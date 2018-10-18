@@ -1,0 +1,29 @@
+// -*- C++ -*-
+//
+//--------------------------------------------------------------------------------
+//
+//                              Michael A.G. Aivazis
+//                       California Institute of Technology
+//                       (C) 1998-2003  All Rights Reserved
+//
+// <LicenseText>
+//
+//--------------------------------------------------------------------------------
+//
+
+#if !defined(journal_Renderer_h)
+#error This header file contains implementation details of the class Renderer
+#else
+
+// meta-methods
+journal::DefaultRenderer::DefaultRenderer() :
+    journal::Renderer()
+{}
+
+#endif
+
+
+// version
+// $Id$
+
+// End of file

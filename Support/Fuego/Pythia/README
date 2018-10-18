@@ -1,0 +1,3 @@
+Prior to sourcing either setup.csh or setup.sh, define PELE_PHYSICS_HOME such that this folder is at ${PELE_PHYSICS_HOME}/Support/Fuego/Pythia
+
+

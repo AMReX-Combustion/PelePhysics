@@ -1,0 +1,76 @@
+// -*- C++ -*-
+//
+//--------------------------------------------------------------------------------
+//
+//                              Michael A.G. Aivazis
+//                       California Institute of Technology
+//                       (C) 1998-2003  All Rights Reserved
+//
+// <LicenseText>
+//
+//--------------------------------------------------------------------------------
+//
+
+#if !defined(journal_Entry_h)
+#error This header file contains implementation details of the class Entry
+#else
+
+
+// interface
+
+void journal::Entry::newline(journal::Entry::string_t line) {
+    _text.push_back(line);
+    return;
+}
+
+size_t journal::Entry::lines() const {
+    return _text.size();
+}
+
+journal::Entry::page_t::const_iterator journal::Entry::lineEnd() const {
+    return _text.end();
+}
+
+journal::Entry::page_t::const_iterator journal::Entry::lineBegin() const {
+    return _text.begin();
+}
+
+journal::Entry::meta_t::const_iterator journal::Entry::metaEnd() const {
+    return _meta.end();
+}
+
+journal::Entry::meta_t::const_iterator journal::Entry::metaBegin() const {
+    return _meta.begin();
+}
+
+void journal::Entry::defaultAttributes(const journal::Entry::meta_t & settings) {
+    _defaults = settings;
+    return;
+}
+
+journal::Entry::string_t & journal::Entry::operator[](journal::Entry::string_t key) {
+    return _meta[key];
+}
+
+journal::Entry::string_t journal::Entry::operator[](journal::Entry::string_t key) const {
+    meta_t::const_iterator i = _meta.find(key);
+    if (i != _meta.end()) {
+        return (*i).second;
+    }
+
+    return string_t();
+}
+
+// meta-methods
+journal::Entry::Entry() :
+    _meta(_defaults)
+{}
+
+
+#endif
+
+
+// version
+// $Id$
+
+// End of file

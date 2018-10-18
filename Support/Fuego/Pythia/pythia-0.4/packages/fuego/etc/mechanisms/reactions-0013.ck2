@@ -1,0 +1,14 @@
+ELEMENTS
+    H
+END
+
+SPECIES
+    H H2
+END
+
+THERMO
+END
+
+REACTIONS CAL/MOLE MOLECULES
+    2 H + M = H2                   1.00E+18 -1.0       0.0 
+END

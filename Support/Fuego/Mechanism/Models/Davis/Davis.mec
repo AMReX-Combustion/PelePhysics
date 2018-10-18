@@ -1,0 +1,135 @@
+!***************************************************************************
+!****************************************************************************
+!          Revised H2/CO high temperature Combustion Mechanism
+!
+!              Scott Davis, Ameya Joshi, and Hai Wang
+!Department of Mechanical Engineering, University of Delaware, Neark, DE 19716
+!
+!                                 January 2003
+!
+!****************************************************************************
+!
+! Reference sources can be found at the end of the file.
+!
+!****************************************************************************
+!
+! Please contact Scott Davis at daviss@exponent.com or
+! Hai Wang at hwang@me.udel.edu for questions and comments
+!     
+!============================================================================  
+ELEMENTS
+O  H  C  N  AR HE
+END
+!
+!First Two Species Must be H2 and H for Modified Burner Stabilized Flame Calc.
+!Radicals in order of increasing molecular weight
+!Stable molecules in order of increasing molecular weight
+!
+SPECIES
+H2  H
+AR  N2  HE
+O  OH  HCO HO2
+H2O  CO  O2  H2O2  CO2
+END
+
+TRANS ALL
+H2                 1    38.000     2.920     0.000     0.790   280.000          
+H                  0   145.000     2.050     0.000     0.000     0.000          
+AR                 0   136.500     3.330     0.000     0.000     0.000          
+N2                 1    97.530     3.621     0.000     1.760     4.000          
+HE                 0    10.200     2.576     0.000     0.000     0.000          
+O                  0    80.000     2.750     0.000     0.000     0.000          
+OH                 1    80.000     2.750     0.000     0.000     0.000          
+HCO                2   498.000     3.590     0.000     0.000     0.000          
+HO2                2   107.400     3.458     0.000     0.000     1.000          
+H2O                2   572.400     2.605     1.844     0.000     4.000          
+CO                 1    98.100     3.650     0.000     1.950     1.800          
+O2                 1   107.400     3.458     0.000     1.600     3.800          
+H2O2               2   107.400     3.458     0.000     0.000     3.800          
+CO2                1   244.000     3.763     0.000     2.650     2.100          
+END
+
+REACTIONS
+!
+! Reactions of H2/O2
+!
+ H+O2 = O+OH             2.644E+16  -0.6707 17041.00 !GRI3.0 * 1.00
+ O+H2 = H+OH             4.589E+04   2.700   6260.00 !GRI3.0 * 1.19
+ OH+H2 = H+H2O           1.734E+08   1.510   3430.00 !GRI3.0 * 0.80
+ OH+OH = O+H2O           3.973E+04   2.400  -2110.00 !GRI3.0 * 1.11
+ H+H+M = H2+M            1.780E+18  -1.000      0.00 !GRI3.0 * 1.78
+   H2/0.0/ H2O/0.0/ CO2/0.0/ AR/0.63/ HE/0.63/
+ H+H+H2 = H2+H2          9.000E+16  -0.600      0.00 !GRI3.0
+ H+H+H2O = H2+H2O        5.624E+19  -1.250      0.00 !GRI3.0 * 0.94
+ H+H+CO2 = H2+CO2        5.500E+20  -2.000      0.00 !GRI3.0
+ H+OH+M = H2O+M          4.400E+22  -2.000      0.00 !GRI3.0 * 2.00
+   H2/2.0/ H2O/6.30/ CO/1.75/ CO2/3.6/  AR/0.38/ HE/0.38/
+ O+H+M = OH+M            9.428E+18  -1.000      0.00 !86TSA/HAM * 2.00
+   H2/2.0/ H2O/12.0/ CO/1.75/ CO2/3.6/  AR/0.7/ HE/0.7/
+ O+O+M = O2+M            1.200E+17  -1.000      0.00 !GRI3.0
+   H2/2.4/ H2O/15.4/  CO/1.75/ CO2/3.6/  AR/0.83/ HE/0.83/
+ H+O2(+M) = HO2(+M)      5.116E+12   0.440      0.00 !00TROE - Based on M=N2 * 1.10
+   LOW/6.328E+19  -1.400  0.00/
+   TROE/0.5  1E-30  1E+30/
+   O2/0.85/  H2O/11.89/ CO/1.09/ CO2/2.18/ AR/0.40/ HE/0.46/ H2/0.75/
+!  O2/0.75/  H2O/12.0/ CO/1.2/ CO2/2.4/ AR/0.53/ HE/0.53/
+! H+O2(+M) = HO2(+M)    4.651E+12   0.440      0.00 !00TROE - Based on M=AR
+!   LOW/7.490E+18  -1.200  0.00/
+!   TROE/0.5  1E-30  1E+30/
+! H+O2(+M) = HO2(+M)  4.651E+12   0.440      0.00 !00TROE - Based on M=H2O
+!   LOW/5.753E+20  -1.400  0.00/                      !10xN2
+!   TROE/0.0 345.0 10 345.0 /                         !FSC
+ H2+O2 = HO2+H           5.916E+05   2.433  53502.00 !00MIC/SUT * 0.80
+ OH+OH(+M) = H2O2(+M)    1.110E+14   -0.370     0.00 !88ZEL/EWI * 1.50
+   LOW  /  2.010E+17   -0.584  -2293.00/     !Fit 88ZEL/EWI and 92BAU/COB
+   TROE/  0.7346   94.00  1756.00  5182.00 / !H2O=6xN2 88ZEL/EWI
+   H2/2.0/ H2O/6.00/ CO/1.75/ CO2/3.6/ AR/0.7/ HE/0.7/
+!
+! Reactions of HO2
+!
+ HO2+H = O+H2O                 3.970E+12    0.000    671.00 !GRI3.0
+ HO2+H = OH+OH                 7.485E+13    0.000    295.00 !99MUE/KIM * 1.06
+ HO2+O = OH+O2                 4.000E+13    0.000      0.00 !GRI3.0 * 2.00
+ HO2+OH = O2+H2O               2.375E+13    0.000   -500.00 !88KEY * 0.82
+  DUPLICATE
+ HO2+OH = O2+H2O               1.000E+16    0.000  17330.00 !95HIP/NEU
+  DUPLICATE
+ HO2+HO2 = O2+H2O2             1.300E+11    0.000  -1630.00 !90HIP/TRO
+  DUPLICATE
+ HO2+HO2 = O2+H2O2             3.658E+14    0.000  12000.00 !90HIP/TRO * 0.87
+  DUPLICATE
+!
+! Reactions of H2O2
+!
+ H2O2+H = HO2+H2               6.050E+06    2.000   5200.00 !GRI3.0 * 0.50
+ H2O2+H = OH+H2O               2.410E+13    0.000   3970.00 !86TSA/HAM 
+ H2O2+O = OH+HO2               9.630E+06    2.000   3970.00 !86TSA/HAM
+ H2O2+OH = HO2+H2O             2.000E+12    0.000    427.00 !95HIP/NEU
+  DUPLICATE
+ H2O2+OH = HO2+H2O             2.670E+41   -7.000  37600.00 !Refit95HIP/NEU
+  DUPLICATE                                                 !2.2E14 MAX K
+!
+! Reactions of CO/CO2
+!
+ CO+O(+M)=CO2(+M)              1.362E+10    0.000   2384.00 !99MUE/KIM * 0.76
+   LOW/1.173E+24 -2.79  4191./
+   H2/2.0/ H2O/12/ CO/1.75/ CO2/3.6/ AR/0.7/ HE/0.7/
+! CO+OH = CO2+H                 4.760E+07    1.228     70.00 !GRI3.0
+  CO+OH=CO2+H                  8.000E+11    0.140   7352.00 !This Work * 0.83
+DUP
+  CO+OH=CO2+H                  8.784E+10   0.030    -16.00 !          * 1.20
+DUP
+ CO+O2 = CO2+O                 1.119E+12    0.000  47700.00 !86TSA/HAM * 0.44
+ CO+HO2 = CO2+OH               3.010E+13    0.000  23000.00 !99MUE/KIM
+!
+! Reactions of HCO
+!
+ HCO+H = CO+H2                 1.200E+14    0.000      0.00 !02FRI/DAV * 1.00
+ HCO+O = CO+OH                 3.000E+13    0.000      0.00 !GRI3.0 
+ HCO+O = CO2+H                 3.000E+13    0.000      0.00 !GRI3.0
+ HCO+OH = CO+H2O               3.020E+13    0.000      0.00 !86TSA/HAM
+ HCO+M = CO+H+M                1.870E+17   -1.000  17000.00 !02FRI/DAV * 2.00
+    H2/2.0/ H2O/0.0/ CO/1.75/ CO2/3.6/ 
+ HCO+H2O = CO+H+H2O            2.244E+18   -1.000  17000.00 !12xM * 2.00
+ HCO+O2 = CO+HO2               1.204E+10    0.807   -727.00 !96HSU/MEB
+END

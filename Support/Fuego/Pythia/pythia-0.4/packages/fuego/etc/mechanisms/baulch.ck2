@@ -1,0 +1,251 @@
+! All data obtained from D.L. Baulch et al., "Evaluated Kinetic Data
+! for Combustion Modeling", J. Phys. Chem. Ref. Data., Vol 21 (1992), p411
+! and Vol. 23 (1994), p847.
+! Compiled by M. Kaneshige, 10/19/96
+
+ELEMENTS H   C   O   N  AR END
+
+SPECIES  H2 H O2 O OH HO2 H2O2 H2O N N2 NO AR NH HNO NO2 N2O NH3 NH2
+ CH CO CH2 CH2(S) CH4 CH3 CH2O HCO CH3O NCO HCN C2H C2H2 HCCO HNCO
+ C2O CH2CO CN CH2OH C NNH HOCN CO2 CH3OH END
+
+REACTIONS KELVINS MOLECULES
+! O Atom Reactions
+   O+H2=OH+H                      8.500E-20  2.67   3160
+   O+OH=>O2+H                     2.400E-11  0.00    353
+   O+HO2=OH+O2                    5.300E-11  0.00      0
+   O+H2O2=OH+HO2                  1.100E-12  0.00   2000
+   O+NO=>O2+N                      1.140E-15  1.13  19200
+   O+N2=>N+NO                     3.000E-10  0.00  38300
+   O+NH=NO+H                      0.750E-10  0.00      0
+   O+NH=N+OH                      0.750E-10  0.00      0
+     ! O+NH rate data only given as sum for two product sets
+   O+NH3=>OH+NH2                  1.600E-11  0.00   3670
+   O+CH=CO+H                      6.600E-11  0.00      0
+   O+CH2=CO+2H                    1.200E-10  0.00      0
+   O+CH2=CO+H2                    0.800E-10  0.00      0
+   O+CH3=CH2O+H                   1.400E-10  0.00      0
+   O+CH4=OH+CH3                   1.200E-15  1.56   4270
+   O+HCO=OH+CO                    5.000E-11  0.00      0
+   O+HCO=CO2+H                    5.000E-11  0.00      0
+   O+CH2O=OH+HCO                  6.900E-13  0.57   1390
+   O+CH3O=>O2+CH3                 2.200E-11  0.00      0
+   O+CH3O=OH+CH2O                 0.300E-11  0.00      0
+   O+CN=>CO+N                     1.700E-11  0.00      0
+     ! What's N(4S) and N(2D)?
+   O+NCO=NO+CO                    3.500E-11  0.00      0
+   O+NCO=>O2+CN                   3.500E-11  0.00      0
+     ! O+NCO data only given as sum for two product sets
+   O+HCN=>NCO+H                   0.767E-18  2.10   3075
+   O+HCN=CO+NH                    0.767E-18  2.10   3075
+   O+HCN=>OH+CN                   0.767E-18  2.10   3075
+   ! O+HCN data only given as sum for three product sets
+   O+C2H=CO+CH                    0.360E-11  0.00      0
+   O+C2H2=CO+CH2                  0.840E-17  2.10    790
+   O+C2H2=HCCO+H                  1.200E-17  2.10    790
+   O+HCCO=2CO+H                   1.600E-10  0.00      0
+! O2 Reactions
+   O2+CH4=HO2+CH3                 6.600E-11  0.00  28630
+   O2+CH2O=HO2+HCO                1.000E-10  0.00  20460
+! H Atom Reactions
+   H+O2=>OH+O                     1.620E-10  0.00   7470
+   H+O2+M=HO2+M                   1.700E-30 -0.80      0
+       H2/3.41/  N2/2.29/
+   H+H+M=>H2+M                    1.800E-30 -1.00      0
+       H2/0.00/
+   H+H+H2=>H2+H2                  2.700E-31 -0.60      0
+   H+OH+M=>H2O+M                  2.300E-26 -2.00      0
+       H2O/16.96/ N2/2.65/
+   H+HO2=H2+O2                    7.100E-11  0.00    710
+   H+HO2=2OH                      2.800E-10  0.00    440
+   H+HO2=H2O+O                    5.000E-11  0.00    866
+   H+H2O=>OH+H2                   7.500E-16  1.6    9270
+   H+H2O2=H2+HO2                  2.800E-12  0.00   1890
+   H+H2O2=OH+H2O                  1.700E-11  0.00   1800
+   H+NO=>OH+N                     3.600E-10  0.00  24910
+   H+NH=H2+N                      1.700E-11  0.00      0
+   H+NH2=H2+NH                    1.000E-11  0.00      0
+   H+CO+M=>HCO+M                  5.300E-34  0.00    370
+   H+CH2=>H2+CH                   1.000E-11  0.00   -900
+   H+CH3=>H2+CH2(S)               1.000E-10  0.00   7600
+   H+CH3(+M)=>CH4(+M)             3.500E-10  0.00      0
+     LOW /1.700E-24 -1.80 0.0/
+     TROE /0.37 3315 61/
+   H+CH4=>H2+CH3                  2.200E-20  3.00   4045
+   H+HCO=H2+CO                    1.500E-10  0.00      0
+   H+CH2O=H2+HCO                  2.100E-16  1.62   1090
+   H+CH3O=H2+CH2O                 3.000E-11  0.00      0
+   H+HNCO=H2+NCO                  3.400E-10 -0.27  10190
+   H+NCO=NH+CO                    4.350E-11  0.00      0
+   H+NCO=>HCN+O                   4.350E-11  0.00      0
+     ! H+NCO data only given as sum for two product sets
+   H+C2H2=>H2+C2H                 1.100E-10  0.00  14000
+   H+HCCO=CH2+CO                  0.833E-10  0.00      0
+   H+HCCO=H2+C2O                  0.833E-10  0.00      0
+   H+CH2CO=CH3+CO                 3.000E-11  0.00   1700
+! H2 Reactions
+   H2+M=>2H+M                     3.700E-10  0.00  48350
+     H2/4.05/
+! OH Radical Reactions
+   OH+H2=>H2O+H                   1.700E-16  1.60   1660
+   2OH=H2O+O                      2.500E-15  1.14     50
+   OH+OH(+M)=>H2O2(+M)            1.200E-10 -0.37      0
+     LOW /6.1E-29 -0.76 0.0/
+     SRI /0.5 0.0 0.0/
+     H2O/0.0/
+   OH+OH(+H2O)=>H2O2(+H2O)        1.200E-10 -0.37      0
+     LOW /4.0E-30 0.0 0.0/
+   OH+HO2=H2O+O2                  4.800E-11  0.00   -250
+   OH+H2O2=H2O+HO2                1.300E-11  0.00    670
+   OH+NH=NO+H2                    4.000E-11  0.00      0
+   OH+NH=H2O+N                    4.000E-11  0.00      0
+   OH+NH2=>O+NH3                  3.300E-14  0.405   250
+   OH+CO=H+CO2                    1.050E-17  1.50   -250
+   OH+CH3=H2O+CH2(S)              1.200E-11  0.00   1400
+   OH+CH3(+M)=CH3OH(+M)           1.000E-10  0.00      0
+     LOW /4.40E-04 -8.2 0.0/
+     TROE /0.82 200 1438/
+   OH+CH4=H2O+CH3                 2.600E-17  1.83   1400
+   OH+HCO=H2O+CO                  1.700E-10  0.00      0
+   OH+CH2O=H2O+HCO                5.700E-15  1.18   -225
+   OH+CN=>O+HCN                   0.500E-10  0.00      0
+   OH+CN=NCO+H                    0.500E-10  0.00      0
+     ! OH+CN data only given as sum for two product sets
+   OH+HCN=>H2O+CN                 1.500E-11  0.00   5400
+   OH+C2H2=H2O+C2H                0.500E-10  0.00   6500
+   OH+C2H2=H+CH2CO                0.500E-10  0.00   6500
+     ! OH+C2H2 data only given as sum for two product sets
+   OH+CH2CO=CH2OH+CO              0.850E-11  0.00      0
+   OH+CH2CO=CH2O+HCO              0.850E-11  0.00      0
+     ! OH+CH2CO data only given as sum for two product sets
+! H2O Reactions
+   H2O+M=>H+OH+M                  5.800E-09  0.00  52920
+! HO2 Radical Reactions
+   HO2+HO2=H2O2+O2                7.000E-10  0.00   6030
+   HO2+NH2=NH3+O2                 1.300E-11  0.00      0
+   HO2+NH2=HNO+H2O                1.300E-11  0.00      0
+     ! HO2+NH2 data only given as sum for two product sets
+   HO2+CH3=OH+CH3O                3.000E-11  0.00      0
+   HO2+CH4=H2O2+CH3               1.500E-11  0.00  12440
+   HO2+CH2O=H2O2+HCO              5.000E-12  0.00   6580
+! H2O2 Reactions
+   H2O2(+M)=>OH+OH(+M)            3.000E+14  0.00  24400
+     LOW /3.000E-08  0.00 21600/
+     SRI /0.5 0.0 0.0/
+     N2/0.00/
+   H2O2(+N2)=>OH+OH(+N2)          3.000E+14  0.00  24400
+     LOW /2.000E-07  0.00 22900/
+     SRI /0.5 0.0 0.0/
+! N Atom Reactions
+   N+O2=>NO+O                     1.500E-14  1.00   3270
+   N+OH=>NO+H                     4.700E-11  0.00      0
+   N+NO=>N2+O                     7.100E-11  0.00    790
+   N+CN=>N2+C                     3.000E-10  0.00      0
+   N+NCO=N2+CO                    3.300E-11  0.00      0
+! NH Radical Reactions
+   NH+O2=NO+OH                    0.650E-13  0.00    770
+   NH+O2=NO2+H                    0.650E-13  0.00    770
+     ! NH+O2 data only given as sum for two product sets
+   NH+O2=HNO+O                    6.500E-11  0.00   9000
+   NH+NO=N2O+H                    0.933E-10  0.00   6400
+   NH+NO=NNH+O                    0.933E-10  0.00   6400
+   NH+NO=N2+OH                    0.933E-10  0.00   6400
+     ! NH+NO data only given as sum for three product sets
+! NH2 Radical Reactions
+   NH2+NO=N2+H2O                  0.792E-12  0.00   -650
+   NH2+NO=N2+H+OH                 0.108E-12  0.00   -650
+   NH2+NO=NNH+OH                  0.108E-12  0.00   -650
+   NH2+NO=N2O+H2                  0.792E-12  0.00   -650
+     ! NH2+NO data only given as a combination of four product sets
+! NH3 Reactions
+   NH3(+M)=NH2+H(+M)              8.300E+15  0.00  55170
+     LOW /7.400E-9 0.0 41560/
+     TROE /0.42 4581 102/
+! C Atom Reactions
+   C+N2=>CN+N                     8.700E-11  0.00  22600
+   C+NO=CN+O                      3.200E-11  0.00      0
+   C+NO=>CO+N                     4.800E-11  0.00      0
+! CH Radical Reactions
+   CH+O2=HCO+O                    2.750E-11  0.00      0
+   CH+O2=CO+OH                    2.750E-11  0.00      0
+     ! CH+O2 data only given as sum for two product sets
+   CH+H2=>CH2+H                   2.400E-10  0.00   1760
+   CH+N2=HCN+N                    2.600E-12  0.00   9030
+   CH+NO=CO+NH                    0.667E-10  0.00      0
+   CH+NO=CN+OH                    0.667E-10  0.00      0
+   CH+NO=HCN+O                    0.667E-10  0.00      0
+! CH2 Radical Reactions
+   CH2+O2=CO+H+OH                 0.820E-11  0.00    750
+   CH2+O2=CO2+H+H                 0.820E-11  0.00    750
+   CH2+O2=CO+H2O                  0.820E-11  0.00    750
+   CH2+O2=CO2+H2                  0.820E-11  0.00    750
+   CH2+O2=CH2O+O                  0.820E-11  0.00    750
+     ! CH2+O2 data only given as sum for five product sets
+   CH2+CH2=C2H2+H2                0.200E-10  0.00    400
+   CH2+CH2=C2H2+2H                1.800E-10  0.00    400
+! CH2(S) Radical Reactions
+   CH2(S)+AR=CH2+AR               6.000E-12  0.00      0
+   CH2(S)+N2=CH2+N2               1.000E-11  0.00      0
+   CH2(S)+CH4=CH2+CH4             1.200E-11  0.00      0
+   CH2(S)+C2H2=CH2+C2H2           8.000E-11  0.00      0
+   CH2(S)+O2=CO+H+OH              1.300E-11  0.00      0
+   CH2(S)+O2=CO2+H2               1.300E-11  0.00      0
+   CH2(S)+O2=CO+H2O               1.300E-11  0.00      0
+   CH2(S)+O2=CH2+O2               1.300E-11  0.00      0
+     ! CH2(S)+O2 data only given as sum for four product sets
+   CH2(S)+H2=>CH3+H               1.200E-10  0.00      0
+! CH3 Radical Reactions
+   CH3+M=CH2+H+M                  1.700E-08  0.00  45600
+   CH3+O2=>CH3O+O                 2.200E-10  0.00  15800
+   CH3+O2=CH2O+OH                 5.500E-13  0.00   4500
+   CH3+H2=>CH4+H                  1.140E-20  2.74   4740
+   CH3+CH2O=CH4+HCO               1.300E-31  6.10    990
+! CH4 Reactions
+   CH4(+M)=>CH3+H(+M)             2.400E+16  0.00  52800
+     LOW /7.8E+23 -8.2 59200/
+     TROE /1.0 0.0 1350 7830/
+     CH4/0.0/
+   CH4(+CH4)=>CH3+H(+CH4)         2.400E+16  0.00  52800
+     LOW /1.4E-06 0.0 45700/
+     TROE /0.69 90 2210/
+! HCO Radical Reactions
+   HCO+M=>H+CO+M                  2.600E-10  0.00   7930
+   HCO+O2=CO+HO2                  2.500E-12  0.00      0
+   HCO+O2=OH+CO2                  2.500E-12  0.00      0
+     ! HCO+O2 data only given as sum for two product sets
+   HCO+HCO=CH2O+CO                5.000E-11  0.00      0
+! CH2O Reactions
+   CH2O+M=H+HCO+M                 0.810E+12 -5.54  48660
+   CH2O+M=H2+CO+M                 1.890E+12 -5.54  48660
+! CH2OH Reactions
+   CH2OH+O2=CH2O+HO2              2.600E-09 -1.00      0
+     DUPLICATE
+   CH2OH+O2=CH2O+HO2              1.200E-10  0.00   1800
+     DUPLICATE
+! CH3O Radical Reactions
+   CH3O+M=CH2O+H+M                9.000E-11  0.00   6790
+   CH3O+O2=CH2O+HO2               3.600E-14  0.00    880
+! CN Radical Reactions
+   CN+O2=>NCO+O                   1.200E-11  0.00   -210
+   CN+H2=HCN+H                    3.200E-20  2.87    820
+   CN+H2O=>HCN+OH                 0.650E-11  0.00   3750
+   CN+H2O=HOCN+H                  0.650E-11  0.00   3750
+     ! CN+H2O data only given as sum for two product sets
+   CN+CH4=HCN+CH3                 1.500E-19  2.64   -150
+   NCO+M=N+CO+M                   1.700E-09  0.00  23500
+   NCO+NO=N2O+CO                  0.767E-06 -1.73    380
+   NCO+NO=N2+CO2                  0.767E-06 -1.73    380
+   NCO+NO=N2+CO+O                 0.767E-06 -1.73    380
+     ! NCO+NO data only given as sum for three product sets
+! C2H Radical Reactions
+   C2H+O2=CO2+CH                  0.750E-11  0.00      0
+   C2H+O2=2CO+H                   0.750E-11  0.00      0
+   C2H+O2=CO+HCO                  0.750E-11  0.00      0
+     ! C2H+O2 data only given as sum for four product sets
+   C2H+H2=>C2H2+H                 1.800E-11  0.00   1090
+! HCCO Reactions
+   HCCO+O2=CO2+HCO                0.675E-12  0.00    430
+   HCCO+O2=2CO+OH                 0.675E-12  0.00    430
+   HCCO+O2=C2O+HO2                0.675E-12  0.00    430
+     ! HCCO+O2 data only given as sum for four product sets
+END

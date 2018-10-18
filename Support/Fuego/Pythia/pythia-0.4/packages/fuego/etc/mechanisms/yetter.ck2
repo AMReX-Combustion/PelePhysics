@@ -1,0 +1,52 @@
+!  Data from Yetter R.A., Dryer F.L. and Rabitz H., " A comprehensive
+!  reaction mechanism for carbon monoxide/hydrogen/oxygen kinetics",
+!  Combust. Sci. Tech. v79, pp97-128, 1991
+!  J. Austin 6/24/99
+
+ELEMENTS H   C   O   N  AR END
+
+SPECIES  H2 H O2 O OH H2O HO2 H2O2 CO CO2 HCO N2 AR END
+
+REACTIONS  KCAl/MOLE
+! H2-O2 Chain Reactions
+   H+O2=O+OH               1.900E14      0.00  16.44		
+   O+H2=H+OH               5.13E4	 2.67  6.29
+   OH+H2=H+H2O             2.14E8	 1.51  3.43
+   OH+OH=O+H2O             5.00E11	 0.00  16.29  ! refitted to Arrhenius expression
+!H2-O2 Dissociation/Recombination Reactions	
+   H2+N2= H+H+N2           4.57E19	 -1.40  104.38
+   H2+AR=H+H+AR            5.89E18	 -1.10  104.38
+   O+O+N2=O2+N2            6.17E15	 -0.50   0.00
+   O+O+AR=O2+AR            1.91E13	  0.00  -1.79	
+   O+H+M=OH+M              4.68E18	 -1.00   0.00		
+   H+OH+N2=H2O+N2          2.24E22	 -2.00   0.00
+   H+OH+AR=H2O+AR          8.32E21	 -2.00   0.00
+! Formation and Consumption of HO2	
+   H+O2+N2=HO2+N2          6.76E19	 -1.42   0.00
+   H+O2+AR=HO2+AR          1.15E15	  0.00  -1.00
+   HO2+H=H2+O2             6.61E13	  0.00   2.13
+   HO2+H=OH+OH             1.70E14	  0.00   0.87
+   HO2+O=OH+O2             1.74E13	  0.00  -0.40
+   HO2+OH=H2O+O2           1.45E16	 -1.00   0.00
+! Formation and Consumption of H2O2	
+   HO2+HO2=H2O2+O2         3.02E12	 0.00    1.39
+   H2O2+N2=OH+OH+N2        1.20E17	 0.00   45.50
+   H2O2+AR=OH+OH+AR        8.51E16	 0.00   45.50
+   H2O2+H=H2O+OH           1.00E13	 0.00    3.59
+   H2O2+H=H2+HO2           4.79E13	 0.00    7.95
+   H2O2+O=OH+HO2           9.55E6	 2.00    3.97
+   H2O2+OH=H2O+HO2         7.08E12	 0.00    1.43
+! Oxidation of CO	
+   CO+O+N2=CO2+N2          2.51E13	 0.00   -4.54
+   CO+O+AR=CO2+AR          2.19E13	 0.00   -4.54
+   CO+O2=CO2+O             2.51E12	 0.00   47.69
+   CO+OH=CO2+H             5.00E12	 0.00    9.91 !refitted to Arrhenius expression
+   CO+HO2=CO2+OH           6.03E13	 0.00   22.95
+! Formation and Consumption of HCO	
+   HCO+N2=H+CO+N2          1.86E17	-1.00   17.00
+   HCO+AR=H+CO+AR          1.86E17	-1.00   17.00
+   HCO+O2=CO+HO2           7.59E12	 0.00    0.41
+   HCO+H=CO+H2             7.24E13	 0.00    0.00
+   HCO+O=CO+OH             3.02E13	 0.00    0.00
+   HCO+OH=CO+H2O           3.02E13	 0.00    0.00	
+END

@@ -1,0 +1,4 @@
+
+CEXE_sources   += SPEval.cpp
+CEXE_headers   += SPEval.H
+f90EXE_sources += SPEval_nd.f90

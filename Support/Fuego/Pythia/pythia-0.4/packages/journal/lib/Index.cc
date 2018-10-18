@@ -1,0 +1,28 @@
+// -*- C++ -*-
+//
+//--------------------------------------------------------------------------------
+//
+//                              Michael A.G. Aivazis
+//                       California Institute of Technology
+//                       (C) 1998-2003  All Rights Reserved
+//
+// <LicenseText>
+//
+//--------------------------------------------------------------------------------
+//
+
+#include <portinfo>
+#include <string>
+#include <sstream>
+
+#include "Index.h"
+
+using namespace journal;
+
+// meta-methods
+Index::~Index() {}
+
+// version
+// $Id$
+
+// End of file

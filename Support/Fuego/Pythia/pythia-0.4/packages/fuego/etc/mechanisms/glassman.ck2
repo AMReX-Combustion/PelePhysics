@@ -1,0 +1,767 @@
+! Taken from Appendix B of "Combustion, 3rd ed." by Irvin Glassman (1996)
+! Academic Press.  References are provided in that appendix for the
+! original source of the rate parameters.  Entered by M. Kaneshige 6/3/97.
+!
+! A number of typos were discovered through unbalanced reactions,
+!  suggesting that other typos may exist in the numerical values.  These
+!  can only be discovered by checking against the original sources.
+! For the larger molecules, the exact nomenclature can be vague and is
+!  important.  Changed
+!    CH3CHO -> CH3HCO
+!    CHCHCH3 -> CH3CHCH
+!    C3H3 -> CH3CC
+! Borrowed thermo data from NASA database.  Should check.
+
+ELEMENTS
+AR  H  O  C  N  CL  S
+END
+
+SPECIES
+AR
+H2      H       O       O2      OH      H2O     HO2     H2O2    
+C       CH      CH2     CH2(S)  CH3     CH4     CO      CO2     
+HCO     CH2O    CH2OH   CH3O    CH3OH
+C2H     C2H2    C2H3    C2H4    C2H5    C2H6    HCCO    CH2CO
+HCCOH   CH3CO   CH3HCO
+I*C3H7  N*C3H7  C3H8    CH3CHCH CH3CCH2 C3H6
+C3H5    C3H4    C3H4P   CH3CC   C3H2    C3H4C
+N2      N       NH      NH2     NH3     NNH     N2H2    N2H4
+N2H3
+NO      NO2     N2O     NO3     HNO     HNO3    HONO
+CN      HCN     H2CN    HCNO    HOCN    HNCO    NCO     HCOOH
+CL      HCL     CL2     CLO     HOCL    CLCO    NOCL
+O3
+S       SO      SO2     SO3     SH      H2S
+END
+
+THERMO
+C3H5              BUR 92C   3H   5          G  200.000   6000.000 1000.00      1
+ 6.54761132E+00 1.33152246E-02-4.78333100E-06 7.71949814E-10-4.61930808E-14    2
+ 1.72714707E+04-9.27486841E+00 3.78794693E+00 9.48414335E-03 2.42343368E-05    3
+-3.65604010E-08 1.48592356E-11 1.86261218E+04 7.82822499E+00                   4
+NOCL              L12/86N   1O   1CL  1     G   298.150  5000.000 1000.00      1
+ 5.86956760E+00 9.32184760E-04-2.52355420E-07 8.09444930E-11-9.02037270E-15    2
+ 4.37178100E+03-2.64405757E+00 3.84293630E+00 7.30757200E-03-9.14007260E-06    3
+ 6.66117580E-09-2.05029050E-12 4.93648720E+03 7.74079403E+00                   4
+END
+
+REACTIONS JOULES/MOLE
+! Table 1: H2/O2 Mechanism
+!  H2-O2 Chain Reactions
+H+O2=O+OH                     1.94E+14    0.00    68780  ! 1.1
+O+H2=H+OH                     5.08E+04    2.67    26320  ! 1.2
+OH+H2=H+H2O                   2.16E+08    1.51    14350  ! 1.3
+O+H2O=OH+OH                   2.95E+06    2.02    56070  ! 1.4
+!  H2-O2 Dissociation/Recombination Reactions
+H2+M=H+H+M                    4.57E+19   -1.40   436730  ! 1.5
+   AR/0.0/
+H2+AR=H+H+AR                  5.89E+18   -1.10   436730
+O+O+M=O2+M                    6.17E+15   -0.50        0  ! 1.6
+   AR/0.0/
+O+O+AR=O2+AR                  1.91E+13    0.00    -7490
+O+H+M=OH+M                    4.72E+18   -1.00        0  ! 1.7
+H+OH+M=H2O+M                  2.24E+22   -2.00        0  ! 1.8
+   AR/0.0/
+H+OH+AR=H2O+AR                8.32E+21   -2.00        0 
+! HO2 Reactions
+H+O2+M=HO2+M                  6.70E+19   -1.42        0  ! 1.9
+   H2/2.50/ H2O/12.0/ CO/1.9/ CO2/3.8/ AR/0.00/
+H+O2+AR=HO2+AR                1.51E+15    0.00    -4180
+H+O2=HO2                      4.52E+13    0.00        0
+HO2+H=H2+O2                   6.62E+13    0.00     8910  ! 1.10
+HO2+H=OH+OH                   1.69E+14    0.00     3640  ! 1.11
+HO2+O=OH+O2                   1.75E+13    0.00    -1670  ! 1.12
+HO2+OH=H2O+O2                 1.90E+16   -1.00        0  ! 1.13
+!  H2O2 Reactions
+HO2+HO2=H2O2+O2               4.20E+14    0.00    50120  ! 1.14
+   DUP
+HO2+HO2=H2O2+O2               1.30E+11    0.00    -6820
+   DUP
+H2O2(+M)=OH+OH(+M)            3.00E+14    0.00   202510  ! 1.15
+   LOW/1.200E+17  0.00  190370/
+   SRI/0.5 0.0 0.0/
+   AR/0.0/
+H2O2(+AR)=OH+OH(+AR)          1.91E+16    0.00   179910
+   LOW/3.000E+14  0.00  202510/
+   SRI/0.5 0.0 0.0/
+H2O2+H=H2O+OH                 1.00E+13    0.00    15020  ! 1.16
+H2O2+H=H2+HO2                 4.82E+13    0.00    33260  ! 1.17
+H2O2+O=OH+HO2                 9.64E+06    2.00    16610  ! 1.18
+H2O2+OH=H2O+HO2               1.00E+12    0.00        0  ! 1.19
+   DUP
+H2O2+OH=H2O+HO2               5.80E+14    0.00    40000  ! 1.19
+   DUP
+! Table 2: CO/H2/O2 Mechanism
+!  CO and CO2 Reactions
+CO+O+M=CO2+M                  2.51E+13    0.00   -19000  ! 2.1
+   AR/0.0/
+CO+O+AR=CO2+AR                2.19E+13    0.00   -19000
+CO+O2=CO2+O                   2.53E+13    0.00   199530  ! 2.2
+CO+OH=CO2+H                   1.50E+07    1.30    -3200  ! 2.3
+CO+HO2=CO2+OH                 6.02E+13    0.00    96020  ! 2.4
+!  HCO Reactions
+HCO+M=H+CO+M                  1.86E+17   -1.00    71130  ! 2.5
+   H2/1.9/ CO/1.9/ H2O/8.0/ CO2/2.8/ CH2O/8.0/ CH3OH/8.0/ CH4/8.0/
+HCO+O2=CO+HO2                 7.58E+12    0.00     1720  ! 2.6
+HCO+H=CO+H2                   7.23E+13    0.00        0  ! 2.7
+HCO+O=CO+OH                   3.00E+13    0.00        0  ! 2.8
+HCO+O=CO2+H                   1.00E+13    0.00        0  ! 2.9
+HCO+OH=CO+H2O                 3.00E+13    0.00        0  ! 2.10
+HCO+HO2=CO2+OH+H              3.00E+13    0.00        0  ! 2.11
+HCO+HCO=H2+CO+CO              3.00E+12    0.00        0  ! 2.12
+! Table 3: CH2O/CO/H2/O2 Mechanism
+!  CH2O Reactions
+CH2O+M=HCO+H+M                4.00E+23   -1.66   382710  ! 3.1
+CH2O+M=CO+H2+M                8.32E+15    0.00   290960  ! 3.2
+CH2O+H=HCO+H2                 5.18E+07    1.66     7660  ! 3.3
+CH2O+O=HCO+OH                 1.82E+13    0.00    12890  ! 3.4
+CH2O+OH=HCO+H2O               3.43E+09    1.18    -1880  ! 3.5
+CH2O+O2=HCO+HO2               2.00E+13    0.00   163180  ! 3.6
+CH2O+HO2=HCO+H2O2             1.47E+13    0.00    63600  ! 3.7
+HCO+HCO=CH2O+CO               1.82E+13    0.00        0  ! 3.8
+! Table 4: CH3OH/CH2O/CO/H2/O2 Mechanism
+!  HCOOH Reactions
+HCOOH+M=CO+H2O+M              2.09E+14    0.00   169000  ! 4.1
+HCOOH+M=CO2+H2+M              1.35E+15    0.00   253600  ! 4.2
+HCOOH+OH=H2O+CO2+H            3.00E+11    0.00        0  ! 4.3
+!  CH2OH Reactions
+CH2OH+M=CH2O+H+M              5.22E+37   -6.54   170460  ! 4.4
+CH2OH+H=CH2O+H2               6.00E+12    0.00        0  ! 4.5
+CH2OH+O=CH2O+OH               4.20E+13    0.00        0  ! 4.6
+CH2OH+OH=CH2O+H2O             2.40E+13    0.00        0  ! 4.7
+CH2OH+O2=CH2O+HO2             2.41E+14    0.00    21000  ! 4.8
+CH2OH+HO2=CH2O+H2O2           1.20E+13    0.00        0  ! 4.9
+CH2OH+HO2=HCOOH+OH+H          3.00E+13    0.00        0  ! 4.10
+CH2OH+HO2=HCOOH+H2O           3.00E+13    0.00        0  ! 4.11
+CH2OH+HCO=CH2O+CH2O           1.80E+14    0.00        0  ! 4.12
+! CH2OH+CH2OH=HOC2H4OH          6.00E+12    0.00        0  ! 4.13
+!   Thermo data for this one?
+!  CH3O Reactions
+CH3O+M=CH2O+H+M               8.30E+17   -1.20    64850  ! 4.14
+CH3O+H=CH2O+H2                2.00E+13    0.00        0  ! 4.15
+CH3O+O=CH2O+OH                6.00E+12    0.00        0  ! 4.16
+CH3O+OH=CH2O+H2O              1.80E+13    0.00        0  ! 4.17
+CH3O+O2=CH2O+HO2              9.03E+13    0.00    50120  ! 4.18
+   DUP
+CH3O+O2=CH2O+HO2              2.20E+10    0.00     7310
+   DUP
+CH3O+HO2=CH2O+H2O2            3.00E+11    0.00        0  ! 4.19
+!   CH3OH Reactions
+CH3OH+M=CH2OH+H+M             4.23E+16   0.00   318400  ! 4.20
+CH3OH=CH2OH+H                 1.90E+17   0.00   384000
+CH3OH+H=CH2OH+H2              3.20E+13   0.00    25500  ! 4.21
+CH3OH+H=CH3O+H2               8.00E+12   0.00    25500  ! 4.22
+CH3OH+O=CH2OH+OH              3.88E+05   2.50    12890  ! 4.23
+CH3OH+OH=CH3O+H2O             1.77E+04   2.65    -3690  ! 4.24
+CH3OH+OH=CH2OH+H2O            1.77E+04   2.65    -3690  ! 4.25
+CH3OH+O2=CH2OH+HO2            2.05E+13   0.00   187860  ! 4.26
+CH3OH+HO2=CH2OH+H2O2          4.00E+13   0.00    81170  ! 4.27
+CH2OH+HCO=CH3OH+CO            1.20E+14   0.00        0  ! 4.28
+CH3O+HCO=CH3OH+CO             9.00E+13   0.00        0  ! 4.29
+CH3OH+HCO=CH2OH+CH2O          9.63E+03   2.90    54850  ! 4.30
+CH2OH+CH2OH=CH3OH+CH2O        3.00E+12   0.00        0  ! 4.31
+CH3O+CH2OH=CH3OH+CH2O         2.40E+13   0.00        0  ! 4.32
+CH3O+CH3O=CH3OH+CH2O          6.00E+13   0.00        0  ! 4.33
+CH3OH+CH3O=CH3OH+CH2OH        3.00E+11   0.00    16990  ! 4.34
+! Table 5: CH4/CH3OH/CH2O/CO/H2/O2 Mechanism
+!  C Reactions
+C+OH=CO+H                     5.00E+13   0.00        0  ! 5.1
+C+O2=CO+O                     2.00E+13   0.00        0  ! 5.2
+!  CH Reactions
+CH+H=C+H2                     1.50E+14   0.00        0  ! 5.3
+CH+O=CO+H                     5.70E+13   0.00        0  ! 5.4
+CH+OH=HCO+H                   3.00E+13   0.00        0  ! 5.5
+CH+O2=HCO+O                   3.30E+13   0.00        0  ! 5.6
+CH+H2O=CH2O+H                 1.17E+15  -0.75        0  ! 5.7
+CH+CO2=HCO+CO                 3.40E+12   0.00     2880  ! 5.8
+!  CH2 Reactions
+CH2+H=CH+H2                   1.00E+18  -1.56        0  ! 5.9
+CH2+O=CO+H+H                  5.00E+13   0.00        0  ! 5.10
+CH2+O=CO+H2                   3.00E+13   0.00        0  ! 5.11
+CH2+OH=CH2O+H                 2.50E+13   0.00        0  ! 5.12
+CH2+OH=CH+H2O                 1.13E+07   2.00    12550  ! 5.13
+CH2+O2=CO+H+OH                8.60E+10   0.00    -2100  ! 5.14
+CH2+O2=CO+H2O                 1.90E+10   0.00    -4180  ! 5.15
+CH2+O2=CO2+H+H                1.60E+13   0.00     4180  ! 5.16
+CH2+O2=CO2+H2                 6.90E+11   0.00     2100  ! 5.17
+CH2+O2=HCO+OH                 4.30E+10   0.00    -2100  ! 5.18
+CH2+O2=CH2O+O                 5.00E+13   0.00    37650  ! 5.19
+CH2+HO2=CH2O+OH               1.81E+13   0.00        0  ! 5.20
+CH2+CO2=CH2O+CO               1.10E+11   0.00     4180  ! 5.21
+!  CH2(S) Reactions
+CH2(S)+M=CH2+M                1.00E+13   0.00        0  ! 5.22
+ H/0.0/
+CH2(S)+H=CH2+H                2.00E+14   0.00        0  ! 5.23
+CH2(S)+O=CO+H2                1.51E+13   0.00        0  ! 5.24
+CH2(S)+O=HCO+H                1.51E+13   0.00        0  ! 5.25
+CH2(S)+OH=CH2O+H              3.00E+13   0.00        0  ! 5.26
+CH2(S)+O2=CO+OH+H             3.00E+13   0.00        0  ! 5.27
+!  CH3 Reactions
+CH3+H=CH2+H2                  9.00E+13   0.00    63180  ! 5.28
+CH2(S)+H2=CH3+H               7.00E+13   0.00        0  ! 5.29
+CH3+O=CH2O+H                  8.00E+13   0.00        0  ! 5.30
+CH2OH+H=CH3+OH                9.64E+13   0.00        0  ! 5.31
+CH3+OH=CH3O+H                 5.74E+12  -0.23    58290  ! 5.32
+CH3OH+M=CH3+OH+M              4.23E+17   0.00   318400  ! 5.33
+CH3OH=CH3+OH                  1.90E+16   0.00   384000
+CH3+OH=CH2+H2O                7.50E+06   2.00    20920  ! 5.34
+CH3+OH=CH2(S)+H2O             8.90E+19  -1.80    33750  ! 5.35
+CH3+O2=CH3O+O                 1.99E+18  -1.57   122300  ! 5.36
+CH3+HO2=CH3O+OH               2.00E+13   0.00        0  ! 5.37
+CH3O+CO=CH3+CO2               1.60E+13   0.00    49370  ! 5.38
+!  CH4 Reactions
+CH4+M=CH3+H+M                 7.21E+30  -3.49   443090  ! 5.39
+CH4=CH3+H                     3.70E+15   0.00   434300
+CH4+H=CH3+H2                  2.20E+04   3.00    36610  ! 5.40
+CH4+O=CH3+OH                  1.02E+09   1.50    36000  ! 5.41
+CH4+OH=CH3+H2O                1.60E+06   2.10    10290  ! 5.42
+CH4+O2=CH3+HO2                7.90E+13   0.00   234300  ! 5.43
+CH4+HO2=CH3+H2O2              1.81E+11   0.00    78240  ! 5.44
+CH3+HCO=CH4+CO                1.20E+14   0.00        0  ! 5.45
+CH3+CH2O=CH4+HCO              5.54E+03   2.81    24530  ! 5.46
+CH3+CH3O=CH4+CH2O             2.41E+13   0.00        0  ! 5.47
+CH3+CH3OH=CH4+CH2OH           3.19E+01   3.17    30010  ! 5.48
+CH4+CH2(S)=CH3+CH3            4.00E+14   0.00        0  ! 5.49
+! Table 6: C2H6/CH4/CH3OH/CH2O/CO/H2/O2 Mechanism
+!  C2H Reactions
+CH2+C=C2H+H                   5.00E+13   0.00        0  ! 6.1
+C2H+O=CH+CO                   5.00E+13   0.00        0  ! 6.2
+C2H+O2=HCO+CO                 2.41E+12   0.00        0  ! 6.3
+!  HCCO Reactions
+HCCO+H=CH2(S)+CO              1.00E+14   0.00        0  ! 6.4
+C2H+OH=HCCO+H                 2.00E+13   0.00        0  ! 6.5
+HCCO+O=H+CO+CO                1.00E+14   0.00        0  ! 6.6
+C2H+O2=HCCO+O                 6.02E+11   0.00        0  ! 6.7
+HCCO+O2=CO+CO+OH              1.60E+12   0.00     3580  ! 6.8
+!  C2H2 Reactions
+C2H2+M=C2H+H+M                7.46E+30  -3.70   531780  ! 6.9
+CH3+C=C2H2+H                  5.00E+13   0.00        0  ! 6.10
+CH2+CH=C2H2+H                 4.00E+13   0.00        0  ! 6.11
+C2H+H2=C2H2+H                 4.09E+05   2.39     3610  ! 6.12
+C2H2+O=CH2+CO                 1.02E+07   2.00     7950  ! 6.13
+C2H2+O=C2H+OH                 3.16E+15  -0.60    62760  ! 6.14
+C2H2+O=HCCO+H                 1.02E+07   2.00     7950  ! 6.15
+C2H2+OH=CH3+CO                4.83E-04   4.00    -8370  ! 6.16
+C2H2+OH=C2H+H2O               3.38E+07   2.00    58580  ! 6.17
+CH2+CH2=C2H2+H2               4.00E+13   0.00        0  ! 6.18
+C2H2+O2=C2H+HO2               1.20E+13   0.00   311750  ! 6.19
+C2H2+O2=HCCO+OH               2.00E+08   1.50   125940  ! 6.20
+HCCO+CH=C2H2+CO               5.00E+13   0.00        0  ! 6.21
+HCCO+HCCO=C2H2+2CO            1.00E+13   0.00        0  ! 6.22
+!  C2H3 Reactions
+C2H2+H+M=C2H3+M               2.67E+27  -3.50    10080  ! 6.23
+  H2/2.0/ CO/2.0/ H2O/5.0/ CO2/3.0/
+C2H2+H=C2H3                   5.54E+12   0.00    10080
+C2H3+H=C2H2+H2                1.20E+13   0.00        0  ! 6.24
+CH3+CH=C2H3+H                 3.00E+13   0.00        0  ! 6.25
+C2H3+OH=C2H2+H2O              3.00E+13   0.00        0  ! 6.26
+C2H3+O2=HCO+HCO+H             3.27E+23  -3.94    20960  ! 6.27
+C2H3+O2=CH2O+HCO              4.48E+26  -4.55    22930  ! 6.28
+   DUP
+C2H3+O2=CH2O+HCO              1.05E+38  -8.22    29410
+   DUP
+C2H3+O2=C2H2+HO2              5.10E+21  -3.24    23680  ! 6.29
+HCCO+CH2=C2H3+CO              3.00E+13   0.00        0  ! 6.30
+C2H3+CH=C2H2+CH2              5.00E+13   0.00        0  ! 6.31
+C2H3+CH3=C2H2+CH4             3.90E+11   0.00        0  ! 6.32
+C2H3+C2H3=C2H4+C2H2           9.60E+11   0.00        0  ! 6.33
+!  HCCOH Reactions
+C2H2+OH=HCCOH+H               5.04E+05   2.30    56490  ! 6.34
+!  CH2CO Reactions
+CH2CO+M=CH2+CO+M              3.60E+15   0.00   247990  ! 6.35
+CH2CO=CH2+CO                  3.00E+14   0.00   297000
+CH2CO+H=CH3+CO                1.13E+13   0.00    14340  ! 6.36
+CH2CO+H=HCCO+H2               5.00E+13   0.00    33470  ! 6.37
+C2H2+OH=CH2CO+H               2.18E-04   4.50    -4180  ! 6.38
+C2H3+O=CH2CO+H                3.00E+13   0.00        0  ! 6.39
+CH+CH2O=CH2CO+H               9.46E+13   0.00    -2150  ! 6.40
+HCCOH+H=CH2CO+H               1.00E+13   0.00        0  ! 6.41
+CH2CO+O=CH2+CO2               1.75E+12   0.00     5650  ! 6.42
+CH2CO+O=HCCO+OH               1.00E+13   0.00    33470  ! 6.43
+CH2CO+OH=HCCO+H2O             7.50E+12   0.00     8370  ! 6.44
+C2H3+HO2=CH2CO+OH+H           3.00E+13   0.00        0  ! 6.45
+!  CH3CO Reactions
+CH3CO+M=CH3+CO+M              8.73E+42  -8.62    93720  ! 6.46
+CH3CO=CH3+CO                  1.20E+22  -3.04    78660
+CH3CO+H=CH3+HCO               9.60E+13   0.00        0  ! 6.47
+CH3CO+O=CH3+CO2               9.60E+12   0.00        0  ! 6.48
+CH3CO+OH=CH3+CO+OH            3.00E+13   0.00        0  ! 6.49
+CH3CO+OH=CH2CO+H2O            1.20E+13   0.00        0  ! 6.50
+CH3CO+HO2=CH3+CO2+OH          3.00E+13   0.00        0  ! 6.51
+!  C2H4 Reactions
+C2H4+M=C2H2+H2+M              1.50E+15   0.44   233480  ! 6.52
+C2H4+M=C2H3+H+M               1.40E+16   0.00   344610  ! 6.53
+C2H4+H=C2H3+H2                1.10E+14   0.00    35570  ! 6.54
+CH4+CH=C2H4+H                 6.00E+13   0.00        0  ! 6.55
+CH3+CH2=C2H4+H                3.00E+13   0.00        0  ! 6.56
+C2H4+O=CH3+HCO                1.60E+09   1.20     3120  ! 6.57
+C2H4+OH=C2H3+H2O              2.02E+13   0.00    24920  ! 6.58
+C2H4+O2=C2H3+HO2              4.22E+13   0.00   241000  ! 6.59
+C2H4+CH3=C2H3+CH4             6.62E+00   3.70    39750  ! 6.60
+CH3+CH3=C2H4+H2               1.00E+16   0.00   139910  ! 6.61
+!  C2H4O Reactions
+! C2H4O=CH4+CO                  3.16E+14   0.00   238490  ! 6.62
+! C2H4+HO2=C2H4O+OH             6.00E+09   0.00    33260  ! 6.63
+!  Don't have C2H4O thermo data
+!  CH3CHO Reactions - Switched CH3CHO to CH3HCO
+CH3HCO=CH3+HCO                7.08E+15   0.00   342100  ! 6.64
+C2H3+OH=CH3HCO                3.00E+13   0.00        0  ! 6.65
+CH3HCO+H=CH3CO+H2             4.00E+13   0.00    17600  ! 6.66
+!  Fixed 6.66 by changing CH3HCO to CH3CO so reaction balances
+CH3HCO+O=CH3CO+OH             5.00E+12   0.00     7500  ! 6.67
+CH3HCO+OH=CH3CO+H2O           1.00E+13   0.00        0  ! 6.68 
+CH3HCO+O2=CH3CO+HO2           2.00E+13   0.50   176560  ! 6.69
+CH3HCO+HO2=CH3CO+H2O2         1.70E+12   0.00    44770  ! 6.70
+CH3HCO+CH3=CH3CO+CH4          1.74E+12   0.00    35310  ! 6.71
+!  C2H5 Reactions
+C2H5+M=C2H4+H+M               5.10E+64 -14.00   251460  ! 6.72
+C2H5=C2H4+H                   4.90E+09   1.19   155640
+CH3+CH3=C2H5+H                8.00E+15   0.00   110930  ! 6.73
+C2H5+H=C2H4+H2                1.81E+12   0.00        0  ! 6.74
+C2H5+O=CH2O+CH3               1.60E+13   0.00        0  ! 6.75
+C2H5+O=CH3HCO+H               9.60E+14   0.00        0  ! 6.76
+C2H5+OH=CH3+CH2O+H            2.40E+13   0.00        0  ! 6.77
+C2H5+OH=C2H4+H2O              2.40E+13   0.00        0  ! 6.78
+C2H5+O2=C2H4+HO2              2.56E+19  -2.77     8270  ! 6.79
+C2H5+HO2=CH3+CH2O+OH          2.40E+13   0.00        0  ! 6.80
+C2H5+HO2=C2H4+H2O2            3.00E+11   0.00        0  ! 6.81
+!  C2H6 Reactions
+CH3+CH3(+M)=C2H6(+M)          9.03E+16  -1.18     2740  ! 6.82
+  H2/2.0/ CO/2.0/ H2O/5.0/ CO2/3.0/
+  LOW/3.18E+41  -7.03  11560/
+  ! Can't make Chemkin blending functions fit the given data
+C2H6=C2H5+H                   2.08E+38  -7.08   445600  ! 6.83
+C2H6+H=C2H5+H2                5.42E+02   3.50    21800  ! 6.84
+C2H6+O=C2H5+OH                3.00E+07   2.00    21400  ! 6.85
+C2H6+OH=C2H5+H2O              5.13E+06   2.06     3570  ! 6.86
+C2H6+O2=C2H5+HO2              4.00E+13   0.00   213000  ! 6.87
+C2H6+HO2=C2H5+H2O2            2.94E+11   0.00    62510  ! 6.88
+C2H6+CH2(S)=C2H5+CH3          1.20E+14   0.00        0  ! 6.89
+C2H6+CH3=C2H5+CH4             5.50E-01   4.00    34730  ! 6.90
+C2H6+C2H3=C2H5+C2H4           6.00E+02   3.30    43930  ! 6.91
+C2H5+C2H5=C2H6+C2H4           1.40E+12   0.00        0  ! 6.92
+! Table 7: Selected reactions of a C3H8 Mechanism
+!  C3H8 Reactions
+C3H8=C2H5+CH3                 7.90E+22  -1.80   371100  ! 7.1
+C3H8+H=N*C3H7+H2              1.33E+06   2.54    28270  ! 7.2
+C3H8+H=I*C3H7+H2              1.30E+06   2.40    18710  ! 7.3
+C3H8+O=N*C3H7+OH              1.93E+05   2.68    15550  ! 7.4
+C3H8+O=I*C3H7+OH              4.76E+04   2.71     8810  ! 7.5
+C3H8+OH=N*C3H7+H2O            1.05E+10   0.97    13190  ! 7.6
+C3H8+OH=I*C3H7+H2O            4.67E+07   1.61     -290  ! 7.7
+C3H8+O2=N*C3H7+HO2            3.98E+13   0.00   213100  ! 7.8
+C3H8+O2=I*C3H7+HO2            3.98E+13   0.00   199100  ! 7.9
+C3H8+HO2=N*C3H7+H2O2          4.75E+04   2.55    69000  ! 7.10
+C3H8+HO2=I*C3H7+H2O2          9.64E+03   2.60    58200  ! 7.11
+C3H8+CH3=N*C3H7+CH4           9.03E-01   3.65    59470  ! 7.12
+C3H8+CH3=I*C3H7+CH4           1.51E+00   3.46    45560  ! 7.13
+!  N*C3H7 Reactions
+N*C3H7=C2H4+CH3               1.26E+13   0.00   252750  ! 7.14
+N*C3H7=C3H6+H                 1.12E+13   0.00   293230  ! 7.15
+N*C3H7+O2=C3H6+HO2            1.17E+19  -1.59   112160  ! 7.16
+N*C3H7+O2=C2H4+CH2O+OH        2.44E+16  -0.95   178580  ! 7.17
+!  I*C3H7 Reactions
+I*C3H7=C2H4+CH3               2.00E+10   0.00   245260  ! 7.18
+I*C3H7=C3H6+H                 4.00E+13   0.00   317590  ! 7.19
+I*C3H7+O2=C3H6+HO2            2.69E+27  -4.60   117560  ! 7.20
+!  C3H6 Reactions
+C3H6=C3H5+H                   2.50E+15   0.00   362680  ! 7.21
+C3H6=C2H3+CH3                 1.10E+21  -1.20   408800  ! 7.22
+C3H6+H=C3H5+H2                1.73E+05   2.50    20700  ! 7.23
+C3H6+H=CH3CHCH+H2             8.07E+05   2.50   102100  ! 7.24
+C3H6+H=CH3CCH2+H2             4.10E+05   2.50    81430  ! 7.25
+C3H6+O=C3H5+OH                1.75E+11   0.70    48910  ! 7.26
+C3H6+O=CH3CHCH+OH             1.20E+11   0.70    74490  ! 7.27
+C3H6+O=CH3CCH2+OH             6.02E+10   0.70    63450  ! 7.28
+C3H6+O=CH2CO+CH3+H            7.80E+07   1.83     3120  ! 7.29
+! C3H6+O=CH3CHCO+2H             3.90E+07   1.83     3120  ! 7.30
+ ! Don't have CH3CHCO thermo data
+C3H6+O=C2H5+HCO               3.49E+07   1.83    -2290  ! 7.31
+   DUP
+C3H6+O=C2H5+HCO              -1.17E+07   1.83     3120
+   DUP
+C3H6+OH=C3H5+H2O              3.12E+06   2.00    -2470  ! 7.32
+C3H6+OH=CH3CHCH+H2O           2.14E+06   2.00    11620  ! 7.33
+C3H6+OH=CH3CCH2+H2O           1.11E+06   2.00     6070  ! 7.34
+C3H6+O2=C3H5+HO2              6.02E+13   0.00   199100  ! 7.35
+C3H6+HO2=C3H5+H2O2            9.64E+03   2.60    58200  ! 7.36
+C3H6+CH3=C3H5+CH4             2.22E+00   3.50    23740  ! 7.37
+C3H6+CH3=CH3CHCH+CH4          1.35E+00   3.50    53760  ! 7.38
+C3H6+CH3=CH3CCH2+CH4          8.42E-01   3.50     4880  ! 7.39
+!  CH3CHCH Reactions
+CH3CHCH=C2H2+CH3              1.59E+12   0.00   156900  ! 7.40
+CH3CHCH+H=C3H4+H2             3.33E+12   0.00        0  ! 7.41
+CH3CHCH+O2=CH3HCO+HCO         4.34E+12   0.00        0  ! 7.42
+CH3CHCH+CH3=C3H4+CH4          1.00E+11   0.00        0  ! 7.43
+!  CH3CCH2 Reactions
+CH3CCH2+H=C3H4P+H2            3.33E+12   0.00        0  ! 7.44
+CH3CCH2+O2=CH2O+CH3CO         4.34E+12   0.00        0  ! 7.45
+CH3CCH2+CH3=C3H4P+CH4         1.00E+11   0.00        0  ! 7.46
+!  C3H5 Reactions
+C3H5=C3H4+H                   1.40E+13   0.00   251000  ! 7.47
+C3H5+H=C3H4+H2                1.80E+13   0.00        0  ! 7.48
+! C3H5+O=C2H3HCO+H              6.02E+13   0.00        0  ! 7.49
+!  Don't have C2H3HCO thermo data
+C3H5+OH=C3H4+H2O              6.02E+12   0.00        0  ! 7.50
+C3H5+O2=C3H4+HO2              1.33E+07   0.00        0  ! 7.51
+! C3H5+HO2=C2H3HCO+OH+H         1.92E+11   0.00        0  ! 7.52
+C3H5+CH3=C3H4+CH4             3.00E+12  -0.32    -1100  ! 7.53
+!  C3H4 Reactions
+C3H4=C3H4P                      1.20E+15   0.00   386600  ! 7.54
+C3H4+M=CH3CC+H+M                1.14E+17   0.00   292900  ! 7.55
+C3H4+H=CH3CC+H2                 3.36E-07   6.00     7080  ! 7.56
+C3H4+H=CH3CCH2                  8.50E+12   0.00     8370  ! 7.57
+C3H4+O=CH2O+C2H2                3.00E-03   4.61   -17750  ! 7.58
+C3H4+O=CO+C2H4                  9.00E-03   4.61   -17750  ! 7.59
+C3H4+OH=CH3CC+H2O               1.45E+13   0.00    17450  ! 7.60
+C3H4+OH=CH2CO+CH3               3.12E+12   0.00    -1660  ! 7.61
+C3H4+O2=CH3CC+HO2               4.00E+13   0.00   257320  ! 7.62
+C3H4+HO2=CH2CO+CH2+OH           4.00E+12   0.00    79500  ! 7.63
+C3H4+CH3=CH3CC+CH4              2.00E+12   0.00    32220  ! 7.64
+!  C3H4P Reactions
+C3H4P+M=CH3CC+H+M               1.00E+17   0.00   292880  ! 7.65
+C3H4P=C2H+CH3                   4.20E+16   0.00   418400  ! 7.66
+C3H4P+H=CH3CC+H2                1.00E+12   0.00     6280  ! 7.67
+C3H4P+H=CH3CCH2                 6.50E+12   0.00     8370  ! 7.68
+C3H4P+H=CH3CHCH                 5.80E+12   0.00    12970  ! 7.69
+C3H4P+O=C2H2+CO+H2              1.50E+13   0.00     8830  ! 7.70
+! C3H4P+O=CH2CO+H2                3.20E+12   0.00     8410  ! 7.71
+!  Typo - does not balance
+C3H4P+O=C2H3+HCO                3.20E+12   0.00     8410  ! 7.72
+C3H4P+O=C2H4+CO                 3.20E+12   0.00     8410  ! 7.73
+C3H4P+O=HCCO+CH3                6.30E+12   0.00     8410  ! 7.74
+C3H4P+O=HCCO+CH2+H              3.20E+11   0.00     8410  ! 7.75
+C3H4P+OH=CH3CC+H2O              1.50E+03   3.00      840  ! 7.76
+C3H4P+OH=CH2CO+CH3              5.00E-04   4.50    -4180  ! 7.77
+C3H4P+O2=CH3CC+HO2              2.50E+12   0.00   213380  ! 7.78
+C3H4P+O2=HCCO+OH+CH2            1.00E+07   1.50   125940  ! 7.79
+C3H4P+HO2=C2H4+CO+OH            3.00E+12   0.00    79500  ! 7.80
+C3H4P+CH3=CH3CC+CH4             2.00E+12   0.00    32220  ! 7.81
+!  C3H4C Reactions
+C3H4C=C3H4                      1.51E+14   0.00   210900  ! 7.82
+C3H4C=C3H4P                     1.20E+15   0.00   182800  ! 7.83
+!  CH3CC Reactions
+CH2+C2H2=CH3CC+H                1.20E+13   0.00    27610  ! 7.84
+CH2(S)+C2H2=CH3CC+H             3.00E+13   0.00        0  ! 7.85
+CH3CC+O=CH2O+C2H                2.00E+13   0.00        0  ! 7.86
+CH3CC+OH=C3H2+H2O               2.00E+13   0.00        0  ! 7.87
+CH3CC+O2=CH2CO+HCO              3.00E+10   0.00    12000  ! 7.88
+CH3CC+CH3=C2H5+C2H              1.00E+13   0.00   156900  ! 7.89
+CH3CC+CH3CC=C2H2+C2H2+C2H2      5.00E+11   0.00        0  ! 7.90
+!  C3H2 Reactions
+CH+C2H2=C3H2+H                  1.00E+14   0.00        0  ! 7.91
+C3H2+O2=HCCO+HCO                1.00E+13   0.00        0  ! 7.92
+! Table 8: NxOy/CO/H2/O2 Mechanism
+!  N and NO Reactions
+NO+M=N+O+M                      9.64E+14   0.00   620910  ! 8.1
+NO+H=N+OH                       1.69E+14   0.00   204180  ! 8.2
+NO+O=N+O2                       1.81E+09   1.00   162130  ! 8.3
+N+HO2=NO+OH                     1.00E+13   0.00     8390  ! 8.4
+NO+N=N2+O                       3.27E+12   0.30        0  ! 8.5
+!  NO2 Reactions
+NO+O(+M)=NO2(+M)                1.30E+15  -0.75        0  ! 8.6
+   LOW/4.72E+24 -2.87 6490/
+   SRI/0.95 0.0 0.0/
+   AR/0.0/
+   ! Not exactly correct representation of given data
+NO+O(+AR)=NO2(+AR)              1.30E+15  -0.75        0
+   LOW/7.56E+19  -1.41  0/
+   SRI/0.95 0.0 0.0/
+   ! Not exactly correct representation of given data
+NO2+H=NO+OH                     1.32E+14   0.00     1510  ! 8.7
+NO2+O=NO+O2                     3.91E+12   0.00    -1000  ! 8.8
+NO2+OH=NO+HO2                   1.81E+13   0.00    27930  ! 8.9
+NO2+CO=NO+CO2                   9.03E+13   0.00   141340  ! 8.10
+NO2+HCO=NO+H+CO2                8.39E+15  -0.75     8060  ! 8.11
+NO2+N=N2+O2                     1.00E+12   0.00        0  ! 8.12
+NO2+N=NO+NO                     4.00E+12   0.00        0  ! 8.13
+NO2+NO2=2NO+O2                  1.63E+12   0.00   109290  ! 8.14
+!  N2O Reactions
+N2O(+M)=N2+O(+M)                7.91E+10   0.00   234390  ! 8.15
+   LOW/9.13E+14  0.00  241420/
+   AR/0.63/ H2O/7.5/
+N2O+H=N2+OH                     2.53E+10   0.00    19040  ! 8.16
+   DUP
+N2O+H=N2+OH                     2.23E+14   0.00    70080  ! 8.16
+   DUP
+N2O+O=N2+O2                     1.00E+14   0.00   117150  ! 8.17
+N2O+O=NO+NO                     1.00E+14   0.00   117150  ! 8.18
+NO2+N=N2O+O                     5.00E+12   0.00        0  ! 8.19
+N2O+OH=N2+HO2                   2.00E+12   0.00   167360  ! 8.20
+N2O+CO=N2+CO2                   5.01E+13   0.00   184100  ! 8.21
+N2O+N=N2+NO                     1.00E+13   0.00    83140  ! 8.22
+N2O+NO=N2+NO2                   1.00E+14   0.00   209200  ! 8.23
+!  HNO Reactions
+NO+H(+M)=HNO(+M)                1.52E+15  -0.41        0  ! 8.24
+   LOW/8.96E+19  -1.32 3080/
+   SRI/0.82 0.0 0.0/
+   AR/0.63/
+HNO+H=NO+H2                     4.46E+11   0.72     2740  ! 8.25
+HNO+O=NO+OH                     1.81E+13   0.00        0  ! 8.26
+HNO+OH=NO+H2O                   1.30E+07   1.88    -4000  ! 8.27
+NO+HCO=HNO+CO                   7.23E+12   0.00        0  ! 8.28
+HNO+HCO=NO+CH2O                 6.02E+11   0.00     8310  ! 8.29
+HNO+N=N2O+H                     5.00E+10   0.50    12550  ! 8.30
+HNO+NO=N2O+OH                   2.00E+12   0.00   108780  ! 8.31
+HNO+HNO=N2O+H2O                 8.51E+08   0.00    12890  ! 8.32
+!  HONO Reactions
+NO+OH(+M)=HONO(+M)              1.99E+12  -0.05    -3020  ! 8.33
+    LOW/5.08E+23  -2.51  -280/
+    SRI/0.62 0.0 0.0/
+    AR/0.63/
+NO2+H2=HONO+H                   3.21E+12   0.00   120540  ! 8.34
+HONO+O=OH+NO2                   1.20E+13   0.00    24940  ! 8.35
+HONO+OH=H2O+NO2                 1.26E+10   1.00      570  ! 8.36
+NO2+HCO=HONO+CO                 1.24E+23  -7.29     9850  ! 8.37
+NO2+CH2O=HONO+HCO               7.83E+02   2.77    57450  ! 8.38
+HNO+NO2=HONO+NO                 6.02E+11   0.00     8310  ! 8.39
+!  NH Reactions
+NH+M=N+H+M                      2.65E+14   0.00   315930  ! 8.40
+N+HO2=NH+O2                     1.00E+13   0.00     8370  ! 8.41
+NH+O2=NO+OH                     7.60E+10   0.00     6400  ! 8.42
+NH+O2=HNO+O                     3.89E+13   0.00    74850  ! 8.43
+N+H2=NH+H                       1.60E+14   0.00   105190  ! 8.44
+NH+O=N+OH                       3.72E+13   0.00        0  ! 8.45
+NH+O=NO+H                       5.50E+13   0.00        0  ! 8.46
+NH+OH=N+H2O                     5.00E+11   0.50     8370  ! 8.47
+NH+OH=HNO+H                     2.00E+13   0.00        0  ! 8.48
+NH+N=N2+H                       3.00E+13   0.00        0  ! 8.49
+NH+NO=N2+OH                     2.16E+13  -0.23        0  ! 8.50
+NH+NO=N2O+H                     2.94E+14  -0.40        0  ! 8.51
+   DUP
+NH+NO=N2O+H                    -2.16E+13  -0.23        0
+   DUP
+HNO+N=NH+NO                     1.00E+13   0.00     8370  ! 8.52
+NH+NO2=HNO+NO                   1.00E+11   0.50    16740  ! 8.53
+NH+NH=N2+H+H                    5.10E+13   0.00        0  ! 8.54
+!  NH2 Reactions
+NH2+M=NH+H+M                    3.98E+23  -2.00   382440  ! 8.55
+NH2+H=NH+H2                     7.20E+05   2.32     6650  ! 8.56
+NH2+O=HNO+H                     6.63E+14  -0.50        0  ! 8.57
+NH2+O=NH+OH                     6.75E+12   0.00        0  ! 8.58
+NH2+OH=NH+H2O                   4.00E+12   2.00     4180  ! 8.59
+NH2+O2=HNO+OH                   1.78E+12   0.00    62340  ! 8.60
+NH2+NO=N2+H2O                   1.30E+16  -1.25        0  ! 8.61
+    DUP
+NH2+NO=N2+H2O                  -2.80E+13  -0.55        0
+    DUP
+NH2+NO=N2O+H2                   5.00E+13   0.00   103090  ! 8.62
+NH2+NO=HNO+NH                   1.00E+13   0.00   167360  ! 8.63
+NH2+NO2=N2O+H2O                 2.84E+18  -2.20        0  ! 8.64
+!  NH3 Reactions
+NH3+M=NH2+H+M                   2.20E+16   0.00   391080  ! 8.65
+NH3+H=NH2+H2                    6.38E+05   2.39    42680  ! 8.66
+NH3+O=NH2+OH                    9.40E+06   1.94    27030  ! 8.67
+NH3+OH=NH2+H2O                  2.04E+06   2.04     2370  ! 8.68
+NH2+HO2=NH3+O2                  3.00E+11   0.00    92050  ! 8.69
+NH2+NH2=NH3+NH                  5.00E+13   0.00    41840  ! 8.70
+!  NNH Reactions
+NNH+M=N2+H+M                    1.00E+14    0.00   12470  ! 8.71
+NNH+H=N2+H2                     1.00E+14    0.00       0  ! 8.72
+NNH+OH=N2+H2O                   5.00E+13    0.00       0  ! 8.73
+NH2+NO=NNH+OH                   2.80E+13   -0.55       0  ! 8.74
+NNH+NO=HNO+N2                   5.00E+13    0.00       0  ! 8.75
+NNH+NH=N2+NH2                   5.00E+13    0.00       0  ! 8.76
+NNH+NH2=N2+NH3                  5.00E+13    0.00       0  ! 8.77
+!  N2H2 Reactions
+N2H2+M=NNH+H+M                  1.00E+16    0.00  207940  ! 8.78
+N2H2+M=NH+NH+M                  3.16E+16    0.00  415890  ! 8.79
+N2H2+H=NNH+H2                   1.00E+13    0.00    4160  ! 8.80
+NH+NH2=N2H2+H                   3.16E+13    0.00    4160  ! 8.81
+N2H2+O=NNH+OH                   1.00E+11    0.50       0  ! 8.82
+N2H2+OH=NNH+H2O                 1.00E+13    0.00    8330  ! 8.83
+NH2+NH2=N2H2+H2                 3.98E+13    0.00   49790  ! 8.84
+N2H2+HO2=NNH+H2O2               1.00E+13    0.00    8330  ! 8.85
+NNH+NNH=N2H2+N2                 1.00E+13    0.00   41590  ! 8.86
+N2H2+NH=NNH+NH2                 1.00E+13    0.00    4160  ! 8.87
+N2H2+NH2=NNH+NH3                1.00E+13    0.00   16610  ! 8.88
+!  N2H3 Reactions
+N2H3+M=N2H2+H+M                 1.00E+16    0.00  207940  ! 8.89
+N2H3+M=NH2+NH+M                 1.00E+16    0.00  174470  ! 8.90
+N2H3+H=NH2+NH2                  1.58E+12    0.00       0  ! 8.91
+N2H3+H=NH+NH3                   1.00E+11    0.00       0  ! 8.92
+N2H3+H=N2H2+H2                  1.00E+12    0.00    8330  ! 8.93
+N2H3+O=N2H2+OH                  3.16E+11    0.50       0  ! 8.94
+N2H3+O=NNH+H2O                  3.16E+11    0.50       0  ! 8.95
+N2H3+OH=N2H2+H2O                1.00E+13    0.00    8330  ! 8.96
+N2H3+HO2=N2H2+H2O2              1.00E+13    0.00    8330  ! 8.97
+NH3+NH2=N2H3+H2                 7.94E+11    0.50   90370  ! 8.98
+N2H2+NH2=NH+N2H3                1.00E+11    0.50  141420  ! 8.99
+N2H3+NH2=N2H2+NH3               1.00E+11    0.50       0  ! 8.100
+N2H2+N2H2=NNH+N2H3              1.00E+13    0.00   41590  ! 8.101
+!  N2H4 Reactions
+N2H4+M=NH2+NH2+M                4.00E+15    0.00  171130  ! 8.102
+N2H4+M=N2H3+H+M                 1.00E+15    0.00  266100  ! 8.103
+N2H4+H=N2H3+H2                  1.29E+13    0.00   10460  ! 8.104
+N2H4+H=NH2+NH3                  4.46E+09    0.00   12970  ! 8.105
+N2H4+O=N2H2+H2O                 6.31E+13    0.00    4980  ! 8.106
+N2H4+O=N2H3+OH                  2.51E+12    0.00    4980  ! 8.107
+N2H4+OH=N2H3+H2O                3.98E+13    0.00       0  ! 8.108
+N2H4+HO2=N2H3+H2O2              3.98E+13    0.00    8330  ! 8.109
+N2H4+NH=NH2+N2H3                1.00E+12    0.00    8330  ! 8.110
+N2H4+NH2=N2H3+NH3               3.98E+11    0.50    8330  ! 8.111
+N2H3+N2H2=N2H4+NNH              1.00E+13    0.00   41590  ! 8.112
+N2H4+N2H2=N2H3+N2H3             2.50E+10    0.50  124680  ! 8.113
+!  NO3 Reactions
+NO2+O(+M)=NO3(+M)               1.33E+13    0.00       0  ! 8.114
+   LOW/1.49E+28  -4.08  10320/
+   SRI/0.79 0.0 0.0/
+   ! Not an exactly correct representation of the blending function
+   AR/0.63/
+NO2+NO2=NO3+NO                  9.64E+09    0.73   87530  ! 8.115
+NO3+H=NO2+OH                    6.00E+13    0.00       0  ! 8.116
+NO3+O=NO2+O2                    1.00E+13    0.00       0  ! 8.117
+NO3+OH=NO2+HO2                  1.40E+13    0.00       0  ! 8.118
+NO3+HO2=NO2+O2+OH               1.50E+12    0.00       0  ! 8.119
+NO3+NO2=NO+NO2+O2               5.00E+10    0.00   12300  ! 8.120
+!  HNO3 Reactions
+NO2+OH(+M)=HNO3(+M)             2.41E+13    0.00       0  ! 8.121
+   LOW/6.42E+32  -5.49  9830/
+   SRI/0.725 0.0 0.0/
+   ! Not an exactly correct representation of the blending function
+   AR/0.63/
+NO+HO2+M=HNO3+M                 2.23E+12   -3.50    9200  ! 8.122
+! HNO3+OH=NO2+HO2                 1.03E+10    0.00   -5190  ! 8.123
+! Typo - equation does not balance
+NO3+HO2=HNO3+O2                 5.60E+11    0.00       0  ! 8.124
+! Table 9: HCl/NxOy/CO/H2/O2 Mechanism
+!  HCl and Cl Reactions
+CL+H+M=HCL+M                    7.20E+21   -2.00       0  ! 9.1
+CL+HO2=HCL+O2                   1.08E+13    0.00   -1380  ! 9.2
+HCL+H=CL+H2                     1.69E+13    0.30   17320  ! 9.3
+HCL+O=CL+OH                     3.37E+03    2.87   14670  ! 9.4
+HCL+OH=CL+H2O                   2.71E+07    1.65    -930  ! 9.5
+CL+H2O2=HCL+HO2                 6.62E+12    0.00    8160  ! 9.6
+CL+HCO=HCL+CO                   1.00E+14    0.00       0  ! 9.7
+CL+HNO=HCL+NO                   9.00E+13    0.00    4160  ! 9.8
+CL+HONO=HCL+NO2                 5.00E+13    0.00       0  ! 9.9
+!  CL2 Reactions
+CL+CL+M=CL2+M                   4.68E+14    0.00   -7530  ! 9.10
+CL2+H=CL+HCL                    8.59E+13    0.00    4900  ! 9.11
+!  CLO Reactions
+CLO+O=CL+O2                     5.70E+13    0.00    1520  ! 9.12
+CL+HO2=CLO+OH                   2.42E+13    0.00    9620  ! 9.13
+CLO+CO=CL+CO2                   6.03E+11    0.00   30960  ! 9.14
+CL2+O=CLO+CL                    2.52E+12    0.00   11380  ! 9.15
+CLO+NO=CL+NO2                   3.85E+12    0.00     590  ! 9.16
+!  HOCL Reactions
+HOCL=CL+OH                      1.76E+20   -3.01  237320  ! 9.17
+HOCL=CLO+H                      8.12E+14   -2.09  392000  ! 9.18
+HOCL=HCL+O                      9.55E+13    0.00   31880  ! 9.19
+!  Typo - changed OH to O so reaction balances
+CLO+H2=HOCL+H                   6.03E+11    0.10   59000  ! 9.20
+HOCL+O=CLO+OH                   6.03E+12    0.00   18280  ! 9.21
+HOCL+OH=CLO+H2O                 1.81E+12    0.00    4140  ! 9.22
+HCO+CLO=HOCL+CO                 3.16E+13    0.00       0  ! 9.23
+HOCL+CL=CL2+OH                  1.81E+12    0.00    1090  ! 9.24
+HOCL+CL=CLO+HCL                 7.62E+12    0.00     750  ! 9.25
+!  CLCO Reactions
+CLCO+M=CL+CO+M                  1.30E+14    0.00   33470  ! 9.26
+CLCO+O2=CLO+CO2                 7.94E+10    0.00   13810  ! 9.27
+CLCO+H=HCL+CO                   1.00E+14    0.00       0  ! 9.28
+CLCO+O=CLO+CO                   1.00E+14    0.00       0  ! 9.29
+CLCO+O=CL+CO2                   1.00E+13    0.00       0  ! 9.30
+CLCO+OH=HOCL+CO                 3.30E+12    0.00       0  ! 9.31
+CLCO+CL=CL2+CO                  4.00E+14    0.00    3350  ! 9.32
+!  NOCL Reactions - no NOCL thermo data
+NOCL+M=CL+NO+M                  2.51E+15    0.00  133470  ! 9.33  
+   H2/1.6/ CO2/3.5/ NO/1.38/
+NOCL+H=HCL+NO                   4.60E+13    0.00    3730  ! 9.34
+NOCL+O=CLO+NO                   5.00E+12    0.00   12550  ! 9.35
+NOCL+CL=CL2+NO                  2.41E+13    0.00       0  ! 9.36
+! Table 10: O3/NxOy/CO/H2/O2 Mechanism
+O+O2+M=O3+M                     1.78E+21   -2.80       0  ! 10.1
+O+O2=O3                         1.69E+12    0.00       0
+O3+H=O2+OH                      8.43E+13    0.00    3910  ! 10.2
+O3+O=O2+O2                      4.81E+12    0.00   17130  ! 10.3
+O3+OH=O2+HO2                    1.15E+12    0.00    8310  ! 10.4
+O3+H2O=O2+H2O2                  6.20E+01    0.00       0  ! 10.5
+O3+HO2=2O2+OH                   8.43E+09    0.00    4990  ! 10.6
+O3+CO=O2+CO2                    6.02E+02    0.00       0  ! 10.7
+O3+HCO=O2+H+CO2                 5.00E+11    0.00       0  ! 10.8
+  ! 10.8 valid at 298 K
+O3+N=O2+NO                      6.00E+07    0.00       0  ! 10.9
+  ! 10.9 valid at 298 K
+O3+NO=O2+NO2                    1.08E+12    0.00   11390  ! 10.10
+O3+NO2=O2+NO3                   7.22E+10    0.00   20370  ! 10.11
+! Table 11: SOx/NxOy/CO/H2/O2 Mechanism
+!  S and SO Reactions
+SO+M=S+O+M                      4.00E+14    0.00  447690  ! 11.1
+S+OH=SO+H                       4.00E+13    0.00       0  ! 11.2
+S+O2=SO+O                       2.00E+06    1.93   -5860  ! 11.3
+!  SO2 Reactions
+SO+O+M=SO2+M                    1.10E+22   -1.84       0  ! 11.4
+SO+OH=SO2+H                     5.20E+13    0.00       0  ! 11.5
+SO+O2=SO2+O                     6.20E+03    2.42   12760  ! 11.6
+SO2+CO=SO+CO2                   2.70E+12    0.00  202090  ! 11.7
+SO+NO2=SO2+NO                   8.40E+12    0.00       0  ! 11.8
+SO+SO=SO2+S                     2.00E+12    0.00   16740  ! 11.9
+!  SO3 Reactions
+SO2+O+M=SO3+M                   4.00E+28   -4.00   21970  ! 11.10
+SO2+OH=SO3+H                    4.90E+02    2.69   99580  ! 11.11
+SO3+O=SO2+O2                    1.30E+12    0.00   25520  ! 11.12
+SO2+NO2=SO3+NO                  6.30E+12    0.00  112970  ! 11.13
+SO3+SO=SO2+SO2                  1.00E+12    0.00   16740  ! 11.14
+!  SH Reactions
+SH+O2=SO+OH                     1.00E+12    0.00   41840  ! 11.15
+S+H2=SH+H                       6.00E+14    0.00  100420  ! 11.16
+SH+O=SO+H                       1.00E+14    0.00       0  ! 11.17
+SH+OH=S+H2O                     1.00E+13    0.00       0  ! 11.18
+!  H2S Reactions
+H2S+M=S+H2+M                    2.00E+14    0.00  276140  ! 11.19
+H2S+H=SH+H2                     1.20E+07    2.10    2930  ! 11.20
+H2S+O=SH+OH                     6.40E+07    1.78   11880  ! 11.21
+H2S+OH=SH+H2O                   2.70E+12    0.00       0  ! 11.22
+H2S+S=SH+SH                     4.00E+14    0.00   63180  ! 11.23
+!  HSO Reactions - no thermo data
+! SO+H+M=HSO+M                    5.00E+15    0.00       0  ! 11.24
+! HSO+O2=SO2+OH                   1.00E+12    0.00   41840  ! 11.25
+! HSO+H=SH+OH                     4.90E+19   -1.86    6530  ! 11.26
+! HSO+H=S+H2O                     1.60E+09    1.37   -1420  ! 11.27
+! HSO+H=H2S+O                     1.10E+06    1.03   43510  ! 11.28
+! HSO+H=SO+H2                     1.00E+12    0.00       0  ! 11.29
+! HSO+O=SO+OH                     1.40E+13    0.15    1260  ! 11.30
+! HSO+O=SO2+H                     4.50E+14   -0.40       0  ! 11.31
+! HSO+OH=SO+H2O                   1.70E+09    1.03    1670  ! 11.32
+! SH+HO2=HSO+OH                   1.00E+12    0.00       0  ! 11.33
+!  HOS Reactions - no thermo data
+! HSO+O=HOS+O                     4.80E+08    1.02   22340  ! 11.34
+!  HSO2 Reactions - no thermo data
+! HSO2+M=SO2+H+M                  1.20E+28   -4.41   79080  ! 11.35
+! HSO+O+M=HSO2+M                  1.10E+19   -1.73    -210  ! 11.36
+!  HOSO Reactions
+! SO+OH+M=HOSO+M                  8.00E+21   -2.16    3470  ! 11.37
+! HSO+O+M=HOSO+M                  6.90E+19   -1.61    6650  ! 11.38
+! HOSO+M=HOS+O+M                  2.50E+30   -4.80  498000  ! 11.39
+! HOSO+M=SO2+H+M                  5.90E+34   -5.67  212970  ! 11.40
+! HSO2+M=HOSO+M                   1.10E+21   -1.99  125100  ! 11.41
+! HOSO+O2=SO2+HO2                 1.00E+12    0.00    4180  ! 11.42
+! HOSO+H=SO+H2O                   6.30E-10    6.29   -7950  ! 11.43
+! HSO+OH=HOSO+H                   5.30E+07    1.57   15690  ! 11.44
+! SO2+OH=HOSO+O                   3.90E+08    1.89  317980  ! 11.45
+! SO3+H=HOSO+O                    2.50E+05    2.92  210460  ! 11.46
+! HOSO+OH=SO2+H2O                 1.00E+12    0.00       0  ! 11.47
+! HSO+NO2=HOSO+NO                 5.80E+12    0.00       0  ! 11.48
+!  H2SO Reactions
+! HSO+H=H2SO                      1.80E+17   -2.47     210  ! 11.49
+! H2SO=H2S+O                      4.90E+28   -6.66  300000  ! 11.50
+!  HSOH Reactions
+! HSO+H=HSOH                      2.50E+20   -3.14    3850  ! 11.51
+! HSOH=SH+OH                      2.80E+39   -8.75  314640  ! 11.52
+! HSOH=S+H2O                      5.80E+29   -5.60  228030  ! 11.53
+! HSOH=H2S+O                      9.80E+16   -3.40  361920  ! 11.54
+!  HOSHO Reactions
+! HSO+OH=HOSHO                    5.20E+28   -5.44   13260  ! 11.55
+! HOSHO=HOSO+H                    6.40E+30   -5.89  308780  ! 11.56
+! HOSHO+H=HOSO+H2                 1.00E+12    0.00       0  ! 11.57
+! HOSHO+O=HOSO+OH                 5.00E+12    0.00       0  ! 11.58
+! HOSHO+OH=HOSO+H2O               1.00E+12    0.00       0  ! 11.59
+!  HOSO2 Reactions
+! SO2+OH=HOSO2                    1.00E+25   -4.34   12760  ! 11.60
+! HOSO2=HOSO+O                    5.40E+18   -2.34  444760  ! 11.61
+! HOSO2=SO3+H                     1.40E+18   -2.91  229700  ! 11.62
+! HOSO2+O2=SO3+HO2                7.80E+11    0.00    2740  ! 11.63
+! HOSO2+H=SO2+H2O                 1.00E+12    0.00       0  ! 11.64
+! HOSO2+O=SO3+OH                  5.00E+12    0.00       0  ! 11.65
+! HOSO2+OH=SO3+H2O                1.00E+12    0.00       0  ! 11.66
+END 

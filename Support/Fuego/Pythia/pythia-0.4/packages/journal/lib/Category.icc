@@ -1,0 +1,27 @@
+// -*- C++ -*-
+//
+//--------------------------------------------------------------------------------
+//
+//                              Michael A.G. Aivazis
+//                       California Institute of Technology
+//                       (C) 1998-2003  All Rights Reserved
+//
+// <LicenseText>
+//
+//--------------------------------------------------------------------------------
+//
+
+#if !defined(journal_Category_h)
+#error This header file contains implementation details of the class Category
+#else
+
+// inlines
+// interface
+journal::Category::Category() {}
+
+#endif
+
+// version
+// $Id$
+
+// End of file

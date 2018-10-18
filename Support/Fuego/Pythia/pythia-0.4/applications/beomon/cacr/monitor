@@ -1,0 +1,10 @@
+#!/bin/sh
+
+cd /usr/local/nodemon
+
+while [ 1 ]; do
+	./nodeprobe `cat /var/local/nodes` >nodestat.tmp
+	mv -f nodestat nodestat.old
+	mv -f nodestat.tmp nodestat
+	sleep 10
+done

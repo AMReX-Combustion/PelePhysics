@@ -1,0 +1,8 @@
+Compile nodemon and mond.
+Put a copy of mond on each node you want to monitor and start it
+automatically during boot.
+
+On the front-end, Copy nodemon, monitor and xnodemon to a directory
+like /usr/local/nodemon, run monitor from this directory.  Make a link
+to the xnodemon script from /usr/local/bin.  monitor assumes that all
+nodes you want to monitor are listed in /var/run/nodes.

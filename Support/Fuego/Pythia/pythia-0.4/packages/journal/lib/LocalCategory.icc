@@ -1,0 +1,30 @@
+// -*- C++ -*-
+//
+//--------------------------------------------------------------------------------
+//
+//                              Michael A.G. Aivazis
+//                       California Institute of Technology
+//                       (C) 1998-2003  All Rights Reserved
+//
+// <LicenseText>
+//
+//--------------------------------------------------------------------------------
+//
+
+#if !defined(journal_LocalCategory_h)
+#error This header file contains implementation details of the class LocalCategory
+#else
+
+// inlines
+// meta-methods
+journal::LocalCategory::LocalCategory(bool state) :
+    Category(),
+    _state(state)
+{}
+
+#endif
+
+// version
+// $Id$
+
+// End of file

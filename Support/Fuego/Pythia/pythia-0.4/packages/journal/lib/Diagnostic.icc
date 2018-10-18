@@ -1,0 +1,59 @@
+// -*- C++ -*-
+//
+//--------------------------------------------------------------------------------
+//
+//                              Michael A.G. Aivazis
+//                       California Institute of Technology
+//                       (C) 1998-2003  All Rights Reserved
+//
+// <LicenseText>
+//
+//--------------------------------------------------------------------------------
+//
+
+#if !defined(journal_Diagnostic_h)
+#error This header file contains implementation details of the class Diagnostic
+#else
+
+// inlines
+// interface
+void journal::Diagnostic::activate() {
+    _category.activate();
+    return;
+}
+
+void journal::Diagnostic::deactivate() {
+    _category.deactivate();
+    return;
+}
+
+void journal::Diagnostic::state(bool flag) {
+    _category.state(flag);
+    return;
+}
+
+bool journal::Diagnostic::state() const {
+    return _category.state();
+}
+
+namespace journal {
+
+template <typename datum_t>
+Diagnostic & Diagnostic::inject(datum_t datum) {
+    _buffer << datum;
+    return *this;
+}
+
+template <typename datum_t>
+Diagnostic & operator<< (Diagnostic & diagnostic, datum_t datum) {
+    return diagnostic.inject(datum);
+}
+
+}
+
+#endif
+
+// version
+// $Id$
+
+// End of file

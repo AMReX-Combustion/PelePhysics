@@ -1,0 +1,67 @@
+// -*- C++ -*-
+//
+//--------------------------------------------------------------------------------
+//
+//                              Michael A.G. Aivazis
+//                       California Institute of Technology
+//                       (C) 1998-2003  All Rights Reserved
+//
+// <LicenseText>
+//
+//--------------------------------------------------------------------------------
+//
+
+#if !defined(journal_manip_decls_h)
+#error This header file contains manipulator implementation details 
+#else
+
+journal::Diagnostic & 
+journal::operator<< (journal::Diagnostic & s, journal::Diagnostic & (m)(journal::Diagnostic &))
+{
+    return (*m)(s);
+}
+
+template <typename arg1_t>
+journal::manip_1<arg1_t>::manip_1(factory_t f, arg1_t arg1) :
+    _f(f), _arg1(arg1)
+{}
+
+template <typename arg1_t>
+journal::Diagnostic & journal::operator<< (
+    journal::Diagnostic & s, journal::manip_1<arg1_t> m)
+{
+    return (*m._f)(s, m._arg1);
+}
+
+template <typename arg1_t, typename arg2_t>
+journal::manip_2<arg1_t, arg2_t>::manip_2(
+    factory_t f, arg1_t arg1, arg2_t arg2) :
+    _f(f), _arg1(arg1), _arg2(arg2)
+{}
+
+template <typename arg1_t, typename arg2_t>
+journal::Diagnostic & 
+journal::operator<< (
+    journal::Diagnostic & s, journal::manip_2<arg1_t, arg2_t> m) 
+{
+    return (*m._f)(s, m._arg1, m._arg2);
+}
+
+template <typename arg1_t, typename arg2_t, typename arg3_t>
+journal::manip_3<arg1_t, arg2_t, arg3_t>::manip_3(
+    factory_t f, arg1_t arg1, arg2_t arg2, arg3_t arg3) :
+    _f(f), _arg1(arg1), _arg2(arg2), _arg3(arg3)
+{}
+
+template <typename arg1_t, typename arg2_t, typename arg3_t>
+journal::Diagnostic & journal::operator<< 
+(journal::Diagnostic & s, journal::manip_3<arg1_t, arg2_t, arg3_t> m) {
+    return (*m._f)(s, m._arg1, m._arg2, m._arg3);
+}
+
+#endif
+
+// version
+// $Id$
+
+// End of file

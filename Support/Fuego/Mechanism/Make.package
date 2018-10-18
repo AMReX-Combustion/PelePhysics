@@ -1,0 +1,10 @@
+ifeq (${Chemistry_Model}, NULL)
+
+  f90EXE_sources += chemistry_module_null.f90
+
+else
+
+  f90EXE_sources += chemistry_module.f90
+  CEXE_headers   += ReactionData.H
+
+endif

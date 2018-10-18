@@ -1,0 +1,130 @@
+! All data obtained from M.T. Allen et al., "The Decomposition of Nitrous
+! Oxide at 1.5<=P<=10.5 Atm and 1103<=T<=1173 K", Int. J. Chem. Kinet.,
+! and Vol. 27, p883, except where noted.
+! Compiled by M. Kaneshige, 1/21/97
+
+ELEMENTS H   O   N  AR END
+
+SPECIES  H2 H O2 O OH HO2 H2O2 H2O N N2 NO AR HONO HNO NO2 NH N2O NO3 
+ HNO3 END
+
+REACTIONS
+! H2-O2 Chain Reactions
+   H+O2=O+OH                      1.910E+14  0.00  16440   ! 1
+   O+H2=H+OH                      5.060E+04  2.67   6290   ! 2
+   OH+H2=H2O+H                    2.160E+08  1.51   3430   ! 3
+   H2O+O=OH+OH                    2.970E+06  2.02  13400   ! 4
+! H2-O2 Dissociation / Recombination Reactions
+   H2+M=H+H+M                     4.570E+19 -1.40 104400   ! 5
+       H2O/12.0/ H2/2.5/ AR/0.0/
+   H2+AR=H+H+AR                   5.840E+18 -1.10 104400
+   O+O+M=O2+M                     6.170E+15 -0.50      0   ! 6
+       H2O/12.0/ H2/2.5/ AR/0.0/
+   O+O+AR=O2+AR                   1.890E+13  0.00  -1790
+   H+O+M=OH+M                     4.720E+18 -1.00      0   ! 7
+       H2O/12.0/ H2/2.5/ AR/0.75/
+   OH+H+M=H2O+M                   2.210E+22 -2.00      0   ! 8
+       H2O/12.0/ H2/2.5/ AR/0.0/
+   OH+H+AR=H2O+AR                 8.410E+21 -2.00      0
+! Formation and Consumption of HO2
+   H+O2(+M)=HO2(+M)               4.520E+13  0.00      0   ! 9
+      LOW /6.70E+19 -1.42 0.0/
+      SRI /1.0 0.0 0.0/
+      H2O/12.0/ H2/2.5/ AR/0.0/
+   H+O2(+AR)=HO2(+AR)             4.520E+13  0.00      0
+      LOW /1.49E+15  0.00 -1000.0/
+      SRI /1.0 0.0 0.0/
+     ! To adapt the Tsang and Herron form used by Allen et al. to
+     ! the Chemkin SRI form, a=Fc, b=0, and c=0.  d and e are not used.
+   HO2+H=H2+O2                    6.620E+13  0.00    2130  ! 10
+   HO2+H=OH+OH                    1.690E+14  0.0      874  ! 11
+   HO2+O=O2+OH                    1.750E+13  0.0     -397  ! 12
+   HO2+OH=H2O+O2                  1.900E+16 -1.0        0  ! 13
+! Formation and Consumption of H2O2
+   HO2+HO2=H2O2+O2                4.200E+14  0.0    11980  ! 14
+       DUPLICATE
+   HO2+HO2=H2O2+O2                1.300E+11  0.0    -1629
+       DUPLICATE
+   H2O2(+M)=OH+OH(+M)             2.950E+14  0.0    48400  ! 15
+      LOW /1.20E+17 0.0  45500/
+      SRI /0.5 0.0 0.0/
+      H2O/12.0/ H2/2.5/ AR /0.0/
+   H2O2(+AR)=OH+OH(+AR)           2.950E+14  0.0    48400  ! 15
+      LOW /1.90E+16 0.0  43000/
+      SRI /0.5 0.0 0.0/
+   H2O2+H=H2O+OH                  1.000E+13  0.0     3590  ! 16
+   H2O2+H=HO2+H2                  4.820E+13  0.0     7950  ! 17
+   H2O2+O=OH+HO2                  9.640E+06  2.0     3970  ! 18
+   H2O2+OH=H2O+HO2                1.000E+12  0.0        0  ! 19
+      DUPLICATE
+   H2O2+OH=H2O+HO2                5.800E+14  0.0     9560
+      DUPLICATE
+! Formation and Consumption of NO
+   NO+H2=HNO+H                    1.390E+13  0.0    56530  ! 20
+   NO+O(+M)=NO2(+M)               1.300E+15 -0.75       0  ! 21
+      LOW /4.720E+24 -2.87 1551/
+      SRI /0.95 0.0 0.0/
+      AR /0.0/
+    ! Had to drop Temperature dependence of Fc.  Maybe could use Taylor
+    ! Series Expansion to match Allen and Chemkin SRI?
+   NO+O(+AR)=NO2(+AR)             1.300E+15 -0.75       0
+      LOW /7.560E+19 -1.41 0/
+      SRI /0.95 0.0 0.0/
+   NO+H(+M)=HNO(+M)               1.520E+15 -0.41       0  ! 22
+      LOW /8.96E+19 -1.32 735.2/
+      SRI /0.82 0.0 0.0/
+      AR /0.75/
+   NO+OH(+M)=HONO(+M)             1.990E+12 -0.05    -721  ! 23
+      LOW /5.08E+23 -2.51 -67.6/
+      SRI /0.62 0.0 0.0/
+      AR /0.75/
+! NO2 Reactions
+   NO2+H2=HONO+H                  3.210E+12  0.0    28810  ! 24
+   NO2+O=O2+NO                    3.910E+12  0.0     -238  ! 25
+   NO2+O(+M)=NO3(+M)              1.330E+13  0.0        0  ! 26
+      LOW /1.49E+28 -4.08 2467/
+      SRI /0.79 0.0 0.0/
+      AR /0.75/
+   NO2+H=NO+OH                    1.320E+14  0.0      362  ! 27
+   NO2+OH(+M)=HNO3(+M)            2.410E+13  0.0        0  ! 28
+      LOW /6.42E+32 -5.49 2350/
+      SRI /0.725 0.0 0.0/
+      AR /0.75/
+   NO2+OH=HO2+NO                  1.810E+13  0.0     6676  ! 29
+   NO2+NO2=NO3+NO                 9.640E+09  0.73   20920  ! 30
+   NO2+NO2=2NO+O2                 1.630E+12  0.0    26120  ! 31
+! NH Reactions
+   NH+O2=HNO+O                    3.890E+13  0.0    17890  ! 32
+   NH+O2=NO+OH                    7.600E+10  0.0     1530  ! 33
+   NH+O=NO+H                      5.500E+13  0.0        0  ! 34
+   NH+OH=HNO+H                    2.000E+13  0.0        0  ! 35
+   NH+NO=N2O+H                    2.940E+14 -0.4        0  ! 36
+       DUPLICATE
+   NH+NO=N2O+H                   -2.160E+13 -0.23       0
+       DUPLICATE
+   NH+NO=N2+OH                    2.160E+13 -0.23       0  ! 37
+   NH+NO2=NO+HNO                  1.000E+11  0.5     4000  ! 38
+   NH+NH=N2+H+H                   5.100E+13  0.0        0  ! 39
+! HNO Reactions
+   HNO+O=OH+NO                    1.810E+13  0.0        0  ! 40
+   HNO+OH=H2O+NO                  4.820E+13  0.0    993.5  ! 41
+   HNO+NO=N2O+OH                  2.000E+12  0.0    26000  ! 42
+   HNO+NO2=HONO+NO                6.020E+11  0.0     1987  ! 43
+   HNO+HNO=H2O+N2O                8.510E+08  0.0     3080  ! 44
+! HONO Reactions
+   HONO+O=OH+NO2                  1.200E+13  0.0     5961  ! 45
+   HONO+OH=H2O+NO2                1.260E+10  1.0    135.1  ! 46
+! N2O Reactions
+   N2O(+M)=N2+O(+M)               7.910E+10  0.0    56020  ! 47
+      LOW /9.13E+14 0.0 57690/
+      SRI /1.0 0.0 0.0/
+      AR /0.63/ H2O /7.5/
+   N2O+O=O2+N2                    1.000E+14  0.0    28000  ! 48
+   N2O+O=2NO                      1.000E+14  0.0    28000  ! 49
+   N2O+H=N2+OH                    2.530E+10  0.0     4550  ! 50
+      DUPLICATE
+   N2O+H=N2+OH                    2.230E+14  0.0    16750
+      DUPLICATE
+!  N2O+OH=HO2+N2      k<5.660E+08
+   N2O+NO=NO2+N2                  1.000E+14  0.0    50000  ! 52
+END

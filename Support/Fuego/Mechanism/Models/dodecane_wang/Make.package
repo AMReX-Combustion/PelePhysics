@@ -1,0 +1,4 @@
+cEXE_sources+=dodecane_wang.c
+
+VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
+
