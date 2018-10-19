@@ -54,11 +54,11 @@ following environment variables are set
    *  REGTEST_RUNDIR: Location where reg test script will be run from
 
 The following example commands will clone the required repositories
-    ...
-    git clone https://github.com/AMReX-Codes/amrex.git ${REGTEST_SCRATCH}/amrex
-    git clone https://github.com/AMReX-Codes/regression_testing.git ${REGTEST_SCRATCH}/regression_testing
-    git clone git@code.ornl.gov:Pele/PelePhysics.git ${REGTEST_SCRATCH}/PelePhysics
-    ...
+    ```
+    git clone git@github.com:AMReX-Codes/amrex.git ${REGTEST_SCRATCH}/amrex
+    git clone git@github.com:AMReX-Codes/regression_testing ${REGTEST_SCRATCH}/regression_testing
+    git clone git@github.com:AMReX-Combustion/PelePhysics.git ${REGTEST_SCRATCH}/PelePhysics
+    ```
 
 4.  Move to the location where the tests will be built/run, preferably the 
 root folder of the PeleRegressionTesting repo, and create the test area expected 
@@ -68,7 +68,7 @@ by reg test scripts:
     cd ${REGTEST_RUNDIR}; mkdir -p TestData/PelePhysics
     ```
 
-3.  Edit the config file, ${REGTEST_SCRATCH}/PelePhysics/Testing/Regression/PelePhysics-tests.ini.
+5.  Edit the config file, ${REGTEST_SCRATCH}/PelePhysics/Testing/Regression/PelePhysics-tests.ini.
 Set the AMReX and PelePhysics scratch clone locations within the scrips, as well as the 
 desired branch/SHA (typically leave this as "development" for amrex and PelePhysics).
 Also set
@@ -78,13 +78,14 @@ Also set
 NOTE: The config file cannot actually deal with environment variables...the config file
 actually used will need to have absolute paths spelled out, or the scripts will fail.
 
-4. (optional) Create symbolic links 
-    ...
+6. (optional) Create symbolic links 
+
+    ```
     ln -s ${REGTEST_SCRATCH}/regression_testing/regtest.py .
     ln -s ${REGTEST_SCRATCH}/PelePhysics/Testing/Regression/PelePhysics-tests.ini .
-    ...
+    ```
 
-4.  Generate the initial benchmark solutions for all the tests listed
+7.  Generate the initial benchmark solutions for all the tests listed
 in the .ini configuration file.  Rerunning this at any time will
 overwrite the previous versions of the benchmarks
 
@@ -92,7 +93,7 @@ overwrite the previous versions of the benchmarks
     ./regtest.py --make_benchmarks "<a useful comment>" PelePhysics-tests.ini
     ```
 
-5. Upon some trigger event, re-run the tests and format the results in
+8. Upon some trigger event, re-run the tests and format the results in
 html.  In this case, the results will appear as
 TestData/PelePhysics/web/index.html
 
