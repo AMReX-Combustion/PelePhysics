@@ -94,6 +94,7 @@ contains
     if (nspec.lt.3) then
        stop 'This step assumes that there are at least 3 species'
     endif
+    eos_state%molefrac = 0.d0
     eos_state%molefrac(1) = 0.2d0
     eos_state%molefrac(2) = 0.1d0
     eos_state%molefrac(nspec) = 1.d0 - eos_state%molefrac(1) - eos_state%molefrac(2)
