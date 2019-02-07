@@ -1,0 +1,6 @@
+CEXE_sources += SprayParticles.cpp 
+CEXE_headers += SprayParticles.H 
+f90EXE_sources += spray.f90
+f90EXE_sources += particle_mod.f90
+f90EXE_sources += drag_$(DIM)d.f90
+f90EXE_sources += control_parameters.f90 fuel_properties.f90
