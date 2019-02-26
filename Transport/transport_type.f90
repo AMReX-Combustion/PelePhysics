@@ -1,6 +1,6 @@
 module transport_type_module
 
-  use bl_types, only: dp_t
+  use amrex_fort_module, only : amrex_real
   use network, only: nspec
   use eos_module
 
@@ -17,11 +17,11 @@ module transport_type_module
   type :: trv_t
      integer                  :: npts
      type(eos_t), allocatable :: eos_state(:)
-     real(dp_t),  allocatable :: mu(:)
-     real(dp_t),  allocatable :: xi(:)
-     real(dp_t),  allocatable :: lam(:)
-     real(dp_t),  allocatable :: Ddiag(:,:)
-     real(dp_t),  allocatable :: Dmat(:,:,:)
+     real(amrex_real),  allocatable :: mu(:)
+     real(amrex_real),  allocatable :: xi(:)
+     real(amrex_real),  allocatable :: lam(:)
+     real(amrex_real),  allocatable :: Ddiag(:,:)
+     real(amrex_real),  allocatable :: Dmat(:,:,:)
   end type trv_t
   
   interface build
