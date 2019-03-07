@@ -117,10 +117,6 @@ EXTERN_CORE += $(PELEC_HOME)/constants
 INCLUDE_LOCATIONS += $(PELEC_HOME)/constants
 VPATH_LOCATIONS   += $(PELEC_HOME)/constants
 
-include $(AMREX_HOME)/Src/F_BaseLib/FParallelMG.mak
-INCLUDE_LOCATIONS += $(AMREX_HOME)/Src/F_BaseLib
-VPATH_LOCATIONS   += $(AMREX_HOME)/Src/F_BaseLib
-
 # runtime parameter support for extern/ routines
 f90EXE_sources += extern.f90
 
