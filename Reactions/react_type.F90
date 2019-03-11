@@ -12,11 +12,14 @@ module react_type_module
 
   type :: react_t
      real(amrex_real) :: rhoedot_ext
+     real(amrex_real) :: rhohdot_ext
      real(amrex_real), allocatable :: rhoY(:)
      real(amrex_real), allocatable :: rhoYdot_ext(:)
      real(amrex_real) :: rho
      real(amrex_real) :: T
      real(amrex_real) :: e
+     real(amrex_real) :: h
+     real(amrex_real) :: p
      integer :: i, j, k
   end type react_t
   
