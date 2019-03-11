@@ -18,7 +18,11 @@ module eos_module
   integer :: iwrk
   real(amrex_real) :: rwrk
 
-  public :: eos_init, eos_xty, eos_ytx, eos_ytx2, eos_ytx_vec, eos_cpi, eos_hi, eos_hi_vec, eos_cv, eos_cp, eos_p_wb, eos_wb, eos_get_activity, eos_rt, eos_tp, eos_rp, eos_re, eos_ps, eos_ph, eos_th, eos_rh, eos_get_transport, eos_h, eos_deriv, eos_mui
+  public :: eos_init, eos_xty, eos_ytx, eos_ytx2, eos_ytx_vec, &
+          eos_cpi, eos_hi, eos_hi_vec, eos_cv, eos_cp, eos_p_wb, eos_wb,&
+          eos_get_activity, eos_rt, eos_tp, eos_rp, eos_re, eos_ps,&
+          eos_ph, eos_th, eos_rh, eos_get_transport, eos_h, eos_deriv, &
+          eos_mui, eos_get_activity_h
   private :: nspecies, Ru, inv_mwt
 
   interface
@@ -131,6 +135,41 @@ contains
     state % dPdr = ZERO
 
   end subroutine eos_bottom
+
+  subroutine eos_bottom_h(state)
+
+    use amrex_constants_module
+    use amrex_error_module
+    implicit none
+
+    type (eos_t), intent(inout) :: state
+    real(amrex_real) :: Cvx
+
+    call ckcvms(state % T, iwrk, rwrk, state % cvi)  ! erg/gi.K
+    call ckcpms(state % T, iwrk, rwrk, state % cpi)  ! erg/gi.K
+    call ckums (state % T, iwrk, rwrk, state % ei)    ! erg/gi
+
+    state % cv = sum(state % massfrac(:) * state % cvi(:)) ! erg/g.K
+    state % cp = sum(state % massfrac(:) * state % cpi(:)) ! erg/g.K
+    state % e  = sum(state % massfrac(:) * state %  ei(:)) ! erg/g
+
+    Cvx = state % wbar  *  state % cv ! erg/mole.K
+
+    state % gam1 = (Cvx + Ru) / Cvx ! -
+    state % cs = sqrt(state % gam1 * state % p / state % rho) ! cm/s
+
+    state % dpdr_e = state % p / state % rho
+    state % dpde = (state % gam1 - ONE) * state % rho
+
+    ! Try to avoid the expensive log function.  Since we don't need entropy
+    ! in hydro solver, set it to an invalid but "nice" value for the plotfile.
+    state % s = ONE
+
+    ! Actually not sure what this is...used in composition derivatives
+    ! in general system (not yet supported)
+    state % dPdr = ZERO
+
+  end subroutine eos_bottom_h
 
   subroutine eos_xty(state)
 
@@ -302,6 +341,22 @@ contains
 
   end subroutine eos_get_activity
 
+  subroutine eos_get_activity_h(state)
+
+    implicit none
+
+    type (eos_t), intent(inout) :: state
+
+    double precision :: Cvx
+
+    call ckytcr(state%rho, state % T, state % massfrac, iwrk, rwrk, state % Acti)
+          
+    call eos_wb(state)
+
+    call eos_bottom_h(state)
+
+  end subroutine eos_get_activity_h
+
   subroutine eos_rt(state)
 
     implicit none
@@ -388,7 +443,20 @@ contains
 
     type (eos_t), intent(inout) :: state
 
-    call bl_error('EOS: eos_ph is not supported in this EOS.')
+    integer :: lierr
+
+    call eos_wb(state)
+
+    call get_T_given_hY(state % h, state % massfrac, iwrk, rwrk, state % T, lierr)
+    if (lierr .ne. 0) then
+            print *, 'EOS: get_T_given_hY failed, T, h, Y = ', &
+                    state % T, state % h, state % massfrac
+    end if
+    state % T = max(state % T, smallT)
+    call ckhms(state % T, iwrk, rwrk, state % hi)
+    call ckrhoy(state % p, state % T, state % massfrac, iwrk, rwrk, state % rho)
+
+    call eos_bottom_h(state)
 
   end subroutine eos_ph
 
@@ -408,7 +476,20 @@ contains
 
     type (eos_t), intent(inout) :: state
 
-    call bl_error('EOS: eos_rh is not supported in this EOS.')
+    integer :: lierr
+
+    call eos_wb(state)
+
+    call get_T_given_hY(state % h, state % massfrac, iwrk, rwrk, state % T, lierr)
+    if (lierr .ne. 0) then
+            print *, 'EOS: get_T_given_hY failed, T, h, Y = ', &
+                    state % T, state % h, state % massfrac
+    end if
+    state % T = max(state % T, smallT)
+    call ckhms(state % T, iwrk, rwrk, state % hi)
+    call ckpy(state % rho, state % T, state % massfrac, iwrk, rwrk, state % p)
+
+    call eos_bottom_h(state)
 
   end subroutine eos_rh
 
