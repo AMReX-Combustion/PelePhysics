@@ -1,5 +1,6 @@
 module reactor_module
 
+  use, intrinsic :: iso_c_binding
   use amrex_fort_module, only : amrex_real
   use network
   use eos_module
@@ -12,12 +13,14 @@ module reactor_module
 
 contains
 
-  subroutine reactor_init() bind(C, name="reactor_init")
+  !Original DVODE version
+  subroutine reactor_init(iE) bind(C, name="reactor_init")
 
     implicit none
+    integer(c_int),  intent(in   ) :: iE
 
     !$omp parallel
-    call actual_reactor_init()
+    call actual_reactor_init(iE)
     !$omp end parallel
     
     reactor_initialized = .true.
@@ -51,9 +54,9 @@ contains
 
     use amrex_error_module
 
-    type(react_t),   intent(in   ) :: react_state_in
-    type(react_t),   intent(inout) :: react_state_out
-    real(amrex_real), intent(in   ) :: dt_react, time
+    type(react_t),  intent(in    ) :: react_state_in
+    type(react_t),  intent(inout ) :: react_state_out
+    real(c_double), intent(in    ) :: dt_react, time
     type(reaction_stat_t)          :: react
 
     if (.not. reactor_initialized) then

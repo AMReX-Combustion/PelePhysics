@@ -7,7 +7,11 @@ module actual_reactor_module
 
 contains
 
-  subroutine actual_reactor_init()
+  subroutine actual_reactor_init(iE_in)
+
+    use, intrinsic :: iso_c_binding
+
+    integer(c_int),  intent(in   ) :: iE_in
 
     !nothing needed here
 

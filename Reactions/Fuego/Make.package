@@ -1,2 +1,7 @@
 f90EXE_sources += actual_network.f90
-f90EXE_sources += actual_reactor.f90
+ifeq ($(USE_DVODE), TRUE)
+    F90EXE_sources += actual_reactor.F90
+else
+    CEXE_headers +=actual_Creactor.h  
+    CEXE_sources+=actual_Creactor.cpp
+endif
