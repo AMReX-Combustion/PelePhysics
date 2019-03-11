@@ -29,7 +29,7 @@ contains
 
     call transport_init()
 
-    call reactor_init()
+    call reactor_init(1)
 
   end subroutine extern_init
 
