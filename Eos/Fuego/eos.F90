@@ -15,8 +15,6 @@ module eos_module
   logical, save, private :: initialized = .false.
 
   real(amrex_real), save, public :: smallT = 1.d-50
-  integer :: iwrk
-  real(amrex_real) :: rwrk
 
   public :: eos_init, eos_xty, eos_ytx, eos_ytx2, eos_ytx_vec, &
           eos_cpi, eos_hi, eos_hi_vec, eos_cv, eos_cp, eos_p_wb, eos_wb,&
@@ -110,9 +108,9 @@ contains
     type (eos_t), intent(inout) :: state
     real(amrex_real) :: Cvx
 
-    call ckcvms(state % T, iwrk, rwrk, state % cvi)  ! erg/gi.K
-    call ckcpms(state % T, iwrk, rwrk, state % cpi)  ! erg/gi.K
-    call ckhms (state % T, iwrk, rwrk, state % hi)    ! erg/gi
+    call ckcvms(state % T, state % cvi)  ! erg/gi.K
+    call ckcpms(state % T, state % cpi)  ! erg/gi.K
+    call ckhms (state % T, state % hi)    ! erg/gi
 
     state % cv = sum(state % massfrac(:) * state % cvi(:)) ! erg/g.K
     state % cp = sum(state % massfrac(:) * state % cpi(:)) ! erg/g.K
@@ -145,9 +143,9 @@ contains
     type (eos_t), intent(inout) :: state
     real(amrex_real) :: Cvx
 
-    call ckcvms(state % T, iwrk, rwrk, state % cvi)  ! erg/gi.K
-    call ckcpms(state % T, iwrk, rwrk, state % cpi)  ! erg/gi.K
-    call ckums (state % T, iwrk, rwrk, state % ei)    ! erg/gi
+    call ckcvms(state % T, state % cvi)  ! erg/gi.K
+    call ckcpms(state % T, state % cpi)  ! erg/gi.K
+    call ckums (state % T, state % ei)    ! erg/gi
 
     state % cv = sum(state % massfrac(:) * state % cvi(:)) ! erg/g.K
     state % cp = sum(state % massfrac(:) * state % cpi(:)) ! erg/g.K
@@ -177,7 +175,7 @@ contains
 
     type (eos_t), intent(inout) :: state
 
-    call ckxty(state % molefrac,iwrk,rwrk,state % massfrac)
+    call ckxty(state % molefrac,state % massfrac)
 
   end subroutine eos_xty
 
@@ -187,7 +185,7 @@ contains
 
     type (eos_t), intent(inout) :: state
 
-    call ckytx (state % massfrac,iwrk,rwrk,state % molefrac)
+    call ckytx (state % massfrac,state % molefrac)
 
   end subroutine eos_ytx
 
@@ -199,7 +197,7 @@ contains
     double precision, intent(out), dimension(1:Nsp) :: X
     integer, intent(in) :: Nsp
 
-    call ckytx(Y(:),iwrk,rwrk,X(:))
+    call ckytx(Y(:),X(:))
 
   end subroutine eos_ytx2
 
@@ -220,7 +218,7 @@ contains
     npts = (hi(1)+1)-(lo(1)-1)+1
     do k = lo(3)-1, hi(3)+1
        do j = lo(2)-1, hi(2)+1
-         call VCKYTX( npts, Y(lo(1)-1:hi(1)+1, j, k, :), iwrk, rwrk, X( lo(1)-1:hi(1)+1, j, k, :) )
+         call VCKYTX( npts, Y(lo(1)-1:hi(1)+1, j, k, :), X( lo(1)-1:hi(1)+1, j, k, :) )
        enddo
     enddo
 
@@ -232,7 +230,7 @@ contains
 
     type (eos_t), intent(inout) :: state
 
-    call ckcpms(state % T, iwrk, rwrk, state % cpi)
+    call ckcpms(state % T, state % cpi)
 
   end subroutine eos_cpi
 
@@ -242,7 +240,7 @@ contains
 
     type (eos_t), intent(inout) :: state
 
-    call ckhms(state % T, iwrk, rwrk, state % hi)
+    call ckhms(state % T,state % hi)
 
   end subroutine eos_hi
 
@@ -254,7 +252,7 @@ contains
     double precision, intent(in), dimension(1:Nsp) :: hi
     integer, intent(in) :: Nsp
 
-    call ckhms(T,iwrk,rwrk,hi(:))
+    call ckhms(T,hi(:))
 
   end subroutine eos_hi2
 
@@ -278,7 +276,7 @@ contains
     npts = (high(1)+1)-(low(1)-1)+1
     do k = low(3)-1, high(3)+1
        do j = low(2)-1, high(2)+1
-          call VCKHMS( npts, T(low(1)-1:high(1)+1, j, k), iwrk, rwrk, hi( low(1)-1:high(1)+1, j, k, :) )
+          call VCKHMS( npts, T(low(1)-1:high(1)+1, j, k), hi( low(1)-1:high(1)+1, j, k, :) )
        enddo
     enddo
 
@@ -290,7 +288,7 @@ contains
 
     type (eos_t), intent(inout) :: state
 
-    call ckcvbs(state % T, state % massfrac, iwrk, rwrk, state % cv)
+    call ckcvbs(state % T, state % massfrac, state % cv)
 
   end subroutine eos_cv
 
@@ -300,7 +298,7 @@ contains
 
     type (eos_t), intent(inout) :: state
 
-    call ckcpbs(state % T, state % massfrac, iwrk, rwrk, state % cp)
+    call ckcpbs(state % T, state % massfrac, state % cp)
 
   end subroutine eos_cp
 
@@ -311,7 +309,7 @@ contains
     type (eos_t), intent(inout) :: state
 
     call eos_wb(state)
-    call ckpy(state % rho, state % T, state % massfrac, iwrk, rwrk, state % p)
+    call ckpy(state % rho, state % T, state % massfrac, state % p)
 
   end subroutine eos_p_wb
 
@@ -333,7 +331,7 @@ contains
 
     double precision :: Cvx
 
-    call ckytcr(state%rho, state % T, state % massfrac, iwrk, rwrk, state % Acti)
+    call ckytcr(state%rho, state % T, state % massfrac, state % Acti)
           
     call eos_wb(state)
 
@@ -349,7 +347,7 @@ contains
 
     double precision :: Cvx
 
-    call ckytcr(state%rho, state % T, state % massfrac, iwrk, rwrk, state % Acti)
+    call ckytcr(state%rho, state % T, state % massfrac, state % Acti)
           
     call eos_wb(state)
 
@@ -364,8 +362,8 @@ contains
 
     call eos_wb(state)
 
-    call ckpy(state % rho, state % T, state % massfrac, iwrk, rwrk, state % p)
-    call ckums(state % T, iwrk, rwrk, state % ei)
+    call ckpy(state % rho, state % T, state % massfrac, state % p)
+    call ckums(state % T, state % ei)
     state % e = sum(state % massfrac(:) * state % ei(:))
 
     call eos_bottom(state)
@@ -380,8 +378,8 @@ contains
 
     call eos_wb(state)
 
-    call ckrhoy(state % p,state % T,state % massfrac,iwrk,rwrk,state % rho)
-    call ckums(state % T, iwrk, rwrk, state % ei)
+    call ckrhoy(state % p,state % T,state % massfrac,state % rho)
+    call ckums(state % T, state % ei)
     state % e = sum(state % massfrac(:) * state % ei(:))
 
     call eos_bottom(state)
@@ -397,7 +395,7 @@ contains
     call eos_wb(state)
 
     state % T = state % p * state % wbar / (state % rho * Ru)
-    call ckums(state % T, iwrk, rwrk, state % ei)
+    call ckums(state % T, state % ei)
     state % e = sum(state % massfrac(:) * state % ei(:))
 
     call eos_bottom(state)
@@ -414,14 +412,14 @@ contains
 
     call eos_wb(state)
 
-    call get_T_given_eY(state % e, state % massfrac, iwrk, rwrk, state % T, lierr)
+    call get_T_given_eY(state % e, state % massfrac, state % T, lierr)
     if (lierr .ne. 0) then
        print *, 'EOS: get_T_given_eY failed, T, e, Y = ', &
             state % T, state % e, state % massfrac
     end if
     state % T = max(state % T, smallT)
-    call ckums(state % T, iwrk, rwrk, state % ei)
-    call ckpy(state % rho, state % T, state % massfrac, iwrk, rwrk, state % p)
+    call ckums(state % T, state % ei)
+    call ckpy(state % rho, state % T, state % massfrac, state % p)
 
     call eos_bottom(state)
 
@@ -447,14 +445,14 @@ contains
 
     call eos_wb(state)
 
-    call get_T_given_hY(state % h, state % massfrac, iwrk, rwrk, state % T, lierr)
+    call get_T_given_hY(state % h, state % massfrac, state % T, lierr)
     if (lierr .ne. 0) then
             print *, 'EOS: get_T_given_hY failed, T, h, Y = ', &
                     state % T, state % h, state % massfrac
     end if
     state % T = max(state % T, smallT)
-    call ckhms(state % T, iwrk, rwrk, state % hi)
-    call ckrhoy(state % p, state % T, state % massfrac, iwrk, rwrk, state % rho)
+    call ckhms(state % T, state % hi)
+    call ckrhoy(state % p, state % T, state % massfrac, state % rho)
 
     call eos_bottom_h(state)
 
@@ -480,14 +478,14 @@ contains
 
     call eos_wb(state)
 
-    call get_T_given_hY(state % h, state % massfrac, iwrk, rwrk, state % T, lierr)
+    call get_T_given_hY(state % h, state % massfrac, state % T, lierr)
     if (lierr .ne. 0) then
             print *, 'EOS: get_T_given_hY failed, T, h, Y = ', &
                     state % T, state % h, state % massfrac
     end if
     state % T = max(state % T, smallT)
-    call ckhms(state % T, iwrk, rwrk, state % hi)
-    call ckpy(state % rho, state % T, state % massfrac, iwrk, rwrk, state % p)
+    call ckhms(state % T, state % hi)
+    call ckpy(state % rho, state % T, state % massfrac, state % p)
 
     call eos_bottom_h(state)
 

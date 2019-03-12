@@ -306,7 +306,7 @@ contains
         call eos_get_activity_h(eos_state)
     end if
 
-    call ckwc(eos_state % T, eos_state % Acti, iwrk, rwrk, cdot)
+    call ckwc(eos_state % T, eos_state % Acti, cdot)
 
     if (iE == 1) then
         ydot(neq)    = rhoedot_ext 

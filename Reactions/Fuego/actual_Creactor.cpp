@@ -59,12 +59,10 @@ int extern_cInit(const int* cvode_meth,const int* cvode_itmeth,
 	realtype reltol, time;
 	N_Vector atol;
 	realtype *ratol;
-	double rwrk;
-	int iwrk;
 	int mm, ii, nfit;
 	int neq_tot;
 
-	ckindx_(&iwrk,&rwrk,&mm,&NEQ,&ii,&nfit);
+	ckindx_(&mm,&NEQ,&ii,&nfit);
         if (iverbose > 0) {
 	    printf("Nb of spec is %d \n", NEQ);
 	}
@@ -359,36 +357,34 @@ int actual_cReact(realtype *rY_in, realtype *rY_src_in,
 	        double rhov, energy, temp, energy2;
 	        double MF[NEQ];
                 //realtype activity[NEQ], cdot[NEQ], molecular_weight[NEQ];
-                int * iwrk;
-                double *  rwrk;
 	        int  lierr;
 	        rhov = 0.0;
                 int offset = tid * (NEQ + 1); 
                 for (int k = 0; k < NEQ; k ++) {
 	    	rhov =  rhov + rY_in[offset + k];
 	        }
-                //ckwt_(iwrk, rwrk, molecular_weight);
+                //ckwt_(molecular_weight);
                 for (int k = 0; k < NEQ; k ++) {
 	    	    MF[k] = rY_in[offset + k]/rhov;
 	            //activity[k] = rY_in[offset + k]/(molecular_weight[k]);
 	        }
 	        energy = rX_in[tid]/rhov ;
 	        if (iE_Creact == 1) { 
-	            get_t_given_ey_(&energy, MF, iwrk, rwrk, &temp, &lierr);
-	            ckhbms_(&temp, MF, iwrk, rwrk, &energy2);
-	            ckubms_(&temp, MF, iwrk, rwrk, &energy);
-	    	    ckpy_(&rhov, &temp, MF, iwrk, rwrk, P_in);
+	            get_t_given_ey_(&energy, MF, &temp, &lierr);
+	            ckhbms_(&temp, MF, &energy2);
+	            ckubms_(&temp, MF, &energy);
+	    	    ckpy_(&rhov, &temp, MF, P_in);
 	            printf("e,h,p,rho ? %4.16e %4.16e %4.16e %4.16e \n",energy, energy2, *P_in, rhov);
 	        } else {
-	            get_t_given_hy_(&energy, MF, iwrk, rwrk, &temp, &lierr);
-	            ckhbms_(&temp, MF, iwrk, rwrk, &energy);
-	            ckubms_(&temp, MF, iwrk, rwrk, &energy2);
-	    	    ckpy_(&rhov, &temp, MF, iwrk, rwrk, P_in);
+	            get_t_given_hy_(&energy, MF, &temp, &lierr);
+	            ckhbms_(&temp, MF, &energy);
+	            ckubms_(&temp, MF, &energy2);
+	    	    ckpy_(&rhov, &temp, MF, P_in);
 	            printf("e,h,p,rho ? %4.16e %4.16e %4.16e %4.16e\n",energy2, energy, *P_in, rhov);
 	        }
 	        //rY_in[offset + NEQ] =  temp;
 	        // DEBUG CHEKS
-                //ckwc_(&temp, activity, iwrk, rwrk, cdot);
+                //ckwc_(&temp, activity, cdot);
 	        // *P_in = cdot[2];
 	    }
 
@@ -447,13 +443,11 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
       realtype cdot[NEQ], molecular_weight[NEQ];
       realtype temp, energy;
       int lierr;
-      int * iwrk;
-      double * rwrk;
 
       int offset = tid * (NEQ + 1); 
 
       /* MW CGS */
-      ckwt_(iwrk, rwrk, molecular_weight);
+      ckwt_(molecular_weight);
       /* rho MKS */ 
       realtype rho = 0.0;
       for (int i = 0; i < NEQ; i++){
@@ -471,15 +465,15 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 
       /* Fuego calls on device */
       if (iE_Creact == 1){
-          get_t_given_ey_(&energy, massfrac, iwrk, rwrk, &temp, &lierr);
-          ckums_(&temp, iwrk, rwrk, Xi);
-          ckcvms_(&temp, iwrk, rwrk, cXi);
+          get_t_given_ey_(&energy, massfrac, &temp, &lierr);
+          ckums_(&temp, Xi);
+          ckcvms_(&temp, cXi);
       } else {
-          get_t_given_hy_(&energy, massfrac, iwrk, rwrk, &temp, &lierr);
-          ckhms_(&temp, iwrk, rwrk, Xi);
-          ckcpms_(&temp, iwrk, rwrk, cXi);
+          get_t_given_hy_(&energy, massfrac, &temp, &lierr);
+          ckhms_(&temp, Xi);
+          ckcpms_(&temp, cXi);
       }
-      ckwc_(&temp, activity, iwrk, rwrk, cdot);
+      ckwc_(&temp, activity, cdot);
       int cX = 0.0;
       for (int i = 0; i < NEQ; i++){
           cX = cX + massfrac[i] * cXi[i];
@@ -508,13 +502,11 @@ static int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
       realtype  temp; 
       realtype activity[NEQ], molecular_weight[NEQ];
       realtype Jmat_tmp[(NEQ+1)*(NEQ+1)];
-      double rwrk;
-      int iwrk;
 
       int offset = tid * (NEQ + 1); 
 
       /* MW CGS */
-      ckwt_(&iwrk, &rwrk, molecular_weight);
+      ckwt_(molecular_weight);
       /* temp */
       temp = ydata[offset + NEQ];
       for (int i = 0; i < NEQ; i++){
@@ -565,9 +557,7 @@ static int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 
   /* MW CGS */
   realtype molecular_weight[NEQ];
-  double rwrk;
-  int iwrk;
-  ckwt_(&iwrk, &rwrk, molecular_weight);
+  ckwt_(molecular_weight);
 
   /* Fixed RowVals */
   for (int i=0;i<data_wk->NNZ;i++) {
@@ -649,13 +639,11 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
 	realtype temp;
 	realtype activity[NEQ], molecular_weight[NEQ];
 	realtype J[(NEQ+1)*(NEQ+1)];
-	double rwrk;
-	int iwrk;
 
         int offset = tid * (NEQ + 1); 
 
         /* MW CGS */
-	ckwt_(&iwrk, &rwrk, molecular_weight);
+	ckwt_(molecular_weight);
 	for (int i = 0; i < NEQ; i++){
             activity[i] = udata[offset + i]/(molecular_weight[i]);
 	}
@@ -724,9 +712,7 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 
   /* MW CGS */
   realtype molecular_weight[NEQ];
-  double rwrk;
-  int iwrk;
-  ckwt_(&iwrk, &rwrk, molecular_weight);
+  ckwt_(molecular_weight);
 
   /* Formalism */
   int consP;
@@ -866,9 +852,7 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 
   /* MW CGS */
   realtype molecular_weight[NEQ];
-  double rwrk;
-  int iwrk;
-  ckwt_(&iwrk, &rwrk, molecular_weight);
+  ckwt_(molecular_weight);
 
   /* Make local copies of pointers in user_data, and of pointer to u's data */
   data_wk = (UserData) user_data;   
