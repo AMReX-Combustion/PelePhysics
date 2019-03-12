@@ -16,8 +16,8 @@ contains
     integer :: namlen
     integer :: name(namlen)
 
-    real (kind=dp_t) :: small_temp = 1.d-200
-    real (kind=dp_t) :: small_dens = 1.d-200
+    real (kind=amrex_real) :: small_temp = 1.d-200
+    real (kind=amrex_real) :: small_dens = 1.d-200
 
     ! initialize the external runtime parameters in
     ! extern_probin_module
