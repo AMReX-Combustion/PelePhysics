@@ -809,7 +809,7 @@ class CPickler(CMill):
             'void CKSYME(int * kname, int * lenkname);',
             'void CKSYMS(int * kname, int * lenkname);',
             #'void CKSYMS'+sym+'(char * cckwrk, int * lout, char * kname, int * kerr, int lencck, int lenkname);',
-            'void CKRP'+sym+'(int * ickwrk, double *  rckwrk, double *  ru, double *  ruc, double *  pa);',
+            'void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa);',
             'void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P);',
             'void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
             'void CKPC'+sym+'(double *  rho, double *  T, double *  c, double *  P);',
@@ -1298,7 +1298,7 @@ class CPickler(CMill):
         self._write()
         self._write(
             self.line(' Returns R, Rc, Patm' ))
-        self._write('void CKRP'+sym+'(int * ickwrk, double *  rckwrk, double *  ru, double *  ruc, double *  pa)')
+        self._write('void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa)')
         self._write('{')
         self._indent()
         

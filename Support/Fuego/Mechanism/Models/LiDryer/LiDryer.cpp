@@ -321,7 +321,7 @@ void CKXNUM(char * line, int * nexp, int * lout, int * nval, double *  rval, int
 void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);
 void CKSYME(int * kname, int * lenkname);
 void CKSYMS(int * kname, int * lenkname);
-void CKRP(int * ickwrk, double *  rckwrk, double *  ru, double *  ruc, double *  pa);
+void CKRP(double *  ru, double *  ruc, double *  pa);
 void CKPX(double *  rho, double *  T, double *  x, double *  P);
 void CKPY(double *  rho, double *  T, double *  y, double *  P);
 void CKPC(double *  rho, double *  T, double *  c, double *  P);
@@ -1036,7 +1036,7 @@ void CKSYMS(int * kname, int * plenkname )
 
 
 /* Returns R, Rc, Patm */
-void CKRP(int * ickwrk, double *  rckwrk, double *  ru, double *  ruc, double *  pa)
+void CKRP(double *  ru, double *  ruc, double *  pa)
 {
      *ru  = 8.31451e+07; 
      *ruc = 1.98721558317399615845; 
