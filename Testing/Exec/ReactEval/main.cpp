@@ -76,6 +76,11 @@ main (int   argc,
 			&(dx[0]), &(plo[0]), &(phi[0]));
     }
 
+    ParmParse ppa("amr");
+    std::string pltfile("plt");  ppa.query("plot_file",pltfile);
+    std::string outfile = Concatenate(pltfile,90); // Need a number other than zero for reg test to pass
+    PlotFileFromMF(mass_frac,outfile);
+
     MultiFab rY_source_ext(ba,dmap,num_spec,num_grow);
     MultiFab re_source_ext(ba,dmap,1,num_grow);
     iMultiFab mask(ba,dmap,1,num_grow);
@@ -108,10 +113,8 @@ main (int   argc,
 		    &time, &dt);
     }
 
-    ParmParse ppa("amr");
-    std::string pltfile("plt");  ppa.query("plot_file",pltfile);
-    std::string outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
-    PlotFileFromMF(temperature,outfile);
+    outfile = Concatenate(pltfile,10); // Need a number other than zero for reg test to pass
+    PlotFileFromMF(mass_frac,outfile);
 
     extern_close();
     Finalize();
