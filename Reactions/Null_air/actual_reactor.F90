@@ -1,13 +1,13 @@
-module actual_reactor_module
+module reactor_module
 
+  use network, only: nspec
   use amrex_fort_module, only : amrex_real
-  use react_type_module
 
   implicit none
 
 contains
 
-  subroutine actual_reactor_init(iE_in)
+  subroutine reactor_init(iE_in) bind(C, name="reactor_init") 
 
     use, intrinsic :: iso_c_binding
 
@@ -15,54 +15,27 @@ contains
 
     !nothing needed here
 
-  end subroutine actual_reactor_init
+  end subroutine reactor_init
 
 
-  subroutine actual_reactor_close()
+  subroutine reactor_close() bind(C, name="reactor_close")
 
     ! nothing needed here
 
-  end subroutine actual_reactor_close
+  end subroutine reactor_close
 
-
-  function actual_ok_to_react(state)
-
-    implicit none
-
-    type (react_t),intent(in) :: state
-    logical                   :: actual_ok_to_react
-
-    actual_ok_to_react = .true.
-
-  end function actual_ok_to_react
-
-
-  function actual_react_null(react_state_in, react_state_out, dt_react, time) result(stat)
-    
-    type(react_t),   intent(in   ) :: react_state_in
-    type(react_t),   intent(inout) :: react_state_out
-    real(amrex_real), intent(in   ) :: dt_react, time
-    type(reaction_stat_t)          :: stat
-
-    react_state_out = react_state_in
-    stat % cost_value = 0.d0
-    stat % reactions_succesful = .true.
-
-  end function actual_react_null
-
-
-  function actual_react(react_state_in, react_state_out, dt_react, time) result(stat)
+  function react(rY_in,rY_src_in,rX_in,rX_src_in,P_in,dt_react,time,Init) bind(C, name="react") result(cost_value)
     
     use eos_module
 
-    type(react_t),   intent(in   ) :: react_state_in
-    type(react_t),   intent(inout) :: react_state_out
-    real(amrex_real), intent(in   ) :: dt_react, time
-    type(reaction_stat_t)          :: stat
+    real(amrex_real),   intent(inout) :: rY_in(nspec+1),rY_src(nspec+1)
+    real(amrex_real),   intent(inout) :: rX_in,rX_src_in,P_in
+    real(amrex_real),   intent(inout) :: dt_react, time
+    integer                           :: Init, cost_value
 
-    stat = actual_react_null(react_state_in, react_state_out, dt_react, time)
+    cost_value = 0
 
-  end function actual_react
+  end function react
 
 
-end module actual_reactor_module
+end module reactor_module

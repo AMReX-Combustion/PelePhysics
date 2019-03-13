@@ -1,4 +1,4 @@
-module actual_reactor_module
+module reactor_module
 
   use amrex_fort_module, only : amrex_real
   use network, only: nspec, spec_names
@@ -12,6 +12,9 @@ module actual_reactor_module
                               rhoh_init, time_old, hdot_ext, h_init, pressureInit
   integer,private :: iloc, jloc, kloc, iE, iDense
   type (eos_t) :: eos_state
+
+  logical, save, private :: reactor_initialized = .false.
+
   !$omp threadprivate(vodeVec,cdot,rhoydot_ext,ydot_ext,rhoedot_ext,rhoe_init,time_init,time_out,rhohdot_ext,rhoh_init,hdot_ext,h_init,time_old,iloc,jloc,kloc,eos_state)
 
 contains
@@ -19,7 +22,7 @@ contains
         
 !*** INITIALISATION ROUTINES ***!
   !DVODE VERSION
-  subroutine actual_reactor_init(iE_in)
+  subroutine reactor_init(iE_in) bind(C, name="reactor_init")
 
     use, intrinsic :: iso_c_binding
     use vode_module, only : vode_init
@@ -63,11 +66,14 @@ contains
 
     call build(eos_state)
 
-  end subroutine actual_reactor_init
+    reactor_initialized = .true.
+
+  end subroutine reactor_init
 
 !*** REACTION ROUTINES ***!
   ! Original DVODE version
-  function actual_react(react_state_in, react_state_out, dt_react, time)
+  !function react(react_state_in, react_state_out, dt_react, time) bind(C, name="react") result(stat)
+  function react(rY_in,rY_src_in,rX_in,rX_src_in,P_in,dt_react,time,Init) bind(C, name="react") result(cost_value)
     
     use amrex_error_module
     use vode_module, only : verbose, itol, rtol, atol, vode_MF=>MF, always_new_j, &
@@ -75,16 +81,51 @@ contains
     use chemistry_module, only : molecular_weight
     use eos_module
 
-    type(react_t),   intent(in   ) :: react_state_in
-    type(react_t),   intent(inout) :: react_state_out
-    real(amrex_real), intent(in   ) :: dt_react, time
-    type(reaction_stat_t)          :: actual_react
+    real(amrex_real),   intent(inout) :: rY_in(nspec+1),rY_src_in(nspec)
+    real(amrex_real),   intent(inout) :: rX_in,rX_src_in,P_in
+    real(amrex_real),   intent(inout) :: dt_react, time
+    integer                           :: Init, cost_value
+    
+    ! For compatibility to remove later
+    type(react_t) :: react_state_in
 
     external dvode
 
     integer, parameter :: itask=1, iopt=1
     integer :: MF, istate, ifail, neq
     real(amrex_real) :: vodeTime, vodeEndTime, rhoInv
+
+    ! For compatibility to remove later
+    call build(react_state_in)
+
+    react_state_in %              T = rY_in(nspec+1)
+    react_state_in %        rhoY(:) = rY_in(1:nspec)
+    react_state_in %            rho = sum(react_state_in % rhoY(:))
+    react_state_in % rhoYdot_ext(:) = rY_src_in(1:nspec)
+
+    if (iE == 1) then
+        react_state_in %              e = rX_in !/ react_state_in % rho
+        react_state_in %    rhoedot_ext = rX_src_in
+        print *, react_state_in % e    
+    else if (iE == 5) then
+        react_state_in %              p = P_in
+        react_state_in %              h = rX_in !/ react_state_in % rho
+        react_state_in %    rhohdot_ext = rX_src_in
+    else
+        react_state_in %              h = rX_in !/ react_state_in % rho
+        react_state_in %    rhohdot_ext = rX_src_in
+    end if
+    ! END For compatibility to remove later
+
+
+    if (.not. reactor_initialized) then
+       call amrex_error('reactor::react called before initialized')
+    endif
+
+    if ( .not. ok_to_react(react_state_in) ) then
+       call amrex_error('reactor::react Not Ok To React')
+       return
+    end if
 
     eos_state % rho               = sum(react_state_in % rhoY(:))
     eos_state % T                 = react_state_in % T
@@ -174,8 +215,7 @@ contains
 
     if (istate > 0) then
 
-       actual_react % reactions_succesful = .true.
-       actual_react % cost_value = DBLE(vodeiwork(12)) ! number of f evaluations
+       cost_value = DBLE(vodeiwork(12)) ! number of f evaluations
 
        if (iE == 1) then
            eos_state % rho               = sum(vodeVec(1:nspec))
@@ -184,22 +224,20 @@ contains
            eos_state % T                 = vodeVec(neq)
            eos_state % e                 = (rhoe_init  +  dt_react*rhoedot_ext) /eos_state % rho
            call eos_re(eos_state)
-           react_state_out % rhoY(:)     = vodeVec(1:nspec) 
-           react_state_out % rho         = sum(vodeVec(1:nspec))
-           react_state_out % rhoedot_ext = rhoedot_ext
-           react_state_out % rhoydot_ext(1:nspec) = rhoydot_ext(1:nspec)
+           rY_in(1:nspec)                = vodeVec(1:nspec)
+           rX_in                         = eos_state % e
+           rX_src_in                     = rhoedot_ext
+           rY_src_in(1:nspec)            = rhoydot_ext(1:nspec)
        else if (iE == 5) then
            eos_state % p                 = pressureInit  
            eos_state % massfrac(1:nspec) = vodeVec(1:nspec)
            eos_state % T                 = vodeVec(neq)
            eos_state % h                 = (h_init  +  dt_react*hdot_ext)
            call eos_ph(eos_state)
-           react_state_out % rhoY(:)     = vodeVec(1:nspec) * eos_state % rho
-           react_state_out % rho         = eos_state % rho 
-           react_state_out % rhohdot_ext = hdot_ext * eos_state % rho
-           !react_state_out % rhohdot_ext = react_state_in % rhohdot_ext
-           react_state_out % rhoydot_ext(1:nspec) = ydot_ext(1:nspec) *  eos_state % rho
-           !react_state_out % rhoydot_ext(1:nspec) = react_state_in % rhoydot_ext(1:nspec)
+           rY_in(1:nspec)                = vodeVec(1:nspec) * eos_state % rho
+           rX_in                         = eos_state % h
+           rX_src_in                     = hdot_ext * eos_state % rho
+           rY_src_in(1:nspec)            = ydot_ext(1:nspec) * eos_state % rho
        else
            eos_state % rho               = sum(vodeVec(1:nspec))
            rhoInv                        = 1.d0 / eos_state % rho
@@ -207,20 +245,16 @@ contains
            eos_state % T                 = vodeVec(neq)
            eos_state % h                 = (rhoh_init  +  dt_react*rhohdot_ext) * rhoInv
            call eos_rh(eos_state)
-           react_state_out % rhoY(:)     = vodeVec(1:nspec)
-           react_state_out % rho         = sum(vodeVec(1:nspec))
-           react_state_out % rhohdot_ext = rhohdot_ext 
-           react_state_out % rhoydot_ext(1:nspec) = rhoydot_ext(1:nspec)
+           rY_in(1:nspec)                = vodeVec(1:nspec)
+           rX_in                         = eos_state % h
+           rX_src_in                     = rhohdot_ext
+           rY_src_in(1:nspec)            = rhoydot_ext(1:nspec)
        end if
 
-       react_state_out % T = eos_state % T
-       react_state_out % e = eos_state % e
-       react_state_out % h = eos_state % h
-       react_state_out % p = eos_state % p
+       rY_in(1+nspec)      = eos_state % T
 
     else
 
-       actual_react % reactions_succesful = .false.
 
        print *,'vode failed at',react_state_in % i,react_state_in % j,react_state_in % k
        print *,'input state:'
@@ -266,7 +300,7 @@ contains
        call amrex_error('vode failed')
 
     end if
-  end function actual_react
+  end function react
 
   ! Original DVODE version
   subroutine f_rhs(neq, time, y, ydot, rpar, ipar)
@@ -346,7 +380,7 @@ contains
   end subroutine f_jac
 
 !*** FINALIZE ROUTINES ***!
-  subroutine actual_reactor_close()
+  subroutine reactor_close() bind(C, name="reactor_close")
 
     if (allocated(vodeVec)) deallocate(vodeVec)
     if (allocated(cdot)) deallocate(cdot)
@@ -354,46 +388,33 @@ contains
     if (allocated(ydot_ext)) deallocate(ydot_ext)
 
     call destroy(eos_state)
+
+    reactor_initialized = .false.
    
-  end subroutine actual_reactor_close
+  end subroutine reactor_close
 
 
 !*** SPECIFIC ROUTINES ***!
-  function actual_ok_to_react(state)
+  function ok_to_react(state)
 
     use extern_probin_module, only: react_T_min, react_T_max, react_rho_min, react_rho_max
 
     implicit none
 
     type (react_t),intent(in) :: state
-    logical                   :: actual_ok_to_react
+    logical                   :: ok_to_react
     real(amrex_real)           :: rho
 
-    actual_ok_to_react = .true.
+    ok_to_react = .true.
 
     rho = sum(state % rhoY)
     if (state % T   < react_T_min   .or. state % T   > react_T_max .or. &
         rho         < react_rho_min .or. rho         > react_rho_max) then
 
-       actual_ok_to_react = .false.
+       ok_to_react = .false.
 
     endif
 
-  end function actual_ok_to_react
+  end function ok_to_react
 
-
-  function actual_react_null(react_state_in, react_state_out, dt_react, time)
-    
-    type(react_t),   intent(in   ) :: react_state_in
-    type(react_t),   intent(inout) :: react_state_out
-    real(amrex_real), intent(in   ) :: dt_react, time
-    type(reaction_stat_t)          :: actual_react_null
-
-    react_state_out = react_state_in
-    actual_react_null % cost_value = 0.d0
-    actual_react_null % reactions_succesful = .true.
-
-  end function actual_react_null
-
-
-end module actual_reactor_module
+end module reactor_module

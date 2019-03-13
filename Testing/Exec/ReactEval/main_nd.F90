@@ -173,45 +173,38 @@ contains
     real(amrex_real) :: esrc(es_lo(1):es_hi(1),es_lo(2):es_hi(2),es_lo(3):es_hi(3))
     integer          :: mask(m_lo(1):m_hi(1),m_lo(2):m_hi(2),m_lo(3):m_hi(3))
     real(amrex_real) :: cost(c_lo(1):c_hi(1),c_lo(2):c_hi(2),c_lo(3):c_hi(3))
-    real(amrex_real) :: time, dt_react
+    real(amrex_real) :: time, dt_react, pressure
 
     integer          :: i, j, k
 
-    type (react_t) :: react_state_in, react_state_out
-    type (reaction_stat_t)  :: stat
+    real(amrex_real) ::    rY(nspec+1), rY_src(nspec)
+    real(amrex_real) ::    energy, energy_src
 
-    call build(react_state_in)
-    call build(react_state_out)
+    pressure = 1013250.d0
 
     do k = lo(3), hi(3)
        do j = lo(2), hi(2)
           do i = lo(1), hi(1)
 
              if (mask(i,j,k) .eq. 1) then
-                react_state_in %              e = eold(i,j,k)
-                react_state_in %              T = Told(i,j,k)
-                react_state_in %        rhoY(:) = mold(i,j,k,1:nspec)
-                react_state_in %            rho = sum(react_state_in % rhoY(:))
-                react_state_in %    rhoedot_ext = esrc(i,j,k)
-                react_state_in % rhoYdot_ext(:) = ysrc(i,j,k,1:nspec)
-                react_state_in % i = i
-                react_state_in % j = j
-                react_state_in % k = k
+                rY(1:nspec)      = mold(i,j,k,1:nspec)
+                rY_src(1:nspec)  = ysrc(i,j,k,1:nspec)
+                rY(nspec+1)      = Told(i,j,k)
+                energy           = eold(i,j,k)
+                energy_src       = esrc(i,j,k)
 
-                stat = react(react_state_in, react_state_out, dt_react, time)
-                cost(i,j,k) = stat % cost_value
+                cost(i,j,k) = react(rY, rY_src,&
+                                    energy, energy_src,&
+                                    pressure,dt_react,time,0)
 
-                enew(i,j,k)         = react_state_out % e
-                Tnew(i,j,k)         = react_state_out % T
-                mnew(i,j,k,1:nspec) = react_state_out % rhoY(1:nspec)
+                enew(i,j,k)         = energy 
+                Tnew(i,j,k)         = rY(nspec+1)
+                mnew(i,j,k,1:nspec) = rY(1:nspec)
              end if
 
           end do
        enddo
     enddo
-
-    call destroy(react_state_in)
-    call destroy(react_state_out)
 
   end subroutine react_state
 
