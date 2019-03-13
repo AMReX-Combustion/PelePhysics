@@ -106,7 +106,6 @@ contains
     if (iE == 1) then
         react_state_in %              e = rX_in !/ react_state_in % rho
         react_state_in %    rhoedot_ext = rX_src_in
-        print *, react_state_in % e    
     else if (iE == 5) then
         react_state_in %              p = P_in
         react_state_in %              h = rX_in !/ react_state_in % rho
