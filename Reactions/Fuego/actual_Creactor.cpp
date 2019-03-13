@@ -229,7 +229,7 @@ int extern_cInit(const int* cvode_meth,const int* cvode_itmeth,
 	if(check_flag(&flag, "CVodeSetMaxNumSteps", 1)) return(1);
 
         /* Set the max order */ 
-        flag = CVodeSetMaxOrd(cvode_mem, 5);
+        flag = CVodeSetMaxOrd(cvode_mem, 2);
 	if(check_flag(&flag, "CVodeSetMaxOrd", 1)) return(1);
 
 	/* Define vectors to be used later in creact */
