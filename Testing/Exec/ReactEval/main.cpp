@@ -21,7 +21,7 @@ main (int   argc,
       char* argv[])
 {
     Initialize(argc,argv);
-
+    {
     ParmParse pp;
     
     std::string probin_file = "probin";
@@ -114,6 +114,7 @@ main (int   argc,
     PlotFileFromMF(temperature,outfile);
 
     extern_close();
+    }
     Finalize();
 
     return 0;

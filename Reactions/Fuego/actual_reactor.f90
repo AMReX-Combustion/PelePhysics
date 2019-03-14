@@ -17,6 +17,7 @@ contains
   subroutine actual_reactor_init()
 
     use vode_module, only : vode_init
+    use extern_probin_module, only : new_Jacobian_each_cell
     integer :: neq, verbose, itol, order, maxstep
     real(amrex_real) :: rtol, atol
     logical :: use_ajac, save_ajac, always_new_j, stiff
@@ -28,7 +29,11 @@ contains
     maxstep = 10000
     use_ajac = .false.
     save_ajac = .false.
-    always_new_J = .false.
+    if (new_Jacobian_each_cell .ne. 0) then
+       always_new_J = .true.
+    else
+       always_new_J = .false.
+    endif
     stiff = .true.
     rtol = 1.d-10
     atol = 1.d-10
