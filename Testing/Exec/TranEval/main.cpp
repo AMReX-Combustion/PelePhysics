@@ -19,6 +19,7 @@ main (int   argc,
 {
     Initialize(argc,argv);
     {
+
       ParmParse pp;
     
       std::string probin_file = "probin";
@@ -97,7 +98,9 @@ main (int   argc,
       PlotFileFromMF(D,outfile);
 
       extern_close();
+
     }
+
     amrex::Finalize();
 
     return 0;

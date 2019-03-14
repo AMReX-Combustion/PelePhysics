@@ -26,6 +26,7 @@ contains
 
     use, intrinsic :: iso_c_binding
     use vode_module, only : vode_init
+    use extern_probin_module, only : new_Jacobian_each_cell
 
     integer(c_int),  intent(in   ) :: iE_in
     integer :: neq, verbose, itol, order, maxstep
@@ -39,7 +40,11 @@ contains
     maxstep = 10000
     use_ajac = .false.
     save_ajac = .false.
-    always_new_J = .true.
+    if (new_Jacobian_each_cell .ne. 0) then
+       always_new_J = .true.
+    else
+       always_new_J = .false.
+    endif
     stiff = .true.
     rtol = 1.d-10
     atol = 1.d-10
