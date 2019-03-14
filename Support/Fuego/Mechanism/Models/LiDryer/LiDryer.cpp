@@ -3984,7 +3984,7 @@ void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
     int nJdata_tmp = 0;
     for (int k=0; k<10; k++) {
         for (int l=0; l<10; l++) {
-            if(J[57*k + l] != 0.0){
+            if(J[ 10 * k + l] != 0.0){
                 nJdata_tmp = nJdata_tmp + 1;
             }
         }
@@ -4015,7 +4015,7 @@ void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)
             if(k == l){
                 nJdata_tmp = nJdata_tmp + 1;
             } else {
-                if(J[57*k + l] != 0.0){
+                if(J[ 10 * k + l] != 0.0){
                     nJdata_tmp = nJdata_tmp + 1;
                 }
             }
@@ -8146,15 +8146,15 @@ void egtransetWT(double* WT ) {
 #define egtransetEPS egtranseteps_
 #endif
 void egtransetEPS(double* EPS ) {
+    EPS[2] = 5.72400000E+02;
     EPS[3] = 1.45000000E+02;
     EPS[4] = 8.00000000E+01;
     EPS[5] = 8.00000000E+01;
     EPS[6] = 1.07400000E+02;
     EPS[7] = 1.07400000E+02;
+    EPS[8] = 9.75300000E+01;
     EPS[0] = 3.80000000E+01;
     EPS[1] = 1.07400000E+02;
-    EPS[2] = 5.72400000E+02;
-    EPS[8] = 9.75300000E+01;
 }
 
 
@@ -8167,15 +8167,15 @@ void egtransetEPS(double* EPS ) {
 #define egtransetSIG egtransetsig_
 #endif
 void egtransetSIG(double* SIG ) {
+    SIG[2] = 2.60500000E+00;
     SIG[3] = 2.05000000E+00;
     SIG[4] = 2.75000000E+00;
     SIG[5] = 2.75000000E+00;
     SIG[6] = 3.45800000E+00;
     SIG[7] = 3.45800000E+00;
+    SIG[8] = 3.62100000E+00;
     SIG[0] = 2.92000000E+00;
     SIG[1] = 3.45800000E+00;
-    SIG[2] = 2.60500000E+00;
-    SIG[8] = 3.62100000E+00;
 }
 
 
@@ -8188,15 +8188,15 @@ void egtransetSIG(double* SIG ) {
 #define egtransetDIP egtransetdip_
 #endif
 void egtransetDIP(double* DIP ) {
+    DIP[2] = 1.84400000E+00;
     DIP[3] = 0.00000000E+00;
     DIP[4] = 0.00000000E+00;
     DIP[5] = 0.00000000E+00;
     DIP[6] = 0.00000000E+00;
     DIP[7] = 0.00000000E+00;
+    DIP[8] = 0.00000000E+00;
     DIP[0] = 0.00000000E+00;
     DIP[1] = 0.00000000E+00;
-    DIP[2] = 1.84400000E+00;
-    DIP[8] = 0.00000000E+00;
 }
 
 
@@ -8209,15 +8209,15 @@ void egtransetDIP(double* DIP ) {
 #define egtransetPOL egtransetpol_
 #endif
 void egtransetPOL(double* POL ) {
+    POL[2] = 0.00000000E+00;
     POL[3] = 0.00000000E+00;
     POL[4] = 0.00000000E+00;
     POL[5] = 0.00000000E+00;
     POL[6] = 0.00000000E+00;
     POL[7] = 0.00000000E+00;
+    POL[8] = 1.76000000E+00;
     POL[0] = 7.90000000E-01;
     POL[1] = 1.60000000E+00;
-    POL[2] = 0.00000000E+00;
-    POL[8] = 1.76000000E+00;
 }
 
 
@@ -8230,15 +8230,15 @@ void egtransetPOL(double* POL ) {
 #define egtransetZROT egtransetzrot_
 #endif
 void egtransetZROT(double* ZROT ) {
+    ZROT[2] = 4.00000000E+00;
     ZROT[3] = 0.00000000E+00;
     ZROT[4] = 0.00000000E+00;
     ZROT[5] = 0.00000000E+00;
     ZROT[6] = 1.00000000E+00;
     ZROT[7] = 3.80000000E+00;
+    ZROT[8] = 4.00000000E+00;
     ZROT[0] = 2.80000000E+02;
     ZROT[1] = 3.80000000E+00;
-    ZROT[2] = 4.00000000E+00;
-    ZROT[8] = 4.00000000E+00;
 }
 
 
@@ -8251,15 +8251,15 @@ void egtransetZROT(double* ZROT ) {
 #define egtransetNLIN egtransetnlin_
 #endif
 void egtransetNLIN(int* NLIN) {
+    NLIN[2] = 2;
     NLIN[3] = 0;
     NLIN[4] = 0;
     NLIN[5] = 1;
     NLIN[6] = 2;
     NLIN[7] = 2;
+    NLIN[8] = 1;
     NLIN[0] = 1;
     NLIN[1] = 1;
-    NLIN[2] = 2;
-    NLIN[8] = 1;
 }
 
 
