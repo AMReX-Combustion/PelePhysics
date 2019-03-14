@@ -13,7 +13,7 @@ contains
        bind(c,name='update_particles')
 
     use iso_c_binding
-    use bl_error_module
+    ! use bl_error_module
     use eos_module
     use network
     use amrex_fort_module, only : amrex_real
@@ -55,45 +55,45 @@ contains
 
     integer :: is, ie, L, M
     integer :: lo(3), hi(3)
-    real(kind=dp_t), dimension(nspec_f) :: inv_diff_temp ! 1/(T_crit - T_boil)
-    real(kind=dp_t), dimension(nspec_f) :: invfmolwt
-    real(kind=dp_t), dimension(nspec_f) :: inv_boil_temp
-    real(kind=dp_t), dimension(nspec_f) :: inv_density
-    real(kind=dp_t), dimension(nspec_f) :: L_fuel
-    real(kind=dp_t), dimension(nspec_f) :: h_skin
-    real(kind=dp_t), dimension(np) :: fluid_molwt
+    real(amrex_real), dimension(nspec_f) :: inv_diff_temp ! 1/(T_crit - T_boil)
+    real(amrex_real), dimension(nspec_f) :: invfmolwt
+    real(amrex_real), dimension(nspec_f) :: inv_boil_temp
+    real(amrex_real), dimension(nspec_f) :: inv_density
+    real(amrex_real), dimension(nspec_f) :: L_fuel
+    real(amrex_real), dimension(nspec_f) :: h_skin
+    real(amrex_real), dimension(np) :: fluid_molwt
     ! Species Diffusion Coefficient Array
-    real(kind=dp_t), dimension(1,1,1,nspec) :: D_dummy
-    real(kind=dp_t), dimension(1,1,1,nspec) :: Y_dummy
-    real(kind=dp_t), dimension(1,1,1) :: T_dummy
-    real(kind=dp_t), dimension(1,1,1) :: r_dummy
-    real(kind=dp_t), dimension(1,1,1) :: xi_dummy
-    real(kind=dp_t), dimension(1,1,1) :: la_dummy
-    real(kind=dp_t), dimension(1,1,1) :: mu_dummy
-    real(kind=dp_t), dimension(np,nspec_f) :: D_skin
+    real(amrex_real), dimension(1,1,1,nspec) :: D_dummy
+    real(amrex_real), dimension(1,1,1,nspec) :: Y_dummy
+    real(amrex_real), dimension(1,1,1) :: T_dummy
+    real(amrex_real), dimension(1,1,1) :: r_dummy
+    real(amrex_real), dimension(1,1,1) :: xi_dummy
+    real(amrex_real), dimension(1,1,1) :: la_dummy
+    real(amrex_real), dimension(1,1,1) :: mu_dummy
+    real(amrex_real), dimension(np,nspec_f) :: D_skin
     ! Species skin Schmidt number
-    real(kind=dp_t), dimension(np,nspec_f) :: Sc_skin
+    real(amrex_real), dimension(np,nspec_f) :: Sc_skin
     ! Sherwood number at skin temperature
-    real(kind=dp_t), dimension(np,nspec_f) :: Sh
+    real(amrex_real), dimension(np,nspec_f) :: Sh
     ! Spalding number
-    real(kind=dp_t), dimension(np,nspec_f) :: spalding_B
+    real(amrex_real), dimension(np,nspec_f) :: spalding_B
     ! Thermal Spalding number
-    real(kind=dp_t), dimension(np,nspec_f) :: B_T
+    real(amrex_real), dimension(np,nspec_f) :: B_T
 
-    real(kind=dp_t), dimension(np) :: inv_tau
+    real(amrex_real), dimension(np) :: inv_tau
     ! Shear Viscosity
-    real(kind=dp_t), dimension(np) :: mu_skin
+    real(amrex_real), dimension(np) :: mu_skin
     ! Bulk  Viscosity (not used, but returned by transport routines)
-    real(kind=dp_t), dimension(np) :: xi_skin
+    real(amrex_real), dimension(np) :: xi_skin
     ! Bulk  Viscosity (not used, but returned by transport routines)
-    real(kind=dp_t), dimension(np) :: lambda_skin
+    real(amrex_real), dimension(np) :: lambda_skin
     ! Heat capacity
-    real(kind=dp_t), dimension(np) :: cp_skin
-    real(kind=dp_t), dimension(np,nspec_f) :: cp_f
-    real(kind=dp_t), dimension(np) :: temp_diff
-    real(kind=dp_t), dimension(np) :: temp_skin
-    real(kind=dp_t), dimension(np) :: Pr_skin
-    real(kind=dp_t), dimension(np) :: Nu
+    real(amrex_real), dimension(np) :: cp_skin
+    real(amrex_real), dimension(np,nspec_f) :: cp_f
+    real(amrex_real), dimension(np) :: temp_diff
+    real(amrex_real), dimension(np) :: temp_skin
+    real(amrex_real), dimension(np) :: Pr_skin
+    real(amrex_real), dimension(np) :: Nu
 
     real*8, parameter :: pi = 3.1415926535897932d0
     real*8, parameter :: half_pi = 0.5d0*Pi
@@ -101,16 +101,11 @@ contains
     real*8, parameter :: one_third = 1.0d0/3.0d0
 
     ! Reference pressure of the boiling temperature (1 atm)
-    real(kind=dp_t) :: p0 = 1.013e6 ! dyn/cm2
+    real(amrex_real) :: p0 = 1.013e6 ! dyn/cm2
     ! Universal Gas Constant (Ru)
     real*8, parameter :: Ru = 8.31447e+7 ! dyn.cm
 
     type (eos_t) :: eos_state
-
-    print *,'CIAO ', source_lo,source_hi
-    print *,'HELLO ', state_lo,state_hi
-
-
 
     inv_dx = 1.0d0/dx
     inv_vol = inv_dx(1) * inv_dx(2) * inv_dx(3)
@@ -169,7 +164,7 @@ contains
           print *,'PARTICLE ID ', particles(n)%id,' REACHING OUT OF BOUNDS AT (I,J,K) = ',i,j,k
           print *,'Array bounds are ', state_lo(:), state_hi(:)
           print *,'(x,y,z) are ', particles(n)%pos(1), particles(n)%pos(2), particles(n)%pos(3)
-          call bl_error('Aborting in update_particles')
+       !  call bl_error('Aborting in update_particles')
        end if
 
        wx_hi = lx - i
