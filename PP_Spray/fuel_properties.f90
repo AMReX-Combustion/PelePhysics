@@ -8,14 +8,14 @@ module fuel_properties
 
       integer :: nspec_f
       integer, parameter :: max_nspec_f = 1
-      real(kind=dp_t), dimension(max_nspec_f) :: fuel_density
-      real(kind=dp_t), dimension(max_nspec_f) :: fuel_crit_temp
-      real(kind=dp_t), dimension(max_nspec_f) :: fuel_latent
-      real(kind=dp_t), dimension(max_nspec_f) :: fuel_mass_frac
-      real(kind=dp_t), dimension(max_nspec_f) :: fuel_boil_temp
-      real(kind=dp_t), dimension(max_nspec_f) :: fuel_cp
-      real(kind=dp_t), dimension(max_nspec_f) :: fuel_molwt
-      integer(kind=dp_t), dimension(max_nspec_f) :: fuel_indx
+      real(amrex_real), dimension(max_nspec_f) :: fuel_density
+      real(amrex_real), dimension(max_nspec_f) :: fuel_crit_temp
+      real(amrex_real), dimension(max_nspec_f) :: fuel_latent
+      real(amrex_real), dimension(max_nspec_f) :: fuel_mass_frac
+      real(amrex_real), dimension(max_nspec_f) :: fuel_boil_temp
+      real(amrex_real), dimension(max_nspec_f) :: fuel_cp
+      real(amrex_real), dimension(max_nspec_f) :: fuel_molwt
+      integer(amrex_real), dimension(max_nspec_f) :: fuel_indx
 
 end module fuel_properties
 

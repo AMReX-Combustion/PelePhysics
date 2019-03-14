@@ -28,13 +28,13 @@ contains
     use fuel_properties
 
     integer :: ccnspec_f
-    real(kind=dp_t), dimension(ccnspec_f) :: ccfuel_mass_frac
-    real(kind=dp_t), dimension(ccnspec_f) :: ccfuel_density
-    real(kind=dp_t), dimension(ccnspec_f) :: ccfuel_crit_temp
-    real(kind=dp_t), dimension(ccnspec_f) :: ccfuel_latent
-    real(kind=dp_t), dimension(ccnspec_f) :: ccfuel_boil_temp
-    real(kind=dp_t), dimension(ccnspec_f) :: ccfuel_cp
-    real(kind=dp_t), dimension(ccnspec_f) :: ccfuel_molwt
+    real(amrex_real), dimension(ccnspec_f) :: ccfuel_mass_frac
+    real(amrex_real), dimension(ccnspec_f) :: ccfuel_density
+    real(amrex_real), dimension(ccnspec_f) :: ccfuel_crit_temp
+    real(amrex_real), dimension(ccnspec_f) :: ccfuel_latent
+    real(amrex_real), dimension(ccnspec_f) :: ccfuel_boil_temp
+    real(amrex_real), dimension(ccnspec_f) :: ccfuel_cp
+    real(amrex_real), dimension(ccnspec_f) :: ccfuel_molwt
     integer, dimension(ccnspec_f) :: ccfuel_indx
 
     nspec_f = ccnspec_f
