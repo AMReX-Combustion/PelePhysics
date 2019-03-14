@@ -1,4 +1,1 @@
 f90EXE_sources += network.f90
-ifeq ($(USE_DVODE), TRUE)
-    F90EXE_sources += react_type.F90
-endif

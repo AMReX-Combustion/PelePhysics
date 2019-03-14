@@ -16,11 +16,6 @@ FUEGO_GAS  = FALSE
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
 
-USE_DVODE = TRUE
-ifeq ($(USE_DVODE), TRUE)
-    DEFINES  += -DUSE_DVODE
-endif
-
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   #Chemistry_Model = chem-H
