@@ -23,7 +23,7 @@ ifeq ($(USE_DVODE), TRUE)
     DEFINES  += -DUSE_DVODE
 endif
 
-USE_SUNDIALS_3x4x=TRUE
+USE_SUNDIALS_3x4x = TRUE
 CVODE_LIB_DIR = /home/amfelden/CODES/PeleLM/Source/ChemDriver/cvode-4.0.2/instdir/lib/
 
 USE_KLU = FALSE

@@ -167,9 +167,9 @@ main (int   argc,
      
     ParmParse ppa("amr");
     ppa.query("plot_file",pltfile);
-    std::string outfile = Concatenate(pltfile,90); // Need a number other than zero for reg test to pass
+    //std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
     //MultiFab::Copy(temperature,mf,Ncomp,0,1,0);
-    PlotFileFromMF(mf,outfile);
+    //PlotFileFromMF(mf,outfile);
 
 
     //iMultiFab mask(ba,dm,1,0);
@@ -236,10 +236,10 @@ main (int   argc,
 
 
 
-    outfile = Concatenate(pltfile,10); // Need a number other than zero for reg test to pass
-    //MultiFab::Copy(temperature,mf,Ncomp,0,1,0);
-    PlotFileFromMF(mf,outfile);
-    //PlotFileFromMF(temperature,outfile);
+    std::string outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
+    MultiFab::Copy(temperature,mf,Ncomp,0,1,0);
+    //PlotFileFromMF(mf,outfile);
+    PlotFileFromMF(temperature,outfile);
 
     extern_cFree();
     extern_close();
