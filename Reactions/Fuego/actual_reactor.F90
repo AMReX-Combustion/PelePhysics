@@ -1,6 +1,7 @@
 module reactor_module
 
   use amrex_fort_module, only : amrex_real
+  use amrex_paralleldescriptor_module, only: parallel_IOProcessor => amrex_pd_ioprocessor
   use network, only: nspec, spec_names
   use react_type_module
   use eos_type_module
@@ -52,18 +53,20 @@ contains
     call vode_init(neq,verbose,itol,rtol,atol,order,&
          maxstep,use_ajac,save_ajac,always_new_j,stiff)
 
-    print *,"Using good ol' dvode"
-    print *,"--> DENSE solver without Analytical J"
+    if (parallel_IOProcessor()) then
+       print *,"Using good ol' dvode"
+       print *,"--> DENSE solver without Analytical J"
+    endif
     iE = iE_in
     if (iE == 1) then
-        print *," ->with internal energy (UV cst)"
-        allocate(rhoydot_ext(nspec))
+       if (parallel_IOProcessor()) print *," ->with internal energy (UV cst)"
+       allocate(rhoydot_ext(nspec))
     else if (iE == 5) then
-        print *," ->with enthalpy (HP cst)"
-        allocate(ydot_ext(nspec))
+       if (parallel_IOProcessor()) print *," ->with enthalpy (HP cst)"
+       allocate(ydot_ext(nspec))
     else
-        print *," ->with enthalpy (sort of rhoP cst)"
-        allocate(rhoydot_ext(nspec))
+       if (parallel_IOProcessor()) print *," ->with enthalpy (sort of rhoP cst)"
+       allocate(rhoydot_ext(nspec))
     end if 
 
     allocate(vodeVec(neq))
