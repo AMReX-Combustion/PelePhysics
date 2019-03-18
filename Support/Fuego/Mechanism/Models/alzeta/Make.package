@@ -1,4 +1,4 @@
-cEXE_sources+=alzeta.c
+CEXE_sources+=alzeta.cpp
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 

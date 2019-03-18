@@ -16,6 +16,5 @@ cat ${CHEMC} \
           ${HEADERDIR}/header.start\
           ${HEADERDIR}/header.mec   ${CHEMINP}\
           ${HEADERDIR}/header.therm ${THERMINP}\
-          ${HEADERDIR}/header.trans ${TRANINP}\
           ${HEADERDIR}/header.end > ${FINALFILE}
 rm -f ${CHEMC} ${CHEMLK} ${LOG} 

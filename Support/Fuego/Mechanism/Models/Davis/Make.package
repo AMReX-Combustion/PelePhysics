@@ -1,4 +1,4 @@
-cEXE_sources+=Davis.c
+CEXE_sources+=Davis.cpp
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 
