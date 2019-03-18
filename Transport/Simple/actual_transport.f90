@@ -353,16 +353,15 @@ contains
   integer npts
 
   real(amrex_real) :: cvk(npts,nspec), cvkint(npts,nspec), cvkrot(npts,nspec)
-  real(amrex_real) :: rwrk 
   real(amrex_real) :: FofT(npts,nspec), Fnorm(nspec), epskoverT
 
   real(amrex_real), parameter :: pi = 3.141592653589793238d0
  
 
-  integer n,i,iwrk
+  integer n,i
 
   do n=1,npts
-      call ckcvms( coeff % eos_state(n) % T, iwrk, rwrk, coeff % eos_state(n)%cvi )
+      call ckcvms( coeff % eos_state(n) % T, coeff % eos_state(n)%cvi )
   enddo
 
   do i=1,nspec

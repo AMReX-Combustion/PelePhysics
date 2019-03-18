@@ -1,7 +1,7 @@
 
 CHEMINP=ALZ_F-MechC_ck.dat
 THERMINP=ALZ_F-MechC_therm.dat
-FINALFILE=alzeta.c
+FINALFILE=alzeta.cpp
 
 FMC=${PELE_PHYSICS_HOME}/Support/Fuego/Pythia/products/bin/fmc.py
 HEADERDIR=${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/header
@@ -12,7 +12,7 @@ CHEMC=chem.c
 
 ${FUEGO_PYTHON} ${FMC} -mechanism=${CHEMINP} -thermo=${THERMINP} -name=${CHEMC}
 echo Compiling ${FINALFILE}...
-cat ${CHEMC} ${TRANC} \
+cat ${CHEMC} \
           ${HEADERDIR}/header.start\
           ${HEADERDIR}/header.mec   ${CHEMINP}\
           ${HEADERDIR}/header.therm ${THERMINP}\

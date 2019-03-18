@@ -23,8 +23,6 @@ module actual_eos_module
   logical, save, private :: initialized = .false.
 
   real(amrex_real), save, public :: smallT = 1.d-50
-  integer :: iwrk
-  real(amrex_real) :: rwrk
 
   private :: nspecies, Ru, inv_mwt
 
@@ -95,14 +93,14 @@ subroutine actual_eos(input, state)
  case (eos_xty)
 
     ! Remains unchanged from Ideal EOS to Peng-Robinson EOS
-    call ckxty (state % molefrac,iwrk,rwrk,state % massfrac)
+    call ckxty (state % molefrac,state % massfrac)
     
     return
 
  case (eos_ytx)
 
     ! Remains unchanged from Ideal EOS to Peng-Robinson EOS
-    call ckytx (state % massfrac,iwrk,rwrk,state % molefrac)
+    call ckytx (state % massfrac,state % molefrac)
 
     return
 
@@ -211,9 +209,9 @@ subroutine actual_eos(input, state)
 
 !!$ ! By here, we know T, e, rho, p, massfrac and wbar
 !!$
-!!$ call ckcvms(state % T, iwrk, rwrk, state % cvi)  ! erg/gi.K
-!!$ call ckcpms(state % T, iwrk, rwrk, state % cpi)  ! erg/gi.K
-!!$ call ckhms (state % T, iwrk, rwrk, state % hi)    ! erg/gi
+!!$ call ckcvms(state % T, state % cvi)  ! erg/gi.K
+!!$ call ckcpms(state % T, state % cpi)  ! erg/gi.K
+!!$ call ckhms (state % T, state % hi)    ! erg/gi
 !!$
 !!$ state % cv = sum(state % massfrac(:) * state % cvi(:)) ! erg/g.K
 !!$ state % cp = sum(state % massfrac(:) * state % cpi(:)) ! erg/g.K
@@ -548,7 +546,7 @@ subroutine PR_EOS_Get_rhoE_givenTP(state)
   K1 = (1.0/(2.0*sqrtOf2*state%bm))*log( (tau + (1.0-sqrtOf2)*state%bm)/(tau + (1.0+sqrtOf2)*state%bm ) )
 
   ! Ideal gas internal energy
-  call ckums(state%T, iwrk, rwrk, Eig)
+  call ckums(state%T, Eig)
 
   ! Add departure function to the ideal gas mixture internal energy 
   state%e = Eig + (state%am - state%T*state%dAmdT)*K1
@@ -600,7 +598,7 @@ subroutine PR_EOS_GetE_givenRhoT(state)
   K1 = (1.0/(2.0*sqrtOf2*state%bm))*log( (tau + (1.0-sqrtOf2)*state%bm)/(tau + (1.0+sqrtOf2)*state%bm ) )
 
   ! Ideal gas internal energy
-  call ckums(state%T, iwrk, rwrk, Eig)
+  call ckums(state%T, Eig)
 
   ! Add departure function to the ideal gas mixture internal energy 
   state%e = Eig + (state%am - state%T*state%dAmdT)*K1
@@ -669,7 +667,7 @@ subroutine PR_EOS_Get_TE_givenRhoP(state)
   K1 = (1.0/(2.0*sqrtOf2*state%bm))*log( (tau + (1.0-sqrtOf2)*state%bm)/(tau + (1.0+sqrtOf2)*state%bm ) )
 
   ! Compute ideal gas internal energy 
-  call ckums(state % T, iwrk, rwrk, Eig)
+  call ckums(state % T, Eig)
   
   ! Update the real gas internal energy using departure functions
   state%e = Eig + (state%am - state%T*state%dAmdT)*K1
@@ -727,8 +725,8 @@ subroutine PR_EOS_Get_TP_GivenRhoE(state,lierr)
      K1 = (1.0/(2.0*sqrtOf2*state%bm))*log( (tau + (1.0-sqrtOf2)*state%bm)/(tau + (1.0+sqrtOf2)*state%bm ) )
 
      ! Ideal gas internal energy and specific heat at constant volume, Cv
-     call ckums(Tn, iwrk, rwrk, Eig)
-     call ckcvbs(Tn, state % massfrac, iwrk, rwrk, state % cv)
+     call ckums(Tn, Eig)
+     call ckcvbs(Tn, state % massfrac,state % cv)
 
      ! Calculate real gas Cv
      state%cv = state%cv - Tn*state%d2AmdT2*K1
@@ -808,7 +806,7 @@ subroutine PR_EOS_GetMixtureCv(state)
   K1 = (1.0/(2.0*sqrtOf2*state%bm))*log( (tau + (1.0-sqrtOf2)*state%bm)/(tau + (1.0+sqrtOf2)*state%bm ) )
 
   ! Ideal gas specific heat at constant volume
-  call ckcvbs(state%T, state % massfrac, iwrk, rwrk, state % cv)
+  call ckcvbs(state%T, state % massfrac, state % cv)
 
   ! Real gas specific heat at constant volume
   state%cv = state%cv - state%T*state%d2AmdT2*K1
@@ -852,7 +850,7 @@ subroutine PR_EOS_GetMixtureCp(state)
   state%dpdtau = -Rm*state%T/(eosT1Denom*eosT1Denom) + 2.0*state%am*(tau+state%bm)/(eosT2Denom*eosT2Denom) 
 
   ! Ideal gas specific heat at constant volume
-  call ckcvbs(state%T, state % massfrac, iwrk, rwrk,CviG)
+  call ckcvbs(state%T, state % massfrac, CviG)
 
   ! Real gas specific heat at constant pressure
   state%cp = CviG - state%T*state%d2AmdT2*K1 - state%T*state%dPdT*state%dPdT/state%dpdtau
@@ -895,7 +893,7 @@ subroutine PR_EOS_GetSpeedOfSound(state)
   state%dpdtau = -Rm*state%T/(eosT1Denom*eosT1Denom) + 2.0*state%am*(tau+state%bm)/(eosT2Denom*eosT2Denom) 
   
   ! Ideal gas specific heat at constant volume
-  call ckcvbs(state%T, state % massfrac, iwrk, rwrk,CviG)
+  call ckcvbs(state%T, state % massfrac, CviG)
   
   ! Real gas specific heat at constant pressure
   state%cp = CviG - state%T*state%d2AmdT2*K1 - state%T*state%dPdT*state%dPdT/state%dpdtau

@@ -1,4 +1,4 @@
-cEXE_sources+=chem-H.c
+CEXE_sources+=chem-H.cpp
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 

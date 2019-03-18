@@ -1,4 +1,4 @@
-cEXE_sources+=LiDryer.c
+CEXE_sources+=LiDryer.cpp
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 

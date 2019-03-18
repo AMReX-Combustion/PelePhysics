@@ -1,4 +1,4 @@
-cEXE_sources+=LuDME.c
+CEXE_sources+=LuDME.cpp
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 
