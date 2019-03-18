@@ -1,7 +1,7 @@
 
 CHEMINP=drm19.dat
 THERMINP=thermo12.dat
-FINALFILE=drm19.c
+FINALFILE=drm19.cpp
 
 FMC=${PELE_PHYSICS_HOME}/Support/Fuego/Pythia/products/bin/fmc.py
 HEADERDIR=${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/header
@@ -11,6 +11,7 @@ LOG=chem.log
 CHEMC=chem.c
 
 ${FUEGO_PYTHON} ${FMC} -mechanism=${CHEMINP} -thermo=${THERMINP} -name=${CHEMC}
+echo Compiling ${FINALFILE}...
 cat ${CHEMC} \
           ${HEADERDIR}/header.start\
           ${HEADERDIR}/header.mec   ${CHEMINP}\
