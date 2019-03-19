@@ -66,7 +66,7 @@ SprayParticleContainer::moveKickDrift (MultiFab& state,
 
     BL_PROFILE("ParticleContainer::moveKickDrift()");
     BL_ASSERT(lev >= 0);
-                 std::cout << " GROW -1" << state.nGrow() << std::endl;
+    //std::cout << " GROW -1" << state.nGrow() << std::endl;
     BL_ASSERT(state.nGrow() >= 2);
 
     //If there are no particles at this level
@@ -103,8 +103,7 @@ SprayParticleContainer::moveKickDrift (MultiFab& state,
     // will end up duplicating those values with each call
     // 
     // ********************************************************************************
-         tmp_src_width = 3;
-         std::cout << " ciccio " << tmp_src_width << std::endl;
+    tmp_src_width = 3; // HACK?
 
     tmp_src_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(lev),
                                       this->m_gdb->ParticleDistributionMap(lev),
@@ -237,7 +236,7 @@ SprayParticleContainer::moveKick(MultiFab& state,
 
     BL_PROFILE("ParticleContainer::moveKick()");
     BL_ASSERT(lev >= 0);
-                 std::cout << " GROW -2" << state.nGrow() << std::endl;
+    //std::cout << " GROW -2" << state.nGrow() << std::endl;
     BL_ASSERT(state.nGrow() >= 2);
 
     //If there are no particles at this level
@@ -274,8 +273,7 @@ SprayParticleContainer::moveKick(MultiFab& state,
     // will end up duplicating those values with each call
     // ********************************************************************************
 
-         tmp_src_width = 3;
-         std::cout << " pippo " << tmp_src_width << std::endl;
+    tmp_src_width = 3; // HACK?
 
     tmp_src_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(lev),
                                       this->m_gdb->ParticleDistributionMap(lev),
