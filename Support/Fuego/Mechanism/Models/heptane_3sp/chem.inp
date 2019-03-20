@@ -1,0 +1,17 @@
+!*******************************
+! Dummy "mechanism" to represent 
+! a simple 3species system for 
+! n-heptane non-reacting spray
+!*******************************
+
+
+ELEMENTS
+C H O N 
+END
+
+SPECIES
+NC7H16 O2     N2
+END
+
+REACTIONS
+END
