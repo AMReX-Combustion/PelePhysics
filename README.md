@@ -11,7 +11,7 @@ Typically, CHEMKIN-based *mechanisms* (combustion models) are transmitted via a 
 * *Thermodynamics* - NASA-formatted polynomial expressions, assuming a mixture of ideal gases
 * *Transport* - physical parameters for each of the chemical species required for the `EGLib` (or comparable) library for computing species- and temperature-dependent molecular transport coefficients
 
-Supported options include:
+This information is read by the FUEGO tool, and source code files are generated that are to linked directly into an executable in the `Pele` code suite in order to provide data and functions necessary to evaluate chemistry, transport and thermodynamic relationships. `PelePhysics` supports the following in addition to standard CHEMKIN style models:
 * *Soave-Redlich-Kwong* real gas equation of state, implemented to be consistent with corresponding ideal gas model at suitable conditions
 * *Gamma-law* gas equation of state
 * *Constant coefficient* transport
