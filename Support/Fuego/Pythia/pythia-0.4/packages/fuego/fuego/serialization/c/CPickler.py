@@ -325,9 +325,42 @@ class CPickler(CMill):
 
     def _renderDocument(self, mechanism, options=None):
 
-        self._setSpecies(mechanism)
+        plot_react_matrix=True
+        reorder_reactions=True
 
-        self.reactionIndex = mechanism._sort_reactions()
+        if(reorder_reactions):
+
+            if(plot_react_matrix):
+                import matplotlib.pyplot as mplt
+                (fig,ax)=mplt.subplots(1,4,figsize=(20,5))
+                rmat=mechanism._get_reaction_matrix()
+                ax[0].matshow(rmat)
+
+            #sort reactions by type
+            self.reactionIndex = mechanism._sort_reactions()
+            if(plot_react_matrix):
+                rmat=mechanism._get_reaction_matrix()
+                ax[1].matshow(rmat)
+
+            #mechanism._sort_reactions_within_type_tsp(self.reactionIndex)
+            mechanism._sort_reactions_within_type_random(self.reactionIndex)
+            if(plot_react_matrix):
+                rmat=mechanism._get_reaction_matrix()
+                ax[2].matshow(rmat)
+
+            #mechanism._sort_species_ids_tsp()
+            mechanism._sort_species_ids_random()
+            if(plot_react_matrix):
+                rmat=mechanism._get_reaction_matrix()
+                ax[3].matshow(rmat)
+                mplt.savefig("rmat_all.pdf")
+
+            #set species in cpickler    
+            self._setSpecies(mechanism)
+
+        else:
+            self._setSpecies(mechanism)
+            self.reactionIndex = mechanism._sort_reactions()
 
         self._includes()
         self._declarations(mechanism)

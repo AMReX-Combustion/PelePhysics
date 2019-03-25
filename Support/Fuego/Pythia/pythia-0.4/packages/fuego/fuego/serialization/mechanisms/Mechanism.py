@@ -198,6 +198,252 @@ class Mechanism(object):
 
         return n
 
+    #HARI======================================
+    #   These are routines to sort reactions
+    #   and improve memory locality
+    #==========================================
+    def _reorder_reaction_set_tsp(self,rset):
+
+        import numpy as npy
+
+        nReactions = len(rset)
+        nSpecies = len(self.species())
+
+        reactionmat=npy.zeros((nReactions,nSpecies))
+
+        for i,reaction in zip(range(nReactions),rset):
+
+            agents = list(set(reaction.reactants+reaction.products))
+
+            for a in agents:
+                symbol, coefficient = a
+                reactionmat[i][self.species(symbol).id]=coefficient
+        
+        new_to_old_map=self._tsp_solve(reactionmat,0.001)
+
+        return(new_to_old_map)
+
+    def _sort_reactions_within_type_tsp(self,n):
+
+        #note--------------------------------------------------------
+        #Species ids, ie sp.id starts with 0
+        #while reaction ids, ie reaction.id starts with 1
+        #although when doing mechanism.reaction(id=i), i should be
+        #index starting with 0. this is because the "find()" function 
+        #in reactionSet class queries within the entity array
+        #------------------------------------------------------------
+
+        #sort within each type
+        #=====================
+        rs    = self._reactions.find()
+
+        itroe      = n[0:2]
+        isri       = n[1:3]
+        ilindemann = n[2:4]
+        i3body     = n[3:5] 
+        isimple    = n[4:6]
+        ispecial   = n[5:7]
+
+        ntroe      = itroe[1]      - itroe[0]
+        nsri       = isri[1]       - isri[0]
+        nlindemann = ilindemann[1] - ilindemann[0]
+        n3body     = i3body[1]     - i3body[0]
+        nsimple    = isimple[1]    - isimple[0]
+        nspecial   = ispecial[1]   - ispecial[0]
+
+        troe_order    = self._reorder_reaction_set_tsp(rs[itroe[0]:itroe[1]])+itroe[0]
+        sri_order     = self._reorder_reaction_set_tsp(rs[isri[0]:isri[1]])+isri[0]
+        lind_order    = self._reorder_reaction_set_tsp(rs[ilindemann[0]:ilindemann[1]])+ilindemann[0]
+        thbody_order  = self._reorder_reaction_set_tsp(rs[i3body[0]:i3body[1]])+i3body[0]
+        simple_order  = self._reorder_reaction_set_tsp(rs[isimple[0]:isimple[1]])+isimple[0]
+        special_order = self._reorder_reaction_set_tsp(rs[ispecial[0]:ispecial[1]])+ispecial[0]
+
+        new_to_old_map = troe_order.tolist()+sri_order.tolist()+\
+        lind_order.tolist()+thbody_order.tolist()+simple_order.tolist()+special_order.tolist()
+
+        self._reorder_reactions_from_map(new_to_old_map)
+
+    def _sort_reactions_within_type_random(self,n):
+
+        import numpy as npy
+        #note--------------------------------------------------------
+        #Species ids, ie sp.id starts with 0
+        #while reaction ids, ie reaction.id starts with 1
+        #although when doing mechanism.reaction(id=i), i should be
+        #index starting with 0. this is because the "find()" function 
+        #in reactionSet class queries within the entity array
+        #------------------------------------------------------------
+
+        #sort within each type
+        #=====================
+        rs    = self._reactions.find()
+
+        itroe      = n[0:2]
+        isri       = n[1:3]
+        ilindemann = n[2:4]
+        i3body     = n[3:5] 
+        isimple    = n[4:6]
+        ispecial   = n[5:7]
+
+        ntroe      = itroe[1]      - itroe[0]
+        nsri       = isri[1]       - isri[0]
+        nlindemann = ilindemann[1] - ilindemann[0]
+        n3body     = i3body[1]     - i3body[0]
+        nsimple    = isimple[1]    - isimple[0]
+        nspecial   = ispecial[1]   - ispecial[0]
+
+        troe_order    = npy.random.permutation(ntroe)      + itroe[0]
+        sri_order     = npy.random.permutation(nsri)       + isri[0]
+        lind_order    = npy.random.permutation(nlindemann) + ilindemann[0]
+        thbody_order  = npy.random.permutation(n3body)     + i3body[0]
+        simple_order  = npy.random.permutation(nsimple)    + isimple[0]
+        special_order = npy.random.permutation(nspecial)   + ispecial[0]
+
+        new_to_old_map = troe_order.tolist()+sri_order.tolist()+\
+        lind_order.tolist()+thbody_order.tolist()+simple_order.tolist()+special_order.tolist()
+
+        self._reorder_reactions_from_map(new_to_old_map)
+
+    def _reorder_reactions_from_map(self,new_to_old_map):
+
+        rs    = self._reactions.find()
+        rsnew = []
+
+        for i in range(len(new_to_old_map)):
+            r = rs[new_to_old_map[i]]
+            r.id = i+1 #id should start with 1
+            rsnew.append(r)
+        
+        for r in rsnew:
+            self._reactions.replace2(r,r.id-1,r)
+
+    def _reorder_species_from_map(self,new_to_old_map):
+
+        from SpeciesSet import SpeciesSet
+        import copy
+
+        nSpecies = len(self.species())
+        spnew=SpeciesSet()
+
+        #reorder species
+        for i in range(nSpecies):
+            for sp in self.species():
+                if(sp.id == new_to_old_map[i]):
+                    break
+
+            sp_temp=copy.deepcopy(sp)
+            sp_temp.id=i
+            spnew.insert(sp_temp.symbol, sp_temp)
+
+        self._species=spnew
+
+
+    def _get_reaction_matrix(self):
+
+        import numpy as npy
+
+        nSpecies = len(self.species())
+        nReactions = len(self.reaction())
+
+        reactionmat=npy.zeros((nReactions,nSpecies))
+
+        for i in range(nReactions):
+
+            reaction = self.reaction(id=i) #here id has to start from 0
+            agents = list(set(reaction.reactants+reaction.products))
+            efficiencies = reaction.efficiencies
+
+            for a in agents:
+                symbol, coefficient = a
+                reactionmat[i][self.species(symbol).id]=coefficient
+            
+            for ii, eff in enumerate(efficiencies):
+                symbol, efficiency = eff
+                reactionmat[i][self.species(symbol).id]=1.0
+
+        return(reactionmat)
+
+    def _cluster_solve(self,mat):
+
+        from sklearn.cluster import AgglomerativeClustering
+
+        #do reaction reordering
+        nclus=mat.shape[0]/2
+
+        clustering = AgglomerativeClustering(n_clusters=nclus, compute_full_tree=True,
+                            affinity='euclidean', linkage='ward')
+        y=clustering.fit_predict(reactionmat)
+        print(y)
+
+        new_to_old_map=[]
+        for i in range(nclus):
+            for j in range(len(y)):
+                if(y[j]==i):
+                    new_to_old_map.append(j)
+
+        return(new_to_old_map)
+
+
+    def _tsp_solve(self,mat,improvement_threshold):
+
+        import numpy as npy
+
+        #===============================================================
+        # Calculate the euclidian distance in n-space of the route r traversing cities c, ending at the path start.
+        path_distance = lambda r,c: npy.sum([npy.linalg.norm(c[r[p]]-c[r[p-1]],1) for p in range(len(r))])
+        # Reverse the order of all elements from element i to element k in array r.
+        two_opt_swap = lambda r,i,k: npy.concatenate((r[0:i],r[k:-len(r)+i-1:-1],r[k+1:len(r)]))
+
+        def two_opt(cities,improvement_threshold): # 2-opt Algorithm adapted from https://en.wikipedia.org/wiki/2-opt
+
+            route = npy.arange(cities.shape[0]) # Make an array of row numbers corresponding to cities.
+            improvement_factor = 1 # Initialize the improvement factor.
+            best_distance = path_distance(route,cities) # Calculate the distance of the initial path.
+            while improvement_factor > improvement_threshold: # If the route is still improving, keep going!
+                distance_to_beat = best_distance # Record the distance at the beginning of the loop.
+                for swap_first in range(1,len(route)-2): # From each city except the first and last,
+                    for swap_last in range(swap_first+1,len(route)): # to each of the cities following,
+                        new_route = two_opt_swap(route,swap_first,swap_last) # try reversing the order of these cities
+                        new_distance = path_distance(new_route,cities) # and check the total distance with this modification.
+                        if new_distance < best_distance: # If the path distance is an improvement,
+                            route = new_route # make this the accepted best route
+                            best_distance = new_distance # and update the distance corresponding to this route.
+                improvement_factor = 1 - best_distance/distance_to_beat # Calculate how much the route has improved.
+            return route # When the route is no longer improving substantially, stop searching and return the route.
+        #===============================================================
+
+        if(len(mat) > 0):
+            nrows=mat.shape[0]
+            ncols=mat.shape[1]
+            newmat=npy.zeros((nrows+1,ncols))
+            newmat[1:(nrows+1),:]=mat
+            order=two_opt(newmat,improvement_threshold)
+            print(order[1:(nrows+1)]-1)
+            return(order[1:(nrows+1)]-1)
+        else:
+            return(npy.array([]))
+
+
+    def _sort_species_ids_tsp(self):
+
+        import numpy as npy
+
+        rmat=self._get_reaction_matrix()
+        new_to_old_map=self._tsp_solve(npy.transpose(rmat),0.001)
+        #new_to_old_map=self._cluster_solve(npy.transpose(rmat))
+
+        self._reorder_species_from_map(new_to_old_map)
+
+    def _sort_species_ids_random(self):
+
+        import numpy as npy
+
+        nSpecies = len(self.species())
+        rmat=self._get_reaction_matrix()
+        new_to_old_map = npy.random.permutation(nSpecies)
+
+        self._reorder_species_from_map(new_to_old_map)
+
 
     # other methods  
 
