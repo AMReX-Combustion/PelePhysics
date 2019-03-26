@@ -1,4 +1,4 @@
-cEXE_sources+=grimech30.c
+CEXE_sources+=grimech30.cpp
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 

@@ -1,4 +1,4 @@
-cEXE_sources+=chem-CH4-2step.c
+CEXE_sources+=chem-CH4-2step.cpp
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 

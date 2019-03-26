@@ -1,4 +1,4 @@
-cEXE_sources+=dodecane_lu.c
+CEXE_sources+=dodecane_lu.cpp
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 
