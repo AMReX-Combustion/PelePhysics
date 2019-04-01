@@ -29,7 +29,7 @@ contains
     
     use eos_module
 
-    real(amrex_real),   intent(inout) :: rY_in(nspec+1),rY_src_in(nspec+1)
+    real(amrex_real),   intent(inout) :: rY_in(nspec+1),rY_src_in(nspec)
     real(amrex_real),   intent(inout) :: rX_in,rX_src_in,P_in
     real(amrex_real),   intent(inout) :: dt_react, time
     integer                           :: Init, cost_value
