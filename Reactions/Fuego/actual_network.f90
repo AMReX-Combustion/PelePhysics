@@ -11,7 +11,7 @@
 
 module actual_network
 
-  use chemistry_module, only : nspecies, chemistry_init, chemistry_close, chemistry_initialized, spec_names, elem_names, rwrk, iwrk
+  use chemistry_module, only : nspecies, chemistry_init, chemistry_close, chemistry_initialized, spec_names, elem_names
 
   implicit none
 
@@ -23,7 +23,7 @@ contains
   subroutine actual_network_init
 
     if (.not. chemistry_initialized)  call chemistry_init()
-    call ckindx(iwrk,rwrk,nelem,nspec,nreac,nfit)
+    call ckindx(nelem,nspec,nreac,nfit)
     nspecies = nspec
     naux = 0
     allocate(aux_names(naux))

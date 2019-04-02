@@ -23,8 +23,6 @@ module eos_module
   logical, save, private :: initialized = .false.
 
   real(amrex_real), save, public :: smallT = 1.d-50
-  integer :: iwrk
-  real(amrex_real) :: rwrk
 
   public :: eos_init, eos_xty, eos_ytx, eos_cpi, eos_hi, eos_cv, eos_cp, eos_p_wb, eos_wb, eos_get_activity, eos_rt, eos_tp, eos_rp, eos_re, eos_ps, eos_ph, eos_th, eos_rh, eos_get_transport, eos_h, eos_deriv, eos_mui
   private :: nspecies, Ru, inv_mwt
@@ -152,7 +150,7 @@ subroutine eos_xty(state)
  type (eos_t), intent(inout) :: state
 
  ! Remains unchanged from Ideal EOS to SRK EOS
- call ckxty (state % molefrac,iwrk,rwrk,state % massfrac)
+ call ckxty (state % molefrac,state % massfrac)
     
 end subroutine eos_xty
 
@@ -163,7 +161,7 @@ subroutine eos_ytx(state)
  type (eos_t), intent(inout) :: state
 
  ! Remains unchanged from Ideal EOS to SRK EOS
- call ckytx (state % massfrac,iwrk,rwrk,state % molefrac)
+ call ckytx (state % massfrac,state % molefrac)
 
 end subroutine eos_ytx
 
@@ -177,7 +175,7 @@ subroutine eos_cpi(state)
  !  these are only used to esimate internal degrees of freedom 
  !  for computing bulk viscosity
 
- call ckcpms(state % T, iwrk, rwrk, state % cpi)
+ call ckcpms(state % T, state % cpi)
 
  !  call bl_error('EOS: eos_cpi is not supported in this EOS.')
  ! Construct the EOS for mixture & Calculate species Cp accounting for non-ideal effects
@@ -435,7 +433,7 @@ subroutine eos_re(state)
  InvEosT2Denom = 1.0d0/eosT2Denom
  InvEosT3Denom = 1.0d0/eosT3Denom
  Rm = (Ru/state%wbar)
- call ckums(state % T, iwrk, rwrk, ek)
+ call ckums(state % T, ek)
  do i = 1,nspecies
     Rmk = Ru*inv_mwt(i)
     Temp1 = (state%T * state%d2amdYkdT(i) - state%dAmdYk(i))*K1
@@ -445,7 +443,7 @@ subroutine eos_re(state)
  state%cv = state%cv + state%T*state%d2AmdT2* (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
  state%dPdT = Rm*InvEosT1Denom - state%dAmdT*InvEosT2Denom
  state%dpdtau = -Rm*state%T*InvEosT1Denom*InvEosT1Denom + state%am*(2.0*tau+state%bm)*InvEosT2Denom*InvEosT2Denom
- call ckcpbs(state % T, state % massfrac, iwrk, rwrk,Cpig)
+ call ckcpbs(state % T, state % massfrac, Cpig)
  dhmdT = Cpig + state%T*state%d2AmdT2*K1 - state%dAmdT*InvEosT3Denom + Rm*state%bm*InvEosT1Denom
  dhmdtau = -(state%T*state%dAmdT - state%am)*InvEosT2Denom + state%am*InvEosT3Denom*InvEosT3Denom - &
            Rm*state%T*state%bm*InvEosT1Denom*InvEosT1Denom
@@ -854,7 +852,7 @@ subroutine SRK_EOS_Get_E_givenTP(state)
   K1 = (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
 
   ! Ideal gas internal energy
-  call ckums(state%T, iwrk, rwrk, ei_ig)
+  call ckums(state%T, ei_ig)
   Eig = sum(state % massfrac(:) * ei_ig(:))
 
   ! Add departure function to the ideal gas mixture internal energy 
@@ -904,7 +902,7 @@ subroutine SRK_EOS_GetE_givenRhoT(state)
   K1 = (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
 
   ! Ideal gas internal energy
-  call ckums(state%T, iwrk, rwrk, ei_ig)
+  call ckums(state%T, ei_ig)
   Eig = sum(state % massfrac(:) * ei_ig(:))
 
   ! Add departure function to the ideal gas mixture internal energy
@@ -987,7 +985,7 @@ subroutine SRK_EOS_Get_TE_givenRhoP(state)
   K1 = (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
 
   ! Compute ideal gas internal energy 
-  call ckums(state%T, iwrk, rwrk, ei_ig)
+  call ckums(state%T, ei_ig)
   Eig = sum(state % massfrac(:) * ei_ig(:))
   
   ! Update the real gas internal energy using departure functions
@@ -1054,10 +1052,10 @@ subroutine SRK_EOS_Get_T_GivenRhoE(state,lierr)
      K1 = (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
 
      ! Ideal gas internal energy and specific heat at constant volume, Cv
-     call ckums(Tn, iwrk, rwrk, ei_ig)
+     call ckums(Tn, ei_ig)
      Eig = sum(state % massfrac(:) * ei_ig(:))
      
-     call ckcvbs(Tn, state % massfrac, iwrk, rwrk, state % cv)
+     call ckcvbs(Tn, state % massfrac, state % cv)
 
      ! Calculate real gas Cv
      state%cv = state%cv - Tn*state%d2AmdT2*K1
@@ -1145,7 +1143,7 @@ subroutine SRK_EOS_GetSpeciesH(state)
   dhmdtau = -(state%T*state%dAmdT - state%am)*InvEosT2Denom + state%am*InvEosT3Denom*InvEosT3Denom - &
             Rm*state%T*state%bm*InvEosT1Denom*InvEosT1Denom
 
-  call ckhms(state % T, iwrk, rwrk, state % hi)
+  call ckhms(state % T, state % hi)
   
   ! Derivative of Pressure w.r.t to Yk, species k massfraction
   do i = 1,nspecies
@@ -1187,10 +1185,10 @@ subroutine SRK_EOS_GetSpecies_ChemicalPotential(state)
 ! assumes rho, T, massFrac known
   
   ! Ideal gas Species enthalpy 
-  call ckhms(state % T, iwrk, rwrk, state % hi)
+  call ckhms(state % T, state % hi)
 
   ! Ideal gas Species entropy
-  call cksms(state % T, iwrk, rwrk, state % si)
+  call cksms(state % T, state % si)
 
   state % wbar = 1.d0 / sum(state % massfrac(:) * inv_mwt(:))
 
@@ -1255,10 +1253,10 @@ subroutine SRK_EOS_GetMixture_FreeEnergy(state)
   call MixingRuleAmBm(state%T,state%massFrac,state%am,state%bm)
   
   ! Ideal gas Species Internal energy 
-  call ckums(state % T, iwrk, rwrk, state % ei)
+  call ckums(state % T, state % ei)
 
   ! Ideal gas Species entropy
-  call cksms(state % T, iwrk, rwrk, state % si)
+  call cksms(state % T, state % si)
 
   tau = 1.0d0/state%rho
   
@@ -1516,7 +1514,7 @@ subroutine SRK_EOS_GetMixtureCv(state)
   call Calc_d2AmdT2(state%T,state%massFrac,state%d2AmdT2)
 
   ! Ideal gas specific heat at constant volume
-  call ckcvbs(state%T, state % massfrac, iwrk, rwrk, state % cv)
+  call ckcvbs(state%T, state % massfrac, state % cv)
 
   ! Real gas specific heat at constant volume
   state%cv = state%cv + state%T*state%d2AmdT2* (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
@@ -1567,7 +1565,7 @@ subroutine SRK_EOS_GetMixtureCp(state)
   state%dpdtau = -Rm*state%T*InvEosT1Denom*InvEosT1Denom + state%am*(2.0*tau+state%bm)*InvEosT2Denom*InvEosT2Denom
 
   ! Ideal gas specific heat at constant pressure
-  call ckcpbs(state % T, state % massfrac, iwrk, rwrk,Cpig)
+  call ckcpbs(state % T, state % massfrac, Cpig)
   
   ! Derivative of enthalpy w.r.t to Temperature
   dhmdT = Cpig + state%T*state%d2AmdT2*K1 - state%dAmdT*InvEosT3Denom + Rm*state%bm*InvEosT1Denom
@@ -1614,9 +1612,9 @@ subroutine SRK_EOS_GetMixture_H(state)
   Rm = (Ru/state%wbar)
 
   ! Ideal gas mixture enthalpy 
-  call ckhms(state % T, iwrk, rwrk, state % hi)
+  call ckhms(state % T, state % hi)
   state%h = sum(state % massfrac(:) * state % hi(:))
-  call ckhbms(state % T, state%massfrac(:), iwrk, rwrk, hmix)
+  call ckhbms(state % T, state%massfrac(:), hmix)
 
   ! Adding non-ideal departure function 
   state%h = state%h + (state%T*state%dAmdT - state%am)*K1 &
@@ -1668,7 +1666,7 @@ subroutine SRK_EOS_GetGamma1(state)
   ! state%dpdtau = -Rm*state%T*InvEosT1Denom*InvEosT1Denom + state%am*(2.0*tau+state%bm)*InvEosT2Denom*InvEosT2Denom
 
   ! Ideal gas specific heat at constant pressure
-  ! call ckcpbs(state % T, state % massfrac, iwrk, rwrk,Cpig)
+  ! call ckcpbs(state % T, state % massfrac, Cpig)
   
   ! Derivative of enthalpy w.r.t to Temperature
   ! dhmdT = Cpig + state%T*state%d2AmdT2*K1 - state%dAmdT*InvEosT3Denom + Rm*state%bm*InvEosT1Denom
@@ -1783,7 +1781,7 @@ subroutine SRK_EOS_GetSpeciesH_V2(state)
 
   Rm = (Ru/state%wbar)
  
-  call ckhms(state % T, iwrk, rwrk, hk)
+  call ckhms(state % T, hk)
   
   ! Derivative of Pressure w.r.t to Yk, species k massfraction
   do i = 1,nspecies
@@ -1847,7 +1845,7 @@ subroutine SRK_EOS_GetSpeciesE(state)
 
   Rm = (Ru/state%wbar)
  
-  call ckums(state % T, iwrk, rwrk, ek)
+  call ckums(state % T, ek)
   
   ! Derivative of Pressure w.r.t to Yk, species k massfraction
   do i = 1,nspecies

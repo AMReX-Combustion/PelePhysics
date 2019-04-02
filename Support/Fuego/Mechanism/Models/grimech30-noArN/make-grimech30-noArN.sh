@@ -1,7 +1,7 @@
 
 CHEMINP=grimech30-noArN.dat
 THERMINP=thermo30.dat
-FINALFILE=grimech30-noArN.c
+FINALFILE=grimech30-noArN.cpp
 
 FMC=${PELE_PHYSICS_HOME}/Support/Fuego/Pythia/products/bin/fmc.py
 HEADERDIR=${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/header
@@ -12,7 +12,7 @@ CHEMC=chem.c
 
 ${FUEGO_PYTHON} ${FMC} -mechanism=${CHEMINP} -thermo=${THERMINP} -name=${CHEMC}
 echo Compiling ${FINALFILE}...
-cat ${CHEMC} ${TRANC} \
+cat ${CHEMC} \
           ${HEADERDIR}/header.start\
           ${HEADERDIR}/header.mec   ${CHEMINP}\
           ${HEADERDIR}/header.therm ${THERMINP}\

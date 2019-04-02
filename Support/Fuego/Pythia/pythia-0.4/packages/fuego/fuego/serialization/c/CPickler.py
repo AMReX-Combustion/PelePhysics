@@ -431,8 +431,12 @@ class CPickler(CMill):
         # Fuego Functions
         self._productionRate(mechanism)
         self._vproductionRate(mechanism)
+        #self._DproductionRatePYJAC(mechanism)
+        self._DproductionRatePrecond(mechanism)
         self._DproductionRate(mechanism)
+        self._sparsity(mechanism)
         self._ajac(mechanism)
+        self._ajacPrecond(mechanism)
         self._dthermodT(mechanism)
         self._progressRate(mechanism)
         self._progressRateFR(mechanism)
@@ -445,6 +449,7 @@ class CPickler(CMill):
         self._getCriticalParameters(mechanism)
         #AF: add transport data
         self._trans(mechanism)
+        self._endfile(mechanism)
         return
 
 
@@ -461,8 +466,18 @@ class CPickler(CMill):
             '#include <stdio.h>',
             '#include <string.h>',
             '#include <stdlib.h>'
+            #'#ifdef USE_PYJAC',
+            #'#include <jacob.h>',
+            #'#endif'
             ]
         return
+
+
+    def _endfile(self, mechanism):
+        self._rep += [
+            '',
+            '}'
+            ]
 
 
     def _declarations(self, mechanism):
@@ -546,6 +561,14 @@ class CPickler(CMill):
             '#define CKEQYR CKEQYR',
             '#define CKEQXR CKEQXR',
             '#define DWDOT DWDOT',
+            #'#ifdef USE_PYJAC',
+            #'#define DWDOT_PYJAC DWDOT_PYJAC',
+            #'#endif',
+            '#define DWDOT_PRECOND DWDOT_PRECOND',
+            '#define SPARSITY_INFO SPARSITY_INFO',
+            '#define SPARSITY_INFO_PRECOND SPARSITY_INFO_PRECOND',
+            '#define SPARSITY_PREPROC SPARSITY_PREPROC',
+            '#define SPARSITY_PREPROC_PRECOND SPARSITY_PREPROC_PRECOND',
             '#define VCKHMS VCKHMS',
             '#define VCKPY VCKPY',
             '#define VCKWYR VCKWYR',
@@ -632,6 +655,14 @@ class CPickler(CMill):
             '#define CKEQYR ckeqyr',
             '#define CKEQXR ckeqxr',
             '#define DWDOT dwdot',
+            #'#ifdef USE_PYJAC',
+            #'#define DWDOT_PYJAC dwdot_pyjac',
+            #'#endif',
+            '#define DWDOT_PRECOND dwdot_precond',
+            '#define SPARSITY_INFO sparsity_info',
+            '#define SPARSITY_INFO_PRECOND sparsity_info_precond',
+            '#define SPARSITY_PREPROC sparsity_preproc',
+            '#define SPARSITY_PREPROC_PRECOND sparsity_preproc_precond',
             '#define VCKHMS vckhms',
             '#define VCKPY vckpy',
             '#define VCKWYR vckwyr',
@@ -718,6 +749,14 @@ class CPickler(CMill):
             '#define CKEQYR ckeqyr_',
             '#define CKEQXR ckeqxr_',
             '#define DWDOT dwdot_',
+            #'#ifdef USE_PYJAC',
+            #'#define DWDOT_PYJAC dwdot_pyjac_',
+            #'#endif',
+            '#define DWDOT_PRECOND dwdot_precond_',
+            '#define SPARSITY_INFO sparsity_info_',
+            '#define SPARSITY_INFO_PRECOND sparsity_info_precond_ ',
+            '#define SPARSITY_PREPROC sparsity_preproc_',
+            '#define SPARSITY_PREPROC_PRECOND sparsity_preproc_precond_',
             '#define VCKHMS vckhms_',
             '#define VCKPY vckpy_',
             '#define VCKWYR vckwyr_',
@@ -735,7 +774,6 @@ class CPickler(CMill):
             '#elif defined(BL_FORT_USE_UNDERSCORE)',
             '#define egtransetEPS egtranseteps_',
             '#endif',
-            'void egtransetEPS(double *  EPS);',
             '#if defined(BL_FORT_USE_UPPERCASE)',
             '#define egtransetSIG EGTRANSETSIG',
             '#elif defined(BL_FORT_USE_LOWERCASE)',
@@ -743,144 +781,156 @@ class CPickler(CMill):
             '#elif defined(BL_FORT_USE_UNDERSCORE)',
             '#define egtransetSIG egtransetsig_',
             '#endif',
+            'extern "C"',
+            '{',
+            'void egtransetEPS(double *  EPS);',
             'void egtransetSIG(double* SIG);',
-            'void atomicWeight(double * restrict awt);',
-            'void molecularWeight(double * restrict wt);',
-            'void gibbs(double * restrict species, double * restrict tc);',
-            'void helmholtz(double * restrict species, double * restrict tc);',
-            'void speciesInternalEnergy(double * restrict species, double * restrict tc);',
-            'void speciesEnthalpy(double * restrict species, double * restrict tc);',
-            'void speciesEntropy(double * restrict species, double * restrict tc);',
-            'void cp_R(double * restrict species, double * restrict tc);',
-            'void cv_R(double * restrict species, double * restrict tc);',
-            'void equilibriumConstants(double * restrict kc, double * restrict g_RT, double T);',
-            'void productionRate(double * restrict wdot, double * restrict sc, double T);',
-            'void comp_k_f(double * restrict tc, double invT, double * restrict k_f);',
-            'void comp_Kc(double * restrict tc, double invT, double * restrict Kc);',
-            'void comp_qfqr(double * restrict q_f, double * restrict q_r, double * restrict sc, double * restrict tc, double invT);',
-            'void progressRate(double * restrict qdot, double * restrict speciesConc, double T);',
-            'void progressRateFR(double * restrict q_f, double * restrict q_r, double * restrict speciesConc, double T);',
+            'void atomicWeight(double *  awt);',
+            'void molecularWeight(double *  wt);',
+            'void gibbs(double *  species, double *  tc);',
+            'void helmholtz(double *  species, double *  tc);',
+            'void speciesInternalEnergy(double *  species, double *  tc);',
+            'void speciesEnthalpy(double *  species, double *  tc);',
+            'void speciesEntropy(double *  species, double *  tc);',
+            'void cp_R(double *  species, double *  tc);',
+            'void cv_R(double *  species, double *  tc);',
+            'void equilibriumConstants(double *  kc, double *  g_RT, double T);',
+            'void productionRate(double *  wdot, double *  sc, double T);',
+            'void comp_k_f(double *  tc, double invT, double *  k_f);',
+            'void comp_Kc(double *  tc, double invT, double *  Kc);',
+            'void comp_qfqr(double *  q_f, double *  q_r, double *  sc, double *  tc, double invT);',
+            'void progressRate(double *  qdot, double *  speciesConc, double T);',
+            'void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);',
             'void CKINIT'+sym+'();',
             'void CKFINALIZE'+sym+'();',
-            'void CKINDX'+sym+'(int * iwrk, double * restrict rwrk, int * mm, int * kk, int * ii, int * nfit );',
-            'void CKXNUM'+sym+'(char * line, int * nexp, int * lout, int * nval, double * restrict rval, int * kerr, int lenline);',
-            'void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double * restrict rval, int * kerr, int lenline, int lenkray);',
+            'void CKINDX'+sym+'(int * mm, int * kk, int * ii, int * nfit );',
+            'void CKXNUM'+sym+'(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);',
+            'void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);',
             'void CKSYME(int * kname, int * lenkname);',
             'void CKSYMS(int * kname, int * lenkname);',
             #'void CKSYMS'+sym+'(char * cckwrk, int * lout, char * kname, int * kerr, int lencck, int lenkname);',
-            'void CKRP'+sym+'(int * ickwrk, double * restrict rckwrk, double * restrict ru, double * restrict ruc, double * restrict pa);',
-            'void CKPX'+sym+'(double * restrict rho, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict P);',
-            'void CKPY'+sym+'(double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict P);',
-            'void CKPC'+sym+'(double * restrict rho, double * restrict T, double * restrict c, int * iwrk, double * restrict rwrk, double * restrict P);',
-            'void CKRHOX'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict rho);',
-            'void CKRHOY'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict rho);',
-            'void CKRHOC'+sym+'(double * restrict P, double * restrict T, double * restrict c, int * iwrk, double * restrict rwrk, double * restrict rho);',
-            'void CKWT'+sym+'(int * iwrk, double * restrict rwrk, double * restrict wt);',
-            'void CKAWT'+sym+'(int * iwrk, double * restrict rwrk, double * restrict awt);',
-            'void CKMMWY'+sym+'(double * restrict y, int * iwrk, double * restrict rwrk, double * restrict wtm);',
-            'void CKMMWX'+sym+'(double * restrict x, int * iwrk, double * restrict rwrk, double * restrict wtm);',
-            'void CKMMWC'+sym+'(double * restrict c, int * iwrk, double * restrict rwrk, double * restrict wtm);',
-            'void CKYTX'+sym+'(double * restrict y, int * iwrk, double * restrict rwrk, double * restrict x);',
-            'void CKYTCP'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict c);',
-            'void CKYTCR'+sym+'(double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict c);',
-            'void CKXTY'+sym+'(double * restrict x, int * iwrk, double * restrict rwrk, double * restrict y);',
-            'void CKXTCP'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict c);',
-            'void CKXTCR'+sym+'(double * restrict rho, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict c);',
-            'void CKCTX'+sym+'(double * restrict c, int * iwrk, double * restrict rwrk, double * restrict x);',
-            'void CKCTY'+sym+'(double * restrict c, int * iwrk, double * restrict rwrk, double * restrict y);',
-            'void CKCPOR'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict cpor);',
-            'void CKHORT'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict hort);',
-            'void CKSOR'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict sor);',
+            'void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa);',
+            'void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P);',
+            'void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
+            'void CKPC'+sym+'(double *  rho, double *  T, double *  c, double *  P);',
+            'void CKRHOX'+sym+'(double *  P, double *  T, double *  x, double *  rho);',
+            'void CKRHOY'+sym+'(double *  P, double *  T, double *  y, double *  rho);',
+            'void CKRHOC'+sym+'(double *  P, double *  T, double *  c, double *  rho);',
+            'void CKWT'+sym+'(double *  wt);',
+            'void CKAWT'+sym+'(double *  awt);',
+            'void CKMMWY'+sym+'(double *  y, double *  wtm);',
+            'void CKMMWX'+sym+'(double *  x, double *  wtm);',
+            'void CKMMWC'+sym+'(double *  c, double *  wtm);',
+            'void CKYTX'+sym+'(double *  y, double *  x);',
+            'void CKYTCP'+sym+'(double *  P, double *  T, double *  y, double *  c);',
+            'void CKYTCR'+sym+'(double *  rho, double *  T, double *  y, double *  c);',
+            'void CKXTY'+sym+'(double *  x, double *  y);',
+            'void CKXTCP'+sym+'(double *  P, double *  T, double *  x, double *  c);',
+            'void CKXTCR'+sym+'(double *  rho, double *  T, double *  x, double *  c);',
+            'void CKCTX'+sym+'(double *  c, double *  x);',
+            'void CKCTY'+sym+'(double *  c, double *  y);',
+            'void CKCPOR'+sym+'(double *  T, double *  cpor);',
+            'void CKHORT'+sym+'(double *  T, double *  hort);',
+            'void CKSOR'+sym+'(double *  T, double *  sor);',
             
-            'void CKCVML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict cvml);',
-            'void CKCPML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict cvml);',
-            'void CKUML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict uml);',
-            'void CKHML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict uml);',
-            'void CKGML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict gml);',
-            'void CKAML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict aml);',
-            'void CKSML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict sml);',
+            'void CKCVML'+sym+'(double *  T, double *  cvml);',
+            'void CKCPML'+sym+'(double *  T, double *  cvml);',
+            'void CKUML'+sym+'(double *  T, double *  uml);',
+            'void CKHML'+sym+'(double *  T, double *  uml);',
+            'void CKGML'+sym+'(double *  T, double *  gml);',
+            'void CKAML'+sym+'(double *  T, double *  aml);',
+            'void CKSML'+sym+'(double *  T, double *  sml);',
             
-            'void CKCVMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict cvms);',
-            'void CKCPMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict cvms);',
-            'void CKUMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict ums);',
-            'void CKHMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict ums);',
-            'void CKGMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict gms);',
-            'void CKAMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict ams);',
-            'void CKSMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict sms);',
+            'void CKCVMS'+sym+'(double *  T, double *  cvms);',
+            'void CKCPMS'+sym+'(double *  T, double *  cvms);',
+            'void CKUMS'+sym+'(double *  T, double *  ums);',
+            'void CKHMS'+sym+'(double *  T, double *  ums);',
+            'void CKGMS'+sym+'(double *  T, double *  gms);',
+            'void CKAMS'+sym+'(double *  T, double *  ams);',
+            'void CKSMS'+sym+'(double *  T, double *  sms);',
             
-            'void CKCPBL'+sym+'(double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict cpbl);',
-            'void CKCPBS'+sym+'(double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict cpbs);',
-            'void CKCVBL'+sym+'(double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict cpbl);',
-            'void CKCVBS'+sym+'(double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict cpbs);',
+            'void CKCPBL'+sym+'(double *  T, double *  x, double *  cpbl);',
+            'void CKCPBS'+sym+'(double *  T, double *  y, double *  cpbs);',
+            'void CKCVBL'+sym+'(double *  T, double *  x, double *  cpbl);',
+            'void CKCVBS'+sym+'(double *  T, double *  y, double *  cpbs);',
             
-            'void CKHBML'+sym+'(double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict hbml);',
-            'void CKHBMS'+sym+'(double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict hbms);',
-            'void CKUBML'+sym+'(double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict ubml);',
-            'void CKUBMS'+sym+'(double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict ubms);',
-            'void CKSBML'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict sbml);',
-            'void CKSBMS'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict sbms);',
-            'void CKGBML'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict gbml);',
-            'void CKGBMS'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict gbms);',
-            'void CKABML'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict abml);',
-            'void CKABMS'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict abms);',
+            'void CKHBML'+sym+'(double *  T, double *  x, double *  hbml);',
+            'void CKHBMS'+sym+'(double *  T, double *  y, double *  hbms);',
+            'void CKUBML'+sym+'(double *  T, double *  x, double *  ubml);',
+            'void CKUBMS'+sym+'(double *  T, double *  y, double *  ubms);',
+            'void CKSBML'+sym+'(double *  P, double *  T, double *  x, double *  sbml);',
+            'void CKSBMS'+sym+'(double *  P, double *  T, double *  y, double *  sbms);',
+            'void CKGBML'+sym+'(double *  P, double *  T, double *  x, double *  gbml);',
+            'void CKGBMS'+sym+'(double *  P, double *  T, double *  y, double *  gbms);',
+            'void CKABML'+sym+'(double *  P, double *  T, double *  x, double *  abml);',
+            'void CKABMS'+sym+'(double *  P, double *  T, double *  y, double *  abms);',
 
             
-            'void CKWC'+sym+'(double * restrict T, double * restrict C, int * iwrk, double * restrict rwrk, double * restrict wdot);',
-            'void CKWYP'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict wdot);',
-            'void CKWXP'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict wdot);',
-            'void CKWYR'+sym+'(double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict wdot);',
-            'void CKWXR'+sym+'(double * restrict rho, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict wdot);',
+            'void CKWC'+sym+'(double *  T, double *  C, double *  wdot);',
+            'void CKWYP'+sym+'(double *  P, double *  T, double *  y, double *  wdot);',
+            'void CKWXP'+sym+'(double *  P, double *  T, double *  x, double *  wdot);',
+            'void CKWYR'+sym+'(double *  rho, double *  T, double *  y, double *  wdot);',
+            'void CKWXR'+sym+'(double *  rho, double *  T, double *  x, double *  wdot);',
 
             
-            'void CKQC'+sym+'(double * restrict T, double * restrict C, int * iwrk, double * restrict rwrk, double * restrict qdot);',
-            'void CKKFKR(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict q_f, double * restrict q_r);',
-            'void CKQYP'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict qdot);',
-            'void CKQXP'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict qdot);',
-            'void CKQYR'+sym+'(double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict qdot);',
-            'void CKQXR'+sym+'(double * restrict rho, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict qdot);',
+            'void CKQC'+sym+'(double *  T, double *  C, double *  qdot);',
+            'void CKKFKR(double *  P, double *  T, double *  x, double *  q_f, double *  q_r);',
+            'void CKQYP'+sym+'(double *  P, double *  T, double *  y, double *  qdot);',
+            'void CKQXP'+sym+'(double *  P, double *  T, double *  x, double *  qdot);',
+            'void CKQYR'+sym+'(double *  rho, double *  T, double *  y, double *  qdot);',
+            'void CKQXR'+sym+'(double *  rho, double *  T, double *  x, double *  qdot);',
             
-            'void CKNU'+sym+'(int * kdim, int * iwrk, double * restrict rwrk, int * nuki);',
-            'void CKNCF'+sym+'(int * mdim, int * iwrk, double * restrict rwrk, int * ncf);',
+            'void CKNU'+sym+'(int * kdim, int * nuki);',
+            'void CKNCF'+sym+'(int * mdim, int * ncf);',
             
-            'void CKABE'+sym+'(int * iwrk, double * restrict rwrk, double * restrict a, double * restrict b, double * restrict e );',
-            'void CKEQC'+sym+'(double * restrict T, double * restrict C , int * iwrk, double * restrict rwrk, double * restrict eqcon );',
-            'void CKEQYP'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict eqcon);',
-            'void CKEQXP'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict eqcon);',
-            'void CKEQYR'+sym+'(double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict eqcon);',
-            'void CKEQXR'+sym+'(double * restrict rho, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict eqcon);',
-            'void DWDOT(double * restrict J, double * restrict sc, double * restrict T, int * consP);',
-            'void aJacobian(double * restrict J, double * restrict sc, double T, int consP);',
-            'void dcvpRdT(double * restrict species, double * restrict tc);',
-            'void GET_T_GIVEN_EY(double * restrict e, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict t, int *ierr);',
-            'void GET_T_GIVEN_HY(double * restrict h, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict t, int *ierr);',
-            'void GET_REACTION_MAP(int * restrict rmap);',
+            'void CKABE'+sym+'(double *  a, double *  b, double *  e );',
+            'void CKEQC'+sym+'(double *  T, double *  C , double *  eqcon );',
+            'void CKEQYP'+sym+'(double *  P, double *  T, double *  y, double *  eqcon);',
+            'void CKEQXP'+sym+'(double *  P, double *  T, double *  x, double *  eqcon);',
+            'void CKEQYR'+sym+'(double *  rho, double *  T, double *  y, double *  eqcon);',
+            'void CKEQXR'+sym+'(double *  rho, double *  T, double *  x, double *  eqcon);',
+            'void DWDOT(double *  J, double *  sc, double *  T, int * consP);',
+            #'#ifdef USE_PYJAC',
+            #'void DWDOT_PYJAC(double *  J, double *  sc, double *  Tp, double *  Press);',
+            #'#endif',
+            'void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);',
+            'void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);',
+            'void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);',
+            'void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
+            'void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * consP);',
+            'void aJacobian(double *  J, double *  sc, double T, int consP);',
+            'void aJacobian_precond(double *  J, double *  sc, double T, int HP);',
+            'void dcvpRdT(double *  species, double *  tc);',
+            'void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);',
+            'void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);',
+            'void GET_REACTION_MAP(int *  rmap);',
             self.line('vector version'),
-            'void vproductionRate(int npt, double * restrict wdot, double * restrict c, double * restrict T);',
-            'void VCKHMS'+sym+'(int * restrict np, double * restrict T, int * iwrk, double * restrict rwrk, double * restrict ums);',
-            'void VCKPY'+sym+'(int * restrict np, double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict P);',
-            'void VCKWYR'+sym+'(int * restrict np, double * restrict rho, double * restrict T,',
-            '            double * restrict y, int * restrict iwrk, double * restrict rwrk,',
-            '            double * restrict wdot);',
-            'void VCKYTX'+sym+'(int * restrict np, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict x);',
-            'void vcomp_k_f(int npt, double * restrict k_f_s, double * restrict tc, double * restrict invT);',
-            'void vcomp_gibbs(int npt, double * restrict g_RT, double * restrict tc);',
-            'void vcomp_Kc(int npt, double * restrict Kc_s, double * restrict g_RT, double * restrict invT);',
+            'void vproductionRate(int npt, double *  wdot, double *  c, double *  T);',
+            'void VCKHMS'+sym+'(int *  np, double *  T, double *  ums);',
+            'void VCKPY'+sym+'(int *  np, double *  rho, double *  T, double *  y, double *  P);',
+            'void VCKWYR'+sym+'(int *  np, double *  rho, double *  T,',
+            '            double *  y,',
+            '            double *  wdot);',
+            'void VCKYTX'+sym+'(int *  np, double *  y, double *  x);',
+            'void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT);',
+            'void vcomp_gibbs(int npt, double *  g_RT, double *  tc);',
+            'void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT);',
             
-            'void GET_CRITPARAMS(double * restrict Tci, double * restrict ai, double * restrict bi, double * restrict acentric_i);',
+            'void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);',
             ]
         nReactions = len(mechanism.reaction())
         if nReactions <= 50:
             self._rep += [
-                'void vcomp_wdot(int npt, double * restrict wdot, double * restrict mixture, double * restrict sc,',
-                '                double * restrict k_f_s, double * restrict Kc_s,',
-                '                double * restrict tc, double * restrict invT, double * restrict T);',
+                'void vcomp_wdot(int npt, double *  wdot, double *  mixture, double *  sc,',
+                '                double *  k_f_s, double *  Kc_s,',
+                '                double *  tc, double *  invT, double *  T);',
                 ]
         else:
             for i in range(0,nReactions,50):
                 self._rep += [
-                    'void vcomp_wdot_%d_%d(int npt, double * restrict wdot, double * restrict mixture, double * restrict sc,' % (i+1,min(i+50,nReactions)),
-                    '                double * restrict k_f_s, double * restrict Kc_s,',
-                    '                double * restrict tc, double * restrict invT, double * restrict T);',
+                    'void vcomp_wdot_%d_%d(int npt, double *  wdot, double *  mixture, double *  sc,' % (i+1,min(i+50,nReactions)),
+                    '                double *  k_f_s, double *  Kc_s,',
+                    '                double *  tc, double *  invT, double *  T);',
                     ]                
         return
 
@@ -1071,13 +1121,16 @@ class CPickler(CMill):
 
             if thirdBody:
                 efficiencies = reaction.efficiencies
-                self._write("nTB[%d] = %d;" % (id, len(efficiencies)))
-                self._write("TB[%d] = (double *) malloc(%d * sizeof(double));" % (id, len(efficiencies)))
-                self._write("TBid[%d] = (int *) malloc(%d * sizeof(int));" % (id, len(efficiencies)))
-                for i, eff in enumerate(efficiencies):
-                    symbol, efficiency = eff
-                    self._write("TBid[%d][%d] = %.17g; TB[%d][%d] = %.17g; // %s"
-                                % (id, i, mechanism.species(symbol).id, id, i, efficiency, symbol ))
+                if (len(efficiencies) > 1):
+                    self._write("nTB[%d] = %d;" % (id, len(efficiencies)))
+                    self._write("TB[%d] = (double *) malloc(%d * sizeof(double));" % (id, len(efficiencies)))
+                    self._write("TBid[%d] = (int *) malloc(%d * sizeof(int));" % (id, len(efficiencies)))
+                    for i, eff in enumerate(efficiencies):
+                        symbol, efficiency = eff
+                        self._write("TBid[%d][%d] = %.17g; TB[%d][%d] = %.17g; // %s"
+                                    % (id, i, mechanism.species(symbol).id, id, i, efficiency, symbol ))
+                else:
+                    self._write("nTB[%d] = 0;" % (id))
             else:
                 self._write("nTB[%d] = 0;" % (id))
 
@@ -1183,7 +1236,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line(' ckxnum... for parsing strings '))
-        self._write('void CKXNUM'+sym+'(char * line, int * nexp, int * lout, int * nval, double * restrict rval, int * kerr, int lenline )')
+        self._write('void CKXNUM'+sym+'(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline )')
         self._write('{')
         self._indent()
         self._write('int n,i; /*Loop Counters */')
@@ -1229,7 +1282,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line(' cksnum... for parsing strings '))
-        self._write('void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double * restrict rval, int * kerr, int lenline, int lenkray)')
+        self._write('void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray)')
         self._write('{')
         self._indent()
         
@@ -1245,7 +1298,7 @@ class CPickler(CMill):
         self._write()
         self._write(
             self.line(' Returns R, Rc, Patm' ))
-        self._write('void CKRP'+sym+'(int * ickwrk, double * restrict rckwrk, double * restrict ru, double * restrict ruc, double * restrict pa)')
+        self._write('void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa)')
         self._write('{')
         self._indent()
         
@@ -1257,6 +1310,7 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         return
+
 
     def _cksyme(self, mechanism):
 
@@ -1339,7 +1393,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('A few mechanism parameters'))
-        self._write('void CKINDX'+sym+'(int * iwrk, double * restrict rwrk, int * mm, int * kk, int * ii, int * nfit)')
+        self._write('void CKINDX'+sym+'(int * mm, int * kk, int * ii, int * nfit)')
         self._write('{')
         self._indent()
         self._write('*mm = %d;' % len(mechanism.element()))
@@ -1358,7 +1412,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute P = rhoRT/W(x)'))
-        self._write('void CKPX'+sym+'(double * restrict rho, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict P)')
+        self._write('void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P)')
         self._write('{')
         self._indent()
 
@@ -1381,11 +1435,12 @@ class CPickler(CMill):
         self._write('}')
         return
 
+
     def _ckpy(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('Compute P = rhoRT/W(y)'))
-        self._write('void CKPY'+sym+'(double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict P)')
+        self._write('void CKPY'+sym+'(double *  rho, double *  T, double *  y,  double *  P)')
         self._write('{')
         self._indent()
 
@@ -1410,11 +1465,12 @@ class CPickler(CMill):
 
         return 
 
+
     def _vckpy(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('Compute P = rhoRT/W(y)'))
-        self._write('void VCKPY'+sym+'(int * restrict np, double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict P)')
+        self._write('void VCKPY'+sym+'(int *  np, double *  rho, double *  T, double *  y,  double *  P)')
         self._write('{')
         self._indent()
 
@@ -1459,7 +1515,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute P = rhoRT/W(c)'))
-        self._write('void CKPC'+sym+'(double * restrict rho, double * restrict T, double * restrict c, int * iwrk, double * restrict rwrk, double * restrict P)')
+        self._write('void CKPC'+sym+'(double *  rho, double *  T, double *  c,  double *  P)')
         
         self._write('{')
         self._indent()
@@ -1499,7 +1555,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute rho = PW(x)/RT'))
-        self._write('void CKRHOX'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict rho)')
+        self._write('void CKRHOX'+sym+'(double *  P, double *  T, double *  x,  double *  rho)')
         self._write('{')
         self._indent()
 
@@ -1528,7 +1584,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute rho = P*W(y)/RT'))
-        self._write('void CKRHOY'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict rho)')
+        self._write('void CKRHOY'+sym+'(double *  P, double *  T, double *  y,  double *  rho)')
         self._write('{')
         self._indent()
         self._write('double YOW = 0;')
@@ -1552,12 +1608,12 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         return 
- 
+
     def _ckrhoc(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('Compute rho = P*W(c)/(R*T)'))
-        self._write('void CKRHOC'+sym+'(double * restrict P, double * restrict T, double * restrict c, int * iwrk, double * restrict rwrk, double * restrict rho)')
+        self._write('void CKRHOC'+sym+'(double *  P, double *  T, double *  c,  double *  rho)')
         
         self._write('{')
         self._indent()
@@ -1597,7 +1653,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('get molecular weight for all species'))
-        self._write('void CKWT'+sym+'(int * iwrk, double * restrict rwrk, double * restrict wt)')
+        self._write('void CKWT'+sym+'( double *  wt)')
         self._write('{')
         self._indent()
 
@@ -1615,7 +1671,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('get atomic weight for all elements'))
-        self._write('void CKAWT'+sym+'(int * iwrk, double * restrict rwrk, double * restrict awt)')
+        self._write('void CKAWT'+sym+'( double *  awt)')
         self._write('{')
         self._indent()
 
@@ -1633,7 +1689,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get specific heat at constant volume as a function '))
         self._write(self.line('of T for all species (molar units)'))
-        self._write('void CKCVML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict cvml)')
+        self._write('void CKCVML'+sym+'(double *  T,  double *  cvml)')
         self._write('{')
         self._indent()
 
@@ -1670,7 +1726,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get specific heat at constant pressure as a '))
         self._write(self.line('function of T for all species (molar units)'))
-        self._write('void CKCPML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict cpml)')
+        self._write('void CKCPML'+sym+'(double *  T,  double *  cpml)')
         self._write('{')
         self._indent()
 
@@ -1707,7 +1763,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get internal energy as a function '))
         self._write(self.line('of T for all species (molar units)'))
-        self._write('void CKUML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict uml)')
+        self._write('void CKUML'+sym+'(double *  T,  double *  uml)')
         self._write('{')
         self._indent()
 
@@ -1747,7 +1803,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get enthalpy as a function '))
         self._write(self.line('of T for all species (molar units)'))
-        self._write('void CKHML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict hml)')
+        self._write('void CKHML'+sym+'(double *  T,  double *  hml)')
         self._write('{')
         self._indent()
 
@@ -1787,7 +1843,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get standard-state Gibbs energy as a function '))
         self._write(self.line('of T for all species (molar units)'))
-        self._write('void CKGML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict gml)')
+        self._write('void CKGML'+sym+'(double *  T,  double *  gml)')
         self._write('{')
         self._indent()
 
@@ -1827,7 +1883,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get standard-state Helmholtz free energy as a '))
         self._write(self.line('function of T for all species (molar units)'))
-        self._write('void CKAML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict aml)')
+        self._write('void CKAML'+sym+'(double *  T,  double *  aml)')
         self._write('{')
         self._indent()
 
@@ -1866,7 +1922,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the standard-state entropies in molar units'))
-        self._write('void CKSML'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict sml)')
+        self._write('void CKSML'+sym+'(double *  T,  double *  sml)')
         self._write('{')
         self._indent()
 
@@ -1902,7 +1958,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns internal energy in mass units (Eq 30.)'))
-        self._write('void CKUMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict ums)')
+        self._write('void CKUMS'+sym+'(double *  T,  double *  ums)')
         self._write('{')
         self._indent()
 
@@ -1933,12 +1989,12 @@ class CPickler(CMill):
         self._write('}')
 
         return
- 
+
     def _ckhms(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('Returns enthalpy in mass units (Eq 27.)'))
-        self._write('void CKHMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict hms)')
+        self._write('void CKHMS'+sym+'(double *  T,  double *  hms)')
         self._write('{')
         self._indent()
 
@@ -1974,7 +2030,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns enthalpy in mass units (Eq 27.)'))
-        self._write('void VCKHMS'+sym+'(int * restrict np, double * restrict T, int * iwrk, double * restrict rwrk, double * restrict hms)')
+        self._write('void VCKHMS'+sym+'(int *  np, double *  T,  double *  hms)')
         self._write('{')
         self._indent()
 
@@ -2025,7 +2081,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns helmholtz in mass units (Eq 32.)'))
-        self._write('void CKAMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict ams)')
+        self._write('void CKAMS'+sym+'(double *  T,  double *  ams)')
         self._write('{')
         self._indent()
 
@@ -2061,7 +2117,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns gibbs in mass units (Eq 31.)'))
-        self._write('void CKGMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict gms)')
+        self._write('void CKGMS'+sym+'(double *  T,  double *  gms)')
         self._write('{')
         self._indent()
 
@@ -2099,7 +2155,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the specific heats at constant volume'))
         self._write(self.line('in mass units (Eq. 29)'))
-        self._write('void CKCVMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict cvms)')
+        self._write('void CKCVMS'+sym+'(double *  T,  double *  cvms)')
         self._write('{')
         self._indent()
 
@@ -2128,12 +2184,13 @@ class CPickler(CMill):
 
         return
 
+
     def _ckcpms(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('Returns the specific heats at constant pressure'))
         self._write(self.line('in mass units (Eq. 26)'))
-        self._write('void CKCPMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict cpms)')
+        self._write('void CKCPMS'+sym+'(double *  T,  double *  cpms)')
         self._write('{')
         self._indent()
 
@@ -2163,11 +2220,12 @@ class CPickler(CMill):
 
         return
 
+
     def _cksms(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('Returns the entropies in mass units (Eq 28.)'))
-        self._write('void CKSMS'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict sms)')
+        self._write('void CKSMS'+sym+'(double *  T,  double *  sms)')
         self._write('{')
         self._indent()
 
@@ -2201,7 +2259,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the mean specific heat at CP (Eq. 33)'))
-        self._write('void CKCPBL'+sym+'(double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict cpbl)')
+        self._write('void CKCPBL'+sym+'(double *  T, double *  x,  double *  cpbl)')
         self._write('{')
         self._indent()
 
@@ -2243,7 +2301,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the mean specific heat at CP (Eq. 34)'))
-        self._write('void CKCPBS'+sym+'(double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict cpbs)')
+        self._write('void CKCPBS'+sym+'(double *  T, double *  y,  double *  cpbs)')
         self._write('{')
         self._indent()
 
@@ -2287,12 +2345,13 @@ class CPickler(CMill):
         self._write('}')
 
         return
+
    
     def _ckcvbl(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('Returns the mean specific heat at CV (Eq. 35)'))
-        self._write('void CKCVBL'+sym+'(double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict cvbl)')
+        self._write('void CKCVBL'+sym+'(double *  T, double *  x,  double *  cvbl)')
         self._write('{')
         self._indent()
 
@@ -2334,7 +2393,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the mean specific heat at CV (Eq. 36)'))
-        self._write('void CKCVBS'+sym+'(double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict cvbs)')
+        self._write('void CKCVBS'+sym+'(double *  T, double *  y,  double *  cvbs)')
         self._write('{')
         self._indent()
 
@@ -2367,12 +2426,13 @@ class CPickler(CMill):
         self._write('}')
 
         return
-    
+
+
     def _ckhbml(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('Returns the mean enthalpy of the mixture in molar units'))
-        self._write('void CKHBML'+sym+'(double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict hbml)')
+        self._write('void CKHBML'+sym+'(double *  T, double *  x,  double *  hbml)')
         self._write('{')
         self._indent()
 
@@ -2418,7 +2478,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns mean enthalpy of mixture in mass units'))
-        self._write('void CKHBMS'+sym+'(double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict hbms)')
+        self._write('void CKHBMS'+sym+'(double *  T, double *  y,  double *  hbms)')
         self._write('{')
         self._indent()
 
@@ -2462,12 +2522,13 @@ class CPickler(CMill):
         self._write('}')
         
         return
+
     
     def _ckubml(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('get mean internal energy in molar units'))
-        self._write('void CKUBML'+sym+'(double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict ubml)')
+        self._write('void CKUBML'+sym+'(double *  T, double *  x,  double *  ubml)')
         self._write('{')
         self._indent()
 
@@ -2512,7 +2573,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('get mean internal energy in mass units'))
-        self._write('void CKUBMS'+sym+'(double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict ubms)')
+        self._write('void CKUBMS'+sym+'(double *  T, double *  y,  double *  ubms)')
         self._write('{')
         self._indent()
 
@@ -2552,12 +2613,13 @@ class CPickler(CMill):
         self._write('}')
         
         return
+
  
     def _cksbml(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('get mixture entropy in molar units'))
-        self._write('void CKSBML'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict sbml)')
+        self._write('void CKSBML'+sym+'(double *  P, double *  T, double *  x,  double *  sbml)')
         self._write('{')
         self._indent()
 
@@ -2604,7 +2666,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('get mixture entropy in mass units'))
-        self._write('void CKSBMS'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict sbms)')
+        self._write('void CKSBMS'+sym+'(double *  P, double *  T, double *  y,  double *  sbms)')
         self._write('{')
         self._indent()
 
@@ -2661,7 +2723,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns mean gibbs free energy in molar units'))
-        self._write('void CKGBML'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict gbml)')
+        self._write('void CKGBML'+sym+'(double *  P, double *  T, double *  x,  double *  gbml)')
         self._write('{')
         self._indent()
 
@@ -2712,7 +2774,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns mixture gibbs free energy in mass units'))
-        self._write('void CKGBMS'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict gbms)')
+        self._write('void CKGBMS'+sym+'(double *  P, double *  T, double *  y,  double *  gbms)')
         self._write('{')
         self._indent()
 
@@ -2775,7 +2837,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns mean helmholtz free energy in molar units'))
-        self._write('void CKABML'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict abml)')
+        self._write('void CKABML'+sym+'(double *  P, double *  T, double *  x,  double *  abml)')
         self._write('{')
         self._indent()
 
@@ -2826,7 +2888,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns mixture helmholtz free energy in mass units'))
-        self._write('void CKABMS'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict abms)')
+        self._write('void CKABMS'+sym+'(double *  P, double *  T, double *  y,  double *  abms)')
         self._write('{')
         self._indent()
 
@@ -2889,7 +2951,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the production rate for each species'))
-        self._write('void CKWC'+sym+'(double * restrict T, double * restrict C, int * iwrk, double * restrict rwrk, double * restrict wdot)')
+        self._write('void CKWC'+sym+'(double *  T, double *  C,  double *  wdot)')
         self._write('{')
         self._indent()
 
@@ -2925,12 +2987,13 @@ class CPickler(CMill):
 
         return
 
+
     def _ckwyp(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('Returns the molar production rate of species'))
         self._write(self.line('Given P, T, and mass fractions'))
-        self._write('void CKWYP'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict wdot)')
+        self._write('void CKWYP'+sym+'(double *  P, double *  T, double *  y,  double *  wdot)')
         self._write('{')
         self._indent()
 
@@ -2984,7 +3047,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the molar production rate of species'))
         self._write(self.line('Given P, T, and mole fractions'))
-        self._write('void CKWXP'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict wdot)')
+        self._write('void CKWXP'+sym+'(double *  P, double *  T, double *  x,  double *  wdot)')
         self._write('{')
         self._indent()
 
@@ -3030,7 +3093,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the molar production rate of species'))
         self._write(self.line('Given rho, T, and mass fractions'))
-        self._write('void CKWYR'+sym+'(double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict wdot)')
+        self._write('void CKWYR'+sym+'(double *  rho, double *  T, double *  y,  double *  wdot)')
         self._write('{')
         self._indent()
 
@@ -3070,9 +3133,9 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the molar production rate of species'))
         self._write(self.line('Given rho, T, and mass fractions'))
-        self._write('void VCKWYR'+sym+'(int * restrict np, double * restrict rho, double * restrict T,')
-        self._write('	    double * restrict y, int * restrict iwrk, double * restrict rwrk,')
-        self._write('	    double * restrict wdot)')
+        self._write('void VCKWYR'+sym+'(int *  np, double *  rho, double *  T,')
+        self._write('	    double *  y,')
+        self._write('	    double *  wdot)')
         self._write('{')
         self._indent()
 
@@ -3116,7 +3179,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the molar production rate of species'))
         self._write(self.line('Given rho, T, and mole fractions'))
-        self._write('void CKWXR'+sym+'(double * restrict rho, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict wdot)')
+        self._write('void CKWXR'+sym+'(double *  rho, double *  T, double *  x,  double *  wdot)')
         self._write('{')
         self._indent()
 
@@ -3174,7 +3237,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the stoichiometric coefficients'))
         self._write(self.line('of the reaction mechanism. (Eq 50)'))
-        self._write('void CKNU'+sym+'(int * kdim, int * iwrk, double * restrict rwrk, int * nuki)')
+        self._write('void CKNU'+sym+'(int * kdim,  int * nuki)')
         self._write('{')
         self._indent()
 
@@ -3219,7 +3282,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the elemental composition '))
         self._write(self.line('of the speciesi (mdim is num of elements)'))
-        self._write('void CKNCF'+sym+'(int * mdim, int * iwrk, double * restrict rwrk, int * ncf)')
+        self._write('void CKNCF'+sym+'(int * mdim,  int * ncf)')
         self._write('{')
         self._indent()
 
@@ -3259,7 +3322,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the arrehenius coefficients '))
         self._write(self.line('for all reactions'))
-        self._write('void CKABE'+sym+'(int * iwrk, double * restrict rwrk, double * restrict a, double * restrict b, double * restrict e)')
+        self._write('void CKABE'+sym+'( double *  a, double *  b, double *  e)')
         self._write('{')
         self._indent()
 
@@ -3285,7 +3348,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('given y[species]: mass fractions'))
         self._write(self.line('returns mean molecular weight (gm/mole)'))
-        self._write('void CKMMWY'+sym+'(double * restrict y, int * iwrk, double * restrict rwrk, double * restrict wtm)')
+        self._write('void CKMMWY'+sym+'(double *  y,  double *  wtm)')
         self._write('{')
         self._indent()
         species = self.species
@@ -3317,7 +3380,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('given x[species]: mole fractions'))
         self._write(self.line('returns mean molecular weight (gm/mole)'))
-        self._write('void CKMMWX'+sym+'(double * restrict x, int * iwrk, double * restrict rwrk, double * restrict wtm)')
+        self._write('void CKMMWX'+sym+'(double *  x,  double *  wtm)')
         self._write('{')
         self._indent()
 
@@ -3343,7 +3406,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('given c[species]: molar concentration'))
         self._write(self.line('returns mean molecular weight (gm/mole)'))
-        self._write('void CKMMWC'+sym+'(double * restrict c, int * iwrk, double * restrict rwrk, double * restrict wtm)')
+        self._write('void CKMMWC'+sym+'(double *  c,  double *  wtm)')
         self._write('{')
         self._indent()
 
@@ -3380,7 +3443,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert y[species] (mass fracs) to x[species] (mole fracs)'))
-        self._write('void CKYTX'+sym+'(double * restrict y, int * iwrk, double * restrict rwrk, double * restrict x)')
+        self._write('void CKYTX'+sym+'(double *  y,  double *  x)')
         self._write('{')
         self._indent()
 
@@ -3420,7 +3483,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert y[npoints*species] (mass fracs) to x[npoints*species] (mole fracs)'))
-        self._write('void VCKYTX'+sym+'(int * restrict np, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict x)')
+        self._write('void VCKYTX'+sym+'(int *  np, double *  y,  double *  x)')
         self._write('{')
         self._indent()
 
@@ -3472,7 +3535,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert y[species] (mass fracs) to c[species] (molar conc)'))
-        self._write('void CKYTCP'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict c)')
+        self._write('void CKYTCP'+sym+'(double *  P, double *  T, double *  y,  double *  c)')
         self._write('{')
         self._indent()
 
@@ -3518,7 +3581,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert y[species] (mass fracs) to c[species] (molar conc)'))
-        self._write('void CKYTCR'+sym+'(double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict c)')
+        self._write('void CKYTCR'+sym+'(double *  rho, double *  T, double *  y,  double *  c)')
         self._write('{')
         self._indent()
         species = self.species
@@ -3532,13 +3595,13 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         return 
- 
+
     def _ckxty(self, mechanism):
         self._write()
         self._write()
         self._write(self.line(
             'convert x[species] (mole fracs) to y[species] (mass fracs)'))
-        self._write('void CKXTY'+sym+'(double * restrict x, int * iwrk, double * restrict rwrk, double * restrict y)')
+        self._write('void CKXTY'+sym+'(double *  x,  double *  y)')
         self._write('{')
         self._indent()
 
@@ -3570,7 +3633,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert x[species] (mole fracs) to c[species] (molar conc)'))
-        self._write('void CKXTCP'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict c)')
+        self._write('void CKXTCP'+sym+'(double *  P, double *  T, double *  x,  double *  c)')
         self._write('{')
         self._indent()
 
@@ -3599,7 +3662,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert x[species] (mole fracs) to c[species] (molar conc)'))
-        self._write('void CKXTCR'+sym+'(double * restrict rho, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict c)')
+        self._write('void CKXTCR'+sym+'(double *  rho, double *  T, double *  x, double *  c)')
         self._write('{')
         self._indent()
 
@@ -3636,7 +3699,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert c[species] (molar conc) to x[species] (mole fracs)'))
-        self._write('void CKCTX'+sym+'(double * restrict c, int * iwrk, double * restrict rwrk, double * restrict x)')
+        self._write('void CKCTX'+sym+'(double *  c, double *  x)')
         self._write('{')
         self._indent()
 
@@ -3674,7 +3737,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert c[species] (molar conc) to y[species] (mass fracs)'))
-        self._write('void CKCTY'+sym+'(double * restrict c, int * iwrk, double * restrict rwrk, double * restrict y)')
+        self._write('void CKCTY'+sym+'(double *  c, double *  y)')
         self._write('{')
         self._indent()
 
@@ -3706,7 +3769,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get Cp/R as a function of T '))
         self._write(self.line('for all species (Eq 19)'))
-        self._write('void CKCPOR'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict cpor)')
+        self._write('void CKCPOR'+sym+'(double *  T, double *  cpor)')
         self._write('{')
         self._indent()
 
@@ -3732,7 +3795,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get H/RT as a function of T '))
         self._write(self.line('for all species (Eq 20)'))
-        self._write('void CKHORT'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict hort)')
+        self._write('void CKHORT'+sym+'(double *  T, double *  hort)')
         self._write('{')
         self._indent()
 
@@ -3758,7 +3821,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get S/R as a function of T '))
         self._write(self.line('for all species (Eq 21)'))
-        self._write('void CKSOR'+sym+'(double * restrict T, int * iwrk, double * restrict rwrk, double * restrict sor)')
+        self._write('void CKSOR'+sym+'(double *  T, double *  sor)')
         self._write('{')
         self._indent()
 
@@ -3788,7 +3851,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the rate of progress for each reaction'))
-        self._write('void CKQC'+sym+'(double * restrict T, double * restrict C, int * iwrk, double * restrict rwrk, double * restrict qdot)')
+        self._write('void CKQC'+sym+'(double *  T, double *  C, double *  qdot)')
         self._write('{')
         self._indent()
 
@@ -3841,7 +3904,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the progress rates of each reactions'))
         self._write(self.line('Given P, T, and mole fractions'))
-        self._write('void CKKFKR'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict q_f, double * restrict q_r)')
+        self._write('void CKKFKR'+sym+'(double *  P, double *  T, double *  x, double *  q_f, double *  q_r)')
         self._write('{')
         self._indent()
 
@@ -3892,7 +3955,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the progress rates of each reactions'))
         self._write(self.line('Given P, T, and mass fractions'))
-        self._write('void CKQYP'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict qdot)')
+        self._write('void CKQYP'+sym+'(double *  P, double *  T, double *  y, double *  qdot)')
         self._write('{')
         self._indent()
 
@@ -3950,7 +4013,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the progress rates of each reactions'))
         self._write(self.line('Given P, T, and mole fractions'))
-        self._write('void CKQXP'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict qdot)')
+        self._write('void CKQXP'+sym+'(double *  P, double *  T, double *  x, double *  qdot)')
         self._write('{')
         self._indent()
 
@@ -4000,7 +4063,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the progress rates of each reactions'))
         self._write(self.line('Given rho, T, and mass fractions'))
-        self._write('void CKQYR'+sym+'(double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict qdot)')
+        self._write('void CKQYR'+sym+'(double *  rho, double *  T, double *  y, double *  qdot)')
         self._write('{')
         self._indent()
 
@@ -4044,7 +4107,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the progress rates of each reactions'))
         self._write(self.line('Given rho, T, and mole fractions'))
-        self._write('void CKQXR'+sym+'(double * restrict rho, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict qdot)')
+        self._write('void CKQXR'+sym+'(double *  rho, double *  T, double *  x, double *  qdot)')
         self._write('{')
         self._indent()
 
@@ -4142,7 +4205,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the equil constants for each reaction'))
-        self._write('void CKEQC'+sym+'(double * restrict T, double * restrict C, int * iwrk, double * restrict rwrk, double * restrict eqcon)')
+        self._write('void CKEQC'+sym+'(double *  T, double *  C, double *  eqcon)')
         self._write('{')
         self._indent()
 
@@ -4164,7 +4227,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the equil constants for each reaction'))
         self._write(self.line('Given P, T, and mass fractions'))
-        self._write('void CKEQYP'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict eqcon)')
+        self._write('void CKEQYP'+sym+'(double *  P, double *  T, double *  y, double *  eqcon)')
         self._write('{')
         self._indent()
 
@@ -4186,7 +4249,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the equil constants for each reaction'))
         self._write(self.line('Given P, T, and mole fractions'))
-        self._write('void CKEQXP'+sym+'(double * restrict P, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict eqcon)')
+        self._write('void CKEQXP'+sym+'(double *  P, double *  T, double *  x, double *  eqcon)')
         self._write('{')
         self._indent()
 
@@ -4208,7 +4271,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the equil constants for each reaction'))
         self._write(self.line('Given rho, T, and mass fractions'))
-        self._write('void CKEQYR'+sym+'(double * restrict rho, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict eqcon)')
+        self._write('void CKEQYR'+sym+'(double *  rho, double *  T, double *  y, double *  eqcon)')
         self._write('{')
         self._indent()
 
@@ -4230,7 +4293,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the equil constants for each reaction'))
         self._write(self.line('Given rho, T, and mole fractions'))
-        self._write('void CKEQXR'+sym+'(double * restrict rho, double * restrict T, double * restrict x, int * iwrk, double * restrict rwrk, double * restrict eqcon)')
+        self._write('void CKEQXR'+sym+'(double *  rho, double *  T, double *  x, double *  eqcon)')
         self._write('{')
         self._indent()
 
@@ -4254,7 +4317,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'get temperature given internal energy in mass units and mass fracs'))
-        self._write('int feeytt'+fsym+'(double * restrict e, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict t)')
+        self._write('int feeytt'+fsym+'(double *  e, double *  y, double *  t)')
         self._write('{')
         self._indent()
 
@@ -4265,12 +4328,12 @@ class CPickler(CMill):
         self._write('double tmax = %g; // min upper bound for thermo def' % highT)
         self._write('double e1,emin,emax,cv,t1,dt;')
         self._write('int i; // loop counter')
-        self._write('CKUBMS'+sym+'(&tmin, y, iwrk, rwrk, &emin);')
-        self._write('CKUBMS'+sym+'(&tmax, y, iwrk, rwrk, &emax);')
+        self._write('CKUBMS'+sym+'(&tmin, y, &emin);')
+        self._write('CKUBMS'+sym+'(&tmax, y, &emax);')
         self._write('if (ein < emin) {')
         self._indent()
         self._write(self.line('Linear Extrapolation below tmin'))
-        self._write('CKCVBS'+sym+'(&tmin, y, iwrk, rwrk, &cv);')
+        self._write('CKCVBS'+sym+'(&tmin, y, &cv);')
         self._write('*t = tmin - (emin-ein)/cv;')
         self._write('return 1;')
         self._outdent()
@@ -4279,7 +4342,7 @@ class CPickler(CMill):
         self._write('if (ein > emax) {')
         self._indent()
         self._write(self.line('Linear Extrapolation above tmax'))
-        self._write('CKCVBS'+sym+'(&tmax, y, iwrk, rwrk, &cv);')
+        self._write('CKCVBS'+sym+'(&tmax, y, &cv);')
         self._write('*t = tmax - (emax-ein)/cv;')
         self._write('return 1;')
         self._outdent()
@@ -4288,8 +4351,8 @@ class CPickler(CMill):
         self._write('t1 = tmin + (tmax-tmin)/(emax-emin)*(ein-emin);')
         self._write('for (i = 0; i < maxiter; ++i) {')
         self._indent()
-        self._write('CKUBMS'+sym+'(&t1,y,iwrk,rwrk,&e1);')
-        self._write('CKCVBS'+sym+'(&t1,y,iwrk,rwrk,&cv);')
+        self._write('CKUBMS'+sym+'(&t1,y,&e1);')
+        self._write('CKCVBS'+sym+'(&t1,y,&cv);')
         self._write('dt = (ein - e1) / cv;')
         self._write('if (dt > 100) { dt = 100; }')
         self._write('else if (dt < -100) { dt = -100; }')
@@ -4317,7 +4380,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'get temperature given enthalpy in mass units and mass fracs'))
-        self._write('int fehytt'+fsym+'(double * restrict h, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict t)')
+        self._write('int fehytt'+fsym+'(double *  h, double *  y, double *  t)')
         self._write('{')
         self._indent()
 
@@ -4328,12 +4391,12 @@ class CPickler(CMill):
         self._write('double tmax = %g; // min upper bound for thermo def' % highT)
         self._write('double h1,hmin,hmax,cp,t1,dt;')
         self._write('int i; // loop counter')
-        self._write('CKHBMS'+sym+'(&tmin, y, iwrk, rwrk, &hmin);')
-        self._write('CKHBMS'+sym+'(&tmax, y, iwrk, rwrk, &hmax);')
+        self._write('CKHBMS'+sym+'(&tmin, y, &hmin);')
+        self._write('CKHBMS'+sym+'(&tmax, y, &hmax);')
         self._write('if (hin < hmin) {')
         self._indent()
         self._write(self.line('Linear Extrapolation below tmin'))
-        self._write('CKCPBS'+sym+'(&tmin, y, iwrk, rwrk, &cp);')
+        self._write('CKCPBS'+sym+'(&tmin, y, &cp);')
         self._write('*t = tmin - (hmin-hin)/cp;')
         self._write('return 1;')
         self._outdent()
@@ -4342,7 +4405,7 @@ class CPickler(CMill):
         self._write('if (hin > hmax) {')
         self._indent()
         self._write(self.line('Linear Extrapolation above tmax'))
-        self._write('CKCPBS'+sym+'(&tmax, y, iwrk, rwrk, &cp);')
+        self._write('CKCPBS'+sym+'(&tmax, y, &cp);')
         self._write('*t = tmax - (hmax-hin)/cp;')
         self._write('return 1;')
         self._outdent()
@@ -4351,8 +4414,8 @@ class CPickler(CMill):
         self._write('t1 = tmin + (tmax-tmin)/(hmax-hmin)*(hin-hmin);')
         self._write('for (i = 0; i < maxiter; ++i) {')
         self._indent()
-        self._write('CKHBMS'+sym+'(&t1,y,iwrk,rwrk,&h1);')
-        self._write('CKCPBS'+sym+'(&t1,y,iwrk,rwrk,&cp);')
+        self._write('CKHBMS'+sym+'(&t1,y,&h1);')
+        self._write('CKCPBS'+sym+'(&t1,y,&cp);')
         self._write('dt = (hin - h1) / cp;')
         self._write('if (dt > 100) { dt = 100; }')
         self._write('else if (dt < -100) { dt = -100; }')
@@ -4376,7 +4439,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert phi[species] (specific mole nums) to y[species] (mass fracs)'))
-        self._write('void fephity'+fsym+'(double * restrict phi, int * iwrk, double * restrict rwrk, double * restrict y)')
+        self._write('void fephity'+fsym+'(double *  phi, double *  y)')
         self._write('{')
         self._indent()
 
@@ -4410,7 +4473,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert y[species] (mass fracs) to phi[species] (specific mole num)'))
-        self._write('void feytphi'+fsym+'(double * restrict y, int * iwrk, double * restrict rwrk, double * restrict phi)')
+        self._write('void feytphi'+fsym+'(double *  y, double *  phi)')
         self._write('{')
         self._indent()
 
@@ -4433,7 +4496,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'reverse of ytcr, useful for rate computations'))
-        self._write('void fectyr'+fsym+'(double * restrict c, double * restrict rho, int * iwrk, double * restrict rwrk, double * restrict y)')
+        self._write('void fectyr'+fsym+'(double *  c, double *  rho, double *  y)')
         self._write('{')
         self._indent()
 
@@ -4451,6 +4514,7 @@ class CPickler(CMill):
         return 
  
  
+    # CAREFULL : need to remove rwrk dependencies before using this one
     def _ck_cvrhs(self, mechanism):
         self._write()
         self._write()
@@ -4460,7 +4524,7 @@ class CPickler(CMill):
             'rwrk[0] and rwrk[1] should contain rho and ene respectively'))
         self._write(self.line(
             'working variable phi contains specific mole numbers'))
-        self._write('void fecvrhs'+fsym+'(double * restrict time, double * restrict phi, double * restrict phidot, double * restrict rwrk, int * iwrk)')
+        self._write('void fecvrhs'+fsym+'(double *  time, double *  phi, double *  phidot)')
 
 	self._write('{')
 	self._indent()
@@ -4472,10 +4536,10 @@ class CPickler(CMill):
         self._write('double temperature,pressure; ' + self.line('temporary var'))
         self._write('rho = rwrk[0];')
         self._write('ene = rwrk[1];')
-        self._write('fephity'+fsym+'(phi, iwrk, rwrk, y);')
-        self._write('feeytt'+fsym+'(&ene, y, iwrk, rwrk, &temperature);')
-        self._write('CKPY'+sym+'(&rho, &temperature,  y, iwrk, rwrk, &pressure);')
-        self._write('CKWYP'+sym+'(&pressure, &temperature,  y, iwrk, rwrk, wdot);')
+        self._write('fephity'+fsym+'(phi, y);')
+        self._write('feeytt'+fsym+'(&ene, y, &temperature);')
+        self._write('CKPY'+sym+'(&rho, &temperature,  y, &pressure);')
+        self._write('CKWYP'+sym+'(&pressure, &temperature,  y, wdot);')
         self._write('for (i=0; i<%s; ++i) phidot[i] = wdot[i] / (rho/1000.0); ' % self.nSpecies)
         self._write()
         self._write('return;')
@@ -4502,6 +4566,7 @@ class CPickler(CMill):
 	return
 
  
+    # CAREFULL : need to remove rwrk dependencies before using this one
     def _ck_zndrhs(self, mechanism):
         self._write()
         self._write()
@@ -4511,7 +4576,7 @@ class CPickler(CMill):
         self._write(self.line( 'rwrk[1] : preshock density (g/cc) '))
         self._write(self.line( 'rwrk[2] : detonation velocity (cm/s) '))
         self._write(self.line( 'solution vector: [P; rho; y0 ... ylast] '))
-        self._write('void fezndrhs'+fsym+'(double * restrict time, double * restrict z, double * restrict zdot, double * restrict rwrk, int * iwrk)')
+        self._write('void fezndrhs'+fsym+'(double *  time, double *  z, double *  zdot)')
 
 	self._write('{')
 	self._indent()
@@ -4523,7 +4588,7 @@ class CPickler(CMill):
         self._write('int i; ' + self.line('Loop counter'))
         self._write(self.line('temporary variables'))
         self._write('double ru, T, uvel, wtm, p, rho, gam, son, xm, sum, drdy, eta, cp, cv ;')
-        self._write('double * restrict y; ' + self.line('mass frac pointer'))
+        self._write('double *  y; ' + self.line('mass frac pointer'))
         self._write()
         self._write('ru = %g;' % (R * mole * kelvin / erg))
         self._write()
@@ -4658,7 +4723,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('save molecular weights into array'))
-        self._write('void molecularWeight(double * restrict wt)')
+        self._write('void molecularWeight(double *  wt)')
         self._write('{')
         self._indent()
 
@@ -4685,12 +4750,13 @@ class CPickler(CMill):
 
         return 
 
+
     def _atomicWeight(self, mechanism):
 
         self._write()
         self._write()
         self._write(self.line('save atomic weights into array'))
-        self._write('void atomicWeight(double * restrict awt)')
+        self._write('void atomicWeight(double *  awt)')
         self._write('{')
         self._indent()
         import pyre
@@ -4710,6 +4776,7 @@ class CPickler(CMill):
         self._write('}')
 
         return 
+
 
     def _productionRate(self, mechanism):
 
@@ -4755,7 +4822,7 @@ class CPickler(CMill):
         # main function
         self._write()
         self._write(self.line('compute the production rate for each species'))
-        self._write('void productionRate(double * restrict wdot, double * restrict sc, double T)')
+        self._write('void productionRate(double *  wdot, double *  sc, double T)')
         self._write('{')
         self._indent()
 
@@ -4816,7 +4883,7 @@ class CPickler(CMill):
 
         # k_f function
         self._write()
-        self._write('void comp_k_f(double * restrict tc, double invT, double * restrict k_f)')
+        self._write('void comp_k_f(double *  tc, double invT, double *  k_f)')
         self._write('{')
         self._indent()
         self._outdent()
@@ -4838,7 +4905,7 @@ class CPickler(CMill):
 
         # Kc
         self._write()
-        self._write('void comp_Kc(double * restrict tc, double invT, double * restrict Kc)')
+        self._write('void comp_Kc(double *  tc, double invT, double *  Kc)')
         self._write('{')
         self._indent()
 
@@ -4888,7 +4955,7 @@ class CPickler(CMill):
 
         # qdot
         self._write()
-        self._write('void comp_qfqr(double * restrict qf, double * restrict qr, double * restrict sc, double * restrict tc, double invT)')
+        self._write('void comp_qfqr(double *  qf, double *  qr, double *  sc, double *  tc, double invT)')
         self._write('{')
         self._indent()
 
@@ -5153,6 +5220,89 @@ class CPickler(CMill):
 
         return
 
+    def _DproductionRatePYJAC(self, mechanism):
+
+        species_list = [x.symbol for x in mechanism.species()]
+        nSpecies = len(species_list)
+
+        self._write('#ifdef USE_PYJAC')
+        self._write()
+        self._write(self.line('compute the reaction Jacobian using PyJac'))
+        self._write('void DWDOT_PYJAC(double *  J, double *  y, double *  Tp, double *  Press)')
+        self._write('{')
+        self._indent()
+
+        self._write('double y_pyjac[%d];' % (nSpecies + 1))
+        self._write('double J_reorg[%d];' % (nSpecies+1)**2)
+
+        self._write()
+        self._write(self.line(' INPUT Y'))
+        self._write('y_pyjac[0] = *Tp;')
+        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._indent()
+        self._write('y_pyjac[1+k] = y[k];')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('double Press_MKS = *Press / 10.0;')
+
+        self._write()
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1)**2)
+        self._indent()
+        self._write('J[k] = 0.0;')
+        self._write('J_reorg[k] = 0.0;')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('eval_jacob(0, Press_MKS, y_pyjac, J);')
+
+        self._write()
+        self._write('/* Reorganization */')
+        self._write('for (int k=0; k<%d; k++) {' %(nSpecies + 1))
+        self._indent()
+        self._write('J_reorg[k*%d + %d] = J[k*%d + 0];' % (nSpecies+1, nSpecies, nSpecies+1))
+        self._write('for (int i=0; i<%d; i++) {' %(nSpecies))
+        self._indent()
+        self._write('J_reorg[k*%d + i] = J[k*%d + (i + 1)];' % (nSpecies+1, nSpecies+1))
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+
+        self._write('for (int k=0; k<%d; k++) {' %(nSpecies + 1))
+        self._indent()
+        self._write('J[%d*%d + k] = J_reorg[k];' % (nSpecies, nSpecies+1))
+        self._outdent()
+        self._write('}')
+
+        self._write('for (int k=0; k<%d; k++) {' %((nSpecies+1)*nSpecies))
+        self._indent()
+        self._write('J[k] = J_reorg[k + %d];' % (nSpecies + 1))
+        self._outdent()
+        self._write('}')
+
+        #self._write()
+        #self._write('/* Go back to CGS */')
+        #self._write('for (int k=0; k<%d; k++) {' %(nSpecies))
+        #self._indent()
+        #self._write('/* dwdot[k]/dT */')
+        #self._write('J[%d*%d + k] *= 1.e-3;' % (nSpecies, nSpecies+1))
+        #self._write('/* dTdot/d[X] */')
+        #self._write('J[k*%d + %d] *= 1.e3;' % (nSpecies+1, nSpecies))
+        #self._outdent()
+        #self._write('}')
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+
+        self._write('}')
+        self._write('#endif')
+
+        return
+
 
     def _DproductionRate(self, mechanism):
 
@@ -5161,7 +5311,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute the reaction Jacobian'))
-        self._write('void DWDOT(double * restrict J, double * restrict sc, double * restrict Tp, int * consP)')
+        self._write('void DWDOT(double *  J, double *  sc, double *  Tp, int * consP)')
         self._write('{')
         self._indent()
 
@@ -5178,16 +5328,10 @@ class CPickler(CMill):
 
         self._write()
         self._write('/* dwdot[k]/dT */')
-        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
-        self._indent()
-        self._write('J[%d+k] *= 1.e-6;' % (nSpecies*(nSpecies+1)))
-        self._outdent()
-        self._write('}')
-
-        self._write()
         self._write('/* dTdot/d[X] */')
         self._write('for (int k=0; k<%d; k++) {' % nSpecies)
         self._indent()
+        self._write('J[%d+k] *= 1.e-6;' % (nSpecies*(nSpecies+1)))
         self._write('J[k*%d+%d] *= 1.e6;' % (nSpecies+1, nSpecies))
         self._outdent()
         self._write('}')
@@ -5200,6 +5344,772 @@ class CPickler(CMill):
 
         return
 
+    def _DproductionRatePrecond(self, mechanism):
+
+        species_list = [x.symbol for x in mechanism.species()]
+        nSpecies = len(species_list)
+
+        self._write()
+        self._write(self.line('compute an approx to the reaction Jacobian'))
+        self._write('void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP)')
+        self._write('{')
+        self._indent()
+
+        self._write('double c[%d];' % (nSpecies))
+        self._write()
+        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._indent()
+        self._write('c[k] = 1.e6 * sc[k];')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('aJacobian_precond(J, c, *Tp, *HP);')
+
+        self._write()
+        self._write('/* dwdot[k]/dT */')
+        self._write('/* dTdot/d[X] */')
+        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._indent()
+        self._write('J[%d+k] *= 1.e-6;' % (nSpecies*(nSpecies+1)))
+        self._write('J[k*%d+%d] *= 1.e6;' % (nSpecies+1, nSpecies))
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+
+        self._write('}')
+
+        return
+
+    def _sparsity(self, mechanism):
+
+        species_list = [x.symbol for x in mechanism.species()]
+        nSpecies = len(species_list)
+
+        ####
+        self._write()
+        self._write(self.line('compute the sparsity pattern Jacobian'))
+        self._write('void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)')
+        self._write('{')
+        self._indent()
+
+        self._write('double c[%d];' % (nSpecies))
+        self._write('double J[%d];' % (nSpecies+1)**2)
+        self._write()
+        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._indent()
+        self._write('c[k] = 1.0/ %f ;' % (nSpecies))
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('aJacobian(J, c, 1500.0, *consP);')
+
+        self._write()
+        self._write('int nJdata_tmp = 0;')
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if(J[ %d * k + l] != 0.0){' % (nSpecies+1))
+        self._indent()
+        self._write('nJdata_tmp = nJdata_tmp + 1;')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('*nJdata = NCELLS * nJdata_tmp;')
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+
+        self._write('}')
+        self._write()
+        self._write()
+
+        ####
+        self._write()
+        self._write(self.line('compute the sparsity pattern of simplified Jacobian'))
+        self._write('void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)')
+        self._write('{')
+        self._indent()
+
+        self._write('double c[%d];' % (nSpecies))
+        self._write('double J[%d];' % (nSpecies+1)**2)
+        self._write()
+        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._indent()
+        self._write('c[k] = 1.0/ %f ;' % (nSpecies))
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('aJacobian_precond(J, c, 1500.0, *consP);')
+
+        self._write()
+        self._write('int nJdata_tmp = 0;')
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if(k == l){')
+        self._indent()
+        self._write('nJdata_tmp = nJdata_tmp + 1;')
+        self._outdent()
+        self._write('} else {')
+        self._indent()
+        self._write('if(J[ %d * k + l] != 0.0){' % (nSpecies+1))
+        self._indent()
+        self._write('nJdata_tmp = nJdata_tmp + 1;')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('nJdata[0] = nJdata_tmp;')
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+
+        self._write('}')
+        self._write()
+        self._write()
+
+        ####
+        self._write(self.line('compute the sparsity pattern of the simplified precond Jacobian'))
+        self._write('void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * consP)')
+        self._write('{')
+        self._indent()
+
+        self._write('double c[%d];' % (nSpecies))
+        self._write('double J[%d];' % (nSpecies+1)**2)
+        self._write()
+        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._indent()
+        self._write('c[k] = 1.0/ %f ;' % (nSpecies))
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('aJacobian_precond(J, c, 1500.0, *consP);')
+
+        self._write()
+        self._write('colPtrs[0] = 0;')
+        self._write('int nJdata_tmp = 0;')
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if (k == l) {')
+        self._indent()
+        self._write('rowVals[nJdata_tmp] = l; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('} else {')
+        self._indent()
+        self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
+        self._indent()
+        self._write('rowVals[nJdata_tmp] = l; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._write('colPtrs[k+1] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+
+        self._write('}')
+
+        ####
+        self._write(self.line('compute the sparsity pattern of the Jacobian'))
+        self._write('void SPARSITY_PREPROC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)')
+        self._write('{')
+        self._indent()
+
+        self._write('double c[%d];' % (nSpecies))
+        self._write('double J[%d];' % (nSpecies+1)**2)
+        self._write('int offset_row;')
+        self._write('int offset_col;')
+        self._write()
+        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._indent()
+        self._write('c[k] = 1.0/ %f ;' % (nSpecies))
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('aJacobian(J, c, 1500.0, *consP);')
+
+        self._write()
+        self._write('colPtrs[0] = 0;')
+        self._write('int nJdata_tmp = 0;')
+        self._write('for (int nc=0; nc<NCELLS; nc++) {')
+        self._indent()
+        self._write('offset_row = nc * %d;' % (nSpecies+1))
+        self._write('offset_col = nc * %d;' % (nSpecies+1))
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
+        self._indent()
+        self._write('rowVals[nJdata_tmp] = l + offset_row; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._write('colPtrs[offset_col + (k + 1)] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+
+        self._write('}')
+
+        return
+
+
+    def _ajacPrecond(self, mechanism):
+
+        nSpecies = len(mechanism.species())
+        nReactions = len(mechanism.reaction())
+
+        self._write()
+        self._write(self.line('compute an approx to the reaction Jacobian'))
+        self._write('void aJacobian_precond(double *  J, double *  sc, double T, int HP)')
+        self._write('{')
+        self._indent()
+
+        self._write('for (int i=0; i<%d; i++) {' % (nSpecies+1)**2)
+        self._indent()
+        self._write('J[i] = 0.0;')
+        self._outdent()
+        self._write('}')
+        
+        self._write()
+
+        self._write('double wdot[%d];' % (nSpecies))
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies))
+        self._indent()
+        self._write('wdot[k] = 0.0;')
+        self._outdent()
+        self._write('}')
+        
+        self._write()
+
+        self._write('double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('double invT = 1.0 / tc[1];')
+        self._write('double invT2 = invT * invT;')
+
+        self._write()
+
+        self._write(self.line('reference concentration: P_atm / (RT) in inverse mol/m^3'))
+        self._write('double refC = %g / %g / T;' % (atm.value, R.value))
+        self._write('double refCinv = 1.0 / refC;')
+
+        self._write()
+
+        self._write(self.line('compute the mixture concentration'))
+        self._write('double mixture = 0.0;')
+        self._write('for (int k = 0; k < %d; ++k) {' % nSpecies)
+        self._indent()
+        self._write('mixture += sc[k];')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+
+        self._write(self.line('compute the Gibbs free energy'))
+        self._write('double g_RT[%d];' % (nSpecies))
+        self._write('gibbs(g_RT, tc);')
+
+        self._write()
+
+        self._write(self.line('compute the species enthalpy'))
+        self._write('double h_RT[%d];' % (nSpecies))
+        self._write('speciesEnthalpy(h_RT, tc);')
+
+        self._write()
+
+        self._write('double phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;') 
+        self._write('double dlnkfdT, dlnk0dT, dlnKcdT, dkrdT, dqdT;')
+        self._write('double dqdci, dcdc_fac, dqdc[%d];' % (nSpecies))
+        self._write('double Pr, fPr, F, k_0, logPr;') 
+        self._write('double logFcent, troe_c, troe_n, troePr_den, troePr, troe;')
+        self._write('double Fcent1, Fcent2, Fcent3, Fcent;')
+        self._write('double dlogFdc, dlogFdn, dlogFdcn_fac;')
+        self._write('double dlogPrdT, dlogfPrdT, dlogFdT, dlogFcentdT, dlogFdlogPr, dlnCorrdT;')
+        self._write('const double ln10 = log(10.0);')
+        self._write('const double log10e = 1.0/log(10.0);')
+
+        for i, reaction in zip(range(nReactions), mechanism.reaction()):
+
+            lt = reaction.lt
+            if lt:
+                print "Landau-Teller reactions are not supported"
+                sys.exit(1)
+
+            self._write(self.line('reaction %d: %s' % (i+1, reaction.equation())))
+            if reaction.low:  # case 1
+                self._write(self.line('a pressure-fall-off reaction'))
+                self._ajac_reaction_precond(mechanism, reaction, 1)
+            elif reaction.thirdBody:  # case 2
+                self._write(self.line('a third-body and non-pressure-fall-off reaction'))
+                self._ajac_reaction_precond(mechanism, reaction, 2)
+            else:  # case 3
+                self._write(self.line('a non-third-body and non-pressure-fall-off reaction'))
+                self._ajac_reaction_precond(mechanism, reaction, 3)
+            self._write()
+
+        self._write('double c_R[%d], dcRdT[%d], e_RT[%d];' % (nSpecies, nSpecies, nSpecies))
+        self._write('double * eh_RT;')
+        self._write('if (HP) {')
+        self._indent()
+
+        self._write('cp_R(c_R, tc);')
+        self._write('dcvpRdT(dcRdT, tc);')
+        self._write('eh_RT = &h_RT[0];');
+
+        self._outdent()
+        self._write('}')
+        self._write('else {')
+        self._indent()
+
+        self._write('cv_R(c_R, tc);')
+        self._write('dcvpRdT(dcRdT, tc);')
+        self._write('speciesInternalEnergy(e_RT, tc);');
+        self._write('eh_RT = &e_RT[0];');
+
+        self._outdent()
+        self._write('}')
+
+        self._write()
+
+        self._write('double cmix = 0.0, ehmix = 0.0, dcmixdT=0.0, dehmixdT=0.0;')
+        self._write('for (int k = 0; k < %d; ++k) {' % nSpecies)
+        self._indent()
+        self._write('cmix += c_R[k]*sc[k];')
+        self._write('dcmixdT += dcRdT[k]*sc[k];')
+        self._write('ehmix += eh_RT[k]*wdot[k];')
+        self._write('dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[%d+k];' % \
+                        (nSpecies*(nSpecies+1)))
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('double cmixinv = 1.0/cmix;')
+        self._write('double tmp1 = ehmix*cmixinv;')
+        self._write('double tmp3 = cmixinv*T;')
+        self._write('double tmp2 = tmp1*tmp3;')
+        self._write('double dehmixdc;')
+
+        self._write('/* dTdot/d[X] */')
+        self._write('for (int k = 0; k < %d; ++k) {' % nSpecies)
+        self._indent()
+        self._write('dehmixdc = 0.0;')
+        self._write('for (int m = 0; m < %d; ++m) {' % nSpecies)
+        self._indent()
+        self._write('dehmixdc += eh_RT[m]*J[k*%s+m];' % (nSpecies+1))
+        self._outdent()
+        self._write('}')        
+        self._write('J[k*%d+%d] = tmp2*c_R[k] - tmp3*dehmixdc;' % (nSpecies+1,nSpecies))
+        self._outdent()
+        self._write('}')
+
+        self._write('/* dTdot/dT */')
+        self._write('J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;' % \
+                        (nSpecies*(nSpecies+1)+nSpecies))
+
+        self._outdent()
+        self._write('}')
+        return
+
+
+
+    def _ajac_reaction_precond(self, mechanism, reaction, rcase):
+
+        if rcase == 1: # pressure-dependent reaction
+            isPD = True
+            if reaction.thirdBody:
+                has_alpha = True
+                self._write('/* also 3-body */')
+            else:
+                has_alpha = False
+                self._write('/* non 3-body */')
+                print 'FIXME: pressure dependent non-3-body reaction in _ajac_reaction'
+                sys.exit(1)
+        elif rcase == 2: # third-body and non-pressure-dependent reaction
+            isPD = False
+            has_alpha = True
+        elif rcase == 3: # simple non-third and non-pressure-dependent reaction
+            isPD = False
+            has_alpha = False
+        else:
+            print '_ajac_reaction: wrong case ', rcase
+            exit(1)
+
+        nSpecies = len(mechanism.species())
+        rea_dict = {}
+        pro_dict = {}
+        all_dict = {}
+        sumNuk = 0
+        for symbol, coefficient in reaction.reactants:
+            k = mechanism.species(symbol).id
+            sumNuk -= coefficient
+            if k in rea_dict:
+                coe_old = rea_dict[k][1]
+                rea_dict[k] = (symbol, coefficient+coe_old)
+            else:
+                rea_dict[k] = (symbol,  coefficient)
+        for symbol, coefficient in reaction.products:
+            k = mechanism.species(symbol).id
+            sumNuk += coefficient
+            if k in pro_dict:
+                coe_old = pro_dict[k][1]
+                pro_dict[k] = (symbol, coefficient+coe_old)
+            else:
+                pro_dict[k] = (symbol, coefficient)
+        for k in range(nSpecies):
+            if k in rea_dict and k in pro_dict:
+                sr, nur = rea_dict[k]
+                sp, nup = pro_dict[k]
+                all_dict[k] = (sr, nup-nur)
+            elif k in rea_dict:
+                sr, nur = rea_dict[k]
+                all_dict[k] = (sr, -nur)
+            elif k in pro_dict:
+                sp, nup = pro_dict[k]
+                all_dict[k] = (sp, nup)
+
+        sorted_reactants = sorted(rea_dict.values())
+        sorted_products = sorted(pro_dict.values()) 
+
+        if not reaction.reversible:
+            if isPD or has_alpha:
+                print 'FIXME: inreversible reaction in _ajac_reaction may not work'
+                self._write('/* FIXME: inreversible reaction in _ajac_reaction may not work*/')
+            for k in range(nSpecies):
+                if k in sorted_reactants and k in sorted_products:
+                    print 'FIXME: inreversible reaction in _ajac_reaction may not work'
+                    self._write('/* FIXME: inreversible reaction in _ajac_reaction may not work*/')
+
+        if isPD:
+            Corr_s = 'Corr *'
+        elif has_alpha:
+            Corr_s = 'alpha * '
+        else:
+            Corr_s = ''
+
+        if has_alpha:
+            self._write("/* 3-body correction factor */")
+            self._write("alpha = %s;" % self._enhancement(mechanism, reaction))
+
+        # forward
+        self._write('/* forward */')
+        self._write("phi_f = %s;" % self._sortedPhaseSpace(mechanism, sorted_reactants))
+        #
+        self._write("k_f = prefactor_units[%d] * fwd_A[%d]" % (reaction.id-1,reaction.id-1))
+        self._write("            * exp(fwd_beta[%d] * tc[0] - activation_units[%d] * fwd_Ea[%d] * invT);"
+                    %(reaction.id-1,reaction.id-1,reaction.id-1))
+        self._write("dlnkfdT = fwd_beta[%d] * invT + activation_units[%d] * fwd_Ea[%d] * invT2;"
+                    %(reaction.id-1,reaction.id-1,reaction.id-1))
+
+        if isPD:
+            self._write('/* pressure-fall-off */')
+            self._write("k_0 = low_A[%d] * exp(low_beta[%d] * tc[0] - activation_units[%d] * low_Ea[%d] * invT);"
+                        %(reaction.id-1,reaction.id-1,reaction.id-1,reaction.id-1))
+            self._write('Pr = phase_units[%d] * alpha / k_f * k_0;' % (reaction.id-1))
+            self._write('fPr = Pr / (1.0+Pr);')
+            self._write("dlnk0dT = low_beta[%d] * invT + activation_units[%d] * low_Ea[%d] * invT2;"
+                        %(reaction.id-1,reaction.id-1,reaction.id-1))
+            self._write('dlogPrdT = log10e*(dlnk0dT - dlnkfdT);')
+            self._write('dlogfPrdT = dlogPrdT / (1.0+Pr);')
+            if reaction.sri:
+                self._write('/* SRI form */')
+                print "FIXME: sri not supported in _ajac_reaction yet"
+                sys.exit(1)
+            elif reaction.troe:
+                self._write('/* Troe form */')
+                troe = reaction.troe
+                self._write("logPr = log10(Pr);")
+                self._write('Fcent1 = (fabs(troe_Tsss[%d]) > 1.e-100 ? (1.-troe_a[%d])*exp(-T/troe_Tsss[%d]) : 0.);'
+                            %(reaction.id-1,reaction.id-1,reaction.id-1))
+                self._write('Fcent2 = (fabs(troe_Ts[%d]) > 1.e-100 ? troe_a[%d] * exp(-T/troe_Ts[%d]) : 0.);'
+                            %(reaction.id-1,reaction.id-1,reaction.id-1))
+                self._write('Fcent3 = (troe_len[%d] == 4 ? exp(-troe_Tss[%d] * invT) : 0.);'
+                            %(reaction.id-1,reaction.id-1))
+                self._write('Fcent = Fcent1 + Fcent2 + Fcent3;')
+                self._write("logFcent = log10(Fcent);")
+                self._write("troe_c = -.4 - .67 * logFcent;")
+                self._write("troe_n = .75 - 1.27 * logFcent;")
+                self._write("troePr_den = 1.0 / (troe_n - .14*(troe_c + logPr));")
+                self._write("troePr = (troe_c + logPr) * troePr_den;")
+                self._write("troe = 1.0 / (1.0 + troePr*troePr);")
+                self._write("F = pow(10.0, logFcent * troe);")
+
+                self._write("dlogFcentdT = log10e/Fcent*( ")
+                self._write("    (fabs(troe_Tsss[%d]) > 1.e-100 ? -Fcent1/troe_Tsss[%d] : 0.)"
+                            %(reaction.id-1,reaction.id-1))
+                self._write("  + (fabs(troe_Ts[%d]) > 1.e-100 ? -Fcent2/troe_Ts[%d] : 0.)"
+                            %(reaction.id-1,reaction.id-1))
+                self._write("  + (troe_len[%d] == 4 ? Fcent3*troe_Tss[%d]*invT2 : 0.) );"
+                            %(reaction.id-1,reaction.id-1))
+
+                self._write("dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;")
+                self._write('dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;')
+                self._write('dlogFdn = dlogFdcn_fac * troePr;')
+                self._write('dlogFdlogPr = dlogFdc;')
+                self._write('dlogFdT = dlogFcentdT*(troe - 0.67*dlogFdc - 1.27*dlogFdn) + dlogFdlogPr * dlogPrdT;')
+            else:
+                self._write('/* Lindemann form */')
+                self._write('F = 1.0;')
+                self._write('dlogFdlogPr = 0.0;')
+                self._write('dlogFdT = 0.0;')
+
+        # reverse
+        if not reaction.reversible:
+            self._write('/* rate of progress */')
+            if (not has_alpha) and (not isPD):
+                self._write('q = k_f*phi_f;')
+            else:
+                self._write('q_nocor = k_f*phi_f;')
+                if isPD:
+                    self._write('Corr = fPr * F;')
+                    self._write('q = Corr * q_nocor;')
+                else: 
+                    self._write('q = alpha * q_nocor;')
+
+            if isPD:
+                self._write('dlnCorrdT = ln10*(dlogfPrdT + dlogFdT);')
+                self._write('dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;' % Corr_s)
+            else:
+                self._write('dqdT = %sdlnkfdT*k_f*phi_f;' % Corr_s)
+        else:
+            self._write('/* reverse */')
+            self._write("phi_r = %s;" % self._sortedPhaseSpace(mechanism, sorted_products))
+            self._write('Kc = %s;' % self._sortedKc(mechanism, reaction))
+            self._write('k_r = k_f / Kc;')
+
+            dlnKcdT_s = 'invT * ('
+            terms = []
+            for symbol, coefficient in sorted(sorted_reactants,
+                                              key=lambda x: mechanism.species(x[0]).id):
+                k = mechanism.species(symbol).id
+                if coefficient == 1:
+                    terms.append('h_RT[%d]' % (k))
+                else:
+                    terms.append('%d*h_RT[%d]' % (coefficient, k))
+            dlnKcdT_s += '-(' + ' + '.join(terms) + ')'
+            terms = []
+            for symbol, coefficient in sorted(sorted_products,
+                                              key=lambda x: mechanism.species(x[0]).id):
+                k = mechanism.species(symbol).id
+                if coefficient == 1:
+                    terms.append('h_RT[%d]' % (k))
+                else:
+                    terms.append('%d*h_RT[%d]' % (coefficient, k))
+            dlnKcdT_s += ' + (' + ' + '.join(terms) + ')'
+            if sumNuk > 0:
+                dlnKcdT_s += ' - %d' % sumNuk
+            elif sumNuk < 0:
+                dlnKcdT_s += ' + %d' % (-sumNuk)
+            dlnKcdT_s += ')'
+            self._write('dlnKcdT = %s;' % dlnKcdT_s)
+
+            self._write('dkrdT = (dlnkfdT - dlnKcdT)*k_r;')
+
+            self._write('/* rate of progress */')
+            if (not has_alpha) and (not isPD):
+                self._write('q = k_f*phi_f - k_r*phi_r;')
+            else:
+                self._write('q_nocor = k_f*phi_f - k_r*phi_r;')
+                if isPD:
+                    self._write('Corr = fPr * F;')
+                    self._write('q = Corr * q_nocor;')
+                else: 
+                    self._write('q = alpha * q_nocor;')
+
+            if isPD:
+                self._write('dlnCorrdT = ln10*(dlogfPrdT + dlogFdT);')
+                self._write('dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) + dlnCorrdT*q;' % Corr_s)
+            else:
+                self._write('dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);' % Corr_s)
+
+        self._write("/* update wdot */")
+        for k in sorted(all_dict.keys()):
+            s, nu = all_dict[k]
+            if nu == 1:
+                self._write('wdot[%d] += q; /* %s */' % (k, s))
+            elif nu == -1:
+                self._write('wdot[%d] -= q; /* %s */' % (k, s))
+            elif nu > 0:
+                self._write('wdot[%d] += %.17g * q; /* %s */' % (k, nu, s))
+            elif nu < 0:
+                self._write('wdot[%d] -= %.17g * q; /* %s */' % (k, -nu, s))
+
+        if isPD:
+            self._write('/* for convenience */')
+            self._write('k_f *= Corr;')
+            if reaction.reversible:
+                self._write('k_r *= Corr;')
+        elif has_alpha:
+            self._write('/* for convenience */')
+            self._write('k_f *= alpha;')
+            if reaction.reversible:
+                self._write('k_r *= alpha;')
+            else:
+                self._write('k_r = 0.0;')
+
+        if isPD:
+            self._write('dcdc_fac = 0.0;')
+        #elif has_alpha:
+        #    self._write('dcdc_fac = q_nocor;')
+
+        def dqdc_simple_precond(dqdc_s, k):
+            if dqdc_s ==  "0":
+                dqdc_s = ''
+            if k in sorted(rea_dict.keys()):
+                dps = self._DphaseSpace(mechanism,sorted_reactants,rea_dict[k][0])
+                if dps == "1.0":
+                    dps_s = ''
+                else:
+                    dps_s = '*'+dps
+                dqdc_s += ' + k_f%s' % dps_s
+            if reaction.reversible:
+                if k in sorted(pro_dict.keys()):
+                    dps = self._DphaseSpace(mechanism,sorted_products,pro_dict[k][0])
+                    if dps == "1.0":
+                        dps_s = ''
+                    else:
+                        dps_s = '*'+dps
+                    dqdc_s += ' - k_r%s' % dps_s
+            return dqdc_s
+
+        if has_alpha or isPD:
+
+            #self._write('if (consP) {')
+            #self._indent()
+
+            #for k in range(nSpecies):
+            #    dqdc_s = self._Denhancement(mechanism,reaction,k,True)
+            #    if dqdc_s != "0":
+            #        if isPD:
+            #            if dqdc_s == "1":
+            #                dqdc_s ='dcdc_fac'
+            #            else:
+            #                dqdc_s +='*dcdc_fac'
+            #        elif has_alpha:
+            #            if dqdc_s == "1":
+            #                dqdc_s ='q_nocor'
+            #            else:
+            #                dqdc_s +='*q_nocor'
+
+            #    dqdc_s = dqdc_simple_precond(dqdc_s,k)
+            #    if dqdc_s:
+            #        symb_k = self.species[k].symbol
+            #        self._write('/* d()/d[%s] */' % symb_k)
+            #        self._write('dqdci = %s;' % (dqdc_s))
+            #        #
+            #        for m in sorted(all_dict.keys()):
+            #            if all_dict[m][1] != 0:
+            #                s1 = 'J[%d] += %.17g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
+            #                s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
+            #                s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], symb_k)
+            #                self._write(s1.ljust(30) + s2)
+
+            #self._outdent()
+            #self._write('}')
+            #self._write('else {')
+            #self._indent()
+
+            for k in range(nSpecies):
+                dqdc_s = self._Denhancement(mechanism,reaction,k,False)
+                if dqdc_s != '0':
+                    if isPD:
+                        if dqdc_s == '1':
+                            dqdc_s ='dcdc_fac'
+                        elif isPD:
+                            dqdc_s +='*dcdc_fac'
+                    elif has_alpha:
+                        if dqdc_s == '1':
+                            dqdc_s ='q_nocor'
+                        else:
+                            dqdc_s +='*q_nocor'
+
+                dqdc_s = dqdc_simple_precond(dqdc_s,k)
+                if dqdc_s:
+                    self._write('dqdc[%d] = %s;' % (k,dqdc_s))
+
+            self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+            self._indent()
+            for m in sorted(all_dict.keys()):
+                if all_dict[m][1] != 0:
+                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((nSpecies+1), m, all_dict[m][1])
+                    s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
+                    self._write(s1)
+            #self._outdent()
+            #self._write('}')
+
+            self._outdent()
+            self._write('}')
+
+            for m in sorted(all_dict.keys()):
+                if all_dict[m][1] != 0:
+                    s1 = 'J[%d] += %.17g * dqdT; /* dwdot[%s]/dT */' % \
+                        (nSpecies*(nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
+                    s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
+                    self._write(s1)
+
+        else:
+
+            for k in range(nSpecies):
+                dqdc_s = dqdc_simple_precond('',k)
+                if dqdc_s:
+                    self._write('/* d()/d[%s] */' % all_dict[k][0])
+                    self._write('dqdci = %s;' % (dqdc_s))
+                    if reaction.reversible or k in rea_dict:
+                        for m in sorted(all_dict.keys()):
+                            if all_dict[m][1] != 0:
+                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
+                                s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
+                                s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], all_dict[k][0])
+                                self._write(s1.ljust(30) + s2)
+            self._write('/* d()/dT */')
+            for m in sorted(all_dict.keys()):
+                if all_dict[m][1] != 0:
+                    s1 = 'J[%d] += %.17g * dqdT;' % (nSpecies*(nSpecies+1)+m, all_dict[m][1])
+                    s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=').replace('+= -1 *', '-=')
+                    s2 = '/* dwdot[%s]/dT */' % (all_dict[m][0])
+                    self._write(s1.ljust(30) + s2)
+
+        return
+
 
     def _ajac(self, mechanism):
 
@@ -5208,7 +6118,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute the reaction Jacobian'))
-        self._write('void aJacobian(double * restrict J, double * restrict sc, double T, int consP)')
+        self._write('void aJacobian(double *  J, double *  sc, double T, int consP)')
         self._write('{')
         self._indent()
 
@@ -5354,8 +6264,8 @@ class CPickler(CMill):
 
         self._outdent()
         self._write('}')
-        return
 
+        return
 
     def _ajac_reaction(self, mechanism, reaction, rcase):
 
@@ -5593,6 +6503,8 @@ class CPickler(CMill):
 
         if isPD:
             self._write('dcdc_fac = q/alpha*(1.0/(Pr+1.0) + dlogFdlogPr);')
+        #elif has_alpha:
+        #    self._write('dcdc_fac = q_nocor;')
 
         def dqdc_simple(dqdc_s, k):
             if dqdc_s ==  "0":
@@ -5654,15 +6566,17 @@ class CPickler(CMill):
             for k in range(nSpecies):
                 dqdc_s = self._Denhancement(mechanism,reaction,k,False)
                 if dqdc_s != '0':
-                    if dqdc_s == '1':
-                        dqdc_s ='dcdc_fac'
-                    elif isPD:
-                        dqdc_s +='*dcdc_fac'
-                elif has_alpha:
-                    if dqdc_s == '1':
-                        dqdc_s ='q_nocor'
-                    else:
-                        dqdc_s +='*q_nocor'
+                    if isPD:
+                        if dqdc_s == '1':
+                            dqdc_s ='dcdc_fac'
+                        elif isPD:
+                            dqdc_s +='*dcdc_fac'
+                    elif has_alpha:
+                        if dqdc_s == '1':
+                            dqdc_s ='q_nocor'
+                        else:
+                            dqdc_s +='*q_nocor'
+
                 dqdc_s = dqdc_simple(dqdc_s,k)
                 if dqdc_s:
                     self._write('dqdc[%d] = %s;' % (k,dqdc_s))
@@ -5734,7 +6648,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the production rate for each species'))
-        self._write('void vproductionRate(int npt, double * restrict wdot, double * restrict sc, double * restrict T)')
+        self._write('void vproductionRate(int npt, double *  wdot, double *  sc, double *  T)')
         self._write('{')
         self._indent()
 
@@ -5799,7 +6713,7 @@ class CPickler(CMill):
 
         self._write()
 
-        self._write('void vcomp_k_f(int npt, double * restrict k_f_s, double * restrict tc, double * restrict invT)')
+        self._write('void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT)')
         self._write('{')
         self._write('#ifdef __INTEL_COMPILER')
         self._indent()
@@ -5820,7 +6734,7 @@ class CPickler(CMill):
 
         self._write()
 
-        self._write('void vcomp_gibbs(int npt, double * restrict g_RT, double * restrict tc)')
+        self._write('void vcomp_gibbs(int npt, double *  g_RT, double *  tc)')
         self._write('{')
         self._indent()
         self._write(self.line('compute the Gibbs free energy'))
@@ -5844,7 +6758,7 @@ class CPickler(CMill):
 
         self._write()
 
-        self._write('void vcomp_Kc(int npt, double * restrict Kc_s, double * restrict g_RT, double * restrict invT)')
+        self._write('void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT)')
         self._write('{')
         self._write('#ifdef __INTEL_COMPILER')
         self._indent()
@@ -5868,18 +6782,18 @@ class CPickler(CMill):
 
         self._write()
         if nReactions <= 50:
-            self._write('void vcomp_wdot(int npt, double * restrict wdot, double * restrict mixture, double * restrict sc,')
-            self._write('		double * restrict k_f_s, double * restrict Kc_s,')
-            self._write('		double * restrict tc, double * restrict invT, double * restrict T)')
+            self._write('void vcomp_wdot(int npt, double *  wdot, double *  mixture, double *  sc,')
+            self._write('		double *  k_f_s, double *  Kc_s,')
+            self._write('		double *  tc, double *  invT, double *  T)')
             self._write('{')
             self._vcomp_wdot(mechanism,0,nReactions)
             self._write('}')
         else:
             for i in range(0,nReactions,50):
                 nr = min(50, nReactions-i)
-                self._write('void vcomp_wdot_%d_%d(int npt, double * restrict wdot, double * restrict mixture, double * restrict sc,' % (i+1,i+nr))
-                self._write('		double * restrict k_f_s, double * restrict Kc_s,')
-                self._write('		double * restrict tc, double * restrict invT, double * restrict T)')
+                self._write('void vcomp_wdot_%d_%d(int npt, double *  wdot, double *  mixture, double *  sc,' % (i+1,i+nr))
+                self._write('		double *  k_f_s, double *  Kc_s,')
+                self._write('		double *  tc, double *  invT, double *  T)')
                 self._write('{')
                 self._vcomp_wdot(mechanism,i,nr)
                 self._write('}')
@@ -6002,7 +6916,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the progress rate for each reaction'))
-        self._write('void progressRate(double * restrict qdot, double * restrict sc, double T)')
+        self._write('void progressRate(double *  qdot, double *  sc, double T)')
         self._write('{')
         self._indent()
 
@@ -6339,7 +7253,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the progress rate for each reaction'))
-        self._write('void progressRateFR(double * restrict q_f, double * restrict q_r, double * restrict sc, double T)')
+        self._write('void progressRateFR(double *  q_f, double *  q_r, double *  sc, double T)')
         self._write('{')
         self._indent()
 
@@ -6393,7 +7307,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the critical parameters for each species'))
-        self._write('void GET_CRITPARAMS(double * restrict Tci, double * restrict ai, double * restrict bi, double * restrict acentric_i)')
+        self._write('void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i)')
         self._write('{')
         self._write()
         self._indent()
@@ -6656,7 +7570,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the equilibrium constants for each reaction'))
-        self._write('void equilibriumConstants(double * restrict kc, double * restrict g_RT, double T)')
+        self._write('void equilibriumConstants(double *  kc, double *  g_RT, double T)')
         self._write('{')
         self._indent()
 
@@ -6741,6 +7655,31 @@ class CPickler(CMill):
         return dim
 
 
+    def _enhancement_d(self, mechanism, reaction):
+        thirdBody = reaction.thirdBody
+        if not thirdBody:
+            import pyre
+            pyre.debug.Firewall.hit("_enhancement called for a reaction without a third body")
+            return
+
+        species, coefficient = thirdBody
+        efficiencies = reaction.efficiencies
+
+        if not efficiencies:
+            if species == "<mixture>":
+                return "mixture"
+            return "sc[%d]" % mechanism.species(species).id
+
+        alpha = ["mixture"]
+        for i, eff in enumerate(efficiencies):
+            symbol, efficiency = eff
+            factor = "(udata->TB[%d][%d] - 1)" % (reaction.id-1, i)
+            conc = "sc[%d]" % mechanism.species(symbol).id
+            alpha.append("%s*%s" % (factor, conc))
+
+        return " + ".join(alpha).replace('+ -','- ')
+
+
     def _enhancement(self, mechanism, reaction):
         thirdBody = reaction.thirdBody
         if not thirdBody:
@@ -6799,6 +7738,40 @@ class CPickler(CMill):
                         return "TB[%d][%d]" % (reaction.id-1,i)
                 return "1"
 
+    def _Denhancement_d(self, mechanism, reaction, kid, consP):
+        thirdBody = reaction.thirdBody
+        if not thirdBody:
+            import pyre
+            pyre.debug.Firewall.hit("_enhancement called for a reaction without a third body")
+            return
+
+        species, coefficient = thirdBody
+        efficiencies = reaction.efficiencies
+
+        if not efficiencies:
+            if species == "<mixture>":
+                if consP:
+                    return "0"
+                else:
+                    return "1"
+            elif mechanism.species(species).id == kid:
+                return "1"
+            else:
+                return "0"
+        else:
+            if consP:
+                for i, eff in enumerate(efficiencies):
+                    symbol, efficiency = eff
+                    if mechanism.species(symbol).id == kid:
+                        return "(udata->TB[%d][%d] - 1)" % (reaction.id-1, i)
+                return "0"
+            else:
+                for i, eff in enumerate(efficiencies):
+                    symbol, efficiency = eff
+                    if mechanism.species(symbol).id == kid:
+                        return "udata->TB[%d][%d]" % (reaction.id-1,i)
+                return "1"
+
     def _venhancement(self, mechanism, reaction):
         thirdBody = reaction.thirdBody
         if not thirdBody:
@@ -6833,6 +7806,7 @@ class CPickler(CMill):
         self._generateThermoRoutine("cv_R", self._cvNASA, speciesInfo)
 
         return
+
     
     def _cp(self, speciesInfo):
 
@@ -6904,12 +7878,11 @@ class CPickler(CMill):
 
         return
 
-
     def _generateThermoRoutine(self, name, expressionGenerator, speciesInfo, needsInvT=0):
 
         lowT, highT, midpoints = speciesInfo
         
-        self._write('void %s(double * restrict species, double * restrict tc)' % name)
+        self._write('void %s(double *  species, double *  tc)' % name)
         self._write('{')
 
         self._indent()
@@ -7040,7 +8013,7 @@ class CPickler(CMill):
 
         self._outdent()
 
-        self._write('};')
+        self._write('}')
 
         return
 
@@ -7125,7 +8098,7 @@ class CPickler(CMill):
 
         self._outdent()
 
-        self._write('};')
+        self._write('}')
 
         return
 
@@ -7242,7 +8215,7 @@ class CPickler(CMill):
 
         self._outdent()
 
-        self._write('};')
+        self._write('}')
 
         #header for cond
         self._write()
@@ -7267,7 +8240,7 @@ class CPickler(CMill):
 
         self._outdent()
 
-        self._write('};')
+        self._write('}')
 
         return
 
@@ -7363,7 +8336,7 @@ class CPickler(CMill):
 
         self._outdent()
 
-        self._write('};')
+        self._write('}')
 
         return
 
@@ -7473,7 +8446,7 @@ class CPickler(CMill):
 
         self._outdent()
 
-        self._write('};')
+        self._write('}')
         
         return
 
@@ -7502,7 +8475,7 @@ class CPickler(CMill):
 
         self._outdent()
 
-        self._write('};')
+        self._write('}')
         
         return
 
@@ -8037,7 +9010,7 @@ class CPickler(CMill):
 
         self._outdent()
 
-        self._write('};')
+        self._write('}')
 
         return
 
@@ -8403,7 +9376,7 @@ class CPickler(CMill):
 
     def _T_given_ey(self, mechanism):
         self._write(self.line(' get temperature given internal energy in mass units and mass fracs'))
-        self._write('void GET_T_GIVEN_EY(double * restrict e, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict t, int * ierr)')
+        self._write('void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int * ierr)')
         self._write('{')
         self._write('#ifdef CONVERGENCE')
         self._indent()
@@ -8422,12 +9395,12 @@ class CPickler(CMill):
         self._write('double tmax = 4000;'+self.line('min upper bound for thermo def'))
         self._write('double e1,emin,emax,cv,t1,dt;')
         self._write('int i;'+self.line(' loop counter'))
-        self._write('CKUBMS(&tmin, y, iwrk, rwrk, &emin);')
-        self._write('CKUBMS(&tmax, y, iwrk, rwrk, &emax);')
+        self._write('CKUBMS(&tmin, y, &emin);')
+        self._write('CKUBMS(&tmax, y, &emax);')
         self._write('if (ein < emin) {')
         self._indent()
         self._write(self.line('Linear Extrapolation below tmin'))
-        self._write('CKCVBS(&tmin, y, iwrk, rwrk, &cv);')
+        self._write('CKCVBS(&tmin, y, &cv);')
         self._write('*t = tmin - (emin-ein)/cv;')
         self._write('*ierr = 1;')
         self._write('return;')
@@ -8436,7 +9409,7 @@ class CPickler(CMill):
         self._write('if (ein > emax) {')
         self._indent()
         self._write(self.line('Linear Extrapolation above tmax'))
-        self._write('CKCVBS(&tmax, y, iwrk, rwrk, &cv);')
+        self._write('CKCVBS(&tmax, y, &cv);')
         self._write('*t = tmax - (emax-ein)/cv;')
         self._write('*ierr = 1;')
         self._write('return;')
@@ -8450,8 +9423,8 @@ class CPickler(CMill):
         self._write('}')
         self._write('for (i = 0; i < maxiter; ++i) {')
         self._indent()
-        self._write('CKUBMS(&t1,y,iwrk,rwrk,&e1);')
-        self._write('CKCVBS(&t1,y,iwrk,rwrk,&cv);')
+        self._write('CKUBMS(&t1,y,&e1);')
+        self._write('CKCVBS(&t1,y,&cv);')
         self._write('dt = (ein - e1) / cv;')
         self._write('if (dt > 100.) { dt = 100.; }')
         self._write('else if (dt < -100.) { dt = -100.; }')
@@ -8465,10 +9438,11 @@ class CPickler(CMill):
         self._write('return;')
         self._outdent()
         self._write('}')
+        self._write()
 
     def _T_given_hy(self, mechanism):
         self._write(self.line(' get temperature given enthalpy in mass units and mass fracs'))
-        self._write('void GET_T_GIVEN_HY(double * restrict h, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict t, int * ierr)')
+        self._write('void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int * ierr)')
         self._write('{')
         self._write('#ifdef CONVERGENCE')
         self._indent()
@@ -8487,12 +9461,12 @@ class CPickler(CMill):
         self._write('double tmax = 4000;'+self.line('min upper bound for thermo def'))
         self._write('double h1,hmin,hmax,cp,t1,dt;')
         self._write('int i;'+self.line(' loop counter'))
-        self._write('CKHBMS(&tmin, y, iwrk, rwrk, &hmin);')
-        self._write('CKHBMS(&tmax, y, iwrk, rwrk, &hmax);')
+        self._write('CKHBMS(&tmin, y, &hmin);')
+        self._write('CKHBMS(&tmax, y, &hmax);')
         self._write('if (hin < hmin) {')
         self._indent()
         self._write(self.line('Linear Extrapolation below tmin'))
-        self._write('CKCPBS(&tmin, y, iwrk, rwrk, &cp);')
+        self._write('CKCPBS(&tmin, y, &cp);')
         self._write('*t = tmin - (hmin-hin)/cp;')
         self._write('*ierr = 1;')
         self._write('return;')
@@ -8501,7 +9475,7 @@ class CPickler(CMill):
         self._write('if (hin > hmax) {')
         self._indent()
         self._write(self.line('Linear Extrapolation above tmax'))
-        self._write('CKCPBS(&tmax, y, iwrk, rwrk, &cp);')
+        self._write('CKCPBS(&tmax, y, &cp);')
         self._write('*t = tmax - (hmax-hin)/cp;')
         self._write('*ierr = 1;')
         self._write('return;')
@@ -8515,8 +9489,8 @@ class CPickler(CMill):
         self._write('}')
         self._write('for (i = 0; i < maxiter; ++i) {')
         self._indent()
-        self._write('CKHBMS(&t1,y,iwrk,rwrk,&h1);')
-        self._write('CKCPBS(&t1,y,iwrk,rwrk,&cp);')
+        self._write('CKHBMS(&t1,y,&h1);')
+        self._write('CKCPBS(&t1,y,&cp);')
         self._write('dt = (hin - h1) / cp;')
         self._write('if (dt > 100.) { dt = 100.; }')
         self._write('else if (dt < -100.) { dt = -100.; }')

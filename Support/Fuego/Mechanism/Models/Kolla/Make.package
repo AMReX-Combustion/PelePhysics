@@ -1,1 +1,1 @@
-cEXE_sources+=Kolla.c
+CEXE_sources+=Kolla.cpp

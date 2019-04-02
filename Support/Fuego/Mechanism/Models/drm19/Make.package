@@ -1,4 +1,4 @@
-cEXE_sources+=drm19.c
+CEXE_sources+=drm19.cpp
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 

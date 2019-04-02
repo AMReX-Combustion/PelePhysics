@@ -1,1 +1,1 @@
-cEXE_sources+=air.c
+CEXE_sources+=air.cpp

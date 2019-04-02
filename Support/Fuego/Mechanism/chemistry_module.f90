@@ -28,7 +28,7 @@ contains
     integer, allocatable :: names(:)
 
     call ckinit()
-    call ckindx(iwrk, rwrk, nelements, nspecies, nreactions, nfit)
+    call ckindx(nelements, nspecies, nreactions, nfit)
 
     allocate(elem_names(nelements))
     allocate(spec_names(nspecies))
@@ -59,10 +59,10 @@ contains
 
     deallocate(names)
 
-    call ckwt(iwrk, rwrk, molecular_weight)
+    call ckwt(molecular_weight)
     inv_mwt = 1.d0 / molecular_weight
 
-    call ckrp(iwrk, rwrk, Ru, Ruc, Patm)
+    call ckrp(Ru, Ruc, Patm)
 
     chemistry_initialized = .true.
 
