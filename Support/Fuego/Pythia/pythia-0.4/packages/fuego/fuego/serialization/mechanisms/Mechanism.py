@@ -220,6 +220,9 @@ class Mechanism(object):
                 reactionmat[i][self.species(symbol).id]=coefficient
         
         new_to_old_map=self._tsp_solve(reactionmat,0.001)
+        #new_to_old_map=self._cluster_solve(reactionmat)
+
+        print(new_to_old_map)
 
         return(new_to_old_map)
 
@@ -366,20 +369,28 @@ class Mechanism(object):
     def _cluster_solve(self,mat):
 
         from sklearn.cluster import AgglomerativeClustering
+        import numpy as npy
 
-        #do reaction reordering
-        nclus=mat.shape[0]/2
+        new_to_old_map=npy.array([])
 
-        clustering = AgglomerativeClustering(n_clusters=nclus, compute_full_tree=True,
-                            affinity='euclidean', linkage='ward')
-        y=clustering.fit_predict(reactionmat)
-        print(y)
+        if(mat.shape[0] > 1):
 
-        new_to_old_map=[]
-        for i in range(nclus):
-            for j in range(len(y)):
-                if(y[j]==i):
-                    new_to_old_map.append(j)
+            nclus=mat.shape[0]/4
+            #nclus=2
+
+            clustering = AgglomerativeClustering(n_clusters=nclus, compute_full_tree=True, affinity='l1', linkage='average')
+            y=clustering.fit_predict(mat)
+
+            for i in range(nclus):
+                for j in range(len(y)):
+                    if(y[j]==i):
+                        new_to_old_map = npy.append(new_to_old_map,j)
+
+            new_to_old_map=new_to_old_map.astype(int)
+
+
+        else:
+            new_to_old_map=npy.arange(mat.shape[0])
 
         return(new_to_old_map)
 
@@ -418,7 +429,6 @@ class Mechanism(object):
             newmat=npy.zeros((nrows+1,ncols))
             newmat[1:(nrows+1),:]=mat
             order=two_opt(newmat,improvement_threshold)
-            print(order[1:(nrows+1)]-1)
             return(order[1:(nrows+1)]-1)
         else:
             return(npy.array([]))
@@ -443,6 +453,8 @@ class Mechanism(object):
         new_to_old_map = npy.random.permutation(nSpecies)
 
         self._reorder_species_from_map(new_to_old_map)
+
+    #===================================================================
 
 
     # other methods  

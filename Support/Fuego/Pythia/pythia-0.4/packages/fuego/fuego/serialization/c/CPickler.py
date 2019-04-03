@@ -325,10 +325,12 @@ class CPickler(CMill):
 
     def _renderDocument(self, mechanism, options=None):
 
-        plot_react_matrix=True
         reorder_reactions=True
 
         if(reorder_reactions):
+
+            plot_react_matrix = True
+            use_tsp = True #traveling salesman reordering
 
             if(plot_react_matrix):
                 import matplotlib.pyplot as mplt
@@ -342,20 +344,26 @@ class CPickler(CMill):
                 rmat=mechanism._get_reaction_matrix()
                 ax[1].matshow(rmat)
 
-            #mechanism._sort_reactions_within_type_tsp(self.reactionIndex)
-            mechanism._sort_reactions_within_type_random(self.reactionIndex)
+            #reorder reactions
+            if(use_tsp):
+                mechanism._sort_reactions_within_type_tsp(self.reactionIndex)
+            else:
+                mechanism._sort_reactions_within_type_random(self.reactionIndex)
             if(plot_react_matrix):
                 rmat=mechanism._get_reaction_matrix()
                 ax[2].matshow(rmat)
 
-            #mechanism._sort_species_ids_tsp()
-            mechanism._sort_species_ids_random()
+            #reorder species
+            if(use_tsp):
+                mechanism._sort_species_ids_tsp()
+            else:
+                mechanism._sort_species_ids_random()
             if(plot_react_matrix):
                 rmat=mechanism._get_reaction_matrix()
                 ax[3].matshow(rmat)
                 mplt.savefig("rmat_all.pdf")
 
-            #set species in cpickler    
+            #set species after reordering    
             self._setSpecies(mechanism)
 
         else:
