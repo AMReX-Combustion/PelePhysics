@@ -325,7 +325,7 @@ class CPickler(CMill):
 
     def _renderDocument(self, mechanism, options=None):
 
-        reorder_reactions=True
+        reorder_reactions=False
 
         if(reorder_reactions):
 
