@@ -11,44 +11,23 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PROJECT = fuego
-PACKAGE = serialization
-
-BUILD_DIRS = \
-    c \
-    f \
-    chemkin \
-    ckml \
-    html \
-    mechanisms \
-    native \
-    python \
-
-OTHER_DIRS = \
-
-RECURSE_DIRS = $(BUILD_DIRS) $(OTHER_DIRS)
+PACKAGE = serialization/f
 
 #--------------------------------------------------------------------------
 #
 
 all: export
 
-tidy::
-	BLD_ACTION="tidy" $(MM) recurse
-
 #--------------------------------------------------------------------------
 #
 # export
 
 EXPORT_PYTHON_MODULES = \
-    Registrar.py \
-    pickle.py \
-    unpickle.py \
+    FPickler.py \
     __init__.py
 
 
 export:: export-package-python-modules
-	BLD_ACTION="export" $(MM) recurse
-
 
 # version
 # $Id$
