@@ -1,0 +1,4 @@
+CEXE_sources+=FFCM1_Red.cpp
+
+VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
+
