@@ -36,7 +36,6 @@ contains
   subroutine eos_init(small_temp, small_dens)
 
     use extern_probin_module
-    use amrex_parallel_module
     use iso_c_binding, only : c_double, c_size_t
 
     implicit none
