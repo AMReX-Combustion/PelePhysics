@@ -38,7 +38,7 @@ contains
     integer,          intent(in   )        :: do_move, lev
     integer,          intent(in   )        :: reflect_lo(3), reflect_hi(3)
 
-    integer          :: i,j,k,i2,j2,k2,n,nc,nf,iloc,jloc,kloc,ii,jj,kk,is_to_skip,ispec_loc
+    integer          :: i,j,k,i2,j2,k2,n,nc,nf,iloc,jloc,kloc,ii,jj,kk,is_heat_skip,is_mass_skip,ispec_loc
     real(amrex_real) :: wx_lo, wy_lo, wz_lo, wx_hi, wy_hi, wz_hi
     real(amrex_real) :: lx, ly, lz, lx2, ly2, lz2
     real(amrex_real) :: half_dt
@@ -137,7 +137,7 @@ contains
 
     do n = 1, np
 
-       if ((particles(n)%id.eq.-1).or. & 
+       if ((particles(n)%id.eq.-1).or. (particles(n)%id.gt.1000000).or. & 
            (particles(n)%pos(1).ne.particles(n)%pos(1))) then 
 
 
@@ -268,7 +268,7 @@ contains
              coef_hhl*Yloc(1,1,0,1:nspec) + &
              coef_hhh*Yloc(1,1,1,1:nspec)
 
-       do M = 1,nspec
+       do M = 1,nspec_f
          if(fluid_Y(M).ne.fluid_Y(M)) then
           print *,'PARTICLE ID ', particles(n)%id, &
           'list',n,' corrupted fuel mass fraction ',fluid_Y(M),i,j
@@ -354,14 +354,20 @@ contains
        d_dot = 0.0d0
        convection = 0.0d0
        L_fuel = 0.0d0
-       is_to_skip = 0
-       do M = 1,nspec
-        if(fluid_Y(M).ge.1d0) then ! the gas phase is only fuel vapor
-         is_to_skip = 1
-        endif 
-       end do 
+       is_mass_skip = 0
+       is_heat_skip = 0
+       do L = 1,nspec_f
+         if(fluid_Y(L).ge.1d0) then ! the gas phase is only fuel vapor
+           is_mass_skip = 1
+         endif 
+         if(particles(n)%temp.ge.fuel_boil_temp(L)) then
+           ! energy transfer cannot use liquid phase properties
+           particles(n)%temp = fuel_boil_temp(L)
+           is_heat_skip = 1
+         endif
+       end do
 
-       if(is_mass_tran.eq.1.and.is_to_skip.eq.0) then
+       if(is_mass_tran.eq.1.and.is_mass_skip.eq.0) then
  
          ! LOOP THROUGH ALL THE FUEL SPECIES AND GET THE INDIVIDUAL
          ! EVAPORATION RATES.
@@ -422,7 +428,7 @@ contains
 ! CALCULATE TEMPERATURE RATE OF CHANGE: psrc_T_d(is:ie)
 
        heat_src = 0d0
-       if((is_heat_tran.eq.1 .or. is_mass_tran.eq.1.).and.is_to_skip.eq.0) then
+       if((is_heat_tran.eq.1.and.is_heat_skip.eq.0).or.(is_mass_tran.eq.1.and.is_mass_skip.eq.0)) then
 
          !-----------------------------------------------------------------------------------------
          ! Calculate Skin Prandtl Number.
@@ -468,10 +474,11 @@ contains
          heat_src = convection+&
                     sum(Y_dot*h_skin,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
          !          sum(Y_dot*L_fuel,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
-           if (heat_src.ne.heat_src) then 
-             print *,'PARTICLE ID ', particles(n)%temp,' temp BUST ',L_fuel(1)
-             stop
-           endif
+
+         if (heat_src.ne.heat_src) then 
+           print *,'Heat src BUST',heat_src,'convc',convection,'pID ', particles(n)%id
+           stop
+         endif
 
        endif ! if(is_heat_tran.eq.1 .or. is_mass_tran.eq.1) 
 
@@ -599,9 +606,9 @@ contains
 
        ! consider changing to lagged temperature to improve order
        delta_T =  half_dt * heat_src / (cp_d_av*pmass)
-       if(abs(delta_T).gt.3d0) then 
-          print *,'PARTICLE ID ', particles(n)%id,' delta T',delta_T,particles(n)%diam
-          !delta_T = 0d0
+       if(delta_T.lt.-30.d0.and.is_heat_skip.eq.1) then 
+!         print *,'Negative T incrm ',delta_T,'pID ', particles(n)%id,is_mass_skip,particles(n)%temp
+          delta_T= 0d0
        endif
 
        particles(n)%temp = particles(n)%temp + delta_T
