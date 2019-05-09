@@ -1,6 +1,7 @@
 module fuel_properties
 
      use meth_params_module
+     use amrex_fort_module, only : amrex_real
 
 !--------------------------------------------------------------------------------
 ! Fuel properties
