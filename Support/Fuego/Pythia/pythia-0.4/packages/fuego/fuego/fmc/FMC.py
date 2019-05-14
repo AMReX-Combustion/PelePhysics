@@ -22,12 +22,15 @@ class FMC(Application):
         import fuego
         import pyre.monitors
 
-        save = self.inventory.name
-        input = self.inventory.input
-        output = self.inventory.output
+        save          = self.inventory.name
+        input         = self.inventory.input
+        output        = self.inventory.output
         mechanismFile = self.inventory.mechanism
-        thermo = self.inventory.thermo
-        trans = self.inventory.trans
+        thermo        = self.inventory.thermo
+        trans         = self.inventory.trans
+        #AF
+        save_chop   = save.split(".")[0]+"_1.cpp" #self.inventory.name_chop
+        save_header = "chemistry_file.H" #save.split(".")[0]+".H" #self.inventory.header
 
         timer = pyre.monitors.timer("fuego")
         if not input:
@@ -50,16 +53,27 @@ class FMC(Application):
         timer.reset()
         timer.start()
         print "Converting into '%s' format" % output,
-        lines = fuego.serialization.save(mechanism, output)
+        lines        = fuego.serialization.save(mechanism, output)
         print "... done (%g sec)" % timer.stop()
 
-        print "saving in '%s'" % save,
+        print "saving in '%s' (header) and '%s'" % (save_header, save),
         timer.reset()
         timer.start()
-        outputFile = self._openOutput(save)
+        outputFileHeader  = self._openOutput(save_header)
+        count_lines = 0
         for line in lines:
+            if ('include "chemistry_file.H"') in line:
+                line_start_core = count_lines
+                break;
+            outputFileHeader.write(line)
+            outputFileHeader.write('\n')
+            count_lines += 1
+
+        outputFile = self._openOutput(save)
+        for line in lines[line_start_core:]:
             outputFile.write(line)
             outputFile.write('\n')
+
         print "... done (%g sec)" % timer.stop()
 
         return
