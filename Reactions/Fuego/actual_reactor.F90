@@ -9,30 +9,31 @@ module reactor_module
   implicit none
 
   real(amrex_real), private, allocatable :: vodeVec(:),cdot(:),rhoydot_ext(:),ydot_ext(:)
-  real(amrex_real), private:: rhoedot_ext, rhoe_init, time_init, time_out, rhohdot_ext, &
+  real(amrex_real), private:: rhoedot_ext, rhoe_init, time_init, rhohdot_ext, &
                               rhoh_init, time_old, hdot_ext, h_init, pressureInit
-  integer,private :: iloc, jloc, kloc, iE, iDense
+  integer,private :: iloc, jloc, kloc, iE
   type (eos_t) :: eos_state
 
   logical, save, private :: reactor_initialized = .false.
 
-  !$omp threadprivate(vodeVec,cdot,rhoydot_ext,ydot_ext,rhoedot_ext,rhoe_init,time_init,time_out,rhohdot_ext,rhoh_init,hdot_ext,h_init,time_old,iloc,jloc,kloc,eos_state)
+  !$omp threadprivate(vodeVec,cdot,rhoydot_ext,ydot_ext,rhoedot_ext,rhoe_init,time_init,rhohdot_ext,rhoh_init,hdot_ext,h_init,time_old,iloc,jloc,kloc,eos_state)
 
 contains
 
         
 !*** INITIALISATION ROUTINES ***!
   !DVODE VERSION
-  subroutine reactor_init(iE_in) bind(C, name="reactor_init")
+  subroutine reactor_init(iE_in, Ncells) bind(C, name="reactor_init")
 
     use, intrinsic :: iso_c_binding
     use vode_module, only : vode_init
     use extern_probin_module, only : new_Jacobian_each_cell
 
     integer(c_int),  intent(in   ) :: iE_in
+    integer(c_int),  intent(in   ), optional :: Ncells
     integer :: neq, verbose, itol, order, maxstep
     real(amrex_real) :: rtol, atol
-    logical :: use_ajac, save_ajac, always_new_j, stiff
+    logical :: use_ajac, save_ajac, always_new_j_loc, stiff
 
     neq = nspec + 1
     verbose = 0
@@ -42,24 +43,25 @@ contains
     use_ajac = .false.
     save_ajac = .false.
     if (new_Jacobian_each_cell .ne. 0) then
-       always_new_J = .true.
+       always_new_j_loc = .true.
     else
-       always_new_J = .false.
+       always_new_j_loc = .false.
     endif
     stiff = .true.
     rtol = 1.d-10
     atol = 1.d-10
 
     call vode_init(neq,verbose,itol,rtol,atol,order,&
-         maxstep,use_ajac,save_ajac,always_new_j,stiff)
+         maxstep,use_ajac,save_ajac,always_new_j_loc,stiff)
 
     if (parallel_IOProcessor()) then
        print *,"Using good ol' dvode"
        print *,"--> DENSE solver without Analytical J"
+       print *,"--> Always new analytical Jac ? ",always_new_j_loc
     endif
     iE = iE_in
     if (iE == 1) then
-       if (parallel_IOProcessor()) print *," ->with internal energy (UV cst)"
+       if (parallel_IOProcessor()) print *,"    ... with internal energy (UV cst)"
        allocate(rhoydot_ext(nspec))
     else if (iE == 5) then
        if (parallel_IOProcessor()) print *," ->with enthalpy (HP cst)"
@@ -86,7 +88,7 @@ contains
     use amrex_error_module
     use vode_module, only : verbose, itol, rtol, atol, vode_MF=>MF, always_new_j, &
          voderwork, vodeiwork, lvoderwork, lvodeiwork, voderpar, vodeipar
-    use chemistry_module, only : molecular_weight
+    !use chemistry_module, only : molecular_weight
     use eos_module
 
     real(amrex_real),   intent(inout) :: rY_in(nspec+1),rY_src_in(nspec)
