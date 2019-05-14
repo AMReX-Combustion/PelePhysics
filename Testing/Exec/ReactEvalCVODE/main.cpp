@@ -1,15 +1,12 @@
-#include <fstream>
 #include <iostream>
 #include <vector>
-#include <iomanip>
 
 #include <AMReX_MultiFab.H>
 #include <AMReX_iMultiFab.H>
-#include <AMReX_ParmParse.H>
-#include <AMReX_Geometry.H>
 #include <AMReX_Print.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_VisMF.H>
+#include <AMReX_ParmParse.H>
 
 using namespace amrex;
 
@@ -24,6 +21,7 @@ main (int   argc,
       char* argv[])
 {
     amrex::Initialize(argc,argv);
+    {
 
     int max_grid_size = 32;
     std::string probin_file="probin";
@@ -31,7 +29,7 @@ main (int   argc,
     std::string txtfile_in=""; 
     /* CVODE inputs */
     int cvode_ncells = 1;
-    int cvode_meth,cvode_itmeth,cvode_iJac,cvode_iE,cvode_iDense;
+    int cvode_iE = 1;
     int ndt = 1; 
     Real dt = 1.e-5; 
 
@@ -51,60 +49,23 @@ main (int   argc,
       // time stepping
       pp.query("ndt",ndt); 
 
-      // Select CVODE solve method.
-      //   1 = Adams (for non-stiff problems)
-      //   2 = BDF (for stiff problems)
-      pp.get("cvode_meth",cvode_meth);
-      // Select CVODE solver iteration method.
-      //   1 = Functional iteration
-      //   2 = Newton iteration
-      pp.get("cvode_itmeth",cvode_itmeth);
-
-      cvode_iJac = 0;
-      pp.query("cvode_iJac",cvode_iJac);
-      // Select CVODE Jacobian eval.
-      //   0 = finite differences
-      //   1 = User supplied function
-      
       pp.get("cvode_iE",cvode_iE);
       // Select CVODE type of energy employed.
       //1 for UV, 2 for HP
       //   1 = Internal energy
       //   anything else = enthalpy (PeleLM restart)
       
-      pp.get("cvode_iDense",cvode_iDense);
-      //1 for regular dense solver, otherwise it is sparse
-      
       pp.query("txtfile_in",txtfile_in);
 
     }
 
-    /* Print parameters on screen */
-    if (cvode_meth < 1)
-      amrex::Abort("Unknown cvode_meth");
-    if (cvode_itmeth < 1)
-      amrex::Abort("Unknown cvode_itmeth");
-
-    amrex::Print() << "CVODE method: ";
-    if (cvode_meth == 1) {
-      amrex::Print() << "Adams (non-stiff)";
-    } else if (cvode_meth == 2) {
+    amrex::Print() << "Integration method: ";
         amrex::Print() << "BDF (stiff)";
-    }
     amrex::Print() << std::endl;
-    amrex::Print() << "CVODE iteration method: ";
-    if (cvode_itmeth == 1) {
-      amrex::Print() << "Functional";
-    } else if (cvode_itmeth == 2) {
+
+    amrex::Print() << "Integration iteration method: ";
         amrex::Print() << "Newton";
-    }
     amrex::Print() << std::endl;
-    amrex::Print() << "CVODE use of Analytical J: ";
-    if (cvode_iJac == 0) {
-      amrex::Print() << "NO";
-    } else {
-        amrex::Print() << "YUP";
-    }
     
     amrex::Print() << std::endl;
 
@@ -116,8 +77,8 @@ main (int   argc,
 	    probin_file_name[i] = probin_file[i];
     extern_init(&(probin_file_name[0]),&probin_file_length, &cvode_iE);
 
-    /* Initialize CVODE reactor */
-    extern_cInit(&cvode_meth, &cvode_itmeth,&cvode_iJac, &cvode_iE, &cvode_iDense, &cvode_ncells);
+    /* Initialize D/CVODE reactor */
+    reactor_init(&cvode_iE, &cvode_ncells);
 
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
@@ -172,12 +133,6 @@ main (int   argc,
     //PlotFileFromMF(mf,outfile);
 
 
-    //iMultiFab mask(ba,dm,1,0);
-    //MultiFab cost(ba,dm,1,0); 
-
-    //mask.setVal(1,0,1,0);
-
-
     /* ADVANCE */
     int reInit = 1;
     Real time = 0.0;
@@ -217,7 +172,7 @@ main (int   argc,
 	        dt_incr =  dt / ndt;
 	        time_tmp = time;
 	        for (int i = 0; i < ndt; ++i) {
-		        actual_cReact(tmp_vect, tmp_src_vect, 
+		        react(tmp_vect, tmp_src_vect, 
 				tmp_vect_energy, tmp_src_vect_energy,
 				&pressure, &dt_incr, &time_tmp, &reInit);
 	                // increment time with true dt_incr
@@ -241,8 +196,10 @@ main (int   argc,
     //PlotFileFromMF(mf,outfile);
     PlotFileFromMF(temperature,outfile);
 
-    extern_cFree();
     extern_close();
+
+    }
+
     amrex::Finalize();
 
     return 0;
