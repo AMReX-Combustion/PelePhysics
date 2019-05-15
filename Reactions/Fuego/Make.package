@@ -1,5 +1,6 @@
 f90EXE_sources += actual_network.f90
 ifeq ($(USE_SUNDIALS_3x4x), TRUE)
+    Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
     CEXE_headers +=actual_Creactor.h  
     CEXE_sources+=actual_Creactor.cpp
 else
