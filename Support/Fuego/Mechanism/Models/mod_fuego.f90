@@ -205,6 +205,13 @@ module fuego_chemistry
             real(amrex_real), intent(out ) :: c(*)
         end subroutine
 
+        subroutine ckytcp(P,T,y,c) bind(c,name='CKYTCP')
+            use amrex_fort_module, only : amrex_real
+            real(amrex_real), intent(in  ) :: P,T 
+            real(amrex_real), intent(in  ) :: y(*)
+            real(amrex_real), intent(out ) :: c(*)
+        end subroutine
+
         subroutine ckrhoy(P,T,y,rho) bind(c,name='CKRHOY')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(in  ) :: P,T
