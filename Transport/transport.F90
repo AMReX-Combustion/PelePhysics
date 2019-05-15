@@ -131,5 +131,61 @@ contains
 
   end subroutine get_transport_coeffs
 
+  subroutine get_visco_coeffs( &
+       lo,hi, &
+       massfrac,    mf_lo, mf_hi, &
+       temperature,  t_lo,  t_hi, &
+       mu,          mu_lo, mu_hi) &
+       bind(C, name="get_visco_coeffs")
+
+    use network, only: nspec
+    use eos_module
+
+    implicit none
+
+    integer         , intent(in   ) ::     lo(3),    hi(3)
+    integer         , intent(in   ) ::  mf_lo(3), mf_hi(3)
+    integer         , intent(in   ) ::   t_lo(3),  t_hi(3)
+    integer         , intent(in   ) ::  mu_lo(3), mu_hi(3)
+    real (amrex_real), intent(in   ) :: massfrac(mf_lo(1):mf_hi(1),mf_lo(2):mf_hi(2),mf_lo(3):mf_hi(3),nspec)
+    real (amrex_real), intent(in   ) :: temperature(t_lo(1):t_hi(1),t_lo(2):t_hi(2),t_lo(3):t_hi(3))
+    real (amrex_real), intent(inout) :: mu(mu_lo(1):mu_hi(1),mu_lo(2):mu_hi(2),mu_lo(3):mu_hi(3))
+
+    ! local variables
+    integer      :: i, j, k, n, np
+    type (wtr_t) :: which_trans
+    type (trv_t) :: coeff
+
+    np = hi(1)-lo(1)+1
+    call build(coeff,np)
+
+    which_trans % wtr_get_xi    = .false.
+    which_trans % wtr_get_mu    = .true.
+    which_trans % wtr_get_lam   = .false.
+    which_trans % wtr_get_Ddiag = .false.
+
+    do k = lo(3),hi(3)
+       do j = lo(2),hi(2)
+
+          do i=1,np
+             coeff%eos_state(i)%massfrac(1:nspec) = massfrac(lo(1)+i-1,j,k,1:nspec)
+          end do
+
+          do i=lo(1),hi(1)
+             coeff%eos_state(i-lo(1)+1)%T = temperature(i,j,k)
+          end do
+
+          call transport(which_trans, coeff)
+
+          do i=lo(1),hi(1)
+             mu(i,j,k)  = coeff %  mu(i-lo(1)+1)
+          end do
+
+       end do
+    end do
+
+    call destroy(coeff)
+
+  end subroutine get_visco_coeffs
 
 end module transport_module
