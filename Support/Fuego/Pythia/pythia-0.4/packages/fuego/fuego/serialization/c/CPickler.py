@@ -909,7 +909,6 @@ class CPickler(CMill):
             'void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);',
             'void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
             'void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * consP);',
-            'void SPARSITY_PREPROC_PRECOND_GPU(int * rowPtr, int * colIndx, int * consP);',
             'void aJacobian(double *  J, double *  sc, double T, int consP);',
             'void aJacobian_precond(double *  J, double *  sc, double T, int HP);',
             'void dcvpRdT(double *  species, double *  tc);',
