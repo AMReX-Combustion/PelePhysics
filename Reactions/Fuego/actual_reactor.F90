@@ -119,7 +119,7 @@ contains
         react_state_in %              h = rX_in !/ react_state_in % rho
         react_state_in %    rhohdot_ext = rX_src_in
     else
-        react_state_in %              h = rX_in !/ react_state_in % rho
+        react_state_in %              h = rX_in / react_state_in % rho
         react_state_in %    rhohdot_ext = rX_src_in
     end if
     ! END For compatibility to remove later
@@ -253,7 +253,7 @@ contains
            eos_state % h                 = (rhoh_init  +  dt_react*rhohdot_ext) * rhoInv
            call eos_rh(eos_state)
            rY_in(1:nspec)                = vodeVec(1:nspec)
-           rX_in                         = eos_state % h
+           rX_in                         = eos_state % h * eos_state % rho
            rX_src_in                     = rhohdot_ext
            rY_src_in(1:nspec)            = rhoydot_ext(1:nspec)
        end if
