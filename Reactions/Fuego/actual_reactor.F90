@@ -61,7 +61,7 @@ contains
     endif
     iE = iE_in
     if (iE == 1) then
-       if (parallel_IOProcessor()) print *,"    ... with internal energy (UV cst)"
+       if (parallel_IOProcessor()) print *," ->with internal energy (UV cst)"
        allocate(rhoydot_ext(nspec))
     else if (iE == 5) then
        if (parallel_IOProcessor()) print *," ->with enthalpy (HP cst)"
@@ -88,7 +88,6 @@ contains
     use amrex_error_module
     use vode_module, only : verbose, itol, rtol, atol, vode_MF=>MF, always_new_j, &
          voderwork, vodeiwork, lvoderwork, lvodeiwork, voderpar, vodeipar
-    !use chemistry_module, only : molecular_weight
     use eos_module
 
     real(amrex_real),   intent(inout) :: rY_in(nspec+1),rY_src_in(nspec)
