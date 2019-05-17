@@ -128,10 +128,6 @@ main (int   argc,
      
     ParmParse ppa("amr");
     ppa.query("plot_file",pltfile);
-    //std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
-    //MultiFab::Copy(temperature,mf,Ncomp,0,1,0);
-    //PlotFileFromMF(mf,outfile);
-
 
     /* ADVANCE */
     int reInit = 1;
