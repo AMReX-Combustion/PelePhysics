@@ -1,833 +1,64 @@
+#include "chemistry_file.H"
 
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-#if defined(BL_FORT_USE_UPPERCASE)
-#define CKINDX CKINDX
-#define CKINIT CKINIT
-#define CKFINALIZE CKFINALIZE
-#define CKXNUM CKXNUM
-#define CKSYME CKSYME
-#define CKSYMS CKSYMS
-#define CKRP CKRP
-#define CKPX CKPX
-#define CKPY CKPY
-#define CKPC CKPC
-#define CKRHOX CKRHOX
-#define CKRHOY CKRHOY
-#define CKRHOC CKRHOC
-#define CKWT CKWT
-#define CKAWT CKAWT
-#define CKMMWY CKMMWY
-#define CKMMWX CKMMWX
-#define CKMMWC CKMMWC
-#define CKYTX CKYTX
-#define CKYTCP CKYTCP
-#define CKYTCR CKYTCR
-#define CKXTY CKXTY
-#define CKXTCP CKXTCP
-#define CKXTCR CKXTCR
-#define CKCTX CKCTX
-#define CKCTY CKCTY
-#define CKCPOR CKCPOR
-#define CKHORT CKHORT
-#define CKSOR CKSOR
-#define CKCVML CKCVML
-#define CKCPML CKCPML
-#define CKUML CKUML
-#define CKHML CKHML
-#define CKGML CKGML
-#define CKAML CKAML
-#define CKSML CKSML
-#define CKCVMS CKCVMS
-#define CKCPMS CKCPMS
-#define CKUMS CKUMS
-#define CKHMS CKHMS
-#define CKGMS CKGMS
-#define CKAMS CKAMS
-#define CKSMS CKSMS
-#define CKCPBL CKCPBL
-#define CKCPBS CKCPBS
-#define CKCVBL CKCVBL
-#define CKCVBS CKCVBS
-#define CKHBML CKHBML
-#define CKHBMS CKHBMS
-#define CKUBML CKUBML
-#define CKUBMS CKUBMS
-#define CKSBML CKSBML
-#define CKSBMS CKSBMS
-#define CKGBML CKGBML
-#define CKGBMS CKGBMS
-#define CKABML CKABML
-#define CKABMS CKABMS
-#define CKWC CKWC
-#define CKWYP CKWYP
-#define CKWXP CKWXP
-#define CKWYR CKWYR
-#define CKWXR CKWXR
-#define CKQC CKQC
-#define CKKFKR CKKFKR
-#define CKQYP CKQYP
-#define CKQXP CKQXP
-#define CKQYR CKQYR
-#define CKQXR CKQXR
-#define CKNU CKNU
-#define CKNCF CKNCF
-#define CKABE CKABE
-#define CKEQC CKEQC
-#define CKEQYP CKEQYP
-#define CKEQXP CKEQXP
-#define CKEQYR CKEQYR
-#define CKEQXR CKEQXR
-#define DWDOT DWDOT
-#define DWDOT_PRECOND DWDOT_PRECOND
-#define SPARSITY_INFO SPARSITY_INFO
-#define SPARSITY_INFO_PRECOND SPARSITY_INFO_PRECOND
-#define SPARSITY_PREPROC SPARSITY_PREPROC
-#define SPARSITY_PREPROC_PRECOND SPARSITY_PREPROC_PRECOND
-#define VCKHMS VCKHMS
-#define VCKPY VCKPY
-#define VCKWYR VCKWYR
-#define VCKYTX VCKYTX
-#define GET_T_GIVEN_EY GET_T_GIVEN_EY
-#define GET_T_GIVEN_HY GET_T_GIVEN_HY
-#define GET_REACTION_MAP GET_REACTION_MAP
-#define GET_CRITPARAMS GET_CRITPARAMS
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define CKINDX ckindx
-#define CKINIT ckinit
-#define CKFINALIZE ckfinalize
-#define CKXNUM ckxnum
-#define CKSYME cksyme
-#define CKSYMS cksyms
-#define CKRP ckrp
-#define CKPX ckpx
-#define CKPY ckpy
-#define CKPC ckpc
-#define CKRHOX ckrhox
-#define CKRHOY ckrhoy
-#define CKRHOC ckrhoc
-#define CKWT ckwt
-#define CKAWT ckawt
-#define CKMMWY ckmmwy
-#define CKMMWX ckmmwx
-#define CKMMWC ckmmwc
-#define CKYTX ckytx
-#define CKYTCP ckytcp
-#define CKYTCR ckytcr
-#define CKXTY ckxty
-#define CKXTCP ckxtcp
-#define CKXTCR ckxtcr
-#define CKCTX ckctx
-#define CKCTY ckcty
-#define CKCPOR ckcpor
-#define CKHORT ckhort
-#define CKSOR cksor
-#define CKCVML ckcvml
-#define CKCPML ckcpml
-#define CKUML ckuml
-#define CKHML ckhml
-#define CKGML ckgml
-#define CKAML ckaml
-#define CKSML cksml
-#define CKCVMS ckcvms
-#define CKCPMS ckcpms
-#define CKUMS ckums
-#define CKHMS ckhms
-#define CKGMS ckgms
-#define CKAMS ckams
-#define CKSMS cksms
-#define CKCPBL ckcpbl
-#define CKCPBS ckcpbs
-#define CKCVBL ckcvbl
-#define CKCVBS ckcvbs
-#define CKHBML ckhbml
-#define CKHBMS ckhbms
-#define CKUBML ckubml
-#define CKUBMS ckubms
-#define CKSBML cksbml
-#define CKSBMS cksbms
-#define CKGBML ckgbml
-#define CKGBMS ckgbms
-#define CKABML ckabml
-#define CKABMS ckabms
-#define CKWC ckwc
-#define CKWYP ckwyp
-#define CKWXP ckwxp
-#define CKWYR ckwyr
-#define CKWXR ckwxr
-#define CKQC ckqc
-#define CKKFKR ckkfkr
-#define CKQYP ckqyp
-#define CKQXP ckqxp
-#define CKQYR ckqyr
-#define CKQXR ckqxr
-#define CKNU cknu
-#define CKNCF ckncf
-#define CKABE ckabe
-#define CKEQC ckeqc
-#define CKEQYP ckeqyp
-#define CKEQXP ckeqxp
-#define CKEQYR ckeqyr
-#define CKEQXR ckeqxr
-#define DWDOT dwdot
-#define DWDOT_PRECOND dwdot_precond
-#define SPARSITY_INFO sparsity_info
-#define SPARSITY_INFO_PRECOND sparsity_info_precond
-#define SPARSITY_PREPROC sparsity_preproc
-#define SPARSITY_PREPROC_PRECOND sparsity_preproc_precond
-#define VCKHMS vckhms
-#define VCKPY vckpy
-#define VCKWYR vckwyr
-#define VCKYTX vckytx
-#define GET_T_GIVEN_EY get_t_given_ey
-#define GET_T_GIVEN_HY get_t_given_hy
-#define GET_REACTION_MAP get_reaction_map
-#define GET_CRITPARAMS get_critparams
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define CKINDX ckindx_
-#define CKINIT ckinit_
-#define CKFINALIZE ckfinalize_
-#define CKXNUM ckxnum_
-#define CKSYME cksyme_
-#define CKSYMS cksyms_
-#define CKRP ckrp_
-#define CKPX ckpx_
-#define CKPY ckpy_
-#define CKPC ckpc_
-#define CKRHOX ckrhox_
-#define CKRHOY ckrhoy_
-#define CKRHOC ckrhoc_
-#define CKWT ckwt_
-#define CKAWT ckawt_
-#define CKMMWY ckmmwy_
-#define CKMMWX ckmmwx_
-#define CKMMWC ckmmwc_
-#define CKYTX ckytx_
-#define CKYTCP ckytcp_
-#define CKYTCR ckytcr_
-#define CKXTY ckxty_
-#define CKXTCP ckxtcp_
-#define CKXTCR ckxtcr_
-#define CKCTX ckctx_
-#define CKCTY ckcty_
-#define CKCPOR ckcpor_
-#define CKHORT ckhort_
-#define CKSOR cksor_
-#define CKCVML ckcvml_
-#define CKCPML ckcpml_
-#define CKUML ckuml_
-#define CKHML ckhml_
-#define CKGML ckgml_
-#define CKAML ckaml_
-#define CKSML cksml_
-#define CKCVMS ckcvms_
-#define CKCPMS ckcpms_
-#define CKUMS ckums_
-#define CKHMS ckhms_
-#define CKGMS ckgms_
-#define CKAMS ckams_
-#define CKSMS cksms_
-#define CKCPBL ckcpbl_
-#define CKCPBS ckcpbs_
-#define CKCVBL ckcvbl_
-#define CKCVBS ckcvbs_
-#define CKHBML ckhbml_
-#define CKHBMS ckhbms_
-#define CKUBML ckubml_
-#define CKUBMS ckubms_
-#define CKSBML cksbml_
-#define CKSBMS cksbms_
-#define CKGBML ckgbml_
-#define CKGBMS ckgbms_
-#define CKABML ckabml_
-#define CKABMS ckabms_
-#define CKWC ckwc_
-#define CKWYP ckwyp_
-#define CKWXP ckwxp_
-#define CKWYR ckwyr_
-#define CKWXR ckwxr_
-#define CKQC ckqc_
-#define CKKFKR ckkfkr_
-#define CKQYP ckqyp_
-#define CKQXP ckqxp_
-#define CKQYR ckqyr_
-#define CKQXR ckqxr_
-#define CKNU cknu_
-#define CKNCF ckncf_
-#define CKABE ckabe_
-#define CKEQC ckeqc_
-#define CKEQYP ckeqyp_
-#define CKEQXP ckeqxp_
-#define CKEQYR ckeqyr_
-#define CKEQXR ckeqxr_
-#define DWDOT dwdot_
-#define DWDOT_PRECOND dwdot_precond_
-#define SPARSITY_INFO sparsity_info_
-#define SPARSITY_INFO_PRECOND sparsity_info_precond_ 
-#define SPARSITY_PREPROC sparsity_preproc_
-#define SPARSITY_PREPROC_PRECOND sparsity_preproc_precond_
-#define VCKHMS vckhms_
-#define VCKPY vckpy_
-#define VCKWYR vckwyr_
-#define VCKYTX vckytx_
-#define GET_T_GIVEN_EY get_t_given_ey_
-#define GET_T_GIVEN_HY get_t_given_hy_
-#define GET_REACTION_MAP get_reaction_map_
-#define GET_CRITPARAMS get_critparams_
-#endif
-
-/*function declarations */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetEPS EGTRANSETEPS
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetEPS egtranseteps
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetEPS egtranseteps_
-#endif
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetSIG EGTRANSETSIG
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetSIG egtransetsig
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetSIG egtransetsig_
-#endif
-extern "C"
+namespace thermo
 {
-void egtransetEPS(double *  EPS);
-void egtransetSIG(double* SIG);
-void atomicWeight(double *  awt);
-void molecularWeight(double *  wt);
-void gibbs(double *  species, double *  tc);
-void helmholtz(double *  species, double *  tc);
-void speciesInternalEnergy(double *  species, double *  tc);
-void speciesEnthalpy(double *  species, double *  tc);
-void speciesEntropy(double *  species, double *  tc);
-void cp_R(double *  species, double *  tc);
-void cv_R(double *  species, double *  tc);
-void equilibriumConstants(double *  kc, double *  g_RT, double T);
-void productionRate(double *  wdot, double *  sc, double T);
-void comp_k_f(double *  tc, double invT, double *  k_f);
-void comp_Kc(double *  tc, double invT, double *  Kc);
-void comp_qfqr(double *  q_f, double *  q_r, double *  sc, double *  tc, double invT);
-void progressRate(double *  qdot, double *  speciesConc, double T);
-void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);
-void CKINIT();
-void CKFINALIZE();
-void CKINDX(int * mm, int * kk, int * ii, int * nfit );
-void CKXNUM(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);
-void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);
-void CKSYME(int * kname, int * lenkname);
-void CKSYMS(int * kname, int * lenkname);
-void CKRP(double *  ru, double *  ruc, double *  pa);
-void CKPX(double *  rho, double *  T, double *  x, double *  P);
-void CKPY(double *  rho, double *  T, double *  y, double *  P);
-void CKPC(double *  rho, double *  T, double *  c, double *  P);
-void CKRHOX(double *  P, double *  T, double *  x, double *  rho);
-void CKRHOY(double *  P, double *  T, double *  y, double *  rho);
-void CKRHOC(double *  P, double *  T, double *  c, double *  rho);
-void CKWT(double *  wt);
-void CKAWT(double *  awt);
-void CKMMWY(double *  y, double *  wtm);
-void CKMMWX(double *  x, double *  wtm);
-void CKMMWC(double *  c, double *  wtm);
-void CKYTX(double *  y, double *  x);
-void CKYTCP(double *  P, double *  T, double *  y, double *  c);
-void CKYTCR(double *  rho, double *  T, double *  y, double *  c);
-void CKXTY(double *  x, double *  y);
-void CKXTCP(double *  P, double *  T, double *  x, double *  c);
-void CKXTCR(double *  rho, double *  T, double *  x, double *  c);
-void CKCTX(double *  c, double *  x);
-void CKCTY(double *  c, double *  y);
-void CKCPOR(double *  T, double *  cpor);
-void CKHORT(double *  T, double *  hort);
-void CKSOR(double *  T, double *  sor);
-void CKCVML(double *  T, double *  cvml);
-void CKCPML(double *  T, double *  cvml);
-void CKUML(double *  T, double *  uml);
-void CKHML(double *  T, double *  uml);
-void CKGML(double *  T, double *  gml);
-void CKAML(double *  T, double *  aml);
-void CKSML(double *  T, double *  sml);
-void CKCVMS(double *  T, double *  cvms);
-void CKCPMS(double *  T, double *  cvms);
-void CKUMS(double *  T, double *  ums);
-void CKHMS(double *  T, double *  ums);
-void CKGMS(double *  T, double *  gms);
-void CKAMS(double *  T, double *  ams);
-void CKSMS(double *  T, double *  sms);
-void CKCPBL(double *  T, double *  x, double *  cpbl);
-void CKCPBS(double *  T, double *  y, double *  cpbs);
-void CKCVBL(double *  T, double *  x, double *  cpbl);
-void CKCVBS(double *  T, double *  y, double *  cpbs);
-void CKHBML(double *  T, double *  x, double *  hbml);
-void CKHBMS(double *  T, double *  y, double *  hbms);
-void CKUBML(double *  T, double *  x, double *  ubml);
-void CKUBMS(double *  T, double *  y, double *  ubms);
-void CKSBML(double *  P, double *  T, double *  x, double *  sbml);
-void CKSBMS(double *  P, double *  T, double *  y, double *  sbms);
-void CKGBML(double *  P, double *  T, double *  x, double *  gbml);
-void CKGBMS(double *  P, double *  T, double *  y, double *  gbms);
-void CKABML(double *  P, double *  T, double *  x, double *  abml);
-void CKABMS(double *  P, double *  T, double *  y, double *  abms);
-void CKWC(double *  T, double *  C, double *  wdot);
-void CKWYP(double *  P, double *  T, double *  y, double *  wdot);
-void CKWXP(double *  P, double *  T, double *  x, double *  wdot);
-void CKWYR(double *  rho, double *  T, double *  y, double *  wdot);
-void CKWXR(double *  rho, double *  T, double *  x, double *  wdot);
-void CKQC(double *  T, double *  C, double *  qdot);
-void CKKFKR(double *  P, double *  T, double *  x, double *  q_f, double *  q_r);
-void CKQYP(double *  P, double *  T, double *  y, double *  qdot);
-void CKQXP(double *  P, double *  T, double *  x, double *  qdot);
-void CKQYR(double *  rho, double *  T, double *  y, double *  qdot);
-void CKQXR(double *  rho, double *  T, double *  x, double *  qdot);
-void CKNU(int * kdim, int * nuki);
-void CKNCF(int * mdim, int * ncf);
-void CKABE(double *  a, double *  b, double *  e );
-void CKEQC(double *  T, double *  C , double *  eqcon );
-void CKEQYP(double *  P, double *  T, double *  y, double *  eqcon);
-void CKEQXP(double *  P, double *  T, double *  x, double *  eqcon);
-void CKEQYR(double *  rho, double *  T, double *  y, double *  eqcon);
-void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon);
-void DWDOT(double *  J, double *  sc, double *  T, int * consP);
-void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);
-void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);
-void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);
-void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);
-void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * consP);
-void aJacobian(double *  J, double *  sc, double T, int consP);
-void aJacobian_precond(double *  J, double *  sc, double T, int HP);
-void dcvpRdT(double *  species, double *  tc);
-void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);
-void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);
-void GET_REACTION_MAP(int *  rmap);
-/*vector version */
-void vproductionRate(int npt, double *  wdot, double *  c, double *  T);
-void VCKHMS(int *  np, double *  T, double *  ums);
-void VCKPY(int *  np, double *  rho, double *  T, double *  y, double *  P);
-void VCKWYR(int *  np, double *  rho, double *  T,
-            double *  y,
-            double *  wdot);
-void VCKYTX(int *  np, double *  y, double *  x);
-void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT);
-void vcomp_gibbs(int npt, double *  g_RT, double *  tc);
-void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT);
-void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);
-void vcomp_wdot_1_50(int npt, double *  wdot, double *  mixture, double *  sc,
-                double *  k_f_s, double *  Kc_s,
-                double *  tc, double *  invT, double *  T);
-void vcomp_wdot_51_100(int npt, double *  wdot, double *  mixture, double *  sc,
-                double *  k_f_s, double *  Kc_s,
-                double *  tc, double *  invT, double *  T);
-void vcomp_wdot_101_124(int npt, double *  wdot, double *  mixture, double *  sc,
-                double *  k_f_s, double *  Kc_s,
-                double *  tc, double *  invT, double *  T);
+    /* Inverse molecular weights */
+    std::vector<double> imw;
 
-/* Inverse molecular weights */
-static const double imw[21] = {
-    1.0 / 28.013400,  /*N2 */
-    1.0 / 2.015940,  /*H2 */
-    1.0 / 1.007970,  /*H */
-    1.0 / 15.999400,  /*O */
-    1.0 / 31.998800,  /*O2 */
-    1.0 / 17.007370,  /*OH */
-    1.0 / 18.015340,  /*H2O */
-    1.0 / 33.006770,  /*HO2 */
-    1.0 / 28.010550,  /*CO */
-    1.0 / 44.009950,  /*CO2 */
-    1.0 / 13.019120,  /*CH */
-    1.0 / 14.027090,  /*CH2 */
-    1.0 / 14.027090,  /*CH2(S) */
-    1.0 / 15.035060,  /*CH3 */
-    1.0 / 16.043030,  /*CH4 */
-    1.0 / 29.018520,  /*HCO */
-    1.0 / 30.026490,  /*CH2O */
-    1.0 / 31.034460,  /*CH2OH */
-    1.0 / 31.034460,  /*CH3O */
-    1.0 / 32.042430,  /*CH3OH */
-    1.0 / 4.002600};  /*HE */
+    double fwd_A[124], fwd_beta[124], fwd_Ea[124];
+    double low_A[124], low_beta[124], low_Ea[124];
+    double rev_A[124], rev_beta[124], rev_Ea[124];
+    double troe_a[124],troe_Ts[124], troe_Tss[124], troe_Tsss[124];
+    double sri_a[124], sri_b[124], sri_c[124], sri_d[124], sri_e[124];
+    double activation_units[124], prefactor_units[124], phase_units[124];
+    int is_PD[124], troe_len[124], sri_len[124], nTB[124], *TBid[124];
+    double *TB[124];
 
+    double fwd_A_DEF[124], fwd_beta_DEF[124], fwd_Ea_DEF[124];
+    double low_A_DEF[124], low_beta_DEF[124], low_Ea_DEF[124];
+    double rev_A_DEF[124], rev_beta_DEF[124], rev_Ea_DEF[124];
+    double troe_a_DEF[124],troe_Ts_DEF[124], troe_Tss_DEF[124], troe_Tsss_DEF[124];
+    double sri_a_DEF[124], sri_b_DEF[124], sri_c_DEF[124], sri_d_DEF[124], sri_e_DEF[124];
+    double activation_units_DEF[124], prefactor_units_DEF[124], phase_units_DEF[124];
+    int is_PD_DEF[124], troe_len_DEF[124], sri_len_DEF[124], nTB_DEF[124], *TBid_DEF[124];
+    double *TB_DEF[124];
+    std::vector<int> rxn_map;
+};
 
+using namespace thermo;
 
-static double fwd_A[124], fwd_beta[124], fwd_Ea[124];
-static double low_A[124], low_beta[124], low_Ea[124];
-static double rev_A[124], rev_beta[124], rev_Ea[124];
-static double troe_a[124],troe_Ts[124], troe_Tss[124], troe_Tsss[124];
-static double sri_a[124], sri_b[124], sri_c[124], sri_d[124], sri_e[124];
-static double activation_units[124], prefactor_units[124], phase_units[124];
-static int is_PD[124], troe_len[124], sri_len[124], nTB[124], *TBid[124];
-static double *TB[124];
-
-static double fwd_A_DEF[124], fwd_beta_DEF[124], fwd_Ea_DEF[124];
-static double low_A_DEF[124], low_beta_DEF[124], low_Ea_DEF[124];
-static double rev_A_DEF[124], rev_beta_DEF[124], rev_Ea_DEF[124];
-static double troe_a_DEF[124],troe_Ts_DEF[124], troe_Tss_DEF[124], troe_Tsss_DEF[124];
-static double sri_a_DEF[124], sri_b_DEF[124], sri_c_DEF[124], sri_d_DEF[124], sri_e_DEF[124];
-static double activation_units_DEF[124], prefactor_units_DEF[124], phase_units_DEF[124];
-static int is_PD_DEF[124], troe_len_DEF[124], sri_len_DEF[124], nTB_DEF[124], *TBid_DEF[124];
-static double *TB_DEF[124];
-static int rxn_map[124] = {18,19,20,21,22,13,23,14,24,15,16,25,0,26,27,28,29,30,31,12,32,33,34,35,17,36,37,38,39,40,41,42,43,1,44,45,46,47,48,49,2,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,3,67,68,69,70,71,4,5,72,73,74,75,76,77,6,78,79,7,80,81,82,83,84,85,86,87,88,8,9,89,90,91,92,93,94,95,96,97,10,11,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123};
-
-void GET_REACTION_MAP(int *rmap)
-{
-    for (int i=0; i<124; ++i) {
-        rmap[i] = rxn_map[i];
-    }
-}
-
-
-#include <ReactionData.H>
-double* GetParamPtr(int                reaction_id,
-                    REACTION_PARAMETER param_id,
-                    int                species_id,
-                    int                get_default)
-{
-  double* ret = 0;
-  if (reaction_id<0 || reaction_id>=124) {
-    printf("Bad reaction id = %d",reaction_id);
-    abort();
-  };
-  int mrid = rxn_map[reaction_id];
-
-  if (param_id == THIRD_BODY) {
-    if (species_id<0 || species_id>=21) {
-      printf("GetParamPtr: Bad species id = %d",species_id);
-      abort();
-    }
-    if (get_default) {
-      for (int i=0; i<nTB_DEF[mrid]; ++i) {
-        if (species_id == TBid_DEF[mrid][i]) {
-          ret = &(TB_DEF[mrid][i]);
-        }
-      }
-    }
-    else {
-      for (int i=0; i<nTB[mrid]; ++i) {
-        if (species_id == TBid[mrid][i]) {
-          ret = &(TB[mrid][i]);
-        }
-      }
-    }
-    if (ret == 0) {
-      printf("GetParamPtr: No TB for reaction id = %d",reaction_id);
-      abort();
-    }
-  }
-  else {
-    if (     param_id == FWD_A)     {ret = (get_default ? &(fwd_A_DEF[mrid]) : &(fwd_A[mrid]));}
-      else if (param_id == FWD_BETA)  {ret = (get_default ? &(fwd_beta_DEF[mrid]) : &(fwd_beta[mrid]));}
-      else if (param_id == FWD_EA)    {ret = (get_default ? &(fwd_Ea_DEF[mrid]) : &(fwd_Ea[mrid]));}
-      else if (param_id == LOW_A)     {ret = (get_default ? &(low_A_DEF[mrid]) : &(low_A[mrid]));}
-      else if (param_id == LOW_BETA)  {ret = (get_default ? &(low_beta_DEF[mrid]) : &(low_beta[mrid]));}
-      else if (param_id == LOW_EA)    {ret = (get_default ? &(low_Ea_DEF[mrid]) : &(low_Ea[mrid]));}
-      else if (param_id == REV_A)     {ret = (get_default ? &(rev_A_DEF[mrid]) : &(rev_A[mrid]));}
-      else if (param_id == REV_BETA)  {ret = (get_default ? &(rev_beta_DEF[mrid]) : &(rev_beta[mrid]));}
-      else if (param_id == REV_EA)    {ret = (get_default ? &(rev_Ea_DEF[mrid]) : &(rev_Ea[mrid]));}
-      else if (param_id == TROE_A)    {ret = (get_default ? &(troe_a_DEF[mrid]) : &(troe_a[mrid]));}
-      else if (param_id == TROE_TS)   {ret = (get_default ? &(troe_Ts_DEF[mrid]) : &(troe_Ts[mrid]));}
-      else if (param_id == TROE_TSS)  {ret = (get_default ? &(troe_Tss_DEF[mrid]) : &(troe_Tss[mrid]));}
-      else if (param_id == TROE_TSSS) {ret = (get_default ? &(troe_Tsss_DEF[mrid]) : &(troe_Tsss[mrid]));}
-      else if (param_id == SRI_A)     {ret = (get_default ? &(sri_a_DEF[mrid]) : &(sri_a[mrid]));}
-      else if (param_id == SRI_B)     {ret = (get_default ? &(sri_b_DEF[mrid]) : &(sri_b[mrid]));}
-      else if (param_id == SRI_C)     {ret = (get_default ? &(sri_c_DEF[mrid]) : &(sri_c[mrid]));}
-      else if (param_id == SRI_D)     {ret = (get_default ? &(sri_d_DEF[mrid]) : &(sri_d[mrid]));}
-      else if (param_id == SRI_E)     {ret = (get_default ? &(sri_e_DEF[mrid]) : &(sri_e[mrid]));}
-    else {
-      printf("GetParamPtr: Unknown parameter id");
-      abort();
-    }
-  }
-  return ret;
-}
-
-void ResetAllParametersToDefault()
-{
-    for (int i=0; i<124; i++) {
-        if (nTB[i] != 0) {
-            nTB[i] = 0;
-            free(TB[i]);
-            free(TBid[i]);
-        }
-
-        fwd_A[i]    = fwd_A_DEF[i];
-        fwd_beta[i] = fwd_beta_DEF[i];
-        fwd_Ea[i]   = fwd_Ea_DEF[i];
-
-        low_A[i]    = low_A_DEF[i];
-        low_beta[i] = low_beta_DEF[i];
-        low_Ea[i]   = low_Ea_DEF[i];
-
-        rev_A[i]    = rev_A_DEF[i];
-        rev_beta[i] = rev_beta_DEF[i];
-        rev_Ea[i]   = rev_Ea_DEF[i];
-
-        troe_a[i]    = troe_a_DEF[i];
-        troe_Ts[i]   = troe_Ts_DEF[i];
-        troe_Tss[i]  = troe_Tss_DEF[i];
-        troe_Tsss[i] = troe_Tsss_DEF[i];
-
-        sri_a[i] = sri_a_DEF[i];
-        sri_b[i] = sri_b_DEF[i];
-        sri_c[i] = sri_c_DEF[i];
-        sri_d[i] = sri_d_DEF[i];
-        sri_e[i] = sri_e_DEF[i];
-
-        is_PD[i]    = is_PD_DEF[i];
-        troe_len[i] = troe_len_DEF[i];
-        sri_len[i]  = sri_len_DEF[i];
-
-        activation_units[i] = activation_units_DEF[i];
-        prefactor_units[i]  = prefactor_units_DEF[i];
-        phase_units[i]      = phase_units_DEF[i];
-
-        nTB[i]  = nTB_DEF[i];
-        if (nTB[i] != 0) {
-           TB[i] = (double *) malloc(sizeof(double) * nTB[i]);
-           TBid[i] = (int *) malloc(sizeof(int) * nTB[i]);
-           for (int j=0; j<nTB[i]; j++) {
-             TB[i][j] = TB_DEF[i][j];
-             TBid[i][j] = TBid_DEF[i][j];
-           }
-        }
-    }
-}
-
-void SetAllDefaults()
-{
-    for (int i=0; i<124; i++) {
-        if (nTB_DEF[i] != 0) {
-            nTB_DEF[i] = 0;
-            free(TB_DEF[i]);
-            free(TBid_DEF[i]);
-        }
-
-        fwd_A_DEF[i]    = fwd_A[i];
-        fwd_beta_DEF[i] = fwd_beta[i];
-        fwd_Ea_DEF[i]   = fwd_Ea[i];
-
-        low_A_DEF[i]    = low_A[i];
-        low_beta_DEF[i] = low_beta[i];
-        low_Ea_DEF[i]   = low_Ea[i];
-
-        rev_A_DEF[i]    = rev_A[i];
-        rev_beta_DEF[i] = rev_beta[i];
-        rev_Ea_DEF[i]   = rev_Ea[i];
-
-        troe_a_DEF[i]    = troe_a[i];
-        troe_Ts_DEF[i]   = troe_Ts[i];
-        troe_Tss_DEF[i]  = troe_Tss[i];
-        troe_Tsss_DEF[i] = troe_Tsss[i];
-
-        sri_a_DEF[i] = sri_a[i];
-        sri_b_DEF[i] = sri_b[i];
-        sri_c_DEF[i] = sri_c[i];
-        sri_d_DEF[i] = sri_d[i];
-        sri_e_DEF[i] = sri_e[i];
-
-        is_PD_DEF[i]    = is_PD[i];
-        troe_len_DEF[i] = troe_len[i];
-        sri_len_DEF[i]  = sri_len[i];
-
-        activation_units_DEF[i] = activation_units[i];
-        prefactor_units_DEF[i]  = prefactor_units[i];
-        phase_units_DEF[i]      = phase_units[i];
-
-        nTB_DEF[i]  = nTB[i];
-        if (nTB_DEF[i] != 0) {
-           TB_DEF[i] = (double *) malloc(sizeof(double) * nTB_DEF[i]);
-           TBid_DEF[i] = (int *) malloc(sizeof(int) * nTB_DEF[i]);
-           for (int j=0; j<nTB_DEF[i]; j++) {
-             TB_DEF[i][j] = TB[i][j];
-             TBid_DEF[i][j] = TBid[i][j];
-           }
-        }
-    }
-}
-
-/* Finalizes parameter database */
-void CKFINALIZE()
-{
-  for (int i=0; i<124; ++i) {
-    free(TB[i]); TB[i] = 0; 
-    free(TBid[i]); TBid[i] = 0;
-    nTB[i] = 0;
-
-    free(TB_DEF[i]); TB_DEF[i] = 0; 
-    free(TBid_DEF[i]); TBid_DEF[i] = 0;
-    nTB_DEF[i] = 0;
-  }
-}
 
 /* Initializes parameter database */
 void CKINIT()
 {
-    // (0):  H + O2 <=> O + OH
-    fwd_A[18]     = 98410000000000;
-    fwd_beta[18]  = 0;
-    fwd_Ea[18]    = 15310;
-    prefactor_units[18]  = 1.0000000000000002e-06;
-    activation_units[18] = 0.50321666580471969;
-    phase_units[18]      = 1e-12;
-    is_PD[18] = 0;
-    nTB[18] = 0;
 
-    // (1):  O + H2 <=> H + OH
-    fwd_A[19]     = 3848000000000;
-    fwd_beta[19]  = 0;
-    fwd_Ea[19]    = 7950;
-    prefactor_units[19]  = 1.0000000000000002e-06;
-    activation_units[19] = 0.50321666580471969;
-    phase_units[19]      = 1e-12;
-    is_PD[19] = 0;
-    nTB[19] = 0;
+    /* Inverse molecular weights */
+    imw = {
+        1.0 / 28.013400,  /*N2 */
+        1.0 / 2.015940,  /*H2 */
+        1.0 / 1.007970,  /*H */
+        1.0 / 15.999400,  /*O */
+        1.0 / 31.998800,  /*O2 */
+        1.0 / 17.007370,  /*OH */
+        1.0 / 18.015340,  /*H2O */
+        1.0 / 33.006770,  /*HO2 */
+        1.0 / 28.010550,  /*CO */
+        1.0 / 44.009950,  /*CO2 */
+        1.0 / 13.019120,  /*CH */
+        1.0 / 14.027090,  /*CH2 */
+        1.0 / 14.027090,  /*CH2(S) */
+        1.0 / 15.035060,  /*CH3 */
+        1.0 / 16.043030,  /*CH4 */
+        1.0 / 29.018520,  /*HCO */
+        1.0 / 30.026490,  /*CH2O */
+        1.0 / 31.034460,  /*CH2OH */
+        1.0 / 31.034460,  /*CH3O */
+        1.0 / 32.042430,  /*CH3OH */
+        1.0 / 4.002600};  /*HE */
 
-    // (2):  O + H2 <=> H + OH
-    fwd_A[20]     = 668700000000000;
-    fwd_beta[20]  = 0;
-    fwd_Ea[20]    = 19180;
-    prefactor_units[20]  = 1.0000000000000002e-06;
-    activation_units[20] = 0.50321666580471969;
-    phase_units[20]      = 1e-12;
-    is_PD[20] = 0;
-    nTB[20] = 0;
+    rxn_map = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123};
 
-    // (3):  OH + H2 <=> H + H2O
-    fwd_A[21]     = 225600000;
-    fwd_beta[21]  = 1.51;
-    fwd_Ea[21]    = 3437;
-    prefactor_units[21]  = 1.0000000000000002e-06;
-    activation_units[21] = 0.50321666580471969;
-    phase_units[21]      = 1e-12;
-    is_PD[21] = 0;
-    nTB[21] = 0;
-
-    // (4):  2 OH <=> O + H2O
-    fwd_A[22]     = 31610;
-    fwd_beta[22]  = 2.4199999999999999;
-    fwd_Ea[22]    = -1928;
-    prefactor_units[22]  = 1.0000000000000002e-06;
-    activation_units[22] = 0.50321666580471969;
-    phase_units[22]      = 1e-12;
-    is_PD[22] = 0;
-    nTB[22] = 0;
-
-    // (5):  H2 + M <=> 2 H + M
-    fwd_A[13]     = 4.58e+19;
-    fwd_beta[13]  = -1.3999999999999999;
-    fwd_Ea[13]    = 104390;
-    prefactor_units[13]  = 1.0000000000000002e-06;
-    activation_units[13] = 0.50321666580471969;
-    phase_units[13]      = 1e-6;
-    is_PD[13] = 0;
-    nTB[13] = 9;
-    TB[13] = (double *) malloc(9 * sizeof(double));
-    TBid[13] = (int *) malloc(9 * sizeof(int));
-    TBid[13][0] = 0; TB[13][0] = 1.01; // N2
-    TBid[13][1] = 1; TB[13][1] = 2.5499999999999998; // H2
-    TBid[13][2] = 6; TB[13][2] = 12.02; // H2O
-    TBid[13][3] = 8; TB[13][3] = 1.95; // CO
-    TBid[13][4] = 9; TB[13][4] = 3.8300000000000001; // CO2
-    TBid[13][5] = 14; TB[13][5] = 2; // CH4
-    TBid[13][6] = 16; TB[13][6] = 2.5; // CH2O
-    TBid[13][7] = 19; TB[13][7] = 3; // CH3OH
-    TBid[13][8] = 20; TB[13][8] = 0; // HE
-
-    // (6):  H2 + HE <=> 2 H + HE
-    fwd_A[23]     = 5.84e+18;
-    fwd_beta[23]  = -1.1000000000000001;
-    fwd_Ea[23]    = 104390;
-    prefactor_units[23]  = 1.0000000000000002e-06;
-    activation_units[23] = 0.50321666580471969;
-    phase_units[23]      = 1e-12;
-    is_PD[23] = 0;
-    nTB[23] = 0;
-
-    // (7):  2 O + M <=> O2 + M
-    fwd_A[14]     = 6160000000000000;
-    fwd_beta[14]  = -0.5;
-    fwd_Ea[14]    = 0;
-    prefactor_units[14]  = 1.0000000000000002e-12;
-    activation_units[14] = 0.50321666580471969;
-    phase_units[14]      = 1e-12;
-    is_PD[14] = 0;
-    nTB[14] = 8;
-    TB[14] = (double *) malloc(8 * sizeof(double));
-    TBid[14] = (int *) malloc(8 * sizeof(int));
-    TBid[14][0] = 1; TB[14][0] = 2.5; // H2
-    TBid[14][1] = 6; TB[14][1] = 12; // H2O
-    TBid[14][2] = 8; TB[14][2] = 1.8999999999999999; // CO
-    TBid[14][3] = 9; TB[14][3] = 3.7999999999999998; // CO2
-    TBid[14][4] = 14; TB[14][4] = 2; // CH4
-    TBid[14][5] = 16; TB[14][5] = 2.5; // CH2O
-    TBid[14][6] = 19; TB[14][6] = 3; // CH3OH
-    TBid[14][7] = 20; TB[14][7] = 0; // HE
-
-    // (8):  2 O + HE <=> O2 + HE
-    fwd_A[24]     = 18900000000000;
-    fwd_beta[24]  = 0;
-    fwd_Ea[24]    = -1788;
-    prefactor_units[24]  = 1.0000000000000002e-12;
-    activation_units[24] = 0.50321666580471969;
-    phase_units[24]      = 1e-18;
-    is_PD[24] = 0;
-    nTB[24] = 0;
-
-    // (9):  O + H + M <=> OH + M
-    fwd_A[15]     = 4.71e+18;
-    fwd_beta[15]  = -1;
-    fwd_Ea[15]    = 0;
-    prefactor_units[15]  = 1.0000000000000002e-12;
-    activation_units[15] = 0.50321666580471969;
-    phase_units[15]      = 1e-12;
-    is_PD[15] = 0;
-    nTB[15] = 9;
-    TB[15] = (double *) malloc(9 * sizeof(double));
-    TBid[15] = (int *) malloc(9 * sizeof(int));
-    TBid[15][0] = 0; TB[15][0] = 1.3200000000000001; // N2
-    TBid[15][1] = 1; TB[15][1] = 2.5; // H2
-    TBid[15][2] = 6; TB[15][2] = 15.800000000000001; // H2O
-    TBid[15][3] = 8; TB[15][3] = 2.52; // CO
-    TBid[15][4] = 9; TB[15][4] = 5.0099999999999998; // CO2
-    TBid[15][5] = 14; TB[15][5] = 2; // CH4
-    TBid[15][6] = 16; TB[15][6] = 2.5; // CH2O
-    TBid[15][7] = 19; TB[15][7] = 3; // CH3OH
-    TBid[15][8] = 20; TB[15][8] = 0.75; // HE
-
-    // (10):  H2O + M <=> H + OH + M
-    fwd_A[16]     = 6.0599999999999999e+27;
-    fwd_beta[16]  = -3.3220000000000001;
-    fwd_Ea[16]    = 120800;
-    prefactor_units[16]  = 1.0000000000000002e-06;
-    activation_units[16] = 0.50321666580471969;
-    phase_units[16]      = 1e-6;
-    is_PD[16] = 0;
-    nTB[16] = 10;
-    TB[16] = (double *) malloc(10 * sizeof(double));
-    TBid[16] = (int *) malloc(10 * sizeof(int));
-    TBid[16][0] = 0; TB[16][0] = 2.46; // N2
-    TBid[16][1] = 1; TB[16][1] = 3.77; // H2
-    TBid[16][2] = 4; TB[16][2] = 1.5; // O2
-    TBid[16][3] = 6; TB[16][3] = 0; // H2O
-    TBid[16][4] = 8; TB[16][4] = 2.3999999999999999; // CO
-    TBid[16][5] = 9; TB[16][5] = 4.6699999999999999; // CO2
-    TBid[16][6] = 14; TB[16][6] = 2; // CH4
-    TBid[16][7] = 16; TB[16][7] = 2.5; // CH2O
-    TBid[16][8] = 19; TB[16][8] = 3; // CH3OH
-    TBid[16][9] = 20; TB[16][9] = 1.3300000000000001; // HE
-
-    // (11):  2 H2O <=> H + OH + H2O
-    fwd_A[25]     = 7.5280000000000001e+25;
-    fwd_beta[25]  = -2.4399999999999999;
-    fwd_Ea[25]    = 120200;
-    prefactor_units[25]  = 1.0000000000000002e-06;
-    activation_units[25] = 0.50321666580471969;
-    phase_units[25]      = 1e-12;
-    is_PD[25] = 0;
-    nTB[25] = 0;
-
-    // (12):  H + O2 (+M) <=> HO2 (+M)
+    // (0):  H + O2 (+M) <=> HO2 (+M)
     fwd_A[0]     = 4565000000000;
     fwd_beta[0]  = 0.44;
     fwd_Ea[0]    = 0;
@@ -857,231 +88,7 @@ void CKINIT()
     TBid[0][8] = 19; TB[0][8] = 3; // CH3OH
     TBid[0][9] = 20; TB[0][9] = 0.70999999999999996; // HE
 
-    // (13):  HO2 + H <=> H2 + O2
-    fwd_A[26]     = 2945000;
-    fwd_beta[26]  = 2.0870000000000002;
-    fwd_Ea[26]    = -1455;
-    prefactor_units[26]  = 1.0000000000000002e-06;
-    activation_units[26] = 0.50321666580471969;
-    phase_units[26]      = 1e-12;
-    is_PD[26] = 0;
-    nTB[26] = 0;
-
-    // (14):  HO2 + H <=> 2 OH
-    fwd_A[27]     = 58880000000000;
-    fwd_beta[27]  = 0;
-    fwd_Ea[27]    = 300;
-    prefactor_units[27]  = 1.0000000000000002e-06;
-    activation_units[27] = 0.50321666580471969;
-    phase_units[27]      = 1e-12;
-    is_PD[27] = 0;
-    nTB[27] = 0;
-
-    // (15):  HO2 + H <=> O + H2O
-    fwd_A[28]     = 1632000000000;
-    fwd_beta[28]  = 0;
-    fwd_Ea[28]    = 0;
-    prefactor_units[28]  = 1.0000000000000002e-06;
-    activation_units[28] = 0.50321666580471969;
-    phase_units[28]      = 1e-12;
-    is_PD[28] = 0;
-    nTB[28] = 0;
-
-    // (16):  HO2 + O <=> OH + O2
-    fwd_A[29]     = 16090000000000;
-    fwd_beta[29]  = 0;
-    fwd_Ea[29]    = -445;
-    prefactor_units[29]  = 1.0000000000000002e-06;
-    activation_units[29] = 0.50321666580471969;
-    phase_units[29]      = 1e-12;
-    is_PD[29] = 0;
-    nTB[29] = 0;
-
-    // (17):  HO2 + OH <=> H2O + O2
-    fwd_A[30]     = 7347000000000;
-    fwd_beta[30]  = 0;
-    fwd_Ea[30]    = -1093;
-    prefactor_units[30]  = 1.0000000000000002e-06;
-    activation_units[30] = 0.50321666580471969;
-    phase_units[30]      = 1e-12;
-    is_PD[30] = 0;
-    nTB[30] = 0;
-
-    // (18):  HO2 + OH <=> H2O + O2
-    fwd_A[31]     = 453400000000000;
-    fwd_beta[31]  = 0;
-    fwd_Ea[31]    = 10930;
-    prefactor_units[31]  = 1.0000000000000002e-06;
-    activation_units[31] = 0.50321666580471969;
-    phase_units[31]      = 1e-12;
-    is_PD[31] = 0;
-    nTB[31] = 0;
-
-    // (19):  CO + O (+M) <=> CO2 (+M)
-    fwd_A[12]     = 188000000000;
-    fwd_beta[12]  = 0;
-    fwd_Ea[12]    = 2430;
-    low_A[12]     = 1.4e+21;
-    low_beta[12]  = -2.1000000000000001;
-    low_Ea[12]    = 5500;
-    prefactor_units[12]  = 1.0000000000000002e-06;
-    activation_units[12] = 0.50321666580471969;
-    phase_units[12]      = 1e-12;
-    is_PD[12] = 1;
-    nTB[12] = 7;
-    TB[12] = (double *) malloc(7 * sizeof(double));
-    TBid[12] = (int *) malloc(7 * sizeof(int));
-    TBid[12][0] = 1; TB[12][0] = 2.5; // H2
-    TBid[12][1] = 6; TB[12][1] = 12; // H2O
-    TBid[12][2] = 8; TB[12][2] = 1.8999999999999999; // CO
-    TBid[12][3] = 9; TB[12][3] = 3.7999999999999998; // CO2
-    TBid[12][4] = 14; TB[12][4] = 2; // CH4
-    TBid[12][5] = 16; TB[12][5] = 2.5; // CH2O
-    TBid[12][6] = 19; TB[12][6] = 3; // CH3OH
-
-    // (20):  CO + O2 <=> O + CO2
-    fwd_A[32]     = 1533000000000;
-    fwd_beta[32]  = 0;
-    fwd_Ea[32]    = 47700;
-    prefactor_units[32]  = 1.0000000000000002e-06;
-    activation_units[32] = 0.50321666580471969;
-    phase_units[32]      = 1e-12;
-    is_PD[32] = 0;
-    nTB[32] = 0;
-
-    // (21):  CO + OH <=> H + CO2
-    fwd_A[33]     = 61870;
-    fwd_beta[33]  = 2.0529999999999999;
-    fwd_Ea[33]    = -356;
-    prefactor_units[33]  = 1.0000000000000002e-06;
-    activation_units[33] = 0.50321666580471969;
-    phase_units[33]      = 1e-12;
-    is_PD[33] = 0;
-    nTB[33] = 0;
-
-    // (22):  CO + OH <=> H + CO2
-    fwd_A[34]     = 5017000000000;
-    fwd_beta[34]  = -0.66400000000000003;
-    fwd_Ea[34]    = 332;
-    prefactor_units[34]  = 1.0000000000000002e-06;
-    activation_units[34] = 0.50321666580471969;
-    phase_units[34]      = 1e-12;
-    is_PD[34] = 0;
-    nTB[34] = 0;
-
-    // (23):  CO + HO2 <=> OH + CO2
-    fwd_A[35]     = 157000;
-    fwd_beta[35]  = 2.1800000000000002;
-    fwd_Ea[35]    = 17944;
-    prefactor_units[35]  = 1.0000000000000002e-06;
-    activation_units[35] = 0.50321666580471969;
-    phase_units[35]      = 1e-12;
-    is_PD[35] = 0;
-    nTB[35] = 0;
-
-    // (24):  HCO + M <=> H + CO + M
-    fwd_A[17]     = 4.8e+17;
-    fwd_beta[17]  = -1.2;
-    fwd_Ea[17]    = 17734;
-    prefactor_units[17]  = 1.0000000000000002e-06;
-    activation_units[17] = 0.50321666580471969;
-    phase_units[17]      = 1e-6;
-    is_PD[17] = 0;
-    nTB[17] = 10;
-    TB[17] = (double *) malloc(10 * sizeof(double));
-    TBid[17] = (int *) malloc(10 * sizeof(int));
-    TBid[17][0] = 0; TB[17][0] = 1.3100000000000001; // N2
-    TBid[17][1] = 1; TB[17][1] = 1.3100000000000001; // H2
-    TBid[17][2] = 4; TB[17][2] = 1.3200000000000001; // O2
-    TBid[17][3] = 6; TB[17][3] = 15.31; // H2O
-    TBid[17][4] = 8; TB[17][4] = 2.04; // CO
-    TBid[17][5] = 9; TB[17][5] = 2; // CO2
-    TBid[17][6] = 14; TB[17][6] = 2.6000000000000001; // CH4
-    TBid[17][7] = 16; TB[17][7] = 3.29; // CH2O
-    TBid[17][8] = 19; TB[17][8] = 3; // CH3OH
-    TBid[17][9] = 20; TB[17][9] = 1.3100000000000001; // HE
-
-    // (25):  HCO + H <=> H2 + CO
-    fwd_A[36]     = 84820000000000;
-    fwd_beta[36]  = 0;
-    fwd_Ea[36]    = 0;
-    prefactor_units[36]  = 1.0000000000000002e-06;
-    activation_units[36] = 0.50321666580471969;
-    phase_units[36]      = 1e-12;
-    is_PD[36] = 0;
-    nTB[36] = 0;
-
-    // (26):  HCO + O <=> OH + CO
-    fwd_A[37]     = 30100000000000;
-    fwd_beta[37]  = 0;
-    fwd_Ea[37]    = 0;
-    prefactor_units[37]  = 1.0000000000000002e-06;
-    activation_units[37] = 0.50321666580471969;
-    phase_units[37]      = 1e-12;
-    is_PD[37] = 0;
-    nTB[37] = 0;
-
-    // (27):  HCO + O <=> H + CO2
-    fwd_A[38]     = 30010000000000;
-    fwd_beta[38]  = 0;
-    fwd_Ea[38]    = 0;
-    prefactor_units[38]  = 1.0000000000000002e-06;
-    activation_units[38] = 0.50321666580471969;
-    phase_units[38]      = 1e-12;
-    is_PD[38] = 0;
-    nTB[38] = 0;
-
-    // (28):  HCO + OH <=> H2O + CO
-    fwd_A[39]     = 119900000000000;
-    fwd_beta[39]  = 0;
-    fwd_Ea[39]    = 0;
-    prefactor_units[39]  = 1.0000000000000002e-06;
-    activation_units[39] = 0.50321666580471969;
-    phase_units[39]      = 1e-12;
-    is_PD[39] = 0;
-    nTB[39] = 0;
-
-    // (29):  HCO + O2 <=> HO2 + CO
-    fwd_A[40]     = 75620000000;
-    fwd_beta[40]  = 0.52100000000000002;
-    fwd_Ea[40]    = -521;
-    prefactor_units[40]  = 1.0000000000000002e-06;
-    activation_units[40] = 0.50321666580471969;
-    phase_units[40]      = 1e-12;
-    is_PD[40] = 0;
-    nTB[40] = 0;
-
-    // (30):  CH + O <=> H + CO
-    fwd_A[41]     = 57000000000000;
-    fwd_beta[41]  = 0;
-    fwd_Ea[41]    = 0;
-    prefactor_units[41]  = 1.0000000000000002e-06;
-    activation_units[41] = 0.50321666580471969;
-    phase_units[41]      = 1e-12;
-    is_PD[41] = 0;
-    nTB[41] = 0;
-
-    // (31):  CH + OH <=> H + HCO
-    fwd_A[42]     = 30000000000000;
-    fwd_beta[42]  = 0;
-    fwd_Ea[42]    = 0;
-    prefactor_units[42]  = 1.0000000000000002e-06;
-    activation_units[42] = 0.50321666580471969;
-    phase_units[42]      = 1e-12;
-    is_PD[42] = 0;
-    nTB[42] = 0;
-
-    // (32):  CH + H2 <=> H + CH2
-    fwd_A[43]     = 161200000000000;
-    fwd_beta[43]  = 0;
-    fwd_Ea[43]    = 3320;
-    prefactor_units[43]  = 1.0000000000000002e-06;
-    activation_units[43] = 0.50321666580471969;
-    phase_units[43]      = 1e-12;
-    is_PD[43] = 0;
-    nTB[43] = 0;
-
-    // (33):  CH + H2 (+M) <=> CH3 (+M)
+    // (1):  CH + H2 (+M) <=> CH3 (+M)
     fwd_A[1]     = 51300000000000;
     fwd_beta[1]  = 0.14999999999999999;
     fwd_Ea[1]    = 0;
@@ -1108,67 +115,7 @@ void CKINIT()
     TBid[1][5] = 19; TB[1][5] = 3; // CH3OH
     TBid[1][6] = 20; TB[1][6] = 0.69999999999999996; // HE
 
-    // (34):  CH + H2O <=> H + CH2O
-    fwd_A[44]     = 3430000000000;
-    fwd_beta[44]  = 0;
-    fwd_Ea[44]    = -884;
-    prefactor_units[44]  = 1.0000000000000002e-06;
-    activation_units[44] = 0.50321666580471969;
-    phase_units[44]      = 1e-12;
-    is_PD[44] = 0;
-    nTB[44] = 0;
-
-    // (35):  CH + O2 <=> O + HCO
-    fwd_A[45]     = 184000000;
-    fwd_beta[45]  = 1.4299999999999999;
-    fwd_Ea[45]    = 1200;
-    prefactor_units[45]  = 1.0000000000000002e-06;
-    activation_units[45] = 0.50321666580471969;
-    phase_units[45]      = 1e-12;
-    is_PD[45] = 0;
-    nTB[45] = 0;
-
-    // (36):  CH + O2 <=> CO2 + H
-    fwd_A[46]     = 278100000;
-    fwd_beta[46]  = 1.4299999999999999;
-    fwd_Ea[46]    = 1200;
-    prefactor_units[46]  = 1.0000000000000002e-06;
-    activation_units[46] = 0.50321666580471969;
-    phase_units[46]      = 1e-12;
-    is_PD[46] = 0;
-    nTB[46] = 0;
-
-    // (37):  CH + O2 <=> CO + OH
-    fwd_A[47]     = 184000000;
-    fwd_beta[47]  = 1.4299999999999999;
-    fwd_Ea[47]    = 1200;
-    prefactor_units[47]  = 1.0000000000000002e-06;
-    activation_units[47] = 0.50321666580471969;
-    phase_units[47]      = 1e-12;
-    is_PD[47] = 0;
-    nTB[47] = 0;
-
-    // (38):  CH + O2 => O + H + CO
-    fwd_A[48]     = 278900000;
-    fwd_beta[48]  = 1.4299999999999999;
-    fwd_Ea[48]    = 1200;
-    prefactor_units[48]  = 1.0000000000000002e-06;
-    activation_units[48] = 0.50321666580471969;
-    phase_units[48]      = 1e-12;
-    is_PD[48] = 0;
-    nTB[48] = 0;
-
-    // (39):  CH + CO2 <=> HCO + CO
-    fwd_A[49]     = 63800000;
-    fwd_beta[49]  = 1.51;
-    fwd_Ea[49]    = -715;
-    prefactor_units[49]  = 1.0000000000000002e-06;
-    activation_units[49] = 0.50321666580471969;
-    phase_units[49]      = 1e-12;
-    is_PD[49] = 0;
-    nTB[49] = 0;
-
-    // (40):  CH2 + H (+M) <=> CH3 (+M)
+    // (2):  CH2 + H (+M) <=> CH3 (+M)
     fwd_A[2]     = 21300000000000;
     fwd_beta[2]  = 0.32000000000000001;
     fwd_Ea[2]    = 0;
@@ -1195,177 +142,7 @@ void CKINIT()
     TBid[2][5] = 19; TB[2][5] = 3; // CH3OH
     TBid[2][6] = 20; TB[2][6] = 0.69999999999999996; // HE
 
-    // (41):  CH2 + O => 2 H + CO
-    fwd_A[50]     = 80000000000000;
-    fwd_beta[50]  = 0;
-    fwd_Ea[50]    = 0;
-    prefactor_units[50]  = 1.0000000000000002e-06;
-    activation_units[50] = 0.50321666580471969;
-    phase_units[50]      = 1e-12;
-    is_PD[50] = 0;
-    nTB[50] = 0;
-
-    // (42):  CH2 + OH <=> H + CH2O
-    fwd_A[51]     = 28990000000000;
-    fwd_beta[51]  = 0.12;
-    fwd_Ea[51]    = -162;
-    prefactor_units[51]  = 1.0000000000000002e-06;
-    activation_units[51] = 0.50321666580471969;
-    phase_units[51]      = 1e-12;
-    is_PD[51] = 0;
-    nTB[51] = 0;
-
-    // (43):  CH2 + OH <=> CH + H2O
-    fwd_A[52]     = 863000;
-    fwd_beta[52]  = 2.02;
-    fwd_Ea[52]    = 6776;
-    prefactor_units[52]  = 1.0000000000000002e-06;
-    activation_units[52] = 0.50321666580471969;
-    phase_units[52]      = 1e-12;
-    is_PD[52] = 0;
-    nTB[52] = 0;
-
-    // (44):  CH2 + HO2 <=> OH + CH2O
-    fwd_A[53]     = 20000000000000;
-    fwd_beta[53]  = 0;
-    fwd_Ea[53]    = 0;
-    prefactor_units[53]  = 1.0000000000000002e-06;
-    activation_units[53] = 0.50321666580471969;
-    phase_units[53]      = 1e-12;
-    is_PD[53] = 0;
-    nTB[53] = 0;
-
-    // (45):  CH2 + H2 <=> H + CH3
-    fwd_A[54]     = 1265000;
-    fwd_beta[54]  = 2;
-    fwd_Ea[54]    = 7230;
-    prefactor_units[54]  = 1.0000000000000002e-06;
-    activation_units[54] = 0.50321666580471969;
-    phase_units[54]      = 1e-12;
-    is_PD[54] = 0;
-    nTB[54] = 0;
-
-    // (46):  CH2 + O2 => OH + H + CO
-    fwd_A[55]     = 2643000000000;
-    fwd_beta[55]  = 0;
-    fwd_Ea[55]    = 1000;
-    prefactor_units[55]  = 1.0000000000000002e-06;
-    activation_units[55] = 0.50321666580471969;
-    phase_units[55]      = 1e-12;
-    is_PD[55] = 0;
-    nTB[55] = 0;
-
-    // (47):  CH2 + O2 => 2 H + CO2
-    fwd_A[56]     = 1844000000000;
-    fwd_beta[56]  = 0;
-    fwd_Ea[56]    = 1000;
-    prefactor_units[56]  = 1.0000000000000002e-06;
-    activation_units[56] = 0.50321666580471969;
-    phase_units[56]      = 1e-12;
-    is_PD[56] = 0;
-    nTB[56] = 0;
-
-    // (48):  CH2 + O2 <=> O + CH2O
-    fwd_A[57]     = 1600000000000;
-    fwd_beta[57]  = 0;
-    fwd_Ea[57]    = 1000;
-    prefactor_units[57]  = 1.0000000000000002e-06;
-    activation_units[57] = 0.50321666580471969;
-    phase_units[57]      = 1e-12;
-    is_PD[57] = 0;
-    nTB[57] = 0;
-
-    // (49):  CH2 + O2 <=> H2 + CO2
-    fwd_A[58]     = 1836000000000;
-    fwd_beta[58]  = 0;
-    fwd_Ea[58]    = 1000;
-    prefactor_units[58]  = 1.0000000000000002e-06;
-    activation_units[58] = 0.50321666580471969;
-    phase_units[58]      = 1e-12;
-    is_PD[58] = 0;
-    nTB[58] = 0;
-
-    // (50):  CH2 + O2 <=> H2O + CO
-    fwd_A[59]     = 520000000000;
-    fwd_beta[59]  = 0;
-    fwd_Ea[59]    = 1000;
-    prefactor_units[59]  = 1.0000000000000002e-06;
-    activation_units[59] = 0.50321666580471969;
-    phase_units[59]      = 1e-12;
-    is_PD[59] = 0;
-    nTB[59] = 0;
-
-    // (51):  CH2(S) + N2 <=> CH2 + N2
-    fwd_A[60]     = 12000000000000;
-    fwd_beta[60]  = 0;
-    fwd_Ea[60]    = 471;
-    prefactor_units[60]  = 1.0000000000000002e-06;
-    activation_units[60] = 0.50321666580471969;
-    phase_units[60]      = 1e-12;
-    is_PD[60] = 0;
-    nTB[60] = 0;
-
-    // (52):  CH2(S) + HE <=> CH2 + HE
-    fwd_A[61]     = 6620000000000;
-    fwd_beta[61]  = 0;
-    fwd_Ea[61]    = 755;
-    prefactor_units[61]  = 1.0000000000000002e-06;
-    activation_units[61] = 0.50321666580471969;
-    phase_units[61]      = 1e-12;
-    is_PD[61] = 0;
-    nTB[61] = 0;
-
-    // (53):  CH2(S) + H <=> CH + H2
-    fwd_A[62]     = 30000000000000;
-    fwd_beta[62]  = 0;
-    fwd_Ea[62]    = 0;
-    prefactor_units[62]  = 1.0000000000000002e-06;
-    activation_units[62] = 0.50321666580471969;
-    phase_units[62]      = 1e-12;
-    is_PD[62] = 0;
-    nTB[62] = 0;
-
-    // (54):  CH2(S) + O => 2 H + CO
-    fwd_A[63]     = 30000000000000;
-    fwd_beta[63]  = 0;
-    fwd_Ea[63]    = 0;
-    prefactor_units[63]  = 1.0000000000000002e-06;
-    activation_units[63] = 0.50321666580471969;
-    phase_units[63]      = 1e-12;
-    is_PD[63] = 0;
-    nTB[63] = 0;
-
-    // (55):  CH2(S) + OH <=> H + CH2O
-    fwd_A[64]     = 30000000000000;
-    fwd_beta[64]  = 0;
-    fwd_Ea[64]    = 0;
-    prefactor_units[64]  = 1.0000000000000002e-06;
-    activation_units[64] = 0.50321666580471969;
-    phase_units[64]      = 1e-12;
-    is_PD[64] = 0;
-    nTB[64] = 0;
-
-    // (56):  CH2(S) + H2 <=> CH3 + H
-    fwd_A[65]     = 82910000000000;
-    fwd_beta[65]  = 0;
-    fwd_Ea[65]    = 0;
-    prefactor_units[65]  = 1.0000000000000002e-06;
-    activation_units[65] = 0.50321666580471969;
-    phase_units[65]      = 1e-12;
-    is_PD[65] = 0;
-    nTB[65] = 0;
-
-    // (57):  CH2(S) + O2 <=> CH2 + O2
-    fwd_A[66]     = 31300000000000;
-    fwd_beta[66]  = 0;
-    fwd_Ea[66]    = 0;
-    prefactor_units[66]  = 1.0000000000000002e-06;
-    activation_units[66] = 0.50321666580471969;
-    phase_units[66]      = 1e-12;
-    is_PD[66] = 0;
-    nTB[66] = 0;
-
-    // (58):  CH2(S) + H2O (+M) <=> CH3OH (+M)
+    // (3):  CH2(S) + H2O (+M) <=> CH3OH (+M)
     fwd_A[3]     = 2940000000000;
     fwd_beta[3]  = 0.052999999999999999;
     fwd_Ea[3]    = -1897;
@@ -1391,57 +168,7 @@ void CKINIT()
     TBid[3][4] = 16; TB[3][4] = 2.5; // CH2O
     TBid[3][5] = 19; TB[3][5] = 3; // CH3OH
 
-    // (59):  CH2(S) + H2O <=> CH2 + H2O
-    fwd_A[67]     = 15100000000000;
-    fwd_beta[67]  = 0;
-    fwd_Ea[67]    = -431;
-    prefactor_units[67]  = 1.0000000000000002e-06;
-    activation_units[67] = 0.50321666580471969;
-    phase_units[67]      = 1e-12;
-    is_PD[67] = 0;
-    nTB[67] = 0;
-
-    // (60):  CH2(S) + H2O <=> H2 + CH2O
-    fwd_A[68]     = 6.6700000000000005e+21;
-    fwd_beta[68]  = -3.1339999999999999;
-    fwd_Ea[68]    = 3300;
-    prefactor_units[68]  = 1.0000000000000002e-06;
-    activation_units[68] = 0.50321666580471969;
-    phase_units[68]      = 1e-12;
-    is_PD[68] = 0;
-    nTB[68] = 0;
-
-    // (61):  CH2(S) + CO <=> CH2 + CO
-    fwd_A[69]     = 9000000000000;
-    fwd_beta[69]  = 0;
-    fwd_Ea[69]    = 0;
-    prefactor_units[69]  = 1.0000000000000002e-06;
-    activation_units[69] = 0.50321666580471969;
-    phase_units[69]      = 1e-12;
-    is_PD[69] = 0;
-    nTB[69] = 0;
-
-    // (62):  CH2(S) + CO2 <=> CH2 + CO2
-    fwd_A[70]     = 13300000000000;
-    fwd_beta[70]  = 0;
-    fwd_Ea[70]    = 0;
-    prefactor_units[70]  = 1.0000000000000002e-06;
-    activation_units[70] = 0.50321666580471969;
-    phase_units[70]      = 1e-12;
-    is_PD[70] = 0;
-    nTB[70] = 0;
-
-    // (63):  CH2(S) + CO2 <=> CO + CH2O
-    fwd_A[71]     = 6620000000000;
-    fwd_beta[71]  = 0;
-    fwd_Ea[71]    = 0;
-    prefactor_units[71]  = 1.0000000000000002e-06;
-    activation_units[71] = 0.50321666580471969;
-    phase_units[71]      = 1e-12;
-    is_PD[71] = 0;
-    nTB[71] = 0;
-
-    // (64):  HCO + H (+M) <=> CH2O (+M)
+    // (4):  HCO + H (+M) <=> CH2O (+M)
     fwd_A[4]     = 191300000000000;
     fwd_beta[4]  = -0.033000000000000002;
     fwd_Ea[4]    = -142;
@@ -1468,7 +195,7 @@ void CKINIT()
     TBid[4][5] = 19; TB[4][5] = 3; // CH3OH
     TBid[4][6] = 20; TB[4][6] = 0.69999999999999996; // HE
 
-    // (65):  CH2O (+M) <=> H2 + CO (+M)
+    // (5):  CH2O (+M) <=> H2 + CO (+M)
     fwd_A[5]     = 37000000000000;
     fwd_beta[5]  = 0;
     fwd_Ea[5]    = 71976;
@@ -1495,67 +222,7 @@ void CKINIT()
     TBid[5][5] = 19; TB[5][5] = 3; // CH3OH
     TBid[5][6] = 20; TB[5][6] = 0.69999999999999996; // HE
 
-    // (66):  CH2O + H <=> HCO + H2
-    fwd_A[72]     = 71490000;
-    fwd_beta[72]  = 1.8999999999999999;
-    fwd_Ea[72]    = 2742;
-    prefactor_units[72]  = 1.0000000000000002e-06;
-    activation_units[72] = 0.50321666580471969;
-    phase_units[72]      = 1e-12;
-    is_PD[72] = 0;
-    nTB[72] = 0;
-
-    // (67):  CH2O + O <=> OH + HCO
-    fwd_A[73]     = 424400000000;
-    fwd_beta[73]  = 0.56999999999999995;
-    fwd_Ea[73]    = 2762;
-    prefactor_units[73]  = 1.0000000000000002e-06;
-    activation_units[73] = 0.50321666580471969;
-    phase_units[73]      = 1e-12;
-    is_PD[73] = 0;
-    nTB[73] = 0;
-
-    // (68):  CH2O + OH <=> HCO + H2O
-    fwd_A[74]     = 83380000;
-    fwd_beta[74]  = 1.6299999999999999;
-    fwd_Ea[74]    = -1055;
-    prefactor_units[74]  = 1.0000000000000002e-06;
-    activation_units[74] = 0.50321666580471969;
-    phase_units[74]      = 1e-12;
-    is_PD[74] = 0;
-    nTB[74] = 0;
-
-    // (69):  CH2O + O2 <=> HO2 + HCO
-    fwd_A[75]     = 329700;
-    fwd_beta[75]  = 2.5;
-    fwd_Ea[75]    = 36460;
-    prefactor_units[75]  = 1.0000000000000002e-06;
-    activation_units[75] = 0.50321666580471969;
-    phase_units[75]      = 1e-12;
-    is_PD[75] = 0;
-    nTB[75] = 0;
-
-    // (70):  CH2O + CH2 <=> CH3 + HCO
-    fwd_A[76]     = 0.073999999999999996;
-    fwd_beta[76]  = 4.21;
-    fwd_Ea[76]    = 1120;
-    prefactor_units[76]  = 1.0000000000000002e-06;
-    activation_units[76] = 0.50321666580471969;
-    phase_units[76]      = 1e-12;
-    is_PD[76] = 0;
-    nTB[76] = 0;
-
-    // (71):  CH2O + CH2(S) <=> CH3 + HCO
-    fwd_A[77]     = 13300000000000;
-    fwd_beta[77]  = 0;
-    fwd_Ea[77]    = -550;
-    prefactor_units[77]  = 1.0000000000000002e-06;
-    activation_units[77] = 0.50321666580471969;
-    phase_units[77]      = 1e-12;
-    is_PD[77] = 0;
-    nTB[77] = 0;
-
-    // (72):  CH3 + H (+M) <=> CH4 (+M)
+    // (6):  CH3 + H (+M) <=> CH4 (+M)
     fwd_A[6]     = 180100000000000;
     fwd_beta[6]  = 0;
     fwd_Ea[6]    = 0;
@@ -1584,27 +251,7 @@ void CKINIT()
     TBid[6][7] = 19; TB[6][7] = 3; // CH3OH
     TBid[6][8] = 20; TB[6][8] = 0.41999999999999998; // HE
 
-    // (73):  CH3 + O <=> H + CH2O
-    fwd_A[78]     = 57220000000000;
-    fwd_beta[78]  = 0;
-    fwd_Ea[78]    = 0;
-    prefactor_units[78]  = 1.0000000000000002e-06;
-    activation_units[78] = 0.50321666580471969;
-    phase_units[78]      = 1e-12;
-    is_PD[78] = 0;
-    nTB[78] = 0;
-
-    // (74):  CH3 + O => H + H2 + CO
-    fwd_A[79]     = 23840000000000;
-    fwd_beta[79]  = 0;
-    fwd_Ea[79]    = 0;
-    prefactor_units[79]  = 1.0000000000000002e-06;
-    activation_units[79] = 0.50321666580471969;
-    phase_units[79]      = 1e-12;
-    is_PD[79] = 0;
-    nTB[79] = 0;
-
-    // (75):  CH3 + OH (+M) <=> CH3OH (+M)
+    // (7):  CH3 + OH (+M) <=> CH3OH (+M)
     fwd_A[7]     = 62100000000000;
     fwd_beta[7]  = -0.017999999999999999;
     fwd_Ea[7]    = -33;
@@ -1630,97 +277,7 @@ void CKINIT()
     TBid[7][4] = 16; TB[7][4] = 2.5; // CH2O
     TBid[7][5] = 19; TB[7][5] = 3; // CH3OH
 
-    // (76):  CH3 + OH <=> CH2 + H2O
-    fwd_A[80]     = 44640;
-    fwd_beta[80]  = 2.5699999999999998;
-    fwd_Ea[80]    = 3998;
-    prefactor_units[80]  = 1.0000000000000002e-06;
-    activation_units[80] = 0.50321666580471969;
-    phase_units[80]      = 1e-12;
-    is_PD[80] = 0;
-    nTB[80] = 0;
-
-    // (77):  CH3 + OH <=> CH2(S) + H2O
-    fwd_A[81]     = 7810000000000000;
-    fwd_beta[81]  = -0.91000000000000003;
-    fwd_Ea[81]    = 546;
-    prefactor_units[81]  = 1.0000000000000002e-06;
-    activation_units[81] = 0.50321666580471969;
-    phase_units[81]      = 1e-12;
-    is_PD[81] = 0;
-    nTB[81] = 0;
-
-    // (78):  CH3 + OH <=> H2 + CH2O
-    fwd_A[82]     = 2735000000;
-    fwd_beta[82]  = 0.73399999999999999;
-    fwd_Ea[82]    = -2177;
-    prefactor_units[82]  = 1.0000000000000002e-06;
-    activation_units[82] = 0.50321666580471969;
-    phase_units[82]      = 1e-12;
-    is_PD[82] = 0;
-    nTB[82] = 0;
-
-    // (79):  CH3 + HO2 <=> O2 + CH4
-    fwd_A[83]     = 126900;
-    fwd_beta[83]  = 2.2280000000000002;
-    fwd_Ea[83]    = -3022;
-    prefactor_units[83]  = 1.0000000000000002e-06;
-    activation_units[83] = 0.50321666580471969;
-    phase_units[83]      = 1e-12;
-    is_PD[83] = 0;
-    nTB[83] = 0;
-
-    // (80):  CH3 + HO2 <=> OH + CH3O
-    fwd_A[84]     = 8821000000000;
-    fwd_beta[84]  = 0;
-    fwd_Ea[84]    = -590;
-    prefactor_units[84]  = 1.0000000000000002e-06;
-    activation_units[84] = 0.50321666580471969;
-    phase_units[84]      = 1e-12;
-    is_PD[84] = 0;
-    nTB[84] = 0;
-
-    // (81):  CH3 + O2 <=> O + CH3O
-    fwd_A[85]     = 8104000000000;
-    fwd_beta[85]  = 0;
-    fwd_Ea[85]    = 28297;
-    prefactor_units[85]  = 1.0000000000000002e-06;
-    activation_units[85] = 0.50321666580471969;
-    phase_units[85]      = 1e-12;
-    is_PD[85] = 0;
-    nTB[85] = 0;
-
-    // (82):  CH3 + O2 <=> OH + CH2O
-    fwd_A[86]     = 99.769999999999996;
-    fwd_beta[86]  = 2.8599999999999999;
-    fwd_Ea[86]    = 9768;
-    prefactor_units[86]  = 1.0000000000000002e-06;
-    activation_units[86] = 0.50321666580471969;
-    phase_units[86]      = 1e-12;
-    is_PD[86] = 0;
-    nTB[86] = 0;
-
-    // (83):  CH3 + HCO <=> CH4 + CO
-    fwd_A[87]     = 5300000000000;
-    fwd_beta[87]  = 0;
-    fwd_Ea[87]    = 0;
-    prefactor_units[87]  = 1.0000000000000002e-06;
-    activation_units[87] = 0.50321666580471969;
-    phase_units[87]      = 1e-12;
-    is_PD[87] = 0;
-    nTB[87] = 0;
-
-    // (84):  CH3 + CH2O <=> HCO + CH4
-    fwd_A[88]     = 32.130000000000003;
-    fwd_beta[88]  = 3.3599999999999999;
-    fwd_Ea[88]    = 4310;
-    prefactor_units[88]  = 1.0000000000000002e-06;
-    activation_units[88] = 0.50321666580471969;
-    phase_units[88]      = 1e-12;
-    is_PD[88] = 0;
-    nTB[88] = 0;
-
-    // (85):  CH3O (+M) <=> H + CH2O (+M)
+    // (8):  CH3O (+M) <=> H + CH2O (+M)
     fwd_A[8]     = 11300000000;
     fwd_beta[8]  = 1.21;
     fwd_Ea[8]    = 24075;
@@ -1748,7 +305,7 @@ void CKINIT()
     TBid[8][6] = 19; TB[8][6] = 3; // CH3OH
     TBid[8][7] = 20; TB[8][7] = 0.67000000000000004; // HE
 
-    // (86):  CH3O + H (+M) <=> CH3OH (+M)
+    // (9):  CH3O + H (+M) <=> CH3OH (+M)
     fwd_A[9]     = 244000000000;
     fwd_beta[9]  = 0.76000000000000001;
     fwd_Ea[9]    = 0;
@@ -1774,97 +331,7 @@ void CKINIT()
     TBid[9][4] = 16; TB[9][4] = 2.5; // CH2O
     TBid[9][5] = 19; TB[9][5] = 3; // CH3OH
 
-    // (87):  CH3O + H <=> H + CH2OH
-    fwd_A[89]     = 12900000;
-    fwd_beta[89]  = 1.8200000000000001;
-    fwd_Ea[89]    = -703;
-    prefactor_units[89]  = 1.0000000000000002e-06;
-    activation_units[89] = 0.50321666580471969;
-    phase_units[89]      = 1e-12;
-    is_PD[89] = 0;
-    nTB[89] = 0;
-
-    // (88):  CH3O + H <=> H2 + CH2O
-    fwd_A[90]     = 37900000000000;
-    fwd_beta[90]  = 0;
-    fwd_Ea[90]    = 596;
-    prefactor_units[90]  = 1.0000000000000002e-06;
-    activation_units[90] = 0.50321666580471969;
-    phase_units[90]      = 1e-12;
-    is_PD[90] = 0;
-    nTB[90] = 0;
-
-    // (89):  CH3O + H <=> OH + CH3
-    fwd_A[91]     = 388000000000000;
-    fwd_beta[91]  = -0.26400000000000001;
-    fwd_Ea[91]    = -26;
-    prefactor_units[91]  = 1.0000000000000002e-06;
-    activation_units[91] = 0.50321666580471969;
-    phase_units[91]      = 1e-12;
-    is_PD[91] = 0;
-    nTB[91] = 0;
-
-    // (90):  CH3O + H <=> CH2(S) + H2O
-    fwd_A[92]     = 197000000000;
-    fwd_beta[92]  = 0.41399999999999998;
-    fwd_Ea[92]    = 243;
-    prefactor_units[92]  = 1.0000000000000002e-06;
-    activation_units[92] = 0.50321666580471969;
-    phase_units[92]      = 1e-12;
-    is_PD[92] = 0;
-    nTB[92] = 0;
-
-    // (91):  CH3O + O <=> OH + CH2O
-    fwd_A[93]     = 3780000000000;
-    fwd_beta[93]  = 0;
-    fwd_Ea[93]    = 0;
-    prefactor_units[93]  = 1.0000000000000002e-06;
-    activation_units[93] = 0.50321666580471969;
-    phase_units[93]      = 1e-12;
-    is_PD[93] = 0;
-    nTB[93] = 0;
-
-    // (92):  CH3O + OH <=> H2O + CH2O
-    fwd_A[94]     = 18100000000000;
-    fwd_beta[94]  = 0;
-    fwd_Ea[94]    = 0;
-    prefactor_units[94]  = 1.0000000000000002e-06;
-    activation_units[94] = 0.50321666580471969;
-    phase_units[94]      = 1e-12;
-    is_PD[94] = 0;
-    nTB[94] = 0;
-
-    // (93):  CH3O + O2 <=> HO2 + CH2O
-    fwd_A[95]     = 63200000000;
-    fwd_beta[95]  = 0;
-    fwd_Ea[95]    = 2603;
-    prefactor_units[95]  = 1.0000000000000002e-06;
-    activation_units[95] = 0.50321666580471969;
-    phase_units[95]      = 1e-12;
-    is_PD[95] = 0;
-    nTB[95] = 0;
-
-    // (94):  CH3O + CH3 <=> CH4 + CH2O
-    fwd_A[96]     = 24000000000000;
-    fwd_beta[96]  = 0;
-    fwd_Ea[96]    = 0;
-    prefactor_units[96]  = 1.0000000000000002e-06;
-    activation_units[96] = 0.50321666580471969;
-    phase_units[96]      = 1e-12;
-    is_PD[96] = 0;
-    nTB[96] = 0;
-
-    // (95):  CH3O + CO <=> CH3 + CO2
-    fwd_A[97]     = 6000000000000;
-    fwd_beta[97]  = 0;
-    fwd_Ea[97]    = 11000;
-    prefactor_units[97]  = 1.0000000000000002e-06;
-    activation_units[97] = 0.50321666580471969;
-    phase_units[97]      = 1e-12;
-    is_PD[97] = 0;
-    nTB[97] = 0;
-
-    // (96):  CH2OH (+M) <=> H + CH2O (+M)
+    // (10):  CH2OH (+M) <=> H + CH2O (+M)
     fwd_A[10]     = 73700000000;
     fwd_beta[10]  = 0.81100000000000005;
     fwd_Ea[10]    = 39580;
@@ -1892,7 +359,7 @@ void CKINIT()
     TBid[10][6] = 19; TB[10][6] = 3; // CH3OH
     TBid[10][7] = 20; TB[10][7] = 0.67000000000000004; // HE
 
-    // (97):  CH2OH + H (+M) <=> CH3OH (+M)
+    // (11):  CH2OH + H (+M) <=> CH3OH (+M)
     fwd_A[11]     = 66700000000;
     fwd_beta[11]  = 0.95999999999999996;
     fwd_Ea[11]    = 0;
@@ -1918,6 +385,934 @@ void CKINIT()
     TBid[11][4] = 16; TB[11][4] = 2.5; // CH2O
     TBid[11][5] = 19; TB[11][5] = 3; // CH3OH
     TBid[11][6] = 20; TB[11][6] = 0.69999999999999996; // HE
+
+    // (12):  CO + O (+M) <=> CO2 (+M)
+    fwd_A[12]     = 188000000000;
+    fwd_beta[12]  = 0;
+    fwd_Ea[12]    = 2430;
+    low_A[12]     = 1.4e+21;
+    low_beta[12]  = -2.1000000000000001;
+    low_Ea[12]    = 5500;
+    prefactor_units[12]  = 1.0000000000000002e-06;
+    activation_units[12] = 0.50321666580471969;
+    phase_units[12]      = 1e-12;
+    is_PD[12] = 1;
+    nTB[12] = 7;
+    TB[12] = (double *) malloc(7 * sizeof(double));
+    TBid[12] = (int *) malloc(7 * sizeof(int));
+    TBid[12][0] = 1; TB[12][0] = 2.5; // H2
+    TBid[12][1] = 6; TB[12][1] = 12; // H2O
+    TBid[12][2] = 8; TB[12][2] = 1.8999999999999999; // CO
+    TBid[12][3] = 9; TB[12][3] = 3.7999999999999998; // CO2
+    TBid[12][4] = 14; TB[12][4] = 2; // CH4
+    TBid[12][5] = 16; TB[12][5] = 2.5; // CH2O
+    TBid[12][6] = 19; TB[12][6] = 3; // CH3OH
+
+    // (13):  H2 + M <=> 2 H + M
+    fwd_A[13]     = 4.58e+19;
+    fwd_beta[13]  = -1.3999999999999999;
+    fwd_Ea[13]    = 104390;
+    prefactor_units[13]  = 1.0000000000000002e-06;
+    activation_units[13] = 0.50321666580471969;
+    phase_units[13]      = 1e-6;
+    is_PD[13] = 0;
+    nTB[13] = 9;
+    TB[13] = (double *) malloc(9 * sizeof(double));
+    TBid[13] = (int *) malloc(9 * sizeof(int));
+    TBid[13][0] = 0; TB[13][0] = 1.01; // N2
+    TBid[13][1] = 1; TB[13][1] = 2.5499999999999998; // H2
+    TBid[13][2] = 6; TB[13][2] = 12.02; // H2O
+    TBid[13][3] = 8; TB[13][3] = 1.95; // CO
+    TBid[13][4] = 9; TB[13][4] = 3.8300000000000001; // CO2
+    TBid[13][5] = 14; TB[13][5] = 2; // CH4
+    TBid[13][6] = 16; TB[13][6] = 2.5; // CH2O
+    TBid[13][7] = 19; TB[13][7] = 3; // CH3OH
+    TBid[13][8] = 20; TB[13][8] = 0; // HE
+
+    // (14):  2 O + M <=> O2 + M
+    fwd_A[14]     = 6160000000000000;
+    fwd_beta[14]  = -0.5;
+    fwd_Ea[14]    = 0;
+    prefactor_units[14]  = 1.0000000000000002e-12;
+    activation_units[14] = 0.50321666580471969;
+    phase_units[14]      = 1e-12;
+    is_PD[14] = 0;
+    nTB[14] = 8;
+    TB[14] = (double *) malloc(8 * sizeof(double));
+    TBid[14] = (int *) malloc(8 * sizeof(int));
+    TBid[14][0] = 1; TB[14][0] = 2.5; // H2
+    TBid[14][1] = 6; TB[14][1] = 12; // H2O
+    TBid[14][2] = 8; TB[14][2] = 1.8999999999999999; // CO
+    TBid[14][3] = 9; TB[14][3] = 3.7999999999999998; // CO2
+    TBid[14][4] = 14; TB[14][4] = 2; // CH4
+    TBid[14][5] = 16; TB[14][5] = 2.5; // CH2O
+    TBid[14][6] = 19; TB[14][6] = 3; // CH3OH
+    TBid[14][7] = 20; TB[14][7] = 0; // HE
+
+    // (15):  O + H + M <=> OH + M
+    fwd_A[15]     = 4.71e+18;
+    fwd_beta[15]  = -1;
+    fwd_Ea[15]    = 0;
+    prefactor_units[15]  = 1.0000000000000002e-12;
+    activation_units[15] = 0.50321666580471969;
+    phase_units[15]      = 1e-12;
+    is_PD[15] = 0;
+    nTB[15] = 9;
+    TB[15] = (double *) malloc(9 * sizeof(double));
+    TBid[15] = (int *) malloc(9 * sizeof(int));
+    TBid[15][0] = 0; TB[15][0] = 1.3200000000000001; // N2
+    TBid[15][1] = 1; TB[15][1] = 2.5; // H2
+    TBid[15][2] = 6; TB[15][2] = 15.800000000000001; // H2O
+    TBid[15][3] = 8; TB[15][3] = 2.52; // CO
+    TBid[15][4] = 9; TB[15][4] = 5.0099999999999998; // CO2
+    TBid[15][5] = 14; TB[15][5] = 2; // CH4
+    TBid[15][6] = 16; TB[15][6] = 2.5; // CH2O
+    TBid[15][7] = 19; TB[15][7] = 3; // CH3OH
+    TBid[15][8] = 20; TB[15][8] = 0.75; // HE
+
+    // (16):  H2O + M <=> H + OH + M
+    fwd_A[16]     = 6.0599999999999999e+27;
+    fwd_beta[16]  = -3.3220000000000001;
+    fwd_Ea[16]    = 120800;
+    prefactor_units[16]  = 1.0000000000000002e-06;
+    activation_units[16] = 0.50321666580471969;
+    phase_units[16]      = 1e-6;
+    is_PD[16] = 0;
+    nTB[16] = 10;
+    TB[16] = (double *) malloc(10 * sizeof(double));
+    TBid[16] = (int *) malloc(10 * sizeof(int));
+    TBid[16][0] = 0; TB[16][0] = 2.46; // N2
+    TBid[16][1] = 1; TB[16][1] = 3.77; // H2
+    TBid[16][2] = 4; TB[16][2] = 1.5; // O2
+    TBid[16][3] = 6; TB[16][3] = 0; // H2O
+    TBid[16][4] = 8; TB[16][4] = 2.3999999999999999; // CO
+    TBid[16][5] = 9; TB[16][5] = 4.6699999999999999; // CO2
+    TBid[16][6] = 14; TB[16][6] = 2; // CH4
+    TBid[16][7] = 16; TB[16][7] = 2.5; // CH2O
+    TBid[16][8] = 19; TB[16][8] = 3; // CH3OH
+    TBid[16][9] = 20; TB[16][9] = 1.3300000000000001; // HE
+
+    // (17):  HCO + M <=> H + CO + M
+    fwd_A[17]     = 4.8e+17;
+    fwd_beta[17]  = -1.2;
+    fwd_Ea[17]    = 17734;
+    prefactor_units[17]  = 1.0000000000000002e-06;
+    activation_units[17] = 0.50321666580471969;
+    phase_units[17]      = 1e-6;
+    is_PD[17] = 0;
+    nTB[17] = 10;
+    TB[17] = (double *) malloc(10 * sizeof(double));
+    TBid[17] = (int *) malloc(10 * sizeof(int));
+    TBid[17][0] = 0; TB[17][0] = 1.3100000000000001; // N2
+    TBid[17][1] = 1; TB[17][1] = 1.3100000000000001; // H2
+    TBid[17][2] = 4; TB[17][2] = 1.3200000000000001; // O2
+    TBid[17][3] = 6; TB[17][3] = 15.31; // H2O
+    TBid[17][4] = 8; TB[17][4] = 2.04; // CO
+    TBid[17][5] = 9; TB[17][5] = 2; // CO2
+    TBid[17][6] = 14; TB[17][6] = 2.6000000000000001; // CH4
+    TBid[17][7] = 16; TB[17][7] = 3.29; // CH2O
+    TBid[17][8] = 19; TB[17][8] = 3; // CH3OH
+    TBid[17][9] = 20; TB[17][9] = 1.3100000000000001; // HE
+
+    // (18):  H + O2 <=> O + OH
+    fwd_A[18]     = 98410000000000;
+    fwd_beta[18]  = 0;
+    fwd_Ea[18]    = 15310;
+    prefactor_units[18]  = 1.0000000000000002e-06;
+    activation_units[18] = 0.50321666580471969;
+    phase_units[18]      = 1e-12;
+    is_PD[18] = 0;
+    nTB[18] = 0;
+
+    // (19):  O + H2 <=> H + OH
+    fwd_A[19]     = 3848000000000;
+    fwd_beta[19]  = 0;
+    fwd_Ea[19]    = 7950;
+    prefactor_units[19]  = 1.0000000000000002e-06;
+    activation_units[19] = 0.50321666580471969;
+    phase_units[19]      = 1e-12;
+    is_PD[19] = 0;
+    nTB[19] = 0;
+
+    // (20):  O + H2 <=> H + OH
+    fwd_A[20]     = 668700000000000;
+    fwd_beta[20]  = 0;
+    fwd_Ea[20]    = 19180;
+    prefactor_units[20]  = 1.0000000000000002e-06;
+    activation_units[20] = 0.50321666580471969;
+    phase_units[20]      = 1e-12;
+    is_PD[20] = 0;
+    nTB[20] = 0;
+
+    // (21):  OH + H2 <=> H + H2O
+    fwd_A[21]     = 225600000;
+    fwd_beta[21]  = 1.51;
+    fwd_Ea[21]    = 3437;
+    prefactor_units[21]  = 1.0000000000000002e-06;
+    activation_units[21] = 0.50321666580471969;
+    phase_units[21]      = 1e-12;
+    is_PD[21] = 0;
+    nTB[21] = 0;
+
+    // (22):  2 OH <=> O + H2O
+    fwd_A[22]     = 31610;
+    fwd_beta[22]  = 2.4199999999999999;
+    fwd_Ea[22]    = -1928;
+    prefactor_units[22]  = 1.0000000000000002e-06;
+    activation_units[22] = 0.50321666580471969;
+    phase_units[22]      = 1e-12;
+    is_PD[22] = 0;
+    nTB[22] = 0;
+
+    // (23):  H2 + HE <=> 2 H + HE
+    fwd_A[23]     = 5.84e+18;
+    fwd_beta[23]  = -1.1000000000000001;
+    fwd_Ea[23]    = 104390;
+    prefactor_units[23]  = 1.0000000000000002e-06;
+    activation_units[23] = 0.50321666580471969;
+    phase_units[23]      = 1e-12;
+    is_PD[23] = 0;
+    nTB[23] = 0;
+
+    // (24):  2 O + HE <=> O2 + HE
+    fwd_A[24]     = 18900000000000;
+    fwd_beta[24]  = 0;
+    fwd_Ea[24]    = -1788;
+    prefactor_units[24]  = 1.0000000000000002e-12;
+    activation_units[24] = 0.50321666580471969;
+    phase_units[24]      = 1e-18;
+    is_PD[24] = 0;
+    nTB[24] = 0;
+
+    // (25):  2 H2O <=> H + OH + H2O
+    fwd_A[25]     = 7.5280000000000001e+25;
+    fwd_beta[25]  = -2.4399999999999999;
+    fwd_Ea[25]    = 120200;
+    prefactor_units[25]  = 1.0000000000000002e-06;
+    activation_units[25] = 0.50321666580471969;
+    phase_units[25]      = 1e-12;
+    is_PD[25] = 0;
+    nTB[25] = 0;
+
+    // (26):  HO2 + H <=> H2 + O2
+    fwd_A[26]     = 2945000;
+    fwd_beta[26]  = 2.0870000000000002;
+    fwd_Ea[26]    = -1455;
+    prefactor_units[26]  = 1.0000000000000002e-06;
+    activation_units[26] = 0.50321666580471969;
+    phase_units[26]      = 1e-12;
+    is_PD[26] = 0;
+    nTB[26] = 0;
+
+    // (27):  HO2 + H <=> 2 OH
+    fwd_A[27]     = 58880000000000;
+    fwd_beta[27]  = 0;
+    fwd_Ea[27]    = 300;
+    prefactor_units[27]  = 1.0000000000000002e-06;
+    activation_units[27] = 0.50321666580471969;
+    phase_units[27]      = 1e-12;
+    is_PD[27] = 0;
+    nTB[27] = 0;
+
+    // (28):  HO2 + H <=> O + H2O
+    fwd_A[28]     = 1632000000000;
+    fwd_beta[28]  = 0;
+    fwd_Ea[28]    = 0;
+    prefactor_units[28]  = 1.0000000000000002e-06;
+    activation_units[28] = 0.50321666580471969;
+    phase_units[28]      = 1e-12;
+    is_PD[28] = 0;
+    nTB[28] = 0;
+
+    // (29):  HO2 + O <=> OH + O2
+    fwd_A[29]     = 16090000000000;
+    fwd_beta[29]  = 0;
+    fwd_Ea[29]    = -445;
+    prefactor_units[29]  = 1.0000000000000002e-06;
+    activation_units[29] = 0.50321666580471969;
+    phase_units[29]      = 1e-12;
+    is_PD[29] = 0;
+    nTB[29] = 0;
+
+    // (30):  HO2 + OH <=> H2O + O2
+    fwd_A[30]     = 7347000000000;
+    fwd_beta[30]  = 0;
+    fwd_Ea[30]    = -1093;
+    prefactor_units[30]  = 1.0000000000000002e-06;
+    activation_units[30] = 0.50321666580471969;
+    phase_units[30]      = 1e-12;
+    is_PD[30] = 0;
+    nTB[30] = 0;
+
+    // (31):  HO2 + OH <=> H2O + O2
+    fwd_A[31]     = 453400000000000;
+    fwd_beta[31]  = 0;
+    fwd_Ea[31]    = 10930;
+    prefactor_units[31]  = 1.0000000000000002e-06;
+    activation_units[31] = 0.50321666580471969;
+    phase_units[31]      = 1e-12;
+    is_PD[31] = 0;
+    nTB[31] = 0;
+
+    // (32):  CO + O2 <=> O + CO2
+    fwd_A[32]     = 1533000000000;
+    fwd_beta[32]  = 0;
+    fwd_Ea[32]    = 47700;
+    prefactor_units[32]  = 1.0000000000000002e-06;
+    activation_units[32] = 0.50321666580471969;
+    phase_units[32]      = 1e-12;
+    is_PD[32] = 0;
+    nTB[32] = 0;
+
+    // (33):  CO + OH <=> H + CO2
+    fwd_A[33]     = 61870;
+    fwd_beta[33]  = 2.0529999999999999;
+    fwd_Ea[33]    = -356;
+    prefactor_units[33]  = 1.0000000000000002e-06;
+    activation_units[33] = 0.50321666580471969;
+    phase_units[33]      = 1e-12;
+    is_PD[33] = 0;
+    nTB[33] = 0;
+
+    // (34):  CO + OH <=> H + CO2
+    fwd_A[34]     = 5017000000000;
+    fwd_beta[34]  = -0.66400000000000003;
+    fwd_Ea[34]    = 332;
+    prefactor_units[34]  = 1.0000000000000002e-06;
+    activation_units[34] = 0.50321666580471969;
+    phase_units[34]      = 1e-12;
+    is_PD[34] = 0;
+    nTB[34] = 0;
+
+    // (35):  CO + HO2 <=> OH + CO2
+    fwd_A[35]     = 157000;
+    fwd_beta[35]  = 2.1800000000000002;
+    fwd_Ea[35]    = 17944;
+    prefactor_units[35]  = 1.0000000000000002e-06;
+    activation_units[35] = 0.50321666580471969;
+    phase_units[35]      = 1e-12;
+    is_PD[35] = 0;
+    nTB[35] = 0;
+
+    // (36):  HCO + H <=> H2 + CO
+    fwd_A[36]     = 84820000000000;
+    fwd_beta[36]  = 0;
+    fwd_Ea[36]    = 0;
+    prefactor_units[36]  = 1.0000000000000002e-06;
+    activation_units[36] = 0.50321666580471969;
+    phase_units[36]      = 1e-12;
+    is_PD[36] = 0;
+    nTB[36] = 0;
+
+    // (37):  HCO + O <=> OH + CO
+    fwd_A[37]     = 30100000000000;
+    fwd_beta[37]  = 0;
+    fwd_Ea[37]    = 0;
+    prefactor_units[37]  = 1.0000000000000002e-06;
+    activation_units[37] = 0.50321666580471969;
+    phase_units[37]      = 1e-12;
+    is_PD[37] = 0;
+    nTB[37] = 0;
+
+    // (38):  HCO + O <=> H + CO2
+    fwd_A[38]     = 30010000000000;
+    fwd_beta[38]  = 0;
+    fwd_Ea[38]    = 0;
+    prefactor_units[38]  = 1.0000000000000002e-06;
+    activation_units[38] = 0.50321666580471969;
+    phase_units[38]      = 1e-12;
+    is_PD[38] = 0;
+    nTB[38] = 0;
+
+    // (39):  HCO + OH <=> H2O + CO
+    fwd_A[39]     = 119900000000000;
+    fwd_beta[39]  = 0;
+    fwd_Ea[39]    = 0;
+    prefactor_units[39]  = 1.0000000000000002e-06;
+    activation_units[39] = 0.50321666580471969;
+    phase_units[39]      = 1e-12;
+    is_PD[39] = 0;
+    nTB[39] = 0;
+
+    // (40):  HCO + O2 <=> HO2 + CO
+    fwd_A[40]     = 75620000000;
+    fwd_beta[40]  = 0.52100000000000002;
+    fwd_Ea[40]    = -521;
+    prefactor_units[40]  = 1.0000000000000002e-06;
+    activation_units[40] = 0.50321666580471969;
+    phase_units[40]      = 1e-12;
+    is_PD[40] = 0;
+    nTB[40] = 0;
+
+    // (41):  CH + O <=> H + CO
+    fwd_A[41]     = 57000000000000;
+    fwd_beta[41]  = 0;
+    fwd_Ea[41]    = 0;
+    prefactor_units[41]  = 1.0000000000000002e-06;
+    activation_units[41] = 0.50321666580471969;
+    phase_units[41]      = 1e-12;
+    is_PD[41] = 0;
+    nTB[41] = 0;
+
+    // (42):  CH + OH <=> H + HCO
+    fwd_A[42]     = 30000000000000;
+    fwd_beta[42]  = 0;
+    fwd_Ea[42]    = 0;
+    prefactor_units[42]  = 1.0000000000000002e-06;
+    activation_units[42] = 0.50321666580471969;
+    phase_units[42]      = 1e-12;
+    is_PD[42] = 0;
+    nTB[42] = 0;
+
+    // (43):  CH + H2 <=> H + CH2
+    fwd_A[43]     = 161200000000000;
+    fwd_beta[43]  = 0;
+    fwd_Ea[43]    = 3320;
+    prefactor_units[43]  = 1.0000000000000002e-06;
+    activation_units[43] = 0.50321666580471969;
+    phase_units[43]      = 1e-12;
+    is_PD[43] = 0;
+    nTB[43] = 0;
+
+    // (44):  CH + H2O <=> H + CH2O
+    fwd_A[44]     = 3430000000000;
+    fwd_beta[44]  = 0;
+    fwd_Ea[44]    = -884;
+    prefactor_units[44]  = 1.0000000000000002e-06;
+    activation_units[44] = 0.50321666580471969;
+    phase_units[44]      = 1e-12;
+    is_PD[44] = 0;
+    nTB[44] = 0;
+
+    // (45):  CH + O2 <=> O + HCO
+    fwd_A[45]     = 184000000;
+    fwd_beta[45]  = 1.4299999999999999;
+    fwd_Ea[45]    = 1200;
+    prefactor_units[45]  = 1.0000000000000002e-06;
+    activation_units[45] = 0.50321666580471969;
+    phase_units[45]      = 1e-12;
+    is_PD[45] = 0;
+    nTB[45] = 0;
+
+    // (46):  CH + O2 <=> CO2 + H
+    fwd_A[46]     = 278100000;
+    fwd_beta[46]  = 1.4299999999999999;
+    fwd_Ea[46]    = 1200;
+    prefactor_units[46]  = 1.0000000000000002e-06;
+    activation_units[46] = 0.50321666580471969;
+    phase_units[46]      = 1e-12;
+    is_PD[46] = 0;
+    nTB[46] = 0;
+
+    // (47):  CH + O2 <=> CO + OH
+    fwd_A[47]     = 184000000;
+    fwd_beta[47]  = 1.4299999999999999;
+    fwd_Ea[47]    = 1200;
+    prefactor_units[47]  = 1.0000000000000002e-06;
+    activation_units[47] = 0.50321666580471969;
+    phase_units[47]      = 1e-12;
+    is_PD[47] = 0;
+    nTB[47] = 0;
+
+    // (48):  CH + O2 => O + H + CO
+    fwd_A[48]     = 278900000;
+    fwd_beta[48]  = 1.4299999999999999;
+    fwd_Ea[48]    = 1200;
+    prefactor_units[48]  = 1.0000000000000002e-06;
+    activation_units[48] = 0.50321666580471969;
+    phase_units[48]      = 1e-12;
+    is_PD[48] = 0;
+    nTB[48] = 0;
+
+    // (49):  CH + CO2 <=> HCO + CO
+    fwd_A[49]     = 63800000;
+    fwd_beta[49]  = 1.51;
+    fwd_Ea[49]    = -715;
+    prefactor_units[49]  = 1.0000000000000002e-06;
+    activation_units[49] = 0.50321666580471969;
+    phase_units[49]      = 1e-12;
+    is_PD[49] = 0;
+    nTB[49] = 0;
+
+    // (50):  CH2 + O => 2 H + CO
+    fwd_A[50]     = 80000000000000;
+    fwd_beta[50]  = 0;
+    fwd_Ea[50]    = 0;
+    prefactor_units[50]  = 1.0000000000000002e-06;
+    activation_units[50] = 0.50321666580471969;
+    phase_units[50]      = 1e-12;
+    is_PD[50] = 0;
+    nTB[50] = 0;
+
+    // (51):  CH2 + OH <=> H + CH2O
+    fwd_A[51]     = 28990000000000;
+    fwd_beta[51]  = 0.12;
+    fwd_Ea[51]    = -162;
+    prefactor_units[51]  = 1.0000000000000002e-06;
+    activation_units[51] = 0.50321666580471969;
+    phase_units[51]      = 1e-12;
+    is_PD[51] = 0;
+    nTB[51] = 0;
+
+    // (52):  CH2 + OH <=> CH + H2O
+    fwd_A[52]     = 863000;
+    fwd_beta[52]  = 2.02;
+    fwd_Ea[52]    = 6776;
+    prefactor_units[52]  = 1.0000000000000002e-06;
+    activation_units[52] = 0.50321666580471969;
+    phase_units[52]      = 1e-12;
+    is_PD[52] = 0;
+    nTB[52] = 0;
+
+    // (53):  CH2 + HO2 <=> OH + CH2O
+    fwd_A[53]     = 20000000000000;
+    fwd_beta[53]  = 0;
+    fwd_Ea[53]    = 0;
+    prefactor_units[53]  = 1.0000000000000002e-06;
+    activation_units[53] = 0.50321666580471969;
+    phase_units[53]      = 1e-12;
+    is_PD[53] = 0;
+    nTB[53] = 0;
+
+    // (54):  CH2 + H2 <=> H + CH3
+    fwd_A[54]     = 1265000;
+    fwd_beta[54]  = 2;
+    fwd_Ea[54]    = 7230;
+    prefactor_units[54]  = 1.0000000000000002e-06;
+    activation_units[54] = 0.50321666580471969;
+    phase_units[54]      = 1e-12;
+    is_PD[54] = 0;
+    nTB[54] = 0;
+
+    // (55):  CH2 + O2 => OH + H + CO
+    fwd_A[55]     = 2643000000000;
+    fwd_beta[55]  = 0;
+    fwd_Ea[55]    = 1000;
+    prefactor_units[55]  = 1.0000000000000002e-06;
+    activation_units[55] = 0.50321666580471969;
+    phase_units[55]      = 1e-12;
+    is_PD[55] = 0;
+    nTB[55] = 0;
+
+    // (56):  CH2 + O2 => 2 H + CO2
+    fwd_A[56]     = 1844000000000;
+    fwd_beta[56]  = 0;
+    fwd_Ea[56]    = 1000;
+    prefactor_units[56]  = 1.0000000000000002e-06;
+    activation_units[56] = 0.50321666580471969;
+    phase_units[56]      = 1e-12;
+    is_PD[56] = 0;
+    nTB[56] = 0;
+
+    // (57):  CH2 + O2 <=> O + CH2O
+    fwd_A[57]     = 1600000000000;
+    fwd_beta[57]  = 0;
+    fwd_Ea[57]    = 1000;
+    prefactor_units[57]  = 1.0000000000000002e-06;
+    activation_units[57] = 0.50321666580471969;
+    phase_units[57]      = 1e-12;
+    is_PD[57] = 0;
+    nTB[57] = 0;
+
+    // (58):  CH2 + O2 <=> H2 + CO2
+    fwd_A[58]     = 1836000000000;
+    fwd_beta[58]  = 0;
+    fwd_Ea[58]    = 1000;
+    prefactor_units[58]  = 1.0000000000000002e-06;
+    activation_units[58] = 0.50321666580471969;
+    phase_units[58]      = 1e-12;
+    is_PD[58] = 0;
+    nTB[58] = 0;
+
+    // (59):  CH2 + O2 <=> H2O + CO
+    fwd_A[59]     = 520000000000;
+    fwd_beta[59]  = 0;
+    fwd_Ea[59]    = 1000;
+    prefactor_units[59]  = 1.0000000000000002e-06;
+    activation_units[59] = 0.50321666580471969;
+    phase_units[59]      = 1e-12;
+    is_PD[59] = 0;
+    nTB[59] = 0;
+
+    // (60):  CH2(S) + N2 <=> CH2 + N2
+    fwd_A[60]     = 12000000000000;
+    fwd_beta[60]  = 0;
+    fwd_Ea[60]    = 471;
+    prefactor_units[60]  = 1.0000000000000002e-06;
+    activation_units[60] = 0.50321666580471969;
+    phase_units[60]      = 1e-12;
+    is_PD[60] = 0;
+    nTB[60] = 0;
+
+    // (61):  CH2(S) + HE <=> CH2 + HE
+    fwd_A[61]     = 6620000000000;
+    fwd_beta[61]  = 0;
+    fwd_Ea[61]    = 755;
+    prefactor_units[61]  = 1.0000000000000002e-06;
+    activation_units[61] = 0.50321666580471969;
+    phase_units[61]      = 1e-12;
+    is_PD[61] = 0;
+    nTB[61] = 0;
+
+    // (62):  CH2(S) + H <=> CH + H2
+    fwd_A[62]     = 30000000000000;
+    fwd_beta[62]  = 0;
+    fwd_Ea[62]    = 0;
+    prefactor_units[62]  = 1.0000000000000002e-06;
+    activation_units[62] = 0.50321666580471969;
+    phase_units[62]      = 1e-12;
+    is_PD[62] = 0;
+    nTB[62] = 0;
+
+    // (63):  CH2(S) + O => 2 H + CO
+    fwd_A[63]     = 30000000000000;
+    fwd_beta[63]  = 0;
+    fwd_Ea[63]    = 0;
+    prefactor_units[63]  = 1.0000000000000002e-06;
+    activation_units[63] = 0.50321666580471969;
+    phase_units[63]      = 1e-12;
+    is_PD[63] = 0;
+    nTB[63] = 0;
+
+    // (64):  CH2(S) + OH <=> H + CH2O
+    fwd_A[64]     = 30000000000000;
+    fwd_beta[64]  = 0;
+    fwd_Ea[64]    = 0;
+    prefactor_units[64]  = 1.0000000000000002e-06;
+    activation_units[64] = 0.50321666580471969;
+    phase_units[64]      = 1e-12;
+    is_PD[64] = 0;
+    nTB[64] = 0;
+
+    // (65):  CH2(S) + H2 <=> CH3 + H
+    fwd_A[65]     = 82910000000000;
+    fwd_beta[65]  = 0;
+    fwd_Ea[65]    = 0;
+    prefactor_units[65]  = 1.0000000000000002e-06;
+    activation_units[65] = 0.50321666580471969;
+    phase_units[65]      = 1e-12;
+    is_PD[65] = 0;
+    nTB[65] = 0;
+
+    // (66):  CH2(S) + O2 <=> CH2 + O2
+    fwd_A[66]     = 31300000000000;
+    fwd_beta[66]  = 0;
+    fwd_Ea[66]    = 0;
+    prefactor_units[66]  = 1.0000000000000002e-06;
+    activation_units[66] = 0.50321666580471969;
+    phase_units[66]      = 1e-12;
+    is_PD[66] = 0;
+    nTB[66] = 0;
+
+    // (67):  CH2(S) + H2O <=> CH2 + H2O
+    fwd_A[67]     = 15100000000000;
+    fwd_beta[67]  = 0;
+    fwd_Ea[67]    = -431;
+    prefactor_units[67]  = 1.0000000000000002e-06;
+    activation_units[67] = 0.50321666580471969;
+    phase_units[67]      = 1e-12;
+    is_PD[67] = 0;
+    nTB[67] = 0;
+
+    // (68):  CH2(S) + H2O <=> H2 + CH2O
+    fwd_A[68]     = 6.6700000000000005e+21;
+    fwd_beta[68]  = -3.1339999999999999;
+    fwd_Ea[68]    = 3300;
+    prefactor_units[68]  = 1.0000000000000002e-06;
+    activation_units[68] = 0.50321666580471969;
+    phase_units[68]      = 1e-12;
+    is_PD[68] = 0;
+    nTB[68] = 0;
+
+    // (69):  CH2(S) + CO <=> CH2 + CO
+    fwd_A[69]     = 9000000000000;
+    fwd_beta[69]  = 0;
+    fwd_Ea[69]    = 0;
+    prefactor_units[69]  = 1.0000000000000002e-06;
+    activation_units[69] = 0.50321666580471969;
+    phase_units[69]      = 1e-12;
+    is_PD[69] = 0;
+    nTB[69] = 0;
+
+    // (70):  CH2(S) + CO2 <=> CH2 + CO2
+    fwd_A[70]     = 13300000000000;
+    fwd_beta[70]  = 0;
+    fwd_Ea[70]    = 0;
+    prefactor_units[70]  = 1.0000000000000002e-06;
+    activation_units[70] = 0.50321666580471969;
+    phase_units[70]      = 1e-12;
+    is_PD[70] = 0;
+    nTB[70] = 0;
+
+    // (71):  CH2(S) + CO2 <=> CO + CH2O
+    fwd_A[71]     = 6620000000000;
+    fwd_beta[71]  = 0;
+    fwd_Ea[71]    = 0;
+    prefactor_units[71]  = 1.0000000000000002e-06;
+    activation_units[71] = 0.50321666580471969;
+    phase_units[71]      = 1e-12;
+    is_PD[71] = 0;
+    nTB[71] = 0;
+
+    // (72):  CH2O + H <=> HCO + H2
+    fwd_A[72]     = 71490000;
+    fwd_beta[72]  = 1.8999999999999999;
+    fwd_Ea[72]    = 2742;
+    prefactor_units[72]  = 1.0000000000000002e-06;
+    activation_units[72] = 0.50321666580471969;
+    phase_units[72]      = 1e-12;
+    is_PD[72] = 0;
+    nTB[72] = 0;
+
+    // (73):  CH2O + O <=> OH + HCO
+    fwd_A[73]     = 424400000000;
+    fwd_beta[73]  = 0.56999999999999995;
+    fwd_Ea[73]    = 2762;
+    prefactor_units[73]  = 1.0000000000000002e-06;
+    activation_units[73] = 0.50321666580471969;
+    phase_units[73]      = 1e-12;
+    is_PD[73] = 0;
+    nTB[73] = 0;
+
+    // (74):  CH2O + OH <=> HCO + H2O
+    fwd_A[74]     = 83380000;
+    fwd_beta[74]  = 1.6299999999999999;
+    fwd_Ea[74]    = -1055;
+    prefactor_units[74]  = 1.0000000000000002e-06;
+    activation_units[74] = 0.50321666580471969;
+    phase_units[74]      = 1e-12;
+    is_PD[74] = 0;
+    nTB[74] = 0;
+
+    // (75):  CH2O + O2 <=> HO2 + HCO
+    fwd_A[75]     = 329700;
+    fwd_beta[75]  = 2.5;
+    fwd_Ea[75]    = 36460;
+    prefactor_units[75]  = 1.0000000000000002e-06;
+    activation_units[75] = 0.50321666580471969;
+    phase_units[75]      = 1e-12;
+    is_PD[75] = 0;
+    nTB[75] = 0;
+
+    // (76):  CH2O + CH2 <=> CH3 + HCO
+    fwd_A[76]     = 0.073999999999999996;
+    fwd_beta[76]  = 4.21;
+    fwd_Ea[76]    = 1120;
+    prefactor_units[76]  = 1.0000000000000002e-06;
+    activation_units[76] = 0.50321666580471969;
+    phase_units[76]      = 1e-12;
+    is_PD[76] = 0;
+    nTB[76] = 0;
+
+    // (77):  CH2O + CH2(S) <=> CH3 + HCO
+    fwd_A[77]     = 13300000000000;
+    fwd_beta[77]  = 0;
+    fwd_Ea[77]    = -550;
+    prefactor_units[77]  = 1.0000000000000002e-06;
+    activation_units[77] = 0.50321666580471969;
+    phase_units[77]      = 1e-12;
+    is_PD[77] = 0;
+    nTB[77] = 0;
+
+    // (78):  CH3 + O <=> H + CH2O
+    fwd_A[78]     = 57220000000000;
+    fwd_beta[78]  = 0;
+    fwd_Ea[78]    = 0;
+    prefactor_units[78]  = 1.0000000000000002e-06;
+    activation_units[78] = 0.50321666580471969;
+    phase_units[78]      = 1e-12;
+    is_PD[78] = 0;
+    nTB[78] = 0;
+
+    // (79):  CH3 + O => H + H2 + CO
+    fwd_A[79]     = 23840000000000;
+    fwd_beta[79]  = 0;
+    fwd_Ea[79]    = 0;
+    prefactor_units[79]  = 1.0000000000000002e-06;
+    activation_units[79] = 0.50321666580471969;
+    phase_units[79]      = 1e-12;
+    is_PD[79] = 0;
+    nTB[79] = 0;
+
+    // (80):  CH3 + OH <=> CH2 + H2O
+    fwd_A[80]     = 44640;
+    fwd_beta[80]  = 2.5699999999999998;
+    fwd_Ea[80]    = 3998;
+    prefactor_units[80]  = 1.0000000000000002e-06;
+    activation_units[80] = 0.50321666580471969;
+    phase_units[80]      = 1e-12;
+    is_PD[80] = 0;
+    nTB[80] = 0;
+
+    // (81):  CH3 + OH <=> CH2(S) + H2O
+    fwd_A[81]     = 7810000000000000;
+    fwd_beta[81]  = -0.91000000000000003;
+    fwd_Ea[81]    = 546;
+    prefactor_units[81]  = 1.0000000000000002e-06;
+    activation_units[81] = 0.50321666580471969;
+    phase_units[81]      = 1e-12;
+    is_PD[81] = 0;
+    nTB[81] = 0;
+
+    // (82):  CH3 + OH <=> H2 + CH2O
+    fwd_A[82]     = 2735000000;
+    fwd_beta[82]  = 0.73399999999999999;
+    fwd_Ea[82]    = -2177;
+    prefactor_units[82]  = 1.0000000000000002e-06;
+    activation_units[82] = 0.50321666580471969;
+    phase_units[82]      = 1e-12;
+    is_PD[82] = 0;
+    nTB[82] = 0;
+
+    // (83):  CH3 + HO2 <=> O2 + CH4
+    fwd_A[83]     = 126900;
+    fwd_beta[83]  = 2.2280000000000002;
+    fwd_Ea[83]    = -3022;
+    prefactor_units[83]  = 1.0000000000000002e-06;
+    activation_units[83] = 0.50321666580471969;
+    phase_units[83]      = 1e-12;
+    is_PD[83] = 0;
+    nTB[83] = 0;
+
+    // (84):  CH3 + HO2 <=> OH + CH3O
+    fwd_A[84]     = 8821000000000;
+    fwd_beta[84]  = 0;
+    fwd_Ea[84]    = -590;
+    prefactor_units[84]  = 1.0000000000000002e-06;
+    activation_units[84] = 0.50321666580471969;
+    phase_units[84]      = 1e-12;
+    is_PD[84] = 0;
+    nTB[84] = 0;
+
+    // (85):  CH3 + O2 <=> O + CH3O
+    fwd_A[85]     = 8104000000000;
+    fwd_beta[85]  = 0;
+    fwd_Ea[85]    = 28297;
+    prefactor_units[85]  = 1.0000000000000002e-06;
+    activation_units[85] = 0.50321666580471969;
+    phase_units[85]      = 1e-12;
+    is_PD[85] = 0;
+    nTB[85] = 0;
+
+    // (86):  CH3 + O2 <=> OH + CH2O
+    fwd_A[86]     = 99.769999999999996;
+    fwd_beta[86]  = 2.8599999999999999;
+    fwd_Ea[86]    = 9768;
+    prefactor_units[86]  = 1.0000000000000002e-06;
+    activation_units[86] = 0.50321666580471969;
+    phase_units[86]      = 1e-12;
+    is_PD[86] = 0;
+    nTB[86] = 0;
+
+    // (87):  CH3 + HCO <=> CH4 + CO
+    fwd_A[87]     = 5300000000000;
+    fwd_beta[87]  = 0;
+    fwd_Ea[87]    = 0;
+    prefactor_units[87]  = 1.0000000000000002e-06;
+    activation_units[87] = 0.50321666580471969;
+    phase_units[87]      = 1e-12;
+    is_PD[87] = 0;
+    nTB[87] = 0;
+
+    // (88):  CH3 + CH2O <=> HCO + CH4
+    fwd_A[88]     = 32.130000000000003;
+    fwd_beta[88]  = 3.3599999999999999;
+    fwd_Ea[88]    = 4310;
+    prefactor_units[88]  = 1.0000000000000002e-06;
+    activation_units[88] = 0.50321666580471969;
+    phase_units[88]      = 1e-12;
+    is_PD[88] = 0;
+    nTB[88] = 0;
+
+    // (89):  CH3O + H <=> H + CH2OH
+    fwd_A[89]     = 12900000;
+    fwd_beta[89]  = 1.8200000000000001;
+    fwd_Ea[89]    = -703;
+    prefactor_units[89]  = 1.0000000000000002e-06;
+    activation_units[89] = 0.50321666580471969;
+    phase_units[89]      = 1e-12;
+    is_PD[89] = 0;
+    nTB[89] = 0;
+
+    // (90):  CH3O + H <=> H2 + CH2O
+    fwd_A[90]     = 37900000000000;
+    fwd_beta[90]  = 0;
+    fwd_Ea[90]    = 596;
+    prefactor_units[90]  = 1.0000000000000002e-06;
+    activation_units[90] = 0.50321666580471969;
+    phase_units[90]      = 1e-12;
+    is_PD[90] = 0;
+    nTB[90] = 0;
+
+    // (91):  CH3O + H <=> OH + CH3
+    fwd_A[91]     = 388000000000000;
+    fwd_beta[91]  = -0.26400000000000001;
+    fwd_Ea[91]    = -26;
+    prefactor_units[91]  = 1.0000000000000002e-06;
+    activation_units[91] = 0.50321666580471969;
+    phase_units[91]      = 1e-12;
+    is_PD[91] = 0;
+    nTB[91] = 0;
+
+    // (92):  CH3O + H <=> CH2(S) + H2O
+    fwd_A[92]     = 197000000000;
+    fwd_beta[92]  = 0.41399999999999998;
+    fwd_Ea[92]    = 243;
+    prefactor_units[92]  = 1.0000000000000002e-06;
+    activation_units[92] = 0.50321666580471969;
+    phase_units[92]      = 1e-12;
+    is_PD[92] = 0;
+    nTB[92] = 0;
+
+    // (93):  CH3O + O <=> OH + CH2O
+    fwd_A[93]     = 3780000000000;
+    fwd_beta[93]  = 0;
+    fwd_Ea[93]    = 0;
+    prefactor_units[93]  = 1.0000000000000002e-06;
+    activation_units[93] = 0.50321666580471969;
+    phase_units[93]      = 1e-12;
+    is_PD[93] = 0;
+    nTB[93] = 0;
+
+    // (94):  CH3O + OH <=> H2O + CH2O
+    fwd_A[94]     = 18100000000000;
+    fwd_beta[94]  = 0;
+    fwd_Ea[94]    = 0;
+    prefactor_units[94]  = 1.0000000000000002e-06;
+    activation_units[94] = 0.50321666580471969;
+    phase_units[94]      = 1e-12;
+    is_PD[94] = 0;
+    nTB[94] = 0;
+
+    // (95):  CH3O + O2 <=> HO2 + CH2O
+    fwd_A[95]     = 63200000000;
+    fwd_beta[95]  = 0;
+    fwd_Ea[95]    = 2603;
+    prefactor_units[95]  = 1.0000000000000002e-06;
+    activation_units[95] = 0.50321666580471969;
+    phase_units[95]      = 1e-12;
+    is_PD[95] = 0;
+    nTB[95] = 0;
+
+    // (96):  CH3O + CH3 <=> CH4 + CH2O
+    fwd_A[96]     = 24000000000000;
+    fwd_beta[96]  = 0;
+    fwd_Ea[96]    = 0;
+    prefactor_units[96]  = 1.0000000000000002e-06;
+    activation_units[96] = 0.50321666580471969;
+    phase_units[96]      = 1e-12;
+    is_PD[96] = 0;
+    nTB[96] = 0;
+
+    // (97):  CH3O + CO <=> CH3 + CO2
+    fwd_A[97]     = 6000000000000;
+    fwd_beta[97]  = 0;
+    fwd_Ea[97]    = 11000;
+    prefactor_units[97]  = 1.0000000000000002e-06;
+    activation_units[97] = 0.50321666580471969;
+    phase_units[97]      = 1e-12;
+    is_PD[97] = 0;
+    nTB[97] = 0;
 
     // (98):  CH2OH + H <=> H2 + CH2O
     fwd_A[98]     = 24400000000000;
@@ -2180,6 +1575,195 @@ void CKINIT()
     nTB[123] = 0;
 
     SetAllDefaults();
+}
+
+void GET_REACTION_MAP(int *rmap)
+{
+    for (int i=0; i<124; ++i) {
+        rmap[i] = rxn_map[i];
+    }
+}
+
+#include <ReactionData.H>
+double* GetParamPtr(int                reaction_id,
+                    REACTION_PARAMETER param_id,
+                    int                species_id,
+                    int                get_default)
+{
+  double* ret = 0;
+  if (reaction_id<0 || reaction_id>=124) {
+    printf("Bad reaction id = %d",reaction_id);
+    abort();
+  };
+  int mrid = rxn_map[reaction_id];
+
+  if (param_id == THIRD_BODY) {
+    if (species_id<0 || species_id>=21) {
+      printf("GetParamPtr: Bad species id = %d",species_id);
+      abort();
+    }
+    if (get_default) {
+      for (int i=0; i<nTB_DEF[mrid]; ++i) {
+        if (species_id == TBid_DEF[mrid][i]) {
+          ret = &(TB_DEF[mrid][i]);
+        }
+      }
+    }
+    else {
+      for (int i=0; i<nTB[mrid]; ++i) {
+        if (species_id == TBid[mrid][i]) {
+          ret = &(TB[mrid][i]);
+        }
+      }
+    }
+    if (ret == 0) {
+      printf("GetParamPtr: No TB for reaction id = %d",reaction_id);
+      abort();
+    }
+  }
+  else {
+    if (     param_id == FWD_A)     {ret = (get_default ? &(fwd_A_DEF[mrid]) : &(fwd_A[mrid]));}
+      else if (param_id == FWD_BETA)  {ret = (get_default ? &(fwd_beta_DEF[mrid]) : &(fwd_beta[mrid]));}
+      else if (param_id == FWD_EA)    {ret = (get_default ? &(fwd_Ea_DEF[mrid]) : &(fwd_Ea[mrid]));}
+      else if (param_id == LOW_A)     {ret = (get_default ? &(low_A_DEF[mrid]) : &(low_A[mrid]));}
+      else if (param_id == LOW_BETA)  {ret = (get_default ? &(low_beta_DEF[mrid]) : &(low_beta[mrid]));}
+      else if (param_id == LOW_EA)    {ret = (get_default ? &(low_Ea_DEF[mrid]) : &(low_Ea[mrid]));}
+      else if (param_id == REV_A)     {ret = (get_default ? &(rev_A_DEF[mrid]) : &(rev_A[mrid]));}
+      else if (param_id == REV_BETA)  {ret = (get_default ? &(rev_beta_DEF[mrid]) : &(rev_beta[mrid]));}
+      else if (param_id == REV_EA)    {ret = (get_default ? &(rev_Ea_DEF[mrid]) : &(rev_Ea[mrid]));}
+      else if (param_id == TROE_A)    {ret = (get_default ? &(troe_a_DEF[mrid]) : &(troe_a[mrid]));}
+      else if (param_id == TROE_TS)   {ret = (get_default ? &(troe_Ts_DEF[mrid]) : &(troe_Ts[mrid]));}
+      else if (param_id == TROE_TSS)  {ret = (get_default ? &(troe_Tss_DEF[mrid]) : &(troe_Tss[mrid]));}
+      else if (param_id == TROE_TSSS) {ret = (get_default ? &(troe_Tsss_DEF[mrid]) : &(troe_Tsss[mrid]));}
+      else if (param_id == SRI_A)     {ret = (get_default ? &(sri_a_DEF[mrid]) : &(sri_a[mrid]));}
+      else if (param_id == SRI_B)     {ret = (get_default ? &(sri_b_DEF[mrid]) : &(sri_b[mrid]));}
+      else if (param_id == SRI_C)     {ret = (get_default ? &(sri_c_DEF[mrid]) : &(sri_c[mrid]));}
+      else if (param_id == SRI_D)     {ret = (get_default ? &(sri_d_DEF[mrid]) : &(sri_d[mrid]));}
+      else if (param_id == SRI_E)     {ret = (get_default ? &(sri_e_DEF[mrid]) : &(sri_e[mrid]));}
+    else {
+      printf("GetParamPtr: Unknown parameter id");
+      abort();
+    }
+  }
+  return ret;
+}
+
+void ResetAllParametersToDefault()
+{
+    for (int i=0; i<124; i++) {
+        if (nTB[i] != 0) {
+            nTB[i] = 0;
+            free(TB[i]);
+            free(TBid[i]);
+        }
+
+        fwd_A[i]    = fwd_A_DEF[i];
+        fwd_beta[i] = fwd_beta_DEF[i];
+        fwd_Ea[i]   = fwd_Ea_DEF[i];
+
+        low_A[i]    = low_A_DEF[i];
+        low_beta[i] = low_beta_DEF[i];
+        low_Ea[i]   = low_Ea_DEF[i];
+
+        rev_A[i]    = rev_A_DEF[i];
+        rev_beta[i] = rev_beta_DEF[i];
+        rev_Ea[i]   = rev_Ea_DEF[i];
+
+        troe_a[i]    = troe_a_DEF[i];
+        troe_Ts[i]   = troe_Ts_DEF[i];
+        troe_Tss[i]  = troe_Tss_DEF[i];
+        troe_Tsss[i] = troe_Tsss_DEF[i];
+
+        sri_a[i] = sri_a_DEF[i];
+        sri_b[i] = sri_b_DEF[i];
+        sri_c[i] = sri_c_DEF[i];
+        sri_d[i] = sri_d_DEF[i];
+        sri_e[i] = sri_e_DEF[i];
+
+        is_PD[i]    = is_PD_DEF[i];
+        troe_len[i] = troe_len_DEF[i];
+        sri_len[i]  = sri_len_DEF[i];
+
+        activation_units[i] = activation_units_DEF[i];
+        prefactor_units[i]  = prefactor_units_DEF[i];
+        phase_units[i]      = phase_units_DEF[i];
+
+        nTB[i]  = nTB_DEF[i];
+        if (nTB[i] != 0) {
+           TB[i] = (double *) malloc(sizeof(double) * nTB[i]);
+           TBid[i] = (int *) malloc(sizeof(int) * nTB[i]);
+           for (int j=0; j<nTB[i]; j++) {
+             TB[i][j] = TB_DEF[i][j];
+             TBid[i][j] = TBid_DEF[i][j];
+           }
+        }
+    }
+}
+
+void SetAllDefaults()
+{
+    for (int i=0; i<124; i++) {
+        if (nTB_DEF[i] != 0) {
+            nTB_DEF[i] = 0;
+            free(TB_DEF[i]);
+            free(TBid_DEF[i]);
+        }
+
+        fwd_A_DEF[i]    = fwd_A[i];
+        fwd_beta_DEF[i] = fwd_beta[i];
+        fwd_Ea_DEF[i]   = fwd_Ea[i];
+
+        low_A_DEF[i]    = low_A[i];
+        low_beta_DEF[i] = low_beta[i];
+        low_Ea_DEF[i]   = low_Ea[i];
+
+        rev_A_DEF[i]    = rev_A[i];
+        rev_beta_DEF[i] = rev_beta[i];
+        rev_Ea_DEF[i]   = rev_Ea[i];
+
+        troe_a_DEF[i]    = troe_a[i];
+        troe_Ts_DEF[i]   = troe_Ts[i];
+        troe_Tss_DEF[i]  = troe_Tss[i];
+        troe_Tsss_DEF[i] = troe_Tsss[i];
+
+        sri_a_DEF[i] = sri_a[i];
+        sri_b_DEF[i] = sri_b[i];
+        sri_c_DEF[i] = sri_c[i];
+        sri_d_DEF[i] = sri_d[i];
+        sri_e_DEF[i] = sri_e[i];
+
+        is_PD_DEF[i]    = is_PD[i];
+        troe_len_DEF[i] = troe_len[i];
+        sri_len_DEF[i]  = sri_len[i];
+
+        activation_units_DEF[i] = activation_units[i];
+        prefactor_units_DEF[i]  = prefactor_units[i];
+        phase_units_DEF[i]      = phase_units[i];
+
+        nTB_DEF[i]  = nTB[i];
+        if (nTB_DEF[i] != 0) {
+           TB_DEF[i] = (double *) malloc(sizeof(double) * nTB_DEF[i]);
+           TBid_DEF[i] = (int *) malloc(sizeof(int) * nTB_DEF[i]);
+           for (int j=0; j<nTB_DEF[i]; j++) {
+             TB_DEF[i][j] = TB[i][j];
+             TBid_DEF[i][j] = TBid[i][j];
+           }
+        }
+    }
+}
+
+/* Finalizes parameter database */
+void CKFINALIZE()
+{
+  for (int i=0; i<124; ++i) {
+    free(TB[i]); TB[i] = 0; 
+    free(TBid[i]); TBid[i] = 0;
+    nTB[i] = 0;
+
+    free(TB_DEF[i]); TB_DEF[i] = 0; 
+    free(TBid_DEF[i]); TBid_DEF[i] = 0;
+    nTB_DEF[i] = 0;
+  }
 }
 
 
@@ -11043,6 +10627,7 @@ void SPARSITY_PREPROC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)
 
     return;
 }
+
 
 /*compute the reaction Jacobian */
 void aJacobian(double *  J, double *  sc, double T, int consP)
@@ -28646,81 +28231,32 @@ void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentri
 }
 
 
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetLENIMC EGTRANSETLENIMC
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetLENIMC egtransetlenimc
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetLENIMC egtransetlenimc_
-#endif
 void egtransetLENIMC(int* LENIMC ) {
     *LENIMC = 87;}
 
 
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetLENRMC EGTRANSETLENRMC
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetLENRMC egtransetlenrmc
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetLENRMC egtransetlenrmc_
-#endif
 void egtransetLENRMC(int* LENRMC ) {
     *LENRMC = 9198;}
 
 
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetNO EGTRANSETNO
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetNO egtransetno
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetNO egtransetno_
-#endif
 void egtransetNO(int* NO ) {
     *NO = 4;}
 
 
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetKK EGTRANSETKK
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetKK egtransetkk
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetKK egtransetkk_
-#endif
 void egtransetKK(int* KK ) {
     *KK = 21;}
 
 
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetNLITE EGTRANSETNLITE
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetNLITE egtransetnlite
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetNLITE egtransetnlite_
-#endif
 void egtransetNLITE(int* NLITE ) {
     *NLITE = 3;}
 
 
 /*Patm in ergs/cm3 */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetPATM EGTRANSETPATM
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetPATM egtransetpatm
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetPATM egtransetpatm_
-#endif
 void egtransetPATM(double* PATM) {
     *PATM =   0.1013250000000000E+07;}
 
 
 /*the molecular weights in g/mol */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetWT EGTRANSETWT
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetWT egtransetwt
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetWT egtransetwt_
-#endif
 void egtransetWT(double* WT ) {
     WT[0] = 2.80134000E+01;
     WT[1] = 2.01594000E+00;
@@ -28747,211 +28283,162 @@ void egtransetWT(double* WT ) {
 
 
 /*the lennard-jones potential well depth eps/kb in K */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetEPS EGTRANSETEPS
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetEPS egtranseteps
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetEPS egtranseteps_
-#endif
 void egtransetEPS(double* EPS ) {
-    EPS[14] = 1.41400000E+02;
-    EPS[5] = 8.00000000E+01;
-    EPS[15] = 4.98000000E+02;
-    EPS[16] = 4.98000000E+02;
-    EPS[11] = 1.44000000E+02;
-    EPS[13] = 1.44000000E+02;
-    EPS[6] = 5.72400000E+02;
-    EPS[17] = 4.17000000E+02;
-    EPS[7] = 1.07400000E+02;
-    EPS[20] = 1.02000000E+01;
-    EPS[10] = 8.00000000E+01;
-    EPS[12] = 1.44000000E+02;
-    EPS[4] = 1.07400000E+02;
-    EPS[0] = 9.75300000E+01;
-    EPS[9] = 2.44000000E+02;
-    EPS[8] = 9.81000000E+01;
     EPS[2] = 1.45000000E+02;
-    EPS[18] = 4.17000000E+02;
-    EPS[19] = 4.81800000E+02;
+    EPS[15] = 4.98000000E+02;
     EPS[3] = 8.00000000E+01;
+    EPS[9] = 2.44000000E+02;
+    EPS[12] = 1.44000000E+02;
+    EPS[5] = 8.00000000E+01;
+    EPS[10] = 8.00000000E+01;
+    EPS[17] = 4.17000000E+02;
+    EPS[16] = 4.98000000E+02;
+    EPS[20] = 1.02000000E+01;
     EPS[1] = 3.80000000E+01;
+    EPS[6] = 5.72400000E+02;
+    EPS[8] = 9.81000000E+01;
+    EPS[18] = 4.17000000E+02;
+    EPS[7] = 1.07400000E+02;
+    EPS[11] = 1.44000000E+02;
+    EPS[4] = 1.07400000E+02;
+    EPS[14] = 1.41400000E+02;
+    EPS[19] = 4.81800000E+02;
+    EPS[0] = 9.75300000E+01;
+    EPS[13] = 1.44000000E+02;
 }
 
 
 /*the lennard-jones collision diameter in Angstroms */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetSIG EGTRANSETSIG
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetSIG egtransetsig
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetSIG egtransetsig_
-#endif
 void egtransetSIG(double* SIG ) {
-    SIG[14] = 3.74600000E+00;
-    SIG[5] = 2.75000000E+00;
-    SIG[15] = 3.59000000E+00;
-    SIG[16] = 3.59000000E+00;
-    SIG[11] = 3.80000000E+00;
-    SIG[13] = 3.80000000E+00;
-    SIG[6] = 2.60500000E+00;
-    SIG[17] = 3.69000000E+00;
-    SIG[7] = 3.45800000E+00;
-    SIG[20] = 2.57600000E+00;
-    SIG[10] = 2.75000000E+00;
-    SIG[12] = 3.80000000E+00;
-    SIG[4] = 3.45800000E+00;
-    SIG[0] = 3.62100000E+00;
-    SIG[9] = 3.76300000E+00;
-    SIG[8] = 3.65000000E+00;
     SIG[2] = 2.05000000E+00;
-    SIG[18] = 3.69000000E+00;
-    SIG[19] = 3.62600000E+00;
+    SIG[15] = 3.59000000E+00;
     SIG[3] = 2.75000000E+00;
+    SIG[9] = 3.76300000E+00;
+    SIG[12] = 3.80000000E+00;
+    SIG[5] = 2.75000000E+00;
+    SIG[10] = 2.75000000E+00;
+    SIG[17] = 3.69000000E+00;
+    SIG[16] = 3.59000000E+00;
+    SIG[20] = 2.57600000E+00;
     SIG[1] = 2.92000000E+00;
+    SIG[6] = 2.60500000E+00;
+    SIG[8] = 3.65000000E+00;
+    SIG[18] = 3.69000000E+00;
+    SIG[7] = 3.45800000E+00;
+    SIG[11] = 3.80000000E+00;
+    SIG[4] = 3.45800000E+00;
+    SIG[14] = 3.74600000E+00;
+    SIG[19] = 3.62600000E+00;
+    SIG[0] = 3.62100000E+00;
+    SIG[13] = 3.80000000E+00;
 }
 
 
 /*the dipole moment in Debye */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetDIP EGTRANSETDIP
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetDIP egtransetdip
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetDIP egtransetdip_
-#endif
 void egtransetDIP(double* DIP ) {
-    DIP[14] = 0.00000000E+00;
-    DIP[5] = 0.00000000E+00;
-    DIP[15] = 0.00000000E+00;
-    DIP[16] = 0.00000000E+00;
-    DIP[11] = 0.00000000E+00;
-    DIP[13] = 0.00000000E+00;
-    DIP[6] = 1.84400000E+00;
-    DIP[17] = 1.70000000E+00;
-    DIP[7] = 0.00000000E+00;
-    DIP[20] = 0.00000000E+00;
-    DIP[10] = 0.00000000E+00;
-    DIP[12] = 0.00000000E+00;
-    DIP[4] = 0.00000000E+00;
-    DIP[0] = 0.00000000E+00;
-    DIP[9] = 0.00000000E+00;
-    DIP[8] = 0.00000000E+00;
     DIP[2] = 0.00000000E+00;
-    DIP[18] = 1.70000000E+00;
-    DIP[19] = 0.00000000E+00;
+    DIP[15] = 0.00000000E+00;
     DIP[3] = 0.00000000E+00;
+    DIP[9] = 0.00000000E+00;
+    DIP[12] = 0.00000000E+00;
+    DIP[5] = 0.00000000E+00;
+    DIP[10] = 0.00000000E+00;
+    DIP[17] = 1.70000000E+00;
+    DIP[16] = 0.00000000E+00;
+    DIP[20] = 0.00000000E+00;
     DIP[1] = 0.00000000E+00;
+    DIP[6] = 1.84400000E+00;
+    DIP[8] = 0.00000000E+00;
+    DIP[18] = 1.70000000E+00;
+    DIP[7] = 0.00000000E+00;
+    DIP[11] = 0.00000000E+00;
+    DIP[4] = 0.00000000E+00;
+    DIP[14] = 0.00000000E+00;
+    DIP[19] = 0.00000000E+00;
+    DIP[0] = 0.00000000E+00;
+    DIP[13] = 0.00000000E+00;
 }
 
 
 /*the polarizability in cubic Angstroms */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetPOL EGTRANSETPOL
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetPOL egtransetpol
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetPOL egtransetpol_
-#endif
 void egtransetPOL(double* POL ) {
-    POL[14] = 2.60000000E+00;
-    POL[5] = 0.00000000E+00;
-    POL[15] = 0.00000000E+00;
-    POL[16] = 0.00000000E+00;
-    POL[11] = 0.00000000E+00;
-    POL[13] = 0.00000000E+00;
-    POL[6] = 0.00000000E+00;
-    POL[17] = 0.00000000E+00;
-    POL[7] = 0.00000000E+00;
-    POL[20] = 0.00000000E+00;
-    POL[10] = 0.00000000E+00;
-    POL[12] = 0.00000000E+00;
-    POL[4] = 1.60000000E+00;
-    POL[0] = 1.76000000E+00;
-    POL[9] = 2.65000000E+00;
-    POL[8] = 1.95000000E+00;
     POL[2] = 0.00000000E+00;
-    POL[18] = 0.00000000E+00;
-    POL[19] = 0.00000000E+00;
+    POL[15] = 0.00000000E+00;
     POL[3] = 0.00000000E+00;
+    POL[9] = 2.65000000E+00;
+    POL[12] = 0.00000000E+00;
+    POL[5] = 0.00000000E+00;
+    POL[10] = 0.00000000E+00;
+    POL[17] = 0.00000000E+00;
+    POL[16] = 0.00000000E+00;
+    POL[20] = 0.00000000E+00;
     POL[1] = 7.90000000E-01;
+    POL[6] = 0.00000000E+00;
+    POL[8] = 1.95000000E+00;
+    POL[18] = 0.00000000E+00;
+    POL[7] = 0.00000000E+00;
+    POL[11] = 0.00000000E+00;
+    POL[4] = 1.60000000E+00;
+    POL[14] = 2.60000000E+00;
+    POL[19] = 0.00000000E+00;
+    POL[0] = 1.76000000E+00;
+    POL[13] = 0.00000000E+00;
 }
 
 
 /*the rotational relaxation collision number at 298 K */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetZROT EGTRANSETZROT
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetZROT egtransetzrot
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetZROT egtransetzrot_
-#endif
 void egtransetZROT(double* ZROT ) {
-    ZROT[14] = 1.30000000E+01;
-    ZROT[5] = 0.00000000E+00;
-    ZROT[15] = 0.00000000E+00;
-    ZROT[16] = 2.00000000E+00;
-    ZROT[11] = 0.00000000E+00;
-    ZROT[13] = 0.00000000E+00;
-    ZROT[6] = 4.00000000E+00;
-    ZROT[17] = 2.00000000E+00;
-    ZROT[7] = 1.00000000E+00;
-    ZROT[20] = 0.00000000E+00;
-    ZROT[10] = 0.00000000E+00;
-    ZROT[12] = 0.00000000E+00;
-    ZROT[4] = 3.80000000E+00;
-    ZROT[0] = 4.00000000E+00;
-    ZROT[9] = 2.10000000E+00;
-    ZROT[8] = 1.80000000E+00;
     ZROT[2] = 0.00000000E+00;
-    ZROT[18] = 2.00000000E+00;
-    ZROT[19] = 1.00000000E+00;
+    ZROT[15] = 0.00000000E+00;
     ZROT[3] = 0.00000000E+00;
+    ZROT[9] = 2.10000000E+00;
+    ZROT[12] = 0.00000000E+00;
+    ZROT[5] = 0.00000000E+00;
+    ZROT[10] = 0.00000000E+00;
+    ZROT[17] = 2.00000000E+00;
+    ZROT[16] = 2.00000000E+00;
+    ZROT[20] = 0.00000000E+00;
     ZROT[1] = 2.80000000E+02;
+    ZROT[6] = 4.00000000E+00;
+    ZROT[8] = 1.80000000E+00;
+    ZROT[18] = 2.00000000E+00;
+    ZROT[7] = 1.00000000E+00;
+    ZROT[11] = 0.00000000E+00;
+    ZROT[4] = 3.80000000E+00;
+    ZROT[14] = 1.30000000E+01;
+    ZROT[19] = 1.00000000E+00;
+    ZROT[0] = 4.00000000E+00;
+    ZROT[13] = 0.00000000E+00;
 }
 
 
 /*0: monoatomic, 1: linear, 2: nonlinear */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetNLIN EGTRANSETNLIN
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetNLIN egtransetnlin
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetNLIN egtransetnlin_
-#endif
 void egtransetNLIN(int* NLIN) {
-    NLIN[14] = 2;
-    NLIN[5] = 1;
-    NLIN[15] = 2;
-    NLIN[16] = 2;
-    NLIN[11] = 1;
-    NLIN[13] = 1;
-    NLIN[6] = 2;
-    NLIN[17] = 2;
-    NLIN[7] = 2;
-    NLIN[20] = 0;
-    NLIN[10] = 1;
-    NLIN[12] = 1;
-    NLIN[4] = 1;
-    NLIN[0] = 1;
-    NLIN[9] = 1;
-    NLIN[8] = 1;
     NLIN[2] = 0;
-    NLIN[18] = 2;
-    NLIN[19] = 2;
+    NLIN[15] = 2;
     NLIN[3] = 0;
+    NLIN[9] = 1;
+    NLIN[12] = 1;
+    NLIN[5] = 1;
+    NLIN[10] = 1;
+    NLIN[17] = 2;
+    NLIN[16] = 2;
+    NLIN[20] = 0;
     NLIN[1] = 1;
+    NLIN[6] = 2;
+    NLIN[8] = 1;
+    NLIN[18] = 2;
+    NLIN[7] = 2;
+    NLIN[11] = 1;
+    NLIN[4] = 1;
+    NLIN[14] = 2;
+    NLIN[19] = 2;
+    NLIN[0] = 1;
+    NLIN[13] = 1;
 }
 
 
 /*Poly fits for the viscosities, dim NO*KK */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetCOFETA EGTRANSETCOFETA
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetCOFETA egtransetcofeta
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetCOFETA egtransetcofeta_
-#endif
 void egtransetCOFETA(double* COFETA) {
     COFETA[0] = -1.66504204E+01;
     COFETA[1] = 2.39101243E+00;
@@ -29041,13 +28528,6 @@ void egtransetCOFETA(double* COFETA) {
 
 
 /*Poly fits for the conductivities, dim NO*KK */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetCOFLAM EGTRANSETCOFLAM
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetCOFLAM egtransetcoflam
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetCOFLAM egtransetcoflam_
-#endif
 void egtransetCOFLAM(double* COFLAM) {
     COFLAM[0] = 6.92874302E+00;
     COFLAM[1] = -9.07396722E-01;
@@ -29137,13 +28617,6 @@ void egtransetCOFLAM(double* COFLAM) {
 
 
 /*Poly fits for the diffusion coefficients, dim NO*KK*KK */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetCOFD EGTRANSETCOFD
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetCOFD egtransetcofd
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetCOFD egtransetcofd_
-#endif
 void egtransetCOFD(double* COFD) {
     COFD[0] = -1.50401107E+01;
     COFD[1] = 3.25712901E+00;
@@ -30913,13 +30386,6 @@ void egtransetCOFD(double* COFD) {
 
 
 /*List of specs with small weight, dim NLITE */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetKTDIF EGTRANSETKTDIF
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetKTDIF egtransetktdif
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetKTDIF egtransetktdif_
-#endif
 void egtransetKTDIF(int* KTDIF) {
     KTDIF[0] = 2;
     KTDIF[1] = 3;
@@ -30928,13 +30394,6 @@ void egtransetKTDIF(int* KTDIF) {
 
 
 /*Poly fits for thermal diff ratios, dim NO*NLITE*KK */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetCOFTD EGTRANSETCOFTD
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetCOFTD egtransetcoftd
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetCOFTD egtransetcoftd_
-#endif
 void egtransetCOFTD(double* COFTD) {
     COFTD[0] = 4.17774559E-01;
     COFTD[1] = 6.24092547E-05;
@@ -31190,470 +30649,4 @@ void egtransetCOFTD(double* COFTD) {
     COFTD[251] = 0.00000000E+00;
 }
 
-}
-
 /* End of file  */
-
-
-
-
-#if 0
-
-
-
-
-\\
-\\
-\\  This is the mechanism file
-\\
-\\
-ELEMENTS
-O       H       C       N       HE  
-END
-SPECIES
-N2              H2              H               O               O2              
-OH              H2O             HO2             CO              CO2             
-CH              CH2             CH2(S)          CH3             CH4             
-HCO             CH2O            CH2OH           CH3O            CH3OH           
-HE              
-END
-TRANS ALL
-N2                 1    97.530     3.621     0.000     1.760     4.000          
-H2                 1    38.000     2.920     0.000     0.790   280.000          
-H                  0   145.000     2.050     0.000     0.000     0.000          
-O                  0    80.000     2.750     0.000     0.000     0.000          
-O2                 1   107.400     3.458     0.000     1.600     3.800          
-OH                 1    80.000     2.750     0.000     0.000     0.000          
-H2O                2   572.400     2.605     1.844     0.000     4.000          
-HO2                2   107.400     3.458     0.000     0.000     1.000          
-CO                 1    98.100     3.650     0.000     1.950     1.800          
-CO2                1   244.000     3.763     0.000     2.650     2.100          
-CH                 1    80.000     2.750     0.000     0.000     0.000          
-CH2                1   144.000     3.800     0.000     0.000     0.000          
-CH2(S)             1   144.000     3.800     0.000     0.000     0.000          
-CH3                1   144.000     3.800     0.000     0.000     0.000          
-CH4                2   141.400     3.746     0.000     2.600    13.000          
-HCO                2   498.000     3.590     0.000     0.000     0.000          
-CH2O               2   498.000     3.590     0.000     0.000     2.000          
-CH2OH              2   417.000     3.690     1.700     0.000     2.000          
-CH3O               2   417.000     3.690     1.700     0.000     2.000          
-CH3OH              2   481.800     3.626     0.000     0.000     1.000          
-HE                 0    10.200     2.576     0.000     0.000     0.000          
-END
-REACTIONS
-H+O2<=>O+OH                                     9.841E+13    0.000    15310.00
-O+H2<=>H+OH                                     3.848E+12    0.000     7950.00
-  DUPLICATE
-O+H2<=>H+OH                                     6.687E+14    0.000    19180.00
-  DUPLICATE
-OH+H2<=>H+H2O                                   2.256E+08    1.510     3437.00
-2OH<=>O+H2O                                     3.161E+04    2.420    -1928.00
-H2+M<=>2H+M                                     4.580E+19   -1.400   104390.00
-N2/  1.01/H2/  2.55/H2O/ 12.02/CO/  1.95/CO2/  3.83/CH4/  2.00/
-CH2O/  2.50/CH3OH/  3.00/HE/  0.00/
-H2+HE<=>2H+HE                                   5.840E+18   -1.100   104390.00
-2O+M<=>O2+M                                     6.160E+15   -0.500        0.00
-H2/  2.50/H2O/ 12.00/CO/  1.90/CO2/  3.80/CH4/  2.00/CH2O/  2.50/
-CH3OH/  3.00/HE/  0.00/
-2O+HE<=>O2+HE                                   1.890E+13    0.000    -1788.00
-O+H+M<=>OH+M                                    4.710E+18   -1.000        0.00
-N2/  1.32/H2/  2.50/H2O/ 15.80/CO/  2.52/CO2/  5.01/CH4/  2.00/
-CH2O/  2.50/CH3OH/  3.00/HE/  0.75/
-H2O+M<=>H+OH+M                                  6.060E+27   -3.322   120800.00
-N2/  2.46/H2/  3.77/O2/  1.50/H2O/  0.00/CO/  2.40/CO2/  4.67/
-CH4/  2.00/CH2O/  2.50/CH3OH/  3.00/HE/  1.33/
-2H2O<=>H+OH+H2O                                 7.528E+25   -2.440   120200.00
-H+O2(+M)<=>HO2(+M)                              4.565E+12    0.440        0.00
-    LOW  / 0.63700E+21 -0.17200E+01  0.52500E+03 /
-    TROE / 0.50000E+00  0.30000E+02  0.90000E+05  0.90000E+05 /
-N2/  0.96/H2/  1.87/O2/  0.75/H2O/ 15.81/CO/  1.90/CO2/  3.45/
-CH4/  2.00/CH2O/  2.50/CH3OH/  3.00/HE/  0.71/
-HO2+H<=>H2+O2                                   2.945E+06    2.087    -1455.00
-HO2+H<=>2OH                                     5.888E+13    0.000      300.00
-HO2+H<=>O+H2O                                   1.632E+12    0.000        0.00
-HO2+O<=>OH+O2                                   1.609E+13    0.000     -445.00
-HO2+OH<=>H2O+O2                                 7.347E+12    0.000    -1093.00
-  DUPLICATE
-HO2+OH<=>H2O+O2                                 4.534E+14    0.000    10930.00
-  DUPLICATE
-CO+O(+M)<=>CO2(+M)                              1.880E+11    0.000     2430.00
-    LOW  / 0.14000E+22 -0.21000E+01  0.55000E+04 /
-H2/  2.50/H2O/ 12.00/CO/  1.90/CO2/  3.80/CH4/  2.00/CH2O/  2.50/
-CH3OH/  3.00/
-CO+O2<=>O+CO2                                   1.533E+12    0.000    47700.00
-CO+OH<=>H+CO2                                   6.187E+04    2.053     -356.00
-  DUPLICATE
-CO+OH<=>H+CO2                                   5.017E+12   -0.664      332.00
-  DUPLICATE
-CO+HO2<=>OH+CO2                                 1.570E+05    2.180    17944.00
-HCO+M<=>H+CO+M                                  4.800E+17   -1.200    17734.00
-N2/  1.31/H2/  1.31/O2/  1.32/H2O/ 15.31/CO/  2.04/CO2/  2.00/
-CH4/  2.60/CH2O/  3.29/CH3OH/  3.00/HE/  1.31/
-HCO+H<=>H2+CO                                   8.482E+13    0.000        0.00
-HCO+O<=>OH+CO                                   3.010E+13    0.000        0.00
-HCO+O<=>H+CO2                                   3.001E+13    0.000        0.00
-HCO+OH<=>H2O+CO                                 1.199E+14    0.000        0.00
-HCO+O2<=>HO2+CO                                 7.562E+10    0.521     -521.00
-CH+O<=>H+CO                                     5.700E+13    0.000        0.00
-CH+OH<=>H+HCO                                   3.000E+13    0.000        0.00
-CH+H2<=>H+CH2                                   1.612E+14    0.000     3320.00
-CH+H2(+M)<=>CH3(+M)                             5.130E+13    0.150        0.00
-    LOW  / 0.24300E+23 -0.16000E+01  0.00000E+00 /
-    TROE / 0.51400E+00  0.15200E+03  0.22850E+05  0.10350E+05 /
-H2O/  6.00/CO/  1.50/CO2/  2.00/CH4/  2.00/CH2O/  2.50/CH3OH/  3.00/
-HE/  0.70/
-CH+H2O<=>H+CH2O                                 3.430E+12    0.000     -884.00
-CH+O2<=>O+HCO                                   1.840E+08    1.430     1200.00
-CH+O2<=>CO2+H                                   2.781E+08    1.430     1200.00
-CH+O2<=>CO+OH                                   1.840E+08    1.430     1200.00
-CH+O2=>O+H+CO                                   2.789E+08    1.430     1200.00
-CH+CO2<=>HCO+CO                                 6.380E+07    1.510     -715.00
-CH2+H(+M)<=>CH3(+M)                             2.130E+13    0.320        0.00
-    LOW  / 0.13900E+35 -0.50400E+01  0.74000E+04 /
-    TROE / 0.40500E+00  0.25800E+03  0.28110E+04  0.99080E+04 /
-H2O/  6.00/CO/  1.50/CO2/  2.00/CH4/  2.00/CH2O/  2.50/CH3OH/  3.00/
-HE/  0.70/
-CH2+O=>2H+CO                                    8.000E+13    0.000        0.00
-CH2+OH<=>H+CH2O                                 2.899E+13    0.120     -162.00
-CH2+OH<=>CH+H2O                                 8.630E+05    2.020     6776.00
-CH2+HO2<=>OH+CH2O                               2.000E+13    0.000        0.00
-CH2+H2<=>H+CH3                                  1.265E+06    2.000     7230.00
-CH2+O2=>OH+H+CO                                 2.643E+12    0.000     1000.00
-CH2+O2=>2H+CO2                                  1.844E+12    0.000     1000.00
-CH2+O2<=>O+CH2O                                 1.600E+12    0.000     1000.00
-CH2+O2<=>H2+CO2                                 1.836E+12    0.000     1000.00
-CH2+O2<=>H2O+CO                                 5.200E+11    0.000     1000.00
-CH2(S)+N2<=>CH2+N2                              1.200E+13    0.000      471.00
-CH2(S)+HE<=>CH2+HE                              6.620E+12    0.000      755.00
-CH2(S)+H<=>CH+H2                                3.000E+13    0.000        0.00
-CH2(S)+O=>2H+CO                                 3.000E+13    0.000        0.00
-CH2(S)+OH<=>H+CH2O                              3.000E+13    0.000        0.00
-CH2(S)+H2<=>CH3+H                               8.291E+13    0.000        0.00
-CH2(S)+O2<=>CH2+O2                              3.130E+13    0.000        0.00
-CH2(S)+H2O(+M)<=>CH3OH(+M)                      2.940E+12    0.053    -1897.00
-    LOW  / 0.16800E+42 -0.71920E+01  0.57770E+04 /
-    TROE / 0.99200E+00  0.94300E+03  0.47310E+05  0.47110E+05 /
-H2O/  6.00/CO/  1.50/CO2/  2.00/CH4/  2.00/CH2O/  2.50/CH3OH/  3.00/
-CH2(S)+H2O<=>CH2+H2O                            1.510E+13    0.000     -431.00
-CH2(S)+H2O<=>H2+CH2O                            6.670E+21   -3.134     3300.00
-CH2(S)+CO<=>CH2+CO                              9.000E+12    0.000        0.00
-CH2(S)+CO2<=>CH2+CO2                            1.330E+13    0.000        0.00
-CH2(S)+CO2<=>CO+CH2O                            6.620E+12    0.000        0.00
-HCO+H(+M)<=>CH2O(+M)                            1.913E+14   -0.033     -142.00
-    LOW  / 0.41900E+35 -0.55330E+01  0.61280E+04 /
-    TROE / 0.78200E+00  0.27100E+03  0.27550E+04  0.65700E+04 /
-H2O/  6.00/CO/  1.50/CO2/  2.00/CH4/  2.00/CH2O/  2.84/CH3OH/  3.00/
-HE/  0.70/
-CH2O(+M)<=>H2+CO(+M)                            3.700E+13    0.000    71976.00
-    LOW  / 0.44000E+39 -0.61000E+01  0.94000E+05 /
-    TROE / 0.93200E+00  0.19700E+03  0.15400E+04  0.10300E+05 /
-H2O/  6.00/CO/  1.50/CO2/  2.00/CH4/  2.00/CH2O/  2.50/CH3OH/  3.00/
-HE/  0.70/
-CH2O+H<=>HCO+H2                                 7.149E+07    1.900     2742.00
-CH2O+O<=>OH+HCO                                 4.244E+11    0.570     2762.00
-CH2O+OH<=>HCO+H2O                               8.338E+07    1.630    -1055.00
-CH2O+O2<=>HO2+HCO                               3.297E+05    2.500    36460.00
-CH2O+CH2<=>CH3+HCO                              7.400E-02    4.210     1120.00
-CH2O+CH2(S)<=>CH3+HCO                           1.330E+13    0.000     -550.00
-CH3+H(+M)<=>CH4(+M)                             1.801E+14    0.000        0.00
-    LOW  / 0.79300E+25 -0.21700E+01  0.00000E+00 /
-    TROE / 0.12400E+00  0.18010E+04  0.33100E+02  0.90000E+05 /
-N2/  0.59/O2/  0.59/H2O/  3.42/CO/  0.89/CO2/  2.00/CH4/  2.00/
-CH2O/  2.50/CH3OH/  3.00/HE/  0.42/
-CH3+O<=>H+CH2O                                  5.722E+13    0.000        0.00
-CH3+O=>H+H2+CO                                  2.384E+13    0.000        0.00
-CH3+OH(+M)<=>CH3OH(+M)                          6.210E+13   -0.018      -33.00
-    LOW  / 0.72400E+37 -0.60000E+01  0.32260E+04 /
-    TROE / 0.18550E+00  0.15600E+03  0.16750E+04  0.45300E+04 /
-H2O/  6.00/CO/  1.50/CO2/  2.00/CH4/  2.00/CH2O/  2.50/CH3OH/  3.00/
-CH3+OH<=>CH2+H2O                                4.464E+04    2.570     3998.00
-CH3+OH<=>CH2(S)+H2O                             7.810E+15   -0.910      546.00
-CH3+OH<=>H2+CH2O                                2.735E+09    0.734    -2177.00
-CH3+HO2<=>O2+CH4                                1.269E+05    2.228    -3022.00
-CH3+HO2<=>OH+CH3O                               8.821E+12    0.000     -590.00
-CH3+O2<=>O+CH3O                                 8.104E+12    0.000    28297.00
-CH3+O2<=>OH+CH2O                                9.977E+01    2.860     9768.00
-CH3+HCO<=>CH4+CO                                5.300E+12    0.000        0.00
-CH3+CH2O<=>HCO+CH4                              3.213E+01    3.360     4310.00
-CH3O(+M)<=>H+CH2O(+M)                           1.130E+10    1.210    24075.00
-    LOW  / 0.60200E+17 -0.54700E+00  0.18024E+05 /
-    TROE / 0.34100E+00  0.28000E+02  0.10000E+04  0.23390E+04 /
-H2/  2.00/H2O/  6.00/CO/  1.50/CO2/  2.00/CH4/  2.00/CH2O/  2.50/
-CH3OH/  3.00/HE/  0.67/
-CH3O+H(+M)<=>CH3OH(+M)                          2.440E+11    0.760        0.00
-    LOW  / 0.67000E+41 -0.73800E+01  0.91770E+04 /
-    TROE / 0.68400E+00  0.37050E+05  0.41490E+05  0.39800E+04 /
-H2O/  6.00/CO/  1.50/CO2/  2.00/CH4/  2.00/CH2O/  2.50/CH3OH/  3.00/
-CH3O+H<=>H+CH2OH                                1.290E+07    1.820     -703.00
-CH3O+H<=>H2+CH2O                                3.790E+13    0.000      596.00
-CH3O+H<=>OH+CH3                                 3.880E+14   -0.264      -26.00
-CH3O+H<=>CH2(S)+H2O                             1.970E+11    0.414      243.00
-CH3O+O<=>OH+CH2O                                3.780E+12    0.000        0.00
-CH3O+OH<=>H2O+CH2O                              1.810E+13    0.000        0.00
-CH3O+O2<=>HO2+CH2O                              6.320E+10    0.000     2603.00
-CH3O+CH3<=>CH4+CH2O                             2.400E+13    0.000        0.00
-CH3O+CO<=>CH3+CO2                               6.000E+12    0.000    11000.00
-CH2OH(+M)<=>H+CH2O(+M)                          7.370E+10    0.811    39580.00
-    LOW  / 0.30100E+14  0.18400E+00  0.17230E+05 /
-    TROE / 0.10000E-02  0.50000E+02  0.60000E+03  0.27800E+04 /
-H2/  2.00/H2O/  5.97/CO/  1.50/CO2/  2.00/CH4/  2.00/CH2O/  2.50/
-CH3OH/  3.00/HE/  0.67/
-CH2OH+H(+M)<=>CH3OH(+M)                         6.670E+10    0.960        0.00
-    LOW  / 0.13400E+42 -0.73800E+01  0.91770E+04 /
-    TROE / 0.68400E+00  0.37050E+05  0.41490E+05  0.39800E+04 /
-H2O/  6.00/CO/  1.50/CO2/  2.00/CH4/  2.00/CH2O/  2.50/CH3OH/  3.00/
-HE/  0.70/
-CH2OH+H<=>H2+CH2O                               2.440E+13    0.000        0.00
-CH2OH+H<=>OH+CH3                                2.006E+13    0.198     -241.00
-CH2OH+H<=>CH2(S)+H2O                            1.280E+11    0.516      215.00
-CH2OH+O<=>OH+CH2O                               9.030E+13    0.000        0.00
-CH2OH+OH<=>H2O+CH2O                             2.410E+13    0.000        0.00
-CH2OH+O2<=>HO2+CH2O                             7.298E+13    0.000     3736.00
-CH2OH+CH3<=>CH4+CH2O                            2.400E+13    0.000        0.00
-CH4+H<=>CH3+H2                                  4.781E+05    2.500     9588.00
-CH4+O<=>OH+CH3                                  6.786E+08    1.560     8485.00
-CH4+OH<=>CH3+H2O                                9.839E+05    2.182     2446.00
-CH4+CH2<=>2CH3                                  2.483E+06    2.000     8270.00
-CH4+CH2(S)<=>2CH3                               1.867E+13    0.000     -497.00
-CH3OH+H<=>CH2OH+H2                              1.550E+06    2.351     5912.00
-CH3OH+H<=>CH3O+H2                               5.490E+06    2.147    11134.00
-CH3OH+O<=>OH+CH2OH                              2.470E+13    0.000     5306.00
-CH3OH+O<=>OH+CH3O                               8.200E+12    0.000     9040.00
-CH3OH+OH<=>CH2OH+H2O                            1.420E+05    2.370     -965.20
-CH3OH+OH<=>CH3O+H2O                             1.600E+04    2.700       53.30
-CH3OH+O2<=>CH2OH+HO2                            3.580E+05    2.270    42760.00
-CH3OH+CH<=>CH3+CH2O                             9.040E+18   -1.930        0.00
-CH3OH+CH2<=>CH3+CH2OH                           3.200E+01    3.200     7175.00
-CH3OH+CH2<=>CH3+CH3O                            1.450E+01    3.100     6940.00
-CH3OH+CH2(S)<=>CH3+CH3O                         7.000E+12    0.000     -550.00
-CH3OH+CH2(S)<=>CH3+CH2OH                        2.000E+13    0.000     -550.00
-CH3OH+CH3<=>CH2OH+CH4                           6.650E+02    3.030     8720.00
-CH3OH+CH3<=>CH3O+CH4                            2.150E+04    2.270     8710.00
-END
-
-\\
-\\
-\\  This is the therm file
-\\
-\\
-THERMO
-   298.000  1000.000  5000.000
-N2                G 8/02N   2    0    0    0G   200.000  6000.000 1000.        1
- 2.95257637E+00 1.39690040E-03-4.92631603E-07 7.86010195E-11-4.60755204E-15    2
--9.23948688E+02 5.87188762E+00 3.53100528E+00-1.23660988E-04-5.02999433E-07    3
- 2.43530612E-09-1.40881235E-12-1.04697628E+03 2.96747038E+00 0.00000000E+00    4
-AR                g 5/97AR  1    0    0    0G   200.000  6000.000 1000.        1
- 2.50000000E+00 0.00000000E+00 0.00000000E+00 0.00000000E+00 0.00000000E+00    2
--7.45375000E+02 4.37967491E+00 2.50000000E+00 0.00000000E+00 0.00000000E+00    3
- 0.00000000E+00 0.00000000E+00-7.45375000E+02 4.37967491E+00 0.00000000E+00    4
-HE                g 5/97HE  1    0    0    0G   200.000  6000.000 1000.        1
- 2.50000000E+00 0.00000000E+00 0.00000000E+00 0.00000000E+00 0.00000000E+00    2
--7.45375000E+02 9.28723974E-01 2.50000000E+00 0.00000000E+00 0.00000000E+00    3
- 0.00000000E+00 0.00000000E+00-7.45375000E+02 9.28723974E-01 0.00000000E+00    4
-C(S)              T 3/10C   1    0    0    0S   200.000  6000.000 1000.        1
- 1.59828070E+00 1.43065097E-03-5.09435105E-07 8.64401302E-11-5.34349530E-15    2
--7.45940284E+02-9.30332005E+00-3.03744539E-01 4.36036227E-03 1.98268825E-06    3
--6.43472598E-09 2.99601320E-12-1.09458288E+02 1.08301475E+00 0.00000000E+00    4
-O2                RUS 89O   2    0    0    0G   200.000  6000.000 1000.        1
- 3.66096065E+00 6.56365811E-04-1.41149627E-07 2.05797935E-11-1.29913436E-15    2
--1.21597718E+03 3.41536279E+00 3.78245636E+00-2.99673416E-03 9.84730201E-06    3
--9.68129509E-09 3.24372837E-12-1.06394356E+03 3.65767573E+00 0.00000000E+00    4
-H2                tpis78H   2    0    0    0G   200.000  6000.000 1000.        1
- 2.93286575E+00 8.26608026E-04-1.46402364E-07 1.54100414E-11-6.88804800E-16    2
--8.13065581E+02-1.02432865E+00 2.34433112E+00 7.98052075E-03-1.94781510E-05    3
- 2.01572094E-08-7.37611761E-12-9.17935173E+02 6.83010238E-01 0.00000000E+00    4
-H                 L 6/94H   1    0    0    0G   200.000  6000.000 1000.        1
- 0.25000000E+01 0.00000000E+00 0.00000000E+00 0.00000000E+00 0.00000000E+00    2
- 0.25473660E+05-0.44668285E+00 0.25000000E+01 0.00000000E+00 0.00000000E+00    3
- 0.00000000E+00 0.00000000E+00 0.25473660E+05-0.44668285E+00 0.000008          4
-O                 L 1/90O   1    0    0    0G   200.000  6000.000 1000.        1
- 2.54363697E+00-2.73162486E-05-4.19029520E-09 4.95481845E-12-4.79553694E-16    2
- 2.92260120E+04 4.92229457E+00 3.16826710E+00-3.27931884E-03 6.64306396E-06    3
--6.12806624E-09 2.11265971E-12 2.91222592E+04 2.05193346E+00 0.00203           4
-OH                IU3/03O   1H   1    0    0G   200.000  6000.000 1000.        1
- 2.83853033E+00 1.10741289E-03-2.94000209E-07 4.20698729E-11-2.42289890E-15    2
- 3.69780808E+03 5.84494652E+00 3.99198424E+00-2.40106655E-03 4.61664033E-06    3
--3.87916306E-09 1.36319502E-12 3.36889836E+03-1.03998477E-01 0.0259            4
-OH*               ATcT AO   1H   1    0    0G   200.000  6000.000 1000.        1
- 2.75582920E+00 1.39848756E-03-4.19428493E-07 6.33453282E-11-3.56042218E-15    2
- 5.09751756E+04 5.62581429E+00 3.46084428E+00 5.01872172E-04-2.00254474E-06    3
- 3.18901984E-09-1.35451838E-12 5.07349466E+04 1.73976415E+00 5.17770741E+04    4
-H2O               L 5/89H   2O   1    0    0G   200.000  6000.000 1000.        1
- 0.26770389E+01 0.29731816E-02-0.77376889E-06 0.94433514E-10-0.42689991E-14    2
--0.29885894E+05 0.68825500E+01 0.41986352E+01-0.20364017E-02 0.65203416E-05    3
--0.54879269E-08 0.17719680E-11-0.30293726E+05-0.84900901E+00 0.0259            4
-HO2               T 1/09H   1O   2    0    0G   200.000  5000.000 1000.        1
- 4.17228741E+00 1.88117627E-03-3.46277286E-07 1.94657549E-11 1.76256905E-16    2
- 3.10206839E+01 2.95767672E+00 4.30179807E+00-4.74912097E-03 2.11582905E-05    3
--2.42763914E-08 9.29225225E-12 2.64018485E+02 3.71666220E+00 0.157             4
-H2O2              T 8/03H   2O   2    0    0G   200.000  6000.000 1000.        1
- 4.57977305E+00 4.05326003E-03-1.29844730E-06 1.98211400E-10-1.13968792E-14    2
--1.80071775E+04 6.64970694E-01 4.31515149E+00-8.47390622E-04 1.76404323E-05    3
--2.26762944E-08 9.08950158E-12-1.77067437E+04 3.27373319E+00 0.0622            4
-C                 L 7/88C   1    0    0    0G   200.000  6000.000 1000.        1
- 0.26055830E+01-0.19593434E-03 0.10673722E-06-0.16423940E-10 0.81870580E-15    2
- 0.85411742E+05 0.41923868E+01 0.25542395E+01-0.32153772E-03 0.73379223E-06    3
--0.73223487E-09 0.26652144E-12 0.85442681E+05 0.45313085E+01 0.0555            4
-CH                IU3/03C   1H   1    0    0G   200.000  6000.000 1000.        1
- 0.25209369E+01 0.17653639E-02-0.46147660E-06 0.59289675E-10-0.33474501E-14    2
- 0.70946769E+05 0.74051829E+01 0.34897583E+01 0.32432160E-03-0.16899751E-05    3
- 0.31628420E-08-0.14061803E-11 0.70612646E+05 0.20842841E+01 0.124             4
-CH*               EG4/09C   1H   1    0    0G   200.000  6000.000 1000.        1
- 2.78220752E+00 1.47246754E-03-4.63436227E-07 7.32736021E-11-4.19705404E-15    2
- 1.04547060E+05 5.17421018E+00 3.47250101E+00 4.26443626E-04-1.95181794E-06    3
- 3.51755043E-09-1.60436174E-12 1.04334869E+05 1.44799533E+00 1.05378099E+05    4
-CH2               IU3/03C   1H   2    0    0G   200.000  6000.000  1000.       1
- 3.14631886E+00 3.03671259E-03-9.96474439E-07 1.50483580E-10-8.57335515E-15    2
- 4.60412605E+04 4.72341711E+00 3.71757846E+00 1.27391260E-03 2.17347251E-06    3
--3.48858500E-09 1.65208866E-12 4.58723866E+04 1.75297945E+00 0.133             4
-CH2*              IU3/03C   1H   2    0    0G   200.000  6000.000 1000.        1
- 3.13501686E+00 2.89593926E-03-8.16668090E-07 1.13572697E-10-6.36262835E-15    2
- 5.05040504E+04 4.06030621E+00 4.19331325E+00-2.33105184E-03 8.15676451E-06    3
--6.62985981E-09 1.93233199E-12 5.03662246E+04-7.46734310E-01 5.15724919E+04    4
-CH2(S)            IU3/03C   1H   2    0    0G   200.000  6000.000 1000.        1
- 3.13501686E+00 2.89593926E-03-8.16668090E-07 1.13572697E-10-6.36262835E-15    2
- 5.05040504E+04 4.06030621E+00 4.19331325E+00-2.33105184E-03 8.15676451E-06    3
--6.62985981E-09 1.93233199E-12 5.03662246E+04-7.46734310E-01 5.15724919E+04    4
-CH3               IU0702C   1H   3    0    0G   200.000  6000.000  1000.       1
- 0.29781206E+01 0.57978520E-02-0.19755800E-05 0.30729790E-09-0.17917416E-13    2
- 0.16509513E+05 0.47224799E+01 0.36571797E+01 0.21265979E-02 0.54583883E-05    3
--0.66181003E-08 0.24657074E-11 0.16422716E+05 0.16735354E+01 0.079             4
-CH4               g 8/99C   1H   4    0    0G   200.000  6000.000  1000.       1
- 1.65326226E+00 1.00263099E-02-3.31661238E-06 5.36483138E-10-3.14696758E-14    2
--1.00095936E+04 9.90506283E+00 5.14911468E+00-1.36622009E-02 4.91453921E-05    3
--4.84246767E-08 1.66603441E-11-1.02465983E+04-4.63848842E+00 0.0554            4
-CO                RUS 79C   1O   1    0    0G   200.000  6000.000  1000.       1
- 0.30484859E+01 0.13517281E-02-0.48579405E-06 0.78853644E-10-0.46980746E-14    2
--0.14266117E+05 0.60170977E+01 0.35795335E+01-0.61035369E-03 0.10168143E-05    3
- 0.90700586E-09-0.90442449E-12-0.14344086E+05 0.35084093E+01 0.0251            4
-CO2               L 7/88C   1O   2    0    0G   200.000  6000.000  1000.       1
- 0.46365111E+01 0.27414569E-02-0.99589759E-06 0.16038666E-09-0.91619857E-14    2
--0.49024904E+05-0.19348955E+01 0.23568130E+01 0.89841299E-02-0.71220632E-05    3
- 0.24573008E-08-0.14288548E-12-0.48371971E+05 0.99009035E+01 0.014             4
-HCO               T 5/03C   1H   1O   1    0G   200.000  6000.000  1000.       1
- 3.92001542E+00 2.52279324E-03-6.71004164E-07 1.05615948E-10-7.43798261E-15    2
- 3.65342928E+03 3.58077056E+00 4.23754610E+00-3.32075257E-03 1.40030264E-05    3
--1.34239995E-08 4.37416208E-12 3.87241185E+03 3.30834869E+00 0.101             4
-HOCO              ATcT/AC   1O   2H   1    0G   200.000  6000.000              1
- 5.39206152E+00 4.11221455E-03-1.48194900E-06 2.39875460E-10-1.43903104E-14    2
--2.38606717E+04-2.23529091E+00 2.92207919E+00 7.62453859E-03 3.29884437E-06    3
--1.07135205E-08 5.11587057E-12-2.30281524E+04 1.12925886E+01-2.18076591E+04    4
-CH2O              g 8/88H   2C   1O   1    0G   200.000  6000.000  1000.       1
- 3.16952665E+00 6.19320560E-03-2.25056366E-06 3.65975660E-10-2.20149458E-14    2
--1.45486831E+04 6.04207898E+00 4.79372312E+00-9.90833322E-03 3.73219990E-05    3
--3.79285237E-08 1.31772641E-11-1.43791953E+04 6.02798058E-01 0.101             4
-CH2OH             IU2/03C   1H   3O   1    0G   200.000  6000.000 1000.        1
- 5.09314370E+00 5.94761260E-03-2.06497460E-06 3.23008173E-10-1.88125902E-14    2
--4.03409640E+03-1.84691493E+00 4.47834367E+00-1.35070310E-03 2.78484980E-05    3
--3.64869060E-08 1.47907450E-11-3.50072890E+03 3.30913500E+00 0.422             4
-CH3O              IU1/03C   1H   3O   1    0G   200.000  6000.000 1000.        1
- 4.75779238E+00 7.44142474E-03-2.69705176E-06 4.38090504E-10-2.63537098E-14    2
- 3.78111940E+02-1.96680028E+00 3.71180502E+00-2.80463306E-03 3.76550971E-05    3
--4.73072089E-08 1.86588420E-11 1.29569760E+03 6.57240864E+00 0.35              4
-CH3OH             T06/02C   1H   4O   1    0G   200.000  6000.000  1000.       1
- 3.52726795E+00 1.03178783E-02-3.62892944E-06 5.77448016E-10-3.42182632E-14    2
--2.60028834E+04 5.16758693E+00 5.65851051E+00-1.62983419E-02 6.91938156E-05    3
--7.58372926E-08 2.80427550E-11-2.56119736E+04-8.97330508E-01 0.169             4
-CH3O2             T04/10C   1H   3O   2    0G   200.000  6000.000 1000.        1
- 5.55530486E+00 9.12236137E-03-3.23851661E-06 5.18713798E-10-3.08834151E-14    2
--1.03569402E+03-3.99158547E+00 4.97169544E+00-5.29356557E-03 4.77334149E-05    3
--5.77065617E-08 2.22219969E-11-1.29022161E+02 2.81501182E+00 1.43618036E+03    4
-CH3O2H            A 7/05C   1H   4O   2    0G   200.000  6000.000 1000.        1
- 7.76538058E+00 8.61499712E-03-2.98006935E-06 4.68638071E-10-2.75339255E-14    2
--1.82979984E+04-1.43992663E+01 2.90540897E+00 1.74994735E-02 5.28243630E-06    3
--2.52827275E-08 1.34368212E-11-1.68894632E+04 1.13741987E+01-1.52423685E+04    4
-C2H               T 5/10C   2H   1    0    0G   200.000  6000.000  1000.       1
- 3.66270248E+00 3.82492252E-03-1.36632500E-06 2.13455040E-10-1.23216848E-14    2
- 6.71683790E+04 3.92205792E+00 2.89867676E+00 1.32988489E-02-2.80733327E-05    3
- 2.89484755E-08-1.07502351E-11 6.70616050E+04 6.18547632E+00 0.163             4
-C2H2              g 1/91C   2H   2    0    0G   200.000  6000.000  1000.       1
- 4.65878489E+00 4.88396667E-03-1.60828888E-06 2.46974544E-10-1.38605959E-14    2
- 2.57594042E+04-3.99838194E+00 8.08679682E-01 2.33615762E-02-3.55172234E-05    3
- 2.80152958E-08-8.50075165E-12 2.64289808E+04 1.39396761E+01 0.142             4
-H2CC              L12/89H   2C   2    0    0G   200.000  6000.000  1000.000    1
- 4.27807305E+00 4.75622626E-03-1.63007378E-06 2.54622680E-10-1.48860086E-14    2
- 4.80140478E+04 6.39978600E-01 3.28154941E+00 6.97642650E-03-2.38527914E-06    3
--1.21077631E-09 9.82041734E-13 4.83191706E+04 5.92035686E+00 0.61              4
-C2H3              ATcT/AC   2H   3    0    0G   200.000  6000.000  1000.       1
- 4.15026763E+00 7.54021341E-03-2.62997847E-06 4.15974048E-10-2.45407509E-14    2
- 3.38566380E+04 1.72812235E+00 3.36377642E+00 2.65765722E-04 2.79620704E-05    3
--3.72986942E-08 1.51590176E-11 3.44749589E+04 7.91510092E+00 0.454             4
-C2H4              g 1/00C   2H   4    0    0G   200.000  6000.000  1000.       1
- 3.99182724E+00 1.04833908E-02-3.71721342E-06 5.94628366E-10-3.53630386E-14    2
- 4.26865851E+03-2.69081762E-01 3.95920063E+00-7.57051373E-03 5.70989993E-05    3
--6.91588352E-08 2.69884190E-11 5.08977598E+03 4.09730213E+00 0.142             4
-C2H5              IU1/07C   2H   5    0    0G   200.000  6000.000  1000.       1
- 4.32195633E+00 1.23930542E-02-4.39680960E-06 7.03519917E-10-4.18435239E-14    2
- 1.21759475E+04 1.71103809E-01 4.24185905E+00-3.56905235E-03 4.82667202E-05    3
--5.85401009E-08 2.25804514E-11 1.29690344E+04 4.44703782E+00 1.43965189E+04    4
-C2H6              g 8/88C   2H   6    0    0G   200.000  6000.000  1000.       1
- 4.04666411E+00 1.53538802E-02-5.47039485E-06 8.77826544E-10-5.23167531E-14    2
--1.24473499E+04-9.68698313E-01 4.29142572E+00-5.50154901E-03 5.99438458E-05    3
--7.08466469E-08 2.68685836E-11-1.15222056E+04 2.66678994E+00 0.159             4
-C2H5OH            L 8/88C   2H   6O   1    0G   200.000  6000.000 1000.        1
- 0.65624365E+01 0.15204222E-01-0.53896795E-05 0.86225011E-09-0.51289787E-13    2
--0.31525621E+05-0.94730202E+01 0.48586957E+01-0.37401726E-02 0.69555378E-04    3
--0.88654796E-07 0.35168835E-10-0.29996132E+05 0.48018545E+01-0.28257829E+05    4
-CH3OCH3           T03/10C   2H   6O   1    0G   200.000  6000.000 1000.        1
- 5.64844274E+00 1.63381875E-02-5.86802189E-06 9.46836384E-10-5.66504295E-14    2
--2.50864216E+04-5.96267354E+00 5.30562273E+00-2.14253958E-03 5.30873092E-05    3
--6.23146897E-08 2.30730916E-11-2.39655820E+04 7.13244569E-01-2.21221696E+04    4
-CH2CH2OH          T05/11C   2H   5O   1    0G   200.000  6000.000 1000.        1
- 7.01348674E+00 1.20204391E-02-4.21992012E-06 6.70675981E-10-3.97135273E-14    2
--6.16161779E+03-8.62052409E+00 4.20954137E+00 9.12964578E-03 2.47462263E-05    3
--3.92945764E-08 1.66541312E-11-4.91511371E+03 8.30445413E+00-3.10541451E+03    4
-CH3CHOH           T06/11C   2H   5O   1    0G   200.000  6000.000 1000.        1
- 6.35842302E+00 1.24356276E-02-4.33096839E-06 6.84530381E-10-4.03713238E-14    2
--9.53018581E+03-6.05106112E+00 4.22283250E+00 5.12174798E-03 3.48386522E-05    3
--4.91943637E-08 2.01183723E-11-8.35622088E+03 8.01675700E+00-6.64945980E+03    4
-CH3CH2O           T06/11C   2H   5O   1    0G   200.000  6000.000 1000.        1
- 6.55053877E+00 1.32525511E-02-4.74726060E-06 7.64699226E-10-4.57008357E-14    2
--4.47191998E+03-9.61231141E+00 3.26905655E+00 9.33562904E-03 2.96317166E-05    3
--4.53411341E-08 1.88795595E-11-2.95022955E+03 1.04200942E+01-1.37951605E+03    4
-CH3OCH2           A10/04C   2H   5O   1    0G   200.000  6000.000 1000.        1
- 5.94067593E+00 1.29906358E-02-4.56921036E-06 7.26888932E-10-4.30599587E-14    2
--2.58503562E+03-4.52841964E+00 4.53195381E+00 7.81884271E-03 1.94968539E-05    3
--2.74538336E-08 1.06521135E-11-1.70629244E+03 5.06122980E+00 1.15460803E+02    4
-CH2OCH2           L 8/88C   2H   4O   1    0G   200.000  6000.000  1000.       1
- 0.54887641E+01 0.12046190E-01-0.43336931E-05 0.70028311E-09-0.41949088E-13    2
--0.91804251E+04-0.70799605E+01 0.37590532E+01-0.94412180E-02 0.80309721E-04    3
--0.10080788E-06 0.40039921E-10-0.75608143E+04 0.78497475E+01 0.425             4
-CH3CHO            L 8/88C   2H   4O   1    0G   200.000  6000.0    1000.0      1
- 0.54041108E+01 0.11723059E-01-0.42263137E-05 0.68372451E-09-0.40984863E-13    2
--0.22593122E+05-0.34807917E+01 0.47294595E+01-0.31932858E-02 0.47534921E-04    3
--0.57458611E-07 0.21931112E-10-0.21572878E+05 0.41030159E+01 0.307             4
-C2H3OH            T03/10C   2H   4O   1    0G   200.000  6000.000 1000.        1
- 7.49818166E+00 1.03957000E-02-3.66891058E-06 5.85205827E-10-3.47373827E-14    2
--1.81643092E+04-1.38388104E+01 2.28758479E+00 1.97013262E-02 1.96382662E-06    3
--1.94389758E-08 1.02616778E-11-1.65373421E+04 1.41333462E+01-1.49958566E+04    4
-C2H3O             A 1/05C   2H   3O   1    0G   200.000  6000.000 1000.        1
- 5.60158035E+00 9.17613962E-03-3.28028902E-06 5.27903888E-10-3.15362241E-14    2
- 1.71446252E+04-5.47228512E+00 3.58349017E+00-6.02275805E-03 6.32426867E-05    3
--8.18540707E-08 3.30444505E-11 1.85681353E+04 9.59725926E+00 1.97814471E+04    4
-CH3CO             IU2/03C   2H   3O   1    0G   200.000  6000.000  1000.       1
- 0.53137165E+01 0.91737793E-02-0.33220386E-05 0.53947456E-09-0.32452368E-13    2
--0.36450414E+04-0.16757558E+01 0.40358705E+01 0.87729487E-03 0.30710010E-04    3
--0.39247565E-07 0.15296869E-10-0.26820738E+04 0.78617682E+01 0.385             4
-CH2CHO            T04/06C   2H   3O   1    0G   200.000  6000.000   1000.      1
- 5.91636535E+00 8.84650426E-03-3.14954895E-06 5.05413189E-10-3.01304621E-14    2
--1.04779892E+03-6.10649981E+00 2.66873956E+00 9.62329538E-03 1.60617438E-05    3
--2.87681820E-08 1.25030066E-11 2.19438429E+02 1.25694476E+01 8.0               4
-CH2CO             g 4/02C   2H   2O   1    0G   200.000  6000.000  1000.       1
- 5.75871449E+00 6.35124053E-03-2.25955361E-06 3.62321512E-10-2.15855515E-14    2
--8.08533464E+03-4.96490444E+00 2.13241136E+00 1.81319455E-02-1.74093315E-05    3
- 9.35336040E-09-2.01724844E-12-7.14808520E+03 1.33807969E+01 0.144             4
-HCCOH             T12/09C   2H   2O   1    0G   200.000  6000.000   1000.0     1
- 6.37509678E+00 5.49429011E-03-1.88136576E-06 2.93803536E-10-1.71771901E-14    2
- 8.93277676E+03-8.24498007E+00 2.05541154E+00 2.52003372E-02-3.80821654E-05    3
- 3.09890632E-08-9.89799902E-12 9.76872113E+03 1.22271534E+01 1.33              4
-HCCO              T 4/09H   1C   2O   1    0G   200.000  6000.000  1000.       1
- 5.91479333E+00 3.71408730E-03-1.30137010E-06 2.06473345E-10-1.21476759E-14    2
- 1.93596301E+04-5.50567269E+00 1.87607969E+00 2.21205418E-02-3.58869325E-05    3
- 3.05402541E-08-1.01281069E-11 2.01633840E+04 1.36968290E+01 0.585             4
-C2O               T 8/11C   2O   1    0    0G   200.000  6000.000   1000.0     1
- 5.42468378E+00 1.85393945E-03-5.17932956E-07 6.77646230E-11-3.53315237E-15    2
- 4.37161379E+04-3.69608405E+00 2.86278214E+00 1.19701204E-02-1.80851222E-05    3
- 1.52777730E-08-5.20063163E-12 4.43125964E+04 8.89759099E+00 1.2               4
-ENDOFDATA
-
-#endif
