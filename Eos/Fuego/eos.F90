@@ -8,6 +8,7 @@ module eos_module
   use amrex_fort_module, only : amrex_real
   use amrex_constants_module
   use eos_type_module
+  use fuego_chemistry
   use chemistry_module, only : nspecies, Ru, inv_mwt, chemistry_init, chemistry_initialized, spec_names, elem_names
 
   implicit none
@@ -248,8 +249,8 @@ contains
     implicit none
 
     double precision, intent(in) :: T
-    double precision, intent(in), dimension(1:Nsp) :: hi
-    integer, intent(in) :: Nsp
+    integer, intent(in)          :: Nsp
+    double precision, intent(inout), dimension(1:Nsp) :: hi
 
     call ckhms(T,hi(:))
 

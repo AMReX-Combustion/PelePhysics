@@ -3,6 +3,7 @@ module actual_transport_module
   use amrex_fort_module, only : amrex_real
   use eos_type_module
   use transport_type_module
+  use fuego_chemistry
   use chemistry_module, only : Ru
 
   implicit none
