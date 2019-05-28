@@ -12,7 +12,7 @@ contains
   ! call any specific initialization used by the transport
 
   ! This subroutine should be called outside OMP PARALLEL
-  subroutine transport_init()
+  subroutine transport_init() bind(C, name="transport_init")
 
     use extern_probin_module
 

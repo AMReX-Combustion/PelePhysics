@@ -56,6 +56,9 @@ def registrar():
         import c
         _registrar.register(c, c.format())
 
+        import f
+        _registrar.register(f, f.format())
+
         import html
         _registrar.register(html, html.format())
 
