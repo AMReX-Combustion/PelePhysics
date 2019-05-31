@@ -273,6 +273,15 @@ module fuego_chemistry
             real(amrex_real), intent(inout) :: wtm
         end subroutine
 
+        subroutine vckwyr(np,rho,t,y,wdot) bind(c,name='VCKWYR')
+            use amrex_fort_module, only : amrex_real
+            integer, intent(in   ) :: np
+            real(amrex_real), intent(inout) :: rho(*)
+            real(amrex_real), intent(in) :: t(*)
+            real(amrex_real), intent(inout) :: y(*)
+            real(amrex_real), intent(inout) :: wdot(*)
+        end subroutine
+
     end interface
 
 end module fuego_chemistry
