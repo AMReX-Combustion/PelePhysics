@@ -102,7 +102,7 @@ class Reactions(BaseParser):
             self.onWarning(msg, self.locator())
             return 0
 
-        record.ford = self._parameterParser.extractRaw("FORD", 2)
+        (record.ford).append(self._parameterParser.extractRaw("FORD", 2))
         return 0
 
 
