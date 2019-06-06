@@ -96,13 +96,14 @@ class Reactions(BaseParser):
 
 
     def aReactionFORD(self, token):
+        print "ford !!"
         record = self._currentReaction
         if not record:
             msg = "no current reaction"
             self.onWarning(msg, self.locator())
             return 0
 
-        record.ford = self._parameterParser.extractRaw("FORD", 2)
+        (record.ford).append(self._parameterParser.extractRaw("FORD", 2))
         return 0
 
 
