@@ -172,7 +172,6 @@
 #define CKEQXP ckeqxp
 #define CKEQYR ckeqyr
 #define CKEQXR ckeqxr
-#define CKECHRG ckchrg
 #define DWDOT dwdot
 #define DWDOT_PRECOND dwdot_precond
 #define SPARSITY_INFO sparsity_info
