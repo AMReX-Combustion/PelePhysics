@@ -81,7 +81,6 @@
 #define CKEQXP CKEQXP
 #define CKEQYR CKEQYR
 #define CKEQXR CKEQXR
-#define CKCHRG CKCHRG
 #define DWDOT DWDOT
 #define DWDOT_PRECOND DWDOT_PRECOND
 #define SPARSITY_INFO SPARSITY_INFO
@@ -265,7 +264,6 @@
 #define CKEQXP ckeqxp_
 #define CKEQYR ckeqyr_
 #define CKEQXR ckeqxr_
-#define CKCHRG ckchrg_
 #define DWDOT dwdot_
 #define DWDOT_PRECOND dwdot_precond_
 #define SPARSITY_INFO sparsity_info_
@@ -394,7 +392,6 @@ void CKEQYP(double *  P, double *  T, double *  y, double *  eqcon);
 void CKEQXP(double *  P, double *  T, double *  x, double *  eqcon);
 void CKEQYR(double *  rho, double *  T, double *  y, double *  eqcon);
 void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon);
-void CKCHRG(int * restrict kcharge);
 void DWDOT(double *  J, double *  sc, double *  T, int * consP);
 void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);
 void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);
@@ -2458,18 +2455,6 @@ void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon)
     /*eqcon[3] *= 1;  */
 }
 
-
-/*Returns the electronic charges of the species */
-void CKCHRG(int * restrict kcharge)
-{
-    kcharge[0] = 0; /* CH4 */
-    kcharge[1] = 0; /* O2 */
-    kcharge[2] = 0; /* H2O */
-    kcharge[3] = 0; /* N2 */
-    kcharge[4] = 0; /* CO */
-    kcharge[5] = 0; /* CO2 */
-    kcharge[6] = 0; /* H2 */
-}
 
 static double T_save = -1;
 #ifdef _OPENMP
