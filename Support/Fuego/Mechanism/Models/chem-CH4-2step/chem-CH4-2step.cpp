@@ -81,6 +81,7 @@
 #define CKEQXP CKEQXP
 #define CKEQYR CKEQYR
 #define CKEQXR CKEQXR
+#define CKCHRG CKCHRG
 #define DWDOT DWDOT
 #define DWDOT_PRECOND DWDOT_PRECOND
 #define SPARSITY_INFO SPARSITY_INFO
@@ -172,6 +173,7 @@
 #define CKEQXP ckeqxp
 #define CKEQYR ckeqyr
 #define CKEQXR ckeqxr
+#define CKECHRG ckchrg
 #define DWDOT dwdot
 #define DWDOT_PRECOND dwdot_precond
 #define SPARSITY_INFO sparsity_info
@@ -263,6 +265,7 @@
 #define CKEQXP ckeqxp_
 #define CKEQYR ckeqyr_
 #define CKEQXR ckeqxr_
+#define CKCHRG ckchrg_
 #define DWDOT dwdot_
 #define DWDOT_PRECOND dwdot_precond_
 #define SPARSITY_INFO sparsity_info_
@@ -391,6 +394,7 @@ void CKEQYP(double *  P, double *  T, double *  y, double *  eqcon);
 void CKEQXP(double *  P, double *  T, double *  x, double *  eqcon);
 void CKEQYR(double *  rho, double *  T, double *  y, double *  eqcon);
 void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon);
+void CKCHRG(int * restrict kcharge);
 void DWDOT(double *  J, double *  sc, double *  T, int * consP);
 void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);
 void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);
@@ -646,9 +650,9 @@ void CKINIT()
     fwd_A[0]     = 154500000000000;
     fwd_beta[0]  = 0.5;
     fwd_Ea[0]    = 39895;
-    prefactor_units[0]  = 1.0000000000000005e-24;
+    prefactor_units[0]  = 1.0000000000000002e-06;
     activation_units[0] = 0.50321666580471969;
-    phase_units[0]      = 1e-30;
+    phase_units[0]      = 1e-12;
     is_PD[0] = 0;
     nTB[0] = 0;
 
@@ -656,9 +660,9 @@ void CKINIT()
     fwd_A[1]     = 199100000000000;
     fwd_beta[1]  = 0;
     fwd_Ea[1]    = 40000;
-    prefactor_units[1]  = 1.0000000000000002e-12;
+    prefactor_units[1]  = 3.1622776601683795e-05;
     activation_units[1] = 0.50321666580471969;
-    phase_units[1]      = 1e-18;
+    phase_units[1]      = 1e-10;
     is_PD[1] = 0;
     nTB[1] = 0;
 
@@ -666,9 +670,9 @@ void CKINIT()
     fwd_A[2]     = 250000000;
     fwd_beta[2]  = 0;
     fwd_Ea[2]    = 40000;
-    prefactor_units[2]  = 1.0000000000000002e-06;
+    prefactor_units[2]  = 1;
     activation_units[2] = 0.50321666580471969;
-    phase_units[2]      = 1e-12;
+    phase_units[2]      = 1e-6;
     is_PD[2] = 0;
     nTB[2] = 0;
 
@@ -2378,6 +2382,18 @@ void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon)
     eqcon[2] *= 1e-06; 
 }
 
+
+/*Returns the electronic charges of the species */
+void CKCHRG(int * restrict kcharge)
+{
+    kcharge[0] = 0; /* O2 */
+    kcharge[1] = 0; /* H2O */
+    kcharge[2] = 0; /* CH4 */
+    kcharge[3] = 0; /* CO */
+    kcharge[4] = 0; /* CO2 */
+    kcharge[5] = 0; /* N2 */
+}
+
 static double T_save = -1;
 #ifdef _OPENMP
 #pragma omp threadprivate(T_save)
@@ -2477,15 +2493,15 @@ void comp_qfqr(double *  qf, double *  qr, double *  sc, double *  tc, double in
 {
 
     /*reaction 1: 2 CH4 + 3 O2 => 2 CO + 4 H2O */
-    qf[0] = sc[0]*sc[0]*sc[0]*sc[2]*sc[2];
+    qf[0] = sc[0]*sc[2];
     qr[0] = 0.0;
 
     /*reaction 2: 2 CO + O2 => 2 CO2 */
-    qf[1] = sc[0]*sc[3]*sc[3];
+    qf[1] = pow( sc[0], 0.25)*pow( sc[1], 0.5)*sc[3];
     qr[1] = 0.0;
 
     /*reaction 3: 2 CO2 => 2 CO + O2 */
-    qf[2] = sc[4]*sc[4];
+    qf[2] = sc[4];
     qr[2] = 0.0;
 
     double T = tc[1];
@@ -4364,12 +4380,12 @@ void egtransetWT(double* WT ) {
 #define egtransetEPS egtranseteps_
 #endif
 void egtransetEPS(double* EPS ) {
-    EPS[0] = 1.07400000E+02;
     EPS[1] = 5.72400000E+02;
-    EPS[5] = 9.75300000E+01;
-    EPS[3] = 9.81000000E+01;
-    EPS[4] = 2.44000000E+02;
     EPS[2] = 1.41400000E+02;
+    EPS[0] = 1.07400000E+02;
+    EPS[5] = 9.75300000E+01;
+    EPS[4] = 2.44000000E+02;
+    EPS[3] = 9.81000000E+01;
 }
 
 
@@ -4382,12 +4398,12 @@ void egtransetEPS(double* EPS ) {
 #define egtransetSIG egtransetsig_
 #endif
 void egtransetSIG(double* SIG ) {
-    SIG[0] = 3.45800000E+00;
     SIG[1] = 2.60500000E+00;
-    SIG[5] = 3.62100000E+00;
-    SIG[3] = 3.65000000E+00;
-    SIG[4] = 3.76300000E+00;
     SIG[2] = 3.74600000E+00;
+    SIG[0] = 3.45800000E+00;
+    SIG[5] = 3.62100000E+00;
+    SIG[4] = 3.76300000E+00;
+    SIG[3] = 3.65000000E+00;
 }
 
 
@@ -4400,12 +4416,12 @@ void egtransetSIG(double* SIG ) {
 #define egtransetDIP egtransetdip_
 #endif
 void egtransetDIP(double* DIP ) {
-    DIP[0] = 0.00000000E+00;
     DIP[1] = 1.84400000E+00;
-    DIP[5] = 0.00000000E+00;
-    DIP[3] = 0.00000000E+00;
-    DIP[4] = 0.00000000E+00;
     DIP[2] = 0.00000000E+00;
+    DIP[0] = 0.00000000E+00;
+    DIP[5] = 0.00000000E+00;
+    DIP[4] = 0.00000000E+00;
+    DIP[3] = 0.00000000E+00;
 }
 
 
@@ -4418,12 +4434,12 @@ void egtransetDIP(double* DIP ) {
 #define egtransetPOL egtransetpol_
 #endif
 void egtransetPOL(double* POL ) {
-    POL[0] = 1.60000000E+00;
     POL[1] = 0.00000000E+00;
-    POL[5] = 1.76000000E+00;
-    POL[3] = 1.95000000E+00;
-    POL[4] = 2.65000000E+00;
     POL[2] = 2.60000000E+00;
+    POL[0] = 1.60000000E+00;
+    POL[5] = 1.76000000E+00;
+    POL[4] = 2.65000000E+00;
+    POL[3] = 1.95000000E+00;
 }
 
 
@@ -4436,12 +4452,12 @@ void egtransetPOL(double* POL ) {
 #define egtransetZROT egtransetzrot_
 #endif
 void egtransetZROT(double* ZROT ) {
-    ZROT[0] = 3.80000000E+00;
     ZROT[1] = 4.00000000E+00;
-    ZROT[5] = 4.00000000E+00;
-    ZROT[3] = 1.80000000E+00;
-    ZROT[4] = 2.10000000E+00;
     ZROT[2] = 1.30000000E+01;
+    ZROT[0] = 3.80000000E+00;
+    ZROT[5] = 4.00000000E+00;
+    ZROT[4] = 2.10000000E+00;
+    ZROT[3] = 1.80000000E+00;
 }
 
 
@@ -4454,12 +4470,12 @@ void egtransetZROT(double* ZROT ) {
 #define egtransetNLIN egtransetnlin_
 #endif
 void egtransetNLIN(int* NLIN) {
-    NLIN[0] = 1;
     NLIN[1] = 2;
-    NLIN[5] = 1;
-    NLIN[3] = 1;
-    NLIN[4] = 1;
     NLIN[2] = 2;
+    NLIN[0] = 1;
+    NLIN[5] = 1;
+    NLIN[4] = 1;
+    NLIN[3] = 1;
 }
 
 
