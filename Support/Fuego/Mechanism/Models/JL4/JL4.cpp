@@ -647,9 +647,9 @@ void CKINIT()
     fwd_A[0]     = 39100000000000;
     fwd_beta[0]  = 0;
     fwd_Ea[0]    = 30000;
-    prefactor_units[0]  = 1.0000000000000002e-12;
+    prefactor_units[0]  = 3.1622776601683795e-05;
     activation_units[0] = 0.50321666580471969;
-    phase_units[0]      = 1e-18;
+    phase_units[0]      = 1e-10;
     is_PD[0] = 0;
     nTB[0] = 0;
 
@@ -667,9 +667,9 @@ void CKINIT()
     fwd_A[2]     = 6.045e+18;
     fwd_beta[2]  = -1;
     fwd_Ea[2]    = 40000;
-    prefactor_units[2]  = 1.0000000000000002e-12;
+    prefactor_units[2]  = 3.1622776601683795e-05;
     activation_units[2] = 0.50321666580471969;
-    phase_units[2]      = 1e-18;
+    phase_units[2]      = 1e-10;
     is_PD[2] = 0;
     nTB[2] = 0;
 
@@ -2454,6 +2454,7 @@ void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon)
     /*eqcon[3] *= 1;  */
 }
 
+
 static double T_save = -1;
 #ifdef _OPENMP
 #pragma omp threadprivate(T_save)
@@ -2561,7 +2562,7 @@ void comp_qfqr(double *  qf, double *  qr, double *  sc, double *  tc, double in
 {
 
     /*reaction 1: 2 CH4 + O2 => 2 CO + 4 H2 */
-    qf[0] = sc[0]*sc[0]*sc[1];
+    qf[0] = pow( sc[0], 0.5)*pow( sc[1], 1.25);
     qr[0] = 0.0;
 
     /*reaction 2: CH4 + H2O <=> CO + 3 H2 */
@@ -2569,7 +2570,7 @@ void comp_qfqr(double *  qf, double *  qr, double *  sc, double *  tc, double in
     qr[1] = sc[4]*sc[6]*sc[6]*sc[6];
 
     /*reaction 3: 2 H2 + O2 => 2 H2O */
-    qf[2] = sc[1]*sc[6]*sc[6];
+    qf[2] = pow( sc[1], 1.5)*pow( sc[6], 0.25);
     qr[2] = 0.0;
 
     /*reaction 4: CO + H2O <=> CO2 + H2 */
@@ -4765,13 +4766,13 @@ void egtransetWT(double* WT ) {
 #define egtransetEPS egtranseteps_
 #endif
 void egtransetEPS(double* EPS ) {
-    EPS[2] = 5.72400000E+02;
-    EPS[6] = 3.80000000E+01;
-    EPS[0] = 1.41400000E+02;
-    EPS[1] = 1.07400000E+02;
-    EPS[4] = 9.81000000E+01;
     EPS[5] = 2.44000000E+02;
     EPS[3] = 9.75300000E+01;
+    EPS[4] = 9.81000000E+01;
+    EPS[6] = 3.80000000E+01;
+    EPS[2] = 5.72400000E+02;
+    EPS[0] = 1.41400000E+02;
+    EPS[1] = 1.07400000E+02;
 }
 
 
@@ -4784,13 +4785,13 @@ void egtransetEPS(double* EPS ) {
 #define egtransetSIG egtransetsig_
 #endif
 void egtransetSIG(double* SIG ) {
-    SIG[2] = 2.60500000E+00;
-    SIG[6] = 2.92000000E+00;
-    SIG[0] = 3.74600000E+00;
-    SIG[1] = 3.45800000E+00;
-    SIG[4] = 3.65000000E+00;
     SIG[5] = 3.76300000E+00;
     SIG[3] = 3.62100000E+00;
+    SIG[4] = 3.65000000E+00;
+    SIG[6] = 2.92000000E+00;
+    SIG[2] = 2.60500000E+00;
+    SIG[0] = 3.74600000E+00;
+    SIG[1] = 3.45800000E+00;
 }
 
 
@@ -4803,13 +4804,13 @@ void egtransetSIG(double* SIG ) {
 #define egtransetDIP egtransetdip_
 #endif
 void egtransetDIP(double* DIP ) {
-    DIP[2] = 1.84400000E+00;
-    DIP[6] = 0.00000000E+00;
-    DIP[0] = 0.00000000E+00;
-    DIP[1] = 0.00000000E+00;
-    DIP[4] = 0.00000000E+00;
     DIP[5] = 0.00000000E+00;
     DIP[3] = 0.00000000E+00;
+    DIP[4] = 0.00000000E+00;
+    DIP[6] = 0.00000000E+00;
+    DIP[2] = 1.84400000E+00;
+    DIP[0] = 0.00000000E+00;
+    DIP[1] = 0.00000000E+00;
 }
 
 
@@ -4822,13 +4823,13 @@ void egtransetDIP(double* DIP ) {
 #define egtransetPOL egtransetpol_
 #endif
 void egtransetPOL(double* POL ) {
-    POL[2] = 0.00000000E+00;
-    POL[6] = 7.90000000E-01;
-    POL[0] = 2.60000000E+00;
-    POL[1] = 1.60000000E+00;
-    POL[4] = 1.95000000E+00;
     POL[5] = 2.65000000E+00;
     POL[3] = 1.76000000E+00;
+    POL[4] = 1.95000000E+00;
+    POL[6] = 7.90000000E-01;
+    POL[2] = 0.00000000E+00;
+    POL[0] = 2.60000000E+00;
+    POL[1] = 1.60000000E+00;
 }
 
 
@@ -4841,13 +4842,13 @@ void egtransetPOL(double* POL ) {
 #define egtransetZROT egtransetzrot_
 #endif
 void egtransetZROT(double* ZROT ) {
-    ZROT[2] = 4.00000000E+00;
-    ZROT[6] = 2.80000000E+02;
-    ZROT[0] = 1.30000000E+01;
-    ZROT[1] = 3.80000000E+00;
-    ZROT[4] = 1.80000000E+00;
     ZROT[5] = 2.10000000E+00;
     ZROT[3] = 4.00000000E+00;
+    ZROT[4] = 1.80000000E+00;
+    ZROT[6] = 2.80000000E+02;
+    ZROT[2] = 4.00000000E+00;
+    ZROT[0] = 1.30000000E+01;
+    ZROT[1] = 3.80000000E+00;
 }
 
 
@@ -4860,13 +4861,13 @@ void egtransetZROT(double* ZROT ) {
 #define egtransetNLIN egtransetnlin_
 #endif
 void egtransetNLIN(int* NLIN) {
-    NLIN[2] = 2;
-    NLIN[6] = 1;
-    NLIN[0] = 2;
-    NLIN[1] = 1;
-    NLIN[4] = 1;
     NLIN[5] = 1;
     NLIN[3] = 1;
+    NLIN[4] = 1;
+    NLIN[6] = 1;
+    NLIN[2] = 2;
+    NLIN[0] = 2;
+    NLIN[1] = 1;
 }
 
 

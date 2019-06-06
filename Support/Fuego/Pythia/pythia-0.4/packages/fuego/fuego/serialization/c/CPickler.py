@@ -1109,7 +1109,10 @@ class CPickler(CMill):
             self._write("fwd_beta[%d]  = %.17g;" % (id,beta))
             self._write("fwd_Ea[%d]    = %.17g;" % (id,E))
 
-            dim = self._phaseSpaceUnits(reaction.reactants)
+            if (len(reaction.ford) > 0) :
+                 dim = self._phaseSpaceUnits(reaction.ford)
+            else:
+                 dim = self._phaseSpaceUnits(reaction.reactants)
             thirdBody = reaction.thirdBody
             low = reaction.low
             if not thirdBody:
@@ -5007,7 +5010,10 @@ class CPickler(CMill):
             self._write()
             reaction = mechanism.reaction(id=i)
             self._write(self.line('reaction %d: %s' % (reaction.id, reaction.equation())))
-            self._write("qf[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.reactants)))
+            if (len(reaction.ford) > 0):
+                self._write("qf[%d] = %s;" % (i, self._sortedPhaseSpace_ford(mechanism, reaction.ford)))
+            else:
+                self._write("qf[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.reactants)))
             if reaction.reversible:
                 self._write("qr[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.products)))
             else:
@@ -7656,6 +7662,18 @@ class CPickler(CMill):
 
         return "*".join(phi)
 
+    def _sortedPhaseSpace_ford(self, mechanism, reagents):
+
+        phi = []
+
+        for symbol, coefficient in sorted(reagents,key=lambda x:mechanism.species(x[0]).id):
+            if (coefficient == "1.0"):
+                phi.append( "sc[%d]" % (mechanism.species(symbol).id))
+            else:
+                phi.append( "pow( sc[%d], %.17g)" % (mechanism.species(symbol).id, float(coefficient)))
+            print phi
+
+        return "*".join(phi)
 
     def _DphaseSpace(self, mechanism, reagents, r):
 
@@ -7691,7 +7709,7 @@ class CPickler(CMill):
     def _phaseSpaceUnits(self, reagents):
         dim = 0
         for symbol, coefficient in reagents:
-            dim += coefficient
+            dim += float(coefficient)
 
         return dim
 
