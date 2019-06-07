@@ -1,13 +1,16 @@
 dt = 1.e-05
-ndt = 1
+ndt = 100
 
 # Select CVODE Jacobian eval.
-ns.cvode_iJac = 0
+ns.cvode_iJac = 1
 
 # 1=full e, 2=full h
 cvode_iE = 1
 
 # choose sparse or dense
-ns.cvode_iDense = 1
+ns.cvode_iDense = 5
+
+# Select number of cells to int simultaneously
+cvode_ncells = 1
 
 amr.plot_file       = plt

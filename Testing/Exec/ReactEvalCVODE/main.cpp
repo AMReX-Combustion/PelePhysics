@@ -13,7 +13,11 @@ using namespace amrex;
 #include <Transport_F.H>
 #include <main_F.H>
 #include <PlotFileFromMF.H>
+#ifdef AMREX_USE_SUNDIALS_3x4x
 #include <actual_Creactor.h>
+#else
+#include <actual_reactor.H> 
+#endif
 
 /**********************************/
 int
@@ -23,10 +27,9 @@ main (int   argc,
     amrex::Initialize(argc,argv);
     {
 
-    int max_grid_size = 32;
+    int max_grid_size = 16;
     std::string probin_file="probin";
     std::string pltfile("plt");
-    std::string txtfile_in=""; 
     /* CVODE inputs */
     int cvode_ncells = 1;
     int cvode_iE = 1;
@@ -54,8 +57,9 @@ main (int   argc,
       //1 for UV, 2 for HP
       //   1 = Internal energy
       //   anything else = enthalpy (PeleLM restart)
-      
-      pp.query("txtfile_in",txtfile_in);
+         
+      // nb of cells to integrate
+      pp.query("cvode_ncells",cvode_ncells);
 
     }
 
@@ -66,9 +70,17 @@ main (int   argc,
     amrex::Print() << "Integration iteration method: ";
         amrex::Print() << "Newton";
     amrex::Print() << std::endl;
-    
+
+    amrex::Print() << "Type of reactor: ";
+        amrex::Print() << cvode_iE;
     amrex::Print() << std::endl;
 
+    amrex::Print() << "Integrating 2x1024x2 box for: ";
+        amrex::Print() << dt << " seconds";
+    amrex::Print() << std::endl;
+
+
+    amrex::Print() << std::endl;
 
     /* take care of probin init to initialize problem */
     int probin_file_length = probin_file.length();
@@ -83,8 +95,9 @@ main (int   argc,
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 128;
+	npts[i] = 2;
     }
+    npts[1] = 1024;
 
     Box domain(IntVect(D_DECL(0,0,0)),
 	       IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
@@ -95,6 +108,7 @@ main (int   argc,
     /* Additional defs to initialize domain */
     std::vector<Real> plo(3,0), phi(3,0), dx(3,1);
     for (int i=0; i<BL_SPACEDIM; ++i) {
+	plo[i] = 0.0; //(i+1)*0.35;
 	phi[i] = domain.length(i);
 	dx[i] = (phi[i] - plo[i])/domain.length(i);
     }
@@ -109,14 +123,15 @@ main (int   argc,
     MultiFab mfE(ba, dm, 1, 0);
     MultiFab rY_source_energy_ext(ba,dm,1,0);
     MultiFab temperature(ba,dm,1,0);
-
-    IntVect tilesize(D_DECL(10240,8,32));
+    MultiFab fctCount(ba,dm,1,0);
 
     /* INITIALIZE DATA */
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-    for (MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi ){
+    int count_mf = 0;
+    for (MFIter mfi(mf); mfi.isValid(); ++mfi ){
+        count_mf = count_mf + 1;	
         const Box& box = mfi.tilebox();
         initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
                		BL_TO_FORTRAN_N_3D(mf[mfi],0),
@@ -125,27 +140,49 @@ main (int   argc,
 		        BL_TO_FORTRAN_N_3D(rY_source_energy_ext[mfi],0),
 			&(dx[0]), &(plo[0]), &(phi[0]));
     }
+    amrex::Print() << "Number of boxes ? (64): \n" << count_mf;
+    std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
+    //// Specs
+    PlotFileFromMF(mf,outfile);
+
      
     ParmParse ppa("amr");
     ppa.query("plot_file",pltfile);
 
     /* ADVANCE */
-    int reInit = 1;
     Real time = 0.0;
+    int reInit = 1;
+    Real dt_incr   = dt/ndt;
     // not used anyway
     double pressure = 1013250.0;
 
-    for ( MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi )
+    amrex::Print() << " \n STARTING THE ADVANCE \n";
+
+    count_mf = 0;
+    for ( MFIter mfi(mf); mfi.isValid(); ++mfi )
     {
+	/* Prints to follow the computation */
+        count_mf = count_mf + 1;	
+        amrex::Print() << "Treating box " << count_mf << std::endl;
+
         const Box& box = mfi.tilebox();
 
 	FArrayBox& Fb     = mf[mfi];
 	FArrayBox& Fbsrc  = rY_source_ext[mfi];
 	FArrayBox& FbE    = mfE[mfi];
 	FArrayBox& FbEsrc = rY_source_energy_ext[mfi];
+	FArrayBox& Fct    = fctCount[mfi];
+
+	const auto len     = amrex::length(box);
+	const auto lo      = amrex::lbound(box);
+
+	const auto rhoY    = Fb.view(lo);
+	const auto rhoE    = FbE.view(lo);
+	const auto frcExt  = Fbsrc.view(lo); 
+	const auto frcEExt = FbEsrc.view(lo);
+	const auto fc      = Fct.view(lo); 
 
         /* Pack the data */
-	int count_box = 1;
 	// rhoY,T
 	double tmp_vect[cvode_ncells*(Ncomp+1)];
 	// rhoY_src_ext
@@ -154,44 +191,68 @@ main (int   argc,
 	double tmp_vect_energy[cvode_ncells];
 	double tmp_src_vect_energy[cvode_ncells];
 
-	for (BoxIterator bit(box); bit.ok(); ++bit) {
-		/* Fill the vectors */
-		tmp_vect_energy[(count_box-1)] = FbE(bit(),0);
-		tmp_src_vect_energy[(count_box-1)] = FbEsrc(bit(),0);
-		for (int i=0;i<Ncomp; i++){
-			tmp_vect[(count_box-1)*(Ncomp+1) + i] = Fb(bit(),i);
-			tmp_src_vect[(count_box-1)*(Ncomp) + i] = Fbsrc(bit(),i);
+	int indx_i[cvode_ncells];
+	int indx_j[cvode_ncells];
+	int indx_k[cvode_ncells];
+	
+	int nc = 0;
+	int num_cell_cvode_int = 0;
+	for         (int k = 0; k < len.z; ++k) {
+	    for         (int j = 0; j < len.y; ++j) {
+	        for         (int i = 0; i < len.x; ++i) {
+		    /* Fill the vectors */
+	            for (int sp=0;sp<Ncomp; sp++){
+	                tmp_vect[nc*(Ncomp+1) + sp]   = rhoY(i,j,k,sp);
+		        tmp_src_vect[nc*Ncomp + sp]   = frcExt(i,j,k,sp);
+		    }
+		    tmp_vect[nc*(Ncomp+1) + Ncomp]    = rhoY(i,j,k,Ncomp);
+		    tmp_vect_energy[nc]               = rhoE(i,j,k,0);
+		    tmp_src_vect_energy[nc]           = frcEExt(i,j,k,0);
+		    //
+		    indx_i[nc] = i;
+		    indx_j[nc] = j;
+		    indx_k[nc] = k;
+		    //
+		    nc = nc+1;
+		    //
+		    num_cell_cvode_int = num_cell_cvode_int + 1;
+		    if (nc == cvode_ncells) {
+			time = 0.0;
+			dt_incr =  dt/ndt;
+                        reInit = 1;
+			for (int ii = 0; ii < ndt; ++ii) {
+	                    fc(i,j,k) = react(tmp_vect, tmp_src_vect,
+		                tmp_vect_energy, tmp_src_vect_energy,
+		                &pressure, &dt_incr, &time,
+				&reInit);
+		            dt_incr =  dt/ndt;
+			    reInit = 1;
+			}
+			//printf(" time reached %14.6e \n", time);
+		        nc = 0;
+		        for (int l = 0; l < cvode_ncells ; ++l){
+		            for (int sp=0;sp<Ncomp; sp++){
+		                rhoY(indx_i[l],indx_j[l],indx_k[l],sp) = tmp_vect[l*(Ncomp+1) + sp];
+		            }
+		            rhoY(indx_i[l],indx_j[l],indx_k[l],Ncomp)  = tmp_vect[l*(Ncomp+1) + Ncomp];
+		            rhoE(indx_i[l],indx_j[l],indx_k[l],0)      = tmp_vect_energy[l];
+		        }
+		    }
 		}
-	        tmp_vect[(count_box-1)*(Ncomp+1) + Ncomp] = Fb(bit(), Ncomp);
-                /* Solve the problem */
-	        Real time_tmp, dt_incr;
-	        dt_incr =  dt / ndt;
-	        time_tmp = time;
-	        for (int i = 0; i < ndt; ++i) {
-		        react(tmp_vect, tmp_src_vect, 
-				tmp_vect_energy, tmp_src_vect_energy,
-				&pressure, &dt_incr, &time_tmp, &reInit);
-	                // increment time with true dt_incr
-		        time_tmp = time_tmp + dt_incr;
-		        // fix new dt_incr to chosen value, hoping cvode will reach it
-		        dt_incr = dt;
-	        }
-
-                /* Unpack the data ? */
-		for (int i=0;i<Ncomp+1; i++){
-			Fb(bit(),i) = tmp_vect[(count_box-1)*(Ncomp+1) + i];
-		}
-                //amrex::Abort("FIRST BoxIt");
+	    }
+	}
+	if (nc != 0) {
+		printf(" WARNING !! Not enough cells (%d) to fill %d \n", nc, cvode_ncells);
+	} else {
+		printf(" Integrated %d cells (4096)\n",num_cell_cvode_int);
 	}
     }
 
 
-
-    std::string outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
-    MultiFab::Copy(temperature,mf,Ncomp,0,1,0);
-    //PlotFileFromMF(mf,outfile);
-    PlotFileFromMF(temperature,outfile);
-
+    outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
+    // Specs
+    PlotFileFromMF(mf,outfile);
+    
     extern_close();
 
     }

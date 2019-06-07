@@ -76,13 +76,12 @@ contains
 
     implicit none
 
-    integer         , intent(in   ) ::     lo(3),    hi(3)
-    integer         , intent(in   ) ::  rY_lo(3), rY_hi(3)
+    integer         , intent(in   ) ::  lo(3),        hi(3)
+    integer         , intent(in   ) ::  rY_lo(3),     rY_hi(3)
     integer         , intent(in   ) ::  rY_src_lo(3), rY_src_hi(3)
-    integer         , intent(in   ) ::  rE_lo(3), rE_hi(3)
-    integer         , intent(in   ) ::  rEs_lo(3), rEs_hi(3)
-    real(amrex_real), intent(in   ) ::     dx(3)
-    real(amrex_real), intent(in   ) ::    plo(3),   phi(3)
+    integer         , intent(in   ) ::  rE_lo(3),     rE_hi(3)
+    integer         , intent(in   ) ::  rEs_lo(3),    rEs_hi(3)
+    real(amrex_real), intent(in   ) ::  dx(3), plo(3), phi(3)
     real(amrex_real), intent(inout) ::  rhoY(rY_lo(1):rY_hi(1),rY_lo(2):rY_hi(2),rY_lo(3):rY_hi(3),nspec+1)
     real(amrex_real), intent(inout) ::  rhoY_src(rY_src_lo(1):rY_src_hi(1),rY_src_lo(2):rY_src_hi(2),rY_src_lo(3):rY_src_hi(3),nspec)
     real(amrex_real), intent(inout) ::  rhoE(rE_lo(1):rE_hi(1),rE_lo(2):rE_hi(2),rE_lo(3):rE_hi(3),1)
@@ -90,22 +89,23 @@ contains
 
     ! local variables
     integer          :: i, j, k
+    integer          :: count_nodes
     real(amrex_real) :: Temp_lo, Temp_hi, dTemp, P(3), L(3), x, y, z, pressure
     type(eos_t)      :: eos_state
 
     call build(eos_state)
 
-    Temp_lo = 1500.d0
-    Temp_hi = 2000.d0
-    dTemp = 5.d0
+    Temp_lo = 2000.d0
+    Temp_hi = 2500.d0
+    dTemp = 100.d0
 
     if (nspec.lt.3) then
        stop 'This step assumes that there are at least 3 species'
     endif
     eos_state%molefrac = 0.d0
-    eos_state%molefrac(1) = 0.2d0
-    eos_state%molefrac(2) = 0.1d0
-    eos_state%molefrac(nspec) = 1.d0 - eos_state%molefrac(1) - eos_state%molefrac(2)
+    eos_state%molefrac(4) = 0.2d0
+    eos_state%molefrac(11) = 0.1d0
+    eos_state%molefrac(nspec-1) = 1.d0 - eos_state%molefrac(4) - eos_state%molefrac(11)
     call eos_xty(eos_state)
     
     L(:) = phi(:) - plo(:)
@@ -113,6 +113,7 @@ contains
 
     pressure = 1013250.d0
     
+    count_nodes = 0
     do k = lo(3),hi(3)
        z = plo(3) + (k+HALF)*dx(3)
        do j = lo(2),hi(2)
@@ -121,7 +122,8 @@ contains
              x = plo(1) + (i+HALF)*dx(1)
 
              eos_state % p        = pressure
-             eos_state % T        = Temp_lo + (Temp_hi-Temp_lo)*y/L(2) + dTemp*SIN(TWO*M_PI*y/P(2))
+             eos_state % T        = Temp_lo + (Temp_hi-Temp_lo)*y/L(2) + dTemp*SIN(TWO*M_PI*y/P(2)) !+ (Temp_hi-Temp_lo)*x/L(1) + (Temp_hi-Temp_lo)*z/L(3) 
+             !print *, "(I,J,K), phi(2), plo(2), L(2) P(2) = ", i,j,k, phi(2), plo(2), L(2), P(2) 
 
              eos_state % massfrac(nspec) = ONE - sum(eos_state % massfrac(1:nspec-1))
 
@@ -134,7 +136,11 @@ contains
              rhoY_src(i,j,k,1:nspec) = 0.0d0
              if (iE_main == 1) then
                  ! all in e
+#ifdef AMREX_USE_SUNDIALS_3x4x
                  rhoE(i,j,k,1) = eos_state % e * eos_state % rho
+#else
+                 rhoE(i,j,k,1) = eos_state % e
+#endif
              else
                  ! all in h
                  rhoE(i,j,k,1) = eos_state % h * eos_state % rho
@@ -142,10 +148,14 @@ contains
              ! all in h
              !rhoE src ext
              rhoEs(i,j,k,1) = 0.0d0
+             count_nodes = count_nodes + 1
 
           end do
        end do
     end do
+
+    print *, "-> Nb of cells ? (64): ", count_nodes
+    call flush()
 
     call destroy(eos_state)
 

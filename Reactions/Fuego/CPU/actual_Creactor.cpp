@@ -87,13 +87,8 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 
 	/* Call CVodeCreate to create the solver memory and specify the
 	 * Backward Differentiation Formula and the use of a Newton iteration */
-	//if ((*cvode_meth == 2) && (*cvode_itmeth == 2))
-	//{
 	cvode_mem = CVodeCreate(CV_BDF);
 	if (check_flag((void *)cvode_mem, "CVodeCreate", 0)) return(1);
-	//} else {
-	//    amrex::Abort("\n--> Weird inputs to CVodeCreate. Viable options are CV_BDF (=2), CV_NEWTON (=2)\n");
-	//}
 
         /* Does not work for more than 1 cell right now */
 	data = AllocUserData();
@@ -122,11 +117,8 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	flag = CVodeSVtolerances(cvode_mem, reltol, atol);
 	if (check_flag(&flag, "CVodeSVtolerances", 1)) return(1);
 
-	flag = CVodeSetInitStep(cvode_mem, 1.0e-09);
-	if (check_flag(&flag, "CVodeSetInitStep", 1)) return(1);
-
-	//flag = CVodeSetNonlinConvCoef(cvode_mem, 1.0e-03);
-	//if (check_flag(&flag, "CVodeSetNonlinConvCoef", 1)) return(1);
+	flag = CVodeSetNonlinConvCoef(cvode_mem, 1.0e-1);
+	if (check_flag(&flag, "CVodeSetNonlinConvCoef", 1)) return(1);
 
 	flag = CVodeSetMaxNonlinIters(cvode_mem, 50);
 	if (check_flag(&flag, "CVodeSetMaxNonlinIters", 1)) return(1);
@@ -236,6 +228,10 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
         flag = CVodeSetMaxOrd(cvode_mem, 2);
 	if(check_flag(&flag, "CVodeSetMaxOrd", 1)) return(1);
 
+        /* Set the num of steps to wait inbetween Jac evals */ 
+	flag = CVodeSetMaxStepsBetweenJac(cvode_mem, 100);
+	if(check_flag(&flag, "CVodeSetMaxStepsBetweenJac", 1)) return(1);
+
 	/* Define vectors to be used later in creact */
 	if (iE_Creact == 1) { 
 	    rhoe_init = (double *) malloc(NCELLS*sizeof(double));
@@ -322,7 +318,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	//            printf("ReInit delta_T = %f \n", temp_old);
 	//	}
 	//        CVodeReInit(cvode_mem, time_init, y);
-	//	InitPartial = false;
+	//      InitPartial = false;
 	//    } else {
         //        if (iverbose > 1) {
 	//            printf("ReInit Partial delta_T = %f \n", temp_old);
@@ -338,6 +334,9 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	if (check_flag(&flag, "CVode", 1)) return(1);
 
 	*dt_react = dummy_time - time_init;
+#ifdef MOD_REACTOR
+	*time  = time_init + (*dt_react);
+#endif
         if (iverbose > 3) {
 	    printf("END : time curr is %14.6e and actual dt_react is %14.6e \n", dummy_time, *dt_react);
 	}
@@ -817,7 +816,6 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
           ok = klu_refactor(data_wk->colPtrs[tid], data_wk->rowVals[tid], data_wk->Jdata[tid], data_wk->Symbolic[tid], data_wk->Numeric[tid], &(data_wk->Common[tid]));
       }
   } else {
-      //printf("and compute pivots ...");
       for (tid = 0; tid < NCELLS; tid ++) {
           data_wk->Numeric[tid] = klu_factor(data_wk->colPtrs[tid], data_wk->rowVals[tid], data_wk->Jdata[tid], data_wk->Symbolic[tid], &(data_wk->Common[tid])) ; 
       }

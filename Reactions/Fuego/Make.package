@@ -6,4 +6,5 @@ ifeq ($(USE_SUNDIALS_3x4x), TRUE)
 else
     F90EXE_sources += react_type.F90
     F90EXE_sources += actual_reactor.F90
+    FEXE_headers += actual_reactor.H
 endif

@@ -63,7 +63,7 @@ Note that only the CV reactor model described above can be validated, since as w
 the CVH reactor model is an abstraction needed for our Low-Mach PeleLM chemistry integration. Also, to have a real CV reactor, 
 the external source terms on the energy and species in `PelePhysics` have been set to 0 (see :ref:`sec:subsDiffReacts`).
 
-The parameters chosen to initialize the simulation in both CANTEA and `PelePhysics` are described in 
+The parameters chosen to initialize the simulation in both CANTERA and `PelePhysics` are described in 
 Table :numref:`tab:ReactEvalCVODE`. Two sets of runs are performed, with two mechanisms available in `PelePhysics`. 
 Note that small sub-steps are taken until the final time is reached, 
 but CVODE's internal machinery can subdivides the :math:`dt` even further. 
@@ -78,7 +78,7 @@ in `PelePhysics` (see section :ref:`sec:subsPPOptions`).
     +------------+-----------------+-------------+----------------+-------------+----------------+-----------------+
     | Mechanism  |     Mixture     |  Initial T  |  Initial phi   |   Pressure  |       dt       |    Final time   |
     +------------+-----------------+-------------+----------------+-------------+----------------+-----------------+
-    |  Li Dryer  |      H2/O2      |   1500 K    |      0.8       |  101325 Pa  |     1.0e-8s    |     1.0e-5s     |
+    |  Li Dryer  |      H2/O2      |   1500 K    |      0.8       |  101325 Pa  |     1.0e-8s    |     3.0e-6s     |
     +------------+-----------------+-------------+----------------+-------------+----------------+-----------------+
 
 Results are plotted in Fig :numref:`fig:ReactEvalCVODE` and :numref:`fig:ReactEvalCVODESpecs`. for the :math:`H_2/O_2` mixture. 
@@ -141,7 +141,7 @@ Activating the different options via the input files
 Choosing between DVODE/CVODE is done at compile time, 
 via the ``GNUmakefile``. On the other hand, the type of reactor and numerical algorithm 
 are selected via keywords in the input file. There is a subtlety though: 
-when any sparsity feature is required, the choice should also be made a compile time; 
+when any sparsity feature is required, the choice should also be made at compile time; 
 and if the option is not selected, subsequent options via keywords can either lead to an error or fall back to a dense formulation 
 of the problem. This is discussed in more depth in what follows.
 
@@ -202,7 +202,11 @@ If sparsity features are required, then the following line should also be added:
 
 In this case, the location of the ``klu.h`` should be specified via: ::
 
-    INCLUDE_LOCATIONS += path_to_your_klu.h
+    INCLUDE_LOCATIONS += patToLocationOfklu.h
+
+And if the `SuiteSparse` instructions have been followed, this should be: ::
+
+   INCLUDE_LOCATIONS += pathToSuiteSparse/include 
 
 The only place where this flag will be used is in the C++ file where all CVODE calls are done.
 
@@ -275,7 +279,7 @@ Additionally, the ``FUEGO_GAS`` flag should be set to true and the chemistry mod
     PRECISION  = DOUBLE                                                                                                                   
     PROFILE    = FALSE
     
-    DEBUG      = TRUE
+    DEBUG      = FALSE
     
     DIM        = 3
     
@@ -316,7 +320,7 @@ Additionally, the ``FUEGO_GAS`` flag should be set to true and the chemistry mod
 
     include $(PELE_PHYSICS_HOME)/Testing/Exec/Make.PelePhysics         
 
-where the ``Make.CVODE`` contains the link to the `SuiteSparse` include files (see :ref:`subsubs:GNUtype`).
+where the ``Make.CVODE`` contains the link to the `SuiteSparse` include directory (see :ref:`subsubs:GNUtype`).
 
 
 The input file
@@ -343,7 +347,7 @@ but consistent with what will be used in `PeleLM`. The number of cells to be int
 Results
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-It took 2m44s to integrate the 4096 cells of this box, with 4 MPI processes and no OMP process. 
+It took 1m19s to integrate the 4096 cells of this box, with 4 MPI processes and no OMP process. 
 The resulting temperature evolution for all cells is displayed in Fig. :numref:`fig:ReacEvalCv`.
 
 
@@ -364,7 +368,7 @@ To go further: ReactEvalCVODE with the KLU library
 The GNUmakefile
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Only the middle part of the ``GNUmakefile`` is modified compared to the previous example, section :ref:`sec:subsReactEvalCvode`.
+Only the middle part of the ``GNUmakefile`` is modified compared to the previous example.
 
 .. code-block:: c++
 
@@ -403,8 +407,8 @@ So that now, a preconditioned iterative Krylov solver is selected, where the pre
 Results
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-This run now takes 3m29s to run. As expected from the dense Jacobian of the system obtained when using the small DRM mechanism 
-(the fill in pattern is :math:`>90 %`), using an iterative solver does not enable to reach speed-ups over the simple dense direct 
+This run now takes 2m01s to run. As expected from the dense Jacobian of the system obtained when using the small DRM mechanism 
+(the fill in pattern is :math:`>90 \%`), using an iterative solver does not enable to reach speed-ups over the simple dense direct 
 solve. **NOTE**, and this is important, that this tendency will revert when sufficiently small time steps are used. 
 For example, if instead of :math:`1e-7s` we took time steps of :math:`1e-8s` (consistent with `PeleC` time steps), then using 
 the iterative GMRES solver would have provided significant time savings. This is because the smaller the time step the 
@@ -419,37 +423,101 @@ ReactEvalCVODE example with the various available CVODE linear solvers.
 .. table:: Summary of ReactEvalCvode runs with various algorithms
     :align: center
 
-    +------------+-----------------+-------------+----------------+----------------+-----------------+
-    |  Solver    |     Direct      |  Direct     |  Direct        |   Iter.        |   Iter.         |
-    |            |     Dense       |  Sparse AJ  |  Dense AJ      |   Precond. (D) |   Precond. (S)  |
-    +------------+-----------------+-------------+----------------+----------------+-----------------+
-    |  KLU       |     OFF         |  ON         |  OFF           |   OFF          |   ON            |
-    +============+=================+=============+================+================+=================+
-    |            |     Dense       |   Sparse AJ |     Dense AJ   |   Precond. (D) |   Precond. (S)  |
-    +------------+-----------------+-------------+----------------+----------------+-----------------+
-
-..
-    \hline 
-    "cvode_iE"              & 1                      &     1                     & 1                                    & 1                        &  1      \\
-    "ns.cvode_iDense" & 1                      &    5                      & 1                                    & 99                      &  99 \\ 
-    "ns.cvode_iJac"      & 0                      &    1                      & 1                                    & 1                        &  1 \\ 
-    \hline
-    Run time $[s]$      &  2m44s           & 1m59s                      & 1m42s                           & 3m05s                    &  3m29s   \\
-    \end{tabular}
-    
+    +-------------------+-----------------+----------------+-------------+----------------+-----------------+
+    |  Solver           |     Direct      |  Direct        |  Direct     |   Iter.        |   Iter.         |
+    |                   |     Dense       |  Dense AJ      |  Sparse AJ  |   Precond. (D) |   Precond. (S)  |
+    +-------------------+-----------------+----------------+-------------+----------------+-----------------+
+    |  KLU              |       OFF       |       OFF      |     ON      |       OFF      |        ON       |
+    +===================+=================+================+=============+================+=================+
+    |  cvode_iE         |       1         |       1        |      1      |        1       |        1        |
+    +-------------------+-----------------+----------------+-------------+----------------+-----------------+
+    |  ns.cvode_iDense  |       1         |       1        |      5      |       99       |       99        |
+    +-------------------+-----------------+----------------+-------------+----------------+-----------------+
+    |  ns.cvode_iJac    |       0         |       1        |      1      |        1       |        1        |
+    +-------------------+-----------------+----------------+-------------+----------------+-----------------+
+    |  Run time         |      1m19s      |     1m02s      |    1m15s    |      1m52s     |        2m01s    |
+    +-------------------+-----------------+----------------+-------------+----------------+-----------------+
 
 
 Current Limitations
 --------------------
 
+TODO
 
+.. _sec:subssubsTricks:
 
 Tricks and hacks, stuff to know
 ---------------------------------
 
+When using DVODE, there is a `hack` enabling the user to reuse the Jacobian instead of reevaluating it from scratch. 
+This option is triggered when setting the ``extern_probin_module`` flag ``new_Jacobian_each_cell`` to ``0``. 
+This can be done in `PelePhysics`  by adding the following line in the ``probin`` file: 
+
+.. code-block:: c++
+
+    &extern
+     new_Jacobian_each_cell = 0                                                                                                           
+    /
+
+A similar feature is currently not available in CVODE, although it would be possible to modify the ``CVodeReInit`` function 
+to reinitialize only a subset of counters. This is currently under investigation. 
+The user still has some control via the CVODE flag ``CVodeSetMaxStepsBetweenJac``.
+
+Note that CVODE is currently **NOT** guaranteed to work with OMP !! 
+It will however work (as seen on the previous examples) with MPI.
 
 
 How does CVODE compare with DVODE ?
 -----------------------------------
+
+Depending on whether the famous Jacobian `hack` is activated or not in DVODE, 
+the run can be much faster. The same test case as that described in the previous section can also be integrated with DVODE. 
+For that purpose, the FORTRAN routines implementing the DVODE integration have been interfaced with C++ via a FORTRAN header. The run is thus identical to ReactEvalCVODE.
+Only the ``GNUmakefile`` needs to be modified:
+
+.. code-block:: c++
+
+    ...
+    #######################
+    USE_SUNDIALS_3x4x = FALSE
+    
+    USE_KLU = FALSE
+    ifeq ($(USE_KLU), TRUE)
+        DEFINES  += -DUSE_KLU
+        include Make.CVODE
+    endif
+    
+    #######################
+    ...
+
+and, as explained in section :ref:`sec:subssubsTricks`, the famous AJ `hack` can be activated via the ``probin`` file.
+
+Two runs are performed, activating the hack or not. Times are reported in Table :numref:`tab:CVODEvsDVODE`.
+
+.. _tab:CVODEvsDVODE:
+
+.. table:: Summary of a CVODE vs a DVODE chemistry integration on the same test case
+    :align: center
+
+    +-------------------+-----------------+----------------+-----------------+
+    |  Solver           |     Direct      |     Direct     |  Direct         |
+    |                   |     Dense       |     Dense      |  Dense + `hack` |
+    +-------------------+-----------------+----------------+-----------------+
+    |  KLU              |       OFF       |       OFF      |       OFF       |
+    +-------------------+-----------------+----------------+-----------------+
+    | USE_SUNDIALS_3x4x |       ON        |       OFF      |       OFF       |
+    +===================+=================+================+=================+
+    |  cvode_iE         |       1         |       1        |        1        |
+    +-------------------+-----------------+----------------+-----------------+
+    |  ns.cvode_iDense  |       1         |      N/A       |       N/A       |
+    +-------------------+-----------------+----------------+-----------------+
+    |  ns.cvode_iJac    |       0         |      N/A       |       N/A       |
+    +-------------------+-----------------+----------------+-----------------+
+    |  Run time         |      1m19s      |     1m25s      |      1m23s      |
+    +-------------------+-----------------+----------------+-----------------+
+
+
+In this case, the hack does not seem to provide significant time savings. Note also that CVODE is slightly more efficient than DVODE, consistently with findings of other studies available in the literature.
+
 
 .. [#Foot1] NOTE that only one cell at a time should be integrated with CVODE right now. The vectorized version on CPU is still WIP and not properly implemented for all linear solver.

@@ -198,8 +198,12 @@ contains
          itol, rtol, atol, itask, istate, iopt, voderwork, lvoderwork, &
          vodeiwork, lvodeiwork, f_jac, MF, voderpar, vodeipar)
 
+#ifdef MOD_REACTOR
+    time = vodeTime
+#endif
+
     if (verbose .ge. 1) then
-       write(6,*) '......dvode done:'
+       write(6,*) '......dvode done:', time
        write(6,*) ' last successful step size = ',voderwork(11)
        write(6,*) '          next step to try = ',voderwork(12)
        write(6,*) '   integrated time reached = ',voderwork(13)
