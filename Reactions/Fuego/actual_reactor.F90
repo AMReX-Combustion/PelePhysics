@@ -385,7 +385,7 @@ contains
 
     integer,        intent(in)  :: neq, npt
     real(amrex_real),intent(in)  :: y(neq,npt), t
-    real(amrex_real),intent(out) :: pd(neq,neq)
+    real(amrex_real),intent(inout) :: pd(neq,neq)
 
     call amrex_error('DVODE version: Analytic Jacobian not yet implemented')
 
