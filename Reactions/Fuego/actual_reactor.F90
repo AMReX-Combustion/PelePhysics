@@ -16,7 +16,7 @@ module reactor_module
 
   logical, save, private :: reactor_initialized = .false.
 
-  !$omp threadprivate(vodeVec,cdot,rhoydot_ext,ydot_ext,rhoedot_ext,rhoe_init,time_init,rhohdot_ext,rhoh_init,hdot_ext,h_init,time_old,iloc,jloc,kloc,eos_state)
+  !$omp threadprivate(vodeVec,cdot,rhoydot_ext,ydot_ext,rhoedot_ext,rhoe_init,time_init,rhohdot_ext,rhoh_init,hdot_ext,h_init,pressureInit,time_old,iloc,jloc,kloc,ie,eos_state,reactor_initialized)
 
 contains
 
