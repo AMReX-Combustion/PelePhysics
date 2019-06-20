@@ -141,9 +141,8 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
 	    if(check_flag(&flag, "CVDlsSetLinearSolver", 1)) return(1);
 
-#ifdef USE_KLU 
 	} else if (iDense_Creact == 5) {
-
+#ifdef USE_KLU 
 	    /* Create sparse SUNMatrix for use in linear solves */
 	    A = SUNSparseMatrix(neq_tot, neq_tot, (data->NNZ)*NCELLS, CSC_MAT);
             if(check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
@@ -155,6 +154,8 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    /* Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode */
 	    flag = CVodeSetLinearSolver(cvode_mem, LS, A);
 	    if(check_flag(&flag, "CVodeSetLinearSolver", 1)) return(1);
+#else
+            amrex::Abort("iDense_Creact=5 not valid for USE_KLU=FALSE");
 #endif
 
 	} else if (iDense_Creact == 99) {
