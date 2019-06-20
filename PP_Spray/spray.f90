@@ -1,5 +1,7 @@
 module spray_module
 
+  use amrex_fort_module
+
   implicit none
 
   public
@@ -176,7 +178,8 @@ contains
     Y_surf = min(Y_surf,1.0d0-eps)
 
     ! Calculate Spalding number
-    B = (Y_surf-gas_ysp)/(1.0d0-Y_surf)+eps ! Eq. (12)
+    B = max((Y_surf-gas_ysp)/(1.0d0-Y_surf),0d0) ! Eq. (12)
+    B = min(B,20d0)
 
   end subroutine calc_spalding_num
 
@@ -209,7 +212,7 @@ contains
 
     ! Executables
     ! log_B = log(1+B_m)             
-    log_B = log(1+B)
+    log_B = log(1.0d0+B)
 
     F_M = log_B*(1.0d0+B)**(0.7)
     F_M = B/F_M
@@ -223,7 +226,7 @@ contains
     !-----------------------------------------------------------------------------------------    
     ! Calculate Evaporation Rate          
     ! Calculate rate of change in mass
-    evap = -Pi*diff_coeff*diameter*Sh*log_B ! Eq. (8)
+    evap = -Pi*max(diff_coeff*diameter*Sh*log_B,0d0) ! Eq. (8)
 
   end subroutine calc_spec_evap_rate
 
@@ -308,8 +311,11 @@ contains
        write(*,*) 'B_T iteration did not converge'
        write(*,*) 'error ', error
        write(*,*) 'B_T ', B_T, B_T
-       stop
+    !  stop
     endif
+
+    B_T = max(B_T,0d0)
+    B_T = min(B_T,20d0)  ! Abr & Sir page 1608
 
     log_BT = log(1.0d0+B_T)
 
@@ -335,6 +341,7 @@ contains
   subroutine calc_skin_enth(n,n_indx,indx,temp_d,temp_g,latent_fuel,enth_skin) &
        bind(C, name="calc_skin_enth")
 
+    use fuel_properties
     ! Input
     integer, intent(in) :: n
     integer, intent(in) :: n_indx
@@ -353,15 +360,15 @@ contains
 
     ! Executables
     ! Calculate the skin temperature
-    skin_temp(1:n) = temp_d(1:n) + one_third*(temp_g(1:n)-temp_d(1:n))
+    skin_temp(1:n) = min(temp_d(1:n) + one_third*(temp_g(1:n)-temp_d(1:n)),fuel_boil_temp(1))
 
     ! Calculate Enthalpy at skin temp for each species
     !call calc_specEnth_spray(n_indx,indx,n,skin_temp(1:n),enth_skin(1:n,:))
-    enth_skin(1:n,1) = (-225.2e7+(skin_temp(1:n)-298.)*224.64e4)/100.2019
+    enth_skin(1:n,1) = (-225.2e7+(skin_temp(1:n)-298.)*224.64e4)/fuel_molwt(1)
 
     ! Calculate Enthalpy at drop temp for each species
     !call calc_specEnth_spray(n_indx,indx,n,temp_d(1:n),h_vap(1:n,:))
-    h_vap(1:n,1) = (-225.2e7+(temp_d(1:n)-298.)*224.64e4)/100.2019
+    h_vap(1:n,1) = (-225.2e7+(temp_d(1:n)-298.)*224.64e4)/fuel_molwt(1)
 
     ! Calculate energy needed to evaporate plus energy needed to raise temperature
     ! of vapor.
