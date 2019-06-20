@@ -11,7 +11,7 @@
 module eos_module
 
   use amrex_fort_module, only : amrex_real
-  use bl_constants_module
+  use amrex_constants_module
   use eos_type_module
 
   use chemistry_module, only : nspecies, Ru, inv_mwt, chemistry_init, chemistry_initialized, spec_names, elem_names, molecular_weight
@@ -93,7 +93,6 @@ end subroutine actual_eos_init
 subroutine eos_init(small_temp, small_dens)
 
   use extern_probin_module
-  use parallel
   use iso_c_binding, only : c_double, c_size_t
 
   implicit none
