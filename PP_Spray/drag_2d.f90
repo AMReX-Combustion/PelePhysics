@@ -277,7 +277,7 @@ contains
        fluid_molwt(n) = eos_state%wbar
 
        ! Calculate the skin temperature of the droplet 1/3 rule.
-       temp_diff(n) = fluid_temp - particles(n)%temp
+       temp_diff(n) = max(fluid_temp - particles(n)%temp,0d0)
        temp_skin(n) = particles(n)%temp + one_third*(temp_diff(n))
 
        ! Compute mu, lambda, D, cp at skin temperature 
@@ -316,7 +316,7 @@ contains
        diff_velmag = sqrt( diff_u**2 + diff_v**2 )
 
        ! Local Reynolds number = (Density * Relative Velocity) * (Particle Diameter) / (Viscosity)
-       reyn = fluid_dens * diff_velmag * particles(n)%diam / visc
+       reyn = fluid_dens*diff_velmag*particles(n)%diam/visc
 
        drag_coef = 1.0d0+0.15d0*reyn**(0.687d0)
 
@@ -327,10 +327,10 @@ contains
        ! drag = 0.125d0 * pi * (particles(n)%diam)**2 * fluid_dens * diff_velmag
        drag = inv_tau(n)*drag_coef*pmass
 
-       force(1) = drag*diff_u
-       force(2) = drag*diff_v
-       !force(1) = 0d0
-       !force(2) = 0d0 ! HACK for convective evaporation
+       !force(1) = drag*diff_u
+       !force(2) = drag*diff_v
+       force(1) = 0d0
+       force(2) = 0d0 ! HACK for convective evaporation
 
        !individual fuel species cp, based on skin temperature 
        !and gas_phase mass fractions.
@@ -357,7 +357,7 @@ contains
          do L = 1,nspec_f
 
            ! Calculate Skin Schmidt Number.
-           Sc_skin(n,L) = mu_skin(n)/(D_skin(n,L))
+           Sc_skin(n,L) = min(mu_skin(n)/(D_skin(n,L)),3d0)
 
            ! CALCULATE THE LATENT HEAT
            ! First term RHS is the enthalpy of the vapor at the skin
@@ -406,10 +406,10 @@ contains
 
          !-----------------------------------------------------------------------------------------
          ! Calculate Skin Prandtl Number.
-         Pr_skin(n) = mu_skin(n)*cp_skin(n)/lambda_skin(n)
+         Pr_skin(n) = min(mu_skin(n)*cp_skin(n)/lambda_skin(n),3d0)
          ! compare to prandtl = 0.75d0
 
-         ! Calculate the time constant for conduction
+         ! Calculate the time constant for convection
          ! Take the reciprocal save some flops.
          inv_cp_d = 1.0d0/(cp_d_av*pmass*Pr_skin(n))
 
@@ -427,7 +427,7 @@ contains
            tmp_conv = temp_diff(n)*one_third*inv_cp_d*cp_skin(n)*pmass*&
                       Nu(n)*inv_tau(n)
 
-           convection = convection + tmp_conv
+           convection = convection + tmp_conv*log(1+spalding_B(n,1))/B_T(n,1)
 
            ! Calculate energy needed to raise temperature of vapor. Why the
            ! liquid phase values?
@@ -442,7 +442,7 @@ contains
 
          ! Add mass transfer term
          heat_src = convection+&
-                    sum(Y_dot*h_skin,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
+                   -sum(Y_dot*h_skin,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
          !          sum(Y_dot*L_fuel,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
 
        endif
@@ -451,9 +451,9 @@ contains
        ! Put the same forcing term on the grid (cell centers)
        ! ****************************************************
        if(is_mom_tran.eq.1.or.is_mass_tran.eq.1.or.is_heat_tran.eq.1) then
+
           lx2 = (particles(n)%pos(1) - plo(1))*inv_dx(1) - 0.5d0
           ly2 = (particles(n)%pos(2) - plo(2))*inv_dx(2) - 0.5d0
- 
           i2 = floor(lx2)
           j2 = floor(ly2)
  
@@ -480,12 +480,14 @@ contains
        endif
 
        if(is_mass_tran.eq.1) then
+          do L = 1,nspec_f
        ! Force component "nc" is component "nf" in the ordering of (URHO, UMX, UMY, ...)
-          nf = UFS + fuel_indx(1)-1
-          source(i2  , j2  ,nf) = source(i2,   j2  ,nf) - coef_ll*Y_dot(1)
-          source(i2  , j2+1,nf) = source(i2,   j2+1,nf) - coef_lh*Y_dot(1)
-          source(i2+1, j2  ,nf) = source(i2+1, j2  ,nf) - coef_hl*Y_dot(1)
-          source(i2+1, j2+1,nf) = source(i2+1, j2+1,nf) - coef_hh*Y_dot(1)
+             nf = UFS + fuel_indx(L)-1
+             source(i2  , j2  ,nf) = source(i2,   j2  ,nf) - coef_ll*Y_dot(L)
+             source(i2  , j2+1,nf) = source(i2,   j2+1,nf) - coef_lh*Y_dot(L)
+             source(i2+1, j2  ,nf) = source(i2+1, j2  ,nf) - coef_hl*Y_dot(L)
+             source(i2+1, j2+1,nf) = source(i2+1, j2+1,nf) - coef_hh*Y_dot(L)
+          end do
        endif
 
        kinetic_src = 0d0
@@ -534,16 +536,16 @@ contains
        end do
 
        ! consider changing to lagged temperature to improve order
-       particles(n)%temp = particles(n)%temp + half_dt * heat_src / (cp_d_av*pmass)
+       particles(n)%temp = particles(n)%temp + half_dt * convection / (cp_d_av*pmass)
  
        ! Update diameter by half dt
-       particles(n)%diam = particles(n)%diam + half_dt * d_dot
+       particles(n)%diam = max(particles(n)%diam + half_dt * d_dot,1e-6)
 
-       if (particles(n)%diam .lt. 1e-6) then ! arbitrary theeshold size
+       if (particles(n)%diam .lt. 2e-6) then ! arbitrary theeshold size
           print *,'PARTICLE ID ', particles(n)%id,' REMOVED'
           print *,'had pos',particles(n)%pos(1),particles(n)%pos(2) 
           print *,'had vel',particles(n)%vel(1),particles(n)%vel(2) 
-          !particles(n)%id = -1
+          particles(n)%id = -1
        endif
 
      endif
