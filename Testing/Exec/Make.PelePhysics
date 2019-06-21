@@ -1,7 +1,6 @@
 AMREX_HOME        ?= ../../../../../amrex
 PELE_HOME         ?= ../../../..
 PELE_PHYSICS_HOME ?= $(PELE_HOME)/PelePhysics
-PELEC_HOME        ?= $(PELE_HOME)/PeleC
 
 TOP := $(PELE_PHYSICS_HOME)
 
@@ -113,11 +112,6 @@ include $(Bpack)
 
 INCLUDE_LOCATIONS += $(Blocs)
 VPATH_LOCATIONS   += $(Blocs)
-
-include $(PELEC_HOME)/constants/Make.package
-EXTERN_CORE += $(PELEC_HOME)/constants
-INCLUDE_LOCATIONS += $(PELEC_HOME)/constants
-VPATH_LOCATIONS   += $(PELEC_HOME)/constants
 
 include $(AMREX_HOME)/Src/F_Interfaces/Base/Make.package
 INCLUDE_LOCATIONS += $(AMREX_HOME)/Src/F_Interfaces/Base
