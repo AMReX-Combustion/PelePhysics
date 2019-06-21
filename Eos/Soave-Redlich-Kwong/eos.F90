@@ -12,6 +12,7 @@ module eos_module
 
   use amrex_fort_module, only : amrex_real
   use amrex_constants_module
+  use fuego_chemistry
   use eos_type_module
 
   use chemistry_module, only : nspecies, Ru, inv_mwt, chemistry_init, chemistry_initialized, spec_names, elem_names, molecular_weight
@@ -275,6 +276,16 @@ subroutine eos_get_activity(state)
  call SRK_EOS_GetSpecies_Activity(state)
 
 end subroutine eos_get_activity
+
+subroutine eos_get_activity_h(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ call SRK_EOS_GetSpecies_Activity(state)
+
+end subroutine eos_get_activity_h
 
 subroutine eos_get_transport(state)
 
