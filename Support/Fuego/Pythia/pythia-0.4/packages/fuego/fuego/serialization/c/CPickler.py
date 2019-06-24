@@ -970,7 +970,7 @@ class CPickler(CMill):
             #'void CKSYMS'+sym+'(char * cckwrk, int * lout, char * kname, int * kerr, int lencck, int lenkname);',
             'void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa);',
             'void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P);',
-            'void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
+            'AMREX_GPU_HOST_DEVICE void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
             'void CKPC'+sym+'(double *  rho, double *  T, double *  c, double *  P);',
             'void CKRHOX'+sym+'(double *  P, double *  T, double *  x, double *  rho);',
             'void CKRHOY'+sym+'(double *  P, double *  T, double *  y, double *  rho);',
@@ -980,7 +980,7 @@ class CPickler(CMill):
             'void CKMMWY'+sym+'(double *  y, double *  wtm);',
             'void CKMMWX'+sym+'(double *  x, double *  wtm);',
             'void CKMMWC'+sym+'(double *  c, double *  wtm);',
-            'void CKYTX'+sym+'(double *  y, double *  x);',
+            'AMREX_GPU_HOST_DEVICE void CKYTX'+sym+'(double *  y, double *  x);',
             'void CKYTCP'+sym+'(double *  P, double *  T, double *  y, double *  c);',
             'void CKYTCR'+sym+'(double *  rho, double *  T, double *  y, double *  c);',
             'void CKXTY'+sym+'(double *  x, double *  y);',
@@ -1056,10 +1056,10 @@ class CPickler(CMill):
             'void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
             'void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * consP);',
             'void SPARSITY_PREPROC_PRECOND_GPU(int * rowPtr, int * colIndx, int * consP);',
-            'void aJacobian(double *  J, double *  sc, double T, int consP);',
+            'AMREX_GPU_HOST_DEVICE void aJacobian(double *  J, double *  sc, double T, int consP);',
             'void aJacobian_precond(double *  J, double *  sc, double T, int HP);',
-            'void dcvpRdT(double *  species, double *  tc);',
-            'void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);',
+            'AMREX_GPU_HOST_DEVICE void dcvpRdT(double *  species, double *  tc);',
+            'AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);',
             'void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);',
             'void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);',
             self.line('vector version'),
@@ -2592,6 +2592,7 @@ class CPickler(CMill):
     def _vckpy(self, mechanism):
         self._write()
         self._write()
+        self._write('#ifndef AMREX_USE_CUDA')
         self._write(self.line('Compute P = rhoRT/W(y)'))
         self._write('void VCKPY'+sym+'(int *  np, double *  rho, double *  T, double *  y,  double *  P)')
         self._write('{')
@@ -2631,6 +2632,7 @@ class CPickler(CMill):
         self._outdent()
 
         self._write('}')
+        self._write('#endif')
 
         return 
  
@@ -3283,6 +3285,7 @@ class CPickler(CMill):
     def _vckhms(self, mechanism):
         self._write()
         self._write()
+        self._write('#ifndef AMREX_USE_CUDA')
         self._write(self.line('Returns enthalpy in mass units (Eq 27.)'))
         self._write('void VCKHMS'+sym+'(int *  np, double *  T,  double *  hms)')
         self._write('{')
@@ -3328,6 +3331,7 @@ class CPickler(CMill):
 
         self._outdent()
         self._write('}')
+        self._write('#endif')
 
         return
 
@@ -4727,6 +4731,7 @@ class CPickler(CMill):
     def _vckwyr(self, mechanism):
         self._write()
         self._write()
+        self._write('#ifndef AMREX_USE_CUDA')
         self._write(self.line('Returns the molar production rate of species'))
         self._write(self.line('Given rho, T, and mass fractions'))
         self._write('void VCKWYR'+sym+'(int *  np, double *  rho, double *  T,')
@@ -4766,6 +4771,7 @@ class CPickler(CMill):
         self._outdent()
 
         self._write('}')
+        self._write('#endif')
 
         return
 
