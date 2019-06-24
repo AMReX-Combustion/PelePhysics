@@ -720,6 +720,7 @@ AMREX_GPU_HOST_DEVICE void CKPY(double *  rho, double *  T, double *  y,  double
 }
 
 
+#ifndef AMREX_USE_CUDA
 /*Compute P = rhoRT/W(y) */
 void VCKPY(int *  np, double *  rho, double *  T, double *  y,  double *  P)
 {
@@ -740,6 +741,7 @@ void VCKPY(int *  np, double *  rho, double *  T, double *  y,  double *  P)
 
     return;
 }
+#endif
 
 
 /*Compute P = rhoRT/W(c) */
@@ -941,6 +943,7 @@ AMREX_GPU_HOST_DEVICE void CKYTX(double *  y,  double *  x)
 }
 
 
+#ifndef AMREX_USE_CUDA
 /*convert y[npoints*species] (mass fracs) to x[npoints*species] (mole fracs) */
 void VCKYTX(int *  np, double *  y,  double *  x)
 {
@@ -966,6 +969,7 @@ void VCKYTX(int *  np, double *  y,  double *  x)
         }
     }
 }
+#endif
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
@@ -1342,6 +1346,7 @@ AMREX_GPU_HOST_DEVICE void CKHMS(double *  T,  double *  hms)
 }
 
 
+#ifndef AMREX_USE_CUDA
 /*Returns enthalpy in mass units (Eq 27.) */
 void VCKHMS(int *  np, double *  T,  double *  hms)
 {
@@ -1373,6 +1378,7 @@ void VCKHMS(int *  np, double *  T,  double *  hms)
         }
     }
 }
+#endif
 
 
 /*Returns gibbs in mass units (Eq 31.) */
@@ -1914,6 +1920,7 @@ AMREX_GPU_HOST_DEVICE void CKWYR(double *  rho, double *  T, double *  y,  doubl
 }
 
 
+#ifndef AMREX_USE_CUDA
 /*Returns the molar production rate of species */
 /*Given rho, T, and mass fractions */
 void VCKWYR(int *  np, double *  rho, double *  T,
@@ -1936,6 +1943,7 @@ void VCKWYR(int *  np, double *  rho, double *  T,
         wdot[i] *= 1.0e-6;
     }
 }
+#endif
 
 
 /*Returns the molar production rate of species */
@@ -7935,85 +7943,85 @@ void egtransetWT(double* WT ) {
 
 /*the lennard-jones potential well depth eps/kb in K */
 void egtransetEPS(double* EPS ) {
-    EPS[1] = 1.07400000E+02;
     EPS[2] = 5.72400000E+02;
     EPS[3] = 1.45000000E+02;
     EPS[4] = 8.00000000E+01;
-    EPS[8] = 9.75300000E+01;
     EPS[5] = 8.00000000E+01;
     EPS[6] = 1.07400000E+02;
     EPS[7] = 1.07400000E+02;
+    EPS[8] = 9.75300000E+01;
     EPS[0] = 3.80000000E+01;
+    EPS[1] = 1.07400000E+02;
 }
 
 
 /*the lennard-jones collision diameter in Angstroms */
 void egtransetSIG(double* SIG ) {
-    SIG[1] = 3.45800000E+00;
     SIG[2] = 2.60500000E+00;
     SIG[3] = 2.05000000E+00;
     SIG[4] = 2.75000000E+00;
-    SIG[8] = 3.62100000E+00;
     SIG[5] = 2.75000000E+00;
     SIG[6] = 3.45800000E+00;
     SIG[7] = 3.45800000E+00;
+    SIG[8] = 3.62100000E+00;
     SIG[0] = 2.92000000E+00;
+    SIG[1] = 3.45800000E+00;
 }
 
 
 /*the dipole moment in Debye */
 void egtransetDIP(double* DIP ) {
-    DIP[1] = 0.00000000E+00;
     DIP[2] = 1.84400000E+00;
     DIP[3] = 0.00000000E+00;
     DIP[4] = 0.00000000E+00;
-    DIP[8] = 0.00000000E+00;
     DIP[5] = 0.00000000E+00;
     DIP[6] = 0.00000000E+00;
     DIP[7] = 0.00000000E+00;
+    DIP[8] = 0.00000000E+00;
     DIP[0] = 0.00000000E+00;
+    DIP[1] = 0.00000000E+00;
 }
 
 
 /*the polarizability in cubic Angstroms */
 void egtransetPOL(double* POL ) {
-    POL[1] = 1.60000000E+00;
     POL[2] = 0.00000000E+00;
     POL[3] = 0.00000000E+00;
     POL[4] = 0.00000000E+00;
-    POL[8] = 1.76000000E+00;
     POL[5] = 0.00000000E+00;
     POL[6] = 0.00000000E+00;
     POL[7] = 0.00000000E+00;
+    POL[8] = 1.76000000E+00;
     POL[0] = 7.90000000E-01;
+    POL[1] = 1.60000000E+00;
 }
 
 
 /*the rotational relaxation collision number at 298 K */
 void egtransetZROT(double* ZROT ) {
-    ZROT[1] = 3.80000000E+00;
     ZROT[2] = 4.00000000E+00;
     ZROT[3] = 0.00000000E+00;
     ZROT[4] = 0.00000000E+00;
-    ZROT[8] = 4.00000000E+00;
     ZROT[5] = 0.00000000E+00;
     ZROT[6] = 1.00000000E+00;
     ZROT[7] = 3.80000000E+00;
+    ZROT[8] = 4.00000000E+00;
     ZROT[0] = 2.80000000E+02;
+    ZROT[1] = 3.80000000E+00;
 }
 
 
 /*0: monoatomic, 1: linear, 2: nonlinear */
 void egtransetNLIN(int* NLIN) {
-    NLIN[1] = 1;
     NLIN[2] = 2;
     NLIN[3] = 0;
     NLIN[4] = 0;
-    NLIN[8] = 1;
     NLIN[5] = 1;
     NLIN[6] = 2;
     NLIN[7] = 2;
+    NLIN[8] = 1;
     NLIN[0] = 1;
+    NLIN[1] = 1;
 }
 
 

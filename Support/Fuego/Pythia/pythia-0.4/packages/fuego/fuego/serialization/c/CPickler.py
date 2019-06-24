@@ -5084,6 +5084,7 @@ class CPickler(CMill):
     def _vckytx(self, mechanism):
         self._write()
         self._write()
+        self._write('#ifndef AMREX_USE_CUDA')
         self._write(self.line(
             'convert y[npoints*species] (mass fracs) to x[npoints*species] (mole fracs)'))
         self._write('void VCKYTX'+sym+'(int *  np, double *  y,  double *  x)')
@@ -5131,6 +5132,7 @@ class CPickler(CMill):
         self._write('}')
         self._outdent()
         self._write('}')
+        self._write('#endif') 
         return 
  
     def _ckytcp(self, mechanism):
