@@ -51,18 +51,17 @@ using namespace thermo;
         34.014740,  /*H2O2 */
         28.013400};  /*N2 */
 
+#endif
+
 AMREX_GPU_HOST_DEVICE
 void get_imw(double imw_new[]){
-#pragma unroll
     for(int i = 0; i<9; ++i) imw_new[i] = imw[i];
 }
 
 AMREX_GPU_HOST_DEVICE
 void get_mw(double mw_new[]){
-#pragma unroll
     for(int i = 0; i<9; ++i) mw_new[i] = molecular_weights[i];
 }
-#endif
 
 
 #ifndef AMREX_USE_CUDA
