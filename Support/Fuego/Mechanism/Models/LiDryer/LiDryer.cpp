@@ -969,6 +969,10 @@ void VCKYTX(int *  np, double *  y,  double *  x)
         }
     }
 }
+#else
+void VCKYTX(int *  np, double *  y,  double *  x)
+{
+}
 #endif
 
 
@@ -1377,6 +1381,10 @@ void VCKHMS(int *  np, double *  T,  double *  hms)
             hms[n*(*np)+i] *= 8.31451e+07 * T[i] * imw[n];
         }
     }
+}
+#else
+void VCKHMS(int *  np, double *  T,  double *  hms)
+{
 }
 #endif
 

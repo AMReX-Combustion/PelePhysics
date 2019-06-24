@@ -1063,14 +1063,14 @@ class CPickler(CMill):
             'void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);',
             'void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);',
             self.line('vector version'),
+            'void VCKYTX'+sym+'(int *  np, double *  y, double *  x);',
+            'void VCKHMS'+sym+'(int *  np, double *  T, double *  ums);',
             '#ifndef AMREX_USE_CUDA',
             'void vproductionRate(int npt, double *  wdot, double *  c, double *  T);',
-            'void VCKHMS'+sym+'(int *  np, double *  T, double *  ums);',
             'void VCKPY'+sym+'(int *  np, double *  rho, double *  T, double *  y, double *  P);',
             'void VCKWYR'+sym+'(int *  np, double *  rho, double *  T,',
             '            double *  y,',
             '            double *  wdot);',
-            'void VCKYTX'+sym+'(int *  np, double *  y, double *  x);',
             'void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT);',
             'void vcomp_gibbs(int npt, double *  g_RT, double *  tc);',
             'void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT);',
@@ -3331,6 +3331,10 @@ class CPickler(CMill):
 
         self._outdent()
         self._write('}')
+        self._write('#else')
+        self._write('void VCKHMS'+sym+'(int *  np, double *  T,  double *  hms)')
+        self._write('{')
+        self._write('}')
         self._write('#endif')
 
         return
@@ -5131,6 +5135,10 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         self._outdent()
+        self._write('}')
+        self._write('#else') 
+        self._write('void VCKYTX'+sym+'(int *  np, double *  y,  double *  x)')
+        self._write('{')
         self._write('}')
         self._write('#endif') 
         return 

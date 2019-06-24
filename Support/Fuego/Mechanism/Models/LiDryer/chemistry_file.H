@@ -119,14 +119,14 @@ AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_EY(double *  e, double *  y, double *  t,
 void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);
 void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);
 /*vector version */
+void VCKYTX(int *  np, double *  y, double *  x);
+void VCKHMS(int *  np, double *  T, double *  ums);
 #ifndef AMREX_USE_CUDA
 void vproductionRate(int npt, double *  wdot, double *  c, double *  T);
-void VCKHMS(int *  np, double *  T, double *  ums);
 void VCKPY(int *  np, double *  rho, double *  T, double *  y, double *  P);
 void VCKWYR(int *  np, double *  rho, double *  T,
             double *  y,
             double *  wdot);
-void VCKYTX(int *  np, double *  y, double *  x);
 void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT);
 void vcomp_gibbs(int npt, double *  g_RT, double *  tc);
 void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT);
