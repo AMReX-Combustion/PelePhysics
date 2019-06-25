@@ -1,5 +1,6 @@
 module fuel_properties
 
+     use amrex_fort_module
      use meth_params_module
      use amrex_fort_module, only : amrex_real
 
@@ -16,7 +17,7 @@ module fuel_properties
       real(amrex_real), dimension(max_nspec_f) :: fuel_boil_temp
       real(amrex_real), dimension(max_nspec_f) :: fuel_cp
       real(amrex_real), dimension(max_nspec_f) :: fuel_molwt
-      integer(amrex_real), dimension(max_nspec_f) :: fuel_indx
+      integer, dimension(max_nspec_f) :: fuel_indx
 
 end module fuel_properties
 
