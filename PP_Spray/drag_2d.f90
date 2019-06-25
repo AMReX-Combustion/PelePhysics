@@ -9,7 +9,7 @@ contains
   subroutine update_particles(np, lev, particles, state, state_lo, state_hi, &
                               source, source_lo, source_hi, domlo, domhi, &
                               plo, phi, reflect_lo, reflect_hi, &
-                              dx, dt, do_move) &
+                              dx, flow_dt, do_move) &
        bind(c,name='update_particles')
 
     use iso_c_binding
@@ -34,18 +34,18 @@ contains
          (state_lo(1):state_hi(1),state_lo(2):state_hi(2),NVAR)
     real(amrex_real), intent(inout)        :: source &
          (source_lo(1):source_hi(1),source_lo(2):source_hi(2),NVAR)
-    real(amrex_real), intent(in   )        :: plo(2),phi(2),dx(2),dt
+    real(amrex_real), intent(in   )        :: plo(2),phi(2),dx(2),flow_dt
     integer,          intent(in   )        :: do_move, lev
     integer,          intent(in   )        :: reflect_lo(2), reflect_hi(2)
 
-    integer          :: i, j, i2, j2, n, nc, nf,  iloc, jloc,is_to_skip
+    integer          :: i, j, i2, j2, n, nc, nf, iloc, jloc,is_to_skip
+    integer          :: isub, nsub
     real(amrex_real) :: wx_lo, wy_lo, wx_hi, wy_hi
     real(amrex_real) :: lx, ly, lx2, ly2
-    real(amrex_real) :: half_dt
     real(amrex_real) :: inv_dx(2), inv_vol
     real(amrex_real) :: force(2), fluid_vel(2), fluid_dens, fluid_temp, drag_coef
     real(amrex_real) :: fluid_pres, fluid_Y(nspec), Y_dot(nspec_f)
-    real(amrex_real) :: m_dot, d_dot, convection, tmp_conv
+    real(amrex_real) :: m_dot, d_dot, convection, tmp_conv, dt
     real(amrex_real) :: diff_u, diff_v, diff_velmag, visc, reyn, drag, pmass
     real(amrex_real) :: heat_src, kinetic_src, prandtl, therm_cond
     real(amrex_real) :: cp_d_av, inv_Ru, inv_cp_d
@@ -53,6 +53,8 @@ contains
     real(amrex_real) :: Tll, Tlh, Thl, Thh
     real(amrex_real) :: Yll(nspec), Ylh(nspec), Yhl(nspec), Yhh(nspec)
     real(amrex_real) :: coef_ll, coef_hl, coef_lh, coef_hh
+    ! Bulk  Viscosity (not used, but returned by transport routines)
+    real(amrex_real) :: xi_skin
 
     integer :: is, ie, L, M
     integer :: lo(3), hi(3)
@@ -62,7 +64,7 @@ contains
     real(amrex_real), dimension(nspec_f) :: inv_density
     real(amrex_real), dimension(nspec_f) :: L_fuel
     real(amrex_real), dimension(nspec_f) :: h_skin
-    real(amrex_real), dimension(np) :: fluid_molwt
+    real(amrex_real) :: fluid_molwt
     ! Species Diffusion Coefficient Array
     real(amrex_real), dimension(1,1,1,nspec) :: D_dummy
     real(amrex_real), dimension(1,1,1,nspec) :: Y_dummy
@@ -81,11 +83,9 @@ contains
     ! Thermal Spalding number
     real(amrex_real), dimension(np,nspec_f) :: B_T
 
-    real(amrex_real), dimension(np) :: inv_tau
+    real(amrex_real) :: inv_tau, inv_tau_d, inv_tau_T
     ! Shear Viscosity
     real(amrex_real), dimension(np) :: mu_skin
-    ! Bulk  Viscosity (not used, but returned by transport routines)
-    real(amrex_real), dimension(np) :: xi_skin
     ! Bulk  Viscosity (not used, but returned by transport routines)
     real(amrex_real), dimension(np) :: lambda_skin
     ! Heat capacity
@@ -96,6 +96,7 @@ contains
     real(amrex_real), dimension(np) :: Pr_skin
     real(amrex_real), dimension(np) :: Nu
 
+    integer, parameter :: NSUBMAX = 100
     real*8, parameter :: pi = 3.1415926535897932d0
     real*8, parameter :: half_pi = 0.5d0*Pi
     real*8, parameter :: pi_six = Pi/6.0d0
@@ -110,7 +111,6 @@ contains
 
     inv_dx = 1.0d0/dx
     inv_vol = inv_dx(1) * inv_dx(2)
-    half_dt = 0.5d0 * dt
     inv_Ru = 1.0d0/Ru ! Reciprocal of Gas Constant
 
     ! ****************************************************
@@ -133,17 +133,20 @@ contains
 
     do n = 1, np
 
-       if ((particles(n)%id.eq.-1).or. particles(n)%id.gt.1e5.or. & 
-           (particles(n)%pos(1).ne.particles(n)%pos(1))) then 
-    !     print *,'PARTICLE ID ', lev,particles(n)%id,' BUST ',&
-    !        particles(n)%pos(1),particles(n)%pos(2)
-       else
-    !     print *,'REAL ', lev,particles(n)%id, &
-    !        particles(n)%pos(1),particles(n)%pos(2),particles(n)%diam
+     if ((particles(n)%id.eq.-1).or. & 
+         (particles(n)%pos(1).ne.particles(n)%pos(1)).or. &
+         (particles(n)%pos(2).ne.particles(n)%pos(2))) then 
+        print *,'PARTICLE ID ', lev,particles(n)%id,' BUST ',&
+          particles(n)%pos(1),particles(n)%pos(2)
+     else
 
        ! ****************************************************
        ! Compute the forcing term at the particle locations
        ! ****************************************************
+
+      isub = 1 ! initialize number of sub-cycles
+      nsub = 1 ! nsub is assigned in the first rub through the loop
+      do while ( isub.le.nsub) 
 
        lx = (particles(n)%pos(1) - plo(1))*inv_dx(1) + 0.5d0
        ly = (particles(n)%pos(2) - plo(2))*inv_dx(2) + 0.5d0
@@ -157,10 +160,6 @@ contains
           print *,'Array bounds are ', state_lo(:), state_hi(:)
           print *,'(x,y) are ', particles(n)%pos(1), particles(n)%pos(2)
           !call bl_error('Aborting in update_particles')
-       !else
-       !   print *,'PARTICLE ID ', particles(n)%id,' at grid point: ',i,j
-       !   print *,'Array bounds are ', state_lo(:), state_hi(:)
-       !   print *,'(x,y) are ', particles(n)%pos(1), particles(n)%pos(2)
        end if
 
        wx_hi = lx - i
@@ -274,7 +273,7 @@ contains
        call eos_wb(eos_state)
 
        fluid_pres = eos_state % p
-       fluid_molwt(n) = eos_state%wbar
+       fluid_molwt = eos_state%wbar
 
        ! Calculate the skin temperature of the droplet 1/3 rule.
        temp_diff(n) = max(fluid_temp - particles(n)%temp,0d0)
@@ -301,7 +300,7 @@ contains
        D_skin(n,1:nspec_f) = D_dummy(1,1,1,fuel_indx(1:nspec_f)) ! now in kg/cm^3 cm^2/s
        visc = 1.827d-4          ! nominal value of fluid viscosity in cgs
        mu_skin(n) = mu_dummy(1,1,1)
-       xi_skin(n) = xi_dummy(1,1,1)
+       xi_skin = xi_dummy(1,1,1)
        lambda_skin(n) = la_dummy(1,1,1)
 
        ! ****************************************************
@@ -321,11 +320,18 @@ contains
        drag_coef = 1.0d0+0.15d0*reyn**(0.687d0)
 
        ! Time constant.
-       inv_tau(n) = (18.0d0*mu_skin(n))/(particles(n)%density*particles(n)%diam**2)
+       inv_tau = (18.0d0*mu_skin(n))/(particles(n)%density*particles(n)%diam**2)
+
+       if(isub.eq.1) then
+          nsub = int(flow_dt*inv_tau)+1
+          nsub = min(nsub,NSUBMAX)
+          dt = flow_dt/nsub
+         !print *,"ncycles -v",nsub,1d0/inv_tau
+       endif
 
        ! Drag coefficient =  (pi / 8) * (Density * Relative Velocity) * (Particle Diameter)**2
        ! drag = 0.125d0 * pi * (particles(n)%diam)**2 * fluid_dens * diff_velmag
-       drag = inv_tau(n)*drag_coef*pmass
+       drag = inv_tau*drag_coef*pmass
 
        !force(1) = drag*diff_u
        !force(2) = drag*diff_v
@@ -345,7 +351,7 @@ contains
        convection = 0.0d0
        L_fuel = 0.0d0
        is_to_skip = 0
-       do M = 1,nspec
+       do M = 1,nspec_f
         if(fluid_Y(M).ge.1d0) then ! the gas phase is only fuel vapor
          is_to_skip = 1
         endif 
@@ -369,7 +375,7 @@ contains
 
            ! CALCULATE THE SPALDING NUMBER
            call calc_spalding_num(L_fuel(L),particles(n)%temp,fluid_pres,&
-                                  fluid_Y(fuel_indx(L)),fluid_molwt(n),fuel_molwt(L),&
+                                  fluid_Y(fuel_indx(L)),fluid_molwt,fuel_molwt(L),&
                                   invfmolwt(L), inv_boil_temp(L),inv_Ru, p0, &
                                   spalding_B(n,L))
 
@@ -382,11 +388,19 @@ contains
 
         end do
 
+        inv_tau_d = -one_third*m_dot/pmass
+        if(isub.eq.1) then
+          nsub = max(nsub,int(flow_dt*inv_tau_d)+1)
+          nsub = min(nsub,NSUBMAX)
+          dt = flow_dt/nsub
+         !print *,"ncycles -d",nsub,1d0/inv_tau_d
+        endif
+
         ! Diameter rate of change (d_dot)
         d_dot = m_dot/(half_pi*particles(n)%density*particles(n)%diam**2)
         if (d_dot .ne.d_dot) then 
           print *,'PARTICLE ID ', particles(n)%id,' BUST '
-          d_dot = 0.
+          stop
         endif
 
        endif
@@ -425,7 +439,7 @@ contains
                 cp_f(n,L), cp_skin(n), spalding_B(n,L), B_T(n,L))
 
            tmp_conv = temp_diff(n)*one_third*inv_cp_d*cp_skin(n)*pmass*&
-                      Nu(n)*inv_tau(n)
+                      Nu(n)*inv_tau
 
            convection = convection + tmp_conv*log(1+spalding_B(n,1))/B_T(n,1)
 
@@ -445,12 +459,22 @@ contains
                    -sum(Y_dot*h_skin,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
          !          sum(Y_dot*L_fuel,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
 
+         inv_tau_T = convection/(cp_d_av*pmass*particles(n)%temp) 
+         if(isub.eq.1) then ! last chance to modify nsub
+           nsub = max(nsub,int(flow_dt*inv_tau_T)+1)
+           nsub = min(nsub,NSUBMAX)
+           dt = flow_dt/nsub
+          !print *,"ncycles -T",nsub,1d0/inv_tau_T
+         endif
+
        endif
 
        ! ****************************************************
        ! Put the same forcing term on the grid (cell centers)
        ! ****************************************************
        if(is_mom_tran.eq.1.or.is_mass_tran.eq.1.or.is_heat_tran.eq.1) then
+
+          inv_vol = inv_vol/nsub ! VIP: add only a fraction of the source term
 
           lx2 = (particles(n)%pos(1) - plo(1))*inv_dx(1) - 0.5d0
           ly2 = (particles(n)%pos(2) - plo(2))*inv_dx(2) - 0.5d0
@@ -488,7 +512,7 @@ contains
              source(i2+1, j2  ,nf) = source(i2+1, j2  ,nf) - coef_hl*Y_dot(L)
              source(i2+1, j2+1,nf) = source(i2+1, j2+1,nf) - coef_hh*Y_dot(L)
           end do
-       endif
+       endif ! is_mass_tran
 
        kinetic_src = 0d0
        if(is_mom_tran.eq.1) then
@@ -501,7 +525,7 @@ contains
           end do
 
           kinetic_src = force(1)*fluid_vel(1)+force(2)*fluid_vel(2)
-       endif
+       endif ! is_mom_tran
 
        if(is_heat_tran.eq.1) then
           source(i2,   j2  ,UEINT) = source(i2,   j2  ,UEINT) - coef_ll*heat_src
@@ -520,7 +544,7 @@ contains
 
           source(i2+1, j2+1,UEDEN) = source(i2+1, j2+1,UEDEN) - coef_hh * &
                 (heat_src + kinetic_src)
-       endif
+       endif ! is_heat_tran
 
        ! ****************************************************
        ! Now apply the forcing term to the particles
@@ -528,7 +552,7 @@ contains
 
        do nc = 1, 2
           ! Update velocity by half dt
-          particles(n)%vel(nc) = particles(n)%vel(nc) + half_dt * force(nc) / pmass
+          particles(n)%vel(nc) = particles(n)%vel(nc) + 0.5d0*dt * force(nc) / pmass
 
           ! Update position by full dt
           if (do_move .eq. 1) &
@@ -536,10 +560,10 @@ contains
        end do
 
        ! consider changing to lagged temperature to improve order
-       particles(n)%temp = particles(n)%temp + half_dt * convection / (cp_d_av*pmass)
+       particles(n)%temp = particles(n)%temp + 0.5d0*dt * convection / (cp_d_av*pmass)
  
        ! Update diameter by half dt
-       particles(n)%diam = max(particles(n)%diam + half_dt * d_dot,1e-6)
+       particles(n)%diam = max(particles(n)%diam + 0.5d0*dt * d_dot,1e-6)
 
        if (particles(n)%diam .lt. 2e-6) then ! arbitrary theeshold size
           print *,'PARTICLE ID ', particles(n)%id,' REMOVED'
@@ -548,64 +572,69 @@ contains
           particles(n)%id = -1
        endif
 
-     endif
+       isub = isub+1
 
-    end do
+      end do ! sub-cycle loop
 
-       ! We are at the lo-x boundary and it is a reflecting wall
-       if (source_lo(1) .lt. domlo(1) .and. reflect_lo(1) .eq. 1) then
-          do j = source_lo(2),source_hi(2)
-             source(domlo(1),j,:) = source(domlo(1),j,:) + source(domlo(1)-1,j,:)
-          end do
-       end if
+     endif ! if (particles(n)%id.eq.-1).or.
 
-       if (source_lo(2) .lt. domlo(2) .and. reflect_lo(2) .eq. 1) then
-          ! We are at the lo-y boundary and it is a reflecting wall
-          do i = source_lo(1),source_hi(1)
-             source(i,domlo(2),:) = source(i,domlo(2),:) + source(i,domlo(2)-1,:)
-          end do
-       end if
+    end do ! n = 1,np
 
-       if (source_hi(1) .gt. domhi(1) .and. reflect_hi(1) .eq. 1) then
-          ! We are at the hi-x boundary and it is a reflecting wall
-          do j = source_lo(2),source_hi(2)
-             source(domhi(1),j,:) = source(domhi(1),j,:) + source(domhi(1)+1,j,:)
-          end do
-       end if
+    if (do_move .eq. 1) then
 
-       if (source_hi(2) .gt. domhi(2) .and. reflect_hi(2) .eq. 1) then
-          ! We are at the hi-y boundary and it is a reflecting wall
-          do i = source_lo(1),source_hi(1)
-             source(i,domhi(2),:) = source(i,domhi(2),:) + source(i,domhi(2)+1,:)
-          end do
-       end if
+       ! If at a reflecting boundary (Symmetry or Wall),     
+       ! flip the position back into the domain and flip the sign of the normal velocity 
 
-       if (do_move .eq. 1) then
+       do nc = 1, 2
 
-          ! If at a reflecting boundary (Symmetry or Wall),     
-          ! flip the position back into the domain and flip the sign of the normal velocity 
-
-          do nc = 1, 2
-
-             if (reflect_lo(nc) .eq. 1) then
-                do n = 1, np
-                   if (particles(n)%pos(nc) .lt. plo(nc)) then
-                      particles(n)%pos(nc) = 2.d0*plo(nc) - particles(n)%pos(nc) 
-                      particles(n)%vel(nc) = -particles(n)%vel(nc) 
-                   end if
-                end do
+          if (reflect_lo(nc) .eq. 1) then
+            do n = 1, np
+             if (particles(n)%pos(nc) .lt. plo(nc)) then
+                 particles(n)%pos(nc) = 2.d0*plo(nc) - particles(n)%pos(nc) 
+                 particles(n)%vel(nc) = -particles(n)%vel(nc) 
              end if
-             if (reflect_hi(nc) .eq. 1) then
-                do n = 1, np
-                   if (particles(n)%pos(nc) .lt. plo(nc)) then
-                      particles(n)%pos(nc) = 2.d0*phi(nc)-particles(n)%pos(nc) 
-                      particles(n)%vel(nc) = -particles(n)%vel(nc) 
-                   end if
-                end do
-             end if
+            end do
+          end if
+          if (reflect_hi(nc) .eq. 1) then
+            do n = 1, np
+              if (particles(n)%pos(nc) .lt. plo(nc)) then
+                  particles(n)%pos(nc) = 2.d0*phi(nc)-particles(n)%pos(nc) 
+                  particles(n)%vel(nc) = -particles(n)%vel(nc) 
+              end if
+            end do
+          end if
 
-          end do
-       end if
+       end do
+
+    endif
+
+    ! We are at the lo-x boundary and it is a reflecting wall
+    if (source_lo(1) .lt. domlo(1) .and. reflect_lo(1) .eq. 1) then
+       do j = source_lo(2),source_hi(2)
+          source(domlo(1),j,:) = source(domlo(1),j,:) + source(domlo(1)-1,j,:)
+        end do
+    end if
+
+    if (source_lo(2) .lt. domlo(2) .and. reflect_lo(2) .eq. 1) then
+       ! We are at the lo-y boundary and it is a reflecting wall
+       do i = source_lo(1),source_hi(1)
+          source(i,domlo(2),:) = source(i,domlo(2),:) + source(i,domlo(2)-1,:)
+       end do
+    end if
+
+    if (source_hi(1) .gt. domhi(1) .and. reflect_hi(1) .eq. 1) then
+       ! We are at the hi-x boundary and it is a reflecting wall
+       do j = source_lo(2),source_hi(2)
+          source(domhi(1),j,:) = source(domhi(1),j,:) + source(domhi(1)+1,j,:)
+       end do
+    end if
+
+    if (source_hi(2) .gt. domhi(2) .and. reflect_hi(2) .eq. 1) then
+       ! We are at the hi-y boundary and it is a reflecting wall
+       do i = source_lo(1),source_hi(1)
+          source(i,domhi(2),:) = source(i,domhi(2),:) + source(i,domhi(2)+1,:)
+       end do
+    end if
 
     call destroy(eos_state)
 
