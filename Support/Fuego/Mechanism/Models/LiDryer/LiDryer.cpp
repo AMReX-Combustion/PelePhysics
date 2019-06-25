@@ -26,10 +26,10 @@ namespace thermo
 };
 
 using namespace thermo;
-#else
+#endif
 
     /* Inverse molecular weights */
-    static AMREX_GPU_DEVICE_MANAGED double imw[9] = {
+    static AMREX_GPU_DEVICE_MANAGED double inv_molecular_weights[9] = {
         1.0 / 2.015940,  /*H2 */
         1.0 / 31.998800,  /*O2 */
         1.0 / 18.015340,  /*H2O */
@@ -50,11 +50,10 @@ using namespace thermo;
         33.006770,  /*HO2 */
         34.014740,  /*H2O2 */
         28.013400};  /*N2 */
-#endif
 
 AMREX_GPU_HOST_DEVICE
 void get_imw(double imw_new[]){
-    for(int i = 0; i<9; ++i) imw_new[i] = imw[i];
+    for(int i = 0; i<9; ++i) imw_new[i] = inv_molecular_weights[i];
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -1932,6 +1931,7 @@ void VCKWYR(int *  np, double *  rho, double *  T,
 	    double *  y,
 	    double *  wdot)
 {
+#ifndef AMREX_USE_CUDA
     double c[9*(*np)]; /*temporary storage */
     /*See Eq 8 with an extra 1e6 so c goes to SI */
     for (int n=0; n<9; n++) {
@@ -1947,6 +1947,7 @@ void VCKWYR(int *  np, double *  rho, double *  T,
     for (int i=0; i<9*(*np); i++) {
         wdot[i] *= 1.0e-6;
     }
+#endif
 }
 
 

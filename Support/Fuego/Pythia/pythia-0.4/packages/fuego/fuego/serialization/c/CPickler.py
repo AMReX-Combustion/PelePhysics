@@ -380,14 +380,14 @@ class CPickler(CMill):
         self._write()
 
         self._write('using namespace thermo;')
-        self._write('#else')
+        self._write('#endif')
         self._write()
 
 
         self._indent()
 
         self._write(self.line(' Inverse molecular weights'))
-        self._write('static AMREX_GPU_DEVICE_MANAGED double imw[%d] = {' %nSpecies )
+        self._write('static AMREX_GPU_DEVICE_MANAGED double inv_molecular_weights[%d] = {' %nSpecies )
         self._indent()
         for i in range(0,self.nSpecies):
             species = self.species[i]
@@ -412,14 +412,13 @@ class CPickler(CMill):
             self._write(text + self.line('%s' % species.symbol))
         self._outdent()
         self._outdent()
-        self._write('#endif')
         self._write()
 
         self._write('AMREX_GPU_HOST_DEVICE')
         self._write('void get_imw(double imw_new[]){')
         ##self._write('#pragma unroll')
         self._indent()
-        self._write('for(int i = 0; i<%d; ++i) imw_new[i] = imw[i];' %nSpecies )
+        self._write('for(int i = 0; i<%d; ++i) imw_new[i] = inv_molecular_weights[i];' %nSpecies )
         self._outdent()
         self._write('}')
         self._write()
