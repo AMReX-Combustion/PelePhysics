@@ -26,6 +26,7 @@ class Mill(Stationery, Indenter):
             #self._renderDocument(document)
             self._renderHeader_CHOP(document)
             self._renderDocument_CHOP(document)
+            self._renderMechHeader_CHOP(document)
         self._end()
 
         return self._rep
