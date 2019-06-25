@@ -7,6 +7,8 @@
 
 extern "C"
 {
+AMREX_GPU_HOST_DEVICE void get_imw(double imw_new[]);
+AMREX_GPU_HOST_DEVICE void get_mw(double mw_new[]);
 void egtransetEPS(double *  EPS);
 void egtransetSIG(double* SIG);
 void atomicWeight(double *  awt);
@@ -36,7 +38,7 @@ void CKSYME(int * kname, int * lenkname);
 void CKSYMS(int * kname, int * lenkname);
 void CKRP(double *  ru, double *  ruc, double *  pa);
 void CKPX(double *  rho, double *  T, double *  x, double *  P);
-void CKPY(double *  rho, double *  T, double *  y, double *  P);
+AMREX_GPU_HOST_DEVICE void CKPY(double *  rho, double *  T, double *  y, double *  P);
 void CKPC(double *  rho, double *  T, double *  c, double *  P);
 void CKRHOX(double *  P, double *  T, double *  x, double *  rho);
 void CKRHOY(double *  P, double *  T, double *  y, double *  rho);
@@ -46,7 +48,7 @@ void CKAWT(double *  awt);
 void CKMMWY(double *  y, double *  wtm);
 void CKMMWX(double *  x, double *  wtm);
 void CKMMWC(double *  c, double *  wtm);
-void CKYTX(double *  y, double *  x);
+AMREX_GPU_HOST_DEVICE void CKYTX(double *  y, double *  x);
 void CKYTCP(double *  P, double *  T, double *  y, double *  c);
 void CKYTCR(double *  rho, double *  T, double *  y, double *  c);
 void CKXTY(double *  x, double *  y);
@@ -106,25 +108,27 @@ void CKEQYR(double *  rho, double *  T, double *  y, double *  eqcon);
 void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon);
 void DWDOT(double *  J, double *  sc, double *  T, int * consP);
 void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);
+void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma);
 void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);
 void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);
 void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);
-void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * consP);
-void aJacobian(double *  J, double *  sc, double T, int consP);
+void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * consP);
+void SPARSITY_PREPROC_PRECOND_GPU(int * rowPtr, int * colIndx, int * consP);
+AMREX_GPU_HOST_DEVICE void aJacobian(double *  J, double *  sc, double T, int consP);
 void aJacobian_precond(double *  J, double *  sc, double T, int HP);
-void dcvpRdT(double *  species, double *  tc);
-void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);
+AMREX_GPU_HOST_DEVICE void dcvpRdT(double *  species, double *  tc);
+AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);
 void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);
 void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);
 /*vector version */
-#ifndef AMREX_USE_CUDA
-void vproductionRate(int npt, double *  wdot, double *  c, double *  T);
+void VCKYTX(int *  np, double *  y, double *  x);
 void VCKHMS(int *  np, double *  T, double *  ums);
-void VCKPY(int *  np, double *  rho, double *  T, double *  y, double *  P);
 void VCKWYR(int *  np, double *  rho, double *  T,
             double *  y,
             double *  wdot);
-void VCKYTX(int *  np, double *  y, double *  x);
+#ifndef AMREX_USE_CUDA
+void vproductionRate(int npt, double *  wdot, double *  c, double *  T);
+void VCKPY(int *  np, double *  rho, double *  T, double *  y, double *  P);
 void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT);
 void vcomp_gibbs(int npt, double *  g_RT, double *  tc);
 void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT);
