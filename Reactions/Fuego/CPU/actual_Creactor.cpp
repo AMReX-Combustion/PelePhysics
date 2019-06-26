@@ -1,6 +1,9 @@
 #include <CPU/actual_Creactor.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
+#include <eos.H>
+//#include <eos_type.H>
+//#include <eos_type_cpp.H>
 
 /**********************************/
 
@@ -44,11 +47,6 @@
   /* Checks */
   bool reactor_cvode_initialized = false;
   bool actual_ok_to_react = true;
-/* TIMERS */
-  std::chrono::duration<double> elapsed_seconds;
-  std::chrono::duration<double> elapsed_seconds_RHS;
-  std::chrono::duration<double> elapsed_seconds_Pcond;
-  std::chrono::duration<double> elapsed_seconds_JacFuego;
 
 /**********************************/
 /* Definitions */
@@ -174,18 +172,14 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    flag = CVSpilsSetLinearSolver(cvode_mem, LS);
 	    if(check_flag(&flag, "CVSpilsSetLinearSolver", 1)) return(1);
 	} else {
-	    int nJdata;
-	    int HP = 0;
-	    SPARSITY_INFO(&nJdata, &HP, 1);
-            printf("--> SPARSE solver -- non zero entries %d represents %f %% sparsity pattern.", nJdata, nJdata/float((NEQ+1) * (NEQ+1)) *100.0);
-	    amrex::Abort("\n \n");
+            amrex::Abort("Linear solvers availables are: Direct Dense (1), Direct Sparse (5) or Iterative GMRES (99)");
 	}
 
 	if (iJac_Creact == 0) {
             printf("\n--> Without Analytical J\n");
 #ifdef USE_KLU 
 	    if (iDense_Creact == 5) {
-	        amrex::Abort("\n--> SPARSE SOLVER SHOULD HAVE AN AJ...\n");
+	        amrex::Abort("\n--> A Sparse Solver should always have an AJ ...\n");
 	    }
 #endif
 	} else {
@@ -260,20 +254,14 @@ int react(realtype *rY_in, realtype *rY_src_in,
 		realtype *P_in, 
                 realtype *dt_react, realtype *time, int *Init){
 
-        std::chrono::time_point<std::chrono::system_clock> start, end;		
-        std::chrono::duration<double> total_elapsed;
 	realtype time_init, time_out, dummy_time, temperature_save ;
 	int flag;
+        //EOSTYPE eos_state;
 
-        //FirstTimePrecond = true;
+	//eos_build(eos_state);
 
         time_init = *time;
 	time_out  = *time + (*dt_react);
-	start = std::chrono::system_clock::now();
-        elapsed_seconds = start - start;
-        elapsed_seconds_RHS = start - start;
-        elapsed_seconds_Pcond = start - start;
-	elapsed_seconds_JacFuego = start - start;
 
         if (iverbose > 3) {
 	    printf("BEG : time curr is %14.6e and dt_react is %14.6e and final time should be %14.6e \n", time_init, *dt_react, time_out);
@@ -296,6 +284,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    std::memcpy(rhohsrc_ext, rX_src_in, sizeof(realtype) * NCELLS);
 	}
 
+	/* Check the initial sate */
 	check_state(y);
 	if (!actual_ok_to_react)  { 
 	    amrex::Abort("\n Check_state failed: state is out of react bounds \n");
@@ -336,6 +325,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 	*dt_react = dummy_time - time_init;
 #ifdef MOD_REACTOR
+	/* REACTOR MODE: enables substepping a big time step */
 	*time  = time_init + (*dt_react);
 #endif
         if (iverbose > 3) {
@@ -348,12 +338,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
             rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
 	}
 
-        end = std::chrono::system_clock::now();
-        total_elapsed = end - start;
-
-	if (*Init != 1) {
-	    temp_old = rY_in[NEQ];
-	}
+	/* Stuff for restart partial not used at the moment */
+	//if (*Init != 1) {
+	//    temp_old = rY_in[NEQ];
+	//}
 
 	/* VERBOSE MODE */
         if (iverbose > 5) {
@@ -391,18 +379,16 @@ int react(realtype *rY_in, realtype *rY_src_in,
                 //CKWC(&temp, activity, cdot);
 	        // *P_in = cdot[2];
 	    }
-
+	    printf("\nAdditional verbose info --\n");
 	    PrintFinalStats(cvode_mem, rY_in[NEQ]);
-
+            printf(" -------------------------------------\n");
 	} else if (iverbose > 2) {
 	    printf("\nAdditional verbose info --\n");
 	    PrintFinalStats(cvode_mem, temperature_save);
-	    //std::cout << "Time spent computing Jac ? " << elapsed_seconds_JacFuego.count() << " " << elapsed_seconds_JacFuego.count() / total_elapsed.count() * 100.0 <<  std::endl; 
-	    //std::cout << "Temp, chemistry solve, RHSeval, PSolve, Precond = " << rY_in[NEQ] << " " << total_elapsed.count() << " "<< elapsed_seconds_RHS.count() << " " << elapsed_seconds.count() << " " << elapsed_seconds_Pcond.count() << std::endl; 
-	    //std::cout << "Temp, RHSeval represnts, PSolve represents, Precond represents = " << rY_in[NEQ] << " " << elapsed_seconds_RHS.count() / total_elapsed.count() * 100.0 <<  " " << elapsed_seconds.count()/total_elapsed.count() * 100.0 << " " << elapsed_seconds_Pcond.count() /total_elapsed.count() * 100.0 << std::endl;
             printf(" -------------------------------------\n");
 	}
 
+	/* Get estimate of work done */
         long int nfe;
 	flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
 	return nfe;
@@ -412,9 +398,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
 /* RHS routine */
 static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, 
 		void *user_data){
-
-        std::chrono::time_point<std::chrono::system_clock> start, end;		
-	start = std::chrono::system_clock::now();
 
 	realtype *y_d      = N_VGetArrayPointer(y_in);
 	realtype *ydot_d   = N_VGetArrayPointer(ydot_in);
@@ -426,8 +409,7 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 	    fKernelSpec(&t, y_d, ydot_d, 
 			    rhoh_init, rhohsrc_ext, rYsrc);
 	}
-	end = std::chrono::system_clock::now();
-        elapsed_seconds_RHS = elapsed_seconds_RHS + end - start;
+
 	return(0);
 }
 
@@ -441,6 +423,7 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 		            double *rhoX_init, double *rhoXsrc_ext, double *rYs)
 {
   int tid;
+  /* Loop on packed cells */
   for (tid = 0; tid < NCELLS; tid ++) {
       realtype massfrac[NEQ],activity[NEQ];
       realtype Xi[NEQ], cXi[NEQ];
@@ -452,36 +435,44 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 
       /* MW CGS */
       CKWT(molecular_weight);
+
       /* rho MKS */ 
       realtype rho = 0.0;
       for (int i = 0; i < NEQ; i++){
           rho = rho + yvec_d[offset + i];
       }
+
       /* temp */
       temp = yvec_d[offset + NEQ];
+
       /* Yks, C CGS*/
       for (int i = 0; i < NEQ; i++){
           massfrac[i] = yvec_d[offset + i] / rho;
 	  activity[i] = yvec_d[offset + i]/(molecular_weight[i]);
       }
+
       /* NRG CGS */
       energy = (rhoX_init[tid] + rhoXsrc_ext[tid]*(*dt)) /rho;
 
       /* Fuego calls on device */
+      realtype cX = 0.0;
       if (iE_Creact == 1){
-          GET_T_GIVEN_EY(&energy, massfrac, &temp, &lierr);
-          CKUMS(&temp, Xi);
-          CKCVMS(&temp, cXi);
+	  /* experience */
+	  eos_re_ext(&rho,massfrac,&temp,&energy,Xi,&cX);
+          //GET_T_GIVEN_EY(&energy, massfrac, &temp, &lierr);
+          //CKUMS(&temp, Xi);
+          //CKCVMS(&temp, cXi);
       } else {
           GET_T_GIVEN_HY(&energy, massfrac, &temp, &lierr);
           CKHMS(&temp, Xi);
           CKCPMS(&temp, cXi);
+          for (int i = 0; i < NEQ; i++){
+              cX = cX + massfrac[i] * cXi[i];
+          }
       }
       CKWC(&temp, activity, cdot);
-      int cX = 0.0;
-      for (int i = 0; i < NEQ; i++){
-          cX = cX + massfrac[i] * cXi[i];
-      }
+      //printf(" Temp is %4.16e and cv is %4.16e \n", temp, cX);
+      //amrex::Abort("\n--> ABORT\n");
 
       /* Fill ydot vect */
       ydot_d[offset + NEQ] = rhoXsrc_ext[tid];
@@ -700,18 +691,6 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
 static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok, 
 		booleantype *jcurPtr, realtype gamma, void *user_data)
 {
-  //std::chrono::time_point<std::chrono::system_clock> start, end;		
-  //std::chrono::time_point<std::chrono::system_clock> start_Jcomp, end_Jcomp;		
-  //std::chrono::time_point<std::chrono::system_clock> start_JNcomp, end_JNcomp;		
-  //std::chrono::time_point<std::chrono::system_clock> start_LUfac, end_LUfac;		
-  
-  //std::chrono::duration<double> elapsed_seconds_Jcomp;
-  //std::chrono::duration<double> elapsed_seconds_JNcomp;
-  //std::chrono::duration<double> elapsed_seconds_LUfac;
-  //std::chrono::duration<double> elapsed_seconds_Pcond_prov;
-
-  //start = std::chrono::system_clock::now();
-
   int ok,tid;
 
   /* MW CGS */
@@ -734,8 +713,6 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
   realtype *udata;
   udata = N_VGetArrayPointer(u);
 
-  //start_Jcomp = std::chrono::system_clock::now();
-  //printf("temp_save %f \n",temp_save);
   if (jok) {
         /* jok = SUNTRUE: Copy Jbd to P */
         *jcurPtr = SUNFALSE;
@@ -783,10 +760,7 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 
         *jcurPtr = SUNTRUE;
   }
-  //end_Jcomp = std::chrono::system_clock::now();
-  //elapsed_seconds_Jcomp = end_Jcomp - start_Jcomp;
 
-  //start_JNcomp = std::chrono::system_clock::now();
   int nbVals;
   for (int i = 1; i < NEQ+2; i++) {
       /* nb non zeros elem should be the same for all cells */
@@ -807,10 +781,7 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
       }
   }
   
-  //end_JNcomp = std::chrono::system_clock::now();
-  //elapsed_seconds_JNcomp = end_JNcomp - start_JNcomp;
 
-  //start_LUfac = std::chrono::system_clock::now();
   if (!FirstTimePrecond) {
       //printf("and reuse pivots ...");
       for (tid = 0; tid < NCELLS; tid ++) {
@@ -822,14 +793,6 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
       }
       FirstTimePrecond = false;
   }
-  //end_LUfac = std::chrono::system_clock::now();
-  //elapsed_seconds_LUfac = end_LUfac - start_LUfac;
-
-  //end = std::chrono::system_clock::now();
-  //elapsed_seconds_Pcond = elapsed_seconds_Pcond + end - start;
-
-  //elapsed_seconds_Pcond_prov = end - start;
-  //std::cout << " stats (Jcomp,JNcomp,pivots,TOTAL) = " << elapsed_seconds_Jcomp.count() <<  " " << elapsed_seconds_JNcomp.count() << " " << elapsed_seconds_LUfac.count() << " " << elapsed_seconds_Pcond_prov.count() << std::endl;
 
   return(0);
 }
@@ -842,9 +805,6 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok, 
 		booleantype *jcurPtr, realtype gamma, void *user_data)
 {
-  std::chrono::time_point<std::chrono::system_clock> start, end;		
-  start = std::chrono::system_clock::now();
-
   UserData data_wk;
   realtype **(**P), **(**Jbd);
   sunindextype *(**pivot), ierr;
@@ -912,9 +872,6 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
   ierr = denseGETRF(P[0][0], NEQ+1, NEQ+1, pivot[0][0]);
   if (ierr != 0) return(1);
   
-  end = std::chrono::system_clock::now();
-  elapsed_seconds_Pcond = elapsed_seconds_Pcond + end - start;
-
   return(0);
 }
 
@@ -924,9 +881,6 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                   realtype gamma, realtype delta, int lr, void *user_data)
 {
-  std::chrono::time_point<std::chrono::system_clock> start, end;		
-  start = std::chrono::system_clock::now();
-
   UserData data_wk;
   data_wk = (UserData) user_data;
 
@@ -947,9 +901,6 @@ static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vec
       std::memcpy(zdata+offset_beg, zdata_cell, (NEQ+1)*sizeof(realtype));
   }
 
-  end = std::chrono::system_clock::now();
-  elapsed_seconds = elapsed_seconds + end - start;
-
   return(0);
 }
 #endif
@@ -959,9 +910,6 @@ static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vec
 static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                   realtype gamma, realtype delta, int lr, void *user_data)
 {
-  std::chrono::time_point<std::chrono::system_clock> start, end;		
-  start = std::chrono::system_clock::now();
-
   realtype **(**P);
   sunindextype *(**pivot);
   realtype *zdata, *v;
@@ -980,10 +928,6 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
      in P and pivot data in pivot, and return the solution in z. */
   v = zdata;
   denseGETRS(P[0][0], NEQ+1, pivot[0][0], v);
-
-  end = std::chrono::system_clock::now();
-  elapsed_seconds = elapsed_seconds + end - start;
-  //std::cout << " RHS duration " << elapsed_seconds.count() << std::endl;
 
   return(0);
 }
