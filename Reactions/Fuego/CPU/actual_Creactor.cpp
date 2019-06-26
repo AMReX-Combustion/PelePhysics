@@ -1,6 +1,7 @@
 #include <CPU/actual_Creactor.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
+#include "mechanism.h"
 #include <eos.H>
 //#include <eos_type.H>
 //#include <eos_type_cpp.H>
@@ -57,10 +58,9 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	realtype reltol, time;
 	N_Vector atol;
 	realtype *ratol;
-	int mm, ii, nfit;
 	int neq_tot;
 
-	CKINDX(&mm,&NEQ,&ii,&nfit);
+	NEQ = NUM_SPECIES;
         if (iverbose > 0) {
 	    printf("Nb of spec is %d \n", NEQ);
 	}
@@ -256,9 +256,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 	realtype time_init, time_out, dummy_time, temperature_save ;
 	int flag;
-        //EOSTYPE eos_state;
-
-	//eos_build(eos_state);
 
         time_init = *time;
 	time_out  = *time + (*dt_react);
@@ -343,7 +340,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	//    temp_old = rY_in[NEQ];
 	//}
 
-	/* VERBOSE MODE */
+	/* VERBOSE MODE 
         if (iverbose > 5) {
             for (int tid = 0; tid < NCELLS; tid ++) {
 	        double rhov, energy, temp, energy2;
@@ -387,6 +384,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    PrintFinalStats(cvode_mem, temperature_save);
             printf(" -------------------------------------\n");
 	}
+	*/
 
 	/* Get estimate of work done */
         long int nfe;
@@ -428,11 +426,13 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
       realtype massfrac[NEQ],activity[NEQ];
       realtype Xi[NEQ], cXi[NEQ];
       realtype cdot[NEQ], molecular_weight[NEQ];
+      realtype cX;
       realtype temp, energy;
       int lierr;
+      EOS eos;
 
       int offset = tid * (NEQ + 1); 
-
+      
       /* MW CGS */
       CKWT(molecular_weight);
 
@@ -441,24 +441,27 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
       for (int i = 0; i < NEQ; i++){
           rho = rho + yvec_d[offset + i];
       }
-
       /* temp */
       temp = yvec_d[offset + NEQ];
-
-      /* Yks, C CGS*/
+      /* Yks */
       for (int i = 0; i < NEQ; i++){
           massfrac[i] = yvec_d[offset + i] / rho;
-	  activity[i] = yvec_d[offset + i]/(molecular_weight[i]);
       }
-
       /* NRG CGS */
       energy = (rhoX_init[tid] + rhoXsrc_ext[tid]*(*dt)) /rho;
 
-      /* Fuego calls on device */
-      realtype cX = 0.0;
+      /* FUNC 1 */
+      eos.eos_EY2T(massfrac, energy, temp);
+      /* FUNC 3 */
+      eos.eos_TY2Cv(temp, massfrac, &cX);
+      /* FUNC 4 */
+      eos.eos_T2EI(temp, Xi);
+      /* FUNC 1b */
+      eos.eos_RTY2W(rho, temp, massfrac, cdot);
+
+      /* Fuego calls on device 
       if (iE_Creact == 1){
-	  /* experience */
-	  eos_re_ext(&rho,massfrac,&temp,&energy,Xi,&cX);
+	  //eos_re_ext(&rho,massfrac,&temp,&energy,Xi,&cX);
           //GET_T_GIVEN_EY(&energy, massfrac, &temp, &lierr);
           //CKUMS(&temp, Xi);
           //CKCVMS(&temp, cXi);
@@ -466,13 +469,12 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
           GET_T_GIVEN_HY(&energy, massfrac, &temp, &lierr);
           CKHMS(&temp, Xi);
           CKCPMS(&temp, cXi);
+	  cX = 0.0;
           for (int i = 0; i < NEQ; i++){
               cX = cX + massfrac[i] * cXi[i];
           }
       }
-      CKWC(&temp, activity, cdot);
-      //printf(" Temp is %4.16e and cv is %4.16e \n", temp, cX);
-      //amrex::Abort("\n--> ABORT\n");
+      */
 
       /* Fill ydot vect */
       ydot_d[offset + NEQ] = rhoXsrc_ext[tid];

@@ -1,4 +1,4 @@
-CEXE_headers+=chemistry_file.H
+CEXE_headers+=chemistry_file.H mechanism.h
 
 CEXE_sources+=LiDryer.cpp
 

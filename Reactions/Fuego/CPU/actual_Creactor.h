@@ -24,6 +24,7 @@
 
 
 #include <AMReX_Print.H>
+#include <Fuego_EOS.H>
 
 /**********************************/
 
