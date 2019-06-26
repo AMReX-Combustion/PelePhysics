@@ -531,5 +531,33 @@ contains
 
   end subroutine eos_mui
 
+  subroutine eos_re_ext(rho,Y,T,e,ei,cv) bind(C, name="eos_re_ext")   
+
+    implicit none
+
+    type (eos_t) :: eos_state
+
+    real(amrex_real), intent(in   ) :: rho, e
+    real(amrex_real), intent(in   ) :: Y(nspecies)
+    real(amrex_real), intent(inout) :: T,cv
+    real(amrex_real), intent(inout) :: ei(nspecies)
+
+    call build(eos_state)
+
+    eos_state % rho               = rho
+    eos_state % massfrac          = Y
+    eos_state % T                 = T
+    eos_state % e                 = e
+
+    call eos_re(eos_state)
+    
+    T                             = eos_state % T
+    ei                            = eos_state % ei
+    cv                            = eos_state % cv
+
+    call destroy(eos_state)
+
+  end subroutine eos_re_ext
+
 end module eos_module
 
