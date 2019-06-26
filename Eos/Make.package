@@ -1,1 +1,3 @@
 f90EXE_sources += eos_type.f90
+$FEXE_headers +=  eos_type.H 
+$CEXE_headers += eos_type_cpp.H  

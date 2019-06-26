@@ -116,6 +116,7 @@ module eos_type_module
   ! Z        -- Compressibility factor 
 
   
+  !type, bind(c) :: eos_t
   type :: eos_t
 
     real(amrex_real) :: rho
@@ -183,8 +184,10 @@ module eos_type_module
 
 contains
 
-  subroutine eos_build(eos)
+  subroutine eos_build(eos) !bind(C, name="eos_build")
+
     type(eos_t), intent(inout) :: eos
+
     if (.not. allocated(eos%massfrac)) then
        allocate(eos%massfrac(nspec))
     endif
@@ -248,8 +251,10 @@ contains
 
   end subroutine eos_build
   
-  subroutine eos_destroy(eos)
+  subroutine eos_destroy(eos) !bind(C, name="eos_destroy")       
+
     type(eos_t), intent(inout) :: eos
+
     deallocate(eos%massfrac)
     deallocate(eos%cpi)
     deallocate(eos%cvi)
