@@ -323,6 +323,210 @@ class CPickler(CMill):
                 
         return
 
+
+    def _statics_chop(self,mechanism):
+
+        self._write()
+
+        self._write('namespace thermo')
+        self._write('{')
+
+        self._indent()
+
+        self._write(self.line(' Inverse molecular weights'))
+        self._write('std::vector<double> imw;')
+
+        nReactions = len(mechanism.reaction())
+        self._write()
+        self._write('double fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double low_A[%d], low_beta[%d], low_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double rev_A[%d], rev_beta[%d], rev_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double troe_a[%d],troe_Ts[%d], troe_Tss[%d], troe_Tsss[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions))
+        self._write('double sri_a[%d], sri_b[%d], sri_c[%d], sri_d[%d], sri_e[%d];'
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('double activation_units[%d], prefactor_units[%d], phase_units[%d];'
+                    % (nReactions,nReactions,nReactions))
+        self._write('int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('double *TB[%d];' 
+                    % (nReactions))
+
+        self._write()
+        self._write('double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double low_A_DEF[%d], low_beta_DEF[%d], low_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double rev_A_DEF[%d], rev_beta_DEF[%d], rev_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double troe_a_DEF[%d],troe_Ts_DEF[%d], troe_Tss_DEF[%d], troe_Tsss_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions))
+        self._write('double sri_a_DEF[%d], sri_b_DEF[%d], sri_c_DEF[%d], sri_d_DEF[%d], sri_e_DEF[%d];'
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('double activation_units_DEF[%d], prefactor_units_DEF[%d], phase_units_DEF[%d];'
+                    % (nReactions,nReactions,nReactions))
+        self._write('int is_PD_DEF[%d], troe_len_DEF[%d], sri_len_DEF[%d], nTB_DEF[%d], *TBid_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('double *TB_DEF[%d];' 
+                    % (nReactions))
+        self._write('std::vector<int> rxn_map;')
+
+        self._outdent()
+
+        self._write('};')
+
+        self._write()
+
+        self._write('using namespace thermo;')
+
+        self._write()
+
+        return
+
+
+
+
+    def _renderHeader_CHOP(self, mechanism, options=None):
+
+        self._setSpecies(mechanism)
+        self.reactionIndex = mechanism._sort_reactions()
+
+        self._includes(True)
+
+        self._header_chop(mechanism)
+        self._namespace(mechanism)
+
+        return
+
+    def _renderDocument_CHOP(self, mechanism, options=None):
+
+        self._setSpecies(mechanism)
+        self.reactionIndex = mechanism._sort_reactions()
+
+        self._includes_chop()
+        self._statics_chop(mechanism)
+        self._ckinit_chop(mechanism)
+
+        # chemkin wrappers
+        self._ckindx(mechanism)
+        self._ckxnum(mechanism)
+        self._cksnum(mechanism)
+        self._cksyme(mechanism)
+        self._cksyms(mechanism)
+        self._ckrp(mechanism)
+        
+        self._ckpx(mechanism)
+        self._ckpy(mechanism)
+        self._vckpy(mechanism)
+        self._ckpc(mechanism)
+        self._ckrhox(mechanism)
+        self._ckrhoy(mechanism)
+        self._ckrhoc(mechanism)
+        self._ckwt(mechanism)
+        self._ckawt(mechanism)
+        self._ckmmwy(mechanism)
+        self._ckmmwx(mechanism)
+        self._ckmmwc(mechanism)
+        self._ckytx(mechanism)
+        self._vckytx(mechanism)
+        self._ckytcp(mechanism)
+        self._ckytcr(mechanism)
+        self._ckxty(mechanism)
+        self._ckxtcp(mechanism)
+        self._ckxtcr(mechanism)
+        self._ckctx(mechanism)
+        self._ckcty(mechanism)
+        
+        self._ckcpor(mechanism)
+        self._ckhort(mechanism)
+        self._cksor(mechanism)
+        
+        self._ckcvml(mechanism)
+        self._ckcpml(mechanism)
+        self._ckuml(mechanism)
+        self._ckhml(mechanism)
+        self._ckgml(mechanism)
+        self._ckaml(mechanism)
+        self._cksml(mechanism)
+        
+        self._ckcvms(mechanism)
+        self._ckcpms(mechanism)
+        self._ckums(mechanism)
+        self._ckhms(mechanism)
+        self._vckhms(mechanism)
+        self._ckgms(mechanism)
+        self._ckams(mechanism)
+        self._cksms(mechanism)
+
+        self._ckcpbl(mechanism)
+        self._ckcpbs(mechanism)
+        self._ckcvbl(mechanism)
+        self._ckcvbs(mechanism)
+        
+        self._ckhbml(mechanism)
+        self._ckhbms(mechanism)
+        self._ckubml(mechanism)
+        self._ckubms(mechanism)
+        self._cksbml(mechanism)
+        self._cksbms(mechanism)
+        self._ckgbml(mechanism)
+        self._ckgbms(mechanism)
+        self._ckabml(mechanism)
+        self._ckabms(mechanism)
+
+        self._ckwc(mechanism)
+        self._ckwyp(mechanism)
+        self._ckwxp(mechanism)
+        self._ckwyr(mechanism)
+        self._vckwyr(mechanism)
+        self._ckwxr(mechanism)
+        
+        self._ckqc(mechanism)
+        self._ckkfkr(mechanism)
+        self._ckqyp(mechanism)
+        self._ckqxp(mechanism)
+        self._ckqyr(mechanism)
+        self._ckqxr(mechanism)
+
+        self._cknu(mechanism)
+        self._ckncf(mechanism)
+        
+        self._ckabe(mechanism)
+        
+        self._ckeqc(mechanism)
+        self._ckeqyp(mechanism)
+        self._ckeqxp(mechanism)
+        self._ckeqyr(mechanism)
+        self._ckeqxr(mechanism)
+        
+        # Fuego Functions
+        self._productionRate(mechanism)
+        self._vproductionRate(mechanism)
+        self._DproductionRatePrecond(mechanism)
+        self._DproductionRate(mechanism)
+        self._sparsity(mechanism)
+        self._ajac(mechanism)
+        self._ajacPrecond(mechanism)
+        self._dthermodT(mechanism)
+        self._progressRate(mechanism)
+        self._progressRateFR(mechanism)
+        self._equilibriumConstants(mechanism)
+        self._thermo(mechanism)
+        self._molecularWeight(mechanism)
+        self._atomicWeight(mechanism)
+        self._T_given_ey(mechanism)
+        self._T_given_hy(mechanism)
+        self._getCriticalParameters(mechanism)
+        #AF: add transport data
+        self._trans_chop(mechanism)
+        #self._endfile(mechanism)
+
+        return
+
+
     def _renderDocument(self, mechanism, options=None):
 
         reorder_reactions=False
@@ -370,7 +574,7 @@ class CPickler(CMill):
             self._setSpecies(mechanism)
             self.reactionIndex = mechanism._sort_reactions()
 
-        self._includes()
+        self._includes(False)
         self._declarations(mechanism)
         self._statics(mechanism)
         self._ckinit(mechanism)
@@ -500,16 +704,28 @@ class CPickler(CMill):
         return
 
 
-    def _includes(self):
+    def _includes(self, header):
         self._rep += [
-            '',
             '#include <math.h>',
             '#include <stdio.h>',
-            '#include <string.h>',
-            '#include <stdlib.h>'
-            #'#ifdef USE_PYJAC',
-            #'#include <jacob.h>',
-            #'#endif'
+            '#include <string.h>'
+        ]
+        if header:
+            self._rep += [
+                '#include <stdlib.h>',
+                '#include <vector>'
+            ]
+        else:
+            self._rep += [
+                '#include <stdlib.h>'
+            ]
+
+        return
+
+
+    def _includes_chop(self):
+        self._rep += [
+            '#include "chemistry_file.H"'
             ]
         return
 
@@ -519,6 +735,238 @@ class CPickler(CMill):
             '',
             '}'
             ]
+
+    def _namespace(self,mechanism):
+
+        self._write()
+
+        self._write('namespace thermo')
+        self._write('{')
+
+        self._indent()
+
+        self._write('extern std::vector<double> imw;')
+
+        nReactions = len(mechanism.reaction())
+        self._write()
+        self._write('extern double fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double low_A[%d], low_beta[%d], low_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double rev_A[%d], rev_beta[%d], rev_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double troe_a[%d],troe_Ts[%d], troe_Tss[%d], troe_Tsss[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double sri_a[%d], sri_b[%d], sri_c[%d], sri_d[%d], sri_e[%d];'
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double activation_units[%d], prefactor_units[%d], phase_units[%d];'
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double *TB[%d];' 
+                    % (nReactions))
+
+        self._write()
+        self._write('extern double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double low_A_DEF[%d], low_beta_DEF[%d], low_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double rev_A_DEF[%d], rev_beta_DEF[%d], rev_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double troe_a_DEF[%d],troe_Ts_DEF[%d], troe_Tss_DEF[%d], troe_Tsss_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double sri_a_DEF[%d], sri_b_DEF[%d], sri_c_DEF[%d], sri_d_DEF[%d], sri_e_DEF[%d];'
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double activation_units_DEF[%d], prefactor_units_DEF[%d], phase_units_DEF[%d];'
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern int is_PD_DEF[%d], troe_len_DEF[%d], sri_len_DEF[%d], nTB_DEF[%d], *TBid_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double *TB_DEF[%d];' 
+                    % (nReactions))
+        self._write('extern std::vector<int> rxn_map;')
+
+        self._outdent()
+
+        self._write('}')
+
+        return
+
+
+    def _header_chop(self, mechanism):
+        self._rep += [
+            '',
+            'extern "C"',
+            '{',
+            'void egtransetEPS(double *  EPS);',
+            'void egtransetSIG(double* SIG);',
+            'void atomicWeight(double *  awt);',
+            'void molecularWeight(double *  wt);',
+            'void gibbs(double *  species, double *  tc);',
+            'void helmholtz(double *  species, double *  tc);',
+            'void speciesInternalEnergy(double *  species, double *  tc);',
+            'void speciesEnthalpy(double *  species, double *  tc);',
+            'void speciesEntropy(double *  species, double *  tc);',
+            'void cp_R(double *  species, double *  tc);',
+            'void cv_R(double *  species, double *  tc);',
+            'void equilibriumConstants(double *  kc, double *  g_RT, double T);',
+            'void productionRate(double *  wdot, double *  sc, double T);',
+            'void comp_k_f(double *  tc, double invT, double *  k_f);',
+            'void comp_Kc(double *  tc, double invT, double *  Kc);',
+            'void comp_qfqr(double *  q_f, double *  q_r, double *  sc, double *  tc, double invT);',
+            'void progressRate(double *  qdot, double *  speciesConc, double T);',
+            'void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);',
+            'void CKINIT'+sym+'();',
+            'void CKFINALIZE'+sym+'();',
+            'void CKINDX'+sym+'(int * mm, int * kk, int * ii, int * nfit );',
+            'void CKXNUM'+sym+'(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);',
+            'void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);',
+            'void CKSYME(int * kname, int * lenkname);',
+            'void CKSYMS(int * kname, int * lenkname);',
+            #'void CKSYMS'+sym+'(char * cckwrk, int * lout, char * kname, int * kerr, int lencck, int lenkname);',
+            'void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa);',
+            'void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P);',
+            'void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
+            'void CKPC'+sym+'(double *  rho, double *  T, double *  c, double *  P);',
+            'void CKRHOX'+sym+'(double *  P, double *  T, double *  x, double *  rho);',
+            'void CKRHOY'+sym+'(double *  P, double *  T, double *  y, double *  rho);',
+            'void CKRHOC'+sym+'(double *  P, double *  T, double *  c, double *  rho);',
+            'void CKWT'+sym+'(double *  wt);',
+            'void CKAWT'+sym+'(double *  awt);',
+            'void CKMMWY'+sym+'(double *  y, double *  wtm);',
+            'void CKMMWX'+sym+'(double *  x, double *  wtm);',
+            'void CKMMWC'+sym+'(double *  c, double *  wtm);',
+            'void CKYTX'+sym+'(double *  y, double *  x);',
+            'void CKYTCP'+sym+'(double *  P, double *  T, double *  y, double *  c);',
+            'void CKYTCR'+sym+'(double *  rho, double *  T, double *  y, double *  c);',
+            'void CKXTY'+sym+'(double *  x, double *  y);',
+            'void CKXTCP'+sym+'(double *  P, double *  T, double *  x, double *  c);',
+            'void CKXTCR'+sym+'(double *  rho, double *  T, double *  x, double *  c);',
+            'void CKCTX'+sym+'(double *  c, double *  x);',
+            'void CKCTY'+sym+'(double *  c, double *  y);',
+            'void CKCPOR'+sym+'(double *  T, double *  cpor);',
+            'void CKHORT'+sym+'(double *  T, double *  hort);',
+            'void CKSOR'+sym+'(double *  T, double *  sor);',
+            
+            'void CKCVML'+sym+'(double *  T, double *  cvml);',
+            'void CKCPML'+sym+'(double *  T, double *  cvml);',
+            'void CKUML'+sym+'(double *  T, double *  uml);',
+            'void CKHML'+sym+'(double *  T, double *  uml);',
+            'void CKGML'+sym+'(double *  T, double *  gml);',
+            'void CKAML'+sym+'(double *  T, double *  aml);',
+            'void CKSML'+sym+'(double *  T, double *  sml);',
+            
+            'void CKCVMS'+sym+'(double *  T, double *  cvms);',
+            'void CKCPMS'+sym+'(double *  T, double *  cvms);',
+            'void CKUMS'+sym+'(double *  T, double *  ums);',
+            'void CKHMS'+sym+'(double *  T, double *  ums);',
+            'void CKGMS'+sym+'(double *  T, double *  gms);',
+            'void CKAMS'+sym+'(double *  T, double *  ams);',
+            'void CKSMS'+sym+'(double *  T, double *  sms);',
+            
+            'void CKCPBL'+sym+'(double *  T, double *  x, double *  cpbl);',
+            'void CKCPBS'+sym+'(double *  T, double *  y, double *  cpbs);',
+            'void CKCVBL'+sym+'(double *  T, double *  x, double *  cpbl);',
+            'void CKCVBS'+sym+'(double *  T, double *  y, double *  cpbs);',
+            
+            'void CKHBML'+sym+'(double *  T, double *  x, double *  hbml);',
+            'void CKHBMS'+sym+'(double *  T, double *  y, double *  hbms);',
+            'void CKUBML'+sym+'(double *  T, double *  x, double *  ubml);',
+            'void CKUBMS'+sym+'(double *  T, double *  y, double *  ubms);',
+            'void CKSBML'+sym+'(double *  P, double *  T, double *  x, double *  sbml);',
+            'void CKSBMS'+sym+'(double *  P, double *  T, double *  y, double *  sbms);',
+            'void CKGBML'+sym+'(double *  P, double *  T, double *  x, double *  gbml);',
+            'void CKGBMS'+sym+'(double *  P, double *  T, double *  y, double *  gbms);',
+            'void CKABML'+sym+'(double *  P, double *  T, double *  x, double *  abml);',
+            'void CKABMS'+sym+'(double *  P, double *  T, double *  y, double *  abms);',
+
+            
+            'void CKWC'+sym+'(double *  T, double *  C, double *  wdot);',
+            'void CKWYP'+sym+'(double *  P, double *  T, double *  y, double *  wdot);',
+            'void CKWXP'+sym+'(double *  P, double *  T, double *  x, double *  wdot);',
+            'void CKWYR'+sym+'(double *  rho, double *  T, double *  y, double *  wdot);',
+            'void CKWXR'+sym+'(double *  rho, double *  T, double *  x, double *  wdot);',
+
+            
+            'void CKQC'+sym+'(double *  T, double *  C, double *  qdot);',
+            'void CKKFKR(double *  P, double *  T, double *  x, double *  q_f, double *  q_r);',
+            'void CKQYP'+sym+'(double *  P, double *  T, double *  y, double *  qdot);',
+            'void CKQXP'+sym+'(double *  P, double *  T, double *  x, double *  qdot);',
+            'void CKQYR'+sym+'(double *  rho, double *  T, double *  y, double *  qdot);',
+            'void CKQXR'+sym+'(double *  rho, double *  T, double *  x, double *  qdot);',
+            
+            'void CKNU'+sym+'(int * kdim, int * nuki);',
+            'void CKNCF'+sym+'(int * mdim, int * ncf);',
+            
+            'void CKABE'+sym+'(double *  a, double *  b, double *  e );',
+            'void CKEQC'+sym+'(double *  T, double *  C , double *  eqcon );',
+            'void CKEQYP'+sym+'(double *  P, double *  T, double *  y, double *  eqcon);',
+            'void CKEQXP'+sym+'(double *  P, double *  T, double *  x, double *  eqcon);',
+            'void CKEQYR'+sym+'(double *  rho, double *  T, double *  y, double *  eqcon);',
+            'void CKEQXR'+sym+'(double *  rho, double *  T, double *  x, double *  eqcon);',
+            'void DWDOT(double *  J, double *  sc, double *  T, int * consP);',
+            'void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);',
+            'void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);',
+            'void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);',
+            'void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
+            'void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * consP);',
+            'void aJacobian(double *  J, double *  sc, double T, int consP);',
+            'void aJacobian_precond(double *  J, double *  sc, double T, int HP);',
+            'void dcvpRdT(double *  species, double *  tc);',
+            'void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);',
+            'void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);',
+            'void GET_REACTION_MAP(int *  rmap);',
+            self.line('vector version'),
+            'void vproductionRate(int npt, double *  wdot, double *  c, double *  T);',
+            'void VCKHMS'+sym+'(int *  np, double *  T, double *  ums);',
+            'void VCKPY'+sym+'(int *  np, double *  rho, double *  T, double *  y, double *  P);',
+            'void VCKWYR'+sym+'(int *  np, double *  rho, double *  T,',
+            '            double *  y,',
+            '            double *  wdot);',
+            'void VCKYTX'+sym+'(int *  np, double *  y, double *  x);',
+            'void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT);',
+            'void vcomp_gibbs(int npt, double *  g_RT, double *  tc);',
+            'void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT);',
+            
+            'void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);',
+            ]
+        nReactions = len(mechanism.reaction())
+        if nReactions <= 50:
+            self._rep += [
+                'void vcomp_wdot(int npt, double *  wdot, double *  mixture, double *  sc,',
+                '                double *  k_f_s, double *  Kc_s,',
+                '                double *  tc, double *  invT, double *  T);',
+                ]
+        else:
+            for i in range(0,nReactions,50):
+                self._rep += [
+                    'void vcomp_wdot_%d_%d(int npt, double *  wdot, double *  mixture, double *  sc,' % (i+1,min(i+50,nReactions)),
+                    '                double *  k_f_s, double *  Kc_s,',
+                    '                double *  tc, double *  invT, double *  T);',
+                    ]                
+
+        self._rep += [
+                'void SetAllDefaults();',
+                self.line('Transport function declarations'),
+                'void egtransetLENIMC(int* LENIMC);',
+                'void egtransetLENRMC(int* LENRMC);',
+                'void egtransetNO(int* NO);',
+                'void egtransetKK(int* KK);',
+                'void egtransetNLITE(int* NLITE);',
+                'void egtransetPATM(double* PATM);',
+                'void egtransetWT(double* WT);',
+                'void egtransetEPS(double* EPS);',
+                'void egtransetSIG(double* SIG);',
+                'void egtransetDIP(double* DIP);',
+                'void egtransetPOL(double* POL);',
+                'void egtransetZROT(double* ZROT);',
+                'void egtransetNLIN(int* NLIN);',
+                'void egtransetCOFETA(double* COFETA);',
+                'void egtransetCOFLAM(double* COFLAM);',
+                'void egtransetCOFD(double* COFD);',
+                'void egtransetKTDIF(int* KTDIF);',
+                '}',
+            ]
+        return
 
 
     def _declarations(self, mechanism):
@@ -1109,10 +1557,7 @@ class CPickler(CMill):
             self._write("fwd_beta[%d]  = %.17g;" % (id,beta))
             self._write("fwd_Ea[%d]    = %.17g;" % (id,E))
 
-            if (len(reaction.ford) > 0) :
-                 dim = self._phaseSpaceUnits(reaction.ford)
-            else:
-                 dim = self._phaseSpaceUnits(reaction.reactants)
+            dim = self._phaseSpaceUnits(reaction.reactants)
             thirdBody = reaction.thirdBody
             low = reaction.low
             if not thirdBody:
@@ -1187,6 +1632,330 @@ class CPickler(CMill):
             
         return
 
+
+    def _ckinit_chop(self, mechanism):
+
+        nElement = len(mechanism.element())
+        nSpecies = len(mechanism.species())
+        nReactions = len(mechanism.reaction())
+        
+        self._write()
+        self._write(self.line(' Initializes parameter database'))
+        self._write('void CKINIT'+sym+'()')
+        self._write('{')
+        self._write()
+
+        self._indent()
+
+        self._write(self.line(' Inverse molecular weights'))
+        self._write('imw = {')
+        self._indent()
+        for i in range(0,self.nSpecies):
+            species = self.species[i]
+            text = '1.0 / %f' % (species.weight)
+            if (i<self.nSpecies-1):
+               text += ',  '
+            else:
+               text += '};  '
+            self._write(text + self.line('%s' % species.symbol))
+        self._outdent()
+        self._write()
+
+        # build reverse reaction map
+        rmap = {}
+        for i, reaction in zip(range(nReactions), mechanism.reaction()):
+            rmap[reaction.orig_id-1] = i
+        
+        self._write('rxn_map = {%s};' % (",".join(str(rmap[x]) for x in range(len(rmap)))))
+
+        self._write()
+
+        for j in range(nReactions):
+            reaction = mechanism.reaction()[rmap[j]]
+            id = reaction.id - 1
+
+            A, beta, E = reaction.arrhenius
+            self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
+            self._write("fwd_A[%d]     = %.17g;" % (id,A))
+            self._write("fwd_beta[%d]  = %.17g;" % (id,beta))
+            self._write("fwd_Ea[%d]    = %.17g;" % (id,E))
+
+            if (len(reaction.ford) > 0) :
+                dim = self._phaseSpaceUnits(reaction.ford)
+            else:
+                dim = self._phaseSpaceUnits(reaction.reactants)
+            thirdBody = reaction.thirdBody
+            low = reaction.low
+            if not thirdBody:
+                uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 3 !PD, !TB
+            elif not low:
+                uc = self._prefactorUnits(reaction.units["prefactor"], -dim) # Case 2 !PD, TB
+            else:
+                uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 1 PD, TB
+                low_A, low_beta, low_E = low
+                self._write("low_A[%d]     = %.17g;" % (id,low_A))
+                self._write("low_beta[%d]  = %.17g;" % (id,low_beta))
+                self._write("low_Ea[%d]    = %.17g;" % (id,low_E))
+                if reaction.troe:
+                    troe = reaction.troe
+                    ntroe = len(troe)
+                    is_troe = True
+                    self._write("troe_a[%d]    = %.17g;" % (id,troe[0]))
+                    if ntroe>1:
+                        self._write("troe_Tsss[%d] = %.17g;" % (id,troe[1]))
+                    if ntroe>2:
+                        self._write("troe_Ts[%d]   = %.17g;" % (id,troe[2]))
+                    if ntroe>3:
+                        self._write("troe_Tss[%d]  = %.17g;" % (id,troe[3]))
+                    self._write("troe_len[%d]  = %d;" % (id,ntroe))
+                if reaction.sri:
+                    sri = reaction.sri
+                    nsri = len(sri)
+                    is_sri = True
+                    self._write("sri_a[%d]     = %.17g;" % (id,sri[0]))
+                    if nsri>1:
+                        self._write("sri_b[%d]     = %.17g;" % (id,sri[1]))
+                    if nsri>2:
+                        self._write("sri_c[%d]     = %.17g;" % (id,sri[2]))
+                    if nsri>3:
+                        self._write("sri_d[%d]     = %.17g;" % (id,sri[3]))
+                    if nsri>4:
+                        self._write("sri_e[%d]     = %.17g;" % (id,sri[4]))
+                    self._write("sri_len[%d]   = %d;" % (id,nsri))
+
+            self._write("prefactor_units[%d]  = %.17g;" % (id,uc.value))
+            aeuc = self._activationEnergyUnits(reaction.units["activation"])
+            self._write("activation_units[%d] = %.17g;" % (id,aeuc / Rc / kelvin))
+            self._write("phase_units[%d]      = 1e-%d;" % (id,dim*6))
+
+            if low:
+                self._write("is_PD[%d] = 1;" % (id) )
+            else:
+                self._write("is_PD[%d] = 0;" % (id) )
+
+
+            if thirdBody:
+                efficiencies = reaction.efficiencies
+                if (len(efficiencies) > 1):
+                    self._write("nTB[%d] = %d;" % (id, len(efficiencies)))
+                    self._write("TB[%d] = (double *) malloc(%d * sizeof(double));" % (id, len(efficiencies)))
+                    self._write("TBid[%d] = (int *) malloc(%d * sizeof(int));" % (id, len(efficiencies)))
+                    for i, eff in enumerate(efficiencies):
+                        symbol, efficiency = eff
+                        self._write("TBid[%d][%d] = %.17g; TB[%d][%d] = %.17g; // %s"
+                                    % (id, i, mechanism.species(symbol).id, id, i, efficiency, symbol ))
+                else:
+                    self._write("nTB[%d] = 0;" % (id))
+            else:
+                self._write("nTB[%d] = 0;" % (id))
+
+            self._write()
+
+        self._write("SetAllDefaults();")
+        self._outdent()
+        self._write("}")
+        self._write()
+            
+        self._write('void GET_REACTION_MAP(int *rmap)')
+        self._write('{')
+        self._indent()
+        self._write('for (int i=0; i<%d; ++i) {' % (nReactions))
+        self._indent()        
+        self._write('rmap[i] = rxn_map[i];')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._write()
+
+        self._write("#include <ReactionData.H>")
+        self._write("double* GetParamPtr(int                reaction_id,")
+        self._write("                    REACTION_PARAMETER param_id,")
+        self._write("                    int                species_id,")
+        self._write("                    int                get_default)")
+        self._write("{")
+        self._write("  double* ret = 0;")
+        self._write("  if (reaction_id<0 || reaction_id>=%d) {" % (nReactions))
+        self._write("    printf(\"Bad reaction id = %d\",reaction_id);")
+        self._write("    abort();")
+        self._write("  };")
+        self._write("  int mrid = rxn_map[reaction_id];")
+        self._write()
+        self._write("  if (param_id == THIRD_BODY) {")
+        self._write("    if (species_id<0 || species_id>=%d) {" % (self.nSpecies))
+        self._write("      printf(\"GetParamPtr: Bad species id = %d\",species_id);")
+        self._write("      abort();")
+        self._write("    }")
+        self._write("    if (get_default) {")
+        self._write("      for (int i=0; i<nTB_DEF[mrid]; ++i) {")
+        self._write("        if (species_id == TBid_DEF[mrid][i]) {")
+        self._write("          ret = &(TB_DEF[mrid][i]);")
+        self._write("        }")
+        self._write("      }")
+        self._write("    }")
+        self._write("    else {")
+        self._write("      for (int i=0; i<nTB[mrid]; ++i) {")
+        self._write("        if (species_id == TBid[mrid][i]) {")
+        self._write("          ret = &(TB[mrid][i]);")
+        self._write("        }")
+        self._write("      }")
+        self._write("    }")
+        self._write("    if (ret == 0) {")
+        self._write("      printf(\"GetParamPtr: No TB for reaction id = %d\",reaction_id);")
+        self._write("      abort();")
+        self._write("    }")
+        self._write("  }")
+        self._write("  else {")
+        self._write("    if (     param_id == FWD_A)     {ret = (get_default ? &(fwd_A_DEF[mrid]) : &(fwd_A[mrid]));}")
+        self._write("      else if (param_id == FWD_BETA)  {ret = (get_default ? &(fwd_beta_DEF[mrid]) : &(fwd_beta[mrid]));}")
+        self._write("      else if (param_id == FWD_EA)    {ret = (get_default ? &(fwd_Ea_DEF[mrid]) : &(fwd_Ea[mrid]));}")
+        self._write("      else if (param_id == LOW_A)     {ret = (get_default ? &(low_A_DEF[mrid]) : &(low_A[mrid]));}")
+        self._write("      else if (param_id == LOW_BETA)  {ret = (get_default ? &(low_beta_DEF[mrid]) : &(low_beta[mrid]));}")
+        self._write("      else if (param_id == LOW_EA)    {ret = (get_default ? &(low_Ea_DEF[mrid]) : &(low_Ea[mrid]));}")
+        self._write("      else if (param_id == REV_A)     {ret = (get_default ? &(rev_A_DEF[mrid]) : &(rev_A[mrid]));}")
+        self._write("      else if (param_id == REV_BETA)  {ret = (get_default ? &(rev_beta_DEF[mrid]) : &(rev_beta[mrid]));}")
+        self._write("      else if (param_id == REV_EA)    {ret = (get_default ? &(rev_Ea_DEF[mrid]) : &(rev_Ea[mrid]));}")
+        self._write("      else if (param_id == TROE_A)    {ret = (get_default ? &(troe_a_DEF[mrid]) : &(troe_a[mrid]));}")
+        self._write("      else if (param_id == TROE_TS)   {ret = (get_default ? &(troe_Ts_DEF[mrid]) : &(troe_Ts[mrid]));}")
+        self._write("      else if (param_id == TROE_TSS)  {ret = (get_default ? &(troe_Tss_DEF[mrid]) : &(troe_Tss[mrid]));}")
+        self._write("      else if (param_id == TROE_TSSS) {ret = (get_default ? &(troe_Tsss_DEF[mrid]) : &(troe_Tsss[mrid]));}")
+        self._write("      else if (param_id == SRI_A)     {ret = (get_default ? &(sri_a_DEF[mrid]) : &(sri_a[mrid]));}")
+        self._write("      else if (param_id == SRI_B)     {ret = (get_default ? &(sri_b_DEF[mrid]) : &(sri_b[mrid]));}")
+        self._write("      else if (param_id == SRI_C)     {ret = (get_default ? &(sri_c_DEF[mrid]) : &(sri_c[mrid]));}")
+        self._write("      else if (param_id == SRI_D)     {ret = (get_default ? &(sri_d_DEF[mrid]) : &(sri_d[mrid]));}")
+        self._write("      else if (param_id == SRI_E)     {ret = (get_default ? &(sri_e_DEF[mrid]) : &(sri_e[mrid]));}")
+        self._write("    else {")
+        self._write("      printf(\"GetParamPtr: Unknown parameter id\");")
+        self._write("      abort();")
+        self._write("    }")
+        self._write("  }")
+        self._write("  return ret;")
+        self._write("}")
+        self._write()
+
+        self._write("void ResetAllParametersToDefault()")
+        self._write("{")
+        self._write("    for (int i=0; i<%d; i++) {" % (nReactions))
+        self._write("        if (nTB[i] != 0) {")
+        self._write("            nTB[i] = 0;")
+        self._write("            free(TB[i]);")
+        self._write("            free(TBid[i]);")
+        self._write("        }")
+        self._write("")
+        self._write("        fwd_A[i]    = fwd_A_DEF[i];")
+        self._write("        fwd_beta[i] = fwd_beta_DEF[i];")
+        self._write("        fwd_Ea[i]   = fwd_Ea_DEF[i];")
+        self._write("")
+        self._write("        low_A[i]    = low_A_DEF[i];")
+        self._write("        low_beta[i] = low_beta_DEF[i];")
+        self._write("        low_Ea[i]   = low_Ea_DEF[i];")
+        self._write("")
+        self._write("        rev_A[i]    = rev_A_DEF[i];")
+        self._write("        rev_beta[i] = rev_beta_DEF[i];")
+        self._write("        rev_Ea[i]   = rev_Ea_DEF[i];")
+        self._write("")
+        self._write("        troe_a[i]    = troe_a_DEF[i];")
+        self._write("        troe_Ts[i]   = troe_Ts_DEF[i];")
+        self._write("        troe_Tss[i]  = troe_Tss_DEF[i];")
+        self._write("        troe_Tsss[i] = troe_Tsss_DEF[i];")
+        self._write("")
+        self._write("        sri_a[i] = sri_a_DEF[i];")
+        self._write("        sri_b[i] = sri_b_DEF[i];")
+        self._write("        sri_c[i] = sri_c_DEF[i];")
+        self._write("        sri_d[i] = sri_d_DEF[i];")
+        self._write("        sri_e[i] = sri_e_DEF[i];")
+        self._write("")
+        self._write("        is_PD[i]    = is_PD_DEF[i];")
+        self._write("        troe_len[i] = troe_len_DEF[i];")
+        self._write("        sri_len[i]  = sri_len_DEF[i];")
+        self._write("")
+        self._write("        activation_units[i] = activation_units_DEF[i];")
+        self._write("        prefactor_units[i]  = prefactor_units_DEF[i];")
+        self._write("        phase_units[i]      = phase_units_DEF[i];")
+        self._write("")
+        self._write("        nTB[i]  = nTB_DEF[i];")
+        self._write("        if (nTB[i] != 0) {")
+        self._write("           TB[i] = (double *) malloc(sizeof(double) * nTB[i]);")
+        self._write("           TBid[i] = (int *) malloc(sizeof(int) * nTB[i]);")
+        self._write("           for (int j=0; j<nTB[i]; j++) {")
+        self._write("             TB[i][j] = TB_DEF[i][j];")
+        self._write("             TBid[i][j] = TBid_DEF[i][j];")
+        self._write("           }")
+        self._write("        }")
+        self._write("    }")
+        self._write("}")
+        self._write()
+        self._write("void SetAllDefaults()")
+        self._write("{")
+        self._write("    for (int i=0; i<%d; i++) {" % (nReactions))
+        self._write("        if (nTB_DEF[i] != 0) {")
+        self._write("            nTB_DEF[i] = 0;")
+        self._write("            free(TB_DEF[i]);")
+        self._write("            free(TBid_DEF[i]);")
+        self._write("        }")
+        self._write("")
+        self._write("        fwd_A_DEF[i]    = fwd_A[i];")
+        self._write("        fwd_beta_DEF[i] = fwd_beta[i];")
+        self._write("        fwd_Ea_DEF[i]   = fwd_Ea[i];")
+        self._write("")
+        self._write("        low_A_DEF[i]    = low_A[i];")
+        self._write("        low_beta_DEF[i] = low_beta[i];")
+        self._write("        low_Ea_DEF[i]   = low_Ea[i];")
+        self._write("")
+        self._write("        rev_A_DEF[i]    = rev_A[i];")
+        self._write("        rev_beta_DEF[i] = rev_beta[i];")
+        self._write("        rev_Ea_DEF[i]   = rev_Ea[i];")
+        self._write("")
+        self._write("        troe_a_DEF[i]    = troe_a[i];")
+        self._write("        troe_Ts_DEF[i]   = troe_Ts[i];")
+        self._write("        troe_Tss_DEF[i]  = troe_Tss[i];")
+        self._write("        troe_Tsss_DEF[i] = troe_Tsss[i];")
+        self._write("")
+        self._write("        sri_a_DEF[i] = sri_a[i];")
+        self._write("        sri_b_DEF[i] = sri_b[i];")
+        self._write("        sri_c_DEF[i] = sri_c[i];")
+        self._write("        sri_d_DEF[i] = sri_d[i];")
+        self._write("        sri_e_DEF[i] = sri_e[i];")
+        self._write("")
+        self._write("        is_PD_DEF[i]    = is_PD[i];")
+        self._write("        troe_len_DEF[i] = troe_len[i];")
+        self._write("        sri_len_DEF[i]  = sri_len[i];")
+        self._write("")
+        self._write("        activation_units_DEF[i] = activation_units[i];")
+        self._write("        prefactor_units_DEF[i]  = prefactor_units[i];")
+        self._write("        phase_units_DEF[i]      = phase_units[i];")
+        self._write("")
+        self._write("        nTB_DEF[i]  = nTB[i];")
+        self._write("        if (nTB_DEF[i] != 0) {")
+        self._write("           TB_DEF[i] = (double *) malloc(sizeof(double) * nTB_DEF[i]);")
+        self._write("           TBid_DEF[i] = (int *) malloc(sizeof(int) * nTB_DEF[i]);")
+        self._write("           for (int j=0; j<nTB_DEF[i]; j++) {")
+        self._write("             TB_DEF[i][j] = TB[i][j];")
+        self._write("             TBid_DEF[i][j] = TBid[i][j];")
+        self._write("           }")
+        self._write("        }")
+        self._write("    }")
+        self._write("}")
+
+        self._write()
+        self._write(self.line(' Finalizes parameter database'))
+        self._write('void CKFINALIZE()')
+        self._write('{')
+        self._write('  for (int i=0; i<%d; ++i) {' % (nReactions))
+        self._write('    free(TB[i]); TB[i] = 0; ')
+        self._write('    free(TBid[i]); TBid[i] = 0;')
+        self._write('    nTB[i] = 0;')
+        self._write()
+        self._write('    free(TB_DEF[i]); TB_DEF[i] = 0; ')
+        self._write('    free(TBid_DEF[i]); TBid_DEF[i] = 0;')
+        self._write('    nTB_DEF[i] = 0;')
+        self._write('  }')
+        self._write('}')
+        self._write()
+
+        return
+
+
     def _thermo(self, mechanism):
         speciesInfo = self._analyzeThermodynamics(mechanism)
 
@@ -1209,19 +1978,44 @@ class CPickler(CMill):
             if spec.weight < 5.0:
                 NLITE+=1
                 idxLightSpecs.append(spec.id)
-        self._miscTransInfo(KK=self.nSpecies, NLITE=NLITE)
-        self._wt()
-        self._eps(speciesTransport)
-        self._sig(speciesTransport)
-        self._dip(speciesTransport)
-        self._pol(speciesTransport)
-        self._zrot(speciesTransport)
-        self._nlin(speciesTransport)
+        self._miscTransInfo(KK=self.nSpecies, NLITE=NLITE, do_declarations=True)
+        self._wt(True)
+        self._eps(speciesTransport, True)
+        self._sig(speciesTransport, True)
+        self._dip(speciesTransport, True)
+        self._pol(speciesTransport, True)
+        self._zrot(speciesTransport, True)
+        self._nlin(speciesTransport, True)
 
-        self._viscosity(speciesTransport, NTFit=50)
-        self._diffcoefs(speciesTransport, NTFit=50)
-        self._lightSpecs(idxLightSpecs)
-        self._thermaldiffratios(speciesTransport, idxLightSpecs, NTFit=50)
+        self._viscosity(speciesTransport, True, NTFit=50)
+        self._diffcoefs(speciesTransport, True, NTFit=50)
+        self._lightSpecs(idxLightSpecs, True)
+        self._thermaldiffratios(speciesTransport, idxLightSpecs, True, NTFit=50)
+
+        return
+
+
+    def _trans_chop(self, mechanism):
+        speciesTransport = self._analyzeTransport(mechanism)
+        NLITE=0
+        idxLightSpecs = []
+        for spec in self.species:
+            if spec.weight < 5.0:
+                NLITE+=1
+                idxLightSpecs.append(spec.id)
+        self._miscTransInfo(KK=self.nSpecies, NLITE=NLITE, do_declarations=False)
+        self._wt(False)
+        self._eps(speciesTransport, False)
+        self._sig(speciesTransport, False)
+        self._dip(speciesTransport, False)
+        self._pol(speciesTransport, False)
+        self._zrot(speciesTransport, False)
+        self._nlin(speciesTransport, False)
+
+        self._viscosity(speciesTransport, False, NTFit=50)
+        self._diffcoefs(speciesTransport, False, NTFit=50)
+        self._lightSpecs(idxLightSpecs, False)
+        self._thermaldiffratios(speciesTransport, idxLightSpecs, False, NTFit=50)
 
         return
 
@@ -5638,6 +6432,7 @@ class CPickler(CMill):
         self._outdent()
 
         self._write('}')
+        self._write()
 
         return
 
@@ -7665,15 +8460,15 @@ class CPickler(CMill):
     def _sortedPhaseSpace_ford(self, mechanism, reagents):
 
         phi = []
-
         for symbol, coefficient in sorted(reagents,key=lambda x:mechanism.species(x[0]).id):
             if (coefficient == "1.0"):
                 phi.append( "sc[%d]" % (mechanism.species(symbol).id))
             else:
                 phi.append( "pow( sc[%d], %.17g)" % (mechanism.species(symbol).id, float(coefficient)))
             print phi
-
+ 
         return "*".join(phi)
+
 
     def _DphaseSpace(self, mechanism, reagents, r):
 
@@ -8003,81 +8798,79 @@ class CPickler(CMill):
         return
 
 
-    def _miscTransInfo(self, KK, NLITE, NO=4):
+    def _miscTransInfo(self, KK, NLITE, do_declarations, NO=4):
 
         self._write()
         self._write()
         LENIMC = 4*KK+NLITE
-        self._generateTransRoutineInteger(["egtransetLENIMC", "EGTRANSETLENIMC", "egtransetlenimc", "egtransetlenimc_", "LENIMC"], LENIMC)
+        self._generateTransRoutineInteger(["egtransetLENIMC", "EGTRANSETLENIMC", "egtransetlenimc", "egtransetlenimc_", "LENIMC"], LENIMC, do_declarations)
 
         self._write()
         self._write()
         LENRMC = (19+2*NO+NO*NLITE)*KK+(15+NO)*KK**2
-        self._generateTransRoutineInteger(["egtransetLENRMC", "EGTRANSETLENRMC", "egtransetlenrmc", "egtransetlenrmc_", "LENRMC"], LENRMC)
+        self._generateTransRoutineInteger(["egtransetLENRMC", "EGTRANSETLENRMC", "egtransetlenrmc", "egtransetlenrmc_", "LENRMC"], LENRMC, do_declarations)
 
         self._write()
         self._write()
-        self._generateTransRoutineInteger(["egtransetNO", "EGTRANSETNO", "egtransetno", "egtransetno_", "NO"], NO)
+        self._generateTransRoutineInteger(["egtransetNO", "EGTRANSETNO", "egtransetno", "egtransetno_", "NO"], NO, do_declarations)
 
         self._write()
         self._write()
-        self._generateTransRoutineInteger(["egtransetKK", "EGTRANSETKK", "egtransetkk", "egtransetkk_", "KK"], KK)
+        self._generateTransRoutineInteger(["egtransetKK", "EGTRANSETKK", "egtransetkk", "egtransetkk_", "KK"], KK, do_declarations)
 
         self._write()
         self._write()
-        self._generateTransRoutineInteger(["egtransetNLITE", "EGTRANSETNLITE", "egtransetnlite", "egtransetnlite_", "NLITE"], NLITE)
+        self._generateTransRoutineInteger(["egtransetNLITE", "EGTRANSETNLITE", "egtransetnlite", "egtransetnlite_", "NLITE"], NLITE, do_declarations)
 
         self._write()
         self._write()
         self._write(self.line('Patm in ergs/cm3'))
-        self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        self._write('#define egtransetPATM EGTRANSETPATM')
-        self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        self._write('#define egtransetPATM egtransetpatm')
-        self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        self._write('#define egtransetPATM egtransetpatm_')
-        self._write('#endif')
+
+        if (do_declarations):
+            self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+            self._write('#define egtransetPATM EGTRANSETPATM')
+            self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+            self._write('#define egtransetPATM egtransetpatm')
+            self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+            self._write('#define egtransetPATM egtransetpatm_')
+            self._write('#endif')
 
         self._write('void egtransetPATM(double* PATM) {')
-
         self._indent()
-
         self._write('*PATM =   0.1013250000000000E+07;}')
-
         self._outdent()
 
         return
 
 
-    def _wt(self):
+    def _wt(self, do_declarations):
 
         self._write()
         self._write()
         self._write(self.line('the molecular weights in g/mol'))
 
-        self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        self._write('#define egtransetWT EGTRANSETWT')
-        self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        self._write('#define egtransetWT egtransetwt')
-        self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        self._write('#define egtransetWT egtransetwt_')
-        self._write('#endif')
+        if (do_declarations):
+            self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+            self._write('#define egtransetWT EGTRANSETWT')
+            self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+            self._write('#define egtransetWT egtransetwt')
+            self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+            self._write('#define egtransetWT egtransetwt_')
+            self._write('#endif')
 
         self._write('void %s(double* %s ) {' % ("egtransetWT", "WT"))
-
         self._indent()
 
         for species in self.species:
             self._write('%s[%d] = %.8E;' % ("WT", species.id, float(species.weight)))
 
         self._outdent()
-
         self._write('}')
 
         return
 
 
-    def _eps(self, speciesTransport):
+    def _eps(self, speciesTransport, do_declarations):
 
         self._write()
         self._write()
@@ -8088,81 +8881,80 @@ class CPickler(CMill):
         #for species in mechanism.species():
         #    expression[i] = float(species.trans[0].eps)
         #    i++
-        self._generateTransRoutineSimple(["egtransetEPS", "EGTRANSETEPS", "egtranseteps", "egtranseteps_", "EPS"], 1, speciesTransport)
+        self._generateTransRoutineSimple(["egtransetEPS", "EGTRANSETEPS", "egtranseteps", "egtranseteps_", "EPS"], 1, speciesTransport, do_declarations)
 
         return
     
 
-    def _sig(self, speciesTransport):
+    def _sig(self, speciesTransport, do_declarations):
 
         self._write()
         self._write()
         self._write(self.line('the lennard-jones collision diameter in Angstroms'))
-        self._generateTransRoutineSimple(["egtransetSIG", "EGTRANSETSIG", "egtransetsig", "egtransetsig_", "SIG"], 2, speciesTransport)
+        self._generateTransRoutineSimple(["egtransetSIG", "EGTRANSETSIG", "egtransetsig", "egtransetsig_", "SIG"], 2, speciesTransport, do_declarations)
 
         return
 
 
-    def _dip(self, speciesTransport):
+    def _dip(self, speciesTransport, do_declarations):
 
         self._write()
         self._write()
         self._write(self.line('the dipole moment in Debye'))
-        self._generateTransRoutineSimple(["egtransetDIP", "EGTRANSETDIP", "egtransetdip", "egtransetdip_", "DIP"], 3, speciesTransport)
+        self._generateTransRoutineSimple(["egtransetDIP", "EGTRANSETDIP", "egtransetdip", "egtransetdip_", "DIP"], 3, speciesTransport, do_declarations)
 
         return
 
 
-    def _pol(self, speciesTransport):
+    def _pol(self, speciesTransport, do_declarations):
 
         self._write()
         self._write()
         self._write(self.line('the polarizability in cubic Angstroms'))
-        self._generateTransRoutineSimple(["egtransetPOL", "EGTRANSETPOL", "egtransetpol", "egtransetpol_", "POL"], 4, speciesTransport)
+        self._generateTransRoutineSimple(["egtransetPOL", "EGTRANSETPOL", "egtransetpol", "egtransetpol_", "POL"], 4, speciesTransport, do_declarations)
 
         return
 
 
-    def _zrot(self, speciesTransport):
+    def _zrot(self, speciesTransport, do_declarations):
 
         self._write()
         self._write()
         self._write(self.line('the rotational relaxation collision number at 298 K'))
-        self._generateTransRoutineSimple(["egtransetZROT", "EGTRANSETZROT", "egtransetzrot", "egtransetzrot_", "ZROT"], 5, speciesTransport)
+        self._generateTransRoutineSimple(["egtransetZROT", "EGTRANSETZROT", "egtransetzrot", "egtransetzrot_", "ZROT"], 5, speciesTransport, do_declarations)
 
         return
 
 
-    def _nlin(self, speciesTransport):
+    def _nlin(self, speciesTransport, do_declarations):
 
         self._write()
         self._write()
         self._write(self.line('0: monoatomic, 1: linear, 2: nonlinear'))
         #self._generateTransRoutineSimple(["egtransetNLIN", "EGTRANSETNLIN", "egtransetNLIN", "egtransetNLIN_", "NLIN"], 0, speciesTransport)
 
-        self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        self._write('#define egtransetNLIN EGTRANSETNLIN')
-        self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        self._write('#define egtransetNLIN egtransetnlin')
-        self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        self._write('#define egtransetNLIN egtransetnlin_')
-        self._write('#endif')
+        if (do_declarations):
+            self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+            self._write('#define egtransetNLIN EGTRANSETNLIN')
+            self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+            self._write('#define egtransetNLIN egtransetnlin')
+            self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+            self._write('#define egtransetNLIN egtransetnlin_')
+            self._write('#endif')
 
         self._write('void egtransetNLIN(int* NLIN) {')
-
         self._indent()
 
         for species in speciesTransport:
             self._write('%s[%d] = %d;' % ('NLIN', species.id, int(speciesTransport[species][0])))
 
         self._outdent()
-
         self._write('}')
 
         return
 
 
-    def _viscosity(self, speciesTransport, NTFit):
+    def _viscosity(self, speciesTransport, do_declarations, NTFit):
 
         #compute single constants in g/cm/s
         kb = 1.3806503e-16
@@ -8255,17 +9047,17 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Poly fits for the viscosities, dim NO*KK'))
-        self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        self._write('#define egtransetCOFETA EGTRANSETCOFETA')
-        self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        self._write('#define egtransetCOFETA egtransetcofeta')
-        self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        self._write('#define egtransetCOFETA egtransetcofeta_')
-        self._write('#endif')
+        if (do_declarations):
+            self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+            self._write('#define egtransetCOFETA EGTRANSETCOFETA')
+            self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+            self._write('#define egtransetCOFETA egtransetcofeta')
+            self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+            self._write('#define egtransetCOFETA egtransetcofeta_')
+            self._write('#endif')
 
         #visco coefs
         self._write('void egtransetCOFETA(double* COFETA) {')
-
         self._indent()
 
         for spec in self.species:
@@ -8273,20 +9065,20 @@ class CPickler(CMill):
                 self._write('%s[%d] = %.8E;' % ('COFETA', spec.id*4+i, cofeta[spec.id][3-i]))
 
         self._outdent()
-
         self._write('}')
 
         #header for cond
         self._write()
         self._write()
         self._write(self.line('Poly fits for the conductivities, dim NO*KK'))
-        self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        self._write('#define egtransetCOFLAM EGTRANSETCOFLAM')
-        self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        self._write('#define egtransetCOFLAM egtransetcoflam')
-        self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        self._write('#define egtransetCOFLAM egtransetcoflam_')
-        self._write('#endif')
+        if (do_declarations):
+            self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+            self._write('#define egtransetCOFLAM EGTRANSETCOFLAM')
+            self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+            self._write('#define egtransetCOFLAM egtransetcoflam')
+            self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+            self._write('#define egtransetCOFLAM egtransetcoflam_')
+            self._write('#endif')
 
         #visco coefs
         self._write('void egtransetCOFLAM(double* COFLAM) {')
@@ -8304,7 +9096,7 @@ class CPickler(CMill):
         return
 
 
-    def _thermaldiffratios(self, speciesTransport, lightSpecList, NTFit):
+    def _thermaldiffratios(self, speciesTransport, lightSpecList, do_declarations, NTFit):
 
         # This is an overhaul of CHEMKIN version III
         #REORDERING OF SPECS
@@ -8375,17 +9167,17 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Poly fits for thermal diff ratios, dim NO*NLITE*KK'))
-        self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        self._write('#define egtransetCOFTD EGTRANSETCOFTD')
-        self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        self._write('#define egtransetCOFTD egtransetcoftd')
-        self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        self._write('#define egtransetCOFTD egtransetcoftd_')
-        self._write('#endif')
+        if (do_declarations):
+            self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+            self._write('#define egtransetCOFTD EGTRANSETCOFTD')
+            self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+            self._write('#define egtransetCOFTD egtransetcoftd')
+            self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+            self._write('#define egtransetCOFTD egtransetcoftd_')
+            self._write('#endif')
 
         #visco coefs
         self._write('void egtransetCOFTD(double* COFTD) {')
-
         self._indent()
 
         for i in range(len(coftd)):
@@ -8394,13 +9186,12 @@ class CPickler(CMill):
                     self._write('%s[%d] = %.8E;' % ('COFTD', i*4*self.nSpecies+j*4+k, coftd[i][j][3-k]))
 
         self._outdent()
-
         self._write('}')
 
         return
 
 
-    def _diffcoefs(self, speciesTransport, NTFit):
+    def _diffcoefs(self, speciesTransport, do_declarations, NTFit) :
 
         #REORDERING OF SPECS
         specOrdered = []
@@ -8480,13 +9271,14 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Poly fits for the diffusion coefficients, dim NO*KK*KK'))
-        self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        self._write('#define egtransetCOFD EGTRANSETCOFD')
-        self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        self._write('#define egtransetCOFD egtransetcofd')
-        self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        self._write('#define egtransetCOFD egtransetcofd_')
-        self._write('#endif')
+        if (do_declarations):
+            self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+            self._write('#define egtransetCOFD EGTRANSETCOFD')
+            self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+            self._write('#define egtransetCOFD egtransetcofd')
+            self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+            self._write('#define egtransetCOFD egtransetcofd_')
+            self._write('#endif')
 
         #coefs
         self._write('void egtransetCOFD(double* COFD) {')
@@ -8510,30 +9302,29 @@ class CPickler(CMill):
         return
 
 
-    def _lightSpecs(self, speclist):
+    def _lightSpecs(self, speclist, do_declarations):
         
         #header 
         self._write()
         self._write()
         self._write(self.line('List of specs with small weight, dim NLITE'))
-        self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        self._write('#define egtransetKTDIF EGTRANSETKTDIF')
-        self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        self._write('#define egtransetKTDIF egtransetktdif')
-        self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        self._write('#define egtransetKTDIF egtransetktdif_')
-        self._write('#endif')
+        if (do_declarations):
+            self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+            self._write('#define egtransetKTDIF EGTRANSETKTDIF')
+            self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+            self._write('#define egtransetKTDIF egtransetktdif')
+            self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+            self._write('#define egtransetKTDIF egtransetktdif_')
+            self._write('#endif')
 
         #coefs
         self._write('void egtransetKTDIF(int* KTDIF) {')
-
         self._indent()
 
         for i in range(len(speclist)):
             self._write('%s[%d] = %d;' % ('KTDIF', i, speclist[i]+1))
 
         self._outdent()
-
         self._write('}')
         
         return
@@ -9050,48 +9841,55 @@ class CPickler(CMill):
         return a*(x0 - x[0])*(x0 - x[1]) + (dy21/dx21)*(x0 - x[1]) + y[1]
 
 
-    def _generateTransRoutineSimple(self, nametab, id, speciesTransport):
+    def _generateTransRoutineSimple(self, nametab, id, speciesTransport, do_declarations):
 
-        self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        self._write('#define %s %s' % (nametab[0], nametab[1]))
-        self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        self._write('#define %s %s' % (nametab[0], nametab[2]))
-        self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        self._write('#define %s %s' % (nametab[0], nametab[3]))
-        self._write('#endif')
+        if (do_declarations):
+            self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+            self._write('#define %s %s' % (nametab[0], nametab[1]))
+            self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+            self._write('#define %s %s' % (nametab[0], nametab[2]))
+            self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+            self._write('#define %s %s' % (nametab[0], nametab[3]))
+            self._write('#endif')
 
         self._write('void %s(double* %s ) {' % (nametab[0], nametab[4]))
-
         self._indent()
 
         for species in speciesTransport:
             self._write('%s[%d] = %.8E;' % (nametab[4], species.id, float(speciesTransport[species][id])))
 
         self._outdent()
-
         self._write('}')
 
         return
 
-    def _generateTransRoutineInteger(self, nametab, expression):
+    def _generateTransRoutineInteger(self, nametab, expression, do_declarations):
 
-        self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        self._write('#define %s %s' % (nametab[0], nametab[1]))
-        self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        self._write('#define %s %s' % (nametab[0], nametab[2]))
-        self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        self._write('#define %s %s' % (nametab[0], nametab[3]))
-        self._write('#endif')
+        if (do_declarations):
+            self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+            self._write('#define %s %s' % (nametab[0], nametab[1]))
+            self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+            self._write('#define %s %s' % (nametab[0], nametab[2]))
+            self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+            self._write('#define %s %s' % (nametab[0], nametab[3]))
+            self._write('#endif')
 
         self._write('void %s(int* %s ) {' % (nametab[0], nametab[4]))
-
         self._indent()
 
         self._write('*%s = %d;}' % (nametab[4], expression ))
-
         self._outdent()
 
         return
+
+    #def _generateTransRoutineInteger_chop(self, nametab, expression):
+
+    #    self._write('void %s(int* %s ) {' % (nametab[0], nametab[1]))
+    #    self._indent()
+    #    self._write('*%s = %d;}' % (nametab[1], expression ))
+    #    self._outdent()
+
+    #    return
 
 
     def _getCVdRspecies(self, t, species):

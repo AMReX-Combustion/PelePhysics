@@ -96,6 +96,7 @@ class Reactions(BaseParser):
 
 
     def aReactionFORD(self, token):
+        print "ford !!"
         record = self._currentReaction
         if not record:
             msg = "no current reaction"

@@ -9,30 +9,31 @@ module reactor_module
   implicit none
 
   real(amrex_real), private, allocatable :: vodeVec(:),cdot(:),rhoydot_ext(:),ydot_ext(:)
-  real(amrex_real), private:: rhoedot_ext, rhoe_init, time_init, time_out, rhohdot_ext, &
+  real(amrex_real), private:: rhoedot_ext, rhoe_init, time_init, rhohdot_ext, &
                               rhoh_init, time_old, hdot_ext, h_init, pressureInit
-  integer,private :: iloc, jloc, kloc, iE, iDense
+  integer,private :: iloc, jloc, kloc, iE
   type (eos_t) :: eos_state
 
   logical, save, private :: reactor_initialized = .false.
 
-  !$omp threadprivate(vodeVec,cdot,rhoydot_ext,ydot_ext,rhoedot_ext,rhoe_init,time_init,time_out,rhohdot_ext,rhoh_init,hdot_ext,h_init,time_old,iloc,jloc,kloc,eos_state)
+  !$omp threadprivate(vodeVec,cdot,rhoydot_ext,ydot_ext,rhoedot_ext,rhoe_init,time_init,rhohdot_ext,rhoh_init,hdot_ext,h_init,pressureInit,time_old,iloc,jloc,kloc,ie,eos_state,reactor_initialized)
 
 contains
 
         
 !*** INITIALISATION ROUTINES ***!
   !DVODE VERSION
-  subroutine reactor_init(iE_in) bind(C, name="reactor_init")
+  subroutine reactor_init(iE_in, Ncells) bind(C, name="reactor_init")
 
     use, intrinsic :: iso_c_binding
     use vode_module, only : vode_init
     use extern_probin_module, only : new_Jacobian_each_cell
 
     integer(c_int),  intent(in   ) :: iE_in
+    integer(c_int),  intent(in   ), optional :: Ncells
     integer :: neq, verbose, itol, order, maxstep
     real(amrex_real) :: rtol, atol
-    logical :: use_ajac, save_ajac, always_new_j, stiff
+    logical :: use_ajac, save_ajac, always_new_j_loc, stiff
 
     neq = nspec + 1
     verbose = 0
@@ -42,20 +43,21 @@ contains
     use_ajac = .false.
     save_ajac = .false.
     if (new_Jacobian_each_cell .ne. 0) then
-       always_new_J = .true.
+       always_new_j_loc = .true.
     else
-       always_new_J = .false.
+       always_new_j_loc = .false.
     endif
     stiff = .true.
     rtol = 1.d-10
     atol = 1.d-10
 
     call vode_init(neq,verbose,itol,rtol,atol,order,&
-         maxstep,use_ajac,save_ajac,always_new_j,stiff)
+         maxstep,use_ajac,save_ajac,always_new_j_loc,stiff)
 
     if (parallel_IOProcessor()) then
        print *,"Using good ol' dvode"
        print *,"--> DENSE solver without Analytical J"
+       print *,"--> Always new analytical Jac ? ",always_new_j_loc
     endif
     iE = iE_in
     if (iE == 1) then
@@ -86,7 +88,6 @@ contains
     use amrex_error_module
     use vode_module, only : verbose, itol, rtol, atol, vode_MF=>MF, always_new_j, &
          voderwork, vodeiwork, lvoderwork, lvodeiwork, voderpar, vodeipar
-    use chemistry_module, only : molecular_weight
     use eos_module
 
     real(amrex_real),   intent(inout) :: rY_in(nspec+1),rY_src_in(nspec)
@@ -119,7 +120,7 @@ contains
         react_state_in %              h = rX_in !/ react_state_in % rho
         react_state_in %    rhohdot_ext = rX_src_in
     else
-        react_state_in %              h = rX_in !/ react_state_in % rho
+        react_state_in %              h = rX_in / react_state_in % rho
         react_state_in %    rhohdot_ext = rX_src_in
     end if
     ! END For compatibility to remove later
@@ -197,8 +198,12 @@ contains
          itol, rtol, atol, itask, istate, iopt, voderwork, lvoderwork, &
          vodeiwork, lvodeiwork, f_jac, MF, voderpar, vodeipar)
 
+#ifdef MOD_REACTOR
+    time = vodeTime
+#endif
+
     if (verbose .ge. 1) then
-       write(6,*) '......dvode done:'
+       write(6,*) '......dvode done:', time
        write(6,*) ' last successful step size = ',voderwork(11)
        write(6,*) '          next step to try = ',voderwork(12)
        write(6,*) '   integrated time reached = ',voderwork(13)
@@ -253,7 +258,7 @@ contains
            eos_state % h                 = (rhoh_init  +  dt_react*rhohdot_ext) * rhoInv
            call eos_rh(eos_state)
            rY_in(1:nspec)                = vodeVec(1:nspec)
-           rX_in                         = eos_state % h
+           rX_in                         = eos_state % h * eos_state % rho
            rX_src_in                     = rhohdot_ext
            rY_src_in(1:nspec)            = rhoydot_ext(1:nspec)
        end if
@@ -380,7 +385,7 @@ contains
 
     integer,        intent(in)  :: neq, npt
     real(amrex_real),intent(in)  :: y(neq,npt), t
-    real(amrex_real),intent(out) :: pd(neq,neq)
+    real(amrex_real),intent(inout) :: pd(neq,neq)
 
     call amrex_error('DVODE version: Analytic Jacobian not yet implemented')
 

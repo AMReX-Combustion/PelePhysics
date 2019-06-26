@@ -1,14 +1,13 @@
 PRECISION  = DOUBLE
 PROFILE    = FALSE
 
-DEBUG      = TRUE
+DEBUG      = FALSE
 
-DIM        = 2
+DIM        = 3
 
 COMP	   = gcc
 FCOMP	   = gfortran
 
-USE_MPI    = FALSE
 USE_MPI    = TRUE
 USE_OMP    = FALSE
 
@@ -18,25 +17,21 @@ FUEGO_GAS  = TRUE
 PELE_PHYSICS_HOME    := ../../..
 
 #######################
+# this flag activates the subcycling mode in the D/Cvode routines
+DEFINES  += -DMOD_REACTOR
+
 USE_SUNDIALS_3x4x = TRUE
 
 USE_KLU = FALSE
 ifeq ($(USE_KLU), TRUE)
     DEFINES  += -DUSE_KLU
+    include Make.CVODE
 endif
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
-  #Chemistry_Model = chem-H
-  Chemistry_Model = LiDryer
-  #Chemistry_Model = BurkeDryer_mod
-  #Chemistry_Model = BurkeDryer
-  #Chemistry_Model = air
-  #Chemistry_Model = grimech12
-  #Chemistry_Model = grimech30
-  #Chemistry_Model = grimech30-noArN
-  #Chemistry_Model = drm19
+  Chemistry_Model = drm19
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else

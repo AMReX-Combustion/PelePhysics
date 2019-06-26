@@ -1,0 +1,10 @@
+CEXE_headers+=chemistry_file.H
+
+EXE_sources += 
+
+LIBRARIES += -L$(CHEM_DIR) -lAromNara
+
+INCLUDE_LOCATIONS += $(CHEM_DIR) 
+
+VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
+

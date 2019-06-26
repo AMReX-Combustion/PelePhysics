@@ -12,7 +12,7 @@ module actual_transport_module
   character (len=64) :: transport_name = "sutherland"
   logical, save, private :: suth_initialized = .false.
   integer, save, private :: npts_suth = 0
-  real(amrex_real), save, allocatable, ptr :: Tp(:), Cpp(:)
+  real(amrex_real), save, allocatable :: Tp(:), Cpp(:)
 
   !$omp threadprivate(suth_initialized,npts_suth,Tp,Cpp)
 

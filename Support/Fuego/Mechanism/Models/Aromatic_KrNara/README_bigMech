@@ -1,0 +1,5 @@
+Generate a shared lib  from the cpp files:
+
+gcc -I../../../Evaluation/ -c -fpic chemistry_file.H Aromatic_KrNara.cpp 
+
+gcc -shared -o libAromNara.so Aromatic_KrNara.o 

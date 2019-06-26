@@ -1,454 +1,91 @@
+#include "chemistry_file.H"
 
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-#if defined(BL_FORT_USE_UPPERCASE)
-#define CKINDX CKINDX
-#define CKINIT CKINIT
-#define CKFINALIZE CKFINALIZE
-#define CKXNUM CKXNUM
-#define CKSYME CKSYME
-#define CKSYMS CKSYMS
-#define CKRP CKRP
-#define CKPX CKPX
-#define CKPY CKPY
-#define CKPC CKPC
-#define CKRHOX CKRHOX
-#define CKRHOY CKRHOY
-#define CKRHOC CKRHOC
-#define CKWT CKWT
-#define CKAWT CKAWT
-#define CKMMWY CKMMWY
-#define CKMMWX CKMMWX
-#define CKMMWC CKMMWC
-#define CKYTX CKYTX
-#define CKYTCP CKYTCP
-#define CKYTCR CKYTCR
-#define CKXTY CKXTY
-#define CKXTCP CKXTCP
-#define CKXTCR CKXTCR
-#define CKCTX CKCTX
-#define CKCTY CKCTY
-#define CKCPOR CKCPOR
-#define CKHORT CKHORT
-#define CKSOR CKSOR
-#define CKCVML CKCVML
-#define CKCPML CKCPML
-#define CKUML CKUML
-#define CKHML CKHML
-#define CKGML CKGML
-#define CKAML CKAML
-#define CKSML CKSML
-#define CKCVMS CKCVMS
-#define CKCPMS CKCPMS
-#define CKUMS CKUMS
-#define CKHMS CKHMS
-#define CKGMS CKGMS
-#define CKAMS CKAMS
-#define CKSMS CKSMS
-#define CKCPBL CKCPBL
-#define CKCPBS CKCPBS
-#define CKCVBL CKCVBL
-#define CKCVBS CKCVBS
-#define CKHBML CKHBML
-#define CKHBMS CKHBMS
-#define CKUBML CKUBML
-#define CKUBMS CKUBMS
-#define CKSBML CKSBML
-#define CKSBMS CKSBMS
-#define CKGBML CKGBML
-#define CKGBMS CKGBMS
-#define CKABML CKABML
-#define CKABMS CKABMS
-#define CKWC CKWC
-#define CKWYP CKWYP
-#define CKWXP CKWXP
-#define CKWYR CKWYR
-#define CKWXR CKWXR
-#define CKQC CKQC
-#define CKKFKR CKKFKR
-#define CKQYP CKQYP
-#define CKQXP CKQXP
-#define CKQYR CKQYR
-#define CKQXR CKQXR
-#define CKNU CKNU
-#define CKNCF CKNCF
-#define CKABE CKABE
-#define CKEQC CKEQC
-#define CKEQYP CKEQYP
-#define CKEQXP CKEQXP
-#define CKEQYR CKEQYR
-#define CKEQXR CKEQXR
-#define DWDOT DWDOT
-#define DWDOT_PRECOND DWDOT_PRECOND
-#define SPARSITY_INFO SPARSITY_INFO
-#define SPARSITY_INFO_PRECOND SPARSITY_INFO_PRECOND
-#define SPARSITY_PREPROC SPARSITY_PREPROC
-#define SPARSITY_PREPROC_PRECOND SPARSITY_PREPROC_PRECOND
-#define VCKHMS VCKHMS
-#define VCKPY VCKPY
-#define VCKWYR VCKWYR
-#define VCKYTX VCKYTX
-#define GET_T_GIVEN_EY GET_T_GIVEN_EY
-#define GET_T_GIVEN_HY GET_T_GIVEN_HY
-#define GET_REACTION_MAP GET_REACTION_MAP
-#define GET_CRITPARAMS GET_CRITPARAMS
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define CKINDX ckindx
-#define CKINIT ckinit
-#define CKFINALIZE ckfinalize
-#define CKXNUM ckxnum
-#define CKSYME cksyme
-#define CKSYMS cksyms
-#define CKRP ckrp
-#define CKPX ckpx
-#define CKPY ckpy
-#define CKPC ckpc
-#define CKRHOX ckrhox
-#define CKRHOY ckrhoy
-#define CKRHOC ckrhoc
-#define CKWT ckwt
-#define CKAWT ckawt
-#define CKMMWY ckmmwy
-#define CKMMWX ckmmwx
-#define CKMMWC ckmmwc
-#define CKYTX ckytx
-#define CKYTCP ckytcp
-#define CKYTCR ckytcr
-#define CKXTY ckxty
-#define CKXTCP ckxtcp
-#define CKXTCR ckxtcr
-#define CKCTX ckctx
-#define CKCTY ckcty
-#define CKCPOR ckcpor
-#define CKHORT ckhort
-#define CKSOR cksor
-#define CKCVML ckcvml
-#define CKCPML ckcpml
-#define CKUML ckuml
-#define CKHML ckhml
-#define CKGML ckgml
-#define CKAML ckaml
-#define CKSML cksml
-#define CKCVMS ckcvms
-#define CKCPMS ckcpms
-#define CKUMS ckums
-#define CKHMS ckhms
-#define CKGMS ckgms
-#define CKAMS ckams
-#define CKSMS cksms
-#define CKCPBL ckcpbl
-#define CKCPBS ckcpbs
-#define CKCVBL ckcvbl
-#define CKCVBS ckcvbs
-#define CKHBML ckhbml
-#define CKHBMS ckhbms
-#define CKUBML ckubml
-#define CKUBMS ckubms
-#define CKSBML cksbml
-#define CKSBMS cksbms
-#define CKGBML ckgbml
-#define CKGBMS ckgbms
-#define CKABML ckabml
-#define CKABMS ckabms
-#define CKWC ckwc
-#define CKWYP ckwyp
-#define CKWXP ckwxp
-#define CKWYR ckwyr
-#define CKWXR ckwxr
-#define CKQC ckqc
-#define CKKFKR ckkfkr
-#define CKQYP ckqyp
-#define CKQXP ckqxp
-#define CKQYR ckqyr
-#define CKQXR ckqxr
-#define CKNU cknu
-#define CKNCF ckncf
-#define CKABE ckabe
-#define CKEQC ckeqc
-#define CKEQYP ckeqyp
-#define CKEQXP ckeqxp
-#define CKEQYR ckeqyr
-#define CKEQXR ckeqxr
-#define DWDOT dwdot
-#define DWDOT_PRECOND dwdot_precond
-#define SPARSITY_INFO sparsity_info
-#define SPARSITY_INFO_PRECOND sparsity_info_precond
-#define SPARSITY_PREPROC sparsity_preproc
-#define SPARSITY_PREPROC_PRECOND sparsity_preproc_precond
-#define VCKHMS vckhms
-#define VCKPY vckpy
-#define VCKWYR vckwyr
-#define VCKYTX vckytx
-#define GET_T_GIVEN_EY get_t_given_ey
-#define GET_T_GIVEN_HY get_t_given_hy
-#define GET_REACTION_MAP get_reaction_map
-#define GET_CRITPARAMS get_critparams
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define CKINDX ckindx_
-#define CKINIT ckinit_
-#define CKFINALIZE ckfinalize_
-#define CKXNUM ckxnum_
-#define CKSYME cksyme_
-#define CKSYMS cksyms_
-#define CKRP ckrp_
-#define CKPX ckpx_
-#define CKPY ckpy_
-#define CKPC ckpc_
-#define CKRHOX ckrhox_
-#define CKRHOY ckrhoy_
-#define CKRHOC ckrhoc_
-#define CKWT ckwt_
-#define CKAWT ckawt_
-#define CKMMWY ckmmwy_
-#define CKMMWX ckmmwx_
-#define CKMMWC ckmmwc_
-#define CKYTX ckytx_
-#define CKYTCP ckytcp_
-#define CKYTCR ckytcr_
-#define CKXTY ckxty_
-#define CKXTCP ckxtcp_
-#define CKXTCR ckxtcr_
-#define CKCTX ckctx_
-#define CKCTY ckcty_
-#define CKCPOR ckcpor_
-#define CKHORT ckhort_
-#define CKSOR cksor_
-#define CKCVML ckcvml_
-#define CKCPML ckcpml_
-#define CKUML ckuml_
-#define CKHML ckhml_
-#define CKGML ckgml_
-#define CKAML ckaml_
-#define CKSML cksml_
-#define CKCVMS ckcvms_
-#define CKCPMS ckcpms_
-#define CKUMS ckums_
-#define CKHMS ckhms_
-#define CKGMS ckgms_
-#define CKAMS ckams_
-#define CKSMS cksms_
-#define CKCPBL ckcpbl_
-#define CKCPBS ckcpbs_
-#define CKCVBL ckcvbl_
-#define CKCVBS ckcvbs_
-#define CKHBML ckhbml_
-#define CKHBMS ckhbms_
-#define CKUBML ckubml_
-#define CKUBMS ckubms_
-#define CKSBML cksbml_
-#define CKSBMS cksbms_
-#define CKGBML ckgbml_
-#define CKGBMS ckgbms_
-#define CKABML ckabml_
-#define CKABMS ckabms_
-#define CKWC ckwc_
-#define CKWYP ckwyp_
-#define CKWXP ckwxp_
-#define CKWYR ckwyr_
-#define CKWXR ckwxr_
-#define CKQC ckqc_
-#define CKKFKR ckkfkr_
-#define CKQYP ckqyp_
-#define CKQXP ckqxp_
-#define CKQYR ckqyr_
-#define CKQXR ckqxr_
-#define CKNU cknu_
-#define CKNCF ckncf_
-#define CKABE ckabe_
-#define CKEQC ckeqc_
-#define CKEQYP ckeqyp_
-#define CKEQXP ckeqxp_
-#define CKEQYR ckeqyr_
-#define CKEQXR ckeqxr_
-#define DWDOT dwdot_
-#define DWDOT_PRECOND dwdot_precond_
-#define SPARSITY_INFO sparsity_info_
-#define SPARSITY_INFO_PRECOND sparsity_info_precond_ 
-#define SPARSITY_PREPROC sparsity_preproc_
-#define SPARSITY_PREPROC_PRECOND sparsity_preproc_precond_
-#define VCKHMS vckhms_
-#define VCKPY vckpy_
-#define VCKWYR vckwyr_
-#define VCKYTX vckytx_
-#define GET_T_GIVEN_EY get_t_given_ey_
-#define GET_T_GIVEN_HY get_t_given_hy_
-#define GET_REACTION_MAP get_reaction_map_
-#define GET_CRITPARAMS get_critparams_
-#endif
-
-/*function declarations */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetEPS EGTRANSETEPS
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetEPS egtranseteps
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetEPS egtranseteps_
-#endif
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetSIG EGTRANSETSIG
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetSIG egtransetsig
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetSIG egtransetsig_
-#endif
-extern "C"
+namespace thermo
 {
-void egtransetEPS(double *  EPS);
-void egtransetSIG(double* SIG);
-void atomicWeight(double *  awt);
-void molecularWeight(double *  wt);
-void gibbs(double *  species, double *  tc);
-void helmholtz(double *  species, double *  tc);
-void speciesInternalEnergy(double *  species, double *  tc);
-void speciesEnthalpy(double *  species, double *  tc);
-void speciesEntropy(double *  species, double *  tc);
-void cp_R(double *  species, double *  tc);
-void cv_R(double *  species, double *  tc);
-void equilibriumConstants(double *  kc, double *  g_RT, double T);
-void productionRate(double *  wdot, double *  sc, double T);
-void comp_k_f(double *  tc, double invT, double *  k_f);
-void comp_Kc(double *  tc, double invT, double *  Kc);
-void comp_qfqr(double *  q_f, double *  q_r, double *  sc, double *  tc, double invT);
-void progressRate(double *  qdot, double *  speciesConc, double T);
-void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);
-void CKINIT();
-void CKFINALIZE();
-void CKINDX(int * mm, int * kk, int * ii, int * nfit );
-void CKXNUM(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);
-void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);
-void CKSYME(int * kname, int * lenkname);
-void CKSYMS(int * kname, int * lenkname);
-void CKRP(double *  ru, double *  ruc, double *  pa);
-void CKPX(double *  rho, double *  T, double *  x, double *  P);
-void CKPY(double *  rho, double *  T, double *  y, double *  P);
-void CKPC(double *  rho, double *  T, double *  c, double *  P);
-void CKRHOX(double *  P, double *  T, double *  x, double *  rho);
-void CKRHOY(double *  P, double *  T, double *  y, double *  rho);
-void CKRHOC(double *  P, double *  T, double *  c, double *  rho);
-void CKWT(double *  wt);
-void CKAWT(double *  awt);
-void CKMMWY(double *  y, double *  wtm);
-void CKMMWX(double *  x, double *  wtm);
-void CKMMWC(double *  c, double *  wtm);
-void CKYTX(double *  y, double *  x);
-void CKYTCP(double *  P, double *  T, double *  y, double *  c);
-void CKYTCR(double *  rho, double *  T, double *  y, double *  c);
-void CKXTY(double *  x, double *  y);
-void CKXTCP(double *  P, double *  T, double *  x, double *  c);
-void CKXTCR(double *  rho, double *  T, double *  x, double *  c);
-void CKCTX(double *  c, double *  x);
-void CKCTY(double *  c, double *  y);
-void CKCPOR(double *  T, double *  cpor);
-void CKHORT(double *  T, double *  hort);
-void CKSOR(double *  T, double *  sor);
-void CKCVML(double *  T, double *  cvml);
-void CKCPML(double *  T, double *  cvml);
-void CKUML(double *  T, double *  uml);
-void CKHML(double *  T, double *  uml);
-void CKGML(double *  T, double *  gml);
-void CKAML(double *  T, double *  aml);
-void CKSML(double *  T, double *  sml);
-void CKCVMS(double *  T, double *  cvms);
-void CKCPMS(double *  T, double *  cvms);
-void CKUMS(double *  T, double *  ums);
-void CKHMS(double *  T, double *  ums);
-void CKGMS(double *  T, double *  gms);
-void CKAMS(double *  T, double *  ams);
-void CKSMS(double *  T, double *  sms);
-void CKCPBL(double *  T, double *  x, double *  cpbl);
-void CKCPBS(double *  T, double *  y, double *  cpbs);
-void CKCVBL(double *  T, double *  x, double *  cpbl);
-void CKCVBS(double *  T, double *  y, double *  cpbs);
-void CKHBML(double *  T, double *  x, double *  hbml);
-void CKHBMS(double *  T, double *  y, double *  hbms);
-void CKUBML(double *  T, double *  x, double *  ubml);
-void CKUBMS(double *  T, double *  y, double *  ubms);
-void CKSBML(double *  P, double *  T, double *  x, double *  sbml);
-void CKSBMS(double *  P, double *  T, double *  y, double *  sbms);
-void CKGBML(double *  P, double *  T, double *  x, double *  gbml);
-void CKGBMS(double *  P, double *  T, double *  y, double *  gbms);
-void CKABML(double *  P, double *  T, double *  x, double *  abml);
-void CKABMS(double *  P, double *  T, double *  y, double *  abms);
-void CKWC(double *  T, double *  C, double *  wdot);
-void CKWYP(double *  P, double *  T, double *  y, double *  wdot);
-void CKWXP(double *  P, double *  T, double *  x, double *  wdot);
-void CKWYR(double *  rho, double *  T, double *  y, double *  wdot);
-void CKWXR(double *  rho, double *  T, double *  x, double *  wdot);
-void CKQC(double *  T, double *  C, double *  qdot);
-void CKKFKR(double *  P, double *  T, double *  x, double *  q_f, double *  q_r);
-void CKQYP(double *  P, double *  T, double *  y, double *  qdot);
-void CKQXP(double *  P, double *  T, double *  x, double *  qdot);
-void CKQYR(double *  rho, double *  T, double *  y, double *  qdot);
-void CKQXR(double *  rho, double *  T, double *  x, double *  qdot);
-void CKNU(int * kdim, int * nuki);
-void CKNCF(int * mdim, int * ncf);
-void CKABE(double *  a, double *  b, double *  e );
-void CKEQC(double *  T, double *  C , double *  eqcon );
-void CKEQYP(double *  P, double *  T, double *  y, double *  eqcon);
-void CKEQXP(double *  P, double *  T, double *  x, double *  eqcon);
-void CKEQYR(double *  rho, double *  T, double *  y, double *  eqcon);
-void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon);
-void DWDOT(double *  J, double *  sc, double *  T, int * consP);
-void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);
-void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);
-void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);
-void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);
-void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * consP);
-void aJacobian(double *  J, double *  sc, double T, int consP);
-void aJacobian_precond(double *  J, double *  sc, double T, int HP);
-void dcvpRdT(double *  species, double *  tc);
-void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);
-void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);
-void GET_REACTION_MAP(int *  rmap);
-/*vector version */
-void vproductionRate(int npt, double *  wdot, double *  c, double *  T);
-void VCKHMS(int *  np, double *  T, double *  ums);
-void VCKPY(int *  np, double *  rho, double *  T, double *  y, double *  P);
-void VCKWYR(int *  np, double *  rho, double *  T,
-            double *  y,
-            double *  wdot);
-void VCKYTX(int *  np, double *  y, double *  x);
-void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT);
-void vcomp_gibbs(int npt, double *  g_RT, double *  tc);
-void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT);
-void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);
-void vcomp_wdot(int npt, double *  wdot, double *  mixture, double *  sc,
-                double *  k_f_s, double *  Kc_s,
-                double *  tc, double *  invT, double *  T);
+    /* Inverse molecular weights */
+    std::vector<double> imw;
 
-/* Inverse molecular weights */
-static const double imw[7] = {
-    1.0 / 16.043030,  /*CH4 */
-    1.0 / 31.998800,  /*O2 */
-    1.0 / 18.015340,  /*H2O */
-    1.0 / 28.013400,  /*N2 */
-    1.0 / 28.010550,  /*CO */
-    1.0 / 44.009950,  /*CO2 */
-    1.0 / 2.015940};  /*H2 */
+    double fwd_A[4], fwd_beta[4], fwd_Ea[4];
+    double low_A[4], low_beta[4], low_Ea[4];
+    double rev_A[4], rev_beta[4], rev_Ea[4];
+    double troe_a[4],troe_Ts[4], troe_Tss[4], troe_Tsss[4];
+    double sri_a[4], sri_b[4], sri_c[4], sri_d[4], sri_e[4];
+    double activation_units[4], prefactor_units[4], phase_units[4];
+    int is_PD[4], troe_len[4], sri_len[4], nTB[4], *TBid[4];
+    double *TB[4];
+
+    double fwd_A_DEF[4], fwd_beta_DEF[4], fwd_Ea_DEF[4];
+    double low_A_DEF[4], low_beta_DEF[4], low_Ea_DEF[4];
+    double rev_A_DEF[4], rev_beta_DEF[4], rev_Ea_DEF[4];
+    double troe_a_DEF[4],troe_Ts_DEF[4], troe_Tss_DEF[4], troe_Tsss_DEF[4];
+    double sri_a_DEF[4], sri_b_DEF[4], sri_c_DEF[4], sri_d_DEF[4], sri_e_DEF[4];
+    double activation_units_DEF[4], prefactor_units_DEF[4], phase_units_DEF[4];
+    int is_PD_DEF[4], troe_len_DEF[4], sri_len_DEF[4], nTB_DEF[4], *TBid_DEF[4];
+    double *TB_DEF[4];
+    std::vector<int> rxn_map;
+};
+
+using namespace thermo;
 
 
+/* Initializes parameter database */
+void CKINIT()
+{
 
-static double fwd_A[4], fwd_beta[4], fwd_Ea[4];
-static double low_A[4], low_beta[4], low_Ea[4];
-static double rev_A[4], rev_beta[4], rev_Ea[4];
-static double troe_a[4],troe_Ts[4], troe_Tss[4], troe_Tsss[4];
-static double sri_a[4], sri_b[4], sri_c[4], sri_d[4], sri_e[4];
-static double activation_units[4], prefactor_units[4], phase_units[4];
-static int is_PD[4], troe_len[4], sri_len[4], nTB[4], *TBid[4];
-static double *TB[4];
+    /* Inverse molecular weights */
+    imw = {
+        1.0 / 16.043030,  /*CH4 */
+        1.0 / 31.998800,  /*O2 */
+        1.0 / 18.015340,  /*H2O */
+        1.0 / 28.013400,  /*N2 */
+        1.0 / 28.010550,  /*CO */
+        1.0 / 44.009950,  /*CO2 */
+        1.0 / 2.015940};  /*H2 */
 
-static double fwd_A_DEF[4], fwd_beta_DEF[4], fwd_Ea_DEF[4];
-static double low_A_DEF[4], low_beta_DEF[4], low_Ea_DEF[4];
-static double rev_A_DEF[4], rev_beta_DEF[4], rev_Ea_DEF[4];
-static double troe_a_DEF[4],troe_Ts_DEF[4], troe_Tss_DEF[4], troe_Tsss_DEF[4];
-static double sri_a_DEF[4], sri_b_DEF[4], sri_c_DEF[4], sri_d_DEF[4], sri_e_DEF[4];
-static double activation_units_DEF[4], prefactor_units_DEF[4], phase_units_DEF[4];
-static int is_PD_DEF[4], troe_len_DEF[4], sri_len_DEF[4], nTB_DEF[4], *TBid_DEF[4];
-static double *TB_DEF[4];
-static int rxn_map[4] = {0,1,2,3};
+    rxn_map = {0,1,2,3};
+
+    // (0):  2 CH4 + O2 => 2 CO + 4 H2
+    fwd_A[0]     = 39100000000000;
+    fwd_beta[0]  = 0;
+    fwd_Ea[0]    = 30000;
+    prefactor_units[0]  = 1.0000000000000002e-12;
+    activation_units[0] = 0.50321666580471969;
+    phase_units[0]      = 1e-18;
+    is_PD[0] = 0;
+    nTB[0] = 0;
+
+    // (1):  CH4 + H2O <=> CO + 3 H2
+    fwd_A[1]     = 300000000000;
+    fwd_beta[1]  = 0;
+    fwd_Ea[1]    = 30000;
+    prefactor_units[1]  = 1.0000000000000002e-06;
+    activation_units[1] = 0.50321666580471969;
+    phase_units[1]      = 1e-12;
+    is_PD[1] = 0;
+    nTB[1] = 0;
+
+    // (2):  2 H2 + O2 => 2 H2O
+    fwd_A[2]     = 6.045e+18;
+    fwd_beta[2]  = -1;
+    fwd_Ea[2]    = 40000;
+    prefactor_units[2]  = 1.0000000000000002e-12;
+    activation_units[2] = 0.50321666580471969;
+    phase_units[2]      = 1e-18;
+    is_PD[2] = 0;
+    nTB[2] = 0;
+
+    // (3):  CO + H2O <=> CO2 + H2
+    fwd_A[3]     = 2750000000000;
+    fwd_beta[3]  = 0;
+    fwd_Ea[3]    = 20000;
+    prefactor_units[3]  = 1.0000000000000002e-06;
+    activation_units[3] = 0.50321666580471969;
+    phase_units[3]      = 1e-12;
+    is_PD[3] = 0;
+    nTB[3] = 0;
+
+    SetAllDefaults();
+}
 
 void GET_REACTION_MAP(int *rmap)
 {
@@ -456,7 +93,6 @@ void GET_REACTION_MAP(int *rmap)
         rmap[i] = rxn_map[i];
     }
 }
-
 
 #include <ReactionData.H>
 double* GetParamPtr(int                reaction_id,
@@ -638,52 +274,6 @@ void CKFINALIZE()
     free(TBid_DEF[i]); TBid_DEF[i] = 0;
     nTB_DEF[i] = 0;
   }
-}
-
-/* Initializes parameter database */
-void CKINIT()
-{
-    // (0):  2 CH4 + O2 => 2 CO + 4 H2
-    fwd_A[0]     = 39100000000000;
-    fwd_beta[0]  = 0;
-    fwd_Ea[0]    = 30000;
-    prefactor_units[0]  = 3.1622776601683795e-05;
-    activation_units[0] = 0.50321666580471969;
-    phase_units[0]      = 1e-10;
-    is_PD[0] = 0;
-    nTB[0] = 0;
-
-    // (1):  CH4 + H2O <=> CO + 3 H2
-    fwd_A[1]     = 300000000000;
-    fwd_beta[1]  = 0;
-    fwd_Ea[1]    = 30000;
-    prefactor_units[1]  = 1.0000000000000002e-06;
-    activation_units[1] = 0.50321666580471969;
-    phase_units[1]      = 1e-12;
-    is_PD[1] = 0;
-    nTB[1] = 0;
-
-    // (2):  2 H2 + O2 => 2 H2O
-    fwd_A[2]     = 6.045e+18;
-    fwd_beta[2]  = -1;
-    fwd_Ea[2]    = 40000;
-    prefactor_units[2]  = 3.1622776601683795e-05;
-    activation_units[2] = 0.50321666580471969;
-    phase_units[2]      = 1e-10;
-    is_PD[2] = 0;
-    nTB[2] = 0;
-
-    // (3):  CO + H2O <=> CO2 + H2
-    fwd_A[3]     = 2750000000000;
-    fwd_beta[3]  = 0;
-    fwd_Ea[3]    = 20000;
-    prefactor_units[3]  = 1.0000000000000002e-06;
-    activation_units[3] = 0.50321666580471969;
-    phase_units[3]      = 1e-12;
-    is_PD[3] = 0;
-    nTB[3] = 0;
-
-    SetAllDefaults();
 }
 
 
@@ -2454,7 +2044,6 @@ void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon)
     /*eqcon[3] *= 1;  */
 }
 
-
 static double T_save = -1;
 #ifdef _OPENMP
 #pragma omp threadprivate(T_save)
@@ -2562,7 +2151,7 @@ void comp_qfqr(double *  qf, double *  qr, double *  sc, double *  tc, double in
 {
 
     /*reaction 1: 2 CH4 + O2 => 2 CO + 4 H2 */
-    qf[0] = pow( sc[0], 0.5)*pow( sc[1], 1.25);
+    qf[0] = sc[0]*sc[0]*sc[1];
     qr[0] = 0.0;
 
     /*reaction 2: CH4 + H2O <=> CO + 3 H2 */
@@ -2570,7 +2159,7 @@ void comp_qfqr(double *  qf, double *  qr, double *  sc, double *  tc, double in
     qr[1] = sc[4]*sc[6]*sc[6]*sc[6];
 
     /*reaction 3: 2 H2 + O2 => 2 H2O */
-    qf[2] = pow( sc[1], 1.5)*pow( sc[6], 0.25);
+    qf[2] = sc[1]*sc[6]*sc[6];
     qr[2] = 0.0;
 
     /*reaction 4: CO + H2O <=> CO2 + H2 */
@@ -2916,6 +2505,7 @@ void SPARSITY_PREPROC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)
 
     return;
 }
+
 
 /*compute the reaction Jacobian */
 void aJacobian(double *  J, double *  sc, double T, int consP)
@@ -4671,81 +4261,32 @@ void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentri
 }
 
 
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetLENIMC EGTRANSETLENIMC
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetLENIMC egtransetlenimc
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetLENIMC egtransetlenimc_
-#endif
 void egtransetLENIMC(int* LENIMC ) {
     *LENIMC = 29;}
 
 
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetLENRMC EGTRANSETLENRMC
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetLENRMC egtransetlenrmc
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetLENRMC egtransetlenrmc_
-#endif
 void egtransetLENRMC(int* LENRMC ) {
     *LENRMC = 1148;}
 
 
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetNO EGTRANSETNO
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetNO egtransetno
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetNO egtransetno_
-#endif
 void egtransetNO(int* NO ) {
     *NO = 4;}
 
 
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetKK EGTRANSETKK
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetKK egtransetkk
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetKK egtransetkk_
-#endif
 void egtransetKK(int* KK ) {
     *KK = 7;}
 
 
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetNLITE EGTRANSETNLITE
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetNLITE egtransetnlite
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetNLITE egtransetnlite_
-#endif
 void egtransetNLITE(int* NLITE ) {
     *NLITE = 1;}
 
 
 /*Patm in ergs/cm3 */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetPATM EGTRANSETPATM
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetPATM egtransetpatm
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetPATM egtransetpatm_
-#endif
 void egtransetPATM(double* PATM) {
     *PATM =   0.1013250000000000E+07;}
 
 
 /*the molecular weights in g/mol */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetWT EGTRANSETWT
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetWT egtransetwt
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetWT egtransetwt_
-#endif
 void egtransetWT(double* WT ) {
     WT[0] = 1.60430300E+01;
     WT[1] = 3.19988000E+01;
@@ -4758,127 +4299,78 @@ void egtransetWT(double* WT ) {
 
 
 /*the lennard-jones potential well depth eps/kb in K */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetEPS EGTRANSETEPS
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetEPS egtranseteps
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetEPS egtranseteps_
-#endif
 void egtransetEPS(double* EPS ) {
     EPS[5] = 2.44000000E+02;
     EPS[3] = 9.75300000E+01;
-    EPS[4] = 9.81000000E+01;
+    EPS[1] = 1.07400000E+02;
     EPS[6] = 3.80000000E+01;
     EPS[2] = 5.72400000E+02;
     EPS[0] = 1.41400000E+02;
-    EPS[1] = 1.07400000E+02;
+    EPS[4] = 9.81000000E+01;
 }
 
 
 /*the lennard-jones collision diameter in Angstroms */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetSIG EGTRANSETSIG
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetSIG egtransetsig
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetSIG egtransetsig_
-#endif
 void egtransetSIG(double* SIG ) {
     SIG[5] = 3.76300000E+00;
     SIG[3] = 3.62100000E+00;
-    SIG[4] = 3.65000000E+00;
+    SIG[1] = 3.45800000E+00;
     SIG[6] = 2.92000000E+00;
     SIG[2] = 2.60500000E+00;
     SIG[0] = 3.74600000E+00;
-    SIG[1] = 3.45800000E+00;
+    SIG[4] = 3.65000000E+00;
 }
 
 
 /*the dipole moment in Debye */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetDIP EGTRANSETDIP
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetDIP egtransetdip
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetDIP egtransetdip_
-#endif
 void egtransetDIP(double* DIP ) {
     DIP[5] = 0.00000000E+00;
     DIP[3] = 0.00000000E+00;
-    DIP[4] = 0.00000000E+00;
+    DIP[1] = 0.00000000E+00;
     DIP[6] = 0.00000000E+00;
     DIP[2] = 1.84400000E+00;
     DIP[0] = 0.00000000E+00;
-    DIP[1] = 0.00000000E+00;
+    DIP[4] = 0.00000000E+00;
 }
 
 
 /*the polarizability in cubic Angstroms */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetPOL EGTRANSETPOL
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetPOL egtransetpol
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetPOL egtransetpol_
-#endif
 void egtransetPOL(double* POL ) {
     POL[5] = 2.65000000E+00;
     POL[3] = 1.76000000E+00;
-    POL[4] = 1.95000000E+00;
+    POL[1] = 1.60000000E+00;
     POL[6] = 7.90000000E-01;
     POL[2] = 0.00000000E+00;
     POL[0] = 2.60000000E+00;
-    POL[1] = 1.60000000E+00;
+    POL[4] = 1.95000000E+00;
 }
 
 
 /*the rotational relaxation collision number at 298 K */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetZROT EGTRANSETZROT
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetZROT egtransetzrot
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetZROT egtransetzrot_
-#endif
 void egtransetZROT(double* ZROT ) {
     ZROT[5] = 2.10000000E+00;
     ZROT[3] = 4.00000000E+00;
-    ZROT[4] = 1.80000000E+00;
+    ZROT[1] = 3.80000000E+00;
     ZROT[6] = 2.80000000E+02;
     ZROT[2] = 4.00000000E+00;
     ZROT[0] = 1.30000000E+01;
-    ZROT[1] = 3.80000000E+00;
+    ZROT[4] = 1.80000000E+00;
 }
 
 
 /*0: monoatomic, 1: linear, 2: nonlinear */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetNLIN EGTRANSETNLIN
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetNLIN egtransetnlin
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetNLIN egtransetnlin_
-#endif
 void egtransetNLIN(int* NLIN) {
     NLIN[5] = 1;
     NLIN[3] = 1;
-    NLIN[4] = 1;
+    NLIN[1] = 1;
     NLIN[6] = 1;
     NLIN[2] = 2;
     NLIN[0] = 2;
-    NLIN[1] = 1;
+    NLIN[4] = 1;
 }
 
 
 /*Poly fits for the viscosities, dim NO*KK */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetCOFETA EGTRANSETCOFETA
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetCOFETA egtransetcofeta
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetCOFETA egtransetcofeta_
-#endif
 void egtransetCOFETA(double* COFETA) {
     COFETA[0] = -2.04642214E+01;
     COFETA[1] = 3.75363357E+00;
@@ -4912,13 +4404,6 @@ void egtransetCOFETA(double* COFETA) {
 
 
 /*Poly fits for the conductivities, dim NO*KK */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetCOFLAM EGTRANSETCOFLAM
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetCOFLAM egtransetcoflam
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetCOFLAM egtransetcoflam_
-#endif
 void egtransetCOFLAM(double* COFLAM) {
     COFLAM[0] = 1.76957851E+01;
     COFLAM[1] = -6.71274475E+00;
@@ -4952,13 +4437,6 @@ void egtransetCOFLAM(double* COFLAM) {
 
 
 /*Poly fits for the diffusion coefficients, dim NO*KK*KK */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetCOFD EGTRANSETCOFD
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetCOFD egtransetcofd
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetCOFD egtransetcofd_
-#endif
 void egtransetCOFD(double* COFD) {
     COFD[0] = -1.75618457E+01;
     COFD[1] = 4.30617914E+00;
@@ -5160,26 +4638,12 @@ void egtransetCOFD(double* COFD) {
 
 
 /*List of specs with small weight, dim NLITE */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetKTDIF EGTRANSETKTDIF
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetKTDIF egtransetktdif
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetKTDIF egtransetktdif_
-#endif
 void egtransetKTDIF(int* KTDIF) {
     KTDIF[0] = 7;
 }
 
 
 /*Poly fits for thermal diff ratios, dim NO*NLITE*KK */
-#if defined(BL_FORT_USE_UPPERCASE)
-#define egtransetCOFTD EGTRANSETCOFTD
-#elif defined(BL_FORT_USE_LOWERCASE)
-#define egtransetCOFTD egtransetcoftd
-#elif defined(BL_FORT_USE_UNDERSCORE)
-#define egtransetCOFTD egtransetcoftd_
-#endif
 void egtransetCOFTD(double* COFTD) {
     COFTD[0] = 2.98973958E-01;
     COFTD[1] = 2.32230992E-04;
@@ -5211,272 +4675,4 @@ void egtransetCOFTD(double* COFTD) {
     COFTD[27] = 0.00000000E+00;
 }
 
-}
-
 /* End of file  */
-
-
-
-
-#if 0
-
-
-
-
-\\
-\\
-\\  This is the mechanism file
-\\
-\\
-ELEMENTS
-C O H N
-END
-SPECIES
-CH4 O2 H2O N2 CO CO2 H2
-END
-TRANS ALL
-CH4                2   141.400     3.746     0.000     2.600    13.000          
-O2                 1   107.400     3.458     0.000     1.600     3.800          
-H2O                2   572.400     2.605     1.844     0.000     4.000          
-N2                 1    97.530     3.621     0.000     1.760     4.000          
-CO                 1    98.100     3.650     0.000     1.950     1.800          
-CO2                1   244.000     3.763     0.000     2.650     2.100          
-H2                 1    38.000     2.920     0.000     0.790   280.000          
-END
-REACTIONS
-2CH4+O2=>2CO+4H2                3.91E13 0 30.0E3
-  FORD /CH4 0.5/
-  FORD /O2 1.25/
-CH4+H2O=CO+3H2                  3.0E11 0 30.0E3
-2H2+O2=>2H2O                    6.045E18 -1 40.0E3
-  FORD /H2 0.25/
-  FORD /O2 1.5/
-CO+H2O=CO2+H2                   2.75E12 0 20.0E3
-END
-
-\\
-\\
-\\  This is the therm file
-\\
-\\
-THERMO ALL
-   300.000  1000.000  5000.000
-O                 L 1/90O   1               G   200.000  3500.000  1000.000    1
- 2.56942078E+00-8.59741137E-05 4.19484589E-08-1.00177799E-11 1.22833691E-15    2
- 2.92175791E+04 4.78433864E+00 3.16826710E+00-3.27931884E-03 6.64306396E-06    3
--6.12806624E-09 2.11265971E-12 2.91222592E+04 2.05193346E+00                   4
-O2                TPIS89O   2               G   200.000  3500.000  1000.000    1
- 3.28253784E+00 1.48308754E-03-7.57966669E-07 2.09470555E-10-2.16717794E-14    2
--1.08845772E+03 5.45323129E+00 3.78245636E+00-2.99673416E-03 9.84730201E-06    3
--9.68129509E-09 3.24372837E-12-1.06394356E+03 3.65767573E+00                   4
-H                 L 7/88H   1               G   200.000  3500.000  1000.000    1
- 2.50000001E+00-2.30842973E-11 1.61561948E-14-4.73515235E-18 4.98197357E-22    2
- 2.54736599E+04-4.46682914E-01 2.50000000E+00 7.05332819E-13-1.99591964E-15    3
- 2.30081632E-18-9.27732332E-22 2.54736599E+04-4.46682853E-01                   4
-H2                TPIS78H   2               G   200.000  3500.000  1000.000    1
- 3.33727920E+00-4.94024731E-05 4.99456778E-07-1.79566394E-10 2.00255376E-14    2
--9.50158922E+02-3.20502331E+00 2.34433112E+00 7.98052075E-03-1.94781510E-05    3
- 2.01572094E-08-7.37611761E-12-9.17935173E+02 6.83010238E-01                   4
-OH                RUS 78O   1H   1          G   200.000  3500.000  1000.000    1
- 3.09288767E+00 5.48429716E-04 1.26505228E-07-8.79461556E-11 1.17412376E-14    2
- 3.85865700E+03 4.47669610E+00 3.99201543E+00-2.40131752E-03 4.61793841E-06    3
--3.88113333E-09 1.36411470E-12 3.61508056E+03-1.03925458E-01                   4
-H2O               L 8/89H   2O   1          G   200.000  3500.000  1000.000    1
- 3.03399249E+00 2.17691804E-03-1.64072518E-07-9.70419870E-11 1.68200992E-14    2
--3.00042971E+04 4.96677010E+00 4.19864056E+00-2.03643410E-03 6.52040211E-06    3
--5.48797062E-09 1.77197817E-12-3.02937267E+04-8.49032208E-01                   4
-HO2               L 5/89H   1O   2          G   200.000  3500.000  1000.000    1
- 4.01721090E+00 2.23982013E-03-6.33658150E-07 1.14246370E-10-1.07908535E-14    2
- 1.11856713E+02 3.78510215E+00 4.30179801E+00-4.74912051E-03 2.11582891E-05    3
--2.42763894E-08 9.29225124E-12 2.94808040E+02 3.71666245E+00                   4
-H2O2              L 7/88H   2O   2          G   200.000  3500.000  1000.000    1
- 4.16500285E+00 4.90831694E-03-1.90139225E-06 3.71185986E-10-2.87908305E-14    2
--1.78617877E+04 2.91615662E+00 4.27611269E+00-5.42822417E-04 1.67335701E-05    3
--2.15770813E-08 8.62454363E-12-1.77025821E+04 3.43505074E+00                   4
-C                 L11/88C   1               G   200.000  3500.000  1000.000    1
- 2.49266888E+00 4.79889284E-05-7.24335020E-08 3.74291029E-11-4.87277893E-15    2
- 8.54512953E+04 4.80150373E+00 2.55423955E+00-3.21537724E-04 7.33792245E-07    3
--7.32234889E-10 2.66521446E-13 8.54438832E+04 4.53130848E+00                   4
-CH                TPIS79C   1H   1          G   200.000  3500.000  1000.000    1
- 2.87846473E+00 9.70913681E-04 1.44445655E-07-1.30687849E-10 1.76079383E-14    2
- 7.10124364E+04 5.48497999E+00 3.48981665E+00 3.23835541E-04-1.68899065E-06    3
- 3.16217327E-09-1.40609067E-12 7.07972934E+04 2.08401108E+00                   4
-CH2               L S/93C   1H   2          G   200.000  3500.000  1000.000    1
- 2.87410113E+00 3.65639292E-03-1.40894597E-06 2.60179549E-10-1.87727567E-14    2
- 4.62636040E+04 6.17119324E+00 3.76267867E+00 9.68872143E-04 2.79489841E-06    3
--3.85091153E-09 1.68741719E-12 4.60040401E+04 1.56253185E+00                   4
-CH2S              L S/93C   1H   2          G   200.000  3500.000  1000.000    1
- 2.29203842E+00 4.65588637E-03-2.01191947E-06 4.17906000E-10-3.39716365E-14    2
- 5.09259997E+04 8.62650169E+00 4.19860411E+00-2.36661419E-03 8.23296220E-06    3
--6.68815981E-09 1.94314737E-12 5.04968163E+04-7.69118967E-01                   4
-CH3               L11/89C   1H   3          G   200.000  3500.000  1000.000    1
- 2.28571772E+00 7.23990037E-03-2.98714348E-06 5.95684644E-10-4.67154394E-14    2
- 1.67755843E+04 8.48007179E+00 3.67359040E+00 2.01095175E-03 5.73021856E-06    3
--6.87117425E-09 2.54385734E-12 1.64449988E+04 1.60456433E+00                   4
-CH4               L 8/88C   1H   4          G   200.000  3500.000  1000.000    1
- 7.48514950E-02 1.33909467E-02-5.73285809E-06 1.22292535E-09-1.01815230E-13    2
--9.46834459E+03 1.84373180E+01 5.14987613E+00-1.36709788E-02 4.91800599E-05    3
--4.84743026E-08 1.66693956E-11-1.02466476E+04-4.64130376E+00                   4
-CO                TPIS79C   1O   1          G   200.000  3500.000  1000.000    1
- 2.71518561E+00 2.06252743E-03-9.98825771E-07 2.30053008E-10-2.03647716E-14    2
--1.41518724E+04 7.81868772E+00 3.57953347E+00-6.10353680E-04 1.01681433E-06    3
- 9.07005884E-10-9.04424499E-13-1.43440860E+04 3.50840928E+00                   4
-CO2               L 7/88C   1O   2          G   200.000  3500.000  1000.000    1
- 3.85746029E+00 4.41437026E-03-2.21481404E-06 5.23490188E-10-4.72084164E-14    2
--4.87591660E+04 2.27163806E+00 2.35677352E+00 8.98459677E-03-7.12356269E-06    3
- 2.45919022E-09-1.43699548E-13-4.83719697E+04 9.90105222E+00                   4
-HCO               L12/89H   1C   1O   1     G   200.000  3500.000  1000.000    1
- 2.77217438E+00 4.95695526E-03-2.48445613E-06 5.89161778E-10-5.33508711E-14    2
- 4.01191815E+03 9.79834492E+00 4.22118584E+00-3.24392532E-03 1.37799446E-05    3
--1.33144093E-08 4.33768865E-12 3.83956496E+03 3.39437243E+00                   4
-CH2O              L 8/88H   2C   1O   1     G   200.000  3500.000  1000.000    1
- 1.76069008E+00 9.20000082E-03-4.42258813E-06 1.00641212E-09-8.83855640E-14    2
--1.39958323E+04 1.36563230E+01 4.79372315E+00-9.90833369E-03 3.73220008E-05    3
--3.79285261E-08 1.31772652E-11-1.43089567E+04 6.02812900E-01                   4
-CH2OH             GUNL93C   1H   3O   1     G   200.000  3500.000  1000.000    1
- 3.69266569E+00 8.64576797E-03-3.75101120E-06 7.87234636E-10-6.48554201E-14    2
--3.24250627E+03 5.81043215E+00 3.86388918E+00 5.59672304E-03 5.93271791E-06    3
--1.04532012E-08 4.36967278E-12-3.19391367E+03 5.47302243E+00                   4
-CH3O              121686C   1H   3O   1     G   200.00   3000.00   1000.000    1
- 0.03770799E+02 0.07871497E-01-0.02656384E-04 0.03944431E-08-0.02112616E-12    2
- 0.12783252E+03 0.02929575E+02 0.02106204E+02 0.07216595E-01 0.05338472E-04    3
--0.07377636E-07 0.02075610E-10 0.09786011E+04 0.13152177E+02                   4
-CH3OH             L 8/88C   1H   4O   1     G   200.000  3500.000  1000.000    1
- 1.78970791E+00 1.40938292E-02-6.36500835E-06 1.38171085E-09-1.17060220E-13    2
--2.53748747E+04 1.45023623E+01 5.71539582E+00-1.52309129E-02 6.52441155E-05    3
--7.10806889E-08 2.61352698E-11-2.56427656E+04-1.50409823E+00                   4
-C2H               L 1/91C   2H   1          G   200.000  3500.000  1000.000    1
- 3.16780652E+00 4.75221902E-03-1.83787077E-06 3.04190252E-10-1.77232770E-14    2
- 6.71210650E+04 6.63589475E+00 2.88965733E+00 1.34099611E-02-2.84769501E-05    3
- 2.94791045E-08-1.09331511E-11 6.68393932E+04 6.22296438E+00                   4
-C2H2              L 1/91C   2H   2          G   200.000  3500.000  1000.000    1
- 4.14756964E+00 5.96166664E-03-2.37294852E-06 4.67412171E-10-3.61235213E-14    2
- 2.59359992E+04-1.23028121E+00 8.08681094E-01 2.33615629E-02-3.55171815E-05    3
- 2.80152437E-08-8.50072974E-12 2.64289807E+04 1.39397051E+01                   4
-C2H3              L 2/92C   2H   3          G   200.000  3500.000  1000.000    1
- 3.01672400E+00 1.03302292E-02-4.68082349E-06 1.01763288E-09-8.62607041E-14    2
- 3.46128739E+04 7.78732378E+00 3.21246645E+00 1.51479162E-03 2.59209412E-05    3
--3.57657847E-08 1.47150873E-11 3.48598468E+04 8.51054025E+00                   4
-C2H4              L 1/91C   2H   4          G   200.000  3500.000  1000.000    1
- 2.03611116E+00 1.46454151E-02-6.71077915E-06 1.47222923E-09-1.25706061E-13    2
- 4.93988614E+03 1.03053693E+01 3.95920148E+00-7.57052247E-03 5.70990292E-05    3
--6.91588753E-08 2.69884373E-11 5.08977593E+03 4.09733096E+00                   4
-C2H5              L12/92C   2H   5          G   200.000  3500.000  1000.000    1
- 1.95465642E+00 1.73972722E-02-7.98206668E-06 1.75217689E-09-1.49641576E-13    2
- 1.28575200E+04 1.34624343E+01 4.30646568E+00-4.18658892E-03 4.97142807E-05    3
--5.99126606E-08 2.30509004E-11 1.28416265E+04 4.70720924E+00                   4
-C2H6              L 8/88C   2H   6          G   200.000  3500.000  1000.000    1
- 1.07188150E+00 2.16852677E-02-1.00256067E-05 2.21412001E-09-1.90002890E-13    2
--1.14263932E+04 1.51156107E+01 4.29142492E+00-5.50154270E-03 5.99438288E-05    3
--7.08466285E-08 2.68685771E-11-1.15222055E+04 2.66682316E+00                   4
-CH2CO             L 5/90C   2H   2O   1     G   200.000  3500.000  1000.000    1
- 4.51129732E+00 9.00359745E-03-4.16939635E-06 9.23345882E-10-7.94838201E-14    2
--7.55105311E+03 6.32247205E-01 2.13583630E+00 1.81188721E-02-1.73947474E-05    3
- 9.34397568E-09-2.01457615E-12-7.04291804E+03 1.22156480E+01                   4
-HCCO              SRIC91H   1C   2O   1     G   200.00   4000.00   1000.000    1
- 0.56282058E+01 0.40853401E-02-0.15934547E-05 0.28626052E-09-0.19407832E-13    2
- 0.19327215E+05-0.39302595E+01 0.22517214E+01 0.17655021E-01-0.23729101E-04    3
- 0.17275759E-07-0.50664811E-11 0.20059449E+05 0.12490417E+02                   4
-HCCOH              SRI91C   2O   1H   2     G   200.000  5000.000  1000.000    1
- 0.59238291E+01 0.67923600E-02-0.25658564E-05 0.44987841E-09-0.29940101E-13    2
- 0.72646260E+04-0.76017742E+01 0.12423733E+01 0.31072201E-01-0.50866864E-04    3
- 0.43137131E-07-0.14014594E-10 0.80316143E+04 0.13874319E+02                   4
-H2CN               41687H   2C   1N   1     G   200.00   4000.000  1000.000    1
- 0.52097030E+01 0.29692911E-02-0.28555891E-06-0.16355500E-09 0.30432589E-13    2
- 0.27677109E+05-0.44444780E+01 0.28516610E+01 0.56952331E-02 0.10711400E-05    3
--0.16226120E-08-0.23511081E-12 0.28637820E+05 0.89927511E+01                   4
-HCN               GRI/98H   1C   1N   1     G   200.000  6000.000  1000.000    1
- 0.38022392E+01 0.31464228E-02-0.10632185E-05 0.16619757E-09-0.97997570E-14    2
- 0.14407292E+05 0.15754601E+01 0.22589886E+01 0.10051170E-01-0.13351763E-04    3
- 0.10092349E-07-0.30089028E-11 0.14712633E+05 0.89164419E+01                   4
-HNO               And93 H   1N   1O   1     G   200.000  6000.000  1000.000    1
- 0.29792509E+01 0.34944059E-02-0.78549778E-06 0.57479594E-10-0.19335916E-15    2
- 0.11750582E+05 0.86063728E+01 0.45334916E+01-0.56696171E-02 0.18473207E-04    3
--0.17137094E-07 0.55454573E-11 0.11548297E+05 0.17498417E+01                   4
-N                 L 6/88N   1               G   200.000  6000.000  1000.000    1
- 0.24159429E+01 0.17489065E-03-0.11902369E-06 0.30226245E-10-0.20360982E-14    2
- 0.56133773E+05 0.46496096E+01 0.25000000E+01 0.00000000E+00 0.00000000E+00    3
- 0.00000000E+00 0.00000000E+00 0.56104637E+05 0.41939087E+01                   4
-NNH               T07/93N   2H   1          G   200.000  6000.000  1000.000    1
- 0.37667544E+01 0.28915082E-02-0.10416620E-05 0.16842594E-09-0.10091896E-13    2
- 0.28650697E+05 0.44705067E+01 0.43446927E+01-0.48497072E-02 0.20059459E-04    3
--0.21726464E-07 0.79469539E-11 0.28791973E+05 0.29779410E+01                   4
-N2O               L 7/88N   2O   1          G   200.000  6000.000  1000.000    1
- 0.48230729E+01 0.26270251E-02-0.95850874E-06 0.16000712E-09-0.97752303E-14    2
- 0.80734048E+04-0.22017207E+01 0.22571502E+01 0.11304728E-01-0.13671319E-04    3
- 0.96819806E-08-0.29307182E-11 0.87417744E+04 0.10757992E+02                   4
-NH                And94 N   1H   1          G   200.000  6000.000  1000.000    1
- 0.27836928E+01 0.13298430E-02-0.42478047E-06 0.78348501E-10-0.55044470E-14    2
- 0.42120848E+05 0.57407799E+01 0.34929085E+01 0.31179198E-03-0.14890484E-05    3
- 0.24816442E-08-0.10356967E-11 0.41880629E+05 0.18483278E+01                   4
-NH2               And89 N   1H   2          G   200.000  6000.000  1000.000    1
- 0.28347421E+01 0.32073082E-02-0.93390804E-06 0.13702953E-09-0.79206144E-14    2
- 0.22171957E+05 0.65204163E+01 0.42040029E+01-0.21061385E-02 0.71068348E-05    3
--0.56115197E-08 0.16440717E-11 0.21885910E+05-0.14184248E+00                   4
-NH3               J 6/77N   1H   3          G   200.000  6000.000  1000.000    1
- 0.26344521E+01 0.56662560E-02-0.17278676E-05 0.23867161E-09-0.12578786E-13    2
--0.65446958E+04 0.65662928E+01 0.42860274E+01-0.46605230E-02 0.21718513E-04    3
--0.22808887E-07 0.82638046E-11-0.67417285E+04-0.62537277E+00                   4
-NO                RUS 78N   1O   1          G   200.000  6000.000  1000.000    1
- 0.32606056E+01 0.11911043E-02-0.42917048E-06 0.69457669E-10-0.40336099E-14    2
- 0.99209746E+04 0.63693027E+01 0.42184763E+01-0.46389760E-02 0.11041022E-04    3
--0.93361354E-08 0.28035770E-11 0.98446230E+04 0.22808464E+01                   4
-NO2               L 7/88N   1O   2          G   200.000  6000.000  1000.000    1
- 0.48847542E+01 0.21723956E-02-0.82806906E-06 0.15747510E-09-0.10510895E-13    2
- 0.23164983E+04-0.11741695E+00 0.39440312E+01-0.15854290E-02 0.16657812E-04    3
--0.20475426E-07 0.78350564E-11 0.28966179E+04 0.63119917E+01                   4
-HCNO              BDEA94H   1N   1C   1O   1G   200.000  5000.000  1382.000    1
- 6.59860456E+00 3.02778626E-03-1.07704346E-06 1.71666528E-10-1.01439391E-14    2
- 1.79661339E+04-1.03306599E+01 2.64727989E+00 1.27505342E-02-1.04794236E-05    3
- 4.41432836E-09-7.57521466E-13 1.92990252E+04 1.07332972E+01                   4
-HOCN              BDEA94H   1N   1C   1O   1G   200.000  5000.000  1368.000    1
- 5.89784885E+00 3.16789393E-03-1.11801064E-06 1.77243144E-10-1.04339177E-14    2
--3.70653331E+03-6.18167825E+00 3.78604952E+00 6.88667922E-03-3.21487864E-06    3
- 5.17195767E-10 1.19360788E-14-2.82698400E+03 5.63292162E+00                   4
-HNCO              BDEA94H   1N   1C   1O   1G   200.000  5000.000  1478.000    1
- 6.22395134E+00 3.17864004E-03-1.09378755E-06 1.70735163E-10-9.95021955E-15    2
--1.66599344E+04-8.38224741E+00 3.63096317E+00 7.30282357E-03-2.28050003E-06    3
--6.61271298E-10 3.62235752E-13-1.55873636E+04 6.19457727E+00                   4
-NCO               EA 93 N   1C   1O   1     G   200.000  6000.000  1000.000    1
- 0.51521845E+01 0.23051761E-02-0.88033153E-06 0.14789098E-09-0.90977996E-14    2
- 0.14004123E+05-0.25442660E+01 0.28269308E+01 0.88051688E-02-0.83866134E-05    3
- 0.48016964E-08-0.13313595E-11 0.14682477E+05 0.95504646E+01                   4
-CN                HBH92 C   1N   1          G   200.000  6000.000  1000.000    1
- 0.37459805E+01 0.43450775E-04 0.29705984E-06-0.68651806E-10 0.44134173E-14    2
- 0.51536188E+05 0.27867601E+01 0.36129351E+01-0.95551327E-03 0.21442977E-05    3
--0.31516323E-09-0.46430356E-12 0.51708340E+05 0.39804995E+01                   4
-HCNN              SRI/94C   1N   2H   1     G   200.000  5000.000  1000.000    1
- 0.58946362E+01 0.39895959E-02-0.15982380E-05 0.29249395E-09-0.20094686E-13    2
- 0.53452941E+05-0.51030502E+01 0.25243194E+01 0.15960619E-01-0.18816354E-04    3
- 0.12125540E-07-0.32357378E-11 0.54261984E+05 0.11675870E+02                   4
-N2                121286N   2               G   200.000  5000.000  1000.000    1
- 0.02926640E+02 0.14879768E-02-0.05684760E-05 0.10097038E-09-0.06753351E-13    2
--0.09227977E+04 0.05980528E+02 0.03298677E+02 0.14082404E-02-0.03963222E-04    3
- 0.05641515E-07-0.02444854E-10-0.10208999E+04 0.03950372E+02                   4
-AR                120186AR  1               G   200.000  5000.000  1000.000    1
- 0.02500000E+02 0.00000000E+00 0.00000000E+00 0.00000000E+00 0.00000000E+00    2
--0.07453750E+04 0.04366000E+02 0.02500000E+02 0.00000000E+00 0.00000000E+00    3
- 0.00000000E+00 0.00000000E+00-0.07453750E+04 0.04366000E+02                   4
-C3H8              L 4/85C   3H   8          G   200.000  5000.000  1000.000    1
- 0.75341368E+01 0.18872239E-01-0.62718491E-05 0.91475649E-09-0.47838069E-13    2
--0.16467516E+05-0.17892349E+02 0.93355381E+00 0.26424579E-01 0.61059727E-05    3
--0.21977499E-07 0.95149253E-11-0.13958520E+05 0.19201691E+02                   4
-C3H7              L 9/84C   3H   7          G   200.000  5000.000  1000.000    1
- 0.77026987E+01 0.16044203E-01-0.52833220E-05 0.76298590E-09-0.39392284E-13    2
- 0.82984336E+04-0.15480180E+02 0.10515518E+01 0.25991980E-01 0.23800540E-05    3
--0.19609569E-07 0.93732470E-11 0.10631863E+05 0.21122559E+02                   4
-CH3CHO            L 8/88C   2H   4O   1     G   200.000  6000.000  1000.000    1
- 0.54041108E+01 0.11723059E-01-0.42263137E-05 0.68372451E-09-0.40984863E-13    2
--0.22593122E+05-0.34807917E+01 0.47294595E+01-0.31932858E-02 0.47534921E-04    3
--0.57458611E-07 0.21931112E-10-0.21572878E+05 0.41030159E+01                   4
-CH2CHO            SAND86O   1H   3C   2     G   200.000  5000.000  1000.000    1
- 0.05975670E+02 0.08130591E-01-0.02743624E-04 0.04070304E-08-0.02176017E-12    2
- 0.04903218E+04-0.05045251E+02 0.03409062E+02 0.10738574E-01 0.01891492E-04    3
--0.07158583E-07 0.02867385E-10 0.15214766E+04 0.09558290E+02                   4
-END
-
-
-
-
-
-#endif

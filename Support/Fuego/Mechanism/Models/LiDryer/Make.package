@@ -1,4 +1,10 @@
+CEXE_headers+=chemistry_file.H
+
 CEXE_sources+=LiDryer.cpp
+
+LIBRARIES += 
+
+INCLUDE_LOCATIONS += $(CHEM_DIR)
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 

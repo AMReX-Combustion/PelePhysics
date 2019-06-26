@@ -74,15 +74,13 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 
 /**********************************/
 /* Functions Called by the Program */
-int extern_cInit(const int* cvode_meth,const int* cvode_itmeth, 
-		const int* cvode_iJac, const int* cvode_iE,
-		const int* cvode_iDense, const int* Ncells);
+int reactor_init(const int* cvode_iE, const int* Ncells);
 
-int actual_cReact(realtype *rY_in, realtype *rY_src_in, 
+int react(realtype *rY_in, realtype *rY_src_in, 
 		realtype *rX_in, realtype *rX_src_in, 
 		realtype *P_in, realtype *dt_react, realtype *time, int *Init);
 
-void extern_cFree();
+void reactor_close();
 
 
 /**********************************/
@@ -97,31 +95,6 @@ static void FreeUserData(UserData data);
 
 static void check_state(N_Vector yvec);
 
-
-/**********************************/
-/* Fuego functions */
-extern "C" {
-    void get_t_given_ey_(double * e, double * y, double * t, int *ierr); 
-    void get_t_given_hy_(double * h, double * y, double * t, int *ierr); 
-    void ckpy_(double * rho, double * T, double * y, double * P);
-    void ckytcr_(double * rho, double * T, double * y, double * c);
-    void ckcvms_(double * T, double * cvms);
-    void ckcpms_(double * T, double * cvms);
-    void ckums_(double * T, double * ums);
-    void ckhms_(double * T, double * ums);
-    void ckwc_(double * T, double * C, double * wdot);
-    void ckwt_(double * wt);
-    void dwdot_(double * J, double * sc, double * Tp, int * consP);
-    void dwdot_precond_(double * J, double * sc, double * Tp, int * HP);
-    void ckindx_(int * mm, int * kk, int * ii, int * nfit); 
-    void ckubms_(double * t, double * y, double * ubms);
-    void ckhbms_(double * t, double * y, double * hbms);
-    void sparsity_info_( int * njdata, int * consp, int ncells);
-    void sparsity_preproc_( int * rowVals, int * colPtrs, int * consP, int ncells);
-    void sparsity_info_precond_( int * njdata, int * consp);
-    void sparsity_preproc_precond_( int * rowVals, int * colPtrs, int * consP);
-
-}
 
 /**********************************/
 /* Main Kernel fct called in solver RHS */

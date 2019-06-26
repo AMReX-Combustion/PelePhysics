@@ -1,0 +1,13 @@
+dt = 1.e-05
+ndt = 1
+
+# Select CVODE Jacobian eval.
+ns.cvode_iJac = 0
+
+# 1=full e, 2=full h
+cvode_iE = 1
+
+# choose sparse or dense
+ns.cvode_iDense = 1
+
+amr.plot_file       = plt

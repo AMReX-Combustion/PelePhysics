@@ -1,19 +1,16 @@
 dt = 1.e-05
-ndt = 1
-
-# 1 = Adams (non-stiff); 2 = BDF (stiff)
-cvode_meth = 2
-
-# 1 = functional iteration; 2 = Newton iteration
-cvode_itmeth = 2
+ndt = 100
 
 # Select CVODE Jacobian eval.
-cvode_iJac = 0
+ns.cvode_iJac = 1
 
 # 1=full e, 2=full h
 cvode_iE = 1
 
 # choose sparse or dense
-cvode_iDense = 1
+ns.cvode_iDense = 5
+
+# Select number of cells to int simultaneously
+cvode_ncells = 1
 
 amr.plot_file       = plt
