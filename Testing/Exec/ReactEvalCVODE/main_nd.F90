@@ -89,7 +89,7 @@ contains
 
     ! local variables
     integer          :: i, j, k
-    integer          :: count_nodes
+    !integer          :: count_nodes
     real(amrex_real) :: Temp_lo, Temp_hi, dTemp, P(3), L(3), x, y, z, pressure
     type(eos_t)      :: eos_state
 
@@ -113,7 +113,7 @@ contains
 
     pressure = 1013250.d0
     
-    count_nodes = 0
+    !count_nodes = 0
     do k = lo(3),hi(3)
        z = plo(3) + (k+HALF)*dx(3)
        do j = lo(2),hi(2)
@@ -148,14 +148,14 @@ contains
              ! all in h
              !rhoE src ext
              rhoEs(i,j,k,1) = 0.0d0
-             count_nodes = count_nodes + 1
+             !count_nodes = count_nodes + 1
 
           end do
        end do
     end do
 
-    print *, "-> Nb of cells ? (64): ", count_nodes
-    call flush()
+    !print *, "-> Nb of cells ? (64): ", count_nodes
+    !call flush()
 
     call destroy(eos_state)
 
