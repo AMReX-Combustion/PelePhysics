@@ -90,6 +90,9 @@ main (int   argc,
     extern_init(&(probin_file_name[0]),&probin_file_length, &cvode_iE);
 
     /* Initialize D/CVODE reactor */
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
     reactor_init(&cvode_iE, &cvode_ncells);
 
     /* make domain and BoxArray */
@@ -125,13 +128,14 @@ main (int   argc,
     MultiFab temperature(ba,dm,1,0);
     MultiFab fctCount(ba,dm,1,0);
 
+    IntVect tilesize(D_DECL(10240,8,32));
+
     /* INITIALIZE DATA */
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel 
 #endif
-    int count_mf = 0;
-    for (MFIter mfi(mf); mfi.isValid(); ++mfi ){
-        count_mf = count_mf + 1;	
+    for (MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi ){
+        //count_mf = count_mf + 1;	
         const Box& box = mfi.tilebox();
         initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
                		BL_TO_FORTRAN_N_3D(mf[mfi],0),
@@ -139,31 +143,32 @@ main (int   argc,
 		        BL_TO_FORTRAN_N_3D(mfE[mfi],0),
 		        BL_TO_FORTRAN_N_3D(rY_source_energy_ext[mfi],0),
 			&(dx[0]), &(plo[0]), &(phi[0]));
+        //amrex::Print() << "Treating box: " << count_mf<< "\n";
     }
-    amrex::Print() << "Number of boxes ? (64): \n" << count_mf;
+
     std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
-    //// Specs
+    // Specs
     PlotFileFromMF(mf,outfile);
 
      
     ParmParse ppa("amr");
     ppa.query("plot_file",pltfile);
 
-    /* ADVANCE */
-    Real time = 0.0;
-    int reInit = 1;
-    Real dt_incr   = dt/ndt;
-    // not used anyway
-    double pressure = 1013250.0;
-
     amrex::Print() << " \n STARTING THE ADVANCE \n";
 
-    count_mf = 0;
-    for ( MFIter mfi(mf); mfi.isValid(); ++mfi )
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+    for ( MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi )
     {
 	/* Prints to follow the computation */
-        count_mf = count_mf + 1;	
-        amrex::Print() << "Treating box " << count_mf << std::endl;
+        /* ADVANCE */
+        Real time = 0.0;
+        int reInit = 1;
+        Real dt_incr   = dt/ndt;
+        // not used anyway
+        double pressure = 1013250.0;
+
 
         const Box& box = mfi.tilebox();
 
@@ -228,7 +233,6 @@ main (int   argc,
 		            dt_incr =  dt/ndt;
 			    reInit = 1;
 			}
-			//printf(" time reached %14.6e \n", time);
 		        nc = 0;
 		        for (int l = 0; l < cvode_ncells ; ++l){
 		            for (int sp=0;sp<Ncomp; sp++){
@@ -243,8 +247,8 @@ main (int   argc,
 	}
 	if (nc != 0) {
 		printf(" WARNING !! Not enough cells (%d) to fill %d \n", nc, cvode_ncells);
-	} else {
-		printf(" Integrated %d cells (4096)\n",num_cell_cvode_int);
+	//} else {
+	//	printf(" Integrated %d cells (4096)\n",num_cell_cvode_int);
 	}
     }
 
