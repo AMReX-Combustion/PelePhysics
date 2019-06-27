@@ -439,27 +439,6 @@ class CPickler(CMill):
 
         return
 
-    def _renderMechHeader_CHOP(self, mechanism, options=None):
-
-        self._setSpecies(mechanism)
-        self.reactionIndex = mechanism._sort_reactions()
-
-        self._print_mech_header(mechanism)
-
-        return
-
-
-    def _renderHeader_CHOP(self, mechanism, options=None):
-
-        self._setSpecies(mechanism)
-        self.reactionIndex = mechanism._sort_reactions()
-
-        self._includes(True)
-
-        self._header_chop(mechanism)
-        self._namespace(mechanism)
-
-        return
 
     def _renderDocument_CHOP(self, mechanism, options=None):
 
@@ -507,6 +486,13 @@ class CPickler(CMill):
         else:
             self._setSpecies(mechanism)
             self.reactionIndex = mechanism._sort_reactions()
+
+        #HEADER
+        self._includes(True)
+
+        self._header_chop(mechanism)
+        self._namespace(mechanism)
+        #HEADER
 
         self._includes_chop()
         self._statics_chop(mechanism)
@@ -632,6 +618,10 @@ class CPickler(CMill):
         self._getCriticalParameters(mechanism)
         #AF: add transport data
         self._trans_chop(mechanism)
+
+        ### MECH HEADER
+        self._print_mech_header(mechanism)
+        ### MECH HEADER
 
         return
 
