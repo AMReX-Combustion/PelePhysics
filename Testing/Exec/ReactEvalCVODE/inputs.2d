@@ -8,7 +8,7 @@ ns.cvode_iJac = 1
 cvode_iE = 1
 
 # choose sparse or dense
-ns.cvode_iDense = 5
+ns.cvode_iDense = 1
 
 # Select number of cells to int simultaneously
 cvode_ncells = 1
