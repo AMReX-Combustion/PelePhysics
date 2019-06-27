@@ -34,6 +34,12 @@ main (int   argc,
 	probin_file_name[i] = probin_file[i];
 
       extern_init(&(probin_file_name[0]),&probin_file_length);
+
+#ifdef _OPENMP
+#pragma omp parallel
+#endif  
+      extern_init_reactor();
+
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {
@@ -79,8 +85,6 @@ main (int   argc,
 
       ParmParse ppa("amr");
       std::string pltfile("plt");  ppa.query("plot_file",pltfile);
-      //std::string outfile = Concatenate(pltfile,90); // Need a number other than zero for reg test to pass
-      //PlotFileFromMF(mass_frac,outfile);
 
       MultiFab rY_source_ext(ba,dmap,num_spec,num_grow);
       MultiFab re_source_ext(ba,dmap,1,num_grow);
