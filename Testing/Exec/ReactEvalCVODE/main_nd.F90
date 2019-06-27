@@ -107,7 +107,7 @@ contains
     eos_state%molefrac = 0.d0
     eos_state%molefrac(oxy_ID) = 0.2d0
     eos_state%molefrac(fuel_ID) = 0.1d0
-    eos_state%molefrac(nspec-1) = 1.d0 - eos_state%molefrac(4) - eos_state%molefrac(11)
+    eos_state%molefrac(nspec-1) = 1.d0 - eos_state%molefrac(fuel_ID) - eos_state%molefrac(oxy_ID)
     call eos_xty(eos_state)
     
     L(:) = phi(:) - plo(:)
