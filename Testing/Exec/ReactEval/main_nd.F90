@@ -11,7 +11,6 @@ contains
     use network
     use eos_module
     use transport_module
-    use reactor_module
 
     integer :: namlen
     integer :: name(namlen)
@@ -29,9 +28,15 @@ contains
 
     call transport_init()
 
+  end subroutine extern_init
+
+  subroutine extern_init_reactor() bind(C, name="extern_init_reactor")
+
+    use reactor_module
+
     call reactor_init(1)
 
-  end subroutine extern_init
+  end subroutine extern_init_reactor
 
 
   subroutine extern_close() bind(C, name="extern_close")
