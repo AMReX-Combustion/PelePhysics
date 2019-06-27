@@ -22,6 +22,10 @@
 #define NUM_SPECIES 9
 #define NUM_REACTIONS 21
 
+#define FUEL_ID 0
+#define OXY_ID 1
+#define FUEL_NAME "H2"
+
 #define NUM_FIT 4
 #endif
 

@@ -36,6 +36,10 @@
 #define NUM_SPECIES 21
 #define NUM_REACTIONS 84
 
+#define FUEL_ID 10
+#define OXY_ID 3
+#define FUEL_NAME "CH4"
+
 #define NUM_FIT 4
 #endif
 
