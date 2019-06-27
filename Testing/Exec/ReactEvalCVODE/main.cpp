@@ -7,6 +7,7 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
+#include "mechanism.h"
 
 using namespace amrex;
 
@@ -29,10 +30,13 @@ main (int   argc,
 
     int max_grid_size = 16;
     std::string probin_file="probin";
+    std::string fuel_name="none";
     std::string pltfile("plt");
     /* CVODE inputs */
     int cvode_ncells = 1;
     int cvode_iE = 1;
+    int fuel_idx = -1;
+    int oxy_idx = -1;
     int ndt = 1; 
     Real dt = 1.e-5; 
 
@@ -52,7 +56,7 @@ main (int   argc,
       // time stepping
       pp.query("ndt",ndt); 
 
-      pp.get("cvode_iE",cvode_iE);
+      pp.query("cvode_iE",cvode_iE);
       // Select CVODE type of energy employed.
       //1 for UV, 2 for HP
       //   1 = Internal energy
@@ -61,6 +65,18 @@ main (int   argc,
       // nb of cells to integrate
       pp.query("cvode_ncells",cvode_ncells);
 
+      // Get name of fuel 
+      pp.get("fuel_name", fuel_name);
+
+    }
+
+    if (fuel_name != FUEL_NAME) {
+        amrex::Print() << fuel_name << "!=" <<FUEL_NAME << std::endl;
+	amrex::Abort("fuel_name is inconsistent with chosen mechanism");
+    } else {
+        amrex::Print() << "Fuel: ";
+            amrex::Print() << fuel_name << ", Oxy: O2";
+        amrex::Print() << std::endl;
     }
 
     amrex::Print() << "Integration method: ";
@@ -87,7 +103,9 @@ main (int   argc,
     std::vector<int> probin_file_name(probin_file_length);
     for (int i = 0; i < probin_file_length; i++)
 	    probin_file_name[i] = probin_file[i];
-    extern_init(&(probin_file_name[0]),&probin_file_length, &cvode_iE);
+    fuel_idx = FUEL_ID;
+    oxy_idx  = OXY_ID;
+    extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&cvode_iE);
 
     /* Initialize D/CVODE reactor */
 #ifdef _OPENMP
