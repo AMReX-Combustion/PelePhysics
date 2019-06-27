@@ -384,9 +384,8 @@ class CPickler(CMill):
         self._write()
 
 
-        self._indent()
-
         self._write(self.line(' Inverse molecular weights'))
+        self._write(self.line(' TODO: check necessity on CPU'))
         self._write('static AMREX_GPU_DEVICE_MANAGED double inv_molecular_weights[%d] = {' %nSpecies )
         self._indent()
         for i in range(0,self.nSpecies):
@@ -400,6 +399,8 @@ class CPickler(CMill):
         self._outdent()
         self._write()
 
+        self._write(self.line(' Inverse molecular weights'))
+        self._write(self.line(' TODO: check necessity because redundant with molecularWeight'))
         self._write('static AMREX_GPU_DEVICE_MANAGED double molecular_weights[%d] = {' %nSpecies )
         self._indent()
         for i in range(0,self.nSpecies):
@@ -410,7 +411,6 @@ class CPickler(CMill):
             else:
                text += '};  '
             self._write(text + self.line('%s' % species.symbol))
-        self._outdent()
         self._outdent()
         self._write()
 
@@ -423,6 +423,7 @@ class CPickler(CMill):
         self._write('}')
         self._write()
 
+        self._write(self.line(' TODO: check necessity because redundant with CKWT'))
         self._write('AMREX_GPU_HOST_DEVICE')
         self._write('void get_mw(double mw_new[]){')
         ##self._write('#pragma unroll')
@@ -462,8 +463,50 @@ class CPickler(CMill):
 
     def _renderDocument_CHOP(self, mechanism, options=None):
 
-        self._setSpecies(mechanism)
-        self.reactionIndex = mechanism._sort_reactions()
+        reorder_reactions=False
+
+        if(reorder_reactions):
+
+            plot_react_matrix = True
+            use_tsp = True #traveling salesman reordering
+
+            if(plot_react_matrix):
+                import matplotlib.pyplot as mplt
+                (fig,ax)=mplt.subplots(1,4,figsize=(20,5))
+                rmat=mechanism._get_reaction_matrix()
+                ax[0].matshow(rmat)
+
+            #sort reactions by type
+            self.reactionIndex = mechanism._sort_reactions()
+            if(plot_react_matrix):
+                rmat=mechanism._get_reaction_matrix()
+                ax[1].matshow(rmat)
+
+            #reorder reactions
+            if(use_tsp):
+                mechanism._sort_reactions_within_type_tsp(self.reactionIndex)
+            else:
+                mechanism._sort_reactions_within_type_random(self.reactionIndex)
+            if(plot_react_matrix):
+                rmat=mechanism._get_reaction_matrix()
+                ax[2].matshow(rmat)
+
+            #reorder species
+            if(use_tsp):
+                mechanism._sort_species_ids_tsp()
+            else:
+                mechanism._sort_species_ids_random()
+            if(plot_react_matrix):
+                rmat=mechanism._get_reaction_matrix()
+                ax[3].matshow(rmat)
+                mplt.savefig("rmat_all.pdf")
+
+            #set species after reordering    
+            self._setSpecies(mechanism)
+
+        else:
+            self._setSpecies(mechanism)
+            self.reactionIndex = mechanism._sort_reactions()
 
         self._includes_chop()
         self._statics_chop(mechanism)
@@ -562,13 +605,20 @@ class CPickler(CMill):
         self._ckeqxr(mechanism)
         
         # Fuego Functions
+        # GPU version
         self._productionRate_GPU(mechanism)
+        # ORI CPU version
+        self._productionRate(mechanism)
+        # ORI CPU vectorized version
         self._vproductionRate(mechanism)
         self._DproductionRatePrecond(mechanism)
         self._DproductionRateSPSPrecond(mechanism)
         self._DproductionRate(mechanism)
         self._sparsity(mechanism)
+        # GPU version
         self._ajac_GPU(mechanism)
+        # ORI CPU version
+        self._ajac(mechanism)
         self._ajacPrecond(mechanism)
         self._dthermodT(mechanism)
         self._progressRate(mechanism)
@@ -902,8 +952,10 @@ class CPickler(CMill):
             'void equilibriumConstants(double *  kc, double *  g_RT, double T);',
             'AMREX_GPU_HOST_DEVICE void productionRate(double *  wdot, double *  sc, double T);',
             'AMREX_GPU_HOST_DEVICE void comp_qfqr(double *  q_f, double *  q_r, double *  sc, double *  tc, double invT);',
-            ##'AMREX_GPU_HOST_DEVICE void comp_k_f(double *  tc, double invT, double *  k_f);',
-            ##'AMREX_GPU_HOST_DEVICE void comp_Kc(double *  tc, double invT, double *  Kc);',
+            '#ifndef AMREX_USE_CUDA',
+            'void comp_k_f(double *  tc, double invT, double *  k_f);',
+            'void comp_Kc(double *  tc, double invT, double *  Kc);',
+            '#endif',
             'AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  speciesConc, double T);',
             'AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);',
             ##'#ifndef AMREX_USE_CUDA',
@@ -999,16 +1051,19 @@ class CPickler(CMill):
             'void CKEQXP'+sym+'(double *  P, double *  T, double *  x, double *  eqcon);',
             'void CKEQYR'+sym+'(double *  rho, double *  T, double *  y, double *  eqcon);',
             'void CKEQXR'+sym+'(double *  rho, double *  T, double *  x, double *  eqcon);',
-            'void DWDOT(double *  J, double *  sc, double *  T, int * consP);',
-            'void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);',
-            'void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma);',
-            'void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);',
-            'void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);',
-            'void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
+            'AMREX_GPU_HOST_DEVICE void DWDOT(double *  J, double *  sc, double *  T, int * consP);',
+            'AMREX_GPU_HOST_DEVICE void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);',
+            'AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
+            '#ifndef AMREX_USE_CUDA',
             'void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * consP);',
-            'void SPARSITY_PREPROC_PRECOND_GPU(int * rowPtr, int * colIndx, int * consP);',
+            '#else',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx, int * consP);',
+            '#endif',
             'AMREX_GPU_HOST_DEVICE void aJacobian(double *  J, double *  sc, double T, int consP);',
-            'void aJacobian_precond(double *  J, double *  sc, double T, int HP);',
+            'AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T, int HP);',
             'AMREX_GPU_HOST_DEVICE void dcvpRdT(double *  species, double *  tc);',
             'AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);',
             'void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);',
@@ -2054,6 +2109,7 @@ class CPickler(CMill):
 
         self._write('#else')
 
+        self._write(self.line(' TODO: Remove on GPU, right now needed by chemistry_module on FORTRAN'))
         self._write('void CKINIT'+sym+'()')
         self._write('{')
         self._write('}')
@@ -3040,6 +3096,7 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         self._write('#else')
+        self._write(self.line('TODO: remove this on GPU'))
         self._write('void VCKHMS'+sym+'(int *  np, double *  T,  double *  hms)')
         self._write('{')
         self._write('}')
@@ -4496,6 +4553,7 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         self._write('#else') 
+        self._write(self.line('TODO: remove this on GPU'))
         self._write('void VCKYTX'+sym+'(int *  np, double *  y,  double *  x)')
         self._write('{')
         self._write('}')
@@ -5876,6 +5934,8 @@ class CPickler(CMill):
 
         # main function
         self._write()
+        self._write('#ifdef AMREX_USE_CUDA')
+        self._write(self.line('GPU version of productionRate: no more use of thermo namespace vectors'))
         self._write(self.line('compute the production rate for each species'))
         self._write('AMREX_GPU_HOST_DEVICE inline void  productionRate(double * wdot, double * sc, double T)')
         self._write('{')
@@ -6153,7 +6213,6 @@ class CPickler(CMill):
             else:
                 self._write("qr[%d] *= Corr * k_f / exp(%s);" % (idx,KcExpArg))
 
-
         self._write()
 
 
@@ -6219,6 +6278,8 @@ class CPickler(CMill):
         self._write('return;')
         self._outdent()
         self._write('}')
+        self._write('#endif')
+        self._write()
 
         return
 
@@ -6247,6 +6308,7 @@ class CPickler(CMill):
 
         # OMP stuff
         self._write()
+        self._write("#ifndef AMREX_USE_CUDA")
         self._write('static double T_save = -1;')
         self._write('#ifdef _OPENMP')
         self._write('#pragma omp threadprivate(T_save)')
@@ -6265,7 +6327,7 @@ class CPickler(CMill):
 
         # main function
         self._write()
-        self._write(self.line('compute the production rate for each species'))
+        self._write(self.line('compute the production rate for each species pointwise on CPU'))
         self._write('void productionRate(double *  wdot, double *  sc, double T)')
         self._write('{')
         self._indent()
@@ -6662,6 +6724,8 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
 
+        self._write("#endif")
+
         return
 
     def _DproductionRatePYJAC(self, mechanism):
@@ -6754,7 +6818,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute the reaction Jacobian'))
-        self._write('void DWDOT(double *  J, double *  sc, double *  Tp, int * consP)')
+        self._write('AMREX_GPU_HOST_DEVICE void DWDOT(double *  J, double *  sc, double *  Tp, int * consP)')
         self._write('{')
         self._indent()
 
@@ -6794,7 +6858,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute an approx to the reaction Jacobian'))
-        self._write('void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP)')
+        self._write('AMREX_GPU_HOST_DEVICE void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP)')
         self._write('{')
         self._indent()
 
@@ -6834,7 +6898,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute an approx to the SPS Jacobian'))
-        self._write('void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma)')
+        self._write('AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma)')
         self._write('{')
         self._indent()
 
@@ -6909,7 +6973,7 @@ class CPickler(CMill):
         ####
         self._write()
         self._write(self.line('compute the sparsity pattern Jacobian'))
-        self._write('void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)')
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)')
         self._write('{')
         self._indent()
 
@@ -6955,7 +7019,7 @@ class CPickler(CMill):
         ####
         self._write()
         self._write(self.line('compute the sparsity pattern of simplified Jacobian'))
-        self._write('void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)')
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)')
         self._write('{')
         self._indent()
 
@@ -7007,7 +7071,8 @@ class CPickler(CMill):
         self._write()
 
         ####
-        self._write(self.line('compute the sparsity pattern of the simplified precond Jacobian'))
+        self._write('#ifndef AMREX_USE_CUDA')
+        self._write(self.line('compute the sparsity pattern of the simplified precond Jacobian on CPU'))
         self._write('void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * consP)')
         self._write('{')
         self._indent()
@@ -7059,11 +7124,12 @@ class CPickler(CMill):
         self._outdent()
 
         self._write('}')
+        self._write('#else')
         self._write()
 
         ####
-        self._write(self.line('compute the sparsity pattern of the simplified precond Jacobian'))
-        self._write('void SPARSITY_PREPROC_PRECOND_GPU(int * rowPtr, int * colIndx, int * consP)')
+        self._write(self.line('compute the sparsity pattern of the simplified precond Jacobian on GPU'))
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx, int * consP)')
         self._write('{')
         self._indent()
 
@@ -7112,11 +7178,12 @@ class CPickler(CMill):
         self._outdent()
 
         self._write('}')
+        self._write('#endif')
         self._write()
 
         ####
         self._write(self.line('compute the sparsity pattern of the Jacobian'))
-        self._write('void SPARSITY_PREPROC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)')
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)')
         self._write('{')
         self._indent()
 
@@ -7176,7 +7243,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute an approx to the reaction Jacobian'))
-        self._write('void aJacobian_precond(double *  J, double *  sc, double T, int HP)')
+        self._write('AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T, int HP)')
         self._write('{')
         self._indent()
 
@@ -7714,20 +7781,14 @@ class CPickler(CMill):
 
 
 
-    def _ajac_GPU_H(self, mechanism):
-
-        self._write(self.line('compute the reaction Jacobian'))
-        self._write('AMREX_GPU_HOST_DEVICE void ajacobian(double * J, double * sc, double T, int consP);')
-
-        return
-
     def _ajac_GPU(self, mechanism):
 
         nSpecies = len(mechanism.species())
         nReactions = len(mechanism.reaction())
 
         self._write()
-        self._write(self.line('compute the reaction Jacobian'))
+        self._write('#ifdef AMREX_USE_CUDA')
+        self._write(self.line('compute the reaction Jacobian on GPU'))
         self._write('AMREX_GPU_HOST_DEVICE')
         self._write('void aJacobian(double * J, double * sc, double T, int consP)')
         self._write('{')
@@ -7881,6 +7942,8 @@ class CPickler(CMill):
         self._write()
         self._write('return;')
         self._write('}')
+        self._write('#endif')
+        self._write()
         return
 
 
@@ -8276,7 +8339,8 @@ class CPickler(CMill):
         nReactions = len(mechanism.reaction())
 
         self._write()
-        self._write(self.line('compute the reaction Jacobian'))
+        self._write('#ifndef AMREX_USE_CUDA')
+        self._write(self.line('compute the reaction Jacobian on CPU'))
         self._write('void aJacobian(double *  J, double *  sc, double T, int consP)')
         self._write('{')
         self._indent()
@@ -8423,6 +8487,8 @@ class CPickler(CMill):
 
         self._outdent()
         self._write('}')
+        self._write('#endif')
+        self._write()
 
         return
 
@@ -9078,24 +9144,28 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the progress rate for each reaction'))
-        self._write('void progressRate(double *  qdot, double *  sc, double T)')
+        self._write('AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  sc, double T)')
         self._write('{')
         self._indent()
 
         self._write('double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('double invT = 1.0 / tc[1];')
-        ##self._write('double* k_f_save;')
-        ##self._write('double* Kc_save;')
         
-        ##self._write()
-        ##self._write('if (T != T_save)')
-        ##self._write('{')
-        ##self._indent()
-        ##self._write('T_save = T;')
-        ##self._write('comp_k_f(tc,invT,k_f_save);');
-        ##self._write('comp_Kc(tc,invT,Kc_save);');
-        ##self._outdent()
-        ##self._write("}")
+        self._write()
+        self._outdent()
+        self._write('#ifndef AMREX_USE_CUDA')
+        self._indent()
+        self._write('if (T != T_save)')
+        self._write('{')
+        self._indent()
+        self._write('T_save = T;')
+        self._write('comp_k_f(tc,invT,k_f_save);');
+        self._write('comp_Kc(tc,invT,Kc_save);');
+        self._outdent()
+        self._write("}")
+        self._outdent()
+        self._write('#endif')
+        self._indent()
 
         self._write()
         self._write('double q_f[%d], q_r[%d];' % (nReactions,nReactions))
@@ -9417,24 +9487,28 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the progress rate for each reaction'))
-        self._write('void progressRateFR(double *  q_f, double *  q_r, double *  sc, double T)')
+        self._write('AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  sc, double T)')
         self._write('{')
         self._indent()
 
         self._write('double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('double invT = 1.0 / tc[1];')
-        ##self._write('double * k_f_save;')
-        ##self._write('double * Kc_save;')
         
-        ##self._write()
-        ##self._write('if (T != T_save)')
-        ##self._write('{')
-        ##self._indent()
-        ##self._write('T_save = T;')
-        ##self._write('comp_k_f(tc,invT,k_f_save);');
-        ##self._write('comp_Kc(tc,invT,Kc_save);');
-        ##self._outdent()
-        ##self._write("}")
+        self._outdent()
+        self._write('#ifndef AMREX_USE_CUDA')
+        self._indent()
+        self._write()
+        self._write('if (T != T_save)')
+        self._write('{')
+        self._indent()
+        self._write('T_save = T;')
+        self._write('comp_k_f(tc,invT,k_f_save);');
+        self._write('comp_Kc(tc,invT,Kc_save);');
+        self._outdent()
+        self._write("}")
+        self._outdent()
+        self._write('#endif')
+        self._indent()
 
         self._write()
         self._write('comp_qfqr(q_f, q_r, sc, tc, invT);');
