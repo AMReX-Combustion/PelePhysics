@@ -6194,7 +6194,8 @@ class CPickler(CMill):
                     self._write("   *  (%d > 3 ? %.17g*exp(%.17g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
                     self._write("Corr = F * F_sri;")
                     self._write("qf[%d] *= Corr * k_f;" % idx)
-                elif reaction.lindemann:
+                elif (nlindemann > 0):
+                    print("nlindemann "+str(nlindemann))
                     self._write("Corr = redP / (1. + redP);")
                     self._write("qf[%d] *= Corr * k_f;" % idx)
 
