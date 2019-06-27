@@ -320,9 +320,9 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	//flag = CVode(cvode_mem, time_out, y, &dummy_time, CV_ONE_STEP);
 	if (check_flag(&flag, "CVode", 1)) return(1);
 
-	*dt_react = dummy_time - time_init;
 #ifdef MOD_REACTOR
 	/* REACTOR MODE: enables substepping a big time step */
+	*dt_react = dummy_time - time_init;
 	*time  = time_init + (*dt_react);
 #endif
         if (iverbose > 3) {
