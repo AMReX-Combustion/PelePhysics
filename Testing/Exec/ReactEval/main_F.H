@@ -8,6 +8,8 @@ extern "C"
     void extern_init
     (const int* name, const int* namlen);
 
+    void extern_init_reactor();
+
     void extern_close();
 
     void get_num_spec(int* nspec);
