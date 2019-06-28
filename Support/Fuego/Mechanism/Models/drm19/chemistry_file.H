@@ -169,7 +169,6 @@ void egtransetKTDIF(int* KTDIF);
 #ifndef AMREX_USE_CUDA
 namespace thermo
 {
-    //extern std::vector<double> imw;
 
     extern double fwd_A[84], fwd_beta[84], fwd_Ea[84];
     extern double low_A[84], low_beta[84], low_Ea[84];
