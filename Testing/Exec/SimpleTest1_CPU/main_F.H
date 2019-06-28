@@ -6,7 +6,9 @@
 extern "C"
 {
     void extern_init
-    (const int* name, const int* namlen);
+    (const int* name, const int* namlen,
+     const int* fuelID,
+     const int* oxyID);
 
     void extern_close();
 
