@@ -1991,6 +1991,7 @@ void CKYTCP(double *  P, double *  T, double *  y,  double *  c)
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
+AMREX_GPU_HOST_DEVICE
 void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
 {
     for (int i = 0; i < 21; i++)
@@ -3042,6 +3043,7 @@ void CKABMS(double *  P, double *  T, double *  y,  double *  abms)
 
 
 /*compute the production rate for each species */
+AMREX_GPU_HOST_DEVICE
 void CKWC(double *  T, double *  C,  double *  wdot)
 {
     int id; /*loop counter */
