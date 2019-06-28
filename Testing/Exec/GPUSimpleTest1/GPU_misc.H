@@ -34,7 +34,6 @@ gpu_RTY2W(int i, int j, int k,
 
 	EOS eos; 
 	eos.eos_RTY2W(rho(i,j,k), temp(i,j,k), mf_pt.data(), cdots_pts.data());
-	//eos.eos_RTY2W(rho(i,j,k), temp(i,j,k), mf_pt.data(), cdots_pts.data());
 	
 	for (int n = 0; n < NUM_SPECIES; n++) {
 		mf(i,j,k,n) = mf_pt[n];

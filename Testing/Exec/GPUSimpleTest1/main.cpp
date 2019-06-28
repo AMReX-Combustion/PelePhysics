@@ -96,10 +96,10 @@ main (int   argc,
 
 	const Box& box = mfi.tilebox();
 
-	const auto  mf      = mass_frac.array(mfi);
-	const auto  temp    = temperature.array(mfi);
-	const auto  rho     = density.array(mfi); 
-	const auto  cdots   = wdots.array(mfi);
+	auto  mf      = mass_frac.array(mfi);
+	auto  temp    = temperature.array(mfi);
+	auto  rho     = density.array(mfi); 
+	auto  cdots   = wdots.array(mfi);
 
 	//FArrayBox& Y       = mass_frac[mfi];
 	//FArrayBox& T       = temperature[mfi];

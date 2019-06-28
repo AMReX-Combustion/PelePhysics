@@ -2,7 +2,6 @@ PRECISION  = DOUBLE
 PROFILE    = FALSE
 
 DEBUG      = FALSE
-DEBUG      = TRUE
 
 DIM        = 2
 
@@ -14,7 +13,7 @@ USE_OMP    = FALSE
 
 FUEGO_GAS  = TRUE
 
-USE_CURA   = TRUE
+USE_CUDA   = FALSE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
