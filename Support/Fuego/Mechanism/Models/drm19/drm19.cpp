@@ -4,7 +4,7 @@
 namespace thermo
 {
     /* Inverse molecular weights */
-    std::vector<double> imw;
+    //std::vector<double> imw;
     double fwd_A[84], fwd_beta[84], fwd_Ea[84];
     double low_A[84], low_beta[84], low_Ea[84];
     double rev_A[84], rev_beta[84], rev_Ea[84];
@@ -30,7 +30,7 @@ using namespace thermo;
 
 /* Inverse molecular weights */
 /* TODO: check necessity on CPU */
-static AMREX_GPU_DEVICE_MANAGED double inv_molecular_weights[21] = {
+static AMREX_GPU_DEVICE_MANAGED double imw[21] = {
     1.0 / 2.015940,  /*H2 */
     1.0 / 1.007970,  /*H */
     1.0 / 15.999400,  /*O */
@@ -80,7 +80,7 @@ static AMREX_GPU_DEVICE_MANAGED double molecular_weights[21] = {
 
 AMREX_GPU_HOST_DEVICE
 void get_imw(double imw_new[]){
-    for(int i = 0; i<21; ++i) imw_new[i] = inv_molecular_weights[i];
+    for(int i = 0; i<21; ++i) imw_new[i] = imw[i];
 }
 
 /* TODO: check necessity because redundant with CKWT */
@@ -96,28 +96,28 @@ void CKINIT()
 {
 
     /* Inverse molecular weights */
-    imw = {
-        1.0 / 2.015940,  /*H2 */
-        1.0 / 1.007970,  /*H */
-        1.0 / 15.999400,  /*O */
-        1.0 / 31.998800,  /*O2 */
-        1.0 / 17.007370,  /*OH */
-        1.0 / 18.015340,  /*H2O */
-        1.0 / 33.006770,  /*HO2 */
-        1.0 / 14.027090,  /*CH2 */
-        1.0 / 14.027090,  /*CH2(S) */
-        1.0 / 15.035060,  /*CH3 */
-        1.0 / 16.043030,  /*CH4 */
-        1.0 / 28.010550,  /*CO */
-        1.0 / 44.009950,  /*CO2 */
-        1.0 / 29.018520,  /*HCO */
-        1.0 / 30.026490,  /*CH2O */
-        1.0 / 31.034460,  /*CH3O */
-        1.0 / 28.054180,  /*C2H4 */
-        1.0 / 29.062150,  /*C2H5 */
-        1.0 / 30.070120,  /*C2H6 */
-        1.0 / 28.013400,  /*N2 */
-        1.0 / 39.948000};  /*AR */
+    //imw = {
+    //    1.0 / 2.015940,  /*H2 */
+    //    1.0 / 1.007970,  /*H */
+    //    1.0 / 15.999400,  /*O */
+    //    1.0 / 31.998800,  /*O2 */
+    //    1.0 / 17.007370,  /*OH */
+    //    1.0 / 18.015340,  /*H2O */
+    //    1.0 / 33.006770,  /*HO2 */
+    //    1.0 / 14.027090,  /*CH2 */
+    //    1.0 / 14.027090,  /*CH2(S) */
+    //    1.0 / 15.035060,  /*CH3 */
+    //    1.0 / 16.043030,  /*CH4 */
+    //    1.0 / 28.010550,  /*CO */
+    //    1.0 / 44.009950,  /*CO2 */
+    //    1.0 / 29.018520,  /*HCO */
+    //    1.0 / 30.026490,  /*CH2O */
+    //    1.0 / 31.034460,  /*CH3O */
+    //    1.0 / 28.054180,  /*C2H4 */
+    //    1.0 / 29.062150,  /*C2H5 */
+    //    1.0 / 30.070120,  /*C2H6 */
+    //    1.0 / 28.013400,  /*N2 */
+    //    1.0 / 39.948000};  /*AR */
 
     rxn_map = {8,14,15,16,17,18,19,9,20,21,22,23,24,25,26,27,10,28,29,30,31,32,11,33,34,35,12,36,37,0,1,38,2,39,3,40,41,4,5,42,6,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,7,76,77,78,79,80,13,81,82,83};
 
@@ -1799,7 +1799,7 @@ void CKRHOC(double *  P, double *  T, double *  c,  double *  rho)
 /*get molecular weight for all species */
 void CKWT( double *  wt)
 {
-    molecularWeight(wt);
+    get_mw(wt);
 }
 
 
@@ -10013,7 +10013,7 @@ AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len
     double J[484];
     double mwt[21];
 
-    molecularWeight(mwt);
+    get_mw(mwt);
 
     for (int k=0; k<21; k++) {
         c[k] = 1.e6 * sc[k];
@@ -28203,7 +28203,7 @@ void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentri
 
     egtransetEPS(EPS);
     egtransetSIG(SIG);
-    molecularWeight(wt);
+    get_mw(wt);
 
     /*species 0: H2 */
     /*Imported from NIST */
