@@ -843,10 +843,13 @@ class CPickler(CMill):
         self._write('/* Species')
         nb_spec = 0
         oxy_id = -1
+        bath_id = -1
         for species in mechanism.species():
             self._write('%d  %s' % (species.id, species.symbol) )
             if (species.symbol == "O2"):
                 oxy_id = species.id
+            if (species.symbol == "N2"):
+                bath_id = species.id
             nb_spec += 1
         self._write('*/')
         self._write("#endif")
@@ -856,6 +859,7 @@ class CPickler(CMill):
         self._write()
         self._write("#define FUEL_ID %s" % ("define"))
         self._write("#define OXY_ID %d" % (oxy_id))
+        self._write("#define BATH_ID %d" % (bath_id))
         self._write("#define FUEL_NAME %s" % ("define"))
         self._write()
         self._write("#define NUM_FIT 4")

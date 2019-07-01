@@ -34,8 +34,9 @@ main (int   argc,
 	probin_file_name[i] = probin_file[i];
 
       int fuel_idx = FUEL_ID;
-      int oxy_idx = OXY_ID;
-      extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx);
+      int oxy_idx  = OXY_ID;
+      int bath_idx = BATH_ID;
+      extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx);
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {

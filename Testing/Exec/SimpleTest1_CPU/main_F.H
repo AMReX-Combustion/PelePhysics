@@ -8,7 +8,8 @@ extern "C"
     void extern_init
     (const int* name, const int* namlen,
      const int* fuelID,
-     const int* oxyID);
+     const int* oxyID,
+     const int* bathID);
 
     void extern_close();
 

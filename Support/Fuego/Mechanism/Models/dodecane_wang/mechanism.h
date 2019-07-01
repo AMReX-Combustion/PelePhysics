@@ -72,6 +72,7 @@
 
 #define FUEL_ID 51
 #define OXY_ID 7
+#define BATH_ID 55
 #define FUEL_NAME "NC12H26"
 
 #define NUM_FIT 4
