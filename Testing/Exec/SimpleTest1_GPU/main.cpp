@@ -39,7 +39,7 @@ main (int   argc,
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 1024;
+	npts[i] = 256;
       }
     
       Box domain(IntVect(D_DECL(0,0,0)),
