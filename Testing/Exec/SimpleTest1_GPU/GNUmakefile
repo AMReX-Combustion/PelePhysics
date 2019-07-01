@@ -3,7 +3,7 @@ PROFILE    = FALSE
 
 DEBUG      = FALSE
 
-DIM        = 2
+DIM        = 3
 
 COMP	   = gcc
 FCOMP	   = gfortran
@@ -34,7 +34,5 @@ endif
 
 Bpack   := ./Make.package
 Blocs   := .
-
-include Make.CVODE
 
 include $(PELE_PHYSICS_HOME)/Testing/Exec/Make.PelePhysics

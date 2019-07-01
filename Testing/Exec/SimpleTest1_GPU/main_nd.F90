@@ -8,8 +8,9 @@ module main_module
 
 contains
 
-    subroutine extern_init(name,namlen) bind(C, name="extern_init")
+    subroutine extern_init(name,namlen,fuel_ID_in,oxy_ID_in) bind(C, name="extern_init")
 
+    use, intrinsic :: iso_c_binding
     use network
     use eos_module
     use transport_module
@@ -19,6 +20,11 @@ contains
 
     real (kind=amrex_real) :: small_temp = 1.d-200
     real (kind=amrex_real) :: small_dens = 1.d-200
+
+    integer(c_int), intent(in) :: fuel_ID_in, oxy_ID_in
+
+    fuel_ID = fuel_ID_in + 1
+    oxy_ID = oxy_ID_in + 1
 
     ! initialize the external runtime parameters in
     ! extern_probin_module
@@ -90,10 +96,6 @@ contains
     Temp_hi = 2000.d0
     dTemp = 5.d0
     
-    ! TODO DRM19
-    fuel_ID  = 11
-    oxy_ID   = 4
-
     if (nspec.lt.3) then
        stop 'This step assumes that there are at least 3 species'
     endif
