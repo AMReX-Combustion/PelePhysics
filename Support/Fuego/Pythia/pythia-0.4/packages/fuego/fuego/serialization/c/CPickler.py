@@ -7509,7 +7509,7 @@ class CPickler(CMill):
                 ntroe = len(troe)
                 self._write("logPr = log10(Pr);")
                 if (abs(troe[1]) > 1.e-100):
-                    self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
+                    self._write('Fcent1 = (1.-(%.17g))*exp(-T/%.17g);'
                                 %(troe[0],troe[1]))
                 else:
                     self._write('Fcent1 = 0.;')
@@ -7519,7 +7519,7 @@ class CPickler(CMill):
                 else:
                     self._write('Fcent2 = 0.;')
                 if (ntroe == 4):
-                    self._write('Fcent3 = exp(-%.17g * invT);'
+                    self._write('Fcent3 = exp(-(%.17g) * invT);'
                                 % troe[3] )
                 else:
                     self._write('Fcent3 = 0.;')
@@ -8064,7 +8064,7 @@ class CPickler(CMill):
                 ntroe = len(troe)
                 self._write("logPr = log10(Pr);")
                 if (abs(troe[1]) > 1.e-100):
-                    self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
+                    self._write('Fcent1 = (1.-(%.17g))*exp(-T/%.17g);'
                                 %(troe[0],troe[1]))
                 else:
                     self._write('Fcent1 = 0.;')
@@ -8074,7 +8074,7 @@ class CPickler(CMill):
                 else:
                     self._write('Fcent2 = 0.;')
                 if (ntroe == 4):
-                    self._write('Fcent3 = exp(-%.17g * invT);'
+                    self._write('Fcent3 = exp(-(%.17g) * invT);'
                                 % troe[3] )
                 else:
                     self._write('Fcent3 = 0.;')
