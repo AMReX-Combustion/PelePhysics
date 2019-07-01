@@ -48,7 +48,8 @@
 #define NUM_REACTIONS 177
 
 #define FUEL_ID 13
-#define OXY_ID 30
+#define OXY_ID 3
+#define BATH_ID 30
 #define FUEL_NAME "CH4"
 
 #define NUM_FIT 4

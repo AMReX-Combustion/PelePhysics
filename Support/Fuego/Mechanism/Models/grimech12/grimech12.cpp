@@ -4,7 +4,6 @@
 namespace thermo
 {
     /* Inverse molecular weights */
-    std::vector<double> imw;
     double fwd_A[177], fwd_beta[177], fwd_Ea[177];
     double low_A[177], low_beta[177], low_Ea[177];
     double rev_A[177], rev_beta[177], rev_Ea[177];
@@ -30,7 +29,7 @@ using namespace thermo;
 
 /* Inverse molecular weights */
 /* TODO: check necessity on CPU */
-static AMREX_GPU_DEVICE_MANAGED double inv_molecular_weights[32] = {
+static AMREX_GPU_DEVICE_MANAGED double imw[32] = {
     1.0 / 2.015940,  /*H2 */
     1.0 / 1.007970,  /*H */
     1.0 / 15.999400,  /*O */
@@ -102,7 +101,7 @@ static AMREX_GPU_DEVICE_MANAGED double molecular_weights[32] = {
 
 AMREX_GPU_HOST_DEVICE
 void get_imw(double imw_new[]){
-    for(int i = 0; i<32; ++i) imw_new[i] = inv_molecular_weights[i];
+    for(int i = 0; i<32; ++i) imw_new[i] = imw[i];
 }
 
 /* TODO: check necessity because redundant with CKWT */
@@ -116,41 +115,6 @@ void get_mw(double mw_new[]){
 /* Initializes parameter database */
 void CKINIT()
 {
-
-    /* Inverse molecular weights */
-    imw = {
-        1.0 / 2.015940,  /*H2 */
-        1.0 / 1.007970,  /*H */
-        1.0 / 15.999400,  /*O */
-        1.0 / 31.998800,  /*O2 */
-        1.0 / 17.007370,  /*OH */
-        1.0 / 18.015340,  /*H2O */
-        1.0 / 33.006770,  /*HO2 */
-        1.0 / 34.014740,  /*H2O2 */
-        1.0 / 12.011150,  /*C */
-        1.0 / 13.019120,  /*CH */
-        1.0 / 14.027090,  /*CH2 */
-        1.0 / 14.027090,  /*CH2(S) */
-        1.0 / 15.035060,  /*CH3 */
-        1.0 / 16.043030,  /*CH4 */
-        1.0 / 28.010550,  /*CO */
-        1.0 / 44.009950,  /*CO2 */
-        1.0 / 29.018520,  /*HCO */
-        1.0 / 30.026490,  /*CH2O */
-        1.0 / 31.034460,  /*CH2OH */
-        1.0 / 31.034460,  /*CH3O */
-        1.0 / 32.042430,  /*CH3OH */
-        1.0 / 25.030270,  /*C2H */
-        1.0 / 26.038240,  /*C2H2 */
-        1.0 / 27.046210,  /*C2H3 */
-        1.0 / 28.054180,  /*C2H4 */
-        1.0 / 29.062150,  /*C2H5 */
-        1.0 / 30.070120,  /*C2H6 */
-        1.0 / 41.029670,  /*HCCO */
-        1.0 / 42.037640,  /*CH2CO */
-        1.0 / 42.037640,  /*HCCOH */
-        1.0 / 28.013400,  /*N2 */
-        1.0 / 39.948000};  /*AR */
 
     rxn_map = {20,21,27,28,29,30,31,32,33,34,35,22,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,23,56,57,58,59,60,24,61,62,63,25,64,65,66,67,68,69,0,70,1,71,2,72,3,4,73,5,74,75,76,6,77,78,79,80,81,82,7,8,9,83,10,84,11,85,86,87,88,89,90,12,91,13,92,93,94,95,96,97,98,99,100,14,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,15,136,137,138,139,140,141,142,143,16,144,145,146,147,148,149,17,150,151,152,153,154,155,156,157,158,159,18,160,161,162,163,164,165,166,167,26,168,169,170,171,172,173,19,174,175,176};
 
@@ -3100,7 +3064,7 @@ void CKRHOC(double *  P, double *  T, double *  c,  double *  rho)
 /*get molecular weight for all species */
 void CKWT( double *  wt)
 {
-    molecularWeight(wt);
+    get_mw(wt);
 }
 
 
@@ -3314,7 +3278,7 @@ void CKYTCP(double *  P, double *  T, double *  y,  double *  c)
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
-void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
+AMREX_GPU_HOST_DEVICE void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
 {
     for (int i = 0; i < 32; i++)
     {
@@ -4585,7 +4549,7 @@ void CKABMS(double *  P, double *  T, double *  y,  double *  abms)
 
 
 /*compute the production rate for each species */
-void CKWC(double *  T, double *  C,  double *  wdot)
+AMREX_GPU_HOST_DEVICE void CKWC(double *  T, double *  C,  double *  wdot)
 {
     int id; /*loop counter */
 
@@ -12008,7 +11972,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.68000000000000005)*exp(-tc[1] / 78) 
         + 0.68000000000000005 * exp(-tc[1]/1995)  
-        + exp(-5590 * invT));
+        + exp(-(5590) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12033,7 +11997,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.78300000000000003)*exp(-tc[1] / 74) 
         + 0.78300000000000003 * exp(-tc[1]/2941)  
-        + exp(-6964 * invT));
+        + exp(-(6964) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12058,7 +12022,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.78239999999999998)*exp(-tc[1] / 271) 
         + 0.78239999999999998 * exp(-tc[1]/2755)  
-        + exp(-6570 * invT));
+        + exp(-(6570) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12083,7 +12047,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.71870000000000001)*exp(-tc[1] / 103) 
         + 0.71870000000000001 * exp(-tc[1]/1291)  
-        + exp(-4160 * invT));
+        + exp(-(4160) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12102,7 +12066,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.75800000000000001)*exp(-tc[1] / 94) 
         + 0.75800000000000001 * exp(-tc[1]/1555)  
-        + exp(-4200 * invT));
+        + exp(-(4200) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12127,7 +12091,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.76790000000000003)*exp(-tc[1] / 338) 
         + 0.76790000000000003 * exp(-tc[1]/1812)  
-        + exp(-5081 * invT));
+        + exp(-(5081) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12164,7 +12128,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.89019999999999999)*exp(-tc[1] / 144) 
         + 0.89019999999999999 * exp(-tc[1]/2838)  
-        + exp(-45569 * invT));
+        + exp(-(45569) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12219,7 +12183,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.64639999999999997)*exp(-tc[1] / 132) 
         + 0.64639999999999997 * exp(-tc[1]/1315)  
-        + exp(-5566 * invT));
+        + exp(-(5566) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12238,7 +12202,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.75070000000000003)*exp(-tc[1] / 98.5) 
         + 0.75070000000000003 * exp(-tc[1]/1302)  
-        + exp(-4167 * invT));
+        + exp(-(4167) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12257,7 +12221,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.78200000000000003)*exp(-tc[1] / 207.5) 
         + 0.78200000000000003 * exp(-tc[1]/2663)  
-        + exp(-6095 * invT));
+        + exp(-(6095) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12282,7 +12246,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.97529999999999994)*exp(-tc[1] / 210) 
         + 0.97529999999999994 * exp(-tc[1]/984)  
-        + exp(-4374 * invT));
+        + exp(-(4374) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12307,7 +12271,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.84219999999999995)*exp(-tc[1] / 125) 
         + 0.84219999999999995 * exp(-tc[1]/2219)  
-        + exp(-6882 * invT));
+        + exp(-(6882) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12362,7 +12326,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.93200000000000005)*exp(-tc[1] / 197) 
         + 0.93200000000000005 * exp(-tc[1]/1540)  
-        + exp(-10300 * invT));
+        + exp(-(10300) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12387,7 +12351,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.73460000000000003)*exp(-tc[1] / 94) 
         + 0.73460000000000003 * exp(-tc[1]/1756)  
-        + exp(-5182 * invT));
+        + exp(-(5182) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12460,7 +12424,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.21049999999999999)*exp(-tc[1] / 83.5) 
         + 0.21049999999999999 * exp(-tc[1]/5398)  
-        + exp(-8370 * invT));
+        + exp(-(8370) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12689,7 +12653,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.57569999999999999)*exp(-tc[1] / 237) 
         + 0.57569999999999999 * exp(-tc[1]/1652)  
-        + exp(-5069 * invT));
+        + exp(-(5069) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12756,7 +12720,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.5907)*exp(-tc[1] / 275) 
         + 0.5907 * exp(-tc[1]/1226)  
-        + exp(-5185 * invT));
+        + exp(-(5185) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12811,7 +12775,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.1507)*exp(-tc[1] / 134) 
         + 0.1507 * exp(-tc[1]/2383)  
-        + exp(-7265 * invT));
+        + exp(-(7265) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12890,7 +12854,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.53249999999999997)*exp(-tc[1] / 151) 
         + 0.53249999999999997 * exp(-tc[1]/1038)  
-        + exp(-4970 * invT));
+        + exp(-(4970) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -12999,7 +12963,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.73450000000000004)*exp(-tc[1] / 180) 
         + 0.73450000000000004 * exp(-tc[1]/1035)  
-        + exp(-5417 * invT));
+        + exp(-(5417) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -18423,7 +18387,7 @@ AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len
     double J[1089];
     double mwt[32];
 
-    molecularWeight(mwt);
+    get_mw(mwt);
 
     for (int k=0; k<32; k++) {
         c[k] = 1.e6 * sc[k];
@@ -18709,9 +18673,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.68000000000000005)*exp(-T/78);
+    Fcent1 = (1.-(0.68000000000000005))*exp(-T/78);
     Fcent2 = 0.68000000000000005 * exp(-T/1995);
-    Fcent3 = exp(-5590 * invT);
+    Fcent3 = exp(-(5590) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -18863,9 +18827,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.78300000000000003)*exp(-T/74);
+    Fcent1 = (1.-(0.78300000000000003))*exp(-T/74);
     Fcent2 = 0.78300000000000003 * exp(-T/2941);
-    Fcent3 = exp(-6964 * invT);
+    Fcent3 = exp(-(6964) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -19012,9 +18976,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.78239999999999998)*exp(-T/271);
+    Fcent1 = (1.-(0.78239999999999998))*exp(-T/271);
     Fcent2 = 0.78239999999999998 * exp(-T/2755);
-    Fcent3 = exp(-6570 * invT);
+    Fcent3 = exp(-(6570) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -19166,9 +19130,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.71870000000000001)*exp(-T/103);
+    Fcent1 = (1.-(0.71870000000000001))*exp(-T/103);
     Fcent2 = 0.71870000000000001 * exp(-T/1291);
-    Fcent3 = exp(-4160 * invT);
+    Fcent3 = exp(-(4160) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -19315,9 +19279,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.75800000000000001)*exp(-T/94);
+    Fcent1 = (1.-(0.75800000000000001))*exp(-T/94);
     Fcent2 = 0.75800000000000001 * exp(-T/1555);
-    Fcent3 = exp(-4200 * invT);
+    Fcent3 = exp(-(4200) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -19464,9 +19428,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.76790000000000003)*exp(-T/338);
+    Fcent1 = (1.-(0.76790000000000003))*exp(-T/338);
     Fcent2 = 0.76790000000000003 * exp(-T/1812);
-    Fcent3 = exp(-5081 * invT);
+    Fcent3 = exp(-(5081) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -19613,9 +19577,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.89019999999999999)*exp(-T/144);
+    Fcent1 = (1.-(0.89019999999999999))*exp(-T/144);
     Fcent2 = 0.89019999999999999 * exp(-T/2838);
-    Fcent3 = exp(-45569 * invT);
+    Fcent3 = exp(-(45569) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -19762,9 +19726,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.64639999999999997)*exp(-T/132);
+    Fcent1 = (1.-(0.64639999999999997))*exp(-T/132);
     Fcent2 = 0.64639999999999997 * exp(-T/1315);
-    Fcent3 = exp(-5566 * invT);
+    Fcent3 = exp(-(5566) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -19916,9 +19880,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.75070000000000003)*exp(-T/98.5);
+    Fcent1 = (1.-(0.75070000000000003))*exp(-T/98.5);
     Fcent2 = 0.75070000000000003 * exp(-T/1302);
-    Fcent3 = exp(-4167 * invT);
+    Fcent3 = exp(-(4167) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20070,9 +20034,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.78200000000000003)*exp(-T/207.5);
+    Fcent1 = (1.-(0.78200000000000003))*exp(-T/207.5);
     Fcent2 = 0.78200000000000003 * exp(-T/2663);
-    Fcent3 = exp(-6095 * invT);
+    Fcent3 = exp(-(6095) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20224,9 +20188,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.97529999999999994)*exp(-T/210);
+    Fcent1 = (1.-(0.97529999999999994))*exp(-T/210);
     Fcent2 = 0.97529999999999994 * exp(-T/984);
-    Fcent3 = exp(-4374 * invT);
+    Fcent3 = exp(-(4374) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20378,9 +20342,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.84219999999999995)*exp(-T/125);
+    Fcent1 = (1.-(0.84219999999999995))*exp(-T/125);
     Fcent2 = 0.84219999999999995 * exp(-T/2219);
-    Fcent3 = exp(-6882 * invT);
+    Fcent3 = exp(-(6882) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20527,9 +20491,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.93200000000000005)*exp(-T/197);
+    Fcent1 = (1.-(0.93200000000000005))*exp(-T/197);
     Fcent2 = 0.93200000000000005 * exp(-T/1540);
-    Fcent3 = exp(-10300 * invT);
+    Fcent3 = exp(-(10300) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20671,9 +20635,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.73460000000000003)*exp(-T/94);
+    Fcent1 = (1.-(0.73460000000000003))*exp(-T/94);
     Fcent2 = 0.73460000000000003 * exp(-T/1756);
-    Fcent3 = exp(-5182 * invT);
+    Fcent3 = exp(-(5182) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20808,9 +20772,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.21049999999999999)*exp(-T/83.5);
+    Fcent1 = (1.-(0.21049999999999999))*exp(-T/83.5);
     Fcent2 = 0.21049999999999999 * exp(-T/5398);
-    Fcent3 = exp(-8370 * invT);
+    Fcent3 = exp(-(8370) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20957,9 +20921,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.57569999999999999)*exp(-T/237);
+    Fcent1 = (1.-(0.57569999999999999))*exp(-T/237);
     Fcent2 = 0.57569999999999999 * exp(-T/1652);
-    Fcent3 = exp(-5069 * invT);
+    Fcent3 = exp(-(5069) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -21106,9 +21070,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.5907)*exp(-T/275);
+    Fcent1 = (1.-(0.5907))*exp(-T/275);
     Fcent2 = 0.5907 * exp(-T/1226);
-    Fcent3 = exp(-5185 * invT);
+    Fcent3 = exp(-(5185) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -21255,9 +21219,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.1507)*exp(-T/134);
+    Fcent1 = (1.-(0.1507))*exp(-T/134);
     Fcent2 = 0.1507 * exp(-T/2383);
-    Fcent3 = exp(-7265 * invT);
+    Fcent3 = exp(-(7265) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -21399,9 +21363,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.53249999999999997)*exp(-T/151);
+    Fcent1 = (1.-(0.53249999999999997))*exp(-T/151);
     Fcent2 = 0.53249999999999997 * exp(-T/1038);
-    Fcent3 = exp(-4970 * invT);
+    Fcent3 = exp(-(4970) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -21532,9 +21496,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.73450000000000004)*exp(-T/180);
+    Fcent1 = (1.-(0.73450000000000004))*exp(-T/180);
     Fcent2 = 0.73450000000000004 * exp(-T/1035);
-    Fcent3 = exp(-5417 * invT);
+    Fcent3 = exp(-(5417) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -41090,9 +41054,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.68000000000000005)*exp(-T/78);
+    Fcent1 = (1.-(0.68000000000000005))*exp(-T/78);
     Fcent2 = 0.68000000000000005 * exp(-T/1995);
-    Fcent3 = exp(-5590 * invT);
+    Fcent3 = exp(-(5590) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -41190,9 +41154,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.78300000000000003)*exp(-T/74);
+    Fcent1 = (1.-(0.78300000000000003))*exp(-T/74);
     Fcent2 = 0.78300000000000003 * exp(-T/2941);
-    Fcent3 = exp(-6964 * invT);
+    Fcent3 = exp(-(6964) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -41290,9 +41254,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.78239999999999998)*exp(-T/271);
+    Fcent1 = (1.-(0.78239999999999998))*exp(-T/271);
     Fcent2 = 0.78239999999999998 * exp(-T/2755);
-    Fcent3 = exp(-6570 * invT);
+    Fcent3 = exp(-(6570) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -41390,9 +41354,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.71870000000000001)*exp(-T/103);
+    Fcent1 = (1.-(0.71870000000000001))*exp(-T/103);
     Fcent2 = 0.71870000000000001 * exp(-T/1291);
-    Fcent3 = exp(-4160 * invT);
+    Fcent3 = exp(-(4160) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -41490,9 +41454,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.75800000000000001)*exp(-T/94);
+    Fcent1 = (1.-(0.75800000000000001))*exp(-T/94);
     Fcent2 = 0.75800000000000001 * exp(-T/1555);
-    Fcent3 = exp(-4200 * invT);
+    Fcent3 = exp(-(4200) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -41590,9 +41554,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.76790000000000003)*exp(-T/338);
+    Fcent1 = (1.-(0.76790000000000003))*exp(-T/338);
     Fcent2 = 0.76790000000000003 * exp(-T/1812);
-    Fcent3 = exp(-5081 * invT);
+    Fcent3 = exp(-(5081) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -41690,9 +41654,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.89019999999999999)*exp(-T/144);
+    Fcent1 = (1.-(0.89019999999999999))*exp(-T/144);
     Fcent2 = 0.89019999999999999 * exp(-T/2838);
-    Fcent3 = exp(-45569 * invT);
+    Fcent3 = exp(-(45569) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -41790,9 +41754,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.64639999999999997)*exp(-T/132);
+    Fcent1 = (1.-(0.64639999999999997))*exp(-T/132);
     Fcent2 = 0.64639999999999997 * exp(-T/1315);
-    Fcent3 = exp(-5566 * invT);
+    Fcent3 = exp(-(5566) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -41890,9 +41854,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.75070000000000003)*exp(-T/98.5);
+    Fcent1 = (1.-(0.75070000000000003))*exp(-T/98.5);
     Fcent2 = 0.75070000000000003 * exp(-T/1302);
-    Fcent3 = exp(-4167 * invT);
+    Fcent3 = exp(-(4167) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -41990,9 +41954,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.78200000000000003)*exp(-T/207.5);
+    Fcent1 = (1.-(0.78200000000000003))*exp(-T/207.5);
     Fcent2 = 0.78200000000000003 * exp(-T/2663);
-    Fcent3 = exp(-6095 * invT);
+    Fcent3 = exp(-(6095) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -42090,9 +42054,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.97529999999999994)*exp(-T/210);
+    Fcent1 = (1.-(0.97529999999999994))*exp(-T/210);
     Fcent2 = 0.97529999999999994 * exp(-T/984);
-    Fcent3 = exp(-4374 * invT);
+    Fcent3 = exp(-(4374) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -42190,9 +42154,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.84219999999999995)*exp(-T/125);
+    Fcent1 = (1.-(0.84219999999999995))*exp(-T/125);
     Fcent2 = 0.84219999999999995 * exp(-T/2219);
-    Fcent3 = exp(-6882 * invT);
+    Fcent3 = exp(-(6882) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -42290,9 +42254,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.93200000000000005)*exp(-T/197);
+    Fcent1 = (1.-(0.93200000000000005))*exp(-T/197);
     Fcent2 = 0.93200000000000005 * exp(-T/1540);
-    Fcent3 = exp(-10300 * invT);
+    Fcent3 = exp(-(10300) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -42390,9 +42354,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.73460000000000003)*exp(-T/94);
+    Fcent1 = (1.-(0.73460000000000003))*exp(-T/94);
     Fcent2 = 0.73460000000000003 * exp(-T/1756);
-    Fcent3 = exp(-5182 * invT);
+    Fcent3 = exp(-(5182) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -42487,9 +42451,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.21049999999999999)*exp(-T/83.5);
+    Fcent1 = (1.-(0.21049999999999999))*exp(-T/83.5);
     Fcent2 = 0.21049999999999999 * exp(-T/5398);
-    Fcent3 = exp(-8370 * invT);
+    Fcent3 = exp(-(8370) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -42587,9 +42551,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.57569999999999999)*exp(-T/237);
+    Fcent1 = (1.-(0.57569999999999999))*exp(-T/237);
     Fcent2 = 0.57569999999999999 * exp(-T/1652);
-    Fcent3 = exp(-5069 * invT);
+    Fcent3 = exp(-(5069) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -42687,9 +42651,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.5907)*exp(-T/275);
+    Fcent1 = (1.-(0.5907))*exp(-T/275);
     Fcent2 = 0.5907 * exp(-T/1226);
-    Fcent3 = exp(-5185 * invT);
+    Fcent3 = exp(-(5185) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -42787,9 +42751,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.1507)*exp(-T/134);
+    Fcent1 = (1.-(0.1507))*exp(-T/134);
     Fcent2 = 0.1507 * exp(-T/2383);
-    Fcent3 = exp(-7265 * invT);
+    Fcent3 = exp(-(7265) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -42887,9 +42851,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.53249999999999997)*exp(-T/151);
+    Fcent1 = (1.-(0.53249999999999997))*exp(-T/151);
     Fcent2 = 0.53249999999999997 * exp(-T/1038);
-    Fcent3 = exp(-4970 * invT);
+    Fcent3 = exp(-(4970) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -42984,9 +42948,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.73450000000000004)*exp(-T/180);
+    Fcent1 = (1.-(0.73450000000000004))*exp(-T/180);
     Fcent2 = 0.73450000000000004 * exp(-T/1035);
-    Fcent3 = exp(-5417 * invT);
+    Fcent3 = exp(-(5417) * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -55615,46 +55579,6 @@ AMREX_GPU_HOST_DEVICE void speciesEntropy(double * species, double *  tc)
 }
 
 
-/*save molecular weights into array */
-void molecularWeight(double *  wt)
-{
-    wt[0] = 2.015940; /*H2 */
-    wt[1] = 1.007970; /*H */
-    wt[2] = 15.999400; /*O */
-    wt[3] = 31.998800; /*O2 */
-    wt[4] = 17.007370; /*OH */
-    wt[5] = 18.015340; /*H2O */
-    wt[6] = 33.006770; /*HO2 */
-    wt[7] = 34.014740; /*H2O2 */
-    wt[8] = 12.011150; /*C */
-    wt[9] = 13.019120; /*CH */
-    wt[10] = 14.027090; /*CH2 */
-    wt[11] = 14.027090; /*CH2(S) */
-    wt[12] = 15.035060; /*CH3 */
-    wt[13] = 16.043030; /*CH4 */
-    wt[14] = 28.010550; /*CO */
-    wt[15] = 44.009950; /*CO2 */
-    wt[16] = 29.018520; /*HCO */
-    wt[17] = 30.026490; /*CH2O */
-    wt[18] = 31.034460; /*CH2OH */
-    wt[19] = 31.034460; /*CH3O */
-    wt[20] = 32.042430; /*CH3OH */
-    wt[21] = 25.030270; /*C2H */
-    wt[22] = 26.038240; /*C2H2 */
-    wt[23] = 27.046210; /*C2H3 */
-    wt[24] = 28.054180; /*C2H4 */
-    wt[25] = 29.062150; /*C2H5 */
-    wt[26] = 30.070120; /*C2H6 */
-    wt[27] = 41.029670; /*HCCO */
-    wt[28] = 42.037640; /*CH2CO */
-    wt[29] = 42.037640; /*HCCOH */
-    wt[30] = 28.013400; /*N2 */
-    wt[31] = 39.948000; /*AR */
-
-    return;
-}
-
-
 /*save atomic weights into array */
 void atomicWeight(double *  awt)
 {
@@ -55782,7 +55706,7 @@ void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentri
 
     egtransetEPS(EPS);
     egtransetSIG(SIG);
-    molecularWeight(wt);
+    get_mw(wt);
 
     /*species 0: H2 */
     /*Imported from NIST */
@@ -56056,18 +55980,21 @@ void egtransetWT(double* WT ) {
 
 /*the lennard-jones potential well depth eps/kb in K */
 void egtransetEPS(double* EPS ) {
+    EPS[3] = 1.07400000E+02;
+    EPS[2] = 8.00000000E+01;
+    EPS[30] = 9.75300000E+01;
+    EPS[31] = 1.36500000E+02;
     EPS[1] = 1.45000000E+02;
     EPS[0] = 3.80000000E+01;
     EPS[4] = 8.00000000E+01;
-    EPS[5] = 5.72400000E+02;
     EPS[29] = 4.36000000E+02;
+    EPS[5] = 5.72400000E+02;
     EPS[6] = 1.07400000E+02;
     EPS[7] = 1.07400000E+02;
     EPS[8] = 7.14000000E+01;
     EPS[9] = 8.00000000E+01;
     EPS[10] = 1.44000000E+02;
     EPS[11] = 1.44000000E+02;
-    EPS[30] = 9.75300000E+01;
     EPS[12] = 1.44000000E+02;
     EPS[13] = 1.41400000E+02;
     EPS[14] = 9.81000000E+01;
@@ -56085,26 +56012,26 @@ void egtransetEPS(double* EPS ) {
     EPS[26] = 2.52300000E+02;
     EPS[28] = 4.36000000E+02;
     EPS[27] = 1.50000000E+02;
-    EPS[3] = 1.07400000E+02;
-    EPS[2] = 8.00000000E+01;
-    EPS[31] = 1.36500000E+02;
 }
 
 
 /*the lennard-jones collision diameter in Angstroms */
 void egtransetSIG(double* SIG ) {
+    SIG[3] = 3.45800000E+00;
+    SIG[2] = 2.75000000E+00;
+    SIG[30] = 3.62100000E+00;
+    SIG[31] = 3.33000000E+00;
     SIG[1] = 2.05000000E+00;
     SIG[0] = 2.92000000E+00;
     SIG[4] = 2.75000000E+00;
-    SIG[5] = 2.60500000E+00;
     SIG[29] = 3.97000000E+00;
+    SIG[5] = 2.60500000E+00;
     SIG[6] = 3.45800000E+00;
     SIG[7] = 3.45800000E+00;
     SIG[8] = 3.29800000E+00;
     SIG[9] = 2.75000000E+00;
     SIG[10] = 3.80000000E+00;
     SIG[11] = 3.80000000E+00;
-    SIG[30] = 3.62100000E+00;
     SIG[12] = 3.80000000E+00;
     SIG[13] = 3.74600000E+00;
     SIG[14] = 3.65000000E+00;
@@ -56122,26 +56049,26 @@ void egtransetSIG(double* SIG ) {
     SIG[26] = 4.30200000E+00;
     SIG[28] = 3.97000000E+00;
     SIG[27] = 2.50000000E+00;
-    SIG[3] = 3.45800000E+00;
-    SIG[2] = 2.75000000E+00;
-    SIG[31] = 3.33000000E+00;
 }
 
 
 /*the dipole moment in Debye */
 void egtransetDIP(double* DIP ) {
+    DIP[3] = 0.00000000E+00;
+    DIP[2] = 0.00000000E+00;
+    DIP[30] = 0.00000000E+00;
+    DIP[31] = 0.00000000E+00;
     DIP[1] = 0.00000000E+00;
     DIP[0] = 0.00000000E+00;
     DIP[4] = 0.00000000E+00;
-    DIP[5] = 1.84400000E+00;
     DIP[29] = 0.00000000E+00;
+    DIP[5] = 1.84400000E+00;
     DIP[6] = 0.00000000E+00;
     DIP[7] = 0.00000000E+00;
     DIP[8] = 0.00000000E+00;
     DIP[9] = 0.00000000E+00;
     DIP[10] = 0.00000000E+00;
     DIP[11] = 0.00000000E+00;
-    DIP[30] = 0.00000000E+00;
     DIP[12] = 0.00000000E+00;
     DIP[13] = 0.00000000E+00;
     DIP[14] = 0.00000000E+00;
@@ -56159,26 +56086,26 @@ void egtransetDIP(double* DIP ) {
     DIP[26] = 0.00000000E+00;
     DIP[28] = 0.00000000E+00;
     DIP[27] = 0.00000000E+00;
-    DIP[3] = 0.00000000E+00;
-    DIP[2] = 0.00000000E+00;
-    DIP[31] = 0.00000000E+00;
 }
 
 
 /*the polarizability in cubic Angstroms */
 void egtransetPOL(double* POL ) {
+    POL[3] = 1.60000000E+00;
+    POL[2] = 0.00000000E+00;
+    POL[30] = 1.76000000E+00;
+    POL[31] = 0.00000000E+00;
     POL[1] = 0.00000000E+00;
     POL[0] = 7.90000000E-01;
     POL[4] = 0.00000000E+00;
-    POL[5] = 0.00000000E+00;
     POL[29] = 0.00000000E+00;
+    POL[5] = 0.00000000E+00;
     POL[6] = 0.00000000E+00;
     POL[7] = 0.00000000E+00;
     POL[8] = 0.00000000E+00;
     POL[9] = 0.00000000E+00;
     POL[10] = 0.00000000E+00;
     POL[11] = 0.00000000E+00;
-    POL[30] = 1.76000000E+00;
     POL[12] = 0.00000000E+00;
     POL[13] = 2.60000000E+00;
     POL[14] = 1.95000000E+00;
@@ -56196,26 +56123,26 @@ void egtransetPOL(double* POL ) {
     POL[26] = 0.00000000E+00;
     POL[28] = 0.00000000E+00;
     POL[27] = 0.00000000E+00;
-    POL[3] = 1.60000000E+00;
-    POL[2] = 0.00000000E+00;
-    POL[31] = 0.00000000E+00;
 }
 
 
 /*the rotational relaxation collision number at 298 K */
 void egtransetZROT(double* ZROT ) {
+    ZROT[3] = 3.80000000E+00;
+    ZROT[2] = 0.00000000E+00;
+    ZROT[30] = 4.00000000E+00;
+    ZROT[31] = 0.00000000E+00;
     ZROT[1] = 0.00000000E+00;
     ZROT[0] = 2.80000000E+02;
     ZROT[4] = 0.00000000E+00;
-    ZROT[5] = 4.00000000E+00;
     ZROT[29] = 2.00000000E+00;
+    ZROT[5] = 4.00000000E+00;
     ZROT[6] = 1.00000000E+00;
     ZROT[7] = 3.80000000E+00;
     ZROT[8] = 0.00000000E+00;
     ZROT[9] = 0.00000000E+00;
     ZROT[10] = 0.00000000E+00;
     ZROT[11] = 0.00000000E+00;
-    ZROT[30] = 4.00000000E+00;
     ZROT[12] = 0.00000000E+00;
     ZROT[13] = 1.30000000E+01;
     ZROT[14] = 1.80000000E+00;
@@ -56233,26 +56160,26 @@ void egtransetZROT(double* ZROT ) {
     ZROT[26] = 1.50000000E+00;
     ZROT[28] = 2.00000000E+00;
     ZROT[27] = 1.00000000E+00;
-    ZROT[3] = 3.80000000E+00;
-    ZROT[2] = 0.00000000E+00;
-    ZROT[31] = 0.00000000E+00;
 }
 
 
 /*0: monoatomic, 1: linear, 2: nonlinear */
 void egtransetNLIN(int* NLIN) {
+    NLIN[3] = 1;
+    NLIN[2] = 0;
+    NLIN[30] = 1;
+    NLIN[31] = 0;
     NLIN[1] = 0;
     NLIN[0] = 1;
     NLIN[4] = 1;
-    NLIN[5] = 2;
     NLIN[29] = 2;
+    NLIN[5] = 2;
     NLIN[6] = 2;
     NLIN[7] = 2;
     NLIN[8] = 0;
     NLIN[9] = 1;
     NLIN[10] = 1;
     NLIN[11] = 1;
-    NLIN[30] = 1;
     NLIN[12] = 1;
     NLIN[13] = 2;
     NLIN[14] = 1;
@@ -56270,9 +56197,6 @@ void egtransetNLIN(int* NLIN) {
     NLIN[26] = 2;
     NLIN[28] = 2;
     NLIN[27] = 2;
-    NLIN[3] = 1;
-    NLIN[2] = 0;
-    NLIN[31] = 0;
 }
 
 
