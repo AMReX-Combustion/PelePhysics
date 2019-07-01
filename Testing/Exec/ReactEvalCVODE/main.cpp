@@ -37,6 +37,7 @@ main (int   argc,
     int cvode_iE = 1;
     int fuel_idx = -1;
     int oxy_idx = -1;
+    int bath_idx = -1;
     int ndt = 1; 
     Real dt = 1.e-5; 
 
@@ -103,9 +104,10 @@ main (int   argc,
     std::vector<int> probin_file_name(probin_file_length);
     for (int i = 0; i < probin_file_length; i++)
 	    probin_file_name[i] = probin_file[i];
-    fuel_idx = FUEL_ID;
-    oxy_idx  = OXY_ID;
-    extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&cvode_iE);
+    fuel_idx  = FUEL_ID;
+    oxy_idx   = OXY_ID;
+    bath_idx  = BATH_ID;
+    extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx,&cvode_iE);
 
     /* Initialize D/CVODE reactor */
 #ifdef _OPENMP

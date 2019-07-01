@@ -4,11 +4,11 @@ module main_module
 
   implicit none
 
-  integer ::  iE_main, fuel_ID, oxy_ID
+  integer ::  iE_main, fuel_ID, oxy_ID, bath_ID
 
 contains
 
-    subroutine extern_init(name,namlen,fuel_ID_in,oxy_ID_in,cvode_iE_in) bind(C, name="extern_init")
+    subroutine extern_init(name,namlen,fuel_ID_in,oxy_ID_in,bath_ID_in,cvode_iE_in) bind(C, name="extern_init")
 
     use, intrinsic :: iso_c_binding
     use network
@@ -18,14 +18,15 @@ contains
     integer :: namlen
     integer :: name(namlen)
 
-    integer(c_int), intent(in) :: cvode_iE_in, fuel_ID_in, oxy_ID_in
+    integer(c_int), intent(in) :: cvode_iE_in, fuel_ID_in, oxy_ID_in, bath_ID_in
 
     real (kind=amrex_real) :: small_temp = 1.d-200
     real (kind=amrex_real) :: small_dens = 1.d-200
 
     iE_main = cvode_iE_in
     fuel_ID = fuel_ID_in + 1
-    oxy_ID = oxy_ID_in + 1
+    oxy_ID  = oxy_ID_in + 1
+    bath_ID = bath_ID_in + 1
 
     ! initialize the external runtime parameters in
     ! extern_probin_module
@@ -105,9 +106,9 @@ contains
        stop 'This step assumes that there are at least 3 species'
     endif
     eos_state%molefrac = 0.d0
-    eos_state%molefrac(oxy_ID) = 0.2d0
+    eos_state%molefrac(oxy_ID)  = 0.2d0
     eos_state%molefrac(fuel_ID) = 0.1d0
-    eos_state%molefrac(nspec-1) = 1.d0 - eos_state%molefrac(fuel_ID) - eos_state%molefrac(oxy_ID)
+    eos_state%molefrac(bath_ID) = 1.d0 - eos_state%molefrac(fuel_ID) - eos_state%molefrac(oxy_ID)
     call eos_xty(eos_state)
     
     L(:) = phi(:) - plo(:)
