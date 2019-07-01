@@ -71,8 +71,8 @@
 #define NUM_REACTIONS 289
 
 #define FUEL_ID 51
-#define OXY_ID 7 
-#define FUEL_NAME "C12H26"
+#define OXY_ID 7
+#define FUEL_NAME "NC12H26"
 
 #define NUM_FIT 4
 #endif

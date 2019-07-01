@@ -4,7 +4,6 @@
 namespace thermo
 {
     /* Inverse molecular weights */
-    std::vector<double> imw;
     double fwd_A[289], fwd_beta[289], fwd_Ea[289];
     double low_A[289], low_beta[289], low_Ea[289];
     double rev_A[289], rev_beta[289], rev_Ea[289];
@@ -30,7 +29,7 @@ using namespace thermo;
 
 /* Inverse molecular weights */
 /* TODO: check necessity on CPU */
-static AMREX_GPU_DEVICE_MANAGED double inv_molecular_weights[56] = {
+static AMREX_GPU_DEVICE_MANAGED double imw[56] = {
     1.0 / 1.007970,  /*H */
     1.0 / 15.999400,  /*O */
     1.0 / 17.007370,  /*OH */
@@ -150,7 +149,7 @@ static AMREX_GPU_DEVICE_MANAGED double molecular_weights[56] = {
 
 AMREX_GPU_HOST_DEVICE
 void get_imw(double imw_new[]){
-    for(int i = 0; i<56; ++i) imw_new[i] = inv_molecular_weights[i];
+    for(int i = 0; i<56; ++i) imw_new[i] = imw[i];
 }
 
 /* TODO: check necessity because redundant with CKWT */
@@ -164,65 +163,6 @@ void get_mw(double mw_new[]){
 /* Initializes parameter database */
 void CKINIT()
 {
-
-    /* Inverse molecular weights */
-    imw = {
-        1.0 / 1.007970,  /*H */
-        1.0 / 15.999400,  /*O */
-        1.0 / 17.007370,  /*OH */
-        1.0 / 33.006770,  /*HO2 */
-        1.0 / 2.015940,  /*H2 */
-        1.0 / 18.015340,  /*H2O */
-        1.0 / 34.014740,  /*H2O2 */
-        1.0 / 31.998800,  /*O2 */
-        1.0 / 13.019120,  /*CH */
-        1.0 / 14.027090,  /*CH2 */
-        1.0 / 14.027090,  /*CH2* */
-        1.0 / 15.035060,  /*CH3 */
-        1.0 / 16.043030,  /*CH4 */
-        1.0 / 29.018520,  /*HCO */
-        1.0 / 30.026490,  /*CH2O */
-        1.0 / 31.034460,  /*CH3O */
-        1.0 / 31.034460,  /*CH2OH */
-        1.0 / 32.042430,  /*CH3OH */
-        1.0 / 28.010550,  /*CO */
-        1.0 / 44.009950,  /*CO2 */
-        1.0 / 25.030270,  /*C2H */
-        1.0 / 26.038240,  /*C2H2 */
-        1.0 / 27.046210,  /*C2H3 */
-        1.0 / 28.054180,  /*C2H4 */
-        1.0 / 29.062150,  /*C2H5 */
-        1.0 / 30.070120,  /*C2H6 */
-        1.0 / 41.029670,  /*HCCO */
-        1.0 / 42.037640,  /*CH2CO */
-        1.0 / 43.045610,  /*CH3CO */
-        1.0 / 43.045610,  /*CH2CHO */
-        1.0 / 44.053580,  /*CH3CHO */
-        1.0 / 39.057360,  /*C3H3 */
-        1.0 / 40.065330,  /*pC3H4 */
-        1.0 / 40.065330,  /*aC3H4 */
-        1.0 / 41.073300,  /*aC3H5 */
-        1.0 / 41.073300,  /*CH3CCH2 */
-        1.0 / 42.081270,  /*C3H6 */
-        1.0 / 43.089240,  /*nC3H7 */
-        1.0 / 43.089240,  /*iC3H7 */
-        1.0 / 56.064730,  /*C2H3CHO */
-        1.0 / 50.060540,  /*C4H2 */
-        1.0 / 51.068510,  /*iC4H3 */
-        1.0 / 52.076480,  /*C4H4 */
-        1.0 / 53.084450,  /*iC4H5 */
-        1.0 / 53.084450,  /*C4H5-2 */
-        1.0 / 54.092420,  /*C4H6 */
-        1.0 / 54.092420,  /*C4H612 */
-        1.0 / 54.092420,  /*C4H6-2 */
-        1.0 / 55.100390,  /*C4H7 */
-        1.0 / 56.108360,  /*C4H81 */
-        1.0 / 57.116330,  /*pC4H9 */
-        1.0 / 170.341020,  /*NC12H26 */
-        1.0 / 84.162540,  /*C6H12 */
-        1.0 / 83.154570,  /*C6H11 */
-        1.0 / 70.135450,  /*C5H10 */
-        1.0 / 28.013400};  /*N2 */
 
     rxn_map = {31,32,33,34,26,35,27,28,29,0,36,1,37,38,39,40,41,42,43,44,45,46,47,48,25,49,50,51,52,53,54,55,30,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,2,71,72,73,74,75,76,3,77,78,79,80,4,5,81,82,83,84,85,86,6,87,7,88,89,90,91,92,93,94,95,96,97,8,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,9,127,128,129,130,131,132,133,134,135,136,137,138,10,139,140,141,11,142,143,144,145,146,147,148,149,150,151,12,152,153,154,155,156,157,158,159,13,160,161,14,162,163,164,165,15,16,166,167,168,169,170,171,172,173,174,175,176,177,178,17,179,180,181,182,183,184,185,18,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,19,205,206,207,208,209,210,211,20,212,213,214,21,22,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,23,281,282,24,283,284,285,286,287,288};
 
@@ -4651,7 +4591,7 @@ void CKRHOC(double *  P, double *  T, double *  c,  double *  rho)
 /*get molecular weight for all species */
 void CKWT( double *  wt)
 {
-    molecularWeight(wt);
+    get_mw(wt);
 }
 
 
@@ -4913,7 +4853,7 @@ void CKYTCP(double *  P, double *  T, double *  y,  double *  c)
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
-void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
+AMREX_GPU_HOST_DEVICE void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
 {
     for (int i = 0; i < 56; i++)
     {
@@ -6664,7 +6604,7 @@ void CKABMS(double *  P, double *  T, double *  y,  double *  abms)
 
 
 /*compute the production rate for each species */
-void CKWC(double *  T, double *  C,  double *  wdot)
+AMREX_GPU_HOST_DEVICE void CKWC(double *  T, double *  C,  double *  wdot)
 {
     int id; /*loop counter */
 
@@ -18259,7 +18199,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.73460000000000003)*exp(-tc[1] / 94) 
         + 0.73460000000000003 * exp(-tc[1]/1756)  
-        + exp(-5182 * invT));
+        + exp(-(5182) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -18497,7 +18437,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.5907)*exp(-tc[1] / 275) 
         + 0.5907 * exp(-tc[1]/1226)  
-        + exp(-5185 * invT));
+        + exp(-(5185) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -18552,7 +18492,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.1507)*exp(-tc[1] / 134) 
         + 0.1507 * exp(-tc[1]/2383)  
-        + exp(-7265 * invT));
+        + exp(-(7265) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -18595,7 +18535,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.71870000000000001)*exp(-tc[1] / 103) 
         + 0.71870000000000001 * exp(-tc[1]/1291)  
-        + exp(-4160 * invT));
+        + exp(-(4160) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -18614,7 +18554,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.75800000000000001)*exp(-tc[1] / 94) 
         + 0.75800000000000001 * exp(-tc[1]/1555)  
-        + exp(-4200 * invT));
+        + exp(-(4200) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -18669,7 +18609,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.78300000000000003)*exp(-tc[1] / 74) 
         + 0.78300000000000003 * exp(-tc[1]/2941)  
-        + exp(-6964 * invT));
+        + exp(-(6964) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -18694,7 +18634,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.21049999999999999)*exp(-tc[1] / 83.5) 
         + 0.21049999999999999 * exp(-tc[1]/5398)  
-        + exp(-8370 * invT));
+        + exp(-(8370) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -18773,7 +18713,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.53249999999999997)*exp(-tc[1] / 151) 
         + 0.53249999999999997 * exp(-tc[1]/1038)  
-        + exp(-4970 * invT));
+        + exp(-(4970) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -18966,7 +18906,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-1.9816)*exp(-tc[1] / 5383.6999999999998) 
         + 1.9816 * exp(-tc[1]/4.2999999999999998)  
-        + exp(--0.10000000000000001 * invT));
+        + exp(-(-0.10000000000000001) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19057,7 +18997,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.33700000000000002)*exp(-tc[1] / 1707) 
         + 0.33700000000000002 * exp(-tc[1]/3200)  
-        + exp(-4131 * invT));
+        + exp(-(4131) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19094,7 +19034,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.78200000000000003)*exp(-tc[1] / 207.5) 
         + 0.78200000000000003 * exp(-tc[1]/2663)  
-        + exp(-6095 * invT));
+        + exp(-(6095) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19173,7 +19113,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.17499999999999999)*exp(-tc[1] / 1340.5999999999999) 
         + 0.17499999999999999 * exp(-tc[1]/60000)  
-        + exp(-10139.799999999999 * invT));
+        + exp(-(10139.799999999999) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19240,7 +19180,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.25800000000000001)*exp(-tc[1] / 598) 
         + 0.25800000000000001 * exp(-tc[1]/21002)  
-        + exp(-1773 * invT));
+        + exp(-(1773) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19271,7 +19211,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.61729999999999996)*exp(-tc[1] / 13.1) 
         + 0.61729999999999996 * exp(-tc[1]/2078)  
-        + exp(-5093 * invT));
+        + exp(-(5093) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19314,7 +19254,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.73450000000000004)*exp(-tc[1] / 180) 
         + 0.73450000000000004 * exp(-tc[1]/1035)  
-        + exp(-5417 * invT));
+        + exp(-(5417) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19333,7 +19273,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.--0.56899999999999995)*exp(-tc[1] / 299) 
         + -0.56899999999999995 * exp(-tc[1]/9147)  
-        + exp(--152.40000000000001 * invT));
+        + exp(-(-152.40000000000001) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19430,7 +19370,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.84219999999999995)*exp(-tc[1] / 125) 
         + 0.84219999999999995 * exp(-tc[1]/2219)  
-        + exp(-6882 * invT));
+        + exp(-(6882) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19491,7 +19431,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.19800000000000001)*exp(-tc[1] / 2277.9000000000001) 
         + 0.19800000000000001 * exp(-tc[1]/60000)  
-        + exp(-5723.1999999999998 * invT));
+        + exp(-(5723.1999999999998) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19624,7 +19564,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.02)*exp(-tc[1] / 1096.5999999999999) 
         + 0.02 * exp(-tc[1]/1096.5999999999999)  
-        + exp(-6859.5 * invT));
+        + exp(-(6859.5) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19685,7 +19625,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.104)*exp(-tc[1] / 1606) 
         + 0.104 * exp(-tc[1]/60000)  
-        + exp(-6118.3999999999996 * invT));
+        + exp(-(6118.3999999999996) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19722,7 +19662,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-1)*exp(-tc[1] / 1000) 
         + 1 * exp(-tc[1]/1310)  
-        + exp(-48097 * invT));
+        + exp(-(48097) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -19741,7 +19681,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-1)*exp(-tc[1] / 1000) 
         + 1 * exp(-tc[1]/645.39999999999998)  
-        + exp(-6844.3000000000002 * invT));
+        + exp(-(6844.3000000000002) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -20156,7 +20096,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-1)*exp(-tc[1] / 1000) 
         + 1 * exp(-tc[1]/645.39999999999998)  
-        + exp(-6844.3000000000002 * invT));
+        + exp(-(6844.3000000000002) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -20187,7 +20127,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-1)*exp(-tc[1] / 1000) 
         + 1 * exp(-tc[1]/645.39999999999998)  
-        + exp(-6844.3000000000002 * invT));
+        + exp(-(6844.3000000000002) * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -28825,7 +28765,7 @@ AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len
     double J[3249];
     double mwt[56];
 
-    molecularWeight(mwt);
+    get_mw(mwt);
 
     for (int k=0; k<56; k++) {
         c[k] = 1.e6 * sc[k];
@@ -89211,70 +89151,6 @@ AMREX_GPU_HOST_DEVICE void speciesEntropy(double * species, double *  tc)
 }
 
 
-/*save molecular weights into array */
-void molecularWeight(double *  wt)
-{
-    wt[0] = 1.007970; /*H */
-    wt[1] = 15.999400; /*O */
-    wt[2] = 17.007370; /*OH */
-    wt[3] = 33.006770; /*HO2 */
-    wt[4] = 2.015940; /*H2 */
-    wt[5] = 18.015340; /*H2O */
-    wt[6] = 34.014740; /*H2O2 */
-    wt[7] = 31.998800; /*O2 */
-    wt[8] = 13.019120; /*CH */
-    wt[9] = 14.027090; /*CH2 */
-    wt[10] = 14.027090; /*CH2* */
-    wt[11] = 15.035060; /*CH3 */
-    wt[12] = 16.043030; /*CH4 */
-    wt[13] = 29.018520; /*HCO */
-    wt[14] = 30.026490; /*CH2O */
-    wt[15] = 31.034460; /*CH3O */
-    wt[16] = 31.034460; /*CH2OH */
-    wt[17] = 32.042430; /*CH3OH */
-    wt[18] = 28.010550; /*CO */
-    wt[19] = 44.009950; /*CO2 */
-    wt[20] = 25.030270; /*C2H */
-    wt[21] = 26.038240; /*C2H2 */
-    wt[22] = 27.046210; /*C2H3 */
-    wt[23] = 28.054180; /*C2H4 */
-    wt[24] = 29.062150; /*C2H5 */
-    wt[25] = 30.070120; /*C2H6 */
-    wt[26] = 41.029670; /*HCCO */
-    wt[27] = 42.037640; /*CH2CO */
-    wt[28] = 43.045610; /*CH3CO */
-    wt[29] = 43.045610; /*CH2CHO */
-    wt[30] = 44.053580; /*CH3CHO */
-    wt[31] = 39.057360; /*C3H3 */
-    wt[32] = 40.065330; /*pC3H4 */
-    wt[33] = 40.065330; /*aC3H4 */
-    wt[34] = 41.073300; /*aC3H5 */
-    wt[35] = 41.073300; /*CH3CCH2 */
-    wt[36] = 42.081270; /*C3H6 */
-    wt[37] = 43.089240; /*nC3H7 */
-    wt[38] = 43.089240; /*iC3H7 */
-    wt[39] = 56.064730; /*C2H3CHO */
-    wt[40] = 50.060540; /*C4H2 */
-    wt[41] = 51.068510; /*iC4H3 */
-    wt[42] = 52.076480; /*C4H4 */
-    wt[43] = 53.084450; /*iC4H5 */
-    wt[44] = 53.084450; /*C4H5-2 */
-    wt[45] = 54.092420; /*C4H6 */
-    wt[46] = 54.092420; /*C4H612 */
-    wt[47] = 54.092420; /*C4H6-2 */
-    wt[48] = 55.100390; /*C4H7 */
-    wt[49] = 56.108360; /*C4H81 */
-    wt[50] = 57.116330; /*pC4H9 */
-    wt[51] = 170.341020; /*NC12H26 */
-    wt[52] = 84.162540; /*C6H12 */
-    wt[53] = 83.154570; /*C6H11 */
-    wt[54] = 70.135450; /*C5H10 */
-    wt[55] = 28.013400; /*N2 */
-
-    return;
-}
-
-
 /*save atomic weights into array */
 void atomicWeight(double *  awt)
 {
@@ -89401,7 +89277,7 @@ void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentri
 
     egtransetEPS(EPS);
     egtransetSIG(SIG);
-    molecularWeight(wt);
+    get_mw(wt);
 
     /*species 0: H */
     Tci[0] = 1.316 * EPS[0] ; 
@@ -89842,367 +89718,367 @@ void egtransetWT(double* WT ) {
 
 /*the lennard-jones potential well depth eps/kb in K */
 void egtransetEPS(double* EPS ) {
-    EPS[39] = 3.57000000E+02;
-    EPS[15] = 4.17000000E+02;
-    EPS[26] = 1.50000000E+02;
-    EPS[17] = 4.81800000E+02;
-    EPS[46] = 3.57000000E+02;
-    EPS[20] = 2.09000000E+02;
     EPS[38] = 2.66800000E+02;
-    EPS[21] = 2.09000000E+02;
-    EPS[40] = 3.57000000E+02;
+    EPS[54] = 4.48508000E+02;
+    EPS[18] = 9.81000000E+01;
+    EPS[43] = 3.57000000E+02;
+    EPS[19] = 2.44000000E+02;
+    EPS[13] = 4.98000000E+02;
     EPS[33] = 2.52000000E+02;
-    EPS[22] = 2.09000000E+02;
+    EPS[14] = 4.98000000E+02;
     EPS[51] = 7.89980000E+02;
-    EPS[52] = 5.04629000E+02;
-    EPS[23] = 2.80800000E+02;
+    EPS[16] = 4.17000000E+02;
     EPS[34] = 2.66800000E+02;
-    EPS[41] = 3.57000000E+02;
-    EPS[24] = 2.52300000E+02;
-    EPS[48] = 3.57000000E+02;
-    EPS[25] = 2.52300000E+02;
+    EPS[15] = 4.17000000E+02;
+    EPS[17] = 4.81800000E+02;
     EPS[36] = 2.66800000E+02;
-    EPS[27] = 4.36000000E+02;
-    EPS[29] = 4.36000000E+02;
+    EPS[20] = 2.09000000E+02;
+    EPS[21] = 2.09000000E+02;
     EPS[32] = 2.52000000E+02;
+    EPS[40] = 3.57000000E+02;
+    EPS[22] = 2.09000000E+02;
+    EPS[35] = 2.66800000E+02;
+    EPS[23] = 2.80800000E+02;
+    EPS[24] = 2.52300000E+02;
+    EPS[25] = 2.52300000E+02;
+    EPS[53] = 5.04629000E+02;
+    EPS[27] = 4.36000000E+02;
+    EPS[49] = 3.57000000E+02;
+    EPS[29] = 4.36000000E+02;
     EPS[44] = 3.57000000E+02;
     EPS[1] = 8.00000000E+01;
-    EPS[35] = 2.66800000E+02;
-    EPS[7] = 1.07400000E+02;
-    EPS[0] = 1.45000000E+02;
-    EPS[4] = 3.80000000E+01;
-    EPS[2] = 8.00000000E+01;
-    EPS[49] = 3.57000000E+02;
-    EPS[5] = 5.72400000E+02;
-    EPS[3] = 1.07400000E+02;
-    EPS[43] = 3.57000000E+02;
-    EPS[6] = 1.07400000E+02;
     EPS[47] = 3.57000000E+02;
-    EPS[53] = 5.04629000E+02;
-    EPS[31] = 2.52000000E+02;
+    EPS[7] = 1.07400000E+02;
     EPS[28] = 4.36000000E+02;
+    EPS[39] = 3.57000000E+02;
+    EPS[0] = 1.45000000E+02;
+    EPS[46] = 3.57000000E+02;
+    EPS[4] = 3.80000000E+01;
+    EPS[42] = 3.57000000E+02;
+    EPS[41] = 3.57000000E+02;
+    EPS[2] = 8.00000000E+01;
+    EPS[45] = 3.57000000E+02;
+    EPS[5] = 5.72400000E+02;
+    EPS[50] = 3.57000000E+02;
+    EPS[3] = 1.07400000E+02;
+    EPS[48] = 3.57000000E+02;
+    EPS[6] = 1.07400000E+02;
+    EPS[30] = 4.36000000E+02;
+    EPS[31] = 2.52000000E+02;
     EPS[55] = 9.75300000E+01;
     EPS[8] = 8.00000000E+01;
-    EPS[45] = 3.57000000E+02;
+    EPS[37] = 2.66800000E+02;
     EPS[9] = 1.44000000E+02;
-    EPS[42] = 3.57000000E+02;
+    EPS[52] = 5.04629000E+02;
     EPS[10] = 1.44000000E+02;
     EPS[11] = 1.44000000E+02;
-    EPS[50] = 3.57000000E+02;
     EPS[12] = 1.41400000E+02;
-    EPS[18] = 9.81000000E+01;
-    EPS[30] = 4.36000000E+02;
-    EPS[19] = 2.44000000E+02;
-    EPS[54] = 4.48508000E+02;
-    EPS[13] = 4.98000000E+02;
-    EPS[37] = 2.66800000E+02;
-    EPS[14] = 4.98000000E+02;
-    EPS[16] = 4.17000000E+02;
+    EPS[26] = 1.50000000E+02;
 }
 
 
 /*the lennard-jones collision diameter in Angstroms */
 void egtransetSIG(double* SIG ) {
-    SIG[39] = 5.17600000E+00;
-    SIG[15] = 3.69000000E+00;
-    SIG[26] = 2.50000000E+00;
-    SIG[17] = 3.62600000E+00;
-    SIG[46] = 5.18000000E+00;
-    SIG[20] = 4.10000000E+00;
     SIG[38] = 4.98200000E+00;
-    SIG[21] = 4.10000000E+00;
-    SIG[40] = 5.18000000E+00;
+    SIG[54] = 5.34200000E+00;
+    SIG[18] = 3.65000000E+00;
+    SIG[43] = 5.17600000E+00;
+    SIG[19] = 3.76300000E+00;
+    SIG[13] = 3.59000000E+00;
     SIG[33] = 4.76000000E+00;
-    SIG[22] = 4.10000000E+00;
+    SIG[14] = 3.59000000E+00;
     SIG[51] = 7.04700000E+00;
-    SIG[52] = 5.62800000E+00;
-    SIG[23] = 3.97100000E+00;
+    SIG[16] = 3.69000000E+00;
     SIG[34] = 4.98200000E+00;
-    SIG[41] = 5.18000000E+00;
-    SIG[24] = 4.30200000E+00;
-    SIG[48] = 5.17600000E+00;
-    SIG[25] = 4.30200000E+00;
+    SIG[15] = 3.69000000E+00;
+    SIG[17] = 3.62600000E+00;
     SIG[36] = 4.98200000E+00;
-    SIG[27] = 3.97000000E+00;
-    SIG[29] = 3.97000000E+00;
+    SIG[20] = 4.10000000E+00;
+    SIG[21] = 4.10000000E+00;
     SIG[32] = 4.76000000E+00;
+    SIG[40] = 5.18000000E+00;
+    SIG[22] = 4.10000000E+00;
+    SIG[35] = 4.98200000E+00;
+    SIG[23] = 3.97100000E+00;
+    SIG[24] = 4.30200000E+00;
+    SIG[25] = 4.30200000E+00;
+    SIG[53] = 5.62800000E+00;
+    SIG[27] = 3.97000000E+00;
+    SIG[49] = 5.17600000E+00;
+    SIG[29] = 3.97000000E+00;
     SIG[44] = 5.18000000E+00;
     SIG[1] = 2.75000000E+00;
-    SIG[35] = 4.98200000E+00;
-    SIG[7] = 3.45800000E+00;
-    SIG[0] = 2.05000000E+00;
-    SIG[4] = 2.92000000E+00;
-    SIG[2] = 2.75000000E+00;
-    SIG[49] = 5.17600000E+00;
-    SIG[5] = 2.60500000E+00;
-    SIG[3] = 3.45800000E+00;
-    SIG[43] = 5.17600000E+00;
-    SIG[6] = 3.45800000E+00;
     SIG[47] = 5.18000000E+00;
-    SIG[53] = 5.62800000E+00;
-    SIG[31] = 4.76000000E+00;
+    SIG[7] = 3.45800000E+00;
     SIG[28] = 3.97000000E+00;
+    SIG[39] = 5.17600000E+00;
+    SIG[0] = 2.05000000E+00;
+    SIG[46] = 5.18000000E+00;
+    SIG[4] = 2.92000000E+00;
+    SIG[42] = 5.18000000E+00;
+    SIG[41] = 5.18000000E+00;
+    SIG[2] = 2.75000000E+00;
+    SIG[45] = 5.17600000E+00;
+    SIG[5] = 2.60500000E+00;
+    SIG[50] = 5.17600000E+00;
+    SIG[3] = 3.45800000E+00;
+    SIG[48] = 5.17600000E+00;
+    SIG[6] = 3.45800000E+00;
+    SIG[30] = 3.97000000E+00;
+    SIG[31] = 4.76000000E+00;
     SIG[55] = 3.62100000E+00;
     SIG[8] = 2.75000000E+00;
-    SIG[45] = 5.17600000E+00;
+    SIG[37] = 4.98200000E+00;
     SIG[9] = 3.80000000E+00;
-    SIG[42] = 5.18000000E+00;
+    SIG[52] = 5.62800000E+00;
     SIG[10] = 3.80000000E+00;
     SIG[11] = 3.80000000E+00;
-    SIG[50] = 5.17600000E+00;
     SIG[12] = 3.74600000E+00;
-    SIG[18] = 3.65000000E+00;
-    SIG[30] = 3.97000000E+00;
-    SIG[19] = 3.76300000E+00;
-    SIG[54] = 5.34200000E+00;
-    SIG[13] = 3.59000000E+00;
-    SIG[37] = 4.98200000E+00;
-    SIG[14] = 3.59000000E+00;
-    SIG[16] = 3.69000000E+00;
+    SIG[26] = 2.50000000E+00;
 }
 
 
 /*the dipole moment in Debye */
 void egtransetDIP(double* DIP ) {
-    DIP[39] = 0.00000000E+00;
-    DIP[15] = 1.70000000E+00;
-    DIP[26] = 0.00000000E+00;
-    DIP[17] = 0.00000000E+00;
-    DIP[46] = 0.00000000E+00;
-    DIP[20] = 0.00000000E+00;
     DIP[38] = 0.00000000E+00;
-    DIP[21] = 0.00000000E+00;
-    DIP[40] = 0.00000000E+00;
+    DIP[54] = 0.00000000E+00;
+    DIP[18] = 0.00000000E+00;
+    DIP[43] = 0.00000000E+00;
+    DIP[19] = 0.00000000E+00;
+    DIP[13] = 0.00000000E+00;
     DIP[33] = 0.00000000E+00;
-    DIP[22] = 0.00000000E+00;
+    DIP[14] = 0.00000000E+00;
     DIP[51] = 0.00000000E+00;
-    DIP[52] = 0.00000000E+00;
-    DIP[23] = 0.00000000E+00;
+    DIP[16] = 1.70000000E+00;
     DIP[34] = 0.00000000E+00;
-    DIP[41] = 0.00000000E+00;
-    DIP[24] = 0.00000000E+00;
-    DIP[48] = 0.00000000E+00;
-    DIP[25] = 0.00000000E+00;
+    DIP[15] = 1.70000000E+00;
+    DIP[17] = 0.00000000E+00;
     DIP[36] = 0.00000000E+00;
-    DIP[27] = 0.00000000E+00;
-    DIP[29] = 0.00000000E+00;
+    DIP[20] = 0.00000000E+00;
+    DIP[21] = 0.00000000E+00;
     DIP[32] = 0.00000000E+00;
+    DIP[40] = 0.00000000E+00;
+    DIP[22] = 0.00000000E+00;
+    DIP[35] = 0.00000000E+00;
+    DIP[23] = 0.00000000E+00;
+    DIP[24] = 0.00000000E+00;
+    DIP[25] = 0.00000000E+00;
+    DIP[53] = 0.00000000E+00;
+    DIP[27] = 0.00000000E+00;
+    DIP[49] = 0.00000000E+00;
+    DIP[29] = 0.00000000E+00;
     DIP[44] = 0.00000000E+00;
     DIP[1] = 0.00000000E+00;
-    DIP[35] = 0.00000000E+00;
-    DIP[7] = 0.00000000E+00;
-    DIP[0] = 0.00000000E+00;
-    DIP[4] = 0.00000000E+00;
-    DIP[2] = 0.00000000E+00;
-    DIP[49] = 0.00000000E+00;
-    DIP[5] = 1.84400000E+00;
-    DIP[3] = 0.00000000E+00;
-    DIP[43] = 0.00000000E+00;
-    DIP[6] = 0.00000000E+00;
     DIP[47] = 0.00000000E+00;
-    DIP[53] = 0.00000000E+00;
-    DIP[31] = 0.00000000E+00;
+    DIP[7] = 0.00000000E+00;
     DIP[28] = 0.00000000E+00;
+    DIP[39] = 0.00000000E+00;
+    DIP[0] = 0.00000000E+00;
+    DIP[46] = 0.00000000E+00;
+    DIP[4] = 0.00000000E+00;
+    DIP[42] = 0.00000000E+00;
+    DIP[41] = 0.00000000E+00;
+    DIP[2] = 0.00000000E+00;
+    DIP[45] = 0.00000000E+00;
+    DIP[5] = 1.84400000E+00;
+    DIP[50] = 0.00000000E+00;
+    DIP[3] = 0.00000000E+00;
+    DIP[48] = 0.00000000E+00;
+    DIP[6] = 0.00000000E+00;
+    DIP[30] = 0.00000000E+00;
+    DIP[31] = 0.00000000E+00;
     DIP[55] = 0.00000000E+00;
     DIP[8] = 0.00000000E+00;
-    DIP[45] = 0.00000000E+00;
+    DIP[37] = 0.00000000E+00;
     DIP[9] = 0.00000000E+00;
-    DIP[42] = 0.00000000E+00;
+    DIP[52] = 0.00000000E+00;
     DIP[10] = 0.00000000E+00;
     DIP[11] = 0.00000000E+00;
-    DIP[50] = 0.00000000E+00;
     DIP[12] = 0.00000000E+00;
-    DIP[18] = 0.00000000E+00;
-    DIP[30] = 0.00000000E+00;
-    DIP[19] = 0.00000000E+00;
-    DIP[54] = 0.00000000E+00;
-    DIP[13] = 0.00000000E+00;
-    DIP[37] = 0.00000000E+00;
-    DIP[14] = 0.00000000E+00;
-    DIP[16] = 1.70000000E+00;
+    DIP[26] = 0.00000000E+00;
 }
 
 
 /*the polarizability in cubic Angstroms */
 void egtransetPOL(double* POL ) {
-    POL[39] = 0.00000000E+00;
-    POL[15] = 0.00000000E+00;
-    POL[26] = 0.00000000E+00;
-    POL[17] = 0.00000000E+00;
-    POL[46] = 0.00000000E+00;
-    POL[20] = 0.00000000E+00;
     POL[38] = 0.00000000E+00;
-    POL[21] = 0.00000000E+00;
-    POL[40] = 0.00000000E+00;
+    POL[54] = 0.00000000E+00;
+    POL[18] = 1.95000000E+00;
+    POL[43] = 0.00000000E+00;
+    POL[19] = 2.65000000E+00;
+    POL[13] = 0.00000000E+00;
     POL[33] = 0.00000000E+00;
-    POL[22] = 0.00000000E+00;
+    POL[14] = 0.00000000E+00;
     POL[51] = 0.00000000E+00;
-    POL[52] = 0.00000000E+00;
-    POL[23] = 0.00000000E+00;
+    POL[16] = 0.00000000E+00;
     POL[34] = 0.00000000E+00;
-    POL[41] = 0.00000000E+00;
-    POL[24] = 0.00000000E+00;
-    POL[48] = 0.00000000E+00;
-    POL[25] = 0.00000000E+00;
+    POL[15] = 0.00000000E+00;
+    POL[17] = 0.00000000E+00;
     POL[36] = 0.00000000E+00;
-    POL[27] = 0.00000000E+00;
-    POL[29] = 0.00000000E+00;
+    POL[20] = 0.00000000E+00;
+    POL[21] = 0.00000000E+00;
     POL[32] = 0.00000000E+00;
+    POL[40] = 0.00000000E+00;
+    POL[22] = 0.00000000E+00;
+    POL[35] = 0.00000000E+00;
+    POL[23] = 0.00000000E+00;
+    POL[24] = 0.00000000E+00;
+    POL[25] = 0.00000000E+00;
+    POL[53] = 0.00000000E+00;
+    POL[27] = 0.00000000E+00;
+    POL[49] = 0.00000000E+00;
+    POL[29] = 0.00000000E+00;
     POL[44] = 0.00000000E+00;
     POL[1] = 0.00000000E+00;
-    POL[35] = 0.00000000E+00;
-    POL[7] = 1.60000000E+00;
-    POL[0] = 0.00000000E+00;
-    POL[4] = 7.90000000E-01;
-    POL[2] = 0.00000000E+00;
-    POL[49] = 0.00000000E+00;
-    POL[5] = 0.00000000E+00;
-    POL[3] = 0.00000000E+00;
-    POL[43] = 0.00000000E+00;
-    POL[6] = 0.00000000E+00;
     POL[47] = 0.00000000E+00;
-    POL[53] = 0.00000000E+00;
-    POL[31] = 0.00000000E+00;
+    POL[7] = 1.60000000E+00;
     POL[28] = 0.00000000E+00;
+    POL[39] = 0.00000000E+00;
+    POL[0] = 0.00000000E+00;
+    POL[46] = 0.00000000E+00;
+    POL[4] = 7.90000000E-01;
+    POL[42] = 0.00000000E+00;
+    POL[41] = 0.00000000E+00;
+    POL[2] = 0.00000000E+00;
+    POL[45] = 0.00000000E+00;
+    POL[5] = 0.00000000E+00;
+    POL[50] = 0.00000000E+00;
+    POL[3] = 0.00000000E+00;
+    POL[48] = 0.00000000E+00;
+    POL[6] = 0.00000000E+00;
+    POL[30] = 0.00000000E+00;
+    POL[31] = 0.00000000E+00;
     POL[55] = 1.76000000E+00;
     POL[8] = 0.00000000E+00;
-    POL[45] = 0.00000000E+00;
+    POL[37] = 0.00000000E+00;
     POL[9] = 0.00000000E+00;
-    POL[42] = 0.00000000E+00;
+    POL[52] = 0.00000000E+00;
     POL[10] = 0.00000000E+00;
     POL[11] = 0.00000000E+00;
-    POL[50] = 0.00000000E+00;
     POL[12] = 2.60000000E+00;
-    POL[18] = 1.95000000E+00;
-    POL[30] = 0.00000000E+00;
-    POL[19] = 2.65000000E+00;
-    POL[54] = 0.00000000E+00;
-    POL[13] = 0.00000000E+00;
-    POL[37] = 0.00000000E+00;
-    POL[14] = 0.00000000E+00;
-    POL[16] = 0.00000000E+00;
+    POL[26] = 0.00000000E+00;
 }
 
 
 /*the rotational relaxation collision number at 298 K */
 void egtransetZROT(double* ZROT ) {
-    ZROT[39] = 1.00000000E+00;
-    ZROT[15] = 2.00000000E+00;
-    ZROT[26] = 1.00000000E+00;
-    ZROT[17] = 1.00000000E+00;
-    ZROT[46] = 1.00000000E+00;
-    ZROT[20] = 2.50000000E+00;
     ZROT[38] = 1.00000000E+00;
-    ZROT[21] = 2.50000000E+00;
-    ZROT[40] = 1.00000000E+00;
+    ZROT[54] = 1.00000000E+00;
+    ZROT[18] = 1.80000000E+00;
+    ZROT[43] = 1.00000000E+00;
+    ZROT[19] = 2.10000000E+00;
+    ZROT[13] = 0.00000000E+00;
     ZROT[33] = 1.00000000E+00;
-    ZROT[22] = 1.00000000E+00;
+    ZROT[14] = 2.00000000E+00;
     ZROT[51] = 1.00000000E+00;
-    ZROT[52] = 1.00000000E+00;
-    ZROT[23] = 1.50000000E+00;
+    ZROT[16] = 2.00000000E+00;
     ZROT[34] = 1.00000000E+00;
-    ZROT[41] = 1.00000000E+00;
-    ZROT[24] = 1.50000000E+00;
-    ZROT[48] = 1.00000000E+00;
-    ZROT[25] = 1.50000000E+00;
+    ZROT[15] = 2.00000000E+00;
+    ZROT[17] = 1.00000000E+00;
     ZROT[36] = 1.00000000E+00;
-    ZROT[27] = 2.00000000E+00;
-    ZROT[29] = 2.00000000E+00;
+    ZROT[20] = 2.50000000E+00;
+    ZROT[21] = 2.50000000E+00;
     ZROT[32] = 1.00000000E+00;
+    ZROT[40] = 1.00000000E+00;
+    ZROT[22] = 1.00000000E+00;
+    ZROT[35] = 1.00000000E+00;
+    ZROT[23] = 1.50000000E+00;
+    ZROT[24] = 1.50000000E+00;
+    ZROT[25] = 1.50000000E+00;
+    ZROT[53] = 1.00000000E+00;
+    ZROT[27] = 2.00000000E+00;
+    ZROT[49] = 1.00000000E+00;
+    ZROT[29] = 2.00000000E+00;
     ZROT[44] = 1.00000000E+00;
     ZROT[1] = 0.00000000E+00;
-    ZROT[35] = 1.00000000E+00;
-    ZROT[7] = 3.80000000E+00;
-    ZROT[0] = 0.00000000E+00;
-    ZROT[4] = 2.80000000E+02;
-    ZROT[2] = 0.00000000E+00;
-    ZROT[49] = 1.00000000E+00;
-    ZROT[5] = 4.00000000E+00;
-    ZROT[3] = 1.00000000E+00;
-    ZROT[43] = 1.00000000E+00;
-    ZROT[6] = 3.80000000E+00;
     ZROT[47] = 1.00000000E+00;
-    ZROT[53] = 1.00000000E+00;
-    ZROT[31] = 1.00000000E+00;
+    ZROT[7] = 3.80000000E+00;
     ZROT[28] = 2.00000000E+00;
+    ZROT[39] = 1.00000000E+00;
+    ZROT[0] = 0.00000000E+00;
+    ZROT[46] = 1.00000000E+00;
+    ZROT[4] = 2.80000000E+02;
+    ZROT[42] = 1.00000000E+00;
+    ZROT[41] = 1.00000000E+00;
+    ZROT[2] = 0.00000000E+00;
+    ZROT[45] = 1.00000000E+00;
+    ZROT[5] = 4.00000000E+00;
+    ZROT[50] = 1.00000000E+00;
+    ZROT[3] = 1.00000000E+00;
+    ZROT[48] = 1.00000000E+00;
+    ZROT[6] = 3.80000000E+00;
+    ZROT[30] = 2.00000000E+00;
+    ZROT[31] = 1.00000000E+00;
     ZROT[55] = 4.00000000E+00;
     ZROT[8] = 0.00000000E+00;
-    ZROT[45] = 1.00000000E+00;
+    ZROT[37] = 1.00000000E+00;
     ZROT[9] = 0.00000000E+00;
-    ZROT[42] = 1.00000000E+00;
+    ZROT[52] = 1.00000000E+00;
     ZROT[10] = 0.00000000E+00;
     ZROT[11] = 0.00000000E+00;
-    ZROT[50] = 1.00000000E+00;
     ZROT[12] = 1.30000000E+01;
-    ZROT[18] = 1.80000000E+00;
-    ZROT[30] = 2.00000000E+00;
-    ZROT[19] = 2.10000000E+00;
-    ZROT[54] = 1.00000000E+00;
-    ZROT[13] = 0.00000000E+00;
-    ZROT[37] = 1.00000000E+00;
-    ZROT[14] = 2.00000000E+00;
-    ZROT[16] = 2.00000000E+00;
+    ZROT[26] = 1.00000000E+00;
 }
 
 
 /*0: monoatomic, 1: linear, 2: nonlinear */
 void egtransetNLIN(int* NLIN) {
-    NLIN[39] = 2;
-    NLIN[15] = 2;
-    NLIN[26] = 2;
-    NLIN[17] = 2;
-    NLIN[46] = 2;
-    NLIN[20] = 1;
     NLIN[38] = 2;
-    NLIN[21] = 1;
-    NLIN[40] = 1;
+    NLIN[54] = 2;
+    NLIN[18] = 1;
+    NLIN[43] = 2;
+    NLIN[19] = 1;
+    NLIN[13] = 2;
     NLIN[33] = 1;
-    NLIN[22] = 2;
+    NLIN[14] = 2;
     NLIN[51] = 2;
-    NLIN[52] = 2;
-    NLIN[23] = 2;
+    NLIN[16] = 2;
     NLIN[34] = 2;
-    NLIN[41] = 2;
-    NLIN[24] = 2;
-    NLIN[48] = 2;
-    NLIN[25] = 2;
+    NLIN[15] = 2;
+    NLIN[17] = 2;
     NLIN[36] = 2;
-    NLIN[27] = 2;
-    NLIN[29] = 2;
+    NLIN[20] = 1;
+    NLIN[21] = 1;
     NLIN[32] = 1;
+    NLIN[40] = 1;
+    NLIN[22] = 2;
+    NLIN[35] = 2;
+    NLIN[23] = 2;
+    NLIN[24] = 2;
+    NLIN[25] = 2;
+    NLIN[53] = 2;
+    NLIN[27] = 2;
+    NLIN[49] = 2;
+    NLIN[29] = 2;
     NLIN[44] = 2;
     NLIN[1] = 0;
-    NLIN[35] = 2;
-    NLIN[7] = 1;
-    NLIN[0] = 0;
-    NLIN[4] = 1;
-    NLIN[2] = 1;
-    NLIN[49] = 2;
-    NLIN[5] = 2;
-    NLIN[3] = 2;
-    NLIN[43] = 2;
-    NLIN[6] = 2;
     NLIN[47] = 2;
-    NLIN[53] = 2;
-    NLIN[31] = 2;
+    NLIN[7] = 1;
     NLIN[28] = 2;
+    NLIN[39] = 2;
+    NLIN[0] = 0;
+    NLIN[46] = 2;
+    NLIN[4] = 1;
+    NLIN[42] = 2;
+    NLIN[41] = 2;
+    NLIN[2] = 1;
+    NLIN[45] = 2;
+    NLIN[5] = 2;
+    NLIN[50] = 2;
+    NLIN[3] = 2;
+    NLIN[48] = 2;
+    NLIN[6] = 2;
+    NLIN[30] = 2;
+    NLIN[31] = 2;
     NLIN[55] = 1;
     NLIN[8] = 1;
-    NLIN[45] = 2;
+    NLIN[37] = 2;
     NLIN[9] = 1;
-    NLIN[42] = 2;
+    NLIN[52] = 2;
     NLIN[10] = 1;
     NLIN[11] = 1;
-    NLIN[50] = 2;
     NLIN[12] = 2;
-    NLIN[18] = 1;
-    NLIN[30] = 2;
-    NLIN[19] = 1;
-    NLIN[54] = 2;
-    NLIN[13] = 2;
-    NLIN[37] = 2;
-    NLIN[14] = 2;
-    NLIN[16] = 2;
+    NLIN[26] = 2;
 }
 
 
