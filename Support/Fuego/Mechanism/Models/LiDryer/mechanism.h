@@ -24,6 +24,7 @@
 
 #define FUEL_ID 0
 #define OXY_ID 1
+#define BATH_ID 8
 #define FUEL_NAME "H2"
 
 #define NUM_FIT 4

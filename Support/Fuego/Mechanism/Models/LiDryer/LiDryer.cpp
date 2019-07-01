@@ -4,7 +4,6 @@
 namespace thermo
 {
     /* Inverse molecular weights */
-    std::vector<double> imw;
     double fwd_A[21], fwd_beta[21], fwd_Ea[21];
     double low_A[21], low_beta[21], low_Ea[21];
     double rev_A[21], rev_beta[21], rev_Ea[21];
@@ -30,7 +29,7 @@ using namespace thermo;
 
 /* Inverse molecular weights */
 /* TODO: check necessity on CPU */
-static AMREX_GPU_DEVICE_MANAGED double inv_molecular_weights[9] = {
+static AMREX_GPU_DEVICE_MANAGED double imw[9] = {
     1.0 / 2.015940,  /*H2 */
     1.0 / 31.998800,  /*O2 */
     1.0 / 18.015340,  /*H2O */
@@ -56,7 +55,7 @@ static AMREX_GPU_DEVICE_MANAGED double molecular_weights[9] = {
 
 AMREX_GPU_HOST_DEVICE
 void get_imw(double imw_new[]){
-    for(int i = 0; i<9; ++i) imw_new[i] = inv_molecular_weights[i];
+    for(int i = 0; i<9; ++i) imw_new[i] = imw[i];
 }
 
 /* TODO: check necessity because redundant with CKWT */
@@ -70,18 +69,6 @@ void get_mw(double mw_new[]){
 /* Initializes parameter database */
 void CKINIT()
 {
-
-    /* Inverse molecular weights */
-    imw = {
-        1.0 / 2.015940,  /*H2 */
-        1.0 / 31.998800,  /*O2 */
-        1.0 / 18.015340,  /*H2O */
-        1.0 / 1.007970,  /*H */
-        1.0 / 15.999400,  /*O */
-        1.0 / 17.007370,  /*OH */
-        1.0 / 33.006770,  /*HO2 */
-        1.0 / 34.014740,  /*H2O2 */
-        1.0 / 28.013400};  /*N2 */
 
     rxn_map = {6,7,8,9,2,3,4,5,0,10,11,12,13,14,15,1,16,17,18,19,20};
 
@@ -840,7 +827,7 @@ void CKRHOC(double *  P, double *  T, double *  c,  double *  rho)
 /*get molecular weight for all species */
 void CKWT( double *  wt)
 {
-    molecularWeight(wt);
+    get_mw(wt);
 }
 
 
@@ -1008,7 +995,7 @@ void CKYTCP(double *  P, double *  T, double *  y,  double *  c)
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
-void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
+AMREX_GPU_HOST_DEVICE void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
 {
     for (int i = 0; i < 9; i++)
     {
@@ -1819,7 +1806,7 @@ void CKABMS(double *  P, double *  T, double *  y,  double *  abms)
 
 
 /*compute the production rate for each species */
-void CKWC(double *  T, double *  C,  double *  wdot)
+AMREX_GPU_HOST_DEVICE void CKWC(double *  T, double *  C,  double *  wdot)
 {
     int id; /*loop counter */
 
@@ -4119,7 +4106,7 @@ AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len
     double J[100];
     double mwt[9];
 
-    molecularWeight(mwt);
+    get_mw(mwt);
 
     for (int k=0; k<9; k++) {
         c[k] = 1.e6 * sc[k];
@@ -4405,7 +4392,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.80000000000000004)*exp(-T/1.0000000000000001e-30);
+    Fcent1 = (1.-(0.80000000000000004))*exp(-T/1.0000000000000001e-30);
     Fcent2 = 0.80000000000000004 * exp(-T/1e+30);
     Fcent3 = 0.;
     Fcent = Fcent1 + Fcent2 + Fcent3;
@@ -4511,7 +4498,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.5)*exp(-T/1.0000000000000001e-30);
+    Fcent1 = (1.-(0.5))*exp(-T/1.0000000000000001e-30);
     Fcent2 = 0.5 * exp(-T/1e+30);
     Fcent3 = 0.;
     Fcent = Fcent1 + Fcent2 + Fcent3;
@@ -6938,7 +6925,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.80000000000000004)*exp(-T/1.0000000000000001e-30);
+    Fcent1 = (1.-(0.80000000000000004))*exp(-T/1.0000000000000001e-30);
     Fcent2 = 0.80000000000000004 * exp(-T/1e+30);
     Fcent3 = 0.;
     Fcent = Fcent1 + Fcent2 + Fcent3;
@@ -7015,7 +7002,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-0.5)*exp(-T/1.0000000000000001e-30);
+    Fcent1 = (1.-(0.5))*exp(-T/1.0000000000000001e-30);
     Fcent2 = 0.5 * exp(-T/1e+30);
     Fcent3 = 0.;
     Fcent = Fcent1 + Fcent2 + Fcent3;
@@ -9369,23 +9356,6 @@ AMREX_GPU_HOST_DEVICE void speciesEntropy(double * species, double *  tc)
 }
 
 
-/*save molecular weights into array */
-void molecularWeight(double *  wt)
-{
-    wt[0] = 2.015940; /*H2 */
-    wt[1] = 31.998800; /*O2 */
-    wt[2] = 18.015340; /*H2O */
-    wt[3] = 1.007970; /*H */
-    wt[4] = 15.999400; /*O */
-    wt[5] = 17.007370; /*OH */
-    wt[6] = 33.006770; /*HO2 */
-    wt[7] = 34.014740; /*H2O2 */
-    wt[8] = 28.013400; /*N2 */
-
-    return;
-}
-
-
 /*save atomic weights into array */
 void atomicWeight(double *  awt)
 {
@@ -9511,7 +9481,7 @@ void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentri
 
     egtransetEPS(EPS);
     egtransetSIG(SIG);
-    molecularWeight(wt);
+    get_mw(wt);
 
     /*species 0: H2 */
     /*Imported from NIST */
@@ -9616,85 +9586,85 @@ void egtransetWT(double* WT ) {
 
 /*the lennard-jones potential well depth eps/kb in K */
 void egtransetEPS(double* EPS ) {
-    EPS[0] = 3.80000000E+01;
-    EPS[1] = 1.07400000E+02;
-    EPS[8] = 9.75300000E+01;
-    EPS[2] = 5.72400000E+02;
     EPS[3] = 1.45000000E+02;
     EPS[4] = 8.00000000E+01;
     EPS[5] = 8.00000000E+01;
     EPS[6] = 1.07400000E+02;
     EPS[7] = 1.07400000E+02;
+    EPS[0] = 3.80000000E+01;
+    EPS[1] = 1.07400000E+02;
+    EPS[2] = 5.72400000E+02;
+    EPS[8] = 9.75300000E+01;
 }
 
 
 /*the lennard-jones collision diameter in Angstroms */
 void egtransetSIG(double* SIG ) {
-    SIG[0] = 2.92000000E+00;
-    SIG[1] = 3.45800000E+00;
-    SIG[8] = 3.62100000E+00;
-    SIG[2] = 2.60500000E+00;
     SIG[3] = 2.05000000E+00;
     SIG[4] = 2.75000000E+00;
     SIG[5] = 2.75000000E+00;
     SIG[6] = 3.45800000E+00;
     SIG[7] = 3.45800000E+00;
+    SIG[0] = 2.92000000E+00;
+    SIG[1] = 3.45800000E+00;
+    SIG[2] = 2.60500000E+00;
+    SIG[8] = 3.62100000E+00;
 }
 
 
 /*the dipole moment in Debye */
 void egtransetDIP(double* DIP ) {
-    DIP[0] = 0.00000000E+00;
-    DIP[1] = 0.00000000E+00;
-    DIP[8] = 0.00000000E+00;
-    DIP[2] = 1.84400000E+00;
     DIP[3] = 0.00000000E+00;
     DIP[4] = 0.00000000E+00;
     DIP[5] = 0.00000000E+00;
     DIP[6] = 0.00000000E+00;
     DIP[7] = 0.00000000E+00;
+    DIP[0] = 0.00000000E+00;
+    DIP[1] = 0.00000000E+00;
+    DIP[2] = 1.84400000E+00;
+    DIP[8] = 0.00000000E+00;
 }
 
 
 /*the polarizability in cubic Angstroms */
 void egtransetPOL(double* POL ) {
-    POL[0] = 7.90000000E-01;
-    POL[1] = 1.60000000E+00;
-    POL[8] = 1.76000000E+00;
-    POL[2] = 0.00000000E+00;
     POL[3] = 0.00000000E+00;
     POL[4] = 0.00000000E+00;
     POL[5] = 0.00000000E+00;
     POL[6] = 0.00000000E+00;
     POL[7] = 0.00000000E+00;
+    POL[0] = 7.90000000E-01;
+    POL[1] = 1.60000000E+00;
+    POL[2] = 0.00000000E+00;
+    POL[8] = 1.76000000E+00;
 }
 
 
 /*the rotational relaxation collision number at 298 K */
 void egtransetZROT(double* ZROT ) {
-    ZROT[0] = 2.80000000E+02;
-    ZROT[1] = 3.80000000E+00;
-    ZROT[8] = 4.00000000E+00;
-    ZROT[2] = 4.00000000E+00;
     ZROT[3] = 0.00000000E+00;
     ZROT[4] = 0.00000000E+00;
     ZROT[5] = 0.00000000E+00;
     ZROT[6] = 1.00000000E+00;
     ZROT[7] = 3.80000000E+00;
+    ZROT[0] = 2.80000000E+02;
+    ZROT[1] = 3.80000000E+00;
+    ZROT[2] = 4.00000000E+00;
+    ZROT[8] = 4.00000000E+00;
 }
 
 
 /*0: monoatomic, 1: linear, 2: nonlinear */
 void egtransetNLIN(int* NLIN) {
-    NLIN[0] = 1;
-    NLIN[1] = 1;
-    NLIN[8] = 1;
-    NLIN[2] = 2;
     NLIN[3] = 0;
     NLIN[4] = 0;
     NLIN[5] = 1;
     NLIN[6] = 2;
     NLIN[7] = 2;
+    NLIN[0] = 1;
+    NLIN[1] = 1;
+    NLIN[2] = 2;
+    NLIN[8] = 1;
 }
 
 
