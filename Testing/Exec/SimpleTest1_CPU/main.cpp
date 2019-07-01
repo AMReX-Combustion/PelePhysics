@@ -72,7 +72,6 @@ main (int   argc,
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-      //int cout_box = 0;
       for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
 	const Box& box = mfi.tilebox();
 	initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
@@ -80,9 +79,7 @@ main (int   argc,
 			BL_TO_FORTRAN_N_3D(temperature[mfi],0),
 			BL_TO_FORTRAN_N_3D(density[mfi],0),
 			&(dx[0]), &(plo[0]), &(phi[0]));
-	//cout_box += 1;
       }
-      //std::cout << "boxes ? " <<cout_box<<std::endl;
 
       ParmParse ppa("amr");
       std::string pltfile("plt");  
