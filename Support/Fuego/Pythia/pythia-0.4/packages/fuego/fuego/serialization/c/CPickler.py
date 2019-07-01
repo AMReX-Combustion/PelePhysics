@@ -6181,7 +6181,7 @@ class CPickler(CMill):
                     else:
                         self._write('    + 0. ')
                     if (ntroe == 4):
-                        self._write('    + exp(-%.17g * invT));' % troe[3])
+                        self._write('    + exp(-(%.17g) * invT));' % troe[3])
                     else:
                         self._write('    + 0.);' )
                     self._write("troe_c = -.4 - .67 * logFcent;")
