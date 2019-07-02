@@ -33,8 +33,6 @@ contains
 
     call network_init()
 
-    call eos_init(small_temp, small_dens)
-
     call transport_init()
 
   end subroutine extern_init

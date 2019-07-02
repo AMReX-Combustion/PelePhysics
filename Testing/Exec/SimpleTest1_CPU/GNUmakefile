@@ -9,7 +9,7 @@ COMP	   = gcc
 FCOMP	   = gfortran
 
 USE_MPI    = FALSE
-USE_OMP    = FALSE
+USE_OMP    = TRUE
 
 FUEGO_GAS  = TRUE
 
@@ -21,10 +21,10 @@ PELE_PHYSICS_HOME    := ../../..
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   #Chemistry_Model = LiDryer
+  #Chemistry_Model = drm19
   #Chemistry_Model = grimech12
   #Chemistry_Model = grimech30
-  #Chemistry_Model = dodecane_wang
-  Chemistry_Model = drm19
+  Chemistry_Model = dodecane_wang
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else

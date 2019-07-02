@@ -36,12 +36,14 @@ main (int   argc,
       int fuel_idx = FUEL_ID;
       int oxy_idx  = OXY_ID;
       int bath_idx = BATH_ID;
+
       extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx);
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 256;
+	npts[i] = 128;
       }
+      npts[1] = 256;
     
       Box domain(IntVect(D_DECL(0,0,0)),
                  IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
@@ -69,9 +71,6 @@ main (int   argc,
 
       IntVect tilesize(D_DECL(10240,8,32));
     
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
       for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
 	const Box& box = mfi.tilebox();
 	initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
@@ -87,9 +86,6 @@ main (int   argc,
       std::string outfile = amrex::Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
       PlotFileFromMF(temperature,outfile);
 
-      //Real time = 0.; pp.query("time",time);
-      //Real dt=1.e-5; pp.query("dt",dt);
-
       MultiFab wdots(ba,dm,num_spec,num_grow);
     
 #ifdef _OPENMP
@@ -103,28 +99,6 @@ main (int   argc,
 	auto  temp    = temperature.array(mfi);
 	auto  rho     = density.array(mfi); 
 	auto  cdots   = wdots.array(mfi);
-
-	//FArrayBox& Y       = mass_frac[mfi];
-	//FArrayBox& T       = temperature[mfi];
-	//FArrayBox& D       = density[mfi];
-	//FArrayBox& W       = wdots[mfi];
-
-	//const auto len     = amrex::length(box);
-	//const auto lo      = amrex::lbound(box);
-
-	//const auto mf      = Y.view(lo); 
-	//const auto temp    = T.view(lo); 
-	//const auto rho     = D.view(lo); 
-	//const auto cdots   = W.view(lo); 
-
-	//for         (int k = 0; k < len.z; ++k) {
-	//    for         (int j = 0; j < len.y; ++j) {
-	//        for         (int i = 0; i < len.x; ++i) {
-	//        
-        //            eos.eos_RTY2W(rho(i,j,k), temp(i,j,k), mf(i,j,k,:), cdots(i,j,k,:));  
-	//	}
-	//    }
-	//}
 
 	amrex::ParallelFor(box,
 	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
