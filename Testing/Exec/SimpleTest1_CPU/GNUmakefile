@@ -25,6 +25,7 @@ ifeq ($(FUEGO_GAS), TRUE)
   #Chemistry_Model = grimech12
   #Chemistry_Model = grimech30
   Chemistry_Model = dodecane_wang
+  #Chemistry_Model = Aromatic_KrNara
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else

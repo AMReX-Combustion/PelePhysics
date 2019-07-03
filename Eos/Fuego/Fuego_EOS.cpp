@@ -81,6 +81,17 @@ void EOS::eos_RTY2W(amrex::Real rho, amrex::Real T, amrex::Real *Y, amrex::Real 
     CKWC(&T, C, wdot);
 }
 
+AMREX_GPU_HOST_DEVICE      
+void EOS::eos_RTY2JAC(amrex::Real rho, amrex::Real T, amrex::Real *Y, amrex::Real *Jac)
+{
+    amrex::Real C[NUM_SPECIES]; 
+    /* UV react for now */
+    int consP = 0;
+
+    CKYTCR(&rho, &T, Y, C); 
+    DWDOT(Jac,C,&T,&consP);
+}
+
 
 //AMREX_GPU_HOST_DEVICE
 //void EOS::eos_EY2T()
@@ -135,16 +146,5 @@ void EOS::eos_RTY2W(amrex::Real rho, amrex::Real T, amrex::Real *Y, amrex::Real 
 //void EOS::eos_ytx()
 //{
 //    CKYTX(massfrac, molefrac); 
-//}
-//
-//AMREX_GPU_HOST_DEVICE
-//void EOS::eos_hi()
-//{
-//   CKHMS( &T,   hi);
-//}
-//AMREX_GPU_HOST_DEVICE
-//void EOS::eos_cv()
-//{
-//    CKCVBS(&T, massfrac, &cv); 
 //}
 //
