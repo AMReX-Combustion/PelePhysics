@@ -81,6 +81,7 @@ void EOS::eos_RTY2W(amrex::Real rho, amrex::Real T, amrex::Real *Y, amrex::Real 
     CKWC(&T, C, wdot);
 }
 
+/* Should not be here but I am not sure wether the CKYTCR needs to be wraped. */
 AMREX_GPU_HOST_DEVICE      
 void EOS::eos_RTY2JAC(amrex::Real rho, amrex::Real T, amrex::Real *Y, amrex::Real *Jac)
 {
