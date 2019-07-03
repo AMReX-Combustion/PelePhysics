@@ -100,13 +100,32 @@ main (int   argc,
 	auto  rho     = density.array(mfi); 
 	auto  cdots   = wdots.array(mfi);
 
-	amrex::ParallelFor(box,
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-	    {
-		gpu_RTY2W(i, j, k, rho, temp, mf, cdots);
-		// put the gunction here
-	    });
+	/* AMREX VERSION */
+	//amrex::ParallelFor(box,
+	//    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+	//    {
+	//	gpu_RTY2W(i, j, k, rho, temp, mf, cdots);
+	//	// put the gunction here
+	//    });
 
+        /* UNWRAPPED VERSION */
+	int ncells = box.numPts();
+	const auto lo  = amrex::lbound(box);
+	const auto len = amrex::length(box);
+	const auto ec = Gpu::ExecutionConfig(ncells);
+	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+	[=] AMREX_GPU_DEVICE () noexcept {
+	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	        icell < ncells; icell += stride) {
+	        int k =  icell /   (len.x*len.y);
+		int j = (icell - k*(len.x*len.y)) /   len.x;
+		int i = (icell - k*(len.x*len.y)) - j*len.x;
+		i += lo.x;
+		j += lo.y;
+		k += lo.z;
+		gpu_RTY2W(i, j, k, rho, temp, mf, cdots);
+	    }
+	});
       }
 
 
