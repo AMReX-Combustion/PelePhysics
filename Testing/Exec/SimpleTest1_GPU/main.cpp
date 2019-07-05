@@ -97,6 +97,7 @@ main (int   argc,
 #endif
       for (MFIter mfi(mass_frac,TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
+
         //std::cout << " **MFITER** " <<std::endl;
 	const Box& box = mfi.tilebox();
 
@@ -134,7 +135,9 @@ main (int   argc,
 	//});
 
         /* UNWRAPPED VERSION 2 */
+        BL_PROFILE_VAR("MyLaunchTestTIME", mfiL);
         MyLaunchTest<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>> (ncells, rho, temp, mf, cdots, len.x, len.y, lo.x, lo.y, lo.z);
+        BL_PROFILE_VAR_STOP(mfiL);
 
       }
 
