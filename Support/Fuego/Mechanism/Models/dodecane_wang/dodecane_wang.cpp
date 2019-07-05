@@ -19271,7 +19271,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     F = redP / (1.0 + redP);
     logPred = log10(redP);
     logFcent = log10(
-        (1.--0.56899999999999995)*exp(-tc[1] / 299) 
+        (1.+0.56899999999999995)*exp(-tc[1] / 299) 
         + -0.56899999999999995 * exp(-tc[1]/9147)  
         + exp(-(-152.40000000000001) * invT));
     troe_c = -.4 - .67 * logFcent;
