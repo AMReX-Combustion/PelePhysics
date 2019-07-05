@@ -8,6 +8,7 @@
 
 #include "mechanism.h"
 #include <GPU_misc.H>
+#include <AMReX_GpuDevice.H>
 
 #include <main_F.H>
 #include <PlotFileFromMF.H>
@@ -71,6 +72,7 @@ main (int   argc,
 
       IntVect tilesize(D_DECL(10240,8,32));
     
+      int count_box = 0;
       for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
 	const Box& box = mfi.tilebox();
 	initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
@@ -78,7 +80,9 @@ main (int   argc,
 			BL_TO_FORTRAN_N_3D(temperature[mfi],0),
 			BL_TO_FORTRAN_N_3D(density[mfi],0),
 			&(dx[0]), &(plo[0]), &(phi[0]));
+        count_box += 1;
       }
+      std::cout << "That many boxes (64)" << count_box <<std::endl; 
 
       ParmParse ppa("amr");
       std::string pltfile("plt");  
@@ -93,39 +97,46 @@ main (int   argc,
 #endif
       for (MFIter mfi(mass_frac,TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
+        //std::cout << " **MFITER** " <<std::endl;
 	const Box& box = mfi.tilebox();
 
-	auto  mf      = mass_frac.array(mfi);
-	auto  temp    = temperature.array(mfi);
-	auto  rho     = density.array(mfi); 
-	auto  cdots   = wdots.array(mfi);
+	const auto  mf      = mass_frac.array(mfi);
+	const auto  temp    = temperature.array(mfi);
+	const auto  rho     = density.array(mfi); 
+	const auto  cdots   = wdots.array(mfi);
 
 	/* AMREX VERSION */
 	//amrex::ParallelFor(box,
 	//    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
 	//    {
 	//	gpu_RTY2W(i, j, k, rho, temp, mf, cdots);
-	//	// put the gunction here
 	//    });
 
-        /* UNWRAPPED VERSION */
-	int ncells = box.numPts();
-	const auto lo  = amrex::lbound(box);
-	const auto len = amrex::length(box);
-	const auto ec = Gpu::ExecutionConfig(ncells);
-	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	[=] AMREX_GPU_DEVICE () noexcept {
-	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	        icell < ncells; icell += stride) {
-	        int k =  icell /   (len.x*len.y);
-		int j = (icell - k*(len.x*len.y)) /   len.x;
-		int i = (icell - k*(len.x*len.y)) - j*len.x;
-		i += lo.x;
-		j += lo.y;
-		k += lo.z;
-		gpu_RTY2W(i, j, k, rho, temp, mf, cdots);
-	    }
-	});
+        /* UNWRAPPED VERSION 1 */
+	//int ncells = box.numPts();
+	//const auto lo  = amrex::lbound(box);
+	//const auto len = amrex::length(box);
+	//const auto ec = Gpu::ExecutionConfig(ncells);
+	//amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+	//amrex::launch_global<<<1,1, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+	//[=] AMREX_GPU_DEVICE () noexcept {
+	//    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	//        icell < ncells; icell += stride) {
+        //        printf(" icell  %d \n", icell);
+	//        int k =  icell /   (len.x*len.y);
+	//	int j = (icell - k*(len.x*len.y)) /   len.x;
+	//	int i = (icell - k*(len.x*len.y)) - j*len.x;
+	//	i += lo.x;
+	//	j += lo.y;
+	//	k += lo.z;
+        //        printf(" i j k %d %d %d \n",i,j,k);
+	//	gpu_RTY2W(i, j, k, rho, temp, mf, cdots);
+	//    }
+	//});
+
+        /* UNWRAPPED VERSION 2 */
+        MyLaunchTest<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>> (ncells, rho, temp, mf, cdots, len.x, len.y, lo.x, lo.y, lo.z);
+
       }
 
 
