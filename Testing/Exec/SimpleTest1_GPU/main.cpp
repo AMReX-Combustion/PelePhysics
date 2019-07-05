@@ -113,12 +113,11 @@ main (int   argc,
 	//    });
 
         /* UNWRAPPED VERSION 1 */
-	//int ncells = box.numPts();
-	//const auto lo  = amrex::lbound(box);
-	//const auto len = amrex::length(box);
-	//const auto ec = Gpu::ExecutionConfig(ncells);
+	int ncells = box.numPts();
+	const auto lo  = amrex::lbound(box);
+	const auto len = amrex::length(box);
+	const auto ec = Gpu::ExecutionConfig(ncells);
 	//amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	//amrex::launch_global<<<1,1, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
 	//[=] AMREX_GPU_DEVICE () noexcept {
 	//    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
 	//        icell < ncells; icell += stride) {
