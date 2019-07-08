@@ -63,6 +63,7 @@ contains
        lo,hi, &
        Y,            Y_lo,  Y_hi, &
        temperature,  t_lo,  t_hi, &
+       nrg,          e_lo,  e_hi, &
        dens,         d_lo,  d_hi, &
        dx, plo, phi) &
        bind(C, name="initialize_data")
@@ -77,11 +78,13 @@ contains
     integer         , intent(in   ) ::     lo(3),    hi(3)
     integer         , intent(in   ) ::   Y_lo(3),  Y_hi(3)
     integer         , intent(in   ) ::   t_lo(3),  t_hi(3)
+    integer         , intent(in   ) ::   e_lo(3),  e_hi(3)
     integer         , intent(in   ) ::   d_lo(3),  d_hi(3)
     real(amrex_real), intent(in   ) ::   dx(3)
     real(amrex_real), intent(in   ) ::   plo(3),   phi(3)
     real(amrex_real), intent(inout) ::   Y(Y_lo(1):Y_hi(1),Y_lo(2):Y_hi(2),Y_lo(3):Y_hi(3),nspec)
     real(amrex_real), intent(inout) ::   temperature( t_lo(1): t_hi(1), t_lo(2): t_hi(2), t_lo(3): t_hi(3))
+    real(amrex_real), intent(inout) ::   nrg( e_lo(1): e_hi(1), e_lo(2): e_hi(2), e_lo(3): e_hi(3))
     real(amrex_real), intent(inout) ::   dens( d_lo(1): d_hi(1), d_lo(2): d_hi(2), d_lo(3): d_hi(3))
 
     ! local variables
@@ -129,6 +132,7 @@ contains
              dens(i,j,k)         = eos_state % rho
              Y(i,j,k,1:nspec)    = eos_state % massfrac !* eos_state % rho
              temperature(i,j,k)  = eos_state % T
+             nrg(i,j,k)          = eos_state % e 
 
           end do
        end do
