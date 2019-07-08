@@ -105,10 +105,10 @@ gpu_J2SYSJ(int i, int j, int k,
                         csr_val_cell[(NUM_SPECIES+1)*m+n] = sJ(i,j,k,(NUM_SPECIES+1)*n+m);
 		}	
 	}
-        printf(" J 3rd line ? \n");
-        for (int n = 0; n < NUM_SPECIES+1; n++) {
-            printf(" %d %14.6e  %14.6e\n", n,  csr_val_cell[2*(NUM_SPECIES+1) + n], sJ(i,j,k,(NUM_SPECIES+1)*n + 2));
-        }
+        //printf(" J 3rd line ? \n");
+        //for (int n = 0; n < NUM_SPECIES+1; n++) {
+        //    printf(" %d %14.6e  %14.6e\n", n,  csr_val_cell[2*(NUM_SPECIES+1) + n], sJ(i,j,k,(NUM_SPECIES+1)*n + 2));
+        //}
 }
 
 AMREX_GPU_DEVICE
@@ -176,7 +176,7 @@ gpu_UPDATETMP(int i, int j, int k,
 		mf(i,j,k,n) = mf(i,j,k,n)/rho(i,j,k);
 	}
 	temp(i,j,k) = temp(i,j,k) + csr_x_cell[NUM_SPECIES];
-        printf("Update T and T and rho %14.6e %14.6e %14.6e \n", csr_x_cell[NUM_SPECIES], temp(i,j,k), rho(i,j,k));
+        //printf("Update T and T and rho %14.6e %14.6e %14.6e \n", csr_x_cell[NUM_SPECIES], temp(i,j,k), rho(i,j,k));
 }
 
 
@@ -200,6 +200,7 @@ gpu_CopyTMP2ORI(int i, int j, int k,
 	temp(i,j,k) = temp_t(i,j,k);
 	nrgy(i,j,k) = nrgy_t(i,j,k);
 	rho(i,j,k)  = rho_t(i,j,k);
+        printf("i,j,k, T, rho, E %d %d %d %14.6e %14.6e %14.6e\n", i, j, k, temp(i,j,k), rho(i,j,k), nrgy(i,j,k));
 }
 
 AMREX_GPU_DEVICE

@@ -48,9 +48,9 @@ main (int   argc,
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 1;
+	npts[i] = 2;
       }
-      //npts[1] = 16;
+      npts[1] = 16;
     
       Box domain(IntVect(D_DECL(0,0,0)),
                  IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
@@ -61,7 +61,7 @@ main (int   argc,
 	dx[i] = (phi[i] - plo[i])/domain.length(i);
       }
     
-      int max_size = 1;
+      int max_size = 2;
       pp.query("max_size",max_size);
       BoxArray ba(domain);
       ba.maxSize(max_size);
@@ -104,9 +104,14 @@ main (int   argc,
       std::string outfile = amrex::Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
       PlotFileFromMF(mass_frac,outfile);
 
+      std::string pltfile1("TEMP");  
+      outfile = amrex::Concatenate(pltfile1,0); // Need a number other than zero for reg test to pass
+      PlotFileFromMF(temperature,outfile);
+
       Real time = 0.; pp.query("time",time);
-      Real dt=1.e-10; pp.query("dt",dt);
-      //Real dt=1.; pp.query("dt",dt);
+      Real dt=1.e-07; pp.query("dt",dt);
+      Real ndt=1000; pp.query("ndt",dt);
+      //Real ndt=1000; pp.query("ndt",dt);
       MultiFab delta_t(ba,dm,1,num_grow);
       delta_t.setVal(dt,0,1,num_grow);
 
@@ -202,158 +207,51 @@ main (int   argc,
                                                         info);
         assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-	/* Copy init guess into q_k = q_0 */
-	amrex::ParallelFor(box,
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-	    {
-		gpu_CopyORI2TMP(i, j, k, rho, temp, nrgy, mf, rho_tmp, temp_tmp, nrgy_tmp, mf_tmp);
-	    });
+        /* allocate working space */
+        cusolver_status = cusolverSpDcsrqrBufferInfoBatched(cusolverHandle,
+                                                        num_spec+1,
+                                                        num_spec+1,
+                                                        (num_spec+1)*(num_spec+1),
+                                                        descrA,
+                                                        csr_val,
+                                                        csr_row_count,
+                                                        csr_col_index,
+                                                        box.numPts(),
+                                                        info,
+                                                        &internalDataInBytes,
+                                                        &workspaceInBytes);
+        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-	/* Estimate wdot for q_0 */
-	amrex::ParallelFor(box,
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-	    {
-		gpu_RTY2W(i, j, k, rho_tmp, temp_tmp, nrgy_tmp, mf_tmp, cdots);
-	    });
+        cudaStat1 = cudaMalloc((void**)&buffer_qr, workspaceInBytes);
+        assert(cudaStat1 == cudaSuccess);
 
-	/* Estimate RHS for q_0 */
-	amrex::ParallelFor(box,
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-	    {
-		gpu_RHS(i, j, k, rho_tmp, temp_tmp, mf_tmp, cdots, deltas, rhs);
-	    });
-
-	/* Compute initial nl residual */
-	int ncells = box.numPts();
-	const auto lo  = amrex::lbound(box);
-	const auto len = amrex::length(box);
-	const auto ec = Gpu::ExecutionConfig(ncells);
-	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	[=] AMREX_GPU_DEVICE () noexcept {
-	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	        icell < ncells; icell += stride) {
-	        int k =  icell /   (len.x*len.y);
-		int j = (icell - k*(len.x*len.y)) /   len.x;
-		int i = (icell - k*(len.x*len.y)) - j*len.x;
-		i += lo.x;
-		j += lo.y;
-		k += lo.z;
-		gpu_NLRES(i, j, k, icell, rho, temp, mf, rhs, res_nl, csr_b);
-	    }
-	});
-
-	/* TODO COMPUTE NORM OF RES */
-
-	/* END INIT */
-
-	/* START LOOP */
-	bool newton_solved = false;
-	int newton_ite = 0;
-	//while (!newton_solved) {
-	while (newton_ite < 5) {
-                printf("Ite number %d \n", newton_ite);
-		newton_ite += 1;
-	        /* Compute initial newton_update (delta q_k+1) */
-	        amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	        [=] AMREX_GPU_DEVICE () noexcept {
-	            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	                icell < ncells; icell += stride) {
-	                int k =  icell /   (len.x*len.y);
-	        	int j = (icell - k*(len.x*len.y)) /   len.x;
-	        	int i = (icell - k*(len.x*len.y)) - j*len.x;
-	        	i += lo.x;
-	        	j += lo.y;
-	        	k += lo.z;
-	        	gpu_resetNU(i, j, k, icell, csr_x);
-	            }
-	        });
-
-	        /* Jac chemistry */
+        for (int stp = 0; stp < ndt; stp++) {
+	        /* Copy init guess into q_k = q_0 */
 	        amrex::ParallelFor(box,
 	            [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
 	            {
-	        	gpu_JAC(i, j, k, rho_tmp, temp_tmp, mf_tmp, sJ);
+	        	gpu_CopyORI2TMP(i, j, k, rho, temp, nrgy, mf, rho_tmp, temp_tmp, nrgy_tmp, mf_tmp);
 	            });
 
-	        /* Jac System */
-	        amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	        [=] AMREX_GPU_DEVICE () noexcept {
-	            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	                icell < ncells; icell += stride) {
-	                int k =  icell /   (len.x*len.y);
-	        	int j = (icell - k*(len.x*len.y)) /   len.x;
-	        	int i = (icell - k*(len.x*len.y)) - j*len.x;
-	        	i += lo.x;
-	        	j += lo.y;
-	        	k += lo.z;
-	        	gpu_J2SYSJ(i, j, k, icell, deltas, sJ, csr_val);
-	            }
-	        });
-
-	        /* SOLVE LINEAR SYSTEM */
-                /* allocate working space */
-                cusolver_status = cusolverSpDcsrqrBufferInfoBatched(cusolverHandle,
-                                                                num_spec+1,
-                                                                num_spec+1,
-                                                                (num_spec+1)*(num_spec+1),
-                                                                descrA,
-                                                                csr_val,
-                                                                csr_row_count,
-                                                                csr_col_index,
-                                                                box.numPts(),
-                                                                info,
-                                                                &internalDataInBytes,
-                                                                &workspaceInBytes);
-                assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-
-                cudaStat1 = cudaMalloc((void**)&buffer_qr, workspaceInBytes);
-                assert(cudaStat1 == cudaSuccess);
-
-                cusolver_status = cusolverSpDcsrqrsvBatched(cusolverHandle,
-                                                                num_spec+1,
-                                                                num_spec+1,
-                                                                (num_spec+1)*(num_spec+1),
-                                                                descrA,
-                                                                csr_val,
-                                                                csr_row_count,
-                                                                csr_col_index,
-                                                                csr_b,
-                                                                csr_x,
-                                                                box.numPts(),
-                                                                info,
-                                                                buffer_qr);
-
-	        /* UPDATE SOLUTION update q_tmp, it becomes q_(k+1, m+1)*/
-	        amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	        [=] AMREX_GPU_DEVICE () noexcept {
-	            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	                icell < ncells; icell += stride) {
-	                int k =  icell /   (len.x*len.y);
-	        	int j = (icell - k*(len.x*len.y)) /   len.x;
-	        	int i = (icell - k*(len.x*len.y)) - j*len.x;
-	        	i += lo.x;
-	        	j += lo.y;
-	        	k += lo.z;
-	        	gpu_UPDATETMP(i, j, k, icell, rho_tmp, temp_tmp, mf_tmp, csr_x);
-	            }
-	        });
-
-
-	        /* Estimate wdot for q_k */
+	        /* Estimate wdot for q_0 */
 	        amrex::ParallelFor(box,
 	            [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
 	            {
-		        gpu_RTY2W(i, j, k, rho_tmp, temp_tmp, nrgy_tmp, mf_tmp, cdots);
+	        	gpu_RTY2W(i, j, k, rho_tmp, temp_tmp, nrgy_tmp, mf_tmp, cdots);
 	            });
 
-	        /* Estimate RHS for q_k */
+	        /* Estimate RHS for q_0 */
 	        amrex::ParallelFor(box,
 	            [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
 	            {
 	        	gpu_RHS(i, j, k, rho_tmp, temp_tmp, mf_tmp, cdots, deltas, rhs);
 	            });
 
-	        /* Compute Newton nl residual */
+	        /* Compute initial nl residual */
+	        int ncells = box.numPts();
+	        const auto lo  = amrex::lbound(box);
+	        const auto len = amrex::length(box);
+	        const auto ec = Gpu::ExecutionConfig(ncells);
 	        amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
 	        [=] AMREX_GPU_DEVICE () noexcept {
 	            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
@@ -368,38 +266,169 @@ main (int   argc,
 	            }
 	        });
 
-	        ///* COMPUTE NORM OF RES */
+	        /* TODO COMPUTE NORM OF RES */
 
-	        ///* SEE IF WE CAN GET OUT OF NL SOLVE */
-	        ///* BREAK LOOP */
+	        /* END INIT */
 
-	        ///* END LOOP */
-	} //( not newton_solved );
+	        /* START LOOP */
+	        bool newton_solved = false;
+	        int newton_ite = 0;
+	        //while (!newton_solved) {
+	        while (newton_ite < 10) {
+                        //printf("Ite number %d \n", newton_ite);
+	        	newton_ite += 1;
+	                /* Compute initial newton_update (delta q_k+1) */
+	                amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+	                [=] AMREX_GPU_DEVICE () noexcept {
+	                    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	                        icell < ncells; icell += stride) {
+	                        int k =  icell /   (len.x*len.y);
+	                	int j = (icell - k*(len.x*len.y)) /   len.x;
+	                	int i = (icell - k*(len.x*len.y)) - j*len.x;
+	                	i += lo.x;
+	                	j += lo.y;
+	                	k += lo.z;
+	                	gpu_resetNU(i, j, k, icell, csr_x);
+	                    }
+	                });
 
-	/* Copy q_tmp into q_(k+1) = iterations successful or other out criterion */
-	amrex::ParallelFor(box,
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-	    {
-		gpu_CopyTMP2ORI(i, j, k, rho_tmp, temp_tmp, nrgy_tmp, mf_tmp, rho, temp, nrgy, mf);
-	    });
+	                /* Jac chemistry */
+	                amrex::ParallelFor(box,
+	                    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+	                    {
+	                	gpu_JAC(i, j, k, rho_tmp, temp_tmp, mf_tmp, sJ);
+	                    });
+
+	                /* Jac System */
+	                amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+	                [=] AMREX_GPU_DEVICE () noexcept {
+	                    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	                        icell < ncells; icell += stride) {
+	                        int k =  icell /   (len.x*len.y);
+	                	int j = (icell - k*(len.x*len.y)) /   len.x;
+	                	int i = (icell - k*(len.x*len.y)) - j*len.x;
+	                	i += lo.x;
+	                	j += lo.y;
+	                	k += lo.z;
+	                	gpu_J2SYSJ(i, j, k, icell, deltas, sJ, csr_val);
+	                    }
+	                });
+
+	                /* SOLVE LINEAR SYSTEM */
+                        /* allocate working space */
+                        cusolver_status = cusolverSpDcsrqrBufferInfoBatched(cusolverHandle,
+                                                                        num_spec+1,
+                                                                        num_spec+1,
+                                                                        (num_spec+1)*(num_spec+1),
+                                                                        descrA,
+                                                                        csr_val,
+                                                                        csr_row_count,
+                                                                        csr_col_index,
+                                                                        box.numPts(),
+                                                                        info,
+                                                                        &internalDataInBytes,
+                                                                        &workspaceInBytes);
+                        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+
+                        //cudaStat1 = cudaMalloc((void**)&buffer_qr, workspaceInBytes);
+                        //assert(cudaStat1 == cudaSuccess);
+
+                        cusolver_status = cusolverSpDcsrqrsvBatched(cusolverHandle,
+                                                                        num_spec+1,
+                                                                        num_spec+1,
+                                                                        (num_spec+1)*(num_spec+1),
+                                                                        descrA,
+                                                                        csr_val,
+                                                                        csr_row_count,
+                                                                        csr_col_index,
+                                                                        csr_b,
+                                                                        csr_x,
+                                                                        box.numPts(),
+                                                                        info,
+                                                                        buffer_qr);
+
+	                /* UPDATE SOLUTION update q_tmp, it becomes q_(k+1, m+1)*/
+	                amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+	                [=] AMREX_GPU_DEVICE () noexcept {
+	                    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	                        icell < ncells; icell += stride) {
+	                        int k =  icell /   (len.x*len.y);
+	                	int j = (icell - k*(len.x*len.y)) /   len.x;
+	                	int i = (icell - k*(len.x*len.y)) - j*len.x;
+	                	i += lo.x;
+	                	j += lo.y;
+	                	k += lo.z;
+	                	gpu_UPDATETMP(i, j, k, icell, rho_tmp, temp_tmp, mf_tmp, csr_x);
+	                    }
+	                });
+
+
+	                /* Estimate wdot for q_k */
+	                amrex::ParallelFor(box,
+	                    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+	                    {
+	        	        gpu_RTY2W(i, j, k, rho_tmp, temp_tmp, nrgy_tmp, mf_tmp, cdots);
+	                    });
+
+	                /* Estimate RHS for q_k */
+	                amrex::ParallelFor(box,
+	                    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+	                    {
+	                	gpu_RHS(i, j, k, rho_tmp, temp_tmp, mf_tmp, cdots, deltas, rhs);
+	                    });
+
+	                /* Compute Newton nl residual */
+	                amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+	                [=] AMREX_GPU_DEVICE () noexcept {
+	                    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	                        icell < ncells; icell += stride) {
+	                        int k =  icell /   (len.x*len.y);
+	                	int j = (icell - k*(len.x*len.y)) /   len.x;
+	                	int i = (icell - k*(len.x*len.y)) - j*len.x;
+	                	i += lo.x;
+	                	j += lo.y;
+	                	k += lo.z;
+	                	gpu_NLRES(i, j, k, icell, rho, temp, mf, rhs, res_nl, csr_b);
+	                    }
+	                });
+
+	                ///* COMPUTE NORM OF RES */
+
+	                ///* SEE IF WE CAN GET OUT OF NL SOLVE */
+	                ///* BREAK LOOP */
+
+	                ///* END LOOP */
+	        } //( not newton_solved );
+
+	        /* Copy q_tmp into q_(k+1) = iterations successful or other out criterion */
+	        amrex::ParallelFor(box,
+	            [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+	            {
+	        	gpu_CopyTMP2ORI(i, j, k, rho_tmp, temp_tmp, nrgy_tmp, mf_tmp, rho, temp, nrgy, mf);
+	            });
+        }
 
       }
 
       std::string pltfile0("MF");  
       outfile = amrex::Concatenate(pltfile0,1); // Need a number other than zero for reg test to pass
-      PlotFileFromMF(mass_frac_tmp,outfile);
+      PlotFileFromMF(mass_frac,outfile);
+
+      //std::string pltfile1("TEMP");  
+      outfile = amrex::Concatenate(pltfile1,1); // Need a number other than zero for reg test to pass
+      PlotFileFromMF(temperature,outfile);
 
       //std::string pltfile1("CDOTS");  
       //outfile = amrex::Concatenate(pltfile1,1); // Need a number other than zero for reg test to pass
       //PlotFileFromMF(wdots,outfile);
 
-      std::string pltfile11("RHS");  
-      outfile = amrex::Concatenate(pltfile11,1); // Need a number other than zero for reg test to pass
-      PlotFileFromMF(systRHS,outfile);
+      //std::string pltfile11("RHS");  
+      //outfile = amrex::Concatenate(pltfile11,1); // Need a number other than zero for reg test to pass
+      //PlotFileFromMF(systRHS,outfile);
 
-      std::string pltfile2("RESNL");  
-      outfile = amrex::Concatenate(pltfile2,2); // Need a number other than zero for reg test to pass
-      PlotFileFromMF(systRESNL,outfile);
+      //std::string pltfile2("RESNL");  
+      //outfile = amrex::Concatenate(pltfile2,2); // Need a number other than zero for reg test to pass
+      //PlotFileFromMF(systRESNL,outfile);
 
       extern_close();
 
