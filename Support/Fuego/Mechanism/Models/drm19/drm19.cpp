@@ -10158,10 +10158,10 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx,
                 colIndx[nJdata_tmp-1] = l+1; 
                 nJdata_tmp = nJdata_tmp + 1; 
             } else {
-                if(J[22*k + l] != 0.0) {
+                //if(J[22*k + l] != 0.0) {
                     colIndx[nJdata_tmp-1] = k+1; 
                     nJdata_tmp = nJdata_tmp + 1; 
-                }
+                //}
             }
         }
         rowPtr[l+1] = nJdata_tmp;
