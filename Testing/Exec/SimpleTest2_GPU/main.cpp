@@ -50,7 +50,7 @@ main (int   argc,
       for (int i = 0; i < BL_SPACEDIM; ++i) {
 	npts[i] = 16;
       }
-      npts[1] = 16;
+      npts[1] = 32;
     
       Box domain(IntVect(D_DECL(0,0,0)),
                  IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
@@ -110,7 +110,7 @@ main (int   argc,
 
       Real time = 0.; pp.query("time",time);
       Real dt=1.e-07; pp.query("dt",dt);
-      Real ndt=500; pp.query("ndt",dt);
+      Real ndt=1000; pp.query("ndt",dt);
       //Real ndt=1000; pp.query("ndt",dt);
       MultiFab delta_t(ba,dm,1,num_grow);
       delta_t.setVal(dt,0,1,num_grow);
