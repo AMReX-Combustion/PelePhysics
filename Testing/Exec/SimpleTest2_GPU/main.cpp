@@ -48,7 +48,7 @@ main (int   argc,
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 2;
+	npts[i] = 16;
       }
       npts[1] = 16;
     
@@ -61,7 +61,7 @@ main (int   argc,
 	dx[i] = (phi[i] - plo[i])/domain.length(i);
       }
     
-      int max_size = 2;
+      int max_size = 16;
       pp.query("max_size",max_size);
       BoxArray ba(domain);
       ba.maxSize(max_size);
@@ -110,7 +110,7 @@ main (int   argc,
 
       Real time = 0.; pp.query("time",time);
       Real dt=1.e-07; pp.query("dt",dt);
-      Real ndt=1000; pp.query("ndt",dt);
+      Real ndt=500; pp.query("ndt",dt);
       //Real ndt=1000; pp.query("ndt",dt);
       MultiFab delta_t(ba,dm,1,num_grow);
       delta_t.setVal(dt,0,1,num_grow);
