@@ -105,10 +105,6 @@ gpu_J2SYSJ(int i, int j, int k,
                         csr_val_cell[(NUM_SPECIES+1)*m+n] = sJ(i,j,k,(NUM_SPECIES+1)*n+m);
 		}	
 	}
-        //printf(" J 3rd line ? \n");
-        //for (int n = 0; n < NUM_SPECIES+1; n++) {
-        //    printf(" %d %14.6e  %14.6e\n", n,  csr_val_cell[2*(NUM_SPECIES+1) + n], sJ(i,j,k,(NUM_SPECIES+1)*n + 2));
-        //}
 }
 
 AMREX_GPU_DEVICE
@@ -200,7 +196,7 @@ gpu_CopyTMP2ORI(int i, int j, int k,
 	temp(i,j,k) = temp_t(i,j,k);
 	nrgy(i,j,k) = nrgy_t(i,j,k);
 	rho(i,j,k)  = rho_t(i,j,k);
-        //printf("i,j,k, T, rho, E %d %d %d %14.6e %14.6e %14.6e\n", i, j, k, temp(i,j,k), rho(i,j,k), nrgy(i,j,k));
+        printf("i,j,k, T, rho, E %d %d %d %14.6e %14.6e %14.6e\n", i, j, k, temp(i,j,k), rho(i,j,k), nrgy(i,j,k));
 }
 
 AMREX_GPU_DEVICE
@@ -230,13 +226,13 @@ inline
 void
 gpu_resetNU(int i, int j, int k,  
                 int icell,
+                amrex::Real * csr_b,
                 amrex::Real * csr_x) noexcept
-		//amrex::Array4<amrex::Real> const& nu) noexcept
 {
         amrex::Real * csr_x_cell = csr_x + icell * (NUM_SPECIES+1);
+        amrex::Real * csr_b_cell = csr_b + icell * (NUM_SPECIES+1);
 	for (int n = 0; n < NUM_SPECIES+1; n++) {
-	//	nu(i,j,k,n) = 0.0;
-                csr_x_cell[n] = 0.0;
+                csr_x_cell[n] = csr_b_cell[n];
 	}
 }
 

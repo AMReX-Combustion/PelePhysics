@@ -1,0 +1,3 @@
+INCLUDE_LOCATIONS += /home/amfelden/CODES/SuiteSparse/include 
+SUITESPARSE_LIB_DIR := /home/amfelden/CODES/SuiteSparse/lib
+LIBRARIES += -L$(SUITESPARSE_LIB_DIR) -lklu -lamd -lcolamd -lbtf -lsuitesparseconfig

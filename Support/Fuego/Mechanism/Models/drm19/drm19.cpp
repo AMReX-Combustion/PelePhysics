@@ -10124,11 +10124,11 @@ void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * co
                 indx[nJdata_tmp] = 22*k + l;
                 nJdata_tmp = nJdata_tmp + 1; 
             } else {
-                if(J[22*k + l] != 0.0) {
+                //if(J[22*k + l] != 0.0) {
                     rowVals[nJdata_tmp] = l; 
                     indx[nJdata_tmp] = 22*k + l;
                     nJdata_tmp = nJdata_tmp + 1; 
-                }
+                //}
             }
         }
         colPtrs[k+1] = nJdata_tmp;

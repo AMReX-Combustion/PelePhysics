@@ -18,6 +18,11 @@ USE_CUDA   = FALSE
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
 
+USE_KLU = TRUE
+ifeq ($(USE_KLU), TRUE)
+	include Make.KLU
+endif
+
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   #Chemistry_Model = LiDryer

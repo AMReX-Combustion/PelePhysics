@@ -19,6 +19,7 @@ extern "C"
     (const int* lo, const int* hi,
      const BL_FORT_FAB_ARG_3D(massfraction),
      const BL_FORT_FAB_ARG_3D(temperature),
+     const BL_FORT_FAB_ARG_3D(energy),
      const BL_FORT_FAB_ARG_3D(density),
      const Real* dx, const Real* plo, const Real* phi);
 

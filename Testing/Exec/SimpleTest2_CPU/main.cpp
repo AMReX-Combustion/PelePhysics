@@ -44,7 +44,7 @@ main (int   argc,
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 16;
+	npts[i] = 1;
       }
     
       Box domain(IntVect(D_DECL(0,0,0)),
@@ -56,7 +56,7 @@ main (int   argc,
 	dx[i] = (phi[i] - plo[i])/domain.length(i);
       }
     
-      int max_size = 16;
+      int max_size = 1;
       pp.query("max_size",max_size);
       BoxArray ba(domain);
       ba.maxSize(max_size);
@@ -94,9 +94,12 @@ main (int   argc,
       printf("That many boxes: %d \n", box_count);
 
       ParmParse ppa("amr");
-      std::string pltfile("plt");  
-      ppa.query("plot_file",pltfile);
-      std::string outfile = amrex::Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
+      //std::string pltfile("plt");  
+      //ppa.query("plot_file",pltfile);
+      //std::string outfile = amrex::Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
+
+      std::string pltfile0("MF");  
+      std::string outfile = amrex::Concatenate(pltfile0,0); // Need a number other than zero for reg test to pass
       PlotFileFromMF(mass_frac,outfile);
 
       std::string pltfile1("TEMP");  
@@ -106,7 +109,6 @@ main (int   argc,
       Real time = 0.; pp.query("time",time);
       Real dt=1.e-07; pp.query("dt",dt);
       Real ndt=500; pp.query("ndt",dt);
-      //Real ndt=1000; pp.query("ndt",dt);
       MultiFab delta_t(ba,dm,1,num_grow);
       delta_t.setVal(dt,0,1,num_grow);
 
@@ -122,7 +124,8 @@ main (int   argc,
       for (MFIter mfi(mass_frac,TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
 	const Box& box = mfi.tilebox();
-        printf("Nb cells in box %d \n", box.numPts());
+	int ncells = box.numPts();
+        printf("Nb cells in box %d \n", ncells);
 
 	/* dt */
 	auto  deltas  = delta_t.array(mfi);
@@ -145,23 +148,18 @@ main (int   argc,
 	auto  res_nl    = systRESNL.array(mfi);
 	//auto  newton_update    = systNU.array(mfi);
 
-        /* cuSolver */
-        /* FLAGS */
         /* OBJECTS */
         klu_common *Common;
         klu_symbolic **Symbolic;
         klu_numeric **Numeric;
-        Common = = new klu_common[box.numPts()];
-        Symbolic = new klu_symbolic*[box.numPts()];
-        Numeric = new klu_numeric*[box.numPts()];
-
-        for(int i = 0; i < NCELLS; ++i) { 
-}
-
+        Common   = new klu_common[ncells];
+        Symbolic = new klu_symbolic*[ncells];
+        Numeric  = new klu_numeric*[ncells];
         /* symbolic analysis */
         /* DENSE MAT right now */
         int* csr_col_count;
         int* csr_row_index;
+	int* indx;
         amrex::Real* csr_val;
         amrex::Real* csr_b;
         amrex::Real* csr_x;
@@ -169,42 +167,22 @@ main (int   argc,
 
         csr_col_count = (int *) malloc( (num_spec+2) * sizeof(int) );
         csr_row_index = (int *) malloc( (num_spec+1)*(num_spec+1)*sizeof(int) );
-        csr_val       = (amrex::Real *) malloc( (num_spec+1)*(num_spec+1)*(box.numPts())*sizeof(amrex::Real) );
-        csr_b         = (amrex::Real *) malloc( (num_spec+1)*(box.numPts())*sizeof(amrex::Real) );
-        csr_x         = (amrex::Real *) malloc( (num_spec+1)*(box.numPts())*sizeof(amrex::Real) );
+        indx          = (int *) malloc( (num_spec+1)*(num_spec+1)*sizeof(int) );
+        csr_val       = (amrex::Real *) malloc( (num_spec+1)*(num_spec+1)*(ncells)*sizeof(amrex::Real) );
+        csr_b         = (amrex::Real *) malloc( (num_spec+1)*(ncells)*sizeof(amrex::Real) );
+        csr_x         = (amrex::Real *) malloc( (num_spec+1)*(ncells)*sizeof(amrex::Real) );
 
-        SPARSITY_PREPROC_PRECOND(csr_col_count, csr_row_index, &HP);
+        SPARSITY_PREPROC_PRECOND(csr_row_index, csr_col_count, indx, &HP);
         //for  (int i = 0; i < num_spec+2; i++) {
-        //  printf(" csr_row_count %d %d \n", i, csr_row_count[i]);
+        //  printf(" csr_col_count %d %d \n", i, csr_col_count[i]);
         //}
 
-        cusolver_status = cusolverSpXcsrqrAnalysisBatched(cusolverHandle,
-                                                        num_spec+1,
-                                                        num_spec+1,
-                                                        (num_spec+1)*(num_spec+1),
-                                                        descrA,
-                                                        csr_row_count,
-                                                        csr_col_index,
-                                                        info);
-        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-
-        /* allocate working space */
-        cusolver_status = cusolverSpDcsrqrBufferInfoBatched(cusolverHandle,
-                                                        num_spec+1,
-                                                        num_spec+1,
-                                                        (num_spec+1)*(num_spec+1),
-                                                        descrA,
-                                                        csr_val,
-                                                        csr_row_count,
-                                                        csr_col_index,
-                                                        box.numPts(),
-                                                        info,
-                                                        &internalDataInBytes,
-                                                        &workspaceInBytes);
-        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-
-        cudaStat1 = cudaMalloc((void**)&buffer_qr, workspaceInBytes);
-        assert(cudaStat1 == cudaSuccess);
+        for(int i = 0; i < ncells; ++i) { 
+		amrex::Real * csr_val_cell = csr_val + i * (num_spec+1) * (num_spec+1);
+		klu_defaults(&Common[i]);
+		Symbolic[i]  = klu_analyze(num_spec+1, csr_col_count, csr_row_index, &Common[i]) ;
+		Numeric[i]   = klu_factor(csr_col_count, csr_row_index, csr_val_cell, Symbolic[i], &Common[i]); 
+  	}
 
         for (int stp = 0; stp < ndt; stp++) {
 	        /* Copy init guess into q_k = q_0 */
@@ -229,23 +207,19 @@ main (int   argc,
 	            });
 
 	        /* Compute initial nl residual */
-	        int ncells = box.numPts();
 	        const auto lo  = amrex::lbound(box);
+		const auto hi  = amrex::ubound(box);
 	        const auto len = amrex::length(box);
-	        const auto ec = Gpu::ExecutionConfig(ncells);
-	        amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	        [=] AMREX_GPU_DEVICE () noexcept {
-	            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	                icell < ncells; icell += stride) {
-	                int k =  icell /   (len.x*len.y);
-	        	int j = (icell - k*(len.x*len.y)) /   len.x;
-	        	int i = (icell - k*(len.x*len.y)) - j*len.x;
-	        	i += lo.x;
-	        	j += lo.y;
-	        	k += lo.z;
-	        	gpu_NLRES(i, j, k, icell, rho, temp, mf, rhs, res_nl, csr_b);
-	            }
-	        });
+		int icell = 0;
+		for (int k = lo.z; k <= hi.z; ++k) {
+			for (int j = lo.y; j <= hi.y; ++j) {
+				AMREX_PRAGMA_SIMD
+				for (int i = lo.x; i <= hi.x; ++i) {
+					gpu_NLRES(i,j,k,icell, rho, temp, mf, rhs, res_nl, csr_b);
+					icell = icell + 1;
+				}
+			}
+		}
 
 	        /* TODO COMPUTE NORM OF RES */
 
@@ -256,22 +230,19 @@ main (int   argc,
 	        int newton_ite = 0;
 	        //while (!newton_solved) {
 	        while (newton_ite < 10) {
-                        //printf("Ite number %d \n", newton_ite);
+                        printf("Ite number %d \n", newton_ite);
 	        	newton_ite += 1;
 	                /* Compute initial newton_update (delta q_k+1) */
-	                amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	                [=] AMREX_GPU_DEVICE () noexcept {
-	                    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	                        icell < ncells; icell += stride) {
-	                        int k =  icell /   (len.x*len.y);
-	                	int j = (icell - k*(len.x*len.y)) /   len.x;
-	                	int i = (icell - k*(len.x*len.y)) - j*len.x;
-	                	i += lo.x;
-	                	j += lo.y;
-	                	k += lo.z;
-	                	gpu_resetNU(i, j, k, icell, csr_x);
+			icell = 0;
+			for (int k = lo.z; k <= hi.z; ++k) {
+			for (int j = lo.y; j <= hi.y; ++j) {
+			    AMREX_PRAGMA_SIMD
+	                    for (int i = lo.x; i <= hi.x; ++i){
+	                	gpu_resetNU(i, j, k, icell, csr_b, csr_x);
+				icell = icell + 1;
 	                    }
-	                });
+			}
+			}
 
 	                /* Jac chemistry */
 	                amrex::ParallelFor(box,
@@ -281,68 +252,37 @@ main (int   argc,
 	                    });
 
 	                /* Jac System */
-	                amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	                [=] AMREX_GPU_DEVICE () noexcept {
-	                    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	                        icell < ncells; icell += stride) {
-	                        int k =  icell /   (len.x*len.y);
-	                	int j = (icell - k*(len.x*len.y)) /   len.x;
-	                	int i = (icell - k*(len.x*len.y)) - j*len.x;
-	                	i += lo.x;
-	                	j += lo.y;
-	                	k += lo.z;
+			icell = 0;
+			for (int k = lo.z; k <= hi.z; ++k) {
+			for (int j = lo.y; j <= hi.y; ++j) {
+			    AMREX_PRAGMA_SIMD
+	                    for (int i = lo.x; i <= hi.x; ++i){
 	                	gpu_J2SYSJ(i, j, k, icell, deltas, sJ, csr_val);
+				icell = icell + 1;
 	                    }
-	                });
+			}
+			}
 
 	                /* SOLVE LINEAR SYSTEM */
-                        /* allocate working space */
-                        cusolver_status = cusolverSpDcsrqrBufferInfoBatched(cusolverHandle,
-                                                                        num_spec+1,
-                                                                        num_spec+1,
-                                                                        (num_spec+1)*(num_spec+1),
-                                                                        descrA,
-                                                                        csr_val,
-                                                                        csr_row_count,
-                                                                        csr_col_index,
-                                                                        box.numPts(),
-                                                                        info,
-                                                                        &internalDataInBytes,
-                                                                        &workspaceInBytes);
-                        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-
-                        //cudaStat1 = cudaMalloc((void**)&buffer_qr, workspaceInBytes);
-                        //assert(cudaStat1 == cudaSuccess);
-
-                        cusolver_status = cusolverSpDcsrqrsvBatched(cusolverHandle,
-                                                                        num_spec+1,
-                                                                        num_spec+1,
-                                                                        (num_spec+1)*(num_spec+1),
-                                                                        descrA,
-                                                                        csr_val,
-                                                                        csr_row_count,
-                                                                        csr_col_index,
-                                                                        csr_b,
-                                                                        csr_x,
-                                                                        box.numPts(),
-                                                                        info,
-                                                                        buffer_qr);
+                        for(int i = 0; i < ncells; ++i) { 
+	                	amrex::Real * csr_val_cell = csr_val + i * (num_spec+1) * (num_spec+1);
+                                amrex::Real * csr_x_cell = csr_x + i * (num_spec+1);
+	
+	                	klu_refactor(csr_col_count, csr_row_index, csr_val_cell, Symbolic[i], Numeric[i], &Common[i]);
+				klu_solve(Symbolic[i], Numeric[i], num_spec+1, 1, csr_x_cell, &Common[i]) ; 
+  	                }
 
 	                /* UPDATE SOLUTION update q_tmp, it becomes q_(k+1, m+1)*/
-	                amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	                [=] AMREX_GPU_DEVICE () noexcept {
-	                    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	                        icell < ncells; icell += stride) {
-	                        int k =  icell /   (len.x*len.y);
-	                	int j = (icell - k*(len.x*len.y)) /   len.x;
-	                	int i = (icell - k*(len.x*len.y)) - j*len.x;
-	                	i += lo.x;
-	                	j += lo.y;
-	                	k += lo.z;
+			icell = 0;
+			for (int k = lo.z; k <= hi.z; ++k) {
+			for (int j = lo.y; j <= hi.y; ++j) {
+			    AMREX_PRAGMA_SIMD
+	                    for (int i = lo.x; i <= hi.x; ++i){
 	                	gpu_UPDATETMP(i, j, k, icell, rho_tmp, temp_tmp, mf_tmp, csr_x);
+				icell = icell + 1;
 	                    }
-	                });
-
+			}
+			}
 
 	                /* Estimate wdot for q_k */
 	                amrex::ParallelFor(box,
@@ -359,19 +299,16 @@ main (int   argc,
 	                    });
 
 	                /* Compute Newton nl residual */
-	                amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	                [=] AMREX_GPU_DEVICE () noexcept {
-	                    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	                        icell < ncells; icell += stride) {
-	                        int k =  icell /   (len.x*len.y);
-	                	int j = (icell - k*(len.x*len.y)) /   len.x;
-	                	int i = (icell - k*(len.x*len.y)) - j*len.x;
-	                	i += lo.x;
-	                	j += lo.y;
-	                	k += lo.z;
+			icell = 0;
+			for (int k = lo.z; k <= hi.z; ++k) {
+			for (int j = lo.y; j <= hi.y; ++j) {
+			    AMREX_PRAGMA_SIMD
+	                    for (int i = lo.x; i <= hi.x; ++i){
 	                	gpu_NLRES(i, j, k, icell, rho, temp, mf, rhs, res_nl, csr_b);
+				icell = icell + 1;
 	                    }
-	                });
+			}
+			}
 
 	                ///* COMPUTE NORM OF RES */
 
@@ -391,7 +328,7 @@ main (int   argc,
 
       }
 
-      std::string pltfile0("MF");  
+      //std::string pltfile0("MF");  
       outfile = amrex::Concatenate(pltfile0,1); // Need a number other than zero for reg test to pass
       PlotFileFromMF(mass_frac,outfile);
 
