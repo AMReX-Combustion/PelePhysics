@@ -17,6 +17,9 @@ fort.*
 test.py
 extract_*py
 convrate_*
+CPickler.py_gpu
+dodecane_wang.cpp_opt3
+drm19.cpp_OK
 
 # AMReX build directories
 d/
@@ -41,6 +44,7 @@ Backtrace*
 chk*
 slice*
 out*
+*.slice
 
 # OSX files
 .DS_Store
@@ -54,3 +58,7 @@ extract_plot.py
 
 # Folders
 TEST/
+MF00*/
+TEMP00*/
+SAVE/
+SAVE_file*/
