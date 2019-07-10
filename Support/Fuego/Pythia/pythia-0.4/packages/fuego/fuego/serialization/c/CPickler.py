@@ -949,8 +949,8 @@ class CPickler(CMill):
             'AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  speciesConc, double T);',
             'AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);',
             ##'#ifndef AMREX_USE_CUDA',
-            'void CKINIT'+sym+'();',
-            'void CKFINALIZE'+sym+'();',
+            'AMREX_GPU_HOST_DEVICE void CKINIT'+sym+'();',
+            'AMREX_GPU_HOST_DEVICE void CKFINALIZE'+sym+'();',
             '#ifndef AMREX_USE_CUDA',
             'void GET_REACTION_MAP(int *  rmap);',
             'void SetAllDefaults();',
@@ -2100,11 +2100,11 @@ class CPickler(CMill):
         self._write('#else')
 
         self._write(self.line(' TODO: Remove on GPU, right now needed by chemistry_module on FORTRAN'))
-        self._write('void CKINIT'+sym+'()')
+        self._write('AMREX_GPU_HOST_DEVICE void CKINIT'+sym+'()')
         self._write('{')
         self._write('}')
         self._write()
-        self._write('void CKFINALIZE()')
+        self._write('AMREX_GPU_HOST_DEVICE void CKFINALIZE()')
         self._write('{')
         self._write('}')
         self._write()
@@ -6165,7 +6165,10 @@ class CPickler(CMill):
                     self._write("logPred = log10(redP);")
                     self._write('logFcent = log10(')
                     if (abs(troe[1]) > 1.e-100):
-                        self._write('    (1.-%.17g)*exp(-tc[1] / %.17g) ' % (troe[0],troe[1]))
+                        if(troe[0] < 0):
+                            self._write('    (1.+%.17g)*exp(-tc[1] / %.17g) ' % (-troe[0],troe[1]))
+                        else:
+                            self._write('    (1.-%.17g)*exp(-tc[1] / %.17g) ' % (troe[0],troe[1]))
                     else:
                         self._write('     0. ' )
                     if (abs(troe[2]) > 1.e-100):
@@ -6173,7 +6176,10 @@ class CPickler(CMill):
                     else:
                         self._write('    + 0. ')
                     if (ntroe == 4):
-                        self._write('    + exp(-%.17g * invT));' % troe[3])
+                        if(troe[3] < 0):
+                            self._write('    + exp(%.17g * invT));' % -troe[3])
+                        else:
+                            self._write('    + exp(-%.17g * invT));' % troe[3])
                     else:
                         self._write('    + 0.);' )
                     self._write("troe_c = -.4 - .67 * logFcent;")
@@ -6186,7 +6192,10 @@ class CPickler(CMill):
                     self._write("F = redP / (1.0 + redP);")
                     self._write("logPred = log10(redP);")
                     self._write("X = 1.0 / (1.0 + logPred*logPred);")
-                    self._write("F_sri = exp(X * log(%.17g * exp(-%.17g*invT)" % (sri[0],sri[1]))
+                    if (sri[1] < 0):
+                        self._write("F_sri = exp(X * log(%.17g * exp(%.17g*invT)" % (sri[0],-sri[1]))
+                    else:
+                        self._write("F_sri = exp(X * log(%.17g * exp(-%.17g*invT)" % (sri[0],sri[1]))
                     if (sri[2] > 1.e-100):
                         self._write("   +  exp(tc[0]/%.17g) " % sri[2])
                     else:
@@ -6194,7 +6203,7 @@ class CPickler(CMill):
                     self._write("   *  (%d > 3 ? %.17g*exp(%.17g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
                     self._write("Corr = F * F_sri;")
                     self._write("qf[%d] *= Corr * k_f;" % idx)
-                elif reaction.lindemann:
+                elif (nlindemann > 0):
                     self._write("Corr = redP / (1. + redP);")
                     self._write("qf[%d] *= Corr * k_f;" % idx)
 
@@ -7499,7 +7508,11 @@ class CPickler(CMill):
                 ntroe = len(troe)
                 self._write("logPr = log10(Pr);")
                 if (abs(troe[1]) > 1.e-100):
-                    self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
+                    if (troe[0] < 0):
+                        self._write('Fcent1 = (1.+%.17g)*exp(-T/%.17g);'
+                                %(-troe[0],troe[1]))
+                    else:
+                        self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
                                 %(troe[0],troe[1]))
                 else:
                     self._write('Fcent1 = 0.;')
@@ -7509,7 +7522,11 @@ class CPickler(CMill):
                 else:
                     self._write('Fcent2 = 0.;')
                 if (ntroe == 4):
-                    self._write('Fcent3 = exp(-%.17g * invT);'
+                    if (troe[3] < 0):
+                        self._write('Fcent3 = exp(%.17g * invT);'
+                                % -troe[3] )
+                    else:
+                        self._write('Fcent3 = exp(-%.17g * invT);'
                                 % troe[3] )
                 else:
                     self._write('Fcent3 = 0.;')
@@ -8054,7 +8071,11 @@ class CPickler(CMill):
                 ntroe = len(troe)
                 self._write("logPr = log10(Pr);")
                 if (abs(troe[1]) > 1.e-100):
-                    self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
+                    if (troe[0] < 0):
+                        self._write('Fcent1 = (1.+%.17g)*exp(-T/%.17g);'
+                                %(-troe[0],troe[1]))
+                    else:
+                        self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
                                 %(troe[0],troe[1]))
                 else:
                     self._write('Fcent1 = 0.;')
@@ -8064,7 +8085,11 @@ class CPickler(CMill):
                 else:
                     self._write('Fcent2 = 0.;')
                 if (ntroe == 4):
-                    self._write('Fcent3 = exp(-%.17g * invT);'
+                    if (troe[3] < 0):
+                        self._write('Fcent3 = exp(%.17g * invT);'
+                                % -troe[3] )
+                    else:
+                        self._write('Fcent3 = exp(-%.17g * invT);'
                                 % troe[3] )
                 else:
                     self._write('Fcent3 = 0.;')
