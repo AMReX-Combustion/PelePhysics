@@ -44,7 +44,7 @@ main (int   argc,
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 16;
+	npts[i] = 2;
       }
       npts[1] = 32;
     
@@ -57,7 +57,7 @@ main (int   argc,
 	dx[i] = (phi[i] - plo[i])/domain.length(i);
       }
     
-      int max_size = 16;
+      int max_size = 2;
       pp.query("max_size",max_size);
       BoxArray ba(domain);
       ba.maxSize(max_size);

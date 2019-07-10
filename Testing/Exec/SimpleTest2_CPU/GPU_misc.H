@@ -196,7 +196,7 @@ gpu_CopyTMP2ORI(int i, int j, int k,
 	temp(i,j,k) = temp_t(i,j,k);
 	nrgy(i,j,k) = nrgy_t(i,j,k);
 	rho(i,j,k)  = rho_t(i,j,k);
-        printf("i,j,k, T, rho, E %d %d %d %14.6e %14.6e %14.6e\n", i, j, k, temp(i,j,k), rho(i,j,k), nrgy(i,j,k));
+        //printf("i,j,k, T, rho, E %d %d %d %14.6e %14.6e %14.6e\n", i, j, k, temp(i,j,k), rho(i,j,k), nrgy(i,j,k));
 }
 
 AMREX_GPU_DEVICE
