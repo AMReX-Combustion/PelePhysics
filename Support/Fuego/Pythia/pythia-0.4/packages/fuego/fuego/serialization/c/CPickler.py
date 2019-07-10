@@ -840,12 +840,11 @@ class CPickler(CMill):
             self._write('%d  %s' % (element.id, element.symbol) )
             nb_elem += 1
         self._write('*/')
-        self._write('/* Species')
+        self._write('/* Species */')
         nb_spec = 0
         for species in mechanism.species():
-            self._write('%d  %s' % (species.id, species.symbol) )
+            self._write('#define %s_ID %d' % (species.symbol, species.id) )
             nb_spec += 1
-        self._write('*/')
         self._write("#endif")
         self._write("#define NUM_ELEMENTS %d" % (nb_elem))
         self._write("#define NUM_SPECIES %d" % (nb_spec))
