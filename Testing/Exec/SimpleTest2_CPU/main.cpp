@@ -108,7 +108,7 @@ main (int   argc,
 
       Real time = 0.; pp.query("time",time);
       Real dt=1.e-07; pp.query("dt",dt);
-      Real ndt=500; pp.query("ndt",dt);
+      Real ndt=1000; pp.query("ndt",dt);
       MultiFab delta_t(ba,dm,1,num_grow);
       delta_t.setVal(dt,0,1,num_grow);
 
@@ -164,6 +164,7 @@ main (int   argc,
         amrex::Real* csr_b;
         amrex::Real* csr_x;
         int HP = 0;
+	int offset_beg = 0;
 
         csr_col_count = (int *) malloc( (num_spec+2) * sizeof(int) );
         csr_row_index = (int *) malloc( (num_spec+1)*(num_spec+1)*sizeof(int) );
@@ -173,12 +174,15 @@ main (int   argc,
         csr_x         = (amrex::Real *) malloc( (num_spec+1)*(ncells)*sizeof(amrex::Real) );
 
         SPARSITY_PREPROC_PRECOND(csr_row_index, csr_col_count, indx, &HP);
-        //for  (int i = 0; i < num_spec+2; i++) {
-        //  printf(" csr_col_count %d %d \n", i, csr_col_count[i]);
-        //}
 
         for(int i = 0; i < ncells; ++i) { 
+		// OPTI 1
 		amrex::Real * csr_val_cell = csr_val + i * (num_spec+1) * (num_spec+1);
+		// OPTI 2
+		//amrex::Real csr_val_cell[(num_spec+1) * (num_spec+1)];
+		//offset_beg = i * (num_spec+1) * (num_spec+1);
+		//std::memcpy(csr_val_cell, csr_val + offset_beg, (num_spec+1) * (num_spec+1)*sizeof(amrex::Real));
+
 		klu_defaults(&Common[i]);
 		Symbolic[i]  = klu_analyze(num_spec+1, csr_col_count, csr_row_index, &Common[i]) ;
 		Numeric[i]   = klu_factor(csr_col_count, csr_row_index, csr_val_cell, Symbolic[i], &Common[i]); 
@@ -230,7 +234,7 @@ main (int   argc,
 	        int newton_ite = 0;
 	        //while (!newton_solved) {
 	        while (newton_ite < 10) {
-                        printf("Ite number %d \n", newton_ite);
+                        //printf("Ite number %d \n", newton_ite);
 	        	newton_ite += 1;
 	                /* Compute initial newton_update (delta q_k+1) */
 			icell = 0;
@@ -266,10 +270,18 @@ main (int   argc,
 	                /* SOLVE LINEAR SYSTEM */
                         for(int i = 0; i < ncells; ++i) { 
 	                	amrex::Real * csr_val_cell = csr_val + i * (num_spec+1) * (num_spec+1);
+		                //amrex::Real csr_val_cell[(num_spec+1) * (num_spec+1)];
+		                //offset_beg = i * (num_spec+1) * (num_spec+1);
+		                //std::memcpy(csr_val_cell, csr_val + offset_beg, (num_spec+1) * (num_spec+1)*sizeof(amrex::Real));
                                 amrex::Real * csr_x_cell = csr_x + i * (num_spec+1);
+				//amrex::Real csr_x_cell[(num_spec+1)];
+				//offset_beg = i * (num_spec+1);
+				//std::memcpy(csr_x_cell, csr_x + offset_beg, (num_spec+1)*sizeof(amrex::Real));
 	
-	                	klu_refactor(csr_col_count, csr_row_index, csr_val_cell, Symbolic[i], Numeric[i], &Common[i]);
+	                	//klu_refactor(csr_col_count, csr_row_index, csr_val_cell, Symbolic[i], Numeric[i], &Common[i]);
+		                Numeric[i]   = klu_factor(csr_col_count, csr_row_index, csr_val_cell, Symbolic[i], &Common[i]); 
 				klu_solve(Symbolic[i], Numeric[i], num_spec+1, 1, csr_x_cell, &Common[i]) ; 
+				//std::memcpy(csr_x + offset_beg, csr_x_cell, (num_spec+1)*sizeof(amrex::Real));
   	                }
 
 	                /* UPDATE SOLUTION update q_tmp, it becomes q_(k+1, m+1)*/

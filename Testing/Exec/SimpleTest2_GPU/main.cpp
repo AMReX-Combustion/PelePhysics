@@ -50,7 +50,7 @@ main (int   argc,
       for (int i = 0; i < BL_SPACEDIM; ++i) {
 	npts[i] = 16;
       }
-      npts[1] = 16;
+      npts[1] = 32;
     
       Box domain(IntVect(D_DECL(0,0,0)),
                  IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
@@ -99,12 +99,9 @@ main (int   argc,
       printf("That many boxes: %d \n", box_count);
 
       ParmParse ppa("amr");
-      //std::string pltfile("plt");  
-      //ppa.query("plot_file",pltfile);
-      //std::string outfile = amrex::Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
-
-      std::string pltfile0("MF");  
-      std::string outfile = amrex::Concatenate(pltfile0,0); // Need a number other than zero for reg test to pass
+      std::string pltfile("plt");  
+      ppa.query("plot_file",pltfile);
+      std::string outfile = amrex::Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
       PlotFileFromMF(mass_frac,outfile);
 
       std::string pltfile1("TEMP");  
@@ -113,7 +110,8 @@ main (int   argc,
 
       Real time = 0.; pp.query("time",time);
       Real dt=1.e-07; pp.query("dt",dt);
-      Real ndt=500; pp.query("ndt",dt);
+      Real ndt=1000; pp.query("ndt",dt);
+      //Real ndt=1000; pp.query("ndt",dt);
       MultiFab delta_t(ba,dm,1,num_grow);
       delta_t.setVal(dt,0,1,num_grow);
 
@@ -412,7 +410,7 @@ main (int   argc,
 
       }
 
-      //std::string pltfile0("MF");  
+      std::string pltfile0("MF");  
       outfile = amrex::Concatenate(pltfile0,1); // Need a number other than zero for reg test to pass
       PlotFileFromMF(mass_frac,outfile);
 

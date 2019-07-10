@@ -98,11 +98,11 @@ gpu_J2SYSJ(int i, int j, int k,
                 csr_val_cell[(NUM_SPECIES+1)*n+n] = sJ(i,j,k,(NUM_SPECIES+1)*n+n);
 		for (int m = 0; m < n; m++) { 
 			sJ(i,j,k,(NUM_SPECIES+1)*n+m) = - deltat(i,j,k) * sJ(i,j,k,(NUM_SPECIES+1)*n+m);
-                        csr_val_cell[(NUM_SPECIES+1)*m+n] = sJ(i,j,k,(NUM_SPECIES+1)*n+m);
+                        csr_val_cell[(NUM_SPECIES+1)*n+m] = sJ(i,j,k,(NUM_SPECIES+1)*n+m);
 		}	
 		for (int m = n+1; m < (NUM_SPECIES+1); m++) { 
 			sJ(i,j,k,(NUM_SPECIES+1)*n+m) = - deltat(i,j,k) * sJ(i,j,k,(NUM_SPECIES+1)*n+m);
-                        csr_val_cell[(NUM_SPECIES+1)*m+n] = sJ(i,j,k,(NUM_SPECIES+1)*n+m);
+                        csr_val_cell[(NUM_SPECIES+1)*n+m] = sJ(i,j,k,(NUM_SPECIES+1)*n+m);
 		}	
 	}
 }
