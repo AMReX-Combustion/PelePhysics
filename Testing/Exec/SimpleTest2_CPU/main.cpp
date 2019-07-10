@@ -44,8 +44,9 @@ main (int   argc,
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 1;
+	npts[i] = 16;
       }
+      npts[1] = 32;
     
       Box domain(IntVect(D_DECL(0,0,0)),
                  IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
@@ -56,7 +57,7 @@ main (int   argc,
 	dx[i] = (phi[i] - plo[i])/domain.length(i);
       }
     
-      int max_size = 1;
+      int max_size = 16;
       pp.query("max_size",max_size);
       BoxArray ba(domain);
       ba.maxSize(max_size);
@@ -348,7 +349,7 @@ main (int   argc,
       outfile = amrex::Concatenate(pltfile1,1); // Need a number other than zero for reg test to pass
       PlotFileFromMF(temperature,outfile);
 
-      //std::string pltfile11("CDOTS");  
+      //std::string pltfile1("CDOTS");  
       //outfile = amrex::Concatenate(pltfile11,1); // Need a number other than zero for reg test to pass
       //PlotFileFromMF(systRHS,outfile);
 
