@@ -29,8 +29,8 @@ void comp_Kc(double *  tc, double invT, double *  Kc);
 #endif
 AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  speciesConc, double T);
 AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);
-void CKINIT();
-void CKFINALIZE();
+AMREX_GPU_HOST_DEVICE void CKINIT();
+AMREX_GPU_HOST_DEVICE void CKFINALIZE();
 #ifndef AMREX_USE_CUDA
 void GET_REACTION_MAP(int *  rmap);
 void SetAllDefaults();

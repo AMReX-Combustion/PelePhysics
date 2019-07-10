@@ -528,11 +528,11 @@ void CKFINALIZE()
 
 #else
 /* TODO: Remove on GPU, right now needed by chemistry_module on FORTRAN */
-void CKINIT()
+AMREX_GPU_HOST_DEVICE void CKINIT()
 {
 }
 
-void CKFINALIZE()
+AMREX_GPU_HOST_DEVICE void CKFINALIZE()
 {
 }
 
