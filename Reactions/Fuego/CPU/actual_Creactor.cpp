@@ -1,6 +1,7 @@
 #include <CPU/actual_Creactor.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
+#include "mechanism.h"
 
 /**********************************/
 
@@ -10,16 +11,6 @@
   SUNLinearSolver LS = NULL;
   SUNMatrix A        = NULL;
   void *cvode_mem    = NULL;
-  /* counters */
-  long int nsetups_old = 0;
-  long int nst_old     = 0;
-  long int nfe_old     = 0;
-  long int nni_old     = 0;
-  long int ncfn_old    = 0;
-  long int nfeLS_old   = 0;
-  long int nje_old = 0;
-  long int npe_old = 0;
-  long int nps_old = 0;
   /* User data */
   UserData data = NULL;
   int NEQ       = 0;
@@ -31,24 +22,22 @@
   int iE_Creact     = 1;
   int iverbose      = 1;
   /* energy */
-  double *rhoe_init = NULL;
-  double *rhoh_init = NULL;
+  double *rhoe_init   = NULL;
+  double *rhoh_init   = NULL;
   double *rhoesrc_ext = NULL;
   double *rhohsrc_ext = NULL;
   double *rYsrc       = NULL;
   /* hacks */
-  double temp_old  = 0;
-  double temp_save = 0;
-  bool InitPartial      = false;
   bool FirstTimePrecond = true;
   /* Checks */
   bool reactor_cvode_initialized = false;
   bool actual_ok_to_react = true;
-/* TIMERS */
+/* TIMERS: disable for now 
   std::chrono::duration<double> elapsed_seconds;
   std::chrono::duration<double> elapsed_seconds_RHS;
   std::chrono::duration<double> elapsed_seconds_Pcond;
   std::chrono::duration<double> elapsed_seconds_JacFuego;
+*/
 
 /**********************************/
 /* Definitions */
@@ -59,10 +48,10 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	realtype reltol, time;
 	N_Vector atol;
 	realtype *ratol;
-	int mm, ii, nfit;
 	int neq_tot;
 
-	CKINDX(&mm,&NEQ,&ii,&nfit);
+	/* Nb of species in mechanism */
+	NEQ = NUM_SPECIES;
         if (iverbose > 0) {
 	    printf("Nb of spec is %d \n", NEQ);
 	}
@@ -72,14 +61,14 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	pp.query("cvode_iJac",iJac_Creact);
 	pp.query("cvode_iDense", iDense_Creact);
 
-	/* Args */
+	/* Args = type of reactor, nb of cells, nb of eqs in whole system */
 	iE_Creact      = *cvode_iE;
 	NCELLS         = *Ncells;
-        neq_tot        = (NEQ + 1) * NCELLS;
-
         if (iverbose > 0) {
 	    printf("Ncells in one solve ? %d\n",NCELLS);
 	}
+        neq_tot        = (NEQ + 1) * NCELLS;
+
 
 	/* Definition of main vector */
 	y = N_VNew_Serial(neq_tot);
@@ -106,6 +95,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	if (check_flag(&flag, "CVodeInit", 1)) return(1);
 	
 	/* Definition of tolerances: one for each species */
+	/* TODO in fct of variable */
 	reltol = 1.0e-10;
         atol  = N_VNew_Serial(neq_tot);
 	ratol = N_VGetArrayPointer(atol);
@@ -174,11 +164,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    flag = CVSpilsSetLinearSolver(cvode_mem, LS);
 	    if(check_flag(&flag, "CVSpilsSetLinearSolver", 1)) return(1);
 	} else {
-	    int nJdata;
-	    int HP = 0;
-	    SPARSITY_INFO(&nJdata, &HP, 1);
-            printf("--> SPARSE solver -- non zero entries %d represents %f %% sparsity pattern.", nJdata, nJdata/float((NEQ+1) * (NEQ+1)) *100.0);
-	    amrex::Abort("\n \n");
+            amrex::Abort("Linear solvers availables are: Direct Dense (1), Direct Sparse (5) or Iterative GMRES (99)");
 	}
 
 	if (iJac_Creact == 0) {
@@ -260,24 +246,28 @@ int react(realtype *rY_in, realtype *rY_src_in,
 		realtype *P_in, 
                 realtype *dt_react, realtype *time, int *Init){
 
-        std::chrono::time_point<std::chrono::system_clock> start, end;		
-        std::chrono::duration<double> total_elapsed;
+        //std::chrono::time_point<std::chrono::system_clock> start, end;		
+        //std::chrono::duration<double> total_elapsed;
 	realtype time_init, time_out, dummy_time, temperature_save ;
 	int flag;
 
-        //FirstTimePrecond = true;
+        if (iverbose > 1) {
+            printf("\n -------------------------------------\n");
+	}
 
+	/* Initial time and time to reach after integration */
         time_init = *time;
 	time_out  = *time + (*dt_react);
-	start = std::chrono::system_clock::now();
-        elapsed_seconds = start - start;
-        elapsed_seconds_RHS = start - start;
-        elapsed_seconds_Pcond = start - start;
-	elapsed_seconds_JacFuego = start - start;
-
         if (iverbose > 3) {
 	    printf("BEG : time curr is %14.6e and dt_react is %14.6e and final time should be %14.6e \n", time_init, *dt_react, time_out);
 	}
+
+	//start = std::chrono::system_clock::now();
+        //elapsed_seconds = start - start;
+        //elapsed_seconds_RHS = start - start;
+        //elapsed_seconds_Pcond = start - start;
+	//elapsed_seconds_JacFuego = start - start;
+
 
 	/* Get Device MemCpy of in arrays */
 	/* Get Device pointer of solution vector */
@@ -296,46 +286,24 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    std::memcpy(rhohsrc_ext, rX_src_in, sizeof(realtype) * NCELLS);
 	}
 
+	/* Check if y is within physical bounds */
 	check_state(y);
 	if (!actual_ok_to_react)  { 
 	    amrex::Abort("\n Check_state failed: state is out of react bounds \n");
 	}
 
-	/* Call CVODE: ReInitPartial for faster start */
-        if (iverbose > 1) {
-            printf("\n -------------------------------------\n");
-	}
-	//if (*Init == 1) {
-            if (iverbose > 1) {
-                printf("ReInit always \n");
-	    }
-	    CVodeReInit(cvode_mem, time_init, y);
-	    InitPartial = false;
-	//} else {
-	//    temp_old = fabs(rY_in[NEQ] - temp_old);
-	//    // Sloppy but I can't think of anything better now
-        //    if (temp_old > 50.0) {
-        //        if (iverbose > 1) {
-	//            printf("ReInit delta_T = %f \n", temp_old);
-	//	}
-	//        CVodeReInit(cvode_mem, time_init, y);
-	//      InitPartial = false;
-	//    } else {
-        //        if (iverbose > 1) {
-	//            printf("ReInit Partial delta_T = %f \n", temp_old);
-	//	}
-	//        CVodeReInitPartial(cvode_mem, time_init, y);
-	//	InitPartial = true;
-	//    }
-	//}
+	/* ReInit CVODE is faster */
+	CVodeReInit(cvode_mem, time_init, y);
 
 	flag = CVode(cvode_mem, time_out, y, &dummy_time, CV_NORMAL);
 	/* ONE STEP MODE FOR DEBUGGING */
 	//flag = CVode(cvode_mem, time_out, y, &dummy_time, CV_ONE_STEP);
 	if (check_flag(&flag, "CVode", 1)) return(1);
 
+	/* Update dt_react with real time step taken ... */
 	*dt_react = dummy_time - time_init;
 #ifdef MOD_REACTOR
+	/* If reactor mode is activated, update time */
 	*time  = time_init + (*dt_react);
 #endif
         if (iverbose > 3) {
@@ -348,14 +316,11 @@ int react(realtype *rY_in, realtype *rY_src_in,
             rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
 	}
 
-        end = std::chrono::system_clock::now();
-        total_elapsed = end - start;
+        //end = std::chrono::system_clock::now();
+        //total_elapsed = end - start;
 
-	if (*Init != 1) {
-	    temp_old = rY_in[NEQ];
-	}
 
-	/* VERBOSE MODE */
+	/* VERBOSE / DEBUG MODE */
         if (iverbose > 5) {
             for (int tid = 0; tid < NCELLS; tid ++) {
 	        double rhov, energy, temp, energy2;
@@ -400,9 +365,13 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    //std::cout << "Time spent computing Jac ? " << elapsed_seconds_JacFuego.count() << " " << elapsed_seconds_JacFuego.count() / total_elapsed.count() * 100.0 <<  std::endl; 
 	    //std::cout << "Temp, chemistry solve, RHSeval, PSolve, Precond = " << rY_in[NEQ] << " " << total_elapsed.count() << " "<< elapsed_seconds_RHS.count() << " " << elapsed_seconds.count() << " " << elapsed_seconds_Pcond.count() << std::endl; 
 	    //std::cout << "Temp, RHSeval represnts, PSolve represents, Precond represents = " << rY_in[NEQ] << " " << elapsed_seconds_RHS.count() / total_elapsed.count() * 100.0 <<  " " << elapsed_seconds.count()/total_elapsed.count() * 100.0 << " " << elapsed_seconds_Pcond.count() /total_elapsed.count() * 100.0 << std::endl;
+	}
+
+        if (iverbose > 1) {
             printf(" -------------------------------------\n");
 	}
 
+	/* Get estimate of how hard the integration process was */
         long int nfe;
 	flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
 	return nfe;
@@ -413,8 +382,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, 
 		void *user_data){
 
-        std::chrono::time_point<std::chrono::system_clock> start, end;		
-	start = std::chrono::system_clock::now();
+        //std::chrono::time_point<std::chrono::system_clock> start, end;		
+	//start = std::chrono::system_clock::now();
 
 	realtype *y_d      = N_VGetArrayPointer(y_in);
 	realtype *ydot_d   = N_VGetArrayPointer(ydot_in);
@@ -426,8 +395,10 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 	    fKernelSpec(&t, y_d, ydot_d, 
 			    rhoh_init, rhohsrc_ext, rYsrc);
 	}
-	end = std::chrono::system_clock::now();
-        elapsed_seconds_RHS = elapsed_seconds_RHS + end - start;
+
+	//end = std::chrono::system_clock::now();
+        //elapsed_seconds_RHS = elapsed_seconds_RHS + end - start;
+	//
 	return(0);
 }
 
@@ -610,10 +581,8 @@ static int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
           }
       }
       /* Go from Dense to Sparse */
-      //printf("\n (new cell) \n");
       for (int i = 1; i < NEQ+2; i++) {
 	  nbVals = data_wk->colPtrs[0][i]-data_wk->colPtrs[0][i - 1];
-	  //printf(" Col %d has %d vals \n", i-1, nbVals);
 	  for (int j = 0; j < nbVals; j++) {
 	          idx = data_wk->rowVals[0][ data_wk->colPtrs[0][i - 1] + j ];
 	              data[ data_wk->colPtrs[0][offset + i - 1] + j ] = Jmat_tmp[(i - 1) * (NEQ + 1) + idx];
@@ -629,7 +598,6 @@ static int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 
 /* Jacobian-times-vector routine.
  * Currently not used !!
- */
 static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu, 
 			  void *user_data, N_Vector tmp)
 {
@@ -646,14 +614,13 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
 
         int offset = tid * (NEQ + 1); 
 
-        /* MW CGS */
 	CKWT(molecular_weight);
 	for (int i = 0; i < NEQ; i++){
             activity[i] = udata[offset + i]/(molecular_weight[i]);
 	}
-        /* temp */
+
 	temp = udata[offset + NEQ];
-        /* NRG CGS */
+
         if (iE_Creact == 1) {
             int consP = 0;
             DWDOT(J, activity, &temp, &consP);
@@ -662,21 +629,20 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
             DWDOT(J, activity, &temp, &consP);
         }
 
-	/* PRINT JAC INFO: debug mode
-	for (int i = 0; i < NEQ+1; i++){
-	    for (int j = 0; j < NEQ+1; j++){
-                printf(" %4.8e ", (J[j*(NEQ+1)+i]));
-	    }
-            printf(" \n");
-	}
-	amrex::Abort("\n--> ABORT\n");
-	*/
+	// PRINT JAC INFO: debug mode
+	//for (int i = 0; i < NEQ+1; i++){
+	//    for (int j = 0; j < NEQ+1; j++){
+        //        printf(" %4.8e ", (J[j*(NEQ+1)+i]));
+	//    }
+        //    printf(" \n");
+	//}
+	//amrex::Abort("\n--> ABORT\n");
+	//
 
-	/* reinit */
 	for (int i = 0; i < NEQ+1; i++){
 	    Jvdata[offset + i] = 0.0;
 	}
-	/* COmpute */
+
 	for (int i = 0; i < NEQ; i++){
             for (int j = 0; j < NEQ; j++){
                 Jvdata[offset + i] = Jvdata[offset + i] + J[j*(NEQ+1)+i] * vdata[offset + j] * molecular_weight[i] / molecular_weight[j];
@@ -691,6 +657,7 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
 
   return(0);
 }
+ */
 
 
 #ifdef USE_KLU 
@@ -735,7 +702,7 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
   udata = N_VGetArrayPointer(u);
 
   //start_Jcomp = std::chrono::system_clock::now();
-  //printf("temp_save %f \n",temp_save);
+  
   if (jok) {
         /* jok = SUNTRUE: Copy Jbd to P */
         *jcurPtr = SUNFALSE;
@@ -791,7 +758,6 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
   for (int i = 1; i < NEQ+2; i++) {
       /* nb non zeros elem should be the same for all cells */
       nbVals = data_wk->colPtrs[0][i]-data_wk->colPtrs[0][i-1];
-      //printf("Rows %d : we have %d nonzero values \n", i-1, nbVals);
       for (int j = 0; j < nbVals; j++) {
     	  /* row of non zero elem should be the same for all cells */
     	  int idx = data_wk->rowVals[0][ data_wk->colPtrs[0][i-1] + j ];
@@ -812,7 +778,6 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 
   //start_LUfac = std::chrono::system_clock::now();
   if (!FirstTimePrecond) {
-      //printf("and reuse pivots ...");
       for (tid = 0; tid < NCELLS; tid ++) {
           ok = klu_refactor(data_wk->colPtrs[tid], data_wk->rowVals[tid], data_wk->Jdata[tid], data_wk->Symbolic[tid], data_wk->Numeric[tid], &(data_wk->Common[tid]));
       }
@@ -842,8 +807,8 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok, 
 		booleantype *jcurPtr, realtype gamma, void *user_data)
 {
-  std::chrono::time_point<std::chrono::system_clock> start, end;		
-  start = std::chrono::system_clock::now();
+  //std::chrono::time_point<std::chrono::system_clock> start, end;		
+  //start = std::chrono::system_clock::now();
 
   UserData data_wk;
   realtype **(**P), **(**Jbd);
@@ -912,8 +877,8 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
   ierr = denseGETRF(P[0][0], NEQ+1, NEQ+1, pivot[0][0]);
   if (ierr != 0) return(1);
   
-  end = std::chrono::system_clock::now();
-  elapsed_seconds_Pcond = elapsed_seconds_Pcond + end - start;
+  //end = std::chrono::system_clock::now();
+  //elapsed_seconds_Pcond = elapsed_seconds_Pcond + end - start;
 
   return(0);
 }
@@ -924,8 +889,8 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                   realtype gamma, realtype delta, int lr, void *user_data)
 {
-  std::chrono::time_point<std::chrono::system_clock> start, end;		
-  start = std::chrono::system_clock::now();
+  //std::chrono::time_point<std::chrono::system_clock> start, end;		
+  //start = std::chrono::system_clock::now();
 
   UserData data_wk;
   data_wk = (UserData) user_data;
@@ -937,6 +902,7 @@ static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vec
 
   /* Solve the block-diagonal system Pz = r using LU factors stored
      in P and pivot data in pivot, and return the solution in z. */
+  /* TODO try just pointing to portion of vect */
   int tid, offset_beg, offset_end;
   realtype zdata_cell[NEQ+1];
   for (tid = 0; tid < NCELLS; tid ++) {
@@ -947,8 +913,8 @@ static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vec
       std::memcpy(zdata+offset_beg, zdata_cell, (NEQ+1)*sizeof(realtype));
   }
 
-  end = std::chrono::system_clock::now();
-  elapsed_seconds = elapsed_seconds + end - start;
+  //end = std::chrono::system_clock::now();
+  //elapsed_seconds = elapsed_seconds + end - start;
 
   return(0);
 }
@@ -959,8 +925,8 @@ static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vec
 static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                   realtype gamma, realtype delta, int lr, void *user_data)
 {
-  std::chrono::time_point<std::chrono::system_clock> start, end;		
-  start = std::chrono::system_clock::now();
+  //std::chrono::time_point<std::chrono::system_clock> start, end;		
+  //start = std::chrono::system_clock::now();
 
   realtype **(**P);
   sunindextype *(**pivot);
@@ -981,9 +947,8 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
   v = zdata;
   denseGETRS(P[0][0], NEQ+1, pivot[0][0], v);
 
-  end = std::chrono::system_clock::now();
-  elapsed_seconds = elapsed_seconds + end - start;
-  //std::cout << " RHS duration " << elapsed_seconds.count() << std::endl;
+  //end = std::chrono::system_clock::now();
+  //elapsed_seconds = elapsed_seconds + end - start;
 
   return(0);
 }
@@ -1006,7 +971,6 @@ static void check_state(N_Vector yvec)
   for (int tid = 0; tid < NCELLS; tid ++) {
       rho = 0.0;
       offset = tid * (NEQ + 1); 
-      //amrex::Print() << " cell, offset, T " << tid << " " << offset << " " << ydata[offset + NEQ] << std::endl; 
       for (int k = 0; k < NEQ; k ++) {
           rho =  rho + ydata[offset + k];
       }
@@ -1071,48 +1035,19 @@ static void PrintFinalStats(void *cvodeMem, realtype Temp)
 
   printf("-- Final Statistics --\n");
   printf("NonLinear (Newton) related --\n");
-  if (InitPartial) {
-         printf("    DT(dtL, dtI), RHS, Iterations, ConvFails, LinSolvSetups = %f %-6ld(%14.6e, %14.6e) %-6ld %-6ld %-6ld %-6ld \n",
-	 Temp, nst-nst_old, hlast, hinused, nfe-nfe_old, nni-nni_old, ncfn-ncfn_old, nsetups-nsetups_old);
-  }else{
-         printf("    DT(dt, dtcur), RHS, Iterations, ErrTestFails, LinSolvSetups = %f %-6ld(%14.6e %14.6e) %-6ld %-6ld %-6ld %-6ld \n",
-	 Temp, nst, hlast, hcur, nfe, nni, netfails, nsetups);
-  }
-  /* RESET */
-  nsetups_old = nsetups;
-  nst_old = nst;
-  nfe_old = nfe;
-  nni_old = nni;
-  ncfn_old = ncfn;
-
+  printf("    DT(dt, dtcur), RHS, Iterations, ErrTestFails, LinSolvSetups = %f %-6ld(%14.6e %14.6e) %-6ld %-6ld %-6ld %-6ld \n",
+                    Temp, nst, hlast, hcur, nfe, nni, netfails, nsetups);
   if (iDense_Creact == 1){
       printf("Linear (Dense Direct Solve) related --\n");
-      if (InitPartial) {
-          printf("    FD RHS, NumJacEvals                           = %f %-6ld %-6ld \n", Temp, nfeLS-nfeLS_old, nje-nje_old);
-      } else {
-          printf("    FD RHS, NumJacEvals                           = %f %-6ld %-6ld \n", Temp, nfeLS, nje);
-      }
-      /* RESET */
-      nfeLS_old = nfeLS;
-      nje_old = nje;
+      printf("    FD RHS, NumJacEvals                           = %f %-6ld %-6ld \n", Temp, nfeLS, nje);
   } else if (iDense_Creact == 99){
 	  // LinSolvSetups actually reflects the number of time the LinSolver has been called. 
 	  // NonLinIterations can be taken without the need for LinItes
       printf("Linear (Krylov GMRES Solve) related --\n");
-      if (InitPartial) {
-          printf("    RHSeval, jtvEval, NumPrecEvals, NumPrecSolves = %f %-6ld %-6ld %-6ld %-6ld \n", 
-            	      Temp, nfeLS-nfeLS_old, nje-nje_old, npe-npe_old, nps-nps_old);
-      } else {
-          printf("    RHSeval, jtvEval, NumPrecEvals, NumPrecSolves = %f %-6ld %-6ld %-6ld %-6ld \n", 
+      printf("    RHSeval, jtvEval, NumPrecEvals, NumPrecSolves = %f %-6ld %-6ld %-6ld %-6ld \n", 
             	      Temp, nfeLS, nje, npe, nps);
-          printf("    Iterations, ConvFails = %f %-6ld %-6ld \n", 
+      printf("    Iterations, ConvFails = %f %-6ld %-6ld \n", 
             	      Temp, nli, ncfl );
-      }
-      /* RESET */
-      nfeLS_old = nfeLS;
-      nje_old = nje;
-      npe_old = npe;
-      nps_old = nps;
   }
 }
 
@@ -1258,7 +1193,7 @@ void reactor_close(){
 
 
 /* Free data memory 
- * Probably not complete, how about the stuff allocated in KLU mode ? */
+ * TODO not complete, how about the stuff allocated in KLU mode ? */
 static void FreeUserData(UserData data_wk)
 {
   if (iDense_Creact == 99) {
