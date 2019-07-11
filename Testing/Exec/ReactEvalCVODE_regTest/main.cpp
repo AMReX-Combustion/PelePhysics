@@ -79,11 +79,11 @@ main (int   argc,
 
     extern_init(&(probin_file_name[0]),&probin_file_length, &cvode_iE);
 
+    int cvode_ncells = 1;
 #ifdef _OPENMP
 #pragma omp parallel
 #endif  
     /* Initialize D/CVODE reactor */
-    int cvode_ncells = 1;
     reactor_init(&cvode_iE, &cvode_ncells);
 
     /* make domain and BoxArray */
@@ -195,8 +195,8 @@ main (int   argc,
 
     std::string outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
     MultiFab::Copy(temperature,mf,Ncomp,0,1,0);
-    //PlotFileFromMF(mf,outfile);
-    PlotFileFromMF(temperature,outfile);
+    PlotFileFromMF(mf,outfile);
+    //PlotFileFromMF(temperature,outfile);
 
     extern_close();
 
