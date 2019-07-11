@@ -38,6 +38,13 @@
   std::chrono::duration<double> elapsed_seconds_JacFuego;
 */
 
+#pragma omp threadprivate(y,LS,A)
+#pragma omp threadprivate(cvode_mem,data)
+#pragma omp threadprivate(NCELLS)
+#pragma omp threadprivate(iDense_Creact,iJac_Creact,iE_Creact,iverbose)
+#pragma omp threadprivate(rhoe_init,rhoh_init,rhoesrc_ext,rhohsrc_ext,rYsrc)
+#pragma omp threadprivate(FirstTimePrecond,reactor_cvode_initialized,actual_ok_to_react)
+
 /**********************************/
 /* Definitions */
 /* Initialization routine, called once at the begining of the problem */
