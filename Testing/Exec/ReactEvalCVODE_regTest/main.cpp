@@ -14,6 +14,7 @@ using namespace amrex;
 #include <main_F.H>
 #include <PlotFileFromMF.H>
 #include <actual_Creactor.h>
+#include "mechanism.h"
 
 /**********************************/
 int
@@ -28,7 +29,6 @@ main (int   argc,
     std::string pltfile("plt");
     std::string txtfile_in=""; 
     /* CVODE inputs */
-    int cvode_ncells = 1;
     int cvode_iE = 1;
     int ndt = 1; 
     Real dt = 1.e-5; 
@@ -73,11 +73,17 @@ main (int   argc,
     /* take care of probin init to initialize problem */
     int probin_file_length = probin_file.length();
     std::vector<int> probin_file_name(probin_file_length);
+
     for (int i = 0; i < probin_file_length; i++)
 	    probin_file_name[i] = probin_file[i];
+
     extern_init(&(probin_file_name[0]),&probin_file_length, &cvode_iE);
 
+#ifdef _OPENMP
+#pragma omp parallel
+#endif  
     /* Initialize D/CVODE reactor */
+    int cvode_ncells = 1;
     reactor_init(&cvode_iE, &cvode_ncells);
 
     /* make domain and BoxArray */
@@ -100,7 +106,7 @@ main (int   argc,
     }
 
     int Ncomp;
-    get_num_spec(&Ncomp);
+    Ncomp =  NUM_SPECIES;
 
     /* Create MultiFabs with no ghost cells */
     DistributionMapping dm(ba);
@@ -129,12 +135,9 @@ main (int   argc,
     ParmParse ppa("amr");
     ppa.query("plot_file",pltfile);
 
-    /* ADVANCE */
-    int reInit = 1;
-    Real time = 0.0;
-    // not used anyway
-    double pressure = 1013250.0;
-
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
     for ( MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi )
     {
         const Box& box = mfi.tilebox();
@@ -144,44 +147,47 @@ main (int   argc,
 	FArrayBox& FbE    = mfE[mfi];
 	FArrayBox& FbEsrc = rY_source_energy_ext[mfi];
 
+        /* ADVANCE */
+        int reInit = 1;
+        // NOT USED
+        double pressure = 1013250.0;
+
         /* Pack the data */
-	int count_box = 1;
 	// rhoY,T
-	double tmp_vect[cvode_ncells*(Ncomp+1)];
+	double tmp_vect[Ncomp+1];
 	// rhoY_src_ext
-	double tmp_src_vect[cvode_ncells*(Ncomp)];
+	double tmp_src_vect[Ncomp];
 	// rhoE/rhoH
-	double tmp_vect_energy[cvode_ncells];
-	double tmp_src_vect_energy[cvode_ncells];
+	double tmp_vect_energy[1];
+	double tmp_src_vect_energy[1];
 
 	for (BoxIterator bit(box); bit.ok(); ++bit) {
 		/* Fill the vectors */
-		tmp_vect_energy[(count_box-1)] = FbE(bit(),0);
-		tmp_src_vect_energy[(count_box-1)] = FbEsrc(bit(),0);
+		tmp_vect_energy[0]     = FbE(bit(),0);
+		tmp_src_vect_energy[0] = FbEsrc(bit(),0);
 		for (int i=0;i<Ncomp; i++){
-			tmp_vect[(count_box-1)*(Ncomp+1) + i] = Fb(bit(),i);
-			tmp_src_vect[(count_box-1)*(Ncomp) + i] = Fbsrc(bit(),i);
+			tmp_vect[i]     = Fb(bit(),i);
+			tmp_src_vect[i] = Fbsrc(bit(),i);
 		}
-	        tmp_vect[(count_box-1)*(Ncomp+1) + Ncomp] = Fb(bit(), Ncomp);
+	        tmp_vect[Ncomp] = Fb(bit(), Ncomp);
                 /* Solve the problem */
 	        Real time_tmp, dt_incr;
 	        dt_incr =  dt / ndt;
-	        time_tmp = time;
+	        time_tmp = 0.0;
 	        for (int i = 0; i < ndt; ++i) {
 		        react(tmp_vect, tmp_src_vect, 
 				tmp_vect_energy, tmp_src_vect_energy,
 				&pressure, &dt_incr, &time_tmp,
 				&reInit);
 		        // fix new dt_incr to chosen value, hoping cvode will reach it
-		        dt_incr = dt;
-			reInit = 1;
+		        dt_incr = dt / ndt;
 	        }
 
                 /* Unpack the data ? */
 		for (int i=0;i<Ncomp+1; i++){
-			Fb(bit(),i) = tmp_vect[(count_box-1)*(Ncomp+1) + i];
+			Fb(bit(),i) = tmp_vect[i];
 		}
-                //amrex::Abort("FIRST BoxIt");
+		FbE(bit(),0) = tmp_vect_energy[0];
 	}
     }
 
