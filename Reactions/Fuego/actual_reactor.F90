@@ -28,12 +28,13 @@ contains
     use, intrinsic :: iso_c_binding
     use vode_module, only : vode_init
     use extern_probin_module, only : new_Jacobian_each_cell
+    use amrex_omp_module
 
     integer(c_int),  intent(in   ) :: iE_in
     integer(c_int),  intent(in   ), optional :: Ncells
     integer :: neq, verbose, itol, order, maxstep
     real(amrex_real) :: rtol, atol
-    logical :: use_ajac, save_ajac, always_new_j_loc, stiff
+    logical :: use_ajac, save_ajac, always_new_j_loc, stiff, isio
 
     neq = nspec + 1
     verbose = 0
@@ -54,20 +55,21 @@ contains
     call vode_init(neq,verbose,itol,rtol,atol,order,&
          maxstep,use_ajac,save_ajac,always_new_j_loc,stiff)
 
-    if (parallel_IOProcessor()) then
+    isio = parallel_IOProcessor() .and. omp_get_thread_num().eq.0
+    if (isio) then
        print *,"Using good ol' dvode"
        print *,"--> DENSE solver without Analytical J"
        print *,"--> Always new analytical Jac ? ",always_new_j_loc
     endif
     iE = iE_in
     if (iE == 1) then
-       if (parallel_IOProcessor()) print *," ->with internal energy (UV cst)"
+       if (isio) print *," ->with internal energy (UV cst)"
        allocate(rhoydot_ext(nspec))
     else if (iE == 5) then
-       if (parallel_IOProcessor()) print *," ->with enthalpy (HP cst)"
+       if (isio) print *," ->with enthalpy (HP cst)"
        allocate(ydot_ext(nspec))
     else
-       if (parallel_IOProcessor()) print *," ->with enthalpy (sort of rhoP cst)"
+       if (isio) print *," ->with enthalpy (sort of rhoP cst)"
        allocate(rhoydot_ext(nspec))
     end if 
 
