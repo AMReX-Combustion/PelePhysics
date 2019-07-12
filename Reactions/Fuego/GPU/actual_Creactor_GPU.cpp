@@ -1,8 +1,13 @@
 #include <actual_Creactor_GPU.h> 
 #include <AMReX_ParmParse.H>
+
 #include <chemistry_file.H>
+#include <Fuego_EOS.H>
 #include "mechanism.h"
-#include <GPU_misc.H>
+
+#include <AMReX_Gpu.H>
+
+using namespace amrex;
 
 /**********************************/
 /* Infos to print once */
@@ -10,7 +15,6 @@ int reactor_info(const int* cvode_iE,const int* Ncells){
 
 	int mm, ii;
 
-	NEQ = NUM_SPECIES;
         printf("Nb of spec is %d \n", NUM_SPECIES);
 
 	/* Args */
@@ -232,8 +236,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    if(check_flag(&flag, "CVSpilsSetJacTimes", 1)) return(1);
 
 	    /* Set the preconditioner solve and setup functions */
-	    flag = CVodeSetPreconditioner(cvode_mem, Precond, PSolve);
-	    if(check_flag(&flag, "CVSpilsSetPreconditioner", 1)) return(1);
+	    //flag = CVodeSetPreconditioner(cvode_mem, Precond, PSolve);
+	    //if(check_flag(&flag, "CVSpilsSetPreconditioner", 1)) return(1);
 	}
 
         /* Set the max number of time steps */ 
@@ -269,7 +273,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	cudaFree(user_data->csr_row_count_d);
 	cudaFree(user_data->csr_col_index_d);
 	cudaFree(user_data->csr_jac_d);
-	cudaFree(user_data->csr_val_d)
+	cudaFree(user_data->csr_val_d);
 
 	N_VDestroy(atol);          /* Free the atol vector */
 
@@ -299,7 +303,7 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
 	[=] AMREX_GPU_DEVICE () noexcept {
 	        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-		icell < ncells; icell += stride) {
+		icell < udata->ncells_d[0]; icell += stride) {
 		    fKernelSpec(icell, user_data, yvec_d, ydot_d, udata->rhoe_init, 
 				    udata->rhoesrc_ext, udata->rYsrc);    
 		}
@@ -311,6 +315,7 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 }
 
 AMREX_GPU_DEVICE
+inline
 void 
 fKernelSpec(int icell, void *user_data, 
             realtype *yvec_d, realtype *ydot_d,  
@@ -359,7 +364,7 @@ fKernelSpec(int icell, void *user_data,
   /* Fill ydot vect */
   ydot_d[offset + NUM_SPECIES] = rhoesrc_ext[icell];
   for (int i = 0; i < NUM_SPECIES; i++){
-      ydot_d[offset + i]           = cdot[i] * mw[i] + rYs[icell * NUM_SPECIES + i];
+      ydot_d[offset + i]           = cdots_pt[i] * mw[i] + rYs[icell * NUM_SPECIES + i];
       ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES]  - ydot_d[offset + i] * ei_pt[i];
   }
   ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES] /(rho_pt * Cv_pt);

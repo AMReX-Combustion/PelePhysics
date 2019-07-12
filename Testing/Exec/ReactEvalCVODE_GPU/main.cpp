@@ -22,7 +22,19 @@ main (int   argc,
       char* argv[])
 {
     amrex::Initialize(argc,argv);
+
+    BL_PROFILE_VAR("main()", pmain);
+
+    Real timer_tot = amrex::second();
+    Real timer_init = 0.;
+    Real timer_advance = 0.;
+    Real timer_print = 0.;
+    Real timer_print_tmp = 0.;
+
+
     {
+
+    timer_init = amrex::second();
 
     int max_grid_size = 16;
     std::string probin_file="probin";
@@ -67,6 +79,7 @@ main (int   argc,
 
     }
 
+
     if (fuel_name != FUEL_NAME) {
         amrex::Print() << fuel_name << "!=" <<FUEL_NAME << std::endl;
 	amrex::Abort("fuel_name is inconsistent with chosen mechanism");
@@ -88,12 +101,6 @@ main (int   argc,
         amrex::Print() << cvode_iE;
     amrex::Print() << std::endl;
 
-    amrex::Print() << "Integrating 2x1024x2 box for: ";
-        amrex::Print() << dt << " seconds";
-    amrex::Print() << std::endl;
-
-
-    amrex::Print() << std::endl;
 
     /* take care of probin init to initialize problem */
     int probin_file_length = probin_file.length();
@@ -113,7 +120,14 @@ main (int   argc,
     for (int i = 0; i < BL_SPACEDIM; ++i) {
 	npts[i] = 2;
     }
-    //npts[1] = 1024;
+    npts[1] = 512;
+
+    amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
+        amrex::Print() << dt << " seconds";
+    amrex::Print() << std::endl;
+
+
+    amrex::Print() << std::endl;
 
     Box domain(IntVect(D_DECL(0,0,0)),
 	       IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
@@ -157,15 +171,24 @@ main (int   argc,
         amrex::Print() << "Treating box: " << count_mf<< "\n";
     }
 
+    timer_init = amrex::second() - timer_init; 
+
+    timer_print = amrex::second();
+
     std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
     // Specs
     PlotFileFromMF(mf,outfile);
+
+    timer_print = amrex::second() - timer_print;
+
 
      
     ParmParse ppa("amr");
     ppa.query("plot_file",pltfile);
 
     amrex::Print() << " \n STARTING THE ADVANCE \n";
+
+    timer_advance = amrex::second();
 
     for ( MFIter mfi(mf,false); mfi.isValid(); ++mfi )
     {
@@ -178,7 +201,7 @@ main (int   argc,
         double pressure = 1013250.0;
 
         const Box& box = mfi.tilebox();
-	ncells = box.numPts();
+	int ncells = box.numPts();
 
 	FArrayBox& Fb     = mf[mfi];
 	FArrayBox& Fbsrc  = rY_source_ext[mfi];
@@ -237,7 +260,8 @@ main (int   argc,
 	                    fc(i,j,k) = react(tmp_vect, tmp_src_vect,
 		                tmp_vect_energy, tmp_src_vect_energy,
 		                &pressure, &dt_incr, &time,
-				&reInit);
+				&reInit, 
+                                &cvode_iE, &ncells, amrex::Gpu::gpuStream());
 		            dt_incr =  dt/ndt;
 			    reInit = 1;
 			}
@@ -260,14 +284,32 @@ main (int   argc,
 	}
     }
 
+    timer_advance = amrex::second() - timer_advance;
+
+
+    timer_print_tmp = amrex::second();
 
     outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
     // Specs
     PlotFileFromMF(mf,outfile);
+
+    timer_print = amrex::second() - timer_print_tmp + timer_print;
     
     extern_close();
 
     }
+
+    timer_tot = amrex::second() - timer_tot;
+
+    ParallelDescriptor::ReduceRealMax({timer_tot, timer_init, timer_advance, timer_print},
+                                     ParallelDescriptor::IOProcessorNumber());
+
+    amrex::Print() << "Run Time total        = " << timer_tot     << "\n"
+                   << "Run Time init         = " << timer_init    << "\n"
+                   << "Run Time advance      = " << timer_advance << "\n"
+                   << "Run Time print plt    = " << timer_print << "\n";
+
+    BL_PROFILE_VAR_STOP(pmain);
 
     amrex::Finalize();
 

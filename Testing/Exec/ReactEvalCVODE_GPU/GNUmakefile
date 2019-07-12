@@ -23,10 +23,13 @@ PELE_PHYSICS_HOME    := ../../..
 DEFINES  += -DMOD_REACTOR
 
 USE_SUNDIALS_3x4x = TRUE
+
+USE_CUDA_CVODE = TRUE
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
-  Chemistry_Model = drm19
+  #Chemistry_Model = drm19
+  Chemistry_Model = dodecane_wang
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else
