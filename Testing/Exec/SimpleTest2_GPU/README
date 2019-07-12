@@ -1,0 +1,34 @@
+For this test case to run, you need to force the sparse format returned by SPARSITY_PREPROC_PRECOND to be
+a "false" dense format, meaning all entries should be considered.
+For this, if you are using a specific mechanism.cpp, you need to manually
+modify the routines -there are two of them -  SPARSITY_PREPROC_PRECOND this way:
+
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(...)
+{
+    double ...;
+
+    for (...) {  
+        c[k] = ..;
+    } 
+ 
+    ...
+    
+    rowPtr[0] = 1;
+    int nJdata_tmp = 1; 
+    for (int l=0; ... ) {
+        for (int k=0; ... ) {
+            if (k == l) {
+               ...
+            } else {
+--> comment this line //if(J[...] != 0.0) {
+                    colIndx[nJdata_tmp-1] = k+1;
+                    nJdata_tmp = nJdata_tmp + 1;
+--> comment this line //}
+            }
+        }
+    }
+
+}
+
+
+DONT FORGET TO MANUALLY REVERSE YOUR MODIFICATIONS
