@@ -8,18 +8,16 @@
 /* Infos to print once */
 int reactor_info(const int* cvode_iE,const int* Ncells){ 
 
-	int mm, ii, nfit;
-	int NEQ;
+	int mm, ii;
 
-	CKINDX(&mm,&NEQ,&ii,&nfit);
-        printf("Nb of spec is %d \n", NEQ);
+	NEQ = NUM_SPECIES;
+        printf("Nb of spec is %d \n", NUM_SPECIES);
 
 	/* Args */
 	printf("Ncells in one solve is %d\n",*Ncells);
 	printf("Reactor type is %d\n",*cvode_iE);
 
 	/* ParmParse from the inputs file */ 
-	/* Reuse dummy variables mm and ii */
 	amrex::ParmParse pp("ns");
 	pp.query("cvode_iJac",mm);
 	pp.query("cvode_iDense", ii);
@@ -27,6 +25,7 @@ int reactor_info(const int* cvode_iE,const int* Ncells){
         /* User data */
         if ((ii == 99) && (mm == 1)) { 
             printf("Using an Iterative GMRES Solver with sparse simplified preconditioning \n");
+	    amrex::Abort("--> Come again later \n");
 	    int nJdata;
             int HP;
             if (*cvode_iE == 1) {
@@ -36,7 +35,7 @@ int reactor_info(const int* cvode_iE,const int* Ncells){
             }
             /* Precond data */ 
             SPARSITY_INFO_PRECOND(&nJdata,&HP);
-            printf("--> SPARSE Preconditioner -- non zero entries %d represents %f %% fill pattern.\n", nJdata, nJdata/float((NEQ+1) * (NEQ+1)) *100.0);
+            printf("--> SPARSE Preconditioner -- non zero entries %d represents %f %% fill pattern.\n", nJdata, nJdata/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0);
         } else if ((ii == 99) && (mm == 0 )) {
             printf("\n--> Using an Iterative Solver without preconditionning \n");
 	} else {
@@ -75,7 +74,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
         cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
         cudaError_t cudaStat1            = cudaSuccess;
 
-	//CKINDX(&mm,&NEQ,&ii,&nfit);
 	NEQ = NUM_SPECIES;
 
 	/* ParmParse from the inputs file */ 
