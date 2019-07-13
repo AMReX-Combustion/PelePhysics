@@ -29,7 +29,6 @@ int reactor_info(const int* cvode_iE,const int* Ncells){
         /* User data */
         if ((ii == 99) && (mm == 1)) { 
             printf("Using an Iterative GMRES Solver with sparse simplified preconditioning \n");
-	    amrex::Abort("--> Come again later \n");
 	    int nJdata;
             int HP;
             if (*cvode_iE == 1) {
@@ -274,6 +273,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	cudaFree(user_data->csr_col_index_d);
 	cudaFree(user_data->csr_jac_d);
 	cudaFree(user_data->csr_val_d);
+	cudaFree(user_data->buffer_qr)
+	cudaFree(user_data)
 
 	N_VDestroy(atol);          /* Free the atol vector */
 
@@ -371,58 +372,65 @@ fKernelSpec(int icell, void *user_data,
 }
 
 
-//static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
-//               booleantype *jcurPtr, realtype gamma, void *user_data) {
-//
-//        cudaError_t cuda_status = cudaSuccess;
-//        size_t workspaceInBytes, internalDataInBytes;
-//        cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
-//
-//        /* Get Device pointers for Kernel call */
-//        realtype *u_d      = N_VGetDeviceArrayPointer_Cuda(u);
-//        realtype *udot_d   = N_VGetDeviceArrayPointer_Cuda(fu);
-//
-//        // allocate working space 
-//        UserData udata = static_cast<CVodeUserData*>(user_data);
-//        udata->gamma_d = gamma;
-//
-//        if (jok) {
-//            //printf(" jok is OK \n");
-//	    unsigned block = 32;
-//	    unsigned grid = udata->ncells_d[0]/32 + 1;
-//	    fKernelComputeAJ<<<grid,block>>>(user_data, u_d, udot_d,udata->csr_val_d);
-//            //cuda_status = cudaDeviceSynchronize();  
-//            cuda_status = cudaStreamSynchronize(udata->stream);  
-//            assert(cuda_status == cudaSuccess);
-//
-//            *jcurPtr = SUNFALSE;
-//        } else {
-//            //printf(" jok is NOT OK \n");
-//	    unsigned block = 32;
-//	    unsigned grid = udata->ncells_d[0]/32 + 1;
-//	    fKernelComputeAJ<<<grid,block>>>(user_data, u_d, udot_d,udata->csr_val_d);
-//            //cuda_status = cudaDeviceSynchronize();  
-//            cuda_status = cudaStreamSynchronize(udata->stream);  
-//            assert(cuda_status == cudaSuccess);
-//
-//            *jcurPtr = SUNTRUE;
-//        }
-//
-//        cusolver_status = cusolverSpDcsrqrBufferInfoBatched(udata->cusolverHandle,udata->neqs_per_cell[0]+1,udata->neqs_per_cell[0]+1, 
-//                                (udata->NNZ),
-//                                udata->descrA,
-//                                udata->csr_val_d,
-//                                udata->csr_row_count_d,
-//                                udata->csr_col_index_d,
-//                                udata->ncells_d[0],
-//                                udata->info,
-//                                &internalDataInBytes,
-//                                &workspaceInBytes);
-//
-//        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-//
-//	return(0);
-//}
+static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
+               booleantype *jcurPtr, realtype gamma, void *user_data) {
+
+        cudaError_t cuda_status = cudaSuccess;
+        size_t workspaceInBytes, internalDataInBytes;
+        cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
+
+        /* Get Device pointers for Kernel call */
+        realtype *u_d      = N_VGetDeviceArrayPointer_Cuda(u);
+        realtype *udot_d   = N_VGetDeviceArrayPointer_Cuda(fu);
+
+        // allocate working space 
+        UserData udata = static_cast<CVodeUserData*>(user_data);
+        udata->gamma_d = gamma;
+
+        if (jok) {
+	    /* GPU tests */
+            const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
+	    amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+	    [=] AMREX_GPU_DEVICE () noexcept {
+	            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	    	icell < udata->ncells_d[0]; icell += stride) {
+	    	    fKernelComputeAJ(icell, user_data, u_d, udot_d, udata->csr_val_d);
+	    	}
+            }); 
+            cuda_status = cudaStreamSynchronize(udata->stream);  
+            assert(cuda_status == cudaSuccess);
+            *jcurPtr = SUNFALSE;
+        } else {
+            //printf(" jok is NOT OK \n");
+            const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
+	    amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+	    [=] AMREX_GPU_DEVICE () noexcept {
+	            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	    	icell < udata->ncells_d[0]; icell += stride) {
+	    	    fKernelComputeAJ(icell, user_data, u_d, udot_d, udata->csr_val_d);
+	    	}
+            }); 
+            //cuda_status = cudaDeviceSynchronize();  
+            cuda_status = cudaStreamSynchronize(udata->stream);  
+            assert(cuda_status == cudaSuccess);
+            *jcurPtr = SUNTRUE;
+        }
+
+        cusolver_status = cusolverSpDcsrqrBufferInfoBatched(udata->cusolverHandle,udata->neqs_per_cell[0]+1,udata->neqs_per_cell[0]+1, 
+                                (udata->NNZ),
+                                udata->descrA,
+                                udata->csr_val_d,
+                                udata->csr_row_count_d,
+                                udata->csr_col_index_d,
+                                udata->ncells_d[0],
+                                udata->info,
+                                &internalDataInBytes,
+                                &workspaceInBytes);
+
+        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+
+	return(0);
+}
 //
 //
 //
@@ -496,32 +504,55 @@ fKernelSpec(int icell, void *user_data,
 /*
  * CUDA kernels
  */
-//__global__ void fKernelComputeAJ(void *user_data, realtype *u_d, realtype *udot_d, double * csr_val_arg)
-//{
-//  UserData udata = static_cast<CVodeUserData*>(user_data);
-//
-//  int tid = blockDim.x * blockIdx.x + threadIdx.x;
-//          
-//  if (tid < udata->ncells_d[0]) {
-//      /* local tmp vars */
-//      realtype activity[21];
-//      realtype molecular_weight[21];
-//      realtype temp;
-//      realtype Jmat[484];
-//
-//      /* offsets */
-//      int u_offset = tid * (udata->neqs_per_cell[0] + 1); 
-//      int jac_offset = tid * udata->NNZ;
-//      realtype* u_curr = u_d + u_offset;
-//      //realtype* csr_jac_cell = udata->csr_jac_d + jac_offset;
-//      //realtype* csr_val_cell = udata->csr_val_d + jac_offset;
-//      realtype* csr_jac_cell = udata->csr_jac_d + jac_offset;
-//      realtype* csr_val_cell = csr_val_arg + jac_offset;
-//
-//      /* MW CGS */
-//      molecularWeight_d(molecular_weight);
-//      /* temp */
-//      temp = u_curr[udata->neqs_per_cell[0]];
+AMREX_GPU_DEVICE
+inline
+void 
+fKernelComputeAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, double * csr_val_arg)
+{
+  UserData udata = static_cast<CVodeUserData*>(user_data);
+
+  EOS eos;
+
+  amrex::Real mw[NUM_SPECIES];
+  amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac;
+  amrex::GpuArray<amrex::Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
+  amrex::Real Cv_pt, rho_pt, temp_pt, nrg_pt;
+
+  int u_offset   = icell * (NUM_SPECIES + 1); 
+  int jac_offset = icell * (udata->NNZ); 
+
+  realtype* u_curr = u_d + u_offset;
+  realtype* csr_jac_cell = udata->csr_jac_d + jac_offset;
+  realtype* csr_val_cell = csr_val_arg + jac_offset;
+  
+  /* MW CGS */
+  get_mw(mw);
+
+  ///* rho */ 
+  //rho_pt = 0.0;
+  //for (int n = 0; n < NUM_SPECIES; n++) {
+  //    rho_pt = rho_pt + yvec_d[offset + n];
+  //}
+
+  ///* Yks, C CGS*/
+  //for (int i = 0; i < NUM_SPECIES; i++){
+  //    massfrac[i] = yvec_d[offset + i] / rho_pt;
+  //}
+
+  ///* NRG CGS */
+  //nrg_pt = (rhoe_init[icell] + rhoesrc_ext[icell]*(udata->dt_save)) /rho_pt;
+
+  /* temp */
+  temp_pt = u_curr[NUM_SPECIES];
+  //eos.eos_EY2T(massfrac.arr, nrg_pt, temp_pt);
+
+  ///* Additional var needed */
+  ///* TODO HP */
+  //eos.eos_T2EI(temp_pt, ei_pt.arr);
+  //eos.eos_TY2Cv(temp_pt, massfrac.arr, &Cv_pt);
+
+  //eos.eos_RTY2W(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
+
 //      /* Yks, C CGS*/
 //      for (int i = 0; i < udata->neqs_per_cell[0]; i++){
 //          activity[i] = u_d[i]/(molecular_weight[i]);

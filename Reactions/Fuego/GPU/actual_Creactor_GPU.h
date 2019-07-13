@@ -112,7 +112,10 @@ fKernelSpec(int ncells, void *user_data,
 //                                          const int size, const int nnz, 
 //                                          const int nbatched);
 
-//__global__ void fKernelComputeAJ(void *user_data, realtype *u_d, realtype *udot_d, realtype *csr_val);
+AMREX_GPU_DEVICE
+inline
+void 
+fKernelComputeAJ(int ncells, void *user_data, realtype *u_d, realtype *udot_d, realtype *csr_val);
 
 //__global__ void fKernelFillJB(void *user_data, realtype *gamma);
 
