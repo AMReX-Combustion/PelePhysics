@@ -8,6 +8,7 @@
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
 #include "mechanism.h"
+#include <GPU_misc.H>
 
 using namespace amrex;
 
@@ -190,102 +191,106 @@ main (int   argc,
 
     timer_advance = amrex::second();
 
+
     for ( MFIter mfi(mf,false); mfi.isValid(); ++mfi )
     {
+        std::cout<<"stream "<<amrex::Gpu::gpuStream()<<std::endl;
 	/* Prints to follow the computation */
-        /* ADVANCE */
+        /* ADVANCE -->same thing should all be def for all MFiter: outside of LOOP ?? */
         Real time = 0.0;
         int reInit = 1;
         Real dt_incr   = dt/ndt;
+        amrex::Real fc_pt;
         // not used anyway
         double pressure = 1013250.0;
 
-        const Box& box = mfi.tilebox();
-	int ncells = box.numPts();
+        cudaError_t cuda_status = cudaSuccess;
 
-	FArrayBox& Fb     = mf[mfi];
-	FArrayBox& Fbsrc  = rY_source_ext[mfi];
-	FArrayBox& FbE    = mfE[mfi];
-	FArrayBox& FbEsrc = rY_source_energy_ext[mfi];
-	FArrayBox& Fct    = fctCount[mfi];
+        const Box& box = mfi.tilebox();
+	int ncells     = box.numPts();
 
 	const auto len     = amrex::length(box);
 	const auto lo      = amrex::lbound(box);
 
-	const auto rhoY    = Fb.view(lo);
-	const auto rhoE    = FbE.view(lo);
-	const auto frcExt  = Fbsrc.view(lo); 
-	const auto frcEExt = FbEsrc.view(lo);
-	const auto fc      = Fct.view(lo); 
+        const auto ec = Gpu::ExecutionConfig(ncells);
 
-        /* Pack the data */
+        /* VERSION 2 */
+        const auto rhoY    = mf.array(mfi);
+        const auto rhoE    = mfE.array(mfi);
+        const auto frcExt  = rY_source_ext.array(mfi);
+        const auto frcEExt = rY_source_energy_ext.array(mfi);
+        const auto fc      = fctCount.array(mfi);
+
+
+        /* Pack the data NEED THOSE TO BE DEF ALWAYS */
 	// rhoY,T
-	double tmp_vect[ncells*(Ncomp+1)];
+        amrex::Real *tmp_vect; 
 	// rhoY_src_ext
-	double tmp_src_vect[ncells*(Ncomp)];
+        amrex::Real *tmp_src_vect;
 	// rhoE/rhoH
-	double tmp_vect_energy[ncells];
-	double tmp_src_vect_energy[ncells];
+        amrex::Real *tmp_vect_energy;
+	amrex::Real *tmp_src_vect_energy;
 
-	int indx_i[ncells];
-	int indx_j[ncells];
-	int indx_k[ncells];
-	
-	int nc = 0;
-	int num_cell_cvode_int = 0;
-	for         (int k = 0; k < len.z; ++k) {
-	    for         (int j = 0; j < len.y; ++j) {
-	        for         (int i = 0; i < len.x; ++i) {
-		    /* Fill the vectors */
-	            for (int sp=0;sp<Ncomp; sp++){
-	                tmp_vect[nc*(Ncomp+1) + sp]   = rhoY(i,j,k,sp);
-		        tmp_src_vect[nc*Ncomp + sp]   = frcExt(i,j,k,sp);
-		    }
-		    tmp_vect[nc*(Ncomp+1) + Ncomp]    = rhoY(i,j,k,Ncomp);
-		    tmp_vect_energy[nc]               = rhoE(i,j,k,0);
-		    tmp_src_vect_energy[nc]           = frcEExt(i,j,k,0);
-		    //
-		    indx_i[nc] = i;
-		    indx_j[nc] = j;
-		    indx_k[nc] = k;
-		    //
-		    nc = nc+1;
-		    //
-		    num_cell_cvode_int = num_cell_cvode_int + 1;
-		    if (nc == ncells) {
-			time = 0.0;
-			dt_incr =  dt/ndt;
-                        reInit = 1;
-			for (int ii = 0; ii < ndt; ++ii) {
-	                    fc(i,j,k) = react(tmp_vect, tmp_src_vect,
-		                tmp_vect_energy, tmp_src_vect_energy,
-		                &pressure, &dt_incr, &time,
-				&reInit, 
-                                &cvode_iE, &ncells, amrex::Gpu::gpuStream());
-		            dt_incr =  dt/ndt;
-			    reInit = 1;
-			}
-		        nc = 0;
-		        for (int l = 0; l < ncells ; ++l){
-		            for (int sp=0;sp<Ncomp; sp++){
-		                rhoY(indx_i[l],indx_j[l],indx_k[l],sp) = tmp_vect[l*(Ncomp+1) + sp];
-		            }
-		            rhoY(indx_i[l],indx_j[l],indx_k[l],Ncomp)  = tmp_vect[l*(Ncomp+1) + Ncomp];
-		            rhoE(indx_i[l],indx_j[l],indx_k[l],0)      = tmp_vect_energy[l];
-		        }
-		    }
-		}
-	    }
-	}
-	if (nc != 0) {
-		printf(" WARNING !! Not enough cells (%d) to fill %d \n", nc, ncells);
-	} else {
-		printf(" Integrated %d cells \n",num_cell_cvode_int);
-	}
+        cudaMallocManaged(&tmp_vect, (Ncomp+1)*ncells*sizeof(amrex::Real));
+        cudaMallocManaged(&tmp_src_vect, Ncomp*ncells*sizeof(amrex::Real));
+        cudaMallocManaged(&tmp_vect_energy, ncells*sizeof(amrex::Real));
+        cudaMallocManaged(&tmp_src_vect_energy, ncells*sizeof(amrex::Real));
+
+        /* Packing of data */
+        /* SECOND VERSION */
+	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+	[=] AMREX_GPU_DEVICE () noexcept {
+	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	        icell < ncells; icell += stride) {
+	        int k =  icell /   (len.x*len.y);
+		int j = (icell - k*(len.x*len.y)) /   len.x;
+		int i = (icell - k*(len.x*len.y)) - j*len.x;
+		i += lo.x;
+		j += lo.y;
+		k += lo.z;
+                gpu_flatten(icell, i, j, k, rhoY, frcExt, rhoE, frcEExt, 
+                                            tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
+            }
+        });
+        
+
+        /* Solve */
+	time = 0.0;
+	for (int ii = 0; ii < ndt; ++ii) {
+	    fc_pt = react(tmp_vect, tmp_src_vect,
+	                    tmp_vect_energy, tmp_src_vect_energy,
+	                    &pressure, &dt_incr, &time,
+	    		    &reInit, 
+                            &cvode_iE, &ncells, amrex::Gpu::gpuStream());
+	    dt_incr =  dt/ndt;
+        }
+
+        /* Unpacking of data */
+	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+	[=] AMREX_GPU_DEVICE () noexcept {
+	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	        icell < ncells; icell += stride) {
+	        int k =  icell /   (len.x*len.y);
+		int j = (icell - k*(len.x*len.y)) /   len.x;
+		int i = (icell - k*(len.x*len.y)) - j*len.x;
+		i += lo.x;
+		j += lo.y;
+		k += lo.z;
+                gpu_unflatten(icell, i, j, k, rhoY, rhoE, 
+                                            tmp_vect, tmp_vect_energy);
+            }
+        });
+
+        cudaFree(tmp_vect);
+        cudaFree(tmp_src_vect);
+        cudaFree(tmp_vect_energy);
+        cudaFree(tmp_src_vect_energy);
+       
+        cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
+
     }
 
     timer_advance = amrex::second() - timer_advance;
-
 
     timer_print_tmp = amrex::second();
 
