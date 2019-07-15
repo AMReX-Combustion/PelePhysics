@@ -171,6 +171,20 @@ module fuego_chemistry
             real(amrex_real), intent(inout) :: hms(*)
         end subroutine
 
+        subroutine cksms(T,sms) bind(c,name='CKSMS') 
+            use amrex_fort_module, only : amrex_real
+            real(amrex_real), intent(in   ) :: T
+            real(amrex_real), intent(inout) :: sms(*)
+        end subroutine
+
+        subroutine get_critparams(Tci,ai,bi,acentric_i) bind(c,name='GET_CRITPARAMS') 
+            use amrex_fort_module, only : amrex_real
+            real(amrex_real), intent(inout   ) :: Tci(*)
+            real(amrex_real), intent(inout   ) :: ai(*)
+            real(amrex_real), intent(inout   ) :: bi(*)
+            real(amrex_real), intent(inout   ) :: acentric_i(*)
+        end subroutine
+
         subroutine ckhbms(T,y,hbms) bind(c,name='CKHBMS') 
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(in   ) :: T
