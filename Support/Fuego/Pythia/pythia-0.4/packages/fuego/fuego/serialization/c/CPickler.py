@@ -382,7 +382,7 @@ class CPickler(CMill):
         self._write('double *low_A_d, *low_beta_d, *low_Ea_d;' )
         self._write('double *rev_A_d, *rev_beta_d, *rev_Ea_d;') 
         self._write('double *troe_a_d,*troe_Ts_d, *troe_Tss_d, *troe_Tsss_d;') 
-        self._write('double *sri_a_d, *sri_b_d, *sri_c_d, *sri_d_d, *sri_e_d;')
+        ##self._write('double *sri_a_d, *sri_b_d, *sri_c_d, *sri_d_d, *sri_e_d;')
         self._write('double *activation_units_d, *prefactor_units_d, *phase_units_d;')
         self._write('int *is_PD_d, *troe_len_d, *sri_len_d, *nTB_d, **TBid_d;')
         self._write('double **TB_d;')
