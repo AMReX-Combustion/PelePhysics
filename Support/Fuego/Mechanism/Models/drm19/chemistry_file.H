@@ -31,9 +31,10 @@ AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  speciesConc, d
 AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);
 void CKINIT();
 void CKFINALIZE();
-#ifndef AMREX_USE_CUDA
 void GET_REACTION_MAP(int *  rmap);
 void SetAllDefaults();
+#ifdef AMREX_USE_CUDA
+void AllocateOnDevice();
 #endif
 void CKINDX(int * mm, int * kk, int * ii, int * nfit );
 void CKXNUM(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);
@@ -166,7 +167,6 @@ void egtransetCOFD(double* COFD);
 void egtransetKTDIF(int* KTDIF);
 }
 
-#ifndef AMREX_USE_CUDA
 namespace thermo
 {
 
@@ -187,6 +187,16 @@ namespace thermo
     extern double activation_units_DEF[84], prefactor_units_DEF[84], phase_units_DEF[84];
     extern int is_PD_DEF[84], troe_len_DEF[84], sri_len_DEF[84], nTB_DEF[84], *TBid_DEF[84];
     extern double *TB_DEF[84];
+
     extern std::vector<int> rxn_map;
+
+    #ifdef AMREX_USE_CUDA
+    extern double *fwd_A_d, *fwd_beta_d, *fwd_Ea_d;
+    extern double *low_A_d, *low_beta_d, *low_Ea_d;
+    extern double *rev_A_d, *rev_beta_d, *rev_Ea_d;
+    extern double *troe_a_d,*troe_Ts_d, *troe_Tss_d, *troe_Tsss_d;
+    extern double *activation_units_d, *prefactor_units_d, *phase_units_d;
+    extern int *is_PD_d, *troe_len_d, *sri_len_d, *nTB_d, **TBid_d;
+    extern double **TB_d;
+    #endif
 }
-#endif

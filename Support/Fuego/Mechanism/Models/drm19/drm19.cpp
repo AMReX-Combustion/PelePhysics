@@ -1,6 +1,5 @@
 #include "chemistry_file.H"
 
-#ifndef AMREX_USE_CUDA
 namespace thermo
 {
     /* Inverse molecular weights */
@@ -22,10 +21,20 @@ namespace thermo
     int is_PD_DEF[84], troe_len_DEF[84], sri_len_DEF[84], nTB_DEF[84], *TBid_DEF[84];
     double *TB_DEF[84];
     std::vector<int> rxn_map;
+
+#ifdef AMREX_USE_CUDA
+    double *fwd_A_d, *fwd_beta_d, *fwd_Ea_d;
+    double *low_A_d, *low_beta_d, *low_Ea_d;
+    double *rev_A_d, *rev_beta_d, *rev_Ea_d;
+    double *troe_a_d,*troe_Ts_d, *troe_Tss_d, *troe_Tsss_d;
+    double *sri_a_d, *sri_b_d, *sri_c_d, *sri_d_d, *sri_e_d;
+    double *activation_units_d, *prefactor_units_d, *phase_units_d;
+    int *is_PD_d, *troe_len_d, *sri_len_d, *nTB_d, **TBid_d;
+    double **TB_d;
+#endif
 };
 
 using namespace thermo;
-#endif
 
 /* Inverse molecular weights */
 /* TODO: check necessity on CPU */
@@ -89,7 +98,6 @@ void get_mw(double mw_new[]){
 }
 
 
-#ifndef AMREX_USE_CUDA
 /* Initializes parameter database */
 void CKINIT()
 {
@@ -1123,6 +1131,9 @@ void CKINIT()
     nTB[83] = 0;
 
     SetAllDefaults();
+#ifdef AMREX_USE_CUDA
+    AllocateOnDevice();
+#endif
 }
 
 void GET_REACTION_MAP(int *rmap)
@@ -1314,16 +1325,84 @@ void CKFINALIZE()
   }
 }
 
-#else
-/* TODO: Remove on GPU, right now needed by chemistry_module on FORTRAN */
-void CKINIT()
+#ifdef AMREX_USE_CUDA
+void AllocateOnDevice()
 {
-}
+/*Allocation */
+    cudaMalloc((void**)&fwd_A_d, sizeof(double) * 84);
+    cudaMalloc((void**)&fwd_beta_d, sizeof(double) * 84);
+    cudaMalloc((void**)&fwd_Ea_d, sizeof(double) * 84);
+    cudaMalloc((void**)&low_A_d, sizeof(double) * 84);
+    cudaMalloc((void**)&low_beta_d, sizeof(double) * 84);
+    cudaMalloc((void**)&low_Ea_d, sizeof(double) * 84);
+    cudaMalloc((void**)&rev_A_d, sizeof(double) * 84);
+    cudaMalloc((void**)&rev_beta_d, sizeof(double) * 84);
+    cudaMalloc((void**)&rev_Ea_d, sizeof(double) * 84);
+    cudaMalloc((void**)&troe_a_d, sizeof(double) * 84);
+    cudaMalloc((void**)&troe_Ts_d, sizeof(double) * 84);
+    cudaMalloc((void**)&troe_Tss_d, sizeof(double) * 84);
+    cudaMalloc((void**)&troe_Tsss_d, sizeof(double) * 84);
+    cudaMalloc((void**)&troe_Tsss_d, sizeof(double) * 84);
+    cudaMalloc((void**)&activation_units_d, sizeof(double) * 84);
+    cudaMalloc((void**)&prefactor_units_d, sizeof(double) * 84);
+    cudaMalloc((void**)&phase_units_d, sizeof(double) * 84);
+    cudaMalloc((void**)&is_PD_d, sizeof(int) * 84);
+    cudaMalloc((void**)&troe_len_d, sizeof(int) * 84);
+    cudaMalloc((void**)&sri_len_d, sizeof(int) * 84);
+    cudaMalloc((void**)&nTB_d, sizeof(int) * 84);
+    cudaMalloc((void**)&TBid_d, sizeof(int*) * 84);
+    cudaMalloc((void**)&TB_d, sizeof(double*) * 84);
 
-void CKFINALIZE()
-{
+/*Fill */
+    cudaMemcpyAsync(fwd_A_d, fwd_A, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(fwd_beta_d, fwd_beta, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(fwd_Ea_d, fwd_Ea, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(low_A_d, low_A, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(low_beta_d, low_beta, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(low_Ea_d, low_Ea, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(rev_A_d, rev_A, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(rev_beta_d, rev_beta, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(rev_Ea_d, rev_Ea, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(troe_a_d, troe_a, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(troe_Ts_d, troe_Ts, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(troe_Tss_d, troe_Tss, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(troe_Tsss_d, troe_Tsss, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(activation_units_d, activation_units, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(prefactor_units_d, prefactor_units, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(phase_units_d, phase_units, sizeof(double) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(is_PD_d, is_PD, sizeof(int) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(troe_len_d, troe_len, sizeof(int) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(sri_len_d, sri_len, sizeof(int) * 84, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(nTB_d, nTB, sizeof(int) * 84, cudaMemcpyHostToDevice);
+    cudaMalloc((void**)&TB_d, sizeof(double) * 7)
+    cudaMemcpyAsync(TBid_d[0], TBid[0], sizeof(double) * 7, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 7)
+    cudaMemcpyAsync(TBid_d[1], TBid[1], sizeof(double) * 7, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 7)
+    cudaMemcpyAsync(TBid_d[2], TBid[2], sizeof(double) * 7, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 6)
+    cudaMemcpyAsync(TBid_d[3], TBid[3], sizeof(double) * 6, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 7)
+    cudaMemcpyAsync(TBid_d[4], TBid[4], sizeof(double) * 7, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 7)
+    cudaMemcpyAsync(TBid_d[5], TBid[5], sizeof(double) * 7, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 7)
+    cudaMemcpyAsync(TBid_d[6], TBid[6], sizeof(double) * 7, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 7)
+    cudaMemcpyAsync(TBid_d[7], TBid[7], sizeof(double) * 7, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 7)
+    cudaMemcpyAsync(TBid_d[8], TBid[8], sizeof(double) * 7, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 8)
+    cudaMemcpyAsync(TBid_d[9], TBid[9], sizeof(double) * 8, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 7)
+    cudaMemcpyAsync(TBid_d[10], TBid[10], sizeof(double) * 7, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 6)
+    cudaMemcpyAsync(TBid_d[11], TBid[11], sizeof(double) * 6, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 5)
+    cudaMemcpyAsync(TBid_d[12], TBid[12], sizeof(double) * 5, cudaMemcpyHostToDevice)
+    cudaMalloc((void**)&TB_d, sizeof(double) * 6)
+    cudaMemcpyAsync(TBid_d[13], TBid[13], sizeof(double) * 6, cudaMemcpyHostToDevice)
 }
-
 #endif
 
 
@@ -28342,157 +28421,157 @@ void egtransetWT(double* WT ) {
 
 /*the lennard-jones potential well depth eps/kb in K */
 void egtransetEPS(double* EPS ) {
-    EPS[7] = 1.44000000E+02;
-    EPS[14] = 4.98000000E+02;
-    EPS[0] = 3.80000000E+01;
-    EPS[17] = 2.52300000E+02;
-    EPS[11] = 9.81000000E+01;
+    EPS[4] = 8.00000000E+01;
+    EPS[10] = 1.41400000E+02;
     EPS[3] = 1.07400000E+02;
     EPS[15] = 4.17000000E+02;
-    EPS[5] = 5.72400000E+02;
-    EPS[16] = 2.80800000E+02;
     EPS[2] = 8.00000000E+01;
+    EPS[18] = 2.52300000E+02;
+    EPS[9] = 1.44000000E+02;
+    EPS[11] = 9.81000000E+01;
+    EPS[14] = 4.98000000E+02;
+    EPS[8] = 1.44000000E+02;
+    EPS[12] = 2.44000000E+02;
+    EPS[17] = 2.52300000E+02;
+    EPS[13] = 4.98000000E+02;
     EPS[20] = 1.36500000E+02;
     EPS[6] = 1.07400000E+02;
-    EPS[12] = 2.44000000E+02;
-    EPS[10] = 1.41400000E+02;
-    EPS[4] = 8.00000000E+01;
-    EPS[18] = 2.52300000E+02;
-    EPS[13] = 4.98000000E+02;
-    EPS[19] = 9.75300000E+01;
     EPS[1] = 1.45000000E+02;
-    EPS[9] = 1.44000000E+02;
-    EPS[8] = 1.44000000E+02;
+    EPS[16] = 2.80800000E+02;
+    EPS[7] = 1.44000000E+02;
+    EPS[0] = 3.80000000E+01;
+    EPS[19] = 9.75300000E+01;
+    EPS[5] = 5.72400000E+02;
 }
 
 
 /*the lennard-jones collision diameter in Angstroms */
 void egtransetSIG(double* SIG ) {
-    SIG[7] = 3.80000000E+00;
-    SIG[14] = 3.59000000E+00;
-    SIG[0] = 2.92000000E+00;
-    SIG[17] = 4.30200000E+00;
-    SIG[11] = 3.65000000E+00;
+    SIG[4] = 2.75000000E+00;
+    SIG[10] = 3.74600000E+00;
     SIG[3] = 3.45800000E+00;
     SIG[15] = 3.69000000E+00;
-    SIG[5] = 2.60500000E+00;
-    SIG[16] = 3.97100000E+00;
     SIG[2] = 2.75000000E+00;
+    SIG[18] = 4.30200000E+00;
+    SIG[9] = 3.80000000E+00;
+    SIG[11] = 3.65000000E+00;
+    SIG[14] = 3.59000000E+00;
+    SIG[8] = 3.80000000E+00;
+    SIG[12] = 3.76300000E+00;
+    SIG[17] = 4.30200000E+00;
+    SIG[13] = 3.59000000E+00;
     SIG[20] = 3.33000000E+00;
     SIG[6] = 3.45800000E+00;
-    SIG[12] = 3.76300000E+00;
-    SIG[10] = 3.74600000E+00;
-    SIG[4] = 2.75000000E+00;
-    SIG[18] = 4.30200000E+00;
-    SIG[13] = 3.59000000E+00;
-    SIG[19] = 3.62100000E+00;
     SIG[1] = 2.05000000E+00;
-    SIG[9] = 3.80000000E+00;
-    SIG[8] = 3.80000000E+00;
+    SIG[16] = 3.97100000E+00;
+    SIG[7] = 3.80000000E+00;
+    SIG[0] = 2.92000000E+00;
+    SIG[19] = 3.62100000E+00;
+    SIG[5] = 2.60500000E+00;
 }
 
 
 /*the dipole moment in Debye */
 void egtransetDIP(double* DIP ) {
-    DIP[7] = 0.00000000E+00;
-    DIP[14] = 0.00000000E+00;
-    DIP[0] = 0.00000000E+00;
-    DIP[17] = 0.00000000E+00;
-    DIP[11] = 0.00000000E+00;
+    DIP[4] = 0.00000000E+00;
+    DIP[10] = 0.00000000E+00;
     DIP[3] = 0.00000000E+00;
     DIP[15] = 1.70000000E+00;
-    DIP[5] = 1.84400000E+00;
-    DIP[16] = 0.00000000E+00;
     DIP[2] = 0.00000000E+00;
+    DIP[18] = 0.00000000E+00;
+    DIP[9] = 0.00000000E+00;
+    DIP[11] = 0.00000000E+00;
+    DIP[14] = 0.00000000E+00;
+    DIP[8] = 0.00000000E+00;
+    DIP[12] = 0.00000000E+00;
+    DIP[17] = 0.00000000E+00;
+    DIP[13] = 0.00000000E+00;
     DIP[20] = 0.00000000E+00;
     DIP[6] = 0.00000000E+00;
-    DIP[12] = 0.00000000E+00;
-    DIP[10] = 0.00000000E+00;
-    DIP[4] = 0.00000000E+00;
-    DIP[18] = 0.00000000E+00;
-    DIP[13] = 0.00000000E+00;
-    DIP[19] = 0.00000000E+00;
     DIP[1] = 0.00000000E+00;
-    DIP[9] = 0.00000000E+00;
-    DIP[8] = 0.00000000E+00;
+    DIP[16] = 0.00000000E+00;
+    DIP[7] = 0.00000000E+00;
+    DIP[0] = 0.00000000E+00;
+    DIP[19] = 0.00000000E+00;
+    DIP[5] = 1.84400000E+00;
 }
 
 
 /*the polarizability in cubic Angstroms */
 void egtransetPOL(double* POL ) {
-    POL[7] = 0.00000000E+00;
-    POL[14] = 0.00000000E+00;
-    POL[0] = 7.90000000E-01;
-    POL[17] = 0.00000000E+00;
-    POL[11] = 1.95000000E+00;
+    POL[4] = 0.00000000E+00;
+    POL[10] = 2.60000000E+00;
     POL[3] = 1.60000000E+00;
     POL[15] = 0.00000000E+00;
-    POL[5] = 0.00000000E+00;
-    POL[16] = 0.00000000E+00;
     POL[2] = 0.00000000E+00;
+    POL[18] = 0.00000000E+00;
+    POL[9] = 0.00000000E+00;
+    POL[11] = 1.95000000E+00;
+    POL[14] = 0.00000000E+00;
+    POL[8] = 0.00000000E+00;
+    POL[12] = 2.65000000E+00;
+    POL[17] = 0.00000000E+00;
+    POL[13] = 0.00000000E+00;
     POL[20] = 0.00000000E+00;
     POL[6] = 0.00000000E+00;
-    POL[12] = 2.65000000E+00;
-    POL[10] = 2.60000000E+00;
-    POL[4] = 0.00000000E+00;
-    POL[18] = 0.00000000E+00;
-    POL[13] = 0.00000000E+00;
-    POL[19] = 1.76000000E+00;
     POL[1] = 0.00000000E+00;
-    POL[9] = 0.00000000E+00;
-    POL[8] = 0.00000000E+00;
+    POL[16] = 0.00000000E+00;
+    POL[7] = 0.00000000E+00;
+    POL[0] = 7.90000000E-01;
+    POL[19] = 1.76000000E+00;
+    POL[5] = 0.00000000E+00;
 }
 
 
 /*the rotational relaxation collision number at 298 K */
 void egtransetZROT(double* ZROT ) {
-    ZROT[7] = 0.00000000E+00;
-    ZROT[14] = 2.00000000E+00;
-    ZROT[0] = 2.80000000E+02;
-    ZROT[17] = 1.50000000E+00;
-    ZROT[11] = 1.80000000E+00;
+    ZROT[4] = 0.00000000E+00;
+    ZROT[10] = 1.30000000E+01;
     ZROT[3] = 3.80000000E+00;
     ZROT[15] = 2.00000000E+00;
-    ZROT[5] = 4.00000000E+00;
-    ZROT[16] = 1.50000000E+00;
     ZROT[2] = 0.00000000E+00;
+    ZROT[18] = 1.50000000E+00;
+    ZROT[9] = 0.00000000E+00;
+    ZROT[11] = 1.80000000E+00;
+    ZROT[14] = 2.00000000E+00;
+    ZROT[8] = 0.00000000E+00;
+    ZROT[12] = 2.10000000E+00;
+    ZROT[17] = 1.50000000E+00;
+    ZROT[13] = 0.00000000E+00;
     ZROT[20] = 0.00000000E+00;
     ZROT[6] = 1.00000000E+00;
-    ZROT[12] = 2.10000000E+00;
-    ZROT[10] = 1.30000000E+01;
-    ZROT[4] = 0.00000000E+00;
-    ZROT[18] = 1.50000000E+00;
-    ZROT[13] = 0.00000000E+00;
-    ZROT[19] = 4.00000000E+00;
     ZROT[1] = 0.00000000E+00;
-    ZROT[9] = 0.00000000E+00;
-    ZROT[8] = 0.00000000E+00;
+    ZROT[16] = 1.50000000E+00;
+    ZROT[7] = 0.00000000E+00;
+    ZROT[0] = 2.80000000E+02;
+    ZROT[19] = 4.00000000E+00;
+    ZROT[5] = 4.00000000E+00;
 }
 
 
 /*0: monoatomic, 1: linear, 2: nonlinear */
 void egtransetNLIN(int* NLIN) {
-    NLIN[7] = 1;
-    NLIN[14] = 2;
-    NLIN[0] = 1;
-    NLIN[17] = 2;
-    NLIN[11] = 1;
+    NLIN[4] = 1;
+    NLIN[10] = 2;
     NLIN[3] = 1;
     NLIN[15] = 2;
-    NLIN[5] = 2;
-    NLIN[16] = 2;
     NLIN[2] = 0;
+    NLIN[18] = 2;
+    NLIN[9] = 1;
+    NLIN[11] = 1;
+    NLIN[14] = 2;
+    NLIN[8] = 1;
+    NLIN[12] = 1;
+    NLIN[17] = 2;
+    NLIN[13] = 2;
     NLIN[20] = 0;
     NLIN[6] = 2;
-    NLIN[12] = 1;
-    NLIN[10] = 2;
-    NLIN[4] = 1;
-    NLIN[18] = 2;
-    NLIN[13] = 2;
-    NLIN[19] = 1;
     NLIN[1] = 0;
-    NLIN[9] = 1;
-    NLIN[8] = 1;
+    NLIN[16] = 2;
+    NLIN[7] = 1;
+    NLIN[0] = 1;
+    NLIN[19] = 1;
+    NLIN[5] = 2;
 }
 
 
