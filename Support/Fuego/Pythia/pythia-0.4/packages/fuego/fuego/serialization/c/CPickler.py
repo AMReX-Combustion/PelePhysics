@@ -838,7 +838,11 @@ class CPickler(CMill):
 
     def _includes_chop(self):
         self._rep += [
-            '#include "chemistry_file.H"'
+            '#include "chemistry_file.H"',
+            '#ifdef AMREX_USE_CUDA',
+            '#include <cuda.h>',
+            '#include <cuda_runtime.h>',
+            '#endif'
             ]
         return
 
@@ -2234,8 +2238,11 @@ class CPickler(CMill):
             if thirdBody:
                 efficiencies = reaction.efficiencies
                 if (len(efficiencies) > 1):
+                    self._write()
                     self._write("cudaMalloc((void**)&TB_d, sizeof(double) * %d);" % (len(efficiencies)))
-                    self._write("cudaMemcpyAsync(TBid_d[%d], TBid[%d], sizeof(double) * %d, cudaMemcpyHostToDevice);" %(id,id,len(efficiencies)))
+                    self._write("cudaMalloc((void**)&TBid_d, sizeof(int) * %d);" % (len(efficiencies)))
+                    self._write("cudaMemcpyAsync(TBid_d[%d], TBid[%d], sizeof(int) * %d, cudaMemcpyHostToDevice);" %(id,id,len(efficiencies)))
+                    self._write("cudaMemcpyAsync(TB_d[%d], TB[%d], sizeof(double) * %d, cudaMemcpyHostToDevice);" %(id,id,len(efficiencies)))
 
         self._outdent()
         self._write("}")
