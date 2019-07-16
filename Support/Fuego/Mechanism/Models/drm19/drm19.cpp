@@ -1,5 +1,9 @@
 #include "chemistry_file.H"
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
+
 namespace thermo
 {
     /* Inverse molecular weights */
@@ -7951,6 +7955,15 @@ void comp_k_f(double *  tc, double invT, double *  k_f)
     };
     return;
 }
+
+#ifdef AMREX_USE_CUDA
+__global__ void comp_k_f_new(double *  tc, double invT, double *  k_f)
+{
+  int i = threadidx.y;
+  k_f[i] = prefactor_units_d[i] * fwd_A_d[i]
+    * exp(fwd_beta_d[i] * tc[0] - activation_units_d[i] * fwd_Ea_d[i] * invT);
+}
+#endif
 
 void comp_Kc(double *  tc, double invT, double *  Kc)
 {
