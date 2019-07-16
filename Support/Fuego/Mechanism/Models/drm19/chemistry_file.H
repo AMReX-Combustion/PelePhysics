@@ -35,6 +35,7 @@ void GET_REACTION_MAP(int *  rmap);
 void SetAllDefaults();
 #ifdef AMREX_USE_CUDA
 void AllocateOnDevice();
+void DeallocateOnDevice();
 #endif
 void CKINDX(int * mm, int * kk, int * ii, int * nfit );
 void CKXNUM(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);

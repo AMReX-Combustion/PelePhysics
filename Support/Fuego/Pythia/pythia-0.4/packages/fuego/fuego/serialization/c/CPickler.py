@@ -993,6 +993,7 @@ class CPickler(CMill):
             'void SetAllDefaults();',
             '#ifdef AMREX_USE_CUDA',
             'void AllocateOnDevice();',
+            'void DeallocateOnDevice();',
             '#endif',
             'void CKINDX'+sym+'(int * mm, int * kk, int * ii, int * nfit );',
             'void CKXNUM'+sym+'(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);',
@@ -2138,6 +2139,11 @@ class CPickler(CMill):
         self._write('    free(TBid_DEF[i]); TBid_DEF[i] = 0;')
         self._write('    nTB_DEF[i] = 0;')
         self._write('  }')
+        self._write('#ifdef AMREX_USE_CUDA')
+        self._indent()
+        self._write("DeallocateOnDevice();")
+        self._outdent()
+        self._write('#endif')
         self._write('}')
         self._write()
 
@@ -2231,6 +2237,39 @@ class CPickler(CMill):
                     self._write("cudaMalloc((void**)&TB_d, sizeof(double) * %d);" % (len(efficiencies)))
                     self._write("cudaMemcpyAsync(TBid_d[%d], TBid[%d], sizeof(double) * %d, cudaMemcpyHostToDevice);" %(id,id,len(efficiencies)))
 
+        self._outdent()
+        self._write("}")
+
+        self._write()
+        self._write("void DeallocateOnDevice()")
+        self._write("{")
+        self._write(self.line('Deallocation'))
+        self._indent()
+        self._write("cudaFree(fwd_A_d);")
+        self._write("cudaFree(fwd_beta_d);")
+        self._write("cudaFree(fwd_Ea_d);")
+        self._write("cudaFree(low_A_d);")
+        self._write("cudaFree(low_beta_d);")
+        self._write("cudaFree(low_Ea_d);")
+        self._write("cudaFree(rev_A_d);")
+        self._write("cudaFree(rev_beta_d);")
+        self._write("cudaFree(rev_Ea_d);")
+        self._write("cudaFree(troe_a_d);")
+        self._write("cudaFree(troe_Ts_d);")
+        self._write("cudaFree(troe_Tss_d);")
+        self._write("cudaFree(troe_Tss_d);")
+        self._write("cudaFree(troe_Tsss_d);")
+        self._write("cudaFree(activation_units_d);")
+        self._write("cudaFree(prefactor_units_d);")
+        self._write("cudaFree(phase_units_d);")
+        self._write("cudaFree(is_PD_d);")
+        self._write("cudaFree(troe_len_d);")
+        self._write("cudaFree(sri_len_d);")
+        self._write("cudaFree(nTB_d);")
+        self._write("cudaFree(TBid_d);")
+        self._write("cudaFree(TB_d);")
+        #self._write('int  **TBid_d;')
+        #self._write('double **TB_d;')
         self._outdent()
         self._write("}")
         self._write('#endif')

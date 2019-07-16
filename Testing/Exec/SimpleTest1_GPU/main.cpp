@@ -9,6 +9,7 @@
 #include "mechanism.h"
 #include <GPU_misc.H>
 #include <AMReX_GpuDevice.H>
+#include <chemistry_file.H>
 
 #include <main_F.H>
 #include <PlotFileFromMF.H>
@@ -145,6 +146,7 @@ main (int   argc,
       outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
       PlotFileFromMF(wdots,outfile);
 
+      CKFINALIZE();
       extern_close();
 
     }
