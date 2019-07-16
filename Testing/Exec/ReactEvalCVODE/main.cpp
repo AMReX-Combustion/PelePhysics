@@ -26,7 +26,19 @@ main (int   argc,
       char* argv[])
 {
     amrex::Initialize(argc,argv);
+
+    BL_PROFILE_VAR("main()", pmain);
+
+    Real timer_tot = amrex::second();
+    Real timer_init = 0.;
+    Real timer_advance = 0.;
+    Real timer_print = 0.;
+    Real timer_print_tmp = 0.;
+
+
     {
+
+    timer_init = amrex::second();
 
     int max_grid_size = 16;
     std::string probin_file="probin";
@@ -49,7 +61,7 @@ main (int   argc,
       pp.query("probin_file",probin_file);
 
       // domain size
-      //pp.query("max_grid_size",max_grid_size);
+      pp.query("max_grid_size",max_grid_size);
 
       // final time
       pp.query("dt",dt);
@@ -64,12 +76,13 @@ main (int   argc,
       //   anything else = enthalpy (PeleLM restart)
          
       // nb of cells to integrate
-      pp.query("cvode_ncells",cvode_ncells);
+      //pp.query("cvode_ncells",cvode_ncells);
 
       // Get name of fuel 
       pp.get("fuel_name", fuel_name);
 
     }
+
 
     if (fuel_name != FUEL_NAME) {
         amrex::Print() << fuel_name << "!=" <<FUEL_NAME << std::endl;
@@ -92,12 +105,6 @@ main (int   argc,
         amrex::Print() << cvode_iE;
     amrex::Print() << std::endl;
 
-    amrex::Print() << "Integrating 2x1024x2 box for: ";
-        amrex::Print() << dt << " seconds";
-    amrex::Print() << std::endl;
-
-
-    amrex::Print() << std::endl;
 
     /* take care of probin init to initialize problem */
     int probin_file_length = probin_file.length();
@@ -118,9 +125,16 @@ main (int   argc,
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 2;
+	npts[i] = 1;
     }
-    npts[1] = 1024;
+    npts[1] = 512;
+
+    amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
+        amrex::Print() << dt << " seconds";
+    amrex::Print() << std::endl;
+
+
+    amrex::Print() << std::endl;
 
     Box domain(IntVect(D_DECL(0,0,0)),
 	       IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
@@ -137,7 +151,7 @@ main (int   argc,
     }
 
     int Ncomp;
-    get_num_spec(&Ncomp);
+    Ncomp = NUM_SPECIES;
 
     /* Create MultiFabs with no ghost cells */
     DistributionMapping dm(ba);
@@ -150,6 +164,7 @@ main (int   argc,
 
     IntVect tilesize(D_DECL(10240,8,32));
 
+    //int count_mf = 0;
     /* INITIALIZE DATA */
 #ifdef _OPENMP
 #pragma omp parallel 
@@ -166,15 +181,24 @@ main (int   argc,
         //amrex::Print() << "Treating box: " << count_mf<< "\n";
     }
 
+    timer_init = amrex::second() - timer_init; 
+
+    timer_print = amrex::second();
+
     std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
     // Specs
     PlotFileFromMF(mf,outfile);
+
+    timer_print = amrex::second() - timer_print;
+
 
      
     ParmParse ppa("amr");
     ppa.query("plot_file",pltfile);
 
     amrex::Print() << " \n STARTING THE ADVANCE \n";
+
+    timer_advance = amrex::second();
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -189,8 +213,8 @@ main (int   argc,
         // not used anyway
         double pressure = 1013250.0;
 
-
         const Box& box = mfi.tilebox();
+	int ncells = box.numPts();
 
 	FArrayBox& Fb     = mf[mfi];
 	FArrayBox& Fbsrc  = rY_source_ext[mfi];
@@ -267,19 +291,37 @@ main (int   argc,
 	}
 	if (nc != 0) {
 		printf(" WARNING !! Not enough cells (%d) to fill %d \n", nc, cvode_ncells);
-	//} else {
-	//	printf(" Integrated %d cells (4096)\n",num_cell_cvode_int);
+	} else {
+		printf(" Integrated %d cells \n",num_cell_cvode_int);
 	}
     }
 
+    timer_advance = amrex::second() - timer_advance;
+
+
+    timer_print_tmp = amrex::second();
 
     outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
     // Specs
     PlotFileFromMF(mf,outfile);
+
+    timer_print = amrex::second() - timer_print_tmp + timer_print;
     
     extern_close();
 
     }
+
+    timer_tot = amrex::second() - timer_tot;
+
+    ParallelDescriptor::ReduceRealMax({timer_tot, timer_init, timer_advance, timer_print},
+                                     ParallelDescriptor::IOProcessorNumber());
+
+    amrex::Print() << "Run Time total        = " << timer_tot     << "\n"
+                   << "Run Time init         = " << timer_init    << "\n"
+                   << "Run Time advance      = " << timer_advance << "\n"
+                   << "Run Time print plt    = " << timer_print << "\n";
+
+    BL_PROFILE_VAR_STOP(pmain);
 
     amrex::Finalize();
 
