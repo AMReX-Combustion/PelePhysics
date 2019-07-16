@@ -2239,8 +2239,8 @@ class CPickler(CMill):
                 efficiencies = reaction.efficiencies
                 if (len(efficiencies) > 1):
                     self._write()
-                    self._write("cudaMalloc((void**)&TB_d, sizeof(double) * %d);" % (len(efficiencies)))
-                    self._write("cudaMalloc((void**)&TBid_d, sizeof(int) * %d);" % (len(efficiencies)))
+                    self._write("cudaMalloc((void**)&TB_d[%d], sizeof(double) * %d);" % (id,len(efficiencies)))
+                    self._write("cudaMalloc((void**)&TBid_d[%d], sizeof(int) * %d);" % (id,len(efficiencies)))
                     self._write("cudaMemcpyAsync(TBid_d[%d], TBid[%d], sizeof(int) * %d, cudaMemcpyHostToDevice);" %(id,id,len(efficiencies)))
                     self._write("cudaMemcpyAsync(TB_d[%d], TB[%d], sizeof(double) * %d, cudaMemcpyHostToDevice);" %(id,id,len(efficiencies)))
 
