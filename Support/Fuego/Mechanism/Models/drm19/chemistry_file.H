@@ -166,10 +166,22 @@ void egtransetCOFD(double* COFD);
 void egtransetKTDIF(int* KTDIF);
 }
 
-#ifndef AMREX_USE_CUDA
+#ifdef AMREX_USE_CUDA
 namespace thermo
 {
+    extern double *fwd_A, *fwd_beta, *fwd_Ea;
+    extern double *low_A, *low_beta, *low_Ea;
+    extern double *rev_A, *rev_beta, *rev_Ea;
+    extern double *troe_a,*troe_Ts,  *troe_Tssi, *troe_Tsss;
+    extern double *activation_units, *prefactor_units, *phase_units;
+    extern int *is_PD, *troe_len, *nTB, **TBid;
+    extern double **TB;
 
+    extern std::vector<int> rxn_map;
+}
+#else
+namespace thermo
+{
     extern double fwd_A[84], fwd_beta[84], fwd_Ea[84];
     extern double low_A[84], low_beta[84], low_Ea[84];
     extern double rev_A[84], rev_beta[84], rev_Ea[84];
@@ -183,10 +195,10 @@ namespace thermo
     extern double low_A_DEF[84], low_beta_DEF[84], low_Ea_DEF[84];
     extern double rev_A_DEF[84], rev_beta_DEF[84], rev_Ea_DEF[84];
     extern double troe_a_DEF[84],troe_Ts_DEF[84], troe_Tss_DEF[84], troe_Tsss_DEF[84];
-    extern double sri_a_DEF[84], sri_b_DEF[84], sri_c_DEF[84], sri_d_DEF[84], sri_e_DEF[84];
     extern double activation_units_DEF[84], prefactor_units_DEF[84], phase_units_DEF[84];
-    extern int is_PD_DEF[84], troe_len_DEF[84], sri_len_DEF[84], nTB_DEF[84], *TBid_DEF[84];
+    extern int is_PD_DEF[84], troe_len_DEF[84], nTB_DEF[84], *TBid_DEF[84];
     extern double *TB_DEF[84];
+
     extern std::vector<int> rxn_map;
 }
 #endif
