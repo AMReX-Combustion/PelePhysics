@@ -384,8 +384,8 @@ class CPickler(CMill):
         self._write('double *troe_a_d,*troe_Ts_d, *troe_Tss_d, *troe_Tsss_d;') 
         ##self._write('double *sri_a_d, *sri_b_d, *sri_c_d, *sri_d_d, *sri_e_d;')
         self._write('double *activation_units_d, *prefactor_units_d, *phase_units_d;')
-        self._write('int *is_PD_d, *troe_len_d, *sri_len_d, *nTB_d, **TBid_d;')
-        self._write('double **TB_d;')
+        self._write('int *is_PD_d, *troe_len_d, *sri_len_d, *nTB_d, *TBid_d;')
+        self._write('double *TB_d;')
         self._outdent()
         self._write('#endif')
         self._write('};')
@@ -950,8 +950,8 @@ class CPickler(CMill):
         self._write('extern double *troe_a_d,*troe_Ts_d, *troe_Tss_d, *troe_Tsss_d;') 
         #self._write('extern double *sri_a_d, *sri_b_d, *sri_c_d, *sri_d_d, *sri_e_d;')
         self._write('extern double *activation_units_d, *prefactor_units_d, *phase_units_d;')
-        self._write('extern int *is_PD_d, *troe_len_d, *sri_len_d, *nTB_d, **TBid_d;')
-        self._write('extern double **TB_d;')
+        self._write('extern int *is_PD_d, *troe_len_d, *sri_len_d, *nTB_d, *TBid_d;')
+        self._write('extern double *TB_d;')
         self._write('#endif')
 
         self._outdent()
@@ -2178,8 +2178,8 @@ class CPickler(CMill):
         self._write("cudaMalloc((void**)&troe_len_d, sizeof(int) * %d);" % nReactions)
         self._write("cudaMalloc((void**)&sri_len_d, sizeof(int) * %d);" % nReactions)
         self._write("cudaMalloc((void**)&nTB_d, sizeof(int) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&TBid_d, sizeof(int*) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&TB_d, sizeof(double*) * %d);" % nReactions)
+        self._write("cudaMalloc((void**)&TBid_d, sizeof(int*) * %d * %d);" % (nReactions,nSpecies))
+        self._write("cudaMalloc((void**)&TB_d, sizeof(double*) * %d * %d);" % (nReactions, nSpecies))
         self._outdent()
         self._write()
 
@@ -2238,11 +2238,12 @@ class CPickler(CMill):
             if thirdBody:
                 efficiencies = reaction.efficiencies
                 if (len(efficiencies) > 1):
+                    start_idx = nSpecies * id
                     self._write()
-                    self._write("cudaMalloc((void**)&TB_d[%d], sizeof(double) * %d);" % (id,len(efficiencies)))
-                    self._write("cudaMalloc((void**)&TBid_d[%d], sizeof(int) * %d);" % (id,len(efficiencies)))
-                    self._write("cudaMemcpyAsync(TBid_d[%d], TBid[%d], sizeof(int) * %d, cudaMemcpyHostToDevice);" %(id,id,len(efficiencies)))
-                    self._write("cudaMemcpyAsync(TB_d[%d], TB[%d], sizeof(double) * %d, cudaMemcpyHostToDevice);" %(id,id,len(efficiencies)))
+                    ##self._write("cudaMalloc((void**)&TB_d[%d], sizeof(double) * %d);" % (id,len(efficiencies)))
+                    ##self._write("cudaMalloc((void**)&TBid_d[%d], sizeof(int) * %d);" % (id,len(efficiencies)))
+                    self._write("cudaMemcpyAsync(TBid_d[%d], TBid[%d], sizeof(int) * %d, cudaMemcpyHostToDevice);" %(start_idx,id,len(efficiencies)))
+                    self._write("cudaMemcpyAsync(TB_d[%d], TB[%d], sizeof(double) * %d, cudaMemcpyHostToDevice);" %(start_idx,id,len(efficiencies)))
 
         self._outdent()
         self._write("}")
