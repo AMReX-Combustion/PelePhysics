@@ -2255,7 +2255,7 @@ class CPickler(CMill):
         NuIdxs = []
 
         self._write(self.line('Zero Nus'))
-        self._write('for (id = 0; id < %d; ++ id) {' % (nSpecies * nReactions) )
+        self._write('for (int id = 0; id < %d; ++ id) {' % (nSpecies * nReactions) )
         self._indent()
         self._write(' NuVals[id] = 0; ')
         self._outdent()
@@ -2280,9 +2280,6 @@ class CPickler(CMill):
        
         # done
         #self._outdent()
-        self._write('}')
-
-
 
         #for i in range(0,self.nSpecies):
         #    species = self.species[i]
@@ -2347,6 +2344,7 @@ class CPickler(CMill):
         ##self._write("#endif")
 
         self._write("cudaMemcpyToSymbol(NuVals_d, NuVals, sizeof(int) * %d);" % (nReactions*nSpecies))
+        self._write("#if 0")
         
         for j in range(nReactions):
             reaction = mechanism.reaction()[j]
@@ -2385,6 +2383,7 @@ class CPickler(CMill):
                     self._write("cudaMemcpyToSymbol(TBid_d[%d], TBid[%d], sizeof(int) * %d);" %(id,id,len(efficiencies)))
                     self._write("cudaMemcpyToSymbol(TB_d[%d], TB[%d], sizeof(double) * %d);" %(id,id,len(efficiencies)))
 
+        self._write("#endif")
         self._outdent()
         self._write("}")
 
@@ -2393,31 +2392,6 @@ class CPickler(CMill):
         self._write("{")
         self._write(self.line('Deallocation'))
         self._indent()
-        ##self._write("cudaFree(fwd_A_d);")
-        ##self._write("cudaFree(fwd_beta_d);")
-        ##self._write("cudaFree(fwd_Ea_d);")
-        ##self._write("cudaFree(low_A_d);")
-        ##self._write("cudaFree(low_beta_d);")
-        ##self._write("cudaFree(low_Ea_d);")
-        ##self._write("cudaFree(rev_A_d);")
-        ##self._write("cudaFree(rev_beta_d);")
-        ##self._write("cudaFree(rev_Ea_d);")
-        ##self._write("cudaFree(troe_a_d);")
-        ##self._write("cudaFree(troe_Ts_d);")
-        ##self._write("cudaFree(troe_Tss_d);")
-        ##self._write("cudaFree(troe_Tss_d);")
-        ##self._write("cudaFree(troe_Tsss_d);")
-        ##self._write("cudaFree(activation_units_d);")
-        ##self._write("cudaFree(prefactor_units_d);")
-        ##self._write("cudaFree(phase_units_d);")
-        ##self._write("cudaFree(is_PD_d);")
-        ##self._write("cudaFree(troe_len_d);")
-        ##self._write("cudaFree(sri_len_d);")
-        ##self._write("cudaFree(nTB_d);")
-        ##self._write("cudaFree(TBid_d);")
-        ##self._write("cudaFree(TB_d);")
-        #self._write('int  **TBid_d;')
-        #self._write('double **TB_d;')
         self._outdent()
         self._write("}")
         self._write('#endif')
@@ -6268,6 +6242,7 @@ class CPickler(CMill):
             'double tc[] = { 0, T, T*T, T*T*T, T*T*T*T }; '
             + self.line('temperature cache'))
         self._write("gibbs(g_RT, tc);")
+        self._write("double invT = 1.0 / T;")
         self._write()
         self._write("*Kc = 0;")
         self._write("int expon = 0;")
@@ -6276,7 +6251,7 @@ class CPickler(CMill):
         self._indent()
         ##self._write("*Kc += NuVals_d[reactID][j] * g_RT[NuIdx_d[reacID][j]]]")
         self._write("*Kc += NuVals_d[reacID*%d + j] * g_RT[j];" % (nSpecies))
-        self._write("expon += NuVals_d[reactID*%d + j];" % (nSpecies))
+        self._write("expon += NuVals_d[reacID*%d + j];" % (nSpecies))
         self._outdent()
         self._write("}")
         self._write("*Kc = exp( (*Kc) );")
