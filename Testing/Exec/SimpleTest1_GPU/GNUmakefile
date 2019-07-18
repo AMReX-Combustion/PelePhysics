@@ -23,10 +23,10 @@ PELE_PHYSICS_HOME    := ../../..
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   #Chemistry_Model = LiDryer
-  #Chemistry_Model = drm19
+  Chemistry_Model = drm19
   #Chemistry_Model = grimech12
   #Chemistry_Model = grimech30
-  Chemistry_Model = dodecane_wang
+  #Chemistry_Model = dodecane_wang
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else

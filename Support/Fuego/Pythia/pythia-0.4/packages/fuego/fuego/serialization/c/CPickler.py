@@ -387,7 +387,8 @@ class CPickler(CMill):
         self._write('AMREX_GPU_DEVICE double activation_units_d[%d], prefactor_units_d[%d], phase_units_d[%d];'%(nReactions,nReactions,nReactions))
         self._write('AMREX_GPU_DEVICE int is_PD_d[%d], troe_len_d[%d], sri_len_d[%d], nTB_d[%d], *TBid_d[%d];'%(nReactions,nReactions,nReactions,nReactions,nReactions))
         self._write('AMREX_GPU_DEVICE double *TB_d[%d];'%(nReactions))
-        self._write('AMREX_GPU_DEVICE int *NuIdxs_d[%d], *NuVals_d[%d];' % (nReactions,nReactions))
+        ##self._write('AMREX_GPU_DEVICE int *NuIdxs_d[%d], *NuVals_d[%d];' % (nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE int NuVals_d[%d];' % (nReactions*nSpecies))
         self._outdent()
         self._write('#endif')
         self._write('};')
@@ -635,7 +636,7 @@ class CPickler(CMill):
         self._trans_chop(mechanism)
 
         ### MECH HEADER
-        self._print_mech_header(mechanism)
+        #self._print_mech_header(mechanism)
         ### MECH HEADER
 
         return
@@ -906,6 +907,7 @@ class CPickler(CMill):
         #self._write('extern std::vector<double> imw;')
 
         nReactions = len(mechanism.reaction())
+        nSpecies   = len(mechanism.species())
         self._write()
         self._write('extern double fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];' 
                     % (nReactions,nReactions,nReactions))
@@ -955,7 +957,8 @@ class CPickler(CMill):
         self._write('AMREX_GPU_DEVICE double activation_units_d[%d], prefactor_units_d[%d], phase_units_d[%d];'%(nReactions,nReactions,nReactions))
         self._write('AMREX_GPU_DEVICE int is_PD_d[%d], troe_len_d[%d], sri_len_d[%d], nTB_d[%d], *TBid_d[%d];'%(nReactions,nReactions,nReactions,nReactions,nReactions))
         self._write('AMREX_GPU_DEVICE double *TB_d[%d];'%(nReactions))
-        self._write('AMREX_GPU_DEVICE int *NuIdxs_d[%d], *NuVals_d[%d];' % (nReactions,nReactions))
+        ##self._write('AMREX_GPU_DEVICE int *NuIdxs_d[%d], *NuVals_d[%d];' % (nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE int NuVals_d[%d];' % (nReactions*nSpecies))
         self._outdent()
         self._write('#endif')
 
@@ -989,6 +992,9 @@ class CPickler(CMill):
             '#ifndef AMREX_USE_CUDA',
             'void comp_k_f(double *  tc, double invT, double *  k_f);',
             'void comp_Kc(double *  tc, double invT, double *  Kc);',
+            '#else',
+            'AMREX_GPU_DEVICE void Kf_reac_d(double T, int reacID, double * Kf);',
+            'AMREX_GPU_DEVICE void Kc_reac_d(double T, int reacID, double * Kf);',
             '#endif',
             'AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  speciesConc, double T);',
             'AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);',
@@ -2252,6 +2258,7 @@ class CPickler(CMill):
         self._write("cudaMemcpyToSymbol(troe_len_d, troe_len, sizeof(int) * %d);" % nReactions)
         self._write("cudaMemcpyToSymbol(sri_len_d, sri_len, sizeof(int) * %d);" % nReactions)
         self._write("cudaMemcpyToSymbol(nTB_d, nTB, sizeof(int) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(NuVals_d, NuVals, sizeof(int) * %d);" % (nReactions*nSpecies))
 
         self._write("")
 
