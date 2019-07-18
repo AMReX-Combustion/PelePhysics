@@ -124,7 +124,7 @@ main (int   argc,
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
       {
-        FArrayBox qf, qr;
+        FArrayBox Q;
         for (MFIter mfi(mass_frac,TilingIfNotGPU()); mfi.isValid(); ++mfi) {
           const Box& box = mfi.tilebox();
           const auto& temp = temperature.array(mfi);
@@ -132,14 +132,9 @@ main (int   argc,
           const auto& rho  = density.array(mfi);
           const auto& wdot = wdots.array(mfi);
           
-          qf.resize(box,NUM_REACTIONS);
-          qr.resize(box,NUM_REACTIONS);
-
-          Elixir iqf = qf.elixir();
-          Elixir iqr = qr.elixir();
-
-          auto iqfa = qf.array();
-          auto iqra = qr.array();
+          Q.resize(box,NUM_REACTIONS);
+          Elixir iQ = Q.elixir();
+          auto iQa = Q.array();
 
           int nR = NUM_REACTIONS;
           For(box, nR, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
@@ -149,11 +144,11 @@ main (int   argc,
              Kf_reac_d(temp(i,j,k),n,&Kf);
              Kc_reac_d(temp(i,j,k),n,&Kc);
 
-             //Real Yloc[NUM_SPECIES];
-             //for (int L=0; L<NUM_SPECIES; ++L) {
-             //  Yloc[L] = Y(i,j,k,L);
-             //}
-             //comp_qfqr_new(temp(i,j,k),Yloc,Kf,Kc,iqfa(i,j,k,n),iqra(i,j,k,n));
+             Real Yloc[NUM_SPECIES];
+             for (int L=0; L<NUM_SPECIES; ++L) {
+               Yloc[L] = Y(i,j,k,L);
+             }
+             //Q_reac_d(temp(i,j,k),Yloc,Kf,Kc,iQa(i,j,k,n));
           });
           /*
           amrex::For(box, NUM_SPECIES, [=] (int i, int j, int k, int n)
