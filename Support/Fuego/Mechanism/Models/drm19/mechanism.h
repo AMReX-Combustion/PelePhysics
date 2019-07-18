@@ -39,7 +39,7 @@
 #define FUEL_ID 10
 #define OXY_ID 3
 #define BATH_ID 19
-#define FUEL_NAME "CH4"
+#define FUEL_NAME CH4
 
 #define NUM_FIT 4
 #endif
