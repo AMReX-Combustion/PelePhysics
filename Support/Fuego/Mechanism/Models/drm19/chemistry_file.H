@@ -191,4 +191,16 @@ namespace thermo
 
     extern std::vector<int> rxn_map;
 
+<<<<<<< HEAD
+=======
+    #ifdef AMREX_USE_CUDA
+    extern double *fwd_A_d, *fwd_beta_d, *fwd_Ea_d;
+    extern double *low_A_d, *low_beta_d, *low_Ea_d;
+    extern double *rev_A_d, *rev_beta_d, *rev_Ea_d;
+    extern double *troe_a_d,*troe_Ts_d, *troe_Tss_d, *troe_Tsss_d;
+    extern double *activation_units_d, *prefactor_units_d, *phase_units_d;
+    extern int *is_PD_d, *troe_len_d, *sri_len_d, *nTB_d, *TBid_d;
+    extern double *TB_d;
+    #endif
+>>>>>>> 839dbaad2af2ecdc7bb827a08ad90a01713f17f9
 }

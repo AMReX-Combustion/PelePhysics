@@ -2284,6 +2284,7 @@ class CPickler(CMill):
             if thirdBody:
                 efficiencies = reaction.efficiencies
                 if (len(efficiencies) > 1):
+                    start_idx = nSpecies * id
                     self._write()
                     self._write("cudaMalloc((void**)&TB_d, sizeof(double) * %d);" % (len(efficiencies)))
                     self._write("cudaMalloc((void**)&TBid_d, sizeof(int) * %d);" % (len(efficiencies)))
