@@ -25,19 +25,19 @@ namespace thermo
     int is_PD_DEF[84], troe_len_DEF[84], sri_len_DEF[84], nTB_DEF[84], *TBid_DEF[84];
     double *TB_DEF[84];
     std::vector<int> rxn_map;
+}
 
 #ifdef AMREX_USE_CUDA
-    AMREX_GPU_DEVICE double fwd_A_d[84], fwd_beta_d[84], fwd_Ea_d[84];
-    AMREX_GPU_DEVICE double low_A_d[84], low_beta_d[84], low_Ea_d[84];
-    AMREX_GPU_DEVICE double rev_A_d[84], rev_beta_d[84], rev_Ea_d[84];
-    AMREX_GPU_DEVICE double troe_a_d[84],troe_Ts_d[84], troe_Tss_d[84], troe_Tsss_d[84];
-    AMREX_GPU_DEVICE double sri_a_d[84], sri_b_d[84], sri_c_d[84], sri_d_d[84], sri_e_d[84];
-    AMREX_GPU_DEVICE double activation_units_d[84], prefactor_units_d[84], phase_units_d[84];
-    AMREX_GPU_DEVICE int is_PD_d[84], troe_len_d[84], sri_len_d[84], nTB_d[84], *TBid_d[84];
-    AMREX_GPU_DEVICE double *TB_d[84];
-    AMREX_GPU_DEVICE int NuVals_d[1764];
+AMREX_GPU_DEVICE double fwd_A_d[84], fwd_beta_d[84], fwd_Ea_d[84];
+AMREX_GPU_DEVICE double low_A_d[84], low_beta_d[84], low_Ea_d[84];
+AMREX_GPU_DEVICE double rev_A_d[84], rev_beta_d[84], rev_Ea_d[84];
+AMREX_GPU_DEVICE double troe_a_d[84],troe_Ts_d[84], troe_Tss_d[84], troe_Tsss_d[84];
+AMREX_GPU_DEVICE double sri_a_d[84], sri_b_d[84], sri_c_d[84], sri_d_d[84], sri_e_d[84];
+AMREX_GPU_DEVICE double activation_units_d[84], prefactor_units_d[84], phase_units_d[84];
+AMREX_GPU_DEVICE int is_PD_d[84], troe_len_d[84], sri_len_d[84], nTB_d[84], *TBid_d[84];
+AMREX_GPU_DEVICE double *TB_d[84];
+AMREX_GPU_DEVICE int NuVals_d[1764];
 #endif
-};
 
 using namespace thermo;
 
@@ -6437,9 +6437,10 @@ AMREX_GPU_DEVICE void Kf_reac_d(double T, int reacID, double * Kf)
     *Kf = prefactor_units_d[reacID] * fwd_A_d[reacID] * exp(fwd_beta_d[reacID] * T - activation_units_d[reacID] * fwd_Ea_d[reacID] * (1./T));
 }
 
-AMREX_GPU_HOST_DEVICE void Kc_reac_d(double T, int reacID, double * Kc)
+AMREX_GPU_DEVICE void Kc_reac_d(double T, int reacID, double * Kc)
 {
     double g_RT[21];
+    double tc[] = { 0, T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     gibbs(g_RT, tc);
 
     *Kc = 0;

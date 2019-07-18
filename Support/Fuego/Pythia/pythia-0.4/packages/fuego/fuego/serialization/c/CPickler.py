@@ -375,6 +375,8 @@ class CPickler(CMill):
         self._write('double *TB_DEF[%d];' 
                     % (nReactions))
         self._write('std::vector<int> rxn_map;')
+        self._outdent()
+        self._write('}')
 
         self._write()
         self._outdent()
@@ -390,9 +392,7 @@ class CPickler(CMill):
         self._write('AMREX_GPU_DEVICE double *TB_d[%d];'%(nReactions))
         ##self._write('AMREX_GPU_DEVICE int *NuIdxs_d[%d], *NuVals_d[%d];' % (nReactions,nReactions))
         self._write('AMREX_GPU_DEVICE int NuVals_d[%d];' % (nReactions*nSpecies))
-        self._outdent()
-        self._write('#endif')
-        self._write('};')
+        self._write("#endif")
 
         self._write()
 
@@ -950,21 +950,6 @@ class CPickler(CMill):
         self._write('extern std::vector<int> rxn_map;')
         self._write()
         self._outdent()
-        self._write('#ifdef AMREX_USE_CUDA')
-        self._indent()
-        self._write('AMREX_GPU_DEVICE extern double fwd_A_d[%d], fwd_beta_d[%d], fwd_Ea_d[%d];' % (nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE extern double low_A_d[%d], low_beta_d[%d], low_Ea_d[%d];' % (nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE extern double rev_A_d[%d], rev_beta_d[%d], rev_Ea_d[%d];' % (nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE extern double troe_a_d[%d],troe_Ts_d[%d], troe_Tss_d[%d], troe_Tsss_d[%d];'%(nReactions,nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE extern double sri_a_d[%d], sri_b_d[%d], sri_c_d[%d], sri_d_d[%d], sri_e_d[%d];'%(nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE extern double activation_units_d[%d], prefactor_units_d[%d], phase_units_d[%d];'%(nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE extern int is_PD_d[%d], troe_len_d[%d], sri_len_d[%d], nTB_d[%d], *TBid_d[%d];'%(nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE extern double *TB_d[%d];'%(nReactions))
-        ##self._write('AMREX_GPU_DEVICE int *NuIdxs_d[%d], *NuVals_d[%d];' % (nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE extern int NuVals_d[%d];' % (nReactions*nSpecies))
-        self._outdent()
-        self._write('#endif')
-
         self._write('}')
         ##self._write('#endif')
 
@@ -6274,11 +6259,14 @@ class CPickler(CMill):
         self._write('}')
         self._write()
 
-        self._write("AMREX_GPU_HOST_DEVICE void Kc_reac_d(double T, int reacID, double * Kc)")
+        self._write("AMREX_GPU_DEVICE void Kc_reac_d(double T, int reacID, double * Kc)")
         self._write("{")
         self._indent()
         self.line("compute the Gibbs free energy")
         self._write("double g_RT[21];")
+        self._write(
+            'double tc[] = { 0, T, T*T, T*T*T, T*T*T*T }; '
+            + self.line('temperature cache'))
         self._write("gibbs(g_RT, tc);")
         self._write()
         self._write("*Kc = 0;")
