@@ -636,7 +636,7 @@ class CPickler(CMill):
         self._trans_chop(mechanism)
 
         ### MECH HEADER
-        #self._print_mech_header(mechanism)
+        self._print_mech_header(mechanism)
         ### MECH HEADER
 
         return
@@ -877,10 +877,10 @@ class CPickler(CMill):
         self._write("#define NUM_SPECIES %d" % (nb_spec))
         self._write("#define NUM_REACTIONS %d" %(len(mechanism.reaction())))
         self._write()
-        self._write("#define FUEL_ID %s" % ("define"))
+        self._write("#define FUEL_ID %s" % "10")#("define"))
         self._write("#define OXY_ID %d" % (oxy_id))
         self._write("#define BATH_ID %d" % (bath_id))
-        self._write("#define FUEL_NAME %s" % ("define"))
+        self._write("#define FUEL_NAME %s" % "CH4") #("define"))
         self._write()
         self._write("#define NUM_FIT 4")
         self._write("#endif")

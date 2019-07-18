@@ -79,10 +79,10 @@ class FMC(Application):
             outputFile.write('\n')
             count_lines += 1
 
-        ##MechHeaderFile = self._openOutput(mech_header)
-        ##for line in lines[line_start_mech_header:]:
-        ##    MechHeaderFile.write(line)
-        ##    MechHeaderFile.write('\n')
+        MechHeaderFile = self._openOutput(mech_header)
+        for line in lines[line_start_mech_header:]:
+            MechHeaderFile.write(line)
+            MechHeaderFile.write('\n')
 
         print "... done (%g sec)" % timer.stop()
 
