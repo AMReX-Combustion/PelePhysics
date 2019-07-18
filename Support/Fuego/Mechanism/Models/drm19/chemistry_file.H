@@ -191,16 +191,15 @@ namespace thermo
 
     extern std::vector<int> rxn_map;
 
-<<<<<<< HEAD
-=======
-    #ifdef AMREX_USE_CUDA
-    extern double *fwd_A_d, *fwd_beta_d, *fwd_Ea_d;
-    extern double *low_A_d, *low_beta_d, *low_Ea_d;
-    extern double *rev_A_d, *rev_beta_d, *rev_Ea_d;
-    extern double *troe_a_d,*troe_Ts_d, *troe_Tss_d, *troe_Tsss_d;
-    extern double *activation_units_d, *prefactor_units_d, *phase_units_d;
-    extern int *is_PD_d, *troe_len_d, *sri_len_d, *nTB_d, *TBid_d;
-    extern double *TB_d;
-    #endif
->>>>>>> 839dbaad2af2ecdc7bb827a08ad90a01713f17f9
+#ifdef AMREX_USE_CUDA
+    AMREX_GPU_DEVICE double fwd_A_d[84], fwd_beta_d[84], fwd_Ea_d[84];
+    AMREX_GPU_DEVICE double low_A_d[84], low_beta_d[84], low_Ea_d[84];
+    AMREX_GPU_DEVICE double rev_A_d[84], rev_beta_d[84], rev_Ea_d[84];
+    AMREX_GPU_DEVICE double troe_a_d[84],troe_Ts_d[84], troe_Tss_d[84], *troe_Tsss_d[84];
+    AMREX_GPU_DEVICE double sri_a_d[84], sri_b_d[84], sri_c_d[84], sri_d_d[84], sri_e_d[84];
+    AMREX_GPU_DEVICE double activation_units_d[84], prefactor_units_d[84], *phase_units_d[84];
+    AMREX_GPU_DEVICE int is_PD_d[84], troe_len_d[84], sri_len_d[84], nTB_d[84], *TBid_d[84];
+    AMREX_GPU_DEVICE double *TB_d[84];
+    AMREX_GPU_DEVICE int *NuIdxs_d[84], *NuVals_d[84];
+#endif
 }
