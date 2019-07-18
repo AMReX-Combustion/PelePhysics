@@ -26,6 +26,9 @@ AMREX_GPU_HOST_DEVICE void comp_qfqr(double *  q_f, double *  q_r, double *  sc,
 #ifndef AMREX_USE_CUDA
 void comp_k_f(double *  tc, double invT, double *  k_f);
 void comp_Kc(double *  tc, double invT, double *  Kc);
+#else
+AMREX_GPU_DEVICE void Kf_reac_d(double T, int reacID, double * Kf);
+AMREX_GPU_DEVICE void Kc_reac_d(double T, int reacID, double * Kf);
 #endif
 AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  speciesConc, double T);
 AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);
@@ -178,6 +181,7 @@ namespace thermo
     extern double sri_a[84], sri_b[84], sri_c[84], sri_d[84], sri_e[84];
     extern double activation_units[84], prefactor_units[84], phase_units[84];
     extern int is_PD[84], troe_len[84], sri_len[84], nTB[84], *TBid[84];
+    extern int NuVals[1764];
     extern double *TB[84];
 
     extern double fwd_A_DEF[84], fwd_beta_DEF[84], fwd_Ea_DEF[84];
@@ -192,14 +196,14 @@ namespace thermo
     extern std::vector<int> rxn_map;
 
 #ifdef AMREX_USE_CUDA
-    AMREX_GPU_DEVICE double fwd_A_d[84], fwd_beta_d[84], fwd_Ea_d[84];
-    AMREX_GPU_DEVICE double low_A_d[84], low_beta_d[84], low_Ea_d[84];
-    AMREX_GPU_DEVICE double rev_A_d[84], rev_beta_d[84], rev_Ea_d[84];
-    AMREX_GPU_DEVICE double troe_a_d[84],troe_Ts_d[84], troe_Tss_d[84], *troe_Tsss_d[84];
-    AMREX_GPU_DEVICE double sri_a_d[84], sri_b_d[84], sri_c_d[84], sri_d_d[84], sri_e_d[84];
-    AMREX_GPU_DEVICE double activation_units_d[84], prefactor_units_d[84], *phase_units_d[84];
-    AMREX_GPU_DEVICE int is_PD_d[84], troe_len_d[84], sri_len_d[84], nTB_d[84], *TBid_d[84];
-    AMREX_GPU_DEVICE double *TB_d[84];
-    AMREX_GPU_DEVICE int *NuIdxs_d[84], *NuVals_d[84];
+    AMREX_GPU_DEVICE extern double fwd_A_d[84], fwd_beta_d[84], fwd_Ea_d[84];
+    AMREX_GPU_DEVICE extern double low_A_d[84], low_beta_d[84], low_Ea_d[84];
+    AMREX_GPU_DEVICE extern double rev_A_d[84], rev_beta_d[84], rev_Ea_d[84];
+    AMREX_GPU_DEVICE extern double troe_a_d[84],troe_Ts_d[84], troe_Tss_d[84], troe_Tsss_d[84];
+    AMREX_GPU_DEVICE extern double sri_a_d[84], sri_b_d[84], sri_c_d[84], sri_d_d[84], sri_e_d[84];
+    AMREX_GPU_DEVICE extern double activation_units_d[84], prefactor_units_d[84], phase_units_d[84];
+    AMREX_GPU_DEVICE extern int is_PD_d[84], troe_len_d[84], sri_len_d[84], nTB_d[84], *TBid_d[84];
+    AMREX_GPU_DEVICE extern double *TB_d[84];
+    AMREX_GPU_DEVICE extern int NuVals_d[1764];
 #endif
 }

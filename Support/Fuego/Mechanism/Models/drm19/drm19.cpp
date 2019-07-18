@@ -14,7 +14,7 @@ namespace thermo
     double activation_units[84], prefactor_units[84], phase_units[84];
     int is_PD[84], troe_len[84], sri_len[84], nTB[84], *TBid[84];
     double *TB[84];
-    int NuIdxs[84], NuVals[84];
+    int NuVals[1764];
 
     double fwd_A_DEF[84], fwd_beta_DEF[84], fwd_Ea_DEF[84];
     double low_A_DEF[84], low_beta_DEF[84], low_Ea_DEF[84];
@@ -30,12 +30,12 @@ namespace thermo
     AMREX_GPU_DEVICE double fwd_A_d[84], fwd_beta_d[84], fwd_Ea_d[84];
     AMREX_GPU_DEVICE double low_A_d[84], low_beta_d[84], low_Ea_d[84];
     AMREX_GPU_DEVICE double rev_A_d[84], rev_beta_d[84], rev_Ea_d[84];
-    AMREX_GPU_DEVICE double troe_a_d[84],troe_Ts_d[84], troe_Tss_d[84], *troe_Tsss_d[84];
+    AMREX_GPU_DEVICE double troe_a_d[84],troe_Ts_d[84], troe_Tss_d[84], troe_Tsss_d[84];
     AMREX_GPU_DEVICE double sri_a_d[84], sri_b_d[84], sri_c_d[84], sri_d_d[84], sri_e_d[84];
-    AMREX_GPU_DEVICE double activation_units_d[84], prefactor_units_d[84], *phase_units_d[84];
+    AMREX_GPU_DEVICE double activation_units_d[84], prefactor_units_d[84], phase_units_d[84];
     AMREX_GPU_DEVICE int is_PD_d[84], troe_len_d[84], sri_len_d[84], nTB_d[84], *TBid_d[84];
     AMREX_GPU_DEVICE double *TB_d[84];
-    AMREX_GPU_DEVICE int *NuIdxs_d[84], *NuVals_d[84];
+    AMREX_GPU_DEVICE int NuVals_d[1764];
 #endif
 };
 
@@ -1358,244 +1358,568 @@ void AllocateOnDevice()
     cudaMemcpyToSymbol(sri_len_d, sri_len, sizeof(int) * 84);
     cudaMemcpyToSymbol(nTB_d, nTB, sizeof(int) * 84);
 
-    #if 0
-    NuIdxs[0] = {1,7,9};
-    NuIdxs[1] = {1,9,10};
-    NuIdxs[2] = {1,13,14};
-    NuIdxs[3] = {1,14,15};
-    NuIdxs[4] = {1,16,17};
-    NuIdxs[5] = {1,17,18};
-    NuIdxs[6] = {0,11,14};
-    NuIdxs[7] = {9,18};
-    NuIdxs[8] = {2,1,4};
-    NuIdxs[9] = {2,11,12};
-    NuIdxs[10] = {1,3,6};
-    NuIdxs[11] = {1,0};
-    NuIdxs[12] = {1,4,5};
-    NuIdxs[13] = {13,1,11};
-    NuIdxs[14] = {2,0,1,4};
-    NuIdxs[15] = {2,6,4,3};
-    NuIdxs[16] = {2,7,1,13};
-    NuIdxs[17] = {2,8,1,13};
-    NuIdxs[18] = {2,9,1,14};
-    NuIdxs[19] = {2,10,4,9};
-    NuIdxs[20] = {2,13,4,11};
-    NuIdxs[21] = {2,13,1,12};
-    NuIdxs[22] = {2,14,4,13};
-    NuIdxs[23] = {2,16,9,13};
-    NuIdxs[24] = {2,17,9,14};
-    NuIdxs[25] = {2,18,4,17};
-    NuIdxs[26] = {3,11,2,12};
-    NuIdxs[27] = {3,14,6,13};
-    NuIdxs[28] = {1,3,6,3};
-    NuIdxs[29] = {1,3,5,6,5};
-    NuIdxs[30] = {1,3,19,6,19};
-    NuIdxs[31] = {1,3,20,6,20};
-    NuIdxs[32] = {1,3,2,4};
-    NuIdxs[33] = {1,0,0};
-    NuIdxs[34] = {1,5,0,5};
-    NuIdxs[35] = {1,12,0,12};
-    NuIdxs[36] = {1,6,3,0};
-    NuIdxs[37] = {1,6,4};
-    NuIdxs[38] = {1,10,9,0};
-    NuIdxs[39] = {1,13,0,11};
-    NuIdxs[40] = {1,14,13,0};
-    NuIdxs[41] = {1,15,4,9};
-    NuIdxs[42] = {1,18,17,0};
-    NuIdxs[43] = {4,0,1,5};
-    NuIdxs[44] = {4,2,5};
-    NuIdxs[45] = {4,6,3,5};
-    NuIdxs[46] = {4,7,1,14};
-    NuIdxs[47] = {4,8,1,14};
-    NuIdxs[48] = {4,9,7,5};
-    NuIdxs[49] = {4,9,8,5};
-    NuIdxs[50] = {4,10,9,5};
-    NuIdxs[51] = {4,11,1,12};
-    NuIdxs[52] = {4,13,5,11};
-    NuIdxs[53] = {4,14,13,5};
-    NuIdxs[54] = {4,18,17,5};
-    NuIdxs[55] = {6,7,4,14};
-    NuIdxs[56] = {6,9,3,10};
-    NuIdxs[57] = {6,9,4,15};
-    NuIdxs[58] = {6,11,4,12};
-    NuIdxs[59] = {7,3,4,13};
-    NuIdxs[60] = {7,0,1,9};
-    NuIdxs[61] = {7,9,1,16};
-    NuIdxs[62] = {7,10,9};
-    NuIdxs[63] = {8,19,7,19};
-    NuIdxs[64] = {8,20,7,20};
-    NuIdxs[65] = {8,3,1,4,11};
-    NuIdxs[66] = {8,3,11,5};
-    NuIdxs[67] = {8,0,9,1};
-    NuIdxs[68] = {8,5,7,5};
-    NuIdxs[69] = {8,9,1,16};
-    NuIdxs[70] = {8,10,9};
-    NuIdxs[71] = {8,11,7,11};
-    NuIdxs[72] = {8,12,7,12};
-    NuIdxs[73] = {8,12,11,14};
-    NuIdxs[74] = {9,3,2,15};
-    NuIdxs[75] = {9,3,4,14};
-    NuIdxs[76] = {9,1,17};
-    NuIdxs[77] = {9,13,10,11};
-    NuIdxs[78] = {9,14,13,10};
-    NuIdxs[79] = {9,18,17,10};
-    NuIdxs[80] = {13,5,1,11,5};
-    NuIdxs[81] = {13,3,6,11};
-    NuIdxs[82] = {15,3,6,14};
-    NuIdxs[83] = {17,3,6,16};
-    NuVals[0] = {-1,-1,1};
-    NuVals[1] = {-1,-1,1};
-    NuVals[2] = {-1,-1,1};
-    NuVals[3] = {-1,-1,1};
-    NuVals[4] = {-1,-1,1};
-    NuVals[5] = {-1,-1,1};
-    NuVals[6] = {-1,-1,1};
-    NuVals[7] = {-2,1};
-    NuVals[8] = {-1,-1,1};
-    NuVals[9] = {-1,-1,1};
-    NuVals[10] = {-1,-1,1};
-    NuVals[11] = {-2,1};
-    NuVals[12] = {-1,-1,1};
-    NuVals[13] = {-1,1,1};
-    NuVals[14] = {-1,-1,1,1};
-    NuVals[15] = {-1,-1,1,1};
-    NuVals[16] = {-1,-1,1,1};
-    NuVals[17] = {-1,-1,1,1};
-    NuVals[18] = {-1,-1,1,1};
-    NuVals[19] = {-1,-1,1,1};
-    NuVals[20] = {-1,-1,1,1};
-    NuVals[21] = {-1,-1,1,1};
-    NuVals[22] = {-1,-1,1,1};
-    NuVals[23] = {-1,-1,1,1};
-    NuVals[24] = {-1,-1,1,1};
-    NuVals[25] = {-1,-1,1,1};
-    NuVals[26] = {-1,-1,1,1};
-    NuVals[27] = {-1,-1,1,1};
-    NuVals[28] = {-1,-2,1,1};
-    NuVals[29] = {-1,-1,-1,1,1};
-    NuVals[30] = {-1,-1,-1,1,1};
-    NuVals[31] = {-1,-1,-1,1,1};
-    NuVals[32] = {-1,-1,1,1};
-    NuVals[33] = {-2,-1,2};
-    NuVals[34] = {-2,-1,1,1};
-    NuVals[35] = {-2,-1,1,1};
-    NuVals[36] = {-1,-1,1,1};
-    NuVals[37] = {-1,-1,2};
-    NuVals[38] = {-1,-1,1,1};
-    NuVals[39] = {-1,-1,1,1};
-    NuVals[40] = {-1,-1,1,1};
-    NuVals[41] = {-1,-1,1,1};
-    NuVals[42] = {-1,-1,1,1};
-    NuVals[43] = {-1,-1,1,1};
-    NuVals[44] = {-2,1,1};
-    NuVals[45] = {-1,-1,1,1};
-    NuVals[46] = {-1,-1,1,1};
-    NuVals[47] = {-1,-1,1,1};
-    NuVals[48] = {-1,-1,1,1};
-    NuVals[49] = {-1,-1,1,1};
-    NuVals[50] = {-1,-1,1,1};
-    NuVals[51] = {-1,-1,1,1};
-    NuVals[52] = {-1,-1,1,1};
-    NuVals[53] = {-1,-1,1,1};
-    NuVals[54] = {-1,-1,1,1};
-    NuVals[55] = {-1,-1,1,1};
-    NuVals[56] = {-1,-1,1,1};
-    NuVals[57] = {-1,-1,1,1};
-    NuVals[58] = {-1,-1,1,1};
-    NuVals[59] = {-1,-1,1,1};
-    NuVals[60] = {-1,-1,1,1};
-    NuVals[61] = {-1,-1,1,1};
-    NuVals[62] = {-1,-1,2};
-    NuVals[63] = {-1,-1,1,1};
-    NuVals[64] = {-1,-1,1,1};
-    NuVals[65] = {-1,-1,1,1,1};
-    NuVals[66] = {-1,-1,1,1};
-    NuVals[67] = {-1,-1,1,1};
-    NuVals[68] = {-1,-1,1,1};
-    NuVals[69] = {-1,-1,1,1};
-    NuVals[70] = {-1,-1,2};
-    NuVals[71] = {-1,-1,1,1};
-    NuVals[72] = {-1,-1,1,1};
-    NuVals[73] = {-1,-1,1,1};
-    NuVals[74] = {-1,-1,1,1};
-    NuVals[75] = {-1,-1,1,1};
-    NuVals[76] = {-2,1,1};
-    NuVals[77] = {-1,-1,1,1};
-    NuVals[78] = {-1,-1,1,1};
-    NuVals[79] = {-1,-1,1,1};
-    NuVals[80] = {-1,-1,1,1,1};
-    NuVals[81] = {-1,-1,1,1};
-    NuVals[82] = {-1,-1,1,1};
-    NuVals[83] = {-1,-1,1,1};
-    #endif
+    /*Zero Nus */
+    for (id = 0; id < 1764; ++ id) {
+         NuVals[id] = 0; 
+    }
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 7);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 7);
+
+    /*reaction 1: H + CH2 (+M) <=> CH3 (+M) */
+    NuVals[ 0 * 21 + 1 ] += -1 ;
+    NuVals[ 0 * 21 + 7 ] += -1 ;
+    NuVals[ 0 * 21 + 9 ] += +1 ;
+
+    /*reaction 2: H + CH3 (+M) <=> CH4 (+M) */
+    NuVals[ 1 * 21 + 1 ] += -1 ;
+    NuVals[ 1 * 21 + 9 ] += -1 ;
+    NuVals[ 1 * 21 + 10 ] += +1 ;
+
+    /*reaction 3: H + HCO (+M) <=> CH2O (+M) */
+    NuVals[ 2 * 21 + 1 ] += -1 ;
+    NuVals[ 2 * 21 + 13 ] += -1 ;
+    NuVals[ 2 * 21 + 14 ] += +1 ;
+
+    /*reaction 4: H + CH2O (+M) <=> CH3O (+M) */
+    NuVals[ 3 * 21 + 1 ] += -1 ;
+    NuVals[ 3 * 21 + 14 ] += -1 ;
+    NuVals[ 3 * 21 + 15 ] += +1 ;
+
+    /*reaction 5: H + C2H4 (+M) <=> C2H5 (+M) */
+    NuVals[ 4 * 21 + 1 ] += -1 ;
+    NuVals[ 4 * 21 + 16 ] += -1 ;
+    NuVals[ 4 * 21 + 17 ] += +1 ;
+
+    /*reaction 6: H + C2H5 (+M) <=> C2H6 (+M) */
+    NuVals[ 5 * 21 + 1 ] += -1 ;
+    NuVals[ 5 * 21 + 17 ] += -1 ;
+    NuVals[ 5 * 21 + 18 ] += +1 ;
+
+    /*reaction 7: H2 + CO (+M) <=> CH2O (+M) */
+    NuVals[ 6 * 21 + 0 ] += -1 ;
+    NuVals[ 6 * 21 + 11 ] += -1 ;
+    NuVals[ 6 * 21 + 14 ] += +1 ;
+
+    /*reaction 8: 2 CH3 (+M) <=> C2H6 (+M) */
+    NuVals[ 7 * 21 + 9 ] += -2 ;
+    NuVals[ 7 * 21 + 18 ] += +1 ;
+
+    /*reaction 9: O + H + M <=> OH + M */
+    NuVals[ 8 * 21 + 2 ] += -1 ;
+    NuVals[ 8 * 21 + 1 ] += -1 ;
+    NuVals[ 8 * 21 + 4 ] += +1 ;
+
+    /*reaction 10: O + CO + M <=> CO2 + M */
+    NuVals[ 9 * 21 + 2 ] += -1 ;
+    NuVals[ 9 * 21 + 11 ] += -1 ;
+    NuVals[ 9 * 21 + 12 ] += +1 ;
+
+    /*reaction 11: H + O2 + M <=> HO2 + M */
+    NuVals[ 10 * 21 + 1 ] += -1 ;
+    NuVals[ 10 * 21 + 3 ] += -1 ;
+    NuVals[ 10 * 21 + 6 ] += +1 ;
+
+    /*reaction 12: 2 H + M <=> H2 + M */
+    NuVals[ 11 * 21 + 1 ] += -2 ;
+    NuVals[ 11 * 21 + 0 ] += +1 ;
+
+    /*reaction 13: H + OH + M <=> H2O + M */
+    NuVals[ 12 * 21 + 1 ] += -1 ;
+    NuVals[ 12 * 21 + 4 ] += -1 ;
+    NuVals[ 12 * 21 + 5 ] += +1 ;
+
+    /*reaction 14: HCO + M <=> H + CO + M */
+    NuVals[ 13 * 21 + 13 ] += -1 ;
+    NuVals[ 13 * 21 + 1 ] += +1 ;
+    NuVals[ 13 * 21 + 11 ] += +1 ;
+
+    /*reaction 15: O + H2 <=> H + OH */
+    NuVals[ 14 * 21 + 2 ] += -1 ;
+    NuVals[ 14 * 21 + 0 ] += -1 ;
+    NuVals[ 14 * 21 + 1 ] += +1 ;
+    NuVals[ 14 * 21 + 4 ] += +1 ;
+
+    /*reaction 16: O + HO2 <=> OH + O2 */
+    NuVals[ 15 * 21 + 2 ] += -1 ;
+    NuVals[ 15 * 21 + 6 ] += -1 ;
+    NuVals[ 15 * 21 + 4 ] += +1 ;
+    NuVals[ 15 * 21 + 3 ] += +1 ;
+
+    /*reaction 17: O + CH2 <=> H + HCO */
+    NuVals[ 16 * 21 + 2 ] += -1 ;
+    NuVals[ 16 * 21 + 7 ] += -1 ;
+    NuVals[ 16 * 21 + 1 ] += +1 ;
+    NuVals[ 16 * 21 + 13 ] += +1 ;
+
+    /*reaction 18: O + CH2(S) <=> H + HCO */
+    NuVals[ 17 * 21 + 2 ] += -1 ;
+    NuVals[ 17 * 21 + 8 ] += -1 ;
+    NuVals[ 17 * 21 + 1 ] += +1 ;
+    NuVals[ 17 * 21 + 13 ] += +1 ;
+
+    /*reaction 19: O + CH3 <=> H + CH2O */
+    NuVals[ 18 * 21 + 2 ] += -1 ;
+    NuVals[ 18 * 21 + 9 ] += -1 ;
+    NuVals[ 18 * 21 + 1 ] += +1 ;
+    NuVals[ 18 * 21 + 14 ] += +1 ;
+
+    /*reaction 20: O + CH4 <=> OH + CH3 */
+    NuVals[ 19 * 21 + 2 ] += -1 ;
+    NuVals[ 19 * 21 + 10 ] += -1 ;
+    NuVals[ 19 * 21 + 4 ] += +1 ;
+    NuVals[ 19 * 21 + 9 ] += +1 ;
+
+    /*reaction 21: O + HCO <=> OH + CO */
+    NuVals[ 20 * 21 + 2 ] += -1 ;
+    NuVals[ 20 * 21 + 13 ] += -1 ;
+    NuVals[ 20 * 21 + 4 ] += +1 ;
+    NuVals[ 20 * 21 + 11 ] += +1 ;
+
+    /*reaction 22: O + HCO <=> H + CO2 */
+    NuVals[ 21 * 21 + 2 ] += -1 ;
+    NuVals[ 21 * 21 + 13 ] += -1 ;
+    NuVals[ 21 * 21 + 1 ] += +1 ;
+    NuVals[ 21 * 21 + 12 ] += +1 ;
+
+    /*reaction 23: O + CH2O <=> OH + HCO */
+    NuVals[ 22 * 21 + 2 ] += -1 ;
+    NuVals[ 22 * 21 + 14 ] += -1 ;
+    NuVals[ 22 * 21 + 4 ] += +1 ;
+    NuVals[ 22 * 21 + 13 ] += +1 ;
+
+    /*reaction 24: O + C2H4 <=> CH3 + HCO */
+    NuVals[ 23 * 21 + 2 ] += -1 ;
+    NuVals[ 23 * 21 + 16 ] += -1 ;
+    NuVals[ 23 * 21 + 9 ] += +1 ;
+    NuVals[ 23 * 21 + 13 ] += +1 ;
+
+    /*reaction 25: O + C2H5 <=> CH3 + CH2O */
+    NuVals[ 24 * 21 + 2 ] += -1 ;
+    NuVals[ 24 * 21 + 17 ] += -1 ;
+    NuVals[ 24 * 21 + 9 ] += +1 ;
+    NuVals[ 24 * 21 + 14 ] += +1 ;
+
+    /*reaction 26: O + C2H6 <=> OH + C2H5 */
+    NuVals[ 25 * 21 + 2 ] += -1 ;
+    NuVals[ 25 * 21 + 18 ] += -1 ;
+    NuVals[ 25 * 21 + 4 ] += +1 ;
+    NuVals[ 25 * 21 + 17 ] += +1 ;
+
+    /*reaction 27: O2 + CO <=> O + CO2 */
+    NuVals[ 26 * 21 + 3 ] += -1 ;
+    NuVals[ 26 * 21 + 11 ] += -1 ;
+    NuVals[ 26 * 21 + 2 ] += +1 ;
+    NuVals[ 26 * 21 + 12 ] += +1 ;
+
+    /*reaction 28: O2 + CH2O <=> HO2 + HCO */
+    NuVals[ 27 * 21 + 3 ] += -1 ;
+    NuVals[ 27 * 21 + 14 ] += -1 ;
+    NuVals[ 27 * 21 + 6 ] += +1 ;
+    NuVals[ 27 * 21 + 13 ] += +1 ;
+
+    /*reaction 29: H + 2 O2 <=> HO2 + O2 */
+    NuVals[ 28 * 21 + 1 ] += -1 ;
+    NuVals[ 28 * 21 + 3 ] += -2 ;
+    NuVals[ 28 * 21 + 6 ] += +1 ;
+    NuVals[ 28 * 21 + 3 ] += +1 ;
+
+    /*reaction 30: H + O2 + H2O <=> HO2 + H2O */
+    NuVals[ 29 * 21 + 1 ] += -1 ;
+    NuVals[ 29 * 21 + 3 ] += -1 ;
+    NuVals[ 29 * 21 + 5 ] += -1 ;
+    NuVals[ 29 * 21 + 6 ] += +1 ;
+    NuVals[ 29 * 21 + 5 ] += +1 ;
+
+    /*reaction 31: H + O2 + N2 <=> HO2 + N2 */
+    NuVals[ 30 * 21 + 1 ] += -1 ;
+    NuVals[ 30 * 21 + 3 ] += -1 ;
+    NuVals[ 30 * 21 + 19 ] += -1 ;
+    NuVals[ 30 * 21 + 6 ] += +1 ;
+    NuVals[ 30 * 21 + 19 ] += +1 ;
+
+    /*reaction 32: H + O2 + AR <=> HO2 + AR */
+    NuVals[ 31 * 21 + 1 ] += -1 ;
+    NuVals[ 31 * 21 + 3 ] += -1 ;
+    NuVals[ 31 * 21 + 20 ] += -1 ;
+    NuVals[ 31 * 21 + 6 ] += +1 ;
+    NuVals[ 31 * 21 + 20 ] += +1 ;
+
+    /*reaction 33: H + O2 <=> O + OH */
+    NuVals[ 32 * 21 + 1 ] += -1 ;
+    NuVals[ 32 * 21 + 3 ] += -1 ;
+    NuVals[ 32 * 21 + 2 ] += +1 ;
+    NuVals[ 32 * 21 + 4 ] += +1 ;
+
+    /*reaction 34: 2 H + H2 <=> 2 H2 */
+    NuVals[ 33 * 21 + 1 ] += -2 ;
+    NuVals[ 33 * 21 + 0 ] += -1 ;
+    NuVals[ 33 * 21 + 0 ] += +2 ;
+
+    /*reaction 35: 2 H + H2O <=> H2 + H2O */
+    NuVals[ 34 * 21 + 1 ] += -2 ;
+    NuVals[ 34 * 21 + 5 ] += -1 ;
+    NuVals[ 34 * 21 + 0 ] += +1 ;
+    NuVals[ 34 * 21 + 5 ] += +1 ;
+
+    /*reaction 36: 2 H + CO2 <=> H2 + CO2 */
+    NuVals[ 35 * 21 + 1 ] += -2 ;
+    NuVals[ 35 * 21 + 12 ] += -1 ;
+    NuVals[ 35 * 21 + 0 ] += +1 ;
+    NuVals[ 35 * 21 + 12 ] += +1 ;
+
+    /*reaction 37: H + HO2 <=> O2 + H2 */
+    NuVals[ 36 * 21 + 1 ] += -1 ;
+    NuVals[ 36 * 21 + 6 ] += -1 ;
+    NuVals[ 36 * 21 + 3 ] += +1 ;
+    NuVals[ 36 * 21 + 0 ] += +1 ;
+
+    /*reaction 38: H + HO2 <=> 2 OH */
+    NuVals[ 37 * 21 + 1 ] += -1 ;
+    NuVals[ 37 * 21 + 6 ] += -1 ;
+    NuVals[ 37 * 21 + 4 ] += +2 ;
+
+    /*reaction 39: H + CH4 <=> CH3 + H2 */
+    NuVals[ 38 * 21 + 1 ] += -1 ;
+    NuVals[ 38 * 21 + 10 ] += -1 ;
+    NuVals[ 38 * 21 + 9 ] += +1 ;
+    NuVals[ 38 * 21 + 0 ] += +1 ;
+
+    /*reaction 40: H + HCO <=> H2 + CO */
+    NuVals[ 39 * 21 + 1 ] += -1 ;
+    NuVals[ 39 * 21 + 13 ] += -1 ;
+    NuVals[ 39 * 21 + 0 ] += +1 ;
+    NuVals[ 39 * 21 + 11 ] += +1 ;
+
+    /*reaction 41: H + CH2O <=> HCO + H2 */
+    NuVals[ 40 * 21 + 1 ] += -1 ;
+    NuVals[ 40 * 21 + 14 ] += -1 ;
+    NuVals[ 40 * 21 + 13 ] += +1 ;
+    NuVals[ 40 * 21 + 0 ] += +1 ;
+
+    /*reaction 42: H + CH3O <=> OH + CH3 */
+    NuVals[ 41 * 21 + 1 ] += -1 ;
+    NuVals[ 41 * 21 + 15 ] += -1 ;
+    NuVals[ 41 * 21 + 4 ] += +1 ;
+    NuVals[ 41 * 21 + 9 ] += +1 ;
+
+    /*reaction 43: H + C2H6 <=> C2H5 + H2 */
+    NuVals[ 42 * 21 + 1 ] += -1 ;
+    NuVals[ 42 * 21 + 18 ] += -1 ;
+    NuVals[ 42 * 21 + 17 ] += +1 ;
+    NuVals[ 42 * 21 + 0 ] += +1 ;
+
+    /*reaction 44: OH + H2 <=> H + H2O */
+    NuVals[ 43 * 21 + 4 ] += -1 ;
+    NuVals[ 43 * 21 + 0 ] += -1 ;
+    NuVals[ 43 * 21 + 1 ] += +1 ;
+    NuVals[ 43 * 21 + 5 ] += +1 ;
+
+    /*reaction 45: 2 OH <=> O + H2O */
+    NuVals[ 44 * 21 + 4 ] += -2 ;
+    NuVals[ 44 * 21 + 2 ] += +1 ;
+    NuVals[ 44 * 21 + 5 ] += +1 ;
+
+    /*reaction 46: OH + HO2 <=> O2 + H2O */
+    NuVals[ 45 * 21 + 4 ] += -1 ;
+    NuVals[ 45 * 21 + 6 ] += -1 ;
+    NuVals[ 45 * 21 + 3 ] += +1 ;
+    NuVals[ 45 * 21 + 5 ] += +1 ;
+
+    /*reaction 47: OH + CH2 <=> H + CH2O */
+    NuVals[ 46 * 21 + 4 ] += -1 ;
+    NuVals[ 46 * 21 + 7 ] += -1 ;
+    NuVals[ 46 * 21 + 1 ] += +1 ;
+    NuVals[ 46 * 21 + 14 ] += +1 ;
+
+    /*reaction 48: OH + CH2(S) <=> H + CH2O */
+    NuVals[ 47 * 21 + 4 ] += -1 ;
+    NuVals[ 47 * 21 + 8 ] += -1 ;
+    NuVals[ 47 * 21 + 1 ] += +1 ;
+    NuVals[ 47 * 21 + 14 ] += +1 ;
+
+    /*reaction 49: OH + CH3 <=> CH2 + H2O */
+    NuVals[ 48 * 21 + 4 ] += -1 ;
+    NuVals[ 48 * 21 + 9 ] += -1 ;
+    NuVals[ 48 * 21 + 7 ] += +1 ;
+    NuVals[ 48 * 21 + 5 ] += +1 ;
+
+    /*reaction 50: OH + CH3 <=> CH2(S) + H2O */
+    NuVals[ 49 * 21 + 4 ] += -1 ;
+    NuVals[ 49 * 21 + 9 ] += -1 ;
+    NuVals[ 49 * 21 + 8 ] += +1 ;
+    NuVals[ 49 * 21 + 5 ] += +1 ;
+
+    /*reaction 51: OH + CH4 <=> CH3 + H2O */
+    NuVals[ 50 * 21 + 4 ] += -1 ;
+    NuVals[ 50 * 21 + 10 ] += -1 ;
+    NuVals[ 50 * 21 + 9 ] += +1 ;
+    NuVals[ 50 * 21 + 5 ] += +1 ;
+
+    /*reaction 52: OH + CO <=> H + CO2 */
+    NuVals[ 51 * 21 + 4 ] += -1 ;
+    NuVals[ 51 * 21 + 11 ] += -1 ;
+    NuVals[ 51 * 21 + 1 ] += +1 ;
+    NuVals[ 51 * 21 + 12 ] += +1 ;
+
+    /*reaction 53: OH + HCO <=> H2O + CO */
+    NuVals[ 52 * 21 + 4 ] += -1 ;
+    NuVals[ 52 * 21 + 13 ] += -1 ;
+    NuVals[ 52 * 21 + 5 ] += +1 ;
+    NuVals[ 52 * 21 + 11 ] += +1 ;
+
+    /*reaction 54: OH + CH2O <=> HCO + H2O */
+    NuVals[ 53 * 21 + 4 ] += -1 ;
+    NuVals[ 53 * 21 + 14 ] += -1 ;
+    NuVals[ 53 * 21 + 13 ] += +1 ;
+    NuVals[ 53 * 21 + 5 ] += +1 ;
+
+    /*reaction 55: OH + C2H6 <=> C2H5 + H2O */
+    NuVals[ 54 * 21 + 4 ] += -1 ;
+    NuVals[ 54 * 21 + 18 ] += -1 ;
+    NuVals[ 54 * 21 + 17 ] += +1 ;
+    NuVals[ 54 * 21 + 5 ] += +1 ;
+
+    /*reaction 56: HO2 + CH2 <=> OH + CH2O */
+    NuVals[ 55 * 21 + 6 ] += -1 ;
+    NuVals[ 55 * 21 + 7 ] += -1 ;
+    NuVals[ 55 * 21 + 4 ] += +1 ;
+    NuVals[ 55 * 21 + 14 ] += +1 ;
+
+    /*reaction 57: HO2 + CH3 <=> O2 + CH4 */
+    NuVals[ 56 * 21 + 6 ] += -1 ;
+    NuVals[ 56 * 21 + 9 ] += -1 ;
+    NuVals[ 56 * 21 + 3 ] += +1 ;
+    NuVals[ 56 * 21 + 10 ] += +1 ;
+
+    /*reaction 58: HO2 + CH3 <=> OH + CH3O */
+    NuVals[ 57 * 21 + 6 ] += -1 ;
+    NuVals[ 57 * 21 + 9 ] += -1 ;
+    NuVals[ 57 * 21 + 4 ] += +1 ;
+    NuVals[ 57 * 21 + 15 ] += +1 ;
+
+    /*reaction 59: HO2 + CO <=> OH + CO2 */
+    NuVals[ 58 * 21 + 6 ] += -1 ;
+    NuVals[ 58 * 21 + 11 ] += -1 ;
+    NuVals[ 58 * 21 + 4 ] += +1 ;
+    NuVals[ 58 * 21 + 12 ] += +1 ;
+
+    /*reaction 60: CH2 + O2 <=> OH + HCO */
+    NuVals[ 59 * 21 + 7 ] += -1 ;
+    NuVals[ 59 * 21 + 3 ] += -1 ;
+    NuVals[ 59 * 21 + 4 ] += +1 ;
+    NuVals[ 59 * 21 + 13 ] += +1 ;
+
+    /*reaction 61: CH2 + H2 <=> H + CH3 */
+    NuVals[ 60 * 21 + 7 ] += -1 ;
+    NuVals[ 60 * 21 + 0 ] += -1 ;
+    NuVals[ 60 * 21 + 1 ] += +1 ;
+    NuVals[ 60 * 21 + 9 ] += +1 ;
+
+    /*reaction 62: CH2 + CH3 <=> H + C2H4 */
+    NuVals[ 61 * 21 + 7 ] += -1 ;
+    NuVals[ 61 * 21 + 9 ] += -1 ;
+    NuVals[ 61 * 21 + 1 ] += +1 ;
+    NuVals[ 61 * 21 + 16 ] += +1 ;
+
+    /*reaction 63: CH2 + CH4 <=> 2 CH3 */
+    NuVals[ 62 * 21 + 7 ] += -1 ;
+    NuVals[ 62 * 21 + 10 ] += -1 ;
+    NuVals[ 62 * 21 + 9 ] += +2 ;
+
+    /*reaction 64: CH2(S) + N2 <=> CH2 + N2 */
+    NuVals[ 63 * 21 + 8 ] += -1 ;
+    NuVals[ 63 * 21 + 19 ] += -1 ;
+    NuVals[ 63 * 21 + 7 ] += +1 ;
+    NuVals[ 63 * 21 + 19 ] += +1 ;
+
+    /*reaction 65: CH2(S) + AR <=> CH2 + AR */
+    NuVals[ 64 * 21 + 8 ] += -1 ;
+    NuVals[ 64 * 21 + 20 ] += -1 ;
+    NuVals[ 64 * 21 + 7 ] += +1 ;
+    NuVals[ 64 * 21 + 20 ] += +1 ;
+
+    /*reaction 66: CH2(S) + O2 <=> H + OH + CO */
+    NuVals[ 65 * 21 + 8 ] += -1 ;
+    NuVals[ 65 * 21 + 3 ] += -1 ;
+    NuVals[ 65 * 21 + 1 ] += +1 ;
+    NuVals[ 65 * 21 + 4 ] += +1 ;
+    NuVals[ 65 * 21 + 11 ] += +1 ;
+
+    /*reaction 67: CH2(S) + O2 <=> CO + H2O */
+    NuVals[ 66 * 21 + 8 ] += -1 ;
+    NuVals[ 66 * 21 + 3 ] += -1 ;
+    NuVals[ 66 * 21 + 11 ] += +1 ;
+    NuVals[ 66 * 21 + 5 ] += +1 ;
+
+    /*reaction 68: CH2(S) + H2 <=> CH3 + H */
+    NuVals[ 67 * 21 + 8 ] += -1 ;
+    NuVals[ 67 * 21 + 0 ] += -1 ;
+    NuVals[ 67 * 21 + 9 ] += +1 ;
+    NuVals[ 67 * 21 + 1 ] += +1 ;
+
+    /*reaction 69: CH2(S) + H2O <=> CH2 + H2O */
+    NuVals[ 68 * 21 + 8 ] += -1 ;
+    NuVals[ 68 * 21 + 5 ] += -1 ;
+    NuVals[ 68 * 21 + 7 ] += +1 ;
+    NuVals[ 68 * 21 + 5 ] += +1 ;
+
+    /*reaction 70: CH2(S) + CH3 <=> H + C2H4 */
+    NuVals[ 69 * 21 + 8 ] += -1 ;
+    NuVals[ 69 * 21 + 9 ] += -1 ;
+    NuVals[ 69 * 21 + 1 ] += +1 ;
+    NuVals[ 69 * 21 + 16 ] += +1 ;
+
+    /*reaction 71: CH2(S) + CH4 <=> 2 CH3 */
+    NuVals[ 70 * 21 + 8 ] += -1 ;
+    NuVals[ 70 * 21 + 10 ] += -1 ;
+    NuVals[ 70 * 21 + 9 ] += +2 ;
+
+    /*reaction 72: CH2(S) + CO <=> CH2 + CO */
+    NuVals[ 71 * 21 + 8 ] += -1 ;
+    NuVals[ 71 * 21 + 11 ] += -1 ;
+    NuVals[ 71 * 21 + 7 ] += +1 ;
+    NuVals[ 71 * 21 + 11 ] += +1 ;
+
+    /*reaction 73: CH2(S) + CO2 <=> CH2 + CO2 */
+    NuVals[ 72 * 21 + 8 ] += -1 ;
+    NuVals[ 72 * 21 + 12 ] += -1 ;
+    NuVals[ 72 * 21 + 7 ] += +1 ;
+    NuVals[ 72 * 21 + 12 ] += +1 ;
+
+    /*reaction 74: CH2(S) + CO2 <=> CO + CH2O */
+    NuVals[ 73 * 21 + 8 ] += -1 ;
+    NuVals[ 73 * 21 + 12 ] += -1 ;
+    NuVals[ 73 * 21 + 11 ] += +1 ;
+    NuVals[ 73 * 21 + 14 ] += +1 ;
+
+    /*reaction 75: CH3 + O2 <=> O + CH3O */
+    NuVals[ 74 * 21 + 9 ] += -1 ;
+    NuVals[ 74 * 21 + 3 ] += -1 ;
+    NuVals[ 74 * 21 + 2 ] += +1 ;
+    NuVals[ 74 * 21 + 15 ] += +1 ;
+
+    /*reaction 76: CH3 + O2 <=> OH + CH2O */
+    NuVals[ 75 * 21 + 9 ] += -1 ;
+    NuVals[ 75 * 21 + 3 ] += -1 ;
+    NuVals[ 75 * 21 + 4 ] += +1 ;
+    NuVals[ 75 * 21 + 14 ] += +1 ;
+
+    /*reaction 77: 2 CH3 <=> H + C2H5 */
+    NuVals[ 76 * 21 + 9 ] += -2 ;
+    NuVals[ 76 * 21 + 1 ] += +1 ;
+    NuVals[ 76 * 21 + 17 ] += +1 ;
+
+    /*reaction 78: CH3 + HCO <=> CH4 + CO */
+    NuVals[ 77 * 21 + 9 ] += -1 ;
+    NuVals[ 77 * 21 + 13 ] += -1 ;
+    NuVals[ 77 * 21 + 10 ] += +1 ;
+    NuVals[ 77 * 21 + 11 ] += +1 ;
+
+    /*reaction 79: CH3 + CH2O <=> HCO + CH4 */
+    NuVals[ 78 * 21 + 9 ] += -1 ;
+    NuVals[ 78 * 21 + 14 ] += -1 ;
+    NuVals[ 78 * 21 + 13 ] += +1 ;
+    NuVals[ 78 * 21 + 10 ] += +1 ;
+
+    /*reaction 80: CH3 + C2H6 <=> C2H5 + CH4 */
+    NuVals[ 79 * 21 + 9 ] += -1 ;
+    NuVals[ 79 * 21 + 18 ] += -1 ;
+    NuVals[ 79 * 21 + 17 ] += +1 ;
+    NuVals[ 79 * 21 + 10 ] += +1 ;
+
+    /*reaction 81: HCO + H2O <=> H + CO + H2O */
+    NuVals[ 80 * 21 + 13 ] += -1 ;
+    NuVals[ 80 * 21 + 5 ] += -1 ;
+    NuVals[ 80 * 21 + 1 ] += +1 ;
+    NuVals[ 80 * 21 + 11 ] += +1 ;
+    NuVals[ 80 * 21 + 5 ] += +1 ;
+
+    /*reaction 82: HCO + O2 <=> HO2 + CO */
+    NuVals[ 81 * 21 + 13 ] += -1 ;
+    NuVals[ 81 * 21 + 3 ] += -1 ;
+    NuVals[ 81 * 21 + 6 ] += +1 ;
+    NuVals[ 81 * 21 + 11 ] += +1 ;
+
+    /*reaction 83: CH3O + O2 <=> HO2 + CH2O */
+    NuVals[ 82 * 21 + 15 ] += -1 ;
+    NuVals[ 82 * 21 + 3 ] += -1 ;
+    NuVals[ 82 * 21 + 6 ] += +1 ;
+    NuVals[ 82 * 21 + 14 ] += +1 ;
+
+    /*reaction 84: C2H5 + O2 <=> HO2 + C2H4 */
+    NuVals[ 83 * 21 + 17 ] += -1 ;
+    NuVals[ 83 * 21 + 3 ] += -1 ;
+    NuVals[ 83 * 21 + 6 ] += +1 ;
+    NuVals[ 83 * 21 + 16 ] += +1 ;
+    }
+    cudaMemcpyToSymbol(NuVals_d, NuVals, sizeof(int) * 1764);
+
+    cudaMalloc((void**)&TB_d[0], sizeof(double) * 7);
+    cudaMalloc((void**)&TBid_d[0], sizeof(int) * 7);
     cudaMemcpyToSymbol(TBid_d[0], TBid[0], sizeof(int) * 7);
     cudaMemcpyToSymbol(TB_d[0], TB[0], sizeof(double) * 7);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 7);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 7);
+    cudaMalloc((void**)&TB_d[1], sizeof(double) * 7);
+    cudaMalloc((void**)&TBid_d[1], sizeof(int) * 7);
     cudaMemcpyToSymbol(TBid_d[1], TBid[1], sizeof(int) * 7);
     cudaMemcpyToSymbol(TB_d[1], TB[1], sizeof(double) * 7);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 7);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 7);
+    cudaMalloc((void**)&TB_d[2], sizeof(double) * 7);
+    cudaMalloc((void**)&TBid_d[2], sizeof(int) * 7);
     cudaMemcpyToSymbol(TBid_d[2], TBid[2], sizeof(int) * 7);
     cudaMemcpyToSymbol(TB_d[2], TB[2], sizeof(double) * 7);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 6);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 6);
+    cudaMalloc((void**)&TB_d[3], sizeof(double) * 6);
+    cudaMalloc((void**)&TBid_d[3], sizeof(int) * 6);
     cudaMemcpyToSymbol(TBid_d[3], TBid[3], sizeof(int) * 6);
     cudaMemcpyToSymbol(TB_d[3], TB[3], sizeof(double) * 6);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 7);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 7);
+    cudaMalloc((void**)&TB_d[4], sizeof(double) * 7);
+    cudaMalloc((void**)&TBid_d[4], sizeof(int) * 7);
     cudaMemcpyToSymbol(TBid_d[4], TBid[4], sizeof(int) * 7);
     cudaMemcpyToSymbol(TB_d[4], TB[4], sizeof(double) * 7);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 7);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 7);
+    cudaMalloc((void**)&TB_d[5], sizeof(double) * 7);
+    cudaMalloc((void**)&TBid_d[5], sizeof(int) * 7);
     cudaMemcpyToSymbol(TBid_d[5], TBid[5], sizeof(int) * 7);
     cudaMemcpyToSymbol(TB_d[5], TB[5], sizeof(double) * 7);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 7);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 7);
+    cudaMalloc((void**)&TB_d[6], sizeof(double) * 7);
+    cudaMalloc((void**)&TBid_d[6], sizeof(int) * 7);
     cudaMemcpyToSymbol(TBid_d[6], TBid[6], sizeof(int) * 7);
     cudaMemcpyToSymbol(TB_d[6], TB[6], sizeof(double) * 7);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 7);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 7);
+    cudaMalloc((void**)&TB_d[7], sizeof(double) * 7);
+    cudaMalloc((void**)&TBid_d[7], sizeof(int) * 7);
     cudaMemcpyToSymbol(TBid_d[7], TBid[7], sizeof(int) * 7);
     cudaMemcpyToSymbol(TB_d[7], TB[7], sizeof(double) * 7);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 7);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 7);
+    cudaMalloc((void**)&TB_d[8], sizeof(double) * 7);
+    cudaMalloc((void**)&TBid_d[8], sizeof(int) * 7);
     cudaMemcpyToSymbol(TBid_d[8], TBid[8], sizeof(int) * 7);
     cudaMemcpyToSymbol(TB_d[8], TB[8], sizeof(double) * 7);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 8);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 8);
+    cudaMalloc((void**)&TB_d[9], sizeof(double) * 8);
+    cudaMalloc((void**)&TBid_d[9], sizeof(int) * 8);
     cudaMemcpyToSymbol(TBid_d[9], TBid[9], sizeof(int) * 8);
     cudaMemcpyToSymbol(TB_d[9], TB[9], sizeof(double) * 8);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 7);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 7);
+    cudaMalloc((void**)&TB_d[10], sizeof(double) * 7);
+    cudaMalloc((void**)&TBid_d[10], sizeof(int) * 7);
     cudaMemcpyToSymbol(TBid_d[10], TBid[10], sizeof(int) * 7);
     cudaMemcpyToSymbol(TB_d[10], TB[10], sizeof(double) * 7);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 6);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 6);
+    cudaMalloc((void**)&TB_d[11], sizeof(double) * 6);
+    cudaMalloc((void**)&TBid_d[11], sizeof(int) * 6);
     cudaMemcpyToSymbol(TBid_d[11], TBid[11], sizeof(int) * 6);
     cudaMemcpyToSymbol(TB_d[11], TB[11], sizeof(double) * 6);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 5);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 5);
+    cudaMalloc((void**)&TB_d[12], sizeof(double) * 5);
+    cudaMalloc((void**)&TBid_d[12], sizeof(int) * 5);
     cudaMemcpyToSymbol(TBid_d[12], TBid[12], sizeof(int) * 5);
     cudaMemcpyToSymbol(TB_d[12], TB[12], sizeof(double) * 5);
 
-    cudaMalloc((void**)&TB_d, sizeof(double) * 6);
-    cudaMalloc((void**)&TBid_d, sizeof(int) * 6);
+    cudaMalloc((void**)&TB_d[13], sizeof(double) * 6);
+    cudaMalloc((void**)&TBid_d[13], sizeof(int) * 6);
     cudaMemcpyToSymbol(TBid_d[13], TBid[13], sizeof(int) * 6);
     cudaMemcpyToSymbol(TB_d[13], TB[13], sizeof(double) * 6);
 }
@@ -1605,6 +1929,506 @@ void DeallocateOnDevice()
 /*Deallocation */
 }
 #endif
+
+
+/*Returns the stoichiometric coefficients */
+/*of the reaction mechanism. (Eq 50) */
+void CKNU(int * kdim,  int * nuki)
+{
+    int id; /*loop counter */
+    int kd = (*kdim); 
+    /*Zero nuki */
+    for (id = 0; id < 21 * kd; ++ id) {
+         nuki[id] = 0; 
+    }
+
+    /*reaction 1: H + CH2 (+M) <=> CH3 (+M) */
+    nuki[ 1 * kd + 0 ] += -1 ;
+    nuki[ 7 * kd + 0 ] += -1 ;
+    nuki[ 9 * kd + 0 ] += +1 ;
+
+    /*reaction 2: H + CH3 (+M) <=> CH4 (+M) */
+    nuki[ 1 * kd + 1 ] += -1 ;
+    nuki[ 9 * kd + 1 ] += -1 ;
+    nuki[ 10 * kd + 1 ] += +1 ;
+
+    /*reaction 3: H + HCO (+M) <=> CH2O (+M) */
+    nuki[ 1 * kd + 2 ] += -1 ;
+    nuki[ 13 * kd + 2 ] += -1 ;
+    nuki[ 14 * kd + 2 ] += +1 ;
+
+    /*reaction 4: H + CH2O (+M) <=> CH3O (+M) */
+    nuki[ 1 * kd + 3 ] += -1 ;
+    nuki[ 14 * kd + 3 ] += -1 ;
+    nuki[ 15 * kd + 3 ] += +1 ;
+
+    /*reaction 5: H + C2H4 (+M) <=> C2H5 (+M) */
+    nuki[ 1 * kd + 4 ] += -1 ;
+    nuki[ 16 * kd + 4 ] += -1 ;
+    nuki[ 17 * kd + 4 ] += +1 ;
+
+    /*reaction 6: H + C2H5 (+M) <=> C2H6 (+M) */
+    nuki[ 1 * kd + 5 ] += -1 ;
+    nuki[ 17 * kd + 5 ] += -1 ;
+    nuki[ 18 * kd + 5 ] += +1 ;
+
+    /*reaction 7: H2 + CO (+M) <=> CH2O (+M) */
+    nuki[ 0 * kd + 6 ] += -1 ;
+    nuki[ 11 * kd + 6 ] += -1 ;
+    nuki[ 14 * kd + 6 ] += +1 ;
+
+    /*reaction 8: 2 CH3 (+M) <=> C2H6 (+M) */
+    nuki[ 9 * kd + 7 ] += -2 ;
+    nuki[ 18 * kd + 7 ] += +1 ;
+
+    /*reaction 9: O + H + M <=> OH + M */
+    nuki[ 2 * kd + 8 ] += -1 ;
+    nuki[ 1 * kd + 8 ] += -1 ;
+    nuki[ 4 * kd + 8 ] += +1 ;
+
+    /*reaction 10: O + CO + M <=> CO2 + M */
+    nuki[ 2 * kd + 9 ] += -1 ;
+    nuki[ 11 * kd + 9 ] += -1 ;
+    nuki[ 12 * kd + 9 ] += +1 ;
+
+    /*reaction 11: H + O2 + M <=> HO2 + M */
+    nuki[ 1 * kd + 10 ] += -1 ;
+    nuki[ 3 * kd + 10 ] += -1 ;
+    nuki[ 6 * kd + 10 ] += +1 ;
+
+    /*reaction 12: 2 H + M <=> H2 + M */
+    nuki[ 1 * kd + 11 ] += -2 ;
+    nuki[ 0 * kd + 11 ] += +1 ;
+
+    /*reaction 13: H + OH + M <=> H2O + M */
+    nuki[ 1 * kd + 12 ] += -1 ;
+    nuki[ 4 * kd + 12 ] += -1 ;
+    nuki[ 5 * kd + 12 ] += +1 ;
+
+    /*reaction 14: HCO + M <=> H + CO + M */
+    nuki[ 13 * kd + 13 ] += -1 ;
+    nuki[ 1 * kd + 13 ] += +1 ;
+    nuki[ 11 * kd + 13 ] += +1 ;
+
+    /*reaction 15: O + H2 <=> H + OH */
+    nuki[ 2 * kd + 14 ] += -1 ;
+    nuki[ 0 * kd + 14 ] += -1 ;
+    nuki[ 1 * kd + 14 ] += +1 ;
+    nuki[ 4 * kd + 14 ] += +1 ;
+
+    /*reaction 16: O + HO2 <=> OH + O2 */
+    nuki[ 2 * kd + 15 ] += -1 ;
+    nuki[ 6 * kd + 15 ] += -1 ;
+    nuki[ 4 * kd + 15 ] += +1 ;
+    nuki[ 3 * kd + 15 ] += +1 ;
+
+    /*reaction 17: O + CH2 <=> H + HCO */
+    nuki[ 2 * kd + 16 ] += -1 ;
+    nuki[ 7 * kd + 16 ] += -1 ;
+    nuki[ 1 * kd + 16 ] += +1 ;
+    nuki[ 13 * kd + 16 ] += +1 ;
+
+    /*reaction 18: O + CH2(S) <=> H + HCO */
+    nuki[ 2 * kd + 17 ] += -1 ;
+    nuki[ 8 * kd + 17 ] += -1 ;
+    nuki[ 1 * kd + 17 ] += +1 ;
+    nuki[ 13 * kd + 17 ] += +1 ;
+
+    /*reaction 19: O + CH3 <=> H + CH2O */
+    nuki[ 2 * kd + 18 ] += -1 ;
+    nuki[ 9 * kd + 18 ] += -1 ;
+    nuki[ 1 * kd + 18 ] += +1 ;
+    nuki[ 14 * kd + 18 ] += +1 ;
+
+    /*reaction 20: O + CH4 <=> OH + CH3 */
+    nuki[ 2 * kd + 19 ] += -1 ;
+    nuki[ 10 * kd + 19 ] += -1 ;
+    nuki[ 4 * kd + 19 ] += +1 ;
+    nuki[ 9 * kd + 19 ] += +1 ;
+
+    /*reaction 21: O + HCO <=> OH + CO */
+    nuki[ 2 * kd + 20 ] += -1 ;
+    nuki[ 13 * kd + 20 ] += -1 ;
+    nuki[ 4 * kd + 20 ] += +1 ;
+    nuki[ 11 * kd + 20 ] += +1 ;
+
+    /*reaction 22: O + HCO <=> H + CO2 */
+    nuki[ 2 * kd + 21 ] += -1 ;
+    nuki[ 13 * kd + 21 ] += -1 ;
+    nuki[ 1 * kd + 21 ] += +1 ;
+    nuki[ 12 * kd + 21 ] += +1 ;
+
+    /*reaction 23: O + CH2O <=> OH + HCO */
+    nuki[ 2 * kd + 22 ] += -1 ;
+    nuki[ 14 * kd + 22 ] += -1 ;
+    nuki[ 4 * kd + 22 ] += +1 ;
+    nuki[ 13 * kd + 22 ] += +1 ;
+
+    /*reaction 24: O + C2H4 <=> CH3 + HCO */
+    nuki[ 2 * kd + 23 ] += -1 ;
+    nuki[ 16 * kd + 23 ] += -1 ;
+    nuki[ 9 * kd + 23 ] += +1 ;
+    nuki[ 13 * kd + 23 ] += +1 ;
+
+    /*reaction 25: O + C2H5 <=> CH3 + CH2O */
+    nuki[ 2 * kd + 24 ] += -1 ;
+    nuki[ 17 * kd + 24 ] += -1 ;
+    nuki[ 9 * kd + 24 ] += +1 ;
+    nuki[ 14 * kd + 24 ] += +1 ;
+
+    /*reaction 26: O + C2H6 <=> OH + C2H5 */
+    nuki[ 2 * kd + 25 ] += -1 ;
+    nuki[ 18 * kd + 25 ] += -1 ;
+    nuki[ 4 * kd + 25 ] += +1 ;
+    nuki[ 17 * kd + 25 ] += +1 ;
+
+    /*reaction 27: O2 + CO <=> O + CO2 */
+    nuki[ 3 * kd + 26 ] += -1 ;
+    nuki[ 11 * kd + 26 ] += -1 ;
+    nuki[ 2 * kd + 26 ] += +1 ;
+    nuki[ 12 * kd + 26 ] += +1 ;
+
+    /*reaction 28: O2 + CH2O <=> HO2 + HCO */
+    nuki[ 3 * kd + 27 ] += -1 ;
+    nuki[ 14 * kd + 27 ] += -1 ;
+    nuki[ 6 * kd + 27 ] += +1 ;
+    nuki[ 13 * kd + 27 ] += +1 ;
+
+    /*reaction 29: H + 2 O2 <=> HO2 + O2 */
+    nuki[ 1 * kd + 28 ] += -1 ;
+    nuki[ 3 * kd + 28 ] += -2 ;
+    nuki[ 6 * kd + 28 ] += +1 ;
+    nuki[ 3 * kd + 28 ] += +1 ;
+
+    /*reaction 30: H + O2 + H2O <=> HO2 + H2O */
+    nuki[ 1 * kd + 29 ] += -1 ;
+    nuki[ 3 * kd + 29 ] += -1 ;
+    nuki[ 5 * kd + 29 ] += -1 ;
+    nuki[ 6 * kd + 29 ] += +1 ;
+    nuki[ 5 * kd + 29 ] += +1 ;
+
+    /*reaction 31: H + O2 + N2 <=> HO2 + N2 */
+    nuki[ 1 * kd + 30 ] += -1 ;
+    nuki[ 3 * kd + 30 ] += -1 ;
+    nuki[ 19 * kd + 30 ] += -1 ;
+    nuki[ 6 * kd + 30 ] += +1 ;
+    nuki[ 19 * kd + 30 ] += +1 ;
+
+    /*reaction 32: H + O2 + AR <=> HO2 + AR */
+    nuki[ 1 * kd + 31 ] += -1 ;
+    nuki[ 3 * kd + 31 ] += -1 ;
+    nuki[ 20 * kd + 31 ] += -1 ;
+    nuki[ 6 * kd + 31 ] += +1 ;
+    nuki[ 20 * kd + 31 ] += +1 ;
+
+    /*reaction 33: H + O2 <=> O + OH */
+    nuki[ 1 * kd + 32 ] += -1 ;
+    nuki[ 3 * kd + 32 ] += -1 ;
+    nuki[ 2 * kd + 32 ] += +1 ;
+    nuki[ 4 * kd + 32 ] += +1 ;
+
+    /*reaction 34: 2 H + H2 <=> 2 H2 */
+    nuki[ 1 * kd + 33 ] += -2 ;
+    nuki[ 0 * kd + 33 ] += -1 ;
+    nuki[ 0 * kd + 33 ] += +2 ;
+
+    /*reaction 35: 2 H + H2O <=> H2 + H2O */
+    nuki[ 1 * kd + 34 ] += -2 ;
+    nuki[ 5 * kd + 34 ] += -1 ;
+    nuki[ 0 * kd + 34 ] += +1 ;
+    nuki[ 5 * kd + 34 ] += +1 ;
+
+    /*reaction 36: 2 H + CO2 <=> H2 + CO2 */
+    nuki[ 1 * kd + 35 ] += -2 ;
+    nuki[ 12 * kd + 35 ] += -1 ;
+    nuki[ 0 * kd + 35 ] += +1 ;
+    nuki[ 12 * kd + 35 ] += +1 ;
+
+    /*reaction 37: H + HO2 <=> O2 + H2 */
+    nuki[ 1 * kd + 36 ] += -1 ;
+    nuki[ 6 * kd + 36 ] += -1 ;
+    nuki[ 3 * kd + 36 ] += +1 ;
+    nuki[ 0 * kd + 36 ] += +1 ;
+
+    /*reaction 38: H + HO2 <=> 2 OH */
+    nuki[ 1 * kd + 37 ] += -1 ;
+    nuki[ 6 * kd + 37 ] += -1 ;
+    nuki[ 4 * kd + 37 ] += +2 ;
+
+    /*reaction 39: H + CH4 <=> CH3 + H2 */
+    nuki[ 1 * kd + 38 ] += -1 ;
+    nuki[ 10 * kd + 38 ] += -1 ;
+    nuki[ 9 * kd + 38 ] += +1 ;
+    nuki[ 0 * kd + 38 ] += +1 ;
+
+    /*reaction 40: H + HCO <=> H2 + CO */
+    nuki[ 1 * kd + 39 ] += -1 ;
+    nuki[ 13 * kd + 39 ] += -1 ;
+    nuki[ 0 * kd + 39 ] += +1 ;
+    nuki[ 11 * kd + 39 ] += +1 ;
+
+    /*reaction 41: H + CH2O <=> HCO + H2 */
+    nuki[ 1 * kd + 40 ] += -1 ;
+    nuki[ 14 * kd + 40 ] += -1 ;
+    nuki[ 13 * kd + 40 ] += +1 ;
+    nuki[ 0 * kd + 40 ] += +1 ;
+
+    /*reaction 42: H + CH3O <=> OH + CH3 */
+    nuki[ 1 * kd + 41 ] += -1 ;
+    nuki[ 15 * kd + 41 ] += -1 ;
+    nuki[ 4 * kd + 41 ] += +1 ;
+    nuki[ 9 * kd + 41 ] += +1 ;
+
+    /*reaction 43: H + C2H6 <=> C2H5 + H2 */
+    nuki[ 1 * kd + 42 ] += -1 ;
+    nuki[ 18 * kd + 42 ] += -1 ;
+    nuki[ 17 * kd + 42 ] += +1 ;
+    nuki[ 0 * kd + 42 ] += +1 ;
+
+    /*reaction 44: OH + H2 <=> H + H2O */
+    nuki[ 4 * kd + 43 ] += -1 ;
+    nuki[ 0 * kd + 43 ] += -1 ;
+    nuki[ 1 * kd + 43 ] += +1 ;
+    nuki[ 5 * kd + 43 ] += +1 ;
+
+    /*reaction 45: 2 OH <=> O + H2O */
+    nuki[ 4 * kd + 44 ] += -2 ;
+    nuki[ 2 * kd + 44 ] += +1 ;
+    nuki[ 5 * kd + 44 ] += +1 ;
+
+    /*reaction 46: OH + HO2 <=> O2 + H2O */
+    nuki[ 4 * kd + 45 ] += -1 ;
+    nuki[ 6 * kd + 45 ] += -1 ;
+    nuki[ 3 * kd + 45 ] += +1 ;
+    nuki[ 5 * kd + 45 ] += +1 ;
+
+    /*reaction 47: OH + CH2 <=> H + CH2O */
+    nuki[ 4 * kd + 46 ] += -1 ;
+    nuki[ 7 * kd + 46 ] += -1 ;
+    nuki[ 1 * kd + 46 ] += +1 ;
+    nuki[ 14 * kd + 46 ] += +1 ;
+
+    /*reaction 48: OH + CH2(S) <=> H + CH2O */
+    nuki[ 4 * kd + 47 ] += -1 ;
+    nuki[ 8 * kd + 47 ] += -1 ;
+    nuki[ 1 * kd + 47 ] += +1 ;
+    nuki[ 14 * kd + 47 ] += +1 ;
+
+    /*reaction 49: OH + CH3 <=> CH2 + H2O */
+    nuki[ 4 * kd + 48 ] += -1 ;
+    nuki[ 9 * kd + 48 ] += -1 ;
+    nuki[ 7 * kd + 48 ] += +1 ;
+    nuki[ 5 * kd + 48 ] += +1 ;
+
+    /*reaction 50: OH + CH3 <=> CH2(S) + H2O */
+    nuki[ 4 * kd + 49 ] += -1 ;
+    nuki[ 9 * kd + 49 ] += -1 ;
+    nuki[ 8 * kd + 49 ] += +1 ;
+    nuki[ 5 * kd + 49 ] += +1 ;
+
+    /*reaction 51: OH + CH4 <=> CH3 + H2O */
+    nuki[ 4 * kd + 50 ] += -1 ;
+    nuki[ 10 * kd + 50 ] += -1 ;
+    nuki[ 9 * kd + 50 ] += +1 ;
+    nuki[ 5 * kd + 50 ] += +1 ;
+
+    /*reaction 52: OH + CO <=> H + CO2 */
+    nuki[ 4 * kd + 51 ] += -1 ;
+    nuki[ 11 * kd + 51 ] += -1 ;
+    nuki[ 1 * kd + 51 ] += +1 ;
+    nuki[ 12 * kd + 51 ] += +1 ;
+
+    /*reaction 53: OH + HCO <=> H2O + CO */
+    nuki[ 4 * kd + 52 ] += -1 ;
+    nuki[ 13 * kd + 52 ] += -1 ;
+    nuki[ 5 * kd + 52 ] += +1 ;
+    nuki[ 11 * kd + 52 ] += +1 ;
+
+    /*reaction 54: OH + CH2O <=> HCO + H2O */
+    nuki[ 4 * kd + 53 ] += -1 ;
+    nuki[ 14 * kd + 53 ] += -1 ;
+    nuki[ 13 * kd + 53 ] += +1 ;
+    nuki[ 5 * kd + 53 ] += +1 ;
+
+    /*reaction 55: OH + C2H6 <=> C2H5 + H2O */
+    nuki[ 4 * kd + 54 ] += -1 ;
+    nuki[ 18 * kd + 54 ] += -1 ;
+    nuki[ 17 * kd + 54 ] += +1 ;
+    nuki[ 5 * kd + 54 ] += +1 ;
+
+    /*reaction 56: HO2 + CH2 <=> OH + CH2O */
+    nuki[ 6 * kd + 55 ] += -1 ;
+    nuki[ 7 * kd + 55 ] += -1 ;
+    nuki[ 4 * kd + 55 ] += +1 ;
+    nuki[ 14 * kd + 55 ] += +1 ;
+
+    /*reaction 57: HO2 + CH3 <=> O2 + CH4 */
+    nuki[ 6 * kd + 56 ] += -1 ;
+    nuki[ 9 * kd + 56 ] += -1 ;
+    nuki[ 3 * kd + 56 ] += +1 ;
+    nuki[ 10 * kd + 56 ] += +1 ;
+
+    /*reaction 58: HO2 + CH3 <=> OH + CH3O */
+    nuki[ 6 * kd + 57 ] += -1 ;
+    nuki[ 9 * kd + 57 ] += -1 ;
+    nuki[ 4 * kd + 57 ] += +1 ;
+    nuki[ 15 * kd + 57 ] += +1 ;
+
+    /*reaction 59: HO2 + CO <=> OH + CO2 */
+    nuki[ 6 * kd + 58 ] += -1 ;
+    nuki[ 11 * kd + 58 ] += -1 ;
+    nuki[ 4 * kd + 58 ] += +1 ;
+    nuki[ 12 * kd + 58 ] += +1 ;
+
+    /*reaction 60: CH2 + O2 <=> OH + HCO */
+    nuki[ 7 * kd + 59 ] += -1 ;
+    nuki[ 3 * kd + 59 ] += -1 ;
+    nuki[ 4 * kd + 59 ] += +1 ;
+    nuki[ 13 * kd + 59 ] += +1 ;
+
+    /*reaction 61: CH2 + H2 <=> H + CH3 */
+    nuki[ 7 * kd + 60 ] += -1 ;
+    nuki[ 0 * kd + 60 ] += -1 ;
+    nuki[ 1 * kd + 60 ] += +1 ;
+    nuki[ 9 * kd + 60 ] += +1 ;
+
+    /*reaction 62: CH2 + CH3 <=> H + C2H4 */
+    nuki[ 7 * kd + 61 ] += -1 ;
+    nuki[ 9 * kd + 61 ] += -1 ;
+    nuki[ 1 * kd + 61 ] += +1 ;
+    nuki[ 16 * kd + 61 ] += +1 ;
+
+    /*reaction 63: CH2 + CH4 <=> 2 CH3 */
+    nuki[ 7 * kd + 62 ] += -1 ;
+    nuki[ 10 * kd + 62 ] += -1 ;
+    nuki[ 9 * kd + 62 ] += +2 ;
+
+    /*reaction 64: CH2(S) + N2 <=> CH2 + N2 */
+    nuki[ 8 * kd + 63 ] += -1 ;
+    nuki[ 19 * kd + 63 ] += -1 ;
+    nuki[ 7 * kd + 63 ] += +1 ;
+    nuki[ 19 * kd + 63 ] += +1 ;
+
+    /*reaction 65: CH2(S) + AR <=> CH2 + AR */
+    nuki[ 8 * kd + 64 ] += -1 ;
+    nuki[ 20 * kd + 64 ] += -1 ;
+    nuki[ 7 * kd + 64 ] += +1 ;
+    nuki[ 20 * kd + 64 ] += +1 ;
+
+    /*reaction 66: CH2(S) + O2 <=> H + OH + CO */
+    nuki[ 8 * kd + 65 ] += -1 ;
+    nuki[ 3 * kd + 65 ] += -1 ;
+    nuki[ 1 * kd + 65 ] += +1 ;
+    nuki[ 4 * kd + 65 ] += +1 ;
+    nuki[ 11 * kd + 65 ] += +1 ;
+
+    /*reaction 67: CH2(S) + O2 <=> CO + H2O */
+    nuki[ 8 * kd + 66 ] += -1 ;
+    nuki[ 3 * kd + 66 ] += -1 ;
+    nuki[ 11 * kd + 66 ] += +1 ;
+    nuki[ 5 * kd + 66 ] += +1 ;
+
+    /*reaction 68: CH2(S) + H2 <=> CH3 + H */
+    nuki[ 8 * kd + 67 ] += -1 ;
+    nuki[ 0 * kd + 67 ] += -1 ;
+    nuki[ 9 * kd + 67 ] += +1 ;
+    nuki[ 1 * kd + 67 ] += +1 ;
+
+    /*reaction 69: CH2(S) + H2O <=> CH2 + H2O */
+    nuki[ 8 * kd + 68 ] += -1 ;
+    nuki[ 5 * kd + 68 ] += -1 ;
+    nuki[ 7 * kd + 68 ] += +1 ;
+    nuki[ 5 * kd + 68 ] += +1 ;
+
+    /*reaction 70: CH2(S) + CH3 <=> H + C2H4 */
+    nuki[ 8 * kd + 69 ] += -1 ;
+    nuki[ 9 * kd + 69 ] += -1 ;
+    nuki[ 1 * kd + 69 ] += +1 ;
+    nuki[ 16 * kd + 69 ] += +1 ;
+
+    /*reaction 71: CH2(S) + CH4 <=> 2 CH3 */
+    nuki[ 8 * kd + 70 ] += -1 ;
+    nuki[ 10 * kd + 70 ] += -1 ;
+    nuki[ 9 * kd + 70 ] += +2 ;
+
+    /*reaction 72: CH2(S) + CO <=> CH2 + CO */
+    nuki[ 8 * kd + 71 ] += -1 ;
+    nuki[ 11 * kd + 71 ] += -1 ;
+    nuki[ 7 * kd + 71 ] += +1 ;
+    nuki[ 11 * kd + 71 ] += +1 ;
+
+    /*reaction 73: CH2(S) + CO2 <=> CH2 + CO2 */
+    nuki[ 8 * kd + 72 ] += -1 ;
+    nuki[ 12 * kd + 72 ] += -1 ;
+    nuki[ 7 * kd + 72 ] += +1 ;
+    nuki[ 12 * kd + 72 ] += +1 ;
+
+    /*reaction 74: CH2(S) + CO2 <=> CO + CH2O */
+    nuki[ 8 * kd + 73 ] += -1 ;
+    nuki[ 12 * kd + 73 ] += -1 ;
+    nuki[ 11 * kd + 73 ] += +1 ;
+    nuki[ 14 * kd + 73 ] += +1 ;
+
+    /*reaction 75: CH3 + O2 <=> O + CH3O */
+    nuki[ 9 * kd + 74 ] += -1 ;
+    nuki[ 3 * kd + 74 ] += -1 ;
+    nuki[ 2 * kd + 74 ] += +1 ;
+    nuki[ 15 * kd + 74 ] += +1 ;
+
+    /*reaction 76: CH3 + O2 <=> OH + CH2O */
+    nuki[ 9 * kd + 75 ] += -1 ;
+    nuki[ 3 * kd + 75 ] += -1 ;
+    nuki[ 4 * kd + 75 ] += +1 ;
+    nuki[ 14 * kd + 75 ] += +1 ;
+
+    /*reaction 77: 2 CH3 <=> H + C2H5 */
+    nuki[ 9 * kd + 76 ] += -2 ;
+    nuki[ 1 * kd + 76 ] += +1 ;
+    nuki[ 17 * kd + 76 ] += +1 ;
+
+    /*reaction 78: CH3 + HCO <=> CH4 + CO */
+    nuki[ 9 * kd + 77 ] += -1 ;
+    nuki[ 13 * kd + 77 ] += -1 ;
+    nuki[ 10 * kd + 77 ] += +1 ;
+    nuki[ 11 * kd + 77 ] += +1 ;
+
+    /*reaction 79: CH3 + CH2O <=> HCO + CH4 */
+    nuki[ 9 * kd + 78 ] += -1 ;
+    nuki[ 14 * kd + 78 ] += -1 ;
+    nuki[ 13 * kd + 78 ] += +1 ;
+    nuki[ 10 * kd + 78 ] += +1 ;
+
+    /*reaction 80: CH3 + C2H6 <=> C2H5 + CH4 */
+    nuki[ 9 * kd + 79 ] += -1 ;
+    nuki[ 18 * kd + 79 ] += -1 ;
+    nuki[ 17 * kd + 79 ] += +1 ;
+    nuki[ 10 * kd + 79 ] += +1 ;
+
+    /*reaction 81: HCO + H2O <=> H + CO + H2O */
+    nuki[ 13 * kd + 80 ] += -1 ;
+    nuki[ 5 * kd + 80 ] += -1 ;
+    nuki[ 1 * kd + 80 ] += +1 ;
+    nuki[ 11 * kd + 80 ] += +1 ;
+    nuki[ 5 * kd + 80 ] += +1 ;
+
+    /*reaction 82: HCO + O2 <=> HO2 + CO */
+    nuki[ 13 * kd + 81 ] += -1 ;
+    nuki[ 3 * kd + 81 ] += -1 ;
+    nuki[ 6 * kd + 81 ] += +1 ;
+    nuki[ 11 * kd + 81 ] += +1 ;
+
+    /*reaction 83: CH3O + O2 <=> HO2 + CH2O */
+    nuki[ 15 * kd + 82 ] += -1 ;
+    nuki[ 3 * kd + 82 ] += -1 ;
+    nuki[ 6 * kd + 82 ] += +1 ;
+    nuki[ 14 * kd + 82 ] += +1 ;
+
+    /*reaction 84: C2H5 + O2 <=> HO2 + C2H4 */
+    nuki[ 17 * kd + 83 ] += -1 ;
+    nuki[ 3 * kd + 83 ] += -1 ;
+    nuki[ 6 * kd + 83 ] += +1 ;
+    nuki[ 16 * kd + 83 ] += +1 ;
+}
 
 
 /*A few mechanism parameters */
@@ -3745,506 +4569,6 @@ void CKQXR(double *  rho, double *  T, double *  x, double *  qdot)
 }
 
 
-/*Returns the stoichiometric coefficients */
-/*of the reaction mechanism. (Eq 50) */
-void CKNU(int * kdim,  int * nuki)
-{
-    int id; /*loop counter */
-    int kd = (*kdim); 
-    /*Zero nuki */
-    for (id = 0; id < 21 * kd; ++ id) {
-         nuki[id] = 0; 
-    }
-
-    /*reaction 1: H + CH2 (+M) <=> CH3 (+M) */
-    nuki[ 1 * kd + 0 ] += -1 ;
-    nuki[ 7 * kd + 0 ] += -1 ;
-    nuki[ 9 * kd + 0 ] += +1 ;
-
-    /*reaction 2: H + CH3 (+M) <=> CH4 (+M) */
-    nuki[ 1 * kd + 1 ] += -1 ;
-    nuki[ 9 * kd + 1 ] += -1 ;
-    nuki[ 10 * kd + 1 ] += +1 ;
-
-    /*reaction 3: H + HCO (+M) <=> CH2O (+M) */
-    nuki[ 1 * kd + 2 ] += -1 ;
-    nuki[ 13 * kd + 2 ] += -1 ;
-    nuki[ 14 * kd + 2 ] += +1 ;
-
-    /*reaction 4: H + CH2O (+M) <=> CH3O (+M) */
-    nuki[ 1 * kd + 3 ] += -1 ;
-    nuki[ 14 * kd + 3 ] += -1 ;
-    nuki[ 15 * kd + 3 ] += +1 ;
-
-    /*reaction 5: H + C2H4 (+M) <=> C2H5 (+M) */
-    nuki[ 1 * kd + 4 ] += -1 ;
-    nuki[ 16 * kd + 4 ] += -1 ;
-    nuki[ 17 * kd + 4 ] += +1 ;
-
-    /*reaction 6: H + C2H5 (+M) <=> C2H6 (+M) */
-    nuki[ 1 * kd + 5 ] += -1 ;
-    nuki[ 17 * kd + 5 ] += -1 ;
-    nuki[ 18 * kd + 5 ] += +1 ;
-
-    /*reaction 7: H2 + CO (+M) <=> CH2O (+M) */
-    nuki[ 0 * kd + 6 ] += -1 ;
-    nuki[ 11 * kd + 6 ] += -1 ;
-    nuki[ 14 * kd + 6 ] += +1 ;
-
-    /*reaction 8: 2 CH3 (+M) <=> C2H6 (+M) */
-    nuki[ 9 * kd + 7 ] += -2 ;
-    nuki[ 18 * kd + 7 ] += +1 ;
-
-    /*reaction 9: O + H + M <=> OH + M */
-    nuki[ 2 * kd + 8 ] += -1 ;
-    nuki[ 1 * kd + 8 ] += -1 ;
-    nuki[ 4 * kd + 8 ] += +1 ;
-
-    /*reaction 10: O + CO + M <=> CO2 + M */
-    nuki[ 2 * kd + 9 ] += -1 ;
-    nuki[ 11 * kd + 9 ] += -1 ;
-    nuki[ 12 * kd + 9 ] += +1 ;
-
-    /*reaction 11: H + O2 + M <=> HO2 + M */
-    nuki[ 1 * kd + 10 ] += -1 ;
-    nuki[ 3 * kd + 10 ] += -1 ;
-    nuki[ 6 * kd + 10 ] += +1 ;
-
-    /*reaction 12: 2 H + M <=> H2 + M */
-    nuki[ 1 * kd + 11 ] += -2 ;
-    nuki[ 0 * kd + 11 ] += +1 ;
-
-    /*reaction 13: H + OH + M <=> H2O + M */
-    nuki[ 1 * kd + 12 ] += -1 ;
-    nuki[ 4 * kd + 12 ] += -1 ;
-    nuki[ 5 * kd + 12 ] += +1 ;
-
-    /*reaction 14: HCO + M <=> H + CO + M */
-    nuki[ 13 * kd + 13 ] += -1 ;
-    nuki[ 1 * kd + 13 ] += +1 ;
-    nuki[ 11 * kd + 13 ] += +1 ;
-
-    /*reaction 15: O + H2 <=> H + OH */
-    nuki[ 2 * kd + 14 ] += -1 ;
-    nuki[ 0 * kd + 14 ] += -1 ;
-    nuki[ 1 * kd + 14 ] += +1 ;
-    nuki[ 4 * kd + 14 ] += +1 ;
-
-    /*reaction 16: O + HO2 <=> OH + O2 */
-    nuki[ 2 * kd + 15 ] += -1 ;
-    nuki[ 6 * kd + 15 ] += -1 ;
-    nuki[ 4 * kd + 15 ] += +1 ;
-    nuki[ 3 * kd + 15 ] += +1 ;
-
-    /*reaction 17: O + CH2 <=> H + HCO */
-    nuki[ 2 * kd + 16 ] += -1 ;
-    nuki[ 7 * kd + 16 ] += -1 ;
-    nuki[ 1 * kd + 16 ] += +1 ;
-    nuki[ 13 * kd + 16 ] += +1 ;
-
-    /*reaction 18: O + CH2(S) <=> H + HCO */
-    nuki[ 2 * kd + 17 ] += -1 ;
-    nuki[ 8 * kd + 17 ] += -1 ;
-    nuki[ 1 * kd + 17 ] += +1 ;
-    nuki[ 13 * kd + 17 ] += +1 ;
-
-    /*reaction 19: O + CH3 <=> H + CH2O */
-    nuki[ 2 * kd + 18 ] += -1 ;
-    nuki[ 9 * kd + 18 ] += -1 ;
-    nuki[ 1 * kd + 18 ] += +1 ;
-    nuki[ 14 * kd + 18 ] += +1 ;
-
-    /*reaction 20: O + CH4 <=> OH + CH3 */
-    nuki[ 2 * kd + 19 ] += -1 ;
-    nuki[ 10 * kd + 19 ] += -1 ;
-    nuki[ 4 * kd + 19 ] += +1 ;
-    nuki[ 9 * kd + 19 ] += +1 ;
-
-    /*reaction 21: O + HCO <=> OH + CO */
-    nuki[ 2 * kd + 20 ] += -1 ;
-    nuki[ 13 * kd + 20 ] += -1 ;
-    nuki[ 4 * kd + 20 ] += +1 ;
-    nuki[ 11 * kd + 20 ] += +1 ;
-
-    /*reaction 22: O + HCO <=> H + CO2 */
-    nuki[ 2 * kd + 21 ] += -1 ;
-    nuki[ 13 * kd + 21 ] += -1 ;
-    nuki[ 1 * kd + 21 ] += +1 ;
-    nuki[ 12 * kd + 21 ] += +1 ;
-
-    /*reaction 23: O + CH2O <=> OH + HCO */
-    nuki[ 2 * kd + 22 ] += -1 ;
-    nuki[ 14 * kd + 22 ] += -1 ;
-    nuki[ 4 * kd + 22 ] += +1 ;
-    nuki[ 13 * kd + 22 ] += +1 ;
-
-    /*reaction 24: O + C2H4 <=> CH3 + HCO */
-    nuki[ 2 * kd + 23 ] += -1 ;
-    nuki[ 16 * kd + 23 ] += -1 ;
-    nuki[ 9 * kd + 23 ] += +1 ;
-    nuki[ 13 * kd + 23 ] += +1 ;
-
-    /*reaction 25: O + C2H5 <=> CH3 + CH2O */
-    nuki[ 2 * kd + 24 ] += -1 ;
-    nuki[ 17 * kd + 24 ] += -1 ;
-    nuki[ 9 * kd + 24 ] += +1 ;
-    nuki[ 14 * kd + 24 ] += +1 ;
-
-    /*reaction 26: O + C2H6 <=> OH + C2H5 */
-    nuki[ 2 * kd + 25 ] += -1 ;
-    nuki[ 18 * kd + 25 ] += -1 ;
-    nuki[ 4 * kd + 25 ] += +1 ;
-    nuki[ 17 * kd + 25 ] += +1 ;
-
-    /*reaction 27: O2 + CO <=> O + CO2 */
-    nuki[ 3 * kd + 26 ] += -1 ;
-    nuki[ 11 * kd + 26 ] += -1 ;
-    nuki[ 2 * kd + 26 ] += +1 ;
-    nuki[ 12 * kd + 26 ] += +1 ;
-
-    /*reaction 28: O2 + CH2O <=> HO2 + HCO */
-    nuki[ 3 * kd + 27 ] += -1 ;
-    nuki[ 14 * kd + 27 ] += -1 ;
-    nuki[ 6 * kd + 27 ] += +1 ;
-    nuki[ 13 * kd + 27 ] += +1 ;
-
-    /*reaction 29: H + 2 O2 <=> HO2 + O2 */
-    nuki[ 1 * kd + 28 ] += -1 ;
-    nuki[ 3 * kd + 28 ] += -2 ;
-    nuki[ 6 * kd + 28 ] += +1 ;
-    nuki[ 3 * kd + 28 ] += +1 ;
-
-    /*reaction 30: H + O2 + H2O <=> HO2 + H2O */
-    nuki[ 1 * kd + 29 ] += -1 ;
-    nuki[ 3 * kd + 29 ] += -1 ;
-    nuki[ 5 * kd + 29 ] += -1 ;
-    nuki[ 6 * kd + 29 ] += +1 ;
-    nuki[ 5 * kd + 29 ] += +1 ;
-
-    /*reaction 31: H + O2 + N2 <=> HO2 + N2 */
-    nuki[ 1 * kd + 30 ] += -1 ;
-    nuki[ 3 * kd + 30 ] += -1 ;
-    nuki[ 19 * kd + 30 ] += -1 ;
-    nuki[ 6 * kd + 30 ] += +1 ;
-    nuki[ 19 * kd + 30 ] += +1 ;
-
-    /*reaction 32: H + O2 + AR <=> HO2 + AR */
-    nuki[ 1 * kd + 31 ] += -1 ;
-    nuki[ 3 * kd + 31 ] += -1 ;
-    nuki[ 20 * kd + 31 ] += -1 ;
-    nuki[ 6 * kd + 31 ] += +1 ;
-    nuki[ 20 * kd + 31 ] += +1 ;
-
-    /*reaction 33: H + O2 <=> O + OH */
-    nuki[ 1 * kd + 32 ] += -1 ;
-    nuki[ 3 * kd + 32 ] += -1 ;
-    nuki[ 2 * kd + 32 ] += +1 ;
-    nuki[ 4 * kd + 32 ] += +1 ;
-
-    /*reaction 34: 2 H + H2 <=> 2 H2 */
-    nuki[ 1 * kd + 33 ] += -2 ;
-    nuki[ 0 * kd + 33 ] += -1 ;
-    nuki[ 0 * kd + 33 ] += +2 ;
-
-    /*reaction 35: 2 H + H2O <=> H2 + H2O */
-    nuki[ 1 * kd + 34 ] += -2 ;
-    nuki[ 5 * kd + 34 ] += -1 ;
-    nuki[ 0 * kd + 34 ] += +1 ;
-    nuki[ 5 * kd + 34 ] += +1 ;
-
-    /*reaction 36: 2 H + CO2 <=> H2 + CO2 */
-    nuki[ 1 * kd + 35 ] += -2 ;
-    nuki[ 12 * kd + 35 ] += -1 ;
-    nuki[ 0 * kd + 35 ] += +1 ;
-    nuki[ 12 * kd + 35 ] += +1 ;
-
-    /*reaction 37: H + HO2 <=> O2 + H2 */
-    nuki[ 1 * kd + 36 ] += -1 ;
-    nuki[ 6 * kd + 36 ] += -1 ;
-    nuki[ 3 * kd + 36 ] += +1 ;
-    nuki[ 0 * kd + 36 ] += +1 ;
-
-    /*reaction 38: H + HO2 <=> 2 OH */
-    nuki[ 1 * kd + 37 ] += -1 ;
-    nuki[ 6 * kd + 37 ] += -1 ;
-    nuki[ 4 * kd + 37 ] += +2 ;
-
-    /*reaction 39: H + CH4 <=> CH3 + H2 */
-    nuki[ 1 * kd + 38 ] += -1 ;
-    nuki[ 10 * kd + 38 ] += -1 ;
-    nuki[ 9 * kd + 38 ] += +1 ;
-    nuki[ 0 * kd + 38 ] += +1 ;
-
-    /*reaction 40: H + HCO <=> H2 + CO */
-    nuki[ 1 * kd + 39 ] += -1 ;
-    nuki[ 13 * kd + 39 ] += -1 ;
-    nuki[ 0 * kd + 39 ] += +1 ;
-    nuki[ 11 * kd + 39 ] += +1 ;
-
-    /*reaction 41: H + CH2O <=> HCO + H2 */
-    nuki[ 1 * kd + 40 ] += -1 ;
-    nuki[ 14 * kd + 40 ] += -1 ;
-    nuki[ 13 * kd + 40 ] += +1 ;
-    nuki[ 0 * kd + 40 ] += +1 ;
-
-    /*reaction 42: H + CH3O <=> OH + CH3 */
-    nuki[ 1 * kd + 41 ] += -1 ;
-    nuki[ 15 * kd + 41 ] += -1 ;
-    nuki[ 4 * kd + 41 ] += +1 ;
-    nuki[ 9 * kd + 41 ] += +1 ;
-
-    /*reaction 43: H + C2H6 <=> C2H5 + H2 */
-    nuki[ 1 * kd + 42 ] += -1 ;
-    nuki[ 18 * kd + 42 ] += -1 ;
-    nuki[ 17 * kd + 42 ] += +1 ;
-    nuki[ 0 * kd + 42 ] += +1 ;
-
-    /*reaction 44: OH + H2 <=> H + H2O */
-    nuki[ 4 * kd + 43 ] += -1 ;
-    nuki[ 0 * kd + 43 ] += -1 ;
-    nuki[ 1 * kd + 43 ] += +1 ;
-    nuki[ 5 * kd + 43 ] += +1 ;
-
-    /*reaction 45: 2 OH <=> O + H2O */
-    nuki[ 4 * kd + 44 ] += -2 ;
-    nuki[ 2 * kd + 44 ] += +1 ;
-    nuki[ 5 * kd + 44 ] += +1 ;
-
-    /*reaction 46: OH + HO2 <=> O2 + H2O */
-    nuki[ 4 * kd + 45 ] += -1 ;
-    nuki[ 6 * kd + 45 ] += -1 ;
-    nuki[ 3 * kd + 45 ] += +1 ;
-    nuki[ 5 * kd + 45 ] += +1 ;
-
-    /*reaction 47: OH + CH2 <=> H + CH2O */
-    nuki[ 4 * kd + 46 ] += -1 ;
-    nuki[ 7 * kd + 46 ] += -1 ;
-    nuki[ 1 * kd + 46 ] += +1 ;
-    nuki[ 14 * kd + 46 ] += +1 ;
-
-    /*reaction 48: OH + CH2(S) <=> H + CH2O */
-    nuki[ 4 * kd + 47 ] += -1 ;
-    nuki[ 8 * kd + 47 ] += -1 ;
-    nuki[ 1 * kd + 47 ] += +1 ;
-    nuki[ 14 * kd + 47 ] += +1 ;
-
-    /*reaction 49: OH + CH3 <=> CH2 + H2O */
-    nuki[ 4 * kd + 48 ] += -1 ;
-    nuki[ 9 * kd + 48 ] += -1 ;
-    nuki[ 7 * kd + 48 ] += +1 ;
-    nuki[ 5 * kd + 48 ] += +1 ;
-
-    /*reaction 50: OH + CH3 <=> CH2(S) + H2O */
-    nuki[ 4 * kd + 49 ] += -1 ;
-    nuki[ 9 * kd + 49 ] += -1 ;
-    nuki[ 8 * kd + 49 ] += +1 ;
-    nuki[ 5 * kd + 49 ] += +1 ;
-
-    /*reaction 51: OH + CH4 <=> CH3 + H2O */
-    nuki[ 4 * kd + 50 ] += -1 ;
-    nuki[ 10 * kd + 50 ] += -1 ;
-    nuki[ 9 * kd + 50 ] += +1 ;
-    nuki[ 5 * kd + 50 ] += +1 ;
-
-    /*reaction 52: OH + CO <=> H + CO2 */
-    nuki[ 4 * kd + 51 ] += -1 ;
-    nuki[ 11 * kd + 51 ] += -1 ;
-    nuki[ 1 * kd + 51 ] += +1 ;
-    nuki[ 12 * kd + 51 ] += +1 ;
-
-    /*reaction 53: OH + HCO <=> H2O + CO */
-    nuki[ 4 * kd + 52 ] += -1 ;
-    nuki[ 13 * kd + 52 ] += -1 ;
-    nuki[ 5 * kd + 52 ] += +1 ;
-    nuki[ 11 * kd + 52 ] += +1 ;
-
-    /*reaction 54: OH + CH2O <=> HCO + H2O */
-    nuki[ 4 * kd + 53 ] += -1 ;
-    nuki[ 14 * kd + 53 ] += -1 ;
-    nuki[ 13 * kd + 53 ] += +1 ;
-    nuki[ 5 * kd + 53 ] += +1 ;
-
-    /*reaction 55: OH + C2H6 <=> C2H5 + H2O */
-    nuki[ 4 * kd + 54 ] += -1 ;
-    nuki[ 18 * kd + 54 ] += -1 ;
-    nuki[ 17 * kd + 54 ] += +1 ;
-    nuki[ 5 * kd + 54 ] += +1 ;
-
-    /*reaction 56: HO2 + CH2 <=> OH + CH2O */
-    nuki[ 6 * kd + 55 ] += -1 ;
-    nuki[ 7 * kd + 55 ] += -1 ;
-    nuki[ 4 * kd + 55 ] += +1 ;
-    nuki[ 14 * kd + 55 ] += +1 ;
-
-    /*reaction 57: HO2 + CH3 <=> O2 + CH4 */
-    nuki[ 6 * kd + 56 ] += -1 ;
-    nuki[ 9 * kd + 56 ] += -1 ;
-    nuki[ 3 * kd + 56 ] += +1 ;
-    nuki[ 10 * kd + 56 ] += +1 ;
-
-    /*reaction 58: HO2 + CH3 <=> OH + CH3O */
-    nuki[ 6 * kd + 57 ] += -1 ;
-    nuki[ 9 * kd + 57 ] += -1 ;
-    nuki[ 4 * kd + 57 ] += +1 ;
-    nuki[ 15 * kd + 57 ] += +1 ;
-
-    /*reaction 59: HO2 + CO <=> OH + CO2 */
-    nuki[ 6 * kd + 58 ] += -1 ;
-    nuki[ 11 * kd + 58 ] += -1 ;
-    nuki[ 4 * kd + 58 ] += +1 ;
-    nuki[ 12 * kd + 58 ] += +1 ;
-
-    /*reaction 60: CH2 + O2 <=> OH + HCO */
-    nuki[ 7 * kd + 59 ] += -1 ;
-    nuki[ 3 * kd + 59 ] += -1 ;
-    nuki[ 4 * kd + 59 ] += +1 ;
-    nuki[ 13 * kd + 59 ] += +1 ;
-
-    /*reaction 61: CH2 + H2 <=> H + CH3 */
-    nuki[ 7 * kd + 60 ] += -1 ;
-    nuki[ 0 * kd + 60 ] += -1 ;
-    nuki[ 1 * kd + 60 ] += +1 ;
-    nuki[ 9 * kd + 60 ] += +1 ;
-
-    /*reaction 62: CH2 + CH3 <=> H + C2H4 */
-    nuki[ 7 * kd + 61 ] += -1 ;
-    nuki[ 9 * kd + 61 ] += -1 ;
-    nuki[ 1 * kd + 61 ] += +1 ;
-    nuki[ 16 * kd + 61 ] += +1 ;
-
-    /*reaction 63: CH2 + CH4 <=> 2 CH3 */
-    nuki[ 7 * kd + 62 ] += -1 ;
-    nuki[ 10 * kd + 62 ] += -1 ;
-    nuki[ 9 * kd + 62 ] += +2 ;
-
-    /*reaction 64: CH2(S) + N2 <=> CH2 + N2 */
-    nuki[ 8 * kd + 63 ] += -1 ;
-    nuki[ 19 * kd + 63 ] += -1 ;
-    nuki[ 7 * kd + 63 ] += +1 ;
-    nuki[ 19 * kd + 63 ] += +1 ;
-
-    /*reaction 65: CH2(S) + AR <=> CH2 + AR */
-    nuki[ 8 * kd + 64 ] += -1 ;
-    nuki[ 20 * kd + 64 ] += -1 ;
-    nuki[ 7 * kd + 64 ] += +1 ;
-    nuki[ 20 * kd + 64 ] += +1 ;
-
-    /*reaction 66: CH2(S) + O2 <=> H + OH + CO */
-    nuki[ 8 * kd + 65 ] += -1 ;
-    nuki[ 3 * kd + 65 ] += -1 ;
-    nuki[ 1 * kd + 65 ] += +1 ;
-    nuki[ 4 * kd + 65 ] += +1 ;
-    nuki[ 11 * kd + 65 ] += +1 ;
-
-    /*reaction 67: CH2(S) + O2 <=> CO + H2O */
-    nuki[ 8 * kd + 66 ] += -1 ;
-    nuki[ 3 * kd + 66 ] += -1 ;
-    nuki[ 11 * kd + 66 ] += +1 ;
-    nuki[ 5 * kd + 66 ] += +1 ;
-
-    /*reaction 68: CH2(S) + H2 <=> CH3 + H */
-    nuki[ 8 * kd + 67 ] += -1 ;
-    nuki[ 0 * kd + 67 ] += -1 ;
-    nuki[ 9 * kd + 67 ] += +1 ;
-    nuki[ 1 * kd + 67 ] += +1 ;
-
-    /*reaction 69: CH2(S) + H2O <=> CH2 + H2O */
-    nuki[ 8 * kd + 68 ] += -1 ;
-    nuki[ 5 * kd + 68 ] += -1 ;
-    nuki[ 7 * kd + 68 ] += +1 ;
-    nuki[ 5 * kd + 68 ] += +1 ;
-
-    /*reaction 70: CH2(S) + CH3 <=> H + C2H4 */
-    nuki[ 8 * kd + 69 ] += -1 ;
-    nuki[ 9 * kd + 69 ] += -1 ;
-    nuki[ 1 * kd + 69 ] += +1 ;
-    nuki[ 16 * kd + 69 ] += +1 ;
-
-    /*reaction 71: CH2(S) + CH4 <=> 2 CH3 */
-    nuki[ 8 * kd + 70 ] += -1 ;
-    nuki[ 10 * kd + 70 ] += -1 ;
-    nuki[ 9 * kd + 70 ] += +2 ;
-
-    /*reaction 72: CH2(S) + CO <=> CH2 + CO */
-    nuki[ 8 * kd + 71 ] += -1 ;
-    nuki[ 11 * kd + 71 ] += -1 ;
-    nuki[ 7 * kd + 71 ] += +1 ;
-    nuki[ 11 * kd + 71 ] += +1 ;
-
-    /*reaction 73: CH2(S) + CO2 <=> CH2 + CO2 */
-    nuki[ 8 * kd + 72 ] += -1 ;
-    nuki[ 12 * kd + 72 ] += -1 ;
-    nuki[ 7 * kd + 72 ] += +1 ;
-    nuki[ 12 * kd + 72 ] += +1 ;
-
-    /*reaction 74: CH2(S) + CO2 <=> CO + CH2O */
-    nuki[ 8 * kd + 73 ] += -1 ;
-    nuki[ 12 * kd + 73 ] += -1 ;
-    nuki[ 11 * kd + 73 ] += +1 ;
-    nuki[ 14 * kd + 73 ] += +1 ;
-
-    /*reaction 75: CH3 + O2 <=> O + CH3O */
-    nuki[ 9 * kd + 74 ] += -1 ;
-    nuki[ 3 * kd + 74 ] += -1 ;
-    nuki[ 2 * kd + 74 ] += +1 ;
-    nuki[ 15 * kd + 74 ] += +1 ;
-
-    /*reaction 76: CH3 + O2 <=> OH + CH2O */
-    nuki[ 9 * kd + 75 ] += -1 ;
-    nuki[ 3 * kd + 75 ] += -1 ;
-    nuki[ 4 * kd + 75 ] += +1 ;
-    nuki[ 14 * kd + 75 ] += +1 ;
-
-    /*reaction 77: 2 CH3 <=> H + C2H5 */
-    nuki[ 9 * kd + 76 ] += -2 ;
-    nuki[ 1 * kd + 76 ] += +1 ;
-    nuki[ 17 * kd + 76 ] += +1 ;
-
-    /*reaction 78: CH3 + HCO <=> CH4 + CO */
-    nuki[ 9 * kd + 77 ] += -1 ;
-    nuki[ 13 * kd + 77 ] += -1 ;
-    nuki[ 10 * kd + 77 ] += +1 ;
-    nuki[ 11 * kd + 77 ] += +1 ;
-
-    /*reaction 79: CH3 + CH2O <=> HCO + CH4 */
-    nuki[ 9 * kd + 78 ] += -1 ;
-    nuki[ 14 * kd + 78 ] += -1 ;
-    nuki[ 13 * kd + 78 ] += +1 ;
-    nuki[ 10 * kd + 78 ] += +1 ;
-
-    /*reaction 80: CH3 + C2H6 <=> C2H5 + CH4 */
-    nuki[ 9 * kd + 79 ] += -1 ;
-    nuki[ 18 * kd + 79 ] += -1 ;
-    nuki[ 17 * kd + 79 ] += +1 ;
-    nuki[ 10 * kd + 79 ] += +1 ;
-
-    /*reaction 81: HCO + H2O <=> H + CO + H2O */
-    nuki[ 13 * kd + 80 ] += -1 ;
-    nuki[ 5 * kd + 80 ] += -1 ;
-    nuki[ 1 * kd + 80 ] += +1 ;
-    nuki[ 11 * kd + 80 ] += +1 ;
-    nuki[ 5 * kd + 80 ] += +1 ;
-
-    /*reaction 82: HCO + O2 <=> HO2 + CO */
-    nuki[ 13 * kd + 81 ] += -1 ;
-    nuki[ 3 * kd + 81 ] += -1 ;
-    nuki[ 6 * kd + 81 ] += +1 ;
-    nuki[ 11 * kd + 81 ] += +1 ;
-
-    /*reaction 83: CH3O + O2 <=> HO2 + CH2O */
-    nuki[ 15 * kd + 82 ] += -1 ;
-    nuki[ 3 * kd + 82 ] += -1 ;
-    nuki[ 6 * kd + 82 ] += +1 ;
-    nuki[ 14 * kd + 82 ] += +1 ;
-
-    /*reaction 84: C2H5 + O2 <=> HO2 + C2H4 */
-    nuki[ 17 * kd + 83 ] += -1 ;
-    nuki[ 3 * kd + 83 ] += -1 ;
-    nuki[ 6 * kd + 83 ] += +1 ;
-    nuki[ 16 * kd + 83 ] += +1 ;
-}
-
-
 /*Returns the elemental composition  */
 /*of the speciesi (mdim is num of elements) */
 void CKNCF(int * mdim,  int * ncf)
@@ -6120,9 +6444,9 @@ AMREX_GPU_HOST_DEVICE void Kc_reac_d(double T, int reacID, double * Kc)
 
     *Kc = 0;
     int expon = 0;
-    for (int j = 0; j<NuIdx_d[reacID].size(); ++j) {
-        *Kc += NuVals_d[reactID][j] * g_RT[NuIdx_d[reacID][j]]]
-        expon += NuVals_d[reactID][j];
+    for (int j = 0; j<21; ++j) {
+        *Kc += NuVals_d[reacID*21 + j] * g_RT[j]]
+        expon += NuVals_d[reactID*21 + j];
     }
     *Kc = exp( (*Kc) );
 
@@ -8296,9 +8620,9 @@ AMREX_GPU_HOST_DEVICE void comp_Kc_new(double *  tc, double invT, double *  Kc)
     int reacIdx = threadIdx.y
     Kc[reacIdx] = 0;
     int expon = 0;
-    for (int j = 0; j<NuIdx[reacIdx].size(); ++j) {
-        Kc[reacIdx] += NuVals[reactIdx][j] * g_RT[NuIdx[reacIdx][j]]]
-        expon += NuVals[reactIdx][j];
+    for (int j = 0; j < 21; ++j) {
+        Kc[reacIdx] += NuVals[reactIdx * 21 + j] * g_RT[j];
+        expon += NuVals[reactIdx * 21 + j];
     }
     Kc[reacIdx] = exp(Kc[reacIdx]);
 
@@ -28683,157 +29007,157 @@ void egtransetWT(double* WT ) {
 
 /*the lennard-jones potential well depth eps/kb in K */
 void egtransetEPS(double* EPS ) {
-    EPS[4] = 8.00000000E+01;
-    EPS[14] = 4.98000000E+02;
-    EPS[5] = 5.72400000E+02;
-    EPS[18] = 2.52300000E+02;
-    EPS[9] = 1.44000000E+02;
-    EPS[3] = 1.07400000E+02;
-    EPS[17] = 2.52300000E+02;
     EPS[12] = 2.44000000E+02;
-    EPS[15] = 4.17000000E+02;
+    EPS[18] = 2.52300000E+02;
+    EPS[10] = 1.41400000E+02;
     EPS[8] = 1.44000000E+02;
-    EPS[20] = 1.36500000E+02;
+    EPS[14] = 4.98000000E+02;
+    EPS[9] = 1.44000000E+02;
+    EPS[17] = 2.52300000E+02;
+    EPS[1] = 1.45000000E+02;
     EPS[13] = 4.98000000E+02;
-    EPS[16] = 2.80800000E+02;
     EPS[7] = 1.44000000E+02;
+    EPS[0] = 3.80000000E+01;
+    EPS[19] = 9.75300000E+01;
+    EPS[16] = 2.80800000E+02;
+    EPS[3] = 1.07400000E+02;
+    EPS[15] = 4.17000000E+02;
+    EPS[2] = 8.00000000E+01;
+    EPS[20] = 1.36500000E+02;
+    EPS[5] = 5.72400000E+02;
     EPS[11] = 9.81000000E+01;
     EPS[6] = 1.07400000E+02;
-    EPS[19] = 9.75300000E+01;
-    EPS[1] = 1.45000000E+02;
-    EPS[0] = 3.80000000E+01;
-    EPS[10] = 1.41400000E+02;
-    EPS[2] = 8.00000000E+01;
+    EPS[4] = 8.00000000E+01;
 }
 
 
 /*the lennard-jones collision diameter in Angstroms */
 void egtransetSIG(double* SIG ) {
-    SIG[4] = 2.75000000E+00;
-    SIG[14] = 3.59000000E+00;
-    SIG[5] = 2.60500000E+00;
-    SIG[18] = 4.30200000E+00;
-    SIG[9] = 3.80000000E+00;
-    SIG[3] = 3.45800000E+00;
-    SIG[17] = 4.30200000E+00;
     SIG[12] = 3.76300000E+00;
-    SIG[15] = 3.69000000E+00;
+    SIG[18] = 4.30200000E+00;
+    SIG[10] = 3.74600000E+00;
     SIG[8] = 3.80000000E+00;
-    SIG[20] = 3.33000000E+00;
+    SIG[14] = 3.59000000E+00;
+    SIG[9] = 3.80000000E+00;
+    SIG[17] = 4.30200000E+00;
+    SIG[1] = 2.05000000E+00;
     SIG[13] = 3.59000000E+00;
-    SIG[16] = 3.97100000E+00;
     SIG[7] = 3.80000000E+00;
+    SIG[0] = 2.92000000E+00;
+    SIG[19] = 3.62100000E+00;
+    SIG[16] = 3.97100000E+00;
+    SIG[3] = 3.45800000E+00;
+    SIG[15] = 3.69000000E+00;
+    SIG[2] = 2.75000000E+00;
+    SIG[20] = 3.33000000E+00;
+    SIG[5] = 2.60500000E+00;
     SIG[11] = 3.65000000E+00;
     SIG[6] = 3.45800000E+00;
-    SIG[19] = 3.62100000E+00;
-    SIG[1] = 2.05000000E+00;
-    SIG[0] = 2.92000000E+00;
-    SIG[10] = 3.74600000E+00;
-    SIG[2] = 2.75000000E+00;
+    SIG[4] = 2.75000000E+00;
 }
 
 
 /*the dipole moment in Debye */
 void egtransetDIP(double* DIP ) {
-    DIP[4] = 0.00000000E+00;
-    DIP[14] = 0.00000000E+00;
-    DIP[5] = 1.84400000E+00;
-    DIP[18] = 0.00000000E+00;
-    DIP[9] = 0.00000000E+00;
-    DIP[3] = 0.00000000E+00;
-    DIP[17] = 0.00000000E+00;
     DIP[12] = 0.00000000E+00;
-    DIP[15] = 1.70000000E+00;
+    DIP[18] = 0.00000000E+00;
+    DIP[10] = 0.00000000E+00;
     DIP[8] = 0.00000000E+00;
-    DIP[20] = 0.00000000E+00;
+    DIP[14] = 0.00000000E+00;
+    DIP[9] = 0.00000000E+00;
+    DIP[17] = 0.00000000E+00;
+    DIP[1] = 0.00000000E+00;
     DIP[13] = 0.00000000E+00;
-    DIP[16] = 0.00000000E+00;
     DIP[7] = 0.00000000E+00;
+    DIP[0] = 0.00000000E+00;
+    DIP[19] = 0.00000000E+00;
+    DIP[16] = 0.00000000E+00;
+    DIP[3] = 0.00000000E+00;
+    DIP[15] = 1.70000000E+00;
+    DIP[2] = 0.00000000E+00;
+    DIP[20] = 0.00000000E+00;
+    DIP[5] = 1.84400000E+00;
     DIP[11] = 0.00000000E+00;
     DIP[6] = 0.00000000E+00;
-    DIP[19] = 0.00000000E+00;
-    DIP[1] = 0.00000000E+00;
-    DIP[0] = 0.00000000E+00;
-    DIP[10] = 0.00000000E+00;
-    DIP[2] = 0.00000000E+00;
+    DIP[4] = 0.00000000E+00;
 }
 
 
 /*the polarizability in cubic Angstroms */
 void egtransetPOL(double* POL ) {
-    POL[4] = 0.00000000E+00;
-    POL[14] = 0.00000000E+00;
-    POL[5] = 0.00000000E+00;
-    POL[18] = 0.00000000E+00;
-    POL[9] = 0.00000000E+00;
-    POL[3] = 1.60000000E+00;
-    POL[17] = 0.00000000E+00;
     POL[12] = 2.65000000E+00;
-    POL[15] = 0.00000000E+00;
+    POL[18] = 0.00000000E+00;
+    POL[10] = 2.60000000E+00;
     POL[8] = 0.00000000E+00;
-    POL[20] = 0.00000000E+00;
+    POL[14] = 0.00000000E+00;
+    POL[9] = 0.00000000E+00;
+    POL[17] = 0.00000000E+00;
+    POL[1] = 0.00000000E+00;
     POL[13] = 0.00000000E+00;
-    POL[16] = 0.00000000E+00;
     POL[7] = 0.00000000E+00;
+    POL[0] = 7.90000000E-01;
+    POL[19] = 1.76000000E+00;
+    POL[16] = 0.00000000E+00;
+    POL[3] = 1.60000000E+00;
+    POL[15] = 0.00000000E+00;
+    POL[2] = 0.00000000E+00;
+    POL[20] = 0.00000000E+00;
+    POL[5] = 0.00000000E+00;
     POL[11] = 1.95000000E+00;
     POL[6] = 0.00000000E+00;
-    POL[19] = 1.76000000E+00;
-    POL[1] = 0.00000000E+00;
-    POL[0] = 7.90000000E-01;
-    POL[10] = 2.60000000E+00;
-    POL[2] = 0.00000000E+00;
+    POL[4] = 0.00000000E+00;
 }
 
 
 /*the rotational relaxation collision number at 298 K */
 void egtransetZROT(double* ZROT ) {
-    ZROT[4] = 0.00000000E+00;
-    ZROT[14] = 2.00000000E+00;
-    ZROT[5] = 4.00000000E+00;
-    ZROT[18] = 1.50000000E+00;
-    ZROT[9] = 0.00000000E+00;
-    ZROT[3] = 3.80000000E+00;
-    ZROT[17] = 1.50000000E+00;
     ZROT[12] = 2.10000000E+00;
-    ZROT[15] = 2.00000000E+00;
+    ZROT[18] = 1.50000000E+00;
+    ZROT[10] = 1.30000000E+01;
     ZROT[8] = 0.00000000E+00;
-    ZROT[20] = 0.00000000E+00;
+    ZROT[14] = 2.00000000E+00;
+    ZROT[9] = 0.00000000E+00;
+    ZROT[17] = 1.50000000E+00;
+    ZROT[1] = 0.00000000E+00;
     ZROT[13] = 0.00000000E+00;
-    ZROT[16] = 1.50000000E+00;
     ZROT[7] = 0.00000000E+00;
+    ZROT[0] = 2.80000000E+02;
+    ZROT[19] = 4.00000000E+00;
+    ZROT[16] = 1.50000000E+00;
+    ZROT[3] = 3.80000000E+00;
+    ZROT[15] = 2.00000000E+00;
+    ZROT[2] = 0.00000000E+00;
+    ZROT[20] = 0.00000000E+00;
+    ZROT[5] = 4.00000000E+00;
     ZROT[11] = 1.80000000E+00;
     ZROT[6] = 1.00000000E+00;
-    ZROT[19] = 4.00000000E+00;
-    ZROT[1] = 0.00000000E+00;
-    ZROT[0] = 2.80000000E+02;
-    ZROT[10] = 1.30000000E+01;
-    ZROT[2] = 0.00000000E+00;
+    ZROT[4] = 0.00000000E+00;
 }
 
 
 /*0: monoatomic, 1: linear, 2: nonlinear */
 void egtransetNLIN(int* NLIN) {
-    NLIN[4] = 1;
-    NLIN[14] = 2;
-    NLIN[5] = 2;
-    NLIN[18] = 2;
-    NLIN[9] = 1;
-    NLIN[3] = 1;
-    NLIN[17] = 2;
     NLIN[12] = 1;
-    NLIN[15] = 2;
+    NLIN[18] = 2;
+    NLIN[10] = 2;
     NLIN[8] = 1;
-    NLIN[20] = 0;
+    NLIN[14] = 2;
+    NLIN[9] = 1;
+    NLIN[17] = 2;
+    NLIN[1] = 0;
     NLIN[13] = 2;
-    NLIN[16] = 2;
     NLIN[7] = 1;
+    NLIN[0] = 1;
+    NLIN[19] = 1;
+    NLIN[16] = 2;
+    NLIN[3] = 1;
+    NLIN[15] = 2;
+    NLIN[2] = 0;
+    NLIN[20] = 0;
+    NLIN[5] = 2;
     NLIN[11] = 1;
     NLIN[6] = 2;
-    NLIN[19] = 1;
-    NLIN[1] = 0;
-    NLIN[0] = 1;
-    NLIN[10] = 2;
-    NLIN[2] = 0;
+    NLIN[4] = 1;
 }
 
 

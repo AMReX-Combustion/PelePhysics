@@ -354,7 +354,8 @@ class CPickler(CMill):
         self._write('int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];' 
                     % (nReactions,nReactions,nReactions,nReactions,nReactions))
         self._write('double *TB[%d];' % (nReactions))
-        self._write('int NuIdxs[%d], NuVals[%d];' % (nReactions,nReactions))
+        ##self._write('int NuIdxs[%d], NuVals[%d];' % (nReactions,nReactions))
+        self._write('int NuVals[%d];' % (nSpecies * nReactions))
 
         self._write()
         self._write('double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
@@ -513,6 +514,7 @@ class CPickler(CMill):
         self._includes_chop()
         self._statics_chop(mechanism)
         self._ckinit_chop(mechanism)
+        self._cknu(mechanism)
 
         # chemkin wrappers
         self._ckindx(mechanism)
@@ -595,7 +597,7 @@ class CPickler(CMill):
         self._ckqyr(mechanism)
         self._ckqxr(mechanism)
 
-        self._cknu(mechanism)
+        ##self._cknu(mechanism)
         self._ckncf(mechanism)
         
         self._ckabe(mechanism)
@@ -880,7 +882,7 @@ class CPickler(CMill):
         self._write("#define FUEL_ID %s" % "10")#("define"))
         self._write("#define OXY_ID %d" % (oxy_id))
         self._write("#define BATH_ID %d" % (bath_id))
-        self._write("#define FUEL_NAME %s" % "CH4") #("define"))
+        self._write("#define FUEL_NAME %s" % '"CH4"') #("define"))
         self._write()
         self._write("#define NUM_FIT 4")
         self._write("#endif")
@@ -923,6 +925,7 @@ class CPickler(CMill):
                     % (nReactions,nReactions,nReactions))
         self._write('extern int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];' 
                     % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('extern int NuVals[%d];' % (nSpecies*nReactions))
         self._write('extern double *TB[%d];' 
                     % (nReactions))
 
@@ -949,16 +952,16 @@ class CPickler(CMill):
         self._outdent()
         self._write('#ifdef AMREX_USE_CUDA')
         self._indent()
-        self._write('AMREX_GPU_DEVICE double fwd_A_d[%d], fwd_beta_d[%d], fwd_Ea_d[%d];' % (nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE double low_A_d[%d], low_beta_d[%d], low_Ea_d[%d];' % (nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE double rev_A_d[%d], rev_beta_d[%d], rev_Ea_d[%d];' % (nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE double troe_a_d[%d],troe_Ts_d[%d], troe_Tss_d[%d], troe_Tsss_d[%d];'%(nReactions,nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE double sri_a_d[%d], sri_b_d[%d], sri_c_d[%d], sri_d_d[%d], sri_e_d[%d];'%(nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE double activation_units_d[%d], prefactor_units_d[%d], phase_units_d[%d];'%(nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE int is_PD_d[%d], troe_len_d[%d], sri_len_d[%d], nTB_d[%d], *TBid_d[%d];'%(nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE double *TB_d[%d];'%(nReactions))
+        self._write('AMREX_GPU_DEVICE extern double fwd_A_d[%d], fwd_beta_d[%d], fwd_Ea_d[%d];' % (nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE extern double low_A_d[%d], low_beta_d[%d], low_Ea_d[%d];' % (nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE extern double rev_A_d[%d], rev_beta_d[%d], rev_Ea_d[%d];' % (nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE extern double troe_a_d[%d],troe_Ts_d[%d], troe_Tss_d[%d], troe_Tsss_d[%d];'%(nReactions,nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE extern double sri_a_d[%d], sri_b_d[%d], sri_c_d[%d], sri_d_d[%d], sri_e_d[%d];'%(nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE extern double activation_units_d[%d], prefactor_units_d[%d], phase_units_d[%d];'%(nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE extern int is_PD_d[%d], troe_len_d[%d], sri_len_d[%d], nTB_d[%d], *TBid_d[%d];'%(nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE extern double *TB_d[%d];'%(nReactions))
         ##self._write('AMREX_GPU_DEVICE int *NuIdxs_d[%d], *NuVals_d[%d];' % (nReactions,nReactions))
-        self._write('AMREX_GPU_DEVICE int NuVals_d[%d];' % (nReactions*nSpecies))
+        self._write('AMREX_GPU_DEVICE extern int NuVals_d[%d];' % (nReactions*nSpecies))
         self._outdent()
         self._write('#endif')
 
@@ -2258,52 +2261,107 @@ class CPickler(CMill):
         self._write("cudaMemcpyToSymbol(troe_len_d, troe_len, sizeof(int) * %d);" % nReactions)
         self._write("cudaMemcpyToSymbol(sri_len_d, sri_len, sizeof(int) * %d);" % nReactions)
         self._write("cudaMemcpyToSymbol(nTB_d, nTB, sizeof(int) * %d);" % nReactions)
-        self._write("cudaMemcpyToSymbol(NuVals_d, NuVals, sizeof(int) * %d);" % (nReactions*nSpecies))
 
         self._write("")
 
         # Matrices of reaction orders (nu', nu'')
-        self._write("#if 0")
+        ##self._write("#if 0")
         NuVals = []
         NuIdxs = []
 
-        for i, reaction in zip(range(nReactions), mechanism.reaction()):
-            NuIdxs.append([])
-            NuVals.append([])
-            for j, [symbol, coefficient] in zip( range(len(reaction.reactants)), reaction.reactants):
-                id = mechanism.species(symbol).id
-                NuIdxs[-1].append(id)
-                NuVals[-1].append(-coefficient)
-            for j, [symbol, coefficient] in zip( range(len(reaction.products)), reaction.products):
-                id = mechanism.species(symbol).id
-                NuIdxs[-1].append(id)
-                NuVals[-1].append(coefficient)
+        self._write(self.line('Zero Nus'))
+        self._write('for (id = 0; id < %d; ++ id) {' % (nSpecies * nReactions) )
+        self._indent()
+        self._write(' NuVals[id] = 0; ')
+        self._outdent()
+        self._write('}')
+        self._write()
+        
+        #self._indent()
+        for reaction in mechanism.reaction():
 
-        for i, reaction in zip(range(nReactions), mechanism.reaction()):
-            t = "NuIdxs[%d] = {" % i
-            tfirst = True
-            for idx in NuIdxs[i]:
-                if tfirst:
-                    tfirst = False
-                else:
-                    t += ","
-                t += "%d" % idx
-            t += "};"
-            self._write(t)            
+            self._write()
+            self._write(self.line('reaction %d: %s' % (reaction.id, reaction.equation())))
 
-        for i, reaction in zip(range(nReactions), mechanism.reaction()):
-            t = "NuVals[%d] = {" % i
-            tfirst = True
-            for idx in NuVals[i]:
-                if tfirst:
-                    tfirst = False
-                else:
-                    t += ","
-                t += "%d" % idx
-            t += "};"
-            self._write(t)            
+            for symbol, coefficient in reaction.reactants:
+                self._write(
+                    "NuVals[ %d * %d + %d ] += -%d ;"
+                    % (reaction.id-1, nSpecies, mechanism.species(symbol).id, coefficient))
 
-        self._write("#endif")
+            for symbol, coefficient in reaction.products:
+                self._write(
+                    "NuVals[ %d * %d + %d ] += +%d ;"
+                    % (reaction.id-1, nSpecies, mechanism.species(symbol).id, coefficient))
+       
+        # done
+        #self._outdent()
+        self._write('}')
+
+
+
+        #for i in range(0,self.nSpecies):
+        #    species = self.species[i]
+        #    text = '1.0 / %f' % (species.weight)
+        #    if (i<self.nSpecies-1):
+        #       text += ',  '
+        #    else:
+        #       text += '};  '
+        #    self._write(text + self.line('%s' % species.symbol))
+        #for i, reaction in zip(range(nReactions), mechanism.reaction()):
+        #    id_reac = (reaction.id - 1)
+        #    ##NuIdxs.append([])
+        #    ##NuVals.append([])
+        #    tfirst = False
+        #    print reaction.equation(), reaction.reactants
+        #    for sp_id in range(0,self.nSpecies):
+        #        sp_sy = self.species[sp_id]
+        #        print sp_sy
+        #        if (sp_sy.symbol in (reaction.reactants)):
+        #            print sp_sy.symbol
+        #            t = "NuVals[%d] = %d" % (sp_id, -coefficient)
+        #        elif (sp_sy.symbol in (reaction.products)):
+        #            t = "NuVals[%d] = %d" % (sp_id, coefficient)
+        #        else:
+        #            t = "NuVals[%d] = %d" % (sp_id, 0)
+        #        self._write(t)            
+           
+            #for j, [symbol, coefficient] in zip( range(len(reaction.reactants)), reaction.reactants):
+            #    id = mechanism.species(symbol).id
+            #    NuIdxs[-1].append(id)
+            #    NuVals[-1].append(-coefficient)
+            #for j, [symbol, coefficient] in zip( range(len(reaction.products)), reaction.products):
+            #    id = mechanism.species(symbol).id
+            #    NuIdxs[-1].append(id)
+            #    NuVals[-1].append(coefficient)
+
+        ##for i, reaction in zip(range(nReactions), mechanism.reaction()):
+        ##    t = "NuIdxs[%d] = {" % i
+        ##    tfirst = True
+        ##    for idx in NuIdxs[i]:
+        ##        if tfirst:
+        ##            tfirst = False
+        ##        else:
+        ##            t += ","
+        ##        t += "%d" % idx
+        ##    t += "};"
+        ##    self._write(t)            
+
+        ##for i, reaction in zip(range(nReactions), mechanism.reaction()):
+        ##    id = (reaction.id - 1) * nSpecies
+        ##    t = "NuVals[%d] = {" % i
+        ##    tfirst = True
+        ##    for idx in NuVals[i]:
+        ##        if tfirst:
+        ##            tfirst = False
+        ##        else:
+        ##            t += ","
+        ##        t += "%d" % idx
+        ##    t += "};"
+        ##    self._write(t)            
+
+        ##self._write("#endif")
+
+        self._write("cudaMemcpyToSymbol(NuVals_d, NuVals, sizeof(int) * %d);" % (nReactions*nSpecies))
         
         for j in range(nReactions):
             reaction = mechanism.reaction()[j]
@@ -2337,8 +2395,8 @@ class CPickler(CMill):
                 if (len(efficiencies) > 1):
                     start_idx = nSpecies * id
                     self._write()
-                    self._write("cudaMalloc((void**)&TB_d, sizeof(double) * %d);" % (len(efficiencies)))
-                    self._write("cudaMalloc((void**)&TBid_d, sizeof(int) * %d);" % (len(efficiencies)))
+                    self._write("cudaMalloc((void**)&TB_d[%d], sizeof(double) * %d);" % (id,len(efficiencies)))
+                    self._write("cudaMalloc((void**)&TBid_d[%d], sizeof(int) * %d);" % (id,len(efficiencies)))
                     self._write("cudaMemcpyToSymbol(TBid_d[%d], TBid[%d], sizeof(int) * %d);" %(id,id,len(efficiencies)))
                     self._write("cudaMemcpyToSymbol(TB_d[%d], TB[%d], sizeof(double) * %d);" %(id,id,len(efficiencies)))
 
@@ -6225,10 +6283,12 @@ class CPickler(CMill):
         self._write()
         self._write("*Kc = 0;")
         self._write("int expon = 0;")
-        self._write("for (int j = 0; j<NuIdx_d[reacID].size(); ++j) {")
+        ##self._write("for (int j = 0; j<NuIdx_d[reacID].size(); ++j) {")
+        self._write("for (int j = 0; j<%d; ++j) {" % nSpecies)
         self._indent()
-        self._write("*Kc += NuVals_d[reactID][j] * g_RT[NuIdx_d[reacID][j]]]")
-        self._write("expon += NuVals_d[reactID][j];")
+        ##self._write("*Kc += NuVals_d[reactID][j] * g_RT[NuIdx_d[reacID][j]]]")
+        self._write("*Kc += NuVals_d[reacID*%d + j] * g_RT[j]]" % (nSpecies))
+        self._write("expon += NuVals_d[reactID*%d + j];" % (nSpecies))
         self._outdent()
         self._write("}")
         self._write("*Kc = exp( (*Kc) );")
@@ -6800,10 +6860,11 @@ class CPickler(CMill):
         self._write("int reacIdx = threadIdx.y")
         self._write("Kc[reacIdx] = 0;")
         self._write("int expon = 0;")
-        self._write("for (int j = 0; j<NuIdx[reacIdx].size(); ++j) {")
+        ##self._write("for (int j = 0; j<NuIdx[reacIdx].size(); ++j) {")
+        self._write("for (int j = 0; j < %d; ++j) {" % (nSpecies))
         self._indent()
-        self._write("Kc[reacIdx] += NuVals[reactIdx][j] * g_RT[NuIdx[reacIdx][j]]]")
-        self._write("expon += NuVals[reactIdx][j];")
+        self._write("Kc[reacIdx] += NuVals[reactIdx * %d + j] * g_RT[j];" % nSpecies)
+        self._write("expon += NuVals[reactIdx * %d + j];" % nSpecies)
         self._outdent()
         self._write("}")
         self._write("Kc[reacIdx] = exp(Kc[reacIdx]);")
