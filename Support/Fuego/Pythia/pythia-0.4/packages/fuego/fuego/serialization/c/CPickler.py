@@ -24,6 +24,7 @@ from pyre.handbook.constants.fundamental import gas_constant as R
 
 import sys
 import numpy as np
+from scipy.sparse import csr_matrix
 
 smallnum = 1e-100
 R = 8.31451e7 * erg/mole/kelvin
@@ -32,6 +33,7 @@ Rc = 1.98721558317399617591 * cal/mole/kelvin
 Patm = 1013250.0
 sym  = ""
 fsym = "_"
+
 
 class speciesDb:
     def __init__(self, id, name, mwt):
@@ -336,7 +338,7 @@ class CPickler(CMill):
         self._write('namespace thermo')
         self._write('{')
         self._indent()
-        self._write(self.line(' Inverse molecular weights'))
+        #self._write(self.line(' Inverse molecular weights'))
         #self._write('std::vector<double> imw;')
         self._write('double fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];' 
                     % (nReactions,nReactions,nReactions))
@@ -352,8 +354,8 @@ class CPickler(CMill):
                     % (nReactions,nReactions,nReactions))
         self._write('int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];' 
                     % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('double *TB[%d];' 
-                    % (nReactions))
+        self._write('double *TB[%d];' % (nReactions))
+        self._write('std::vector<std::vector<int>> NuIdxs(%d), NuVals(%d);' % (nReactions,nReactions))
 
         self._write()
         self._write('double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
@@ -372,20 +374,22 @@ class CPickler(CMill):
                     % (nReactions,nReactions,nReactions,nReactions,nReactions))
         self._write('double *TB_DEF[%d];' 
                     % (nReactions))
+        
         self._write('std::vector<int> rxn_map;')
 
         self._write()
         self._outdent()
         self._write('#ifdef AMREX_USE_CUDA')
         self._indent()
-        self._write('double *fwd_A_d, *fwd_beta_d, *fwd_Ea_d;')
-        self._write('double *low_A_d, *low_beta_d, *low_Ea_d;' )
-        self._write('double *rev_A_d, *rev_beta_d, *rev_Ea_d;') 
-        self._write('double *troe_a_d,*troe_Ts_d, *troe_Tss_d, *troe_Tsss_d;') 
-        ##self._write('double *sri_a_d, *sri_b_d, *sri_c_d, *sri_d_d, *sri_e_d;')
-        self._write('double *activation_units_d, *prefactor_units_d, *phase_units_d;')
-        self._write('int *is_PD_d, *troe_len_d, *sri_len_d, *nTB_d, **TBid_d;')
-        self._write('double **TB_d;')
+        self._write('AMREX_GPU_DEVICE double fwd_A_d[%d], fwd_beta_d[%d], fwd_Ea_d[%d];' % (nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE double low_A_d[%d], low_beta_d[%d], low_Ea_d[%d];' % (nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE double rev_A_d[%d], rev_beta_d[%d], rev_Ea_d[%d];' % (nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE double troe_a_d[%d],troe_Ts_d[%d], troe_Tss_d[%d], *troe_Tsss_d[%d];'%(nReactions,nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE double sri_a_d[%d], sri_b_d[%d], sri_c_d[%d], sri_d_d[%d], sri_e_d[%d];'%(nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE double activation_units_d[%d], prefactor_units_d[%d], *phase_units_d[%d];'%(nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE int is_PD_d[%d], troe_len_d[%d], sri_len_d[%d], nTB_d[%d], *TBid_d[%d];'%(nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('AMREX_GPU_DEVICE double *TB_d[%d];'%(nReactions))
+        self._write('AMREX_GPU_DEVICE int *NuIdxs_d[%d], *NuVals_d[%d];' % (nReactions,nReactions))
         self._outdent()
         self._write('#endif')
         self._write('};')
@@ -943,17 +947,6 @@ class CPickler(CMill):
         self._write('extern std::vector<int> rxn_map;')
         self._write()
 
-        self._write('#ifdef AMREX_USE_CUDA')
-        self._write('extern double *fwd_A_d, *fwd_beta_d, *fwd_Ea_d;')
-        self._write('extern double *low_A_d, *low_beta_d, *low_Ea_d;' )
-        self._write('extern double *rev_A_d, *rev_beta_d, *rev_Ea_d;') 
-        self._write('extern double *troe_a_d,*troe_Ts_d, *troe_Tss_d, *troe_Tsss_d;') 
-        #self._write('extern double *sri_a_d, *sri_b_d, *sri_c_d, *sri_d_d, *sri_e_d;')
-        self._write('extern double *activation_units_d, *prefactor_units_d, *phase_units_d;')
-        self._write('extern int *is_PD_d, *troe_len_d, *sri_len_d, *nTB_d, **TBid_d;')
-        self._write('extern double **TB_d;')
-        self._write('#endif')
-
         self._outdent()
 
         self._write('}')
@@ -1061,7 +1054,6 @@ class CPickler(CMill):
             'void CKABML'+sym+'(double *  P, double *  T, double *  x, double *  abml);',
             'void CKABMS'+sym+'(double *  P, double *  T, double *  y, double *  abms);',
 
-            
             'AMREX_GPU_HOST_DEVICE void CKWC'+sym+'(double *  T, double *  C, double *  wdot);',
             'void CKWYP'+sym+'(double *  P, double *  T, double *  y, double *  wdot);',
             'void CKWXP'+sym+'(double *  P, double *  T, double *  x, double *  wdot);',
@@ -1727,16 +1719,12 @@ class CPickler(CMill):
         self._write('  }')
         self._write('}')
         self._write()
+
         self._write(self.line(' Initializes parameter database'))
         self._write('void CKINIT'+sym+'()')
         self._write('{')
 
         self._indent()
-
-        # build reverse reaction map
-        rmap = {}
-        for i, reaction in zip(range(nReactions), mechanism.reaction()):
-            rmap[reaction.orig_id-1] = i
 
         for j in range(nReactions):
             reaction = mechanism.reaction()[rmap[j]]
@@ -1815,6 +1803,48 @@ class CPickler(CMill):
                 self._write("nTB[%d] = 0;" % (id))
 
             self._write()
+
+        self._write("#if 0")
+        # Matrices of reaction orders (nu', nu'')
+        NuVals = []
+        NuIdxs = []
+
+        for i, reaction in zip(range(nReactions), mechanism.reaction()):
+            NuIdxs.append([])
+            NuVals.append([])
+            for j, [symbol, coefficient] in zip( range(len(reaction.reactants)), reaction.reactants):
+                id = mechanism.species(symbol).id
+                NuIdxs[-1].append(id)
+                NuVals[-1].append(-coefficient)
+            for j, [symbol, coefficient] in zip( range(len(reaction.products)), reaction.products):
+                id = mechanism.species(symbol).id
+                NuIdxs[-1].append(id)
+                NuVals[-1].append(coefficient)
+
+        for i, reaction in zip(range(nReactions), mechanism.reaction()):
+            t = "NuIdxs[%d] = {" % i
+            tfirst = True
+            for idx in NuIdxs[i]:
+                if tfirst:
+                    tfirst = False
+                else:
+                    t += ","
+                t += "%d" % idx
+            t += "};"
+            self._write(t)            
+
+        for i, reaction in zip(range(nReactions), mechanism.reaction()):
+            t = "NuVals[%d] = {" % i
+            tfirst = True
+            for idx in NuVals[i]:
+                if tfirst:
+                    tfirst = False
+                else:
+                    t += ","
+                t += "%d" % idx
+            t += "};"
+            self._write(t)            
+        self._write("#endif")
 
         self._write("SetAllDefaults();")
         self._outdent()
@@ -2154,60 +2184,76 @@ class CPickler(CMill):
         self._write('#ifdef AMREX_USE_CUDA')
         self._write("void AllocateOnDevice()")
         self._write("{")
-        self._write(self.line('Allocation'))
-        self._indent()
-        self._write("cudaMalloc((void**)&fwd_A_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&fwd_beta_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&fwd_Ea_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&low_A_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&low_beta_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&low_Ea_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&rev_A_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&rev_beta_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&rev_Ea_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&troe_a_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&troe_Ts_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&troe_Tss_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&troe_Tsss_d, sizeof(double) * %d);" % nReactions)
-        # PUT SRI
-        self._write("cudaMalloc((void**)&troe_Tsss_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&activation_units_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&prefactor_units_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&phase_units_d, sizeof(double) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&is_PD_d, sizeof(int) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&troe_len_d, sizeof(int) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&sri_len_d, sizeof(int) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&nTB_d, sizeof(int) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&TBid_d, sizeof(int*) * %d);" % nReactions)
-        self._write("cudaMalloc((void**)&TB_d, sizeof(double*) * %d);" % nReactions)
-        self._outdent()
-        self._write()
-
         self._write(self.line('Fill'))
         self._indent()
-        self._write("cudaMemcpyAsync(fwd_A_d, fwd_A, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(fwd_beta_d, fwd_beta, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(fwd_Ea_d, fwd_Ea, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(low_A_d, low_A, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(low_beta_d, low_beta, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(low_Ea_d, low_Ea, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(rev_A_d, rev_A, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(rev_beta_d, rev_beta, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(rev_Ea_d, rev_Ea, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(troe_a_d, troe_a, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(troe_Ts_d, troe_Ts, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(troe_Tss_d, troe_Tss, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(troe_Tsss_d, troe_Tsss, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
+        self._write("cudaMemcpyToSymbol(fwd_A_d, fwd_A, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(fwd_beta_d, fwd_beta, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(fwd_Ea_d, fwd_Ea, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(low_A_d, low_A, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(low_beta_d, low_beta, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(low_Ea_d, low_Ea, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(rev_A_d, rev_A, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(rev_beta_d, rev_beta, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(rev_Ea_d, rev_Ea, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(troe_a_d, troe_a, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(troe_Ts_d, troe_Ts, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(troe_Tss_d, troe_Tss, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(troe_Tsss_d, troe_Tsss, sizeof(double) * %d);" % nReactions)
         # PUT SRI
         #self._write('double *sri_a_d, *sri_b_d, *sri_c_d, *sri_d_d, *sri_e_d;')
-        self._write("cudaMemcpyAsync(activation_units_d, activation_units, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(prefactor_units_d, prefactor_units, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(phase_units_d, phase_units, sizeof(double) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(is_PD_d, is_PD, sizeof(int) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(troe_len_d, troe_len, sizeof(int) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(sri_len_d, sri_len, sizeof(int) * %d, cudaMemcpyHostToDevice);" % nReactions)
-        self._write("cudaMemcpyAsync(nTB_d, nTB, sizeof(int) * %d, cudaMemcpyHostToDevice);" % nReactions)
+        self._write("cudaMemcpyToSymbol(activation_units_d, activation_units, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(prefactor_units_d, prefactor_units, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(phase_units_d, phase_units, sizeof(double) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(is_PD_d, is_PD, sizeof(int) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(troe_len_d, troe_len, sizeof(int) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(sri_len_d, sri_len, sizeof(int) * %d);" % nReactions)
+        self._write("cudaMemcpyToSymbol(nTB_d, nTB, sizeof(int) * %d);" % nReactions)
 
+        self._write("")
+
+        # Matrices of reaction orders (nu', nu'')
+        self._write("#if 0")
+        NuVals = []
+        NuIdxs = []
+
+        for i, reaction in zip(range(nReactions), mechanism.reaction()):
+            NuIdxs.append([])
+            NuVals.append([])
+            for j, [symbol, coefficient] in zip( range(len(reaction.reactants)), reaction.reactants):
+                id = mechanism.species(symbol).id
+                NuIdxs[-1].append(id)
+                NuVals[-1].append(-coefficient)
+            for j, [symbol, coefficient] in zip( range(len(reaction.products)), reaction.products):
+                id = mechanism.species(symbol).id
+                NuIdxs[-1].append(id)
+                NuVals[-1].append(coefficient)
+
+        for i, reaction in zip(range(nReactions), mechanism.reaction()):
+            t = "NuIdxs[%d] = {" % i
+            tfirst = True
+            for idx in NuIdxs[i]:
+                if tfirst:
+                    tfirst = False
+                else:
+                    t += ","
+                t += "%d" % idx
+            t += "};"
+            self._write(t)            
+
+        for i, reaction in zip(range(nReactions), mechanism.reaction()):
+            t = "NuVals[%d] = {" % i
+            tfirst = True
+            for idx in NuVals[i]:
+                if tfirst:
+                    tfirst = False
+                else:
+                    t += ","
+                t += "%d" % idx
+            t += "};"
+            self._write(t)            
+
+        self._write("#endif")
+        
         for j in range(nReactions):
             reaction = mechanism.reaction()[j]
             id = reaction.id - 1
@@ -2241,8 +2287,8 @@ class CPickler(CMill):
                     self._write()
                     self._write("cudaMalloc((void**)&TB_d, sizeof(double) * %d);" % (len(efficiencies)))
                     self._write("cudaMalloc((void**)&TBid_d, sizeof(int) * %d);" % (len(efficiencies)))
-                    self._write("cudaMemcpyAsync(TBid_d[%d], TBid[%d], sizeof(int) * %d, cudaMemcpyHostToDevice);" %(id,id,len(efficiencies)))
-                    self._write("cudaMemcpyAsync(TB_d[%d], TB[%d], sizeof(double) * %d, cudaMemcpyHostToDevice);" %(id,id,len(efficiencies)))
+                    self._write("cudaMemcpyToSymbol(TBid_d[%d], TBid[%d], sizeof(int) * %d);" %(id,id,len(efficiencies)))
+                    self._write("cudaMemcpyToSymbol(TB_d[%d], TB[%d], sizeof(double) * %d);" %(id,id,len(efficiencies)))
 
         self._outdent()
         self._write("}")
@@ -2252,31 +2298,6 @@ class CPickler(CMill):
         self._write("{")
         self._write(self.line('Deallocation'))
         self._indent()
-        self._write("cudaFree(fwd_A_d);")
-        self._write("cudaFree(fwd_beta_d);")
-        self._write("cudaFree(fwd_Ea_d);")
-        self._write("cudaFree(low_A_d);")
-        self._write("cudaFree(low_beta_d);")
-        self._write("cudaFree(low_Ea_d);")
-        self._write("cudaFree(rev_A_d);")
-        self._write("cudaFree(rev_beta_d);")
-        self._write("cudaFree(rev_Ea_d);")
-        self._write("cudaFree(troe_a_d);")
-        self._write("cudaFree(troe_Ts_d);")
-        self._write("cudaFree(troe_Tss_d);")
-        self._write("cudaFree(troe_Tss_d);")
-        self._write("cudaFree(troe_Tsss_d);")
-        self._write("cudaFree(activation_units_d);")
-        self._write("cudaFree(prefactor_units_d);")
-        self._write("cudaFree(phase_units_d);")
-        self._write("cudaFree(is_PD_d);")
-        self._write("cudaFree(troe_len_d);")
-        self._write("cudaFree(sri_len_d);")
-        self._write("cudaFree(nTB_d);")
-        self._write("cudaFree(TBid_d);")
-        self._write("cudaFree(TB_d);")
-        #self._write('int  **TBid_d;')
-        #self._write('double **TB_d;')
         self._outdent()
         self._write("}")
         self._write('#endif')
@@ -4147,7 +4168,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the production rate for each species'))
-        self._write('AMREX_GPU_HOST_DEVICE void CKWC'+sym+'(double *  T, double *  C,  double *  wdot)')
+        self._write('AMREX_GPU_HOST_DEVICE void CKWC'+sym+'(double *  T, double *  C, double *  wdot)')
         self._write('{')
         self._indent()
 
@@ -4180,7 +4201,7 @@ class CPickler(CMill):
         self._outdent()
 
         self._write('}')
-
+        
         return
 
     def _ckwyp(self, mechanism):
@@ -6109,7 +6130,15 @@ class CPickler(CMill):
 
         # main function
         self._write()
-        self._write('#ifdef AMREX_USE_CUDA')
+        self._write("#ifdef AMREX_USE_CUDA")
+        self._write("AMREX_GPU_DEVICE void Kf_reac_d(double T, int reacID, double * Kf)")
+        self._write('{')
+        self._indent()
+        self._write("*Kf = prefactor_units_d[reacID] * fwd_A_d[reacID] * exp(fwd_beta_d[reacID] * T - activation_units_d[reacID] * fwd_Ea_d[reacID] * (1./T));")
+        self._outdent()
+        self._write('}')
+        self._write()
+        
         self._write(self.line('GPU version of productionRate: no more use of thermo namespace vectors'))
         self._write(self.line('compute the production rate for each species'))
         self._write('AMREX_GPU_HOST_DEVICE inline void  productionRate(double * wdot, double * sc, double T)')
@@ -6155,8 +6184,7 @@ class CPickler(CMill):
                             self._write("wdot[%d] += %d * qdot;" % (mechanism.species(symbol).id, coefficient))
 
 
-        self._write()
-        self._write('return;')
+        self._write("return;")
         self._outdent()
 
         self._write('}')
@@ -6600,7 +6628,6 @@ class CPickler(CMill):
         for reaction in mechanism.reaction():
             KcExpArg = self._sortedKcExpArg(mechanism, reaction)
             self._write("Kc[%d] = %s;" % (reaction.id-1,KcExpArg))
-
         self._write()
         
         self._outdent()
@@ -6631,6 +6658,60 @@ class CPickler(CMill):
         
         self._write()
 
+        self._write('return;')
+        self._outdent()
+        self._write('}')
+
+        # k_f_new function
+        self._write()
+        self._write('AMREX_GPU_HOST_DEVICE void comp_k_f_new(double * tc, double invT, double * k_f, double * prefactor_units_l, double * fwd_A_l, double * fwd_beta_l, double * activation_units_l, double * fwd_Ea_l)')
+        self._write('{')
+        self._indent()
+        self._write("int i = threadIdx.y;")
+        self._write("k_f[i] = prefactor_units_l[i] * fwd_A_l[i]")
+        self._write("            * exp(fwd_beta_l[i] * tc[0] - activation_units_l[i] * fwd_Ea_l[i] * invT);")
+        self._outdent()
+        self._write('}')
+
+        # Kc_new
+        self._write()
+        self._write('AMREX_GPU_HOST_DEVICE void comp_Kc_new(double *  tc, double invT, double *  Kc)')
+        self._write('{')
+        self._indent()
+
+        self._write(self.line('compute the Gibbs free energy'))
+        self._write('double g_RT[%d];' % (nSpecies))
+        self._write('gibbs(g_RT, tc);')
+
+        self._write()
+
+        self._write()
+        self._write("int reacIdx = threadIdx.y")
+        self._write("Kc[reacIdx] = 0;")
+        self._write("int expon = 0;")
+        self._write("for (int j = 0; j<NuIdx[reacIdx].size(); ++j) {")
+        self._indent()
+        self._write("Kc[reacIdx] += NuVals[reactIdx][j] * g_RT[NuIdx[reacIdx][j]]]")
+        self._write("expon += NuVals[reactIdx][j];")
+        self._outdent()
+        self._write("}")
+        self._write("Kc[reacIdx] = exp(Kc[reacIdx]);")
+
+        self._write("")
+
+        self._write("")
+        self._write("if (expon > 0) {")
+        self._indent()
+        self._write('double refC = %g / %g * invT;' % (atm.value, R.value))
+        self._write("Kc[reacIdx] += refC;")
+        self._outdent()
+        self._write("} else if (expon < 0) {")
+        self._indent()
+        self._write('double refC = %g / %g * tc[0];' % (R.value, atm.value))
+        self._write("Kc[reacIdx] += 1./refC;")
+        self._outdent()
+        self._write("}")
+        
         self._write('return;')
         self._outdent()
         self._write('}')
@@ -11874,7 +11955,6 @@ class CPickler(CMill):
             return dG[3:]
         else:
             return "-"+dG[3:]
-
 
     def _sortedKc(self, mechanism, reaction):
         conv = self._KcConv(mechanism,reaction)

@@ -18,6 +18,32 @@ std::string inputs_name = "";
 
 using namespace amrex;
 
+template <typename L>
+void For (Box const& box, int nc, L f) noexcept
+{
+    int ncells = box.numPts();
+    const auto lo  = amrex::lbound(box);
+    const auto len = amrex::length(box);
+    auto ec = Gpu::ExecutionConfig(ncells);
+    ec.numBlocks.y = nc;
+    amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+    [=] AMREX_GPU_DEVICE () noexcept {
+        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+             icell < ncells; icell += stride) {
+            int k =  icell /   (len.x*len.y);
+            int j = (icell - k*(len.x*len.y)) /   len.x;
+            int i = (icell - k*(len.x*len.y)) - j*len.x;
+            i += lo.x;
+            j += lo.y;
+            k += lo.z;
+            int n = blockIdx.y;
+            f(i,j,k,n);
+        }
+    });
+    AMREX_GPU_ERROR_CHECK();
+}
+
+
 int
 main (int   argc,
       char* argv[])
@@ -96,52 +122,52 @@ main (int   argc,
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-      for (MFIter mfi(mass_frac,TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+      {
+        FArrayBox qf, qr;
+        for (MFIter mfi(mass_frac,TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+          const Box& box = mfi.tilebox();
+          const auto& temp = temperature.array(mfi);
+          const auto& Y    = mass_frac.array(mfi);
+          const auto& rho  = density.array(mfi);
+          const auto& wdot = wdots.array(mfi);
+          
+          qf.resize(box,NUM_REACTIONS);
+          qr.resize(box,NUM_REACTIONS);
 
+          Elixir iqf = qf.elixir();
+          Elixir iqr = qr.elixir();
 
-        //std::cout << " **MFITER** " <<std::endl;
-	const Box& box = mfi.tilebox();
+          auto iqfa = qf.array();
+          auto iqra = qr.array();
 
-	const auto  mf      = mass_frac.array(mfi);
-	const auto  temp    = temperature.array(mfi);
-	const auto  rho     = density.array(mfi); 
-	const auto  cdots   = wdots.array(mfi);
+          int nR = NUM_REACTIONS;
+          For(box, nR, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
+          {
+             Real Kf;
+             Real Kc;
+             Real Yloc[NUM_SPECIES];
+             for (int L=0; L<NUM_SPECIES; ++L) {
+               Yloc[L] = Y(i,j,k,L);
+             }
 
-	/* AMREX VERSION */
-	//amrex::ParallelFor(box,
-	//    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-	//    {
-	//	gpu_RTY2W(i, j, k, rho, temp, mf, cdots);
-	//    });
-
-        /* UNWRAPPED VERSION 1 */
-	int ncells = box.numPts();
-	const auto lo  = amrex::lbound(box);
-	const auto len = amrex::length(box);
-	const auto ec = Gpu::ExecutionConfig(ncells);
-	//amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	//[=] AMREX_GPU_DEVICE () noexcept {
-	//    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	//        icell < ncells; icell += stride) {
-        //        printf(" icell  %d \n", icell);
-	//        int k =  icell /   (len.x*len.y);
-	//	int j = (icell - k*(len.x*len.y)) /   len.x;
-	//	int i = (icell - k*(len.x*len.y)) - j*len.x;
-	//	i += lo.x;
-	//	j += lo.y;
-	//	k += lo.z;
-        //        printf(" i j k %d %d %d \n",i,j,k);
-	//	gpu_RTY2W(i, j, k, rho, temp, mf, cdots);
-	//    }
-	//});
-
-        /* UNWRAPPED VERSION 2 */
-        BL_PROFILE_VAR("MyLaunchTestTIME", mfiL);
-        MyLaunchTest<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>> (ncells, rho, temp, mf, cdots, len.x, len.y, lo.x, lo.y, lo.z);
-        BL_PROFILE_VAR_STOP(mfiL);
-
+             Kf_reac_d(temp(i,j,k),n,&Kf);
+             //Kc = CompKc(temp(i,j,k),Yloc);
+             //comp_qfqr_new(temp(i,j,k),Yloc,Kf,Kc,iqfa(i,j,k,n),iqra(i,j,k,n));
+          });
+          /*
+          amrex::For(box, NUM_SPECIES, [=] (int i, int j, int k, int n)
+          {
+             Real qfloc[NUM_REACTIONS];
+             Real qrloc[NUM_REACTIONS];
+             for (int L=0; L<NUM_REACTIONS; ++L) {
+               qfloc[L] = iqfa(i,j,k,L);
+               qrloc[L] = iqra(i,j,k,L);
+             }
+             comp_wdot_qfqr(qfloc,qrloc,wdot(i,j,k,n));
+          });
+          */
       }
-
+      }
 
       outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
       PlotFileFromMF(wdots,outfile);
