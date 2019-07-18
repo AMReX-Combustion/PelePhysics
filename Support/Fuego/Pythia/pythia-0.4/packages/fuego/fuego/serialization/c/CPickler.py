@@ -6275,7 +6275,7 @@ class CPickler(CMill):
         self._write("for (int j = 0; j<%d; ++j) {" % nSpecies)
         self._indent()
         ##self._write("*Kc += NuVals_d[reactID][j] * g_RT[NuIdx_d[reacID][j]]]")
-        self._write("*Kc += NuVals_d[reacID*%d + j] * g_RT[j]]" % (nSpecies))
+        self._write("*Kc += NuVals_d[reacID*%d + j] * g_RT[j];" % (nSpecies))
         self._write("expon += NuVals_d[reactID*%d + j];" % (nSpecies))
         self._outdent()
         self._write("}")
