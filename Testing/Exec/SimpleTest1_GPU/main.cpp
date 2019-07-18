@@ -61,9 +61,13 @@ main (int   argc,
       for (int i = 0; i < probin_file_length; i++)
 	probin_file_name[i] = probin_file[i];
 
-      int fuel_idx = FUEL_ID;
+      //int fuel_idx = FUEL_ID;
+      int fuel_idx = 10;
       int oxy_idx  = OXY_ID;
       int bath_idx = BATH_ID;
+      Print() << "fuel_idx: " << fuel_idx << std::endl;
+      Print() << "oxy_idx: " << oxy_idx << std::endl;
+      Print() << "bath_idx: " << bath_idx << std::endl;
 
       extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx);
     
@@ -90,7 +94,7 @@ main (int   argc,
       int num_spec;
       num_spec = NUM_SPECIES;
 
-      DistributionMapping dm{ba};
+      DistributionMapping dm(ba);
 
       int num_grow = 0;
       MultiFab mass_frac(ba,dm,num_spec,num_grow);
@@ -99,17 +103,14 @@ main (int   argc,
 
       IntVect tilesize(D_DECL(10240,8,32));
     
-      int count_box = 0;
-      for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
-	const Box& box = mfi.tilebox();
+      for (MFIter mfi(mass_frac,TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+ 	const Box& box = mfi.tilebox();
 	initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
 			BL_TO_FORTRAN_N_3D(mass_frac[mfi],0),
 			BL_TO_FORTRAN_N_3D(temperature[mfi],0),
 			BL_TO_FORTRAN_N_3D(density[mfi],0),
 			&(dx[0]), &(plo[0]), &(phi[0]));
-        count_box += 1;
       }
-      std::cout << "That many boxes (64)" << count_box <<std::endl; 
 
       ParmParse ppa("amr");
       std::string pltfile("plt");  
@@ -145,13 +146,13 @@ main (int   argc,
           {
              Real Kf;
              Real Kc;
-             Real Yloc[NUM_SPECIES];
-             for (int L=0; L<NUM_SPECIES; ++L) {
-               Yloc[L] = Y(i,j,k,L);
-             }
-
              Kf_reac_d(temp(i,j,k),n,&Kf);
-             //Kc = CompKc(temp(i,j,k),Yloc);
+             Kc_reac_d(temp(i,j,k),n,&Kc);
+
+             //Real Yloc[NUM_SPECIES];
+             //for (int L=0; L<NUM_SPECIES; ++L) {
+             //  Yloc[L] = Y(i,j,k,L);
+             //}
              //comp_qfqr_new(temp(i,j,k),Yloc,Kf,Kc,iqfa(i,j,k,n),iqra(i,j,k,n));
           });
           /*
