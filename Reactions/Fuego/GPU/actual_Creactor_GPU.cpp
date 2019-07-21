@@ -544,15 +544,15 @@ fKernelComputeAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, do
 
   /* Additional var needed */
   /* TODO HP */
-  eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat)
+  eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt)
 
   /* renorm the DenseMat */
   for (int i = 0; i < udata->neqs_per_cell[0]; i++){
       for (int k = 0; k < udata->neqs_per_cell[0]; k++){
-          Jmat[k*(udata->neqs_per_cell[0]+1)+i] = Jmat[k*(udata->neqs_per_cell[0]+1)+i] * molecular_weight[i] / molecular_weight[k];
+          Jmat_pt[k*(udata->neqs_per_cell[0]+1)+i] = Jmat_pt[k*(udata->neqs_per_cell[0]+1)+i] * mw[i] / mw[k];
       }
-      Jmat[i*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] = Jmat[i*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] / molecular_weight[i]; 
-      Jmat[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+i] = Jmat[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+i] * molecular_weight[i]; 
+      Jmat_pt[i*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] = Jmat_pt[i*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] / mw[i]; 
+      Jmat_pt[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+i] = Jmat_pt[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+i] * mw[i]; 
   }
   /* Fill the Sps Mat */
   int nbVals;
@@ -563,11 +563,11 @@ fKernelComputeAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, do
               /* Scale by -gamma */
               /* Add identity matrix */
     	      if (idx == (i-1)) {
-                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = 1.0 - (udata->gamma_d) * Jmat[ idx * (udata->neqs_per_cell[0]+1) + idx ]; 
-                  csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = Jmat[ idx * (udata->neqs_per_cell[0]+1) + idx ]; 
+                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = 1.0 - (udata->gamma_d) * Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + idx ]; 
+                  csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + idx ]; 
     	      } else {
-                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = - (udata->gamma_d) * Jmat[ idx * (udata->neqs_per_cell[0]+1) + i-1 ]; 
-                  csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = Jmat[ idx * (udata->neqs_per_cell[0]+1) + i-1 ]; 
+                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = - (udata->gamma_d) * Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + i-1 ]; 
+                  csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + i-1 ]; 
     	      }
       }
   }
@@ -586,9 +586,9 @@ fKernelComputeAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, do
 //
 //    if (tid < nbatched) {
 //        realtype activity[21];
-//        realtype molecular_weight[21];
+//        realtype mw[21];
 //        realtype temp;
-//        realtype Jmat[484];
+//        realtype Jmat_pt[484];
 //
 //        int jac_offset = tid * nnz;
 //        int y_offset = tid * size;
@@ -597,7 +597,7 @@ fKernelComputeAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, do
 //        realtype* actual_y = yvec_d + y_offset;
 //
 //        /* MW CGS */
-//        molecularWeight_d(molecular_weight);
+//        molecularWeight_d(mw);
 //        /* rho */ 
 //        //realtype rho = 0.0;
 //        //for (int i = 0; i < udata->neqs_per_cell[0]; i++){
@@ -607,27 +607,27 @@ fKernelComputeAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, do
 //        temp = actual_y[udata->neqs_per_cell[0]];
 //        /* Yks, C CGS*/
 //        for (int i = 0; i < udata->neqs_per_cell[0]; i++){
-//	    activity[i] = actual_y[i]/(molecular_weight[i]);
+//	    activity[i] = actual_y[i]/(mw[i]);
 //        }
 //        /* Fuego calls on device 
 //         * NB to be more accurate should use energy to
 //         * recompute temp ...      */
 //        if (udata->flagP == 1){
 //            int consP = 0 ;
-//            dwdot_d(Jmat, activity, &temp, &consP);
+//            dwdot_d(Jmat_pt, activity, &temp, &consP);
 //        } else {
 //            int consP = 1 ;
-//            dwdot_d(Jmat, activity, &temp, &consP);
+//            dwdot_d(Jmat_pt, activity, &temp, &consP);
 //        }
 //        /* fill the sunMat */
 //        for (int k = 0; k < udata->neqs_per_cell[0]; k++){
 //	    for (int i = 0; i < udata->neqs_per_cell[0]; i++){
-//                csr_jac_cell[k*(udata->neqs_per_cell[0]+1)+i] = Jmat[i*(udata->neqs_per_cell[0]+1)+k] * molecular_weight[k] / molecular_weight[i];
+//                csr_jac_cell[k*(udata->neqs_per_cell[0]+1)+i] = Jmat_pt[i*(udata->neqs_per_cell[0]+1)+k] * mw[k] / mw[i];
 //	    }
-//	    csr_jac_cell[k*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] = Jmat[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+k] * molecular_weight[k]; 
+//	    csr_jac_cell[k*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] = Jmat_pt[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+k] * mw[k]; 
 //        }
 //        for (int i = 0; i < udata->neqs_per_cell[0]; i++){
-//            csr_jac_cell[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+i] = Jmat[i*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] / molecular_weight[i]; 
+//            csr_jac_cell[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+i] = Jmat_pt[i*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] / mw[i]; 
 //        }
 //    }
 //}
