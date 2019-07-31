@@ -232,8 +232,9 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    rhoe_init = (double *) malloc(NCELLS*sizeof(double));
 	    rhoesrc_ext = (double *) malloc( NCELLS*sizeof(double));
 	} else {
-	    rhoh_init = (double *) malloc(NCELLS*sizeof(double));
-	    rhohsrc_ext = (double *) malloc( NCELLS*sizeof(double));
+	    amrex::Abort(" Only UV reactor implemented for now, cvode_iE == 1\n");
+	    //rhoh_init = (double *) malloc(NCELLS*sizeof(double));
+	    //rhohsrc_ext = (double *) malloc( NCELLS*sizeof(double));
 	}
 	rYsrc = (double *)  malloc((NCELLS*NEQ)*sizeof(double));
 
@@ -1160,12 +1161,14 @@ static UserData AllocUserData(void)
       /* Nb of non zero elements*/
       SPARSITY_INFO_PRECOND(&(data_wk->NNZ),&HP);
       printf("--> SPARSE Preconditioner -- non zero entries %d represents %f %% fill pattern.\n", data_wk->NNZ, data_wk->NNZ/float((NEQ+1) * (NEQ+1)) *100.0);
+      int indx[data_wk->NNZ];
       for(int i = 0; i < NCELLS; ++i) {
           (data_wk->PS)[i] = SUNSparseMatrix(NEQ+1, NEQ+1, data_wk->NNZ, CSC_MAT);
           data_wk->colPtrs[i] = (int*) SUNSparseMatrix_IndexPointers((data_wk->PS)[i]); 
           data_wk->rowVals[i] = (int*) SUNSparseMatrix_IndexValues((data_wk->PS)[i]);
           data_wk->Jdata[i] = SUNSparseMatrix_Data((data_wk->PS)[i]);
-          SPARSITY_PREPROC_PRECOND(data_wk->rowVals[i],data_wk->colPtrs[i],&HP);
+	  /* indx not used */
+          SPARSITY_PREPROC_PRECOND(data_wk->rowVals[i],data_wk->colPtrs[i],indx,&HP);
           klu_defaults (&(data_wk->Common[i]));
           //data_wk->Common.btf = 0;
           //(data_wk->Common[i]).maxwork = 15;
