@@ -10,7 +10,6 @@ cvode_iE = 1
 # Choose between sparse (5) dense (1) or iterative (99) solver
 ns.cvode_iDense = 99
 
-
 max_grid_size = 128
 
 # Choose name of output pltfile

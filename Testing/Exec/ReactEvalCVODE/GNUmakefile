@@ -3,12 +3,12 @@ PROFILE    = FALSE
 
 DEBUG      = FALSE
 
-DIM        = 3
+DIM        = 2
 
 COMP	   = gcc
 FCOMP	   = gfortran
 
-USE_MPI    = TRUE
+USE_MPI    = FALSE
 USE_OMP    = FALSE
 
 FUEGO_GAS  = TRUE
@@ -22,7 +22,7 @@ DEFINES  += -DMOD_REACTOR
 
 USE_SUNDIALS_3x4x = TRUE
 
-USE_KLU = FALSE
+USE_KLU = TRUE
 ifeq ($(USE_KLU), TRUE)
     DEFINES  += -DUSE_KLU
     include Make.CVODE

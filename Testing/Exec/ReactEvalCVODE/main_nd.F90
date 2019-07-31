@@ -126,9 +126,6 @@ contains
 
              eos_state % p        = pressure
              eos_state % T        = Temp_lo + (Temp_hi-Temp_lo)*y/L(2) + dTemp*SIN(TWO*M_PI*y/P(2)) !+ (Temp_hi-Temp_lo)*x/L(1) + (Temp_hi-Temp_lo)*z/L(3) 
-             !print *, "(I,J,K), phi(2), plo(2), L(2) P(2) = ", i,j,k, phi(2), plo(2), L(2), P(2) 
-
-             eos_state % massfrac(nspec) = ONE - sum(eos_state % massfrac(1:nspec-1))
 
              call eos_tp(eos_state)
 

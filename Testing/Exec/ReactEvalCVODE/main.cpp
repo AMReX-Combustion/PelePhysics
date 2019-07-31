@@ -125,7 +125,7 @@ main (int   argc,
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 1;
+	npts[i] = 4;
     }
     npts[1] = 512;
 
