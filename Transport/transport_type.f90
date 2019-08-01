@@ -1,7 +1,7 @@
 module transport_type_module
 
   use amrex_fort_module, only : amrex_real
-  use network, only: nspec
+  use network, only: nspecies
   use eos_module
 
   implicit none
@@ -45,7 +45,7 @@ contains
        allocate(trv%xi(n))
        allocate(trv%lam(n))
 !   need to set this up to build different D depending on flag
-       allocate(trv%Ddiag(n,nspec))
+       allocate(trv%Ddiag(n,nspecies))
        do i=1,n
           call build(trv%eos_state(i))
        enddo

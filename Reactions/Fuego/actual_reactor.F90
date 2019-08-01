@@ -2,13 +2,14 @@ module reactor_module
 
   use amrex_fort_module, only : amrex_real
   use amrex_paralleldescriptor_module, only: parallel_IOProcessor => amrex_pd_ioprocessor
-  use network, only: nspec, spec_names
+  use network, only: nspecies, spec_names
   use react_type_module
   use eos_type_module
 
   implicit none
 
-  real(amrex_real), private, allocatable :: vodeVec(:),cdot(:),rhoydot_ext(:),ydot_ext(:)
+  integer, parameter :: neq = nspecies + 1
+  real(amrex_real), private :: vodeVec(neq),cdot(nspecies),rhoydot_ext(nspecies),ydot_ext(nspecies)
   real(amrex_real), private:: rhoedot_ext, rhoe_init, time_init, rhohdot_ext, &
                               rhoh_init, time_old, hdot_ext, h_init, pressureInit
   integer,private :: iloc, jloc, kloc, iE
@@ -36,7 +37,6 @@ contains
     real(amrex_real) :: rtol, atol
     logical :: use_ajac, save_ajac, always_new_j_loc, stiff, isio
 
-    neq = nspec + 1
     verbose = 0
     itol = 1
     order = 2
@@ -64,17 +64,11 @@ contains
     iE = iE_in
     if (iE == 1) then
        if (isio) print *," ->with internal energy (UV cst)"
-       allocate(rhoydot_ext(nspec))
     else if (iE == 5) then
        if (isio) print *," ->with enthalpy (HP cst)"
-       allocate(ydot_ext(nspec))
     else
        if (isio) print *," ->with enthalpy (sort of rhoP cst)"
-       allocate(rhoydot_ext(nspec))
     end if 
-
-    allocate(vodeVec(neq))
-    allocate(cdot(nspec))
 
     call build(eos_state)
 
@@ -92,7 +86,7 @@ contains
          voderwork, vodeiwork, lvoderwork, lvodeiwork, voderpar, vodeipar
     use eos_module
 
-    real(amrex_real),   intent(inout) :: rY_in(nspec+1),rY_src_in(nspec)
+    real(amrex_real),   intent(inout) :: rY_in(nspecies+1),rY_src_in(nspecies)
     real(amrex_real),   intent(inout) :: rX_in,rX_src_in,P_in
     real(amrex_real),   intent(inout) :: dt_react, time
     integer                           :: Init, cost_value
@@ -109,10 +103,10 @@ contains
     ! For compatibility to remove later
     call build(react_state_in)
 
-    react_state_in %              T = rY_in(nspec+1)
-    react_state_in %        rhoY(:) = rY_in(1:nspec)
+    react_state_in %              T = rY_in(nspecies+1)
+    react_state_in %        rhoY(:) = rY_in(1:nspecies)
     react_state_in %            rho = sum(react_state_in % rhoY(:))
-    react_state_in % rhoYdot_ext(:) = rY_src_in(1:nspec)
+    react_state_in % rhoYdot_ext(:) = rY_src_in(1:nspecies)
 
     if (iE == 1) then
         react_state_in %              e = rX_in !/ react_state_in % rho
@@ -140,7 +134,7 @@ contains
     eos_state % rho               = sum(react_state_in % rhoY(:))
     eos_state % T                 = react_state_in % T
     rhoInv                         = 1.d0 / eos_state % rho
-    eos_state % massfrac(1:nspec) = react_state_in % rhoY(1:nspec) * rhoInv
+    eos_state % massfrac(1:nspecies) = react_state_in % rhoY(1:nspecies) * rhoInv
 
     if (iE == 1) then
         eos_state % e = react_state_in % e
@@ -161,7 +155,7 @@ contains
     MF          = vode_MF
     vodeTime    = time
     vodeEndTime = time + dt_react
-    neq         = nspec + 1
+    neq         = nspecies + 1
     time_old    = time
 
     vodeVec(neq)     = eos_state % T
@@ -169,18 +163,18 @@ contains
     if (iE == 1) then
         rhoe_init            = eos_state % e  *  eos_state % rho
         rhoedot_ext          = react_state_in % rhoedot_ext
-        rhoydot_ext(1:nspec) = react_state_in % rhoydot_ext(1:nspec)
-        vodeVec(1:nspec)     = react_state_in % rhoY(:)
+        rhoydot_ext(1:nspecies) = react_state_in % rhoydot_ext(1:nspecies)
+        vodeVec(1:nspecies)     = react_state_in % rhoY(:)
     else if (iE == 5) then
         h_init            = eos_state % h  
         hdot_ext          = react_state_in % rhohdot_ext / eos_state % rho
-        ydot_ext(1:nspec) = react_state_in % rhoydot_ext(1:nspec) / eos_state % rho
-        vodeVec(1:nspec)  = react_state_in % rhoY(:) / eos_state % rho
+        ydot_ext(1:nspecies) = react_state_in % rhoydot_ext(1:nspecies) / eos_state % rho
+        vodeVec(1:nspecies)  = react_state_in % rhoY(:) / eos_state % rho
     else
         rhoh_init            = eos_state % h  *  eos_state % rho
         rhohdot_ext          = react_state_in % rhohdot_ext 
-        rhoydot_ext(1:nspec) = react_state_in % rhoydot_ext(1:nspec)
-        vodeVec(1:nspec)     = react_state_in % rhoY(:)
+        rhoydot_ext(1:nspecies) = react_state_in % rhoydot_ext(1:nspecies)
+        vodeVec(1:nspecies)     = react_state_in % rhoY(:)
     end if
 
     time_init = time
@@ -219,7 +213,7 @@ contains
        write(6,*) ' number of Newton failures = ',vodeiwork(21)
        if (istate.eq.-4 .or. istate.eq.-5) then
           ifail = vodeiwork(16)
-          if (ifail .eq. nspec+1) then
+          if (ifail .eq. nspecies+1) then
              write(6,*) '   T has the largest error'
           else
              write(6,*) '   spec with largest error = ', trim(spec_names(ifail))
@@ -232,40 +226,40 @@ contains
        cost_value = DBLE(vodeiwork(12)) ! number of f evaluations
 
        if (iE == 1) then
-           eos_state % rho               = sum(vodeVec(1:nspec))
+           eos_state % rho               = sum(vodeVec(1:nspecies))
            rhoInv                        = 1.d0 / eos_state % rho
-           eos_state % massfrac(1:nspec) = vodeVec(1:nspec) * rhoInv
+           eos_state % massfrac(1:nspecies) = vodeVec(1:nspecies) * rhoInv
            eos_state % T                 = vodeVec(neq)
            eos_state % e                 = (rhoe_init  +  dt_react*rhoedot_ext) /eos_state % rho
            call eos_re(eos_state)
-           rY_in(1:nspec)                = vodeVec(1:nspec)
+           rY_in(1:nspecies)                = vodeVec(1:nspecies)
            rX_in                         = eos_state % e
            rX_src_in                     = rhoedot_ext
-           rY_src_in(1:nspec)            = rhoydot_ext(1:nspec)
+           rY_src_in(1:nspecies)            = rhoydot_ext(1:nspecies)
        else if (iE == 5) then
            eos_state % p                 = pressureInit  
-           eos_state % massfrac(1:nspec) = vodeVec(1:nspec)
+           eos_state % massfrac(1:nspecies) = vodeVec(1:nspecies)
            eos_state % T                 = vodeVec(neq)
            eos_state % h                 = (h_init  +  dt_react*hdot_ext)
            call eos_ph(eos_state)
-           rY_in(1:nspec)                = vodeVec(1:nspec) * eos_state % rho
+           rY_in(1:nspecies)                = vodeVec(1:nspecies) * eos_state % rho
            rX_in                         = eos_state % h
            rX_src_in                     = hdot_ext * eos_state % rho
-           rY_src_in(1:nspec)            = ydot_ext(1:nspec) * eos_state % rho
+           rY_src_in(1:nspecies)            = ydot_ext(1:nspecies) * eos_state % rho
        else
-           eos_state % rho               = sum(vodeVec(1:nspec))
+           eos_state % rho               = sum(vodeVec(1:nspecies))
            rhoInv                        = 1.d0 / eos_state % rho
-           eos_state % massfrac(1:nspec) = vodeVec(1:nspec) * rhoInv
+           eos_state % massfrac(1:nspecies) = vodeVec(1:nspecies) * rhoInv
            eos_state % T                 = vodeVec(neq)
            eos_state % h                 = (rhoh_init  +  dt_react*rhohdot_ext) * rhoInv
            call eos_rh(eos_state)
-           rY_in(1:nspec)                = vodeVec(1:nspec)
+           rY_in(1:nspecies)                = vodeVec(1:nspecies)
            rX_in                         = eos_state % h * eos_state % rho
            rX_src_in                     = rhohdot_ext
-           rY_src_in(1:nspec)            = rhoydot_ext(1:nspec)
+           rY_src_in(1:nspecies)            = rhoydot_ext(1:nspecies)
        end if
 
-       rY_in(1+nspec)      = eos_state % T
+       rY_in(1+nspecies)      = eos_state % T
 
     else
 
@@ -285,7 +279,7 @@ contains
        else
            print *,'rhoh forcing',react_state_in%rhohdot_ext
        end if
-       print *,'rhoY forcing',react_state_in%rhoydot_ext(1:nspec)
+       print *,'rhoY forcing',react_state_in%rhoydot_ext(1:nspecies)
 
        write(6,*) '......dvode data:'
        write(6,*) ' last successful step size = ',voderwork(11)
@@ -301,7 +295,7 @@ contains
        write(6,*) ' number of Newton failures = ',vodeiwork(21)
        if (istate.eq.-4 .or. istate.eq.-5) then
           ifail = vodeiwork(16)
-          if (ifail .eq. nspec+1) then
+          if (ifail .eq. nspecies+1) then
              write(6,*) '   T has the largest error'
           else
              write(6,*) '   spec with largest error = ', trim(spec_names(ifail))
@@ -309,7 +303,7 @@ contains
        end if
 
        print *,'Final T',vodeVec(neq)
-       print *,'Final rhoY',vodeVec(1:nspec)
+       print *,'Final rhoY',vodeVec(1:nspecies)
 
        call amrex_error('vode failed')
 
@@ -330,24 +324,24 @@ contains
 
 
     if (iE == 1) then
-        eos_state % rho               = sum(y(1:nspec))
+        eos_state % rho               = sum(y(1:nspecies))
         rhoInv                        = 1.d0 / eos_state % rho
-        eos_state % massfrac(1:nspec) = y(1:nspec) * rhoInv
+        eos_state % massfrac(1:nspecies) = y(1:nspecies) * rhoInv
         eos_state % T                 = y(neq) ! guess
         eos_state % e = (rhoe_init + (time - time_init) * rhoedot_ext) * rhoInv
         call eos_re(eos_state)
         call eos_get_activity(eos_state)
     else if (iE == 5) then
-        eos_state % massfrac(1:nspec) = y(1:nspec) 
+        eos_state % massfrac(1:nspecies) = y(1:nspecies) 
         eos_state % T                 = y(neq) ! guess
         eos_state % h = h_init + (time - time_init) * hdot_ext
         eos_state % p                 = pressureInit  
         call eos_ph(eos_state)
         call eos_get_activity_h(eos_state)
     else
-        eos_state % rho               = sum(y(1:nspec))
+        eos_state % rho               = sum(y(1:nspecies))
         rhoInv                        = 1.d0 / eos_state % rho
-        eos_state % massfrac(1:nspec) = y(1:nspec) * rhoInv 
+        eos_state % massfrac(1:nspecies) = y(1:nspecies) * rhoInv 
         eos_state % T                 = y(neq) ! guess
         eos_state % h = (rhoh_init + (time - time_init) * rhohdot_ext) * rhoInv
         call eos_rh(eos_state)
@@ -358,21 +352,21 @@ contains
 
     if (iE == 1) then
         ydot(neq)    = rhoedot_ext 
-        do n=1,nspec
+        do n=1,nspecies
            ydot(n)   = cdot(n) * molecular_weight(n) + rhoYdot_ext(n)
            ydot(neq) = ydot(neq) - eos_state%ei(n)*ydot(n)
         end do
         ydot(neq)    = ydot(neq)/(eos_state%rho * eos_state%cv)
     else if (iE == 5) then
         ydot(neq)    = hdot_ext
-        do n=1,nspec
+        do n=1,nspecies
            ydot(n)   = cdot(n) * molecular_weight(n) / eos_state%rho + ydot_ext(n)
            ydot(neq) = ydot(neq) - eos_state%hi(n)*ydot(n) 
         end do
         ydot(neq)    = ydot(neq)/eos_state%cp
     else
         ydot(neq)    = rhohdot_ext
-        do n=1,nspec
+        do n=1,nspecies
            ydot(n)   = cdot(n) * molecular_weight(n) + rhoYdot_ext(n)
            ydot(neq) = ydot(neq) - eos_state%hi(n)*ydot(n) 
         end do
@@ -395,11 +389,6 @@ contains
 
 !*** FINALIZE ROUTINES ***!
   subroutine reactor_close() bind(C, name="reactor_close")
-
-    if (allocated(vodeVec)) deallocate(vodeVec)
-    if (allocated(cdot)) deallocate(cdot)
-    if (allocated(rhoydot_ext)) deallocate(rhoydot_ext)
-    if (allocated(ydot_ext)) deallocate(ydot_ext)
 
     call destroy(eos_state)
 

@@ -4,7 +4,7 @@ ifeq (${Chemistry_Model}, NULL)
 
 else
 
-  f90EXE_sources += chemistry_module.f90
+  F90EXE_sources += chemistry_module.F90
   CEXE_headers   += ReactionData.H
 
 endif

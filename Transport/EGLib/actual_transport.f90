@@ -54,9 +54,9 @@ contains
        allocate(Tp(npts))
        allocate(L1(npts))
        allocate(L2(npts))
-       allocate(Yp(npts,nspec))
-       allocate(Xp(npts,nspec))
-       allocate(Cpp(npts,nspec))
+       allocate(Yp(npts,nspecies))
+       allocate(Xp(npts,nspecies))
+       allocate(Cpp(npts,nspecies))
        npts_egz = npts
     endif
 
