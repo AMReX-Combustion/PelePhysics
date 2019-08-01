@@ -9,8 +9,9 @@ module actual_network
   integer, parameter :: nreactions  = 0 ! number of reactions
   integer, parameter :: nspec_evolve = 1
   integer, parameter :: naux =  0
+  integer, parameter :: L_spec_name = 1 ! max length of species names
 
-  character (len=16), save :: spec_names(nspecies) 
+  character (len=L_spec_name), save :: spec_names(nspecies) 
   character (len=16), save :: aux_names(naux)
 
   real(amrex_real), save   :: molec_wt(nspecies)

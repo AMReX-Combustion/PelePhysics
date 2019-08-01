@@ -7551,7 +7551,7 @@ class CPickler(CMill):
                     self._write("    -Fcent2/%.17g"
                                 % troe[2] )
                 else:
-                    self._write("    0.")
+                    self._write("    +0.")
                 if (ntroe == 4):
                     self._write("    + Fcent3*%.17g*invT2);"
                                 % troe[3] )
