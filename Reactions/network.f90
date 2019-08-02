@@ -35,12 +35,12 @@ contains
 
     ! Check to make sure, and if not, throw an error.
 
-    if ( nspecies .le. 1 ) then
-       call bl_error("Network cannot have a nonpositive number of species.")
+    if ( nspecies .lt. 1 ) then
+       call bl_error("Network cannot have less than one species.")
     endif
 
-    if ( nreactions .le. 0 ) then
-       call bl_error("Network cannot have a negative number of reactions.")
+    if ( nreactions .lt. 0 ) then
+       call bl_error("Network cannot have less than zero reactions.")
     endif
 
     if ( naux .lt. 0 ) then
