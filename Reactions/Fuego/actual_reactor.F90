@@ -33,7 +33,7 @@ contains
 
     integer(c_int),  intent(in   ) :: iE_in
     integer(c_int),  intent(in   ), optional :: Ncells
-    integer :: neq, verbose, itol, order, maxstep
+    integer :: verbose, itol, order, maxstep
     real(amrex_real) :: rtol, atol
     logical :: use_ajac, save_ajac, always_new_j_loc, stiff, isio
 
