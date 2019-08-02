@@ -35,11 +35,11 @@ contains
 
     ! Check to make sure, and if not, throw an error.
 
-    if ( nspecies .le. 1 ) then
+    if ( nspecies .lt. 1 ) then
        call bl_error("Network cannot have a nonpositive number of species.")
     endif
 
-    if ( nreactions .le. 0 ) then
+    if ( nreactions .lt. 0 ) then
        call bl_error("Network cannot have a negative number of reactions.")
     endif
 
