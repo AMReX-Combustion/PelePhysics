@@ -31,6 +31,7 @@ contains
     use extern_probin_module, only : new_Jacobian_each_cell
     use amrex_omp_module
 
+    implicit none
     integer(c_int),  intent(in   ) :: iE_in
     integer(c_int),  intent(in   ), optional :: Ncells
     integer :: verbose, itol, order, maxstep
@@ -86,6 +87,7 @@ contains
          voderwork, vodeiwork, lvoderwork, lvodeiwork, voderpar, vodeipar
     use eos_module
 
+    implicit none
     real(amrex_real),   intent(inout) :: rY_in(nspecies+1),rY_src_in(nspecies)
     real(amrex_real),   intent(inout) :: rX_in,rX_src_in,P_in
     real(amrex_real),   intent(inout) :: dt_react, time
@@ -316,6 +318,7 @@ contains
     use chemistry_module, only : molecular_weight
     use eos_module
 
+    implicit none
     integer,         intent(in)   :: neq, ipar(*)
     real(amrex_real), intent(in)  :: y(neq), time, rpar(*)
     real(amrex_real), intent(out) :: ydot(neq)
@@ -379,6 +382,7 @@ contains
   subroutine f_jac(neq, npt, y, t, pd)
     use amrex_error_module
 
+    implicit none
     integer,        intent(in)  :: neq, npt
     real(amrex_real),intent(in)  :: y(neq,npt), t
     real(amrex_real),intent(inout) :: pd(neq,neq)
@@ -390,6 +394,7 @@ contains
 !*** FINALIZE ROUTINES ***!
   subroutine reactor_close() bind(C, name="reactor_close")
 
+    implicit none
     call destroy(eos_state)
 
     reactor_initialized = .false.

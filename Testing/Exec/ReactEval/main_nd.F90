@@ -12,6 +12,7 @@ contains
     use eos_module
     use transport_module
 
+    implicit none
     integer :: namlen
     integer :: name(namlen)
 
@@ -33,6 +34,7 @@ contains
   subroutine extern_init_reactor() bind(C, name="extern_init_reactor")
 
     use reactor_module
+    implicit none
 
     call reactor_init(1)
 
@@ -42,6 +44,7 @@ contains
   subroutine extern_close() bind(C, name="extern_close")
 
     use transport_module
+    implicit none
 
     call transport_close()
 

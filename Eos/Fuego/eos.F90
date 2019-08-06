@@ -27,6 +27,7 @@ module eos_module
   interface
      subroutine amrex_array_init_snan (p, nelem) bind(C,name="amrex_array_init_snan")
        use iso_c_binding, only : c_double, c_size_t
+       implicit none
        real(c_double),intent(inout) :: p
        integer (kind=c_size_t),intent(in),value :: nelem
      end subroutine amrex_array_init_snan

@@ -36,6 +36,7 @@ module transport_type_module
 contains
 
   subroutine trv_build(trv,n)    
+    implicit none
     type(trv_t), intent(inout) :: trv
     integer, intent(in) :: n
     integer :: i
@@ -54,6 +55,7 @@ contains
   end subroutine trv_build
   
   subroutine trv_destroy(trv)
+    implicit none
     type(trv_t), intent(inout) :: trv
     integer :: i
     if (trv%npts .gt. 0) then

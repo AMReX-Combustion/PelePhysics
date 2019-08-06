@@ -42,6 +42,7 @@ module eos_module
   interface
      subroutine amrex_array_init_snan (p, nelem) bind(C,name="amrex_array_init_snan")
        use iso_c_binding, only : c_double, c_size_t
+       implicit none
        real(c_double),intent(inout) :: p
        integer (kind=c_size_t),intent(in),value :: nelem
      end subroutine amrex_array_init_snan
@@ -1592,6 +1593,7 @@ end subroutine SRK_EOS_GetMixtureCp
 ! Given a mixture composition calculate mixture enthalpy using SRK EOS  !  
 !=======================================================================!
 subroutine SRK_EOS_GetMixture_H(state)
+  implicit none
   type (eos_t), intent(inout) :: state
   real(amrex_real) :: tau, K1
   real(amrex_real) :: eosT1Denom, eosT3Denom 
@@ -1876,6 +1878,7 @@ end subroutine SRK_EOS_GetSpeciesE
 !  the following derivatives for testing, dP/dT, dP/dtau, dH/dtau !
 !=================================================================!
 subroutine  SRK_EOS_GetDerivative(state)
+  implicit none
   type (eos_t), intent(inout) :: state
   integer :: i,j
   real(amrex_real) :: tau, K1

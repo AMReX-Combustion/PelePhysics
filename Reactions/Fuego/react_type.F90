@@ -35,10 +35,12 @@ module react_type_module
 contains
 
   subroutine react_build(r)
+    implicit none
     type(react_t), intent(inout) :: r
   end subroutine react_build
 
   subroutine react_destroy(r)
+    implicit none
     type(react_t), intent(inout) :: r
   end subroutine react_destroy
   

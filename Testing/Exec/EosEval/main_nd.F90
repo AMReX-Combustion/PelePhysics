@@ -12,6 +12,7 @@ contains
     use eos_module
     use transport_module
 
+    implicit none
     integer :: namlen
     integer :: name(namlen)
 
@@ -34,6 +35,7 @@ contains
   subroutine extern_close() bind(C, name="extern_close")
 
     use transport_module
+    implicit none
 
     call transport_close()
 
