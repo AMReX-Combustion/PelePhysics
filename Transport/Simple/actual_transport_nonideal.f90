@@ -5,6 +5,7 @@ module actual_transport_module
   use transport_type_module
   use fuego_chemistry
   use chemistry_module, only : Ru
+  use network, only : nspecies
 
   implicit none
 
@@ -44,8 +45,12 @@ contains
 
     integer :: n,i,j
     integer :: iH2O
-    
-    call egtransetKK(nspecies)
+    integer :: nspecies_tran
+
+    call egtransetKK(nspecies_tran)
+    if (nspecies_tran .ne. nspecies) then
+       call bl_pd_abort('Incompatible transport database')
+    endif 
     call egtransetNO(nfit)
 
     if(.not.allocated(wt)) then
