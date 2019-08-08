@@ -14,8 +14,8 @@ module eos_module
   use amrex_constants_module
   use fuego_chemistry
   use eos_type_module
-
-  use chemistry_module, only : nspecies, Ru, inv_mwt, chemistry_init, chemistry_initialized, spec_names, elem_names, molecular_weight
+  use network, only : nspecies
+  use chemistry_module, only : Ru, inv_mwt, chemistry_init, chemistry_initialized, spec_names, elem_names, molecular_weight
 
   implicit none
 

@@ -40,9 +40,9 @@ void eval_single_point_transport(const std::vector<Real>& massFrac,
 				 Real&                    bulk_viscosity,
 				 Real&                    conductivity)
 {
-    int nspec = get_num_species();
+    int nspecies = get_num_species();
 
-    mix_avg_diffusivity.resize(nspec);
+    mix_avg_diffusivity.resize(nspecies);
 
     // Build a trivial box, from ivt to ivt, to pass to transport coeff routine
     int ivt[3] = {0, 0, 0};

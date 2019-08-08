@@ -29,9 +29,9 @@ contains
   end subroutine extern_init
 
   function get_num_species() bind(C, name="get_num_species") result (n) 
-    use network, only: nspec
+    use network, only: nspecies
     integer :: n
-    n = nspec
+    n = nspecies
   end function get_num_species
 
 

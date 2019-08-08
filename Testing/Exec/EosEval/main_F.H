@@ -12,7 +12,7 @@ extern "C"
 
     void extern_close();
     
-    void get_num_spec(int* nspec);
+    void get_num_spec(int* nspecies);
 
     void initialize_data
     (const int* lo, const int* hi,

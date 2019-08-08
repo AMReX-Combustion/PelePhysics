@@ -38,10 +38,10 @@ contains
 
     implicit none
 
-    integer :: nspec_tran
+    integer :: nspecies_tran
     
-    call egtransetKK(nspec_tran)
-    if (nspec_tran .ne. nspecies) then
+    call egtransetKK(nspecies_tran)
+    if (nspecies_tran .ne. nspecies) then
        call bl_pd_abort('Incompatible transport database')
     endif
     call egtransetNO(nfit)

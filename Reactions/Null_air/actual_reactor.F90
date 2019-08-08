@@ -1,6 +1,6 @@
 module reactor_module
 
-  use network, only: nspec
+  use network, only: nspecies
   use amrex_fort_module, only : amrex_real
 
   implicit none
@@ -29,8 +29,7 @@ contains
     
     use eos_module
 
-    implicit none
-    real(amrex_real),   intent(inout) :: rY_in(nspec+1),rY_src_in(nspec)
+    real(amrex_real),   intent(inout) :: rY_in(nspecies+1),rY_src_in(nspecies)
     real(amrex_real),   intent(inout) :: rX_in,rX_src_in,P_in
     real(amrex_real),   intent(inout) :: dt_react, time
     integer                           :: Init, cost_value
