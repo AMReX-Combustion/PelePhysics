@@ -11,6 +11,7 @@ contains
 
     use, intrinsic :: iso_c_binding
 
+    implicit none
     integer(c_int),  intent(in   ) :: iE_in
 
     !nothing needed here

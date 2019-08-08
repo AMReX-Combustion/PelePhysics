@@ -178,6 +178,7 @@ contains
 
 
   subroutine build_internal(npts)
+    implicit none
     integer, intent(in) :: npts
 
     if (npts_smp .ne. npts .and. npts.gt.0) then
@@ -203,6 +204,8 @@ contains
 
   subroutine destroy_internal
 
+    implicit none
+
     deallocate(Tloc)
     deallocate(rholoc)
     deallocate(Yloc)
@@ -223,6 +226,8 @@ contains
   subroutine actual_transport(which, coeff)
 
     use amrex_error_module
+
+    implicit none
 
     type (wtr_t), intent(in   ) :: which
     type (trv_t), intent(inout) :: coeff
