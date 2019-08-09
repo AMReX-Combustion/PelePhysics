@@ -38,4 +38,6 @@ endif
 Bpack   := ./Make.package
 Blocs   := .
 
+CEXE_sources += gpu_reduction.cpp
+
 include $(PELE_PHYSICS_HOME)/Testing/Exec/Make.PelePhysics
