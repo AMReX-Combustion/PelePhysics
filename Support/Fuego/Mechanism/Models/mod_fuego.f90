@@ -296,6 +296,27 @@ module fuego_chemistry
             real(amrex_real), intent(inout) :: wdot(*)
         end subroutine
 
+        subroutine cknu(kdim,nuki) bind(c,name='CKNU')
+            integer, intent(in   ) :: kdim
+            integer, intent(inout) :: nuki(*)
+        end subroutine
+
+        subroutine ckinu(i,nspec,ki,nu) bind(c,name='CKINU')
+            integer, intent(in   ) :: i
+            integer, intent(inout) :: nspec
+            integer, intent(inout) :: ki(*)
+            integer, intent(inout) :: nu(*)
+        end subroutine
+
+        subroutine ckncf(mdim,ncf) bind(c,name='CKNCF')
+            integer, intent(in   ) :: mdim
+            integer, intent(inout) :: ncf(*)
+        end subroutine
+
+        subroutine GET_REACTION_MAP(rmap) bind(c,name='GET_REACTION_MAP')
+            integer, intent(inout) :: rmap(*)
+        end subroutine
+
     end interface
 
 end module fuego_chemistry

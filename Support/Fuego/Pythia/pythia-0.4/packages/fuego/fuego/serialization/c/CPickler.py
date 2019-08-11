@@ -146,7 +146,7 @@ class CPickler(CMill):
         self._indent()
         self._write('for (int i=0; i<%d; ++i) {' % (nReactions))
         self._indent()        
-        self._write('rmap[i] = rxn_map[i];')
+        self._write('rmap[i] = rxn_map[i] + 1;')
         self._outdent()
         self._write('}')
         self._outdent()
@@ -353,6 +353,9 @@ class CPickler(CMill):
                     % (nReactions,nReactions,nReactions,nReactions,nReactions))
         self._write('double *TB[%d];' 
                     % (nReactions))
+
+        self._write('std::vector<std::vector<int>> kiv(%d); ' % (nReactions))
+        self._write('std::vector<std::vector<int>> nuv(%d); ' % (nReactions))
 
         self._write()
         self._write('double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
@@ -580,6 +583,7 @@ class CPickler(CMill):
         self._ckqxr(mechanism)
 
         self._cknu(mechanism)
+        self._ckinu(mechanism)
         self._ckncf(mechanism)
         
         self._ckabe(mechanism)
@@ -896,6 +900,9 @@ class CPickler(CMill):
         self._write('extern double *TB[%d];' 
                     % (nReactions))
 
+        self._write('extern std::vector<std::vector<int>> kiv; ')
+        self._write('extern std::vector<std::vector<int>> nuv; ')
+
         self._write()
         self._write('extern double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
                     % (nReactions,nReactions,nReactions))
@@ -1035,6 +1042,7 @@ class CPickler(CMill):
             'void CKQXR'+sym+'(double *  rho, double *  T, double *  x, double *  qdot);',
             
             'void CKNU'+sym+'(int * kdim, int * nuki);',
+            'void CKINU'+sym+'(int * i, int * nspec, int * ki, int * nu);',
             'void CKNCF'+sym+'(int * mdim, int * ncf);',
             
             'void CKABE'+sym+'(double *  a, double *  b, double *  e );',
@@ -1187,6 +1195,7 @@ class CPickler(CMill):
             '#define CKQYR CKQYR',
             '#define CKQXR CKQXR',
             '#define CKNU CKNU',
+            '#define CKINU CKINU',
             '#define CKNCF CKNCF',
             '#define CKABE CKABE',
             '#define CKEQC CKEQC',
@@ -1282,6 +1291,7 @@ class CPickler(CMill):
             '#define CKQYR ckqyr',
             '#define CKQXR ckqxr',
             '#define CKNU cknu',
+            '#define CKINU ckinu',
             '#define CKNCF ckncf',
             '#define CKABE ckabe',
             '#define CKEQC ckeqc',
@@ -1377,6 +1387,7 @@ class CPickler(CMill):
             '#define CKQYR ckqyr_',
             '#define CKQXR ckqxr_',
             '#define CKNU cknu_',
+            '#define CKINU ckinu_',
             '#define CKNCF ckncf_',
             '#define CKABE ckabe_',
             '#define CKEQC ckeqc_',
@@ -1518,6 +1529,7 @@ class CPickler(CMill):
             'void CKQXR'+sym+'(double *  rho, double *  T, double *  x, double *  qdot);',
             
             'void CKNU'+sym+'(int * kdim, int * nuki);',
+            'void CKINU'+sym+'(int * i, int * nspec, int * ki, int * nu);',
             'void CKNCF'+sym+'(int * mdim, int * ncf);',
             
             'void CKABE'+sym+'(double *  a, double *  b, double *  e );',
@@ -1700,8 +1712,22 @@ class CPickler(CMill):
             reaction = mechanism.reaction()[rmap[j]]
             id = reaction.id - 1
 
-            A, beta, E = reaction.arrhenius
+            ki = []
+            nu = []
+            for symbol, coefficient in reaction.reactants:
+                ki.append(mechanism.species(symbol).id)
+                nu.append(-coefficient)
+            for symbol, coefficient in reaction.products:
+                ki.append(mechanism.species(symbol).id)
+                nu.append(coefficient)
+
             self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
+            kistr = "{" + ','.join(str(x) for x in ki) + "}"
+            nustr = "{" + ','.join(str(x) for x in nu) + "}"
+            self._write("kiv[%d] = %s;" % (id,kistr))
+            self._write("nuv[%d] = %s;" % (id,nustr))
+
+            A, beta, E = reaction.arrhenius
             self._write("fwd_A[%d]     = %.17g;" % (id,A))
             self._write("fwd_beta[%d]  = %.17g;" % (id,beta))
             self._write("fwd_Ea[%d]    = %.17g;" % (id,E))
@@ -1796,6 +1822,7 @@ class CPickler(CMill):
 
         self._indent()
 
+
         self._write(self.line(' Inverse molecular weights'))
         self._write('imw = {')
         self._indent()
@@ -1823,8 +1850,22 @@ class CPickler(CMill):
             reaction = mechanism.reaction()[rmap[j]]
             id = reaction.id - 1
 
-            A, beta, E = reaction.arrhenius
+            ki = []
+            nu = []
+            for symbol, coefficient in reaction.reactants:
+                ki.append(mechanism.species(symbol).id)
+                nu.append(-coefficient)
+            for symbol, coefficient in reaction.products:
+                ki.append(mechanism.species(symbol).id)
+                nu.append(coefficient)
+
             self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
+            kistr = "{" + ','.join(str(x) for x in ki) + "}"
+            nustr = "{" + ','.join(str(x) for x in nu) + "}"
+            self._write("kiv[%d] = %s;" % (id,kistr))
+            self._write("nuv[%d] = %s;" % (id,nustr))
+
+            A, beta, E = reaction.arrhenius
             self._write("fwd_A[%d]     = %.17g;" % (id,A))
             self._write("fwd_beta[%d]  = %.17g;" % (id,beta))
             self._write("fwd_Ea[%d]    = %.17g;" % (id,E))
@@ -1907,7 +1948,7 @@ class CPickler(CMill):
         self._indent()
         self._write('for (int i=0; i<%d; ++i) {' % (nReactions))
         self._indent()        
-        self._write('rmap[i] = rxn_map[i];')
+        self._write('rmap[i] = rxn_map[i] + 1;')
         self._outdent()
         self._write('}')
         self._outdent()
@@ -4280,6 +4321,55 @@ class CPickler(CMill):
                     "nuki[ %d * kd + %d ] += +%d ;"
                     % (mechanism.species(symbol).id, reaction.id-1, coefficient))
        
+        # done
+        self._outdent()
+        self._write('}')
+
+        return
+
+
+    def _ckinu(self, mechanism):
+
+        nSpecies  = len(mechanism.species())
+        nReaction = len(mechanism.reaction())
+
+        self._write()
+        self._write()
+        self._write(self.line('Returns a count of species in a reaction, and their indices'))
+        self._write(self.line('and stoichiometric coefficients. (Eq 50)'))
+        self._write('void CKINU'+sym+'(int * i, int * nspec, int * ki, int * nu)')
+        self._write('{')
+        self._indent()
+
+        self._write("if (*i < 1) {")
+        self._indent()
+
+        maxsp = 0
+        for reaction in mechanism.reaction():
+            maxsp = max(maxsp,len(reaction.reactants) + len(reaction.products))
+
+        self._write(self.line('Return max num species per reaction'))
+        self._write("*nspec = %d;" % (maxsp))
+        self._outdent()
+        self._write("} else {")
+        self._indent()
+        self._write("if (*i > %d) {" % (nReaction))
+        self._indent()
+        self._write("*nspec = -1;")
+        self._outdent()
+        self._write("} else {")
+        self._indent()
+        self._write("*nspec = kiv[*i-1].size();")
+        self._write("for (int j=0; j<*nspec; ++j) {")
+        self._indent()
+        self._write("ki[j] = kiv[*i-1][j] + 1;")
+        self._write("nu[j] = nuv[*i-1][j];")
+        self._outdent()
+        self._write("}")
+        self._outdent()
+        self._write("}")
+        self._outdent()
+        self._write("}")
         # done
         self._outdent()
         self._write('}')
