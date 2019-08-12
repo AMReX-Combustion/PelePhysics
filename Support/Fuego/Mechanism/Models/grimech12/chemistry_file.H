@@ -103,6 +103,7 @@ void CKQXP(double *  P, double *  T, double *  x, double *  qdot);
 void CKQYR(double *  rho, double *  T, double *  y, double *  qdot);
 void CKQXR(double *  rho, double *  T, double *  x, double *  qdot);
 void CKNU(int * kdim, int * nuki);
+void CKINU(int * i, int * nspec, int * ki, int * nu);
 void CKNCF(int * mdim, int * ncf);
 void CKABE(double *  a, double *  b, double *  e );
 void CKEQC(double *  T, double *  C , double *  eqcon );
@@ -185,6 +186,8 @@ namespace thermo
     extern double activation_units[177], prefactor_units[177], phase_units[177];
     extern int is_PD[177], troe_len[177], sri_len[177], nTB[177], *TBid[177];
     extern double *TB[177];
+    extern std::vector<std::vector<int>> kiv; 
+    extern std::vector<std::vector<int>> nuv; 
 
     extern double fwd_A_DEF[177], fwd_beta_DEF[177], fwd_Ea_DEF[177];
     extern double low_A_DEF[177], low_beta_DEF[177], low_Ea_DEF[177];

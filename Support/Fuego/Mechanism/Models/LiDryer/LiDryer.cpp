@@ -13,6 +13,8 @@ namespace thermo
     double activation_units[21], prefactor_units[21], phase_units[21];
     int is_PD[21], troe_len[21], sri_len[21], nTB[21], *TBid[21];
     double *TB[21];
+    std::vector<std::vector<int>> kiv(21); 
+    std::vector<std::vector<int>> nuv(21); 
 
     double fwd_A_DEF[21], fwd_beta_DEF[21], fwd_Ea_DEF[21];
     double low_A_DEF[21], low_beta_DEF[21], low_Ea_DEF[21];
@@ -86,6 +88,8 @@ void CKINIT()
     rxn_map = {6,7,8,9,2,3,4,5,0,10,11,12,13,14,15,1,16,17,18,19,20};
 
     // (0):  H + O2 <=> O + OH
+    kiv[6] = {3,1,4,5};
+    nuv[6] = {-1,-1,1,1};
     fwd_A[6]     = 3547000000000000;
     fwd_beta[6]  = -0.40600000000000003;
     fwd_Ea[6]    = 16599;
@@ -96,6 +100,8 @@ void CKINIT()
     nTB[6] = 0;
 
     // (1):  O + H2 <=> H + OH
+    kiv[7] = {4,0,3,5};
+    nuv[7] = {-1,-1,1,1};
     fwd_A[7]     = 50800;
     fwd_beta[7]  = 2.6699999999999999;
     fwd_Ea[7]    = 6290;
@@ -106,6 +112,8 @@ void CKINIT()
     nTB[7] = 0;
 
     // (2):  H2 + OH <=> H2O + H
+    kiv[8] = {0,5,2,3};
+    nuv[8] = {-1,-1,1,1};
     fwd_A[8]     = 216000000;
     fwd_beta[8]  = 1.51;
     fwd_Ea[8]    = 3430;
@@ -116,6 +124,8 @@ void CKINIT()
     nTB[8] = 0;
 
     // (3):  O + H2O <=> OH + OH
+    kiv[9] = {4,2,5,5};
+    nuv[9] = {-1,-1,1,1};
     fwd_A[9]     = 2970000;
     fwd_beta[9]  = 2.02;
     fwd_Ea[9]    = 13400;
@@ -126,6 +136,8 @@ void CKINIT()
     nTB[9] = 0;
 
     // (4):  H2 + M <=> H + H + M
+    kiv[2] = {0,3,3};
+    nuv[2] = {-1,1,1};
     fwd_A[2]     = 4.577e+19;
     fwd_beta[2]  = -1.3999999999999999;
     fwd_Ea[2]    = 104380;
@@ -140,6 +152,8 @@ void CKINIT()
     TBid[2][1] = 2; TB[2][1] = 12; // H2O
 
     // (5):  O + O + M <=> O2 + M
+    kiv[3] = {4,4,1};
+    nuv[3] = {-1,-1,1};
     fwd_A[3]     = 6165000000000000;
     fwd_beta[3]  = -0.5;
     fwd_Ea[3]    = 0;
@@ -154,6 +168,8 @@ void CKINIT()
     TBid[3][1] = 2; TB[3][1] = 12; // H2O
 
     // (6):  O + H + M <=> OH + M
+    kiv[4] = {4,3,5};
+    nuv[4] = {-1,-1,1};
     fwd_A[4]     = 4.714e+18;
     fwd_beta[4]  = -1;
     fwd_Ea[4]    = 0;
@@ -168,6 +184,8 @@ void CKINIT()
     TBid[4][1] = 2; TB[4][1] = 12; // H2O
 
     // (7):  H + OH + M <=> H2O + M
+    kiv[5] = {3,5,2};
+    nuv[5] = {-1,-1,1};
     fwd_A[5]     = 3.8000000000000004e+22;
     fwd_beta[5]  = -2;
     fwd_Ea[5]    = 0;
@@ -182,6 +200,8 @@ void CKINIT()
     TBid[5][1] = 2; TB[5][1] = 12; // H2O
 
     // (8):  H + O2 (+M) <=> HO2 (+M)
+    kiv[0] = {3,1,6};
+    nuv[0] = {-1,-1,1};
     fwd_A[0]     = 1475000000000;
     fwd_beta[0]  = 0.59999999999999998;
     fwd_Ea[0]    = 0;
@@ -204,6 +224,8 @@ void CKINIT()
     TBid[0][2] = 1; TB[0][2] = 0.78000000000000003; // O2
 
     // (9):  HO2 + H <=> H2 + O2
+    kiv[10] = {6,3,0,1};
+    nuv[10] = {-1,-1,1,1};
     fwd_A[10]     = 16600000000000;
     fwd_beta[10]  = 0;
     fwd_Ea[10]    = 823;
@@ -214,6 +236,8 @@ void CKINIT()
     nTB[10] = 0;
 
     // (10):  HO2 + H <=> OH + OH
+    kiv[11] = {6,3,5,5};
+    nuv[11] = {-1,-1,1,1};
     fwd_A[11]     = 70790000000000;
     fwd_beta[11]  = 0;
     fwd_Ea[11]    = 295;
@@ -224,6 +248,8 @@ void CKINIT()
     nTB[11] = 0;
 
     // (11):  HO2 + O <=> O2 + OH
+    kiv[12] = {6,4,1,5};
+    nuv[12] = {-1,-1,1,1};
     fwd_A[12]     = 32500000000000;
     fwd_beta[12]  = 0;
     fwd_Ea[12]    = 0;
@@ -234,6 +260,8 @@ void CKINIT()
     nTB[12] = 0;
 
     // (12):  HO2 + OH <=> H2O + O2
+    kiv[13] = {6,5,2,1};
+    nuv[13] = {-1,-1,1,1};
     fwd_A[13]     = 28900000000000;
     fwd_beta[13]  = 0;
     fwd_Ea[13]    = -497;
@@ -244,6 +272,8 @@ void CKINIT()
     nTB[13] = 0;
 
     // (13):  HO2 + HO2 <=> H2O2 + O2
+    kiv[14] = {6,6,7,1};
+    nuv[14] = {-1,-1,1,1};
     fwd_A[14]     = 420000000000000;
     fwd_beta[14]  = 0;
     fwd_Ea[14]    = 11982;
@@ -254,6 +284,8 @@ void CKINIT()
     nTB[14] = 0;
 
     // (14):  HO2 + HO2 <=> H2O2 + O2
+    kiv[15] = {6,6,7,1};
+    nuv[15] = {-1,-1,1,1};
     fwd_A[15]     = 130000000000;
     fwd_beta[15]  = 0;
     fwd_Ea[15]    = -1629.3;
@@ -264,6 +296,8 @@ void CKINIT()
     nTB[15] = 0;
 
     // (15):  H2O2 (+M) <=> OH + OH (+M)
+    kiv[1] = {7,5,5};
+    nuv[1] = {-1,1,1};
     fwd_A[1]     = 295100000000000;
     fwd_beta[1]  = 0;
     fwd_Ea[1]    = 48430;
@@ -285,6 +319,8 @@ void CKINIT()
     TBid[1][1] = 2; TB[1][1] = 12; // H2O
 
     // (16):  H2O2 + H <=> H2O + OH
+    kiv[16] = {7,3,2,5};
+    nuv[16] = {-1,-1,1,1};
     fwd_A[16]     = 24100000000000;
     fwd_beta[16]  = 0;
     fwd_Ea[16]    = 3970;
@@ -295,6 +331,8 @@ void CKINIT()
     nTB[16] = 0;
 
     // (17):  H2O2 + H <=> HO2 + H2
+    kiv[17] = {7,3,6,0};
+    nuv[17] = {-1,-1,1,1};
     fwd_A[17]     = 48200000000000;
     fwd_beta[17]  = 0;
     fwd_Ea[17]    = 7950;
@@ -305,6 +343,8 @@ void CKINIT()
     nTB[17] = 0;
 
     // (18):  H2O2 + O <=> OH + HO2
+    kiv[18] = {7,4,5,6};
+    nuv[18] = {-1,-1,1,1};
     fwd_A[18]     = 9550000;
     fwd_beta[18]  = 2;
     fwd_Ea[18]    = 3970;
@@ -315,6 +355,8 @@ void CKINIT()
     nTB[18] = 0;
 
     // (19):  H2O2 + OH <=> HO2 + H2O
+    kiv[19] = {7,5,6,2};
+    nuv[19] = {-1,-1,1,1};
     fwd_A[19]     = 1000000000000;
     fwd_beta[19]  = 0;
     fwd_Ea[19]    = 0;
@@ -325,6 +367,8 @@ void CKINIT()
     nTB[19] = 0;
 
     // (20):  H2O2 + OH <=> HO2 + H2O
+    kiv[20] = {7,5,6,2};
+    nuv[20] = {-1,-1,1,1};
     fwd_A[20]     = 580000000000000;
     fwd_beta[20]  = 0;
     fwd_Ea[20]    = 9557;
@@ -340,7 +384,7 @@ void CKINIT()
 void GET_REACTION_MAP(int *rmap)
 {
     for (int i=0; i<21; ++i) {
-        rmap[i] = rxn_map[i];
+        rmap[i] = rxn_map[i] + 1;
     }
 }
 
@@ -2301,6 +2345,27 @@ void CKNU(int * kdim,  int * nuki)
     nuki[ 5 * kd + 20 ] += -1 ;
     nuki[ 6 * kd + 20 ] += +1 ;
     nuki[ 2 * kd + 20 ] += +1 ;
+}
+
+
+/*Returns a count of species in a reaction, and their indices */
+/*and stoichiometric coefficients. (Eq 50) */
+void CKINU(int * i, int * nspec, int * ki, int * nu)
+{
+    if (*i < 1) {
+        /*Return max num species per reaction */
+        *nspec = 4;
+    } else {
+        if (*i > 21) {
+            *nspec = -1;
+        } else {
+            *nspec = kiv[*i-1].size();
+            for (int j=0; j<*nspec; ++j) {
+                ki[j] = kiv[*i-1][j] + 1;
+                nu[j] = nuv[*i-1][j];
+            }
+        }
+    }
 }
 
 
