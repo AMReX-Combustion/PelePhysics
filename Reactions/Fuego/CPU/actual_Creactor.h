@@ -56,8 +56,8 @@ static int cJac_KLU(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 #endif
 
-static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u,
-		N_Vector fu, void *user_data, N_Vector tmp);
+//static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u,
+//		N_Vector fu, void *user_data, N_Vector tmp);
 
 static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
 		N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);

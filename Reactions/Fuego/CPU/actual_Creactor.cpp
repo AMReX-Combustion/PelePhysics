@@ -589,7 +589,6 @@ static int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 
 /* Jacobian-times-vector routine.
  * Currently not used !!
- */
 static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu, 
 			  void *user_data, N_Vector tmp)
 {
@@ -606,14 +605,14 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
 
         int offset = tid * (NUM_SPECIES + 1); 
 
-        /* MW CGS */
+        // MW CGS 
 	CKWT(molecular_weight);
 	for (int i = 0; i < NUM_SPECIES; i++){
             activity[i] = udata[offset + i]/(molecular_weight[i]);
 	}
-        /* temp */
+        // temp 
 	temp = udata[offset + NUM_SPECIES];
-        /* NRG CGS */
+        // NRG CGS 
         if (iE_Creact == 1) {
             int consP = 0;
             DWDOT(J, activity, &temp, &consP);
@@ -622,21 +621,20 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
             DWDOT(J, activity, &temp, &consP);
         }
 
-	/* PRINT JAC INFO: debug mode
-	for (int i = 0; i < NUM_SPECIES+1; i++){
-	    for (int j = 0; j < NUM_SPECIES+1; j++){
-                printf(" %4.8e ", (J[j*(NUM_SPECIES+1)+i]));
-	    }
-            printf(" \n");
-	}
-	amrex::Abort("\n--> ABORT\n");
-	*/
+	// PRINT JAC INFO: debug mode
+	//for (int i = 0; i < NUM_SPECIES+1; i++){
+	//    for (int j = 0; j < NUM_SPECIES+1; j++){
+        //        printf(" %4.8e ", (J[j*(NUM_SPECIES+1)+i]));
+	//    }
+        //    printf(" \n");
+	//}
+	//amrex::Abort("\n--> ABORT\n");
 
-	/* reinit */
+	// reinit 
 	for (int i = 0; i < NUM_SPECIES+1; i++){
 	    Jvdata[offset + i] = 0.0;
 	}
-	/* COmpute */
+	// COmpute 
 	for (int i = 0; i < NUM_SPECIES; i++){
             for (int j = 0; j < NUM_SPECIES; j++){
                 Jvdata[offset + i] = Jvdata[offset + i] + J[j*(NUM_SPECIES+1)+i] * vdata[offset + j] * molecular_weight[i] / molecular_weight[j];
@@ -651,6 +649,7 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
 
   return(0);
 }
+ */
 
 
 #ifdef USE_KLU 
