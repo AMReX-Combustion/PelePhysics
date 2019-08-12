@@ -1,16 +1,16 @@
 dt = 1.e-05
-ndt = 100
+ndt = 400
 
 # Select CVODE Jacobian eval: 0=FD 1=AJ
-ns.cvode_iJac = 0
+ns.cvode_iJac = 1
 
 # Reactor formalism: 1=full e, 2=full h
 cvode_iE = 1
 
 # Choose between sparse (5) dense (1) or iterative (99) solver
-ns.cvode_iDense = 99
+ns.cvode_iDense = 1
 
-max_grid_size = 128
+max_grid_size = 16
 
 # Choose name of output pltfile
 amr.plot_file       = plt
