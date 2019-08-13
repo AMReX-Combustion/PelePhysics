@@ -23,10 +23,6 @@ DEFINES  += -DMOD_REACTOR
 USE_SUNDIALS_3x4x = TRUE
 
 USE_KLU = TRUE
-ifeq ($(USE_KLU), TRUE)
-    DEFINES  += -DUSE_KLU
-    include Make.CVODE
-endif
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
