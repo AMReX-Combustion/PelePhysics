@@ -13,12 +13,10 @@
 #include <cvode/cvode_spils.h>         /* access to CVSpils interface */
 #include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype      */
 #include <sundials/sundials_math.h>
-#include <cvode/cvode_impl.h>
 
 #ifdef USE_KLU 
 #include "klu.h"
 #include <sunlinsol/sunlinsol_klu.h>
-#include <sundials/sundials_sparse.h>
 #include <sunmatrix/sunmatrix_sparse.h>
 #endif
 
