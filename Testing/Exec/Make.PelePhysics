@@ -113,10 +113,6 @@ include $(Bpack)
 INCLUDE_LOCATIONS += $(Blocs)
 VPATH_LOCATIONS   += $(Blocs)
 
-include $(AMREX_HOME)/Src/F_Interfaces/Base/Make.package
-INCLUDE_LOCATIONS += $(AMREX_HOME)/Src/F_Interfaces/Base
-VPATH_LOCATIONS   += $(AMREX_HOME)/Src/F_Interfaces/Base
-
 # runtime parameter support for extern/ routines
 f90EXE_sources += extern.f90
 
