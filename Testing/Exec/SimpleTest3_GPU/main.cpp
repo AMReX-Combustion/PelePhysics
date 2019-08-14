@@ -7,31 +7,22 @@
 #include <AMReX_ParmParse.H>
 
 #include <AMReX_GpuDevice.H>
+#include <kernel.H>
 
-#define NUM_SPECIES 9
-#define NUM_REACTIONS 84
-
-using namespace amrex;
-
-
-AMREX_GPU_DEVICE Real Q_reac_d(Real rho,
-                               Real temp,
-                               Real * Y, int strideY,
-                               int reacIdx)
-{
-  Real Q = 0;
-  return Q;
-}
-
-#if 0
 template <typename L>
-void For (Box const& box, int nc, L f) noexcept
+void ForMarc (Box const& box, int nc, L f) noexcept
 {
     int ncells = box.numPts();
     const auto lo  = amrex::lbound(box);
     const auto len = amrex::length(box);
     auto ec = Gpu::ExecutionConfig(ncells);
     //ec.numBlocks.y = nc;
+    ec.numBlocks.x = 32;
+    ec.numBlocks.y = 1;
+    ec.numBlocks.z = 10;
+    ec.numThreads.x = nc;
+    ec.numThreads.y = 1;
+    ec.numThreads.z = 1;
     amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
     [=] AMREX_GPU_DEVICE () noexcept {
       for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
@@ -50,7 +41,6 @@ void For (Box const& box, int nc, L f) noexcept
     });
     AMREX_GPU_ERROR_CHECK();
 }
-#endif
 
 int
 main (int   argc,
@@ -101,11 +91,12 @@ main (int   argc,
         }
       }
 
-#if 0
       MultiFab wdots(ba,dm,num_spec,num_grow);
       wdots.setVal(0);
       MultiFab Qmfab(ba,dm,num_reac,num_grow);
       Qmfab.setVal(0);
+
+      kinit();
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -125,14 +116,13 @@ main (int   argc,
           const auto& iQa = Qmfab.array(mfi);
 
           int nR = NUM_REACTIONS;
-          For(box, nR,
+          ForMarc(box, nR,
               [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
               {
                 iQa(i,j,k,n) = Q_reac_d(rho(i,j,k),temp(i,j,k),&(Y(i,j,k,0)),numPts,n);
               });
         }
       }
-#endif      
     }
 
     Finalize();

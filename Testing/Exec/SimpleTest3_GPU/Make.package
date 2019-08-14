@@ -1,2 +1,3 @@
-CEXE_sources += main.cpp
+CEXE_sources += main.cpp kernel.cpp
+CEXE_headers += kernel.H
 
