@@ -5,6 +5,7 @@ namespace mythermo
     AMREX_GPU_DEVICE_MANAGED double fwd_A[84], fwd_beta[84], fwd_Ea[84];
     AMREX_GPU_DEVICE_MANAGED double activation_units[84], prefactor_units[84], phase_units[84];
     std::vector<std::vector<int>> kiv(84), nuv(84);
+    AMREX_GPU_DEVICE_MANAGED int ki2D[420], nu2D[420];
 }
 
 using namespace mythermo;
@@ -850,6 +851,19 @@ void kinit()
     prefactor_units[83]  = 1.0000000000000002e-06;
     activation_units[83] = 0.50321666580471969;
     phase_units[83]      = 1e-12;
+
+    int max_nu = 5;
+    for (int i=0; i<84; ++i) {
+      size_t offset = max_nu * i;
+      for (int j=0; j<nuv[i].size(); ++j) {
+        nu2D[offset+j] = nuv[i][j];
+        ki2D[offset+j] = kiv[i][j];
+      }
+      for (int j=nuv[i].size(); j<max_nu; ++j) {
+        nu2D[offset+j] = 0;
+        ki2D[offset+j] = 0;
+      }
+    }
 }
 
 static AMREX_GPU_DEVICE_MANAGED double imw[21] = {
@@ -880,21 +894,63 @@ AMREX_GPU_HOST_DEVICE void molarConc(double *  rho, double *  T, double *  y,  i
 {
     for (int i = 0; i < 21; i++)
     {
-        c[i] = (*rho)  * y[i*strideY] * imw[i];
+        c[i] = (*rho)  *  *(y+i*strideY) * imw[i];
     }
 }
 
-AMREX_GPU_DEVICE Real Q_reac_d(Real rho,
+AMREX_GPU_DEVICE void W_spec_d(Real rho,
                                Real temp,
                                Real * Y, int strideY,
-                               int idx)
+                               Real * wdot)
 {
+  __shared__ Real Q_s[84];
+
+  int idx = threadIdx.x;
+
   Real RcInv = 0.503217;
   Real k_f = fwd_A[idx] * exp(fwd_beta[idx] * temp - activation_units[idx]*RcInv * fwd_Ea[idx] / temp);
   Real C[21];
   molarConc(&rho,&temp,Y,strideY,C);
-  Real Q = C[2] * C[8] * k_f;
-  return Q;
+
+  {
+    Q_s[idx] = k_f;
+    size_t offset = idx*5;
+    for (int j=0; j<5; ++j) {
+      int nu = nu2D[offset+j];
+      if (nu<0) {
+        int ki = ki2D[offset+j];
+        switch (-nu) {
+          case 1:
+            Q_s[idx] *= C[ki];
+            break;
+          case 2:
+            Q_s[idx] *= C[ki]*C[ki];
+            break;
+          case 3:
+            Q_s[idx] *= C[ki]*C[ki]*C[ki];
+            break;
+          default:
+            Abort("Bad nu");
+        }
+      }
+    }
+  }
+
+  __syncthreads();
+
+  if (idx<21) {
+    *wdot = 0;
+    for (int i=0; i<84; ++i) {
+      size_t offset = i*5;
+      for (int j=0; j<5; ++j) {
+        int nu = nu2D[offset+j];
+        int ki = ki2D[offset+j];
+        if (nu<0 && ki==idx) {
+          *wdot += Q_s[i] * nu;
+        }
+      }
+    }
+  }
 }
 
 

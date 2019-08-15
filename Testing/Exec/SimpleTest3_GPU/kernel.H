@@ -2,15 +2,15 @@
 #define _kernel_H_
 #include <AMReX_GpuDevice.H>
 
-#define NUM_SPECIES 9
+#define NUM_SPECIES 21
 #define NUM_REACTIONS 84
 
 using namespace amrex;
 
-AMREX_GPU_DEVICE Real Q_reac_d(Real rho,
+AMREX_GPU_DEVICE void W_spec_d(Real rho,
                                Real temp,
                                Real * Y, int strideY,
-                               int reacIdx);
+                               Real * wdot);
 void kinit();
 
 #endif
