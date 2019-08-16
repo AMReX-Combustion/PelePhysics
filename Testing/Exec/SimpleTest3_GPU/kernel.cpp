@@ -890,7 +890,7 @@ static AMREX_GPU_DEVICE_MANAGED double imw[21] = {
     1.0 / 39.948000};  /*AR */
 
 AMREX_GPU_DEVICE void W_spec_d(Real rho,
-                               Real temp,
+                               Real T,
                                Real * Y, int strideY,
                                Real * wdot)
 {
@@ -898,13 +898,16 @@ AMREX_GPU_DEVICE void W_spec_d(Real rho,
   __shared__ Real C_s[21];
 
   int idx = threadIdx.x;
+  double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
+  double invT = 1.0 / tc[1];
 
-  C_s[idx] = Y[strideY*idx] * rho * imw[idx];
+  if (idx<21) {
+    C_s[idx] = Y[strideY*idx] * rho * imw[idx];
+  }
 
   __syncthreads();
 
-  Q_s[idx] = fwd_A[idx] * exp(fwd_beta[idx] * temp - activation_units[idx]*0.503217 * fwd_Ea[idx] / temp);
-
+  Q_s[idx] = prefactor_units[idx] * fwd_A[idx] * exp(fwd_beta[idx] * tc[0] - activation_units[idx] * fwd_Ea[idx] * invT);
   {
     size_t offset = idx*5;
     for (int j=0; j<5; ++j) {

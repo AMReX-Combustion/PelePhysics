@@ -16,7 +16,7 @@ void ForMarc (Box const& box, int nc, L f) noexcept
     const auto lo  = amrex::lbound(box);
     const auto len = amrex::length(box);
     Gpu::ExecutionConfig ec;
-    ec.numBlocks.x = AMREX_GPU_MAX_THREADS;
+    ec.numBlocks.x = 256;
     ec.numBlocks.y = 1;
     ec.numBlocks.z = 1;
     ec.numThreads.x = nc;
@@ -47,11 +47,11 @@ main (int   argc,
     {
       ParmParse pp;
 
-      Vector<int> n_cells(BL_SPACEDIM,128);
+      Vector<int> n_cells(BL_SPACEDIM,256);
       Box domain(IntVect(D_DECL(0,0,0)),
                  IntVect(D_DECL(n_cells[0]-1,n_cells[1]-1,n_cells[2]-1)));
 
-      int max_size = 32;
+      int max_size = 64;
       pp.query("max_size",max_size);
       BoxArray ba(domain);
       ba.maxSize(max_size);
