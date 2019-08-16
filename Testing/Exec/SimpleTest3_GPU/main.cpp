@@ -47,7 +47,7 @@ main (int   argc,
     {
       ParmParse pp;
 
-      Vector<int> n_cells(BL_SPACEDIM,64);
+      Vector<int> n_cells(BL_SPACEDIM,128);
       Box domain(IntVect(D_DECL(0,0,0)),
                  IntVect(D_DECL(n_cells[0]-1,n_cells[1]-1,n_cells[2]-1)));
 
@@ -70,6 +70,7 @@ main (int   argc,
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
       {
+        BL_PROFILE("INIT");
         for (MFIter mfi(mass_frac,TilingIfNotGPU()); mfi.isValid(); ++mfi) {
           const Box& bx = mfi.tilebox();
           const auto& temp = temperature.array(mfi);
@@ -96,7 +97,7 @@ main (int   argc,
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
       {
-        BL_PROFILE("MARC");
+        BL_PROFILE("COMPUTE_W");
         FArrayBox Q;
         for (MFIter mfi(mass_frac,TilingIfNotGPU()); mfi.isValid(); ++mfi) {
           const Box& box = mfi.tilebox();
@@ -117,7 +118,7 @@ main (int   argc,
         }
       }
 
-      VisMF::Write(wdot,"WDOT");
+      //VisMF::Write(wdot,"WDOT");
 
     }
 

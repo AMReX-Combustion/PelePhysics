@@ -889,31 +889,23 @@ static AMREX_GPU_DEVICE_MANAGED double imw[21] = {
     1.0 / 28.013400,  /*N2 */
     1.0 / 39.948000};  /*AR */
 
-/*convert y[species] (mass fracs) to c[species] (molar conc) */
-AMREX_GPU_HOST_DEVICE void molarConc(double *  rho, double *  T, double *  y,  int strideY, double *  c)
-{
-    for (int i = 0; i < 21; i++)
-    {
-        c[i] = (*rho)  *  *(y+i*strideY) * imw[i];
-    }
-}
-
 AMREX_GPU_DEVICE void W_spec_d(Real rho,
                                Real temp,
                                Real * Y, int strideY,
                                Real * wdot)
 {
   __shared__ Real Q_s[84];
+  __shared__ Real C_s[21];
 
   int idx = threadIdx.x;
 
-  Real RcInv = 0.503217;
-  Real k_f = fwd_A[idx] * exp(fwd_beta[idx] * temp - activation_units[idx]*RcInv * fwd_Ea[idx] / temp);
-  Real C[21];
-  molarConc(&rho,&temp,Y,strideY,C);
+  C_s[idx] = Y[strideY*idx] * rho * imw[idx];
+
+  __syncthreads();
+
+  Q_s[idx] = fwd_A[idx] * exp(fwd_beta[idx] * temp - activation_units[idx]*0.503217 * fwd_Ea[idx] / temp);
 
   {
-    Q_s[idx] = k_f;
     size_t offset = idx*5;
     for (int j=0; j<5; ++j) {
       int nu = nu2D[offset+j];
@@ -921,13 +913,13 @@ AMREX_GPU_DEVICE void W_spec_d(Real rho,
         int ki = ki2D[offset+j];
         switch (-nu) {
           case 1:
-            Q_s[idx] *= C[ki];
+            Q_s[idx] *= C_s[ki];
             break;
           case 2:
-            Q_s[idx] *= C[ki]*C[ki];
+            Q_s[idx] *= C_s[ki]*C_s[ki];
             break;
           case 3:
-            Q_s[idx] *= C[ki]*C[ki]*C[ki];
+            Q_s[idx] *= C_s[ki]*C_s[ki]*C_s[ki];
             break;
           default:
             Abort("Bad nu");
