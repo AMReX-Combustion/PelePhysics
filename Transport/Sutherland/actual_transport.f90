@@ -38,6 +38,7 @@ contains
 
 
   subroutine build_internal(npts)
+    implicit none
     integer, intent(in) :: npts
 
     if (npts_suth .ne. npts .and. npts.gt.0) then
@@ -53,6 +54,8 @@ contains
 
 
   subroutine destroy_internal
+
+    implicit none
 
     deallocate(Tp)
     deallocate(Cpp)
