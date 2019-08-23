@@ -1,56 +1,9 @@
 module eos_type_module
 
   use amrex_fort_module, only : amrex_real
-  use network, only: nspec, naux
+  use network, only: nspecies, naux
 
   implicit none
-
-  !integer, parameter :: eos_input_rt = 1  ! rho, T are inputs
-  !integer, parameter :: eos_input_rh = 2  ! rho, h are inputs
-  !integer, parameter :: eos_input_tp = 3  ! T, p are inputs
-  !integer, parameter :: eos_input_rp = 4  ! rho, p are inputs
-  !integer, parameter :: eos_input_re = 5  ! rho, e are inputs
-  !integer, parameter :: eos_input_ps = 6  ! p, s are inputs
-  !integer, parameter :: eos_input_ph = 7  ! p, h are inputs
-  !integer, parameter :: eos_input_th = 8  ! T, h are inputs
-
-  !integer, parameter :: eos_xty = 9  ! molefrac in, massfrac out only
-  !integer, parameter :: eos_ytx = 10 ! massfrac in, molefrac out only
-  !integer, parameter :: eos_cpi = 11 ! temp in, cp_i out only
-  !integer, parameter :: eos_cp  = 12 ! temp,massfrac in, cvmix out only
-  !integer, parameter :: eos_cv  = 13 ! temp,massfrac in, cvmix out only
-  !integer, parameter :: eos_hi  = 14 ! temp in, h_i out only
-  !integer, parameter :: eos_ei  = 15 ! temp in, e_i out only
-  !integer, parameter :: eos_mui = 16 ! temp, Pressure and MassFraction in, chemical potential (mu_i) out
-  !integer, parameter :: eos_h   = 17 ! temp in, massfrac in and pressure in, Mixture enthalpy out only 
-  !integer, parameter :: eos_f   = 18 ! Mixture gibbs free energy
-  !integer, parameter :: eos_deriv   = 19 ! temp in, massfrac in and pressure in, dP/dT, dP/dtau and dh/dtau out
-  !integer, parameter :: eos_p_wb= 20 ! rho/T/massfrac in, p/wbar out
-  !integer, parameter :: eos_get_activity = 21 !  get activty coefficient
-  !integer, parameter :: eos_get_transport = 22 !  get transport terms
-
-  ! these are used to allow for a generic interface to the 
-  ! root finding
-  integer, parameter :: itemp = 1
-  integer, parameter :: idens = 2
-  integer, parameter :: iener = 3
-  integer, parameter :: ienth = 4
-  integer, parameter :: ientr = 5
-  integer, parameter :: ipres = 6
-
-  ! error codes
-  integer, parameter :: ierr_general         = 1
-  integer, parameter :: ierr_input           = 2
-  integer, parameter :: ierr_iter_conv       = 3
-  integer, parameter :: ierr_neg_e           = 4
-  integer, parameter :: ierr_neg_p           = 5
-  integer, parameter :: ierr_neg_h           = 6
-  integer, parameter :: ierr_neg_s           = 7
-  integer, parameter :: ierr_iter_var        = 8
-  integer, parameter :: ierr_init            = 9
-  integer, parameter :: ierr_init_massfrac   = 10
-  integer, parameter :: ierr_out_of_bounds   = 11
-  integer, parameter :: ierr_not_implemented = 12
 
   ! Minimum and maximum thermodynamic quantities permitted by the EOS.
   real(amrex_real), save :: mintemp
@@ -116,7 +69,6 @@ module eos_type_module
   ! Z        -- Compressibility factor 
 
   
-  !type, bind(c) :: eos_t
   type :: eos_t
 
     real(amrex_real) :: rho
@@ -126,8 +78,8 @@ module eos_type_module
     real(amrex_real) :: h
     real(amrex_real) :: s
     real(amrex_real) :: f
-    real(amrex_real),allocatable :: massfrac(:)
-    real(amrex_real),allocatable :: molefrac(:)
+    real(amrex_real) :: massfrac(nspecies)
+    real(amrex_real) :: molefrac(nspecies)
     real(amrex_real),allocatable :: aux(:)
 
     real(amrex_real) :: dpdT
@@ -143,33 +95,33 @@ module eos_type_module
 
     real(amrex_real) :: cv
     real(amrex_real) :: cp
-    real(amrex_real),allocatable :: cpi(:)
-    real(amrex_real),allocatable :: cvi(:)
-    real(amrex_real),allocatable :: hi(:)
-    real(amrex_real),allocatable :: ei(:)
-    real(amrex_real),allocatable :: si(:)
+    real(amrex_real) :: cpi(nspecies)
+    real(amrex_real) :: cvi(nspecies)
+    real(amrex_real) :: hi(nspecies)
+    real(amrex_real) :: ei(nspecies)
+    real(amrex_real) :: si(nspecies)
     real(amrex_real) :: wbar
-    real(amrex_real),allocatable :: mui(:)
-    real(amrex_real),allocatable :: Acti(:)
-    real(amrex_real),allocatable :: dedY(:)
-    real(amrex_real),allocatable :: dpdY(:)
-    real(amrex_real),allocatable :: dhdY(:)
+    real(amrex_real) :: mui(nspecies)
+    real(amrex_real) :: Acti(nspecies)
+    real(amrex_real) :: dedY(nspecies)
+    real(amrex_real) :: dpdY(nspecies)
+    real(amrex_real) :: dhdY(nspecies)
     real(amrex_real) :: gam1
     real(amrex_real) :: cs
 
     ! Quantities used for non-Ideal EOS
     real(amrex_real) :: am
     real(amrex_real) :: bm
-    real(amrex_real),allocatable :: damdYk(:)
-    real(amrex_real),allocatable :: d2amdYkdT(:)
-    real(amrex_real),allocatable :: dPdYk(:)
+    real(amrex_real) :: damdYk(nspecies)
+    real(amrex_real) :: d2amdYkdT(nspecies)
+    real(amrex_real) :: dPdYk(nspecies)
     real(amrex_real) :: damdT
     real(amrex_real) :: d2amdT2
     real(amrex_real) :: dpdtau
     real(amrex_real) :: Z
-    real(amrex_real),allocatable :: taui(:)
-    real(amrex_real),allocatable :: diP(:)
-    real(amrex_real),allocatable :: dijY(:,:)
+    real(amrex_real) :: taui(nspecies)
+    real(amrex_real) :: diP(nspecies)
+    real(amrex_real) :: dijY(nspecies,nspecies)
 
   end type eos_t
 
@@ -184,97 +136,18 @@ module eos_type_module
 
 contains
 
-  subroutine eos_build(eos) !bind(C, name="eos_build")
-
+  subroutine eos_build(eos)
     type(eos_t), intent(inout) :: eos
-
-    if (.not. allocated(eos%massfrac)) then
-       allocate(eos%massfrac(nspec))
-    endif
-    if (.not. allocated(eos%cpi)) then
-       allocate(eos%cpi(nspec))
-    endif
-    if (.not. allocated(eos%cvi)) then
-       allocate(eos%cvi(nspec))
-    endif
-    if (.not. allocated(eos%hi)) then
-       allocate(eos%hi(nspec))
-    endif
-    if (.not. allocated(eos%ei)) then
-       allocate(eos%ei(nspec))
-    endif
-    if (.not. allocated(eos%molefrac)) then
-       allocate(eos%molefrac(nspec))
-    endif
-    if (.not. allocated(eos%aux)) then
+    if (.not. allocated(eos%aux) .and. naux.gt.0) then
        allocate(eos%aux(naux))
     endif
-    if (.not. allocated(eos%dedY)) then
-       allocate(eos%dedY(nspec))
-    endif
-    if (.not. allocated(eos%dpdY)) then
-       allocate(eos%dpdY(nspec))
-    endif
-    if (.not. allocated(eos%dhdY)) then
-       allocate(eos%dhdY(nspec))
-    endif
-    if (.not. allocated(eos%dhdY)) then
-       allocate(eos%dhdY(nspec))
-    endif
-    if (.not. allocated(eos%mui)) then
-       allocate(eos%mui(nspec))
-    end if
-    if (.not. allocated(eos%damdYk)) then
-       allocate(eos%damdYk(nspec))
-    endif
-    if(.not.allocated(eos%d2amdYkdT)) then
-       allocate(eos%d2amdYkdT(nspec))
-    end if
-    if(.not.allocated(eos%dPdYk)) then
-       allocate(eos%dPdYk(nspec))
-    end if
-    if (.not.allocated(eos%Acti)) then
-       allocate(eos%Acti(nspec))
-    end if
-    if(.not.allocated(eos%si)) then
-       allocate(eos%si(nspec))
-    end if
-    if(.not.allocated(eos%taui)) then 
-       allocate(eos%taui(nspec))
-    end if
-    if(.not.allocated(eos%diP)) then
-       allocate(eos%diP(nspec))
-    end if
-    if(.not.allocated(eos%dijY)) then
-       allocate(eos%dijY(nspec,nspec))
-    end if
-
   end subroutine eos_build
   
-  subroutine eos_destroy(eos) !bind(C, name="eos_destroy")       
-
+  subroutine eos_destroy(eos)
     type(eos_t), intent(inout) :: eos
-
-    deallocate(eos%massfrac)
-    deallocate(eos%cpi)
-    deallocate(eos%cvi)
-    deallocate(eos%hi)
-    deallocate(eos%ei)
-    deallocate(eos%molefrac)
-    deallocate(eos%dedY)
-    deallocate(eos%dpdY)
-    deallocate(eos%dhdY)
-    deallocate(eos%aux)
-    deallocate(eos%damdYk)
-    deallocate(eos%mui)
-    deallocate(eos%d2amdYkdT)
-    deallocate(eos%dPdYk)
-    deallocate(eos%Acti)
-    deallocate(eos%si)
-    deallocate(eos%taui)
-    deallocate(eos%diP)
-    deallocate(eos%dijY)
-
+    if (naux.gt.0) then
+       deallocate(eos%aux)
+    endif
   end subroutine eos_destroy
   
   ! Given a set of mass fractions, calculate quantities that depend
