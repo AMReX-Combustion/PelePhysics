@@ -146,7 +146,7 @@ class CPickler(CMill):
         self._indent()
         self._write('for (int i=0; i<%d; ++i) {' % (nReactions))
         self._indent()        
-        self._write('rmap[i] = rxn_map[i];')
+        self._write('rmap[i] = rxn_map[i] + 1;')
         self._outdent()
         self._write('}')
         self._outdent()
@@ -335,8 +335,6 @@ class CPickler(CMill):
         self._write('namespace thermo')
         self._write('{')
         self._indent()
-        self._write(self.line(' Inverse molecular weights'))
-        #self._write('std::vector<double> imw;')
         self._write('double fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];' 
                     % (nReactions,nReactions,nReactions))
         self._write('double low_A[%d], low_beta[%d], low_Ea[%d];' 
@@ -353,6 +351,9 @@ class CPickler(CMill):
                     % (nReactions,nReactions,nReactions,nReactions,nReactions))
         self._write('double *TB[%d];' 
                     % (nReactions))
+
+        self._write('std::vector<std::vector<int>> kiv(%d); ' % (nReactions))
+        self._write('std::vector<std::vector<int>> nuv(%d); ' % (nReactions))
 
         self._write()
         self._write('double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
@@ -580,6 +581,7 @@ class CPickler(CMill):
         self._ckqxr(mechanism)
 
         self._cknu(mechanism)
+        self._ckinu(mechanism)
         self._ckncf(mechanism)
         
         self._ckabe(mechanism)
@@ -611,7 +613,6 @@ class CPickler(CMill):
         self._progressRateFR(mechanism)
         self._equilibriumConstants(mechanism)
         self._thermo_GPU(mechanism)
-        #self._molecularWeight(mechanism)
         self._atomicWeight(mechanism)
         self._T_given_ey(mechanism)
         self._T_given_hy(mechanism)
@@ -833,6 +834,7 @@ class CPickler(CMill):
         self._write()
         self._write("#ifndef MECHANISM_h")
         self._write("#define MECHANISM_h")
+        self._write()
         self._write("#if 0")
         self._write("/* Elements")
         nb_elem = 0
@@ -840,27 +842,17 @@ class CPickler(CMill):
             self._write('%d  %s' % (element.id, element.symbol) )
             nb_elem += 1
         self._write('*/')
-        self._write('/* Species')
-        nb_spec = 0
-        oxy_id = -1
-        bath_id = -1
-        for species in mechanism.species():
-            self._write('%d  %s' % (species.id, species.symbol) )
-            if (species.symbol == "O2"):
-                oxy_id = species.id
-            if (species.symbol == "N2"):
-                bath_id = species.id
-            nb_spec += 1
-        self._write('*/')
         self._write("#endif")
+        self._write()
+        self._write('/* Species */')
+        nb_spec = 0
+        for species in mechanism.species():
+            self._write('#define %s_ID %d' % (species.symbol, species.id) )
+            nb_spec += 1
+        self._write()
         self._write("#define NUM_ELEMENTS %d" % (nb_elem))
         self._write("#define NUM_SPECIES %d" % (nb_spec))
         self._write("#define NUM_REACTIONS %d" %(len(mechanism.reaction())))
-        self._write()
-        self._write("#define FUEL_ID %s" % ("define"))
-        self._write("#define OXY_ID %d" % (oxy_id))
-        self._write("#define BATH_ID %d" % (bath_id))
-        self._write("#define FUEL_NAME %s" % ("define"))
         self._write()
         self._write("#define NUM_FIT 4")
         self._write("#endif")
@@ -884,8 +876,6 @@ class CPickler(CMill):
 
         self._indent()
 
-        #self._write('extern std::vector<double> imw;')
-
         nReactions = len(mechanism.reaction())
         self._write()
         self._write('extern double fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];' 
@@ -904,6 +894,9 @@ class CPickler(CMill):
                     % (nReactions,nReactions,nReactions,nReactions,nReactions))
         self._write('extern double *TB[%d];' 
                     % (nReactions))
+
+        self._write('extern std::vector<std::vector<int>> kiv; ')
+        self._write('extern std::vector<std::vector<int>> nuv; ')
 
         self._write()
         self._write('extern double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
@@ -960,8 +953,8 @@ class CPickler(CMill):
             'AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  speciesConc, double T);',
             'AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);',
             ##'#ifndef AMREX_USE_CUDA',
-            'void CKINIT'+sym+'();',
-            'void CKFINALIZE'+sym+'();',
+            'AMREX_GPU_HOST_DEVICE void CKINIT'+sym+'();',
+            'AMREX_GPU_HOST_DEVICE void CKFINALIZE'+sym+'();',
             '#ifndef AMREX_USE_CUDA',
             'void GET_REACTION_MAP(int *  rmap);',
             'void SetAllDefaults();',
@@ -1044,6 +1037,7 @@ class CPickler(CMill):
             'void CKQXR'+sym+'(double *  rho, double *  T, double *  x, double *  qdot);',
             
             'void CKNU'+sym+'(int * kdim, int * nuki);',
+            'void CKINU'+sym+'(int * i, int * nspec, int * ki, int * nu);',
             'void CKNCF'+sym+'(int * mdim, int * ncf);',
             
             'void CKABE'+sym+'(double *  a, double *  b, double *  e );',
@@ -1196,6 +1190,7 @@ class CPickler(CMill):
             '#define CKQYR CKQYR',
             '#define CKQXR CKQXR',
             '#define CKNU CKNU',
+            '#define CKINU CKINU',
             '#define CKNCF CKNCF',
             '#define CKABE CKABE',
             '#define CKEQC CKEQC',
@@ -1291,6 +1286,7 @@ class CPickler(CMill):
             '#define CKQYR ckqyr',
             '#define CKQXR ckqxr',
             '#define CKNU cknu',
+            '#define CKINU ckinu',
             '#define CKNCF ckncf',
             '#define CKABE ckabe',
             '#define CKEQC ckeqc',
@@ -1386,6 +1382,7 @@ class CPickler(CMill):
             '#define CKQYR ckqyr_',
             '#define CKQXR ckqxr_',
             '#define CKNU cknu_',
+            '#define CKINU ckinu_',
             '#define CKNCF ckncf_',
             '#define CKABE ckabe_',
             '#define CKEQC ckeqc_',
@@ -1527,6 +1524,7 @@ class CPickler(CMill):
             'void CKQXR'+sym+'(double *  rho, double *  T, double *  x, double *  qdot);',
             
             'void CKNU'+sym+'(int * kdim, int * nuki);',
+            'void CKINU'+sym+'(int * i, int * nspec, int * ki, int * nu);',
             'void CKNCF'+sym+'(int * mdim, int * ncf);',
             
             'void CKABE'+sym+'(double *  a, double *  b, double *  e );',
@@ -1709,6 +1707,21 @@ class CPickler(CMill):
             reaction = mechanism.reaction()[rmap[j]]
             id = reaction.id - 1
 
+            ki = []
+            nu = []
+            for symbol, coefficient in reaction.reactants:
+                ki.append(mechanism.species(symbol).id)
+                nu.append(-coefficient)
+            for symbol, coefficient in reaction.products:
+                ki.append(mechanism.species(symbol).id)
+                nu.append(coefficient)
+
+            self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
+            kistr = "{" + ','.join(str(x) for x in ki) + "}"
+            nustr = "{" + ','.join(str(x) for x in nu) + "}"
+            self._write("kiv[%d] = %s;" % (id,kistr))
+            self._write("nuv[%d] = %s;" % (id,nustr))
+
             A, beta, E = reaction.arrhenius
             self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
             self._write("fwd_A[%d]     = %.17g;" % (id,A))
@@ -1805,19 +1818,7 @@ class CPickler(CMill):
 
         self._indent()
 
-        #self._write(self.line(' Inverse molecular weights'))
-        #self._write('imw = {')
-        #self._indent()
-        #for i in range(0,self.nSpecies):
-        #    species = self.species[i]
-        #    text = '1.0 / %f' % (species.weight)
-        #    if (i<self.nSpecies-1):
-        #       text += ',  '
-        #    else:
-        #       text += '};  '
-        #    self._write(text + self.line('%s' % species.symbol))
-        #self._outdent()
-        #self._write()
+
 
         # build reverse reaction map
         rmap = {}
@@ -1831,6 +1832,21 @@ class CPickler(CMill):
         for j in range(nReactions):
             reaction = mechanism.reaction()[rmap[j]]
             id = reaction.id - 1
+
+            ki = []
+            nu = []
+            for symbol, coefficient in reaction.reactants:
+                ki.append(mechanism.species(symbol).id)
+                nu.append(-coefficient)
+            for symbol, coefficient in reaction.products:
+                ki.append(mechanism.species(symbol).id)
+                nu.append(coefficient)
+
+            self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
+            kistr = "{" + ','.join(str(x) for x in ki) + "}"
+            nustr = "{" + ','.join(str(x) for x in nu) + "}"
+            self._write("kiv[%d] = %s;" % (id,kistr))
+            self._write("nuv[%d] = %s;" % (id,nustr))
 
             A, beta, E = reaction.arrhenius
             self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
@@ -1916,7 +1932,7 @@ class CPickler(CMill):
         self._indent()
         self._write('for (int i=0; i<%d; ++i) {' % (nReactions))
         self._indent()        
-        self._write('rmap[i] = rxn_map[i];')
+        self._write('rmap[i] = rxn_map[i] + 1;')
         self._outdent()
         self._write('}')
         self._outdent()
@@ -2111,11 +2127,11 @@ class CPickler(CMill):
         self._write('#else')
 
         self._write(self.line(' TODO: Remove on GPU, right now needed by chemistry_module on FORTRAN'))
-        self._write('void CKINIT'+sym+'()')
+        self._write('AMREX_GPU_HOST_DEVICE void CKINIT'+sym+'()')
         self._write('{')
         self._write('}')
         self._write()
-        self._write('void CKFINALIZE()')
+        self._write('AMREX_GPU_HOST_DEVICE void CKFINALIZE()')
         self._write('{')
         self._write('}')
         self._write()
@@ -2163,12 +2179,12 @@ class CPickler(CMill):
                 idxLightSpecs.append(spec.id)
         self._miscTransInfo(KK=self.nSpecies, NLITE=NLITE, do_declarations=True)
         self._wt(True)
-        self._eps(speciesTransport, True)
-        self._sig(speciesTransport, True)
-        self._dip(speciesTransport, True)
-        self._pol(speciesTransport, True)
-        self._zrot(speciesTransport, True)
-        self._nlin(speciesTransport, True)
+        self._eps(mechanism, speciesTransport, True)
+        self._sig(mechanism, speciesTransport, True)
+        self._dip(mechanism, speciesTransport, True)
+        self._pol(mechanism, speciesTransport, True)
+        self._zrot(mechanism, speciesTransport, True)
+        self._nlin(mechanism, speciesTransport, True)
 
         self._viscosity(speciesTransport, True, NTFit=50)
         self._diffcoefs(speciesTransport, True, NTFit=50)
@@ -2188,12 +2204,12 @@ class CPickler(CMill):
                 idxLightSpecs.append(spec.id)
         self._miscTransInfo(KK=self.nSpecies, NLITE=NLITE, do_declarations=False)
         self._wt(False)
-        self._eps(speciesTransport, False)
-        self._sig(speciesTransport, False)
-        self._dip(speciesTransport, False)
-        self._pol(speciesTransport, False)
-        self._zrot(speciesTransport, False)
-        self._nlin(speciesTransport, False)
+        self._eps(mechanism, speciesTransport, False)
+        self._sig(mechanism, speciesTransport, False)
+        self._dip(mechanism, speciesTransport, False)
+        self._pol(mechanism, speciesTransport, False)
+        self._zrot(mechanism, speciesTransport, False)
+        self._nlin(mechanism, speciesTransport, False)
 
         self._viscosity(speciesTransport, False, NTFit=50)
         self._diffcoefs(speciesTransport, False, NTFit=50)
@@ -2678,7 +2694,6 @@ class CPickler(CMill):
         self._indent()
 
         # call molecularWeight
-        #self._write('molecularWeight(wt);')
         self._write('get_mw(wt);')
         
         self._outdent()
@@ -4290,6 +4305,55 @@ class CPickler(CMill):
                     "nuki[ %d * kd + %d ] += +%d ;"
                     % (mechanism.species(symbol).id, reaction.id-1, coefficient))
        
+        # done
+        self._outdent()
+        self._write('}')
+
+        return
+
+
+    def _ckinu(self, mechanism):
+
+        nSpecies  = len(mechanism.species())
+        nReaction = len(mechanism.reaction())
+
+        self._write()
+        self._write()
+        self._write(self.line('Returns a count of species in a reaction, and their indices'))
+        self._write(self.line('and stoichiometric coefficients. (Eq 50)'))
+        self._write('void CKINU'+sym+'(int * i, int * nspec, int * ki, int * nu)')
+        self._write('{')
+        self._indent()
+
+        self._write("if (*i < 1) {")
+        self._indent()
+
+        maxsp = 0
+        for reaction in mechanism.reaction():
+            maxsp = max(maxsp,len(reaction.reactants) + len(reaction.products))
+
+        self._write(self.line('Return max num species per reaction'))
+        self._write("*nspec = %d;" % (maxsp))
+        self._outdent()
+        self._write("} else {")
+        self._indent()
+        self._write("if (*i > %d) {" % (nReaction))
+        self._indent()
+        self._write("*nspec = -1;")
+        self._outdent()
+        self._write("} else {")
+        self._indent()
+        self._write("*nspec = kiv[*i-1].size();")
+        self._write("for (int j=0; j<*nspec; ++j) {")
+        self._indent()
+        self._write("ki[j] = kiv[*i-1][j] + 1;")
+        self._write("nu[j] = nuv[*i-1][j];")
+        self._outdent()
+        self._write("}")
+        self._outdent()
+        self._write("}")
+        self._outdent()
+        self._write("}")
         # done
         self._outdent()
         self._write('}')
@@ -6177,7 +6241,10 @@ class CPickler(CMill):
                     self._write("logPred = log10(redP);")
                     self._write('logFcent = log10(')
                     if (abs(troe[1]) > 1.e-100):
-                        self._write('    (1.-%.17g)*exp(-tc[1] / %.17g) ' % (troe[0],troe[1]))
+                        if(troe[0] < 0):
+                            self._write('    (1.+%.17g)*exp(-tc[1] / %.17g) ' % (-troe[0],troe[1]))
+                        else:
+                            self._write('    (1.-%.17g)*exp(-tc[1] / %.17g) ' % (troe[0],troe[1]))
                     else:
                         self._write('     0. ' )
                     if (abs(troe[2]) > 1.e-100):
@@ -6185,7 +6252,10 @@ class CPickler(CMill):
                     else:
                         self._write('    + 0. ')
                     if (ntroe == 4):
-                        self._write('    + exp(-(%.17g) * invT));' % troe[3])
+                        if(troe[3] < 0):
+                            self._write('    + exp(%.17g * invT));' % -troe[3])
+                        else:
+                            self._write('    + exp(-%.17g * invT));' % troe[3])
                     else:
                         self._write('    + 0.);' )
                     self._write("troe_c = -.4 - .67 * logFcent;")
@@ -6198,7 +6268,10 @@ class CPickler(CMill):
                     self._write("F = redP / (1.0 + redP);")
                     self._write("logPred = log10(redP);")
                     self._write("X = 1.0 / (1.0 + logPred*logPred);")
-                    self._write("F_sri = exp(X * log(%.17g * exp(-%.17g*invT)" % (sri[0],sri[1]))
+                    if (sri[1] < 0):
+                        self._write("F_sri = exp(X * log(%.17g * exp(%.17g*invT)" % (sri[0],-sri[1]))
+                    else:
+                        self._write("F_sri = exp(X * log(%.17g * exp(-%.17g*invT)" % (sri[0],sri[1]))
                     if (sri[2] > 1.e-100):
                         self._write("   +  exp(tc[0]/%.17g) " % sri[2])
                     else:
@@ -6207,7 +6280,6 @@ class CPickler(CMill):
                     self._write("Corr = F * F_sri;")
                     self._write("qf[%d] *= Corr * k_f;" % idx)
                 elif (nlindemann > 0):
-                    print("nlindemann "+str(nlindemann))
                     self._write("Corr = redP / (1. + redP);")
                     self._write("qf[%d] *= Corr * k_f;" % idx)
 
@@ -6909,7 +6981,6 @@ class CPickler(CMill):
         self._write('double J[%d];' % ((nSpecies+1) * (nSpecies+1)))
         self._write('double mwt[%d];' % (nSpecies))
         self._write()
-        #self._write('molecularWeight(mwt);')
         self._write('get_mw(mwt);')
         self._write()
         self._write('for (int k=0; k<%d; k++) {' % nSpecies)
@@ -7513,7 +7584,11 @@ class CPickler(CMill):
                 ntroe = len(troe)
                 self._write("logPr = log10(Pr);")
                 if (abs(troe[1]) > 1.e-100):
-                    self._write('Fcent1 = (1.-(%.17g))*exp(-T/%.17g);'
+                    if (troe[0] < 0):
+                        self._write('Fcent1 = (1.+%.17g)*exp(-T/%.17g);'
+                                %(-troe[0],troe[1]))
+                    else:
+                        self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
                                 %(troe[0],troe[1]))
                 else:
                     self._write('Fcent1 = 0.;')
@@ -7523,7 +7598,11 @@ class CPickler(CMill):
                 else:
                     self._write('Fcent2 = 0.;')
                 if (ntroe == 4):
-                    self._write('Fcent3 = exp(-(%.17g) * invT);'
+                    if (troe[3] < 0):
+                        self._write('Fcent3 = exp(%.17g * invT);'
+                                % -troe[3] )
+                    else:
+                        self._write('Fcent3 = exp(-%.17g * invT);'
                                 % troe[3] )
                 else:
                     self._write('Fcent3 = 0.;')
@@ -7541,12 +7620,12 @@ class CPickler(CMill):
                     self._write("    -Fcent1/%.17g"
                                 % troe[1] )
                 else:
-                    self._write("    0.")
+                    self._write("    +0.")
                 if (abs(troe[2]) > 1.e-100):
                     self._write("    -Fcent2/%.17g"
                                 % troe[2] )
                 else:
-                    self._write("    0.")
+                    self._write("    +0.")
                 if (ntroe == 4):
                     self._write("    + Fcent3*%.17g*invT2);"
                                 % troe[3] )
@@ -8068,7 +8147,11 @@ class CPickler(CMill):
                 ntroe = len(troe)
                 self._write("logPr = log10(Pr);")
                 if (abs(troe[1]) > 1.e-100):
-                    self._write('Fcent1 = (1.-(%.17g))*exp(-T/%.17g);'
+                    if (troe[0] < 0):
+                        self._write('Fcent1 = (1.+%.17g)*exp(-T/%.17g);'
+                                %(-troe[0],troe[1]))
+                    else:
+                        self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
                                 %(troe[0],troe[1]))
                 else:
                     self._write('Fcent1 = 0.;')
@@ -8078,7 +8161,11 @@ class CPickler(CMill):
                 else:
                     self._write('Fcent2 = 0.;')
                 if (ntroe == 4):
-                    self._write('Fcent3 = exp(-(%.17g) * invT);'
+                    if (troe[3] < 0):
+                        self._write('Fcent3 = exp(%.17g * invT);'
+                                % -troe[3] )
+                    else:
+                        self._write('Fcent3 = exp(-%.17g * invT);'
                                 % troe[3] )
                 else:
                     self._write('Fcent3 = 0.;')
@@ -10495,7 +10582,7 @@ class CPickler(CMill):
         return
 
 
-    def _eps(self, speciesTransport, do_declarations):
+    def _eps(self, mechanism, speciesTransport, do_declarations):
 
         self._write()
         self._write()
@@ -10506,52 +10593,52 @@ class CPickler(CMill):
         #for species in mechanism.species():
         #    expression[i] = float(species.trans[0].eps)
         #    i++
-        self._generateTransRoutineSimple(["egtransetEPS", "EGTRANSETEPS", "egtranseteps", "egtranseteps_", "EPS"], 1, speciesTransport, do_declarations)
+        self._generateTransRoutineSimple(mechanism, ["egtransetEPS", "EGTRANSETEPS", "egtranseteps", "egtranseteps_", "EPS"], 1, speciesTransport, do_declarations)
 
         return
     
 
-    def _sig(self, speciesTransport, do_declarations):
+    def _sig(self, mechanism, speciesTransport, do_declarations):
 
         self._write()
         self._write()
         self._write(self.line('the lennard-jones collision diameter in Angstroms'))
-        self._generateTransRoutineSimple(["egtransetSIG", "EGTRANSETSIG", "egtransetsig", "egtransetsig_", "SIG"], 2, speciesTransport, do_declarations)
+        self._generateTransRoutineSimple(mechanism, ["egtransetSIG", "EGTRANSETSIG", "egtransetsig", "egtransetsig_", "SIG"], 2, speciesTransport, do_declarations)
 
         return
 
 
-    def _dip(self, speciesTransport, do_declarations):
+    def _dip(self, mechanism, speciesTransport, do_declarations):
 
         self._write()
         self._write()
         self._write(self.line('the dipole moment in Debye'))
-        self._generateTransRoutineSimple(["egtransetDIP", "EGTRANSETDIP", "egtransetdip", "egtransetdip_", "DIP"], 3, speciesTransport, do_declarations)
+        self._generateTransRoutineSimple(mechanism, ["egtransetDIP", "EGTRANSETDIP", "egtransetdip", "egtransetdip_", "DIP"], 3, speciesTransport, do_declarations)
 
         return
 
 
-    def _pol(self, speciesTransport, do_declarations):
+    def _pol(self, mechanism, speciesTransport, do_declarations):
 
         self._write()
         self._write()
         self._write(self.line('the polarizability in cubic Angstroms'))
-        self._generateTransRoutineSimple(["egtransetPOL", "EGTRANSETPOL", "egtransetpol", "egtransetpol_", "POL"], 4, speciesTransport, do_declarations)
+        self._generateTransRoutineSimple(mechanism, ["egtransetPOL", "EGTRANSETPOL", "egtransetpol", "egtransetpol_", "POL"], 4, speciesTransport, do_declarations)
 
         return
 
 
-    def _zrot(self, speciesTransport, do_declarations):
+    def _zrot(self, mechanism, speciesTransport, do_declarations):
 
         self._write()
         self._write()
         self._write(self.line('the rotational relaxation collision number at 298 K'))
-        self._generateTransRoutineSimple(["egtransetZROT", "EGTRANSETZROT", "egtransetzrot", "egtransetzrot_", "ZROT"], 5, speciesTransport, do_declarations)
+        self._generateTransRoutineSimple(mechanism, ["egtransetZROT", "EGTRANSETZROT", "egtransetzrot", "egtransetzrot_", "ZROT"], 5, speciesTransport, do_declarations)
 
         return
 
 
-    def _nlin(self, speciesTransport, do_declarations):
+    def _nlin(self, mechanism, speciesTransport, do_declarations):
 
         self._write()
         self._write()
@@ -10570,8 +10657,8 @@ class CPickler(CMill):
         self._write('void egtransetNLIN(int* NLIN) {')
         self._indent()
 
-        for species in speciesTransport:
-            self._write('%s[%d] = %d;' % ('NLIN', species.id, int(speciesTransport[species][0])))
+        for species in mechanism.species():
+            self._write('%s[%d] = %d;' % ("NLIN", species.id, int(speciesTransport[species][0])))
 
         self._outdent()
         self._write('}')
@@ -11466,7 +11553,7 @@ class CPickler(CMill):
         return a*(x0 - x[0])*(x0 - x[1]) + (dy21/dx21)*(x0 - x[1]) + y[1]
 
 
-    def _generateTransRoutineSimple(self, nametab, id, speciesTransport, do_declarations):
+    def _generateTransRoutineSimple(self, mechanism, nametab, id, speciesTransport, do_declarations):
 
         if (do_declarations):
             self._write('#if defined(BL_FORT_USE_UPPERCASE)')
@@ -11480,7 +11567,7 @@ class CPickler(CMill):
         self._write('void %s(double* %s ) {' % (nametab[0], nametab[4]))
         self._indent()
 
-        for species in speciesTransport:
+        for species in mechanism.species():
             self._write('%s[%d] = %.8E;' % (nametab[4], species.id, float(speciesTransport[species][id])))
 
         self._outdent()
