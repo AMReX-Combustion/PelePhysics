@@ -1,6 +1,8 @@
 AMREX_HOME        ?= ../../../../../amrex
 PELE_HOME         ?= ../../../..
 PELE_PHYSICS_HOME ?= $(PELE_HOME)/PelePhysics
+CVODE_LIB_DIR     ?= $(PELE_HOME)/ThirdParty/sundials/lib
+SUITESPARSE_DIR   ?= $(PELE_HOME)/ThirdParty/SuiteSparse
 
 TOP := $(PELE_PHYSICS_HOME)
 
