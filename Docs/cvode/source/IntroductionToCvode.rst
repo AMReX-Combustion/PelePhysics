@@ -5,8 +5,8 @@ A brief introduction to CVODE
 ==============================
 
 CVODE is part of a software family called sundials for SUite of Nonlinear and DIfferential / ALgebraic equation Solver [LLNL2005]_. 
-Currently, CVODE development version is v5.0.0, while the stable release version is v4.1.0. **The version used with PelePhysics is v4.0.2.** 
-Cvode can be `easily downladed <https://computation.llnl.gov/projects/sundials/sundials-software>`_. 
+
+**The version used with PelePhysics for the tests presented in this document is v4.0.2. This does not mean this is the recommended version to link with PelePhysics. Always refer to** :ref:`sec:GetCVODE` **to know which versions of CVODE/SuiteSparse to use !!** 
 
 In the following, details pertaining to the methods implemented in `PelePhysics` are provided. 
 The interested user is referred to the very exhaustive `CVODE User-guide <https://computation.llnl.gov/sites/default/files/public/cv_guide.pdf>`_ for more information.
