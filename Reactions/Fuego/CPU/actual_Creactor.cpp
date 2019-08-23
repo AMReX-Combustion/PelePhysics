@@ -3,8 +3,6 @@
 #include <chemistry_file.H>
 #include "mechanism.h"
 #include <eos.H>
-//#include <eos_type.H>
-//#include <eos_type_cpp.H>
 
 /**********************************/
 
@@ -34,6 +32,7 @@
   /* Checks */
   bool reactor_cvode_initialized = false;
   bool actual_ok_to_react = true;
+
 #ifdef _OPENMP
 #pragma omp threadprivate(y,LS,A)
 #pragma omp threadprivate(cvode_mem,data)

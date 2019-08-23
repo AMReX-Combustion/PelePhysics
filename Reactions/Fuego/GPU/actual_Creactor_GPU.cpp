@@ -254,7 +254,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	if (check_flag(&flag, "CVode", 1)) return(1);
 
 	/* Pack data to return in main routine external */
-	//cudaMemcpy(rY_in, yvec_d, ((NEQ+1)*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost);
 	cudaMemcpyAsync(rY_in, yvec_d, ((NEQ+1)*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost,stream);
 	for  (int i = 0; i < NCELLS; i++) {
             rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
