@@ -17,6 +17,15 @@ FUEGO_GAS  = TRUE
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
 
+#######################
+# use CVODE
+#CVODE_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
+#USE_SUNDIALS_3x4x = TRUE
+
+#SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
+#USE_KLU = TRUE
+
+#######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   #Chemistry_Model = chem-H
