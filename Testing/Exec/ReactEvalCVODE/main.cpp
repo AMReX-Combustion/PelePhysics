@@ -206,11 +206,9 @@ main (int   argc,
         /* ADVANCE */
         Real time = 0.0;
         Real dt_incr   = dt/ndt;
-        // not used anyway
-        double pressure = 1013250.0;
 
         const Box& box = mfi.tilebox();
-	int ncells = box.numPts();
+	//int ncells = box.numPts();
 
 	FArrayBox& Fb     = mf[mfi];
 	FArrayBox& Fbsrc  = rY_source_ext[mfi];
@@ -270,9 +268,10 @@ main (int   argc,
 		                tmp_vect_energy, tmp_src_vect_energy,
 		                &dt_incr, &time);
 #else
+                            double pressure = 1013250.0;
 	                    fc(i,j,k) = react(tmp_vect, tmp_src_vect,
 		                tmp_vect_energy, tmp_src_vect_energy,
-				pressure,
+				&pressure,
 		                &dt_incr, &time);
 #endif
 		            dt_incr =  dt/ndt;
