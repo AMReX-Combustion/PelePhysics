@@ -1,7 +1,4 @@
-ifeq ($(USE_CUDA_CVODE), TRUE)
-   CEXE_sources += Fuego_EOS.cpp 
-   CEXE_headers += Fuego_EOS.H
-else    
-    F90EXE_sources += eos.F90
-    FEXE_headers += eos.H
-endif
+CEXE_sources += Fuego_EOS.cpp 
+CEXE_headers += Fuego_EOS.H
+F90EXE_sources += eos.F90
+FEXE_headers += eos.H
