@@ -62,27 +62,24 @@ typedef struct {
 
 /**********************************/
 /* Functions Called by the Solver */
-static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void *user_data);
+int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void *user_data);
 
-static int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
+int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 #ifdef USE_KLU_PP 
-static int cJac_KLU(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
+int cJac_KLU(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
-#endif
 
-
-#ifdef USE_KLU_PP 
-static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
+int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
 		N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);
-static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
+int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 		booleantype *jcurPtr, realtype gamma, void *user_data);
 #else
-static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
+int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
 		N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);
 
-static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
+int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 		booleantype *jcurPtr, realtype gamma, void *user_data);
 #endif
 
@@ -105,15 +102,15 @@ extern "C"
 
 /**********************************/
 /* Helper functions */
-static int check_flag(void *flagvalue, const char *funcname, int opt);
+int check_flag(void *flagvalue, const char *funcname, int opt);
 
-static void PrintFinalStats(void *cvodeMem, realtype Temp);
+void PrintFinalStats(void *cvodeMem, realtype Temp);
 
-static UserData AllocUserData(int iE, int num_cells);
+UserData AllocUserData(int iE, int num_cells);
 
-static void FreeUserData(UserData data);
+void FreeUserData(UserData data);
 
-static void check_state(N_Vector yvec);
+void check_state(N_Vector yvec);
 
 
 /**********************************/

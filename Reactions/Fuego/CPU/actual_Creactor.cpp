@@ -381,7 +381,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 
 /* RHS routine */
-static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, 
+int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, 
 		void *user_data){
 
 	realtype *y_d      = N_VGetArrayPointer(y_in);
@@ -469,7 +469,7 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 
 
 /* Analytical Jacobian evaluation */
-static int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
+int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
 
   /* Make local copies of pointers to input data (big M) */
@@ -538,7 +538,7 @@ static int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 
 #ifdef USE_KLU_PP 
 /* Analytical SPARSE Jacobian evaluation */
-static int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
+int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
 
   /* Make local copies of pointers to input data (big M) */
@@ -629,7 +629,7 @@ static int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 
 /* Jacobian-times-vector routine.
  * Currently not used !!
-static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu, 
+int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu, 
 			  void *user_data, N_Vector tmp)
 {
   realtype *udata, *vdata, *Jvdata;
@@ -696,7 +696,7 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
 /* Preconditioner setup routine for GMRES solver when KLU sparse mode is activated 
  * Generate and preprocess P
 */
-static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok, 
+int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok, 
 		booleantype *jcurPtr, realtype gamma, void *user_data)
 {
   /* Make local copies of pointers to input data (big M) */
@@ -811,7 +811,7 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 /* Preconditioner setup routine for GMRES solver when no sparse mode is activated 
  * Generate and preprocess P
 */
-static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok, 
+int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok, 
 		booleantype *jcurPtr, realtype gamma, void *user_data)
 {
   /* Make local copies of pointers to input data (big M) */
@@ -900,7 +900,7 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 
 #ifdef USE_KLU_PP 
 /* PSolve for GMRES solver when KLU sparse mode is activated */
-static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
+int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                   realtype gamma, realtype delta, int lr, void *user_data)
 {
   /* Make local copies of pointers in user_data */
@@ -929,7 +929,7 @@ static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vec
 
 #else
 /* PSolve for GMRES solver when no sparse mode is activated */
-static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
+int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                   realtype gamma, realtype delta, int lr, void *user_data)
 {
   /* Make local copies of pointers to input data (big M) */
@@ -959,7 +959,7 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
  * OTHERS
 */
 
-static void check_state(N_Vector yvec) 
+void check_state(N_Vector yvec) 
 {
   realtype *ydata = N_VGetArrayPointer(yvec);
 
@@ -988,7 +988,7 @@ static void check_state(N_Vector yvec)
 }
 
 /* Get and print some final statistics */
-static void PrintFinalStats(void *cvodeMem, realtype Temp)
+void PrintFinalStats(void *cvodeMem, realtype Temp)
 {
   long int nst, nfe, nsetups, nje, nfeLS, nni, ncfn;
   long int nli, npe, nps, ncfl, netfails;
@@ -1059,7 +1059,7 @@ static void PrintFinalStats(void *cvodeMem, realtype Temp)
      opt == 2 means function allocates memory so check if returned
               NULL pointer */
 
-static int check_flag(void *flagvalue, const char *funcname, int opt)
+int check_flag(void *flagvalue, const char *funcname, int opt)
 {
   int *errflag;
 
@@ -1088,7 +1088,7 @@ static int check_flag(void *flagvalue, const char *funcname, int opt)
 
 
 /* Alloc Data for CVODE */
-static UserData AllocUserData(int iE, int num_cells)
+UserData AllocUserData(int iE, int num_cells)
 {
   /* Make local copies of pointers in user_data */
   UserData data_wk;
@@ -1224,7 +1224,7 @@ void reactor_close(){
 
 /* Free data memory 
  * Probably not complete, how about the stuff allocated in KLU mode ? */
-static void FreeUserData(UserData data_wk)
+void FreeUserData(UserData data_wk)
 {
 #ifndef USE_KLU_PP
   if (data_wk->iDense_Creact == 99) {
