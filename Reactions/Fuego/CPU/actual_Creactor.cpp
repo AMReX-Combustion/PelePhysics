@@ -298,7 +298,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 #endif
 
 #ifdef _OPENMP
-	if ((data->iverbose > 1) && (omp_thread == 0))
+	if ((data->iverbose > 1) && (omp_thread == 0)) {
 #else
         if (data->iverbose > 1) {
 #endif
@@ -310,7 +310,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	time_out  = *time + (*dt_react);
 
 #ifdef _OPENMP
-	if ((data->iverbose > 3) && (omp_thread == 0))
+	if ((data->iverbose > 3) && (omp_thread == 0)) {
 #else
         if (data->iverbose > 3) {
 #endif
@@ -350,7 +350,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 #endif
 
 #ifdef _OPENMP
-	if ((data->iverbose > 3) && (omp_thread == 0))
+	if ((data->iverbose > 3) && (omp_thread == 0)) {
 #else
         if (data->iverbose > 3) {
 #endif
@@ -364,7 +364,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	}
 
 #ifdef _OPENMP
-	if ((data->iverbose > 1) && (omp_thread == 0))
+	if ((data->iverbose > 1) && (omp_thread == 0)) {
 #else
 	if (data->iverbose > 1) {
 #endif
@@ -388,7 +388,6 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 	realtype *ydot_d   = N_VGetArrayPointer(ydot_in);
 
         fKernelSpec(&t, y_d, ydot_d, 
-		    rhoX_init, rhoXsrc_ext, rYsrc,
 		    user_data);
 
 	return(0);
@@ -402,7 +401,6 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 
 /* RHS source terms evaluation */
 void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,  
-		            double *rhoX_init, double *rhoXsrc_ext, double *rYs,
 			    void *user_data)
 {
   /* Make local copies of pointers in user_data (cell M)*/
@@ -416,7 +414,7 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
   for (tid = 0; tid < data_wk->ncells; tid ++) {
       /* Tmp vars */
       realtype massfrac[NUM_SPECIES];
-      realtype Xi[NUM_SPECIES], cXi[NUM_SPECIES];
+      realtype Xi[NUM_SPECIES];
       realtype cdot[NUM_SPECIES], molecular_weight[NUM_SPECIES];
       realtype cX;
       realtype temp, energy;
@@ -462,7 +460,7 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
       /* Fill ydot vect */
       ydot_d[offset + NUM_SPECIES] = rhoXsrc_ext[tid];
       for (int i = 0; i < NUM_SPECIES; i++){
-          ydot_d[offset + i] = cdot[i] * molecular_weight[i] + rYs[tid * (NUM_SPECIES) + i];
+          ydot_d[offset + i] = cdot[i] * molecular_weight[i] + rYsrc[tid * (NUM_SPECIES) + i];
           ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES]  - ydot_d[offset + i] * Xi[i];
       }
       ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES] /(rho * cX);
@@ -723,13 +721,11 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
         realtype activity[NUM_SPECIES], massfrac[NUM_SPECIES];
         /* EOS object in cpp */
         EOS eos;
-        /* Idx for sparsity */
-	int offset,nbVals,idx;
         /* Save Jac from cell to cell if more than one */
         temp_save_lcl = 0.0;
         for (tid = 0; tid < data_wk->ncells; tid ++) {
             /* Offset in case several cells */
-            offset = tid * (NUM_SPECIES + 1); 
+            int offset = tid * (NUM_SPECIES + 1); 
             /* rho MKS */ 
             realtype rho = 0.0;
             for (int i = 0; i < NUM_SPECIES; i++){
@@ -1177,9 +1173,9 @@ static UserData AllocUserData(int iE, int num_cells)
       /* Nb of non zero elements*/
       SPARSITY_INFO_PRECOND(&(data_wk->NNZ),&HP);
 #ifdef _OPENMP
-      if ((data_wk->iverbose > 0) && (omp_thread == 0) && (data_wk->iJac_Creact != 1)) {
+      if ((data_wk->iverbose > 0) && (omp_thread == 0) && (data_wk->iJac_Creact != 0)) {
 #else
-      if ((data_wk->iverbose > 0) && (data_wk->iJac_Creact != 1)) {
+      if ((data_wk->iverbose > 0) && (data_wk->iJac_Creact != 0)) {
 #endif
           amrex::Print() << "--> SPARSE Preconditioner -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
       }

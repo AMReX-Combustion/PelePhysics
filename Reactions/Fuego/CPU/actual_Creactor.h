@@ -73,18 +73,19 @@ static int cJac_KLU(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 #endif
 
 
-static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
-		N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);
-
 #ifdef USE_KLU 
 static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
 		N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);
 static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 		booleantype *jcurPtr, realtype gamma, void *user_data);
-#endif
+#else
+static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
+		N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);
 
 static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 		booleantype *jcurPtr, realtype gamma, void *user_data);
+#endif
+
 
 
 /**********************************/
@@ -118,7 +119,6 @@ static void check_state(N_Vector yvec);
 /**********************************/
 /* Main Kernel fct called in solver RHS */
 void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
-		double *rhoX_init, double *rhoXsrc_ext, double *rYs,
 		void *user_data);
 
 
