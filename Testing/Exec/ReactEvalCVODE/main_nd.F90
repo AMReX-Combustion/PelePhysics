@@ -15,6 +15,7 @@ contains
     use eos_module
     use transport_module
 
+    implicit none
     integer :: namlen
     integer :: name(namlen)
 

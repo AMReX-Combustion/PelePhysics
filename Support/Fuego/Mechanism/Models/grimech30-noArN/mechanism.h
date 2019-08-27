@@ -7,7 +7,6 @@
 1  H
 2  C
 3  N
-4  AR
 */
 #endif
 
@@ -43,11 +42,14 @@
 #define CH2CO_ID 28
 #define HCCOH_ID 29
 #define N2_ID 30
-#define AR_ID 31
+#define C3H7_ID 31
+#define C3H8_ID 32
+#define CH2CHO_ID 33
+#define CH3CHO_ID 34
 
-#define NUM_ELEMENTS 5
-#define NUM_SPECIES 32
-#define NUM_REACTIONS 177
+#define NUM_ELEMENTS 4
+#define NUM_SPECIES 35
+#define NUM_REACTIONS 217
 
 #define NUM_FIT 4
 #endif

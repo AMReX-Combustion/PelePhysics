@@ -103,6 +103,7 @@ void CKQXP(double *  P, double *  T, double *  x, double *  qdot);
 void CKQYR(double *  rho, double *  T, double *  y, double *  qdot);
 void CKQXR(double *  rho, double *  T, double *  x, double *  qdot);
 void CKNU(int * kdim, int * nuki);
+void CKINU(int * i, int * nspec, int * ki, int * nu);
 void CKNCF(int * mdim, int * ncf);
 void CKABE(double *  a, double *  b, double *  e );
 void CKEQC(double *  T, double *  C , double *  eqcon );
@@ -145,7 +146,13 @@ void vcomp_wdot_1_50(int npt, double *  wdot, double *  mixture, double *  sc,
 void vcomp_wdot_51_100(int npt, double *  wdot, double *  mixture, double *  sc,
                 double *  k_f_s, double *  Kc_s,
                 double *  tc, double *  invT, double *  T);
-void vcomp_wdot_101_124(int npt, double *  wdot, double *  mixture, double *  sc,
+void vcomp_wdot_101_150(int npt, double *  wdot, double *  mixture, double *  sc,
+                double *  k_f_s, double *  Kc_s,
+                double *  tc, double *  invT, double *  T);
+void vcomp_wdot_151_200(int npt, double *  wdot, double *  mixture, double *  sc,
+                double *  k_f_s, double *  Kc_s,
+                double *  tc, double *  invT, double *  T);
+void vcomp_wdot_201_217(int npt, double *  wdot, double *  mixture, double *  sc,
                 double *  k_f_s, double *  Kc_s,
                 double *  tc, double *  invT, double *  T);
 #endif
@@ -174,23 +181,25 @@ namespace thermo
 {
     extern std::vector<double> imw;
 
-    extern double fwd_A[124], fwd_beta[124], fwd_Ea[124];
-    extern double low_A[124], low_beta[124], low_Ea[124];
-    extern double rev_A[124], rev_beta[124], rev_Ea[124];
-    extern double troe_a[124],troe_Ts[124], troe_Tss[124], troe_Tsss[124];
-    extern double sri_a[124], sri_b[124], sri_c[124], sri_d[124], sri_e[124];
-    extern double activation_units[124], prefactor_units[124], phase_units[124];
-    extern int is_PD[124], troe_len[124], sri_len[124], nTB[124], *TBid[124];
-    extern double *TB[124];
+    extern double fwd_A[217], fwd_beta[217], fwd_Ea[217];
+    extern double low_A[217], low_beta[217], low_Ea[217];
+    extern double rev_A[217], rev_beta[217], rev_Ea[217];
+    extern double troe_a[217],troe_Ts[217], troe_Tss[217], troe_Tsss[217];
+    extern double sri_a[217], sri_b[217], sri_c[217], sri_d[217], sri_e[217];
+    extern double activation_units[217], prefactor_units[217], phase_units[217];
+    extern int is_PD[217], troe_len[217], sri_len[217], nTB[217], *TBid[217];
+    extern double *TB[217];
+    extern std::vector<std::vector<int>> kiv; 
+    extern std::vector<std::vector<int>> nuv; 
 
-    extern double fwd_A_DEF[124], fwd_beta_DEF[124], fwd_Ea_DEF[124];
-    extern double low_A_DEF[124], low_beta_DEF[124], low_Ea_DEF[124];
-    extern double rev_A_DEF[124], rev_beta_DEF[124], rev_Ea_DEF[124];
-    extern double troe_a_DEF[124],troe_Ts_DEF[124], troe_Tss_DEF[124], troe_Tsss_DEF[124];
-    extern double sri_a_DEF[124], sri_b_DEF[124], sri_c_DEF[124], sri_d_DEF[124], sri_e_DEF[124];
-    extern double activation_units_DEF[124], prefactor_units_DEF[124], phase_units_DEF[124];
-    extern int is_PD_DEF[124], troe_len_DEF[124], sri_len_DEF[124], nTB_DEF[124], *TBid_DEF[124];
-    extern double *TB_DEF[124];
+    extern double fwd_A_DEF[217], fwd_beta_DEF[217], fwd_Ea_DEF[217];
+    extern double low_A_DEF[217], low_beta_DEF[217], low_Ea_DEF[217];
+    extern double rev_A_DEF[217], rev_beta_DEF[217], rev_Ea_DEF[217];
+    extern double troe_a_DEF[217],troe_Ts_DEF[217], troe_Tss_DEF[217], troe_Tsss_DEF[217];
+    extern double sri_a_DEF[217], sri_b_DEF[217], sri_c_DEF[217], sri_d_DEF[217], sri_e_DEF[217];
+    extern double activation_units_DEF[217], prefactor_units_DEF[217], phase_units_DEF[217];
+    extern int is_PD_DEF[217], troe_len_DEF[217], sri_len_DEF[217], nTB_DEF[217], *TBid_DEF[217];
+    extern double *TB_DEF[217];
     extern std::vector<int> rxn_map;
 }
 #endif

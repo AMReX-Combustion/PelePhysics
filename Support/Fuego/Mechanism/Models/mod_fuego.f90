@@ -171,6 +171,20 @@ module fuego_chemistry
             real(amrex_real), intent(inout) :: hms(*)
         end subroutine
 
+        subroutine cksms(T,sms) bind(c,name='CKSMS') 
+            use amrex_fort_module, only : amrex_real
+            real(amrex_real), intent(in   ) :: T
+            real(amrex_real), intent(inout) :: sms(*)
+        end subroutine
+
+        subroutine get_critparams(Tci,ai,bi,acentric_i) bind(c,name='GET_CRITPARAMS') 
+            use amrex_fort_module, only : amrex_real
+            real(amrex_real), intent(inout   ) :: Tci(*)
+            real(amrex_real), intent(inout   ) :: ai(*)
+            real(amrex_real), intent(inout   ) :: bi(*)
+            real(amrex_real), intent(inout   ) :: acentric_i(*)
+        end subroutine
+
         subroutine ckhbms(T,y,hbms) bind(c,name='CKHBMS') 
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(in   ) :: T
@@ -280,6 +294,27 @@ module fuego_chemistry
             real(amrex_real), intent(in) :: t(*)
             real(amrex_real), intent(inout) :: y(*)
             real(amrex_real), intent(inout) :: wdot(*)
+        end subroutine
+
+        subroutine cknu(kdim,nuki) bind(c,name='CKNU')
+            integer, intent(in   ) :: kdim
+            integer, intent(inout) :: nuki(*)
+        end subroutine
+
+        subroutine ckinu(i,nspec,ki,nu) bind(c,name='CKINU')
+            integer, intent(in   ) :: i
+            integer, intent(inout) :: nspec
+            integer, intent(inout) :: ki(*)
+            integer, intent(inout) :: nu(*)
+        end subroutine
+
+        subroutine ckncf(mdim,ncf) bind(c,name='CKNCF')
+            integer, intent(in   ) :: mdim
+            integer, intent(inout) :: ncf(*)
+        end subroutine
+
+        subroutine GET_REACTION_MAP(rmap) bind(c,name='GET_REACTION_MAP')
+            integer, intent(inout) :: rmap(*)
         end subroutine
 
     end interface
