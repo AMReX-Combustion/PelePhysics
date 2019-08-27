@@ -21,7 +21,7 @@
 #define O2_ID 7
 #define CH_ID 8
 #define CH2_ID 9
-#define CH2*_ID 10
+#define CH2D_ID 10
 #define CH3_ID 11
 #define CH4_ID 12
 #define HCO_ID 13
@@ -55,10 +55,10 @@
 #define iC4H3_ID 41
 #define C4H4_ID 42
 #define iC4H5_ID 43
-#define C4H5-2_ID 44
+#define C4H52_ID 44
 #define C4H6_ID 45
 #define C4H612_ID 46
-#define C4H6-2_ID 47
+#define C4H62_ID 47
 #define C4H7_ID 48
 #define C4H81_ID 49
 #define pC4H9_ID 50
