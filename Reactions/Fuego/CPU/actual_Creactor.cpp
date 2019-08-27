@@ -5,72 +5,47 @@
 #include <eos.H>
 
 /**********************************/
-
 /* Global Variables */
-/* FOR CVODE */
   N_Vector y         = NULL;
   SUNLinearSolver LS = NULL;
   SUNMatrix A        = NULL;
   void *cvode_mem    = NULL;
   /* User data */
-  UserData data = NULL;
-  int NCELLS    = 0;
+  UserData data      = NULL;
 /* OPTIONS */
-  /* base */
-  int iDense_Creact = 1;
-  int iJac_Creact   = 0;
-  int iE_Creact     = 1;
-  int iverbose      = 1;
   /* energy */
-  double *rhoe_init   = NULL;
-  double *rhoh_init   = NULL;
-  double *rhoesrc_ext = NULL;
-  double *rhohsrc_ext = NULL;
+  double *rhoX_init   = NULL;
+  double *rhoXsrc_ext = NULL;
   double *rYsrc       = NULL;
-  /* hacks */
-  bool FirstTimePrecond = true;
-  /* Checks */
-  bool reactor_cvode_initialized = false;
-  bool actual_ok_to_react = true;
 
 #ifdef _OPENMP
 #pragma omp threadprivate(y,LS,A)
 #pragma omp threadprivate(cvode_mem,data)
-#pragma omp threadprivate(NCELLS)
-#pragma omp threadprivate(iDense_Creact,iJac_Creact,iE_Creact,iverbose)
-#pragma omp threadprivate(rhoe_init,rhoh_init,rhoesrc_ext,rhohsrc_ext,rYsrc)
-#pragma omp threadprivate(FirstTimePrecond,reactor_cvode_initialized,actual_ok_to_react)
+#pragma omp threadprivate(rhoX_init,rhoXsrc_ext,rYsrc)
 #endif
+/**********************************/
 
 /**********************************/
-/* Definitions */
 /* Initialization routine, called once at the begining of the problem */
 int reactor_init(const int* cvode_iE, const int* Ncells) {
-
+        /* CVODE return Flag  */
 	int flag;
-	realtype reltol, time;
+	/* CVODE initial time - 0 */
+	realtype time;
+	/* CVODE tolerances */
+	realtype reltol;
 	N_Vector atol;
 	realtype *ratol;
+	/* Tot numb of eq to integrate */
 	int neq_tot;
+#ifdef _OPENMP
+	int omp_thread;
 
-	/* Nb of species in mechanism */
-        if (iverbose > 0) {
-	    printf("Nb of spec is %d \n", NUM_SPECIES);
-	}
-
-	/* ParmParse from the inputs file */ 
-	amrex::ParmParse pp("ns");
-	pp.query("cvode_iJac",iJac_Creact);
-	pp.query("cvode_iDense", iDense_Creact);
-
-	/* Args = type of reactor, nb of cells, nb of eqs in whole system */
-	iE_Creact      = *cvode_iE;
-	NCELLS         = *Ncells;
-        if (iverbose > 0) {
-	    printf("Ncells in one solve ? %d\n",NCELLS);
-	}
-        neq_tot        = (NUM_SPECIES + 1) * NCELLS;
-
+	/* omp thread if applicable */
+	omp_thread = omp_get_thread_num(); 
+#endif
+	/* Total number of eq to integrate */
+        neq_tot        = (NUM_SPECIES + 1) * (*Ncells);
 
 	/* Definition of main vector */
 	y = N_VNew_Serial(neq_tot);
@@ -82,8 +57,18 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	if (check_flag((void *)cvode_mem, "CVodeCreate", 0)) return(1);
 
         /* Does not work for more than 1 cell right now */
-	data = AllocUserData();
+	data = AllocUserData(*cvode_iE, *Ncells);
 	if(check_flag((void *)data, "AllocUserData", 2)) return(1);
+
+	/* Nb of species and cells in mechanism */
+#ifdef _OPENMP
+        if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+        if (data->iverbose > 0) {
+#endif
+		amrex::Print() << "Nb of spec in mech is " << NUM_SPECIES << "\n";    
+		amrex::Print() << "Ncells in one solve is " << data->ncells << "\n";
+	}
 
 	/* Set the pointer to user-defined data */
 	flag = CVodeSetUserData(cvode_mem, data);
@@ -97,7 +82,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	if (check_flag(&flag, "CVodeInit", 1)) return(1);
 	
 	/* Definition of tolerances: one for each species */
-	/* TODO in fct of variable */
+	/* TODO in fct of variable !! */
 	reltol = 1.0e-10;
         atol  = N_VNew_Serial(neq_tot);
 	ratol = N_VGetArrayPointer(atol);
@@ -109,8 +94,8 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	flag = CVodeSVtolerances(cvode_mem, reltol, atol);
 	if (check_flag(&flag, "CVodeSVtolerances", 1)) return(1);
 
-	flag = CVodeSetNonlinConvCoef(cvode_mem, 1.0e-1);
-	if (check_flag(&flag, "CVodeSetNonlinConvCoef", 1)) return(1);
+	//flag = CVodeSetNonlinConvCoef(cvode_mem, 1.0e-1);
+	//if (check_flag(&flag, "CVodeSetNonlinConvCoef", 1)) return(1);
 
 	flag = CVodeSetMaxNonlinIters(cvode_mem, 50);
 	if (check_flag(&flag, "CVodeSetMaxNonlinIters", 1)) return(1);
@@ -118,8 +103,14 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	flag = CVodeSetMaxErrTestFails(cvode_mem, 100);
 	if (check_flag(&flag, "CVodeSetMaxErrTestFails", 1)) return(1);
 
-	if (iDense_Creact == 1) {
-            printf("\n--> Using a Direct Dense Solver \n");
+	if (data->iDense_Creact == 1) {
+#ifdef _OPENMP
+            if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+            if (data->iverbose > 0) {
+#endif
+	    	amrex::Print() << "\n--> Using a Direct Dense Solver\n";    
+	    }
 
             /* Create dense SUNMatrix for use in linear solves */
 	    A = SUNDenseMatrix(neq_tot, neq_tot);
@@ -133,10 +124,17 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
 	    if(check_flag(&flag, "CVDlsSetLinearSolver", 1)) return(1);
 
-	} else if (iDense_Creact == 5) {
+	} else if (data->iDense_Creact == 5) {
 #ifdef USE_KLU 
+#ifdef _OPENMP
+            if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+            if (data->iverbose > 0) {
+#endif
+	    	amrex::Print() << "\n--> Using a Direct Sparse Solver\n";    
+	    }
 	    /* Create sparse SUNMatrix for use in linear solves */
-	    A = SUNSparseMatrix(neq_tot, neq_tot, (data->NNZ)*NCELLS, CSC_MAT);
+	    A = SUNSparseMatrix(neq_tot, neq_tot, (data->NNZ)*data->ncells, CSC_MAT);
             if(check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
 
 	    /* Create KLU solver object for use by CVode */
@@ -147,14 +145,22 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    flag = CVodeSetLinearSolver(cvode_mem, LS, A);
 	    if(check_flag(&flag, "CVodeSetLinearSolver", 1)) return(1);
 #else
-            amrex::Abort("iDense_Creact=5 not valid for USE_KLU=FALSE");
+            if (data->iverbose > 0) {
+                amrex::Abort("Sparse solver not valid without KLU solver.");
+	    }
 #endif
 
-	} else if (iDense_Creact == 99) {
-            printf("\n--> Using an Iterative Solver \n");
+	} else if (data->iDense_Creact == 99) {
+#ifdef _OPENMP
+            if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+            if (data->iverbose > 0) {
+#endif
+	    	amrex::Print() << "\n--> Using an Iterative Solver\n";    
+	    }
 
             /* Create the linear solver object */
-	    if (iJac_Creact == 0) {
+	    if (data->iJac_Creact == 0) {
 	        LS = SUNSPGMR(y, PREC_NONE, 0);
 	        if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
 	    } else {
@@ -166,43 +172,75 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    flag = CVSpilsSetLinearSolver(cvode_mem, LS);
 	    if(check_flag(&flag, "CVSpilsSetLinearSolver", 1)) return(1);
 	} else {
-            amrex::Abort("Linear solvers availables are: Direct Dense (1), Direct Sparse (5) or Iterative GMRES (99)");
+            if (data->iverbose > 0) {
+                amrex::Abort("Linear solvers availables are: Direct Dense (1), Direct Sparse (5) or Iterative GMRES (99)");
+	    }
 	}
 
-	if (iJac_Creact == 0) {
-            printf("\n--> Without Analytical J\n");
+	if (data->iJac_Creact == 0) {
+#ifdef _OPENMP
+            if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+            if (data->iverbose > 0) {
+#endif
+		    amrex::Print() << "    Without Analytical J/Preconditioner\n";
+	    }
 #ifdef USE_KLU 
-	    if (iDense_Creact == 5) {
-	        amrex::Abort("\n--> SPARSE SOLVER SHOULD HAVE AN AJ...\n");
+	    if (data->iDense_Creact == 5) {
+		if (data->iverbose > 0) {
+	            amrex::Abort("A Sparse Solver should have an Analytical J");
+		}
 	    }
 #endif
 	} else {
-            printf("\n--> With Analytical J\n");
-	    if (iDense_Creact == 99) {
-                if (iverbose > 0) {
-                    printf("\n    (99)\n");
-		}
+	    if (data->iDense_Creact == 99) {
 	        /* Set the JAcobian-times-vector function */
 	        flag = CVSpilsSetJacTimes(cvode_mem, NULL, NULL);
 	        if(check_flag(&flag, "CVSpilsSetJacTimes", 1)) return(1);
-	        /* Set the preconditioner solve and setup functions */
 #ifdef USE_KLU 
+#ifdef _OPENMP
+                if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+                if (data->iverbose > 0) {
+#endif
+			amrex::Print() << "    With a Sparse Preconditioner\n";
+		}
+	        /* Set the preconditioner solve and setup functions */
 	        flag = CVSpilsSetPreconditioner(cvode_mem, Precond_sparse, PSolve_sparse);
 	        if(check_flag(&flag, "CVSpilsSetPreconditioner", 1)) return(1);
 #else
+#ifdef _OPENMP
+                if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+                if (data->iverbose > 0) {
+#endif
+			amrex::Print() << "    With a Preconditioner\n";
+		}
+	        /* Set the preconditioner solve and setup functions */
 	        flag = CVSpilsSetPreconditioner(cvode_mem, Precond, PSolve);
 	        if(check_flag(&flag, "CVSpilsSetPreconditioner", 1)) return(1);
 #endif
 #ifdef USE_KLU 
-	    } else if (iDense_Creact == 5){
+	    } else if (data->iDense_Creact == 5){
+#ifdef _OPENMP
+                if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+                if (data->iverbose > 0) {
+#endif
+                    amrex::Print() << "    With a Sparse Analytical J\n";
+	        }
 		/* Set the user-supplied Jacobian routine Jac */
 		flag = CVodeSetJacFn(cvode_mem, cJac_KLU);
 		if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1); 
 #endif
 	    } else {
-                if (iverbose > 0) {
-                    printf("\n    (1)\n");
-		}
+#ifdef _OPENMP
+                if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+                if (data->iverbose > 0) {
+#endif
+                    amrex::Print() << "    With Analytical J\n";
+	        }
 	        /* Set the user-supplied Jacobian routine Jac */
                 flag = CVodeSetJacFn(cvode_mem, cJac);
 		if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1);
@@ -222,68 +260,77 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	if(check_flag(&flag, "CVodeSetMaxStepsBetweenJac", 1)) return(1);
 
 	/* Define vectors to be used later in creact */
-	if (iE_Creact == 1) { 
-	    rhoe_init = (double *) malloc(NCELLS*sizeof(double));
-	    rhoesrc_ext = (double *) malloc( NCELLS*sizeof(double));
-	} else {
-	    amrex::Abort(" Only UV reactor implemented for now, cvode_iE == 1\n");
-	    //rhoh_init = (double *) malloc(NCELLS*sizeof(double));
-	    //rhohsrc_ext = (double *) malloc( NCELLS*sizeof(double));
-	}
-	rYsrc = (double *)  malloc((NCELLS*NUM_SPECIES)*sizeof(double));
+	rhoX_init = (double *) malloc(data->ncells*sizeof(double));
+	rhoXsrc_ext = (double *) malloc( data->ncells*sizeof(double));
+	rYsrc       = (double *)  malloc((data->ncells*NUM_SPECIES)*sizeof(double));
 
-	N_VDestroy(atol);          /* Free the atol vector */
+	/* Free the atol vector */
+	N_VDestroy(atol); 
 
 	/* Ok we're done ...*/
-        if (iverbose > 0) {
-	    printf(" --> DONE WITH INITIALIZATION (CPU) %d \n", iE_Creact);
+#ifdef _OPENMP
+        if ((data->iverbose > 1) && (omp_thread == 0)) {
+#else
+        if (data->iverbose > 1) {
+#endif
+		amrex::Print() << "\n--> DONE WITH INITIALIZATION (CPU)" << data->iE_Creact << "\n";
 	}
-	reactor_cvode_initialized = true;
+
+	/* Reactor is now initialized */
+	data->reactor_cvode_initialized = true;
 
 	return(0);
 }
 
+
 /* Main CVODE call routine */
 int react(realtype *rY_in, realtype *rY_src_in, 
 		realtype *rX_in, realtype *rX_src_in,
-		realtype *P_in, 
-                realtype *dt_react, realtype *time, int *Init){
+                realtype *dt_react, realtype *time){
 
-	realtype time_init, time_out, dummy_time, temperature_save ;
+	realtype time_init, time_out, dummy_time;
 	int flag;
+#ifdef _OPENMP
+	int omp_thread;
 
-        if (iverbose > 1) {
-            printf("\n -------------------------------------\n");
+	/* omp thread if applicable */
+	omp_thread = omp_get_thread_num(); 
+#endif
+
+#ifdef _OPENMP
+	if ((data->iverbose > 1) && (omp_thread == 0))
+#else
+        if (data->iverbose > 1) {
+#endif
+	    amrex::Print() <<"\n -------------------------------------\n";
 	}
 
 	/* Initial time and time to reach after integration */
         time_init = *time;
 	time_out  = *time + (*dt_react);
 
-        if (iverbose > 3) {
-	    printf("BEG : time curr is %14.6e and dt_react is %14.6e and final time should be %14.6e \n", time_init, *dt_react, time_out);
+#ifdef _OPENMP
+	if ((data->iverbose > 3) && (omp_thread == 0))
+#else
+        if (data->iverbose > 3) {
+#endif
+	    amrex::Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << *dt_react << " and final time should be " << time_out << "\n";
 	}
 
 	/* Get Device MemCpy of in arrays */
 	/* Get Device pointer of solution vector */
 	realtype *yvec_d      = N_VGetArrayPointer(y);
-	// rhoY,T
-	std::memcpy(yvec_d, rY_in, sizeof(realtype) * ((NUM_SPECIES+1)*NCELLS));
-	temperature_save = rY_in[NUM_SPECIES];
-	// rhoY_src_ext
-	std::memcpy(rYsrc, rY_src_in, (NUM_SPECIES*NCELLS)*sizeof(double));
-	// rhoE/rhoH
-	if (iE_Creact == 1) { 
-	    std::memcpy(rhoe_init, rX_in, sizeof(realtype) * NCELLS);
-	    std::memcpy(rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS);
-	} else {
-	    std::memcpy(rhoh_init, rX_in, sizeof(realtype) * NCELLS);
-	    std::memcpy(rhohsrc_ext, rX_src_in, sizeof(realtype) * NCELLS);
-	}
+	/* rhoY,T */
+	std::memcpy(yvec_d, rY_in, sizeof(realtype) * ((NUM_SPECIES+1)*data->ncells));
+	/* rhoY_src_ext */
+	std::memcpy(rYsrc, rY_src_in, (NUM_SPECIES * data->ncells)*sizeof(double));
+	/* rhoE/rhoH */
+	std::memcpy(rhoX_init, rX_in, sizeof(realtype) * data->ncells);
+	std::memcpy(rhoXsrc_ext, rX_src_in, sizeof(realtype) * data->ncells);
 
 	/* Check if y is within physical bounds */
 	check_state(y);
-	if (!actual_ok_to_react)  { 
+	if (!(data->actual_ok_to_react))  { 
 	    amrex::Abort("\n Check_state failed: state is out of react bounds \n");
 	}
 
@@ -301,60 +348,30 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	/* If reactor mode is activated, update time */
 	*time  = time_init + (*dt_react);
 #endif
-        if (iverbose > 3) {
-	    printf("END : time curr is %14.6e and actual dt_react is %14.6e \n", dummy_time, *dt_react);
+
+#ifdef _OPENMP
+	if ((data->iverbose > 3) && (omp_thread == 0))
+#else
+        if (data->iverbose > 3) {
+#endif
+	    amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << *dt_react << "\n";
 	}
 
 	/* Pack data to return in main routine external */
-	std::memcpy(rY_in, yvec_d, ((NUM_SPECIES+1)*NCELLS)*sizeof(realtype));
-	for  (int i = 0; i < NCELLS; i++) {
+	std::memcpy(rY_in, yvec_d, ((NUM_SPECIES+1)*data->ncells)*sizeof(realtype));
+	for  (int i = 0; i < data->ncells; i++) {
             rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
 	}
 
-
-	/* VERBOSE / DEBUG MODE 
-        if (iverbose > 5) {
-            for (int tid = 0; tid < NCELLS; tid ++) {
-	        double rhov, energy, temp, energy2;
-	        double MF[NUM_SPECIES];
-                //realtype activity[NUM_SPECIES], cdot[NUM_SPECIES], molecular_weight[NUM_SPECIES];
-	        int  lierr;
-	        rhov = 0.0;
-                int offset = tid * (NUM_SPECIES + 1); 
-                for (int k = 0; k < NUM_SPECIES; k ++) {
-	    	rhov =  rhov + rY_in[offset + k];
-	        }
-                //CKWT(molecular_weight);
-                for (int k = 0; k < NUM_SPECIES; k ++) {
-	    	    MF[k] = rY_in[offset + k]/rhov;
-	            //activity[k] = rY_in[offset + k]/(molecular_weight[k]);
-	        }
-	        energy = rX_in[tid]/rhov ;
-	        if (iE_Creact == 1) { 
-	            GET_T_GIVEN_EY(&energy, MF, &temp, &lierr);
-	            CKHBMS(&temp, MF, &energy2);
-	            CKUBMS(&temp, MF, &energy);
-	    	    CKPY(&rhov, &temp, MF, P_in);
-	            printf("e,h,p,rho ? %4.16e %4.16e %4.16e %4.16e \n",energy, energy2, *P_in, rhov);
-	        } else {
-	            GET_T_GIVEN_HY(&energy, MF, &temp, &lierr);
-	            CKHBMS(&temp, MF, &energy);
-	            CKUBMS(&temp, MF, &energy2);
-	    	    CKPY(&rhov, &temp, MF, P_in);
-	            printf("e,h,p,rho ? %4.16e %4.16e %4.16e %4.16e\n",energy2, energy, *P_in, rhov);
-	        }
-	        //rY_in[offset + NUM_SPECIES] =  temp;
-	        // DEBUG CHEKS
-                //CKWC(&temp, activity, cdot);
-	        // *P_in = cdot[2];
-	    }
+#ifdef _OPENMP
+	if ((data->iverbose > 1) && (omp_thread == 0))
+#else
+	if (data->iverbose > 1) {
+#endif
+	    amrex::Print() <<"Additional verbose info --\n";
 	    PrintFinalStats(cvode_mem, rY_in[NUM_SPECIES]);
-	} else if (iverbose > 2) {
-	    printf("\nAdditional verbose info --\n");
-	    PrintFinalStats(cvode_mem, temperature_save);
-            printf(" -------------------------------------\n");
+	    amrex::Print() <<"\n -------------------------------------\n";
 	}
-	*/
 
 	/* Get estimate of how hard the integration process was */
         long int nfe;
@@ -370,16 +387,13 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 	realtype *y_d      = N_VGetArrayPointer(y_in);
 	realtype *ydot_d   = N_VGetArrayPointer(ydot_in);
 
-        if (iE_Creact == 1) {
-	    fKernelSpec(&t, y_d, ydot_d, 
-			    rhoe_init, rhoesrc_ext, rYsrc);
-	} else {
-	    fKernelSpec(&t, y_d, ydot_d, 
-			    rhoh_init, rhohsrc_ext, rYsrc);
-	}
+        fKernelSpec(&t, y_d, ydot_d, 
+		    rhoX_init, rhoXsrc_ext, rYsrc,
+		    user_data);
 
 	return(0);
 }
+/**********************************/
 
 
 /*
@@ -388,19 +402,28 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 
 /* RHS source terms evaluation */
 void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,  
-		            double *rhoX_init, double *rhoXsrc_ext, double *rYs)
+		            double *rhoX_init, double *rhoXsrc_ext, double *rYs,
+			    void *user_data)
 {
+  /* Make local copies of pointers in user_data (cell M)*/
+  UserData data_wk;
+  data_wk = (UserData) user_data;   
+
+  /* Tmp vars */
   int tid;
+
   /* Loop on packed cells */
-  for (tid = 0; tid < NCELLS; tid ++) {
-      realtype massfrac[NUM_SPECIES],activity[NUM_SPECIES];
+  for (tid = 0; tid < data_wk->ncells; tid ++) {
+      /* Tmp vars */
+      realtype massfrac[NUM_SPECIES];
       realtype Xi[NUM_SPECIES], cXi[NUM_SPECIES];
       realtype cdot[NUM_SPECIES], molecular_weight[NUM_SPECIES];
       realtype cX;
       realtype temp, energy;
-      int lierr;
+      /* EOS object in cpp */
       EOS eos;
 
+      /* Offset in case several cells */
       int offset = tid * (NUM_SPECIES + 1); 
       
       /* MW CGS */
@@ -411,40 +434,30 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
       for (int i = 0; i < NUM_SPECIES; i++){
           rho = rho + yvec_d[offset + i];
       }
+
       /* temp */
       temp = yvec_d[offset + NUM_SPECIES];
+
       /* Yks */
       for (int i = 0; i < NUM_SPECIES; i++){
           massfrac[i] = yvec_d[offset + i] / rho;
       }
+
       /* NRG CGS */
       energy = (rhoX_init[tid] + rhoXsrc_ext[tid]*(*dt)) /rho;
 
-      /* FUNC 1 */
-      eos.eos_EY2T(massfrac, energy, temp);
-      /* FUNC 3 */
-      eos.eos_TY2Cv(temp, massfrac, &cX);
-      /* FUNC 4 */
-      eos.eos_T2EI(temp, Xi);
-      /* FUNC 1b */
-      eos.eos_RTY2W(rho, temp, massfrac, cdot);
-
-      /* Fuego calls on device 
-      if (iE_Creact == 1){
-	  //eos_re_ext(&rho,massfrac,&temp,&energy,Xi,&cX);
-          //GET_T_GIVEN_EY(&energy, massfrac, &temp, &lierr);
-          //CKUMS(&temp, Xi);
-          //CKCVMS(&temp, cXi);
+      if (data_wk->iE_Creact == 1){
+          /* UV REACTOR */
+          eos.eos_EY2T(massfrac, energy, temp);
+          eos.eos_TY2Cv(temp, massfrac, &cX);
+          eos.eos_T2EI(temp, Xi);
       } else {
-          GET_T_GIVEN_HY(&energy, massfrac, &temp, &lierr);
-          CKHMS(&temp, Xi);
-          CKCPMS(&temp, cXi);
-	  cX = 0.0;
-          for (int i = 0; i < NUM_SPECIES; i++){
-              cX = cX + massfrac[i] * cXi[i];
-          }
+          /* HP REACTOR */
+          eos.eos_HY2T(massfrac, energy, temp);
+          eos.eos_TY2Cp(temp, massfrac, &cX);
+          eos.eos_T2HI(temp, Xi);
       }
-      */
+      eos.eos_RTY2W(rho, temp, massfrac, cdot);
 
       /* Fill ydot vect */
       ydot_d[offset + NUM_SPECIES] = rhoXsrc_ext[tid];
@@ -461,33 +474,51 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 static int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
 
+  /* Make local copies of pointers to input data (big M) */
   realtype *ydata  = N_VGetArrayPointer(u);
 
-  int tid;
-  for (tid = 0; tid < NCELLS; tid ++) {
-      realtype *J_col_k;
-      realtype  temp; 
-      realtype activity[NUM_SPECIES], molecular_weight[NUM_SPECIES];
-      realtype Jmat_tmp[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
+  /* Make local copies of pointers in user_data (cell M)*/
+  UserData data_wk;
+  data_wk = (UserData) user_data;   
 
+  int tid;
+  for (tid = 0; tid < data_wk->ncells; tid ++) {
+      /* Tmp vars */
+      realtype *J_col_k;
+      realtype massfrac[NUM_SPECIES], molecular_weight[NUM_SPECIES];
+      realtype temp; 
+      realtype Jmat_tmp[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
+      /* EOS object in cpp */
+      EOS eos;
+
+      /* Offset in case several cells */
       int offset = tid * (NUM_SPECIES + 1); 
 
       /* MW CGS */
       CKWT(molecular_weight);
+
+      /* rho MKS */ 
+      realtype rho = 0.0;
+      for (int i = 0; i < NUM_SPECIES; i++){
+          rho = rho + ydata[offset + i];
+      }
+
       /* temp */
       temp = ydata[offset + NUM_SPECIES];
+
+      /* Yks */
       for (int i = 0; i < NUM_SPECIES; i++){
-          activity[i] = ydata[offset + i]/(molecular_weight[i]);
+          massfrac[i] = ydata[offset + i] / rho;
       }
-      /* NRG CGS */
+
+      /* Jac */
       int consP;
-      if (iE_Creact == 1) {
+      if (data_wk->iE_Creact == 1) {
 	  consP = 0;
-          DWDOT(Jmat_tmp, activity, &temp, &consP);
       } else {
           consP = 1;
-          DWDOT(Jmat_tmp, activity, &temp, &consP);
       }
+      eos.eos_RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
       /* fill the sunMat */
       for (int k = 0; k < NUM_SPECIES; k++){
 	  J_col_k = SM_COLUMN_D(J,offset + k);
@@ -513,10 +544,10 @@ static int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
 
   /* Make local copies of pointers to input data (big M) */
-  realtype *ydata  = N_VGetArrayPointer(u);
+  realtype *ydata           = N_VGetArrayPointer(u);
   sunindextype *colptrs_tmp = SUNSparseMatrix_IndexPointers(J);
   sunindextype *rowvals_tmp = SUNSparseMatrix_IndexValues(J);
-  realtype *data = SUNSparseMatrix_Data(J);
+  realtype *Jdata           = SUNSparseMatrix_Data(J);
 
   /* Make local copies of pointers in user_data (cell M)*/
   UserData data_wk;
@@ -532,34 +563,44 @@ static int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
   }
   /* Fixed colPtrs */
   colptrs_tmp[0] = data_wk->colPtrs[0][0];
-  for (int i=0;i<NCELLS*(NUM_SPECIES + 1);i++) {
+  for (int i=0;i<data_wk->ncells*(NUM_SPECIES + 1);i++) {
       colptrs_tmp[i+1] = data_wk->colPtrs[0][i+1];
   }
 
   /* Temp vectors */
   realtype temp_save_lcl, temp;
-  realtype activity[NUM_SPECIES];
+  realtype massfrac[NUM_SPECIES];
   realtype Jmat_tmp[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
+  /* EOS object in cpp */
+  EOS eos;
+  /* Idx for sparsity */
   int tid, offset, nbVals, idx;
+  /* Save Jac from cell to cell if more than one */
   temp_save_lcl = 0.0;
-  for (tid = 0; tid < NCELLS; tid ++) {
+  for (tid = 0; tid < data_wk->ncells; tid ++) {
+      /* Offset in case several cells */
       offset = tid * (NUM_SPECIES + 1); 
+      /* rho MKS */ 
+      realtype rho = 0.0;
+      for (int i = 0; i < NUM_SPECIES; i++){
+          rho = rho + ydata[offset + i];
+      }
+      /* Yks */
+      for (int i = 0; i < NUM_SPECIES; i++){
+          massfrac[i] = ydata[offset + i] / rho;
+      }
       /* temp */
       temp = ydata[offset + NUM_SPECIES];
       /* Do we recompute Jac ? */
       if (fabs(temp - temp_save_lcl) > 1.0) {
-          for (int i = 0; i < NUM_SPECIES; i++){
-              activity[i] = ydata[offset + i]/(molecular_weight[i]);
-          }
           /* NRG CGS */
           int consP;
-          if (iE_Creact == 1) {
+          if (data_wk->iE_Creact == 1) {
               consP = 0;
-              DWDOT(Jmat_tmp, activity, &temp, &consP);
           } else {
               consP = 1;
-              DWDOT(Jmat_tmp, activity, &temp, &consP);
           }
+          eos.eos_RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
 	  temp_save_lcl = temp;
 	  /* rescale */
           for (int i = 0; i < NUM_SPECIES; i++) {
@@ -577,7 +618,7 @@ static int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 	  nbVals = data_wk->colPtrs[0][i]-data_wk->colPtrs[0][i - 1];
 	  for (int j = 0; j < nbVals; j++) {
 	          idx = data_wk->rowVals[0][ data_wk->colPtrs[0][i - 1] + j ];
-	              data[ data_wk->colPtrs[0][offset + i - 1] + j ] = Jmat_tmp[(i - 1) * (NUM_SPECIES + 1) + idx];
+	              Jdata[ data_wk->colPtrs[0][offset + i - 1] + j ] = Jmat_tmp[(i - 1) * (NUM_SPECIES + 1) + idx];
 	  }
       }
   }
@@ -599,7 +640,7 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
   Jvdata = N_VGetArrayPointer(Jv);
 
   int tid;
-  for (tid = 0; tid < NCELLS; tid ++) {
+  for (tid = 0; tid < data->ncells; tid ++) {
 	realtype temp;
 	realtype activity[NUM_SPECIES], molecular_weight[NUM_SPECIES];
 	realtype J[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
@@ -660,68 +701,74 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
 static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok, 
 		booleantype *jcurPtr, realtype gamma, void *user_data)
 {
+  /* Make local copies of pointers to input data (big M) */
+  realtype *udata   = N_VGetArrayPointer(u);
+  /* Make local copies of pointers in user_data (cell M)*/
+  UserData data_wk;
+  data_wk = (UserData) user_data;   
+  /* Tmp array */
   int ok,tid;
 
   /* MW CGS */
   realtype molecular_weight[NUM_SPECIES];
   CKWT(molecular_weight);
 
-  /* Formalism */
-  int consP;
-  if (iE_Creact == 1) { 
-       consP = 0;
-  } else {
-       consP = 1;
-  }
-
-  /* Make local copies of pointers in user_data, and of pointer to u's data */
-  UserData data_wk;
-  data_wk = (UserData) user_data;   
-  realtype **(**Jbd);
-  Jbd = (data_wk->Jbd);
-  realtype *udata;
-  udata = N_VGetArrayPointer(u);
-
+  /* Check if Jac is stale */
   if (jok) {
         /* jok = SUNTRUE: Copy Jbd to P */
         *jcurPtr = SUNFALSE;
   } else {
         /* Temp vectors */
         realtype temp, temp_save_lcl;
-        realtype Jmat[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
-        realtype activity[NUM_SPECIES];
+        realtype activity[NUM_SPECIES], massfrac[NUM_SPECIES];
+        /* EOS object in cpp */
+        EOS eos;
+        /* Idx for sparsity */
 	int offset,nbVals,idx;
+        /* Save Jac from cell to cell if more than one */
         temp_save_lcl = 0.0;
-        for (tid = 0; tid < NCELLS; tid ++) {
+        for (tid = 0; tid < data_wk->ncells; tid ++) {
+            /* Offset in case several cells */
             offset = tid * (NUM_SPECIES + 1); 
+            /* rho MKS */ 
+            realtype rho = 0.0;
+            for (int i = 0; i < NUM_SPECIES; i++){
+                rho = rho + udata[offset + i];
+            }
+            /* Yks */
+            for (int i = 0; i < NUM_SPECIES; i++){
+                massfrac[i] = udata[offset + i] / rho;
+            }
             /* temp */
             temp = udata[offset + NUM_SPECIES];
+            /* Activities */
+	    eos.eos_RTY2C(rho, temp, massfrac, activity);
             /* Do we recompute Jac ? */
             if (fabs(temp - temp_save_lcl) > 1.0) {
-                for (int i = 0; i < NUM_SPECIES; i++){
-		    activity[i] = udata[offset + i]/(molecular_weight[i]);
+                /* Formalism */
+                int consP;
+                if (data_wk->iE_Creact == 1) {
+                    consP = 0;
+                } else {
+                    consP = 1;
                 }
-                DWDOT_PRECOND(Jmat, activity, &temp, &consP);
-
-                /* Compute Jacobian.  Load into P. */
-                denseScale(0.0, Jbd[tid][tid], NUM_SPECIES+1, NUM_SPECIES+1);
+                DWDOT_PRECOND(data_wk->JSPSmat[tid], activity, &temp, &consP);
 
                 for (int i = 0; i < NUM_SPECIES; i++) {
                     for (int k = 0; k < NUM_SPECIES; k++) {
-                        (Jbd[tid][tid])[k][i] = Jmat[k*(NUM_SPECIES+1) + i] * molecular_weight[i] / molecular_weight[k];
+                        (data_wk->JSPSmat[tid])[k*(NUM_SPECIES+1) + i] = (data_wk->JSPSmat[tid])[k*(NUM_SPECIES+1) + i] * molecular_weight[i] / molecular_weight[k];
                     }
-                    (Jbd[tid][tid])[i][NUM_SPECIES] = Jmat[i*(NUM_SPECIES+1) + NUM_SPECIES] / molecular_weight[i];
+                    (data_wk->JSPSmat[tid])[i*(NUM_SPECIES+1) + NUM_SPECIES] = (data_wk->JSPSmat[tid])[i*(NUM_SPECIES+1) + NUM_SPECIES] / molecular_weight[i];
                 }
                 for (int i = 0; i < NUM_SPECIES; i++) {
-                    (Jbd[tid][tid])[NUM_SPECIES][i] = Jmat[NUM_SPECIES*(NUM_SPECIES+1) + i] * molecular_weight[i];
+                    (data_wk->JSPSmat[tid])[NUM_SPECIES*(NUM_SPECIES+1) + i] = (data_wk->JSPSmat[tid])[NUM_SPECIES*(NUM_SPECIES+1) + i] * molecular_weight[i];
                 }
-	        (Jbd[tid][tid])[NUM_SPECIES][NUM_SPECIES] = Jmat[(NUM_SPECIES+1)*(NUM_SPECIES+1)-1];
 	        temp_save_lcl = temp;
 	    } else {
 		/* if not: copy the one from prev cell */
 		for (int i = 0; i < NUM_SPECIES+1; i++) {
 		    for (int k = 0; k < NUM_SPECIES+1; k++) {
-		        (Jbd[tid][tid])[i][k] = (Jbd[tid-1][tid-1])[i][k];
+		        (data_wk->JSPSmat[tid])[k*(NUM_SPECIES+1) + i] = (data_wk->JSPSmat[tid-1])[k*(NUM_SPECIES+1) + i];
 		    }
 		}
 	    }
@@ -740,79 +787,89 @@ static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
     	  int idx = data_wk->rowVals[0][ data_wk->colPtrs[0][i-1] + j ];
           /* Scale by -gamma */
           /* Add identity matrix */
-          for (tid = 0; tid < NCELLS; tid ++) {
+          for (tid = 0; tid < data_wk->ncells; tid ++) {
     	      if (idx == (i-1)) {
-                  data_wk->Jdata[tid][ data_wk->colPtrs[tid][i-1] + j ] = 1.0 - gamma * (Jbd[tid][tid])[ i-1 ][ idx ]; 
+                  data_wk->Jdata[tid][ data_wk->colPtrs[tid][i-1] + j ] = 1.0 - gamma * (data_wk->JSPSmat[tid])[ idx * (NUM_SPECIES+1) + idx]; 
     	      } else {
-                  data_wk->Jdata[tid][ data_wk->colPtrs[tid][i-1] + j ] = - gamma * (Jbd[tid][tid])[ i-1 ][ idx ]; 
+                  data_wk->Jdata[tid][ data_wk->colPtrs[tid][i-1] + j ] = - gamma * (data_wk->JSPSmat[tid])[ (i-1) * (NUM_SPECIES+1) + idx ]; 
     	      }
           }
       }
   }
   
-
-  if (!FirstTimePrecond) {
-      for (tid = 0; tid < NCELLS; tid ++) {
+  if (!(data_wk->FirstTimePrecond)) {
+      for (tid = 0; tid < data_wk->ncells; tid ++) {
           ok = klu_refactor(data_wk->colPtrs[tid], data_wk->rowVals[tid], data_wk->Jdata[tid], data_wk->Symbolic[tid], data_wk->Numeric[tid], &(data_wk->Common[tid]));
       }
   } else {
-      for (tid = 0; tid < NCELLS; tid ++) {
+      for (tid = 0; tid < data_wk->ncells; tid ++) {
           data_wk->Numeric[tid] = klu_factor(data_wk->colPtrs[tid], data_wk->rowVals[tid], data_wk->Jdata[tid], data_wk->Symbolic[tid], &(data_wk->Common[tid])) ; 
       }
-      FirstTimePrecond = false;
+      data_wk->FirstTimePrecond = false;
   }
 
   return(0);
 }
-#endif
 
-
+#else 
 /* Preconditioner setup routine for GMRES solver when no sparse mode is activated 
  * Generate and preprocess P
 */
 static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok, 
 		booleantype *jcurPtr, realtype gamma, void *user_data)
 {
+  /* Make local copies of pointers to input data (big M) */
+  realtype *udata = N_VGetArrayPointer(u);
+
+  /* Make local copies of pointers in user_data */
   UserData data_wk;
+  data_wk = (UserData) user_data;   
   realtype **(**P), **(**Jbd);
-  sunindextype *(**pivot), ierr;
-  realtype *udata; //, **a, **j;
-  realtype temp;
+  sunindextype *(**pivot);
+  P     = (data_wk->P);
+  Jbd   = (data_wk->Jbd);
+  pivot = (data_wk->pivot);
+
+  /* Tmp arrays */
+  realtype molecular_weight[NUM_SPECIES];
   realtype Jmat[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
-  realtype activity[NUM_SPECIES];
+  realtype massfrac[NUM_SPECIES], activity[NUM_SPECIES];
+  realtype temp;
+  sunindextype ierr;
 
   /* MW CGS */
-  realtype molecular_weight[NUM_SPECIES];
   CKWT(molecular_weight);
-
-  /* Make local copies of pointers in user_data, and of pointer to u's data */
-  data_wk = (UserData) user_data;   
-  P = (data_wk->P);
-  Jbd = (data_wk->Jbd);
-  pivot = (data_wk->pivot);
-  udata = N_VGetArrayPointer(u);
 
   if (jok) {
       /* jok = SUNTRUE: Copy Jbd to P */
       denseCopy(Jbd[0][0], P[0][0], NUM_SPECIES+1, NUM_SPECIES+1);
       *jcurPtr = SUNFALSE;
   } else {
+      /* EOS object in cpp */   
+      EOS eos;
+      /* rho MKS */ 
+      realtype rho = 0.0;
+      for (int i = 0; i < NUM_SPECIES; i++){
+          rho = rho + udata[i];
+      }
+      /* Yks */
+      for (int i = 0; i < NUM_SPECIES; i++){
+          massfrac[i] = udata[i] / rho;
+      }
+      /* temp */
+      temp = udata[NUM_SPECIES];
+      /* Activities */
+      eos.eos_RTY2C(rho, temp, massfrac, activity);
       /* jok = SUNFALSE: Generate Jbd from scratch and copy to P */
       /* Make local copies of problem variables, for efficiency. */
-      for (int i = 0; i < NUM_SPECIES; i++){
-          activity[i] = udata[i]/(molecular_weight[i]);
-      }
-      temp = udata[NUM_SPECIES];
-
-      // C in mol/cm3
       int consP;
-      if (iE_Creact == 1) { 
+      if (data_wk->iE_Creact == 1) { 
           consP = 0;
       } else {
           consP = 1;
       }
       DWDOT_PRECOND(Jmat, activity, &temp, &consP);
-      //DWDOT(Jmat, activity, &temp, &consP);
+
       /* Compute Jacobian.  Load into P. */
       denseScale(0.0, Jbd[0][0], NUM_SPECIES+1, NUM_SPECIES+1);
       for (int i = 0; i < NUM_SPECIES; i++) {
@@ -842,6 +899,7 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
   
   return(0);
 }
+#endif
 
 
 #ifdef USE_KLU 
@@ -849,11 +907,12 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                   realtype gamma, realtype delta, int lr, void *user_data)
 {
+  /* Make local copies of pointers in user_data */
   UserData data_wk;
   data_wk = (UserData) user_data;
 
-  realtype *zdata;
-  zdata = N_VGetArrayPointer(z);
+  /* Make local copies of pointers to input data (big M) */
+  realtype *zdata = N_VGetArrayPointer(z);
 
   N_VScale(1.0, r, z);
 
@@ -861,7 +920,7 @@ static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vec
      in P and pivot data in pivot, and return the solution in z. */
   int tid, offset_beg, offset_end;
   realtype zdata_cell[NUM_SPECIES+1];
-  for (tid = 0; tid < NCELLS; tid ++) {
+  for (tid = 0; tid < data_wk->ncells; tid ++) {
       offset_beg = tid * (NUM_SPECIES + 1); 
       offset_end = (tid + 1) * (NUM_SPECIES + 1);
       std::memcpy(zdata_cell, zdata+offset_beg, (NUM_SPECIES+1)*sizeof(realtype));
@@ -871,62 +930,62 @@ static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vec
 
   return(0);
 }
-#endif
 
-
+#else
 /* PSolve for GMRES solver when no sparse mode is activated */
 static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                   realtype gamma, realtype delta, int lr, void *user_data)
 {
-  realtype **(**P);
-  sunindextype *(**pivot);
-  realtype *zdata, *v;
-  UserData data_wk;
+  /* Make local copies of pointers to input data (big M) */
+  realtype *zdata = N_VGetArrayPointer(z);
 
   /* Extract the P and pivot arrays from user_data. */
-
+  UserData data_wk;
   data_wk = (UserData) user_data;
-  P = data_wk->P;
+  realtype **(**P);
+  sunindextype *(**pivot);
+  P     = data_wk->P;
   pivot = data_wk->pivot;
-  zdata = N_VGetArrayPointer(z);
   
   N_VScale(1.0, r, z);
   
   /* Solve the block-diagonal system Pz = r using LU factors stored
      in P and pivot data in pivot, and return the solution in z. */
-  v = zdata;
+  realtype *v = zdata;
   denseGETRS(P[0][0], NUM_SPECIES+1, pivot[0][0], v);
 
   return(0);
 }
+#endif
 
 
 /* 
  * OTHERS
 */
 
-
 static void check_state(N_Vector yvec) 
 {
-  realtype *ydata;
-  ydata = N_VGetArrayPointer(yvec);
+  realtype *ydata = N_VGetArrayPointer(yvec);
 
-  actual_ok_to_react = true;
+  data->actual_ok_to_react = true;
 
-  double rho, Temp;
+  realtype Temp;
   int offset;
-  for (int tid = 0; tid < NCELLS; tid ++) {
-      rho = 0.0;
+  for (int tid = 0; tid < data->ncells; tid ++) {
+      /* Offset in case several cells */
       offset = tid * (NUM_SPECIES + 1); 
+      /* rho MKS */ 
+      realtype rho = 0.0;
       for (int k = 0; k < NUM_SPECIES; k ++) {
           rho =  rho + ydata[offset + k];
       }
+      /* temp */
       Temp = ydata[offset + NUM_SPECIES];
       if ((rho < 1.0e-10) || (rho > 1.e10)) {
-          actual_ok_to_react = false;
+          data->actual_ok_to_react = false;
       }
       if ((Temp < 200.0) || (Temp > 5000.0)) {
-          actual_ok_to_react = false; 
+          data->actual_ok_to_react = false; 
       }
   }
 
@@ -959,12 +1018,12 @@ static void PrintFinalStats(void *cvodeMem, realtype Temp)
   flag = CVodeGetCurrentTime(cvodeMem, &hcur);
   check_flag(&flag, "CVodeGetCurrentTime", 1);
 
-  if (iDense_Creact == 1){
+  if (data->iDense_Creact == 1){
       flag = CVDlsGetNumRhsEvals(cvodeMem, &nfeLS);
       check_flag(&flag, "CVDlsGetNumRhsEvals", 1);
       flag = CVDlsGetNumJacEvals(cvodeMem, &nje);
       check_flag(&flag, "CVDlsGetNumJacEvals", 1);
-  } else if (iDense_Creact == 99){
+  } else if (data->iDense_Creact == 99){
       flag = CVSpilsGetNumRhsEvals(cvode_mem, &nfeLS);
       check_flag(&flag, "CVSpilsGetNumRhsEvals", 1);
       flag = CVSpilsGetNumJtimesEvals(cvodeMem, &nje);
@@ -980,21 +1039,18 @@ static void PrintFinalStats(void *cvodeMem, realtype Temp)
       check_flag(&flag, "CVSpilsGetNumConvFails", 1);
   }
 
-  printf("-- Final Statistics --\n");
-  printf("NonLinear (Newton) related --\n");
-  printf("    DT(dt, dtcur), RHS, Iterations, ErrTestFails, LinSolvSetups = %f %-6ld(%14.6e %14.6e) %-6ld %-6ld %-6ld %-6ld \n",
-                    Temp, nst, hlast, hcur, nfe, nni, netfails, nsetups);
-  if (iDense_Creact == 1){
-      printf("Linear (Dense Direct Solve) related --\n");
-      printf("    FD RHS, NumJacEvals                           = %f %-6ld %-6ld \n", Temp, nfeLS, nje);
-  } else if (iDense_Creact == 99){
+  amrex::Print() << "-- Final Statistics --\n";
+  amrex::Print() << "NonLinear (Newton) related --\n";
+  amrex::Print() << Temp << " |DT(dt, dtcur) = " << nst << "(" << hlast << "," << hcur << "), RHS = " << nfe << ", Iterations = " << nni << ", ErrTestFails = " << netfails << ", LinSolvSetups = " << nsetups << "\n";
+  if (data->iDense_Creact == 1){
+	  amrex::Print() <<"Linear (Dense Direct Solve) related --\n";
+	  amrex::Print()<<Temp << " |FD RHS = "<< nfeLS<<", NumJacEvals = "<< nje <<" \n";
+  } else if (data->iDense_Creact == 99){
 	  // LinSolvSetups actually reflects the number of time the LinSolver has been called. 
 	  // NonLinIterations can be taken without the need for LinItes
-      printf("Linear (Krylov GMRES Solve) related --\n");
-      printf("    RHSeval, jtvEval, NumPrecEvals, NumPrecSolves = %f %-6ld %-6ld %-6ld %-6ld \n", 
-            	      Temp, nfeLS, nje, npe, nps);
-      printf("    Iterations, ConvFails = %f %-6ld %-6ld \n", 
-            	      Temp, nli, ncfl );
+      amrex::Print() << "Linear (Krylov GMRES Solve) related --\n";
+      amrex::Print() << Temp << " |RHSeval = "<< nfeLS << ", jtvEval = "<<nje << ", NumPrecEvals = "<< npe << ", NumPrecSolves = "<< nps <<"\n"; 
+      amrex::Print() <<Temp << " |Iterations = "<< nli <<", ConvFails = "<< ncfl<<"\n"; 
   }
 }
 
@@ -1036,74 +1092,108 @@ static int check_flag(void *flagvalue, const char *funcname, int opt)
 
 
 /* Alloc Data for CVODE */
-static UserData AllocUserData(void)
+static UserData AllocUserData(int iE, int num_cells)
 {
+  /* Make local copies of pointers in user_data */
   UserData data_wk;
-
   data_wk = (UserData) malloc(sizeof *data_wk);
+#ifdef _OPENMP
+  int omp_thread;
 
-  if (iDense_Creact == 99) {
+  /* omp thread if applicable */
+  omp_thread = omp_get_thread_num(); 
+#endif
+
+  /* ParmParse from the inputs file */
+  /* TODO change that in the future */ 
+  amrex::ParmParse pp("ns");
+  pp.query("cvode_iJac",data_wk->iJac_Creact);
+  pp.query("cvode_iDense", data_wk->iDense_Creact);
+  (data_wk->iE_Creact)      = iE;
+
+  (data_wk->ncells)                    = num_cells;
+
+  (data_wk->iverbose)                  = 1;
+
+  (data_wk->FirstTimePrecond)          = true;
+  (data_wk->reactor_cvode_initialized) = false;
+  (data_wk->actual_ok_to_react)        = true; 
+
+#ifndef USE_KLU
+  if (data_wk->iDense_Creact == 99) {
       /* Precond data */
-      printf("Alloc stuff for Precond \n");
-      (data_wk->P) = new realtype***[NCELLS];
-      (data_wk->Jbd) = new realtype***[NCELLS];
-      (data_wk->pivot) = new sunindextype**[NCELLS];
-      for(int i = 0; i < NCELLS; ++i) {
-              (data_wk->P)[i] = new realtype**[NCELLS];
-              (data_wk->Jbd)[i] = new realtype**[NCELLS];
-              (data_wk->pivot)[i] = new sunindextype*[NCELLS];
+      (data_wk->P)     = new realtype***[data_wk->ncells];
+      (data_wk->Jbd)   = new realtype***[data_wk->ncells];
+      (data_wk->pivot) = new sunindextype**[data_wk->ncells];
+      for(int i = 0; i < data_wk->ncells; ++i) {
+              (data_wk->P)[i]     = new realtype**[data_wk->ncells];
+              (data_wk->Jbd)[i]   = new realtype**[data_wk->ncells];
+              (data_wk->pivot)[i] = new sunindextype*[data_wk->ncells];
       }
 
-      for(int i = 0; i < NCELLS; ++i) {
-          (data_wk->P)[i][i] = newDenseMat(NUM_SPECIES+1, NUM_SPECIES+1);
-          (data_wk->Jbd)[i][i] = newDenseMat(NUM_SPECIES+1, NUM_SPECIES+1);
+      for(int i = 0; i < data_wk->ncells; ++i) {
+          (data_wk->P)[i][i]     = newDenseMat(NUM_SPECIES+1, NUM_SPECIES+1);
+          (data_wk->Jbd)[i][i]   = newDenseMat(NUM_SPECIES+1, NUM_SPECIES+1);
           (data_wk->pivot)[i][i] = newIndexArray(NUM_SPECIES+1);
       }
   } 
 
-#ifdef USE_KLU 
+#else
   /* Sparse Direct and Sparse (It) Precond data */
-  data_wk->colPtrs = new int*[NCELLS];
-  data_wk->rowVals = new int*[NCELLS];
-  data_wk->Jdata = new realtype*[NCELLS];
+  data_wk->colPtrs = new int*[data_wk->ncells];
+  data_wk->rowVals = new int*[data_wk->ncells];
+  data_wk->Jdata   = new realtype*[data_wk->ncells];
 
   int HP;
-  if (iE_Creact == 1) {
+  if (data_wk->iE_Creact == 1) {
       HP = 0;
   } else {
       HP = 1;
   }
-  if (iDense_Creact == 5) {
+  if (data_wk->iDense_Creact == 5) {
       /* Sparse Matrix for Direct Sparse KLU solver */
       (data_wk->PS) = new SUNMatrix[1];
-      SPARSITY_INFO(&(data_wk->NNZ),&HP,NCELLS);
-      printf("--> SPARSE solver -- non zero entries %d represents %f %% fill pattern.\n", data_wk->NNZ, data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1) * NCELLS * NCELLS) *100.0);
-      //for(int i = 0; i < NCELLS; ++i) {
-          (data_wk->PS)[0] = SUNSparseMatrix((NUM_SPECIES+1)*NCELLS, (NUM_SPECIES+1)*NCELLS, data_wk->NNZ, CSC_MAT);
-          data_wk->colPtrs[0] = (int*) SUNSparseMatrix_IndexPointers((data_wk->PS)[0]); 
-          data_wk->rowVals[0] = (int*) SUNSparseMatrix_IndexValues((data_wk->PS)[0]);
-          data_wk->Jdata[0] = SUNSparseMatrix_Data((data_wk->PS)[0]);
-          SPARSITY_PREPROC(data_wk->rowVals[0],data_wk->colPtrs[0],&HP,NCELLS);
-      //}
+      SPARSITY_INFO(&(data_wk->NNZ),&HP,data_wk->ncells);
+#ifdef _OPENMP
+      if ((data_wk->iverbose > 0) && (omp_thread == 0)) {
+#else
+      if (data_wk->iverbose > 0) {
+#endif
+          amrex::Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1) * (data_wk->ncells) * (data_wk->ncells)) *100.0 <<" % fill-in pattern\n";
+      }
+      (data_wk->PS)[0] = SUNSparseMatrix((NUM_SPECIES+1)*data_wk->ncells, (NUM_SPECIES+1)*data_wk->ncells, data_wk->NNZ, CSC_MAT);
+      data_wk->colPtrs[0] = (int*) SUNSparseMatrix_IndexPointers((data_wk->PS)[0]); 
+      data_wk->rowVals[0] = (int*) SUNSparseMatrix_IndexValues((data_wk->PS)[0]);
+      data_wk->Jdata[0] = SUNSparseMatrix_Data((data_wk->PS)[0]);
+      SPARSITY_PREPROC(data_wk->rowVals[0],data_wk->colPtrs[0],&HP,data_wk->ncells);
 
-  } else if (iDense_Creact == 99) {
+  } else if (data_wk->iDense_Creact == 99) {
       /* KLU internal storage */
-      data_wk->Common = new klu_common[NCELLS];
-      data_wk->Symbolic = new klu_symbolic*[NCELLS];
-      data_wk->Numeric = new klu_numeric*[NCELLS];
+      data_wk->Common   = new klu_common[data_wk->ncells];
+      data_wk->Symbolic = new klu_symbolic*[data_wk->ncells];
+      data_wk->Numeric  = new klu_numeric*[data_wk->ncells];
       /* Sparse Matrices for It Sparse KLU block-solve */
-      data_wk->PS = new SUNMatrix[NCELLS];
+      data_wk->PS = new SUNMatrix[data_wk->ncells];
       /* Nb of non zero elements*/
       SPARSITY_INFO_PRECOND(&(data_wk->NNZ),&HP);
-      printf("--> SPARSE Preconditioner -- non zero entries %d represents %f %% fill pattern.\n", data_wk->NNZ, data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0);
-      int indx[data_wk->NNZ];
-      for(int i = 0; i < NCELLS; ++i) {
-          (data_wk->PS)[i] = SUNSparseMatrix(NUM_SPECIES+1, NUM_SPECIES+1, data_wk->NNZ, CSC_MAT);
+#ifdef _OPENMP
+      if ((data_wk->iverbose > 0) && (omp_thread == 0) && (data_wk->iJac_Creact != 1)) {
+#else
+      if ((data_wk->iverbose > 0) && (data_wk->iJac_Creact != 1)) {
+#endif
+          amrex::Print() << "--> SPARSE Preconditioner -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+      }
+      /* Not used yet. TODO use to fetch sparse Mat */
+      data_wk->indx      = new int[data_wk->NNZ];
+      data_wk->JSPSmat   = new realtype*[data_wk->ncells];
+      for(int i = 0; i < data_wk->ncells; ++i) {
+          (data_wk->PS)[i]    = SUNSparseMatrix(NUM_SPECIES+1, NUM_SPECIES+1, data_wk->NNZ, CSC_MAT);
           data_wk->colPtrs[i] = (int*) SUNSparseMatrix_IndexPointers((data_wk->PS)[i]); 
           data_wk->rowVals[i] = (int*) SUNSparseMatrix_IndexValues((data_wk->PS)[i]);
-          data_wk->Jdata[i] = SUNSparseMatrix_Data((data_wk->PS)[i]);
-	  /* indx not used */
-          SPARSITY_PREPROC_PRECOND(data_wk->rowVals[i],data_wk->colPtrs[i],indx,&HP);
+          data_wk->Jdata[i]   = SUNSparseMatrix_Data((data_wk->PS)[i]);
+	  /* indx not used YET */
+          SPARSITY_PREPROC_PRECOND(data_wk->rowVals[i],data_wk->colPtrs[i],data_wk->indx,&HP);
+          data_wk->JSPSmat[i] = new realtype[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
           klu_defaults (&(data_wk->Common[i]));
           //data_wk->Common.btf = 0;
           //(data_wk->Common[i]).maxwork = 15;
@@ -1122,22 +1212,17 @@ void reactor_close(){
 
   CVodeFree(&cvode_mem);
   SUNLinSolFree(LS);
-  if (iDense_Creact == 1) {
+
+  if (data->iDense_Creact == 1) {
     SUNMatDestroy(A);
   }
+
   N_VDestroy(y); 
   FreeUserData(data);
 
-  if (iE_Creact == 1) { 
-    free(rhoe_init);
-    free(rhoesrc_ext);
-  } else {
-    free(rhoh_init);
-    free(rhohsrc_ext);
-  }
+  free(rhoX_init);
+  free(rhoXsrc_ext);
   free(rYsrc);
-
-  reactor_cvode_initialized = false;
 }
 
 
@@ -1145,13 +1230,20 @@ void reactor_close(){
  * Probably not complete, how about the stuff allocated in KLU mode ? */
 static void FreeUserData(UserData data_wk)
 {
-  if (iDense_Creact == 99) {
-      for(int i = 0; i < NCELLS; ++i) {
+#ifndef USE_KLU
+  if (data_wk->iDense_Creact == 99) {
+      for(int i = 0; i < data_wk->ncells; ++i) {
           destroyMat((data_wk->P)[i][i]);
           destroyMat((data_wk->Jbd)[i][i]);
           destroyArray((data_wk->pivot)[i][i]);
       }
   }
+#else
+  free(data_wk->colPtrs);
+  free(data_wk->rowVals);
+  free(data_wk->Jdata);
+  // Destroy data_wk->PS ?
+#endif
   free(data_wk);
 } 
 
