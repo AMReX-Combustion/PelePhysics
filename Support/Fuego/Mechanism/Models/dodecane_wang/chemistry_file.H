@@ -29,8 +29,8 @@ void comp_Kc(double *  tc, double invT, double *  Kc);
 #endif
 AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  speciesConc, double T);
 AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);
-void CKINIT();
-void CKFINALIZE();
+AMREX_GPU_HOST_DEVICE void CKINIT();
+AMREX_GPU_HOST_DEVICE void CKFINALIZE();
 #ifndef AMREX_USE_CUDA
 void GET_REACTION_MAP(int *  rmap);
 void SetAllDefaults();
@@ -103,6 +103,7 @@ void CKQXP(double *  P, double *  T, double *  x, double *  qdot);
 void CKQYR(double *  rho, double *  T, double *  y, double *  qdot);
 void CKQXR(double *  rho, double *  T, double *  x, double *  qdot);
 void CKNU(int * kdim, int * nuki);
+void CKINU(int * i, int * nspec, int * ki, int * nu);
 void CKNCF(int * mdim, int * ncf);
 void CKABE(double *  a, double *  b, double *  e );
 void CKEQC(double *  T, double *  C , double *  eqcon );
@@ -190,6 +191,8 @@ namespace thermo
     extern double activation_units[289], prefactor_units[289], phase_units[289];
     extern int is_PD[289], troe_len[289], sri_len[289], nTB[289], *TBid[289];
     extern double *TB[289];
+    extern std::vector<std::vector<int>> kiv; 
+    extern std::vector<std::vector<int>> nuv; 
 
     extern double fwd_A_DEF[289], fwd_beta_DEF[289], fwd_Ea_DEF[289];
     extern double low_A_DEF[289], low_beta_DEF[289], low_Ea_DEF[289];
