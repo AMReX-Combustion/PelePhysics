@@ -3,21 +3,23 @@ module chemistry_module
   use amrex_fort_module, only : amrex_real
   use fuego_chemistry
 
+#include "mechanism.h"
+
   implicit none
 
-  integer, save :: nelements   ! number of elements
-  integer, save :: nspecies    ! number of species
-  integer, save :: nreactions  ! number of reactions
+  integer, parameter :: nelements   = NUM_ELEMENTS  ! number of elements
+  integer, parameter :: nspecies    = NUM_SPECIES   ! number of species
+  integer, parameter :: nreactions  = NUM_REACTIONS ! number of reactions
 
   logical, save :: chemistry_initialized = .false.
 
   integer, parameter :: L_elem_name = 3 ! Each element name has at most 3 characters
-  character*(L_elem_name), allocatable, save :: elem_names(:)
+  character*(L_elem_name), save :: elem_names(nelements)
 
   integer, parameter :: L_spec_name = 16 ! Each species name has at most 8 characters
-  character*(L_spec_name), allocatable, save :: spec_names(:)
+  character*(L_spec_name), save :: spec_names(nspecies)
 
-  real(amrex_real), allocatable, save :: molecular_weight(:), inv_mwt(:)
+  real(amrex_real), save :: molecular_weight(nspecies), inv_mwt(nspecies)
 
   real(amrex_real), save :: Ru, Ruc, Patm, rwrk
   integer, save          :: iwrk
@@ -27,17 +29,9 @@ contains
   subroutine chemistry_init()
     integer :: nfit, i, ic, ii
     real(amrex_real) :: T0
-    integer, allocatable :: names(:)
+    integer :: names(nspecies*L_spec_name)
 
     call ckinit()
-    call ckindx(nelements, nspecies, nreactions, nfit)
-
-    allocate(elem_names(nelements))
-    allocate(spec_names(nspecies))
-    allocate(molecular_weight(nspecies))
-    allocate(inv_mwt(nspecies))
-
-    allocate(names(nspecies*L_spec_name))  
 
     call cksyme(names, L_elem_name) 
 
@@ -59,8 +53,6 @@ contains
        end do
     end do
 
-    deallocate(names)
-
     call ckwt(molecular_weight)
     inv_mwt = 1.d0 / molecular_weight
 
@@ -72,7 +64,6 @@ contains
 
 
   subroutine chemistry_close()
-    deallocate(elem_names,spec_names,molecular_weight,inv_mwt)
     call ckfinalize()
   end subroutine chemistry_close
 
