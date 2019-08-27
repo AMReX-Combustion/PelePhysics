@@ -1,7 +1,7 @@
 PRECISION  = DOUBLE
 PROFILE    = FALSE
 
-DEBUG      = FALSE
+DEBUG      = TRUE
 
 DIM        = 2
 
@@ -9,7 +9,8 @@ COMP	   = gcc
 FCOMP	   = gfortran
 
 USE_MPI    = FALSE
-USE_OMP    = FALSE
+USE_MPI    = TRUE
+USE_OMP    = TRUE
 
 FUEGO_GAS  = TRUE
 
@@ -20,8 +21,11 @@ PELE_PHYSICS_HOME    := ../../..
 # this flag activates the subcycling mode in the D/Cvode routines
 DEFINES  += -DMOD_REACTOR
 
+# use CVODE
+CVODE_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
 USE_SUNDIALS_3x4x = TRUE
 
+SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
 USE_KLU = TRUE
 
 #######################

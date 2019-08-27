@@ -75,23 +75,19 @@ main (int   argc,
       //   1 = Internal energy
       //   anything else = enthalpy (PeleLM restart)
          
-      // nb of cells to integrate
-      //pp.query("cvode_ncells",cvode_ncells);
-
       // Get name of fuel 
       pp.get("fuel_name", fuel_name);
 
     }
 
-
-    if (fuel_name != FUEL_NAME) {
-        amrex::Print() << fuel_name << "!=" <<FUEL_NAME << std::endl;
-	amrex::Abort("fuel_name is inconsistent with chosen mechanism");
-    } else {
+    //if (fuel_name != FUEL_NAME) {
+    //    amrex::Print() << fuel_name << "!=" <<FUEL_NAME << std::endl;
+    //    amrex::Abort("fuel_name is inconsistent with chosen mechanism");
+    //} else {
         amrex::Print() << "Fuel: ";
             amrex::Print() << fuel_name << ", Oxy: O2";
         amrex::Print() << std::endl;
-    }
+    //}
 
     amrex::Print() << "Integration method: ";
         amrex::Print() << "BDF (stiff)";
@@ -111,9 +107,15 @@ main (int   argc,
     std::vector<int> probin_file_name(probin_file_length);
     for (int i = 0; i < probin_file_length; i++)
 	    probin_file_name[i] = probin_file[i];
-    fuel_idx  = FUEL_ID;
-    oxy_idx   = OXY_ID;
-    bath_idx  = BATH_ID;
+    if (fuel_name == "H2") {
+        fuel_idx  = H2_ID;
+    } else if (fuel_name == "CH4") {
+        fuel_idx  = CH4_ID;
+    } else if (fuel_name == "NC12H26") {
+        fuel_idx  = NC12H26_ID;
+    }
+    oxy_idx   = O2_ID;
+    bath_idx  = N2_ID;
     extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx,&cvode_iE);
 
     /* Initialize D/CVODE reactor */
@@ -164,13 +166,11 @@ main (int   argc,
 
     IntVect tilesize(D_DECL(10240,8,32));
 
-    //int count_mf = 0;
     /* INITIALIZE DATA */
 #ifdef _OPENMP
 #pragma omp parallel 
 #endif
     for (MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi ){
-        //count_mf = count_mf + 1;	
         const Box& box = mfi.tilebox();
         initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
                		BL_TO_FORTRAN_N_3D(mf[mfi],0),
@@ -178,24 +178,21 @@ main (int   argc,
 		        BL_TO_FORTRAN_N_3D(mfE[mfi],0),
 		        BL_TO_FORTRAN_N_3D(rY_source_energy_ext[mfi],0),
 			&(dx[0]), &(plo[0]), &(phi[0]));
-        //amrex::Print() << "Treating box: " << count_mf<< "\n";
     }
 
     timer_init = amrex::second() - timer_init; 
 
     timer_print = amrex::second();
 
+    ParmParse ppa("amr");
+    ppa.query("plot_file",pltfile);
     std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
     // Specs
     PlotFileFromMF(mf,outfile);
 
     timer_print = amrex::second() - timer_print;
-
-
      
-    ParmParse ppa("amr");
-    ppa.query("plot_file",pltfile);
-
+    /* EVALUATE */
     amrex::Print() << " \n STARTING THE ADVANCE \n";
 
     timer_advance = amrex::second();
@@ -208,7 +205,6 @@ main (int   argc,
 	/* Prints to follow the computation */
         /* ADVANCE */
         Real time = 0.0;
-        int reInit = 1;
         Real dt_incr   = dt/ndt;
         // not used anyway
         double pressure = 1013250.0;
@@ -268,14 +264,18 @@ main (int   argc,
 		    if (nc == cvode_ncells) {
 			time = 0.0;
 			dt_incr =  dt/ndt;
-                        reInit = 1;
 			for (int ii = 0; ii < ndt; ++ii) {
+#ifdef AMREX_USE_SUNDIALS_3x4x
 	                    fc(i,j,k) = react(tmp_vect, tmp_src_vect,
 		                tmp_vect_energy, tmp_src_vect_energy,
-		                &pressure, &dt_incr, &time,
-				&reInit);
+		                &dt_incr, &time);
+#else
+	                    fc(i,j,k) = react(tmp_vect, tmp_src_vect,
+		                tmp_vect_energy, tmp_src_vect_energy,
+				pressure,
+		                &dt_incr, &time);
+#endif
 		            dt_incr =  dt/ndt;
-			    reInit = 1;
 			    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 			}
 		        nc = 0;
