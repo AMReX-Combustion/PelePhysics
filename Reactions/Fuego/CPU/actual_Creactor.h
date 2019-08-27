@@ -13,7 +13,7 @@
 #include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype      */
 #include <sundials/sundials_math.h>
 
-#ifdef USE_KLU 
+#ifdef USE_KLU_PP 
 #include "klu.h"
 #include <sunlinsol/sunlinsol_klu.h>
 #include <sunmatrix/sunmatrix_sparse.h>
@@ -35,7 +35,7 @@ typedef struct {
       int iDense_Creact;
       int iJac_Creact;
       int iE_Creact;
-#ifdef USE_KLU 
+#ifdef USE_KLU_PP 
       int NNZ; 
       /* Sparse Matrices for KLU-related solve */
       SUNMatrix *PS;
@@ -67,13 +67,13 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void *user_data);
 static int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
-#ifdef USE_KLU 
+#ifdef USE_KLU_PP 
 static int cJac_KLU(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 #endif
 
 
-#ifdef USE_KLU 
+#ifdef USE_KLU_PP 
 static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
 		N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);
 static int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,

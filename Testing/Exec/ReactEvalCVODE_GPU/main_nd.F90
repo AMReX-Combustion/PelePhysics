@@ -139,7 +139,7 @@ contains
              rhoY_src(i,j,k,1:nspec) = 0.0d0
              if (iE_main == 1) then
                  ! all in e
-#ifdef AMREX_USE_SUNDIALS_3x4x
+#ifdef USE_SUNDIALS_PP
                  rhoE(i,j,k,1) = eos_state % e * eos_state % rho
 #else
                  rhoE(i,j,k,1) = eos_state % e

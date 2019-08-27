@@ -125,7 +125,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    if(check_flag(&flag, "CVDlsSetLinearSolver", 1)) return(1);
 
 	} else if (data->iDense_Creact == 5) {
-#ifdef USE_KLU 
+#ifdef USE_KLU_PP 
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
@@ -185,7 +185,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 #endif
 		    amrex::Print() << "    Without Analytical J/Preconditioner\n";
 	    }
-#ifdef USE_KLU 
+#ifdef USE_KLU_PP 
 	    if (data->iDense_Creact == 5) {
 		if (data->iverbose > 0) {
 	            amrex::Abort("A Sparse Solver should have an Analytical J");
@@ -197,7 +197,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	        /* Set the JAcobian-times-vector function */
 	        flag = CVSpilsSetJacTimes(cvode_mem, NULL, NULL);
 	        if(check_flag(&flag, "CVSpilsSetJacTimes", 1)) return(1);
-#ifdef USE_KLU 
+#ifdef USE_KLU_PP 
 #ifdef _OPENMP
                 if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
@@ -220,7 +220,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	        flag = CVSpilsSetPreconditioner(cvode_mem, Precond, PSolve);
 	        if(check_flag(&flag, "CVSpilsSetPreconditioner", 1)) return(1);
 #endif
-#ifdef USE_KLU 
+#ifdef USE_KLU_PP 
 	    } else if (data->iDense_Creact == 5){
 #ifdef _OPENMP
                 if ((data->iverbose > 0) && (omp_thread == 0)) {
@@ -536,7 +536,7 @@ static int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 }
 
 
-#ifdef USE_KLU 
+#ifdef USE_KLU_PP 
 /* Analytical SPARSE Jacobian evaluation */
 static int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
@@ -692,7 +692,7 @@ static int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
  */
 
 
-#ifdef USE_KLU 
+#ifdef USE_KLU_PP 
 /* Preconditioner setup routine for GMRES solver when KLU sparse mode is activated 
  * Generate and preprocess P
 */
@@ -898,7 +898,7 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 #endif
 
 
-#ifdef USE_KLU 
+#ifdef USE_KLU_PP 
 /* PSolve for GMRES solver when KLU sparse mode is activated */
 static int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                   realtype gamma, realtype delta, int lr, void *user_data)
@@ -1115,7 +1115,7 @@ static UserData AllocUserData(int iE, int num_cells)
   (data_wk->reactor_cvode_initialized) = false;
   (data_wk->actual_ok_to_react)        = true; 
 
-#ifndef USE_KLU
+#ifndef USE_KLU_PP
   if (data_wk->iDense_Creact == 99) {
       /* Precond data */
       (data_wk->P)     = new realtype***[data_wk->ncells];
@@ -1226,7 +1226,7 @@ void reactor_close(){
  * Probably not complete, how about the stuff allocated in KLU mode ? */
 static void FreeUserData(UserData data_wk)
 {
-#ifndef USE_KLU
+#ifndef USE_KLU_PP
   if (data_wk->iDense_Creact == 99) {
       for(int i = 0; i < data_wk->ncells; ++i) {
           destroyMat((data_wk->P)[i][i]);

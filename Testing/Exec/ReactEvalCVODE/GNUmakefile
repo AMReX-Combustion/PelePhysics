@@ -23,10 +23,10 @@ DEFINES  += -DMOD_REACTOR
 
 # use CVODE
 CVODE_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
-USE_SUNDIALS_3x4x = TRUE
+USE_SUNDIALS_PP = TRUE
 
 SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
-USE_KLU = TRUE
+USE_KLU_PP = TRUE
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)

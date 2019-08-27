@@ -14,7 +14,7 @@ using namespace amrex;
 #include <Transport_F.H>
 #include <main_F.H>
 #include <PlotFileFromMF.H>
-#ifdef AMREX_USE_SUNDIALS_3x4x
+#ifdef USE_SUNDIALS_PP
 #include <actual_Creactor.h>
 #else
 #include <actual_reactor.H> 
@@ -265,7 +265,7 @@ main (int   argc,
 			time = 0.0;
 			dt_incr =  dt/ndt;
 			for (int ii = 0; ii < ndt; ++ii) {
-#ifdef AMREX_USE_SUNDIALS_3x4x
+#ifdef USE_SUNDIALS_PP
 	                    fc(i,j,k) = react(tmp_vect, tmp_src_vect,
 		                tmp_vect_energy, tmp_src_vect_energy,
 		                &dt_incr, &time);

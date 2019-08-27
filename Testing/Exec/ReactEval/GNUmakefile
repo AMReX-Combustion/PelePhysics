@@ -18,12 +18,13 @@ FUEGO_GAS  = TRUE
 PELE_PHYSICS_HOME    := ../../..
 
 #######################
-# use CVODE
+# use CVODE PP version
 #CVODE_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
-#USE_SUNDIALS_3x4x = TRUE
+#USE_SUNDIALS_PP = TRUE
 
+# use sparse features of CVODE
 #SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
-#USE_KLU = TRUE
+#USE_KLU_PP = TRUE
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)

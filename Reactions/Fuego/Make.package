@@ -4,7 +4,7 @@ ifeq ($(USE_CUDA_CVODE), TRUE)
     CEXE_headers += actual_Creactor_GPU.h
     CEXE_sources += actual_Creactor_GPU.cpp
 else
-    ifeq ($(USE_SUNDIALS_3x4x), TRUE)
+    ifeq ($(USE_SUNDIALS_PP), TRUE)
         Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
         CEXE_headers +=actual_Creactor.h  
         CEXE_sources +=actual_Creactor.cpp

@@ -18,12 +18,11 @@ FUEGO_GAS  = TRUE
 PELE_PHYSICS_HOME    := ../../..
 
 #######################
-USE_SUNDIALS_3x4x = TRUE
+CVODE_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
+USE_SUNDIALS_PP = TRUE
 
-USE_KLU = FALSE
-ifeq ($(USE_KLU), TRUE)
-    DEFINES  += -DUSE_KLU
-endif
+SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
+USE_KLU_PP = FALSE
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
