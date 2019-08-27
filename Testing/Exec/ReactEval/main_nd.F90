@@ -217,7 +217,6 @@ contains
     real(amrex_real) ::    energy, energy_src
 #endif
 
-    pressure = 1013250.d0
 
     do k = lo(3), hi(3)
        do j = lo(2), hi(2)
@@ -233,6 +232,8 @@ contains
 #else
                 energy           = eold(i,j,k)
                 energy_src       = esrc(i,j,k)
+
+                pressure = 1013250.d0
 #endif
 
                 cost(i,j,k) = react(rY, rY_src,&
