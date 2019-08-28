@@ -150,7 +150,6 @@ main (int   argc,
         /* ADVANCE */
         int reInit = 1;
         // NOT USED
-        double pressure = 1013250.0;
 
         /* Pack the data */
 	// rhoY,T
@@ -177,8 +176,7 @@ main (int   argc,
 	        for (int i = 0; i < ndt; ++i) {
 		        react(tmp_vect, tmp_src_vect, 
 				tmp_vect_energy, tmp_src_vect_energy,
-				&pressure, &dt_incr, &time_tmp,
-				&reInit);
+				&dt_incr, &time_tmp);
 		        // fix new dt_incr to chosen value, hoping cvode will reach it
 		        dt_incr = dt / ndt;
 	        }
@@ -195,8 +193,8 @@ main (int   argc,
 
     std::string outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
     MultiFab::Copy(temperature,mf,Ncomp,0,1,0);
-    PlotFileFromMF(mf,outfile);
-    //PlotFileFromMF(temperature,outfile);
+    //PlotFileFromMF(mf,outfile);
+    PlotFileFromMF(temperature,outfile);
 
     extern_close();
 
