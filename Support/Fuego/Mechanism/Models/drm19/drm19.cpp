@@ -3,7 +3,6 @@
 #ifndef AMREX_USE_CUDA
 namespace thermo
 {
-    /* Inverse molecular weights */
     double fwd_A[84], fwd_beta[84], fwd_Ea[84];
     double low_A[84], low_beta[84], low_Ea[84];
     double rev_A[84], rev_beta[84], rev_Ea[84];
@@ -12,6 +11,8 @@ namespace thermo
     double activation_units[84], prefactor_units[84], phase_units[84];
     int is_PD[84], troe_len[84], sri_len[84], nTB[84], *TBid[84];
     double *TB[84];
+    std::vector<std::vector<int>> kiv(84); 
+    std::vector<std::vector<int>> nuv(84); 
 
     double fwd_A_DEF[84], fwd_beta_DEF[84], fwd_Ea_DEF[84];
     double low_A_DEF[84], low_beta_DEF[84], low_Ea_DEF[84];
@@ -97,6 +98,9 @@ void CKINIT()
     rxn_map = {8,14,15,16,17,18,19,9,20,21,22,23,24,25,26,27,10,28,29,30,31,32,11,33,34,35,12,36,37,0,1,38,2,39,3,40,41,4,5,42,6,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,7,76,77,78,79,80,13,81,82,83};
 
     // (0):  O + H + M <=> OH + M
+    kiv[8] = {2,1,4};
+    nuv[8] = {-1,-1,1};
+    // (0):  O + H + M <=> OH + M
     fwd_A[8]     = 5e+17;
     fwd_beta[8]  = -1;
     fwd_Ea[8]    = 0;
@@ -116,6 +120,9 @@ void CKINIT()
     TBid[8][6] = 20; TB[8][6] = 0.69999999999999996; // AR
 
     // (1):  O + H2 <=> H + OH
+    kiv[14] = {2,0,1,4};
+    nuv[14] = {-1,-1,1,1};
+    // (1):  O + H2 <=> H + OH
     fwd_A[14]     = 50000;
     fwd_beta[14]  = 2.6699999999999999;
     fwd_Ea[14]    = 6290;
@@ -125,6 +132,9 @@ void CKINIT()
     is_PD[14] = 0;
     nTB[14] = 0;
 
+    // (2):  O + HO2 <=> OH + O2
+    kiv[15] = {2,6,4,3};
+    nuv[15] = {-1,-1,1,1};
     // (2):  O + HO2 <=> OH + O2
     fwd_A[15]     = 20000000000000;
     fwd_beta[15]  = 0;
@@ -136,6 +146,9 @@ void CKINIT()
     nTB[15] = 0;
 
     // (3):  O + CH2 <=> H + HCO
+    kiv[16] = {2,7,1,13};
+    nuv[16] = {-1,-1,1,1};
+    // (3):  O + CH2 <=> H + HCO
     fwd_A[16]     = 80000000000000;
     fwd_beta[16]  = 0;
     fwd_Ea[16]    = 0;
@@ -145,6 +158,9 @@ void CKINIT()
     is_PD[16] = 0;
     nTB[16] = 0;
 
+    // (4):  O + CH2(S) <=> H + HCO
+    kiv[17] = {2,8,1,13};
+    nuv[17] = {-1,-1,1,1};
     // (4):  O + CH2(S) <=> H + HCO
     fwd_A[17]     = 15000000000000;
     fwd_beta[17]  = 0;
@@ -156,6 +172,9 @@ void CKINIT()
     nTB[17] = 0;
 
     // (5):  O + CH3 <=> H + CH2O
+    kiv[18] = {2,9,1,14};
+    nuv[18] = {-1,-1,1,1};
+    // (5):  O + CH3 <=> H + CH2O
     fwd_A[18]     = 84300000000000;
     fwd_beta[18]  = 0;
     fwd_Ea[18]    = 0;
@@ -166,6 +185,9 @@ void CKINIT()
     nTB[18] = 0;
 
     // (6):  O + CH4 <=> OH + CH3
+    kiv[19] = {2,10,4,9};
+    nuv[19] = {-1,-1,1,1};
+    // (6):  O + CH4 <=> OH + CH3
     fwd_A[19]     = 1020000000;
     fwd_beta[19]  = 1.5;
     fwd_Ea[19]    = 8600;
@@ -175,6 +197,9 @@ void CKINIT()
     is_PD[19] = 0;
     nTB[19] = 0;
 
+    // (7):  O + CO + M <=> CO2 + M
+    kiv[9] = {2,11,12};
+    nuv[9] = {-1,-1,1};
     // (7):  O + CO + M <=> CO2 + M
     fwd_A[9]     = 602000000000000;
     fwd_beta[9]  = 0;
@@ -196,6 +221,9 @@ void CKINIT()
     TBid[9][7] = 20; TB[9][7] = 0.5; // AR
 
     // (8):  O + HCO <=> OH + CO
+    kiv[20] = {2,13,4,11};
+    nuv[20] = {-1,-1,1,1};
+    // (8):  O + HCO <=> OH + CO
     fwd_A[20]     = 30000000000000;
     fwd_beta[20]  = 0;
     fwd_Ea[20]    = 0;
@@ -205,6 +233,9 @@ void CKINIT()
     is_PD[20] = 0;
     nTB[20] = 0;
 
+    // (9):  O + HCO <=> H + CO2
+    kiv[21] = {2,13,1,12};
+    nuv[21] = {-1,-1,1,1};
     // (9):  O + HCO <=> H + CO2
     fwd_A[21]     = 30000000000000;
     fwd_beta[21]  = 0;
@@ -216,6 +247,9 @@ void CKINIT()
     nTB[21] = 0;
 
     // (10):  O + CH2O <=> OH + HCO
+    kiv[22] = {2,14,4,13};
+    nuv[22] = {-1,-1,1,1};
+    // (10):  O + CH2O <=> OH + HCO
     fwd_A[22]     = 39000000000000;
     fwd_beta[22]  = 0;
     fwd_Ea[22]    = 3540;
@@ -225,6 +259,9 @@ void CKINIT()
     is_PD[22] = 0;
     nTB[22] = 0;
 
+    // (11):  O + C2H4 <=> CH3 + HCO
+    kiv[23] = {2,16,9,13};
+    nuv[23] = {-1,-1,1,1};
     // (11):  O + C2H4 <=> CH3 + HCO
     fwd_A[23]     = 19200000;
     fwd_beta[23]  = 1.8300000000000001;
@@ -236,6 +273,9 @@ void CKINIT()
     nTB[23] = 0;
 
     // (12):  O + C2H5 <=> CH3 + CH2O
+    kiv[24] = {2,17,9,14};
+    nuv[24] = {-1,-1,1,1};
+    // (12):  O + C2H5 <=> CH3 + CH2O
     fwd_A[24]     = 132000000000000;
     fwd_beta[24]  = 0;
     fwd_Ea[24]    = 0;
@@ -245,6 +285,9 @@ void CKINIT()
     is_PD[24] = 0;
     nTB[24] = 0;
 
+    // (13):  O + C2H6 <=> OH + C2H5
+    kiv[25] = {2,18,4,17};
+    nuv[25] = {-1,-1,1,1};
     // (13):  O + C2H6 <=> OH + C2H5
     fwd_A[25]     = 89800000;
     fwd_beta[25]  = 1.9199999999999999;
@@ -256,6 +299,9 @@ void CKINIT()
     nTB[25] = 0;
 
     // (14):  O2 + CO <=> O + CO2
+    kiv[26] = {3,11,2,12};
+    nuv[26] = {-1,-1,1,1};
+    // (14):  O2 + CO <=> O + CO2
     fwd_A[26]     = 2500000000000;
     fwd_beta[26]  = 0;
     fwd_Ea[26]    = 47800;
@@ -266,6 +312,9 @@ void CKINIT()
     nTB[26] = 0;
 
     // (15):  O2 + CH2O <=> HO2 + HCO
+    kiv[27] = {3,14,6,13};
+    nuv[27] = {-1,-1,1,1};
+    // (15):  O2 + CH2O <=> HO2 + HCO
     fwd_A[27]     = 100000000000000;
     fwd_beta[27]  = 0;
     fwd_Ea[27]    = 40000;
@@ -275,6 +324,9 @@ void CKINIT()
     is_PD[27] = 0;
     nTB[27] = 0;
 
+    // (16):  H + O2 + M <=> HO2 + M
+    kiv[10] = {1,3,6};
+    nuv[10] = {-1,-1,1};
     // (16):  H + O2 + M <=> HO2 + M
     fwd_A[10]     = 2.8e+18;
     fwd_beta[10]  = -0.85999999999999999;
@@ -295,6 +347,9 @@ void CKINIT()
     TBid[10][6] = 20; TB[10][6] = 0; // AR
 
     // (17):  H + 2 O2 <=> HO2 + O2
+    kiv[28] = {1,3,6,3};
+    nuv[28] = {-1,-2,1,1};
+    // (17):  H + 2 O2 <=> HO2 + O2
     fwd_A[28]     = 3e+20;
     fwd_beta[28]  = -1.72;
     fwd_Ea[28]    = 0;
@@ -304,6 +359,9 @@ void CKINIT()
     is_PD[28] = 0;
     nTB[28] = 0;
 
+    // (18):  H + O2 + H2O <=> HO2 + H2O
+    kiv[29] = {1,3,5,6,5};
+    nuv[29] = {-1,-1,-1,1,1};
     // (18):  H + O2 + H2O <=> HO2 + H2O
     fwd_A[29]     = 9.38e+18;
     fwd_beta[29]  = -0.76000000000000001;
@@ -315,6 +373,9 @@ void CKINIT()
     nTB[29] = 0;
 
     // (19):  H + O2 + N2 <=> HO2 + N2
+    kiv[30] = {1,3,19,6,19};
+    nuv[30] = {-1,-1,-1,1,1};
+    // (19):  H + O2 + N2 <=> HO2 + N2
     fwd_A[30]     = 3.75e+20;
     fwd_beta[30]  = -1.72;
     fwd_Ea[30]    = 0;
@@ -324,6 +385,9 @@ void CKINIT()
     is_PD[30] = 0;
     nTB[30] = 0;
 
+    // (20):  H + O2 + AR <=> HO2 + AR
+    kiv[31] = {1,3,20,6,20};
+    nuv[31] = {-1,-1,-1,1,1};
     // (20):  H + O2 + AR <=> HO2 + AR
     fwd_A[31]     = 7e+17;
     fwd_beta[31]  = -0.80000000000000004;
@@ -335,6 +399,9 @@ void CKINIT()
     nTB[31] = 0;
 
     // (21):  H + O2 <=> O + OH
+    kiv[32] = {1,3,2,4};
+    nuv[32] = {-1,-1,1,1};
+    // (21):  H + O2 <=> O + OH
     fwd_A[32]     = 83000000000000;
     fwd_beta[32]  = 0;
     fwd_Ea[32]    = 14413;
@@ -344,6 +411,9 @@ void CKINIT()
     is_PD[32] = 0;
     nTB[32] = 0;
 
+    // (22):  2 H + M <=> H2 + M
+    kiv[11] = {1,0};
+    nuv[11] = {-2,1};
     // (22):  2 H + M <=> H2 + M
     fwd_A[11]     = 1e+18;
     fwd_beta[11]  = -1;
@@ -363,6 +433,9 @@ void CKINIT()
     TBid[11][5] = 20; TB[11][5] = 0.63; // AR
 
     // (23):  2 H + H2 <=> 2 H2
+    kiv[33] = {1,0,0};
+    nuv[33] = {-2,-1,2};
+    // (23):  2 H + H2 <=> 2 H2
     fwd_A[33]     = 90000000000000000;
     fwd_beta[33]  = -0.59999999999999998;
     fwd_Ea[33]    = 0;
@@ -372,6 +445,9 @@ void CKINIT()
     is_PD[33] = 0;
     nTB[33] = 0;
 
+    // (24):  2 H + H2O <=> H2 + H2O
+    kiv[34] = {1,5,0,5};
+    nuv[34] = {-2,-1,1,1};
     // (24):  2 H + H2O <=> H2 + H2O
     fwd_A[34]     = 6e+19;
     fwd_beta[34]  = -1.25;
@@ -383,6 +459,9 @@ void CKINIT()
     nTB[34] = 0;
 
     // (25):  2 H + CO2 <=> H2 + CO2
+    kiv[35] = {1,12,0,12};
+    nuv[35] = {-2,-1,1,1};
+    // (25):  2 H + CO2 <=> H2 + CO2
     fwd_A[35]     = 5.5e+20;
     fwd_beta[35]  = -2;
     fwd_Ea[35]    = 0;
@@ -392,6 +471,9 @@ void CKINIT()
     is_PD[35] = 0;
     nTB[35] = 0;
 
+    // (26):  H + OH + M <=> H2O + M
+    kiv[12] = {1,4,5};
+    nuv[12] = {-1,-1,1};
     // (26):  H + OH + M <=> H2O + M
     fwd_A[12]     = 2.2e+22;
     fwd_beta[12]  = -2;
@@ -410,6 +492,9 @@ void CKINIT()
     TBid[12][4] = 20; TB[12][4] = 0.38; // AR
 
     // (27):  H + HO2 <=> O2 + H2
+    kiv[36] = {1,6,3,0};
+    nuv[36] = {-1,-1,1,1};
+    // (27):  H + HO2 <=> O2 + H2
     fwd_A[36]     = 28000000000000;
     fwd_beta[36]  = 0;
     fwd_Ea[36]    = 1068;
@@ -420,6 +505,9 @@ void CKINIT()
     nTB[36] = 0;
 
     // (28):  H + HO2 <=> 2 OH
+    kiv[37] = {1,6,4};
+    nuv[37] = {-1,-1,2};
+    // (28):  H + HO2 <=> 2 OH
     fwd_A[37]     = 134000000000000;
     fwd_beta[37]  = 0;
     fwd_Ea[37]    = 635;
@@ -429,6 +517,9 @@ void CKINIT()
     is_PD[37] = 0;
     nTB[37] = 0;
 
+    // (29):  H + CH2 (+M) <=> CH3 (+M)
+    kiv[0] = {1,7,9};
+    nuv[0] = {-1,-1,1};
     // (29):  H + CH2 (+M) <=> CH3 (+M)
     fwd_A[0]     = 25000000000000000;
     fwd_beta[0]  = -0.80000000000000004;
@@ -457,6 +548,9 @@ void CKINIT()
     TBid[0][6] = 20; TB[0][6] = 0.69999999999999996; // AR
 
     // (30):  H + CH3 (+M) <=> CH4 (+M)
+    kiv[1] = {1,9,10};
+    nuv[1] = {-1,-1,1};
+    // (30):  H + CH3 (+M) <=> CH4 (+M)
     fwd_A[1]     = 12700000000000000;
     fwd_beta[1]  = -0.63;
     fwd_Ea[1]    = 383;
@@ -484,6 +578,9 @@ void CKINIT()
     TBid[1][6] = 20; TB[1][6] = 0.69999999999999996; // AR
 
     // (31):  H + CH4 <=> CH3 + H2
+    kiv[38] = {1,10,9,0};
+    nuv[38] = {-1,-1,1,1};
+    // (31):  H + CH4 <=> CH3 + H2
     fwd_A[38]     = 660000000;
     fwd_beta[38]  = 1.6200000000000001;
     fwd_Ea[38]    = 10840;
@@ -493,6 +590,9 @@ void CKINIT()
     is_PD[38] = 0;
     nTB[38] = 0;
 
+    // (32):  H + HCO (+M) <=> CH2O (+M)
+    kiv[2] = {1,13,14};
+    nuv[2] = {-1,-1,1};
     // (32):  H + HCO (+M) <=> CH2O (+M)
     fwd_A[2]     = 1090000000000;
     fwd_beta[2]  = 0.47999999999999998;
@@ -521,6 +621,9 @@ void CKINIT()
     TBid[2][6] = 20; TB[2][6] = 0.69999999999999996; // AR
 
     // (33):  H + HCO <=> H2 + CO
+    kiv[39] = {1,13,0,11};
+    nuv[39] = {-1,-1,1,1};
+    // (33):  H + HCO <=> H2 + CO
     fwd_A[39]     = 73400000000000;
     fwd_beta[39]  = 0;
     fwd_Ea[39]    = 0;
@@ -530,6 +633,9 @@ void CKINIT()
     is_PD[39] = 0;
     nTB[39] = 0;
 
+    // (34):  H + CH2O (+M) <=> CH3O (+M)
+    kiv[3] = {1,14,15};
+    nuv[3] = {-1,-1,1};
     // (34):  H + CH2O (+M) <=> CH3O (+M)
     fwd_A[3]     = 540000000000;
     fwd_beta[3]  = 0.45400000000000001;
@@ -557,6 +663,9 @@ void CKINIT()
     TBid[3][5] = 18; TB[3][5] = 3; // C2H6
 
     // (35):  H + CH2O <=> HCO + H2
+    kiv[40] = {1,14,13,0};
+    nuv[40] = {-1,-1,1,1};
+    // (35):  H + CH2O <=> HCO + H2
     fwd_A[40]     = 23000000000;
     fwd_beta[40]  = 1.05;
     fwd_Ea[40]    = 3275;
@@ -567,6 +676,9 @@ void CKINIT()
     nTB[40] = 0;
 
     // (36):  H + CH3O <=> OH + CH3
+    kiv[41] = {1,15,4,9};
+    nuv[41] = {-1,-1,1,1};
+    // (36):  H + CH3O <=> OH + CH3
     fwd_A[41]     = 32000000000000;
     fwd_beta[41]  = 0;
     fwd_Ea[41]    = 0;
@@ -576,6 +688,9 @@ void CKINIT()
     is_PD[41] = 0;
     nTB[41] = 0;
 
+    // (37):  H + C2H4 (+M) <=> C2H5 (+M)
+    kiv[4] = {1,16,17};
+    nuv[4] = {-1,-1,1};
     // (37):  H + C2H4 (+M) <=> C2H5 (+M)
     fwd_A[4]     = 1080000000000;
     fwd_beta[4]  = 0.45400000000000001;
@@ -604,6 +719,9 @@ void CKINIT()
     TBid[4][6] = 20; TB[4][6] = 0.69999999999999996; // AR
 
     // (38):  H + C2H5 (+M) <=> C2H6 (+M)
+    kiv[5] = {1,17,18};
+    nuv[5] = {-1,-1,1};
+    // (38):  H + C2H5 (+M) <=> C2H6 (+M)
     fwd_A[5]     = 5.21e+17;
     fwd_beta[5]  = -0.98999999999999999;
     fwd_Ea[5]    = 1580;
@@ -631,6 +749,9 @@ void CKINIT()
     TBid[5][6] = 20; TB[5][6] = 0.69999999999999996; // AR
 
     // (39):  H + C2H6 <=> C2H5 + H2
+    kiv[42] = {1,18,17,0};
+    nuv[42] = {-1,-1,1,1};
+    // (39):  H + C2H6 <=> C2H5 + H2
     fwd_A[42]     = 115000000;
     fwd_beta[42]  = 1.8999999999999999;
     fwd_Ea[42]    = 7530;
@@ -640,6 +761,9 @@ void CKINIT()
     is_PD[42] = 0;
     nTB[42] = 0;
 
+    // (40):  H2 + CO (+M) <=> CH2O (+M)
+    kiv[6] = {0,11,14};
+    nuv[6] = {-1,-1,1};
     // (40):  H2 + CO (+M) <=> CH2O (+M)
     fwd_A[6]     = 43000000;
     fwd_beta[6]  = 1.5;
@@ -668,6 +792,9 @@ void CKINIT()
     TBid[6][6] = 20; TB[6][6] = 0.69999999999999996; // AR
 
     // (41):  OH + H2 <=> H + H2O
+    kiv[43] = {4,0,1,5};
+    nuv[43] = {-1,-1,1,1};
+    // (41):  OH + H2 <=> H + H2O
     fwd_A[43]     = 216000000;
     fwd_beta[43]  = 1.51;
     fwd_Ea[43]    = 3430;
@@ -677,6 +804,9 @@ void CKINIT()
     is_PD[43] = 0;
     nTB[43] = 0;
 
+    // (42):  2 OH <=> O + H2O
+    kiv[44] = {4,2,5};
+    nuv[44] = {-2,1,1};
     // (42):  2 OH <=> O + H2O
     fwd_A[44]     = 35700;
     fwd_beta[44]  = 2.3999999999999999;
@@ -688,6 +818,9 @@ void CKINIT()
     nTB[44] = 0;
 
     // (43):  OH + HO2 <=> O2 + H2O
+    kiv[45] = {4,6,3,5};
+    nuv[45] = {-1,-1,1,1};
+    // (43):  OH + HO2 <=> O2 + H2O
     fwd_A[45]     = 29000000000000;
     fwd_beta[45]  = 0;
     fwd_Ea[45]    = -500;
@@ -697,6 +830,9 @@ void CKINIT()
     is_PD[45] = 0;
     nTB[45] = 0;
 
+    // (44):  OH + CH2 <=> H + CH2O
+    kiv[46] = {4,7,1,14};
+    nuv[46] = {-1,-1,1,1};
     // (44):  OH + CH2 <=> H + CH2O
     fwd_A[46]     = 20000000000000;
     fwd_beta[46]  = 0;
@@ -708,6 +844,9 @@ void CKINIT()
     nTB[46] = 0;
 
     // (45):  OH + CH2(S) <=> H + CH2O
+    kiv[47] = {4,8,1,14};
+    nuv[47] = {-1,-1,1,1};
+    // (45):  OH + CH2(S) <=> H + CH2O
     fwd_A[47]     = 30000000000000;
     fwd_beta[47]  = 0;
     fwd_Ea[47]    = 0;
@@ -717,6 +856,9 @@ void CKINIT()
     is_PD[47] = 0;
     nTB[47] = 0;
 
+    // (46):  OH + CH3 <=> CH2 + H2O
+    kiv[48] = {4,9,7,5};
+    nuv[48] = {-1,-1,1,1};
     // (46):  OH + CH3 <=> CH2 + H2O
     fwd_A[48]     = 56000000;
     fwd_beta[48]  = 1.6000000000000001;
@@ -728,6 +870,9 @@ void CKINIT()
     nTB[48] = 0;
 
     // (47):  OH + CH3 <=> CH2(S) + H2O
+    kiv[49] = {4,9,8,5};
+    nuv[49] = {-1,-1,1,1};
+    // (47):  OH + CH3 <=> CH2(S) + H2O
     fwd_A[49]     = 25010000000000;
     fwd_beta[49]  = 0;
     fwd_Ea[49]    = 0;
@@ -737,6 +882,9 @@ void CKINIT()
     is_PD[49] = 0;
     nTB[49] = 0;
 
+    // (48):  OH + CH4 <=> CH3 + H2O
+    kiv[50] = {4,10,9,5};
+    nuv[50] = {-1,-1,1,1};
     // (48):  OH + CH4 <=> CH3 + H2O
     fwd_A[50]     = 100000000;
     fwd_beta[50]  = 1.6000000000000001;
@@ -748,6 +896,9 @@ void CKINIT()
     nTB[50] = 0;
 
     // (49):  OH + CO <=> H + CO2
+    kiv[51] = {4,11,1,12};
+    nuv[51] = {-1,-1,1,1};
+    // (49):  OH + CO <=> H + CO2
     fwd_A[51]     = 47600000;
     fwd_beta[51]  = 1.228;
     fwd_Ea[51]    = 70;
@@ -757,6 +908,9 @@ void CKINIT()
     is_PD[51] = 0;
     nTB[51] = 0;
 
+    // (50):  OH + HCO <=> H2O + CO
+    kiv[52] = {4,13,5,11};
+    nuv[52] = {-1,-1,1,1};
     // (50):  OH + HCO <=> H2O + CO
     fwd_A[52]     = 50000000000000;
     fwd_beta[52]  = 0;
@@ -768,6 +922,9 @@ void CKINIT()
     nTB[52] = 0;
 
     // (51):  OH + CH2O <=> HCO + H2O
+    kiv[53] = {4,14,13,5};
+    nuv[53] = {-1,-1,1,1};
+    // (51):  OH + CH2O <=> HCO + H2O
     fwd_A[53]     = 3430000000;
     fwd_beta[53]  = 1.1799999999999999;
     fwd_Ea[53]    = -447;
@@ -777,6 +934,9 @@ void CKINIT()
     is_PD[53] = 0;
     nTB[53] = 0;
 
+    // (52):  OH + C2H6 <=> C2H5 + H2O
+    kiv[54] = {4,18,17,5};
+    nuv[54] = {-1,-1,1,1};
     // (52):  OH + C2H6 <=> C2H5 + H2O
     fwd_A[54]     = 3540000;
     fwd_beta[54]  = 2.1200000000000001;
@@ -788,6 +948,9 @@ void CKINIT()
     nTB[54] = 0;
 
     // (53):  HO2 + CH2 <=> OH + CH2O
+    kiv[55] = {6,7,4,14};
+    nuv[55] = {-1,-1,1,1};
+    // (53):  HO2 + CH2 <=> OH + CH2O
     fwd_A[55]     = 20000000000000;
     fwd_beta[55]  = 0;
     fwd_Ea[55]    = 0;
@@ -797,6 +960,9 @@ void CKINIT()
     is_PD[55] = 0;
     nTB[55] = 0;
 
+    // (54):  HO2 + CH3 <=> O2 + CH4
+    kiv[56] = {6,9,3,10};
+    nuv[56] = {-1,-1,1,1};
     // (54):  HO2 + CH3 <=> O2 + CH4
     fwd_A[56]     = 1000000000000;
     fwd_beta[56]  = 0;
@@ -808,6 +974,9 @@ void CKINIT()
     nTB[56] = 0;
 
     // (55):  HO2 + CH3 <=> OH + CH3O
+    kiv[57] = {6,9,4,15};
+    nuv[57] = {-1,-1,1,1};
+    // (55):  HO2 + CH3 <=> OH + CH3O
     fwd_A[57]     = 20000000000000;
     fwd_beta[57]  = 0;
     fwd_Ea[57]    = 0;
@@ -817,6 +986,9 @@ void CKINIT()
     is_PD[57] = 0;
     nTB[57] = 0;
 
+    // (56):  HO2 + CO <=> OH + CO2
+    kiv[58] = {6,11,4,12};
+    nuv[58] = {-1,-1,1,1};
     // (56):  HO2 + CO <=> OH + CO2
     fwd_A[58]     = 150000000000000;
     fwd_beta[58]  = 0;
@@ -828,6 +1000,9 @@ void CKINIT()
     nTB[58] = 0;
 
     // (57):  CH2 + O2 <=> OH + HCO
+    kiv[59] = {7,3,4,13};
+    nuv[59] = {-1,-1,1,1};
+    // (57):  CH2 + O2 <=> OH + HCO
     fwd_A[59]     = 13200000000000;
     fwd_beta[59]  = 0;
     fwd_Ea[59]    = 1500;
@@ -837,6 +1012,9 @@ void CKINIT()
     is_PD[59] = 0;
     nTB[59] = 0;
 
+    // (58):  CH2 + H2 <=> H + CH3
+    kiv[60] = {7,0,1,9};
+    nuv[60] = {-1,-1,1,1};
     // (58):  CH2 + H2 <=> H + CH3
     fwd_A[60]     = 500000;
     fwd_beta[60]  = 2;
@@ -848,6 +1026,9 @@ void CKINIT()
     nTB[60] = 0;
 
     // (59):  CH2 + CH3 <=> H + C2H4
+    kiv[61] = {7,9,1,16};
+    nuv[61] = {-1,-1,1,1};
+    // (59):  CH2 + CH3 <=> H + C2H4
     fwd_A[61]     = 40000000000000;
     fwd_beta[61]  = 0;
     fwd_Ea[61]    = 0;
@@ -857,6 +1038,9 @@ void CKINIT()
     is_PD[61] = 0;
     nTB[61] = 0;
 
+    // (60):  CH2 + CH4 <=> 2 CH3
+    kiv[62] = {7,10,9};
+    nuv[62] = {-1,-1,2};
     // (60):  CH2 + CH4 <=> 2 CH3
     fwd_A[62]     = 2460000;
     fwd_beta[62]  = 2;
@@ -868,6 +1052,9 @@ void CKINIT()
     nTB[62] = 0;
 
     // (61):  CH2(S) + N2 <=> CH2 + N2
+    kiv[63] = {8,19,7,19};
+    nuv[63] = {-1,-1,1,1};
+    // (61):  CH2(S) + N2 <=> CH2 + N2
     fwd_A[63]     = 15000000000000;
     fwd_beta[63]  = 0;
     fwd_Ea[63]    = 600;
@@ -877,6 +1064,9 @@ void CKINIT()
     is_PD[63] = 0;
     nTB[63] = 0;
 
+    // (62):  CH2(S) + AR <=> CH2 + AR
+    kiv[64] = {8,20,7,20};
+    nuv[64] = {-1,-1,1,1};
     // (62):  CH2(S) + AR <=> CH2 + AR
     fwd_A[64]     = 9000000000000;
     fwd_beta[64]  = 0;
@@ -888,6 +1078,9 @@ void CKINIT()
     nTB[64] = 0;
 
     // (63):  CH2(S) + O2 <=> H + OH + CO
+    kiv[65] = {8,3,1,4,11};
+    nuv[65] = {-1,-1,1,1,1};
+    // (63):  CH2(S) + O2 <=> H + OH + CO
     fwd_A[65]     = 28000000000000;
     fwd_beta[65]  = 0;
     fwd_Ea[65]    = 0;
@@ -897,6 +1090,9 @@ void CKINIT()
     is_PD[65] = 0;
     nTB[65] = 0;
 
+    // (64):  CH2(S) + O2 <=> CO + H2O
+    kiv[66] = {8,3,11,5};
+    nuv[66] = {-1,-1,1,1};
     // (64):  CH2(S) + O2 <=> CO + H2O
     fwd_A[66]     = 12000000000000;
     fwd_beta[66]  = 0;
@@ -908,6 +1104,9 @@ void CKINIT()
     nTB[66] = 0;
 
     // (65):  CH2(S) + H2 <=> CH3 + H
+    kiv[67] = {8,0,9,1};
+    nuv[67] = {-1,-1,1,1};
+    // (65):  CH2(S) + H2 <=> CH3 + H
     fwd_A[67]     = 70000000000000;
     fwd_beta[67]  = 0;
     fwd_Ea[67]    = 0;
@@ -917,6 +1116,9 @@ void CKINIT()
     is_PD[67] = 0;
     nTB[67] = 0;
 
+    // (66):  CH2(S) + H2O <=> CH2 + H2O
+    kiv[68] = {8,5,7,5};
+    nuv[68] = {-1,-1,1,1};
     // (66):  CH2(S) + H2O <=> CH2 + H2O
     fwd_A[68]     = 30000000000000;
     fwd_beta[68]  = 0;
@@ -928,6 +1130,9 @@ void CKINIT()
     nTB[68] = 0;
 
     // (67):  CH2(S) + CH3 <=> H + C2H4
+    kiv[69] = {8,9,1,16};
+    nuv[69] = {-1,-1,1,1};
+    // (67):  CH2(S) + CH3 <=> H + C2H4
     fwd_A[69]     = 12000000000000;
     fwd_beta[69]  = 0;
     fwd_Ea[69]    = -570;
@@ -937,6 +1142,9 @@ void CKINIT()
     is_PD[69] = 0;
     nTB[69] = 0;
 
+    // (68):  CH2(S) + CH4 <=> 2 CH3
+    kiv[70] = {8,10,9};
+    nuv[70] = {-1,-1,2};
     // (68):  CH2(S) + CH4 <=> 2 CH3
     fwd_A[70]     = 16000000000000;
     fwd_beta[70]  = 0;
@@ -948,6 +1156,9 @@ void CKINIT()
     nTB[70] = 0;
 
     // (69):  CH2(S) + CO <=> CH2 + CO
+    kiv[71] = {8,11,7,11};
+    nuv[71] = {-1,-1,1,1};
+    // (69):  CH2(S) + CO <=> CH2 + CO
     fwd_A[71]     = 9000000000000;
     fwd_beta[71]  = 0;
     fwd_Ea[71]    = 0;
@@ -957,6 +1168,9 @@ void CKINIT()
     is_PD[71] = 0;
     nTB[71] = 0;
 
+    // (70):  CH2(S) + CO2 <=> CH2 + CO2
+    kiv[72] = {8,12,7,12};
+    nuv[72] = {-1,-1,1,1};
     // (70):  CH2(S) + CO2 <=> CH2 + CO2
     fwd_A[72]     = 7000000000000;
     fwd_beta[72]  = 0;
@@ -968,6 +1182,9 @@ void CKINIT()
     nTB[72] = 0;
 
     // (71):  CH2(S) + CO2 <=> CO + CH2O
+    kiv[73] = {8,12,11,14};
+    nuv[73] = {-1,-1,1,1};
+    // (71):  CH2(S) + CO2 <=> CO + CH2O
     fwd_A[73]     = 14000000000000;
     fwd_beta[73]  = 0;
     fwd_Ea[73]    = 0;
@@ -977,6 +1194,9 @@ void CKINIT()
     is_PD[73] = 0;
     nTB[73] = 0;
 
+    // (72):  CH3 + O2 <=> O + CH3O
+    kiv[74] = {9,3,2,15};
+    nuv[74] = {-1,-1,1,1};
     // (72):  CH3 + O2 <=> O + CH3O
     fwd_A[74]     = 26750000000000;
     fwd_beta[74]  = 0;
@@ -988,6 +1208,9 @@ void CKINIT()
     nTB[74] = 0;
 
     // (73):  CH3 + O2 <=> OH + CH2O
+    kiv[75] = {9,3,4,14};
+    nuv[75] = {-1,-1,1,1};
+    // (73):  CH3 + O2 <=> OH + CH2O
     fwd_A[75]     = 36000000000;
     fwd_beta[75]  = 0;
     fwd_Ea[75]    = 8940;
@@ -997,6 +1220,9 @@ void CKINIT()
     is_PD[75] = 0;
     nTB[75] = 0;
 
+    // (74):  2 CH3 (+M) <=> C2H6 (+M)
+    kiv[7] = {9,18};
+    nuv[7] = {-2,1};
     // (74):  2 CH3 (+M) <=> C2H6 (+M)
     fwd_A[7]     = 21200000000000000;
     fwd_beta[7]  = -0.96999999999999997;
@@ -1025,6 +1251,9 @@ void CKINIT()
     TBid[7][6] = 20; TB[7][6] = 0.69999999999999996; // AR
 
     // (75):  2 CH3 <=> H + C2H5
+    kiv[76] = {9,1,17};
+    nuv[76] = {-2,1,1};
+    // (75):  2 CH3 <=> H + C2H5
     fwd_A[76]     = 4990000000000;
     fwd_beta[76]  = 0.10000000000000001;
     fwd_Ea[76]    = 10600;
@@ -1034,6 +1263,9 @@ void CKINIT()
     is_PD[76] = 0;
     nTB[76] = 0;
 
+    // (76):  CH3 + HCO <=> CH4 + CO
+    kiv[77] = {9,13,10,11};
+    nuv[77] = {-1,-1,1,1};
     // (76):  CH3 + HCO <=> CH4 + CO
     fwd_A[77]     = 26480000000000;
     fwd_beta[77]  = 0;
@@ -1045,6 +1277,9 @@ void CKINIT()
     nTB[77] = 0;
 
     // (77):  CH3 + CH2O <=> HCO + CH4
+    kiv[78] = {9,14,13,10};
+    nuv[78] = {-1,-1,1,1};
+    // (77):  CH3 + CH2O <=> HCO + CH4
     fwd_A[78]     = 3320;
     fwd_beta[78]  = 2.8100000000000001;
     fwd_Ea[78]    = 5860;
@@ -1054,6 +1289,9 @@ void CKINIT()
     is_PD[78] = 0;
     nTB[78] = 0;
 
+    // (78):  CH3 + C2H6 <=> C2H5 + CH4
+    kiv[79] = {9,18,17,10};
+    nuv[79] = {-1,-1,1,1};
     // (78):  CH3 + C2H6 <=> C2H5 + CH4
     fwd_A[79]     = 6140000;
     fwd_beta[79]  = 1.74;
@@ -1065,6 +1303,9 @@ void CKINIT()
     nTB[79] = 0;
 
     // (79):  HCO + H2O <=> H + CO + H2O
+    kiv[80] = {13,5,1,11,5};
+    nuv[80] = {-1,-1,1,1,1};
+    // (79):  HCO + H2O <=> H + CO + H2O
     fwd_A[80]     = 2.244e+18;
     fwd_beta[80]  = -1;
     fwd_Ea[80]    = 17000;
@@ -1074,6 +1315,9 @@ void CKINIT()
     is_PD[80] = 0;
     nTB[80] = 0;
 
+    // (80):  HCO + M <=> H + CO + M
+    kiv[13] = {13,1,11};
+    nuv[13] = {-1,1,1};
     // (80):  HCO + M <=> H + CO + M
     fwd_A[13]     = 1.87e+17;
     fwd_beta[13]  = -1;
@@ -1093,6 +1337,9 @@ void CKINIT()
     TBid[13][5] = 18; TB[13][5] = 3; // C2H6
 
     // (81):  HCO + O2 <=> HO2 + CO
+    kiv[81] = {13,3,6,11};
+    nuv[81] = {-1,-1,1,1};
+    // (81):  HCO + O2 <=> HO2 + CO
     fwd_A[81]     = 7600000000000;
     fwd_beta[81]  = 0;
     fwd_Ea[81]    = 400;
@@ -1103,6 +1350,9 @@ void CKINIT()
     nTB[81] = 0;
 
     // (82):  CH3O + O2 <=> HO2 + CH2O
+    kiv[82] = {15,3,6,14};
+    nuv[82] = {-1,-1,1,1};
+    // (82):  CH3O + O2 <=> HO2 + CH2O
     fwd_A[82]     = 4.2799999999999999e-13;
     fwd_beta[82]  = 7.5999999999999996;
     fwd_Ea[82]    = -3530;
@@ -1112,6 +1362,9 @@ void CKINIT()
     is_PD[82] = 0;
     nTB[82] = 0;
 
+    // (83):  C2H5 + O2 <=> HO2 + C2H4
+    kiv[83] = {17,3,6,16};
+    nuv[83] = {-1,-1,1,1};
     // (83):  C2H5 + O2 <=> HO2 + C2H4
     fwd_A[83]     = 840000000000;
     fwd_beta[83]  = 0;
@@ -1128,7 +1381,7 @@ void CKINIT()
 void GET_REACTION_MAP(int *rmap)
 {
     for (int i=0; i<84; ++i) {
-        rmap[i] = rxn_map[i];
+        rmap[i] = rxn_map[i] + 1;
     }
 }
 
@@ -1316,11 +1569,11 @@ void CKFINALIZE()
 
 #else
 /* TODO: Remove on GPU, right now needed by chemistry_module on FORTRAN */
-void CKINIT()
+AMREX_GPU_HOST_DEVICE void CKINIT()
 {
 }
 
-void CKFINALIZE()
+AMREX_GPU_HOST_DEVICE void CKFINALIZE()
 {
 }
 
@@ -3962,6 +4215,27 @@ void CKNU(int * kdim,  int * nuki)
     nuki[ 3 * kd + 83 ] += -1 ;
     nuki[ 6 * kd + 83 ] += +1 ;
     nuki[ 16 * kd + 83 ] += +1 ;
+}
+
+
+/*Returns a count of species in a reaction, and their indices */
+/*and stoichiometric coefficients. (Eq 50) */
+void CKINU(int * i, int * nspec, int * ki, int * nu)
+{
+    if (*i < 1) {
+        /*Return max num species per reaction */
+        *nspec = 5;
+    } else {
+        if (*i > 84) {
+            *nspec = -1;
+        } else {
+            *nspec = kiv[*i-1].size();
+            for (int j=0; j<*nspec; ++j) {
+                ki[j] = kiv[*i-1][j] + 1;
+                nu[j] = nuv[*i-1][j];
+            }
+        }
+    }
 }
 
 
@@ -6874,7 +7148,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.68000000000000005)*exp(-tc[1] / 78) 
         + 0.68000000000000005 * exp(-tc[1]/1995)  
-        + exp(-(5590) * invT));
+        + exp(-5590 * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -6893,7 +7167,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.78300000000000003)*exp(-tc[1] / 74) 
         + 0.78300000000000003 * exp(-tc[1]/2941)  
-        + exp(-(6964) * invT));
+        + exp(-6964 * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -6918,7 +7192,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.78239999999999998)*exp(-tc[1] / 271) 
         + 0.78239999999999998 * exp(-tc[1]/2755)  
-        + exp(-(6570) * invT));
+        + exp(-6570 * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -6943,7 +7217,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.75800000000000001)*exp(-tc[1] / 94) 
         + 0.75800000000000001 * exp(-tc[1]/1555)  
-        + exp(-(4200) * invT));
+        + exp(-4200 * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -6974,7 +7248,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.97529999999999994)*exp(-tc[1] / 210) 
         + 0.97529999999999994 * exp(-tc[1]/984)  
-        + exp(-(4374) * invT));
+        + exp(-4374 * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -6993,7 +7267,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.84219999999999995)*exp(-tc[1] / 125) 
         + 0.84219999999999995 * exp(-tc[1]/2219)  
-        + exp(-(6882) * invT));
+        + exp(-6882 * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -7018,7 +7292,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.93200000000000005)*exp(-tc[1] / 197) 
         + 0.93200000000000005 * exp(-tc[1]/1540)  
-        + exp(-(10300) * invT));
+        + exp(-10300 * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -7235,7 +7509,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     logFcent = log10(
         (1.-0.53249999999999997)*exp(-tc[1] / 151) 
         + 0.53249999999999997 * exp(-tc[1]/1038)  
-        + exp(-(4970) * invT));
+        + exp(-4970 * invT));
     troe_c = -.4 - .67 * logFcent;
     troe_n = .75 - 1.27 * logFcent;
     troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
@@ -10272,9 +10546,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.68000000000000005))*exp(-T/78);
+    Fcent1 = (1.-0.68000000000000005)*exp(-T/78);
     Fcent2 = 0.68000000000000005 * exp(-T/1995);
-    Fcent3 = exp(-(5590) * invT);
+    Fcent3 = exp(-5590 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -10415,9 +10689,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.78300000000000003))*exp(-T/74);
+    Fcent1 = (1.-0.78300000000000003)*exp(-T/74);
     Fcent2 = 0.78300000000000003 * exp(-T/2941);
-    Fcent3 = exp(-(6964) * invT);
+    Fcent3 = exp(-6964 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -10553,9 +10827,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.78239999999999998))*exp(-T/271);
+    Fcent1 = (1.-0.78239999999999998)*exp(-T/271);
     Fcent2 = 0.78239999999999998 * exp(-T/2755);
-    Fcent3 = exp(-(6570) * invT);
+    Fcent3 = exp(-6570 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -10696,9 +10970,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.75800000000000001))*exp(-T/94);
+    Fcent1 = (1.-0.75800000000000001)*exp(-T/94);
     Fcent2 = 0.75800000000000001 * exp(-T/1555);
-    Fcent3 = exp(-(4200) * invT);
+    Fcent3 = exp(-4200 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -10834,9 +11108,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.97529999999999994))*exp(-T/210);
+    Fcent1 = (1.-0.97529999999999994)*exp(-T/210);
     Fcent2 = 0.97529999999999994 * exp(-T/984);
-    Fcent3 = exp(-(4374) * invT);
+    Fcent3 = exp(-4374 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -10977,9 +11251,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.84219999999999995))*exp(-T/125);
+    Fcent1 = (1.-0.84219999999999995)*exp(-T/125);
     Fcent2 = 0.84219999999999995 * exp(-T/2219);
-    Fcent3 = exp(-(6882) * invT);
+    Fcent3 = exp(-6882 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -11115,9 +11389,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.93200000000000005))*exp(-T/197);
+    Fcent1 = (1.-0.93200000000000005)*exp(-T/197);
     Fcent2 = 0.93200000000000005 * exp(-T/1540);
-    Fcent3 = exp(-(10300) * invT);
+    Fcent3 = exp(-10300 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -11248,9 +11522,9 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.53249999999999997))*exp(-T/151);
+    Fcent1 = (1.-0.53249999999999997)*exp(-T/151);
     Fcent2 = 0.53249999999999997 * exp(-T/1038);
-    Fcent3 = exp(-(4970) * invT);
+    Fcent3 = exp(-4970 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20557,9 +20831,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.68000000000000005))*exp(-T/78);
+    Fcent1 = (1.-0.68000000000000005)*exp(-T/78);
     Fcent2 = 0.68000000000000005 * exp(-T/1995);
-    Fcent3 = exp(-(5590) * invT);
+    Fcent3 = exp(-5590 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20646,9 +20920,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.78300000000000003))*exp(-T/74);
+    Fcent1 = (1.-0.78300000000000003)*exp(-T/74);
     Fcent2 = 0.78300000000000003 * exp(-T/2941);
-    Fcent3 = exp(-(6964) * invT);
+    Fcent3 = exp(-6964 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20735,9 +21009,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.78239999999999998))*exp(-T/271);
+    Fcent1 = (1.-0.78239999999999998)*exp(-T/271);
     Fcent2 = 0.78239999999999998 * exp(-T/2755);
-    Fcent3 = exp(-(6570) * invT);
+    Fcent3 = exp(-6570 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20824,9 +21098,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.75800000000000001))*exp(-T/94);
+    Fcent1 = (1.-0.75800000000000001)*exp(-T/94);
     Fcent2 = 0.75800000000000001 * exp(-T/1555);
-    Fcent3 = exp(-(4200) * invT);
+    Fcent3 = exp(-4200 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -20913,9 +21187,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.97529999999999994))*exp(-T/210);
+    Fcent1 = (1.-0.97529999999999994)*exp(-T/210);
     Fcent2 = 0.97529999999999994 * exp(-T/984);
-    Fcent3 = exp(-(4374) * invT);
+    Fcent3 = exp(-4374 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -21002,9 +21276,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.84219999999999995))*exp(-T/125);
+    Fcent1 = (1.-0.84219999999999995)*exp(-T/125);
     Fcent2 = 0.84219999999999995 * exp(-T/2219);
-    Fcent3 = exp(-(6882) * invT);
+    Fcent3 = exp(-6882 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -21091,9 +21365,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.93200000000000005))*exp(-T/197);
+    Fcent1 = (1.-0.93200000000000005)*exp(-T/197);
     Fcent2 = 0.93200000000000005 * exp(-T/1540);
-    Fcent3 = exp(-(10300) * invT);
+    Fcent3 = exp(-10300 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -21180,9 +21454,9 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogfPrdT = dlogPrdT / (1.0+Pr);
     /* Troe form */
     logPr = log10(Pr);
-    Fcent1 = (1.-(0.53249999999999997))*exp(-T/151);
+    Fcent1 = (1.-0.53249999999999997)*exp(-T/151);
     Fcent2 = 0.53249999999999997 * exp(-T/1038);
-    Fcent3 = exp(-(4970) * invT);
+    Fcent3 = exp(-4970 * invT);
     Fcent = Fcent1 + Fcent2 + Fcent3;
     logFcent = log10(Fcent);
     troe_c = -.4 - .67 * logFcent;
@@ -28342,157 +28616,157 @@ void egtransetWT(double* WT ) {
 
 /*the lennard-jones potential well depth eps/kb in K */
 void egtransetEPS(double* EPS ) {
-    EPS[7] = 1.44000000E+02;
-    EPS[14] = 4.98000000E+02;
     EPS[0] = 3.80000000E+01;
-    EPS[17] = 2.52300000E+02;
-    EPS[11] = 9.81000000E+01;
-    EPS[3] = 1.07400000E+02;
-    EPS[15] = 4.17000000E+02;
-    EPS[5] = 5.72400000E+02;
-    EPS[16] = 2.80800000E+02;
-    EPS[2] = 8.00000000E+01;
-    EPS[20] = 1.36500000E+02;
-    EPS[6] = 1.07400000E+02;
-    EPS[12] = 2.44000000E+02;
-    EPS[10] = 1.41400000E+02;
-    EPS[4] = 8.00000000E+01;
-    EPS[18] = 2.52300000E+02;
-    EPS[13] = 4.98000000E+02;
-    EPS[19] = 9.75300000E+01;
     EPS[1] = 1.45000000E+02;
-    EPS[9] = 1.44000000E+02;
+    EPS[2] = 8.00000000E+01;
+    EPS[3] = 1.07400000E+02;
+    EPS[4] = 8.00000000E+01;
+    EPS[5] = 5.72400000E+02;
+    EPS[6] = 1.07400000E+02;
+    EPS[7] = 1.44000000E+02;
     EPS[8] = 1.44000000E+02;
+    EPS[9] = 1.44000000E+02;
+    EPS[10] = 1.41400000E+02;
+    EPS[11] = 9.81000000E+01;
+    EPS[12] = 2.44000000E+02;
+    EPS[13] = 4.98000000E+02;
+    EPS[14] = 4.98000000E+02;
+    EPS[15] = 4.17000000E+02;
+    EPS[16] = 2.80800000E+02;
+    EPS[17] = 2.52300000E+02;
+    EPS[18] = 2.52300000E+02;
+    EPS[19] = 9.75300000E+01;
+    EPS[20] = 1.36500000E+02;
 }
 
 
 /*the lennard-jones collision diameter in Angstroms */
 void egtransetSIG(double* SIG ) {
-    SIG[7] = 3.80000000E+00;
-    SIG[14] = 3.59000000E+00;
     SIG[0] = 2.92000000E+00;
-    SIG[17] = 4.30200000E+00;
-    SIG[11] = 3.65000000E+00;
-    SIG[3] = 3.45800000E+00;
-    SIG[15] = 3.69000000E+00;
-    SIG[5] = 2.60500000E+00;
-    SIG[16] = 3.97100000E+00;
-    SIG[2] = 2.75000000E+00;
-    SIG[20] = 3.33000000E+00;
-    SIG[6] = 3.45800000E+00;
-    SIG[12] = 3.76300000E+00;
-    SIG[10] = 3.74600000E+00;
-    SIG[4] = 2.75000000E+00;
-    SIG[18] = 4.30200000E+00;
-    SIG[13] = 3.59000000E+00;
-    SIG[19] = 3.62100000E+00;
     SIG[1] = 2.05000000E+00;
-    SIG[9] = 3.80000000E+00;
+    SIG[2] = 2.75000000E+00;
+    SIG[3] = 3.45800000E+00;
+    SIG[4] = 2.75000000E+00;
+    SIG[5] = 2.60500000E+00;
+    SIG[6] = 3.45800000E+00;
+    SIG[7] = 3.80000000E+00;
     SIG[8] = 3.80000000E+00;
+    SIG[9] = 3.80000000E+00;
+    SIG[10] = 3.74600000E+00;
+    SIG[11] = 3.65000000E+00;
+    SIG[12] = 3.76300000E+00;
+    SIG[13] = 3.59000000E+00;
+    SIG[14] = 3.59000000E+00;
+    SIG[15] = 3.69000000E+00;
+    SIG[16] = 3.97100000E+00;
+    SIG[17] = 4.30200000E+00;
+    SIG[18] = 4.30200000E+00;
+    SIG[19] = 3.62100000E+00;
+    SIG[20] = 3.33000000E+00;
 }
 
 
 /*the dipole moment in Debye */
 void egtransetDIP(double* DIP ) {
-    DIP[7] = 0.00000000E+00;
-    DIP[14] = 0.00000000E+00;
     DIP[0] = 0.00000000E+00;
-    DIP[17] = 0.00000000E+00;
-    DIP[11] = 0.00000000E+00;
-    DIP[3] = 0.00000000E+00;
-    DIP[15] = 1.70000000E+00;
-    DIP[5] = 1.84400000E+00;
-    DIP[16] = 0.00000000E+00;
-    DIP[2] = 0.00000000E+00;
-    DIP[20] = 0.00000000E+00;
-    DIP[6] = 0.00000000E+00;
-    DIP[12] = 0.00000000E+00;
-    DIP[10] = 0.00000000E+00;
-    DIP[4] = 0.00000000E+00;
-    DIP[18] = 0.00000000E+00;
-    DIP[13] = 0.00000000E+00;
-    DIP[19] = 0.00000000E+00;
     DIP[1] = 0.00000000E+00;
-    DIP[9] = 0.00000000E+00;
+    DIP[2] = 0.00000000E+00;
+    DIP[3] = 0.00000000E+00;
+    DIP[4] = 0.00000000E+00;
+    DIP[5] = 1.84400000E+00;
+    DIP[6] = 0.00000000E+00;
+    DIP[7] = 0.00000000E+00;
     DIP[8] = 0.00000000E+00;
+    DIP[9] = 0.00000000E+00;
+    DIP[10] = 0.00000000E+00;
+    DIP[11] = 0.00000000E+00;
+    DIP[12] = 0.00000000E+00;
+    DIP[13] = 0.00000000E+00;
+    DIP[14] = 0.00000000E+00;
+    DIP[15] = 1.70000000E+00;
+    DIP[16] = 0.00000000E+00;
+    DIP[17] = 0.00000000E+00;
+    DIP[18] = 0.00000000E+00;
+    DIP[19] = 0.00000000E+00;
+    DIP[20] = 0.00000000E+00;
 }
 
 
 /*the polarizability in cubic Angstroms */
 void egtransetPOL(double* POL ) {
-    POL[7] = 0.00000000E+00;
-    POL[14] = 0.00000000E+00;
     POL[0] = 7.90000000E-01;
-    POL[17] = 0.00000000E+00;
-    POL[11] = 1.95000000E+00;
-    POL[3] = 1.60000000E+00;
-    POL[15] = 0.00000000E+00;
-    POL[5] = 0.00000000E+00;
-    POL[16] = 0.00000000E+00;
-    POL[2] = 0.00000000E+00;
-    POL[20] = 0.00000000E+00;
-    POL[6] = 0.00000000E+00;
-    POL[12] = 2.65000000E+00;
-    POL[10] = 2.60000000E+00;
-    POL[4] = 0.00000000E+00;
-    POL[18] = 0.00000000E+00;
-    POL[13] = 0.00000000E+00;
-    POL[19] = 1.76000000E+00;
     POL[1] = 0.00000000E+00;
-    POL[9] = 0.00000000E+00;
+    POL[2] = 0.00000000E+00;
+    POL[3] = 1.60000000E+00;
+    POL[4] = 0.00000000E+00;
+    POL[5] = 0.00000000E+00;
+    POL[6] = 0.00000000E+00;
+    POL[7] = 0.00000000E+00;
     POL[8] = 0.00000000E+00;
+    POL[9] = 0.00000000E+00;
+    POL[10] = 2.60000000E+00;
+    POL[11] = 1.95000000E+00;
+    POL[12] = 2.65000000E+00;
+    POL[13] = 0.00000000E+00;
+    POL[14] = 0.00000000E+00;
+    POL[15] = 0.00000000E+00;
+    POL[16] = 0.00000000E+00;
+    POL[17] = 0.00000000E+00;
+    POL[18] = 0.00000000E+00;
+    POL[19] = 1.76000000E+00;
+    POL[20] = 0.00000000E+00;
 }
 
 
 /*the rotational relaxation collision number at 298 K */
 void egtransetZROT(double* ZROT ) {
-    ZROT[7] = 0.00000000E+00;
-    ZROT[14] = 2.00000000E+00;
     ZROT[0] = 2.80000000E+02;
-    ZROT[17] = 1.50000000E+00;
-    ZROT[11] = 1.80000000E+00;
-    ZROT[3] = 3.80000000E+00;
-    ZROT[15] = 2.00000000E+00;
-    ZROT[5] = 4.00000000E+00;
-    ZROT[16] = 1.50000000E+00;
-    ZROT[2] = 0.00000000E+00;
-    ZROT[20] = 0.00000000E+00;
-    ZROT[6] = 1.00000000E+00;
-    ZROT[12] = 2.10000000E+00;
-    ZROT[10] = 1.30000000E+01;
-    ZROT[4] = 0.00000000E+00;
-    ZROT[18] = 1.50000000E+00;
-    ZROT[13] = 0.00000000E+00;
-    ZROT[19] = 4.00000000E+00;
     ZROT[1] = 0.00000000E+00;
-    ZROT[9] = 0.00000000E+00;
+    ZROT[2] = 0.00000000E+00;
+    ZROT[3] = 3.80000000E+00;
+    ZROT[4] = 0.00000000E+00;
+    ZROT[5] = 4.00000000E+00;
+    ZROT[6] = 1.00000000E+00;
+    ZROT[7] = 0.00000000E+00;
     ZROT[8] = 0.00000000E+00;
+    ZROT[9] = 0.00000000E+00;
+    ZROT[10] = 1.30000000E+01;
+    ZROT[11] = 1.80000000E+00;
+    ZROT[12] = 2.10000000E+00;
+    ZROT[13] = 0.00000000E+00;
+    ZROT[14] = 2.00000000E+00;
+    ZROT[15] = 2.00000000E+00;
+    ZROT[16] = 1.50000000E+00;
+    ZROT[17] = 1.50000000E+00;
+    ZROT[18] = 1.50000000E+00;
+    ZROT[19] = 4.00000000E+00;
+    ZROT[20] = 0.00000000E+00;
 }
 
 
 /*0: monoatomic, 1: linear, 2: nonlinear */
 void egtransetNLIN(int* NLIN) {
-    NLIN[7] = 1;
-    NLIN[14] = 2;
     NLIN[0] = 1;
-    NLIN[17] = 2;
-    NLIN[11] = 1;
-    NLIN[3] = 1;
-    NLIN[15] = 2;
-    NLIN[5] = 2;
-    NLIN[16] = 2;
-    NLIN[2] = 0;
-    NLIN[20] = 0;
-    NLIN[6] = 2;
-    NLIN[12] = 1;
-    NLIN[10] = 2;
-    NLIN[4] = 1;
-    NLIN[18] = 2;
-    NLIN[13] = 2;
-    NLIN[19] = 1;
     NLIN[1] = 0;
-    NLIN[9] = 1;
+    NLIN[2] = 0;
+    NLIN[3] = 1;
+    NLIN[4] = 1;
+    NLIN[5] = 2;
+    NLIN[6] = 2;
+    NLIN[7] = 1;
     NLIN[8] = 1;
+    NLIN[9] = 1;
+    NLIN[10] = 2;
+    NLIN[11] = 1;
+    NLIN[12] = 1;
+    NLIN[13] = 2;
+    NLIN[14] = 2;
+    NLIN[15] = 2;
+    NLIN[16] = 2;
+    NLIN[17] = 2;
+    NLIN[18] = 2;
+    NLIN[19] = 1;
+    NLIN[20] = 0;
 }
 
 

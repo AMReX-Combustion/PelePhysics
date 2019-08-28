@@ -1,10 +1,8 @@
 #include "chemistry_file.H"
 
+#ifndef AMREX_USE_CUDA
 namespace thermo
 {
-    /* Inverse molecular weights */
-    std::vector<double> imw;
-
     double fwd_A[0], fwd_beta[0], fwd_Ea[0];
     double low_A[0], low_beta[0], low_Ea[0];
     double rev_A[0], rev_beta[0], rev_Ea[0];
@@ -13,6 +11,8 @@ namespace thermo
     double activation_units[0], prefactor_units[0], phase_units[0];
     int is_PD[0], troe_len[0], sri_len[0], nTB[0], *TBid[0];
     double *TB[0];
+    std::vector<std::vector<int>> kiv(0); 
+    std::vector<std::vector<int>> nuv(0); 
 
     double fwd_A_DEF[0], fwd_beta_DEF[0], fwd_Ea_DEF[0];
     double low_A_DEF[0], low_beta_DEF[0], low_Ea_DEF[0];
@@ -26,16 +26,36 @@ namespace thermo
 };
 
 using namespace thermo;
+#endif
+
+/* Inverse molecular weights */
+/* TODO: check necessity on CPU */
+static AMREX_GPU_DEVICE_MANAGED double imw[2] = {
+    1.0 / 31.998800,  /*O2 */
+    1.0 / 28.013400};  /*N2 */
+
+/* Inverse molecular weights */
+/* TODO: check necessity because redundant with molecularWeight */
+static AMREX_GPU_DEVICE_MANAGED double molecular_weights[2] = {
+    31.998800,  /*O2 */
+    28.013400};  /*N2 */
+
+AMREX_GPU_HOST_DEVICE
+void get_imw(double imw_new[]){
+    for(int i = 0; i<2; ++i) imw_new[i] = imw[i];
+}
+
+/* TODO: check necessity because redundant with CKWT */
+AMREX_GPU_HOST_DEVICE
+void get_mw(double mw_new[]){
+    for(int i = 0; i<2; ++i) mw_new[i] = molecular_weights[i];
+}
 
 
+#ifndef AMREX_USE_CUDA
 /* Initializes parameter database */
 void CKINIT()
 {
-
-    /* Inverse molecular weights */
-    imw = {
-        1.0 / 31.998800,  /*O2 */
-        1.0 / 28.013400};  /*N2 */
 
     rxn_map = {};
 
@@ -45,7 +65,7 @@ void CKINIT()
 void GET_REACTION_MAP(int *rmap)
 {
     for (int i=0; i<0; ++i) {
-        rmap[i] = rxn_map[i];
+        rmap[i] = rxn_map[i] + 1;
     }
 }
 
@@ -231,6 +251,17 @@ void CKFINALIZE()
   }
 }
 
+#else
+/* TODO: Remove on GPU, right now needed by chemistry_module on FORTRAN */
+AMREX_GPU_HOST_DEVICE void CKINIT()
+{
+}
+
+AMREX_GPU_HOST_DEVICE void CKFINALIZE()
+{
+}
+
+#endif
 
 
 /*A few mechanism parameters */
@@ -350,7 +381,7 @@ void CKPX(double *  rho, double *  T, double *  x, double *  P)
 
 
 /*Compute P = rhoRT/W(y) */
-void CKPY(double *  rho, double *  T, double *  y,  double *  P)
+AMREX_GPU_HOST_DEVICE void CKPY(double *  rho, double *  T, double *  y,  double *  P)
 {
     double YOW = 0;/* for computing mean MW */
     YOW += y[0]*imw[0]; /*O2 */
@@ -361,6 +392,7 @@ void CKPY(double *  rho, double *  T, double *  y,  double *  P)
 }
 
 
+#ifndef AMREX_USE_CUDA
 /*Compute P = rhoRT/W(y) */
 void VCKPY(int *  np, double *  rho, double *  T, double *  y,  double *  P)
 {
@@ -381,6 +413,7 @@ void VCKPY(int *  np, double *  rho, double *  T, double *  y,  double *  P)
 
     return;
 }
+#endif
 
 
 /*Compute P = rhoRT/W(c) */
@@ -456,7 +489,7 @@ void CKRHOC(double *  P, double *  T, double *  c,  double *  rho)
 /*get molecular weight for all species */
 void CKWT( double *  wt)
 {
-    molecularWeight(wt);
+    get_mw(wt);
 }
 
 
@@ -523,7 +556,7 @@ void CKMMWC(double *  c,  double *  wtm)
 
 
 /*convert y[species] (mass fracs) to x[species] (mole fracs) */
-void CKYTX(double *  y,  double *  x)
+AMREX_GPU_HOST_DEVICE void CKYTX(double *  y,  double *  x)
 {
     double YOW = 0;
     double tmp[2];
@@ -547,6 +580,7 @@ void CKYTX(double *  y,  double *  x)
 }
 
 
+#ifndef AMREX_USE_CUDA
 /*convert y[npoints*species] (mass fracs) to x[npoints*species] (mole fracs) */
 void VCKYTX(int *  np, double *  y,  double *  x)
 {
@@ -572,6 +606,12 @@ void VCKYTX(int *  np, double *  y,  double *  x)
         }
     }
 }
+#else
+/*TODO: remove this on GPU */
+void VCKYTX(int *  np, double *  y,  double *  x)
+{
+}
+#endif
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
@@ -603,7 +643,7 @@ void CKYTCP(double *  P, double *  T, double *  y,  double *  c)
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
-void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
+AMREX_GPU_HOST_DEVICE void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
 {
     for (int i = 0; i < 2; i++)
     {
@@ -847,7 +887,7 @@ void CKSML(double *  T,  double *  sml)
 
 /*Returns the specific heats at constant volume */
 /*in mass units (Eq. 29) */
-void CKCVMS(double *  T,  double *  cvms)
+AMREX_GPU_HOST_DEVICE void CKCVMS(double *  T,  double *  cvms)
 {
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
@@ -860,7 +900,7 @@ void CKCVMS(double *  T,  double *  cvms)
 
 /*Returns the specific heats at constant pressure */
 /*in mass units (Eq. 26) */
-void CKCPMS(double *  T,  double *  cpms)
+AMREX_GPU_HOST_DEVICE void CKCPMS(double *  T,  double *  cpms)
 {
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
@@ -872,7 +912,7 @@ void CKCPMS(double *  T,  double *  cpms)
 
 
 /*Returns internal energy in mass units (Eq 30.) */
-void CKUMS(double *  T,  double *  ums)
+AMREX_GPU_HOST_DEVICE void CKUMS(double *  T,  double *  ums)
 {
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
@@ -886,7 +926,7 @@ void CKUMS(double *  T,  double *  ums)
 
 
 /*Returns enthalpy in mass units (Eq 27.) */
-void CKHMS(double *  T,  double *  hms)
+AMREX_GPU_HOST_DEVICE void CKHMS(double *  T,  double *  hms)
 {
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
@@ -899,6 +939,7 @@ void CKHMS(double *  T,  double *  hms)
 }
 
 
+#ifndef AMREX_USE_CUDA
 /*Returns enthalpy in mass units (Eq 27.) */
 void VCKHMS(int *  np, double *  T,  double *  hms)
 {
@@ -923,6 +964,12 @@ void VCKHMS(int *  np, double *  T,  double *  hms)
         }
     }
 }
+#else
+/*TODO: remove this on GPU */
+void VCKHMS(int *  np, double *  T,  double *  hms)
+{
+}
+#endif
 
 
 /*Returns gibbs in mass units (Eq 31.) */
@@ -1026,7 +1073,7 @@ void CKCVBL(double *  T, double *  x,  double *  cvbl)
 
 
 /*Returns the mean specific heat at CV (Eq. 36) */
-void CKCVBS(double *  T, double *  y,  double *  cvbs)
+AMREX_GPU_HOST_DEVICE void CKCVBS(double *  T, double *  y,  double *  cvbs)
 {
     double result = 0; 
     double tT = *T; /*temporary temperature */
@@ -1103,7 +1150,7 @@ void CKUBML(double *  T, double *  x,  double *  ubml)
 
 
 /*get mean internal energy in mass units */
-void CKUBMS(double *  T, double *  y,  double *  ubms)
+AMREX_GPU_HOST_DEVICE void CKUBMS(double *  T, double *  y,  double *  ubms)
 {
     double result = 0;
     double tT = *T; /*temporary temperature */
@@ -1267,7 +1314,7 @@ void CKABMS(double *  P, double *  T, double *  y,  double *  abms)
 
 
 /*compute the production rate for each species */
-void CKWC(double *  T, double *  C,  double *  wdot)
+AMREX_GPU_HOST_DEVICE void CKWC(double *  T, double *  C,  double *  wdot)
 {
     int id; /*loop counter */
 
@@ -1341,7 +1388,7 @@ void CKWXP(double *  P, double *  T, double *  x,  double *  wdot)
 
 /*Returns the molar production rate of species */
 /*Given rho, T, and mass fractions */
-void CKWYR(double *  rho, double *  T, double *  y,  double *  wdot)
+AMREX_GPU_HOST_DEVICE void CKWYR(double *  rho, double *  T, double *  y,  double *  wdot)
 {
     int id; /*loop counter */
     double c[2]; /*temporary storage */
@@ -1365,6 +1412,7 @@ void VCKWYR(int *  np, double *  rho, double *  T,
 	    double *  y,
 	    double *  wdot)
 {
+#ifndef AMREX_USE_CUDA
     double c[2*(*np)]; /*temporary storage */
     /*See Eq 8 with an extra 1e6 so c goes to SI */
     for (int n=0; n<2; n++) {
@@ -1380,6 +1428,7 @@ void VCKWYR(int *  np, double *  rho, double *  T,
     for (int i=0; i<2*(*np); i++) {
         wdot[i] *= 1.0e-6;
     }
+#endif
 }
 
 
@@ -1574,6 +1623,27 @@ void CKNU(int * kdim,  int * nuki)
 }
 
 
+/*Returns a count of species in a reaction, and their indices */
+/*and stoichiometric coefficients. (Eq 50) */
+void CKINU(int * i, int * nspec, int * ki, int * nu)
+{
+    if (*i < 1) {
+        /*Return max num species per reaction */
+        *nspec = 0;
+    } else {
+        if (*i > 0) {
+            *nspec = -1;
+        } else {
+            *nspec = kiv[*i-1].size();
+            for (int j=0; j<*nspec; ++j) {
+                ki[j] = kiv[*i-1][j] + 1;
+                nu[j] = nuv[*i-1][j];
+            }
+        }
+    }
+}
+
+
 /*Returns the elemental composition  */
 /*of the speciesi (mdim is num of elements) */
 void CKNCF(int * mdim,  int * ncf)
@@ -1598,11 +1668,6 @@ void CKNCF(int * mdim,  int * ncf)
 /*for all reactions */
 void CKABE( double *  a, double *  b, double *  e)
 {
-    for (int i=0; i<0; ++i) {
-        a[i] = fwd_A[i];
-        b[i] = fwd_beta[i];
-        e[i] = fwd_Ea[i];
-    }
 
     return;
 }
@@ -1686,6 +1751,52 @@ void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon)
     equilibriumConstants(eqcon, gort, tT);
 }
 
+#ifdef AMREX_USE_CUDA
+/*GPU version of productionRate: no more use of thermo namespace vectors */
+/*compute the production rate for each species */
+AMREX_GPU_HOST_DEVICE inline void  productionRate(double * wdot, double * sc, double T)
+{
+    double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
+    double invT = 1.0 / tc[1];
+
+    double qdot, q_f[0], q_r[0];
+    comp_qfqr(q_f, q_r, sc, tc, invT);
+
+    for (int i = 0; i < 2; ++i) {
+        wdot[i] = 0.0;
+    }
+
+    return;
+}
+
+AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * sc, double * tc, double invT)
+{
+
+    /*compute the mixture concentration */
+    double mixture = 0.0;
+    for (int i = 0; i < 2; ++i) {
+        mixture += sc[i];
+    }
+
+    /*compute the Gibbs free energy */
+    double g_RT[2];
+    gibbs(g_RT, tc);
+
+    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
+    double refC = 101325 / 8.31451 * invT;
+    double refCinv = 1 / refC;
+
+    /* Evaluate the kfs */
+    double k_f, Corr;
+
+
+
+    return;
+}
+#endif
+
+
+#ifndef AMREX_USE_CUDA
 static double T_save = -1;
 #ifdef _OPENMP
 #pragma omp threadprivate(T_save)
@@ -1702,7 +1813,7 @@ static double Kc_save[0];
 #endif
 
 
-/*compute the production rate for each species */
+/*compute the production rate for each species pointwise on CPU */
 void productionRate(double *  wdot, double *  sc, double T)
 {
     double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
@@ -1783,8 +1894,10 @@ void comp_qfqr(double *  qf, double *  qr, double *  sc, double *  tc, double in
 
     return;
 }
+#endif
 
 
+#ifndef AMREX_USE_CUDA
 /*compute the production rate for each species */
 void vproductionRate(int npt, double *  wdot, double *  sc, double *  T)
 {
@@ -1874,9 +1987,10 @@ void vcomp_wdot(int npt, double *  wdot, double *  mixture, double *  sc,
         double qdot, q_f, q_r, phi_f, phi_r, k_f, k_r, Kc;
     }
 }
+#endif
 
 /*compute an approx to the reaction Jacobian */
-void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP)
+AMREX_GPU_HOST_DEVICE void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP)
 {
     double c[2];
 
@@ -1896,8 +2010,51 @@ void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP)
     return;
 }
 
+/*compute an approx to the SPS Jacobian */
+AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma)
+{
+    double c[2];
+    double J[9];
+    double mwt[2];
+
+    get_mw(mwt);
+
+    for (int k=0; k<2; k++) {
+        c[k] = 1.e6 * sc[k];
+    }
+
+    aJacobian_precond(J, c, *Tp, *HP);
+
+    /* Change of coord */
+    /* dwdot[k]/dT */
+    /* dTdot/d[X] */
+    for (int k=0; k<2; k++) {
+        J[6+k] = 1.e-6 * J[6+k] * mwt[k];
+        J[k*3+2] = 1.e6 * J[k*3+2] / mwt[k];
+    }
+    /* dTdot/dT */
+    /* dwdot[l]/[k] */
+    for (int k=0; k<2; k++) {
+        for (int l=0; l<2; l++) {
+            /* DIAG elem */
+            if (k == l){
+                J[ 3 * k + l] =  J[ 3 * k + l] * mwt[l] / mwt[k];
+            /* NOT DIAG and not last column nor last row */
+            } else {
+                J[ 3 * k + l] =  J[ 3 * k + l] * mwt[l] / mwt[k];
+            }
+        }
+    }
+
+    for (int k=0; k<(*len); k++) {
+        Jsps[k] = J[indx[k]];
+    }
+
+    return;
+}
+
 /*compute the reaction Jacobian */
-void DWDOT(double *  J, double *  sc, double *  Tp, int * consP)
+AMREX_GPU_HOST_DEVICE void DWDOT(double *  J, double *  sc, double *  Tp, int * consP)
 {
     double c[2];
 
@@ -1918,7 +2075,7 @@ void DWDOT(double *  J, double *  sc, double *  Tp, int * consP)
 }
 
 /*compute the sparsity pattern Jacobian */
-void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
+AMREX_GPU_HOST_DEVICE void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
 {
     double c[2];
     double J[9];
@@ -1946,7 +2103,7 @@ void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
 
 
 /*compute the sparsity pattern of simplified Jacobian */
-void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)
+AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)
 {
     double c[2];
     double J[9];
@@ -1976,8 +2133,9 @@ void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)
 }
 
 
-/*compute the sparsity pattern of the simplified precond Jacobian */
-void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * consP)
+#ifndef AMREX_USE_CUDA
+/*compute the sparsity pattern of the simplified precond Jacobian on CPU */
+void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * consP)
 {
     double c[2];
     double J[9];
@@ -1994,10 +2152,12 @@ void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * consP)
         for (int l=0; l<3; l++) {
             if (k == l) {
                 rowVals[nJdata_tmp] = l; 
+                indx[nJdata_tmp] = 3*k + l;
                 nJdata_tmp = nJdata_tmp + 1; 
             } else {
                 if(J[3*k + l] != 0.0) {
                     rowVals[nJdata_tmp] = l; 
+                    indx[nJdata_tmp] = 3*k + l;
                     nJdata_tmp = nJdata_tmp + 1; 
                 }
             }
@@ -2007,8 +2167,43 @@ void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * consP)
 
     return;
 }
+#else
+
+/*compute the sparsity pattern of the simplified precond Jacobian on GPU */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx, int * consP)
+{
+    double c[2];
+    double J[9];
+
+    for (int k=0; k<2; k++) {
+        c[k] = 1.0/ 2.000000 ;
+    }
+
+    aJacobian_precond(J, c, 1500.0, *consP);
+
+    rowPtr[0] = 1;
+    int nJdata_tmp = 1;
+    for (int l=0; l<3; l++) {
+        for (int k=0; k<3; k++) {
+            if (k == l) {
+                colIndx[nJdata_tmp-1] = l+1; 
+                nJdata_tmp = nJdata_tmp + 1; 
+            } else {
+                if(J[3*k + l] != 0.0) {
+                    colIndx[nJdata_tmp-1] = k+1; 
+                    nJdata_tmp = nJdata_tmp + 1; 
+                }
+            }
+        }
+        rowPtr[l+1] = nJdata_tmp;
+    }
+
+    return;
+}
+#endif
+
 /*compute the sparsity pattern of the Jacobian */
-void SPARSITY_PREPROC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)
 {
     double c[2];
     double J[9];
@@ -2041,7 +2236,99 @@ void SPARSITY_PREPROC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)
 }
 
 
-/*compute the reaction Jacobian */
+#ifdef AMREX_USE_CUDA
+/*compute the reaction Jacobian on GPU */
+AMREX_GPU_HOST_DEVICE
+void aJacobian(double * J, double * sc, double T, int consP)
+{
+
+
+    for (int i=0; i<9; i++) {
+        J[i] = 0.0;
+    }
+
+    double wdot[2];
+    for (int k=0; k<2; k++) {
+        wdot[k] = 0.0;
+    }
+
+    double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
+    double invT = 1.0 / tc[1];
+    double invT2 = invT * invT;
+
+    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
+    double refC = 101325 / 8.31451 / T;
+    double refCinv = 1.0 / refC;
+
+    /*compute the mixture concentration */
+    double mixture = 0.0;
+    for (int k = 0; k < 2; ++k) {
+        mixture += sc[k];
+    }
+
+    /*compute the Gibbs free energy */
+    double g_RT[2];
+    gibbs(g_RT, tc);
+
+    /*compute the species enthalpy */
+    double h_RT[2];
+    speciesEnthalpy(h_RT, tc);
+
+    double phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;
+    double dlnkfdT, dlnk0dT, dlnKcdT, dkrdT, dqdT;
+    double dqdci, dcdc_fac, dqdc[2];
+    double Pr, fPr, F, k_0, logPr;
+    double logFcent, troe_c, troe_n, troePr_den, troePr, troe;
+    double Fcent1, Fcent2, Fcent3, Fcent;
+    double dlogFdc, dlogFdn, dlogFdcn_fac;
+    double dlogPrdT, dlogfPrdT, dlogFdT, dlogFcentdT, dlogFdlogPr, dlnCorrdT;
+    const double ln10 = log(10.0);
+    const double log10e = 1.0/log(10.0);
+    double c_R[2], dcRdT[2], e_RT[2];
+    double * eh_RT;
+    if (consP) {
+        cp_R(c_R, tc);
+        dcvpRdT(dcRdT, tc);
+        eh_RT = &h_RT[0];
+    }
+    else {
+        cv_R(c_R, tc);
+        dcvpRdT(dcRdT, tc);
+        speciesInternalEnergy(e_RT, tc);
+        eh_RT = &e_RT[0];
+    }
+
+    double cmix = 0.0, ehmix = 0.0, dcmixdT=0.0, dehmixdT=0.0;
+    for (int k = 0; k < 2; ++k) {
+        cmix += c_R[k]*sc[k];
+        dcmixdT += dcRdT[k]*sc[k];
+        ehmix += eh_RT[k]*wdot[k];
+        dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[6+k];
+    }
+
+    double cmixinv = 1.0/cmix;
+    double tmp1 = ehmix*cmixinv;
+    double tmp3 = cmixinv*T;
+    double tmp2 = tmp1*tmp3;
+    double dehmixdc;
+    /* dTdot/d[X] */
+    for (int k = 0; k < 2; ++k) {
+        dehmixdc = 0.0;
+        for (int m = 0; m < 2; ++m) {
+            dehmixdc += eh_RT[m]*J[k*3+m];
+        }
+        J[k*3+2] = tmp2*c_R[k] - tmp3*dehmixdc;
+    }
+    /* dTdot/dT */
+    J[8] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;
+
+return;
+}
+#endif
+
+
+#ifndef AMREX_USE_CUDA
+/*compute the reaction Jacobian on CPU */
 void aJacobian(double *  J, double *  sc, double T, int consP)
 {
     for (int i=0; i<9; i++) {
@@ -2123,9 +2410,11 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     /* dTdot/dT */
     J[8] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;
 }
+#endif
+
 
 /*compute an approx to the reaction Jacobian */
-void aJacobian_precond(double *  J, double *  sc, double T, int HP)
+AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T, int HP)
 {
     for (int i=0; i<9; i++) {
         J[i] = 0.0;
@@ -2210,7 +2499,7 @@ void aJacobian_precond(double *  J, double *  sc, double T, int HP)
 
 /*compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-void dcvpRdT(double *  species, double *  tc)
+AMREX_GPU_HOST_DEVICE void dcvpRdT(double * species, double *  tc)
 {
 
     /*temperature */
@@ -2249,17 +2538,19 @@ void dcvpRdT(double *  species, double *  tc)
 
 
 /*compute the progress rate for each reaction */
-void progressRate(double *  qdot, double *  sc, double T)
+AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  sc, double T)
 {
     double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     double invT = 1.0 / tc[1];
 
+#ifndef AMREX_USE_CUDA
     if (T != T_save)
     {
         T_save = T;
         comp_k_f(tc,invT,k_f_save);
         comp_Kc(tc,invT,Kc_save);
     }
+#endif
 
     double q_f[0], q_r[0];
     comp_qfqr(q_f, q_r, sc, tc, invT);
@@ -2273,10 +2564,11 @@ void progressRate(double *  qdot, double *  sc, double T)
 
 
 /*compute the progress rate for each reaction */
-void progressRateFR(double *  q_f, double *  q_r, double *  sc, double T)
+AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  sc, double T)
 {
     double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     double invT = 1.0 / tc[1];
+#ifndef AMREX_USE_CUDA
 
     if (T != T_save)
     {
@@ -2284,6 +2576,7 @@ void progressRateFR(double *  q_f, double *  q_r, double *  sc, double T)
         comp_k_f(tc,invT,k_f_save);
         comp_Kc(tc,invT,Kc_save);
     }
+#endif
 
     comp_qfqr(q_f, q_r, sc, tc, invT);
 
@@ -2303,7 +2596,7 @@ void equilibriumConstants(double *  kc, double *  g_RT, double T)
 
 /*compute the g/(RT) at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-void gibbs(double *  species, double *  tc)
+AMREX_GPU_HOST_DEVICE void gibbs(double * species, double *  tc)
 {
 
     /*temperature */
@@ -2356,7 +2649,7 @@ void gibbs(double *  species, double *  tc)
 
 /*compute the a/(RT) at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-void helmholtz(double *  species, double *  tc)
+AMREX_GPU_HOST_DEVICE void helmholtz(double * species, double *  tc)
 {
 
     /*temperature */
@@ -2409,7 +2702,7 @@ void helmholtz(double *  species, double *  tc)
 
 /*compute Cv/R at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-void cv_R(double *  species, double *  tc)
+AMREX_GPU_HOST_DEVICE void cv_R(double * species, double *  tc)
 {
 
     /*temperature */
@@ -2453,7 +2746,7 @@ void cv_R(double *  species, double *  tc)
 
 /*compute Cp/R at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-void cp_R(double *  species, double *  tc)
+AMREX_GPU_HOST_DEVICE void cp_R(double * species, double *  tc)
 {
 
     /*temperature */
@@ -2497,7 +2790,7 @@ void cp_R(double *  species, double *  tc)
 
 /*compute the e/(RT) at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-void speciesInternalEnergy(double *  species, double *  tc)
+AMREX_GPU_HOST_DEVICE void speciesInternalEnergy(double * species, double *  tc)
 {
 
     /*temperature */
@@ -2546,7 +2839,7 @@ void speciesInternalEnergy(double *  species, double *  tc)
 
 /*compute the h/(RT) at the given temperature (Eq 20) */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-void speciesEnthalpy(double *  species, double *  tc)
+AMREX_GPU_HOST_DEVICE void speciesEnthalpy(double * species, double *  tc)
 {
 
     /*temperature */
@@ -2595,7 +2888,7 @@ void speciesEnthalpy(double *  species, double *  tc)
 
 /*compute the S/R at the given temperature (Eq 21) */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-void speciesEntropy(double *  species, double *  tc)
+AMREX_GPU_HOST_DEVICE void speciesEntropy(double * species, double *  tc)
 {
 
     /*temperature */
@@ -2641,16 +2934,6 @@ void speciesEntropy(double *  species, double *  tc)
 }
 
 
-/*save molecular weights into array */
-void molecularWeight(double *  wt)
-{
-    wt[0] = 31.998800; /*O2 */
-    wt[1] = 28.013400; /*N2 */
-
-    return;
-}
-
-
 /*save atomic weights into array */
 void atomicWeight(double *  awt)
 {
@@ -2659,8 +2942,10 @@ void atomicWeight(double *  awt)
 
     return;
 }
+
+
 /* get temperature given internal energy in mass units and mass fracs */
-void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int * ierr)
+AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int * ierr)
 {
 #ifdef CONVERGENCE
     const int maxiter = 5000;
@@ -2773,7 +3058,7 @@ void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentri
 
     egtransetEPS(EPS);
     egtransetSIG(SIG);
-    molecularWeight(wt);
+    get_mw(wt);
 
     /*species 0: O2 */
     /*Imported from NIST */
@@ -2923,4 +3208,3 @@ void egtransetKTDIF(int* KTDIF) {
 void egtransetCOFTD(double* COFTD) {
 }
 
-/* End of file  */
