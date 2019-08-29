@@ -1,0 +1,27 @@
+ifeq ($(USE_SUNDIALS_PP),TRUE) 
+  DEFINES  += -DUSE_SUNDIALS_PP
+  CVODE_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib
+  INCLUDE_LOCATIONS += $(CVODE_LIB_DIR)/../include
+  LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_cvode
+  LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nvecserial
+  ifeq ($(USE_OMP),TRUE)
+    LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nvecopenmp
+  endif
+  ifeq ($(USE_CUDA),TRUE)
+    LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nveccuda
+  endif
+  LIBRARIES += -Wl,-rpath=${CVODE_LIB_DIR}
+  ifeq ($(USE_KLU_PP), TRUE)
+    SUITESPARSE_DIR   ?= $(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse
+    DEFINES   += -DUSE_KLU_PP
+    LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_sunmatrixsparse
+    LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_sunlinsolklu
+    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lklu
+    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lamd
+    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lcolamd
+    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lbtf
+    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lsuitesparseconfig
+    INCLUDE_LOCATIONS+=${SUITESPARSE_DIR}/include
+    LIBRARIES += -Wl,-rpath=${SUITESPARSE_DIR}/lib
+  endif
+endif
