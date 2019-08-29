@@ -14,6 +14,10 @@ EBASE = Pele
 # this list will be searched for runtime parameters
 EXTERN_CORE ?=
 
+ifeq ($(USE_SUNDIALS_PP),TRUE) 
+  include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
+endif
+
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
 # PeleC uses a coarse grained OMP approach
@@ -52,9 +56,6 @@ else
 endif
 
 # Reactions
-ifeq ($(USE_SUNDIALS_PP),TRUE) 
-  include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
-endif
 REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
 include $(REACTIONS_HOME)/Make.package
 include $(REACTIONS_PATH)/Make.package

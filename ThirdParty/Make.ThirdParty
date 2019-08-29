@@ -1,14 +1,17 @@
 ifeq ($(USE_SUNDIALS_PP),TRUE) 
+  $(info ***Loading Make.ThirdParty) 
   DEFINES  += -DUSE_SUNDIALS_PP
   CVODE_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib
+  $(info CVODE_LIB_DIR="$(CVODE_LIB_DIR)")
   INCLUDE_LOCATIONS += $(CVODE_LIB_DIR)/../include
   LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_cvode
   LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nvecserial
   ifeq ($(USE_OMP),TRUE)
     LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nvecopenmp
   endif
-  ifeq ($(USE_CUDA),TRUE)
+  ifeq ($(USE_CUDA_CVODE),TRUE)
     LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nveccuda
+    LIBRARIES += -lcusolver -lcusparse
   endif
   LIBRARIES += -Wl,-rpath=${CVODE_LIB_DIR}
   ifeq ($(USE_KLU_PP), TRUE)
