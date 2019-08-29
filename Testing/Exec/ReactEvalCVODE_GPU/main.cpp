@@ -198,7 +198,7 @@ main (int   argc,
     {
         std::cout<<"stream "<<amrex::Gpu::gpuStream()<<std::endl;
 	/* Prints to follow the computation */
-        /* ADVANCE -->same thing should all be def for all MFiter: outside of LOOP ?? */
+        /* ADVANCE */
         Real time = 0.0;
         Real dt_incr   = dt/ndt;
         amrex::Real fc_pt;

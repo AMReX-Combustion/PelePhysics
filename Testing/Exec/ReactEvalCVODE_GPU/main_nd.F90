@@ -95,7 +95,6 @@ contains
 
     ! local variables
     integer          :: i, j, k
-    !integer          :: count_nodes
     real(amrex_real) :: Temp_lo, Temp_hi, dTemp, P(3), L(3), x, y, z, pressure
     type(eos_t)      :: eos_state
 
