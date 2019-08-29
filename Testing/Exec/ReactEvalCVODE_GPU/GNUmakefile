@@ -22,9 +22,9 @@ PELE_PHYSICS_HOME    := ../../..
 # this flag activates the subcycling mode in the D/Cvode routines
 DEFINES  += -DMOD_REACTOR
 
-USE_SUNDIALS_PP = TRUE
+USE_SUNDIALS_PP=TRUE
 
-USE_CUDA_CVODE = TRUE
+USE_CUDA_CVODE=TRUE
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego

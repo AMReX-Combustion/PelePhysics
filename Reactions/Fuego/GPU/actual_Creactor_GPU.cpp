@@ -54,8 +54,7 @@ int reactor_info(const int* cvode_iE,const int* Ncells){
 /* Main routine for external looping */
 int react(realtype *rY_in, realtype *rY_src_in, 
 		realtype *rX_in, realtype *rX_src_in,
-		realtype *P_in, 
-                realtype *dt_react, realtype *time, int *Init,
+                realtype *dt_react, realtype *time,
                 const int* cvode_iE,const int* Ncells, cudaStream_t stream) {
 
         /* CVODE */
@@ -515,10 +514,10 @@ fKernelComputeAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, do
   amrex::Real mw[NUM_SPECIES];
   amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac;
   amrex::GpuArray<amrex::Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
-  amrex::Real Cv_pt, rho_pt, temp_pt, nrg_pt;
+  amrex::Real rho_pt, temp_pt;
 
-  int u_offset   = icell * (NUM_SPECIES + 1); 
-  int jac_offset = icell * (udata->NNZ); 
+  int u_offset   = ncell * (NUM_SPECIES + 1); 
+  int jac_offset = ncell * (udata->NNZ); 
 
   realtype* u_curr = u_d + u_offset;
   realtype* csr_jac_cell = udata->csr_jac_d + jac_offset;
@@ -543,7 +542,13 @@ fKernelComputeAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, do
 
   /* Additional var needed */
   /* TODO HP */
-  eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt)
+  int consP;
+  if (udata->flagP == 1){
+      consP = 0 ;
+  } else {
+      consP = 1;
+  }
+  eos.eos_RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP);
 
   /* renorm the DenseMat */
   for (int i = 0; i < udata->neqs_per_cell[0]; i++){

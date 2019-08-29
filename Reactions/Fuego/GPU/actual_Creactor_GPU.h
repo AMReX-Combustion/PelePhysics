@@ -14,13 +14,11 @@
 #include <cvode/cvode_spils.h>         /* access to CVSpils interface */
 #include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype      */
 #include <sundials/sundials_math.h>
-#include <cvode/cvode_impl.h>
 
 #include <nvector/nvector_cuda.h>
 
 //#include <cusolver/cvode_cusolver_spqr.h>
 
-#include <sundials/sundials_sparse.h>
 #include <sunmatrix/sunmatrix_sparse.h>
 #include <AMReX_Print.H>
 
@@ -74,8 +72,7 @@ int reactor_info(const int* cvode_iE, const int* Ncells);
 
 int react(realtype *rY_in, realtype *rY_src_in, 
 		realtype *rX_in, realtype *rX_src_in, 
-		realtype *P_in, 
-		realtype *dt_react, realtype *time, int *Init,
+		realtype *dt_react, realtype *time,
                 const int* cvode_iE, const int* Ncells, cudaStream_t stream);
 
 static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
@@ -112,10 +109,10 @@ fKernelSpec(int ncells, void *user_data,
 //                                          const int size, const int nnz, 
 //                                          const int nbatched);
 
-//AMREX_GPU_DEVICE
-//inline
-//void 
-KernelComputeAJ(int ncells, void *user_data, realtype *u_d, realtype *udot_d, realtype *csr_val);
+AMREX_GPU_DEVICE
+inline
+void 
+fKernelComputeAJ(int ncells, void *user_data, realtype *u_d, realtype *udot_d, realtype *csr_val);
 
 //__global__ void fKernelFillJB(void *user_data, realtype *gamma);
 
