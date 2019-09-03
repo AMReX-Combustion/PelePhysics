@@ -22,7 +22,7 @@ contains
   subroutine actual_transport(which, coeff)
 
     use extern_probin_module, only: const_conductivity, const_viscosity,&
-         const_bulk_viscosity, const_diffusivity
+         const_bulk_viscosity, const_diffusivity, mks_unit
 
     implicit none
 
@@ -43,6 +43,15 @@ contains
 
     if (which % wtr_get_Ddiag) then
        coeff % Ddiag = const_diffusivity
+    endif
+
+! By default the units are in CGS
+! Below is a flag to let the user to provide MKS data, and it makes the conversion to CGS
+    if (mks_unit) then
+      coeff % lam = coeff % lam * 1.0d5
+      coeff % mu = coeff % mu * 10.0d0
+      coeff % xi = coeff % xi * 10.0d0
+      coeff % Ddiag = coeff % Ddiag * 10.0d0
     endif
 
   end subroutine actual_transport
