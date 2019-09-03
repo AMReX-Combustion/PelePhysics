@@ -54,7 +54,7 @@ void CKMMWX(double *  x, double *  wtm);
 void CKMMWC(double *  c, double *  wtm);
 AMREX_GPU_HOST_DEVICE void CKYTX(double *  y, double *  x);
 void CKYTCP(double *  P, double *  T, double *  y, double *  c);
-void CKYTCR(double *  rho, double *  T, double *  y, double *  c);
+AMREX_GPU_HOST_DEVICE void CKYTCR(double *  rho, double *  T, double *  y, double *  c);
 void CKXTY(double *  x, double *  y);
 void CKXTCP(double *  P, double *  T, double *  x, double *  c);
 void CKXTCR(double *  rho, double *  T, double *  x, double *  c);
@@ -91,7 +91,7 @@ void CKGBML(double *  P, double *  T, double *  x, double *  gbml);
 void CKGBMS(double *  P, double *  T, double *  y, double *  gbms);
 void CKABML(double *  P, double *  T, double *  x, double *  abml);
 void CKABMS(double *  P, double *  T, double *  y, double *  abms);
-void CKWC(double *  T, double *  C, double *  wdot);
+AMREX_GPU_HOST_DEVICE void CKWC(double *  T, double *  C, double *  wdot);
 void CKWYP(double *  P, double *  T, double *  y, double *  wdot);
 void CKWXP(double *  P, double *  T, double *  x, double *  wdot);
 AMREX_GPU_HOST_DEVICE void CKWYR(double *  rho, double *  T, double *  y, double *  wdot);
@@ -167,7 +167,6 @@ void egtransetKTDIF(int* KTDIF);
 #ifndef AMREX_USE_CUDA
 namespace thermo
 {
-    extern std::vector<double> imw;
 
     extern double fwd_A[21], fwd_beta[21], fwd_Ea[21];
     extern double low_A[21], low_beta[21], low_Ea[21];

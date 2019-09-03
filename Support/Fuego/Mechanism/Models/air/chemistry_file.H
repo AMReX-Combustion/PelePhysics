@@ -54,7 +54,7 @@ void CKMMWX(double *  x, double *  wtm);
 void CKMMWC(double *  c, double *  wtm);
 AMREX_GPU_HOST_DEVICE void CKYTX(double *  y, double *  x);
 void CKYTCP(double *  P, double *  T, double *  y, double *  c);
-void CKYTCR(double *  rho, double *  T, double *  y, double *  c);
+AMREX_GPU_HOST_DEVICE void CKYTCR(double *  rho, double *  T, double *  y, double *  c);
 void CKXTY(double *  x, double *  y);
 void CKXTCP(double *  P, double *  T, double *  x, double *  c);
 void CKXTCR(double *  rho, double *  T, double *  x, double *  c);
@@ -91,7 +91,7 @@ void CKGBML(double *  P, double *  T, double *  x, double *  gbml);
 void CKGBMS(double *  P, double *  T, double *  y, double *  gbms);
 void CKABML(double *  P, double *  T, double *  x, double *  abml);
 void CKABMS(double *  P, double *  T, double *  y, double *  abms);
-void CKWC(double *  T, double *  C, double *  wdot);
+AMREX_GPU_HOST_DEVICE void CKWC(double *  T, double *  C, double *  wdot);
 void CKWYP(double *  P, double *  T, double *  y, double *  wdot);
 void CKWXP(double *  P, double *  T, double *  x, double *  wdot);
 AMREX_GPU_HOST_DEVICE void CKWYR(double *  rho, double *  T, double *  y, double *  wdot);
@@ -103,6 +103,7 @@ void CKQXP(double *  P, double *  T, double *  x, double *  qdot);
 void CKQYR(double *  rho, double *  T, double *  y, double *  qdot);
 void CKQXR(double *  rho, double *  T, double *  x, double *  qdot);
 void CKNU(int * kdim, int * nuki);
+void CKINU(int * i, int * nspec, int * ki, int * nu);
 void CKNCF(int * mdim, int * ncf);
 void CKABE(double *  a, double *  b, double *  e );
 void CKEQC(double *  T, double *  C , double *  eqcon );
@@ -166,7 +167,6 @@ void egtransetKTDIF(int* KTDIF);
 #ifndef AMREX_USE_CUDA
 namespace thermo
 {
-    extern std::vector<double> imw;
 
     extern double fwd_A[0], fwd_beta[0], fwd_Ea[0];
     extern double low_A[0], low_beta[0], low_Ea[0];
@@ -176,6 +176,8 @@ namespace thermo
     extern double activation_units[0], prefactor_units[0], phase_units[0];
     extern int is_PD[0], troe_len[0], sri_len[0], nTB[0], *TBid[0];
     extern double *TB[0];
+    extern std::vector<std::vector<int>> kiv; 
+    extern std::vector<std::vector<int>> nuv; 
 
     extern double fwd_A_DEF[0], fwd_beta_DEF[0], fwd_Ea_DEF[0];
     extern double low_A_DEF[0], low_beta_DEF[0], low_Ea_DEF[0];

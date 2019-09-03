@@ -33,10 +33,25 @@ contains
 
   subroutine extern_init_reactor() bind(C, name="extern_init_reactor")
 
+#ifdef USE_SUNDIALS_PP
+    use cvode_module      , only : reactor_init
+
+    implicit none
+
+    integer :: ncells(1), iiE(1)
+
+    iiE(1)    = 1
+    ncells(1) = 1
+
+    call reactor_init(iiE(1),ncells(1))
+#else
     use reactor_module
+
     implicit none
 
     call reactor_init(1)
+#endif
+
 
   end subroutine extern_init_reactor
 
@@ -127,7 +142,11 @@ contains
 
              call eos_tp(eos_state)
 
+#ifdef USE_SUNDIALS_PP
+             eint(i,j,k) = eos_state % e * eos_state % rho
+#else
              eint(i,j,k) = eos_state % e
+#endif
              rhoY(i,j,k,1:nspecies) = eos_state % massfrac * eos_state % rho
              temperature(i,j,k) = eos_state % T
 
@@ -154,9 +173,11 @@ contains
                          time,dt_react) bind(C, name="react_state")
 
     use network           , only : nspecies
-    use react_type_module
-    use reactor_module, only : react
-    use react_type_module
+#ifdef USE_SUNDIALS_PP
+    use cvode_module      , only : react
+#else
+    use reactor_module    , only : react
+#endif
 
     implicit none
 
@@ -181,14 +202,21 @@ contains
     real(amrex_real) :: esrc(es_lo(1):es_hi(1),es_lo(2):es_hi(2),es_lo(3):es_hi(3))
     integer          :: mask(m_lo(1):m_hi(1),m_lo(2):m_hi(2),m_lo(3):m_hi(3))
     real(amrex_real) :: cost(c_lo(1):c_hi(1),c_lo(2):c_hi(2),c_lo(3):c_hi(3))
+#ifdef USE_SUNDIALS_PP
+    real(amrex_real) :: time, dt_react
+#else
     real(amrex_real) :: time, dt_react, pressure
+#endif
 
     integer          :: i, j, k
 
     real(amrex_real) ::    rY(nspecies+1), rY_src(nspecies)
+#ifdef USE_SUNDIALS_PP
+    real(amrex_real) ::    energy(1), energy_src(1)
+#else
     real(amrex_real) ::    energy, energy_src
+#endif
 
-    pressure = 1013250.d0
 
     do k = lo(3), hi(3)
        do j = lo(2), hi(2)
@@ -198,15 +226,32 @@ contains
                 rY(1:nspecies)      = mold(i,j,k,1:nspecies)
                 rY_src(1:nspecies)  = ysrc(i,j,k,1:nspecies)
                 rY(nspecies+1)      = Told(i,j,k)
+#ifdef USE_SUNDIALS_PP
+                energy(1)           = eold(i,j,k)
+                energy_src(1)       = esrc(i,j,k)
+#else
                 energy           = eold(i,j,k)
                 energy_src       = esrc(i,j,k)
 
-                cost(i,j,k) = react(rY, rY_src,&
-                                    energy, energy_src,&
-                                    pressure,dt_react,time,0)
+                pressure = 1013250.d0
+#endif
 
-                enew(i,j,k)         = energy 
-                Tnew(i,j,k)         = rY(nspecies+1)
+                cost(i,j,k) = react(rY, rY_src,&
+#ifdef USE_SUNDIALS_PP
+                                    energy(1), energy_src(1),&
+                                    dt_react,time)
+#else
+                                    energy, energy_src,&
+                                    pressure,&
+                                    dt_react,time)
+#endif
+
+#ifdef USE_SUNDIALS_PP
+                enew(i,j,k)            = energy(1) 
+#else
+                enew(i,j,k)            = energy 
+#endif
+                Tnew(i,j,k)            = rY(nspecies+1)
                 mnew(i,j,k,1:nspecies) = rY(1:nspecies)
              end if
 

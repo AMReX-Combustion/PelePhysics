@@ -1,8 +1,8 @@
 CEXE_headers+=chemistry_file.H
 
-EXE_sources += 
+CEXE_sources+=Aromatic_KrNara.cpp 
 
-LIBRARIES += -L$(CHEM_DIR) -lAromNara
+LIBRARIES += 
 
 INCLUDE_LOCATIONS += $(CHEM_DIR) 
 

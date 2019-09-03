@@ -1,10 +1,17 @@
 f90EXE_sources += actual_network.f90
-ifeq ($(USE_SUNDIALS_3x4x), TRUE)
-    Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
-    CEXE_headers +=actual_Creactor.h  
-    CEXE_sources+=actual_Creactor.cpp
+ifeq ($(USE_CUDA_CVODE), TRUE)
+    Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU
+    CEXE_headers += actual_Creactor_GPU.h
+    CEXE_sources += actual_Creactor_GPU.cpp
 else
-    F90EXE_sources += react_type.F90
-    F90EXE_sources += actual_reactor.F90
-    FEXE_headers += actual_reactor.H
+    ifeq ($(USE_SUNDIALS_PP), TRUE)
+        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
+        CEXE_headers +=actual_Creactor.h  
+        CEXE_sources +=actual_Creactor.cpp
+        f90EXE_sources += mod_cvode.f90
+    else
+        F90EXE_sources += react_type.F90
+        F90EXE_sources += actual_reactor.F90
+        FEXE_headers   += actual_reactor.H
+    endif
 endif

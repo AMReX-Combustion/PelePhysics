@@ -76,7 +76,7 @@ References to sections within the rest of this manuscript are given, for more in
 
 - **Regression testings** have been put in place in `PelePhysics` to test the CVODE integration. See section :ref:`sec:subsubValidCVreact` for validations, and section :ref:`sec:subsReactEvalCvode` for a step-by-step example.
 
-- A Cvode version running on **GPU** is currently WIP
+- A CVODE version running on **GPU** is also implemented but the documentation is WIP
 
 - Many modifications to the chemistry-related routines generator `Fuego` have been put in place. 
   The one having the largest impact is that the chemistry files are now divided in two parts: a header file 

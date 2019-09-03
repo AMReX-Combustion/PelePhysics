@@ -3,8 +3,6 @@
 #ifndef AMREX_USE_CUDA
 namespace thermo
 {
-    /* Inverse molecular weights */
-    std::vector<double> imw;
     double fwd_A[21], fwd_beta[21], fwd_Ea[21];
     double low_A[21], low_beta[21], low_Ea[21];
     double rev_A[21], rev_beta[21], rev_Ea[21];
@@ -32,7 +30,7 @@ using namespace thermo;
 
 /* Inverse molecular weights */
 /* TODO: check necessity on CPU */
-static AMREX_GPU_DEVICE_MANAGED double inv_molecular_weights[9] = {
+static AMREX_GPU_DEVICE_MANAGED double imw[9] = {
     1.0 / 2.015940,  /*H2 */
     1.0 / 31.998800,  /*O2 */
     1.0 / 18.015340,  /*H2O */
@@ -58,7 +56,7 @@ static AMREX_GPU_DEVICE_MANAGED double molecular_weights[9] = {
 
 AMREX_GPU_HOST_DEVICE
 void get_imw(double imw_new[]){
-    for(int i = 0; i<9; ++i) imw_new[i] = inv_molecular_weights[i];
+    for(int i = 0; i<9; ++i) imw_new[i] = imw[i];
 }
 
 /* TODO: check necessity because redundant with CKWT */
@@ -73,23 +71,12 @@ void get_mw(double mw_new[]){
 void CKINIT()
 {
 
-    /* Inverse molecular weights */
-    imw = {
-        1.0 / 2.015940,  /*H2 */
-        1.0 / 31.998800,  /*O2 */
-        1.0 / 18.015340,  /*H2O */
-        1.0 / 1.007970,  /*H */
-        1.0 / 15.999400,  /*O */
-        1.0 / 17.007370,  /*OH */
-        1.0 / 33.006770,  /*HO2 */
-        1.0 / 34.014740,  /*H2O2 */
-        1.0 / 28.013400};  /*N2 */
-
     rxn_map = {6,7,8,9,2,3,4,5,0,10,11,12,13,14,15,1,16,17,18,19,20};
 
     // (0):  H + O2 <=> O + OH
     kiv[6] = {3,1,4,5};
     nuv[6] = {-1,-1,1,1};
+    // (0):  H + O2 <=> O + OH
     fwd_A[6]     = 3547000000000000;
     fwd_beta[6]  = -0.40600000000000003;
     fwd_Ea[6]    = 16599;
@@ -102,6 +89,7 @@ void CKINIT()
     // (1):  O + H2 <=> H + OH
     kiv[7] = {4,0,3,5};
     nuv[7] = {-1,-1,1,1};
+    // (1):  O + H2 <=> H + OH
     fwd_A[7]     = 50800;
     fwd_beta[7]  = 2.6699999999999999;
     fwd_Ea[7]    = 6290;
@@ -114,6 +102,7 @@ void CKINIT()
     // (2):  H2 + OH <=> H2O + H
     kiv[8] = {0,5,2,3};
     nuv[8] = {-1,-1,1,1};
+    // (2):  H2 + OH <=> H2O + H
     fwd_A[8]     = 216000000;
     fwd_beta[8]  = 1.51;
     fwd_Ea[8]    = 3430;
@@ -126,6 +115,7 @@ void CKINIT()
     // (3):  O + H2O <=> OH + OH
     kiv[9] = {4,2,5,5};
     nuv[9] = {-1,-1,1,1};
+    // (3):  O + H2O <=> OH + OH
     fwd_A[9]     = 2970000;
     fwd_beta[9]  = 2.02;
     fwd_Ea[9]    = 13400;
@@ -138,6 +128,7 @@ void CKINIT()
     // (4):  H2 + M <=> H + H + M
     kiv[2] = {0,3,3};
     nuv[2] = {-1,1,1};
+    // (4):  H2 + M <=> H + H + M
     fwd_A[2]     = 4.577e+19;
     fwd_beta[2]  = -1.3999999999999999;
     fwd_Ea[2]    = 104380;
@@ -154,6 +145,7 @@ void CKINIT()
     // (5):  O + O + M <=> O2 + M
     kiv[3] = {4,4,1};
     nuv[3] = {-1,-1,1};
+    // (5):  O + O + M <=> O2 + M
     fwd_A[3]     = 6165000000000000;
     fwd_beta[3]  = -0.5;
     fwd_Ea[3]    = 0;
@@ -170,6 +162,7 @@ void CKINIT()
     // (6):  O + H + M <=> OH + M
     kiv[4] = {4,3,5};
     nuv[4] = {-1,-1,1};
+    // (6):  O + H + M <=> OH + M
     fwd_A[4]     = 4.714e+18;
     fwd_beta[4]  = -1;
     fwd_Ea[4]    = 0;
@@ -186,6 +179,7 @@ void CKINIT()
     // (7):  H + OH + M <=> H2O + M
     kiv[5] = {3,5,2};
     nuv[5] = {-1,-1,1};
+    // (7):  H + OH + M <=> H2O + M
     fwd_A[5]     = 3.8000000000000004e+22;
     fwd_beta[5]  = -2;
     fwd_Ea[5]    = 0;
@@ -202,6 +196,7 @@ void CKINIT()
     // (8):  H + O2 (+M) <=> HO2 (+M)
     kiv[0] = {3,1,6};
     nuv[0] = {-1,-1,1};
+    // (8):  H + O2 (+M) <=> HO2 (+M)
     fwd_A[0]     = 1475000000000;
     fwd_beta[0]  = 0.59999999999999998;
     fwd_Ea[0]    = 0;
@@ -226,6 +221,7 @@ void CKINIT()
     // (9):  HO2 + H <=> H2 + O2
     kiv[10] = {6,3,0,1};
     nuv[10] = {-1,-1,1,1};
+    // (9):  HO2 + H <=> H2 + O2
     fwd_A[10]     = 16600000000000;
     fwd_beta[10]  = 0;
     fwd_Ea[10]    = 823;
@@ -238,6 +234,7 @@ void CKINIT()
     // (10):  HO2 + H <=> OH + OH
     kiv[11] = {6,3,5,5};
     nuv[11] = {-1,-1,1,1};
+    // (10):  HO2 + H <=> OH + OH
     fwd_A[11]     = 70790000000000;
     fwd_beta[11]  = 0;
     fwd_Ea[11]    = 295;
@@ -250,6 +247,7 @@ void CKINIT()
     // (11):  HO2 + O <=> O2 + OH
     kiv[12] = {6,4,1,5};
     nuv[12] = {-1,-1,1,1};
+    // (11):  HO2 + O <=> O2 + OH
     fwd_A[12]     = 32500000000000;
     fwd_beta[12]  = 0;
     fwd_Ea[12]    = 0;
@@ -262,6 +260,7 @@ void CKINIT()
     // (12):  HO2 + OH <=> H2O + O2
     kiv[13] = {6,5,2,1};
     nuv[13] = {-1,-1,1,1};
+    // (12):  HO2 + OH <=> H2O + O2
     fwd_A[13]     = 28900000000000;
     fwd_beta[13]  = 0;
     fwd_Ea[13]    = -497;
@@ -274,6 +273,7 @@ void CKINIT()
     // (13):  HO2 + HO2 <=> H2O2 + O2
     kiv[14] = {6,6,7,1};
     nuv[14] = {-1,-1,1,1};
+    // (13):  HO2 + HO2 <=> H2O2 + O2
     fwd_A[14]     = 420000000000000;
     fwd_beta[14]  = 0;
     fwd_Ea[14]    = 11982;
@@ -286,6 +286,7 @@ void CKINIT()
     // (14):  HO2 + HO2 <=> H2O2 + O2
     kiv[15] = {6,6,7,1};
     nuv[15] = {-1,-1,1,1};
+    // (14):  HO2 + HO2 <=> H2O2 + O2
     fwd_A[15]     = 130000000000;
     fwd_beta[15]  = 0;
     fwd_Ea[15]    = -1629.3;
@@ -298,6 +299,7 @@ void CKINIT()
     // (15):  H2O2 (+M) <=> OH + OH (+M)
     kiv[1] = {7,5,5};
     nuv[1] = {-1,1,1};
+    // (15):  H2O2 (+M) <=> OH + OH (+M)
     fwd_A[1]     = 295100000000000;
     fwd_beta[1]  = 0;
     fwd_Ea[1]    = 48430;
@@ -321,6 +323,7 @@ void CKINIT()
     // (16):  H2O2 + H <=> H2O + OH
     kiv[16] = {7,3,2,5};
     nuv[16] = {-1,-1,1,1};
+    // (16):  H2O2 + H <=> H2O + OH
     fwd_A[16]     = 24100000000000;
     fwd_beta[16]  = 0;
     fwd_Ea[16]    = 3970;
@@ -333,6 +336,7 @@ void CKINIT()
     // (17):  H2O2 + H <=> HO2 + H2
     kiv[17] = {7,3,6,0};
     nuv[17] = {-1,-1,1,1};
+    // (17):  H2O2 + H <=> HO2 + H2
     fwd_A[17]     = 48200000000000;
     fwd_beta[17]  = 0;
     fwd_Ea[17]    = 7950;
@@ -345,6 +349,7 @@ void CKINIT()
     // (18):  H2O2 + O <=> OH + HO2
     kiv[18] = {7,4,5,6};
     nuv[18] = {-1,-1,1,1};
+    // (18):  H2O2 + O <=> OH + HO2
     fwd_A[18]     = 9550000;
     fwd_beta[18]  = 2;
     fwd_Ea[18]    = 3970;
@@ -357,6 +362,7 @@ void CKINIT()
     // (19):  H2O2 + OH <=> HO2 + H2O
     kiv[19] = {7,5,6,2};
     nuv[19] = {-1,-1,1,1};
+    // (19):  H2O2 + OH <=> HO2 + H2O
     fwd_A[19]     = 1000000000000;
     fwd_beta[19]  = 0;
     fwd_Ea[19]    = 0;
@@ -369,6 +375,7 @@ void CKINIT()
     // (20):  H2O2 + OH <=> HO2 + H2O
     kiv[20] = {7,5,6,2};
     nuv[20] = {-1,-1,1,1};
+    // (20):  H2O2 + OH <=> HO2 + H2O
     fwd_A[20]     = 580000000000000;
     fwd_beta[20]  = 0;
     fwd_Ea[20]    = 9557;
@@ -884,7 +891,7 @@ void CKRHOC(double *  P, double *  T, double *  c,  double *  rho)
 /*get molecular weight for all species */
 void CKWT( double *  wt)
 {
-    molecularWeight(wt);
+    get_mw(wt);
 }
 
 
@@ -1052,7 +1059,7 @@ void CKYTCP(double *  P, double *  T, double *  y,  double *  c)
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
-void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
+AMREX_GPU_HOST_DEVICE void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
 {
     for (int i = 0; i < 9; i++)
     {
@@ -1863,7 +1870,7 @@ void CKABMS(double *  P, double *  T, double *  y,  double *  abms)
 
 
 /*compute the production rate for each species */
-void CKWC(double *  T, double *  C,  double *  wdot)
+AMREX_GPU_HOST_DEVICE void CKWC(double *  T, double *  C,  double *  wdot)
 {
     int id; /*loop counter */
 
@@ -4184,7 +4191,7 @@ AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len
     double J[100];
     double mwt[9];
 
-    molecularWeight(mwt);
+    get_mw(mwt);
 
     for (int k=0; k<9; k++) {
         c[k] = 1.e6 * sc[k];
@@ -9434,23 +9441,6 @@ AMREX_GPU_HOST_DEVICE void speciesEntropy(double * species, double *  tc)
 }
 
 
-/*save molecular weights into array */
-void molecularWeight(double *  wt)
-{
-    wt[0] = 2.015940; /*H2 */
-    wt[1] = 31.998800; /*O2 */
-    wt[2] = 18.015340; /*H2O */
-    wt[3] = 1.007970; /*H */
-    wt[4] = 15.999400; /*O */
-    wt[5] = 17.007370; /*OH */
-    wt[6] = 33.006770; /*HO2 */
-    wt[7] = 34.014740; /*H2O2 */
-    wt[8] = 28.013400; /*N2 */
-
-    return;
-}
-
-
 /*save atomic weights into array */
 void atomicWeight(double *  awt)
 {
@@ -9576,7 +9566,7 @@ void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentri
 
     egtransetEPS(EPS);
     egtransetSIG(SIG);
-    molecularWeight(wt);
+    get_mw(wt);
 
     /*species 0: H2 */
     /*Imported from NIST */

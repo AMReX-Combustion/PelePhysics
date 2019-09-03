@@ -3,8 +3,6 @@
 #ifndef AMREX_USE_CUDA
 namespace thermo
 {
-    /* Inverse molecular weights */
-    std::vector<double> imw;
     double fwd_A[0], fwd_beta[0], fwd_Ea[0];
     double low_A[0], low_beta[0], low_Ea[0];
     double rev_A[0], rev_beta[0], rev_Ea[0];
@@ -13,6 +11,8 @@ namespace thermo
     double activation_units[0], prefactor_units[0], phase_units[0];
     int is_PD[0], troe_len[0], sri_len[0], nTB[0], *TBid[0];
     double *TB[0];
+    std::vector<std::vector<int>> kiv(0); 
+    std::vector<std::vector<int>> nuv(0); 
 
     double fwd_A_DEF[0], fwd_beta_DEF[0], fwd_Ea_DEF[0];
     double low_A_DEF[0], low_beta_DEF[0], low_Ea_DEF[0];
@@ -30,7 +30,7 @@ using namespace thermo;
 
 /* Inverse molecular weights */
 /* TODO: check necessity on CPU */
-static AMREX_GPU_DEVICE_MANAGED double inv_molecular_weights[2] = {
+static AMREX_GPU_DEVICE_MANAGED double imw[2] = {
     1.0 / 31.998800,  /*O2 */
     1.0 / 28.013400};  /*N2 */
 
@@ -42,7 +42,7 @@ static AMREX_GPU_DEVICE_MANAGED double molecular_weights[2] = {
 
 AMREX_GPU_HOST_DEVICE
 void get_imw(double imw_new[]){
-    for(int i = 0; i<2; ++i) imw_new[i] = inv_molecular_weights[i];
+    for(int i = 0; i<2; ++i) imw_new[i] = imw[i];
 }
 
 /* TODO: check necessity because redundant with CKWT */
@@ -57,11 +57,6 @@ void get_mw(double mw_new[]){
 void CKINIT()
 {
 
-    /* Inverse molecular weights */
-    imw = {
-        1.0 / 31.998800,  /*O2 */
-        1.0 / 28.013400};  /*N2 */
-
     rxn_map = {};
 
     SetAllDefaults();
@@ -70,7 +65,7 @@ void CKINIT()
 void GET_REACTION_MAP(int *rmap)
 {
     for (int i=0; i<0; ++i) {
-        rmap[i] = rxn_map[i];
+        rmap[i] = rxn_map[i] + 1;
     }
 }
 
@@ -494,7 +489,7 @@ void CKRHOC(double *  P, double *  T, double *  c,  double *  rho)
 /*get molecular weight for all species */
 void CKWT( double *  wt)
 {
-    molecularWeight(wt);
+    get_mw(wt);
 }
 
 
@@ -648,7 +643,7 @@ void CKYTCP(double *  P, double *  T, double *  y,  double *  c)
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
-void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
+AMREX_GPU_HOST_DEVICE void CKYTCR(double *  rho, double *  T, double *  y,  double *  c)
 {
     for (int i = 0; i < 2; i++)
     {
@@ -1319,7 +1314,7 @@ void CKABMS(double *  P, double *  T, double *  y,  double *  abms)
 
 
 /*compute the production rate for each species */
-void CKWC(double *  T, double *  C,  double *  wdot)
+AMREX_GPU_HOST_DEVICE void CKWC(double *  T, double *  C,  double *  wdot)
 {
     int id; /*loop counter */
 
@@ -1624,6 +1619,27 @@ void CKNU(int * kdim,  int * nuki)
     /*Zero nuki */
     for (id = 0; id < 2 * kd; ++ id) {
          nuki[id] = 0; 
+    }
+}
+
+
+/*Returns a count of species in a reaction, and their indices */
+/*and stoichiometric coefficients. (Eq 50) */
+void CKINU(int * i, int * nspec, int * ki, int * nu)
+{
+    if (*i < 1) {
+        /*Return max num species per reaction */
+        *nspec = 0;
+    } else {
+        if (*i > 0) {
+            *nspec = -1;
+        } else {
+            *nspec = kiv[*i-1].size();
+            for (int j=0; j<*nspec; ++j) {
+                ki[j] = kiv[*i-1][j] + 1;
+                nu[j] = nuv[*i-1][j];
+            }
+        }
     }
 }
 
@@ -2001,7 +2017,7 @@ AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len
     double J[9];
     double mwt[2];
 
-    molecularWeight(mwt);
+    get_mw(mwt);
 
     for (int k=0; k<2; k++) {
         c[k] = 1.e6 * sc[k];
@@ -2918,16 +2934,6 @@ AMREX_GPU_HOST_DEVICE void speciesEntropy(double * species, double *  tc)
 }
 
 
-/*save molecular weights into array */
-void molecularWeight(double *  wt)
-{
-    wt[0] = 31.998800; /*O2 */
-    wt[1] = 28.013400; /*N2 */
-
-    return;
-}
-
-
 /*save atomic weights into array */
 void atomicWeight(double *  awt)
 {
@@ -3052,7 +3058,7 @@ void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentri
 
     egtransetEPS(EPS);
     egtransetSIG(SIG);
-    molecularWeight(wt);
+    get_mw(wt);
 
     /*species 0: O2 */
     /*Imported from NIST */
