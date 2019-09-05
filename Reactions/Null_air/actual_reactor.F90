@@ -25,14 +25,14 @@ contains
 
   end subroutine reactor_close
 
-  function react(rY_in,rY_src_in,rX_in,rX_src_in,P_in,dt_react,time,Init) bind(C, name="react") result(cost_value)
+  function react(rY_in,rY_src_in,rX_in,rX_src_in,P_in,dt_react,time) bind(C, name="react") result(cost_value)
     
     use eos_module
 
     real(amrex_real),   intent(inout) :: rY_in(nspecies+1),rY_src_in(nspecies)
     real(amrex_real),   intent(inout) :: rX_in,rX_src_in,P_in
     real(amrex_real),   intent(inout) :: dt_react, time
-    integer                           :: Init, cost_value
+    integer                           :: cost_value
 
     cost_value = 0
 
