@@ -9,20 +9,6 @@
 #include <AMReX_GpuDevice.H>
 #include <kernel.H>
 
-template <typename L>
-AMREX_FORCE_INLINE
-void ParallelForMarc (Box const& box, L&& f, std::size_t shared_mem_bytes=0) noexcept
-{
-    const auto lo = amrex::lbound(box);
-    const auto hi = amrex::ubound(box);
-    for (int k = lo.z; k <= hi.z; ++k) {
-    for (int j = lo.y; j <= hi.y; ++j) {
-    AMREX_PRAGMA_SIMD
-    for (int i = lo.x; i <= hi.x; ++i) {
-        f(i,j,k);
-    }}}
-}
-
 int
 main (int   argc,
       char* argv[])
@@ -90,9 +76,7 @@ main (int   argc,
           const auto& w    = wdot.array(mfi);
           int numPts = box.numPts();
 
-          //printf("That many pts: %d \n", numPts);
-
-	  ParallelForMarc(box,
+	  ParallelFor(box,
           [=] AMREX_GPU_DEVICE (int i, int j, int k)
           {
 	    W_spec_d(i, j, k, rho, temp, Y, w);

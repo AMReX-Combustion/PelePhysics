@@ -912,7 +912,7 @@ void kinit()
 }
 
 
-AMREX_GPU_DEVICE 
+AMREX_GPU_DEVICE
 void 
 W_spec_d(int i, int j, int k,
          amrex::Array4<amrex::Real> const& rho,
@@ -922,7 +922,8 @@ W_spec_d(int i, int j, int k,
 {
   amrex::GpuArray<amrex::Real,NUM_SPECIES> sc;
   amrex::GpuArray<amrex::Real,NUM_SPECIES> wdot;
-  amrex::Real invT, logT, qf;
+  amrex::GpuArray<amrex::Real,NUM_REACTIONS> qf;
+  amrex::Real invT, logT;
 
   invT = 1/temp(i,j,k);
   logT = log(temp(i,j,k));
@@ -934,18 +935,18 @@ W_spec_d(int i, int j, int k,
 
   for (int n=0; n<NUM_REACTIONS; ++n) {
     size_t offset = n*5;
-    qf = 1;
+    qf[n] = 1;
     for (int m=0; m<5; ++m) {
       int nu = nu2D[offset+m];
       if (nu<0) {
-        qf *= pow(sc[ki2D[offset+m]],-nu);
+        qf[n] *= pow(sc[ki2D[offset+m]],-nu);
       }
     }
-    qf *=  prefactor_units[n] * fwd_A[n] * exp(fwd_beta[n] * logT - activation_units[n] * fwd_Ea[n] * invT);
+    qf[n] *=  prefactor_units[n] * fwd_A[n] * exp(fwd_beta[n] * logT - activation_units[n] * fwd_Ea[n] * invT);
     for (int m=0; m<5; ++m) {
       int nu = nu2D[offset+m];
       if (nu<0) {
-        wdot[ki2D[offset+m]] += nu*qf;
+        wdot[ki2D[offset+m]] += nu*qf[n];
       }
     }
   }
