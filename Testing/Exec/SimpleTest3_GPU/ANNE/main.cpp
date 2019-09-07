@@ -79,7 +79,7 @@ main (int   argc,
 	  ParallelFor(box,
           [=] AMREX_GPU_DEVICE (int i, int j, int k)
           {
-	    W_spec_d(i, j, k, rho, temp, Y, w);
+	    W_spec1_d(i, j, k, rho, temp, Y, w);
           });
         }
       }

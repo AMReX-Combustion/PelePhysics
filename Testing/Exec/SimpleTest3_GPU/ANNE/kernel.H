@@ -11,7 +11,7 @@ namespace mythermo
 {
     AMREX_GPU_DEVICE_MANAGED amrex::Real fwd_A[84], fwd_beta[84], fwd_Ea[84];
     AMREX_GPU_DEVICE_MANAGED amrex::Real activation_units[84], prefactor_units[84], phase_units[84];
-    std::vector<std::vector<int>> kiv(84), nuv(84);
+    AMREX_GPU_DEVICE_MANAGED amrex::GpuArray<amrex::GpuArray<int,5>, 84> kiv, nuv;
     AMREX_GPU_DEVICE_MANAGED int ki2D[420], nu2D[420];
 }
 
@@ -907,6 +907,11 @@ void kinit()
     AMREX_CUDA_SAFE_CALL(cudaMemPrefetchAsync(nu2D, 420, Gpu::Device::deviceId(), Gpu::gpuStream()));
     AMREX_CUDA_SAFE_CALL(cudaMemPrefetchAsync(ki2D, 420, Gpu::Device::deviceId(), Gpu::gpuStream()));
     AMREX_CUDA_SAFE_CALL(cudaMemPrefetchAsync(imw, 21, Gpu::Device::deviceId(), Gpu::gpuStream()));
+    for (int n=0; n<NUM_REACTIONS; ++n) {
+      AMREX_CUDA_SAFE_CALL(cudaMemPrefetchAsync(&(kiv[n][0]), 5, Gpu::Device::deviceId(), Gpu::gpuStream()));
+      AMREX_CUDA_SAFE_CALL(cudaMemPrefetchAsync(&(nuv[n][0]), 5, Gpu::Device::deviceId(), Gpu::gpuStream()));
+    }
+
 #endif
 
 }
@@ -979,7 +984,7 @@ W_spec1_d(int i, int j, int k,
 	for (int n = 0; n < NUM_SPECIES; n++) {
 	        sc[n] = Y(i,j,k,n) * rho(i,j,k) * imw[n];
 	}
-
+#if 0
         /*reaction 1: H + CH2 (+M) <=> CH3 (+M) */
         qf[0] = sc[1]*sc[7];
         /*reaction 2: H + CH3 (+M) <=> CH4 (+M) */
@@ -1148,6 +1153,16 @@ W_spec1_d(int i, int j, int k,
         qf[82] = sc[3]*sc[15];
         /*reaction 84: C2H5 + O2 <=> HO2 + C2H4 */
         qf[83] = sc[3]*sc[17];
+#else
+  for (int n=0; n<NUM_REACTIONS; ++n) {
+    int nu0 = nuv[n][0];
+    int nu1 = nuv[n][1];
+    int ki0 = kiv[n][0];
+    int ki1 = kiv[n][1];
+    qf[n] = (nu0<0 ? sc[ki0] : 1) * (nu0<1 ? sc[ki0] : 1)
+          * (nu1<0 ? sc[ki1] : 1) * (nu1<1 ? sc[ki0] : 1);
+ }
+#endif
 
         // (0):  O + H + M <=> OH + M
         qf[8] *= 1.0000000000000002e-12 * 5e+17 
