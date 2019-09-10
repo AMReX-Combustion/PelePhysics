@@ -274,6 +274,11 @@ module fuego_chemistry
             real(amrex_real), intent(inout) :: wt(*)
         end subroutine
 
+        subroutine ckawt(awt) bind(c,name='CKAWT')
+            use amrex_fort_module, only : amrex_real
+            real(amrex_real), intent(inout) :: awt(*)
+        end subroutine
+
         subroutine ckwc(T,c,wdot) bind(c,name='CKWC')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(in   ) :: T
