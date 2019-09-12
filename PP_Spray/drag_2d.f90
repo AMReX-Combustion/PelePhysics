@@ -46,7 +46,7 @@ contains
     real(amrex_real) :: force(2), fluid_vel(2), fluid_dens, fluid_temp, drag_coef
     real(amrex_real) :: fluid_pres, fluid_Y(nspecies), Y_dot(nspec_f)
     real(amrex_real) :: m_dot, d_dot, convection, tmp_conv, dt
-    real(amrex_real) :: diff_u, diff_v, diff_velmag, visc, reyn, drag, pmass
+    real(amrex_real) :: diff_u, diff_v, diff_velmag, reyn, drag, pmass
     real(amrex_real) :: heat_src, kinetic_src, prandtl, therm_cond
     real(amrex_real) :: cp_d_av, inv_Ru, inv_cp_d
     real(amrex_real) :: rholl, rholh, rhohl, rhohh
@@ -297,8 +297,9 @@ contains
                                  xi_dummy, lo, hi, &
                                  la_dummy, lo, hi)
 
-       D_skin(n,1:nspec_f) = D_dummy(1,1,1,fuel_indx(1:nspec_f)) ! now in kg/cm^3 cm^2/s
-       visc = 1.827d-4          ! nominal value of fluid viscosity in cgs
+       D_skin(n,1:nspec_f) = D_dummy(1,1,1,fuel_indx(1:nspec_f)) ! now in g/cm^3*cm^2/s
+       D_skin(n,1) = 0.22*fluid_dens ! water
+       !visc = 1.827d-4          ! nominal value of fluid viscosity in cgs
        mu_skin(n) = mu_dummy(1,1,1)
        xi_skin = xi_dummy(1,1,1)
        lambda_skin(n) = la_dummy(1,1,1)
@@ -315,7 +316,7 @@ contains
        diff_velmag = sqrt( diff_u**2 + diff_v**2 )
 
        ! Local Reynolds number = (Density * Relative Velocity) * (Particle Diameter) / (Viscosity)
-       reyn = fluid_dens*diff_velmag*particles(n)%diam/visc
+       reyn = fluid_dens*diff_velmag*particles(n)%diam/mu_skin(n)
 
        drag_coef = 1.0d0+0.15d0*reyn**(0.687d0)
 

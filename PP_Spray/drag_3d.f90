@@ -96,7 +96,7 @@ contains
     real(amrex_real), dimension(np) :: Pr_skin
     real(amrex_real), dimension(np) :: Nu
 
-    integer, parameter :: NSUBMAX = 100
+    integer, parameter :: NSUBMAX = 1000
     real*8, parameter :: pi = 3.1415926535897932d0
     real*8, parameter :: half_pi = 0.5d0*Pi
     real*8, parameter :: pi_six = Pi/6.0d0
@@ -134,6 +134,7 @@ contains
     do n = 1, np
 
        if ((particles(n)%id.eq.-1).or.(particles(n)%id.ne.particles(n)%id).or. & 
+           (particles(n)%id.gt.1e8).or. & 
            (particles(n)%pos(1).ne.particles(n)%pos(1)) .or. &
            (particles(n)%pos(2).ne.particles(n)%pos(2)) .or. &
            (particles(n)%pos(3).ne.particles(n)%pos(3))) then
@@ -255,6 +256,11 @@ contains
           'list',n,' corrupted field temperature ',fluid_temp,i,j
          stop
        endif
+       if(fluid_temp.le.263) then
+         print *,'PARTICLE ID ', particles(n)%id, &
+          ' in cold gas ',fluid_temp
+         is_heat_skip = 1
+       endif
 
        fluid_Y = &
              coef_lll*Yloc(0,0,0,1:nspecies) + &
@@ -317,6 +323,11 @@ contains
        xi_skin = xi_dummy(1,1,1)
        lambda_skin(n) = la_dummy(1,1,1)
 
+       if(mu_skin(n).lt.0) then
+          print *,'PARTICLE ID ', particles(n)%id,' tcoeff BUST ',mu_skin(n),fluid_Y
+          stop
+       endif
+
        ! ****************************************************
        ! Source terms by individual drop
        ! ****************************************************
@@ -356,6 +367,10 @@ contains
        call calc_spec_mix_cp_spray(eos_state, &
                                    fluid_Y, temp_skin(n), &
                                    cp_skin(n), cp_f(n,1:nspec_f))
+       if(cp_skin(n).le.0d0) then
+         print *,"PARTICLE ID ", particles(n)%id,"cp_skin ",cp_skin(n)
+         cp_skin(n) = 2.5939e7
+       endif
 
        m_dot = 0.0d0
        Y_dot = 0.0d0
@@ -371,6 +386,9 @@ contains
          if(particles(n)%temp.ge.fuel_boil_temp(L)) then
            ! energy transfer cannot use liquid phase properties
            particles(n)%temp = fuel_boil_temp(L)
+           is_heat_skip = 1
+         else if(particles(n)%temp.le.263) then
+           particles(n)%temp = 263
            is_heat_skip = 1
          endif
        end do
@@ -440,6 +458,10 @@ contains
          !-----------------------------------------------------------------------------------------
          ! Calculate Skin Prandtl Number.
          Pr_skin(n) = mu_skin(n)*cp_skin(n)/lambda_skin(n)
+         if(Pr_skin(n).lt.0) then
+           print *,"BUST",Pr_skin(n),mu_skin(n),fluid_Y
+           stop
+         endif 
          ! compare to prandtl = 0.75d0
 
          ! Calculate the time constant for convection
@@ -449,7 +471,7 @@ contains
          ! Calculate energy transfer due to heat transfer and evaporation
          do L = 1,nspec_f
 
-           ! Calculate Nusselt Number (Uncorrected)
+        ! Calculate Nusselt Number (Uncorrected)
            Nu(n) = 1.0d0+max(reyn**0.077,1.0d0)*(1.0d0+reyn*Pr_skin(n))**one_third ! Eq. (21)
 
            ! Calculate Spalding Heat transfer number (B_T) and the corrected
@@ -480,8 +502,14 @@ contains
          !         -sum(Y_dot*L_fuel,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
 
          if (heat_src.ne.heat_src) then 
-           print *,'Heat src BUST',heat_src,'convc',convection,'pID ', particles(n)%id
+           print *,'Heat src BUST',heat_src,'convc',convection,'pID ', particles(n)%id,isub,nsub, &
+             reyn,pmass,Nu(n),Pr_skin(n)
            stop
+         endif
+
+         if(heat_src.gt.1e6) then
+           print *,"heat src", heat_src,particles(n)%temp,particles(n)%diam
+           heat_src = 1e6
          endif
 
          inv_tau_T = convection/(cp_d_av*pmass*particles(n)%temp) 
@@ -626,7 +654,8 @@ contains
        ! Update diameter by half dt
        particles(n)%diam = max(particles(n)%diam + 0.5d0*dt * d_dot,1e-6)
 
-        if (particles(n)%diam .lt. 1e-4) then ! arbitrary theeshold size
+        if ((particles(n)%diam.lt.1e-4).or.(particles(n)%temp.gt.fuel_boil_temp(1))) then 
+          ! reached minimum theeshold size or boiling temperature
           print *,'PARTICLE ID ', particles(n)%id,' fully evaporated'
           print *,'at pos',particles(n)%pos(1),particles(n)%pos(2),particles(n)%pos(3)
           print *,'with vel',particles(n)%vel(1),particles(n)%vel(2),particles(n)%vel(3)
