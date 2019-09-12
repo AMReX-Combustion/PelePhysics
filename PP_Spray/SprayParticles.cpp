@@ -392,6 +392,7 @@ SprayParticleContainer::estTimestep (int lev, Real cfl) const
             const Real mag_vel_over_dx[BL_SPACEDIM] = { D_DECL(std::abs(p.rdata(1))/dx[0],
                                                                std::abs(p.rdata(2))/dx[1],
                                                                std::abs(p.rdata(3))/dx[2]) };
+
             max_mag_vel_over_dx = std::max(mag_vel_over_dx[0], mag_vel_over_dx[1]);
 #if (BL_SPACEDIM > 2)
             max_mag_vel_over_dx = std::max(mag_vel_over_dx[2], max_mag_vel_over_dx);
@@ -453,6 +454,7 @@ SprayParticleContainer::insertParticles (Real time, int nstep, int lev)
 
     for (int iter = 0; iter < 100; iter++)
     {
+ // Real x = 0.04*(rand()%100)/99.-0.02;
     Real x = 0.10*(rand()%100)/99.-0.05;
     Real y = 0.12*(rand()%100)/99.-0.06;
     Real z = 0.24*(rand()%100)/99.;
@@ -476,8 +478,10 @@ SprayParticleContainer::insertParticles (Real time, int nstep, int lev)
      if (AMREX_SPACEDIM>2) {
        p.rdata(2) = 0.;
      }
-     p.rdata(AMREX_SPACEDIM) = 293.; // temperature
+//   p.rdata(AMREX_SPACEDIM) = 293.; // temperature
+     p.rdata(AMREX_SPACEDIM) = 400.; // temperature
      p.rdata(AMREX_SPACEDIM+1) = 0.0004; // diameter
+//   p.rdata(AMREX_SPACEDIM+1) = 0.0010; // diameter
      p.rdata(AMREX_SPACEDIM+2) = 0.68141; // fuel density
     
      particles.push_back(p);
