@@ -1,5 +1,6 @@
 #ifndef MECHANISM_h
 #define MECHANISM_h
+
 #if 0
 /* Elements
 0  N
@@ -8,175 +9,171 @@
 3  C
 4  AR
 */
-/* Species
-0  H
-1  O2
-2  O
-3  OH
-4  H2
-5  H2O
-6  CO2
-7  HO2
-8  H2O2
-9  CO
-10  HCO
-11  C
-12  CH
-13  T-CH2
-14  CH3
-15  CH2O
-16  HCCO
-17  C2H
-18  CH2CO
-19  C2H2
-20  S-CH2
-21  AR
-22  CH3OH
-23  CH2OH
-24  CH3O
-25  CH4
-26  CH3O2
-27  C2H3
-28  C2H4
-29  C2H5
-30  HCCOH
-31  CH2CHO
-32  CH3CHO
-33  H2C2
-34  C2H5O
-35  N-C3H7
-36  C2H6
-37  C3H8
-38  C3H6
-39  C3H3
-40  P-C3H4
-41  A-C3H4
-42  S-C3H5
-43  N-C4H3
-44  C2H3CHO
-45  A-C3H5
-46  C2O
-47  C4H4
-48  C3H2
-49  C3H2O
-50  C4H2
-51  I-C4H3
-52  T-C3H5
-53  C3H5O
-54  C4H
-55  C8H2
-56  C6H2
-57  C4H6
-58  N-C4H5
-59  I-C4H5
-60  A1
-61  N-C7H16
-62  C5H11
-63  P-C4H9
-64  C7H15
-65  P-C4H8
-66  C5H10
-67  C7H14
-68  C7H15O
-69  C3H7CHO
-70  C4H7
-71  C7H13
-72  C5H9
-73  C4H7O
-74  N-C3H7O
-75  I-C8H18
-76  Y-C7H15
-77  I-C4H8
-78  I-C3H7
-79  T-C4H9
-80  C-C8H17
-81  Y-C7H14
-82  D-C8H17O
-83  CH3COCH3
-84  I-C4H7
-85  X-C7H13
-86  I-C3H5CHO
-87  T-C4H9O
-88  I-C4H7O
-89  C5H4CH2
-90  A1-
-91  A1C2H2
-92  A1C2H3
-93  A1C2H
-94  A1C2H*
-95  A1C2H3*
-96  A2-
-97  A2
-98  A2*
-99  A2C2H2A
-100  A2C2H2B
-101  A2C2HA
-102  A2C2HB
-103  A2C2HA*
-104  A2C2HB*
-105  A2R5
-106  A2R5-
-107  A2R5C2H2
-108  A2R5C2H
-109  A2R5C2H*
-110  P2
-111  P2-
-112  A3-
-113  A3
-114  A3*
-115  A3R5-
-116  A3R5
-117  A4
-118  A4-
-119  A4R5
-120  FLTN
-121  C5H6
-122  C5H5
-123  T-C5H5O
-124  C5H4O
-125  S-C5H5O
-126  C9H8
-127  C9H7
-128  A1CH2
-129  C9H6O
-130  O-C6H4
-131  A1CH3
-132  A1OH
-133  HOA1CH3
-134  OA1CH3
-135  A1CH2O
-136  A1CH2OH
-137  A1CHO
-138  A1O
-139  A1CH3*
-140  A1C2H4
-141  A1C2H5
-142  C8H9O2
-143  C8H8OOH
-144  OC8H7OOH
-145  A1CH3CH3
-146  A1CH3CH2
-147  A1CH3CHO
-148  A2CH3
-149  A1CHOCH2
-150  A1CHOCHO
-151  A2OH
-152  A2CH2
-153  A2CH2O
-154  A2CHO
-155  A2O
-156  OC6H4O
-157  N2
-*/
 #endif
+
+/* Species */
+#define H_ID 0
+#define O2_ID 1
+#define O_ID 2
+#define OH_ID 3
+#define H2_ID 4
+#define H2O_ID 5
+#define CO2_ID 6
+#define HO2_ID 7
+#define H2O2_ID 8
+#define CO_ID 9
+#define HCO_ID 10
+#define C_ID 11
+#define CH_ID 12
+#define TCH2_ID 13
+#define CH3_ID 14
+#define CH2O_ID 15
+#define HCCO_ID 16
+#define C2H_ID 17
+#define CH2CO_ID 18
+#define C2H2_ID 19
+#define SCH2_ID 20
+#define AR_ID 21
+#define CH3OH_ID 22
+#define CH2OH_ID 23
+#define CH3O_ID 24
+#define CH4_ID 25
+#define CH3O2_ID 26
+#define C2H3_ID 27
+#define C2H4_ID 28
+#define C2H5_ID 29
+#define HCCOH_ID 30
+#define CH2CHO_ID 31
+#define CH3CHO_ID 32
+#define H2C2_ID 33
+#define C2H5O_ID 34
+#define NC3H7_ID 35
+#define C2H6_ID 36
+#define C3H8_ID 37
+#define C3H6_ID 38
+#define C3H3_ID 39
+#define PC3H4_ID 40
+#define AC3H4_ID 41
+#define SC3H5_ID 42
+#define NC4H3_ID 43
+#define C2H3CHO_ID 44
+#define AC3H5_ID 45
+#define C2O_ID 46
+#define C4H4_ID 47
+#define C3H2_ID 48
+#define C3H2O_ID 49
+#define C4H2_ID 50
+#define IC4H3_ID 51
+#define TC3H5_ID 52
+#define C3H5O_ID 53
+#define C4H_ID 54
+#define C8H2_ID 55
+#define C6H2_ID 56
+#define C4H6_ID 57
+#define NC4H5_ID 58
+#define IC4H5_ID 59
+#define A1_ID 60
+#define NC7H16_ID 61
+#define C5H11_ID 62
+#define PC4H9_ID 63
+#define C7H15_ID 64
+#define PC4H8_ID 65
+#define C5H10_ID 66
+#define C7H14_ID 67
+#define C7H15O_ID 68
+#define C3H7CHO_ID 69
+#define C4H7_ID 70
+#define C7H13_ID 71
+#define C5H9_ID 72
+#define C4H7O_ID 73
+#define NC3H7O_ID 74
+#define IC8H18_ID 75
+#define YC7H15_ID 76
+#define IC4H8_ID 77
+#define IC3H7_ID 78
+#define TC4H9_ID 79
+#define CC8H17_ID 80
+#define YC7H14_ID 81
+#define DC8H17O_ID 82
+#define CH3COCH3_ID 83
+#define IC4H7_ID 84
+#define XC7H13_ID 85
+#define IC3H5CHO_ID 86
+#define TC4H9O_ID 87
+#define IC4H7O_ID 88
+#define C5H4CH2_ID 89
+#define A1_ID 90
+#define A1C2H2_ID 91
+#define A1C2H3_ID 92
+#define A1C2H_ID 93
+#define A1C2HD_ID 94
+#define A1C2H3D_ID 95
+#define A2_ID 96
+#define A2_ID 97
+#define A2D_ID 98
+#define A2C2H2A_ID 99
+#define A2C2H2B_ID 100
+#define A2C2HA_ID 101
+#define A2C2HB_ID 102
+#define A2C2HAD_ID 103
+#define A2C2HBD_ID 104
+#define A2R5_ID 105
+#define A2R5_ID 106
+#define A2R5C2H2_ID 107
+#define A2R5C2H_ID 108
+#define A2R5C2HD_ID 109
+#define P2_ID 110
+#define P2_ID 111
+#define A3_ID 112
+#define A3_ID 113
+#define A3D_ID 114
+#define A3R5_ID 115
+#define A3R5_ID 116
+#define A4_ID 117
+#define A4_ID 118
+#define A4R5_ID 119
+#define FLTN_ID 120
+#define C5H6_ID 121
+#define C5H5_ID 122
+#define TC5H5O_ID 123
+#define C5H4O_ID 124
+#define SC5H5O_ID 125
+#define C9H8_ID 126
+#define C9H7_ID 127
+#define A1CH2_ID 128
+#define C9H6O_ID 129
+#define OC6H4_ID 130
+#define A1CH3_ID 131
+#define A1OH_ID 132
+#define HOA1CH3_ID 133
+#define OA1CH3_ID 134
+#define A1CH2O_ID 135
+#define A1CH2OH_ID 136
+#define A1CHO_ID 137
+#define A1O_ID 138
+#define A1CH3D_ID 139
+#define A1C2H4_ID 140
+#define A1C2H5_ID 141
+#define C8H9O2_ID 142
+#define C8H8OOH_ID 143
+#define OC8H7OOH_ID 144
+#define A1CH3CH3_ID 145
+#define A1CH3CH2_ID 146
+#define A1CH3CHO_ID 147
+#define A2CH3_ID 148
+#define A1CHOCH2_ID 149
+#define A1CHOCHO_ID 150
+#define A2OH_ID 151
+#define A2CH2_ID 152
+#define A2CH2O_ID 153
+#define A2CHO_ID 154
+#define A2O_ID 155
+#define OC6H4O_ID 156
+#define N2_ID 157
+
 #define NUM_ELEMENTS 5
 #define NUM_SPECIES 158
 #define NUM_REACTIONS 1049
-
-#define FUEL_ID 28
-#define OXY_ID 1
-#define BATH_ID 157
-#define FUEL_NAME "C2H4"
 
 #define NUM_FIT 4
 #endif
