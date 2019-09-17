@@ -89,6 +89,8 @@ public:
 
     void injectParticles (amrex::Real time, int nstep, int lev);
 
+    void InitParticlesUniform(const int& lev, const int& num_ppc);
+
 private:
     int nstate;
     ///
