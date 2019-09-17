@@ -76,7 +76,7 @@ contains
   subroutine calc_spec_mix_cp_spray (eos_state,massfrac,temp,mix_cp,fuel_spec_cp)
 
     use eos_module
-    use network, only: nspecies
+    use chemistry_module, only : nspecies
     use fuel_properties, only: nspec_f, fuel_indx
 
     double precision, dimension(nspecies), intent(in) :: massfrac
