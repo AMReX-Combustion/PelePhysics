@@ -1,6 +1,6 @@
 
 #include <SprayParticles.H>
-//#include <AMReX_Particles_F.H>
+#include <AMReX_Particles.H>
 #include <Transport_F.H>
 #include <drag_F.H>
 
@@ -128,7 +128,6 @@ SprayParticleContainer::moveKickDrift (MultiFab& state,
         {
            const Box& state_box = (*state_ptr)[pti].box();
            const Box&   src_box = (*tmp_src_ptr)[pti].box();
-
            update_particles(&Np,&lev, particles.data(), 
                             (*state_ptr)[pti].dataPtr(),
                             state_box.loVect(), state_box.hiVect(),

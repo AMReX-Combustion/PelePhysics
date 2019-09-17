@@ -45,8 +45,8 @@ contains
     real(amrex_real) :: half_dt
     real(amrex_real) :: inv_dx(3), inv_vol
     real(amrex_real) :: force(3), fluid_vel(3), fluid_dens, fluid_temp, drag_coef
-    real(amrex_real) :: rholoc(0:1,0:1,0:1),Tloc(0:1,0:1,0:1),Yloc(0:1,0:1,0:1,1:nspec) 
-    real(amrex_real) :: fluid_pres, fluid_Y(nspec), Y_dot(nspec_f)
+    real(amrex_real) :: rholoc(0:1,0:1,0:1),Tloc(0:1,0:1,0:1),Yloc(0:1,0:1,0:1,1:nspecies) 
+    real(amrex_real) :: fluid_pres, fluid_Y(nspecies), Y_dot(nspec_f)
     real(amrex_real) :: m_dot, d_dot, convection, tmp_conv, dt
     real(amrex_real) :: diff_u, diff_v, diff_w, diff_velmag, visc, reyn, drag, pmass
     real(amrex_real) :: heat_src, kinetic_src, prandtl, therm_cond
@@ -64,8 +64,8 @@ contains
     real(amrex_real), dimension(nspec_f) :: h_skin
     real(amrex_real) :: fluid_molwt
     ! Species Diffusion Coefficient Array
-    real(amrex_real), dimension(1,1,1,nspec) :: D_dummy
-    real(amrex_real), dimension(1,1,1,nspec) :: Y_dummy
+    real(amrex_real), dimension(1,1,1,nspecies) :: D_dummy
+    real(amrex_real), dimension(1,1,1,nspecies) :: Y_dummy
     real(amrex_real), dimension(1,1,1) :: T_dummy
     real(amrex_real), dimension(1,1,1) :: r_dummy
     real(amrex_real), dimension(1,1,1) :: xi_dummy
@@ -207,18 +207,18 @@ contains
           eos_state % T   = state(i+ii,j+jj,k+kk,UTEMP) ! Initial guess for the EOS
           eos_state % e   = state(i+ii,j+jj,k+kk,UEINT)           / state(i+ii,j+jj,k+kk,URHO)
 
-          do ispec_loc = 1,nspec
+          do ispec_loc = 1,nspecies
             if(state(i+ii,j+jj,k+kk,UFS+ispec_loc-1).lt.-0.00001) then
               print *,"WARNING: input concentration",ispec_loc,state(i+ii,j+jj,k+kk,UFS+ispec_loc-1)
             endif
           enddo
 
-          eos_state % massfrac = max(state(i+ii,j+jj,k+kk,UFS:UFS+nspec-1)/ state(i+ii,j+jj,k+kk,URHO),0d0)
+          eos_state % massfrac = max(state(i+ii,j+jj,k+kk,UFS:UFS+nspecies-1)/ state(i+ii,j+jj,k+kk,URHO),0d0)
 
           call eos_re(eos_state)
           rholoc(iloc,jloc,kloc) =  eos_state % rho
           Tloc(iloc,jloc,kloc) =  eos_state % T
-          Yloc(iloc,jloc,kloc,1:nspec) =  eos_state % massfrac
+          Yloc(iloc,jloc,kloc,1:nspecies) =  eos_state % massfrac
 
        enddo
        enddo
@@ -257,16 +257,16 @@ contains
        endif
 
        fluid_Y = &
-             coef_lll*Yloc(0,0,0,1:nspec) + &
-             coef_llh*Yloc(0,0,1,1:nspec) + &
-             coef_lhl*Yloc(0,1,0,1:nspec) + &
-             coef_lhh*Yloc(0,1,1,1:nspec) + &
-             coef_hll*Yloc(1,0,0,1:nspec) + &
-             coef_hlh*Yloc(1,0,1,1:nspec) + &
-             coef_hhl*Yloc(1,1,0,1:nspec) + &
-             coef_hhh*Yloc(1,1,1,1:nspec)
+             coef_lll*Yloc(0,0,0,1:nspecies) + &
+             coef_llh*Yloc(0,0,1,1:nspecies) + &
+             coef_lhl*Yloc(0,1,0,1:nspecies) + &
+             coef_lhh*Yloc(0,1,1,1:nspecies) + &
+             coef_hll*Yloc(1,0,0,1:nspecies) + &
+             coef_hlh*Yloc(1,0,1,1:nspecies) + &
+             coef_hhl*Yloc(1,1,0,1:nspecies) + &
+             coef_hhh*Yloc(1,1,1,1:nspecies)
 
-       do M = 1,nspec
+       do M = 1,nspecies
          if(fluid_Y(M).ne.fluid_Y(M)) then
           print *,'PARTICLE ID ', particles(n)%id, &
           'list',n,' corrupted fuel mass fraction ',fluid_Y(M),i,j
@@ -296,7 +296,7 @@ contains
        ! Compute mu, lambda, D, cp at skin temperature 
        lo(1:3) = 1
        hi(1:3) = 1
-       Y_dummy(1,1,1,1:nspec) = fluid_Y
+       Y_dummy(1,1,1,1:nspecies) = fluid_Y
        T_dummy(1,1,1) = temp_skin(n)
        r_dummy(1,1,1) = fluid_dens
        ! massfrac(mf_lo(1):mf_hi(1),mf_lo(2):mf_hi(2),mf_lo(3):mf_hi(3),nspec)
@@ -475,8 +475,8 @@ contains
          end do ! do L
 
          ! Add mass transfer term
-         heat_src = convection+&
-                   -sum(Y_dot*h_skin,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
+         heat_src = convection-&
+                   sum(Y_dot*h_skin,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
          !         -sum(Y_dot*L_fuel,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
 
          if (heat_src.ne.heat_src) then 

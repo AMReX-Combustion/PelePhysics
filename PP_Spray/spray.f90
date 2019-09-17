@@ -76,10 +76,10 @@ contains
   subroutine calc_spec_mix_cp_spray (eos_state,massfrac,temp,mix_cp,fuel_spec_cp)
 
     use eos_module
-    use network, only: nspec
+    use network, only: nspecies
     use fuel_properties, only: nspec_f, fuel_indx
 
-    double precision, dimension(nspec), intent(in) :: massfrac
+    double precision, dimension(nspecies), intent(in) :: massfrac
     double precision, intent(in)  :: temp
     double precision, intent(out) :: mix_cp
     double precision, dimension(nspec_f), intent(out) :: fuel_spec_cp
@@ -106,7 +106,7 @@ contains
     !we're using simple Gammalaw, but we save elsewhere
     !HK: Can I use the fortran intrinsic sum cleverly
     mix_cp = 0.0
-    do L = 1, nspec
+    do L = 1, nspecies
        mix_cp = mix_cp + massfrac(L)*eos_state%cpi(L) 
     enddo
 

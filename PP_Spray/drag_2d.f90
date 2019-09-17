@@ -44,14 +44,14 @@ contains
     real(amrex_real) :: lx, ly, lx2, ly2
     real(amrex_real) :: inv_dx(2), inv_vol
     real(amrex_real) :: force(2), fluid_vel(2), fluid_dens, fluid_temp, drag_coef
-    real(amrex_real) :: fluid_pres, fluid_Y(nspec), Y_dot(nspec_f)
+    real(amrex_real) :: fluid_pres, fluid_Y(nspecies), Y_dot(nspec_f)
     real(amrex_real) :: m_dot, d_dot, convection, tmp_conv, dt
     real(amrex_real) :: diff_u, diff_v, diff_velmag, visc, reyn, drag, pmass
     real(amrex_real) :: heat_src, kinetic_src, prandtl, therm_cond
     real(amrex_real) :: cp_d_av, inv_Ru, inv_cp_d
     real(amrex_real) :: rholl, rholh, rhohl, rhohh
     real(amrex_real) :: Tll, Tlh, Thl, Thh
-    real(amrex_real) :: Yll(nspec), Ylh(nspec), Yhl(nspec), Yhh(nspec)
+    real(amrex_real) :: Yll(nspecies), Ylh(nspecies), Yhl(nspecies), Yhh(nspecies)
     real(amrex_real) :: coef_ll, coef_hl, coef_lh, coef_hh
     ! Bulk  Viscosity (not used, but returned by transport routines)
     real(amrex_real) :: xi_skin
@@ -66,8 +66,8 @@ contains
     real(amrex_real), dimension(nspec_f) :: h_skin
     real(amrex_real) :: fluid_molwt
     ! Species Diffusion Coefficient Array
-    real(amrex_real), dimension(1,1,1,nspec) :: D_dummy
-    real(amrex_real), dimension(1,1,1,nspec) :: Y_dummy
+    real(amrex_real), dimension(1,1,1,nspecies) :: D_dummy
+    real(amrex_real), dimension(1,1,1,nspecies) :: Y_dummy
     real(amrex_real), dimension(1,1,1) :: T_dummy
     real(amrex_real), dimension(1,1,1) :: r_dummy
     real(amrex_real), dimension(1,1,1) :: xi_dummy
@@ -188,7 +188,7 @@ contains
        eos_state % rho = state(i-1,j-1,URHO)
        eos_state % T   = state(i-1,j-1,UTEMP) ! Initial guess for the EOS
        eos_state % e   = state(i-1,j-1,UEINT) / state(i-1,j-1,URHO)
-       eos_state % massfrac  = state(i-1,j-1,UFS:UFS+nspec-1) / state(i,j-1,URHO)
+       eos_state % massfrac  = state(i-1,j-1,UFS:UFS+nspecies-1) / state(i-1,j-1,URHO)
 
        call eos_re(eos_state)
        rholl  = eos_state % rho
@@ -200,7 +200,7 @@ contains
        eos_state % rho = state(i,j-1,URHO)
        eos_state % T   = state(i,j-1,UTEMP) ! Initial guess for the EOS
        eos_state % e   = state(i,j-1,UEINT) / state(i,j-1,URHO)
-       eos_state % massfrac  = state(i,j-1,UFS:UFS+nspec-1) / state(i,j-1,URHO)
+       eos_state % massfrac  = state(i,j-1,UFS:UFS+nspecies-1) / state(i,j-1,URHO)
 
        call eos_re(eos_state)
        rhohl  = eos_state % rho
@@ -212,7 +212,7 @@ contains
        eos_state % rho = state(i-1,j,URHO)
        eos_state % T   = state(i-1,j,UTEMP) ! Initial guess for the EOS
        eos_state % e   = state(i-1,j,UEINT) / state(i-1,j,URHO)
-       eos_state % massfrac  = state(i-1,j,UFS:UFS+nspec-1) / state(i-1,j,URHO)
+       eos_state % massfrac  = state(i-1,j,UFS:UFS+nspecies-1) / state(i-1,j,URHO)
 
        call eos_re(eos_state)
        rholh  = eos_state % rho
@@ -224,7 +224,7 @@ contains
        eos_state % rho = state(i,j,URHO)
        eos_state % T   = state(i,j,UTEMP) ! Initial guess for the EOS
        eos_state % e   = state(i,j,UEINT) / state(i,j,URHO)
-       eos_state % massfrac  = state(i,j,UFS:UFS+nspec-1) / state(i,j,URHO)
+       eos_state % massfrac  = state(i,j,UFS:UFS+nspecies-1) / state(i,j,URHO)
 
        call eos_re(eos_state)
        rhohh  = eos_state % rho
@@ -256,7 +256,7 @@ contains
        fluid_Y    = ( coef_ll*Yll + coef_lh*Ylh + &
                       coef_hl*Yhl + coef_hh*Yhh )
 
-       do M = 1,nspec
+       do M = 1,nspecies
          if(fluid_Y(M).ne.fluid_Y(M)) then
           print *,'PARTICLE ID ', particles(n)%id, &
           'list',n,' corrupted fuel mass fraction ',fluid_Y(M),i,j
@@ -282,7 +282,7 @@ contains
        ! Compute mu, lambda, D, cp at skin temperature 
        lo(1:3) = 1
        hi(1:3) = 1
-       Y_dummy(1,1,1,1:nspec) = fluid_Y
+       Y_dummy(1,1,1,1:nspecies) = fluid_Y
        T_dummy(1,1,1) = temp_skin(n)
        r_dummy(1,1,1) = fluid_dens
        ! massfrac(mf_lo(1):mf_hi(1),mf_lo(2):mf_hi(2),mf_lo(3):mf_hi(3),nspec)
