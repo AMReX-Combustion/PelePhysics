@@ -187,7 +187,7 @@ contains
 
        eos_state % rho = state(i-1,j-1,URHO)
        eos_state % T   = state(i-1,j-1,UTEMP) ! Initial guess for the EOS
-       eos_state % e   = state(i-1,j-1,UEINT) / state(i,j-1,URHO)
+       eos_state % e   = state(i-1,j-1,UEINT) / state(i-1,j-1,URHO)
        eos_state % massfrac  = state(i-1,j-1,UFS:UFS+nspec-1) / state(i,j-1,URHO)
 
        call eos_re(eos_state)
