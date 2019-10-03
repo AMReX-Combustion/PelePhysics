@@ -1,6 +1,6 @@
 
 #include <SprayParticles.H>
-#include <AMReX_Particles_F.H>
+//#include <AMReX_Particles_F.H>
 #include <Transport_F.H>
 #include <drag_F.H>
 
@@ -452,9 +452,9 @@ SprayParticleContainer::insertParticles (Real time, int nstep, int lev)
 // geometry.prob_lo     =   -0.12 -0.06 0.0
 // geometry.prob_hi     =  0.12 0.06 0.24
 
-    for (int iter = 0; iter < 10; iter++)
+    for (int iter = 0; iter < 100; iter++)
     {
-    Real x = 0.04*(rand()%100)/99.-0.02;
+    Real x = 0.10*(rand()%100)/99.-0.05;
     Real y = 0.12*(rand()%100)/99.-0.06;
     Real z = 0.24*(rand()%100)/99.;
 
@@ -478,7 +478,7 @@ SprayParticleContainer::insertParticles (Real time, int nstep, int lev)
        p.rdata(2) = 0.;
      }
      p.rdata(AMREX_SPACEDIM) = 293.; // temperature
-     p.rdata(AMREX_SPACEDIM+1) = 0.0010; // diameter
+     p.rdata(AMREX_SPACEDIM+1) = 0.0004; // diameter
      p.rdata(AMREX_SPACEDIM+2) = 0.68141; // fuel density
     
      particles.push_back(p);
