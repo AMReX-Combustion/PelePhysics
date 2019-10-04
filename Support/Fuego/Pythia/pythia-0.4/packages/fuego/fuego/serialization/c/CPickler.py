@@ -6361,53 +6361,6 @@ class CPickler(CMill):
 
         #self._write()
         
-        if nspecial > 0:
-
-            print "\n\n ***** WARNING: %d unclassified reactions\n" % nspecial
-
-            self._write()
-            self._write(self.line('unclassified reactions'))
-            self._write('{')
-            self._indent()
-
-            self._write(self.line("reactions: %d to %d" % (ispecial[0]+1,ispecial[1])))
-
-            self._write('double Kc;                      ' + self.line('equilibrium constant'))
-            self._write('double k_f;                     ' + self.line('forward reaction rate'))
-            self._write('double k_r;                     ' + self.line('reverse reaction rate'))
-            self._write('double q_f;                     ' + self.line('forward progress rate'))
-            self._write('double q_r;                     ' + self.line('reverse progress rate'))
-            self._write('double phi_f;                   '
-                        + self.line('forward phase space factor'))
-            self._write('double phi_r;                   ' + self.line('reverse phase space factor'))
-            self._write('double alpha;                   ' + self.line('enhancement'))
-
-            self._write('double redP;                    ' + self.line('reduced pressure'))
-            self._write('double logPred;                 ' + self.line('log of above'))
-            self._write('double F;                       ' + self.line('fallof rate enhancement'))
-            self._write()
-            self._write('double F_troe;                  ' + self.line('TROE intermediate'))
-            self._write('double logFcent;                ' + self.line('TROE intermediate'))
-            self._write('double troe;                    ' + self.line('TROE intermediate'))
-            self._write('double troe_c;                  ' + self.line('TROE intermediate'))
-            self._write('double troe_n;                  ' + self.line('TROE intermediate'))
-
-            for i in range(ispecial[0],ispecial[1]):
-                self._write()
-                reaction = mechanism.reaction(id=i)
-                self._write(self.line('reaction %d: %s' % (reaction.id, reaction.equation())))
-
-                # compute the rates
-                self._forwardRate(mechanism, reaction)
-                self._reverseRate(mechanism, reaction)
-
-                # store the progress rate
-                self._write("qf[%d] = q_f;" % i)
-                self._write("qr[%d] = q_r;" % i)
-
-            self._outdent()
-            self._write('}')
-
         self._write()
         self._write('return;')
         self._outdent()
