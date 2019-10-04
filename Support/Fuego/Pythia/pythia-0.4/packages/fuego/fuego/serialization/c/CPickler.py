@@ -1736,6 +1736,23 @@ class CPickler(CMill):
             self._write("fwd_beta[%d]  = %.17g;" % (id,beta))
             self._write("fwd_Ea[%d]    = %.17g;" % (id,E))
 
+            #ANNE
+            if (reaction.rev):
+                Ar, betar, Er = reaction.rev
+                self._write("rev_A[%d]     = %.17g;" % (id,Ar))
+                self._write("rev_beta[%d]  = %.17g;" % (id,betar))
+                self._write("rev_Ea[%d]    = %.17g;" % (id,Er))
+                dim_rev       = self._phaseSpaceUnits(reaction.products)
+                if not thirdBody:
+                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
+                elif not low:
+                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], -dim_rev)
+                else:
+                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
+                self._write("prefactor_units_rev[%d]  = %.17g;" % (id,uc_rev.value))
+                aeuc_rev = self._activationEnergyUnits(reaction.units["activation"])
+                self._write("activation_units_rev[%d] = %.17g;" % (id,aeuc_rev / Rc / kelvin))
+
             dim = self._phaseSpaceUnits(reaction.reactants)
             thirdBody = reaction.thirdBody
             low = reaction.low
@@ -1862,9 +1879,27 @@ class CPickler(CMill):
             self._write("fwd_beta[%d]  = %.17g;" % (id,beta))
             self._write("fwd_Ea[%d]    = %.17g;" % (id,E))
 
-            dim = self._phaseSpaceUnits(reaction.reactants)
             thirdBody = reaction.thirdBody
             low = reaction.low
+
+            #ANNE
+            if (reaction.rev):
+                Ar, betar, Er = reaction.rev
+                self._write("rev_A[%d]     = %.17g;" % (id,Ar))
+                self._write("rev_beta[%d]  = %.17g;" % (id,betar))
+                self._write("rev_Ea[%d]    = %.17g;" % (id,Er))
+                dim_rev       = self._phaseSpaceUnits(reaction.products)
+                if not thirdBody:
+                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
+                elif not low:
+                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], -dim_rev)
+                else:
+                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
+                self._write("prefactor_units_rev[%d]  = %.17g;" % (id,uc_rev.value))
+                aeuc_rev = self._activationEnergyUnits(reaction.units["activation"])
+                self._write("activation_units_rev[%d] = %.17g;" % (id,aeuc_rev / Rc / kelvin))
+
+            dim = self._phaseSpaceUnits(reaction.reactants)
             if not thirdBody:
                 uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 3 !PD, !TB
             elif not low:
