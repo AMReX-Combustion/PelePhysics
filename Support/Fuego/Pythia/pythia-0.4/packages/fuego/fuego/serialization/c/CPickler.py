@@ -1736,7 +1736,6 @@ class CPickler(CMill):
             self._write("fwd_beta[%d]  = %.17g;" % (id,beta))
             self._write("fwd_Ea[%d]    = %.17g;" % (id,E))
 
-            #ANNE
             if (reaction.rev):
                 Ar, betar, Er = reaction.rev
                 self._write("rev_A[%d]     = %.17g;" % (id,Ar))
@@ -1882,7 +1881,6 @@ class CPickler(CMill):
             thirdBody = reaction.thirdBody
             low = reaction.low
 
-            #ANNE
             if (reaction.rev):
                 Ar, betar, Er = reaction.rev
                 self._write("rev_A[%d]     = %.17g;" % (id,Ar))
@@ -6188,7 +6186,7 @@ class CPickler(CMill):
         nclassd = nReactions - nspecial
         #nCorr   = n3body + ntroe + nsri + nlindemann
 
-        for i in range(nclassd):
+        for i in range(nReactions):
             self._write()
             reaction = mechanism.reaction(id=i)
             self._write(self.line('reaction %d: %s' % (reaction.id, reaction.equation())))
@@ -6197,9 +6195,6 @@ class CPickler(CMill):
                 self._write("qr[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.products)))
             else:
                 self._write("qr[%d] = 0.0;" % (i))
-            if reaction.rev:
-                print "reaction.rev not finished"
-                sys.exit(1)
 
         self._write()
 
@@ -6333,10 +6328,24 @@ class CPickler(CMill):
                     self._write("Corr = redP / (1. + redP);")
                     self._write("qf[%d] *= Corr * k_f;" % idx)
 
-            if KcConv:
-                self._write("qr[%d] *= Corr * k_f / (exp(%s) * %s);" % (idx,KcExpArg,KcConv))        
+            if reaction.rev:
+                Ar, betar, Er = reaction.rev
+                dim_rev       = self._phaseSpaceUnits(reaction.products)
+                if not thirdBody:
+                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
+                elif not low:
+                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], -dim_rev)
+                else:
+                    print("REV reaction cannot be PD")
+                    sys.exit(1)
+                self._write("k_r = %.17g * %.17g " % (uc_rev.value,Ar)) 
+                self._write("           * exp(%.17g * tc[0] - %.17g * %.17g * invT);" % (betar, aeuc / Rc / kelvin, Er))
+                self._write("qr[%d] *= Corr * k_r;" % idx)
             else:
-                self._write("qr[%d] *= Corr * k_f / exp(%s);" % (idx,KcExpArg))
+                if KcConv:
+                    self._write("qr[%d] *= Corr * k_f / (exp(%s) * %s);" % (idx,KcExpArg,KcConv))        
+                else:
+                    self._write("qr[%d] *= Corr * k_f / exp(%s);" % (idx,KcExpArg))
 
         self._write()
 
@@ -6602,9 +6611,6 @@ class CPickler(CMill):
                 self._write("qr[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.products)))
             else:
                 self._write("qr[%d] = 0.0;" % (i))
-            if reaction.rev:
-                print "reaction.rev not finished"
-                sys.exit(1)
 
         self._write()
         self._write('double T = tc[1];')
@@ -9558,7 +9564,7 @@ class CPickler(CMill):
             if thirdBody:
                 self._write("k_r *= alpha;")
 
-            self._write("q_r[%d] = phi_r * k_r;" % (reaction.id - 1))
+            self._write("q_r = phi_r * k_r;")
             return
         
         self._write("Kc = Kc_save[%d];" % (reaction.id-1))
