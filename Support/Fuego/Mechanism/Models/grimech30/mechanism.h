@@ -23,7 +23,7 @@
 #define C_ID 8
 #define CH_ID 9
 #define CH2_ID 10
-#define CH2(S)_ID 11
+#define CH2S_ID 11
 #define CH3_ID 12
 #define CH4_ID 13
 #define CO_ID 14

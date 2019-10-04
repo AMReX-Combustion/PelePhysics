@@ -20,7 +20,7 @@
 #define H2O_ID 5
 #define HO2_ID 6
 #define CH2_ID 7
-#define CH2(S)_ID 8
+#define CH2S_ID 8
 #define CH3_ID 9
 #define CH4_ID 10
 #define CO_ID 11
