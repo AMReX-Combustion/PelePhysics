@@ -853,7 +853,7 @@ class CPickler(CMill):
         self._write('/* Species */')
         nb_spec = 0
         for species in mechanism.species():
-            self._write('#define %s_ID %d' % (((species.symbol).replace("*","D")).replace("-",""), species.id) )
+            self._write('#define %s_ID %d' % ((species.symbol).replace("*","D").replace("-","").replace(")","").replace("(",""), species.id) )
             nb_spec += 1
         self._write()
         self._write("#define NUM_ELEMENTS %d" % (nb_elem))
