@@ -853,7 +853,15 @@ class CPickler(CMill):
         self._write('/* Species */')
         nb_spec = 0
         for species in mechanism.species():
-            self._write('#define %s_ID %d' % ((species.symbol).replace("*","D").replace("-","").replace(")","").replace("(",""), species.id) )
+            s = species.symbol.strip()
+            # Ionic species
+            if s[-1] == '-': s = s[:-1] + 'm'
+            if s[-1] == '+': s = s[:-1] + 'p'
+            # Excited species
+            s = s.replace('*', 's')
+            # Remove other characters not allowed in preprocessor defines
+            s = s.replace('-', '').replace('(','').replace(')','')
+            self._write('#define %s_ID %d' % (s, species.id))
             nb_spec += 1
         self._write()
         self._write("#define NUM_ELEMENTS %d" % (nb_elem))
