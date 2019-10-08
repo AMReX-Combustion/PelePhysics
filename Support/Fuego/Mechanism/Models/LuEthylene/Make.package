@@ -1,1 +1,10 @@
+CEXE_headers+=chemistry_file.H mechanism.h
+
 CEXE_sources+=LuEthylene.cpp
+
+LIBRARIES += 
+
+INCLUDE_LOCATIONS += $(CHEM_DIR)
+
+VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
+
