@@ -335,6 +335,10 @@ class CPickler(CMill):
         nReactions = len(mechanism.reaction())
         nSpecies = len(mechanism.species())
 
+        ispecial   = self.reactionIndex[5:7]
+
+        nspecial   = ispecial[1]   - ispecial[0]
+
         self._write()
 
         self._write('#ifndef AMREX_USE_CUDA')
@@ -357,6 +361,10 @@ class CPickler(CMill):
                     % (nReactions,nReactions,nReactions,nReactions,nReactions))
         self._write('double *TB[%d];' 
                     % (nReactions))
+
+        if nspecial > 0:  
+                self._write('double prefactor_units_rev[%d], activation_units_rev[%d];' 
+                            % (nReactions,nReactions))
 
         self._write('std::vector<std::vector<int>> kiv(%d); ' % (nReactions))
         self._write('std::vector<std::vector<int>> nuv(%d); ' % (nReactions))
@@ -1948,7 +1956,7 @@ class CPickler(CMill):
 
             if thirdBody:
                 efficiencies = reaction.efficiencies
-                if (len(efficiencies) > 1):
+                if (len(efficiencies) > 0):
                     self._write("nTB[%d] = %d;" % (id, len(efficiencies)))
                     self._write("TB[%d] = (double *) malloc(%d * sizeof(double));" % (id, len(efficiencies)))
                     self._write("TBid[%d] = (int *) malloc(%d * sizeof(int));" % (id, len(efficiencies)))
@@ -6767,7 +6775,7 @@ class CPickler(CMill):
 
             self._write(self.line("reactions: %d to %d" % (ispecial[0]+1,ispecial[1])))
 
-            self._write('double Kc;                      ' + self.line('equilibrium constant'))
+            #self._write('double Kc;                      ' + self.line('equilibrium constant'))
             self._write('double k_f;                     ' + self.line('forward reaction rate'))
             self._write('double k_r;                     ' + self.line('reverse reaction rate'))
             self._write('double q_f;                     ' + self.line('forward progress rate'))
@@ -6777,15 +6785,15 @@ class CPickler(CMill):
             self._write('double phi_r;                   ' + self.line('reverse phase space factor'))
             self._write('double alpha;                   ' + self.line('enhancement'))
 
-            self._write('double redP;                    ' + self.line('reduced pressure'))
-            self._write('double logPred;                 ' + self.line('log of above'))
-            self._write('double F;                       ' + self.line('fallof rate enhancement'))
-            self._write()
-            self._write('double F_troe;                  ' + self.line('TROE intermediate'))
-            self._write('double logFcent;                ' + self.line('TROE intermediate'))
-            self._write('double troe;                    ' + self.line('TROE intermediate'))
-            self._write('double troe_c;                  ' + self.line('TROE intermediate'))
-            self._write('double troe_n;                  ' + self.line('TROE intermediate'))
+            #self._write('double redP;                    ' + self.line('reduced pressure'))
+            #self._write('double logPred;                 ' + self.line('log of above'))
+            #self._write('double F;                       ' + self.line('fallof rate enhancement'))
+            #self._write()
+            #self._write('double F_troe;                  ' + self.line('TROE intermediate'))
+            #self._write('double logFcent;                ' + self.line('TROE intermediate'))
+            #self._write('double troe;                    ' + self.line('TROE intermediate'))
+            #self._write('double troe_c;                  ' + self.line('TROE intermediate'))
+            #self._write('double troe_n;                  ' + self.line('TROE intermediate'))
 
             for i in range(ispecial[0],ispecial[1]):
                 self._write()
@@ -9158,8 +9166,9 @@ class CPickler(CMill):
         self._indent()
 
         self._write('double qdot, q_f, q_r, phi_f, phi_r, k_f, k_r, Kc;')
-        if istart < isimple[0]:
-            self._write('double alpha;')
+        self._write('double alpha;')
+        #if istart < isimple[0]:
+        #    self._write('double alpha;')
         if istart < i3body[0]:
             self._write('double redP, F;') 
         if istart < ilindemann[0]:
@@ -9550,7 +9559,7 @@ class CPickler(CMill):
             if thirdBody:
                 self._write("k_r *= alpha;")
 
-            self._write("q_f = phi_r * k_r;")
+            self._write("q_r = phi_r * k_r;")
             return
         
         self._write("Kc = Kc_s[%d*npt+i];" % (reaction.id-1))
