@@ -1767,9 +1767,6 @@ AMREX_GPU_HOST_DEVICE inline void  productionRate(double * wdot, double * sc, do
     double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     double invT = 1.0 / tc[1];
 
-    double qdot, q_f[0], q_r[0];
-    comp_qfqr(q_f, q_r, sc, tc, invT);
-
     for (int i = 0; i < 3; ++i) {
         wdot[i] = 0.0;
     }
@@ -2578,12 +2575,6 @@ AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  sc, double T)
     }
 #endif
 
-    double q_f[0], q_r[0];
-    comp_qfqr(q_f, q_r, sc, tc, invT);
-
-    for (int i = 0; i < 0; ++i) {
-        qdot[i] = q_f[i] - q_r[i];
-    }
 
     return;
 }
