@@ -9519,7 +9519,7 @@ class CPickler(CMill):
 
         if reaction.rev:
 
-            self._write("k_r = prefactor_units[%d] * rev_A[%d] * exp(rev_beta[%d] * tc[0] - activation_units[%d] * rev_Ea[%d] * invT);"
+            self._write("k_r = prefactor_units_rev[%d] * rev_A[%d] * exp(rev_beta[%d] * tc[0] - activation_units_rev[%d] * rev_Ea[%d] * invT);"
                         % (reaction.id-1,reaction.id-1,reaction.id-1,reaction.id-1,reaction.id-1))
 
             thirdBody = reaction.thirdBody
