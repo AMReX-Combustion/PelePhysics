@@ -63,7 +63,7 @@ class Reaction(Entity):
         for species, factor in composition:
             str = ""
             if factor != 1:
-                str += "%d " % factor
+                str += "%f " % factor
             str += species
 
             terms.append(str)
@@ -82,7 +82,7 @@ class Reaction(Entity):
                 thirdBody += ' + '
 
             if factor != 1:
-                thirdBody += "%d" % factor
+                thirdBody += "%f" % factor
 
             thirdBody += species
 

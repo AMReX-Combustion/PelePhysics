@@ -157,7 +157,7 @@ class Reaction(Token):
 
         # Convert coefficient to an integer
         try:
-            c = int(coefficient)
+            c = float(coefficient)
         except TypeError: # attempt to int(None); set to 1
             c = 1
         except ValueError:

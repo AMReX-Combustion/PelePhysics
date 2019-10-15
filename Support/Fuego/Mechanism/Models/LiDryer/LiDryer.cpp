@@ -82,7 +82,7 @@ void CKINIT()
     fwd_Ea[6]    = 16599;
     prefactor_units[6]  = 1.0000000000000002e-06;
     activation_units[6] = 0.50321666580471969;
-    phase_units[6]      = 1e-12;
+    phase_units[6]      = pow(10,-12.000000);
     is_PD[6] = 0;
     nTB[6] = 0;
 
@@ -95,7 +95,7 @@ void CKINIT()
     fwd_Ea[7]    = 6290;
     prefactor_units[7]  = 1.0000000000000002e-06;
     activation_units[7] = 0.50321666580471969;
-    phase_units[7]      = 1e-12;
+    phase_units[7]      = pow(10,-12.000000);
     is_PD[7] = 0;
     nTB[7] = 0;
 
@@ -108,7 +108,7 @@ void CKINIT()
     fwd_Ea[8]    = 3430;
     prefactor_units[8]  = 1.0000000000000002e-06;
     activation_units[8] = 0.50321666580471969;
-    phase_units[8]      = 1e-12;
+    phase_units[8]      = pow(10,-12.000000);
     is_PD[8] = 0;
     nTB[8] = 0;
 
@@ -121,7 +121,7 @@ void CKINIT()
     fwd_Ea[9]    = 13400;
     prefactor_units[9]  = 1.0000000000000002e-06;
     activation_units[9] = 0.50321666580471969;
-    phase_units[9]      = 1e-12;
+    phase_units[9]      = pow(10,-12.000000);
     is_PD[9] = 0;
     nTB[9] = 0;
 
@@ -134,7 +134,7 @@ void CKINIT()
     fwd_Ea[2]    = 104380;
     prefactor_units[2]  = 1.0000000000000002e-06;
     activation_units[2] = 0.50321666580471969;
-    phase_units[2]      = 1e-6;
+    phase_units[2]      = pow(10,-6.000000);
     is_PD[2] = 0;
     nTB[2] = 2;
     TB[2] = (double *) malloc(2 * sizeof(double));
@@ -151,7 +151,7 @@ void CKINIT()
     fwd_Ea[3]    = 0;
     prefactor_units[3]  = 1.0000000000000002e-12;
     activation_units[3] = 0.50321666580471969;
-    phase_units[3]      = 1e-12;
+    phase_units[3]      = pow(10,-12.000000);
     is_PD[3] = 0;
     nTB[3] = 2;
     TB[3] = (double *) malloc(2 * sizeof(double));
@@ -168,7 +168,7 @@ void CKINIT()
     fwd_Ea[4]    = 0;
     prefactor_units[4]  = 1.0000000000000002e-12;
     activation_units[4] = 0.50321666580471969;
-    phase_units[4]      = 1e-12;
+    phase_units[4]      = pow(10,-12.000000);
     is_PD[4] = 0;
     nTB[4] = 2;
     TB[4] = (double *) malloc(2 * sizeof(double));
@@ -185,7 +185,7 @@ void CKINIT()
     fwd_Ea[5]    = 0;
     prefactor_units[5]  = 1.0000000000000002e-12;
     activation_units[5] = 0.50321666580471969;
-    phase_units[5]      = 1e-12;
+    phase_units[5]      = pow(10,-12.000000);
     is_PD[5] = 0;
     nTB[5] = 2;
     TB[5] = (double *) malloc(2 * sizeof(double));
@@ -209,7 +209,7 @@ void CKINIT()
     troe_len[0]  = 3;
     prefactor_units[0]  = 1.0000000000000002e-06;
     activation_units[0] = 0.50321666580471969;
-    phase_units[0]      = 1e-12;
+    phase_units[0]      = pow(10,-12.000000);
     is_PD[0] = 1;
     nTB[0] = 3;
     TB[0] = (double *) malloc(3 * sizeof(double));
@@ -227,7 +227,7 @@ void CKINIT()
     fwd_Ea[10]    = 823;
     prefactor_units[10]  = 1.0000000000000002e-06;
     activation_units[10] = 0.50321666580471969;
-    phase_units[10]      = 1e-12;
+    phase_units[10]      = pow(10,-12.000000);
     is_PD[10] = 0;
     nTB[10] = 0;
 
@@ -240,7 +240,7 @@ void CKINIT()
     fwd_Ea[11]    = 295;
     prefactor_units[11]  = 1.0000000000000002e-06;
     activation_units[11] = 0.50321666580471969;
-    phase_units[11]      = 1e-12;
+    phase_units[11]      = pow(10,-12.000000);
     is_PD[11] = 0;
     nTB[11] = 0;
 
@@ -253,7 +253,7 @@ void CKINIT()
     fwd_Ea[12]    = 0;
     prefactor_units[12]  = 1.0000000000000002e-06;
     activation_units[12] = 0.50321666580471969;
-    phase_units[12]      = 1e-12;
+    phase_units[12]      = pow(10,-12.000000);
     is_PD[12] = 0;
     nTB[12] = 0;
 
@@ -266,7 +266,7 @@ void CKINIT()
     fwd_Ea[13]    = -497;
     prefactor_units[13]  = 1.0000000000000002e-06;
     activation_units[13] = 0.50321666580471969;
-    phase_units[13]      = 1e-12;
+    phase_units[13]      = pow(10,-12.000000);
     is_PD[13] = 0;
     nTB[13] = 0;
 
@@ -279,7 +279,7 @@ void CKINIT()
     fwd_Ea[14]    = 11982;
     prefactor_units[14]  = 1.0000000000000002e-06;
     activation_units[14] = 0.50321666580471969;
-    phase_units[14]      = 1e-12;
+    phase_units[14]      = pow(10,-12.000000);
     is_PD[14] = 0;
     nTB[14] = 0;
 
@@ -292,7 +292,7 @@ void CKINIT()
     fwd_Ea[15]    = -1629.3;
     prefactor_units[15]  = 1.0000000000000002e-06;
     activation_units[15] = 0.50321666580471969;
-    phase_units[15]      = 1e-12;
+    phase_units[15]      = pow(10,-12.000000);
     is_PD[15] = 0;
     nTB[15] = 0;
 
@@ -312,7 +312,7 @@ void CKINIT()
     troe_len[1]  = 3;
     prefactor_units[1]  = 1;
     activation_units[1] = 0.50321666580471969;
-    phase_units[1]      = 1e-6;
+    phase_units[1]      = pow(10,-6.000000);
     is_PD[1] = 1;
     nTB[1] = 2;
     TB[1] = (double *) malloc(2 * sizeof(double));
@@ -329,7 +329,7 @@ void CKINIT()
     fwd_Ea[16]    = 3970;
     prefactor_units[16]  = 1.0000000000000002e-06;
     activation_units[16] = 0.50321666580471969;
-    phase_units[16]      = 1e-12;
+    phase_units[16]      = pow(10,-12.000000);
     is_PD[16] = 0;
     nTB[16] = 0;
 
@@ -342,7 +342,7 @@ void CKINIT()
     fwd_Ea[17]    = 7950;
     prefactor_units[17]  = 1.0000000000000002e-06;
     activation_units[17] = 0.50321666580471969;
-    phase_units[17]      = 1e-12;
+    phase_units[17]      = pow(10,-12.000000);
     is_PD[17] = 0;
     nTB[17] = 0;
 
@@ -355,7 +355,7 @@ void CKINIT()
     fwd_Ea[18]    = 3970;
     prefactor_units[18]  = 1.0000000000000002e-06;
     activation_units[18] = 0.50321666580471969;
-    phase_units[18]      = 1e-12;
+    phase_units[18]      = pow(10,-12.000000);
     is_PD[18] = 0;
     nTB[18] = 0;
 
@@ -368,7 +368,7 @@ void CKINIT()
     fwd_Ea[19]    = 0;
     prefactor_units[19]  = 1.0000000000000002e-06;
     activation_units[19] = 0.50321666580471969;
-    phase_units[19]      = 1e-12;
+    phase_units[19]      = pow(10,-12.000000);
     is_PD[19] = 0;
     nTB[19] = 0;
 
@@ -381,7 +381,7 @@ void CKINIT()
     fwd_Ea[20]    = 9557;
     prefactor_units[20]  = 1.0000000000000002e-06;
     activation_units[20] = 0.50321666580471969;
-    phase_units[20]      = 1e-12;
+    phase_units[20]      = pow(10,-12.000000);
     is_PD[20] = 0;
     nTB[20] = 0;
 
@@ -2234,124 +2234,124 @@ void CKNU(int * kdim,  int * nuki)
     }
 
     /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
-    nuki[ 3 * kd + 0 ] += -1 ;
-    nuki[ 1 * kd + 0 ] += -1 ;
-    nuki[ 6 * kd + 0 ] += +1 ;
+    nuki[ 3 * kd + 0 ] += -1.000000 ;
+    nuki[ 1 * kd + 0 ] += -1.000000 ;
+    nuki[ 6 * kd + 0 ] += +1.000000 ;
 
     /*reaction 2: H2O2 (+M) <=> OH + OH (+M) */
-    nuki[ 7 * kd + 1 ] += -1 ;
-    nuki[ 5 * kd + 1 ] += +1 ;
-    nuki[ 5 * kd + 1 ] += +1 ;
+    nuki[ 7 * kd + 1 ] += -1.000000 ;
+    nuki[ 5 * kd + 1 ] += +1.000000 ;
+    nuki[ 5 * kd + 1 ] += +1.000000 ;
 
     /*reaction 3: H2 + M <=> H + H + M */
-    nuki[ 0 * kd + 2 ] += -1 ;
-    nuki[ 3 * kd + 2 ] += +1 ;
-    nuki[ 3 * kd + 2 ] += +1 ;
+    nuki[ 0 * kd + 2 ] += -1.000000 ;
+    nuki[ 3 * kd + 2 ] += +1.000000 ;
+    nuki[ 3 * kd + 2 ] += +1.000000 ;
 
     /*reaction 4: O + O + M <=> O2 + M */
-    nuki[ 4 * kd + 3 ] += -1 ;
-    nuki[ 4 * kd + 3 ] += -1 ;
-    nuki[ 1 * kd + 3 ] += +1 ;
+    nuki[ 4 * kd + 3 ] += -1.000000 ;
+    nuki[ 4 * kd + 3 ] += -1.000000 ;
+    nuki[ 1 * kd + 3 ] += +1.000000 ;
 
     /*reaction 5: O + H + M <=> OH + M */
-    nuki[ 4 * kd + 4 ] += -1 ;
-    nuki[ 3 * kd + 4 ] += -1 ;
-    nuki[ 5 * kd + 4 ] += +1 ;
+    nuki[ 4 * kd + 4 ] += -1.000000 ;
+    nuki[ 3 * kd + 4 ] += -1.000000 ;
+    nuki[ 5 * kd + 4 ] += +1.000000 ;
 
     /*reaction 6: H + OH + M <=> H2O + M */
-    nuki[ 3 * kd + 5 ] += -1 ;
-    nuki[ 5 * kd + 5 ] += -1 ;
-    nuki[ 2 * kd + 5 ] += +1 ;
+    nuki[ 3 * kd + 5 ] += -1.000000 ;
+    nuki[ 5 * kd + 5 ] += -1.000000 ;
+    nuki[ 2 * kd + 5 ] += +1.000000 ;
 
     /*reaction 7: H + O2 <=> O + OH */
-    nuki[ 3 * kd + 6 ] += -1 ;
-    nuki[ 1 * kd + 6 ] += -1 ;
-    nuki[ 4 * kd + 6 ] += +1 ;
-    nuki[ 5 * kd + 6 ] += +1 ;
+    nuki[ 3 * kd + 6 ] += -1.000000 ;
+    nuki[ 1 * kd + 6 ] += -1.000000 ;
+    nuki[ 4 * kd + 6 ] += +1.000000 ;
+    nuki[ 5 * kd + 6 ] += +1.000000 ;
 
     /*reaction 8: O + H2 <=> H + OH */
-    nuki[ 4 * kd + 7 ] += -1 ;
-    nuki[ 0 * kd + 7 ] += -1 ;
-    nuki[ 3 * kd + 7 ] += +1 ;
-    nuki[ 5 * kd + 7 ] += +1 ;
+    nuki[ 4 * kd + 7 ] += -1.000000 ;
+    nuki[ 0 * kd + 7 ] += -1.000000 ;
+    nuki[ 3 * kd + 7 ] += +1.000000 ;
+    nuki[ 5 * kd + 7 ] += +1.000000 ;
 
     /*reaction 9: H2 + OH <=> H2O + H */
-    nuki[ 0 * kd + 8 ] += -1 ;
-    nuki[ 5 * kd + 8 ] += -1 ;
-    nuki[ 2 * kd + 8 ] += +1 ;
-    nuki[ 3 * kd + 8 ] += +1 ;
+    nuki[ 0 * kd + 8 ] += -1.000000 ;
+    nuki[ 5 * kd + 8 ] += -1.000000 ;
+    nuki[ 2 * kd + 8 ] += +1.000000 ;
+    nuki[ 3 * kd + 8 ] += +1.000000 ;
 
     /*reaction 10: O + H2O <=> OH + OH */
-    nuki[ 4 * kd + 9 ] += -1 ;
-    nuki[ 2 * kd + 9 ] += -1 ;
-    nuki[ 5 * kd + 9 ] += +1 ;
-    nuki[ 5 * kd + 9 ] += +1 ;
+    nuki[ 4 * kd + 9 ] += -1.000000 ;
+    nuki[ 2 * kd + 9 ] += -1.000000 ;
+    nuki[ 5 * kd + 9 ] += +1.000000 ;
+    nuki[ 5 * kd + 9 ] += +1.000000 ;
 
     /*reaction 11: HO2 + H <=> H2 + O2 */
-    nuki[ 6 * kd + 10 ] += -1 ;
-    nuki[ 3 * kd + 10 ] += -1 ;
-    nuki[ 0 * kd + 10 ] += +1 ;
-    nuki[ 1 * kd + 10 ] += +1 ;
+    nuki[ 6 * kd + 10 ] += -1.000000 ;
+    nuki[ 3 * kd + 10 ] += -1.000000 ;
+    nuki[ 0 * kd + 10 ] += +1.000000 ;
+    nuki[ 1 * kd + 10 ] += +1.000000 ;
 
     /*reaction 12: HO2 + H <=> OH + OH */
-    nuki[ 6 * kd + 11 ] += -1 ;
-    nuki[ 3 * kd + 11 ] += -1 ;
-    nuki[ 5 * kd + 11 ] += +1 ;
-    nuki[ 5 * kd + 11 ] += +1 ;
+    nuki[ 6 * kd + 11 ] += -1.000000 ;
+    nuki[ 3 * kd + 11 ] += -1.000000 ;
+    nuki[ 5 * kd + 11 ] += +1.000000 ;
+    nuki[ 5 * kd + 11 ] += +1.000000 ;
 
     /*reaction 13: HO2 + O <=> O2 + OH */
-    nuki[ 6 * kd + 12 ] += -1 ;
-    nuki[ 4 * kd + 12 ] += -1 ;
-    nuki[ 1 * kd + 12 ] += +1 ;
-    nuki[ 5 * kd + 12 ] += +1 ;
+    nuki[ 6 * kd + 12 ] += -1.000000 ;
+    nuki[ 4 * kd + 12 ] += -1.000000 ;
+    nuki[ 1 * kd + 12 ] += +1.000000 ;
+    nuki[ 5 * kd + 12 ] += +1.000000 ;
 
     /*reaction 14: HO2 + OH <=> H2O + O2 */
-    nuki[ 6 * kd + 13 ] += -1 ;
-    nuki[ 5 * kd + 13 ] += -1 ;
-    nuki[ 2 * kd + 13 ] += +1 ;
-    nuki[ 1 * kd + 13 ] += +1 ;
+    nuki[ 6 * kd + 13 ] += -1.000000 ;
+    nuki[ 5 * kd + 13 ] += -1.000000 ;
+    nuki[ 2 * kd + 13 ] += +1.000000 ;
+    nuki[ 1 * kd + 13 ] += +1.000000 ;
 
     /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
-    nuki[ 6 * kd + 14 ] += -1 ;
-    nuki[ 6 * kd + 14 ] += -1 ;
-    nuki[ 7 * kd + 14 ] += +1 ;
-    nuki[ 1 * kd + 14 ] += +1 ;
+    nuki[ 6 * kd + 14 ] += -1.000000 ;
+    nuki[ 6 * kd + 14 ] += -1.000000 ;
+    nuki[ 7 * kd + 14 ] += +1.000000 ;
+    nuki[ 1 * kd + 14 ] += +1.000000 ;
 
     /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
-    nuki[ 6 * kd + 15 ] += -1 ;
-    nuki[ 6 * kd + 15 ] += -1 ;
-    nuki[ 7 * kd + 15 ] += +1 ;
-    nuki[ 1 * kd + 15 ] += +1 ;
+    nuki[ 6 * kd + 15 ] += -1.000000 ;
+    nuki[ 6 * kd + 15 ] += -1.000000 ;
+    nuki[ 7 * kd + 15 ] += +1.000000 ;
+    nuki[ 1 * kd + 15 ] += +1.000000 ;
 
     /*reaction 17: H2O2 + H <=> H2O + OH */
-    nuki[ 7 * kd + 16 ] += -1 ;
-    nuki[ 3 * kd + 16 ] += -1 ;
-    nuki[ 2 * kd + 16 ] += +1 ;
-    nuki[ 5 * kd + 16 ] += +1 ;
+    nuki[ 7 * kd + 16 ] += -1.000000 ;
+    nuki[ 3 * kd + 16 ] += -1.000000 ;
+    nuki[ 2 * kd + 16 ] += +1.000000 ;
+    nuki[ 5 * kd + 16 ] += +1.000000 ;
 
     /*reaction 18: H2O2 + H <=> HO2 + H2 */
-    nuki[ 7 * kd + 17 ] += -1 ;
-    nuki[ 3 * kd + 17 ] += -1 ;
-    nuki[ 6 * kd + 17 ] += +1 ;
-    nuki[ 0 * kd + 17 ] += +1 ;
+    nuki[ 7 * kd + 17 ] += -1.000000 ;
+    nuki[ 3 * kd + 17 ] += -1.000000 ;
+    nuki[ 6 * kd + 17 ] += +1.000000 ;
+    nuki[ 0 * kd + 17 ] += +1.000000 ;
 
     /*reaction 19: H2O2 + O <=> OH + HO2 */
-    nuki[ 7 * kd + 18 ] += -1 ;
-    nuki[ 4 * kd + 18 ] += -1 ;
-    nuki[ 5 * kd + 18 ] += +1 ;
-    nuki[ 6 * kd + 18 ] += +1 ;
+    nuki[ 7 * kd + 18 ] += -1.000000 ;
+    nuki[ 4 * kd + 18 ] += -1.000000 ;
+    nuki[ 5 * kd + 18 ] += +1.000000 ;
+    nuki[ 6 * kd + 18 ] += +1.000000 ;
 
     /*reaction 20: H2O2 + OH <=> HO2 + H2O */
-    nuki[ 7 * kd + 19 ] += -1 ;
-    nuki[ 5 * kd + 19 ] += -1 ;
-    nuki[ 6 * kd + 19 ] += +1 ;
-    nuki[ 2 * kd + 19 ] += +1 ;
+    nuki[ 7 * kd + 19 ] += -1.000000 ;
+    nuki[ 5 * kd + 19 ] += -1.000000 ;
+    nuki[ 6 * kd + 19 ] += +1.000000 ;
+    nuki[ 2 * kd + 19 ] += +1.000000 ;
 
     /*reaction 21: H2O2 + OH <=> HO2 + H2O */
-    nuki[ 7 * kd + 20 ] += -1 ;
-    nuki[ 5 * kd + 20 ] += -1 ;
-    nuki[ 6 * kd + 20 ] += +1 ;
-    nuki[ 2 * kd + 20 ] += +1 ;
+    nuki[ 7 * kd + 20 ] += -1.000000 ;
+    nuki[ 5 * kd + 20 ] += -1.000000 ;
+    nuki[ 6 * kd + 20 ] += +1.000000 ;
+    nuki[ 2 * kd + 20 ] += +1.000000 ;
 }
 
 
@@ -4503,7 +4503,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     phi_r = sc[6];
     Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1);
+    dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -4606,10 +4606,10 @@ void aJacobian(double * J, double * sc, double T, int consP)
     dlogFdlogPr = dlogFdc;
     dlogFdT = dlogFcentdT*(troe - 0.67*dlogFdc - 1.27*dlogFdn) + dlogFdlogPr * dlogPrdT;
     /* reverse */
-    phi_r = sc[5]*sc[5];
+    phi_r = pow(sc[5], 2.000000);
     Kc = refC * exp(-g_RT[5] - g_RT[5] + g_RT[7]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[7]) + (2*h_RT[5]) - 1);
+    dlnKcdT = invT * (-(h_RT[7]) + (2.000000*h_RT[5]) - 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -4634,7 +4634,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
         J[25] += 2 * dqdci;           /* dwdot[OH]/d[H2O] */
         J[27] -= dqdci;               /* dwdot[H2O2]/d[H2O] */
         /* d()/d[OH] */
-        dqdci =  - k_r*2*sc[5];
+        dqdci =  - k_r*2.000000*sc[5];
         J[55] += 2 * dqdci;           /* dwdot[OH]/d[OH] */
         J[57] -= dqdci;               /* dwdot[H2O2]/d[OH] */
         /* d()/d[H2O2] */
@@ -4648,7 +4648,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
         dqdc[2] = 12*dcdc_fac;
         dqdc[3] = dcdc_fac;
         dqdc[4] = dcdc_fac;
-        dqdc[5] = dcdc_fac - k_r*2*sc[5];
+        dqdc[5] = dcdc_fac - k_r*2.000000*sc[5];
         dqdc[6] = dcdc_fac;
         dqdc[7] = dcdc_fac + k_f;
         dqdc[8] = dcdc_fac;
@@ -4670,10 +4670,10 @@ void aJacobian(double * J, double * sc, double T, int consP)
                 * exp(-1.3999999999999999 * tc[0] - 0.50321666580471969 * 104380 * invT);
     dlnkfdT = -1.3999999999999999 * invT + 0.50321666580471969 *  104380  * invT2;
     /* reverse */
-    phi_r = sc[3]*sc[3];
+    phi_r = pow(sc[3], 2.000000);
     Kc = refC * exp(g_RT[0] - g_RT[3] - g_RT[3]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[0]) + (2*h_RT[3]) - 1);
+    dlnKcdT = invT * (-(h_RT[0]) + (2.000000*h_RT[3]) - 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -4695,7 +4695,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
         J[20] -= dqdci;               /* dwdot[H2]/d[H2O] */
         J[23] += 2 * dqdci;           /* dwdot[H]/d[H2O] */
         /* d()/d[H] */
-        dqdci =  - k_r*2*sc[3];
+        dqdci =  - k_r*2.000000*sc[3];
         J[30] -= dqdci;               /* dwdot[H2]/d[H] */
         J[33] += 2 * dqdci;           /* dwdot[H]/d[H] */
     }
@@ -4703,7 +4703,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
         dqdc[0] = 2.5*q_nocor + k_f;
         dqdc[1] = q_nocor;
         dqdc[2] = 12*q_nocor;
-        dqdc[3] = q_nocor - k_r*2*sc[3];
+        dqdc[3] = q_nocor - k_r*2.000000*sc[3];
         dqdc[4] = q_nocor;
         dqdc[5] = q_nocor;
         dqdc[6] = q_nocor;
@@ -4722,7 +4722,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     /* 3-body correction factor */
     alpha = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
     /* forward */
-    phi_f = sc[4]*sc[4];
+    phi_f = pow(sc[4], 2.000000);
     k_f = 1.0000000000000002e-12 * 6165000000000000
                 * exp(-0.5 * tc[0] - 0.50321666580471969 * 0 * invT);
     dlnkfdT = -0.5 * invT + 0.50321666580471969 *  0  * invT2;
@@ -4730,7 +4730,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     phi_r = sc[1];
     Kc = refCinv * exp(-g_RT[1] + g_RT[4] + g_RT[4]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(2*h_RT[4]) + (h_RT[1]) + 1);
+    dlnKcdT = invT * (-(2.000000*h_RT[4]) + (h_RT[1]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -4756,7 +4756,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
         J[21] += dqdci;               /* dwdot[O2]/d[H2O] */
         J[24] += -2 * dqdci;          /* dwdot[O]/d[H2O] */
         /* d()/d[O] */
-        dqdci =  + k_f*2*sc[4];
+        dqdci =  + k_f*2.000000*sc[4];
         J[41] += dqdci;               /* dwdot[O2]/d[O] */
         J[44] += -2 * dqdci;          /* dwdot[O]/d[O] */
     }
@@ -4765,7 +4765,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
         dqdc[1] = q_nocor - k_r;
         dqdc[2] = 12*q_nocor;
         dqdc[3] = q_nocor;
-        dqdc[4] = q_nocor + k_f*2*sc[4];
+        dqdc[4] = q_nocor + k_f*2.000000*sc[4];
         dqdc[5] = q_nocor;
         dqdc[6] = q_nocor;
         dqdc[7] = q_nocor;
@@ -4791,7 +4791,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     phi_r = sc[5];
     Kc = refCinv * exp(g_RT[3] + g_RT[4] - g_RT[5]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[3] + h_RT[4]) + (h_RT[5]) + 1);
+    dlnKcdT = invT * (-(h_RT[3] + h_RT[4]) + (h_RT[5]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -4864,7 +4864,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     phi_r = sc[2];
     Kc = refCinv * exp(-g_RT[2] + g_RT[3] + g_RT[5]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[3] + h_RT[5]) + (h_RT[2]) + 1);
+    dlnKcdT = invT * (-(h_RT[3] + h_RT[5]) + (h_RT[2]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -5080,10 +5080,10 @@ void aJacobian(double * J, double * sc, double T, int consP)
                 * exp(2.02 * tc[0] - 0.50321666580471969 * 13400 * invT);
     dlnkfdT = 2.02 * invT + 0.50321666580471969 *  13400  * invT2;
     /* reverse */
-    phi_r = sc[5]*sc[5];
+    phi_r = pow(sc[5], 2.000000);
     Kc = exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[5]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[2] + h_RT[4]) + (2*h_RT[5]));
+    dlnKcdT = invT * (-(h_RT[2] + h_RT[4]) + (2.000000*h_RT[5]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -5103,7 +5103,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     J[44] -= dqdci;               /* dwdot[O]/d[O] */
     J[45] += 2 * dqdci;           /* dwdot[OH]/d[O] */
     /* d()/d[OH] */
-    dqdci =  - k_r*2*sc[5];
+    dqdci =  - k_r*2.000000*sc[5];
     J[52] -= dqdci;               /* dwdot[H2O]/d[OH] */
     J[54] -= dqdci;               /* dwdot[O]/d[OH] */
     J[55] += 2 * dqdci;           /* dwdot[OH]/d[OH] */
@@ -5171,10 +5171,10 @@ void aJacobian(double * J, double * sc, double T, int consP)
                 * exp(0 * tc[0] - 0.50321666580471969 * 295 * invT);
     dlnkfdT = 0 * invT + 0.50321666580471969 *  295  * invT2;
     /* reverse */
-    phi_r = sc[5]*sc[5];
+    phi_r = pow(sc[5], 2.000000);
     Kc = exp(g_RT[3] - g_RT[5] - g_RT[5] + g_RT[6]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[3] + h_RT[6]) + (2*h_RT[5]));
+    dlnKcdT = invT * (-(h_RT[3] + h_RT[6]) + (2.000000*h_RT[5]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -5189,7 +5189,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     J[35] += 2 * dqdci;           /* dwdot[OH]/d[H] */
     J[36] -= dqdci;               /* dwdot[HO2]/d[H] */
     /* d()/d[OH] */
-    dqdci =  - k_r*2*sc[5];
+    dqdci =  - k_r*2.000000*sc[5];
     J[53] -= dqdci;               /* dwdot[H]/d[OH] */
     J[55] += 2 * dqdci;           /* dwdot[OH]/d[OH] */
     J[56] -= dqdci;               /* dwdot[HO2]/d[OH] */
@@ -5308,7 +5308,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
-    phi_f = sc[6]*sc[6];
+    phi_f = pow(sc[6], 2.000000);
     k_f = 1.0000000000000002e-06 * 420000000000000
                 * exp(0 * tc[0] - 0.50321666580471969 * 11982 * invT);
     dlnkfdT = 0 * invT + 0.50321666580471969 *  11982  * invT2;
@@ -5316,7 +5316,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     phi_r = sc[1]*sc[7];
     Kc = exp(-g_RT[1] + g_RT[6] + g_RT[6] - g_RT[7]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(2*h_RT[6]) + (h_RT[1] + h_RT[7]));
+    dlnKcdT = invT * (-(2.000000*h_RT[6]) + (h_RT[1] + h_RT[7]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -5331,7 +5331,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     J[16] += -2 * dqdci;          /* dwdot[HO2]/d[O2] */
     J[17] += dqdci;               /* dwdot[H2O2]/d[O2] */
     /* d()/d[HO2] */
-    dqdci =  + k_f*2*sc[6];
+    dqdci =  + k_f*2.000000*sc[6];
     J[61] += dqdci;               /* dwdot[O2]/d[HO2] */
     J[66] += -2 * dqdci;          /* dwdot[HO2]/d[HO2] */
     J[67] += dqdci;               /* dwdot[H2O2]/d[HO2] */
@@ -5348,7 +5348,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
-    phi_f = sc[6]*sc[6];
+    phi_f = pow(sc[6], 2.000000);
     k_f = 1.0000000000000002e-06 * 130000000000
                 * exp(0 * tc[0] - 0.50321666580471969 * -1629.3 * invT);
     dlnkfdT = 0 * invT + 0.50321666580471969 *  -1629.3  * invT2;
@@ -5356,7 +5356,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     phi_r = sc[1]*sc[7];
     Kc = exp(-g_RT[1] + g_RT[6] + g_RT[6] - g_RT[7]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(2*h_RT[6]) + (h_RT[1] + h_RT[7]));
+    dlnKcdT = invT * (-(2.000000*h_RT[6]) + (h_RT[1] + h_RT[7]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -5371,7 +5371,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     J[16] += -2 * dqdci;          /* dwdot[HO2]/d[O2] */
     J[17] += dqdci;               /* dwdot[H2O2]/d[O2] */
     /* d()/d[HO2] */
-    dqdci =  + k_f*2*sc[6];
+    dqdci =  + k_f*2.000000*sc[6];
     J[61] += dqdci;               /* dwdot[O2]/d[HO2] */
     J[66] += -2 * dqdci;          /* dwdot[HO2]/d[HO2] */
     J[67] += dqdci;               /* dwdot[H2O2]/d[HO2] */
@@ -5771,7 +5771,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     phi_r = sc[6];
     Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1);
+    dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -5874,10 +5874,10 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     dlogFdlogPr = dlogFdc;
     dlogFdT = dlogFcentdT*(troe - 0.67*dlogFdc - 1.27*dlogFdn) + dlogFdlogPr * dlogPrdT;
     /* reverse */
-    phi_r = sc[5]*sc[5];
+    phi_r = pow(sc[5], 2.000000);
     Kc = refC * exp(-g_RT[5] - g_RT[5] + g_RT[7]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[7]) + (2*h_RT[5]) - 1);
+    dlnKcdT = invT * (-(h_RT[7]) + (2.000000*h_RT[5]) - 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -5902,7 +5902,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
         J[25] += 2 * dqdci;           /* dwdot[OH]/d[H2O] */
         J[27] -= dqdci;               /* dwdot[H2O2]/d[H2O] */
         /* d()/d[OH] */
-        dqdci =  - k_r*2*sc[5];
+        dqdci =  - k_r*2.000000*sc[5];
         J[55] += 2 * dqdci;           /* dwdot[OH]/d[OH] */
         J[57] -= dqdci;               /* dwdot[H2O2]/d[OH] */
         /* d()/d[H2O2] */
@@ -5916,7 +5916,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
         dqdc[2] = TB[1][1]*dcdc_fac;
         dqdc[3] = dcdc_fac;
         dqdc[4] = dcdc_fac;
-        dqdc[5] = dcdc_fac - k_r*2*sc[5];
+        dqdc[5] = dcdc_fac - k_r*2.000000*sc[5];
         dqdc[6] = dcdc_fac;
         dqdc[7] = dcdc_fac + k_f;
         dqdc[8] = dcdc_fac;
@@ -5938,10 +5938,10 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
                 * exp(fwd_beta[2] * tc[0] - activation_units[2] * fwd_Ea[2] * invT);
     dlnkfdT = fwd_beta[2] * invT + activation_units[2] * fwd_Ea[2] * invT2;
     /* reverse */
-    phi_r = sc[3]*sc[3];
+    phi_r = pow(sc[3], 2.000000);
     Kc = refC * exp(g_RT[0] - g_RT[3] - g_RT[3]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[0]) + (2*h_RT[3]) - 1);
+    dlnKcdT = invT * (-(h_RT[0]) + (2.000000*h_RT[3]) - 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -5963,7 +5963,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
         J[20] -= dqdci;               /* dwdot[H2]/d[H2O] */
         J[23] += 2 * dqdci;           /* dwdot[H]/d[H2O] */
         /* d()/d[H] */
-        dqdci =  - k_r*2*sc[3];
+        dqdci =  - k_r*2.000000*sc[3];
         J[30] -= dqdci;               /* dwdot[H2]/d[H] */
         J[33] += 2 * dqdci;           /* dwdot[H]/d[H] */
     }
@@ -5971,7 +5971,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
         dqdc[0] = TB[2][0]*q_nocor + k_f;
         dqdc[1] = q_nocor;
         dqdc[2] = TB[2][1]*q_nocor;
-        dqdc[3] = q_nocor - k_r*2*sc[3];
+        dqdc[3] = q_nocor - k_r*2.000000*sc[3];
         dqdc[4] = q_nocor;
         dqdc[5] = q_nocor;
         dqdc[6] = q_nocor;
@@ -5990,7 +5990,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     /* 3-body correction factor */
     alpha = mixture + (TB[3][0] - 1)*sc[0] + (TB[3][1] - 1)*sc[2];
     /* forward */
-    phi_f = sc[4]*sc[4];
+    phi_f = pow(sc[4], 2.000000);
     k_f = prefactor_units[3] * fwd_A[3]
                 * exp(fwd_beta[3] * tc[0] - activation_units[3] * fwd_Ea[3] * invT);
     dlnkfdT = fwd_beta[3] * invT + activation_units[3] * fwd_Ea[3] * invT2;
@@ -5998,7 +5998,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     phi_r = sc[1];
     Kc = refCinv * exp(-g_RT[1] + g_RT[4] + g_RT[4]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(2*h_RT[4]) + (h_RT[1]) + 1);
+    dlnKcdT = invT * (-(2.000000*h_RT[4]) + (h_RT[1]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -6024,7 +6024,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
         J[21] += dqdci;               /* dwdot[O2]/d[H2O] */
         J[24] += -2 * dqdci;          /* dwdot[O]/d[H2O] */
         /* d()/d[O] */
-        dqdci =  + k_f*2*sc[4];
+        dqdci =  + k_f*2.000000*sc[4];
         J[41] += dqdci;               /* dwdot[O2]/d[O] */
         J[44] += -2 * dqdci;          /* dwdot[O]/d[O] */
     }
@@ -6033,7 +6033,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
         dqdc[1] = q_nocor - k_r;
         dqdc[2] = TB[3][1]*q_nocor;
         dqdc[3] = q_nocor;
-        dqdc[4] = q_nocor + k_f*2*sc[4];
+        dqdc[4] = q_nocor + k_f*2.000000*sc[4];
         dqdc[5] = q_nocor;
         dqdc[6] = q_nocor;
         dqdc[7] = q_nocor;
@@ -6059,7 +6059,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     phi_r = sc[5];
     Kc = refCinv * exp(g_RT[3] + g_RT[4] - g_RT[5]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[3] + h_RT[4]) + (h_RT[5]) + 1);
+    dlnKcdT = invT * (-(h_RT[3] + h_RT[4]) + (h_RT[5]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -6132,7 +6132,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     phi_r = sc[2];
     Kc = refCinv * exp(-g_RT[2] + g_RT[3] + g_RT[5]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[3] + h_RT[5]) + (h_RT[2]) + 1);
+    dlnKcdT = invT * (-(h_RT[3] + h_RT[5]) + (h_RT[2]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -6348,10 +6348,10 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
                 * exp(fwd_beta[9] * tc[0] - activation_units[9] * fwd_Ea[9] * invT);
     dlnkfdT = fwd_beta[9] * invT + activation_units[9] * fwd_Ea[9] * invT2;
     /* reverse */
-    phi_r = sc[5]*sc[5];
+    phi_r = pow(sc[5], 2.000000);
     Kc = exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[5]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[2] + h_RT[4]) + (2*h_RT[5]));
+    dlnKcdT = invT * (-(h_RT[2] + h_RT[4]) + (2.000000*h_RT[5]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -6371,7 +6371,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     J[44] -= dqdci;               /* dwdot[O]/d[O] */
     J[45] += 2 * dqdci;           /* dwdot[OH]/d[O] */
     /* d()/d[OH] */
-    dqdci =  - k_r*2*sc[5];
+    dqdci =  - k_r*2.000000*sc[5];
     J[52] -= dqdci;               /* dwdot[H2O]/d[OH] */
     J[54] -= dqdci;               /* dwdot[O]/d[OH] */
     J[55] += 2 * dqdci;           /* dwdot[OH]/d[OH] */
@@ -6439,10 +6439,10 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
                 * exp(fwd_beta[11] * tc[0] - activation_units[11] * fwd_Ea[11] * invT);
     dlnkfdT = fwd_beta[11] * invT + activation_units[11] * fwd_Ea[11] * invT2;
     /* reverse */
-    phi_r = sc[5]*sc[5];
+    phi_r = pow(sc[5], 2.000000);
     Kc = exp(g_RT[3] - g_RT[5] - g_RT[5] + g_RT[6]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[3] + h_RT[6]) + (2*h_RT[5]));
+    dlnKcdT = invT * (-(h_RT[3] + h_RT[6]) + (2.000000*h_RT[5]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -6457,7 +6457,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     J[35] += 2 * dqdci;           /* dwdot[OH]/d[H] */
     J[36] -= dqdci;               /* dwdot[HO2]/d[H] */
     /* d()/d[OH] */
-    dqdci =  - k_r*2*sc[5];
+    dqdci =  - k_r*2.000000*sc[5];
     J[53] -= dqdci;               /* dwdot[H]/d[OH] */
     J[55] += 2 * dqdci;           /* dwdot[OH]/d[OH] */
     J[56] -= dqdci;               /* dwdot[HO2]/d[OH] */
@@ -6576,7 +6576,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
-    phi_f = sc[6]*sc[6];
+    phi_f = pow(sc[6], 2.000000);
     k_f = prefactor_units[14] * fwd_A[14]
                 * exp(fwd_beta[14] * tc[0] - activation_units[14] * fwd_Ea[14] * invT);
     dlnkfdT = fwd_beta[14] * invT + activation_units[14] * fwd_Ea[14] * invT2;
@@ -6584,7 +6584,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     phi_r = sc[1]*sc[7];
     Kc = exp(-g_RT[1] + g_RT[6] + g_RT[6] - g_RT[7]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(2*h_RT[6]) + (h_RT[1] + h_RT[7]));
+    dlnKcdT = invT * (-(2.000000*h_RT[6]) + (h_RT[1] + h_RT[7]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -6599,7 +6599,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     J[16] += -2 * dqdci;          /* dwdot[HO2]/d[O2] */
     J[17] += dqdci;               /* dwdot[H2O2]/d[O2] */
     /* d()/d[HO2] */
-    dqdci =  + k_f*2*sc[6];
+    dqdci =  + k_f*2.000000*sc[6];
     J[61] += dqdci;               /* dwdot[O2]/d[HO2] */
     J[66] += -2 * dqdci;          /* dwdot[HO2]/d[HO2] */
     J[67] += dqdci;               /* dwdot[H2O2]/d[HO2] */
@@ -6616,7 +6616,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
-    phi_f = sc[6]*sc[6];
+    phi_f = pow(sc[6], 2.000000);
     k_f = prefactor_units[15] * fwd_A[15]
                 * exp(fwd_beta[15] * tc[0] - activation_units[15] * fwd_Ea[15] * invT);
     dlnkfdT = fwd_beta[15] * invT + activation_units[15] * fwd_Ea[15] * invT2;
@@ -6624,7 +6624,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     phi_r = sc[1]*sc[7];
     Kc = exp(-g_RT[1] + g_RT[6] + g_RT[6] - g_RT[7]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(2*h_RT[6]) + (h_RT[1] + h_RT[7]));
+    dlnKcdT = invT * (-(2.000000*h_RT[6]) + (h_RT[1] + h_RT[7]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -6639,7 +6639,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     J[16] += -2 * dqdci;          /* dwdot[HO2]/d[O2] */
     J[17] += dqdci;               /* dwdot[H2O2]/d[O2] */
     /* d()/d[HO2] */
-    dqdci =  + k_f*2*sc[6];
+    dqdci =  + k_f*2.000000*sc[6];
     J[61] += dqdci;               /* dwdot[O2]/d[HO2] */
     J[66] += -2 * dqdci;          /* dwdot[HO2]/d[HO2] */
     J[67] += dqdci;               /* dwdot[H2O2]/d[HO2] */
@@ -7036,7 +7036,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     phi_r = sc[6];
     Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1);
+    dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -7110,10 +7110,10 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dlogFdlogPr = dlogFdc;
     dlogFdT = dlogFcentdT*(troe - 0.67*dlogFdc - 1.27*dlogFdn) + dlogFdlogPr * dlogPrdT;
     /* reverse */
-    phi_r = sc[5]*sc[5];
+    phi_r = pow(sc[5], 2.000000);
     Kc = refC * exp(-g_RT[5] - g_RT[5] + g_RT[7]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[7]) + (2*h_RT[5]) - 1);
+    dlnKcdT = invT * (-(h_RT[7]) + (2.000000*h_RT[5]) - 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -7133,7 +7133,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dqdc[2] = 12*dcdc_fac;
     dqdc[3] = dcdc_fac;
     dqdc[4] = dcdc_fac;
-    dqdc[5] = dcdc_fac - k_r*2*sc[5];
+    dqdc[5] = dcdc_fac - k_r*2.000000*sc[5];
     dqdc[6] = dcdc_fac;
     dqdc[7] = dcdc_fac + k_f;
     dqdc[8] = dcdc_fac;
@@ -7154,10 +7154,10 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
                 * exp(-1.3999999999999999 * tc[0] - 0.50321666580471969 * 104380 * invT);
     dlnkfdT = -1.3999999999999999 * invT + 0.50321666580471969 *  104380  * invT2;
     /* reverse */
-    phi_r = sc[3]*sc[3];
+    phi_r = pow(sc[3], 2.000000);
     Kc = refC * exp(g_RT[0] - g_RT[3] - g_RT[3]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[0]) + (2*h_RT[3]) - 1);
+    dlnKcdT = invT * (-(h_RT[0]) + (2.000000*h_RT[3]) - 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -7172,7 +7172,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dqdc[0] = 2.5*q_nocor + k_f;
     dqdc[1] = q_nocor;
     dqdc[2] = 12*q_nocor;
-    dqdc[3] = q_nocor - k_r*2*sc[3];
+    dqdc[3] = q_nocor - k_r*2.000000*sc[3];
     dqdc[4] = q_nocor;
     dqdc[5] = q_nocor;
     dqdc[6] = q_nocor;
@@ -7190,7 +7190,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     /* 3-body correction factor */
     alpha = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
     /* forward */
-    phi_f = sc[4]*sc[4];
+    phi_f = pow(sc[4], 2.000000);
     k_f = 1.0000000000000002e-12 * 6165000000000000
                 * exp(-0.5 * tc[0] - 0.50321666580471969 * 0 * invT);
     dlnkfdT = -0.5 * invT + 0.50321666580471969 *  0  * invT2;
@@ -7198,7 +7198,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     phi_r = sc[1];
     Kc = refCinv * exp(-g_RT[1] + g_RT[4] + g_RT[4]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(2*h_RT[4]) + (h_RT[1]) + 1);
+    dlnKcdT = invT * (-(2.000000*h_RT[4]) + (h_RT[1]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -7214,7 +7214,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     dqdc[1] = q_nocor - k_r;
     dqdc[2] = 12*q_nocor;
     dqdc[3] = q_nocor;
-    dqdc[4] = q_nocor + k_f*2*sc[4];
+    dqdc[4] = q_nocor + k_f*2.000000*sc[4];
     dqdc[5] = q_nocor;
     dqdc[6] = q_nocor;
     dqdc[7] = q_nocor;
@@ -7239,7 +7239,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     phi_r = sc[5];
     Kc = refCinv * exp(g_RT[3] + g_RT[4] - g_RT[5]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[3] + h_RT[4]) + (h_RT[5]) + 1);
+    dlnKcdT = invT * (-(h_RT[3] + h_RT[4]) + (h_RT[5]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -7283,7 +7283,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     phi_r = sc[2];
     Kc = refCinv * exp(-g_RT[2] + g_RT[3] + g_RT[5]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[3] + h_RT[5]) + (h_RT[2]) + 1);
+    dlnKcdT = invT * (-(h_RT[3] + h_RT[5]) + (h_RT[2]) + 1.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q_nocor = k_f*phi_f - k_r*phi_r;
@@ -7475,10 +7475,10 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
                 * exp(2.02 * tc[0] - 0.50321666580471969 * 13400 * invT);
     dlnkfdT = 2.02 * invT + 0.50321666580471969 *  13400  * invT2;
     /* reverse */
-    phi_r = sc[5]*sc[5];
+    phi_r = pow(sc[5], 2.000000);
     Kc = exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[5]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[2] + h_RT[4]) + (2*h_RT[5]));
+    dlnKcdT = invT * (-(h_RT[2] + h_RT[4]) + (2.000000*h_RT[5]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -7498,7 +7498,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     J[44] -= dqdci;               /* dwdot[O]/d[O] */
     J[45] += 2 * dqdci;           /* dwdot[OH]/d[O] */
     /* d()/d[OH] */
-    dqdci =  - k_r*2*sc[5];
+    dqdci =  - k_r*2.000000*sc[5];
     J[52] -= dqdci;               /* dwdot[H2O]/d[OH] */
     J[54] -= dqdci;               /* dwdot[O]/d[OH] */
     J[55] += 2 * dqdci;           /* dwdot[OH]/d[OH] */
@@ -7566,10 +7566,10 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
                 * exp(0 * tc[0] - 0.50321666580471969 * 295 * invT);
     dlnkfdT = 0 * invT + 0.50321666580471969 *  295  * invT2;
     /* reverse */
-    phi_r = sc[5]*sc[5];
+    phi_r = pow(sc[5], 2.000000);
     Kc = exp(g_RT[3] - g_RT[5] - g_RT[5] + g_RT[6]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(h_RT[3] + h_RT[6]) + (2*h_RT[5]));
+    dlnKcdT = invT * (-(h_RT[3] + h_RT[6]) + (2.000000*h_RT[5]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -7584,7 +7584,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     J[35] += 2 * dqdci;           /* dwdot[OH]/d[H] */
     J[36] -= dqdci;               /* dwdot[HO2]/d[H] */
     /* d()/d[OH] */
-    dqdci =  - k_r*2*sc[5];
+    dqdci =  - k_r*2.000000*sc[5];
     J[53] -= dqdci;               /* dwdot[H]/d[OH] */
     J[55] += 2 * dqdci;           /* dwdot[OH]/d[OH] */
     J[56] -= dqdci;               /* dwdot[HO2]/d[OH] */
@@ -7703,7 +7703,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
-    phi_f = sc[6]*sc[6];
+    phi_f = pow(sc[6], 2.000000);
     k_f = 1.0000000000000002e-06 * 420000000000000
                 * exp(0 * tc[0] - 0.50321666580471969 * 11982 * invT);
     dlnkfdT = 0 * invT + 0.50321666580471969 *  11982  * invT2;
@@ -7711,7 +7711,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     phi_r = sc[1]*sc[7];
     Kc = exp(-g_RT[1] + g_RT[6] + g_RT[6] - g_RT[7]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(2*h_RT[6]) + (h_RT[1] + h_RT[7]));
+    dlnKcdT = invT * (-(2.000000*h_RT[6]) + (h_RT[1] + h_RT[7]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -7726,7 +7726,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     J[16] += -2 * dqdci;          /* dwdot[HO2]/d[O2] */
     J[17] += dqdci;               /* dwdot[H2O2]/d[O2] */
     /* d()/d[HO2] */
-    dqdci =  + k_f*2*sc[6];
+    dqdci =  + k_f*2.000000*sc[6];
     J[61] += dqdci;               /* dwdot[O2]/d[HO2] */
     J[66] += -2 * dqdci;          /* dwdot[HO2]/d[HO2] */
     J[67] += dqdci;               /* dwdot[H2O2]/d[HO2] */
@@ -7743,7 +7743,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
-    phi_f = sc[6]*sc[6];
+    phi_f = pow(sc[6], 2.000000);
     k_f = 1.0000000000000002e-06 * 130000000000
                 * exp(0 * tc[0] - 0.50321666580471969 * -1629.3 * invT);
     dlnkfdT = 0 * invT + 0.50321666580471969 *  -1629.3  * invT2;
@@ -7751,7 +7751,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     phi_r = sc[1]*sc[7];
     Kc = exp(-g_RT[1] + g_RT[6] + g_RT[6] - g_RT[7]);
     k_r = k_f / Kc;
-    dlnKcdT = invT * (-(2*h_RT[6]) + (h_RT[1] + h_RT[7]));
+    dlnKcdT = invT * (-(2.000000*h_RT[6]) + (h_RT[1] + h_RT[7]));
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
     /* rate of progress */
     q = k_f*phi_f - k_r*phi_r;
@@ -7766,7 +7766,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     J[16] += -2 * dqdci;          /* dwdot[HO2]/d[O2] */
     J[17] += dqdci;               /* dwdot[H2O2]/d[O2] */
     /* d()/d[HO2] */
-    dqdci =  + k_f*2*sc[6];
+    dqdci =  + k_f*2.000000*sc[6];
     J[61] += dqdci;               /* dwdot[O2]/d[HO2] */
     J[66] += -2 * dqdci;          /* dwdot[HO2]/d[HO2] */
     J[67] += dqdci;               /* dwdot[H2O2]/d[HO2] */
