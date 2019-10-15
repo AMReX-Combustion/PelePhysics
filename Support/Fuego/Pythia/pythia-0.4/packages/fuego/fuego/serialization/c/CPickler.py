@@ -853,7 +853,7 @@ class CPickler(CMill):
         self._write('/* Species */')
         nb_spec = 0
         for species in mechanism.species():
-            self._write('#define %s_ID %d' % ((species.symbol).replace("*","D").replace("-","").replace(")","").replace("(",""), species.id) )
+            self._write('#define %s_ID %d' % ((species.symbol).replace("*","D").replace("-","n").replace("+","p").replace(")","").replace("(",""), species.id) )
             nb_spec += 1
         self._write()
         self._write("#define NUM_ELEMENTS %d" % (nb_elem))
@@ -1938,7 +1938,7 @@ class CPickler(CMill):
             self._write("prefactor_units[%d]  = %.17g;" % (id,uc.value))
             aeuc = self._activationEnergyUnits(reaction.units["activation"])
             self._write("activation_units[%d] = %.17g;" % (id,aeuc / Rc / kelvin))
-            self._write("phase_units[%d]      = 1e-%d;" % (id,dim*6))
+            self._write("phase_units[%d]      = pow(10,-%f);" % (id,dim*6))
 
             if low:
                 self._write("is_PD[%d] = 1;" % (id) )
@@ -4343,12 +4343,12 @@ class CPickler(CMill):
 
             for symbol, coefficient in reaction.reactants:
                 self._write(
-                    "nuki[ %d * kd + %d ] += -%d ;"
+                    "nuki[ %d * kd + %d ] += -%f ;"
                     % (mechanism.species(symbol).id, reaction.id-1, coefficient))
 
             for symbol, coefficient in reaction.products:
                 self._write(
-                    "nuki[ %d * kd + %d ] += +%d ;"
+                    "nuki[ %d * kd + %d ] += +%f ;"
                     % (mechanism.species(symbol).id, reaction.id-1, coefficient))
        
         # done
@@ -6082,16 +6082,16 @@ class CPickler(CMill):
                 symbol, coefficient = a
                 for b in reaction.reactants:
                     if b == a:
-                        if coefficient == 1:
+                        if coefficient == 1.0:
                             self._write("wdot[%d] -= qdot;" % (mechanism.species(symbol).id))
                         else:
-                            self._write("wdot[%d] -= %d * qdot;" % (mechanism.species(symbol).id, coefficient))
+                            self._write("wdot[%d] -= %f * qdot;" % (mechanism.species(symbol).id, coefficient))
                 for b in reaction.products: 
                     if b == a:
-                        if coefficient == 1:
+                        if coefficient == 1.0:
                             self._write("wdot[%d] += qdot;" % (mechanism.species(symbol).id))
                         else:
-                            self._write("wdot[%d] += %d * qdot;" % (mechanism.species(symbol).id, coefficient))
+                            self._write("wdot[%d] += %f * qdot;" % (mechanism.species(symbol).id, coefficient))
 
 
         self._write()
@@ -6459,13 +6459,13 @@ class CPickler(CMill):
                         if coefficient == 1:
                             self._write("wdot[%d] -= qdot;" % (mechanism.species(symbol).id))
                         else:
-                            self._write("wdot[%d] -= %d * qdot;" % (mechanism.species(symbol).id, coefficient))
+                            self._write("wdot[%d] -= %f * qdot;" % (mechanism.species(symbol).id, coefficient))
                 for b in reaction.products: 
                     if b == a:
                         if coefficient == 1:
                             self._write("wdot[%d] += qdot;" % (mechanism.species(symbol).id))
                         else:
-                            self._write("wdot[%d] += %d * qdot;" % (mechanism.species(symbol).id, coefficient))
+                            self._write("wdot[%d] += %f * qdot;" % (mechanism.species(symbol).id, coefficient))
 
 
         self._write()
@@ -7681,24 +7681,24 @@ class CPickler(CMill):
             for symbol, coefficient in sorted(sorted_reactants,
                                               key=lambda x: mechanism.species(x[0]).id):
                 k = mechanism.species(symbol).id
-                if coefficient == 1:
+                if coefficient == 1.0:
                     terms.append('h_RT[%d]' % (k))
                 else:
-                    terms.append('%d*h_RT[%d]' % (coefficient, k))
+                    terms.append('%f*h_RT[%d]' % (coefficient, k))
             dlnKcdT_s += '-(' + ' + '.join(terms) + ')'
             terms = []
             for symbol, coefficient in sorted(sorted_products,
                                               key=lambda x: mechanism.species(x[0]).id):
                 k = mechanism.species(symbol).id
-                if coefficient == 1:
+                if coefficient == 1.0:
                     terms.append('h_RT[%d]' % (k))
                 else:
-                    terms.append('%d*h_RT[%d]' % (coefficient, k))
+                    terms.append('%f*h_RT[%d]' % (coefficient, k))
             dlnKcdT_s += ' + (' + ' + '.join(terms) + ')'
             if sumNuk > 0:
-                dlnKcdT_s += ' - %d' % sumNuk
+                dlnKcdT_s += ' - %f' % sumNuk
             elif sumNuk < 0:
-                dlnKcdT_s += ' + %d' % (-sumNuk)
+                dlnKcdT_s += ' + %f' % (-sumNuk)
             dlnKcdT_s += ')'
             self._write('dlnKcdT = %s;' % dlnKcdT_s)
 
@@ -8244,24 +8244,24 @@ class CPickler(CMill):
             for symbol, coefficient in sorted(sorted_reactants,
                                               key=lambda x: mechanism.species(x[0]).id):
                 k = mechanism.species(symbol).id
-                if coefficient == 1:
+                if coefficient == 1.0:
                     terms.append('h_RT[%d]' % (k))
                 else:
-                    terms.append('%d*h_RT[%d]' % (coefficient, k))
+                    terms.append('%f*h_RT[%d]' % (coefficient, k))
             dlnKcdT_s += '-(' + ' + '.join(terms) + ')'
             terms = []
             for symbol, coefficient in sorted(sorted_products,
                                               key=lambda x: mechanism.species(x[0]).id):
                 k = mechanism.species(symbol).id
-                if coefficient == 1:
+                if coefficient == 1.0:
                     terms.append('h_RT[%d]' % (k))
                 else:
-                    terms.append('%d*h_RT[%d]' % (coefficient, k))
+                    terms.append('%f*h_RT[%d]' % (coefficient, k))
             dlnKcdT_s += ' + (' + ' + '.join(terms) + ')'
             if sumNuk > 0:
-                dlnKcdT_s += ' - %d' % sumNuk
+                dlnKcdT_s += ' - %f' % sumNuk
             elif sumNuk < 0:
-                dlnKcdT_s += ' + %d' % (-sumNuk)
+                dlnKcdT_s += ' + %f' % (-sumNuk)
             dlnKcdT_s += ')'
             self._write('dlnKcdT = %s;' % dlnKcdT_s)
 
@@ -8761,24 +8761,24 @@ class CPickler(CMill):
             for symbol, coefficient in sorted(sorted_reactants,
                                               key=lambda x: mechanism.species(x[0]).id):
                 k = mechanism.species(symbol).id
-                if coefficient == 1:
+                if coefficient == 1.0:
                     terms.append('h_RT[%d]' % (k))
                 else:
-                    terms.append('%d*h_RT[%d]' % (coefficient, k))
+                    terms.append('%f*h_RT[%d]' % (coefficient, k))
             dlnKcdT_s += '-(' + ' + '.join(terms) + ')'
             terms = []
             for symbol, coefficient in sorted(sorted_products,
                                               key=lambda x: mechanism.species(x[0]).id):
                 k = mechanism.species(symbol).id
-                if coefficient == 1:
+                if coefficient == 1.0:
                     terms.append('h_RT[%d]' % (k))
                 else:
-                    terms.append('%d*h_RT[%d]' % (coefficient, k))
+                    terms.append('%f*h_RT[%d]' % (coefficient, k))
             dlnKcdT_s += ' + (' + ' + '.join(terms) + ')'
             if sumNuk > 0:
-                dlnKcdT_s += ' - %d' % sumNuk
+                dlnKcdT_s += ' - %f' % sumNuk
             elif sumNuk < 0:
-                dlnKcdT_s += ' + %d' % (-sumNuk)
+                dlnKcdT_s += ' + %f' % (-sumNuk)
             dlnKcdT_s += ')'
             self._write('dlnKcdT = %s;' % dlnKcdT_s)
 
@@ -9196,19 +9196,19 @@ class CPickler(CMill):
                 symbol, coefficient = a
                 for b in reaction.reactants:
                     if b == a:
-                        if coefficient == 1:
+                        if coefficient == 1.0:
                             self._write("wdot[%d*npt+i] -= qdot;" 
                                         % (mechanism.species(symbol).id))
                         else:
-                            self._write("wdot[%d*npt+i] -= %d * qdot;" 
+                            self._write("wdot[%d*npt+i] -= %f * qdot;" 
                                         % (mechanism.species(symbol).id, coefficient))
                 for b in reaction.products: 
                     if b == a:
-                        if coefficient == 1:
+                        if coefficient == 1.0:
                             self._write("wdot[%d*npt+i] += qdot;" 
                                         % (mechanism.species(symbol).id))
                         else:
-                            self._write("wdot[%d*npt+i] += %d * qdot;" 
+                            self._write("wdot[%d*npt+i] += %f * qdot;" 
                                         % (mechanism.species(symbol).id, coefficient))
 
         self._outdent()
@@ -9885,6 +9885,9 @@ class CPickler(CMill):
             pyre.debug.Firewall.hit("unknown prefactor units '%s'" % code)
             return 1
 
+        #print "UNITS/SECOND/EXP ", units.value, second.value, exponent
+        #print " units ** exponent / second (value) " , units.value ** exponent / second.value
+        #print " units ** exponent / second (returned) " , units ** exponent / second
         return units ** exponent / second
 
 
@@ -9940,8 +9943,11 @@ class CPickler(CMill):
         phi = []
 
         for symbol, coefficient in reagents:
-            conc = "sc[%d]" % mechanism.species(symbol).id
-            phi += [conc] * coefficient
+            if (coefficient == "1.0"):
+                conc = "sc[%d]" % mechanism.species(symbol).id
+            else:
+                conc = "pow(sc[%d], %f)" % (mechanism.species(symbol).id, coefficient)
+            phi += [conc]
 
         return "*".join(phi)
 
@@ -9950,8 +9956,11 @@ class CPickler(CMill):
         phi = []
 
         for symbol, coefficient in sorted(reagents,key=lambda x:mechanism.species(x[0]).id):
-            conc = "sc[%d]" % mechanism.species(symbol).id
-            phi += [conc] * coefficient
+            if (coefficient == 1.0):
+                conc = "sc[%d]" % mechanism.species(symbol).id
+            else:
+                conc = "pow(sc[%d], %f)" % (mechanism.species(symbol).id, coefficient)
+            phi += [conc]
 
         return "*".join(phi)
 
@@ -9963,12 +9972,18 @@ class CPickler(CMill):
         for symbol, coefficient in sorted(reagents,key=lambda x:mechanism.species(x[0]).id):
             if symbol == r:
                 if coefficient > 1:
-                    conc = "sc[%d]" % mechanism.species(symbol).id
-                    phi += ["%d" % coefficient]
-                    phi += [conc] * (coefficient-1)
+                    phi += ["%f" % coefficient]
+                    if ((coefficient-1) == 1.0):
+                        conc = "sc[%d]" % (mechanism.species(symbol).id)
+                    else:
+                        conc = "pow(sc[%d],%f)" % (mechanism.species(symbol).id, (coefficient-1))
+                    phi += [conc]
             else:
-                conc = "sc[%d]" % mechanism.species(symbol).id
-                phi += [conc] * coefficient
+                if (coefficient == 1.0):
+                    conc = "sc[%d]" % mechanism.species(symbol).id
+                else:
+                    conc = "pow(sc[%d], %f)" % (mechanism.species(symbol).id, coefficient)
+                phi += [conc]
 
         if phi:
             return "*".join(phi)
@@ -9981,8 +9996,11 @@ class CPickler(CMill):
         phi = []
 
         for symbol, coefficient in sorted(reagents,key=lambda x:mechanism.species(x[0]).id):
-            conc = "sc[%d*npt+i]" % mechanism.species(symbol).id
-            phi += [conc] * coefficient
+            if (coefficient == 1.0):
+                conc = "sc[%d*npt+i]" % (mechanism.species(symbol).id)
+            else:
+                conc = "pow(sc[%d*npt+i], %f)" % (mechanism.species(symbol).id, coefficient)
+            phi += [conc]
 
         return "*".join(phi)
 
@@ -11716,10 +11734,10 @@ class CPickler(CMill):
 
         terms = []
         for symbol, coefficient in reaction.reactants:
-            if coefficient == 1:
+            if coefficient == 1.0:
                 factor = ""
             else:
-                factor = "%d * " % coefficient
+                factor = "%f * " % coefficient
                     
             terms.append("%sg_RT[%d]" % (factor, mechanism.species(symbol).id))
             dim -= coefficient
@@ -11728,10 +11746,10 @@ class CPickler(CMill):
         # flip the signs
         terms = []
         for symbol, coefficient in reaction.products:
-            if coefficient == 1:
+            if coefficient == 1.0:
                 factor = ""
             else:
-                factor = "%d * " % coefficient
+                factor = "%f * " % coefficient
             terms.append("%sg_RT[%d]" % (factor, mechanism.species(symbol).id))
             dim += coefficient
         dG += ' - (' + ' + '.join(terms) + ')'
@@ -11741,9 +11759,15 @@ class CPickler(CMill):
         if dim == 0:
             conversion = ""
         elif dim > 0:
-            conversion = "*".join(["refC"] * dim) + ' * '
+            if (dim == 1.0):
+                conversion = "*".join(["refC"]) + ' * '
+            else:
+                conversion = "*".join(["pow(refC,%f)" % dim]) + ' * '
         else:
-            conversion = "1.0 / (" + "*".join(["refC"] * abs(dim)) + ') * '
+            if (dim == -1.0):
+                conversion = "1.0 / (" + "*".join(["refC"]) + ') * '
+            else:
+                conversion = "1.0 / (" + "*".join(["pow(refC,%f)" % abs(dim)]) + ') * '
 
         K_c = conversion + K_p
 
@@ -11760,9 +11784,15 @@ class CPickler(CMill):
         if dim == 0:
             conversion = ""
         elif dim > 0:
-            conversion = "*".join(["refC"] * dim)
+            if (dim == 1.0):
+                conversion = "*".join(["refC"])
+            else:
+                conversion = "*".join(["pow(refC,%f)" % dim])
         else:
-            conversion = "*".join(["refCinv"] * abs(dim))
+            if (dim == -1.0):
+                conversion = "*".join(["refCinv"])
+            else:
+                conversion = "*".join(["pow(refCinv,%f)" % abs(dim)])
 
         return conversion
 
@@ -11774,18 +11804,18 @@ class CPickler(CMill):
         for i in range(nSpecies):
             terms.append('')
         for symbol, coefficient in reaction.reactants:
-            if coefficient == 1:
+            if coefficient == 1.0:
                 factor = " + "
             else:
-                factor = " + %d*" % coefficient
+                factor = " + %f*" % coefficient
             i = mechanism.species(symbol).id
             terms[i] += "%sg_RT[%d]"%(factor,i)
 
         for symbol, coefficient in reaction.products:
-            if coefficient == 1:
+            if coefficient == 1.0:
                 factor = " - "    # flip the signs
             else:
-                factor = " - %d*" % coefficient
+                factor = " - %f*" % coefficient
             i = mechanism.species(symbol).id
             terms[i] += "%sg_RT[%d]"%(factor,i)
 
@@ -11816,10 +11846,10 @@ class CPickler(CMill):
         terms = []
         for symbol, coefficient in sorted(reaction.reactants, 
                                           key=lambda x: mechanism.species(x[0]).id):
-            if coefficient == 1:
+            if coefficient == 1.0:
                 factor = ""
             else:
-                factor = "%d * " % coefficient
+                factor = "%f * " % coefficient
                     
             terms.append("%sg_RT[%d*npt+i]" % (factor, mechanism.species(symbol).id))
             dim -= coefficient
@@ -11829,10 +11859,10 @@ class CPickler(CMill):
         terms = []
         for symbol, coefficient in sorted(reaction.products,
                                           key=lambda x: mechanism.species(x[0]).id):
-            if coefficient == 1:
+            if coefficient == 1.0:
                 factor = ""
             else:
-                factor = "%d * " % coefficient
+                factor = "%f * " % coefficient
             terms.append("%sg_RT[%d*npt+i]" % (factor, mechanism.species(symbol).id))
             dim += coefficient
         dG += ' - (' + ' + '.join(terms) + ')'
@@ -11842,9 +11872,15 @@ class CPickler(CMill):
         if dim == 0:
             conversion = ""
         elif dim > 0:
-            conversion = "*".join(["refC"] * dim) + ' * '
+            if (dim == 1.0):
+                conversion = "*".join(["refC"]) + ' * '
+            else:
+                conversion = "*".join(["pow(refC,%f)" % dim]) + ' * '
         else:
-            conversion = "*".join(["refCinv"] * abs(dim)) + ' * '
+            if (dim == -1.0):
+                conversion = "*".join(["refCinv"]) + ' * '
+            else:
+                conversion = "*".join(["pow(refCinv,%f)" % abs(dim)]) + ' * '
 
         K_c = conversion + K_p
 
@@ -11857,10 +11893,10 @@ class CPickler(CMill):
 
         terms = []
         for symbol, coefficient in reaction.reactants:
-            if coefficient == 1:
+            if coefficient == 1.0:
                 factor = ""
             else:
-                factor = "%d * " % coefficient
+                factor = "%f * " % coefficient
                     
             terms.append("%sg_RT[%d]" % (factor, mechanism.species(symbol).id))
         dG += '(' + ' + '.join(terms) + ')'
@@ -11868,10 +11904,10 @@ class CPickler(CMill):
         # flip the signs
         terms = []
         for symbol, coefficient in reaction.products:
-            if coefficient == 1:
+            if coefficient == 1.0:
                 factor = ""
             else:
-                factor = "%d * " % coefficient
+                factor = "%f * " % coefficient
             terms.append("%sg_RT[%d]" % (factor, mechanism.species(symbol).id))
         dG += ' - (' + ' + '.join(terms) + ')'
 
