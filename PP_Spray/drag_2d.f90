@@ -23,7 +23,7 @@ contains
     use control_parameters
     use spray_module
     use transport_module, only : get_transport_coeffs
-    use chemistry_module, only : nspecies
+    use network, only : nspecies
     implicit none
 
     integer,          intent(in   )        :: np
@@ -188,8 +188,9 @@ contains
 
        eos_state % rho = state(i-1,j-1,URHO)
        eos_state % T   = state(i-1,j-1,UTEMP) ! Initial guess for the EOS
-       eos_state % e   = state(i-1,j-1,UEINT) / state(i,j-1,URHO)
+       eos_state % e   = state(i-1,j-1,UEINT) / state(i-1,j-1,URHO)
        eos_state % massfrac  = state(i-1,j-1,UFS:UFS+nspecies-1) / state(i,j-1,URHO)
+       eos_state % massfrac  = state(i-1,j-1,UFS:UFS+nspecies-1) / state(i-1,j-1,URHO)
 
        call eos_re(eos_state)
        rholl  = eos_state % rho
@@ -286,8 +287,8 @@ contains
        Y_dummy(1,1,1,1:nspecies) = fluid_Y
        T_dummy(1,1,1) = temp_skin(n)
        r_dummy(1,1,1) = fluid_dens
-       ! massfrac(mf_lo(1):mf_hi(1),mf_lo(2):mf_hi(2),mf_lo(3):mf_hi(3),nspec)
-       ! D(D_lo(1):D_hi(1),D_lo(2):D_hi(2),D_lo(3):D_hi(3),nspec)
+       ! massfrac(mf_lo(1):mf_hi(1),mf_lo(2):mf_hi(2),mf_lo(3):mf_hi(3),nspecies)
+       ! D(D_lo(1):D_hi(1),D_lo(2):D_hi(2),D_lo(3):D_hi(3),nspecies)
        ! mu(mu_lo(1):mu_hi(1),mu_lo(2):mu_hi(2),mu_lo(3):mu_hi(3))
        call get_transport_coeffs (lo, hi, &
                                  Y_dummy, lo, hi, &
