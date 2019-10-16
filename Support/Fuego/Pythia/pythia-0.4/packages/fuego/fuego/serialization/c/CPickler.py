@@ -366,8 +366,8 @@ class CPickler(CMill):
                 self._write('double prefactor_units_rev[%d], activation_units_rev[%d];' 
                             % (nReactions,nReactions))
 
-        self._write('std::vector<std::vector<int>> kiv(%d); ' % (nReactions))
-        self._write('std::vector<std::vector<int>> nuv(%d); ' % (nReactions))
+        self._write('std::vector<std::vector<double>> kiv(%d); ' % (nReactions))
+        self._write('std::vector<std::vector<double>> nuv(%d); ' % (nReactions))
 
         self._write()
         self._write('double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
@@ -909,8 +909,8 @@ class CPickler(CMill):
         self._write('extern double *TB[%d];' 
                     % (nReactions))
 
-        self._write('extern std::vector<std::vector<int>> kiv; ')
-        self._write('extern std::vector<std::vector<int>> nuv; ')
+        self._write('extern std::vector<std::vector<double>> kiv; ')
+        self._write('extern std::vector<std::vector<double>> nuv; ')
 
         self._write()
         self._write('extern double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
