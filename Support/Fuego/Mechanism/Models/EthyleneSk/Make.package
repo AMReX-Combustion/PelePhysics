@@ -1,0 +1,10 @@
+CEXE_headers+=chemistry_file.H
+
+CEXE_sources+=EthyleneSk.cpp
+
+LIBRARIES += 
+
+INCLUDE_LOCATIONS += $(CHEM_DIR)
+
+VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
+
