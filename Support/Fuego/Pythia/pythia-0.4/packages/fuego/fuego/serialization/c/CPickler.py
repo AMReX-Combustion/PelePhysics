@@ -1905,7 +1905,13 @@ class CPickler(CMill):
                 aeuc_rev = self._activationEnergyUnits(reaction.units["activation"])
                 self._write("activation_units_rev[%d] = %.17g;" % (id,aeuc_rev / Rc / kelvin))
 
-            dim = self._phaseSpaceUnits(reaction.reactants)
+            if (len(reaction.ford) > 0) :
+                if (reaction.rev):
+                    print '\n\n ***** WARNING: Reac is FORD and REV. Results might be wrong !\n'
+                dim = self._phaseSpaceUnits(reaction.ford)
+            else:
+                dim = self._phaseSpaceUnits(reaction.reactants)
+
             if not thirdBody:
                 uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 3 !PD, !TB
             elif not low:
@@ -6198,7 +6204,10 @@ class CPickler(CMill):
             self._write()
             reaction = mechanism.reaction(id=i)
             self._write(self.line('reaction %d: %s' % (reaction.id, reaction.equation())))
-            self._write("qf[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.reactants)))
+            if (len(reaction.ford) > 0):
+                self._write("qf[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.ford)))
+            else:
+                self._write("qf[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.reactants)))
             if reaction.reversible:
                 self._write("qr[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.products)))
             else:
@@ -9968,7 +9977,7 @@ class CPickler(CMill):
             if (coefficient == 1.0):
                 conc = "sc[%d]" % mechanism.species(symbol).id
             else:
-                conc = "pow(sc[%d], %f)" % (mechanism.species(symbol).id, coefficient)
+                conc = "pow(sc[%d], %f)" % (mechanism.species(symbol).id, float(coefficient))
             phi += [conc]
 
         return "*".join(phi)
@@ -10015,9 +10024,9 @@ class CPickler(CMill):
 
 
     def _phaseSpaceUnits(self, reagents):
-        dim = 0
+        dim = 0.0
         for symbol, coefficient in reagents:
-            dim += coefficient
+            dim += float(coefficient)
 
         return dim
 
