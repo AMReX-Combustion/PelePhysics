@@ -78,11 +78,11 @@ void CKGMS(double *  T, double *  gms);
 void CKAMS(double *  T, double *  ams);
 void CKSMS(double *  T, double *  sms);
 void CKCPBL(double *  T, double *  x, double *  cpbl);
-void CKCPBS(double *  T, double *  y, double *  cpbs);
+AMREX_GPU_HOST_DEVICE void CKCPBS(double *  T, double *  y, double *  cpbs);
 void CKCVBL(double *  T, double *  x, double *  cpbl);
 AMREX_GPU_HOST_DEVICE void CKCVBS(double *  T, double *  y, double *  cpbs);
 void CKHBML(double *  T, double *  x, double *  hbml);
-void CKHBMS(double *  T, double *  y, double *  hbms);
+AMREX_GPU_HOST_DEVICE void CKHBMS(double *  T, double *  y, double *  hbms);
 void CKUBML(double *  T, double *  x, double *  ubml);
 AMREX_GPU_HOST_DEVICE void CKUBMS(double *  T, double *  y, double *  ubms);
 void CKSBML(double *  P, double *  T, double *  x, double *  sbml);
@@ -103,7 +103,9 @@ void CKQXP(double *  P, double *  T, double *  x, double *  qdot);
 void CKQYR(double *  rho, double *  T, double *  y, double *  qdot);
 void CKQXR(double *  rho, double *  T, double *  x, double *  qdot);
 void CKNU(int * kdim, int * nuki);
+#ifndef AMREX_USE_CUDA
 void CKINU(int * i, int * nspec, int * ki, int * nu);
+#endif
 void CKNCF(int * mdim, int * ncf);
 void CKABE(double *  a, double *  b, double *  e );
 void CKEQC(double *  T, double *  C , double *  eqcon );
@@ -126,7 +128,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian(double *  J, double *  sc, double T, int co
 AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T, int HP);
 AMREX_GPU_HOST_DEVICE void dcvpRdT(double *  species, double *  tc);
 AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);
-void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);
+AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);
 void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);
 /*vector version */
 void VCKYTX(int *  np, double *  y, double *  x);
@@ -185,8 +187,8 @@ namespace thermo
     extern double activation_units[177], prefactor_units[177], phase_units[177];
     extern int is_PD[177], troe_len[177], sri_len[177], nTB[177], *TBid[177];
     extern double *TB[177];
-    extern std::vector<std::vector<int>> kiv; 
-    extern std::vector<std::vector<int>> nuv; 
+    extern std::vector<std::vector<double>> kiv; 
+    extern std::vector<std::vector<double>> nuv; 
 
     extern double fwd_A_DEF[177], fwd_beta_DEF[177], fwd_Ea_DEF[177];
     extern double low_A_DEF[177], low_beta_DEF[177], low_Ea_DEF[177];

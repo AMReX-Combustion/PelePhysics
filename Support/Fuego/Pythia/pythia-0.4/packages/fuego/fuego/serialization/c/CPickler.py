@@ -6072,9 +6072,12 @@ class CPickler(CMill):
         self._write('double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('double invT = 1.0 / tc[1];')
         
-        self._write()
-        self._write('double qdot, q_f[%d], q_r[%d];' % (nReactions,nReactions))
-        self._write('comp_qfqr(q_f, q_r, sc, tc, invT);');
+        if (nReactions == 0):
+            self._write()
+        else:
+            self._write()
+            self._write('double qdot, q_f[%d], q_r[%d];' % (nReactions,nReactions))
+            self._write('comp_qfqr(q_f, q_r, sc, tc, invT);');
 
         self._write()
         self._write('for (int i = 0; i < %d; ++i) {' % nSpecies)
@@ -6197,174 +6200,176 @@ class CPickler(CMill):
         self._write('{')
         self._indent()
 
-        nclassd = nReactions - nspecial
-        #nCorr   = n3body + ntroe + nsri + nlindemann
+        if (nReactions > 0):
 
-        for i in range(nReactions):
+            nclassd = nReactions - nspecial
+            #nCorr   = n3body + ntroe + nsri + nlindemann
+
+            for i in range(nReactions):
+                self._write()
+                reaction = mechanism.reaction(id=i)
+                self._write(self.line('reaction %d: %s' % (reaction.id, reaction.equation())))
+                if (len(reaction.ford) > 0):
+                    self._write("qf[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.ford)))
+                else:
+                    self._write("qf[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.reactants)))
+                if reaction.reversible:
+                    self._write("qr[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.products)))
+                else:
+                    self._write("qr[%d] = 0.0;" % (i))
+
             self._write()
-            reaction = mechanism.reaction(id=i)
-            self._write(self.line('reaction %d: %s' % (reaction.id, reaction.equation())))
-            if (len(reaction.ford) > 0):
-                self._write("qf[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.ford)))
-            else:
-                self._write("qf[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.reactants)))
-            if reaction.reversible:
-                self._write("qr[%d] = %s;" % (i, self._sortedPhaseSpace(mechanism, reaction.products)))
-            else:
-                self._write("qr[%d] = 0.0;" % (i))
 
-        self._write()
+            # Mixt concentration for PD & TB
+            self._write(self.line('compute the mixture concentration'))
+            self._write('double mixture = 0.0;')
+            self._write('for (int i = 0; i < %d; ++i) {' % nSpecies)
+            self._indent()
+            self._write('mixture += sc[i];')
+            self._outdent()
+            self._write('}')
+            self._write()
 
-        # Mixt concentration for PD & TB
-        self._write(self.line('compute the mixture concentration'))
-        self._write('double mixture = 0.0;')
-        self._write('for (int i = 0; i < %d; ++i) {' % nSpecies)
-        self._indent()
-        self._write('mixture += sc[i];')
-        self._outdent()
-        self._write('}')
-        self._write()
+            # Kc stuff
+            self._write(self.line('compute the Gibbs free energy'))
+            self._write('double g_RT[%d];' % (nSpecies))
+            self._write('gibbs(g_RT, tc);')
 
-        # Kc stuff
-        self._write(self.line('compute the Gibbs free energy'))
-        self._write('double g_RT[%d];' % (nSpecies))
-        self._write('gibbs(g_RT, tc);')
+            self._write()
 
-        self._write()
+            self._write(self.line('reference concentration: P_atm / (RT) in inverse mol/m^3'))
+            self._write('double refC = %g / %g * invT;' % (atm.value, R.value))
+            self._write('double refCinv = 1 / refC;')
 
-        self._write(self.line('reference concentration: P_atm / (RT) in inverse mol/m^3'))
-        self._write('double refC = %g / %g * invT;' % (atm.value, R.value))
-        self._write('double refCinv = 1 / refC;')
+            self._write()
+            
+            # kfs
+            self._write("/* Evaluate the kfs */")
+            #self._write("double k_f[%d];"% nclassd)
+            #self._write("double Corr[%d];" % nclassd)
+            self._write("double k_f, Corr;")
+            if ntroe > 0:
+                self._write("double redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;")
+            if nsri > 0:
+                self._write("double redP, F, X, F_sri;")
+            self._write()
 
-        self._write()
-        
-        # kfs
-        self._write("/* Evaluate the kfs */")
-        #self._write("double k_f[%d];"% nclassd)
-        #self._write("double Corr[%d];" % nclassd)
-        self._write("double k_f, Corr;")
-        if ntroe > 0:
-            self._write("double redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;")
-        if nsri > 0:
-            self._write("double redP, F, X, F_sri;")
-        self._write()
+            # build reverse reaction map
+            rmap = {}
+            for i, reaction in zip(range(nReactions), mechanism.reaction()):
+                rmap[reaction.orig_id-1] = i
 
-        # build reverse reaction map
-        rmap = {}
-        for i, reaction in zip(range(nReactions), mechanism.reaction()):
-            rmap[reaction.orig_id-1] = i
+            for i in range(nReactions):
+                reaction = mechanism.reaction()[rmap[i]]
+                idx = reaction.id - 1
 
-        for i in range(nReactions):
-            reaction = mechanism.reaction()[rmap[i]]
-            idx = reaction.id - 1
+                KcExpArg = self._sortedKcExpArg(mechanism, reaction)
+                KcConv = self._KcConv(mechanism, reaction)
 
-            KcExpArg = self._sortedKcExpArg(mechanism, reaction)
-            KcConv = self._KcConv(mechanism, reaction)
-
-            A, beta, E = reaction.arrhenius
-            dim = self._phaseSpaceUnits(reaction.reactants)
-            thirdBody = reaction.thirdBody
-            low = reaction.low
-            if not thirdBody:
-                uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 3 !PD, !TB
-            elif not low:
-                uc = self._prefactorUnits(reaction.units["prefactor"], -dim) # Case 2 !PD, TB
-            else:
-                uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 1 PD, TB
-                low_A, low_beta, low_E = low
-                if reaction.troe:
-                    troe = reaction.troe
-                    ntroe = len(troe)
-                    is_troe = True
-                if reaction.sri:
-                    sri = reaction.sri
-                    nsri = len(sri)
-                    is_sri = True
-            aeuc = self._activationEnergyUnits(reaction.units["activation"])
-
-            self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-            self._write("k_f = %.17g * %.17g " % (uc.value,A)) 
-            self._write("           * exp(%.17g * tc[0] - %.17g * %.17g * invT);" % (beta, aeuc / Rc / kelvin, E))
-
-            if not thirdBody:
-                self._write("Corr  = 1.0;")
-                self._write("qf[%d] *= Corr * k_f;" % idx)
-            elif not low:
-                alpha = self._enhancement_d(mechanism, reaction)
-                self._write("Corr  = %s;" %(alpha))
-                self._write("qf[%d] *= Corr * k_f;" % idx)
-            else:
-                alpha = self._enhancement_d(mechanism, reaction)
-                self._write("Corr  = %s;" %(alpha))
-                self._write("redP = Corr / k_f * 1e-%d * %.17g " % (dim*6, low_A)) 
-                self._write("           * exp(%.17g  * tc[0] - %.17g  * %.17g *invT);" % (low_beta, aeuc / Rc / kelvin, low_E))
-                if reaction.troe:
-                    self._write("F = redP / (1.0 + redP);")
-                    self._write("logPred = log10(redP);")
-                    self._write('logFcent = log10(')
-                    if (abs(troe[1]) > 1.e-100):
-                        if(troe[0] < 0):
-                            self._write('    (1.+%.17g)*exp(-tc[1] / %.17g) ' % (-troe[0],troe[1]))
-                        else:
-                            self._write('    (1.-%.17g)*exp(-tc[1] / %.17g) ' % (troe[0],troe[1]))
-                    else:
-                        self._write('     0. ' )
-                    if (abs(troe[2]) > 1.e-100):
-                        self._write('    + %.17g * exp(-tc[1]/%.17g)  ' % (troe[0],troe[2]))
-                    else:
-                        self._write('    + 0. ')
-                    if (ntroe == 4):
-                        if(troe[3] < 0):
-                            self._write('    + exp(%.17g * invT));' % -troe[3])
-                        else:
-                            self._write('    + exp(-%.17g * invT));' % troe[3])
-                    else:
-                        self._write('    + 0.);' )
-                    self._write("troe_c = -.4 - .67 * logFcent;")
-                    self._write("troe_n = .75 - 1.27 * logFcent;")
-                    self._write("troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));")
-                    self._write("F_troe = pow(10., logFcent / (1.0 + troe*troe));")
-                    self._write("Corr = F * F_troe;")
-                    self._write("qf[%d] *= Corr * k_f;" % idx)
-                elif reaction.sri:
-                    self._write("F = redP / (1.0 + redP);")
-                    self._write("logPred = log10(redP);")
-                    self._write("X = 1.0 / (1.0 + logPred*logPred);")
-                    if (sri[1] < 0):
-                        self._write("F_sri = exp(X * log(%.17g * exp(%.17g*invT)" % (sri[0],-sri[1]))
-                    else:
-                        self._write("F_sri = exp(X * log(%.17g * exp(-%.17g*invT)" % (sri[0],sri[1]))
-                    if (sri[2] > 1.e-100):
-                        self._write("   +  exp(tc[0]/%.17g) " % sri[2])
-                    else:
-                        self._write("   +  0. ") 
-                    self._write("   *  (%d > 3 ? %.17g*exp(%.17g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
-                    self._write("Corr = F * F_sri;")
-                    self._write("qf[%d] *= Corr * k_f;" % idx)
-                elif (nlindemann > 0):
-                    self._write("Corr = redP / (1. + redP);")
-                    self._write("qf[%d] *= Corr * k_f;" % idx)
-
-            if reaction.rev:
-                Ar, betar, Er = reaction.rev
-                dim_rev       = self._phaseSpaceUnits(reaction.products)
+                A, beta, E = reaction.arrhenius
+                dim = self._phaseSpaceUnits(reaction.reactants)
+                thirdBody = reaction.thirdBody
+                low = reaction.low
                 if not thirdBody:
-                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
+                    uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 3 !PD, !TB
                 elif not low:
-                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], -dim_rev)
+                    uc = self._prefactorUnits(reaction.units["prefactor"], -dim) # Case 2 !PD, TB
                 else:
-                    print("REV reaction cannot be PD")
-                    sys.exit(1)
-                self._write("k_r = %.17g * %.17g " % (uc_rev.value,Ar)) 
-                self._write("           * exp(%.17g * tc[0] - %.17g * %.17g * invT);" % (betar, aeuc / Rc / kelvin, Er))
-                self._write("qr[%d] *= Corr * k_r;" % idx)
-            else:
-                if KcConv:
-                    self._write("qr[%d] *= Corr * k_f / (exp(%s) * %s);" % (idx,KcExpArg,KcConv))        
-                else:
-                    self._write("qr[%d] *= Corr * k_f / exp(%s);" % (idx,KcExpArg))
+                    uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 1 PD, TB
+                    low_A, low_beta, low_E = low
+                    if reaction.troe:
+                        troe = reaction.troe
+                        ntroe = len(troe)
+                        is_troe = True
+                    if reaction.sri:
+                        sri = reaction.sri
+                        nsri = len(sri)
+                        is_sri = True
+                aeuc = self._activationEnergyUnits(reaction.units["activation"])
 
-        self._write()
+                self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
+                self._write("k_f = %.17g * %.17g " % (uc.value,A)) 
+                self._write("           * exp(%.17g * tc[0] - %.17g * %.17g * invT);" % (beta, aeuc / Rc / kelvin, E))
+
+                if not thirdBody:
+                    self._write("Corr  = 1.0;")
+                    self._write("qf[%d] *= Corr * k_f;" % idx)
+                elif not low:
+                    alpha = self._enhancement_d(mechanism, reaction)
+                    self._write("Corr  = %s;" %(alpha))
+                    self._write("qf[%d] *= Corr * k_f;" % idx)
+                else:
+                    alpha = self._enhancement_d(mechanism, reaction)
+                    self._write("Corr  = %s;" %(alpha))
+                    self._write("redP = Corr / k_f * 1e-%d * %.17g " % (dim*6, low_A)) 
+                    self._write("           * exp(%.17g  * tc[0] - %.17g  * %.17g *invT);" % (low_beta, aeuc / Rc / kelvin, low_E))
+                    if reaction.troe:
+                        self._write("F = redP / (1.0 + redP);")
+                        self._write("logPred = log10(redP);")
+                        self._write('logFcent = log10(')
+                        if (abs(troe[1]) > 1.e-100):
+                            if(troe[0] < 0):
+                                self._write('    (1.+%.17g)*exp(-tc[1] / %.17g) ' % (-troe[0],troe[1]))
+                            else:
+                                self._write('    (1.-%.17g)*exp(-tc[1] / %.17g) ' % (troe[0],troe[1]))
+                        else:
+                            self._write('     0. ' )
+                        if (abs(troe[2]) > 1.e-100):
+                            self._write('    + %.17g * exp(-tc[1]/%.17g)  ' % (troe[0],troe[2]))
+                        else:
+                            self._write('    + 0. ')
+                        if (ntroe == 4):
+                            if(troe[3] < 0):
+                                self._write('    + exp(%.17g * invT));' % -troe[3])
+                            else:
+                                self._write('    + exp(-%.17g * invT));' % troe[3])
+                        else:
+                            self._write('    + 0.);' )
+                        self._write("troe_c = -.4 - .67 * logFcent;")
+                        self._write("troe_n = .75 - 1.27 * logFcent;")
+                        self._write("troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));")
+                        self._write("F_troe = pow(10., logFcent / (1.0 + troe*troe));")
+                        self._write("Corr = F * F_troe;")
+                        self._write("qf[%d] *= Corr * k_f;" % idx)
+                    elif reaction.sri:
+                        self._write("F = redP / (1.0 + redP);")
+                        self._write("logPred = log10(redP);")
+                        self._write("X = 1.0 / (1.0 + logPred*logPred);")
+                        if (sri[1] < 0):
+                            self._write("F_sri = exp(X * log(%.17g * exp(%.17g*invT)" % (sri[0],-sri[1]))
+                        else:
+                            self._write("F_sri = exp(X * log(%.17g * exp(-%.17g*invT)" % (sri[0],sri[1]))
+                        if (sri[2] > 1.e-100):
+                            self._write("   +  exp(tc[0]/%.17g) " % sri[2])
+                        else:
+                            self._write("   +  0. ") 
+                        self._write("   *  (%d > 3 ? %.17g*exp(%.17g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
+                        self._write("Corr = F * F_sri;")
+                        self._write("qf[%d] *= Corr * k_f;" % idx)
+                    elif (nlindemann > 0):
+                        self._write("Corr = redP / (1. + redP);")
+                        self._write("qf[%d] *= Corr * k_f;" % idx)
+
+                if reaction.rev:
+                    Ar, betar, Er = reaction.rev
+                    dim_rev       = self._phaseSpaceUnits(reaction.products)
+                    if not thirdBody:
+                        uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
+                    elif not low:
+                        uc_rev = self._prefactorUnits(reaction.units["prefactor"], -dim_rev)
+                    else:
+                        print("REV reaction cannot be PD")
+                        sys.exit(1)
+                    self._write("k_r = %.17g * %.17g " % (uc_rev.value,Ar)) 
+                    self._write("           * exp(%.17g * tc[0] - %.17g * %.17g * invT);" % (betar, aeuc / Rc / kelvin, Er))
+                    self._write("qr[%d] *= Corr * k_r;" % idx)
+                else:
+                    if KcConv:
+                        self._write("qr[%d] *= Corr * k_f / (exp(%s) * %s);" % (idx,KcExpArg,KcConv))        
+                    else:
+                        self._write("qr[%d] *= Corr * k_f / exp(%s);" % (idx,KcExpArg))
+
+            self._write()
 
 
         #for reaction in mechanism.reaction():
@@ -9285,16 +9290,18 @@ class CPickler(CMill):
         self._write('#endif')
         self._indent()
 
-        self._write()
-        self._write('double q_f[%d], q_r[%d];' % (nReactions,nReactions))
-        self._write('comp_qfqr(q_f, q_r, sc, tc, invT);');
-
-        self._write()
-        self._write('for (int i = 0; i < %d; ++i) {' % nReactions)
-        self._indent()
-        self._write('qdot[i] = q_f[i] - q_r[i];')
-        self._outdent()
-        self._write('}')
+        if (nReactions == 0):
+            self._write()
+        else:
+            self._write()
+            self._write('double q_f[%d], q_r[%d];' % (nReactions,nReactions))
+            self._write('comp_qfqr(q_f, q_r, sc, tc, invT);');
+            self._write()
+            self._write('for (int i = 0; i < %d; ++i) {' % nReactions)
+            self._indent()
+            self._write('qdot[i] = q_f[i] - q_r[i];')
+            self._outdent()
+            self._write('}')
 
         self._write()
         self._write('return;')
@@ -9609,29 +9616,32 @@ class CPickler(CMill):
         self._write('{')
         self._indent()
 
-        self._write('double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
-        self._write('double invT = 1.0 / tc[1];')
-        
-        self._outdent()
-        self._write('#ifndef AMREX_USE_CUDA')
-        self._indent()
-        self._write()
-        self._write('if (T != T_save)')
-        self._write('{')
-        self._indent()
-        self._write('T_save = T;')
-        self._write('comp_k_f(tc,invT,k_f_save);');
-        self._write('comp_Kc(tc,invT,Kc_save);');
-        self._outdent()
-        self._write("}")
-        self._outdent()
-        self._write('#endif')
-        self._indent()
+        if (nReactions > 0):
 
-        self._write()
-        self._write('comp_qfqr(q_f, q_r, sc, tc, invT);');
+            self._write('double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+            self._write('double invT = 1.0 / tc[1];')
+            
+            self._outdent()
+            self._write('#ifndef AMREX_USE_CUDA')
+            self._indent()
+            self._write()
+            self._write('if (T != T_save)')
+            self._write('{')
+            self._indent()
+            self._write('T_save = T;')
+            self._write('comp_k_f(tc,invT,k_f_save);');
+            self._write('comp_Kc(tc,invT,Kc_save);');
+            self._outdent()
+            self._write("}")
+            self._outdent()
+            self._write('#endif')
+            self._indent()
 
-        self._write()
+            self._write()
+            self._write('comp_qfqr(q_f, q_r, sc, tc, invT);');
+
+            self._write()
+
         self._write('return;')
         self._outdent()
 

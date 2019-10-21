@@ -26,16 +26,21 @@ main (int   argc,
 
     BL_PROFILE_VAR("main()", pmain);
 
-    Real timer_tot = amrex::second();
-    Real timer_init = 0.;
-    Real timer_advance = 0.;
-    Real timer_print = 0.;
-    Real timer_print_tmp = 0.;
-
+    const int IOProc = ParallelDescriptor::IOProcessorNumber();
+    //TOTAL TIME
+    Real timer_init = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_init,IOProc);
+    Real timer_tot = 0.;
+    //INITIALIZATIOn
+    Real timer_initializ_stop = 0.;
+    // ADVANCE
+    Real timer_adv_init = 0.;
+    Real timer_adv_stop = 0.;
+    //Print
+    Real timer_print_init = 0.;
+    Real timer_print_stop = 0.;
 
     {
-
-    timer_init = amrex::second();
 
     int max_grid_size = 16;
     std::string probin_file="probin";
@@ -111,22 +116,26 @@ main (int   argc,
         fuel_idx  = H2_ID;
     } else if (fuel_name == "CH4") {
         fuel_idx  = CH4_ID;
-    } else if (fuel_name == "NC12H26") {
-        fuel_idx  = NC12H26_ID;
+    //} else if (fuel_name == "NC12H26") {
+    //    fuel_idx  = NC12H26_ID;
     }
     oxy_idx   = O2_ID;
     bath_idx  = N2_ID;
     extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx,&cvode_iE);
 
+    BL_PROFILE_VAR("reactor_info()", reactInfo);
+
     /* Initialize D/CVODE reactor */
     reactor_info(&cvode_iE, &cvode_ncells);
+
+    BL_PROFILE_VAR_STOP(reactInfo);
 
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 2;
+	npts[i] = 16;
     }
-    npts[1] = 512;
+    npts[1] = 64;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
         amrex::Print() << dt << " seconds";
@@ -161,12 +170,13 @@ main (int   argc,
     MultiFab temperature(ba,dm,1,0);
     MultiFab fctCount(ba,dm,1,0);
 
-    IntVect tilesize(D_DECL(10240,8,32));
+    //IntVect tilesize(D_DECL(10240,8,32));
+
+    BL_PROFILE_VAR("initialize_data()", InitData);
 
     int count_mf = 0;
     /* INITIALIZE DATA */
     for (MFIter mfi(mf,false); mfi.isValid(); ++mfi ){
-        count_mf = count_mf + 1;	
         const Box& box = mfi.tilebox();
         initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
                		BL_TO_FORTRAN_N_3D(mf[mfi],0),
@@ -174,25 +184,48 @@ main (int   argc,
 		        BL_TO_FORTRAN_N_3D(mfE[mfi],0),
 		        BL_TO_FORTRAN_N_3D(rY_source_energy_ext[mfi],0),
 			&(dx[0]), &(plo[0]), &(phi[0]));
-        amrex::Print() << "Treating box: " << count_mf<< "\n";
+	count_mf = count_mf + 1;
     }
 
-    timer_init = amrex::second() - timer_init; 
+    BL_PROFILE_VAR_STOP(InitData);
 
-    timer_print = amrex::second();
+    amrex::Print() << "That many boxes: " << count_mf<< "\n";
+
+    timer_initializ_stop = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_initializ_stop,IOProc);
+
+    //timer_print_init = ParallelDescriptor::second();
+    //ParallelDescriptor::ReduceRealMax(timer_print_init,IOProc);
+
+    BL_PROFILE_VAR("PlotFileFromMF()", PlotFile);
 
     ParmParse ppa("amr");
     ppa.query("plot_file",pltfile);
     std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
     // Specs
-    PlotFileFromMF(mf,outfile);
+    //PlotFileFromMF(mf,outfile);
 
-    timer_print = amrex::second() - timer_print;
+    BL_PROFILE_VAR_STOP(PlotFile);
+
+    //timer_print_stop = ParallelDescriptor::second();
+    //ParallelDescriptor::ReduceRealMax(timer_print_stop,IOProc);
      
     /* EVALUATE */
     amrex::Print() << " \n STARTING THE ADVANCE \n";
 
-    timer_advance = amrex::second();
+    BL_PROFILE_VAR("Malloc()", Allocs);
+    BL_PROFILE_VAR_STOP(Allocs);
+
+    BL_PROFILE_VAR("React()", ReactInLoop);
+    BL_PROFILE_VAR_STOP(ReactInLoop);
+
+    BL_PROFILE_VAR("(un)flatten()", FlatStuff);
+    BL_PROFILE_VAR_STOP(FlatStuff);
+
+    BL_PROFILE_VAR("advance()", Advance);
+
+    timer_adv_init = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_adv_init,IOProc);
 
     for ( MFIter mfi(mf,false); mfi.isValid(); ++mfi )
     {
@@ -229,12 +262,15 @@ main (int   argc,
 	// rhoE/rhoH
         amrex::Real *tmp_vect_energy;
 	amrex::Real *tmp_src_vect_energy;
-
+        
+	BL_PROFILE_VAR_START(Allocs);
         cudaMallocManaged(&tmp_vect, (Ncomp+1)*ncells*sizeof(amrex::Real));
         cudaMallocManaged(&tmp_src_vect, Ncomp*ncells*sizeof(amrex::Real));
         cudaMallocManaged(&tmp_vect_energy, ncells*sizeof(amrex::Real));
         cudaMallocManaged(&tmp_src_vect_energy, ncells*sizeof(amrex::Real));
+	BL_PROFILE_VAR_STOP(Allocs);
 
+        BL_PROFILE_VAR_START(FlatStuff);
         /* Packing of data */
         /* SECOND VERSION */
 	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
@@ -251,18 +287,23 @@ main (int   argc,
                                             tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
             }
         });
+	BL_PROFILE_VAR_STOP(FlatStuff);
         
 
         /* Solve */
+        BL_PROFILE_VAR_START(ReactInLoop);
 	time = 0.0;
 	for (int ii = 0; ii < ndt; ++ii) {
 	    fc_pt = react(tmp_vect, tmp_src_vect,
 	                    tmp_vect_energy, tmp_src_vect_energy,
 	                    &dt_incr, &time,
                             &cvode_iE, &ncells, amrex::Gpu::gpuStream());
+	    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 	    dt_incr =  dt/ndt;
         }
+        BL_PROFILE_VAR_STOP(ReactInLoop);
 
+        BL_PROFILE_VAR_START(FlatStuff);
         /* Unpacking of data */
 	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
 	[=] AMREX_GPU_DEVICE () noexcept {
@@ -278,6 +319,7 @@ main (int   argc,
                                             tmp_vect, tmp_vect_energy);
             }
         });
+        BL_PROFILE_VAR_STOP(FlatStuff);
 
         cudaFree(tmp_vect);
         cudaFree(tmp_src_vect);
@@ -288,30 +330,38 @@ main (int   argc,
 
     }
 
-    timer_advance = amrex::second() - timer_advance;
+    BL_PROFILE_VAR_STOP(Advance);
+
+    timer_adv_stop = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_adv_stop,IOProc);
 
 
-    timer_print_tmp = amrex::second();
+    timer_print_init = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_print_init,IOProc);
+
+    BL_PROFILE_VAR_START(PlotFile);
 
     outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
     // Specs
     PlotFileFromMF(mf,outfile);
 
-    timer_print = amrex::second() - timer_print_tmp + timer_print;
+    BL_PROFILE_VAR_STOP(PlotFile);
+
+    timer_print_stop = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_print_stop,IOProc);
     
     extern_close();
 
     }
 
-    timer_tot = amrex::second() - timer_tot;
+    timer_tot = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_tot,IOProc);
 
-    ParallelDescriptor::ReduceRealMax({timer_tot, timer_init, timer_advance, timer_print},
-                                     ParallelDescriptor::IOProcessorNumber());
 
-    amrex::Print() << "Run Time total        = " << timer_tot     << "\n"
-                   << "Run Time init         = " << timer_init    << "\n"
-                   << "Run Time advance      = " << timer_advance << "\n"
-                   << "Run Time print plt    = " << timer_print << "\n";
+    amrex::Print() << "Run Time total        = " << timer_tot            - timer_init    << "\n"
+                   << "Run Time init         = " << timer_initializ_stop - timer_init    << "\n"
+                   << "Run Time advance      = " << timer_adv_stop       - timer_adv_init << "\n"
+                   << "Run Time print plt    = " << timer_print_stop     - timer_print_init << "\n";
 
     BL_PROFILE_VAR_STOP(pmain);
 

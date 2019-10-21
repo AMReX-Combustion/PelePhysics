@@ -11,8 +11,8 @@ namespace thermo
     double activation_units[0], prefactor_units[0], phase_units[0];
     int is_PD[0], troe_len[0], sri_len[0], nTB[0], *TBid[0];
     double *TB[0];
-    std::vector<std::vector<int>> kiv(0); 
-    std::vector<std::vector<int>> nuv(0); 
+    std::vector<std::vector<double>> kiv(0); 
+    std::vector<std::vector<double>> nuv(0); 
 
     double fwd_A_DEF[0], fwd_beta_DEF[0], fwd_Ea_DEF[0];
     double low_A_DEF[0], low_beta_DEF[0], low_Ea_DEF[0];
@@ -1766,8 +1766,6 @@ AMREX_GPU_HOST_DEVICE inline void  productionRate(double * wdot, double * sc, do
     double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     double invT = 1.0 / tc[1];
 
-    double qdot, q_f[0], q_r[0];
-    comp_qfqr(q_f, q_r, sc, tc, invT);
 
     for (int i = 0; i < 3; ++i) {
         wdot[i] = 0.0;
@@ -1778,25 +1776,6 @@ AMREX_GPU_HOST_DEVICE inline void  productionRate(double * wdot, double * sc, do
 
 AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * sc, double * tc, double invT)
 {
-
-    /*compute the mixture concentration */
-    double mixture = 0.0;
-    for (int i = 0; i < 3; ++i) {
-        mixture += sc[i];
-    }
-
-    /*compute the Gibbs free energy */
-    double g_RT[3];
-    gibbs(g_RT, tc);
-
-    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    double refC = 101325 / 8.31451 * invT;
-    double refCinv = 1 / refC;
-
-    /* Evaluate the kfs */
-    double k_f, Corr;
-
-
 
     return;
 }
@@ -1993,6 +1972,7 @@ void vcomp_wdot(int npt, double *  wdot, double *  mixture, double *  sc,
 #endif
     for (int i=0; i<npt; i++) {
         double qdot, q_f, q_r, phi_f, phi_r, k_f, k_r, Kc;
+        double alpha;
     }
 }
 #endif
@@ -2577,12 +2557,6 @@ AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  sc, double T)
     }
 #endif
 
-    double q_f[0], q_r[0];
-    comp_qfqr(q_f, q_r, sc, tc, invT);
-
-    for (int i = 0; i < 0; ++i) {
-        qdot[i] = q_f[i] - q_r[i];
-    }
 
     return;
 }
@@ -2591,20 +2565,6 @@ AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  sc, double T)
 /*compute the progress rate for each reaction */
 AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  sc, double T)
 {
-    double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
-    double invT = 1.0 / tc[1];
-#ifndef AMREX_USE_CUDA
-
-    if (T != T_save)
-    {
-        T_save = T;
-        comp_k_f(tc,invT,k_f_save);
-        comp_Kc(tc,invT,Kc_save);
-    }
-#endif
-
-    comp_qfqr(q_f, q_r, sc, tc, invT);
-
     return;
 }
 

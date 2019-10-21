@@ -34,7 +34,7 @@ int reactor_info(const int* cvode_iE,const int* Ncells){
             if (*cvode_iE == 1) {
                 HP = 0;
             } else {
-	        amrex::Abort("\n--> Only type of reactor implemented is UV ...\n");
+                HP = 1;
             }
             /* Precond data */ 
             SPARSITY_INFO_PRECOND(&nJdata,&HP);
@@ -76,6 +76,9 @@ int react(realtype *rY_in, realtype *rY_src_in,
         cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
         cudaError_t cudaStat1            = cudaSuccess;
 
+        workspaceInBytes = 0;
+        internalDataInBytes = 0;
+
 	NEQ = NUM_SPECIES;
 
 	/* ParmParse from the inputs file */ 
@@ -89,7 +92,9 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
         /* User data */
         UserData user_data;
+	BL_PROFILE_VAR("AllocsInCVODE", AllocsCVODE);
         cudaMallocManaged(&user_data, sizeof(struct CVodeUserData));
+	BL_PROFILE_VAR_STOP(AllocsCVODE);
         user_data->ncells_d[0]      = NCELLS;
         user_data->neqs_per_cell[0] = NEQ;
         user_data->flagP            = iE_Creact; 
@@ -105,17 +110,24 @@ int react(realtype *rY_in, realtype *rY_src_in,
                 HP = 1;
             }
             // Find sparsity pattern to fill structure of sparse matrix
+	    BL_PROFILE_VAR("SparsityFuegoStuff", SparsityStuff);
             SPARSITY_INFO_PRECOND(&(user_data->NNZ),&HP);
+	    BL_PROFILE_VAR_STOP(SparsityStuff);
 
+	    BL_PROFILE_VAR_START(AllocsCVODE);
             cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
             cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
             cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
             cudaMallocManaged(&(user_data->csr_val_d), user_data->NNZ * NCELLS * sizeof(double));
+	    BL_PROFILE_VAR_STOP(AllocsCVODE);
 
+	    BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_PREPROC_PRECOND(user_data->csr_row_count_d, user_data->csr_col_index_d, &HP);
+	    BL_PROFILE_VAR_STOP(SparsityStuff);
 
             // Create Sparse batch QR solver
             // qr info and matrix descriptor
+	    BL_PROFILE_VAR("CuSolverInit", CuSolverInit);
             cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
@@ -141,7 +153,14 @@ int react(realtype *rY_in, realtype *rY_src_in,
                                                       user_data->csr_col_index_d,
                                                       user_data->info);
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-
+           
+	    /*
+            size_t free_mem = 0;
+            size_t total_mem = 0;
+            cudaStat1 = cudaMemGetInfo( &free_mem, &total_mem );
+            assert( cudaSuccess == cudaStat1 );
+            std::cout<<"(AFTER SA) Free: "<< free_mem<< " Tot: "<<total_mem<<std::endl;
+	    */
 
             // allocate working space 
             cusolver_status = cusolverSpDcsrqrBufferInfoBatched(user_data->cusolverHandle,
@@ -157,9 +176,21 @@ int react(realtype *rY_in, realtype *rY_src_in,
                                                       &internalDataInBytes,
                                                       &workspaceInBytes);
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+	    BL_PROFILE_VAR_STOP(CuSolverInit);
             
+	    BL_PROFILE_VAR_START(AllocsCVODE);
             cudaStat1 = cudaMalloc((void**)&(user_data->buffer_qr), workspaceInBytes);
             assert(cudaStat1 == cudaSuccess);
+	    BL_PROFILE_VAR_STOP(AllocsCVODE);
+
+	    /*
+            free_mem = 0;
+            total_mem = 0;
+            cudaStat1 = cudaMemGetInfo( &free_mem, &total_mem );
+            assert( cudaSuccess == cudaStat1 );
+            std::cout<<"(AFTER AWS) Free: "<< free_mem<< " Tot: "<<total_mem<<std::endl;
+            std::cout<<" WORKSPACE "<< workspaceInBytes<<" INTERNAL DATA "<< internalDataInBytes<<"\n"<<std::endl;
+	    */
         }
 
 	/* Definition of main vector */
@@ -176,14 +207,17 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
         flag = CVodeSetUserData(cvode_mem, static_cast<void*>(user_data));
 
+	BL_PROFILE_VAR_START(AllocsCVODE);
 	/* Define vectors to be used later in creact */
 	cudaMalloc(&(user_data->rhoe_init), NCELLS*sizeof(double));
 	cudaMalloc(&(user_data->rhoesrc_ext), NCELLS*sizeof(double));
 	cudaMalloc(&(user_data->rYsrc), (NCELLS*NEQ)*sizeof(double));
+	BL_PROFILE_VAR_STOP(AllocsCVODE);
 
 	/* Get Device MemCpy of in arrays */
 	/* Get Device pointer of solution vector */
 	realtype *yvec_d      = N_VGetDeviceArrayPointer_Cuda(y);
+	BL_PROFILE_VAR("AsyncCpy", AsyncCpy);
 	// rhoY,T
 	cudaMemcpyAsync(yvec_d, rY_in, sizeof(realtype) * ((NEQ+1)*NCELLS), cudaMemcpyHostToDevice,stream);
 	// rhoY_src_ext
@@ -191,6 +225,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	// rhoE/rhoH
 	cudaMemcpyAsync(user_data->rhoe_init, rX_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice, stream);
 	cudaMemcpyAsync(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice,stream);
+	BL_PROFILE_VAR_STOP(AsyncCpy)
 
 	realtype time_init, time_out ;
         time_init = *time;
@@ -243,20 +278,32 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	if(check_flag(&flag, "CVodeSetMaxNumSteps", 1)) return(1);
 
         /* Set the max order */
-        flag = CVodeSetMaxOrd(cvode_mem, 5);
+        flag = CVodeSetMaxOrd(cvode_mem, 2);
         if(check_flag(&flag, "CVodeSetMaxOrd", 1)) return(1);
 
 	/* Call CVODE: ReInit for convergence */
         //CVodeReInit(cvode_mem, time_init, y);
 
+	BL_PROFILE_VAR("AroundCVODE", AroundCVODE);
 	flag = CVode(cvode_mem, time_out, y, &time_init, CV_NORMAL);
 	if (check_flag(&flag, "CVode", 1)) return(1);
+	BL_PROFILE_VAR_STOP(AroundCVODE);
+
+        /* ONLY FOR PP */
+#ifdef MOD_REACTOR
+	/* If reactor mode is activated, update time */
+        *dt_react = time_init - *time;
+        *time = time_init;
+#endif
 
 	/* Pack data to return in main routine external */
+	BL_PROFILE_VAR_START(AsyncCpy)
 	cudaMemcpyAsync(rY_in, yvec_d, ((NEQ+1)*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost,stream);
+
 	for  (int i = 0; i < NCELLS; i++) {
             rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
 	}
+	BL_PROFILE_VAR_STOP(AsyncCpy)
 
         long int nfe;
 	flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
@@ -264,6 +311,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	SUNLinSolFree(LS);
 	N_VDestroy(y);          /* Free the y vector */
 	CVodeFree(&cvode_mem);
+
 	cudaFree(user_data->rhoe_init);
         cudaFree(user_data->rhoesrc_ext);
 	cudaFree(user_data->rYsrc);
@@ -271,7 +319,15 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	cudaFree(user_data->csr_col_index_d);
 	cudaFree(user_data->csr_jac_d);
 	cudaFree(user_data->csr_val_d);
+
+        cusolver_status = cusolverSpDestroy(user_data->cusolverHandle);
+        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+
+        cusolver_status = cusolverSpDestroyCsrqrInfo(user_data->info);
+        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+ 
 	cudaFree(user_data->buffer_qr);
+
 	cudaFree(user_data);
 
 	N_VDestroy(atol);          /* Free the atol vector */
@@ -287,6 +343,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
 /* RHS routine used in CVODE */
 static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, 
 		void *user_data){
+
+	BL_PROFILE_VAR("fKernelSpec()", fKernelSpec);
+
+        cudaError_t cuda_status = cudaSuccess;
 
 	/* Get Device pointers for Kernel call */
 	realtype *yvec_d      = N_VGetDeviceArrayPointer_Cuda(y_in);
@@ -307,8 +367,11 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 				    udata->rhoesrc_ext, udata->rYsrc);    
 		}
         }); 
-	//cuda_status = cudaDeviceSynchronize();
-	//assert(cuda_status == cudaSuccess);
+
+        cuda_status = cudaStreamSynchronize(udata->stream);  
+        assert(cuda_status == cudaSuccess);
+
+	BL_PROFILE_VAR_STOP(fKernelSpec);
 	
 	return(0);
 }
@@ -351,12 +414,19 @@ fKernelSpec(int icell, void *user_data,
 
   /* temp */
   temp_pt = yvec_d[offset + NUM_SPECIES];
-  eos.eos_EY2T(massfrac.arr, nrg_pt, temp_pt);
 
   /* Additional var needed */
-  /* TODO HP */
-  eos.eos_T2EI(temp_pt, ei_pt.arr);
-  eos.eos_TY2Cv(temp_pt, massfrac.arr, &Cv_pt);
+  if (udata->flagP == 1){
+      /* UV REACTOR */
+      eos.eos_EY2T(massfrac.arr, nrg_pt, temp_pt);
+      eos.eos_T2EI(temp_pt, ei_pt.arr);
+      eos.eos_TY2Cv(temp_pt, massfrac.arr, &Cv_pt);
+  }else {
+      /* HP REACTOR */
+      eos.eos_HY2T(massfrac.arr, nrg_pt, temp_pt);
+      eos.eos_TY2Cp(temp_pt, massfrac.arr, &Cv_pt);
+      eos.eos_T2HI(temp_pt, ei_pt.arr);
+  }
 
   eos.eos_RTY2W(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
 
@@ -373,9 +443,14 @@ fKernelSpec(int icell, void *user_data,
 static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
                booleantype *jcurPtr, realtype gamma, void *user_data) {
 
+	BL_PROFILE_VAR("Precond()", Precond);
+
         cudaError_t cuda_status = cudaSuccess;
         size_t workspaceInBytes, internalDataInBytes;
         cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
+
+        workspaceInBytes = 0;
+        internalDataInBytes = 0;
 
         /* Get Device pointers for Kernel call */
         realtype *u_d      = N_VGetDeviceArrayPointer_Cuda(u);
@@ -385,6 +460,7 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
         UserData udata = static_cast<CVodeUserData*>(user_data);
         udata->gamma_d = gamma;
 
+	BL_PROFILE_VAR("fKernelComputeAJ()", fKernelComputeAJ);
         if (jok) {
 	    /* GPU tests */
             const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
@@ -399,7 +475,6 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
             assert(cuda_status == cudaSuccess);
             *jcurPtr = SUNFALSE;
         } else {
-            //printf(" jok is NOT OK \n");
             const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
 	    amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
 	    [=] AMREX_GPU_DEVICE () noexcept {
@@ -413,7 +488,9 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
             assert(cuda_status == cudaSuccess);
             *jcurPtr = SUNTRUE;
         }
+	BL_PROFILE_VAR_STOP(fKernelComputeAJ);
 
+	BL_PROFILE_VAR("InfoBatched(inPrecond)", InfoBatched);
         cusolver_status = cusolverSpDcsrqrBufferInfoBatched(udata->cusolverHandle,udata->neqs_per_cell[0]+1,udata->neqs_per_cell[0]+1, 
                                 (udata->NNZ),
                                 udata->descrA,
@@ -427,6 +504,13 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 
         assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
+        cuda_status = cudaDeviceSynchronize();  
+        assert(cuda_status == cudaSuccess);
+
+	BL_PROFILE_VAR_STOP(InfoBatched);
+
+	BL_PROFILE_VAR_STOP(Precond);
+
 	return(0);
 }
 
@@ -435,15 +519,12 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                   realtype gamma, realtype delta, int lr, void *user_data)
 {
+	BL_PROFILE_VAR("Psolve()", cusolverPsolve);
 
         cudaError_t cuda_status = cudaSuccess;
         cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
 
         UserData udata = static_cast<CVodeUserData*>(user_data);
-
-        /* Get Device pointers for Kernel call */
-        realtype *u_d      = N_VGetDeviceArrayPointer_Cuda(u);
-        realtype *udot_d   = N_VGetDeviceArrayPointer_Cuda(fu);
 
         realtype *z_d      = N_VGetDeviceArrayPointer_Cuda(z);
         realtype *r_d      = N_VGetDeviceArrayPointer_Cuda(r);
@@ -460,13 +541,15 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                                udata->info,
                                udata->buffer_qr);
 
+        cuda_status = cudaDeviceSynchronize();  
+        assert(cuda_status == cudaSuccess);
+
+	BL_PROFILE_VAR_STOP(cusolverPsolve);
+
 
         /* Checks */
         N_VCopyFromDevice_Cuda(z);
         N_VCopyFromDevice_Cuda(r);
-
-        realtype *z_h      = N_VGetHostArrayPointer_Cuda(z);
-        realtype *r_h      = N_VGetHostArrayPointer_Cuda(r);
 
         //if (udata->iverbose > 4) {
         //    for(int batchId = 0 ; batchId < udata->ncells_d[0]; batchId++){
@@ -512,7 +595,7 @@ fKernelComputeAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, do
   EOS eos;
 
   amrex::Real mw[NUM_SPECIES];
-  amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac;
+  amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac, activity;
   amrex::GpuArray<amrex::Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
   amrex::Real rho_pt, temp_pt;
 
@@ -540,15 +623,17 @@ fKernelComputeAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, do
   /* temp */
   temp_pt = u_curr[NUM_SPECIES];
 
+  /* Activities */
+  eos.eos_RTY2C(rho_pt, temp_pt, massfrac.arr, activity.arr);
+
   /* Additional var needed */
-  /* TODO HP */
   int consP;
   if (udata->flagP == 1){
       consP = 0 ;
   } else {
       consP = 1;
   }
-  eos.eos_RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP);
+  DWDOT_PRECOND(Jmat_pt.arr, activity.arr, &temp_pt, &consP);
 
   /* renorm the DenseMat */
   for (int i = 0; i < udata->neqs_per_cell[0]; i++){
