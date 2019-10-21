@@ -196,8 +196,8 @@ namespace thermo
     extern double activation_units[325], prefactor_units[325], phase_units[325];
     extern int is_PD[325], troe_len[325], sri_len[325], nTB[325], *TBid[325];
     extern double *TB[325];
-    extern std::vector<std::vector<int>> kiv; 
-    extern std::vector<std::vector<int>> nuv; 
+    extern std::vector<std::vector<double>> kiv; 
+    extern std::vector<std::vector<double>> nuv; 
 
     extern double fwd_A_DEF[325], fwd_beta_DEF[325], fwd_Ea_DEF[325];
     extern double low_A_DEF[325], low_beta_DEF[325], low_Ea_DEF[325];
