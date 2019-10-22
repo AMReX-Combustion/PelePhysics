@@ -6289,7 +6289,7 @@ class CPickler(CMill):
 
                 self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
                 self._write("k_f = %.17g * %.17g " % (uc.value,A)) 
-                self._write("           * exp(%.17g * tc[0] - %.17g * %.17g * invT);" % (beta, aeuc / Rc / kelvin, E))
+                self._write("           * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);" % (beta, aeuc / Rc / kelvin, E))
 
                 if not thirdBody:
                     self._write("Corr  = 1.0;")
@@ -6302,7 +6302,7 @@ class CPickler(CMill):
                     alpha = self._enhancement_d(mechanism, reaction)
                     self._write("Corr  = %s;" %(alpha))
                     self._write("redP = Corr / k_f * 1e-%d * %.17g " % (dim*6, low_A)) 
-                    self._write("           * exp(%.17g  * tc[0] - %.17g  * %.17g *invT);" % (low_beta, aeuc / Rc / kelvin, low_E))
+                    self._write("           * exp(%.17g  * tc[0] - %.17g  * (%.17g) *invT);" % (low_beta, aeuc / Rc / kelvin, low_E))
                     if reaction.troe:
                         self._write("F = redP / (1.0 + redP);")
                         self._write("logPred = log10(redP);")
@@ -7587,20 +7587,20 @@ class CPickler(CMill):
         self._write("phi_f = %s;" % self._sortedPhaseSpace(mechanism, sorted_reactants))
         #
         self._write("k_f = %.17g * %.17g" % (uc.value,A))
-        self._write("            * exp(%.17g * tc[0] - %.17g * %.17g * invT);"
+        self._write("            * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
                     %(beta,aeuc / Rc / kelvin,E))
         #
-        self._write("dlnkfdT = %.17g * invT + %.17g *  %.17g  * invT2;"
+        self._write("dlnkfdT = %.17g * invT + %.17g *  (%.17g)  * invT2;"
                     %(beta,aeuc / Rc / kelvin,E))
 
         if isPD:
             low_A, low_beta, low_E = reaction.low
             self._write('/* pressure-fall-off */')
-            self._write("k_0 = %.17g * exp(%.17g * tc[0] - %.17g * %.17g * invT);"
+            self._write("k_0 = %.17g * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
                         %(low_A,low_beta,aeuc / Rc / kelvin,low_E))
             self._write('Pr = 1e-%d * alpha / k_f * k_0;' % (dim*6))
             self._write('fPr = Pr / (1.0+Pr);')
-            self._write("dlnk0dT = %.17g * invT + %.17g * %.17g * invT2;"
+            self._write("dlnk0dT = %.17g * invT + %.17g * (%.17g) * invT2;"
                         %(low_beta,aeuc / Rc / kelvin,low_E))
             self._write('dlogPrdT = log10e*(dlnk0dT - dlnkfdT);')
             self._write('dlogfPrdT = dlogPrdT / (1.0+Pr);')
@@ -7847,6 +7847,8 @@ class CPickler(CMill):
                 dqdc_s = dqdc_simple_precond(dqdc_s,k)
                 if dqdc_s:
                     self._write('dqdc[%d] = %s;' % (k,dqdc_s))
+                else:
+                    self._write('dqdc[%d] = 0.0;' % k)
 
             self._write('for (int k=0; k<%d; k++) {' % nSpecies)
             self._indent()
@@ -8150,7 +8152,7 @@ class CPickler(CMill):
         self._write("phi_f = %s;" % self._sortedPhaseSpace(mechanism, sorted_reactants))
         #
         self._write("k_f = %.17g * %.17g" % (uc.value,A))
-        self._write("            * exp(%.17g * tc[0] - %.17g * %.17g * invT);"
+        self._write("            * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
                     %(beta,aeuc / Rc / kelvin,E))
         #
         self._write("dlnkfdT = %.17g * invT + %.17g *  %.17g  * invT2;"
@@ -8159,11 +8161,11 @@ class CPickler(CMill):
         if isPD:
             low_A, low_beta, low_E = reaction.low
             self._write('/* pressure-fall-off */')
-            self._write("k_0 = %.17g * exp(%.17g * tc[0] - %.17g * %.17g * invT);"
+            self._write("k_0 = %.17g * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
                         %(low_A,low_beta,aeuc / Rc / kelvin,low_E))
             self._write('Pr = 1e-%d * alpha / k_f * k_0;' % (dim*6))
             self._write('fPr = Pr / (1.0+Pr);')
-            self._write("dlnk0dT = %.17g * invT + %.17g * %.17g * invT2;"
+            self._write("dlnk0dT = %.17g * invT + %.17g * (%.17g) * invT2;"
                         %(low_beta,aeuc / Rc / kelvin,low_E))
             self._write('dlogPrdT = log10e*(dlnk0dT - dlnkfdT);')
             self._write('dlogfPrdT = dlogPrdT / (1.0+Pr);')
