@@ -10,6 +10,7 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
     LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nvecopenmp
   endif
   ifeq ($(USE_CUDA_CVODE),TRUE)
+    DEFINES  += -DUSE_CUDA_CVODE
     LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nveccuda
     LIBRARIES += -lcusolver -lcusparse
   endif
