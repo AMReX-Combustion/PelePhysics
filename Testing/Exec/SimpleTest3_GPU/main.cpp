@@ -24,7 +24,7 @@ void ForMarc (Box const& box, int nc, L f) noexcept
     ec.numThreads.z = 1;
     amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
     [=] AMREX_GPU_DEVICE () noexcept {
-      for (int icell = blockIdx.x, stride = blockDim.x; icell < ncells; icell += stride)
+      for (int icell = blockIdx.x, stride = gridDim.x; icell < ncells; icell += stride)
       {
         int k =  icell /   (len.x*len.y);
         int j = (icell - k*(len.x*len.y)) /   len.x;
