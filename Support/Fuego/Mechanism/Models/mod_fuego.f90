@@ -322,6 +322,11 @@ module fuego_chemistry
             integer, intent(inout) :: rmap(*)
         end subroutine
 
+        subroutine get_imw(imw) bind(c,name='get_imw')
+            use amrex_fort_module, only : amrex_real
+            real(amrex_real), intent(inout) :: imw(*)
+        end subroutine
+
     end interface
 
 end module fuego_chemistry
