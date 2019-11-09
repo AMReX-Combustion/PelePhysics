@@ -9989,7 +9989,7 @@ class CPickler(CMill):
         phi = []
 
         for symbol, coefficient in sorted(reagents,key=lambda x:mechanism.species(x[0]).id):
-            if (coefficient == 1.0):
+            if (float(coefficient) == 1.0):
                 conc = "sc[%d]" % mechanism.species(symbol).id
             else:
                 conc = "pow(sc[%d], %f)" % (mechanism.species(symbol).id, float(coefficient))
