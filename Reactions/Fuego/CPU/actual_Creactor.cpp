@@ -1197,6 +1197,7 @@ UserData AllocUserData(int iE, int num_cells)
           data_wk->Symbolic[i] = klu_analyze (NUM_SPECIES+1, data_wk->colPtrs[i], data_wk->rowVals[i], &(data_wk->Common[i])) ; 
       }
   }  else if (data_wk->iDense_Creact == -5) {
+      /* Debug mode, makes no sense to call with OMP/MPI activated */
       int counter;
 
       /* CHEMISTRY JAC */
@@ -1236,11 +1237,11 @@ UserData AllocUserData(int iE, int num_cells)
       std::cout << " There was " << counter << " non zero elems (compare to the "<<data_wk->NNZ<< " we need)" << std::endl;
 
       /* SYST JAC */
-      //SPARSITY_INFO_SYST(&(data_wk->NNZ),&HP);
-      //amrex::Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
-      //PS = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
-      //rowCount = (int*) SUNSparseMatrix_IndexPointers(PS); 
-      //colIdx   = (int*) SUNSparseMatrix_IndexValues(PS);
+      SPARSITY_INFO_SYST(&(data_wk->NNZ),&HP);
+      amrex::Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+      PS = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
+      rowCount = (int*) SUNSparseMatrix_IndexPointers(PS); 
+      colIdx   = (int*) SUNSparseMatrix_IndexValues(PS);
       SPARSITY_PREPROC_SYST_CSR(colIdx,rowCount,&HP);
       /* CHEMISTRY JAC */
       std::cout <<" " << std::endl;
