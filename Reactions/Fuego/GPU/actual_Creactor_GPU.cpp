@@ -37,7 +37,7 @@ int reactor_info(const int* cvode_iE,const int* Ncells){
                 HP = 1;
             }
             /* Precond data */ 
-            SPARSITY_INFO_PRECOND(&nJdata,&HP);
+            SPARSITY_INFO_SYST_SIMPLIFIED(&nJdata,&HP);
             printf("--> SPARSE Preconditioner -- non zero entries %d represents %f %% fill pattern.\n", nJdata, nJdata/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0);
         } else if ((ii == 99) && (mm == 0 )) {
             printf("\n--> Using an Iterative Solver without preconditionning \n");
@@ -111,7 +111,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
             }
             // Find sparsity pattern to fill structure of sparse matrix
 	    BL_PROFILE_VAR("SparsityFuegoStuff", SparsityStuff);
-            SPARSITY_INFO_PRECOND(&(user_data->NNZ),&HP);
+            SPARSITY_INFO_SYST_SIMPLIFIED(&(user_data->NNZ),&HP);
 	    BL_PROFILE_VAR_STOP(SparsityStuff);
 
 	    BL_PROFILE_VAR_START(AllocsCVODE);
@@ -122,7 +122,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    BL_PROFILE_VAR_STOP(AllocsCVODE);
 
 	    BL_PROFILE_VAR_START(SparsityStuff);
-            SPARSITY_PREPROC_PRECOND(user_data->csr_row_count_d, user_data->csr_col_index_d, &HP);
+            SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP);
 	    BL_PROFILE_VAR_STOP(SparsityStuff);
 
             // Create Sparse batch QR solver
@@ -633,7 +633,7 @@ fKernelComputeAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, do
   } else {
       consP = 1;
   }
-  DWDOT_PRECOND(Jmat_pt.arr, activity.arr, &temp_pt, &consP);
+  DWDOT_SIMPLIFIED(Jmat_pt.arr, activity.arr, &temp_pt, &consP);
 
   /* renorm the DenseMat */
   for (int i = 0; i < udata->neqs_per_cell[0]; i++){

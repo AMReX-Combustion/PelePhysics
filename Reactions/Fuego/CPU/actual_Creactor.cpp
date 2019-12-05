@@ -748,7 +748,7 @@ int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
                 } else {
                     consP = 1;
                 }
-                DWDOT_PRECOND(data_wk->JSPSmat[tid], activity, &temp, &consP);
+                DWDOT_SIMPLIFIED(data_wk->JSPSmat[tid], activity, &temp, &consP);
 
                 for (int i = 0; i < NUM_SPECIES; i++) {
                     for (int k = 0; k < NUM_SPECIES; k++) {
@@ -864,7 +864,7 @@ int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
       } else {
           consP = 1;
       }
-      DWDOT_PRECOND(Jmat, activity, &temp, &consP);
+      DWDOT_SIMPLIFIED(Jmat, activity, &temp, &consP);
 
       /* Compute Jacobian.  Load into P. */
       denseScale(0.0, Jbd[0][0], NUM_SPECIES+1, NUM_SPECIES+1);
@@ -1161,7 +1161,7 @@ UserData AllocUserData(int iE, int num_cells)
       data_wk->colPtrs[0] = (int*) SUNSparseMatrix_IndexPointers((data_wk->PS)[0]); 
       data_wk->rowVals[0] = (int*) SUNSparseMatrix_IndexValues((data_wk->PS)[0]);
       data_wk->Jdata[0] = SUNSparseMatrix_Data((data_wk->PS)[0]);
-      SPARSITY_PREPROC(data_wk->rowVals[0],data_wk->colPtrs[0],&HP,data_wk->ncells);
+      SPARSITY_PREPROC_CSC(data_wk->rowVals[0],data_wk->colPtrs[0],&HP,data_wk->ncells);
 
   } else if (data_wk->iDense_Creact == 99) {
       /* KLU internal storage */
@@ -1171,7 +1171,7 @@ UserData AllocUserData(int iE, int num_cells)
       /* Sparse Matrices for It Sparse KLU block-solve */
       data_wk->PS = new SUNMatrix[data_wk->ncells];
       /* Nb of non zero elements*/
-      SPARSITY_INFO_PRECOND(&(data_wk->NNZ),&HP);
+      SPARSITY_INFO_SYST_SIMPLIFIED(&(data_wk->NNZ),&HP);
 #ifdef _OPENMP
       if ((data_wk->iverbose > 0) && (omp_thread == 0) && (data_wk->iJac_Creact != 0)) {
 #else
@@ -1188,7 +1188,7 @@ UserData AllocUserData(int iE, int num_cells)
           data_wk->rowVals[i] = (int*) SUNSparseMatrix_IndexValues((data_wk->PS)[i]);
           data_wk->Jdata[i]   = SUNSparseMatrix_Data((data_wk->PS)[i]);
 	  /* indx not used YET */
-          SPARSITY_PREPROC_PRECOND(data_wk->rowVals[i],data_wk->colPtrs[i],data_wk->indx,&HP);
+          SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(data_wk->rowVals[i],data_wk->colPtrs[i],data_wk->indx,&HP);
           data_wk->JSPSmat[i] = new realtype[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
           klu_defaults (&(data_wk->Common[i]));
           //data_wk->Common.btf = 0;
@@ -1196,6 +1196,80 @@ UserData AllocUserData(int iE, int num_cells)
           //data_wk->Common.ordering = 1;
           data_wk->Symbolic[i] = klu_analyze (NUM_SPECIES+1, data_wk->colPtrs[i], data_wk->rowVals[i], &(data_wk->Common[i])) ; 
       }
+  }  else if (data_wk->iDense_Creact == -5) {
+      int counter;
+
+      /* CHEMISTRY JAC */
+      SPARSITY_INFO(&(data_wk->NNZ),&HP,1);
+      amrex::Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+      SUNMatrix PS;
+      PS = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
+      int *colIdx, *rowCount;
+      rowCount = (int*) SUNSparseMatrix_IndexPointers(PS); 
+      colIdx   = (int*) SUNSparseMatrix_IndexValues(PS);
+      SPARSITY_PREPROC_CSR(colIdx,rowCount,&HP,1);
+      std::cout <<" " << std::endl;
+      std::cout << "*** Treating CHEM Jac (CSR symbolic analysis)***" << std::endl;
+      std::cout <<" " << std::endl;
+      int nbVals;
+      counter = 0;
+      for (int i = 0; i < NUM_SPECIES+1; i++) {
+          nbVals         = rowCount[i+1] - rowCount[i];
+	  int idx_arr[nbVals];
+	  std::fill_n(idx_arr, nbVals, -1);
+	  std::memcpy(idx_arr, colIdx + rowCount[i], nbVals*sizeof(int));
+          int idx        = 0;
+	  //std::cout << " Treating row number " << i << " (has " << nbVals << " vals)" << std::endl;
+	  //std::cout << " rowCount[i] is " << rowCount[i] << std::endl;
+          for (int j = 0; j < NUM_SPECIES+1; j++) {
+	      //std::cout << " colmn : " << j << " idx " << idx_arr[idx] << std::endl;
+              if ((j == idx_arr[idx]) && (nbVals > 0)) {
+	          std::cout << 1 << " ";
+		  idx = idx + 1;
+		  counter = counter + 1;
+	      } else {
+	          std::cout << 0 << " ";
+	      }
+          }
+	  std::cout << std::endl;
+      }
+      std::cout << " There was " << counter << " non zero elems (compare to the "<<data_wk->NNZ<< " we need)" << std::endl;
+
+      /* SYST JAC */
+      //SPARSITY_INFO_SYST(&(data_wk->NNZ),&HP);
+      //amrex::Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+      //PS = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
+      //rowCount = (int*) SUNSparseMatrix_IndexPointers(PS); 
+      //colIdx   = (int*) SUNSparseMatrix_IndexValues(PS);
+      SPARSITY_PREPROC_SYST_CSR(colIdx,rowCount,&HP);
+      /* CHEMISTRY JAC */
+      std::cout <<" " << std::endl;
+      std::cout << "*** Treating SYST Jac (CSR symbolic analysis)***" << std::endl;
+      std::cout <<" " << std::endl;
+      counter = 0;
+      for (int i = 0; i < NUM_SPECIES+1; i++) {
+          nbVals         = rowCount[i+1] - rowCount[i];
+	  int idx_arr[nbVals];
+	  std::fill_n(idx_arr, nbVals, -1);
+	  std::memcpy(idx_arr, colIdx + (rowCount[i] - 1), nbVals*sizeof(int));
+          int idx        = 0;
+	  //std::cout << " Treating row number " << i << " (has " << nbVals << " vals)" << std::endl;
+	  //std::cout << " rowCount[i] is " << rowCount[i] << std::endl;
+          for (int j = 0; j < NUM_SPECIES+1; j++) {
+	      //std::cout << " colmn : " << j << " idx " << idx_arr[idx] - 1 << std::endl;
+              if ((j == idx_arr[idx] - 1) && ((nbVals-idx) > 0)) {
+	          std::cout << 1 << " ";
+		  idx = idx + 1;
+		  counter = counter + 1;
+	      } else {
+	          std::cout << 0 << " ";
+	      }
+          }
+	  std::cout << std::endl;
+      }
+      std::cout << " There was " << counter << " non zero elems (compare to the "<<data_wk->NNZ<< " we need)" << std::endl;
+
+      amrex::Abort("Dump Sparsity Patern of SystemJac and ChemJac in CSR format.");
   }
 #endif
 

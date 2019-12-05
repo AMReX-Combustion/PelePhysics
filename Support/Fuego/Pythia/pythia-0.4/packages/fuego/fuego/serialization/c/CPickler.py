@@ -614,7 +614,7 @@ class CPickler(CMill):
         # ORI CPU vectorized version
         self._vproductionRate(mechanism)
         self._DproductionRatePrecond(mechanism)
-        self._DproductionRateSPSPrecond(mechanism)
+        #self._DproductionRateSPSPrecond(mechanism)
         self._DproductionRate(mechanism)
         self._sparsity(mechanism)
         # GPU version
@@ -1063,16 +1063,16 @@ class CPickler(CMill):
             'void CKEQYR'+sym+'(double *  rho, double *  T, double *  y, double *  eqcon);',
             'void CKEQXR'+sym+'(double *  rho, double *  T, double *  x, double *  eqcon);',
             'AMREX_GPU_HOST_DEVICE void DWDOT(double *  J, double *  sc, double *  T, int * consP);',
-            'AMREX_GPU_HOST_DEVICE void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);',
-            'AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma);',
+            'AMREX_GPU_HOST_DEVICE void DWDOT_SIMPLIFIED(double *  J, double *  sc, double *  Tp, int * HP);',
+            #'AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);',
-            'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);',
-            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
-            '#ifndef AMREX_USE_CUDA',
-            'void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * consP);',
-            '#else',
-            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx, int * consP);',
-            '#endif',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST(int * nJdata, int * consP);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, int * consP);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs, int * consP);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP);',
             'AMREX_GPU_HOST_DEVICE void aJacobian(double *  J, double *  sc, double T, int consP);',
             'AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T, int HP);',
             'AMREX_GPU_HOST_DEVICE void dcvpRdT(double *  species, double *  tc);',
@@ -6966,8 +6966,8 @@ class CPickler(CMill):
         nSpecies = len(species_list)
 
         self._write()
-        self._write(self.line('compute an approx to the reaction Jacobian'))
-        self._write('AMREX_GPU_HOST_DEVICE void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP)')
+        self._write(self.line('compute an approx to the reaction Jacobian (for preconditioning)'))
+        self._write('AMREX_GPU_HOST_DEVICE void DWDOT_SIMPLIFIED(double *  J, double *  sc, double *  Tp, int * HP)')
         self._write('{')
         self._indent()
 
@@ -7081,7 +7081,7 @@ class CPickler(CMill):
 
         ####
         self._write()
-        self._write(self.line('compute the sparsity pattern Jacobian'))
+        self._write(self.line('compute the sparsity pattern of the chemistry Jacobian'))
         self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)')
         self._write('{')
         self._indent()
@@ -7127,8 +7127,62 @@ class CPickler(CMill):
 
         ####
         self._write()
-        self._write(self.line('compute the sparsity pattern of simplified Jacobian'))
-        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)')
+        self._write(self.line('compute the sparsity pattern of the system Jacobian'))
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST( int * nJdata, int * consP)')
+        self._write('{')
+        self._indent()
+
+        self._write('double c[%d];' % (nSpecies))
+        self._write('double J[%d];' % (nSpecies+1)**2)
+        self._write()
+        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._indent()
+        self._write('c[k] = 1.0/ %f ;' % (nSpecies))
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('aJacobian(J, c, 1500.0, *consP);')
+
+        self._write()
+        self._write('int nJdata_tmp = 0;')
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if(k == l){')
+        self._indent()
+        self._write('nJdata_tmp = nJdata_tmp + 1;')
+        self._outdent()
+        self._write('} else {')
+        self._indent()
+        self._write('if(J[ %d * k + l] != 0.0){' % (nSpecies+1))
+        self._indent()
+        self._write('nJdata_tmp = nJdata_tmp + 1;')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('nJdata[0] = nJdata_tmp;')
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+
+        self._write('}')
+        self._write()
+        self._write()
+
+        ####
+        self._write()
+        self._write(self.line('compute the sparsity pattern of the simplified (for preconditioning) system Jacobian'))
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST_SIMPLIFIED( int * nJdata, int * consP)')
         self._write('{')
         self._indent()
 
@@ -7179,10 +7233,167 @@ class CPickler(CMill):
         self._write()
         self._write()
 
+
         ####
-        self._write('#ifndef AMREX_USE_CUDA')
-        self._write(self.line('compute the sparsity pattern of the simplified precond Jacobian on CPU'))
-        self._write('void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * consP)')
+        self._write(self.line('compute the sparsity pattern of the chemistry Jacobian in CSC format -- base 0'))
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)')
+        self._write('{')
+        self._indent()
+
+        self._write('double c[%d];' % (nSpecies))
+        self._write('double J[%d];' % (nSpecies+1)**2)
+        self._write('int offset_row;')
+        self._write('int offset_col;')
+        self._write()
+        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._indent()
+        self._write('c[k] = 1.0/ %f ;' % (nSpecies))
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('aJacobian(J, c, 1500.0, *consP);')
+
+        self._write()
+        self._write('colPtrs[0] = 0;')
+        self._write('int nJdata_tmp = 0;')
+        self._write('for (int nc=0; nc<NCELLS; nc++) {')
+        self._indent()
+        self._write('offset_row = nc * %d;' % (nSpecies+1))
+        self._write('offset_col = nc * %d;' % (nSpecies+1))
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
+        self._indent()
+        self._write('rowVals[nJdata_tmp] = l + offset_row; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._write('colPtrs[offset_col + (k + 1)] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+
+        self._write('}')
+        self._write()
+
+        ####
+        self._write(self.line('compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0'))
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int *  colVals, int *  rowPtrs, int * consP, int NCELLS)')
+        self._write('{')
+        self._indent()
+
+        self._write('double c[%d];' % (nSpecies))
+        self._write('double J[%d];' % (nSpecies+1)**2)
+        self._write('int offset;')
+        self._write()
+        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._indent()
+        self._write('c[k] = 1.0/ %f ;' % (nSpecies))
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('aJacobian(J, c, 1500.0, *consP);')
+
+        self._write()
+        self._write('rowPtrs[0] = 0;')
+        self._write('int nJdata_tmp = 0;')
+        self._write('for (int nc=0; nc<NCELLS; nc++) {')
+        self._indent()
+        self._write('offset = nc * %d;' % (nSpecies+1))
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
+        self._indent()
+        self._write('colVals[nJdata_tmp] = k + offset; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._write('rowPtrs[offset + (l + 1)] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+
+        self._write('}')
+        self._write()
+
+        ####
+        self._write(self.line('compute the sparsity pattern of the system Jacobian'))
+        self._write(self.line('CSR format BASE 1'))
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP)')
+        self._write('{')
+        self._indent()
+
+        self._write('double c[%d];' % (nSpecies))
+        self._write('double J[%d];' % (nSpecies+1)**2)
+        self._write()
+        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._indent()
+        self._write('c[k] = 1.0/ %f ;' % (nSpecies))
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('aJacobian(J, c, 1500.0, *consP);')
+
+        self._write()
+        self._write('rowPtr[0] = 1;')
+        self._write('int nJdata_tmp = 1;')
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if (k == l) {')
+        self._indent()
+        self._write('colVals[nJdata_tmp-1] = l+1; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('} else {')
+        self._indent()
+        self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
+        self._indent()
+        self._write('colVals[nJdata_tmp-1] = k+1; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._write('rowPtr[l+1] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+
+        self._write('}')
+        self._write()
+
+        ####
+        self._write(self.line('compute the sparsity pattern of the simplified (for precond) system Jacobian on CPU'))
+        self._write(self.line('BASE 0'))
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP)')
         self._write('{')
         self._indent()
 
@@ -7233,12 +7444,12 @@ class CPickler(CMill):
         self._outdent()
 
         self._write('}')
-        self._write('#else')
         self._write()
 
         ####
-        self._write(self.line('compute the sparsity pattern of the simplified precond Jacobian on GPU'))
-        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx, int * consP)')
+        self._write(self.line('compute the sparsity pattern of the simplified (for precond) system Jacobian'))
+        self._write(self.line('CSR format BASE 1'))
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP)')
         self._write('{')
         self._indent()
 
@@ -7263,14 +7474,14 @@ class CPickler(CMill):
         self._indent()
         self._write('if (k == l) {')
         self._indent()
-        self._write('colIndx[nJdata_tmp-1] = l+1; ')
+        self._write('colVals[nJdata_tmp-1] = l+1; ')
         self._write('nJdata_tmp = nJdata_tmp + 1; ')
         self._outdent()
         self._write('} else {')
         self._indent()
         self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
         self._indent()
-        self._write('colIndx[nJdata_tmp-1] = k+1; ')
+        self._write('colVals[nJdata_tmp-1] = k+1; ')
         self._write('nJdata_tmp = nJdata_tmp + 1; ')
         self._outdent()
         self._write('}')
@@ -7279,59 +7490,6 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         self._write('rowPtr[l+1] = nJdata_tmp;')
-        self._outdent()
-        self._write('}')
-
-        self._write()
-        self._write('return;')
-        self._outdent()
-
-        self._write('}')
-        self._write('#endif')
-        self._write()
-
-        ####
-        self._write(self.line('compute the sparsity pattern of the Jacobian'))
-        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)')
-        self._write('{')
-        self._indent()
-
-        self._write('double c[%d];' % (nSpecies))
-        self._write('double J[%d];' % (nSpecies+1)**2)
-        self._write('int offset_row;')
-        self._write('int offset_col;')
-        self._write()
-        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
-        self._indent()
-        self._write('c[k] = 1.0/ %f ;' % (nSpecies))
-        self._outdent()
-        self._write('}')
-
-        self._write()
-        self._write('aJacobian(J, c, 1500.0, *consP);')
-
-        self._write()
-        self._write('colPtrs[0] = 0;')
-        self._write('int nJdata_tmp = 0;')
-        self._write('for (int nc=0; nc<NCELLS; nc++) {')
-        self._indent()
-        self._write('offset_row = nc * %d;' % (nSpecies+1))
-        self._write('offset_col = nc * %d;' % (nSpecies+1))
-        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
-        self._indent()
-        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
-        self._indent()
-        self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
-        self._indent()
-        self._write('rowVals[nJdata_tmp] = l + offset_row; ')
-        self._write('nJdata_tmp = nJdata_tmp + 1; ')
-        self._outdent()
-        self._write('}')
-        self._outdent()
-        self._write('}')
-        self._write('colPtrs[offset_col + (k + 1)] = nJdata_tmp;')
-        self._outdent()
-        self._write('}')
         self._outdent()
         self._write('}')
 
