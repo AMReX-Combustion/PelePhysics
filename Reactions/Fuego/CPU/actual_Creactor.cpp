@@ -103,7 +103,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	flag = CVodeSetMaxErrTestFails(cvode_mem, 100);
 	if (check_flag(&flag, "CVodeSetMaxErrTestFails", 1)) return(1);
 
-	if (data->iDense_Creact == 1) {
+	if (data->isolve_type == dense_solve) {
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
@@ -124,7 +124,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
 	    if(check_flag(&flag, "CVDlsSetLinearSolver", 1)) return(1);
 
-	} else if (data->iDense_Creact == 5) {
+	} else if (data->isolve_type == sparse_solve) {
 #ifdef USE_KLU_PP 
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
@@ -150,7 +150,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    }
 #endif
 
-	} else if (data->iDense_Creact == 99) {
+	} else if (data->isolve_type == iterative_gmres_solve) {
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
@@ -160,7 +160,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    }
 
             /* Create the linear solver object */
-	    if (data->iJac_Creact == 0) {
+	    if (data->ianalytical_jacobian == 0) {
 	        LS = SUNSPGMR(y, PREC_NONE, 0);
 	        if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
 	    } else {
@@ -177,7 +177,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	    }
 	}
 
-	if (data->iJac_Creact == 0) {
+	if (data->ianalytical_jacobian == 0) {
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
@@ -186,14 +186,14 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 		    amrex::Print() << "    Without Analytical J/Preconditioner\n";
 	    }
 #ifdef USE_KLU_PP 
-	    if (data->iDense_Creact == 5) {
+	    if (data->isolve_type == sparse_solve) {
 		if (data->iverbose > 0) {
 	            amrex::Abort("A Sparse Solver should have an Analytical J");
 		}
 	    }
 #endif
 	} else {
-	    if (data->iDense_Creact == 99) {
+	    if (data->isolve_type == iterative_gmres_solve) {
 	        /* Set the JAcobian-times-vector function */
 	        flag = CVSpilsSetJacTimes(cvode_mem, NULL, NULL);
 	        if(check_flag(&flag, "CVSpilsSetJacTimes", 1)) return(1);
@@ -221,7 +221,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	        if(check_flag(&flag, "CVSpilsSetPreconditioner", 1)) return(1);
 #endif
 #ifdef USE_KLU_PP 
-	    } else if (data->iDense_Creact == 5){
+	    } else if (data->isolve_type == sparse_solve){
 #ifdef _OPENMP
                 if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
@@ -273,7 +273,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 #else
         if (data->iverbose > 1) {
 #endif
-		amrex::Print() << "\n--> DONE WITH INITIALIZATION (CPU)" << data->iE_Creact << "\n";
+		amrex::Print() << "\n--> DONE WITH INITIALIZATION (CPU)" << data->ireactor_type << "\n";
 	}
 
 	/* Reactor is now initialized */
@@ -444,12 +444,12 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
       /* NRG CGS */
       energy = (rhoX_init[tid] + rhoXsrc_ext[tid]*(*dt)) /rho;
 
-      if (data_wk->iE_Creact == 1){
+      if (data_wk->ireactor_type == eint_rho){
           /* UV REACTOR */
           eos.eos_EY2T(massfrac, energy, temp);
           eos.eos_TY2Cv(temp, massfrac, &cX);
           eos.eos_T2EI(temp, Xi);
-      } else {
+      } else if (data_wk->ireactor_type == enth_rho) {
           /* HP REACTOR */
           eos.eos_HY2T(massfrac, energy, temp);
           eos.eos_TY2Cp(temp, massfrac, &cX);
@@ -511,7 +511,7 @@ int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 
       /* Jac */
       int consP;
-      if (data_wk->iE_Creact == 1) {
+      if (data_wk->ireactor_type == eint_rho) {
 	  consP = 0;
       } else {
           consP = 1;
@@ -593,7 +593,7 @@ int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
       if (fabs(temp - temp_save_lcl) > 1.0) {
           /* NRG CGS */
           int consP;
-          if (data_wk->iE_Creact == 1) {
+          if (data_wk->ireactor_type == eint_rho) {
               consP = 0;
           } else {
               consP = 1;
@@ -653,7 +653,7 @@ int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
         // temp 
 	temp = udata[offset + NUM_SPECIES];
         // NRG CGS 
-        if (iE_Creact == 1) {
+        if (ireactor_type == eint_rho) {
             int consP = 0;
             DWDOT(J, activity, &temp, &consP);
         } else {
@@ -743,7 +743,7 @@ int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
             if (fabs(temp - temp_save_lcl) > 1.0) {
                 /* Formalism */
                 int consP;
-                if (data_wk->iE_Creact == 1) {
+                if (data_wk->ireactor_type == eint_rho) {
                     consP = 0;
                 } else {
                     consP = 1;
@@ -859,7 +859,7 @@ int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
       /* jok = SUNFALSE: Generate Jbd from scratch and copy to P */
       /* Make local copies of problem variables, for efficiency. */
       int consP;
-      if (data_wk->iE_Creact == 1) { 
+      if (data_wk->ireactor_type == eint_rho) { 
           consP = 0;
       } else {
           consP = 1;
@@ -1014,12 +1014,12 @@ void PrintFinalStats(void *cvodeMem, realtype Temp)
   flag = CVodeGetCurrentTime(cvodeMem, &hcur);
   check_flag(&flag, "CVodeGetCurrentTime", 1);
 
-  if (data->iDense_Creact == 1){
+  if (data->isolve_type == dense_solve){
       flag = CVDlsGetNumRhsEvals(cvodeMem, &nfeLS);
       check_flag(&flag, "CVDlsGetNumRhsEvals", 1);
       flag = CVDlsGetNumJacEvals(cvodeMem, &nje);
       check_flag(&flag, "CVDlsGetNumJacEvals", 1);
-  } else if (data->iDense_Creact == 99){
+  } else if (data->isolve_type == iterative_gmres_solve){
       flag = CVSpilsGetNumRhsEvals(cvode_mem, &nfeLS);
       check_flag(&flag, "CVSpilsGetNumRhsEvals", 1);
       flag = CVSpilsGetNumJtimesEvals(cvodeMem, &nje);
@@ -1038,10 +1038,10 @@ void PrintFinalStats(void *cvodeMem, realtype Temp)
   amrex::Print() << "-- Final Statistics --\n";
   amrex::Print() << "NonLinear (Newton) related --\n";
   amrex::Print() << Temp << " |DT(dt, dtcur) = " << nst << "(" << hlast << "," << hcur << "), RHS = " << nfe << ", Iterations = " << nni << ", ErrTestFails = " << netfails << ", LinSolvSetups = " << nsetups << "\n";
-  if (data->iDense_Creact == 1){
+  if (data->isolve_type == dense_solve){
 	  amrex::Print() <<"Linear (Dense Direct Solve) related --\n";
 	  amrex::Print()<<Temp << " |FD RHS = "<< nfeLS<<", NumJacEvals = "<< nje <<" \n";
-  } else if (data->iDense_Creact == 99){
+  } else if (data->isolve_type == iterative_gmres_solve){
 	  // LinSolvSetups actually reflects the number of time the LinSolver has been called. 
 	  // NonLinIterations can be taken without the need for LinItes
       amrex::Print() << "Linear (Krylov GMRES Solve) related --\n";
@@ -1103,9 +1103,9 @@ UserData AllocUserData(int iE, int num_cells)
   /* ParmParse from the inputs file */
   /* TODO change that in the future */ 
   amrex::ParmParse pp("ns");
-  pp.query("cvode_iJac",data_wk->iJac_Creact);
-  pp.query("cvode_iDense", data_wk->iDense_Creact);
-  (data_wk->iE_Creact)      = iE;
+  pp.query("cvode_iJac",data_wk->ianalytical_jacobian);
+  pp.query("cvode_iDense", data_wk->isolve_type);
+  (data_wk->ireactor_type)      = iE;
 
   (data_wk->ncells)                    = num_cells;
 
@@ -1116,7 +1116,7 @@ UserData AllocUserData(int iE, int num_cells)
   (data_wk->actual_ok_to_react)        = true; 
 
 #ifndef USE_KLU_PP
-  if (data_wk->iDense_Creact == 99) {
+  if (data_wk->isolve_type == iterative_gmres_solve) {
       /* Precond data */
       (data_wk->P)     = new realtype***[data_wk->ncells];
       (data_wk->Jbd)   = new realtype***[data_wk->ncells];
@@ -1141,12 +1141,12 @@ UserData AllocUserData(int iE, int num_cells)
   data_wk->Jdata   = new realtype*[data_wk->ncells];
 
   int HP;
-  if (data_wk->iE_Creact == 1) {
+  if (data_wk->ireactor_type == eint_rho) {
       HP = 0;
   } else {
       HP = 1;
   }
-  if (data_wk->iDense_Creact == 5) {
+  if (data_wk->isolve_type == sparse_solve) {
       /* Sparse Matrix for Direct Sparse KLU solver */
       (data_wk->PS) = new SUNMatrix[1];
       SPARSITY_INFO(&(data_wk->NNZ),&HP,data_wk->ncells);
@@ -1163,7 +1163,7 @@ UserData AllocUserData(int iE, int num_cells)
       data_wk->Jdata[0] = SUNSparseMatrix_Data((data_wk->PS)[0]);
       SPARSITY_PREPROC_CSC(data_wk->rowVals[0],data_wk->colPtrs[0],&HP,data_wk->ncells);
 
-  } else if (data_wk->iDense_Creact == 99) {
+  } else if (data_wk->isolve_type == iterative_gmres_solve) {
       /* KLU internal storage */
       data_wk->Common   = new klu_common[data_wk->ncells];
       data_wk->Symbolic = new klu_symbolic*[data_wk->ncells];
@@ -1173,9 +1173,9 @@ UserData AllocUserData(int iE, int num_cells)
       /* Nb of non zero elements*/
       SPARSITY_INFO_SYST_SIMPLIFIED(&(data_wk->NNZ),&HP);
 #ifdef _OPENMP
-      if ((data_wk->iverbose > 0) && (omp_thread == 0) && (data_wk->iJac_Creact != 0)) {
+      if ((data_wk->iverbose > 0) && (omp_thread == 0) && (data_wk->ianalytical_jacobian != 0)) {
 #else
-      if ((data_wk->iverbose > 0) && (data_wk->iJac_Creact != 0)) {
+      if ((data_wk->iverbose > 0) && (data_wk->ianalytical_jacobian != 0)) {
 #endif
           amrex::Print() << "--> SPARSE Preconditioner -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
       }
@@ -1196,7 +1196,7 @@ UserData AllocUserData(int iE, int num_cells)
           //data_wk->Common.ordering = 1;
           data_wk->Symbolic[i] = klu_analyze (NUM_SPECIES+1, data_wk->colPtrs[i], data_wk->rowVals[i], &(data_wk->Common[i])) ; 
       }
-  }  else if (data_wk->iDense_Creact == -5) {
+  }  else if (data_wk->isolve_type == hack_dump_sparsity_pattern) {
       /* Debug mode, makes no sense to call with OMP/MPI activated */
       int counter;
 
@@ -1284,7 +1284,7 @@ void reactor_close(){
   CVodeFree(&cvode_mem);
   SUNLinSolFree(LS);
 
-  if (data->iDense_Creact == 1) {
+  if (data->isolve_type == dense_solve) {
     SUNMatDestroy(A);
   }
 
@@ -1302,7 +1302,7 @@ void reactor_close(){
 void FreeUserData(UserData data_wk)
 {
 #ifndef USE_KLU_PP
-  if (data_wk->iDense_Creact == 99) {
+  if (data_wk->isolve_type == iterative_gmres_solve) {
       for(int i = 0; i < data_wk->ncells; ++i) {
           destroyMat((data_wk->P)[i][i]);
           destroyMat((data_wk->Jbd)[i][i]);

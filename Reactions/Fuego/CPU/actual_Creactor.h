@@ -32,9 +32,16 @@ typedef struct {
       /* Base items */
       int ncells;
       int iverbose;
-      int iDense_Creact;
-      int iJac_Creact;
-      int iE_Creact;
+      int isolve_type;
+      int ianalytical_jacobian;
+      int ireactor_type;
+      /* Options */
+      int dense_solve = 1;
+      int iterative_gmres_solve = 99;
+      int sparse_solve = 5;
+      int hack_dump_sparsity_pattern = -5;
+      int eint_rho = 1; // in/out = rhoE/rhoY
+      int enth_rho = 2; // in/out = rhoH/rhoY 
 #ifdef USE_KLU_PP 
       int NNZ; 
       /* Sparse Matrices for KLU-related solve */
