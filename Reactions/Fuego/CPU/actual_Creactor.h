@@ -36,12 +36,13 @@ typedef struct {
       int ianalytical_jacobian;
       int ireactor_type;
       /* Options */
-      int dense_solve = 1;
-      int iterative_gmres_solve = 99;
-      int sparse_solve = 5;
-      int hack_dump_sparsity_pattern = -5;
-      int eint_rho = 1; // in/out = rhoE/rhoY
-      int enth_rho = 2; // in/out = rhoH/rhoY 
+      //int dense_solve           = 1;
+      //int sparse_solve          = 5;
+      //int iterative_gmres_solve = 99;
+      //int dense_solve_custom    = 101;
+      //int hack_dump_sparsity_pattern = -5;
+      //int eint_rho = 1; // in/out = rhoE/rhoY
+      //int enth_rho = 2; // in/out = rhoH/rhoY 
 #ifdef USE_KLU_PP 
       int NNZ; 
       /* Sparse Matrices for KLU-related solve */
@@ -124,5 +125,26 @@ void check_state(N_Vector yvec);
 /* Main Kernel fct called in solver RHS */
 void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 		void *user_data);
+
+/**********************************/
+/* custom solver */
+SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A); 
+
+SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S); 
+SUNLinearSolver_ID SUNLinSolGetID_Dense_custom(SUNLinearSolver S); 
+
+int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
+		N_Vector b, realtype tol);
+
+
+
+
+
+
+
+
+
+
+
 
 

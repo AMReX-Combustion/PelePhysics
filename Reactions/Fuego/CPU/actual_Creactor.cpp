@@ -17,6 +17,14 @@
   double *rhoX_init   = NULL;
   double *rhoXsrc_ext = NULL;
   double *rYsrc       = NULL;
+/* REMOVE MAYBE LATER */
+  int dense_solve           = 1;
+  int sparse_solve          = 5;
+  int iterative_gmres_solve = 99;
+  int dense_solve_custom    = 101;
+  int hack_dump_sparsity_pattern = -5;
+  int eint_rho = 1; // in/out = rhoE/rhoY
+  int enth_rho = 2; // in/out = rhoH/rhoY 
 
 #ifdef _OPENMP
 #pragma omp threadprivate(y,LS,A)
@@ -27,7 +35,7 @@
 
 /**********************************/
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init(const int* cvode_iE, const int* Ncells) {
+int reactor_init(const int* reactor_type, const int* Ncells) {
         /* CVODE return Flag  */
 	int flag;
 	/* CVODE initial time - 0 */
@@ -57,7 +65,7 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 	if (check_flag((void *)cvode_mem, "CVodeCreate", 0)) return(1);
 
         /* Does not work for more than 1 cell right now */
-	data = AllocUserData(*cvode_iE, *Ncells);
+	data = AllocUserData(*reactor_type, *Ncells);
 	if(check_flag((void *)data, "AllocUserData", 2)) return(1);
 
 	/* Nb of species and cells in mechanism */
@@ -118,6 +126,27 @@ int reactor_init(const int* cvode_iE, const int* Ncells) {
 
 	    /* Create dense SUNLinearSolver object for use by CVode */
 	    LS = SUNDenseLinearSolver(y, A);
+	    if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
+
+	    /* Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode */
+	    flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
+	    if(check_flag(&flag, "CVDlsSetLinearSolver", 1)) return(1);
+
+	} else if (data->isolve_type == dense_solve_custom) {
+#ifdef _OPENMP
+            if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+            if (data->iverbose > 0) {
+#endif
+	    	amrex::Print() << "\n--> Using a custom Direct Dense Solver\n";    
+	    }
+
+            /* Create dense SUNMatrix for use in linear solves */
+	    A = SUNDenseMatrix(neq_tot, neq_tot);
+	    if(check_flag((void *)A, "SUNDenseMatrix", 0)) return(1);
+
+	    /* Create dense SUNLinearSolver object for use by CVode */
+	    LS = SUNLinSol_dense_custom(y, A);
 	    if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
 
 	    /* Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode */
@@ -395,6 +424,7 @@ int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 /**********************************/
 
 
+
 /*
  * kernels
  */
@@ -467,6 +497,10 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
   }
 }
 
+
+/*
+ * Auxiliary routines
+ */
 
 /* Analytical Jacobian evaluation */
 int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
@@ -953,8 +987,105 @@ int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
   return(0);
 }
 #endif
+/**********************************/
+
+/* 
+ * CUSTOM SOLVER STUFF
+ */
+SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A) 
+{
+  SUNLinearSolver S;
+  SUNLinearSolverContent_Dense content;
+  //sunindextype MatrixRows;
+
+  /* Create an empty linear solver */
+  S = NULL;
+  S = SUNLinSolNewEmpty(); 
+  if (S == NULL) return(NULL);
+
+  /* Attach operations */ 
+  S->ops->gettype    = SUNLinSolGetType_Dense_custom;
+  S->ops->getid      = SUNLinSolGetID_Dense_custom;
+  S->ops->solve      = SUNLinSolSolve_Dense_custom;
+
+  /* Create content */
+  content = NULL; 
+  content = (SUNLinearSolverContent_Dense) malloc(sizeof *content);
+  if (content == NULL) { SUNLinSolFree(S); return(NULL); }
+
+  /* Attach content */
+  S->content = content; 
+
+  /* Fill content */ 
+  //content->N         = MatrixRows;
+  content->last_flag = 0;
+  //content->pivots    = NULL;
+
+  /* Allocate content */ 
+  //content->pivots = (sunindextype *) malloc(MatrixRows * sizeof(sunindextype));
+  //if (content->pivots == NULL) { SUNLinSolFree(S); return(NULL); }
+
+  return(S);
+}
 
 
+SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S) 
+{
+  return(SUNLINEARSOLVER_DIRECT);
+}
+
+SUNLinearSolver_ID SUNLinSolGetID_Dense_custom(SUNLinearSolver S) 
+{
+  return(SUNLINEARSOLVER_DENSE); 
+}
+
+int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
+		N_Vector b, realtype tol)
+{
+  /* Make local copies of pointers in user_data (cell M)*/
+  //UserData data_wk;
+  //data_wk = (UserData) user_data;   
+
+  int HP, NNZ;
+  realtype *A_colj, *A_rowi;
+  //if (data_wk->ireactor_type == eint_rho) {
+  //    HP = 0;
+  //} else {
+  //    HP = 1;
+  //}
+  //SPARSITY_INFO(&NNZ,&HP,1);
+  
+
+  SUNMatrix A_csr;
+  NNZ = (NUM_SPECIES+1)*(NUM_SPECIES+1);
+  A_csr = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), NNZ, CSR_MAT);
+  int *colIdx, *rowCount;
+  rowCount = (int*) SUNSparseMatrix_IndexPointers(A_csr); 
+  colIdx   = (int*) SUNSparseMatrix_IndexValues(A_csr);
+  //SPARSITY_PREPROC_CSR(colIdx,rowCount,&HP,1);
+  rowCount[0] = 0;
+  int counter = 0;
+  for (int j = 0; j < NUM_SPECIES+1; j++) {
+      A_colj = SUNDenseMatrix_Column(A,j);
+      for (int i = 0; i < NUM_SPECIES+1; i++) {
+          colIdx[rowCount[i] + j] = A_colj[i];
+          rowCount[i+1] = (i+1)*(NUM_SPECIES+1); 
+      }
+  }
+
+  //SparseGaussJordan::solve(A_csr, x, b);
+
+  for (int j = 0; j < NUM_SPECIES+1; j++) {
+      A_colj = SUNDenseMatrix_Column(A,j);
+      for (int i = 0; i < NUM_SPECIES+1; i++) {
+          A_colj[i] = colIdx[rowCount[i] + j];
+      }
+  }
+  return(SUNLS_SUCCESS);
+}
+
+
+/**********************************/
 /* 
  * OTHERS
 */
@@ -1088,7 +1219,7 @@ int check_flag(void *flagvalue, const char *funcname, int opt)
 
 
 /* Alloc Data for CVODE */
-UserData AllocUserData(int iE, int num_cells)
+UserData AllocUserData(int reactor_type, int num_cells)
 {
   /* Make local copies of pointers in user_data */
   UserData data_wk;
@@ -1105,7 +1236,7 @@ UserData AllocUserData(int iE, int num_cells)
   amrex::ParmParse pp("ns");
   pp.query("cvode_iJac",data_wk->ianalytical_jacobian);
   pp.query("cvode_iDense", data_wk->isolve_type);
-  (data_wk->ireactor_type)      = iE;
+  (data_wk->ireactor_type)      = reactor_type;
 
   (data_wk->ncells)                    = num_cells;
 
