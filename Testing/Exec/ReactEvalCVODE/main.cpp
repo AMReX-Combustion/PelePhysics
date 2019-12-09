@@ -111,8 +111,9 @@ main (int   argc,
         fuel_idx  = H2_ID;
     } else if (fuel_name == "CH4") {
         fuel_idx  = CH4_ID;
-    } else if (fuel_name == "NC12H26") {
-        fuel_idx  = NC12H26_ID;
+	amrex::Print() << "FOUND FUEL ";
+    //} else if (fuel_name == "NC12H26") {
+    //    fuel_idx  = NC12H26_ID;
     }
     oxy_idx   = O2_ID;
     bath_idx  = N2_ID;
@@ -127,9 +128,9 @@ main (int   argc,
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 2;
+	npts[i] = 1;
     }
-    npts[1] = 128;
+    npts[1] = 1;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
         amrex::Print() << dt << " seconds";
@@ -210,20 +211,14 @@ main (int   argc,
         const Box& box = mfi.tilebox();
 	//int ncells = box.numPts();
 
-	FArrayBox& Fb     = mf[mfi];
-	FArrayBox& Fbsrc  = rY_source_ext[mfi];
-	FArrayBox& FbE    = mfE[mfi];
-	FArrayBox& FbEsrc = rY_source_energy_ext[mfi];
-	FArrayBox& Fct    = fctCount[mfi];
-
 	const auto len     = amrex::length(box);
 	const auto lo      = amrex::lbound(box);
 
-	const auto rhoY    = Fb.view(lo);
-	const auto rhoE    = FbE.view(lo);
-	const auto frcExt  = Fbsrc.view(lo); 
-	const auto frcEExt = FbEsrc.view(lo);
-	const auto fc      = Fct.view(lo); 
+	const auto rhoY    = mf.array(mfi);
+	const auto rhoE    = mfE.array(mfi);
+	const auto frcExt  = rY_source_ext.array(mfi); 
+	const auto frcEExt = rY_source_energy_ext.array(mfi);
+	const auto fc      = fctCount.array(mfi); 
 
         /* Pack the data */
 	// rhoY,T
@@ -275,7 +270,7 @@ main (int   argc,
 		                &dt_incr, &time);
 #endif
 		            dt_incr =  dt/ndt;
-			    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+			    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 			}
 		        nc = 0;
 		        for (int l = 0; l < cvode_ncells ; ++l){

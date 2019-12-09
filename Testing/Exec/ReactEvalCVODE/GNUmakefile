@@ -1,7 +1,7 @@
 PRECISION  = DOUBLE
 PROFILE    = FALSE
 
-DEBUG      = TRUE
+DEBUG      = FALSE
 
 DIM        = 2
 
@@ -10,7 +10,7 @@ FCOMP	   = gfortran
 
 USE_MPI    = FALSE
 USE_MPI    = TRUE
-USE_OMP    = TRUE
+USE_OMP    = FALSE
 
 FUEGO_GAS  = TRUE
 
@@ -31,8 +31,9 @@ USE_KLU_PP = TRUE
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
-  #Chemistry_Model = drm19
-  Chemistry_Model = dodecane_wang
+  Chemistry_Model = drm19
+  #Chemistry_Model = dodecane_wang
+  #Chemistry_Model = LiDryer
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else
