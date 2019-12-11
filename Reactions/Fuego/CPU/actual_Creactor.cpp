@@ -996,7 +996,6 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A)
 {
   SUNLinearSolver S;
   SUNLinearSolverContent_Dense content;
-  //sunindextype MatrixRows;
 
   /* Create an empty linear solver */
   S = NULL;
@@ -1017,13 +1016,7 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A)
   S->content = content; 
 
   /* Fill content */ 
-  //content->N         = MatrixRows;
   content->last_flag = 0;
-  //content->pivots    = NULL;
-
-  /* Allocate content */ 
-  //content->pivots = (sunindextype *) malloc(MatrixRows * sizeof(sunindextype));
-  //if (content->pivots == NULL) { SUNLinSolFree(S); return(NULL); }
 
   return(S);
 }
@@ -1047,7 +1040,9 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   //data_wk = (UserData) user_data;   
 
   int HP, NNZ;
-  realtype *A_colj, *A_rowi;
+  realtype *A_colj;
+  realtype *x_d      = N_VGetArrayPointer(x);
+  realtype *b_d      = N_VGetArrayPointer(b);
   //if (data_wk->ireactor_type == eint_rho) {
   //    HP = 0;
   //} else {
@@ -1060,27 +1055,25 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   NNZ = (NUM_SPECIES+1)*(NUM_SPECIES+1);
   A_csr = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), NNZ, CSR_MAT);
   int *colIdx, *rowCount;
+  double *Data;
   rowCount = (int*) SUNSparseMatrix_IndexPointers(A_csr); 
   colIdx   = (int*) SUNSparseMatrix_IndexValues(A_csr);
+  Data     = (double*) SUNSparseMatrix_Data(A_csr);
   //SPARSITY_PREPROC_CSR(colIdx,rowCount,&HP,1);
   rowCount[0] = 0;
   int counter = 0;
   for (int j = 0; j < NUM_SPECIES+1; j++) {
       A_colj = SUNDenseMatrix_Column(A,j);
       for (int i = 0; i < NUM_SPECIES+1; i++) {
-          colIdx[rowCount[i] + j] = A_colj[i];
-          rowCount[i+1] = (i+1)*(NUM_SPECIES+1); 
+          colIdx[rowCount[i] + j] = j;
+          Data[rowCount[i] + j]   = A_colj[i];
+          rowCount[i+1]           = (i+1)*(NUM_SPECIES+1); 
       }
   }
 
-  //SparseGaussJordan::solve(A_csr, x, b);
+  //amrex::Print() <<"\n before sgjsolve\n";
+  sgjsolve(Data, x_d, b_d);
 
-  for (int j = 0; j < NUM_SPECIES+1; j++) {
-      A_colj = SUNDenseMatrix_Column(A,j);
-      for (int i = 0; i < NUM_SPECIES+1; i++) {
-          A_colj[i] = colIdx[rowCount[i] + j];
-      }
-  }
   return(SUNLS_SUCCESS);
 }
 
@@ -1233,9 +1226,9 @@ UserData AllocUserData(int reactor_type, int num_cells)
 
   /* ParmParse from the inputs file */
   /* TODO change that in the future */ 
-  amrex::ParmParse pp("ns");
-  pp.query("cvode_iJac",data_wk->ianalytical_jacobian);
-  pp.query("cvode_iDense", data_wk->isolve_type);
+  amrex::ParmParse pp("cvode");
+  pp.query("analytical_jacobian",data_wk->ianalytical_jacobian);
+  pp.query("solve_type", data_wk->isolve_type);
   (data_wk->ireactor_type)      = reactor_type;
 
   (data_wk->ncells)                    = num_cells;

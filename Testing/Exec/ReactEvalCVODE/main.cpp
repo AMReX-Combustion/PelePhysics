@@ -46,7 +46,7 @@ main (int   argc,
     std::string pltfile("plt");
     /* CVODE inputs */
     int cvode_ncells = 1;
-    int cvode_iE = 1;
+    int cvode_iE = -1;
     int fuel_idx = -1;
     int oxy_idx = -1;
     int bath_idx = -1;
@@ -69,7 +69,7 @@ main (int   argc,
       // time stepping
       pp.query("ndt",ndt); 
 
-      pp.query("cvode_iE",cvode_iE);
+      pp.query("reactor_type",cvode_iE);
       // Select CVODE type of energy employed.
       //1 for UV, 2 for HP
       //   1 = Internal energy
