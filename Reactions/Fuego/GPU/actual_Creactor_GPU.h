@@ -121,7 +121,8 @@ fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *udot_
 AMREX_GPU_DEVICE
 inline
 void 
-fKernelDenseSolve(int ncells, realtype *x_d, realtype *b_d);
+fKernelDenseSolve(int ncells, realtype *x_d, realtype *b_d,
+		  int subsys_size, int subsys_nnz, realtype *csr_val);
 
 /**********************************/
 /* Custom solver stuff */

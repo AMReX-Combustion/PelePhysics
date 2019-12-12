@@ -925,13 +925,13 @@ fKernelComputeAJsys(int ncell, void *user_data, realtype *u_d, realtype *udot_d,
 AMREX_GPU_DEVICE
 inline
 void 
-fKernelDenseSolve(int ncell, realtype *x_d, realtype *b_d)
+fKernelDenseSolve(int ncell, realtype *x_d, realtype *b_d,
+		  int subsys_size, int subsys_nnz, realtype *csr_val)
 {
-  int NNZ      = SUN_CUSP_SUBSYS_NNZ(S);
-  int offset   = ncell * SUN_CUSP_SUBSYS_SIZE(S); 
-  int offset_A = ncell * NNZ;
+  int offset   = ncell * subsys_size; 
+  int offset_A = ncell * subsys_nnz;
 
-  realtype* csr_val_cell = SUN_CUSP_DVALUES(S) + offset_A;
+  realtype* csr_val_cell = csr_val + offset_A;
   realtype* x_cell       = x_d + offset;
   realtype* b_cell       = b_d + offset;
 
@@ -1125,7 +1125,8 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
       [=] AMREX_GPU_DEVICE () noexcept {
           for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
 	      icell < SUN_CUSP_NUM_SUBSYS(S); icell += stride) {
-	      fKernelDenseSolve(icell, x_d, b_d);
+	      fKernelDenseSolve(icell, x_d, b_d,
+			      SUN_CUSP_NUM_SUBSYS(S), SUN_CUSP_SUBSYS_NNZ(S), SUN_CUSP_DVALUES(S));
 	  }
       }); 
 
