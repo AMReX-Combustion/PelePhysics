@@ -1004,7 +1004,7 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A)
 
   /* Attach operations */ 
   S->ops->gettype    = SUNLinSolGetType_Dense_custom;
-  S->ops->getid      = SUNLinSolGetID_Dense_custom;
+  //S->ops->getid      = SUNLinSolGetID_Dense_custom;
   S->ops->solve      = SUNLinSolSolve_Dense_custom;
 
   /* Create content */
