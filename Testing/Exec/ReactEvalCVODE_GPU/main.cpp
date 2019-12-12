@@ -71,7 +71,7 @@ main (int   argc,
       // time stepping
       pp.query("ndt",ndt); 
 
-      pp.query("cvode_iE",cvode_iE);
+      pp.query("reactor_type",cvode_iE);
       // Select CVODE type of energy employed.
       //1 for UV, 2 for HP
       //   1 = Internal energy
@@ -135,7 +135,7 @@ main (int   argc,
     for (int i = 0; i < BL_SPACEDIM; ++i) {
 	npts[i] = 16;
     }
-    npts[1] = 64;
+    npts[1] = 16;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
         amrex::Print() << dt << " seconds";
@@ -298,7 +298,7 @@ main (int   argc,
 	                    tmp_vect_energy, tmp_src_vect_energy,
 	                    &dt_incr, &time,
                             &cvode_iE, &ncells, amrex::Gpu::gpuStream());
-	    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+	    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 	    dt_incr =  dt/ndt;
         }
         BL_PROFILE_VAR_STOP(ReactInLoop);

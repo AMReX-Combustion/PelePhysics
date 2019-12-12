@@ -116,7 +116,7 @@ fKernelComputeAJsys(int ncells, void *user_data, realtype *u_d, realtype *udot_d
 AMREX_GPU_DEVICE
 inline
 void 
-fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *udot_d, realtype *csr_val);
+fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *udot_d);
 
 AMREX_GPU_DEVICE
 inline

@@ -410,7 +410,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
         long int nfe;
 	flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
 
-	PrintFinalStats(cvode_mem);
+	//PrintFinalStats(cvode_mem);
 
 	SUNLinSolFree(LS);
 	N_VDestroy(y);          /* Free the y vector */
@@ -648,9 +648,11 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 				SUNSparseMatrix_NNZ(J), CSR_MAT);
 	}
 		/* check that vector/matrix dimensions match up */
-        if ((SUNSparseMatrix_Rows(J) != udata->neqs_per_cell[0]+1) || 
-		(SUNSparseMatrix_Columns(J) != (udata->neqs_per_cell[0]+1)) ||
-                (SUNSparseMatrix_NNZ(J) != udata->ncells_d[0] * udata->NNZ)) {
+	std::cout << SUNSparseMatrix_Rows(J) << " "<< SUNSparseMatrix_NNZ(J) << std::endl;
+	std::cout << (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0]) << " "<<  udata->ncells_d[0] * udata->NNZ << std::endl;
+        if ((SUNSparseMatrix_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
+		(SUNSparseMatrix_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
+                (SUNSparseMatrix_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
                     printf("Jac error: matrix is wrong size!\n");
                     return 1;
         }
@@ -661,12 +663,12 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 	[=] AMREX_GPU_DEVICE () noexcept {
 	        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
 		icell < udata->ncells_d[0]; icell += stride) {
-	    	    fKernelComputeAJchem(icell, user_data, yvec_d, ydot_d, udata->csr_val_d);
+	    	    fKernelComputeAJchem(icell, user_data, yvec_d, ydot_d);
 		}
         }); 
 
 	realtype *Jdata = SUNSparseMatrix_Data(J); 
-	Jdata = udata->csr_val_d;
+	Jdata = udata->csr_jac_d;
 
         cuda_status = cudaStreamSynchronize(udata->stream);  
         assert(cuda_status == cudaSuccess);
@@ -749,7 +751,7 @@ fKernelSpec(int icell, void *user_data,
 AMREX_GPU_DEVICE
 inline
 void 
-fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d, double * csr_val_arg)
+fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d)
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
 
@@ -765,7 +767,6 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d
 
   realtype* u_curr = u_d + u_offset;
   realtype* csr_jac_cell = udata->csr_jac_d + jac_offset;
-  realtype* csr_val_cell = csr_val_arg + jac_offset;
   
   /* MW CGS */
   get_mw(mw);
@@ -786,7 +787,7 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d
 
   /* Additional var needed */
   int consP;
-  if (udata->flagP == 1){
+  if (udata->ireactor_type == 1){
       consP = 0 ;
   } else {
       consP = 1;
@@ -1108,13 +1109,11 @@ SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S)
 int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol)
 {
-  int HP, NNZ;
-  realtype *A_colj;
-
   /* Get Device pointers for Kernel call */
   realtype *x_d      = N_VGetDeviceArrayPointer_Cuda(x);
   realtype *b_d      = N_VGetDeviceArrayPointer_Cuda(b);
 
+  cudaError_t cuerr;
   cuerr = cudaMemcpy(SUN_CUSP_DVALUES(S), SUNSparseMatrix_Data(A),
 		  sizeof(double) * (SUN_CUSP_SUBSYS_NNZ(S) * SUN_CUSP_NUM_SUBSYS(S)), cudaMemcpyHostToDevice);
   if (cuerr != cudaSuccess) SUN_CUSP_LASTFLAG(S) = SUNLS_MEM_FAIL;

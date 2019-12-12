@@ -11,7 +11,7 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
   endif
   ifeq ($(USE_CUDA_CVODE),TRUE)
     DEFINES  += -DUSE_CUDA_CVODE
-    LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nveccuda
+    LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nveccuda -lsundials_sunlinsolcusolversp
     LIBRARIES += -lcusolver -lcusparse
   endif
   LIBRARIES += -Wl,-rpath=${CVODE_LIB_DIR}
