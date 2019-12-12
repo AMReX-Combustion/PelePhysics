@@ -8,15 +8,15 @@
 #include <cvode/cvode.h>               /* prototypes for CVODE fcts., consts.  */
 #include <nvector/nvector_serial.h>    /* access to serial N_Vector            */
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
+#include <nvector/nvector_cuda.h>
+#include <sunmatrix/sunmatrix_sparse.h>
 #include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver      */
 #include <sunlinsol/sunlinsol_spgmr.h> /* access to SPGMR SUNLinearSolver     */
+#include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
 #include <cvode/cvode_direct.h>        /* access to CVDls interface            */
 #include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype      */
 #include <sundials/sundials_math.h>
 
-#include <nvector/nvector_cuda.h>
-
-#include <sunmatrix/sunmatrix_sparse.h>
 #include <AMReX_Print.H>
 
 #include <cuda_runtime.h>
@@ -118,6 +118,11 @@ inline
 void 
 fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *udot_d, realtype *csr_val);
 
+AMREX_GPU_DEVICE
+inline
+void 
+fKernelDenseSolve(int ncells, realtype *x_d, realtype *b_d);
+
 /**********************************/
 /* Custom solver stuff */
 struct _SUNLinearSolverContent_Dense_custom {
@@ -132,7 +137,8 @@ struct _SUNLinearSolverContent_Dense_custom {
 
 typedef struct _SUNLinearSolverContent_Dense_custom *SUNLinearSolverContent_Dense_custom; 
 
-SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, int nsubsys, int subsys_size);
+SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, 
+		int nsubsys, int subsys_size, int subsys_nnz);
 
 SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S); 
 
