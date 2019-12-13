@@ -318,7 +318,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
         /* Create the linear solver object */
 	if (user_data->isolve_type == iterative_gmres_solve) {
-            if (user_data->ianalytical_jacobian == 0) { 
+    if (user_data->ianalytical_jacobian == 0) { 
 	        LS = SUNSPGMR(y, PREC_NONE, 0);
 	        if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
             } else { 
@@ -667,11 +667,11 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 		}
         }); 
 
-	realtype *Jdata = SUNSparseMatrix_Data(J); 
-	Jdata = udata->csr_jac_d;
-
         cuda_status = cudaStreamSynchronize(udata->stream);  
         assert(cuda_status == cudaSuccess);
+
+	realtype *Jdata = SUNSparseMatrix_Data(J); 
+	std::memcpy(Jdata, udata->csr_jac_d, sizeof(double) * udata->NNZ * (udata->neqs_per_cell[0]+1) );
 
 	BL_PROFILE_VAR_STOP(fKernelJac);
 	
@@ -765,8 +765,9 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d
   int u_offset   = ncell * (NUM_SPECIES + 1); 
   int jac_offset = ncell * (udata->NNZ); 
 
-  realtype* u_curr = u_d + u_offset;
-  realtype* csr_jac_cell = udata->csr_jac_d + jac_offset;
+  realtype* u_curr               = u_d + u_offset;
+  //realtype* csr_jac_cell         = udata->csr_jac_d + jac_offset;
+  int* csr_row_count_cell        = udata->csr_row_count_d + u_offset;
   
   /* MW CGS */
   get_mw(mw);
@@ -805,10 +806,13 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d
   /* Fill the Sps Mat */
   int nbVals;
   for (int i = 1; i < udata->neqs_per_cell[0]+2; i++) {
-      nbVals = udata->csr_row_count_d[i]-udata->csr_row_count_d[i-1];
+      nbVals = csr_row_count_cell[i] - csr_row_count_cell[i-1];
+      //printf("** nb vals %d \n",nbVals);
       for (int j = 0; j < nbVals; j++) {
-    	      int idx = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j ];
-              csr_jac_cell[ udata->csr_row_count_d[u_offset + i - 1] + j ] = Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + i-1 ]; 
+    	      int idx      = udata->csr_col_index_d[ csr_row_count_cell[i-1] + j ];
+	      int idx_cell = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j ] ;
+	      //printf("   Indx: %d Indx cell: %d Indx dans Jmat_pT: %d \n", idx, idx_cell, idx_cell * (udata->neqs_per_cell[0]+1) + i-1 );
+              udata->csr_jac_d[ csr_row_count_cell[i-1] + j ] = Jmat_pt[ idx_cell * (udata->neqs_per_cell[0]+1) + i-1 ]; 
       }
   }
 
@@ -1055,19 +1059,31 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A,
   if (cuerr != cudaSuccess) { cudaFree(d_rowptr); cudaFree(d_colind); return(NULL) ; }
 
   /* copy matrix stuff to the device */
-  cuerr = cudaMemcpy(SUN_CUSP_DCOLIND(S), SUNSparseMatrix_IndexValues(A),
+  cuerr = cudaMemcpy(d_colind, SUNSparseMatrix_IndexValues(A),
 		  sizeof(int) * subsys_nnz * nsubsys, cudaMemcpyHostToDevice);
-  if (cuerr != cudaSuccess) SUN_CUSP_LASTFLAG(S) = SUNLS_MEM_FAIL;
+  if (cuerr != cudaSuccess) { 
+	  cudaFree(d_rowptr); 
+	  cudaFree(d_colind); 
+	  cudaFree(d_values); 
+	  return(NULL); 
+  };
 
-  cuerr = cudaMemcpy(SUN_CUSP_DROWPTR(S), SUNSparseMatrix_IndexPointers(A),
-		  sizeof(int) * (SUN_CUSP_SUBSYS_SIZE(S)+1), cudaMemcpyHostToDevice);
-  if (cuerr != cudaSuccess) SUN_CUSP_LASTFLAG(S) = SUNLS_MEM_FAIL;
+  cuerr = cudaMemcpy(d_rowptr, SUNSparseMatrix_IndexPointers(A),
+		  sizeof(int) * (subsys_size * nsubsys + 1), cudaMemcpyHostToDevice);
+  if (cuerr != cudaSuccess) { 
+	  cudaFree(d_rowptr); 
+	  cudaFree(d_colind); 
+	  cudaFree(d_values); 
+	  return(NULL); 
+  };
 
   /* Create an empty linear solver */
   S = NULL;
   S = SUNLinSolNewEmpty(); 
   if (S == NULL) { 
-     cudaFree(d_rowptr); cudaFree(d_colind); cudaFree(d_values);
+     cudaFree(d_rowptr); 
+     cudaFree(d_colind); 
+     cudaFree(d_values);
      return(NULL);
   }
 
@@ -1079,7 +1095,9 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A,
   content = NULL; 
   content = (SUNLinearSolverContent_Dense_custom) malloc(sizeof *content);
   if (content == NULL) { 
-      cudaFree(d_rowptr); cudaFree(d_colind); cudaFree(d_values);
+      cudaFree(d_rowptr); 
+      cudaFree(d_colind); 
+      cudaFree(d_values);
       SUNLinSolFree(S); 
       return(NULL); 
   }
