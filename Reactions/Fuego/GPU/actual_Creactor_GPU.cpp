@@ -648,8 +648,8 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 				SUNSparseMatrix_NNZ(J), CSR_MAT);
 	}
 		/* check that vector/matrix dimensions match up */
-	std::cout << SUNSparseMatrix_Rows(J) << " "<< SUNSparseMatrix_NNZ(J) << std::endl;
-	std::cout << (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0]) << " "<<  udata->ncells_d[0] * udata->NNZ << std::endl;
+	//std::cout << SUNSparseMatrix_Rows(J) << " "<< SUNSparseMatrix_NNZ(J) << std::endl;
+	//std::cout << (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0]) << " "<<  udata->ncells_d[0] * udata->NNZ << std::endl;
         if ((SUNSparseMatrix_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
 		(SUNSparseMatrix_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
                 (SUNSparseMatrix_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
@@ -671,8 +671,10 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
         assert(cuda_status == cudaSuccess);
 
 	realtype *Jdata = SUNSparseMatrix_Data(J); 
-	std::memcpy(Jdata, udata->csr_jac_d, sizeof(double) * udata->NNZ * (udata->neqs_per_cell[0]+1) );
-
+        for (int tid = 0; tid < udata->NNZ * (udata->ncells_d[0]); tid ++) {
+		Jdata[tid] = udata->csr_jac_d[tid];
+		//printf("tid %d Jdata %E -- ", tid, Jdata[tid]);
+	}
 	BL_PROFILE_VAR_STOP(fKernelJac);
 	
 	return(0);
@@ -766,8 +768,7 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d
   int jac_offset = ncell * (udata->NNZ); 
 
   realtype* u_curr               = u_d + u_offset;
-  //realtype* csr_jac_cell         = udata->csr_jac_d + jac_offset;
-  int* csr_row_count_cell        = udata->csr_row_count_d + u_offset;
+  realtype* csr_jac_cell         = udata->csr_jac_d + jac_offset;
   
   /* MW CGS */
   get_mw(mw);
@@ -805,14 +806,14 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d
   }
   /* Fill the Sps Mat */
   int nbVals;
+  //printf("** NCELL %d \n", ncell);
   for (int i = 1; i < udata->neqs_per_cell[0]+2; i++) {
-      nbVals = csr_row_count_cell[i] - csr_row_count_cell[i-1];
-      //printf("** nb vals %d \n",nbVals);
+      nbVals = udata->csr_row_count_d[i]-udata->csr_row_count_d[i-1];
+      //printf(" -- nvals %d \n", nbVals);
       for (int j = 0; j < nbVals; j++) {
-    	      int idx      = udata->csr_col_index_d[ csr_row_count_cell[i-1] + j ];
 	      int idx_cell = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j ] ;
-	      //printf("   Indx: %d Indx cell: %d Indx dans Jmat_pT: %d \n", idx, idx_cell, idx_cell * (udata->neqs_per_cell[0]+1) + i-1 );
-              udata->csr_jac_d[ csr_row_count_cell[i-1] + j ] = Jmat_pt[ idx_cell * (udata->neqs_per_cell[0]+1) + i-1 ]; 
+	      //printf("Idx %d, Idx cell %d  -- ", idx_cell, udata->csr_row_count_d[i-1] + j);
+              csr_jac_cell[ udata->csr_row_count_d[i-1] + j ] = Jmat_pt[ idx_cell * (udata->neqs_per_cell[0]+1) + i-1 ]; 
       }
   }
 
