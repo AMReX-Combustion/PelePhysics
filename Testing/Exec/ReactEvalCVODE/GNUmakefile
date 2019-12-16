@@ -9,7 +9,6 @@ COMP	   = gcc
 FCOMP	   = gfortran
 
 USE_MPI    = FALSE
-USE_MPI    = TRUE
 USE_OMP    = FALSE
 
 FUEGO_GAS  = TRUE
@@ -24,6 +23,8 @@ DEFINES  += -DMOD_REACTOR
 # use CVODE
 CVODE_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
 USE_SUNDIALS_PP = TRUE
+
+USE_ARKODE_PP = FALSE
 
 SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
 USE_KLU_PP = TRUE

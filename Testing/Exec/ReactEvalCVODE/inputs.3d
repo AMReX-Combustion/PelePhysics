@@ -10,7 +10,7 @@ reactor_type  = 1
 # Choose between sparse (5) dense (1/101) iterative (99) solver
 cvode.solve_type = 101
 
-max_grid_size = 1
+max_grid_size = 4
 
 # Choose name of output pltfile
 amr.plot_file       = plt

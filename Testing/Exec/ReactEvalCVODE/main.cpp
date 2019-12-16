@@ -128,9 +128,9 @@ main (int   argc,
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 1;
+	npts[i] = 4;
     }
-    npts[1] = 1;
+    npts[1] = 16;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
         amrex::Print() << dt << " seconds";
@@ -207,9 +207,11 @@ main (int   argc,
         /* ADVANCE */
         Real time = 0.0;
         Real dt_incr   = dt/ndt;
+	Real fc_tmp;
 
         const Box& box = mfi.tilebox();
-	//int ncells = box.numPts();
+	int ncells = box.numPts();
+	amrex::Print() << " Integrating " << ncells << " cells with a "<<cvode_ncells<< " cvode cell buffer \n";
 
 	const auto len     = amrex::length(box);
 	const auto lo      = amrex::lbound(box);
@@ -240,16 +242,16 @@ main (int   argc,
 	        for         (int i = 0; i < len.x; ++i) {
 		    /* Fill the vectors */
 	            for (int sp=0;sp<Ncomp; sp++){
-	                tmp_vect[nc*(Ncomp+1) + sp]   = rhoY(i,j,k,sp);
-		        tmp_src_vect[nc*Ncomp + sp]   = frcExt(i,j,k,sp);
+	                tmp_vect[nc*(Ncomp+1) + sp]   = rhoY(i+lo.x,j+lo.y,k+lo.z,sp);
+		        tmp_src_vect[nc*Ncomp + sp]   = frcExt(i+lo.x,j+lo.y,k+lo.z,sp);
 		    }
-		    tmp_vect[nc*(Ncomp+1) + Ncomp]    = rhoY(i,j,k,Ncomp);
-		    tmp_vect_energy[nc]               = rhoE(i,j,k,0);
-		    tmp_src_vect_energy[nc]           = frcEExt(i,j,k,0);
+		    tmp_vect[nc*(Ncomp+1) + Ncomp]    = rhoY(i+lo.x,j+lo.y,k+lo.z,Ncomp);
+		    tmp_vect_energy[nc]               = rhoE(i+lo.x,j+lo.y,k+lo.z,0);
+		    tmp_src_vect_energy[nc]           = frcEExt(i+lo.x,j+lo.y,k+lo.z,0);
 		    //
-		    indx_i[nc] = i;
-		    indx_j[nc] = j;
-		    indx_k[nc] = k;
+		    indx_i[nc] = i+lo.x;
+		    indx_j[nc] = j+lo.y;
+		    indx_k[nc] = k+lo.z;
 		    //
 		    nc = nc+1;
 		    //
@@ -259,12 +261,12 @@ main (int   argc,
 			dt_incr =  dt/ndt;
 			for (int ii = 0; ii < ndt; ++ii) {
 #ifdef USE_SUNDIALS_PP
-	                    fc(i,j,k) = react(tmp_vect, tmp_src_vect,
+	                    fc_tmp = react(tmp_vect, tmp_src_vect,
 		                tmp_vect_energy, tmp_src_vect_energy,
 		                &dt_incr, &time);
 #else
                             double pressure = 1013250.0;
-	                    fc(i,j,k) = react(tmp_vect, tmp_src_vect,
+	                    fc_tmp = react(tmp_vect, tmp_src_vect,
 		                tmp_vect_energy, tmp_src_vect_energy,
 				&pressure,
 		                &dt_incr, &time);
@@ -279,6 +281,7 @@ main (int   argc,
 		            }
 		            rhoY(indx_i[l],indx_j[l],indx_k[l],Ncomp)  = tmp_vect[l*(Ncomp+1) + Ncomp];
 		            rhoE(indx_i[l],indx_j[l],indx_k[l],0)      = tmp_vect_energy[l];
+			    fc(indx_i[l],indx_j[l],indx_k[l],0)        = fc_tmp;
 		        }
 		    }
 		}
