@@ -137,14 +137,3 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol);
 
 
-
-
-
-
-
-
-
-
-
-
-
