@@ -5,10 +5,16 @@ ifeq ($(USE_CUDA_CVODE), TRUE)
     CEXE_sources += actual_Creactor_GPU.cpp
 else
     ifeq ($(USE_SUNDIALS_PP), TRUE)
-        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
-        CEXE_headers +=actual_Creactor.h  
-        CEXE_sources +=actual_Creactor.cpp
-        f90EXE_sources += mod_cvode.f90
+        ifeq ($(USE_ARKODE_PP), TRUE)
+            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
+            CEXE_headers +=actual_CARKODE.h  
+            CEXE_sources +=actual_CARKODE.cpp
+        else
+            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
+            CEXE_headers +=actual_Creactor.h  
+            CEXE_sources +=actual_Creactor.cpp
+            f90EXE_sources += mod_cvode.f90
+        endif
     else
         F90EXE_sources += react_type.F90
         F90EXE_sources += actual_reactor.F90
