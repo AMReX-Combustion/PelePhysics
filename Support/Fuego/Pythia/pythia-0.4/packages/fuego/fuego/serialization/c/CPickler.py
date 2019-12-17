@@ -1066,7 +1066,7 @@ class CPickler(CMill):
             'AMREX_GPU_HOST_DEVICE void DWDOT_SIMPLIFIED(double *  J, double *  sc, double *  Tp, int * HP);',
             #'AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);',
-            'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST(int * nJdata, int * consP);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST(int * nJdata, int * consP, int NCELLS);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, int * consP);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS);',
@@ -7128,7 +7128,7 @@ class CPickler(CMill):
         ####
         self._write()
         self._write(self.line('compute the sparsity pattern of the system Jacobian'))
-        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST( int * nJdata, int * consP)')
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST( int * nJdata, int * consP, int NCELLS)')
         self._write('{')
         self._indent()
 
@@ -7169,7 +7169,7 @@ class CPickler(CMill):
         self._write('}')
 
         self._write()
-        self._write('nJdata[0] = nJdata_tmp;')
+        self._write('*nJdata = NCELLS * nJdata_tmp;')
 
         self._write()
         self._write('return;')

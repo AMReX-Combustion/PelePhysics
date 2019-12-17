@@ -10306,7 +10306,7 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
 
 
 /*compute the sparsity pattern of the system Jacobian */
-AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST( int * nJdata, int * consP)
+AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST( int * nJdata, int * consP, int NCELLS)
 {
     double c[21];
     double J[484];
@@ -10330,7 +10330,7 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST( int * nJdata, int * consP)
         }
     }
 
-    nJdata[0] = nJdata_tmp;
+    *nJdata = NCELLS * nJdata_tmp;
 
     return;
 }

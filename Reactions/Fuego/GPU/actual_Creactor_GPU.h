@@ -89,6 +89,8 @@ void reactor_close();
 /**********************************/
 /* Additional useful functions */
 
+AMREX_GPU_HOST_DEVICE void fill_dense_csr(int * colVals, int * rowPtr);
+
 static int check_flag(void *flagvalue, const char *funcname, int opt);
 
 static void PrintFinalStats(void *cvode_mem);
