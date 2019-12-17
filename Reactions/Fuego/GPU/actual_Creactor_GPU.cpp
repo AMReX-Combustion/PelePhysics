@@ -79,7 +79,7 @@ int reactor_info(const int* reactor_type,const int* Ncells){
                     HP = 1;
                 }
                 /* Precond data */ 
-                SPARSITY_INFO(&nJdata,&HP,*Ncells);
+                SPARSITY_INFO_SYST(&nJdata,&HP,*Ncells);
                 printf("--> SPARSE Solver -- non zero entries %d represents %f %% fill pattern.\n", nJdata, nJdata/float(*Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0);
 	    } else {
                 amrex::Abort("\n--> When using SDS, specify an AJ \n");
@@ -150,14 +150,14 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    if (user_data->isolve_type == iterative_gmres_solve) {
                 SPARSITY_INFO_SYST_SIMPLIFIED(&(user_data->NNZ),&HP);
 	    } else if (user_data->isolve_type == sparse_solve) {
-                SPARSITY_INFO(&(user_data->NNZ),&HP,NCELLS);
+                SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,NCELLS);
 		A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ, CSR_MAT);
 		if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
-	    } else if (user_data->isolve_type == dense_solve) {
-		/* Blocks are dense */
-		user_data->NNZ = (NEQ + 1) * (NEQ + 1) * NCELLS;
-		A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ, CSR_MAT);
-		if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
+	    //} else if (user_data->isolve_type == dense_solve) {
+	    //    /* Blocks are dense */
+	    //    user_data->NNZ = (NEQ + 1) * (NEQ + 1) * NCELLS;
+	    //    A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ, CSR_MAT);
+	    //    if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
 	    }
 	    BL_PROFILE_VAR_STOP(SparsityStuff);
 
@@ -179,7 +179,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    if (user_data->isolve_type == iterative_gmres_solve) {    
                 SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP);
 	    } else if (user_data->isolve_type == sparse_solve) {
-		SPARSITY_PREPROC_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, NCELLS); 
+		SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, NCELLS); 
 	    }
 	    BL_PROFILE_VAR_STOP(SparsityStuff);
 
@@ -318,7 +318,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
         /* Create the linear solver object */
 	if (user_data->isolve_type == iterative_gmres_solve) {
-    if (user_data->ianalytical_jacobian == 0) { 
+            if (user_data->ianalytical_jacobian == 0) { 
 	        LS = SUNSPGMR(y, PREC_NONE, 0);
 	        if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
             } else { 
@@ -349,7 +349,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
             } else {
                 HP = 1;
             }
-	    SPARSITY_INFO(&(user_data->NNZ),&HP,1);
+	    SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,1);
             LS = SUNLinSol_cuSolverSp_batchQR(y, A, NCELLS, (NEQ+1) , user_data->NNZ);
 	    if(check_flag((void *)LS, "SUNLinSol_cuSolverSp_batchQR", 0)) return(1);
 
@@ -362,6 +362,11 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1); 
 
         } else if (user_data->isolve_type == dense_solve) {
+	    /* Blocks are dense */
+	    user_data->NNZ = (NEQ + 1) * (NEQ + 1) * NCELLS;
+	    A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ, CSR_MAT);
+	    if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
+
 	    /* NNZ should only reflect one subsystem from now on */
 	    user_data->NNZ = (NEQ+1) * (NEQ+1);
 
@@ -642,11 +647,11 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
         UserData udata = static_cast<CVodeUserData*>(user_data);
 
 	/* Create empty chem Jacobian matrix (if not done already) */
-	if (udata->R == NULL) {
-		udata->R = SUNSparseMatrix(SUNSparseMatrix_Rows(J),
-				SUNSparseMatrix_Columns(J),
-				SUNSparseMatrix_NNZ(J), CSR_MAT);
-	}
+	//if (udata->R == NULL) {
+	//	udata->R = SUNSparseMatrix(SUNSparseMatrix_Rows(J),
+	//			SUNSparseMatrix_Columns(J),
+	//			SUNSparseMatrix_NNZ(J), CSR_MAT);
+	//}
 		/* check that vector/matrix dimensions match up */
 	//std::cout << SUNSparseMatrix_Rows(J) << " "<< SUNSparseMatrix_NNZ(J) << std::endl;
 	//std::cout << (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0]) << " "<<  udata->ncells_d[0] * udata->NNZ << std::endl;
@@ -811,9 +816,9 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d
       nbVals = udata->csr_row_count_d[i]-udata->csr_row_count_d[i-1];
       //printf(" -- nvals %d \n", nbVals);
       for (int j = 0; j < nbVals; j++) {
-	      int idx_cell = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j ] ;
+	      int idx_cell = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j - 1] - 1 ;
 	      //printf("Idx %d, Idx cell %d  -- ", idx_cell, udata->csr_row_count_d[i-1] + j);
-              csr_jac_cell[ udata->csr_row_count_d[i-1] + j ] = Jmat_pt[ idx_cell * (udata->neqs_per_cell[0]+1) + i-1 ]; 
+              csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = Jmat_pt[ idx_cell * (udata->neqs_per_cell[0]+1) + i - 1 ]; 
       }
   }
 
