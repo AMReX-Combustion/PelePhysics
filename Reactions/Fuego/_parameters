@@ -3,3 +3,6 @@ react_T_max             real       5000.d0
 react_rho_min           real       1.e-10
 react_rho_max           real       1.e10
 new_Jacobian_each_cell  integer    0
+# Auxiliary variables, names should be a comma separated list with numaux entries
+numaux                       integer           0
+auxnamesin                   character         ""
