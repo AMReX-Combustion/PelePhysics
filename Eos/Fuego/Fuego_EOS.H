@@ -15,7 +15,7 @@ public:
   AMREX_GPU_HOST_DEVICE EOS();
   AMREX_GPU_HOST_DEVICE ~EOS();
 
-  AMREX_GPU_HOST_DEVICE void eos_EY2T(const amrex::Real *Y, amrex::Real &E, amrex::Real &T);
+  AMREX_GPU_HOST_DEVICE void eos_EY2T(const amrex::Real *Y, amrex::Real E, amrex::Real &T);
   AMREX_GPU_HOST_DEVICE void eos_T2EI(      amrex::Real  T, amrex::Real *ei);
   AMREX_GPU_HOST_DEVICE void eos_TY2Cv(     amrex::Real  T, const amrex::Real *Y, amrex::Real &Cv);
 
