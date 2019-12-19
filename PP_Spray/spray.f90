@@ -268,6 +268,11 @@ contains
     ! Collect all the constants together or else we'll waste a lot of computations
     ratio = (cp_fuel/cp_gas)*(Pr/Sc)*Sh
 
+    if(Nu.ne.Nu) then
+      print *,"BUST",Nu
+      stop
+    endif
+
     ! Copy Nu data. Since Nu is constantly updated I can't guarantee it will be
     ! the correct
     ! answer if Nu is used in the iteration, though it probably should be.
@@ -326,7 +331,7 @@ contains
     ! Nu = 2.0d0+(Nu-2.0d0)*F_T ! Nu*
     Nu = 2.0d0+(Nu_0-2.0d0)*F_T ! Nu*
 
-    F_T = log_BT/B_T
+    F_T = log_BT/max(B_T,1e-10)
 
     F_T = min(F_T,1.0d0)
 
