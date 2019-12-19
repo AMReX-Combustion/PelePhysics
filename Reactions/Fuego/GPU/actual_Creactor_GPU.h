@@ -121,7 +121,7 @@ void
 fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *udot_d);
 
 //AMREX_GPU_DEVICE
-AMREX_GPU_HOST_DEVICE
+__global__
 inline
 void 
 fKernelDenseSolve(int ncells, realtype *x_d, realtype *b_d,
@@ -134,7 +134,7 @@ struct _SUNLinearSolverContent_Dense_custom {
 	int                nsubsys;       /* number of subsystems */
 	int                subsys_size;   /* size of each subsystem */
 	int                subsys_nnz;
-	realtype*          d_values;      /* device  array of matrix A values */
+        N_Vector           d_values;      /* device  array of matrix A values */
 	int*               d_colind;      /* device array of column indices for a subsystem */
 	int*               d_rowptr;      /* device array of rowptrs for a subsystem */
 	cudaStream_t       stream;
