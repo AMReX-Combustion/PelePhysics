@@ -1,4 +1,4 @@
-dt = 1.e-04
+dt = 1e-04
 ndt = 500
 
 # Select CVODE Jacobian eval: 0=FD 1=AJ
@@ -8,7 +8,7 @@ cvode.analytical_jacobian = 1
 reactor_type  = 1
 
 # Choose between sparse (5) dense (1) or iterative (99) solver
-cvode.solve_type = 99
+cvode.solve_type = 1
 
 max_grid_size = 4
 

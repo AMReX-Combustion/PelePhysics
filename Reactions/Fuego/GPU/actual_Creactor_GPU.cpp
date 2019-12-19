@@ -179,7 +179,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 		SPARSITY_PREPROC_SYST_CSR(SUNSparseMatrix_IndexValues(A), SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
 	    } else if (user_data->isolve_type == dense_solve) {
 	        fill_dense_csr(user_data->csr_col_index_d, user_data->csr_row_count_d, 1, 1);
-		fill_dense_csr(SUNSparseMatrix_IndexValues(A), SUNSparseMatrix_IndexPointers(A),  NCELLS, 1);
+		fill_dense_csr(SUNSparseMatrix_IndexValues(A), SUNSparseMatrix_IndexPointers(A),  NCELLS, 0);
 	    }
 	    BL_PROFILE_VAR_STOP(SparsityStuff);
 
@@ -941,30 +941,21 @@ void
 fKernelDenseSolve(int ncell, realtype *x_d, realtype *b_d,
 		  int subsys_size, int subsys_nnz, realtype *csr_val)
 {
-  //printf(" (In fKernelDenseSolve)\n");
-  int offset   = ncell * subsys_size; 
-  int offset_A = ncell * subsys_nnz;
-  //printf(" -- offset %d, offset_A %d \n", offset, offset_A);
-  //printf(" -- subsys_size %d, subsys_nnz %d \n", subsys_size, subsys_nnz);
 
-  realtype* csr_val_cell = csr_val + offset_A;
-  realtype* x_cell       = x_d + offset;
-  realtype* b_cell       = b_d + offset;
+  int stride = blockDim.x*gridDim.x;
+  
+  for (int icell = blockDim.x*blockIdx.x+threadIdx.x;
+       icell < ncell; icell += stride) {   
+           int offset   = icell * subsys_size; 
+           int offset_A = icell * subsys_nnz;
 
-  //for (int i = 0; i < (NUM_SPECIES + 1); i++) {
-  //    for (int j = 0; j < (NUM_SPECIES + 1); j++) {
-  //        printf(" %E ", csr_val_cell[i*(NUM_SPECIES + 1) + j]);
-  //    }
-  //    printf(" \n");
-  //}
+           realtype* csr_val_cell = csr_val + offset_A;
+           realtype* x_cell       = x_d + offset;
+           realtype* b_cell       = b_d + offset;
 
-  /* Solve the subsystem of the cell */
-  sgjsolve(csr_val_cell, x_cell, b_cell);
-
-  //for (int j = 0; j < subsys_size; j++) {
-  //    printf("    %E \n", x_cell[j]);
-  //}
-  //amrex::Abort("\n TESTING \n");
+           /* Solve the subsystem of the cell */
+           sgjsolve(csr_val_cell, x_cell, b_cell);
+  }  
 
 }
 
@@ -1187,6 +1178,7 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 
   BL_PROFILE_VAR("fKernelDenseSolve()", fKernelDenseSolve);
   const auto ec = Gpu::ExecutionConfig(SUN_CUSP_NUM_SUBSYS(S));  
+  // TODO: why is this AMREX version NOT working ?
   //amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, SUN_CUSP_STREAM(S)>>>(
   //    [=] AMREX_GPU_DEVICE () noexcept {
   //        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
@@ -1195,7 +1187,8 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   //      		      SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), data_d);
   //        }
   //    }); 
-  fKernelDenseSolve<<<ec.numBlocks, ec.numThreads, ec.sharedMem, SUN_CUSP_STREAM(S)>>>(0, x_d, b_d, SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), data_d);
+  fKernelDenseSolve<<<ec.numBlocks, ec.numThreads, ec.sharedMem, SUN_CUSP_STREAM(S)>>>(SUN_CUSP_NUM_SUBSYS(S), x_d, b_d, 
+                                                                                       SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), data_d);
   BL_PROFILE_VAR_STOP(fKernelDenseSolve);
 
   cuda_status = cudaStreamSynchronize(SUN_CUSP_STREAM(S));  

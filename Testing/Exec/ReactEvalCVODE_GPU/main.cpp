@@ -289,17 +289,25 @@ main (int   argc,
         });
 	BL_PROFILE_VAR_STOP(FlatStuff);
         
+        cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
 
         /* Solve */
         BL_PROFILE_VAR_START(ReactInLoop);
 	time = 0.0;
+        for (int ii = 0; ii < ncells; ++ii) {
+	    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + ii*(NUM_SPECIES + 1)]);
+        }
+        printf("\n \n ");
 	for (int ii = 0; ii < ndt; ++ii) {
 	    fc_pt = react(tmp_vect, tmp_src_vect,
 	                    tmp_vect_energy, tmp_src_vect_energy,
 	                    &dt_incr, &time,
                             &cvode_iE, &ncells, amrex::Gpu::gpuStream());
-	    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+	    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)]);
 	    dt_incr =  dt/ndt;
+        }
+        for (int ii = 0; ii < ncells; ++ii) {
+            printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)*ii]);
         }
         BL_PROFILE_VAR_STOP(ReactInLoop);
 
