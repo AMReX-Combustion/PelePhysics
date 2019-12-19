@@ -89,7 +89,7 @@ void reactor_close();
 /**********************************/
 /* Additional useful functions */
 
-AMREX_GPU_HOST_DEVICE void fill_dense_csr(int * colVals, int * rowPtr);
+AMREX_GPU_HOST_DEVICE void fill_dense_csr(int * colVals, int * rowPtr, int NCELLS, int base);
 
 static int check_flag(void *flagvalue, const char *funcname, int opt);
 
@@ -120,7 +120,8 @@ inline
 void 
 fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *udot_d);
 
-AMREX_GPU_DEVICE
+//AMREX_GPU_DEVICE
+AMREX_GPU_HOST_DEVICE
 inline
 void 
 fKernelDenseSolve(int ncells, realtype *x_d, realtype *b_d,
@@ -136,12 +137,14 @@ struct _SUNLinearSolverContent_Dense_custom {
 	realtype*          d_values;      /* device  array of matrix A values */
 	int*               d_colind;      /* device array of column indices for a subsystem */
 	int*               d_rowptr;      /* device array of rowptrs for a subsystem */
+	cudaStream_t       stream;
 };
 
 typedef struct _SUNLinearSolverContent_Dense_custom *SUNLinearSolverContent_Dense_custom; 
 
 SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, 
-		int nsubsys, int subsys_size, int subsys_nnz);
+		int nsubsys, int subsys_size, int subsys_nnz, 
+		cudaStream_t stream);
 
 SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S); 
 

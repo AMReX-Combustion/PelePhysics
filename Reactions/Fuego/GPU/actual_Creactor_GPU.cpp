@@ -17,6 +17,7 @@ using namespace amrex;
 #define SUN_CUSP_DVALUES(S)        ( SUN_CUSP_CONTENT(S)->d_values )
 
 #define SUN_CUSP_LASTFLAG(S)       ( SUN_CUSP_CONTENT(S)->last_flag )
+#define SUN_CUSP_STREAM(S)         ( SUN_CUSP_CONTENT(S)->stream )
 
 /**********************************/
 /* Global Variables */
@@ -100,6 +101,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
                 realtype *dt_react, realtype *time,
                 const int* reactor_type,const int* Ncells, cudaStream_t stream) {
 
+        printf("BEGIN REACT \n");
+
         /* CVODE */
         N_Vector y         = NULL;
         SUNLinearSolver LS = NULL;
@@ -174,9 +177,22 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    if (user_data->isolve_type == iterative_gmres_solve) {    
                 SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP);
 	    } else if (user_data->isolve_type == sparse_solve) {
-		SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP); 
+		SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
+		SPARSITY_PREPROC_SYST_CSR(SUNSparseMatrix_IndexValues(A), SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
+		//printf("SUNSparseMatrix_IndexValues first line of each subsystem ?\n");
+		//int offset;
+		//for (int nc=0; nc<NCELLS; nc++) {
+                //    for (int i=0; i<(NEQ + 1); i++) {
+		//	offset = nc * user_data->NNZ + 10;
+		//	printf("   %d ", SUNSparseMatrix_IndexValues(A)[i + offset]);
+		//    }
+		//    printf(" \n ");
+		//}
+		//printf("\n");
+		//amrex::Abort("\n--> When using a custom direct dense solver, specify an AJ \n");
 	    } else if (user_data->isolve_type == dense_solve) {
-	        fill_dense_csr(user_data->csr_col_index_d, user_data->csr_row_count_d);
+	        fill_dense_csr(user_data->csr_col_index_d, user_data->csr_row_count_d, 1, 1);
+		fill_dense_csr(SUNSparseMatrix_IndexValues(A), SUNSparseMatrix_IndexPointers(A),  NCELLS, 1);
 	    }
 	    BL_PROFILE_VAR_STOP(SparsityStuff);
 
@@ -352,13 +368,19 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
         } else if (user_data->isolve_type == dense_solve) {
 
+            printf("   ... alloc LS \n");
+
 	    /* Create dense SUNLinearSolver object for use by CVode */ 
-	    LS = SUNLinSol_dense_custom(y, A, NCELLS, (NEQ+1), user_data->NNZ);
+	    LS = SUNLinSol_dense_custom(y, A, NCELLS, (NEQ+1), user_data->NNZ, stream);
 	    if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
+
+            printf("   ... attach LS \n");
 
 	    /* Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode */
 	    flag = CVDlsSetLinearSolver(cvode_mem, LS, A); 
 	    if(check_flag(&flag, "CVDlsSetLinearSolver", 1)) return(1); 
+
+            printf("   ... attach Jac \n");
 
 	    /* Set the user-supplied Jacobian routine Jac */
             flag = CVodeSetJacFn(cvode_mem, cJac);
@@ -377,6 +399,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 	/* Call CVODE: ReInit for convergence */
         //CVodeReInit(cvode_mem, time_init, y);
+	
+        printf("   ... CALL CVODE \n");
 
 	BL_PROFILE_VAR("AroundCVODE", AroundCVODE);
 	flag = CVode(cvode_mem, time_out, y, &time_init, CV_NORMAL);
@@ -403,6 +427,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
 
 	//PrintFinalStats(cvode_mem);
+	
+        //printf("   ... Free some mem \n");
 
 	SUNLinSolFree(LS);
 	N_VDestroy(y);          /* Free the y vector */
@@ -443,6 +469,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 /* RHS routine used in CVODE */
 static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, 
 		void *user_data){
+
+        printf("IN RHS !! \n");
 
 	BL_PROFILE_VAR("fKernelSpec()", fKernelSpec);
 
@@ -622,8 +650,9 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
 static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
-	BL_PROFILE_VAR("Jacobian()", fKernelJac );
+        printf("IN cJac !! \n");
 
+	BL_PROFILE_VAR("Jacobian()", fKernelJac );
         cudaError_t cuda_status = cudaSuccess;
 
 	/* Get Device pointers for Kernel call */
@@ -685,6 +714,7 @@ fKernelSpec(int icell, void *user_data,
             realtype *yvec_d, realtype *ydot_d,  
             double *rhoe_init, double *rhoesrc_ext, double *rYs)
 {
+  printf(" (In fKernelSpec) \n");
   UserData udata = static_cast<CVodeUserData*>(user_data);
 
   EOS eos;
@@ -747,6 +777,7 @@ inline
 void 
 fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d)
 {
+  printf(" (In fKernelComputeAJchem) \n");
   UserData udata = static_cast<CVodeUserData*>(user_data);
 
   EOS eos;
@@ -920,21 +951,40 @@ fKernelComputeAJsys(int ncell, void *user_data, realtype *u_d, realtype *udot_d,
 }
 
 
-AMREX_GPU_DEVICE
+//AMREX_GPU_DEVICE
+AMREX_GPU_HOST_DEVICE
 inline
 void 
 fKernelDenseSolve(int ncell, realtype *x_d, realtype *b_d,
 		  int subsys_size, int subsys_nnz, realtype *csr_val)
 {
+  printf(" (In fKernelDenseSolve)\n");
   int offset   = ncell * subsys_size; 
   int offset_A = ncell * subsys_nnz;
+  printf(" -- offset %d, offset_A %d \n", offset, offset_A);
+  printf(" -- subsys_size %d, subsys_nnz %d \n", subsys_size, subsys_nnz);
 
   realtype* csr_val_cell = csr_val + offset_A;
   realtype* x_cell       = x_d + offset;
   realtype* b_cell       = b_d + offset;
 
+  //for (int j = 0; j < subsys_size; j++) {
+  //    printf("    %E \n", b_cell[j]);
+  //}
+  for (int i = 0; i < (NUM_SPECIES + 1); i++) {
+      for (int j = 0; j < (NUM_SPECIES + 1); j++) {
+          printf(" %E ", csr_val_cell[i*(NUM_SPECIES + 1) + j]);
+      }
+      printf(" \n");
+  }
+
   /* Solve the subsystem of the cell */
   sgjsolve(csr_val_cell, x_cell, b_cell);
+
+  for (int j = 0; j < subsys_size; j++) {
+      printf("    %E \n", x_cell[j]);
+  }
+  amrex::Abort("\n TESTING \n");
 
 }
 
@@ -1002,7 +1052,7 @@ fKernelDenseSolve(int ncell, realtype *x_d, realtype *b_d,
  * CUSTOM SOLVER STUFF
  */
 SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, 
-		int nsubsys, int subsys_size, int subsys_nnz) 
+		int nsubsys, int subsys_size, int subsys_nnz, cudaStream_t stream) 
 {
   SUNLinearSolver S;
   SUNLinearSolverContent_Dense_custom content;
@@ -1043,35 +1093,35 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A,
 
   cudaError_t cuerr;
   //cuerr = cudaMallocManaged(&d_colind, sizeof(int) * (subsys_nnz * nsubsys));
-  //cuerr = cudaMalloc(&d_colind, sizeof(int) * (subsys_nnz * nsubsys));
-  //if (cuerr != cudaSuccess) return(NULL); 
+  cuerr = cudaMalloc(&d_colind, sizeof(int) * (subsys_nnz * nsubsys));
+  if (cuerr != cudaSuccess) return(NULL); 
 
   //cuerr = cudaMallocManaged(&d_rowptr, sizeof(int) * (subsys_size * nsubsys + 1));
-  //cuerr = cudaMalloc(&d_rowptr, sizeof(int) * (subsys_size * nsubsys + 1));
-  //if (cuerr != cudaSuccess) { cudaFree(d_colind); return(NULL); }
+  cuerr = cudaMalloc(&d_rowptr, sizeof(int) * (subsys_size * nsubsys + 1));
+  if (cuerr != cudaSuccess) { cudaFree(d_colind); return(NULL); }
 
-  //cuerr = cudaMallocManaged(&d_values, sizeof(double) * (subsys_nnz * nsubsys));
-  cuerr = cudaMalloc(&d_values, sizeof(double) * (subsys_nnz * nsubsys));
+  cuerr = cudaMallocManaged(&d_values, sizeof(double) * (subsys_nnz * nsubsys));
+  //cuerr = cudaMalloc(&d_values, sizeof(double) * (subsys_nnz * nsubsys));
   if (cuerr != cudaSuccess) { cudaFree(d_rowptr); cudaFree(d_colind); return(NULL) ; }
 
   /* copy matrix stuff to the device */
-  //cuerr = cudaMemcpy(d_colind, SUNSparseMatrix_IndexValues(A),
-  //      	  sizeof(int) * subsys_nnz * nsubsys, cudaMemcpyHostToDevice);
-  //if (cuerr != cudaSuccess) { 
-  //        cudaFree(d_rowptr); 
-  //        cudaFree(d_colind); 
-  //        cudaFree(d_values); 
-  //        return(NULL); 
-  //};
+  cuerr = cudaMemcpy(d_colind, SUNSparseMatrix_IndexValues(A),
+        	  sizeof(int) * subsys_nnz * nsubsys, cudaMemcpyHostToDevice);
+  if (cuerr != cudaSuccess) { 
+          cudaFree(d_rowptr); 
+          cudaFree(d_colind); 
+          cudaFree(d_values); 
+          return(NULL); 
+  };
 
-  //cuerr = cudaMemcpy(d_rowptr, SUNSparseMatrix_IndexPointers(A),
-  //      	  sizeof(int) * (subsys_size * nsubsys + 1), cudaMemcpyHostToDevice);
-  //if (cuerr != cudaSuccess) { 
-  //        cudaFree(d_rowptr); 
-  //        cudaFree(d_colind); 
-  //        cudaFree(d_values); 
-  //        return(NULL); 
-  //};
+  cuerr = cudaMemcpy(d_rowptr, SUNSparseMatrix_IndexPointers(A),
+        	  sizeof(int) * (subsys_size * nsubsys + 1), cudaMemcpyHostToDevice);
+  if (cuerr != cudaSuccess) { 
+          cudaFree(d_rowptr); 
+          cudaFree(d_colind); 
+          cudaFree(d_values); 
+          return(NULL); 
+  };
 
   /* Create an empty linear solver */
   S = NULL;
@@ -1109,6 +1159,7 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A,
   content->d_values    = d_values;
   content->d_colind    = d_colind;
   content->d_rowptr    = d_rowptr; 
+  content->stream      = stream; 
 
   return(S);
 }
@@ -1123,31 +1174,44 @@ SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S)
 int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol)
 {
+  printf("IN SUNLinSolSolve_Dense_custom !!\n");
   /* Get Device pointers for Kernel call */
   realtype *x_d      = N_VGetDeviceArrayPointer_Cuda(x);
   realtype *b_d      = N_VGetDeviceArrayPointer_Cuda(b);
+
+  /* DEBUG */
+  printf("SUNSparseMatrix A (NNZ, nbSubsyst) : (%d, %d) \n", SUN_CUSP_SUBSYS_NNZ(S), SUN_CUSP_NUM_SUBSYS(S));
 
   cudaError_t cuerr;
   cuerr = cudaMemcpy(SUN_CUSP_DVALUES(S), SUNSparseMatrix_Data(A),
         	  sizeof(double) * (SUN_CUSP_SUBSYS_NNZ(S) * SUN_CUSP_NUM_SUBSYS(S)), cudaMemcpyHostToDevice);
   if (cuerr != cudaSuccess) SUN_CUSP_LASTFLAG(S) = SUNLS_MEM_FAIL;
 
-  //realtype *data_d   = N_VGetDeviceArrayPointer_Cuda(SUN_CUSP_DVALUES(S));
+  /* DEBUG */
+  //for (int nc=0; nc<SUN_CUSP_NUM_SUBSYS(S); nc++) {
+  //    //for (int i=0; i<SUN_CUSP_SUBSYS_SIZE(S); i++) {
+  //    for (int i=0; i<SUN_CUSP_SUBSYS_NNZ(S); i++) {
+  //            printf(" %E ", SUNSparseMatrix_Data(A)[nc*SUN_CUSP_SUBSYS_NNZ(S) + i]);
+  //            //printf(" %E ", SUN_CUSP_DVALUES(S)[nc*SUN_CUSP_SUBSYS_NNZ(S) + i]);
+  //            //printf(" %E ", b_d[nc*SUN_CUSP_SUBSYS_SIZE(S) + i]);
+  //    }
+  //    printf("\n");
+  //}
+
+  printf("go into fKernelDenseSolve ?? \n");
 
   BL_PROFILE_VAR("fKernelDenseSolve()", fKernelDenseSolve);
   const auto ec = Gpu::ExecutionConfig(SUN_CUSP_NUM_SUBSYS(S));  
-  amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+  amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, SUN_CUSP_STREAM(S)>>>(
       [=] AMREX_GPU_DEVICE () noexcept {
           for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
 	      icell < SUN_CUSP_NUM_SUBSYS(S); icell += stride) {
 	      fKernelDenseSolve(icell, x_d, b_d,
-			      //SUN_CUSP_NUM_SUBSYS(S), SUN_CUSP_SUBSYS_NNZ(S), data_d);
-			      SUN_CUSP_NUM_SUBSYS(S), SUN_CUSP_SUBSYS_NNZ(S), SUN_CUSP_DVALUES(S));
+			      SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), SUN_CUSP_DVALUES(S));
 	  }
       }); 
+  fKernelDenseSolve(0, x_d, b_d, SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), SUN_CUSP_DVALUES(S));
   BL_PROFILE_VAR_STOP(fKernelDenseSolve);
-
-
 
   return(SUNLS_SUCCESS);
 }
@@ -1158,16 +1222,36 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
  * OTHERS
 */
 
-AMREX_GPU_HOST_DEVICE void fill_dense_csr(int * colVals, int * rowPtr) 
+AMREX_GPU_HOST_DEVICE void fill_dense_csr(int * colVals, int * rowPtr, int NCELLS, int base) 
 {
-  rowPtr[0]      = 1;
-  int nJdata_tmp = 1;
-  for (int l=0; l<(NUM_SPECIES + 1); l++) { 
-      for (int k=0; k<(NUM_SPECIES + 1); k++) {
-          colVals[nJdata_tmp-1] = k+1;
-	  nJdata_tmp = nJdata_tmp + 1;
+  int offset; 
+
+  if (base == 1) {
+      rowPtr[0]      = 1;
+      int nJdata_tmp = 1;
+      for (int nc=0; nc<NCELLS; nc++) {
+	  offset = nc * (NUM_SPECIES + 1);
+          for (int l=0; l<(NUM_SPECIES + 1); l++) { 
+              for (int k=0; k<(NUM_SPECIES + 1); k++) {
+                  colVals[nJdata_tmp-1] = k+1 + offset;
+                  nJdata_tmp = nJdata_tmp + 1;
+              }
+              rowPtr[offset + l+1] = nJdata_tmp;
+          }
       }
-      rowPtr[l+1] = nJdata_tmp;
+  } else {
+      rowPtr[0]      = 0;
+      int nJdata_tmp = 0;
+      for (int nc=0; nc<NCELLS; nc++) {
+	  offset = nc * (NUM_SPECIES + 1);
+          for (int l=0; l<(NUM_SPECIES + 1); l++) { 
+              for (int k=0; k<(NUM_SPECIES + 1); k++) {
+                  colVals[nJdata_tmp] = k + offset;
+                  nJdata_tmp = nJdata_tmp + 1;
+              }
+              rowPtr[offset + l+1] = nJdata_tmp;
+          }
+      }
   }
 }
 

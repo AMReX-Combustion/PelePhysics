@@ -10434,10 +10434,11 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int *  colVals, int *  rowPtrs, 
 
 /*compute the sparsity pattern of the system Jacobian */
 /*CSR format BASE 1 */
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP)
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCELLS, int base)
 {
     double c[21];
     double J[484];
+    int offset;
 
     for (int k=0; k<21; k++) {
         c[k] = 1.0/ 21.000000 ;
@@ -10445,21 +10446,46 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr
 
     aJacobian(J, c, 1500.0, *consP);
 
-    rowPtr[0] = 1;
-    int nJdata_tmp = 1;
-    for (int l=0; l<22; l++) {
-        for (int k=0; k<22; k++) {
-            if (k == l) {
-                colVals[nJdata_tmp-1] = l+1; 
-                nJdata_tmp = nJdata_tmp + 1; 
-            } else {
-                if(J[22*k + l] != 0.0) {
-                    colVals[nJdata_tmp-1] = k+1; 
-                    nJdata_tmp = nJdata_tmp + 1; 
+    if (base == 1) {
+        rowPtr[0] = 1;
+        int nJdata_tmp = 1;
+        for (int nc=0; nc<NCELLS; nc++) {
+            offset = nc * 22;
+            for (int l=0; l<22; l++) {
+                for (int k=0; k<22; k++) {
+                    if (k == l) {
+                        colVals[nJdata_tmp-1] = l+1 + offset; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    } else {
+                        if(J[22*k + l] != 0.0) {
+                            colVals[nJdata_tmp-1] = k+1 + offset; 
+                            nJdata_tmp = nJdata_tmp + 1; 
+                        }
+                    }
                 }
+                rowPtr[offset + (l + 1)] = nJdata_tmp;
             }
         }
-        rowPtr[l+1] = nJdata_tmp;
+    } else {
+        rowPtr[0] = 0;
+        int nJdata_tmp = 0;
+        for (int nc=0; nc<NCELLS; nc++) {
+            offset = nc * 22;
+            for (int l=0; l<22; l++) {
+                for (int k=0; k<22; k++) {
+                    if (k == l) {
+                        colVals[nJdata_tmp] = l + offset; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    } else {
+                        if(J[22*k + l] != 0.0) {
+                            colVals[nJdata_tmp] = k + offset; 
+                            nJdata_tmp = nJdata_tmp + 1; 
+                        }
+                    }
+                }
+                rowPtr[offset + (l + 1)] = nJdata_tmp;
+            }
+        }
     }
 
     return;
