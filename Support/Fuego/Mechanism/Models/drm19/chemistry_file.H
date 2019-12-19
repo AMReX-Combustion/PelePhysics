@@ -166,8 +166,7 @@ void egtransetCOFETA(double* COFETA);
 void egtransetCOFLAM(double* COFLAM);
 void egtransetCOFD(double* COFD);
 void egtransetKTDIF(int* KTDIF);
-
-/*gauss-jordan stuff*/
+/*gauss-jordan solver external routine */
 AMREX_GPU_HOST_DEVICE void sgjsolve(double* A, double* x, double* b);
 }
 

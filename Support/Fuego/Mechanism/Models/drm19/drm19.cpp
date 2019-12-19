@@ -10433,7 +10433,7 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int *  colVals, int *  rowPtrs, 
 }
 
 /*compute the sparsity pattern of the system Jacobian */
-/*CSR format BASE 1 */
+/*CSR format BASE is user choice */
 AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCELLS, int base)
 {
     double c[21];

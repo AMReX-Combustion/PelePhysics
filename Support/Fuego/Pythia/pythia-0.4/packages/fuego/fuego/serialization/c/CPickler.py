@@ -1070,7 +1070,7 @@ class CPickler(CMill):
             'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, int * consP);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS);',
-            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs, int * consP);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP);',
             'AMREX_GPU_HOST_DEVICE void aJacobian(double *  J, double *  sc, double T, int consP);',
@@ -1128,8 +1128,13 @@ class CPickler(CMill):
                 'void egtransetCOFLAM(double* COFLAM);',
                 'void egtransetCOFD(double* COFD);',
                 'void egtransetKTDIF(int* KTDIF);',
-                '}',
             ]
+
+        self._rep += [
+                self.line('gauss-jordan solver external routine'),
+                'AMREX_GPU_HOST_DEVICE void sgjsolve(double* A, double* x, double* b);',
+                '}',
+                ]
         return
 
 
@@ -7338,13 +7343,15 @@ class CPickler(CMill):
 
         ####
         self._write(self.line('compute the sparsity pattern of the system Jacobian'))
-        self._write(self.line('CSR format BASE 1'))
-        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP)')
+        self._write(self.line('CSR format BASE is user choice'))
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCELLS, int base)')
         self._write('{')
         self._indent()
 
         self._write('double c[%d];' % (nSpecies))
         self._write('double J[%d];' % (nSpecies+1)**2)
+        self._write('int offset;')
+
         self._write()
         self._write('for (int k=0; k<%d; k++) {' % nSpecies)
         self._indent()
@@ -7356,22 +7363,27 @@ class CPickler(CMill):
         self._write('aJacobian(J, c, 1500.0, *consP);')
 
         self._write()
+        self._write('if (base == 1) {')
+        self._indent()
         self._write('rowPtr[0] = 1;')
         self._write('int nJdata_tmp = 1;')
+        self._write('for (int nc=0; nc<NCELLS; nc++) {')
+        self._indent()
+        self._write('offset = nc * %d;' % (nSpecies+1));
         self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
         self._indent()
         self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
         self._indent()
         self._write('if (k == l) {')
         self._indent()
-        self._write('colVals[nJdata_tmp-1] = l+1; ')
+        self._write('colVals[nJdata_tmp-1] = l+1 + offset; ')
         self._write('nJdata_tmp = nJdata_tmp + 1; ')
         self._outdent()
         self._write('} else {')
         self._indent()
         self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
         self._indent()
-        self._write('colVals[nJdata_tmp-1] = k+1; ')
+        self._write('colVals[nJdata_tmp-1] = k+1 + offset; ')
         self._write('nJdata_tmp = nJdata_tmp + 1; ')
         self._outdent()
         self._write('}')
@@ -7379,7 +7391,45 @@ class CPickler(CMill):
         self._write('}')
         self._outdent()
         self._write('}')
-        self._write('rowPtr[l+1] = nJdata_tmp;')
+        self._write('rowPtr[offset + (l + 1)] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('} else {')
+        self._indent()
+        self._write('rowPtr[0] = 0;')
+        self._write('int nJdata_tmp = 0;')
+        self._write('for (int nc=0; nc<NCELLS; nc++) {')
+        self._indent()
+        self._write('offset = nc * %d;' % (nSpecies+1));
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if (k == l) {')
+        self._indent()
+        self._write('colVals[nJdata_tmp] = l + offset; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('} else {')
+        self._indent()
+        self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
+        self._indent()
+        self._write('colVals[nJdata_tmp] = k + offset; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._write('rowPtr[offset + (l + 1)] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
         self._outdent()
         self._write('}')
 
