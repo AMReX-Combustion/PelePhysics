@@ -23,7 +23,6 @@ contains
     use control_parameters
     use spray_module
     use transport_module, only : get_transport_coeffs
-    use network, only : nspecies
     implicit none
 
     integer,          intent(in   )        :: np
@@ -43,7 +42,7 @@ contains
     integer          :: isub, nsub
     real(amrex_real) :: wx_lo, wy_lo, wx_hi, wy_hi
     real(amrex_real) :: lx, ly, lx2, ly2
-    real(amrex_real) :: inv_dx(2), inv_vol
+    real(amrex_real) :: inv_dx(2), inv_vol, sub_inv_vol
     real(amrex_real) :: force(2), fluid_vel(2), fluid_dens, fluid_temp, drag_coef
     real(amrex_real) :: fluid_pres, fluid_Y(nspecies), Y_dot(nspec_f)
     real(amrex_real) :: m_dot, d_dot, convection, tmp_conv, dt
@@ -190,7 +189,6 @@ contains
        eos_state % T   = state(i-1,j-1,UTEMP) ! Initial guess for the EOS
        eos_state % e   = state(i-1,j-1,UEINT) / state(i-1,j-1,URHO)
        eos_state % massfrac  = state(i-1,j-1,UFS:UFS+nspecies-1) / state(i,j-1,URHO)
-       eos_state % massfrac  = state(i-1,j-1,UFS:UFS+nspecies-1) / state(i-1,j-1,URHO)
 
        call eos_re(eos_state)
        rholl  = eos_state % rho
@@ -300,7 +298,7 @@ contains
                                  la_dummy, lo, hi)
 
        D_skin(n,1:nspec_f) = D_dummy(1,1,1,fuel_indx(1:nspec_f)) ! now in g/cm^3*cm^2/s
-       D_skin(n,1) = 0.22*fluid_dens ! water
+       !D_skin(n,1) = 0.22*fluid_dens ! water
        !visc = 1.827d-4          ! nominal value of fluid viscosity in cgs
        mu_skin(n) = mu_dummy(1,1,1)
        xi_skin = xi_dummy(1,1,1)
@@ -453,16 +451,15 @@ contains
            ! This is with enthalpy of the vapor phase
            !h_skin(L) = -cp_f(n,L)*(temp_skin(n)-particles(n)%temp)+L_fuel(L)
            h_skin(L) = cp_f(n,L)*(temp_skin(n)-particles(n)%temp)+L_fuel(L)
-           !h_skin(L) = -1.5e7*(temp_skin(n)-particles(n)%temp)+L_fuel(L)
 
          end do
 
          ! Add mass transfer term
-         heat_src = convection+&
-                   -sum(Y_dot*h_skin,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
-         !          sum(Y_dot*L_fuel,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
+         heat_src = convection*cp_d_av*pmass  &
+                   -sum(Y_dot*h_skin,DIM=nspec_f)
+         !         -sum(Y_dot*L_fuel,DIM=nspec_f)
 
-         inv_tau_T = convection/(cp_d_av*pmass*particles(n)%temp) 
+         inv_tau_T = convection/temp_diff(n)
          if(isub.eq.1) then ! last chance to modify nsub
            nsub = max(nsub,int(flow_dt*inv_tau_T)+1)
            nsub = min(nsub,NSUBMAX)
@@ -472,12 +469,14 @@ contains
 
        endif
 
+       if(isub.eq.1) then
+         sub_inv_vol = inv_vol/nsub ! VIP: add only a fraction of the source term
+       endif
+
        ! ****************************************************
        ! Put the same forcing term on the grid (cell centers)
        ! ****************************************************
        if(is_mom_tran.eq.1.or.is_mass_tran.eq.1.or.is_heat_tran.eq.1) then
-
-          inv_vol = inv_vol/nsub ! VIP: add only a fraction of the source term
 
           lx2 = (particles(n)%pos(1) - plo(1))*inv_dx(1) - 0.5d0
           ly2 = (particles(n)%pos(2) - plo(2))*inv_dx(2) - 0.5d0
@@ -491,10 +490,10 @@ contains
           wy_lo = 1.0d0 - wy_hi
 
           ! These are the coefficients for the deposition of sources from particle locations to the fields
-          coef_ll = wx_lo * wy_lo * inv_vol
-          coef_hl = wx_hi * wy_lo * inv_vol
-          coef_lh = wx_lo * wy_hi * inv_vol
-          coef_hh = wx_hi * wy_hi * inv_vol
+          coef_ll = wx_lo * wy_lo * sub_inv_vol
+          coef_hl = wx_hi * wy_lo * sub_inv_vol
+          coef_lh = wx_lo * wy_hi * sub_inv_vol
+          coef_hh = wx_hi * wy_hi * sub_inv_vol
 
           if (i2 .lt. source_lo(1) .or. i2 .gt. source_hi(1)-1 .or. &
               j2 .lt. source_lo(2) .or. j2 .gt. source_hi(2)-1) then
@@ -563,7 +562,7 @@ contains
        end do
 
        ! consider changing to lagged temperature to improve order
-       particles(n)%temp = particles(n)%temp + 0.5d0*dt * convection / (cp_d_av*pmass)
+       particles(n)%temp = particles(n)%temp + 0.5d0*dt * convection 
  
        ! Update diameter by half dt
        particles(n)%diam = max(particles(n)%diam + 0.5d0*dt * d_dot,1e-6)
