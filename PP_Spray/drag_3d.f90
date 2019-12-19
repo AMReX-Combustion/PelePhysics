@@ -43,7 +43,7 @@ contains
     real(amrex_real) :: wx_lo, wy_lo, wz_lo, wx_hi, wy_hi, wz_hi
     real(amrex_real) :: lx, ly, lz, lx2, ly2, lz2
     real(amrex_real) :: half_dt
-    real(amrex_real) :: inv_dx(3), inv_vol
+    real(amrex_real) :: inv_dx(3), inv_vol, sub_inv_vol
     real(amrex_real) :: force(3), fluid_vel(3), fluid_dens, fluid_temp, drag_coef
     real(amrex_real) :: rholoc(0:1,0:1,0:1),Tloc(0:1,0:1,0:1),Yloc(0:1,0:1,0:1,1:nspecies) 
     real(amrex_real) :: fluid_pres, fluid_Y(nspecies), Y_dot(nspec_f)
@@ -317,8 +317,9 @@ contains
                                  xi_dummy, lo, hi, &
                                  la_dummy, lo, hi)
 
-       D_skin(n,1:nspec_f) = D_dummy(1,1,1,fuel_indx(1:nspec_f)) ! now in kg/cm^3 cm^2/s
-       visc = 1.827d-4          ! nominal value of fluid viscosity in cgs
+       D_skin(n,1:nspec_f) = D_dummy(1,1,1,fuel_indx(1:nspec_f)) ! now in g/cm^3 cm^2/s
+       ! reference value for n-dodecane @ 500 K: D_skin*rho_v = 1.011e-4 kg/cm/s
+       !visc = 1.827d-4          ! nominal value of fluid viscosity in cgs
        mu_skin(n) = mu_dummy(1,1,1)
        xi_skin = xi_dummy(1,1,1)
        lambda_skin(n) = la_dummy(1,1,1)
@@ -341,9 +342,10 @@ contains
        diff_velmag = sqrt( diff_u**2 + diff_v**2 + diff_w**2)
 
        ! Local Reynolds number = (Density * Relative Velocity) * (Particle Diameter) / (Viscosity)
-       reyn = fluid_dens*diff_velmag*particles(n)%diam/visc
+       reyn = fluid_dens*diff_velmag*particles(n)%diam/mu_skin(n)
 
        drag_coef = 1.0d0+0.15d0*reyn**(0.687d0)
+
        ! Time constant.
        inv_tau = (18.0d0*mu_skin(n))/(particles(n)%density*particles(n)%diam**2)
 
@@ -354,8 +356,7 @@ contains
          !if(nsub.gt.1) print *,"ncycles - v",nsub,1d0/inv_tau
        endif
 
-       ! Drag coefficient =  (pi / 8) * (Density * Relative Velocity) * (Particle Diameter)**2
-       drag = 0.125d0*pi*(particles(n)%diam)**2 *fluid_dens*diff_velmag
+       drag = inv_tau*drag_coef*pmass
 
        force(1) = drag*diff_u
        force(2) = drag*diff_v
@@ -416,12 +417,16 @@ contains
                                   invfmolwt(L), inv_boil_temp(L),inv_Ru, p0, &
                                   spalding_B(n,L))
 
-           ! CALCULATE Y_dot (mass/time) FOR EACH SPECIES 
-           call calc_spec_evap_rate(particles(n)%diam,spalding_B(n,L),reyn,&
+           if(spalding_B(n,L).gt.0d0) then
+
+             ! CALCULATE Y_dot (mass/time) FOR EACH SPECIES 
+             call calc_spec_evap_rate(particles(n)%diam,spalding_B(n,L),reyn,&
                                     Sc_skin(n,L),D_skin(n,L),Sh(n,L),Y_dot(L))
 
-           ! Total mass transfer is sum of individual species transfer (in g/s)
-           m_dot = m_dot + Y_dot(L)
+             ! Total mass transfer is sum of individual species transfer (in g/s)
+             m_dot = m_dot + Y_dot(L)
+
+           endif
 
         end do ! do L
 
@@ -469,10 +474,10 @@ contains
          inv_cp_d = 1.0d0/(cp_d_av*pmass*Pr_skin(n))
 
          ! Calculate energy transfer due to heat transfer and evaporation
-         do L = 1,nspec_f
+         ! Calculate Nusselt Number (Uncorrected)
+         Nu(n) = 1.0d0+max(reyn**0.077,1.0d0)*(1.0d0+reyn*Pr_skin(n))**one_third ! Eq. (21)
 
-        ! Calculate Nusselt Number (Uncorrected)
-           Nu(n) = 1.0d0+max(reyn**0.077,1.0d0)*(1.0d0+reyn*Pr_skin(n))**one_third ! Eq. (21)
+         do L = 1,nspec_f
 
            ! Calculate Spalding Heat transfer number (B_T) and the corrected
            ! nusselt number
@@ -480,10 +485,13 @@ contains
                 cp_f(n,L), cp_skin(n), spalding_B(n,L), B_T(n,L))
 
            tmp_conv = temp_diff(n)*one_third*inv_cp_d*cp_skin(n)*pmass*&
-                      Nu(n)*inv_tau
+                      Nu(n)*inv_tau    ! in [K/s]
 
-!          convection = convection + tmp_conv*log(1+spalding_B(n,L))/B_T(n,L)
-           convection = convection + tmp_conv
+           if(spalding_B(n,L).gt.0d0) then
+             convection = convection + tmp_conv*log(1+spalding_B(n,L))/B_T(n,L)
+           else
+             convection = convection + tmp_conv
+           endif
 
            ! Calculate energy needed to raise temperature of vapor. Why the
            ! liquid phase values?
@@ -492,14 +500,13 @@ contains
            ! This is with enthalpy of the vapor phase
            !h_skin(L) = -cp_f(n,L)*(temp_skin(n)-particles(n)%temp)+L_fuel(L)
            h_skin(L) = cp_f(n,L)*(temp_skin(n)-particles(n)%temp)+L_fuel(L)
-           !h_skin(L) = -1.5e7*(temp_skin(n)-particles(n)%temp)+L_fuel(L)
 
          end do ! do L
 
          ! Add mass transfer term
-         heat_src = convection-&
-                   sum(Y_dot*h_skin,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
-         !         -sum(Y_dot*L_fuel,DIM=nspec_f)*inv_cp_d*Pr_skin(n)
+         heat_src = convection*cp_d_av*pmass &
+                   -sum(Y_dot*h_skin,DIM=nspec_f)
+         !         -sum(Y_dot*L_fuel,DIM=nspec_f)
 
          if (heat_src.ne.heat_src) then 
            print *,'Heat src BUST',heat_src,'convc',convection,'pID ', particles(n)%id,isub,nsub, &
@@ -507,12 +514,12 @@ contains
            stop
          endif
 
-         if(heat_src.gt.1e6) then
-           print *,"heat src", heat_src,particles(n)%temp,particles(n)%diam
-           heat_src = 1e6
-         endif
+!        if(heat_src.gt.1e6) then
+!          print *,"heat src", heat_src,particles(n)%temp,particles(n)%diam
+!          heat_src = 1e6
+!        endif
 
-         inv_tau_T = convection/(cp_d_av*pmass*particles(n)%temp) 
+         inv_tau_T = convection/temp_diff(n)
          if(isub.eq.1) then ! last chance to modify nsub
            nsub = max(nsub,int(flow_dt*inv_tau_T)+1)
            nsub = min(nsub,NSUBMAX)
@@ -522,13 +529,16 @@ contains
 
        endif ! if(is_heat_tran.eq.1 .or. is_mass_tran.eq.1) 
 
+       if(isub.eq.1) then 
+         sub_inv_vol = inv_vol/nsub ! VIP: add only a fraction of the source term
+       endif
+
        ! ****************************************************
        ! Put the same forcing term on the grid (cell centers)
        ! ****************************************************
 
        if(is_mom_tran.eq.1.or.is_mass_tran.eq.1.or.is_heat_tran.eq.1) then
 
-          inv_vol = inv_vol/nsub ! VIP: add only a fraction of the source term
 
           lx2 = (particles(n)%pos(1) - plo(1))*inv_dx(1) - 0.5d0
           ly2 = (particles(n)%pos(2) - plo(2))*inv_dx(2) - 0.5d0
@@ -547,14 +557,14 @@ contains
           wz_lo = 1.0d0 - wz_hi
   
           ! These are the coefficients for the deposition of sources from particle locations to the fields
-          coef_lll = (wx_lo * wy_lo * wz_lo) * inv_vol
-          coef_hll = (wx_hi * wy_lo * wz_lo) * inv_vol
-          coef_lhl = (wx_lo * wy_hi * wz_lo) * inv_vol
-          coef_hhl = (wx_hi * wy_hi * wz_lo) * inv_vol
-          coef_llh = (wx_lo * wy_lo * wz_hi) * inv_vol
-          coef_hlh = (wx_hi * wy_lo * wz_hi) * inv_vol
-          coef_lhh = (wx_lo * wy_hi * wz_hi) * inv_vol
-          coef_hhh = (wx_hi * wy_hi * wz_hi) * inv_vol
+          coef_lll = (wx_lo * wy_lo * wz_lo) * sub_inv_vol
+          coef_hll = (wx_hi * wy_lo * wz_lo) * sub_inv_vol
+          coef_lhl = (wx_lo * wy_hi * wz_lo) * sub_inv_vol
+          coef_hhl = (wx_hi * wy_hi * wz_lo) * sub_inv_vol
+          coef_llh = (wx_lo * wy_lo * wz_hi) * sub_inv_vol
+          coef_hlh = (wx_hi * wy_lo * wz_hi) * sub_inv_vol
+          coef_lhh = (wx_lo * wy_hi * wz_hi) * sub_inv_vol
+          coef_hhh = (wx_hi * wy_hi * wz_hi) * sub_inv_vol
 
        if (i2 .lt. source_lo(1) .or. i2 .gt. source_hi(1)-1 .or. &
            j2 .lt. source_lo(2) .or. j2 .gt. source_hi(2)-1 .or. &
@@ -566,8 +576,8 @@ contains
        endif
  
        endif
-       ! Force component "nc" is component "nf" in the ordering of (URHO, UMX, UMY, ...)
-       if(is_mass_tran.eq.1) then
+
+       if(is_mass_tran.eq.1.and.is_mass_skip.eq.0) then
           nf = UFS + fuel_indx(1)-1
           source(i2,   j2  ,k2  ,nf) = source(i2,   j2  ,k2  ,nf) - coef_lll*Y_dot(1)
           source(i2,   j2+1,k2  ,nf) = source(i2,   j2+1,k2  ,nf) - coef_lhl*Y_dot(1)
@@ -596,7 +606,7 @@ contains
 
        endif
 
-       if(is_heat_tran.eq.1) then
+       if(is_heat_tran.eq.1.and.is_heat_skip.eq.0) then
 
           source(i2,   j2  ,k2  ,UEINT) = source(i2,   j2  ,k2  ,UEINT) - coef_lll*heat_src
           source(i2,   j2+1,k2  ,UEINT) = source(i2,   j2+1,k2  ,UEINT) - coef_lhl*heat_src
@@ -643,18 +653,18 @@ contains
 
           ! Update position by full dt
           if (do_move .eq. 1) &
-             particles(n)%pos(nc) =particles(n)%pos(nc) + dt * particles(n)%vel(nc) 
+             particles(n)%pos(nc) = particles(n)%pos(nc) + dt * particles(n)%vel(nc) 
        end do
 
        ! consider changing to lagged temperature to improve order
-       delta_T =  0.5d0*dt * convection / (cp_d_av*pmass)
+       delta_T =  0.5d0*dt * convection 
 
        particles(n)%temp = particles(n)%temp + delta_T
  
        ! Update diameter by half dt
        particles(n)%diam = max(particles(n)%diam + 0.5d0*dt * d_dot,1e-6)
 
-        if ((particles(n)%diam.lt.1e-4).or.(particles(n)%temp.gt.fuel_boil_temp(1))) then 
+        if ((particles(n)%diam.lt.1e-4).or.(particles(n)%temp.ge.0.9999*fuel_boil_temp(1))) then 
           ! reached minimum theeshold size or boiling temperature
           print *,'PARTICLE ID ', particles(n)%id,' fully evaporated'
           print *,'at pos',particles(n)%pos(1),particles(n)%pos(2),particles(n)%pos(3)
@@ -752,7 +762,6 @@ contains
        end do
        end do
     end if
-
 
     call destroy(eos_state)
 
