@@ -1361,12 +1361,12 @@ UserData AllocUserData(int reactor_type, int num_cells)
       std::cout << " There was " << counter << " non zero elems (compare to the "<<data_wk->NNZ<< " we need)" << std::endl;
 
       /* SYST JAC */
-      SPARSITY_INFO_SYST(&(data_wk->NNZ),&HP);
+      SPARSITY_INFO_SYST(&(data_wk->NNZ),&HP,1);
       amrex::Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
       PS = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
       rowCount = (int*) SUNSparseMatrix_IndexPointers(PS); 
       colIdx   = (int*) SUNSparseMatrix_IndexValues(PS);
-      SPARSITY_PREPROC_SYST_CSR(colIdx,rowCount,&HP);
+      SPARSITY_PREPROC_SYST_CSR(colIdx,rowCount,&HP,1,1);
       /* CHEMISTRY JAC */
       std::cout <<" " << std::endl;
       std::cout << "*** Treating SYST Jac (CSR symbolic analysis)***" << std::endl;

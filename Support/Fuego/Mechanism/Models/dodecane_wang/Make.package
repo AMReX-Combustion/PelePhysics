@@ -1,6 +1,6 @@
 CEXE_headers+=chemistry_file.H
 
-CEXE_sources+=dodecane_wang.cpp
+CEXE_sources+=dodecane_wang.cpp solver.cpp
 
 LIBRARIES += 
 
