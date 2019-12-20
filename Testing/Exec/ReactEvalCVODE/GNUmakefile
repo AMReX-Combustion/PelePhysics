@@ -32,8 +32,8 @@ USE_KLU_PP = TRUE
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
-  Chemistry_Model = drm19
-  #Chemistry_Model = dodecane_wang
+  #Chemistry_Model = drm19
+  Chemistry_Model = dodecane_wang
   #Chemistry_Model = LiDryer
   Reactions_dir   = Fuego
   Transport_dir   = Simple
