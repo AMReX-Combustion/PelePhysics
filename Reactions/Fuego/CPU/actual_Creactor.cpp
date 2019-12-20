@@ -4,6 +4,9 @@
 #include "mechanism.h"
 #include <eos.H>
 
+#define SUN_CUSP_CONTENT(S)        ( (SUNLinearSolverContent_Dense_custom)(S->content) )
+#define SUN_CUSP_REACTYPE(S)       ( SUN_CUSP_CONTENT(S)->reactor_type )
+
 /**********************************/
 /* Global Variables */
   N_Vector y         = NULL;
@@ -146,7 +149,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 	    if(check_flag((void *)A, "SUNDenseMatrix", 0)) return(1);
 
 	    /* Create dense SUNLinearSolver object for use by CVode */
-	    LS = SUNLinSol_dense_custom(y, A);
+	    LS = SUNLinSol_dense_custom(y, A, *reactor_type);
 	    if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
 
 	    /* Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode */
@@ -650,7 +653,7 @@ int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 	  nbVals = data_wk->colPtrs[0][i]-data_wk->colPtrs[0][i - 1];
 	  for (int j = 0; j < nbVals; j++) {
 	          idx = data_wk->rowVals[0][ data_wk->colPtrs[0][i - 1] + j ];
-	              Jdata[ data_wk->colPtrs[0][offset + i - 1] + j ] = Jmat_tmp[(i - 1) * (NUM_SPECIES + 1) + idx];
+	          Jdata[ data_wk->colPtrs[0][offset + i - 1] + j ] = Jmat_tmp[(i - 1) * (NUM_SPECIES + 1) + idx];
 	  }
       }
   }
@@ -992,10 +995,10 @@ int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
 /* 
  * CUSTOM SOLVER STUFF
  */
-SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A) 
+SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, int reactor_type) 
 {
   SUNLinearSolver S;
-  SUNLinearSolverContent_Dense content;
+  SUNLinearSolverContent_Dense_custom content;
 
   /* Create an empty linear solver */
   S = NULL;
@@ -1004,19 +1007,19 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A)
 
   /* Attach operations */ 
   S->ops->gettype    = SUNLinSolGetType_Dense_custom;
-  //S->ops->getid      = SUNLinSolGetID_Dense_custom;
   S->ops->solve      = SUNLinSolSolve_Dense_custom;
 
   /* Create content */
   content = NULL; 
-  content = (SUNLinearSolverContent_Dense) malloc(sizeof *content);
+  content = (SUNLinearSolverContent_Dense_custom) malloc(sizeof *content);
   if (content == NULL) { SUNLinSolFree(S); return(NULL); }
 
   /* Attach content */
   S->content = content; 
 
   /* Fill content */ 
-  content->last_flag = 0;
+  content->last_flag    = 0;
+  content->reactor_type = reactor_type;
 
   return(S);
 }
@@ -1035,43 +1038,37 @@ SUNLinearSolver_ID SUNLinSolGetID_Dense_custom(SUNLinearSolver S)
 int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol)
 {
-  /* Make local copies of pointers in user_data (cell M)*/
-  //UserData data_wk;
-  //data_wk = (UserData) user_data;   
 
-  int HP, NNZ;
-  realtype *A_colj;
   realtype *x_d      = N_VGetArrayPointer(x);
   realtype *b_d      = N_VGetArrayPointer(b);
-  //if (data_wk->ireactor_type == eint_rho) {
-  //    HP = 0;
-  //} else {
-  //    HP = 1;
-  //}
-  //SPARSITY_INFO(&NNZ,&HP,1);
-  
 
+  int HP, NNZ;
+  if (SUN_CUSP_REACTYPE(S) == eint_rho) {
+      HP = 0;
+  } else {
+      HP = 1;
+  }
+  SPARSITY_INFO_SYST(&NNZ,&HP,1);
+  
   SUNMatrix A_csr;
-  NNZ = (NUM_SPECIES+1)*(NUM_SPECIES+1);
   A_csr = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), NNZ, CSR_MAT);
   int *colIdx, *rowCount;
   double *Data;
   rowCount = (int*) SUNSparseMatrix_IndexPointers(A_csr); 
   colIdx   = (int*) SUNSparseMatrix_IndexValues(A_csr);
   Data     = (double*) SUNSparseMatrix_Data(A_csr);
-  //SPARSITY_PREPROC_CSR(colIdx,rowCount,&HP,1);
-  rowCount[0] = 0;
-  int counter = 0;
-  for (int j = 0; j < NUM_SPECIES+1; j++) {
-      A_colj = SUNDenseMatrix_Column(A,j);
-      for (int i = 0; i < NUM_SPECIES+1; i++) {
-          colIdx[rowCount[i] + j] = j;
-          Data[rowCount[i] + j]   = A_colj[i];
-          rowCount[i+1]           = (i+1)*(NUM_SPECIES+1); 
+  SPARSITY_PREPROC_SYST_CSR(colIdx,rowCount,&HP,1,0);
+  realtype *A_colj;
+  int nbVals, idx;
+  for (int i = 0; i < NUM_SPECIES+2; i++) {
+      nbVals = rowCount[i+1] - rowCount[i];
+      for (int j = 0; j < nbVals; j++) {
+          idx = colIdx[rowCount[i] + j];
+          A_colj = SUNDenseMatrix_Column(A,idx);
+	  Data[rowCount[i] + j] = A_colj[i];
       }
   }
 
-  //amrex::Print() <<"\n before sgjsolve\n";
   sgjsolve(Data, x_d, b_d);
 
   return(SUNLS_SUCCESS);

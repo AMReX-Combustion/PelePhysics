@@ -128,7 +128,14 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 
 /**********************************/
 /* custom solver */
-SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A); 
+struct _SUNLinearSolverContent_Dense_custom {
+	sunindextype       last_flag;
+	int                reactor_type;
+};
+
+typedef struct _SUNLinearSolverContent_Dense_custom *SUNLinearSolverContent_Dense_custom; 
+
+SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, int reactor_type); 
 
 SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S); 
 SUNLinearSolver_ID SUNLinSolGetID_Dense_custom(SUNLinearSolver S); 
