@@ -4,7 +4,7 @@
 #include "mechanism.h"
 #include <eos.H>
 
-#define SUN_CUSP_CONTENT(S)        ( (SUNLinearSolverContent_Dense_custom)(S->content) )
+#define SUN_CUSP_CONTENT(S)        ( (SUNLinearSolverContent_Sparse_custom)(S->content) )
 #define SUN_CUSP_REACTYPE(S)       ( SUN_CUSP_CONTENT(S)->reactor_type )
 
 /**********************************/
@@ -24,7 +24,7 @@
   int dense_solve           = 1;
   int sparse_solve          = 5;
   int iterative_gmres_solve = 99;
-  int dense_solve_custom    = 101;
+  int sparse_solve_custom    = 101;
   int hack_dump_sparsity_pattern = -5;
   int eint_rho = 1; // in/out = rhoE/rhoY
   int enth_rho = 2; // in/out = rhoH/rhoY 
@@ -122,7 +122,6 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 #endif
 	    	amrex::Print() << "\n--> Using a Direct Dense Solver\n";    
 	    }
-
             /* Create dense SUNMatrix for use in linear solves */
 	    A = SUNDenseMatrix(neq_tot, neq_tot);
 	    if(check_flag((void *)A, "SUNDenseMatrix", 0)) return(1);
@@ -135,7 +134,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 	    flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
 	    if(check_flag(&flag, "CVDlsSetLinearSolver", 1)) return(1);
 
-	} else if (data->isolve_type == dense_solve_custom) {
+	} else if (data->isolve_type == sparse_solve_custom) {
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
@@ -143,13 +142,12 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 #endif
 	    	amrex::Print() << "\n--> Using a custom Direct Dense Solver\n";    
 	    }
-
             /* Create dense SUNMatrix for use in linear solves */
-	    A = SUNDenseMatrix(neq_tot, neq_tot);
+	    A = SUNSparseMatrix(neq_tot, neq_tot, (data->NNZ)*data->ncells, CSR_MAT);
 	    if(check_flag((void *)A, "SUNDenseMatrix", 0)) return(1);
 
 	    /* Create dense SUNLinearSolver object for use by CVode */
-	    LS = SUNLinSol_dense_custom(y, A, *reactor_type);
+	    LS = SUNLinSol_sparse_custom(y, A, *reactor_type, data->ncells, (NUM_SPECIES+1), data->NNZ);
 	    if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
 
 	    /* Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode */
@@ -265,7 +263,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 		flag = CVodeSetJacFn(cvode_mem, cJac_KLU);
 		if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1); 
 #endif
-	    } else {
+	    } else if (data->isolve_type == dense_solve){
 #ifdef _OPENMP
                 if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
@@ -275,6 +273,18 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 	        }
 	        /* Set the user-supplied Jacobian routine Jac */
                 flag = CVodeSetJacFn(cvode_mem, cJac);
+		if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1);
+
+	    }  else if (data->isolve_type == sparse_solve_custom) {
+#ifdef _OPENMP
+                if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+                if (data->iverbose > 0) {
+#endif
+                    amrex::Print() << "    With a Sparse Analytical J\n";
+	        }
+	        /* Set the user-supplied Jacobian routine Jac */
+                flag = CVodeSetJacFn(cvode_mem, cJac_sps);
 		if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1);
 	    }
 	}
@@ -565,6 +575,94 @@ int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
       J_col_k = SM_COLUMN_D(J,offset + NUM_SPECIES);
       for (int i = 0; i < NUM_SPECIES; i++){
           J_col_k[offset + i] = Jmat_tmp[NUM_SPECIES*(NUM_SPECIES+1)+i] * molecular_weight[i]; 
+      }
+  }
+
+  return(0);
+
+}
+
+/* Analytical SPARSE Jacobian evaluation */
+int cJac_sps(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
+		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
+
+  /* Make local copies of pointers to input data (big M) */
+  realtype *ydata           = N_VGetArrayPointer(u);
+  sunindextype *rowPtrs_tmp = SUNSparseMatrix_IndexPointers(J);
+  sunindextype *colIndx_tmp = SUNSparseMatrix_IndexValues(J);
+  realtype *Jdata           = SUNSparseMatrix_Data(J);
+
+  /* Make local copies of pointers in user_data (cell M)*/
+  UserData data_wk;
+  data_wk = (UserData) user_data;   
+
+  /* MW CGS */
+  realtype molecular_weight[NUM_SPECIES];
+  CKWT(molecular_weight);
+
+  /* Fixed colVals*/
+  for (int i=0;i<data_wk->NNZ;i++) {
+      colIndx_tmp[i] = data_wk->colVals[i];
+  }
+  /* Fixed rowPtrs */
+  for (int i=0;i<(NUM_SPECIES + 2);i++) {
+      rowPtrs_tmp[i] = data_wk->rowPtrs[i];
+  }
+
+  /* Temp vectors */
+  realtype temp_save_lcl, temp;
+  realtype massfrac[NUM_SPECIES];
+  realtype Jmat_tmp[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
+  /* EOS object in cpp */
+  EOS eos;
+  /* Idx for sparsity */
+  int tid, offset, offset_J, nbVals, idx;
+  /* Save Jac from cell to cell if more than one */
+  temp_save_lcl = 0.0;
+  for (tid = 0; tid < data_wk->ncells; tid ++) {
+      /* Offset in case several cells */
+      offset   = tid * (NUM_SPECIES + 1); 
+      offset_J = tid * data_wk->NNZ;
+      /* rho MKS */ 
+      realtype rho = 0.0;
+      for (int i = 0; i < NUM_SPECIES; i++){
+          rho = rho + ydata[offset + i];
+      }
+      /* Yks */
+      for (int i = 0; i < NUM_SPECIES; i++){
+          massfrac[i] = ydata[offset + i] / rho;
+      }
+      /* temp */
+      temp = ydata[offset + NUM_SPECIES];
+      /* Do we recompute Jac ? */
+      if (fabs(temp - temp_save_lcl) > 1.0) {
+          /* NRG CGS */
+          int consP;
+          if (data_wk->ireactor_type == eint_rho) {
+              consP = 0;
+          } else {
+              consP = 1;
+          }
+          eos.eos_RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
+	  temp_save_lcl = temp;
+	  /* rescale */
+          for (int i = 0; i < NUM_SPECIES; i++) {
+              for (int k = 0; k < NUM_SPECIES; k++) {
+                  Jmat_tmp[k*(NUM_SPECIES+1) + i] = Jmat_tmp[k*(NUM_SPECIES+1) + i] * molecular_weight[i] / molecular_weight[k];
+              }
+              Jmat_tmp[i*(NUM_SPECIES+1) + NUM_SPECIES] = Jmat_tmp[i*(NUM_SPECIES+1) + NUM_SPECIES] / molecular_weight[i];
+          }
+          for (int i = 0; i < NUM_SPECIES; i++) {
+              Jmat_tmp[NUM_SPECIES*(NUM_SPECIES+1) + i] = Jmat_tmp[NUM_SPECIES*(NUM_SPECIES+1) + i] * molecular_weight[i];
+          }
+      }
+      /* Go from Dense to Sparse */
+      for (int i = 1; i < NUM_SPECIES+2; i++) {
+	  nbVals = data_wk->rowPtrs[i]-data_wk->rowPtrs[i - 1];
+	  for (int j = 0; j < nbVals; j++) {
+	          idx = data_wk->colVals[ data_wk->rowPtrs[i - 1] + j ];
+	          Jdata[ offset_J + data_wk->rowPtrs[i - 1] + j ] = Jmat_tmp[(i - 1) + (NUM_SPECIES + 1)*idx];
+	  }
       }
   }
 
@@ -995,10 +1093,30 @@ int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
 /* 
  * CUSTOM SOLVER STUFF
  */
-SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, int reactor_type) 
+SUNLinearSolver SUNLinSol_sparse_custom(N_Vector y, SUNMatrix A, int reactor_type,
+		int nsubsys, int subsys_size, int subsys_nnz) 
 {
   SUNLinearSolver S;
-  SUNLinearSolverContent_Dense_custom content;
+  SUNLinearSolverContent_Sparse_custom content;
+
+  /* Check that required arguments are not NULL */
+  if (y == NULL || A == NULL) return(NULL);
+  if (SUNMatGetID(A) != SUNMATRIX_SPARSE) return(NULL); 
+
+  /* Matrix should be square */
+  if (SUNSparseMatrix_Columns(A) != SUNSparseMatrix_Rows(A)) return(NULL);
+
+  /* Check that it is a CSR matrix */
+  if (SUNSparseMatrix_SparseType(A) != CSR_MAT) return(NULL);
+
+  /* Matrix and vector dimensions must agree */
+  if (N_VGetLength(y) != SUNSparseMatrix_Columns(A)) return(NULL);
+
+  /* All subsystems must be the same size */ 
+  if (SUNSparseMatrix_Columns(A) != (subsys_size * nsubsys)) return(NULL);
+
+  /* Number of nonzeros per subsys must be the same */
+  if (SUNSparseMatrix_NNZ(A) != (subsys_nnz * nsubsys)) return(NULL);
 
   /* Create an empty linear solver */
   S = NULL;
@@ -1006,12 +1124,12 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, int reactor_type
   if (S == NULL) return(NULL);
 
   /* Attach operations */ 
-  S->ops->gettype    = SUNLinSolGetType_Dense_custom;
-  S->ops->solve      = SUNLinSolSolve_Dense_custom;
+  S->ops->gettype    = SUNLinSolGetType_Sparse_custom;
+  S->ops->solve      = SUNLinSolSolve_Sparse_custom;
 
   /* Create content */
   content = NULL; 
-  content = (SUNLinearSolverContent_Dense_custom) malloc(sizeof *content);
+  content = (SUNLinearSolverContent_Sparse_custom) malloc(sizeof *content);
   if (content == NULL) { SUNLinSolFree(S); return(NULL); }
 
   /* Attach content */
@@ -1020,54 +1138,27 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, int reactor_type
   /* Fill content */ 
   content->last_flag    = 0;
   content->reactor_type = reactor_type;
+  content->nsubsys      = nsubsys;
+  content->subsys_size  = subsys_size;
+  content->subsys_nnz   = subsys_nnz;
 
   return(S);
 }
 
 
-SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S) 
+SUNLinearSolver_Type SUNLinSolGetType_Sparse_custom(SUNLinearSolver S) 
 {
   return(SUNLINEARSOLVER_DIRECT);
 }
 
-SUNLinearSolver_ID SUNLinSolGetID_Dense_custom(SUNLinearSolver S) 
-{
-  return(SUNLINEARSOLVER_DENSE); 
-}
-
-int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
+int SUNLinSolSolve_Sparse_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol)
 {
-
   realtype *x_d      = N_VGetArrayPointer(x);
   realtype *b_d      = N_VGetArrayPointer(b);
 
-  int HP, NNZ;
-  if (SUN_CUSP_REACTYPE(S) == eint_rho) {
-      HP = 0;
-  } else {
-      HP = 1;
-  }
-  SPARSITY_INFO_SYST(&NNZ,&HP,1);
-  
-  SUNMatrix A_csr;
-  A_csr = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), NNZ, CSR_MAT);
-  int *colIdx, *rowCount;
   double *Data;
-  rowCount = (int*) SUNSparseMatrix_IndexPointers(A_csr); 
-  colIdx   = (int*) SUNSparseMatrix_IndexValues(A_csr);
-  Data     = (double*) SUNSparseMatrix_Data(A_csr);
-  SPARSITY_PREPROC_SYST_CSR(colIdx,rowCount,&HP,1,0);
-  realtype *A_colj;
-  int nbVals, idx;
-  for (int i = 0; i < NUM_SPECIES+2; i++) {
-      nbVals = rowCount[i+1] - rowCount[i];
-      for (int j = 0; j < nbVals; j++) {
-          idx = colIdx[rowCount[i] + j];
-          A_colj = SUNDenseMatrix_Column(A,idx);
-	  Data[rowCount[i] + j] = A_colj[i];
-      }
-  }
+  Data     = (double*) SUNSparseMatrix_Data(A);
 
   sgjsolve(Data, x_d, b_d);
 
@@ -1236,6 +1327,13 @@ UserData AllocUserData(int reactor_type, int num_cells)
   (data_wk->reactor_cvode_initialized) = false;
   (data_wk->actual_ok_to_react)        = true; 
 
+  int HP;
+  if (data_wk->ireactor_type == eint_rho) {
+      HP = 0;
+  } else {
+      HP = 1;
+  }
+
 #ifndef USE_KLU_PP
   if (data_wk->isolve_type == iterative_gmres_solve) {
       /* Precond data */
@@ -1261,12 +1359,6 @@ UserData AllocUserData(int reactor_type, int num_cells)
   data_wk->rowVals = new int*[data_wk->ncells];
   data_wk->Jdata   = new realtype*[data_wk->ncells];
 
-  int HP;
-  if (data_wk->ireactor_type == eint_rho) {
-      HP = 0;
-  } else {
-      HP = 1;
-  }
   if (data_wk->isolve_type == sparse_solve) {
       /* Sparse Matrix for Direct Sparse KLU solver */
       (data_wk->PS) = new SUNMatrix[1];
@@ -1317,6 +1409,23 @@ UserData AllocUserData(int reactor_type, int num_cells)
           //data_wk->Common.ordering = 1;
           data_wk->Symbolic[i] = klu_analyze (NUM_SPECIES+1, data_wk->colPtrs[i], data_wk->rowVals[i], &(data_wk->Common[i])) ; 
       }
+  }
+#endif
+
+  if (data_wk->isolve_type == sparse_solve_custom) {
+      /* SYST JAC */
+      SPARSITY_INFO_SYST(&(data_wk->NNZ),&HP,1);
+      data_wk->PSc         = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
+      data_wk->rowPtrs    = (int*) SUNSparseMatrix_IndexPointers(data_wk->PSc); 
+      data_wk->colVals    = (int*) SUNSparseMatrix_IndexValues(data_wk->PSc);
+      SPARSITY_PREPROC_SYST_CSR(data_wk->colVals,data_wk->rowPtrs,&HP,1,0);
+#ifdef _OPENMP
+      if ((data_wk->iverbose > 0) && (omp_thread == 0)) {
+#else
+      if (data_wk->iverbose > 0) {
+#endif
+          amrex::Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+      }
   }  else if (data_wk->isolve_type == hack_dump_sparsity_pattern) {
       /* Debug mode, makes no sense to call with OMP/MPI activated */
       int counter;
@@ -1341,10 +1450,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
 	  std::fill_n(idx_arr, nbVals, -1);
 	  std::memcpy(idx_arr, colIdx + rowCount[i], nbVals*sizeof(int));
           int idx        = 0;
-	  //std::cout << " Treating row number " << i << " (has " << nbVals << " vals)" << std::endl;
-	  //std::cout << " rowCount[i] is " << rowCount[i] << std::endl;
           for (int j = 0; j < NUM_SPECIES+1; j++) {
-	      //std::cout << " colmn : " << j << " idx " << idx_arr[idx] << std::endl;
               if ((j == idx_arr[idx]) && (nbVals > 0)) {
 	          std::cout << 1 << " ";
 		  idx = idx + 1;
@@ -1375,10 +1481,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
 	  std::fill_n(idx_arr, nbVals, -1);
 	  std::memcpy(idx_arr, colIdx + (rowCount[i] - 1), nbVals*sizeof(int));
           int idx        = 0;
-	  //std::cout << " Treating row number " << i << " (has " << nbVals << " vals)" << std::endl;
-	  //std::cout << " rowCount[i] is " << rowCount[i] << std::endl;
           for (int j = 0; j < NUM_SPECIES+1; j++) {
-	      //std::cout << " colmn : " << j << " idx " << idx_arr[idx] - 1 << std::endl;
               if ((j == idx_arr[idx] - 1) && ((nbVals-idx) > 0)) {
 	          std::cout << 1 << " ";
 		  idx = idx + 1;
@@ -1393,7 +1496,6 @@ UserData AllocUserData(int reactor_type, int num_cells)
 
       amrex::Abort("Dump Sparsity Patern of SystemJac and ChemJac in CSR format.");
   }
-#endif
 
   return(data_wk);
 }

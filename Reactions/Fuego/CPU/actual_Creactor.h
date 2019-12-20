@@ -36,15 +36,8 @@ typedef struct {
       int ianalytical_jacobian;
       int ireactor_type;
       /* Options */
-      //int dense_solve           = 1;
-      //int sparse_solve          = 5;
-      //int iterative_gmres_solve = 99;
-      //int dense_solve_custom    = 101;
-      //int hack_dump_sparsity_pattern = -5;
-      //int eint_rho = 1; // in/out = rhoE/rhoY
-      //int enth_rho = 2; // in/out = rhoH/rhoY 
-#ifdef USE_KLU_PP 
       int NNZ; 
+#ifdef USE_KLU_PP 
       /* Sparse Matrices for KLU-related solve */
       SUNMatrix *PS;
       /* SUNSparseMatrix_Data */
@@ -65,6 +58,10 @@ typedef struct {
       realtype **(**P);
       sunindextype *(**pivot);
 #endif
+      /* Sparse custom */
+      SUNMatrix PSc;
+      int *colVals;
+      int *rowPtrs;
 } *UserData;
 
 
@@ -73,6 +70,9 @@ typedef struct {
 int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void *user_data);
 
 int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
+		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+
+int cJac_sps(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 #ifdef USE_KLU_PP 
@@ -128,19 +128,23 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 
 /**********************************/
 /* custom solver */
-struct _SUNLinearSolverContent_Dense_custom {
+struct _SUNLinearSolverContent_Sparse_custom {
 	sunindextype       last_flag;
 	int                reactor_type;
+	int                nsubsys;       /* number of subsystems */
+	int                subsys_size;   /* size of each subsystem */
+	int                subsys_nnz;
+
 };
 
-typedef struct _SUNLinearSolverContent_Dense_custom *SUNLinearSolverContent_Dense_custom; 
+typedef struct _SUNLinearSolverContent_Sparse_custom *SUNLinearSolverContent_Sparse_custom; 
 
-SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, int reactor_type); 
+SUNLinearSolver SUNLinSol_sparse_custom(N_Vector y, SUNMatrix A, int reactor_type,
+		int nsubsys, int subsys_size, int subsys_nnz);
 
-SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S); 
-SUNLinearSolver_ID SUNLinSolGetID_Dense_custom(SUNLinearSolver S); 
+SUNLinearSolver_Type SUNLinSolGetType_Sparse_custom(SUNLinearSolver S); 
 
-int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
+int SUNLinSolSolve_Sparse_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol);
 
 
