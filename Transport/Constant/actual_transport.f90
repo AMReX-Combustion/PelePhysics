@@ -48,10 +48,10 @@ contains
 ! By default the units are in CGS
 ! Below is a flag to let the user to provide MKS data, and it makes the conversion to CGS
     if (mks_unit) then
-      coeff % lam = coeff % lam * 1.0d5
-      coeff % mu = coeff % mu * 10.0d0
-      coeff % xi = coeff % xi * 10.0d0
-      coeff % Ddiag = coeff % Ddiag * 10.0d0
+      if (which % wtr_get_lam) coeff % lam = coeff % lam * 1.0d5
+      if (which % wtr_get_mu) coeff % mu = coeff % mu * 10.0d0
+      if (which % wtr_get_xi) coeff % xi = coeff % xi * 10.0d0
+      if (which % wtr_get_Ddiag) coeff % Ddiag = coeff % Ddiag * 10.0d0
     endif
 
   end subroutine actual_transport
