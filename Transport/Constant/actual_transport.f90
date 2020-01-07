@@ -29,29 +29,27 @@ contains
     type (wtr_t), intent(in   ) :: which
     type (trv_t), intent(inout) :: coeff
 
+!   By default the units are in CGS
+!   Below mks_unit is a flag to let the user to provide MKS data, and it makes the conversion to CGS
+
     if (which % wtr_get_lam) then
        coeff % lam = const_conductivity
+       if (mks_unit) coeff % lam = coeff % lam * 1.0d5
     endif
 
     if (which % wtr_get_mu) then
        coeff % mu = const_viscosity
+       if (mks_unit) coeff % mu = coeff % mu * 10.0d0
     endif
 
     if (which % wtr_get_xi) then
        coeff % xi = const_bulk_viscosity
+       if (mks_unit) coeff % xi = coeff % xi * 10.0d0
     endif
 
     if (which % wtr_get_Ddiag) then
        coeff % Ddiag = const_diffusivity
-    endif
-
-! By default the units are in CGS
-! Below is a flag to let the user to provide MKS data, and it makes the conversion to CGS
-    if (mks_unit) then
-      if (which % wtr_get_lam) coeff % lam = coeff % lam * 1.0d5
-      if (which % wtr_get_mu) coeff % mu = coeff % mu * 10.0d0
-      if (which % wtr_get_xi) coeff % xi = coeff % xi * 10.0d0
-      if (which % wtr_get_Ddiag) coeff % Ddiag = coeff % Ddiag * 10.0d0
+       if (mks_unit) coeff % Ddiag = coeff % Ddiag * 10.0d0
     endif
 
   end subroutine actual_transport
