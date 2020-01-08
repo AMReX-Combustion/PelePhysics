@@ -13,6 +13,8 @@ USE_OMP    = FALSE
 
 FUEGO_GAS  = TRUE
 
+TINY_PROFILE = TRUE
+
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
 
