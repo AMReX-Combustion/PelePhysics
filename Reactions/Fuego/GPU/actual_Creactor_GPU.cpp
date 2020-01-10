@@ -523,7 +523,6 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 	    	    fKernelComputeallAJ(icell, user_data, u_d, udot_d, udata->csr_val_d);
 	    	}
             }); 
-            //cuda_status = cudaDeviceSynchronize();  
             cuda_status = cudaStreamSynchronize(udata->stream);  
             assert(cuda_status == cudaSuccess);
             *jcurPtr = SUNTRUE;
@@ -584,13 +583,12 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
         cuda_status = cudaDeviceSynchronize();  
         assert(cuda_status == cudaSuccess);
 
-	BL_PROFILE_VAR_STOP(cusolverPsolve);
-
-
-        /* Checks */
         N_VCopyFromDevice_Cuda(z);
         N_VCopyFromDevice_Cuda(r);
 
+	BL_PROFILE_VAR_STOP(cusolverPsolve);
+
+        /* Checks */
         //if (udata->iverbose > 4) {
         //    for(int batchId = 0 ; batchId < udata->ncells_d[0]; batchId++){
         //        // measure |bj - Aj*xj|
@@ -621,14 +619,14 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
         return(0);
 }
 
-
+/* Will not work for cuSolver_sparse_solve right now */
 static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
 	BL_PROFILE_VAR("Jacobian()", fKernelJac );
         cudaError_t cuda_status = cudaSuccess;
 
-        // allocate working space 
+        /* allocate working space */
         UserData udata = static_cast<CVodeUserData*>(user_data);
 
 	/* Get Device pointers for Kernel call */
@@ -637,6 +635,8 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 
         /* Fixed Indices and Pointers for Jacobian Matrix */
         fill_dense_csr(SUNSparseMatrix_IndexValues(J), SUNSparseMatrix_IndexPointers(J), udata->ncells_d[0], 0);
+	//SPARSITY_PREPROC_SYST_CSR(SUNSparseMatrix_IndexValues(J), SUNSparseMatrix_IndexPointers(J), 
+                                     //&HP, udata->ncells_d[0], 0); 
 	
 	/* Create empty chem Jacobian matrix (if not done already) */
 	//if (udata->R == NULL) {
@@ -644,9 +644,7 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 	//			SUNSparseMatrix_Columns(J),
 	//			SUNSparseMatrix_NNZ(J), CSR_MAT);
 	//}
-		/* check that vector/matrix dimensions match up */
-	//std::cout << SUNSparseMatrix_Rows(J) << " "<< SUNSparseMatrix_NNZ(J) << std::endl;
-	//std::cout << (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0]) << " "<<  udata->ncells_d[0] * udata->NNZ << std::endl;
+	/* check that vector/matrix dimensions match up */
         if ((SUNSparseMatrix_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
 		(SUNSparseMatrix_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
                 (SUNSparseMatrix_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
@@ -681,8 +679,6 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
         //}
 	BL_PROFILE_VAR_STOP(fKernelJac);
 
-        //amrex::Abort("\n TESTING \n");
-	
 	return(0);
 
 }
@@ -812,13 +808,10 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d
   }
   /* Fill the Sps Mat */
   int nbVals;
-  //printf("** NCELL %d \n", ncell);
   for (int i = 1; i < udata->neqs_per_cell[0]+2; i++) {
       nbVals = udata->csr_row_count_d[i]-udata->csr_row_count_d[i-1];
-      //printf(" -- nvals %d \n", nbVals);
       for (int j = 0; j < nbVals; j++) {
 	      int idx_cell = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j - 1] - 1 ;
-	      //printf("Idx %d, Idx cell %d  -- ", idx_cell, udata->csr_row_count_d[i-1] + j);
               csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = Jmat_pt[ idx_cell * (udata->neqs_per_cell[0]+1) + i - 1 ]; 
       }
   }
@@ -934,7 +927,6 @@ fKernelComputeAJsys(int ncell, void *user_data, realtype *u_d, realtype *udot_d,
 }
 
 
-//AMREX_GPU_DEVICE
 __global__
 inline
 void 
@@ -1143,8 +1135,6 @@ SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S)
 int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol)
 {
-  //printf("IN SUNLinSolSolve_Dense_custom !!\n");
-
   cudaError_t cuda_status = cudaSuccess;
   cudaError_t cuerr = cudaSuccess;
 
@@ -1153,9 +1143,6 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   realtype *b_d      = N_VGetDeviceArrayPointer_Cuda(b);
 
   realtype *data_d   = N_VGetDeviceArrayPointer_Cuda(SUN_CUSP_DVALUES(S));
-
-  /* DEBUG */
-  //printf("SUNSparseMatrix A (NNZ, nbSubsyst) : (%d, %d) \n", SUN_CUSP_SUBSYS_NNZ(S), SUN_CUSP_NUM_SUBSYS(S));
 
   cuerr = cudaMemcpyAsync(data_d, SUNSparseMatrix_Data(A),
         	  sizeof(double) * (SUN_CUSP_SUBSYS_NNZ(S) * SUN_CUSP_NUM_SUBSYS(S)), cudaMemcpyHostToDevice);
@@ -1189,10 +1176,11 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   //    }); 
   fKernelDenseSolve<<<ec.numBlocks, ec.numThreads, ec.sharedMem, SUN_CUSP_STREAM(S)>>>(SUN_CUSP_NUM_SUBSYS(S), x_d, b_d, 
                                                                                        SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), data_d);
-  BL_PROFILE_VAR_STOP(fKernelDenseSolve);
 
   cuda_status = cudaStreamSynchronize(SUN_CUSP_STREAM(S));  
   assert(cuda_status == cudaSuccess);
+
+  BL_PROFILE_VAR_STOP(fKernelDenseSolve);
 
   return(SUNLS_SUCCESS);
 }
