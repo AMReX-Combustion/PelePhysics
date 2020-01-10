@@ -22,8 +22,8 @@ using namespace amrex;
 /**********************************/
 /* Global Variables */
 
-AMREX_GPU_DEVICE_MANAGED int dense_solve           = 1;
-AMREX_GPU_DEVICE_MANAGED int sparse_solve          = 5;
+AMREX_GPU_DEVICE_MANAGED int sparse_solve           = 1;
+AMREX_GPU_DEVICE_MANAGED int sparse_cusolver_solve = 5;
 AMREX_GPU_DEVICE_MANAGED int iterative_gmres_solve = 99;
 AMREX_GPU_DEVICE_MANAGED int eint_rho = 1; // in/out = rhoE/rhoY
 AMREX_GPU_DEVICE_MANAGED int enth_rho = 2; // in/out = rhoH/rhoY
@@ -63,13 +63,13 @@ int reactor_info(const int* reactor_type,const int* Ncells){
 	    } else {
 		printf("\n--> Using an Iterative Solver without preconditionning \n");
             }
-	} else if (isolve_type == dense_solve) {
+	} else if (isolve_type == sparse_solve) {
 	    if (ianalytical_jacobian == 1) {
 	        printf("\n--> Using a custom direct dense solver with analytical Jacobian \n");
 	    } else {
 		amrex::Abort("\n--> When using a custom direct dense solver, specify an AJ \n");
 	    }
-        } else if (isolve_type == sparse_solve) {
+        } else if (isolve_type == sparse_cusolver_solve) {
 	    if (ianalytical_jacobian == 1) {
                 printf("Using a Sparse Direct Solver based on cuSolver \n");
 	        int nJdata;
@@ -150,11 +150,11 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    BL_PROFILE_VAR("SparsityFuegoStuff", SparsityStuff);
 	    if (user_data->isolve_type == iterative_gmres_solve) {
                 SPARSITY_INFO_SYST_SIMPLIFIED(&(user_data->NNZ),&HP);
-	    } else if (user_data->isolve_type == sparse_solve) {
+	    } else if (user_data->isolve_type == sparse_cusolver_solve) {
                 SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,1);
 		A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ * NCELLS, CSR_MAT);
 		if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
-	    } else if (user_data->isolve_type == dense_solve) {
+	    } else if (user_data->isolve_type == sparse_solve) {
 	        /* Blocks are dense */
 	        user_data->NNZ = (NEQ + 1) * (NEQ + 1);
 	        A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ * NCELLS, CSR_MAT);
@@ -163,7 +163,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    BL_PROFILE_VAR_STOP(SparsityStuff);
 
 	    BL_PROFILE_VAR_START(AllocsCVODE);
-	    //if ((user_data->isolve_type == iterative_gmres_solve) || (user_data->isolve_type == sparse_solve)){
+	    //if ((user_data->isolve_type == iterative_gmres_solve) || (user_data->isolve_type == sparse_cusolver_solve)){
                 cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
                 cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
                 cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
@@ -174,10 +174,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	    BL_PROFILE_VAR_START(SparsityStuff);
 	    if (user_data->isolve_type == iterative_gmres_solve) {    
                 SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP);
-	    } else if (user_data->isolve_type == sparse_solve) {
+	    } else if (user_data->isolve_type == sparse_cusolver_solve) {
 		SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
 		SPARSITY_PREPROC_SYST_CSR(SUNSparseMatrix_IndexValues(A), SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
-	    } else if (user_data->isolve_type == dense_solve) {
+	    } else if (user_data->isolve_type == sparse_solve) {
 	        fill_dense_csr(user_data->csr_col_index_d, user_data->csr_row_count_d, 1, 1);
 		fill_dense_csr(SUNSparseMatrix_IndexValues(A), SUNSparseMatrix_IndexPointers(A),  NCELLS, 0);
 	    }
@@ -340,7 +340,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	        if(check_flag(&flag, "CVodeSetPreconditioner", 1)) return(1);
 	    }
 
-	} else if (user_data->isolve_type == sparse_solve) {
+	} else if (user_data->isolve_type == sparse_cusolver_solve) {
 
             LS = SUNLinSol_cuSolverSp_batchQR(y, A, NCELLS, (NEQ+1) , user_data->NNZ);
 	    if(check_flag((void *)LS, "SUNLinSol_cuSolverSp_batchQR", 0)) return(1);
@@ -353,7 +353,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
             flag = CVodeSetJacFn(cvode_mem, cJac);
 	    if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1); 
 
-        } else if (user_data->isolve_type == dense_solve) {
+        } else if (user_data->isolve_type == sparse_solve) {
 
 	    /* Create dense SUNLinearSolver object for use by CVode */ 
 	    LS = SUNLinSol_dense_custom(y, A, NCELLS, (NEQ+1), user_data->NNZ, stream);
@@ -415,7 +415,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
         cudaFree(user_data->rhoesrc_ext);
 	cudaFree(user_data->rYsrc);
 
-	if ((user_data->ianalytical_jacobian == 1) && (user_data->isolve_type /= dense_solve)) {
+	if ((user_data->ianalytical_jacobian == 1) && (user_data->isolve_type /= sparse_solve)) {
 	    cudaFree(user_data->csr_row_count_d);
 	    cudaFree(user_data->csr_col_index_d);
 	    cudaFree(user_data->csr_jac_d);
