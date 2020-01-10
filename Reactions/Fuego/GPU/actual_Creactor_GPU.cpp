@@ -22,7 +22,7 @@ using namespace amrex;
 /**********************************/
 /* Global Variables */
 
-AMREX_GPU_DEVICE_MANAGED int sparse_solve           = 1;
+AMREX_GPU_DEVICE_MANAGED int sparse_solve          = 1;
 AMREX_GPU_DEVICE_MANAGED int sparse_cusolver_solve = 5;
 AMREX_GPU_DEVICE_MANAGED int iterative_gmres_solve = 99;
 AMREX_GPU_DEVICE_MANAGED int eint_rho = 1; // in/out = rhoE/rhoY
@@ -46,7 +46,7 @@ int reactor_info(const int* reactor_type,const int* Ncells){
 	pp.query("analytical_jacobian",ianalytical_jacobian);
 	pp.query("solve_type", isolve_type);
 
-        /* User data */
+        /* Checks */
         if (isolve_type == iterative_gmres_solve) {
             if (ianalytical_jacobian == 1) { 
                 printf("Using an Iterative GMRES Solver with sparse simplified preconditioning \n");
@@ -61,14 +61,26 @@ int reactor_info(const int* reactor_type,const int* Ncells){
                 SPARSITY_INFO_SYST_SIMPLIFIED(&nJdata,&HP);
                 printf("--> SPARSE Preconditioner -- non zero entries %d represents %f %% fill pattern.\n", nJdata, nJdata/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0);
 	    } else {
-		printf("\n--> Using an Iterative Solver without preconditionning \n");
+		printf("Using an Iterative Solver without preconditionning \n");
             }
+
 	} else if (isolve_type == sparse_solve) {
 	    if (ianalytical_jacobian == 1) {
-	        printf("\n--> Using a custom direct dense solver with analytical Jacobian \n");
+	        printf("Using a custom Sparse Direct solver (with Analytical Jacobian) \n");
+	        int nJdata;
+                int HP;
+		if (*reactor_type == eint_rho) {
+                    HP = 0;
+                } else {
+                    HP = 1;
+                }
+                /* Jac data */ 
+                SPARSITY_INFO_SYST(&nJdata,&HP,*Ncells);
+                printf("--> SPARSE Solver -- non zero entries %d represents %f %% fill pattern.\n", nJdata, nJdata/float(*Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0);
 	    } else {
-		amrex::Abort("\n--> When using a custom direct dense solver, specify an AJ \n");
+		amrex::Abort("\n--> When using a custom direct sparse solver, specify an AJ \n");
 	    }
+
         } else if (isolve_type == sparse_cusolver_solve) {
 	    if (ianalytical_jacobian == 1) {
                 printf("Using a Sparse Direct Solver based on cuSolver \n");
@@ -79,11 +91,11 @@ int reactor_info(const int* reactor_type,const int* Ncells){
                 } else {
                     HP = 1;
                 }
-                /* Precond data */ 
+                /* Jac data */ 
                 SPARSITY_INFO_SYST(&nJdata,&HP,*Ncells);
                 printf("--> SPARSE Solver -- non zero entries %d represents %f %% fill pattern.\n", nJdata, nJdata/float(*Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0);
 	    } else {
-                amrex::Abort("\n--> When using SDS, specify an AJ \n");
+                amrex::Abort("\n--> When using a SDS, specify an AJ \n");
 	    }
 	} else {
 	    amrex::Abort("\n--> Wrong choice of input parameters (cvode) \n");
