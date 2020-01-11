@@ -120,7 +120,6 @@ inline
 void 
 fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *udot_d);
 
-//AMREX_GPU_DEVICE
 __global__
 inline
 void 
@@ -150,6 +149,8 @@ SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S);
 
 int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol);
+
+int SUNLinSolFree_Dense_custom(SUNLinearSolver S);
 
 
 
