@@ -440,7 +440,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	}
 
 	/* Get estimate of how hard the integration process was */
-	PrintFinalStats(cvode_mem, rY_in[NUM_SPECIES]);
         long int nfe;
 	flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
 	return nfe;
