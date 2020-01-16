@@ -1133,6 +1133,7 @@ class CPickler(CMill):
         self._rep += [
                 self.line('gauss-jordan solver external routine'),
                 'AMREX_GPU_HOST_DEVICE void sgjsolve(double* A, double* x, double* b);',
+                'AMREX_GPU_HOST_DEVICE void sgjsolve_simplified(double* A, double* x, double* b);',
                 '}',
                 ]
         return

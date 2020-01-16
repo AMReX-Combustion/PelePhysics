@@ -37,18 +37,20 @@ typedef struct {
       int ireactor_type;
       /* Options */
       int NNZ; 
-#ifdef USE_KLU_PP 
       /* Sparse Matrices for KLU-related solve */
       SUNMatrix *PS;
       /* SUNSparseMatrix_Data */
       realtype **Jdata  = NULL;
       /* SUNSparseMatrix_IndexValues */
       int **rowVals     = NULL;
+      int **rowPtrs     = NULL;
       /* SUNSparseMatrix_IndexPointers */
       int **colPtrs     = NULL;
+      int **colVals     = NULL;
       /* Holder for sparse matrix in Fuego fetches */
       int *indx = NULL;
       realtype **JSPSmat = NULL;
+#ifdef USE_KLU_PP 
       /* KLU objects */
       klu_common *Common;
       klu_symbolic **Symbolic;
@@ -60,8 +62,8 @@ typedef struct {
 #endif
       /* Sparse custom */
       SUNMatrix PSc;
-      int *colVals;
-      int *rowPtrs;
+      int *colVals_c;
+      int *rowPtrs_c;
 } *UserData;
 
 
@@ -74,6 +76,12 @@ int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 
 int cJac_sps(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+
+int PSolve_custom(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
+		N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);
+
+int Precond_custom(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
+		booleantype *jcurPtr, realtype gamma, void *user_data);
 
 #ifdef USE_KLU_PP 
 int cJac_KLU(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,

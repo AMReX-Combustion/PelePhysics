@@ -180,6 +180,7 @@ void egtransetCOFD(double* COFD);
 void egtransetKTDIF(int* KTDIF);
 /*gauss-jordan solver external routine */
 AMREX_GPU_HOST_DEVICE void sgjsolve(double* A, double* x, double* b);
+AMREX_GPU_HOST_DEVICE void sgjsolve_simplified(double* A, double* x, double* b);
 }
 
 #ifndef AMREX_USE_CUDA
