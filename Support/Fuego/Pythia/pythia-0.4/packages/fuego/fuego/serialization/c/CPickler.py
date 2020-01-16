@@ -1072,7 +1072,7 @@ class CPickler(CMill):
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP);',
-            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base);',
             'AMREX_GPU_HOST_DEVICE void aJacobian(double *  J, double *  sc, double T, int consP);',
             'AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T, int HP);',
             'AMREX_GPU_HOST_DEVICE void dcvpRdT(double *  species, double *  tc);',
@@ -7498,8 +7498,8 @@ class CPickler(CMill):
 
         ####
         self._write(self.line('compute the sparsity pattern of the simplified (for precond) system Jacobian'))
-        self._write(self.line('CSR format BASE 1'))
-        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP)')
+        self._write(self.line('CSR format BASE is under choice'))
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base)')
         self._write('{')
         self._indent()
 
@@ -7516,6 +7516,8 @@ class CPickler(CMill):
         self._write('aJacobian_precond(J, c, 1500.0, *consP);')
 
         self._write()
+        self._write('if (base == 1) {')
+        self._indent()
         self._write('rowPtr[0] = 1;')
         self._write('int nJdata_tmp = 1;')
         self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
@@ -7540,6 +7542,37 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         self._write('rowPtr[l+1] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('} else {')
+        self._indent()
+        self._write('rowPtr[0] = 0;')
+        self._write('int nJdata_tmp = 0;')
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if (k == l) {')
+        self._indent()
+        self._write('colVals[nJdata_tmp] = l; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('} else {')
+        self._indent()
+        self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
+        self._indent()
+        self._write('colVals[nJdata_tmp] = k; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._write('rowPtr[l+1] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
         self._outdent()
         self._write('}')
 
