@@ -709,6 +709,7 @@ int cJac_sps(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
 
+  BL_PROFILE_VAR("SparseKLUJac", SpsKLUJac);
   /* Make local copies of pointers to input data (big M) */
   realtype *ydata           = N_VGetArrayPointer(u);
   sunindextype *colptrs_tmp = SUNSparseMatrix_IndexPointers(J);
@@ -780,6 +781,7 @@ int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
           }
       }
       /* Go from Dense to Sparse */
+      BL_PROFILE_VAR("DensetoSps", DtoS);
       for (int i = 1; i < NUM_SPECIES+2; i++) {
 	  nbVals = data_wk->colPtrs[0][i]-data_wk->colPtrs[0][i - 1];
 	  for (int j = 0; j < nbVals; j++) {
@@ -787,7 +789,10 @@ int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 	          Jdata[ data_wk->colPtrs[0][offset + i - 1] + j ] = Jmat_tmp[(i - 1) * (NUM_SPECIES + 1) + idx];
 	  }
       }
+      BL_PROFILE_VAR_STOP(DtoS);
   }
+
+  BL_PROFILE_VAR_STOP(SpsKLUJac);
 
   return(0);
 

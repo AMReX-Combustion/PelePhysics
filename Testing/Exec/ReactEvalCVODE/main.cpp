@@ -109,11 +109,15 @@ main (int   argc,
 	    probin_file_name[i] = probin_file[i];
     if (fuel_name == "H2") {
         fuel_idx  = H2_ID;
+	amrex::Print() << "FUEL IS H2 \n";
     } else if (fuel_name == "CH4") {
         fuel_idx  = CH4_ID;
+        amrex::Print() << "FUEL IS CH4 \n";
+#ifdef NC12H26_ID
     } else if (fuel_name == "NC12H26") {
         fuel_idx  = NC12H26_ID;
-        amrex::Print() << "FOUND FUEL ";
+        amrex::Print() << "FUEL IS NC12H26 \n";
+#endif
     }
     oxy_idx   = O2_ID;
     bath_idx  = N2_ID;
@@ -128,9 +132,9 @@ main (int   argc,
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 16;
+	npts[i] = 2;
     }
-    //npts[1] = 16;
+    npts[1] = 1024;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
         amrex::Print() << dt << " seconds";
@@ -272,7 +276,7 @@ main (int   argc,
 		                &dt_incr, &time);
 #endif
 		            dt_incr =  dt/ndt;
-			    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+			    // printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 			}
 		        nc = 0;
 		        for (int l = 0; l < cvode_ncells ; ++l){

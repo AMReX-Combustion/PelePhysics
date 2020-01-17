@@ -1,6 +1,6 @@
 #include "chemistry_file.H"
 
-AMREX_GPU_HOST_DEVICE void sgjsolve(double* A, double* x, double* b) {
+AMREX_GPU_HOST_DEVICE void sgjsolve_simplified(double* A, double* x, double* b) {
     double scratch_0 = 1.0/A[0];
     double scratch_1 = b[0]*scratch_0;
     double scratch_2 = A[23]*scratch_0;
