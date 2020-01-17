@@ -52,6 +52,7 @@ main (int   argc,
     int fuel_idx = -1;
     int oxy_idx = -1;
     int bath_idx = -1;
+    int third_dim = 1024;
     int ndt = 1; 
     Real dt = 1.e-5; 
 
@@ -70,6 +71,9 @@ main (int   argc,
 
       // time stepping
       pp.query("ndt",ndt); 
+
+      // third dim
+      pp.query("third_dim",third_dim);
 
       pp.query("reactor_type",cvode_iE);
       // Select CVODE type of energy employed.
@@ -114,10 +118,15 @@ main (int   argc,
 	    probin_file_name[i] = probin_file[i];
     if (fuel_name == "H2") {
         fuel_idx  = H2_ID;
+        amrex::Print() << "FUEL IS H2 \n";
     } else if (fuel_name == "CH4") {
         fuel_idx  = CH4_ID;
-    //} else if (fuel_name == "NC12H26") {
-    //    fuel_idx  = NC12H26_ID;
+        amrex::Print() << "FUEL IS CH4 \n";
+#ifdef NC12H26_ID
+    } else if (fuel_name == "NC12H26") {
+        fuel_idx  = NC12H26_ID;
+        amrex::Print() << "FUEL IS NC12H26 \n";
+#endif
     }
     oxy_idx   = O2_ID;
     bath_idx  = N2_ID;
@@ -133,9 +142,9 @@ main (int   argc,
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 4;
+	npts[i] = 2;
     }
-    npts[1] = 16;
+    npts[1] = third_dim;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
         amrex::Print() << dt << " seconds";
@@ -203,7 +212,7 @@ main (int   argc,
     ppa.query("plot_file",pltfile);
     std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
     // Specs
-    //PlotFileFromMF(mf,outfile);
+    PlotFileFromMF(mf,outfile);
 
     BL_PROFILE_VAR_STOP(PlotFile);
 
@@ -294,10 +303,10 @@ main (int   argc,
         /* Solve */
         BL_PROFILE_VAR_START(ReactInLoop);
 	time = 0.0;
-        for (int ii = 0; ii < ncells; ++ii) {
-	    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + ii*(NUM_SPECIES + 1)]);
-        }
-        printf("\n \n ");
+        //for (int ii = 0; ii < ncells; ++ii) {
+	//    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + ii*(NUM_SPECIES + 1)]);
+        //}
+        //printf("\n \n ");
 	for (int ii = 0; ii < ndt; ++ii) {
 	    fc_pt = react(tmp_vect, tmp_src_vect,
 	                    tmp_vect_energy, tmp_src_vect_energy,
@@ -306,9 +315,9 @@ main (int   argc,
 	    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)]);
 	    dt_incr =  dt/ndt;
         }
-        for (int ii = 0; ii < ncells; ++ii) {
-            printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)*ii]);
-        }
+        //for (int ii = 0; ii < ncells; ++ii) {
+        //    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)*ii]);
+        //}
         BL_PROFILE_VAR_STOP(ReactInLoop);
 
         BL_PROFILE_VAR_START(FlatStuff);
