@@ -18,6 +18,8 @@ using namespace amrex;
 
 #define SUN_CUSP_LASTFLAG(S)       ( SUN_CUSP_CONTENT(S)->last_flag )
 #define SUN_CUSP_STREAM(S)         ( SUN_CUSP_CONTENT(S)->stream )
+#define SUN_CUSP_NBLOCK(S)         ( SUN_CUSP_CONTENT(S)->nbBlocks )
+#define SUN_CUSP_NTHREAD(S)        ( SUN_CUSP_CONTENT(S)->nbThreads )
 
 /**********************************/
 /* Global Variables */
@@ -150,6 +152,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	user_data->isolve_type          = isolve_type; 
         user_data->iverbose             = 1;
         user_data->stream               = stream;
+        user_data->nbBlocks             = NCELLS/32;
+        user_data->nbThreads            = 32;
 
         if (user_data->ianalytical_jacobian == 1) { 
             int HP;
@@ -180,7 +184,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 	    BL_PROFILE_VAR_START(SparsityStuff);
 	    if (user_data->isolve_type == iterative_gmres_solve) {    
-                SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP);
+                SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP,1);
 	    } else {
 		SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
 		SPARSITY_PREPROC_SYST_CSR(SUNSparseMatrix_IndexValues(A), SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
@@ -289,12 +293,12 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	realtype *yvec_d      = N_VGetDeviceArrayPointer_Cuda(y);
 	BL_PROFILE_VAR("AsyncCpy", AsyncCpy);
 	// rhoY,T
-	cudaMemcpyAsync(yvec_d, rY_in, sizeof(realtype) * ((NEQ+1)*NCELLS), cudaMemcpyHostToDevice,stream);
+	cudaMemcpy(yvec_d, rY_in, sizeof(realtype) * ((NEQ+1)*NCELLS), cudaMemcpyHostToDevice);
 	// rhoY_src_ext
-	cudaMemcpyAsync(user_data->rYsrc, rY_src_in, (NEQ*NCELLS)*sizeof(double), cudaMemcpyHostToDevice,stream);
+	cudaMemcpy(user_data->rYsrc, rY_src_in, (NEQ*NCELLS)*sizeof(double), cudaMemcpyHostToDevice);
 	// rhoE/rhoH
-	cudaMemcpyAsync(user_data->rhoe_init, rX_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice, stream);
-	cudaMemcpyAsync(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice,stream);
+	cudaMemcpy(user_data->rhoe_init, rX_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
+	cudaMemcpy(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
 	BL_PROFILE_VAR_STOP(AsyncCpy)
 
 	realtype time_init, time_out ;
@@ -398,7 +402,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 	/* Pack data to return in main routine external */
 	BL_PROFILE_VAR_START(AsyncCpy)
-	cudaMemcpyAsync(rY_in, yvec_d, ((NEQ+1)*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost,stream);
+	cudaMemcpy(rY_in, yvec_d, ((NEQ+1)*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost);
 
 	for  (int i = 0; i < NCELLS; i++) {
             rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
@@ -464,7 +468,8 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
         udata->dt_save = t;
 
         const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+	//amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+	amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
 	[=] AMREX_GPU_DEVICE () noexcept {
 	        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
 		icell < udata->ncells_d[0]; icell += stride) {
@@ -506,7 +511,8 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
         if (jok) {
 	    /* GPU tests */
             const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-	    amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+	    //amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+	    amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
 	    [=] AMREX_GPU_DEVICE () noexcept {
 	            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
 	    	    icell < udata->ncells_d[0]; icell += stride) {
@@ -518,7 +524,7 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
             *jcurPtr = SUNFALSE;
         } else {
             const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-	    amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+	    amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
 	    [=] AMREX_GPU_DEVICE () noexcept {
 	            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
 	    	    icell < udata->ncells_d[0]; icell += stride) {
@@ -625,7 +631,6 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
 static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
-	BL_PROFILE_VAR("Jacobian()", fKernelJac );
         cudaError_t cuda_status = cudaSuccess;
 
         /* allocate working space */
@@ -636,6 +641,7 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
         realtype *ydot_d       = N_VGetDeviceArrayPointer_Cuda(fy);
 
         /* Fixed Indices and Pointers for Jacobian Matrix */
+	BL_PROFILE_VAR("cJac::SparsityStuff",cJacSparsityStuff);
         int consP;
         if (udata->ireactor_type == 1){
             consP = 0 ;
@@ -644,6 +650,7 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
         }
 	SPARSITY_PREPROC_SYST_CSR(SUNSparseMatrix_IndexValues(J), SUNSparseMatrix_IndexPointers(J), 
                                      &consP, udata->ncells_d[0], 0); 
+	BL_PROFILE_VAR_STOP(cJacSparsityStuff);
 	
 	/* Create empty chem Jacobian matrix (if not done already) */
 	//if (udata->R == NULL) {
@@ -659,9 +666,11 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
                     return 1;
         }
 
+	BL_PROFILE_VAR("Jacobian()", fKernelJac );
 	/* GPU tests */
         const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+	//amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+	amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
 	[=] AMREX_GPU_DEVICE () noexcept {
 	        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
 		icell < udata->ncells_d[0]; icell += stride) {
@@ -671,13 +680,17 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 
         cuda_status = cudaStreamSynchronize(udata->stream);  
         assert(cuda_status == cudaSuccess);
-
-	realtype *Jdata = SUNSparseMatrix_Data(J); 
-        for (int tid = 0; tid < udata->NNZ * (udata->ncells_d[0]); tid ++) {
-		Jdata[tid] = udata->csr_jac_d[tid];
-	}
-
 	BL_PROFILE_VAR_STOP(fKernelJac);
+
+        BL_PROFILE_VAR("cJac::memcpy",cJacmemcpy);
+	realtype *Jdata = SUNSparseMatrix_Data(J); 
+        //for (int tid = 0; tid < udata->NNZ * (udata->ncells_d[0]); tid ++) {
+	//	Jdata[tid] = udata->csr_jac_d[tid];
+	//}
+        std::memcpy(Jdata, udata->csr_jac_d, sizeof(realtype)*udata->NNZ*(udata->ncells_d[0]));
+	BL_PROFILE_VAR_STOP(cJacmemcpy);
+
+
 
 	return(0);
 
@@ -928,7 +941,6 @@ fKernelComputeAJsys(int ncell, void *user_data, realtype *u_d, realtype *udot_d,
 
 
 __global__
-inline
 void 
 fKernelDenseSolve(int ncell, realtype *x_d, realtype *b_d,
 		  int subsys_size, int subsys_nnz, realtype *csr_val)
@@ -1018,7 +1030,6 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A,
 {
   SUNLinearSolver S;
   SUNLinearSolverContent_Dense_custom content;
-  sunindextype MatrixRows;
 
   /* Check that required arguments are not NULL */
   if (y == NULL || A == NULL) return(NULL);
@@ -1053,46 +1064,47 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A,
   d_rowptr = NULL;
   d_values = NULL;
 
-  cudaError_t cuerr;
-  cuerr = cudaMalloc(&d_colind, sizeof(int) * (subsys_nnz * nsubsys));
-  if (cuerr != cudaSuccess) return(NULL); 
+  //cudaError_t cuerr;
+  //cuerr = cudaMalloc(&d_colind, sizeof(int) * (subsys_nnz * nsubsys));
+  //if (cuerr != cudaSuccess) return(NULL); 
 
-  cuerr = cudaMalloc(&d_rowptr, sizeof(int) * (subsys_size * nsubsys + 1));
-  if (cuerr != cudaSuccess) { cudaFree(d_colind); return(NULL); }
+  //cuerr = cudaMalloc(&d_rowptr, sizeof(int) * (subsys_size * nsubsys + 1));
+  //if (cuerr != cudaSuccess) { cudaFree(d_colind); return(NULL); }
 
   d_values = N_VNewManaged_Cuda(subsys_nnz * nsubsys);
 
   /* copy matrix stuff to the device */
-  cuerr = cudaMemcpy(d_colind, SUNSparseMatrix_IndexValues(A),
-        	  sizeof(int) * subsys_nnz * nsubsys, cudaMemcpyHostToDevice);
-  if (cuerr != cudaSuccess) { 
-          cudaFree(d_rowptr); 
-          cudaFree(d_colind); 
-          N_VDestroy(d_values);
-          return(NULL); 
-  };
+  //cuerr = cudaMemcpy(d_colind, SUNSparseMatrix_IndexValues(A),
+  //      	  sizeof(int) * subsys_nnz * nsubsys, cudaMemcpyHostToDevice);
+  //if (cuerr != cudaSuccess) { 
+  //        cudaFree(d_rowptr); 
+  //        cudaFree(d_colind); 
+  //        N_VDestroy(d_values);
+  //        return(NULL); 
+  //};
 
-  cuerr = cudaMemcpy(d_rowptr, SUNSparseMatrix_IndexPointers(A),
-        	  sizeof(int) * (subsys_size * nsubsys + 1), cudaMemcpyHostToDevice);
-  if (cuerr != cudaSuccess) { 
-          cudaFree(d_rowptr); 
-          cudaFree(d_colind); 
-          N_VDestroy(d_values);
-          return(NULL); 
-  };
+  //cuerr = cudaMemcpy(d_rowptr, SUNSparseMatrix_IndexPointers(A),
+  //      	  sizeof(int) * (subsys_size * nsubsys + 1), cudaMemcpyHostToDevice);
+  //if (cuerr != cudaSuccess) { 
+  //        cudaFree(d_rowptr); 
+  //        cudaFree(d_colind); 
+  //        N_VDestroy(d_values);
+  //        return(NULL); 
+  //};
 
   /* Create an empty linear solver */
   S = NULL;
   S = SUNLinSolNewEmpty(); 
   if (S == NULL) { 
-     cudaFree(d_rowptr); 
-     cudaFree(d_colind); 
+     //cudaFree(d_rowptr); 
+     //cudaFree(d_colind); 
      N_VDestroy(d_values);
      return(NULL);
   }
 
   /* Attach operations */ 
   S->ops->gettype    = SUNLinSolGetType_Dense_custom;
+  S->ops->setup      = SUNLinSolSetup_Dense_custom;  
   S->ops->solve      = SUNLinSolSolve_Dense_custom;
   S->ops->free       = SUNLinSolFree_Dense_custom;
 
@@ -1100,8 +1112,8 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A,
   content = NULL; 
   content = (SUNLinearSolverContent_Dense_custom) malloc(sizeof *content);
   if (content == NULL) { 
-      cudaFree(d_rowptr); 
-      cudaFree(d_colind); 
+      //cudaFree(d_rowptr); 
+      //cudaFree(d_colind); 
       N_VDestroy(d_values);
       SUNLinSolFree(S); 
       return(NULL); 
@@ -1118,6 +1130,8 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A,
   content->d_values    = d_values;
   content->d_colind    = d_colind;
   content->d_rowptr    = d_rowptr; 
+  content->nbBlocks    = nsubsys/32; 
+  content->nbThreads   = 32;
   content->stream      = stream; 
 
   return(S);
@@ -1129,25 +1143,34 @@ SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S)
   return(SUNLINEARSOLVER_DIRECT);
 }
 
+int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A) 
+{
+  cudaError_t cuerr = cudaSuccess;
+
+  realtype *data_d   = N_VGetDeviceArrayPointer_Cuda(SUN_CUSP_DVALUES(S));
+
+  BL_PROFILE_VAR("SETUP::MemCpyMatrix",MemCpyMatrix);
+  cuerr = cudaMemcpy(data_d, SUNSparseMatrix_Data(A),
+        	  sizeof(double) * (SUN_CUSP_SUBSYS_NNZ(S) * SUN_CUSP_NUM_SUBSYS(S)), cudaMemcpyHostToDevice);
+  if (cuerr != cudaSuccess) {
+      SUN_CUSP_LASTFLAG(S) = SUNLS_MEM_FAIL;
+      amrex::Abort("\nPB MEMCPY\n");
+  }
+  BL_PROFILE_VAR_STOP(MemCpyMatrix);
+
+  return(SUNLS_SUCCESS);
+}
 
 int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol)
 {
   cudaError_t cuda_status = cudaSuccess;
-  cudaError_t cuerr = cudaSuccess;
 
   /* Get Device pointers for Kernel call */
   realtype *x_d      = N_VGetDeviceArrayPointer_Cuda(x);
   realtype *b_d      = N_VGetDeviceArrayPointer_Cuda(b);
 
   realtype *data_d   = N_VGetDeviceArrayPointer_Cuda(SUN_CUSP_DVALUES(S));
-
-  cuerr = cudaMemcpyAsync(data_d, SUNSparseMatrix_Data(A),
-        	  sizeof(double) * (SUN_CUSP_SUBSYS_NNZ(S) * SUN_CUSP_NUM_SUBSYS(S)), cudaMemcpyHostToDevice);
-  if (cuerr != cudaSuccess) {
-      SUN_CUSP_LASTFLAG(S) = SUNLS_MEM_FAIL;
-      amrex::Abort("\nPB MEMCPY\n");
-  }
 
   BL_PROFILE_VAR("fKernelDenseSolve()", fKernelDenseSolve);
   const auto ec = Gpu::ExecutionConfig(SUN_CUSP_NUM_SUBSYS(S));  
@@ -1160,8 +1183,10 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   //      		      SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), data_d);
   //        }
   //    }); 
-  fKernelDenseSolve<<<ec.numBlocks, ec.numThreads, ec.sharedMem, SUN_CUSP_STREAM(S)>>>(SUN_CUSP_NUM_SUBSYS(S), x_d, b_d, 
-                                                                                       SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), data_d);
+  //fKernelDenseSolve<<<ec.numBlocks, ec.numThreads, ec.sharedMem, SUN_CUSP_STREAM(S)>>>(SUN_CUSP_NUM_SUBSYS(S), x_d, b_d, 
+  fKernelDenseSolve<<<SUN_CUSP_NBLOCK(S), SUN_CUSP_NTHREAD(S), 
+                           ec.sharedMem, SUN_CUSP_STREAM(S)>>>(SUN_CUSP_NUM_SUBSYS(S), x_d, b_d, 
+                                                               SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), data_d);
 
   cuda_status = cudaStreamSynchronize(SUN_CUSP_STREAM(S));  
   assert(cuda_status == cudaSuccess);
@@ -1177,8 +1202,8 @@ int SUNLinSolFree_Dense_custom(SUNLinearSolver S)
   if (S == NULL) return(SUNLS_SUCCESS);
 
   /* free stuff in the content structure */
-  cudaFree(SUN_CUSP_DCOLIND(S));
-  cudaFree(SUN_CUSP_DROWPTR(S));
+  //cudaFree(SUN_CUSP_DCOLIND(S));
+  //cudaFree(SUN_CUSP_DROWPTR(S));
   N_VDestroy(SUN_CUSP_DVALUES(S)); 
 
   /* free content structure */

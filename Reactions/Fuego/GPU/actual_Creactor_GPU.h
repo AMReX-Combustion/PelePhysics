@@ -61,6 +61,8 @@ typedef struct CVodeUserData {
     cusparseMatDescr_t descrA;
     cusolverSpHandle_t cusolverHandle;
     cudaStream_t stream;
+    int nbBlocks;
+    int nbThreads;
 }* UserData;
 
 /* Functions Called by the Solver */
@@ -121,7 +123,6 @@ void
 fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *udot_d);
 
 __global__
-inline
 void 
 fKernelDenseSolve(int ncells, realtype *x_d, realtype *b_d,
 		  int subsys_size, int subsys_nnz, realtype *csr_val);
@@ -137,6 +138,8 @@ struct _SUNLinearSolverContent_Dense_custom {
 	int*               d_colind;      /* device array of column indices for a subsystem */
 	int*               d_rowptr;      /* device array of rowptrs for a subsystem */
 	cudaStream_t       stream;
+        int                nbBlocks;
+        int                nbThreads;
 };
 
 typedef struct _SUNLinearSolverContent_Dense_custom *SUNLinearSolverContent_Dense_custom; 
@@ -149,6 +152,8 @@ SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S);
 
 int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol);
+
+int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A);
 
 int SUNLinSolFree_Dense_custom(SUNLinearSolver S);
 
