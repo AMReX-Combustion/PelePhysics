@@ -28,6 +28,7 @@
   int sparse_solve          = 5;
   int iterative_gmres_solve = 99;
   int sparse_solve_custom   = 101;
+  int iterative_gmres_solve_custom = 199;
   int hack_dump_sparsity_pattern = -5;
   int eint_rho = 1; // in/out = rhoE/rhoY
   int enth_rho = 2; // in/out = rhoH/rhoY 
@@ -184,13 +185,14 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 	    }
 #endif
 
-	} else if (data->isolve_type == iterative_gmres_solve) {
+	} else if ((data->isolve_type == iterative_gmres_solve) 
+			|| (data->isolve_type == iterative_gmres_solve_custom)) {
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
             if (data->iverbose > 0) {
 #endif
-	    	amrex::Print() << "\n--> Using an Iterative Solver\n";    
+	    	amrex::Print() << "\n--> Using an Iterative Solver ("<<data->isolve_type<<")\n";    
 	    }
 
             /* Create the linear solver object */
@@ -227,7 +229,23 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 	    }
 #endif
 	} else {
-	    if (data->isolve_type == iterative_gmres_solve) {
+	    if (data->isolve_type == iterative_gmres_solve_custom) {
+		/* Set the JAcobian-times-vector function */
+		flag = CVSpilsSetJacTimes(cvode_mem, NULL, NULL);
+		if(check_flag(&flag, "CVSpilsSetJacTimes", 1)) return(1);
+
+#ifdef _OPENMP
+                if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+                if (data->iverbose > 0) {
+#endif
+			amrex::Print() << "    With a Sparse Preconditioner\n";
+		}
+	        /* Set the preconditioner solve and setup functions */
+	        flag = CVSpilsSetPreconditioner(cvode_mem, Precond_custom, PSolve_custom);
+	        if(check_flag(&flag, "CVSpilsSetPreconditioner", 1)) return(1);
+
+	    } else if (data->isolve_type == iterative_gmres_solve) {
 	        /* Set the JAcobian-times-vector function */
 	        flag = CVSpilsSetJacTimes(cvode_mem, NULL, NULL);
 	        if(check_flag(&flag, "CVSpilsSetJacTimes", 1)) return(1);
@@ -613,12 +631,12 @@ int cJac_sps(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
   BL_PROFILE_VAR("FillSparseData", FillSpsData);
   /* Fixed colVals*/
   for (int i=0;i<data_wk->NNZ*data_wk->ncells;i++) {
-      colIndx_tmp[i] = (sunindextype) data_wk->colVals[i];
+      colIndx_tmp[i] = (sunindextype) data_wk->colVals_c[i];
   }
-  rowPtrs_tmp[0] = (sunindextype) data_wk->rowPtrs[0];
+  rowPtrs_tmp[0] = (sunindextype) data_wk->rowPtrs_c[0];
   /* Fixed rowPtrs */
   for (int i=0;i<data_wk->ncells*(NUM_SPECIES + 1);i++) {
-      rowPtrs_tmp[i+1] = (sunindextype) data_wk->rowPtrs[i+1];
+      rowPtrs_tmp[i+1] = (sunindextype) data_wk->rowPtrs_c[i+1];
   }
   BL_PROFILE_VAR_STOP(FillSpsData);
 
@@ -673,10 +691,10 @@ int cJac_sps(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
       }
       /* Go from Dense to Sparse */
       for (int i = 1; i < NUM_SPECIES+2; i++) {
-	  nbVals = data_wk->rowPtrs[i]-data_wk->rowPtrs[i - 1];
+	  nbVals = data_wk->rowPtrs_c[i]-data_wk->rowPtrs_c[i - 1];
 	  for (int j = 0; j < nbVals; j++) {
-	          idx = data_wk->colVals[ data_wk->rowPtrs[i - 1] + j ];
-	          Jdata[ offset_J + data_wk->rowPtrs[i - 1] + j ] = Jmat_tmp[(i - 1) + (NUM_SPECIES + 1)*idx];
+	          idx = data_wk->colVals_c[ data_wk->rowPtrs_c[i - 1] + j ];
+	          Jdata[ offset_J + data_wk->rowPtrs_c[i - 1] + j ] = Jmat_tmp[(i - 1) + (NUM_SPECIES + 1)*idx];
 	  }
       }
   }
@@ -691,6 +709,7 @@ int cJac_sps(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
 
+  BL_PROFILE_VAR("SparseKLUJac", SpsKLUJac);
   /* Make local copies of pointers to input data (big M) */
   realtype *ydata           = N_VGetArrayPointer(u);
   sunindextype *colptrs_tmp = SUNSparseMatrix_IndexPointers(J);
@@ -762,6 +781,7 @@ int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
           }
       }
       /* Go from Dense to Sparse */
+      BL_PROFILE_VAR("DensetoSps", DtoS);
       for (int i = 1; i < NUM_SPECIES+2; i++) {
 	  nbVals = data_wk->colPtrs[0][i]-data_wk->colPtrs[0][i - 1];
 	  for (int j = 0; j < nbVals; j++) {
@@ -769,7 +789,10 @@ int cJac_KLU(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 	          Jdata[ data_wk->colPtrs[0][offset + i - 1] + j ] = Jmat_tmp[(i - 1) * (NUM_SPECIES + 1) + idx];
 	  }
       }
+      BL_PROFILE_VAR_STOP(DtoS);
   }
+
+  BL_PROFILE_VAR_STOP(SpsKLUJac);
 
   return(0);
 
@@ -840,6 +863,108 @@ int jtv(N_Vector v, N_Vector Jv, realtype t, N_Vector u, N_Vector fu,
   return(0);
 }
  */
+
+/* Preconditioner setup routine for GMRES solver when custom sparse mode is activated 
+ * Generate and preprocess P 
+ */
+int Precond_custom(realtype tn, N_Vector u, N_Vector fu, booleantype jok, 
+		booleantype *jcurPtr, realtype gamma, void *user_data)
+{
+  /* Make local copies of pointers to input data (big M) */
+  realtype *udata   = N_VGetArrayPointer(u);
+  /* Make local copies of pointers in user_data (cell M)*/
+  UserData data_wk;
+  data_wk = (UserData) user_data;   
+  /* Tmp array */
+  int ok,tid;
+
+  /* MW CGS */
+  realtype molecular_weight[NUM_SPECIES];
+  CKWT(molecular_weight);
+
+  /* Check if Jac is stale */
+  if (jok) {
+        /* jok = SUNTRUE: Copy Jbd to P */
+        *jcurPtr = SUNFALSE;
+  } else {
+        /* Temp vectors */
+        realtype temp, temp_save_lcl;
+        realtype activity[NUM_SPECIES], massfrac[NUM_SPECIES];
+        /* EOS object in cpp */
+        EOS eos;
+        /* Save Jac from cell to cell if more than one */
+        temp_save_lcl = 0.0;
+        for (tid = 0; tid < data_wk->ncells; tid ++) {
+            /* Offset in case several cells */
+            int offset = tid * (NUM_SPECIES + 1); 
+            /* rho MKS */ 
+            realtype rho = 0.0;
+            for (int i = 0; i < NUM_SPECIES; i++){
+                rho = rho + udata[offset + i];
+            }
+            /* Yks */
+            for (int i = 0; i < NUM_SPECIES; i++){
+                massfrac[i] = udata[offset + i] / rho;
+            }
+            /* temp */
+            temp = udata[offset + NUM_SPECIES];
+            /* Activities */
+	    eos.eos_RTY2C(rho, temp, massfrac, activity);
+            /* Do we recompute Jac ? */
+            if (fabs(temp - temp_save_lcl) > 1.0) {
+                /* Formalism */
+                int consP;
+                if (data_wk->ireactor_type == eint_rho) {
+                    consP = 0;
+                } else {
+                    consP = 1;
+                }
+                DWDOT_SIMPLIFIED(data_wk->JSPSmat[tid], activity, &temp, &consP);
+
+                for (int i = 0; i < NUM_SPECIES; i++) {
+                    for (int k = 0; k < NUM_SPECIES; k++) {
+                        (data_wk->JSPSmat[tid])[k*(NUM_SPECIES+1) + i] = (data_wk->JSPSmat[tid])[k*(NUM_SPECIES+1) + i] * molecular_weight[i] / molecular_weight[k];
+                    }
+                    (data_wk->JSPSmat[tid])[i*(NUM_SPECIES+1) + NUM_SPECIES] = (data_wk->JSPSmat[tid])[i*(NUM_SPECIES+1) + NUM_SPECIES] / molecular_weight[i];
+                }
+                for (int i = 0; i < NUM_SPECIES; i++) {
+                    (data_wk->JSPSmat[tid])[NUM_SPECIES*(NUM_SPECIES+1) + i] = (data_wk->JSPSmat[tid])[NUM_SPECIES*(NUM_SPECIES+1) + i] * molecular_weight[i];
+                }
+	        temp_save_lcl = temp;
+	    } else {
+		/* if not: copy the one from prev cell */
+		for (int i = 0; i < NUM_SPECIES+1; i++) {
+		    for (int k = 0; k < NUM_SPECIES+1; k++) {
+		        (data_wk->JSPSmat[tid])[k*(NUM_SPECIES+1) + i] = (data_wk->JSPSmat[tid-1])[k*(NUM_SPECIES+1) + i];
+		    }
+		}
+	    }
+	}
+
+        *jcurPtr = SUNTRUE;
+  }
+
+  int nbVals;
+  for (int i = 1; i < NUM_SPECIES+2; i++) {
+      /* nb non zeros elem should be the same for all cells */
+      nbVals = data_wk->rowPtrs[0][i]-data_wk->rowPtrs[0][i-1];
+      for (int j = 0; j < nbVals; j++) {
+    	  /* row of non zero elem should be the same for all cells */
+    	  int idx = data_wk->colVals[0][ data_wk->rowPtrs[0][i-1] + j ];
+          /* Scale by -gamma */
+          /* Add identity matrix */
+          for (tid = 0; tid < data_wk->ncells; tid ++) {
+    	      if (idx == (i-1)) {
+                  data_wk->Jdata[tid][ data_wk->rowPtrs[tid][i-1] + j ] = 1.0 - gamma * (data_wk->JSPSmat[tid])[ idx * (NUM_SPECIES+1) + idx]; 
+    	      } else {
+                  data_wk->Jdata[tid][ data_wk->rowPtrs[tid][i-1] + j ] = - gamma * (data_wk->JSPSmat[tid])[ (i - 1) + (NUM_SPECIES+1)*idx ]; 
+    	      }
+          }
+      }
+  }
+
+  return(0);
+}
 
 
 #ifdef USE_KLU_PP 
@@ -942,6 +1067,7 @@ int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
       }
   }
   
+  BL_PROFILE_VAR("KLU_factorization", KLU_factor);
   if (!(data_wk->FirstTimePrecond)) {
       for (tid = 0; tid < data_wk->ncells; tid ++) {
           ok = klu_refactor(data_wk->colPtrs[tid], data_wk->rowVals[tid], data_wk->Jdata[tid], data_wk->Symbolic[tid], data_wk->Numeric[tid], &(data_wk->Common[tid]));
@@ -952,6 +1078,7 @@ int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
       }
       data_wk->FirstTimePrecond = false;
   }
+  BL_PROFILE_VAR_STOP(KLU_factor);
 
   return(0);
 }
@@ -1046,6 +1173,36 @@ int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 }
 #endif
 
+/* PSolve for GMRES solver when custom sparse mode is activated */
+int PSolve_custom(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
+                  realtype gamma, realtype delta, int lr, void *user_data)
+{
+  /* Make local copies of pointers in user_data */
+  UserData data_wk;
+  data_wk = (UserData) user_data;
+
+  /* Make local copies of pointers to input data (big M) */
+  realtype *zdata = N_VGetArrayPointer(z);
+  realtype *rdata = N_VGetArrayPointer(r);
+  
+  N_VScale(1.0, r, z);
+
+  /* Solve the block-diagonal system Pz = r using LU factors stored
+     in P and pivot data in pivot, and return the solution in z. */
+  BL_PROFILE_VAR("GaussSolver", GaussSolver);
+  double *z_d_offset;
+  double *r_d_offset;
+  int tid, offset;
+  for (tid = 0; tid < data_wk->ncells; tid ++) {
+      offset      = tid * (NUM_SPECIES + 1);
+      z_d_offset  = zdata  + offset;
+      r_d_offset  = rdata  + offset;
+      sgjsolve_simplified(data_wk->Jdata[tid], z_d_offset, r_d_offset);
+  }
+  BL_PROFILE_VAR_STOP(GaussSolver);
+
+  return(0);
+}
 
 #ifdef USE_KLU_PP 
 /* PSolve for GMRES solver when KLU sparse mode is activated */
@@ -1058,7 +1215,9 @@ int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
 
   /* Make local copies of pointers to input data (big M) */
   realtype *zdata = N_VGetArrayPointer(z);
+  realtype *rdata = N_VGetArrayPointer(r);
 
+  BL_PROFILE_VAR("KLU_inversion", PSolve_sparse);
   N_VScale(1.0, r, z);
 
   /* Solve the block-diagonal system Pz = r using LU factors stored
@@ -1072,6 +1231,7 @@ int PSolve_sparse(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
       klu_solve(data_wk->Symbolic[tid], data_wk->Numeric[tid], NUM_SPECIES+1, 1, zdata_cell, &(data_wk->Common[tid])) ; 
       std::memcpy(zdata+offset_beg, zdata_cell, (NUM_SPECIES+1)*sizeof(realtype));
   }
+  BL_PROFILE_VAR_STOP(PSolve_sparse);
 
   return(0);
 }
@@ -1263,7 +1423,7 @@ void PrintFinalStats(void *cvodeMem, realtype Temp)
       check_flag(&flag, "CVSpilsGetNumRhsEvals", 1);
       flag = CVSpilsGetNumJtimesEvals(cvodeMem, &nje);
       //flag = CVSpilsGetNumJTSetupEvals(cvodeMem, &nje);
-      check_flag(&flag, "CVSpilsGetNumJTSetupEvals", 1);
+      check_flag(&flag, "CVSpilsGetNumJtimesEvals", 1);
       flag = CVSpilsGetNumPrecEvals(cvodeMem, &npe);
       check_flag(&flag, "CVSpilsGetNumPrecEvals", 1);
       flag = CVSpilsGetNumPrecSolves(cvodeMem, &nps);
@@ -1439,13 +1599,38 @@ UserData AllocUserData(int reactor_type, int num_cells)
   //}
 #endif
 
+  } else if (data_wk->isolve_type == iterative_gmres_solve_custom) {
+      /* Sparse Direct and Sparse (It) Precond data */
+      data_wk->colVals = new int*[data_wk->ncells];
+      data_wk->rowPtrs = new int*[data_wk->ncells];
+      data_wk->Jdata   = new realtype*[data_wk->ncells];
+      /* Matrices for It Sparse custom block-solve */
+      data_wk->PS         = new SUNMatrix[data_wk->ncells];
+      data_wk->JSPSmat    = new realtype*[data_wk->ncells];
+      /* Nb of non zero elements*/
+      SPARSITY_INFO_SYST_SIMPLIFIED(&(data_wk->NNZ),&HP);
+      for(int i = 0; i < data_wk->ncells; ++i) {
+	      (data_wk->PS)[i]       = SUNSparseMatrix(NUM_SPECIES+1, NUM_SPECIES+1, data_wk->NNZ, CSR_MAT);
+	      data_wk->rowPtrs[i]    = (int*) SUNSparseMatrix_IndexPointers((data_wk->PS)[i]);
+	      data_wk->colVals[i]    = (int*) SUNSparseMatrix_IndexValues((data_wk->PS)[i]);
+	      data_wk->Jdata[i]      = SUNSparseMatrix_Data((data_wk->PS)[i]);
+              SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(data_wk->colVals[i],data_wk->rowPtrs[i],&HP,0);
+              data_wk->JSPSmat[i]    = new realtype[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
+      }
+#ifdef _OPENMP
+      if ((data_wk->iverbose > 0) && (omp_thread == 0)) {
+#else
+      if (data_wk->iverbose > 0) {
+#endif
+          amrex::Print() << "--> SPARSE Preconditioner -- non zero entries: " << data_wk->NNZ*data_wk->ncells << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1) * data_wk->ncells) *100.0 <<" % fill-in pattern\n";
+      }
   } else if (data_wk->isolve_type == sparse_solve_custom) {
-      /* SYST JAC */
+      /* Nb of non zero elements*/
       SPARSITY_INFO_SYST(&(data_wk->NNZ),&HP,1);
-      data_wk->PSc         = SUNSparseMatrix((NUM_SPECIES+1)*data_wk->ncells, (NUM_SPECIES+1)*data_wk->ncells, data_wk->NNZ*data_wk->ncells, CSR_MAT);
-      data_wk->rowPtrs    = (int*) SUNSparseMatrix_IndexPointers(data_wk->PSc); 
-      data_wk->colVals    = (int*) SUNSparseMatrix_IndexValues(data_wk->PSc);
-      SPARSITY_PREPROC_SYST_CSR(data_wk->colVals,data_wk->rowPtrs,&HP,data_wk->ncells,0);
+      data_wk->PSc          = SUNSparseMatrix((NUM_SPECIES+1)*data_wk->ncells, (NUM_SPECIES+1)*data_wk->ncells, data_wk->NNZ*data_wk->ncells, CSR_MAT);
+      data_wk->rowPtrs_c    = (int*) SUNSparseMatrix_IndexPointers(data_wk->PSc); 
+      data_wk->colVals_c    = (int*) SUNSparseMatrix_IndexValues(data_wk->PSc);
+      SPARSITY_PREPROC_SYST_CSR(data_wk->colVals_c,data_wk->rowPtrs_c,&HP,data_wk->ncells,0);
 #ifdef _OPENMP
       if ((data_wk->iverbose > 0) && (omp_thread == 0)) {
 #else
@@ -1459,7 +1644,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
 
       /* CHEMISTRY JAC */
       SPARSITY_INFO(&(data_wk->NNZ),&HP,1);
-      amrex::Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+      amrex::Print() << "--> Chem Jac -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
       SUNMatrix PS;
       PS = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
       int *colIdx, *rowCount;
@@ -1492,7 +1677,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
 
       /* SYST JAC */
       SPARSITY_INFO_SYST(&(data_wk->NNZ),&HP,1);
-      amrex::Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+      amrex::Print() << "--> Syst Jac -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
       PS = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
       rowCount = (int*) SUNSparseMatrix_IndexPointers(PS); 
       colIdx   = (int*) SUNSparseMatrix_IndexValues(PS);
@@ -1521,7 +1706,38 @@ UserData AllocUserData(int reactor_type, int num_cells)
       }
       std::cout << " There was " << counter << " non zero elems (compare to the "<<data_wk->NNZ<< " we need)" << std::endl;
 
-      amrex::Abort("Dump Sparsity Patern of SystemJac and ChemJac in CSR format.");
+      /* SYST JAC SIMPLIFIED*/
+      SPARSITY_INFO_SYST_SIMPLIFIED(&(data_wk->NNZ),&HP);
+      amrex::Print() << "--> Simplified Syst Jac (for Precond) -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+      PS = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
+      rowCount = (int*) SUNSparseMatrix_IndexPointers(PS); 
+      colIdx   = (int*) SUNSparseMatrix_IndexValues(PS);
+      SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(colIdx,rowCount,&HP,1);
+      /* CHEMISTRY JAC */
+      std::cout <<" " << std::endl;
+      std::cout << "*** Treating simplified SYST Jac (CSR symbolic analysis)***" << std::endl;
+      std::cout <<" " << std::endl;
+      counter = 0;
+      for (int i = 0; i < NUM_SPECIES+1; i++) {
+          nbVals         = rowCount[i+1] - rowCount[i];
+	  int idx_arr[nbVals];
+	  std::fill_n(idx_arr, nbVals, -1);
+	  std::memcpy(idx_arr, colIdx + (rowCount[i] - 1), nbVals*sizeof(int));
+          int idx        = 0;
+          for (int j = 0; j < NUM_SPECIES+1; j++) {
+              if ((j == idx_arr[idx] - 1) && ((nbVals-idx) > 0)) {
+	          std::cout << 1 << " ";
+		  idx = idx + 1;
+		  counter = counter + 1;
+	      } else {
+	          std::cout << 0 << " ";
+	      }
+          }
+	  std::cout << std::endl;
+      }
+      std::cout << " There was " << counter << " non zero elems (compare to the "<<data_wk->NNZ<< " we need)" << std::endl;
+
+      amrex::Abort("Dump Sparsity Patern of different Jacobians in CSR format.");
   }
 
   return(data_wk);

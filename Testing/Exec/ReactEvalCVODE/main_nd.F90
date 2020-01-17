@@ -100,8 +100,8 @@ contains
 
     call build(eos_state)
 
-    Temp_lo = 1500.d0
-    Temp_hi = 2000.d0
+    Temp_lo = 2000.d0
+    Temp_hi = 2500.d0
     dTemp = 100.d0
 
     if (nspecies.lt.3) then

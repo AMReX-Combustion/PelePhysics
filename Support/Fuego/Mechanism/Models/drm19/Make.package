@@ -1,6 +1,6 @@
 CEXE_headers+=chemistry_file.H
 
-CEXE_sources+=drm19.cpp solver.cpp
+CEXE_sources+=drm19.cpp solver.cpp solver_simplified.cpp
 
 LIBRARIES += 
 

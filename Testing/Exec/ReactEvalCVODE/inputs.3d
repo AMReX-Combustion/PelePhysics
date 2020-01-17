@@ -1,5 +1,5 @@
 dt = 1.e-05
-ndt = 100
+ndt = 10
 
 # Select CVODE Jacobian eval: 0=FD 1=AJ
 cvode.analytical_jacobian = 1
@@ -10,10 +10,10 @@ reactor_type  = 1
 # Choose between sparse (5) dense (1/101) iterative (99) solver
 cvode.solve_type = 5
 
-max_grid_size = 4
+max_grid_size = 2
 
 # Choose name of output pltfile
 amr.plot_file       = plt
 
 # Be aware of what your fuel species is 
-fuel_name = NC12H26
+fuel_name = CH4

@@ -10527,8 +10527,8 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, i
 }
 
 /*compute the sparsity pattern of the simplified (for precond) system Jacobian */
-/*CSR format BASE 1 */
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP)
+/*CSR format BASE is under choice */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base)
 {
     double c[21];
     double J[484];
@@ -10539,21 +10539,40 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, i
 
     aJacobian_precond(J, c, 1500.0, *consP);
 
-    rowPtr[0] = 1;
-    int nJdata_tmp = 1;
-    for (int l=0; l<22; l++) {
-        for (int k=0; k<22; k++) {
-            if (k == l) {
-                colVals[nJdata_tmp-1] = l+1; 
-                nJdata_tmp = nJdata_tmp + 1; 
-            } else {
-                if(J[22*k + l] != 0.0) {
-                    colVals[nJdata_tmp-1] = k+1; 
+    if (base == 1) {
+        rowPtr[0] = 1;
+        int nJdata_tmp = 1;
+        for (int l=0; l<22; l++) {
+            for (int k=0; k<22; k++) {
+                if (k == l) {
+                    colVals[nJdata_tmp-1] = l+1; 
                     nJdata_tmp = nJdata_tmp + 1; 
+                } else {
+                    if(J[22*k + l] != 0.0) {
+                        colVals[nJdata_tmp-1] = k+1; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    }
                 }
             }
+            rowPtr[l+1] = nJdata_tmp;
         }
-        rowPtr[l+1] = nJdata_tmp;
+    } else {
+        rowPtr[0] = 0;
+        int nJdata_tmp = 0;
+        for (int l=0; l<22; l++) {
+            for (int k=0; k<22; k++) {
+                if (k == l) {
+                    colVals[nJdata_tmp] = l; 
+                    nJdata_tmp = nJdata_tmp + 1; 
+                } else {
+                    if(J[22*k + l] != 0.0) {
+                        colVals[nJdata_tmp] = k; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    }
+                }
+            }
+            rowPtr[l+1] = nJdata_tmp;
+        }
     }
 
     return;
