@@ -5,6 +5,7 @@
 #include "AMReX_Particles.H"
 #include "AMReX_AmrParticles.H"
 #include "AMReX_Amr.H"
+#include <AMReX_IntVect.H>
 
 /*
   Setting the number of components in the particle structs, we must be sure that 
@@ -100,8 +101,8 @@ private:
 
     bool sub_cycle;
     amrex::BCRec* phys_bc;
-    int reflect_lo[AMREX_SPACEDIM];
-    int reflect_hi[AMREX_SPACEDIM];
+    amrex::IntVect reflect_lo;
+    amrex::IntVect reflect_hi;
 };
 
 #endif

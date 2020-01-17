@@ -62,7 +62,6 @@ contains
     real(amrex_real), dimension(nspec_f) :: inv_diff_temp ! 1/(T_crit - T_boil)
     real(amrex_real), dimension(nspec_f) :: invfmolwt
     real(amrex_real), dimension(nspec_f) :: inv_boil_temp
-    real(amrex_real), dimension(nspec_f) :: inv_density
     real(amrex_real), dimension(nspec_f) :: L_fuel
     real(amrex_real), dimension(nspec_f) :: h_skin
     real(amrex_real) :: fluid_molwt
@@ -123,7 +122,6 @@ contains
     do L = 1,nspec_f
       invfmolwt(L) = 1.0d0/fuel_molwt(L)
       inv_boil_temp(L) = 1.0d0/fuel_boil_temp(L)
-      inv_density(L) = 1.0d0/fuel_density(L)
       inv_diff_temp(L) = (fuel_crit_temp(L)-fuel_boil_temp(L))
       inv_diff_temp(L) = 1.0d0/inv_diff_temp(L)
     end do
@@ -457,7 +455,7 @@ contains
 
          ! Add mass transfer term
          heat_src = convection*cp_d_av*pmass  &
-                   -sum(Y_dot*h_skin,DIM=nspec_f)
+                   +sum(Y_dot*h_skin,DIM=nspec_f)
          !         -sum(Y_dot*L_fuel,DIM=nspec_f)
 
          inv_tau_T = convection/temp_diff(n)
@@ -478,7 +476,6 @@ contains
        ! Put the same forcing term on the grid (cell centers)
        ! ****************************************************
        if(is_mom_tran.eq.1.or.is_mass_tran.eq.1.or.is_heat_tran.eq.1) then
-
           lx2 = (particles(n)%pos(1) - plo(1))*inv_dx(1) - 0.5d0
           ly2 = (particles(n)%pos(2) - plo(2))*inv_dx(2) - 0.5d0
           i2 = floor(lx2)
@@ -563,7 +560,8 @@ contains
        end do
 
        ! consider changing to lagged temperature to improve order
-       particles(n)%temp = particles(n)%temp + 0.5d0*dt * convection 
+       !particles(n)%temp = particles(n)%temp + 0.5d0*dt * convection 
+       particles(n)%temp = particles(n)%temp + 0.5d0*dt * heat_src/(cp_d_av*pmass)
  
        ! Update diameter by half dt
        particles(n)%diam = max(particles(n)%diam + 0.5d0*dt * d_dot,1e-6)

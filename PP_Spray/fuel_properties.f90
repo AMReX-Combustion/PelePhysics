@@ -10,7 +10,6 @@ module fuel_properties
 
       integer :: nspec_f
       integer, parameter :: max_nspec_f = 1
-      real(amrex_real), dimension(max_nspec_f) :: fuel_density
       real(amrex_real), dimension(max_nspec_f) :: fuel_crit_temp
       real(amrex_real), dimension(max_nspec_f) :: fuel_latent
       real(amrex_real), dimension(max_nspec_f) :: fuel_mass_frac

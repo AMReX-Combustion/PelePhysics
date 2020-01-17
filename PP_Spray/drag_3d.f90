@@ -59,7 +59,6 @@ contains
     real(amrex_real), dimension(nspec_f) :: inv_diff_temp ! 1/(T_crit - T_boil)
     real(amrex_real), dimension(nspec_f) :: invfmolwt
     real(amrex_real), dimension(nspec_f) :: inv_boil_temp
-    real(amrex_real), dimension(nspec_f) :: inv_density
     real(amrex_real), dimension(nspec_f) :: L_fuel
     real(amrex_real), dimension(nspec_f) :: h_skin
     real(amrex_real) :: fluid_molwt
@@ -122,7 +121,6 @@ contains
     do L = 1,nspec_f
       invfmolwt(L) = 1.0d0/fuel_molwt(L)
       inv_boil_temp(L) = 1.0d0/fuel_boil_temp(L)
-      inv_density(L) = 1.0d0/fuel_density(L)
       inv_diff_temp(L) = (fuel_crit_temp(L)-fuel_boil_temp(L))
       inv_diff_temp(L) = 1.0d0/inv_diff_temp(L)
     end do

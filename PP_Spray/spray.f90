@@ -22,7 +22,7 @@ contains
   ! ------------------------------------------------------------------------------
   !  Import fuel properties from input file
   ! ------------------------------------------------------------------------------
-  subroutine import_fuel_properties(ccnspec_f, ccfuel_mass_frac, ccfuel_density, &
+  subroutine import_fuel_properties(ccnspec_f, ccfuel_mass_frac, &
        ccfuel_crit_temp, ccfuel_latent, ccfuel_boil_temp, &
        ccfuel_cp, ccfuel_molwt, ccfuel_indx) &
        bind(C, name="import_fuel_properties")
@@ -31,7 +31,6 @@ contains
 
     integer :: ccnspec_f
     real(amrex_real), dimension(ccnspec_f) :: ccfuel_mass_frac
-    real(amrex_real), dimension(ccnspec_f) :: ccfuel_density
     real(amrex_real), dimension(ccnspec_f) :: ccfuel_crit_temp
     real(amrex_real), dimension(ccnspec_f) :: ccfuel_latent
     real(amrex_real), dimension(ccnspec_f) :: ccfuel_boil_temp
@@ -41,13 +40,12 @@ contains
 
     nspec_f = ccnspec_f
     fuel_mass_frac(1:nspec_f)=ccfuel_mass_frac
-    fuel_density(1:nspec_f)=ccfuel_density
     fuel_crit_temp(1:nspec_f)=ccfuel_crit_temp
     fuel_latent(1:nspec_f)=ccfuel_latent
     fuel_boil_temp(1:nspec_f)=ccfuel_boil_temp
     fuel_cp(1:nspec_f)=ccfuel_cp
     fuel_molwt(1:nspec_f)=ccfuel_molwt
-    fuel_indx(1:nspec_f)=ccfuel_indx
+    fuel_indx(1:nspec_f)=ccfuel_indx + 1 ! To convert to fortran indexing
 
   end subroutine import_fuel_properties
 
@@ -235,7 +233,8 @@ contains
   ! SUBROUTINE TO ITERATE AND CALCULATE B_T
   !-----------------------------------------------------------------------------------------
 
-  subroutine calc_thermal_B(Nu, Sh, Pr, Sc,cp_fuel,cp_gas, B_m, B_T)
+  subroutine calc_thermal_B(Nu, Sh, Pr, Sc,cp_fuel,cp_gas, B_m, B_T)&
+       bind(C, name="calc_thermal_B")
 
     ! Input Variables
     double precision, intent(   in) :: Sh
