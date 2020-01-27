@@ -5,9 +5,7 @@
 #include <AMReX_Particles.H>
 #include <PeleC_F.H>
 #include <PeleC.H>
-#include <Spray_F.H>
 #include <chemistry_file.H>
-//#include <eos.H>
 #include <Fuego_EOS.H>
 #include <SprayParticles.H>
 
@@ -208,6 +206,12 @@ update_particlesCPP(const int&      lev,
   Real Ru, p0, ruc;
   CKRP(&Ru, &ruc, &p0);
   const Real inv_Ru = 1./Ru;
+  // Retrieve the number of species for the gas phase
+  int nspecies;
+  get_num_spec(&nspecies);
+  Vector<Real> mw_fluid(nspecies);
+  get_mw(mw_fluid.data());
+  EOS eos;
 
   const Box& state_box = state.box();
   const Box& src_box = source.box();
@@ -215,13 +219,6 @@ update_particlesCPP(const int&      lev,
   // Low/hi positions of the problem domain
   const RealVect plo(AMREX_D_DECL(prob_dom.lo(0), prob_dom.lo(1), prob_dom.lo(2)));
   const RealVect phi(AMREX_D_DECL(prob_dom.hi(0), prob_dom.hi(1), prob_dom.hi(2)));
-
-  EOS eos;
-  // Retrieve the number of species for the gas phase
-  int nspecies;
-  get_num_spec(&nspecies);
-  Vector<Real> mw_fluid(nspecies);
-  get_mw(mw_fluid.data());
 
   // Get fuel property values
   int nspec_f = PeleC::particle_nfuel_species;

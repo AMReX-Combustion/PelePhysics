@@ -12,7 +12,7 @@
   this is consistent with the definition of the particle type in f90.  We make space
   for position (D), velocity (D), temp (1), diameter (1) and density (1) [here, D is 
   the space dimension].  The library already accounts for the position, so we 
-  declear D+3.
+  declare D+3.
 
   From particle_mod.f90:
 
