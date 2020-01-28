@@ -142,9 +142,8 @@ main (int   argc,
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 2;
+	npts[i] = third_dim;
     }
-    npts[1] = third_dim;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
         amrex::Print() << dt << " seconds";
