@@ -4236,7 +4236,7 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
 
 
 /*compute the sparsity pattern of the system Jacobian */
-AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST( int * nJdata, int * consP)
+AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST( int * nJdata, int * consP, int NCELLS)
 {
     double c[9];
     double J[100];
@@ -4260,7 +4260,7 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST( int * nJdata, int * consP)
         }
     }
 
-    nJdata[0] = nJdata_tmp;
+    *nJdata = NCELLS * nJdata_tmp;
 
     return;
 }
@@ -4363,11 +4363,12 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int *  colVals, int *  rowPtrs, 
 }
 
 /*compute the sparsity pattern of the system Jacobian */
-/*CSR format BASE 1 */
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP)
+/*CSR format BASE is user choice */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCELLS, int base)
 {
     double c[9];
     double J[100];
+    int offset;
 
     for (int k=0; k<9; k++) {
         c[k] = 1.0/ 9.000000 ;
@@ -4375,21 +4376,46 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr
 
     aJacobian(J, c, 1500.0, *consP);
 
-    rowPtr[0] = 1;
-    int nJdata_tmp = 1;
-    for (int l=0; l<10; l++) {
-        for (int k=0; k<10; k++) {
-            if (k == l) {
-                colVals[nJdata_tmp-1] = l+1; 
-                nJdata_tmp = nJdata_tmp + 1; 
-            } else {
-                if(J[10*k + l] != 0.0) {
-                    colVals[nJdata_tmp-1] = k+1; 
-                    nJdata_tmp = nJdata_tmp + 1; 
+    if (base == 1) {
+        rowPtr[0] = 1;
+        int nJdata_tmp = 1;
+        for (int nc=0; nc<NCELLS; nc++) {
+            offset = nc * 10;
+            for (int l=0; l<10; l++) {
+                for (int k=0; k<10; k++) {
+                    if (k == l) {
+                        colVals[nJdata_tmp-1] = l+1 + offset; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    } else {
+                        if(J[10*k + l] != 0.0) {
+                            colVals[nJdata_tmp-1] = k+1 + offset; 
+                            nJdata_tmp = nJdata_tmp + 1; 
+                        }
+                    }
                 }
+                rowPtr[offset + (l + 1)] = nJdata_tmp;
             }
         }
-        rowPtr[l+1] = nJdata_tmp;
+    } else {
+        rowPtr[0] = 0;
+        int nJdata_tmp = 0;
+        for (int nc=0; nc<NCELLS; nc++) {
+            offset = nc * 10;
+            for (int l=0; l<10; l++) {
+                for (int k=0; k<10; k++) {
+                    if (k == l) {
+                        colVals[nJdata_tmp] = l + offset; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    } else {
+                        if(J[10*k + l] != 0.0) {
+                            colVals[nJdata_tmp] = k + offset; 
+                            nJdata_tmp = nJdata_tmp + 1; 
+                        }
+                    }
+                }
+                rowPtr[offset + (l + 1)] = nJdata_tmp;
+            }
+        }
     }
 
     return;
@@ -4431,8 +4457,8 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, i
 }
 
 /*compute the sparsity pattern of the simplified (for precond) system Jacobian */
-/*CSR format BASE 1 */
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP)
+/*CSR format BASE is under choice */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base)
 {
     double c[9];
     double J[100];
@@ -4443,21 +4469,40 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, i
 
     aJacobian_precond(J, c, 1500.0, *consP);
 
-    rowPtr[0] = 1;
-    int nJdata_tmp = 1;
-    for (int l=0; l<10; l++) {
-        for (int k=0; k<10; k++) {
-            if (k == l) {
-                colVals[nJdata_tmp-1] = l+1; 
-                nJdata_tmp = nJdata_tmp + 1; 
-            } else {
-                if(J[10*k + l] != 0.0) {
-                    colVals[nJdata_tmp-1] = k+1; 
+    if (base == 1) {
+        rowPtr[0] = 1;
+        int nJdata_tmp = 1;
+        for (int l=0; l<10; l++) {
+            for (int k=0; k<10; k++) {
+                if (k == l) {
+                    colVals[nJdata_tmp-1] = l+1; 
                     nJdata_tmp = nJdata_tmp + 1; 
+                } else {
+                    if(J[10*k + l] != 0.0) {
+                        colVals[nJdata_tmp-1] = k+1; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    }
                 }
             }
+            rowPtr[l+1] = nJdata_tmp;
         }
-        rowPtr[l+1] = nJdata_tmp;
+    } else {
+        rowPtr[0] = 0;
+        int nJdata_tmp = 0;
+        for (int l=0; l<10; l++) {
+            for (int k=0; k<10; k++) {
+                if (k == l) {
+                    colVals[nJdata_tmp] = l; 
+                    nJdata_tmp = nJdata_tmp + 1; 
+                } else {
+                    if(J[10*k + l] != 0.0) {
+                        colVals[nJdata_tmp] = k; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    }
+                }
+            }
+            rowPtr[l+1] = nJdata_tmp;
+        }
     }
 
     return;

@@ -22733,8 +22733,8 @@ void vcomp_wdot_201_224(int npt, double *  wdot, double *  mixture, double *  sc
 
 #endif
 
-/*compute an approx to the reaction Jacobian */
-AMREX_GPU_HOST_DEVICE void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP)
+/*compute an approx to the reaction Jacobian (for preconditioning) */
+AMREX_GPU_HOST_DEVICE void DWDOT_SIMPLIFIED(double *  J, double *  sc, double *  Tp, int * HP)
 {
     double c[47];
 
@@ -22749,49 +22749,6 @@ AMREX_GPU_HOST_DEVICE void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp
     for (int k=0; k<47; k++) {
         J[2256+k] *= 1.e-6;
         J[k*48+47] *= 1.e6;
-    }
-
-    return;
-}
-
-/*compute an approx to the SPS Jacobian */
-AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma)
-{
-    double c[47];
-    double J[2304];
-    double mwt[47];
-
-    get_mw(mwt);
-
-    for (int k=0; k<47; k++) {
-        c[k] = 1.e6 * sc[k];
-    }
-
-    aJacobian_precond(J, c, *Tp, *HP);
-
-    /* Change of coord */
-    /* dwdot[k]/dT */
-    /* dTdot/d[X] */
-    for (int k=0; k<47; k++) {
-        J[2256+k] = 1.e-6 * J[2256+k] * mwt[k];
-        J[k*48+47] = 1.e6 * J[k*48+47] / mwt[k];
-    }
-    /* dTdot/dT */
-    /* dwdot[l]/[k] */
-    for (int k=0; k<47; k++) {
-        for (int l=0; l<47; l++) {
-            /* DIAG elem */
-            if (k == l){
-                J[ 48 * k + l] =  J[ 48 * k + l] * mwt[l] / mwt[k];
-            /* NOT DIAG and not last column nor last row */
-            } else {
-                J[ 48 * k + l] =  J[ 48 * k + l] * mwt[l] / mwt[k];
-            }
-        }
-    }
-
-    for (int k=0; k<(*len); k++) {
-        Jsps[k] = J[indx[k]];
     }
 
     return;
@@ -22818,7 +22775,7 @@ AMREX_GPU_HOST_DEVICE void DWDOT(double *  J, double *  sc, double *  Tp, int * 
     return;
 }
 
-/*compute the sparsity pattern Jacobian */
+/*compute the sparsity pattern of the chemistry Jacobian */
 AMREX_GPU_HOST_DEVICE void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
 {
     double c[47];
@@ -22846,8 +22803,40 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
 
 
 
-/*compute the sparsity pattern of simplified Jacobian */
-AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)
+/*compute the sparsity pattern of the system Jacobian */
+AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST( int * nJdata, int * consP, int NCELLS)
+{
+    double c[47];
+    double J[2304];
+
+    for (int k=0; k<47; k++) {
+        c[k] = 1.0/ 47.000000 ;
+    }
+
+    aJacobian(J, c, 1500.0, *consP);
+
+    int nJdata_tmp = 0;
+    for (int k=0; k<48; k++) {
+        for (int l=0; l<48; l++) {
+            if(k == l){
+                nJdata_tmp = nJdata_tmp + 1;
+            } else {
+                if(J[ 48 * k + l] != 0.0){
+                    nJdata_tmp = nJdata_tmp + 1;
+                }
+            }
+        }
+    }
+
+    *nJdata = NCELLS * nJdata_tmp;
+
+    return;
+}
+
+
+
+/*compute the sparsity pattern of the simplified (for preconditioning) system Jacobian */
+AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST_SIMPLIFIED( int * nJdata, int * consP)
 {
     double c[47];
     double J[2304];
@@ -22877,9 +22866,132 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)
 }
 
 
-#ifndef AMREX_USE_CUDA
-/*compute the sparsity pattern of the simplified precond Jacobian on CPU */
-void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * consP)
+/*compute the sparsity pattern of the chemistry Jacobian in CSC format -- base 0 */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)
+{
+    double c[47];
+    double J[2304];
+    int offset_row;
+    int offset_col;
+
+    for (int k=0; k<47; k++) {
+        c[k] = 1.0/ 47.000000 ;
+    }
+
+    aJacobian(J, c, 1500.0, *consP);
+
+    colPtrs[0] = 0;
+    int nJdata_tmp = 0;
+    for (int nc=0; nc<NCELLS; nc++) {
+        offset_row = nc * 48;
+        offset_col = nc * 48;
+        for (int k=0; k<48; k++) {
+            for (int l=0; l<48; l++) {
+                if(J[48*k + l] != 0.0) {
+                    rowVals[nJdata_tmp] = l + offset_row; 
+                    nJdata_tmp = nJdata_tmp + 1; 
+                }
+            }
+            colPtrs[offset_col + (k + 1)] = nJdata_tmp;
+        }
+    }
+
+    return;
+}
+
+/*compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0 */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int *  colVals, int *  rowPtrs, int * consP, int NCELLS)
+{
+    double c[47];
+    double J[2304];
+    int offset;
+
+    for (int k=0; k<47; k++) {
+        c[k] = 1.0/ 47.000000 ;
+    }
+
+    aJacobian(J, c, 1500.0, *consP);
+
+    rowPtrs[0] = 0;
+    int nJdata_tmp = 0;
+    for (int nc=0; nc<NCELLS; nc++) {
+        offset = nc * 48;
+        for (int l=0; l<48; l++) {
+            for (int k=0; k<48; k++) {
+                if(J[48*k + l] != 0.0) {
+                    colVals[nJdata_tmp] = k + offset; 
+                    nJdata_tmp = nJdata_tmp + 1; 
+                }
+            }
+            rowPtrs[offset + (l + 1)] = nJdata_tmp;
+        }
+    }
+
+    return;
+}
+
+/*compute the sparsity pattern of the system Jacobian */
+/*CSR format BASE is user choice */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCELLS, int base)
+{
+    double c[47];
+    double J[2304];
+    int offset;
+
+    for (int k=0; k<47; k++) {
+        c[k] = 1.0/ 47.000000 ;
+    }
+
+    aJacobian(J, c, 1500.0, *consP);
+
+    if (base == 1) {
+        rowPtr[0] = 1;
+        int nJdata_tmp = 1;
+        for (int nc=0; nc<NCELLS; nc++) {
+            offset = nc * 48;
+            for (int l=0; l<48; l++) {
+                for (int k=0; k<48; k++) {
+                    if (k == l) {
+                        colVals[nJdata_tmp-1] = l+1 + offset; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    } else {
+                        if(J[48*k + l] != 0.0) {
+                            colVals[nJdata_tmp-1] = k+1 + offset; 
+                            nJdata_tmp = nJdata_tmp + 1; 
+                        }
+                    }
+                }
+                rowPtr[offset + (l + 1)] = nJdata_tmp;
+            }
+        }
+    } else {
+        rowPtr[0] = 0;
+        int nJdata_tmp = 0;
+        for (int nc=0; nc<NCELLS; nc++) {
+            offset = nc * 48;
+            for (int l=0; l<48; l++) {
+                for (int k=0; k<48; k++) {
+                    if (k == l) {
+                        colVals[nJdata_tmp] = l + offset; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    } else {
+                        if(J[48*k + l] != 0.0) {
+                            colVals[nJdata_tmp] = k + offset; 
+                            nJdata_tmp = nJdata_tmp + 1; 
+                        }
+                    }
+                }
+                rowPtr[offset + (l + 1)] = nJdata_tmp;
+            }
+        }
+    }
+
+    return;
+}
+
+/*compute the sparsity pattern of the simplified (for precond) system Jacobian on CPU */
+/*BASE 0 */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP)
 {
     double c[47];
     double J[2304];
@@ -22911,10 +23023,10 @@ void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * co
 
     return;
 }
-#else
 
-/*compute the sparsity pattern of the simplified precond Jacobian on GPU */
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx, int * consP)
+/*compute the sparsity pattern of the simplified (for precond) system Jacobian */
+/*CSR format BASE is under choice */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base)
 {
     double c[47];
     double J[2304];
@@ -22925,54 +23037,39 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx,
 
     aJacobian_precond(J, c, 1500.0, *consP);
 
-    rowPtr[0] = 1;
-    int nJdata_tmp = 1;
-    for (int l=0; l<48; l++) {
-        for (int k=0; k<48; k++) {
-            if (k == l) {
-                colIndx[nJdata_tmp-1] = l+1; 
-                nJdata_tmp = nJdata_tmp + 1; 
-            } else {
-                if(J[48*k + l] != 0.0) {
-                    colIndx[nJdata_tmp-1] = k+1; 
+    if (base == 1) {
+        rowPtr[0] = 1;
+        int nJdata_tmp = 1;
+        for (int l=0; l<48; l++) {
+            for (int k=0; k<48; k++) {
+                if (k == l) {
+                    colVals[nJdata_tmp-1] = l+1; 
                     nJdata_tmp = nJdata_tmp + 1; 
+                } else {
+                    if(J[48*k + l] != 0.0) {
+                        colVals[nJdata_tmp-1] = k+1; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    }
                 }
             }
+            rowPtr[l+1] = nJdata_tmp;
         }
-        rowPtr[l+1] = nJdata_tmp;
-    }
-
-    return;
-}
-#endif
-
-/*compute the sparsity pattern of the Jacobian */
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)
-{
-    double c[47];
-    double J[2304];
-    int offset_row;
-    int offset_col;
-
-    for (int k=0; k<47; k++) {
-        c[k] = 1.0/ 47.000000 ;
-    }
-
-    aJacobian(J, c, 1500.0, *consP);
-
-    colPtrs[0] = 0;
-    int nJdata_tmp = 0;
-    for (int nc=0; nc<NCELLS; nc++) {
-        offset_row = nc * 48;
-        offset_col = nc * 48;
-        for (int k=0; k<48; k++) {
-            for (int l=0; l<48; l++) {
-                if(J[48*k + l] != 0.0) {
-                    rowVals[nJdata_tmp] = l + offset_row; 
+    } else {
+        rowPtr[0] = 0;
+        int nJdata_tmp = 0;
+        for (int l=0; l<48; l++) {
+            for (int k=0; k<48; k++) {
+                if (k == l) {
+                    colVals[nJdata_tmp] = l; 
                     nJdata_tmp = nJdata_tmp + 1; 
+                } else {
+                    if(J[48*k + l] != 0.0) {
+                        colVals[nJdata_tmp] = k; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    }
                 }
             }
-            colPtrs[offset_col + (k + 1)] = nJdata_tmp;
+            rowPtr[l+1] = nJdata_tmp;
         }
     }
 
@@ -69363,685 +69460,3 @@ void egtransetCOFTD(double* COFTD) {
     COFTD[375] = 6.27459580E-11;
 }
 
-
-
-
-
-#if 0
-
-
-
-
-\\
-\\
-\\  This is the mechanism file
-\\
-\\
-ELEMENTS
- N   C   H   O  
-END
-SPECIES
- N2                S-CH2             T-CH2             O                 H2               
- H                 OH                H2O               O2                HO2              
- CH                CO                HCO               CH2O              CH3              
- CO2               CH4               C2H3              C2H4              C2H5             
- C2H               HCCO              C2H2              C3H3              A-C3H5           
- N-C3H7            C2H6              P-C3H4            A-C3H4            A1               
- A1-               C5H5              C3H6              C4H8              C5H6             
- A2                C5H10             C5H11             A1C2H2            A1CH2            
- A1CHO             A1CH3             C7H15             N-C7H16           A1C2H*           
- A2-               A1C2H            
-END
-
-TRANS ALL
-N2                 1    97.530     3.621     0.000     1.760     4.000          
-S-CH2              1   144.000     3.800     0.000     0.000     0.000          
-T-CH2              1   144.000     3.800     0.000     0.000     0.000          
-O                  0    80.000     2.750     0.000     0.000     0.000          
-H2                 1    38.000     2.920     0.000     0.790   280.000          
-H                  0   145.000     2.050     0.000     0.000     0.000          
-OH                 1    80.000     2.750     0.000     0.000     0.000          
-H2O                2   572.400     2.605     1.844     0.000     4.000          
-O2                 1   107.400     3.458     0.000     1.600     3.800          
-HO2                2   107.400     3.458     0.000     0.000     1.000          
-CH                 1    80.000     2.750     0.000     0.000     0.000          
-CO                 1    98.100     3.650     0.000     1.950     1.800          
-HCO                2   498.000     3.590     0.000     0.000     0.000          
-CH2O               2   498.000     3.590     0.000     0.000     2.000          
-CH3                1   144.000     3.800     0.000     0.000     0.000          
-CO2                1   244.000     3.763     0.000     2.650     2.100          
-CH4                2   141.400     3.746     0.000     2.600    13.000          
-C2H3               2   209.000     4.100     0.000     0.000     1.000          
-C2H4               2   280.800     3.971     0.000     0.000     1.500          
-C2H5               2   252.300     4.302     0.000     0.000     1.500          
-C2H                1   209.000     4.100     0.000     0.000     2.500          
-HCCO               2   150.000     2.500     0.000     0.000     1.000          
-C2H2               1   209.000     4.100     0.000     0.000     2.500          
-C3H3               2   252.000     4.760     0.000     0.000     1.000          
-A-C3H5             2   266.800     4.982     0.000     0.000     1.000          
-N-C3H7             2   266.800     4.982     0.000     0.000     1.000          
-C2H6               2   252.300     4.302     0.000     0.000     1.500          
-P-C3H4             2   252.000     4.760     0.000     0.000     1.000          
-A-C3H4             2   252.000     4.760     0.000     0.000     1.000          
-A1                 2   464.8       5.29      0.00     10.32      1.000          
-A1-                2   464.8       5.29      0.00     10.32      1.000          
-C5H5               2   400.0       5.20      0.00      0.00      1.000          
-C3H6               2   266.800     4.982     0.000     0.000     1.000          
-C4H8               2   345.700     5.088     0.300     0.000     1.000          
-C5H6               2   400.0       5.20      0.00      0.00      0.000          
-A2                 2   630.4       6.18      0.00     16.50      1.000          
-C5H10              2   386.200     5.489     0.400     0.000     1.000          
-C5H11              2   440.735     5.041     0.000     0.000     0.000          
-A1C2H2             2   546.2       6.00      0.13     15.00      1.000          
-A1CH2              2   495.3       5.68      0.43     12.30      1.000          
-A1CHO              2   495.3       5.68      0.43     12.30      1.000          
-A1CH3              2   495.3       5.68      0.43     12.30      1.000          
-C7H15              2   459.600     6.253     0.000     0.000     1.000          
-N-C7H16            2   459.600     6.253     0.000     0.000     1.000          
-A1C2H*             2   535.6       5.72      0.77     12.00      1.000          
-A2-                2   630.4       6.18      0.00     16.50      1.000          
-A1C2H              2   535.6       5.72      0.77     12.00      1.000          
-END
-
-REACTIONS
- S-CH2+N2 = T-CH2+N2                     1.500e+13    0.000    599.90
- O+H2 = H+OH                             4.590e+04    2.700   6259.56
- H+O+M => OH+M                           9.430e+18   -1.000      0.00
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
- H+OH+M => H2O+M                         4.400e+22   -2.000      0.00
-   H2/2.00/ H2O/6.30/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
- OH+H2 = H+H2O                           1.730e+08    1.510   3429.73
- 2OH = O+H2O                             3.970e+04    2.400  -2110.42
- H+O2(+M) => HO2(+M)                     5.120e+12    0.440      0.00
-   H2/0.75/ H2O/11.89/ O2/0.85/ CO/1.09/ CO2/2.18/ 
-   LOW  /  6.330e+19   -1.400      0.00 /
-   TROE/     0.5     0.00 10000000000.00 10000000000.00 /
- H+O2 = O+OH                             2.640e+16   -0.670  17041.11
- HO2+H => O2+H2                          3.649e+06    2.070  -1092.26
- HO2+H => O+H2O                          3.970e+12    0.000    671.61
- HO2+H => 2OH                            7.490e+13    0.000    635.76
- HO2+O => OH+O2                          4.000e+13    0.000      0.00
- HO2+OH => H2O+O2                        2.380e+13    0.000   -499.52
-   DUPLICATE
- HO2+OH => H2O+O2                        1.000e+16    0.000  17330.31
-   DUPLICATE
- CH+O => CO+H                            5.700e+13    0.000      0.00
- CH+OH => HCO+H                          3.000e+13    0.000      0.00
- CH+H2 = T-CH2+H                         1.080e+14    0.000   3109.46
- CH+H2O => CH2O+H                        5.710e+12    0.000   -755.26
- CH+O2 => HCO+O                          6.710e+13    0.000      0.00
- T-CH2+O => HCO+H                        8.000e+13    0.000      0.00
- T-CH2+OH => CH2O+H                      2.000e+13    0.000      0.00
- T-CH2+OH = CH+H2O                       1.130e+07    2.000   2999.52
- T-CH2+H2 = H+CH3                        5.000e+05    2.000   7229.92
- T-CH2+O2 => CO2+2H                      5.800e+12    0.000   1500.96
- T-CH2+O2 => CH2O+O                      2.400e+12    0.000   1500.96
- T-CH2+O2 => OH+H+CO                     5.000e+12    0.000   1500.96
- S-CH2+H2 = CH3+H                        7.000e+13    0.000      0.00
- S-CH2+O2 => H+OH+CO                     2.800e+13    0.000      0.00
- S-CH2+O2 => CO+H2O                      1.200e+13    0.000      0.00
- S-CH2+H2O(+M) => CH2O+H2(+M)            4.820e+17   -1.160   1144.84
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
-   LOW  /  1.880e+38   -6.360   5040.63 /
-   TROE/  0.6027   208.00   3922.00  10180.00 /
- S-CH2+H2O = T-CH2+H2O                   3.000e+13    0.000      0.00
- S-CH2+H2O => H2+CH2O                    6.820e+10    0.250   -934.51
- CH3+H(+M) = CH4(+M)                     6.920e+13    0.180      0.00
-   H2/2.00/ H2O/6.00/ CO/1.50/ CO2/2.00/ CH4/3.00/ C2H6/3.00/ 
-   LOW  /  3.470e+38   -6.300   5074.09 /
- CH3+O => CH2O+H                         5.060e+13    0.000      0.00
- CH3+O => H+H2+CO                        3.370e+13    0.000      0.00
- CH3+OH(+M) => CH2O+H2(+M)               2.790e+18   -1.430   1331.26
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
-   LOW  /  4.000e+36   -5.920   3140.54 /
-   TROE/   0.412   195.00   5900.00   6394.00 /
- CH3+OH = T-CH2+H2O                      5.600e+07    1.600   5420.65
- CH3+OH = S-CH2+H2O                      6.440e+17   -1.340   1417.30
- CH3+O2 => CH2O+O+H                      1.380e+13    0.000  30480.40
- CH3+O2 => CH2O+OH                       5.870e+11    0.000  13840.82
- CH3+HO2 => CH2O+OH+H                    1.000e+13    0.000      0.00
- CH3+HO2 => CH4+O2                       3.610e+12    0.000      0.00
- CH3+CH => C2H3+H                        3.000e+13    0.000      0.00
- CH3+T-CH2 => C2H4+H                     1.000e+14    0.000      0.00
- 2CH3 = C2H5+H                           6.840e+12    0.100  10599.90
- 2CH3 => S-CH2+CH4                       2.632e+12   -0.060  13661.57
- CH4+H = CH3+H2                          6.600e+08    1.620  10841.30
- CH4+O = CH3+OH                          1.020e+09    1.500   8599.43
- CH4+OH = CH3+H2O                        1.000e+08    1.600   3119.02
- CH4+CH => C2H4+H                        6.000e+13    0.000      0.00
- CH4+T-CH2 = 2CH3                        2.460e+06    2.000   8269.60
- CO+O(+M) => CO2(+M)                     1.360e+10    0.000   2385.28
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
-   LOW  /  1.170e+24   -2.790   4192.16 /
-   TROE/       1     1.00 10000000.00 10000000.00 /
- CO+OH = CO2+H                           8.000e+11    0.140   7351.82
-   DUPLICATE
- CO+OH = CO2+H                           8.780e+10    0.030    -16.73
-   DUPLICATE
- CO+HO2 => CO2+OH                        3.010e+13    0.000  22999.52
- CO+S-CH2 = CO+T-CH2                     9.000e+12    0.000      0.00
- HCO+H => CO+H2                          1.200e+14    0.000      0.00
- HCO+O => CO+OH                          3.000e+13    0.000      0.00
- HCO+O => CO2+H                          3.000e+13    0.000      0.00
- HCO+OH => CO+H2O                        3.020e+13    0.000      0.00
- HCO+M = CO+H+M                          1.870e+17   -1.000  17000.48
-   H2/2.00/ H2O/0.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
- HCO+H2O = CO+H+H2O                      2.240e+18   -1.000  17000.48
- HCO+O2 => CO+HO2                        1.200e+10    0.810   -726.58
- CH3+HCO => CH4+CO                       2.650e+13    0.000      0.00
- CH2O+H = HCO+H2                         5.740e+07    1.900   2741.40
- CH2O+O => HCO+OH                        3.900e+13    0.000   3539.67
- CH2O+OH => HCO+H2O                      3.430e+09    1.180   -446.94
- CH3+CH2O => CH4+HCO                     3.320e+03    2.810   5860.42
- CO2+CH => HCO+CO                        1.900e+14    0.000  15791.11
- CO2+S-CH2 = CO2+T-CH2                   7.000e+12    0.000      0.00
- CO2+S-CH2 => CH2O+CO                    1.400e+13    0.000      0.00
- C2H+O => CH+CO                          5.000e+13    0.000      0.00
- C2H+OH => HCCO+H                        2.000e+13    0.000      0.00
- C2H+O2 => HCO+CO                        1.000e+13    0.000   -755.26
- C2H+H2 = C2H2+H                         3.310e+06    2.260    901.05
- C2H2+H(+M) = C2H3(+M)                   1.710e+10    1.270   2707.93
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
-   LOW  /  6.340e+31   -4.660   3781.07 /
-   TROE/  0.2122     1.00 -10210.00 /
- C2H2+O => HCCO+H                        8.100e+06    2.000   1900.10
- C2H2+O => T-CH2+CO                      1.250e+07    2.000   1900.10
- C2H2+O => C2H+OH                        3.324e+16   -0.440  30697.90
- C2H2+OH => C2H+H2O                      2.630e+06    2.140  17060.23
- C2H2+OH => CH3+CO                       7.530e+06    1.550   2105.64
-   DUPLICATE
- C2H2+OH => CH3+CO                       1.280e+09    0.730   2578.87
-   DUPLICATE
- C2H2+S-CH2 = C3H3+H                     1.900e+14    0.000      0.00
- C2H3+H(+M) => C2H4(+M)                  6.080e+12    0.270    279.64
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
-   LOW  /  1.400e+30   -3.860   3319.79 /
-   TROE/   0.782   207.50   2663.00   6095.00 /
- C2H3+H => C2H2+H2                       3.000e+13    0.000      0.00
- C2H3+O => CH3+CO                        1.030e+13    0.210   -427.82
- C2H3+OH => C2H2+H2O                     5.000e+12    0.000      0.00
- C2H3+O2 => C2H2+HO2                     1.340e+06    1.610   -384.80
- C2H3+O2 => CH3+CO+O                     3.030e+11    0.290     11.95
- C2H3+O2 => HCO+CH2O                     4.580e+16   -1.390   1015.77
- C2H3+HCO => C2H4+CO                     9.000e+13    0.000      0.00
- C2H3+CH3 => C2H2+CH4                    9.030e+12    0.000   -764.82
- C2H3+CH3 = A-C3H5+H                     1.930e+18   -1.250   7669.69
- C2H4+H(+M) = C2H5(+M)                   1.370e+09    1.460   1355.16
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
-   LOW  /  2.030e+39   -6.640   5769.60 /
-   TROE/  -0.569   299.00  -9147.00    152.40 /
- C2H4+H => C2H3+H2                       1.330e+06    2.530  12239.48
- C2H4+O => CH3+CO+H                      7.660e+09    0.880   1140.06
- C2H4+O => T-CH2+CH2O                    7.150e+04    2.470    929.73
- C2H4+O => CH3+HCO                       3.890e+08    1.360    886.71
- C2H4+OH => C2H3+H2O                     1.310e-01    4.200   -860.42
- C2H4+OH => CH3+CH2O                     3.750e+36   -7.800   7060.23
- C2H4+CH3 => C2H3+CH4                    2.270e+05    2.000   9199.33
- C2H4+CH3(+M) = N-C3H7(+M)               2.550e+06    1.600   5700.29
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
-   LOW  /  3.000e+63  -14.600  18169.22 /
-   TROE/  0.1894   277.00   8748.00   7891.00 /
- C2H5+H(+M) = C2H6(+M)                   5.210e+17   -0.990   1579.83
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
-   LOW  /  1.990e+41   -7.080   6684.99 /
-   TROE/  0.8422   125.00   2219.00   6882.00 /
- C2H5+O => CH3+CH2O                      3.170e+13    0.030   -394.36
- C2H5+O2 => C2H4+HO2                     1.920e+07    1.020  -2033.94
- C2H5+HCO => C2H6+CO                     1.200e+14    0.000      0.00
- C2H5+HO2 => C2H6+O2                     3.000e+11    0.000      0.00
- C2H5+HO2 => CH3+CH2O+OH                 3.100e+13    0.000      0.00
- C2H6(+M) = 2CH3(+M)                     1.880e+50   -9.720 107342.26
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
-   LOW  /  3.720e+65  -13.140 101579.83 /
-   TROE/    0.39   100.00   1900.00   6000.00 /
- C2H6+H => C2H5+H2                       1.700e+05    2.700   5740.92
- C2H6+O => C2H5+OH                       8.980e+07    1.920   5690.73
- C2H6+OH => C2H5+H2O                     1.610e+06    2.220    740.92
- C2H6+CH3 => C2H5+CH4                    8.430e+14    0.000  22256.21
- HCCO(+M) => CO+CH(+M)                   2.255e+20   -1.440  74732.31
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
-   LOW  /  1.213e+35   -5.180  76668.26 /
-   TROE/  0.5757   237.00   1652.00   5069.00 /
- HCCO+H => S-CH2+CO                      1.000e+14    0.000      0.00
- HCCO+O => H+2CO                         1.000e+14    0.000      0.00
- HCCO+O2 => OH+2CO                       4.200e+10    0.000    853.25
- 2HCCO => C2H2+2CO                       1.000e+13    0.000      0.00
- HCCO+C2H2 => C3H3+CO                    1.000e+11    0.000   2999.52
- HCCO+CH3 => C2H4+CO                     5.000e+13    0.000      0.00
- HCCO+OH => 2HCO                         1.000e+13    0.000      0.00
- C3H3+H = P-C3H4                         7.940e+29   -5.060   4861.38
- C3H3+H = A-C3H4                         3.160e+29   -5.000   4710.80
- C3H3+OH => C2H4+CO                      1.280e+09    0.730   2578.87
- C3H3+O => C2H2+CO+H                     6.950e+13    0.000      0.00
- C3H3+O2 => CH3+2CO                      1.700e+05    1.700   1500.96
- C3H3+HO2 => OH+CO+C2H3                  8.000e+11    0.000      0.00
- 2C3H3 = A1                              1.870e+46   -9.840  16804.49
- 2C3H3 = A1-+H                           5.770e+37   -7.000  31505.74
- C3H3+C2H2 = C5H5                        2.350e+11    0.000   9995.22
- P-C3H4+H = C2H2+CH3                     3.460e+12    0.440   5463.67
- P-C3H4+H = C3H3+H2                      8.500e+04    2.700   5740.92
- P-C3H4+OH => C3H3+H2O                   8.050e+05    2.220    740.92
- P-C3H4+CH3 => C3H3+CH4                  4.220e+14    0.000  22256.21
- P-C3H4+O => HCCO+CH3                    4.050e+06    2.000   1900.10
- P-C3H4+O => C2H4+CO                     6.250e+06    2.000   1900.10
- P-C3H4+OH => C2H5+CO                    1.280e+09    0.730   2578.87
- A-C3H4+H = C2H2+CH3                     8.950e+13   -0.020  11250.00
- A-C3H4 = P-C3H4                         7.760e+39   -7.800  78446.46
- A-C3H4+H = P-C3H4+H                     2.470e+15   -0.330   6436.42
- A-C3H4+H => C3H3+H2                     1.330e+06    2.530  12239.48
- A-C3H4+OH => C3H3+H2O                   1.310e-01    4.200   -860.42
- A-C3H4+CH3 => C3H3+CH4                  2.270e+05    2.000   9199.33
- A-C3H4+H = A-C3H5                       2.010e+49  -10.770  19622.37
- A-C3H5+H => A-C3H4+H2                   9.560e+03    2.800   3291.11
- A-C3H5+OH => A-C3H4+H2O                 6.030e+12    0.000      0.00
- A-C3H5+CH3 => A-C3H4+CH4                4.860e+11   -0.320   -131.45
- A-C3H5+O2 => C2H2+CH2O+OH               9.710e+20   -2.700  24980.88
- A-C3H5+C3H3 => A1+2H                    2.160e+39   -7.740  23852.77
- C3H6+H(+M) = N-C3H7(+M)                 3.060e+14   -0.370   4032.03
-   H2/2.00/ H2O/12.00/ CO/1.75/ CO2/3.60/ CH4/2.00/ C2H6/3.00/ 
-   LOW  /  6.260e+38   -6.660   7000.48 /
-   TROE/       1  1000.00   1310.00  48100.00 /
- C3H6 = C2H3+CH3                         4.040e+42   -7.670 111830.78
- A-C3H5+H = C3H6                         5.930e+54  -11.760  23549.24
- C3H6+H = C2H4+CH3                       8.000e+21   -2.390  11180.69
- C3H6+O => 2CH3+CO                       1.200e+08    1.600    327.44
- C3H6+O => C2H5+HCO                      3.500e+07    1.600   -972.75
- C3H6+H => A-C3H5+H2                     6.600e+05    2.540   6756.69
- C3H6+O => A-C3H5+OH                     9.650e+04    2.680   3716.54
- C3H6+OH => A-C3H5+H2O                   2.000e+08    1.460    537.76
- C3H6+CH3 => A-C3H5+CH4                  4.520e-01    3.650   7153.44
- C4H8+H => C2H5+C2H4                     7.680e+12    0.110   1479.45
- C4H8 => A-C3H5+CH3                      5.000e+15    0.000  70999.04
- C5H5+HO2 => O2+C5H6                     2.561e+12    0.060   3116.63
- 2C5H5 => A2+2H                          6.390e+29   -4.030  35205.54
- C5H5+O => C2H3+C2H2+CO                  7.000e+13    0.000      0.00
- C5H5+HO2 => C2H3+C2H2+CO+OH             6.776e+29   -4.700  11658.70
- C5H5+HO2 => 2C2H2+CO+H2O                1.190e+33   -6.520  13401.05
- C5H5+OH => C2H3+C2H2+CO+H               3.020e+13    0.000      0.00
- C5H6 = C5H5+H                           1.730e+68  -15.160 116371.89
- C5H6+H => C5H5+H2                       2.800e+13    0.000   2258.60
- C5H6+H => A-C3H5+C2H2                   6.600e+14    0.000  12344.65
- C5H6+O => C5H5+OH                       4.770e+04    2.710   1106.60
- C5H6+OH => C5H5+H2O                     3.080e+06    2.000      0.00
- C5H6+CH3 => C5H5+CH4                    1.800e-01    4.000      0.00
- C5H10+H => C5H11                        7.100e+12    0.120   1460.33
- C5H10 => C2H5+A-C3H5                    9.170e+20   -1.630  73989.01
- C5H11 => C2H4+N-C3H7                    7.460e+21   -2.610  32026.77
- C5H11 => H+C5H10                        8.460e+14   -0.470  37617.11
- C5H11 => C3H6+C2H5                      3.150e-19    8.840   7105.64
- A1-+O2 => C5H5+CO+O                     2.600e+13    0.000   6120.94
- A1-+O2 => 2CO+2C2H2+H                   3.000e+13    0.000   8979.45
- A1-+O => C5H5+CO                        1.000e+14    0.000      0.00
- A1-+OH => C5H6+CO                       3.000e+13    0.000      0.00
- A1-+HO2 => C5H5+CO+OH                   3.000e+13    0.000      0.00
- A1-+C2H2 = A1C2H2                       3.290e+06    2.050   3162.05
- A1 = A1-+H                              1.290e+61  -12.480 148085.56
- A1+H => A1-+H2                          6.020e+08    1.800  16352.77
- A1+OH => A1-+H2O                        4.030e+02    3.330   1455.54
- A1+CH3 => A1-+CH4                       2.752e-02    4.460  13637.67
- A1+O => C5H5+CO+H                       2.220e+13    0.000   4531.55
- A1+OH => C5H6+CO+H                      1.320e+02    3.250   5590.34
- A1CH2 = C5H5+C2H2                       8.200e+14    0.000  80676.39
- A1CH2+H = A1-+CH3                       5.830e+67  -14.150  68329.35
- A1CH2+O => A1CHO+H                      3.310e+14    0.000      0.00
- A1CH2+HO2 => A1CHO+OH+H                 1.060e+16   -0.940   2523.90
- A1CH2+C3H3 => A2+2H                     4.320e+39   -7.740  23852.77
- A1CH3+H = A1+CH3                        2.310e+06    2.170   4163.48
- A1CH3 = A1CH2+H                         1.250e+18   -0.600  94787.28
- A1CH3 = A1-+CH3                         2.160e+29   -3.580 110164.91
- A1CH3+H => A1CH2+H2                     6.470e+00    3.980   3384.32
- A1CH3+OH => A1CH2+H2O                   1.620e+13    0.000   2770.08
- A1CH3+CH3 => A1CH2+CH4                  4.220e+14    0.000  22256.21
- C7H15 => C5H11+C2H4                     1.890e+12    0.020  27784.42
- C7H15 => C2H5+C2H4+C3H6                 7.730e+18   -1.750  31974.19
- C7H15 => C4H8+N-C3H7                    2.530e+18   -1.650  31682.60
- C7H15 => C2H5+C5H10                     2.490e+16   -1.180  29517.21
- N-C7H16 => C5H11+C2H5                   8.100e+77  -17.620 120399.14
- N-C7H16 => C2H5+C2H4+N-C3H7             1.420e+78  -17.710 120700.29
- N-C7H16+H => C7H15+H2                   1.750e+06    2.600   4361.85
- N-C7H16+O => C7H15+OH                   1.720e+05    2.810   2260.99
- N-C7H16+OH => C7H15+H2O                 7.400e+08    1.500    258.13
- N-C7H16+CH3 => C7H15+CH4                1.460e+04    2.570   6933.56
- A1CHO => A1-+HCO                        2.610e+15    0.150  80549.71
- A1CHO+H => A1-+CO+H2                    2.050e+09    1.160   2404.40
- A1CHO+CH3 => A1-+CO+CH4                 2.720e+06    1.770   5920.17
- A1C2H*+C2H2 = A2-                       1.340e+04    2.500   1283.46
- A1C2H*+C2H4 = A2+H                      3.620e+28   -4.240  23864.72
- A1C2H = A1C2H*+H                        2.100e+60  -12.400 148076.00
- A1C2H+H = A1C2H*+H2                     1.320e+08    1.880  16821.22
- A1C2H+OH = A1C2H*+H2O                   1.340e+02    3.330   1455.54
- A1C2H2 = A1C2H+H                        1.340e+17   -0.860  41238.05
- A1C2H2+C2H2 = A2+H                      7.091e+13   -0.260   7002.87
- A2 = A2-+H                              8.600e+60  -12.480 148076.00
- A2+H = A2-+H2                           2.650e+08    1.870  17096.08
- A2+OH = A2-+H2O                         9.630e+02    3.020   4373.80
-END
-
-\\
-\\
-\\  This is the therm file
-\\
-\\
-THERMO                                                                          
-  500.000  1000.000  5000.000                                                   
-
-
-! ** Thermodynamic properties taken from **
-!
-! " An optimized kinetic model of H2/CO combustion"
-! Davis, Joshi, Wang, and Egolfopoulos
-! Proc. Comb. Inst. 30 (2005) 1283-1292
-!
-
-! CAS# : 3352-57-6
-OH                S 9/01O   1H   1    0    0G   200.000  6000.000   1000.00    1
- 2.86472886E+00 1.05650448E-03-2.59082758E-07 3.05218674E-11-1.33195876E-15    2
- 3.71885774E+03 5.70164073E+00 4.12530561E+00-3.22544939E-03 6.52764691E-06    3
--5.79853643E-09 2.06237379E-12 3.38153812E+03-6.90432960E-01 4.51532273E+03    4
-
-! ** Thermodynamic properties taken from **
-!
-! GRI-MECH Version 3.0
-!
-
-! CAS# : 7727-37-9
-N2                121286N   2               G   300.000  5000.000  1000.000    1
- 0.02926640E+02 0.14879768E-02-0.05684760E-05 0.10097038E-09-0.06753351E-13    2
--0.09227977E+04 0.05980528E+02 0.03298677E+02 0.14082404E-02-0.03963222E-04    3
- 0.05641515E-07-0.02444854E-10-0.10208999E+04 0.03950372E+02                   4
-! CAS# : 17778-80-2
-O                 L 1/90O   1   00   00   00G   200.000  3500.000  1000.000    1
- 2.56942078E+00-8.59741137E-05 4.19484589E-08-1.00177799E-11 1.22833691E-15    2
- 2.92175791E+04 4.78433864E+00 3.16826710E+00-3.27931884E-03 6.64306396E-06    3
--6.12806624E-09 2.11265971E-12 2.91222592E+04 2.05193346E+00 6.72540300E+03    4
-! CAS# : 7782-44-7
-O2                TPIS89O   2   00   00   00G   200.000  3500.000  1000.000    1
- 3.28253784E+00 1.48308754E-03-7.57966669E-07 2.09470555E-10-2.16717794E-14    2
--1.08845772E+03 5.45323129E+00 3.78245636E+00-2.99673416E-03 9.84730201E-06    3
--9.68129509E-09 3.24372837E-12-1.06394356E+03 3.65767573E+00 8.68010400E+03    4
-! CAS# : 12385-13-6
-H                 L 7/88H   1   00   00   00G   200.000  3500.000   1000.00    1
- 2.50000001E+00-2.30842973E-11 1.61561948E-14-4.73515235E-18 4.98197357E-22    2
- 2.54736599E+04-4.46682914E-01 2.50000000E+00 7.05332819E-13-1.99591964E-15    3
- 2.30081632E-18-9.27732332E-22 2.54736599E+04-4.46682853E-01 6.19742800E+03    4
-! CAS# : 1333-74-0
-H2                TPIS78H   2   00   00   00G   200.000  3500.000   1000.00    1
- 3.33727920E+00-4.94024731E-05 4.99456778E-07-1.79566394E-10 2.00255376E-14    2
--9.50158922E+02-3.20502331E+00 2.34433112E+00 7.98052075E-03-1.94781510E-05    3
- 2.01572094E-08-7.37611761E-12-9.17935173E+02 6.83010238E-01 8.46810200E+03    4
-! CAS# : 7732-18-5
-H2O               L 8/89H   2O   1   00   00G   200.000  3500.000  1000.000    1
- 3.03399249E+00 2.17691804E-03-1.64072518E-07-9.70419870E-11 1.68200992E-14    2
--3.00042971E+04 4.96677010E+00 4.19864056E+00-2.03643410E-03 6.52040211E-06    3
--5.48797062E-09 1.77197817E-12-3.02937267E+04-8.49032208E-01 9.90409200E+03    4
-! CAS# : 3170-83-0
-HO2               L 5/89H   1O   2   00   00G   200.000  3500.000  1000.000    1
- 4.01721090E+00 2.23982013E-03-6.33658150E-07 1.14246370E-10-1.07908535E-14    2
- 1.11856713E+02 3.78510215E+00 4.30179801E+00-4.74912051E-03 2.11582891E-05    3
--2.42763894E-08 9.29225124E-12 2.94808040E+02 3.71666245E+00 1.00021620E+04    4
-! CAS# : 3315-37-5
-CH                TPIS79C   1H   1   00   00G   200.000  3500.000  1000.000    1
- 2.87846473E+00 9.70913681E-04 1.44445655E-07-1.30687849E-10 1.76079383E-14    2
- 7.10124364E+04 5.48497999E+00 3.48981665E+00 3.23835541E-04-1.68899065E-06    3
- 3.16217327E-09-1.40609067E-12 7.07972934E+04 2.08401108E+00 8.62500000E+03    4
-! CAS# : 2465-56-7
-T-CH2             L S/93C   1H   2   00   00G   200.000  3500.000  1000.000    1
- 2.87410113E+00 3.65639292E-03-1.40894597E-06 2.60179549E-10-1.87727567E-14    2
- 4.62636040E+04 6.17119324E+00 3.76267867E+00 9.68872143E-04 2.79489841E-06    3
--3.85091153E-09 1.68741719E-12 4.60040401E+04 1.56253185E+00 1.00274170E+04    4
-! CAS# : 2465-56-7
-S-CH2             L S/93C   1H   2   00   00G   200.000  3500.000  1000.000    1
- 2.29203842E+00 4.65588637E-03-2.01191947E-06 4.17906000E-10-3.39716365E-14    2
- 5.09259997E+04 8.62650169E+00 4.19860411E+00-2.36661419E-03 8.23296220E-06    3
--6.68815981E-09 1.94314737E-12 5.04968163E+04-7.69118967E-01 9.93967200E+03    4
-! CAS# : 630-08-0
-CO                TPIS79C   1O   1   00   00G   200.000  3500.000  1000.000    1
- 2.71518561E+00 2.06252743E-03-9.98825771E-07 2.30053008E-10-2.03647716E-14    2
--1.41518724E+04 7.81868772E+00 3.57953347E+00-6.10353680E-04 1.01681433E-06    3
- 9.07005884E-10-9.04424499E-13-1.43440860E+04 3.50840928E+00 8.67100000E+03    4
-! CAS# : 124-38-9
-CO2               L 7/88C   1O   2   00   00G   200.000  3500.000  1000.000    1
- 3.85746029E+00 4.41437026E-03-2.21481404E-06 5.23490188E-10-4.72084164E-14    2
--4.87591660E+04 2.27163806E+00 2.35677352E+00 8.98459677E-03-7.12356269E-06    3
- 2.45919022E-09-1.43699548E-13-4.83719697E+04 9.90105222E+00 9.36546900E+03    4
-! CAS# : 2597-44-6
-HCO               L12/89H   1C   1O   1   00G   200.000  3500.000  1000.000    1
- 2.77217438E+00 4.95695526E-03-2.48445613E-06 5.89161778E-10-5.33508711E-14    2
- 4.01191815E+03 9.79834492E+00 4.22118584E+00-3.24392532E-03 1.37799446E-05    3
--1.33144093E-08 4.33768865E-12 3.83956496E+03 3.39437243E+00 9.98945000E+03    4
-! CAS# : 50-00-0
-CH2O              L 8/88H   2C   1O   1   00G   200.000  3500.000  1000.000    1
- 1.76069008E+00 9.20000082E-03-4.42258813E-06 1.00641212E-09-8.83855640E-14    2
--1.39958323E+04 1.36563230E+01 4.79372315E+00-9.90833369E-03 3.73220008E-05    3
--3.79285261E-08 1.31772652E-11-1.43089567E+04 6.02812900E-01 1.00197170E+04    4
-! CAS# : 2122-48-7
-C2H               L 1/91C   2H   1   00   00G   200.000  3500.000  1000.000    1
- 3.16780652E+00 4.75221902E-03-1.83787077E-06 3.04190252E-10-1.77232770E-14    2
- 6.71210650E+04 6.63589475E+00 2.88965733E+00 1.34099611E-02-2.84769501E-05    3
- 2.94791045E-08-1.09331511E-11 6.68393932E+04 6.22296438E+00 1.04544720E+04    4
-! CAS# : 74-86-2
-C2H2              L 1/91C   2H   2   00   00G   200.000  3500.000  1000.000    1
- 4.14756964E+00 5.96166664E-03-2.37294852E-06 4.67412171E-10-3.61235213E-14    2
- 2.59359992E+04-1.23028121E+00 8.08681094E-01 2.33615629E-02-3.55171815E-05    3
- 2.80152437E-08-8.50072974E-12 2.64289807E+04 1.39397051E+01 1.00058390E+04    4
-! CAS# : 2669-89-8
-C2H3              L 2/92C   2H   3   00   00G   200.000  3500.000  1000.000    1
- 3.01672400E+00 1.03302292E-02-4.68082349E-06 1.01763288E-09-8.62607041E-14    2
- 3.46128739E+04 7.78732378E+00 3.21246645E+00 1.51479162E-03 2.59209412E-05    3
--3.57657847E-08 1.47150873E-11 3.48598468E+04 8.51054025E+00 1.05750490E+04    4
-! CAS# : 74-85-1
-C2H4              L 1/91C   2H   4   00   00G   200.000  3500.000  1000.000    1
- 2.03611116E+00 1.46454151E-02-6.71077915E-06 1.47222923E-09-1.25706061E-13    2
- 4.93988614E+03 1.03053693E+01 3.95920148E+00-7.57052247E-03 5.70990292E-05    3
--6.91588753E-08 2.69884373E-11 5.08977593E+03 4.09733096E+00 1.05186890E+04    4
-! CAS# : 2025-56-1
-C2H5              L12/92C   2H   5   00   00G   200.000  3500.000  1000.000    1
- 1.95465642E+00 1.73972722E-02-7.98206668E-06 1.75217689E-09-1.49641576E-13    2
- 1.28575200E+04 1.34624343E+01 4.30646568E+00-4.18658892E-03 4.97142807E-05    3
--5.99126606E-08 2.30509004E-11 1.28416265E+04 4.70720924E+00 1.21852440E+04    4
-! CAS# : 74-84-0
-C2H6              L 8/88C   2H   6   00   00G   200.000  3500.000  1000.000    1
- 1.07188150E+00 2.16852677E-02-1.00256067E-05 2.21412001E-09-1.90002890E-13    2
--1.14263932E+04 1.51156107E+01 4.29142492E+00-5.50154270E-03 5.99438288E-05    3
--7.08466285E-08 2.68685771E-11-1.15222055E+04 2.66682316E+00 1.18915940E+04    4
-! CAS# : 51095-15-9
-HCCO              SRIC91H   1C   2O   1     G  0300.00   4000.00  1000.00      1
- 0.56282058E+01 0.40853401E-02-0.15934547E-05 0.28626052E-09-0.19407832E-13    2
- 0.19327215E+05-0.39302595E+01 0.22517214E+01 0.17655021E-01-0.23729101E-04    3
- 0.17275759E-07-0.50664811E-11 0.20059449E+05 0.12490417E+02                   4
-! CAS# : 2143-61-5
-N-C3H7          N-L 9/85C   3H   7    0    0G   298.15   5000.00               1
- 0.77040405E+01 0.16041540E-01-0.52815967E-05 0.76254403E-09-0.39353462E-13    2
- 0.82979531E+04-0.15487514E+02 0.10475473E+01 0.26007794E-01 0.23562252E-05    3
--0.19592317E-07 0.93680116E-11 0.10632637E+05 0.21141876E+02 0.12087447E+05    4
-
-
-! ** Thermodynamic properties taken from **
-! 
-! Alexander Burcat and Branko Ruscic
-! Ideal Gas Thermochemical Database with updates from Active Thermochemical Tables
-!
-! <ftp://ftp.technion.ac.il/pub/supported/aetdd/thermodynamics>; 21 July 2008.
-! mirrored at 
-! <http://garfield.chem.elte.hu/Burcat/burcat.html>; 21 July 2008. 
-!
-
-
-! CAS# : 2229-07-4
-! CAS# : 2229-07-4
-CH3 METHYL        IU0702C   1H   3    0    0G   200.000  6000.000  1000.000    1
- 2.97812060E+00 5.79785200E-03-1.97558000E-06 3.07297900E-10-1.79174160E-14    2
- 1.65095130E+04 4.72247990E+00 3.65717970E+00 2.12659790E-03 5.45838830E-06    3
--6.61810030E-09 2.46570740E-12 1.64227160E+04 1.67353540E+00 1.76439350E+04    4
-! CAS# : 74-82-8
-CH4               g 8/99C   1H   4    0    0G   200.000  6000.000  1000.000    1
- 1.65326226E+00 1.00263099E-02-3.31661238E-06 5.36483138E-10-3.14696758E-14    2
--1.00095936E+04 9.90506283E+00 5.14911468E+00-1.36622009E-02 4.91453921E-05    3
--4.84246767E-08 1.66603441E-11-1.02465983E+04-4.63848842E+00-8.97226656E+03    4
-
-
-! ** Thermodynamic properties taken from **
-! 
-! "Thermochemical Properties of Polycyclic Aromatic Hydrocarbons (PAH)
-! from G3MP2B3 Calculations"
-! G. Blanquart and H. Pitsch
-! J. Phys. Chem. A 2007, 111, 6510 -6520
-! 
-
-A1                G3B3  H   6C   6O   0N   0G   300.000  3000.000  1000.000    1
--2.06240612E-01 4.64122440E-02-2.77653536E-05 7.88910537E-09-8.60365259E-13    2
- 8.09883905E+03 2.06566629E+01-5.51558393E+00 6.45453225E-02-4.41402928E-05    3
- 7.47712161E-09 3.10282254E-12 9.11031457E+03 4.65332293E+01 1.43778102E+04    4
-A1-               G3B3  H   5C   6O   0N   0G   300.000  3000.000  1000.000    1
- 1.38016336E+00 4.04032009E-02-2.42250885E-05 6.88723321E-09-7.50960802E-13    2
- 3.86973520E+04 1.55220921E+01-4.87654845E+00 6.26805782E-02-4.87402286E-05    3
- 1.41122287E-08 5.18518312E-13 3.99269438E+04 4.59964173E+01 1.43462431E+04    4
-A1C2H             G3B3  H   6C   8O   0N   0G   300.000  3000.000  1000.000    1
- 5.81520488E+00 4.40872933E-02-2.52053858E-05 6.90275228E-09-7.31378908E-13    2
- 3.30271906E+04-6.49320690E+00-5.21036925E+00 8.65551944E-02-8.45007483E-05    3
- 4.21920706E-08-8.16766167E-12 3.52488620E+04 4.69445057E+01 1.98675349E+04    4
-A1C2H*            G3B3  H   5C   8O   0N   0G   300.000  3000.000  1000.000    1
- 7.23812069E+00 3.83812109E-02-2.18850731E-05 5.97161247E-09-6.30351467E-13    2
- 6.49528135E+04-1.17512654E+01-4.42757639E+00 8.36668645E-02-8.70106362E-05    3
- 4.70285661E-08-1.01816985E-11 6.73302359E+04 4.48118287E+01 1.98764605E+04    4
-A1C2H2            G3B3  H   7C   8O   0N   0G   300.000  3000.000  1000.000    1
- 5.85935080E+00 4.72571459E-02-2.69864733E-05 7.35311775E-09-7.74900830E-13    2
- 4.33198974E+04-5.22359403E+00-6.31199276E+00 9.51097942E-02-9.56352102E-05    3
- 4.97780207E-08-1.02323717E-11 4.57330975E+04 5.35475222E+01 2.09496589E+04    4
-A2                G3B3  H   8C  10O   0N   0G   300.000  3000.000  1000.000    1
- 1.76826275E+00 6.89143506E-02-4.14322176E-05 1.17914309E-08-1.28597061E-12    2
- 1.26883657E+04 1.06256608E+01-8.72434585E+00 1.05376008E-01-8.01710690E-05    3
- 2.18545974E-08 1.42066606E-12 1.48059774E+04 6.19827540E+01 2.10522087E+04    4
-A2-               G3B3  H   7C  10O   0N   0G   300.000  3000.000  1000.000    1
- 3.22892303E+00 6.31264486E-02-3.80582381E-05 1.08454069E-08-1.18342512E-12    2
- 4.78400840E+04 5.82016697E+00-8.02718034E+00 1.02924518E-01-8.34272010E-05    3
- 2.72135383E-08-7.24559554E-13 5.01363344E+04 6.08902264E+01 2.10209869E+04    4
-
-
-
-! ** Thermodynamic properties taken from **
-! 
-! Lawrence Livermore n-Heptane Mechanism - ver 2c
-!
-! "A Comprehensive Modeling Study of n-Heptane Oxidation"  
-! Curran, H. J., Gaffuri, P., Pitz, W. J., and Westbrook, C. K.
-! Combustion and Flame 114:149-177 (1998).
-!
-! UCRL-WEB-204236
-! Review and release date: May 19, 2004.
-!
-
-! CAS# : 106-98-9
-C4H8              000000N   0C   4H   8O   0G       300      5000    1000      1
- 3.04470367E+00 3.27451765E-02-1.45363237E-05 2.39744017E-09 0.00000000E+00    2
--2.52177534E+03 1.00151514E+01-8.31372089E-01 4.52580978E-02-2.93658559E-05    3
- 1.00220436E-08-1.43191680E-12-1.57875035E+03 2.95084236E+01 0.00000000E+00    4
-! CAS# : 109-67-1
-C5H10             000000N   0C   5H  10O   0G       300      5000    1000      1
- 3.98580522E+00 4.12429986E-02-1.84390497E-05 3.06155241E-09 0.00000000E+00    2
--5.70112071E+03 6.85332264E+00-1.06223481E+00 5.74218294E-02-3.74486890E-05    3
- 1.27364989E-08-1.79609789E-12-4.46546666E+03 3.22739790E+01 0.00000000E+00    4
-! CAS# : 2672-01-7 or 2492-34-4
-C5H11             000000N   0C   5H  11O   0G       300      5000    1000      1
- 4.88920629E+00 4.22834537E-02-1.85843100E-05 3.04124763E-09 0.00000000E+00    2
- 3.43475468E+03 3.43704878E+00-9.05255912E-01 6.10632852E-02-4.09491825E-05    3
- 1.46093470E-08-2.18859615E-12 4.83995303E+03 3.25574963E+01 0.00000000E+00    4
-! CAS# : 3356-67-0 or 3474-30-4 or ??? or ???
-C7H15             000000N   0C   7H  15O   0G       300      5000    1000      1
- 3.74721159E+00 6.49345162E-02-3.01341025E-05 5.17418142E-09 0.00000000E+00    2
--3.37018357E+03 1.42780413E+01-3.79155767E-02 7.56726570E-02-4.07473634E-05    3
- 9.32678943E-09-4.92360745E-13-2.35605303E+03 3.37321506E+01 0.00000000E+00    4
-! CAS# : 142-82-5
-N-C7H16           000000N   0C   7H  16O   0G       300      5000    1000      1
- 5.14079241E+00 6.53078671E-02-2.94827624E-05 4.93726726E-09 0.00000000E+00    2
--2.72533890E+04 2.98195967E+00-1.26836187E+00 8.54355820E-02-5.25346786E-05    3
- 1.62945721E-08-2.02394925E-12-2.56586565E+04 3.53732912E+01 0.00000000E+00    4
-
-
-! ** Thermodynamic properties taken from **
-! 
-! Optimized geometries with B3LYP/6-311++G**
-! Internal decgrees of rotation treated as in JPCA 2007
-!
-! Guillaume Blanquart
-! 
-! DfH : heat of formation at 298K
-! Cp  : heat capacity at 298K
-! S   : entropy at 298K
-!
-
-! Enthalpy of formation taken from experiments
-! ============================================
-
-! CAS# : 2932-78-7
-! DfH = 339.00 kJ/mol, Cp = 62.91 J/mol/K, S = 254.55 J/mol/K
-C3H3              G3B3  H   3C   3O   0N   0G   300.000  3000.000  1000.000    1
- 6.14915291E+00 9.34063166E-03-3.75055354E-06 6.90156316E-10-4.60824994E-14    2
- 3.83854848E+04-7.45345215E+00 1.40299238E+00 3.01773327E-02-3.98449373E-05    3
- 2.93534629E-08-8.70554579E-12 3.93108220E+04 1.51527845E+01 1.32756763E+04    4
-! CAS# : 463-49-0
-! DfH = 190.90 kJ/mol, Cp = 59.10 J/mol/K, S = 243.32 J/mol/K
-A-C3H4            G3B3  H   4C   3O   0N   0G   300.000  3000.000  1000.000    1
- 2.56128757E+00 1.95080128E-02-1.04061366E-05 2.70165173E-09-2.75074329E-13    2
- 2.13894289E+04 9.20550397E+00 3.68928265E-01 2.89351397E-02-2.44386408E-05    3
- 1.12547166E-08-2.03040262E-12 2.17585256E+04 1.95267211E+01 1.25979025E+04    4
-! CAS# : 74-99-7
-! DfH = 185.40 kJ/mol, Cp = 60.88 J/mol/K, S = 247.91 J/mol/K
-P-C3H4            G3B3  H   4C   3O   0N   0G   300.000  3000.000  1000.000    1
- 2.81460543E+00 1.85524496E-02-9.55026768E-06 2.39951370E-09-2.37485257E-13    2
- 2.07010771E+04 8.60604972E+00 1.46175323E+00 2.46026602E-02-1.90219395E-05    3
- 8.60363422E-09-1.66729240E-12 2.09209793E+04 1.49262585E+01 1.30043710E+04    4
-! CAS# : 1981-80-2
-! DfH = 166.1 kJ/mol, Cp = 63.37 J/mol/K, S = 258.61 J/mol/K
-A-C3H5            G3B3  H   5C   3O   0N   0G   300.000  3000.000  1000.000    1
- 2.28794927E+00 2.36401575E-02-1.27891450E-05 3.36838540E-09-3.47449449E-13    2
- 1.83033514E+04 1.14063418E+01-1.03516444E+00 3.75043366E-02-3.26381242E-05    3
- 1.47662613E-08-2.43741154E-12 1.88792254E+04 2.71451071E+01 1.27188954E+04    4
-! CAS# : 115-07-1
-! DfH = 19.70 kJ/mol, Cp = 65.09 J/mol/K, S = 266.77 J/mol/K
-C3H6              G3B3  H   6C   3O   0N   0G   300.000  3000.000  1000.000    1
- 4.71697982E-01 2.89513070E-02-1.56601819E-05 4.11443199E-09-4.23075141E-13    2
- 1.12603387E+03 2.15237289E+01-2.29261670E-03 3.10261065E-02-1.67151548E-05    3
- 1.89594170E-09 1.24957915E-12 1.13437406E+03 2.35719601E+01 1.37075717E+04    4
-! CAS# : 108-88-3
-! DfH = 50.00 kJ/mol, Cp = 105.42 J/mol/K, S = 321.87 J/mol/K
-A1CH3             G3B3  H   8C   7O   0N   0G   300.000  3000.000  1000.000    1
--1.01117220E+00 5.85301912E-02-3.47595069E-05 9.82180993E-09-1.06680870E-12    2
- 3.99363395E+03 2.83610783E+01-4.54072038E+00 6.85427145E-02-3.57113024E-05    3
--4.19397642E-09 7.41779795E-12 4.64121087E+03 4.57564849E+01 1.82495532E+04    4
-! CAS# : 2154-56-5
-! DfH = 207.00 kJ/mol, Cp = 108.44 J/mol/K, S = 316.61 J/mol/K
-A1CH2             G3B3  H   7C   7O   0N   0G   300.000  3000.000  1000.000    1
- 3.30049696E+00 4.80055340E-02-2.78443022E-05 7.72371356E-09-8.27154136E-13    2
- 2.17498572E+04 5.42371919E+00-6.07053038E+00 8.35201507E-02-7.41700083E-05    3
- 3.13153847E-08-4.23670868E-12 2.35894712E+04 5.07932172E+01 1.79065647E+04    4
-! CAS# : 100-52-7
-! DfH = -37.20 kJ/mol, Cp = 112.08 J/mol/K, S = 335.94 J/mol/K
-A1CHO             G3B3  H   6C   7O   1N   0G   300.000  3000.000  1000.000    1
- 1.87355756E+00 5.26231551E-02-3.17644962E-05 9.06403069E-09-9.90306123E-13    2
--7.23603865E+03 1.49787009E+01-3.47171048E+00 6.92891889E-02-4.32603509E-05    3
- 3.43871096E-09 4.81010261E-12-6.14558774E+03 4.14094024E+01 1.95577369E+04    4
-
-! Enthalpy of formation from published articles
-! =============================================
-
-! Roy et al. 2001
-! CAS# : 542-92-7
-! DfH = 134.30 kJ/mol, Cp = 76.66 J/mol/K, S = 274.82 J/mol/K
-C5H6              G3B3  H   6C   5O   0N   0G   300.000  3000.000  1000.000    1
- 2.30537462E-01 4.09571826E-02-2.41588958E-05 6.79763480E-09-7.36374421E-13    2
- 1.43779465E+04 2.02551234E+01-5.13691194E+00 6.06953453E-02-4.60552837E-05    3
- 1.28457201E-08 7.41214852E-13 1.53675713E+04 4.61567559E+01 1.36969782E+04    4
-
-! Entropy and Heat capacity from Kiefer et al. 2001
-! Energy from Tokmakov et al. 2003
-! Refitted from 300 to 3000
-! CAS# : 2143-53-5
-! DfH = 261.50 kJ/mol, Cp = 84.46 J/mol/K, S = 265.55 J/mol/K
-C5H5           Refitted H   5C   5O   0N   0G   300.000  3000.000  1000.000    1
- 4.21464919E+00 2.71834728E-02-1.33173209E-05 3.08980119E-09-2.77879873E-13    2
- 2.88952416E+04-3.05999781E-02-7.37844042E+00 9.72391818E-02-1.69579138E-04    3
- 1.51818667E-07-5.12075479E-11 3.05514662E+04 5.12829539E+01 1.52014006E+04    4
-
-
-#endif
