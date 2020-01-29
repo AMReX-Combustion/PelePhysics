@@ -14,7 +14,7 @@
 #define H_ID 0
 #define H2_ID 1
 #define CH2_ID 2
-#define CH2(S)_ID 3
+#define CH2S_ID 3
 #define CH3_ID 4
 #define O_ID 5
 #define CH4_ID 6

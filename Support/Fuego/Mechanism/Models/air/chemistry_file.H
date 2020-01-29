@@ -78,11 +78,11 @@ void CKGMS(double *  T, double *  gms);
 void CKAMS(double *  T, double *  ams);
 void CKSMS(double *  T, double *  sms);
 void CKCPBL(double *  T, double *  x, double *  cpbl);
-void CKCPBS(double *  T, double *  y, double *  cpbs);
+AMREX_GPU_HOST_DEVICE void CKCPBS(double *  T, double *  y, double *  cpbs);
 void CKCVBL(double *  T, double *  x, double *  cpbl);
 AMREX_GPU_HOST_DEVICE void CKCVBS(double *  T, double *  y, double *  cpbs);
 void CKHBML(double *  T, double *  x, double *  hbml);
-void CKHBMS(double *  T, double *  y, double *  hbms);
+AMREX_GPU_HOST_DEVICE void CKHBMS(double *  T, double *  y, double *  hbms);
 void CKUBML(double *  T, double *  x, double *  ubml);
 AMREX_GPU_HOST_DEVICE void CKUBMS(double *  T, double *  y, double *  ubms);
 void CKSBML(double *  P, double *  T, double *  x, double *  sbml);
@@ -103,7 +103,9 @@ void CKQXP(double *  P, double *  T, double *  x, double *  qdot);
 void CKQYR(double *  rho, double *  T, double *  y, double *  qdot);
 void CKQXR(double *  rho, double *  T, double *  x, double *  qdot);
 void CKNU(int * kdim, int * nuki);
+#ifndef AMREX_USE_CUDA
 void CKINU(int * i, int * nspec, int * ki, int * nu);
+#endif
 void CKNCF(int * mdim, int * ncf);
 void CKABE(double *  a, double *  b, double *  e );
 void CKEQC(double *  T, double *  C , double *  eqcon );
@@ -112,21 +114,20 @@ void CKEQXP(double *  P, double *  T, double *  x, double *  eqcon);
 void CKEQYR(double *  rho, double *  T, double *  y, double *  eqcon);
 void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon);
 AMREX_GPU_HOST_DEVICE void DWDOT(double *  J, double *  sc, double *  T, int * consP);
-AMREX_GPU_HOST_DEVICE void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);
-AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma);
+AMREX_GPU_HOST_DEVICE void DWDOT_SIMPLIFIED(double *  J, double *  sc, double *  Tp, int * HP);
 AMREX_GPU_HOST_DEVICE void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);
-AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);
-#ifndef AMREX_USE_CUDA
-void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * consP);
-#else
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx, int * consP);
-#endif
+AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST(int * nJdata, int * consP, int NCELLS);
+AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, int * consP);
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, int * consP, int NCELLS);
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS);
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP);
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base);
 AMREX_GPU_HOST_DEVICE void aJacobian(double *  J, double *  sc, double T, int consP);
 AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T, int HP);
 AMREX_GPU_HOST_DEVICE void dcvpRdT(double *  species, double *  tc);
 AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);
-void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);
+AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);
 void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);
 /*vector version */
 void VCKYTX(int *  np, double *  y, double *  x);
@@ -162,6 +163,9 @@ void egtransetCOFETA(double* COFETA);
 void egtransetCOFLAM(double* COFLAM);
 void egtransetCOFD(double* COFD);
 void egtransetKTDIF(int* KTDIF);
+/*gauss-jordan solver external routine */
+AMREX_GPU_HOST_DEVICE void sgjsolve(double* A, double* x, double* b);
+AMREX_GPU_HOST_DEVICE void sgjsolve_simplified(double* A, double* x, double* b);
 }
 
 #ifndef AMREX_USE_CUDA
@@ -176,8 +180,8 @@ namespace thermo
     extern double activation_units[0], prefactor_units[0], phase_units[0];
     extern int is_PD[0], troe_len[0], sri_len[0], nTB[0], *TBid[0];
     extern double *TB[0];
-    extern std::vector<std::vector<int>> kiv; 
-    extern std::vector<std::vector<int>> nuv; 
+    extern std::vector<std::vector<double>> kiv; 
+    extern std::vector<std::vector<double>> nuv; 
 
     extern double fwd_A_DEF[0], fwd_beta_DEF[0], fwd_Ea_DEF[0];
     extern double low_A_DEF[0], low_beta_DEF[0], low_Ea_DEF[0];

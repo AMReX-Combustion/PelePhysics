@@ -11,8 +11,8 @@ namespace thermo
     double activation_units[0], prefactor_units[0], phase_units[0];
     int is_PD[0], troe_len[0], sri_len[0], nTB[0], *TBid[0];
     double *TB[0];
-    std::vector<std::vector<int>> kiv(0); 
-    std::vector<std::vector<int>> nuv(0); 
+    std::vector<std::vector<double>> kiv(0); 
+    std::vector<std::vector<double>> nuv(0); 
 
     double fwd_A_DEF[0], fwd_beta_DEF[0], fwd_Ea_DEF[0];
     double low_A_DEF[0], low_beta_DEF[0], low_Ea_DEF[0];
@@ -75,62 +75,9 @@ double* GetParamPtr(int                reaction_id,
                     int                species_id,
                     int                get_default)
 {
-  double* ret = 0;
-  if (reaction_id<0 || reaction_id>=0) {
-    printf("Bad reaction id = %d",reaction_id);
-    abort();
-  };
-  int mrid = rxn_map[reaction_id];
-
-  if (param_id == THIRD_BODY) {
-    if (species_id<0 || species_id>=2) {
-      printf("GetParamPtr: Bad species id = %d",species_id);
-      abort();
-    }
-    if (get_default) {
-      for (int i=0; i<nTB_DEF[mrid]; ++i) {
-        if (species_id == TBid_DEF[mrid][i]) {
-          ret = &(TB_DEF[mrid][i]);
-        }
-      }
-    }
-    else {
-      for (int i=0; i<nTB[mrid]; ++i) {
-        if (species_id == TBid[mrid][i]) {
-          ret = &(TB[mrid][i]);
-        }
-      }
-    }
-    if (ret == 0) {
-      printf("GetParamPtr: No TB for reaction id = %d",reaction_id);
-      abort();
-    }
-  }
-  else {
-    if (     param_id == FWD_A)     {ret = (get_default ? &(fwd_A_DEF[mrid]) : &(fwd_A[mrid]));}
-      else if (param_id == FWD_BETA)  {ret = (get_default ? &(fwd_beta_DEF[mrid]) : &(fwd_beta[mrid]));}
-      else if (param_id == FWD_EA)    {ret = (get_default ? &(fwd_Ea_DEF[mrid]) : &(fwd_Ea[mrid]));}
-      else if (param_id == LOW_A)     {ret = (get_default ? &(low_A_DEF[mrid]) : &(low_A[mrid]));}
-      else if (param_id == LOW_BETA)  {ret = (get_default ? &(low_beta_DEF[mrid]) : &(low_beta[mrid]));}
-      else if (param_id == LOW_EA)    {ret = (get_default ? &(low_Ea_DEF[mrid]) : &(low_Ea[mrid]));}
-      else if (param_id == REV_A)     {ret = (get_default ? &(rev_A_DEF[mrid]) : &(rev_A[mrid]));}
-      else if (param_id == REV_BETA)  {ret = (get_default ? &(rev_beta_DEF[mrid]) : &(rev_beta[mrid]));}
-      else if (param_id == REV_EA)    {ret = (get_default ? &(rev_Ea_DEF[mrid]) : &(rev_Ea[mrid]));}
-      else if (param_id == TROE_A)    {ret = (get_default ? &(troe_a_DEF[mrid]) : &(troe_a[mrid]));}
-      else if (param_id == TROE_TS)   {ret = (get_default ? &(troe_Ts_DEF[mrid]) : &(troe_Ts[mrid]));}
-      else if (param_id == TROE_TSS)  {ret = (get_default ? &(troe_Tss_DEF[mrid]) : &(troe_Tss[mrid]));}
-      else if (param_id == TROE_TSSS) {ret = (get_default ? &(troe_Tsss_DEF[mrid]) : &(troe_Tsss[mrid]));}
-      else if (param_id == SRI_A)     {ret = (get_default ? &(sri_a_DEF[mrid]) : &(sri_a[mrid]));}
-      else if (param_id == SRI_B)     {ret = (get_default ? &(sri_b_DEF[mrid]) : &(sri_b[mrid]));}
-      else if (param_id == SRI_C)     {ret = (get_default ? &(sri_c_DEF[mrid]) : &(sri_c[mrid]));}
-      else if (param_id == SRI_D)     {ret = (get_default ? &(sri_d_DEF[mrid]) : &(sri_d[mrid]));}
-      else if (param_id == SRI_E)     {ret = (get_default ? &(sri_e_DEF[mrid]) : &(sri_e[mrid]));}
-    else {
-      printf("GetParamPtr: Unknown parameter id");
-      abort();
-    }
-  }
-  return ret;
+  printf("No reactions in this model");
+  abort();
+  return 0;
 }
 
 void ResetAllParametersToDefault()
@@ -1032,7 +979,7 @@ void CKCPBL(double *  T, double *  x,  double *  cpbl)
 
 
 /*Returns the mean specific heat at CP (Eq. 34) */
-void CKCPBS(double *  T, double *  y,  double *  cpbs)
+AMREX_GPU_HOST_DEVICE void CKCPBS(double *  T, double *  y,  double *  cpbs)
 {
     double result = 0; 
     double tT = *T; /*temporary temperature */
@@ -1109,7 +1056,7 @@ void CKHBML(double *  T, double *  x,  double *  hbml)
 
 
 /*Returns mean enthalpy of mixture in mass units */
-void CKHBMS(double *  T, double *  y,  double *  hbms)
+AMREX_GPU_HOST_DEVICE void CKHBMS(double *  T, double *  y,  double *  hbms)
 {
     double result = 0;
     double tT = *T; /*temporary temperature */
@@ -1623,6 +1570,7 @@ void CKNU(int * kdim,  int * nuki)
 }
 
 
+#ifndef AMREX_USE_CUDA
 /*Returns a count of species in a reaction, and their indices */
 /*and stoichiometric coefficients. (Eq 50) */
 void CKINU(int * i, int * nspec, int * ki, int * nu)
@@ -1642,6 +1590,7 @@ void CKINU(int * i, int * nspec, int * ki, int * nu)
         }
     }
 }
+#endif
 
 
 /*Returns the elemental composition  */
@@ -1759,8 +1708,6 @@ AMREX_GPU_HOST_DEVICE inline void  productionRate(double * wdot, double * sc, do
     double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     double invT = 1.0 / tc[1];
 
-    double qdot, q_f[0], q_r[0];
-    comp_qfqr(q_f, q_r, sc, tc, invT);
 
     for (int i = 0; i < 2; ++i) {
         wdot[i] = 0.0;
@@ -1771,25 +1718,6 @@ AMREX_GPU_HOST_DEVICE inline void  productionRate(double * wdot, double * sc, do
 
 AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * sc, double * tc, double invT)
 {
-
-    /*compute the mixture concentration */
-    double mixture = 0.0;
-    for (int i = 0; i < 2; ++i) {
-        mixture += sc[i];
-    }
-
-    /*compute the Gibbs free energy */
-    double g_RT[2];
-    gibbs(g_RT, tc);
-
-    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    double refC = 101325 / 8.31451 * invT;
-    double refCinv = 1 / refC;
-
-    /* Evaluate the kfs */
-    double k_f, Corr;
-
-
 
     return;
 }
@@ -1985,12 +1913,13 @@ void vcomp_wdot(int npt, double *  wdot, double *  mixture, double *  sc,
 #endif
     for (int i=0; i<npt; i++) {
         double qdot, q_f, q_r, phi_f, phi_r, k_f, k_r, Kc;
+        double alpha;
     }
 }
 #endif
 
-/*compute an approx to the reaction Jacobian */
-AMREX_GPU_HOST_DEVICE void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP)
+/*compute an approx to the reaction Jacobian (for preconditioning) */
+AMREX_GPU_HOST_DEVICE void DWDOT_SIMPLIFIED(double *  J, double *  sc, double *  Tp, int * HP)
 {
     double c[2];
 
@@ -2005,49 +1934,6 @@ AMREX_GPU_HOST_DEVICE void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp
     for (int k=0; k<2; k++) {
         J[6+k] *= 1.e-6;
         J[k*3+2] *= 1.e6;
-    }
-
-    return;
-}
-
-/*compute an approx to the SPS Jacobian */
-AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma)
-{
-    double c[2];
-    double J[9];
-    double mwt[2];
-
-    get_mw(mwt);
-
-    for (int k=0; k<2; k++) {
-        c[k] = 1.e6 * sc[k];
-    }
-
-    aJacobian_precond(J, c, *Tp, *HP);
-
-    /* Change of coord */
-    /* dwdot[k]/dT */
-    /* dTdot/d[X] */
-    for (int k=0; k<2; k++) {
-        J[6+k] = 1.e-6 * J[6+k] * mwt[k];
-        J[k*3+2] = 1.e6 * J[k*3+2] / mwt[k];
-    }
-    /* dTdot/dT */
-    /* dwdot[l]/[k] */
-    for (int k=0; k<2; k++) {
-        for (int l=0; l<2; l++) {
-            /* DIAG elem */
-            if (k == l){
-                J[ 3 * k + l] =  J[ 3 * k + l] * mwt[l] / mwt[k];
-            /* NOT DIAG and not last column nor last row */
-            } else {
-                J[ 3 * k + l] =  J[ 3 * k + l] * mwt[l] / mwt[k];
-            }
-        }
-    }
-
-    for (int k=0; k<(*len); k++) {
-        Jsps[k] = J[indx[k]];
     }
 
     return;
@@ -2074,7 +1960,7 @@ AMREX_GPU_HOST_DEVICE void DWDOT(double *  J, double *  sc, double *  Tp, int * 
     return;
 }
 
-/*compute the sparsity pattern Jacobian */
+/*compute the sparsity pattern of the chemistry Jacobian */
 AMREX_GPU_HOST_DEVICE void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
 {
     double c[2];
@@ -2102,8 +1988,40 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
 
 
 
-/*compute the sparsity pattern of simplified Jacobian */
-AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)
+/*compute the sparsity pattern of the system Jacobian */
+AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST( int * nJdata, int * consP, int NCELLS)
+{
+    double c[2];
+    double J[9];
+
+    for (int k=0; k<2; k++) {
+        c[k] = 1.0/ 2.000000 ;
+    }
+
+    aJacobian(J, c, 1500.0, *consP);
+
+    int nJdata_tmp = 0;
+    for (int k=0; k<3; k++) {
+        for (int l=0; l<3; l++) {
+            if(k == l){
+                nJdata_tmp = nJdata_tmp + 1;
+            } else {
+                if(J[ 3 * k + l] != 0.0){
+                    nJdata_tmp = nJdata_tmp + 1;
+                }
+            }
+        }
+    }
+
+    *nJdata = NCELLS * nJdata_tmp;
+
+    return;
+}
+
+
+
+/*compute the sparsity pattern of the simplified (for preconditioning) system Jacobian */
+AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST_SIMPLIFIED( int * nJdata, int * consP)
 {
     double c[2];
     double J[9];
@@ -2133,9 +2051,132 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_PRECOND( int * nJdata, int * consP)
 }
 
 
-#ifndef AMREX_USE_CUDA
-/*compute the sparsity pattern of the simplified precond Jacobian on CPU */
-void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * consP)
+/*compute the sparsity pattern of the chemistry Jacobian in CSC format -- base 0 */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)
+{
+    double c[2];
+    double J[9];
+    int offset_row;
+    int offset_col;
+
+    for (int k=0; k<2; k++) {
+        c[k] = 1.0/ 2.000000 ;
+    }
+
+    aJacobian(J, c, 1500.0, *consP);
+
+    colPtrs[0] = 0;
+    int nJdata_tmp = 0;
+    for (int nc=0; nc<NCELLS; nc++) {
+        offset_row = nc * 3;
+        offset_col = nc * 3;
+        for (int k=0; k<3; k++) {
+            for (int l=0; l<3; l++) {
+                if(J[3*k + l] != 0.0) {
+                    rowVals[nJdata_tmp] = l + offset_row; 
+                    nJdata_tmp = nJdata_tmp + 1; 
+                }
+            }
+            colPtrs[offset_col + (k + 1)] = nJdata_tmp;
+        }
+    }
+
+    return;
+}
+
+/*compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0 */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int *  colVals, int *  rowPtrs, int * consP, int NCELLS)
+{
+    double c[2];
+    double J[9];
+    int offset;
+
+    for (int k=0; k<2; k++) {
+        c[k] = 1.0/ 2.000000 ;
+    }
+
+    aJacobian(J, c, 1500.0, *consP);
+
+    rowPtrs[0] = 0;
+    int nJdata_tmp = 0;
+    for (int nc=0; nc<NCELLS; nc++) {
+        offset = nc * 3;
+        for (int l=0; l<3; l++) {
+            for (int k=0; k<3; k++) {
+                if(J[3*k + l] != 0.0) {
+                    colVals[nJdata_tmp] = k + offset; 
+                    nJdata_tmp = nJdata_tmp + 1; 
+                }
+            }
+            rowPtrs[offset + (l + 1)] = nJdata_tmp;
+        }
+    }
+
+    return;
+}
+
+/*compute the sparsity pattern of the system Jacobian */
+/*CSR format BASE is user choice */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCELLS, int base)
+{
+    double c[2];
+    double J[9];
+    int offset;
+
+    for (int k=0; k<2; k++) {
+        c[k] = 1.0/ 2.000000 ;
+    }
+
+    aJacobian(J, c, 1500.0, *consP);
+
+    if (base == 1) {
+        rowPtr[0] = 1;
+        int nJdata_tmp = 1;
+        for (int nc=0; nc<NCELLS; nc++) {
+            offset = nc * 3;
+            for (int l=0; l<3; l++) {
+                for (int k=0; k<3; k++) {
+                    if (k == l) {
+                        colVals[nJdata_tmp-1] = l+1 + offset; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    } else {
+                        if(J[3*k + l] != 0.0) {
+                            colVals[nJdata_tmp-1] = k+1 + offset; 
+                            nJdata_tmp = nJdata_tmp + 1; 
+                        }
+                    }
+                }
+                rowPtr[offset + (l + 1)] = nJdata_tmp;
+            }
+        }
+    } else {
+        rowPtr[0] = 0;
+        int nJdata_tmp = 0;
+        for (int nc=0; nc<NCELLS; nc++) {
+            offset = nc * 3;
+            for (int l=0; l<3; l++) {
+                for (int k=0; k<3; k++) {
+                    if (k == l) {
+                        colVals[nJdata_tmp] = l + offset; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    } else {
+                        if(J[3*k + l] != 0.0) {
+                            colVals[nJdata_tmp] = k + offset; 
+                            nJdata_tmp = nJdata_tmp + 1; 
+                        }
+                    }
+                }
+                rowPtr[offset + (l + 1)] = nJdata_tmp;
+            }
+        }
+    }
+
+    return;
+}
+
+/*compute the sparsity pattern of the simplified (for precond) system Jacobian on CPU */
+/*BASE 0 */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP)
 {
     double c[2];
     double J[9];
@@ -2167,10 +2208,10 @@ void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * co
 
     return;
 }
-#else
 
-/*compute the sparsity pattern of the simplified precond Jacobian on GPU */
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx, int * consP)
+/*compute the sparsity pattern of the simplified (for precond) system Jacobian */
+/*CSR format BASE is under choice */
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base)
 {
     double c[2];
     double J[9];
@@ -2181,54 +2222,39 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx,
 
     aJacobian_precond(J, c, 1500.0, *consP);
 
-    rowPtr[0] = 1;
-    int nJdata_tmp = 1;
-    for (int l=0; l<3; l++) {
-        for (int k=0; k<3; k++) {
-            if (k == l) {
-                colIndx[nJdata_tmp-1] = l+1; 
-                nJdata_tmp = nJdata_tmp + 1; 
-            } else {
-                if(J[3*k + l] != 0.0) {
-                    colIndx[nJdata_tmp-1] = k+1; 
+    if (base == 1) {
+        rowPtr[0] = 1;
+        int nJdata_tmp = 1;
+        for (int l=0; l<3; l++) {
+            for (int k=0; k<3; k++) {
+                if (k == l) {
+                    colVals[nJdata_tmp-1] = l+1; 
                     nJdata_tmp = nJdata_tmp + 1; 
+                } else {
+                    if(J[3*k + l] != 0.0) {
+                        colVals[nJdata_tmp-1] = k+1; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    }
                 }
             }
+            rowPtr[l+1] = nJdata_tmp;
         }
-        rowPtr[l+1] = nJdata_tmp;
-    }
-
-    return;
-}
-#endif
-
-/*compute the sparsity pattern of the Jacobian */
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)
-{
-    double c[2];
-    double J[9];
-    int offset_row;
-    int offset_col;
-
-    for (int k=0; k<2; k++) {
-        c[k] = 1.0/ 2.000000 ;
-    }
-
-    aJacobian(J, c, 1500.0, *consP);
-
-    colPtrs[0] = 0;
-    int nJdata_tmp = 0;
-    for (int nc=0; nc<NCELLS; nc++) {
-        offset_row = nc * 3;
-        offset_col = nc * 3;
-        for (int k=0; k<3; k++) {
-            for (int l=0; l<3; l++) {
-                if(J[3*k + l] != 0.0) {
-                    rowVals[nJdata_tmp] = l + offset_row; 
+    } else {
+        rowPtr[0] = 0;
+        int nJdata_tmp = 0;
+        for (int l=0; l<3; l++) {
+            for (int k=0; k<3; k++) {
+                if (k == l) {
+                    colVals[nJdata_tmp] = l; 
                     nJdata_tmp = nJdata_tmp + 1; 
+                } else {
+                    if(J[3*k + l] != 0.0) {
+                        colVals[nJdata_tmp] = k; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    }
                 }
             }
-            colPtrs[offset_col + (k + 1)] = nJdata_tmp;
+            rowPtr[l+1] = nJdata_tmp;
         }
     }
 
@@ -2552,12 +2578,6 @@ AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  sc, double T)
     }
 #endif
 
-    double q_f[0], q_r[0];
-    comp_qfqr(q_f, q_r, sc, tc, invT);
-
-    for (int i = 0; i < 0; ++i) {
-        qdot[i] = q_f[i] - q_r[i];
-    }
 
     return;
 }
@@ -2566,20 +2586,6 @@ AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  sc, double T)
 /*compute the progress rate for each reaction */
 AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  sc, double T)
 {
-    double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
-    double invT = 1.0 / tc[1];
-#ifndef AMREX_USE_CUDA
-
-    if (T != T_save)
-    {
-        T_save = T;
-        comp_k_f(tc,invT,k_f_save);
-        comp_Kc(tc,invT,Kc_save);
-    }
-#endif
-
-    comp_qfqr(q_f, q_r, sc, tc, invT);
-
     return;
 }
 
@@ -2995,7 +3001,7 @@ AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_EY(double *  e, double *  y, double *  t,
 }
 
 /* get temperature given enthalpy in mass units and mass fracs */
-void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int * ierr)
+AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int * ierr)
 {
 #ifdef CONVERGENCE
     const int maxiter = 5000;
