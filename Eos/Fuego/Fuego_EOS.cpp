@@ -13,80 +13,79 @@ AMREX_GPU_HOST_DEVICE EOS::~EOS()
 
 
 AMREX_GPU_HOST_DEVICE
-void EOS::eos_EY2T(amrex::Real *Y, amrex::Real E, amrex::Real T)
+void EOS::eos_EY2T(const Real *Y, Real E, Real &T)
 {
-    int lierr=0; 
-    GET_T_GIVEN_EY(&E, Y, &T, &lierr);
-
+  int lierr=0;
+  GET_T_GIVEN_EY(&E, (Real*)Y, &T, &lierr);
 }
 
 AMREX_GPU_HOST_DEVICE
-void EOS::eos_T2EI(amrex::Real T, amrex::Real *ei)
+void EOS::eos_T2EI(Real T, Real *ei)
 {
-    CKUMS(&T,  ei); 
+  CKUMS(&T,  ei);
 }
 
 AMREX_GPU_HOST_DEVICE
-void EOS::eos_TY2Cv(amrex::Real T, amrex::Real *Y, amrex::Real *Cv)
+void EOS::eos_TY2Cv(Real T, const Real *Y, Real &Cv)
 {
-    amrex::Real cvi[NUM_SPECIES]; 
+  Real cvi[NUM_SPECIES];
 
-    CKCVMS(&T,  cvi); 
+  CKCVMS(&T,  cvi);
 
-    *Cv = 0.0; 
-    for(int i = 0; i < NUM_SPECIES; ++i){
-        *Cv += Y[i] * cvi[i];
-    }
+  Cv = 0.0;
+  for(int i = 0; i < NUM_SPECIES; ++i){
+    Cv += Y[i] * cvi[i];
+  }
+}
+
+
+AMREX_GPU_HOST_DEVICE
+void EOS::eos_HY2T(const Real *Y, Real H, Real &T)
+{
+  int lierr=0;
+  GET_T_GIVEN_HY(&H, (Real *)Y, &T, &lierr);
 }
 
 AMREX_GPU_HOST_DEVICE
-void EOS::eos_HY2T(amrex::Real *Y, amrex::Real H, amrex::Real T)
+void EOS::eos_T2HI(Real T, Real *hi)
 {
-    int lierr=0; 
-    GET_T_GIVEN_HY(&H, Y, &T, &lierr);
-
+  CKHMS(&T,  hi);
 }
 
 AMREX_GPU_HOST_DEVICE
-void EOS::eos_T2HI(amrex::Real T, amrex::Real *hi)
+void EOS::eos_TY2Cp(Real T, const Real *Y, Real &Cp)
 {
-    CKHMS(&T,  hi); 
+  Real cpi[NUM_SPECIES];
+
+  CKCPMS(&T,  cpi);
+
+  Cp = 0.0;
+  for(int i = 0; i < NUM_SPECIES; ++i){
+    Cp += Y[i] * cpi[i];
+  }
 }
 
 AMREX_GPU_HOST_DEVICE
-void EOS::eos_TY2Cp(amrex::Real T, amrex::Real *Y, amrex::Real *Cp)
+void EOS::eos_RTY2C(Real rho, Real T, const Real *Y, Real *acti)
 {
-    amrex::Real cpi[NUM_SPECIES]; 
-
-    CKCPMS(&T,  cpi); 
-
-    *Cp = 0.0; 
-    for(int i = 0; i < NUM_SPECIES; ++i){
-        *Cp += Y[i] * cpi[i];
-    }
+  CKYTCR(&rho, &T, (Real *)Y, acti);
 }
 
 AMREX_GPU_HOST_DEVICE
-void EOS::eos_RTY2C(amrex::Real rho, amrex::Real T, amrex::Real *Y, amrex::Real *acti)
+void EOS::eos_RTY2W(Real rho, Real T, const Real *Y, Real *wdot)
 {
-    CKYTCR(&rho, &T, Y, acti);
-}
+  Real C[NUM_SPECIES];
 
-AMREX_GPU_HOST_DEVICE      
-void EOS::eos_RTY2W(amrex::Real rho, amrex::Real T, amrex::Real *Y, amrex::Real *wdot)
-{
-    amrex::Real C[NUM_SPECIES]; 
-
-    CKYTCR(&rho, &T, Y, C); 
-    CKWC(&T, C, wdot);
+  CKYTCR(&rho, &T, (Real *)Y, C);
+  CKWC(&T, C, wdot);
 }
 
 /* Should not be here but I am not sure wether the CKYTCR needs to be wraped. */
-AMREX_GPU_HOST_DEVICE      
-void EOS::eos_RTY2JAC(amrex::Real rho, amrex::Real T, amrex::Real *Y, amrex::Real *Jac, int HP)
+AMREX_GPU_HOST_DEVICE
+void EOS::eos_RTY2JAC(Real rho, Real T, const Real *Y, Real *Jac,  int HP)
 {
-    amrex::Real C[NUM_SPECIES]; 
+  Real C[NUM_SPECIES];
 
-    CKYTCR(&rho, &T, Y, C); 
-    DWDOT(Jac,C,&T,&HP);
+  CKYTCR(&rho, &T, (Real *)Y, C);
+  DWDOT(Jac,C,&T,&HP);
 }
