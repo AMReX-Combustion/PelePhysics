@@ -4,14 +4,18 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
   CVODE_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib
   $(info CVODE_LIB_DIR="$(CVODE_LIB_DIR)")
   INCLUDE_LOCATIONS += $(CVODE_LIB_DIR)/../include
-  LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_cvode
+  ifeq ($(USE_ARKODE_PP),TRUE)
+      LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_arkode
+  else
+      LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_cvode
+  endif
   LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nvecserial
   ifeq ($(USE_OMP),TRUE)
     LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nvecopenmp
   endif
   ifeq ($(USE_CUDA_CVODE),TRUE)
     DEFINES  += -DUSE_CUDA_CVODE
-    LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nveccuda
+    LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nveccuda -lsundials_sunlinsolcusolversp
     LIBRARIES += -lcusolver -lcusparse
   endif
   LIBRARIES += -Wl,-rpath=${CVODE_LIB_DIR}

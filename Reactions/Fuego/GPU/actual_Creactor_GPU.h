@@ -8,18 +8,15 @@
 #include <cvode/cvode.h>               /* prototypes for CVODE fcts., consts.  */
 #include <nvector/nvector_serial.h>    /* access to serial N_Vector            */
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
+#include <nvector/nvector_cuda.h>
+#include <sunmatrix/sunmatrix_sparse.h>
 #include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver      */
 #include <sunlinsol/sunlinsol_spgmr.h> /* access to SPGMR SUNLinearSolver     */
+#include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
 #include <cvode/cvode_direct.h>        /* access to CVDls interface            */
-#include <cvode/cvode_spils.h>         /* access to CVSpils interface */
 #include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype      */
 #include <sundials/sundials_math.h>
 
-#include <nvector/nvector_cuda.h>
-
-//#include <cusolver/cvode_cusolver_spqr.h>
-
-#include <sunmatrix/sunmatrix_sparse.h>
 #include <AMReX_Print.H>
 
 #include <cuda_runtime.h>
@@ -39,9 +36,11 @@ typedef struct CVodeUserData {
     /* nb of eq per cell */
     int neqs_per_cell[1];
     /* HP/UV react */
-    int flagP;
+    int ireactor_type;
     /* Are we using a AJ */
-    int iJac;
+    int ianalytical_jacobian;
+    /* Are we using a IS or DS */
+    int isolve_type;
     /* energy related variables */
     double *rhoe_init = NULL;
     double *rhoesrc_ext = NULL;
@@ -55,12 +54,15 @@ typedef struct CVodeUserData {
     int* csr_col_index_d;
     double* csr_val_d;
     double* csr_jac_d;
+    SUNMatrix R = NULL;
     /* CUDA cusolver */
     void *buffer_qr = NULL;
     csrqrInfo_t info;
     cusparseMatDescr_t descrA;
     cusolverSpHandle_t cusolverHandle;
     cudaStream_t stream;
+    int nbBlocks;
+    int nbThreads;
 }* UserData;
 
 /* Functions Called by the Solver */
@@ -81,11 +83,15 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
 		N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);
 
+static int cJac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J,
+		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+
 void reactor_close();
 
 /**********************************/
 /* Additional useful functions */
-//static void initialize_chemistry_device(UserData user_data);
+
+AMREX_GPU_HOST_DEVICE void fill_dense_csr(int * colVals, int * rowPtr, int NCELLS, int base);
 
 static int check_flag(void *flagvalue, const char *funcname, int opt);
 
@@ -94,7 +100,6 @@ static void PrintFinalStats(void *cvode_mem);
 /**********************************/
 /* Device crap               */
 
-/* Main Kernel fct called in solver RHS */
 AMREX_GPU_DEVICE
 inline
 void
@@ -102,18 +107,56 @@ fKernelSpec(int ncells, void *user_data,
 		            realtype *yvec_d, realtype *ydot_d,  
 		            double *rhoX_init, double *rhoXsrc_ext, double *rYs);
 
-
-//__global__ void fKernelJacCSR(realtype t, void *user_data,
-//                                          realtype *yvec_d, realtype *ydot_d,
-//                                          realtype* csr_jac, 
-//                                          const int size, const int nnz, 
-//                                          const int nbatched);
+AMREX_GPU_DEVICE
+inline
+void 
+fKernelComputeallAJ(int ncells, void *user_data, realtype *u_d, realtype *udot_d, realtype *csr_val);
 
 AMREX_GPU_DEVICE
 inline
 void 
-fKernelComputeAJ(int ncells, void *user_data, realtype *u_d, realtype *udot_d, realtype *csr_val);
+fKernelComputeAJsys(int ncells, void *user_data, realtype *u_d, realtype *udot_d, realtype *csr_val);
 
-//__global__ void fKernelFillJB(void *user_data, realtype *gamma);
+AMREX_GPU_DEVICE
+inline
+void 
+fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *udot_d);
+
+__global__
+void 
+fKernelDenseSolve(int ncells, realtype *x_d, realtype *b_d,
+		  int subsys_size, int subsys_nnz, realtype *csr_val);
+
+/**********************************/
+/* Custom solver stuff */
+struct _SUNLinearSolverContent_Dense_custom {
+	sunindextype       last_flag;
+	int                nsubsys;       /* number of subsystems */
+	int                subsys_size;   /* size of each subsystem */
+	int                subsys_nnz;
+        N_Vector           d_values;      /* device  array of matrix A values */
+	int*               d_colind;      /* device array of column indices for a subsystem */
+	int*               d_rowptr;      /* device array of rowptrs for a subsystem */
+	cudaStream_t       stream;
+        int                nbBlocks;
+        int                nbThreads;
+};
+
+typedef struct _SUNLinearSolverContent_Dense_custom *SUNLinearSolverContent_Dense_custom; 
+
+SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, 
+		int nsubsys, int subsys_size, int subsys_nnz, 
+		cudaStream_t stream);
+
+SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S); 
+
+int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
+		N_Vector b, realtype tol);
+
+int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A);
+
+int SUNLinSolFree_Dense_custom(SUNLinearSolver S);
+
+
 
 

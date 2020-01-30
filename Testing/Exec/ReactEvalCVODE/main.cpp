@@ -46,7 +46,7 @@ main (int   argc,
     std::string pltfile("plt");
     /* CVODE inputs */
     int cvode_ncells = 1;
-    int cvode_iE = 1;
+    int cvode_iE = -1;
     int fuel_idx = -1;
     int oxy_idx = -1;
     int bath_idx = -1;
@@ -69,7 +69,7 @@ main (int   argc,
       // time stepping
       pp.query("ndt",ndt); 
 
-      pp.query("cvode_iE",cvode_iE);
+      pp.query("reactor_type",cvode_iE);
       // Select CVODE type of energy employed.
       //1 for UV, 2 for HP
       //   1 = Internal energy
@@ -109,10 +109,15 @@ main (int   argc,
 	    probin_file_name[i] = probin_file[i];
     if (fuel_name == "H2") {
         fuel_idx  = H2_ID;
+	amrex::Print() << "FUEL IS H2 \n";
     } else if (fuel_name == "CH4") {
         fuel_idx  = CH4_ID;
+        amrex::Print() << "FUEL IS CH4 \n";
+#ifdef NC12H26_ID
     } else if (fuel_name == "NC12H26") {
         fuel_idx  = NC12H26_ID;
+        amrex::Print() << "FUEL IS NC12H26 \n";
+#endif
     }
     oxy_idx   = O2_ID;
     bath_idx  = N2_ID;
@@ -129,7 +134,7 @@ main (int   argc,
     for (int i = 0; i < BL_SPACEDIM; ++i) {
 	npts[i] = 2;
     }
-    npts[1] = 128;
+    npts[1] = 1024;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
         amrex::Print() << dt << " seconds";
@@ -206,24 +211,20 @@ main (int   argc,
         /* ADVANCE */
         Real time = 0.0;
         Real dt_incr   = dt/ndt;
+	Real fc_tmp;
 
         const Box& box = mfi.tilebox();
-	//int ncells = box.numPts();
-
-	FArrayBox& Fb     = mf[mfi];
-	FArrayBox& Fbsrc  = rY_source_ext[mfi];
-	FArrayBox& FbE    = mfE[mfi];
-	FArrayBox& FbEsrc = rY_source_energy_ext[mfi];
-	FArrayBox& Fct    = fctCount[mfi];
+	int ncells = box.numPts();
+	amrex::Print() << " Integrating " << ncells << " cells with a "<<cvode_ncells<< " cvode cell buffer \n";
 
 	const auto len     = amrex::length(box);
 	const auto lo      = amrex::lbound(box);
 
-	const auto rhoY    = Fb.view(lo);
-	const auto rhoE    = FbE.view(lo);
-	const auto frcExt  = Fbsrc.view(lo); 
-	const auto frcEExt = FbEsrc.view(lo);
-	const auto fc      = Fct.view(lo); 
+	const auto rhoY    = mf.array(mfi);
+	const auto rhoE    = mfE.array(mfi);
+	const auto frcExt  = rY_source_ext.array(mfi); 
+	const auto frcEExt = rY_source_energy_ext.array(mfi);
+	const auto fc      = fctCount.array(mfi); 
 
         /* Pack the data */
 	// rhoY,T
@@ -245,16 +246,16 @@ main (int   argc,
 	        for         (int i = 0; i < len.x; ++i) {
 		    /* Fill the vectors */
 	            for (int sp=0;sp<Ncomp; sp++){
-	                tmp_vect[nc*(Ncomp+1) + sp]   = rhoY(i,j,k,sp);
-		        tmp_src_vect[nc*Ncomp + sp]   = frcExt(i,j,k,sp);
+	                tmp_vect[nc*(Ncomp+1) + sp]   = rhoY(i+lo.x,j+lo.y,k+lo.z,sp);
+		        tmp_src_vect[nc*Ncomp + sp]   = frcExt(i+lo.x,j+lo.y,k+lo.z,sp);
 		    }
-		    tmp_vect[nc*(Ncomp+1) + Ncomp]    = rhoY(i,j,k,Ncomp);
-		    tmp_vect_energy[nc]               = rhoE(i,j,k,0);
-		    tmp_src_vect_energy[nc]           = frcEExt(i,j,k,0);
+		    tmp_vect[nc*(Ncomp+1) + Ncomp]    = rhoY(i+lo.x,j+lo.y,k+lo.z,Ncomp);
+		    tmp_vect_energy[nc]               = rhoE(i+lo.x,j+lo.y,k+lo.z,0);
+		    tmp_src_vect_energy[nc]           = frcEExt(i+lo.x,j+lo.y,k+lo.z,0);
 		    //
-		    indx_i[nc] = i;
-		    indx_j[nc] = j;
-		    indx_k[nc] = k;
+		    indx_i[nc] = i+lo.x;
+		    indx_j[nc] = j+lo.y;
+		    indx_k[nc] = k+lo.z;
 		    //
 		    nc = nc+1;
 		    //
@@ -264,18 +265,18 @@ main (int   argc,
 			dt_incr =  dt/ndt;
 			for (int ii = 0; ii < ndt; ++ii) {
 #ifdef USE_SUNDIALS_PP
-	                    fc(i,j,k) = react(tmp_vect, tmp_src_vect,
+	                    fc_tmp = react(tmp_vect, tmp_src_vect,
 		                tmp_vect_energy, tmp_src_vect_energy,
 		                &dt_incr, &time);
 #else
                             double pressure = 1013250.0;
-	                    fc(i,j,k) = react(tmp_vect, tmp_src_vect,
+	                    fc_tmp = react(tmp_vect, tmp_src_vect,
 		                tmp_vect_energy, tmp_src_vect_energy,
 				&pressure,
 		                &dt_incr, &time);
 #endif
 		            dt_incr =  dt/ndt;
-			    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+			    // printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 			}
 		        nc = 0;
 		        for (int l = 0; l < cvode_ncells ; ++l){
@@ -284,6 +285,7 @@ main (int   argc,
 		            }
 		            rhoY(indx_i[l],indx_j[l],indx_k[l],Ncomp)  = tmp_vect[l*(Ncomp+1) + Ncomp];
 		            rhoE(indx_i[l],indx_j[l],indx_k[l],0)      = tmp_vect_energy[l];
+			    fc(indx_i[l],indx_j[l],indx_k[l],0)        = fc_tmp;
 		        }
 		    }
 		}

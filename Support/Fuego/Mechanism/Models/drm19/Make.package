@@ -1,10 +1,10 @@
 CEXE_headers+=chemistry_file.H
 
-CEXE_sources+=drm19.cpp
+CEXE_sources+=drm19.cpp solver.cpp solver_simplified.cpp
 
 LIBRARIES += 
 
-INCLUDE_LOCATIONS += $(CHEM_DIR)
+INCLUDE_LOCATIONS += $(CHEM_DIR) 
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 

@@ -52,6 +52,7 @@ main (int   argc,
     int fuel_idx = -1;
     int oxy_idx = -1;
     int bath_idx = -1;
+    int third_dim = 1024;
     int ndt = 1; 
     Real dt = 1.e-5; 
 
@@ -71,7 +72,10 @@ main (int   argc,
       // time stepping
       pp.query("ndt",ndt); 
 
-      pp.query("cvode_iE",cvode_iE);
+      // third dim
+      pp.query("third_dim",third_dim);
+
+      pp.query("reactor_type",cvode_iE);
       // Select CVODE type of energy employed.
       //1 for UV, 2 for HP
       //   1 = Internal energy
@@ -114,10 +118,15 @@ main (int   argc,
 	    probin_file_name[i] = probin_file[i];
     if (fuel_name == "H2") {
         fuel_idx  = H2_ID;
+        amrex::Print() << "FUEL IS H2 \n";
     } else if (fuel_name == "CH4") {
         fuel_idx  = CH4_ID;
-    //} else if (fuel_name == "NC12H26") {
-    //    fuel_idx  = NC12H26_ID;
+        amrex::Print() << "FUEL IS CH4 \n";
+#ifdef NC12H26_ID
+    } else if (fuel_name == "NC12H26") {
+        fuel_idx  = NC12H26_ID;
+        amrex::Print() << "FUEL IS NC12H26 \n";
+#endif
     }
     oxy_idx   = O2_ID;
     bath_idx  = N2_ID;
@@ -133,9 +142,8 @@ main (int   argc,
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 16;
+	npts[i] = third_dim;
     }
-    npts[1] = 64;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
         amrex::Print() << dt << " seconds";
@@ -203,7 +211,7 @@ main (int   argc,
     ppa.query("plot_file",pltfile);
     std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
     // Specs
-    //PlotFileFromMF(mf,outfile);
+    PlotFileFromMF(mf,outfile);
 
     BL_PROFILE_VAR_STOP(PlotFile);
 
@@ -289,18 +297,26 @@ main (int   argc,
         });
 	BL_PROFILE_VAR_STOP(FlatStuff);
         
+        cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
 
         /* Solve */
         BL_PROFILE_VAR_START(ReactInLoop);
 	time = 0.0;
+        //for (int ii = 0; ii < ncells; ++ii) {
+	//    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + ii*(NUM_SPECIES + 1)]);
+        //}
+        //printf("\n \n ");
 	for (int ii = 0; ii < ndt; ++ii) {
 	    fc_pt = react(tmp_vect, tmp_src_vect,
 	                    tmp_vect_energy, tmp_src_vect_energy,
 	                    &dt_incr, &time,
                             &cvode_iE, &ncells, amrex::Gpu::gpuStream());
-	    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+	    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)]);
 	    dt_incr =  dt/ndt;
         }
+        //for (int ii = 0; ii < ncells; ++ii) {
+        //    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)*ii]);
+        //}
         BL_PROFILE_VAR_STOP(ReactInLoop);
 
         BL_PROFILE_VAR_START(FlatStuff);

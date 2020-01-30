@@ -12,11 +12,11 @@
 #include <cvode/cvode_spils.h>         /* access to CVSpils interface */
 #include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype      */
 #include <sundials/sundials_math.h>
+#include <sunmatrix/sunmatrix_sparse.h>
 
 #ifdef USE_KLU_PP 
 #include "klu.h"
 #include <sunlinsol/sunlinsol_klu.h>
-#include <sunmatrix/sunmatrix_sparse.h>
 #endif
 
 #include <AMReX_Print.H>
@@ -32,10 +32,10 @@ typedef struct {
       /* Base items */
       int ncells;
       int iverbose;
-      int iDense_Creact;
-      int iJac_Creact;
-      int iE_Creact;
-#ifdef USE_KLU_PP 
+      int isolve_type;
+      int ianalytical_jacobian;
+      int ireactor_type;
+      /* Options */
       int NNZ; 
       /* Sparse Matrices for KLU-related solve */
       SUNMatrix *PS;
@@ -43,11 +43,14 @@ typedef struct {
       realtype **Jdata  = NULL;
       /* SUNSparseMatrix_IndexValues */
       int **rowVals     = NULL;
+      int **rowPtrs     = NULL;
       /* SUNSparseMatrix_IndexPointers */
       int **colPtrs     = NULL;
+      int **colVals     = NULL;
       /* Holder for sparse matrix in Fuego fetches */
       int *indx = NULL;
       realtype **JSPSmat = NULL;
+#ifdef USE_KLU_PP 
       /* KLU objects */
       klu_common *Common;
       klu_symbolic **Symbolic;
@@ -57,6 +60,10 @@ typedef struct {
       realtype **(**P);
       sunindextype *(**pivot);
 #endif
+      /* Sparse custom */
+      SUNMatrix PSc;
+      int *colVals_c;
+      int *rowPtrs_c;
 } *UserData;
 
 
@@ -66,6 +73,15 @@ int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void *user_data);
 
 int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+
+int cJac_sps(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
+		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+
+int PSolve_custom(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
+		N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);
+
+int Precond_custom(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
+		booleantype *jcurPtr, realtype gamma, void *user_data);
 
 #ifdef USE_KLU_PP 
 int cJac_KLU(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
@@ -117,5 +133,26 @@ void check_state(N_Vector yvec);
 /* Main Kernel fct called in solver RHS */
 void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 		void *user_data);
+
+/**********************************/
+/* custom solver */
+struct _SUNLinearSolverContent_Sparse_custom {
+	sunindextype       last_flag;
+	int                reactor_type;
+	int                nsubsys;       /* number of subsystems */
+	int                subsys_size;   /* size of each subsystem */
+	int                subsys_nnz;
+
+};
+
+typedef struct _SUNLinearSolverContent_Sparse_custom *SUNLinearSolverContent_Sparse_custom; 
+
+SUNLinearSolver SUNLinSol_sparse_custom(N_Vector y, SUNMatrix A, int reactor_type,
+		int nsubsys, int subsys_size, int subsys_nnz);
+
+SUNLinearSolver_Type SUNLinSolGetType_Sparse_custom(SUNLinearSolver S); 
+
+int SUNLinSolSolve_Sparse_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
+		N_Vector b, realtype tol);
 
 
