@@ -32,7 +32,7 @@
 
 /**********************************/
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init(const int* reactor_type, const int* Ncells, bool implicitflag,bool use_erkode,double relative_tol,double absolute_tol) {
+int reactor_init(const int* reactor_type, const int* Ncells, int implicitflag,int use_erkode,double relative_tol,double absolute_tol) {
         /* return Flag  */
 	int flag;
 	/* ARKODE initial time - 0 */
@@ -52,11 +52,11 @@ int reactor_init(const int* reactor_type, const int* Ncells, bool implicitflag,b
 
 	/* Definition of main vector */
 	y = N_VNew_Serial(neq_tot);
-	if (check_flag((void *)y, "N_VNew_Serial", 0)) return(1);
+        if (check_flag((void *)y, "N_VNew_Serial", 0)) return(1);
 
 
         //Just a sanity check
-        if (implicitflag and use_erkode) 
+        if (implicitflag==1 && use_erkode==1) 
         {
             amrex::Abort("ERK ODE is for explicit updates, cannot do implict");
 	}
@@ -64,13 +64,13 @@ int reactor_init(const int* reactor_type, const int* Ncells, bool implicitflag,b
 	/* Create the solver memory and specify the
 	 * RHS function */
 	time = 0.0e+0;
-        if(implicitflag)
+        if(implicitflag==1)
         {
 	    arkode_mem = ARKStepCreate(NULL, cF_RHS, time, y);
         }
         else
         {
-            if(use_erkode)
+            if(use_erkode==1)
             {
 	        arkode_mem = ERKStepCreate(cF_RHS, time, y);
             }
@@ -96,7 +96,7 @@ int reactor_init(const int* reactor_type, const int* Ncells, bool implicitflag,b
 	}
 
 	/* Set the pointer to user-defined data */
-	if(use_erkode)
+	if(use_erkode==1)
         {
             flag = ERKStepSetUserData(arkode_mem, data); 
         }
@@ -109,7 +109,7 @@ int reactor_init(const int* reactor_type, const int* Ncells, bool implicitflag,b
 	/* Definition of tolerances */
 	reltol = relative_tol;
 	atol   = absolute_tol;
-        if(use_erkode)
+        if(use_erkode==1)
         {
 	    flag = ERKStepSStolerances(arkode_mem, reltol, atol); 
         }
@@ -119,7 +119,7 @@ int reactor_init(const int* reactor_type, const int* Ncells, bool implicitflag,b
         }
 	if (check_flag(&flag, "ARKStepSStolerances", 1)) return 1;
 
-        if(implicitflag){
+        if(implicitflag==1){
 	    if (data->isolve_type == dense_solve) {
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
@@ -568,7 +568,7 @@ int check_flag(void *flagvalue, const char *funcname, int opt)
 
 
 /* Alloc Data for ARKODE */
-UserData AllocUserData(int reactor_type, int num_cells,bool implicitflag,bool use_erkode)
+UserData AllocUserData(int reactor_type, int num_cells,int implicitflag,int use_erkode)
 {
     printf("   Allocating data\n");
 
@@ -595,11 +595,16 @@ UserData AllocUserData(int reactor_type, int num_cells,bool implicitflag,bool us
 
     (data_wk->reactor_arkode_initialized) = false;
 
-    (data_wk->implicitflag) = implicitflag;
-
-    (data_wk->use_erkode) = use_erkode;
-
-
+    (data_wk->implicitflag) = false;
+    (data_wk->use_erkode) = false;
+    if(implicitflag==1)
+    {
+        (data_wk->implicitflag) = true;
+    }
+    if(use_erkode==1)
+    {
+        (data_wk->use_erkode) = true;
+    }
 
     return(data_wk);
 }
