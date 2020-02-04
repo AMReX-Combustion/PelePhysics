@@ -73,6 +73,7 @@ int reactor_init(const int* reactor_type, const int* Ncells, bool implicitflag,b
             if(use_erkode)
             {
 	        arkode_mem = ERKStepCreate(cF_RHS, time, y);
+            }
             else
             {
 	        arkode_mem = ARKStepCreate(cF_RHS, NULL, time, y);
@@ -254,7 +255,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
         {
             if(data->use_erkode)
             {
-	        ARKStepReInit(arkode_mem, cF_RHS, time_init, y);
+	        ERKStepReInit(arkode_mem, cF_RHS, time_init, y);
             }
             else
             {
@@ -308,11 +309,11 @@ int react(realtype *rY_in, realtype *rY_src_in,
         long int nfe, nfi;
         if(data->use_erkode)
         {
-            flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
+            flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
         }
         else
         {
-            flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
+            flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
         }
 	return nfi;
 }
@@ -482,7 +483,7 @@ void PrintFinalStats(void *arkode_mem, realtype Temp)
   long int nst, nst_a, nfe, nfi, nsetups, nje, nfeLS, nni, ncfn, netf;
   int flag;
 
-  if(use_erkode)
+  if(data->use_erkode)
   {
       flag = ERKStepGetNumSteps(arkode_mem, &nst);
       check_flag(&flag, "ERKStepGetNumSteps", 1);
@@ -567,7 +568,7 @@ int check_flag(void *flagvalue, const char *funcname, int opt)
 
 
 /* Alloc Data for ARKODE */
-UserData AllocUserData(int reactor_type, int num_cells,bool implicitflag)
+UserData AllocUserData(int reactor_type, int num_cells,bool implicitflag,bool use_erkode)
 {
     printf("   Allocating data\n");
 
