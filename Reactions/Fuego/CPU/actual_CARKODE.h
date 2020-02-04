@@ -4,6 +4,7 @@
 #include <chrono>
 
 #include <arkode/arkode_arkstep.h>
+#include <arkode/arkode_erkstep.h>
 
 #include <nvector/nvector_serial.h>    /* access to serial N_Vector            */
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
@@ -19,6 +20,8 @@
 typedef struct {
       /* Checks */
       bool reactor_arkode_initialized;
+      bool implicitflag;
+      bool use_erkode;
       /* Base items */
       int ncells;
       int iverbose;
@@ -39,7 +42,8 @@ int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 /* Functions Called by the Program */
 extern "C"
 {
-    int reactor_init(const int* cvode_iE, const int* Ncells);
+    int reactor_init(const int* cvode_iE, const int* Ncells,bool implicitflag=true,
+            bool use_erkode=false,double relative_tol=1e-10,double absolute_tol=1e-10);
 
     int react(realtype *rY_in, realtype *rY_src_in, 
 		realtype *rX_in, realtype *rX_src_in, 
@@ -55,7 +59,7 @@ int check_flag(void *flagvalue, const char *funcname, int opt);
 
 void PrintFinalStats(void *arkodeMem, realtype Temp);
 
-UserData AllocUserData(int iE, int num_cells);
+UserData AllocUserData(int iE, int num_cells,bool implicitflag,bool use_erkode);
 
 void FreeUserData(UserData data);
 
