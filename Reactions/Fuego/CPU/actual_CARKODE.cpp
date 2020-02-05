@@ -306,16 +306,18 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	}
 
 	/* Get estimate of how hard the integration process was */
-        long int nfe, nfi;
+        long int nfe, nfi, nf;
         if(data->use_erkode)
         {
             flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
+            nf=nfe;
         }
         else
         {
             flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
+            nf=nfi;
         }
-	return nfi;
+	return nf;
 }
 
 
