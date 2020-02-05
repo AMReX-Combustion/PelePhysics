@@ -18,7 +18,7 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
     LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nveccuda -lsundials_sunlinsolcusolversp
     LIBRARIES += -lcusolver -lcusparse
   endif
-  LIBRARIES += -Wl,-rpath,${CVODE_LIB_DIR}
+  LIBRARIES += -Wl,-rpath=${CVODE_LIB_DIR}
   ifeq ($(USE_KLU_PP), TRUE)
     SUITESPARSE_DIR   ?= $(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse
     DEFINES   += -DUSE_KLU_PP
