@@ -15,7 +15,11 @@ using namespace amrex;
 #include <main_F.H>
 #include <PlotFileFromMF.H>
 #ifdef USE_SUNDIALS_PP
-#include <actual_Creactor.h>
+#if USE_ARKODE_PP
+    #include <actual_CARKODE.h>
+#else
+    #include <actual_Creactor.h>
+#endif
 #else
 #include <actual_reactor.H> 
 #endif
@@ -51,7 +55,15 @@ main (int   argc,
     int oxy_idx = -1;
     int bath_idx = -1;
     int ndt = 1; 
-    Real dt = 1.e-5; 
+    Real dt = 1.e-5;
+
+#if USE_ARKODE_PP 
+    //ARK parameters
+    Real ark_rtol=1e-9;
+    Real ark_atol=1e-9;
+    int implicitflag=1;
+    int use_erkode=0;
+#endif
 
     {
       /* ParmParse from the inputs file */
@@ -78,6 +90,13 @@ main (int   argc,
       // Get name of fuel 
       pp.get("fuel_name", fuel_name);
 
+#if USE_ARKODE_PP 
+      pp.query("implicitflag",implicitflag);
+      pp.query("use_erkode",use_erkode);
+      pp.query("ark_rtol",ark_rtol);
+      pp.query("ark_atol",ark_atol);
+#endif
+
     }
 
     //if (fuel_name != FUEL_NAME) {
@@ -90,7 +109,11 @@ main (int   argc,
     //}
 
     amrex::Print() << "Integration method: ";
-        amrex::Print() << "BDF (stiff)";
+#if USE_ARKODE_PP 
+    amrex::Print() << "ARK ODE";
+#else
+    amrex::Print() << "BDF (stiff)";
+#endif
     amrex::Print() << std::endl;
 
     amrex::Print() << "Integration iteration method: ";
@@ -127,7 +150,11 @@ main (int   argc,
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
+#if USE_ARKODE_PP
+    reactor_init(&cvode_iE, &cvode_ncells,implicitflag,use_erkode,ark_rtol,ark_atol);
+#else
     reactor_init(&cvode_iE, &cvode_ncells);
+#endif
 
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);

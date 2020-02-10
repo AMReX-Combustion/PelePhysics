@@ -1,5 +1,0 @@
-f90EXE_sources += probdata.f90
-F90EXE_sources += rk_params.F90
-F90EXE_sources += explicit_rk.F90
-F90EXE_sources += main_nd.F90
-CEXE_sources += main.cpp
