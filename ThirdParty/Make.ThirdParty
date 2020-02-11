@@ -18,7 +18,9 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
     LIBRARIES += -L$(CVODE_LIB_DIR) -lsundials_nveccuda -lsundials_sunlinsolcusolversp
     LIBRARIES += -lcusolver -lcusparse
   endif
-  LIBRARIES += -Wl,-rpath=${CVODE_LIB_DIR}
+  ifneq ($(shell uname),Darwin)
+    LIBRARIES += -Wl,-rpath=${CVODE_LIB_DIR}
+  endif
   ifeq ($(USE_KLU_PP), TRUE)
     SUITESPARSE_DIR   ?= $(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse
     DEFINES   += -DUSE_KLU_PP
@@ -30,6 +32,8 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
     LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lbtf
     LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lsuitesparseconfig
     INCLUDE_LOCATIONS+=${SUITESPARSE_DIR}/include
-    LIBRARIES += -Wl,-rpath=${SUITESPARSE_DIR}/lib
+    ifneq ($(shell uname),Darwin)
+      LIBRARIES += -Wl,-rpath=${SUITESPARSE_DIR}/lib
+    endif
   endif
 endif
