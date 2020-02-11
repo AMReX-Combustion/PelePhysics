@@ -1,0 +1,41 @@
+#include <math.h>
+#include <iostream>
+#include <cstring>
+#include <chrono>
+#include <AMReX_Print.H>
+#include <Fuego_EOS.H>
+/**********************************/
+
+typedef struct {
+    /* Checks */
+    /* Base items */
+    int ncells;
+    int iverbose;
+    int ireactor_type;
+    double errtol;
+    int nsubsteps_guess;
+    int nsubsteps_min;
+    int nsubsteps_max;
+} *UserData;
+
+/**********************************/
+/* Functions Called by the Program */
+extern "C"
+{
+    int reactor_init_rk64(const int* reactor_type, const int* Ncells,double rk64_errtol=1e-16,
+        int rk64_nsubsteps_guess=10,int rk64_nsusbteps_min=2,int rk64_nsubsteps_max=500);
+
+    int react_rk64(double *rY_in, double *rY_src_in, 
+            double *rX_in, double *rX_src_in, 
+            double *dt_react, double *time);
+
+    void reactor_close_rk64();
+}
+
+void FreeUserData(UserData data);
+
+void fKernelSpec(double *dt, double *yvec_d, double *ydot_d,
+        void *user_data);
+
+UserData AllocUserData(int reactor_type, int num_cells,double rk64_errtol,
+        int rk64_nsubsteps_guess,int rk64_nsubsteps_min,int rk64_nsubsteps_max);
