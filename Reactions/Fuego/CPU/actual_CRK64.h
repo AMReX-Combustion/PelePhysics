@@ -22,14 +22,14 @@ typedef struct {
 /* Functions Called by the Program */
 extern "C"
 {
-    int reactor_init_rk64(const int* reactor_type, const int* Ncells,double rk64_errtol=1e-16,
-        int rk64_nsubsteps_guess=10,int rk64_nsusbteps_min=2,int rk64_nsubsteps_max=500);
+    int reactor_init(const int* reactor_type, const int* Ncells,double rk64_errtol=1e-16,
+        int rk64_nsubsteps_guess=10,int rk64_nsusbteps_min=5,int rk64_nsubsteps_max=500);
 
-    int react_rk64(double *rY_in, double *rY_src_in, 
+    int react(double *rY_in, double *rY_src_in, 
             double *rX_in, double *rX_src_in, 
             double *dt_react, double *time);
 
-    void reactor_close_rk64();
+    void reactor_close();
 }
 
 void FreeUserData(UserData data);

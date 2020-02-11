@@ -9,7 +9,7 @@ else
             Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
             CEXE_headers +=actual_CARKODE.h  
             CEXE_sources +=actual_CARKODE.cpp
-        ifeq($(USE_RK64_EXPL), TRUE)
+        else ifeq ($(USE_RK64_PP), TRUE)
             Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
             CEXE_headers +=actual_CRK64.h  
             CEXE_sources +=actual_CRK64.cpp

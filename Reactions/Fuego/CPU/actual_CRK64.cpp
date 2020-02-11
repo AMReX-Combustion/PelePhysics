@@ -24,7 +24,7 @@ double *rYsrc       = NULL;
 
 /******************************************************************************************/
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init_rk64(const int* reactor_type, const int* Ncells,double rk64_errtol,
+int reactor_init(const int* reactor_type, const int* Ncells,double rk64_errtol,
         int rk64_nsubsteps_guess,int rk64_nsubsteps_min,int rk64_nsubsteps_max) {
 
 #ifdef _OPENMP
@@ -71,7 +71,7 @@ UserData AllocUserData(int reactor_type, int num_cells,double rk64_errtol,
 }
 /******************************************************************************************/
 /* Main call routine */
-int react_rk64(double *rY_in, double *rY_src_in, 
+int react(double *rY_in, double *rY_src_in, 
         double *rX_in, double *rX_src_in,
         double *dt_react, double *time)
 {
@@ -228,7 +228,8 @@ int react_rk64(double *rY_in, double *rY_src_in,
     if (data->iverbose > 3) 
     {
     #endif
-          amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << *dt_react << "\n";
+          amrex::Print() <<"END : time curr is "<< current_time << 
+              " and actual dt_react is " << *dt_react << "\n";
     }
 
     /* Pack data to return in main routine external */
@@ -321,7 +322,7 @@ void fKernelSpec(double *dt, double *yvec_d, double *ydot_d,
 }
 /******************************************************************************************/
 /* Free memory */
-void reactor_close_rk64()
+void reactor_close()
 {
 
     FreeUserData(data);

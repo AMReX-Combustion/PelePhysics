@@ -17,6 +17,8 @@ using namespace amrex;
 #ifdef USE_SUNDIALS_PP
 #if USE_ARKODE_PP
     #include <actual_CARKODE.h>
+#elif USE_RK64_PP
+    #include <actual_CRK64.h>
 #else
     #include <actual_Creactor.h>
 #endif
@@ -63,6 +65,10 @@ main (int   argc,
     Real ark_atol=1e-9;
     int implicitflag=1;
     int use_erkode=0;
+#endif
+
+#if USE_RK64_PP
+    Print()<<"using RK64\n";
 #endif
 
     {

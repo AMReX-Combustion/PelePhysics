@@ -28,12 +28,18 @@ USE_SUNDIALS_PP = TRUE
 
 USE_ARKODE_PP = FALSE
 
+USE_RK64_PP = FALSE
+
 ifeq ($(USE_ARKODE_PP), TRUE)
     DEFINES += -DUSE_ARKODE_PP
 endif
 
+ifeq ($(USE_RK64_PP), TRUE)
+    DEFINES += -DUSE_RK64_PP
+endif
+
 SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
-USE_KLU_PP = TRUE
+USE_KLU_PP = FALSE
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
