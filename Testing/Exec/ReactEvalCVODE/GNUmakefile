@@ -22,24 +22,20 @@ PELE_PHYSICS_HOME    := ../../..
 # this flag activates the subcycling mode in the D/Cvode routines
 DEFINES  += -DMOD_REACTOR
 
-# use CVODE
-CVODE_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
+#######################
+# ODE solver OPTIONS: DVODE / SUNDIALS / RK explicit
+#######################
+# Activates use of SUNDIALS -- CVODE (default) or ARKODE
+SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
 USE_SUNDIALS_PP = TRUE
-
+# use ARKODE
 USE_ARKODE_PP = FALSE
-
-USE_RK64_PP = FALSE
-
-ifeq ($(USE_ARKODE_PP), TRUE)
-    DEFINES += -DUSE_ARKODE_PP
-endif
-
-ifeq ($(USE_RK64_PP), TRUE)
-    DEFINES += -DUSE_RK64_PP
-endif
-
+# use KLU sparse features -- only useful if CVODE
 SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
 USE_KLU_PP = FALSE
+
+# Activates use of Hari explicit RK
+USE_RK64_PP = FALSE
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
