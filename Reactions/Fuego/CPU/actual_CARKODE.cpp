@@ -32,7 +32,8 @@
 
 /**********************************/
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init(const int* reactor_type, const int* Ncells, int implicitflag,int use_erkode,double relative_tol,double absolute_tol) {
+int reactor_init(const int* reactor_type, const int* Ncells,
+		double relative_tol,double absolute_tol) {
         /* return Flag  */
 	int flag;
 	/* ARKODE initial time - 0 */
@@ -54,36 +55,15 @@ int reactor_init(const int* reactor_type, const int* Ncells, int implicitflag,in
 	y = N_VNew_Serial(neq_tot);
         if (check_flag((void *)y, "N_VNew_Serial", 0)) return(1);
 
+        /* Does not work for more than 1 cell right now */
+	data = AllocUserData(*reactor_type, *Ncells);
+	if(check_flag((void *)data, "AllocUserData", 2)) return(1);
 
-        //Just a sanity check
-        if (implicitflag==1 && use_erkode==1) 
+        /* Just a sanity check */
+        if ( (data->iimplicit_solve == 1) && (data->iuse_erkode == 1)) 
         {
             amrex::Abort("ERK ODE is for explicit updates, cannot do implict");
 	}
-
-	/* Create the solver memory and specify the
-	 * RHS function */
-	time = 0.0e+0;
-        if(implicitflag==1)
-        {
-	    arkode_mem = ARKStepCreate(NULL, cF_RHS, time, y);
-        }
-        else
-        {
-            if(use_erkode==1)
-            {
-	        arkode_mem = ERKStepCreate(cF_RHS, time, y);
-            }
-            else
-            {
-	        arkode_mem = ARKStepCreate(cF_RHS, NULL, time, y);
-            }
-        }
-	if (check_flag((void *)arkode_mem, "ARKStepCreate", 0)) return 1;
-
-        /* Does not work for more than 1 cell right now */
-	data = AllocUserData(*reactor_type, *Ncells,implicitflag,use_erkode);
-	if(check_flag((void *)data, "AllocUserData", 2)) return(1);
 
 	/* Nb of species and cells in mechanism */
 #ifdef _OPENMP
@@ -95,38 +75,45 @@ int reactor_init(const int* reactor_type, const int* Ncells, int implicitflag,in
 		amrex::Print() << "Ncells in one solve is " << data->ncells << "\n";
 	}
 
-	/* Set the pointer to user-defined data */
-	if(use_erkode==1)
-        {
-            flag = ERKStepSetUserData(arkode_mem, data); 
+	/* Create the solver memory, specify RHS function 
+	 * and set the pointer to user-defined data*/
+	time = 0.0e+0;
+        if (data->iimplicit_solve == 1) {
+	    arkode_mem = ARKStepCreate(NULL, cF_RHS, time, y);
+	    if (check_flag((void *)arkode_mem, "ARKStepCreate", 0)) return 1;
+	    flag = ARKStepSetUserData(arkode_mem, data);
+	    if (check_flag(&flag, "ARKStepSetUserData", 1)) return 1;
+        } else {
+            if (data->iuse_erkode == 1) {
+	        arkode_mem = ERKStepCreate(cF_RHS, time, y);
+		if (check_flag((void *)arkode_mem, "ERKStepCreate", 0)) return 1;
+		flag = ERKStepSetUserData(arkode_mem, data);
+		if (check_flag(&flag, "ERKStepSetUserData", 1)) return 1;
+            } else {
+	        arkode_mem = ARKStepCreate(cF_RHS, NULL, time, y);
+		if (check_flag((void *)arkode_mem, "ARKStepCreate", 0)) return 1;
+		flag = ARKStepSetUserData(arkode_mem, data);
+		if (check_flag(&flag, "ARKStepSetUserData", 1)) return 1;
+            }
         }
-        else
-        {
-            flag = ARKStepSetUserData(arkode_mem, data); 
-        }
-	if (check_flag(&flag, "ARKStepSetUserData", 1)) return 1;
 	
 	/* Definition of tolerances */
 	reltol = relative_tol;
 	atol   = absolute_tol;
-        if(use_erkode==1)
-        {
+        if (data->iuse_erkode == 1) {
 	    flag = ERKStepSStolerances(arkode_mem, reltol, atol); 
-        }
-        else
-        {
+        } else {
 	    flag = ARKStepSStolerances(arkode_mem, reltol, atol); 
         }
 	if (check_flag(&flag, "ARKStepSStolerances", 1)) return 1;
 
-        if(implicitflag==1){
-	    if (data->isolve_type == dense_solve) {
+        if(data->iimplicit_solve == 1){
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
             if (data->iverbose > 0) {
 #endif
-	    	amrex::Print() << "\n--> Using a Direct Dense Solver\n";    
+	    	amrex::Print() << "\n--> Using the ARKStep implicit solver (RK solver with Newton solve and Dense Direct Linear solve ) \n";    
 	    }
 
             /* Create dense SUNMatrix for use in linear solves */
@@ -151,34 +138,39 @@ int reactor_init(const int* reactor_type, const int* Ncells, int implicitflag,in
 	    flag = ARKStepSetMaxNonlinIters(arkode_mem, 100); 
 	    if (check_flag(&flag, "ARKStepSetMaxNonlinIters", 1)) return 1;
 
-
-	} else {
-            if (data->iverbose > 0) {
-                amrex::Abort("Linear solvers availables are: Direct Dense (1)");
-	    }
-	}
-
-	if (data->ianalytical_jacobian == 0) {
+	    if (data->ianalytical_jacobian == 0) {
 #ifdef _OPENMP
-            if ((data->iverbose > 0) && (omp_thread == 0)) {
+                if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
-            if (data->iverbose > 0) {
+                if (data->iverbose > 0) {
 #endif
 		    amrex::Print() << "    Without Analytical J/Preconditioner\n";
+	        }
+	    } else {
+#ifdef _OPENMP
+                if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+                if (data->iverbose > 0) {
+#endif
+                    amrex::Print() << "    With Analytical J\n";
+	        }
+	        /* Set the user-supplied Jacobian routine Jac */
+	        flag = ARKStepSetJacFn(arkode_mem, cJac);                 /* Set Jacobian routine */
+	        if (check_flag(&flag, "ARKStepSetJacFn", 1)) return 1;
 	    }
-	} else {
+        } else {
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
             if (data->iverbose > 0) {
 #endif
-                amrex::Print() << "    With Analytical J\n";
+		if (data->iuse_erkode == 1) {
+	    	    amrex::Print() << "\n--> Using the ERKStep explicit solver (RK solver) \n";    
+		} else {
+	    	    amrex::Print() << "\n--> Using the ARKStep explicit solver (RK solver) \n";    
+		}
 	    }
-	    /* Set the user-supplied Jacobian routine Jac */
-	    flag = ARKStepSetJacFn(arkode_mem, cJac);                 /* Set Jacobian routine */
-	    if (check_flag(&flag, "ARKStepSetJacFn", 1)) return 1;
 	}
-    }
 
 	/* Define vectors to be used later in creact */
 	rhoX_init   = (double *) malloc(data->ncells*sizeof(double));
@@ -246,33 +238,25 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	std::memcpy(rhoX_init, rX_in, sizeof(realtype) * data->ncells);
 	std::memcpy(rhoXsrc_ext, rX_src_in, sizeof(realtype) * data->ncells);
 
-        if(data->implicitflag)
-        {
+        if (data->implicitflag == 1) {
             //set explicit rhs to null
 	    ARKStepReInit(arkode_mem, NULL, cF_RHS, time_init, y);
-        }
-        else
-        {
-            if(data->use_erkode)
-            {
+        } else {
+            if (data->iuse_erkode == 1) {
 	        ERKStepReInit(arkode_mem, cF_RHS, time_init, y);
-            }
-            else
-            {
+            } else {
                 //set implicit rhs to null
 	        ARKStepReInit(arkode_mem, cF_RHS, NULL, time_init, y);
             }
         }
        
-        if(data->use_erkode)
-        { 
+        if (data->iuse_erkode == 1) { 
 	    flag = ERKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
-        }
-        else
-        {
+	    if (check_flag(&flag, "ERKStepEvolve", 1)) return 1;
+        } else {
 	    flag = ARKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
+	    if (check_flag(&flag, "ARKStepEvolve", 1)) return 1;
         }
-	if (check_flag(&flag, "ARKStepEvolve", 1)) return 1;
 
 	/* Update dt_react with real time step taken ... */
 	*dt_react = dummy_time - time_init;
@@ -307,13 +291,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 	/* Get estimate of how hard the integration process was */
         long int nfe, nfi, nf;
-        if(data->use_erkode)
-        {
+        if (data->iuse_erkode == 1) {
             flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
             nf=nfe;
-        }
-        else
-        {
+        } else {
             flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
             nf=nfi;
         }
@@ -485,8 +466,7 @@ void PrintFinalStats(void *arkode_mem, realtype Temp)
   long int nst, nst_a, nfe, nfi, nsetups, nje, nfeLS, nni, ncfn, netf;
   int flag;
 
-  if(data->use_erkode)
-  {
+  if (data->iuse_erkode == 1) {
       flag = ERKStepGetNumSteps(arkode_mem, &nst);
       check_flag(&flag, "ERKStepGetNumSteps", 1);
       flag = ERKStepGetNumStepAttempts(arkode_mem, &nst_a);
@@ -497,9 +477,7 @@ void PrintFinalStats(void *arkode_mem, realtype Temp)
       printf("\nFinal Solver Statistics:\n");
       printf("   Internal solver steps = %li (attempted = %li)\n", nst, nst_a);
       printf("   Total RHS evals:  Fe = %li", nfe);
-  }
-  else
-  {
+  } else {
       flag = ARKStepGetNumSteps(arkode_mem, &nst);
       check_flag(&flag, "ARKStepGetNumSteps", 1);
       flag = ARKStepGetNumStepAttempts(arkode_mem, &nst_a);
@@ -570,7 +548,7 @@ int check_flag(void *flagvalue, const char *funcname, int opt)
 
 
 /* Alloc Data for ARKODE */
-UserData AllocUserData(int reactor_type, int num_cells,int implicitflag,int use_erkode)
+UserData AllocUserData(int reactor_type, int num_cells)
 {
     printf("   Allocating data\n");
 
@@ -586,9 +564,12 @@ UserData AllocUserData(int reactor_type, int num_cells,int implicitflag,int use_
 
     /* ParmParse from the inputs file */
     /* TODO change that in the future */ 
-    amrex::ParmParse pp("cvode");
+    amrex::ParmParse pp("ode");
     pp.query("analytical_jacobian",data_wk->ianalytical_jacobian);
-    pp.query("solve_type", data_wk->isolve_type);
+    amrex::ParmParse ppak("arkode");
+    ppak.query("implicit_solve", data_wk->iimplicit_solve);
+    ppak.query("use_erkode", data_wk->iuse_erkode);
+
     (data_wk->ireactor_type)      = reactor_type;
 
     (data_wk->ncells)                    = num_cells;
@@ -597,17 +578,6 @@ UserData AllocUserData(int reactor_type, int num_cells,int implicitflag,int use_
 
     (data_wk->reactor_arkode_initialized) = false;
 
-    (data_wk->implicitflag) = false;
-    (data_wk->use_erkode) = false;
-    if(implicitflag==1)
-    {
-        (data_wk->implicitflag) = true;
-    }
-    if(use_erkode==1)
-    {
-        (data_wk->use_erkode) = true;
-    }
-
     return(data_wk);
 }
 
@@ -615,21 +585,15 @@ UserData AllocUserData(int reactor_type, int num_cells,int implicitflag,int use_
 /* Free memory */
 void reactor_close(){
 
-    if(data->use_erkode)
-    {
-        ERKStepFree(&arkode_mem);    /* Free integrator memory */
-    }
-  else
-  {
+  if (data->iuse_erkode == 1) {
+      ERKStepFree(&arkode_mem);    /* Free integrator memory */
+  } else {
     ARKStepFree(&arkode_mem);    /* Free integrator memory */
-  }
-  if(data->implicitflag)
-  {
+    if (data->iimplicit_solve == 1) {
       SUNLinSolFree(LS);
-      if (data->isolve_type == 1) {
-          SUNMatDestroy(A);
-      }
+      SUNMatDestroy(A);
       SUNNonlinSolFree(NLS); 
+    }
   }
 
   N_VDestroy(y); 

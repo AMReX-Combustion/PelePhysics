@@ -20,14 +20,13 @@
 typedef struct {
       /* Checks */
       bool reactor_arkode_initialized;
-      bool implicitflag;
-      bool use_erkode;
       /* Base items */
       int ncells;
       int iverbose;
-      int isolve_type;
       int ianalytical_jacobian;
       int ireactor_type;
+      int iimplicit_solve;
+      int iuse_erkode;
 } *UserData;
 
 
@@ -42,8 +41,8 @@ int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 /* Functions Called by the Program */
 extern "C"
 {
-    int reactor_init(const int* cvode_iE, const int* Ncells,int implicitflag=1,
-            int use_erkode=0,double relative_tol=1e-10,double absolute_tol=1e-10);
+    int reactor_init(const int* cvode_iE, const int* Ncells,
+           double relative_tol=1e-10,double absolute_tol=1e-10);
 
     int react(realtype *rY_in, realtype *rY_src_in, 
 		realtype *rX_in, realtype *rX_src_in, 
@@ -59,7 +58,7 @@ int check_flag(void *flagvalue, const char *funcname, int opt);
 
 void PrintFinalStats(void *arkodeMem, realtype Temp);
 
-UserData AllocUserData(int iE, int num_cells,int implicitflag,int use_erkode);
+UserData AllocUserData(int iE, int num_cells);
 
 void FreeUserData(UserData data);
 
