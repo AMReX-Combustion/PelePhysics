@@ -8,23 +8,15 @@ DIM        = 2
 COMP	   = gcc
 FCOMP	   = gfortran
 
-USE_MPI    = FALSE
 USE_MPI    = TRUE
 USE_OMP    = FALSE
 
 FUEGO_GAS  = TRUE
 
+TINY_PROFILE = FALSE
+
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
-
-#######################
-# use CVODE PP version
-#CVODE_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
-#USE_SUNDIALS_PP = TRUE
-
-# use sparse features of CVODE
-#SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
-#USE_KLU_PP = TRUE
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
