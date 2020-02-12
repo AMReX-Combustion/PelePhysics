@@ -3,7 +3,7 @@ PROFILE    = FALSE
 
 DEBUG      = FALSE
 
-DIM        = 3
+DIM        = 2
 
 COMP	   = gcc
 FCOMP	   = gfortran
@@ -23,19 +23,26 @@ PELE_PHYSICS_HOME    := ../../..
 DEFINES  += -DMOD_REACTOR
 
 #######################
-# ODE solver OPTIONS: DVODE / SUNDIALS / RK explicit
+# ODE solver OPTIONS: DVODE (default) / SUNDIALS / RK explicit
 #######################
-# Activates use of SUNDIALS -- CVODE (default) or ARKODE
-SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
+# Activates use of SUNDIALS: CVODE (default) / ARKODE
 USE_SUNDIALS_PP = TRUE
-# use ARKODE
-USE_ARKODE_PP = FALSE
-# use KLU sparse features -- only useful if CVODE
-SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
-USE_KLU_PP = TRUE
-
-# Activates use of Hari explicit RK
-USE_RK64_PP = FALSE
+ifeq ($(USE_SUNDIALS_PP), TRUE)
+  # provide location of sundials lib if needed
+  SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
+  # use ARKODE: if FALSE then CVODE is used
+  USE_ARKODE_PP = FALSE
+  # use KLU sparse features -- only useful if CVODE is used
+  USE_KLU_PP = TRUE
+  ifeq ($(USE_KLU_PP), TRUE)
+    # provide location of KLU lib if needed
+    SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
+  endif
+else
+  # Activates use of Hari explicit RK
+  # will only work if USE_SUNDIALS_PP = FALSE
+  USE_RK64_PP = FALSE
+endif
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)

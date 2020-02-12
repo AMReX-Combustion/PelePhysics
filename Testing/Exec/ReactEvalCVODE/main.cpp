@@ -63,9 +63,11 @@ main (int   argc,
     int ode_iE     = -1;
     int ndt        = 1; 
     Real dt        = 1.e-5;
+#ifdef USE_ARKODE_PP 
     /* ARKODE parameters for now but should be for all solvers */
     Real rtol=1e-9;
     Real atol=1e-9;
+#endif
 
     {
       /* ParmParse from the inputs file */
@@ -155,8 +157,12 @@ main (int   argc,
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
+#ifdef USE_SUNDIALS_PP
 #ifdef USE_ARKODE_PP
     reactor_init(&ode_iE, &ode_ncells,rtol,atol);
+#else
+    reactor_init(&ode_iE, &ode_ncells);
+#endif
 #else
     reactor_init(&ode_iE, &ode_ncells);
 #endif
@@ -293,7 +299,7 @@ main (int   argc,
 			time = 0.0;
 			dt_incr =  dt/ndt;
 			for (int ii = 0; ii < ndt; ++ii) {
-#ifdef USE_SUNDIALS_PP
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
 	                    fc_tmp = react(tmp_vect, tmp_src_vect,
 		                tmp_vect_energy, tmp_src_vect_energy,
 		                &dt_incr, &time);
@@ -305,7 +311,7 @@ main (int   argc,
 		                &dt_incr, &time);
 #endif
 		            dt_incr =  dt/ndt;
-			    // printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+			    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 			}
 		        nc = 0;
 		        for (int l = 0; l < ode_ncells ; ++l){

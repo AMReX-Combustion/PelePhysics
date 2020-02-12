@@ -7,8 +7,6 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
   ifeq ($(USE_ARKODE_PP),TRUE)
       DEFINES += -DUSE_ARKODE_PP
       LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_arkode
-  else ifeq ($(USE_RK64_PP), TRUE)
-      DEFINES += -DUSE_RK64_PP
   else
       LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_cvode
   endif
@@ -39,4 +37,6 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
       LIBRARIES += -Wl,-rpath=${SUITESPARSE_DIR}/lib
     endif
   endif
+else ifeq ($(USE_RK64_PP), TRUE)
+      DEFINES += -DUSE_RK64_PP
 endif
