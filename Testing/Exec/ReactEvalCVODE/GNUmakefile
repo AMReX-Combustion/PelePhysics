@@ -32,7 +32,7 @@ USE_SUNDIALS_PP = TRUE
 USE_ARKODE_PP = FALSE
 # use KLU sparse features -- only useful if CVODE
 SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
-USE_KLU_PP = FALSE
+USE_KLU_PP = TRUE
 
 # Activates use of Hari explicit RK
 USE_RK64_PP = FALSE

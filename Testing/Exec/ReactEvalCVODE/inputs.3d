@@ -1,7 +1,7 @@
 #ODE solver options
 # REACTOR mode
-ode.dt = 1.e-05
-ode.ndt = 10
+ode.dt = 1.e-04
+ode.ndt = 500
 #use this ndt for ARK ODE
 #ode.ndt=500
 # Reactor formalism: 1=full e, 2=full h
@@ -13,14 +13,14 @@ ode.atol = 1e-9
 ode.analytical_jacobian = 1
 #CVODE SPECIFICS
 # Choose between sparse (5) dense (1/101) iterative (99) solver
-cvode.solve_type = 5
+cvode.solve_type = 1
 #ARKODE SPECIFICS
 # Choose if using implicit or explicit solve
 #arkode.implicit
 
 #OTHER
 # Max size of problem
-max_grid_size = 2
+max_grid_size = 1
 # Choose name of output pltfile
 amr.plot_file       = plt
 # Fuel species 
