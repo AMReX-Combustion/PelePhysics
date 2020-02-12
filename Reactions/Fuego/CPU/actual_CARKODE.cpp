@@ -238,7 +238,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	std::memcpy(rhoX_init, rX_in, sizeof(realtype) * data->ncells);
 	std::memcpy(rhoXsrc_ext, rX_src_in, sizeof(realtype) * data->ncells);
 
-        if (data->implicitflag == 1) {
+        if (data->iimplicit_solve == 1) {
             //set explicit rhs to null
 	    ARKStepReInit(arkode_mem, NULL, cF_RHS, time_init, y);
         } else {
