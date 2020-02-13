@@ -21,7 +21,6 @@ double *rYsrc       = NULL;
 #pragma omp threadprivate(rhoX_init,rhoXsrc_ext,rYsrc)
 #endif
 
-
 /******************************************************************************************/
 /* Initialization routine, called once at the begining of the problem */
 int reactor_init(const int* reactor_type, const int* Ncells,double rk64_errtol,
@@ -46,8 +45,6 @@ int reactor_init(const int* reactor_type, const int* Ncells,double rk64_errtol,
 UserData AllocUserData(int reactor_type, int num_cells,double rk64_errtol,
         int rk64_nsubsteps_guess,int rk64_nsubsteps_min,int rk64_nsubsteps_max)
 {
-    printf("   Allocating data\n");
-
     /* Make local copies of pointers in user_data */
     UserData data_wk;
     data_wk = (UserData) malloc(sizeof *data_wk);

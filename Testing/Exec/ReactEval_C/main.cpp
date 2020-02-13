@@ -117,7 +117,7 @@ main (int   argc,
 #endif
 #else
 #ifdef USE_RK64_PP
-    amrex::Print()<<"Using custom RK64 (explicit solver)\n";
+    amrex::Print()<<"Using custom RK64 (explicit solver)";
 #else
     amrex::Print()<<"Using DVODE (implicit solver)";
 #endif

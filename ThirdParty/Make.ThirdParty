@@ -37,6 +37,4 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
       LIBRARIES += -Wl,-rpath=${SUITESPARSE_DIR}/lib
     endif
   endif
-else ifeq ($(USE_RK64_PP), TRUE)
-      DEFINES += -DUSE_RK64_PP
 endif
