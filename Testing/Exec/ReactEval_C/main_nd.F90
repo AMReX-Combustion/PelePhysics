@@ -137,7 +137,7 @@ contains
              rhoY_src(i,j,k,1:nspecies) = 0.0d0
              if (iE_main == 1) then
                  ! all in e
-#ifdef USE_SUNDIALS_PP
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
                  rhoE(i,j,k,1) = eos_state % e * eos_state % rho
 #else
                  rhoE(i,j,k,1) = eos_state % e
