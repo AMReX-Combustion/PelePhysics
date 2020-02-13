@@ -3,7 +3,7 @@ PROFILE    = FALSE
 
 DEBUG      = FALSE
 
-DIM        = 2
+DIM        = 3
 
 COMP	   = gcc
 FCOMP	   = gfortran
@@ -33,7 +33,7 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
   # use ARKODE: if FALSE then CVODE is used
   USE_ARKODE_PP = FALSE
   # use KLU sparse features -- only useful if CVODE is used
-  USE_KLU_PP = TRUE
+  USE_KLU_PP = FALSE
   ifeq ($(USE_KLU_PP), TRUE)
     # provide location of KLU lib if needed
     SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
@@ -48,8 +48,6 @@ endif
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   Chemistry_Model = drm19
-  #Chemistry_Model = dodecane_wang
-  #Chemistry_Model = LiDryer
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else
