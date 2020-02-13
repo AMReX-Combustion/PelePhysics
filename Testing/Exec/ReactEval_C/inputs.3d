@@ -1,0 +1,26 @@
+#ODE solver options
+# REACTOR mode
+ode.dt = 1.e-04
+ode.ndt = 500
+# Reactor formalism: 1=full e, 2=full h
+ode.reactor_type  = 1
+# Tolerances for ODE solve
+ode.rtol = 1e-9
+ode.atol = 1e-9
+# Select ARK/CV-ODE Jacobian eval: 0=FD 1=AJ
+ode.analytical_jacobian = 1
+#CVODE SPECIFICS
+# Choose between sparse (5) dense (1/101) iterative (99) solver
+cvode.solve_type = 1
+#ARKODE SPECIFICS
+# Choose if using implicit or explicit solve -- if expl no AJ needed
+#arkode.implicit_solve = 1
+#arkode.use_erkode = 0
+
+#OTHER
+# Max size of problem
+max_grid_size = 1
+# Choose name of output pltfile
+amr.plot_file       = plt
+# Fuel species 
+fuel_name = CH4

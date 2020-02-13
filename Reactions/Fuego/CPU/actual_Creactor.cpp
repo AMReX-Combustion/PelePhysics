@@ -1501,9 +1501,10 @@ UserData AllocUserData(int reactor_type, int num_cells)
 
   /* ParmParse from the inputs file */
   /* TODO change that in the future */ 
-  amrex::ParmParse pp("cvode");
+  amrex::ParmParse pp("ode");
   pp.query("analytical_jacobian",data_wk->ianalytical_jacobian);
-  pp.query("solve_type", data_wk->isolve_type);
+  amrex::ParmParse ppcv("cvode");
+  ppcv.query("solve_type", data_wk->isolve_type);
   (data_wk->ireactor_type)      = reactor_type;
 
   (data_wk->ncells)                    = num_cells;

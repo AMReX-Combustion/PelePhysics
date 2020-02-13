@@ -14,10 +14,20 @@ using namespace amrex;
 #include <Transport_F.H>
 #include <main_F.H>
 #include <PlotFileFromMF.H>
-#ifdef USE_SUNDIALS_PP
-#include <actual_Creactor.h>
+
+#if defined(USE_SUNDIALS_PP)
+// ARKODE or CVODE
+  #ifdef USE_ARKODE_PP
+    #include <actual_CARKODE.h>
+  #else
+    #include <actual_Creactor.h>
+  #endif
+#elif defined(USE_RK64_PP)
+// Expl RK solver
+  #include <actual_CRK64.h>
 #else
-#include <actual_reactor.H> 
+// DVODE
+  #include <actual_reactor.H> 
 #endif
 
 /**********************************/
@@ -44,14 +54,20 @@ main (int   argc,
     std::string probin_file="probin";
     std::string fuel_name="none";
     std::string pltfile("plt");
-    /* CVODE inputs */
-    int cvode_ncells = 1;
-    int cvode_iE = -1;
-    int fuel_idx = -1;
-    int oxy_idx = -1;
-    int bath_idx = -1;
-    int ndt = 1; 
-    Real dt = 1.e-5; 
+    /* Mixture info */
+    int fuel_idx   = -1;
+    int oxy_idx    = -1;
+    int bath_idx   = -1;
+    /* ODE inputs */
+    int ode_ncells = 1;
+    int ode_iE     = -1;
+    int ndt        = 1; 
+    Real dt        = 1.e-5;
+#ifdef USE_ARKODE_PP 
+    /* ARKODE parameters for now but should be for all solvers */
+    Real rtol=1e-9;
+    Real atol=1e-9;
+#endif
 
     {
       /* ParmParse from the inputs file */
@@ -63,44 +79,58 @@ main (int   argc,
       // domain size
       pp.query("max_grid_size",max_grid_size);
 
+      // Get name of fuel
+      pp.get("fuel_name", fuel_name);
+    }
+
+    {
+      /* ParmParse from the inputs file */
+      ParmParse ppode("ode");
+
       // final time
-      pp.query("dt",dt);
+      ppode.query("dt",dt);
 
       // time stepping
-      pp.query("ndt",ndt); 
+      ppode.query("ndt",ndt); 
 
-      pp.query("reactor_type",cvode_iE);
-      // Select CVODE type of energy employed.
+      ppode.query("reactor_type",ode_iE);
+      /* Select ODE type of energy employed */
       //1 for UV, 2 for HP
       //   1 = Internal energy
       //   anything else = enthalpy (PeleLM restart)
-         
-      // Get name of fuel 
-      pp.get("fuel_name", fuel_name);
+
+#ifdef USE_ARKODE_PP 
+      /* Additional ARKODE queries */
+      ppode.query("rtol",rtol);
+      ppode.query("atol",atol);
+#endif
 
     }
 
-    //if (fuel_name != FUEL_NAME) {
-    //    amrex::Print() << fuel_name << "!=" <<FUEL_NAME << std::endl;
-    //    amrex::Abort("fuel_name is inconsistent with chosen mechanism");
-    //} else {
-        amrex::Print() << "Fuel: ";
-            amrex::Print() << fuel_name << ", Oxy: O2";
-        amrex::Print() << std::endl;
-    //}
-
-    amrex::Print() << "Integration method: ";
-        amrex::Print() << "BDF (stiff)";
-    amrex::Print() << std::endl;
-
-    amrex::Print() << "Integration iteration method: ";
-        amrex::Print() << "Newton";
+    /* PRINT ODE INFO */
+    amrex::Print() << "ODE solver: ";
+#ifdef USE_SUNDIALS_PP
+#ifdef USE_ARKODE_PP 
+    amrex::Print() << "Using ARKODE (impl/expl solver)";
+#else
+    amrex::Print() << "Using CVODE (implicit solver)";
+#endif
+#else
+#ifdef USE_RK64_PP
+    amrex::Print()<<"Using custom RK64 (explicit solver)";
+#else
+    amrex::Print()<<"Using DVODE (implicit solver)";
+#endif
+#endif
     amrex::Print() << std::endl;
 
     amrex::Print() << "Type of reactor: ";
-        amrex::Print() << cvode_iE;
+        amrex::Print() << ode_iE;
     amrex::Print() << std::endl;
 
+    amrex::Print() << "Fuel: ";
+        amrex::Print() << fuel_name << ", Oxy: O2";
+    amrex::Print() << std::endl;
 
     /* take care of probin init to initialize problem */
     int probin_file_length = probin_file.length();
@@ -121,26 +151,31 @@ main (int   argc,
     }
     oxy_idx   = O2_ID;
     bath_idx  = N2_ID;
-    extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx,&cvode_iE);
+    extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx,&ode_iE);
 
     /* Initialize D/CVODE reactor */
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-    reactor_init(&cvode_iE, &cvode_ncells);
+#ifdef USE_SUNDIALS_PP
+#ifdef USE_ARKODE_PP
+    reactor_init(&ode_iE, &ode_ncells,rtol,atol);
+#else
+    reactor_init(&ode_iE, &ode_ncells);
+#endif
+#else
+    reactor_init(&ode_iE, &ode_ncells);
+#endif
 
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 2;
+	npts[i] = 1;
     }
-    npts[1] = 1024;
+    npts[1] = 1;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
         amrex::Print() << dt << " seconds";
-    amrex::Print() << std::endl;
-
-
     amrex::Print() << std::endl;
 
     Box domain(IntVect(D_DECL(0,0,0)),
@@ -215,7 +250,7 @@ main (int   argc,
 
         const Box& box = mfi.tilebox();
 	int ncells = box.numPts();
-	amrex::Print() << " Integrating " << ncells << " cells with a "<<cvode_ncells<< " cvode cell buffer \n";
+	amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
 
 	const auto len     = amrex::length(box);
 	const auto lo      = amrex::lbound(box);
@@ -228,19 +263,19 @@ main (int   argc,
 
         /* Pack the data */
 	// rhoY,T
-	double tmp_vect[cvode_ncells*(Ncomp+1)];
+	double tmp_vect[ode_ncells*(Ncomp+1)];
 	// rhoY_src_ext
-	double tmp_src_vect[cvode_ncells*(Ncomp)];
+	double tmp_src_vect[ode_ncells*(Ncomp)];
 	// rhoE/rhoH
-	double tmp_vect_energy[cvode_ncells];
-	double tmp_src_vect_energy[cvode_ncells];
+	double tmp_vect_energy[ode_ncells];
+	double tmp_src_vect_energy[ode_ncells];
 
-	int indx_i[cvode_ncells];
-	int indx_j[cvode_ncells];
-	int indx_k[cvode_ncells];
+	int indx_i[ode_ncells];
+	int indx_j[ode_ncells];
+	int indx_k[ode_ncells];
 	
 	int nc = 0;
-	int num_cell_cvode_int = 0;
+	int num_cell_ode_int = 0;
 	for         (int k = 0; k < len.z; ++k) {
 	    for         (int j = 0; j < len.y; ++j) {
 	        for         (int i = 0; i < len.x; ++i) {
@@ -259,12 +294,12 @@ main (int   argc,
 		    //
 		    nc = nc+1;
 		    //
-		    num_cell_cvode_int = num_cell_cvode_int + 1;
-		    if (nc == cvode_ncells) {
+		    num_cell_ode_int = num_cell_ode_int + 1;
+		    if (nc == ode_ncells) {
 			time = 0.0;
 			dt_incr =  dt/ndt;
 			for (int ii = 0; ii < ndt; ++ii) {
-#ifdef USE_SUNDIALS_PP
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
 	                    fc_tmp = react(tmp_vect, tmp_src_vect,
 		                tmp_vect_energy, tmp_src_vect_energy,
 		                &dt_incr, &time);
@@ -276,10 +311,10 @@ main (int   argc,
 		                &dt_incr, &time);
 #endif
 		            dt_incr =  dt/ndt;
-			    // printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+			    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 			}
 		        nc = 0;
-		        for (int l = 0; l < cvode_ncells ; ++l){
+		        for (int l = 0; l < ode_ncells ; ++l){
 		            for (int sp=0;sp<Ncomp; sp++){
 		                rhoY(indx_i[l],indx_j[l],indx_k[l],sp) = tmp_vect[l*(Ncomp+1) + sp];
 		            }
@@ -292,9 +327,9 @@ main (int   argc,
 	    }
 	}
 	if (nc != 0) {
-		printf(" WARNING !! Not enough cells (%d) to fill %d \n", nc, cvode_ncells);
+		printf(" WARNING !! Not enough cells (%d) to fill %d \n", nc, ode_ncells);
 	} else {
-		printf(" Integrated %d cells \n",num_cell_cvode_int);
+		printf(" Integrated %d cells \n",num_cell_ode_int);
 	}
     }
 

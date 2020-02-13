@@ -16,6 +16,8 @@ EXTERN_CORE ?=
 
 ifeq ($(USE_SUNDIALS_PP),TRUE) 
   include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
+else ifeq ($(USE_RK64_PP),TRUE)
+  DEFINES += -DUSE_RK64_PP
 endif
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs

@@ -32,7 +32,8 @@
 
 /**********************************/
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init(const int* reactor_type, const int* Ncells) {
+int reactor_init(const int* reactor_type, const int* Ncells,
+		double relative_tol,double absolute_tol) {
         /* return Flag  */
 	int flag;
 	/* ARKODE initial time - 0 */
@@ -52,17 +53,17 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 
 	/* Definition of main vector */
 	y = N_VNew_Serial(neq_tot);
-	if (check_flag((void *)y, "N_VNew_Serial", 0)) return(1);
-
-	/* Create the solver memory and specify the
-	 * RHS function */
-	time = 0.0e+0;
-	arkode_mem = ARKStepCreate(NULL, cF_RHS, time, y);
-	if (check_flag((void *)arkode_mem, "ARKStepCreate", 0)) return 1;
+        if (check_flag((void *)y, "N_VNew_Serial", 0)) return(1);
 
         /* Does not work for more than 1 cell right now */
 	data = AllocUserData(*reactor_type, *Ncells);
 	if(check_flag((void *)data, "AllocUserData", 2)) return(1);
+
+        /* Just a sanity check */
+        if ( (data->iimplicit_solve == 1) && (data->iuse_erkode == 1)) 
+        {
+            amrex::Abort("ERK ODE is for explicit updates, cannot do implict");
+	}
 
 	/* Nb of species and cells in mechanism */
 #ifdef _OPENMP
@@ -74,23 +75,45 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 		amrex::Print() << "Ncells in one solve is " << data->ncells << "\n";
 	}
 
-	/* Set the pointer to user-defined data */
-	flag = ARKStepSetUserData(arkode_mem, data); 
-	if (check_flag(&flag, "ARKStepSetUserData", 1)) return 1;
+	/* Create the solver memory, specify RHS function 
+	 * and set the pointer to user-defined data*/
+	time = 0.0e+0;
+        if (data->iimplicit_solve == 1) {
+	    arkode_mem = ARKStepCreate(NULL, cF_RHS, time, y);
+	    if (check_flag((void *)arkode_mem, "ARKStepCreate", 0)) return 1;
+	    flag = ARKStepSetUserData(arkode_mem, data);
+	    if (check_flag(&flag, "ARKStepSetUserData", 1)) return 1;
+        } else {
+            if (data->iuse_erkode == 1) {
+	        arkode_mem = ERKStepCreate(cF_RHS, time, y);
+		if (check_flag((void *)arkode_mem, "ERKStepCreate", 0)) return 1;
+		flag = ERKStepSetUserData(arkode_mem, data);
+		if (check_flag(&flag, "ERKStepSetUserData", 1)) return 1;
+            } else {
+	        arkode_mem = ARKStepCreate(cF_RHS, NULL, time, y);
+		if (check_flag((void *)arkode_mem, "ARKStepCreate", 0)) return 1;
+		flag = ARKStepSetUserData(arkode_mem, data);
+		if (check_flag(&flag, "ARKStepSetUserData", 1)) return 1;
+            }
+        }
 	
 	/* Definition of tolerances */
-	reltol = 1.0e-10;
-	atol   = 1.0e-10;
-	flag = ARKStepSStolerances(arkode_mem, reltol, atol); 
+	reltol = relative_tol;
+	atol   = absolute_tol;
+        if (data->iuse_erkode == 1) {
+	    flag = ERKStepSStolerances(arkode_mem, reltol, atol); 
+        } else {
+	    flag = ARKStepSStolerances(arkode_mem, reltol, atol); 
+        }
 	if (check_flag(&flag, "ARKStepSStolerances", 1)) return 1;
 
-	if (data->isolve_type == dense_solve) {
+        if(data->iimplicit_solve == 1){
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
             if (data->iverbose > 0) {
 #endif
-	    	amrex::Print() << "\n--> Using a Direct Dense Solver\n";    
+	    	amrex::Print() << "\n--> Using the ARKStep implicit solver (RK solver with Newton solve and Dense Direct Linear solve ) \n";    
 	    }
 
             /* Create dense SUNMatrix for use in linear solves */
@@ -115,32 +138,38 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 	    flag = ARKStepSetMaxNonlinIters(arkode_mem, 100); 
 	    if (check_flag(&flag, "ARKStepSetMaxNonlinIters", 1)) return 1;
 
-
-	} else {
-            if (data->iverbose > 0) {
-                amrex::Abort("Linear solvers availables are: Direct Dense (1)");
-	    }
-	}
-
-	if (data->ianalytical_jacobian == 0) {
+	    if (data->ianalytical_jacobian == 0) {
 #ifdef _OPENMP
-            if ((data->iverbose > 0) && (omp_thread == 0)) {
+                if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
-            if (data->iverbose > 0) {
+                if (data->iverbose > 0) {
 #endif
 		    amrex::Print() << "    Without Analytical J/Preconditioner\n";
+	        }
+	    } else {
+#ifdef _OPENMP
+                if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+                if (data->iverbose > 0) {
+#endif
+                    amrex::Print() << "    With Analytical J\n";
+	        }
+	        /* Set the user-supplied Jacobian routine Jac */
+	        flag = ARKStepSetJacFn(arkode_mem, cJac);                 /* Set Jacobian routine */
+	        if (check_flag(&flag, "ARKStepSetJacFn", 1)) return 1;
 	    }
-	} else {
+        } else {
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
             if (data->iverbose > 0) {
 #endif
-                amrex::Print() << "    With Analytical J\n";
+		if (data->iuse_erkode == 1) {
+	    	    amrex::Print() << "\n--> Using the ERKStep explicit solver (RK solver) \n";    
+		} else {
+	    	    amrex::Print() << "\n--> Using the ARKStep explicit solver (RK solver) \n";    
+		}
 	    }
-	    /* Set the user-supplied Jacobian routine Jac */
-	    flag = ARKStepSetJacFn(arkode_mem, cJac);                 /* Set Jacobian routine */
-	    if (check_flag(&flag, "ARKStepSetJacFn", 1)) return 1;
 	}
 
 	/* Define vectors to be used later in creact */
@@ -209,10 +238,25 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	std::memcpy(rhoX_init, rX_in, sizeof(realtype) * data->ncells);
 	std::memcpy(rhoXsrc_ext, rX_src_in, sizeof(realtype) * data->ncells);
 
-	ARKStepReInit(arkode_mem, NULL, cF_RHS, time_init, y);
-
-	flag = ARKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
-	if (check_flag(&flag, "ARKStepEvolve", 1)) return 1;
+        if (data->iimplicit_solve == 1) {
+            //set explicit rhs to null
+	    ARKStepReInit(arkode_mem, NULL, cF_RHS, time_init, y);
+        } else {
+            if (data->iuse_erkode == 1) {
+	        ERKStepReInit(arkode_mem, cF_RHS, time_init, y);
+            } else {
+                //set implicit rhs to null
+	        ARKStepReInit(arkode_mem, cF_RHS, NULL, time_init, y);
+            }
+        }
+       
+        if (data->iuse_erkode == 1) { 
+	    flag = ERKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
+	    if (check_flag(&flag, "ERKStepEvolve", 1)) return 1;
+        } else {
+	    flag = ARKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
+	    if (check_flag(&flag, "ARKStepEvolve", 1)) return 1;
+        }
 
 	/* Update dt_react with real time step taken ... */
 	*dt_react = dummy_time - time_init;
@@ -246,9 +290,15 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	}
 
 	/* Get estimate of how hard the integration process was */
-        long int nfe, nfi;
-        flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
-	return nfi;
+        long int nfe, nfi, nf;
+        if (data->iuse_erkode == 1) {
+            flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
+            nf=nfe;
+        } else {
+            flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
+            nf=nfi;
+        }
+	return nf;
 }
 
 
@@ -317,12 +367,12 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
       if (data_wk->ireactor_type == eint_rho){
           /* UV REACTOR */
           eos.eos_EY2T(massfrac, energy, temp);
-          eos.eos_TY2Cv(temp, massfrac, &cX);
+          eos.eos_TY2Cv(temp, massfrac, cX);
           eos.eos_T2EI(temp, Xi);
       } else {
           /* HP REACTOR */
           eos.eos_HY2T(massfrac, energy, temp);
-          eos.eos_TY2Cp(temp, massfrac, &cX);
+          eos.eos_TY2Cp(temp, massfrac, cX);
           eos.eos_T2HI(temp, Xi);
       }
       eos.eos_RTY2W(rho, temp, massfrac, cdot);
@@ -416,114 +466,135 @@ void PrintFinalStats(void *arkode_mem, realtype Temp)
   long int nst, nst_a, nfe, nfi, nsetups, nje, nfeLS, nni, ncfn, netf;
   int flag;
 
-  flag = ARKStepGetNumSteps(arkode_mem, &nst);
-  check_flag(&flag, "ARKStepGetNumSteps", 1);
-  flag = ARKStepGetNumStepAttempts(arkode_mem, &nst_a);
-  check_flag(&flag, "ARKStepGetNumStepAttempts", 1);
-  flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
-  check_flag(&flag, "ARKStepGetNumRhsEvals", 1);
-  flag = ARKStepGetNumLinSolvSetups(arkode_mem, &nsetups);
-  check_flag(&flag, "ARKStepGetNumLinSolvSetups", 1);
-  flag = ARKStepGetNumErrTestFails(arkode_mem, &netf);
-  check_flag(&flag, "ARKStepGetNumErrTestFails", 1);
-  flag = ARKStepGetNumNonlinSolvIters(arkode_mem, &nni);
-  check_flag(&flag, "ARKStepGetNumNonlinSolvIters", 1);
-  flag = ARKStepGetNumNonlinSolvConvFails(arkode_mem, &ncfn);
-  check_flag(&flag, "ARKStepGetNumNonlinSolvConvFails", 1);
-  flag = ARKStepGetNumJacEvals(arkode_mem, &nje);
-  check_flag(&flag, "ARKStepGetNumJacEvals", 1);
-  flag = ARKStepGetNumLinRhsEvals(arkode_mem, &nfeLS);
-  check_flag(&flag, "ARKStepGetNumLinRhsEvals", 1);
+  if (data->iuse_erkode == 1) {
+      flag = ERKStepGetNumSteps(arkode_mem, &nst);
+      check_flag(&flag, "ERKStepGetNumSteps", 1);
+      flag = ERKStepGetNumStepAttempts(arkode_mem, &nst_a);
+      check_flag(&flag, "ERKStepGetNumStepAttempts", 1);
+      flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
+      check_flag(&flag, "ERKStepGetNumRhsEvals", 1);
 
-  printf("\nFinal Solver Statistics:\n");
-  printf("   Internal solver steps = %li (attempted = %li)\n", nst, nst_a);
-  printf("   Total RHS evals:  Fe = %li,  Fi = %li\n", nfe, nfi);
-  printf("   Total linear solver setups = %li\n", nsetups);
-  printf("   Total RHS evals for setting up the linear system = %li\n", nfeLS);
-  printf("   Total number of Jacobian evaluations = %li\n", nje);
-  printf("   Total number of Newton iterations = %li\n", nni);
-  printf("   Total number of linear solver convergence failures = %li\n", ncfn);
-  printf("   Total number of error test failures = %li\n\n", netf);
+      printf("\nFinal Solver Statistics:\n");
+      printf("   Internal solver steps = %li (attempted = %li)\n", nst, nst_a);
+      printf("   Total RHS evals:  Fe = %li", nfe);
+  } else {
+      flag = ARKStepGetNumSteps(arkode_mem, &nst);
+      check_flag(&flag, "ARKStepGetNumSteps", 1);
+      flag = ARKStepGetNumStepAttempts(arkode_mem, &nst_a);
+      check_flag(&flag, "ARKStepGetNumStepAttempts", 1);
+      flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
+      check_flag(&flag, "ARKStepGetNumRhsEvals", 1);
+      flag = ARKStepGetNumLinSolvSetups(arkode_mem, &nsetups);
+      check_flag(&flag, "ARKStepGetNumLinSolvSetups", 1);
+      flag = ARKStepGetNumErrTestFails(arkode_mem, &netf);
+      check_flag(&flag, "ARKStepGetNumErrTestFails", 1);
+      flag = ARKStepGetNumNonlinSolvIters(arkode_mem, &nni);
+      check_flag(&flag, "ARKStepGetNumNonlinSolvIters", 1);
+      flag = ARKStepGetNumNonlinSolvConvFails(arkode_mem, &ncfn);
+      check_flag(&flag, "ARKStepGetNumNonlinSolvConvFails", 1);
+      flag = ARKStepGetNumJacEvals(arkode_mem, &nje);
+      check_flag(&flag, "ARKStepGetNumJacEvals", 1);
+      flag = ARKStepGetNumLinRhsEvals(arkode_mem, &nfeLS);
+      check_flag(&flag, "ARKStepGetNumLinRhsEvals", 1);
+
+      printf("\nFinal Solver Statistics:\n");
+      printf("   Internal solver steps = %li (attempted = %li)\n", nst, nst_a);
+      printf("   Total RHS evals:  Fe = %li,  Fi = %li\n", nfe, nfi);
+      printf("   Total linear solver setups = %li\n", nsetups);
+      printf("   Total RHS evals for setting up the linear system = %li\n", nfeLS);
+      printf("   Total number of Jacobian evaluations = %li\n", nje);
+      printf("   Total number of Newton iterations = %li\n", nni);
+      printf("   Total number of linear solver convergence failures = %li\n", ncfn);
+      printf("   Total number of error test failures = %li\n\n", netf);
+  }
+
 }
 
 
 /* Check function return value...
-     opt == 0 means SUNDIALS function allocates memory so check if
-              returned NULL pointer
-     opt == 1 means SUNDIALS function returns a flag so check if
-              flag >= 0
-     opt == 2 means function allocates memory so check if returned
-              NULL pointer */
+   opt == 0 means SUNDIALS function allocates memory so check if
+   returned NULL pointer
+   opt == 1 means SUNDIALS function returns a flag so check if
+   flag >= 0
+   opt == 2 means function allocates memory so check if returned
+   NULL pointer */
 
 int check_flag(void *flagvalue, const char *funcname, int opt)
 {
-  int *errflag;
+    int *errflag;
 
-  /* Check if SUNDIALS function returned NULL pointer - no memory allocated */
-  if (opt == 0 && flagvalue == NULL) {
-    fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
-            funcname);
-    return(1); }
+    /* Check if SUNDIALS function returned NULL pointer - no memory allocated */
+    if (opt == 0 && flagvalue == NULL) {
+        fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
+                funcname);
+        return(1); }
 
-  /* Check if flag < 0 */
-  else if (opt == 1) {
-    errflag = (int *) flagvalue;
-    if (*errflag < 0) {
-      fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n\n",
-              funcname, *errflag);
-      return(1); }}
+    /* Check if flag < 0 */
+    else if (opt == 1) {
+        errflag = (int *) flagvalue;
+        if (*errflag < 0) {
+            fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n\n",
+                    funcname, *errflag);
+            return(1); }}
 
-  /* Check if function returned NULL pointer - no memory allocated */
-  else if (opt == 2 && flagvalue == NULL) {
-    fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
-            funcname);
-    return(1); }
+    /* Check if function returned NULL pointer - no memory allocated */
+    else if (opt == 2 && flagvalue == NULL) {
+        fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
+                funcname);
+        return(1); }
 
-  return(0);
+    return(0);
 }
 
 
 /* Alloc Data for ARKODE */
 UserData AllocUserData(int reactor_type, int num_cells)
 {
-  printf("   Allocating data\n");
-  
-  /* Make local copies of pointers in user_data */
-  UserData data_wk;
-  data_wk = (UserData) malloc(sizeof *data_wk);
-#ifdef _OPENMP
-  int omp_thread;
+    printf("   Allocating data\n");
 
-  /* omp thread if applicable */
-  omp_thread = omp_get_thread_num(); 
+    /* Make local copies of pointers in user_data */
+    UserData data_wk;
+    data_wk = (UserData) malloc(sizeof *data_wk);
+#ifdef _OPENMP
+    int omp_thread;
+
+    /* omp thread if applicable */
+    omp_thread = omp_get_thread_num(); 
 #endif
 
-  /* ParmParse from the inputs file */
-  /* TODO change that in the future */ 
-  amrex::ParmParse pp("cvode");
-  pp.query("analytical_jacobian",data_wk->ianalytical_jacobian);
-  pp.query("solve_type", data_wk->isolve_type);
-  (data_wk->ireactor_type)      = reactor_type;
+    /* ParmParse from the inputs file */
+    /* TODO change that in the future */ 
+    amrex::ParmParse pp("ode");
+    pp.query("analytical_jacobian",data_wk->ianalytical_jacobian);
+    amrex::ParmParse ppak("arkode");
+    ppak.query("implicit_solve", data_wk->iimplicit_solve);
+    ppak.query("use_erkode", data_wk->iuse_erkode);
 
-  (data_wk->ncells)                    = num_cells;
+    (data_wk->ireactor_type)      = reactor_type;
 
-  (data_wk->iverbose)                  = 1;
+    (data_wk->ncells)                    = num_cells;
 
-  (data_wk->reactor_arkode_initialized) = false;
+    (data_wk->iverbose)                  = 1;
 
-  return(data_wk);
+    (data_wk->reactor_arkode_initialized) = false;
+
+    return(data_wk);
 }
 
 
 /* Free memory */
 void reactor_close(){
 
-  ARKStepFree(&arkode_mem);    /* Free integrator memory */
-  SUNLinSolFree(LS);
-  if (data->isolve_type == 1) {
-    SUNMatDestroy(A);
+  if (data->iuse_erkode == 1) {
+      ERKStepFree(&arkode_mem);    /* Free integrator memory */
+  } else {
+    ARKStepFree(&arkode_mem);    /* Free integrator memory */
+    if (data->iimplicit_solve == 1) {
+      SUNLinSolFree(LS);
+      SUNMatDestroy(A);
+      SUNNonlinSolFree(NLS); 
+    }
   }
-  SUNNonlinSolFree(NLS); 
 
   N_VDestroy(y); 
   FreeUserData(data);

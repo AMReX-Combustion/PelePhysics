@@ -69,7 +69,7 @@ The CVODE sources are distributed as compressed archives, with names following t
 
 1. Go into ``$PELE_PHYSICS_HOME/ThirdParty`` 
 2. Execute either ``get_sundials_v5dev1.sh`` or ``get_sundials_v5dev1_CUDA.sh`` depending on your application and machine
-3. Set the ``CVODE_LIB_DIR`` environment variable to point towards the location where all CVODE libraries have been generated. If you followed these guidelines, it should be ``$PELE_PHYSICS_HOME/ThirdParty/sundials/instdir/lib/`` 
+3. Set the ``SUNDIALS_LIB_DIR`` environment variable to point towards the location where all CVODE libraries have been generated. If you followed these guidelines, it should be ``$PELE_PHYSICS_HOME/ThirdParty/sundials/instdir/lib/`` 
 4. It is recommended, here also, that you add the path ``$PELE_PHYSICS_HOME/ThirdParty/sundials/instdir/lib`` to your ``LD_LIBRARY_PATH``, as paths can get lost in the build of external libraries
 
 Note that if you do not want to use the KLU library, you can also disable the flags (``-DKLU_ENABLE``) in the scripts. 

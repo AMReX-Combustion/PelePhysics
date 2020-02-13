@@ -4,6 +4,7 @@
 #include <chrono>
 
 #include <arkode/arkode_arkstep.h>
+#include <arkode/arkode_erkstep.h>
 
 #include <nvector/nvector_serial.h>    /* access to serial N_Vector            */
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
@@ -22,9 +23,10 @@ typedef struct {
       /* Base items */
       int ncells;
       int iverbose;
-      int isolve_type;
       int ianalytical_jacobian;
       int ireactor_type;
+      int iimplicit_solve;
+      int iuse_erkode;
 } *UserData;
 
 
@@ -39,7 +41,8 @@ int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 /* Functions Called by the Program */
 extern "C"
 {
-    int reactor_init(const int* cvode_iE, const int* Ncells);
+    int reactor_init(const int* cvode_iE, const int* Ncells,
+           double relative_tol=1e-10,double absolute_tol=1e-10);
 
     int react(realtype *rY_in, realtype *rY_src_in, 
 		realtype *rX_in, realtype *rX_src_in, 

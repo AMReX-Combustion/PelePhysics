@@ -126,7 +126,7 @@ contains
              x = plo(1) + (i+HALF)*dx(1)
 
              eos_state % p        = pressure
-             eos_state % T        = Temp_lo + (Temp_hi-Temp_lo)*y/L(2) + dTemp*SIN(TWO*M_PI*y/P(2)) !+ (Temp_hi-Temp_lo)*x/L(1) + (Temp_hi-Temp_lo)*z/L(3) 
+             eos_state % T        = Temp_lo !+ (Temp_hi-Temp_lo)*y/L(2) + dTemp*SIN(TWO*M_PI*y/P(2)) !+ (Temp_hi-Temp_lo)*x/L(1) + (Temp_hi-Temp_lo)*z/L(3) 
 
              call eos_tp(eos_state)
 
@@ -137,7 +137,7 @@ contains
              rhoY_src(i,j,k,1:nspecies) = 0.0d0
              if (iE_main == 1) then
                  ! all in e
-#ifdef USE_SUNDIALS_PP
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
                  rhoE(i,j,k,1) = eos_state % e * eos_state % rho
 #else
                  rhoE(i,j,k,1) = eos_state % e
