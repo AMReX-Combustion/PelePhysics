@@ -52,16 +52,16 @@ in which
 Linear Algebra
 -----------------
 
-To find the solution of the linear system :eq:`eqc`; CVODE provides several linear solver choice. 
+To find the solution of the linear system :eq:`eqc`; CVODE provides several linear solver choices. 
 The linear solver modules distributed with Sundials are organized in two families, a `direct` family comprising direct linear solvers 
 for dense, banded, or sparse matrices, and a `spils` family comprising scaled preconditioned iterative (Krylov) linear solvers.  
-The methods offered through these modules that are of interest in the present document are:
+The solvers offered through these modules that are of interest to us are:
 
-- dense direct solver
-- sparse direct solver interfaces, in particular using the `KLU` sparse solver library
+- a dense direct solver
+- a sparse direct solver interface using the `KLU` sparse solver library
 - SPGMR, a scaled -possibly preconditioned- GMRES (Generalized Minimal Residual method) solver [BROWN1990]_
 
-When using a dense direct solver, the user has the option to specify an analytical Jacobian. 
+When using a dense direct solver, the user has the option to specify an Analytical Jacobian. 
 If none is provided, a difference quotients is performed. When a sparse direct solver is employed however, 
 the user **must** specify an analytical Jacobian. All of these options have been enabled in `PelePhysics`.
 
@@ -69,7 +69,7 @@ For large stiff systems,  where direct methods are often not feasible, the combi
 yields a powerful tool. In this case, the linear solve is `matrix-free`, and the default Newton iteration is an 
 `Inexact` Newton iteration, in which :math:`M` is applied with matrix-vector products :math:`Jv` obtained by either difference quotients 
 or a user-supplied routine. In `PelePhysics`, it is possible to use either a non-preconditioned or a preconditioned GMRES solver. 
-In the latter case, the preconditioner can be either specified in a dense or sparse format (if the KLU library is linked to Cvode), 
+In the latter case, the preconditioner can be either specified in a dense or sparse format (if the KLU library is linked to CVODE), 
 and it is provided in the form of a Jacobian approximation, based on the work of [McNenly2015]_.
 
 

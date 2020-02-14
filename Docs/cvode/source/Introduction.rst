@@ -27,25 +27,24 @@ All three codes rely on `AMREX <https://amrex-codes.github.io/amrex>`_, which is
 
 
 
-Up until recently, `PelePhysics` (as well as the `ChemDriver` object) depended on DVODE [VODE1989]_ 
+`PelePhysics` (as well as the `ChemDriver` object of `PeleLM` ) used to rely upon DVODE [VODE1989]_ 
 to perform the chemistry integration, no matter the problem at hand. 
 DVODE is a very robust, but slightly outdated, variable-coefficient Ordinary Differential Equation (ODE) solver written in Fortran 77. 
 At its core, it uses a direct dense linear solver. DVODE is very efficient in the resolution of small stiff systems 
 of equations but can become prohibitively expensive when dealing with bigger systems of equations, such as those frequently encountered in combustion systems. 
-In recent years, the Sundials team at LLNL [LLNL2005]_ have been involved in the active development of a modern, 
-C++ version of DVODE called CVODE. 
+
+In recent years, the Sundials team at LLNL [LLNL2005]_ has been involved in the active development of a modern, 
+C++ version, of DVODE called CVODE. 
 CVODE implements the same functionalities as those available in DVODE, but offers much more flexibility through 
 its user-friendly set of interface routines. Additionally, other linear solvers are available, 
 such as iterative or sparse solvers which can prove to be very efficient in handling "larger" systems of equations.
 
-The primary objective of this user-guide is to explain in details the switch that has been put in motion in the `development` branch of `PelePhysics`
-from a DVODE to a CVODE based ODE integration; in terms of:
+The objective of this user-guide is to document the CVODE-based chemistry integration implemented in `PelePhysics`. Although it is possible to use CVODE in `PeleC`, the following is mainly intended for `PeleLM` users. This user-guide will cover:
 
-- ODE equations solved (`reactor type`)
-- Default solver settings chosen (tolerances/order/...)
-- Linear solvers available, along with exemples of performance
-- Changes in `PelePhysics` run settings
-- Induced changes in the relying codes (such as `PeleC`)
+- ODE equations (`reactor type`)
+- Default settings (tolerances/order/...)
+- Linear solvers available --along with exemples of performance
+- Setting-up a `PelePhysics` test case
 - ...
 
 
@@ -53,38 +52,36 @@ from a DVODE to a CVODE based ODE integration; in terms of:
 How to naviguate this documentation
 ------------------------------------
 
-`This section provides a short summary of the functionalities implemented in the PeleSuite of codes. 
-References to sections within the rest of this manuscript are given, for more insights.`
+`This section provides a short overview of the chemistry-related features of PelePhysics. For an in-depth discussion, relevant references to specific sections of this manuscript are given.`
 
 
-- In `PelePhysics`, **two different reactor types** have been implemented. 
+- In `PelePhysics`, the user can select between **two different reactor types**. 
   The first type is a `constant volume` reactor, were the choice of fixed variables are the internal energy and the density, 
-  to comply with PeleC transported variables. This reproduces what was originally 
+  to comply with `PeleC` transported variables. This reproduces what was originally 
   implemented with DVODE in `PelePhysics`. 
-  A second reactor type formulated in terms of enthalpy and density has been put in place, to comply with PeleLM. 
-  Both reactors are available either via DVODE (in fortran 90) or CVODE (in cpp).
+  A second reactor type formulated in terms of enthalpy and density has been put in place, to comply with `PeleLM`. 
+  Both reactors are available in DVODE (in fortran 90) and CVODE (in cpp).
   See sections :ref:`sec:subsDiffReacts` for additional details, 
   and :ref:`sec:subsPPOptions` to see how to activate one or the other via the input files.
 
 - With both reactors, it is possible to use an **Analytical Jacobian** (depending upon the choice of linear solver, see section :ref:`sec:subslinalg`.)
 
-- Three different **linear solves** can be perfomed, see section :ref:`sec:subslinalg` for additional details, and :ref:`sec:subsPPOptions` to see how to make a selection:
+- Three different types of **linear solvers** are implemented, see section :ref:`sec:subslinalg` for additional details, and :ref:`sec:subsPPOptions` to see how to make a selection:
  
-    - a dense direct solve
-    - a sparse direct solve (requires the KLU library)
-    - a sparse iterative solve
+    - a dense direct solver -- with or without Analytical Jacobian
+    - a sparse direct solver (requires the KLU library) -- always requires an Analytical Jacobian
+    - a couple of sparse iterative solvers from the GMRES family -- preconditioned or not
 
 - **Regression testings** have been put in place in `PelePhysics` to test the CVODE integration. See section :ref:`sec:subsubValidCVreact` for validations, and section :ref:`sec:subsReactEvalCvode` for a step-by-step example.
 
-- A CVODE version running on **GPU** is also implemented but the documentation is WIP
+- A CVODE version running on **GPU** is also technically available but the documentation is a WIP. The interested user can   
+  contact code developers for additional information
 
-- Many modifications to the chemistry-related routines generator `Fuego` have been put in place. 
-  The one having the largest impact is that the chemistry files are now divided in two parts: a header file 
-  ``chemistry_file.H`` and a C++ file containing the routines definitions. 
-  This header file should be imported in any C++ file referencing any Fuego routine. Additionally, a 
-  fortran module ``fuego_chemistry`` is defined that should be imported to use Fuego routines from Fortran.
-
-
+- `PelePhysics` uses an automatic chemistry-related routine generator: **Fuego**. Fuego is part of 
+  the sources of `PelePhysics`. With Fuego, a unique chemistry file is generated for a specific 
+  kinetic scheme. The structure of the chemistry file is discussed in section :ref:`sec:`, along with instructions to
+  generate your own (all you need are chemistry files in the famous CHEMKIN format).
+  Note that `PelePhysics` already offers a large choice of more than 20 different kinetic schemes.
 
 .. [VODE1989] P. N. Brown, G. D. Byrne, and A. C. Hindmarsh. VODE, a variable-coefficient ODE solver. SIAM journal on scientific and statistical computing, 10(5):1038-1051, 1989. 
 
