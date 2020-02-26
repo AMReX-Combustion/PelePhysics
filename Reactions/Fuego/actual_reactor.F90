@@ -90,7 +90,7 @@ contains
     implicit none
     real(amrex_real),   intent(inout) :: rY_in(nspecies+1),rY_src_in(nspecies)
     real(amrex_real),   intent(inout) :: rX_in,rX_src_in,P_in
-    real(amrex_real),   intent(inout) :: dt_react, time
+    real(amrex_real)                  :: dt_react, time
     integer                           :: cost_value
     
     ! For compatibility to remove later
@@ -129,7 +129,7 @@ contains
     endif
 
     if ( .not. ok_to_react(react_state_in) ) then
-       call amrex_error('reactor::react Not Ok To React')
+       cost_value = 0.d0
        return
     end if
 
@@ -324,7 +324,6 @@ contains
     real(amrex_real), intent(out) :: ydot(neq)
     integer          :: n
     real(amrex_real) :: rhoInv
-
 
     if (iE == 1) then
         eos_state % rho               = sum(y(1:nspecies))

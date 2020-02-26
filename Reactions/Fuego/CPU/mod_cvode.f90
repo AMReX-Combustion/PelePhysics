@@ -17,7 +17,7 @@ module cvode_module
                 real(c_double), dimension(*), intent(inout) :: rX_in
                 real(c_double), dimension(*), intent(inout) :: rX_src_in
                 real(c_double),  intent(inout) :: dt_react
-                real(c_double),  intent(inout) :: time
+                real(c_double)                 :: time
         end function react
 
         subroutine reactor_close() bind(c,name='reactor_close')

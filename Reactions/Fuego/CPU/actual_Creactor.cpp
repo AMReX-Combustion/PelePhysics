@@ -23,6 +23,7 @@
   double *rhoX_init   = NULL;
   double *rhoXsrc_ext = NULL;
   double *rYsrc       = NULL;
+  double time_init    = 0.0;
 /* REMOVE MAYBE LATER */
   int dense_solve           = 1;
   int sparse_solve          = 5;
@@ -36,7 +37,7 @@
 #ifdef _OPENMP
 #pragma omp threadprivate(y,LS,A)
 #pragma omp threadprivate(cvode_mem,data)
-#pragma omp threadprivate(rhoX_init,rhoXsrc_ext,rYsrc)
+#pragma omp threadprivate(rhoX_init,rhoXsrc_ext,rYsrc,time_init)
 #endif
 /**********************************/
 
@@ -354,7 +355,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 		realtype *rX_in, realtype *rX_src_in,
                 realtype *dt_react, realtype *time){
 
-	realtype time_init, time_out, dummy_time;
+	realtype time_out, dummy_time;
 	int flag;
 #ifdef _OPENMP
 	int omp_thread;
@@ -397,7 +398,11 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	/* Check if y is within physical bounds */
 	check_state(y);
 	if (!(data->actual_ok_to_react))  { 
-	    amrex::Abort("\n Check_state failed: state is out of react bounds \n");
+#ifdef MOD_REACTOR
+	    /* If reactor mode is activated, update time */
+	    *time  = time_out;
+#endif
+            return 0;
 	}
 
 	/* ReInit CVODE is faster */
@@ -469,7 +474,7 @@ int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
  */
 
 /* RHS source terms evaluation */
-void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,  
+void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,  
 			    void *user_data)
 {
   /* Make local copies of pointers in user_data (cell M)*/
@@ -487,8 +492,12 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
       realtype cdot[NUM_SPECIES], molecular_weight[NUM_SPECIES];
       realtype cX;
       realtype temp, energy;
+      realtype dt;
       /* EOS object in cpp */
       EOS eos;
+
+      /* dt is curr time - time init */
+      dt = *t - time_init;
 
       /* Offset in case several cells */
       int offset = tid * (NUM_SPECIES + 1); 
@@ -511,7 +520,7 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
       }
 
       /* NRG CGS */
-      energy = (rhoX_init[tid] + rhoXsrc_ext[tid]*(*dt)) /rho;
+      energy = (rhoX_init[tid] + rhoXsrc_ext[tid] * dt) /rho;
 
       if (data_wk->ireactor_type == eint_rho){
           /* UV REACTOR */
@@ -1378,9 +1387,11 @@ void check_state(N_Vector yvec)
       Temp = ydata[offset + NUM_SPECIES];
       if ((rho < 1.0e-10) || (rho > 1.e10)) {
           data->actual_ok_to_react = false;
+	  amrex::Print() <<"rho "<< rho << "\n";
       }
       if ((Temp < 200.0) || (Temp > 5000.0)) {
           data->actual_ok_to_react = false; 
+	  amrex::Print() <<"Temp "<< Temp << "\n";
       }
   }
 
