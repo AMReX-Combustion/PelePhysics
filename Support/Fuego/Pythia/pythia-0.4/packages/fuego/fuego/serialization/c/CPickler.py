@@ -986,7 +986,7 @@ class CPickler(CMill):
             'AMREX_GPU_HOST_DEVICE void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
             'void CKPC'+sym+'(double *  rho, double *  T, double *  c, double *  P);',
             'void CKRHOX'+sym+'(double *  P, double *  T, double *  x, double *  rho);',
-            'void CKRHOY'+sym+'(double *  P, double *  T, double *  y, double *  rho);',
+            'AMREX_GPU_HOST_DEVICE void CKRHOY'+sym+'(double *  P, double *  T, double *  y, double *  rho);',
             'void CKRHOC'+sym+'(double *  P, double *  T, double *  c, double *  rho);',
             'void CKWT'+sym+'(double *  wt);',
             'void CKAWT'+sym+'(double *  awt);',
@@ -996,7 +996,7 @@ class CPickler(CMill):
             'AMREX_GPU_HOST_DEVICE void CKYTX'+sym+'(double *  y, double *  x);',
             'void CKYTCP'+sym+'(double *  P, double *  T, double *  y, double *  c);',
             'AMREX_GPU_HOST_DEVICE void CKYTCR'+sym+'(double *  rho, double *  T, double *  y, double *  c);',
-            'void CKXTY'+sym+'(double *  x, double *  y);',
+            'AMREX_GPU_HOST_DEVICE void CKXTY'+sym+'(double *  x, double *  y);',
             'void CKXTCP'+sym+'(double *  P, double *  T, double *  x, double *  c);',
             'void CKXTCR'+sym+'(double *  rho, double *  T, double *  x, double *  c);',
             'void CKCTX'+sym+'(double *  c, double *  x);',
@@ -2688,7 +2688,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute rho = P*W(y)/RT'))
-        self._write('void CKRHOY'+sym+'(double *  P, double *  T, double *  y,  double *  rho)')
+        self._write('AMREX_GPU_HOST_DEVICE void CKRHOY'+sym+'(double *  P, double *  T, double *  y,  double *  rho)')
         self._write('{')
         self._indent()
         self._write('double YOW = 0;')
@@ -4767,7 +4767,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert x[species] (mole fracs) to y[species] (mass fracs)'))
-        self._write('void CKXTY'+sym+'(double *  x,  double *  y)')
+        self._write('AMREX_GPU_HOST_DEVICE void CKXTY'+sym+'(double *  x,  double *  y)')
         self._write('{')
         self._indent()
 

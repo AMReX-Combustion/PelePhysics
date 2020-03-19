@@ -1,0 +1,6 @@
+const_conductivity   real     1.0d0
+const_viscosity      real     1.0d-4
+const_bulk_viscosity real     0.d0
+const_diffusivity    real     1.0d0
+mks_unit             logical     .false.
+

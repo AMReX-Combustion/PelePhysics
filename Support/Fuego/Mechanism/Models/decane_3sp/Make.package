@@ -1,1 +1,1 @@
-cEXE_sources+=decane_3sp.c
+CEXE_sources+=mechanism.cpp
