@@ -35,10 +35,3 @@ init()
 
 } // namespace EOS
 
-void
-pc_eos_init()
-{
-  EOS::init();
-}
-
-

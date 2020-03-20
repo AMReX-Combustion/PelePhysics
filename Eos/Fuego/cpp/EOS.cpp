@@ -1,11 +1,5 @@
 #include "EOS.H"
 
-void
-pc_eos_init()
-{
-  EOS::init();
-}
-
 namespace EOS {
 AMREX_GPU_DEVICE_MANAGED int upassMap[NPASSIVE];
 AMREX_GPU_DEVICE_MANAGED int qpassMap[NPASSIVE];

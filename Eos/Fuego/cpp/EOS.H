@@ -332,6 +332,4 @@ qpass_map(const int i)
 
 }; // namespace EOS
 
-void pc_eos_init();
-
 #endif
