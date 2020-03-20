@@ -6,7 +6,6 @@
 #include "chemistry_file.H"
 #include "TransportParams.H"
 
-extern "C" {
 void egtransetWT(amrex::Real* wt);
 void egtransetEPS(amrex::Real* eps);
 void egtransetSIG(amrex::Real* sig);
@@ -17,7 +16,6 @@ void egtransetNLIN(int* nlin);
 void egtransetCOFETA(amrex::Real* fitmu);
 void egtransetCOFLAM(amrex::Real* fitlam);
 void egtransetCOFD(amrex::Real* fitdbin);
-}
 
 namespace transport_params {
 

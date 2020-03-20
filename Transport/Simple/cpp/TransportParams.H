@@ -9,8 +9,6 @@ namespace transport_params {
 void init();
 void finalize();
 
-// AMREX_GPU_DEVICE void test ();
-
 extern AMREX_GPU_DEVICE_MANAGED amrex::Real* wt;
 extern AMREX_GPU_DEVICE_MANAGED amrex::Real* iwt;
 extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eps;

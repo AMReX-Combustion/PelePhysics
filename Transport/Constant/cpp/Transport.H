@@ -14,9 +14,6 @@
 #include "TransportParams.H"
 #include "IndexDefines.H"
 
-extern "C" {
-}
-
 using namespace transport_params;
 
 AMREX_GPU_HOST_DEVICE

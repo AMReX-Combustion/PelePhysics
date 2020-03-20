@@ -25,10 +25,8 @@ void pc_get_transport_coeffs(
   amrex::Array4<const amrex::Real> const& q,
   amrex::Array4<amrex::Real> const& D);
 
-extern "C" {
 AMREX_GPU_HOST_DEVICE
 void CKCVMS(amrex::Real* Tloc, amrex::Real* cvk);
-}
 
 using namespace transport_params;
 

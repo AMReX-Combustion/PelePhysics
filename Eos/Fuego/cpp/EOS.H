@@ -11,7 +11,6 @@
 #include "IndexDefines.H"
 #include "Constants.H"
 
-extern "C" {
 AMREX_GPU_HOST_DEVICE void get_imw(amrex::Real imw[]);
 AMREX_GPU_HOST_DEVICE void get_mn(amrex::Real mw[]);
 AMREX_GPU_HOST_DEVICE void
@@ -32,7 +31,6 @@ AMREX_GPU_HOST_DEVICE void
 CKXTY(amrex::Real molefrac[], amrex::Real massfrac[]);
 AMREX_GPU_HOST_DEVICE void CKRHOY(
   amrex::Real* pres, amrex::Real* T, amrex::Real massfrac[], amrex::Real* rho);
-}
 
 namespace EOS {
 
@@ -40,29 +38,6 @@ extern AMREX_GPU_DEVICE_MANAGED int upassMap[NPASSIVE];
 extern AMREX_GPU_DEVICE_MANAGED int qpassMap[NPASSIVE];
 
 void init();
-/*
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void bottom()
-{
-    CKCVMS(&T,  cvi);
-    CKCPMS(&T,  cpi);
-    CKHMS(&T,   hi);
-    cv = 0.0, cp = 0.0, h = 0.0;
-    for(int i = 0; i < NUM_SPECIES; ++i){
-         cv+=massfrac[i]*cvi[i];
-         cp+=massfrac[i]*cpi[i];
-         h +=massfrac[i]* hi[i];
-    }
-    amrex::Real Cvx = wbar*cv;
-    gam1 = (Cvx + RU)/Cvx;
-    cs = std::sqrt(gam1*p/rho);
-    dpdr_e = p/rho;
-    dpde = (gam1 - 1.0)*rho;
-    s = 1.0;
-    dpdr = 0.0;
-}
-*/
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
