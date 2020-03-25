@@ -546,17 +546,22 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	  for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
 	    Real cur_coef = -coef[aindx]*sub_source;
 	    IntVect cur_indx = indx_array[aindx];
-	    for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
-	      const int nd = momIndx + dir;
-	      amrex::Gpu::Atomic::Add(&sourcearr(cur_indx, nd),
-	      			      cur_coef*fluid_mom_src[dir]);
+	    if (mom_trans) {
+	      for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+		const int nd = momIndx + dir;
+		amrex::Gpu::Atomic::Add(&sourcearr(cur_indx, nd),
+					cur_coef*fluid_mom_src[dir]);
+	      }
 	    }
-	    Gpu::Atomic::Add(&sourcearr(cur_indx, rhoIndx), cur_coef*m_dot);
-	    for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-	      const int nf = specIndx + fuel_indx[spf];
-	      Gpu::Atomic::Add(&sourcearr(cur_indx, nf), cur_coef*Y_dot[spf]);
+	    if (mass_trans) {
+	      Gpu::Atomic::Add(&sourcearr(cur_indx, rhoIndx), cur_coef*m_dot);
+	      for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
+		const int nf = specIndx + fuel_indx[spf];
+		Gpu::Atomic::Add(&sourcearr(cur_indx, nf), cur_coef*Y_dot[spf]);
+	      }
 	    }
-	    Gpu::Atomic::Add(&sourcearr(cur_indx, engIndx), cur_coef*fluid_eng_src);
+	    if (mass_trans || heat_trans)
+	      Gpu::Atomic::Add(&sourcearr(cur_indx, engIndx), cur_coef*fluid_eng_src);
 	  }
 	  if (mass_trans) {
 	    // Compute new particle diameter

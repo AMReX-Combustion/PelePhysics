@@ -100,9 +100,9 @@ public:
   ///
   /// Insert particles according to some criterion
   ///
-  void insertParticles (amrex::Real time, int nstep, int lev);
+  bool insertParticles (amrex::Real time, int nstep, int lev);
 
-  void injectParticles (amrex::Real time, int nstep, int lev);
+  bool injectParticles (amrex::Real time, int nstep, int lev);
 
   void InitParticlesUniform (amrex::AmrLevel* pelec, const int& lev, const int& num_ppc);
 
