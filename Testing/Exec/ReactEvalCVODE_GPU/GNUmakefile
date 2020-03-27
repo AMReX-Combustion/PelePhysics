@@ -15,7 +15,7 @@ FUEGO_GAS  = TRUE
 
 USE_CUDA   = TRUE
 
-TINY_PROFILE = TRUE
+TINY_PROFILE = FALSE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
@@ -29,6 +29,7 @@ DEFINES  += -DMOD_REACTOR
 USE_SUNDIALS_PP = TRUE
 
 USE_CUDA_CVODE = TRUE
+USE_ARKODE_PP = TRUE
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)

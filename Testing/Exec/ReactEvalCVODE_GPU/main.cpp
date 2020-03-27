@@ -15,7 +15,14 @@ using namespace amrex;
 #include <Transport_F.H>
 #include <main_F.H>
 #include <PlotFileFromMF.H>
-#include <actual_Creactor_GPU.h>
+#if defined(USE_SUNDIALS_PP)
+// ARKODE or CVODE
+  #ifdef USE_ARKODE_PP
+    #include <actual_CARKODE_GPU.h>
+  #else
+    #include <actual_Creactor_GPU.h>
+  #endif
+#endif
 
 /**********************************/
 int
@@ -44,7 +51,7 @@ main (int   argc,
 
     int max_grid_size = 16;
     std::string probin_file="probin";
-    std::string fuel_name="none";
+    std::string fuel_name="CH4";
     std::string pltfile("plt");
     /* CVODE inputs */
     int cvode_ncells = 1;
@@ -85,7 +92,7 @@ main (int   argc,
       pp.query("cvode_ncells",cvode_ncells);
 
       // Get name of fuel 
-      pp.get("fuel_name", fuel_name);
+      pp.query("fuel_name", fuel_name);
 
     }
 
@@ -99,12 +106,17 @@ main (int   argc,
     //}
 
     amrex::Print() << "Integration method: ";
+  #ifdef USE_ARKODE_PP
+        amrex::Print() << "using arkode";
+        amrex::Print() << std::endl;
+  #else
         amrex::Print() << "BDF (stiff)";
-    amrex::Print() << std::endl;
-
-    amrex::Print() << "Integration iteration method: ";
+        amrex::Print() << std::endl;
+        amrex::Print() << "Integration iteration method: ";
         amrex::Print() << "Newton";
-    amrex::Print() << std::endl;
+        amrex::Print() << std::endl;
+   #endif
+
 
     amrex::Print() << "Type of reactor: ";
         amrex::Print() << cvode_iE;

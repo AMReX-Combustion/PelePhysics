@@ -1,4 +1,4 @@
-dt = 1.e-06
+dt = 1.e-05
 ndt = 10
 
 # Select CVODE Jacobian eval: 0=FD 1=AJ
@@ -19,3 +19,5 @@ amr.plot_file = plt
 fuel_name = CH4
 
 third_dim = 128
+
+ode.use_erkode=0
