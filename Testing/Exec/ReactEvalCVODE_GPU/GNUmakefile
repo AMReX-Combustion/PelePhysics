@@ -24,13 +24,22 @@ PELE_PHYSICS_HOME    := ../../..
 # this flag activates the subcycling mode in the D/Cvode routines
 DEFINES  += -DMOD_REACTOR
 
-# use CVODE
-#CVODE_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
+# use SUNDIALS
 USE_SUNDIALS_PP = TRUE
-
-USE_CUDA_CVODE = TRUE
-USE_ARKODE_PP = TRUE
-
+ifeq ($(USE_SUNDIALS_PP), TRUE)  
+    # provide location of sundials lib if needed 
+    #SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
+    # use ARKODE: if FALSE then CVODE is used
+    USE_ARKODE_PP = FALSE
+    # use KLU sparse features -- only useful if CVODE is used on CPU
+    USE_KLU_PP = FALSE
+    # Activates GPU version
+    USE_CUDA_SUNDIALS_PP = TRUE
+else
+  # Activates use of Hari explicit RK
+  # will only work if USE_SUNDIALS_PP = FALSE
+  USE_RK64_PP = FALSE
+endif
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
