@@ -23,213 +23,185 @@ void init();
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-get_wb(amrex::Real mass[], amrex::Real& wbar)
+void //get_wb
+Y2WBAR(amrex::Real Y[], amrex::Real& WBAR)
 {
   const amrex::Real molec_wt[NUM_SPECIES] = {28.97};
   amrex::Real summ = 0.0;
   for (int i = 0; i < NUM_SPECIES; ++i)
-    summ += mass[i] * (1.0 / molec_wt[i]);
-  wbar = 1.0 / summ;
+    summ += Y[i] * (1.0 / molec_wt[i]);
+  WBAR = 1.0 / summ;
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-get_cv(amrex::Real mass[], amrex::Real T, amrex::Real& cv)
+void //get_cv
+YT2Cv(amrex::Real Y[], amrex::Real T, amrex::Real& Cv)
 {
   amrex::Real wbar;
-  get_wb(mass, wbar);
-  cv = RU / (wbar * (gamma - 1.0));
+  Y2WBAR(Y, wbar);
+  Cv = RU / (wbar * (gamma - 1.0));
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-get_cp(amrex::Real T, amrex::Real mass[], amrex::Real& cp)
+void //get_cp
+TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
 {
   amrex::Real cv;
-  get_cv(mass, T, cv);
-  cp = gamma * cv;
+  YT2Cv(Y, T, cv);
+  Cp = gamma * cv;
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-get_cpi(amrex::Real T, amrex::Real cpi[])
+void //get_cpi
+T2Cpi(amrex::Real T, amrex::Real Cpi[])
 {
-  cpi[0] = gamma*RU/ (28.97 * (gamma - 1.0));
+  Cpi[0] = gamma*RU/ (28.97 * (gamma - 1.0));
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-get_p(
-  amrex::Real rho,
-  amrex::Real massfrac[],
-  amrex::Real& e,
+void //get_p
+RYET2P(
+  amrex::Real R,
+  amrex::Real Y[],
+  amrex::Real& E,
   amrex::Real& T,
-  amrex::Real& p)
+  amrex::Real& P)
 {
-  p = (gamma - 1.0) * rho * e;
+  P = (gamma - 1.0) * R * E;
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-get_cs_no_T(amrex::Real rho, amrex::Real p, amrex::Real mass[], amrex::Real& cs)
+void //get_cs_no_T
+RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
 {
-  cs = std::sqrt(gamma * p / rho);
+  Cs = std::sqrt(gamma * P / R);
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-get_cs(amrex::Real rho, amrex::Real T, amrex::Real mass[], amrex::Real& cs)
+void //get_cs
+RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
 {
-  amrex::Real wbar, p;
-  get_wb(mass, wbar);
-  amrex::Real cv = RU / (wbar * (gamma - 1.0));
-  amrex::Real e = cv * T;
-  get_p(rho, mass, e, T, p);
-  cs = std::sqrt(gamma * p / rho);
+  amrex::Real wbar, P;
+  Y2WBAR(Y, wbar);
+  amrex::Real Cv = RU / (wbar * (gamma - 1.0));
+  amrex::Real E = Cv * T;
+  RYET2P(R, Y, E, T, P);
+  Cs = std::sqrt(gamma * P / R);
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-cmpT(amrex::Real e, amrex::Real mass[], amrex::Real& T)
+void //cmpT
+EY2T(amrex::Real E, amrex::Real Y[], amrex::Real& T)
 {
   amrex::Real poverrho, wbar;
-  poverrho = (gamma - 1.0) * e;
-  get_wb(mass, wbar);
+  poverrho = (gamma - 1.0) * E;
+  Y2WBAR(Y, wbar);
   T = poverrho * wbar / RU;
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-ctop(
-  amrex::Real massfrac[],
-  amrex::Real rho,
-  amrex::Real& e,
-  amrex::Real& T,
-  amrex::Real& p,
-  amrex::Real& dpdr_e,
-  amrex::Real& dpde,
-  amrex::Real& gam,
-  amrex::Real& cs,
-  amrex::Real& wbar)
+void //TrhoY2p
+TRY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
 {
-  get_wb(massfrac, wbar);
-  cmpT(e, massfrac, T);
-  get_p(rho, massfrac, e, T, p);
-  gam = gamma;
-  dpdr_e = (gam - 1.0) * e;
-  dpde = (gam - 1.0) * rho;
-  get_cs(rho, T, massfrac, cs);
+  amrex::Real Cv, E;
+  YT2Cv(Y, T, Cv);
+  E = Cv * T;
+  P = (gamma - 1.0) * R * E;
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-TrhoY2p(amrex::Real rho, amrex::Real T, amrex::Real mass[], amrex::Real& p)
-{
-  amrex::Real cv, e;
-  get_cv(mass, T, cv);
-  e = cv * T;
-  p = (gamma - 1.0) * rho * e;
-}
-
-/*
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void mpr2wdot(amrex::Real dens, amrex::Real T, amrex::Real mass[],
-amrex::Real wdot[])
-{
-    CKWYR(&dens, &T, mass, wdot);
-    amrex::Real mw[NUM_SPECIES];
-    get_mw(mw);
-    for(int n = 0; n < NUM_SPECIES; n++) wdot[n] *= mw[n];
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void get_ei(amrex::Real T, amrex::Real enrgi[])
-{
-    CKUMS(&T, enrgi);
-}
-*/
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
-ytx(amrex::Real mass[], amrex::Real mole[])
+void //ytx
+Y2X(amrex::Real Y[], amrex::Real X[])
 {
   for (int n = 0; n < NUM_SPECIES; n++)
-    mole[n] = mass[n];
+    X[n] = Y[n];
 }
-/*
+
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void xty(amrex::Real mole[], amrex::Real mass[])
-{
-    CKXTY(mole, mass);
-}
-*/
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
-tp(
-  amrex::Real pres,
-  amrex::Real massfrac[],
+void //tp
+PYTR2E(
+  amrex::Real P,
+  amrex::Real Y[],
   amrex::Real T,
-  amrex::Real& rho,
-  amrex::Real& energy)
+  amrex::Real& R,
+  amrex::Real& E)
 {
   amrex::Real wbar;
-  get_wb(massfrac, wbar);
-  rho = pres * wbar / (RU * T);
-  energy = pres / (rho * (gamma - 1.0));
+  Y2WBAR(Y, wbar);
+  R = P * wbar / (RU * T);
+  E = P / (R * (gamma - 1.0));
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-rhopY2e(
-  amrex::Real rho, amrex::Real massfrac[], amrex::Real p, amrex::Real& energy)
+void //rhopY2e
+RYP2E(
+  amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 {
   amrex::Real wbar;
-  get_wb(massfrac, wbar);
-  energy = p / (rho * (gamma - 1.0));
+  Y2WBAR(Y, wbar);
+  E = P / (R * (gamma - 1.0));
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-get_hi(amrex::Real mass[], amrex::Real T, amrex::Real enthalpy[])
+void //get_hi
+YT2H(amrex::Real Y[], amrex::Real T, amrex::Real H[])
 {
   amrex::Real wbar;
-  get_wb(mass, wbar);
-  const amrex::Real cv = RU / (wbar * (gamma - 1.0));
+  Y2WBAR(Y, wbar);
+  const amrex::Real Cv = RU / (wbar * (gamma - 1.0));
   for (int n = 0; n < NUM_SPECIES; n++)
-    enthalpy[n] = cv * T * gamma;
+    H[n] = Cv * T * gamma;
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-get_s(amrex::Real& s)
+void //get_s
+S(amrex::Real& s)
 {
   s = 1.0;
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void
-get_gamma(amrex::Real e, amrex::Real massfrac[NUM_SPECIES], amrex::Real& gam)
+void //get_gamma
+EY2G(amrex::Real E, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
 {
-  gam = gamma;
+  G = gamma;
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RPE2dpdr_e(
+  amrex::Real R,
+  amrex::Real P,
+  amrex::Real E,
+  amrex::Real& dpdr_e)
+{
+  dpdr_e = (gamma - 1.0) * E;
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RG2dpde(
+  amrex::Real R,
+  amrex::Real G,
+  amrex::Real& dpde)
+{
+  dpde = (gamma - 1.0) * R;
 }
 
 // Hydro -> Advected -> Species -> Aux
