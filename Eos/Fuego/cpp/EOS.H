@@ -20,7 +20,7 @@ void init();
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //get_cp
+void
 TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
 {
   amrex::Real tmp[NUM_SPECIES];
@@ -32,7 +32,7 @@ TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //get_cs_no_T
+void
 RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
 {
   amrex::Real tmp[NUM_SPECIES];
@@ -49,7 +49,7 @@ RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //get_cs
+void
 RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
 {
   amrex::Real P;
@@ -67,7 +67,7 @@ RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //cmpT
+void
 EY2T(amrex::Real E, amrex::Real Y[], amrex::Real& T)
 {
   // For Fuego this function is really just a wrapper for GET_T_GIVEN_EY
@@ -78,7 +78,7 @@ EY2T(amrex::Real E, amrex::Real Y[], amrex::Real& T)
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //get_p
+void
 RYET2P(
   amrex::Real R,
   amrex::Real Y[],
@@ -93,7 +93,7 @@ RYET2P(
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //TrhoY2p
+void
 TRY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
 {
   CKPY(&R, &T, Y, &P);
@@ -101,9 +101,8 @@ TRY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //mpr2wdot
-RTY2WDOT(
-  amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
+void
+RTY2WDOT(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
 {
   CKWYR(&R, &T, Y, WDOT);
   amrex::Real mw[NUM_SPECIES];
@@ -114,7 +113,7 @@ RTY2WDOT(
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //get_ei
+void
 T2E(amrex::Real T, amrex::Real E[])
 {
   CKUMS(&T, E);
@@ -122,7 +121,7 @@ T2E(amrex::Real T, amrex::Real E[])
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //get_cv
+void
 YT2Cv(amrex::Real Y[], amrex::Real T, amrex::Real& Cv)
 {
   Cv = 0.0;
@@ -134,7 +133,7 @@ YT2Cv(amrex::Real Y[], amrex::Real T, amrex::Real& Cv)
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //ytx
+void
 Y2X(amrex::Real Y[], amrex::Real X[])
 {
   CKYTX(Y, X);
@@ -142,7 +141,7 @@ Y2X(amrex::Real Y[], amrex::Real X[])
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //xty
+void
 X2Y(amrex::Real X[], amrex::Real Y[])
 {
   CKXTY(X, Y);
@@ -150,13 +149,9 @@ X2Y(amrex::Real X[], amrex::Real Y[])
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //tp
+void
 PYTR2E(
-  amrex::Real P,
-  amrex::Real Y[],
-  amrex::Real T,
-  amrex::Real& R,
-  amrex::Real& E)
+  amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real& R, amrex::Real& E)
 {
   CKRHOY(&P, &T, Y, &R);
   amrex::Real ei[NUM_SPECIES];
@@ -168,9 +163,8 @@ PYTR2E(
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //rhopY2e
-RYP2E(
-  amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
+void
+RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 {
   amrex::Real wbar;
   CKMMWY(&Y[0], &wbar);
@@ -184,7 +178,7 @@ RYP2E(
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //get_hi
+void
 YT2H(amrex::Real Y[], amrex::Real T, amrex::Real H[])
 {
   CKHMS(&T, H);
@@ -192,7 +186,7 @@ YT2H(amrex::Real Y[], amrex::Real T, amrex::Real H[])
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //get_s
+void
 S(amrex::Real& s)
 {
   s = 1.0;
@@ -200,7 +194,7 @@ S(amrex::Real& s)
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-void //get_gamma
+void
 EY2G(amrex::Real E, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
 {
   amrex::Real wbar, Cv, T, Cvx;
@@ -214,9 +208,7 @@ EY2G(amrex::Real E, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-Y2WBAR(
-  amrex::Real Y[],
-  amrex::Real& WBAR)
+Y2WBAR(amrex::Real Y[], amrex::Real& WBAR)
 {
   amrex::Real tmp[NUM_SPECIES];
   get_imw(tmp);
@@ -229,11 +221,7 @@ Y2WBAR(
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-RPE2dpdr_e(
-  amrex::Real R,
-  amrex::Real P,
-  amrex::Real E,
-  amrex::Real& dpdr_e)
+RPE2dpdr_e(amrex::Real R, amrex::Real P, amrex::Real E, amrex::Real& dpdr_e)
 {
   dpdr_e = P / R;
 }
@@ -241,10 +229,7 @@ RPE2dpdr_e(
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-RG2dpde(
-  amrex::Real R,
-  amrex::Real G,
-  amrex::Real& dpde)
+RG2dpde(amrex::Real R, amrex::Real G, amrex::Real& dpde)
 {
   dpde = (G - 1.0) * R;
 }
