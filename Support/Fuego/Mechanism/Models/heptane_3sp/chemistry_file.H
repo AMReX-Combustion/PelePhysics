@@ -49,7 +49,7 @@ AMREX_GPU_HOST_DEVICE void CKRHOY(double *  P, double *  T, double *  y, double 
 void CKRHOC(double *  P, double *  T, double *  c, double *  rho);
 void CKWT(double *  wt);
 void CKAWT(double *  awt);
-void CKMMWY(double *  y, double *  wtm);
+AMREX_GPU_HOST_DEVICE void CKMMWY(double *  y, double *  wtm);
 void CKMMWX(double *  x, double *  wtm);
 void CKMMWC(double *  c, double *  wtm);
 AMREX_GPU_HOST_DEVICE void CKYTX(double *  y, double *  x);

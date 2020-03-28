@@ -11,57 +11,12 @@
 #include "IndexDefines.H"
 #include "Constants.H"
 
-AMREX_GPU_HOST_DEVICE void get_imw(amrex::Real imw[]);
-AMREX_GPU_HOST_DEVICE void get_mn(amrex::Real mw[]);
-AMREX_GPU_HOST_DEVICE void
-CKPY(amrex::Real* rho, amrex::Real* T, amrex::Real* y, amrex::Real* P);
-AMREX_GPU_HOST_DEVICE void CKCVMS(amrex::Real* T, amrex::Real* cvms);
-AMREX_GPU_HOST_DEVICE void
-CKCVBS(amrex::Real* T, amrex::Real* massfrac, amrex::Real* cv);
-AMREX_GPU_HOST_DEVICE void CKCPMS(amrex::Real* T, amrex::Real* cvms);
-AMREX_GPU_HOST_DEVICE void CKUMS(amrex::Real* T, amrex::Real* ums);
-AMREX_GPU_HOST_DEVICE void CKHMS(amrex::Real* T, amrex::Real* ums);
-AMREX_GPU_HOST_DEVICE void
-CKWYR(amrex::Real* rho, amrex::Real* T, amrex::Real* y, amrex::Real* wdot);
-AMREX_GPU_HOST_DEVICE void
-GET_T_GIVEN_EY(amrex::Real* e, amrex::Real* y, amrex::Real* t, int* ierr);
-AMREX_GPU_HOST_DEVICE void
-CKYTX(amrex::Real massfrac[], amrex::Real molefrac[]);
-AMREX_GPU_HOST_DEVICE void
-CKXTY(amrex::Real molefrac[], amrex::Real massfrac[]);
-AMREX_GPU_HOST_DEVICE void CKRHOY(
-  amrex::Real* pres, amrex::Real* T, amrex::Real massfrac[], amrex::Real* rho);
-
 namespace EOS {
 
 extern AMREX_GPU_DEVICE_MANAGED int upassMap[NPASSIVE];
 extern AMREX_GPU_DEVICE_MANAGED int qpassMap[NPASSIVE];
 
 void init();
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
-get_mw_eos(amrex::Real mw[])
-{
-  get_mw(mw);
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
-get_imw_eos(amrex::Real imw[])
-{
-  get_imw(imw);
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
-get_cpi(amrex::Real T, amrex::Real cpi[])
-{
-  CKCPMS(&T, cpi);
-}
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
@@ -78,24 +33,11 @@ get_cp(amrex::Real T, amrex::Real mass[], amrex::Real& cp)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-get_wb(amrex::Real mass[], amrex::Real& wbar)
-{
-  amrex::Real imw[NUM_SPECIES];
-  get_imw(imw);
-  amrex::Real summ = 0.0;
-  for (int i = 0; i < NUM_SPECIES; ++i)
-    summ += mass[i] * imw[i];
-  wbar = 1.0 / summ;
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
 get_cs_no_T(amrex::Real rho, amrex::Real p, amrex::Real mass[], amrex::Real& cs)
 {
   amrex::Real temp[NUM_SPECIES];
   amrex::Real wbar;
-  get_wb(mass, wbar);
+  CKMMWY(&mass[0], &wbar);
   amrex::Real T = p * wbar / (rho * RU);
   CKCVMS(&T, temp); // temp = cvi
   amrex::Real cv = 0.0;
@@ -118,7 +60,7 @@ get_cs(amrex::Real rho, amrex::Real T, amrex::Real mass[], amrex::Real& cs)
   for (int i = 0; i < NUM_SPECIES; ++i)
     cv += mass[i] * temp[i];
   amrex::Real wbar;
-  get_wb(mass, wbar);
+  CKMMWY(&mass[0], &wbar);
   amrex::Real ga = (wbar * cv + RU) / (wbar * cv);
   cs = std::sqrt(ga * pres / rho);
 }
@@ -272,7 +214,7 @@ rhopY2e(
   amrex::Real rho, amrex::Real massfrac[], amrex::Real p, amrex::Real& energy)
 {
   amrex::Real wbar;
-  get_wb(massfrac, wbar);
+  CKMMWY(&massfrac[0], &wbar);
   amrex::Real T = p * wbar / (rho * RU);
   amrex::Real ei[NUM_SPECIES];
   CKUMS(&T, ei);
@@ -305,7 +247,7 @@ get_gamma(amrex::Real e, amrex::Real massfrac[NUM_SPECIES], amrex::Real& gamma)
   amrex::Real wbar, cv, T, Cvx;
   cmpT(e, massfrac, T);
   get_cv(massfrac, T, cv);
-  get_wb(massfrac, wbar);
+  CKMMWY(&massfrac[0], &wbar);
   Cvx = wbar * cv;
   gamma = (Cvx + RU) / Cvx;
 }

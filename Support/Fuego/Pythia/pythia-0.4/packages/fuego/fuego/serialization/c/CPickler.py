@@ -990,7 +990,7 @@ class CPickler(CMill):
             'void CKRHOC'+sym+'(double *  P, double *  T, double *  c, double *  rho);',
             'void CKWT'+sym+'(double *  wt);',
             'void CKAWT'+sym+'(double *  awt);',
-            'void CKMMWY'+sym+'(double *  y, double *  wtm);',
+            'AMREX_GPU_HOST_DEVICE void CKMMWY'+sym+'(double *  y, double *  wtm);',
             'void CKMMWX'+sym+'(double *  x, double *  wtm);',
             'void CKMMWC'+sym+'(double *  c, double *  wtm);',
             'AMREX_GPU_HOST_DEVICE void CKYTX'+sym+'(double *  y, double *  x);',
@@ -4507,7 +4507,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('given y[species]: mass fractions'))
         self._write(self.line('returns mean molecular weight (gm/mole)'))
-        self._write('void CKMMWY'+sym+'(double *  y,  double *  wtm)')
+        self._write('AMREX_GPU_HOST_DEVICE void CKMMWY'+sym+'(double *  y,  double *  wtm)')
         self._write('{')
         self._indent()
         species = self.species

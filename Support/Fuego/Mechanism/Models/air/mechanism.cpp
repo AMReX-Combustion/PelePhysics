@@ -449,7 +449,7 @@ void CKAWT( double *  awt)
 
 /*given y[species]: mass fractions */
 /*returns mean molecular weight (gm/mole) */
-void CKMMWY(double *  y,  double *  wtm)
+AMREX_GPU_HOST_DEVICE void CKMMWY(double *  y,  double *  wtm)
 {
     double YOW = 0;
     double tmp[2];

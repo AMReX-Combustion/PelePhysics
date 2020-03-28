@@ -24,22 +24,6 @@ void init();
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-get_mw_eos(amrex::Real mw[])
-{
-  mw[0] = {28.97};
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
-get_imw_eos(amrex::Real imw[])
-{
-  imw[0] = {1./28.97};
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
 get_wb(amrex::Real mass[], amrex::Real& wbar)
 {
   const amrex::Real molec_wt[NUM_SPECIES] = {28.97};
