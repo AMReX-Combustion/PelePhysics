@@ -4,11 +4,11 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
     ifeq ($(USE_CUDA_SUNDIALS_PP), TRUE)
         Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU
         ifeq ($(USE_ARKODE_PP), TRUE)
-            CEXE_headers += actual_CARKODE_GPU.h  
-            CEXE_sources += actual_CARKODE_GPU.cpp
+            CEXE_headers += actual_CARKODE.h  
+            CEXE_sources += actual_CARKODE.cpp
         else
-            CEXE_headers += actual_Creactor_GPU.h
-            CEXE_sources += actual_Creactor_GPU.cpp
+            CEXE_headers += actual_Creactor.h
+            CEXE_sources += actual_Creactor.cpp
         endif
     else
         Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU

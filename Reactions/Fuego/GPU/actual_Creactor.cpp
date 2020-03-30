@@ -1,4 +1,4 @@
-#include <actual_Creactor_GPU.h> 
+#include <actual_Creactor.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include <Fuego_EOS.H>
