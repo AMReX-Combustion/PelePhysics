@@ -745,11 +745,11 @@ fKernelSpec(int icell, void *user_data,
       /* UV REACTOR */
       eos.eos_EY2T(massfrac.arr, nrg_pt, temp_pt);
       eos.eos_T2EI(temp_pt, ei_pt.arr);
-      eos.eos_TY2Cv(temp_pt, massfrac.arr, &Cv_pt);
+      eos.eos_TY2Cv(temp_pt, massfrac.arr, Cv_pt);
   }else {
       /* HP REACTOR */
       eos.eos_HY2T(massfrac.arr, nrg_pt, temp_pt);
-      eos.eos_TY2Cp(temp_pt, massfrac.arr, &Cv_pt);
+      eos.eos_TY2Cp(temp_pt, massfrac.arr, Cv_pt);
       eos.eos_T2HI(temp_pt, ei_pt.arr);
   }
 
