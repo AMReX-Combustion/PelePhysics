@@ -1,24 +1,31 @@
 f90EXE_sources += actual_network.f90
-ifeq ($(USE_CUDA_CVODE), TRUE)
-    Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU
-    CEXE_headers += actual_Creactor_GPU.h
-    CEXE_sources += actual_Creactor_GPU.cpp
-else
-    ifeq ($(USE_SUNDIALS_PP), TRUE)
+
+ifeq ($(USE_SUNDIALS_PP), TRUE)
+    ifeq ($(USE_CUDA_SUNDIALS_PP), TRUE)
+        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU
         ifeq ($(USE_ARKODE_PP), TRUE)
-            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
-            CEXE_headers +=actual_CARKODE.h  
-            CEXE_sources +=actual_CARKODE.cpp
+            CEXE_headers += actual_CARKODE_GPU.h  
+            CEXE_sources += actual_CARKODE_GPU.cpp
         else
-            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
-            CEXE_headers +=actual_Creactor.h  
-            CEXE_sources +=actual_Creactor.cpp
+            CEXE_headers += actual_Creactor_GPU.h
+            CEXE_sources += actual_Creactor_GPU.cpp
+        endif
+    else
+        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
+        ifeq ($(USE_ARKODE_PP), TRUE)
+            CEXE_headers += actual_CARKODE.h  
+            CEXE_sources += actual_CARKODE.cpp
+        else
+            CEXE_headers += actual_Creactor.h  
+            CEXE_sources += actual_Creactor.cpp
             f90EXE_sources += mod_cvode.f90
         endif
-    else ifeq ($(USE_RK64_PP), TRUE)
+    endif
+else 
+    ifeq ($(USE_RK64_PP), TRUE)
         Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
-        CEXE_headers +=actual_CRK64.h  
-        CEXE_sources +=actual_CRK64.cpp
+        CEXE_headers += actual_CRK64.h  
+        CEXE_sources += actual_CRK64.cpp
     else
         F90EXE_sources += react_type.F90
         F90EXE_sources += actual_reactor.F90
