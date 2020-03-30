@@ -299,8 +299,8 @@ main (int   argc,
 		    num_cell_ode_int = num_cell_ode_int + 1;
 		    if (nc == ode_ncells) {
 			time = 0.0;
-			dt_incr =  dt/ndt;
 			for (int ii = 0; ii < ndt; ++ii) {
+			    dt_incr =  dt/ndt;
 #if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
 	                    fc_tmp = react(tmp_vect, tmp_src_vect,
 		                tmp_vect_energy, tmp_src_vect_energy,
@@ -312,8 +312,7 @@ main (int   argc,
 				&pressure,
 		                &dt_incr, &time);
 #endif
-		            dt_incr =  dt/ndt;
-			    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+			    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 			}
 		        nc = 0;
 		        for (int l = 0; l < ode_ncells ; ++l){

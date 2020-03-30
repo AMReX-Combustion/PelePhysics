@@ -29,7 +29,7 @@ DEFINES  += -DMOD_REACTOR
 USE_SUNDIALS_PP = TRUE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
   # provide location of sundials lib if needed
-  SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
+  #SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
   # use ARKODE: if FALSE then CVODE is used
   USE_ARKODE_PP = FALSE
   # use KLU sparse features -- only useful if CVODE is used
@@ -38,6 +38,7 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
     # provide location of KLU lib if needed
     SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
   endif
+  USE_CUDA_CVODE = FALSE
 else
   # Activates use of Hari explicit RK
   # will only work if USE_SUNDIALS_PP = FALSE
