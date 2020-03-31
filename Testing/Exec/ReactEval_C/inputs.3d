@@ -11,7 +11,7 @@ ode.atol = 1e-9
 ode.analytical_jacobian = 0
 #CVODE SPECIFICS
 # Choose between sparse (5) dense (1/101) iterative (99) solver
-cvode.solve_type = 99
+cvode.solve_type = 1
 #ARKODE SPECIFICS
 # Choose if using implicit or explicit solve -- if expl no AJ needed
 #arkode.implicit_solve = 1
