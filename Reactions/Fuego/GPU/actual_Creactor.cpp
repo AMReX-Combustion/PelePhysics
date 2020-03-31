@@ -44,9 +44,10 @@ int reactor_info(const int* reactor_type,const int* Ncells){
 	printf("Reactor type is %d\n",*reactor_type);
 
 	/* ParmParse from the inputs file */ 
-	amrex::ParmParse pp("cvode");
+        amrex::ParmParse ppcv("cvode");
+	amrex::ParmParse pp("ode");
 	pp.query("analytical_jacobian",ianalytical_jacobian);
-	pp.query("solve_type", isolve_type);
+	ppcv.query("solve_type", isolve_type);
 
         /* Checks */
         if (isolve_type == iterative_gmres_solve) {
@@ -130,9 +131,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
         int ianalytical_jacobian, isolve_type;
 
 	/* ParmParse from the inputs file */ 
-	amrex::ParmParse pp("cvode");
+	amrex::ParmParse ppcv("cvode");
+	amrex::ParmParse pp("ode");
 	pp.query("analytical_jacobian",ianalytical_jacobian);
-	pp.query("solve_type", isolve_type);
+	ppcv.query("solve_type", isolve_type);
 
 	NEQ = NUM_SPECIES;
 
