@@ -1,23 +1,28 @@
-dt = 1.e-05
-ndt = 10
-
-# Select CVODE Jacobian eval: 0=FD 1=AJ
-cvode.analytical_jacobian = 1
-
+#ODE solver options
+# REACTOR mode
+ode.dt  = 1.e-05
+ode.ndt = 10
 # Reactor formalism: 1=full e, 2=full h
-reactor_type  = 1
+ode.reactor_type  = 1
+# Tolerances for ODE solve
+ode.rtol = 1e-9
+ode.atol = 1e-9
+# Select ARK/CV-ODE Jacobian eval: 0=FD 1=AJ
+ode.analytical_jacobian = 0
+#CVODE SPECIFICS
+# Choose between sparse (5) dense (1/101) iterative (99) solver
+cvode.solve_type = 99
+#ARKODE SPECIFICS
+# Choose if using implicit or explicit solve -- if expl no AJ needed
+#arkode.implicit_solve = 1
+#arkode.use_erkode     = 0
 
-# Choose between sparse (5) dense (1) or iterative (99) solver
-cvode.solve_type = 1
-
-max_grid_size = 128
-
+#OTHER
+# Max size of problem
+max_grid_size  = 128
 # Choose name of output pltfile
-amr.plot_file = plt
-
-# Be aware of what your fuel species is 
-fuel_name = CH4
-
-third_dim = 128
-
-ode.use_erkode=0
+amr.plot_file  = plt
+# Fuel species 
+fuel_name      = CH4
+# Second dim 
+third_dim = 1024
