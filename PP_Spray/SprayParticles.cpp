@@ -108,7 +108,9 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
 				       this->m_gdb->ParticleDistributionMap(lev),
 				       source.nComp(), tmp_src_width);
   tmp_src_ptr->setVal(0.);
+  BL_PROFILE_VAR("SprayParticles::updateParticles()", UPD_PART);
   updateParticles(lev, (*state_ptr), (*tmp_src_ptr), dt, time, do_move);
+  BL_PROFILE_VAR_STOP(UPD_PART);
 
   // ********************************************************************************
   // Make sure the momentum put into ghost cells of each grid is added to both 
@@ -136,7 +138,9 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   delete tmp_src_ptr;
 
   // Fill ghost cells after we've synced up ..
-  source.FillBoundary(Geom(lev).periodicity());
+  // TODO: Check to see if this is needed at all
+  if (lev > 0)
+    source.FillBoundary(Geom(lev).periodicity());
 
   // Only delete this if in fact we created it.  Note we didn't change state_ptr so 
   //  we don't need to copy anything back into state
@@ -242,8 +246,8 @@ SprayParticleContainer::updateParticles(const int&  lev,
   const Real Pi_six = M_PI/6.;
   Real mw_fluid[NUM_SPECIES];
   Real invmw[NUM_SPECIES];
-  EOS::get_mw_eos(mw_fluid);
-  EOS::get_imw_eos(invmw);
+  EOS::GET_MW(mw_fluid);
+  EOS::GET_IMW(invmw);
   // Extract control parameters for mass, heat, and momentum transfer
   const int heat_trans = PeleC::particle_heat_tran;
   const int mass_trans = PeleC::particle_mass_tran;
@@ -344,7 +348,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	}
 	Real intEng = statearr(cur_indx, engIndx)*inv_rho - ke;
 	Real T_val;
-	EOS::cmpT(intEng, mass_frac, T_val);
+	EOS::EY2T(intEng, mass_frac, T_val);
 	T_fluid_interp[aindx] = T_val;
 	T_fluid += cur_coef*T_val;
       }
@@ -392,12 +396,12 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	Real delT = amrex::max(T_fluid - T_part, 0.);
 	Real T_skin = T_part + rule*delT;
 	// Calculate the C_p at the skin temperature for each species
-	EOS::get_cpi(T_skin, cp_n);
+	EOS::T2Cpi(T_skin, cp_n);
 #ifdef PELEC_EOS_FUEGO
-	EOS::get_hi(nullptr, T_part, h_skin);
+	EOS::YT2H(nullptr, T_part, h_skin);
 #else
-	amrex::Real masstmp[NUM_SPECIES] = {28.97};
-	EOS::get_hi(masstmp, T_part, h_skin);
+	Real masstmp[NUM_SPECIES] = {28.97};
+	EOS::YT2H(masstmp, T_part, h_skin);
 #endif
 	Real cp_skin = 0.; // Averaged C_p at particle surface
 	Real mw_mix = 0.;  // Average molar mass of gas mixture
