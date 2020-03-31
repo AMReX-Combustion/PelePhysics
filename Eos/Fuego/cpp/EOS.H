@@ -21,6 +21,22 @@ void init();
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
+GET_MW(amrex::Real mw[])
+{
+  get_mw(mw);
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+GET_IMW(amrex::Real imw[])
+{
+  get_imw(imw);
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
 TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
 {
   amrex::Real tmp[NUM_SPECIES];
@@ -28,6 +44,14 @@ TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
   Cp = 0.0;
   for (int i = 0; i < NUM_SPECIES; ++i)
     Cp += Y[i] * tmp[i];
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+T2Cpi(amrex::Real T, amrex::Real Cpi[])
+{
+  CKCPMS(&T, Cpi);
 }
 
 AMREX_GPU_HOST_DEVICE
