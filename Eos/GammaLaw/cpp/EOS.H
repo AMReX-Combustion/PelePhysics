@@ -24,6 +24,24 @@ void init();
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
+GET_MW(amrex::Real mw[])
+{
+  for (int n = 0; n < NUM_SPECIES; n++)
+    mw[n] = 28.97;
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+GET_IMW(amrex::Real imw[])
+{
+  for (int n = 0; n < NUM_SPECIES; n++)
+    imw[n] = 1./28.97;
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
 Y2WBAR(amrex::Real Y[], amrex::Real& WBAR)
 {
   const amrex::Real molec_wt[NUM_SPECIES] = {28.97};
