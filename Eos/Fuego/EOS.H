@@ -8,13 +8,13 @@
 #include "mechanism.h"
 #include "chemistry_file.H"
 
-#include "IndexDefines.H"
-#include "Constants.H"
+//#include "IndexDefines.H"
+//#include "Constants.H"
 
 namespace EOS {
 
-extern AMREX_GPU_DEVICE_MANAGED int upassMap[NPASSIVE];
-extern AMREX_GPU_DEVICE_MANAGED int qpassMap[NPASSIVE];
+//extern AMREX_GPU_DEVICE_MANAGED int upassMap[NPASSIVE];
+//extern AMREX_GPU_DEVICE_MANAGED int qpassMap[NPASSIVE];
 
 void init();
 
@@ -49,6 +49,18 @@ TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
+TY2Cv(amrex::Real T, amrex::Real Y[], amrex::Real& Cv)
+{
+  amrex::Real tmp[NUM_SPECIES];
+  CKCVMS(&T, tmp);
+  Cv = 0.0;
+  for (int i = 0; i < NUM_SPECIES; ++i)
+    Cv += Y[i] * tmp[i];
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
 T2Cpi(amrex::Real T, amrex::Real Cpi[])
 {
   CKCPMS(&T, Cpi);
@@ -61,7 +73,9 @@ RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
 {
   amrex::Real tmp[NUM_SPECIES];
   amrex::Real wbar;
+  amrex::Real RU, RUC, PA;
   CKMMWY(&Y[0], &wbar);
+  CKRP(&RU,&RUC,&PA);
   amrex::Real T = P * wbar / (R * RU);
   CKCVMS(&T, tmp);
   amrex::Real Cv = 0.0;
@@ -76,9 +90,11 @@ AMREX_FORCE_INLINE
 void
 RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
 {
+  amrex::Real tmp[NUM_SPECIES];
+  amrex::Real RU, RUC, PA;
   amrex::Real P;
   CKPY(&R, &T, Y, &P);
-  amrex::Real tmp[NUM_SPECIES];
+  CKRP(&RU,&RUC,&PA);
   CKCVMS(&T, tmp);
   amrex::Real Cv = 0.0;
   for (int i = 0; i < NUM_SPECIES; ++i)
@@ -98,6 +114,17 @@ EY2T(amrex::Real E, amrex::Real Y[], amrex::Real& T)
   // In SRK this will be different probably
   int lierr = 0;
   GET_T_GIVEN_EY(&E, Y, &T, &lierr);
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+HY2T(amrex::Real H, amrex::Real Y[], amrex::Real& T)
+{
+  // For Fuego this function is really just a wrapper for GET_T_GIVEN_HY
+  // In SRK this will be different probably
+  int lierr = 0;
+  GET_T_GIVEN_HY(&H, Y, &T, &lierr);
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -128,11 +155,33 @@ AMREX_FORCE_INLINE
 void
 RTY2WDOT(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
 {
-  CKWYR(&R, &T, Y, WDOT);
+  //CKWYR(&R, &T, Y, WDOT);
+  amrex::Real C[NUM_SPECIES];
+  CKYTCR(&R, &T, Y, C);
+  CKWC(&T, C, WDOT);
+
   amrex::Real mw[NUM_SPECIES];
   get_mw(mw);
   for (int n = 0; n < NUM_SPECIES; n++)
     WDOT[n] *= mw[n];
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RTY2JAC(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real JAC[], int HP)
+{
+  amrex::Real C[NUM_SPECIES];
+  CKYTCR(&R, &T, Y, C);
+  DWDOT(JAC, C, &T,&HP);
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RTY2C(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real acti[])
+{
+  CKYTCR(&R, &T,  Y, acti); 
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -191,6 +240,8 @@ void
 RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 {
   amrex::Real wbar;
+  amrex::Real RU, RUC, PA;
+  CKRP(&RU,&RUC,&PA);
   CKMMWY(&Y[0], &wbar);
   amrex::Real T = P * wbar / (R * RU);
   amrex::Real ei[NUM_SPECIES];
@@ -203,7 +254,7 @@ RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-YT2H(amrex::Real Y[], amrex::Real T, amrex::Real H[])
+T2H(amrex::Real T, amrex::Real H[])
 {
   CKHMS(&T, H);
 }
@@ -222,6 +273,8 @@ void
 EY2G(amrex::Real E, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
 {
   amrex::Real wbar, Cv, T, Cvx;
+  amrex::Real RU, RUC, PA;
+  CKRP(&RU,&RUC,&PA);
   EOS::EY2T(E, Y, T);
   EOS::YT2Cv(Y, T, Cv);
   CKMMWY(&Y[0], &wbar);
@@ -261,22 +314,22 @@ RG2dpde(amrex::Real R, amrex::Real G, amrex::Real& dpde)
 // Hydro -> Advected -> Species -> Aux
 // If num_adv == 0 -> QFA = QFS and UFA = UFS, see IndexDefines.H
 // For explicit definitions.
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-int
-upass_map(const int i)
-{
-  return upassMap[i];
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-int
-qpass_map(const int i)
-{
-  /*V and W are passive*/
-  return qpassMap[i];
-}
+//AMREX_GPU_HOST_DEVICE
+//AMREX_FORCE_INLINE
+//int
+//upass_map(const int i)
+//{
+//  return upassMap[i];
+//}
+//
+//AMREX_GPU_HOST_DEVICE
+//AMREX_FORCE_INLINE
+//int
+//qpass_map(const int i)
+//{
+//  /*V and W are passive*/
+//  return qpassMap[i];
+//}
 
 }; // namespace EOS
 
