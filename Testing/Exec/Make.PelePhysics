@@ -42,11 +42,13 @@ all: $(executable)
 
 # EOS
 EOS_PATH := $(EOS_HOME)/$(strip $(Eos_dir))
+EOS_PATH_F90 := $(EOS_PATH)/F90
 include $(EOS_HOME)/Make.package
 include $(EOS_PATH)/Make.package
-EXTERN_CORE       += $(EOS_HOME) $(EOS_PATH)
-INCLUDE_LOCATIONS += $(EOS_HOME) $(EOS_PATH)
-VPATH_LOCATIONS   += $(EOS_HOME) $(EOS_PATH)
+include $(EOS_PATH_F90)/Make.package
+EXTERN_CORE       += $(EOS_HOME) $(EOS_PATH) $(EOS_PATH_F90)
+INCLUDE_LOCATIONS += $(EOS_HOME) $(EOS_PATH) $(EOS_PATH_F90)
+VPATH_LOCATIONS   += $(EOS_HOME) $(EOS_PATH) $(EOS_PATH_F90)
 ifeq ($(Eos_dir), Fuego)
   TRANSPORT_TYPE := IDEAL_GAS
 else
@@ -56,6 +58,8 @@ else
     TRANSPORT_TYPE := REAL_GAS
   endif
 endif
+Bpack             += $(EOS_PATH)/Make.package
+Blocs             += $(EOS_PATH)
 
 # Reactions
 REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
