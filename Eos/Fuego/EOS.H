@@ -187,7 +187,7 @@ RTY2C(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real acti[])
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-T2E(amrex::Real T, amrex::Real E[])
+YT2E(amrex::Real Y[], amrex::Real T, amrex::Real E[])
 {
   CKUMS(&T, E);
 }
@@ -254,7 +254,7 @@ RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-T2H(amrex::Real T, amrex::Real H[])
+YT2H(amrex::Real Y[], amrex::Real T, amrex::Real H[])
 {
   CKHMS(&T, H);
 }

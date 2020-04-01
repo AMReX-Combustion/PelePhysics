@@ -10,13 +10,13 @@
 #include "mechanism.h"
 #include "chemistry_file.H"
 
-#include "IndexDefines.H"
-#include "Constants.H"
+//#include "IndexDefines.H"
+//#include "Constants.H"
 
 namespace EOS {
 
-extern AMREX_GPU_DEVICE_MANAGED int upassMap[NPASSIVE];
-extern AMREX_GPU_DEVICE_MANAGED int qpassMap[NPASSIVE];
+//extern AMREX_GPU_DEVICE_MANAGED int upassMap[NPASSIVE];
+//extern AMREX_GPU_DEVICE_MANAGED int qpassMap[NPASSIVE];
 extern AMREX_GPU_DEVICE_MANAGED amrex::Real gamma;
 
 void init();
@@ -42,21 +42,11 @@ GET_IMW(amrex::Real imw[])
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-Y2WBAR(amrex::Real Y[], amrex::Real& WBAR)
-{
-  const amrex::Real molec_wt[NUM_SPECIES] = {28.97};
-  amrex::Real summ = 0.0;
-  for (int i = 0; i < NUM_SPECIES; ++i)
-    summ += Y[i] * (1.0 / molec_wt[i]);
-  WBAR = 1.0 / summ;
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
 YT2Cv(amrex::Real Y[], amrex::Real T, amrex::Real& Cv)
 {
   amrex::Real wbar;
+  amrex::Real RU, RUC, PA;
+  CKRP(&RU,&RUC,&PA);
   EOS::Y2WBAR(Y, wbar);
   Cv = RU / (wbar * (gamma - 1.0));
 }
@@ -76,6 +66,8 @@ AMREX_FORCE_INLINE
 void
 T2Cpi(amrex::Real T, amrex::Real Cpi[])
 {
+  amrex::Real RU, RUC, PA;
+  CKRP(&RU,&RUC,&PA);
   Cpi[0] = gamma * RU / (28.97 * (gamma - 1.0));
 }
 
@@ -106,6 +98,8 @@ void
 RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
 {
   amrex::Real wbar, P;
+  amrex::Real RU, RUC, PA;
+  CKRP(&RU,&RUC,&PA);
   EOS::Y2WBAR(Y, wbar);
   amrex::Real Cv = RU / (wbar * (gamma - 1.0));
   amrex::Real E = Cv * T;
@@ -119,6 +113,8 @@ void
 EY2T(amrex::Real E, amrex::Real Y[], amrex::Real& T)
 {
   amrex::Real poverrho, wbar;
+  amrex::Real RU, RUC, PA;
+  CKRP(&RU,&RUC,&PA);
   poverrho = (gamma - 1.0) * E;
   EOS::Y2WBAR(Y, wbar);
   T = poverrho * wbar / RU;
@@ -151,6 +147,8 @@ PYTR2E(
   amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real& R, amrex::Real& E)
 {
   amrex::Real wbar;
+  amrex::Real RU, RUC, PA;
+  CKRP(&RU,&RUC,&PA);
   EOS::Y2WBAR(Y, wbar);
   R = P * wbar / (RU * T);
   E = P / (R * (gamma - 1.0));
@@ -172,6 +170,8 @@ void
 YT2H(amrex::Real Y[], amrex::Real T, amrex::Real H[])
 {
   amrex::Real wbar;
+  amrex::Real RU, RUC, PA;
+  CKRP(&RU,&RUC,&PA);
   EOS::Y2WBAR(Y, wbar);
   const amrex::Real Cv = RU / (wbar * (gamma - 1.0));
   for (int n = 0; n < NUM_SPECIES; n++)
@@ -197,6 +197,19 @@ EY2G(amrex::Real E, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
+Y2WBAR(amrex::Real Y[], amrex::Real& WBAR)
+{
+  const amrex::Real molec_wt[NUM_SPECIES] = {28.97};
+  amrex::Real summ = 0.0;
+  for (int i = 0; i < NUM_SPECIES; ++i)
+    summ += Y[i] * (1.0 / molec_wt[i]);
+  WBAR = 1.0 / summ;
+}
+
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
 RPE2dpdr_e(amrex::Real R, amrex::Real P, amrex::Real E, amrex::Real& dpdr_e)
 {
   dpdr_e = (gamma - 1.0) * E;
@@ -213,21 +226,21 @@ RG2dpde(amrex::Real R, amrex::Real G, amrex::Real& dpde)
 // Hydro -> Advected -> Species -> Aux
 // If num_adv == 0 -> QFA = QFS and UFA = UFS, see IndexDefines.H
 // For explicit definitions.
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-int
-upass_map(const int i)
-{
-  return upassMap[i];
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-int
-qpass_map(const int i)
-{
-  return qpassMap[i];
-}
+//AMREX_GPU_HOST_DEVICE
+//AMREX_FORCE_INLINE
+//int
+//upass_map(const int i)
+//{
+//  return upassMap[i];
+//}
+//
+//AMREX_GPU_HOST_DEVICE
+//AMREX_FORCE_INLINE
+//int
+//qpass_map(const int i)
+//{
+//  return qpassMap[i];
+//}
 
 }; // namespace EOS
 
