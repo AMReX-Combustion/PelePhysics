@@ -17,17 +17,22 @@ using namespace amrex;
 
 #if defined(USE_SUNDIALS_PP)
 // ARKODE or CVODE
+  #if defined(USE_CUDA_SUNDIALS_PP)
+    #include <GPU_misc.H> 
+  #endif
   #ifdef USE_ARKODE_PP
     #include <actual_CARKODE.h>
   #else
     #include <actual_Creactor.h>
   #endif
-#elif defined(USE_RK64_PP)
-// Expl RK solver
-  #include <actual_CRK64.h>
 #else
+  #if defined(USE_RK64_PP)
+// Expl RK solver
+    #include <actual_CRK64.h>
+  #else
 // DVODE
-  #include <actual_reactor.H> 
+    #include <actual_reactor.H> 
+  #endif
 #endif
 
 /**********************************/
@@ -39,16 +44,22 @@ main (int   argc,
 
     BL_PROFILE_VAR("main()", pmain);
 
-    Real timer_tot = amrex::second();
-    Real timer_init = 0.;
-    Real timer_advance = 0.;
+    const int IOProc = ParallelDescriptor::IOProcessorNumber();
+    //INITIAL TIME
+    Real timer_init = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_init,IOProc);
+    //TOTAL TIME
+    Real timer_tot = 0.;
+    //INITIALIZATION
+    Real timer_initialize_stop = 0.;
+    // ADVANCE
+    Real timer_adv = 0.;
+    Real timer_adv_stop = 0.;
+    //Print
     Real timer_print = 0.;
-    Real timer_print_tmp = 0.;
-
+    Real timer_print_stop = 0.;
 
     {
-
-    timer_init = amrex::second();
 
     int max_grid_size = 16;
     std::string probin_file="probin";
@@ -61,6 +72,7 @@ main (int   argc,
     /* ODE inputs */
     int ode_ncells = 1;
     int ode_iE     = -1;
+    int third_dim  = 1024;
     int ndt        = 1; 
     Real dt        = 1.e-5;
 #ifdef USE_ARKODE_PP 
@@ -78,6 +90,9 @@ main (int   argc,
 
       // domain size
       pp.query("max_grid_size",max_grid_size);
+
+      // third dim
+      pp.query("third_dim",third_dim);
 
       // Get name of fuel
       pp.get("fuel_name", fuel_name);
@@ -98,6 +113,11 @@ main (int   argc,
       //1 for UV, 2 for HP
       //   1 = Internal energy
       //   anything else = enthalpy (PeleLM restart)
+
+#if defined(USE_CUDA_SUNDIALS_PP)
+      // nb of cells to integrate
+      ppode.query("ode_ncells",ode_ncells);
+#endif
 
 #ifdef USE_ARKODE_PP 
       /* Additional ARKODE queries */
@@ -155,26 +175,37 @@ main (int   argc,
     bath_idx  = N2_ID;
     extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx,&ode_iE);
 
+    BL_PROFILE_VAR("reactor_info()", reactInfo);
+
     /* Initialize D/CVODE reactor */
+#ifdef USE_SUNDIALS_PP
+#ifdef USE_CUDA_SUNDIALS_PP
+    reactor_info(&ode_iE, &ode_ncells);
+#else
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-#ifdef USE_SUNDIALS_PP
 #ifdef USE_ARKODE_PP
     reactor_init(&ode_iE, &ode_ncells,rtol,atol);
 #else
     reactor_init(&ode_iE, &ode_ncells);
 #endif
+#endif
 #else
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
     reactor_init(&ode_iE, &ode_ncells);
 #endif
+
+    BL_PROFILE_VAR_STOP(reactInfo);
 
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
 	npts[i] = 2;
     }
-    npts[1] = 1024;
+    npts[1] = third_dim;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
         amrex::Print() << dt << " seconds";
@@ -206,13 +237,19 @@ main (int   argc,
     MultiFab temperature(ba,dm,1,0);
     MultiFab fctCount(ba,dm,1,0);
 
-    IntVect tilesize(D_DECL(10240,8,32));
+    BL_PROFILE_VAR("initialize_data()", InitData);
 
     /* INITIALIZE DATA */
+#ifndef USE_CUDA_SUNDIALS_PP
+    IntVect tilesize(D_DECL(10240,8,32));
 #ifdef _OPENMP
 #pragma omp parallel 
 #endif
     for (MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi ){
+#else
+    int count_mf = 0;
+    for (MFIter mfi(mf,false); mfi.isValid(); ++mfi ){
+#endif
         const Box& box = mfi.tilebox();
         initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
                		BL_TO_FORTRAN_N_3D(mf[mfi],0),
@@ -220,11 +257,21 @@ main (int   argc,
 		        BL_TO_FORTRAN_N_3D(mfE[mfi],0),
 		        BL_TO_FORTRAN_N_3D(rY_source_energy_ext[mfi],0),
 			&(dx[0]), &(plo[0]), &(phi[0]));
+#ifdef USE_CUDA_SUNDIALS_PP
+	count_mf = count_mf + 1;
+#endif
     }
 
-    timer_init = amrex::second() - timer_init; 
+    BL_PROFILE_VAR_STOP(InitData);
 
-    timer_print = amrex::second();
+#ifdef USE_CUDA_SUNDIALS_PP
+    amrex::Print() << "That many boxes: " << count_mf<< "\n";
+#endif
+
+    timer_initialize_stop = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_initialize_stop,IOProc);
+
+    BL_PROFILE_VAR("PlotFileFromMF()", PlotFile);
 
     ParmParse ppa("amr");
     ppa.query("plot_file",pltfile);
@@ -232,17 +279,35 @@ main (int   argc,
     // Specs
     PlotFileFromMF(mf,outfile);
 
-    timer_print = amrex::second() - timer_print;
-     
+    BL_PROFILE_VAR_STOP(PlotFile);
+
     /* EVALUATE */
     amrex::Print() << " \n STARTING THE ADVANCE \n";
 
-    timer_advance = amrex::second();
+#ifdef USE_CUDA_SUNDIALS_PP
+    BL_PROFILE_VAR("Malloc()", Allocs);
+    BL_PROFILE_VAR_STOP(Allocs);
 
+    BL_PROFILE_VAR("React()", ReactInLoop);
+    BL_PROFILE_VAR_STOP(ReactInLoop);
+
+    BL_PROFILE_VAR("(un)flatten()", FlatStuff);
+    BL_PROFILE_VAR_STOP(FlatStuff);
+#endif
+
+    BL_PROFILE_VAR("advance()", Advance);
+
+    timer_adv = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_adv,IOProc);
+
+#ifndef USE_CUDA_SUNDIALS_PP
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
     for ( MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi )
+#else
+    for ( MFIter mfi(mf,false); mfi.isValid(); ++mfi )
+#endif
     {
 	/* Prints to follow the computation */
         /* ADVANCE */
@@ -251,18 +316,103 @@ main (int   argc,
 	Real fc_tmp;
 
         const Box& box = mfi.tilebox();
-	int ncells = box.numPts();
-	amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
+	int ncells     = box.numPts();
 
 	const auto len     = amrex::length(box);
 	const auto lo      = amrex::lbound(box);
 
-	const auto rhoY    = mf.array(mfi);
-	const auto rhoE    = mfE.array(mfi);
-	const auto frcExt  = rY_source_ext.array(mfi); 
-	const auto frcEExt = rY_source_energy_ext.array(mfi);
-	const auto fc      = fctCount.array(mfi); 
+#ifdef USE_CUDA_SUNDIALS_PP
+        std::cout<<"stream "<<amrex::Gpu::gpuStream()<<std::endl;
 
+        cudaError_t cuda_status = cudaSuccess;
+        const auto ec = Gpu::ExecutionConfig(ncells);
+#endif
+        /* VERSION 2 */
+        const auto rhoY    = mf.array(mfi);
+        const auto rhoE    = mfE.array(mfi);
+        const auto frcExt  = rY_source_ext.array(mfi);
+        const auto frcEExt = rY_source_energy_ext.array(mfi);
+        const auto fc      = fctCount.array(mfi);
+
+
+#ifdef USE_CUDA_SUNDIALS_PP
+	amrex::Print() << " Integrating " << ncells <<" cells \n";
+        /* Pack the data */
+	// rhoY,T
+        amrex::Real *tmp_vect; 
+	// rhoY_src_ext
+        amrex::Real *tmp_src_vect;
+	// rhoE/rhoH
+        amrex::Real *tmp_vect_energy;
+	amrex::Real *tmp_src_vect_energy;
+        
+	BL_PROFILE_VAR_START(Allocs);
+        cudaMallocManaged(&tmp_vect, (Ncomp+1)*ncells*sizeof(amrex::Real));
+        cudaMallocManaged(&tmp_src_vect, Ncomp*ncells*sizeof(amrex::Real));
+        cudaMallocManaged(&tmp_vect_energy, ncells*sizeof(amrex::Real));
+        cudaMallocManaged(&tmp_src_vect_energy, ncells*sizeof(amrex::Real));
+	BL_PROFILE_VAR_STOP(Allocs);
+
+        BL_PROFILE_VAR_START(FlatStuff);
+        /* Packing of data */
+	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+	[=] AMREX_GPU_DEVICE () noexcept {
+	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	        icell < ncells; icell += stride) {
+	        int k =  icell /   (len.x*len.y);
+		int j = (icell - k*(len.x*len.y)) /   len.x;
+		int i = (icell - k*(len.x*len.y)) - j*len.x;
+		i += lo.x;
+		j += lo.y;
+		k += lo.z;
+                gpu_flatten(icell, i, j, k, rhoY, frcExt, rhoE, frcEExt, 
+                                            tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
+            }
+        });
+	BL_PROFILE_VAR_STOP(FlatStuff);
+        
+        cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
+
+        /* Solve */
+        BL_PROFILE_VAR_START(ReactInLoop);
+	time = 0.0;
+	for (int ii = 0; ii < ndt; ++ii) {
+	    fc_tmp = react(tmp_vect, tmp_src_vect,
+	                    tmp_vect_energy, tmp_src_vect_energy,
+	                    &dt_incr, &time,
+                            &ode_iE, &ncells, amrex::Gpu::gpuStream());
+	    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)]);
+	    dt_incr =  dt/ndt;
+        }
+        BL_PROFILE_VAR_STOP(ReactInLoop);
+
+        BL_PROFILE_VAR_START(FlatStuff);
+        /* Unpacking of data */
+	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+	[=] AMREX_GPU_DEVICE () noexcept {
+	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	        icell < ncells; icell += stride) {
+	        int k =  icell /   (len.x*len.y);
+		int j = (icell - k*(len.x*len.y)) /   len.x;
+		int i = (icell - k*(len.x*len.y)) - j*len.x;
+		i += lo.x;
+		j += lo.y;
+		k += lo.z;
+                gpu_unflatten(icell, i, j, k, rhoY, rhoE, 
+                                            tmp_vect, tmp_vect_energy);
+            }
+        });
+        BL_PROFILE_VAR_STOP(FlatStuff);
+
+        cudaFree(tmp_vect);
+        cudaFree(tmp_src_vect);
+        cudaFree(tmp_vect_energy);
+        cudaFree(tmp_src_vect_energy);
+       
+        cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
+#else
+
+	amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
         /* Pack the data */
 	// rhoY,T
 	double tmp_vect[ode_ncells*(Ncomp+1)];
@@ -313,7 +463,7 @@ main (int   argc,
 		                &dt_incr, &time);
 #endif
 		            dt_incr =  dt/ndt;
-			    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+			    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 			}
 		        nc = 0;
 		        for (int l = 0; l < ode_ncells ; ++l){
@@ -333,32 +483,41 @@ main (int   argc,
 	} else {
 		printf(" Integrated %d cells \n",num_cell_ode_int);
 	}
+#endif
+
     }
+    BL_PROFILE_VAR_STOP(Advance);
 
-    timer_advance = amrex::second() - timer_advance;
+    timer_adv_stop = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_adv_stop,IOProc);
 
 
-    timer_print_tmp = amrex::second();
+    timer_print = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_print,IOProc);
+
+    BL_PROFILE_VAR_START(PlotFile);
 
     outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
     // Specs
     PlotFileFromMF(mf,outfile);
 
-    timer_print = amrex::second() - timer_print_tmp + timer_print;
+    BL_PROFILE_VAR_STOP(PlotFile);
+
+    timer_print_stop = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_print_stop,IOProc);
     
     extern_close();
 
     }
 
-    timer_tot = amrex::second() - timer_tot;
+    timer_tot = ParallelDescriptor::second();
+    ParallelDescriptor::ReduceRealMax(timer_tot,IOProc);
 
-    ParallelDescriptor::ReduceRealMax({timer_tot, timer_init, timer_advance, timer_print},
-                                     ParallelDescriptor::IOProcessorNumber());
 
-    amrex::Print() << "Run Time total        = " << timer_tot     << "\n"
-                   << "Run Time init         = " << timer_init    << "\n"
-                   << "Run Time advance      = " << timer_advance << "\n"
-                   << "Run Time print plt    = " << timer_print << "\n";
+    amrex::Print() << "Run Time total     (main())             = " << timer_tot             - timer_init    << "\n"
+                   << "Run Time init      (initialize_data())  = " << timer_initialize_stop - timer_init    << "\n"
+                   << "Run Time advance   (advance())          = " << timer_adv_stop        - timer_adv << "\n"
+                   << "Run Time print plt (PlotFileFromMF())   = " << timer_print_stop      - timer_print << "\n";
 
     BL_PROFILE_VAR_STOP(pmain);
 

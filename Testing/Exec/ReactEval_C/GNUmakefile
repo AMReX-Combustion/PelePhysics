@@ -8,12 +8,14 @@ DIM        = 3
 COMP	   = gcc
 FCOMP	   = gfortran
 
-USE_MPI    = TRUE
+USE_MPI    = FALSE
 USE_OMP    = FALSE
 
 FUEGO_GAS  = TRUE
 
 TINY_PROFILE = TRUE
+
+USE_CUDA   = FALSE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
@@ -29,15 +31,17 @@ DEFINES  += -DMOD_REACTOR
 USE_SUNDIALS_PP = TRUE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
   # provide location of sundials lib if needed
-  SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
+  #SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
   # use ARKODE: if FALSE then CVODE is used
   USE_ARKODE_PP = FALSE
-  # use KLU sparse features -- only useful if CVODE is used
+  # use KLU sparse features -- only useful if CVODE is used on CPU
   USE_KLU_PP = FALSE
   ifeq ($(USE_KLU_PP), TRUE)
     # provide location of KLU lib if needed
-    SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
+    #SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
   endif
+  # Activates GPU version
+  USE_CUDA_SUNDIALS_PP = FALSE
 else
   # Activates use of Hari explicit RK
   # will only work if USE_SUNDIALS_PP = FALSE

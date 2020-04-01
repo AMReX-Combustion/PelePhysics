@@ -14,10 +14,14 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
   ifeq ($(USE_OMP),TRUE)
     LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvecopenmp
   endif
-  ifeq ($(USE_CUDA_CVODE),TRUE)
-    DEFINES  += -DUSE_CUDA_CVODE
-    LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda -lsundials_sunlinsolcusolversp
-    LIBRARIES += -lcusolver -lcusparse
+  ifeq ($(USE_CUDA_SUNDIALS_PP),TRUE)
+      DEFINES  += -DUSE_CUDA_SUNDIALS_PP
+      ifeq ($(USE_ARKODE_PP),TRUE)
+          LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda
+      else
+          LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda -lsundials_sunlinsolcusolversp
+          LIBRARIES += -lcusolver -lcusparse
+      endif
   endif
   ifneq ($(shell uname),Darwin)
     LIBRARIES += -Wl,-rpath=${SUNDIALS_LIB_DIR}

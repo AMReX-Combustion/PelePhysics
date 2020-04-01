@@ -1,4 +1,4 @@
-#include <actual_Creactor_GPU.h> 
+#include <actual_Creactor.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include <Fuego_EOS.H>
@@ -44,9 +44,10 @@ int reactor_info(const int* reactor_type,const int* Ncells){
 	printf("Reactor type is %d\n",*reactor_type);
 
 	/* ParmParse from the inputs file */ 
-	amrex::ParmParse pp("cvode");
+        amrex::ParmParse ppcv("cvode");
+	amrex::ParmParse pp("ode");
 	pp.query("analytical_jacobian",ianalytical_jacobian);
-	pp.query("solve_type", isolve_type);
+	ppcv.query("solve_type", isolve_type);
 
         /* Checks */
         if (isolve_type == iterative_gmres_solve) {
@@ -130,9 +131,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
         int ianalytical_jacobian, isolve_type;
 
 	/* ParmParse from the inputs file */ 
-	amrex::ParmParse pp("cvode");
+	amrex::ParmParse ppcv("cvode");
+	amrex::ParmParse pp("ode");
 	pp.query("analytical_jacobian",ianalytical_jacobian);
-	pp.query("solve_type", isolve_type);
+	ppcv.query("solve_type", isolve_type);
 
 	NEQ = NUM_SPECIES;
 
@@ -745,11 +747,11 @@ fKernelSpec(int icell, void *user_data,
       /* UV REACTOR */
       eos.eos_EY2T(massfrac.arr, nrg_pt, temp_pt);
       eos.eos_T2EI(temp_pt, ei_pt.arr);
-      eos.eos_TY2Cv(temp_pt, massfrac.arr, &Cv_pt);
+      eos.eos_TY2Cv(temp_pt, massfrac.arr, Cv_pt);
   }else {
       /* HP REACTOR */
       eos.eos_HY2T(massfrac.arr, nrg_pt, temp_pt);
-      eos.eos_TY2Cp(temp_pt, massfrac.arr, &Cv_pt);
+      eos.eos_TY2Cp(temp_pt, massfrac.arr, Cv_pt);
       eos.eos_T2HI(temp_pt, ei_pt.arr);
   }
 
