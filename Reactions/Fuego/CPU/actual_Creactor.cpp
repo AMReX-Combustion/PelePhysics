@@ -523,12 +523,12 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
           /* UV REACTOR */
 	  EOS::EY2T(energy, massfrac, temp);
 	  EOS::TY2Cv(temp, massfrac, cX);
-	  EOS::T2E(temp, Xi);
+	  EOS::YT2E(massfrac, temp, Xi);
       } else if (data_wk->ireactor_type == enth_rho) {
           /* HP REACTOR */
 	  EOS::HY2T(energy, massfrac, temp);
 	  EOS::TY2Cp(temp, massfrac, cX);
-	  EOS::T2H(temp, Xi);
+	  EOS::YT2H(massfrac, temp, Xi);
       }
       EOS::RTY2WDOT(rho, temp, massfrac, cdot);
 
