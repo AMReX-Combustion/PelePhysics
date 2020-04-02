@@ -63,12 +63,15 @@ Bpack             += $(EOS_PATH)/Make.package
 Blocs             += $(EOS_PATH)
 
 # Reactions
+REACTIONS_HOME_F90 := $(REACTIONS_HOME)/F90
 REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
-include $(REACTIONS_HOME)/Make.package
+REACTIONS_PATH_F90 := $(REACTIONS_HOME)/$(strip $(Reactions_dir))/F90
+include $(REACTIONS_HOME_F90)/Make.package
 include $(REACTIONS_PATH)/Make.package
-EXTERN_CORE       += $(REACTIONS_HOME) $(REACTIONS_PATH)
-INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH)
-VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH)
+include $(REACTIONS_PATH_F90)/Make.package
+EXTERN_CORE       += $(REACTIONS_HOME) $(REACTIONS_HOME_F90) $(REACTIONS_PATH) $(REACTIONS_PATH_F90)  
+INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_HOME_F90) $(REACTIONS_PATH) $(REACTIONS_PATH_F90)
+VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_HOME_F90) $(REACTIONS_PATH) $(REACTIONS_PATH_F90)
 ifdef Chemistry_Model
   ifeq ($(Eos_dir), GammaLaw)
     $(error Chemistry_Model definition not compatible with Eos_Dir=GammaLaw)

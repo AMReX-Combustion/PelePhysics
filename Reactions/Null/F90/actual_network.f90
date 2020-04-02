@@ -1,6 +1,7 @@
 module actual_network
 
-  use amrex_fort_module, only : amrex_real
+  use amrex_fort_module,    only : amrex_real
+  use extern_probin_module, only : mwt_scalar
 
   implicit none
 
@@ -22,7 +23,7 @@ contains
 
     spec_names(1) = "X"
 
-    molec_wt(1) = 29.0
+    molec_wt(1) = mwt_scalar
 
   end subroutine actual_network_init
 
