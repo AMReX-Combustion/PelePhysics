@@ -77,14 +77,16 @@ public:
   ///
   void moveKick (amrex::MultiFab& state, amrex::MultiFab& source,
 		 const int level, const amrex::Real& dt,
-		 const amrex::Real time, const int tmp_src_width);
+		 const amrex::Real time, const bool isVirtual,
+		 const bool isGhost, const int tmp_src_width);
 
   ///
   /// Update and move positions of the particles
   ///
   void moveKickDrift (amrex::MultiFab& state, amrex::MultiFab& source,
 		      const int level, const amrex::Real& dt,
-		      const amrex::Real time, const int tmp_src_width,
+		      const amrex::Real time, const bool isVirtual,
+		      const bool isGhost, const int tmp_src_width,
 		      const bool do_move, const int where_width);
 
   ///
@@ -95,6 +97,7 @@ public:
 			amrex::MultiFab&   source,
 			const amrex::Real& flow_dt,
 			const amrex::Real& time,
+                        const int          numGhost,
 			const bool         do_move);
 
   ///

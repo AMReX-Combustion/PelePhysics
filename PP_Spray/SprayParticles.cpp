@@ -50,12 +50,14 @@ SprayParticleContainer::moveKick (MultiFab&   state,
 				  const int   lev,
 				  const Real& dt,
 				  const Real  time,
+				  const bool  isVirtual,
+				  const bool  isGhost,
 				  const int   tmp_src_width)
 {
   bool do_move = false;
   int width = 0;
-  moveKickDrift(state, source, lev, dt, time, tmp_src_width,
-		do_move, width);
+  moveKickDrift(state, source, lev, dt, time, isVirtual, isGhost,
+		tmp_src_width, do_move, width);
 }
 
 void
@@ -64,13 +66,15 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
 				       const int   lev,
 				       const Real& dt,
 				       const Real  time,
+				       const bool  isVirtual,
+				       const bool  isGhost,
 				       const int   tmp_src_width,
 				       const bool  do_move,
 				       const int   where_width)
 {  
   BL_PROFILE("ParticleContainer::moveKickDrift()");
-  BL_ASSERT(lev >= 0);
-  BL_ASSERT(state.nGrow() >= 2);
+  AMREX_ASSERT(lev >= 0);
+  AMREX_ASSERT(state.nGrow() >= 2);
 
   //If there are no particles at this level
   if (lev >= this->GetParticles().size())
@@ -90,8 +94,8 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
     state_ptr = &state;
   } else {
     state_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(lev),
-			     this->m_gdb->ParticleDistributionMap(lev),
-			     state.nComp(), state.nGrow());
+                             this->m_gdb->ParticleDistributionMap(lev),
+                             state.nComp(), state.nGrow());
     state_ptr->setVal(0.);
     state_ptr->copy(state,0,0,state.nComp());
     state_ptr->FillBoundary(Geom(lev).periodicity());
@@ -103,13 +107,21 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   // because if we use one that already has values in it, the SumBoundary call
   // will end up duplicating those values with each call
   // ********************************************************************************
+  bool tempSource = false;
 
-  MultiFab* tmp_src_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(lev),
-				       this->m_gdb->ParticleDistributionMap(lev),
-				       source.nComp(), tmp_src_width);
-  tmp_src_ptr->setVal(0.);
+  MultiFab* tmp_src_ptr;
+  if (this->OnSameGrids(lev, source) && !isVirtual && !isGhost
+      && source.nGrow() >= tmp_src_width) {
+    tmp_src_ptr = &source;
+  } else {
+    tmp_src_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(lev),
+                               this->m_gdb->ParticleDistributionMap(lev),
+                               source.nComp(), tmp_src_width);
+    tmp_src_ptr->setVal(0.);
+    tempSource = true;
+  }
   BL_PROFILE_VAR("SprayParticles::updateParticles()", UPD_PART);
-  updateParticles(lev, (*state_ptr), (*tmp_src_ptr), dt, time, do_move);
+  updateParticles(lev, (*state_ptr), (*tmp_src_ptr), dt, time, tmp_src_width, do_move);
   BL_PROFILE_VAR_STOP(UPD_PART);
 
   // ********************************************************************************
@@ -121,11 +133,11 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   if (lev > 0) {
     int ncomp = tmp_src_ptr->nComp();
     MultiFab tmp(this->m_gdb->ParticleBoxArray(lev),
-		 this->m_gdb->ParticleDistributionMap(lev),
-		 ncomp, tmp_src_ptr->nGrow());
+                 this->m_gdb->ParticleDistributionMap(lev),
+                 ncomp, tmp_src_ptr->nGrow());
     tmp.setVal(0.);
     tmp.copy(*tmp_src_ptr, 0, 0, ncomp, tmp_src_ptr->nGrow(), tmp_src_ptr->nGrow(),
-	     Geom(lev).periodicity(), FabArrayBase::ADD);
+             Geom(lev).periodicity(), FabArrayBase::ADD);
     tmp_src_ptr->copy(tmp, 0, 0, ncomp, tmp_src_width, tmp_src_width,
 		      Geom(lev).periodicity(), FabArrayBase::COPY);
   } else {
@@ -133,9 +145,11 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   }
 
   // Add new sources into source *after* we have called SumBoundary
-  MultiFab::Add(source,*tmp_src_ptr,0,0, source.nComp(),
-		amrex::min(source.nGrow(), tmp_src_width));
-  delete tmp_src_ptr;
+  if (tempSource) {
+    MultiFab::Add(source, *tmp_src_ptr, 0, 0, source.nComp(),
+                  amrex::min(source.nGrow(), tmp_src_width));
+    delete tmp_src_ptr;
+  }
 
   // Fill ghost cells after we've synced up ..
   // TODO: Check to see if this is needed at all
@@ -155,16 +169,16 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
       auto& pbox = kv.second.GetArrayOfStructs();
       const int Np = pbox.size();
       for (int k = 0; k < Np; ++k) {
-  	ParticleType& p = pbox[k];
-  	//  TODO: Double check this for correctness and figure out what it is doing
-  	if (p.id() <= 0) continue;
-  	if (!this->Where(p, pld, lev, lev, where_width)) {
-  	  if (p.id() == GhostParticleID) {
-  	    p.id() = -1;
-  	  } else {
-  	    p.id() = -1;
-  	  }
-  	}
+        ParticleType& p = pbox[k];
+        //  TODO: Double check this for correctness and figure out what it is doing
+        if (p.id() <= 0) continue;
+        if (!this->Where(p, pld, lev, lev, where_width)) {
+          if (p.id() == GhostParticleID) {
+            p.id() = -1;
+          } else {
+            p.id() = -1;
+          }
+        }
       }
     }
   }
@@ -222,11 +236,12 @@ SprayParticleContainer::estTimestep (int lev, Real cfl) const
 
 void
 SprayParticleContainer::updateParticles(const int&  lev,
-					MultiFab&   state,
-					MultiFab&   source,
-					const Real& flow_dt,
-					const Real& time,
-					const bool  do_move)
+                                        MultiFab&   state,
+                                        MultiFab&   source,
+                                        const Real& flow_dt,
+                                        const Real& time,
+                                        const int   numGhost,
+                                        const bool  do_move)
 {
   AMREX_ASSERT(OnSameGrids(lev, state));
   AMREX_ASSERT(OnSameGrids(lev, source));
@@ -277,6 +292,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
   const int specIndx = PeleC::FirstSpec;
   // Start the ParIter, which loops over separate sets of particles in different boxes
   for (MyParIter pti(*this, lev); pti.isValid(); ++pti) {
+    const Box& tile_box = pti.growntilebox(numGhost);
     int Np = pti.numParticles();
     ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
     auto const ref_h = m_fuelData.refFuelH();
@@ -326,6 +342,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
       // Extract adjacent values and interpolate fluid at particle location
       for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
 	IntVect cur_indx = indx_array[aindx];
+        AMREX_ASSERT(tile_box.contains(cur_indx));
 	Real cur_coef = coef[aindx];
 	Real cur_rho = statearr(cur_indx, rhoIndx);
 	rho_fluid_interp[aindx] = cur_rho;
@@ -550,6 +567,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	  for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
 	    Real cur_coef = -coef[aindx]*sub_source;
 	    IntVect cur_indx = indx_array[aindx];
+            AMREX_ASSERT(tile_box.contains(cur_indx));
 	    if (mom_trans) {
 	      for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
 		const int nd = momIndx + dir;
