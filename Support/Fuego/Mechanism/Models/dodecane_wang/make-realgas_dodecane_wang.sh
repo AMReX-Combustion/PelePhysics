@@ -1,7 +1,7 @@
 
 CHEMINP=dodecane_reduced_mech_jetsurf.txt
 THERMINP=thermdat_jetsurf.txt
-FINALFILE=chemistry.cpp
+FINALFILE=mechanism.cpp
 
 FMC=${PELE_PHYSICS_HOME}/Support/Fuego/Pythia/products/bin/fmc.py
 HEADERDIR=${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/header
