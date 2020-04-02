@@ -44,7 +44,6 @@ all: $(executable)
 EOS_HOME_F90 := $(EOS_HOME)/F90
 EOS_PATH := $(EOS_HOME)/$(strip $(Eos_dir))
 EOS_PATH_F90 := $(EOS_PATH)/F90
-include $(EOS_HOME)/Make.package
 include $(EOS_HOME_F90)/Make.package
 include $(EOS_PATH)/Make.package
 include $(EOS_PATH_F90)/Make.package
