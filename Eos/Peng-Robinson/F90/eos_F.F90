@@ -8,7 +8,7 @@
 !!$  Internal energy, enthalpy, Cp, Cv are calculated using departure functions
 !!$  from ideal gas values
 
-module actual_eos_module
+module eos_module
 
   use amrex_fort_module, only : amrex_real
   use amrex_constants_module
@@ -75,166 +75,251 @@ subroutine actual_eos_init
  
 end subroutine actual_eos_init
 
-subroutine actual_eos(input, state)
+subroutine eos_init(small_temp, small_dens)
+
+  use extern_probin_module
+  use iso_c_binding, only : c_double, c_size_t
+
+  implicit none
+
+  real(amrex_real), optional :: small_temp
+  real(amrex_real), optional :: small_dens
+
+  integer (kind=c_size_t) :: nelem
+
+  nelem = 1
+  call amrex_array_init_snan(mintemp,nelem)
+  call amrex_array_init_snan(maxtemp,nelem)
+  call amrex_array_init_snan(mindens,nelem)
+  call amrex_array_init_snan(maxdens,nelem)
+  call amrex_array_init_snan(minmassfrac,nelem)
+  call amrex_array_init_snan(maxmassfrac,nelem)
+  call amrex_array_init_snan(mine,nelem)
+  call amrex_array_init_snan(maxe,nelem)
+  call amrex_array_init_snan(minp,nelem)
+  call amrex_array_init_snan(maxp,nelem)
+  call amrex_array_init_snan(mins,nelem)
+  call amrex_array_init_snan(maxs,nelem)
+  call amrex_array_init_snan(minh,nelem)
+  call amrex_array_init_snan(maxh,nelem)
+
+  ! Set up any specific parameters or initialization steps required by the EOS we are using.
+
+  call actual_eos_init
+
+  if (present(small_temp)) then
+     if (small_temp < mintemp) then
+        small_temp = mintemp
+     else
+        mintemp = small_temp
+     endif
+  endif
+
+  if (present(small_dens)) then
+     if (small_dens < mindens) then
+        small_dens = mindens
+     else
+        mindens = small_dens
+     endif
+  endif
+
+  initialized = .true.
+
+end subroutine eos_init
+
+subroutine eos_xty(state)
 
  implicit none
 
- integer,      intent(in   ) :: input
+ type (eos_t), intent(inout) :: state
+
+ ! Remains unchanged from Ideal EOS to Peng-Robinson EOS
+ call ckxty (state % molefrac,state % massfrac)
+
+ call PR_EOS_GetSpeedOfSound(state)
+    
+end subroutine eos_xty
+
+subroutine eos_ytx(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ ! Remains unchanged from Ideal EOS to Peng-Robinson EOS
+ call ckytx (state % massfrac,state % molefrac)
+
+ call PR_EOS_GetSpeedOfSound(state)
+
+end subroutine eos_ytx
+
+
+subroutine eos_cpi(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ call PR_EOS_GetSpeciesCp(state)
+
+ call PR_EOS_GetSpeedOfSound(state)
+
+end subroutine eos_cpi
+
+subroutine eos_hi(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ ! Construct the EOS for mixture & Calculate species enthalpy accounting for non-ideal effects
+ call PR_Eos_GetSpeciesH(state)
+
+ call PR_EOS_GetSpeedOfSound(state)
+   
+end subroutine eos_hi
+
+subroutine eos_cv(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ ! Construct the EOS for mixture & Calculate mixture Cv accounting for non-ideal effects
+ call PR_EOS_GetMixtureCv(state)
+
+ call PR_EOS_GetSpeedOfSound(state)
+
+end subroutine eos_cv
+
+subroutine eos_cp(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ ! Construct the EOS for mixture & Calculate mixture Cp accounting for non-ideal effects
+ call PR_EOS_GetMixtureCp(state)
+
+ call PR_EOS_GetSpeedOfSound(state)
+
+end subroutine eos_cp
+
+subroutine eos_mui(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ ! Construct the EOS for mixture & calculate species chemical potential accounting for non-ideal effects
+ call PR_EOS_GetSpecies_ChemicalPotential(state)
+
+ call PR_EOS_GetSpeedOfSound(state)
+
+end subroutine eos_mui
+
+subroutine eos_rt(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ ! (rho, T, massfrac) are inputs, get (p, e)
+ call PR_EOS_GetP_GivenRhoT(state)
+ call PR_EOS_GetE_GivenRhoT(state)
+
+ call PR_EOS_GetSpeedOfSound(state)
+
+end subroutine eos_rt
+
+subroutine eos_rp(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ ! (rho, p, massfrac) are inputs, get (T, e)
+ call PR_EOS_Get_TE_GivenRhoP(state)
+
+ call PR_EOS_GetSpeedOfSound(state)
+
+end subroutine eos_rp
+
+subroutine eos_tp(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ ! (temp, press, massfrac) are inputs, get (rho, e)
+ call PR_EOS_Get_rhoE_GivenTP(state)
+
+ call PR_EOS_GetSpeedOfSound(state)
+
+end subroutine eos_tp
+
+subroutine eos_re(state)
+
+ implicit none
+
  type (eos_t), intent(inout) :: state
 
  integer :: lierr
- real(amrex_real) :: Cvx
 
- ! dispense with quick, independent  calls first
- ! All but the first one of this set assume mass fractions are set
- ! All but the first two assume T is set
- select case (input)
+ ! (rho, e, massfrac) are inputs, get (T, p)
+ call PR_EOS_Get_TP_GivenRhoE(state,lierr)
 
- case (eos_xty)
+ if (lierr .ne. 0) then
+    print *, 'PR EOS: get_T_given_e Y failed, T, e, Y = ', &
+         state % T, state % e, state % massfrac
+ end if
 
-    ! Remains unchanged from Ideal EOS to Peng-Robinson EOS
-    call ckxty (state % molefrac,state % massfrac)
-    
-    return
-
- case (eos_ytx)
-
-    ! Remains unchanged from Ideal EOS to Peng-Robinson EOS
-    call ckytx (state % massfrac,state % molefrac)
-
-    return
-
- case (eos_cpi)
-
-    ! Construct the EOS for mixture & Calculate species Cp accounting for non-ideal effects
-    call PR_Eos_GetSpeciesCp(state)
-
-    return
-
- case (eos_hi)
-
-    ! Construct the EOS for mixture & Calculate species enthalpy accounting for non-ideal effects
-    call PR_Eos_GetSpeciesH(state)
-    
-    return
-
- case (eos_cv)
-
-    ! Construct the EOS for mixture & Calculate mixture Cv accounting for non-ideal effects
-    call PR_Eos_GetMixtureCv(state)
-
-    return
-
- case (eos_cp)
-
-    ! Construct the EOS for mixture & Calculate mixture Cp accounting for non-ideal effects
-    call PR_Eos_GetMixtureCp(state)
-    
-    return
-
- case(eos_mui)
-
-    ! Construct the EOS for mixture & calculate species chemical potential accounting for non-ideal effects
-    call PR_EOS_GetSpecies_ChemicalPotential(state)
-
- case default
-
-    ! Pass through
-
- end select
-
- state % wbar = 1.d0 / sum(state % massfrac(:) * inv_mwt(:))
-
- select case (input)
-
- case (eos_input_rt)
-
-    ! (rho, T, massfrac) are inputs, get (p, e)
-    call PR_EOS_GetP_GivenRhoT(state)
-    call PR_EOS_GetE_GivenRhoT(state)
-
- case (eos_input_tp)
-
-    ! (temp, press, massfrac) are inputs, get (rho, e)
-    call PR_EOS_Get_rhoE_GivenTP(state)
-    
- case (eos_input_rp)
-
-    ! (rho, p, massfrac) are inputs, get (T, e)
-    call PR_EOS_Get_TE_GivenRhoP(state)
-
- case (eos_input_re)
-
-    ! (rho, e, massfrac) are inputs, get (T, p)
-    call PR_EOS_Get_TP_GivenRhoE(state,lierr)
-
-    if (lierr .ne. 0) then
-       print *, 'PR EOS: get_T_given_e Y failed, T, e, Y = ', &
-            state % T, state % e, state % massfrac
-    end if
-
- case (eos_input_ps)
-
-    ! (p, s, massfrac) are inputs unsupported
-#ifndef ACC
-    call amrex_error('EOS: eos_input_ps is not supported in this EOS.')
-#endif
-
- case (eos_input_ph)
-
-    ! (p, enthalpy, massfrac) are inputs unsupported
-#ifndef ACC
-    call amrex_error('EOS: eos_input_ph is not supported in this EOS.')
-#endif
-
- case (eos_input_th)
-
-    ! (T, enthalpy, massfrac) are inputs unsupported
-#ifndef ACC
-    call amrex_error('EOS: eos_input_th is not supported in this EOS.')
-#endif
-
- case (eos_input_rh)
-
-    ! (rho, enthalpy, massfrac) are inputs, unsupported
-#ifndef ACC
-    call amrex_error('EOS: eos_input_rh is not supported in this EOS.')
-#endif
-
- case default
-
-    ! do nothing
-
- end select
-
-!!$ ! By here, we know T, e, rho, p, massfrac and wbar
-!!$
-!!$ call ckcvms(state % T, state % cvi)  ! erg/gi.K
-!!$ call ckcpms(state % T, state % cpi)  ! erg/gi.K
-!!$ call ckhms (state % T, state % hi)    ! erg/gi
-!!$
-!!$ state % cv = sum(state % massfrac(:) * state % cvi(:)) ! erg/g.K
-!!$ state % cp = sum(state % massfrac(:) * state % cpi(:)) ! erg/g.K
-!!$ state % h  = sum(state % massfrac(:) * state %  hi(:)) ! erg/g
-!!$
-!!$ Cvx = state % wbar  *  state % cv ! erg/mole.K
-!!$
-!!$ state % gam1 = (Cvx + Ru) / Cvx ! -
  call PR_EOS_GetSpeedOfSound(state)
-!!$ state % cs = sqrt(state % gam1 * state % p / state % rho) ! cm/s
-!!$
-!!$ state % dpdr_e = state % p / state % rho
-!!$ state % dpde = (state % gam1 - ONE) * state % rho
-!!$
-!!$ ! Try to avoid the expensive log function.  Since we don't need entropy
-!!$ ! in hydro solver, set it to an invalid but "nice" value for the plotfile.
-!!$ state % s = ONE
-!!$ 
-!!$ ! Actually not sure what this is...used in composition derivatives
-!!$ ! in general system (not yet supported)
-!!$ state % dPdr = ZERO
 
-end subroutine actual_eos
+end subroutine eos_re
+
+subroutine eos_ps(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ ! (p, s, massfrac) are inputs unsupported
+ call bl_error('EOS: eos_ps is not supported in this EOS.')
+
+end subroutine eos_ps
+
+subroutine eos_ph(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ call bl_error('EOS: eos_input_ph is not supported in this EOS.')
+
+end subroutine eos_ph
+
+subroutine eos_th(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ call bl_error('EOS: eos_th is not supported in this EOS.')
+
+end subroutine eos_th
+
+subroutine eos_rh(state)
+
+ implicit none
+
+ type (eos_t), intent(inout) :: state
+
+ call bl_error('EOS: eos_input_rh is not supported in this EOS.')
+
+end subroutine eos_rh
+
+
 !===================================================!
 ! Compute the EOS species attractive and repulsive  !
 ! EOS parameters - dependent on critical properties !
@@ -259,6 +344,7 @@ subroutine preComputeAiBi
   end do
   
 end subroutine preComputeAiBi
+
 !=======================================!
 ! Calculate the Accentric factor based  !
 !   Temperature correction              !
@@ -285,6 +371,7 @@ subroutine Calc_Fomega(T)
   end do
 
 end subroutine Calc_Fomega
+
 !==================================!
 !  Compute Am, Bm for the mixture  !
 !==================================!
@@ -342,6 +429,7 @@ subroutine MixingRuleAmBm(T,moleFrac,am,bm)
 
 
 end subroutine MixingRuleAmBm
+
 !==================================!
 !  Compute Am, Bm for the mixture  !
 !==================================!
@@ -392,6 +480,7 @@ subroutine MixingRuleAm(T,moleFrac,am)
   end do
 
 end subroutine MixingRuleAm
+
 !==================================!
 !  Compute Am, Bm for the mixture  !
 !==================================!
@@ -408,6 +497,7 @@ subroutine MixingRuleBm(moleFrac,bm)
   end do
 
 end subroutine MixingRuleBm
+
 !==================================!
 !  Compute dAm/dT for PR EOS      !
 !==================================!
@@ -444,6 +534,7 @@ subroutine Calc_dAmdT(T,moleFrac,am,dAmdT)
   end do
 
 end subroutine Calc_dAmdT
+
 !==================================!
 !  Compute d2Am/dT2 for PR EOS      !
 !==================================!
@@ -468,6 +559,7 @@ subroutine Calc_d2AmdT2(T,moleFrac,am,dAmdT,d2AmdT2)
   d2AmdT2 = (d2AmdT2 - dAmdT)/(2.0*T)
   
 end subroutine Calc_d2AmdT2
+
 !=============================================!
 ! Calculate the roots of the cubic equation   !
 !  to compute compressibility factor          !
@@ -516,6 +608,7 @@ subroutine Calc_CompressFactor_Z(Z,am,bm,P,T,Wbar)
   end if
   
 end subroutine Calc_CompressFactor_Z
+
 !==========================================================!
 ! Given a mixture composition calculate mixture density &  !
 ! internal energy given Pressure and Temperature           !
@@ -552,12 +645,13 @@ subroutine PR_EOS_Get_rhoE_givenTP(state)
   state%e = Eig + (state%am - state%T*state%dAmdT)*K1
 
 end subroutine PR_EOS_Get_rhoE_givenTP
+
 !==========================================================!
 ! Given a mixture composition calculate Pressure           !
 !      given density and Temperature                       !
 !      using Peng-Robinson EOS                             !
 !==========================================================!
-subroutine PR_EOS_GetP_givenRhoT(state)
+subroutine PR_EOS_GetP_GivenRhoT(state)
   implicit none
   type (eos_t), intent(inout) :: state
   real(amrex_real) :: tau,Eig 
@@ -574,12 +668,13 @@ subroutine PR_EOS_GetP_givenRhoT(state)
   state%p = (Ru/state%wbar) * state%T/(tau - state%bm) - state%am/(tau*tau + 2.0*tau*state%bm - state%bm*state%bm)
 
 end subroutine PR_EOS_GetP_GivenRhoT
+
 !==========================================================!
 ! Given a mixture composition calculate internal energy    !
 !    given density and Temperature                         !
 !      using Peng-Robinson EOS                             !
 !==========================================================!
-subroutine PR_EOS_GetE_givenRhoT(state)
+subroutine PR_EOS_GetE_GivenRhoT(state)
   implicit none
   type (eos_t), intent(inout) :: state
   real(amrex_real) :: tau,Eig 
@@ -604,6 +699,7 @@ subroutine PR_EOS_GetE_givenRhoT(state)
   state%e = Eig + (state%am - state%T*state%dAmdT)*K1
 
 end subroutine PR_EOS_GetE_GivenRhoT
+
 !==========================================================!
 !       Generate mixture Peng Robinson EOS
 !  calculate T and internal energy given rho & P
@@ -673,6 +769,7 @@ subroutine PR_EOS_Get_TE_givenRhoP(state)
   state%e = Eig + (state%am - state%T*state%dAmdT)*K1
   
 end subroutine PR_EOS_Get_TE_GivenRhoP
+
 !==========================================================!
 !       Generate mixture Peng Robinson EOS
 !        calculate T and P given rho & e
@@ -749,6 +846,7 @@ subroutine PR_EOS_Get_TP_GivenRhoE(state,lierr)
   state%p = (Ru/state%wbar)*state%T/(tau-state%bm) - state%am/(tau*tau + 2.0*tau*state%bm - state%bm*state%bm)
 
 end subroutine PR_EOS_Get_TP_GivenRhoE
+
 !========================================================!
 ! Given a mixture composition calculate species Cp using !
 !                Peng-Robinson EOS                       !
@@ -761,6 +859,7 @@ subroutine PR_EOS_GetSpeciesCp(state)
 
 
 end subroutine PR_EOS_GetSpeciesCp
+
 !=================================================================!
 ! Given a mixture composition calculate species enthalpy, h using !
 !                Peng-Robinson EOS                                !
@@ -771,6 +870,7 @@ subroutine PR_EOS_GetSpeciesH(state)
 
   
 end subroutine PR_EOS_GetSpeciesH
+
 !========================================================================!
 ! Given a mixture composition calculate species chemical potential, mu_k !
 !           using Peng-Robinson EOS                                      !
@@ -781,6 +881,7 @@ subroutine PR_EOS_GetSpecies_ChemicalPotential(state)
 
   
 end subroutine PR_EOS_GetSpecies_ChemicalPotential
+
 !======================================================================!
 ! Given a mixture composition calculate mixture specific heat Cv using !
 !                Peng-Robinson EOS                                     !
@@ -812,6 +913,7 @@ subroutine PR_EOS_GetMixtureCv(state)
   state%cv = state%cv - state%T*state%d2AmdT2*K1
   
 end subroutine PR_EOS_GetMixtureCv
+
 !======================================================================!
 ! Given a mixture composition calculate mixture specific heat Cp using !
 !                Peng-Robinson EOS                                     !
@@ -856,6 +958,7 @@ subroutine PR_EOS_GetMixtureCp(state)
   state%cp = CviG - state%T*state%d2AmdT2*K1 - state%T*state%dPdT*state%dPdT/state%dpdtau
   
 end subroutine PR_EOS_GetMixtureCp
+
 !=========================================!
 ! Calculate speed of sound using PR EOS   !
 !=========================================!
@@ -906,5 +1009,4 @@ subroutine PR_EOS_GetSpeedOfSound(state)
 
 end subroutine PR_EOS_GetSpeedOfSound
 
-end module actual_eos_module
-
+end module eos_module
