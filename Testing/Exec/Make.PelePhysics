@@ -41,14 +41,16 @@ all: $(executable)
 	@echo SUCCESS
 
 # EOS
+EOS_HOME_F90 := $(EOS_HOME)/F90
 EOS_PATH := $(EOS_HOME)/$(strip $(Eos_dir))
 EOS_PATH_F90 := $(EOS_PATH)/F90
 include $(EOS_HOME)/Make.package
+include $(EOS_HOME_F90)/Make.package
 include $(EOS_PATH)/Make.package
 include $(EOS_PATH_F90)/Make.package
-EXTERN_CORE       += $(EOS_HOME) $(EOS_PATH) $(EOS_PATH_F90)
-INCLUDE_LOCATIONS += $(EOS_HOME) $(EOS_PATH) $(EOS_PATH_F90)
-VPATH_LOCATIONS   += $(EOS_HOME) $(EOS_PATH) $(EOS_PATH_F90)
+EXTERN_CORE       += $(EOS_HOME) $(EOS_HOME_F90) $(EOS_PATH) $(EOS_PATH_F90)
+INCLUDE_LOCATIONS += $(EOS_HOME) $(EOS_HOME_F90) $(EOS_PATH) $(EOS_PATH_F90)
+VPATH_LOCATIONS   += $(EOS_HOME) $(EOS_HOME_F90) $(EOS_PATH) $(EOS_PATH_F90)
 ifeq ($(Eos_dir), Fuego)
   TRANSPORT_TYPE := IDEAL_GAS
 else
