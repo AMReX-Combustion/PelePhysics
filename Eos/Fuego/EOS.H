@@ -1,6 +1,10 @@
 #ifndef _EOS_H_
 #define _EOS_H_
 
+#ifndef RU
+#define RU 8.31446261815324e7
+#endif
+
 #include <AMReX.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
@@ -8,13 +12,7 @@
 #include "mechanism.h"
 #include "chemistry_file.H"
 
-//#include "IndexDefines.H"
-//#include "Constants.H"
-
 namespace EOS {
-
-//extern AMREX_GPU_DEVICE_MANAGED int upassMap[NPASSIVE];
-//extern AMREX_GPU_DEVICE_MANAGED int qpassMap[NPASSIVE];
 
 void init();
 
@@ -73,9 +71,7 @@ RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
 {
   amrex::Real tmp[NUM_SPECIES];
   amrex::Real wbar;
-  amrex::Real RU, RUC, PA;
   CKMMWY(&Y[0], &wbar);
-  CKRP(&RU,&RUC,&PA);
   amrex::Real T = P * wbar / (R * RU);
   CKCVMS(&T, tmp);
   amrex::Real Cv = 0.0;
@@ -91,10 +87,8 @@ void
 RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
 {
   amrex::Real tmp[NUM_SPECIES];
-  amrex::Real RU, RUC, PA;
   amrex::Real P;
   CKPY(&R, &T, Y, &P);
-  CKRP(&RU,&RUC,&PA);
   CKCVMS(&T, tmp);
   amrex::Real Cv = 0.0;
   for (int i = 0; i < NUM_SPECIES; ++i)
@@ -240,8 +234,6 @@ void
 RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 {
   amrex::Real wbar;
-  amrex::Real RU, RUC, PA;
-  CKRP(&RU,&RUC,&PA);
   CKMMWY(&Y[0], &wbar);
   amrex::Real T = P * wbar / (R * RU);
   amrex::Real ei[NUM_SPECIES];
@@ -273,8 +265,6 @@ void
 EY2G(amrex::Real E, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
 {
   amrex::Real wbar, Cv, T, Cvx;
-  amrex::Real RU, RUC, PA;
-  CKRP(&RU,&RUC,&PA);
   EOS::EY2T(E, Y, T);
   EOS::YT2Cv(Y, T, Cv);
   CKMMWY(&Y[0], &wbar);
