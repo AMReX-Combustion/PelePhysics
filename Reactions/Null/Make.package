@@ -1,2 +1,3 @@
+Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Null/F90
 f90EXE_sources += actual_network.f90
 F90EXE_sources += actual_reactor.F90
