@@ -1,5 +1,4 @@
-ifeq ($(TRANSPORT_TYPE), IDEAL_GAS)
-  f90EXE_sources += actual_transport.f90
-else
-  f90EXE_sources += actual_transport_nonideal.f90
-endif
+CEXE_headers += Transport.H
+CEXE_sources += Transport.cpp
+CEXE_sources += TransportParams.cpp
+CEXE_headers += TransportParams.H

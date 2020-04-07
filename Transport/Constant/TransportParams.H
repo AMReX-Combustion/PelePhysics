@@ -8,13 +8,14 @@
 
 namespace transport_params {
 
+void init();
+void finalize();
+
 extern AMREX_GPU_DEVICE_MANAGED amrex::Real const_viscosity;
 extern AMREX_GPU_DEVICE_MANAGED amrex::Real const_bulk_viscosity;
 extern AMREX_GPU_DEVICE_MANAGED amrex::Real const_diffusivity;
 extern AMREX_GPU_DEVICE_MANAGED amrex::Real const_conductivity;
 
-void init();
-void finalize();
 
 } // namespace transport_params
 

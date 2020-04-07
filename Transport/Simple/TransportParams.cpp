@@ -6,17 +6,6 @@
 #include "chemistry_file.H"
 #include "TransportParams.H"
 
-void egtransetWT(amrex::Real* wt);
-void egtransetEPS(amrex::Real* eps);
-void egtransetSIG(amrex::Real* sig);
-void egtransetDIP(amrex::Real* dip);
-void egtransetPOL(amrex::Real* pol);
-void egtransetZROT(amrex::Real* zrot);
-void egtransetNLIN(int* nlin);
-void egtransetCOFETA(amrex::Real* fitmu);
-void egtransetCOFLAM(amrex::Real* fitlam);
-void egtransetCOFD(amrex::Real* fitdbin);
-
 namespace transport_params {
 
 AMREX_GPU_DEVICE_MANAGED amrex::Real* wt;

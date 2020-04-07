@@ -1,20 +1,20 @@
 #include "Transport.H"
 
 void
-pc_transport_init()
+transport_init()
 {
   transport_params::init();
 }
 
 void
-pc_transport_close()
+transport_close()
 {
   transport_params::finalize();
 }
 
 AMREX_GPU_DEVICE
 void
-pc_get_transport_coeffs(
+get_transport_coeffs(
   amrex::Box const& bx,
   amrex::Array4<const amrex::Real> const& q,
   amrex::Array4<amrex::Real> const& D)
@@ -47,7 +47,7 @@ pc_get_transport_coeffs(
           massloc[n] = q(i, j, k, QFS + n);
         }
 
-        pc_actual_transport(
+        transport(
           wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, T, rho, massloc,
           Ddiag, muloc, xiloc, lamloc);
 

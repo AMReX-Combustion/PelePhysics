@@ -16,24 +16,21 @@
 #include "IndexDefines.H"
 #include "TransportParams.H"
 
-void pc_transport_init();
-void pc_transport_close();
+void transport_init();
+void transport_close();
 
 AMREX_GPU_DEVICE
-void pc_get_transport_coeffs(
+void get_transport_coeffs(
   amrex::Box const& bx,
   amrex::Array4<const amrex::Real> const& q,
   amrex::Array4<amrex::Real> const& D);
-
-AMREX_GPU_HOST_DEVICE
-void CKCVMS(amrex::Real* Tloc, amrex::Real* cvk);
 
 using namespace transport_params;
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-pc_comp_pure_bulk(amrex::Real Tloc, amrex::Real* muloc, amrex::Real* xiloc)
+comp_pure_bulk(amrex::Real Tloc, amrex::Real* muloc, amrex::Real* xiloc)
 {
   amrex::Real cvk[NUM_SPECIES];
   amrex::Real cvkint[NUM_SPECIES];
@@ -90,7 +87,7 @@ pc_comp_pure_bulk(amrex::Real Tloc, amrex::Real* muloc, amrex::Real* xiloc)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-pc_actual_transport(
+transport(
   bool wtr_get_xi,
   bool wtr_get_mu,
   bool wtr_get_lam,
@@ -140,7 +137,7 @@ pc_actual_transport(
   for (int i = 0; i < NUM_SPECIES; ++i) {
     Xloc[i] = Yloc[i] * wbar * iwt[i];
   }
-  if (wtr_get_mu == true) {
+  if (wtr_get_mu) {
     for (int i = 0; i < NUM_SPECIES; ++i) {
       muloc[i] = fitmu[4 * i] + fitmu[1 + 4 * i] * logT[0] +
                  fitmu[2 + 4 * i] * logT[1] + fitmu[3 + 4 * i] * logT[2];
@@ -158,8 +155,8 @@ pc_actual_transport(
     //  assumption that we only get bulk viscosity if we are already getting
     //  shear viscosity
 
-    if (wtr_get_xi == true) {
-      pc_comp_pure_bulk(Tloc, muloc, xiloc);
+    if (wtr_get_xi) {
+      comp_pure_bulk(Tloc, muloc, xiloc);
       xi = 0.0;
       for (int i = 0; i < NUM_SPECIES; ++i) {
         xi = xi + Xloc[i] * (std::sqrt(std::sqrt(
@@ -171,7 +168,7 @@ pc_actual_transport(
     }
   }
 
-  if (wtr_get_lam == true) {
+  if (wtr_get_lam) {
     for (int i = 0; i < NUM_SPECIES; ++i) {
       lamloc[i] = fitlam[4 * i] + fitlam[1 + 4 * i] * logT[0] +
                   fitlam[2 + 4 * i] * logT[1] + fitlam[3 + 4 * i] * logT[2];
@@ -188,7 +185,7 @@ pc_actual_transport(
     lam = lam * lam * lam * lam; // lam = lam^4
   }
 
-  if (wtr_get_Ddiag == true) {
+  if (wtr_get_Ddiag) {
     //       for (int i = 0; i < NUM_SPECIES ; ++i){
     //          for (int j = 0; j < i-1 ; ++j){
     //               dbinloc[i+NUM_SPECIES*j] =

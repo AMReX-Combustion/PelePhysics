@@ -11,15 +11,24 @@
 
 #include "mechanism.h"
 #include "chemistry_file.H"
-#include "TransportParams.H"
 #include "IndexDefines.H"
+#include "TransportParams.H"
+
+void transport_init();
+void transport_close();
+
+AMREX_GPU_DEVICE
+void get_transport_coeffs(
+  amrex::Box const& bx,
+  amrex::Array4<const amrex::Real> const& q,
+  amrex::Array4<amrex::Real> const& D);
 
 using namespace transport_params;
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-pc_actual_transport(
+transport(
   bool wtr_get_xi,
   bool wtr_get_mu,
   bool wtr_get_lam,
@@ -34,7 +43,7 @@ pc_actual_transport(
 
 {
 
-  if (wtr_get_lam == true) {
+  if (wtr_get_lam) {
     lam = const_conductivity;
   }
 
@@ -52,14 +61,5 @@ pc_actual_transport(
     }
   }
 }
-
-void pc_transport_init();
-void pc_transport_close();
-
-AMREX_GPU_DEVICE
-void pc_get_transport_coeffs(
-  amrex::Box const& bx,
-  amrex::Array4<const amrex::Real> const& q,
-  amrex::Array4<amrex::Real> const& D);
 
 #endif
