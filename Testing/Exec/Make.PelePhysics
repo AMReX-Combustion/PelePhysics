@@ -41,6 +41,7 @@ all: $(executable)
 	@echo SUCCESS
 
 # EOS
+# Both Fortran and cpp can be loaded for EOS
 EOS_HOME_F90 := $(EOS_HOME)/F90
 EOS_PATH := $(EOS_HOME)/$(strip $(Eos_dir))
 EOS_PATH_F90 := $(EOS_PATH)/F90
