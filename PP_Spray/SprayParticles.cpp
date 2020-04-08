@@ -110,10 +110,11 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   bool tempSource = false;
 
   MultiFab* tmp_src_ptr;
-  if (this->OnSameGrids(lev, source) && !isVirtual && !isGhost
-      && source.nGrow() >= tmp_src_width) {
-    tmp_src_ptr = &source;
-  } else {
+//   if (this->OnSameGrids(lev, source) && !isVirtual && !isGhost
+//       && source.nGrow() >= tmp_src_width) {
+//     tmp_src_ptr = &source;
+//   } else {
+  {
     tmp_src_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(lev),
                                this->m_gdb->ParticleDistributionMap(lev),
                                source.nComp(), tmp_src_width);
@@ -176,7 +177,7 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
           if (p.id() == GhostParticleID) {
             p.id() = -1;
           } else {
-            p.id() = -1;
+            Abort("Trying to remove non-ghost particle");
           }
         }
       }
@@ -203,24 +204,42 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
 Real
 SprayParticleContainer::estTimestep (int lev, Real cfl) const
 {
+  BL_PROFILE("ParticleContainer::estTimestep()");
   // TODO: Clean up this mess and bring the num particle functionality back
   Real dt = std::numeric_limits<Real>::max();
-
   if (this->GetParticles().size() == 0 || PeleC::particle_mom_tran == 0)
     return dt;
 
   const Real strttime = ParallelDescriptor::second();
   const Geometry& geom = this->m_gdb->Geom(lev);
   const auto dxi = geom.InvCellSizeArray();
-  // TODO: This assumes that pstateVel = 0 and dxi[0] = dxi[1] = dxi[2]
-  using PType = typename SprayParticleContainer::SuperParticleType;
-  Real max_mag_vdx = ReduceMax(*this, lev, [=] AMREX_GPU_HOST_DEVICE (const PType& p) ->
-  			       Real { return amrex::max(AMREX_D_DECL(std::abs(p.rdata(0)),
-  								     std::abs(p.rdata(1)),
-  								     std::abs(p.rdata(2))));})*dxi[0];
-  Real global_dt = (max_mag_vdx > 0.) ? (cfl/max_mag_vdx) : 1.E50;
-  dt = global_dt;
-
+  {
+    amrex::ReduceOps<amrex::ReduceOpMin> reduce_op;
+    amrex::ReduceData<amrex::Real> reduce_data(reduce_op);
+    using ReduceTuple = typename decltype(reduce_data)::Type;
+    for (MyParConstIter pti(*this, lev); pti.isValid(); ++pti) {
+      const AoS& pbox = pti.GetArrayOfStructs();
+      const ParticleType* pstruct = pbox().data();
+      const int n = pbox.size();
+      reduce_op.eval(n, reduce_data,
+                     [=] AMREX_GPU_DEVICE (const int i) -> ReduceTuple
+      {
+        const ParticleType& p = pstruct[i];
+        // TODO: This assumes that pstateVel = 0 and dxi[0] = dxi[1] = dxi[2]
+        if (p.id() > 0) {
+          const Real max_mag_vdx = amrex::max(AMREX_D_DECL(std::abs(p.rdata(0)),
+                                                           std::abs(p.rdata(1)),
+                                                           std::abs(p.rdata(2))))*dxi[0];
+          Real dt_part = (max_mag_vdx > 0.) ? (cfl/max_mag_vdx) : 1.E50;
+          return dt_part;
+        }
+        return 1.E50;
+      });
+    }
+    ReduceTuple hv = reduce_data.value();
+    Real ldt_cpu = amrex::get<0>(hv);
+    dt = amrex::min(dt,ldt_cpu);
+  }
   ParallelDescriptor::ReduceRealMin(dt);
 
   if (this->m_verbose > 1) {
@@ -252,7 +271,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
   const Real vol = AMREX_D_TERM(dx[0],*dx[1],*dx[2]);
   const Real inv_vol = 1./vol;
   // Set all constants
-  const Real eps = 1.E-15;
+  const Real C_eps = 1.E-15;
   const Real B_eps = 1.E-7;
   const Real dia_eps = 2.E-6;
   const int nSubMax = 100;
@@ -307,7 +326,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
     AMREX_FOR_1D ( Np, i,
     {
       ParticleType& p = pstruct[i];
-      if (p.id() == -1) continue;
+      if (p.id() <= 0) continue;
       Real dt = flow_dt;
       Real sub_source = inv_vol;
       // TODO: I was hoping to not have to instantiate this everytime
@@ -451,7 +470,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	    // Compute the mass fraction of the fuel vapor at droplet surface
 	    Real Yfv = calcVaporMF(part_latent, T_part, p_fluid,
 				   mw_mix, mw_fluid[fspec],
-				   invBoilT[spf], inv_Ru, p0, eps);
+				   invBoilT[spf], inv_Ru, p0, C_eps);
 	    B_M_num[spf] = (Yfv - Y_fluid[fspec])/(1. - Yfv);
 #ifndef LEGACY_SPRAY
 	    Y_skin[fspec] += Yfv + rule*(Y_fluid[fspec] - Yfv);
@@ -467,15 +486,15 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	    cp_skin += Y_skin[sp]*cp_n[sp];
 	  }
 	} else {
-	  for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) Y_dot[spf] = 0.;
-	  for (int sp = 0; sp != NUM_SPECIES; ++sp) Y_skin[sp] = Y_fluid[sp];
+          for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) Y_dot[spf] = 0.;
+          for (int sp = 0; sp != NUM_SPECIES; ++sp) Y_skin[sp] = Y_fluid[sp];
 	}
 	Real lambda_skin = 0.;
 	Real mu_skin = 0.;
 	Real xi_skin = 0.;
-	pc_actual_transport(get_xi, get_mu, get_lambda, get_Ddiag,
-			    T_fluid, rho_fluid, Y_skin, Ddiag,
-			    mu_skin, xi_skin, lambda_skin);
+        transport(get_xi, get_mu, get_lambda, get_Ddiag,
+                  T_fluid, rho_fluid, Y_skin, Ddiag,
+                  mu_skin, xi_skin, lambda_skin);
 	// Ensure gas is not all fuel to allow evaporation
 	bool evap_fuel = (sumYFuel >= 1.) ? false : true;
 	RealVect diff_vel = vel_fluid - vel_part;

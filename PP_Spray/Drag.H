@@ -66,13 +66,13 @@ Real calcVaporMF(const Real& h_L,
 		 const Real& inv_boil_temp,
 		 const Real& inv_Ru,
 		 const Real& p_ref,
-		 const Real& eps)
+		 const Real& C_eps)
 {
   Real pres_sat = p_ref*std::exp(h_L*inv_Ru*mw_fuel*
-				 (inv_boil_temp - 1./T_part)) + eps;
+				 (inv_boil_temp - 1./T_part)) + C_eps;
   Real Yfv = mw_fuel*pres_sat/(mw_mix*p_fluid +
 			       (mw_fuel - mw_mix)* pres_sat);
-  return amrex::min(1. - eps, Yfv);
+  return amrex::min(1. - C_eps, Yfv);
 }
 
 // Calculate evaporation rate and Sherwood number
