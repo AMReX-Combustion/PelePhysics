@@ -2,6 +2,8 @@ module main_module
 
   use amrex_fort_module, only : amrex_real
 
+#include "mechanism.h"
+
   implicit none
 
   integer ::  iE_main, fuel_ID, oxy_ID, bath_ID
@@ -11,7 +13,6 @@ contains
     subroutine extern_init(name,namlen,fuel_ID_in,oxy_ID_in,bath_ID_in,cvode_iE_in) bind(C, name="extern_init")
 
     use, intrinsic :: iso_c_binding
-    use network
     use eos_module
     use transport_module
 
@@ -33,7 +34,7 @@ contains
     ! extern_probin_module
     call runtime_init(name,namlen)
 
-    call network_init()
+    call ckinit()
 
     call eos_init(small_temp, small_dens)
 
@@ -54,13 +55,11 @@ contains
 
   subroutine get_num_spec(nspecies_out) bind(C, name="get_num_spec")
 
-    use network, only : nspecies
-
     implicit none
 
     integer, intent(out) :: nspecies_out
 
-    nspecies_out = nspecies
+    nspecies_out = NUM_SPECIES
 
   end subroutine get_num_spec
 
@@ -75,7 +74,6 @@ contains
        bind(C, name="initialize_data")
 
     use amrex_constants_module, only: M_PI, HALF, ONE, TWO, ZERO
-    use network, only: nspecies
     use eos_type_module
     use eos_module
 
@@ -88,8 +86,8 @@ contains
     integer         , intent(in   ) ::  rEs_lo(3), rEs_hi(3)
     real(amrex_real), intent(in   ) ::     dx(3)
     real(amrex_real), intent(in   ) ::    plo(3),   phi(3)
-    real(amrex_real), intent(inout) ::  rhoY(rY_lo(1):rY_hi(1),rY_lo(2):rY_hi(2),rY_lo(3):rY_hi(3),nspecies+1)
-    real(amrex_real), intent(inout) ::  rhoY_src(rY_src_lo(1):rY_src_hi(1),rY_src_lo(2):rY_src_hi(2),rY_src_lo(3):rY_src_hi(3),nspecies)
+    real(amrex_real), intent(inout) ::  rhoY(rY_lo(1):rY_hi(1),rY_lo(2):rY_hi(2),rY_lo(3):rY_hi(3),NUM_SPECIES+1)
+    real(amrex_real), intent(inout) ::  rhoY_src(rY_src_lo(1):rY_src_hi(1),rY_src_lo(2):rY_src_hi(2),rY_src_lo(3):rY_src_hi(3),NUM_SPECIES)
     real(amrex_real), intent(inout) ::  rhoE(rE_lo(1):rE_hi(1),rE_lo(2):rE_hi(2),rE_lo(3):rE_hi(3),1)
     real(amrex_real), intent(inout) ::  rhoEs(rEs_lo(1):rEs_hi(1),rEs_lo(2):rEs_hi(2),rEs_lo(3):rEs_hi(3),1)
 
@@ -104,7 +102,7 @@ contains
     Temp_hi = 2500.d0
     dTemp = 100.d0
 
-    if (nspecies.lt.3) then
+    if (NUM_SPECIES.lt.3) then
        stop 'This step assumes that there are at least 3 species'
     endif
     eos_state%molefrac = 0.d0
@@ -130,11 +128,11 @@ contains
 
              call eos_tp(eos_state)
 
-             ! rhoY(:nspecies) = rhoY, rhoY(nspecies+1) = T
-             rhoY(i,j,k,1:nspecies) = eos_state % massfrac * eos_state % rho
-             rhoY(i,j,k,nspecies+1) = eos_state % T
-             ! rhoY_src(:nspecies) = rhoForcingSpecs
-             rhoY_src(i,j,k,1:nspecies) = 0.0d0
+             ! rhoY(:NUM_SPECIES) = rhoY, rhoY(NUM_SPECIES+1) = T
+             rhoY(i,j,k,1:NUM_SPECIES) = eos_state % massfrac * eos_state % rho
+             rhoY(i,j,k,NUM_SPECIES+1) = eos_state % T
+             ! rhoY_src(:NUM_SPECIES) = rhoForcingSpecs
+             rhoY_src(i,j,k,1:NUM_SPECIES) = 0.0d0
              if (iE_main == 1) then
                  ! all in e
 #if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
