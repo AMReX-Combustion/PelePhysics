@@ -9,17 +9,17 @@ namespace transport_params {
 void init();
 void finalize();
 
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real* wt;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real* iwt;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eps;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real* sig;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real* dip;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real* pol;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real* zrot;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real* fitmu;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real* fitlam;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real* fitdbin;
-extern AMREX_GPU_DEVICE_MANAGED int* nlin;
+extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_wt;
+extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_iwt;
+extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_eps;
+extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_sig;
+extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_dip;
+extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_pol;
+extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_zrot;
+extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_fitmu;
+extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_fitlam;
+extern AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_fitdbin;
+extern AMREX_GPU_DEVICE_MANAGED int* eos_nlin;
 extern AMREX_GPU_DEVICE_MANAGED int array_size;
 extern AMREX_GPU_DEVICE_MANAGED int fit_length;
 

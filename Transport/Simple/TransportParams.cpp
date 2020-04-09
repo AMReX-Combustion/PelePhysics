@@ -8,17 +8,17 @@
 
 namespace transport_params {
 
-AMREX_GPU_DEVICE_MANAGED amrex::Real* wt;
-AMREX_GPU_DEVICE_MANAGED amrex::Real* iwt;
-AMREX_GPU_DEVICE_MANAGED amrex::Real* eps;
-AMREX_GPU_DEVICE_MANAGED amrex::Real* sig;
-AMREX_GPU_DEVICE_MANAGED amrex::Real* dip;
-AMREX_GPU_DEVICE_MANAGED amrex::Real* pol;
-AMREX_GPU_DEVICE_MANAGED amrex::Real* zrot;
-AMREX_GPU_DEVICE_MANAGED amrex::Real* fitmu;
-AMREX_GPU_DEVICE_MANAGED amrex::Real* fitlam;
-AMREX_GPU_DEVICE_MANAGED amrex::Real* fitdbin;
-AMREX_GPU_DEVICE_MANAGED int* nlin;
+AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_wt;
+AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_iwt;
+AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_eps;
+AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_sig;
+AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_dip;
+AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_pol;
+AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_zrot;
+AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_fitmu;
+AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_fitlam;
+AMREX_GPU_DEVICE_MANAGED amrex::Real* eos_fitdbin;
+AMREX_GPU_DEVICE_MANAGED int* eos_nlin;
 AMREX_GPU_DEVICE_MANAGED int array_size;
 AMREX_GPU_DEVICE_MANAGED int fit_length;
 
@@ -29,61 +29,61 @@ init()
   fit_length = NUM_FIT;
   //    std::cout << " array_size " << array_size << std::endl;
   //    std::cout << " fit_length " << fit_length << std::endl;
-  wt = static_cast<amrex::Real*>(
+  eos_wt = static_cast<amrex::Real*>(
     amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real) * array_size));
-  iwt = static_cast<amrex::Real*>(
+  eos_iwt = static_cast<amrex::Real*>(
     amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real) * array_size));
-  eps = static_cast<amrex::Real*>(
+  eos_eps = static_cast<amrex::Real*>(
     amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real) * array_size));
-  sig = static_cast<amrex::Real*>(
+  eos_sig = static_cast<amrex::Real*>(
     amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real) * array_size));
   dip = static_cast<amrex::Real*>(
     amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real) * array_size));
-  pol = static_cast<amrex::Real*>(
+  eos_pol = static_cast<amrex::Real*>(
     amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real) * array_size));
-  zrot = static_cast<amrex::Real*>(
+  eos_zrot = static_cast<amrex::Real*>(
     amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real) * array_size));
 
-  fitmu = static_cast<amrex::Real*>(amrex::The_Managed_Arena()->alloc(
+  eos_fitmu = static_cast<amrex::Real*>(amrex::The_Managed_Arena()->alloc(
     sizeof(amrex::Real) * array_size * fit_length));
-  fitlam = static_cast<amrex::Real*>(amrex::The_Managed_Arena()->alloc(
+  eos_fitlam = static_cast<amrex::Real*>(amrex::The_Managed_Arena()->alloc(
     sizeof(amrex::Real) * array_size * fit_length));
-  fitdbin = static_cast<amrex::Real*>(amrex::The_Managed_Arena()->alloc(
+  eos_fitdbin = static_cast<amrex::Real*>(amrex::The_Managed_Arena()->alloc(
     sizeof(amrex::Real) * array_size * array_size * fit_length));
 
-  nlin = static_cast<int*>(
+  eos_nlin = static_cast<int*>(
     amrex::The_Managed_Arena()->alloc(sizeof(int) * array_size));
 
-  egtransetWT(wt);
-  egtransetEPS(eps);
-  egtransetSIG(sig);
-  egtransetDIP(dip);
-  egtransetPOL(pol);
-  egtransetZROT(zrot);
-  egtransetNLIN(nlin);
-  egtransetCOFETA(fitmu);
-  egtransetCOFLAM(fitlam);
-  egtransetCOFD(fitdbin);
+  egtransetWT(eos_wt);
+  egtransetEPS(eos_eps);
+  egtransetSIG(eos_sig);
+  egtransetDIP(eos_dip);
+  egtransetPOL(eos_pol);
+  egtransetZROT(eos_zrot);
+  egtransetNLIN(eos_nlin);
+  egtransetCOFETA(eos_fitmu);
+  egtransetCOFLAM(eos_fitlam);
+  egtransetCOFD(eos_fitdbin);
 
   for (int i = 0; i < array_size; ++i) {
-    iwt[i] = 1. / wt[i];
+    eos_iwt[i] = 1. / eos_wt[i];
   }
 }
 
 void
 finalize()
 {
-  amrex::The_Managed_Arena()->free(wt);
-  amrex::The_Managed_Arena()->free(iwt);
-  amrex::The_Managed_Arena()->free(eps);
-  amrex::The_Managed_Arena()->free(sig);
-  amrex::The_Managed_Arena()->free(dip);
-  amrex::The_Managed_Arena()->free(pol);
-  amrex::The_Managed_Arena()->free(zrot);
-  amrex::The_Managed_Arena()->free(fitmu);
-  amrex::The_Managed_Arena()->free(fitlam);
-  amrex::The_Managed_Arena()->free(fitdbin);
-  amrex::The_Managed_Arena()->free(nlin);
+  amrex::The_Managed_Arena()->free(eos_wt);
+  amrex::The_Managed_Arena()->free(eos_iwt);
+  amrex::The_Managed_Arena()->free(eos_eps);
+  amrex::The_Managed_Arena()->free(eos_sig);
+  amrex::The_Managed_Arena()->free(eos_dip);
+  amrex::The_Managed_Arena()->free(eos_pol);
+  amrex::The_Managed_Arena()->free(eos_zrot);
+  amrex::The_Managed_Arena()->free(eos_fitmu);
+  amrex::The_Managed_Arena()->free(eos_fitlam);
+  amrex::The_Managed_Arena()->free(eos_fitdbin);
+  amrex::The_Managed_Arena()->free(eos_nlin);
 }
 
 } // namespace transport_params
