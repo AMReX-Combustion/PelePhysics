@@ -18,3 +18,8 @@ AMREX_GPU_HOST_DEVICE void CKFINALIZE()
 {
 }
 
+AMREX_GPU_HOST_DEVICE void CKWC(double *  T, double *  C,  double *  wdot)
+{
+     wdot[0] = 0.0e0;
+}
+
