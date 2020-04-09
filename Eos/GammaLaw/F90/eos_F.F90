@@ -15,7 +15,10 @@ module eos_module
 
   real(amrex_real), save :: gamma_const
 
-  public :: eos_init, eos_xty, eos_ytx, eos_ytx_vec, eos_cpi, eos_hi, eos_hi_vec, eos_cv, eos_cp, eos_p_wb, eos_wb, eos_get_activity, eos_rt, eos_tp, eos_rp, eos_re, eos_ps, eos_ph, eos_th, eos_rh, eos_get_transport, eos_h, eos_deriv, eos_mui
+  public :: eos_init, eos_xty, eos_ytx, eos_ytx_vec, eos_cpi, eos_hi, &
+          eos_hi_vec, eos_cv, eos_cp, eos_p_wb, eos_wb, eos_get_activity, &
+          eos_rt, eos_tp, eos_rp, eos_re, eos_ps, eos_ph, eos_th, eos_rh, &
+          eos_get_transport, eos_h, eos_deriv, eos_mui, eos_get_activity_h
 
 contains
 
@@ -313,6 +316,16 @@ contains
     call bl_error('EOS: eos_get_activity is not supported in this EOS.')
 
   end subroutine eos_get_activity
+
+  subroutine eos_get_activity_h(state)
+
+    implicit none
+
+    type (eos_t), intent(inout) :: state
+
+    call bl_error('EOS: eos_get_activity_h is not supported in this EOS.')
+
+  end subroutine eos_get_activity_h
 
   subroutine eos_get_transport(state)
 
