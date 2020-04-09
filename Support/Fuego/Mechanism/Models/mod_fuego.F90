@@ -333,31 +333,34 @@ contains
 
       call ckinit()
 
-      call cksyme(names, L_elem_name) 
-
-      ic = 1
-      do i = 1, NUM_ELEMENTS
-         do ii=1, L_elem_name
-            elem_names(i)(ii:ii) = char(names(ic))
-            ic = ic + 1
-         end do
-      end do
-
-      call cksyms(names, L_spec_name) 
-
-      ic = 1
-      do i = 1, NUM_SPECIES
-         do ii=1, L_spec_name
-            spec_names(i)(ii:ii) = char(names(ic))
-            ic = ic+1
-         end do
-      end do
-
       if (NUM_SPECIES > 1) then
+          call cksyme(names, L_elem_name) 
+
+          ic = 1
+          do i = 1, NUM_ELEMENTS
+             do ii=1, L_elem_name
+                elem_names(i)(ii:ii) = char(names(ic))
+                ic = ic + 1
+             end do
+          end do
+
+          call cksyms(names, L_spec_name) 
+
+          ic = 1
+          do i = 1, NUM_SPECIES
+             do ii=1, L_spec_name
+                spec_names(i)(ii:ii) = char(names(ic))
+                ic = ic+1
+             end do
+          end do
+
           call ckwt(molecular_weight)
       else
+          elem_names(1) = "X"
+          spec_names(1) = "X"
           molecular_weight = mwt_scalar
       end if
+
       inv_mwt = 1.d0 / molecular_weight
 
       call ckrp(Ru, Ruc, Patm)
