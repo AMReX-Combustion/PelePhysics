@@ -4,8 +4,6 @@ module actual_transport_module
   use eos_type_module
   use transport_type_module
   use fuego_chemistry
-  use chemistry_module, only : Ru
-  use network, only : nspecies
 
   implicit none
 

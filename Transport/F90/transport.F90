@@ -65,7 +65,7 @@ contains
        lam,        lam_lo,lam_hi) &
        bind(C, name="get_transport_coeffs")
 
-    use network, only: nspecies, naux
+    use fuego_chemistry, only: nspecies, naux
     use eos_module
 
     implicit none
@@ -138,7 +138,7 @@ contains
        mu,          mu_lo, mu_hi) &
        bind(C, name="get_visco_coeffs")
 
-    use network, only: nspecies
+    use fuego_chemistry, only: nspecies
     use eos_module
 
     implicit none
@@ -202,7 +202,7 @@ contains
        Daux,       Dau_lo,Dau_hi) &
        bind(C, name="get_transport_coeffs_aux")
 
-    use network, only: nspecies, naux
+    use fuego_chemistry, only: nspecies, naux
     use eos_module
 
     implicit none

@@ -1,7 +1,7 @@
 module transport_type_module
 
   use amrex_fort_module, only : amrex_real
-  use network, only: nspecies
+  use fuego_chemistry, only: nspecies
   use eos_module
 
   implicit none
