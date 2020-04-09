@@ -2,7 +2,7 @@ module reactor_module
 
   use amrex_fort_module, only : amrex_real
   use amrex_paralleldescriptor_module, only: parallel_IOProcessor => amrex_pd_ioprocessor
-  use fuego_chemistry, only: nspecies, spec_names
+  use fuego_chemistry
   use react_type_module
   use eos_type_module
 
@@ -324,7 +324,6 @@ contains
   ! Original DVODE version
   subroutine f_rhs(neq, time, y, ydot, rpar, ipar)
 
-    use fuego_chemistry, only : molecular_weight
     use eos_module
 
     implicit none
