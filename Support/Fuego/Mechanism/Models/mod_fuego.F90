@@ -358,7 +358,7 @@ contains
       else
           elem_names(1) = "X"
           spec_names(1) = "X"
-          molecular_weight = mwt_scalar
+          molecular_weight(1) = mwt_scalar
       end if
 
       inv_mwt = 1.d0 / molecular_weight
