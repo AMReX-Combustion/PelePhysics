@@ -40,6 +40,7 @@ void CKXNUM(char * line, int * nexp, int * lout, int * nval, double *  rval, int
 void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);
 void CKSYME(int * kname, int * lenkname);
 void CKSYMS(int * kname, int * lenkname);
+void CKSYMS_STR(amrex::Vector<std::string>& kname);
 void CKRP(double *  ru, double *  ruc, double *  pa);
 void CKPX(double *  rho, double *  T, double *  x, double *  P);
 AMREX_GPU_HOST_DEVICE void CKPY(double *  rho, double *  T, double *  y, double *  P);
