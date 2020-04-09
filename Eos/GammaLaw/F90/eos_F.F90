@@ -7,21 +7,13 @@ module eos_module
 
   use amrex_fort_module, only : amrex_real
   use eos_type_module
+  use fuego_chemistry, only : Ru, molecular_weight 
 
   implicit none
 
   character (len=64) :: eos_name = "gamma_law"
 
   real(amrex_real), save :: gamma_const
-  double precision, parameter :: R = 8.314462145468952d7
-
-  integer, parameter :: nelements = 1
-  integer, parameter :: L_elem_name = 3 ! Each element name has at most 3 characters
-  character*(L_elem_name), save :: elem_names(nelements)
-
-  !integer, parameter :: nspecies = 1 ! already in eos_type_module
-  integer, parameter :: L_spec_name = 16 ! Each species name has at most 8 characters
-  character*(L_spec_name), save :: spec_names(nspecies)
 
   public :: eos_init, eos_xty, eos_ytx, eos_ytx_vec, eos_cpi, eos_hi, eos_hi_vec, eos_cv, eos_cp, eos_p_wb, eos_wb, eos_get_activity, eos_rt, eos_tp, eos_rp, eos_re, eos_ps, eos_ph, eos_th, eos_rh, eos_get_transport, eos_h, eos_deriv, eos_mui
 
@@ -46,9 +38,6 @@ contains
        call bl_error("gamma_const cannot be < 0")
     end if
 
-    elem_names(1) = "X"
-    spec_names(1) = "X"
-
     mintemp     = 1.d-200
     maxtemp     = 1.d200
     mindens     = 1.d-200
@@ -68,19 +57,17 @@ contains
 
   subroutine eos_wb(state)
 
-    use network, only: molec_wt
     implicit none
 
     type (eos_t), intent(inout) :: state
 
-    state % wbar = 1.d0 / sum(state % massfrac(:) / molec_wt(:))
+    state % wbar = 1.d0 / sum(state % massfrac(:) / molecular_weight(:))
 
   end subroutine eos_wb
 
   subroutine eos_top(state)
 
     use amrex_constants_module
-    use network, only: molec_wt
 
     implicit none
 
@@ -89,7 +76,7 @@ contains
     ! Calculate wbar
     call eos_wb(state)
     state % gam1 = gamma_const
-    state % cv = R / (state % wbar * (state % gam1 - ONE))
+    state % cv = Ru / (state % wbar * (state % gam1 - ONE))
     state % cp = state % gam1 * state % cv
     state % cpi = state % cp
 
@@ -161,7 +148,7 @@ contains
 
     call eos_top(state)
 
-    state % rho = state % p * state % wbar / (R * state % T)
+    state % rho = state % p * state % wbar / (Ru * state % T)
     state % e   = state % p / (state % rho * (state % gam1 - ONE))
     state % s   = ONE
 
@@ -182,7 +169,7 @@ contains
     call eos_top(state)
 
     poverrho = state % p / state % rho
-    state % T = poverrho * state % wbar / R
+    state % T = poverrho * state % wbar / Ru
     state % e = poverrho / (state % gam1 - ONE)
     state % s = ONE
 
@@ -204,7 +191,7 @@ contains
 
     poverrho = (state % gam1 - ONE) * state % e
     state % p = poverrho * state % rho
-    state % T = poverrho * state % wbar / R
+    state % T = poverrho * state % wbar / Ru
     state % s = ONE
 
     call eos_bottom(state)
@@ -340,7 +327,6 @@ contains
   subroutine eos_hi_vec(mass, masslo, masshi, T, Tlo, Thi, hi, hilo, hihi, low, high, Nsp)
 
     use amrex_constants_module
-    use network, only: molec_wt
 
     implicit none
 
@@ -360,7 +346,7 @@ contains
        do k = low(3)-1, high(3) + 1
           do j = low(2)-1, high(2) + 1
              do i = low(1)-1, high(1) + 1
-                hi(i,j,k,n) = R / ((1.d0 / sum(mass(i,j,k,:) / molec_wt(:))) * (gamma_const - ONE)) * T(i,j,k) * gamma_const
+                hi(i,j,k,n) = Ru / ((1.d0 / sum(mass(i,j,k,:) / molecular_weight(:))) * (gamma_const - ONE)) * T(i,j,k) * gamma_const
              enddo
           enddo
        enddo

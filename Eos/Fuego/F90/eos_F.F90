@@ -8,9 +8,7 @@ module eos_module
   use amrex_fort_module, only : amrex_real
   use amrex_constants_module
   use eos_type_module
-  use fuego_chemistry
-  use network, only : nspecies
-  use chemistry_module, only : Ru, inv_mwt, chemistry_init, chemistry_initialized, spec_names, elem_names
+  use fuego_chemistry, only : nspecies, Ru, inv_mwt, chemistry_init, chemistry_initialized 
 
   implicit none
   character (len=64) :: eos_name = "fuego"
@@ -23,7 +21,7 @@ module eos_module
           eos_get_activity, eos_rt, eos_tp, eos_rp, eos_re, eos_ps,&
           eos_ph, eos_th, eos_rh, eos_get_transport, eos_h, eos_deriv, &
           eos_mui, eos_get_activity_h
-  private :: nspecies, Ru, inv_mwt
+  private :: nspecies, Ru
 
   interface
      subroutine amrex_array_init_snan (p, nelem) bind(C,name="amrex_array_init_snan")

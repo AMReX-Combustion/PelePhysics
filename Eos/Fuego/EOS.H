@@ -1,10 +1,6 @@
 #ifndef _EOS_H_
 #define _EOS_H_
 
-#ifndef RU
-#define RU 8.31446261815324e7
-#endif
-
 #include <AMReX.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
@@ -13,6 +9,10 @@
 #include "chemistry_file.H"
 
 namespace EOS {
+
+constexpr amrex::Real RU   = 8.31446261815324e7;
+constexpr amrex::Real RUC  = 1.98721558317399615845;
+constexpr amrex::Real PATM = 1.01325e+06;
 
 void init();
 
@@ -72,12 +72,12 @@ RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
   amrex::Real tmp[NUM_SPECIES];
   amrex::Real wbar;
   CKMMWY(&Y[0], &wbar);
-  amrex::Real T = P * wbar / (R * RU);
+  amrex::Real T = P * wbar / (R * EOS::RU);
   CKCVMS(&T, tmp);
   amrex::Real Cv = 0.0;
   for (int i = 0; i < NUM_SPECIES; i++)
     Cv += Y[i] * tmp[i];
-  amrex::Real G = (wbar * Cv + RU) / (wbar * Cv);
+  amrex::Real G = (wbar * Cv + EOS::RU) / (wbar * Cv);
   Cs = std::sqrt(G * P / R);
 }
 
@@ -95,7 +95,7 @@ RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
     Cv += Y[i] * tmp[i];
   amrex::Real wbar;
   CKMMWY(&Y[0], &wbar);
-  amrex::Real G = (wbar * Cv + RU) / (wbar * Cv);
+  amrex::Real G = (wbar * Cv + EOS::RU) / (wbar * Cv);
   Cs = std::sqrt(G * P / R);
 }
 
@@ -235,7 +235,7 @@ RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 {
   amrex::Real wbar;
   CKMMWY(&Y[0], &wbar);
-  amrex::Real T = P * wbar / (R * RU);
+  amrex::Real T = P * wbar / (R * EOS::RU);
   amrex::Real ei[NUM_SPECIES];
   CKUMS(&T, ei);
   E = 0.0;
@@ -269,7 +269,7 @@ EY2G(amrex::Real E, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
   EOS::YT2Cv(Y, T, Cv);
   CKMMWY(&Y[0], &wbar);
   Cvx = wbar * Cv;
-  G = (Cvx + RU) / Cvx;
+  G = (Cvx + EOS::RU) / Cvx;
 }
 
 AMREX_GPU_HOST_DEVICE
