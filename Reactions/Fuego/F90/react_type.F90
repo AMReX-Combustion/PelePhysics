@@ -1,6 +1,6 @@
 module react_type_module
 
-  use network, only: nspecies
+  use fuego_chemistry, only: nspecies
 
   use amrex_fort_module, only : amrex_real
   implicit none

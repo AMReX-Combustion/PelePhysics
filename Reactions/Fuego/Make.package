@@ -1,4 +1,3 @@
-
 ifeq ($(USE_SUNDIALS_PP), TRUE)
     ifeq ($(USE_CUDA_SUNDIALS_PP), TRUE)
         Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU
@@ -27,7 +26,6 @@ else
         CEXE_sources += actual_CRK64.cpp
     else
         Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/F90
-        f90EXE_sources += actual_network.f90
         F90EXE_sources += react_type.F90
         F90EXE_sources += actual_reactor.F90
         FEXE_headers   += actual_reactor.H
