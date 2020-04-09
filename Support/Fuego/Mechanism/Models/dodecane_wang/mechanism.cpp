@@ -4645,6 +4645,68 @@ void CKSYME(int * kname, int * plenkname )
 }
 
 
+/* Returns the vector of strings of species names */
+void CKSYMS_STR(amrex::Vector<std::string>& kname)
+{
+    kname.push_back("H");
+    kname.push_back("O");
+    kname.push_back("OH");
+    kname.push_back("HO2");
+    kname.push_back("H2");
+    kname.push_back("H2O");
+    kname.push_back("H2O2");
+    kname.push_back("O2");
+    kname.push_back("CH");
+    kname.push_back("CH2");
+    kname.push_back("CH2*");
+    kname.push_back("CH3");
+    kname.push_back("CH4");
+    kname.push_back("HCO");
+    kname.push_back("CH2O");
+    kname.push_back("CH3O");
+    kname.push_back("CH2OH");
+    kname.push_back("CH3OH");
+    kname.push_back("CO");
+    kname.push_back("CO2");
+    kname.push_back("C2H");
+    kname.push_back("C2H2");
+    kname.push_back("C2H3");
+    kname.push_back("C2H4");
+    kname.push_back("C2H5");
+    kname.push_back("C2H6");
+    kname.push_back("HCCO");
+    kname.push_back("CH2CO");
+    kname.push_back("CH3CO");
+    kname.push_back("CH2CHO");
+    kname.push_back("CH3CHO");
+    kname.push_back("C3H3");
+    kname.push_back("pC3H4");
+    kname.push_back("aC3H4");
+    kname.push_back("aC3H5");
+    kname.push_back("CH3CCH2");
+    kname.push_back("C3H6");
+    kname.push_back("nC3H7");
+    kname.push_back("iC3H7");
+    kname.push_back("C2H3CHO");
+    kname.push_back("C4H2");
+    kname.push_back("iC4H3");
+    kname.push_back("C4H4");
+    kname.push_back("iC4H5");
+    kname.push_back("C4H5-2");
+    kname.push_back("C4H6");
+    kname.push_back("C4H612");
+    kname.push_back("C4H6-2");
+    kname.push_back("C4H7");
+    kname.push_back("C4H81");
+    kname.push_back("pC4H9");
+    kname.push_back("NC12H26");
+    kname.push_back("C6H12");
+    kname.push_back("C6H11");
+    kname.push_back("C5H10");
+    kname.push_back("N2");
+}
+
+
 /* Returns the char strings of species names */
 void CKSYMS(int * kname, int * plenkname )
 {
