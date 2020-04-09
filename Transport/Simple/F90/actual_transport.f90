@@ -23,7 +23,6 @@ module actual_transport_module
   integer, parameter::  norder = 3
   integer, parameter::  iter = 1
   real(amrex_real), parameter ::  trace = 1.d-15
-  real(amrex_real), parameter ::  Patm = 1.01325d6
 
   logical, parameter :: use_bulk_viscosity = .true.
 
