@@ -26,7 +26,7 @@ import sys
 import numpy as np
 
 smallnum = 1e-100
-R = 8.31451e7 * erg/mole/kelvin
+R = 8.31446261815324e7 * erg/mole/kelvin
 #Rc = 1.987215583 * cal/mole/kelvin
 Rc = 1.98721558317399617591 * cal/mole/kelvin
 Patm = 1013250.0
@@ -2407,7 +2407,7 @@ class CPickler(CMill):
         self._write('{')
         self._indent()
         
-        self._write(' *ru  = %g; ' % (R * mole * kelvin / erg))
+        self._write(' *ru  = %1.14e; ' % (R * mole * kelvin / erg))
         self._write(' *ruc = %.20f; ' % (Rc * mole * kelvin / cal))
         self._write(' *pa  = %g; ' % (Patm) )
         

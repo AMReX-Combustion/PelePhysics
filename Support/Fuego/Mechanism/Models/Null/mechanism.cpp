@@ -5,7 +5,7 @@ void CKSYMS(int * kname, int * plenkname) {}
 /* Returns R, Rc, Patm */
 void CKRP(double *  ru, double *  ruc, double *  pa)
 {
-     *ru  = 8.31451e+07; 
+     *ru  = 8.31446261815324e+07; 
      *ruc = 1.98721558317399615845; 
      *pa  = 1.01325e+06; 
 }

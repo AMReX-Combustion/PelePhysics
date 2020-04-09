@@ -7,7 +7,7 @@ module eos_module
 
   use amrex_fort_module, only : amrex_real
   use eos_type_module
-  use fuego_chemistry 
+  use fuego_chemistry, only : Ru, molecular_weight 
 
   implicit none
 

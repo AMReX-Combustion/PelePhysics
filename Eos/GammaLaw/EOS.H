@@ -13,7 +13,7 @@
 namespace EOS {
 
 extern AMREX_GPU_DEVICE_MANAGED amrex::Real gamma;
-constexpr amrex::Real RU = 8.31446261815324e7;
+constexpr amrex::Real RU = 8.31446261815324e+07;
 
 void init();
 
