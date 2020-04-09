@@ -8,7 +8,7 @@ module eos_module
   use amrex_fort_module, only : amrex_real
   use amrex_constants_module
   use eos_type_module
-  use fuego_chemistry, only : nspecies, Ru, inv_mwt, chemistry_init, chemistry_initialized 
+  use fuego_chemistry
 
   implicit none
   character (len=64) :: eos_name = "fuego"
