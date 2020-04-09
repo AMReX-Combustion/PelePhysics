@@ -12,7 +12,7 @@ contains
   ! call any specific initialization used by the transport
 
   ! This subroutine should be called outside OMP PARALLEL
-  subroutine transport_init() bind(C, name="transport_init")
+  subroutine transport_init_F() bind(C, name="transport_init_F")
 
     use extern_probin_module
 
@@ -21,10 +21,10 @@ contains
     ! Set up any specific parameters or initialization steps required by the transport we are using.
     call actual_transport_init()
 
-  end subroutine transport_init
+  end subroutine transport_init_F
 
 
-  subroutine transport_close()
+  subroutine transport_close_F()
 
     use extern_probin_module
 
@@ -33,10 +33,10 @@ contains
     ! Clean up any specific parameters or initialization steps required by the transport we are using.
     call actual_transport_close
 
-  end subroutine transport_close
+  end subroutine transport_close_F
 
 
-  subroutine transport(which, coeff)
+  subroutine transport_F(which, coeff)
 
     !$acc routine seq
 
@@ -52,9 +52,9 @@ contains
     ! Call the transport evaluator
     call actual_transport(which, coeff)
 
-  end subroutine transport
+  end subroutine transport_F
 
-  subroutine get_transport_coeffs( &
+  subroutine get_transport_coeffs_F( &
        lo,hi, &
        massfrac,    mf_lo, mf_hi, &
        temperature,  t_lo,  t_hi, &
@@ -63,7 +63,7 @@ contains
        mu,          mu_lo, mu_hi, &
        xi,          xi_lo, xi_hi, &
        lam,        lam_lo,lam_hi) &
-       bind(C, name="get_transport_coeffs")
+       bind(C, name="get_transport_coeffs_F")
 
     use fuego_chemistry, only: nspecies, naux
     use eos_module
@@ -111,7 +111,7 @@ contains
              coeff%eos_state(i-lo(1)+1)%rho = density(i,j,k)
           end do
 
-          call transport(which_trans, coeff)
+          call transport_F(which_trans, coeff)
 
           do i=lo(1),hi(1)
              mu(i,j,k)  = coeff %  mu(i-lo(1)+1)
@@ -129,14 +129,14 @@ contains
 
     call destroy(coeff)
 
-  end subroutine get_transport_coeffs
+  end subroutine get_transport_coeffs_F
 
-  subroutine get_visco_coeffs( &
+  subroutine get_visco_coeffs_F( &
        lo,hi, &
        massfrac,    mf_lo, mf_hi, &
        temperature,  t_lo,  t_hi, &
        mu,          mu_lo, mu_hi) &
-       bind(C, name="get_visco_coeffs")
+       bind(C, name="get_visco_coeffs_F")
 
     use fuego_chemistry, only: nspecies
     use eos_module
@@ -175,7 +175,7 @@ contains
              coeff%eos_state(i-lo(1)+1)%T = temperature(i,j,k)
           end do
 
-          call transport(which_trans, coeff)
+          call transport_F(which_trans, coeff)
 
           do i=lo(1),hi(1)
              mu(i,j,k)  = coeff %  mu(i-lo(1)+1)
@@ -186,7 +186,7 @@ contains
 
     call destroy(coeff)
 
-  end subroutine get_visco_coeffs
+  end subroutine get_visco_coeffs_F
 
 
   ! For now, we will assume that auxiliary variables diffuse with unity Le (if they diffuse at all)
@@ -243,7 +243,7 @@ contains
              call eos_cp(coeff%eos_state(i-lo(1)+1))
           end do
 
-          call transport(which_trans, coeff)
+          call transport_F(which_trans, coeff)
 
           do n=1,naux
              do i=lo(1),hi(1)

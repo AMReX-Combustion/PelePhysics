@@ -6,7 +6,7 @@
 
 extern "C"
 {
-  void get_transport_coeffs
+  void get_transport_coeffs_F
     (const int* lo, const int* hi,
      const BL_FORT_FAB_ARG_3D(massfraction),
      const BL_FORT_FAB_ARG_3D(temperature),
