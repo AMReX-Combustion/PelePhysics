@@ -518,6 +518,7 @@ class CPickler(CMill):
         self._ckxnum(mechanism)
         self._cksnum(mechanism)
         self._cksyme(mechanism)
+        self._cksyms_str(mechanism)
         self._cksyms(mechanism)
         self._ckrp(mechanism)
         
@@ -980,7 +981,7 @@ class CPickler(CMill):
             'void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);',
             'void CKSYME(int * kname, int * lenkname);',
             'void CKSYMS(int * kname, int * lenkname);',
-            #'void CKSYMS'+sym+'(char * cckwrk, int * lout, char * kname, int * kerr, int lencck, int lenkname);',
+            'void CKSYMS_STR(amrex::Vector<std::string>& kname);',
             'void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa);',
             'void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P);',
             'AMREX_GPU_HOST_DEVICE void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
@@ -1475,7 +1476,6 @@ class CPickler(CMill):
             'void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);',
             'void CKSYME(int * kname, int * lenkname);',
             'void CKSYMS(int * kname, int * lenkname);',
-            #'void CKSYMS'+sym+'(char * cckwrk, int * lout, char * kname, int * kerr, int lencck, int lenkname);',
             'void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa);',
             'void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P);',
             'void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
@@ -2453,6 +2453,23 @@ class CPickler(CMill):
         self._write('}')
         return
 
+    def _cksyms_str(self, mechanism):
+
+        nSpecies = len(mechanism.species())  
+
+        self._write() 
+        self._write()
+        self._write(
+            self.line(' Returns the vector of strings of species names'))
+        self._write('void CKSYMS_STR'+sym+'(amrex::Vector<std::string>& kname)')
+        self._write('{')
+        self._indent()
+        for species in mechanism.species():
+            self._write('kname.push_back("%s");' % species.symbol)
+
+        self._outdent() 
+        self._write('}') 
+        return
 
     def _cksyms(self, mechanism):
 
@@ -2462,7 +2479,6 @@ class CPickler(CMill):
         self._write()
         self._write(
             self.line(' Returns the char strings of species names'))
-        #self._write('void CKSYMS'+sym+'(char * cckwrk, int * lout, char * kname, int * kerr, int lencck, int lenkname )')
         self._write('void CKSYMS'+sym+'(int * kname, int * plenkname )')
         self._write('{')
         self._indent()
