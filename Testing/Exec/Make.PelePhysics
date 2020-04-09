@@ -67,9 +67,6 @@ Blocs             += $(EOS_PATH)
 REACTIONS_HOME_F90 := $(REACTIONS_HOME)/F90
 REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
 REACTIONS_PATH_F90 := $(REACTIONS_PATH)/F90
-# Put inside an if use FORTRAN later
-include $(REACTIONS_HOME_F90)/Make.package
-#
 include $(REACTIONS_PATH)/Make.package
 EXTERN_CORE       += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)  
 INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_HOME_F90) $(REACTIONS_PATH) $(REACTIONS_PATH_F90)
@@ -102,8 +99,7 @@ VPATH_LOCATIONS   += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
 USE_FUEGO = FALSE
 ifeq ($(Transport_dir), Simple)
   DEFINES += -DSIMPLE_TRANSPORT
-  Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Make.package \
-             $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
+  Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
 
   Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism \
              $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
@@ -111,8 +107,7 @@ endif
 ifeq ($(Transport_dir), EGLib)
   USE_FUEGO = TRUE
   DEFINES += -DEGLIB_TRANSPORT
-  Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Make.package \
-             $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
+  Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
 
   Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism \
              $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
