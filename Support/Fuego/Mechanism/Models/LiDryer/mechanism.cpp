@@ -666,6 +666,21 @@ void CKSYME(int * kname, int * plenkname )
 }
 
 
+/* Returns the vector of strings of species names */
+void CKSYMS_STR(amrex::Vector<std::string>& kname)
+{
+    kname.push_back("H2");
+    kname.push_back("O2");
+    kname.push_back("H2O");
+    kname.push_back("H");
+    kname.push_back("O");
+    kname.push_back("OH");
+    kname.push_back("HO2");
+    kname.push_back("H2O2");
+    kname.push_back("N2");
+}
+
+
 /* Returns the char strings of species names */
 void CKSYMS(int * kname, int * plenkname )
 {
