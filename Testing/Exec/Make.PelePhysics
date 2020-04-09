@@ -73,7 +73,9 @@ INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_HOME_F90) $(REACTIONS_PATH) $
 VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_HOME_F90) $(REACTIONS_PATH) $(REACTIONS_PATH_F90)
 ifdef Chemistry_Model
   ifeq ($(Eos_dir), GammaLaw)
-    $(error Chemistry_Model definition not compatible with Eos_Dir=GammaLaw)
+    ifneq ($(Chemistry_Model), Null)
+      $(error Chemistry_Model definition not compatible with Eos_Dir=GammaLaw)
+    endif
   endif
   CHEM_HOME = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models/$(Chemistry_Model)
   CHEM_ALL  = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models
@@ -97,20 +99,16 @@ EXTERN_CORE       += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
 INCLUDE_LOCATIONS += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
 VPATH_LOCATIONS   += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
 USE_FUEGO = FALSE
+Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
+
+Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism \
+           $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
 ifeq ($(Transport_dir), Simple)
   DEFINES += -DSIMPLE_TRANSPORT
-  Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
-
-  Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism \
-             $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
 endif
 ifeq ($(Transport_dir), EGLib)
-  USE_FUEGO = TRUE
   DEFINES += -DEGLIB_TRANSPORT
-  Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
-
-  Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism \
-             $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
+  USE_FUEGO = TRUE
 endif
 ifeq ($(Transport_dir), Constant)
   DEFINES += -DCONSTANT_TRANSPORT

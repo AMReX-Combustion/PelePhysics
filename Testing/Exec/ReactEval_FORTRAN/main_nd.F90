@@ -8,7 +8,7 @@ contains
 
     subroutine extern_init(name,namlen) bind(C, name="extern_init")
 
-    use network
+    use fuego_chemistry
     use eos_module
     use transport_module
 
@@ -68,7 +68,7 @@ contains
 
   subroutine get_num_spec(nspecies_out) bind(C, name="get_num_spec")
 
-    use network, only : nspecies
+    use fuego_chemistry, only : nspecies
 
     implicit none
 
@@ -87,7 +87,7 @@ contains
        bind(C, name="initialize_data")
 
     use amrex_constants_module, only: M_PI, HALF, ONE, TWO, ZERO
-    use network, only: nspecies
+    use fuego_chemistry, only: nspecies
     use eos_type_module
     use eos_module
 
@@ -172,7 +172,7 @@ contains
                          cost,c_lo,c_hi, &
                          time,dt_react) bind(C, name="react_state")
 
-    use network           , only : nspecies
+    use fuego_chemistry           , only : nspecies
 #ifdef USE_SUNDIALS_PP
     use cvode_module      , only : react
 #else
