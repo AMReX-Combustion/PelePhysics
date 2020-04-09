@@ -24,11 +24,11 @@ contains
     ! extern_probin_module
     call runtime_init(name,namlen)
 
-    call ckinit()
+    call network_init()
 
     call eos_init(small_temp, small_dens)
 
-    call transport_init()
+    call transport_init_F()
 
   end subroutine extern_init
 
@@ -38,7 +38,7 @@ contains
     use transport_module
     implicit none
 
-    call transport_close()
+    call transport_close_F()
 
   end subroutine extern_close
 
@@ -116,6 +116,7 @@ contains
           end do
        end do
     end do
+
   end subroutine initialize_data
 
 
