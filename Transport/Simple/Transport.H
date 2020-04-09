@@ -40,7 +40,7 @@ comp_pure_bulk(amrex::Real Tloc, amrex::Real* muloc, amrex::Real* xiloc)
   amrex::Real epskoverT, epskoverTstd;
   amrex::Real pi = 3.141592653589793238;
   amrex::Real pi3_2 = 5.56832799683171;
-  amrex::Real Ru = 8.31451e+07;
+  amrex::Real Ru = 8.31446261815324e7;;
 
   CKCVMS(&Tloc, cvk);
 
@@ -216,7 +216,7 @@ transport(
       Ddiag[i] = trans_wt[i] * term1 / term2 / wbar;
     }
 
-    amrex::Real Ru = 8.31451e+07;
+    amrex::Real Ru = 8.31446261815324e7;;
     pscale = Patm * wbar / (Ru * Tloc * rholoc);
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
