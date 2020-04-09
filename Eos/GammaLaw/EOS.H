@@ -1,10 +1,6 @@
 #ifndef _EOS_H_
 #define _EOS_H_
 
-#ifndef RU
-#define RU 8.31446261815324e7
-#endif
-
 #include <AMReX.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
