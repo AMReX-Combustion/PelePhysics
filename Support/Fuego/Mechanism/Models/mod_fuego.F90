@@ -1,113 +1,108 @@
 module fuego_chemistry
 
+    use amrex_fort_module,    only : amrex_real
+    use extern_probin_module, only : mwt_scalar
+
+#include "mechanism.h"
+
+    implicit none
+
+    integer, parameter :: nelements   = NUM_ELEMENTS  ! number of elements
+    integer, parameter :: nspecies    = NUM_SPECIES   ! number of species
+    integer, parameter :: nreactions  = NUM_REACTIONS ! number of reactions
+
+    integer :: naux 
+    character (len=16), save, allocatable :: aux_names(:)
+
+    logical, save :: chemistry_initialized = .false.
+    logical, save :: network_initialized = .false.
+
+    integer, parameter :: L_elem_name = 3  ! Each element name has at most 3 characters
+    character*(L_elem_name), save :: elem_names(NUM_ELEMENTS)
+
+    integer, parameter :: L_spec_name = 16 ! Each species name has at most 8 characters
+    character*(L_spec_name), save :: spec_names(NUM_SPECIES)
+
+    real(amrex_real), save :: molecular_weight(NUM_SPECIES), inv_mwt(NUM_SPECIES)
+
+    real(amrex_real), save :: Ru, Ruc, Patm
+
     interface
         subroutine egtransetLENIMC(LENIMC) bind(c,name='egtransetLENIMC')
             integer, intent(inout) :: LENIMC
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetLENRMC(LENRMC) bind(c,name='egtransetLENRMC')
             integer, intent(inout) :: LENRMC
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetNO(NO) bind(c,name='egtransetNO')
             integer, intent(inout) :: NO
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetKK(KK) bind(c,name='egtransetKK')
             integer, intent(inout) :: KK
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetNLITE(NLITE) bind(c,name='egtransetNLITE')
             integer, intent(inout) :: NLITE
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetPATM(PATM) bind(c,name='egtransetPATM')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(inout) :: PATM
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetWT(WT) bind(c,name='egtransetWT')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(inout) :: WT(*)
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetEPS(EPS) bind(c,name='egtransetEPS')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(inout) :: EPS(*)
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetSIG(SIG) bind(c,name='egtransetSIG')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(inout) :: SIG(*)
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetDIP(DIP) bind(c,name='egtransetDIP')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(inout) :: DIP(*)
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetPOL(POL) bind(c,name='egtransetPOL')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(inout) ::POL(*)
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetZROT(ZROT) bind(c,name='egtransetZROT')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(inout) :: ZROT(*)
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetNLIN(NLIN) bind(c,name='egtransetNLIN')
             use amrex_fort_module, only : amrex_real
             integer, intent(inout) :: NLIN(*)
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetCOFETA(COFETA) bind(c,name='egtransetCOFETA')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(inout) :: COFETA(*)
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetCOFLAM(COFLAM) bind(c,name='egtransetCOFLAM')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(inout) :: COFLAM(*)
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetCOFD(COFD) bind(c,name='egtransetCOFD')
             use amrex_fort_module, only : amrex_real
             real(amrex_real), intent(inout) :: COFD(*)
         end subroutine
-    !end interface
 
-    !interface
         subroutine egtransetKTDIF(KTDIF) bind(c,name='egtransetKTDIF')
             use amrex_fort_module, only : amrex_real
             integer, intent(inout) :: KTDIF(*)
@@ -328,5 +323,134 @@ module fuego_chemistry
         end subroutine
 
     end interface
+
+contains
+
+    subroutine chemistry_init()
+
+      integer :: i, ic, ii
+      integer :: names(NUM_SPECIES*L_spec_name)
+
+      call ckinit()
+
+      call cksyme(names, L_elem_name) 
+
+      ic = 1
+      do i = 1, NUM_ELEMENTS
+         do ii=1, L_elem_name
+            elem_names(i)(ii:ii) = char(names(ic))
+            ic = ic + 1
+         end do
+      end do
+
+      call cksyms(names, L_spec_name) 
+
+      ic = 1
+      do i = 1, NUM_SPECIES
+         do ii=1, L_spec_name
+            spec_names(i)(ii:ii) = char(names(ic))
+            ic = ic+1
+         end do
+      end do
+
+      if (NUM_SPECIES > 1) then
+          call ckwt(molecular_weight)
+      else
+          molecular_weight = mwt_scalar
+      end if
+      inv_mwt = 1.d0 / molecular_weight
+
+      call ckrp(Ru, Ruc, Patm)
+
+      chemistry_initialized = .true.
+
+    end subroutine chemistry_init
+
+
+    subroutine chemistry_close()
+      call ckfinalize()
+      chemistry_initialized = .false.
+    end subroutine chemistry_close
+
+
+    !function get_species_index(name) result (iname)
+    !  character(len=*), intent(in) :: name
+    !  integer :: iname
+    !  integer :: i
+    !  iname = -1
+    !  do i = 1, NUM_SPECIES
+    !     if (trim(spec_names(i)) .eq. trim(name)) then
+    !        iname = i
+    !        exit
+    !     end if
+    !  end do
+    !end function get_species_index
+
+
+    subroutine network_init
+
+      use extern_probin_module, only: numaux, auxnamesin 
+      use amrex_error_module
+
+      implicit none
+
+      integer :: iaux,nnames
+
+      if (.not. chemistry_initialized)  call chemistry_init() 
+
+      ! Get auxiliary variables (if any) 
+      naux = numaux
+      allocate(aux_names(naux))
+      nnames = count(transfer(auxnamesin, 'a', len(auxnamesin)) == ",") +1
+      if (naux .gt. 0) then
+        if (naux .ne. nnames) then
+          call amrex_error('simple ::actual_network_init wrong number of aux variable names')  
+        end if
+        read(auxnamesin,*) aux_names
+        do iaux = 1,naux 
+          aux_names(iaux) = trim(adjustl(aux_names(iaux)))
+        end do
+      end if
+
+      ! Check to make sure, and if not, throw an error
+      if ( NUM_SPECIES .lt. 1 ) then
+              call bl_error("Network cannot have a nonpositive number of species.")
+      endif
+
+      if ( NUM_REACTIONS .lt. 0 ) then
+              call bl_error("Network cannot have a negative number of reactions.")
+      endif
+
+      if ( naux .lt. 0 ) then
+              call bl_error("Network cannot have a negative number of auxiliary variables.")
+      endif
+
+      network_initialized = .true.
+    end subroutine network_init
+
+
+    subroutine network_close
+      call chemistry_close()
+
+      deallocate(aux_names)
+
+      network_initialized = .false.
+    end subroutine network_close
+
+
+    !function network_species_index(name) result(r)
+
+    !  character(len=*) :: name
+    !  integer :: r, n
+
+    !  r = -1
+    !  do n = 1, NUM_SPECIES
+    !     if (name == spec_names(n)) then
+    !        r = n
+    !        return
+    !     endif
+    !  enddo
+
+    !end function network_species_index
 
 end module fuego_chemistry

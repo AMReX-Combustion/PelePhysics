@@ -38,6 +38,10 @@ contains
     real(amrex_real) :: rtol, atol
     logical :: use_ajac, save_ajac, always_new_j_loc, stiff, isio
 
+    if (nspecies .lt. 2) then
+           return
+    endif
+
     verbose = 0
     itol = 1
     order = 2
@@ -101,6 +105,11 @@ contains
     integer, parameter :: itask=1, iopt=1
     integer :: MF, istate, ifail, neq
     real(amrex_real) :: vodeTime, vodeEndTime, rhoInv
+
+    if (nspecies .lt. 2) then
+           cost_value = 0
+           return
+    endif
 
     ! For compatibility to remove later
     call build(react_state_in)
@@ -394,6 +403,11 @@ contains
   subroutine reactor_close() bind(C, name="reactor_close")
 
     implicit none
+
+    if (nspecies .lt. 2) then
+           return
+    endif
+
     call destroy(eos_state)
 
     reactor_initialized = .false.
