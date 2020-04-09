@@ -45,11 +45,11 @@ comp_pure_bulk(amrex::Real Tloc, amrex::Real* muloc, amrex::Real* xiloc)
   CKCVMS(&Tloc, cvk);
 
   for (int i = 0; i < NUM_SPECIES; ++i) {
-    if (nlin[i] == 0) {
+    if (trans_nlin[i] == 0) {
       cvkint[i] = 0.0;
       cvkrot[i] = 0.0;
-    } else if (nlin[i] == 1) {
-      cvkint[i] = cvk[i] * wt[i] / Ru - 1.50;
+    } else if (trans_nlin[i] == 1) {
+      cvkint[i] = cvk[i] * trans_wt[i] / Ru - 1.50;
       cvkrot[i] = 1.0;
     } else {
       cvkint[i] = cvk[i] * wt[i] / Ru - 1.50;
@@ -58,8 +58,8 @@ comp_pure_bulk(amrex::Real Tloc, amrex::Real* muloc, amrex::Real* xiloc)
   }
 
   for (int i = 0; i < NUM_SPECIES; ++i) {
-    epskoverTstd = eps[i] / 298.0;
-    epskoverT = eps[i] / Tloc;
+    epskoverTstd = trans_eps[i] / 298.0;
+    epskoverT = trans_eps[i] / Tloc;
     Fnorm[i] = 1.0 + 0.50 * pi3_2 * std::sqrt(epskoverTstd) +
                (2.0 + .50 * pi * pi) * epskoverTstd +
                pi3_2 * std::sqrt(epskoverTstd) * epskoverTstd;
@@ -70,7 +70,7 @@ comp_pure_bulk(amrex::Real Tloc, amrex::Real* muloc, amrex::Real* xiloc)
   }
 
   for (int i = 0; i < NUM_SPECIES; ++i) {
-    if (nlin[i] == 0) {
+    if (trans_nlin[i] == 0) {
       xiloc[i] = 0.0;
     } else {
       //   zrot/crot approximately zint / cint by assuming vibrational internal
@@ -79,7 +79,7 @@ comp_pure_bulk(amrex::Real Tloc, amrex::Real* muloc, amrex::Real* xiloc)
       xiloc[i] =
         0.250 * pi *
         (cvkint[i] / (cvkint[i] + 1.50) * cvkint[i] / (cvkint[i] + 1.50)) *
-        zrot[i] / cvkrot[i] * Fnorm[i] / FofT[i] * muloc[i];
+        trans_zrot[i] / cvkrot[i] * Fnorm[i] / FofT[i] * muloc[i];
     }
   }
 }
@@ -131,16 +131,16 @@ transport(
   }
 
   for (int i = 0; i < NUM_SPECIES; ++i) {
-    wbar = wbar + Yloc[i] * iwt[i];
+    wbar = wbar + Yloc[i] * trans_iwt[i];
   }
   wbar = 1.0 / wbar;
   for (int i = 0; i < NUM_SPECIES; ++i) {
-    Xloc[i] = Yloc[i] * wbar * iwt[i];
+    Xloc[i] = Yloc[i] * wbar * trans_iwt[i];
   }
   if (wtr_get_mu) {
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      muloc[i] = fitmu[4 * i] + fitmu[1 + 4 * i] * logT[0] +
-                 fitmu[2 + 4 * i] * logT[1] + fitmu[3 + 4 * i] * logT[2];
+      muloc[i] = trans_fitmu[4 * i] + trans_fitmu[1 + 4 * i] * logT[0] +
+                 trans_fitmu[2 + 4 * i] * logT[1] + trans_fitmu[3 + 4 * i] * logT[2];
       muloc[i] = std::exp(muloc[i]);
     }
 
@@ -170,8 +170,8 @@ transport(
 
   if (wtr_get_lam) {
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      lamloc[i] = fitlam[4 * i] + fitlam[1 + 4 * i] * logT[0] +
-                  fitlam[2 + 4 * i] * logT[1] + fitlam[3 + 4 * i] * logT[2];
+      lamloc[i] = trans_fitlam[4 * i] + trans_fitlam[1 + 4 * i] * logT[0] +
+                  trans_fitlam[2 + 4 * i] * logT[1] + trans_fitlam[3 + 4 * i] * logT[2];
       lamloc[i] = std::exp(lamloc[i]);
     }
 
@@ -205,15 +205,15 @@ transport(
       term2 = 0.0;
       for (int j = 0; j < NUM_SPECIES; ++j) {
         if (i != j) {
-          dbintemp = fitdbin[4 * (i + NUM_SPECIES * j)] +
-                     fitdbin[1 + 4 * (i + NUM_SPECIES * j)] * logT[0] +
-                     fitdbin[2 + 4 * (i + NUM_SPECIES * j)] * logT[1] +
-                     fitdbin[3 + 4 * (i + NUM_SPECIES * j)] * logT[2];
+          dbintemp = trans_fitdbin[4 * (i + NUM_SPECIES * j)] +
+                     trans_fitdbin[1 + 4 * (i + NUM_SPECIES * j)] * logT[0] +
+                     trans_fitdbin[2 + 4 * (i + NUM_SPECIES * j)] * logT[1] +
+                     trans_fitdbin[3 + 4 * (i + NUM_SPECIES * j)] * logT[2];
           term1 = term1 + Yloc[j];
           term2 = term2 + Xloc[j] / std::exp(dbintemp);
         }
       }
-      Ddiag[i] = wt[i] * term1 / term2 / wbar;
+      Ddiag[i] = trans_wt[i] * term1 / term2 / wbar;
     }
 
     amrex::Real Ru = 8.31451e+07;
