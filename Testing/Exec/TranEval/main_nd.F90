@@ -12,6 +12,7 @@ contains
 
     use eos_module
     use transport_module
+    use fuego_chemistry, only : network_init 
 
     implicit none
     integer :: namlen

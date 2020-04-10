@@ -6,8 +6,8 @@ module egz_module
 
   private
 
-  double precision, parameter :: Ru = 8.314d7
-  double precision, parameter :: Patmos = 1.01325d6
+  !double precision, parameter :: Ru = 8.314d7
+  !double precision, parameter :: Patm = 1.01325d6
 
   logical, save :: use_bulk_visc = .true.
 
@@ -520,7 +520,7 @@ contains
     do i = 1, np
        ! EVALUATE THE MATRIX H
        ! Note:    FAC * BIN = 2 W_{ij} / \eta_{ij} / A_{ij}
-       FAC(i) = (6.0D0 * RU / ( 5.0D0 * PATMOS )) * T(i)
+       FAC(i) = (6.0D0 * RU / ( 5.0D0 * Patm )) * T(i)
     end do
 
     CCC = 5.0D0 / 3.0D0
@@ -713,7 +713,9 @@ contains
     
     integer :: i, m, n
     double precision :: ccc(np), wtfac, bb
-    double precision, parameter :: denfac = 2.4d0 * Ru / Patmos
+    double precision :: denfac
+
+    denfac = 2.4d0 * Ru / Patm
 
     if (.not. use_bulk_visc) then
        VV = 0.d0
@@ -830,7 +832,7 @@ contains
     end do
 
     do i=1,np
-       fac(i) = (Patmos/Ru) / T(i)
+       fac(i) = (Patm/Ru) / T(i)
     end do
 
     do n=1,ns
