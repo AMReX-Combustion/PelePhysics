@@ -376,18 +376,18 @@ contains
     end subroutine chemistry_close
 
 
-    !function get_species_index(name) result (iname)
-    !  character(len=*), intent(in) :: name
-    !  integer :: iname
-    !  integer :: i
-    !  iname = -1
-    !  do i = 1, NUM_SPECIES
-    !     if (trim(spec_names(i)) .eq. trim(name)) then
-    !        iname = i
-    !        exit
-    !     end if
-    !  end do
-    !end function get_species_index
+    function get_species_index(name) result (iname)
+      character(len=*), intent(in) :: name
+      integer :: iname
+      integer :: i
+      iname = -1
+      do i = 1, NUM_SPECIES
+         if (trim(spec_names(i)) .eq. trim(name)) then
+            iname = i
+            exit
+         end if
+      end do
+    end function get_species_index
 
 
     subroutine network_init
