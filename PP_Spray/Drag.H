@@ -13,28 +13,37 @@ using namespace amrex;
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void AdjIndexWeights(const RealVect& len,
-		     IntVect*        indx_array,
-		     Real*           coef)
+                     IntVect*        indx_array,
+                     Real*           coef,
+                     const IntVect&  dom_lo,
+                     const IntVect&  dom_hi)
 {
   // Compute distances for trilinear interpolation
   IntVect indx(AMREX_D_DECL(amrex::Math::floor(len[0]),
-			    amrex::Math::floor(len[1]),
-			    amrex::Math::floor(len[2])));
+                            amrex::Math::floor(len[1]),
+                            amrex::Math::floor(len[2])));
   RealVect delL(AMREX_D_DECL(len[0] - indx[0], len[1] - indx[1], len[2] - indx[2]));
   Real ssx[2] = {1._rt - delL[0], delL[0]};
   int aindx = 0;
+  IntVect cur_indx;
 #if AMREX_SPACEDIM > 1
   Real ssy[2] = {1._rt - delL[1], delL[1]};
 #if AMREX_SPACEDIM == 3
   Real ssz[2] = {1._rt - delL[2], delL[2]};
   for (int kk = 0; kk != 2; ++kk) {
+    cur_indx[2] =
+      amrex::min(dom_hi[2], amrex::max(dom_lo[2], indx[2] + kk - 1));
 #endif
     for (int jj = 0; jj != 2; ++jj) {
+      cur_indx[1] =
+        amrex::min(dom_hi[1], amrex::max(dom_lo[1], indx[1] + jj - 1));
 #endif
       for (int ii = 0; ii != 2; ++ii) {
-	AMREX_D_TERM(indx_array[aindx][0] = indx[0] + ii - 1;,
-		     indx_array[aindx][1] = indx[1] + jj - 1;,
-		     indx_array[aindx][2] = indx[2] + kk - 1;);
+        cur_indx[0] =
+          amrex::min(dom_hi[0], amrex::max(dom_lo[0], indx[0] + ii - 1));
+        AMREX_D_TERM(indx_array[aindx][0] = cur_indx[0];,
+                     indx_array[aindx][1] = cur_indx[1];,
+                     indx_array[aindx][2] = cur_indx[2];);
 	coef[aindx] = AMREX_D_TERM(ssx[ii],*ssy[jj],*ssz[kk]);
 	aindx++;
       }

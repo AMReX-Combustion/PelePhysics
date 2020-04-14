@@ -265,7 +265,15 @@ SprayParticleContainer::updateParticles(const int&  lev,
   AMREX_ASSERT(OnSameGrids(lev, source));
   const auto dxi = this->Geom(lev).InvCellSizeArray();
   const auto plo = this->Geom(lev).ProbLoArray();
+  const auto phi = this->Geom(lev).ProbHiArray();
   const auto domain = this->Geom(lev).Domain();
+  IntVect dom_lo = domain.smallEnd();
+  IntVect dom_hi = domain.bigEnd();
+  // We are only concerned with domain boundaries that are reflective
+  for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+    if (reflect_lo[dir] == 0) dom_lo[dir] += -100;
+    if (reflect_hi[dir] == 0) dom_hi[dir] += 100;
+  }
   const auto dx = this->Geom(lev).CellSizeArray();
   const Real vol = AMREX_D_TERM(dx[0],*dx[1],*dx[2]);
   const Real inv_vol = 1./vol;
@@ -279,8 +287,8 @@ SprayParticleContainer::updateParticles(const int&  lev,
   const Real Pi_six = M_PI/6.;
   Real mw_fluid[NUM_SPECIES];
   Real invmw[NUM_SPECIES];
-  EOS::GET_MW(mw_fluid);
-  EOS::GET_IMW(invmw);
+  EOS::molecular_weight(mw_fluid);
+  EOS::inv_molecular_weight(invmw);
   // Extract control parameters for mass, heat, and momentum transfer
   const int heat_trans = PeleC::particle_heat_tran;
   const int mass_trans = PeleC::particle_mass_tran;
@@ -352,7 +360,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
 				(p.pos(1) - plo[1])*dxi[1] + 0.5,
 				(p.pos(2) - plo[2])*dxi[2] + 0.5));
       // Do initial interpolation and save corresponding adjacent fluid information
-      AdjIndexWeights(len, indx_array, coef);
+      AdjIndexWeights(len, indx_array, coef, dom_lo, dom_hi);
       RealVect vel_fluid = RealVect::TheZeroVector();
       Real T_fluid = 0.;
       Real rho_fluid = 0.;
@@ -414,7 +422,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
 		       len[1] =	(p.pos(1) - plo[1])*dxi[1] + 0.5;,
 		       len[2] = (p.pos(2) - plo[2])*dxi[2] + 0.5;);
 	  // Recompute the weights
-	  AdjIndexWeights(len, indx_array, coef);
+	  AdjIndexWeights(len, indx_array, coef, dom_lo, dom_hi);
 	  // Re-interpolate the fluid state at the new particle location
 	  for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
 	    Real cur_coef = coef[aindx];
@@ -431,13 +439,8 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	Real delT = amrex::max(T_fluid - T_part, 0.);
 	Real T_skin = T_part + rule*delT;
 	// Calculate the C_p at the skin temperature for each species
-	EOS::T2Cpi(T_skin, cp_n);
-#ifdef PELEC_EOS_FUEGO
-	EOS::YT2H(nullptr, T_part, h_skin);
-#else
-	Real masstmp[NUM_SPECIES] = {28.97};
-	EOS::YT2H(masstmp, T_part, h_skin);
-#endif
+        EOS::T2Cpi(T_skin, cp_n);
+        EOS::T2Hi(T_part, h_skin);
 	Real cp_skin = 0.; // Averaged C_p at particle surface
 	Real mw_mix = 0.;  // Average molar mass of gas mixture
 	for (int sp = 0; sp != NUM_SPECIES; ++sp) {
@@ -582,6 +585,50 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	  dt = flow_dt/Real(nsub);
 	}
 	if (mom_trans || mass_trans || heat_trans) {
+	  if (mass_trans) {
+	    // Compute new particle diameter
+	    Real new_dia = dia_part + 0.5*dt*d_dot;
+	    if (new_dia < dia_eps) {
+	      p.id() = -1; // Particle is considered completely evaporated
+	      isub = nsub + 1; // Make sure to break out of while loop
+	    } else {
+	      p.rdata(pstateDia) = new_dia;
+	    }
+	  }
+	  if (mom_trans) {
+	    // Modify particle velocity by half time step
+	    for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+	      Gpu::Atomic::Add(&p.rdata(pstateVel+dir), 0.5*dt*part_mom_src[dir]/pmass);
+	    }
+	    // Modify particle position by whole time step
+	    if (do_move) {
+	      for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+		Gpu::Atomic::Add(&p.pos(dir), dt*p.rdata(pstateVel+dir));
+                // Check if particle is reflecting off a wall or leaving the domain
+                if (p.pos(dir) > phi[dir]) {
+                  if (reflect_hi[dir]) {
+                    p.pos(dir) = 2.*phi[dir] - p.pos(dir);
+                    p.rdata(pstateVel+dir) *= -1.;
+                  } else {
+                    p.id() = -1;
+                  }
+                }
+                if (p.pos(dir) < plo[dir]) {
+                  if (reflect_lo[dir]) {
+                    p.pos(dir) = 2.*plo[dir] - p.pos(dir);
+                    p.rdata(pstateVel+dir) *= -1.;
+                  } else {
+                    p.id() = -1;
+                  }
+                }
+	      }
+	    }
+	  }
+	  if (heat_trans) {
+	    // Modify particle temperature
+	    Gpu::Atomic::Add(&p.rdata(pstateT), 0.5*dt*part_temp_src);
+	  }
+          // Add the spray source terms to the Eulerian fluid
 	  for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
 	    Real cur_coef = -coef[aindx]*sub_source;
 	    IntVect cur_indx = indx_array[aindx];
@@ -602,32 +649,6 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	    }
 	    if (mass_trans || heat_trans)
 	      Gpu::Atomic::Add(&sourcearr(cur_indx, engIndx), cur_coef*fluid_eng_src);
-	  }
-	  if (mass_trans) {
-	    // Compute new particle diameter
-	    Real new_dia = dia_part + 0.5*dt*d_dot;
-	    if (new_dia < dia_eps) {
-	      p.id() = -1; // Particle is considered completely evaporated
-	      isub = nsub + 1; // Make sure to break out of while loop
-	    } else {
-	      p.rdata(pstateDia) = new_dia;
-	    }
-	  }
-	  if (mom_trans) {
-	    // Modify particle velocity by half time step
-	    for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
-	      Gpu::Atomic::Add(&p.rdata(pstateVel+dir), 0.5*dt*part_mom_src[dir]/pmass);
-	    }
-	    // Modify particle position by whole time step
-	    if (do_move) {
-	      for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
-		Gpu::Atomic::Add(&p.pos(dir), dt*p.rdata(pstateVel+dir));
-	      }
-	    }
-	  }
-	  if (heat_trans) {
-	    // Modify particle temperature
-	    Gpu::Atomic::Add(&p.rdata(pstateT), 0.5*dt*part_temp_src);
 	  }
 	}
 	// Increment sub-iteration

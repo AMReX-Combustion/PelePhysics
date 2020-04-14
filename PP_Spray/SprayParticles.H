@@ -51,12 +51,7 @@ public:
 		     amrex::Real         ref_T)
   {
     HostVectReal fuelEnth(NUM_SPECIES);
-#ifdef PELEC_EOS_FUEGO
-    EOS::YT2H(nullptr, ref_T, fuelEnth.dataPtr());
-#else
-    amrex::Real masstmp[NUM_SPECIES] = {28.97};
-    EOS::YT2H(masstmp, ref_T, fuelEnth.dataPtr());
-#endif
+    EOS::T2Hi(ref_T, fuelEnth.dataPtr());
     m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelIndx);
   }
 
