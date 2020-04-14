@@ -110,11 +110,10 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   bool tempSource = false;
 
   MultiFab* tmp_src_ptr;
-//   if (this->OnSameGrids(lev, source) && !isVirtual && !isGhost
-//       && source.nGrow() >= tmp_src_width) {
-//     tmp_src_ptr = &source;
-//   } else {
-  {
+  if (this->OnSameGrids(lev, source) && !isVirtual && !isGhost
+      && source.nGrow() >= tmp_src_width) {
+    tmp_src_ptr = &source;
+  } else {
     tmp_src_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(lev),
                                this->m_gdb->ParticleDistributionMap(lev),
                                source.nComp(), tmp_src_width);
@@ -286,8 +285,8 @@ SprayParticleContainer::updateParticles(const int&  lev,
   const int heat_trans = PeleC::particle_heat_tran;
   const int mass_trans = PeleC::particle_mass_tran;
   const int mom_trans = PeleC::particle_mom_tran;
-  const Real p0 = 1.01325E6;
-  const Real inv_Ru = 1./RU;
+  const Real p0 = EOS::PATM;
+  const Real inv_Ru = 1./EOS::RU;
   const Real ref_T = PeleC::sprayRefT;
   // Particle components indices
   const int pstateVel = PeleC::pstateVel;
@@ -383,7 +382,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	  mass_frac[sp] = cur_mf;
 	}
 	Real intEng = statearr(cur_indx, engIndx)*inv_rho - ke;
-	Real T_val;
+	Real T_val = 300.;
 	EOS::EY2T(intEng, mass_frac, T_val);
 	T_fluid_interp[aindx] = T_val;
 	T_fluid += cur_coef*T_val;
@@ -446,7 +445,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	  mw_mix += Y_n*invmw[sp];
 	  Y_skin[sp] = 0.;
 	}
-	Real R_fluid = RU*mw_mix;
+	Real R_fluid = EOS::RU*mw_mix;
 	Real p_fluid = rho_fluid*R_fluid*T_fluid;
 	mw_mix = 1./mw_mix;
 
