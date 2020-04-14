@@ -246,7 +246,11 @@ RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
+<<<<<<< HEAD
 T2Hi(amrex::Real T, amrex::Real Hi[])
+=======
+T2Hi(amrex::Real Y[], amrex::Real T, amrex::Real H[])
+>>>>>>> b1e6fa36a15f5c1b652ab169b714e415887dfa8c
 {
   CKHMS(&T, Hi);
 }
