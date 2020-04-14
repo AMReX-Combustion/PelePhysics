@@ -165,7 +165,7 @@ RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-YT2H(amrex::Real Y[], amrex::Real T, amrex::Real H[])
+YT2Hi(amrex::Real Y[], amrex::Real T, amrex::Real H[])
 {
   amrex::Real wbar;
   EOS::Y2WBAR(Y, wbar);
