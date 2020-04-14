@@ -52,7 +52,7 @@ comp_pure_bulk(amrex::Real Tloc, amrex::Real* muloc, amrex::Real* xiloc)
       cvkint[i] = cvk[i] * trans_wt[i] / Ru - 1.50;
       cvkrot[i] = 1.0;
     } else {
-      cvkint[i] = cvk[i] * wt[i] / Ru - 1.50;
+      cvkint[i] = cvk[i] * trans_wt[i] / Ru - 1.50;
       cvkrot[i] = 1.5;
     }
   }

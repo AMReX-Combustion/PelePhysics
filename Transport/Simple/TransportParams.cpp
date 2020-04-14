@@ -35,7 +35,7 @@ init()
     amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real) * array_size));
   trans_sig = static_cast<amrex::Real*>(
     amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real) * array_size));
-  dip = static_cast<amrex::Real*>(
+  trans_dip = static_cast<amrex::Real*>(
     amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real) * array_size));
   trans_pol = static_cast<amrex::Real*>(
     amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real) * array_size));
