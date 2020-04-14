@@ -14,25 +14,28 @@ namespace EOS {
 
 extern AMREX_GPU_DEVICE_MANAGED amrex::Real gamma;
 constexpr amrex::Real RU = 8.31446261815324e7;
+constexpr amrex::Real RUC  = 1.98721558317399615845;
+constexpr amrex::Real PATM = 1.01325e+06;
+constexpr amrex::Real AIRMW = 28.97;
 
 void init();
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-GET_MW(amrex::Real mw[])
+molecular_weight(amrex::Real mw[])
 {
   for (int n = 0; n < NUM_SPECIES; n++)
-    mw[n] = 28.97;
+    mw[n] = AIRMW;
 }
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-GET_IMW(amrex::Real imw[])
+inv_molecular_weight(amrex::Real imw[])
 {
   for (int n = 0; n < NUM_SPECIES; n++)
-    imw[n] = 1./28.97;
+    imw[n] = 1./AIRMW;
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -40,11 +43,18 @@ AMREX_FORCE_INLINE
 void
 Y2WBAR(amrex::Real Y[], amrex::Real& WBAR)
 {
-  const amrex::Real molec_wt[NUM_SPECIES] = {28.97};
-  amrex::Real summ = 0.0;
-  for (int i = 0; i < NUM_SPECIES; ++i)
-    summ += Y[i] * (1.0 / molec_wt[i]);
-  WBAR = 1.0 / summ;
+  WBAR = AIRMW;
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+T2Ei(amrex::Real T, amrex::Real Ei[])
+{
+  amrex::Real wbar = AIRMW;
+  const amrex::Real Cv = RU / (wbar * (gamma - 1.0));
+  for (int n = 0; n < NUM_SPECIES; n++)
+    Ei[n] = Cv * T;
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -72,7 +82,8 @@ AMREX_FORCE_INLINE
 void
 T2Cpi(amrex::Real T, amrex::Real Cpi[])
 {
-  Cpi[0] = gamma * RU / (28.97 * (gamma - 1.0));
+  for (int n = 0; n < NUM_SPECIES; n++)
+    Cpi[n] = gamma * RU / (AIRMW * (gamma - 1.0));
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -165,13 +176,12 @@ RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-YT2H(amrex::Real Y[], amrex::Real T, amrex::Real H[])
+T2Hi(amrex::Real T, amrex::Real Hi[])
 {
-  amrex::Real wbar;
-  EOS::Y2WBAR(Y, wbar);
+  amrex::Real wbar = AIRMW;
   const amrex::Real Cv = RU / (wbar * (gamma - 1.0));
   for (int n = 0; n < NUM_SPECIES; n++)
-    H[n] = Cv * T * gamma;
+    Hi[n] = Cv * T * gamma;
 }
 
 AMREX_GPU_HOST_DEVICE

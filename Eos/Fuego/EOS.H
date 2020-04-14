@@ -19,7 +19,7 @@ void init();
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-GET_MW(amrex::Real mw[])
+molecular_weight(amrex::Real mw[])
 {
   get_mw(mw);
 }
@@ -27,7 +27,7 @@ GET_MW(amrex::Real mw[])
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-GET_IMW(amrex::Real imw[])
+inv_molecular_weight(amrex::Real imw[])
 {
   get_imw(imw);
 }
@@ -181,9 +181,9 @@ RTY2C(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real acti[])
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-YT2E(amrex::Real Y[], amrex::Real T, amrex::Real E[])
+T2Ei(amrex::Real T, amrex::Real Ei[])
 {
-  CKUMS(&T, E);
+  CKUMS(&T, Ei);
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -246,9 +246,9 @@ RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-YT2H(amrex::Real Y[], amrex::Real T, amrex::Real H[])
+T2Hi(amrex::Real T, amrex::Real Hi[])
 {
-  CKHMS(&T, H);
+  CKHMS(&T, Hi);
 }
 
 AMREX_GPU_HOST_DEVICE
