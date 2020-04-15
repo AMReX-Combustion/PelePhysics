@@ -284,21 +284,22 @@ main (int   argc,
     /* EVALUATE */
     amrex::Print() << " \n STARTING THE ADVANCE \n";
 
-#ifdef USE_CUDA_SUNDIALS_PP
     BL_PROFILE_VAR("Malloc()", Allocs);
     BL_PROFILE_VAR_STOP(Allocs);
 
     BL_PROFILE_VAR("React()", ReactInLoop);
     BL_PROFILE_VAR_STOP(ReactInLoop);
 
-    BL_PROFILE_VAR("(un)flatten()", FlatStuff);
-    BL_PROFILE_VAR_STOP(FlatStuff);
-#endif
-
     BL_PROFILE_VAR("advance()", Advance);
 
     timer_adv = ParallelDescriptor::second();
     ParallelDescriptor::ReduceRealMax(timer_adv,IOProc);
+    
+    amrex::Gpu::ManagedVector<Real> rY_and_T;
+    amrex::Gpu::ManagedVector<Real> rY_src;
+    amrex::Gpu::ManagedVector<Real> rX; //rhoe or rhoh
+    amrex::Gpu::ManagedVector<Real> rX_src; //rhoe or rhoh
+
 
 #ifndef USE_CUDA_SUNDIALS_PP
 #ifdef _OPENMP
@@ -321,170 +322,104 @@ main (int   argc,
 	const auto len     = amrex::length(box);
 	const auto lo      = amrex::lbound(box);
 
-#ifdef USE_CUDA_SUNDIALS_PP
-        std::cout<<"stream "<<amrex::Gpu::gpuStream()<<std::endl;
-
-        cudaError_t cuda_status = cudaSuccess;
-        const auto ec = Gpu::ExecutionConfig(ncells);
-#endif
-        /* VERSION 2 */
         const auto rhoY    = mf.array(mfi);
         const auto rhoE    = mfE.array(mfi);
         const auto frcExt  = rY_source_ext.array(mfi);
         const auto frcEExt = rY_source_energy_ext.array(mfi);
         const auto fc      = fctCount.array(mfi);
-
-
+        
 #ifdef USE_CUDA_SUNDIALS_PP
-	amrex::Print() << " Integrating " << ncells <<" cells \n";
-        /* Pack the data */
-	// rhoY,T
-        amrex::Real *tmp_vect; 
-	// rhoY_src_ext
-        amrex::Real *tmp_src_vect;
-	// rhoE/rhoH
-        amrex::Real *tmp_vect_energy;
-	amrex::Real *tmp_src_vect_energy;
-        
-	BL_PROFILE_VAR_START(Allocs);
-        cudaMallocManaged(&tmp_vect, (Ncomp+1)*ncells*sizeof(amrex::Real));
-        cudaMallocManaged(&tmp_src_vect, Ncomp*ncells*sizeof(amrex::Real));
-        cudaMallocManaged(&tmp_vect_energy, ncells*sizeof(amrex::Real));
-        cudaMallocManaged(&tmp_src_vect_energy, ncells*sizeof(amrex::Real));
-	BL_PROFILE_VAR_STOP(Allocs);
+        std::cout<<"stream "<<amrex::Gpu::gpuStream()<<std::endl;
+        cudaError_t cuda_status = cudaSuccess;
+        const auto ec = Gpu::ExecutionConfig(ncells);
+        ode_ncells=ncells;
+#endif
+	amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
 
-        BL_PROFILE_VAR_START(FlatStuff);
-        /* Packing of data */
-	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	[=] AMREX_GPU_DEVICE () noexcept {
-	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	        icell < ncells; icell += stride) {
-	        int k =  icell /   (len.x*len.y);
-		int j = (icell - k*(len.x*len.y)) /   len.x;
-		int i = (icell - k*(len.x*len.y)) - j*len.x;
-		i += lo.x;
-		j += lo.y;
-		k += lo.z;
-                gpu_flatten(icell, i, j, k, rhoY, frcExt, rhoE, frcEExt, 
-                                            tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
+	BL_PROFILE_VAR_START(Allocs);
+
+        rY_and_T.clear();
+        rY_src.clear();
+        rX.clear();
+        rX_src.clear();
+
+        rY_and_T.resize((Ncomp+1)*ncells);
+        rY_src.resize(Ncomp*ncells);
+        rX.resize(ncells);
+        rX_src.resize(ncells);
+
+        BL_PROFILE_VAR_STOP(Allocs);
+
+        amrex::Real *tmp_vect             =  rY_and_T.data();
+        amrex::Real *tmp_src_vect         =  rY_src.data();
+        amrex::Real *tmp_vect_energy      =  rX.data();
+        amrex::Real *tmp_src_vect_energy  =  rX_src.data();
+
+        amrex::ParallelFor(box, [=] 
+                AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+
+            int offset = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+            for(int sp=0; sp<NUM_SPECIES; sp++)
+            {
+                tmp_vect[offset+sp]      = rhoY(i,j,k,sp);
+                tmp_src_vect[offset+sp]  = frcExt(i,j,k,sp);
             }
+            tmp_vect[offset+Ncomp]       = rhoY(i,j,k,Ncomp);
+            tmp_vect_energy[offset]      = rhoE(i,j,k,0);
+            tmp_src_vect_energy[offset]  = frcEExt(i,j,k,0);
         });
-	BL_PROFILE_VAR_STOP(FlatStuff);
         
+#ifdef USE_CUDA_SUNDIALS_PP
         cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
+#endif
 
         /* Solve */
         BL_PROFILE_VAR_START(ReactInLoop);
-	time = 0.0;
-	for (int ii = 0; ii < ndt; ++ii) {
-	    fc_tmp = react(tmp_vect, tmp_src_vect,
-	                    tmp_vect_energy, tmp_src_vect_energy,
+         for(int i = 0; i < ncells; i+=ode_ncells)
+         {
+	    time = 0.0;
+	    for (int ii = 0; ii < ndt; ++ii) 
+            {
+
+
+#ifndef USE_CUDA_SUNDIALS_PP
+    #if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
+	        fc_tmp = react(tmp_vect+i*(Ncomp+1), tmp_src_vect+i*Ncomp,
+		    tmp_vect_energy+i, tmp_src_vect_energy+i,
+		    &dt_incr, &time);
+    #else
+                double pressure = 1013250.0;
+	        fc_tmp = react(tmp_vect+i*(Ncomp+1), tmp_src_vect+i*Ncomp,
+		        tmp_vect_energy+i, tmp_src_vect_energy+i,
+			&pressure,
+		        &dt_incr, &time);
+    #endif
+#else
+	        fc_tmp = react(tmp_vect+i*(Ncomp+1), tmp_src_vect+i*Ncomp,
+	                    tmp_vect_energy+i, tmp_src_vect_energy+i,
 	                    &dt_incr, &time,
                             &ode_iE, &ncells, amrex::Gpu::gpuStream());
+#endif
 	    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)]);
-	    dt_incr =  dt/ndt;
+	       dt_incr =  dt/ndt;
+            }
         }
         BL_PROFILE_VAR_STOP(ReactInLoop);
+        
+        amrex::ParallelFor(box, [=] 
+                AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
 
-        BL_PROFILE_VAR_START(FlatStuff);
-        /* Unpacking of data */
-	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	[=] AMREX_GPU_DEVICE () noexcept {
-	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	        icell < ncells; icell += stride) {
-	        int k =  icell /   (len.x*len.y);
-		int j = (icell - k*(len.x*len.y)) /   len.x;
-		int i = (icell - k*(len.x*len.y)) - j*len.x;
-		i += lo.x;
-		j += lo.y;
-		k += lo.z;
-                gpu_unflatten(icell, i, j, k, rhoY, rhoE, 
-                                            tmp_vect, tmp_vect_energy);
+            int offset = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+            for(int sp=0; sp<NUM_SPECIES; sp++)
+            {
+                rhoY(i,j,k,sp) = tmp_vect[offset+sp];
             }
+            rhoY(i,j,k,Ncomp) = tmp_vect[offset + Ncomp];
+	    rhoE(i,j,k,0)    = tmp_vect_energy[offset];
+            fc(i,j,k,0)        = fc_tmp;
         });
-        BL_PROFILE_VAR_STOP(FlatStuff);
-
-        cudaFree(tmp_vect);
-        cudaFree(tmp_src_vect);
-        cudaFree(tmp_vect_energy);
-        cudaFree(tmp_src_vect_energy);
-       
-        cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
-#else
-
-	amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
-        /* Pack the data */
-	// rhoY,T
-	double tmp_vect[ode_ncells*(Ncomp+1)];
-	// rhoY_src_ext
-	double tmp_src_vect[ode_ncells*(Ncomp)];
-	// rhoE/rhoH
-	double tmp_vect_energy[ode_ncells];
-	double tmp_src_vect_energy[ode_ncells];
-
-	int indx_i[ode_ncells];
-	int indx_j[ode_ncells];
-	int indx_k[ode_ncells];
-	
-	int nc = 0;
-	int num_cell_ode_int = 0;
-	for         (int k = 0; k < len.z; ++k) {
-	    for         (int j = 0; j < len.y; ++j) {
-	        for         (int i = 0; i < len.x; ++i) {
-		    /* Fill the vectors */
-	            for (int sp=0;sp<Ncomp; sp++){
-	                tmp_vect[nc*(Ncomp+1) + sp]   = rhoY(i+lo.x,j+lo.y,k+lo.z,sp);
-		        tmp_src_vect[nc*Ncomp + sp]   = frcExt(i+lo.x,j+lo.y,k+lo.z,sp);
-		    }
-		    tmp_vect[nc*(Ncomp+1) + Ncomp]    = rhoY(i+lo.x,j+lo.y,k+lo.z,Ncomp);
-		    tmp_vect_energy[nc]               = rhoE(i+lo.x,j+lo.y,k+lo.z,0);
-		    tmp_src_vect_energy[nc]           = frcEExt(i+lo.x,j+lo.y,k+lo.z,0);
-		    //
-		    indx_i[nc] = i+lo.x;
-		    indx_j[nc] = j+lo.y;
-		    indx_k[nc] = k+lo.z;
-		    //
-		    nc = nc+1;
-		    //
-		    num_cell_ode_int = num_cell_ode_int + 1;
-		    if (nc == ode_ncells) {
-			time = 0.0;
-			dt_incr =  dt/ndt;
-			for (int ii = 0; ii < ndt; ++ii) {
-#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
-	                    fc_tmp = react(tmp_vect, tmp_src_vect,
-		                tmp_vect_energy, tmp_src_vect_energy,
-		                &dt_incr, &time);
-#else
-                            double pressure = 1013250.0;
-	                    fc_tmp = react(tmp_vect, tmp_src_vect,
-		                tmp_vect_energy, tmp_src_vect_energy,
-				&pressure,
-		                &dt_incr, &time);
-#endif
-		            dt_incr =  dt/ndt;
-			    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
-			}
-		        nc = 0;
-		        for (int l = 0; l < ode_ncells ; ++l){
-		            for (int sp=0;sp<Ncomp; sp++){
-		                rhoY(indx_i[l],indx_j[l],indx_k[l],sp) = tmp_vect[l*(Ncomp+1) + sp];
-		            }
-		            rhoY(indx_i[l],indx_j[l],indx_k[l],Ncomp)  = tmp_vect[l*(Ncomp+1) + Ncomp];
-		            rhoE(indx_i[l],indx_j[l],indx_k[l],0)      = tmp_vect_energy[l];
-			    fc(indx_i[l],indx_j[l],indx_k[l],0)        = fc_tmp;
-		        }
-		    }
-		}
-	    }
-	}
-	if (nc != 0) {
-		printf(" WARNING !! Not enough cells (%d) to fill %d \n", nc, ode_ncells);
-	} else {
-		printf(" Integrated %d cells \n",num_cell_ode_int);
-	}
-#endif
-
     }
     BL_PROFILE_VAR_STOP(Advance);
 
