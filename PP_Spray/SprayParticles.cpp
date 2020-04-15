@@ -269,8 +269,11 @@ SprayParticleContainer::updateParticles(const int&  lev,
   const auto domain = this->Geom(lev).Domain();
   IntVect dom_lo = domain.smallEnd();
   IntVect dom_hi = domain.bigEnd();
+  // Vector to determine periodicity, 0-is periodic, 1-is not periodic
+  IntVect not_period = IntVect::TheUnitVector();
   // We are only concerned with domain boundaries that are reflective
   for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+    if (this->Geom(lev).isPeriodic(dir)) not_period[dir] = 0;
     if (reflect_lo[dir] == 0) dom_lo[dir] += -100;
     if (reflect_hi[dir] == 0) dom_hi[dir] += 100;
   }
@@ -605,7 +608,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	      for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
 		Gpu::Atomic::Add(&p.pos(dir), dt*p.rdata(pstateVel+dir));
                 // Check if particle is reflecting off a wall or leaving the domain
-                if (p.pos(dir) > phi[dir]) {
+                if (p.pos(dir) > phi[dir] && not_period[dir]) {
                   if (reflect_hi[dir]) {
                     p.pos(dir) = 2.*phi[dir] - p.pos(dir);
                     p.rdata(pstateVel+dir) *= -1.;
@@ -613,7 +616,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
                     p.id() = -1;
                   }
                 }
-                if (p.pos(dir) < plo[dir]) {
+                if (p.pos(dir) < plo[dir] && not_period[dir]) {
                   if (reflect_lo[dir]) {
                     p.pos(dir) = 2.*plo[dir] - p.pos(dir);
                     p.rdata(pstateVel+dir) *= -1.;
