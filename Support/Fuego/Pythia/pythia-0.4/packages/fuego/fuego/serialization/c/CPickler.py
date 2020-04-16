@@ -26,9 +26,8 @@ import sys
 import numpy as np
 
 smallnum = 1e-100
-R = 8.31451e7 * erg/mole/kelvin
-#Rc = 1.987215583 * cal/mole/kelvin
-Rc = 1.98721558317399617591 * cal/mole/kelvin
+R = 8.31446261815324e7 * erg/mole/kelvin
+Rc = 1.98721558317399615845 * cal/mole/kelvin
 Patm = 1013250.0
 sym  = ""
 fsym = "_"
@@ -518,6 +517,7 @@ class CPickler(CMill):
         self._ckxnum(mechanism)
         self._cksnum(mechanism)
         self._cksyme(mechanism)
+        self._cksyms_str(mechanism)
         self._cksyms(mechanism)
         self._ckrp(mechanism)
         
@@ -980,23 +980,23 @@ class CPickler(CMill):
             'void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);',
             'void CKSYME(int * kname, int * lenkname);',
             'void CKSYMS(int * kname, int * lenkname);',
-            #'void CKSYMS'+sym+'(char * cckwrk, int * lout, char * kname, int * kerr, int lencck, int lenkname);',
+            'void CKSYMS_STR(amrex::Vector<std::string>& kname);',
             'void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa);',
             'void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P);',
             'AMREX_GPU_HOST_DEVICE void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
             'void CKPC'+sym+'(double *  rho, double *  T, double *  c, double *  P);',
             'void CKRHOX'+sym+'(double *  P, double *  T, double *  x, double *  rho);',
-            'void CKRHOY'+sym+'(double *  P, double *  T, double *  y, double *  rho);',
+            'AMREX_GPU_HOST_DEVICE void CKRHOY'+sym+'(double *  P, double *  T, double *  y, double *  rho);',
             'void CKRHOC'+sym+'(double *  P, double *  T, double *  c, double *  rho);',
             'void CKWT'+sym+'(double *  wt);',
             'void CKAWT'+sym+'(double *  awt);',
-            'void CKMMWY'+sym+'(double *  y, double *  wtm);',
+            'AMREX_GPU_HOST_DEVICE void CKMMWY'+sym+'(double *  y, double *  wtm);',
             'void CKMMWX'+sym+'(double *  x, double *  wtm);',
             'void CKMMWC'+sym+'(double *  c, double *  wtm);',
             'AMREX_GPU_HOST_DEVICE void CKYTX'+sym+'(double *  y, double *  x);',
             'void CKYTCP'+sym+'(double *  P, double *  T, double *  y, double *  c);',
             'AMREX_GPU_HOST_DEVICE void CKYTCR'+sym+'(double *  rho, double *  T, double *  y, double *  c);',
-            'void CKXTY'+sym+'(double *  x, double *  y);',
+            'AMREX_GPU_HOST_DEVICE void CKXTY'+sym+'(double *  x, double *  y);',
             'void CKXTCP'+sym+'(double *  P, double *  T, double *  x, double *  c);',
             'void CKXTCR'+sym+'(double *  rho, double *  T, double *  x, double *  c);',
             'void CKCTX'+sym+'(double *  c, double *  x);',
@@ -1475,7 +1475,6 @@ class CPickler(CMill):
             'void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);',
             'void CKSYME(int * kname, int * lenkname);',
             'void CKSYMS(int * kname, int * lenkname);',
-            #'void CKSYMS'+sym+'(char * cckwrk, int * lout, char * kname, int * kerr, int lencck, int lenkname);',
             'void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa);',
             'void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P);',
             'void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
@@ -2407,7 +2406,7 @@ class CPickler(CMill):
         self._write('{')
         self._indent()
         
-        self._write(' *ru  = %g; ' % (R * mole * kelvin / erg))
+        self._write(' *ru  = %1.14e; ' % (R * mole * kelvin / erg))
         self._write(' *ruc = %.20f; ' % (Rc * mole * kelvin / cal))
         self._write(' *pa  = %g; ' % (Patm) )
         
@@ -2453,6 +2452,23 @@ class CPickler(CMill):
         self._write('}')
         return
 
+    def _cksyms_str(self, mechanism):
+
+        nSpecies = len(mechanism.species())  
+
+        self._write() 
+        self._write()
+        self._write(
+            self.line(' Returns the vector of strings of species names'))
+        self._write('void CKSYMS_STR'+sym+'(amrex::Vector<std::string>& kname)')
+        self._write('{')
+        self._indent()
+        for species in mechanism.species():
+            self._write('kname.push_back("%s");' % species.symbol)
+
+        self._outdent() 
+        self._write('}') 
+        return
 
     def _cksyms(self, mechanism):
 
@@ -2462,7 +2478,6 @@ class CPickler(CMill):
         self._write()
         self._write(
             self.line(' Returns the char strings of species names'))
-        #self._write('void CKSYMS'+sym+'(char * cckwrk, int * lout, char * kname, int * kerr, int lencck, int lenkname )')
         self._write('void CKSYMS'+sym+'(int * kname, int * plenkname )')
         self._write('{')
         self._indent()
@@ -2688,7 +2703,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute rho = P*W(y)/RT'))
-        self._write('void CKRHOY'+sym+'(double *  P, double *  T, double *  y,  double *  rho)')
+        self._write('AMREX_GPU_HOST_DEVICE void CKRHOY'+sym+'(double *  P, double *  T, double *  y,  double *  rho)')
         self._write('{')
         self._indent()
         self._write('double YOW = 0;')
@@ -4507,7 +4522,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('given y[species]: mass fractions'))
         self._write(self.line('returns mean molecular weight (gm/mole)'))
-        self._write('void CKMMWY'+sym+'(double *  y,  double *  wtm)')
+        self._write('AMREX_GPU_HOST_DEVICE void CKMMWY'+sym+'(double *  y,  double *  wtm)')
         self._write('{')
         self._indent()
         species = self.species
@@ -4767,7 +4782,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert x[species] (mole fracs) to y[species] (mass fracs)'))
-        self._write('void CKXTY'+sym+'(double *  x,  double *  y)')
+        self._write('AMREX_GPU_HOST_DEVICE void CKXTY'+sym+'(double *  x,  double *  y)')
         self._write('{')
         self._indent()
 

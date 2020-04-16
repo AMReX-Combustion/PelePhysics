@@ -20,7 +20,7 @@
 #endif
 
 #include <AMReX_Print.H>
-#include <Fuego_EOS.H>
+#include <EOS.H>
 /**********************************/
 
 typedef struct {

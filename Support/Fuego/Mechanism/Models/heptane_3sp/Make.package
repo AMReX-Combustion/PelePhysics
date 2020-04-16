@@ -1,1 +1,1 @@
-cEXE_sources+=heptane_3sp.c
+CEXE_sources+=heptane_3sp.cpp

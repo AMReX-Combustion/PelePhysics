@@ -4,7 +4,7 @@ GammaLaw:
 
    A simple gamma-law EOS.  This computes the mean molecular
    weight from the mass fractions and the species properties defined
-   in the network module.  
+   in the fuego_chemistry  module.  
 
    NOTE: this simple version of the EOS does not compute all of the
    thermodynamic variables defined in the eos_type, but only those

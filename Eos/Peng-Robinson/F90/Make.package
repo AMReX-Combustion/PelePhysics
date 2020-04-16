@@ -1,0 +1,1 @@
+F90EXE_sources += eos_F.F90
