@@ -18,19 +18,17 @@ public:
 	      const Gpu::HostVector<int>&  fuelIndx)
   {
     const int nfspec = SPRAY_FUEL_NUM;
-    // Number of adjacent cells
-    const int numspec = NUM_SPECIES;
     m_critT.resize(nfspec);
     m_boilT.resize(nfspec);
     m_fuelCp.resize(nfspec);
     m_fuelLatent.resize(nfspec);
     m_fuelIndx.resize(nfspec);
-    m_refFuelH.resize(numspec);
     Gpu::HostVector<Real> invBoilT(nfspec);
+    Gpu::HostVector<Real> tmpFuelLatent(nfspec);
     m_invBoilT.resize(nfspec);
-    for (int i = 0; i != nfspec; ++i)
-      {
-	invBoilT[i] = 1./boilT[i];
+    for (int i = 0; i != nfspec; ++i) {
+      tmpFuelLatent[i] = fuelLatent[i] - refFuelH[i];
+      invBoilT[i] = 1./boilT[i];
       }
     Gpu::copy(Gpu::hostToDevice, critT.begin(), critT.end(),
 	      m_critT.begin());
@@ -38,12 +36,10 @@ public:
 	      m_boilT.begin());
     Gpu::copy(Gpu::hostToDevice, fuelCp.begin(), fuelCp.end(),
 	      m_fuelCp.begin());
-    Gpu::copy(Gpu::hostToDevice, fuelLatent.begin(), fuelLatent.end(),
+    Gpu::copy(Gpu::hostToDevice, tmpFuelLatent.begin(), tmpFuelLatent.end(),
 	      m_fuelLatent.begin());
     Gpu::copy(Gpu::hostToDevice, fuelIndx.begin(), fuelIndx.end(),
 	      m_fuelIndx.begin());
-    Gpu::copy(Gpu::hostToDevice, refFuelH.begin(), refFuelH.end(),
-	      m_refFuelH.begin());
     Gpu::copy(Gpu::hostToDevice, invBoilT.begin(), invBoilT.end(),
 	      m_invBoilT.begin());
   }
@@ -60,9 +56,6 @@ public:
   //! \brief returns the const pointer to the latent heat for the spray fuel
   const Real* fuelLatent() const noexcept { return m_fuelLatent.dataPtr(); }
 
-  //! \brief returns the const pointer to the gas species enthalpy at the reference temperature
-  const Real* refFuelH() const noexcept { return m_refFuelH.dataPtr(); }
-
   //! \brief returns the const pointer to the index of the fuel species relative to the gas species
   const int* fuelIndx() const noexcept { return m_fuelIndx.dataPtr(); }
 
@@ -75,7 +68,6 @@ private:
   Gpu::DeviceVector<Real> m_critT;
   Gpu::DeviceVector<Real> m_boilT;
   Gpu::DeviceVector<Real> m_fuelCp;
-  Gpu::DeviceVector<Real> m_refFuelH;
   Gpu::DeviceVector<Real> m_fuelLatent;
   Gpu::DeviceVector<int>  m_fuelIndx;
   Gpu::DeviceVector<Real> m_invBoilT;

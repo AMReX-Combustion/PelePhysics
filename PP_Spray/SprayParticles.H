@@ -113,8 +113,8 @@ private:
 
   bool sub_cycle;
   amrex::BCRec* phys_bc;
-  amrex::IntVect reflect_lo;
-  amrex::IntVect reflect_hi;
+  bool reflect_lo[AMREX_SPACEDIM];
+  bool reflect_hi[AMREX_SPACEDIM];
   SprayFuelData m_fuelData;
 };
 
