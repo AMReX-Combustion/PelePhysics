@@ -6,9 +6,6 @@ module egz_module
 
   private
 
-  !double precision, parameter :: Ru = 8.314d7
-  !double precision, parameter :: Patm = 1.01325d6
-
   logical, save :: use_bulk_visc = .true.
 
   integer, parameter :: nfit=7
