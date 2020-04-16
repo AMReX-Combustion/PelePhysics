@@ -114,10 +114,8 @@ main (int   argc,
       //   1 = Internal energy
       //   anything else = enthalpy (PeleLM restart)
 
-#if defined(USE_CUDA_SUNDIALS_PP)
       // nb of cells to integrate
       ppode.query("ode_ncells",ode_ncells);
-#endif
 
 #ifdef USE_ARKODE_PP 
       /* Additional ARKODE queries */
@@ -295,10 +293,6 @@ main (int   argc,
     timer_adv = ParallelDescriptor::second();
     ParallelDescriptor::ReduceRealMax(timer_adv,IOProc);
     
-    amrex::Gpu::ManagedVector<Real> rY_and_T;
-    amrex::Gpu::ManagedVector<Real> rY_src;
-    amrex::Gpu::ManagedVector<Real> rX; //rhoe or rhoh
-    amrex::Gpu::ManagedVector<Real> rX_src; //rhoe or rhoh
 
 
 #ifndef USE_CUDA_SUNDIALS_PP
@@ -322,11 +316,11 @@ main (int   argc,
 	const auto len     = amrex::length(box);
 	const auto lo      = amrex::lbound(box);
 
-        const auto rhoY    = mf.array(mfi);
-        const auto rhoE    = mfE.array(mfi);
-        const auto frcExt  = rY_source_ext.array(mfi);
-        const auto frcEExt = rY_source_energy_ext.array(mfi);
-        const auto fc      = fctCount.array(mfi);
+        Array4<Real> rhoY    = mf.array(mfi);
+        Array4<Real> rhoE    = mfE.array(mfi);
+        Array4<Real> frcExt  = rY_source_ext.array(mfi);
+        Array4<Real> frcEExt = rY_source_energy_ext.array(mfi);
+        Array4<Real> fc      = fctCount.array(mfi);
         
 #ifdef USE_CUDA_SUNDIALS_PP
         std::cout<<"stream "<<amrex::Gpu::gpuStream()<<std::endl;
@@ -338,37 +332,58 @@ main (int   argc,
 
 	BL_PROFILE_VAR_START(Allocs);
 
-        rY_and_T.clear();
-        rY_src.clear();
-        rX.clear();
-        rX_src.clear();
+        amrex::Real  *rY_and_T;
+        amrex::Real  *rY_src;
+        amrex::Real  *rX;
+        amrex::Real  *rX_src;
 
-        rY_and_T.resize((Ncomp+1)*ncells);
-        rY_src.resize(Ncomp*ncells);
-        rX.resize(ncells);
-        rX_src.resize(ncells);
+        rY_and_T = new amrex::Real[(NUM_SPECIES+1)*ncells];
+        rY_src   = new amrex::Real[NUM_SPECIES*ncells];
+        rX       = new amrex::Real[ncells];
+        rX_src   = new amrex::Real[ncells];
+
+#ifdef USE_CUDA_SUNDIALS_PP
+        amrex::Gpu::AsyncArray<amrex::Real> rY_and_T_async(rY_and_T,(NUM_SPECIES+1)*ncells);
+        amrex::Gpu::AsyncArray<amrex::Real> rY_src_async(rY_src,NUM_SPECIES*ncells);
+        amrex::Gpu::AsyncArray<amrex::Real> rX_async(rX, ncells);
+        amrex::Gpu::AsyncArray<amrex::Real> rX_src_async(rX_src, ncells);
+
+        amrex::Real *tmp_vect             =  rY_and_T_async.data();
+        amrex::Real *tmp_src_vect         =  rY_src_async.data();
+        amrex::Real *tmp_vect_energy      =  rX_async.data();
+        amrex::Real *tmp_src_vect_energy  =  rX_src_async.data();
+#else
+        amrex::Real *tmp_vect             =  rY_and_T;
+        amrex::Real *tmp_src_vect         =  rY_src;
+        amrex::Real *tmp_vect_energy      =  rX;
+        amrex::Real *tmp_src_vect_energy  =  rX_src;
+#endif
 
         BL_PROFILE_VAR_STOP(Allocs);
 
-        amrex::Real *tmp_vect             =  rY_and_T.data();
-        amrex::Real *tmp_src_vect         =  rY_src.data();
-        amrex::Real *tmp_vect_energy      =  rX.data();
-        amrex::Real *tmp_src_vect_energy  =  rX_src.data();
-
-        amrex::ParallelFor(box, [=] 
+        amrex::ParallelFor(box, [=]
                 AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
 
             int offset = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
             for(int sp=0; sp<NUM_SPECIES; sp++)
             {
-                tmp_vect[offset+sp]      = rhoY(i,j,k,sp);
-                tmp_src_vect[offset+sp]  = frcExt(i,j,k,sp);
+                tmp_vect[offset*(NUM_SPECIES+1)+sp]      = rhoY(i,j,k,sp);
+                tmp_src_vect[offset*NUM_SPECIES+sp]      = frcExt(i,j,k,sp);
             }
-            tmp_vect[offset+Ncomp]       = rhoY(i,j,k,Ncomp);
-            tmp_vect_energy[offset]      = rhoE(i,j,k,0);
-            tmp_src_vect_energy[offset]  = frcEExt(i,j,k,0);
+            tmp_vect[offset*(NUM_SPECIES+1)+NUM_SPECIES] = rhoY(i,j,k,NUM_SPECIES);
+            tmp_vect_energy[offset]                      = rhoE(i,j,k,0);
+            tmp_src_vect_energy[offset]                  = frcEExt(i,j,k,0);
         });
+
+#ifdef USE_CUDA_SUNDIALS_PP
+       rY_and_T_async.copyToHost(rY_and_T, (NUM_SPECIES+1)*ncells);
+       rY_src_async.copyToHost  (rY_src, NUM_SPECIES*ncells);
+       rX_async.copyToHost      (rX,ncells);
+       rX_src_async.copyToHost  (rX_src,ncells);
+#endif
+
+       Print()<<rY_and_T[Ncomp]<<"\n";
         
 #ifdef USE_CUDA_SUNDIALS_PP
         cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
@@ -385,19 +400,19 @@ main (int   argc,
 
 #ifndef USE_CUDA_SUNDIALS_PP
     #if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
-	        fc_tmp = react(tmp_vect+i*(Ncomp+1), tmp_src_vect+i*Ncomp,
-		    tmp_vect_energy+i, tmp_src_vect_energy+i,
+	        fc_tmp = react(rY_and_T+i*(Ncomp+1), rY_src+i*Ncomp,
+		     rX+i, rX_src+i,
 		    &dt_incr, &time);
     #else
                 double pressure = 1013250.0;
-	        fc_tmp = react(tmp_vect+i*(Ncomp+1), tmp_src_vect+i*Ncomp,
-		        tmp_vect_energy+i, tmp_src_vect_energy+i,
+	        fc_tmp = react(rY_and_T+i*(Ncomp+1), rY_src+i*Ncomp,
+		        rX+i, rX_src+i,
 			&pressure,
 		        &dt_incr, &time);
     #endif
 #else
-	        fc_tmp = react(tmp_vect+i*(Ncomp+1), tmp_src_vect+i*Ncomp,
-	                    tmp_vect_energy+i, tmp_src_vect_energy+i,
+	        fc_tmp = react(rY_and_T+i*(Ncomp+1), rY_src+i*Ncomp,
+	                    rX+i, rX_src+i,
 	                    &dt_incr, &time,
                             &ode_iE, &ncells, amrex::Gpu::gpuStream());
 #endif
@@ -414,12 +429,18 @@ main (int   argc,
             int offset = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
             for(int sp=0; sp<NUM_SPECIES; sp++)
             {
-                rhoY(i,j,k,sp) = tmp_vect[offset+sp];
+                rhoY(i,j,k,sp) = rY_and_T[offset*(Ncomp+1)+sp];
             }
-            rhoY(i,j,k,Ncomp) = tmp_vect[offset + Ncomp];
-	    rhoE(i,j,k,0)    = tmp_vect_energy[offset];
+            rhoY(i,j,k,Ncomp) = rY_and_T[offset*(Ncomp+1) + Ncomp];
+	    rhoE(i,j,k,0)     = rX[offset];
             fc(i,j,k,0)        = fc_tmp;
         });
+
+        
+        delete(rY_and_T); 
+        delete(rY_src);   
+        delete(rX);       
+        delete(rX_src); 
     }
     BL_PROFILE_VAR_STOP(Advance);
 

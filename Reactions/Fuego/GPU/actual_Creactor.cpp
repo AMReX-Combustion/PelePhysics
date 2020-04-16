@@ -352,7 +352,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 	} else if (user_data->isolve_type == sparse_cusolver_solve) {
 
-            LS = SUNLinSol_cuSolverSp_batchQR(y, A, NCELLS, (NEQ+1) , user_data->NNZ);
+            //LS = SUNLinSol_cuSolverSp_batchQR(y, A, NCELLS, (NEQ+1) , user_data->NNZ);
+            LS = SUNLinSol_cuSolverSp_batchQR(y, A, user_data->cusolverHandle);
 	    if(check_flag((void *)LS, "SUNLinSol_cuSolverSp_batchQR", 0)) return(1);
 
             /* Set matrix and linear solver to Cvode */
