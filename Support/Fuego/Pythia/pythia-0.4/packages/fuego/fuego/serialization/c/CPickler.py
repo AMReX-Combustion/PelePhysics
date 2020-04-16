@@ -27,8 +27,7 @@ import numpy as np
 
 smallnum = 1e-100
 R = 8.31446261815324e7 * erg/mole/kelvin
-#Rc = 1.987215583 * cal/mole/kelvin
-Rc = 1.98721558317399617591 * cal/mole/kelvin
+Rc = 1.98721558317399615845 * cal/mole/kelvin
 Patm = 1013250.0
 sym  = ""
 fsym = "_"
