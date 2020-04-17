@@ -270,10 +270,11 @@ SprayParticleContainer::updateParticles(const int&  lev,
   IntVect dom_lo = domain.smallEnd();
   IntVect dom_hi = domain.bigEnd();
   // Vector to determine periodicity, false-is periodic, true-is not periodic
-  bool not_period[AMREX_SPACEDIM] = {true};
+  bool not_period[AMREX_SPACEDIM];
   // We are only concerned with domain boundaries that are reflective
   for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
     if (this->Geom(lev).isPeriodic(dir)) not_period[dir] = false;
+    else not_period[dir] = true;
     // Only concered with reflective boundaries
     if (!reflect_lo[dir]) dom_lo[dir] -= 100;
     if (!reflect_hi[dir]) dom_hi[dir] += 100;
@@ -339,15 +340,15 @@ SprayParticleContainer::updateParticles(const int&  lev,
       Real dt = flow_dt;
       Real sub_source = inv_vol;
       // TODO: I was hoping to not have to instantiate this everytime
-      Real Y_fluid[NUM_SPECIES] = {0.};
-      Real Y_skin[NUM_SPECIES] = {0.};
+      Real Y_fluid[NUM_SPECIES];
+      Real Y_skin[NUM_SPECIES];
       Real h_skin[NUM_SPECIES];
       Real cp_n[NUM_SPECIES];
       Real mass_frac[NUM_SPECIES];
       Real Ddiag[NUM_SPECIES];
       Real B_M_num[SPRAY_FUEL_NUM];
       Real Sh_num[SPRAY_FUEL_NUM];
-      Real Y_dot[SPRAY_FUEL_NUM] = {0.};;
+      Real Y_dot[SPRAY_FUEL_NUM];
       Real L_fuel[SPRAY_FUEL_NUM];
       // Weights for interpolation
       Real coef[AMREX_D_PICK(2, 4, 8)];
@@ -362,6 +363,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
       RealVect vel_fluid(RealVect::TheZeroVector());
       Real T_fluid = 0.;
       Real rho_fluid = 0.;
+      for (int sp = 0; sp != NUM_SPECIES; ++sp) Y_fluid[sp] = 0.;
       // Extract adjacent values and interpolate fluid at particle location
       for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
 	IntVect cur_indx = indx_array[aindx];
@@ -372,13 +374,13 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	Real inv_rho = 1./cur_rho;
         AMREX_D_TERM(Real velx = statearr(cur_indx, momIndx)*inv_rho;
                      Real ke = 0.5*velx*velx;
-                     vel_fluid[0] = velx;,
+                     vel_fluid[0] += cur_coef*velx;,
                      Real vely = statearr(cur_indx, momIndx+1)*inv_rho;
                      ke += 0.5*vely*vely;
-                     vel_fluid[1] = vely;,
+                     vel_fluid[1] += cur_coef*vely;,
                      Real velz = statearr(cur_indx, momIndx+2)*inv_rho;
                      ke += 0.5*velz*velz;
-                     vel_fluid[2] = velz;);
+                     vel_fluid[2] += cur_coef*velz;);
 	for (int sp = 0; sp != NUM_SPECIES; ++sp) {
 	  int mf_indx = sp + specIndx;
 	  Real cur_mf = statearr(cur_indx, mf_indx)*inv_rho;
@@ -417,6 +419,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
         if (heat_trans || mass_trans) {
           for (int sp = 0; sp != NUM_SPECIES; ++sp) {
             mw_mix += Y_fluid[sp]*invmw[sp];
+            Y_skin[sp] = 0.;
           }
         } else {
           for (int sp = 0; sp != NUM_SPECIES; ++sp) {
@@ -475,7 +478,6 @@ SprayParticleContainer::updateParticles(const int&  lev,
         transport(get_xi, get_mu, get_lambda, get_Ddiag,
                   T_fluid, rho_fluid, Y_skin, Ddiag,
                   mu_skin, xi_skin, lambda_skin);
-        const Real inv_lambda = 1./lambda_skin;
 	// Ensure gas is not all fuel to allow evaporation
 	bool evap_fuel = (sumYFuel >= 1.) ? false : true;
 	RealVect diff_vel = vel_fluid - vel_part;
@@ -488,7 +490,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	Real m_dot = 0.;
 	Real d_dot = 0.;
 	if ((mass_trans || heat_trans) && evap_fuel) {
-          Real Pr_skin = mu_skin*cp_skin*inv_lambda;
+          Real Pr_skin = mu_skin*cp_skin/lambda_skin;
           Real powR = amrex::max(std::pow(Reyn, 0.077), 1.);
           Nu_0 = 1. + powR*std::cbrt(1. + Reyn*Pr_skin);
 	  for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
@@ -501,15 +503,12 @@ SprayParticleContainer::updateParticles(const int&  lev,
             Real invFM = B_M/(logB*std::pow(1. + B_M, 0.7));
             Real Sh_0 = 1. + powR*std::cbrt(1. + Reyn*Sc_skin);
 	    Sh_num[spf] = 2. + (Sh_0 - 2.)*invFM;
-            Y_dot[spf] = -amrex::max(M_PI*rhoD*dia_part*Sh_num[spf]*logB, 0.);
-	    m_dot += Y_dot[spf];
+            if (mass_trans) {
+              Y_dot[spf] = -amrex::max(M_PI*rhoD*dia_part*Sh_num[spf]*logB, 0.);
+              m_dot += Y_dot[spf];
+            }
 	  }
 	  d_dot = m_dot/(0.5*M_PI*rho_part*dia2_part);
-	  if (!mass_trans) {
-	    d_dot = 0.;
-	    m_dot = 0.;
-	    for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) Y_dot[spf] = 0.;
-	  }
 	}
 
 	// Solve for momentum source terms
@@ -542,7 +541,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	  Real coeff_heat = 0.;
 	  for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
 	    const int fspec = fuel_indx[spf];
-	    Real ratio = cp_n[fspec]*Sh_num[spf]*Ddiag[fspec]*inv_lambda;;
+	    Real ratio = cp_n[fspec]*Sh_num[spf]*Ddiag[fspec]/lambda_skin;
 	    Real heatC = calcHeatCoeff(ratio, B_M_num[spf], B_eps, Nu_0);
 	    // Convection term
 	    coeff_heat += heatC;
@@ -560,8 +559,8 @@ SprayParticleContainer::updateParticles(const int&  lev,
           part_temp_src += conv_src;
           part_temp_src *= inv_pm_cp;
 	  if (isub == 1) {
-	    Real inv_tau_T = conv_src*inv_pm_cp;
-	    nsub = amrex::min(amrex::max(nsub, int(flow_dt*inv_tau_T*delT) + 1), nSubMax);
+	    Real inv_tau_T = conv_src*inv_pm_cp/delT;
+	    nsub = amrex::min(amrex::max(nsub, int(flow_dt*inv_tau_T) + 1), nSubMax);
 	  }
 	}
 	if (isub == 1) {
