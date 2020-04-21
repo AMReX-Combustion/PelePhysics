@@ -131,17 +131,11 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   //      cells not covered at this level then we need to do more.
   // ********************************************************************************
   if (lev > 0) {
-    int ncomp = tmp_src_ptr->nComp();
-    MultiFab tmp(this->m_gdb->ParticleBoxArray(lev),
-                 this->m_gdb->ParticleDistributionMap(lev),
-                 ncomp, tmp_src_ptr->nGrow());
-    tmp.setVal(0.);
-    tmp.copy(*tmp_src_ptr, 0, 0, ncomp, tmp_src_ptr->nGrow(), tmp_src_ptr->nGrow(),
-             Geom(lev).periodicity(), FabArrayBase::ADD);
-    tmp_src_ptr->copy(tmp, 0, 0, ncomp, tmp_src_width, tmp_src_width,
-		      Geom(lev).periodicity(), FabArrayBase::COPY);
-  } else {
-    tmp_src_ptr->SumBoundary(Geom(lev).periodicity());
+    IntVect ghostVect(tmp_src_width*IntVect::TheUnitVector());
+    tmp_src_ptr->
+      SumBoundary(0, tmp_src_ptr->nComp(), ghostVect, Geom(lev).periodicity());
+    } else {
+      tmp_src_ptr->SumBoundary(Geom(lev).periodicity());
   }
 
   // Add new sources into source *after* we have called SumBoundary
@@ -399,8 +393,8 @@ SprayParticleContainer::updateParticles(const int&  lev,
 				       p.rdata(pstateVel+1),
 				       p.rdata(pstateVel+2)));
 	Real T_part = p.rdata(pstateT);
+        Real dia_part = p.rdata(pstateDia);
 	Real rho_part = p.rdata(pstateRho);
-	Real dia_part = p.rdata(pstateDia);
 	Real dia2_part = dia_part*dia_part;
 	Real pmass = Pi_six*rho_part*dia_part*dia2_part;
 	Real part_ke = 0.5*vel_part.radSquared();
@@ -567,24 +561,16 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	  sub_source /= Real(nsub);
 	  dt = flow_dt/Real(nsub);
 	}
+        const Real part_dt = 0.5*dt;
 	if (mom_trans || mass_trans || heat_trans) {
-	  if (mass_trans) {
-	    // Compute new particle diameter
-	    Real new_dia = dia_part + 0.5*dt*d_dot;
-	    if (new_dia < dia_eps) {
-	      p.id() = -1; // Particle is considered completely evaporated
-	      isub = nsub + 1; // Make sure to break out of while loop
-	    } else {
-	      p.rdata(pstateDia) = new_dia;
-	    }
-	  }
-	  if (mom_trans) {
+          bool remove_particle = false;
+          if (mom_trans) {
 	    // Modify particle velocity by half time step
-            AMREX_D_TERM(Gpu::Atomic::Add(&p.rdata(pstateVel), 0.5*dt*part_mom_src[0]*inv_pmass);,
-                         Gpu::Atomic::Add(&p.rdata(pstateVel+1), 0.5*dt*part_mom_src[1]*inv_pmass);,
-                         Gpu::Atomic::Add(&p.rdata(pstateVel+2), 0.5*dt*part_mom_src[2]*inv_pmass););
-	    // Modify particle position by whole time step
-	    if (do_move) {
+            AMREX_D_TERM(Gpu::Atomic::Add(&p.rdata(pstateVel), part_dt*part_mom_src[0]*inv_pmass);,
+                         Gpu::Atomic::Add(&p.rdata(pstateVel+1), part_dt*part_mom_src[1]*inv_pmass);,
+                         Gpu::Atomic::Add(&p.rdata(pstateVel+2), part_dt*part_mom_src[2]*inv_pmass););
+            // Modify particle position by whole time step
+            if (do_move) {
 	      for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
                 Gpu::Atomic::Add(&p.pos(dir), dt*p.rdata(pstateVel+dir));
                 // Check if particle is reflecting off a wall or leaving the domain
@@ -593,7 +579,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
                     p.pos(dir) = 2.*phi[dir] - p.pos(dir);
                     p.rdata(pstateVel+dir) *= -1.;
                   } else {
-                    p.id() = -1;
+                    remove_particle = true;
                   }
                 }
                 if (p.pos(dir) < plo[dir] && not_period[dir]) {
@@ -601,16 +587,30 @@ SprayParticleContainer::updateParticles(const int&  lev,
                     p.pos(dir) = 2.*plo[dir] - p.pos(dir);
                     p.rdata(pstateVel+dir) *= -1.;
                   } else {
-                    p.id() = -1;
+                    remove_particle = true;
                   }
                 }
 	      }
-	    }
-	  }
+            }
+          }
 	  if (heat_trans) {
 	    // Modify particle temperature
-	    Gpu::Atomic::Add(&p.rdata(pstateT), 0.5*dt*part_temp_src);
+	    Gpu::Atomic::Add(&p.rdata(pstateT), part_dt*part_temp_src);
 	  }
+	  if (mass_trans) {
+	    // Compute new particle diameter
+	    Real new_dia = dia_part + part_dt*d_dot;
+	    if (new_dia < dia_eps) {
+              remove_particle = true;
+	    } else {
+	      p.rdata(pstateDia) = new_dia;
+	    }
+	  }
+          if (remove_particle) {
+            p.id() = -1;
+            isub = nsub + 1;
+            continue;
+          }
           // Add the spray source terms to the Eulerian fluid
 	  for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
 	    Real cur_coef = -coef[aindx]*sub_source;
