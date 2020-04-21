@@ -31,28 +31,32 @@ contains
 
     if (which % wtr_get_lam) then
        coeff % lam = const_conductivity
+       if (mks_unit) then
+         coeff % lam = coeff % lam * 1.0d5
+       endif
     endif
 
     if (which % wtr_get_mu) then
        coeff % mu = const_viscosity
+       if (mks_unit) then
+         coeff % mu = coeff % mu * 10.0d0
+       endif
     endif
 
     if (which % wtr_get_xi) then
        coeff % xi = const_bulk_viscosity
+       if (mks_unit) then
+         coeff % xi = coeff % xi * 10.0d0
+       endif
     endif
 
     if (which % wtr_get_Ddiag) then
        coeff % Ddiag = const_diffusivity
+       if (mks_unit) then
+         coeff % Ddiag = coeff % Ddiag * 10.0d0
+       endif
     endif
 
-! By default the units are in CGS
-! Below is a flag to let the user to provide MKS data, and it makes the conversion to CGS
-    if (mks_unit) then
-      coeff % lam = coeff % lam * 1.0d5
-      coeff % mu = coeff % mu * 10.0d0
-      coeff % xi = coeff % xi * 10.0d0
-      coeff % Ddiag = coeff % Ddiag * 10.0d0
-    endif
 
   end subroutine actual_transport
   
