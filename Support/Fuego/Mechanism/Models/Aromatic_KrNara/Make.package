@@ -1,6 +1,6 @@
 CEXE_headers+=chemistry_file.H
 
-CEXE_sources+=Aromatic_KrNara.cpp  Aromatic_KrNara_1.cpp Aromatic_KrNara_2.cpp Aromatic_KrNara_3.cpp 
+CEXE_sources+=mechanism.cpp  mechanism_1.cpp mechanism_2.cpp 
 
 LIBRARIES += 
 
