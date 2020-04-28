@@ -10,29 +10,60 @@
 #include "SprayFuelData.H"
 #include "EOS.H"
 
-// Define the number of fuel species used in the droplets, if not defined in GNUmakefile
-#ifndef SPRAY_FUEL_NUM
-#define SPRAY_FUEL_NUM 1
+#ifdef USE_SPRAY_SOA
+#define NSR_SPR 0
+#define NSI_SPR 0
+#define NAR_SPR AMREX_SPACEDIM+3+SPRAY_FUEL_NUM
+#define NAI_SPR 0
+#else
+#define NSR_SPR AMREX_SPACEDIM+3+SPRAY_FUEL_NUM
+#define NSI_SPR 0
+#define NAR_SPR 0
+#define NAI_SPR 0
 #endif
 
-#define NSR_SPR AMREX_SPACEDIM+3+SPRAY_FUEL_NUM
-#define NAR_SPR 0
-#define NSI_SPR 0
-#define NAI_SPR 0
+
+class MyParIter
+  : public amrex::ParIter<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>
+{
+public:
+  using amrex::ParIter<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>::ParIter;
+
+  std::array<RealVector, NAR_SPR>& GetAttribs() {
+    return GetStructOfArrays().GetRealData();
+  }
+
+  RealVector& GetAttribs(int comp) {
+    return GetStructOfArrays().GetRealData(comp);
+  }
+};
+
+class MyParConstIter
+  : public amrex::ParConstIter<NSR_SPR,NSI_SPR,NAR_SPR,NSI_SPR>
+{
+public:
+  using amrex::ParConstIter<NSR_SPR,NSI_SPR,NAR_SPR,NSI_SPR>::ParConstIter;
+
+  const std::array<RealVector, NAR_SPR>& GetAttribs() const {
+    return GetStructOfArrays().GetRealData();
+  }
+
+  const RealVector& GetAttribs(int comp) const {
+    return GetStructOfArrays().GetRealData(comp);
+  }
+};
 
 class SprayParticleContainer
   : public amrex::AmrParticleContainer<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>
 {
 public:
 
-  using MyParIter = amrex::ParIter<NSR_SPR,0>;
-  using MyParConstIter = amrex::ParConstIter<NSR_SPR,0>;
   using PairIndex = std::pair<int, int>;
   using HostVectReal = amrex::Gpu::HostVector<amrex::Real>;
   using HostVectInt = amrex::Gpu::HostVector<int>;
 
   SprayParticleContainer(amrex::Amr* amr, amrex::BCRec* _phys_bc)
-    : amrex::AmrParticleContainer<NSR_SPR,0>(amr),
+    : amrex::AmrParticleContainer<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>(amr),
     sub_cycle(amr->subCycle()),
     phys_bc(_phys_bc)
   {
