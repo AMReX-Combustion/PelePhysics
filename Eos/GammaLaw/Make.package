@@ -1,1 +1,2 @@
-F90EXE_sources += eos.F90
+CEXE_sources += EOS.cpp
+CEXE_headers += EOS.H

@@ -1,0 +1,6 @@
+# cutoff for species mass fractions
+small_massfrac                         real               1.d-30
+mwt_scalar                             real               1.0
+# Auxiliary variables, names should be a comma separated list with numaux entries
+numaux                       integer           0
+auxnamesin                   character         ""

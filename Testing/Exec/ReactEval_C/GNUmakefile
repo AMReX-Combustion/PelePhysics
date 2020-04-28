@@ -55,8 +55,9 @@ ifeq ($(FUEGO_GAS), TRUE)
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else
+  Chemistry_Model = Null
   Eos_dir       = GammaLaw
-  Reactions_dir = Null
+  Reactions_dir = Fuego
   Transport_dir = Constant
 endif
 

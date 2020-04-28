@@ -419,7 +419,7 @@ void CKRHOX(double *  P, double *  T, double *  x,  double *  rho)
 
 
 /*Compute rho = P*W(y)/RT */
-void CKRHOY(double *  P, double *  T, double *  y,  double *  rho)
+AMREX_GPU_HOST_DEVICE void CKRHOY(double *  P, double *  T, double *  y,  double *  rho)
 {
     double YOW = 0;
     double tmp[3];
@@ -474,7 +474,7 @@ void CKAWT( double *  awt)
 
 /*given y[species]: mass fractions */
 /*returns mean molecular weight (gm/mole) */
-void CKMMWY(double *  y,  double *  wtm)
+AMREX_GPU_HOST_DEVICE void CKMMWY(double *  y,  double *  wtm)
 {
     double YOW = 0;
     double tmp[3];
@@ -627,7 +627,7 @@ AMREX_GPU_HOST_DEVICE void CKYTCR(double *  rho, double *  T, double *  y,  doub
 
 
 /*convert x[species] (mole fracs) to y[species] (mass fracs) */
-void CKXTY(double *  x,  double *  y)
+AMREX_GPU_HOST_DEVICE void CKXTY(double *  x,  double *  y)
 {
     double XW = 0; /*See Eq 4, 9 in CK Manual */
     /*Compute mean molecular wt first */
