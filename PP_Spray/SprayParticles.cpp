@@ -357,7 +357,6 @@ SprayParticleContainer::updateParticles(const int&  lev,
     AMREX_FOR_1D ( Np, i,
     {
       ParticleType& p = pstruct[i];
-      if (p.id() <= 0) continue;
       Real dt = flow_dt;
       Real sub_source = inv_vol;
       // TODO: I was hoping to not have to instantiate this everytime
