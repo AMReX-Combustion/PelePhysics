@@ -416,7 +416,21 @@ main (int   argc,
 	    rhoE(i,j,k,0)     = tmp_vect_energy[offset];
             fc(i,j,k,0)        = fc_tmp;
         });
+
+#ifdef USE_CUDA_SUNDIALS_PP 
+        cudaFree(tmp_vect);
+        cudaFree(tmp_src_vect);
+        cudaFree(tmp_vect_energy);
+        cudaFree(tmp_src_vect_energy);
         
+        cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
+#else
+        delete(tmp_vect);
+        delete(tmp_src_vect);
+        delete(tmp_vect_energy);
+        delete(tmp_src_vect_energy);
+#endif
+
     }
     BL_PROFILE_VAR_STOP(Advance);
 
