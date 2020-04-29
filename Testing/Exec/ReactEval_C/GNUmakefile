@@ -13,9 +13,9 @@ USE_OMP    = FALSE
 
 FUEGO_GAS  = TRUE
 
-#TINY_PROFILE = TRUE
+TINY_PROFILE = TRUE
 
-USE_CUDA   = TRUE
+USE_CUDA   = FALSE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
@@ -41,12 +41,13 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
     #SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
   endif
   # Activates GPU version
-  USE_CUDA_SUNDIALS_PP = TRUE
+  USE_CUDA_SUNDIALS_PP = FALSE
 else
   # Activates use of Hari explicit RK
   # will only work if USE_SUNDIALS_PP = FALSE
   USE_RK64_PP = FALSE
 endif
+
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)

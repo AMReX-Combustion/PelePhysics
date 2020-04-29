@@ -287,6 +287,9 @@ main (int   argc,
 
     BL_PROFILE_VAR("React()", ReactInLoop);
     BL_PROFILE_VAR_STOP(ReactInLoop);
+    
+    BL_PROFILE_VAR("(un)flatten()", FlatStuff);
+    BL_PROFILE_VAR_STOP(FlatStuff);
 
     BL_PROFILE_VAR("advance()", Advance);
 
@@ -327,24 +330,24 @@ main (int   argc,
 #endif
 	amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
 
-#ifdef USE_CUDA_SUNDIALS_PP
+	BL_PROFILE_VAR_START(Allocs);
+
         amrex::Real *tmp_vect;
         amrex::Real *tmp_src_vect;
         amrex::Real *tmp_vect_energy;
         amrex::Real *tmp_src_vect_energy;
-
-	BL_PROFILE_VAR_START(Allocs);
+#ifdef USE_CUDA_SUNDIALS_PP
         cudaMallocManaged(&tmp_vect, (NUM_SPECIES+1)*ncells*sizeof(amrex::Real));
         cudaMallocManaged(&tmp_src_vect, NUM_SPECIES*ncells*sizeof(amrex::Real));
         cudaMallocManaged(&tmp_vect_energy, ncells*sizeof(amrex::Real));
         cudaMallocManaged(&tmp_src_vect_energy, ncells*sizeof(amrex::Real));
-	BL_PROFILE_VAR_STOP(Allocs);
 #else
-        amrex::Real tmp_vect[ode_ncells*(NUM_SPECIES+1)];
-        amrex::Real tmp_src_vect[ode_ncells*(NUM_SPECIES)];
-        amrex::Real tmp_vect_energy[ode_ncells];
-        amrex::Real tmp_src_vect_energy[ode_ncells];
+        tmp_vect            =  new amrex::Real[ncells*(NUM_SPECIES+1)];
+        tmp_src_vect        =  new amrex::Real[ncells*(NUM_SPECIES)];
+        tmp_vect_energy     =  new amrex::Real[ncells];
+        tmp_src_vect_energy =  new amrex::Real[ncells];
 #endif
+	BL_PROFILE_VAR_STOP(Allocs);
 
         BL_PROFILE_VAR_START(FlatStuff);
         amrex::ParallelFor(box, [=]

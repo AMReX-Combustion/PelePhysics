@@ -14,7 +14,7 @@
 #include <sundials/sundials_math.h>
 
 #include <AMReX_Print.H>
-#include <Fuego_EOS.H>
+#include <EOS.H>
 /**********************************/
 
 typedef struct {
