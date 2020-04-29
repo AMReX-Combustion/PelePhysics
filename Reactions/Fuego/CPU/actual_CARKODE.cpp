@@ -2,7 +2,7 @@
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include "mechanism.h"
-#include <eos.H>
+#include <EOS.H>
 
 /**********************************/
 /* Global Variables */
@@ -339,7 +339,6 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
       realtype cX;
       realtype temp, energy;
       /* EOS object in cpp */
-      EOS eos;
 
       /* Offset in case several cells */
       int offset = tid * (NUM_SPECIES + 1); 
@@ -366,21 +365,21 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 
       if (data_wk->ireactor_type == eint_rho){
           /* UV REACTOR */
-          eos.eos_EY2T(massfrac, energy, temp);
-          eos.eos_TY2Cv(temp, massfrac, cX);
-          eos.eos_T2EI(temp, Xi);
+          EOS::EY2T(energy, massfrac, temp);
+          EOS::TY2Cv(temp, massfrac, cX);
+          EOS::T2Ei(temp, Xi);
       } else {
           /* HP REACTOR */
-          eos.eos_HY2T(massfrac, energy, temp);
-          eos.eos_TY2Cp(temp, massfrac, cX);
-          eos.eos_T2HI(temp, Xi);
+          EOS::HY2T(energy, massfrac, temp);
+          EOS::TY2Cp(temp, massfrac, cX);
+          EOS::T2Hi(temp, Xi);
       }
-      eos.eos_RTY2W(rho, temp, massfrac, cdot);
+      EOS::RTY2WDOT(rho, temp, massfrac, cdot);
 
       /* Fill ydot vect */
       ydot_d[offset + NUM_SPECIES] = rhoXsrc_ext[tid];
       for (int i = 0; i < NUM_SPECIES; i++){
-          ydot_d[offset + i] = cdot[i] * molecular_weight[i] + rYsrc[tid * (NUM_SPECIES) + i];
+          ydot_d[offset + i] = cdot[i] + rYsrc[tid * (NUM_SPECIES) + i];
           ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES]  - ydot_d[offset + i] * Xi[i];
       }
       ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES] /(rho * cX);
@@ -407,7 +406,6 @@ int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
       realtype temp; 
       realtype Jmat_tmp[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
       /* EOS object in cpp */
-      EOS eos;
 
       /* Offset in case several cells */
       int offset = tid * (NUM_SPECIES + 1); 
@@ -436,7 +434,7 @@ int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
       } else {
           consP = 1;
       }
-      eos.eos_RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
+      EOS::RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
       /* fill the sunMat */
       for (int k = 0; k < NUM_SPECIES; k++){
 	  J_col_k = SM_COLUMN_D(J,offset + k);

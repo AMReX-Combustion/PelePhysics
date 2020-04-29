@@ -1,7 +1,7 @@
 #include <actual_Creactor.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
-#include <Fuego_EOS.H>
+#include <EOS.H>
 #include "mechanism.h"
 #include <AMReX_Gpu.H>
 
@@ -301,7 +301,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	// rhoE/rhoH
 	cudaMemcpy(user_data->rhoe_init, rX_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
 	cudaMemcpy(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
-	BL_PROFILE_VAR_STOP(AsyncCpy)
+	BL_PROFILE_VAR_STOP(AsyncCpy);
 
 	realtype time_init, time_out ;
         time_init = *time;
@@ -352,7 +352,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 	} else if (user_data->isolve_type == sparse_cusolver_solve) {
 
-            LS = SUNLinSol_cuSolverSp_batchQR(y, A, NCELLS, (NEQ+1) , user_data->NNZ);
+            //LS = SUNLinSol_cuSolverSp_batchQR(y, A, NCELLS, (NEQ+1) , user_data->NNZ);
+            LS = SUNLinSol_cuSolverSp_batchQR(y, A, user_data->cusolverHandle);
 	    if(check_flag((void *)LS, "SUNLinSol_cuSolverSp_batchQR", 0)) return(1);
 
             /* Set matrix and linear solver to Cvode */
@@ -403,13 +404,13 @@ int react(realtype *rY_in, realtype *rY_src_in,
 #endif
 
 	/* Pack data to return in main routine external */
-	BL_PROFILE_VAR_START(AsyncCpy)
+	BL_PROFILE_VAR_START(AsyncCpy);
 	cudaMemcpy(rY_in, yvec_d, ((NEQ+1)*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost);
 
 	for  (int i = 0; i < NCELLS; i++) {
             rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
 	}
-	BL_PROFILE_VAR_STOP(AsyncCpy)
+	BL_PROFILE_VAR_STOP(AsyncCpy);
 
         long int nfe;
 	flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
@@ -712,8 +713,6 @@ fKernelSpec(int icell, void *user_data,
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
 
-  EOS eos;
-
   amrex::Real mw[NUM_SPECIES];
   amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac;
   amrex::GpuArray<amrex::Real,NUM_SPECIES> ei_pt;
@@ -745,22 +744,22 @@ fKernelSpec(int icell, void *user_data,
   /* Additional var needed */
   if (udata->ireactor_type == 1){
       /* UV REACTOR */
-      eos.eos_EY2T(massfrac.arr, nrg_pt, temp_pt);
-      eos.eos_T2EI(temp_pt, ei_pt.arr);
-      eos.eos_TY2Cv(temp_pt, massfrac.arr, Cv_pt);
+      EOS::EY2T(nrg_pt, massfrac.arr, temp_pt);
+      EOS::T2Ei(temp_pt, ei_pt.arr);
+      EOS::TY2Cv(temp_pt, massfrac.arr, Cv_pt);
   }else {
       /* HP REACTOR */
-      eos.eos_HY2T(massfrac.arr, nrg_pt, temp_pt);
-      eos.eos_TY2Cp(temp_pt, massfrac.arr, Cv_pt);
-      eos.eos_T2HI(temp_pt, ei_pt.arr);
+      EOS::HY2T(nrg_pt, massfrac.arr, temp_pt);
+      EOS::TY2Cp(temp_pt, massfrac.arr, Cv_pt);
+      EOS::T2Hi(temp_pt, ei_pt.arr);
   }
 
-  eos.eos_RTY2W(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
+  EOS::RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
 
   /* Fill ydot vect */
   ydot_d[offset + NUM_SPECIES] = rhoesrc_ext[icell];
   for (int i = 0; i < NUM_SPECIES; i++){
-      ydot_d[offset + i]           = cdots_pt[i] * mw[i] + rYs[icell * NUM_SPECIES + i];
+      ydot_d[offset + i]           = cdots_pt[i] + rYs[icell * NUM_SPECIES + i];
       ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES]  - ydot_d[offset + i] * ei_pt[i];
   }
   ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES] /(rho_pt * Cv_pt);
@@ -773,8 +772,6 @@ void
 fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d)
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
-
-  EOS eos;
 
   amrex::Real mw[NUM_SPECIES];
   amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac;
@@ -811,7 +808,7 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *udot_d
   } else {
       consP = 1;
   }
-  eos.eos_RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP); 
+  EOS::RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP); 
 
   /* renorm the DenseMat */
   for (int i = 0; i < udata->neqs_per_cell[0]; i++){
@@ -840,8 +837,6 @@ void
 fKernelComputeallAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d, double * csr_val_arg)
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
-
-  EOS eos;
 
   amrex::Real mw[NUM_SPECIES];
   amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac, activity;
@@ -873,7 +868,7 @@ fKernelComputeallAJ(int ncell, void *user_data, realtype *u_d, realtype *udot_d,
   temp_pt = u_curr[NUM_SPECIES];
 
   /* Activities */
-  eos.eos_RTY2C(rho_pt, temp_pt, massfrac.arr, activity.arr);
+  EOS::RTY2C(rho_pt, temp_pt, massfrac.arr, activity.arr);
 
   /* Additional var needed */
   int consP;
