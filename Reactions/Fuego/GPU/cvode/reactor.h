@@ -60,6 +60,7 @@ typedef struct CVodeUserData {
     csrqrInfo_t info;
     cusparseMatDescr_t descrA;
     cusolverSpHandle_t cusolverHandle;
+    cusparseHandle_t cuSPHandle;
     cudaStream_t stream;
     int nbBlocks;
     int nbThreads;

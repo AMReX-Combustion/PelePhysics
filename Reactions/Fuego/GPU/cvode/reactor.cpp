@@ -164,34 +164,59 @@ int react(realtype *rY_in, realtype *rY_src_in,
             } else {
                 HP = 1;
             }
-            /* Find sparsity pattern to fill structure of sparse matrix */
-	    BL_PROFILE_VAR("SparsityFuegoStuff", SparsityStuff);
-	    if (user_data->isolve_type == iterative_gmres_solve) {
-                SPARSITY_INFO_SYST_SIMPLIFIED(&(user_data->NNZ),&HP);
-            } else {
-                SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,1);
-		A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ * NCELLS, CSR_MAT);
-		if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
-	    }
-	    BL_PROFILE_VAR_STOP(SparsityStuff);
 
 	    BL_PROFILE_VAR_START(AllocsCVODE);
             cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
             cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
             cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
-            if (user_data->isolve_type == iterative_gmres_solve) {
+	    if (user_data->isolve_type == iterative_gmres_solve) {
                 cudaMallocManaged(&(user_data->csr_val_d), user_data->NNZ * NCELLS * sizeof(double));
 	    }
 	    BL_PROFILE_VAR_STOP(AllocsCVODE);
 
-	    BL_PROFILE_VAR_START(SparsityStuff);
-	    if (user_data->isolve_type == iterative_gmres_solve) {    
+            /* Find sparsity pattern to fill structure of sparse matrix */
+	    //BL_PROFILE_VAR("SparsityFuegoStuff", SparsityStuff);
+	    if (user_data->isolve_type == iterative_gmres_solve) {
+                SPARSITY_INFO_SYST_SIMPLIFIED(&(user_data->NNZ),&HP);
+	        //BL_PROFILE_VAR_STOP(SparsityStuff);
+		
                 SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP,1);
-	    } else {
-		SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
-		SPARSITY_PREPROC_SYST_CSR(SUNSparseMatrix_IndexValues(A), SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
+            } else {
+                if (isolve_type == sparse_cusolver_solve) {
+                    SPARSITY_INFO(&(user_data->NNZ),&HP,1);
+	            //BL_PROFILE_VAR_STOP(SparsityStuff);
+
+                    cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
+		    int retval;
+
+                    cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
+                    assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+
+		    cusolver_status = cusparseCreate(&cuSPHandle);
+		    assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+
+		    A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, neq_tot, neq_tot, user_data->NNZ * NCELLS, user_data->cusp_handle);
+		    if (check_retval((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
+
+		    SPARSITY_PREPROC_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
+		    SPARSITY_PREPROC_CSR(SUNMatrix_cuSparse_IndexValues(A), SUNMatrix_cuSparse_IndexPointers(A), &HP, 1, 0); 
+
+		    retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
+		    if(check_retval(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1)) return(1);
+
+		    JacInit(A); 
+		} else {
+                    SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,1);
+	            //BL_PROFILE_VAR_STOP(SparsityStuff);
+
+		    A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ * NCELLS, CSR_MAT);
+		    if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
+
+		    SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
+		    SPARSITY_PREPROC_SYST_CSR(SUNSparseMatrix_IndexValues(A), SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
+		}
 	    }
-	    BL_PROFILE_VAR_STOP(SparsityStuff);
+
 
             // Create Sparse batch QR solver
             // qr info and matrix descriptor
@@ -352,7 +377,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 	} else if (user_data->isolve_type == sparse_cusolver_solve) {
 
-            //LS = SUNLinSol_cuSolverSp_batchQR(y, A, NCELLS, (NEQ+1) , user_data->NNZ);
             LS = SUNLinSol_cuSolverSp_batchQR(y, A, user_data->cusolverHandle);
 	    if(check_flag((void *)LS, "SUNLinSol_cuSolverSp_batchQR", 0)) return(1);
 
@@ -396,8 +420,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	if (check_flag(&flag, "CVode", 1)) return(1);
 	BL_PROFILE_VAR_STOP(AroundCVODE);
 
-        /* ONLY FOR PP */
 #ifdef MOD_REACTOR
+        /* ONLY FOR PP */
 	/* If reactor mode is activated, update time */
         *dt_react = time_init - *time;
         *time = time_init;
@@ -439,6 +463,14 @@ int react(realtype *rY_in, realtype *rY_src_in,
                 assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
  
 	        cudaFree(user_data->buffer_qr);
+	    } else {
+	        if (user_data->isolve_type == sparse_cusolver_solve) {
+                    cusolverStatus_t cusolver_status = cusolverSpDestroy(user_data->cusolverHandle);
+                    assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+
+	            cusolver_status = cusparseDestroy(user_data->cuSPHandle);
+	            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+	        }
 	    }
 	}
 
@@ -651,47 +683,65 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
         } else {
             consP = 1;
         }
-	SPARSITY_PREPROC_SYST_CSR(SUNSparseMatrix_IndexValues(J), SUNSparseMatrix_IndexPointers(J), 
-                                     &consP, udata->ncells_d[0], 0); 
-	BL_PROFILE_VAR_STOP(cJacSparsityStuff);
 	
-	/* Create empty chem Jacobian matrix (if not done already) */
-	//if (udata->R == NULL) {
-	//	udata->R = SUNSparseMatrix(SUNSparseMatrix_Rows(J),
-	//			SUNSparseMatrix_Columns(J),
-	//			SUNSparseMatrix_NNZ(J), CSR_MAT);
-	//}
-	/* check that vector/matrix dimensions match up */
-        if ((SUNSparseMatrix_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
-		(SUNSparseMatrix_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
+        if (udata->isolve_type == sparse_cusolver_solve) {
+	    Jdata   = SUNMatrix_cuSparse_Data(J);
+	} else {
+	    SPARSITY_PREPROC_SYST_CSR(SUNSparseMatrix_IndexValues(J), SUNSparseMatrix_IndexPointers(J), 
+                                     &consP, udata->ncells_d[0], 0); 
+	
+	    /* Create empty chem Jacobian matrix (if not done already) */
+	    //if (udata->R == NULL) {
+	    //	udata->R = SUNSparseMatrix(SUNSparseMatrix_Rows(J),
+	    //			SUNSparseMatrix_Columns(J),
+	    //			SUNSparseMatrix_NNZ(J), CSR_MAT);
+	    //}
+	    /* check that vector/matrix dimensions match up */
+            if ((SUNSparseMatrix_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
+	    	(SUNSparseMatrix_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
                 (SUNSparseMatrix_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
-                    printf("Jac error: matrix is wrong size!\n");
-                    return 1;
-        }
+                        printf("Jac error: matrix is wrong size!\n");
+                        return 1;
+            }
+	}
+	BL_PROFILE_VAR_STOP(cJacSparsityStuff);
 
 	BL_PROFILE_VAR("Jacobian()", fKernelJac );
-	/* GPU tests */
-        const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-	//amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
-	amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
-	[=] AMREX_GPU_DEVICE () noexcept {
+        if (udata->isolve_type == sparse_cusolver_solve) {
+	    /* GPU tests */
+            const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
+	    amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+	    [=] AMREX_GPU_DEVICE () noexcept {
 	        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-		icell < udata->ncells_d[0]; icell += stride) {
-	    	    fKernelComputeAJchem(icell, user_data, yvec_d, ydot_d);
-		}
-        }); 
-
+	    	icell < udata->ncells_d[0]; icell += stride) {
+	            fKernelComputeAJchemCuSolver(icell, user_data, yvec_d, Jdata);
+	    	}
+            }); 
+	} else {
+	    /* GPU tests */
+            const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
+	    //amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+	    amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+	    [=] AMREX_GPU_DEVICE () noexcept {
+	        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	    	icell < udata->ncells_d[0]; icell += stride) {
+	            fKernelComputeAJchem(icell, user_data, yvec_d, ydot_d);
+	    	}
+            }); 
+	}
         cuda_status = cudaStreamSynchronize(udata->stream);  
         assert(cuda_status == cudaSuccess);
 	BL_PROFILE_VAR_STOP(fKernelJac);
 
-        BL_PROFILE_VAR("cJac::memcpy",cJacmemcpy);
-	realtype *Jdata = SUNSparseMatrix_Data(J); 
-        //for (int tid = 0; tid < udata->NNZ * (udata->ncells_d[0]); tid ++) {
-	//	Jdata[tid] = udata->csr_jac_d[tid];
-	//}
-        std::memcpy(Jdata, udata->csr_jac_d, sizeof(realtype)*udata->NNZ*(udata->ncells_d[0]));
-	BL_PROFILE_VAR_STOP(cJacmemcpy);
+        if (udata->isolve_type == sparse_solve) {
+            BL_PROFILE_VAR("cJac::memcpy",cJacmemcpy);
+	    realtype *Jdata = SUNSparseMatrix_Data(J); 
+            //for (int tid = 0; tid < udata->NNZ * (udata->ncells_d[0]); tid ++) {
+	    //	Jdata[tid] = udata->csr_jac_d[tid];
+	    //}
+            std::memcpy(Jdata, udata->csr_jac_d, sizeof(realtype)*udata->NNZ*(udata->ncells_d[0]));
+	    BL_PROFILE_VAR_STOP(cJacmemcpy);
+	}
 
 
 
@@ -764,6 +814,69 @@ fKernelSpec(int icell, void *user_data,
   }
   ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES] /(rho_pt * Cv_pt);
 }
+
+
+AMREX_GPU_DEVICE
+inline
+void 
+fKernelComputeAJchemCuSolver(int ncell, void *user_data, realtype *u_d, realtype *Jdata)
+{
+  UserData udata = static_cast<CVodeUserData*>(user_data);
+
+  amrex::Real mw[NUM_SPECIES];
+  amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac;
+  amrex::GpuArray<amrex::Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
+  amrex::Real rho_pt, temp_pt;
+
+  int u_offset      = ncell * (NUM_SPECIES + 1); 
+  realtype* u_curr  = u_d + u_offset;
+  
+  /* MW CGS */
+  get_mw(mw);
+
+  /* rho */ 
+  rho_pt = 0.0;
+  for (int n = 0; n < NUM_SPECIES; n++) {
+      rho_pt = rho_pt + u_curr[n];
+  }
+
+  /* Yks, C CGS*/
+  for (int i = 0; i < NUM_SPECIES; i++){
+      massfrac[i] = u_curr[i] / rho_pt;
+  }
+
+  /* temp */
+  temp_pt = u_curr[NUM_SPECIES];
+
+  /* Additional var needed */
+  int consP;
+  if (udata->ireactor_type == 1){
+      consP = 0 ;
+  } else {
+      consP = 1;
+  }
+  EOS::RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP); 
+
+  /* renorm the DenseMat */
+  for (int i = 0; i < udata->neqs_per_cell[0]; i++){
+      for (int k = 0; k < udata->neqs_per_cell[0]; k++){
+          Jmat_pt[k*(udata->neqs_per_cell[0]+1)+i] = Jmat_pt[k*(udata->neqs_per_cell[0]+1)+i] * mw[i] / mw[k];
+      }
+      Jmat_pt[i*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] = Jmat_pt[i*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] / mw[i]; 
+      Jmat_pt[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+i] = Jmat_pt[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+i] * mw[i]; 
+  }
+  /* Fill the Sps Mat */
+  int nbVals;
+  for (int i = 1; i < udata->neqs_per_cell[0]+2; i++) {
+      nbVals = udata->csr_row_count_d[i]-udata->csr_row_count_d[i-1];
+      for (int j = 0; j < nbVals; j++) {
+	      int idx_cell = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j - 1] - 1 ;
+              Jdata[ udata->csr_row_count_d[i-1] + j - 1 ] = Jmat_pt[ idx_cell * (udata->neqs_per_cell[0]+1) + i - 1 ]; 
+      }
+  }
+
+}
+
 
 
 AMREX_GPU_DEVICE
