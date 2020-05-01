@@ -10,6 +10,7 @@
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
 #include <nvector/nvector_cuda.h>
 #include <sunmatrix/sunmatrix_sparse.h>
+#include <sunmatrix/sunmatrix_cusparse.h>
 #include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver      */
 #include <sunlinsol/sunlinsol_spgmr.h> /* access to SPGMR SUNLinearSolver     */
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
@@ -101,28 +102,36 @@ static void PrintFinalStats(void *cvode_mem);
 /**********************************/
 /* Device crap               */
 
+// RHS kernel
 AMREX_GPU_DEVICE
 inline
 void
 fKernelSpec(int ncells, void *user_data, 
-		            realtype *yvec_d, realtype *ydot_d,  
-		            double *rhoX_init, double *rhoXsrc_ext, double *rYs);
+            realtype *yvec_d, realtype *ydot_d,  
+            double *rhoX_init, double *rhoXsrc_ext, double *rYs);
+
+// JACOBIANS
+AMREX_GPU_DEVICE
+inline
+void 
+fKernelComputeallAJ(int ncells, void *user_data, realtype *u_d, realtype *csr_val);
 
 AMREX_GPU_DEVICE
 inline
 void 
-fKernelComputeallAJ(int ncells, void *user_data, realtype *u_d, realtype *udot_d, realtype *csr_val);
+fKernelComputeAJsys(int ncells, void *user_data, realtype *u_d, realtype *csr_val);
 
 AMREX_GPU_DEVICE
 inline
 void 
-fKernelComputeAJsys(int ncells, void *user_data, realtype *u_d, realtype *udot_d, realtype *csr_val);
+fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d);
 
 AMREX_GPU_DEVICE
 inline
 void 
-fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *udot_d);
+fKernelComputeAJchemCuSolver(int ncells, void *user_data, realtype *u_d, realtype *Jdata);
 
+// CUSTOM
 __global__
 void 
 fKernelDenseSolve(int ncells, realtype *x_d, realtype *b_d,
