@@ -574,8 +574,8 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 	    	    fKernelComputeAJsys(icell, user_data, u_d, udata->csr_val_d);
 	    	}
             }); 
-            cuda_status = cudaStreamSynchronize(udata->stream);  
-            assert(cuda_status == cudaSuccess);
+            //cuda_status = cudaStreamSynchronize(udata->stream);  
+            //assert(cuda_status == cudaSuccess);
             *jcurPtr = SUNFALSE;
         } else {
             const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
@@ -586,10 +586,12 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 	    	    fKernelComputeallAJ(icell, user_data, u_d, udata->csr_val_d);
 	    	}
             }); 
-            cuda_status = cudaStreamSynchronize(udata->stream);  
-            assert(cuda_status == cudaSuccess);
+            //cuda_status = cudaStreamSynchronize(udata->stream);  
+            //assert(cuda_status == cudaSuccess);
             *jcurPtr = SUNTRUE;
         }
+        cuda_status = cudaDeviceSynchronize();  
+        assert(cuda_status == cudaSuccess);
 	BL_PROFILE_VAR_STOP(fKernelComputeAJ);
 
 	BL_PROFILE_VAR("InfoBatched(inPrecond)", InfoBatched);
