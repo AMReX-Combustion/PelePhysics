@@ -1265,7 +1265,7 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A,
   content->d_values    = d_values;
   content->d_colind    = d_colind;
   content->d_rowptr    = d_rowptr; 
-  content->nbBlocks    = nsubsys/32; 
+  content->nbBlocks    = std::max(1,nsubsys/32); 
   content->nbThreads   = 32;
   content->stream      = stream; 
 
