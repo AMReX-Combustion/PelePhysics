@@ -4375,7 +4375,7 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtr, int
             }
         }
     } else {
-        rowPtrs[0] = 0;
+        rowPtr[0] = 0;
         int nJdata_tmp = 0;
         for (int nc=0; nc<NCELLS; nc++) {
             offset = nc * 10;
@@ -4386,7 +4386,7 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtr, int
                         nJdata_tmp = nJdata_tmp + 1; 
 		    }
                 }
-                rowPtrs[offset + (l + 1)] = nJdata_tmp;
+                rowPtr[offset + (l + 1)] = nJdata_tmp;
             }
 	}
     }
