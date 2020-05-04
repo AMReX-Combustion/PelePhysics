@@ -610,21 +610,23 @@ SprayParticleContainer::updateParticles(const int&  lev,
             if (do_move) {
               for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
                 Gpu::Atomic::Add(&p.pos(dir), dt*velp[dir][i]);
-                // Check if particle is reflecting off a wall or leaving the domain
-                if (p.pos(dir) > phi[dir] && not_period[dir]) {
-                  if (reflect_hi[dir]) {
-                    p.pos(dir) = 2.*phi[dir] - p.pos(dir);
-                    velp[dir][i] *= -1.;
-                  } else {
-                    remove_particle = true;
+                if (not_period[dir]) {
+                  // Check if particle is reflecting off a wall or leaving the domain
+                  if (p.pos(dir) > phi[dir]) {
+                    if (reflect_hi[dir]) {
+                      p.pos(dir) = 2.*phi[dir] - p.pos(dir);
+                      velp[dir][i] *= -1.;
+                    } else {
+                      remove_particle = true;
+                    }
                   }
-                }
-                if (p.pos(dir) < plo[dir] && not_period[dir]) {
-                  if (reflect_lo[dir]) {
-                    p.pos(dir) = 2.*plo[dir] - p.pos(dir);
-                    velp[dir][i] *= -1.;
-                  } else {
-                    remove_particle = true;
+                  if (p.pos(dir) < plo[dir]) {
+                    if (reflect_lo[dir]) {
+                      p.pos(dir) = 2.*plo[dir] - p.pos(dir);
+                      velp[dir][i] *= -1.;
+                    } else {
+                      remove_particle = true;
+                    }
                   }
                 }
               }
@@ -652,21 +654,23 @@ SprayParticleContainer::updateParticles(const int&  lev,
             if (do_move) {
               for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
                 Gpu::Atomic::Add(&p.pos(dir), dt*p.rdata(pstateVel+dir));
-                // Check if particle is reflecting off a wall or leaving the domain
-                if (p.pos(dir) > phi[dir] && not_period[dir]) {
-                  if (reflect_hi[dir]) {
-                    p.pos(dir) = 2.*phi[dir] - p.pos(dir);
-                    p.rdata(pstateVel+dir) *= -1.;
-                  } else {
-                    remove_particle = true;
+                if (not_period[dir]) {
+                  // Check if particle is reflecting off a wall or leaving the domain
+                  if (p.pos(dir) > phi[dir]) {
+                    if (reflect_hi[dir]) {
+                      p.pos(dir) = 2.*phi[dir] - p.pos(dir);
+                      p.rdata(pstateVel+dir) *= -1.;
+                    } else {
+                      remove_particle = true;
+                    }
                   }
-                }
-                if (p.pos(dir) < plo[dir] && not_period[dir]) {
-                  if (reflect_lo[dir]) {
-                    p.pos(dir) = 2.*plo[dir] - p.pos(dir);
-                    p.rdata(pstateVel+dir) *= -1.;
-                  } else {
-                    remove_particle = true;
+                  if (p.pos(dir) < plo[dir]) {
+                    if (reflect_lo[dir]) {
+                      p.pos(dir) = 2.*plo[dir] - p.pos(dir);
+                      p.rdata(pstateVel+dir) *= -1.;
+                    } else {
+                      remove_particle = true;
+                    }
                   }
                 }
               }
