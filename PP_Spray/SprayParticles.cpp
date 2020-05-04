@@ -601,9 +601,9 @@ SprayParticleContainer::updateParticles(const int&  lev,
         const Real part_dt = 0.5*dt;
         if (mom_trans || mass_trans || heat_trans) {
           bool remove_particle = false;
-          if (mom_trans) {
          // Modify particle velocity by half time step
 #ifdef USE_SPRAY_SOA
+          if (mom_trans) {
             AMREX_D_TERM(Gpu::Atomic::Add(&velp[0][i], part_dt*part_mom_src[0]*inv_pmass);,
                          Gpu::Atomic::Add(&velp[1][i], part_dt*part_mom_src[1]*inv_pmass);,
                          Gpu::Atomic::Add(&velp[2][i], part_dt*part_mom_src[2]*inv_pmass););
@@ -644,11 +644,12 @@ SprayParticleContainer::updateParticles(const int&  lev,
 	    }
 	  }
 #else
-          AMREX_D_TERM(Gpu::Atomic::Add(&p.rdata(pstateVel), part_dt*part_mom_src[0]*inv_pmass);,
-                       Gpu::Atomic::Add(&p.rdata(pstateVel+1), part_dt*part_mom_src[1]*inv_pmass);,
-                       Gpu::Atomic::Add(&p.rdata(pstateVel+2), part_dt*part_mom_src[2]*inv_pmass););
-          // Modify particle position by whole time step
-          if (do_move) {
+          if (mom_trans) {
+            AMREX_D_TERM(Gpu::Atomic::Add(&p.rdata(pstateVel), part_dt*part_mom_src[0]*inv_pmass);,
+                         Gpu::Atomic::Add(&p.rdata(pstateVel+1), part_dt*part_mom_src[1]*inv_pmass);,
+                         Gpu::Atomic::Add(&p.rdata(pstateVel+2), part_dt*part_mom_src[2]*inv_pmass););
+            // Modify particle position by whole time step
+            if (do_move) {
               for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
                 Gpu::Atomic::Add(&p.pos(dir), dt*p.rdata(pstateVel+dir));
                 // Check if particle is reflecting off a wall or leaving the domain
