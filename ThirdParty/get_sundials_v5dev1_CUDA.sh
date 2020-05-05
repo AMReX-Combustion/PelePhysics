@@ -4,7 +4,7 @@ set -e
 export INSTALL_PREFIX=$(pwd)/sundials/instdir
 echo $INSTALL_PREFIX
 
-export SUITESPARSE_PREFIX=$(pwd)/SuiteSparse
+##export SUITESPARSE_PREFIX=$(pwd)/SuiteSparse
 
 if [ ! -d sundials ]; then
   git clone https://github.com/LLNL/sundials
@@ -38,9 +38,9 @@ cmake    \
    -DMPI_ENABLE=OFF    \
    -DOPENMP_ENABLE=ON \
    -DKLU_ENABLE=ON \
-   -DKLU_INCLUDE_DIR=${SUITESPARSE_PREFIX}/include \
-   -DKLU_LIBRARY_DIR=${SUITESPARSE_PREFIX}/lib \
-   -DEXAMPLES_ENABLE=OFF ../
+   -DKLU_INCLUDE_DIR=${SUITESPARSE_DIR}/include \
+   -DKLU_LIBRARY_DIR=${SUITESPARSE_DIR}/lib \
+   -DEXAMPLES_ENABLE=ON ../
 
 make
 make install
