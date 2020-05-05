@@ -154,7 +154,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	user_data->isolve_type          = isolve_type; 
         user_data->iverbose             = 1;
         user_data->stream               = stream;
-        user_data->nbBlocks             =std::max(1,NCELLS/32);
+        user_data->nbBlocks             = std::max(1,NCELLS/32);
         user_data->nbThreads            = 32;
 
         if (user_data->ianalytical_jacobian == 1) { 
@@ -305,8 +305,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
 		cudaError_t cudaStat1            = cudaSuccess;
 		cudaStat1 = cudaMalloc((void**)&(user_data->buffer_qr), workspaceInBytes);
 		assert(cudaStat1 == cudaSuccess);
-
-                //std::cout<<" WORKSPACE "<< workspaceInBytes<<" INTERNAL DATA "<< internalDataInBytes<<"\n"<<std::endl;
 	    }
 	    BL_PROFILE_VAR_STOP(CuSolverInit);
 
@@ -345,12 +343,12 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	realtype *yvec_d      = N_VGetDeviceArrayPointer_Cuda(y);
 	BL_PROFILE_VAR("AsyncCpy", AsyncCpy);
 	// rhoY,T
-	cudaMemcpy(yvec_d, rY_in, sizeof(realtype) * ((NEQ+1)*NCELLS), cudaMemcpyHostToDevice);
+	cudaMemcpyAsync((yvec_d, rY_in, sizeof(realtype) * ((NEQ+1)*NCELLS), cudaMemcpyHostToDevice, stream);
 	// rhoY_src_ext
-	cudaMemcpy(user_data->rYsrc, rY_src_in, (NEQ*NCELLS)*sizeof(double), cudaMemcpyHostToDevice);
+	cudaMemcpyAsync((user_data->rYsrc, rY_src_in, (NEQ*NCELLS)*sizeof(double), cudaMemcpyHostToDevice, stream);
 	// rhoE/rhoH
-	cudaMemcpy(user_data->rhoe_init, rX_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
-	cudaMemcpy(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
+	cudaMemcpyAsync(user_data->rhoe_init, rX_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice, stream);
+	cudaMemcpyAsync(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice, stream);
 	BL_PROFILE_VAR_STOP(AsyncCpy);
 
 	realtype time_init, time_out ;
@@ -454,7 +452,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 	/* Pack data to return in main routine external */
 	BL_PROFILE_VAR_START(AsyncCpy);
-	cudaMemcpy(rY_in, yvec_d, ((NEQ+1)*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(rY_in, yvec_d, ((NEQ+1)*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost,stream);
 
 	for  (int i = 0; i < NCELLS; i++) {
             rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
@@ -544,10 +542,7 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 		}
         }); 
 
-        //cuda_status = cudaStreamSynchronize(udata->stream);  
-        //assert(cuda_status == cudaSuccess);
-
-        cuda_status = cudaDeviceSynchronize();  
+        cuda_status = cudaStreamSynchronize(udata->stream);  
         assert(cuda_status == cudaSuccess);
 
 	BL_PROFILE_VAR_STOP(fKernelSpec);
@@ -601,9 +596,7 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
             *jcurPtr = SUNTRUE;
         }
 
-        //cuda_status = cudaStreamSynchronize(udata->stream);  
-        //assert(cuda_status == cudaSuccess);
-        cuda_status = cudaDeviceSynchronize();  
+        cuda_status = cudaStreamSynchronize(udata->stream);  
         assert(cuda_status == cudaSuccess);
 	BL_PROFILE_VAR_STOP(fKernelComputeAJ);
 
@@ -650,8 +643,6 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
         realtype *z_d      = N_VGetDeviceArrayPointer_Cuda(z);
         realtype *r_d      = N_VGetDeviceArrayPointer_Cuda(r);
 
-        N_VScale(1.0, r, z);
-
         //for(int batchId = 0 ; batchId < udata->ncells_d[0]; batchId++){
         //    realtype* csr_val_cell = (udata->csr_val_d) + batchId * (udata->NNZ);
         //    int nbVals;
@@ -694,30 +685,30 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
 
         /* Checks */
         //if (udata->iverbose > 4) {
-            for(int batchId = 0 ; batchId < udata->ncells_d[0]; batchId++){
-                // measure |bj - Aj*xj|
-                realtype *csrValAj = (udata->csr_val_d) + batchId * (udata->NNZ);
-                double *xj       = N_VGetHostArrayPointer_Cuda(z) + batchId * (udata->neqs_per_cell[0]+1);
-                double *bj       = N_VGetHostArrayPointer_Cuda(r) + batchId * (udata->neqs_per_cell[0]+1);
-                // sup| bj - Aj*xj|
-                double sup_res = 0;
-                for(int row = 0 ; row < (udata->neqs_per_cell[0]+1) ; row++){
-                    printf("\n     row %d: ", row);
-                    const int start = udata->csr_row_count_d[row] - 1;
-                    const int end = udata->csr_row_count_d[row +1] - 1;
-                    double Ax = 0.0; // Aj(row,:)*xj
-                    for(int colidx = start ; colidx < end ; colidx++){
-                        const int col = udata->csr_col_index_d[colidx] - 1;
-                        const double Areg = csrValAj[colidx];
-                        const double xreg = xj[col];
-                        printf("  (%d, %14.8e, %14.8e, %14.8e) ", col,Areg,xreg,bj[row] );
-                        Ax = Ax + Areg * xreg;
-                    }
-                    double rresidi = bj[row] - Ax;
-                    sup_res = (sup_res > fabs(rresidi))? sup_res : fabs(rresidi);
-                }
-                printf("batchId %d: sup|bj - Aj*xj| = %E \n", batchId, sup_res);
-            }
+        //    for(int batchId = 0 ; batchId < udata->ncells_d[0]; batchId++){
+        //        // measure |bj - Aj*xj|
+        //        realtype *csrValAj = (udata->csr_val_d) + batchId * (udata->NNZ);
+        //        double *xj       = N_VGetHostArrayPointer_Cuda(z) + batchId * (udata->neqs_per_cell[0]+1);
+        //        double *bj       = N_VGetHostArrayPointer_Cuda(r) + batchId * (udata->neqs_per_cell[0]+1);
+        //        // sup| bj - Aj*xj|
+        //        double sup_res = 0;
+        //        for(int row = 0 ; row < (udata->neqs_per_cell[0]+1) ; row++){
+        //            printf("\n     row %d: ", row);
+        //            const int start = udata->csr_row_count_d[row] - 1;
+        //            const int end = udata->csr_row_count_d[row +1] - 1;
+        //            double Ax = 0.0; // Aj(row,:)*xj
+        //            for(int colidx = start ; colidx < end ; colidx++){
+        //                const int col = udata->csr_col_index_d[colidx] - 1;
+        //                const double Areg = csrValAj[colidx];
+        //                const double xreg = xj[col];
+        //                printf("  (%d, %14.8e, %14.8e, %14.8e) ", col,Areg,xreg,bj[row] );
+        //                Ax = Ax + Areg * xreg;
+        //            }
+        //            double rresidi = bj[row] - Ax;
+        //            sup_res = (sup_res > fabs(rresidi))? sup_res : fabs(rresidi);
+        //        }
+        //        printf("batchId %d: sup|bj - Aj*xj| = %E \n", batchId, sup_res);
+        //    }
         //}
 
         return(0);
@@ -1014,7 +1005,6 @@ void
 fKernelComputeallAJ(int ncell, void *user_data, realtype *u_d, double * csr_val_arg)
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
-  //printf("    I am in fKernelComputeallAJ\n");
 
   amrex::Real mw[NUM_SPECIES];
   amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac, activity;
@@ -1045,7 +1035,6 @@ fKernelComputeallAJ(int ncell, void *user_data, realtype *u_d, double * csr_val_
 
   /* temp */
   temp_pt = u_curr[NUM_SPECIES];
-  //printf("T is: %f  ", temp_pt);
 
   /* Activities */
   EOS::RTY2C(rho_pt, temp_pt, massfrac.arr, activity.arr);
@@ -1069,19 +1058,17 @@ fKernelComputeallAJ(int ncell, void *user_data, realtype *u_d, double * csr_val_
   }
   /* Fill the Sps Mat */
   int nbVals;
-  //printf( "nbVals :\n");
   for (int i = 1; i < udata->neqs_per_cell[0]+2; i++) {
       nbVals = udata->csr_row_count_d[i]-udata->csr_row_count_d[i-1];
-      //printf( "%d \n", nbVals);
       for (int j = 0; j < nbVals; j++) {
     	      int idx = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j - 1 ] - 1;
               /* Scale by -gamma */
               /* Add identity matrix */
     	      if (idx == (i-1)) {
-                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = 1.0; // - (udata->gamma_d) * Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + idx ]; 
+                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = 1.0 - (udata->gamma_d) * Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + idx ]; 
                   csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + idx ]; 
     	      } else {
-                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = 0.0; //- (udata->gamma_d) * Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + i-1 ]; 
+                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = - (udata->gamma_d) * Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + i-1 ]; 
                   csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + i-1 ]; 
     	      }
               //printf( " %14.8e(%d %d ) ", csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ], idx, udata->csr_row_count_d[i-1] + j - 1);
@@ -1099,8 +1086,6 @@ fKernelComputeAJsys(int ncell, void *user_data, realtype *u_d, double * csr_val_
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
 
-  //printf("    I am in fKernelComputeAJsys\n");
-
   int jac_offset = ncell * (udata->NNZ); 
 
   realtype* csr_jac_cell = udata->csr_jac_d + jac_offset;
@@ -1116,9 +1101,9 @@ fKernelComputeAJsys(int ncell, void *user_data, realtype *u_d, double * csr_val_
               /* Scale by -gamma */
               /* Add identity matrix */
     	      if (idx == (i-1)) {
-                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = 1.0; //- (udata->gamma_d) * csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ];
+                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = 1.0 - (udata->gamma_d) * csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ];
     	      } else {
-                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = 0.0; //- (udata->gamma_d) * csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ];
+                  csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = - (udata->gamma_d) * csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ];
     	      }
               //printf( " %14.8e(%d %d ) ", csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ], idx, udata->csr_row_count_d[i-1] + j - 1);
       }
