@@ -185,40 +185,40 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	        BL_PROFILE_VAR_STOP(SparsityStuff);
             } else {
                 if (isolve_type == sparse_cusolver_solve) {
-                    BL_PROFILE_VAR_START(SparsityStuff);
-                    SPARSITY_INFO(&(user_data->NNZ),&HP,1);
-	            BL_PROFILE_VAR_STOP(SparsityStuff);
+                    //BL_PROFILE_VAR_START(SparsityStuff);
+                    //SPARSITY_INFO(&(user_data->NNZ),&HP,1);
+	            //BL_PROFILE_VAR_STOP(SparsityStuff);
 
-	            BL_PROFILE_VAR_START(AllocsCVODE);
-                    cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
-                    cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
-                    cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
-	            BL_PROFILE_VAR_STOP(AllocsCVODE);
+	            //BL_PROFILE_VAR_START(AllocsCVODE);
+                    //cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
+                    //cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
+                    //cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
+	            //BL_PROFILE_VAR_STOP(AllocsCVODE);
 
-                    cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
-                    cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
-                    cudaError_t      cuda_status     = cudaSuccess;
-		    int retval;
+                    //cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
+                    //cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
+                    //cudaError_t      cuda_status     = cudaSuccess;
+		    //int retval;
 
-                    cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
-                    assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+                    //cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
+                    //assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-		    cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
-		    assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+		    //cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
+		    //assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-		    A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, neq_tot, neq_tot, user_data->NNZ * NCELLS, user_data->cuSPHandle);
-		    if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
+		    //A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, neq_tot, neq_tot, user_data->NNZ * NCELLS, user_data->cuSPHandle);
+		    //if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
 
-		    retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
-		    if(check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1)) return(1);
+		    //retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
+		    //if(check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1)) return(1);
 
-                    BL_PROFILE_VAR_START(SparsityStuff);
-		    SPARSITY_PREPROC_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
-                    SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_d, user_data->csr_col_index_d);
-                    cuda_status = cudaDeviceSynchronize();
-                    assert(cuda_status == cudaSuccess);
-		    //SPARSITY_PREPROC_CSR(SUNMatrix_cuSparse_IndexValues(A), SUNMatrix_cuSparse_IndexPointers(A), &HP, 1, 0); 
-	            BL_PROFILE_VAR_STOP(SparsityStuff);
+                    //BL_PROFILE_VAR_START(SparsityStuff);
+		    //SPARSITY_PREPROC_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
+                    //SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_d, user_data->csr_col_index_d);
+                    //cuda_status = cudaDeviceSynchronize();
+                    //assert(cuda_status == cudaSuccess);
+		    ////SPARSITY_PREPROC_CSR(SUNMatrix_cuSparse_IndexValues(A), SUNMatrix_cuSparse_IndexPointers(A), &HP, 1, 0); 
+	            //BL_PROFILE_VAR_STOP(SparsityStuff);
 
 		} else {
                     BL_PROFILE_VAR_START(SparsityStuff);
@@ -343,9 +343,9 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	realtype *yvec_d      = N_VGetDeviceArrayPointer_Cuda(y);
 	BL_PROFILE_VAR("AsyncCpy", AsyncCpy);
 	// rhoY,T
-	cudaMemcpyAsync((yvec_d, rY_in, sizeof(realtype) * ((NEQ+1)*NCELLS), cudaMemcpyHostToDevice, stream);
+	cudaMemcpyAsync(yvec_d, rY_in, sizeof(realtype) * ((NEQ+1)*NCELLS), cudaMemcpyHostToDevice, stream);
 	// rhoY_src_ext
-	cudaMemcpyAsync((user_data->rYsrc, rY_src_in, (NEQ*NCELLS)*sizeof(double), cudaMemcpyHostToDevice, stream);
+	cudaMemcpyAsync(user_data->rYsrc, rY_src_in, (NEQ*NCELLS)*sizeof(double), cudaMemcpyHostToDevice, stream);
 	// rhoE/rhoH
 	cudaMemcpyAsync(user_data->rhoe_init, rX_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice, stream);
 	cudaMemcpyAsync(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice, stream);
@@ -400,16 +400,16 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 	} else if (user_data->isolve_type == sparse_cusolver_solve) {
 
-            LS = SUNLinSol_cuSolverSp_batchQR(y, A, user_data->cusolverHandle);
-	    if(check_flag((void *)LS, "SUNLinSol_cuSolverSp_batchQR", 0)) return(1);
+            //LS = SUNLinSol_cuSolverSp_batchQR(y, A, user_data->cusolverHandle);
+	    //if(check_flag((void *)LS, "SUNLinSol_cuSolverSp_batchQR", 0)) return(1);
 
-            /* Set matrix and linear solver to Cvode */
-            flag = CVodeSetLinearSolver(cvode_mem, LS, A);
-            if(check_flag(&flag, "CVodeSetLinearSolver", 1)) return(1);
+            ///* Set matrix and linear solver to Cvode */
+            //flag = CVodeSetLinearSolver(cvode_mem, LS, A);
+            //if(check_flag(&flag, "CVodeSetLinearSolver", 1)) return(1);
 
-	    /* Set the user-supplied Jacobian routine Jac */
-            flag = CVodeSetJacFn(cvode_mem, cJac);
-	    if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1); 
+	    ///* Set the user-supplied Jacobian routine Jac */
+            //flag = CVodeSetJacFn(cvode_mem, cJac);
+	    //if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1); 
 
         } else if (user_data->isolve_type == sparse_solve) {
 
@@ -740,7 +740,7 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
         }
 	
         if (udata->isolve_type == sparse_cusolver_solve) {
-	    Jdata   = SUNMatrix_cuSparse_Data(J);
+	    //Jdata   = SUNMatrix_cuSparse_Data(J);
 	} else {
 	    SPARSITY_PREPROC_SYST_CSR( (int*) SUNSparseMatrix_IndexValues(J), (int*) SUNSparseMatrix_IndexPointers(J), 
                                      &consP, udata->ncells_d[0], 0); 
@@ -763,15 +763,15 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 
 	BL_PROFILE_VAR("Jacobian()", fKernelJac );
         if (udata->isolve_type == sparse_cusolver_solve) {
-	    /* GPU tests */
-            const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-	    amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
-	    [=] AMREX_GPU_DEVICE () noexcept {
-	        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	    	icell < udata->ncells_d[0]; icell += stride) {
-	            fKernelComputeAJchemCuSolver(icell, user_data, yvec_d, Jdata);
-	    	}
-            }); 
+	    ///* GPU tests */
+            //const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
+	    //amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+	    //[=] AMREX_GPU_DEVICE () noexcept {
+	    //    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	    //	icell < udata->ncells_d[0]; icell += stride) {
+	    //        fKernelComputeAJchemCuSolver(icell, user_data, yvec_d, Jdata);
+	    //	}
+            //}); 
 	} else {
 	    /* GPU tests */
             const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   

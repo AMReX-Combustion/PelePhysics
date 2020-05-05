@@ -10,7 +10,7 @@
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
 #include <nvector/nvector_cuda.h>
 #include <sunmatrix/sunmatrix_sparse.h>
-#include <sunmatrix/sunmatrix_cusparse.h>
+//#include <sunmatrix/sunmatrix_cusparse.h>
 #include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver      */
 #include <sunlinsol/sunlinsol_spgmr.h> /* access to SPGMR SUNLinearSolver     */
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
