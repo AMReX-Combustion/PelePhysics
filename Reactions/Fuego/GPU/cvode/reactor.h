@@ -10,7 +10,7 @@
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
 #include <nvector/nvector_cuda.h>
 #include <sunmatrix/sunmatrix_sparse.h>
-//#include <sunmatrix/sunmatrix_cusparse.h>
+#include <sunmatrix/sunmatrix_cusparse.h>
 #include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver      */
 #include <sunlinsol/sunlinsol_spgmr.h> /* access to SPGMR SUNLinearSolver     */
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
@@ -92,8 +92,6 @@ void reactor_close();
 
 /**********************************/
 /* Additional useful functions */
-
-AMREX_GPU_HOST_DEVICE void fill_dense_csr(int * colVals, int * rowPtr, int NCELLS, int base);
 
 static int check_flag(void *flagvalue, const char *funcname, int opt);
 

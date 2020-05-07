@@ -159,7 +159,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
         if (user_data->ianalytical_jacobian == 1) { 
             int HP;
-            if (user_data->ireactor_type == 1) {
+            if (user_data->ireactor_type == eint_rho) {
                 HP = 0;
             } else {
                 HP = 1;
@@ -183,62 +183,60 @@ int react(realtype *rY_in, realtype *rY_src_in,
                 BL_PROFILE_VAR_START(SparsityStuff);
                 SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP,1);
 	        BL_PROFILE_VAR_STOP(SparsityStuff);
+            } else if (isolve_type == sparse_cusolver_solve) {
+                BL_PROFILE_VAR_START(SparsityStuff);
+                SPARSITY_INFO(&(user_data->NNZ),&HP,1);
+	        BL_PROFILE_VAR_STOP(SparsityStuff);
+
+	        BL_PROFILE_VAR_START(AllocsCVODE);
+                cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
+                cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
+                cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
+	        BL_PROFILE_VAR_STOP(AllocsCVODE);
+
+                cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
+                cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
+                cudaError_t      cuda_status     = cudaSuccess;
+		int retval;
+
+                cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
+                assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+
+		cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
+		assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+
+		A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, neq_tot, neq_tot, user_data->NNZ * NCELLS, user_data->cuSPHandle);
+		if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
+
+		retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
+		if(check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1)) return(1);
+
+                BL_PROFILE_VAR_START(SparsityStuff);
+		SPARSITY_PREPROC_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
+                SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_d, user_data->csr_col_index_d);
+                cuda_status = cudaDeviceSynchronize();
+                assert(cuda_status == cudaSuccess);
+		//SPARSITY_PREPROC_CSR(SUNMatrix_cuSparse_IndexValues(A), SUNMatrix_cuSparse_IndexPointers(A), &HP, 1, 0); 
+	        BL_PROFILE_VAR_STOP(SparsityStuff);
+
             } else {
-                if (isolve_type == sparse_cusolver_solve) {
-                    //BL_PROFILE_VAR_START(SparsityStuff);
-                    //SPARSITY_INFO(&(user_data->NNZ),&HP,1);
-	            //BL_PROFILE_VAR_STOP(SparsityStuff);
+                BL_PROFILE_VAR_START(SparsityStuff);
+                SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,1);
+	        BL_PROFILE_VAR_STOP(SparsityStuff);
 
-	            //BL_PROFILE_VAR_START(AllocsCVODE);
-                    //cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
-                    //cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
-                    //cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
-	            //BL_PROFILE_VAR_STOP(AllocsCVODE);
+	        BL_PROFILE_VAR_START(AllocsCVODE);
+                cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
+                cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
+                cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
+	        BL_PROFILE_VAR_STOP(AllocsCVODE);
 
-                    //cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
-                    //cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
-                    //cudaError_t      cuda_status     = cudaSuccess;
-		    //int retval;
+		A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ * NCELLS, CSR_MAT);
+		if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
 
-                    //cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
-                    //assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-
-		    //cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
-		    //assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-
-		    //A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, neq_tot, neq_tot, user_data->NNZ * NCELLS, user_data->cuSPHandle);
-		    //if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
-
-		    //retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
-		    //if(check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1)) return(1);
-
-                    //BL_PROFILE_VAR_START(SparsityStuff);
-		    //SPARSITY_PREPROC_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
-                    //SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_d, user_data->csr_col_index_d);
-                    //cuda_status = cudaDeviceSynchronize();
-                    //assert(cuda_status == cudaSuccess);
-		    ////SPARSITY_PREPROC_CSR(SUNMatrix_cuSparse_IndexValues(A), SUNMatrix_cuSparse_IndexPointers(A), &HP, 1, 0); 
-	            //BL_PROFILE_VAR_STOP(SparsityStuff);
-
-		} else {
-                    BL_PROFILE_VAR_START(SparsityStuff);
-                    SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,1);
-	            BL_PROFILE_VAR_STOP(SparsityStuff);
-
-	            BL_PROFILE_VAR_START(AllocsCVODE);
-                    cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
-                    cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
-                    cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
-	            BL_PROFILE_VAR_STOP(AllocsCVODE);
-
-		    A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ * NCELLS, CSR_MAT);
-		    if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
-
-                    BL_PROFILE_VAR_START(SparsityStuff);
-		    SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
-		    SPARSITY_PREPROC_SYST_CSR( (int*)SUNSparseMatrix_IndexValues(A), (int*)SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
-	            BL_PROFILE_VAR_STOP(SparsityStuff);
-		}
+                BL_PROFILE_VAR_START(SparsityStuff);
+		SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
+		SPARSITY_PREPROC_SYST_CSR( (int*)SUNSparseMatrix_IndexValues(A), (int*)SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
+	        BL_PROFILE_VAR_STOP(SparsityStuff);
 	    }
 
 
@@ -307,14 +305,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
 		assert(cudaStat1 == cudaSuccess);
 	    }
 	    BL_PROFILE_VAR_STOP(CuSolverInit);
-
-	    /*
-            free_mem = 0;
-            total_mem = 0;
-            cudaStat1 = cudaMemGetInfo( &free_mem, &total_mem );
-            assert( cudaSuccess == cudaStat1 );
-            std::cout<<"(AFTER AWS) Free: "<< free_mem<< " Tot: "<<total_mem<<std::endl;
-	    */
         }
 
 	/* Definition of main vector */
@@ -411,7 +401,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
             //flag = CVodeSetJacFn(cvode_mem, cJac);
 	    //if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1); 
 
-        } else if (user_data->isolve_type == sparse_solve) {
+        } else {
 
 	    /* Create dense SUNLinearSolver object for use by CVode */ 
 	    LS = SUNLinSol_dense_custom(y, A, NCELLS, (NEQ+1), user_data->NNZ, stream);
@@ -492,14 +482,12 @@ int react(realtype *rY_in, realtype *rY_src_in,
                 assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
  
 	        cudaFree(user_data->buffer_qr);
-	    } else {
-	        if (user_data->isolve_type == sparse_cusolver_solve) {
+	    } else if (user_data->isolve_type == sparse_cusolver_solve) {
                     cusolverStatus_t cusolver_status = cusolverSpDestroy(user_data->cusolverHandle);
                     assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
 	            cusparseStatus_t cusparse_status = cusparseDestroy(user_data->cuSPHandle);
 	            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
-	        }
 	    }
 	}
 
@@ -612,7 +600,6 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
                                 &internalDataInBytes,
                                 &workspaceInBytes);
 
-        //printf("numerical factorization needs internal data %lld bytes\n", (long long)internalDataInBytes);
 
         assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
@@ -632,8 +619,6 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                   realtype gamma, realtype delta, int lr, void *user_data)
 {
 	BL_PROFILE_VAR("Psolve()", cusolverPsolve);
-
-        printf("In PSolve \n");
 
         cudaError_t cuda_status = cudaSuccess;
         cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
@@ -847,7 +832,7 @@ fKernelSpec(int icell, void *user_data,
   temp_pt = yvec_d[offset + NUM_SPECIES];
 
   /* Additional var needed */
-  if (udata->ireactor_type == 1){
+  if (udata->ireactor_type == eint_rho){
       /* UV REACTOR */
       EOS::EY2T(nrg_pt, massfrac.arr, temp_pt);
       EOS::T2Ei(temp_pt, ei_pt.arr);
@@ -1026,7 +1011,6 @@ fKernelComputeallAJ(int ncell, void *user_data, realtype *u_d, double * csr_val_
   for (int n = 0; n < NUM_SPECIES; n++) {
       rho_pt = rho_pt + u_curr[n];
   }
-  //printf("rho is: %f  ", rho_pt);
 
   /* Yks, C CGS*/
   for (int i = 0; i < NUM_SPECIES; i++){
@@ -1041,7 +1025,7 @@ fKernelComputeallAJ(int ncell, void *user_data, realtype *u_d, double * csr_val_
 
   /* Additional var needed */
   int consP;
-  if (udata->ireactor_type == 1){
+  if (udata->ireactor_type == eint_rho){
       consP = 0 ;
   } else {
       consP = 1;
@@ -1071,11 +1055,8 @@ fKernelComputeallAJ(int ncell, void *user_data, realtype *u_d, double * csr_val_
                   csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = - (udata->gamma_d) * Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + i-1 ]; 
                   csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = Jmat_pt[ idx * (udata->neqs_per_cell[0]+1) + i-1 ]; 
     	      }
-              //printf( " %14.8e(%d %d ) ", csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ], idx, udata->csr_row_count_d[i-1] + j - 1);
       }
-      //printf( " \n");
   }
-  //printf(" \n");
 
 }
 
@@ -1092,10 +1073,8 @@ fKernelComputeAJsys(int ncell, void *user_data, realtype *u_d, double * csr_val_
   realtype* csr_val_cell = csr_val_arg + jac_offset;
   
   int nbVals;
-  //printf( "nbVals :\n");
   for (int i = 1; i < udata->neqs_per_cell[0]+2; i++) {
       nbVals = udata->csr_row_count_d[i]-udata->csr_row_count_d[i-1];
-      //printf( "%d \n", nbVals);
       for (int j = 0; j < nbVals; j++) {
     	      int idx = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j - 1 ] - 1;
               /* Scale by -gamma */
@@ -1105,11 +1084,8 @@ fKernelComputeAJsys(int ncell, void *user_data, realtype *u_d, double * csr_val_
     	      } else {
                   csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = - (udata->gamma_d) * csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ];
     	      }
-              //printf( " %14.8e(%d %d ) ", csr_val_cell[ udata->csr_row_count_d[i-1] + j - 1 ], idx, udata->csr_row_count_d[i-1] + j - 1);
       }
-      //printf( " \n");
   }
-  //printf( " \n");
 
 }
 
@@ -1406,38 +1382,6 @@ int SUNLinSolFree_Dense_custom(SUNLinearSolver S)
  * OTHERS
 */
 
-AMREX_GPU_HOST_DEVICE void fill_dense_csr(int * colVals, int * rowPtr, int NCELLS, int base) 
-{
-  int offset; 
-
-  if (base == 1) {
-      rowPtr[0]      = 1;
-      int nJdata_tmp = 1;
-      for (int nc=0; nc<NCELLS; nc++) {
-	  offset = nc * (NUM_SPECIES + 1);
-          for (int l=0; l<(NUM_SPECIES + 1); l++) { 
-              for (int k=0; k<(NUM_SPECIES + 1); k++) {
-                  colVals[nJdata_tmp-1] = k+1 + offset;
-                  nJdata_tmp = nJdata_tmp + 1;
-              }
-              rowPtr[offset + l+1] = nJdata_tmp;
-          }
-      }
-  } else {
-      rowPtr[0]      = 0;
-      int nJdata_tmp = 0;
-      for (int nc=0; nc<NCELLS; nc++) {
-	  offset = nc * (NUM_SPECIES + 1);
-          for (int l=0; l<(NUM_SPECIES + 1); l++) { 
-              for (int k=0; k<(NUM_SPECIES + 1); k++) {
-                  colVals[nJdata_tmp] = k + offset;
-                  nJdata_tmp = nJdata_tmp + 1;
-              }
-              rowPtr[offset + l+1] = nJdata_tmp;
-          }
-      }
-  }
-}
 
 /* Get and print some final statistics */
 static void PrintFinalStats(void *cvodeMem)

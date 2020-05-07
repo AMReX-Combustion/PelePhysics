@@ -17,8 +17,7 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
       ifeq ($(USE_ARKODE_PP),TRUE)
           LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda
       else
-          LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda 
-          $LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda -lsundials_sunlinsolcusolversp -lsundials_sunmatrixcusparse
+          LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda -lsundials_sunlinsolcusolversp -lsundials_sunmatrixcusparse
           LIBRARIES += -lcusolver -lcusparse
       endif
   endif
