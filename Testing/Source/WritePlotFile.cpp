@@ -225,7 +225,7 @@ VisMF::FabOnDisk VisMFWrite(const FArrayBox &fabIn, const std::string &filename,
     } else {
       fab.resize(fabIn.box(), fabIn.nComp());
     }
-    fab.copy<RunOn::Host>(fabIn);
+    fab.copy(fabIn);
 
 
     VisMF::FabOnDisk fab_on_disk(filename, VisMF::FileOffset(os));
