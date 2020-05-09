@@ -404,6 +404,33 @@ int react(realtype *rY_in, realtype *rY_src_in,
             return 0;
 	}
 
+	/* T update with energy and Y */
+	int offset;
+	realtype rho, nrg_loc, temp;
+	for  (int i = 0; i < data->ncells; i++) {
+	    offset = i * (NUM_SPECIES + 1);
+	    realtype* mass_frac = rY_in + offset;
+	    // get rho
+	    rho = 0;
+	    for  (int kk = 0; kk < NUM_SPECIES; kk++) {
+	        rho += mass_frac[kk];
+	    }
+	    // get Yks
+	    for  (int kk = 0; kk < NUM_SPECIES; kk++) {
+                mass_frac[kk] = mass_frac[kk] / rho;
+	    }
+	    // get energy
+	    nrg_loc = rX_in[i] / rho;
+	    // recompute T
+            if (data->ireactor_type == eint_rho){
+	      EOS::EY2T(nrg_loc,mass_frac,temp);
+	    } else {
+	      EOS::HY2T(nrg_loc,mass_frac,temp);
+	    }
+	    // store T in y
+	    yvec_d[offset + NUM_SPECIES] = temp;
+	}
+
 	/* ReInit CVODE is faster */
 	CVodeReInit(cvode_mem, time_init, y);
 
@@ -433,6 +460,31 @@ int react(realtype *rY_in, realtype *rY_src_in,
             rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
 	}
 
+	/* T update with energy and Y */
+	for  (int i = 0; i < data->ncells; i++) {
+	    offset = i * (NUM_SPECIES + 1);
+	    realtype* mass_frac = yvec_d + offset;
+	    // get rho
+	    rho = 0;
+	    for  (int kk = 0; kk < NUM_SPECIES; kk++) {
+	        rho += mass_frac[kk];
+	    }
+	    // get Yks
+	    for  (int kk = 0; kk < NUM_SPECIES; kk++) {
+                mass_frac[kk] = mass_frac[kk] / rho;
+	    }
+	    // get energy
+	    nrg_loc = rX_in[i] / rho;
+	    // recompute T
+            if (data->ireactor_type == eint_rho){
+	      EOS::EY2T(nrg_loc,mass_frac,temp);
+	    } else {
+	      EOS::HY2T(nrg_loc,mass_frac,temp);
+	    }
+	    // store T in rY_in
+	    rY_in[offset + NUM_SPECIES] = temp;
+	}
+
 #ifdef _OPENMP
 	if ((data->iverbose > 1) && (omp_thread == 0)) {
 #else
@@ -444,9 +496,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	}
 
 	/* Get estimate of how hard the integration process was */
-        long int nfe;
+        long int nfe,nfeLS;
 	flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
-	return nfe;
+        flag = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+	return nfe+nfeLS;
 }
 
 

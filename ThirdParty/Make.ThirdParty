@@ -1,8 +1,6 @@
 ifeq ($(USE_SUNDIALS_PP),TRUE) 
-  $(info ***Loading Make.ThirdParty) 
   DEFINES  += -DUSE_SUNDIALS_PP
   SUNDIALS_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib
-  $(info SUNDIALS_LIB_DIR="$(SUNDIALS_LIB_DIR)")
   INCLUDE_LOCATIONS += $(SUNDIALS_LIB_DIR)/../include
   ifeq ($(USE_ARKODE_PP),TRUE)
       DEFINES += -DUSE_ARKODE_PP
