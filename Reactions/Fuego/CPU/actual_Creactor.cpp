@@ -44,7 +44,7 @@
 
 /**********************************/
 /* Initialization of typVals */
-int SetTypValsCVODE(std::vector<double> ExtTypVals) {
+int SetTypValsODE(std::vector<double> ExtTypVals) {
 	int size_ETV = (NUM_SPECIES + 1);
 	if (typVals==NULL) {
 	    typVals = (double *) malloc(size_ETV*sizeof(double));
