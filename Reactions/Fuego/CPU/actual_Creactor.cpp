@@ -124,8 +124,13 @@ int reactor_init(const int* reactor_type, const int* Ncells,
 	ratol = N_VGetArrayPointer(atol);
 	int offset;
 	if (typVals) {
-	    printf("Using typical values\n");
-	    printf("rtol = %14.8e atolfact = %14.8e \n",relative_tol, absolute_tol);
+#ifdef _OPENMP
+            if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+            if (data->iverbose > 0) {
+#endif
+	        printf("rtol = %14.8e atolfact = %14.8e \n",relative_tol, absolute_tol);
+	    }
 	    for  (int i = 0; i < data->ncells; i++) {
 	        offset = i * (NUM_SPECIES + 1);
 		for  (int k = 0; k < NUM_SPECIES + 1; k++) {
@@ -134,7 +139,13 @@ int reactor_init(const int* reactor_type, const int* Ncells,
 		}
 	    }
 	} else {
-	    printf("rtol = %14.8e atol = %14.8e \n",relative_tol, absolute_tol);
+#ifdef _OPENMP
+            if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+            if (data->iverbose > 0) {
+#endif
+	        printf("rtol = %14.8e atol = %14.8e \n",relative_tol, absolute_tol);
+	    }
             for (int i=0; i<neq_tot; i++) {
                 ratol[i] = absolute_tol;
             }
