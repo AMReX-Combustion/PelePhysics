@@ -18,6 +18,7 @@
   double *rhoX_init   = NULL;
   double *rhoXsrc_ext = NULL;
   double *rYsrc       = NULL;
+  double *typVals     = NULL;
 /* REMOVE MAYBE LATER */
   int dense_solve           = 1;
   int eint_rho = 1; // in/out = rhoE/rhoY
@@ -31,6 +32,23 @@
 /**********************************/
 
 /**********************************/
+/* Initialization of typVals */
+int SetTypValsODE(std::vector<double> ExtTypVals) {
+	int size_ETV = (NUM_SPECIES + 1);
+	if (typVals==NULL) {
+	    typVals = (double *) malloc(size_ETV*sizeof(double));
+	}
+	amrex::Vector<std::string> kname;
+	CKSYMS_STR(kname);
+        for (int i=0; i<size_ETV-1; i++) {
+            typVals[i] = ExtTypVals[i];
+            amrex::Print() << kname[i] << ":" << typVals[i] << "  ";    
+        }
+	typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
+        amrex::Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";    
+	return(0);
+}
+
 /* Initialization routine, called once at the begining of the problem */
 int reactor_init(const int* reactor_type, const int* Ncells,
 		double relative_tol,double absolute_tol) {
@@ -39,7 +57,9 @@ int reactor_init(const int* reactor_type, const int* Ncells,
 	/* ARKODE initial time - 0 */
 	realtype time;
 	/* ARKODE tolerances */
-	realtype reltol, atol;
+	realtype reltol;
+	N_Vector atol; 
+	realtype *ratol;
 	/* Tot numb of eq to integrate */
 	int neq_tot;
 #ifdef _OPENMP
@@ -99,11 +119,27 @@ int reactor_init(const int* reactor_type, const int* Ncells,
 	
 	/* Definition of tolerances */
 	reltol = relative_tol;
-	atol   = absolute_tol;
+        atol  = N_VNew_Serial(neq_tot);
+	ratol = N_VGetArrayPointer(atol);
+	if (typVals) { 
+	    printf("Using typical values\n");
+	    printf("rtol = %14.8e atolfact = %14.8e \n",relative_tol, absolute_tol);
+	    for  (int i = 0; i < data->ncells; i++) {
+	        offset = i * (NUM_SPECIES + 1);
+		for  (int k = 0; k < NUM_SPECIES + 1; k++) {
+		    ratol[offset + k] = typVals[k]*absolute_tol;
+		}
+	    }
+	} else {
+	    printf("rtol = %14.8e atol = %14.8e \n",relative_tol, absolute_tol);
+            for (int i=0; i<neq_tot; i++) {
+                ratol[i] = absolute_tol;
+            }
+	}
         if (data->iuse_erkode == 1) {
-	    flag = ERKStepSStolerances(arkode_mem, reltol, atol); 
+	    flag = ERKStepSVtolerances(arkode_mem, reltol, atol); 
         } else {
-	    flag = ARKStepSStolerances(arkode_mem, reltol, atol); 
+	    flag = ARKStepSVtolerances(arkode_mem, reltol, atol); 
         }
 	if (check_flag(&flag, "ARKStepSStolerances", 1)) return 1;
 
@@ -176,6 +212,9 @@ int reactor_init(const int* reactor_type, const int* Ncells,
 	rhoX_init   = (double *) malloc(data->ncells*sizeof(double));
 	rhoXsrc_ext = (double *) malloc( data->ncells*sizeof(double));
 	rYsrc       = (double *)  malloc((data->ncells*NUM_SPECIES)*sizeof(double));
+
+	/* Free the atol vector */
+	N_VDestroy(atol); 
 
 	/* Ok we're done ...*/
 #ifdef _OPENMP

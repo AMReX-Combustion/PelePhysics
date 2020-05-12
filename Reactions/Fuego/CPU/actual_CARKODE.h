@@ -41,6 +41,7 @@ int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 /* Functions Called by the Program */
 extern "C"
 {
+    int SetTypValsODE(std::vector<double> ExtTypVals);
     int reactor_init(const int* cvode_iE, const int* Ncells,
            double relative_tol=1e-10,double absolute_tol=1e-10);
 
