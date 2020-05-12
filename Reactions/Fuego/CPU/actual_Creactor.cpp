@@ -23,6 +23,7 @@
   double *rhoXsrc_ext = NULL;
   double *rYsrc       = NULL;
   double time_init    = 0.0;
+  double *typVals     = NULL;
 /* REMOVE MAYBE LATER */
   int dense_solve           = 1;
   int sparse_solve          = 5;
@@ -37,12 +38,31 @@
 #pragma omp threadprivate(y,LS,A)
 #pragma omp threadprivate(cvode_mem,data)
 #pragma omp threadprivate(rhoX_init,rhoXsrc_ext,rYsrc,time_init)
+#pragma omp threadprivate(typVals)
 #endif
 /**********************************/
 
 /**********************************/
+/* Initialization of typVals */
+int SetTypValsCVODE(std::vector<double> ExtTypVals) {
+	int size_ETV = (NUM_SPECIES + 1);
+	if (typVals==NULL) {
+	    typVals = (double *) malloc(size_ETV*sizeof(double));
+	}
+	amrex::Vector<std::string> kname;
+	CKSYMS_STR(kname);
+        for (int i=0; i<size_ETV-1; i++) {
+            typVals[i] = ExtTypVals[i];
+            amrex::Print() << kname[i] << ":" << typVals[i] << "  ";    
+        }
+	typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
+        amrex::Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";    
+	return(0);
+}
+
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init(const int* reactor_type, const int* Ncells) {
+int reactor_init(const int* reactor_type, const int* Ncells,
+		double relative_tol,double absolute_tol) {
 	BL_PROFILE_VAR("reactInit", reactInit);
         /* CVODE return Flag  */
 	int flag;
@@ -99,12 +119,26 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 	
 	/* Definition of tolerances: one for each species */
 	/* TODO in fct of variable !! */
-	reltol = 1.0e-10;
+	reltol = relative_tol;
         atol  = N_VNew_Serial(neq_tot);
 	ratol = N_VGetArrayPointer(atol);
-        for (int i=0; i<neq_tot; i++) {
-            ratol[i] = 1.0e-10;
-        }
+	int offset;
+	if (typVals) {
+	    printf("Using typical values\n");
+	    printf("rtol = %14.8e atolfact = %14.8e \n",relative_tol, absolute_tol);
+	    for  (int i = 0; i < data->ncells; i++) {
+	        offset = i * (NUM_SPECIES + 1);
+		for  (int k = 0; k < NUM_SPECIES + 1; k++) {
+		    //ratol[offset + k] = std::max(typVals[k]*absolute_tol,relative_tol);
+		    ratol[offset + k] = typVals[k]*absolute_tol;
+		}
+	    }
+	} else {
+	    printf("rtol = %14.8e atol = %14.8e \n",relative_tol, absolute_tol);
+            for (int i=0; i<neq_tot; i++) {
+                ratol[i] = absolute_tol;
+            }
+	}
 	/* Call CVodeSVtolerances to specify the scalar relative tolerance
 	 * and vector absolute tolerances */
 	flag = CVodeSVtolerances(cvode_mem, reltol, atol);
