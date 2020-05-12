@@ -79,7 +79,7 @@ main (int   argc,
     /* ARKODE parameters for now but should be for all solvers */
     Real rtol=1e-9;
     Real atol=1e-9;
-    int set_typ_vals = 0;
+    int use_typ_vals = 0;
 #endif
 
     {
@@ -124,7 +124,7 @@ main (int   argc,
       /* Additional ARKODE queries */
       ppode.query("rtol",rtol);
       ppode.query("atol",atol);
-      ppode.query("set_typ_vals",set_typ_vals);
+      ppode.query("use_typ_vals",use_typ_vals);
 #endif
 
     }
@@ -189,7 +189,7 @@ main (int   argc,
 #pragma omp parallel
 #endif
     // init species-specific abs tolerances
-    if (set_typ_vals) {
+    if (use_typ_vals) {
         amrex::Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
         amrex::ParmParse pptv("ode");
         int nb_typ_vals = pptv.countval("typ_vals");
@@ -201,7 +201,7 @@ main (int   argc,
         for (int i = 0; i < nb_typ_vals; ++i) {
                 pptv.get("typ_vals", typ_vals[i],i);
         }
-        SetTypValsCVODE(typ_vals);
+        SetTypValsODE(typ_vals);
     }
     reactor_init(&ode_iE, &ode_ncells,rtol,atol);
 #endif
@@ -477,7 +477,7 @@ main (int   argc,
 		                &dt_incr, &time);
 #endif
 		            dt_incr =  dt/ndt;
-			    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+			    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 			}
 		        nc = 0;
 		        for (int l = 0; l < ode_ncells ; ++l){
