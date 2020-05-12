@@ -107,7 +107,7 @@ extern "C"
 {
     int SetTypValsCVODE(std::vector<double> ExtTypVals);
     int reactor_init(const int* cvode_iE, const int* Ncells,
-           double relative_tol=1e-8,double absolute_tol=1e-8);
+           double relative_tol=1e-10,double absolute_tol=1e-10);
 
     int react(realtype *rY_in, realtype *rY_src_in, 
 		realtype *rX_in, realtype *rX_src_in, 
