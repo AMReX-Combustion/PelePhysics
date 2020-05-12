@@ -28,6 +28,7 @@
 #pragma omp threadprivate(y,LS,A)
 #pragma omp threadprivate(arkode_mem,data)
 #pragma omp threadprivate(rhoX_init,rhoXsrc_ext,rYsrc)
+#pragma omp threadprivate(typVals)
 #endif
 /**********************************/
 
