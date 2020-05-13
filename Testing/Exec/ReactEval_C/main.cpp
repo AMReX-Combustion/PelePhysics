@@ -182,13 +182,16 @@ main (int   argc,
 
     /* Initialize D/CVODE reactor */
 #ifdef USE_SUNDIALS_PP
-#ifdef USE_CUDA_SUNDIALS_PP
+  #ifdef USE_CUDA_SUNDIALS_PP
     reactor_info(&ode_iE, &ode_ncells);
-#else
+  #else
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-    // init species-specific abs tolerances
+{
+    // Set ODE r/a tolerances
+    SetTolFactODE(rtol,atol);
+    // Set species-specific abs tolerances
     if (use_typ_vals) {
         amrex::Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
         amrex::ParmParse pptv("ode");
@@ -203,8 +206,9 @@ main (int   argc,
         }
         SetTypValsODE(typ_vals);
     }
-    reactor_init(&ode_iE, &ode_ncells,rtol,atol);
-#endif
+    reactor_init(&ode_iE, &ode_ncells);
+}
+  #endif
 #else
 #ifdef _OPENMP
 #pragma omp parallel
