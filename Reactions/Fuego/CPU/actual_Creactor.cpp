@@ -24,7 +24,7 @@
   double *rYsrc       = NULL;
   double time_init    = 0.0;
   double *typVals     = NULL;
-  double relTol       = 1.0e-10
+  double relTol       = 1.0e-10;
   double absTol       = 1.0e-10;
 /* REMOVE MAYBE LATER */
   int dense_solve           = 1;
@@ -57,6 +57,8 @@ void SetTypValsODE(std::vector<double> ExtTypVals) {
 	amrex::Vector<std::string> kname;
 	CKSYMS_STR(kname);
 
+	amrex::Print() << "Set the typVals in PelePhysics: \n  ";
+
         for (int i=0; i<size_ETV-1; i++) {
             typVals[i] = ExtTypVals[i];
             amrex::Print() << kname[i] << ":" << typVals[i] << "  ";    
@@ -71,7 +73,14 @@ void SetTolFactODE(double relative_tol,double absolute_tol) {
         relTol = relative_tol;
 	absTol = absolute_tol;
 
-	amrex::Print() << "RTOL, ATOL: "<<relTol<< " "<<absTol<<  " \n";
+#ifdef _OPENMP
+	/* omp thread if applicable */
+        if (omp_get_thread_num() == 0){
+	    amrex::Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " \n";
+	}
+#else
+	amrex::Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " \n";
+#endif
 }
 
 
@@ -91,11 +100,11 @@ void ReSetTolODE() {
 	int offset;
 	if (typVals) {
 #ifdef _OPENMP
-            if ((data->iverbose > 0) && (omp_thread == 0)) {
+            if ((data->iverbose > 0) && (omp_get_thread_num() == 0)) {
 #else
             if (data->iverbose > 0) {
 #endif
-	        printf("rtol = %14.8e atolfact = %14.8e \n",relTol, absTol);
+	        printf("Using rtol = %14.8e atolfact = %14.8e \n",relTol, absTol);
 	    }
 	    for  (int i = 0; i < data->ncells; i++) {
 	        offset = i * (NUM_SPECIES + 1);
@@ -105,11 +114,11 @@ void ReSetTolODE() {
 	    }
 	} else {
 #ifdef _OPENMP
-            if ((data->iverbose > 0) && (omp_thread == 0)) {
+            if ((data->iverbose > 0) && (omp_get_thread_num() == 0)) {
 #else
             if (data->iverbose > 0) {
 #endif
-	        printf("rtol = %14.8e atol = %14.8e \n",relTol, absTol);
+	        printf("Using rtol = %14.8e atol = %14.8e \n",relTol, absTol);
 	    }
             for (int i=0; i<neq_tot; i++) {
                 ratol[i] = absTol;
@@ -117,8 +126,8 @@ void ReSetTolODE() {
 	}
 	/* Call CVodeSVtolerances to specify the scalar relative tolerance
 	 * and vector absolute tolerances */
-	flag = CVodeSVtolerances(cvode_mem, relTol, atol);
-	if (check_flag(&flag, "CVodeSVtolerances", 1)) return(1);
+	int flag = CVodeSVtolerances(cvode_mem, relTol, atol);
+	if (check_flag(&flag, "CVodeSVtolerances", 1)) amrex::Abort("Problem in ReSetTolODE");
 }
 
 

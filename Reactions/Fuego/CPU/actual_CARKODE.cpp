@@ -19,7 +19,7 @@
   double *rhoXsrc_ext = NULL;
   double *rYsrc       = NULL;
   double *typVals     = NULL;
-  double relTol       = 1.0e-10
+  double relTol       = 1.0e-10;
   double absTol       = 1.0e-10;
 /* REMOVE MAYBE LATER */
   int dense_solve           = 1;
@@ -106,11 +106,11 @@ void ReSetTolODE() {
             }
 	}
         if (data->iuse_erkode == 1) {
-	    flag = ERKStepSVtolerances(arkode_mem, relTol, atol); 
-	    if (check_flag(&flag, "ERKStepSVtolerances", 1)) return 1;
+	    int flag = ERKStepSVtolerances(arkode_mem, relTol, atol); 
+	    if (check_flag(&flag, "ERKStepSVtolerances", 1)) amrex::Abort("Problem in ReSetTolODE");
         } else {
-	    flag = ARKStepSVtolerances(arkode_mem, relTol, atol); 
-	    if (check_flag(&flag, "ARKStepSVtolerances", 1)) return 1;
+	    int flag = ARKStepSVtolerances(arkode_mem, relTol, atol); 
+	    if (check_flag(&flag, "ARKStepSVtolerances", 1)) amrex::Abort("Problem in ReSetTolODE");
         }
 }
 
