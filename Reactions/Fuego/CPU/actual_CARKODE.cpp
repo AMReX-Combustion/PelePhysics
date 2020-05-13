@@ -47,12 +47,31 @@ void SetTypValsODE(std::vector<double> ExtTypVals) {
 	amrex::Vector<std::string> kname;
 	CKSYMS_STR(kname);
 
+#ifdef _OPENMP
+	/* omp thread if applicable */
+        if (omp_get_thread_num() == 0){
+	    amrex::Print() << "Set the typVals in PelePhysics: \n  ";
+            for (int i=0; i<size_ETV-1; i++) {
+                typVals[i] = ExtTypVals[i];
+                amrex::Print() << kname[i] << ":" << typVals[i] << "  ";    
+            }
+	    typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
+            amrex::Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";    
+	} else {
+            for (int i=0; i<size_ETV-1; i++) {
+                typVals[i] = ExtTypVals[i];
+            }
+	    typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
+	}
+#else
+	amrex::Print() << "Set the typVals in PelePhysics: \n  ";
         for (int i=0; i<size_ETV-1; i++) {
             typVals[i] = ExtTypVals[i];
             amrex::Print() << kname[i] << ":" << typVals[i] << "  ";    
         }
 	typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
         amrex::Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";    
+#endif
 }
 
 
@@ -61,7 +80,14 @@ void SetTolFactODE(double relative_tol,double absolute_tol) {
         relTol = relative_tol;
 	absTol = absolute_tol;
 
-	amrex::Print() << "RTOL, ATOL: "<<relTol<< " "<<absTol<<  " \n";
+#ifdef _OPENMP
+	/* omp thread if applicable */
+        if (omp_get_thread_num() == 0){
+	    amrex::Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
+	}
+#else
+	amrex::Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
+#endif
 }
 
 
@@ -85,7 +111,7 @@ void ReSetTolODE() {
 #else
             if (data->iverbose > 0) {
 #endif
-	        printf("rtol = %14.8e atolfact = %14.8e \n",relTol, absTol);
+	        printf("Setting ARK/ERKODE tolerances rtol = %14.8e atolfact = %14.8e in PelePhysics \n",relTol, absTol);
 	    }
 	    for  (int i = 0; i < data->ncells; i++) {
 	        offset = i * (NUM_SPECIES + 1);
@@ -99,7 +125,7 @@ void ReSetTolODE() {
 #else
             if (data->iverbose > 0) {
 #endif
-	        printf("rtol = %14.8e atol = %14.8e \n",relTol, absTol);
+	        printf("Setting ARK/ERKODE tolerances rtol = %14.8e atol = %14.8e in PelePhysics \n",relTol, absTol);
 	    }
             for (int i=0; i<neq_tot; i++) {
                 ratol[i] = absTol;
@@ -190,7 +216,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 #else
             if (data->iverbose > 0) {
 #endif
-	        printf("rtol = %14.8e atolfact = %14.8e \n",relTol, absTol);
+	        printf("Setting ARK/ERKODE tolerances rtol = %14.8e atolfact = %14.8e in PelePhysics \n",relTol, absTol);
 	    }
 	    for  (int i = 0; i < data->ncells; i++) {
 	        offset = i * (NUM_SPECIES + 1);
@@ -204,7 +230,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 #else
             if (data->iverbose > 0) {
 #endif
-	        printf("rtol = %14.8e atol = %14.8e \n",relTol, absTol);
+	        printf("Setting ARK/ERKODE tolerances rtol = %14.8e atol = %14.8e in PelePhysics \n",relTol, absTol);
 	    }
             for (int i=0; i<neq_tot; i++) {
                 ratol[i] = absTol;
