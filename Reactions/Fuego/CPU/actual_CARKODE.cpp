@@ -19,6 +19,8 @@
   double *rhoXsrc_ext = NULL;
   double *rYsrc       = NULL;
   double *typVals     = NULL;
+  double relTol       = 1.0e-10
+  double absTol       = 1.0e-10;
 /* REMOVE MAYBE LATER */
   int dense_solve           = 1;
   int eint_rho = 1; // in/out = rhoE/rhoY
@@ -29,36 +31,97 @@
 #pragma omp threadprivate(arkode_mem,data)
 #pragma omp threadprivate(rhoX_init,rhoXsrc_ext,rYsrc)
 #pragma omp threadprivate(typVals)
+#pragma omp threadprivate(relTol,absTol)
 #endif
 /**********************************/
 
 /**********************************/
 /* Initialization of typVals */
-int SetTypValsODE(std::vector<double> ExtTypVals) {
+void SetTypValsODE(std::vector<double> ExtTypVals) {
 	int size_ETV = (NUM_SPECIES + 1);
+
 	if (typVals==NULL) {
 	    typVals = (double *) malloc(size_ETV*sizeof(double));
 	}
+
 	amrex::Vector<std::string> kname;
 	CKSYMS_STR(kname);
+
         for (int i=0; i<size_ETV-1; i++) {
             typVals[i] = ExtTypVals[i];
             amrex::Print() << kname[i] << ":" << typVals[i] << "  ";    
         }
 	typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
         amrex::Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";    
-	return(0);
 }
 
+
+/* Set or update the rel/abs tolerances  */
+void SetTolFactODE(double relative_tol,double absolute_tol) {
+        relTol = relative_tol;
+	absTol = absolute_tol;
+
+	amrex::Print() << "RTOL, ATOL: "<<relTol<< " "<<absTol<<  " \n";
+}
+
+
+/* Function to ReSet the Tolerances */
+void ReSetTolODE() {
+	if (data==NULL) {
+                amrex::Abort("Reactor object is not initialized !!");
+	}
+
+	int neq_tot;
+	N_Vector atol;
+	realtype *ratol;
+        neq_tot = (NUM_SPECIES + 1) * data->ncells;
+        atol    = N_VNew_Serial(neq_tot);
+	ratol   = N_VGetArrayPointer(atol);
+
+	int offset;
+	if (typVals) {
+#ifdef _OPENMP
+            if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+            if (data->iverbose > 0) {
+#endif
+	        printf("rtol = %14.8e atolfact = %14.8e \n",relTol, absTol);
+	    }
+	    for  (int i = 0; i < data->ncells; i++) {
+	        offset = i * (NUM_SPECIES + 1);
+		for  (int k = 0; k < NUM_SPECIES + 1; k++) {
+		    ratol[offset + k] = typVals[k]*absTol;
+		}
+	    }
+	} else {
+#ifdef _OPENMP
+            if ((data->iverbose > 0) && (omp_thread == 0)) {
+#else
+            if (data->iverbose > 0) {
+#endif
+	        printf("rtol = %14.8e atol = %14.8e \n",relTol, absTol);
+	    }
+            for (int i=0; i<neq_tot; i++) {
+                ratol[i] = absTol;
+            }
+	}
+        if (data->iuse_erkode == 1) {
+	    flag = ERKStepSVtolerances(arkode_mem, relTol, atol); 
+	    if (check_flag(&flag, "ERKStepSVtolerances", 1)) return 1;
+        } else {
+	    flag = ARKStepSVtolerances(arkode_mem, relTol, atol); 
+	    if (check_flag(&flag, "ARKStepSVtolerances", 1)) return 1;
+        }
+}
+
+
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init(const int* reactor_type, const int* Ncells,
-		double relative_tol,double absolute_tol) {
+int reactor_init(const int* reactor_type, const int* Ncells) {
         /* return Flag  */
 	int flag;
 	/* ARKODE initial time - 0 */
 	realtype time;
 	/* ARKODE tolerances */
-	realtype reltol;
 	N_Vector atol; 
 	realtype *ratol;
 	/* Tot numb of eq to integrate */
@@ -119,7 +182,6 @@ int reactor_init(const int* reactor_type, const int* Ncells,
         }
 	
 	/* Definition of tolerances */
-	reltol = relative_tol;
         atol  = N_VNew_Serial(neq_tot);
 	ratol = N_VGetArrayPointer(atol);
 	if (typVals) { 
@@ -128,12 +190,12 @@ int reactor_init(const int* reactor_type, const int* Ncells,
 #else
             if (data->iverbose > 0) {
 #endif
-	        printf("rtol = %14.8e atolfact = %14.8e \n",relative_tol, absolute_tol);
+	        printf("rtol = %14.8e atolfact = %14.8e \n",relTol, absTol);
 	    }
 	    for  (int i = 0; i < data->ncells; i++) {
 	        offset = i * (NUM_SPECIES + 1);
 		for  (int k = 0; k < NUM_SPECIES + 1; k++) {
-		    ratol[offset + k] = typVals[k]*absolute_tol;
+		    ratol[offset + k] = typVals[k]*absTol;
 		}
 	    }
 	} else {
@@ -142,18 +204,19 @@ int reactor_init(const int* reactor_type, const int* Ncells,
 #else
             if (data->iverbose > 0) {
 #endif
-	        printf("rtol = %14.8e atol = %14.8e \n",relative_tol, absolute_tol);
+	        printf("rtol = %14.8e atol = %14.8e \n",relTol, absTol);
 	    }
             for (int i=0; i<neq_tot; i++) {
-                ratol[i] = absolute_tol;
+                ratol[i] = absTol;
             }
 	}
         if (data->iuse_erkode == 1) {
-	    flag = ERKStepSVtolerances(arkode_mem, reltol, atol); 
+	    flag = ERKStepSVtolerances(arkode_mem, relTol, atol); 
+	    if (check_flag(&flag, "ERKStepSVtolerances", 1)) return 1;
         } else {
-	    flag = ARKStepSVtolerances(arkode_mem, reltol, atol); 
+	    flag = ARKStepSVtolerances(arkode_mem, relTol, atol); 
+	    if (check_flag(&flag, "ARKStepSVtolerances", 1)) return 1;
         }
-	if (check_flag(&flag, "ARKStepSStolerances", 1)) return 1;
 
         if(data->iimplicit_solve == 1){
 #ifdef _OPENMP
