@@ -105,9 +105,7 @@ int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 /* Functions Called by the Program */
 extern "C"
 {
-    int SetTypValsODE(std::vector<double> ExtTypVals);
-    int reactor_init(const int* cvode_iE, const int* Ncells,
-           double relative_tol=1e-10,double absolute_tol=1e-10);
+    int reactor_init(const int* cvode_iE, const int* Ncells);
 
     int react(realtype *rY_in, realtype *rY_src_in, 
 		realtype *rX_in, realtype *rX_src_in, 
@@ -130,6 +128,11 @@ void FreeUserData(UserData data);
 
 void check_state(N_Vector yvec);
 
+void SetTypValsODE(std::vector<double> ExtTypVals);
+
+void SetTolFactODE(double relative_tol,double absolute_tol);
+
+void ReSetTolODE();
 
 /**********************************/
 /* Main Kernel fct called in solver RHS */
