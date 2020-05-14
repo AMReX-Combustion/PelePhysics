@@ -128,6 +128,11 @@ void FreeUserData(UserData data);
 
 void check_state(N_Vector yvec);
 
+void SetTypValsODE(std::vector<double> ExtTypVals);
+
+void SetTolFactODE(double relative_tol,double absolute_tol);
+
+void ReSetTolODE();
 
 /**********************************/
 /* Main Kernel fct called in solver RHS */

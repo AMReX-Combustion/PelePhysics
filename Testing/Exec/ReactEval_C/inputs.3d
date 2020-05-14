@@ -4,9 +4,12 @@ ode.dt  = 1.e-05
 ode.ndt = 10
 # Reactor formalism: 1=full e, 2=full h
 ode.reactor_type  = 1
-# Tolerances for ODE solve
-ode.rtol = 1e-9
-ode.atol = 1e-9
+# abs and rel tolerances for ODE solve
+ode.rtol = 1e-10
+ode.atol = 1e-10
+# Use variable-specific abs tols in ODE solve
+# Note that atol becomes a factor
+ode.use_typ_vals = 0
 # Select ARK/CV-ODE Jacobian eval: 0=FD 1=AJ
 ode.analytical_jacobian = 0
 #CVODE SPECIFICS

@@ -75,10 +75,11 @@ main (int   argc,
     int third_dim  = 1024;
     int ndt        = 1; 
     Real dt        = 1.e-5;
-#ifdef USE_ARKODE_PP 
+#ifdef USE_SUNDIALS_PP
     /* ARKODE parameters for now but should be for all solvers */
     Real rtol=1e-9;
     Real atol=1e-9;
+    int use_typ_vals = 0;
 #endif
 
     {
@@ -119,10 +120,11 @@ main (int   argc,
       ppode.query("ode_ncells",ode_ncells);
 #endif
 
-#ifdef USE_ARKODE_PP 
+#ifdef USE_SUNDIALS_PP
       /* Additional ARKODE queries */
       ppode.query("rtol",rtol);
       ppode.query("atol",atol);
+      ppode.query("use_typ_vals",use_typ_vals);
 #endif
 
     }
@@ -149,8 +151,6 @@ main (int   argc,
     amrex::Print() << std::endl;
 
     amrex::Print() << "Fuel: ";
-        amrex::Print() << fuel_name << ", Oxy: O2";
-    amrex::Print() << std::endl;
 
     /* take care of probin init to initialize problem */
     int probin_file_length = probin_file.length();
@@ -159,16 +159,19 @@ main (int   argc,
 	    probin_file_name[i] = probin_file[i];
     if (fuel_name == "H2") {
         fuel_idx  = H2_ID;
-	amrex::Print() << "FUEL IS H2 \n";
+        amrex::Print() << fuel_name << ", Oxy: O2";
+        amrex::Print() << std::endl;
 #ifdef CH4_ID
     } else if (fuel_name == "CH4") {
         fuel_idx  = CH4_ID;
-        amrex::Print() << "FUEL IS CH4 \n";
+        amrex::Print() << fuel_name << ", Oxy: O2";
+        amrex::Print() << std::endl;
 #endif
 #ifdef NC12H26_ID
     } else if (fuel_name == "NC12H26") {
         fuel_idx  = NC12H26_ID;
-        amrex::Print() << "FUEL IS NC12H26 \n";
+        amrex::Print() << fuel_name << ", Oxy: O2";
+        amrex::Print() << std::endl;
 #endif
     }
     oxy_idx   = O2_ID;
@@ -179,18 +182,33 @@ main (int   argc,
 
     /* Initialize D/CVODE reactor */
 #ifdef USE_SUNDIALS_PP
-#ifdef USE_CUDA_SUNDIALS_PP
+  #ifdef USE_CUDA_SUNDIALS_PP
     reactor_info(&ode_iE, &ode_ncells);
-#else
+  #else
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-#ifdef USE_ARKODE_PP
-    reactor_init(&ode_iE, &ode_ncells,rtol,atol);
-#else
+{
+    // Set ODE r/a tolerances
+    SetTolFactODE(rtol,atol);
+    // Set species-specific abs tolerances
+    if (use_typ_vals) {
+        amrex::Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
+        amrex::ParmParse pptv("ode");
+        int nb_typ_vals = pptv.countval("typ_vals");
+        if (nb_typ_vals != (NUM_SPECIES + 1)){
+            printf("%d %d\n", nb_typ_vals, (NUM_SPECIES + 1));
+            amrex::Abort("Not enough/too many typical values");
+        }
+        std::vector<double> typ_vals(nb_typ_vals);
+        for (int i = 0; i < nb_typ_vals; ++i) {
+                pptv.get("typ_vals", typ_vals[i],i);
+        }
+        SetTypValsODE(typ_vals);
+    }
     reactor_init(&ode_iE, &ode_ncells);
-#endif
-#endif
+}
+  #endif
 #else
 #ifdef _OPENMP
 #pragma omp parallel
@@ -463,7 +481,7 @@ main (int   argc,
 		                &dt_incr, &time);
 #endif
 		            dt_incr =  dt/ndt;
-			    printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
+			    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
 			}
 		        nc = 0;
 		        for (int l = 0; l < ode_ncells ; ++l){
