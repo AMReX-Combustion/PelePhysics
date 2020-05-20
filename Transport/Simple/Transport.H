@@ -13,7 +13,6 @@
 
 #include "mechanism.h"
 #include "chemistry_file.H"
-#include "IndexDefines.H"
 #include "TransportParams.H"
 
 void transport_init();
@@ -22,8 +21,13 @@ void transport_close();
 AMREX_GPU_DEVICE
 void get_transport_coeffs(
   amrex::Box const& bx,
-  amrex::Array4<const amrex::Real> const& q,
-  amrex::Array4<amrex::Real> const& D);
+  amrex::Array4<const amrex::Real> const& Y_in,
+  amrex::Array4<const amrex::Real> const& T_in,
+  amrex::Array4<const amrex::Real> const& Rho_in,
+  amrex::Array4<amrex::Real> const& D_out,
+  amrex::Array4<amrex::Real> const& mu_out,
+  amrex::Array4<amrex::Real> const& xi_out,
+  amrex::Array4<amrex::Real> const& lam_out);
 
 using namespace transport_params;
 
@@ -40,6 +44,7 @@ comp_pure_bulk(amrex::Real Tloc, amrex::Real* muloc, amrex::Real* xiloc)
   amrex::Real epskoverT, epskoverTstd;
   amrex::Real pi = 3.141592653589793238;
   amrex::Real pi3_2 = 5.56832799683171;
+  // Call CKRP ?
   amrex::Real Ru = 8.31446261815324e7;;
 
   CKCVMS(&Tloc, cvk);
@@ -103,6 +108,7 @@ transport(
   //  need to set Ru
 
   amrex::Real trace = 1.e-15;
+  // Call CKRP ?
   amrex::Real Patm = 1.01325e6;
   amrex::Real wbar, pscale;
   amrex::Real Xloc[NUM_SPECIES];
@@ -216,6 +222,7 @@ transport(
       Ddiag[i] = trans_wt[i] * term1 / term2 / wbar;
     }
 
+    // Call CKRP ?
     amrex::Real Ru = 8.31446261815324e7;;
     pscale = Patm * wbar / (Ru * Tloc * rholoc);
 

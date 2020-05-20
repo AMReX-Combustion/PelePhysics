@@ -11,7 +11,6 @@
 
 #include "mechanism.h"
 #include "chemistry_file.H"
-#include "IndexDefines.H"
 #include "TransportParams.H"
 
 void transport_init();
@@ -20,8 +19,13 @@ void transport_close();
 AMREX_GPU_DEVICE
 void get_transport_coeffs(
   amrex::Box const& bx,
-  amrex::Array4<const amrex::Real> const& q,
-  amrex::Array4<amrex::Real> const& D);
+  amrex::Array4<const amrex::Real> const& Y_in,
+  amrex::Array4<const amrex::Real> const& T_in,
+  amrex::Array4<const amrex::Real> const& Rho_in,
+  amrex::Array4<amrex::Real> const& D_out,
+  amrex::Array4<amrex::Real> const& mu_out,
+  amrex::Array4<amrex::Real> const& xi_out,
+  amrex::Array4<amrex::Real> const& lam_out);
 
 using namespace transport_params;
 
