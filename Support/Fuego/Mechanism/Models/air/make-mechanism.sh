@@ -1,5 +1,4 @@
-
-CHEMINP=chem.inp
+CHEMINP=mechanism.inp
 THERMINP=therm.dat
 FINALFILE=mechanism.cpp
 
