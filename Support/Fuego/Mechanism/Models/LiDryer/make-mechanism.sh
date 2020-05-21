@@ -1,6 +1,5 @@
-
-CHEMINP=drm19.dat
-THERMINP=thermo12.dat
+CHEMINP=mechanism.inp
+THERMINP=therm.dat
 FINALFILE=mechanism.cpp
 
 FMC=${PELE_PHYSICS_HOME}/Support/Fuego/Pythia/products/bin/fmc.py
