@@ -1,7 +1,6 @@
-
-CHEMINP=C3H8_sk_34_FC.inp
+CHEMINP=mechanism.inp
 THERMINP=therm.dat
-FINALFILE=propane_fc.cpp
+FINALFILE=mechanism.cpp
 
 FMC=${PELE_PHYSICS_HOME}/Support/Fuego/Pythia/products/bin/fmc.py
 HEADERDIR=${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/header
