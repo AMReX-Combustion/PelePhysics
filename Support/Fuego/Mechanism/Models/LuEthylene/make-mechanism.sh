@@ -1,7 +1,6 @@
-
-CHEMINP=chem.inp
+CHEMINP=mechanism.inp
 THERMINP=therm.dat
-FINALFILE=LuEthylene.cpp
+FINALFILE=mechanism.cpp
 
 FMC=${PELE_PHYSICS_HOME}/Support/Fuego/Pythia/products/bin/fmc.py
 HEADERDIR=${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/header
