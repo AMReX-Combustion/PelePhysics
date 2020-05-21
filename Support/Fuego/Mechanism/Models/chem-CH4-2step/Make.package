@@ -1,4 +1,9 @@
-CEXE_sources+=chem-CH4-2step.cpp
+CEXE_headers+=chemistry_file.H
+
+CEXE_sources+=mechanism.cpp
+
+LIBRARIES +=
+
+INCLUDE_LOCATIONS += $(CHEM_DIR)
 
 VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
-
