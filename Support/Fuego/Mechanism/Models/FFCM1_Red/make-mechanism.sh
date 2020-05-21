@@ -1,7 +1,6 @@
-
-CHEMINP=scheme-FFCM1_Red.dat
-THERMINP=thermdat.dat
-FINALFILE=FFCM1_Red.cpp
+CHEMINP=mechanism.inp
+THERMINP=therm.dat
+FINALFILE=mechanism.cpp
 
 FMC=${PELE_PHYSICS_HOME}/Support/Fuego/Pythia/products/bin/fmc.py
 HEADERDIR=${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/header
