@@ -5253,6 +5253,65 @@ void CKSYME(int * kname, int * plenkname )
 }
 
 
+/* Returns the vector of strings of species names */
+void CKSYMS_STR(amrex::Vector<std::string>& kname)
+{
+    kname.push_back("H2");
+    kname.push_back("H");
+    kname.push_back("O");
+    kname.push_back("O2");
+    kname.push_back("OH");
+    kname.push_back("H2O");
+    kname.push_back("HO2");
+    kname.push_back("H2O2");
+    kname.push_back("C");
+    kname.push_back("CH");
+    kname.push_back("CH2");
+    kname.push_back("CH2(S)");
+    kname.push_back("CH3");
+    kname.push_back("CH4");
+    kname.push_back("CO");
+    kname.push_back("CO2");
+    kname.push_back("HCO");
+    kname.push_back("CH2O");
+    kname.push_back("CH2OH");
+    kname.push_back("CH3O");
+    kname.push_back("CH3OH");
+    kname.push_back("C2H");
+    kname.push_back("C2H2");
+    kname.push_back("C2H3");
+    kname.push_back("C2H4");
+    kname.push_back("C2H5");
+    kname.push_back("C2H6");
+    kname.push_back("HCCO");
+    kname.push_back("CH2CO");
+    kname.push_back("HCCOH");
+    kname.push_back("N");
+    kname.push_back("NH");
+    kname.push_back("NH2");
+    kname.push_back("NH3");
+    kname.push_back("NNH");
+    kname.push_back("NO");
+    kname.push_back("NO2");
+    kname.push_back("N2O");
+    kname.push_back("HNO");
+    kname.push_back("CN");
+    kname.push_back("HCN");
+    kname.push_back("H2CN");
+    kname.push_back("HCNN");
+    kname.push_back("HCNO");
+    kname.push_back("HOCN");
+    kname.push_back("HNCO");
+    kname.push_back("NCO");
+    kname.push_back("N2");
+    kname.push_back("AR");
+    kname.push_back("C3H7");
+    kname.push_back("C3H8");
+    kname.push_back("CH2CHO");
+    kname.push_back("CH3CHO");
+}
+
+
 /* Returns the char strings of species names */
 void CKSYMS(int * kname, int * plenkname )
 {
@@ -5602,7 +5661,7 @@ void CKSYMS(int * kname, int * plenkname )
 /* Returns R, Rc, Patm */
 void CKRP(double *  ru, double *  ruc, double *  pa)
 {
-     *ru  = 8.31451e+07; 
+     *ru  = 8.31446261815324e+07; 
      *ruc = 1.98721558317399615845; 
      *pa  = 1.01325e+06; 
 }
@@ -5665,7 +5724,7 @@ void CKPX(double *  rho, double *  T, double *  x, double *  P)
     XW += x[50]*44.097210; /*C3H8 */
     XW += x[51]*43.045610; /*CH2CHO */
     XW += x[52]*44.053580; /*CH3CHO */
-    *P = *rho * 8.31451e+07 * (*T) / XW; /*P = rho*R*T/W */
+    *P = *rho * 8.31446e+07 * (*T) / XW; /*P = rho*R*T/W */
 
     return;
 }
@@ -5728,7 +5787,7 @@ AMREX_GPU_HOST_DEVICE void CKPY(double *  rho, double *  T, double *  y,  double
     YOW += y[50]*imw[50]; /*C3H8 */
     YOW += y[51]*imw[51]; /*CH2CHO */
     YOW += y[52]*imw[52]; /*CH3CHO */
-    *P = *rho * 8.31451e+07 * (*T) * YOW; /*P = rho*R*T/W */
+    *P = *rho * 8.31446e+07 * (*T) * YOW; /*P = rho*R*T/W */
 
     return;
 }
@@ -5750,7 +5809,7 @@ void VCKPY(int *  np, double *  rho, double *  T, double *  y,  double *  P)
     }
 
     for (int i=0; i<(*np); i++) {
-        P[i] = rho[i] * 8.31451e+07 * T[i] * YOW[i]; /*P = rho*R*T/W */
+        P[i] = rho[i] * 8.31446e+07 * T[i] * YOW[i]; /*P = rho*R*T/W */
     }
 
     return;
@@ -5822,7 +5881,7 @@ void CKPC(double *  rho, double *  T, double *  c,  double *  P)
     for (id = 0; id < 53; ++id) {
         sumC += c[id];
     }
-    *P = *rho * 8.31451e+07 * (*T) * sumC / W; /*P = rho*R*T/W */
+    *P = *rho * 8.31446e+07 * (*T) * sumC / W; /*P = rho*R*T/W */
 
     return;
 }
@@ -5885,7 +5944,7 @@ void CKRHOX(double *  P, double *  T, double *  x,  double *  rho)
     XW += x[50]*44.097210; /*C3H8 */
     XW += x[51]*43.045610; /*CH2CHO */
     XW += x[52]*44.053580; /*CH3CHO */
-    *rho = *P * XW / (8.31451e+07 * (*T)); /*rho = P*W/(R*T) */
+    *rho = *P * XW / (8.31446e+07 * (*T)); /*rho = P*W/(R*T) */
 
     return;
 }
@@ -5906,7 +5965,7 @@ AMREX_GPU_HOST_DEVICE void CKRHOY(double *  P, double *  T, double *  y,  double
         YOW += tmp[i];
     }
 
-    *rho = *P / (8.31451e+07 * (*T) * YOW);/*rho = P*W/(R*T) */
+    *rho = *P / (8.31446e+07 * (*T) * YOW);/*rho = P*W/(R*T) */
     return;
 }
 
@@ -5975,7 +6034,7 @@ void CKRHOC(double *  P, double *  T, double *  c,  double *  rho)
     for (id = 0; id < 53; ++id) {
         sumC += c[id];
     }
-    *rho = *P * W / (sumC * (*T) * 8.31451e+07); /*rho = PW/(R*T) */
+    *rho = *P * W / (sumC * (*T) * 8.31446e+07); /*rho = PW/(R*T) */
 
     return;
 }
@@ -6228,7 +6287,7 @@ void CKYTCP(double *  P, double *  T, double *  y,  double *  c)
     }
 
     /*PW/RT (see Eq. 7) */
-    PWORT = (*P)/(YOW * 8.31451e+07 * (*T)); 
+    PWORT = (*P)/(YOW * 8.31446e+07 * (*T)); 
     /*Now compute conversion */
 
     for (int i = 0; i < 53; i++)
@@ -6371,7 +6430,7 @@ AMREX_GPU_HOST_DEVICE void CKXTY(double *  x,  double *  y)
 void CKXTCP(double *  P, double *  T, double *  x,  double *  c)
 {
     int id; /*loop counter */
-    double PORT = (*P)/(8.31451e+07 * (*T)); /*P/RT */
+    double PORT = (*P)/(8.31446e+07 * (*T)); /*P/RT */
 
     /*Compute conversion, see Eq 10 */
     for (id = 0; id < 53; ++id) {
@@ -6633,7 +6692,7 @@ void CKCVML(double *  T,  double *  cvml)
 
     /*convert to chemkin units */
     for (id = 0; id < 53; ++id) {
-        cvml[id] *= 8.31451e+07;
+        cvml[id] *= 8.31446e+07;
     }
 }
 
@@ -6649,7 +6708,7 @@ void CKCPML(double *  T,  double *  cpml)
 
     /*convert to chemkin units */
     for (id = 0; id < 53; ++id) {
-        cpml[id] *= 8.31451e+07;
+        cpml[id] *= 8.31446e+07;
     }
 }
 
@@ -6661,7 +6720,7 @@ void CKUML(double *  T,  double *  uml)
     int id; /*loop counter */
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     speciesInternalEnergy(uml, tc);
 
     /*convert to chemkin units */
@@ -6678,7 +6737,7 @@ void CKHML(double *  T,  double *  hml)
     int id; /*loop counter */
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     speciesEnthalpy(hml, tc);
 
     /*convert to chemkin units */
@@ -6695,7 +6754,7 @@ void CKGML(double *  T,  double *  gml)
     int id; /*loop counter */
     double tT = *T; /*temporary temperature */
     double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     gibbs(gml, tc);
 
     /*convert to chemkin units */
@@ -6712,7 +6771,7 @@ void CKAML(double *  T,  double *  aml)
     int id; /*loop counter */
     double tT = *T; /*temporary temperature */
     double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     helmholtz(aml, tc);
 
     /*convert to chemkin units */
@@ -6732,7 +6791,7 @@ void CKSML(double *  T,  double *  sml)
 
     /*convert to chemkin units */
     for (id = 0; id < 53; ++id) {
-        sml[id] *= 8.31451e+07;
+        sml[id] *= 8.31446e+07;
     }
 }
 
@@ -6745,59 +6804,59 @@ AMREX_GPU_HOST_DEVICE void CKCVMS(double *  T,  double *  cvms)
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cv_R(cvms, tc);
     /*multiply by R/molecularweight */
-    cvms[0] *= 4.124383662212169e+07; /*H2 */
-    cvms[1] *= 8.248767324424338e+07; /*H */
-    cvms[2] *= 5.196763628636074e+06; /*O */
-    cvms[3] *= 2.598381814318037e+06; /*O2 */
-    cvms[4] *= 4.888768810227566e+06; /*OH */
-    cvms[5] *= 4.615239012974499e+06; /*H2O */
-    cvms[6] *= 2.519031701678171e+06; /*HO2 */
-    cvms[7] *= 2.444384405113783e+06; /*H2O2 */
-    cvms[8] *= 6.922326338443862e+06; /*C */
-    cvms[9] *= 6.386384025955671e+06; /*CH */
-    cvms[10] *= 5.927466067445207e+06; /*CH2 */
-    cvms[11] *= 5.927466067445207e+06; /*CH2(S) */
-    cvms[12] *= 5.530081023953346e+06; /*CH3 */
-    cvms[13] *= 5.182630712527496e+06; /*CH4 */
-    cvms[14] *= 2.968349425484326e+06; /*CO */
-    cvms[15] *= 1.889234139098090e+06; /*CO2 */
-    cvms[16] *= 2.865242610581105e+06; /*HCO */
-    cvms[17] *= 2.769058254894261e+06; /*CH2O */
-    cvms[18] *= 2.679121853578248e+06; /*CH2OH */
-    cvms[19] *= 2.679121853578248e+06; /*CH3O */
-    cvms[20] *= 2.594843774332970e+06; /*CH3OH */
-    cvms[21] *= 3.321781986370902e+06; /*C2H */
-    cvms[22] *= 3.193192012977835e+06; /*C2H2 */
-    cvms[23] *= 3.074186734481467e+06; /*C2H3 */
-    cvms[24] *= 2.963733033722604e+06; /*C2H4 */
-    cvms[25] *= 2.860941121011349e+06; /*C2H5 */
-    cvms[26] *= 2.765040511976673e+06; /*C2H6 */
-    cvms[27] *= 2.026462801187531e+06; /*HCCO */
-    cvms[28] *= 1.977872687429646e+06; /*CH2CO */
-    cvms[29] *= 1.977872687429646e+06; /*HCCOH */
-    cvms[30] *= 5.936094868884177e+06; /*N */
-    cvms[31] *= 5.537590902763763e+06; /*NH */
-    cvms[32] *= 5.189225995216768e+06; /*NH2 */
-    cvms[33] *= 4.882097587813943e+06; /*NH3 */
-    cvms[34] *= 2.864961233739138e+06; /*NNH */
-    cvms[35] *= 2.770939908885194e+06; /*NO */
-    cvms[36] *= 1.807286085359359e+06; /*NO2 */
-    cvms[37] *= 1.889111803838883e+06; /*N2O */
-    cvms[38] *= 2.680883224936295e+06; /*HNO */
-    cvms[39] *= 3.195694494356758e+06; /*CN */
-    cvms[40] *= 3.076506096762281e+06; /*HCN */
-    cvms[41] *= 2.965888665071686e+06; /*H2CN */
-    cvms[42] *= 2.026322048950442e+06; /*HCNN */
-    cvms[43] *= 1.932473558531484e+06; /*HCNO */
-    cvms[44] *= 1.932473558531484e+06; /*HOCN */
-    cvms[45] *= 1.932473558531484e+06; /*HNCO */
-    cvms[46] *= 1.978832503317090e+06; /*NCO */
-    cvms[47] *= 2.968047434442088e+06; /*N2 */
-    cvms[48] *= 2.081333233203164e+06; /*AR */
-    cvms[49] *= 1.929602378691293e+06; /*C3H7 */
-    cvms[50] *= 1.885495703696447e+06; /*C3H8 */
-    cvms[51] *= 1.931558177477332e+06; /*CH2CHO */
-    cvms[52] *= 1.887363070152301e+06; /*CH3CHO */
+    cvms[0] *= 4.124360158612479e+07; /*H2 */
+    cvms[1] *= 8.248720317224957e+07; /*H */
+    cvms[2] *= 5.196734013871295e+06; /*O */
+    cvms[3] *= 2.598367006935648e+06; /*O2 */
+    cvms[4] *= 4.888740950630956e+06; /*OH */
+    cvms[5] *= 4.615212712140454e+06; /*H2O */
+    cvms[6] *= 2.519017346487778e+06; /*HO2 */
+    cvms[7] *= 2.444370475315478e+06; /*H2O2 */
+    cvms[8] *= 6.922286890225532e+06; /*C */
+    cvms[9] *= 6.386347631908485e+06; /*CH */
+    cvms[10] *= 5.927432288630956e+06; /*CH2 */
+    cvms[11] *= 5.927432288630956e+06; /*CH2(S) */
+    cvms[12] *= 5.530049509714786e+06; /*CH3 */
+    cvms[13] *= 5.182601178301878e+06; /*CH4 */
+    cvms[14] *= 2.968332509769797e+06; /*CO */
+    cvms[15] *= 1.889223372931176e+06; /*CO2 */
+    cvms[16] *= 2.865226282440744e+06; /*HCO */
+    cvms[17] *= 2.769042474879095e+06; /*CH2O */
+    cvms[18] *= 2.679106586083096e+06; /*CH2OH */
+    cvms[19] *= 2.679106586083096e+06; /*CH3O */
+    cvms[20] *= 2.594828987112788e+06; /*CH3OH */
+    cvms[21] *= 3.321763056552422e+06; /*C2H */
+    cvms[22] *= 3.193173815954242e+06; /*C2H2 */
+    cvms[23] *= 3.074169215632519e+06; /*C2H3 */
+    cvms[24] *= 2.963716144315478e+06; /*C2H4 */
+    cvms[25] *= 2.860924817383862e+06; /*C2H5 */
+    cvms[26] *= 2.765024754857393e+06; /*C2H6 */
+    cvms[27] *= 2.026451252996488e+06; /*HCCO */
+    cvms[28] *= 1.977861416138784e+06; /*CH2CO */
+    cvms[29] *= 1.977861416138784e+06; /*HCCOH */
+    cvms[30] *= 5.936061040897028e+06; /*N */
+    cvms[31] *= 5.537559345728704e+06; /*NH */
+    cvms[32] *= 5.189196423406655e+06; /*NH2 */
+    cvms[33] *= 4.882069766234586e+06; /*NH3 */
+    cvms[34] *= 2.864944907202258e+06; /*NNH */
+    cvms[35] *= 2.770924118147057e+06; /*NO */
+    cvms[36] *= 1.807275786189312e+06; /*NO2 */
+    cvms[37] *= 1.889101038369120e+06; /*N2O */
+    cvms[38] *= 2.680867947403627e+06; /*HNO */
+    cvms[39] *= 3.195676283072290e+06; /*CN */
+    cvms[40] *= 3.076488564695998e+06; /*HCN */
+    cvms[41] *= 2.965871763380277e+06; /*H2CN */
+    cvms[42] *= 2.026310501561503e+06; /*HCNN */
+    cvms[43] *= 1.932462545956357e+06; /*HCNO */
+    cvms[44] *= 1.932462545956357e+06; /*HOCN */
+    cvms[45] *= 1.932462545956357e+06; /*HNCO */
+    cvms[46] *= 1.978821226556531e+06; /*NCO */
+    cvms[47] *= 2.968030520448514e+06; /*N2 */
+    cvms[48] *= 2.081321372322329e+06; /*AR */
+    cvms[49] *= 1.929591382478141e+06; /*C3H7 */
+    cvms[50] *= 1.885484958833731e+06; /*C3H8 */
+    cvms[51] *= 1.931547170118681e+06; /*CH2CHO */
+    cvms[52] *= 1.887352314648035e+06; /*CH3CHO */
 }
 
 
@@ -6809,59 +6868,59 @@ AMREX_GPU_HOST_DEVICE void CKCPMS(double *  T,  double *  cpms)
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cp_R(cpms, tc);
     /*multiply by R/molecularweight */
-    cpms[0] *= 4.124383662212169e+07; /*H2 */
-    cpms[1] *= 8.248767324424338e+07; /*H */
-    cpms[2] *= 5.196763628636074e+06; /*O */
-    cpms[3] *= 2.598381814318037e+06; /*O2 */
-    cpms[4] *= 4.888768810227566e+06; /*OH */
-    cpms[5] *= 4.615239012974499e+06; /*H2O */
-    cpms[6] *= 2.519031701678171e+06; /*HO2 */
-    cpms[7] *= 2.444384405113783e+06; /*H2O2 */
-    cpms[8] *= 6.922326338443862e+06; /*C */
-    cpms[9] *= 6.386384025955671e+06; /*CH */
-    cpms[10] *= 5.927466067445207e+06; /*CH2 */
-    cpms[11] *= 5.927466067445207e+06; /*CH2(S) */
-    cpms[12] *= 5.530081023953346e+06; /*CH3 */
-    cpms[13] *= 5.182630712527496e+06; /*CH4 */
-    cpms[14] *= 2.968349425484326e+06; /*CO */
-    cpms[15] *= 1.889234139098090e+06; /*CO2 */
-    cpms[16] *= 2.865242610581105e+06; /*HCO */
-    cpms[17] *= 2.769058254894261e+06; /*CH2O */
-    cpms[18] *= 2.679121853578248e+06; /*CH2OH */
-    cpms[19] *= 2.679121853578248e+06; /*CH3O */
-    cpms[20] *= 2.594843774332970e+06; /*CH3OH */
-    cpms[21] *= 3.321781986370902e+06; /*C2H */
-    cpms[22] *= 3.193192012977835e+06; /*C2H2 */
-    cpms[23] *= 3.074186734481467e+06; /*C2H3 */
-    cpms[24] *= 2.963733033722604e+06; /*C2H4 */
-    cpms[25] *= 2.860941121011349e+06; /*C2H5 */
-    cpms[26] *= 2.765040511976673e+06; /*C2H6 */
-    cpms[27] *= 2.026462801187531e+06; /*HCCO */
-    cpms[28] *= 1.977872687429646e+06; /*CH2CO */
-    cpms[29] *= 1.977872687429646e+06; /*HCCOH */
-    cpms[30] *= 5.936094868884177e+06; /*N */
-    cpms[31] *= 5.537590902763763e+06; /*NH */
-    cpms[32] *= 5.189225995216768e+06; /*NH2 */
-    cpms[33] *= 4.882097587813943e+06; /*NH3 */
-    cpms[34] *= 2.864961233739138e+06; /*NNH */
-    cpms[35] *= 2.770939908885194e+06; /*NO */
-    cpms[36] *= 1.807286085359359e+06; /*NO2 */
-    cpms[37] *= 1.889111803838883e+06; /*N2O */
-    cpms[38] *= 2.680883224936295e+06; /*HNO */
-    cpms[39] *= 3.195694494356758e+06; /*CN */
-    cpms[40] *= 3.076506096762281e+06; /*HCN */
-    cpms[41] *= 2.965888665071686e+06; /*H2CN */
-    cpms[42] *= 2.026322048950442e+06; /*HCNN */
-    cpms[43] *= 1.932473558531484e+06; /*HCNO */
-    cpms[44] *= 1.932473558531484e+06; /*HOCN */
-    cpms[45] *= 1.932473558531484e+06; /*HNCO */
-    cpms[46] *= 1.978832503317090e+06; /*NCO */
-    cpms[47] *= 2.968047434442088e+06; /*N2 */
-    cpms[48] *= 2.081333233203164e+06; /*AR */
-    cpms[49] *= 1.929602378691293e+06; /*C3H7 */
-    cpms[50] *= 1.885495703696447e+06; /*C3H8 */
-    cpms[51] *= 1.931558177477332e+06; /*CH2CHO */
-    cpms[52] *= 1.887363070152301e+06; /*CH3CHO */
+    cpms[0] *= 4.124360158612479e+07; /*H2 */
+    cpms[1] *= 8.248720317224957e+07; /*H */
+    cpms[2] *= 5.196734013871295e+06; /*O */
+    cpms[3] *= 2.598367006935648e+06; /*O2 */
+    cpms[4] *= 4.888740950630956e+06; /*OH */
+    cpms[5] *= 4.615212712140454e+06; /*H2O */
+    cpms[6] *= 2.519017346487778e+06; /*HO2 */
+    cpms[7] *= 2.444370475315478e+06; /*H2O2 */
+    cpms[8] *= 6.922286890225532e+06; /*C */
+    cpms[9] *= 6.386347631908485e+06; /*CH */
+    cpms[10] *= 5.927432288630956e+06; /*CH2 */
+    cpms[11] *= 5.927432288630956e+06; /*CH2(S) */
+    cpms[12] *= 5.530049509714786e+06; /*CH3 */
+    cpms[13] *= 5.182601178301878e+06; /*CH4 */
+    cpms[14] *= 2.968332509769797e+06; /*CO */
+    cpms[15] *= 1.889223372931176e+06; /*CO2 */
+    cpms[16] *= 2.865226282440744e+06; /*HCO */
+    cpms[17] *= 2.769042474879095e+06; /*CH2O */
+    cpms[18] *= 2.679106586083096e+06; /*CH2OH */
+    cpms[19] *= 2.679106586083096e+06; /*CH3O */
+    cpms[20] *= 2.594828987112788e+06; /*CH3OH */
+    cpms[21] *= 3.321763056552422e+06; /*C2H */
+    cpms[22] *= 3.193173815954242e+06; /*C2H2 */
+    cpms[23] *= 3.074169215632519e+06; /*C2H3 */
+    cpms[24] *= 2.963716144315478e+06; /*C2H4 */
+    cpms[25] *= 2.860924817383862e+06; /*C2H5 */
+    cpms[26] *= 2.765024754857393e+06; /*C2H6 */
+    cpms[27] *= 2.026451252996488e+06; /*HCCO */
+    cpms[28] *= 1.977861416138784e+06; /*CH2CO */
+    cpms[29] *= 1.977861416138784e+06; /*HCCOH */
+    cpms[30] *= 5.936061040897028e+06; /*N */
+    cpms[31] *= 5.537559345728704e+06; /*NH */
+    cpms[32] *= 5.189196423406655e+06; /*NH2 */
+    cpms[33] *= 4.882069766234586e+06; /*NH3 */
+    cpms[34] *= 2.864944907202258e+06; /*NNH */
+    cpms[35] *= 2.770924118147057e+06; /*NO */
+    cpms[36] *= 1.807275786189312e+06; /*NO2 */
+    cpms[37] *= 1.889101038369120e+06; /*N2O */
+    cpms[38] *= 2.680867947403627e+06; /*HNO */
+    cpms[39] *= 3.195676283072290e+06; /*CN */
+    cpms[40] *= 3.076488564695998e+06; /*HCN */
+    cpms[41] *= 2.965871763380277e+06; /*H2CN */
+    cpms[42] *= 2.026310501561503e+06; /*HCNN */
+    cpms[43] *= 1.932462545956357e+06; /*HCNO */
+    cpms[44] *= 1.932462545956357e+06; /*HOCN */
+    cpms[45] *= 1.932462545956357e+06; /*HNCO */
+    cpms[46] *= 1.978821226556531e+06; /*NCO */
+    cpms[47] *= 2.968030520448514e+06; /*N2 */
+    cpms[48] *= 2.081321372322329e+06; /*AR */
+    cpms[49] *= 1.929591382478141e+06; /*C3H7 */
+    cpms[50] *= 1.885484958833731e+06; /*C3H8 */
+    cpms[51] *= 1.931547170118681e+06; /*CH2CHO */
+    cpms[52] *= 1.887352314648035e+06; /*CH3CHO */
 }
 
 
@@ -6870,7 +6929,7 @@ AMREX_GPU_HOST_DEVICE void CKUMS(double *  T,  double *  ums)
 {
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     speciesInternalEnergy(ums, tc);
     for (int i = 0; i < 53; i++)
     {
@@ -6884,7 +6943,7 @@ AMREX_GPU_HOST_DEVICE void CKHMS(double *  T,  double *  hms)
 {
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     speciesEnthalpy(hms, tc);
     for (int i = 0; i < 53; i++)
     {
@@ -6965,7 +7024,7 @@ void VCKHMS(int *  np, double *  T,  double *  hms)
 
     for (int n=0; n<53; n++) {
         for (int i=0; i<(*np); i++) {
-            hms[n*(*np)+i] *= 8.31451e+07 * T[i] * imw[n];
+            hms[n*(*np)+i] *= 8.31446e+07 * T[i] * imw[n];
         }
     }
 }
@@ -6982,7 +7041,7 @@ void CKGMS(double *  T,  double *  gms)
 {
     double tT = *T; /*temporary temperature */
     double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     gibbs(gms, tc);
     for (int i = 0; i < 53; i++)
     {
@@ -6996,7 +7055,7 @@ void CKAMS(double *  T,  double *  ams)
 {
     double tT = *T; /*temporary temperature */
     double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     helmholtz(ams, tc);
     for (int i = 0; i < 53; i++)
     {
@@ -7012,59 +7071,59 @@ void CKSMS(double *  T,  double *  sms)
     double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     speciesEntropy(sms, tc);
     /*multiply by R/molecularweight */
-    sms[0] *= 4.124383662212169e+07; /*H2 */
-    sms[1] *= 8.248767324424338e+07; /*H */
-    sms[2] *= 5.196763628636074e+06; /*O */
-    sms[3] *= 2.598381814318037e+06; /*O2 */
-    sms[4] *= 4.888768810227566e+06; /*OH */
-    sms[5] *= 4.615239012974499e+06; /*H2O */
-    sms[6] *= 2.519031701678171e+06; /*HO2 */
-    sms[7] *= 2.444384405113783e+06; /*H2O2 */
-    sms[8] *= 6.922326338443862e+06; /*C */
-    sms[9] *= 6.386384025955671e+06; /*CH */
-    sms[10] *= 5.927466067445207e+06; /*CH2 */
-    sms[11] *= 5.927466067445207e+06; /*CH2(S) */
-    sms[12] *= 5.530081023953346e+06; /*CH3 */
-    sms[13] *= 5.182630712527496e+06; /*CH4 */
-    sms[14] *= 2.968349425484326e+06; /*CO */
-    sms[15] *= 1.889234139098090e+06; /*CO2 */
-    sms[16] *= 2.865242610581105e+06; /*HCO */
-    sms[17] *= 2.769058254894261e+06; /*CH2O */
-    sms[18] *= 2.679121853578248e+06; /*CH2OH */
-    sms[19] *= 2.679121853578248e+06; /*CH3O */
-    sms[20] *= 2.594843774332970e+06; /*CH3OH */
-    sms[21] *= 3.321781986370902e+06; /*C2H */
-    sms[22] *= 3.193192012977835e+06; /*C2H2 */
-    sms[23] *= 3.074186734481467e+06; /*C2H3 */
-    sms[24] *= 2.963733033722604e+06; /*C2H4 */
-    sms[25] *= 2.860941121011349e+06; /*C2H5 */
-    sms[26] *= 2.765040511976673e+06; /*C2H6 */
-    sms[27] *= 2.026462801187531e+06; /*HCCO */
-    sms[28] *= 1.977872687429646e+06; /*CH2CO */
-    sms[29] *= 1.977872687429646e+06; /*HCCOH */
-    sms[30] *= 5.936094868884177e+06; /*N */
-    sms[31] *= 5.537590902763763e+06; /*NH */
-    sms[32] *= 5.189225995216768e+06; /*NH2 */
-    sms[33] *= 4.882097587813943e+06; /*NH3 */
-    sms[34] *= 2.864961233739138e+06; /*NNH */
-    sms[35] *= 2.770939908885194e+06; /*NO */
-    sms[36] *= 1.807286085359359e+06; /*NO2 */
-    sms[37] *= 1.889111803838883e+06; /*N2O */
-    sms[38] *= 2.680883224936295e+06; /*HNO */
-    sms[39] *= 3.195694494356758e+06; /*CN */
-    sms[40] *= 3.076506096762281e+06; /*HCN */
-    sms[41] *= 2.965888665071686e+06; /*H2CN */
-    sms[42] *= 2.026322048950442e+06; /*HCNN */
-    sms[43] *= 1.932473558531484e+06; /*HCNO */
-    sms[44] *= 1.932473558531484e+06; /*HOCN */
-    sms[45] *= 1.932473558531484e+06; /*HNCO */
-    sms[46] *= 1.978832503317090e+06; /*NCO */
-    sms[47] *= 2.968047434442088e+06; /*N2 */
-    sms[48] *= 2.081333233203164e+06; /*AR */
-    sms[49] *= 1.929602378691293e+06; /*C3H7 */
-    sms[50] *= 1.885495703696447e+06; /*C3H8 */
-    sms[51] *= 1.931558177477332e+06; /*CH2CHO */
-    sms[52] *= 1.887363070152301e+06; /*CH3CHO */
+    sms[0] *= 4.124360158612479e+07; /*H2 */
+    sms[1] *= 8.248720317224957e+07; /*H */
+    sms[2] *= 5.196734013871295e+06; /*O */
+    sms[3] *= 2.598367006935648e+06; /*O2 */
+    sms[4] *= 4.888740950630956e+06; /*OH */
+    sms[5] *= 4.615212712140454e+06; /*H2O */
+    sms[6] *= 2.519017346487778e+06; /*HO2 */
+    sms[7] *= 2.444370475315478e+06; /*H2O2 */
+    sms[8] *= 6.922286890225532e+06; /*C */
+    sms[9] *= 6.386347631908485e+06; /*CH */
+    sms[10] *= 5.927432288630956e+06; /*CH2 */
+    sms[11] *= 5.927432288630956e+06; /*CH2(S) */
+    sms[12] *= 5.530049509714786e+06; /*CH3 */
+    sms[13] *= 5.182601178301878e+06; /*CH4 */
+    sms[14] *= 2.968332509769797e+06; /*CO */
+    sms[15] *= 1.889223372931176e+06; /*CO2 */
+    sms[16] *= 2.865226282440744e+06; /*HCO */
+    sms[17] *= 2.769042474879095e+06; /*CH2O */
+    sms[18] *= 2.679106586083096e+06; /*CH2OH */
+    sms[19] *= 2.679106586083096e+06; /*CH3O */
+    sms[20] *= 2.594828987112788e+06; /*CH3OH */
+    sms[21] *= 3.321763056552422e+06; /*C2H */
+    sms[22] *= 3.193173815954242e+06; /*C2H2 */
+    sms[23] *= 3.074169215632519e+06; /*C2H3 */
+    sms[24] *= 2.963716144315478e+06; /*C2H4 */
+    sms[25] *= 2.860924817383862e+06; /*C2H5 */
+    sms[26] *= 2.765024754857393e+06; /*C2H6 */
+    sms[27] *= 2.026451252996488e+06; /*HCCO */
+    sms[28] *= 1.977861416138784e+06; /*CH2CO */
+    sms[29] *= 1.977861416138784e+06; /*HCCOH */
+    sms[30] *= 5.936061040897028e+06; /*N */
+    sms[31] *= 5.537559345728704e+06; /*NH */
+    sms[32] *= 5.189196423406655e+06; /*NH2 */
+    sms[33] *= 4.882069766234586e+06; /*NH3 */
+    sms[34] *= 2.864944907202258e+06; /*NNH */
+    sms[35] *= 2.770924118147057e+06; /*NO */
+    sms[36] *= 1.807275786189312e+06; /*NO2 */
+    sms[37] *= 1.889101038369120e+06; /*N2O */
+    sms[38] *= 2.680867947403627e+06; /*HNO */
+    sms[39] *= 3.195676283072290e+06; /*CN */
+    sms[40] *= 3.076488564695998e+06; /*HCN */
+    sms[41] *= 2.965871763380277e+06; /*H2CN */
+    sms[42] *= 2.026310501561503e+06; /*HCNN */
+    sms[43] *= 1.932462545956357e+06; /*HCNO */
+    sms[44] *= 1.932462545956357e+06; /*HOCN */
+    sms[45] *= 1.932462545956357e+06; /*HNCO */
+    sms[46] *= 1.978821226556531e+06; /*NCO */
+    sms[47] *= 2.968030520448514e+06; /*N2 */
+    sms[48] *= 2.081321372322329e+06; /*AR */
+    sms[49] *= 1.929591382478141e+06; /*C3H7 */
+    sms[50] *= 1.885484958833731e+06; /*C3H8 */
+    sms[51] *= 1.931547170118681e+06; /*CH2CHO */
+    sms[52] *= 1.887352314648035e+06; /*CH3CHO */
 }
 
 
@@ -7083,7 +7142,7 @@ void CKCPBL(double *  T, double *  x,  double *  cpbl)
         result += x[id]*cpor[id];
     }
 
-    *cpbl = result * 8.31451e+07;
+    *cpbl = result * 8.31446e+07;
 }
 
 
@@ -7105,7 +7164,7 @@ AMREX_GPU_HOST_DEVICE void CKCPBS(double *  T, double *  y,  double *  cpbs)
         result += tresult[i];
     }
 
-    *cpbs = result * 8.31451e+07;
+    *cpbs = result * 8.31446e+07;
 }
 
 
@@ -7124,7 +7183,7 @@ void CKCVBL(double *  T, double *  x,  double *  cvbl)
         result += x[id]*cvor[id];
     }
 
-    *cvbl = result * 8.31451e+07;
+    *cvbl = result * 8.31446e+07;
 }
 
 
@@ -7191,7 +7250,7 @@ AMREX_GPU_HOST_DEVICE void CKCVBS(double *  T, double *  y,  double *  cvbs)
     result += cvor[51]*y[51]*imw[51]; /*CH2CHO */
     result += cvor[52]*y[52]*imw[52]; /*CH3CHO */
 
-    *cvbs = result * 8.31451e+07;
+    *cvbs = result * 8.31446e+07;
 }
 
 
@@ -7203,7 +7262,7 @@ void CKHBML(double *  T, double *  x,  double *  hbml)
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     double hml[53]; /* temporary storage */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     speciesEnthalpy(hml, tc);
 
     /*perform dot product */
@@ -7222,7 +7281,7 @@ AMREX_GPU_HOST_DEVICE void CKHBMS(double *  T, double *  y,  double *  hbms)
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     double hml[53], tmp[53]; /* temporary storage */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     speciesEnthalpy(hml, tc);
     int id;
     for (id = 0; id < 53; ++id) {
@@ -7244,7 +7303,7 @@ void CKUBML(double *  T, double *  x,  double *  ubml)
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     double uml[53]; /* temporary energy array */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     speciesInternalEnergy(uml, tc);
 
     /*perform dot product */
@@ -7263,7 +7322,7 @@ AMREX_GPU_HOST_DEVICE void CKUBMS(double *  T, double *  y,  double *  ubms)
     double tT = *T; /*temporary temperature */
     double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     double ums[53]; /* temporary energy array */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     speciesInternalEnergy(ums, tc);
     /*perform dot product + scaling by wt */
     result += y[0]*ums[0]*imw[0]; /*H2 */
@@ -7341,7 +7400,7 @@ void CKSBML(double *  P, double *  T, double *  x,  double *  sbml)
         result += x[id]*(sor[id]-log((x[id]+1e-100))-logPratio);
     }
 
-    *sbml = result * 8.31451e+07;
+    *sbml = result * 8.31446e+07;
 }
 
 
@@ -7520,7 +7579,7 @@ void CKSBMS(double *  P, double *  T, double *  y,  double *  sbms)
     result += x[51]*(sor[51]-log((x[51]+1e-100))-logPratio);
     result += x[52]*(sor[52]-log((x[52]+1e-100))-logPratio);
     /*Scale by R/W */
-    *sbms = result * 8.31451e+07 * YOW;
+    *sbms = result * 8.31446e+07 * YOW;
 }
 
 
@@ -7533,7 +7592,7 @@ void CKGBML(double *  P, double *  T, double *  x,  double *  gbml)
     double logPratio = log ( *P / 1013250.0 ); 
     double tT = *T; /*temporary temperature */
     double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     double gort[53]; /* temporary storage */
     /*Compute g/RT */
     gibbs(gort, tc);
@@ -7555,7 +7614,7 @@ void CKGBMS(double *  P, double *  T, double *  y,  double *  gbms)
     double logPratio = log ( *P / 1013250.0 ); 
     double tT = *T; /*temporary temperature */
     double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     double gort[53]; /* temporary storage */
     double x[53]; /* need a ytx conversion */
     double YOW = 0; /*To hold 1/molecularweight */
@@ -7736,7 +7795,7 @@ void CKABML(double *  P, double *  T, double *  x,  double *  abml)
     double logPratio = log ( *P / 1013250.0 ); 
     double tT = *T; /*temporary temperature */
     double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     double aort[53]; /* temporary storage */
     /*Compute g/RT */
     helmholtz(aort, tc);
@@ -7758,7 +7817,7 @@ void CKABMS(double *  P, double *  T, double *  y,  double *  abms)
     double logPratio = log ( *P / 1013250.0 ); 
     double tT = *T; /*temporary temperature */
     double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    double RT = 8.31451e+07*tT; /*R*T */
+    double RT = 8.31446e+07*tT; /*R*T */
     double aort[53]; /* temporary storage */
     double x[53]; /* need a ytx conversion */
     double YOW = 0; /*To hold 1/molecularweight */
@@ -8014,7 +8073,7 @@ void CKWYP(double *  P, double *  T, double *  y,  double *  wdot)
     YOW += y[51]*imw[51]; /*CH2CHO */
     YOW += y[52]*imw[52]; /*CH3CHO */
     /*PW/RT (see Eq. 7) */
-    PWORT = (*P)/(YOW * 8.31451e+07 * (*T)); 
+    PWORT = (*P)/(YOW * 8.31446e+07 * (*T)); 
     /*multiply by 1e6 so c goes to SI */
     PWORT *= 1e6; 
     /*Now compute conversion (and go to SI) */
@@ -8088,7 +8147,7 @@ void CKWXP(double *  P, double *  T, double *  x,  double *  wdot)
 {
     int id; /*loop counter */
     double c[53]; /*temporary storage */
-    double PORT = 1e6 * (*P)/(8.31451e+07 * (*T)); /*1e6 * P/RT so c goes to SI units */
+    double PORT = 1e6 * (*P)/(8.31446e+07 * (*T)); /*1e6 * P/RT so c goes to SI units */
 
     /*Compute conversion, see Eq 10 */
     for (id = 0; id < 53; ++id) {
@@ -8312,7 +8371,7 @@ void CKKFKR(double *  P, double *  T, double *  x, double *  q_f, double *  q_r)
 {
     int id; /*loop counter */
     double c[53]; /*temporary storage */
-    double PORT = 1e6 * (*P)/(8.31451e+07 * (*T)); /*1e6 * P/RT so c goes to SI units */
+    double PORT = 1e6 * (*P)/(8.31446e+07 * (*T)); /*1e6 * P/RT so c goes to SI units */
 
     /*Compute conversion, see Eq 10 */
     for (id = 0; id < 53; ++id) {
@@ -8393,7 +8452,7 @@ void CKQYP(double *  P, double *  T, double *  y, double *  qdot)
     YOW += y[51]*imw[51]; /*CH2CHO */
     YOW += y[52]*imw[52]; /*CH3CHO */
     /*PW/RT (see Eq. 7) */
-    PWORT = (*P)/(YOW * 8.31451e+07 * (*T)); 
+    PWORT = (*P)/(YOW * 8.31446e+07 * (*T)); 
     /*multiply by 1e6 so c goes to SI */
     PWORT *= 1e6; 
     /*Now compute conversion (and go to SI) */
@@ -8467,7 +8526,7 @@ void CKQXP(double *  P, double *  T, double *  x, double *  qdot)
 {
     int id; /*loop counter */
     double c[53]; /*temporary storage */
-    double PORT = 1e6 * (*P)/(8.31451e+07 * (*T)); /*1e6 * P/RT so c goes to SI units */
+    double PORT = 1e6 * (*P)/(8.31446e+07 * (*T)); /*1e6 * P/RT so c goes to SI units */
 
     /*Compute conversion, see Eq 10 */
     for (id = 0; id < 53; ++id) {
@@ -20653,7 +20712,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     gibbs(g_RT, tc);
 
     /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    double refC = 101325 / 8.31451 * invT;
+    double refC = 101325 / 8.31446 * invT;
     double refCinv = 1 / refC;
 
     /* Evaluate the kfs */
@@ -25268,7 +25327,7 @@ void comp_Kc(double *  tc, double invT, double *  Kc)
     };
 
     /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    double refC = 101325 / 8.31451 * invT;
+    double refC = 101325 / 8.31446 * invT;
     double refCinv = 1 / refC;
 
     Kc[0] *= refCinv;
@@ -32865,7 +32924,7 @@ void aJacobian(double * J, double * sc, double T, int consP)
     double invT2 = invT * invT;
 
     /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    double refC = 101325 / 8.31451 / T;
+    double refC = 101325 / 8.31446 / T;
     double refCinv = 1.0 / refC;
 
     /*compute the mixture concentration */
@@ -53397,7 +53456,7 @@ void aJacobian(double *  J, double *  sc, double T, int consP)
     double invT2 = invT * invT;
 
     /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    double refC = 101325 / 8.31451 / T;
+    double refC = 101325 / 8.31446 / T;
     double refCinv = 1.0 / refC;
 
     /*compute the mixture concentration */
@@ -73932,7 +73991,7 @@ AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T
     double invT2 = invT * invT;
 
     /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    double refC = 101325 / 8.31451 / T;
+    double refC = 101325 / 8.31446 / T;
     double refCinv = 1.0 / refC;
 
     /*compute the mixture concentration */
@@ -93141,7 +93200,7 @@ AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *
 void equilibriumConstants(double *  kc, double *  g_RT, double T)
 {
     /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    double refC = 101325 / 8.31451 / T;
+    double refC = 101325 / 8.31446 / T;
 
     /*reaction 1: H + CH2 (+M) <=> CH3 (+M) */
     kc[0] = 1.0 / (refC) * exp((g_RT[1] + g_RT[10]) - (g_RT[12]));
