@@ -1,7 +1,6 @@
-
-CHEMINP=NUIGalway.mec
-THERMINP=NUIGalway.therm
-FINALFILE=NUIGalway.cpp
+CHEMINP=mechanism.inp
+THERMINP=therm.dat
+FINALFILE=mechanism.cpp
 
 FMC=${PELE_PHYSICS_HOME}/Support/Fuego/Pythia/products/bin/fmc.py
 HEADERDIR=${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/header
