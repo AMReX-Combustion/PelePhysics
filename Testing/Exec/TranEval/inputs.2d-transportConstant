@@ -1,0 +1,4 @@
+transport.const_viscosity=2.0e-5
+transport.const_bulk_viscosity=0.0
+transport.const_conductivity=1.0
+transport.const_diffusivity=1.0

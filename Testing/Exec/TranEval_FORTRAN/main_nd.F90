@@ -8,6 +8,41 @@ module main_module
 
 contains
 
+    subroutine extern_init(name,namlen) bind(C, name="extern_init")
+
+    use eos_module
+    use transport_module
+    use fuego_chemistry, only : network_init 
+
+    implicit none
+    integer :: namlen
+    integer :: name(namlen)
+
+    real(amrex_real) :: small_temp = 1.d-200
+    real(amrex_real) :: small_dens = 1.d-200
+
+    ! initialize the external runtime parameters in
+    ! extern_probin_module
+    call runtime_init(name,namlen)
+
+    call network_init()
+
+    call eos_init(small_temp, small_dens)
+
+    call transport_init_F()
+
+  end subroutine extern_init
+
+
+  subroutine extern_close() bind(C, name="extern_close")
+
+    use transport_module
+    implicit none
+
+    call transport_close_F()
+
+  end subroutine extern_close
+
   subroutine initialize_data( &
        lo,hi, &
        massfrac,    mf_lo, mf_hi, &

@@ -7,6 +7,13 @@
 
 extern "C"
 {
+    void extern_init
+    (const int* name, const int* namlen);
+
+    void extern_close();
+
+    void get_num_spec(int* nspecies);
+
     void initialize_data
     (const int* lo, const int* hi,
      const BL_FORT_FAB_ARG_3D(massfraction),
