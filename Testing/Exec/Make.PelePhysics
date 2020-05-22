@@ -82,18 +82,20 @@ ifdef Chemistry_Model
 endif
 
 # Transport
-TRAN_HOME_F90 := $(TRAN_HOME)/F90
 TRAN_PATH := $(TRAN_HOME)/$(strip $(Transport_dir))
-TRAN_PATH_F90 := $(TRAN_PATH)/F90
-# Put inside an if use FORTRAN later
-include $(TRAN_HOME_F90)/Make.package
-include $(TRAN_PATH_F90)/Make.package
-#
-# CPP TRANSPORT NOT USED RIGHT NOW
-#include $(TRAN_PATH)/Make.package
-EXTERN_CORE       += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
-INCLUDE_LOCATIONS += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
-VPATH_LOCATIONS   += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
+ifeq ($(TRANSPORT_CPP),TRUE) 
+    include $(TRAN_PATH)/Make.package
+    INCLUDE_LOCATIONS += $(TRAN_PATH)
+    VPATH_LOCATIONS   += $(TRAN_PATH)
+else
+    TRAN_HOME_F90 := $(TRAN_HOME)/F90
+    TRAN_PATH_F90 := $(TRAN_PATH)/F90
+    include $(TRAN_HOME_F90)/Make.package
+    include $(TRAN_PATH_F90)/Make.package
+    EXTERN_CORE       += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
+    INCLUDE_LOCATIONS += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
+    VPATH_LOCATIONS   += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
+endif
 USE_FUEGO = FALSE
 Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
 
