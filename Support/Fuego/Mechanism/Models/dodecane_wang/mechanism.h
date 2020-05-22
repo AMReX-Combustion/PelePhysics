@@ -55,10 +55,10 @@
 #define iC4H3_ID 41
 #define C4H4_ID 42
 #define iC4H5_ID 43
-#define C4H5n2_ID 44
+#define C4H52_ID 44
 #define C4H6_ID 45
 #define C4H612_ID 46
-#define C4H6n2_ID 47
+#define C4H62_ID 47
 #define C4H7_ID 48
 #define C4H81_ID 49
 #define pC4H9_ID 50

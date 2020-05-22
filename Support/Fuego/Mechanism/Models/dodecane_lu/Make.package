@@ -1,6 +1,6 @@
 CEXE_headers+=chemistry_file.H
 
-CEXE_sources+=dodecane_lu.cpp
+CEXE_sources+=mechanism.cpp
 
 LIBRARIES +=
 
