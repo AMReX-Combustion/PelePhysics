@@ -20,6 +20,8 @@ constexpr amrex::Real AIRMW = 28.97;
 
 void init();
 
+void close();
+
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void

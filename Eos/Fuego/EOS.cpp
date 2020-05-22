@@ -2,9 +2,14 @@
 
 namespace EOS {
 
-void
-init()
+void init() 
 {
+  CKINIT();
+}
+
+void close()
+{
+  CKFINALIZE();
 }
 
 } // namespace EOS

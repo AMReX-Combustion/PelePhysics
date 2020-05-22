@@ -9,6 +9,14 @@ init()
 {
   amrex::ParmParse pp("eos");
   pp.query("gamma", gamma);
+
+  CKINIT();
+}
+
+void 
+close()
+{
+  CKFINALIZE();
 }
 
 } // namespace EOS
