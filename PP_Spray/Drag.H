@@ -96,4 +96,44 @@ Real calcHeatCoeff(const Real ratio,
   return Nu_num*logB/B_T;
 }
 
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+bool checkWall(Real&      pos,
+               Real&      vel,
+               const Real phi,
+               const Real plo,
+               const int  hi_bound,
+               const int  lo_bound)
+{
+  if (pos > phi) {
+    switch (hi_bound) {
+    case 1 :
+      pos *= -1.;
+      pos += 2.*phi;
+      vel *= -1.;
+      break;
+    case -1 :
+      return true;
+      break;
+    default :
+      break;
+    }
+  }
+  if (pos < plo) {
+    switch (lo_bound) {
+    case 1 :
+      pos *= -1.;
+      pos += 2.*plo;
+      vel *= -1.;
+      break;
+    case -1 :
+      return true;
+      break;
+    default :
+      break;
+    }
+  }
+  return false;
+}
+
 #endif
