@@ -264,7 +264,8 @@ AMREX_FORCE_INLINE
 void
 EY2G(amrex::Real E, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
 {
-  amrex::Real wbar, Cv, T, Cvx;
+  amrex::Real wbar, Cv, Cvx;
+  amrex::Real T = 300.;
   EOS::EY2T(E, Y, T);
   EOS::YT2Cv(Y, T, Cv);
   CKMMWY(&Y[0], &wbar);
