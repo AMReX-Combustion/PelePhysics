@@ -24,7 +24,7 @@
 #define CO2_ID 9
 #define CH_ID 10
 #define CH2_ID 11
-#define CH2(S)_ID 12
+#define CH2S_ID 12
 #define CH3_ID 13
 #define CH4_ID 14
 #define HCO_ID 15

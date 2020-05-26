@@ -1,0 +1,37 @@
+Here is a list of tested and updated mechanisms
+-----------------------------------------------------------
+    Null
+    air
+    LiDryer
+    drm19
+    chem-CH4-2step
+    grimech12
+    grimech30
+    grimech30-noArN
+    dodecane_wang
+    heptane_fc
+    propane_fc
+    Aromatic_KrNara
+    etylene_af
+
+Here is a list of NOT tested and updated mechanisms
+-----------------------------------------------------------
+    FFCM1_Red
+    NUIGalway
+    LuEthylene
+    decane_3sp
+    heptane_3sp
+    Davis
+    BurkeDryer
+    LuDME
+    alzeta
+    JL4
+    Kolla
+    dodecane_lu
+    chem-H
+    SootReaction
+
+Here is a list of NOT tested and NOT updated mechanisms
+-----------------------------------------------------------
+BurkeDryer_mod
+CH4-15step

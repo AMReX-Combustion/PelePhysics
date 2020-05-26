@@ -16,8 +16,13 @@ AMREX_GPU_DEVICE
 void
 get_transport_coeffs(
   amrex::Box const& bx,
-  amrex::Array4<const amrex::Real> const& q,
-  amrex::Array4<amrex::Real> const& D)
+  amrex::Array4<const amrex::Real> const& Y_in,
+  amrex::Array4<const amrex::Real> const& T_in,
+  amrex::Array4<const amrex::Real> const& Rho_in,
+  amrex::Array4<amrex::Real> const& D_out,
+  amrex::Array4<amrex::Real> const& mu_out,
+  amrex::Array4<amrex::Real> const& xi_out,
+  amrex::Array4<amrex::Real> const& lam_out)
 {
 
   const auto lo = amrex::lbound(bx);
@@ -41,10 +46,10 @@ get_transport_coeffs(
     for (int j = lo.y; j <= hi.y; ++j) {
       for (int i = lo.x; i <= hi.x; ++i) {
 
-        T = q(i, j, k, QTEMP);
-        rho = q(i, j, k, QRHO);
+        T = T_in(i, j, k);
+        rho = Rho_in(i, j, k);
         for (int n = 0; n < NUM_SPECIES; ++n) {
-          massloc[n] = q(i, j, k, QFS + n);
+          massloc[n] = Y_in(i, j, k, n);
         }
 
         transport(
@@ -53,12 +58,12 @@ get_transport_coeffs(
 
         //   mu, xi and lambda are stored after D in the diffusion multifab
         for (int n = 0; n < NUM_SPECIES; ++n) {
-          D(i, j, k, n) = Ddiag[n];
+          D_out(i, j, k, n) = Ddiag[n];
         }
 
-        D(i, j, k, dComp_mu) = muloc;
-        D(i, j, k, dComp_xi) = xiloc;
-        D(i, j, k, dComp_lambda) = lamloc;
+        mu_out(i, j, k)  = muloc;
+        xi_out(i, j, k)  = xiloc;
+        lam_out(i, j, k) = lamloc;
       }
     }
   }
