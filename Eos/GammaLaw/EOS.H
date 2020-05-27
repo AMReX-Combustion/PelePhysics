@@ -155,6 +155,16 @@ TRY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
+RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T)
+{
+  amrex::Real wbar;
+  EOS::Y2WBAR(Y, wbar);
+  T = P * wbar / (R * EOS::RU);
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
 Y2X(amrex::Real Y[], amrex::Real X[])
 {
   for (int n = 0; n < NUM_SPECIES; n++)
