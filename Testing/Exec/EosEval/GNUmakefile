@@ -11,29 +11,35 @@ FCOMP	   = gfortran
 USE_MPI    = FALSE
 USE_OMP    = TRUE
 
-FUEGO_GAS  = FALSE
+FUEGO_GAS  = TRUE
+
+#Determine the type of test ?
+REGTEST_CP = TRUE
+ifeq ($(REGTEST_CP), TRUE)
+  DEFINES  += -DREGTEST_CP
+endif
+REGTEST_CV = FALSE
+ifeq ($(REGTEST_CV), TRUE)
+  DEFINES  += -DREGTEST_CV
+endif
+REGTEST_EY2T = FALSE
+ifeq ($(REGTEST_EY2T), TRUE)
+  DEFINES  += -DREGTEST_EY2T
+endif
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
 
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
-  #Chemistry_Model = chem-H
   Chemistry_Model = LiDryer
-  #Chemistry_Model = BurkeDryer_mod
-  #Chemistry_Model = BurkeDryer
-  #Chemistry_Model = air
-  #Chemistry_Model = grimech12
-  #Chemistry_Model = grimech30
-  #Chemistry_Model = grimech30-noArN
-  #Chemistry_Model = drm19
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else
+  Eos_dir         = GammaLaw
   Chemistry_Model = Null
-  Eos_dir       = GammaLaw
-  Reactions_dir = Fuego
-  Transport_dir = Constant
+  Reactions_dir   = Fuego
+  Transport_dir   = Constant
 endif
 
 Bpack   := ./Make.package
