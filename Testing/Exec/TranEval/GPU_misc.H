@@ -45,7 +45,7 @@ initialize_data(int i, int j, int k,
 	rho(i,j,k) = 0.01 + dRho * std::sin(2.0*pi*y/P[1]);
 
 	amrex::Real dummy = 0.0;
-	for (int n = 0; n < NUM_SPECIES; n++) {
+	for (int n = 0; n < NUM_SPECIES-1; n++) {
 	    dummy = dummy + mf(i,j,k,n);
 	}
 	 mf(i,j,k,NUM_SPECIES-1) = 1.0 - dummy;

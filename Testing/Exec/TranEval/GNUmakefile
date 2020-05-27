@@ -11,7 +11,7 @@ FCOMP	   = gfortran
 USE_MPI    = TRUE
 USE_OMP    = TRUE
 
-FUEGO_GAS  = FALSE
+FUEGO_GAS  = TRUE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
