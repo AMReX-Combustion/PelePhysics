@@ -189,18 +189,6 @@ T2Ei(amrex::Real T, amrex::Real Ei[])
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-YT2Cv(amrex::Real Y[], amrex::Real T, amrex::Real& Cv)
-{
-  Cv = 0.0;
-  amrex::Real tmp[NUM_SPECIES];
-  CKCVMS(&T, tmp);
-  for (int i = 0; i < NUM_SPECIES; i++)
-    Cv += Y[i] * tmp[i];
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
 Y2X(amrex::Real Y[], amrex::Real X[])
 {
   CKYTX(Y, X);
@@ -262,11 +250,10 @@ S(amrex::Real& s)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-EY2G(amrex::Real E, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
+TY2G(amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
 {
-  amrex::Real wbar, Cv, T, Cvx;
-  EOS::EY2T(E, Y, T);
-  EOS::YT2Cv(Y, T, Cv);
+  amrex::Real wbar, Cv, Cvx;
+  EOS::TY2Cv(T, Y, Cv);
   CKMMWY(&Y[0], &wbar);
   Cvx = wbar * Cv;
   G = (Cvx + EOS::RU) / Cvx;
@@ -300,26 +287,6 @@ RG2dpde(amrex::Real R, amrex::Real G, amrex::Real& dpde)
 {
   dpde = (G - 1.0) * R;
 }
-
-// Hydro -> Advected -> Species -> Aux
-// If num_adv == 0 -> QFA = QFS and UFA = UFS, see IndexDefines.H
-// For explicit definitions.
-//AMREX_GPU_HOST_DEVICE
-//AMREX_FORCE_INLINE
-//int
-//upass_map(const int i)
-//{
-//  return upassMap[i];
-//}
-//
-//AMREX_GPU_HOST_DEVICE
-//AMREX_FORCE_INLINE
-//int
-//qpass_map(const int i)
-//{
-//  /*V and W are passive*/
-//  return qpassMap[i];
-//}
 
 }; // namespace EOS
 
