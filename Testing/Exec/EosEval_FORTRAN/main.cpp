@@ -61,7 +61,7 @@ main (int   argc,
       MultiFab mass_frac(ba,dm,NUM_SPECIES,num_grow);
       MultiFab temperature(ba,dm,1,num_grow);
       MultiFab density(ba,dm,1,num_grow);
-      MultiFab energyy(ba,dm,1,num_grow);
+      MultiFab energy(ba,dm,1,num_grow);
 
       IntVect tilesize(D_DECL(10240,8,32));
     
@@ -74,7 +74,7 @@ main (int   argc,
 			BL_TO_FORTRAN_N_3D(mass_frac[mfi],0),
 			BL_TO_FORTRAN_N_3D(temperature[mfi],0),
 			BL_TO_FORTRAN_N_3D(density[mfi],0),
-			BL_TO_FORTRAN_N_3D(energyy[mfi],0),
+			BL_TO_FORTRAN_N_3D(energy[mfi],0),
 			&(dx[0]), &(plo[0]), &(phi[0]));
       }
 
