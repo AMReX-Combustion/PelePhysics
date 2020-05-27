@@ -52,6 +52,10 @@ main (int   argc,
       BoxArray ba(domain);
       ba.maxSize(max_size);
 
+      ParmParse ppa("amr");
+      std::string pltfile("plt");  
+      ppa.query("plot_file",pltfile);
+
       DistributionMapping dm{ba};
 
       int num_grow = 0;
@@ -73,6 +77,14 @@ main (int   argc,
 			&(dx[0]), &(plo[0]), &(phi[0]));
       }
 
+      // Plot init state for debug purposes
+      //MultiFab VarPltInit(ba,dm,NUM_SPECIES+2,num_grow);
+      //MultiFab::Copy(VarPltInit,mass_frac,0,0,NUM_SPECIES,num_grow);
+      //MultiFab::Copy(VarPltInit,temperature,0,NUM_SPECIES,1,num_grow);
+      //MultiFab::Copy(VarPltInit,density,0,NUM_SPECIES+1,1,num_grow);
+      //std::string initfile = amrex::Concatenate(pltfile,99); // Need a number other than zero for reg test to pass
+      //PlotFileFromMF(VarPltInit,initfile);
+
       MultiFab D(ba,dm,NUM_SPECIES+3,num_grow);
 
 #ifdef _OPENMP
@@ -90,8 +102,6 @@ main (int   argc,
 			     BL_TO_FORTRAN_N_3D(D[mfi],NUM_SPECIES+2));
       }
 
-      ParmParse ppa("amr");
-      std::string pltfile("plt");  ppa.query("plot_file",pltfile);
       std::string outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
       PlotFileFromMF(D,outfile);
 
