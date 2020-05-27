@@ -6,9 +6,9 @@
 #include <AMReX_ParmParse.H>
 
 #include <Transport.H>
-#include <main_F.H>
 #include <PlotFileFromMF.H>
 #include "mechanism.h"
+#include <GPU_misc.H>
 
 #include <EOS.H>
 
@@ -47,6 +47,10 @@ main (int   argc,
       BoxArray ba(domain);
       ba.maxSize(max_size);
 
+      ParmParse ppa("amr");
+      std::string pltfile("plt");  
+      ppa.query("plot_file",pltfile);
+
       DistributionMapping dm{ba};
 
       int num_grow = 0;
@@ -59,14 +63,24 @@ main (int   argc,
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-      for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
-	const Box& box = mfi.tilebox();
-	initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
-			BL_TO_FORTRAN_N_3D(mass_frac[mfi],0),
-			BL_TO_FORTRAN_N_3D(temperature[mfi],0),
-			BL_TO_FORTRAN_N_3D(density[mfi],0),
-			&(dx[0]), &(plo[0]), &(phi[0]));
+      for (MFIter mfi(mass_frac,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+
+	const Box& gbox = mfi.tilebox();
+
+	Array4<Real> const& Y_a    = mass_frac.array(mfi);
+	Array4<Real> const& T_a    = temperature.array(mfi);
+	Array4<Real> const& rho_a  = density.array(mfi);
+
+	amrex::ParallelFor(gbox, 
+	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+		initialize_data(i, j, k, Y_a, T_a, rho_a, 
+				dx, plo, phi);
+	});
+
       }
+
+      std::string initfile = amrex::Concatenate(pltfile,99); // Need a number other than zero for reg test to pass
+      PlotFileFromMF(mass_frac,initfile);
 
       MultiFab D(ba,dm,NUM_SPECIES,num_grow);
       MultiFab mu(ba,dm,1,num_grow);
@@ -104,8 +118,6 @@ main (int   argc,
       MultiFab::Copy(VarPlt,xi,0,NUM_SPECIES+1,1,num_grow);
       MultiFab::Copy(VarPlt,lam,0,NUM_SPECIES+2,1,num_grow);
 
-      ParmParse ppa("amr");
-      std::string pltfile("plt");  ppa.query("plot_file",pltfile);
       std::string outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
       PlotFileFromMF(VarPlt,outfile);
 
