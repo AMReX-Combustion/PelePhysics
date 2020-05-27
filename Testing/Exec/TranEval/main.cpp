@@ -12,8 +12,6 @@
 
 #include <EOS.H>
 
-std::string inputs_name = "";
-
 using namespace amrex;
 
 int
