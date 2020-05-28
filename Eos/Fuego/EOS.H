@@ -39,11 +39,7 @@ AMREX_FORCE_INLINE
 void
 TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
 {
-  amrex::Real tmp[NUM_SPECIES];
-  CKCPMS(&T, tmp);
-  Cp = 0.0;
-  for (int i = 0; i < NUM_SPECIES; ++i)
-    Cp += Y[i] * tmp[i];
+  CKCPBS(&T, Y, &Cp);
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -51,11 +47,7 @@ AMREX_FORCE_INLINE
 void
 TY2Cv(amrex::Real T, amrex::Real Y[], amrex::Real& Cv)
 {
-  amrex::Real tmp[NUM_SPECIES];
-  CKCVMS(&T, tmp);
-  Cv = 0.0;
-  for (int i = 0; i < NUM_SPECIES; ++i)
-    Cv += Y[i] * tmp[i];
+  CKCVBS(&T, Y, &Cv);
 }
 
 AMREX_GPU_HOST_DEVICE
