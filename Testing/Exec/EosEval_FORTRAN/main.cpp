@@ -78,8 +78,14 @@ main (int   argc,
 			&(dx[0]), &(plo[0]), &(phi[0]));
       }
 
-      std::string initfile = amrex::Concatenate(pltfile,99); // Need a number other than zero for reg test to pass
-      PlotFileFromMF(temperature,initfile);
+      // Plot init state for debug purposes
+      //MultiFab VarPltInit(ba,dm,NUM_SPECIES+3,num_grow);
+      //MultiFab::Copy(VarPltInit,mass_frac,0,0,NUM_SPECIES,num_grow);
+      //MultiFab::Copy(VarPltInit,temperature,0,NUM_SPECIES,1,num_grow);
+      //MultiFab::Copy(VarPltInit,density,0,NUM_SPECIES+1,1,num_grow);
+      //MultiFab::Copy(VarPltInit,energy,0,NUM_SPECIES+2,1,num_grow);
+      //std::string initfile = amrex::Concatenate(pltfile,99); // Need a number other than zero for reg test to pass
+      //PlotFileFromMF(VarPltInit,initfile);
 
 #ifdef REGTEST_CP 
       MultiFab cp(ba,dm,1,num_grow);

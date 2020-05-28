@@ -19,7 +19,6 @@ initialize_data(int i, int j, int k,
 		std::vector<amrex::Real> plo, 
 		std::vector<amrex::Real> phi ) noexcept
 {
-	amrex::Real T,e;
 	amrex::Real dTemp = 5.0;
 	amrex::Real dRho = 0.005;
 	amrex::Real denergy = 100.0;
@@ -42,25 +41,25 @@ initialize_data(int i, int j, int k,
 	}
 	Y_lo[0] = 1.0;
 
+	// T, Yk, rho
 	temp(i,j,k) = 500.0 + dTemp * std::sin(2.0*pi*y/P[1]);
-	T = temp(i,j,k);
 	for (int n = 0; n < NUM_SPECIES; n++) {
             mf(i,j,k,n) = Y_lo[n] + (Y_hi[n]-Y_lo[n]) * x / L[0];	
 	}
 	rho(i,j,k) = 0.01 + dRho * std::sin(2.0*pi*y/P[1]);
-
+        // corr Yk
 	amrex::Real dummy = 0.0;
-	for (int n = 0; n < NUM_SPECIES; n++) {
+	for (int n = 0; n < NUM_SPECIES-1; n++) {
 	    dummy = dummy + mf(i,j,k,n);
 	}
 	mf(i,j,k,NUM_SPECIES-1) = 1.0 - dummy;
-
-	EOS::T2Ei(T, ei.arr);
+        // compute real E + perturb it for future tests
+	EOS::T2Ei(temp(i,j,k), ei.arr);
+	energy(i,j,k) = 0.0;
 	for (int n = 0; n < NUM_SPECIES; n++) {
-	    e = e + mf(i,j,k,n) * ei[n];
+	    energy(i,j,k) = energy(i,j,k) + mf(i,j,k,n) * ei[n];
 	}
-
-	energy(i,j,k) = e + denergy * std::sin(2.0*pi*y/P[1]); 
+	energy(i,j,k) = energy(i,j,k) + denergy * std::sin(2.0*pi*y/P[1]); 
 }
 
 
