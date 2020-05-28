@@ -86,6 +86,7 @@ main (int   argc,
       //std::string initfile = amrex::Concatenate(pltfile,99); // Need a number other than zero for reg test to pass
       //PlotFileFromMF(VarPltInit,initfile);
 
+#ifdef REGTEST_CP 
       MultiFab cp(ba,dm,1,num_grow);
 
 #ifdef _OPENMP
@@ -106,10 +107,36 @@ main (int   argc,
 	});
       }
 
-      EOS::close();
-
       std::string outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
       PlotFileFromMF(cp,outfile);
+#endif
+
+#ifdef REGTEST_CV 
+      MultiFab cv(ba,dm,1,num_grow);
+
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+      for (MFIter mfi(mass_frac,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+
+	const Box& gbox = mfi.tilebox();
+
+	Array4<Real> const& Y_a    = mass_frac.array(mfi);
+	Array4<Real> const& T_a    = temperature.array(mfi);
+	Array4<Real> const& cv_a   = cv.array(mfi);
+
+	amrex::ParallelFor(gbox, 
+	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+	    get_cv(i, j, k, 
+	           Y_a, T_a, cv_a);
+	});
+      }
+
+      std::string outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
+      PlotFileFromMF(cv,outfile);
+
+#endif
+      EOS::close();
 
     }
 

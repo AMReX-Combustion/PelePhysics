@@ -80,5 +80,22 @@ get_cp(int i, int j, int k,
 	EOS::TY2Cp(temp(i,j,k), mf_pt.arr, cp(i,j,k));
 }
 
+AMREX_GPU_HOST_DEVICE
+inline
+void
+get_cv(int i, int j, int k,  
+	amrex::Array4<amrex::Real> const& mf,
+	amrex::Array4<amrex::Real> const& temp,
+	amrex::Array4<amrex::Real> const& cv) noexcept 
+{
+
+	amrex::GpuArray<amrex::Real,NUM_SPECIES> mf_pt;
+	for (int n = 0; n < NUM_SPECIES; n++) {
+		mf_pt[n] = mf(i,j,k,n);
+	}
+
+	EOS::TY2Cv(temp(i,j,k), mf_pt.arr, cv(i,j,k));
+}
+
 
 #endif
