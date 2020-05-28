@@ -14,7 +14,7 @@ USE_OMP    = TRUE
 FUEGO_GAS  = TRUE
 
 #Determine the type of test ?
-REGTEST_CP = TRUE
+REGTEST_CP = FALSE
 ifeq ($(REGTEST_CP), TRUE)
   DEFINES  += -DREGTEST_CP
 endif
