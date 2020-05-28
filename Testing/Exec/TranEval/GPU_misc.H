@@ -48,7 +48,7 @@ initialize_data(int i, int j, int k,
 	for (int n = 0; n < NUM_SPECIES-1; n++) {
 	    dummy = dummy + mf(i,j,k,n);
 	}
-	 mf(i,j,k,NUM_SPECIES-1) = 1.0 - dummy;
+	mf(i,j,k,NUM_SPECIES-1) = 1.0 - dummy;
 
 }
 

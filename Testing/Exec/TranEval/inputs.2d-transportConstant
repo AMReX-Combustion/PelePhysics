@@ -1,3 +1,4 @@
+eos.gamma = 1.4
 transport.const_conductivity   = 1.0
 transport.const_viscosity      = 2.0
 transport.const_bulk_viscosity = 3.0
