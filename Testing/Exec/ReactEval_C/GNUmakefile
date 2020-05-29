@@ -28,7 +28,7 @@ DEFINES  += -DMOD_REACTOR
 # ODE solver OPTIONS: DVODE (default) / SUNDIALS / RK explicit
 #######################
 # Activates use of SUNDIALS: CVODE (default) / ARKODE
-USE_SUNDIALS_PP = TRUE
+USE_SUNDIALS_PP = FALSE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
   TRANSPORT_CPP = TRUE
   # provide location of sundials lib if needed
