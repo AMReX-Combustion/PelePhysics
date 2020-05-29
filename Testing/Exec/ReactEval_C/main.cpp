@@ -11,14 +11,15 @@
 
 using namespace amrex;
 
-#include <Transport_F.H>
 #include <main_F.H>
 #include <PlotFileFromMF.H>
+#include <EOS.H>
+#include <Transport.H>
+#include <GPU_misc.H> 
 
 #if defined(USE_SUNDIALS_PP)
 // ARKODE or CVODE
   #if defined(USE_CUDA_SUNDIALS_PP)
-    #include <GPU_misc.H> 
   #endif
   #ifdef USE_ARKODE_PP
     #include <actual_CARKODE.h>
@@ -32,6 +33,7 @@ using namespace amrex;
   #else
 // DVODE
     #include <actual_reactor.H> 
+    #include <Transport_F.H>
   #endif
 #endif
 
@@ -62,13 +64,8 @@ main (int   argc,
     {
 
     int max_grid_size = 16;
-    std::string probin_file="probin";
-    std::string fuel_name="none";
     std::string pltfile("plt");
-    /* Mixture info */
-    int fuel_idx   = -1;
-    int oxy_idx    = -1;
-    int bath_idx   = -1;
+    std::string fuel_name="none";
     /* ODE inputs */
     int ode_ncells = 1;
     int ode_iE     = -1;
@@ -82,12 +79,20 @@ main (int   argc,
     int use_typ_vals = 0;
 #endif
 
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
     {
       /* ParmParse from the inputs file */
       ParmParse pp;
       
+#else
+    std::string probin_file="probin";
+    {
+      /* ParmParse from the inputs file */
+      ParmParse pp;
+
       // probin file
       pp.query("probin_file",probin_file);
+#endif
 
       // domain size
       pp.query("max_grid_size",max_grid_size);
@@ -129,6 +134,9 @@ main (int   argc,
 
     }
 
+    ParmParse ppa("amr");
+    ppa.query("plot_file",pltfile);
+
     /* PRINT ODE INFO */
     amrex::Print() << "ODE solver: ";
 #ifdef USE_SUNDIALS_PP
@@ -151,32 +159,38 @@ main (int   argc,
     amrex::Print() << std::endl;
 
     amrex::Print() << "Fuel: ";
+    amrex::Print() << fuel_name << ", Oxy: O2";
+    amrex::Print() << std::endl;
 
+    /* Mixture info */
+    int fuel_idx   = -1;
+    int oxy_idx    = -1;
+    int bath_idx   = -1;
+    if (fuel_name == "H2") {
+        fuel_idx  = H2_ID;
+#ifdef CH4_ID
+    } else if (fuel_name == "CH4") {
+        fuel_idx  = CH4_ID;
+#endif
+#ifdef NC12H26_ID
+    } else if (fuel_name == "NC12H26") {
+        fuel_idx  = NC12H26_ID;
+#endif
+    }
+    oxy_idx   = O2_ID;
+    bath_idx  = N2_ID;
+
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
+      EOS::init();
+      transport_init();
+#else
     /* take care of probin init to initialize problem */
     int probin_file_length = probin_file.length();
     std::vector<int> probin_file_name(probin_file_length);
     for (int i = 0; i < probin_file_length; i++)
 	    probin_file_name[i] = probin_file[i];
-    if (fuel_name == "H2") {
-        fuel_idx  = H2_ID;
-        amrex::Print() << fuel_name << ", Oxy: O2";
-        amrex::Print() << std::endl;
-#ifdef CH4_ID
-    } else if (fuel_name == "CH4") {
-        fuel_idx  = CH4_ID;
-        amrex::Print() << fuel_name << ", Oxy: O2";
-        amrex::Print() << std::endl;
-#endif
-#ifdef NC12H26_ID
-    } else if (fuel_name == "NC12H26") {
-        fuel_idx  = NC12H26_ID;
-        amrex::Print() << fuel_name << ", Oxy: O2";
-        amrex::Print() << std::endl;
-#endif
-    }
-    oxy_idx   = O2_ID;
-    bath_idx  = N2_ID;
     extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx,&ode_iE);
+#endif
 
     BL_PROFILE_VAR("reactor_info()", reactInfo);
 
@@ -258,16 +272,30 @@ main (int   argc,
     BL_PROFILE_VAR("initialize_data()", InitData);
 
     /* INITIALIZE DATA */
-#ifndef USE_CUDA_SUNDIALS_PP
+#ifdef USE_CUDA_SUNDIALS_PP
+    int count_mf = 0;
+#endif
     IntVect tilesize(D_DECL(10240,8,32));
 #ifdef _OPENMP
 #pragma omp parallel 
 #endif
-    for (MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi ){
+    for (MFIter mfi(mf,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
+	const Box& gbox = mfi.tilebox();
+
+	Array4<Real> const& rY_a    = mf.array(mfi);
+	Array4<Real> const& rYs_a   = rY_source_ext.array(mfi);
+	Array4<Real> const& E_a     = mfE.array(mfi);
+	Array4<Real> const& rE_a    = rY_source_energy_ext.array(mfi);
+
+	amrex::ParallelFor(gbox,
+	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+	        initialize_data(i, j, k, fuel_idx, 
+				rY_a, rYs_a, E_a, rE_a,
+				dx, plo, phi);
+        });
 #else
-    int count_mf = 0;
-    for (MFIter mfi(mf,false); mfi.isValid(); ++mfi ){
-#endif
         const Box& box = mfi.tilebox();
         initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
                		BL_TO_FORTRAN_N_3D(mf[mfi],0),
@@ -275,6 +303,8 @@ main (int   argc,
 		        BL_TO_FORTRAN_N_3D(mfE[mfi],0),
 		        BL_TO_FORTRAN_N_3D(rY_source_energy_ext[mfi],0),
 			&(dx[0]), &(plo[0]), &(phi[0]));
+#endif
+
 #ifdef USE_CUDA_SUNDIALS_PP
 	count_mf = count_mf + 1;
 #endif
@@ -291,8 +321,6 @@ main (int   argc,
 
     BL_PROFILE_VAR("PlotFileFromMF()", PlotFile);
 
-    ParmParse ppa("amr");
-    ppa.query("plot_file",pltfile);
     std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
     // Specs
     PlotFileFromMF(mf,outfile);
@@ -318,15 +346,10 @@ main (int   argc,
     timer_adv = ParallelDescriptor::second();
     ParallelDescriptor::ReduceRealMax(timer_adv,IOProc);
 
-#ifndef USE_CUDA_SUNDIALS_PP
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-    for ( MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi )
-#else
-    for ( MFIter mfi(mf,false); mfi.isValid(); ++mfi )
-#endif
-    {
+    for ( MFIter mfi(mf,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 	/* Prints to follow the computation */
         /* ADVANCE */
         Real time = 0.0;
@@ -524,7 +547,12 @@ main (int   argc,
     timer_print_stop = ParallelDescriptor::second();
     ParallelDescriptor::ReduceRealMax(timer_print_stop,IOProc);
     
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
+    EOS::close();
+    transport_close();
+#else
     extern_close();
+#endif
 
     }
 
