@@ -87,9 +87,9 @@ main (int   argc,
       //std::string initfile = amrex::Concatenate(pltfile,99); // Need a number other than zero for reg test to pass
       //PlotFileFromMF(VarPltInit,initfile);
 
-#ifdef REGTEST_CP 
+      MultiFab VarPlt(ba,dm,4,num_grow);
       MultiFab cp(ba,dm,1,num_grow);
-
+      MultiFab cv(ba,dm,1,num_grow);
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
@@ -100,13 +100,7 @@ main (int   argc,
 	       BL_TO_FORTRAN_N_3D(temperature[mfi],0),
 	       BL_TO_FORTRAN_N_3D(cp[mfi],0));
       }
-
-      std::string outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
-      PlotFileFromMF(cp,outfile);
-#endif
-
-#ifdef REGTEST_CV 
-      MultiFab cv(ba,dm,1,num_grow);
+      MultiFab::Copy(VarPlt,cp,0,0,1,num_grow);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -118,10 +112,24 @@ main (int   argc,
 	       BL_TO_FORTRAN_N_3D(temperature[mfi],0),
 	       BL_TO_FORTRAN_N_3D(cv[mfi],0));
       }
+      MultiFab::Copy(VarPlt,cv,0,1,1,num_grow);
+
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+      for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
+	const Box& box = mfi.tilebox();
+	get_T_from_EY(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
+	       BL_TO_FORTRAN_N_3D(mass_frac[mfi],0),
+	       BL_TO_FORTRAN_N_3D(temperature[mfi],0),
+	       BL_TO_FORTRAN_N_3D(density[mfi],0),
+	       BL_TO_FORTRAN_N_3D(energy[mfi],0));
+      }
+      MultiFab::Copy(VarPlt,temperature,0,2,1,num_grow);
+      MultiFab::Copy(VarPlt,energy,0,3,1,num_grow);
 
       std::string outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
-      PlotFileFromMF(cv,outfile);
-#endif
+      PlotFileFromMF(VarPlt,outfile);
 
       extern_close();
 

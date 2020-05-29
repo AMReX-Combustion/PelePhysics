@@ -234,7 +234,7 @@ contains
        massfrac,    mf_lo, mf_hi, &
        temperature,  t_lo,  t_hi, &
        density,      r_lo,  r_hi, &
-       energy,      e_lo, e_hi) &
+       energy,       e_lo, e_hi) &
        bind(C, name="get_T_from_EY")
 
     use eos_type_module

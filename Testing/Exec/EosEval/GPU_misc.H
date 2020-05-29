@@ -98,4 +98,22 @@ get_cv(int i, int j, int k,
 }
 
 
+AMREX_GPU_HOST_DEVICE
+inline
+void
+get_T_from_EY(int i, int j, int k,  
+	amrex::Array4<amrex::Real> const& mf,
+	amrex::Array4<amrex::Real> const& temp,
+	amrex::Array4<amrex::Real> const& energy) noexcept 
+{
+
+	amrex::GpuArray<amrex::Real,NUM_SPECIES> mf_pt;
+	for (int n = 0; n < NUM_SPECIES; n++) {
+		mf_pt[n] = mf(i,j,k,n);
+	}
+
+	EOS::EY2T(energy(i,j,k), mf_pt.arr, temp(i,j,k));
+}
+
+
 #endif
