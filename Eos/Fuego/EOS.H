@@ -209,7 +209,7 @@ X2Y(amrex::Real X[], amrex::Real Y[])
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-PYTR2E(
+PYT2RE(
   amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real& R, amrex::Real& E)
 {
   CKRHOY(&P, &T, Y, &R);
