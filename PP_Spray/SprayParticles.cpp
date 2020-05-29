@@ -497,8 +497,8 @@ SprayParticleContainer::updateParticles(const int&  lev,
               Real pres_sat = EOS::PATM*std::exp(part_latent*inv_Ru*mw_fuel*
                                                  (invBoilT[spf] - 1./T_part)) + C_eps;
               Real Yfv = mw_fuel*pres_sat/(mw_mix*p_fluid + (mw_fuel - mw_mix)*pres_sat);
-              Yfv = amrex::min(1. - C_eps, Yfv);
-              B_M_num[spf] = (Yfv - Y_fluid[fspec])/(1. - Yfv);
+              Yfv = amrex::max(0., amrex::min(1. - C_eps, Yfv));
+              B_M_num[spf] = std::max(C_eps, (Yfv - Y_fluid[fspec])/(1. - Yfv));
 #ifndef LEGACY_SPRAY
               Y_skin[fspec] = Yfv + rule*(Y_fluid[fspec] - Yfv);
               sumYSkin += Y_skin[fspec];
@@ -590,7 +590,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
             for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
               const int fspec = fuel_indx[spf];
               Real ratio = cp_n[fspec]*Sh_num[spf]*Ddiag[fspec]/lambda_skin;
-              Real heatC = calcHeatCoeff(ratio, B_M_num[spf], B_eps, Nu_0);
+              Real heatC = calcHeatCoeff(ratio, B_M_num[spf], B_eps, C_eps, Nu_0);
               // Convection term
               coeff_heat += heatC;
 #ifdef LEGACY_SPRAY
@@ -606,7 +606,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
             fluid_eng_src += conv_src;
             part_temp_src += conv_src;
             part_temp_src *= inv_pm_cp;
-            if (isub == 1) {
+            if (isub == 1 && delT > C_eps) {
               Real inv_tau_T = conv_src*inv_pm_cp/delT;
               nsub = amrex::min(amrex::max(nsub, int(flow_dt*inv_tau_T) + 1), nSubMax);
             }

@@ -61,11 +61,13 @@ void AdjIndexWeights(const RealVect& len,
 // corrected Nusselt number and B_T value
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
-Real calcHeatCoeff(const Real ratio,
-		   const Real B_M,
-		   const Real B_eps,
-		   const Real Nu_0)
+Real calcHeatCoeff(const Real& ratio,
+                   const Real& B_M,
+                   const Real& B_eps,
+                   const Real& C_eps,
+                   const Real& Nu_0)
 {
+  if (B_M <= C_eps) return 0.;
   const int maxIter = 100;
   const Real NU2 = Nu_0 - 2.;
   const Real BM1 = 1. + B_M;
@@ -77,7 +79,7 @@ Real calcHeatCoeff(const Real ratio,
   Real Nu_num = 2. + NU2*invFT;
   phi = ratio/Nu_num;
   Real B_T = std::pow(BM1, phi) - 1.;
-  Real error = std::abs(B_T - B_T_old)/B_T;
+  Real error = std::abs(B_T - B_T_old);
   int k = 0;
   while (k < maxIter && error > B_eps) {
     B_T_old = B_T;
@@ -87,7 +89,7 @@ Real calcHeatCoeff(const Real ratio,
     Nu_num = 2. + NU2*invFT;
     phi = ratio/Nu_num;
     B_T = std::pow(BM1, phi) - 1.;
-    error = std::abs(B_T - B_T_old)/B_T;
+    error = std::abs(B_T - B_T_old);
     k++;
   }
   logB = std::log(1. + B_T);
