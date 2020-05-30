@@ -266,6 +266,18 @@ TY2G(amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
+TY2H(amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& H)
+{
+  amrex::Real hi[NUM_SPECIES];
+  CKHMS(&T, hi);
+  H = 0.0;
+  for (int n = 0; n < NUM_SPECIES; n++)
+    H += Y[n] * hi[n];
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
 Y2WBAR(amrex::Real Y[], amrex::Real& WBAR)
 {
   amrex::Real tmp[NUM_SPECIES];

@@ -234,6 +234,20 @@ TY2G(amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
+TY2H(amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& H)
+{
+  amrex::Real wbar = AIRMW;
+  const amrex::Real Cv = RU / (wbar * (gamma - 1.0)); 
+  H = 0.0;
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    Hi[n] = Cv * T * gamma;
+    H = H + Y[n] * Hi[n]; 
+  }
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
 RPE2dpdr_e(amrex::Real R, amrex::Real P, amrex::Real E, amrex::Real& dpdr_e)
 {
   dpdr_e = (gamma - 1.0) * E;
