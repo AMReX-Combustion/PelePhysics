@@ -107,9 +107,14 @@ contains
           do i = lo(1),hi(1)
              x = plo(1) + (i+HALF)*dx(1)
 
+#if ( AMREX_SPACEDIM == 1 )
+             temperature(i,j,k) = Temp_lo
+             density(i,j,k)     = Rho_lo
+#else
              temperature(i,j,k) = Temp_lo + (Temp_hi-Temp_lo)*y/L(2) + dTemp*SIN(TWO*M_PI*y/P(2))
+             density(i,j,k)     = Rho_lo + (Rho_hi-Rho_lo)*y/L(2) + dRho*SIN(TWO*M_PI*y/P(2))
+#endif
              massfrac(i,j,k,:) = Y_lo(:) + (Y_hi(:)-Y_lo(:))*x/L(1)
-             density(i,j,k) = Rho_lo + (Rho_hi-Rho_lo)*y/L(2) + dRho*SIN(TWO*M_PI*y/P(2))
 
              sum = ZERO
              do n=1,NUM_SPECIES-1
@@ -124,7 +129,11 @@ contains
 
              call eos_rt(eos_state)
 
+#if ( AMREX_SPACEDIM == 1 )
+             energy(i,j,k) = eos_state % e
+#else
              energy(i,j,k) = eos_state % e +  (energy_hi-energy_lo)*y/L(2) + denergy*SIN(TWO*M_PI*y/P(2))
+#endif
 
           end do
        end do

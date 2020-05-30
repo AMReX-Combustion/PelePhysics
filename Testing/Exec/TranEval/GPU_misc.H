@@ -38,12 +38,18 @@ initialize_data(int i, int j, int k,
 	}
 	Y_lo[0] = 1.0;
 
+	// T, Yk, rho
+#if ( AMREX_SPACEDIM == 1 )
+	temp(i,j,k) = 500.0;
+	rho(i,j,k) = 0.01;
+#else
 	temp(i,j,k) = 500.0 + dTemp * std::sin(2.0*pi*y/P[1]);
+	rho(i,j,k) = 0.01 + dRho * std::sin(2.0*pi*y/P[1]);
+#endif
 	for (int n = 0; n < NUM_SPECIES; n++) {
             mf(i,j,k,n) = Y_lo[n] + (Y_hi[n]-Y_lo[n]) * x / L[0];	
 	}
-	rho(i,j,k) = 0.01 + dRho * std::sin(2.0*pi*y/P[1]);
-
+        // corr Yk
 	amrex::Real dummy = 0.0;
 	for (int n = 0; n < NUM_SPECIES-1; n++) {
 	    dummy = dummy + mf(i,j,k,n);
