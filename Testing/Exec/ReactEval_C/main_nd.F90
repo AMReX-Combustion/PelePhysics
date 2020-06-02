@@ -34,7 +34,7 @@ contains
     ! extern_probin_module
     call runtime_init(name,namlen)
 
-    call ckinit()
+    call network_init()
 
     call eos_init(small_temp, small_dens)
 

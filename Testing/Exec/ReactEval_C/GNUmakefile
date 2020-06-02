@@ -8,8 +8,8 @@ DIM        = 3
 COMP	   = gcc
 FCOMP	   = gfortran
 
-USE_MPI    = FALSE
-USE_OMP    = FALSE
+USE_MPI    = TRUE
+USE_OMP    = TRUE
 
 FUEGO_GAS  = TRUE
 
@@ -28,7 +28,7 @@ DEFINES  += -DMOD_REACTOR
 # ODE solver OPTIONS: DVODE (default) / SUNDIALS / RK explicit
 #######################
 # Activates use of SUNDIALS: CVODE (default) / ARKODE
-USE_SUNDIALS_PP = FALSE
+USE_SUNDIALS_PP = TRUE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
   TRANSPORT_CPP = TRUE
   # provide location of sundials lib if needed

@@ -75,8 +75,8 @@ main (int   argc,
     Real dt        = 1.e-5;
 #ifdef USE_SUNDIALS_PP
     /* ARKODE parameters for now but should be for all solvers */
-    Real rtol=1e-9;
-    Real atol=1e-9;
+    Real rtol=1e-10;
+    Real atol=1e-10;
     int use_typ_vals = 0;
 #endif
 
@@ -276,7 +276,8 @@ main (int   argc,
 #ifdef USE_CUDA_SUNDIALS_PP
     int count_mf = 0;
 #endif
-    IntVect tilesize(D_DECL(10240,8,32));
+    IntVect tilesize(D_DECL(1024,1024,1024));
+    FabArrayBase::mfiter_tile_size = tilesize;
 #ifdef _OPENMP
 #pragma omp parallel 
 #endif
@@ -349,9 +350,6 @@ main (int   argc,
     for ( MFIter mfi(mf,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 	/* Prints to follow the computation */
         /* ADVANCE */
-        Real time = 0.0;
-        Real dt_incr   = dt/ndt;
-	Real fc_tmp;
 
         const Box& box = mfi.tilebox();
 	int ncells     = box.numPts();
@@ -436,32 +434,37 @@ main (int   argc,
         
 
         /* Solve */
+        Real fc_tmp;
         BL_PROFILE_VAR_START(ReactInLoop);
-	for(int i = 0; i < ncells; i+=ode_ncells) {
-	    time = 0.0;
-	    for (int ii = 0; ii < ndt; ++ii) {
+        for(int i = 0; i < ncells; i+=ode_ncells) {
+           Real time      = 0.0;
+           Real dt_incr   = dt/ndt;
+           Real fc_tmp_lcl = 0.0;
+           for (int ii = 0; ii < ndt; ++ii) {
 #ifndef USE_CUDA_SUNDIALS_PP
     #if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
-	        fc_tmp = react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
-		               tmp_vect_energy + i, tmp_src_vect_energy + i,
-		               &dt_incr, &time);
+	        fc_tmp_lcl = react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
+		                   tmp_vect_energy + i, tmp_src_vect_energy + i,
+		                   &dt_incr, &time);
+
     #else
                 double pressure = 1013250.0;
-	        fc_tmp = react(tmp_vect+i*(NUM_SPECIES+1), tmp_src_vect+i*NUM_SPECIES,
-		               tmp_vect_energy+i, tmp_src_vect_energy+i,
-			       &pressure,
-		               &dt_incr, &time);
+	        fc_tmp_lcl = react(tmp_vect+i*(NUM_SPECIES+1), tmp_src_vect+i*NUM_SPECIES,
+		                   tmp_vect_energy+i, tmp_src_vect_energy+i,
+			           &pressure,
+		                   &dt_incr, &time);
     #endif
 #else
 
-	        fc_tmp = react(tmp_vect, tmp_src_vect,
-	                    tmp_vect_energy, tmp_src_vect_energy,
-	                    &dt_incr, &time,
-                            &ode_iE, &ncells, amrex::Gpu::gpuStream());
+	        fc_tmp_lcl = react(tmp_vect, tmp_src_vect,
+	                           tmp_vect_energy, tmp_src_vect_energy,
+	                           &dt_incr, &time,
+                                   &ode_iE, &ncells, amrex::Gpu::gpuStream());
 #endif
 	        //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)]);
 	        dt_incr =  dt/ndt;
-	    }
+		fc_tmp = fc_tmp_lcl;
+           }
         }
         BL_PROFILE_VAR_STOP(ReactInLoop);
 
