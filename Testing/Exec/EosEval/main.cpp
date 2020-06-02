@@ -152,7 +152,6 @@ main (int   argc,
       std::string outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
       PlotFileFromMF(VarPlt,outfile);
 
-#endif
       EOS::close();
 
     }

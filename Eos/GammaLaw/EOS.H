@@ -236,6 +236,7 @@ AMREX_FORCE_INLINE
 void
 TY2H(amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& H)
 {
+  amrex::Real Hi[NUM_SPECIES];
   amrex::Real wbar = AIRMW;
   const amrex::Real Cv = RU / (wbar * (gamma - 1.0)); 
   H = 0.0;
