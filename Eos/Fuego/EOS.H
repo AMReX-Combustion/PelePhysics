@@ -16,6 +16,8 @@ constexpr amrex::Real PATM = 1.01325e+06;
 
 void init();
 
+void close();
+
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
@@ -37,11 +39,7 @@ AMREX_FORCE_INLINE
 void
 TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
 {
-  amrex::Real tmp[NUM_SPECIES];
-  CKCPMS(&T, tmp);
-  Cp = 0.0;
-  for (int i = 0; i < NUM_SPECIES; ++i)
-    Cp += Y[i] * tmp[i];
+  CKCPBS(&T, Y, &Cp);
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -49,11 +47,7 @@ AMREX_FORCE_INLINE
 void
 TY2Cv(amrex::Real T, amrex::Real Y[], amrex::Real& Cv)
 {
-  amrex::Real tmp[NUM_SPECIES];
-  CKCVMS(&T, tmp);
-  Cv = 0.0;
-  for (int i = 0; i < NUM_SPECIES; ++i)
-    Cv += Y[i] * tmp[i];
+  CKCVBS(&T, Y, &Cv);
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -215,7 +209,7 @@ X2Y(amrex::Real X[], amrex::Real Y[])
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-PYTR2E(
+PYT2RE(
   amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real& R, amrex::Real& E)
 {
   CKRHOY(&P, &T, Y, &R);
@@ -267,6 +261,18 @@ TY2G(amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
   CKMMWY(&Y[0], &wbar);
   Cvx = wbar * Cv;
   G = (Cvx + EOS::RU) / Cvx;
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+TY2H(amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& H)
+{
+  amrex::Real hi[NUM_SPECIES];
+  CKHMS(&T, hi);
+  H = 0.0;
+  for (int n = 0; n < NUM_SPECIES; n++)
+    H += Y[n] * hi[n];
 }
 
 AMREX_GPU_HOST_DEVICE

@@ -8,13 +8,15 @@ DIM        = 2
 COMP	   = gcc
 FCOMP	   = gfortran
 
-USE_MPI    = FALSE
+USE_MPI    = TRUE
 USE_OMP    = TRUE
 
 FUEGO_GAS  = TRUE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
+
+TRANSPORT_CPP = FALSE
 
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego

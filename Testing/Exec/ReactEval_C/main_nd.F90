@@ -34,7 +34,7 @@ contains
     ! extern_probin_module
     call runtime_init(name,namlen)
 
-    call ckinit()
+    call network_init()
 
     call eos_init(small_temp, small_dens)
 
@@ -53,25 +53,14 @@ contains
   end subroutine extern_close
 
 
-  subroutine get_num_spec(nspecies_out) bind(C, name="get_num_spec")
-
-    implicit none
-
-    integer, intent(out) :: nspecies_out
-
-    nspecies_out = NUM_SPECIES
-
-  end subroutine get_num_spec
-
-
-  subroutine initialize_data( &
+  subroutine initialize_data_F( &
        lo,hi, &
        rhoY,         rY_lo, rY_hi, &
        rhoY_src,     rY_src_lo, rY_src_hi, &
        rhoE,         rE_lo, rE_hi, &
        rhoEs,        rEs_lo, rEs_hi, &
        dx, plo, phi) &
-       bind(C, name="initialize_data")
+       bind(C, name="initialize_data_F")
 
     use amrex_constants_module, only: M_PI, HALF, ONE, TWO, ZERO
     use eos_type_module
@@ -154,6 +143,6 @@ contains
 
     call destroy(eos_state)
 
-  end subroutine initialize_data
+  end subroutine initialize_data_F
 
 end module main_module

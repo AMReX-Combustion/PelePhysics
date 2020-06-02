@@ -5,11 +5,11 @@
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
 
+#include <main_F.H>
 #include <PlotFileFromMF.H>
 #include "mechanism.h"
-#include <GPU_misc.H>
 
-#include <EOS.H>
+std::string inputs_name = "";
 
 using namespace amrex;
 
@@ -21,8 +21,16 @@ main (int   argc,
     {
 
       ParmParse pp;
+    
+      std::string probin_file = "probin";
+      pp.query("probin_file",probin_file);
+      int probin_file_length = probin_file.length();
+      std::vector<int> probin_file_name(probin_file_length);
 
-      EOS::init();
+      for (int i = 0; i < probin_file_length; i++)
+	probin_file_name[i] = probin_file[i];
+
+      extern_init(&(probin_file_name[0]),&probin_file_length);
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {
@@ -44,7 +52,7 @@ main (int   argc,
       ba.maxSize(max_size);
 
       ParmParse ppa("amr");
-      std::string pltfile("plt");  
+      std::string pltfile("plt");
       ppa.query("plot_file",pltfile);
 
       DistributionMapping dm{ba};
@@ -60,21 +68,14 @@ main (int   argc,
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-      for (MFIter mfi(mass_frac,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-
-	const Box& gbox = mfi.tilebox();
-
-	Array4<Real> const& Y_a    = mass_frac.array(mfi);
-	Array4<Real> const& T_a    = temperature.array(mfi);
-	Array4<Real> const& rho_a  = density.array(mfi);
-	Array4<Real> const& e_a    = energy.array(mfi);
-
-	amrex::ParallelFor(gbox, 
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-		initialize_data(i, j, k, Y_a, T_a, rho_a, e_a ,
-				dx, plo, phi);
-	});
-
+      for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
+	const Box& box = mfi.tilebox();
+	initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
+			BL_TO_FORTRAN_N_3D(mass_frac[mfi],0),
+			BL_TO_FORTRAN_N_3D(temperature[mfi],0),
+			BL_TO_FORTRAN_N_3D(density[mfi],0),
+			BL_TO_FORTRAN_N_3D(energy[mfi],0),
+			&(dx[0]), &(plo[0]), &(phi[0]));
       }
 
       // Plot init state for debug purposes
@@ -92,59 +93,37 @@ main (int   argc,
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-      for (MFIter mfi(mass_frac,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-
-	const Box& gbox = mfi.tilebox();
-
-	Array4<Real> const& Y_a    = mass_frac.array(mfi);
-	Array4<Real> const& T_a    = temperature.array(mfi);
-	Array4<Real> const& cp_a   = cp.array(mfi);
-
-	amrex::ParallelFor(gbox, 
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-	    get_cp(i, j, k, 
-	           Y_a, T_a, cp_a);
-	});
+      for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
+	const Box& box = mfi.tilebox();
+	get_cp(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
+	       BL_TO_FORTRAN_N_3D(mass_frac[mfi],0),
+	       BL_TO_FORTRAN_N_3D(temperature[mfi],0),
+	       BL_TO_FORTRAN_N_3D(cp[mfi],0));
       }
       MultiFab::Copy(VarPlt,cp,0,0,1,num_grow);
 
-
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-      for (MFIter mfi(mass_frac,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-
-	const Box& gbox = mfi.tilebox();
-
-	Array4<Real> const& Y_a    = mass_frac.array(mfi);
-	Array4<Real> const& T_a    = temperature.array(mfi);
-	Array4<Real> const& cv_a   = cv.array(mfi);
-
-	amrex::ParallelFor(gbox, 
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-	    get_cv(i, j, k, 
-	           Y_a, T_a, cv_a);
-	});
+      for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
+	const Box& box = mfi.tilebox();
+	get_cv(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
+	       BL_TO_FORTRAN_N_3D(mass_frac[mfi],0),
+	       BL_TO_FORTRAN_N_3D(temperature[mfi],0),
+	       BL_TO_FORTRAN_N_3D(cv[mfi],0));
       }
       MultiFab::Copy(VarPlt,cv,0,1,1,num_grow);
 
-      
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-      for (MFIter mfi(mass_frac,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-
-	const Box& gbox = mfi.tilebox();
-
-	Array4<Real> const& Y_a    = mass_frac.array(mfi);
-	Array4<Real> const& T_a    = temperature.array(mfi);
-	Array4<Real> const& e_a    = energy.array(mfi);
-
-	amrex::ParallelFor(gbox, 
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-	    get_T_from_EY(i, j, k, 
-	           Y_a, T_a, e_a);
-	});
+      for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
+	const Box& box = mfi.tilebox();
+	get_T_from_EY(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
+	       BL_TO_FORTRAN_N_3D(mass_frac[mfi],0),
+	       BL_TO_FORTRAN_N_3D(temperature[mfi],0),
+	       BL_TO_FORTRAN_N_3D(density[mfi],0),
+	       BL_TO_FORTRAN_N_3D(energy[mfi],0));
       }
       MultiFab::Copy(VarPlt,temperature,0,2,1,num_grow);
       MultiFab::Copy(VarPlt,energy,0,3,1,num_grow);
@@ -152,7 +131,7 @@ main (int   argc,
       std::string outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
       PlotFileFromMF(VarPlt,outfile);
 
-      EOS::close();
+      extern_close();
 
     }
 

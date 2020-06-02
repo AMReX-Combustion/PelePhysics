@@ -11,14 +11,15 @@
 
 using namespace amrex;
 
-#include <Transport_F.H>
 #include <main_F.H>
 #include <PlotFileFromMF.H>
+#include <EOS.H>
+#include <GPU_misc.H> 
 
 #if defined(USE_SUNDIALS_PP)
 // ARKODE or CVODE
+  #include <Transport.H>
   #if defined(USE_CUDA_SUNDIALS_PP)
-    #include <GPU_misc.H> 
   #endif
   #ifdef USE_ARKODE_PP
     #include <actual_CARKODE.h>
@@ -27,10 +28,12 @@ using namespace amrex;
   #endif
 #else
   #if defined(USE_RK64_PP)
+  #include <Transport.H>
 // Expl RK solver
     #include <actual_CRK64.h>
   #else
 // DVODE
+    #include <Transport_F.H>
     #include <actual_reactor.H> 
   #endif
 #endif
@@ -62,13 +65,8 @@ main (int   argc,
     {
 
     int max_grid_size = 16;
-    std::string probin_file="probin";
-    std::string fuel_name="none";
     std::string pltfile("plt");
-    /* Mixture info */
-    int fuel_idx   = -1;
-    int oxy_idx    = -1;
-    int bath_idx   = -1;
+    std::string fuel_name="none";
     /* ODE inputs */
     int ode_ncells = 1;
     int ode_iE     = -1;
@@ -77,17 +75,25 @@ main (int   argc,
     Real dt        = 1.e-5;
 #ifdef USE_SUNDIALS_PP
     /* ARKODE parameters for now but should be for all solvers */
-    Real rtol=1e-9;
-    Real atol=1e-9;
+    Real rtol=1e-10;
+    Real atol=1e-10;
     int use_typ_vals = 0;
 #endif
 
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
     {
       /* ParmParse from the inputs file */
       ParmParse pp;
       
+#else
+    std::string probin_file="probin";
+    {
+      /* ParmParse from the inputs file */
+      ParmParse pp;
+
       // probin file
       pp.query("probin_file",probin_file);
+#endif
 
       // domain size
       pp.query("max_grid_size",max_grid_size);
@@ -129,6 +135,9 @@ main (int   argc,
 
     }
 
+    ParmParse ppa("amr");
+    ppa.query("plot_file",pltfile);
+
     /* PRINT ODE INFO */
     amrex::Print() << "ODE solver: ";
 #ifdef USE_SUNDIALS_PP
@@ -151,32 +160,38 @@ main (int   argc,
     amrex::Print() << std::endl;
 
     amrex::Print() << "Fuel: ";
+    amrex::Print() << fuel_name << ", Oxy: O2";
+    amrex::Print() << std::endl;
 
+    /* Mixture info */
+    int fuel_idx   = -1;
+    int oxy_idx    = -1;
+    int bath_idx   = -1;
+    if (fuel_name == "H2") {
+        fuel_idx  = H2_ID;
+#ifdef CH4_ID
+    } else if (fuel_name == "CH4") {
+        fuel_idx  = CH4_ID;
+#endif
+#ifdef NC12H26_ID
+    } else if (fuel_name == "NC12H26") {
+        fuel_idx  = NC12H26_ID;
+#endif
+    }
+    oxy_idx   = O2_ID;
+    bath_idx  = N2_ID;
+
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
+      EOS::init();
+      transport_init();
+#else
     /* take care of probin init to initialize problem */
     int probin_file_length = probin_file.length();
     std::vector<int> probin_file_name(probin_file_length);
     for (int i = 0; i < probin_file_length; i++)
 	    probin_file_name[i] = probin_file[i];
-    if (fuel_name == "H2") {
-        fuel_idx  = H2_ID;
-        amrex::Print() << fuel_name << ", Oxy: O2";
-        amrex::Print() << std::endl;
-#ifdef CH4_ID
-    } else if (fuel_name == "CH4") {
-        fuel_idx  = CH4_ID;
-        amrex::Print() << fuel_name << ", Oxy: O2";
-        amrex::Print() << std::endl;
-#endif
-#ifdef NC12H26_ID
-    } else if (fuel_name == "NC12H26") {
-        fuel_idx  = NC12H26_ID;
-        amrex::Print() << fuel_name << ", Oxy: O2";
-        amrex::Print() << std::endl;
-#endif
-    }
-    oxy_idx   = O2_ID;
-    bath_idx  = N2_ID;
     extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx,&ode_iE);
+#endif
 
     BL_PROFILE_VAR("reactor_info()", reactInfo);
 
@@ -258,23 +273,40 @@ main (int   argc,
     BL_PROFILE_VAR("initialize_data()", InitData);
 
     /* INITIALIZE DATA */
-#ifndef USE_CUDA_SUNDIALS_PP
-    IntVect tilesize(D_DECL(10240,8,32));
+#ifdef USE_CUDA_SUNDIALS_PP
+    int count_mf = 0;
+#endif
+    IntVect tilesize(D_DECL(1024,1024,1024));
+    FabArrayBase::mfiter_tile_size = tilesize;
 #ifdef _OPENMP
 #pragma omp parallel 
 #endif
-    for (MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi ){
+    for (MFIter mfi(mf,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
+	const Box& gbox = mfi.tilebox();
+
+	Array4<Real> const& rY_a    = mf.array(mfi);
+	Array4<Real> const& rYs_a   = rY_source_ext.array(mfi);
+	Array4<Real> const& E_a     = mfE.array(mfi);
+	Array4<Real> const& rE_a    = rY_source_energy_ext.array(mfi);
+
+	amrex::ParallelFor(gbox,
+	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+	        initialize_data(i, j, k, fuel_idx, 
+				rY_a, rYs_a, E_a, rE_a,
+				dx, plo, phi);
+        });
 #else
-    int count_mf = 0;
-    for (MFIter mfi(mf,false); mfi.isValid(); ++mfi ){
-#endif
         const Box& box = mfi.tilebox();
-        initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
+        initialize_data_F(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
                		BL_TO_FORTRAN_N_3D(mf[mfi],0),
                		BL_TO_FORTRAN_N_3D(rY_source_ext[mfi],0),
 		        BL_TO_FORTRAN_N_3D(mfE[mfi],0),
 		        BL_TO_FORTRAN_N_3D(rY_source_energy_ext[mfi],0),
 			&(dx[0]), &(plo[0]), &(phi[0]));
+#endif
+
 #ifdef USE_CUDA_SUNDIALS_PP
 	count_mf = count_mf + 1;
 #endif
@@ -290,19 +322,14 @@ main (int   argc,
     ParallelDescriptor::ReduceRealMax(timer_initialize_stop,IOProc);
 
     BL_PROFILE_VAR("PlotFileFromMF()", PlotFile);
-
-    ParmParse ppa("amr");
-    ppa.query("plot_file",pltfile);
     std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
     // Specs
     PlotFileFromMF(mf,outfile);
-
     BL_PROFILE_VAR_STOP(PlotFile);
 
     /* EVALUATE */
     amrex::Print() << " \n STARTING THE ADVANCE \n";
 
-#ifdef USE_CUDA_SUNDIALS_PP
     BL_PROFILE_VAR("Malloc()", Allocs);
     BL_PROFILE_VAR_STOP(Allocs);
 
@@ -311,27 +338,18 @@ main (int   argc,
 
     BL_PROFILE_VAR("(un)flatten()", FlatStuff);
     BL_PROFILE_VAR_STOP(FlatStuff);
-#endif
 
     BL_PROFILE_VAR("advance()", Advance);
 
     timer_adv = ParallelDescriptor::second();
     ParallelDescriptor::ReduceRealMax(timer_adv,IOProc);
 
-#ifndef USE_CUDA_SUNDIALS_PP
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-    for ( MFIter mfi(mf,tilesize); mfi.isValid(); ++mfi )
-#else
-    for ( MFIter mfi(mf,false); mfi.isValid(); ++mfi )
-#endif
-    {
+    for ( MFIter mfi(mf,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 	/* Prints to follow the computation */
         /* ADVANCE */
-        Real time = 0.0;
-        Real dt_incr   = dt/ndt;
-	Real fc_tmp;
 
         const Box& box = mfi.tilebox();
 	int ncells     = box.numPts();
@@ -339,23 +357,22 @@ main (int   argc,
 	const auto len     = amrex::length(box);
 	const auto lo      = amrex::lbound(box);
 
-#ifdef USE_CUDA_SUNDIALS_PP
-        std::cout<<"stream "<<amrex::Gpu::gpuStream()<<std::endl;
+	Array4<Real> rhoY    = mf.array(mfi);
+	Array4<Real> rhoE    = mfE.array(mfi);
+	Array4<Real> frcExt  = rY_source_ext.array(mfi);
+	Array4<Real> frcEExt = rY_source_energy_ext.array(mfi);
+	Array4<Real> fc      = fctCount.array(mfi);
 
+#ifdef USE_CUDA_SUNDIALS_PP
         cudaError_t cuda_status = cudaSuccess;
         const auto ec = Gpu::ExecutionConfig(ncells);
+	ode_ncells    = ncells;
 #endif
-        /* VERSION 2 */
-        const auto rhoY    = mf.array(mfi);
-        const auto rhoE    = mfE.array(mfi);
-        const auto frcExt  = rY_source_ext.array(mfi);
-        const auto frcEExt = rY_source_energy_ext.array(mfi);
-        const auto fc      = fctCount.array(mfi);
 
+	amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
 
-#ifdef USE_CUDA_SUNDIALS_PP
-	amrex::Print() << " Integrating " << ncells <<" cells \n";
-        /* Pack the data */
+	/* ALLOCS */
+	BL_PROFILE_VAR_START(Allocs);
 	// rhoY,T
         amrex::Real *tmp_vect; 
 	// rhoY_src_ext
@@ -363,49 +380,112 @@ main (int   argc,
 	// rhoE/rhoH
         amrex::Real *tmp_vect_energy;
 	amrex::Real *tmp_src_vect_energy;
-        
-	BL_PROFILE_VAR_START(Allocs);
+
+#ifdef USE_CUDA_SUNDIALS_PP
         cudaMallocManaged(&tmp_vect, (Ncomp+1)*ncells*sizeof(amrex::Real));
         cudaMallocManaged(&tmp_src_vect, Ncomp*ncells*sizeof(amrex::Real));
         cudaMallocManaged(&tmp_vect_energy, ncells*sizeof(amrex::Real));
         cudaMallocManaged(&tmp_src_vect_energy, ncells*sizeof(amrex::Real));
+#else
+	tmp_vect            =  new amrex::Real[ncells*(NUM_SPECIES+1)];
+	tmp_src_vect        =  new amrex::Real[ncells*(NUM_SPECIES)];
+	tmp_vect_energy     =  new amrex::Real[ncells];
+	tmp_src_vect_energy =  new amrex::Real[ncells];
+#endif
 	BL_PROFILE_VAR_STOP(Allocs);
 
-        BL_PROFILE_VAR_START(FlatStuff);
+
+
         /* Packing of data */
+        BL_PROFILE_VAR_START(FlatStuff);
+#ifndef USE_CUDA_SUNDIALS_PP
+	amrex::ParallelFor(box, [=]
+		AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+			int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+			for(int sp=0; sp<NUM_SPECIES; sp++) {
+			    tmp_vect[icell*(NUM_SPECIES+1)+sp]     = rhoY(i,j,k,sp);
+			    tmp_src_vect[icell*NUM_SPECIES+sp]     = frcExt(i,j,k,sp);
+			}
+			tmp_vect[icell*(NUM_SPECIES+1)+NUM_SPECIES] = rhoY(i,j,k,NUM_SPECIES);
+			tmp_vect_energy[icell]                      = rhoE(i,j,k,0);
+			tmp_src_vect_energy[icell]                  = frcEExt(i,j,k,0);
+	         });
+
+#else
 	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	[=] AMREX_GPU_DEVICE () noexcept {
-	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	        icell < ncells; icell += stride) {
-	        int k =  icell /   (len.x*len.y);
-		int j = (icell - k*(len.x*len.y)) /   len.x;
-		int i = (icell - k*(len.x*len.y)) - j*len.x;
-		i += lo.x;
-		j += lo.y;
-		k += lo.z;
-                gpu_flatten(icell, i, j, k, rhoY, frcExt, rhoE, frcEExt, 
-                                            tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
-            }
-        });
-	BL_PROFILE_VAR_STOP(FlatStuff);
-        
+	    [=] AMREX_GPU_DEVICE () noexcept {
+	        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+	                         icell < ncells; icell += stride) {
+	            int k =  icell /   (len.x*len.y);
+		    int j = (icell - k*(len.x*len.y)) /   len.x;
+		    int i = (icell - k*(len.x*len.y)) - j*len.x;
+		    i += lo.x;
+		    j += lo.y;
+		    k += lo.z;
+                    gpu_flatten(icell, i, j, k, rhoY, frcExt, rhoE, frcEExt, 
+                                tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
+                }
+            });
+
         cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
+#endif
+	BL_PROFILE_VAR_STOP(FlatStuff);
+
+        
 
         /* Solve */
+        Real fc_tmp;
         BL_PROFILE_VAR_START(ReactInLoop);
-	time = 0.0;
-	for (int ii = 0; ii < ndt; ++ii) {
-	    fc_tmp = react(tmp_vect, tmp_src_vect,
-	                    tmp_vect_energy, tmp_src_vect_energy,
-	                    &dt_incr, &time,
-                            &ode_iE, &ncells, amrex::Gpu::gpuStream());
-	    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)]);
-	    dt_incr =  dt/ndt;
+        for(int i = 0; i < ncells; i+=ode_ncells) {
+           Real time      = 0.0;
+           Real dt_incr   = dt/ndt;
+           Real fc_tmp_lcl = 0.0;
+           for (int ii = 0; ii < ndt; ++ii) {
+#ifndef USE_CUDA_SUNDIALS_PP
+    #if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
+	        fc_tmp_lcl = react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
+		                   tmp_vect_energy + i, tmp_src_vect_energy + i,
+		                   &dt_incr, &time);
+
+    #else
+                double pressure = 1013250.0;
+	        fc_tmp_lcl = react(tmp_vect+i*(NUM_SPECIES+1), tmp_src_vect+i*NUM_SPECIES,
+		                   tmp_vect_energy+i, tmp_src_vect_energy+i,
+			           &pressure,
+		                   &dt_incr, &time);
+    #endif
+#else
+
+	        fc_tmp_lcl = react(tmp_vect, tmp_src_vect,
+	                           tmp_vect_energy, tmp_src_vect_energy,
+	                           &dt_incr, &time,
+                                   &ode_iE, &ncells, amrex::Gpu::gpuStream());
+#endif
+	        //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)]);
+	        dt_incr =  dt/ndt;
+		fc_tmp = fc_tmp_lcl;
+           }
         }
         BL_PROFILE_VAR_STOP(ReactInLoop);
 
-        BL_PROFILE_VAR_START(FlatStuff);
+
+
+
         /* Unpacking of data */
+        BL_PROFILE_VAR_START(FlatStuff);
+#ifndef USE_CUDA_SUNDIALS_PP
+	amrex::ParallelFor(box, [=]
+		AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+			int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+			for(int sp=0; sp<NUM_SPECIES; sp++) {
+			    rhoY(i,j,k,sp) = tmp_vect[icell*(NUM_SPECIES+1)+sp];
+			}
+			rhoY(i,j,k,NUM_SPECIES) = tmp_vect[icell*(NUM_SPECIES+1) + NUM_SPECIES];
+			rhoE(i,j,k,0)           = tmp_vect_energy[icell];
+			fc(i,j,k,0)             = fc_tmp;
+	         });
+
+#else
 	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
 	[=] AMREX_GPU_DEVICE () noexcept {
 	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
@@ -420,87 +500,25 @@ main (int   argc,
                                             tmp_vect, tmp_vect_energy);
             }
         });
+
+        cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
+#endif
         BL_PROFILE_VAR_STOP(FlatStuff);
 
+
+
+	/* Deallocate */
+#ifdef USE_CUDA_SUNDIALS_PP 
         cudaFree(tmp_vect);
         cudaFree(tmp_src_vect);
         cudaFree(tmp_vect_energy);
         cudaFree(tmp_src_vect_energy);
        
-        cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
 #else
-
-	amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
-        /* Pack the data */
-	// rhoY,T
-	double tmp_vect[ode_ncells*(Ncomp+1)];
-	// rhoY_src_ext
-	double tmp_src_vect[ode_ncells*(Ncomp)];
-	// rhoE/rhoH
-	double tmp_vect_energy[ode_ncells];
-	double tmp_src_vect_energy[ode_ncells];
-
-	int indx_i[ode_ncells];
-	int indx_j[ode_ncells];
-	int indx_k[ode_ncells];
-	
-	int nc = 0;
-	int num_cell_ode_int = 0;
-	for         (int k = 0; k < len.z; ++k) {
-	    for         (int j = 0; j < len.y; ++j) {
-	        for         (int i = 0; i < len.x; ++i) {
-		    /* Fill the vectors */
-	            for (int sp=0;sp<Ncomp; sp++){
-	                tmp_vect[nc*(Ncomp+1) + sp]   = rhoY(i+lo.x,j+lo.y,k+lo.z,sp);
-		        tmp_src_vect[nc*Ncomp + sp]   = frcExt(i+lo.x,j+lo.y,k+lo.z,sp);
-		    }
-		    tmp_vect[nc*(Ncomp+1) + Ncomp]    = rhoY(i+lo.x,j+lo.y,k+lo.z,Ncomp);
-		    tmp_vect_energy[nc]               = rhoE(i+lo.x,j+lo.y,k+lo.z,0);
-		    tmp_src_vect_energy[nc]           = frcEExt(i+lo.x,j+lo.y,k+lo.z,0);
-		    //
-		    indx_i[nc] = i+lo.x;
-		    indx_j[nc] = j+lo.y;
-		    indx_k[nc] = k+lo.z;
-		    //
-		    nc = nc+1;
-		    //
-		    num_cell_ode_int = num_cell_ode_int + 1;
-		    if (nc == ode_ncells) {
-			time = 0.0;
-			dt_incr =  dt/ndt;
-			for (int ii = 0; ii < ndt; ++ii) {
-#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
-	                    fc_tmp = react(tmp_vect, tmp_src_vect,
-		                tmp_vect_energy, tmp_src_vect_energy,
-		                &dt_incr, &time);
-#else
-                            double pressure = 1013250.0;
-	                    fc_tmp = react(tmp_vect, tmp_src_vect,
-		                tmp_vect_energy, tmp_src_vect_energy,
-				&pressure,
-		                &dt_incr, &time);
-#endif
-		            dt_incr =  dt/ndt;
-			    //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp]);
-			}
-		        nc = 0;
-		        for (int l = 0; l < ode_ncells ; ++l){
-		            for (int sp=0;sp<Ncomp; sp++){
-		                rhoY(indx_i[l],indx_j[l],indx_k[l],sp) = tmp_vect[l*(Ncomp+1) + sp];
-		            }
-		            rhoY(indx_i[l],indx_j[l],indx_k[l],Ncomp)  = tmp_vect[l*(Ncomp+1) + Ncomp];
-		            rhoE(indx_i[l],indx_j[l],indx_k[l],0)      = tmp_vect_energy[l];
-			    fc(indx_i[l],indx_j[l],indx_k[l],0)        = fc_tmp;
-		        }
-		    }
-		}
-	    }
-	}
-	if (nc != 0) {
-		printf(" WARNING !! Not enough cells (%d) to fill %d \n", nc, ode_ncells);
-	} else {
-		printf(" Integrated %d cells \n",num_cell_ode_int);
-	}
+	delete(tmp_vect);
+	delete(tmp_src_vect);
+	delete(tmp_vect_energy);
+	delete(tmp_src_vect_energy);
 #endif
 
     }
@@ -514,17 +532,20 @@ main (int   argc,
     ParallelDescriptor::ReduceRealMax(timer_print,IOProc);
 
     BL_PROFILE_VAR_START(PlotFile);
-
     outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
     // Specs
     PlotFileFromMF(mf,outfile);
-
     BL_PROFILE_VAR_STOP(PlotFile);
 
     timer_print_stop = ParallelDescriptor::second();
     ParallelDescriptor::ReduceRealMax(timer_print_stop,IOProc);
     
+#if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
+    EOS::close();
+    transport_close();
+#else
     extern_close();
+#endif
 
     }
 

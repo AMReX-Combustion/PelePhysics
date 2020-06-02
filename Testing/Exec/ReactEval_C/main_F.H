@@ -14,16 +14,13 @@ extern "C"
 
     void extern_close();
 
-    void get_num_spec(int* nspecies);
-
-    void initialize_data
+    void initialize_data_F
     (const int* lo, const int* hi,
      const BL_FORT_FAB_ARG_3D(massfraction),
      const BL_FORT_FAB_ARG_3D(rY_src_ext),
      const BL_FORT_FAB_ARG_3D(energy),
      const BL_FORT_FAB_ARG_3D(energy_src_ext),
      const Real* dx, const Real* plo, const Real* phi);
-
 }
 
 #endif // _main_F_H_

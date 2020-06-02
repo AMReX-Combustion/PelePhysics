@@ -5,12 +5,12 @@
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
 
-#include <Transport.H>
+#include <Transport_F.H>
+#include <main_F.H>
 #include <PlotFileFromMF.H>
 #include "mechanism.h"
-#include <GPU_misc.H>
 
-#include <EOS.H>
+std::string inputs_name = "";
 
 using namespace amrex;
 
@@ -22,9 +22,16 @@ main (int   argc,
     {
 
       ParmParse pp;
+    
+      std::string probin_file = "probin";
+      pp.query("probin_file",probin_file);
+      int probin_file_length = probin_file.length();
+      std::vector<int> probin_file_name(probin_file_length);
 
-      EOS::init();
-      transport_init();
+      for (int i = 0; i < probin_file_length; i++)
+	probin_file_name[i] = probin_file[i];
+
+      extern_init(&(probin_file_name[0]),&probin_file_length);
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {
@@ -61,20 +68,13 @@ main (int   argc,
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-      for (MFIter mfi(mass_frac,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-
-	const Box& gbox = mfi.tilebox();
-
-	Array4<Real> const& Y_a    = mass_frac.array(mfi);
-	Array4<Real> const& T_a    = temperature.array(mfi);
-	Array4<Real> const& rho_a  = density.array(mfi);
-
-	amrex::ParallelFor(gbox, 
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-		initialize_data(i, j, k, Y_a, T_a, rho_a, 
-				dx, plo, phi);
-	});
-
+      for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
+	const Box& box = mfi.tilebox();
+	initialize_data(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
+			BL_TO_FORTRAN_N_3D(mass_frac[mfi],0),
+			BL_TO_FORTRAN_N_3D(temperature[mfi],0),
+			BL_TO_FORTRAN_N_3D(density[mfi],0),
+			&(dx[0]), &(plo[0]), &(phi[0]));
       }
 
       // Plot init state for debug purposes
@@ -85,44 +85,27 @@ main (int   argc,
       //std::string initfile = amrex::Concatenate(pltfile,99); // Need a number other than zero for reg test to pass
       //PlotFileFromMF(VarPltInit,initfile);
 
-      MultiFab D(ba,dm,NUM_SPECIES,num_grow);
-      MultiFab mu(ba,dm,1,num_grow);
-      MultiFab xi(ba,dm,1,num_grow);
-      MultiFab lam(ba,dm,1,num_grow);
+      MultiFab D(ba,dm,NUM_SPECIES+3,num_grow);
 
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-      for (MFIter mfi(mass_frac,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-
-	const Box& gbox = mfi.tilebox();
-
-	Array4<Real> const& Y_a    = mass_frac.array(mfi);
-	Array4<Real> const& T_a    = temperature.array(mfi);
-	Array4<Real> const& rho_a  = density.array(mfi);
-	Array4<Real> const& D_a    = D.array(mfi);
-	Array4<Real> const& mu_a   = mu.array(mfi);
-	Array4<Real> const& xi_a   = xi.array(mfi);
-	Array4<Real> const& lam_a  = lam.array(mfi);
-
-	amrex::launch(gbox, [=] AMREX_GPU_DEVICE(amrex::Box const& tbx) {
-		get_transport_coeffs(tbx,
-				Y_a, T_a, rho_a, 
-				D_a, mu_a, xi_a, lam_a);
-	});
+      for (MFIter mfi(mass_frac,tilesize); mfi.isValid(); ++mfi) {
+	const Box& box = mfi.tilebox();
+	get_transport_coeffs_F(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
+			     BL_TO_FORTRAN_N_3D(mass_frac[mfi],0),
+			     BL_TO_FORTRAN_N_3D(temperature[mfi],0),
+			     BL_TO_FORTRAN_N_3D(density[mfi],0),
+			     BL_TO_FORTRAN_N_3D(D[mfi],0),
+			     BL_TO_FORTRAN_N_3D(D[mfi],NUM_SPECIES),
+			     BL_TO_FORTRAN_N_3D(D[mfi],NUM_SPECIES+1),
+			     BL_TO_FORTRAN_N_3D(D[mfi],NUM_SPECIES+2));
       }
 
-      transport_close();
-      EOS::close();
-
-      MultiFab VarPlt(ba,dm,NUM_SPECIES+3,num_grow);
-      MultiFab::Copy(VarPlt,D,0,0,NUM_SPECIES,num_grow);
-      MultiFab::Copy(VarPlt,mu,0,NUM_SPECIES,1,num_grow);
-      MultiFab::Copy(VarPlt,xi,0,NUM_SPECIES+1,1,num_grow);
-      MultiFab::Copy(VarPlt,lam,0,NUM_SPECIES+2,1,num_grow);
-
       std::string outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
-      PlotFileFromMF(VarPlt,outfile);
+      PlotFileFromMF(D,outfile);
+
+      extern_close();
 
     }
 
