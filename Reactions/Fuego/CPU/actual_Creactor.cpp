@@ -105,7 +105,15 @@ void SetTolFactODE(double relative_tol,double absolute_tol) {
 /* Function to ReSet the Tolerances */
 void ReSetTolODE() {
 	if (data==NULL) {
-                amrex::Abort("Reactor object is not initialized !!");
+#ifdef _OPENMP
+            if (omp_get_thread_num() == 0) {
+		amrex::Abort("Reactor object is not initialized !!");
+	    } else {
+                amrex::Abort();
+	    }
+#else
+            amrex::Abort("Reactor object is not initialized !!");
+#endif
 	}
 
 	int neq_tot;
@@ -145,7 +153,9 @@ void ReSetTolODE() {
 	/* Call CVodeSVtolerances to specify the scalar relative tolerance
 	 * and vector absolute tolerances */
 	int flag = CVodeSVtolerances(cvode_mem, relTol, atol);
-	if (check_flag(&flag, "CVodeSVtolerances", 1)) amrex::Abort("Problem in ReSetTolODE");
+	if (check_flag(&flag, "CVodeSVtolerances", 1)) { 
+	    amrex::Abort("Problem in ReSetTolODE");
+	}
 }
 
 
@@ -310,8 +320,16 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 	    flag = CVodeSetLinearSolver(cvode_mem, LS, A);
 	    if(check_flag(&flag, "CVodeSetLinearSolver", 1)) return(1);
 #else
-            if (data->iverbose > 0) {
+	    if (data->iverbose > 0) {
+#ifdef _OPENMP
+                if (omp_thread == 0) {
+                    amrex::Abort("Sparse solver not valid without KLU solver.");
+	        } else {
+                    amrex::Abort();
+	        }
+#else
                 amrex::Abort("Sparse solver not valid without KLU solver.");
+#endif
 	    }
 #endif
 
@@ -339,7 +357,15 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 	    if(check_flag(&flag, "CVSpilsSetLinearSolver", 1)) return(1);
 	} else {
             if (data->iverbose > 0) {
-                amrex::Abort("Linear solvers availables are: Direct Dense (1), Direct Sparse (5) or Iterative GMRES (99)");
+#ifdef _OPENMP
+                if (omp_thread == 0) {
+	            amrex::Abort("Wrong choice of linear solver...");
+		} else {
+	            amrex::Abort();
+		}
+#else
+            amrex::Abort("Wrong choice of linear solver...");
+#endif
 	    }
 	}
 
@@ -354,10 +380,31 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 #ifdef USE_KLU_PP 
 	    if (data->isolve_type == sparse_solve) {
 		if (data->iverbose > 0) {
+#ifdef _OPENMP
+                    if (omp_thread == 0) {
+		        amrex::Abort("A Sparse Solver should have an Analytical J");
+		    } else {
+		        amrex::Abort();
+		    }
+#else
 	            amrex::Abort("A Sparse Solver should have an Analytical J");
-		}
+#endif
+	        }
 	    }
 #endif
+	    if (data->isolve_type == sparse_solve_custom) {
+		if (data->iverbose > 0) {
+#ifdef _OPENMP
+                    if (omp_thread == 0) {
+	                amrex::Abort("A Sparse Solver should have an Analytical J");
+		    } else {
+		        amrex::Abort();
+		    }
+#else
+	            amrex::Abort("A Sparse Solver should have an Analytical J");
+#endif
+		}
+	    }
 	} else {
 	    if (data->isolve_type == iterative_gmres_solve_custom) {
 		/* Set the JAcobian-times-vector function */
@@ -369,7 +416,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 #else
                 if (data->iverbose > 0) {
 #endif
-			amrex::Print() << "    With a Sparse Preconditioner\n";
+			amrex::Print() << "    With a custom Sparse Preconditioner\n";
 		}
 	        /* Set the preconditioner solve and setup functions */
 	        flag = CVSpilsSetPreconditioner(cvode_mem, Precond_custom, PSolve_custom);
@@ -1678,17 +1725,50 @@ UserData AllocUserData(int reactor_type, int num_cells)
   omp_thread = omp_get_thread_num(); 
 #endif
 
-  /* ParmParse from the inputs file */
-  /* TODO change that in the future */ 
+  /* ParmParse from the inputs file: only done once */
   amrex::ParmParse pp("ode");
   pp.query("analytical_jacobian",data_wk->ianalytical_jacobian);
+  data_wk->iverbose = 1;
+  pp.query("verbose",data_wk->iverbose);
+
+  std::string  solve_type_str = "none";
   amrex::ParmParse ppcv("cvode");
-  ppcv.query("solve_type", data_wk->isolve_type);
-  (data_wk->ireactor_type)      = reactor_type;
+  ppcv.query("solve_type", solve_type_str);
+  /* options are: 
+  dense_solve           = 1;
+  sparse_solve          = 5;
+  iterative_gmres_solve = 99;
+  sparse_solve_custom   = 101;
+  iterative_gmres_solve_custom = 199;
+  hack_dump_sparsity_pattern = -5;
+  */
+  if (solve_type_str == "dense") {
+	  data_wk->isolve_type = dense_solve; 
+  } else if (solve_type_str == "sparse") {
+	  data_wk->isolve_type = sparse_solve;
+  } else if (solve_type_str == "GMRES") {
+	  data_wk->isolve_type = iterative_gmres_solve;
+  } else if (solve_type_str == "sparse_custom") {
+	  data_wk->isolve_type = sparse_solve_custom;
+  } else if (solve_type_str == "GMRES_custom") { 
+	  data_wk->isolve_type = iterative_gmres_solve_custom;
+  } else if (solve_type_str == "diag") {
+	  data_wk->isolve_type = hack_dump_sparsity_pattern;
+  } else {
+#ifdef _OPENMP
+      if (omp_thread == 0) {
+          amrex::Abort("Wrong solve_type. Options are: dense, sparse, GMRES, sparse_custom, GMRES_custom");
+      } else {
+	  amrex::Abort();
+      }
+#else
+      amrex::Abort("Wrong solve_type. Options are: dense, sparse, GMRES, sparse_custom, GMRES_custom");
+#endif
+  }
+
+  (data_wk->ireactor_type)             = reactor_type;
 
   (data_wk->ncells)                    = num_cells;
-
-  (data_wk->iverbose)                  = 1;
 
   (data_wk->FirstTimePrecond)          = true;
   (data_wk->reactor_cvode_initialized) = false;
