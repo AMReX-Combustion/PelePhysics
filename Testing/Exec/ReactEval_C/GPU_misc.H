@@ -17,9 +17,9 @@ initialize_data(int i, int j, int k, int fuel_id,
 		amrex::Array4<amrex::Real> const& frcExt,
 		amrex::Array4<amrex::Real> const& rhoE,
 		amrex::Array4<amrex::Real> const& frcEExt,
-                std::vector<amrex::Real> dx, 
-		std::vector<amrex::Real> plo, 
-		std::vector<amrex::Real> phi ) noexcept
+                amrex::Real * dx, 
+		amrex::Real * plo, 
+		amrex::Real * phi ) noexcept
 {
 	amrex::Real Temp_lo = 2000.0;
 	amrex::Real Temp_hi = 2500.0;

@@ -245,7 +245,14 @@ main (int   argc,
     ba.maxSize(max_grid_size);
 
     /* Additional defs to initialize domain */
+#ifdef USE_CUDA_SUNDIALS_PP
+    Real *plo, *phi, *dx;
+    cudaMallocManaged(&plo, 3*sizeof(amrex::Real));
+    cudaMallocManaged(&phi, 3*sizeof(amrex::Real));
+    cudaMallocManaged(&dx,  3*sizeof(amrex::Real));
+#else
     std::vector<Real> plo(3,0), phi(3,0), dx(3,1);
+#endif
     for (int i=0; i<BL_SPACEDIM; ++i) {
 	plo[i] = 0.0; //(i+1)*0.35;
 	phi[i] = domain.length(i);
