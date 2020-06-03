@@ -1,5 +1,5 @@
-#ifndef _REACTOR_DVODE_H_
-#define _REACTOR_DVODE_H_
+#ifndef _REACTOR_H_
+#define _REACTOR_H_
 
 #include <AMReX_ArrayLim.H>
 #include <AMReX_BLFort.H>

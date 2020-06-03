@@ -1,33 +1,29 @@
 ifeq ($(USE_SUNDIALS_PP), TRUE)
     ifeq ($(USE_CUDA_SUNDIALS_PP), TRUE)
-        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU
         ifeq ($(USE_ARKODE_PP), TRUE)
-            CEXE_headers += reactor_arkode.h  
-            CEXE_sources += reactor_arkode.cpp
+            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU/arkode
         else
-            CEXE_headers += reactor_cvode.h
-            CEXE_sources += reactor_cvode.cpp
+            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU/cvode
         endif
     else
-        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
         ifeq ($(USE_ARKODE_PP), TRUE)
-            CEXE_headers += reactor_arkode.h  
-            CEXE_sources += reactor_arkode.cpp
+            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU/arkode
         else
-            CEXE_headers += reactor_cvode.h  
-            CEXE_sources += reactor_cvode.cpp
+            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU/cvode
             f90EXE_sources += mod_cvode.f90
         endif
     endif
+    CEXE_headers += reactor.h  
+    CEXE_sources += reactor.cpp
 else 
     ifeq ($(USE_RK64_PP), TRUE)
-        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
-        CEXE_headers += reactor_RK64.h  
-        CEXE_sources += reactor_RK64.cpp
+        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU/RK64
+        CEXE_headers += reactor.h  
+        CEXE_sources += reactor.cpp
     else
         Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/F90
         F90EXE_sources += react_type.F90
-        F90EXE_sources += reactor_dvode.F90
-        FEXE_headers   += reactor_dvode.H
+        F90EXE_sources += reactor.F90
+        FEXE_headers   += reactor.H
     endif
 endif

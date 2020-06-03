@@ -19,22 +19,16 @@ using namespace amrex;
 #if defined(USE_SUNDIALS_PP)
 // ARKODE or CVODE
   #include <Transport.H>
-  #if defined(USE_CUDA_SUNDIALS_PP)
-  #endif
-  #ifdef USE_ARKODE_PP
-    #include <reactor_arkode.h>
-  #else
-    #include <reactor_cvode.h>
-  #endif
+  #include <reactor.h>
 #else
   #if defined(USE_RK64_PP)
-  #include <Transport.H>
+    #include <Transport.H>
 // Expl RK solver
-    #include <reactor_RK64.h>
+    #include <reactor.h>
   #else
 // DVODE
     #include <Transport_F.H>
-    #include <reactor_dvode.H> 
+    #include <reactor.H> 
   #endif
 #endif
 
