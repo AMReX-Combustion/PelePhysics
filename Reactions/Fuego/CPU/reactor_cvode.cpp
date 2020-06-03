@@ -1,4 +1,4 @@
-#include <CPU/actual_Creactor.h> 
+#include <CPU/reactor_cvode.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include "mechanism.h"

@@ -1,4 +1,4 @@
-#include <CPU/actual_CARKODE.h> 
+#include <CPU/reactor_arkode.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include "mechanism.h"

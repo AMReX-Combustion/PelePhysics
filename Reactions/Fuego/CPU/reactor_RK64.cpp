@@ -1,4 +1,4 @@
-#include <CPU/actual_CRK64.h> 
+#include <CPU/reactor_RK64.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include "mechanism.h"
