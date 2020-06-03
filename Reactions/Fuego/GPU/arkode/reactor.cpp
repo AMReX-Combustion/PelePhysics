@@ -1,4 +1,4 @@
-#include <GPU/actual_CARKODE.h> 
+#include <reactor.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include "mechanism.h"
