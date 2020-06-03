@@ -1079,7 +1079,7 @@ class CPickler(CMill):
             'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST(int * nJdata, int * consP, int NCELLS);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, int * consP);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
-            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base);',
@@ -7319,7 +7319,7 @@ class CPickler(CMill):
 
         ####
         self._write(self.line('compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0'))
-        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int *  colVals, int *  rowPtrs, int * consP, int NCELLS)')
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base)')
         self._write('{')
         self._indent()
 
@@ -7337,6 +7337,34 @@ class CPickler(CMill):
         self._write('aJacobian(J, c, 1500.0, *consP);')
 
         self._write()
+        self._write('if (base == 1) {')
+        self._indent()
+        self._write('rowPtrs[0] = 1;')
+        self._write('int nJdata_tmp = 1;')
+        self._write('for (int nc=0; nc<NCELLS; nc++) {')
+        self._indent()
+        self._write('offset = nc * %d;' % (nSpecies+1))
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
+        self._indent()
+        self._write('colVals[nJdata_tmp-1] = k+1 + offset; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._write('rowPtrs[offset + (l + 1)] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+         
+        self._outdent()
+        self._write('} else {')
+        self._indent()
         self._write('rowPtrs[0] = 0;')
         self._write('int nJdata_tmp = 0;')
         self._write('for (int nc=0; nc<NCELLS; nc++) {')
@@ -7355,6 +7383,8 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         self._write('rowPtrs[offset + (l + 1)] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
         self._outdent()
         self._write('}')
         self._outdent()
