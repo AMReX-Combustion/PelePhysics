@@ -1,4 +1,4 @@
-#include <GPU/reactor_arkode.h> 
+#include <reactor.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include "mechanism.h"
