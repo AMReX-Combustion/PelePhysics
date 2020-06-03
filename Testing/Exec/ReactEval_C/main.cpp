@@ -251,7 +251,8 @@ main (int   argc,
     cudaMallocManaged(&phi, 3*sizeof(amrex::Real));
     cudaMallocManaged(&dx,  3*sizeof(amrex::Real));
 #else
-    std::vector<Real> plo(3,0), phi(3,0), dx(3,1);
+    Real *plo, *phi, *dx;
+    plo = new Real[3]; phi = new Real[3]; dx = new Real[3];
 #endif
     for (int i=0; i<BL_SPACEDIM; ++i) {
 	plo[i] = 0.0; //(i+1)*0.35;
