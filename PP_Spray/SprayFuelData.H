@@ -27,9 +27,13 @@ public:
     Gpu::HostVector<Real> tmpFuelLatent(nfspec);
     m_invBoilT.resize(nfspec);
     for (int i = 0; i != nfspec; ++i) {
-      tmpFuelLatent[i] = fuelLatent[i] - refFuelH[i];
+      const int specIndx = fuelIndx[i];
+      tmpFuelLatent[i] = fuelLatent[i];
+#ifndef LEGACY_SPRAY
+      tmpFuelLatent[i] -= refFuelH[specIndx];
+#endif
       invBoilT[i] = 1./boilT[i];
-      }
+    }
     Gpu::copy(Gpu::hostToDevice, critT.begin(), critT.end(),
 	      m_critT.begin());
     Gpu::copy(Gpu::hostToDevice, boilT.begin(), boilT.end(),
