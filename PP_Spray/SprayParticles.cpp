@@ -498,7 +498,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
                                                  (invBoilT[spf] - 1./T_part)) + C_eps;
               Real Yfv = mw_fuel*pres_sat/(mw_mix*p_fluid + (mw_fuel - mw_mix)*pres_sat);
               Yfv = amrex::max(0., amrex::min(1. - C_eps, Yfv));
-              B_M_num[spf] = std::max(C_eps, (Yfv - Y_fluid[fspec])/(1. - Yfv));
+              B_M_num[spf] = amrex::max(C_eps, (Yfv - Y_fluid[fspec])/(1. - Yfv));
 #ifndef LEGACY_SPRAY
               Y_skin[fspec] = Yfv + rule*(Y_fluid[fspec] - Yfv);
               sumYSkin += Y_skin[fspec];
