@@ -131,9 +131,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
         int ianalytical_jacobian, isolve_type;
 
 	/* ParmParse from the inputs file */ 
-	amrex::ParmParse ppcv("cvode");
 	amrex::ParmParse pp("ode");
 	pp.query("analytical_jacobian",ianalytical_jacobian);
+
+	amrex::ParmParse ppcv("cvode");
 	ppcv.query("solve_type", isolve_type);
 
 	NEQ = NUM_SPECIES;
@@ -152,10 +153,11 @@ int react(realtype *rY_in, realtype *rY_src_in,
         user_data->ireactor_type        = *reactor_type; 
         user_data->ianalytical_jacobian = ianalytical_jacobian;
 	user_data->isolve_type          = isolve_type; 
-        user_data->iverbose             = 1;
         user_data->stream               = stream;
         user_data->nbBlocks             = std::max(1,NCELLS/32);
         user_data->nbThreads            = 32;
+        user_data->iverbose             = 1;
+        pp.query("verbose",user_data->iverbose);
 
         if (user_data->ianalytical_jacobian == 1) { 
             int HP;
@@ -453,7 +455,9 @@ int react(realtype *rY_in, realtype *rY_src_in,
         long int nfe;
 	flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
 
-	//PrintFinalStats(cvode_mem);
+	if (user_data->iverbose > 1) {
+	    PrintFinalStats(cvode_mem);
+        }
 	
 	N_VDestroy(y);          /* Free the y vector */
 	CVodeFree(&cvode_mem);
