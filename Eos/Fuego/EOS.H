@@ -141,6 +141,14 @@ TRY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
+Y2Wbar(amrex::Real Y[], amrex::Real& Wbar)
+{
+  CKMMWY(&Y[0], &Wbar);
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
 RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T)
 {
   amrex::Real wbar;
