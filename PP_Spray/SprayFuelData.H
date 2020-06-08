@@ -11,11 +11,11 @@ class SprayFuelData
 public:
 
   void build (const Gpu::HostVector<Real>& critT,
-	      const Gpu::HostVector<Real>& boilT,
-	      const Gpu::HostVector<Real>& fuelCp,
-	      const Gpu::HostVector<Real>& refFuelH,
-	      const Gpu::HostVector<Real>& fuelLatent,
-	      const Gpu::HostVector<int>&  fuelIndx)
+              const Gpu::HostVector<Real>& boilT,
+              const Gpu::HostVector<Real>& fuelCp,
+              const Gpu::HostVector<Real>& refFuelH,
+              const Gpu::HostVector<Real>& fuelLatent,
+              const Gpu::HostVector<int>&  fuelIndx)
   {
     const int nfspec = SPRAY_FUEL_NUM;
     m_critT.resize(nfspec);

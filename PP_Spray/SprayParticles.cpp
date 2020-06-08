@@ -341,6 +341,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
   const int rhoIndx = PeleC::Density;
   const int momIndx = PeleC::Xmom;
   const int engIndx = PeleC::Eden;
+  const int utempIndx = PeleC::Temp;
   const int specIndx = PeleC::FirstSpec;
   // Start the ParIter, which loops over separate sets of particles in different boxes
   for (MyParIter pti(*this, lev); pti.isValid(); ++pti) {
@@ -400,7 +401,6 @@ SprayParticleContainer::updateParticles(const int&  lev,
         RealVect vel_fluid(RealVect::TheZeroVector());
         Real T_fluid = 0.;
         Real rho_fluid = 0.;
-        Real T_val = 300.;
         for (int sp = 0; sp != NUM_SPECIES; ++sp) Y_fluid[sp] = 0.;
         // Extract adjacent values and interpolate fluid at particle location
         for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
@@ -426,6 +426,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
             mass_frac[sp] = cur_mf;
           }
           Real intEng = statearr(cur_indx, engIndx)*inv_rho - ke;
+          Real T_val = statearr(cur_indx, utempIndx);
           EOS::EY2T(intEng, mass_frac, T_val);
           T_fluid += cur_coef*T_val;
         }
