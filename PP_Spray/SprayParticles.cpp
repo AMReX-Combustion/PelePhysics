@@ -110,8 +110,7 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   bool tempSource = false;
 
   MultiFab* tmp_src_ptr;
-  if (this->OnSameGrids(lev, source) && !isVirtual && !isGhost
-      && source.nGrow() >= tmp_src_width) {
+  if (this->OnSameGrids(lev, source) && source.nGrow() >= tmp_src_width) {
     tmp_src_ptr = &source;
   } else {
     tmp_src_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(lev),
