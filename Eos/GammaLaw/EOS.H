@@ -197,6 +197,16 @@ PYT2RE(
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
+PYT2R(amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real &R) 
+{
+  amrex::Real wbar;
+  EOS::Y2WBAR(Y, wbar);
+  R = P * wbar / (RU * T); 
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
 RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 {
   amrex::Real wbar;
