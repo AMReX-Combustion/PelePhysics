@@ -223,6 +223,14 @@ PYT2RE(
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
+TYP2R(amrex::Real T, amrex::Real Y[], amrex::Real P, amrex::Real &R) 
+{
+  CKRHOY(&P, &T, Y, &R);
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
 RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 {
   amrex::Real wbar;
