@@ -1,6 +1,17 @@
 ifeq ($(USE_SUNDIALS_PP),TRUE) 
   DEFINES  += -DUSE_SUNDIALS_PP
-  SUNDIALS_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib
+  #SUNDIALS_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib
+  ifeq ($(USE_CUDA),TRUE)
+    ifeq ($(lowercase_nvcc_host_comp),$(filter $(lowercase_nvcc_host_comp),gcc gnu g++))
+      HOSTCC = gcc
+    else
+      HOSTCC = pgi
+    endif
+  else
+    HOSTCC = $(CC)
+  endif
+  configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; make tp_suffix USE_CUDA=$(USE_CUDA) USE_KLU=$(USE_KLU) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP))
+  SUNDIALS_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib
   INCLUDE_LOCATIONS += $(SUNDIALS_LIB_DIR)/../include
   ifeq ($(USE_ARKODE_PP),TRUE)
       DEFINES += -DUSE_ARKODE_PP
