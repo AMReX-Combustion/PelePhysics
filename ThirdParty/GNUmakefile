@@ -3,7 +3,6 @@
 #
 
 COMP            = gcc
-NVCC            = nvcc
 DEBUG           = FALSE
 USE_CUDA        = FALSE
 USE_KLU         = FALSE
@@ -11,7 +10,40 @@ USE_KLU         = FALSE
 #SS_VERSION=5.7.2
 SS_VERSION=5.4.0
 
-#include $(AMREX_HOME)/Tools/GNUMake/Make.defs
+lowercase_hcomp = $(shell echo $(COMP) | tr A-Z a-z)
+ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),gcc gnu g++ mpicc mpicxx))
+  ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),mpi))
+    CCOMPILER = $(shell $(COMP) --show | awk '{print $$1}')
+  else
+    CCOMPILER = gcc
+  endif
+else
+  ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),intel))
+    CCOMPILER = icc
+  else
+    ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),pgi))
+      CCOMPILER = pgicc
+    else
+      $(error Unknown COMP setting)
+    endif
+  endif
+endif
+
+ifeq ($(USE_MPI),TRUE)
+  ifeq ($(CCOMPILER),$(filter $(CCOMPILER),mpi))
+    HOST_COMPILER = $(shell $(CCOMPILER) --show | awk '{print $$1}')
+  else
+    HOST_COMPILER = $(CCOMPILER)
+  endif
+else
+  HOST_COMPILER = $(CCOMPILER)
+endif
+
+ifeq ($(USE_CUDA),TRUE)
+  DEV_COMPILER = nvcc
+else
+  DEV_COMPILER = $(HOST_COMPILER)
+endif
 
 tp_suffix=$(COMP)$(DebugSuffix)$(CUDASuffix)$(KLUSuffix)
 INSTALL_PREFIX=$(PWD)/INSTALL/$(tp_suffix)
@@ -45,7 +77,7 @@ else
 endif
 
 ifeq ($(USE_CUDA),TRUE)
-  CUDA_DEFINES=-DCUDA_ENABLE:BOOL=ON -DCUDA_HOST_COMPILER=$(NVCC)
+  CUDA_DEFINES=-DCUDA_ENABLE:BOOL=ON -DCUDA_HOST_COMPILER=$(DEV_COMPILER)
   CUDASuffix=.CUDA
 else
   CUDA_DEFINES=-DCUDA_ENABLE:BOOL=OFF
@@ -65,17 +97,14 @@ tp_suffix:
 
 
 $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE)
-	@echo Target $(ONE_SUNDIALS_LIB_FILE)
 	@mkdir -p $(SUNDIALS_BUILD_DIR)
-	cd $(SUNDIALS_BUILD_DIR); cmake -DCMAKE_INSTALL_PREFIX=$(INSTALL_PREFIX) -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_C_COMPILER=$(COMP) $(CUDA_HOST_COMP_DEFINE) -DEXAMPLES_INSTALL_PATH=$(INSTALL_PREFIX)/examples -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DCMAKE_C_FLAGS_RELEASE=$(COMP_FLAGS) $(CUDA_DEFINES) -DMPI_ENABLE:BOOL=OFF -DOPENMP_ENABLE:BOOL=OFF $(KLU_DEFINES) -DEXAMPLES_ENABLE_C:BOOL=OFF $(SUNDIALS_SOURCE_DIR); make; make install
+	cd $(SUNDIALS_BUILD_DIR); cmake -DCMAKE_INSTALL_PREFIX=$(INSTALL_PREFIX) -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_C_COMPILER=$(HOST_COMPILER) $(CUDA_HOST_COMP_DEFINE) -DEXAMPLES_INSTALL_PATH=$(INSTALL_PREFIX)/examples -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DCMAKE_C_FLAGS_RELEASE=$(COMP_FLAGS) $(CUDA_DEFINES) -DMPI_ENABLE:BOOL=OFF -DOPENMP_ENABLE:BOOL=OFF $(KLU_DEFINES) -DEXAMPLES_ENABLE_C:BOOL=OFF $(SUNDIALS_SOURCE_DIR); make; make install
 
 $(ONE_SUNDIALS_SRC_FILE):
-	@echo Target $(ONE_SUNDIALS_SRC_FILE)
 	@mkdir -p $(SUNDIALS_SOURCE_DIR)
 	@git clone https://github.com/LLNL/sundials $(SUNDIALS_SOURCE_DIR)
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
-	@echo Target $(ONE_SS_LIB_FILE)
 	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
 	@cd $(SS_SOURCE_DIR)/AMD; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
 	@cd $(SS_SOURCE_DIR)/COLAMD; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
@@ -86,10 +115,8 @@ $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
 	@cd $(SS_SOURCE_DIR)/KLU; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
 
 $(ONE_SS_SRC_FILE): $(SS_DIST_DIR)/$(SS_DIST_FILE)
-	@echo Target $(ONE_SS_SRC_FILE)
 	@cd $(SS_DIST_DIR)/..; tar zxf $(SS_DIST_DIR)/$(SS_DIST_FILE); find $(SS_SOURCE_DIR) -type f -exec touch {} +
 
 $(SS_DIST_DIR)/$(SS_DIST_FILE):
-	@echo Target $(ONE_SS_DIST_FILE)
 	@mkdir -p $(SS_DIST_DIR)
 	@cd $(SS_DIST_DIR); wget https://github.com/DrTimothyAldenDavis/SuiteSparse/archive/$(SS_DIST_FILE)
