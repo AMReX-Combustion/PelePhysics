@@ -1,6 +1,5 @@
 ifeq ($(USE_SUNDIALS_PP),TRUE) 
   DEFINES  += -DUSE_SUNDIALS_PP
-  #SUNDIALS_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib
   ifeq ($(USE_CUDA),TRUE)
     ifeq ($(lowercase_nvcc_host_comp),$(filter $(lowercase_nvcc_host_comp),gcc gnu g++))
       HOSTCC = gcc
@@ -10,7 +9,7 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
   else
     HOSTCC = $(CC)
   endif
-  configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; make tp_suffix USE_CUDA=$(USE_CUDA) USE_KLU=$(USE_KLU) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP))
+  configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; make tp_suffix USE_CUDA=$(USE_CUDA) USE_KLU=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP))
   SUNDIALS_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib
   INCLUDE_LOCATIONS += $(SUNDIALS_LIB_DIR)/../include
   ifeq ($(USE_ARKODE_PP),TRUE)
@@ -36,15 +35,10 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
     LIBRARIES += -Wl,-rpath=${SUNDIALS_LIB_DIR}
   endif
   ifeq ($(USE_KLU_PP), TRUE)
-    SUITESPARSE_DIR   ?= $(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse
+    SUITESPARSE_DIR   ?= $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)
     DEFINES   += -DUSE_KLU_PP
-    LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_sunmatrixsparse
-    LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_sunlinsolklu
-    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lklu
-    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lamd
-    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lcolamd
-    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lbtf
-    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lsuitesparseconfig
+    LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_sunmatrixsparse  -lsundials_sunlinsolklu
+    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lklu -lamd -lcolamd -lbtf -lsuitesparseconfig
     INCLUDE_LOCATIONS+=${SUITESPARSE_DIR}/include
     ifneq ($(shell uname),Darwin)
       LIBRARIES += -Wl,-rpath=${SUITESPARSE_DIR}/lib
