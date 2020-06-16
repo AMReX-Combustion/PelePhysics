@@ -7,9 +7,9 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
       HOSTCC = pgi
     endif
   else
-    HOSTCC = $(CC)
+    HOSTCC = $(COMP)
   endif
-  configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; make tp_suffix USE_CUDA=$(USE_CUDA) USE_KLU=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP))
+  configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; make tp_suffix USE_CUDA=$(USE_CUDA) USE_KLU=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) | tail -1)
   SUNDIALS_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib
   INCLUDE_LOCATIONS += $(SUNDIALS_LIB_DIR)/../include
   ifeq ($(USE_ARKODE_PP),TRUE)
