@@ -24,11 +24,10 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
   endif
   ifeq ($(USE_CUDA_SUNDIALS_PP),TRUE)
       DEFINES  += -DUSE_CUDA_SUNDIALS_PP
-      ifeq ($(USE_ARKODE_PP),TRUE)
-          LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda
-      else
-          LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda -lsundials_sunlinsolcusolversp
-          LIBRARIES += -lcusolver -lcusparse
+      LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
+      LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda
+      ifneq ($(USE_ARKODE_PP),TRUE)
+          LIBRARIES += -lsundials_sunlinsolcusolversp -lsundials_sunmatrixcusparse -lcusolver -lcusparse
       endif
   endif
   ifneq ($(shell uname),Darwin)
@@ -45,3 +44,4 @@ ifeq ($(USE_SUNDIALS_PP),TRUE)
     endif
   endif
 endif
+

@@ -120,3 +120,16 @@ $(ONE_SS_SRC_FILE): $(SS_DIST_DIR)/$(SS_DIST_FILE)
 $(SS_DIST_DIR)/$(SS_DIST_FILE):
 	@mkdir -p $(SS_DIST_DIR)
 	@cd $(SS_DIST_DIR); wget https://github.com/DrTimothyAldenDavis/SuiteSparse/archive/$(SS_DIST_FILE)
+
+ifeq ($(USE_KLU),TRUE)
+  clean_SS:
+	@echo rm -rf $(SS_BUILD_PREFIX)
+else
+  clean_SS:
+endif
+
+clean: clean_SS
+	rm -rf $(INSTALL_PREFIX) $(SUNDIALS_BUILD_PREFIX)
+
+realclean:
+	rm -rf $(PWD)/INSTALL $(PWD)/BUILD
