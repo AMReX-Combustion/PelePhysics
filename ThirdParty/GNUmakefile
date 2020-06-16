@@ -6,13 +6,13 @@ COMP            = gcc
 DEBUG           = FALSE
 USE_CUDA        = FALSE
 USE_KLU         = FALSE
-CUDA_ARCH      ?= UNSET
+CUDA_ARCH       =
 
 #SS_VERSION=5.7.2
 SS_VERSION=5.4.0
 
 ifeq ($(USE_CUDA),TRUE)
-  ifeq ($(CUDA_ARCH),UNSET)
+  ifeq ($(CUDA_ARCH),)
     $(error Must set CUDA_ARCH.  Run deviceQuery and if CUDA Capability is 6.1, CUDA_ARCH=sm_61. Cori:sm_70, Garuda:sm_75, Godzilla:sm_61)
   endif
 endif
