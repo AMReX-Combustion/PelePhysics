@@ -41,9 +41,6 @@ element_compositionCHON(int ecompCHON[])
 {
   amrex::Vector<std::string> ename;
   CKSYME_STR(ename);
-  // debug
-  amrex::Vector<std::string> specname;
-  CKSYMS_STR(specname); 
   //CHON
   int CHON[4];
   for (int i = 0; i < 4; i++) {
@@ -58,17 +55,14 @@ element_compositionCHON(int ecompCHON[])
   int ecomp[NUM_SPECIES*NUM_ELEMENTS]; 
   CKNCF(ecomp);
   for (int i = 0; i < NUM_SPECIES; i++) {
-      amrex::Print()<<specname[i]<<"\n"; 
       for (int k = 0; k < 4; k++) {
           if (CHON[k] > -1) {
               ecompCHON[i*4 + k] = ecomp[i*NUM_ELEMENTS + CHON[k]];
           } else {
               ecompCHON[i*4 + k] = 0;
           }
-          amrex::Print()<<"Elem "<< k << "  count:"<< ecompCHON[i*4 + k] << "\n"; 
       }
   }
-  amrex::Abort();
 }
 
 } // namespace EOS
