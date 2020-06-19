@@ -18,6 +18,15 @@ void init();
 
 void close();
 
+void
+atomic_weightsCHON(amrex::Real atwCHON[]);
+
+void
+element_compositionCHON(int ecompCHON[]);
+
+void
+speciesNames(amrex::Vector<std::string>& spn);
+
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
