@@ -146,7 +146,7 @@ HY2T(amrex::Real H, amrex::Real Y[], amrex::Real& T)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-TRY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
+RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
 {
   amrex::Real Cv, E;
   EOS::TY2Cv(T, Y, Cv);
