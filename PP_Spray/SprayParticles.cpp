@@ -524,7 +524,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
           Real mu_skin = 0.;
           Real xi_skin = 0.;
           transport(get_xi, get_mu, get_lambda, get_Ddiag,
-                    T_fluid, rho_fluid, Y_skin, Ddiag,
+                    T_skin, rho_fluid, Y_skin, Ddiag,
                     mu_skin, xi_skin, lambda_skin);
           // Ensure gas is not all fuel to allow evaporation
           bool evap_fuel = (sumYFuel >= 1.) ? false : true;
