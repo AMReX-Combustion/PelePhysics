@@ -142,7 +142,7 @@ RYET2P(
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-TRY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
+RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
 {
   CKPY(&R, &T, Y, &P);
 }
