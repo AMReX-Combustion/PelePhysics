@@ -84115,7 +84115,7 @@ void egtransetCOFETA(double* COFETA) {
 void egtransetCOFLAM(double* COFLAM) {
     COFLAM[0] = -9.35546325E+00;
     COFLAM[1] = 3.31628854E+00;
-    COFLAM[2] = -1.07145802E-02;
+    COFLAM[2] = -1.07145803E-02;
     COFLAM[3] = -1.24086068E-02;
     COFLAM[4] = -8.57929284E-01;
     COFLAM[5] = 3.65436395E+00;

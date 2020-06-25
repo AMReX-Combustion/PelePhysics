@@ -913,6 +913,18 @@ void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * kn
 }
 
 
+/* Returns the vector of strings of element names */
+void CKSYME_STR(amrex::Vector<std::string>& ename)
+{
+    ename.push_back("O");
+    ename.push_back("H");
+    ename.push_back("C");
+    ename.push_back("N");
+    ename.push_back("AR");
+    ename.push_back("HE");
+}
+
+
 /* Returns the char strings of element names */
 void CKSYME(int * kname, int * plenkname )
 {
@@ -2992,10 +3004,10 @@ void CKINU(int * i, int * nspec, int * ki, int * nu)
 
 /*Returns the elemental composition  */
 /*of the speciesi (mdim is num of elements) */
-void CKNCF(int * mdim,  int * ncf)
+void CKNCF(int * ncf)
 {
     int id; /*loop counter */
-    int kd = (*mdim); 
+    int kd = 6; 
     /*Zero ncf */
     for (id = 0; id < kd * 14; ++ id) {
          ncf[id] = 0; 
