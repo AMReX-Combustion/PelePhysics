@@ -56,11 +56,7 @@ initialize_data(int i, int j, int k, int fuel_id,
 	    frcExt(i,j,k,n) = 0.0;
 	}
 	rhoY(i,j,k,NUM_SPECIES) = temp; 
-#if defined(USE_SUNDIALS_PP)
 	rhoE(i,j,k) = energy * density; 
-#else
-	rhoE(i,j,k) = energy; 
-#endif
 	frcEExt(i,j,k) = 0.0;
 }
 
