@@ -2,10 +2,10 @@
 # Build configuration
 #
 
-COMP            = gcc
-DEBUG           = FALSE
-USE_CUDA        = FALSE
-USE_KLU         = FALSE
+COMP            ?= gcc
+DEBUG           ?= FALSE
+USE_CUDA        ?= FALSE
+USE_KLU         ?= FALSE
 
 #SS_VERSION=5.7.2
 SS_VERSION=5.4.0
