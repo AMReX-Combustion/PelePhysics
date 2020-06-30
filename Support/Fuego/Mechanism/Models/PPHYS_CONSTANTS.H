@@ -1,0 +1,18 @@
+#ifndef _PPHYS_CONSTANTS_H_
+#define _PPHYS_CONSTANTS_H_
+
+ 
+
+#define PP_RU_CGS   83144626.1815324
+#define PP_RU_MKS   8.31446261815324
+#define PP_PA_CGS   1013250.0
+#define PP_PA_MKS   101325.0
+#define PP_RUC_CGS  1.98721558317399615845
+
+#define C_AW   12.011150 
+#define H_AW   1.007970
+#define O_AW   15.999400
+#define N_AW   14.006700
+#define AR_AW  39.948000
+
+#endif
