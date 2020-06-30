@@ -27,11 +27,12 @@
   int enth_rho = 2; // in/out = rhoH/rhoY 
 
 #ifdef _OPENMP
-#pragma omp threadprivate(y,LS,A)
+#pragma omp threadprivate(y,LS,NLS,A)
 #pragma omp threadprivate(arkode_mem,data)
 #pragma omp threadprivate(rhoX_init,rhoXsrc_ext,rYsrc)
 #pragma omp threadprivate(typVals)
 #pragma omp threadprivate(relTol,absTol)
+#pragma omp threadprivate(dense_solve,eint_rho,enth_rho)
 #endif
 /**********************************/
 
@@ -103,6 +104,13 @@ void ReSetTolODE() {
         neq_tot = (NUM_SPECIES + 1) * data->ncells;
         atol    = N_VNew_Serial(neq_tot);
 	ratol   = N_VGetArrayPointer(atol);
+    
+#ifdef _OPENMP
+        int omp_thread;
+
+        /* omp thread if applicable */
+        omp_thread = omp_get_thread_num(); 
+#endif
 
 	int offset;
 	if (typVals) {
@@ -210,6 +218,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 	/* Definition of tolerances */
         atol  = N_VNew_Serial(neq_tot);
 	ratol = N_VGetArrayPointer(atol);
+        int offset;
 	if (typVals) { 
 #ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
