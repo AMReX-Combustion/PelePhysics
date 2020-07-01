@@ -35,17 +35,17 @@ public:
       invBoilT[i] = 1./boilT[i];
     }
     Gpu::copy(Gpu::hostToDevice, critT.begin(), critT.end(),
-	      m_critT.begin());
+              m_critT.begin());
     Gpu::copy(Gpu::hostToDevice, boilT.begin(), boilT.end(),
-	      m_boilT.begin());
+              m_boilT.begin());
     Gpu::copy(Gpu::hostToDevice, fuelCp.begin(), fuelCp.end(),
-	      m_fuelCp.begin());
+              m_fuelCp.begin());
     Gpu::copy(Gpu::hostToDevice, tmpFuelLatent.begin(), tmpFuelLatent.end(),
-	      m_fuelLatent.begin());
+              m_fuelLatent.begin());
     Gpu::copy(Gpu::hostToDevice, fuelIndx.begin(), fuelIndx.end(),
-	      m_fuelIndx.begin());
+              m_fuelIndx.begin());
     Gpu::copy(Gpu::hostToDevice, invBoilT.begin(), invBoilT.end(),
-	      m_invBoilT.begin());
+              m_invBoilT.begin());
   }
 
   //! \brief returns the const pointer to the critical temperature for the liquid fuels

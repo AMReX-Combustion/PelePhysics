@@ -46,8 +46,8 @@ void AdjIndexWeights(const RealVect& len,
         AMREX_D_TERM(indx_array[aindx][0] = xindx;,
                      indx_array[aindx][1] = yindx;,
                      indx_array[aindx][2] = zindx;);
-	coef[aindx] = AMREX_D_TERM(ssx[ii],*ssy[jj],*ssz[kk]);
-	++aindx;
+        coef[aindx] = AMREX_D_TERM(ssx[ii],*ssy[jj],*ssz[kk]);
+        ++aindx;
       }
 #if AMREX_SPACEDIM > 1
     }

@@ -13,15 +13,15 @@ SprayParticleContainer::init_bcs()
 {
   for (int dir = 0; dir < AMREX_SPACEDIM; dir++) {
     if (phys_bc->lo(dir) == Symmetry   ||
-	phys_bc->lo(dir) == SlipWall   ||
-	phys_bc->lo(dir) == NoSlipWall) {
+        phys_bc->lo(dir) == SlipWall   ||
+        phys_bc->lo(dir) == NoSlipWall) {
       reflect_lo[dir] = true;
     } else {
       reflect_lo[dir] = false;
     }
     if (phys_bc->hi(dir) == Symmetry   ||
-	phys_bc->hi(dir) == SlipWall   ||
-	phys_bc->hi(dir) == NoSlipWall) {
+        phys_bc->hi(dir) == SlipWall   ||
+        phys_bc->hi(dir) == NoSlipWall) {
       reflect_hi[dir] = true;
     } else {
       reflect_hi[dir] = false;
@@ -38,7 +38,7 @@ SprayParticleContainer::init_bcs()
 //     AoS& particles = kv.second.GetArrayOfStructs();
 //     for (auto& p : particles) {
 //       if (p.id() > 0)
-// 	p.rdata(pstate_idx) = val;
+//      p.rdata(pstate_idx) = val;
 //     }
 //   }
 //   return;
@@ -46,31 +46,31 @@ SprayParticleContainer::init_bcs()
 
 void
 SprayParticleContainer::moveKick (MultiFab&   state,
-				  MultiFab&   source,
-				  const int   lev,
-				  const Real& dt,
-				  const Real  time,
-				  const bool  isVirtual,
-				  const bool  isGhost,
-				  const int   tmp_src_width)
+                                  MultiFab&   source,
+                                  const int   lev,
+                                  const Real& dt,
+                                  const Real  time,
+                                  const bool  isVirtual,
+                                  const bool  isGhost,
+                                  const int   tmp_src_width)
 {
   bool do_move = false;
   int width = 0;
   moveKickDrift(state, source, lev, dt, time, isVirtual, isGhost,
-		tmp_src_width, do_move, width);
+                tmp_src_width, do_move, width);
 }
 
 void
 SprayParticleContainer::moveKickDrift (MultiFab&   state,
-				       MultiFab&   source,
-				       const int   lev,
-				       const Real& dt,
-				       const Real  time,
-				       const bool  isVirtual,
-				       const bool  isGhost,
-				       const int   tmp_src_width,
-				       const bool  do_move,
-				       const int   where_width)
+                                       MultiFab&   source,
+                                       const int   lev,
+                                       const Real& dt,
+                                       const Real  time,
+                                       const bool  isVirtual,
+                                       const bool  isGhost,
+                                       const int   tmp_src_width,
+                                       const bool  do_move,
+                                       const int   where_width)
 {
   BL_PROFILE("ParticleContainer::moveKickDrift()");
   AMREX_ASSERT(lev >= 0);
@@ -184,11 +184,11 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
     ParallelDescriptor::ReduceRealMax(stoptime,ParallelDescriptor::IOProcessorNumber());
     if (ParallelDescriptor::IOProcessor()) {
       if (do_move) {
-  	Print() << "SprayParticleContainer::moveKickDrift() time: "
-  		<< stoptime << '\n';
+        Print() << "SprayParticleContainer::moveKickDrift() time: "
+                << stoptime << '\n';
       } else {
-  	Print() << "SprayParticleContainer::moveKick() time: "
-  		<< stoptime << '\n';
+        Print() << "SprayParticleContainer::moveKick() time: "
+                << stoptime << '\n';
       }
     }
   }
@@ -250,10 +250,10 @@ SprayParticleContainer::estTimestep (int lev, Real cfl) const
   if (this->m_verbose > 1) {
     Real stoptime = ParallelDescriptor::second() - strttime;
     ParallelDescriptor::ReduceRealMax(stoptime,
-				      ParallelDescriptor::IOProcessorNumber());
+                                      ParallelDescriptor::IOProcessorNumber());
     if (ParallelDescriptor::IOProcessor())
       std::cout << "SprayParticleContainer::estTimestep() time: "
-		<< stoptime << '\n';
+                << stoptime << '\n';
   }
   return dt;
 }

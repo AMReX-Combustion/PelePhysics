@@ -75,18 +75,18 @@ public:
   /// Set fuel data
   ///
   void buildFuelData(const HostVectReal& critT,
-		     const HostVectReal& boilT,
-		     const HostVectReal& fuelCp,
-		     const HostVectReal& fuelLatent,
-		     const HostVectInt&  fuelIndx,
-		     amrex::Real         ref_T)
+                     const HostVectReal& boilT,
+                     const HostVectReal& fuelCp,
+                     const HostVectReal& fuelLatent,
+                     const HostVectInt&  fuelIndx,
+                     amrex::Real         ref_T)
   {
     HostVectReal fuelEnth(NUM_SPECIES);
     EOS::T2Hi(ref_T, fuelEnth.dataPtr());
     m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelIndx);
   }
 
-  ~SprayParticleContainer () {}
+  ~SprayParticleContainer() {}
 
   ///
   /// Set the value of particle state for all partilces on a level
@@ -96,44 +96,44 @@ public:
   ///
   /// Compute a maximum time step based on the particle velocities and a particle CFL number
   ///
-  amrex::Real estTimestep (int level, amrex::Real cfl) const;
+  amrex::Real estTimestep(int level, amrex::Real cfl) const;
 
   ///
   /// Update the particles but do not move particles
   ///
-  void moveKick (amrex::MultiFab& state, amrex::MultiFab& source,
-		 const int level, const amrex::Real& dt,
-		 const amrex::Real time, const bool isVirtual,
-		 const bool isGhost, const int tmp_src_width);
+  void moveKick(amrex::MultiFab& state, amrex::MultiFab& source,
+                const int level, const amrex::Real& dt,
+                const amrex::Real time, const bool isVirtual,
+                const bool isGhost, const int tmp_src_width);
 
   ///
   /// Update and move positions of the particles
   ///
-  void moveKickDrift (amrex::MultiFab& state, amrex::MultiFab& source,
-		      const int level, const amrex::Real& dt,
-		      const amrex::Real time, const bool isVirtual,
-		      const bool isGhost, const int tmp_src_width,
-		      const bool do_move, const int where_width);
+  void moveKickDrift(amrex::MultiFab& state, amrex::MultiFab& source,
+                     const int level, const amrex::Real& dt,
+                     const amrex::Real time, const bool isVirtual,
+                     const bool isGhost, const int tmp_src_width,
+                     const bool do_move, const int where_width);
 
   ///
   /// Update particles
   ///
-  void updateParticles (const int&         lev,
-			amrex::MultiFab&   state,
-			amrex::MultiFab&   source,
-			const amrex::Real& flow_dt,
-			const amrex::Real& time,
-                        const int          numGhost,
-			const bool         do_move);
+  void updateParticles(const int&         lev,
+                       amrex::MultiFab&   state,
+                       amrex::MultiFab&   source,
+                       const amrex::Real& flow_dt,
+                       const amrex::Real& time,
+                       const int          numGhost,
+                       const bool         do_move);
 
   ///
   /// Insert particles according to some criterion
   ///
-  bool insertParticles (amrex::Real time, int nstep, int lev);
+  bool insertParticles(amrex::Real time, amrex::Real dt, int nstep, int lev);
 
-  bool injectParticles (amrex::Real time, int nstep, int lev);
+  bool injectParticles(amrex::Real time, amrex::Real dt, int nstep, int lev);
 
-  void InitParticlesUniform (amrex::AmrLevel* pelec, const int& lev, const int& num_ppc);
+  void InitSprayParticles(amrex::AmrLevel* pelec, const int& lev, const int& num_ppc);
 
 private:
   int nstate;
