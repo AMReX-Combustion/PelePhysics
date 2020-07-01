@@ -87,7 +87,7 @@ SootModel::define()
 
 // Clip moment values
 void
-SootModel::clipMoments(Vector<Real>& moments) const
+SootModel::clipMoments(Real moments[]) const
 {
   Real weightDelta = moments[NUM_SOOT_MOMENTS];;
   const Real dimer_nbrc = m_dimerVol; // Set dimer size
@@ -160,7 +160,7 @@ SootModel::addSootSourceTerm(const Box&       vbox,
   const int numGS = GasSpecIndx::numGasSpecs;
   // Molar concentrations (mol/cm^3)
   // Ordered based on GasSpecIndx, not PeleC species
-  Vector<Real> xi_n(numGS);
+  Real xi_n[NUM_SOOT_GS];
   // Vector of moment values M_xy (cm^(3(x + 2/3y))cm^(-3))
   // M00, M10, M01,..., N0
   Real moments[NUM_SOOT_VARS];

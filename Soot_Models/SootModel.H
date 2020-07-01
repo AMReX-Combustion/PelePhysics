@@ -104,7 +104,7 @@ public:
   //
   // Clip moment values when necessary
   //
-  void clipMoments(Vector<Real>& moments) const;
+  void clipMoments(Real moments[]) const;
 
   /***********************************************************************
     Moment source term functions (SootModel.cpp)
@@ -112,53 +112,53 @@ public:
   //
   // Nucleation
   //
-  void nucleationMomSrc(const Real&   betaNucl,
-                        const Real&   dimerConc,
-                        Vector<Real>& mom_src) const;
+  void nucleationMomSrc(const Real& betaNucl,
+                        const Real& dimerConc,
+                        Real        mom_src[]) const;
 
   //
   // Condensation
   //
-  void condensationMomSrc(const Real&         colConst,
-                          const Real&         dimerConc,
-                          const Vector<Real>& momFV,
-                          Vector<Real>&       mom_src) const;
+  void condensationMomSrc(const Real& colConst,
+                          const Real& dimerConc,
+                          const Real  momFV[],
+                          Real        mom_src[]) const;
 
   //
   // Coagulation
   //
-  void coagulationMomSrc(const Real&         colConst,
-                         const Real&         T,
-                         const Real&         mu,
-                         const Real&         rho,
-                         const Real&         molMass,
-                         const Vector<Real>& momFV,
-                         Vector<Real>&       mom_src) const;
+  void coagulationMomSrc(const Real& colConst,
+                         const Real& T,
+                         const Real& mu,
+                         const Real& rho,
+                         const Real& molMass,
+                         const Real  momFV[],
+                         Real        mom_src[]) const;
 
   //
   // Compute the dimerization concentration
   //
-  Real dimerization(const Real&         T,
-                    const Real&         convT,
-                    const Real&         betaNucl,
-                    const Real&         betaDimer,
-                    const Real&         xi_PAH,
-                    const Vector<Real>& momFV) const;
+  Real dimerization(const Real& T,
+                    const Real& convT,
+                    const Real& betaNucl,
+                    const Real& betaDimer,
+                    const Real& xi_PAH,
+                    const Real  momFV[]) const;
 
   //
   // Compute the surface growth source terms
   //
-  void surfaceGrowthMomSrc(const Real&         k_sg,
-                           const Vector<Real>& momFV,
-                           Vector<Real>&       mom_src) const;
+  void surfaceGrowthMomSrc(const Real& k_sg,
+                           const Real  momFV[],
+                           Real        mom_src[]) const;
 
   //
   // Compute oxidation and fragmentation source term
   //
-  void oxidFragMomSrc(const Real&         k_ox,
-                      const Real&         k_o2,
-                      const Vector<Real>& momFV,
-                      Vector<Real>&       mom_src) const;
+  void oxidFragMomSrc(const Real& k_ox,
+                      const Real& k_o2,
+                      const Real  momFV[],
+                      Real        mom_src[]) const;
 
   /***********************************************************************
     Reaction functions (SootModel_react.cpp)
@@ -176,101 +176,101 @@ public:
   //
   // Compute surface and gas phase chemistry
   //
-  void chemicalSrc(const Real&         T,
-                   const Vector<Real>& xi_n,
-                   const Vector<Real>& moments,
-                   const Vector<Real>& momFV,
-                   Vector<Real>&       k_fwd,
-                   Vector<Real>&       k_bkwd,
-                   Vector<Real>&       w_fwd,
-                   Vector<Real>&       w_bkwd,
-                   Real&               k_sg,
-                   Real&               k_ox,
-                   Real&               k_o2,
-                   Vector<Real>&       omega_src) const;
+  void chemicalSrc(const Real& T,
+                   const Real  xi_n[],
+                   const Real  moments[],
+                   const Real  momFV[],
+                   Real        k_fwd[],
+                   Real        k_bkwd[],
+                   Real        w_fwd[],
+                   Real        w_bkwd[],
+                   Real&       k_sg,
+                   Real&       k_ox,
+                   Real&       k_o2,
+                   Real        omega_src[]) const;
 
   //
   // Compute quasi-steady state concentration of radical sites
   //
-  Real computeRadSiteConc(const Vector<Real>& xi_n,
-                          const Vector<Real>& k_fwd,
-                          const Vector<Real>& k_bkwd) const;
+  Real computeRadSiteConc(const Real xi_n[],
+                          const Real k_fwd[],
+                          const Real k_bkwd[]) const;
 
   //
   // Compute surface growth and oxication rates
   //
-  void computeSurfRates(const Vector<Real>& xi_n,
-                        const Vector<Real>& w_fwd,
-                        const Vector<Real>& w_bkwd,
-                        const Real&         fSootStar,
-                        Real&               k_sg,
-                        Real&               k_ox,
-                        Real&               k_o2) const;
+  void computeSurfRates(const Real  xi_n[],
+                        const Real  w_fwd[],
+                        const Real  w_bkwd[],
+                        const Real& fSootStar,
+                        Real&       k_sg,
+                        Real&       k_ox,
+                        Real&       k_o2) const;
 
   /***********************************************************************
     Moment interpolation functions (SootModel.cpp)
   ***********************************************************************/
 
-  void computeFracMomVect(const Vector<Real>& moments,
-                          Vector<Real>&       momFV) const;
+  void computeFracMomVect(const Real moments[],
+                          Real       momFV[]) const;
 
-  Real fracMom(const Real          volOrd,
-               const Real          surfOrd,
-               const Vector<Real>& momFV) const;
+  Real fracMom(const Real volOrd,
+               const Real surfOrd,
+               const Real momFV[]) const;
 
-  Real fracMomLarge(const Real          volOrd,
-                    const Real          surfOrd,
-                    const Vector<Real>& momFV) const;
+  Real fracMomLarge(const Real volOrd,
+                    const Real surfOrd,
+                    const Real momFV[]) const;
 
   // Collision coefficient for nucleation
-  Real getBetaCond(const Real&         convT,
-                   const Vector<Real>& momFV) const;
+  Real getBetaCond(const Real& convT,
+                   const Real  momFV[]) const;
 
   // Free molecular coagulation functions
-  Real psiSL(const Real          x,
-             const Real          y,
-             const Real          a,
-             const Real          b,
-             const Vector<Real>& momFV) const;
+  Real psiSL(const Real x,
+             const Real y,
+             const Real a,
+             const Real b,
+             const Real momFV[]) const;
 
-  Real psiLL(const Real          x,
-             const Real          y,
-             const Real          a,
-             const Real          b,
-             const Vector<Real>& momFV) const;
+  Real psiLL(const Real x,
+             const Real y,
+             const Real a,
+             const Real b,
+             const Real momFV[]) const;
 
-  Real FMCoagSL(const int           i,
-                const Vector<Real>& momFV) const;
+  Real FMCoagSL(const int  i,
+                const Real momFV[]) const;
 
-  Real FMCoagLL(const int           i,
-                const Vector<Real>& momFV) const;
+  Real FMCoagLL(const int  i,
+                const Real momFV[]) const;
 
   // Continuum coagulation functions
-  Real CNCoagSL(const int           i,
-                const Real&         lambda,
-                const Vector<Real>& momFV) const;
+  Real CNCoagSL(const int   i,
+                const Real& lambda,
+                const Real  momFV[]) const;
 
-  Real CNCoagLL(const int           i,
-                const Real&         lambda,
-                const Vector<Real>& momFV) const;
+  Real CNCoagLL(const int   i,
+                const Real& lambda,
+                const Real  momFV[]) const;
 
-  Real CNCoagSLFunc(int                 n[4],
-                    const Real          x,
-                    const Real          y,
-                    const Real&         lambda,
-                    const Vector<Real>& momFV) const;
+  Real CNCoagSLFunc(int         n[4],
+                    const Real  x,
+                    const Real  y,
+                    const Real& lambda,
+                    const Real  momFV[]) const;
 
-  Real CNCoagLLFunc(const Real          x,
-                    const Real          y,
-                    const Real&         lambda,
-                    const Vector<Real>& momFV) const;
+  Real CNCoagLLFunc(const Real  x,
+                    const Real  y,
+                    const Real& lambda,
+                    const Real  momFV[]) const;
 
-  Real CNCoagLLFunc(const Real          x,
-                    const Real          y,
-                    const Real          x2,
-                    const Real          y2,
-                    const Real&         lambda,
-                    const Vector<Real>& momFV) const;
+  Real CNCoagLLFunc(const Real  x,
+                    const Real  y,
+                    const Real  x2,
+                    const Real  y2,
+                    const Real& lambda,
+                    const Real  momFV[]) const;
 
   /***********************************************************************
     Inline functions
@@ -297,7 +297,7 @@ public:
   //
   // Convert moments from CGS to mol of C
   //
-  static void convertCGStoMol(Vector<Real>& moments)
+  static void convertCGStoMol(Real moments[])
   {
     for (int i = 0; i != NUM_SOOT_VARS; ++i) {
       moments[i] /= MomUnitConv[i];
@@ -307,7 +307,7 @@ public:
   //
   // Convert moments from mol of C to CGS
   //
-  static void convertMoltoCGS(Vector<Real>& mom_src)
+  static void convertMoltoCGS(Real mom_src[])
   {
     for (int i = 0; i != NUM_SOOT_VARS; ++i) {
       mom_src[i] *= MomUnitConv[i];
@@ -317,8 +317,8 @@ public:
   //
   // Convert moments from mol of C to CGS
   //
-  static void convertMoltoCGS(Vector<Real>& mom_src,
-                              Vector<Real>& moments)
+  static void convertMoltoCGS(Real mom_src[],
+                              Real moments[])
   {
     for (int i = 0; i != NUM_SOOT_VARS; ++i) {
       mom_src[i] *= MomUnitConv[i];
@@ -365,7 +365,7 @@ public:
   //
   // Initialize moment values to very small 
   //
-  static void initialSmallMomVals(Vector<Real>& moments)
+  static void initialSmallMomVals(Real moments[])
   {
     for (int i = 0; i != NUM_SOOT_MOMENTS; ++i) {
       moments[i] = m_smallWeight*

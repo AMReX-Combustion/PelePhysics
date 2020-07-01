@@ -256,18 +256,18 @@ SootModel::fillReactionData()
 
 // Compute the surface and gas phase chemistry rates
 void
-SootModel::chemicalSrc(const Real&         T,
-                       const Vector<Real>& xi_n,
-                       const Vector<Real>& moments,
-                       const Vector<Real>& momFV,
-                       Vector<Real>&       k_fwd,
-                       Vector<Real>&       k_bkwd,
-                       Vector<Real>&       w_fwd,
-                       Vector<Real>&       w_bkwd,
-                       Real&               k_sg,
-                       Real&               k_ox,
-                       Real&               k_o2,
-                       Vector<Real>&       omega_src) const
+SootModel::chemicalSrc(const Real& T,
+                       const Real  xi_n[],
+                       const Real  moments[],
+                       const Real  momFV[],
+                       Real        k_fwd[],
+                       Real        k_bkwd[],
+                       Real        w_fwd[],
+                       Real        w_bkwd[],
+                       Real&       k_sg,
+                       Real&       k_ox,
+                       Real&       k_o2,
+                       Real        omega_src[]) const
 {
   // Number of surface reactions
   const int nsr = m_numSurfReacts;
@@ -340,9 +340,9 @@ SootModel::chemicalSrc(const Real&         T,
 
 // Return fSootStar, fraction of hydrogenated sites that are radical sites
 Real
-SootModel::computeRadSiteConc(const Vector<Real>& xi_n,
-                              const Vector<Real>& k_fwd,
-                              const Vector<Real>& k_bkwd) const
+SootModel::computeRadSiteConc(const Real xi_n[],
+                              const Real k_fwd[],
+                              const Real k_bkwd[]) const
 {
   Real C_OH = xi_n[GasSpecIndx::indxOH];
   Real C_H = xi_n[GasSpecIndx::indxH];
@@ -358,13 +358,13 @@ SootModel::computeRadSiteConc(const Vector<Real>& xi_n,
 
 // Compute the surface chemistry rates (1/s)
 void
-SootModel::computeSurfRates(const Vector<Real>& xi_n,
-                            const Vector<Real>& w_fwd,
-                            const Vector<Real>& w_bkwd,
-                            const Real&         fSootStar,
-                            Real&               k_sg,
-                            Real&               k_ox,
-                            Real&               k_o2) const
+SootModel::computeSurfRates(const Real  xi_n[],
+                            const Real  w_fwd[],
+                            const Real  w_bkwd[],
+                            const Real& fSootStar,
+                            Real&       k_sg,
+                            Real&       k_ox,
+                            Real&       k_o2) const
 {
   k_sg = w_fwd[3]*fSootStar;
   k_ox = w_fwd[4]*fSootStar + w_fwd[5]*0.5/m_SootChi;
