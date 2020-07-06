@@ -17,8 +17,11 @@ TINY_PROFILE = TRUE
 
 USE_CUDA   = FALSE
 
+ifeq ($(USE_CUDA), TRUE)
+    USE_OMP=FALSE
+endif
 # define the location of the PELE_PHYSICS top directory
-PELE_PHYSICS_HOME    := ../../..
+#PELE_PHYSICS_HOME    := ../../..
 
 #######################
 # this flag activates the subcycling mode in the D/Cvode routines
@@ -29,6 +32,7 @@ DEFINES  += -DMOD_REACTOR
 #######################
 # Activates use of SUNDIALS: CVODE (default) / ARKODE
 USE_SUNDIALS_PP = TRUE
+USE_RK64_PP = FALSE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
   TRANSPORT_CPP = TRUE
   # provide location of sundials lib if needed
@@ -41,12 +45,16 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
     # provide location of KLU lib if needed
     #SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
   endif
+  ifeq ($(USE_CUDA), TRUE)
   # Activates GPU version
   USE_CUDA_SUNDIALS_PP = FALSE
+  endif
 else
+  ifeq ($(USE_RK64_PP), TRUE)
   # Activates use of Hari explicit RK
   # will only work if USE_SUNDIALS_PP = FALSE
-  USE_RK64_PP = FALSE
+  TRANSPORT_CPP = TRUE
+  endif
 endif
 
 
@@ -65,5 +73,7 @@ endif
 
 Bpack   := ./Make.package
 Blocs   := .
+
+LIBRARIES += -lnvToolsExt
 
 include $(PELE_PHYSICS_HOME)/Testing/Exec/Make.PelePhysics
