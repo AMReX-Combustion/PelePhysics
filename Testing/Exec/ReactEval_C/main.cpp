@@ -230,7 +230,7 @@ main (int   argc,
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-        npts[i] = 1;
+        npts[i] = 2;
     }
     npts[1] = third_dim;
 
@@ -470,11 +470,9 @@ main (int   argc,
                 dt_incr =  dt/ndt;
                 fc_tmp = fc_tmp_lcl;
             }
-            printf("nd of loop ?");
         }   
         BL_PROFILE_VAR_STOP(ReactInLoop);
 
-        printf("BEF Unpacking?");
 
         /* Unpacking of data */
         BL_PROFILE_VAR_START(FlatStuff);
