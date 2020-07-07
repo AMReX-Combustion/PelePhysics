@@ -17,9 +17,9 @@ initialize_data(int i, int j, int k, int fuel_id,
         amrex::Array4<amrex::Real> const& frcExt,
         amrex::Array4<amrex::Real> const& rhoE,
         amrex::Array4<amrex::Real> const& frcEExt,
-        std::vector<amrex::Real> dx, 
-        std::vector<amrex::Real> plo, 
-        std::vector<amrex::Real> phi ) noexcept
+        GpuArray<Real, AMREX_SPACEDIM>  dx, 
+        GpuArray<Real, AMREX_SPACEDIM>  plo, 
+        GpuArray<Real, AMREX_SPACEDIM>  phi ) noexcept
 {
     amrex::Real Temp_lo = 2000.0;
     amrex::Real Temp_hi = 2500.0;
@@ -34,7 +34,7 @@ initialize_data(int i, int j, int k, int fuel_id,
     amrex::GpuArray<amrex::Real,3> L;
     amrex::GpuArray<amrex::Real,3> P;
 
-    for (int n = 0; n < 3; n++) {
+    for (int n = 0; n < AMREX_SPACEDIM; n++) {
         L[n] = phi[n] - plo[n];
         P[n] = L[n] / 4.0;
     }
