@@ -2,10 +2,10 @@
 # Build configuration
 #
 
-COMP            = gcc
-DEBUG           = FALSE
-USE_CUDA        = FALSE
-USE_KLU         = FALSE
+COMP            ?= gcc
+DEBUG           ?= FALSE
+USE_CUDA        ?= FALSE
+USE_KLU         ?= FALSE
 
 #SS_VERSION=5.7.2
 SS_VERSION=5.4.0
@@ -115,6 +115,10 @@ $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
 	@cd $(SS_SOURCE_DIR)/CCOLAMD; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
 	@cd $(SS_SOURCE_DIR)/CAMD; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
 	@cd $(SS_SOURCE_DIR)/KLU; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
+	# For some reason, the static libraries are built but not installed. Add
+	# a workaround here for now, but this should be fixed in SuiteSparse.
+	@install -m 644 $(SS_SOURCE_DIR)/SuiteSparse_config/libsuitesparseconfig.a $(INSTALL_PREFIX)/lib
+	@install -m 644 $(SS_SOURCE_DIR)/*/Lib/*.a $(INSTALL_PREFIX)/lib
 
 $(ONE_SS_SRC_FILE): $(SS_DIST_DIR)/$(SS_DIST_FILE)
 	@cd $(SS_DIST_DIR)/..; tar zxf $(SS_DIST_DIR)/$(SS_DIST_FILE); find $(SS_SOURCE_DIR) -type f -exec touch {} +
