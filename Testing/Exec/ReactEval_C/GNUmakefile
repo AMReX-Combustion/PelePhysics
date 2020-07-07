@@ -22,7 +22,7 @@ USE_OMP=FALSE
 endif
 
 # define the location of the PELE_PHYSICS top directory
-#PELE_PHYSICS_HOME    := ../../..
+PELE_PHYSICS_HOME    := ../../..
 
 #######################
 # this flag activates the subcycling mode in the D/Cvode routines
