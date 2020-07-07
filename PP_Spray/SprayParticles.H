@@ -104,7 +104,8 @@ public:
   void moveKick(amrex::MultiFab& state, amrex::MultiFab& source,
                 const int level, const amrex::Real& dt,
                 const amrex::Real time, const bool isVirtual,
-                const bool isGhost, const int tmp_src_width);
+                const bool isGhost, const int tmp_src_width,
+                amrex::MultiFab* u_mac = nullptr);
 
   ///
   /// Update and move positions of the particles
@@ -113,7 +114,8 @@ public:
                      const int level, const amrex::Real& dt,
                      const amrex::Real time, const bool isVirtual,
                      const bool isGhost, const int tmp_src_width,
-                     const bool do_move, const int where_width);
+                     const bool do_move, const int where_width,
+                     amrex::MultiFab* u_mac = nullptr);
 
   ///
   /// Update particles
@@ -124,7 +126,8 @@ public:
                        const amrex::Real& flow_dt,
                        const amrex::Real& time,
                        const int          numGhost,
-                       const bool         do_move);
+                       const bool         do_move,
+                       amrex::MultiFab*   u_mac);
 
   ///
   /// Insert particles according to some criterion

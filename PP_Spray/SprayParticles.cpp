@@ -52,12 +52,13 @@ SprayParticleContainer::moveKick (MultiFab&   state,
                                   const Real  time,
                                   const bool  isVirtual,
                                   const bool  isGhost,
-                                  const int   tmp_src_width)
+                                  const int   tmp_src_width,
+                                  MultiFab*   u_mac)
 {
   bool do_move = false;
   int width = 0;
   moveKickDrift(state, source, lev, dt, time, isVirtual, isGhost,
-                tmp_src_width, do_move, width);
+                tmp_src_width, do_move, width, u_mac);
 }
 
 void
@@ -70,9 +71,11 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
                                        const bool  isGhost,
                                        const int   tmp_src_width,
                                        const bool  do_move,
-                                       const int   where_width)
+                                       const int   where_width,
+                                       MultiFab*   u_mac)
 {
   BL_PROFILE("ParticleContainer::moveKickDrift()");
+  AMREX_ASSERT(u_mac == nullptr || u_mac[0].nGrow() >= 1);
   AMREX_ASSERT(lev >= 0);
   AMREX_ASSERT(state.nGrow() >= 2);
 
@@ -120,7 +123,7 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
     tempSource = true;
   }
   BL_PROFILE_VAR("SprayParticles::updateParticles()", UPD_PART);
-  updateParticles(lev, (*state_ptr), (*tmp_src_ptr), dt, time, tmp_src_width, do_move);
+  updateParticles(lev, (*state_ptr), (*tmp_src_ptr), dt, time, tmp_src_width, do_move, u_mac);
   BL_PROFILE_VAR_STOP(UPD_PART);
 
   // ********************************************************************************
@@ -265,7 +268,8 @@ SprayParticleContainer::updateParticles(const int&  lev,
                                         const Real& flow_dt,
                                         const Real& time,
                                         const int   numGhost,
-                                        const bool  do_move)
+                                        const bool  do_move,
+                                        MultiFab*   u_mac)
 {
   AMREX_ASSERT(OnSameGrids(lev, state));
   AMREX_ASSERT(OnSameGrids(lev, source));
@@ -364,12 +368,15 @@ SprayParticleContainer::updateParticles(const int&  lev,
 #endif
     auto const crit_T = m_fuelData.critT();
     auto const boil_T = m_fuelData.boilT();
-    auto const invBoilT = m_fuelData.invBoilT();
+    auto const inv_boil_T = m_fuelData.invBoilT();
     auto const fuel_cp = m_fuelData.fuelCp();
     auto const fuel_latent = m_fuelData.fuelLatent();
     auto const fuel_indx = m_fuelData.fuelIndx();
     Array4<const Real> const& statearr = state.array(pti);
     Array4<Real> const& sourcearr = source.array(pti);
+    GpuArray<
+      Array4<const Real>, AMREX_SPACEDIM> const
+      umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti), u_mac[2].array(pti))};
     AMREX_FOR_1D ( Np, i,
     {
       ParticleType& p = pstruct[i];
@@ -395,12 +402,15 @@ SprayParticleContainer::updateParticles(const int&  lev,
         RealVect len(AMREX_D_DECL((p.pos(0) - plo[0])*dxi[0] + 0.5,
                                   (p.pos(1) - plo[1])*dxi[1] + 0.5,
                                   (p.pos(2) - plo[2])*dxi[2] + 0.5));
-        // Do initial interpolation and save corresponding adjacent fluid information
-        AdjIndexWeights(len, indx_array, coef, dom_lo, dom_hi);
         RealVect vel_fluid(RealVect::TheZeroVector());
+#ifdef SPRAY_PELE_LM
+        InterpolateFaceVelocity(len, dom_lo, dom_hi, umac, vel_fluid);
+#endif
         Real T_fluid = 0.;
         Real rho_fluid = 0.;
         for (int sp = 0; sp != NUM_SPECIES; ++sp) Y_fluid[sp] = 0.;
+        // Do initial interpolation and save corresponding adjacent fluid information
+        AdjIndexWeights(len, indx_array, coef, dom_lo, dom_hi);
         // Extract adjacent values and interpolate fluid at particle location
         for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
           IntVect cur_indx = indx_array[aindx];
@@ -409,6 +419,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
           Real cur_rho = statearr(cur_indx, rhoIndx);
           rho_fluid += cur_coef*cur_rho;
           Real inv_rho = 1./cur_rho;
+#ifndef SPRAY_PELE_LM
           AMREX_D_TERM(Real velx = statearr(cur_indx, momIndx)*inv_rho;
                        Real ke = 0.5*velx*velx;
                        vel_fluid[0] += cur_coef*velx;,
@@ -418,6 +429,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
                        Real velz = statearr(cur_indx, momIndx+2)*inv_rho;
                        ke += 0.5*velz*velz;
                        vel_fluid[2] += cur_coef*velz;);
+#endif
           for (int sp = 0; sp != NUM_SPECIES; ++sp) {
             int mf_indx = sp + specIndx;
             Real cur_mf = statearr(cur_indx, mf_indx)*inv_rho;
@@ -495,7 +507,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
               L_fuel[spf] = part_latent;
               // Compute the mass fraction of the fuel vapor at droplet surface
               Real pres_sat = EOS::PATM*std::exp(part_latent*inv_Ru*mw_fuel*
-                                                 (invBoilT[spf] - 1./T_part)) + C_eps;
+                                                 (inv_boil_T[spf] - 1./T_part)) + C_eps;
               Real Yfv = mw_fuel*pres_sat/(mw_mix*p_fluid + (mw_fuel - mw_mix)*pres_sat);
               Yfv = amrex::max(0., amrex::min(1. - C_eps, Yfv));
               B_M_num[spf] = amrex::max(C_eps, (Yfv - Y_fluid[fspec])/(1. - Yfv));

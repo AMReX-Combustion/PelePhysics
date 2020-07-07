@@ -57,6 +57,59 @@ void AdjIndexWeights(const RealVect& len,
 #endif
 }
 
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+void InterpolateFaceVelocity(const RealVect& len,
+                             const IntVect&  dom_lo,
+                             const IntVect&  dom_hi,
+                             GpuArray<Array4<Real const>, AMREX_SPACEDIM> const& umac,
+                             RealVect&       vel_fluid)
+{
+  for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+    RealVect face_len(AMREX_D_DECL(len[0] + (dir == 0)*0.5,
+                                   len[1] + (dir == 1)*0.5,
+                                   len[2] + (dir == 2)*0.5));
+    // Compute distances for trilinear interpolation
+    IntVect indx(AMREX_D_DECL(amrex::Math::floor(face_len[0]),
+                              amrex::Math::floor(face_len[1]),
+                              amrex::Math::floor(face_len[2])));
+    RealVect delL(AMREX_D_DECL(face_len[0] - indx[0],
+                               face_len[1] - indx[1],
+                               face_len[2] - indx[2]));
+    int iin[2] = {amrex::max(indx[0] - 1, dom_lo[0]),
+                  amrex::min(indx[0], dom_hi[0])};
+    Real ssx[2] = {1. - delL[0], delL[0]};
+    int zindx = 0;
+    int yindx = 0;
+    int xindx = 0;
+#if AMREX_SPACEDIM > 1
+    int jjn[2] = {amrex::max(indx[1] - 1, dom_lo[1]),
+                  amrex::min(indx[1], dom_hi[1])};
+    Real ssy[2] = {1. - delL[1], delL[1]};
+#if AMREX_SPACEDIM == 3
+    int kkn[2] = {amrex::max(indx[2] - 1, dom_lo[2]),
+                  amrex::min(indx[2], dom_hi[2])};
+    Real ssz[2] = {1. - delL[2], delL[2]};
+    for (int kk = 0; kk != 2; ++kk) {
+      zindx = kkn[kk];
+#endif
+      for (int jj = 0; jj != 2; ++jj) {
+        yindx = jjn[jj];
+#endif
+        for (int ii = 0; ii != 2; ++ii) {
+          xindx = iin[ii];
+          vel_fluid[dir] += (umac[dir])(xindx, yindx, zindx, 0)*
+            AMREX_D_TERM(ssx[ii],*ssy[jj],*ssz[kk]);
+        }
+#if AMREX_SPACEDIM > 1
+      }
+#if AMREX_SPACEDIM == 3
+    }
+#endif
+#endif
+  }
+}
+
 // Compute the heat transfer coefficient using the
 // corrected Nusselt number and B_T value
 AMREX_GPU_DEVICE
