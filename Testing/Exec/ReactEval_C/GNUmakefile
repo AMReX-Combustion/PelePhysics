@@ -9,7 +9,7 @@ COMP	   = gcc
 FCOMP	   = gfortran
 
 USE_MPI    = TRUE
-USE_OMP    = TRUE
+USE_OMP    = FALSE
 
 FUEGO_GAS  = TRUE
 
@@ -36,11 +36,7 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
   # use ARKODE: if FALSE then CVODE is used
   USE_ARKODE_PP = FALSE
   # use KLU sparse features -- only useful if CVODE is used on CPU
-  USE_KLU_PP = FALSE
-  ifeq ($(USE_KLU_PP), TRUE)
-    # provide location of KLU lib if needed
-    #SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
-  endif
+  USE_KLU_PP = TRUE
   # Activates GPU version
   USE_CUDA_SUNDIALS_PP = FALSE
 else
