@@ -35,8 +35,6 @@ AMREX_GPU_DEVICE_MANAGED int enth_rho = 2; // in/out = rhoH/rhoY
 /* Infos to print once */
 int reactor_info(const int* reactor_type,const int* Ncells){ 
 
-    int ianalytical_jacobian, isolve_type, iverbose;
-
     /* ParmParse from the inputs file */ 
     amrex::ParmParse pp("ode");
     int ianalytical_jacobian = 0;
