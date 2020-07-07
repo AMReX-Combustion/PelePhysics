@@ -18,6 +18,15 @@ void init();
 
 void close();
 
+void
+atomic_weightsCHON(amrex::Real atwCHON[]);
+
+void
+element_compositionCHON(int ecompCHON[]);
+
+void
+speciesNames(amrex::Vector<std::string>& spn);
+
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
@@ -133,7 +142,7 @@ RYET2P(
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-TRY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
+RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
 {
   CKPY(&R, &T, Y, &P);
 }
@@ -218,6 +227,14 @@ PYT2RE(
   E = 0.0;
   for (int n = 0; n < NUM_SPECIES; n++)
     E += Y[n] * ei[n];
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+PYT2R(amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real &R) 
+{
+  CKRHOY(&P, &T, Y, &R);
 }
 
 AMREX_GPU_HOST_DEVICE

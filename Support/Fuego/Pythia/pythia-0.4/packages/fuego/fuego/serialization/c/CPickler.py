@@ -516,6 +516,7 @@ class CPickler(CMill):
         self._ckindx(mechanism)
         self._ckxnum(mechanism)
         self._cksnum(mechanism)
+        self._cksyme_str(mechanism)
         self._cksyme(mechanism)
         self._cksyms_str(mechanism)
         self._cksyms(mechanism)
@@ -986,9 +987,10 @@ class CPickler(CMill):
             'void CKINDX'+sym+'(int * mm, int * kk, int * ii, int * nfit );',
             'void CKXNUM'+sym+'(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);',
             'void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);',
+            'void CKSYME_STR(amrex::Vector<std::string>& ename);',
             'void CKSYME(int * kname, int * lenkname);',
-            'void CKSYMS(int * kname, int * lenkname);',
             'void CKSYMS_STR(amrex::Vector<std::string>& kname);',
+            'void CKSYMS(int * kname, int * lenkname);',
             'void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa);',
             'void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P);',
             'AMREX_GPU_HOST_DEVICE void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
@@ -1064,7 +1066,7 @@ class CPickler(CMill):
             '#ifndef AMREX_USE_CUDA',
             'void CKINU'+sym+'(int * i, int * nspec, int * ki, int * nu);',
             '#endif',
-            'void CKNCF'+sym+'(int * mdim, int * ncf);',
+            'void CKNCF'+sym+'(int * ncf);',
             
             'void CKABE'+sym+'(double *  a, double *  b, double *  e );',
             'void CKEQC'+sym+'(double *  T, double *  C , double *  eqcon );',
@@ -1556,7 +1558,7 @@ class CPickler(CMill):
             
             'void CKNU'+sym+'(int * kdim, int * nuki);',
             'void CKINU'+sym+'(int * i, int * nspec, int * ki, int * nu);',
-            'void CKNCF'+sym+'(int * mdim, int * ncf);',
+            'void CKNCF'+sym+'(int * ncf);',
             
             'void CKABE'+sym+'(double *  a, double *  b, double *  e );',
             'void CKEQC'+sym+'(double *  T, double *  C , double *  eqcon );',
@@ -2418,6 +2420,24 @@ class CPickler(CMill):
         self._write(' *ruc = %.20f; ' % (Rc * mole * kelvin / cal))
         self._write(' *pa  = %g; ' % (Patm) )
         
+        # done
+        self._outdent()
+        self._write('}')
+        return
+
+    def _cksyme_str(self, mechanism):
+
+        nElement = len(mechanism.element())
+
+        self._write()
+        self._write()
+        self._write(
+            self.line(' Returns the vector of strings of element names'))
+        self._write('void CKSYME_STR'+sym+'(amrex::Vector<std::string>& ename)')
+        self._write('{')
+        self._indent()
+        for element in mechanism.element():
+            self._write('ename.push_back("%s");' % element.symbol)
         # done
         self._outdent()
         self._write('}')
@@ -4463,13 +4483,13 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the elemental composition '))
         self._write(self.line('of the speciesi (mdim is num of elements)'))
-        self._write('void CKNCF'+sym+'(int * mdim,  int * ncf)')
+        self._write('void CKNCF'+sym+'(int * ncf)')
         self._write('{')
         self._indent()
 
  
         self._write('int id; ' + self.line('loop counter'))
-        self._write('int kd = (*mdim); ')
+        self._write('int kd = %d; ' % (nElement))
         self._write(self.line('Zero ncf'))
         self._write('for (id = 0; id < kd * %d; ++ id) {' % (self.nSpecies) )
         self._indent()

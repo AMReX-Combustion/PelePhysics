@@ -2688,6 +2688,16 @@ void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * kn
 }
 
 
+/* Returns the vector of strings of element names */
+void CKSYME_STR(amrex::Vector<std::string>& ename)
+{
+    ename.push_back("N");
+    ename.push_back("O");
+    ename.push_back("H");
+    ename.push_back("C");
+}
+
+
 /* Returns the char strings of element names */
 void CKSYME(int * kname, int * plenkname )
 {
@@ -6374,10 +6384,10 @@ void CKINU(int * i, int * nspec, int * ki, int * nu)
 
 /*Returns the elemental composition  */
 /*of the speciesi (mdim is num of elements) */
-void CKNCF(int * mdim,  int * ncf)
+void CKNCF(int * ncf)
 {
     int id; /*loop counter */
-    int kd = (*mdim); 
+    int kd = 4; 
     /*Zero ncf */
     for (id = 0; id < kd * 34; ++ id) {
          ncf[id] = 0; 
@@ -47127,15 +47137,15 @@ void egtransetCOFD(double* COFD) {
     COFD[3922] = -3.75026436E-01;
     COFD[3923] = 1.39466941E-02;
     COFD[3924] = -2.25933800E+01;
-    COFD[3925] = 5.42562555E+00;
+    COFD[3925] = 5.42562556E+00;
     COFD[3926] = -4.48132861E-01;
     COFD[3927] = 1.77847329E-02;
     COFD[3928] = -2.25933800E+01;
-    COFD[3929] = 5.42562555E+00;
+    COFD[3929] = 5.42562556E+00;
     COFD[3930] = -4.48132861E-01;
     COFD[3931] = 1.77847329E-02;
     COFD[3932] = -2.25999351E+01;
-    COFD[3933] = 5.42562555E+00;
+    COFD[3933] = 5.42562556E+00;
     COFD[3934] = -4.48132861E-01;
     COFD[3935] = 1.77847329E-02;
     COFD[3936] = -2.15763465E+01;
@@ -47259,7 +47269,7 @@ void egtransetCOFD(double* COFD) {
     COFD[4054] = -4.81921515E-01;
     COFD[4055] = 1.97721229E-02;
     COFD[4056] = -2.25933800E+01;
-    COFD[4057] = 5.42562555E+00;
+    COFD[4057] = 5.42562556E+00;
     COFD[4058] = -4.48132861E-01;
     COFD[4059] = 1.77847329E-02;
     COFD[4060] = -2.26149345E+01;
@@ -47395,7 +47405,7 @@ void egtransetCOFD(double* COFD) {
     COFD[4190] = -4.81921515E-01;
     COFD[4191] = 1.97721229E-02;
     COFD[4192] = -2.25933800E+01;
-    COFD[4193] = 5.42562555E+00;
+    COFD[4193] = 5.42562556E+00;
     COFD[4194] = -4.48132861E-01;
     COFD[4195] = 1.77847329E-02;
     COFD[4196] = -2.26149345E+01;
@@ -47531,7 +47541,7 @@ void egtransetCOFD(double* COFD) {
     COFD[4326] = -4.81921515E-01;
     COFD[4327] = 1.97721229E-02;
     COFD[4328] = -2.25999351E+01;
-    COFD[4329] = 5.42562555E+00;
+    COFD[4329] = 5.42562556E+00;
     COFD[4330] = -4.48132861E-01;
     COFD[4331] = 1.77847329E-02;
     COFD[4332] = -2.26206818E+01;

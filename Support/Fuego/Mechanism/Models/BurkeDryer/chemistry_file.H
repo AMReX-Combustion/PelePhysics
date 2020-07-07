@@ -38,9 +38,10 @@ void SetAllDefaults();
 void CKINDX(int * mm, int * kk, int * ii, int * nfit );
 void CKXNUM(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);
 void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);
+void CKSYME_STR(amrex::Vector<std::string>& ename);
 void CKSYME(int * kname, int * lenkname);
-void CKSYMS(int * kname, int * lenkname);
 void CKSYMS_STR(amrex::Vector<std::string>& kname);
+void CKSYMS(int * kname, int * lenkname);
 void CKRP(double *  ru, double *  ruc, double *  pa);
 void CKPX(double *  rho, double *  T, double *  x, double *  P);
 AMREX_GPU_HOST_DEVICE void CKPY(double *  rho, double *  T, double *  y, double *  P);
@@ -107,7 +108,7 @@ void CKNU(int * kdim, int * nuki);
 #ifndef AMREX_USE_CUDA
 void CKINU(int * i, int * nspec, int * ki, int * nu);
 #endif
-void CKNCF(int * mdim, int * ncf);
+void CKNCF(int * ncf);
 void CKABE(double *  a, double *  b, double *  e );
 void CKEQC(double *  T, double *  C , double *  eqcon );
 void CKEQYP(double *  P, double *  T, double *  y, double *  eqcon);

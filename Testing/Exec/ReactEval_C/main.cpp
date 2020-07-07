@@ -69,62 +69,62 @@ main (int   argc,
     Real dt        = 1.e-5;
 #ifdef USE_SUNDIALS_PP
     /* ARKODE parameters for now but should be for all solvers */
-    Real rtol=1e-10;
-    Real atol=1e-10;
+    Real rtol      = 1e-10;
+    Real atol      = 1e-10;
     int use_typ_vals = 0;
 #endif
 
 #if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
     {
-      /* ParmParse from the inputs file */
-      ParmParse pp;
+    /* ParmParse from the inputs file */
+    ParmParse pp;
       
 #else
     std::string probin_file="probin";
     {
-      /* ParmParse from the inputs file */
-      ParmParse pp;
+        /* ParmParse from the inputs file */
+        ParmParse pp;
 
-      // probin file
-      pp.query("probin_file",probin_file);
+        // probin file
+        pp.query("probin_file",probin_file);
 #endif
 
-      // domain size
-      pp.query("max_grid_size",max_grid_size);
+        // domain size
+        pp.query("max_grid_size",max_grid_size);
 
-      // third dim
-      pp.query("third_dim",third_dim);
+        // third dim
+        pp.query("third_dim",third_dim);
 
-      // Get name of fuel
-      pp.get("fuel_name", fuel_name);
+        // Get name of fuel
+        pp.get("fuel_name", fuel_name);
     }
 
     {
-      /* ParmParse from the inputs file */
-      ParmParse ppode("ode");
+        /* ParmParse from the inputs file */
+        ParmParse ppode("ode");
 
-      // final time
-      ppode.query("dt",dt);
+        // final time
+        ppode.query("dt",dt);
 
-      // time stepping
-      ppode.query("ndt",ndt); 
+        // time stepping
+        ppode.query("ndt",ndt); 
 
-      ppode.query("reactor_type",ode_iE);
-      /* Select ODE type of energy employed */
-      //1 for UV, 2 for HP
-      //   1 = Internal energy
-      //   anything else = enthalpy (PeleLM restart)
+        ppode.query("reactor_type",ode_iE);
+        /* Select ODE type of energy employed */
+        //1 for UV, 2 for HP
+        //   1 = Internal energy
+        //   anything else = enthalpy (PeleLM restart)
 
-#if defined(USE_CUDA_SUNDIALS_PP)
-      // nb of cells to integrate
-      ppode.query("ode_ncells",ode_ncells);
-#endif
+//#if defined(USE_CUDA_SUNDIALS_PP)
+        // nb of cells to integrate
+        ppode.query("ode_ncells",ode_ncells);
+//#endif
 
 #ifdef USE_SUNDIALS_PP
-      /* Additional ARKODE queries */
-      ppode.query("rtol",rtol);
-      ppode.query("atol",atol);
-      ppode.query("use_typ_vals",use_typ_vals);
+        /* Additional ARKODE queries */
+        ppode.query("rtol",rtol);
+        ppode.query("atol",atol);
+        ppode.query("use_typ_vals",use_typ_vals);
 #endif
 
     }
@@ -176,14 +176,14 @@ main (int   argc,
     bath_idx  = N2_ID;
 
 #if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
-      EOS::init();
-      transport_init();
+    EOS::init();
+    transport_init();
 #else
     /* take care of probin init to initialize problem */
     int probin_file_length = probin_file.length();
     std::vector<int> probin_file_name(probin_file_length);
     for (int i = 0; i < probin_file_length; i++)
-	    probin_file_name[i] = probin_file[i];
+        probin_file_name[i] = probin_file[i];
     extern_init(&(probin_file_name[0]),&probin_file_length,&fuel_idx,&oxy_idx,&bath_idx,&ode_iE);
 #endif
 
@@ -211,7 +211,7 @@ main (int   argc,
         }
         std::vector<double> typ_vals(nb_typ_vals);
         for (int i = 0; i < nb_typ_vals; ++i) {
-                pptv.get("typ_vals", typ_vals[i],i);
+            pptv.get("typ_vals", typ_vals[i],i);
         }
         SetTypValsODE(typ_vals);
     }
@@ -230,34 +230,28 @@ main (int   argc,
     /* make domain and BoxArray */
     std::vector<int> npts(3,1);
     for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 8;
+        npts[i] = 2;
     }
     npts[1] = third_dim;
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
-        amrex::Print() << dt << " seconds";
+    amrex::Print() << dt << " seconds";
     amrex::Print() << std::endl;
 
     Box domain(IntVect(D_DECL(0,0,0)),
-	       IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
+    IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
 
     BoxArray ba(domain);
     ba.maxSize(max_grid_size);
 
     /* Additional defs to initialize domain */
-#ifdef USE_CUDA_SUNDIALS_PP
-    Real *plo, *phi, *dx;
-    cudaMallocManaged(&plo, 3*sizeof(amrex::Real));
-    cudaMallocManaged(&phi, 3*sizeof(amrex::Real));
-    cudaMallocManaged(&dx,  3*sizeof(amrex::Real));
-#else
-    Real *plo, *phi, *dx;
-    plo = new Real[3]; phi = new Real[3]; dx = new Real[3];
-#endif
-    for (int i=0; i<BL_SPACEDIM; ++i) {
-	plo[i] = 0.0; //(i+1)*0.35;
-	phi[i] = domain.length(i);
-	dx[i] = (phi[i] - plo[i])/domain.length(i);
+    GpuArray<Real, AMREX_SPACEDIM>  dx;
+    GpuArray<Real, AMREX_SPACEDIM>  plo;
+    GpuArray<Real, AMREX_SPACEDIM>  phi;
+    for (int i=0; i<AMREX_SPACEDIM; ++i) {
+        plo[i] = 0.0; //(i+1)*0.35;
+        phi[i] = domain.length(i);
+        dx[i] = (phi[i] - plo[i])/domain.length(i);
     }
 
     int Ncomp;
@@ -286,31 +280,31 @@ main (int   argc,
     for (MFIter mfi(mf,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
 #if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
-	const Box& gbox = mfi.tilebox();
+        const Box& gbox = mfi.tilebox();
 
-	Array4<Real> const& rY_a    = mf.array(mfi);
-	Array4<Real> const& rYs_a   = rY_source_ext.array(mfi);
-	Array4<Real> const& E_a     = mfE.array(mfi);
-	Array4<Real> const& rE_a    = rY_source_energy_ext.array(mfi);
+        Array4<Real> const& rY_a    = mf.array(mfi);
+        Array4<Real> const& rYs_a   = rY_source_ext.array(mfi);
+        Array4<Real> const& E_a     = mfE.array(mfi);
+        Array4<Real> const& rE_a    = rY_source_energy_ext.array(mfi);
 
-	amrex::ParallelFor(gbox,
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-	        initialize_data(i, j, k, fuel_idx, 
-				rY_a, rYs_a, E_a, rE_a,
-				dx, plo, phi);
+        amrex::ParallelFor(gbox,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+                initialize_data(i, j, k, fuel_idx, 
+                                rY_a, rYs_a, E_a, rE_a,
+                                dx, plo, phi);
         });
 #else
         const Box& box = mfi.tilebox();
         initialize_data_F(ARLIM_3D(box.loVect()), ARLIM_3D(box.hiVect()),
-               		BL_TO_FORTRAN_N_3D(mf[mfi],0),
-               		BL_TO_FORTRAN_N_3D(rY_source_ext[mfi],0),
-		        BL_TO_FORTRAN_N_3D(mfE[mfi],0),
-		        BL_TO_FORTRAN_N_3D(rY_source_energy_ext[mfi],0),
-			&(dx[0]), &(plo[0]), &(phi[0]));
+                BL_TO_FORTRAN_N_3D(mf[mfi],0),
+                BL_TO_FORTRAN_N_3D(rY_source_ext[mfi],0),
+                BL_TO_FORTRAN_N_3D(mfE[mfi],0),
+                BL_TO_FORTRAN_N_3D(rY_source_energy_ext[mfi],0),
+                &(dx[0]), &(plo[0]), &(phi[0]));
 #endif
 
 #ifdef USE_CUDA_SUNDIALS_PP
-	count_mf = count_mf + 1;
+        count_mf = count_mf + 1;
 #endif
     }
 
@@ -346,42 +340,45 @@ main (int   argc,
     timer_adv = ParallelDescriptor::second();
     ParallelDescriptor::ReduceRealMax(timer_adv,IOProc);
 
+    /* ADVANCE */
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
     for ( MFIter mfi(mf,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-	/* Prints to follow the computation */
-        /* ADVANCE */
 
         const Box& box = mfi.tilebox();
-	int ncells     = box.numPts();
+        int ncells     = box.numPts();
+        int extra_cells = 0;
 
-	const auto len     = amrex::length(box);
-	const auto lo      = amrex::lbound(box);
+        const auto len     = amrex::length(box);
+        const auto lo      = amrex::lbound(box);
 
-	Array4<Real> rhoY    = mf.array(mfi);
-	Array4<Real> rhoE    = mfE.array(mfi);
-	Array4<Real> frcExt  = rY_source_ext.array(mfi);
-	Array4<Real> frcEExt = rY_source_energy_ext.array(mfi);
-	Array4<Real> fc      = fctCount.array(mfi);
+        Array4<Real> rhoY    = mf.array(mfi);
+        Array4<Real> rhoE    = mfE.array(mfi);
+        Array4<Real> frcExt  = rY_source_ext.array(mfi);
+        Array4<Real> frcEExt = rY_source_energy_ext.array(mfi);
+        Array4<Real> fc      = fctCount.array(mfi);
 
 #ifdef USE_CUDA_SUNDIALS_PP
         cudaError_t cuda_status = cudaSuccess;
         const auto ec = Gpu::ExecutionConfig(ncells);
-	ode_ncells    = ncells;
+        ode_ncells    = ncells;
+#else
+        extra_cells = ncells - ncells / ode_ncells * ode_ncells; 
 #endif
 
-	amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
+        amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
+        amrex::Print() << "("<< extra_cells<<" extra cells) \n";
 
-	/* ALLOCS */
-	BL_PROFILE_VAR_START(Allocs);
-	// rhoY,T
+        /* ALLOCS */
+        BL_PROFILE_VAR_START(Allocs);
+        // rhoY,T
         amrex::Real *tmp_vect; 
-	// rhoY_src_ext
+        // rhoY_src_ext
         amrex::Real *tmp_src_vect;
-	// rhoE/rhoH
+        // rhoE/rhoH
         amrex::Real *tmp_vect_energy;
-	amrex::Real *tmp_src_vect_energy;
+        amrex::Real *tmp_src_vect_energy;
 
 #ifdef USE_CUDA_SUNDIALS_PP
         cudaMallocManaged(&tmp_vect, (Ncomp+1)*ncells*sizeof(amrex::Real));
@@ -389,115 +386,118 @@ main (int   argc,
         cudaMallocManaged(&tmp_vect_energy, ncells*sizeof(amrex::Real));
         cudaMallocManaged(&tmp_src_vect_energy, ncells*sizeof(amrex::Real));
 #else
-	tmp_vect            =  new amrex::Real[ncells*(NUM_SPECIES+1)];
-	tmp_src_vect        =  new amrex::Real[ncells*(NUM_SPECIES)];
-	tmp_vect_energy     =  new amrex::Real[ncells];
-	tmp_src_vect_energy =  new amrex::Real[ncells];
+        tmp_vect            =  new amrex::Real[(ncells+extra_cells)*(NUM_SPECIES+1)];
+        tmp_src_vect        =  new amrex::Real[(ncells+extra_cells)*(NUM_SPECIES)];
+        tmp_vect_energy     =  new amrex::Real[(ncells+extra_cells)];
+        tmp_src_vect_energy =  new amrex::Real[(ncells+extra_cells)];
 #endif
-	BL_PROFILE_VAR_STOP(Allocs);
-
-
+        BL_PROFILE_VAR_STOP(Allocs);
 
         /* Packing of data */
         BL_PROFILE_VAR_START(FlatStuff);
 #ifndef USE_CUDA_SUNDIALS_PP
-	amrex::ParallelFor(box, [=]
-		AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-			int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
-			for(int sp=0; sp<NUM_SPECIES; sp++) {
-			    tmp_vect[icell*(NUM_SPECIES+1)+sp]     = rhoY(i,j,k,sp);
-			    tmp_src_vect[icell*NUM_SPECIES+sp]     = frcExt(i,j,k,sp);
-			}
-			tmp_vect[icell*(NUM_SPECIES+1)+NUM_SPECIES] = rhoY(i,j,k,NUM_SPECIES);
-			tmp_vect_energy[icell]                      = rhoE(i,j,k,0);
-			tmp_src_vect_energy[icell]                  = frcEExt(i,j,k,0);
-	         });
+        amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+            int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+            for(int sp=0; sp<NUM_SPECIES; sp++) {
+                tmp_vect[icell*(NUM_SPECIES+1)+sp]     = rhoY(i,j,k,sp);
+                tmp_src_vect[icell*NUM_SPECIES+sp]     = frcExt(i,j,k,sp);
+            }
+            tmp_vect[icell*(NUM_SPECIES+1)+NUM_SPECIES] = rhoY(i,j,k,NUM_SPECIES);
+            tmp_vect_energy[icell]                      = rhoE(i,j,k,0);
+            tmp_src_vect_energy[icell]                  = frcEExt(i,j,k,0);
+        });
+
+        for (int icell=ncells; icell<ncells+extra_cells; icell++) {
+            for(int sp=0; sp<NUM_SPECIES; sp++) {
+                tmp_vect[icell*(NUM_SPECIES+1)+sp]     = rhoY(0,0,0,sp);
+                tmp_src_vect[icell*NUM_SPECIES+sp]     = frcExt(0,0,0,sp);
+            }
+            tmp_vect[icell*(NUM_SPECIES+1)+NUM_SPECIES] = rhoY(0,0,0,NUM_SPECIES);
+            tmp_vect_energy[icell]                      = rhoE(0,0,0,0); 
+            tmp_src_vect_energy[icell]                  = frcEExt(0,0,0,0);
+        }
 
 #else
-	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	    [=] AMREX_GPU_DEVICE () noexcept {
-	        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	                         icell < ncells; icell += stride) {
-	            int k =  icell /   (len.x*len.y);
-		    int j = (icell - k*(len.x*len.y)) /   len.x;
-		    int i = (icell - k*(len.x*len.y)) - j*len.x;
-		    i += lo.x;
-		    j += lo.y;
-		    k += lo.z;
+        amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+            [=] AMREX_GPU_DEVICE () noexcept {
+                for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+                         icell < ncells; icell += stride) {
+                    int k =  icell /   (len.x*len.y);
+                    int j = (icell - k*(len.x*len.y)) /   len.x;
+                    int i = (icell - k*(len.x*len.y)) - j*len.x;
+                    i += lo.x;
+                    j += lo.y;
+                    k += lo.z;
                     gpu_flatten(icell, i, j, k, rhoY, frcExt, rhoE, frcEExt, 
                                 tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
                 }
-            });
+        });
 
         cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
 #endif
-	BL_PROFILE_VAR_STOP(FlatStuff);
+        BL_PROFILE_VAR_STOP(FlatStuff);
 
-        
 
         /* Solve */
         Real fc_tmp;
         BL_PROFILE_VAR_START(ReactInLoop);
-        for(int i = 0; i < ncells; i+=ode_ncells) {
-           Real time      = 0.0;
-           Real dt_incr   = dt/ndt;
-           Real fc_tmp_lcl = 0.0;
-           for (int ii = 0; ii < ndt; ++ii) {
+        for(int i = 0; i < ncells+extra_cells; i+=ode_ncells) {
+            Real time      = 0.0;
+            Real dt_incr   = dt/ndt;
+            Real fc_tmp_lcl = 0.0;
+            for (int ii = 0; ii < ndt; ++ii) {
 #ifndef USE_CUDA_SUNDIALS_PP
     #if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
-	        fc_tmp_lcl = react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
-		                   tmp_vect_energy + i, tmp_src_vect_energy + i,
-		                   &dt_incr, &time);
+                fc_tmp_lcl = react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
+                                   tmp_vect_energy + i, tmp_src_vect_energy + i,
+                                   &dt_incr, &time);
 
     #else
                 double pressure = 1013250.0;
-	        fc_tmp_lcl = react(tmp_vect+i*(NUM_SPECIES+1), tmp_src_vect+i*NUM_SPECIES,
-		                   tmp_vect_energy+i, tmp_src_vect_energy+i,
-			           &pressure,
-		                   &dt_incr, &time);
+                fc_tmp_lcl = react(tmp_vect+i*(NUM_SPECIES+1), tmp_src_vect+i*NUM_SPECIES,
+                                   tmp_vect_energy+i, tmp_src_vect_energy+i,
+                                   &pressure,
+                                   &dt_incr, &time);
     #endif
 #else
 
-	        fc_tmp_lcl = react(tmp_vect, tmp_src_vect,
-	                           tmp_vect_energy, tmp_src_vect_energy,
-	                           &dt_incr, &time,
+                fc_tmp_lcl = react(tmp_vect, tmp_src_vect,
+                                   tmp_vect_energy, tmp_src_vect_energy,
+                                   &dt_incr, &time,
                                    &ode_iE, &ncells, amrex::Gpu::gpuStream());
 #endif
-	        //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES + 1)]);
-	        dt_incr =  dt/ndt;
-		fc_tmp = fc_tmp_lcl;
-           }
-        }
+                printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES+1)]);
+                dt_incr =  dt/ndt;
+                fc_tmp = fc_tmp_lcl;
+            }
+        }   
         BL_PROFILE_VAR_STOP(ReactInLoop);
-
-
 
 
         /* Unpacking of data */
         BL_PROFILE_VAR_START(FlatStuff);
 #ifndef USE_CUDA_SUNDIALS_PP
-	amrex::ParallelFor(box, [=]
-		AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-			int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
-			for(int sp=0; sp<NUM_SPECIES; sp++) {
-			    rhoY(i,j,k,sp) = tmp_vect[icell*(NUM_SPECIES+1)+sp];
-			}
-			rhoY(i,j,k,NUM_SPECIES) = tmp_vect[icell*(NUM_SPECIES+1) + NUM_SPECIES];
-			rhoE(i,j,k,0)           = tmp_vect_energy[icell];
-			fc(i,j,k,0)             = fc_tmp;
-	         });
+        amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+               int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+               for(int sp=0; sp<NUM_SPECIES; sp++) {
+                   rhoY(i,j,k,sp) = tmp_vect[icell*(NUM_SPECIES+1)+sp];
+               }
+               rhoY(i,j,k,NUM_SPECIES) = tmp_vect[icell*(NUM_SPECIES+1) + NUM_SPECIES];
+               rhoE(i,j,k,0)           = tmp_vect_energy[icell];
+               fc(i,j,k,0)             = fc_tmp;
+        });
 
 #else
-	amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
-	[=] AMREX_GPU_DEVICE () noexcept {
-	    for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	        icell < ncells; icell += stride) {
-	        int k =  icell /   (len.x*len.y);
-		int j = (icell - k*(len.x*len.y)) /   len.x;
-		int i = (icell - k*(len.x*len.y)) - j*len.x;
-		i += lo.x;
-		j += lo.y;
-		k += lo.z;
+        amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, amrex::Gpu::gpuStream()>>>(
+        [=] AMREX_GPU_DEVICE () noexcept {
+            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+                     icell < ncells; icell += stride) {
+                int k =  icell /   (len.x*len.y);
+                int j = (icell - k*(len.x*len.y)) /   len.x;
+                int i = (icell - k*(len.x*len.y)) - j*len.x;
+                i += lo.x;
+                j += lo.y;
+                k += lo.z;
                 gpu_unflatten(icell, i, j, k, rhoY, rhoE, 
                                             tmp_vect, tmp_vect_energy);
             }
@@ -508,19 +508,18 @@ main (int   argc,
         BL_PROFILE_VAR_STOP(FlatStuff);
 
 
-
-	/* Deallocate */
+        printf("DONE");
+        /* Deallocate */
 #ifdef USE_CUDA_SUNDIALS_PP 
         cudaFree(tmp_vect);
         cudaFree(tmp_src_vect);
         cudaFree(tmp_vect_energy);
         cudaFree(tmp_src_vect_energy);
-       
 #else
-	delete(tmp_vect);
-	delete(tmp_src_vect);
-	delete(tmp_vect_energy);
-	delete(tmp_src_vect_energy);
+        delete(tmp_vect);
+        delete(tmp_src_vect);
+        delete(tmp_vect_energy);
+        delete(tmp_src_vect_energy);
 #endif
 
     }
