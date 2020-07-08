@@ -18,7 +18,7 @@ TINY_PROFILE = TRUE
 USE_CUDA   = FALSE
 
 # define the location of the PELE_PHYSICS top directory
-PELE_PHYSICS_HOME    := ../../..
+PELE_PHYSICS_HOME    ?= ../../..
 
 #######################
 # this flag activates the subcycling mode in the D/Cvode routines
@@ -43,8 +43,10 @@ else
   # Activates use of Hari explicit RK
   # will only work if USE_SUNDIALS_PP = FALSE
   USE_RK64_PP = FALSE
+  ifeq ($(USE_RK64_PP), TRUE)
+    TRANSPORT_CPP = TRUE
+  endif
 endif
-
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
