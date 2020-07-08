@@ -1847,7 +1847,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
       int *colIdx, *rowCount;
       rowCount = (int*) SUNSparseMatrix_IndexPointers(PS); 
       colIdx   = (int*) SUNSparseMatrix_IndexValues(PS);
-      SPARSITY_PREPROC_CSR(colIdx,rowCount,&HP,1);
+      SPARSITY_PREPROC_CSR(colIdx,rowCount,&HP,1, 0);
       std::cout <<" " << std::endl;
       std::cout << "*** Treating CHEM Jac (CSR symbolic analysis)***" << std::endl;
       std::cout <<" " << std::endl;

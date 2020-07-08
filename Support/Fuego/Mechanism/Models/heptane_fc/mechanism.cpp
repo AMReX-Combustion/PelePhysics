@@ -22510,7 +22510,7 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, 
 }
 
 /*compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0 */
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int *  colVals, int *  rowPtrs, int * consP, int NCELLS)
+AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base)
 {
     double c[52];
     double J[2809];
@@ -22522,18 +22522,35 @@ AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int *  colVals, int *  rowPtrs, 
 
     aJacobian(J, c, 1500.0, *consP);
 
-    rowPtrs[0] = 0;
-    int nJdata_tmp = 0;
-    for (int nc=0; nc<NCELLS; nc++) {
-        offset = nc * 53;
-        for (int l=0; l<53; l++) {
-            for (int k=0; k<53; k++) {
-                if(J[53*k + l] != 0.0) {
-                    colVals[nJdata_tmp] = k + offset; 
-                    nJdata_tmp = nJdata_tmp + 1; 
+    if (base == 1) {
+        rowPtrs[0] = 1;
+        int nJdata_tmp = 1;
+        for (int nc=0; nc<NCELLS; nc++) {
+            offset = nc * 53;
+            for (int l=0; l<53; l++) {
+                for (int k=0; k<53; k++) {
+                    if(J[53*k + l] != 0.0) {
+                        colVals[nJdata_tmp-1] = k+1 + offset; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    }
                 }
+                rowPtrs[offset + (l + 1)] = nJdata_tmp;
             }
-            rowPtrs[offset + (l + 1)] = nJdata_tmp;
+        }
+    } else {
+        rowPtrs[0] = 0;
+        int nJdata_tmp = 0;
+        for (int nc=0; nc<NCELLS; nc++) {
+            offset = nc * 53;
+            for (int l=0; l<53; l++) {
+                for (int k=0; k<53; k++) {
+                    if(J[53*k + l] != 0.0) {
+                        colVals[nJdata_tmp] = k + offset; 
+                        nJdata_tmp = nJdata_tmp + 1; 
+                    }
+                }
+                rowPtrs[offset + (l + 1)] = nJdata_tmp;
+            }
         }
     }
 
