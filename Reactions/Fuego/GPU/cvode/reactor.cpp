@@ -218,73 +218,74 @@ int react(realtype *rY_in, realtype *rY_src_in,
         if (user_data->isolve_type == iterative_gmres_solve) {
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_INFO_SYST_SIMPLIFIED(&(user_data->NNZ),&HP);
-	    BL_PROFILE_VAR_STOP(SparsityStuff);
+            BL_PROFILE_VAR_STOP(SparsityStuff);
 
-	    BL_PROFILE_VAR_START(AllocsCVODE);
+            BL_PROFILE_VAR_START(AllocsCVODE);
             cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
             cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
             cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
             cudaMallocManaged(&(user_data->csr_val_d), user_data->NNZ * NCELLS * sizeof(double));
-	    BL_PROFILE_VAR_STOP(AllocsCVODE);
+            BL_PROFILE_VAR_STOP(AllocsCVODE);
 
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP,1);
-	    BL_PROFILE_VAR_STOP(SparsityStuff);
+            BL_PROFILE_VAR_STOP(SparsityStuff);
 
         } else if (isolve_type == sparse_cusolver_solve) {
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,1);
-	    BL_PROFILE_VAR_STOP(SparsityStuff);
+            BL_PROFILE_VAR_STOP(SparsityStuff);
 
-	    BL_PROFILE_VAR_START(AllocsCVODE);
+            BL_PROFILE_VAR_START(AllocsCVODE);
             cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
             cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
             cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
-	    BL_PROFILE_VAR_STOP(AllocsCVODE);
+            BL_PROFILE_VAR_STOP(AllocsCVODE);
 
             cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
             cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
             cudaError_t      cuda_status     = cudaSuccess;
-	    int retval;
+            int retval;
 
             cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-	    cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
-	    assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+            cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
+            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-	    A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, (NEQ + 1), (NEQ + 1), user_data->NNZ, user_data->cuSPHandle);
-	    if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
+            A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, (NEQ + 1), (NEQ + 1), user_data->NNZ, user_data->cuSPHandle);
+            if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
 
-	    retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
-	    if(check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1)) return(1);
+            retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
+            if(check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1)) return(1);
 
             BL_PROFILE_VAR_START(SparsityStuff);
-	    SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 0); 
+            SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 0); 
             SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_d, user_data->csr_col_index_d);
             cuda_status = cudaDeviceSynchronize();
             assert(cuda_status == cudaSuccess);
-	    //SPARSITY_PREPROC_CSR(SUNMatrix_cuSparse_IndexValues(A), SUNMatrix_cuSparse_IndexPointers(A), &HP, 1, 0); 
-	    //SPARSITY_PREPROC_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
-	    BL_PROFILE_VAR_STOP(SparsityStuff);
+            //SPARSITY_PREPROC_CSR(SUNMatrix_cuSparse_IndexValues(A), SUNMatrix_cuSparse_IndexPointers(A), &HP, 1, 0); 
+            //SPARSITY_PREPROC_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
+            BL_PROFILE_VAR_STOP(SparsityStuff);
+
         } else {
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,1);
-	    BL_PROFILE_VAR_STOP(SparsityStuff);
+            BL_PROFILE_VAR_STOP(SparsityStuff);
 
-	    BL_PROFILE_VAR_START(AllocsCVODE);
+            BL_PROFILE_VAR_START(AllocsCVODE);
             cudaMallocManaged(&(user_data->csr_row_count_d), (NEQ+2) * sizeof(int));
             cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
             cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
-	    BL_PROFILE_VAR_STOP(AllocsCVODE);
+            BL_PROFILE_VAR_STOP(AllocsCVODE);
 
             A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ * NCELLS, CSR_MAT);
             if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
 
             BL_PROFILE_VAR_START(SparsityStuff);
-	    SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
-	    SPARSITY_PREPROC_SYST_CSR( (int*)SUNSparseMatrix_IndexValues(A), (int*)SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
-	    BL_PROFILE_VAR_STOP(SparsityStuff);
+            SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
+            SPARSITY_PREPROC_SYST_CSR( (int*)SUNSparseMatrix_IndexValues(A), (int*)SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
+            BL_PROFILE_VAR_STOP(SparsityStuff);
         }
 
     }
@@ -350,9 +351,9 @@ int react(realtype *rY_in, realtype *rY_src_in,
                                                   &workspaceInBytes);
         assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-	cudaError_t cudaStat1            = cudaSuccess;
-	cudaStat1 = cudaMalloc((void**)&(user_data->buffer_qr), workspaceInBytes);
-	assert(cudaStat1 == cudaSuccess);
+        cudaError_t cudaStat1            = cudaSuccess;
+        cudaStat1 = cudaMalloc((void**)&(user_data->buffer_qr), workspaceInBytes);
+        assert(cudaStat1 == cudaSuccess);
     }
     BL_PROFILE_VAR_STOP(CuSolverInit);
 
@@ -427,42 +428,40 @@ int react(realtype *rY_in, realtype *rY_src_in,
         flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
         if(check_flag(&flag, "CVodeSetLinearSolver", 1)) return(1);
 
-	/* Set the JAcobian-times-vector function */
-	flag = CVodeSetJacTimes(cvode_mem, NULL, NULL);
-	if(check_flag(&flag, "CVodeSetJacTimes", 1)) return(1);
+        /* Set the JAcobian-times-vector function */
+        flag = CVodeSetJacTimes(cvode_mem, NULL, NULL);
+        if(check_flag(&flag, "CVodeSetJacTimes", 1)) return(1);
 
-	if (user_data->ianalytical_jacobian == 1) {
-	    /* Set the preconditioner solve and setup functions */
-	    flag = CVodeSetPreconditioner(cvode_mem, Precond, PSolve);
-	    if(check_flag(&flag, "CVodeSetPreconditioner", 1)) return(1);
-	}
+        if (user_data->ianalytical_jacobian == 1) {
+            /* Set the preconditioner solve and setup functions */
+            flag = CVodeSetPreconditioner(cvode_mem, Precond, PSolve);
+            if(check_flag(&flag, "CVodeSetPreconditioner", 1)) return(1);
+        }
 
     } else if (user_data->isolve_type == sparse_cusolver_solve) {
-
         LS = SUNLinSol_cuSolverSp_batchQR(y, A, user_data->cusolverHandle);
-	if(check_flag((void *)LS, "SUNLinSol_cuSolverSp_batchQR", 0)) return(1);
+        if(check_flag((void *)LS, "SUNLinSol_cuSolverSp_batchQR", 0)) return(1);
 
         /* Set matrix and linear solver to Cvode */
         flag = CVodeSetLinearSolver(cvode_mem, LS, A);
         if(check_flag(&flag, "CVodeSetLinearSolver", 1)) return(1);
 
-	/* Set the user-supplied Jacobian routine Jac */
+        /* Set the user-supplied Jacobian routine Jac */
         flag = CVodeSetJacFn(cvode_mem, cJac);
-	if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1); 
+        if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1); 
 
     } else {
-
         /* Create dense SUNLinearSolver object for use by CVode */ 
-	LS = SUNLinSol_dense_custom(y, A, NCELLS, (NEQ+1), user_data->NNZ, stream);
-	if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
+        LS = SUNLinSol_dense_custom(y, A, NCELLS, (NEQ+1), user_data->NNZ, stream);
+        if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
 
-	/* Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode */
-	flag = CVodeSetLinearSolver(cvode_mem, LS, A); 
-	if(check_flag(&flag, "CVodeSetLinearSolver", 1)) return(1); 
+        /* Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode */
+        flag = CVodeSetLinearSolver(cvode_mem, LS, A); 
+        if(check_flag(&flag, "CVodeSetLinearSolver", 1)) return(1); 
 
-	/* Set the user-supplied Jacobian routine Jac */
+        /* Set the user-supplied Jacobian routine Jac */
         flag = CVodeSetJacFn(cvode_mem, cJac);
-	if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1);
+        if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1);
     }
 
     /* Set the max number of time steps */ 
@@ -500,7 +499,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     if (user_data->iverbose > 1) {
         PrintFinalStats(cvode_mem);
     }
-	
+    
     N_VDestroy(y);          /* Free the y vector */
     CVodeFree(&cvode_mem);
 
@@ -528,14 +527,14 @@ int react(realtype *rY_in, realtype *rY_src_in,
             cusolver_status = cusolverSpDestroyCsrqrInfo(user_data->info);
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
  
-	    cudaFree(user_data->buffer_qr);
-	} else if (user_data->isolve_type == sparse_cusolver_solve) {
+            cudaFree(user_data->buffer_qr);
+        } else if (user_data->isolve_type == sparse_cusolver_solve) {
             cusolverStatus_t cusolver_status = cusolverSpDestroy(user_data->cusolverHandle);
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-	    cusparseStatus_t cusparse_status = cusparseDestroy(user_data->cuSPHandle);
-	    assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
-	}
+            cusparseStatus_t cusparse_status = cusparseDestroy(user_data->cuSPHandle);
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
+        }
     }
 
     cudaFree(user_data);
@@ -587,7 +586,7 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 
 
 static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
-               booleantype *jcurPtr, realtype gamma, void *user_data) {
+                   booleantype *jcurPtr, realtype gamma, void *user_data) {
 
     BL_PROFILE_VAR("Precond()", Precond);
 
@@ -610,22 +609,22 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
     if (jok) {
         /* GPU tests */
         const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-	amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
-	    [=] AMREX_GPU_DEVICE () noexcept {
-	            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	    	    icell < udata->ncells_d[0]; icell += stride) {
-	    	    fKernelComputeAJsys(icell, user_data, u_d, udata->csr_val_d);
-	    	}
+        amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+            [=] AMREX_GPU_DEVICE () noexcept {
+                for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+                     icell < udata->ncells_d[0]; icell += stride) {
+                         fKernelComputeAJsys(icell, user_data, u_d, udata->csr_val_d);
+                }
         }); 
         *jcurPtr = SUNFALSE;
     } else {
         const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
         amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
-	    [=] AMREX_GPU_DEVICE () noexcept {
-	            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	    	    icell < udata->ncells_d[0]; icell += stride) {
-	    	    fKernelComputeallAJ(icell, user_data, u_d, udata->csr_val_d);
-	    	}
+            [=] AMREX_GPU_DEVICE () noexcept {
+                for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+                     icell < udata->ncells_d[0]; icell += stride) {
+                         fKernelComputeallAJ(icell, user_data, u_d, udata->csr_val_d);
+                }
         }); 
         *jcurPtr = SUNTRUE;
     }
@@ -685,139 +684,137 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
                                udata->info,
                                udata->buffer_qr);
 
-        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+    assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-        cuda_status = cudaDeviceSynchronize();  
-        assert(cuda_status == cudaSuccess);
+    cuda_status = cudaDeviceSynchronize();  
+    assert(cuda_status == cudaSuccess);
 
-        N_VCopyFromDevice_Cuda(z);
-        N_VCopyFromDevice_Cuda(r);
+    N_VCopyFromDevice_Cuda(z);
+    N_VCopyFromDevice_Cuda(r);
 
-	BL_PROFILE_VAR_STOP(cusolverPsolve);
+    BL_PROFILE_VAR_STOP(cusolverPsolve);
 
-        /* Checks */
-        //if (udata->iverbose > 4) {
-        //    for(int batchId = 0 ; batchId < udata->ncells_d[0]; batchId++){
-        //        // measure |bj - Aj*xj|
-        //        realtype *csrValAj = (udata->csr_val_d) + batchId * (udata->NNZ);
-        //        double *xj       = N_VGetHostArrayPointer_Cuda(z) + batchId * (udata->neqs_per_cell[0]+1);
-        //        double *bj       = N_VGetHostArrayPointer_Cuda(r) + batchId * (udata->neqs_per_cell[0]+1);
-        //        // sup| bj - Aj*xj|
-        //        double sup_res = 0;
-        //        for(int row = 0 ; row < (udata->neqs_per_cell[0]+1) ; row++){
-        //            printf("\n     row %d: ", row);
-        //            const int start = udata->csr_row_count_d[row] - 1;
-        //            const int end = udata->csr_row_count_d[row +1] - 1;
-        //            double Ax = 0.0; // Aj(row,:)*xj
-        //            for(int colidx = start ; colidx < end ; colidx++){
-        //                const int col = udata->csr_col_index_d[colidx] - 1;
-        //                const double Areg = csrValAj[colidx];
-        //                const double xreg = xj[col];
-        //                printf("  (%d, %14.8e, %14.8e, %14.8e) ", col,Areg,xreg,bj[row] );
-        //                Ax = Ax + Areg * xreg;
-        //            }
-        //            double rresidi = bj[row] - Ax;
-        //            sup_res = (sup_res > fabs(rresidi))? sup_res : fabs(rresidi);
-        //        }
-        //        printf("batchId %d: sup|bj - Aj*xj| = %E \n", batchId, sup_res);
-        //    }
-        //}
+    /* Checks */
+    //if (udata->iverbose > 4) {
+    //    for(int batchId = 0 ; batchId < udata->ncells_d[0]; batchId++){
+    //        // measure |bj - Aj*xj|
+    //        realtype *csrValAj = (udata->csr_val_d) + batchId * (udata->NNZ);
+    //        double *xj       = N_VGetHostArrayPointer_Cuda(z) + batchId * (udata->neqs_per_cell[0]+1);
+    //        double *bj       = N_VGetHostArrayPointer_Cuda(r) + batchId * (udata->neqs_per_cell[0]+1);
+    //        // sup| bj - Aj*xj|
+    //        double sup_res = 0;
+    //        for(int row = 0 ; row < (udata->neqs_per_cell[0]+1) ; row++){
+    //            printf("\n     row %d: ", row);
+    //            const int start = udata->csr_row_count_d[row] - 1;
+    //            const int end = udata->csr_row_count_d[row +1] - 1;
+    //            double Ax = 0.0; // Aj(row,:)*xj
+    //            for(int colidx = start ; colidx < end ; colidx++){
+    //                const int col = udata->csr_col_index_d[colidx] - 1;
+    //                const double Areg = csrValAj[colidx];
+    //                const double xreg = xj[col];
+    //                printf("  (%d, %14.8e, %14.8e, %14.8e) ", col,Areg,xreg,bj[row] );
+    //                Ax = Ax + Areg * xreg;
+    //            }
+    //            double rresidi = bj[row] - Ax;
+    //            sup_res = (sup_res > fabs(rresidi))? sup_res : fabs(rresidi);
+    //        }
+    //        printf("batchId %d: sup|bj - Aj*xj| = %E \n", batchId, sup_res);
+    //    }
+    //}
 
-        return(0);
+    return(0);
 }
 
 /* Will not work for cuSolver_sparse_solve right now */
 static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
                 void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
-        cudaError_t cuda_status = cudaSuccess;
+    cudaError_t cuda_status = cudaSuccess;
 
-        /* allocate working space */
-        UserData udata = static_cast<CVodeUserData*>(user_data);
+    /* allocate working space */
+    UserData udata = static_cast<CVodeUserData*>(user_data);
 
-	/* Get Device pointers for Kernel call */
-	realtype *yvec_d       = N_VGetDeviceArrayPointer_Cuda(y_in);
-        realtype *ydot_d       = N_VGetDeviceArrayPointer_Cuda(fy);
+    /* Get Device pointers for Kernel call */
+    realtype *yvec_d       = N_VGetDeviceArrayPointer_Cuda(y_in);
+    realtype *ydot_d       = N_VGetDeviceArrayPointer_Cuda(fy);
 
-        /* Jdata */
-        realtype *Jdata;
+    /* Jdata */
+    realtype *Jdata;
 
-        /* Fixed Indices and Pointers for Jacobian Matrix */
-	BL_PROFILE_VAR("cJac::SparsityStuff",cJacSparsityStuff);
-        int consP;
-        if (udata->ireactor_type == 1){
-            consP = 0 ;
-        } else {
-            consP = 1;
+    /* Fixed Indices and Pointers for Jacobian Matrix */
+    BL_PROFILE_VAR("cJac::SparsityStuff",cJacSparsityStuff);
+    int consP;
+    if (udata->ireactor_type == 1){
+        consP = 0 ;
+    } else {
+        consP = 1;
+    }
+    
+    if (udata->isolve_type == sparse_cusolver_solve) {
+        Jdata   = SUNMatrix_cuSparse_Data(J);
+        if ((SUNMatrix_cuSparse_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
+           (SUNMatrix_cuSparse_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
+           (SUNMatrix_cuSparse_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
+                printf("Jac error: matrix is wrong size!\n");
+                return 1;
         }
-	
-        if (udata->isolve_type == sparse_cusolver_solve) {
-	    Jdata   = SUNMatrix_cuSparse_Data(J);
-            if ((SUNMatrix_cuSparse_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
-	    	(SUNMatrix_cuSparse_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
-                (SUNMatrix_cuSparse_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
-                        printf("Jac error: matrix is wrong size!\n");
-                        return 1;
-            }
-	} else {
-	    SPARSITY_PREPROC_SYST_CSR( (int*) SUNSparseMatrix_IndexValues(J), (int*) SUNSparseMatrix_IndexPointers(J), 
-                                     &consP, udata->ncells_d[0], 0); 
-	    /* Create empty chem Jacobian matrix (if not done already) */
-	    //if (udata->R == NULL) {
-	    //	udata->R = SUNSparseMatrix(SUNSparseMatrix_Rows(J),
-	    //			SUNSparseMatrix_Columns(J),
-	    //			SUNSparseMatrix_NNZ(J), CSR_MAT);
-	    //}
-	    /* check that vector/matrix dimensions match up */
-            if ((SUNSparseMatrix_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
-	    	(SUNSparseMatrix_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
-                (SUNSparseMatrix_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
-                        printf("Jac error: matrix is wrong size!\n");
-                        return 1;
-            }
-	}
-	BL_PROFILE_VAR_STOP(cJacSparsityStuff);
+    } else {
+        SPARSITY_PREPROC_SYST_CSR( (int*) SUNSparseMatrix_IndexValues(J), (int*) SUNSparseMatrix_IndexPointers(J), 
+                                  &consP, udata->ncells_d[0], 0); 
+        /* Create empty chem Jacobian matrix (if not done already) */
+        //if (udata->R == NULL) {
+        //  udata->R = SUNSparseMatrix(SUNSparseMatrix_Rows(J),
+        //          SUNSparseMatrix_Columns(J),
+        //          SUNSparseMatrix_NNZ(J), CSR_MAT);
+        //}
+        /* check that vector/matrix dimensions match up */
+        if ((SUNSparseMatrix_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
+            (SUNSparseMatrix_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
+            (SUNSparseMatrix_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
+                printf("Jac error: matrix is wrong size!\n");
+                return 1;
+        }
+    }
+    BL_PROFILE_VAR_STOP(cJacSparsityStuff);
 
-	BL_PROFILE_VAR("Jacobian()", fKernelJac );
-        if (udata->isolve_type == sparse_cusolver_solve) {
-	    /* GPU tests */
-            const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-	    amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
-	    [=] AMREX_GPU_DEVICE () noexcept {
-	        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	    	icell < udata->ncells_d[0]; icell += stride) {
-	            fKernelComputeAJchemCuSolver(icell, user_data, yvec_d, Jdata);
-	    	}
-            }); 
-	} else {
-	    /* GPU tests */
-            const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-	    //amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
-	    amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
-	    [=] AMREX_GPU_DEVICE () noexcept {
-	        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-	    	icell < udata->ncells_d[0]; icell += stride) {
-	            fKernelComputeAJchem(icell, user_data, yvec_d);
-	    	}
-            }); 
-	}
-        cuda_status = cudaStreamSynchronize(udata->stream);  
-        assert(cuda_status == cudaSuccess);
-	BL_PROFILE_VAR_STOP(fKernelJac);
+    BL_PROFILE_VAR("Jacobian()", fKernelJac );
+    if (udata->isolve_type == sparse_cusolver_solve) {
+        /* GPU tests */
+        const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
+        amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+            [=] AMREX_GPU_DEVICE () noexcept {
+                for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+                     icell < udata->ncells_d[0]; icell += stride) {
+                         fKernelComputeAJchemCuSolver(icell, user_data, yvec_d, Jdata);
+                }
+        }); 
+    } else {
+        /* GPU tests */
+        const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
+        amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+            [=] AMREX_GPU_DEVICE () noexcept {
+                for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+                     icell < udata->ncells_d[0]; icell += stride) {
+                         fKernelComputeAJchem(icell, user_data, yvec_d);
+                }
+        }); 
+    }
+    cuda_status = cudaStreamSynchronize(udata->stream);  
+    assert(cuda_status == cudaSuccess);
+    BL_PROFILE_VAR_STOP(fKernelJac);
 
-        if (udata->isolve_type == sparse_solve) {
-            BL_PROFILE_VAR("cJac::memcpy",cJacmemcpy);
-	    realtype *Jdata = SUNSparseMatrix_Data(J); 
-            std::memcpy(Jdata, udata->csr_jac_d, sizeof(realtype)*udata->NNZ*(udata->ncells_d[0]));
-	    BL_PROFILE_VAR_STOP(cJacmemcpy);
-	}
+    if (udata->isolve_type == sparse_solve) {
+        BL_PROFILE_VAR("cJac::memcpy",cJacmemcpy);
+        realtype *Jdata = SUNSparseMatrix_Data(J); 
+        std::memcpy(Jdata, udata->csr_jac_d, sizeof(realtype)*udata->NNZ*(udata->ncells_d[0]));
+        BL_PROFILE_VAR_STOP(cJacmemcpy);
+    }
 
-        return(0);
+    return(0);
 
 }
+
 /**********************************/
-
-
 /*
  * CUDA kernels
  */
@@ -940,7 +937,7 @@ fKernelComputeAJchemCuSolver(int ncell, void *user_data, realtype *u_d, realtype
   for (int i = 1; i < udata->neqs_per_cell[0]+2; i++) {
       nbVals = udata->csr_row_count_d[i]-udata->csr_row_count_d[i-1];
       for (int j = 0; j < nbVals; j++) {
-	      int idx_cell = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j ];
+          int idx_cell = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j ];
               csr_jac_cell[ udata->csr_row_count_d[i-1] + j ] = Jmat_pt[ idx_cell * (udata->neqs_per_cell[0]+1) + i - 1 ]; 
       }
   }
@@ -1142,14 +1139,13 @@ fKernelDenseSolve(int ncell, realtype *x_d, realtype *b_d,
   }  
 }
 
+
 /**********************************/
-
-
 /* 
  * CUSTOM SOLVER STUFF
  */
 SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, 
-        int nsubsys, int subsys_size, int subsys_nnz, cudaStream_t stream) 
+                                       int nsubsys, int subsys_size, int subsys_nnz, cudaStream_t stream) 
 {
   SUNLinearSolver S;
   SUNLinearSolverContent_Dense_custom content;
@@ -1285,7 +1281,7 @@ int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A)
 }
 
 int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
-        N_Vector b, realtype tol)
+                                N_Vector b, realtype tol)
 {
   cudaError_t cuda_status = cudaSuccess;
 
@@ -1396,14 +1392,14 @@ static void PrintFinalStats(void *cvodeMem)
   check_flag(&flag, "CVodeGetNumLinConvFails", 1);
 
   amrex::Print() <<"\nFinal Statistics: \n";
-  amrex::Print() <<"lenrw      = " << lenrw   <<"    leniw          = " << leniw   << "\n";
-  amrex::Print() <<"lenrwLS    = " << lenrwLS <<"    leniwLS        = " << leniwLS << "\n";
+  amrex::Print() <<"lenrw      = " << lenrw   <<"    leniw         = " << leniw   << "\n";
+  amrex::Print() <<"lenrwLS    = " << lenrwLS <<"    leniwLS       = " << leniwLS << "\n";
   amrex::Print() <<"nSteps     = " << nst     <<"\n";
-  amrex::Print() <<"nRHSeval   = " << nfe     <<"     nLinRHSeval   = " << nfeLS   << "\n";
-  amrex::Print() <<"nnLinIt    = " << nni     <<"     nLinIt        = " << nli     << "\n";
-  amrex::Print() <<"nLinsetups = " << nsetups <<"     nErrtf        = " << netf    << "\n";
-  amrex::Print() <<"nPreceval  = " << npe     <<"     nPrecsolve    = " << nps     << "\n";
-  amrex::Print() <<"nConvfail  = " << ncfn    <<"     nLinConvfail  = " << ncfl    << "\n\n";
+  amrex::Print() <<"nRHSeval   = " << nfe     <<"    nLinRHSeval   = " << nfeLS   << "\n";
+  amrex::Print() <<"nnLinIt    = " << nni     <<"    nLinIt        = " << nli     << "\n";
+  amrex::Print() <<"nLinsetups = " << nsetups <<"    nErrtf        = " << netf    << "\n";
+  amrex::Print() <<"nPreceval  = " << npe     <<"    nPrecsolve    = " << nps     << "\n";
+  amrex::Print() <<"nConvfail  = " << ncfn    <<"    nLinConvfail  = " << ncfl    << "\n\n";
 
 }
 
