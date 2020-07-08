@@ -29,8 +29,6 @@ DEFINES  += -DMOD_REACTOR
 #######################
 # Activates use of SUNDIALS: CVODE (default) / ARKODE
 USE_SUNDIALS_PP = TRUE
-
-
 ifeq ($(USE_SUNDIALS_PP), TRUE)
   TRANSPORT_CPP = TRUE
   # provide location of sundials lib if needed
