@@ -383,12 +383,12 @@ int react(realtype *rY_in, realtype *rY_src_in,
     realtype *yvec_d      = N_VGetDeviceArrayPointer_Cuda(y);
     BL_PROFILE_VAR("AsyncCpy", AsyncCpy);
     // rhoY,T
-    cudaMemcpy(yvec_d, rY_in, sizeof(realtype) * ((NEQ+1)*NCELLS), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(yvec_d, rY_in, sizeof(realtype) * ((NEQ+1)*NCELLS), cudaMemcpyHostToDevice, stream);
     // rhoY_src_ext
-    cudaMemcpy(user_data->rYsrc, rY_src_in, (NEQ*NCELLS)*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(user_data->rYsrc, rY_src_in, (NEQ*NCELLS)*sizeof(double), cudaMemcpyHostToDevice, stream);
     // rhoE/rhoH
-    cudaMemcpy(user_data->rhoe_init, rX_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
-    cudaMemcpy(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(user_data->rhoe_init, rX_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice,stream);
+    cudaMemcpyAsync(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice, stream);
     BL_PROFILE_VAR_STOP(AsyncCpy);
 
     realtype time_init, time_out ;
