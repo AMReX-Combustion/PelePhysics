@@ -56,13 +56,15 @@ int reactor_info(const int* reactor_type,const int* Ncells){
     sparse_cusolver_solve = 5;
     iterative_gmres_solve = 99;
     */
-    int isolve_type = iterative_gmres_solve;
+    int isolve_type = -1;
     if (solve_type_str == "sparse_custom") {
         isolve_type = sparse_solve; 
     } else if (solve_type_str == "sparse") {
         isolve_type = sparse_cusolver_solve;
     } else if (solve_type_str == "GMRES") {
         isolve_type = iterative_gmres_solve; 
+    } else {
+        amrex::Abort("Wrong solve_type. Options are: sparse, sparse_custom, GMRES");
     }
 
     /* Checks */
@@ -172,7 +174,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     sparse_cusolver_solve = 5;
     iterative_gmres_solve = 99;
     */
-    int isolve_type = iterative_gmres_solve;
+    int isolve_type = -1;
     if (solve_type_str == "sparse_custom") {
         isolve_type = sparse_solve; 
     } else if (solve_type_str == "sparse") {
