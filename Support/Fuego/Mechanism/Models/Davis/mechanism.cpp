@@ -914,14 +914,16 @@ void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * kn
 
 
 /* Returns the vector of strings of element names */
-void CKSYME_STR(amrex::Vector<std::string>& ename)
+amrex::Array<std::string, 6> CKSYME_STR()
 {
-    ename.push_back("O");
-    ename.push_back("H");
-    ename.push_back("C");
-    ename.push_back("N");
-    ename.push_back("AR");
-    ename.push_back("HE");
+    amrex::Array<std::string, 6> result;
+    result[0] = "O";
+    result[1] = "H";
+    result[2] = "C";
+    result[3] = "N";
+    result[4] = "AR";
+    result[5] = "HE";
+    return result;
 }
 
 
@@ -965,22 +967,24 @@ void CKSYME(int * kname, int * plenkname )
 
 
 /* Returns the vector of strings of species names */
-void CKSYMS_STR(amrex::Vector<std::string>& kname)
+amrex::Array<std::string,14> CKSYMS_STR()
 {
-    kname.push_back("H2");
-    kname.push_back("H");
-    kname.push_back("AR");
-    kname.push_back("N2");
-    kname.push_back("HE");
-    kname.push_back("O");
-    kname.push_back("OH");
-    kname.push_back("HCO");
-    kname.push_back("HO2");
-    kname.push_back("H2O");
-    kname.push_back("CO");
-    kname.push_back("O2");
-    kname.push_back("H2O2");
-    kname.push_back("CO2");
+    amrex::Array<std::string,14> result;
+    result[0] = "H2";
+    result[1] = "H";
+    result[2] = "AR";
+    result[3] = "N2";
+    result[4] = "HE";
+    result[5] = "O";
+    result[6] = "OH";
+    result[7] = "HCO";
+    result[8] = "HO2";
+    result[9] = "H2O";
+    result[10] = "CO";
+    result[11] = "O2";
+    result[12] = "H2O2";
+    result[13] = "CO2";
+    return result;
 }
 
 

@@ -4617,12 +4617,14 @@ void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * kn
 
 
 /* Returns the vector of strings of element names */
-void CKSYME_STR(amrex::Vector<std::string>& ename)
+amrex::Array<std::string, 4> CKSYME_STR()
 {
-    ename.push_back("O");
-    ename.push_back("H");
-    ename.push_back("C");
-    ename.push_back("N");
+    amrex::Array<std::string, 4> result;
+    result[0] = "O";
+    result[1] = "H";
+    result[2] = "C";
+    result[3] = "N";
+    return result;
 }
 
 
@@ -4656,64 +4658,66 @@ void CKSYME(int * kname, int * plenkname )
 
 
 /* Returns the vector of strings of species names */
-void CKSYMS_STR(amrex::Vector<std::string>& kname)
+amrex::Array<std::string,56> CKSYMS_STR()
 {
-    kname.push_back("H");
-    kname.push_back("O");
-    kname.push_back("OH");
-    kname.push_back("HO2");
-    kname.push_back("H2");
-    kname.push_back("H2O");
-    kname.push_back("H2O2");
-    kname.push_back("O2");
-    kname.push_back("CH");
-    kname.push_back("CH2");
-    kname.push_back("CH2*");
-    kname.push_back("CH3");
-    kname.push_back("CH4");
-    kname.push_back("HCO");
-    kname.push_back("CH2O");
-    kname.push_back("CH3O");
-    kname.push_back("CH2OH");
-    kname.push_back("CH3OH");
-    kname.push_back("CO");
-    kname.push_back("CO2");
-    kname.push_back("C2H");
-    kname.push_back("C2H2");
-    kname.push_back("C2H3");
-    kname.push_back("C2H4");
-    kname.push_back("C2H5");
-    kname.push_back("C2H6");
-    kname.push_back("HCCO");
-    kname.push_back("CH2CO");
-    kname.push_back("CH3CO");
-    kname.push_back("CH2CHO");
-    kname.push_back("CH3CHO");
-    kname.push_back("C3H3");
-    kname.push_back("pC3H4");
-    kname.push_back("aC3H4");
-    kname.push_back("aC3H5");
-    kname.push_back("CH3CCH2");
-    kname.push_back("C3H6");
-    kname.push_back("nC3H7");
-    kname.push_back("iC3H7");
-    kname.push_back("C2H3CHO");
-    kname.push_back("C4H2");
-    kname.push_back("iC4H3");
-    kname.push_back("C4H4");
-    kname.push_back("iC4H5");
-    kname.push_back("C4H5-2");
-    kname.push_back("C4H6");
-    kname.push_back("C4H612");
-    kname.push_back("C4H6-2");
-    kname.push_back("C4H7");
-    kname.push_back("C4H81");
-    kname.push_back("pC4H9");
-    kname.push_back("NC12H26");
-    kname.push_back("C6H12");
-    kname.push_back("C6H11");
-    kname.push_back("C5H10");
-    kname.push_back("N2");
+    amrex::Array<std::string,56> result;
+    result[0] = "H";
+    result[1] = "O";
+    result[2] = "OH";
+    result[3] = "HO2";
+    result[4] = "H2";
+    result[5] = "H2O";
+    result[6] = "H2O2";
+    result[7] = "O2";
+    result[8] = "CH";
+    result[9] = "CH2";
+    result[10] = "CH2*";
+    result[11] = "CH3";
+    result[12] = "CH4";
+    result[13] = "HCO";
+    result[14] = "CH2O";
+    result[15] = "CH3O";
+    result[16] = "CH2OH";
+    result[17] = "CH3OH";
+    result[18] = "CO";
+    result[19] = "CO2";
+    result[20] = "C2H";
+    result[21] = "C2H2";
+    result[22] = "C2H3";
+    result[23] = "C2H4";
+    result[24] = "C2H5";
+    result[25] = "C2H6";
+    result[26] = "HCCO";
+    result[27] = "CH2CO";
+    result[28] = "CH3CO";
+    result[29] = "CH2CHO";
+    result[30] = "CH3CHO";
+    result[31] = "C3H3";
+    result[32] = "pC3H4";
+    result[33] = "aC3H4";
+    result[34] = "aC3H5";
+    result[35] = "CH3CCH2";
+    result[36] = "C3H6";
+    result[37] = "nC3H7";
+    result[38] = "iC3H7";
+    result[39] = "C2H3CHO";
+    result[40] = "C4H2";
+    result[41] = "iC4H3";
+    result[42] = "C4H4";
+    result[43] = "iC4H5";
+    result[44] = "C4H5-2";
+    result[45] = "C4H6";
+    result[46] = "C4H612";
+    result[47] = "C4H6-2";
+    result[48] = "C4H7";
+    result[49] = "C4H81";
+    result[50] = "pC4H9";
+    result[51] = "NC12H26";
+    result[52] = "C6H12";
+    result[53] = "C6H11";
+    result[54] = "C5H10";
+    result[55] = "N2";
+    return result;
 }
 
 
@@ -104632,4 +104636,3 @@ void egtransetCOFTD(double* COFTD) {
     COFTD[446] = -5.94509616E-08;
     COFTD[447] = 1.21437993E-11;
 }
-

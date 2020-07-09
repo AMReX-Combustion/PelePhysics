@@ -4340,12 +4340,14 @@ void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * kn
 
 
 /* Returns the vector of strings of element names */
-void CKSYME_STR(amrex::Vector<std::string>& ename)
+amrex::Array<std::string, 4> CKSYME_STR()
 {
-    ename.push_back("O");
-    ename.push_back("H");
-    ename.push_back("C");
-    ename.push_back("N");
+    amrex::Array<std::string, 4> result;
+    result[0] = "O";
+    result[1] = "H";
+    result[2] = "C";
+    result[3] = "N";
+    return result;
 }
 
 
@@ -4379,61 +4381,63 @@ void CKSYME(int * kname, int * plenkname )
 
 
 /* Returns the vector of strings of species names */
-void CKSYMS_STR(amrex::Vector<std::string>& kname)
+amrex::Array<std::string,53> CKSYMS_STR()
 {
-    kname.push_back("NC12H26");
-    kname.push_back("H");
-    kname.push_back("O");
-    kname.push_back("OH");
-    kname.push_back("HO2");
-    kname.push_back("H2");
-    kname.push_back("H2O");
-    kname.push_back("H2O2");
-    kname.push_back("O2");
-    kname.push_back("CH2");
-    kname.push_back("CH2*");
-    kname.push_back("CH3");
-    kname.push_back("CH4");
-    kname.push_back("HCO");
-    kname.push_back("CH2O");
-    kname.push_back("CH3O");
-    kname.push_back("CO");
-    kname.push_back("CO2");
-    kname.push_back("C2H2");
-    kname.push_back("C2H3");
-    kname.push_back("C2H4");
-    kname.push_back("C2H5");
-    kname.push_back("C2H6");
-    kname.push_back("CH2CHO");
-    kname.push_back("aC3H5");
-    kname.push_back("C3H6");
-    kname.push_back("nC3H7");
-    kname.push_back("C2H3CHO");
-    kname.push_back("C4H7");
-    kname.push_back("C4H81");
-    kname.push_back("pC4H9");
-    kname.push_back("C5H9");
-    kname.push_back("C5H10");
-    kname.push_back("PXC5H11");
-    kname.push_back("C6H12");
-    kname.push_back("PXC6H13");
-    kname.push_back("C7H14");
-    kname.push_back("PXC7H15");
-    kname.push_back("C8H16");
-    kname.push_back("PXC8H17");
-    kname.push_back("C9H18");
-    kname.push_back("PXC9H19");
-    kname.push_back("C10H20");
-    kname.push_back("PXC10H21");
-    kname.push_back("PXC12H25");
-    kname.push_back("SXC12H25");
-    kname.push_back("S3XC12H25");
-    kname.push_back("C12H24");
-    kname.push_back("C12H25O2");
-    kname.push_back("C12OOH");
-    kname.push_back("O2C12H24OOH");
-    kname.push_back("OC12H23OOH");
-    kname.push_back("N2");
+    amrex::Array<std::string,53> result;
+    result[0] = "NC12H26";
+    result[1] = "H";
+    result[2] = "O";
+    result[3] = "OH";
+    result[4] = "HO2";
+    result[5] = "H2";
+    result[6] = "H2O";
+    result[7] = "H2O2";
+    result[8] = "O2";
+    result[9] = "CH2";
+    result[10] = "CH2*";
+    result[11] = "CH3";
+    result[12] = "CH4";
+    result[13] = "HCO";
+    result[14] = "CH2O";
+    result[15] = "CH3O";
+    result[16] = "CO";
+    result[17] = "CO2";
+    result[18] = "C2H2";
+    result[19] = "C2H3";
+    result[20] = "C2H4";
+    result[21] = "C2H5";
+    result[22] = "C2H6";
+    result[23] = "CH2CHO";
+    result[24] = "aC3H5";
+    result[25] = "C3H6";
+    result[26] = "nC3H7";
+    result[27] = "C2H3CHO";
+    result[28] = "C4H7";
+    result[29] = "C4H81";
+    result[30] = "pC4H9";
+    result[31] = "C5H9";
+    result[32] = "C5H10";
+    result[33] = "PXC5H11";
+    result[34] = "C6H12";
+    result[35] = "PXC6H13";
+    result[36] = "C7H14";
+    result[37] = "PXC7H15";
+    result[38] = "C8H16";
+    result[39] = "PXC8H17";
+    result[40] = "C9H18";
+    result[41] = "PXC9H19";
+    result[42] = "C10H20";
+    result[43] = "PXC10H21";
+    result[44] = "PXC12H25";
+    result[45] = "SXC12H25";
+    result[46] = "S3XC12H25";
+    result[47] = "C12H24";
+    result[48] = "C12H25O2";
+    result[49] = "C12OOH";
+    result[50] = "O2C12H24OOH";
+    result[51] = "OC12H23OOH";
+    result[52] = "N2";
+    return result;
 }
 
 

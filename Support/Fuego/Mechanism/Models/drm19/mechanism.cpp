@@ -1632,13 +1632,15 @@ void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * kn
 
 
 /* Returns the vector of strings of element names */
-void CKSYME_STR(amrex::Vector<std::string>& ename)
+amrex::Array<std::string, 5> CKSYME_STR()
 {
-    ename.push_back("O");
-    ename.push_back("H");
-    ename.push_back("C");
-    ename.push_back("N");
-    ename.push_back("AR");
+    amrex::Array<std::string, 5> result;
+    result[0] = "O";
+    result[1] = "H";
+    result[2] = "C";
+    result[3] = "N";
+    result[4] = "AR";
+    return result;
 }
 
 
@@ -1677,29 +1679,31 @@ void CKSYME(int * kname, int * plenkname )
 
 
 /* Returns the vector of strings of species names */
-void CKSYMS_STR(amrex::Vector<std::string>& kname)
+amrex::Array<std::string,21> CKSYMS_STR()
 {
-    kname.push_back("H2");
-    kname.push_back("H");
-    kname.push_back("O");
-    kname.push_back("O2");
-    kname.push_back("OH");
-    kname.push_back("H2O");
-    kname.push_back("HO2");
-    kname.push_back("CH2");
-    kname.push_back("CH2(S)");
-    kname.push_back("CH3");
-    kname.push_back("CH4");
-    kname.push_back("CO");
-    kname.push_back("CO2");
-    kname.push_back("HCO");
-    kname.push_back("CH2O");
-    kname.push_back("CH3O");
-    kname.push_back("C2H4");
-    kname.push_back("C2H5");
-    kname.push_back("C2H6");
-    kname.push_back("N2");
-    kname.push_back("AR");
+    amrex::Array<std::string,21> result;
+    result[0] = "H2";
+    result[1] = "H";
+    result[2] = "O";
+    result[3] = "O2";
+    result[4] = "OH";
+    result[5] = "H2O";
+    result[6] = "HO2";
+    result[7] = "CH2";
+    result[8] = "CH2(S)";
+    result[9] = "CH3";
+    result[10] = "CH4";
+    result[11] = "CO";
+    result[12] = "CO2";
+    result[13] = "HCO";
+    result[14] = "CH2O";
+    result[15] = "CH3O";
+    result[16] = "C2H4";
+    result[17] = "C2H5";
+    result[18] = "C2H6";
+    result[19] = "N2";
+    result[20] = "AR";
+    return result;
 }
 
 
@@ -31056,4 +31060,3 @@ void egtransetCOFTD(double* COFTD) {
     COFTD[166] = -3.64844875E-07;
     COFTD[167] = 6.03054876E-11;
 }
-

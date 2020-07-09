@@ -263,10 +263,12 @@ void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * kn
 
 
 /* Returns the vector of strings of element names */
-void CKSYME_STR(amrex::Vector<std::string>& ename)
+amrex::Array<std::string, 2> CKSYME_STR()
 {
-    ename.push_back("O");
-    ename.push_back("N");
+    amrex::Array<std::string, 2> result;
+    result[0] = "O";
+    result[1] = "N";
+    return result;
 }
 
 
@@ -292,10 +294,12 @@ void CKSYME(int * kname, int * plenkname )
 
 
 /* Returns the vector of strings of species names */
-void CKSYMS_STR(amrex::Vector<std::string>& kname)
+amrex::Array<std::string,2> CKSYMS_STR()
 {
-    kname.push_back("O2");
-    kname.push_back("N2");
+    amrex::Array<std::string,2> result;
+    result[0] = "O2";
+    result[1] = "N2";
+    return result;
 }
 
 

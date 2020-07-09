@@ -3102,12 +3102,14 @@ void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * kn
 
 
 /* Returns the vector of strings of element names */
-void CKSYME_STR(amrex::Vector<std::string>& ename)
+amrex::Array<std::string, 4> CKSYME_STR()
 {
-    ename.push_back("N");
-    ename.push_back("H");
-    ename.push_back("O");
-    ename.push_back("C");
+    amrex::Array<std::string, 4> result;
+    result[0] = "N";
+    result[1] = "H";
+    result[2] = "O";
+    result[3] = "C";
+    return result;
 }
 
 
@@ -3141,37 +3143,39 @@ void CKSYME(int * kname, int * plenkname )
 
 
 /* Returns the vector of strings of species names */
-void CKSYMS_STR(amrex::Vector<std::string>& kname)
+amrex::Array<std::string,29> CKSYMS_STR()
 {
-    kname.push_back("N2");
-    kname.push_back("H");
-    kname.push_back("H2");
-    kname.push_back("O");
-    kname.push_back("OH");
-    kname.push_back("O2");
-    kname.push_back("H2O2");
-    kname.push_back("H2O");
-    kname.push_back("HO2");
-    kname.push_back("CO");
-    kname.push_back("CH3");
-    kname.push_back("CH2O");
-    kname.push_back("CO2");
-    kname.push_back("CH4");
-    kname.push_back("C2H2");
-    kname.push_back("C2H4");
-    kname.push_back("CH2CO");
-    kname.push_back("C2H6");
-    kname.push_back("C");
-    kname.push_back("CH");
-    kname.push_back("HCO");
-    kname.push_back("TXCH2");
-    kname.push_back("SXCH2");
-    kname.push_back("C2H3");
-    kname.push_back("C2H5");
-    kname.push_back("HCCO");
-    kname.push_back("CH3CHO");
-    kname.push_back("CH2CHO");
-    kname.push_back("C2H5O");
+    amrex::Array<std::string,29> result;
+    result[0] = "N2";
+    result[1] = "H";
+    result[2] = "H2";
+    result[3] = "O";
+    result[4] = "OH";
+    result[5] = "O2";
+    result[6] = "H2O2";
+    result[7] = "H2O";
+    result[8] = "HO2";
+    result[9] = "CO";
+    result[10] = "CH3";
+    result[11] = "CH2O";
+    result[12] = "CO2";
+    result[13] = "CH4";
+    result[14] = "C2H2";
+    result[15] = "C2H4";
+    result[16] = "CH2CO";
+    result[17] = "C2H6";
+    result[18] = "C";
+    result[19] = "CH";
+    result[20] = "HCO";
+    result[21] = "TXCH2";
+    result[22] = "SXCH2";
+    result[23] = "C2H3";
+    result[24] = "C2H5";
+    result[25] = "HCCO";
+    result[26] = "CH3CHO";
+    result[27] = "CH2CHO";
+    result[28] = "C2H5O";
+    return result;
 }
 
 

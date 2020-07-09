@@ -20,8 +20,8 @@ close()
 }
 
 void
-speciesNames(amrex::Vector<std::string>& spn) {
-  spn.push_back("AIR");
+speciesNames(amrex::Array<std::string, NUM_SPECIES>& spn) {
+  spn[0] = "AIR";
 }
 
 void
