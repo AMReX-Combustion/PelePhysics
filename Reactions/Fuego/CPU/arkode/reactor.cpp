@@ -45,8 +45,8 @@ void SetTypValsODE(std::vector<double> ExtTypVals) {
 	    typVals = (double *) malloc(size_ETV*sizeof(double));
 	}
 
-    amrex::Array<std::string, NUM_SPECIES> kname;
-    EOS::speciesNames(kname);
+	amrex::Vector<std::string> kname;
+	CKSYMS_STR(kname);
 
 #ifdef _OPENMP
 	/* omp thread if applicable */

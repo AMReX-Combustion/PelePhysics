@@ -13,14 +13,15 @@ void close()
 }
 
 void
-speciesNames(amrex::Array<std::string, NUM_SPECIES>& spn) {
-  spn = CKSYMS_STR();
+speciesNames(amrex::Vector<std::string>& spn) {
+  CKSYMS_STR(spn);
 }
 
 void
 atomic_weightsCHON(amrex::Real atwCHON[])
 {
-  auto ename = CKSYME_STR();
+  amrex::Vector<std::string> ename;
+  CKSYME_STR(ename);
   amrex::Real atw[NUM_ELEMENTS];
   CKAWT(atw);
   //CHON
@@ -38,7 +39,8 @@ atomic_weightsCHON(amrex::Real atwCHON[])
 void
 element_compositionCHON(int ecompCHON[])
 {
-  auto ename = CKSYME_STR();
+  amrex::Vector<std::string> ename;
+  CKSYME_STR(ename);
   //CHON
   int CHON[4];
   for (int i = 0; i < 4; i++) {

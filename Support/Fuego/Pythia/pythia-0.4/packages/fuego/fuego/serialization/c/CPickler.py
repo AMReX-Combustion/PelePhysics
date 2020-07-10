@@ -331,9 +331,9 @@ class CPickler(CMill):
             'void CKINDX'+sym+'(int * mm, int * kk, int * ii, int * nfit );',
             'void CKXNUM'+sym+'(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);',
             'void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);',
-            'amrex::Array<std::string,%d> CKSYME_STR();' % nElement,
+            'void CKSYME_STR(amrex::Vector<std::string>& ename);',
             'void CKSYME(int * kname, int * lenkname);',
-            'amrex::Array<std::string,%d> CKSYMS_STR();' % nSpecies,
+            'void CKSYMS_STR(amrex::Vector<std::string>& kname);',
             'void CKSYMS(int * kname, int * lenkname);',
             'void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa);',
             'void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P);',
@@ -1142,14 +1142,13 @@ class CPickler(CMill):
         self._write()
         self._write(
             self.line(' Returns the vector of strings of element names'))
-        self._write('amrex::Array<std::string, %d> CKSYME_STR()' %nElement)
+        self._write('void CKSYME_STR'+sym+'(amrex::Vector<std::string>& ename)')
         self._write('{')
         self._indent()
-        self._write('amrex::Array<std::string, %d> result;' %nElement)
+        self._write('ename.resize(%d);' %nElement)
         for element in mechanism.element():
-            self._write('result[%d] = "%s";' %(element.id, element.symbol ))
+            self._write('ename[%d] = "%s";' %(element.id, element.symbol))
         # done
-        self._write('return result;')
         self._outdent()
         self._write('}')
         return
@@ -1197,13 +1196,12 @@ class CPickler(CMill):
         self._write()
         self._write(
             self.line(' Returns the vector of strings of species names'))
-        self._write('amrex::Array<std::string,%d> CKSYMS_STR()' % nSpecies)
+        self._write('void CKSYMS_STR'+sym+'(amrex::Vector<std::string>& kname)')
         self._write('{')
         self._indent()
-        self._write('amrex::Array<std::string,%d> result;' % nSpecies)
+        self._write('kname.resize(%d);' % nSpecies)
         for species in mechanism.species():
-            self._write('result[%d] = "%s";' %(species.id, species.symbol ))
-        self._write('return result;')
+            self._write('kname[%d] = "%s";' %(species.id, species.symbol))
         self._outdent() 
         self._write('}') 
         return

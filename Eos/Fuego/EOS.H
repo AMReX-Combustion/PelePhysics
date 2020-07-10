@@ -25,7 +25,7 @@ void
 element_compositionCHON(int ecompCHON[]);
 
 void
-speciesNames(amrex::Array<std::string, NUM_SPECIES>& spn);
+speciesNames(amrex::Vector<std::string>& spn);
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
