@@ -57,23 +57,16 @@ SootModel::initializeReactData()
     Abort(m_PAHname + " not recognized as PAH inception species. Must be" +
           PAH_names[0] + ", " + PAH_names[1] + ", or " + PAH_names[2]);
   }
-  // Retrieve the molecular weights
-  Real mw_fluid[NUM_SPECIES];
-  EOS::molecular_weight(mw_fluid);
   Vector<std::string> spec_names(NUM_SPECIES);
   EOS::speciesNames(spec_names);
   // Loop over all species
   for (int i = 0; i != NUM_SPECIES; ++i) {
     // Check if species is the PAH inceptor
-    if (spec_names[i] == m_PAHname) {
-      m_PAHindx = i;
-    }
+    if (spec_names[i] == m_PAHname) m_PAHindx = i;
     // Check if species matches others for surface reactions
     for (int sootSpec = 0; sootSpec != ngs; ++sootSpec) {
-      if (species_name == m_gasSpecNames[sootSpec]) {
+      if (spec_names[i] == m_gasSpecNames[sootSpec])
         m_gasSpecRefs[sootSpec] = i;
-        m_gasMW[sootSpec] = mw_fluid[i];
-      }
     }
   }
   // Return error if no PAH inception species is specified in mechanism
@@ -82,10 +75,9 @@ SootModel::initializeReactData()
   }
   // Return error if not all soot species are present
   for (int sootSpec = 0; sootSpec != ngs; ++sootSpec) {
-    if (m_gasSpecRefs[sootSpec] == -1) {
+    if (m_gasSpecRefs[sootSpec] == -1)
       Abort("Species " + m_gasSpecNames[sootSpec] + 
             " must be present in PelePhysics mechanism");
-    }
   }
   AMREX_ASSERT(m_gasSpecNames.size() == ngs);
   // Surface reaction information

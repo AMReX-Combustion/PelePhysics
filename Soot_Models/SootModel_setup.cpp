@@ -59,7 +59,7 @@ SootModel::defineMemberData()
   m_SootDensityC = m_SootChi*m_S0;
 
   // Factors used throughout
-  m_colFact = M_PI*Rgas/(2.*avogadros*m_SootDensity);
+  m_colFact = M_PI*EOS::RU/(2.*avogadros*m_SootDensity);
   m_colFact23 = std::pow(m_V0, m_two3rd);
   m_colFact16 = std::pow(m_V0, 1./6.); // Units: cm^0.5
   m_colFactPi23 = std::pow(6./M_PI, m_two3rd);
@@ -122,13 +122,13 @@ SootModel::addSootDerivePlotVars(DeriveList&           derive_lst,
   // Add in soot variables
   Vector<std::string> sootNames = {"rho_soot", "soot_dp", "soot_np"};
   derive_lst.add("soot_vars",IndexType::TheCellType(),sootNames.size(),
-                 sootNames,soot_genvars,DeriveRec::TheSameBox);
+                 sootNames,soot_genvars, the_same_box);
   derive_lst.addComponent("soot_vars",desc_lst,0,PeleC::Density, NVAR);
 
   // Variables associated with the second mode (large particles)
   Vector<std::string> large_part_names = {"NL", "VL", "SL"};
   derive_lst.add("soot_large_particles",IndexType::TheCellType(),
                  large_part_names.size(),large_part_names,
-                 soot_largeparticledata,DeriveRec::TheSameBox);
+                 soot_largeparticledata, the_same_box);
   derive_lst.addComponent("soot_large_particles",desc_lst,0,PeleC::Density, NVAR);
 }

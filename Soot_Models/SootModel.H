@@ -11,6 +11,10 @@
 #include <AMReX_Vector.H>
 #include <AMReX_Derive.H>
 
+// PeleC and PelePhysics include statements
+#include "EOS.H"
+#include "IndexDefines.H"
+
 // TODO: This should be specified in makefile when
 // different soot formation reactions are implemented
 // Define the number of species involved in soot reactions

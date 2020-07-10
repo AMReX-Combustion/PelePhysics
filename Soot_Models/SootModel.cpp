@@ -12,10 +12,6 @@
 
 // PeleC include statements
 #include <PeleC.H>
-#include <PeleC_F.H>
-
-// PeleC-Physics include statements
-#include <Fuego_EOS.H>
 
 // PeleC-MP include statements
 #include <SootModel.H>
@@ -118,10 +114,9 @@ SootModel::clipMoments(Real moments[]) const
   moments[5] = amrex::max(moments[5], moments[2]*moments[2]/moments[0]);
 #endif
   if (weightDelta < m_smallWeight) {
-    for (int i = 0; i != NUM_SOOT_MOMENTS; ++i) {
+    for (int i = 0; i != NUM_SOOT_MOMENTS; ++i)
       moments[i] += (m_smallWeight - weightDelta)*
         std::pow(nucl_nbrc, MomOrderV[i])*std::pow(nucl_surf, MomOrderS[i]);
-    }
     weightDelta = m_smallWeight;
   }
   if (weightDelta > moments[0])
@@ -153,166 +148,159 @@ SootModel::addSootSourceTerm(const Box&       vbox,
   const int qSootIndx = QFSOOT;
   const int numSootMom = NUM_SOOT_MOMENTS;
   const int numSootVar = NUM_SOOT_VARS;
-  const int rhoIndx = PeleC::Density;
-  const int engIndx = PeleC::Eden;
-  const int specIndx = PeleC::FirstSpec;
-  // Number of relevant gas species
-  const int numGS = GasSpecIndx::numGasSpecs;
-  // Molar concentrations (mol/cm^3)
-  // Ordered based on GasSpecIndx, not PeleC species
-  Real xi_n[NUM_SOOT_GS];
-  // Vector of moment values M_xy (cm^(3(x + 2/3y))cm^(-3))
-  // M00, M10, M01,..., N0
-  Real moments[NUM_SOOT_VARS];
-  /*
-    These are the values inside the terms in fracMom
-    momFV[NUM_SOOT_MOMENTS] - Weight of the delta function
-    momFV[NUM_SOOT_MOMENTS+1] - modeCoef
-    where modeCoef signifies the number of modes to be used
-    If the moments are effectively zero, modeCoef = 0 and only 1 mode is used
-    Otherwise, modeCoef = 1 and both modes are used
-    The rest of the momFV values are used in fracMom fact1 = momFV[0],
-    fact2 = momFV[1]^volOrd, fact2 = momFV[2]^surfOrd, etc.
-  */
-  Real momFV[NUM_SOOT_VARS + 1];
-  // Vector of source terms for moment equations
-  Real mom_src[NUM_SOOT_VARS];
-  // Vector of reaction source terms for species
-  Vector<Real> omega_src(numGS);
-  const int nsr = m_numSurfReacts;
-  // Forward and backward reaction rates
-  Vector<Real> k_fwd(nsr);
-  Vector<Real> k_bkwd(nsr);
-  // Creation and destruction rates
-  Vector<Real> w_fwd(nsr);
-  Vector<Real> w_bkwd(nsr);
+  const int rhoIndx = URHO;
+  const int engIndx = UEDEN;
+  const int specIndx = UFS;
+  const int sootIndx = UFSOOT;
+  Real mw_fluid[NUM_SPECIES];
+  EOS::molecular_weight(mw_fluid);
+  const int numGS = NUM_SOOT_GS;
 
   // H2 absorbs the error from surface reactions
   const int absorbIndx = GasSpecIndx::indxH2;
   const int absorbIndxP = specIndx + local2GlobalIndx(absorbIndx);
 
-  const auto lo = lbound(vbox);
-  const auto hi = ubound(vbox);
   const auto Qstate = Qfab.array();
   const auto Ustate = Ufab.array();
   const auto coeff_state = coeff_cc.array();
   auto Sstate = Sfab.array();
-  for (int k = lo.z; k <= hi.z; ++k) {
-    for (int j = lo.y; j <= hi.y; ++j ) {
-      for (int i = lo.x; i <= hi.x; ++i) {
-        Real Hi[NUM_SPECIES];
-        const Real rho = Qstate(i,j,k,qRhoIndx);
-        const Real T = Qstate(i,j,k,qTempIndx);
-        // Dynamic viscosity
-        const Real mu = coeff_state(i,j,k,dComp_mu);
-        // Compute species enthalpy
-        EOS::T2Hi(T, Hi);
-        // Extract mass fractions for gas phases corresponding to GasSpecIndx
-        // Compute the average molar mass (g/mol)
-        Real molarMass = 0.;
-        for (int sp = 0; sp != numGS; ++sp) {
-          const int specConvIndx = local2GlobalIndx(sp);
-          const int peleIndx = qSpecIndx + specConvIndx;
-          Real cn = Qstate(i,j,k,peleIndx);
-          enth_n[sp] = Hi[specConvIndx];
-          Real conv = cn/m_gasMW[sp];
-          xi_n[sp] = rho*conv;
-          molarMass += conv;
-          // Reset the reaction source term
-          omega_src[sp] = 0.;
-        }
-        molarMass = 1./molarMass;
-        // Molar concentration of the PAH inception species
-        Real xi_PAH = xi_n[GasSpecIndx::indxPAH];
-        // Extract moment values
-        for (int mom = 0; mom != numSootVar; ++mom) {
-          const int peleIndx = qSootIndx + mom;
-          moments[mom] = Qstate(i,j,k,peleIndx);
-          // Reset moment source
-          mom_src[mom] = 0.;
-        }
-        // Convert moments from CGS to mol of C
-        convertCGStoMol(moments);
-        // Clip moments
-        clipMoments(moments);
-        // Compute constant values used throughout
-        // (R*T*Pi/(2*A*rho_soot))^(1/2)
-        const Real convT = std::sqrt(m_colFact*T);
-        // Constant for free molecular collisions
-        const Real colConst = convT*m_colFactPi23*m_colFact16*avogadros;
-        // Collision frequency between two dimer in the free
-        // molecular regime with van der Waals enhancement
-        // Units: cm^3/mol-s
-        const Real betaNucl = convT*m_betaNuclFact;
-        const Real betaDimer = convT*m_betaDimerFact;
-        // Compute the vector of factors used for moment interpolation
-        computeFracMomVect(moments, momFV);
-        // Estimate [DIMER]
-        Real dimerConc = dimerization(T, convT, betaNucl, betaDimer,
-                                      xi_PAH, momFV);
-        // Add the nucleation source term to mom_src
-        nucleationMomSrc(betaNucl, dimerConc, mom_src);
-        // Add the condensation source term to mom_src
-        condensationMomSrc(colConst, dimerConc, momFV, mom_src);
-        // Add the coagulation source term to mom_src
-        coagulationMomSrc(colConst, T, mu, rho, molarMass, momFV, mom_src);
-        // Reaction rates for surface growth (k_sg), oxidation (k_ox),
-        // and fragmentation (k_o2)
-        Real k_sg = 0.;
-        Real k_ox = 0.;
-        Real k_o2 = 0.;
-        // Compute the species reaction source terms into omega_src
-        chemicalSrc(T, xi_n, moments, momFV, k_fwd, k_bkwd, w_fwd, w_bkwd,
-                    k_sg, k_ox, k_o2, omega_src);
-        // Compute the continuity and energy source term
-        Real rho_src = 0.;
-        Real eng_src = 0.;
-        Real local_rate = 0.;
-        for (int sp = 0; sp != numGS; ++sp) {
-          // Convert to proper units
-          omega_src[sp] *= m_gasMW[sp];
-          // Convert from local gas species index to global gas species index
-          const int specConvIndx = local2GlobalIndx(sp);
-          const int peleIndx = specIndx + specConvIndx;
-          Real spec_rate = std::abs(omega_src[sp])/
-            (Ustate(i,j,k,peleIndx) + 1.E-12);
-          Sstate(i,j,k,peleIndx) += omega_src[sp];
-          local_rate = amrex::max(local_rate, spec_rate);
-          rho_src += omega_src[sp];
-          eng_src += omega_src[sp]*Hi[specConvIndx];
-        }
-        // Add the surface growth source to mom_src
-        surfaceGrowthMomSrc(k_sg, momFV, mom_src);
-        oxidFragMomSrc(k_ox, k_o2, momFV, mom_src);
-        // Convert moment source terms back to CGS units
-        convertMoltoCGS(mom_src, moments);
-        if (m_conserveMass) {
-          // Difference between mass lost from fluid and mass gained to soot
-          Real del_rho_dot = rho_src + mom_src[1]*m_SootDensity;
-          // Add that mass to H2
-          Sstate(i,j,k,absorbIndxP) -= del_rho_dot;
-          rho_src -= del_rho_dot;
-          eng_src -= enth_n[absorbIndx]*del_rho_dot;
-        }
-        // Add density source term
-        Real rho_rate = std::abs(rho_src)/rho;
-        Sstate(i,j,k,rhoIndx) += rho_src;
-        Real eng_rate = std::abs(eng_src/Ustate(i,j,k,engIndx));
-        Sstate(i,j,k,engIndx) -= eng_src;
-        local_rate = amrex::max(local_rate, amrex::max(eng_rate, rho_rate));
-        // Add moment source terms
-        for (int mom = 0; mom != numSootVar; ++mom) {
-          const int peleIndx = sootIndx + mom;
-          Sstate(i,j,k,peleIndx) += mom_src[mom];
-          // Only limit based on positive moment sources
-          local_rate = std::max(local_rate, -mom_src[mom]/moments[mom]);
-        }
-        if (dt*local_rate > m_maxDtRate) {
-          local_soot_dt = std::min(local_soot_dt, m_maxDtRate/local_rate);
-        }
+  amrex::ParallelFor(vbox, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+      Real Hi[NUM_SPECIES];
+      Real enth_n[NUM_SOOT_GS];
+      Real omega_src[NUM_SOOT_GS];
+      // Molar concentrations (mol/cm^3)
+      Real xi_n[NUM_SOOT_GS];
+      // Array of moment values M_xy (cm^(3(x + 2/3y))cm^(-3))
+      // M00, M10, M01,..., N0
+      Real moments[NUM_SOOT_VARS];
+      /*
+        These are the values inside the terms in fracMom
+        momFV[NUM_SOOT_MOMENTS] - Weight of the delta function
+        momFV[NUM_SOOT_MOMENTS+1] - modeCoef
+        where modeCoef signifies the number of modes to be used
+        If the moments are effectively zero, modeCoef = 0 and only 1 mode is used
+        Otherwise, modeCoef = 1 and both modes are used
+        The rest of the momFV values are used in fracMom fact1 = momFV[0],
+        fact2 = momFV[1]^volOrd, fact2 = momFV[2]^surfOrd, etc.
+      */
+      Real momFV[NUM_SOOT_VARS + 1];
+      // Array of source terms for moment equations
+      Real mom_src[NUM_SOOT_VARS];
+        // Forward and backward reaction rates
+      Real k_fwd[NUM_SOOT_REACT];
+      Real k_bkwd[NUM_SOOT_REACT];
+      Real w_fwd[NUM_SOOT_REACT];
+      Real w_bkwd[NUM_SOOT_REACT];
+      const Real rho = Qstate(i,j,k,qRhoIndx);
+      const Real T = Qstate(i,j,k,qTempIndx);
+      AMREX_ASSERT(std::abs(T) < 1.E20);
+      // Dynamic viscosity
+      const Real mu = coeff_state(i,j,k,dComp_mu);
+      // Compute species enthalpy
+      EOS::T2Hi(T, Hi);
+      // Extract mass fractions for gas phases corresponding to GasSpecIndx
+      // Compute the average molar mass (g/mol)
+      Real molarMass = 0.;
+      for (int sp = 0; sp != numGS; ++sp) {
+        const int specConvIndx = local2GlobalIndx(sp);
+        const int peleIndx = qSpecIndx + specConvIndx;
+        Real cn = Qstate(i,j,k,peleIndx);
+        enth_n[sp] = Hi[specConvIndx];
+        Real conv = cn/mw_fluid[specConvIndx];
+        xi_n[sp] = rho*conv;
+        molarMass += conv;
+        // Reset the reaction source term
+        omega_src[sp] = 0.;
       }
-    }
-  }
+      molarMass = 1./molarMass;
+      // Molar concentration of the PAH inception species
+      Real xi_PAH = xi_n[GasSpecIndx::indxPAH];
+      // Extract moment values
+      for (int mom = 0; mom != numSootVar; ++mom) {
+        const int peleIndx = qSootIndx + mom;
+        moments[mom] = Qstate(i,j,k,peleIndx);
+        // Reset moment source
+        mom_src[mom] = 0.;
+      }
+      // Convert moments from CGS to mol of C
+      convertCGStoMol(moments);
+      // Clip moments
+      clipMoments(moments);
+      // Compute constant values used throughout
+      // (R*T*Pi/(2*A*rho_soot))^(1/2)
+      const Real convT = std::sqrt(m_colFact*T);
+      // Constant for free molecular collisions
+      const Real colConst = convT*m_colFactPi23*m_colFact16*avogadros;
+      // Collision frequency between two dimer in the free
+      // molecular regime with van der Waals enhancement
+      // Units: cm^3/mol-s
+      const Real betaNucl = convT*m_betaNuclFact;
+      const Real betaDimer = convT*m_betaDimerFact;
+      // Compute the vector of factors used for moment interpolation
+      computeFracMomVect(moments, momFV);
+      // Estimate [DIMER]
+      Real dimerConc = dimerization(T, convT, betaNucl, betaDimer,
+                                    xi_PAH, momFV);
+      // Add the nucleation source term to mom_src
+      nucleationMomSrc(betaNucl, dimerConc, mom_src);
+      // Add the condensation source term to mom_src
+      condensationMomSrc(colConst, dimerConc, momFV, mom_src);
+      // Add the coagulation source term to mom_src
+      coagulationMomSrc(colConst, T, mu, rho, molarMass, momFV, mom_src);
+      // Reaction rates for surface growth (k_sg), oxidation (k_ox),
+      // and fragmentation (k_o2)
+      Real k_sg = 0.;
+      Real k_ox = 0.;
+      Real k_o2 = 0.;
+      // Compute the species reaction source terms into omega_src
+      chemicalSrc(T, xi_n, moments, momFV, k_fwd, k_bkwd, w_fwd, w_bkwd,
+                  k_sg, k_ox, k_o2, omega_src);
+      // Compute the continuity and energy source term
+      Real rho_src = 0.;
+      Real eng_src = 0.;
+      Real local_rate = 0.;
+      for (int sp = 0; sp != numGS; ++sp) {
+        // Convert from local gas species index to global gas species index
+        const int specConvIndx = local2GlobalIndx(sp);
+        // Convert to proper units
+        omega_src[sp] *= mw_fluid[specConvIndx];
+        const int peleIndx = specIndx + specConvIndx;
+        Real spec_rate = std::abs(omega_src[sp])/
+          (Ustate(i,j,k,peleIndx) + 1.E-12);
+        Sstate(i,j,k,peleIndx) += omega_src[sp];
+        local_rate = amrex::max(local_rate, spec_rate);
+        rho_src += omega_src[sp];
+        eng_src += omega_src[sp]*Hi[specConvIndx];
+      }
+      // Add the surface growth source to mom_src
+      surfaceGrowthMomSrc(k_sg, momFV, mom_src);
+      oxidFragMomSrc(k_ox, k_o2, momFV, mom_src);
+      // Convert moment source terms back to CGS units
+      convertMoltoCGS(mom_src, moments);
+      if (m_conserveMass) {
+        // Difference between mass lost from fluid and mass gained to soot
+        Real del_rho_dot = rho_src + mom_src[1]*m_SootDensity;
+        // Add that mass to H2
+        Sstate(i,j,k,absorbIndxP) -= del_rho_dot;
+        rho_src -= del_rho_dot;
+        eng_src -= enth_n[absorbIndx]*del_rho_dot;
+      }
+      // Add density source term
+      Real rho_rate = std::abs(rho_src)/rho;
+      Sstate(i,j,k,rhoIndx) += rho_src;
+      Real eng_rate = std::abs(eng_src/Ustate(i,j,k,engIndx));
+      Sstate(i,j,k,engIndx) -= eng_src;
+      local_rate = amrex::max(local_rate, amrex::max(eng_rate, rho_rate));
+      // Add moment source terms
+      for (int mom = 0; mom != numSootVar; ++mom) {
+        const int peleIndx = sootIndx + mom;
+        Sstate(i,j,k,peleIndx) += mom_src[mom];
+        // Only limit based on positive moment sources
+        local_rate = std::max(local_rate, -mom_src[mom]/moments[mom]);
+      }
+      if (dt*local_rate > m_maxDtRate)
+        local_soot_dt = std::min(local_soot_dt, m_maxDtRate/local_rate);
+    });
 }
 
 /********************************************************************
@@ -321,23 +309,22 @@ SootModel::addSootSourceTerm(const Box&       vbox,
 
 // Nucleation source term
 void
-SootModel::nucleationMomSrc(const Real&   betaNucl,
-                            const Real&   dimerConc,
-                            Vector<Real>& mom_src) const
+SootModel::nucleationMomSrc(const Real& betaNucl,
+                            const Real& dimerConc,
+                            Real        mom_src[]) const
 {
   const Real dimerConc2 = dimerConc*dimerConc;
-  for (int i = 0; i != NUM_SOOT_MOMENTS; ++i) {
+  for (int i = 0; i != NUM_SOOT_MOMENTS; ++i)
     mom_src[i] += 0.5*betaNucl*dimerConc2*m_momFact[i];
-  }
   mom_src[NUM_SOOT_MOMENTS] += 0.5*betaNucl*dimerConc2;
 }
 
 // Condensation source term
 void
-SootModel::condensationMomSrc(const Real&         colConst,
-                              const Real&         dimerConc,
-                              const Vector<Real>& momFV,
-                              Vector<Real>&       mom_src) const
+SootModel::condensationMomSrc(const Real& colConst,
+                              const Real& dimerConc,
+                              const Real  momFV[],
+                              Real        mom_src[]) const
 {  
 /** Compute condensation source values
     @param colConst Constant for free molecular collisions
@@ -345,10 +332,6 @@ SootModel::condensationMomSrc(const Real&         colConst,
     @param momFV Vector of factors used in moment interpolation
     @param mom_src Moment source values
 */
-  if (m_sootVerbosity >= 2) {
-    Print() << "SootModel::condensationMomSrc(): Adding condensation"
-            << std::endl;
-  }
   Real weightDelta = momFV[NUM_SOOT_MOMENTS];
   for (int i = 0; i != NUM_SOOT_MOMENTS; ++i) {
     const Real vv1 = MomOrderV[i] + 2.*m_SootAv;
@@ -383,18 +366,14 @@ SootModel::condensationMomSrc(const Real&         colConst,
 
 // Compute the coagulation source term
 void
-SootModel::coagulationMomSrc(const Real&         colConst,
-                             const Real&         T,
-                             const Real&         mu,
-                             const Real&         rho,
-                             const Real&         molMass,
-                             const Vector<Real>& momFV,
-                             Vector<Real>&       mom_src) const
+SootModel::coagulationMomSrc(const Real& colConst,
+                             const Real& T,
+                             const Real& mu,
+                             const Real& rho,
+                             const Real& molMass,
+                             const Real  momFV[],
+                             Real        mom_src[]) const
 {
-  if (m_sootVerbosity >= 2) {
-    Print() << "SootModel::coagulationMomSrc(): Adding coagulation"
-            << std::endl;
-  }
   // Index of the weight of the delta function
   const int dwIndx = NUM_SOOT_MOMENTS;
   // Free molecular collision coefficient with van der Waals enhancements
@@ -463,14 +442,10 @@ SootModel::coagulationMomSrc(const Real&         colConst,
 
 // Surface growth source term
 void
-SootModel::surfaceGrowthMomSrc(const Real&         k_sg,
-                               const Vector<Real>& momFV,
-                               Vector<Real>&       mom_src) const
+SootModel::surfaceGrowthMomSrc(const Real& k_sg,
+                               const Real  momFV[],
+                               Real        mom_src[]) const
 {
-  if (m_sootVerbosity >= 2) {
-    Print() << "SootModel::surfaceGrowthMomSrc(): Adding surface growth"
-            << std::endl;
-  }
   // Index of the weight of the delta function
   const int dwIndx = NUM_SOOT_MOMENTS;
   const Real weightDelta = momFV[dwIndx];
@@ -487,15 +462,11 @@ SootModel::surfaceGrowthMomSrc(const Real&         k_sg,
 
 // Oxidation and fragmentation source terms
 void
-SootModel::oxidFragMomSrc(const Real&         k_ox,
-                          const Real&         k_o2,
-                          const Vector<Real>& momFV,
-                          Vector<Real>&       mom_src) const
+SootModel::oxidFragMomSrc(const Real& k_ox,
+                          const Real& k_o2,
+                          const Real  momFV[],
+                          Real        mom_src[]) const
 {
-  if (m_sootVerbosity >= 2) {
-    Print() << "SootModel::oxidFragMomSrc(): Oxidation and fragmentation"
-            << std::endl;
-  }
   // Index of the weight of the delta function
   const int dwIndx = NUM_SOOT_MOMENTS;
   const Real weightDelta = momFV[dwIndx];
@@ -526,12 +497,12 @@ SootModel::oxidFragMomSrc(const Real&         k_ox,
 
 // Return the dimer concentration
 Real
-SootModel::dimerization(const Real&         T,
-                        const Real&         convT,
-                        const Real&         betaNucl,
-                        const Real&         betaDimer,
-                        const Real&         xi_PAH,
-                        const Vector<Real>& momFV) const
+SootModel::dimerization(const Real& T,
+                        const Real& convT,
+                        const Real& betaNucl,
+                        const Real& betaDimer,
+                        const Real& xi_PAH,
+                        const Real  momFV[]) const
 {
   // Collision coefficient for condensation
   const Real betaCond = getBetaCond(convT, momFV);
@@ -553,7 +524,7 @@ SootModel::dimerization(const Real&         T,
   Moment interpolation functions
 *********************************************************************/
 
-// Compute the moment interpolation vector
+// Compute the moment interpolation array
 /*
   momFV contains factors for interpolating the moments
   It is ordered as the following
@@ -565,8 +536,8 @@ SootModel::dimerization(const Real&         T,
   Otherwise, modeCoef = 1. and both modes are used
 */
 void
-SootModel::computeFracMomVect(const Vector<Real>& moments,
-                              Vector<Real>&       momFV) const
+SootModel::computeFracMomVect(const Real moments[],
+                              Real       momFV[]) const
 {
   // See above for description of modeCoef
   Real modeCoef;
@@ -628,9 +599,9 @@ SootModel::computeFracMomVect(const Vector<Real>& moments,
 
 // Moment interpolation
 Real
-SootModel::fracMomLarge(const Real          volOrd,
-                        const Real          surfOrd,
-                        const Vector<Real>& momFV) const
+SootModel::fracMomLarge(const Real volOrd,
+                        const Real surfOrd,
+                        const Real momFV[]) const
 {
   // Weight of the delta function
   Real dwVal = momFV[NUM_SOOT_MOMENTS];
@@ -639,17 +610,16 @@ SootModel::fracMomLarge(const Real          volOrd,
   Real outMom = fracMom(volOrd, surfOrd, momFV) - dwVal*factor;
   
   // If the moment is negative, return a small (consistent) value
-  if (outMom <= 0. || outMom != outMom) {
+  if (outMom <= 0. || outMom != outMom)
     return factor*1.E-66;
-  }
   return outMom;
 }
 
 // Moment interpolation
 Real
-SootModel::fracMom(const Real          volOrd,
-                   const Real          surfOrd,
-                   const Vector<Real>& momFV) const
+SootModel::fracMom(const Real volOrd,
+                   const Real surfOrd,
+                   const Real momFV[]) const
 {
   // If modeCoef = 0.; only first mode is used
   // If modeCoef = 1.; both modes are used
@@ -678,11 +648,11 @@ SootModel::fracMom(const Real          volOrd,
 // Only two grid functions used for all moments
 // Limited sensitivity to increasing the number of grid functions
 Real
-SootModel::psiSL(const Real          x,
-                 const Real          y,
-                 const Real          a,
-                 const Real          b,
-                 const Vector<Real>& momFV) const
+SootModel::psiSL(const Real x,
+                 const Real y,
+                 const Real a,
+                 const Real b,
+                 const Real momFV[]) const
 {
   const Real weightDelta = momFV[NUM_SOOT_MOMENTS];
   const Real factor = weightDelta*std::pow(m_nuclVol, a + m_two3rd*b);
@@ -710,11 +680,11 @@ SootModel::psiSL(const Real          x,
 // Only two grid functions used for all moments
 // Limited sensitivity to increasing the number of grid functions
 Real
-SootModel::psiLL(const Real          x,
-                 const Real          y,
-                 const Real          a,
-                 const Real          b,
-                 const Vector<Real>& momFV) const
+SootModel::psiLL(const Real x,
+                 const Real y,
+                 const Real a,
+                 const Real b,
+                 const Real momFV[]) const
 {
   Real VF_xy[3] = {2.*m_SootAv + x, m_SootAv + x, x};
   Real SF_xy[3] = {2.*m_SootAs + y, m_SootAs + y, y};
@@ -748,8 +718,8 @@ SootModel::psiLL(const Real          x,
 // Small-Large: "Splashing"
 // -Generalized grid function follows terms
 Real
-SootModel::FMCoagSL(const int           i,
-                    const Vector<Real>& momFV) const
+SootModel::FMCoagSL(const int  i,
+                    const Real momFV[]) const
 {
   // Weight of delta function N0 and M00
   if (i == NUM_SOOT_MOMENTS || i == 0) {
@@ -785,8 +755,8 @@ SootModel::FMCoagSL(const int           i,
 // Large-Large: Pure aggregation
 // -Generalized grid function follows terms
 Real
-SootModel::FMCoagLL(const int           i,
-                    const Vector<Real>& momFV) const
+SootModel::FMCoagLL(const int  i,
+                    const Real momFV[]) const
 {
   switch (i) {
   case 0: // M00
@@ -811,9 +781,9 @@ SootModel::FMCoagLL(const int           i,
 // Small-Large: "Splashing"
 // Large-Large: Pure aggregation
 Real
-SootModel::CNCoagSL(const int           i,
-                    const Real&         lambda,
-                    const Vector<Real>& momFV) const
+SootModel::CNCoagSL(const int   i,
+                    const Real& lambda,
+                    const Real  momFV[]) const
 {
   const Real weightDelta = momFV[NUM_SOOT_MOMENTS];
   // Mean free path for finite Knudsen number correction in continuum regime
@@ -897,11 +867,11 @@ SootModel::CNCoagSL(const int           i,
 }
 
 Real
-SootModel::CNCoagSLFunc(int                 n[4],
-                        const Real          x,
-                        const Real          y,
-                        const Real&         lambda,
-                        const Vector<Real>& momFV) const
+SootModel::CNCoagSLFunc(int         n[4],
+                        const Real  x,
+                        const Real  y,
+                        const Real& lambda,
+                        const Real  momFV[]) const
 {
   Real xy_1 = fracMomLarge(x, y, momFV);
   Real xy_2 = fracMomLarge(x - m_SootAv, y - m_SootAs, momFV);
@@ -916,9 +886,9 @@ SootModel::CNCoagSLFunc(int                 n[4],
 }
 
 Real
-SootModel::CNCoagLL(const int           i,
-                    const Real&         lambda,
-                    const Vector<Real>& momFV) const
+SootModel::CNCoagLL(const int   i,
+                    const Real& lambda,
+                    const Real  momFV[]) const
 {
   switch (i) {
   case 0: // M00
@@ -938,10 +908,10 @@ SootModel::CNCoagLL(const int           i,
 }
 
 Real
-SootModel::CNCoagLLFunc(const Real          x,
-                        const Real          y,
-                        const Real&         lambda,
-                        const Vector<Real>& momFV) const
+SootModel::CNCoagLLFunc(const Real  x,
+                        const Real  y,
+                        const Real& lambda,
+                        const Real  momFV[]) const
 {
   Real xy_1 = fracMomLarge(x, y, momFV);
   Real xy_2 = fracMomLarge(x - m_SootAv, y - m_SootAs, momFV);
@@ -952,12 +922,12 @@ SootModel::CNCoagLLFunc(const Real          x,
 }
 
 Real
-SootModel::CNCoagLLFunc(const Real          x,
-                        const Real          y,
-                        const Real          a,
-                        const Real          b,
-                        const Real&         lambda,
-                        const Vector<Real>& momFV) const
+SootModel::CNCoagLLFunc(const Real  x,
+                        const Real  y,
+                        const Real  a,
+                        const Real  b,
+                        const Real& lambda,
+                        const Real  momFV[]) const
 {
   Real xy_1 = fracMomLarge(x, y, momFV);
   Real xy_2 = fracMomLarge(x - m_SootAv, y - m_SootAs, momFV);
@@ -972,8 +942,8 @@ SootModel::CNCoagLLFunc(const Real          x,
 }
 
 Real
-SootModel::getBetaCond(const Real&         convT,
-                       const Vector<Real>& momFV) const
+SootModel::getBetaCond(const Real& convT,
+                       const Real  momFV[]) const
 {
   // Collision frequency between two dimer in the free
   // molecular regime WITHOUT van der Waals enhancement
