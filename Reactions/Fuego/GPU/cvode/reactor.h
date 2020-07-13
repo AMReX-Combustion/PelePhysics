@@ -75,18 +75,18 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void *user_data);
 int reactor_info(const int* cvode_iE, const int* Ncells); 
 
 int react(realtype *rY_in, realtype *rY_src_in, 
-		realtype *rX_in, realtype *rX_src_in, 
-		realtype *dt_react, realtype *time,
-                const int* cvode_iE, const int* Ncells, cudaStream_t stream);
+          realtype *rX_in, realtype *rX_src_in, 
+          realtype *dt_react, realtype *time,
+          const int* cvode_iE, const int* Ncells, cudaStream_t stream);
 
 static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
-		booleantype *jcurPtr, realtype gamma, void *user_data);
+                   booleantype *jcurPtr, realtype gamma, void *user_data);
 
 static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, 
-		N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);
+                  N_Vector z, realtype gamma, realtype delta, int lr, void *user_data);
 
 static int cJac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J,
-		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+                void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 void reactor_close();
 
@@ -133,33 +133,33 @@ fKernelComputeAJchemCuSolver(int ncells, void *user_data, realtype *u_d, realtyp
 __global__
 void 
 fKernelDenseSolve(int ncells, realtype *x_d, realtype *b_d,
-		  int subsys_size, int subsys_nnz, realtype *csr_val);
+                  int subsys_size, int subsys_nnz, realtype *csr_val);
 
 /**********************************/
 /* Custom solver stuff */
 struct _SUNLinearSolverContent_Dense_custom {
-	sunindextype       last_flag;
-	int                nsubsys;       /* number of subsystems */
-	int                subsys_size;   /* size of each subsystem */
-	int                subsys_nnz;
+    sunindextype       last_flag;
+    int                nsubsys;       /* number of subsystems */
+    int                subsys_size;   /* size of each subsystem */
+    int                subsys_nnz;
         N_Vector           d_values;      /* device  array of matrix A values */
-	int*               d_colind;      /* device array of column indices for a subsystem */
-	int*               d_rowptr;      /* device array of rowptrs for a subsystem */
-	cudaStream_t       stream;
-        int                nbBlocks;
-        int                nbThreads;
+    int*               d_colind;      /* device array of column indices for a subsystem */
+    int*               d_rowptr;      /* device array of rowptrs for a subsystem */
+    cudaStream_t       stream;
+    int                nbBlocks;
+    int                nbThreads;
 };
 
 typedef struct _SUNLinearSolverContent_Dense_custom *SUNLinearSolverContent_Dense_custom; 
 
 SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, 
-		int nsubsys, int subsys_size, int subsys_nnz, 
-		cudaStream_t stream);
+                                       int nsubsys, int subsys_size, int subsys_nnz, 
+                                       cudaStream_t stream);
 
 SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S); 
 
 int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
-		N_Vector b, realtype tol);
+                                N_Vector b, realtype tol);
 
 int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A);
 

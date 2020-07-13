@@ -231,6 +231,70 @@ int react(realtype *rY_in, realtype *rY_src_in,
             SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP,1);
             BL_PROFILE_VAR_STOP(SparsityStuff);
 
+            // Create Sparse batch QR solver
+            // qr info and matrix descriptor
+            BL_PROFILE_VAR("CuSolverInit", CuSolverInit);
+            size_t workspaceInBytes, internalDataInBytes;
+            cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
+            cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
+
+            workspaceInBytes = 0;
+            internalDataInBytes = 0;
+
+            cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
+            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+
+            cusparse_status = cusparseCreateMatDescr(&(user_data->descrA)); 
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
+
+            cusparse_status = cusparseSetMatType(user_data->descrA, CUSPARSE_MATRIX_TYPE_GENERAL);
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
+
+            cusparse_status = cusparseSetMatIndexBase(user_data->descrA, CUSPARSE_INDEX_BASE_ONE);
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
+
+            cusolver_status = cusolverSpCreateCsrqrInfo(&(user_data->info));
+            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+
+            // symbolic analysis
+            cusolver_status = cusolverSpXcsrqrAnalysisBatched(user_data->cusolverHandle,
+                                       NEQ+1, // size per subsystem
+                                       NEQ+1, // size per subsystem
+                                       user_data->NNZ,
+                                       user_data->descrA,
+                                       user_data->csr_row_count_d,
+                                       user_data->csr_col_index_d,
+                                       user_data->info);
+            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+               
+            /*
+            size_t free_mem = 0;
+            size_t total_mem = 0;
+            cudaStat1 = cudaMemGetInfo( &free_mem, &total_mem );
+            assert( cudaSuccess == cudaStat1 );
+            std::cout<<"(AFTER SA) Free: "<< free_mem<< " Tot: "<<total_mem<<std::endl;
+            */
+
+            // allocate working space 
+            cusolver_status = cusolverSpDcsrqrBufferInfoBatched(user_data->cusolverHandle,
+                                                      NEQ+1, // size per subsystem
+                                                      NEQ+1, // size per subsystem
+                                                      user_data->NNZ,
+                                                      user_data->descrA,
+                                                      user_data->csr_val_d,
+                                                      user_data->csr_row_count_d,
+                                                      user_data->csr_col_index_d,
+                                                      NCELLS,
+                                                      user_data->info,
+                                                      &internalDataInBytes,
+                                                      &workspaceInBytes);
+            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+
+            cudaError_t cudaStat1            = cudaSuccess;
+            cudaStat1 = cudaMalloc((void**)&(user_data->buffer_qr), workspaceInBytes);
+            assert(cudaStat1 == cudaSuccess);
+            BL_PROFILE_VAR_STOP(CuSolverInit);
+
         } else if (isolve_type == sparse_cusolver_solve) {
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,1);
@@ -290,72 +354,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
     }
 
-
-    // Create Sparse batch QR solver
-    // qr info and matrix descriptor
-    BL_PROFILE_VAR("CuSolverInit", CuSolverInit);
-    if (user_data->isolve_type == iterative_gmres_solve) {
-        size_t workspaceInBytes, internalDataInBytes;
-        cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
-        cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
-
-        workspaceInBytes = 0;
-        internalDataInBytes = 0;
-
-        cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
-        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-
-        cusparse_status = cusparseCreateMatDescr(&(user_data->descrA)); 
-        assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
-
-        cusparse_status = cusparseSetMatType(user_data->descrA, CUSPARSE_MATRIX_TYPE_GENERAL);
-        assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
-
-        cusparse_status = cusparseSetMatIndexBase(user_data->descrA, CUSPARSE_INDEX_BASE_ONE);
-        assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
-
-        cusolver_status = cusolverSpCreateCsrqrInfo(&(user_data->info));
-        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-
-        // symbolic analysis
-        cusolver_status = cusolverSpXcsrqrAnalysisBatched(user_data->cusolverHandle,
-                                   NEQ+1, // size per subsystem
-                                   NEQ+1, // size per subsystem
-                                   user_data->NNZ,
-                                   user_data->descrA,
-                                   user_data->csr_row_count_d,
-                                   user_data->csr_col_index_d,
-                                   user_data->info);
-        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-           
-        /*
-        size_t free_mem = 0;
-        size_t total_mem = 0;
-        cudaStat1 = cudaMemGetInfo( &free_mem, &total_mem );
-        assert( cudaSuccess == cudaStat1 );
-        std::cout<<"(AFTER SA) Free: "<< free_mem<< " Tot: "<<total_mem<<std::endl;
-        */
-
-        // allocate working space 
-        cusolver_status = cusolverSpDcsrqrBufferInfoBatched(user_data->cusolverHandle,
-                                                  NEQ+1, // size per subsystem
-                                                  NEQ+1, // size per subsystem
-                                                  user_data->NNZ,
-                                                  user_data->descrA,
-                                                  user_data->csr_val_d,
-                                                  user_data->csr_row_count_d,
-                                                  user_data->csr_col_index_d,
-                                                  NCELLS,
-                                                  user_data->info,
-                                                  &internalDataInBytes,
-                                                  &workspaceInBytes);
-        assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-
-        cudaError_t cudaStat1            = cudaSuccess;
-        cudaStat1 = cudaMalloc((void**)&(user_data->buffer_qr), workspaceInBytes);
-        assert(cudaStat1 == cudaSuccess);
-    }
-    BL_PROFILE_VAR_STOP(CuSolverInit);
 
     /* Definition of main vector */
     y = N_VNewManaged_Cuda(neq_tot);
