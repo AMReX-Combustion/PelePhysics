@@ -1,8 +1,2 @@
-ifeq ($(USE_SUNDIALS_PP),FALSE) 
-  ifeq ($(USE_RK64_PP),FALSE) 
-    f90EXE_sources += probdata.f90
-    F90EXE_sources += main_nd.F90
-  endif
-endif
 CEXE_sources += main.cpp
 
