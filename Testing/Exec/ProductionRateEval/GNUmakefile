@@ -14,8 +14,8 @@ FCOMP	   = gfortran
 USE_MPI    = FALSE
 USE_OMP    = FALSE
 
-USE_CUDA   = FALSE
 USE_CUDA   = TRUE
+USE_CUDA   = FALSE
 
 TINY_PROFILE = FALSE
 
@@ -30,7 +30,7 @@ else
   USE_KLU_PP = FALSE
   USE_CUDA_SUNDIALS_PP = FALSE
 endif
-#######################
+USE_KLU = $(USE_KLU_PP) # sort out keywords later...
 
 Eos_dir         = Fuego
 Chemistry_Model = LiDryer
