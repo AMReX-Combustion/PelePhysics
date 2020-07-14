@@ -1634,11 +1634,12 @@ void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * kn
 /* Returns the vector of strings of element names */
 void CKSYME_STR(amrex::Vector<std::string>& ename)
 {
-    ename.push_back("O");
-    ename.push_back("H");
-    ename.push_back("C");
-    ename.push_back("N");
-    ename.push_back("AR");
+    ename.resize(5);
+    ename[0] = "O";
+    ename[1] = "H";
+    ename[2] = "C";
+    ename[3] = "N";
+    ename[4] = "AR";
 }
 
 
@@ -1679,27 +1680,28 @@ void CKSYME(int * kname, int * plenkname )
 /* Returns the vector of strings of species names */
 void CKSYMS_STR(amrex::Vector<std::string>& kname)
 {
-    kname.push_back("H2");
-    kname.push_back("H");
-    kname.push_back("O");
-    kname.push_back("O2");
-    kname.push_back("OH");
-    kname.push_back("H2O");
-    kname.push_back("HO2");
-    kname.push_back("CH2");
-    kname.push_back("CH2(S)");
-    kname.push_back("CH3");
-    kname.push_back("CH4");
-    kname.push_back("CO");
-    kname.push_back("CO2");
-    kname.push_back("HCO");
-    kname.push_back("CH2O");
-    kname.push_back("CH3O");
-    kname.push_back("C2H4");
-    kname.push_back("C2H5");
-    kname.push_back("C2H6");
-    kname.push_back("N2");
-    kname.push_back("AR");
+    kname.resize(21);
+    kname[0] = "H2";
+    kname[1] = "H";
+    kname[2] = "O";
+    kname[3] = "O2";
+    kname[4] = "OH";
+    kname[5] = "H2O";
+    kname[6] = "HO2";
+    kname[7] = "CH2";
+    kname[8] = "CH2(S)";
+    kname[9] = "CH3";
+    kname[10] = "CH4";
+    kname[11] = "CO";
+    kname[12] = "CO2";
+    kname[13] = "HCO";
+    kname[14] = "CH2O";
+    kname[15] = "CH3O";
+    kname[16] = "C2H4";
+    kname[17] = "C2H5";
+    kname[18] = "C2H6";
+    kname[19] = "N2";
+    kname[20] = "AR";
 }
 
 
@@ -31056,4 +31058,3 @@ void egtransetCOFTD(double* COFTD) {
     COFTD[166] = -3.64844875E-07;
     COFTD[167] = 6.03054876E-11;
 }
-

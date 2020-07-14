@@ -3612,10 +3612,11 @@ void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * kn
 /* Returns the vector of strings of element names */
 void CKSYME_STR(amrex::Vector<std::string>& ename)
 {
-    ename.push_back("N");
-    ename.push_back("O");
-    ename.push_back("H");
-    ename.push_back("C");
+    ename.resize(4);
+    ename[0] = "N";
+    ename[1] = "O";
+    ename[2] = "H";
+    ename[3] = "C";
 }
 
 
@@ -3651,58 +3652,59 @@ void CKSYME(int * kname, int * plenkname )
 /* Returns the vector of strings of species names */
 void CKSYMS_STR(amrex::Vector<std::string>& kname)
 {
-    kname.push_back("N2");
-    kname.push_back("O");
-    kname.push_back("H2");
-    kname.push_back("H");
-    kname.push_back("OH");
-    kname.push_back("H2O");
-    kname.push_back("O2");
-    kname.push_back("HO2");
-    kname.push_back("H2O2");
-    kname.push_back("CH");
-    kname.push_back("HCO");
-    kname.push_back("CH2");
-    kname.push_back("CO2");
-    kname.push_back("CO");
-    kname.push_back("CH2O");
-    kname.push_back("CH2GSG");
-    kname.push_back("CH3");
-    kname.push_back("CH3O");
-    kname.push_back("CH4");
-    kname.push_back("CH3OH");
-    kname.push_back("C2H6");
-    kname.push_back("C2H5");
-    kname.push_back("CH2CO");
-    kname.push_back("HOCHO");
-    kname.push_back("CH3O2");
-    kname.push_back("CH3O2H");
-    kname.push_back("C2H2");
-    kname.push_back("HCCO");
-    kname.push_back("C2H3");
-    kname.push_back("CH2CHO");
-    kname.push_back("C3H6");
-    kname.push_back("C2H4");
-    kname.push_back("C2H5O");
-    kname.push_back("CH3CO");
-    kname.push_back("C2H5O2");
-    kname.push_back("C3H2");
-    kname.push_back("C3H3");
-    kname.push_back("C3H4XA");
-    kname.push_back("C3H5XA");
-    kname.push_back("NXC3H7");
-    kname.push_back("NXC3H7O2");
-    kname.push_back("C4H6");
-    kname.push_back("C4H7");
-    kname.push_back("C4H8X1");
-    kname.push_back("PXC4H9");
-    kname.push_back("PXC4H9O2");
-    kname.push_back("C5H9");
-    kname.push_back("C5H10X1");
-    kname.push_back("C5H11X1");
-    kname.push_back("C6H12X1");
-    kname.push_back("C7H15X2");
-    kname.push_back("NXC7H16");
+    kname.resize(52);
+    kname[0] = "N2";
+    kname[1] = "O";
+    kname[2] = "H2";
+    kname[3] = "H";
+    kname[4] = "OH";
+    kname[5] = "H2O";
+    kname[6] = "O2";
+    kname[7] = "HO2";
+    kname[8] = "H2O2";
+    kname[9] = "CH";
+    kname[10] = "HCO";
+    kname[11] = "CH2";
+    kname[12] = "CO2";
+    kname[13] = "CO";
+    kname[14] = "CH2O";
+    kname[15] = "CH2GSG";
+    kname[16] = "CH3";
+    kname[17] = "CH3O";
+    kname[18] = "CH4";
+    kname[19] = "CH3OH";
+    kname[20] = "C2H6";
+    kname[21] = "C2H5";
+    kname[22] = "CH2CO";
+    kname[23] = "HOCHO";
+    kname[24] = "CH3O2";
+    kname[25] = "CH3O2H";
+    kname[26] = "C2H2";
+    kname[27] = "HCCO";
+    kname[28] = "C2H3";
+    kname[29] = "CH2CHO";
+    kname[30] = "C3H6";
+    kname[31] = "C2H4";
+    kname[32] = "C2H5O";
+    kname[33] = "CH3CO";
+    kname[34] = "C2H5O2";
+    kname[35] = "C3H2";
+    kname[36] = "C3H3";
+    kname[37] = "C3H4XA";
+    kname[38] = "C3H5XA";
+    kname[39] = "NXC3H7";
+    kname[40] = "NXC3H7O2";
+    kname[41] = "C4H6";
+    kname[42] = "C4H7";
+    kname[43] = "C4H8X1";
+    kname[44] = "PXC4H9";
+    kname[45] = "PXC4H9O2";
+    kname[46] = "C5H9";
+    kname[47] = "C5H10X1";
+    kname[48] = "C5H11X1";
+    kname[49] = "C6H12X1";
+    kname[50] = "C7H15X2";
+    kname[51] = "NXC7H16";
 }
 
 

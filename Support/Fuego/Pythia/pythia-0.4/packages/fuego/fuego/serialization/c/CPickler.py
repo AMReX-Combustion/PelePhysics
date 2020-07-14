@@ -1142,8 +1142,9 @@ class CPickler(CMill):
         self._write('void CKSYME_STR'+sym+'(amrex::Vector<std::string>& ename)')
         self._write('{')
         self._indent()
+        self._write('ename.resize(%d);' % nElement)
         for element in mechanism.element():
-            self._write('ename.push_back("%s");' % element.symbol)
+            self._write('ename[%d] = "%s";' %(element.id, element.symbol))
         # done
         self._outdent()
         self._write('}')
@@ -1195,8 +1196,9 @@ class CPickler(CMill):
         self._write('void CKSYMS_STR'+sym+'(amrex::Vector<std::string>& kname)')
         self._write('{')
         self._indent()
+        self._write('kname.resize(%d);' % nSpecies)
         for species in mechanism.species():
-            self._write('kname.push_back("%s");' % species.symbol)
+            self._write('kname[%d] = "%s";' %(species.id, species.symbol))
 
         self._outdent() 
         self._write('}') 

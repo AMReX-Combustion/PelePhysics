@@ -7,11 +7,12 @@ ode.reactor_type  = 1
 #verbose
 ode.verbose = 0
 # abs and rel tolerances for ODE solve
-#ode.rtol = 1e-10
-#ode.atol = 1e-10
+ode.rtol = 1e-6
+ode.atol = 1e-6
 # Use variable-specific abs tols in ODE solve
 # Note that atol becomes a factor
-#ode.use_typ_vals = 0
+ode.use_typ_vals = 1
+ode.typ_vals = 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1500.0
 # Select ARK/CV-ODE Jacobian eval: 0=FD 1=AJ
 ode.analytical_jacobian = 0
 #CVODE SPECIFICS
