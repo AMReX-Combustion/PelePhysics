@@ -420,7 +420,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     cudaMemcpyAsync(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice, stream);
     BL_PROFILE_VAR_STOP(AsyncCpy);
 
-    realtype time_init, time_out ;
+    realtype time_init, time_out;
     time_init = *time;
     time_out  = *time + *dt_react;
 
@@ -435,8 +435,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
     ratol = N_VGetHostArrayPointer_Cuda(atol);
     if (typVals.size()>0) {
         printf("Setting CVODE tolerances rtol = %14.8e atolfact = %14.8e in PelePhysics \n",relTol, absTol);
-        for (int i = 0; i < NCELLS, i++) {
-            offset = i * (NUM_SPECIES + 1);
+        for (int i = 0; i < NCELLS; i++) {
+            int offset = i * (NUM_SPECIES + 1);
             for  (int k = 0; k < NUM_SPECIES + 1; k++) {
                 ratol[offset + k] = typVals[k]*absTol;
             }
