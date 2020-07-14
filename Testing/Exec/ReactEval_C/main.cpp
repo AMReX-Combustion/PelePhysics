@@ -335,22 +335,22 @@ main (int   argc,
 
     /* ADVANCE */
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(mf,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
-        const Box& box = mfi.tilebox();
-        int ncells     = box.numPts();
+        const Box& box  = mfi.tilebox();
+        int ncells      = box.numPts();
         int extra_cells = 0;
 
         const auto len     = amrex::length(box);
         const auto lo      = amrex::lbound(box);
 
-        Array4<Real> rhoY    = mf.array(mfi);
-        Array4<Real> rhoE    = mfE.array(mfi);
-        Array4<Real> frcExt  = rY_source_ext.array(mfi);
-        Array4<Real> frcEExt = rY_source_energy_ext.array(mfi);
-        Array4<Real> fc      = fctCount.array(mfi);
+        auto const& rhoY    = mf.array(mfi);
+        auto const& rhoE    = mfE.array(mfi);
+        auto const& frcExt  = rY_source_ext.array(mfi);
+        auto const& frcEExt = rY_source_energy_ext.array(mfi);
+        auto const& fc      = fctCount.array(mfi);
 
 #ifdef USE_CUDA_SUNDIALS_PP
         cudaError_t cuda_status = cudaSuccess;
@@ -454,8 +454,8 @@ main (int   argc,
     #endif
 #else
 
-                fc_tmp_lcl = react(tmp_vect, tmp_src_vect,
-                                   tmp_vect_energy, tmp_src_vect_energy,
+                fc_tmp_lcl = react(rhoY, frcExt,
+                                   rhoE, frcEExt,
                                    &dt_incr, &time,
                                    &ode_iE, &ncells, amrex::Gpu::gpuStream());
 #endif

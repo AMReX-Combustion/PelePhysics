@@ -79,6 +79,15 @@ int react(realtype *rY_in, realtype *rY_src_in,
           realtype *dt_react, realtype *time,
           const int* cvode_iE, const int* Ncells, cudaStream_t stream);
 
+int react(amrex::Array4<amrex::Real> const& rY_in,
+          amrex::Array4<amrex::Real> const& rY_src_in, 
+          amrex::Array4<amrex::Real> const& rEner_in,  
+          amrex::Array4<amrex::Real> const& rEner_src_in,
+          amrex::Real *dt_react,
+          amrex::Real *time,
+          const int* cvode_iE,
+          const int* Ncells, cudaStream_t stream);
+   
 static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
                    booleantype *jcurPtr, realtype gamma, void *user_data);
 

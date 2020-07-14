@@ -172,6 +172,18 @@ int reactor_info(const int* reactor_type,const int* Ncells){
     return(0);
 }
 
+/* Main routine for external looping */
+int react(amrex::Array4<amrex::Real> const& rY_in,
+          amrex::Array4<amrex::Real> const& rY_src_in, 
+          amrex::Array4<amrex::Real> const& rEner_in,  
+          amrex::Array4<amrex::Real> const& rEner_src_in,
+          amrex::Real *dt_react,
+          amrex::Real *time,
+          const int* cvode_iE,
+          const int* Ncells, cudaStream_t stream) {
+   amrex::Print() << "Do nothing";
+   return 0;   
+}
 
 /* Main routine for external looping */
 int react(realtype *rY_in, realtype *rY_src_in, 
