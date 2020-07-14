@@ -14,7 +14,7 @@ using namespace amrex;
 #include <main_F.H>
 #include <PlotFileFromMF.H>
 #include <EOS.H>
-#include <GPU_misc.H> 
+#include <main_K.H> 
 
 #if defined(USE_SUNDIALS_PP)
 // ARKODE or CVODE
@@ -299,7 +299,6 @@ main (int   argc,
 
         const Box& box  = mfi.tilebox();
         int ncells      = box.numPts();
-        int extra_cells = 0;
 
         const auto len     = amrex::length(box);
         const auto lo      = amrex::lbound(box);
@@ -313,33 +312,29 @@ main (int   argc,
 #ifdef USE_CUDA_SUNDIALS_PP
         cudaError_t cuda_status = cudaSuccess;
         ode_ncells    = ncells;
-#else
-        extra_cells = ncells - ncells / ode_ncells * ode_ncells; 
 #endif
 
         amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
-        amrex::Print() << "("<< extra_cells<<" extra cells) \n";
 
         /* Solve */
         Real fc_tmp;
         BL_PROFILE_VAR_START(ReactInLoop);
-        for(int i = 0; i < ncells+extra_cells; i+=ode_ncells) {
-            Real time      = 0.0;
-            Real dt_incr   = dt/ndt;
-            Real fc_tmp_lcl = 0.0;
-            for (int ii = 0; ii < ndt; ++ii) {
-                fc_tmp_lcl = react(rhoY, frcExt,
-                                   rhoE, frcEExt,
+        Real time      = 0.0;
+        Real dt_incr   = dt/ndt;
+        Real fc_tmp_lcl = 0.0;
+        for (int ii = 0; ii < ndt; ++ii) {
+            fc_tmp_lcl = react(box,
+                               rhoY, frcExt,
+                               rhoE, frcEExt,
 #ifdef USE_CUDA_SUNDIALS_PP
-                                   &dt_incr, &time,
-                                   &ode_iE, &ncells, amrex::Gpu::gpuStream());
+                               &dt_incr, &time,
+                               &ode_iE, &ncells, amrex::Gpu::gpuStream());
 #else
-                                   &dt_incr, &time);
+                               ncells, dt_incr, time);
 #endif
-                dt_incr =  dt/ndt;
-                fc_tmp = fc_tmp_lcl;
-            }
-        }   
+            dt_incr =  dt/ndt;
+            fc_tmp = fc_tmp_lcl;
+        }
         BL_PROFILE_VAR_STOP(ReactInLoop);
 
 #ifdef USE_CUDA_SUNDIALS_PP

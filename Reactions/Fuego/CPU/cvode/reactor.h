@@ -19,6 +19,10 @@
 #include <sunlinsol/sunlinsol_klu.h>
 #endif
 
+#include <AMReX_FArrayBox.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_iMultiFab.H>
+
 #include <AMReX_Print.H>
 #include <EOS.H>
 /**********************************/
@@ -35,6 +39,12 @@ typedef struct {
       int isolve_type;
       int ianalytical_jacobian;
       int ireactor_type;
+      int boxcell;
+      /* external forcing */
+      amrex::Gpu::ManagedVector<amrex::Real> Yvect_full; 
+      amrex::Gpu::ManagedVector<amrex::Real> rhoX_init;
+      amrex::Gpu::ManagedVector<amrex::Real> rhoXsrc_ext;
+      amrex::Gpu::ManagedVector<amrex::Real> rYsrc;
       /* Options */
       int NNZ; 
       /* Sparse Matrices for KLU-related solve */
@@ -103,21 +113,22 @@ int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 
 /**********************************/
 /* Functions Called by the Program */
-int reactor_init(const int* cvode_iE, const int* Ncells);
+int reactor_init(const int cvode_iE, const int Ncells);
 
-int react(amrex::Array4<amrex::Real> const& rY_in,
+int react(const amrex::Box& box,
+          amrex::Array4<amrex::Real> const& rY_in,
           amrex::Array4<amrex::Real> const& rY_src_in, 
           amrex::Array4<amrex::Real> const& rEner_in,  
           amrex::Array4<amrex::Real> const& rEner_src_in,
-          amrex::Real *dt_react,
-          amrex::Real *time);
+          int box_ncells,
+          amrex::Real &dt_react,
+          amrex::Real &time);
 
-int react(realtype *rY_in, realtype *rY_src_in, 
-	realtype *rX_in, realtype *rX_src_in, 
-	realtype *dt_react, realtype *time);
+int react(realtype &rY_in, realtype &rY_src_in, 
+	      realtype &rX_in, realtype &rX_src_in, 
+	      realtype &dt_react, realtype &time);
 
 void reactor_close();
-
 
 
 /**********************************/
@@ -163,5 +174,4 @@ SUNLinearSolver_Type SUNLinSolGetType_Sparse_custom(SUNLinearSolver S);
 
 int SUNLinSolSolve_Sparse_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol);
-
 

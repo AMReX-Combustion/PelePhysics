@@ -2,6 +2,7 @@
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include "mechanism.h"
+#include <AMREX_misc.H>
 
 #define SUN_CUSP_CONTENT(S)        ( (SUNLinearSolverContent_Sparse_custom)(S->content) )
 #define SUN_CUSP_REACTYPE(S)       ( SUN_CUSP_CONTENT(S)->reactor_type )
@@ -18,12 +19,8 @@
   /* User data */
   UserData data      = NULL;
 /* OPTIONS */
-  /* energy */
-  double *rhoX_init   = NULL;
-  double *rhoXsrc_ext = NULL;
-  double *rYsrc       = NULL;
   double time_init    = 0.0;
-  double *typVals     = NULL;
+  amrex::Gpu::ManagedVector<amrex::Real> typVals;
   double relTol       = 1.0e-10;
   double absTol       = 1.0e-10;
 /* REMOVE MAYBE LATER */
@@ -39,7 +36,7 @@
 #ifdef _OPENMP
 #pragma omp threadprivate(y,LS,A)
 #pragma omp threadprivate(cvode_mem,data)
-#pragma omp threadprivate(rhoX_init,rhoXsrc_ext,rYsrc,time_init)
+#pragma omp threadprivate(time_init)
 #pragma omp threadprivate(typVals)
 #pragma omp threadprivate(relTol,absTol)
 #endif
@@ -50,8 +47,8 @@
 void SetTypValsODE(std::vector<double> ExtTypVals) {
     int size_ETV = (NUM_SPECIES + 1);
 
-    if (typVals==NULL) {
-        typVals = (double *) malloc(size_ETV*sizeof(double));
+    if (typVals.size()==0) {
+        typVals.resize(size_ETV);
     }
 
     amrex::Vector<std::string> kname;
@@ -102,7 +99,7 @@ void SetTolFactODE(double relative_tol,double absolute_tol) {
 }
 
 
-/* Function to ReSet the Tolerances */
+/* Function to ReSet the tol of the cvode object directly */
 void ReSetTolODE() {
     if (data==NULL) {
 #ifdef _OPENMP
@@ -124,7 +121,7 @@ void ReSetTolODE() {
     ratol   = N_VGetArrayPointer(atol);
 
     int offset;
-    if (typVals) {
+    if (typVals.size()>0) {
 #ifdef _OPENMP
         if ((data->iverbose > 0) && (omp_get_thread_num() == 0)) {
 #else
@@ -160,7 +157,7 @@ void ReSetTolODE() {
 
 
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init(const int* reactor_type, const int* Ncells) {
+int reactor_init(const int reactor_type, const int ode_ncells) {
     BL_PROFILE_VAR("reactInit", reactInit);
     /* CVODE return Flag  */
     int flag;
@@ -178,7 +175,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
     omp_thread = omp_get_thread_num(); 
 #endif
     /* Total number of eq to integrate */
-    neq_tot        = (NUM_SPECIES + 1) * (*Ncells);
+    neq_tot        = (NUM_SPECIES + 1) * ode_ncells;
 
     /* Definition of main vector */
     y = N_VNew_Serial(neq_tot);
@@ -190,7 +187,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
     if (check_flag((void *)cvode_mem, "CVodeCreate", 0)) return(1);
 
     /* Does not work for more than 1 cell right now */
-    data = AllocUserData(*reactor_type, *Ncells);
+    data = AllocUserData(reactor_type, ode_ncells);
     if(check_flag((void *)data, "AllocUserData", 2)) return(1);
 
     /* Nb of species and cells in mechanism */
@@ -218,7 +215,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
     atol  = N_VNew_Serial(neq_tot);
     ratol = N_VGetArrayPointer(atol);
     int offset;
-    if (typVals) {
+    if (typVals.size()>0) {
 #ifdef _OPENMP
         if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
@@ -292,7 +289,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
         if(check_flag((void *)A, "SUNDenseMatrix", 0)) return(1);
 
         /* Create dense SUNLinearSolver object for use by CVode */
-        LS = SUNLinSol_sparse_custom(y, A, *reactor_type, data->ncells, (NUM_SPECIES+1), data->NNZ);
+        LS = SUNLinSol_sparse_custom(y, A, reactor_type, data->ncells, (NUM_SPECIES+1), data->NNZ);
         if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
 
         /* Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode */
@@ -500,11 +497,6 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
     flag = CVodeSetMaxStepsBetweenJac(cvode_mem, 100);
     if(check_flag(&flag, "CVodeSetMaxStepsBetweenJac", 1)) return(1);
 
-    /* Define vectors to be used later in creact */
-    rhoX_init = (double *) malloc(data->ncells*sizeof(double));
-    rhoXsrc_ext = (double *) malloc( data->ncells*sizeof(double));
-    rYsrc       = (double *)  malloc((data->ncells*NUM_SPECIES)*sizeof(double));
-
     /* Free the atol vector */
     N_VDestroy(atol); 
 
@@ -525,23 +517,167 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
     return(0);
 }
 
-/* Main routine for external looping */
-int react(amrex::Array4<amrex::Real> const& rY_in,
+/* Main routine for CVode integration: integrate a Box*/
+int react(const amrex::Box& box,
+          amrex::Array4<amrex::Real> const& rY_in,
           amrex::Array4<amrex::Real> const& rY_src_in, 
           amrex::Array4<amrex::Real> const& rEner_in,  
           amrex::Array4<amrex::Real> const& rEner_src_in,
-          amrex::Real *dt_react,
-          amrex::Real *time) {
-   amrex::Print() << "Do nothing";
-   return 0;   
+          int box_ncells,
+          amrex::Real &dt_react,
+          amrex::Real &time) {
+
+    realtype time_out, dummy_time;
+    int flag, offset, extra_cells;
+#ifdef _OPENMP
+    int omp_thread;
+
+    /* omp thread if applicable */
+    omp_thread = omp_get_thread_num(); 
+#endif
+
+#ifdef _OPENMP
+    if ((data->iverbose > 1) && (omp_thread == 0)) {
+#else
+    if (data->iverbose > 1) {
+#endif
+        amrex::Print() <<"\n -------------------------------------\n";
+    }
+
+    /* Initial time and time to reach after integration */
+    time_init = time;
+    time_out  = time + dt_react;
+
+#ifdef _OPENMP
+    if ((data->iverbose > 3) && (omp_thread == 0)) {
+#else
+    if (data->iverbose > 3) {
+#endif
+        amrex::Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << dt_react << " and final time should be " << time_out << "\n";
+    }
+
+    /* Define full box_ncells length vectors to be integrated piece by piece
+       by CVode */
+#ifdef _OPENMP
+    if ((data->iverbose > 2) && (omp_thread == 0)) {
+#else
+    if (data->iverbose > 2) {
+#endif
+        amrex::Print() <<"Ncells in the box = "<<  box_ncells  << "\n";
+    }
+    if ((data->rhoX_init).size() != box_ncells) {
+        (data->Yvect_full).resize(box_ncells*(NUM_SPECIES+1));
+        (data->rhoX_init).resize(box_ncells);
+        (data->rhoXsrc_ext).resize(box_ncells);
+        (data->rYsrc).resize(box_ncells*NUM_SPECIES);
+    }
+
+    /* Fill the full box_ncells length vectors from input Array4*/
+    const auto len        = amrex::length(box);
+    const auto lo         = amrex::lbound(box); 
+    amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+        int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+        box_flatten(icell, i, j, k, data->ireactor_type,
+                    rY_in, rY_src_in, rEner_in, rEner_src_in,
+                    data->Yvect_full, data->rYsrc, data->rhoX_init, idata->rhoXsrc_ext);
+    });
+
+    /* We may need extra cells to fill the fixed data->ncells in this case 
+       since we do not Init each time */
+    extra_cells = box_ncells - box_ncells / (data->ncells) * (data->ncells); 
+#ifdef _OPENMP
+    if ((data->iverbose > 2) && (omp_thread == 0)) {
+#else
+    if (data->iverbose > 2) {
+#endif
+        amrex::Print() <<" Extra cells = "<< extra_cells  << "\n";
+    }
+    
+    /* Integrate data->ncells at a time with CVode 
+       The extra cell machinery is not ope yet and most likely produce
+       out of bound errors */
+    realtype *yvec_d      = N_VGetArrayPointer(y);
+    for  (int i = 0; i < box_ncells+extra_cells; i+=data->ncells) {
+        //amrex::Print() <<" dealing with cell " << i <<  "\n";
+        offset = i * (NUM_SPECIES + 1);
+        data->boxcell = i; 
+        for  (int k = 0; k < data->ncells*(NUM_SPECIES+1); k++) {
+            yvec_d[k] = data->Yvect_full[offset + k];
+        }
+        
+        /* Check if y is within physical bounds 
+           we may remove that eventually */
+        check_state(y);
+        if (!(data->actual_ok_to_react))  { 
+#ifdef MOD_REACTOR
+            /* If reactor mode is activated, update time */
+            time  = time_out;
+#endif
+            return 0;
+        }
+
+        /* Initial time and time to reach after integration */
+        time_init = time;
+        time_out  = time + dt_react;
+
+        /* ReInit CVODE is faster */
+        CVodeReInit(cvode_mem, time_init, y);
+
+        /* Integration */
+        flag = CVode(cvode_mem, time_out, y, &dummy_time, CV_NORMAL);
+        if (check_flag(&flag, "CVode", 1)) return(1);
+
+        for  (int k = 0; k < data->ncells*(NUM_SPECIES+1); k++) {
+            data->Yvect_full[offset + k] = yvec_d[k];
+        }
+    }
+
+    /* Update dt_react with real time step taken ... 
+       should be very similar to input dt_react */
+    dt_react = dummy_time - time_init;
+#ifdef MOD_REACTOR
+    /* If reactor mode is activated, update time to perform subcycling */
+    time  = time_init + dt_react;
+#endif
+
+#ifdef _OPENMP
+    if ((data->iverbose > 3) && (omp_thread == 0)) {
+#else
+    if (data->iverbose > 3) {
+#endif
+        amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << dt_react << "\n";
+    }
+
+    /* Update the input/output Array4 rY_in and rEner_in*/
+    amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+        int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+        box_unflatten(icell, i, j, k, data->ireactor_type,
+                    rY_in, rEner_in, rEner_src_in,
+                    data->Yvect_full, data->rhoX_init, dt_react);
+    });
+
+#ifdef _OPENMP
+    if ((data->iverbose > 1) && (omp_thread == 0)) {
+#else
+    if (data->iverbose > 1) {
+#endif
+        amrex::Print() <<"Additional verbose info --\n";
+        PrintFinalStats(cvode_mem, yvec_d[NUM_SPECIES]);
+        amrex::Print() <<"\n -------------------------------------\n";
+    }
+
+    /* Get estimate of how hard the integration process was */
+    long int nfe,nfeLS;
+    flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
+    flag = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+    return nfe+nfeLS;
 }
 
 
-
-/* Main CVODE call routine */
-int react(realtype *rY_in, realtype *rY_src_in, 
-        realtype *rX_in, realtype *rX_src_in,
-        realtype *dt_react, realtype *time){
+/* Main routine for CVode integration: classic version */
+int react(realtype &rY_in, realtype &rY_src_in, 
+          realtype &rX_in, realtype &rX_src_in,
+          realtype dt_react, realtype time){
 
     realtype time_out, dummy_time;
     int flag;
@@ -561,15 +697,15 @@ int react(realtype *rY_in, realtype *rY_src_in,
     }
 
     /* Initial time and time to reach after integration */
-    time_init = *time;
-    time_out  = *time + (*dt_react);
+    time_init = time;
+    time_out  = time + dt_react;
 
 #ifdef _OPENMP
     if ((data->iverbose > 3) && (omp_thread == 0)) {
 #else
     if (data->iverbose > 3) {
 #endif
-        amrex::Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << *dt_react << " and final time should be " << time_out << "\n";
+        amrex::Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << dt_react << " and final time should be " << time_out << "\n";
     }
 
     /* Get Device MemCpy of in arrays */
@@ -578,17 +714,18 @@ int react(realtype *rY_in, realtype *rY_src_in,
     /* rhoY,T */
     std::memcpy(yvec_d, rY_in, sizeof(realtype) * ((NUM_SPECIES+1)*data->ncells));
     /* rhoY_src_ext */
-    std::memcpy(rYsrc, rY_src_in, (NUM_SPECIES * data->ncells)*sizeof(double));
+    std::memcpy((data->rYsrc).data(), rY_src_in, (NUM_SPECIES * data->ncells)*sizeof(double));
     /* rhoE/rhoH */
-    std::memcpy(rhoX_init, rX_in, sizeof(realtype) * data->ncells);
-    std::memcpy(rhoXsrc_ext, rX_src_in, sizeof(realtype) * data->ncells);
+    std::memcpy((data->rhoX_init).data(), rX_in, sizeof(realtype) * data->ncells);
+    std::memcpy((data->rhoXsrc_ext).data(), rX_src_in, sizeof(realtype) * data->ncells);
 
-    /* Check if y is within physical bounds */
+    /* Check if y is within physical bounds
+       we may remove that eventually */
     check_state(y);
     if (!(data->actual_ok_to_react))  { 
 #ifdef MOD_REACTOR
         /* If reactor mode is activated, update time */
-        *time  = time_out;
+        time  = time_out;
 #endif
         return 0;
     }
@@ -622,17 +759,21 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
     /* ReInit CVODE is faster */
     CVodeReInit(cvode_mem, time_init, y);
+    
+    /* There should be no internal looping of CVOde */
+    data->boxcell = 0;
 
     flag = CVode(cvode_mem, time_out, y, &dummy_time, CV_NORMAL);
     /* ONE STEP MODE FOR DEBUGGING */
     //flag = CVode(cvode_mem, time_out, y, &dummy_time, CV_ONE_STEP);
     if (check_flag(&flag, "CVode", 1)) return(1);
 
-    /* Update dt_react with real time step taken ... */
-    *dt_react = dummy_time - time_init;
+    /* Update dt_react with real time step taken ... 
+       should be very similar to input dt_react */
+    dt_react = dummy_time - time_init;
 #ifdef MOD_REACTOR
     /* If reactor mode is activated, update time */
-    *time  = time_init + (*dt_react);
+    time  = time_init + dt_react;
 #endif
 
 #ifdef _OPENMP
@@ -758,7 +899,7 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
       }
 
       /* NRG CGS */
-      energy = (rhoX_init[tid] + rhoXsrc_ext[tid] * dt) /rho;
+      energy = (data_wk->rhoX_init[data->boxcell + tid] + data_wk->rhoXsrc_ext[data_wk->boxcell + tid] * dt) /rho;
 
       if (data_wk->ireactor_type == eint_rho){
           /* UV REACTOR */
@@ -774,9 +915,9 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
       EOS::RTY2WDOT(rho, temp, massfrac, cdot);
 
       /* Fill ydot vect */
-      ydot_d[offset + NUM_SPECIES] = rhoXsrc_ext[tid];
+      ydot_d[offset + NUM_SPECIES] = data_wk->rhoXsrc_ext[data_wk->boxcell + tid];
       for (int i = 0; i < NUM_SPECIES; i++){
-          ydot_d[offset + i] = cdot[i] + rYsrc[tid * (NUM_SPECIES) + i];
+          ydot_d[offset + i] = cdot[i] + rYsrc[(data_wk->boxcell + tid) * (NUM_SPECIES) + i];
           ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES]  - ydot_d[offset + i] * Xi[i];
       }
       ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES] /(rho * cX);
@@ -1965,10 +2106,6 @@ void reactor_close(){
 
   N_VDestroy(y); 
   FreeUserData(data);
-
-  free(rhoX_init);
-  free(rhoXsrc_ext);
-  free(rYsrc);
 }
 
 
@@ -1992,5 +2129,6 @@ void FreeUserData(UserData data_wk)
 #endif
   free(data_wk);
 } 
+
 
 /* End of file  */
