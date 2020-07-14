@@ -80,7 +80,10 @@ main (int   argc,
     amrex::Print() << " Initialization of EOS (CPP)... \n";
     EOS::init();
       
-    std::vector<int> npts(3,64);
+    ParmParse pp;
+    int nc = 512;
+    pp.query("nc",nc);
+    std::vector<int> npts(3,nc);
 
     Box domain(IntVect(D_DECL(0,0,0)),
                IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
@@ -90,8 +93,7 @@ main (int   argc,
       phi[i] = domain.length(i);
       dx[i] = (phi[i] - plo[i])/domain.length(i);
     }
-    ParmParse pp;
-    int max_size = 32;
+    int max_size = 128;
     pp.query("max_size",max_size);
     BoxArray ba(domain);
     ba.maxSize(max_size);
