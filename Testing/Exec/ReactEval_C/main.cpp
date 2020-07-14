@@ -190,12 +190,8 @@ main (int   argc,
     BL_PROFILE_VAR("reactor_info()", reactInfo);
 
     /* Initialize D/CVODE reactor */
-#ifdef USE_SUNDIALS_PP
-  #ifdef USE_CUDA_SUNDIALS_PP
-    reactor_info(&ode_iE, &ode_ncells);
-  #else
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
 {
     // Set ODE r/a tolerances
@@ -215,15 +211,12 @@ main (int   argc,
         }
         SetTypValsODE(typ_vals);
     }
-    reactor_init(&ode_iE, &ode_ncells);
-}
-  #endif
+#ifdef USE_CUDA_SUNDIALS_PP
+    reactor_info(&ode_iE, &ode_ncells);
 #else
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
     reactor_init(&ode_iE, &ode_ncells);
 #endif
+}
 
     BL_PROFILE_VAR_STOP(reactInfo);
 
