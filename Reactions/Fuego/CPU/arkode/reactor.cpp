@@ -46,7 +46,7 @@ void SetTypValsODE(std::vector<double> ExtTypVals) {
 	}
 
 	amrex::Vector<std::string> kname;
-	CKSYMS_STR(kname);
+    EOS::speciesNames(kname);
 
 #ifdef _OPENMP
 	/* omp thread if applicable */
