@@ -97,6 +97,10 @@ static int check_flag(void *flagvalue, const char *funcname, int opt);
 
 static void PrintFinalStats(void *cvode_mem);
 
+void SetTypValsODE(std::vector<double> ExtTypVals);
+
+void SetTolFactODE(double relative_tol,double absolute_tol);
+
 /**********************************/
 /* Device crap               */
 

@@ -29,9 +29,41 @@ AMREX_GPU_DEVICE_MANAGED int sparse_cusolver_solve = 5;
 AMREX_GPU_DEVICE_MANAGED int iterative_gmres_solve = 99;
 AMREX_GPU_DEVICE_MANAGED int eint_rho = 1; // in/out = rhoE/rhoY
 AMREX_GPU_DEVICE_MANAGED int enth_rho = 2; // in/out = rhoH/rhoY
+
+amrex::Gpu::ManagedVector<amrex::Real> typVals;
+AMREX_GPU_DEVICE_MANAGED amrex::Real relTol    = 1.0e-10;
+AMREX_GPU_DEVICE_MANAGED amrex::Real absTol    = 1.0e-10;
 /**********************************/
 
 /**********************************/
+/* Set or update typVals */
+void SetTypValsODE(std::vector<double> ExtTypVals) {
+    int size_ETV = (NUM_SPECIES + 1);
+
+    if (typVals.size()==0) {
+        typVals.resize(size_ETV);
+    }
+
+    amrex::Vector<std::string> kname;
+    EOS::speciesNames(kname);
+
+    amrex::Print() << "Set the typVals in PelePhysics: \n  ";
+    for (int i=0; i<size_ETV-1; i++) {
+        typVals[i] = ExtTypVals[i];
+        amrex::Print() << kname[i] << ":" << typVals[i] << "  ";    
+    }
+    typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
+    amrex::Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";    
+
+}
+
+/* Set or update the rel/abs tolerances  */
+void SetTolFactODE(double relative_tol,double absolute_tol) {
+    relTol = relative_tol;
+    absTol = absolute_tol;
+    amrex::Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
+}
+
 /* Infos to print once */
 int reactor_info(const int* reactor_type,const int* Ncells){ 
 
@@ -155,7 +187,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
     /* Misc */
     int flag;
     int NCELLS, NEQ, neq_tot;
-    realtype reltol;
     N_Vector atol;
     realtype *ratol;
 
@@ -400,16 +431,26 @@ int react(realtype *rY_in, realtype *rY_src_in,
     if (check_flag(&flag, "CVodeInit", 1)) return(1);
     
     /* Definition of tolerances: one for each species */
-    reltol = 1.0e-10;
     atol  = N_VNew_Cuda(neq_tot);
     ratol = N_VGetHostArrayPointer_Cuda(atol);
-    for (int i=0; i<neq_tot; i++) {
-        ratol[i] = 1.0e-10;
+    if (typVals.size()>0) {
+        printf("Setting CVODE tolerances rtol = %14.8e atolfact = %14.8e in PelePhysics \n",relTol, absTol);
+        for (int i = 0; i < NCELLS, i++) {
+            offset = i * (NUM_SPECIES + 1);
+            for  (int k = 0; k < NUM_SPECIES + 1; k++) {
+                ratol[offset + k] = typVals[k]*absTol;
+            }
+        }
+        
+    } else {
+        for (int i=0; i<neq_tot; i++) {
+            ratol[i] = absTol;
+        }
     }
     N_VCopyToDevice_Cuda(atol);
     /* Call CVodeSVtolerances to specify the scalar relative tolerance
      * and vector absolute tolerances */
-    flag = CVodeSVtolerances(cvode_mem, reltol, atol);
+    flag = CVodeSVtolerances(cvode_mem, relTol, atol);
     if (check_flag(&flag, "CVodeSVtolerances", 1)) return(1);
 
     /* Create the linear solver object */
