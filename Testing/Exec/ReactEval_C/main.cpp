@@ -305,10 +305,11 @@ main (int   argc,
         const auto lo      = amrex::lbound(box);
 
         auto const& rhoY    = mf.array(mfi);
+        auto const& T       = mf.array(mfi, NUM_SPECIES);
         auto const& rhoE    = mfE.array(mfi);
         auto const& frcExt  = rY_source_ext.array(mfi);
         auto const& frcEExt = rY_source_energy_ext.array(mfi);
-        //auto const& fc      = fctCount.array(mfi);
+        auto const& fc      = fctCount.array(mfi);
 
 #ifdef USE_CUDA_SUNDIALS_PP
         cudaError_t cuda_status = cudaSuccess;
@@ -379,8 +380,9 @@ main (int   argc,
                 //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES+1)]);
 #else
                 fc_tmp_lcl = react(box,
-                                   rhoY, frcExt,
+                                   rhoY, frcExt, T,
                                    rhoE, frcEExt,
+                                   FC_in, mask,
 #ifdef USE_CUDA_SUNDIALS_PP
                                    &dt_incr, &time,
                                    &ode_iE, &ncells, amrex::Gpu::gpuStream());
@@ -410,7 +412,7 @@ main (int   argc,
                }
                rhoY(i,j,k,NUM_SPECIES) = tmp_vect[icell*(NUM_SPECIES+1) + NUM_SPECIES];
                rhoE(i,j,k,0)           = tmp_vect_energy[icell];
-               //fc(i,j,k,0)             = fc_tmp;
+               fc(i,j,k,0)             = fc_tmp;
         });
         BL_PROFILE_VAR_STOP(FlatStuff);
 #endif
