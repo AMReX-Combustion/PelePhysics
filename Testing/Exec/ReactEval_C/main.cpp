@@ -226,6 +226,7 @@ main (int   argc,
     MultiFab rY_source_energy_ext(ba,dm,1,0);
     MultiFab temperature(ba,dm,1,0);
     MultiFab fctCount(ba,dm,1,0);
+    iMultiFab dummyMask(ba,dm,1,0);
 
     BL_PROFILE_VAR("initialize_data()", InitData);
 
@@ -310,6 +311,7 @@ main (int   argc,
         auto const& frcExt  = rY_source_ext.array(mfi);
         auto const& frcEExt = rY_source_energy_ext.array(mfi);
         auto const& fc      = fctCount.array(mfi);
+        auto const& mask    = dummyMask.array(mfi);
 
 #ifdef USE_CUDA_SUNDIALS_PP
         cudaError_t cuda_status = cudaSuccess;
@@ -367,11 +369,11 @@ main (int   argc,
         /* Solve */
         BL_PROFILE_VAR_START(ReactInLoop);
 #ifndef CVODE_BOXINTEG
+        Real fc_tmp_lcl = 0.0;
         for(int i = 0; i < ncells+extra_cells; i+=ode_ncells) {
 #endif
             Real time      = 0.0;
             Real dt_incr   = dt/ndt;
-            Real fc_tmp_lcl = 0.0;
             for (int ii = 0; ii < ndt; ++ii) {
 #ifndef CVODE_BOXINTEG
                 fc_tmp_lcl = react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
@@ -379,15 +381,15 @@ main (int   argc,
                                    dt_incr, time);
                 //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES+1)]);
 #else
-                fc_tmp_lcl = react(box,
-                                   rhoY, frcExt, T,
-                                   rhoE, frcEExt,
-                                   FC_in, mask,
+                react_1(box,
+                      rhoY, frcExt, T,
+                      rhoE, frcEExt,
+                      fc, mask,
 #ifdef USE_CUDA_SUNDIALS_PP
-                                   &dt_incr, &time,
-                                   &ode_iE, &ncells, amrex::Gpu::gpuStream());
+                      &dt_incr, &time,
+                      &ode_iE, &ncells, amrex::Gpu::gpuStream());
 #else
-                                   ncells, dt_incr, time);
+                      dt_incr, time);
 #endif
 #endif
                 dt_incr =  dt/ndt;
@@ -412,7 +414,7 @@ main (int   argc,
                }
                rhoY(i,j,k,NUM_SPECIES) = tmp_vect[icell*(NUM_SPECIES+1) + NUM_SPECIES];
                rhoE(i,j,k,0)           = tmp_vect_energy[icell];
-               fc(i,j,k,0)             = fc_tmp;
+               fc(i,j,k,0)             = fc_tmp_lcl;
         });
         BL_PROFILE_VAR_STOP(FlatStuff);
 #endif
