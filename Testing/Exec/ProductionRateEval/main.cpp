@@ -26,9 +26,9 @@ initialize_data(int i, int j, int k,
 		Array4<Real> const& mf,
 		Array4<Real> const& temp,
 		Array4<Real> const& rho,
-                const Real* dx, 
-		const Real* plo, 
-		const Real* phi ) noexcept
+                const GpuArray<Real,3>& dx, 
+		const GpuArray<Real,3>& plo, 
+		const GpuArray<Real,3>& phi ) noexcept
 {
   Real dTemp = 5.0;
   Real dRho = 0.005;
@@ -122,7 +122,7 @@ main (int   argc,
       amrex::ParallelFor(gbox, 
                          [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
                          {
-                           initialize_data(i, j, k, Y_a, T_a, rho_a, dx.data(), plo.data(), phi.data());
+                           initialize_data(i, j, k, Y_a, T_a, rho_a, dx, plo, phi);
                          });
     }
 
