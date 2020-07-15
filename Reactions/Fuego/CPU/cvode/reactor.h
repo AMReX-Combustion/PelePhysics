@@ -45,6 +45,7 @@ typedef struct {
       amrex::Gpu::ManagedVector<amrex::Real> rhoX_init;
       amrex::Gpu::ManagedVector<amrex::Real> rhoXsrc_ext;
       amrex::Gpu::ManagedVector<amrex::Real> rYsrc;
+      amrex::Gpu::ManagedVector<int> FCunt;
       /* Options */
       int NNZ; 
       /* Sparse Matrices for KLU-related solve */
@@ -118,8 +119,11 @@ int reactor_init(const int cvode_iE, const int Ncells);
 int react(const amrex::Box& box,
           amrex::Array4<amrex::Real> const& rY_in,
           amrex::Array4<amrex::Real> const& rY_src_in, 
+          amrex::Array4<amrex::Real> const& T_in,
           amrex::Array4<amrex::Real> const& rEner_in,  
           amrex::Array4<amrex::Real> const& rEner_src_in,
+          amrex::Array4<int> const& FC_in,
+          amrex::Array4<int> const& mask,
           int box_ncells,
           amrex::Real &dt_react,
           amrex::Real &time);

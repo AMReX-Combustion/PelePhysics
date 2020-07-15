@@ -521,8 +521,11 @@ int reactor_init(const int reactor_type, const int ode_ncells) {
 int react(const amrex::Box& box,
           amrex::Array4<amrex::Real> const& rY_in,
           amrex::Array4<amrex::Real> const& rY_src_in, 
+          amrex::Array4<amrex::Real> const& T_in, 
           amrex::Array4<amrex::Real> const& rEner_in,  
           amrex::Array4<amrex::Real> const& rEner_src_in,
+          amrex::Array4<int> const& FC_in,
+          amrex::Array4<int> const& mask, 
           int box_ncells,
           amrex::Real &dt_react,
           amrex::Real &time) {
@@ -570,6 +573,7 @@ int react(const amrex::Box& box,
         (data->rhoX_init).resize(box_ncells);
         (data->rhoXsrc_ext).resize(box_ncells);
         (data->rYsrc).resize(box_ncells*NUM_SPECIES);
+        (data->FCunt).resize(box_ncells);
     }
 
     /* Fill the full box_ncells length vectors from input Array4*/
@@ -578,7 +582,8 @@ int react(const amrex::Box& box,
     amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
         int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
         box_flatten(icell, i, j, k, data->ireactor_type,
-                    rY_in, rY_src_in, rEner_in, rEner_src_in,
+                    rY_in, rY_src_in, T_in, 
+                    rEner_in, rEner_src_in,
                     data->Yvect_full, data->rYsrc, data->rhoX_init, data->rhoXsrc_ext);
     });
 
@@ -627,8 +632,17 @@ int react(const amrex::Box& box,
         flag = CVode(cvode_mem, time_out, y, &dummy_time, CV_NORMAL);
         if (check_flag(&flag, "CVode", 1)) return(1);
 
+        /* Update full box length vector */
         for  (int k = 0; k < data->ncells*(NUM_SPECIES+1); k++) {
             data->Yvect_full[offset + k] = yvec_d[k];
+        }
+
+        /* Get estimate of how hard the integration process was */
+        long int nfe,nfeLS;
+        flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
+        flag = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+        for  (int k = 0; k < data->ncells; k++) {
+            data->FCunt[i + k] = nfe+nfeLS;
         }
     }
 
@@ -652,8 +666,8 @@ int react(const amrex::Box& box,
     amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
         int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
         box_unflatten(icell, i, j, k, data->ireactor_type,
-                    rY_in, rEner_in, rEner_src_in,
-                    data->Yvect_full, data->rhoX_init, dt_react);
+                    rY_in, T_in, rEner_in, rEner_src_in, FC_in,
+                    data->Yvect_full, data->rhoX_init, data->FCunt, dt_react);
     });
 
 #ifdef _OPENMP

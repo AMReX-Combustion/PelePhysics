@@ -16,6 +16,7 @@ void
 box_flatten(int icell, int i, int j, int k, int ireactor_type, 
         amrex::Array4<amrex::Real> const& rhoY,
         amrex::Array4<amrex::Real> const& frcExt,
+        amrex::Array4<amrex::Real> const& temperature,
         amrex::Array4<amrex::Real> const& rhoE,
         amrex::Array4<amrex::Real> const& frcEExt,
         amrex::Gpu::ManagedVector<amrex::Real>& tmp_vect,
@@ -37,7 +38,7 @@ box_flatten(int icell, int i, int j, int k, int ireactor_type,
         rho += tmp_vect[offset_yvec + n];
     }
     amrex::Real rho_inv        = 1.0 / rho;
-    temp                       = rhoY(i,j,k,NUM_SPECIES);  
+    temp                       = temperature(i,j,k,0);  
     tmp_vect_energy[icell]     = rhoE(i,j,k,0);
     tmp_src_vect_energy[icell] = frcEExt(i,j,k,0); 
 
@@ -60,10 +61,13 @@ inline
 void
 box_unflatten(int icell, int i, int j, int k, int ireactor_type, 
         amrex::Array4<amrex::Real> const& rhoY,
+        amrex::Array4<amrex::Real> const& T_in,
         amrex::Array4<amrex::Real> const& rhoE,
         amrex::Array4<amrex::Real> const& frcEExt,
+        amrex::Array4<int> const& FC_in,
         amrex::Gpu::ManagedVector<amrex::Real>& tmp_vect,
         amrex::Gpu::ManagedVector<amrex::Real>& tmp_vect_energy, 
+        amrex::Gpu::ManagedVector<int>& tmp_FCunt, 
         amrex::Real dt) noexcept
 {
     amrex::Real mass_frac[NUM_SPECIES];
@@ -72,7 +76,6 @@ box_unflatten(int icell, int i, int j, int k, int ireactor_type,
     amrex::Real temp;
 
     int offset_yvec = icell * (NUM_SPECIES+1);
-    int offset_spec = icell * (NUM_SPECIES);
 
     for (int n = 0; n < NUM_SPECIES; n++) {
         rhoY(i,j,k,n) = tmp_vect[offset_yvec + n];
@@ -92,6 +95,8 @@ box_unflatten(int icell, int i, int j, int k, int ireactor_type,
     } else {
         EOS::HY2T(Enrg_loc,mass_frac,temp);
     }
-    rhoY(i,j,k,NUM_SPECIES) = temp;  
+    T_in(i,j,k,0) = temp;  
+ 
+    FC_in(i,j,k,0) = tmp_FCunt[icell];
 }
 #endif
