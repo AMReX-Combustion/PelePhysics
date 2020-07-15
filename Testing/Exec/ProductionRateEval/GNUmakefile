@@ -11,11 +11,11 @@ DIM        = 3
 COMP	   = gcc
 FCOMP	   = gfortran
 
-USE_MPI    = FALSE
+USE_MPI    = TRUE
 USE_OMP    = FALSE
 
-USE_CUDA   = TRUE
 USE_CUDA   = FALSE
+USE_CUDA   = TRUE
 
 TINY_PROFILE = FALSE
 
