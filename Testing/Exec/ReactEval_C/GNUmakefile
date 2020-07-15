@@ -35,9 +35,9 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
   #SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
   # use ARKODE: if FALSE then CVODE is used
   USE_ARKODE_PP = FALSE
-  ifeq ($(USE_ARKODE_PP), FALSE)
-      DEFINES += -DCVODE_BOXINTEG
-  endif
+  #ifeq ($(USE_ARKODE_PP), FALSE)
+  #    DEFINES += -DCVODE_BOXINTEG
+  #endif
   # use KLU sparse features -- only useful if CVODE is used on CPU
   USE_KLU_PP = TRUE
   # Activates GPU version

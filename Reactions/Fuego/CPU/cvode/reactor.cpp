@@ -708,16 +708,32 @@ int react(realtype *rY_in, realtype *rY_src_in,
         amrex::Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << dt_react << " and final time should be " << time_out << "\n";
     }
 
+    /* Define full box_ncells length vectors to be integrated piece by piece
+       by CVode */
+#ifdef _OPENMP
+    if ((data->iverbose > 2) && (omp_thread == 0)) {
+#else
+    if (data->iverbose > 2) {
+#endif
+        amrex::Print() <<"Ncells in the box = "<<  data->ncells  << "\n";
+    }
+    if ((data->rhoX_init).size() != data->ncells) {
+        (data->Yvect_full).resize(data->ncells*(NUM_SPECIES+1));
+        (data->rhoX_init).resize(data->ncells);
+        (data->rhoXsrc_ext).resize(data->ncells);
+        (data->rYsrc).resize(data->ncells*NUM_SPECIES);
+    }
+
     /* Get Device MemCpy of in arrays */
     /* Get Device pointer of solution vector */
     realtype *yvec_d      = N_VGetArrayPointer(y);
     /* rhoY,T */
     std::memcpy(yvec_d, rY_in, sizeof(realtype) * ((NUM_SPECIES+1)*data->ncells));
     /* rhoY_src_ext */
-    std::memcpy((data->rYsrc).data(), rY_src_in, (NUM_SPECIES * data->ncells)*sizeof(double));
+    std::memcpy((data->rYsrc).data(), rY_src_in, (NUM_SPECIES * data->ncells)*sizeof(amrex::Real));
     /* rhoE/rhoH */
-    std::memcpy((data->rhoX_init).data(), rX_in, sizeof(realtype) * data->ncells);
-    std::memcpy((data->rhoXsrc_ext).data(), rX_src_in, sizeof(realtype) * data->ncells);
+    std::memcpy((data->rhoX_init).data(), rX_in, sizeof(amrex::Real) * data->ncells);
+    std::memcpy((data->rhoXsrc_ext).data(), rX_src_in, sizeof(amrex::Real) * data->ncells);
 
     /* Check if y is within physical bounds
        we may remove that eventually */
@@ -732,7 +748,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
     /* T update with energy and Y */
     int offset;
-    realtype rho, nrg_loc, temp;
+    realtype rho, rho_inv, nrg_loc, temp;
     for  (int i = 0; i < data->ncells; i++) {
         offset = i * (NUM_SPECIES + 1);
         realtype* mass_frac = rY_in + offset;
@@ -741,12 +757,13 @@ int react(realtype *rY_in, realtype *rY_src_in,
         for  (int kk = 0; kk < NUM_SPECIES; kk++) {
             rho += mass_frac[kk];
         }
+        rho_inv = 1 / rho; 
         // get Yks
         for  (int kk = 0; kk < NUM_SPECIES; kk++) {
-            mass_frac[kk] = mass_frac[kk] / rho;
+            mass_frac[kk] = mass_frac[kk] * rho_inv;
         }
         // get energy
-        nrg_loc = rX_in[i] / rho;
+        nrg_loc = rX_in[i] * rho_inv;
         // recompute T
         if (data->ireactor_type == eint_rho){
             EOS::EY2T(nrg_loc,mass_frac,temp);
@@ -799,12 +816,13 @@ int react(realtype *rY_in, realtype *rY_src_in,
         for  (int kk = 0; kk < NUM_SPECIES; kk++) {
             rho += mass_frac[kk];
         }
+        rho_inv = 1 / rho;
         // get Yks
         for  (int kk = 0; kk < NUM_SPECIES; kk++) {
-            mass_frac[kk] = mass_frac[kk] / rho;
+            mass_frac[kk] = mass_frac[kk] * rho_inv;
         }
         // get energy
-        nrg_loc = rX_in[i] / rho;
+        nrg_loc = rX_in[i] * rho_inv;
         // recompute T
         if (data->ireactor_type == eint_rho){
             EOS::EY2T(nrg_loc,mass_frac,temp);

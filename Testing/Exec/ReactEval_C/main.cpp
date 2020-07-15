@@ -182,7 +182,7 @@ main (int   argc,
 #ifdef USE_CUDA_SUNDIALS_PP
     reactor_info(&ode_iE, &ode_ncells);
 #else
-    reactor_init(&ode_iE, &ode_ncells);
+    reactor_init(ode_iE, ode_ncells);
 #endif
 }
 
@@ -308,7 +308,7 @@ main (int   argc,
         auto const& rhoE    = mfE.array(mfi);
         auto const& frcExt  = rY_source_ext.array(mfi);
         auto const& frcEExt = rY_source_energy_ext.array(mfi);
-        auto const& fc      = fctCount.array(mfi);
+        //auto const& fc      = fctCount.array(mfi);
 
 #ifdef USE_CUDA_SUNDIALS_PP
         cudaError_t cuda_status = cudaSuccess;
@@ -376,6 +376,7 @@ main (int   argc,
                 fc_tmp_lcl = react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
                                    tmp_vect_energy + i, tmp_src_vect_energy + i,
                                    dt_incr, time);
+                //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES+1)]);
 #else
                 fc_tmp_lcl = react(box,
                                    rhoY, frcExt,
@@ -387,7 +388,6 @@ main (int   argc,
                                    ncells, dt_incr, time);
 #endif
 #endif
-                printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES+1)]);
                 dt_incr =  dt/ndt;
             }
 #ifndef CVODE_BOXINTEG
@@ -410,7 +410,7 @@ main (int   argc,
                }
                rhoY(i,j,k,NUM_SPECIES) = tmp_vect[icell*(NUM_SPECIES+1) + NUM_SPECIES];
                rhoE(i,j,k,0)           = tmp_vect_energy[icell];
-               fc(i,j,k,0)             = fc_tmp;
+               //fc(i,j,k,0)             = fc_tmp;
         });
         BL_PROFILE_VAR_STOP(FlatStuff);
 #endif
