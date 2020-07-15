@@ -246,7 +246,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
         /* Find sparsity pattern to fill structure of sparse matrix */
         BL_PROFILE_VAR("SparsityFuegoStuff", SparsityStuff);
         BL_PROFILE_VAR_STOP(SparsityStuff);
-        if (user_data->isolve_type == iterative_gmres_solve) {
+        if (user_data->isolve_type == iterative_gmres_solve && 
+              user_data->ianalytical_jacobian == 1 ) {
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_INFO_SYST_SIMPLIFIED(&(user_data->NNZ),&HP);
             BL_PROFILE_VAR_STOP(SparsityStuff);
