@@ -110,6 +110,10 @@ void SetTypValsODE(std::vector<double> ExtTypVals);
 
 void SetTolFactODE(double relative_tol,double absolute_tol);
 
+void* sunalloc(size_t mem_size);
+
+void sunfree(void* ptr);
+
 /**********************************/
 /* Device crap               */
 
