@@ -579,7 +579,7 @@ int react(const amrex::Box& box,
         int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
         box_flatten(icell, i, j, k, data->ireactor_type,
                     rY_in, rY_src_in, rEner_in, rEner_src_in,
-                    data->Yvect_full, data->rYsrc, data->rhoX_init, idata->rhoXsrc_ext);
+                    data->Yvect_full, data->rYsrc, data->rhoX_init, data->rhoXsrc_ext);
     });
 
     /* We may need extra cells to fill the fixed data->ncells in this case 
@@ -675,9 +675,9 @@ int react(const amrex::Box& box,
 
 
 /* Main routine for CVode integration: classic version */
-int react(realtype &rY_in, realtype &rY_src_in, 
-          realtype &rX_in, realtype &rX_src_in,
-          realtype dt_react, realtype time){
+int react(realtype *rY_in, realtype *rY_src_in, 
+          realtype *rX_in, realtype *rX_src_in,
+          realtype &dt_react, realtype &time){
 
     realtype time_out, dummy_time;
     int flag;
@@ -781,13 +781,13 @@ int react(realtype &rY_in, realtype &rY_src_in,
 #else
     if (data->iverbose > 3) {
 #endif
-        amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << *dt_react << "\n";
+        amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << dt_react << "\n";
     }
 
     /* Pack data to return in main routine external */
     std::memcpy(rY_in, yvec_d, ((NUM_SPECIES+1)*data->ncells)*sizeof(realtype));
     for  (int i = 0; i < data->ncells; i++) {
-        rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
+        rX_in[i] = rX_in[i] + (dt_react) * rX_src_in[i];
     }
 
     /* T update with energy and Y */
@@ -917,7 +917,7 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
       /* Fill ydot vect */
       ydot_d[offset + NUM_SPECIES] = data_wk->rhoXsrc_ext[data_wk->boxcell + tid];
       for (int i = 0; i < NUM_SPECIES; i++){
-          ydot_d[offset + i] = cdot[i] + rYsrc[(data_wk->boxcell + tid) * (NUM_SPECIES) + i];
+          ydot_d[offset + i] = cdot[i] + data_wk->rYsrc[(data_wk->boxcell + tid) * (NUM_SPECIES) + i];
           ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES]  - ydot_d[offset + i] * Xi[i];
       }
       ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES] /(rho * cX);

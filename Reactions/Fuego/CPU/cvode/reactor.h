@@ -124,8 +124,8 @@ int react(const amrex::Box& box,
           amrex::Real &dt_react,
           amrex::Real &time);
 
-int react(realtype &rY_in, realtype &rY_src_in, 
-	      realtype &rX_in, realtype &rX_src_in, 
+int react(realtype *rY_in, realtype *rY_src_in, 
+	      realtype *rX_in, realtype *rX_src_in, 
 	      realtype &dt_react, realtype &time);
 
 void reactor_close();

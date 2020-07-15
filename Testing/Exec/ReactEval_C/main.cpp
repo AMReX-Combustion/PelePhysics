@@ -299,6 +299,7 @@ main (int   argc,
 
         const Box& box  = mfi.tilebox();
         int ncells      = box.numPts();
+        int extra_cells = 0;
 
         const auto len     = amrex::length(box);
         const auto lo      = amrex::lbound(box);
@@ -312,43 +313,122 @@ main (int   argc,
 #ifdef USE_CUDA_SUNDIALS_PP
         cudaError_t cuda_status = cudaSuccess;
         ode_ncells    = ncells;
+#else
+        extra_cells = ncells - ncells / ode_ncells * ode_ncells; 
 #endif
 
         amrex::Print() << " Integrating " << ncells << " cells with a "<<ode_ncells<< " ode cell buffer \n";
+        amrex::Print() << "("<< extra_cells<<" extra cells) \n";
+
+#ifndef CVODE_BOXINTEG
+        /* ALLOCS */
+        BL_PROFILE_VAR_START(Allocs);
+        // rhoY,T
+        amrex::Real *tmp_vect; 
+        // rhoY_src_ext
+        amrex::Real *tmp_src_vect;
+        // rhoE/rhoH
+        amrex::Real *tmp_vect_energy;
+        amrex::Real *tmp_src_vect_energy;
+
+        tmp_vect            =  new amrex::Real[(ncells+extra_cells)*(NUM_SPECIES+1)];
+        tmp_src_vect        =  new amrex::Real[(ncells+extra_cells)*(NUM_SPECIES)];
+        tmp_vect_energy     =  new amrex::Real[(ncells+extra_cells)];
+        tmp_src_vect_energy =  new amrex::Real[(ncells+extra_cells)];
+        BL_PROFILE_VAR_STOP(Allocs);
+
+        /* Packing of data */
+        BL_PROFILE_VAR_START(FlatStuff);
+        amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+            int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+            for(int sp=0; sp<NUM_SPECIES; sp++) {
+                tmp_vect[icell*(NUM_SPECIES+1)+sp]     = rhoY(i,j,k,sp);
+                tmp_src_vect[icell*NUM_SPECIES+sp]     = frcExt(i,j,k,sp);
+            }
+            tmp_vect[icell*(NUM_SPECIES+1)+NUM_SPECIES] = rhoY(i,j,k,NUM_SPECIES);
+            tmp_vect_energy[icell]                      = rhoE(i,j,k,0);
+            tmp_src_vect_energy[icell]                  = frcEExt(i,j,k,0);
+        });
+
+        for (int icell=ncells; icell<ncells+extra_cells; icell++) {
+            for(int sp=0; sp<NUM_SPECIES; sp++) {
+                tmp_vect[icell*(NUM_SPECIES+1)+sp]     = rhoY(0,0,0,sp);
+                tmp_src_vect[icell*NUM_SPECIES+sp]     = frcExt(0,0,0,sp);
+            }
+            tmp_vect[icell*(NUM_SPECIES+1)+NUM_SPECIES] = rhoY(0,0,0,NUM_SPECIES);
+            tmp_vect_energy[icell]                      = rhoE(0,0,0,0); 
+            tmp_src_vect_energy[icell]                  = frcEExt(0,0,0,0);
+        }
+        BL_PROFILE_VAR_STOP(FlatStuff);
+#endif
+
 
         /* Solve */
-        Real fc_tmp;
         BL_PROFILE_VAR_START(ReactInLoop);
-        Real time      = 0.0;
-        Real dt_incr   = dt/ndt;
-        Real fc_tmp_lcl = 0.0;
-        for (int ii = 0; ii < ndt; ++ii) {
-            fc_tmp_lcl = react(box,
-                               rhoY, frcExt,
-                               rhoE, frcEExt,
-#ifdef USE_CUDA_SUNDIALS_PP
-                               &dt_incr, &time,
-                               &ode_iE, &ncells, amrex::Gpu::gpuStream());
-#else
-                               ncells, dt_incr, time);
+#ifndef CVODE_BOXINTEG
+        for(int i = 0; i < ncells+extra_cells; i+=ode_ncells) {
 #endif
-            dt_incr =  dt/ndt;
-            fc_tmp = fc_tmp_lcl;
-        }
+            Real time      = 0.0;
+            Real dt_incr   = dt/ndt;
+            Real fc_tmp_lcl = 0.0;
+            for (int ii = 0; ii < ndt; ++ii) {
+#ifndef CVODE_BOXINTEG
+                fc_tmp_lcl = react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
+                                   tmp_vect_energy + i, tmp_src_vect_energy + i,
+                                   dt_incr, time);
+#else
+                fc_tmp_lcl = react(box,
+                                   rhoY, frcExt,
+                                   rhoE, frcEExt,
+#ifdef USE_CUDA_SUNDIALS_PP
+                                   &dt_incr, &time,
+                                   &ode_iE, &ncells, amrex::Gpu::gpuStream());
+#else
+                                   ncells, dt_incr, time);
+#endif
+#endif
+                printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES+1)]);
+                dt_incr =  dt/ndt;
+            }
+#ifndef CVODE_BOXINTEG
+        }   
+#endif
         BL_PROFILE_VAR_STOP(ReactInLoop);
 
 #ifdef USE_CUDA_SUNDIALS_PP
         cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
 #endif
-        BL_PROFILE_VAR_STOP(FlatStuff);
 
+
+#ifndef CVODE_BOXINTEG
+        /* Unpacking of data */
+        BL_PROFILE_VAR_START(FlatStuff);
+        amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+               int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+               for(int sp=0; sp<NUM_SPECIES; sp++) {
+                   rhoY(i,j,k,sp) = tmp_vect[icell*(NUM_SPECIES+1)+sp];
+               }
+               rhoY(i,j,k,NUM_SPECIES) = tmp_vect[icell*(NUM_SPECIES+1) + NUM_SPECIES];
+               rhoE(i,j,k,0)           = tmp_vect_energy[icell];
+               fc(i,j,k,0)             = fc_tmp;
+        });
+        BL_PROFILE_VAR_STOP(FlatStuff);
+#endif
 
         printf("DONE");
+#ifndef CVODE_BOXINTEG 
+        delete(tmp_vect);
+        delete(tmp_src_vect);
+        delete(tmp_vect_energy);
+        delete(tmp_src_vect_energy);
+#endif
+
     }
     BL_PROFILE_VAR_STOP(Advance);
 
     timer_adv_stop = ParallelDescriptor::second();
     ParallelDescriptor::ReduceRealMax(timer_adv_stop,IOProc);
+
 
     timer_print = ParallelDescriptor::second();
     ParallelDescriptor::ReduceRealMax(timer_print,IOProc);
