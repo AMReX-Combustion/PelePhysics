@@ -180,7 +180,7 @@ main (int   argc,
         SetTypValsODE(typ_vals);
     }
 #ifdef USE_CUDA_SUNDIALS_PP
-    reactor_info(&ode_iE, &ode_ncells);
+    reactor_info(ode_iE, ode_ncells);
 #else
     reactor_init(ode_iE, ode_ncells);
 #endif
@@ -381,16 +381,22 @@ main (int   argc,
                                    dt_incr, time);
                 //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES+1)]);
 #else
+
+#ifdef USE_CUDA_SUNDIALS_PP
+                react(box,
+                      rhoY, frcExt, T,
+                      rhoE, frcEExt,
+                      fc, mask,
+                      dt_incr, time,
+                      ode_iE, amrex::Gpu::gpuStream());
+#else
                 react_1(box,
                       rhoY, frcExt, T,
                       rhoE, frcEExt,
                       fc, mask,
-#ifdef USE_CUDA_SUNDIALS_PP
-                      &dt_incr, &time,
-                      &ode_iE, &ncells, amrex::Gpu::gpuStream());
-#else
                       dt_incr, time);
 #endif
+
 #endif
                 dt_incr =  dt/ndt;
             }
