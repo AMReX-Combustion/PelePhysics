@@ -59,13 +59,15 @@ void SetTypValsODE(const std::vector<double>& ExtTypVals) {
     omp_thread = omp_get_thread_num();
 #endif
 
+    for (int i=0; i<size_ETV-1; i++) {
+      typVals[i] = ExtTypVals[i];
+    }
+    typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
     if (omp_thread == 0){
         Print() << "Set the typVals in PelePhysics: \n  ";
         for (int i=0; i<size_ETV-1; i++) {
-            typVals[i] = ExtTypVals[i];
             Print() << kname[i] << ":" << typVals[i] << "  ";
         }
-        typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
         Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";
     }
 }
