@@ -91,7 +91,6 @@ int react(const amrex::Box& box,
           amrex::Real &dt_react,
           amrex::Real &time,
           const int &cvode_iE,
-          const int &Ncells, 
           cudaStream_t stream);
    
 static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,

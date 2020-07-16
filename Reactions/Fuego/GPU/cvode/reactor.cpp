@@ -78,7 +78,7 @@ int reactor_info(const int &reactor_type,const int &Ncells){
     if (iverbose > 0) {
         amrex::Print() << "Nb of spec in mech is " << NUM_SPECIES << "\n";    
 
-        amrex::Print() << "Ncells in one solve is " << *Ncells << "\n";
+        amrex::Print() << "Ncells in one solve is " << Ncells << "\n";
     }
 
     std::string  solve_type_str = "none"; 
@@ -108,7 +108,7 @@ int reactor_info(const int &reactor_type,const int &Ncells){
             }
             int nJdata;
             int HP;
-            if (*reactor_type == eint_rho) {
+            if (reactor_type == eint_rho) {
                 HP = 0;
             } else {
                 HP = 1;
@@ -131,15 +131,15 @@ int reactor_info(const int &reactor_type,const int &Ncells){
             }
             int nJdata;
             int HP;
-            if (*reactor_type == eint_rho) {
+            if (reactor_type == eint_rho) {
                 HP = 0;
             } else {
                 HP = 1;
             }
             /* Jac data */ 
-            SPARSITY_INFO_SYST(&nJdata,&HP,*Ncells);
+            SPARSITY_INFO_SYST(&nJdata,&HP,Ncells);
             if (iverbose > 0) {
-                amrex::Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(*Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
+                amrex::Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
             }         
         } else {
             amrex::Abort("\n--> When using a custom direct sparse solver, specify an AJ \n");
@@ -150,15 +150,15 @@ int reactor_info(const int &reactor_type,const int &Ncells){
             amrex::Print() <<"Using a Sparse Direct Solver based on cuSolver \n";
             int nJdata;
             int HP;
-            if (*reactor_type == eint_rho) {
+            if (reactor_type == eint_rho) {
                 HP = 0;
             } else {
                 HP = 1;
             }
             /* Jac data */ 
-            SPARSITY_INFO_SYST(&nJdata,&HP,*Ncells);
+            SPARSITY_INFO_SYST(&nJdata,&HP,Ncells);
             if (iverbose > 0) {
-                amrex::Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(*Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
+                amrex::Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
             }         
         } else {
                 amrex::Abort("\n--> When using a SDS, specify an AJ \n");
@@ -168,7 +168,7 @@ int reactor_info(const int &reactor_type,const int &Ncells){
         amrex::Abort("\n--> Wrong choice of input parameters (cvode) \n");
     }
 
-    amrex::Print() << "\n--> DONE WITH INITIALIZATION (GPU)" << *reactor_type << "\n";
+    amrex::Print() << "\n--> DONE WITH INITIALIZATION (GPU)" << reactor_type << "\n";
 
     return(0);
 }
@@ -184,7 +184,7 @@ int react(const amrex::Box& box,
           amrex::Array4<int> const& mask,
           amrex::Real &dt_react,
           amrex::Real &time,
-          const int &cvode_iE,
+          const int &reactor_type,
           cudaStream_t stream) {
 
     /* CVODE */
@@ -229,11 +229,11 @@ int react(const amrex::Box& box,
     /* User data */
     UserData user_data;
     BL_PROFILE_VAR("AllocsInCVODE", AllocsCVODE);
-    user_data = The_Managed_Arena()->alloc(sizeof(struct CVodeUserData));  
+    user_data = (CVodeUserData *) The_Managed_Arena()->alloc(sizeof(struct CVodeUserData));  
     BL_PROFILE_VAR_STOP(AllocsCVODE);
     user_data->ncells_d[0]          = NCELLS;
     user_data->neqs_per_cell[0]     = NUM_SPECIES;
-    user_data->ireactor_type        = *reactor_type; 
+    user_data->ireactor_type        = reactor_type; 
     user_data->ianalytical_jacobian = ianalytical_jacobian;
     user_data->isolve_type          = isolve_type; 
     user_data->iverbose             = iverbose;
@@ -420,10 +420,10 @@ int react(const amrex::Box& box,
     const auto lo         = amrex::lbound(box); 
     amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
         int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
-        box_flatten(icell, i, j, k, data->ireactor_type,
+        box_flatten(icell, i, j, k, user_data->ireactor_type,
                     rY_in, rY_src_in, T_in, 
                     rEner_in, rEner_src_in,
-                    yvec_d, duser_data->rYsrc, data->rhoe_init, data->rhoesrc_ext);
+                    yvec_d, user_data->rYsrc, user_data->rhoe_init, user_data->rhoesrc_ext);
     });
     BL_PROFILE_VAR_STOP(FlatStuff);
 
@@ -536,9 +536,9 @@ int react(const amrex::Box& box,
     /* Update the input/output Array4 rY_in and rEner_in*/
     amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
         int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
-        box_unflatten(icell, i, j, k, data->ireactor_type,
+        box_unflatten(icell, i, j, k, user_data->ireactor_type,
                     rY_in, T_in, rEner_in, rEner_src_in, FC_in,
-                    yvec_d, data->rhoX_init, nfe, dt_react);
+                    yvec_d, user_data->rhoe_init, nfe, dt_react);
     });
     BL_PROFILE_VAR_STOP(FlatStuff);
 
@@ -633,7 +633,7 @@ int react(realtype *rY_in,    realtype *rY_src_in,
     }
 
     /* Args */
-    NCELLS         = *Ncells;
+    NCELLS         = Ncells;
     neq_tot        = (NUM_SPECIES + 1) * NCELLS;
 
     /* User data */
@@ -643,7 +643,7 @@ int react(realtype *rY_in,    realtype *rY_src_in,
     BL_PROFILE_VAR_STOP(AllocsCVODE);
     user_data->ncells_d[0]          = NCELLS;
     user_data->neqs_per_cell[0]     = NUM_SPECIES;
-    user_data->ireactor_type        = *reactor_type; 
+    user_data->ireactor_type        = reactor_type; 
     user_data->ianalytical_jacobian = ianalytical_jacobian;
     user_data->isolve_type          = isolve_type; 
     user_data->iverbose             = iverbose;
@@ -837,8 +837,8 @@ int react(realtype *rY_in,    realtype *rY_src_in,
     BL_PROFILE_VAR_STOP(AsyncCpy);
 
     realtype time_init, time_out;
-    time_init = *time;
-    time_out  = *time + *dt_react;
+    time_init = time;
+    time_out  = time + dt_react;
 
     /* Call CVodeInit to initialize the integrator memory and specify the
      * user's right hand side function, the inital time, and 
@@ -935,8 +935,8 @@ int react(realtype *rY_in,    realtype *rY_src_in,
 #ifdef MOD_REACTOR
     /* ONLY FOR PP */
     /*If reactor mode is activated, update time */
-    *dt_react = time_init - *time;
-    *time = time_init;
+    dt_react = time_init - time;
+    time = time_init;
 #endif
 
     /* Pack data to return in main routine external */
@@ -944,7 +944,7 @@ int react(realtype *rY_in,    realtype *rY_src_in,
     cudaMemcpyAsync(rY_in, yvec_d, ((NUM_SPECIES+1)*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost,stream);
 
     for  (int i = 0; i < NCELLS; i++) {
-        rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
+        rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
     }
     BL_PROFILE_VAR_STOP(AsyncCpy);
 
@@ -1895,8 +1895,6 @@ static int check_flag(void *flagvalue, const char *funcname, int opt)
 }
 
 void* sunalloc(size_t mem_size) {
-  amrex::MultiFab::updateMemUsage ("Sunalloc", mem_size, nullptr);
-  amrex::MultiFab::updateMemUsage ("All", mem_size, nullptr);
 
   void * ptr = (void*) The_Arena()->alloc(mem_size);
 
@@ -1908,8 +1906,6 @@ void sunfree(void* ptr) {
 
   The_Arena()->free(ptr);
 
-  amrex::MultiFab::updateMemUsage ("Sunalloc", -mem_size, nullptr);
-  amrex::MultiFab::updateMemUsage ("All", -mem_size, nullptr);
 }
 
 /* End of file  */
