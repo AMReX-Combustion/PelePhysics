@@ -30,31 +30,26 @@ AMREX_GPU_DEVICE_MANAGED int iterative_gmres_solve = 99;
 AMREX_GPU_DEVICE_MANAGED int eint_rho = 1; // in/out = rhoE/rhoY
 AMREX_GPU_DEVICE_MANAGED int enth_rho = 2; // in/out = rhoH/rhoY
 
-amrex::Gpu::ManagedVector<amrex::Real> typVals;
+Array<amrex::Real,NUM_SPECIES+1> typVals = {-1};
 AMREX_GPU_DEVICE_MANAGED amrex::Real relTol    = 1.0e-10;
 AMREX_GPU_DEVICE_MANAGED amrex::Real absTol    = 1.0e-10;
 /**********************************/
 
 /**********************************/
 /* Set or update typVals */
-void SetTypValsODE(std::vector<double> ExtTypVals) {
-    int size_ETV = (NUM_SPECIES + 1);
-
-    if (typVals.size()==0) {
-        typVals.resize(size_ETV);
-    }
-
+void SetTypValsODE(const std::vector<double>& ExtTypVals) {
     amrex::Vector<std::string> kname;
     EOS::speciesNames(kname);
 
     amrex::Print() << "Set the typVals in PelePhysics: \n  ";
+    int size_ETV = ExtTypVals.size();
+    AMREX_ASSERT(size_ETV == typVals.size());
     for (int i=0; i<size_ETV-1; i++) {
         typVals[i] = ExtTypVals[i];
-        amrex::Print() << kname[i] << ":" << typVals[i] << "  ";    
+        amrex::Print() << kname[i] << ":" << typVals[i] << "  ";
     }
     typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
-    amrex::Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";    
-
+    amrex::Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";
 }
 
 /* Set or update the rel/abs tolerances  */
@@ -433,7 +428,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     /* Definition of tolerances: one for each species */
     atol  = N_VNew_Cuda(neq_tot);
     ratol = N_VGetHostArrayPointer_Cuda(atol);
-    if (typVals.size()>0) {
+    if (typVals[0]>0) {
         printf("Setting CVODE tolerances rtol = %14.8e atolfact = %14.8e in PelePhysics \n",relTol, absTol);
         for (int i = 0; i < NCELLS; i++) {
             int offset = i * (NUM_SPECIES + 1);
