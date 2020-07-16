@@ -35,7 +35,7 @@ main (int   argc,
 {
     amrex::Initialize(argc,argv);
 
-    BL_PROFILE_VAR("main()", pmain);
+    BL_PROFILE_VAR("main::main()", pmain);
 
     const int IOProc = ParallelDescriptor::IOProcessorNumber();
     //INITIAL TIME
@@ -155,7 +155,7 @@ main (int   argc,
     EOS::init();
     transport_init();
 
-    BL_PROFILE_VAR("reactor_info()", reactInfo);
+    BL_PROFILE_VAR("main::reactor_info()", reactInfo);
 
     /* Initialize reactor object */
 #ifdef _OPENMP
@@ -228,7 +228,7 @@ main (int   argc,
     MultiFab fctCount(ba,dm,1,0);
     iMultiFab dummyMask(ba,dm,1,0);
 
-    BL_PROFILE_VAR("initialize_data()", InitData);
+    BL_PROFILE_VAR("main::initialize_data()", InitData);
 
     /* INITIALIZE DATA */
 #ifdef USE_CUDA_SUNDIALS_PP
@@ -269,7 +269,7 @@ main (int   argc,
     timer_initialize_stop = ParallelDescriptor::second();
     ParallelDescriptor::ReduceRealMax(timer_initialize_stop,IOProc);
 
-    BL_PROFILE_VAR("PlotFileFromMF()", PlotFile);
+    BL_PROFILE_VAR("main::PlotFileFromMF()", PlotFile);
     std::string outfile = Concatenate(pltfile,0); // Need a number other than zero for reg test to pass
     // Specs
     PlotFileFromMF(mf,outfile);
@@ -278,16 +278,16 @@ main (int   argc,
     /* EVALUATE */
     amrex::Print() << " \n STARTING THE ADVANCE \n";
 
-    BL_PROFILE_VAR("Malloc()", Allocs);
+    BL_PROFILE_VAR("main::Malloc()", Allocs);
     BL_PROFILE_VAR_STOP(Allocs);
 
-    BL_PROFILE_VAR("React()", ReactInLoop);
+    BL_PROFILE_VAR("main::React()", ReactInLoop);
     BL_PROFILE_VAR_STOP(ReactInLoop);
 
-    BL_PROFILE_VAR("(un)flatten()", FlatStuff);
-    BL_PROFILE_VAR_STOP(FlatStuff);
+    BL_PROFILE_VAR("main::(un)flatten()", mainflatten);
+    BL_PROFILE_VAR_STOP(mainflatten);
 
-    BL_PROFILE_VAR("advance()", Advance);
+    BL_PROFILE_VAR("main::advance()", Advance);
 
     timer_adv = ParallelDescriptor::second();
     ParallelDescriptor::ReduceRealMax(timer_adv,IOProc);
@@ -341,7 +341,7 @@ main (int   argc,
         BL_PROFILE_VAR_STOP(Allocs);
 
         /* Packing of data */
-        BL_PROFILE_VAR_START(FlatStuff);
+        BL_PROFILE_VAR_START(mainflatten);
         amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
             int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
             for(int sp=0; sp<NUM_SPECIES; sp++) {
@@ -362,7 +362,7 @@ main (int   argc,
             tmp_vect_energy[icell]                      = rhoE(0,0,0,0); 
             tmp_src_vect_energy[icell]                  = frcEExt(0,0,0,0);
         }
-        BL_PROFILE_VAR_STOP(FlatStuff);
+        BL_PROFILE_VAR_STOP(mainflatten);
 #endif
 
 
@@ -406,7 +406,7 @@ main (int   argc,
 
 #ifndef CVODE_BOXINTEG
         /* Unpacking of data */
-        BL_PROFILE_VAR_START(FlatStuff);
+        BL_PROFILE_VAR_START(mainflatten);
         amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
                int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
                for(int sp=0; sp<NUM_SPECIES; sp++) {
@@ -416,7 +416,7 @@ main (int   argc,
                rhoE(i,j,k,0)           = tmp_vect_energy[icell];
                fc(i,j,k,0)             = fc_tmp_lcl;
         });
-        BL_PROFILE_VAR_STOP(FlatStuff);
+        BL_PROFILE_VAR_STOP(mainflatten);
 #endif
 
         printf("DONE");
