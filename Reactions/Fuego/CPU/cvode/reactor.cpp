@@ -10,6 +10,8 @@
 #define SUN_CUSP_SUBSYS_NNZ(S)     ( SUN_CUSP_CONTENT(S)->subsys_nnz )
 #define SUN_CUSP_SUBSYS_SIZE(S)     ( SUN_CUSP_CONTENT(S)->subsys_size )
 
+using namespace amrex;
+
 /**********************************/
 /* Global Variables */
   N_Vector y         = NULL;
@@ -19,8 +21,12 @@
   /* User data */
   UserData data      = NULL;
 /* OPTIONS */
-  amrex::Real time_init    = 0.0;
-  amrex::Gpu::ManagedVector<amrex::Real> typVals;
+  /* energy */
+  double *rhoX_init   = NULL;
+  double *rhoXsrc_ext = NULL;
+  double *rYsrc       = NULL;
+  Real time_init    = 0.0;
+  Array<double,NUM_SPECIES+1> typVals = {-1};
   double relTol       = 1.0e-10;
   double absTol       = 1.0e-10;
 /* REMOVE MAYBE LATER */
@@ -44,42 +50,24 @@
 
 /**********************************/
 /* Set or update typVals */
-void SetTypValsODE(std::vector<double> ExtTypVals) {
+void SetTypValsODE(const std::vector<double>& ExtTypVals) {
     int size_ETV = (NUM_SPECIES + 1);
-
-    if (typVals.size()==0) {
-        typVals.resize(size_ETV);
-    }
-
-    amrex::Vector<std::string> kname;
+    Vector<std::string> kname;
     EOS::speciesNames(kname);
-
+    int omp_thread = 0;
 #ifdef _OPENMP
-    /* omp thread if applicable */
-    if (omp_get_thread_num() == 0){
-        amrex::Print() << "Set the typVals in PelePhysics: \n  ";
-        for (int i=0; i<size_ETV-1; i++) {
-            typVals[i] = ExtTypVals[i];
-            amrex::Print() << kname[i] << ":" << typVals[i] << "  ";    
-        }
-        typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
-        amrex::Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";    
-    } else {
-        for (int i=0; i<size_ETV-1; i++) {
-            typVals[i] = ExtTypVals[i];
-        }
-        typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
-    }
-#else
-    amrex::Print() << "Set the typVals in PelePhysics: \n  ";
-    for (int i=0; i<size_ETV-1; i++) {
-        typVals[i] = ExtTypVals[i];
-        amrex::Print() << kname[i] << ":" << typVals[i] << "  ";    
-    }
-    typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
-    amrex::Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";    
+    omp_thread = omp_get_thread_num();
 #endif
 
+    if (omp_thread == 0){
+        Print() << "Set the typVals in PelePhysics: \n  ";
+        for (int i=0; i<size_ETV-1; i++) {
+            typVals[i] = ExtTypVals[i];
+            Print() << kname[i] << ":" << typVals[i] << "  ";
+        }
+        typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
+        Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";
+    }
 }
 
 
@@ -87,31 +75,25 @@ void SetTypValsODE(std::vector<double> ExtTypVals) {
 void SetTolFactODE(double relative_tol,double absolute_tol) {
     relTol = relative_tol;
     absTol = absolute_tol;
-
+    int omp_thread = 0;
 #ifdef _OPENMP
-    /* omp thread if applicable */
-    if (omp_get_thread_num() == 0){
-        amrex::Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
-    }
-#else
-    amrex::Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
+    omp_thread = omp_get_thread_num();
 #endif
+
+    if (omp_thread == 0){
+        Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
+    }
 }
 
 
 /* Function to ReSet the tol of the cvode object directly */
 void ReSetTolODE() {
-    if (data==NULL) {
+    int omp_thread = 0;
 #ifdef _OPENMP
-        if (omp_get_thread_num() == 0) {
-            amrex::Abort("Reactor object is not initialized !!");
-        } else {
-            amrex::Abort();
-        }
-#else
-        amrex::Abort("Reactor object is not initialized !!");
+    omp_thread = omp_get_thread_num();
 #endif
-    }
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(data != NULL, "Reactor object is not initialized !!");
 
     int neq_tot;
     N_Vector atol;
@@ -121,13 +103,9 @@ void ReSetTolODE() {
     ratol   = N_VGetArrayPointer(atol);
 
     int offset;
-    if (typVals.size()>0) {
-#ifdef _OPENMP
-        if ((data->iverbose > 0) && (omp_get_thread_num() == 0)) {
-#else
-        if (data->iverbose > 0) {
-#endif
-            printf("Setting CVODE tolerances rtol = %14.8e atolfact = %14.8e in PelePhysics \n",relTol, absTol);
+    if (typVals[0] > 0) {
+        if ((data->iverbose > 0) && (omp_thread == 0)) {
+            Print() << "Setting CVODE tolerances rtol = " << relTol << " atolfact = " << absTol << " in PelePhysics \n";
         }
         for  (int i = 0; i < data->ncells; i++) {
             offset = i * (NUM_SPECIES + 1);
@@ -136,12 +114,8 @@ void ReSetTolODE() {
             }
         }
     } else {
-#ifdef _OPENMP
-        if ((data->iverbose > 0) && (omp_get_thread_num() == 0)) {
-#else
-        if (data->iverbose > 0) {
-#endif
-            printf("Setting CVODE tolerances rtol = %14.8e atol = %14.8e in PelePhysics \n",relTol, absTol);
+        if ((data->iverbose > 0) && (omp_thread == 0)) {
+            Print() << "Setting CVODE tolerances rtol = " << reltol << " atol = " << absTol << " in PelePhysics \n";
         }
         for (int i=0; i<neq_tot; i++) {
             ratol[i] = absTol;
@@ -151,7 +125,7 @@ void ReSetTolODE() {
      * and vector absolute tolerances */
     int flag = CVodeSVtolerances(cvode_mem, relTol, atol);
     if (check_flag(&flag, "CVodeSVtolerances", 1)) { 
-        amrex::Abort("Problem in ReSetTolODE");
+        Abort("Problem in ReSetTolODE");
     }
 }
 
@@ -169,11 +143,9 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
     realtype *ratol;
     /* Tot numb of eq to integrate */
     int neq_tot;
+    int omp_thread = 0;
 #ifdef _OPENMP
-    int omp_thread;
-
-    /* omp thread if applicable */
-    omp_thread = omp_get_thread_num(); 
+    omp_thread = omp_get_thread_num();
 #endif
     /* Total number of eq to integrate */
     neq_tot        = (NUM_SPECIES + 1) * ode_ncells;
@@ -191,14 +163,10 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
     data = AllocUserData(reactor_type, ode_ncells);
     if(check_flag((void *)data, "AllocUserData", 2)) return(1);
 
-    /* Nb of species and cells in mechanism */
-#ifdef _OPENMP
+    /* Number of species and cells in mechanism */
     if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 0) {
-#endif
-        amrex::Print() << "Nb of spec in mech is " << NUM_SPECIES << "\n";    
-        amrex::Print() << "Ncells in one solve is " << data->ncells << "\n";
+        Print() << "Number of species in mech is " << NUM_SPECIES << "\n";
+        Print() << "Number of cells in one solve is " << data->ncells << "\n";
     }
 
     /* Set the pointer to user-defined data */
@@ -216,13 +184,9 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
     atol  = N_VNew_Serial(neq_tot);
     ratol = N_VGetArrayPointer(atol);
     int offset;
-    if (typVals.size()>0) {
-#ifdef _OPENMP
+    if (typVals[0] > 0) {
         if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-        if (data->iverbose > 0) {
-#endif
-            printf("Setting CVODE tolerances rtol = %14.8e atolfact = %14.8e in PelePhysics \n",relTol, absTol);
+            Print() << "Setting CVODE tolerances rtol = " << relTol << " atolfact = " << absTol << " in PelePhysics \n";
         }
         for  (int i = 0; i < data->ncells; i++) {
             offset = i * (NUM_SPECIES + 1);
@@ -232,12 +196,8 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
             }
         }
     } else {
-#ifdef _OPENMP
         if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-        if (data->iverbose > 0) {
-#endif
-            printf("Setting CVODE tolerances rtol = %14.8e atol = %14.8e in PelePhysics \n",relTol, absTol);
+            Print() << "Setting CVODE tolerances rtol = " << relTol << " atol = " << absTol << " in PelePhysics \n";
         }
         for (int i=0; i<neq_tot; i++) {
             ratol[i] = absTol;
@@ -258,12 +218,8 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
     if (check_flag(&flag, "CVodeSetMaxErrTestFails", 1)) return(1);
 
     if (data->isolve_type == dense_solve) {
-#ifdef _OPENMP
         if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-        if (data->iverbose > 0) {
-#endif
-            amrex::Print() << "\n--> Using a Direct Dense Solver\n";    
+            Print() << "\n--> Using a Direct Dense Solver\n";
         }
         /* Create dense SUNMatrix for use in linear solves */
         A = SUNDenseMatrix(neq_tot, neq_tot);
@@ -278,12 +234,8 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
         if(check_flag(&flag, "CVDlsSetLinearSolver", 1)) return(1);
 
     } else if (data->isolve_type == sparse_solve_custom) {
-#ifdef _OPENMP
         if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-        if (data->iverbose > 0) {
-#endif
-            amrex::Print() << "\n--> Using a custom Direct Sparse Solver\n";    
+            Print() << "\n--> Using a custom Direct Sparse Solver\n";
         }
         /* Create dense SUNMatrix for use in linear solves */
         A = SUNSparseMatrix(neq_tot, neq_tot, (data->NNZ)*data->ncells, CSR_MAT);
@@ -299,12 +251,8 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
 
     } else if (data->isolve_type == sparse_solve) {
 #ifdef USE_KLU_PP 
-#ifdef _OPENMP
         if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-        if (data->iverbose > 0) {
-#endif
-            amrex::Print() << "\n--> Using a Direct Sparse Solver\n";    
+            Print() << "\n--> Using a Direct Sparse Solver\n";
         }
         /* Create sparse SUNMatrix for use in linear solves */
         A = SUNSparseMatrix(neq_tot, neq_tot, (data->NNZ)*data->ncells, CSC_MAT);
@@ -317,28 +265,14 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
         /* Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode */
         flag = CVodeSetLinearSolver(cvode_mem, LS, A);
         if(check_flag(&flag, "CVodeSetLinearSolver", 1)) return(1);
-#else
-        if (data->iverbose > 0) {
-#ifdef _OPENMP
-        if (omp_thread == 0) {
-            amrex::Abort("Sparse solver not valid without KLU solver.");
-        } else {
-            amrex::Abort();
-        }
-#else
-        amrex::Abort("Sparse solver not valid without KLU solver.");
-#endif
-        }
+#else        
+        Abort("Sparse solver not valid without KLU solver.");
 #endif
 
     } else if ((data->isolve_type == iterative_gmres_solve) 
             || (data->isolve_type == iterative_gmres_solve_custom)) {
-#ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-            if (data->iverbose > 0) {
-#endif
-            amrex::Print() << "\n--> Using an Iterative Solver ("<<data->isolve_type<<")\n";    
+            Print() << "\n--> Using an Iterative Solver ("<<data->isolve_type<<")\n";
         }
 
             /* Create the linear solver object */
@@ -354,54 +288,20 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
         flag = CVSpilsSetLinearSolver(cvode_mem, LS);
         if(check_flag(&flag, "CVSpilsSetLinearSolver", 1)) return(1);
     } else {
-        if (data->iverbose > 0) {
-#ifdef _OPENMP
-            if (omp_thread == 0) {
-                amrex::Abort("Wrong choice of linear solver...");
-            } else {
-                amrex::Abort();
-            }
-#else
-            amrex::Abort("Wrong choice of linear solver...");
-#endif
-        }
+        Abort("Wrong choice of linear solver...");
     }
 
     if (data->ianalytical_jacobian == 0) {
-#ifdef _OPENMP
         if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-        if (data->iverbose > 0) {
-#endif
-            amrex::Print() << "    Without Analytical J/Preconditioner\n";
+            Print() << "    Without Analytical J/Preconditioner\n";
         }
 #ifdef USE_KLU_PP 
         if (data->isolve_type == sparse_solve) {
-            if (data->iverbose > 0) {
-#ifdef _OPENMP
-                if (omp_thread == 0) {
-                    amrex::Abort("A Sparse Solver should have an Analytical J");
-                } else {
-                    amrex::Abort();
-                }
-#else
-                amrex::Abort("A Sparse Solver should have an Analytical J");
-#endif
-            }
+            Abort("Sparse Solver requires an Analytical J");
         }
 #endif
         if (data->isolve_type == sparse_solve_custom) {
-            if (data->iverbose > 0) {
-#ifdef _OPENMP
-                if (omp_thread == 0) {
-                    amrex::Abort("A Sparse Solver should have an Analytical J");
-                } else {
-                    amrex::Abort();
-                }
-#else
-                amrex::Abort("A Sparse Solver should have an Analytical J");
-#endif
-            }
+            Abort("Custom sparse solver requires an Analytical J");
         }
     } else {
         if (data->isolve_type == iterative_gmres_solve_custom) {
@@ -409,12 +309,8 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
             flag = CVSpilsSetJacTimes(cvode_mem, NULL, NULL);
             if(check_flag(&flag, "CVSpilsSetJacTimes", 1)) return(1);
 
-#ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-            if (data->iverbose > 0) {
-#endif
-                amrex::Print() << "    With a custom Sparse Preconditioner\n";
+                Print() << "    With a custom Sparse Preconditioner\n";
             }
             /* Set the preconditioner solve and setup functions */
             flag = CVSpilsSetPreconditioner(cvode_mem, Precond_custom, PSolve_custom);
@@ -425,23 +321,15 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
             flag = CVSpilsSetJacTimes(cvode_mem, NULL, NULL);
             if(check_flag(&flag, "CVSpilsSetJacTimes", 1)) return(1);
 #ifdef USE_KLU_PP 
-#ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-            if (data->iverbose > 0) {
-#endif
-                amrex::Print() << "    With a Sparse Preconditioner\n";
+                Print() << "    With a Sparse Preconditioner\n";
             }
             /* Set the preconditioner solve and setup functions */
             flag = CVSpilsSetPreconditioner(cvode_mem, Precond_sparse, PSolve_sparse);
             if(check_flag(&flag, "CVSpilsSetPreconditioner", 1)) return(1);
 #else
-#ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-            if (data->iverbose > 0) {
-#endif 
-                amrex::Print() << "    With a Preconditioner\n";
+                Print() << "    With a Preconditioner\n";
             }
             /* Set the preconditioner solve and setup functions */
             flag = CVSpilsSetPreconditioner(cvode_mem, Precond, PSolve);
@@ -449,36 +337,24 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
 #endif
 #ifdef USE_KLU_PP 
         } else if (data->isolve_type == sparse_solve){
-#ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-            if (data->iverbose > 0) {
-#endif
-                amrex::Print() << "    With a Sparse Analytical J\n";
+                Print() << "    With a Sparse Analytical J\n";
             }
             /* Set the user-supplied Jacobian routine Jac */
             flag = CVodeSetJacFn(cvode_mem, cJac_KLU);
             if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1); 
 #endif
         } else if (data->isolve_type == dense_solve){
-#ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-            if (data->iverbose > 0) {
-#endif
-                amrex::Print() << "    With Analytical J\n";
+                Print() << "    With Analytical J\n";
             }
             /* Set the user-supplied Jacobian routine Jac */
             flag = CVodeSetJacFn(cvode_mem, cJac);
             if(check_flag(&flag, "CVodeSetJacFn", 1)) return(1);
 
         }  else if (data->isolve_type == sparse_solve_custom) {
-#ifdef _OPENMP
             if ((data->iverbose > 0) && (omp_thread == 0)) {
-#else
-            if (data->iverbose > 0) {
-#endif
-                amrex::Print() << "    With a Sparse Analytical J\n";
+                Print() << "    With a Sparse Analytical J\n";
             }
             /* Set the user-supplied Jacobian routine Jac */
             flag = CVodeSetJacFn(cvode_mem, cJac_sps);
@@ -502,12 +378,8 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
     N_VDestroy(atol); 
 
     /* Ok we're done ...*/
-#ifdef _OPENMP
     if ((data->iverbose > 1) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 1) {
-#endif
-        amrex::Print() << "\n--> DONE WITH INITIALIZATION (CPU)" << data->ireactor_type << "\n";
+        Print() << "\n--> DONE WITH INITIALIZATION (CPU)" << data->ireactor_type << "\n";
     }
 
     /* Reactor is now initialized */
@@ -530,29 +402,19 @@ int react_1(const amrex::Box& box,
           amrex::Real &dt_react,
           amrex::Real &time) {
 
+    int omp_thread = 0;
 #ifdef _OPENMP
-    int omp_thread;
-
-    /* omp thread if applicable */
     omp_thread = omp_get_thread_num(); 
 #endif
 
-#ifdef _OPENMP
     if ((data->iverbose > 1) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 1) {
-#endif
         amrex::Print() <<"\n -------------------------------------\n";
     }
 
     /* Initial time and time to reach after integration */
     time_init = time;
 
-#ifdef _OPENMP
     if ((data->iverbose > 3) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 3) {
-#endif
         amrex::Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << dt_react << " and final time should be " << time_init + dt_react << "\n";
     }
 
@@ -562,11 +424,7 @@ int react_1(const amrex::Box& box,
     int box_ncells  = box.numPts(); 
     data->boxcell   = 0; 
 
-#ifdef _OPENMP
     if ((data->iverbose > 2) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 2) {
-#endif
         amrex::Print() <<"Ncells in the box = "<<  box_ncells  << "\n";
     }
 
@@ -627,11 +485,7 @@ int react_1(const amrex::Box& box,
         //if (check_flag(&flag, "CVode", 1)) return(1);
         BL_PROFILE_VAR_STOP(AroundCVODE);
 
-#ifdef _OPENMP
         if ((data->iverbose > 1) && (omp_thread == 0)) {
-#else
-        if (data->iverbose > 1) {
-#endif
             amrex::Print() <<"Additional verbose info --\n";
             PrintFinalStats(cvode_mem, yvec_d[NUM_SPECIES]);
             amrex::Print() <<"\n -------------------------------------\n";
@@ -666,11 +520,7 @@ int react_1(const amrex::Box& box,
         T_in(i,j,k,0) = temp;
         BL_PROFILE_VAR_STOP(FlatStuff);
 
-#ifdef _OPENMP
         if ((data->iverbose > 3) && (omp_thread == 0)) {
-#else
-        if (data->iverbose > 3) {
-#endif
             amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << (dummy_time - time_init) << "\n";
         }
     });
@@ -704,18 +554,12 @@ int react_2(const amrex::Box& box,
     realtype time_out, dummy_time;
     int flag, offset, extra_cells;
     int box_ncells;
+    int omp_thread = 0;
 #ifdef _OPENMP
-    int omp_thread;
-
-    /* omp thread if applicable */
     omp_thread = omp_get_thread_num(); 
 #endif
 
-#ifdef _OPENMP
     if ((data->iverbose > 1) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 1) {
-#endif
         amrex::Print() <<"\n -------------------------------------\n";
     }
 
@@ -723,22 +567,14 @@ int react_2(const amrex::Box& box,
     time_init = time;
     time_out  = time + dt_react;
 
-#ifdef _OPENMP
     if ((data->iverbose > 3) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 3) {
-#endif
         amrex::Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << dt_react << " and final time should be " << time_out << "\n";
     }
 
     /* Define full box_ncells length vectors to be integrated piece by piece
        by CVode */
     box_ncells  = box.numPts(); 
-#ifdef _OPENMP
     if ((data->iverbose > 2) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 2) {
-#endif
         amrex::Print() <<"Ncells in the box = "<<  box_ncells  << "\n";
     }
     BL_PROFILE_VAR("reactor::ExtForcingAlloc", ExtForcingAlloc);
@@ -770,11 +606,7 @@ int react_2(const amrex::Box& box,
     /* We may need extra cells to fill the fixed data->ncells in this case 
        since we do not Init each time */
     extra_cells = box_ncells - box_ncells / (data->ncells) * (data->ncells); 
-#ifdef _OPENMP
     if ((data->iverbose > 2) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 2) {
-#endif
         amrex::Print() <<" Extra cells = "<< extra_cells  << "\n";
     }
     
@@ -812,11 +644,7 @@ int react_2(const amrex::Box& box,
             data->FCunt[i + k] = nfe+nfeLS;
         }
 
-#ifdef _OPENMP
         if ((data->iverbose > 3) && (omp_thread == 0)) {
-#else
-        if (data->iverbose > 3) {
-#endif
             amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << (dummy_time - time_init) << "\n";
         }
 
@@ -837,11 +665,7 @@ int react_2(const amrex::Box& box,
     });
     BL_PROFILE_VAR_STOP(FlatStuff);
 
-#ifdef _OPENMP
     if ((data->iverbose > 1) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 1) {
-#endif
         amrex::Print() <<"Additional verbose info --\n";
         PrintFinalStats(cvode_mem, yvec_d[NUM_SPECIES]);
         amrex::Print() <<"\n -------------------------------------\n";
@@ -862,40 +686,26 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
     realtype time_out, dummy_time;
     int flag;
+    int omp_thread = 0;
 #ifdef _OPENMP
-    int omp_thread;
-
-    /* omp thread if applicable */
-    omp_thread = omp_get_thread_num(); 
+    omp_thread = omp_get_thread_num();
 #endif
 
-#ifdef _OPENMP
     if ((data->iverbose > 1) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 1) {
-#endif
-        amrex::Print() <<"\n -------------------------------------\n";
+        Print() <<"\n -------------------------------------\n";
     }
 
     /* Initial time and time to reach after integration */
     time_init = time;
     time_out  = time + dt_react;
 
-#ifdef _OPENMP
     if ((data->iverbose > 3) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 3) {
-#endif
-        amrex::Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << dt_react << " and final time should be " << time_out << "\n";
+        Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << dt_react << " and final time should be " << time_out << "\n";
     }
 
     /* Define full box_ncells length vectors to be integrated piece by piece
        by CVode */
-#ifdef _OPENMP
     if ((data->iverbose > 2) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 2) {
-#endif
         amrex::Print() <<"Ncells in the box = "<<  data->ncells  << "\n";
     }
     BL_PROFILE_VAR("reactor::ExtForcingAlloc", ExtForcingAlloc);
@@ -982,12 +792,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
     time  = time_init + dt_react;
 #endif
 
-#ifdef _OPENMP
     if ((data->iverbose > 3) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 3) {
-#endif
-        amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << dt_react << "\n";
+        Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << dt_react << "\n";
     }
 
     BL_PROFILE_VAR_START(FlatStuff);
@@ -1024,14 +830,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
     }
     BL_PROFILE_VAR_STOP(FlatStuff);
 
-#ifdef _OPENMP
     if ((data->iverbose > 1) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 1) {
-#endif
-        amrex::Print() <<"Additional verbose info --\n";
+        Print() <<"Additional verbose info --\n";
         PrintFinalStats(cvode_mem, rY_in[NUM_SPECIES]);
-        amrex::Print() <<"\n -------------------------------------\n";
+        Print() <<"\n -------------------------------------\n";
     }
 
     /* Get estimate of how hard the integration process was */
@@ -1898,11 +1700,11 @@ void check_state(N_Vector yvec)
       Temp = ydata[offset + NUM_SPECIES];
       if ((rho < 1.0e-10) || (rho > 1.e10)) {
           data->actual_ok_to_react = false;
-      amrex::Print() <<"rho "<< rho << "\n";
+      Print() <<"rho "<< rho << "\n";
       }
       if ((Temp < 200.0) || (Temp > 5000.0)) {
           data->actual_ok_to_react = false; 
-      amrex::Print() <<"Temp "<< Temp << "\n";
+      Print() <<"Temp "<< Temp << "\n";
       }
   }
 
@@ -1956,18 +1758,18 @@ void PrintFinalStats(void *cvodeMem, realtype Temp)
       check_flag(&flag, "CVSpilsGetNumConvFails", 1);
   }
 
-  amrex::Print() << "-- Final Statistics --\n";
-  amrex::Print() << "NonLinear (Newton) related --\n";
-  amrex::Print() << Temp << " |DT(dt, dtcur) = " << nst << "(" << hlast << "," << hcur << "), RHS = " << nfe << ", Iterations = " << nni << ", ErrTestFails = " << netfails << ", LinSolvSetups = " << nsetups << "\n";
+  Print() << "-- Final Statistics --\n";
+  Print() << "NonLinear (Newton) related --\n";
+  Print() << Temp << " |DT(dt, dtcur) = " << nst << "(" << hlast << "," << hcur << "), RHS = " << nfe << ", Iterations = " << nni << ", ErrTestFails = " << netfails << ", LinSolvSetups = " << nsetups << "\n";
   if (data->isolve_type == dense_solve){
-      amrex::Print() <<"Linear (Dense Direct Solve) related --\n";
-      amrex::Print()<<Temp << " |FD RHS = "<< nfeLS<<", NumJacEvals = "<< nje <<" \n";
+      Print() <<"Linear (Dense Direct Solve) related --\n";
+      Print()<<Temp << " |FD RHS = "<< nfeLS<<", NumJacEvals = "<< nje <<" \n";
   } else if (data->isolve_type == iterative_gmres_solve){
       // LinSolvSetups actually reflects the number of time the LinSolver has been called. 
       // NonLinIterations can be taken without the need for LinItes
-      amrex::Print() << "Linear (Krylov GMRES Solve) related --\n";
-      amrex::Print() << Temp << " |RHSeval = "<< nfeLS << ", jtvEval = "<<nje << ", NumPrecEvals = "<< npe << ", NumPrecSolves = "<< nps <<"\n"; 
-      amrex::Print() <<Temp << " |Iterations = "<< nli <<", ConvFails = "<< ncfl<<"\n"; 
+      Print() << "Linear (Krylov GMRES Solve) related --\n";
+      Print() << Temp << " |RHSeval = "<< nfeLS << ", jtvEval = "<<nje << ", NumPrecEvals = "<< npe << ", NumPrecSolves = "<< nps <<"\n";
+      Print() <<Temp << " |Iterations = "<< nli <<", ConvFails = "<< ncfl<<"\n";
   }
 }
 
@@ -1986,24 +1788,30 @@ int check_flag(void *flagvalue, const char *funcname, int opt)
 
   /* Check if SUNDIALS function returned NULL pointer - no memory allocated */
   if (opt == 0 && flagvalue == NULL) {
-    fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
-            funcname);
-    return(1); }
+      if (ParallelDescriptor::IOProcessor()) {
+          fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
+                  funcname);
+      }
+      return(1); }
 
   /* Check if flag < 0 */
   else if (opt == 1) {
       errflag = (int *) flagvalue;
       if (*errflag < 0) {
-          fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n\n",
-          funcname, *errflag);
+          if (ParallelDescriptor::IOProcessor()) {
+              fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n\n",
+                      funcname, *errflag);
+          }
           return(1); 
       }
   }
 
   /* Check if function returned NULL pointer - no memory allocated */
   else if (opt == 2 && flagvalue == NULL) {
-      fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
-      funcname);
+      if (ParallelDescriptor::IOProcessor()) {
+          fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
+                  funcname);
+      }
       return(1); 
   }
 
@@ -2017,21 +1825,19 @@ UserData AllocUserData(int reactor_type, int num_cells)
   /* Make local copies of pointers in user_data */
   UserData data_wk;
   data_wk = (UserData) malloc(sizeof *data_wk);
+    int omp_thread = 0;
 #ifdef _OPENMP
-  int omp_thread;
-
-  /* omp thread if applicable */
-  omp_thread = omp_get_thread_num(); 
+    omp_thread = omp_get_thread_num();
 #endif
 
   /* ParmParse from the inputs file: only done once */
-  amrex::ParmParse pp("ode");
+  ParmParse pp("ode");
   pp.query("analytical_jacobian",data_wk->ianalytical_jacobian);
   data_wk->iverbose = 1;
   pp.query("verbose",data_wk->iverbose);
 
   std::string  solve_type_str = "none";
-  amrex::ParmParse ppcv("cvode");
+  ParmParse ppcv("cvode");
   ppcv.query("solve_type", solve_type_str);
   /* options are: 
   dense_solve           = 1;
@@ -2054,15 +1860,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
   } else if (solve_type_str == "diag") {
       data_wk->isolve_type = hack_dump_sparsity_pattern;
   } else {
-#ifdef _OPENMP
-      if (omp_thread == 0) {
-          amrex::Abort("Wrong solve_type. Options are: dense, sparse, GMRES, sparse_custom, GMRES_custom");
-      } else {
-          amrex::Abort();
-      }
-#else
-      amrex::Abort("Wrong solve_type. Options are: dense, sparse, GMRES, sparse_custom, GMRES_custom");
-#endif
+      Abort("Wrong solve_type. Options are: dense, sparse, GMRES, sparse_custom, GMRES_custom");
   }
 
   (data_wk->ireactor_type)             = reactor_type;
@@ -2109,12 +1907,8 @@ UserData AllocUserData(int reactor_type, int num_cells)
       /* Sparse Matrix for Direct Sparse KLU solver */
       (data_wk->PS) = new SUNMatrix[1];
       SPARSITY_INFO(&(data_wk->NNZ),&HP,data_wk->ncells);
-#ifdef _OPENMP
       if ((data_wk->iverbose > 0) && (omp_thread == 0)) {
-#else
-      if (data_wk->iverbose > 0) {
-#endif
-          amrex::Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1) * (data_wk->ncells) * (data_wk->ncells)) *100.0 <<" % fill-in pattern\n";
+          Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1) * (data_wk->ncells) * (data_wk->ncells)) *100.0 <<" % fill-in pattern\n";
       }
       (data_wk->PS)[0] = SUNSparseMatrix((NUM_SPECIES+1)*data_wk->ncells, (NUM_SPECIES+1)*data_wk->ncells, data_wk->NNZ, CSC_MAT);
       data_wk->colPtrs[0] = (int*) SUNSparseMatrix_IndexPointers((data_wk->PS)[0]); 
@@ -2129,14 +1923,10 @@ UserData AllocUserData(int reactor_type, int num_cells)
       data_wk->Numeric  = new klu_numeric*[data_wk->ncells];
       /* Sparse Matrices for It Sparse KLU block-solve */
       data_wk->PS = new SUNMatrix[data_wk->ncells];
-      /* Nb of non zero elements*/
+      /* Number of non zero elements*/
       SPARSITY_INFO_SYST_SIMPLIFIED(&(data_wk->NNZ),&HP);
-#ifdef _OPENMP
       if ((data_wk->iverbose > 0) && (omp_thread == 0) && (data_wk->ianalytical_jacobian != 0)) {
-#else
-      if ((data_wk->iverbose > 0) && (data_wk->ianalytical_jacobian != 0)) {
-#endif
-          amrex::Print() << "--> SPARSE Preconditioner -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+          Print() << "--> SPARSE Preconditioner -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
       }
       /* Not used yet. TODO use to fetch sparse Mat */
       data_wk->indx      = new int[data_wk->NNZ];
@@ -2166,7 +1956,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
       /* Matrices for It Sparse custom block-solve */
       data_wk->PS         = new SUNMatrix[data_wk->ncells];
       data_wk->JSPSmat    = new realtype*[data_wk->ncells];
-      /* Nb of non zero elements*/
+      /* Number of non zero elements*/
       SPARSITY_INFO_SYST_SIMPLIFIED(&(data_wk->NNZ),&HP);
       for(int i = 0; i < data_wk->ncells; ++i) {
           (data_wk->PS)[i]       = SUNSparseMatrix(NUM_SPECIES+1, NUM_SPECIES+1, data_wk->NNZ, CSR_MAT);
@@ -2176,26 +1966,18 @@ UserData AllocUserData(int reactor_type, int num_cells)
           SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(data_wk->colVals[i],data_wk->rowPtrs[i],&HP,0);
           data_wk->JSPSmat[i]    = new realtype[(NUM_SPECIES+1)*(NUM_SPECIES+1)];
       }
-#ifdef _OPENMP
       if ((data_wk->iverbose > 0) && (omp_thread == 0)) {
-#else
-      if (data_wk->iverbose > 0) {
-#endif
-          amrex::Print() << "--> SPARSE Preconditioner -- non zero entries: " << data_wk->NNZ*data_wk->ncells << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1) * data_wk->ncells) *100.0 <<" % fill-in pattern\n";
+          Print() << "--> SPARSE Preconditioner -- non zero entries: " << data_wk->NNZ*data_wk->ncells << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1) * data_wk->ncells) *100.0 <<" % fill-in pattern\n";
       }
   } else if (data_wk->isolve_type == sparse_solve_custom) {
-      /* Nb of non zero elements*/
+      /* Number of non zero elements*/
       SPARSITY_INFO_SYST(&(data_wk->NNZ),&HP,1);
       data_wk->PSc          = SUNSparseMatrix((NUM_SPECIES+1)*data_wk->ncells, (NUM_SPECIES+1)*data_wk->ncells, data_wk->NNZ*data_wk->ncells, CSR_MAT);
       data_wk->rowPtrs_c    = (int*) SUNSparseMatrix_IndexPointers(data_wk->PSc); 
       data_wk->colVals_c    = (int*) SUNSparseMatrix_IndexValues(data_wk->PSc);
       SPARSITY_PREPROC_SYST_CSR(data_wk->colVals_c,data_wk->rowPtrs_c,&HP,data_wk->ncells,0);
-#ifdef _OPENMP
       if ((data_wk->iverbose > 0) && (omp_thread == 0)) {
-#else
-      if (data_wk->iverbose > 0) {
-#endif
-          amrex::Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ*data_wk->ncells << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1) * data_wk->ncells) *100.0 <<" % fill-in pattern\n";
+          Print() << "--> SPARSE solver -- non zero entries: " << data_wk->NNZ*data_wk->ncells << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1) * data_wk->ncells) *100.0 <<" % fill-in pattern\n";
       }
   }  else if (data_wk->isolve_type == hack_dump_sparsity_pattern) {
       /* Debug mode, makes no sense to call with OMP/MPI activated */
@@ -2203,7 +1985,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
 
       /* CHEMISTRY JAC */
       SPARSITY_INFO(&(data_wk->NNZ),&HP,1);
-      amrex::Print() << "--> Chem Jac -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+      Print() << "--> Chem Jac -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
       SUNMatrix PS;
       PS = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
       int *colIdx, *rowCount;
@@ -2236,7 +2018,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
 
       /* SYST JAC */
       SPARSITY_INFO_SYST(&(data_wk->NNZ),&HP,1);
-      amrex::Print() << "--> Syst Jac -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+      Print() << "--> Syst Jac -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
       PS = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
       rowCount = (int*) SUNSparseMatrix_IndexPointers(PS); 
       colIdx   = (int*) SUNSparseMatrix_IndexValues(PS);
@@ -2267,7 +2049,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
 
       /* SYST JAC SIMPLIFIED*/
       SPARSITY_INFO_SYST_SIMPLIFIED(&(data_wk->NNZ),&HP);
-      amrex::Print() << "--> Simplified Syst Jac (for Precond) -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+      Print() << "--> Simplified Syst Jac (for Precond) -- non zero entries: " << data_wk->NNZ << ", which represents "<< data_wk->NNZ/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
       PS = SUNSparseMatrix((NUM_SPECIES+1), (NUM_SPECIES+1), data_wk->NNZ, CSR_MAT);
       rowCount = (int*) SUNSparseMatrix_IndexPointers(PS); 
       colIdx   = (int*) SUNSparseMatrix_IndexValues(PS);
@@ -2296,7 +2078,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
       }
       std::cout << " There was " << counter << " non zero elems (compare to the "<<data_wk->NNZ<< " we need)" << std::endl;
 
-      amrex::Abort("Dump Sparsity Patern of different Jacobians in CSR format.");
+      Abort("Dump Sparsity Patern of different Jacobians in CSR format.");
   }
 
   return(data_wk);

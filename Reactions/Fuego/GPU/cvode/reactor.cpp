@@ -31,58 +31,52 @@ AMREX_GPU_DEVICE_MANAGED int iterative_gmres_solve = 99;
 AMREX_GPU_DEVICE_MANAGED int eint_rho = 1; // in/out = rhoE/rhoY
 AMREX_GPU_DEVICE_MANAGED int enth_rho = 2; // in/out = rhoH/rhoY
 
-amrex::Gpu::ManagedVector<amrex::Real> typVals;
-AMREX_GPU_DEVICE_MANAGED amrex::Real relTol    = 1.0e-10;
-AMREX_GPU_DEVICE_MANAGED amrex::Real absTol    = 1.0e-10;
+Array<Real,NUM_SPECIES+1> typVals = {-1};
+AMREX_GPU_DEVICE_MANAGED Real relTol    = 1.0e-10;
+AMREX_GPU_DEVICE_MANAGED Real absTol    = 1.0e-10;
 /**********************************/
 
 /**********************************/
 /* Set or update typVals */
-void SetTypValsODE(std::vector<double> ExtTypVals) {
-    int size_ETV = (NUM_SPECIES + 1);
-
-    if (typVals.size()==0) {
-        typVals.resize(size_ETV);
-    }
-
-    amrex::Vector<std::string> kname;
+void SetTypValsODE(const std::vector<double>& ExtTypVals) {
+    Vector<std::string> kname;
     EOS::speciesNames(kname);
 
-    amrex::Print() << "Set the typVals in PelePhysics: \n  ";
+    Print() << "Set the typVals in PelePhysics: \n  ";
+    int size_ETV = ExtTypVals.size();
+    AMREX_ASSERT(size_ETV == typVals.size());
     for (int i=0; i<size_ETV-1; i++) {
         typVals[i] = ExtTypVals[i];
-        amrex::Print() << kname[i] << ":" << typVals[i] << "  ";    
+        Print() << kname[i] << ":" << typVals[i] << "  ";
     }
     typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
-    amrex::Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";    
-
+    Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";
 }
 
 /* Set or update the rel/abs tolerances  */
 void SetTolFactODE(double relative_tol,double absolute_tol) {
     relTol = relative_tol;
     absTol = absolute_tol;
-    amrex::Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
+    Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
 }
 
 /* Infos to print once */
-int reactor_info(const int &reactor_type,const int &Ncells){ 
+int reactor_info(int reactor_type,int Ncells){ 
 
     /* ParmParse from the inputs file */ 
-    amrex::ParmParse pp("ode");
+    ParmParse pp("ode");
     int ianalytical_jacobian = 0;
     pp.query("analytical_jacobian",ianalytical_jacobian);
     int iverbose = 1;
     pp.query("verbose",iverbose);
 
     if (iverbose > 0) {
-        amrex::Print() << "Nb of spec in mech is " << NUM_SPECIES << "\n";    
-
-        amrex::Print() << "Ncells in one solve is " << Ncells << "\n";
+        Print() << "Number of species in mech is " << NUM_SPECIES << "\n";
+        Print() << "Number of cells in one solve is " << Ncells << "\n";
     }
 
     std::string  solve_type_str = "none"; 
-    amrex::ParmParse ppcv("cvode");
+    ParmParse ppcv("cvode");
     ppcv.query("solve_type", solve_type_str);
     /* options are:
     sparse_solve          = 1;
@@ -97,14 +91,14 @@ int reactor_info(const int &reactor_type,const int &Ncells){
     } else if (solve_type_str == "GMRES") {
         isolve_type = iterative_gmres_solve; 
     } else {
-        amrex::Abort("Wrong solve_type. Options are: sparse, sparse_custom, GMRES");
+        Abort("Wrong solve_type. Options are: sparse, sparse_custom, GMRES");
     }
 
     /* Checks */
     if (isolve_type == iterative_gmres_solve) {
         if (ianalytical_jacobian == 1) { 
             if (iverbose > 0) {
-                amrex::Print() <<"Using an Iterative GMRES Solver with sparse simplified preconditioning \n";
+                Print() <<"Using an Iterative GMRES Solver with sparse simplified preconditioning \n";
             }
             int nJdata;
             int HP;
@@ -116,18 +110,18 @@ int reactor_info(const int &reactor_type,const int &Ncells){
             /* Precond data */ 
             SPARSITY_INFO_SYST_SIMPLIFIED(&nJdata,&HP);
             if (iverbose > 0) {
-                amrex::Print() << "--> SPARSE Preconditioner -- non zero entries: " << nJdata << ", which represents "<< nJdata/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
+                Print() << "--> SPARSE Preconditioner -- non zero entries: " << nJdata << ", which represents "<< nJdata/float((NUM_SPECIES+1) * (NUM_SPECIES+1)) *100.0 <<" % fill-in pattern\n";
             }         
         } else {
             if (iverbose > 0) {
-                amrex::Print() <<"Using an Iterative GMRES Solver without preconditionning \n";
+                Print() <<"Using an Iterative GMRES Solver without preconditionning \n";
             }
         }
 
     } else if (isolve_type == sparse_solve) {
         if (ianalytical_jacobian == 1) {
             if (iverbose > 0) {
-                amrex::Print() <<"Using a custom Sparse Direct solver (with Analytical Jacobian) \n";
+                Print() <<"Using a custom sparse direct solver (with an analytical Jacobian) \n";
             }
             int nJdata;
             int HP;
@@ -139,15 +133,15 @@ int reactor_info(const int &reactor_type,const int &Ncells){
             /* Jac data */ 
             SPARSITY_INFO_SYST(&nJdata,&HP,Ncells);
             if (iverbose > 0) {
-                amrex::Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
+                Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
             }         
         } else {
-            amrex::Abort("\n--> When using a custom direct sparse solver, specify an AJ \n");
+            Abort("\n--> Custom direct sparse solver requires an analytic Jacobian \n");
         }
 
     } else if (isolve_type == sparse_cusolver_solve) {
         if (ianalytical_jacobian == 1) {
-            amrex::Print() <<"Using a Sparse Direct Solver based on cuSolver \n";
+            Print() <<"Using a Sparse Direct Solver based on cuSolver \n";
             int nJdata;
             int HP;
             if (reactor_type == eint_rho) {
@@ -158,17 +152,17 @@ int reactor_info(const int &reactor_type,const int &Ncells){
             /* Jac data */ 
             SPARSITY_INFO_SYST(&nJdata,&HP,Ncells);
             if (iverbose > 0) {
-                amrex::Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
+              Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
             }         
         } else {
-                amrex::Abort("\n--> When using a SDS, specify an AJ \n");
+                Abort("\n--> Sparse direct solvers requires an analytic Jacobian \n");
         }
 
     } else {
-        amrex::Abort("\n--> Wrong choice of input parameters (cvode) \n");
+        Abort("\n--> Bad linear solver choice for CVODE \n");
     }
 
-    amrex::Print() << "\n--> DONE WITH INITIALIZATION (GPU)" << reactor_type << "\n";
+    Print() << "\n--> DONE WITH INITIALIZATION (GPU)" << reactor_type << "\n";
 
     return(0);
 }
@@ -199,14 +193,14 @@ int react(const amrex::Box& box,
     realtype *ratol;
 
     /* ParmParse from the inputs file */ 
-    amrex::ParmParse pp("ode");
+    ParmParse pp("ode");
     int ianalytical_jacobian = 0;
     pp.query("analytical_jacobian",ianalytical_jacobian);
     int iverbose = 1;
     pp.query("verbose",iverbose);
 
     std::string  solve_type_str = "none"; 
-    amrex::ParmParse ppcv("cvode");
+    ParmParse ppcv("cvode");
     ppcv.query("solve_type", solve_type_str);
     /* options are:
     sparse_solve          = 1;
@@ -594,7 +588,7 @@ int react(const amrex::Box& box,
 int react(realtype *rY_in,    realtype *rY_src_in, 
           realtype *rX_in,    realtype *rX_src_in,
           realtype &dt_react, realtype &time,
-          const int &reactor_type,const int &Ncells, 
+          int reactor_type, int Ncells, 
           cudaStream_t stream) {
 
     /* CVODE */
@@ -849,8 +843,8 @@ int react(realtype *rY_in,    realtype *rY_src_in,
     /* Definition of tolerances: one for each species */
     atol  = N_VNew_Cuda(neq_tot);
     ratol = N_VGetHostArrayPointer_Cuda(atol);
-    if (typVals.size()>0) {
-        printf("Setting CVODE tolerances rtol = %14.8e atolfact = %14.8e in PelePhysics \n",relTol, absTol);
+    if (typVals[0]>0) {
+        Print() << "Setting CVODE tolerances rtol = " << relTol << " atolfact = " << absTol << " in PelePhysics \n";
         for (int i = 0; i < NCELLS; i++) {
             int offset = i * (NUM_SPECIES + 1);
             for  (int k = 0; k < NUM_SPECIES + 1; k++) {
@@ -1021,8 +1015,8 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
     udata->dt_save = t;
 
     const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-    //amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
-    amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+    //launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+    launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
         [=] AMREX_GPU_DEVICE () noexcept {
             for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
                      icell < udata->ncells_d[0]; icell += stride) {
@@ -1064,7 +1058,7 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
     if (jok) {
         /* GPU tests */
         const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-        amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+        launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
             [=] AMREX_GPU_DEVICE () noexcept {
                 for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
                      icell < udata->ncells_d[0]; icell += stride) {
@@ -1074,7 +1068,7 @@ static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
         *jcurPtr = SUNFALSE;
     } else {
         const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-        amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+        launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
             [=] AMREX_GPU_DEVICE () noexcept {
                 for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
                      icell < udata->ncells_d[0]; icell += stride) {
@@ -1210,7 +1204,7 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
         if ((SUNMatrix_cuSparse_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
            (SUNMatrix_cuSparse_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
            (SUNMatrix_cuSparse_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
-                printf("Jac error: matrix is wrong size!\n");
+                Print() << "Jac error: matrix is wrong size!\n";
                 return 1;
         }
     } else {
@@ -1226,7 +1220,7 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
         if ((SUNSparseMatrix_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
             (SUNSparseMatrix_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
             (SUNSparseMatrix_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
-                printf("Jac error: matrix is wrong size!\n");
+                Print() << "Jac error: matrix is wrong size!\n";
                 return 1;
         }
     }
@@ -1236,7 +1230,7 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
     if (udata->isolve_type == sparse_cusolver_solve) {
         /* GPU tests */
         const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-        amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+        launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
             [=] AMREX_GPU_DEVICE () noexcept {
                 for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
                      icell < udata->ncells_d[0]; icell += stride) {
@@ -1246,7 +1240,7 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
     } else {
         /* GPU tests */
         const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-        amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+        launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
             [=] AMREX_GPU_DEVICE () noexcept {
                 for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
                      icell < udata->ncells_d[0]; icell += stride) {
@@ -1282,11 +1276,11 @@ fKernelSpec(int icell, void *user_data,
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
 
-  amrex::Real mw[NUM_SPECIES];
-  amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac;
-  amrex::GpuArray<amrex::Real,NUM_SPECIES> ei_pt;
-  amrex::GpuArray<amrex::Real,NUM_SPECIES> cdots_pt;
-  amrex::Real Cv_pt, rho_pt, temp_pt, nrg_pt;
+  Real mw[NUM_SPECIES];
+  GpuArray<Real,NUM_SPECIES> massfrac;
+  GpuArray<Real,NUM_SPECIES> ei_pt;
+  GpuArray<Real,NUM_SPECIES> cdots_pt;
+  Real Cv_pt, rho_pt, temp_pt, nrg_pt;
 
   int offset = icell * (NUM_SPECIES + 1); 
 
@@ -1342,10 +1336,10 @@ fKernelComputeAJchemCuSolver(int ncell, void *user_data, realtype *u_d, realtype
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
 
-  amrex::Real mw[NUM_SPECIES];
-  amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac;
-  amrex::GpuArray<amrex::Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
-  amrex::Real rho_pt, temp_pt;
+  Real mw[NUM_SPECIES];
+  GpuArray<Real,NUM_SPECIES> massfrac;
+  GpuArray<Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
+  Real rho_pt, temp_pt;
 
   int u_offset      = ncell * (NUM_SPECIES + 1); 
   int jac_offset = ncell * (udata->NNZ); 
@@ -1408,10 +1402,10 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d)
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
 
-  amrex::Real mw[NUM_SPECIES];
-  amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac;
-  amrex::GpuArray<amrex::Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
-  amrex::Real rho_pt, temp_pt;
+  Real mw[NUM_SPECIES];
+  GpuArray<Real,NUM_SPECIES> massfrac;
+  GpuArray<Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
+  Real rho_pt, temp_pt;
 
   int u_offset   = ncell * (NUM_SPECIES + 1); 
   int jac_offset = ncell * (udata->NNZ); 
@@ -1473,10 +1467,10 @@ fKernelComputeallAJ(int ncell, void *user_data, realtype *u_d, double * csr_val_
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
 
-  amrex::Real mw[NUM_SPECIES];
-  amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac, activity;
-  amrex::GpuArray<amrex::Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
-  amrex::Real rho_pt, temp_pt;
+  Real mw[NUM_SPECIES];
+  GpuArray<Real,NUM_SPECIES> massfrac, activity;
+  GpuArray<Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
+  Real rho_pt, temp_pt;
 
   int u_offset   = ncell * (NUM_SPECIES + 1); 
   int jac_offset = ncell * (udata->NNZ); 
@@ -1728,7 +1722,7 @@ int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A)
                      sizeof(double) * (SUN_CUSP_SUBSYS_NNZ(S) * SUN_CUSP_NUM_SUBSYS(S)), cudaMemcpyHostToDevice);
   if (cuerr != cudaSuccess) {
       SUN_CUSP_LASTFLAG(S) = SUNLS_MEM_FAIL;
-      amrex::Abort("\nPB MEMCPY\n");
+      Abort("\nPB MEMCPY\n");
   }
   BL_PROFILE_VAR_STOP(MemCpyMatrix);
 
@@ -1749,7 +1743,7 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   BL_PROFILE_VAR("fKernelDenseSolve()", fKernelDenseSolve);
   const auto ec = Gpu::ExecutionConfig(SUN_CUSP_NUM_SUBSYS(S));  
   // TODO: why is this AMREX version NOT working ?
-  //amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, SUN_CUSP_STREAM(S)>>>(
+  //launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, SUN_CUSP_STREAM(S)>>>(
   //    [=] AMREX_GPU_DEVICE () noexcept {
   //        for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
   //            icell < SUN_CUSP_NUM_SUBSYS(S); icell += stride) {
@@ -1846,15 +1840,15 @@ static void PrintFinalStats(void *cvodeMem)
   flag = CVodeGetNumLinConvFails(cvodeMem, &ncfl);
   check_flag(&flag, "CVodeGetNumLinConvFails", 1);
 
-  amrex::Print() <<"\nFinal Statistics: \n";
-  amrex::Print() <<"lenrw      = " << lenrw   <<"    leniw         = " << leniw   << "\n";
-  amrex::Print() <<"lenrwLS    = " << lenrwLS <<"    leniwLS       = " << leniwLS << "\n";
-  amrex::Print() <<"nSteps     = " << nst     <<"\n";
-  amrex::Print() <<"nRHSeval   = " << nfe     <<"    nLinRHSeval   = " << nfeLS   << "\n";
-  amrex::Print() <<"nnLinIt    = " << nni     <<"    nLinIt        = " << nli     << "\n";
-  amrex::Print() <<"nLinsetups = " << nsetups <<"    nErrtf        = " << netf    << "\n";
-  amrex::Print() <<"nPreceval  = " << npe     <<"    nPrecsolve    = " << nps     << "\n";
-  amrex::Print() <<"nConvfail  = " << ncfn    <<"    nLinConvfail  = " << ncfl    << "\n\n";
+  Print() <<"\nFinal Statistics: \n";
+  Print() <<"lenrw      = " << lenrw   <<"    leniw         = " << leniw   << "\n";
+  Print() <<"lenrwLS    = " << lenrwLS <<"    leniwLS       = " << leniwLS << "\n";
+  Print() <<"nSteps     = " << nst     <<"\n";
+  Print() <<"nRHSeval   = " << nfe     <<"    nLinRHSeval   = " << nfeLS   << "\n";
+  Print() <<"nnLinIt    = " << nni     <<"    nLinIt        = " << nli     << "\n";
+  Print() <<"nLinsetups = " << nsetups <<"    nErrtf        = " << netf    << "\n";
+  Print() <<"nPreceval  = " << npe     <<"    nPrecsolve    = " << nps     << "\n";
+  Print() <<"nConvfail  = " << ncfn    <<"    nLinConvfail  = " << ncfl    << "\n\n";
 
 }
 
@@ -1871,23 +1865,29 @@ static int check_flag(void *flagvalue, const char *funcname, int opt)
 
   /* Check if SUNDIALS function returned NULL pointer - no memory allocated */
   if (opt == 0 && flagvalue == NULL) {
-      fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
-      funcname);
+      if (ParallelDescriptor::IOProcessor()) {
+          fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
+                  funcname);
+      }
       return(1); 
   }
   /* Check if flag < 0 */
   else if (opt == 1) {
       errflag = (int *) flagvalue;
       if (*errflag < 0) {
-          fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n\n",
-          funcname, *errflag);
+          if (ParallelDescriptor::IOProcessor()) {
+              fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n\n",
+                      funcname, *errflag);
+          }
           return(1); 
       }
   }
   /* Check if function returned NULL pointer - no memory allocated */
   else if (opt == 2 && flagvalue == NULL) {
-      fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
-      funcname);
+      if (ParallelDescriptor::IOProcessor()) {
+          fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
+                  funcname);
+      }
       return(1); 
   }
 

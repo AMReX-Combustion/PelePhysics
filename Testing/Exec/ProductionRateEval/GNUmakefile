@@ -1,0 +1,45 @@
+PELE_PHYSICS_HOME    := ../../..
+
+
+PRECISION  = DOUBLE
+PROFILE    = FALSE
+
+DEBUG      = FALSE
+
+DIM        = 3
+
+COMP	   = gcc
+FCOMP	   = gfortran
+
+USE_MPI    = TRUE
+USE_OMP    = FALSE
+
+USE_CUDA   = FALSE
+USE_CUDA   = TRUE
+
+TINY_PROFILE = FALSE
+
+TRANSPORT_CPP = TRUE
+
+ifeq ($(USE_CUDA), TRUE)
+  USE_SUNDIALS_PP = TRUE
+  USE_KLU_PP = FALSE
+  USE_CUDA_SUNDIALS_PP = TRUE
+else
+  USE_SUNDIALS_PP = FALSE
+  USE_KLU_PP = FALSE
+  USE_CUDA_SUNDIALS_PP = FALSE
+endif
+USE_KLU = $(USE_KLU_PP) # sort out keywords later...
+
+Eos_dir         = Fuego
+#Chemistry_Model = LiDryer
+#Chemistry_Model = drm19
+Chemistry_Model = grimech12
+Reactions_dir   = Fuego
+Transport_dir   = Simple
+
+CEXE_sources += main.cpp
+Blocs   := .
+
+include $(PELE_PHYSICS_HOME)/Testing/Exec/Make.PelePhysics

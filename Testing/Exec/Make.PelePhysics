@@ -159,9 +159,10 @@ AMReX_buildInfo.cpp:
           --GIT "$(TOP) $(AMREX_HOME) $(PELE_PHYSICS_HOME)"
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
+include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
 
 clean::
-	$(SILENT) $(RM) extern.f90
+	$(SILENT) $(RM) extern.f90 extern_parameters.cpp extern_parameters_F.H extern_parameters.H extern.f90
 	$(SILENT) $(RM) AMReX_buildInfo.cpp
 
 

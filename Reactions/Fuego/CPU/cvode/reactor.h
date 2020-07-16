@@ -114,7 +114,7 @@ int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 
 /**********************************/
 /* Functions Called by the Program */
-int reactor_init(const int &cvode_iE, const int &Ncells);
+int reactor_init(int cvode_iE, int Ncells);
 
 int react_1(const amrex::Box& box,
           amrex::Array4<amrex::Real> const& rY_in,
@@ -157,7 +157,7 @@ void FreeUserData(UserData data);
 
 void check_state(N_Vector yvec);
 
-void SetTypValsODE(std::vector<double> ExtTypVals);
+void SetTypValsODE(const std::vector<double>& ExtTypVals);
 
 void SetTolFactODE(double relative_tol,double absolute_tol);
 
