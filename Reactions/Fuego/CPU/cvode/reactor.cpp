@@ -157,7 +157,7 @@ void ReSetTolODE() {
 
 
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init(const int reactor_type, const int ode_ncells) {
+int reactor_init(const int &reactor_type, const int &ode_ncells) {
 
     BL_PROFILE_VAR("reactInit", reactInit);
     /* CVODE return Flag  */

@@ -114,7 +114,7 @@ int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 
 /**********************************/
 /* Functions Called by the Program */
-int reactor_init(const int cvode_iE, const int Ncells);
+int reactor_init(const int &cvode_iE, const int &Ncells);
 
 int react_1(const amrex::Box& box,
           amrex::Array4<amrex::Real> const& rY_in,
