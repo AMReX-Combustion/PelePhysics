@@ -208,6 +208,7 @@ SprayParticleContainer::estTimestep (int lev, Real cfl) const
 
   const Real strttime = ParallelDescriptor::second();
   const Geometry& geom = this->m_gdb->Geom(lev);
+  const auto dx = geom.CellSizeArray();
   const auto dxi = geom.InvCellSizeArray();
   {
     amrex::ReduceOps<amrex::ReduceOpMin> reduce_op;
@@ -249,6 +250,10 @@ SprayParticleContainer::estTimestep (int lev, Real cfl) const
     dt = amrex::min(dt,ldt_cpu);
   }
   ParallelDescriptor::ReduceRealMin(dt);
+  // Check if the velocity of particles being injected
+  // is greater existing particle velocities
+  if (m_injectVel > 0.)
+    dt = amrex::min(dt, cfl*dx[0]/m_injectVel);
 
   if (this->m_verbose > 1) {
     Real stoptime = ParallelDescriptor::second() - strttime;
@@ -308,6 +313,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
   const Real vol = AMREX_D_TERM(dx[0],*dx[1],*dx[2]);
   const Real inv_vol = 1./vol;
   // Set all constants
+  const Real num_ppp = m_parcelSize;
   const Real C_eps = 1.E-15;
   const Real B_eps = 1.E-7;
   const Real dia_eps = 2.E-6;
@@ -692,7 +698,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
             }
             // Add the spray source terms to the Eulerian fluid
             for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
-              Real cur_coef = -coef[aindx]*sub_source;
+              Real cur_coef = -coef[aindx]*sub_source*num_ppp;
               IntVect cur_indx = indx_array[aindx];
               AMREX_ASSERT(tile_box.contains(cur_indx));
               if (mom_trans) {

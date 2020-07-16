@@ -64,8 +64,10 @@ public:
 
   SprayParticleContainer(amrex::Amr* amr, amrex::BCRec* _phys_bc)
     : amrex::AmrParticleContainer<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>(amr),
-    sub_cycle(amr->subCycle()),
-    phys_bc(_phys_bc)
+      sub_cycle(amr->subCycle()),
+      phys_bc(_phys_bc),
+      m_injectVel(0.),
+      m_parcelSize(1.)
   {
     nstate = NSR_SPR;
     init_bcs();
@@ -97,6 +99,14 @@ public:
   /// Compute a maximum time step based on the particle velocities and a particle CFL number
   ///
   amrex::Real estTimestep(int level, amrex::Real cfl) const;
+
+  ///
+  /// Set the number of particles per parcel
+  ///
+  inline void setParcelSize(const amrex::Real parcelSize)
+  {
+    m_parcelSize = parcelSize;
+  }
 
   ///
   /// Update the particles but do not move particles
@@ -139,6 +149,8 @@ public:
   void InitSprayParticles(amrex::AmrLevel* pelec, const int& lev, const int& num_ppc);
 
 private:
+  amrex::Real m_injectVel;
+  amrex::Real m_parcelSize;
   int nstate;
   ///
   /// This defines reflect_lo and reflect_hi from phys_bc
