@@ -138,9 +138,9 @@ int react_2(const amrex::Box& box,
           amrex::Real &dt_react,
           amrex::Real &time);
 
-int react(realtype *rY_in, realtype *rY_src_in, 
-	      realtype *rX_in, realtype *rX_src_in, 
-	      realtype &dt_react, realtype &time);
+int react(amrex::Real *rY_in, amrex::Real *rY_src_in, 
+	      amrex::Real *rX_in, amrex::Real *rX_src_in, 
+	      amrex::Real &dt_react, amrex::Real &time);
 
 void reactor_close();
 
@@ -149,7 +149,7 @@ void reactor_close();
 /* Helper functions */
 int check_flag(void *flagvalue, const char *funcname, int opt);
 
-void PrintFinalStats(void *cvodeMem, realtype Temp);
+void PrintFinalStats(void *cvodeMem, amrex::Real Temp);
 
 UserData AllocUserData(int iE, int num_cells);
 

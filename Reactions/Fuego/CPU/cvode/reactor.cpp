@@ -19,7 +19,7 @@
   /* User data */
   UserData data      = NULL;
 /* OPTIONS */
-  double time_init    = 0.0;
+  amrex::Real time_init    = 0.0;
   amrex::Gpu::ManagedVector<amrex::Real> typVals;
   double relTol       = 1.0e-10;
   double absTol       = 1.0e-10;
@@ -530,9 +530,6 @@ int react_1(const amrex::Box& box,
           amrex::Real &dt_react,
           amrex::Real &time) {
 
-    realtype time_out, dummy_time;
-    int flag, offset, extra_cells;
-    int box_ncells;
 #ifdef _OPENMP
     int omp_thread;
 
@@ -550,21 +547,20 @@ int react_1(const amrex::Box& box,
 
     /* Initial time and time to reach after integration */
     time_init = time;
-    time_out  = time + dt_react;
 
 #ifdef _OPENMP
     if ((data->iverbose > 3) && (omp_thread == 0)) {
 #else
     if (data->iverbose > 3) {
 #endif
-        amrex::Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << dt_react << " and final time should be " << time_out << "\n";
+        amrex::Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << dt_react << " and final time should be " << time_init + dt_react << "\n";
     }
 
     if (data->ncells != 1) {
         amrex::Abort("CVODE react_1 can only integrate one cell at a time");
     }
-    box_ncells  = box.numPts(); 
-    data->boxcell = 0; 
+    int box_ncells  = box.numPts(); 
+    data->boxcell   = 0; 
 
 #ifdef _OPENMP
     if ((data->iverbose > 2) && (omp_thread == 0)) {
@@ -583,12 +579,7 @@ int react_1(const amrex::Box& box,
     }
     BL_PROFILE_VAR_STOP(ExtForcingAlloc);
 
-    BL_PROFILE_VAR("reactor::FlatStuff", FlatStuff);
-    BL_PROFILE_VAR_STOP(FlatStuff);
-
     /* Perform integration one cell at a time */
-    const auto len        = amrex::length(box);
-    const auto lo         = amrex::lbound(box); 
     amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
 
         amrex::Real mass_frac[NUM_SPECIES];
@@ -599,10 +590,10 @@ int react_1(const amrex::Box& box,
 
         realtype *yvec_d      = N_VGetArrayPointer(y);
         
-        BL_PROFILE_VAR_START(FlatStuff);
+        BL_PROFILE_VAR("reactor::FlatStuff", FlatStuff);
         for (int n = 0; n < NUM_SPECIES; n++) {
-            yvec_d[n]     = rhoY(i,j,k,n);
-            (data->rYsrc)[n] = frcExt(i,j,k,n);
+            yvec_d[n]        = rY_in(i,j,k,n);
+            (data->rYsrc)[n] = rY_src_in(i,j,k,n);
             rho += yvec_d[n]; 
         }
         rho_inv                 = 1.0 / rho;
@@ -623,17 +614,17 @@ int react_1(const amrex::Box& box,
         yvec_d[NUM_SPECIES] = temp;
         BL_PROFILE_VAR_STOP(FlatStuff);
 
-        /* Initial time and time to reach after integration */
-        time_init = time;
-        time_out  = time + dt_react;
-
         /* ReInit CVODE is faster */
         CVodeReInit(cvode_mem, time_init, y);
 
+        /* Time to reach after integration */
+        amrex::Real time_out_lcl  = time_init + dt_react;
+
         /* Integration */
+        amrex::Real dummy_time;
         BL_PROFILE_VAR("reactor::AroundCVODE", AroundCVODE);
-        flag = CVode(cvode_mem, time_out, y, &dummy_time, CV_NORMAL);
-        if (check_flag(&flag, "CVode", 1)) return(1);
+        int flag = CVode(cvode_mem, time_out_lcl, y, &dummy_time, CV_NORMAL);
+        //if (check_flag(&flag, "CVode", 1)) return(1);
         BL_PROFILE_VAR_STOP(AroundCVODE);
 
 #ifdef _OPENMP
@@ -655,7 +646,7 @@ int react_1(const amrex::Box& box,
         BL_PROFILE_VAR_START(FlatStuff);
         rho = 0.0;
         for (int n = 0; n < NUM_SPECIES; n++) {
-            rhoY(i,j,k,n) = yvec_d[n];
+            rY_in(i,j,k,n) = yvec_d[n];
             rho += yvec_d[n]; 
         }
         rho_inv    = 1.0 / rho; 
@@ -674,23 +665,24 @@ int react_1(const amrex::Box& box,
         }
         T_in(i,j,k,0) = temp;
         BL_PROFILE_VAR_STOP(FlatStuff);
+
+#ifdef _OPENMP
+        if ((data->iverbose > 3) && (omp_thread == 0)) {
+#else
+        if (data->iverbose > 3) {
+#endif
+            amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << (dummy_time - time_init) << "\n";
+        }
     });
 
     /* Update dt_react with real time step taken ... 
        should be very similar to input dt_react */
-    dt_react = dummy_time - time_init;
+    //dt_react = dummy_time - time_init;
 #ifdef MOD_REACTOR
     /* If reactor mode is activated, update time to perform subcycling */
     time  = time_init + dt_react;
 #endif
 
-#ifdef _OPENMP
-    if ((data->iverbose > 3) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 3) {
-#endif
-        amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << dt_react << "\n";
-    }
 
     /* Get estimate of how hard the integration process was */
     return 20;
@@ -798,10 +790,6 @@ int react_2(const amrex::Box& box,
             yvec_d[k] = data->Yvect_full[offset + k];
         }
         
-        /* Initial time and time to reach after integration */
-        time_init = time;
-        time_out  = time + dt_react;
-
         /* ReInit CVODE is faster */
         CVodeReInit(cvode_mem, time_init, y);
 
@@ -823,23 +811,21 @@ int react_2(const amrex::Box& box,
         for  (int k = 0; k < data->ncells; k++) {
             data->FCunt[i + k] = nfe+nfeLS;
         }
+
+#ifdef _OPENMP
+        if ((data->iverbose > 3) && (omp_thread == 0)) {
+#else
+        if (data->iverbose > 3) {
+#endif
+            amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << (dummy_time - time_init) << "\n";
+        }
+
     }
 
-    /* Update dt_react with real time step taken ... 
-       should be very similar to input dt_react */
-    dt_react = dummy_time - time_init;
 #ifdef MOD_REACTOR
     /* If reactor mode is activated, update time to perform subcycling */
     time  = time_init + dt_react;
 #endif
-
-#ifdef _OPENMP
-    if ((data->iverbose > 3) && (omp_thread == 0)) {
-#else
-    if (data->iverbose > 3) {
-#endif
-        amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << dt_react << "\n";
-    }
 
     BL_PROFILE_VAR_START(FlatStuff);
     /* Update the input/output Array4 rY_in and rEner_in*/
@@ -912,7 +898,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 #endif
         amrex::Print() <<"Ncells in the box = "<<  data->ncells  << "\n";
     }
-    BL_PROFILE_VAR("ExtForcing::Alloc", ExtForcingAlloc);
+    BL_PROFILE_VAR("reactor::ExtForcingAlloc", ExtForcingAlloc);
     if ((data->rhoX_init).size() != data->ncells) {
         (data->Yvect_full).resize(data->ncells*(NUM_SPECIES+1));
         (data->rhoX_init).resize(data->ncells);
@@ -921,6 +907,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     }
     BL_PROFILE_VAR_STOP(ExtForcingAlloc);
 
+    BL_PROFILE_VAR("reactor::FlatStuff", FlatStuff);
     /* Get Device MemCpy of in arrays */
     /* Get Device pointer of solution vector */
     realtype *yvec_d      = N_VGetArrayPointer(y);
@@ -931,6 +918,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     /* rhoE/rhoH */
     std::memcpy((data->rhoX_init).data(), rX_in, sizeof(amrex::Real) * data->ncells);
     std::memcpy((data->rhoXsrc_ext).data(), rX_src_in, sizeof(amrex::Real) * data->ncells);
+    BL_PROFILE_VAR_STOP(FlatStuff);
 
     /* Check if y is within physical bounds
        we may remove that eventually */
@@ -943,6 +931,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
         return 0;
     }
 
+    BL_PROFILE_VAR_START(FlatStuff);
     /* T update with energy and Y */
     int offset;
     realtype rho, rho_inv, nrg_loc, temp;
@@ -970,6 +959,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
         // store T in y
         yvec_d[offset + NUM_SPECIES] = temp;
     }
+    BL_PROFILE_VAR_STOP(FlatStuff);
 
     /* ReInit CVODE is faster */
     CVodeReInit(cvode_mem, time_init, y);
@@ -977,10 +967,12 @@ int react(realtype *rY_in, realtype *rY_src_in,
     /* There should be no internal looping of CVOde */
     data->boxcell = 0;
 
+    BL_PROFILE_VAR("reactor::AroundCVODE", AroundCVODE);
     flag = CVode(cvode_mem, time_out, y, &dummy_time, CV_NORMAL);
     /* ONE STEP MODE FOR DEBUGGING */
     //flag = CVode(cvode_mem, time_out, y, &dummy_time, CV_ONE_STEP);
     if (check_flag(&flag, "CVode", 1)) return(1);
+    BL_PROFILE_VAR_STOP(AroundCVODE);
 
     /* Update dt_react with real time step taken ... 
        should be very similar to input dt_react */
@@ -998,6 +990,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
         amrex::Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << dt_react << "\n";
     }
 
+    BL_PROFILE_VAR_START(FlatStuff);
     /* Pack data to return in main routine external */
     std::memcpy(rY_in, yvec_d, ((NUM_SPECIES+1)*data->ncells)*sizeof(realtype));
     for  (int i = 0; i < data->ncells; i++) {
@@ -1029,6 +1022,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
         // store T in rY_in
         rY_in[offset + NUM_SPECIES] = temp;
     }
+    BL_PROFILE_VAR_STOP(FlatStuff);
 
 #ifdef _OPENMP
     if ((data->iverbose > 1) && (omp_thread == 0)) {
