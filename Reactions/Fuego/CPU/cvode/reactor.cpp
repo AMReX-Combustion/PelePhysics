@@ -23,7 +23,7 @@
   double *rhoXsrc_ext = NULL;
   double *rYsrc       = NULL;
   double time_init    = 0.0;
-  double *typVals     = NULL;
+  Array<double,NUM_SPECIES+1> typVals = {-1};
   double relTol       = 1.0e-10;
   double absTol       = 1.0e-10;
 /* REMOVE MAYBE LATER */
@@ -47,13 +47,8 @@
 
 /**********************************/
 /* Set or update typVals */
-void SetTypValsODE(std::vector<double> ExtTypVals) {
+void SetTypValsODE(const std::vector<double>& ExtTypVals) {
     int size_ETV = (NUM_SPECIES + 1);
-
-    if (typVals==NULL) {
-        typVals = (double *) malloc(size_ETV*sizeof(double));
-    }
-
     amrex::Vector<std::string> kname;
     EOS::speciesNames(kname);
 
@@ -124,7 +119,7 @@ void ReSetTolODE() {
     ratol   = N_VGetArrayPointer(atol);
 
     int offset;
-    if (typVals) {
+    if (typVals[0] > 0) {
 #ifdef _OPENMP
         if ((data->iverbose > 0) && (omp_get_thread_num() == 0)) {
 #else
