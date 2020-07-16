@@ -122,6 +122,8 @@ void ReSetTolODE() {
 	    int flag = ARKStepSVtolerances(arkode_mem, relTol, atol); 
 	    if (check_flag(&flag, "ARKStepSVtolerances", 1)) Abort("Problem in ReSetTolODE");
         }
+
+        N_VDestroy(atol);
 }
 
 
@@ -271,6 +273,7 @@ int reactor_init(int reactor_type, int Ncells) {
 
 	/* Free the atol vector */
 	N_VDestroy(atol); 
+        N_VDestroy(y); 
 
 	/* Ok we're done ...*/
         if ((data->iverbose > 1) && (omp_thread == 0)) {

@@ -129,6 +129,8 @@ void ReSetTolODE() {
     if (check_flag(&flag, "CVodeSVtolerances", 1)) { 
         Abort("Problem in ReSetTolODE");
     }
+
+    N_VDestroy(atol);
 }
 
 
@@ -377,7 +379,8 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
     if(check_flag(&flag, "CVodeSetMaxStepsBetweenJac", 1)) return(1);
 
     /* Free the atol vector */
-    N_VDestroy(atol); 
+    N_VDestroy(atol);
+    N_VDestroy(y);
 
     /* Ok we're done ...*/
     if ((data->iverbose > 1) && (omp_thread == 0)) {
