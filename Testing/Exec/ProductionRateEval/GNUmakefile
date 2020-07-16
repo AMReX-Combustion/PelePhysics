@@ -33,7 +33,9 @@ endif
 USE_KLU = $(USE_KLU_PP) # sort out keywords later...
 
 Eos_dir         = Fuego
-Chemistry_Model = LiDryer
+#Chemistry_Model = LiDryer
+#Chemistry_Model = drm19
+Chemistry_Model = grimech12
 Reactions_dir   = Fuego
 Transport_dir   = Simple
 
