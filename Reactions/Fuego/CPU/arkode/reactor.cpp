@@ -289,11 +289,9 @@ int reactor_init(int reactor_type, int Ncells) {
 
 /* Main call routine */
 int react(realtype *rY_in, realtype *rY_src_in, 
-		realtype *rX_in, realtype *rX_src_in,
-                realtype *dt_react, realtype *time){
+          realtype *rX_in, realtype *rX_src_in,
+          realtype *dt_react, realtype *time){
 
-	realtype time_init, time_out, dummy_time;
-	int flag;
 	int omp_thread = 0;
 #ifdef _OPENMP
 	omp_thread = omp_get_thread_num(); 
@@ -304,8 +302,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	}
 
 	/* Initial time and time to reach after integration */
-        time_init = *time;
-	time_out  = *time + (*dt_react);
+        realtype time_init = *time;
+	realtype time_out  = *time + (*dt_react);
 
 	if ((data->iverbose > 3) && (omp_thread == 0)) {
 	    Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << *dt_react << " and final time should be " << time_out << "\n";
@@ -335,10 +333,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
         }
        
         if (data->iuse_erkode == 1) { 
-	    flag = ERKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
+            int flag = ERKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
 	    if (check_flag(&flag, "ERKStepEvolve", 1)) return 1;
         } else {
-	    flag = ARKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
+	    int flag = ARKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
 	    if (check_flag(&flag, "ARKStepEvolve", 1)) return 1;
         }
 
@@ -400,14 +398,10 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 			    void *user_data)
 {
   /* Make local copies of pointers in user_data (cell M)*/
-  UserData data_wk;
-  data_wk = (UserData) user_data;   
-
-  /* Tmp vars */
-  int tid;
+  UserData data_wk = (UserData) user_data;
 
   /* Loop on packed cells */
-  for (tid = 0; tid < data_wk->ncells; tid ++) {
+  for (int tid = 0; tid < data_wk->ncells; tid ++) {
       /* Tmp vars */
       realtype massfrac[NUM_SPECIES];
       realtype Xi[NUM_SPECIES];
@@ -633,8 +627,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
     Print() << "   Allocating data\n";
 
     /* Make local copies of pointers in user_data */
-    UserData data_wk;
-    data_wk = (UserData) malloc(sizeof *data_wk);
+    UserData data_wk = (UserData) malloc(sizeof *data_wk);
     int omp_thread = 0;
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num(); 

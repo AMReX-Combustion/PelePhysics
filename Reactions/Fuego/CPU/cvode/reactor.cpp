@@ -14,7 +14,6 @@ using namespace amrex;
 
 /**********************************/
 /* Global Variables */
-  N_Vector y         = NULL;
   SUNLinearSolver LS = NULL;
   SUNMatrix A        = NULL;
   void *cvode_mem    = NULL;
@@ -138,24 +137,16 @@ void ReSetTolODE() {
 int reactor_init(const int &reactor_type, const int &ode_ncells) {
 
     BL_PROFILE_VAR("reactInit", reactInit);
-    /* CVODE return Flag  */
-    int flag;
-    /* CVODE initial time - 0 */
-    realtype time;
-    /* CVODE tolerances */
-    N_Vector atol;
-    realtype *ratol;
-    /* Tot numb of eq to integrate */
-    int neq_tot;
+
     int omp_thread = 0;
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num();
 #endif
     /* Total number of eq to integrate */
-    neq_tot        = (NUM_SPECIES + 1) * ode_ncells;
+    int neq_tot = (NUM_SPECIES + 1) * ode_ncells;
 
     /* Definition of main vector */
-    y = N_VNew_Serial(neq_tot);
+    N_Vector y = N_VNew_Serial(neq_tot);
     if (check_flag((void *)y, "N_VNew_Serial", 0)) return(1);
 
     /* Call CVodeCreate to create the solver memory and specify the
@@ -174,10 +165,10 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
     }
 
     /* Set the pointer to user-defined data */
-    flag = CVodeSetUserData(cvode_mem, data);
+    int flag = CVodeSetUserData(cvode_mem, data);
     if(check_flag(&flag, "CVodeSetUserData", 1)) return(1);   
 
-    time = 0.0e+0;
+    realtype time = 0.0e+0;
     /* Call CVodeInit to initialize the integrator memory and specify the
      * user's right hand side function, the inital time, and 
      * initial dependent variable vector y. */
@@ -185,8 +176,8 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
     if (check_flag(&flag, "CVodeInit", 1)) return(1);
     
     /* Definition of tolerances: one for each species */
-    atol  = N_VNew_Serial(neq_tot);
-    ratol = N_VGetArrayPointer(atol);
+    N_Vector atol = N_VNew_Serial(neq_tot);
+    realtype *ratol = N_VGetArrayPointer(atol);
     int offset;
     if (typVals[0] > 0) {
         if ((data->iverbose > 0) && (omp_thread == 0)) {
@@ -404,8 +395,8 @@ int react_1(const Box& box,
           Array4<Real> const& rEner_src_in,
           Array4<Real> const& FC_in,
           Array4<int> const& mask,
-          Real dt_react,
-          Real time) {
+          Real &dt_react,
+          Real &time) {
 
     int omp_thread = 0;
 #ifdef _OPENMP
@@ -553,8 +544,8 @@ int react_2(const Box& box,
           Array4<Real> const& rEner_src_in,
           Array4<Real> const& FC_in,
           Array4<int> const& mask,
-          Real dt_react,
-          Real time) {
+          Real &dt_react,
+          Real &time) {
 
     realtype time_out, dummy_time;
     int flag, offset, extra_cells;
