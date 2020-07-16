@@ -15,15 +15,15 @@ AMREX_GPU_DEVICE_MANAGED int use_erkode=0;
 /* Initialization routine, called once at the begining of the problem */
 int reactor_info(const int* reactor_type, const int* Ncells)
 {
-    amrex::ParmParse pp("ode");
+    ParmParse pp("ode");
     pp.query("use_erkode", use_erkode);
     if(use_erkode==1)
     {
-        amrex::Print()<<"Using ERK ODE\n";
+        Print()<<"Using ERK ODE\n";
     }
     else
     {
-        amrex::Print()<<"Using ARK ODE\n";
+        Print()<<"Using ARK ODE\n";
     }
     return(0);
 }
@@ -164,8 +164,8 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
     udata->dt_save = t;
 
     const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-    //amrex::launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
-    amrex::launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+    //launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
+    launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
             [=] AMREX_GPU_DEVICE () noexcept {
             for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
                     icell < udata->ncells_d[0]; icell += stride) {
@@ -194,11 +194,11 @@ fKernelSpec(int icell, void *user_data,
 {
     UserData udata = static_cast<ARKODEUserData*>(user_data);
 
-    amrex::GpuArray<amrex::Real,NUM_SPECIES> mw;
-    amrex::GpuArray<amrex::Real,NUM_SPECIES> massfrac;
-    amrex::GpuArray<amrex::Real,NUM_SPECIES> ei_pt;
-    amrex::GpuArray<amrex::Real,NUM_SPECIES> cdots_pt;
-    amrex::Real Cv_pt, rho_pt, temp_pt, nrg_pt;
+    GpuArray<Real,NUM_SPECIES> mw;
+    GpuArray<Real,NUM_SPECIES> massfrac;
+    GpuArray<Real,NUM_SPECIES> ei_pt;
+    GpuArray<Real,NUM_SPECIES> cdots_pt;
+    Real Cv_pt, rho_pt, temp_pt, nrg_pt;
 
     int offset = icell * (NUM_SPECIES + 1); 
 
