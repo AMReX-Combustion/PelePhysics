@@ -380,9 +380,11 @@ SprayParticleContainer::updateParticles(const int&  lev,
     auto const fuel_indx = m_fuelData.fuelIndx();
     Array4<const Real> const& statearr = state.array(pti);
     Array4<Real> const& sourcearr = source.array(pti);
+#ifdef SPRAY_PELE_LM
     GpuArray<
       Array4<const Real>, AMREX_SPACEDIM> const
       umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti), u_mac[2].array(pti))};
+#endif
     AMREX_FOR_1D ( Np, i,
     {
       ParticleType& p = pstruct[i];
