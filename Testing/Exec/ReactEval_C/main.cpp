@@ -443,7 +443,7 @@ main (int   argc,
     #if defined(USE_SUNDIALS_PP) || defined(USE_RK64_PP)
                 fc_tmp_lcl = react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
                                    tmp_vect_energy + i, tmp_src_vect_energy + i,
-                                   &dt_incr, &time);
+                                   dt_incr, time);
 
     #else
                 double pressure = 1013250.0;
