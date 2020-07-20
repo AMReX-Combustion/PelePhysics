@@ -397,7 +397,7 @@ int reactor_init(int reactor_type, int Ncells) {
 /* Main CVODE call routine */
 int react(realtype *rY_in, realtype *rY_src_in, 
         realtype *rX_in, realtype *rX_src_in,
-        realtype *dt_react, realtype *time){
+        realtype &dt_react, realtype &time){
 
     realtype time_out, dummy_time;
     int flag;
@@ -411,11 +411,11 @@ int react(realtype *rY_in, realtype *rY_src_in,
     }
 
     /* Initial time and time to reach after integration */
-    time_init = *time;
-    time_out  = *time + (*dt_react);
+    time_init = time;
+    time_out  = time + (dt_react);
 
     if ((data->iverbose > 3) && (omp_thread == 0)) {
-        Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << *dt_react << " and final time should be " << time_out << "\n";
+        Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << dt_react << " and final time should be " << time_out << "\n";
     }
 
     /* Get Device MemCpy of in arrays */
@@ -434,7 +434,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     if (!(data->actual_ok_to_react))  { 
 #ifdef MOD_REACTOR
         /* If reactor mode is activated, update time */
-        *time  = time_out;
+        time  = time_out;
 #endif
         return 0;
     }
@@ -475,20 +475,20 @@ int react(realtype *rY_in, realtype *rY_src_in,
     if (check_flag(&flag, "CVode", 1)) return(1);
 
     /* Update dt_react with real time step taken ... */
-    *dt_react = dummy_time - time_init;
+    dt_react = dummy_time - time_init;
 #ifdef MOD_REACTOR
     /* If reactor mode is activated, update time */
-    *time  = time_init + (*dt_react);
+    time  = time_init + dt_react;
 #endif
 
     if ((data->iverbose > 3) && (omp_thread == 0)) {
-        Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << *dt_react << "\n";
+        Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << dt_react << "\n";
     }
 
     /* Pack data to return in main routine external */
     std::memcpy(rY_in, yvec_d, ((NUM_SPECIES+1)*data->ncells)*sizeof(realtype));
     for  (int i = 0; i < data->ncells; i++) {
-        rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
+        rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
     }
 
     /* T update with energy and Y */
