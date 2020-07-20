@@ -585,10 +585,10 @@ int react(const amrex::Box& box,
 }
 
 /* Main routine for external looping */
-int react(realtype *rY_in,    realtype *rY_src_in, 
+int react(realtype *rY_in,    realtype *rY_src_in,
           realtype *rX_in,    realtype *rX_src_in,
           realtype &dt_react, realtype &time,
-          int reactor_type, int Ncells, 
+          int reactor_type, int Ncells,
           cudaStream_t stream) {
 
     /* CVODE */

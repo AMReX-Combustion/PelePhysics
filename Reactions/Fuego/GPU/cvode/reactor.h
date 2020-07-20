@@ -72,12 +72,12 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void *user_data);
 
 /**********************************/
 /* Functions Called by the main program */
-int reactor_info(const int &cvode_iE, const int &Ncells); 
+int reactor_info(int cvode_iE, int Ncells);
 
-int react(realtype *rY_in, realtype *rY_src_in, 
-          realtype *rX_in, realtype *rX_src_in, 
-          realtype *dt_react, realtype *time,
-          const int &cvode_iE, const int &Ncells, 
+int react(realtype *rY_in, realtype *rY_src_in,
+          realtype *rX_in, realtype *rX_src_in,
+          realtype &dt_react, realtype &time,
+          int cvode_iE, int Ncells,
           cudaStream_t stream);
 
 int react(const amrex::Box& box,
