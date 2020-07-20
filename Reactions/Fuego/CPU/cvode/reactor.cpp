@@ -23,7 +23,7 @@
   double *rhoXsrc_ext = NULL;
   double *rYsrc       = NULL;
   double time_init    = 0.0;
-  Array<double,NUM_SPECIES+1> typVals = {-1};
+  amrex::Array<double,NUM_SPECIES+1> typVals = {-1};
   double relTol       = 1.0e-10;
   double absTol       = 1.0e-10;
 /* REMOVE MAYBE LATER */
@@ -213,7 +213,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
     atol  = N_VNew_Serial(neq_tot);
     ratol = N_VGetArrayPointer(atol);
     int offset;
-    if (typVals) {
+    if (typVals[0]>0) {
 #ifdef _OPENMP
         if ((data->iverbose > 0) && (omp_thread == 0)) {
 #else
