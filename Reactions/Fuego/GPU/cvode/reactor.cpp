@@ -60,7 +60,7 @@ void SetTolFactODE(double relative_tol,double absolute_tol) {
 }
 
 /* Infos to print once */
-int reactor_info(const int* reactor_type,const int* Ncells){ 
+int reactor_info(int reactor_type, int Ncells){ 
 
     /* ParmParse from the inputs file */ 
     ParmParse pp("ode");
@@ -72,7 +72,7 @@ int reactor_info(const int* reactor_type,const int* Ncells){
     if (iverbose > 0) {
         Print() << "Number of species in mech is " << NUM_SPECIES << "\n";    
 
-        Print() << "Number of cells in one solve is " << *Ncells << "\n";
+        Print() << "Number of cells in one solve is " << Ncells << "\n";
     }
 
     std::string  solve_type_str = "none"; 
@@ -102,7 +102,7 @@ int reactor_info(const int* reactor_type,const int* Ncells){
             }
             int nJdata;
             int HP;
-            if (*reactor_type == eint_rho) {
+            if (reactor_type == eint_rho) {
                 HP = 0;
             } else {
                 HP = 1;
@@ -125,15 +125,15 @@ int reactor_info(const int* reactor_type,const int* Ncells){
             }
             int nJdata;
             int HP;
-            if (*reactor_type == eint_rho) {
+            if (reactor_type == eint_rho) {
                 HP = 0;
             } else {
                 HP = 1;
             }
             /* Jac data */ 
-            SPARSITY_INFO_SYST(&nJdata,&HP,*Ncells);
+            SPARSITY_INFO_SYST(&nJdata,&HP,Ncells);
             if (iverbose > 0) {
-                Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(*Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
+                Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
             }         
         } else {
             Abort("\n--> Custom direct sparse solver requires an analytic Jacobian \n");
@@ -144,15 +144,15 @@ int reactor_info(const int* reactor_type,const int* Ncells){
             Print() <<"Using a Sparse Direct Solver based on cuSolver \n";
             int nJdata;
             int HP;
-            if (*reactor_type == eint_rho) {
+            if (reactor_type == eint_rho) {
                 HP = 0;
             } else {
                 HP = 1;
             }
             /* Jac data */ 
-            SPARSITY_INFO_SYST(&nJdata,&HP,*Ncells);
+            SPARSITY_INFO_SYST(&nJdata,&HP,Ncells);
             if (iverbose > 0) {
-                Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(*Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
+                Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
             }         
         } else {
                 Abort("\n--> Sparse direct solvers requires an analytic Jacobian \n");
@@ -162,7 +162,7 @@ int reactor_info(const int* reactor_type,const int* Ncells){
         Abort("\n--> Bad linear solver choice for CVODE \n");
     }
 
-    Print() << "\n--> DONE WITH INITIALIZATION (GPU)" << *reactor_type << "\n";
+    Print() << "\n--> DONE WITH INITIALIZATION (GPU)" << reactor_type << "\n";
 
     return(0);
 }
@@ -171,8 +171,9 @@ int reactor_info(const int* reactor_type,const int* Ncells){
 /* Main routine for external looping */
 int react(realtype *rY_in, realtype *rY_src_in, 
           realtype *rX_in, realtype *rX_src_in,
-          realtype *dt_react, realtype *time,
-          const int* reactor_type,const int* Ncells, cudaStream_t stream) {
+          realtype &dt_react, realtype &time,
+          int reactor_type, int Ncells, 
+          cudaStream_t stream) {
 
     /* CVODE */
     N_Vector y         = NULL;
@@ -212,7 +213,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     NEQ = NUM_SPECIES;
 
     /* Args */
-    NCELLS         = *Ncells;
+    NCELLS         = Ncells;
     neq_tot        = (NEQ + 1) * NCELLS;
 
     /* User data */
@@ -222,7 +223,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     BL_PROFILE_VAR_STOP(AllocsCVODE);
     user_data->ncells_d[0]          = NCELLS;
     user_data->neqs_per_cell[0]     = NEQ;
-    user_data->ireactor_type        = *reactor_type; 
+    user_data->ireactor_type        = reactor_type; 
     user_data->ianalytical_jacobian = ianalytical_jacobian;
     user_data->isolve_type          = isolve_type; 
     user_data->iverbose             = iverbose;
@@ -416,8 +417,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
     BL_PROFILE_VAR_STOP(AsyncCpy);
 
     realtype time_init, time_out;
-    time_init = *time;
-    time_out  = *time + *dt_react;
+    time_init = time;
+    time_out  = time + dt_react;
 
     /* Call CVodeInit to initialize the integrator memory and specify the
      * user's right hand side function, the inital time, and 
@@ -514,8 +515,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 #ifdef MOD_REACTOR
     /* ONLY FOR PP */
     /*If reactor mode is activated, update time */
-    *dt_react = time_init - *time;
-    *time = time_init;
+    dt_react = time_init - time;
+    time     = time_init;
 #endif
 
     /* Pack data to return in main routine external */
@@ -523,7 +524,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     cudaMemcpyAsync(rY_in, yvec_d, ((NEQ+1)*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost,stream);
 
     for  (int i = 0; i < NCELLS; i++) {
-        rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
+        rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
     }
     BL_PROFILE_VAR_STOP(AsyncCpy);
 
