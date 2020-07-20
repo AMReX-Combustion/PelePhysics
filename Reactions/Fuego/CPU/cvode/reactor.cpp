@@ -182,7 +182,8 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
     atol  = N_VNew_Serial(neq_tot);
     ratol = N_VGetArrayPointer(atol);
     int offset;
-    if (typVals) {
+    if (typVals[0] > 0) {
+#ifdef _OPENMP
         if ((data->iverbose > 0) && (omp_thread == 0)) {
             Print() << "Setting CVODE tolerances rtol = " << relTol << " atolfact = " << absTol << " in PelePhysics \n";
         }

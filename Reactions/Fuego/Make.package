@@ -24,6 +24,6 @@ else
         Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/F90
         F90EXE_sources += react_type.F90
         F90EXE_sources += reactor.F90
-        FEXE_headers   += reactor.H
+        FEXE_headers   += reactor_F.H
     endif
 endif
