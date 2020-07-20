@@ -14,6 +14,7 @@ using namespace amrex;
 
 /**********************************/
 /* Global Variables */
+  N_Vector         y = NULL; 
   SUNLinearSolver LS = NULL;
   SUNMatrix A        = NULL;
   void *cvode_mem    = NULL;
@@ -112,7 +113,7 @@ void ReSetTolODE() {
         }
     } else {
         if ((data->iverbose > 0) && (omp_thread == 0)) {
-            Print() << "Setting CVODE tolerances rtol = " << reltol << " atol = " << absTol << " in PelePhysics \n";
+            Print() << "Setting CVODE tolerances rtol = " << relTol << " atol = " << absTol << " in PelePhysics \n";
         }
         for (int i=0; i<neq_tot; i++) {
             ratol[i] = absTol;
@@ -142,7 +143,7 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
     int neq_tot = (NUM_SPECIES + 1) * ode_ncells;
 
     /* Definition of main vector */
-    N_Vector y = N_VNew_Serial(neq_tot);
+    y = N_VNew_Serial(neq_tot);
     if (check_flag((void *)y, "N_VNew_Serial", 0)) return(1);
 
     /* Call CVodeCreate to create the solver memory and specify the
@@ -366,7 +367,6 @@ int reactor_init(const int &reactor_type, const int &ode_ncells) {
 
     /* Free the atol vector */
     N_VDestroy(atol);
-    N_VDestroy(y);
 
     /* Ok we're done ...*/
     if ((data->iverbose > 1) && (omp_thread == 0)) {
