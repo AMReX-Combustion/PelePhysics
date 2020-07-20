@@ -61,7 +61,7 @@ UserData AllocUserData(int iE, int num_cells);
 
 void FreeUserData(UserData data);
 
-void SetTypValsODE(std::vector<double> ExtTypVals);
+void SetTypValsODE(const std::vector<double>& ExtTypVals);
 
 void SetTolFactODE(double relative_tol,double absolute_tol);
 
