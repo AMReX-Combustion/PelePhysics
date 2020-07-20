@@ -577,6 +577,9 @@ SprayParticleContainer::updateParticles(const int&  lev,
               }
             }
             d_dot = m_dot/(0.5*M_PI*rho_part*dia2_part);
+            Real inv_tau_d = -m_dot/(3.*pmass);
+            if (isub == 1)
+              nsub = amrex::min(int(flow_dt*inv_tau_d) + 1, nSubMax);
           }
 
           // Solve for momentum source terms
@@ -599,7 +602,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
             fluid_eng_src += S_dmu_dot_u + m_dot*part_ke;
             Real inv_tau_var = drag_force*inv_pmass;
             if (isub == 1)
-              nsub = amrex::min(int(flow_dt*inv_tau_var) + 1, nSubMax);
+              nsub = amrex::min(amrex::max(nsub, int(flow_dt*inv_tau_var) + 1), nSubMax);
           }
 
           // Solve for energy source terms
