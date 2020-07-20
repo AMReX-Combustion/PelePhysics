@@ -105,7 +105,7 @@ int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 /* Functions Called by the Program */
 extern "C"
 {
-    int reactor_init(const int* cvode_iE, const int* Ncells);
+    int reactor_init(int cvode_iE, int Ncells);
 
     int react(realtype *rY_in, realtype *rY_src_in, 
 		realtype *rX_in, realtype *rX_src_in, 

@@ -214,7 +214,7 @@ main (int   argc,
 #ifdef USE_CUDA_SUNDIALS_PP
     reactor_info(&ode_iE, &ode_ncells);
 #else
-    reactor_init(&ode_iE, &ode_ncells);
+    reactor_init(ode_iE, ode_ncells);
 #endif
 }
 

@@ -130,7 +130,7 @@ void ReSetTolODE() {
 
 
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init(const int* reactor_type, const int* Ncells) {
+int reactor_init(int reactor_type, int Ncells) {
     BL_PROFILE_VAR("reactInit", reactInit);
     /* CVODE return Flag  */
     int flag;
@@ -146,7 +146,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
     omp_thread = omp_get_thread_num();
 #endif
     /* Total number of eq to integrate */
-    neq_tot        = (NUM_SPECIES + 1) * (*Ncells);
+    neq_tot        = (NUM_SPECIES + 1) * (Ncells);
 
     /* Definition of main vector */
     y = N_VNew_Serial(neq_tot);
@@ -158,7 +158,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
     if (check_flag((void *)cvode_mem, "CVodeCreate", 0)) return(1);
 
     /* Does not work for more than 1 cell right now */
-    data = AllocUserData(*reactor_type, *Ncells);
+    data = AllocUserData(reactor_type, Ncells);
     if(check_flag((void *)data, "AllocUserData", 2)) return(1);
 
     /* Number of species and cells in mechanism */
@@ -240,7 +240,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
         if(check_flag((void *)A, "SUNDenseMatrix", 0)) return(1);
 
         /* Create dense SUNLinearSolver object for use by CVode */
-        LS = SUNLinSol_sparse_custom(y, A, *reactor_type, data->ncells, (NUM_SPECIES+1), data->NNZ);
+        LS = SUNLinSol_sparse_custom(y, A, reactor_type, data->ncells, (NUM_SPECIES+1), data->NNZ);
         if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
 
         /* Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode */
