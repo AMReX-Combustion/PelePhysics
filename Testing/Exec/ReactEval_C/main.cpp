@@ -456,8 +456,9 @@ main (int   argc,
 
                 fc_tmp_lcl = react(tmp_vect, tmp_src_vect,
                                    tmp_vect_energy, tmp_src_vect_energy,
-                                   &dt_incr, &time,
-                                   &ode_iE, &ncells, amrex::Gpu::gpuStream());
+                                   dt_incr, time,
+                                   ode_iE, ncells, 
+                                   amrex::Gpu::gpuStream());
 #endif
                 printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES+1)]);
                 dt_incr =  dt/ndt;
