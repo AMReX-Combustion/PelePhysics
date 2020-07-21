@@ -49,20 +49,16 @@ void SetTypValsODE(const std::vector<double>& ExtTypVals) {
     omp_thread = omp_get_thread_num();
 #endif
 
-    /* omp thread if applicable */
+    for (int i=0; i<size_ETV-1; i++) {
+      typVals[i] = ExtTypVals[i];
+    }
+    typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
     if (omp_thread == 0){
         Print() << "Set the typVals in PelePhysics: \n  ";
         for (int i=0; i<size_ETV-1; i++) {
-            typVals[i] = ExtTypVals[i];
             Print() << kname[i] << ":" << typVals[i] << "  ";
         }
-        typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
         Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";
-    } else {
-        for (int i=0; i<size_ETV-1; i++) {
-            typVals[i] = ExtTypVals[i];
-        }
-        typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
     }
 }
 
@@ -126,11 +122,13 @@ void ReSetTolODE() {
 	    int flag = ARKStepSVtolerances(arkode_mem, relTol, atol); 
 	    if (check_flag(&flag, "ARKStepSVtolerances", 1)) Abort("Problem in ReSetTolODE");
         }
+
+        N_VDestroy(atol);
 }
 
 
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init(const int* reactor_type, const int* Ncells) {
+int reactor_init(int reactor_type, int Ncells) {
         /* return Flag  */
 	int flag;
 	/* ARKODE initial time - 0 */
@@ -145,14 +143,14 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 	omp_thread = omp_get_thread_num(); 
 #endif
 	/* Total number of eq to integrate */
-        neq_tot        = (NUM_SPECIES + 1) * (*Ncells);
+        neq_tot        = (NUM_SPECIES + 1) * Ncells;
 
 	/* Definition of main vector */
 	y = N_VNew_Serial(neq_tot);
         if (check_flag((void *)y, "N_VNew_Serial", 0)) return(1);
 
         /* Does not work for more than 1 cell right now */
-	data = AllocUserData(*reactor_type, *Ncells);
+	data = AllocUserData(reactor_type, Ncells);
 	if(check_flag((void *)data, "AllocUserData", 2)) return(1);
 
         /* Just a sanity check */
@@ -275,6 +273,7 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 
 	/* Free the atol vector */
 	N_VDestroy(atol); 
+        N_VDestroy(y); 
 
 	/* Ok we're done ...*/
         if ((data->iverbose > 1) && (omp_thread == 0)) {
@@ -290,11 +289,9 @@ int reactor_init(const int* reactor_type, const int* Ncells) {
 
 /* Main call routine */
 int react(realtype *rY_in, realtype *rY_src_in, 
-		realtype *rX_in, realtype *rX_src_in,
-                realtype *dt_react, realtype *time){
+          realtype *rX_in, realtype *rX_src_in,
+          realtype *dt_react, realtype *time){
 
-	realtype time_init, time_out, dummy_time;
-	int flag;
 	int omp_thread = 0;
 #ifdef _OPENMP
 	omp_thread = omp_get_thread_num(); 
@@ -305,8 +302,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	}
 
 	/* Initial time and time to reach after integration */
-        time_init = *time;
-	time_out  = *time + (*dt_react);
+        realtype time_init = *time;
+	realtype time_out  = *time + (*dt_react);
 
 	if ((data->iverbose > 3) && (omp_thread == 0)) {
 	    Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << *dt_react << " and final time should be " << time_out << "\n";
@@ -336,10 +333,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
         }
        
         if (data->iuse_erkode == 1) { 
-	    flag = ERKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
+            int flag = ERKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
 	    if (check_flag(&flag, "ERKStepEvolve", 1)) return 1;
         } else {
-	    flag = ARKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
+	    int flag = ARKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
 	    if (check_flag(&flag, "ARKStepEvolve", 1)) return 1;
         }
 
@@ -401,14 +398,10 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 			    void *user_data)
 {
   /* Make local copies of pointers in user_data (cell M)*/
-  UserData data_wk;
-  data_wk = (UserData) user_data;   
-
-  /* Tmp vars */
-  int tid;
+  UserData data_wk = (UserData) user_data;
 
   /* Loop on packed cells */
-  for (tid = 0; tid < data_wk->ncells; tid ++) {
+  for (int tid = 0; tid < data_wk->ncells; tid ++) {
       /* Tmp vars */
       realtype massfrac[NUM_SPECIES];
       realtype Xi[NUM_SPECIES];
@@ -634,8 +627,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
     Print() << "   Allocating data\n";
 
     /* Make local copies of pointers in user_data */
-    UserData data_wk;
-    data_wk = (UserData) malloc(sizeof *data_wk);
+    UserData data_wk = (UserData) malloc(sizeof *data_wk);
     int omp_thread = 0;
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num(); 

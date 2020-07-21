@@ -13,7 +13,7 @@ AMREX_GPU_DEVICE_MANAGED int use_erkode=0;
 
 /******************************************************************************************/
 /* Initialization routine, called once at the begining of the problem */
-int reactor_info(const int* reactor_type, const int* Ncells)
+int reactor_info(int reactor_type, int Ncells)
 {
     ParmParse pp("ode");
     pp.query("use_erkode", use_erkode);
@@ -32,7 +32,7 @@ int reactor_info(const int* reactor_type, const int* Ncells)
 int react(realtype *rY_in, realtype *rY_src_in, 
         realtype *rX_in, realtype *rX_src_in,
         realtype *dt_react, realtype *time,
-        const int* reactor_type,const int* Ncells, cudaStream_t stream,
+        int reactor_type, int Ncells, cudaStream_t stream,
         double reltol,double abstol)
 {
 
@@ -42,7 +42,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     N_Vector y         = NULL;
 
     NEQ = NUM_SPECIES;
-    NCELLS         = *Ncells;
+    NCELLS         = Ncells;
     neq_tot        = (NEQ + 1) * NCELLS;
 
     /* User data */
@@ -52,7 +52,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     BL_PROFILE_VAR_STOP(AllocsARKODE);
     user_data->ncells_d[0]             = NCELLS;
     user_data->neqs_per_cell[0]        = NEQ;
-    user_data->ireactor_type           = *reactor_type; 
+    user_data->ireactor_type           = reactor_type; 
     user_data->iverbose                = 1;
     user_data->stream                  = stream;
     user_data->nbBlocks                = NCELLS/32;

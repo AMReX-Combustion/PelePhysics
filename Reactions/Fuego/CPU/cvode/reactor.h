@@ -19,6 +19,10 @@
 #include <sunlinsol/sunlinsol_klu.h>
 #endif
 
+#include <AMReX_FArrayBox.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_iMultiFab.H>
+
 #include <AMReX_Print.H>
 #include <EOS.H>
 /**********************************/
@@ -35,6 +39,13 @@ typedef struct {
       int isolve_type;
       int ianalytical_jacobian;
       int ireactor_type;
+      int boxcell;
+      /* external forcing */
+      amrex::Gpu::ManagedVector<amrex::Real> Yvect_full; 
+      amrex::Gpu::ManagedVector<amrex::Real> rhoX_init;
+      amrex::Gpu::ManagedVector<amrex::Real> rhoXsrc_ext;
+      amrex::Gpu::ManagedVector<amrex::Real> rYsrc;
+      amrex::Gpu::ManagedVector<int> FCunt;
       /* Options */
       int NNZ; 
       /* Sparse Matrices for KLU-related solve */
@@ -103,24 +114,42 @@ int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
 
 /**********************************/
 /* Functions Called by the Program */
-extern "C"
-{
-    int reactor_init(int cvode_iE, int Ncells);
+int reactor_init(int cvode_iE, int Ncells);
 
-    int react(realtype *rY_in, realtype *rY_src_in, 
-		realtype *rX_in, realtype *rX_src_in, 
-		realtype &dt_react, realtype &time);
+int react(const amrex::Box& box,
+          amrex::Array4<amrex::Real> const& rY_in,
+          amrex::Array4<amrex::Real> const& rY_src_in, 
+          amrex::Array4<amrex::Real> const& T_in, 
+          amrex::Array4<amrex::Real> const& rEner_in,  
+          amrex::Array4<amrex::Real> const& rEner_src_in,
+          amrex::Array4<amrex::Real> const& FC_in,
+          amrex::Array4<int> const& mask, 
+          amrex::Real &dt_react,
+          amrex::Real &time);
 
-    void reactor_close();
-}
+int react_2(const amrex::Box& box,
+          amrex::Array4<amrex::Real> const& rY_in,
+          amrex::Array4<amrex::Real> const& rY_src_in, 
+          amrex::Array4<amrex::Real> const& T_in,
+          amrex::Array4<amrex::Real> const& rEner_in,  
+          amrex::Array4<amrex::Real> const& rEner_src_in,
+          amrex::Array4<amrex::Real> const& FC_in,
+          amrex::Array4<int> const& mask,
+          amrex::Real &dt_react,
+          amrex::Real &time);
 
+int react(amrex::Real *rY_in, amrex::Real *rY_src_in, 
+	      amrex::Real *rX_in, amrex::Real *rX_src_in, 
+	      amrex::Real &dt_react, amrex::Real &time);
+
+void reactor_close();
 
 
 /**********************************/
 /* Helper functions */
 int check_flag(void *flagvalue, const char *funcname, int opt);
 
-void PrintFinalStats(void *cvodeMem, realtype Temp);
+void PrintFinalStats(void *cvodeMem, amrex::Real Temp);
 
 UserData AllocUserData(int iE, int num_cells);
 
@@ -159,5 +188,4 @@ SUNLinearSolver_Type SUNLinSolGetType_Sparse_custom(SUNLinearSolver S);
 
 int SUNLinSolSolve_Sparse_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 		N_Vector b, realtype tol);
-
 

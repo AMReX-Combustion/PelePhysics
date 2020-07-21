@@ -5,19 +5,19 @@ ode.ndt = 1
 # Reactor formalism: 1=full e, 2=full h
 ode.reactor_type  = 1
 #verbose
-ode.verbose = 0
+ode.verbose = 1
 # abs and rel tolerances for ODE solve
-ode.rtol = 1e-6
-ode.atol = 1e-6
+#ode.rtol = 1e-6
+#ode.atol = 1e-6
 # Use variable-specific abs tols in ODE solve
 # Note that atol becomes a factor
-ode.use_typ_vals = 1
-ode.typ_vals = 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1500.0
+#ode.use_typ_vals = 1
+#ode.typ_vals = 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1500.0
 # Select ARK/CV-ODE Jacobian eval: 0=FD 1=AJ
-ode.analytical_jacobian = 0
+ode.analytical_jacobian = 1
 #CVODE SPECIFICS
 # Choose between sparse (5) dense (1/101) iterative (99) solver
-cvode.solve_type = dense
+cvode.solve_type = GMRES
 #ARKODE SPECIFICS
 # Choose if using implicit or explicit solve -- if expl no AJ needed
 #arkode.implicit_solve = 1
@@ -31,7 +31,7 @@ amr.plot_file  = plt
 # Fuel species 
 fuel_name      = CH4
 # Second dim 
-third_dim = 1024
+third_dim = 256
 
 amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1
