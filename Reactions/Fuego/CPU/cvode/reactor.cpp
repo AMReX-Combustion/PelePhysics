@@ -21,10 +21,6 @@ using namespace amrex;
   /* User data */
   UserData data      = NULL;
 /* OPTIONS */
-  /* energy */
-  double *rhoX_init   = NULL;
-  double *rhoXsrc_ext = NULL;
-  double *rYsrc       = NULL;
   Real time_init    = 0.0;
   Array<double,NUM_SPECIES+1> typVals = {-1};
   double relTol       = 1.0e-10;
@@ -701,9 +697,9 @@ int react(realtype *rY_in, realtype *rY_src_in,
     BL_PROFILE_VAR("reactor::ExtForcingAlloc", ExtForcingAlloc);
     if ((data->rhoX_init).size() != data->ncells) {
         (data->Yvect_full).resize(data->ncells*(NUM_SPECIES+1));
+        (data->rYsrc).resize(data->ncells*NUM_SPECIES);
         (data->rhoX_init).resize(data->ncells);
         (data->rhoXsrc_ext).resize(data->ncells);
-        (data->rYsrc).resize(data->ncells*NUM_SPECIES);
     }
     BL_PROFILE_VAR_STOP(ExtForcingAlloc);
 
@@ -712,11 +708,11 @@ int react(realtype *rY_in, realtype *rY_src_in,
     /* Get Device pointer of solution vector */
     realtype *yvec_d      = N_VGetArrayPointer(y);
     /* rhoY,T */
-    std::memcpy(yvec_d, rY_in, sizeof(realtype) * ((NUM_SPECIES+1)*data->ncells));
+    std::memcpy(yvec_d,                     rY_in,     sizeof(Real) * ((NUM_SPECIES+1)*data->ncells));
     /* rhoY_src_ext */
-    std::memcpy((data->rYsrc).data(), rY_src_in, (NUM_SPECIES * data->ncells)*sizeof(Real));
+    std::memcpy((data->rYsrc).data(),       rY_src_in, sizeof(Real) * (NUM_SPECIES * data->ncells));
     /* rhoE/rhoH */
-    std::memcpy((data->rhoX_init).data(), rX_in, sizeof(Real) * data->ncells);
+    std::memcpy((data->rhoX_init).data(),   rX_in,     sizeof(Real) * data->ncells);
     std::memcpy((data->rhoXsrc_ext).data(), rX_src_in, sizeof(Real) * data->ncells);
     BL_PROFILE_VAR_STOP(FlatStuff);
 
@@ -1284,7 +1280,7 @@ int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
       realtype activity[NUM_SPECIES], massfrac[NUM_SPECIES];
       /* Save Jac from cell to cell if more than one */
       realtype temp_save_lcl = 0.0;
-      for (tid = 0; tid < data_wk->ncells; tid ++) {
+      for (int tid = 0; tid < data_wk->ncells; tid ++) {
           /* Offset in case several cells */
           int offset = tid * (NUM_SPECIES + 1);
           /* rho MKS */ 
@@ -1349,11 +1345,11 @@ int Precond_sparse(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
   
   BL_PROFILE_VAR("KLU_factorization", KLU_factor);
   if (!(data_wk->FirstTimePrecond)) {
-      for (tid = 0; tid < data_wk->ncells; tid ++) {
+      for (int tid = 0; tid < data_wk->ncells; tid ++) {
           int ok = klu_refactor(data_wk->colPtrs[tid], data_wk->rowVals[tid], data_wk->Jdata[tid], data_wk->Symbolic[tid], data_wk->Numeric[tid], &(data_wk->Common[tid]));
       }
   } else {
-      for (tid = 0; tid < data_wk->ncells; tid ++) {
+      for (int tid = 0; tid < data_wk->ncells; tid ++) {
           data_wk->Numeric[tid] = klu_factor(data_wk->colPtrs[tid], data_wk->rowVals[tid], data_wk->Jdata[tid], data_wk->Symbolic[tid], &(data_wk->Common[tid])) ; 
       }
       data_wk->FirstTimePrecond = false;
