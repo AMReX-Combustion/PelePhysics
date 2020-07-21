@@ -382,7 +382,7 @@ int reactor_init(int reactor_type, int ode_ncells) {
 }
 
 /* Main routine for CVode integration: integrate a Box version 1*/
-int react_1(const Box& box,
+int react(const Box& box,
           Array4<Real> const& rY_in,
           Array4<Real> const& rY_src_in,
           Array4<Real> const& T_in,
@@ -410,7 +410,7 @@ int react_1(const Box& box,
     }
 
     if (data->ncells != 1) {
-        Abort("CVODE react_1 can only integrate one cell at a time");
+        Abort("CVODE react can only integrate one cell at a time");
     }
     int box_ncells  = box.numPts();
     data->boxcell   = 0; 
