@@ -61,7 +61,7 @@ void SetTolFactODE(double relative_tol,double absolute_tol) {
 }
 
 /* Infos to print once */
-int reactor_info(int reactor_type,int Ncells){ 
+int reactor_info(int reactor_type, int Ncells){ 
 
     /* ParmParse from the inputs file */ 
     ParmParse pp("ode");
@@ -71,7 +71,7 @@ int reactor_info(int reactor_type,int Ncells){
     pp.query("verbose",iverbose);
 
     if (iverbose > 0) {
-        Print() << "Number of species in mech is " << NUM_SPECIES << "\n";
+        Print() << "Number of species in mech is " << NUM_SPECIES << "\n";    
         Print() << "Number of cells in one solve is " << Ncells << "\n";
     }
 
@@ -152,7 +152,7 @@ int reactor_info(int reactor_type,int Ncells){
             /* Jac data */ 
             SPARSITY_INFO_SYST(&nJdata,&HP,Ncells);
             if (iverbose > 0) {
-              Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
+               Print() << "--> SPARSE Solver -- non zero entries: " << nJdata << ", which represents "<< nJdata/float(Ncells * (NUM_SPECIES+1) * (NUM_SPECIES+1)) * 100.0 <<" % fill-in pattern\n";
             }         
         } else {
                 Abort("\n--> Sparse direct solvers requires an analytic Jacobian \n");
@@ -930,7 +930,7 @@ int react(realtype *rY_in,    realtype *rY_src_in,
     /* ONLY FOR PP */
     /*If reactor mode is activated, update time */
     dt_react = time_init - time;
-    time = time_init;
+    time     = time_init;
 #endif
 
     /* Pack data to return in main routine external */

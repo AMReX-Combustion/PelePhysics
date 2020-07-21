@@ -790,7 +790,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     /* Pack data to return in main routine external */
     std::memcpy(rY_in, yvec_d, ((NUM_SPECIES+1)*data->ncells)*sizeof(realtype));
     for  (int i = 0; i < data->ncells; i++) {
-        rX_in[i] = rX_in[i] + (dt_react) * rX_src_in[i];
+        rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
     }
 
     /* T update with energy and Y */
