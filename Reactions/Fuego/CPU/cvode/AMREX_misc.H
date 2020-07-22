@@ -13,16 +13,16 @@
 AMREX_GPU_HOST_DEVICE
 inline
 void
-box_flatten(int icell, int i, int j, int k, int ireactor_type, 
+box_flatten(int icell, int i, int j, int k, int ireactor_type,
         amrex::Array4<amrex::Real> const& rhoY,
         amrex::Array4<amrex::Real> const& frcExt,
         amrex::Array4<amrex::Real> const& temperature,
         amrex::Array4<amrex::Real> const& rhoE,
         amrex::Array4<amrex::Real> const& frcEExt,
-        amrex::Gpu::ManagedVector<amrex::Real>& tmp_vect,
-        amrex::Gpu::ManagedVector<amrex::Real>& tmp_src_vect,
-        amrex::Gpu::ManagedVector<amrex::Real>& tmp_vect_energy, 
-        amrex::Gpu::ManagedVector<amrex::Real>& tmp_src_vect_energy) noexcept
+        amrex::Real* tmp_vect,
+        amrex::Real* tmp_src_vect,
+        amrex::Real* tmp_vect_energy,
+        amrex::Real* tmp_src_vect_energy) noexcept
 {
     amrex::Real mass_frac[NUM_SPECIES];
     amrex::Real rho = 0.0;
@@ -38,9 +38,9 @@ box_flatten(int icell, int i, int j, int k, int ireactor_type,
         rho += tmp_vect[offset_yvec + n];
     }
     amrex::Real rho_inv        = 1.0 / rho;
-    temp                       = temperature(i,j,k,0);  
+    temp                       = temperature(i,j,k,0);
     tmp_vect_energy[icell]     = rhoE(i,j,k,0);
-    tmp_src_vect_energy[icell] = frcEExt(i,j,k,0); 
+    tmp_src_vect_energy[icell] = frcEExt(i,j,k,0);
 
     /* T update with energy and Y */
     for (int n = 0; n < NUM_SPECIES; n++) {
@@ -59,15 +59,15 @@ box_flatten(int icell, int i, int j, int k, int ireactor_type,
 AMREX_GPU_HOST_DEVICE
 inline
 void
-box_unflatten(int icell, int i, int j, int k, int ireactor_type, 
+box_unflatten(int icell, int i, int j, int k, int ireactor_type,
         amrex::Array4<amrex::Real> const& rhoY,
         amrex::Array4<amrex::Real> const& T_in,
         amrex::Array4<amrex::Real> const& rhoE,
         amrex::Array4<amrex::Real> const& frcEExt,
         amrex::Array4<amrex::Real> const& FC_in,
-        amrex::Gpu::ManagedVector<amrex::Real>& tmp_vect,
-        amrex::Gpu::ManagedVector<amrex::Real>& tmp_vect_energy, 
-        amrex::Gpu::ManagedVector<int>& tmp_FCunt, 
+        amrex::Real* tmp_vect,
+        amrex::Real* tmp_vect_energy,
+        int* tmp_FCunt,
         amrex::Real dt) noexcept
 {
     amrex::Real mass_frac[NUM_SPECIES];
@@ -95,8 +95,8 @@ box_unflatten(int icell, int i, int j, int k, int ireactor_type,
     } else {
         EOS::HY2T(Enrg_loc,mass_frac,temp);
     }
-    T_in(i,j,k,0) = temp;  
- 
+    T_in(i,j,k,0) = temp;
+
     FC_in(i,j,k,0) = tmp_FCunt[icell];
 }
 #endif
