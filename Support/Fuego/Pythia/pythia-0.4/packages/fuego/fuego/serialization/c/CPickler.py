@@ -5062,7 +5062,7 @@ class CPickler(CMill):
             self._write("/* Evaluate the kfs */")
             #self._write("double k_f[%d];"% nclassd)
             #self._write("double Corr[%d];" % nclassd)
-            self._write("double k_f, Corr;")
+            self._write("double k_f, k_r, Corr;")
             if ntroe > 0:
                 self._write("double redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;")
             if nsri > 0:
