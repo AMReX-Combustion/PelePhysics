@@ -160,12 +160,11 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
 
   if (lev > 0 && sub_cycle && do_move && !isVirtual) {
     ParticleLocData pld;
-    auto& pmap = GetParticles(lev);
-    for (auto& kv : pmap) {
-      auto& pbox = kv.second.GetArrayOfStructs();
-      const long Np = pbox.numParticles();
-      for (int k = 0; k < Np; ++k) {
-        ParticleType& p = pbox[k];
+    for (ParConstIterType pti(*this, lev); pti.isValid(); ++pti) {
+      auto& ptile = ParticlesAt(lev, pti);
+      auto src = ptile.getParticleTileData();
+      for (int k = 0; k != ptile.numParticles(); ++k) {
+        SuperParticleType p = src.getSuperParticle(k);
         //  TODO: Double check this for correctness and figure out what it is doing
         if (p.id() > 0) {
           if (!this->Where(p, pld, lev, lev, where_width)) {
