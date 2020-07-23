@@ -41,11 +41,6 @@ typedef struct {
       int ireactor_type;
       int boxcell;
       /* external forcing */
-      //amrex::Gpu::ManagedVector<amrex::Real> Yvect_full;
-      //amrex::Gpu::ManagedVector<amrex::Real> rhoX_init;
-      //amrex::Gpu::ManagedVector<amrex::Real> rhoXsrc_ext;
-      //amrex::Gpu::ManagedVector<amrex::Real> rYsrc;
-      //amrex::Gpu::ManagedVector<int> FCunt;
       amrex::Real *Yvect_full = NULL;
       amrex::Real *rhoX_init = NULL;
       amrex::Real *rhoXsrc_ext = NULL;
