@@ -415,15 +415,6 @@ int react(const Box& box,
         Print() <<"Ncells in the box = "<<  box_ncells  << "\n";
     }
 
-    BL_PROFILE_VAR("reactor::ExtForcingAlloc", ExtForcingAlloc);
-    /* External forcing crap */
-    if ((data->rhoX_init).size() != data->ncells) {
-        (data->rhoX_init).resize(data->ncells);
-        (data->rhoXsrc_ext).resize(data->ncells);
-        (data->rYsrc).resize(data->ncells*NUM_SPECIES);
-    }
-    BL_PROFILE_VAR_STOP(ExtForcingAlloc);
-
     /* Perform integration one cell at a time */
     ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
 
@@ -438,19 +429,19 @@ int react(const Box& box,
         BL_PROFILE_VAR("reactor::FlatStuff", FlatStuff);
         for (int n = 0; n < NUM_SPECIES; n++) {
             yvec_d[n]        = rY_in(i,j,k,n);
-            (data->rYsrc)[n] = rY_src_in(i,j,k,n);
+            data->rYsrc[n]   = rY_src_in(i,j,k,n);
             rho += yvec_d[n]; 
         }
         rho_inv                 = 1.0 / rho;
         temp                    = T_in(i,j,k,0);
-        (data->rhoX_init)[0]    = rEner_in(i,j,k,0); 
-        (data->rhoXsrc_ext)[0]  = rEner_src_in(i,j,k,0);
+        data->rhoX_init[0]      = rEner_in(i,j,k,0); 
+        data->rhoXsrc_ext[0]    = rEner_src_in(i,j,k,0);
 
         /* T update with energy and Y */
         for (int n = 0; n < NUM_SPECIES; n++) {
             mass_frac[n] = yvec_d[n] * rho_inv;
         }
-        Enrg_loc = (data->rhoX_init)[0] / rho;
+        Enrg_loc = data->rhoX_init[0] / rho;
         if (data->ireactor_type == 1){
             EOS::EY2T(Enrg_loc,mass_frac,temp);
         } else {
@@ -498,7 +489,7 @@ int react(const Box& box,
             mass_frac[n] = yvec_d[n] * rho_inv;
         }
         //Enrg_loc = ((data->rhoX_init)[0] + (dummy_time - time_init) * rEner_src_in(i,j,k,0)) / rho;
-        Enrg_loc = ((data->rhoX_init)[0] + (dummy_time - time_init) * (data->rhoXsrc_ext)[0]) /rho;
+        Enrg_loc = (data->rhoX_init[0] + (dummy_time - time_init) * data->rhoXsrc_ext[0]) /rho;
         if (data->ireactor_type == 1){
             EOS::EY2T(Enrg_loc,mass_frac,temp);
         } else {
@@ -519,7 +510,6 @@ int react(const Box& box,
     /* If reactor mode is activated, update time to perform subcycling */
     time  = time_init + dt_react;
 #endif
-
 
     /* Get estimate of how hard the integration process was */
     return 20;
@@ -564,13 +554,11 @@ int react_2(const Box& box,
         Print() <<"Ncells in the box = "<<  box_ncells  << "\n";
     }
     BL_PROFILE_VAR("reactor::ExtForcingAlloc", ExtForcingAlloc);
-    if ((data->rhoX_init).size() != box_ncells) {
-        (data->Yvect_full).resize(box_ncells*(NUM_SPECIES+1));
-        (data->rhoX_init).resize(box_ncells);
-        (data->rhoXsrc_ext).resize(box_ncells);
-        (data->rYsrc).resize(box_ncells*NUM_SPECIES);
-        (data->FCunt).resize(box_ncells);
-    }
+        (data->Yvect_full)  = new  amrex::Real[box_ncells*(NUM_SPECIES+1)];
+        (data->rYsrc)       = new  amrex::Real[box_ncells*(NUM_SPECIES)];
+        (data->rhoX_init)   = new  amrex::Real[box_ncells];
+        (data->rhoXsrc_ext) = new  amrex::Real[box_ncells];
+        (data->FCunt)       = new amrex::int[box_ncells];
     BL_PROFILE_VAR_STOP(ExtForcingAlloc);
 
     BL_PROFILE_VAR("reactor::FlatStuff", FlatStuff);
@@ -633,7 +621,6 @@ int react_2(const Box& box,
         if ((data->iverbose > 3) && (omp_thread == 0)) {
             Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << (dummy_time - time_init) << "\n";
         }
-
     }
 
 #ifdef MOD_REACTOR
@@ -650,6 +637,14 @@ int react_2(const Box& box,
                     data->Yvect_full, data->rhoX_init, data->FCunt, dt_react);
     });
     BL_PROFILE_VAR_STOP(FlatStuff);
+
+    BL_PROFILE_VAR_START(ExtForcingAlloc);
+        delete (data->Yvect_full);  
+        delete (data->rYsrc);       
+        delete (data->rhoX_init); 
+        delete (data->rhoXsrc_ext); 
+        delete (data->FCunt);       
+    BL_PROFILE_VAR_STOP(ExtForcingAlloc);
 
     if ((data->iverbose > 1) && (omp_thread == 0)) {
         Print() <<"Additional verbose info --\n";
@@ -694,32 +689,24 @@ int react(realtype *rY_in, realtype *rY_src_in,
     if ((data->iverbose > 2) && (omp_thread == 0)) {
         Print() <<"Ncells in the box = "<<  data->ncells  << "\n";
     }
-    BL_PROFILE_VAR("reactor::ExtForcingAlloc", ExtForcingAlloc);
-    if ((data->rhoX_init).size() != data->ncells) {
-        (data->Yvect_full).resize(data->ncells*(NUM_SPECIES+1));
-        (data->rYsrc).resize(data->ncells*NUM_SPECIES);
-        (data->rhoX_init).resize(data->ncells);
-        (data->rhoXsrc_ext).resize(data->ncells);
-    }
-    BL_PROFILE_VAR_STOP(ExtForcingAlloc);
 
     BL_PROFILE_VAR("reactor::FlatStuff", FlatStuff);
     /* Get Device MemCpy of in arrays */
     /* Get Device pointer of solution vector */
     realtype *yvec_d      = N_VGetArrayPointer(y);
     /* rhoY,T */
-    std::memcpy(yvec_d,                     rY_in,     sizeof(Real) * ((NUM_SPECIES+1)*data->ncells));
+    std::memcpy(yvec_d, rY_in, sizeof(Real) * ((NUM_SPECIES+1)*data->ncells));
     /* rhoY_src_ext */
-    std::memcpy((data->rYsrc).data(),       rY_src_in, sizeof(Real) * (NUM_SPECIES * data->ncells));
+    std::memcpy(data->rYsrc, rY_src_in, sizeof(Real) * (NUM_SPECIES * data->ncells));
     /* rhoE/rhoH */
-    std::memcpy((data->rhoX_init).data(),   rX_in,     sizeof(Real) * data->ncells);
-    std::memcpy((data->rhoXsrc_ext).data(), rX_src_in, sizeof(Real) * data->ncells);
+    std::memcpy(data->rhoX_init,   rX_in,     sizeof(Real) * data->ncells);
+    std::memcpy(data->rhoXsrc_ext, rX_src_in, sizeof(Real) * data->ncells);
     BL_PROFILE_VAR_STOP(FlatStuff);
 
     /* Check if y is within physical bounds
        we may remove that eventually */
     check_state(y);
-    if (!(data->actual_ok_to_react))  { 
+    if (!(data->actual_ok_to_react))  {
 #ifdef MOD_REACTOR
         /* If reactor mode is activated, update time */
         time  = time_out;
@@ -739,7 +726,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
         for  (int kk = 0; kk < NUM_SPECIES; kk++) {
             rho += mass_frac[kk];
         }
-        rho_inv = 1 / rho; 
+        rho_inv = 1 / rho;
         // get Yks
         for  (int kk = 0; kk < NUM_SPECIES; kk++) {
             mass_frac[kk] = mass_frac[kk] * rho_inv;
@@ -831,7 +818,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
 
 /* RHS routine */
-int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, 
+int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
            void *user_data){
 
     realtype *y_d      = N_VGetArrayPointer(y_in);
@@ -1800,6 +1787,23 @@ UserData AllocUserData(int reactor_type, int num_cells)
   (data_wk->ireactor_type)             = reactor_type;
 
   (data_wk->ncells)                    = num_cells;
+
+  // Not sure of the interest of doing that the following: 
+  //N_Vector Data = NULL; 
+  //Data = N_VNew_Serial(data_wk->ncells*(NUM_SPECIES+1)); 
+  //(data_wk->Yvect_full)  = N_VGetArrayPointer_Serial(Data); 
+  //Data = N_VNew_Serial(data_wk->ncells*(NUM_SPECIES)); 
+  //(data_wk->rYsrc)       = N_VGetArrayPointer_Serial(Data);
+  //Data = N_VNew_Serial(data_wk->ncells); 
+  //(data_wk->rhoX_init)   = N_VGetArrayPointer_Serial(Data);
+  //Data = N_VNew_Serial(data_wk->ncells); 
+  //(data_wk->rhoXsrc_ext) = N_VGetArrayPointer_Serial(Data);
+   
+  (data_wk->Yvect_full)  = new  amrex::Real[data_wk->ncells*(NUM_SPECIES+1)];
+  (data_wk->rYsrc)       = new  amrex::Real[data_wk->ncells*(NUM_SPECIES)];
+  (data_wk->rhoX_init)   = new  amrex::Real[data_wk->ncells];
+  (data_wk->rhoXsrc_ext) = new  amrex::Real[data_wk->ncells];
+  (data_wk->FCunt)       = new  amrex::int[data_wk->ncells];
 
   (data_wk->FirstTimePrecond)          = true;
   (data_wk->reactor_cvode_initialized) = false;
