@@ -558,7 +558,7 @@ int react_2(const Box& box,
         (data->rYsrc)       = new  amrex::Real[box_ncells*(NUM_SPECIES)];
         (data->rhoX_init)   = new  amrex::Real[box_ncells];
         (data->rhoXsrc_ext) = new  amrex::Real[box_ncells];
-        (data->FCunt)       = new amrex::int[box_ncells];
+        (data->FCunt)       = new  int[box_ncells];
     BL_PROFILE_VAR_STOP(ExtForcingAlloc);
 
     BL_PROFILE_VAR("reactor::FlatStuff", FlatStuff);
@@ -1803,7 +1803,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
   (data_wk->rYsrc)       = new  amrex::Real[data_wk->ncells*(NUM_SPECIES)];
   (data_wk->rhoX_init)   = new  amrex::Real[data_wk->ncells];
   (data_wk->rhoXsrc_ext) = new  amrex::Real[data_wk->ncells];
-  (data_wk->FCunt)       = new  amrex::int[data_wk->ncells];
+  (data_wk->FCunt)       = new  int[data_wk->ncells];
 
   (data_wk->FirstTimePrecond)          = true;
   (data_wk->reactor_cvode_initialized) = false;

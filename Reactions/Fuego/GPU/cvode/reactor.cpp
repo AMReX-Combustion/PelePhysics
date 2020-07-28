@@ -400,9 +400,9 @@ int react(const amrex::Box& box,
 
     BL_PROFILE_VAR_START(AllocsCVODE);
     /* Define vectors to be used later in creact */
-    user_data->rhoe_init   = (double*) The_Arena()->alloc(NCELLS* sizeof(double));
-    user_data->rhoesrc_ext = (double*) The_Arena()->alloc(NCELLS* sizeof(double));
-    user_data->rYsrc       = (double*) The_Arena()->alloc(NCELLS*NUM_SPECIES*sizeof(double));
+    user_data->rhoe_init   = (double*) sunalloc(NCELLS* sizeof(double));
+    user_data->rhoesrc_ext = (double*) sunalloc(NCELLS* sizeof(double));
+    user_data->rYsrc       = (double*) sunalloc(NCELLS*NUM_SPECIES*sizeof(double));
     BL_PROFILE_VAR_STOP(AllocsCVODE);
 
     /* Get Device pointer of solution vector */
@@ -550,9 +550,9 @@ int react(const amrex::Box& box,
         SUNMatDestroy(A);
     }
 
-    The_Arena()->free(user_data->rhoe_init);
-    The_Arena()->free(user_data->rhoesrc_ext);
-    The_Arena()->free(user_data->rYsrc);
+    sunfree(user_data->rhoe_init);
+    sunfree(user_data->rhoesrc_ext);
+    sunfree(user_data->rYsrc);
 
     if (user_data->ianalytical_jacobian == 1) {
         The_Managed_Arena()->free(user_data->csr_row_count_d);
