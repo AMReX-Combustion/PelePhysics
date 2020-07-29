@@ -13,13 +13,13 @@ AMREX_GPU_HOST_DEVICE
 inline
 void
 initialize_data(int i, int j, int k, int fuel_id, 
-        amrex::Array4<amrex::Real> const& rhoY,
-        amrex::Array4<amrex::Real> const& frcExt,
-        amrex::Array4<amrex::Real> const& rhoE,
-        amrex::Array4<amrex::Real> const& frcEExt,
-        GpuArray<Real, AMREX_SPACEDIM>  dx, 
-        GpuArray<Real, AMREX_SPACEDIM>  plo, 
-        GpuArray<Real, AMREX_SPACEDIM>  phi ) noexcept
+                amrex::Array4<amrex::Real> const& rhoY,
+                amrex::Array4<amrex::Real> const& frcExt,
+                amrex::Array4<amrex::Real> const& rhoE,
+                amrex::Array4<amrex::Real> const& frcEExt,
+                const GpuArray<Real, AMREX_SPACEDIM>&  dx, 
+                const GpuArray<Real, AMREX_SPACEDIM>&  plo, 
+                const GpuArray<Real, AMREX_SPACEDIM>&  phi ) noexcept
 {
     amrex::Real Temp_lo = 2000.0;
     amrex::Real Temp_hi = 2500.0;
