@@ -30,8 +30,6 @@ max_grid_size  = 16
 amr.plot_file  = plt
 # Fuel species 
 fuel_name      = CH4
-# Second dim 
-third_dim = 256
 
 amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1

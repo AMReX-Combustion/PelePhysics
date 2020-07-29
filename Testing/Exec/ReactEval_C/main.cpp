@@ -77,7 +77,6 @@ main (int   argc,
     std::string pltfile("plt");
     ppa.query("plot_file",pltfile);
 
-    /* PRINT ODE INFO */
     Print() << "ODE solver: " << ODE_SOLVER << std::endl;
     Print() << "Type of reactor: " << (ode_iE == 1 ? "e (PeleC)" : "h (PeleLM)") << std::endl; // <---- FIXME
     Print() << "Fuel: " << fuel_name << ", Oxy: O2"  << std::endl;
