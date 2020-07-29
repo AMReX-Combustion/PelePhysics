@@ -9,14 +9,12 @@
 #include <AMReX_ParmParse.H>
 #include "mechanism.h"
 
-using namespace amrex;
-
 #include <PlotFileFromMF.H>
 #include <EOS.H>
-
-#if defined(USE_SUNDIALS_PP)
 #include <Transport.H>
 #include <reactor.h>
+
+#if defined(USE_SUNDIALS_PP)
 #ifdef USE_ARKODE_PP 
 static std::string ODE_SOLVER = "ARKODE";
 #else
@@ -24,12 +22,13 @@ static std::string ODE_SOLVER = "CVODE";
 #endif
 #else
 #if defined(USE_RK64_PP)
-#include <Transport.H>
-#include <reactor.h>
 static std::string ODE_SOLVER = "RK64";
+#else
+static std::string ODE_SOLVER = "DVODE"; // Note currently supported here though
 #endif
 #endif
 
+using namespace amrex;
 
 AMREX_GPU_HOST_DEVICE
 inline
@@ -324,7 +323,6 @@ main (int   argc,
       BL_PROFILE_VAR_STOP(mainflatten);
 #endif
 
-
       /* Solve */
       BL_PROFILE_VAR("React",ReactInLoop);
 #ifndef CVODE_BOXINTEG
@@ -385,7 +383,6 @@ main (int   argc,
       delete(tmp_vect_energy);
       delete(tmp_src_vect_energy);
 #endif
-
     }
     BL_PROFILE_VAR_STOP(Advance);
     
