@@ -11,10 +11,8 @@
 
 using namespace amrex;
 
-#include <main_F.H>
 #include <PlotFileFromMF.H>
 #include <EOS.H>
-#include <main_K.H> 
 
 #if defined(USE_SUNDIALS_PP)
 #include <Transport.H>
@@ -32,11 +30,65 @@ static std::string ODE_SOLVER = "RK64";
 #endif
 #endif
 
+
+AMREX_GPU_HOST_DEVICE
+inline
+void
+initialize_data(int i, int j, int k, int fuel_id, 
+                Array4<Real> const& rhoY,
+                Array4<Real> const& frcExt,
+                Array4<Real> const& rhoE,
+                Array4<Real> const& frcEExt,
+                const GpuArray<Real, AMREX_SPACEDIM>&  dx, 
+                const GpuArray<Real, AMREX_SPACEDIM>&  plo, 
+                const GpuArray<Real, AMREX_SPACEDIM>&  phi ) noexcept
+{
+    Real Temp_lo = 2000.0;
+    Real Temp_hi = 2500.0;
+    Real dTemp = 100.0;
+    Real pressure = 1013250.0;
+    Real density, energy, temp;
+    GpuArray<Real,NUM_SPECIES> X;
+    GpuArray<Real,NUM_SPECIES> Y;
+    Real y = plo[1] + (j+0.5)*dx[1];
+    Real x = plo[0] + (i+0.5)*dx[0];
+    Real pi = 3.1415926535897932;
+    GpuArray<Real,3> L;
+    GpuArray<Real,3> P;
+
+    for (int n = 0; n < AMREX_SPACEDIM; n++) {
+        L[n] = phi[n] - plo[n];
+        P[n] = L[n] / 4.0;
+    }
+    // Y
+    for (int n = 0; n < NUM_SPECIES; n++) {
+        X[n] = 0.0;
+    }
+    X[O2_ID]   = 0.2;
+    X[fuel_id] = 0.1;
+    X[N2_ID]   = 0.7;
+    EOS::X2Y(&X[0],&Y[0]);
+    // T
+    temp =  Temp_lo + (Temp_hi-Temp_lo)*y/L[1] + dTemp * std::sin(2.0*pi*y/P[1]);
+    // get rho and E 
+    EOS::PYT2RE(pressure, &Y[0], temp, density, energy);
+    // Fill vect
+    for (int n = 0; n < NUM_SPECIES; n++) {
+        rhoY(i,j,k,n) = Y[n]*density;   
+        frcExt(i,j,k,n) = 0.0;
+    }
+    rhoY(i,j,k,NUM_SPECIES) = temp; 
+
+    rhoE(i,j,k) = energy * density; 
+
+    frcEExt(i,j,k) = 0.0;
+}
+
 int
 main (int   argc,
       char* argv[])
 {
-  amrex::Initialize(argc,argv);
+  Initialize(argc,argv);
   {
     BL_PROFILE_VAR("main::main()", pmain);
 
@@ -47,9 +99,6 @@ main (int   argc,
     int max_grid_size = 16;
     pp.query("max_grid_size",max_grid_size);
 
-    int ncells = 16;
-    pp.query("ncells",ncells);
-    
     /* ODE inputs */
     ParmParse ppode("ode");
     int ode_ncells = 1;
@@ -135,11 +184,22 @@ main (int   argc,
     }
     BL_PROFILE_VAR_STOP(reactInfo);
 
-    /* make domain and BoxArray */
-    std::array<int,3> npts = {D_DECL(ncells,ncells,ncells)};
-
+    std::array<int,3> ncells = {D_DECL(1,1,1)};
+    if (pp.countval("ncells") == 1) {
+      pp.get("ncells",ncells[0]);
+      ncells = {D_DECL(ncells[0],1,1)};
+    }
+    else if (pp.countval("ncells") >= AMREX_SPACEDIM) {
+      Vector<int> nc(AMREX_SPACEDIM);
+      pp.getarr("ncells",nc,0,AMREX_SPACEDIM);
+      ncells = {D_DECL(nc[0],nc[1],nc[2])};
+    }
+    else {
+      Abort("ncells has to have length 1 or spacedim");
+    }
+    
     Box domain(IntVect(D_DECL(0,0,0)),
-               IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
+               IntVect(D_DECL(ncells[0]-1,ncells[1]-1,ncells[2]-1)));
 
     Print() << "Integrating "<< domain.numPts() << " cells for: " << dt << " seconds" << std::endl;
 
