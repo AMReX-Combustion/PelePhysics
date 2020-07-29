@@ -40,10 +40,6 @@ main (int   argc,
   {
     BL_PROFILE_VAR("main::main()", pmain);
 
-    const int IOProc = ParallelDescriptor::IOProcessorNumber();
-    Real timer_init = ParallelDescriptor::second();
-    ParallelDescriptor::ReduceRealMax(timer_init,IOProc);
-
     ParmParse pp;
     std::string fuel_name;
     pp.get("fuel_name", fuel_name);
@@ -195,16 +191,12 @@ main (int   argc,
     }
     BL_PROFILE_VAR_STOP(InitData);
 
-    Real timer_initialize_stop = ParallelDescriptor::second();
-    ParallelDescriptor::ReduceRealMax(timer_initialize_stop,IOProc);
-
     BL_PROFILE_VAR("main::PlotFileFromMF()", PlotFile);
     std::string outfile = Concatenate(pltfile,0);
     PlotFileFromMF(mf,outfile);
     BL_PROFILE_VAR_STOP(PlotFile);
 
     Print() << " \n STARTING THE ADVANCE \n";
-    Real timer_adv = ParallelDescriptor::second();
 
     /* REACT */
     BL_PROFILE_VAR("Advance",Advance);
@@ -279,16 +271,21 @@ main (int   argc,
 #ifndef CVODE_BOXINTEG
       for(int i = 0; i < nc+extra_cells; i+=ode_ncells) {
         tmp_fc[i] = 0.0;
-#endif
-        Real time      = 0.0;
-        Real dt_incr   = dt/ndt;
+        Real time = 0.0;
+        Real dt_incr = dt/ndt;
         for (int ii = 0; ii < ndt; ++ii) {
-#ifndef CVODE_BOXINTEG
           tmp_fc[i] += react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
                              tmp_vect_energy + i, tmp_src_vect_energy + i,
                              dt_incr, time);
+          dt_incr =  dt/ndt;
+        }
+      }
 #else
-
+      {      
+        Real time = 0.0;
+        Real dt_incr = dt/ndt;
+        for (int ii = 0; ii < ndt; ++ii)
+        {
 #ifdef USE_CUDA_SUNDIALS_PP
           react(box,
                 rhoY, frcExt, T,
@@ -303,19 +300,11 @@ main (int   argc,
                   fc, mask,
                   dt_incr, time);
 #endif
-
-#endif
           dt_incr =  dt/ndt;
         }
-#ifndef CVODE_BOXINTEG
-      }   
+      }
 #endif
       BL_PROFILE_VAR_STOP(ReactInLoop);
-
-#ifdef USE_CUDA_SUNDIALS_PP
-      cuda_status = cudaStreamSynchronize(Gpu::gpuStream());  
-#endif
-
 
 #ifndef CVODE_BOXINTEG
       BL_PROFILE_VAR_START(mainflatten);
@@ -331,9 +320,7 @@ main (int   argc,
         fc(i,j,k)               = tmp_fc[icell];
       });
       BL_PROFILE_VAR_STOP(mainflatten);
-#endif
 
-#ifndef CVODE_BOXINTEG 
       delete(tmp_vect);
       delete(tmp_src_vect);
       delete(tmp_vect_energy);
@@ -343,14 +330,8 @@ main (int   argc,
     }
     BL_PROFILE_VAR_STOP(Advance);
     
-    Real timer_adv_stop = ParallelDescriptor::second();
-    ParallelDescriptor::ReduceRealMax(timer_adv_stop,IOProc);
-
     outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
 
-    Real timer_print = ParallelDescriptor::second();
-    ParallelDescriptor::ReduceRealMax(timer_print,IOProc);
-    
     BL_PROFILE_VAR_START(PlotFile);
     MultiFab out(mf.boxArray(),mf.DistributionMap(),mf.nComp()+1,mf.nGrow());
     MultiFab::Copy(out,mf,0,0,mf.nComp(),mf.nGrow());
@@ -359,20 +340,9 @@ main (int   argc,
     PlotFileFromMF(out,outfile);
     BL_PROFILE_VAR_STOP(PlotFile);
 
-    Real timer_print_stop = ParallelDescriptor::second();
-    ParallelDescriptor::ReduceRealMax(timer_print_stop,IOProc);
-    
     EOS::close();
     transport_close();
 
-    Real timer_tot = ParallelDescriptor::second();
-    ParallelDescriptor::ReduceRealMax(timer_tot,IOProc);
-
-
-    Print() << "Run Time total     (main())             = " << timer_tot             - timer_init    << "\n"
-            << "Run Time init      (initialize_data())  = " << timer_initialize_stop - timer_init    << "\n"
-            << "Run Time advance   (advance())          = " << timer_adv_stop        - timer_adv << "\n"
-            << "Run Time print plt (PlotFileFromMF())   = " << timer_print_stop      - timer_print << "\n";
     BL_PROFILE_VAR_STOP(pmain);
   }
   Finalize();
