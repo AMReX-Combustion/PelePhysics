@@ -433,7 +433,7 @@ int react(const amrex::Box& box,
     /* Definition of tolerances: one for each species */
     atol  = N_VNew_Cuda(neq_tot);
     ratol = N_VGetHostArrayPointer_Cuda(atol);
-    if (typVals.size()>0) {
+    if (typVals[0]>0) {
         printf("Setting CVODE tolerances rtol = %14.8e atolfact = %14.8e in PelePhysics \n",relTol, absTol);
         for (int i = 0; i < NCELLS; i++) {
             int offset = i * (NUM_SPECIES + 1);
