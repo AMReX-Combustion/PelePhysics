@@ -1,3 +1,3 @@
 
-CEXE_headers += SootModel.H SootModel_derive.H
-CEXE_sources += SootModel.cpp SootModel_react.cpp SootModel_setup.cpp SootModel_derive.cpp
+CEXE_headers += Constants_Soot.H SootData.H SootReactions.H SootModel.H SootModel_derive.H
+CEXE_sources += SootModel.cpp SootModel_react.cpp SootModel_derive.cpp

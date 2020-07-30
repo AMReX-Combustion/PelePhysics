@@ -16,8 +16,8 @@ void soot_largeparticledata (const Box&       bx,
                              const int*       bcrec,
                              const int        level)
 {
-  const Real V0 = SootModel::m_V0;
-  const Real S0 = SootModel::m_S0;
+  const Real V0 = SootConst::V0;
+  const Real S0 = SootConst::S0;
   auto const dat = datafab.array();
   auto       sl  = slfab.array();
   amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
@@ -44,7 +44,7 @@ void soot_genvars (const Box&       bx,
                    const int*       bcrec,
                    const int        level)
 {
-  const Real sootRho = SootModel::m_SootDensity;
+  const Real sootRho = SootConst::SootDensity;
   auto const dat = datafab.array();
   auto       sl  = slfab.array();
   amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
