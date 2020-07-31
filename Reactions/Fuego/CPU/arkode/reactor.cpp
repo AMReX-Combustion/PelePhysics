@@ -20,7 +20,7 @@ using namespace amrex;
   double *rhoX_init   = NULL;
   double *rhoXsrc_ext = NULL;
   double *rYsrc       = NULL;
-  Array<double,NUM_SPECIES+1) typVals = {-1};
+  Array<double,NUM_SPECIES+1> typVals = {-1};
   double relTol       = 1.0e-10;
   double absTol       = 1.0e-10;
 /* REMOVE MAYBE LATER */
@@ -99,7 +99,7 @@ void ReSetTolODE() {
 	int offset;
 	if (typVals[0] > 0) {
             if ((data->iverbose > 0) && (omp_thread == 0)) {
-	        Print() << "Setting ARK/ERKODE tolerances rtol = " << relTol << " atolfact = " << abstol << " in PelePhysics \n";
+	        Print() << "Setting ARK/ERKODE tolerances rtol = " << relTol << " atolfact = " << absTol << " in PelePhysics \n";
 	    }
 	    for  (int i = 0; i < data->ncells; i++) {
 	        offset = i * (NUM_SPECIES + 1);
@@ -109,7 +109,7 @@ void ReSetTolODE() {
 	    }
 	} else {
             if ((data->iverbose > 0) && (omp_thread == 0)) {
-	        Print() << "Setting ARK/ERKODE tolerances rtol = " << reltol << " atol = " << abstol << " in PelePhysics \n";
+	        Print() << "Setting ARK/ERKODE tolerances rtol = " << relTol << " atol = " << absTol << " in PelePhysics \n";
 	    }
             for (int i=0; i<neq_tot; i++) {
                 ratol[i] = absTol;
@@ -273,7 +273,6 @@ int reactor_init(int reactor_type, int Ncells) {
 
 	/* Free the atol vector */
 	N_VDestroy(atol); 
-        N_VDestroy(y); 
 
 	/* Ok we're done ...*/
         if ((data->iverbose > 1) && (omp_thread == 0)) {
@@ -290,7 +289,7 @@ int reactor_init(int reactor_type, int Ncells) {
 /* Main call routine */
 int react(realtype *rY_in, realtype *rY_src_in, 
           realtype *rX_in, realtype *rX_src_in,
-          realtype *dt_react, realtype *time){
+          realtype &dt_react, realtype &time){
 
 	int omp_thread = 0;
 #ifdef _OPENMP
@@ -302,11 +301,11 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	}
 
 	/* Initial time and time to reach after integration */
-        realtype time_init = *time;
-	realtype time_out  = *time + (*dt_react);
+        realtype time_init = time;
+	realtype time_out  = time + dt_react;
 
 	if ((data->iverbose > 3) && (omp_thread == 0)) {
-	    Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << *dt_react << " and final time should be " << time_out << "\n";
+	    Print() <<"BEG : time curr is "<< time_init << " and dt_react is " << dt_react << " and final time should be " << time_out << "\n";
 	}
 
 	/* Get Device MemCpy of in arrays */
@@ -331,7 +330,8 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	        ARKStepReInit(arkode_mem, cF_RHS, NULL, time_init, y);
             }
         }
-       
+
+        Real dummy_time = 0;
         if (data->iuse_erkode == 1) { 
             int flag = ERKStepEvolve(arkode_mem, time_out, y, &dummy_time, ARK_NORMAL);      /* call integrator */
 	    if (check_flag(&flag, "ERKStepEvolve", 1)) return 1;
@@ -341,20 +341,20 @@ int react(realtype *rY_in, realtype *rY_src_in,
         }
 
 	/* Update dt_react with real time step taken ... */
-	*dt_react = dummy_time - time_init;
+	dt_react = dummy_time - time_init;
 #ifdef MOD_REACTOR
 	/* If reactor mode is activated, update time */
-	*time  = time_init + (*dt_react);
+	time  = time_init + dt_react;
 #endif
 
 	if ((data->iverbose > 3) && (omp_thread == 0)) {
-	    Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << *dt_react << "\n";
+	    Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << dt_react << "\n";
 	}
 
 	/* Pack data to return in main routine external */
 	std::memcpy(rY_in, yvec_d, ((NUM_SPECIES+1)*data->ncells)*sizeof(realtype));
 	for  (int i = 0; i < data->ncells; i++) {
-            rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
+            rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
 	}
 
 	if ((data->iverbose > 1) && (omp_thread == 0)) {
@@ -366,10 +366,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	/* Get estimate of how hard the integration process was */
         long int nfe, nfi, nf;
         if (data->iuse_erkode == 1) {
-            flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
+            int flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
             nf=nfe;
         } else {
-            flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
+            int flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
             nf=nfi;
         }
 	return nf;
