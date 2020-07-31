@@ -32,10 +32,6 @@ ifeq ($(USE_ACC), TRUE)
   DEFINES += -DACC
 endif
 
-all: $(executable) 
-	$(SILENT) $(RM) AMReX_buildInfo.cpp
-	@echo SUCCESS
-
 # EOS
 # Both Fortran and cpp can be loaded for EOS
 EOS_HOME_F90 := $(EOS_HOME)/F90
@@ -133,11 +129,6 @@ EXTERN_TEMPLATE := $(PELE_PHYSICS_HOME)/Testing/Source/extern_probin.template
 
 EXTERN_PARAMETERS := $(shell $(AMREX_HOME)/Tools/F_scripts/findparams.py $(EXTERN_CORE))
 
-extern.f90: $(EXTERN_PARAMETERS) $(EXTERN_TEMPLATE)
-	$(AMREX_HOME)/Tools/F_scripts/write_probin.py \
-           -t $(EXTERN_TEMPLATE) -o extern.f90 -n extern \
-           --pa "$(EXTERN_PARAMETERS)" 
-
 # job_info support
 CEXE_sources += AMReX_buildInfo.cpp
 CEXE_headers += $(AMREX_HOME)/Tools/C_scripts/buildInfo.H
@@ -150,6 +141,25 @@ ifdef Chemistry_Model
   MNAMES += CHEMISTRY=$(Chemistry_Model)
 endif
 
+include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
+
+ifeq ($(shell uname),Darwin)
+  all: $(executable)
+	install_name_tool -add_rpath $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib $(executable)
+	$(SILENT) $(RM) AMReX_buildInfo.cpp
+	@echo SUCCESS
+else
+  all: $(executable)
+	$(SILENT) $(RM) AMReX_buildInfo.cpp
+	@echo SUCCESS
+endif
+
+include $(AMREX_HOME)/Tools/GNUMake/Make.rules
+
+clean::
+	$(SILENT) $(RM) extern.f90 extern_parameters.cpp extern_parameters_F.H extern_parameters.H extern.f90
+	$(SILENT) $(RM) AMReX_buildInfo.cpp
+
 AMReX_buildInfo.cpp:
 	$(AMREX_HOME)/Tools/C_scripts/makebuildinfo_C.py \
           --amrex_home "$(AMREX_HOME)" \
@@ -158,13 +168,10 @@ AMReX_buildInfo.cpp:
           --MODULES "$(MNAMES)" \
           --GIT "$(TOP) $(AMREX_HOME) $(PELE_PHYSICS_HOME)"
 
-include $(AMREX_HOME)/Tools/GNUMake/Make.rules
-include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
-
-clean::
-	$(SILENT) $(RM) extern.f90 extern_parameters.cpp extern_parameters_F.H extern_parameters.H extern.f90
-	$(SILENT) $(RM) AMReX_buildInfo.cpp
-
+extern.f90: $(EXTERN_PARAMETERS) $(EXTERN_TEMPLATE)
+	$(AMREX_HOME)/Tools/F_scripts/write_probin.py \
+           -t $(EXTERN_TEMPLATE) -o extern.f90 -n extern \
+           --pa "$(EXTERN_PARAMETERS)"
 
 ifeq ($(USE_SUNDIALS_PP),TRUE)
   TPL:
