@@ -15,6 +15,7 @@ FUEGO_GAS  = TRUE
 
 TINY_PROFILE = TRUE
 
+USE_CUDA   = TRUE
 USE_CUDA   = FALSE
 
 # define the location of the PELE_PHYSICS top directory
@@ -31,19 +32,17 @@ DEFINES  += -DMOD_REACTOR
 USE_SUNDIALS_PP = TRUE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
   TRANSPORT_CPP = TRUE
-  # provide location of sundials lib if needed
-  #SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
   # use ARKODE: if FALSE then CVODE is used
   USE_ARKODE_PP = FALSE
-  #ifeq ($(USE_ARKODE_PP), FALSE)
-  #    DEFINES += -DCVODE_BOXINTEG
-  #endif
-  # use KLU sparse features -- only useful if CVODE is used on CPU
-  USE_KLU_PP = TRUE
-  # Activates GPU version
-  USE_CUDA_SUNDIALS_PP = FALSE
-  ifeq ($(USE_CUDA_SUNDIALS_PP), TRUE)
+  ifeq ($(USE_CUDA), TRUE)
+      # Activates GPU version of SUNDIALS stuff
+      USE_CUDA_SUNDIALS_PP = TRUE
       DEFINES += -DCVODE_BOXINTEG
+      # use KLU sparse features -- only useful if CVODE is used on CPU
+      USE_KLU_PP = FALSE
+  else
+      USE_CUDA_SUNDIALS_PP = FALSE
+      USE_KLU_PP = TRUE
   endif
 else
   # Activates use of Hari explicit RK
@@ -53,11 +52,13 @@ else
     TRANSPORT_CPP = TRUE
   endif
 endif
+USE_KLU = USE_KLU_PP
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   Chemistry_Model = drm19
+  Chemistry_Model = grimech30
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else

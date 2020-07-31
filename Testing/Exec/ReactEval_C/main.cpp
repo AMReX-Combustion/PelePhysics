@@ -160,23 +160,6 @@ main (int   argc,
       // Set ODE tolerances
       SetTolFactODE(rtol,atol);
 
-      // Set species-specific abs tolerances
-      if (use_typ_vals) {
-        Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
-        ParmParse pptv("ode");
-        int nb_typ_vals = pptv.countval("typ_vals");
-        if (nb_typ_vals != (NUM_SPECIES + 1)){
-          printf("%d %d\n", nb_typ_vals, (NUM_SPECIES + 1));
-          Abort("Not enough/too many typical values");
-        }
-        std::vector<double> typ_vals(nb_typ_vals);
-        for (int i = 0; i < nb_typ_vals; ++i) {
-          pptv.get("typ_vals", typ_vals[i],i);
-        }
-        SetTypValsODE(typ_vals);
-      }
-#ifdef USE_CUDA_SUNDIALS_PP
-      reactor_info(ode_iE, ode_ncells);
 #else
       reactor_init(ode_iE, ode_ncells);
 #endif
@@ -248,6 +231,27 @@ main (int   argc,
       });
     }
     BL_PROFILE_VAR_STOP(InitData);
+
+    /* Initialize reactor object inside OMP region, including tolerances */
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+    {
+      if (use_typ_vals) {
+        Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
+        Vector<double> typ_vals(NUM_SPECIES+1);
+        ppode.getarr("typ_vals", typ_vals,0,NUM_SPECIES+1);
+        for (int i = 0; i < NUM_SPECIES; ++i) {
+          typ_vals[i] = std::max(typ_vals[i],1.e-10);
+        }
+        SetTypValsODE(typ_vals);
+      }
+#ifdef USE_CUDA_SUNDIALS_PP
+      reactor_info(ode_iE, ode_ncells);
+#else
+      reactor_init(ode_iE, ode_ncells);
+#endif
+    }
 
     BL_PROFILE_VAR("main::PlotFileFromMF()", PlotFile);
     std::string outfile = Concatenate(pltfile,0);
@@ -385,7 +389,16 @@ main (int   argc,
 #endif
     }
     BL_PROFILE_VAR_STOP(Advance);
-    
+
+    {
+      Vector<double> typ_vals(NUM_SPECIES+1);
+      Print() << "ode.typ_vals= ";
+      for (int i = 0; i < NUM_SPECIES+1; ++i) {
+        Print() << std::max(1.e-10,mf.max(i)) << " ";
+      }
+      Print() << std::endl;
+    }
+
     outfile = Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
 
     BL_PROFILE_VAR_START(PlotFile);
