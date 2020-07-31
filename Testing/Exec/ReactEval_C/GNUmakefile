@@ -15,8 +15,8 @@ FUEGO_GAS  = TRUE
 
 TINY_PROFILE = TRUE
 
-USE_CUDA   = TRUE
 USE_CUDA   = FALSE
+USE_CUDA   = TRUE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    ?= ../../..

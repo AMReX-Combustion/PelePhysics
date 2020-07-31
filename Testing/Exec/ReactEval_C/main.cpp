@@ -160,6 +160,8 @@ main (int   argc,
       // Set ODE tolerances
       SetTolFactODE(rtol,atol);
 
+#ifdef USE_CUDA_SUNDIALS_PP
+      reactor_info(ode_iE, ode_ncells);
 #else
       reactor_init(ode_iE, ode_ncells);
 #endif
