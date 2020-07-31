@@ -371,12 +371,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
       Yp[spf] = attribs[pstateY+spf].data();
     }
 #endif
-    auto const crit_T = m_fuelData.critT();
-    auto const boil_T = m_fuelData.boilT();
-    auto const inv_boil_T = m_fuelData.invBoilT();
-    auto const fuel_cp = m_fuelData.fuelCp();
-    auto const fuel_latent = m_fuelData.fuelLatent();
-    auto const fuel_indx = m_fuelData.fuelIndx();
+    SprayData fdat = m_fuelData.getSprayData();
     Array4<const Real> const& statearr = state.array(pti);
     Array4<Real> const& sourcearr = source.array(pti);
 #ifdef SPRAY_PELE_LM
@@ -500,21 +495,21 @@ SprayParticleContainer::updateParticles(const int&  lev,
           Real cp_L_av = 0.;  // Cp of the liquid state
           if (heat_trans || mass_trans) {
             for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-              const int fspec = fuel_indx[spf];
+              const int fspec = fdat.indx(spf);
               const Real mw_fuel = mw_fluid[fspec];
               // Compute latent heat
 #ifdef LEGACY_SPRAY
-              Real part_latent = fuel_latent[spf]*
-                std::pow(amrex::max((crit_T[spf] - T_part)/
-                                    (crit_T[spf] - boil_T[spf]), 0.), 0.38);
+              Real part_latent = fdat.latent(spf)*
+                std::pow(amrex::max((fdat.critT(spf) - T_part)/
+                                    (fdat.critT(spf) - fdat.boilT(spf)), 0.), 0.38);
 #else
-              Real part_latent = h_skin[fspec] + fuel_latent[spf]
-                - fuel_cp[spf]*(T_part - ref_T);
+              Real part_latent = h_skin[fspec] + fdat.latent(spf)
+                - fdat.cp(spf)*(T_part - ref_T);
 #endif
               L_fuel[spf] = part_latent;
               // Compute the mass fraction of the fuel vapor at droplet surface
               Real pres_sat = EOS::PATM*std::exp(part_latent*inv_Ru*mw_fuel*
-                                                 (inv_boil_T[spf] - 1./T_part)) + C_eps;
+                                                 (1./fdat.boilT(spf) - 1./T_part)) + C_eps;
               Real Yfv = mw_fuel*pres_sat/(mw_mix*p_fluid + (mw_fuel - mw_mix)*pres_sat);
               Yfv = amrex::max(0., amrex::min(1. - C_eps, Yfv));
               B_M_num[spf] = amrex::max(C_eps, (Yfv - Y_fluid[fspec])/(1. - Yfv));
@@ -523,9 +518,9 @@ SprayParticleContainer::updateParticles(const int&  lev,
               sumYSkin += Y_skin[fspec];
 #endif
 #ifdef USE_SPRAY_SOA
-              cp_L_av += Yp[spf][i]*fuel_cp[spf];
+              cp_L_av += Yp[spf][i]*fdat.cp(spf);
 #else
-              cp_L_av += p.rdata(pstateY+spf)*fuel_cp[spf];
+              cp_L_av += p.rdata(pstateY+spf)*fdat.cp(spf);
 #endif
               sumYFuel += Y_fluid[fspec];
             }
@@ -561,7 +556,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
             Real powR = amrex::max(std::pow(Reyn, 0.077), 1.);
             Nu_0 = 1. + powR*std::cbrt(1. + Reyn*Pr_skin);
             for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-              const int fspec = fuel_indx[spf];
+              const int fspec = fdat.indx(spf);
               const Real rhoD = Ddiag[fspec];
               const Real Sc_skin = mu_skin/rhoD;
               const Real B_M = B_M_num[spf];
@@ -610,7 +605,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
             const Real inv_pm_cp = inv_pmass/cp_L_av;
             Real coeff_heat = 0.;
             for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-              const int fspec = fuel_indx[spf];
+              const int fspec = fdat.indx(spf);
               Real ratio = cp_n[fspec]*Sh_num[spf]*Ddiag[fspec]/lambda_skin;
               Real heatC = calcHeatCoeff(ratio, B_M_num[spf], B_eps, C_eps, Nu_0);
               // Convection term
@@ -714,7 +709,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
               if (mass_trans) {
                 Gpu::Atomic::Add(&sourcearr(cur_indx, rhoIndx), cur_coef*m_dot);
                 for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-                  const int nf = specIndx + fuel_indx[spf];
+                  const int nf = specIndx + fdat.indx(spf);
                   Gpu::Atomic::Add(&sourcearr(cur_indx, nf), cur_coef*Y_dot[spf]);
                 }
               }

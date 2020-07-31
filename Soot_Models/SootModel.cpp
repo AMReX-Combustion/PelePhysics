@@ -269,7 +269,6 @@ SootModel::addSootSourceTerm(const Box&                vbox,
                              Array4<const Real> const& Qstate,
                              Array4<const Real> const& coeff_state,
                              Array4<Real> const&       soot_state,
-                             Array4<Real> const&       rate_state,
                              const Real                time,
                              const Real                dt) const
 {
@@ -401,17 +400,13 @@ SootModel::addSootSourceTerm(const Box&                vbox,
       // Compute the continuity and energy source term
       Real rho_src = 0.;
       Real eng_src = 0.;
-      Real local_rate = 0.;
       for (int sp = 0; sp != NUM_SOOT_GS; ++sp) {
         // Convert from local gas species index to global gas species index
         const int specConvIndx = SootConst::refIndx[sp];
         // Convert to proper units
         omega_src[sp] *= mw_fluid[specConvIndx];
         const int peleIndx = specIndx + specConvIndx;
-        Real spec_rate = std::abs(omega_src[sp])/
-          (Ustate(i,j,k,peleIndx) + 1.E-12);
         soot_state(i,j,k,peleIndx) += omega_src[sp];
-        local_rate = amrex::max(local_rate, spec_rate);
         rho_src += omega_src[sp];
         eng_src += omega_src[sp]*Hi[specConvIndx];
       }
@@ -429,19 +424,12 @@ SootModel::addSootSourceTerm(const Box&                vbox,
         eng_src -= enth_n[absorbIndx]*del_rho_dot;
       }
       // Add density source term
-      Real rho_rate = std::abs(rho_src)/rho;
       soot_state(i,j,k,rhoIndx) += rho_src;
-      Real eng_rate = std::abs(eng_src/Ustate(i,j,k,engIndx));
       soot_state(i,j,k,engIndx) -= eng_src;
-      local_rate = amrex::max(local_rate, amrex::max(eng_rate, rho_rate));
       // Add moment source terms
       for (int mom = 0; mom != numSootVar; ++mom) {
         const int peleIndx = sootIndx + mom;
         soot_state(i,j,k,peleIndx) += mom_src[mom];
-        // Only limit based on positive moment sources
-        local_rate = amrex::max(local_rate, -mom_src[mom]/moments[mom]);
       }
-      if (local_rate > 0.)
-        rate_state(i,j,k,0) = maxDtRate/local_rate;
     });
 }

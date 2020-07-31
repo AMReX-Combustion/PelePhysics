@@ -63,7 +63,6 @@ public:
                          Array4<const Real> const& Qstate,
                          Array4<const Real> const& coeff_state,
                          Array4<Real> const&       soot_state,
-                         Array4<Real> const&       rate_state,
                          const Real                time,
                          const Real                dt) const;
 
@@ -83,13 +82,13 @@ public:
   //
   inline void setTimeStep(const Real soot_dt)
   {
-    local_soot_dt = soot_dt;
+    local_soot_dt = m_maxDtRate*soot_dt;
   }
 
   //
   // Return the estimated soot time step and reset the member variable
   //
-  inline Real estSootTimeStep() const
+  inline Real estSootTimeStep()
   {
     Real cur_dt = local_soot_dt;
     // Reset time step
@@ -140,7 +139,7 @@ public:
   Vector<std::string> m_sootVarName;
 
   // Time step estimation
-  mutable Real local_soot_dt;
+  Real local_soot_dt;
   // Maximum allowable change for mass fractions, density, or moments
   // to adjust the time step
   Real m_maxDtRate;

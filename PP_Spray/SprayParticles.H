@@ -161,7 +161,7 @@ private:
   amrex::BCRec* phys_bc;
   bool reflect_lo[AMREX_SPACEDIM];
   bool reflect_hi[AMREX_SPACEDIM];
-  SprayFuelData m_fuelData;
+  SprayDataContainer m_fuelData;
 };
 
 #endif
