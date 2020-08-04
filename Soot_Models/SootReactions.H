@@ -50,7 +50,7 @@ struct SootReactions
     // The effective rate of dimerization
     // This should coincide with the last reaction in the reaction lists
     const int fr = NUM_SOOT_REACT - 1;
-    return A_f[fr]*std::pow(T, n_f[fr])*std::exp(-ER_f[fr]/T)*xi_PAH*xi_PAH;
+    return amrex::max(0., A_f[fr]*std::pow(T, n_f[fr])*std::exp(-ER_f[fr]/T)*xi_PAH*xi_PAH);
   }
 
   // Compute the surface and gas phase chemistry rates
@@ -59,7 +59,6 @@ struct SootReactions
                     const Real& surf,
                     const Real  xi_n[],
                     const Real  moments[],
-                    const Real  momFV[],
                     Real        k_fwd[],
                     Real        k_bkwd[],
                     Real        w_fwd[],
@@ -93,7 +92,7 @@ struct SootReactions
     }
     // TODO: This will depend on the surface reactions, currently hardcoded
     Real fSootStar = computeRadSiteConc(xi_n, k_fwd, k_bkwd);
-    computeSurfRates(xi_n, w_fwd, w_bkwd, fSootStar, k_sg, k_ox, k_o2);
+    computeSurfRates(w_fwd, w_bkwd, fSootStar, k_sg, k_ox, k_o2);
     // Determine the concentration of hydrogenated and radical soot surface sites
     // Quasi-steady state for surface radical sites on soot
     Real C_Soot[SootConst::SootIndx::numSootSpecs];
@@ -152,8 +151,7 @@ struct SootReactions
 
   // Compute the surface chemistry rates (1/s)
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-  void computeSurfRates (const Real  xi_n[],
-                         const Real  w_fwd[],
+  void computeSurfRates (const Real  w_fwd[],
                          const Real  w_bkwd[],
                          const Real& fSootStar,
                          Real&       k_sg,

@@ -19,8 +19,6 @@ struct SootData
             const DVReal& sscnCF,
             const DVReal& smallOF,
             const DVReal& fragFact,
-            const Real&   betaDimerFact,
-            const Real&   betaNuclFact,
             const Real&   condFact,
             const Real&   lambdaCoagFact)
     : m_dime6(dime6.dataPtr()),
@@ -31,8 +29,6 @@ struct SootData
       m_sscnCF(sscnCF.dataPtr()),
       m_smallOF(smallOF.dataPtr()),
       m_fragFact(fragFact.dataPtr()),
-      m_betaDF(betaDimerFact),
-      m_betaNF(betaNuclFact),
       m_condFact(condFact),
       m_lambdaCF(lambdaCoagFact)
   {}
@@ -98,12 +94,13 @@ struct SootData
       const Real vs1 = momS + 2.*SootConst::SootAs;
       const Real vv2 = momV + SootConst::SootAv;
       const Real vs2 = momS + SootConst::SootAs;
-      Real volTerm = fracMom(vv1 - 1.,  vs1,  momFV)*getDimerExp6(3)
-        +  2.*fracMom(vv2 - 1.,  vs2,  momFV)*getDimerExp6(5)
-        +     fracMom(momV - 1., momS, momFV)*getDimerExp6(7)
-        + 0.5*fracMom(vv1 - 2.,  vs1,  momFV)*getDimerExp6(9)
-        +     fracMom(vv2 - 2.,  vs2,  momFV)*getDimerExp6(11)
-        + 0.5*fracMom(momV - 2., momS, momFV)*getDimerExp6(13);
+      Real volTerm =
+              fracMom(vv1 -  1.,  vs1,  momFV)*getDimerExp6(3)
+        +  2.*fracMom(vv2 -  1.,  vs2,  momFV)*getDimerExp6(5)
+        +     fracMom(momV - 1., momS,  momFV)*getDimerExp6(7)
+        + 0.5*fracMom(vv1 -  2.,  vs1,  momFV)*getDimerExp6(9)
+        +     fracMom(vv2 -  2.,  vs2,  momFV)*getDimerExp6(11)
+        + 0.5*fracMom(momV - 2., momS,  momFV)*getDimerExp6(13);
       const Real ss3 = momS + 3.*SootConst::SootFitE;
       const Real sv3 = momV - 2.*SootConst::SootFitE;
       const Real ss2 = ss3 + SootConst::SootAs;
@@ -135,7 +132,8 @@ struct SootData
     const Real weightDelta = momFV[dwIndx];
     const Real factor = SootConst::SootDensityC*SootConst::dVol*k_sg;
     for (int i = 0; i != NUM_SOOT_MOMENTS; ++i) {
-      Real fact1 = fracMom(SootConst::MomOrderV[i] - 1., SootConst::MomOrderS[i] + 1., momFV);
+      Real fact1 = fracMom(SootConst::MomOrderV[i] - 1.,
+                           SootConst::MomOrderS[i] + 1., momFV);
       Real fact2 = fracMom(SootConst::MomOrderV[i] - 1. - 2.*SootConst::SootFitE,
                            SootConst::MomOrderS[i] + 1. + 3.*SootConst::SootFitE, momFV);
       mom_src[i] += (SootConst::MomOrderV[i]*fact1 +
@@ -161,8 +159,8 @@ struct SootData
       // Oxidation of the small particles
       Real small = -factOx*m_smallOF[i]*weightDelta;
       // Oxidation of the larger particles
-      Real factLarge = fracMomLarge(SootConst::MomOrderV[i] - 1., SootConst::MomOrderS[i] + 1.,
-                                    momFV);
+      Real factLarge = fracMomLarge(SootConst::MomOrderV[i] - 1.,
+                                    SootConst::MomOrderS[i] + 1., momFV);
       Real large = -factOx*(SootConst::MomOrderV[i] + 2./3.*SootConst::MomOrderS[i])*factLarge;
       // Add oxidation source
       mom_src[i] += large + small;
@@ -182,11 +180,8 @@ struct SootData
 
   // Return the dimer concentration
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-  Real dimerization (const Real& T,
-                     const Real& convT,
+  Real dimerization (const Real& convT,
                      const Real& betaNucl,
-                     const Real& betaDimer,
-                     const Real& xi_PAH,
                      const Real& dimerRate,
                      const Real  momFV[]) const
   {
@@ -204,26 +199,22 @@ struct SootData
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE
   void clipMoments (Real moments[]) const
   {
-    Real weightDelta = moments[NUM_SOOT_MOMENTS];;
-    const Real dimer_nbrc = SootConst::dimerVol; // Set dimer size
-    // Nucleated particle size
-    const Real nucl_nbrc = 2.*dimer_nbrc;
-    const Real nucl_surf = std::pow(nucl_nbrc, 2./3.);
-    const Real tolV = SootConst::smallWeight*nucl_nbrc;
-    const Real tolS = SootConst::smallWeight*nucl_surf;
+    Real weightDelta = moments[NUM_SOOT_MOMENTS];
+    const Real tolV = SootConst::smallWeight*SootConst::nuclVol;
+    const Real tolS = SootConst::smallWeight*SootConst::nuclSurf;
     // Check for globally small moments
     if (moments[0] < SootConst::smallWeight || moments[1] < tolV
         || moments[2] < tolS) {
       moments[1] = amrex::max(moments[1], tolV);
-      moments[0] = moments[1]/nucl_nbrc;
-      moments[2] = nucl_surf*moments[0];
+      moments[0] = moments[1]/SootConst::nuclVol;
+      moments[2] = SootConst::nuclSurf*moments[0];
       weightDelta = moments[0];
     }
     // Check for size of second mode
-    if (moments[1] < nucl_nbrc*moments[0] ||
-        moments[2] < nucl_surf*moments[0]) {
-      moments[0] = moments[1]/nucl_nbrc;
-      moments[2] = moments[0]*nucl_surf;
+    if (moments[1] < SootConst::nuclVol*moments[0] ||
+        moments[2] < SootConst::nuclSurf*moments[0]) {
+      moments[0] = moments[1]/SootConst::nuclVol;
+      moments[2] = moments[0]*SootConst::nuclSurf;
     }
 #if NUM_SOOT_MOMENTS == 6
     // Check for (co)variance of second mode
@@ -234,7 +225,8 @@ struct SootData
     if (weightDelta < SootConst::smallWeight) {
       for (int i = 0; i != NUM_SOOT_MOMENTS; ++i)
         moments[i] += (SootConst::smallWeight - weightDelta)*
-          std::pow(nucl_nbrc, SootConst::MomOrderV[i])*std::pow(nucl_surf, SootConst::MomOrderS[i]);
+          std::pow(SootConst::nuclVol, SootConst::MomOrderV[i])*
+          std::pow(SootConst::nuclSurf, SootConst::MomOrderS[i]);
       weightDelta = SootConst::smallWeight;
     }
     if (weightDelta > moments[0])
@@ -697,10 +689,12 @@ struct SootData
                      const Real& lambda,
                      const Real  momFV[]) const
   {
+    const Real stav = SootConst::SootAv;
+    const Real stas = SootConst::SootAs;
     Real xy_1 = fracMomLarge(x, y, momFV);
-    Real xy_2 = fracMomLarge(x - SootConst::SootAv, y - SootConst::SootAs, momFV);
-    Real xy_3 = fracMomLarge(x + SootConst::SootAv, y + SootConst::SootAs, momFV);
-    Real xy_4 = fracMomLarge(x - 2.*SootConst::SootAv, y - 2.*SootConst::SootAs, momFV);
+    Real xy_2 = fracMomLarge(x -    stav, y -    stas, momFV);
+    Real xy_3 = fracMomLarge(x +    stav, y +    stas, momFV);
+    Real xy_4 = fracMomLarge(x - 2.*stav, y - 2.*stas, momFV);
     return 2.*xy_1*xy_1 + xy_2*xy_3 + xy_3*xy_2
       + 1.257*lambda*(xy_1*xy_2 + xy_2*xy_1 + xy_3*xy_4 + xy_4*xy_3);
   }
@@ -713,14 +707,16 @@ struct SootData
                     const Real& lambda,
                     const Real  momFV[]) const
   {
-    Real xy_1 = fracMomLarge(x, y, momFV);
-    Real xy_2 = fracMomLarge(x - SootConst::SootAv, y - SootConst::SootAs, momFV);
-    Real xy_3 = fracMomLarge(x + SootConst::SootAv, y + SootConst::SootAs, momFV);
-    Real xy_4 = fracMomLarge(x - 2.*SootConst::SootAv, y - 2.*SootConst::SootAs, momFV);
+    const Real stav = SootConst::SootAv;
+    const Real stas = SootConst::SootAs;
+    Real xy_1 = fracMomLarge(x,           y,           momFV);
+    Real xy_2 = fracMomLarge(x -    stav, y -    stas, momFV);
+    Real xy_3 = fracMomLarge(x +    stav, y +    stas, momFV);
+    Real xy_4 = fracMomLarge(x - 2.*stav, y - 2.*stas, momFV);
     Real ab_1 = fracMomLarge(a, b, momFV);
-    Real ab_2 = fracMomLarge(a - SootConst::SootAv, b - SootConst::SootAs, momFV);
-    Real ab_3 = fracMomLarge(a + SootConst::SootAv, b + SootConst::SootAs, momFV);
-    Real ab_4 = fracMomLarge(a - 2.*SootConst::SootAv, b - 2.*SootConst::SootAs, momFV);
+    Real ab_2 = fracMomLarge(a -    stav, b -    stas, momFV);
+    Real ab_3 = fracMomLarge(a +    stav, b +    stas, momFV);
+    Real ab_4 = fracMomLarge(a - 2.*stav, b - 2.*stas, momFV);
     return  2.*ab_1*xy_1 + ab_2*xy_3 + ab_3*xy_2
       + 1.257*lambda*(ab_1*xy_2 + ab_2*xy_1 + ab_3*xy_4 + ab_4*xy_3);
   }
@@ -732,13 +728,15 @@ struct SootData
     // Collision frequency between two dimer in the free
     // molecular regime WITHOUT van der Waals enhancement
     // Units: 1/s
+    const Real stav = SootConst::SootAv;
+    const Real stas = SootConst::SootAs;
     const Real Cfm = SootConst::colFactPi23*convT*SootConst::colFact16*SootConst::avogadros;
-    const Real SN = fracMom(2.*SootConst::SootAv,    2.*SootConst::SootAs, momFV)*getDimerExp6(-3)
-      +          2.*fracMom(   SootConst::SootAv,       SootConst::SootAs, momFV)*getDimerExp6(-1)
-      +             fracMom(       0.,           0., momFV)*getDimerExp6(1)
-      +         0.5*fracMom(2.*SootConst::SootAv-1., 2.*SootConst::SootAs, momFV)*getDimerExp6(3)
-      +             fracMom(   SootConst::SootAv-1.,    SootConst::SootAs, momFV)*getDimerExp6(5)
-      +         0.5*fracMom(         -1.,        0., momFV)*getDimerExp6(7);
+    const Real SN = fracMom(  2.*stav,  2.*stas, momFV)*getDimerExp6(-3)
+      +          2.*fracMom(     stav,     stas, momFV)*getDimerExp6(-1)
+      +             fracMom(       0.,       0., momFV)*getDimerExp6(1)
+      +         0.5*fracMom(2.*stav-1., 2.*stas, momFV)*getDimerExp6(3)
+      +             fracMom(   stav-1.,    stas, momFV)*getDimerExp6(5)
+      +         0.5*fracMom(       -1.,      0., momFV)*getDimerExp6(7);
     return Cfm*SN;
   }
 
@@ -751,8 +749,6 @@ private:
   const Real * m_sscnCF;
   const Real * m_smallOF;
   const Real * m_fragFact;
-  const Real m_betaDF;
-  const Real m_betaNF;
   const Real m_condFact;
   const Real m_lambdaCF;
 };
@@ -768,14 +764,16 @@ public:
 
   ~SootDataContainer () {}
 
-  void build_vectors (const HVReal& dimerExp6,
-                      const HVReal& nuclVolExp3,
-                      const HVReal& nuclVolExp6,
-                      const HVReal& momFact,
-                      const HVReal& ssfmCoagFact,
-                      const HVReal& sscnCoagFact,
-                      const HVReal& smallOxidFact,
-                      const HVReal& fragFact)
+  void build (const HVReal& dimerExp6,
+              const HVReal& nuclVolExp3,
+              const HVReal& nuclVolExp6,
+              const HVReal& momFact,
+              const HVReal& ssfmCoagFact,
+              const HVReal& sscnCoagFact,
+              const HVReal& smallOxidFact,
+              const HVReal& fragFact,
+              const Real&   condFact,
+              const Real&   lambdaCoagFact)
   {
     m_dime6.resize(9);
     Gpu::copy(Gpu::hostToDevice, dimerExp6.begin(), dimerExp6.end(),
@@ -801,15 +799,6 @@ public:
     m_fragFact.resize(NUM_SOOT_MOMENTS);
     Gpu::copy(Gpu::hostToDevice, fragFact.begin(), fragFact.end(),
               m_fragFact.begin());
-  }
-
-  void build_scalars (const Real& betaDimerFact,
-                      const Real& betaNuclFact,
-                      const Real& condFact,
-                      const Real& lambdaCoagFact)
-  {
-    m_betaDimerFact = betaDimerFact;
-    m_betaNuclFact = betaNuclFact;
     m_condFact = condFact;
     m_lambdaCoagFact = lambdaCoagFact;
   }
@@ -817,8 +806,8 @@ public:
   SootData getSootData () const
   {
     return SootData(m_dime6, m_nve3, m_nve6, m_momFact, m_ssfmCF,
-                    m_sscnCF, m_smallOF, m_fragFact, m_betaDimerFact,
-                    m_betaNuclFact, m_condFact, m_lambdaCoagFact);
+                    m_sscnCF, m_smallOF, m_fragFact, m_condFact,
+                    m_lambdaCoagFact);
   }
 
 private:
@@ -830,8 +819,6 @@ private:
   DVReal m_sscnCF;
   DVReal m_smallOF;
   DVReal m_fragFact;
-  Real m_betaDimerFact;
-  Real m_betaNuclFact;
   Real m_condFact;
   Real m_lambdaCoagFact;
 };

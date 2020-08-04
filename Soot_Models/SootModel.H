@@ -59,7 +59,7 @@ public:
   // Compute HMOM source term
   //
   void addSootSourceTerm(const Box&                vbox,
-                         Array4<const Real> const& Ustate,
+                         Array4<Real> const&       Ustate,
                          Array4<const Real> const& Qstate,
                          Array4<const Real> const& coeff_state,
                          Array4<Real> const&       soot_state,
@@ -152,9 +152,6 @@ public:
   bool m_reactDataFilled;
   /// Number and names of species for surface reactions
   Vector<std::string> m_gasSpecNames;
-  /// Surface chemistry data (CGS)
-  /// Number of reactions for surface chemistry
-  int m_numSurfReacts;
 
   /************************************************************************
     Factor member data (to reduce computational costs)
@@ -164,10 +161,6 @@ public:
   /// Factors for beta
   Real m_betaDimerFact;
   Real m_betaNuclFact;
-  /// Condensation constant
-  Real m_condFact;
-  /// Coagulation constants
-  Real m_lambdaCoagFact;
 };
 
 #endif
