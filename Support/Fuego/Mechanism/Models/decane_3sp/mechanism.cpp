@@ -1846,9 +1846,6 @@ void productionRate(double *  wdot, double *  sc, double T)
 
 void comp_k_f(double *  tc, double invT, double *  k_f)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<0; ++i) {
         k_f[i] = prefactor_units[i] * fwd_A[i]
                     * exp(fwd_beta[i] * tc[0] - activation_units[i] * fwd_Ea[i] * invT);
@@ -1863,9 +1860,6 @@ void comp_Kc(double *  tc, double invT, double *  Kc)
     gibbs(g_RT, tc);
 
 
-#ifdef __INTEL_COMPILER
-     #pragma simd
-#endif
     for (int i=0; i<0; ++i) {
         Kc[i] = exp(Kc[i]);
     };
@@ -1912,9 +1906,6 @@ void vproductionRate(int npt, double *  wdot, double *  sc, double *  T)
     double k_f_s[0*npt], Kc_s[0*npt], mixture[npt], g_RT[3*npt];
     double tc[5*npt], invT[npt];
 
-#ifdef __INTEL_COMPILER
-     #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         tc[0*npt+i] = log(T[i]);
         tc[1*npt+i] = T[i];
@@ -1946,9 +1937,6 @@ void vproductionRate(int npt, double *  wdot, double *  sc, double *  T)
 
 void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
     }
 }
@@ -1974,9 +1962,6 @@ void vcomp_gibbs(int npt, double *  g_RT, double *  tc)
 
 void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
         double refC = (101325. / 8.31451) * invT[i];
@@ -1989,9 +1974,6 @@ void vcomp_wdot(int npt, double *  wdot, double *  mixture, double *  sc,
 		double *  k_f_s, double *  Kc_s,
 		double *  tc, double *  invT, double *  T)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         double qdot, q_f, q_r, phi_f, phi_r, k_f, k_r, Kc;
         double alpha;
