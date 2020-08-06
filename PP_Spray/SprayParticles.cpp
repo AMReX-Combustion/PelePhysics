@@ -713,8 +713,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
                   Gpu::Atomic::Add(&sourcearr(cur_indx, nf), cur_coef*Y_dot[spf]);
                 }
               }
-              if (mass_trans || heat_trans)
-                Gpu::Atomic::Add(&sourcearr(cur_indx, engIndx), cur_coef*fluid_eng_src);
+              Gpu::Atomic::Add(&sourcearr(cur_indx, engIndx), cur_coef*fluid_eng_src);
             }
           }
           // Increment sub-iteration
