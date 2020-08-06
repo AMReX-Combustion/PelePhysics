@@ -1277,7 +1277,7 @@ class CPickler(CMill):
                 species.id, species.weight) + self.line('%s' % species.symbol))
 
         self._write(
-            '*P = *rho * %g * (*T) / XW; ' % (R*kelvin*mole/erg)
+            '*P = *rho * %1.14e * (*T) / XW; ' % (R*kelvin*mole/erg)
             + self.line('P = rho*R*T/W'))
         
         self._write()
@@ -1305,7 +1305,7 @@ class CPickler(CMill):
 
         self.line('YOW holds the reciprocal of the mean molecular wt')
         self._write(
-            '*P = *rho * %g * (*T) * YOW; ' % (R*kelvin*mole/erg)
+            '*P = *rho * %1.14e * (*T) * YOW; ' % (R*kelvin*mole/erg)
             + self.line('P = rho*R*T/W'))
         
         
@@ -1350,7 +1350,7 @@ class CPickler(CMill):
         self._write('for (int i=0; i<(*np); i++) {')
         self._indent()
         self._write(
-            'P[i] = rho[i] * %g * T[i] * YOW[i]; ' % (R*kelvin*mole/erg)
+            'P[i] = rho[i] * %1.14e * T[i] * YOW[i]; ' % (R*kelvin*mole/erg)
             + self.line('P = rho*R*T/W'))
         self._outdent()
         self._write('}')
@@ -1394,7 +1394,7 @@ class CPickler(CMill):
 
         self.line('W/sumC holds the mean molecular wt')
         self._write(
-            '*P = *rho * %g * (*T) * sumC / W; ' % (R*kelvin*mole/erg)
+            '*P = *rho * %1.14e * (*T) * sumC / W; ' % (R*kelvin*mole/erg)
             + self.line('P = rho*R*T/W'))
         
         self._write()
@@ -1423,7 +1423,7 @@ class CPickler(CMill):
                 species.id, species.weight) + self.line('%s' % species.symbol))
 
         self._write(
-            '*rho = *P * XW / (%g * (*T)); ' % (R*kelvin*mole/erg)
+            '*rho = *P * XW / (%1.14e * (*T)); ' % (R*kelvin*mole/erg)
             + self.line('rho = P*W/(R*T)'))
         
         self._write()
@@ -1459,7 +1459,7 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         self._write('')
-        self._write('*rho = *P / (%g * (*T) * YOW);' % (R * mole * kelvin / erg) + self.line('rho = P*W/(R*T)'))
+        self._write('*rho = *P / (%1.14e * (*T) * YOW);' % (R * mole * kelvin / erg) + self.line('rho = P*W/(R*T)'))
         self._write('return;')
         self._outdent()
         self._write('}')
@@ -1494,7 +1494,7 @@ class CPickler(CMill):
 
         self.line('W/sumC holds the mean molecular wt')
         self._write(
-            '*rho = *P * W / (sumC * (*T) * %g); ' % (R*kelvin*mole/erg)
+            '*rho = *P * W / (sumC * (*T) * %1.14e); ' % (R*kelvin*mole/erg)
             + self.line('rho = PW/(R*T)'))
         
         self._write()
@@ -1754,7 +1754,7 @@ class CPickler(CMill):
         self._write('}')
         self._write('')
         self._write(self.line('PW/RT (see Eq. 7)'))
-        self._write('PWORT = (*P)/(YOW * %g * (*T)); ' % (R*kelvin*mole/erg) )
+        self._write('PWORT = (*P)/(YOW * %1.14e * (*T)); ' % (R*kelvin*mole/erg) )
 
         # now compute conversion
         self._write(self.line('Now compute conversion'))
@@ -1910,7 +1910,7 @@ class CPickler(CMill):
         self._write(self.line('convert to chemkin units'))
         self._write('for (id = 0; id < %d; ++id) {' % self.nSpecies)
         self._indent()
-        self._write('cvml[id] *= %g;' % (R*kelvin*mole/erg) )
+        self._write('cvml[id] *= %1.14e;' % (R*kelvin*mole/erg) )
         self._outdent()
         self._write('}')
        
@@ -1948,7 +1948,7 @@ class CPickler(CMill):
         self._write(self.line('convert to chemkin units'))
         self._write('for (id = 0; id < %d; ++id) {' % self.nSpecies)
         self._indent()
-        self._write('cpml[id] *= %g;' % (R*kelvin*mole/erg) )
+        self._write('cpml[id] *= %1.14e;' % (R*kelvin*mole/erg) )
         self._outdent()
         self._write('}')
        
@@ -1977,7 +1977,7 @@ class CPickler(CMill):
             'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2018,7 +2018,7 @@ class CPickler(CMill):
             'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2059,7 +2059,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2100,7 +2100,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2148,7 +2148,7 @@ class CPickler(CMill):
         self._write(self.line('convert to chemkin units'))
         self._write('for (id = 0; id < %d; ++id) {' % self.nSpecies)
         self._indent()
-        self._write('sml[id] *= %g;' % (R*kelvin*mole/erg) )
+        self._write('sml[id] *= %1.14e;' % (R*kelvin*mole/erg) )
         self._outdent()
         self._write('}')
        
@@ -2175,7 +2175,7 @@ class CPickler(CMill):
             'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2211,7 +2211,7 @@ class CPickler(CMill):
             'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2273,7 +2273,7 @@ class CPickler(CMill):
         self._indent()
         self._write('for (int i=0; i<(*np); i++) {')
         self._indent()
-        self._write('hms[n*(*np)+i] *= %g * T[i] * imw[n];' % (R*kelvin*mole/erg))
+        self._write('hms[n*(*np)+i] *= %1.14e * T[i] * imw[n];' % (R*kelvin*mole/erg))
         self._outdent()
         self._write('}')
         self._outdent()
@@ -2306,7 +2306,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2342,7 +2342,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2500,7 +2500,7 @@ class CPickler(CMill):
         self._write('}')
 
         self._write()
-        self._write('*cpbl = result * %g;' % (R*kelvin*mole/erg) )
+        self._write('*cpbl = result * %1.14e;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
@@ -2550,7 +2550,7 @@ class CPickler(CMill):
         self._write('}')
 
         self._write()
-        self._write('*cpbs = result * %g;' % (R*kelvin*mole/erg) )
+        self._write('*cpbs = result * %1.14e;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
@@ -2593,7 +2593,7 @@ class CPickler(CMill):
         self._write('}')
 
         self._write()
-        self._write('*cvbl = result * %g;' % (R*kelvin*mole/erg) )
+        self._write('*cvbl = result * %1.14e;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
@@ -2631,7 +2631,7 @@ class CPickler(CMill):
                 species.id, species.id, species.id) + self.line('%s' % species.symbol))
 
         self._write()
-        self._write('*cvbs = result * %g;' % (R*kelvin*mole/erg) )
+        self._write('*cvbs = result * %1.14e;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
@@ -2660,7 +2660,7 @@ class CPickler(CMill):
         self._write(
             'double hml[%d]; ' % self.nSpecies + self.line(' temporary storage'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2706,7 +2706,7 @@ class CPickler(CMill):
             'double hml[%d], tmp[%d]; ' % (self.nSpecies,self.nSpecies) + self.line(' temporary storage'))
         
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2755,7 +2755,7 @@ class CPickler(CMill):
         self._write(
             'double uml[%d]; ' % self.nSpecies + self.line(' temporary energy array'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2800,7 +2800,7 @@ class CPickler(CMill):
             'double ums[%d]; ' % self.nSpecies + self.line(' temporary energy array'))
         
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2863,7 +2863,7 @@ class CPickler(CMill):
 
         self._write()
         
-        self._write('*sbml = result * %g;' % (R*kelvin*mole/erg) )
+        self._write('*sbml = result * %1.14e;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
@@ -2920,7 +2920,7 @@ class CPickler(CMill):
                         (species.id, species.id, species.id, smallnum) )
 
         self._write(self.line('Scale by R/W'))
-        self._write('*sbms = result * %g * YOW;' % (R*kelvin*mole/erg) )
+        self._write('*sbms = result * %1.14e * YOW;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
@@ -2949,7 +2949,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         self._write(
             'double gort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -2999,7 +2999,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         self._write(
             'double gort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -3063,7 +3063,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         self._write(
             'double aort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -3113,7 +3113,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         self._write(
             'double aort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -3218,7 +3218,7 @@ class CPickler(CMill):
                 species.id, species.id) + self.line('%s' % species.symbol))
  
         self._write(self.line('PW/RT (see Eq. 7)'))
-        self._write('PWORT = (*P)/(YOW * %g * (*T)); ' % (R*kelvin*mole/erg) )
+        self._write('PWORT = (*P)/(YOW * %1.14e * (*T)); ' % (R*kelvin*mole/erg) )
         
         self._write(self.line('multiply by 1e6 so c goes to SI'))
         self._write('PWORT *= 1e6; ')
@@ -3263,7 +3263,7 @@ class CPickler(CMill):
 
         self._write('double c[%d]; ' % self.nSpecies + self.line('temporary storage'))
         
-        self._write('double PORT = 1e6 * (*P)/(%g * (*T)); ' % (R*kelvin*mole/erg) +
+        self._write('double PORT = 1e6 * (*P)/(%1.14e * (*T)); ' % (R*kelvin*mole/erg) +
                     self.line('1e6 * P/RT so c goes to SI units'))
         
         # now compute conversion
@@ -3648,7 +3648,7 @@ class CPickler(CMill):
         self._indent()
 
         self._write('int id; ' + self.line('loop counter'))
-        self._write('double PORT = (*P)/(%g * (*T)); ' % (R*kelvin*mole/erg) +
+        self._write('double PORT = (*P)/(%1.14e * (*T)); ' % (R*kelvin*mole/erg) +
                     self.line('P/RT'))
         # now compute conversion
         self._write()
@@ -3922,7 +3922,7 @@ class CPickler(CMill):
 
         self._write('double c[%d]; ' % nSpecies + self.line('temporary storage'))
         
-        self._write('double PORT = 1e6 * (*P)/(%g * (*T)); ' % (R*kelvin*mole/erg) +
+        self._write('double PORT = 1e6 * (*P)/(%1.14e * (*T)); ' % (R*kelvin*mole/erg) +
                     self.line('1e6 * P/RT so c goes to SI units'))
         
         # now compute conversion
@@ -3982,7 +3982,7 @@ class CPickler(CMill):
                 species.id, species.id) + self.line('%s' % species.symbol))
  
         self._write(self.line('PW/RT (see Eq. 7)'))
-        self._write('PWORT = (*P)/(YOW * %g * (*T)); ' % (R*kelvin*mole/erg) )
+        self._write('PWORT = (*P)/(YOW * %1.14e * (*T)); ' % (R*kelvin*mole/erg) )
         
         self._write(self.line('multiply by 1e6 so c goes to SI'))
         self._write('PWORT *= 1e6; ')
@@ -4031,7 +4031,7 @@ class CPickler(CMill):
 
         self._write('double c[%d]; ' % nSpecies + self.line('temporary storage'))
         
-        self._write('double PORT = 1e6 * (*P)/(%g * (*T)); ' % (R*kelvin*mole/erg) +
+        self._write('double PORT = 1e6 * (*P)/(%1.14e * (*T)); ' % (R*kelvin*mole/erg) +
                     self.line('1e6 * P/RT so c goes to SI units'))
         
         # now compute conversion
@@ -4600,7 +4600,7 @@ class CPickler(CMill):
         self._write('double ru, T, uvel, wtm, p, rho, gam, son, xm, sum, drdy, eta, cp, cv ;')
         self._write('double *  y; ' + self.line('mass frac pointer'))
         self._write()
-        self._write('ru = %g;' % (R * mole * kelvin / erg))
+        self._write('ru = %1.14e;' % (R * mole * kelvin / erg))
         self._write()
         self._write('psc = rwrk[0];')
         self._write('rho1 = rwrk[1];')
