@@ -16,22 +16,23 @@ ode.verbose = 1
 # Select ARK/CV-ODE Jacobian eval: 0=FD 1=AJ
 ode.analytical_jacobian = 1
 #CVODE SPECIFICS
-# Choose between sparse (5) dense (1/101) iterative (99) solver
+# Choose between sparse, sparse_custom, and GMRES
 cvode.solve_type = GMRES
 #ARKODE SPECIFICS
 # Choose if using implicit or explicit solve -- if expl no AJ needed
 #arkode.implicit_solve = 1
 #arkode.use_erkode     = 0
 
+#AMR options
+amr.n_cell = 2 256 2
+# Choose name of output pltfile
+amr.plot_file  = plt
+
 #OTHER
 # Max size of problem
 max_grid_size  = 16
-# Choose name of output pltfile
-amr.plot_file  = plt
 # Fuel species 
 fuel_name      = CH4
-# Second dim 
-third_dim = 256
 
 amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1

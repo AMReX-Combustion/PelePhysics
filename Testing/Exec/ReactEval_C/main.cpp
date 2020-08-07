@@ -18,6 +18,7 @@ using namespace amrex;
 
 #if defined(USE_SUNDIALS_PP)
 // ARKODE or CVODE
+  #include <sundials/sundials_version.h>
   #include <Transport.H>
   #include <reactor.h>
 #else
@@ -60,13 +61,13 @@ main (int   argc,
     /* ODE inputs */
     int ode_ncells = 1;
     int ode_iE     = -1;
-    int third_dim  = 1024;
     int ndt        = 1; 
     Real dt        = 1.e-5;
     /* Scaling */
     Real rtol      = 1e-10;
     Real atol      = 1e-10;
     int use_typ_vals = 0;
+    
 
     {
         /* ParmParse from the inputs file */
@@ -74,10 +75,7 @@ main (int   argc,
 
         // domain size
         pp.query("max_grid_size",max_grid_size);
-
-        // third dim
-        pp.query("third_dim",third_dim);
-
+	
         // Get name of fuel
         pp.get("fuel_name", fuel_name);
     }
@@ -110,10 +108,17 @@ main (int   argc,
 
     ParmParse ppa("amr");
     ppa.query("plot_file",pltfile);
+    std::vector<double> npts(3);
+    for (int i = 0; i < 3; ++i) {
+        ppa.get("n_cell", npts[i], i);
+    }
 
     /* PRINT ODE INFO */
     amrex::Print() << "ODE solver: ";
 #ifdef USE_SUNDIALS_PP
+    char sundials_ver[32];
+    SUNDIALSGetVersion(sundials_ver, 32);
+    amrex::Print() << "SUNDIALS version: " << sundials_ver << ", ";
 #ifdef USE_ARKODE_PP 
     amrex::Print() << "Using ARKODE (impl/expl solver)";
 #else
@@ -158,10 +163,7 @@ main (int   argc,
     BL_PROFILE_VAR("main::reactor_info()", reactInfo);
 
     /* Initialize reactor object */
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-{
+
     // Set ODE r/a tolerances
     SetTolFactODE(rtol,atol);
     // Set species-specific abs tolerances
@@ -179,28 +181,22 @@ main (int   argc,
         }
         SetTypValsODE(typ_vals);
     }
+
 #ifdef USE_CUDA_SUNDIALS_PP
     reactor_info(ode_iE, ode_ncells);
 #else
     reactor_init(ode_iE, ode_ncells);
 #endif
-}
 
     BL_PROFILE_VAR_STOP(reactInfo);
 
-    /* make domain and BoxArray */
-    std::vector<int> npts(3,1);
-    for (int i = 0; i < BL_SPACEDIM; ++i) {
-        npts[i] = 2;
-    }
-    npts[1] = third_dim;
+    /* Make domain and BoxArray */
 
     amrex::Print() << "Integrating "<<npts[0]<< "x"<<npts[1]<< "x"<<npts[2]<< "  box for: ";
     amrex::Print() << dt << " seconds";
     amrex::Print() << std::endl;
 
-    Box domain(IntVect(D_DECL(0,0,0)),
-    IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
+    Box domain(IntVect(D_DECL(0,0,0)), IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
 
     BoxArray ba(domain);
     ba.maxSize(max_grid_size);
@@ -294,10 +290,12 @@ main (int   argc,
 
     /* ADVANCE */
 #ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+    const auto tiling = MFItInfo().SetDynamic(true);
+#pragma omp parallel
+#else
+    const bool tiling = amrex::TilingIfNotGpu();
 #endif
-    for ( MFIter mfi(mf,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-
+    for (MFIter mfi(mf,tiling); mfi.isValid(); ++mfi) {
         const Box& box  = mfi.tilebox();
         int ncells      = box.numPts();
         int extra_cells = 0;
@@ -315,7 +313,7 @@ main (int   argc,
 
 #ifdef USE_CUDA_SUNDIALS_PP
         cudaError_t cuda_status = cudaSuccess;
-        ode_ncells    = ncells;
+        ode_ncells = ncells;
 #else
         extra_cells = ncells - ncells / ode_ncells * ode_ncells; 
 #endif
@@ -407,6 +405,7 @@ main (int   argc,
 
 #ifdef USE_CUDA_SUNDIALS_PP
         cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
+        assert(cuda_status == cudaSuccess); 
 #endif
 
 

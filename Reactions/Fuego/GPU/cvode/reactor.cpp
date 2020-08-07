@@ -34,6 +34,7 @@ AMREX_GPU_DEVICE_MANAGED int enth_rho = 2; // in/out = rhoH/rhoY
 Array<Real,NUM_SPECIES+1> typVals = {-1};
 AMREX_GPU_DEVICE_MANAGED Real relTol    = 1.0e-10;
 AMREX_GPU_DEVICE_MANAGED Real absTol    = 1.0e-10;
+
 /**********************************/
 
 /**********************************/
@@ -275,6 +276,9 @@ int react(const amrex::Box& box,
             cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
+            cusolver_status = cusolverSpSetStream(user_data->cusolverHandle, stream);
+            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+            
             cusparse_status = cusparseCreateMatDescr(&(user_data->descrA)); 
             assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
 
@@ -343,10 +347,16 @@ int react(const amrex::Box& box,
             int retval;
 
             cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
+            assert(cusolver_status == CUSPARSE_STATUS_SUCCESS);
+            
+            cusolver_status = cusolverSpSetStream(user_data->cusolverHandle, stream);
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
             cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
-            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+            assert(cusolver_status == CUSPARSE_STATUS_SUCCESS);
+            
+            cusparse_status = cusparseSetStream(user_data->cuSPHandle, stream);
+            assert(cusolver_status == CUSPARSE_STATUS_SUCCESS);
 
             A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, (NUM_SPECIES + 1), (NUM_SPECIES + 1), user_data->NNZ, user_data->cuSPHandle);
             if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
@@ -656,7 +666,8 @@ int react(realtype *rY_in,    realtype *rY_src_in,
         /* Find sparsity pattern to fill structure of sparse matrix */
         BL_PROFILE_VAR("SparsityFuegoStuff", SparsityStuff);
         BL_PROFILE_VAR_STOP(SparsityStuff);
-        if (user_data->isolve_type == iterative_gmres_solve) {
+        if (user_data->isolve_type == iterative_gmres_solve && 
+              user_data->ianalytical_jacobian == 1 ) {
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_INFO_SYST_SIMPLIFIED(&(user_data->NNZ),&HP);
             BL_PROFILE_VAR_STOP(SparsityStuff);
@@ -756,7 +767,10 @@ int react(realtype *rY_in,    realtype *rY_src_in,
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
             cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
-            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+            assert(cusolver_status == CUSPARSE_STATUS_SUCCESS);
+            
+            cusparse_status = cusparseSetStream(user_data->cuSPHandle, stream);
+            assert(cusolver_status == CUSPARSE_STATUS_SUCCESS);
 
             A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, (NUM_SPECIES + 1), (NUM_SPECIES + 1), user_data->NNZ, user_data->cuSPHandle);
             if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
@@ -1840,7 +1854,12 @@ static void PrintFinalStats(void *cvodeMem)
   flag = CVodeGetNumLinConvFails(cvodeMem, &ncfl);
   check_flag(&flag, "CVodeGetNumLinConvFails", 1);
 
-  Print() <<"\nFinal Statistics: \n";
+#ifdef _OPENMP
+  Print() <<"\nFinal Statistics: " << "(thread:" << omp_get_thread_num() << ", ";
+  Print() << "cvodeMem:" << cvodeMem << ")\n";
+#else
+  Print() <<"\nFinal Statistics:\n";
+#endif
   Print() <<"lenrw      = " << lenrw   <<"    leniw         = " << leniw   << "\n";
   Print() <<"lenrwLS    = " << lenrwLS <<"    leniwLS       = " << leniwLS << "\n";
   Print() <<"nSteps     = " << nst     <<"\n";
