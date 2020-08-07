@@ -108,10 +108,8 @@ main (int   argc,
 
     ParmParse ppa("amr");
     ppa.query("plot_file",pltfile);
-    std::vector<double> npts(3);
-    for (int i = 0; i < 3; ++i) {
-        ppa.get("n_cell", npts[i], i);
-    }
+    std::vector<double> npts(AMREX_SPACEDIM);
+    ppa.getarr("n_cell",npts,0,AMREX_SPACEDIM);
 
     /* PRINT ODE INFO */
     amrex::Print() << "ODE solver: ";
@@ -293,7 +291,7 @@ main (int   argc,
     const auto tiling = MFItInfo().SetDynamic(true);
 #pragma omp parallel
 #else
-    const bool tiling = amrex::TilingIfNotGpu();
+    const bool tiling = TilingIfNotGpu();
 #endif
     for (MFIter mfi(mf,tiling); mfi.isValid(); ++mfi) {
         const Box& box  = mfi.tilebox();
