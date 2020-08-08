@@ -46,6 +46,7 @@ typedef struct {
       amrex::Real *rhoXsrc_ext = NULL;
       amrex::Real *rYsrc = NULL;
       int *FCunt = NULL;
+      int *mask = NULL;
 
       /* Options */
       int NNZ; 
