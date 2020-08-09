@@ -1359,7 +1359,7 @@ int Precond_sparse(realtype /* tn */, N_Vector u, N_Vector /* fu */, booleantype
 /* Preconditioner setup routine for GMRES solver when no sparse mode is activated 
  * Generate and preprocess P
 */
-int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok, 
+int Precond(realtype /* tn */, N_Vector u, N_Vector /* fu */, booleantype jok, 
             booleantype *jcurPtr, realtype gamma, void *user_data)
 {
   /* Make local copies of pointers to input data (big M) */
@@ -1499,8 +1499,8 @@ int PSolve_sparse(realtype /* tn */, N_Vector /* u */, N_Vector /* fu */, N_Vect
 
 #else
 /* PSolve for GMRES solver when no sparse mode is activated */
-int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r, N_Vector z,
-           realtype gamma, realtype delta, int lr, void *user_data)
+int PSolve(realtype /* tn */, N_Vector /* u */, N_Vector /* fu */, N_Vector r, N_Vector z,
+           realtype /* gamma */, realtype /* delta */, int /* lr */, void *user_data)
 {
   /* Make local copies of pointers to input data (big M) */
   realtype *zdata = N_VGetArrayPointer(z);
@@ -1824,6 +1824,11 @@ UserData AllocUserData(int reactor_type, int num_cells)
       HP = 1;
   }
 
+  /* Sparse Direct and Sparse (It) Precond data */
+  data_wk->colPtrs = new int*[data_wk->ncells];
+  data_wk->rowVals = new int*[data_wk->ncells];
+  data_wk->Jdata   = new realtype*[data_wk->ncells];
+
 #ifndef USE_KLU_PP
   if (data_wk->isolve_type == iterative_gmres_solve) {
       /* Precond data */
@@ -1844,11 +1849,6 @@ UserData AllocUserData(int reactor_type, int num_cells)
   //} 
 
 #else
-  /* Sparse Direct and Sparse (It) Precond data */
-  data_wk->colPtrs = new int*[data_wk->ncells];
-  data_wk->rowVals = new int*[data_wk->ncells];
-  data_wk->Jdata   = new realtype*[data_wk->ncells];
-
   if (data_wk->isolve_type == sparse_solve) {
       /* Sparse Matrix for Direct Sparse KLU solver */
       (data_wk->PS) = new SUNMatrix[1];
@@ -1898,7 +1898,6 @@ UserData AllocUserData(int reactor_type, int num_cells)
       /* Sparse Direct and Sparse (It) Precond data */
       data_wk->colVals = new int*[data_wk->ncells];
       data_wk->rowPtrs = new int*[data_wk->ncells];
-      data_wk->Jdata   = new realtype*[data_wk->ncells];
       /* Matrices for It Sparse custom block-solve */
       data_wk->PS         = new SUNMatrix[data_wk->ncells];
       data_wk->JSPSmat    = new realtype*[data_wk->ncells];
@@ -2060,6 +2059,9 @@ void FreeUserData(UserData data_wk)
   delete[] (data_wk->FCunt);
   delete[] (data_wk->mask);
 
+  delete[] data_wk->colPtrs;
+  delete[] data_wk->rowVals;
+  delete[] data_wk->Jdata;
 #ifndef USE_KLU_PP
   if (data_wk->isolve_type == iterative_gmres_solve) {
       for(int i = 0; i < data_wk->ncells; ++i) {
@@ -2079,6 +2081,7 @@ void FreeUserData(UserData data_wk)
 
 #else
   if (data_wk->isolve_type == sparse_solve) {
+      SUNMatDestroy(A);
       SUNMatDestroy((data_wk->PS)[0]);
       delete[] (data_wk->PS);
   } else if (data_wk->isolve_type == iterative_gmres_solve) {
@@ -2104,16 +2107,13 @@ void FreeUserData(UserData data_wk)
       }
       delete[] data_wk->colVals;
       delete[] data_wk->rowPtrs;
-      delete[] data_wk->Jdata;
       delete[] data_wk->PS;
       delete[] data_wk->JSPSmat;
   } else if (data_wk->isolve_type == sparse_solve_custom) {
+      SUNMatDestroy(A);
       SUNMatDestroy(data_wk->PSc);
   }  else if (data_wk->isolve_type == hack_dump_sparsity_pattern) {
   }
-  delete[] data_wk->colPtrs;
-  delete[] data_wk->rowVals;
-  delete[] data_wk->Jdata;
 
   free(data_wk);
 } 
