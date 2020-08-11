@@ -58,7 +58,7 @@ USE_KLU = USE_KLU_PP
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   Chemistry_Model = drm19
-  Chemistry_Model = grimech30
+  #Chemistry_Model = grimech30
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else
