@@ -15197,7 +15197,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     double refCinv = 1 / refC;
 
     /* Evaluate the kfs */
-    double k_f, Corr;
+    double k_f, k_r, Corr;
     double redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
 
     // (0):  O + H2 => H + OH
@@ -17933,9 +17933,6 @@ void productionRate(double *  wdot, double *  sc, double T)
 
 void comp_k_f(double *  tc, double invT, double *  k_f)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<218; ++i) {
         k_f[i] = prefactor_units[i] * fwd_A[i]
                     * exp(fwd_beta[i] * tc[0] - activation_units[i] * fwd_Ea[i] * invT);
@@ -18168,9 +18165,6 @@ void comp_Kc(double *  tc, double invT, double *  Kc)
     Kc[216] = g_RT[4] - g_RT[5] - g_RT[50] + g_RT[51];
     Kc[217] = g_RT[16] - g_RT[18] - g_RT[50] + g_RT[51];
 
-#ifdef __INTEL_COMPILER
-     #pragma simd
-#endif
     for (int i=0; i<218; ++i) {
         Kc[i] = exp(Kc[i]);
     };
@@ -19162,9 +19156,6 @@ void comp_qfqr(double *  qf, double *  qr, double *  sc, double *  tc, double in
         alpha[8] = mixture + (TB[8][0] - 1)*sc[29] + (TB[8][1] - 1)*sc[9] + (TB[8][2] - 1)*sc[13] + (TB[8][3] - 1)*sc[2] + (TB[8][4] - 1)*sc[44] + (TB[8][5] - 1)*sc[15] + (TB[8][6] - 1)*sc[42] + (TB[8][7] - 1)*sc[27] + (TB[8][8] - 1)*sc[48] + (TB[8][9] - 1)*sc[5] + (TB[8][10] - 1)*sc[12] + (TB[8][11] - 1)*sc[32] + (TB[8][12] - 1)*sc[35] + (TB[8][13] - 1)*sc[33] + (TB[8][14] - 1)*sc[50];
         alpha[9] = mixture + (TB[9][0] - 1)*sc[29] + (TB[9][1] - 1)*sc[9] + (TB[9][2] - 1)*sc[35] + (TB[9][3] - 1)*sc[44] + (TB[9][4] - 1)*sc[15] + (TB[9][5] - 1)*sc[42] + (TB[9][6] - 1)*sc[27] + (TB[9][7] - 1)*sc[48] + (TB[9][8] - 1)*sc[33] + (TB[9][9] - 1)*sc[32] + (TB[9][10] - 1)*sc[50];
         alpha[10] = mixture + (TB[10][0] - 1)*sc[29] + (TB[10][1] - 1)*sc[9] + (TB[10][2] - 1)*sc[35] + (TB[10][3] - 1)*sc[44] + (TB[10][4] - 1)*sc[15] + (TB[10][5] - 1)*sc[42] + (TB[10][6] - 1)*sc[27] + (TB[10][7] - 1)*sc[48] + (TB[10][8] - 1)*sc[33] + (TB[10][9] - 1)*sc[32] + (TB[10][10] - 1)*sc[50];
-#ifdef __INTEL_COMPILER
-         #pragma simd
-#endif
         for (int i=0; i<11; i++)
         {
             double redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
@@ -19220,9 +19211,6 @@ void vproductionRate(int npt, double *  wdot, double *  sc, double *  T)
     double k_f_s[218*npt], Kc_s[218*npt], mixture[npt], g_RT[52*npt];
     double tc[5*npt], invT[npt];
 
-#ifdef __INTEL_COMPILER
-     #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         tc[0*npt+i] = log(T[i]);
         tc[1*npt+i] = T[i];
@@ -19258,9 +19246,6 @@ void vproductionRate(int npt, double *  wdot, double *  sc, double *  T)
 
 void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         k_f_s[0*npt+i] = prefactor_units[0] * fwd_A[0] * exp(fwd_beta[0] * tc[i] - activation_units[0] * fwd_Ea[0] * invT[i]);
         k_f_s[1*npt+i] = prefactor_units[1] * fwd_A[1] * exp(fwd_beta[1] * tc[i] - activation_units[1] * fwd_Ea[1] * invT[i]);
@@ -19553,9 +19538,6 @@ void vcomp_gibbs(int npt, double *  g_RT, double *  tc)
 
 void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
         double refC = (101325. / 8.31451) * invT[i];
@@ -19786,9 +19768,6 @@ void vcomp_wdot_1_50(int npt, double *  wdot, double *  mixture, double *  sc,
 		double *  k_f_s, double *  Kc_s,
 		double *  tc, double *  invT, double *  T)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         double qdot, q_f, q_r, phi_f, phi_r, k_f, k_r, Kc;
         double alpha;
@@ -20490,9 +20469,6 @@ void vcomp_wdot_51_100(int npt, double *  wdot, double *  mixture, double *  sc,
 		double *  k_f_s, double *  Kc_s,
 		double *  tc, double *  invT, double *  T)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         double qdot, q_f, q_r, phi_f, phi_r, k_f, k_r, Kc;
         double alpha;
@@ -21052,9 +21028,6 @@ void vcomp_wdot_101_150(int npt, double *  wdot, double *  mixture, double *  sc
 		double *  k_f_s, double *  Kc_s,
 		double *  tc, double *  invT, double *  T)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         double qdot, q_f, q_r, phi_f, phi_r, k_f, k_r, Kc;
         double alpha;
@@ -21605,9 +21578,6 @@ void vcomp_wdot_151_200(int npt, double *  wdot, double *  mixture, double *  sc
 		double *  k_f_s, double *  Kc_s,
 		double *  tc, double *  invT, double *  T)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         double qdot, q_f, q_r, phi_f, phi_r, k_f, k_r, Kc;
         double alpha;
@@ -22142,9 +22112,6 @@ void vcomp_wdot_201_218(int npt, double *  wdot, double *  mixture, double *  sc
 		double *  k_f_s, double *  Kc_s,
 		double *  tc, double *  invT, double *  T)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         double qdot, q_f, q_r, phi_f, phi_r, k_f, k_r, Kc;
         double alpha;

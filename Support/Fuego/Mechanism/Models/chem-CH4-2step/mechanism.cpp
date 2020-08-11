@@ -2151,7 +2151,7 @@ AMREX_GPU_HOST_DEVICE inline void comp_qfqr(double *  qf, double * qr, double * 
     double refCinv = 1 / refC;
 
     /* Evaluate the kfs */
-    double k_f, Corr;
+    double k_f, k_r, Corr;
 
     // (0):  2.000000 CH4 + 3.000000 O2 => 2.000000 CO + 4.000000 H2O
     k_f = 1.0000000000000005e-24 * 154500000000000 
@@ -2236,9 +2236,6 @@ void productionRate(double *  wdot, double *  sc, double T)
 
 void comp_k_f(double *  tc, double invT, double *  k_f)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<3; ++i) {
         k_f[i] = prefactor_units[i] * fwd_A[i]
                     * exp(fwd_beta[i] * tc[0] - activation_units[i] * fwd_Ea[i] * invT);
@@ -2256,9 +2253,6 @@ void comp_Kc(double *  tc, double invT, double *  Kc)
     Kc[1] = g_RT[0] + 2.000000*g_RT[3] - 2.000000*g_RT[4];
     Kc[2] = -g_RT[0] - 2.000000*g_RT[3] + 2.000000*g_RT[4];
 
-#ifdef __INTEL_COMPILER
-     #pragma simd
-#endif
     for (int i=0; i<3; ++i) {
         Kc[i] = exp(Kc[i]);
     };
@@ -2320,9 +2314,6 @@ void vproductionRate(int npt, double *  wdot, double *  sc, double *  T)
     double k_f_s[3*npt], Kc_s[3*npt], mixture[npt], g_RT[6*npt];
     double tc[5*npt], invT[npt];
 
-#ifdef __INTEL_COMPILER
-     #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         tc[0*npt+i] = log(T[i]);
         tc[1*npt+i] = T[i];
@@ -2354,9 +2345,6 @@ void vproductionRate(int npt, double *  wdot, double *  sc, double *  T)
 
 void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         k_f_s[0*npt+i] = prefactor_units[0] * fwd_A[0] * exp(fwd_beta[0] * tc[i] - activation_units[0] * fwd_Ea[0] * invT[i]);
         k_f_s[1*npt+i] = prefactor_units[1] * fwd_A[1] * exp(fwd_beta[1] * tc[i] - activation_units[1] * fwd_Ea[1] * invT[i]);
@@ -2388,9 +2376,6 @@ void vcomp_gibbs(int npt, double *  g_RT, double *  tc)
 
 void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
         double refC = (101325. / 8.31451) * invT[i];
@@ -2406,9 +2391,6 @@ void vcomp_wdot(int npt, double *  wdot, double *  mixture, double *  sc,
 		double *  k_f_s, double *  Kc_s,
 		double *  tc, double *  invT, double *  T)
 {
-#ifdef __INTEL_COMPILER
-    #pragma simd
-#endif
     for (int i=0; i<npt; i++) {
         double qdot, q_f, q_r, phi_f, phi_r, k_f, k_r, Kc;
         double alpha;
