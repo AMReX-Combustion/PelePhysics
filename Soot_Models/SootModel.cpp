@@ -264,7 +264,6 @@ SootModel::addSootDerivePlotVars(DeriveList&           derive_lst,
 // Add soot source term
 void
 SootModel::addSootSourceTerm(const Box&                vbox,
-                             Array4<Real> const&       Ustate,
                              Array4<const Real> const& Qstate,
                              Array4<const Real> const& coeff_state,
                              Array4<Real> const&       soot_state,
@@ -424,7 +423,6 @@ SootModel::addSootSourceTerm(const Box&                vbox,
       for (int mom = 0; mom != NUM_SOOT_VARS; ++mom) {
         const int peleIndx = sootIndx + mom;
         // Overwrite moment values with clipped moments
-        Ustate(i, j, k, peleIndx) = moments[mom];
         soot_state(i, j, k, peleIndx) += mom_src[mom];
       }
     });

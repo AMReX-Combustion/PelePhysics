@@ -59,7 +59,6 @@ public:
   // Compute HMOM source term
   //
   void addSootSourceTerm(const Box&                vbox,
-                         Array4<Real> const&       Ustate,
                          Array4<const Real> const& Qstate,
                          Array4<const Real> const& coeff_state,
                          Array4<Real> const&       soot_state,
