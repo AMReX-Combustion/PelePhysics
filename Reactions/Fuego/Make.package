@@ -1,5 +1,5 @@
 ifeq ($(USE_SUNDIALS_PP), TRUE)
-    ifeq ($(USE_CUDA_SUNDIALS_PP), TRUE)
+    ifeq ($(USE_CUDA), TRUE)
         ifeq ($(USE_ARKODE_PP), TRUE)
             Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU/arkode
         else

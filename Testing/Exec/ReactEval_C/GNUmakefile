@@ -41,8 +41,7 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
   # use KLU sparse features -- only useful if CVODE is used on CPU
   USE_KLU_PP = TRUE
   # Activates GPU version
-  USE_CUDA_SUNDIALS_PP = FALSE
-  ifeq ($(USE_CUDA_SUNDIALS_PP), TRUE)
+  ifeq ($(USE_CUDA), TRUE)
       DEFINES += -DCVODE_BOXINTEG
   endif
 else
