@@ -32,17 +32,24 @@ ifeq ($(USE_ACC), TRUE)
   DEFINES += -DACC
 endif
 
+USE_F90 = FALSE
+
 # EOS
 # Both Fortran and cpp can be loaded for EOS
-EOS_HOME_F90 := $(EOS_HOME)/F90
+ifeq ($(EOS_F90),TRUE) 
+    EOS_HOME_F90 := $(EOS_HOME)/F90
+    EOS_PATH_F90 := $(EOS_PATH)/F90
+    include $(EOS_HOME_F90)/Make.package
+    include $(EOS_PATH_F90)/Make.package
+    EXTERN_CORE       += $(EOS_HOME_F90) $(EOS_PATH_F90)
+    INCLUDE_LOCATIONS += $(EOS_HOME_F90) $(EOS_PATH_F90)
+    VPATH_LOCATIONS   += $(EOS_HOME_F90) $(EOS_PATH_F90)
+    USE_F90 = TRUE
+endif
 EOS_PATH := $(EOS_HOME)/$(strip $(Eos_dir))
-EOS_PATH_F90 := $(EOS_PATH)/F90
-include $(EOS_HOME_F90)/Make.package
 include $(EOS_PATH)/Make.package
-include $(EOS_PATH_F90)/Make.package
-EXTERN_CORE       += $(EOS_HOME_F90) $(EOS_PATH_F90)
-INCLUDE_LOCATIONS += $(EOS_HOME) $(EOS_HOME_F90) $(EOS_PATH) $(EOS_PATH_F90)
-VPATH_LOCATIONS   += $(EOS_HOME) $(EOS_HOME_F90) $(EOS_PATH) $(EOS_PATH_F90)
+INCLUDE_LOCATIONS += $(EOS_HOME) $(EOS_PATH) 
+VPATH_LOCATIONS   += $(EOS_HOME) $(EOS_PATH) 
 ifeq ($(Eos_dir), Fuego)
   TRANSPORT_TYPE := IDEAL_GAS
 else
@@ -56,13 +63,18 @@ Bpack             += $(EOS_PATH)/Make.package
 Blocs             += $(EOS_PATH)
 
 # Reactions
-REACTIONS_HOME_F90 := $(REACTIONS_HOME)/F90
+ifeq ($(REACTIONS_F90),TRUE) 
+    REACTIONS_HOME_F90 := $(REACTIONS_HOME)/F90
+    REACTIONS_PATH_F90 := $(REACTIONS_PATH)/F90
+    EXTERN_CORE       += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)  
+    INCLUDE_LOCATIONS += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
+    VPATH_LOCATIONS   += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
+    USE_F90 = TRUE
+endif
 REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
-REACTIONS_PATH_F90 := $(REACTIONS_PATH)/F90
 include $(REACTIONS_PATH)/Make.package
-EXTERN_CORE       += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)  
-INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_HOME_F90) $(REACTIONS_PATH) $(REACTIONS_PATH_F90)
-VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_HOME_F90) $(REACTIONS_PATH) $(REACTIONS_PATH_F90)
+INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
+VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH) 
 ifdef Chemistry_Model
   ifeq ($(Eos_dir), GammaLaw)
     ifneq ($(Chemistry_Model), Null)
@@ -90,12 +102,14 @@ ifeq ($(TRANSPORT_F90),TRUE)
     EXTERN_CORE       += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
     INCLUDE_LOCATIONS += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
     VPATH_LOCATIONS   += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
+    USE_F90 = TRUE
+    Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
+    Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
 endif
 USE_FUEGO = FALSE
-Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
 
-Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism \
-           $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
+Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism
+
 ifeq ($(Transport_dir), Simple)
   DEFINES += -DSIMPLE_TRANSPORT
 endif
