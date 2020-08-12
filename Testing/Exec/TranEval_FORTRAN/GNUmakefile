@@ -16,7 +16,7 @@ FUEGO_GAS  = TRUE
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
 
-TRANSPORT_CPP = FALSE
+TRANSPORT_F90 = TRUE
 
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego

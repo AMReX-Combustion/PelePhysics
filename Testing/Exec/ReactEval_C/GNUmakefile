@@ -30,7 +30,6 @@ DEFINES  += -DMOD_REACTOR
 # Activates use of SUNDIALS: CVODE (default) / ARKODE
 USE_SUNDIALS_PP = TRUE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
-  TRANSPORT_CPP = TRUE
   # provide location of sundials lib if needed
   #SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
   # use ARKODE: if FALSE then CVODE is used
@@ -48,9 +47,6 @@ else
   # Activates use of Hari explicit RK
   # will only work if USE_SUNDIALS_PP = FALSE
   USE_RK64_PP = FALSE
-  ifeq ($(USE_RK64_PP), TRUE)
-    TRANSPORT_CPP = TRUE
-  endif
 endif
 
 #######################
