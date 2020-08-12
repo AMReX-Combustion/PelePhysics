@@ -179,7 +179,7 @@ main (int   argc,
         }
         SetTypValsODE(typ_vals);
     }
-#ifdef USE_CUDA
+#ifdef AMREX_USE_CUDA
     reactor_info(ode_iE, ode_ncells);
 #else
     reactor_init(ode_iE, ode_ncells);
@@ -231,7 +231,7 @@ main (int   argc,
     BL_PROFILE_VAR("main::initialize_data()", InitData);
 
     /* INITIALIZE DATA */
-#ifdef USE_CUDA
+#ifdef AMREX_USE_CUDA
     int count_mf = 0;
 #endif
     IntVect tilesize(D_DECL(1024,1024,1024));
@@ -255,14 +255,14 @@ main (int   argc,
                                 dx, plo, phi);
         });
 
-#ifdef USE_CUDA
+#ifdef AMREX_USE_CUDA
         count_mf = count_mf + 1;
 #endif
     }
 
     BL_PROFILE_VAR_STOP(InitData);
 
-#ifdef USE_CUDA
+#ifdef AMREX_USE_CUDA
     amrex::Print() << "That many boxes: " << count_mf<< "\n";
 #endif
 
@@ -313,7 +313,7 @@ main (int   argc,
         auto const& fc      = fctCount.array(mfi);
         auto const& mask    = dummyMask.array(mfi);
 
-#ifdef USE_CUDA
+#ifdef AMREX_USE_CUDA
         cudaError_t cuda_status = cudaSuccess;
         ode_ncells    = ncells;
 #else
@@ -382,7 +382,7 @@ main (int   argc,
                 //printf("%14.6e %14.6e \n", time, tmp_vect[Ncomp + (NUM_SPECIES+1)]);
 #else
 
-#ifdef USE_CUDA
+#ifdef AMREX_USE_CUDA
                 react(box,
                       rhoY, frcExt, T,
                       rhoE, frcEExt,
@@ -405,7 +405,7 @@ main (int   argc,
 #endif
         BL_PROFILE_VAR_STOP(ReactInLoop);
 
-#ifdef USE_CUDA
+#ifdef AMREX_USE_CUDA
         cuda_status = cudaStreamSynchronize(amrex::Gpu::gpuStream());  
 #endif
 
