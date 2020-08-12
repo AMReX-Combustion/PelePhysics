@@ -18,18 +18,15 @@ TINY_PROFILE = FALSE
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
 
+#Testing F90 routines
+REACTIONS_F90 = TRUE
+EOS_F90 = TRUE
+TRANSPORT_F90 = TRUE
+
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
-  #Chemistry_Model = chem-H
   Chemistry_Model = LiDryer
-  #Chemistry_Model = BurkeDryer_mod
-  #Chemistry_Model = BurkeDryer
-  #Chemistry_Model = air
-  #Chemistry_Model = grimech12
-  #Chemistry_Model = grimech30
-  #Chemistry_Model = grimech30-noArN
-  #Chemistry_Model = drm19
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else
