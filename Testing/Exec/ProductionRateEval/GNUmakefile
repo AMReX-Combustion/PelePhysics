@@ -19,20 +19,19 @@ USE_CUDA   = TRUE
 
 TINY_PROFILE = FALSE
 
+USE_SUNDIALS_PP = TRUE
 ifeq ($(USE_CUDA), TRUE)
-  USE_SUNDIALS_PP = TRUE
   USE_KLU_PP = FALSE
 else
-  USE_F90_PP = TRUE
-  USE_SUNDIALS_PP = FALSE
+  USE_F90_PP = FALSE
   USE_KLU_PP = FALSE
 endif
 USE_KLU = $(USE_KLU_PP) # sort out keywords later...
 
 Eos_dir         = Fuego
 #Chemistry_Model = LiDryer
-#Chemistry_Model = drm19
-Chemistry_Model = grimech12
+Chemistry_Model = drm19
+#Chemistry_Model = grimech12
 Reactions_dir   = Fuego
 Transport_dir   = Simple
 
