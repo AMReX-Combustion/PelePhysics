@@ -17,9 +17,7 @@ FUEGO_GAS  = TRUE
 PELE_PHYSICS_HOME    := ../../..
 
 #Testing F90 routines
-REACTIONS_F90 = TRUE
-EOS_F90 = TRUE
-TRANSPORT_F90 = TRUE
+USE_F90_PP = TRUE
 
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego

@@ -32,11 +32,9 @@ ifeq ($(USE_ACC), TRUE)
   DEFINES += -DACC
 endif
 
-USE_F90 = FALSE
-
 # EOS
 # Both Fortran and cpp can be loaded for EOS
-ifeq ($(EOS_F90),TRUE) 
+ifeq ($(USE_F90_PP),TRUE) 
     EOS_HOME_F90 := $(EOS_HOME)/F90
     EOS_PATH_F90 := $(EOS_PATH)/F90
     include $(EOS_HOME_F90)/Make.package
@@ -44,7 +42,6 @@ ifeq ($(EOS_F90),TRUE)
     EXTERN_CORE       += $(EOS_HOME_F90) $(EOS_PATH_F90)
     INCLUDE_LOCATIONS += $(EOS_HOME_F90) $(EOS_PATH_F90)
     VPATH_LOCATIONS   += $(EOS_HOME_F90) $(EOS_PATH_F90)
-    USE_F90 = TRUE
 endif
 EOS_PATH := $(EOS_HOME)/$(strip $(Eos_dir))
 include $(EOS_PATH)/Make.package
@@ -63,13 +60,12 @@ Bpack             += $(EOS_PATH)/Make.package
 Blocs             += $(EOS_PATH)
 
 # Reactions
-ifeq ($(REACTIONS_F90),TRUE) 
+ifeq ($(USE_F90_PP),TRUE) 
     REACTIONS_HOME_F90 := $(REACTIONS_HOME)/F90
     REACTIONS_PATH_F90 := $(REACTIONS_PATH)/F90
     EXTERN_CORE       += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)  
     INCLUDE_LOCATIONS += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
     VPATH_LOCATIONS   += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
-    USE_F90 = TRUE
 endif
 REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
 include $(REACTIONS_PATH)/Make.package
@@ -94,7 +90,7 @@ TRAN_PATH := $(TRAN_HOME)/$(strip $(Transport_dir))
 include $(TRAN_PATH)/Make.package
 INCLUDE_LOCATIONS += $(TRAN_PATH)
 VPATH_LOCATIONS   += $(TRAN_PATH)
-ifeq ($(TRANSPORT_F90),TRUE) 
+ifeq ($(USE_F90_PP),TRUE) 
     TRAN_HOME_F90 := $(TRAN_HOME)/F90
     TRAN_PATH_F90 := $(TRAN_PATH)/F90
     include $(TRAN_HOME_F90)/Make.package
@@ -102,7 +98,6 @@ ifeq ($(TRANSPORT_F90),TRUE)
     EXTERN_CORE       += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
     INCLUDE_LOCATIONS += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
     VPATH_LOCATIONS   += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
-    USE_F90 = TRUE
     Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
     Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
 endif
