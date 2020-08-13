@@ -1,2 +1,4 @@
-F90EXE_sources += mod_fuego.F90
+ifeq ($(USE_F90),TRUE)
+    F90EXE_sources += mod_fuego.F90
+endif
 CEXE_headers += PPHYS_CONSTANTS.H
