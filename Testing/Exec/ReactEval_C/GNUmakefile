@@ -32,25 +32,17 @@ DEFINES  += -DMOD_REACTOR
 USE_SUNDIALS_PP = TRUE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
   TRANSPORT_CPP = TRUE
-  # use ARKODE: if FALSE then CVODE is used
   USE_ARKODE_PP = FALSE
   ifeq ($(USE_CUDA), TRUE)
-      # Activates GPU version of SUNDIALS stuff
-      USE_CUDA_SUNDIALS_PP = TRUE
       DEFINES += -DCVODE_BOXINTEG
-      # use KLU sparse features -- only useful if CVODE is used on CPU
       USE_KLU_PP = FALSE
   else
-      USE_CUDA_SUNDIALS_PP = FALSE
       USE_KLU_PP = TRUE
   endif
 else
   # Activates use of Hari explicit RK
   # will only work if USE_SUNDIALS_PP = FALSE
   USE_RK64_PP = FALSE
-  ifeq ($(USE_RK64_PP), TRUE)
-    TRANSPORT_CPP = TRUE
-  endif
 endif
 USE_KLU = USE_KLU_PP
 

@@ -14,18 +14,14 @@
 #include <Transport.H>
 #include <reactor.h>
 
-#if defined(USE_SUNDIALS_PP)
+#ifndef USE_RK64_PP
 #ifdef USE_ARKODE_PP 
 static std::string ODE_SOLVER = "ARKODE";
 #else
 static std::string ODE_SOLVER = "CVODE";
 #endif
 #else
-#if defined(USE_RK64_PP)
 static std::string ODE_SOLVER = "RK64";
-#else
-static std::string ODE_SOLVER = "DVODE"; // Note currently supported here though
-#endif
 #endif
 
 using namespace amrex;
@@ -159,7 +155,7 @@ main (int   argc,
       // Set ODE tolerances
       SetTolFactODE(rtol,atol);
 
-#ifdef USE_CUDA_SUNDIALS_PP
+#ifdef AMREX_USE_CUDA
       reactor_info(ode_iE, ode_ncells);
 #else
       reactor_init(ode_iE, ode_ncells);
@@ -283,7 +279,7 @@ main (int   argc,
       auto const& fc      = fctCount.array(mfi);
       auto const& mask    = dummyMask.array(mfi);
 
-#ifdef USE_CUDA_SUNDIALS_PP
+#ifdef AMREX_USE_CUDA
       cudaError_t cuda_status = cudaSuccess;
       ode_ncells    = nc;
 #else
@@ -355,7 +351,7 @@ main (int   argc,
         Real dt_incr = dt/ndt;
         for (int ii = 0; ii < ndt; ++ii)
         {
-#ifdef USE_CUDA_SUNDIALS_PP
+#ifdef AMREX_USE_CUDA
           react(box,
                 rhoY, frcExt, T,
                 rhoE, frcEExt,

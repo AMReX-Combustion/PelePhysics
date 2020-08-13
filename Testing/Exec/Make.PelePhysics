@@ -79,11 +79,10 @@ endif
 
 # Transport
 TRAN_PATH := $(TRAN_HOME)/$(strip $(Transport_dir))
-ifeq ($(TRANSPORT_CPP),TRUE) 
-    include $(TRAN_PATH)/Make.package
-    INCLUDE_LOCATIONS += $(TRAN_PATH)
-    VPATH_LOCATIONS   += $(TRAN_PATH)
-else
+include $(TRAN_PATH)/Make.package
+INCLUDE_LOCATIONS += $(TRAN_PATH)
+VPATH_LOCATIONS   += $(TRAN_PATH)
+ifeq ($(TRANSPORT_F90),TRUE) 
     TRAN_HOME_F90 := $(TRAN_HOME)/F90
     TRAN_PATH_F90 := $(TRAN_PATH)/F90
     include $(TRAN_HOME_F90)/Make.package
