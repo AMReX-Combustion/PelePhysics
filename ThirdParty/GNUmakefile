@@ -5,7 +5,7 @@
 COMP            ?= gcc
 DEBUG           ?= FALSE
 USE_CUDA        ?= FALSE
-USE_KLU         ?= FALSE
+USE_KLU_PP      ?= FALSE
 
 #SS_VERSION=5.7.2
 SS_VERSION=5.4.0
@@ -50,7 +50,7 @@ endif
 tp_suffix=$(COMP)$(DebugSuffix)$(CUDASuffix)$(KLUSuffix)
 INSTALL_PREFIX=$(PWD)/INSTALL/$(tp_suffix)
 
-ifeq ($(USE_KLU),TRUE)
+ifeq ($(USE_KLU_PP),TRUE)
   KLUSuffix   := .KLU
   KLU_DEFINES=-DKLU_ENABLE:BOOL=ON -DKLU_INCLUDE_DIR=${INSTALL_PREFIX}/include -DKLU_LIBRARY_DIR=${INSTALL_PREFIX}/lib 
   SS_BUILD_PREFIX=$(PWD)/BUILD/SUITESPARSE
@@ -127,7 +127,7 @@ $(SS_DIST_DIR)/$(SS_DIST_FILE):
 	@mkdir -p $(SS_DIST_DIR)
 	@cd $(SS_DIST_DIR); wget https://github.com/DrTimothyAldenDavis/SuiteSparse/archive/$(SS_DIST_FILE)
 
-ifeq ($(USE_KLU),TRUE)
+ifeq ($(USE_KLU_PP),TRUE)
   clean_SS:
 	@echo rm -rf $(SS_BUILD_PREFIX)
 else

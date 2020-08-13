@@ -16,7 +16,6 @@ FUEGO_GAS  = TRUE
 TINY_PROFILE = TRUE
 
 USE_CUDA   = FALSE
-USE_CUDA   = TRUE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    ?= ../../..
@@ -31,7 +30,6 @@ DEFINES  += -DMOD_REACTOR
 # Activates use of SUNDIALS: CVODE (default) / ARKODE
 USE_SUNDIALS_PP = TRUE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
-  TRANSPORT_CPP = TRUE
   USE_ARKODE_PP = FALSE
   ifeq ($(USE_CUDA), TRUE)
       DEFINES += -DCVODE_BOXINTEG
@@ -44,13 +42,11 @@ else
   # will only work if USE_SUNDIALS_PP = FALSE
   USE_RK64_PP = FALSE
 endif
-USE_KLU = USE_KLU_PP
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   Chemistry_Model = drm19
-  #Chemistry_Model = grimech30
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else
