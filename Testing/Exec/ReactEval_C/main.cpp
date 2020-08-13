@@ -385,7 +385,6 @@ main (int   argc,
         fc(i,j,k)               = tmp_fc[icell];
       });
       BL_PROFILE_VAR_STOP(mainflatten);
-#endif
 
       delete[] tmp_vect;
       delete[] tmp_src_vect;
@@ -393,6 +392,7 @@ main (int   argc,
       delete[] tmp_src_vect_energy;
       delete[] tmp_fc;
       delete[] tmp_mask;
+#endif
     }
     BL_PROFILE_VAR_STOP(Advance);
 
@@ -416,7 +416,9 @@ main (int   argc,
       BL_PROFILE_VAR_STOP(PlotFile);
     }
     
+#ifndef AMREX_USE_CUDA
     reactor_close();
+#endif
     transport_close();
     EOS::close();
     
