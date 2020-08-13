@@ -1,6 +1,6 @@
-ncells = 1
+ncells = 2 256 2
 max_grid_size  = 16
-plot_file = plt
+plotfile = plt
 fuel_name = CH4
 
 ode.dt  = 1.e-05
