@@ -59,7 +59,7 @@ f.write('VARIABLES = "X" "temp" "u" "rho" ' + ' '.join(species)+'\n')
 f.write('ZONE I=' + str(np) + ' FORMAT=POINT\n')
 lenx = len(x_data)
 for i in range(lenx):
-    f.write(' '.join([str(y_data[j][i]) for j in range(ns)])+'\n')
+    f.write(' '.join([str(y_data[j][i]) for j in range(ns+1)])+'\n')
 f.close()
 
 print('pmf data writtent to ' + sys.argv[3])
