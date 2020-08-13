@@ -84,6 +84,7 @@ ifdef Chemistry_Model
            $(CHEM_ALL)/Make.package
   Blocs += $(CHEM_HOME) $(CHEM_ALL)
 endif
+Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
 
 # Transport
 TRAN_PATH := $(TRAN_HOME)/$(strip $(Transport_dir))
@@ -99,7 +100,6 @@ ifeq ($(USE_F90_PP),TRUE)
     INCLUDE_LOCATIONS += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
     VPATH_LOCATIONS   += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
     Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
-    Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
 endif
 USE_FUEGO = FALSE
 
