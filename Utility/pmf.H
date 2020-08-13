@@ -27,9 +27,9 @@ namespace PMF {
     amrex::GpuArray<amrex::Real, NUM_SPECIES + 4>& y_vector)
   {
     amrex::Real sum = 0.0, xmid = 0.0;
-    int lo_loside = 0, lo_hiside = 0;
-    int hi_loside = 0, hi_hiside = 0;
-    int loside = 0, hiside = 0;
+    int lo_loside = -1, lo_hiside = -1;
+    int hi_loside = -1, hi_hiside = -1;
+    int loside = -1, hiside = -1;
     amrex::Real ylo = 0.0, yhi = 0.0, x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0,
       dydx = 0.0;
 
@@ -53,17 +53,17 @@ namespace PMF {
         hi_loside = pmf_N - 1;
         hi_hiside = pmf_N - 1;
       }
-      if (lo_loside == 0) {
+      if (lo_loside == -1) {
         for (int i = 0; i < pmf_N - 1; i++) {
-          if ((xlo > d_pmf_X[i]) && (xlo < d_pmf_X[i + 1])) {
+          if ((xlo >= d_pmf_X[i]) && (xlo <= d_pmf_X[i + 1])) {
             lo_loside = i;
             lo_hiside = i + 1;
           }
         }
       }
-      if (hi_loside == 0) {
+      if (hi_loside == -1) {
         for (int i = 0; i < pmf_N - 1; i++) {
-          if ((xhi > d_pmf_X[i]) && (xhi < d_pmf_X[i + 1])) {
+          if ((xhi >= d_pmf_X[i]) && (xhi <= d_pmf_X[i + 1])) {
             hi_loside = i;
             hi_hiside = i + 1;
           }
@@ -88,7 +88,7 @@ namespace PMF {
           dydx = hi_loside == hi_hiside ? 0.0 : (y2 - y1) / (x2 - x1);
           yhi = y1 + dydx * (xhi - x1);
           sum = sum + (xhi - x1) * 0.5 * (yhi + y1);
-          for (int k = lo_hiside; k < hi_loside - 1; k++) {
+          for (int k = lo_hiside; k <= hi_loside - 1; k++) {
             sum = sum + (d_pmf_X[k + 1] - d_pmf_X[k]) * 0.5 *
               (d_pmf_Y[pmf_N * j + k] +
                d_pmf_Y[pmf_N * j + k + 1]);

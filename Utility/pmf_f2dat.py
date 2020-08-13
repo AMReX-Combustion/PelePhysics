@@ -19,16 +19,33 @@ nl = len(lines)
 ns = int(lines[14].split()[-1].split(':')[-1])
 np = int(lines[15].split()[-1].split(':')[-1])
 
+in_dat = False
+nl_hdr = 0
+for i in range(nl):
+    s = lines[i].split()
+    is_nondat = len(s)==1 or not (len(s) > 2 and s[0] == 'data' and s[1] == 'x_data(1)')
+    if not in_dat:
+        if is_nondat:
+            nl_hdr = nl_hdr+1
+        else:
+            in_dat = True
+
 x_data = []
-for i in range(86,nl-101,ns+1):
+for i in range(nl_hdr,nl+1,ns+1):
+    if lines[i].split()[0] != 'data':
+        break
     x_data.append(float([x for x in lines[i].split()[-1].split('/') if x][-1]))
+np = len(x_data)
 
 y_data = []
-for j in range(0,ns+1):
+for j in range(1,ns+1):
     y_data.append([])
-    for i in range(86+j,nl-101,ns+1):
+    for i in range(nl_hdr+j,nl+1,ns+1):
+        if lines[i].split()[0] != 'data':
+            break
         y_data[-1].append(float([x for x in lines[i].split()[-1].split('/') if x][-1]))
-
+    if len(y_data[-1]) != np:
+        sys.exit('Different number of values read for y_data than x_data')
 
 mech = sys.argv[2]
 mech_file = os.environ['PELE_PHYSICS_HOME'] + '/Support/Fuego/Mechanism/Models/' + mech + '/mechanism.h'
@@ -57,9 +74,8 @@ except Exception as ex:
 
 f.write('VARIABLES = "X" "temp" "u" "rho" ' + ' '.join(species)+'\n')
 f.write('ZONE I=' + str(np) + ' FORMAT=POINT\n')
-lenx = len(x_data)
-for i in range(lenx):
-    f.write(' '.join([str(y_data[j][i]) for j in range(ns+1)])+'\n')
+for i in range(np):
+    f.write(str(x_data[i])+' '+' '.join([str(y_data[j][i]) for j in range(ns)])+'\n')
 f.close()
 
 print('pmf data writtent to ' + sys.argv[3])
