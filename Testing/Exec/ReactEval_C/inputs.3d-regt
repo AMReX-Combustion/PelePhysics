@@ -1,37 +1,31 @@
-#ODE solver options
-# REACTOR mode
+ncells = 1
+max_grid_size  = 16
+plot_file = plt
+fuel_name = CH4
+
 ode.dt  = 1.e-05
 ode.ndt = 1
-# Reactor formalism: 1=full e, 2=full h
-ode.reactor_type  = 1
-#verbose
+ode.reactor_type  = 1 # 1=full e, 2=full h
 ode.verbose = 1
-# abs and rel tolerances for ODE solve
-#ode.rtol = 1e-6
-#ode.atol = 1e-6
-# Use variable-specific abs tols in ODE solve
-# Note that atol becomes a factor
-#ode.use_typ_vals = 1
-#ode.typ_vals = 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1.0e-7 1500.0
-# Select ARK/CV-ODE Jacobian eval: 0=FD 1=AJ
-ode.analytical_jacobian = 1
-#CVODE SPECIFICS
-# Choose between sparse (5) dense (1/101) iterative (99) solver
+ode.use_typ_vals = 0
+ode.analytical_jacobian = 1 
+ode.rtol = 1e-8
+ode.atol = 1e-8
+ode.rtol = 1e-10
+ode.atol = 1e-10
+
+cvode.solve_type = sparse
+cvode.solve_type = sparse_custom
+cvode.solve_type = GMRES_custom
 cvode.solve_type = GMRES
-#ARKODE SPECIFICS
-# Choose if using implicit or explicit solve -- if expl no AJ needed
 #arkode.implicit_solve = 1
 #arkode.use_erkode     = 0
 
-#OTHER
-# Max size of problem
-max_grid_size  = 16
-# Choose name of output pltfile
-amr.plot_file  = plt
-# Fuel species 
-fuel_name      = CH4
-# Second dim 
-third_dim = 256
+# DRM19
+#ode.typ_vals = 1.e-7 3.e-9 1.e-8 3.e-5 7.e-8 1.e-6 1.e-7 5.e-9 1.e-9 9.e-7 6.e-6 1.e-6 1.7e-8 1.9e-8 7.4e-7 6.7e-9 3.5e-7 1.6e-8 1.3e-8 1.e-4 1.8e-33 2300
+
+# GRI30
+#ode.typ_vals= 2.51329708e-07 7.558638424e-09 3.536561076e-08 2.961142007e-05 1.477342634e-07 3.04368643e-06 1.277876633e-07 3.991004863e-09 1e-10 1.63770557e-10 1.017856774e-08 2.13931043e-09 1.145012231e-06 4.772231695e-06 2.39206209e-06 2.966733473e-07 3.117616856e-08 7.367787054e-07 3.172956498e-09 8.509716323e-09 1.639869322e-08 5.336892245e-10 1.189081364e-07 1.479224962e-08 4.071741437e-07 4.823292836e-08 1.159100834e-08 6.05362257e-09 7.420026077e-08 1.343840403e-09 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 0.0001062095459 1e-10 6.484071391e-10 1.178044783e-10 2.838163288e-09 2.226196887e-08 2385.173759
 
 amrex.fpe_trap_invalid = 1
 amrex.fpe_trap_zero = 1
