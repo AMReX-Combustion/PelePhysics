@@ -34,6 +34,10 @@ endif
 
 # EOS
 # Both Fortran and cpp can be loaded for EOS
+EOS_PATH := $(EOS_HOME)/$(strip $(Eos_dir))
+include $(EOS_PATH)/Make.package
+INCLUDE_LOCATIONS += $(EOS_HOME) $(EOS_PATH) 
+VPATH_LOCATIONS   += $(EOS_HOME) $(EOS_PATH) 
 ifeq ($(USE_F90_PP),TRUE) 
     EOS_HOME_F90 := $(EOS_HOME)/F90
     EOS_PATH_F90 := $(EOS_PATH)/F90
@@ -43,10 +47,6 @@ ifeq ($(USE_F90_PP),TRUE)
     INCLUDE_LOCATIONS += $(EOS_HOME_F90) $(EOS_PATH_F90)
     VPATH_LOCATIONS   += $(EOS_HOME_F90) $(EOS_PATH_F90)
 endif
-EOS_PATH := $(EOS_HOME)/$(strip $(Eos_dir))
-include $(EOS_PATH)/Make.package
-INCLUDE_LOCATIONS += $(EOS_HOME) $(EOS_PATH) 
-VPATH_LOCATIONS   += $(EOS_HOME) $(EOS_PATH) 
 ifeq ($(Eos_dir), Fuego)
   TRANSPORT_TYPE := IDEAL_GAS
 else
@@ -60,6 +60,10 @@ Bpack             += $(EOS_PATH)/Make.package
 Blocs             += $(EOS_PATH)
 
 # Reactions
+REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
+include $(REACTIONS_PATH)/Make.package
+INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
+VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH) 
 ifeq ($(USE_F90_PP),TRUE) 
     REACTIONS_HOME_F90 := $(REACTIONS_HOME)/F90
     REACTIONS_PATH_F90 := $(REACTIONS_PATH)/F90
@@ -67,10 +71,6 @@ ifeq ($(USE_F90_PP),TRUE)
     INCLUDE_LOCATIONS += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
     VPATH_LOCATIONS   += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
 endif
-REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
-include $(REACTIONS_PATH)/Make.package
-INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
-VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH) 
 ifdef Chemistry_Model
   ifeq ($(Eos_dir), GammaLaw)
     ifneq ($(Chemistry_Model), Null)

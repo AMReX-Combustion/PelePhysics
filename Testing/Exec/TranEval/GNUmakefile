@@ -16,6 +16,8 @@ FUEGO_GAS  = TRUE
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
 
+USE_SUNDIALS_PP = TRUE
+
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   Chemistry_Model = LiDryer

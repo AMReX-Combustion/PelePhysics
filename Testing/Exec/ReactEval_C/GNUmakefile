@@ -40,7 +40,7 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
 else
   # Activates use of Hari explicit RK
   # will only work if USE_SUNDIALS_PP = FALSE
-  USE_RK64_PP = FALSE
+  USE_RK64_PP = TRUE
 endif
 
 #######################
