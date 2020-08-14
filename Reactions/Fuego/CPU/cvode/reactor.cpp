@@ -502,8 +502,8 @@ int react(const Box& box,
         for (int n = 0; n < NUM_SPECIES; n++) {
             mass_frac[n] = yvec_d[n] * rho_inv;
         }
-        //Enrg_loc = ((data->rhoX_init)[0] + (dummy_time - time_init) * rEner_src_in(i,j,k,0)) / rho;
-        Enrg_loc = (data->rhoX_init[0] + (dummy_time - time_init) * data->rhoXsrc_ext[0]) /rho;
+        rEner_in(i,j,k,0) = data->rhoX_init[0] + (dummy_time - time_init) * data->rhoXsrc_ext[0]; 
+        Enrg_loc          = rEner_in(i,j,k,0) /rho;
         if (data->ireactor_type == 1){
             EOS::EY2T(Enrg_loc,mass_frac,temp);
         } else {
