@@ -125,6 +125,15 @@ void ReSetTolODE() {
     N_VDestroy(atol);
 }
 
+void cvodeErrHandler(int error_code, const char *module,
+                     const char *function, char *msg,
+                     void *eh_data)
+{
+  if (error_code != CV_WARNING) {
+    std::cout << "From CVODE: " << msg << std::endl;
+    Abort("Bad CVODE");
+  }
+}
 
 /* Initialization routine, called once at the begining of the problem */
 int reactor_init(int reactor_type, int ode_ncells) {
@@ -203,6 +212,9 @@ int reactor_init(int reactor_type, int ode_ncells) {
 
     flag = CVodeSetMaxErrTestFails(cvode_mem, 100);
     if (check_flag(&flag, "CVodeSetMaxErrTestFails", 1)) return(1);
+
+    flag = CVodeSetErrHandlerFn(cvode_mem, cvodeErrHandler, 0);
+    if (check_flag(&flag, "CVodeSetErrHandlerFn", 1)) return(1);
 
     if (data->isolve_type == dense_solve) {
         if ((data->iverbose > 0) && (omp_thread == 0)) {
