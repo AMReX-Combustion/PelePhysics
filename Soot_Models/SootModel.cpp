@@ -102,7 +102,7 @@ SootModel::define()
   SootConst::nuclVol = 2.*SootConst::dimerVol;
   SootConst::nuclSurf = std::pow(SootConst::nuclVol, 2./3.);
   if (!corrPAH) {
-    Abort(m_PAHname + " not recognized as PAH inception species. Must be" +
+    Abort(m_PAHname + " not recognized as PAH inception species. Must be " +
           PAH_names[0] + ", " + PAH_names[1] + ", or " + PAH_names[2]);
   }
   Vector<std::string> spec_names(NUM_SPECIES);
@@ -293,13 +293,13 @@ SootModel::addSootSourceTerm(const Box&                vbox,
 
   // H2 absorbs the error from surface reactions
   const int absorbIndx = SootConst::GasSpecIndx::indxH2;
-  const int absorbIndxP = specIndx + SootConst::refIndx[absorbIndx];
+  const int absorbIndxN = SootConst::refIndx[absorbIndx];
+  const int absorbIndxP = specIndx + absorbIndxN;
 
   SootData sd = m_SootDataContainer.getSootData();
   SootReactions sr = m_SootReactionContainer.getSootReactions();
   amrex::ParallelFor(vbox, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
       Real Hi[NUM_SPECIES];
-      Real enth_n[NUM_SOOT_GS];
       Real omega_src[NUM_SOOT_GS];
       // Molar concentrations (mol/cm^3)
       Real xi_n[NUM_SOOT_GS];
@@ -319,14 +319,8 @@ SootModel::addSootSourceTerm(const Box&                vbox,
       Real momFV[NUM_SOOT_VARS+1];
       // Array of source terms for moment equations
       Real mom_src[NUM_SOOT_VARS];
-      // Forward and backward reaction rates
-      Real k_fwd[NUM_SOOT_REACT];
-      Real k_bkwd[NUM_SOOT_REACT];
-      Real w_fwd[NUM_SOOT_REACT];
-      Real w_bkwd[NUM_SOOT_REACT];
       const Real rho = Qstate(i, j, k, qRhoIndx);
       const Real T = Qstate(i, j, k, qTempIndx);
-      AMREX_ASSERT(std::abs(T) < 1.E20);
       // Dynamic viscosity
       const Real mu = coeff_state(i, j, k, dComp_mu);
       // Compute species enthalpy
@@ -338,7 +332,6 @@ SootModel::addSootSourceTerm(const Box&                vbox,
         const int specConvIndx = SootConst::refIndx[sp];
         const int peleIndx = qSpecIndx + specConvIndx;
         Real cn = Qstate(i, j, k, peleIndx);
-        enth_n[sp] = Hi[specConvIndx];
         Real conv = cn/mw_fluid[specConvIndx];
         xi_n[sp] = rho*conv;
         molarMass += conv;
@@ -388,8 +381,7 @@ SootModel::addSootSourceTerm(const Box&                vbox,
       Real k_ox = 0.;
       Real k_o2 = 0.;
       // Compute the species reaction source terms into omega_src
-      sr.chemicalSrc(T, surf, xi_n, moments, k_fwd, k_bkwd, w_fwd, w_bkwd,
-                     k_sg, k_ox, k_o2, omega_src);
+      sr.chemicalSrc(T, surf, xi_n, moments, k_sg, k_ox, k_o2, omega_src);
       // Compute the continuity and energy source term
       Real rho_src = 0.;
       Real eng_src = 0.;
@@ -414,7 +406,7 @@ SootModel::addSootSourceTerm(const Box&                vbox,
         // Add that mass to H2
         soot_state(i, j, k, absorbIndxP) -= del_rho_dot;
         rho_src -= del_rho_dot;
-        eng_src -= enth_n[absorbIndx]*del_rho_dot;
+        eng_src -= Hi[absorbIndxN]*del_rho_dot;
       }
       // Add density source term
       soot_state(i, j, k, rhoIndx) += rho_src;
@@ -422,7 +414,6 @@ SootModel::addSootSourceTerm(const Box&                vbox,
       // Add moment source terms
       for (int mom = 0; mom != NUM_SOOT_VARS; ++mom) {
         const int peleIndx = sootIndx + mom;
-        // Overwrite moment values with clipped moments
         soot_state(i, j, k, peleIndx) += mom_src[mom];
       }
     });

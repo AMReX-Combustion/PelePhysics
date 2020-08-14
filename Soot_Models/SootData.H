@@ -234,6 +234,15 @@ struct SootData
     moments[NUM_SOOT_MOMENTS] = weightDelta;
   }
 
+  // Convert from CGS to mol, clip moments, and convert back
+  AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+  void momConvClipConv (Real mom[]) const
+  {
+    SootConst::convertCGStoMol(mom);
+    clipMoments(mom);
+    SootConst::convertMoltoCGS(mom);
+  }
+
   // Compute the coagulation source term
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE
   void coagulationMomSrc (const Real& colConst,
@@ -409,12 +418,15 @@ struct SootData
     // If modeCoef = 0.; only first mode is used
     // If modeCoef = 1.; both modes are used
     const Real modeCoef = momFV[NUM_SOOT_MOMENTS + 1];
-    Real bothPFact = modeCoef*std::pow(SootConst::nuclVol, volOrd)*
-      std::pow(SootConst::nuclSurf, surfOrd);
+    Real bothPFact = 0.;
+    if (modeCoef > 0.)
+      bothPFact = momFV[NUM_SOOT_MOMENTS]*
+        std::pow(SootConst::nuclVol, volOrd)*
+        std::pow(SootConst::nuclSurf, surfOrd);
 #if NUM_SOOT_MOMENTS == 3
     Real peak = std::pow(momFV[0], 1. - volOrd - surfOrd)*
       std::pow(momFV[1], volOrd)*std::pow(momFV[2], surfOrd);
-    return momFV[3]*bothPFact + peak;
+    return bothPFact + peak;
 #elif NUM_SOOT_MOMENTS == 6
     Real prod = momFV[0];
     prod *= std::pow(momFV[1], volOrd);
@@ -422,7 +434,7 @@ struct SootData
     prod *= std::pow(momFV[3], volOrd*volOrd);
     prod *= std::pow(momFV[4], volOrd*surfOrd);
     prod *= std::pow(momFV[5], surfOrd*surfOrd);
-    return momFV[6]*bothPFact + prod;
+    return bothPFact + prod;
 #endif
   }
 

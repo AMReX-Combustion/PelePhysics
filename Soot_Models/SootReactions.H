@@ -59,10 +59,6 @@ struct SootReactions
                     const Real& surf,
                     const Real  xi_n[],
                     const Real  moments[],
-                    Real        k_fwd[],
-                    Real        k_bkwd[],
-                    Real        w_fwd[],
-                    Real        w_bkwd[],
                     Real&       k_sg,
                     Real&       k_ox,
                     Real&       k_o2,
@@ -70,6 +66,10 @@ struct SootReactions
   {
     // Number of surface reactions
     const int nsr = NUM_SOOT_REACT;
+    Real k_fwd[NUM_SOOT_REACT];
+    Real k_bkwd[NUM_SOOT_REACT];
+    Real w_fwd[NUM_SOOT_REACT];
+    Real w_bkwd[NUM_SOOT_REACT];
     const Real invT = 1./T;
     // Loop over reactions
     for (int i = 0; i != nsr; ++i) {

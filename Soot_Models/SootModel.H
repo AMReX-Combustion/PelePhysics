@@ -65,6 +65,11 @@ public:
                          const Real                time,
                          const Real                dt) const;
 
+  inline SootData getSootData()
+  {
+    return m_SootDataContainer.getSootData();
+  }
+
   /***********************************************************************
     Reaction functions (SootModel_react.cpp)
   ***********************************************************************/
