@@ -431,7 +431,7 @@ int react(const Box& box,
     ParallelFor(box,
     [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
     {
-      if (mask(i,j,k) == 1)
+      if (mask(i,j,k) != -1)
       {
         Real mass_frac[NUM_SPECIES];
         Real rho = 0.0;
@@ -515,6 +515,8 @@ int react(const Box& box,
         if ((data->iverbose > 3) && (omp_thread == 0)) {
             Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << (dummy_time - time_init) << "\n";
         }
+      } else {
+        FC_in(i,j,k,0) = 0.0;
       }
     });
 
@@ -605,7 +607,7 @@ int react_2(const Box& box,
        out of bound errors */
     realtype *yvec_d      = N_VGetArrayPointer(y);
     for  (int i = 0; i < box_ncells+extra_cells; i+=data->ncells) {
-      if (data->mask[i] == 1)
+      if (data->mask[i] != -1)  //   TODO: this doesn't really work, but we are not using react_2, let alone react_2 + EB.
       {
         //Print() <<" dealing with cell " << i <<  "\n";
         int offset = i * (NUM_SPECIES + 1);
@@ -638,6 +640,10 @@ int react_2(const Box& box,
 
         if ((data->iverbose > 3) && (omp_thread == 0)) {
             Print() <<"END : time curr is "<< dummy_time << " and actual dt_react is " << (dummy_time - time_init) << "\n";
+        }
+      } else {
+        for  (int k = 0; k < data->ncells; k++) {
+            data->FCunt[i + k] = 0.0;
         }
       }
     }
