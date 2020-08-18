@@ -86,7 +86,7 @@ public:
   //
   inline void setTimeStep(const Real soot_dt)
   {
-    local_soot_dt = m_maxDtRate*soot_dt;
+    local_soot_dt = amrex::min(local_soot_dt, m_maxDtRate*soot_dt);
   }
 
   //
