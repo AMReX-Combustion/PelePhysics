@@ -995,6 +995,19 @@ int cJac(realtype /* tn */, N_Vector u, N_Vector /* fu */, SUNMatrix J,
           J_col_k[offset + i] = Jmat_tmp[NUM_SPECIES*(NUM_SPECIES+1)+i] * molecular_weight[i]; 
       }
       J_col_k = SM_COLUMN_D(J,offset);
+
+      /* Printing */
+      std::cout << "*** Printing CHEM Jac ***" << std::endl;
+      realtype gamma_curr;
+      CVodeGetCurrentGamma(cvode_mem, &gamma_curr);
+      realtype *Jdata = SUNDenseMatrix_Data(J);
+      std::cout << "    gamma is:" << gamma_curr <<std::endl;
+      for (int k = 0; k < NUM_SPECIES+1; k++){
+          for (int i = 0; i < NUM_SPECIES+1; i++){
+              std::cout << Jdata[i*(NUM_SPECIES+1) + k] << " ";
+          }
+          std::cout << std::endl;
+      }
   }
   BL_PROFILE_VAR_STOP(DenseJac);
 

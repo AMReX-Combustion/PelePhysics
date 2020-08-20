@@ -1,23 +1,18 @@
-ncells = 2 256 2
+ncells = 1 1 1
 max_grid_size  = 16
 plotfile = plt
 fuel_name = CH4
 
-ode.dt  = 1.e-05
-ode.ndt = 1
+ode.dt  = 1.e-04
+ode.ndt = 100
 ode.reactor_type  = 1 # 1=full e, 2=full h
 ode.verbose = 1
 ode.use_typ_vals = 0
 ode.analytical_jacobian = 1 
-ode.rtol = 1e-8
-ode.atol = 1e-8
 ode.rtol = 1e-10
 ode.atol = 1e-10
 
-cvode.solve_type = sparse
-cvode.solve_type = sparse_custom
-cvode.solve_type = GMRES_custom
-cvode.solve_type = GMRES
+cvode.solve_type = dense
 #arkode.implicit_solve = 1
 #arkode.use_erkode     = 0
 

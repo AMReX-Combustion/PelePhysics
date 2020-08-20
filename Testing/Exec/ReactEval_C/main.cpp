@@ -64,7 +64,7 @@ initialize_data(int i, int j, int k, int fuel_id,
     X[N2_ID]   = 0.7;
     EOS::X2Y(&X[0],&Y[0]);
     // T
-    temp =  Temp_lo + (Temp_hi-Temp_lo)*y/L[1] + dTemp * std::sin(2.0*pi*y/P[1]);
+    temp =  Temp_lo; //+ (Temp_hi-Temp_lo)*y/L[1] + dTemp * std::sin(2.0*pi*y/P[1]);
     // get rho and E 
     EOS::PYT2RE(pressure, &Y[0], temp, density, energy);
     // Fill vect
@@ -337,11 +337,19 @@ main (int   argc,
           tmp_fc[i] = 0.0;
           Real time = 0.0;
           Real dt_incr = dt/ndt;
+          Print() << std::endl;
+          Print() << "----------------------------------------------------------------- "  << std::endl;
+          Print() << "Cell "  << i << std::endl;
+          Print() << "----------------------------------------------------------------- "  << std::endl;
           for (int ii = 0; ii < ndt; ++ii) {
             tmp_fc[i] += react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
                                tmp_vect_energy + i, tmp_src_vect_energy + i,
                                dt_incr, time);
             dt_incr =  dt/ndt;
+            Print() << "Time, temp: " << time <<" "<< tmp_vect[i*(NUM_SPECIES+1) + NUM_SPECIES] << std::endl;
+            Print() << "----------------------------------------------------------------- "  << std::endl;
+            Print() << std::endl;
+            Print() << std::endl;
           }
         }
       }
