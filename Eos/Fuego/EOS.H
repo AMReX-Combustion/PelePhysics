@@ -308,7 +308,7 @@ Y2WBAR(amrex::Real Y[], amrex::Real& WBAR)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-RPE2dpdr_e(amrex::Real R, amrex::Real P, amrex::Real E, amrex::Real& dpdr_e)
+RPE2dpdr_e(amrex::Real R, amrex::Real P, amrex::Real /* E */, amrex::Real& dpdr_e)
 {
   dpdr_e = P / R;
 }
@@ -321,6 +321,6 @@ RG2dpde(amrex::Real R, amrex::Real G, amrex::Real& dpde)
   dpde = (G - 1.0) * R;
 }
 
-}; // namespace EOS
+} // namespace EOS
 
 #endif
