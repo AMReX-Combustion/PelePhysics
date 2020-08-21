@@ -585,8 +585,10 @@ SprayParticleContainer::updateParticles(const int&  lev,
 #ifdef LEGACY_SPRAY
             Real drag_force = 3.*M_PI*mu_skin*dia_part*(1. + 0.15*std::pow(Reyn, 0.687));
 #else
-            Real drag_coef =
-              (Reyn > 1.) ? 24./Reyn*(1. + std::cbrt(Reyn*Reyn)/6.) : 24./Reyn;
+            Real drag_coef = 0.;
+            if (Reyn > 0.)
+	      drag_coef =
+	        (Reyn > 1.) ? 24./Reyn*(1. + std::cbrt(Reyn*Reyn)/6.) : 24./Reyn;
             Real drag_force = 0.125*rho_fluid*drag_coef*M_PI*dia2_part*diff_vel_mag;
 #endif
             part_mom_src = drag_force*diff_vel;
