@@ -258,7 +258,7 @@ main (int   argc,
     BL_PROFILE_VAR("Advance",Advance);
     BL_PROFILE_VAR_NS("React",ReactInLoop);
     BL_PROFILE_VAR_NS("Allocs",Allocs);
-    BL_PROFILE_VAR("Flatten",mainflatten);
+    BL_PROFILE_VAR_NS("Flatten",mainflatten);
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
