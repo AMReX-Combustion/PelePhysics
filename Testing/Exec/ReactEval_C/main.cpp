@@ -283,7 +283,9 @@ main (int   argc,
       cudaError_t cuda_status = cudaSuccess;
       ode_ncells    = nc;
 #else
+#ifndef CVODE_BOXINTEG
       extra_cells = nc - (nc / ode_ncells) * ode_ncells; 
+#endif
 #endif
 
       Print() << " Integrating " << nc << " cells with a "<<ode_ncells<< " ode cell buffer \n";
@@ -291,7 +293,7 @@ main (int   argc,
 
 #ifndef CVODE_BOXINTEG
       BL_PROFILE_VAR_START(Allocs);
-      int nCells = nc+extra_cells;
+      int nCells               =  nc+extra_cells;
       auto tmp_vect            =  new Real[nCells * (NUM_SPECIES+1)];
       auto tmp_src_vect        =  new Real[nCells * NUM_SPECIES];
       auto tmp_vect_energy     =  new Real[nCells];
@@ -359,7 +361,7 @@ main (int   argc,
                 dt_incr, time,
                 ode_iE, Gpu::gpuStream());
 #else
-          react_1(box,
+          react(box,
                   rhoY, frcExt, T,
                   rhoE, frcEExt,
                   fc, mask,
