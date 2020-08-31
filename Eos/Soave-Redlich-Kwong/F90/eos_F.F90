@@ -14,8 +14,8 @@ module eos_module
   use amrex_constants_module
   use fuego_chemistry
   use eos_type_module
-  !!use chemistry_module, only : nspecies, Ru, inv_mwt, chemistry_init, chemistry_initialized, spec_names, elem_names, molecular_weight
-  !!!! FIXME: Had to comment out above, with restructured chemistry comes from fuego_chemistry
+  ! use chemistry_module, only : nspecies, Ru, inv_mwt, chemistry_init, chemistry_initialized, spec_names, elem_names, molecular_weight
+  ! With restructured chemistry above all comes from fuego_chemistry module
 
   implicit none
 
@@ -88,14 +88,6 @@ subroutine actual_eos_init
 
      sqrtAsti(i) = sqrt(Astari(i))
 
-     print *, i-1
-     print *, "Tc", Tc(i)
-     print *, "oneOverTc", oneOverTc(i)
-     print *, "sqrtAsti", sqrtAsti(i)
-     print *, "Fomega", Fomega(i)
-     print *, "Bi", Bi(i)
-     print *, ''
-     
   end do
   
 end subroutine actual_eos_init
@@ -427,36 +419,6 @@ subroutine eos_re(state)
  integer :: lierr
  integer :: i,j
 
-  !! Run some tests !! print inputs
- real(amrex_real) :: d2AmdY2(nspecies,nspecies)
-
- Temp1 = 300d+0
- print *, "Testing 123"
- print *, "R", state%rho
- print *, "E", state%E
- print *, "Y", state%massFrac
- print *, "T", Temp1
- state%T = Temp1
- print *, "Running Tests"
- ! call MixingRuleBm(state%massFrac, state%bm)
- ! print *, "bm", state%bm
- ! call MixingRuleAm(Temp1, state%massFrac, state%am)
- ! print *, "am", state%am
- ! call MixingRuleAmBm(Temp1, state%massFrac, state%am, state%bm)
- ! print *, "ambm", state%am, state%bm
- ! call Calc_dAmdT(Temp1, state%massFrac, state%dAmdT)
- ! print *, "dAmdT", state%dAmdT
- ! call Calc_d2AmdT2(Temp1, state%massFrac, state%d2AmdT2)
- ! print *, "d2AmdT2", state%d2AmdT2
- ! call Calc_dAmdY(Temp1, state%massFrac, state%dAmdYk)
- ! print *, "dAmdY", state%dAmdYk
- ! call Calc_d2AmdTY(Temp1, state%massFrac, state%d2AmdYkdT)
- ! print *, "d2AmdTY", state%d2AmdYkdT
- ! call Calc_d2AmdY2(Temp1, state%massFrac, d2AmdY2)
- ! print *, "d2AmdY2", d2AmdY2
- ! print *, ""
-
- 
  !begin eos_top(state)
  state % wbar = 1.d0 / sum(state % massfrac(:) * inv_mwt(:))
  !end eos_top(state)
@@ -467,8 +429,6 @@ subroutine eos_re(state)
  !        state % T, state % e, state % massfrac
  !end if
 
- print *, 'Final T',  state % T
- 
  call MixingRuleAmBm(state%T, state%massFrac, state%am, state%bm)
  call Calc_dAmdT(state%T, state%massFrac, state%damdT)
  tau = 1.d0/state%rho
@@ -491,7 +451,8 @@ subroutine eos_re(state)
     Temp2 = (state%T * state%dAmdT - state%am)*(-Bi(i)*K1 + InvEosT3Denom*Bi(i))/state%bm
     state%ei(i) = ek(i) + Temp1 + Temp2
  end do
- state%cv = state%cv + state%T*state%d2AmdT2* (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
+ ! Non-ideal Cv is already calculated in SRK_EOS_Get_T_GivenRhoE
+ ! state%cv = state%cv + state%T*state%d2AmdT2* (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
  state%dPdT = Rm*InvEosT1Denom - state%dAmdT*InvEosT2Denom
  state%dpdtau = -Rm*state%T*InvEosT1Denom*InvEosT1Denom + state%am*(2.0*tau+state%bm)*InvEosT2Denom*InvEosT2Denom
  call ckcpbs(state % T, state % massfrac, Cpig)
@@ -874,12 +835,12 @@ subroutine SRK_EOS_Get_rho_givenTP(state)
 
   ! Calculate the roots of cubic EOS to calculate Compressibility factor
   call Calc_CompressFactor_Z(state%Z,state%am,state%bm,state%P,state%T,state%wbar)
-  
+
   state%rho = state%P * state%Wbar/(state%Z*Ru*state%T)
 
   ! Specific volume
   tau = 1.0d0/state%rho
-  
+
 end subroutine SRK_EOS_Get_rho_givenTP
 !================================================================!
 ! Given a mixture composition calculate mixture internal energy  !
@@ -1030,8 +991,12 @@ subroutine SRK_EOS_Get_TE_givenRhoP(state)
      
   end do
 
+  ! print *, 'nIter', nIter
+
   ! Update temperature in the state 
   state%T = Tnp1
+  ! recompute dAmdT at updated temperature (we've already done this for Am)
+  call Calc_dAmdT(state%T,state%massFrac,state%dAmdT)
 
   K1 = (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
 
@@ -1109,13 +1074,12 @@ subroutine SRK_EOS_Get_T_GivenRhoE(state,lierr)
      call ckcvbs(Tn, state % massfrac, state % cv)
 
      ! Calculate real gas Cv
-     state%cv = state%cv - Tn*state%d2AmdT2*K1
+     state%cv = state%cv + Tn*state%d2AmdT2*K1
 
      ! Compute the non-linear equation
      fzero = -state%e + Eig + (Tn*state%dAmdT-state%am)*K1
      
      dT = fzero/state%cv
-
      ! Update the temperature
      Tnp1 = Tn - dT
 
@@ -1128,9 +1092,8 @@ subroutine SRK_EOS_Get_T_GivenRhoE(state,lierr)
   ! Update the state structure with the updated Temperature and Pressure
   state%T = Tnp1
 
-  print *, 'T', nIter, Tnp1
-  print *, ''
-  
+  ! print *, 'nIter', nIter
+
 end subroutine SRK_EOS_Get_T_GivenRhoE
 !========================================================!
 ! Given a mixture composition calculate species Cp using !
