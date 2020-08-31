@@ -8,20 +8,12 @@
 #include "mechanism.h"
 #include "chemistry_file.H"
 
-/* List of Speedups
- Save oneOverSqrtTc instead of oneOverTc
- Put diagonal of double loops into single loops, only do upper triang of double loop
- Precalculate Amloc and Amlocder
- Parmparse MaxIter and ConvCrit
- Raise error if fail MaxIter or ConvCrit
-*/
-
 namespace EOS {
 
-  // Are these needed for SRK?
   constexpr amrex::Real RU   = 8.31446261815324e7;
-  constexpr amrex::Real RUC  = 1.98721558317399615845;
-  constexpr amrex::Real PATM = 1.01325e+06;
+  // constexpr amrex::Real RU   = 8.3145100000000E+07; // value from old Fortran Version
+  // constexpr amrex::Real RUC  = 1.98721558317399615845;
+  // constexpr amrex::Real PATM = 1.01325e+06;
 
   // Constants for SRK
   constexpr amrex::Real f0 = 0.48508e+0;
@@ -30,12 +22,13 @@ namespace EOS {
   constexpr amrex::Real convCrit = 1e-4;
   constexpr int maxIter  = 2000;
   
-  extern bool initialized;
-  extern amrex::Real Tc[NUM_SPECIES];
-  extern amrex::Real Bi[NUM_SPECIES];
-  extern amrex::Real oneOverTc[NUM_SPECIES];
-  extern amrex::Real sqrtAsti[NUM_SPECIES];
-  extern amrex::Real Fomega[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED extern bool initialized;
+  AMREX_GPU_DEVICE_MANAGED extern amrex::Real Tc[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED extern amrex::Real Bi[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED extern amrex::Real oneOverTc[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED extern amrex::Real sqrtOneOverTc[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED extern amrex::Real sqrtAsti[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED extern amrex::Real Fomega[NUM_SPECIES];
   
 void init();
 
@@ -48,14 +41,12 @@ MixingRuleAmBm(amrex::Real T, amrex::Real Y[], amrex::Real &am, amrex::Real &bm)
 {
   am = 0.0;
   bm = 0.0;
-  amrex::Real Tr ;
+  amrex::Real sqrtT = std::sqrt(T);
   amrex::Real amloc[NUM_SPECIES];
 
   // Combine as follows: add diagonal to am in first loop, loop upper triang in second loop
-  
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
-    Tr = T * oneOverTc[ii];
-    amloc[ii] = (1.0 + Fomega[ii] *(1.0 - std::sqrt(Tr))) * sqrtAsti[ii];
+    amloc[ii] = (1.0 + Fomega[ii] *(1.0 - sqrtT*sqrtOneOverTc[ii])) * sqrtAsti[ii];
     bm += Y[ii] * Bi[ii];
   }
 
@@ -72,14 +63,12 @@ void
 MixingRuleAm(amrex::Real T, amrex::Real Y[], amrex::Real &am)
 {
   am = 0.0;
-  amrex::Real Tr ;
+  amrex::Real sqrtT= std::sqrt(T) ;
   amrex::Real amloc[NUM_SPECIES];
 
   // Combine as follows: add diagonal to am in first loop, loop upper triang in second loop
-  
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
-    Tr = T * oneOverTc[ii];
-    amloc[ii] = (1.0 + Fomega[ii] *(1.0 - std::sqrt(Tr))) * sqrtAsti[ii];
+    amloc[ii] = (1.0 + Fomega[ii] *(1.0 - sqrtT*sqrtOneOverTc[ii])) * sqrtAsti[ii];
   }
 
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
@@ -107,21 +96,18 @@ Calc_dAmdT(amrex::Real T, amrex::Real Y[], amrex::Real &dAmdT)
 {
   dAmdT = 0.0;
   amrex::Real oneOverT = 1.0/T;
-  amrex::Real Tr ;
+  amrex::Real sqrtT = std::sqrt(T);
   amrex::Real amloc[NUM_SPECIES];
   amrex::Real amlocder[NUM_SPECIES];
 
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
-    Tr = T * oneOverTc[ii];
-    amloc[ii] = (1.0 + Fomega[ii]*(1.0 - std::sqrt(Tr)))*sqrtAsti[ii];
-    amlocder[ii] = -0.5 * Fomega[ii] * sqrtAsti[ii]
-      * oneOverT * oneOverTc[ii] * std::sqrt(T*Tc[ii])  ;
+    amloc[ii] = (1.0 + Fomega[ii]*(1.0 - sqrtT*sqrtOneOverTc[ii]))*sqrtAsti[ii];
+    amlocder[ii] = -0.5 * Fomega[ii] * sqrtAsti[ii] * oneOverT * sqrtT*sqrtOneOverTc[ii];
   }
 
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
     for (int jj = 0; jj<NUM_SPECIES; jj++) {
       dAmdT += Y[ii] * Y[jj] * (amloc[ii] * amlocder[jj] + amloc[jj]*amlocder[ii]);
-      //      std::cout << "test" << dAmdT << " " << Y[ii] << " " << Y[jj] << " " << amloc[ii]<< " " << amloc[ii]<< " " << amlocder[ii]<< " " << amlocder[ii] << std::endl;
     }
   } 
 }
@@ -132,13 +118,12 @@ AMREX_FORCE_INLINE
 void
 Calc_dAmdY(amrex::Real T, amrex::Real Y[], amrex::Real dAmdY[])
 {
-  amrex::Real Tr ;
+  amrex::Real sqrtT = std::sqrt(T);
   amrex::Real amloc[NUM_SPECIES];
 
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
     dAmdY[ii] = 0.0;
-    Tr = T * oneOverTc[ii];
-    amloc[ii] = (1.0 + Fomega[ii]*(1.0 - std::sqrt(Tr)))*sqrtAsti[ii];
+    amloc[ii] = (1.0 + Fomega[ii]*(1.0 - sqrtT*sqrtOneOverTc[ii]))*sqrtAsti[ii];
   }
 
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
@@ -154,12 +139,11 @@ AMREX_FORCE_INLINE
 void
 Calc_d2AmdY2(amrex::Real T, amrex::Real Y[], amrex::Real d2AmdY2[][NUM_SPECIES])
 {
-  amrex::Real Tr ;
+  amrex::Real sqrtT = std::sqrt(T);
   amrex::Real amloc[NUM_SPECIES];
 
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
-    Tr = T * oneOverTc[ii];
-    amloc[ii] = (1.0 + Fomega[ii]*(1.0 - std::sqrt(Tr)))*sqrtAsti[ii];
+    amloc[ii] = (1.0 + Fomega[ii]*(1.0 - sqrtT*sqrtOneOverTc[ii]))*sqrtAsti[ii];
   }
 
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
@@ -176,16 +160,14 @@ void
 Calc_d2AmdTY(amrex::Real T, amrex::Real Y[], amrex::Real d2AmdTY[])
 {
   amrex::Real oneOverT = 1.0/T;
-  amrex::Real Tr ;
+  amrex::Real sqrtT = std::sqrt(T);
   amrex::Real amloc[NUM_SPECIES];
   amrex::Real amlocder[NUM_SPECIES];
 
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
     d2AmdTY[ii] = 0.0 ;
-    Tr = T * oneOverTc[ii];
-    amloc[ii] = (1.0 + Fomega[ii]*(1.0 - std::sqrt(Tr)))*sqrtAsti[ii];
-    amlocder[ii] = -0.5 * Fomega[ii] * sqrtAsti[ii]
-      * oneOverT * oneOverTc[ii] * std::sqrt(T*Tc[ii])  ;
+    amloc[ii] = (1.0 + Fomega[ii]*(1.0 - sqrtT*sqrtOneOverTc[ii]))*sqrtAsti[ii];
+    amlocder[ii] = -0.5 * Fomega[ii] * sqrtAsti[ii] * oneOverT * sqrtT*sqrtOneOverTc[ii];
   }
 
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
@@ -216,15 +198,16 @@ Calc_CompressFactor_Z(amrex::Real &Z,
   amrex::Real gamma = -(am*bm*P*P)/R3;
   amrex::Real Q = (alpha * alpha - 3.0*beta)/9.0;
   amrex::Real R = (2.0*alpha*alpha*alpha - 9.0*alpha*beta + 27.0*gamma)/54.0;
-  amrex::Real PI = 3.1415926535897932;
+  amrex::Real PIval = 3.1415926535897932;
+  
   // Multiple roots of cubic
   third = 1.0/3.0;
   if ((Q*Q*Q - R*R) > 0) {
     sqrtQ = std::sqrt(Q);
     theta = std::acos(R/(Q*sqrtQ));
     Z1 = -2.0 * sqrtQ *std::cos(theta*third) - alpha*third;
-    Z2 = -2.0 * sqrtQ *std::cos((theta+ 2.0*PI)*third) - alpha*third;
-    Z3 = -2.0 * sqrtQ *std::cos((theta+ 4.0*PI)*third) - alpha*third;
+    Z2 = -2.0 * sqrtQ *std::cos((theta+ 2.0*PIval)*third) - alpha*third;
+    Z3 = -2.0 * sqrtQ *std::cos((theta+ 4.0*PIval)*third) - alpha*third;
     Z = std::max(Z1,Z2);
     Z = std::max(Z ,Z3);
   } else {
@@ -242,26 +225,81 @@ Calc_d2AmdT2(amrex::Real T, amrex::Real Y[], amrex::Real &d2AmdT2)
 {
   amrex::Real oneOverT = 1.0/T;
   amrex::Real tmp1 = -0.5 *oneOverT;
-  amrex::Real Tr ;
+  amrex::Real sqrtT = std::sqrt(T);
   amrex::Real amloc[NUM_SPECIES];
   amrex::Real amlocder[NUM_SPECIES];
 
   d2AmdT2 = 0.0;
   
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
-    Tr = T * oneOverTc[ii];
-    amloc[ii] = (1.0 + Fomega[ii]*(1.0 - std::sqrt(Tr)))*sqrtAsti[ii];
-    amlocder[ii] = -0.5 * Fomega[ii] * sqrtAsti[ii]
-      * oneOverT * oneOverTc[ii] * std::sqrt(T*Tc[ii])  ;
+    amloc[ii] = (1.0 + Fomega[ii]*(1.0 - sqrtT*sqrtOneOverTc[ii]))*sqrtAsti[ii];
+    amlocder[ii] = -0.5 * Fomega[ii] * sqrtAsti[ii] * oneOverT * sqrtT*sqrtOneOverTc[ii];
   }
 
   for (int ii = 0; ii<NUM_SPECIES; ii++) {
     for (int jj = 0; jj<NUM_SPECIES; jj++) {
-      d2AmdT2 += tmp1 * Y[ii] * Y[jj] * (-4.0 * T * amlocder[ii] * amlocder[jj] + amloc[ii] * amlocder[jj] + amloc[jj] * amlocder[ii]);
+      d2AmdT2 += tmp1 * Y[ii] * Y[jj] *
+	(-4.0 * T * amlocder[ii] * amlocder[jj]
+	 + amloc[ii] * amlocder[jj] + amloc[jj] * amlocder[ii]);
     }
   }
 }
   
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+Calc_Am_and_derivs(amrex::Real T, amrex::Real Y[],
+		   amrex::Real &am, amrex::Real &dAmdT, amrex::Real &d2AmdT2)
+{
+  amrex::Real oneOverT = 1.0/T;
+  amrex::Real tmp1 = -0.5 *oneOverT;
+  amrex::Real sqrtT = std::sqrt(T);
+  amrex::Real amloc[NUM_SPECIES];
+  amrex::Real amlocder[NUM_SPECIES];
+
+  am = 0.0;
+  dAmdT = 0.0;
+  d2AmdT2 = 0.0;
+
+  // Compute species-dependent intermediates
+  for (int ii = 0; ii<NUM_SPECIES; ii++) {
+    amloc[ii] = (1.0 + Fomega[ii]*(1.0 - sqrtT*sqrtOneOverTc[ii]))*sqrtAsti[ii];
+    amlocder[ii] = Fomega[ii] * sqrtAsti[ii] * sqrtOneOverTc[ii];  // *-0.5*oneOverT*sqrtT
+  }
+
+  // intialize sums to 0
+  am = 0.0;
+  dAmdT = 0.0;
+  d2AmdT2 = 0.0;
+  
+  // compute off-diagonal elements of sum using symmetry
+#if NUM_SPECIES>1
+  for (int ii = 0; ii<NUM_SPECIES; ii++) {
+    for (int jj = ii+1; jj<NUM_SPECIES; jj++) {
+      am += Y[ii] * Y[jj] * amloc[ii] * amloc[jj];
+      dAmdT += Y[ii] * Y[jj] * (amloc[ii] * amlocder[jj] + amloc[jj]*amlocder[ii]); 
+      d2AmdT2 += Y[ii] * Y[jj] * amlocder[ii] * amlocder[jj];
+    }
+  }
+  am *= 2.0;
+  dAmdT *= 2.0;
+  d2AmdT2 *= 2.0;
+#endif
+  
+  // Compute on diagonal elements of sum  
+  for (int ii = 0; ii<NUM_SPECIES; ii++) {
+    am += Y[ii] * Y[ii] * amloc[ii] * amloc[ii];
+    dAmdT += 2.0 * Y[ii] * Y[ii] * (amloc[ii] * amlocder[ii]);
+    d2AmdT2 +=  Y[ii] * Y[ii] * amlocder[ii] * amlocder[ii]; 
+  }
+  
+  // factor in constants
+  dAmdT *= tmp1 * sqrtT;
+  d2AmdT2 = -d2AmdT2;
+  d2AmdT2 += dAmdT;
+  d2AmdT2 *= tmp1;
+}
+
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
@@ -283,7 +321,7 @@ AMREX_FORCE_INLINE
 void
 TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
 {
-  amrex::Error("TY2Cp not physically possible for this EoS");
+  amrex::Error("TY2Cp not physically possible for SRK EoS");
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -291,15 +329,39 @@ AMREX_FORCE_INLINE
 void
 RTY2Cp(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
 {
-  CKCPBS(&T, Y, &Cp);
+  amrex::Real bm, am, dAmdT, d2AmdT2;
+  amrex::Real K1, Cpig, wbar, tau, Rm;
+  amrex::Real dpdT, dpdtau, dhmdT, dhmdtau;
+  
+  CKMMWY(&Y[0], &wbar);
+  EOS::MixingRuleBm(Y, bm);
+  EOS::Calc_Am_and_derivs(T, Y, am, dAmdT, d2AmdT2);
+
+  tau = 1.0/R;
+  K1 = (1.0 / bm) * log(1.0 + bm*R);
+  amrex::Real InvEosT1Denom = 1.0/(tau - bm);
+  amrex::Real InvEosT2Denom = 1.0/(tau*(tau+bm));
+  amrex::Real InvEosT3Denom = 1.0/(tau + bm);
+  Rm = EOS::RU/wbar;
+    
+  dpdT = Rm*InvEosT1Denom - dAmdT * InvEosT2Denom;
+  dpdtau = -Rm * T * InvEosT1Denom*InvEosT1Denom
+    + am * (2.0*tau + bm) * InvEosT2Denom*InvEosT2Denom;
+  
+  CKCPBS(&T, Y, &Cpig);
+  dhmdT = Cpig + T*d2AmdT2*K1 - dAmdT*InvEosT3Denom + Rm*bm*InvEosT1Denom;
+  dhmdtau = -(T*dAmdT - am)*InvEosT2Denom
+    + am*InvEosT3Denom*InvEosT3Denom
+    - Rm*T*bm*InvEosT1Denom*InvEosT1Denom;
+  Cp = dhmdT - (dhmdtau/dpdtau)*dpdT;
 }
   
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
 TY2Cv(amrex::Real T, amrex::Real Y[], amrex::Real& Cv)
-{
-  amrex::Error("TY2Cv not physically possible for this EoS");
+{   
+  amrex::Error("TY2Cv not physically possible for SRK EoS");
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -307,51 +369,25 @@ AMREX_FORCE_INLINE
 void
 RTY2Cv(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cv)
 {
+  amrex::Real am,bm,d2AmdT2;
+  // Alternative: MixingRuleBm then Calc_Am_and_derivs
+  MixingRuleAmBm(T, Y, am, bm);
+  Calc_d2AmdT2(T, Y, d2AmdT2);
   CKCVBS(&T, Y, &Cv);
+  Cv += T * d2AmdT2 * (1.0/bm) * log(1 + bm*R);
 }
-  
+
+
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
 T2Cpi(amrex::Real T, amrex::Real Cpi[])
 {
-  CKCPMS(&T, Cpi);
+  amrex::Error("T2Cpi not physically possible for SRK EoS");
+  //CKCPMS(&T, Cpi);
 }
 
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
-RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
-{
-  amrex::Real tmp[NUM_SPECIES];
-  amrex::Real wbar;
-  CKMMWY(&Y[0], &wbar);
-  amrex::Real T = P * wbar / (R * EOS::RU);
-  CKCVMS(&T, tmp);
-  amrex::Real Cv = 0.0;
-  for (int i = 0; i < NUM_SPECIES; i++)
-    Cv += Y[i] * tmp[i];
-  amrex::Real G = (wbar * Cv + EOS::RU) / (wbar * Cv);
-  Cs = std::sqrt(G * P / R);
-}
 
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
-RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
-{
-  amrex::Real tmp[NUM_SPECIES];
-  amrex::Real P;
-  CKPY(&R, &T, Y, &P);
-  CKCVMS(&T, tmp);
-  amrex::Real Cv = 0.0;
-  for (int i = 0; i < NUM_SPECIES; ++i)
-    Cv += Y[i] * tmp[i];
-  amrex::Real wbar;
-  CKMMWY(&Y[0], &wbar);
-  amrex::Real G = (wbar * Cv + EOS::RU) / (wbar * Cv);
-  Cs = std::sqrt(G * P / R);
-}
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
@@ -363,128 +399,75 @@ EY2T(amrex::Real E, amrex::Real Y[], amrex::Real& T)
   amrex::Error("EY2T not physically possible for this EoS");
 }
 
+
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
 REY2T(amrex::Real R, amrex::Real E, amrex::Real Y[], amrex::Real& T)
 {
-  amrex::Real tau = 1.0/R;
   amrex::Real Tn = T;
   amrex::Real bm, am, dAmdT, d2AmdT2;
   amrex::Real K1, ei_ig[NUM_SPECIES], Eig, Cv, dT;
   int nIter = 0;
-  int lierr = 0;
   amrex::Real fzero = 1.0;
   
-  // Run some tests
-  //  First print inputs
-  Tn = 501.0;
-  //std::cout << "Testing" <<std::endl;
-  //std::cout << "R " << R << std::endl;
-  //std::cout << "E " << E << std::endl;
-  //std::cout << "Y ";
-  for (int ii =0; ii<NUM_SPECIES; ii++) { std::cout << Y[ii]; };
-  //std::cout << std::endl;
-  //std::cout << "T " << Tn << std::endl;
-
-  // Now run tests
-  //std::cout << " Running tests:" << std::endl;
-  // EOS::MixingRuleBm(Y, bm);  
-  // std::cout << "bm " << bm << std::endl;
-  // EOS::MixingRuleAm(Tn, Y, am);
-  // std::cout << "am " << am << std::endl;
-  // EOS::MixingRuleAmBm(Tn, Y, am, bm);
-  // std::cout << "ambm " << am << " " << bm << std::endl;
-  // EOS::Calc_dAmdT(Tn, Y, dAmdT);
-  // std::cout << "dAmdT " << dAmdT << std::endl;
-  // EOS::Calc_d2AmdT2(Tn, Y, d2AmdT2);
-  // std::cout << "d2AmdT2" << d2AmdT2 << std::endl;
-  
-  // amrex::Real temp_vec[NUM_SPECIES];
-  // EOS::Calc_dAmdY(Tn, Y, temp_vec);
-  // std::cout << "dAmdY ";
-  // for (int ii =0; ii<NUM_SPECIES; ii++) { std::cout << temp_vec[ii] << " "; };
-  // std::cout << std::endl;
-  
-  // EOS::Calc_d2AmdTY(Tn, Y, temp_vec);
-  // std::cout << "d2AmdTY ";
-  // for (int ii =0; ii<NUM_SPECIES; ii++) { std::cout << temp_vec[ii] << " "; };
-  // std::cout << std::endl;
-  
-  // amrex::Real temp_vec2[NUM_SPECIES][NUM_SPECIES];
-  // EOS::Calc_d2AmdY2(Tn, Y, temp_vec2);
-  // std::cout << "d2AmdTY ";
-  // for (int ii =0; ii<NUM_SPECIES; ii++)
-  //   {for (int jj =0; jj<NUM_SPECIES; jj++){
-  // 	std::cout << temp_vec2[ii][jj] << " ";
-  //     }}
-  // std::cout << std::endl;
-  // std::cout << std::endl;
-  
   EOS::MixingRuleBm(Y, bm);
-  K1 = (1.0 / bm) * log(1.0 + bm/tau); // log or log10?	\
+  K1 = (1.0 / bm) * log(1.0 + bm*R); 
 
-  // Use input T as initial guess, even though it may be garbage
+  // Use input T as initial guess, but constrain it to reasonable bounds
+  Tn = amrex::min(amrex::max(T,300.0),5000.0);
   
   while ( amrex::Math::abs(fzero) > convCrit && nIter < maxIter) {
     nIter++;
-    EOS::MixingRuleAm(Tn, Y, am);
-    EOS::Calc_dAmdT(Tn, Y, dAmdT);
-    EOS::Calc_d2AmdT2(Tn, Y, d2AmdT2);
+    EOS::Calc_Am_and_derivs(Tn, Y, am, dAmdT, d2AmdT2);
+    
     // ideal gas internal energy
     CKUMS(&Tn, ei_ig);
     Eig = 0.0; for (int ii = 0; ii< NUM_SPECIES; ii++) {Eig += Y[ii]*ei_ig[ii];};
     // ideal gas heat capacity
     CKCVBS(&Tn, Y, &Cv);
-    //std::cout << "Cv1 " <<Cv << std::endl;
-    //std::cout << "Eig " << Eig << std::endl;
     // real gas heat capacity
-    Cv -= Tn * d2AmdT2 * K1;
+    Cv += Tn * d2AmdT2 * K1;
 
+    //std::cout << "nIter " << nIter << " T " << Tn << " E " << E << " Eig " << Eig<<std::endl;
+    
     // Take difference between E(Tn) and E and iterate
     fzero = -E + Eig + (Tn * dAmdT - am)*K1;
-    //std::cout << fzero << std::endl;
-    //std::cout << d2AmdT2 << std::endl;
-    //std::cout << Cv << std::endl;
     dT = fzero / Cv;
     Tn -= dT;
-    //std::cout << dT << std::endl;
-    //std::cout << "T " << nIter << " " << Tn << std::endl;
+
   }
   T = Tn;
-  std::cout << "T " << nIter << " " << Tn << std::endl;
-  //std::cout << "E " << E << " Eig " << Eig << std::endl << std::endl;
+  //std::cout << "nIter " << nIter <<std::endl;
 }
 
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
-TPY2R(amrex::Real T, amrex::Real P, amrex::Real Y[],amrex::Real& R)
-{
-  amrex::Real am, bm, Z, wbar, dAmdT, K1;
-  amrex::Real ei_ig[NUM_SPECIES];
-  EOS::MixingRuleAmBm(T, Y, am, bm);
-  CKMMWY(&Y[0], &wbar);
-  EOS::Calc_CompressFactor_Z(Z, am, bm, P, T, wbar);
-  R = P * wbar/(Z*EOS::RU*T); 
-  //std::cout << "Z " << Z << std::endl;
-  //std::cout << "R " << R << std::endl; 
-  //std::cout << "T " << T << std::endl; 
-  //std::cout << "P " << P << std::endl;
-  //std::cout << "RU " << EOS::RU << std::endl;
-  //std::cout << "wbar " << wbar << std::endl;   
-}
+
   
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
 HY2T(amrex::Real H, amrex::Real Y[], amrex::Real& T)
 {
-  // For Fuego this function is really just a wrapper for GET_T_GIVEN_HY
-  // In SRK this will be different probably
-  int lierr = 0;
-  GET_T_GIVEN_HY(&H, Y, &T, &lierr);
+  // In SRK this  function is not possible
+  // RHY2T would be possible but is not yet supported
+  amrex::Error("HY2T not physically possible for this EoS");
 }
+
+
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
+{
+  amrex::Real wbar, tau, am, bm;
+  tau = 1.0/R;
+  CKMMWY(&Y[0], &wbar);
+  EOS::MixingRuleAmBm(T, Y, am, bm);
+  P = (EOS::RU/wbar) * T / (tau - bm) - am / (tau *(tau+bm));
+}
+
+
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
@@ -496,37 +479,109 @@ RYET2P(
   amrex::Real& T,
   amrex::Real& P)
 {
-  int lierr = 0;
-  GET_T_GIVEN_EY(&E, Y, &T, &lierr);
-  CKPY(&R, &T, Y, &P);
+  // Note: this function was written to have the same behavior as the Fuego
+  // version (T gets overwritten, so the function is actually RYE2TP)
+  // I'm not sure if this behavior makes sense. The function is only called
+  // once in PeleC, in pc_derpmmserror. One MixingRuleAm could be eliminated
+  // by expanding these function explicitly, but that's small relative to
+  // the overall cost. By using T as in input (unlike Fuego) iteration would
+  // be eliminated and the overall cost would be greatly reduced. - BAP
+  EOS::REY2T(R,E,Y,T);
+  EOS::RTY2P(R,T,Y,P);
 }
 
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
-RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
-{
-  CKPY(&R, &T, Y, &P);
-}
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
 RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T)
 {
-  amrex::Real wbar;
+  amrex::Real am,bm,dAmdT;
+  amrex::Real tau, wbar, Rm, Pnp1, dpdT;
+  amrex::Real eosT1Denom, eosT2Denom, InvEosT1Denom, InvEosT2Denom;
+  int nIter;
+  
+  // Precalculate some variables
+  tau = 1.0/R;
   CKMMWY(&Y[0], &wbar);
-  T = P * wbar / (R * EOS::RU);
+  Rm = EOS::RU/wbar;
+  
+  // Use ideal gas to get an inital guess
+  T = P *tau / Rm;
+  MixingRuleAmBm(T, Y, am, bm);
+  
+  eosT1Denom = tau - bm;
+  eosT2Denom = tau*(tau+bm);
+  InvEosT1Denom = 1.0 / eosT1Denom;
+  InvEosT2Denom = 1.0 / eosT2Denom;
+
+  Pnp1 = Rm * T * InvEosT1Denom - am * InvEosT2Denom;
+  nIter = 0;
+
+  // Newton Iteration loop
+  while ( amrex::Math::abs(P-Pnp1) > EOS::convCrit && nIter < EOS::maxIter) {
+    nIter += 1;
+    Calc_dAmdT(T, Y, dAmdT);
+    dpdT = Rm * InvEosT1Denom - dAmdT * InvEosT2Denom;
+    // Newton iteration: Tnext = T - (p(T,Y,R) - Ptarget)/dpdT
+    T -= (Pnp1 - P) / dpdT;
+    // Calculate updated pressure to use as a convergence criterion
+    MixingRuleAm(T, Y, am);
+    Pnp1 = Rm * T * InvEosT1Denom - am * InvEosT2Denom;
+  }
+  //std::cout << "nIter " << nIter << std::endl;
 }
+
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RTY2JAC(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real JAC[], int HP)
+{
+  amrex::Error("RTY2JAC not supported with SRK EoS");
+}
+
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RTY2C(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real acti[])
+{
+  amrex::Real am, bm, dAmdY[NUM_SPECIES];
+  amrex::Real inv_mwt[NUM_SPECIES], mwt[NUM_SPECIES];
+  amrex::Real K1, InvEosT1Denom, InvEosT3Denom, wbar, RmT, InvRuT, InvBm, tau;
+  
+  MixingRuleAmBm(T, Y, am, bm);
+  Calc_dAmdY(T, Y, dAmdY);
+  get_imw(inv_mwt);
+  get_mw(mwt);
+  CKMMWY(&Y[0], &wbar);
+
+  InvBm = 1.0/bm;
+  tau = 1.0/R;
+  K1 = InvBm * log(1.0+ bm * R);
+  RmT = EOS::RU / wbar * T;
+  InvRuT = 1.0/ (EOS::RU * T);
+  InvEosT1Denom = 1.0 / (tau - bm);
+  InvEosT3Denom = 1.0 / (tau + bm);
+  
+  for (int ii = 0; ii < NUM_SPECIES; ii++){
+    acti[ii] = (exp( (mwt[ii]*InvRuT) *
+		     (RmT * InvEosT1Denom * EOS::Bi[ii]
+		      - K1*dAmdY[ii] + am * InvBm * K1 * EOS::Bi[ii]
+		      - am*InvEosT3Denom*EOS::Bi[ii] * InvBm ) )
+		* Y[ii] * inv_mwt[ii] * InvEosT1Denom );
+  }
+}
+
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
 RTY2WDOT(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
 {
-  //CKWYR(&R, &T, Y, WDOT);
   amrex::Real C[NUM_SPECIES];
-  CKYTCR(&R, &T, Y, C);
+  EOS::RTY2C(R,T,Y,C);
   CKWC(&T, C, WDOT);
 
   amrex::Real mw[NUM_SPECIES];
@@ -538,30 +593,39 @@ RTY2WDOT(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-RTY2JAC(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real JAC[], int HP)
-{
-  amrex::Real C[NUM_SPECIES];
-  CKYTCR(&R, &T, Y, C);
-  DWDOT(JAC, C, &T,&HP);
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
-RTY2C(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real acti[])
-{
-  CKYTCR(&R, &T,  Y, acti); 
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void
 T2Ei(amrex::Real T, amrex::Real Ei[])
 {
-  CKUMS(&T, Ei);
+  amrex::Error("T2Ei not physically possible for SRK EoS");
 }
 
-// Function added for non-ideal
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RTY2Ei(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real Ei[])
+{
+  amrex::Real am, bm, dAmdT, dAmdY[NUM_SPECIES], d2AmdTY[NUM_SPECIES];
+  amrex::Real K1, inv_bm, InvEosT3Denom;
+  
+  // ideal gas portion
+  CKUMS(&T, Ei);
+
+  // non-ideal portion : Combine Am and Derivs for Speedup?
+  MixingRuleAmBm(T, Y, am, bm);
+  Calc_dAmdT(T, Y, dAmdT);
+  Calc_dAmdY(T, Y, dAmdY);
+  Calc_d2AmdTY(T, Y, d2AmdTY);
+
+  inv_bm = 1.0/bm;
+  K1 = inv_bm * log(1.0 + bm*R);
+  InvEosT3Denom = 1.0/(1.0/R + bm);
+  
+  for (int ii = 0; ii < NUM_SPECIES; ii++){
+    Ei[ii] += (T * d2AmdTY[ii] - dAmdY[ii]) * K1;
+    Ei[ii] += (T * dAmdT - am) * EOS::Bi[ii]* (InvEosT3Denom - K1) * inv_bm;
+  }
+}
+
+// Function added for SRK
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
@@ -583,14 +647,6 @@ RTY2E(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& E)
   // below was log(1 + bm/tau), tau = 1/R so this is simpler)
   K1 = (1.0 / bm) * log(1.0 + bm*R);
   E += (T * dAmdT - am)*K1;
-
-  {
-    amrex::Real wbar, tau, P;
-  CKMMWY(&Y[0], &wbar);
-  tau = 1/R;
-  P = (EOS::RU/wbar)* T/(tau-bm) - am /(tau*(tau+bm));
-  // std::cout << "Recalculated P " << P << std::endl;
-  }
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -615,12 +671,23 @@ void
 PYT2RE(
   amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real& R, amrex::Real& E)
 {
-  CKRHOY(&P, &T, Y, &R);
-  amrex::Real ei[NUM_SPECIES];
-  CKUMS(&T, ei);
+  // Calculate RHO
+  amrex::Real am, bm, Z, wbar, K1;
+  EOS::MixingRuleAmBm(T, Y, am, bm);
+  CKMMWY(&Y[0], &wbar);
+  EOS::Calc_CompressFactor_Z(Z, am, bm, P, T, wbar);
+  R = P * wbar/(Z*EOS::RU*T);
+  
+  // Calculate E - ideal gas portion then add non-ideal portion
+  amrex::Real Ei[NUM_SPECIES], dAmdT;
   E = 0.0;
-  for (int n = 0; n < NUM_SPECIES; n++)
-    E += Y[n] * ei[n];
+  CKUMS(&T, Ei);
+  for (int ii = 0; ii < NUM_SPECIES; ii++){
+    E += Ei[ii] * Y[ii];
+  }
+  Calc_dAmdT(T, Y, dAmdT);
+  K1 = (1.0 / bm) * log(1.0 + bm*R);  // R = 1/tau
+  E += (T * dAmdT - am)*K1;
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -628,7 +695,11 @@ AMREX_FORCE_INLINE
 void
 PYT2R(amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real &R) 
 {
-  CKRHOY(&P, &T, Y, &R);
+  amrex::Real am, bm, Z, wbar;
+  EOS::MixingRuleAmBm(T, Y, am, bm);
+  CKMMWY(&Y[0], &wbar);
+  EOS::Calc_CompressFactor_Z(Z, am, bm, P, T, wbar);
+  R = P * wbar/(Z*EOS::RU*T);
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -636,14 +707,12 @@ AMREX_FORCE_INLINE
 void
 RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
 {
-  amrex::Real wbar;
-  CKMMWY(&Y[0], &wbar);
-  amrex::Real T = P * wbar / (R * EOS::RU);
-  amrex::Real ei[NUM_SPECIES];
-  CKUMS(&T, ei);
-  E = 0.0;
-  for (int n = 0; n < NUM_SPECIES; n++)
-    E += Y[n] * ei[n];
+  amrex::Real T;
+  // Note: could get away with one fewer MixingRuleAm by writing this
+  // out explicitly, but that is trivial relative to cost of iteration
+  // in RYP2T.
+  EOS::RYP2T(R,Y,P,T);
+  EOS::RTY2E(R,T,Y,E);
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -651,7 +720,57 @@ AMREX_FORCE_INLINE
 void
 T2Hi(amrex::Real T, amrex::Real Hi[])
 {
-  CKHMS(&T, Hi);
+  amrex::Error("T2Hi not physically possible for SRK EoS");
+  //CKHMS(&T, Hi);
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RTY2Hi(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real Hi[])
+{
+  amrex::Real am, bm, dAmdT, d2AmdT2;
+  amrex::Real dAmdY[NUM_SPECIES], d2AmdTY[NUM_SPECIES], inv_mwt[NUM_SPECIES];
+  amrex::Real wbar, Rmk;
+  amrex::Real dpdtau, dhmdtau, dpdYk, dhmdYk;
+
+  // Ideal gas part
+  CKHMS(&T, Hi); 
+  
+  // Non-ideal part: Could be optimized a bit more by combining all derivative calls
+  MixingRuleBm(Y, bm);
+  Calc_Am_and_derivs(T, Y, am, dAmdT, d2AmdT2);
+  Calc_dAmdY(T, Y, dAmdY);
+  Calc_d2AmdTY(T, Y, d2AmdTY);
+  CKMMWY(&Y[0], &wbar);
+  get_imw(inv_mwt);
+  
+  amrex::Real tau = 1.0/R;
+  amrex::Real K1 = (1.0 / bm) * log(1.0 + bm*R);
+  amrex::Real InvEosT1Denom = 1.0/(tau - bm);
+  amrex::Real InvEosT2Denom = 1.0/(tau*(tau+bm));
+  amrex::Real InvEosT3Denom = 1.0/(tau + bm);
+  amrex::Real Rm = EOS::RU/wbar;
+  
+  dpdtau = -Rm * T * InvEosT1Denom*InvEosT1Denom
+    + am * (2.0*tau + bm) * InvEosT2Denom*InvEosT2Denom;
+  dhmdtau = -(T*dAmdT - am)*InvEosT2Denom
+    + am*InvEosT3Denom*InvEosT3Denom
+    - Rm*T*bm*InvEosT1Denom*InvEosT1Denom;
+
+  for (int ii = 0; ii < NUM_SPECIES; ii++){
+    Rmk = EOS::RU * inv_mwt[ii];
+    dpdYk = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom
+      + EOS::Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom
+		       + am * InvEosT2Denom * InvEosT3Denom);
+    dhmdYk = Hi[ii] + (T * d2AmdTY[ii] - dAmdY[ii])*K1
+      - EOS::Bi[ii]*(T*dAmdT -am) * (K1/bm - InvEosT3Denom/bm)
+      + am * EOS::Bi[ii] * InvEosT3Denom * InvEosT3Denom
+      - InvEosT3Denom * dAmdY[ii]
+      + Rmk * T * bm * InvEosT1Denom
+      + Rm *T * EOS::Bi[ii] *(InvEosT1Denom + bm * InvEosT1Denom*InvEosT1Denom);
+    Hi[ii] = dhmdYk - (dhmdtau / dpdtau) * dpdYk;
+  }
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -667,12 +786,75 @@ AMREX_FORCE_INLINE
 void
 TY2G(amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
 {
-  amrex::Real wbar, Cv, Cvx;
-  EOS::TY2Cv(T, Y, Cv);
-  CKMMWY(&Y[0], &wbar);
-  Cvx = wbar * Cv;
-  G = (Cvx + EOS::RU) / Cvx;
+  amrex::Error("TY2G not physically possible for SRK EoS");
 }
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RTY2G(amrex::Real R, amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
+{
+  amrex::Real bm, am, dAmdT, d2AmdT2;
+  amrex::Real K1, Cpig, Cp, Cv, wbar, tau, Rm;
+  amrex::Real P, dpdT, dpdtau, dhmdT, dhmdtau;
+  
+  CKMMWY(&Y[0], &wbar);
+  EOS::MixingRuleBm(Y, bm);
+  EOS::Calc_Am_and_derivs(T, Y, am, dAmdT, d2AmdT2);
+
+  tau = 1.0/R;
+  K1 = (1.0 / bm) * log(1.0 + bm*R);
+  
+  amrex::Real InvEosT1Denom = 1.0/(tau - bm);
+  amrex::Real InvEosT2Denom = 1.0/(tau*(tau+bm));
+  amrex::Real InvEosT3Denom = 1.0/(tau + bm);
+  Rm = EOS::RU/wbar;
+    
+  dpdT = Rm*InvEosT1Denom - dAmdT * InvEosT2Denom;
+  dpdtau = -Rm * T * InvEosT1Denom*InvEosT1Denom
+    + am * (2.0*tau + bm) * InvEosT2Denom*InvEosT2Denom;
+  
+  CKCPBS(&T, Y, &Cpig);
+  dhmdT = Cpig + T*d2AmdT2*K1 - dAmdT*InvEosT3Denom + Rm*bm*InvEosT1Denom;
+  dhmdtau = -(T*dAmdT - am)*InvEosT2Denom
+    + am*InvEosT3Denom*InvEosT3Denom
+    - Rm*T*bm*InvEosT1Denom*InvEosT1Denom;
+  Cp = dhmdT - (dhmdtau/dpdtau)*dpdT;
+
+  CKCVBS(&T, Y, &Cv);
+  Cv += T * d2AmdT2 * K1;
+
+  P = (EOS::RU/wbar) * T * InvEosT1Denom - am * InvEosT2Denom;
+  G = -tau * Cp *dpdtau / (P * Cv);
+}
+
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
+{
+  amrex::Real T, G;
+  // RTY2Cs involves some redundant Am calcs but add cost is small relative
+  // to iteration for RYP2T
+  RYP2T(R,Y,P,T);
+  RTY2G(R,T,Y,G);
+  Cs = std::sqrt(G * P / R);
+}
+
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
+{
+  amrex::Real P,G;
+  // RTY2P involves one redundant MixingRuleAm
+  EOS::RTY2G(R,T,Y,G);
+  EOS::RTY2P(R,T,Y,P);
+  Cs = std::sqrt(G * P / R);
+}
+
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
@@ -702,9 +884,9 @@ Y2WBAR(amrex::Real Y[], amrex::Real& WBAR)
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void
-RPE2dpdr_e(amrex::Real R, amrex::Real P, amrex::Real E, amrex::Real& dpdr_e)
+RPE2dpdr_e(amrex::Real R, amrex::Real P, amrex::Real /* E */, amrex::Real& dpdr_e)
 {
-  dpdr_e = P / R;
+  amrex::Error("RPE2dpdr_e not physically possible for SRK EoS");
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -712,13 +894,106 @@ AMREX_FORCE_INLINE
 void
 RG2dpde(amrex::Real R, amrex::Real G, amrex::Real& dpde)
 {
-  dpde = (G - 1.0) * R;
+  amrex::Error("RG2dpde not physically possible for SRK EoS");
 }
 
 
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RTY2dpde_dpdre(amrex::Real R, amrex::Real T, amrex::Real Y[],
+	       amrex::Real& dpde, amrex::Real& dpdr_e)
+{
+  amrex::Real am, bm, dAmdT, d2AmdT2, wbar, Cv;
+
+  CKMMWY(&Y[0], &wbar);
+  EOS::MixingRuleBm(Y, bm);
+  EOS::Calc_Am_and_derivs(T, Y, am, dAmdT, d2AmdT2);
+
+  amrex::Real Rm = EOS::RU/wbar;
+  amrex::Real tau = 1.0 / R;
+  amrex::Real InvEosT1Denom = 1.0 / (tau - bm);
+  amrex::Real InvEosT2Denom = 1.0 / (tau*(tau+bm));
+  CKCVBS(&T, Y, &Cv);
+  Cv += T * d2AmdT2 * (1.0/bm) * log(1 + bm*R);
+
+  amrex::Real dpdT = Rm * InvEosT1Denom - dAmdT * InvEosT2Denom;
+  amrex::Real dedtau = InvEosT2Denom * (am -T *dAmdT);
+  amrex::Real dpdtau = -Rm * T * InvEosT1Denom * InvEosT1Denom
+    + am * (2.0*tau + bm) * InvEosT2Denom * InvEosT2Denom;
+  dpde = dpdT / Cv;
+  dpdr_e = -tau * tau * (dpdtau - dedtau*dpde);
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+RTY2transport(amrex::Real R, amrex::Real T, amrex::Real Y[],
+	      amrex::Real diP[], amrex::Real dijY[][NUM_SPECIES])
+{
+  amrex::Real bm, am, dAmdY[NUM_SPECIES], d2AmdY2[NUM_SPECIES][NUM_SPECIES];
+  amrex::Real  wbar,  Rmk;
+  amrex::Real dpdtau, dpdYk[NUM_SPECIES], inv_mwt[NUM_SPECIES];
+
+  // Optimize by combining Am derivate calls?
+  CKMMWY(&Y[0], &wbar);
+  get_imw(inv_mwt);
+  EOS::MixingRuleAmBm(T, Y, am, bm);
+  EOS::Calc_dAmdY(T, Y, dAmdY);
+  EOS::Calc_d2AmdY2(T, Y, d2AmdY2);
+
+  amrex::Real tau = 1.0/R;
+  amrex::Real InvBm = 1.0/bm;
+  amrex::Real K1 = (1.0 / bm) * log(1.0 + bm*R);
+  amrex::Real InvEosT1Denom = 1.0/(tau - bm);
+  amrex::Real InvEosT2Denom = 1.0/(tau*(tau+bm));
+  amrex::Real InvEosT3Denom = 1.0/(tau + bm);
+  amrex::Real Rm = EOS::RU/wbar;
+    
+  dpdtau = -Rm * T * InvEosT1Denom*InvEosT1Denom
+    + am * (2.0*tau + bm) * InvEosT2Denom*InvEosT2Denom;
+  
+  for (int ii = 0; ii < NUM_SPECIES; ii++) {
+    Rmk = Rm * inv_mwt[ii];
+    dpdYk[ii] = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom
+      + EOS::Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom
+		       + am * InvEosT2Denom * InvEosT3Denom);
+  }
+
+  for (int ii = 0; ii < NUM_SPECIES; ii++) {
+
+    diP[ii] = (Y[ii]*wbar/(Rm*T) *
+	       ((dAmdY[ii] - am*EOS::Bi[ii]*InvBm) * InvEosT2Denom
+		+ am*EOS::Bi[ii]*InvBm*InvEosT1Denom*InvEosT1Denom)
+	       ) - Y[ii]* (EOS::Bi[ii] * InvEosT1Denom*InvEosT1Denom
+			   + wbar * inv_mwt[ii] * InvEosT1Denom);
+    diP[ii] /= dpdtau;
+    
+    for (int jj = 0; jj < NUM_SPECIES; jj++) {
+      dijY[ii][jj] = 0.0;
+    }
+    dijY[ii][ii] = wbar * inv_mwt[ii];   
+    for (int jj = 0; jj < NUM_SPECIES; jj++) {
+      dijY[ii][jj] -= diP[ii] * dpdYk[jj]
+	+ wbar * Y[ii] *InvEosT1Denom * (EOS::Bi[ii] * inv_mwt[jj]
+					 + EOS::Bi[jj] * inv_mwt[ii])
+	+ Y[ii] * InvEosT1Denom * InvEosT1Denom * EOS::Bi[ii] * EOS::Bi[jj]
+	+ Y[ii]/(Rm*T) * ( (K1-InvEosT3Denom)*dAmdY[jj]*EOS::Bi[ii]*InvBm
+			   - K1*d2AmdY2[ii][jj]
+			   + (K1*dAmdY[ii]-InvEosT3Denom)*EOS::Bi[ii]*InvBm
+			   + ((-2.0*am*K1 + am*InvEosT3Denom)
+			      *EOS::Bi[ii]*EOS::Bi[jj]*InvBm*InvBm)
+			   + ((am*InvEosT3Denom *InvBm
+			       + am*InvEosT3Denom*InvEosT3Denom)
+			      *EOS::Bi[ii]*EOS::Bi[jj]*InvBm)
+			   );
+    }
+  }
+
+}
 
 
   
-}; // namespace EOS
+} // namespace EOS
 
 #endif
