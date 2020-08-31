@@ -405,7 +405,7 @@ AMREX_FORCE_INLINE
 void
 REY2T(amrex::Real R, amrex::Real E, amrex::Real Y[], amrex::Real& T)
 {
-  amrex::Real Tn = T;
+  amrex::Real Tn;
   amrex::Real bm, am, dAmdT, d2AmdT2;
   amrex::Real K1, ei_ig[NUM_SPECIES], Eig, Cv, dT;
   int nIter = 0;
@@ -414,13 +414,14 @@ REY2T(amrex::Real R, amrex::Real E, amrex::Real Y[], amrex::Real& T)
   EOS::MixingRuleBm(Y, bm);
   K1 = (1.0 / bm) * log(1.0 + bm*R); 
 
-  // Use input T as initial guess, but constrain it to reasonable bounds
-  Tn = amrex::min(amrex::max(T,300.0),5000.0);
+  // Use input T as initial guess
+  Tn = T;
+  // constrain it to reasonable bounds
+  // Tn = amrex::min(amrex::max(T,300.0),5000.0);
   
   while ( amrex::Math::abs(fzero) > convCrit && nIter < maxIter) {
     nIter++;
     EOS::Calc_Am_and_derivs(Tn, Y, am, dAmdT, d2AmdT2);
-    
     // ideal gas internal energy
     CKUMS(&Tn, ei_ig);
     Eig = 0.0; for (int ii = 0; ii< NUM_SPECIES; ii++) {Eig += Y[ii]*ei_ig[ii];};
@@ -438,7 +439,10 @@ REY2T(amrex::Real R, amrex::Real E, amrex::Real Y[], amrex::Real& T)
 
   }
   T = Tn;
-  //std::cout << "nIter " << nIter <<std::endl;
+  // if (nIter == maxIter) {
+  //   amrex::Warning("Max iterations reached in REY2T EoS call");
+  // }
+  // std::cout << "nIter " << nIter <<std::endl;
 }
 
 
