@@ -991,8 +991,6 @@ subroutine SRK_EOS_Get_TE_givenRhoP(state)
      
   end do
 
-  ! print *, 'nIter', nIter
-
   ! Update temperature in the state 
   state%T = Tnp1
   ! recompute dAmdT at updated temperature (we've already done this for Am)
@@ -1091,8 +1089,6 @@ subroutine SRK_EOS_Get_T_GivenRhoE(state,lierr)
 
   ! Update the state structure with the updated Temperature and Pressure
   state%T = Tnp1
-
-  ! print *, 'nIter', nIter
 
 end subroutine SRK_EOS_Get_T_GivenRhoE
 !========================================================!
@@ -1752,8 +1748,6 @@ subroutine SRK_EOS_GetSpeciesTau(state)
      state%taui(i) = Temp2/Temp1
 
   end do
-
-!!$  print*,'Test tau,k', tau, sum(state%massFrac(:)*state%taui(:))
 
 end subroutine SRK_EOS_GetSpeciesTau
 !=================================================================!

@@ -41,6 +41,7 @@ MixingRuleAmBm(amrex::Real T, amrex::Real Y[], amrex::Real &am, amrex::Real &bm)
 {
   am = 0.0;
   bm = 0.0;
+  AMREX_ASSERT(T > 0.0);
   amrex::Real sqrtT = std::sqrt(T);
   amrex::Real amloc[NUM_SPECIES];
 
@@ -63,6 +64,7 @@ void
 MixingRuleAm(amrex::Real T, amrex::Real Y[], amrex::Real &am)
 {
   am = 0.0;
+  AMREX_ASSERT(T > 0.0);
   amrex::Real sqrtT= std::sqrt(T) ;
   amrex::Real amloc[NUM_SPECIES];
 
@@ -95,6 +97,7 @@ void
 Calc_dAmdT(amrex::Real T, amrex::Real Y[], amrex::Real &dAmdT)
 {
   dAmdT = 0.0;
+  AMREX_ASSERT(T > 0.0);
   amrex::Real oneOverT = 1.0/T;
   amrex::Real sqrtT = std::sqrt(T);
   amrex::Real amloc[NUM_SPECIES];
@@ -118,6 +121,7 @@ AMREX_FORCE_INLINE
 void
 Calc_dAmdY(amrex::Real T, amrex::Real Y[], amrex::Real dAmdY[])
 {
+  AMREX_ASSERT(T > 0.0);
   amrex::Real sqrtT = std::sqrt(T);
   amrex::Real amloc[NUM_SPECIES];
 
@@ -139,6 +143,7 @@ AMREX_FORCE_INLINE
 void
 Calc_d2AmdY2(amrex::Real T, amrex::Real Y[], amrex::Real d2AmdY2[][NUM_SPECIES])
 {
+  AMREX_ASSERT(T > 0.0);
   amrex::Real sqrtT = std::sqrt(T);
   amrex::Real amloc[NUM_SPECIES];
 
@@ -159,6 +164,7 @@ AMREX_FORCE_INLINE
 void
 Calc_d2AmdTY(amrex::Real T, amrex::Real Y[], amrex::Real d2AmdTY[])
 {
+  AMREX_ASSERT(T > 0.0);
   amrex::Real oneOverT = 1.0/T;
   amrex::Real sqrtT = std::sqrt(T);
   amrex::Real amloc[NUM_SPECIES];
@@ -223,6 +229,7 @@ AMREX_FORCE_INLINE
 void
 Calc_d2AmdT2(amrex::Real T, amrex::Real Y[], amrex::Real &d2AmdT2)
 {
+  AMREX_ASSERT(T > 0.0);
   amrex::Real oneOverT = 1.0/T;
   amrex::Real tmp1 = -0.5 *oneOverT;
   amrex::Real sqrtT = std::sqrt(T);
@@ -251,6 +258,7 @@ void
 Calc_Am_and_derivs(amrex::Real T, amrex::Real Y[],
 		   amrex::Real &am, amrex::Real &dAmdT, amrex::Real &d2AmdT2)
 {
+  AMREX_ASSERT(T > 0.0);
   amrex::Real oneOverT = 1.0/T;
   amrex::Real tmp1 = -0.5 *oneOverT;
   amrex::Real sqrtT = std::sqrt(T);
@@ -405,6 +413,9 @@ AMREX_FORCE_INLINE
 void
 REY2T(amrex::Real R, amrex::Real E, amrex::Real Y[], amrex::Real& T)
 {
+  // NOTE: for this function T is the output, but the input T serves as the
+  // initial guess for Newton iteration, so it must be initialized to
+  // a reasonable initial guess.
   amrex::Real Tn;
   amrex::Real bm, am, dAmdT, d2AmdT2;
   amrex::Real K1, ei_ig[NUM_SPECIES], Eig, Cv, dT;
@@ -416,8 +427,7 @@ REY2T(amrex::Real R, amrex::Real E, amrex::Real Y[], amrex::Real& T)
 
   // Use input T as initial guess
   Tn = T;
-  // constrain it to reasonable bounds
-  // Tn = amrex::min(amrex::max(T,300.0),5000.0);
+  AMREX_ASSERT(Tn > 0.0);
   
   while ( amrex::Math::abs(fzero) > convCrit && nIter < maxIter) {
     nIter++;
@@ -430,8 +440,6 @@ REY2T(amrex::Real R, amrex::Real E, amrex::Real Y[], amrex::Real& T)
     // real gas heat capacity
     Cv += Tn * d2AmdT2 * K1;
 
-    //std::cout << "nIter " << nIter << " T " << Tn << " E " << E << " Eig " << Eig<<std::endl;
-    
     // Take difference between E(Tn) and E and iterate
     fzero = -E + Eig + (Tn * dAmdT - am)*K1;
     dT = fzero / Cv;
@@ -439,10 +447,7 @@ REY2T(amrex::Real R, amrex::Real E, amrex::Real Y[], amrex::Real& T)
 
   }
   T = Tn;
-  // if (nIter == maxIter) {
-  //   amrex::Warning("Max iterations reached in REY2T EoS call");
-  // }
-  // std::cout << "nIter " << nIter <<std::endl;
+  AMREX_ASSERT(nIter < maxIter);
 }
 
 
@@ -533,7 +538,6 @@ RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T)
     MixingRuleAm(T, Y, am);
     Pnp1 = Rm * T * InvEosT1Denom - am * InvEosT2Denom;
   }
-  //std::cout << "nIter " << nIter << std::endl;
 }
 
 
