@@ -62,12 +62,13 @@ public:
   using HostVectReal = amrex::Gpu::HostVector<amrex::Real>;
   using HostVectInt = amrex::Gpu::HostVector<int>;
 
-  SprayParticleContainer(amrex::Amr* amr, amrex::BCRec* _phys_bc)
+  SprayParticleContainer(amrex::Amr* amr, amrex::BCRec* _phys_bc, const amrex::Real parcelSize)
     : amrex::AmrParticleContainer<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>(amr),
+      m_setFuelData(false),
       sub_cycle(amr->subCycle()),
       phys_bc(_phys_bc),
       m_injectVel(0.),
-      m_parcelSize(1.)
+      m_parcelSize(parcelSize)
   {
     nstate = NSR_SPR;
     init_bcs();
@@ -86,6 +87,7 @@ public:
     HostVectReal fuelEnth(NUM_SPECIES);
     EOS::T2Hi(ref_T, fuelEnth.dataPtr());
     m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelIndx);
+    m_setFuelData = true;
   }
 
   ~SprayParticleContainer() {}
@@ -149,7 +151,9 @@ public:
   void InitSprayParticles(amrex::AmrLevel* pelec, const int& lev, const int& num_ppc);
 
 private:
+  bool m_setFuelData;
   amrex::Real m_injectVel;
+  // The number of spray droplets per computational particle
   amrex::Real m_parcelSize;
   int nstate;
   ///

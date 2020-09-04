@@ -137,13 +137,13 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
     tmp_src_ptr->
       SumBoundary(0, tmp_src_ptr->nComp(), ghostVect, Geom(lev).periodicity());
   } else {
-      tmp_src_ptr->SumBoundary(Geom(lev).periodicity());
+    tmp_src_ptr->SumBoundary(Geom(lev).periodicity());
   }
 
   // Add new sources into source *after* we have called SumBoundary
   if (tempSource) {
-    MultiFab::Add(source, *tmp_src_ptr, 0, 0, source.nComp(),
-                  amrex::min(source.nGrow(), tmp_src_width));
+    int nghost = amrex::min(source.nGrow(), tmp_src_width);
+    MultiFab::Add(source, *tmp_src_ptr, 0, 0, source.nComp(), nghost);
     delete tmp_src_ptr;
   }
 
@@ -153,7 +153,7 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
     source.FillBoundary(Geom(lev).periodicity());
 
   // Only delete this if in fact we created it.  Note we didn't change state_ptr so
-  //  we don't need to copy anything back into state
+  // we don't need to copy anything back into state
   if (tempState) delete state_ptr;
 
   // ********************************************************************************
@@ -275,6 +275,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
                                         const bool  do_move,
                                         MultiFab*   u_mac)
 {
+  AMREX_ASSERT(m_setFuelData);
   AMREX_ASSERT(OnSameGrids(lev, state));
   AMREX_ASSERT(OnSameGrids(lev, source));
   const auto dxi = this->Geom(lev).InvCellSizeArray();
@@ -304,7 +305,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
       lo_bound[dir] = 0;
       hi_bound[dir] = 0;
     }
-    // Only concered with reflective boundaries
+    // Only concerned with reflective boundaries
     if (!reflect_lo[dir]) dom_lo[dir] -= 100;
     if (!reflect_hi[dir]) dom_hi[dir] += 100;
   }
@@ -400,7 +401,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
         Real coef[AMREX_D_PICK(2, 4, 8)];
         // Indices of adjacent cells
         IntVect indx_array[AMREX_D_PICK(2, 4, 8)];
-        // Storage for fluid info in cells adjacent to the particle
+        // Cell-based length of particle in domain
         RealVect len(AMREX_D_DECL((p.pos(0) - plo[0])*dxi[0] + 0.5,
                                   (p.pos(1) - plo[1])*dxi[1] + 0.5,
                                   (p.pos(2) - plo[2])*dxi[2] + 0.5));
@@ -411,7 +412,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
         Real T_fluid = 0.;
         Real rho_fluid = 0.;
         for (int sp = 0; sp != NUM_SPECIES; ++sp) Y_fluid[sp] = 0.;
-        // Do initial interpolation and save corresponding adjacent fluid information
+        // Do initial interpolation
         AdjIndexWeights(len, indx_array, coef, dom_lo, dom_hi);
         // Extract adjacent values and interpolate fluid at particle location
         for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
@@ -697,7 +698,6 @@ SprayParticleContainer::updateParticles(const int&  lev,
               isub = nsub + 1;
               continue;
             }
-            // Add the spray source terms to the Eulerian fluid
             for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
               Real cur_coef = -coef[aindx]*sub_source*num_ppp;
               IntVect cur_indx = indx_array[aindx];
