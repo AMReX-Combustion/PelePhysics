@@ -132,7 +132,7 @@ public:
   ///
   /// Update particles
   ///
-  void updateParticles(const int&         lev,
+  void updateParticles(const int&         level,
                        amrex::MultiFab&   state,
                        amrex::MultiFab&   source,
                        const amrex::Real& flow_dt,
@@ -142,13 +142,27 @@ public:
                        amrex::MultiFab*   u_mac);
 
   ///
+  /// Sum boundary and copy temporary source term
+  ///
+  inline void transferSource(const int&       tmp_src_width,
+                             const int&       level,
+                             amrex::MultiFab& tmp_source,
+                             amrex::MultiFab& source)
+  {
+    const int nghost = amrex::min(source.nGrow(), tmp_src_width);
+    tmp_source.SumBoundary(Geom(level).periodicity());
+    amrex::MultiFab::Add(source, tmp_source, 0, 0, source.nComp(), nghost);
+    tmp_source.setVal(0.);
+  }
+
+  ///
   /// Insert particles according to some criterion
   ///
-  bool insertParticles(amrex::Real time, amrex::Real dt, int nstep, int lev, int finest_level);
+  bool insertParticles(amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level);
 
-  bool injectParticles(amrex::Real time, amrex::Real dt, int nstep, int lev, int finest_level);
+  bool injectParticles(amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level);
 
-  void InitSprayParticles(amrex::AmrLevel* pelec, const int& lev, const int& num_ppc);
+  void InitSprayParticles(amrex::AmrLevel* pelec, const int& level, const int& num_ppc);
 
 private:
   bool m_setFuelData;

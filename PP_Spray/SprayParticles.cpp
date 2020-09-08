@@ -29,25 +29,10 @@ SprayParticleContainer::init_bcs()
   }
 }
 
-// void
-// SprayParticleContainer::SetAll (Real val, int pstate_idx, int lev)
-// {
-//   BL_ASSERT(lev >= 0 && lev < GetParticles().size());
-//   ParticleLevel& plev = GetParticles(lev);
-//   for (auto& kv : plev) {
-//     AoS& particles = kv.second.GetArrayOfStructs();
-//     for (auto& p : particles) {
-//       if (p.id() > 0)
-//      p.rdata(pstate_idx) = val;
-//     }
-//   }
-//   return;
-// }
-
 void
 SprayParticleContainer::moveKick (MultiFab&   state,
                                   MultiFab&   source,
-                                  const int   lev,
+                                  const int   level,
                                   const Real& dt,
                                   const Real  time,
                                   const bool  isVirtual,
@@ -57,14 +42,14 @@ SprayParticleContainer::moveKick (MultiFab&   state,
 {
   bool do_move = false;
   int width = 0;
-  moveKickDrift(state, source, lev, dt, time, isVirtual, isGhost,
+  moveKickDrift(state, source, level, dt, time, isVirtual, isGhost,
                 tmp_src_width, do_move, width, u_mac);
 }
 
 void
 SprayParticleContainer::moveKickDrift (MultiFab&   state,
                                        MultiFab&   source,
-                                       const int   lev,
+                                       const int   level,
                                        const Real& dt,
                                        const Real  time,
                                        const bool  isVirtual,
@@ -76,11 +61,11 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
 {
   BL_PROFILE("ParticleContainer::moveKickDrift()");
   AMREX_ASSERT(u_mac == nullptr || u_mac[0].nGrow() >= 1);
-  AMREX_ASSERT(lev >= 0);
+  AMREX_ASSERT(level >= 0);
   AMREX_ASSERT(state.nGrow() >= 2);
 
   //If there are no particles at this level
-  if (lev >= this->GetParticles().size())
+  if (level >= this->GetParticles().size())
     return;
 
   const Real strttime = ParallelDescriptor::second();
@@ -93,64 +78,26 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   // ********************************************************************************
   bool tempState = false;
 
-  if (this->OnSameGrids(lev, state)) {
+  if (this->OnSameGrids(level, state)) {
     state_ptr = &state;
   } else {
-    state_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(lev),
-                             this->m_gdb->ParticleDistributionMap(lev),
+    state_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(level),
+                             this->m_gdb->ParticleDistributionMap(level),
                              state.nComp(), state.nGrow());
     state_ptr->setVal(0.);
     state_ptr->copy(state,0,0,state.nComp());
-    state_ptr->FillBoundary(Geom(lev).periodicity());
+    state_ptr->FillBoundary(Geom(level).periodicity());
     tempState = true;
   }
 
-  // ********************************************************************************
-  // We make a temporary MultiFab for the source here and initialize it to zero
-  // because if we use one that already has values in it, the SumBoundary call
-  // will end up duplicating those values with each call
-  // ********************************************************************************
-  bool tempSource = false;
-
-  MultiFab* tmp_src_ptr;
-  if (this->OnSameGrids(lev, source) && source.nGrow() >= tmp_src_width) {
-    tmp_src_ptr = &source;
-  } else {
-    tmp_src_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(lev),
-                               this->m_gdb->ParticleDistributionMap(lev),
-                               source.nComp(), tmp_src_width);
-    tmp_src_ptr->setVal(0.);
-    tempSource = true;
-  }
   BL_PROFILE_VAR("SprayParticles::updateParticles()", UPD_PART);
-  updateParticles(lev, (*state_ptr), (*tmp_src_ptr), dt, time, tmp_src_width, do_move, u_mac);
+  updateParticles(level, (*state_ptr), source, dt, time, tmp_src_width, do_move, u_mac);
   BL_PROFILE_VAR_STOP(UPD_PART);
-
-  // ********************************************************************************
-  // Make sure the momentum put into ghost cells of each grid is added to both
-  //      valid regions AND the ghost cells of other grids.  If at level = 0
-  //      we can accomplish this with SumBoundary; however if this level has ghost
-  //      cells not covered at this level then we need to do more.
-  // ********************************************************************************
-  if (lev > 0) {
-    IntVect ghostVect(tmp_src_width*IntVect::TheUnitVector());
-    tmp_src_ptr->
-      SumBoundary(0, tmp_src_ptr->nComp(), ghostVect, Geom(lev).periodicity());
-  } else {
-    tmp_src_ptr->SumBoundary(Geom(lev).periodicity());
-  }
-
-  // Add new sources into source *after* we have called SumBoundary
-  if (tempSource) {
-    int nghost = amrex::min(source.nGrow(), tmp_src_width);
-    MultiFab::Add(source, *tmp_src_ptr, 0, 0, source.nComp(), nghost);
-    delete tmp_src_ptr;
-  }
 
   // Fill ghost cells after we've synced up ..
   // TODO: Check to see if this is needed at all
-  if (lev > 0)
-    source.FillBoundary(Geom(lev).periodicity());
+  // if (level > 0)
+  //   source.FillBoundary(Geom(level).periodicity());
 
   // Only delete this if in fact we created it.  Note we didn't change state_ptr so
   // we don't need to copy anything back into state
@@ -158,16 +105,16 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
 
   // ********************************************************************************
 
-  if (lev > 0 && sub_cycle && do_move && !isVirtual) {
+  if (level > 0 && sub_cycle && do_move && !isVirtual) {
     ParticleLocData pld;
-    for (ParConstIterType pti(*this, lev); pti.isValid(); ++pti) {
-      auto& ptile = ParticlesAt(lev, pti);
+    for (ParConstIterType pti(*this, level); pti.isValid(); ++pti) {
+      auto& ptile = ParticlesAt(level, pti);
       auto src = ptile.getParticleTileData();
       for (int k = 0; k != ptile.numParticles(); ++k) {
         SuperParticleType p = src.getSuperParticle(k);
         //  TODO: Double check this for correctness and figure out what it is doing
         if (p.id() > 0) {
-          if (!this->Where(p, pld, lev, lev, where_width)) {
+          if (!this->Where(p, pld, level, level, where_width)) {
             if (p.id() == GhostParticleID) {
               p.id() = -1;
             } else {
@@ -197,23 +144,23 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
 }
 
 Real
-SprayParticleContainer::estTimestep (int lev, Real cfl) const
+SprayParticleContainer::estTimestep (int level, Real cfl) const
 {
   BL_PROFILE("ParticleContainer::estTimestep()");
   // TODO: Clean up this mess and bring the num particle functionality back
   Real dt = std::numeric_limits<Real>::max();
-  if (lev >= this->GetParticles().size() || PeleC::particle_mom_tran == 0)
+  if (level >= this->GetParticles().size() || PeleC::particle_mom_tran == 0)
     return dt;
 
   const Real strttime = ParallelDescriptor::second();
-  const Geometry& geom = this->m_gdb->Geom(lev);
+  const Geometry& geom = this->m_gdb->Geom(level);
   const auto dx = geom.CellSizeArray();
   const auto dxi = geom.InvCellSizeArray();
   {
     amrex::ReduceOps<amrex::ReduceOpMin> reduce_op;
     amrex::ReduceData<amrex::Real> reduce_data(reduce_op);
     using ReduceTuple = typename decltype(reduce_data)::Type;
-    for (MyParConstIter pti(*this, lev); pti.isValid(); ++pti) {
+    for (MyParConstIter pti(*this, level); pti.isValid(); ++pti) {
       const AoS& pbox = pti.GetArrayOfStructs();
       const ParticleType* pstruct = pbox().data();
       const int n = pbox.numParticles();
@@ -266,7 +213,7 @@ SprayParticleContainer::estTimestep (int lev, Real cfl) const
 }
 
 void
-SprayParticleContainer::updateParticles(const int&  lev,
+SprayParticleContainer::updateParticles(const int&  level,
                                         MultiFab&   state,
                                         MultiFab&   source,
                                         const Real& flow_dt,
@@ -276,12 +223,12 @@ SprayParticleContainer::updateParticles(const int&  lev,
                                         MultiFab*   u_mac)
 {
   AMREX_ASSERT(m_setFuelData);
-  AMREX_ASSERT(OnSameGrids(lev, state));
-  AMREX_ASSERT(OnSameGrids(lev, source));
-  const auto dxi = this->Geom(lev).InvCellSizeArray();
-  const auto plo = this->Geom(lev).ProbLoArray();
-  const auto phi = this->Geom(lev).ProbHiArray();
-  const auto domain = this->Geom(lev).Domain();
+  AMREX_ASSERT(OnSameGrids(level, state));
+  AMREX_ASSERT(OnSameGrids(level, source));
+  const auto dxi = this->Geom(level).InvCellSizeArray();
+  const auto plo = this->Geom(level).ProbLoArray();
+  const auto phi = this->Geom(level).ProbHiArray();
+  const auto domain = this->Geom(level).Domain();
   IntVect dom_lo = domain.smallEnd();
   IntVect dom_hi = domain.bigEnd();
   // Vector to determine boundary type: 1 - reflective,
@@ -290,7 +237,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
   int hi_bound[AMREX_SPACEDIM];
   // We are only concerned with domain boundaries that are reflective
   for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
-    if (!this->Geom(lev).isPeriodic(dir)) {
+    if (!this->Geom(level).isPeriodic(dir)) {
       if (reflect_lo[dir]) {
         lo_bound[dir] = 1;
       } else {
@@ -309,7 +256,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
     if (!reflect_lo[dir]) dom_lo[dir] -= 100;
     if (!reflect_hi[dir]) dom_hi[dir] += 100;
   }
-  const auto dx = this->Geom(lev).CellSizeArray();
+  const auto dx = this->Geom(level).CellSizeArray();
   const Real vol = AMREX_D_TERM(dx[0],*dx[1],*dx[2]);
   const Real inv_vol = 1./vol;
   // Set all constants
@@ -353,7 +300,7 @@ SprayParticleContainer::updateParticles(const int&  lev,
   const int utempIndx = PeleC::Temp;
   const int specIndx = PeleC::FirstSpec;
   // Start the ParIter, which loops over separate sets of particles in different boxes
-  for (MyParIter pti(*this, lev); pti.isValid(); ++pti) {
+  for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
     const Box& tile_box = pti.growntilebox(numGhost);
     const long Np = pti.numParticles();
     ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
