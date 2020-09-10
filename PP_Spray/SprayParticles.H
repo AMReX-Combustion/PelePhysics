@@ -149,6 +149,7 @@ public:
                              amrex::MultiFab& tmp_source,
                              amrex::MultiFab& source)
   {
+    BL_PROFILE("ParticleContainer::transferSource()");
     const int nghost = amrex::min(source.nGrow(), tmp_src_width);
     tmp_source.SumBoundary(Geom(level).periodicity());
     amrex::MultiFab::Add(source, tmp_source, 0, 0, source.nComp(), nghost);
