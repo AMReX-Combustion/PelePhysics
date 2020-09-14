@@ -55,7 +55,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     user_data->ireactor_type           = reactor_type; 
     user_data->iverbose                = 1;
     user_data->stream                  = stream;
-    user_data->nbBlocks                = NCELLS/32;
+    user_data->nbBlocks                = std::max(1,NCELLS/32);
     user_data->nbThreads               = 32;
 
     y = N_VNewManaged_Cuda(neq_tot);
