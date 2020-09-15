@@ -440,7 +440,8 @@ SprayParticleContainer::updateParticles(const int&  level,
           Real sumYSkin = 0.; // Mass fraction of the fuel in skin film, uses one-thirds rule
           Real sumYFuel = 0.; // Mass fraction of the fuel in the gas phase
           Real cp_skin = 0.; // Averaged C_p at particle surface
-          Real cp_L_av = 0.;  // Cp of the liquid state
+          Real cp_L_av = 0.; // Cp of the liquid state
+          Real mw_vap = 0.; // Average molar mass of vapor mixture
           if (heat_trans || mass_trans) {
             for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
               const int fspec = fdat.indx(spf);
@@ -480,7 +481,9 @@ SprayParticleContainer::updateParticles(const int&  level,
               Y_skin[sp] += restYSkin*Y_fluid[sp];
 #endif
               cp_skin += Y_skin[sp]*cp_n[sp];
+              mw_vap += Y_skin[sp]*invmw[sp];
             }
+            mw_vap = 1./mw_vap;
           }
           Real lambda_skin = 0.;
           Real mu_skin = 0.;
@@ -505,6 +508,9 @@ SprayParticleContainer::updateParticles(const int&  level,
             Nu_0 = 1. + powR*std::cbrt(1. + Reyn*Pr_skin);
             for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
               const int fspec = fdat.indx(spf);
+              // Convert mass diffusion coefficient from mixture average
+              // to binary for fuel only, not concerned with other species
+              Ddiag[fspec] *= mw_vap*invmw[fspec];
               const Real rhoD = Ddiag[fspec];
               const Real Sc_skin = mu_skin/rhoD;
               const Real B_M = B_M_num[spf];
