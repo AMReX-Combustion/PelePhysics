@@ -1008,6 +1008,7 @@ int cJac(realtype /* tn */, N_Vector u, N_Vector /* fu */, SUNMatrix J,
           }
           std::cout << std::endl;
       }
+      std::cout << "*** END CHEM Jac ***" << std::endl;
   }
   BL_PROFILE_VAR_STOP(DenseJac);
 
