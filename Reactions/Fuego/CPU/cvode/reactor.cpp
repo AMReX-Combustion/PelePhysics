@@ -503,7 +503,7 @@ int react(const Box& box,
             mass_frac[n] = yvec_d[n] * rho_inv;
         }
         rEner_in(i,j,k,0) = data->rhoX_init[0] + (dummy_time - time_init) * data->rhoXsrc_ext[0]; 
-        Enrg_loc          = rEner_in(i,j,k,0) /rho;
+        Enrg_loc          = rEner_in(i,j,k,0) * rho_inv;
         if (data->ireactor_type == 1){
             EOS::EY2T(Enrg_loc,mass_frac,temp);
         } else {
