@@ -34,7 +34,6 @@ AMREX_GPU_DEVICE_MANAGED int enth_rho = 2; // in/out = rhoH/rhoY
 Array<Real,NUM_SPECIES+1> typVals = {-1};
 AMREX_GPU_DEVICE_MANAGED Real relTol    = 1.0e-10;
 AMREX_GPU_DEVICE_MANAGED Real absTol    = 1.0e-10;
-
 /**********************************/
 
 /**********************************/
@@ -347,13 +346,13 @@ int react(const amrex::Box& box,
             int retval;
 
             cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
-            assert(cusolver_status == CUSPARSE_STATUS_SUCCESS);
+            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
             
             cusolver_status = cusolverSpSetStream(user_data->cusolverHandle, stream);
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
             cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
-            assert(cusolver_status == CUSPARSE_STATUS_SUCCESS);
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
             
             cusparse_status = cusparseSetStream(user_data->cuSPHandle, stream);
             assert(cusolver_status == CUSPARSE_STATUS_SUCCESS);
@@ -666,8 +665,7 @@ int react(realtype *rY_in,    realtype *rY_src_in,
         /* Find sparsity pattern to fill structure of sparse matrix */
         BL_PROFILE_VAR("SparsityFuegoStuff", SparsityStuff);
         BL_PROFILE_VAR_STOP(SparsityStuff);
-        if (user_data->isolve_type == iterative_gmres_solve && 
-              user_data->ianalytical_jacobian == 1 ) {
+        if (user_data->isolve_type == iterative_gmres_solve) {
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_INFO_SYST_SIMPLIFIED(&(user_data->NNZ),&HP);
             BL_PROFILE_VAR_STOP(SparsityStuff);
