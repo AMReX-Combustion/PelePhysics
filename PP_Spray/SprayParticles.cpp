@@ -35,15 +35,16 @@ SprayParticleContainer::moveKick (MultiFab&   state,
                                   const int   level,
                                   const Real& dt,
                                   const Real  time,
-                                  const bool  isVirtual,
-                                  const bool  isGhost,
-                                  const int   tmp_src_width,
+                                  const bool  isVirtualPart,
+                                  const bool  isGhostPart,
+                                  const int   state_ghosts,
+                                  const int   source_ghosts,
                                   MultiFab*   u_mac)
 {
   bool do_move = false;
   int width = 0;
-  moveKickDrift(state, source, level, dt, time, isVirtual, isGhost,
-                tmp_src_width, do_move, width, u_mac);
+  moveKickDrift(state, source, level, dt, time, isVirtualPart, isGhostPart,
+                state_ghosts, source_ghosts, do_move, width, u_mac);
 }
 
 void
@@ -52,9 +53,10 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
                                        const int   level,
                                        const Real& dt,
                                        const Real  time,
-                                       const bool  isVirtual,
-                                       const bool  isGhost,
-                                       const int   tmp_src_width,
+                                       const bool  isVirtualPart,
+                                       const bool  isGhostPart,
+                                       const int   state_ghosts,
+                                       const int   source_ghosts,
                                        const bool  do_move,
                                        const int   where_width,
                                        MultiFab*   u_mac)
@@ -91,7 +93,7 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   }
 
   BL_PROFILE_VAR("SprayParticles::updateParticles()", UPD_PART);
-  updateParticles(level, (*state_ptr), source, dt, time, tmp_src_width, do_move, u_mac);
+  updateParticles(level, (*state_ptr), source, dt, time, state_ghosts, source_ghosts, do_move, u_mac);
   BL_PROFILE_VAR_STOP(UPD_PART);
 
   // Fill ghost cells after we've synced up ..
@@ -105,14 +107,17 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
 
   // ********************************************************************************
 
-  if (level > 0 && sub_cycle && do_move && !isVirtual) {
+  // We need to check if ghost particles have moved far enough away from AMR
+  // interface to be considered
+#ifdef AMREX_DEBUG
+  // If we are debugging, make sure to check all particles
+  if (level > 0 && sub_cycle && do_move && !isVirtualPart) {
     ParticleLocData pld;
     for (ParConstIterType pti(*this, level); pti.isValid(); ++pti) {
       auto& ptile = ParticlesAt(level, pti);
       auto src = ptile.getParticleTileData();
       for (int k = 0; k != ptile.numParticles(); ++k) {
         SuperParticleType p = src.getSuperParticle(k);
-        //  TODO: Double check this for correctness and figure out what it is doing
         if (p.id() > 0) {
           if (!this->Where(p, pld, level, level, where_width)) {
             if (p.id() == GhostParticleID) {
@@ -125,6 +130,27 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
       }
     }
   }
+#else
+  // Otherwise, assume all particles are ghost particles
+  if (level > 0 && sub_cycle && do_move && isGhostPart) {
+    ParticleLocData pld;
+    for (ParConstIterType pti(*this, level); pti.isValid(); ++pti) {
+      auto& ptile = ParticlesAt(level, pti);
+      auto src = ptile.getParticleTileData();
+      for (int k = 0; k != ptile.numParticles(); ++k) {
+        SuperParticleType p = src.getSuperParticle(k);
+        //  TODO: Double check this for correctness and figure out what it is doing
+        if (p.id() > 0) {
+          if (!this->Where(p, pld, level, level, where_width)) {
+            if (p.id() == GhostParticleID) {
+              p.id() = -1;
+            }
+          }
+        }
+      }
+    }
+  }
+#endif
 
   // ********************************************************************************
 
@@ -218,7 +244,8 @@ SprayParticleContainer::updateParticles(const int&  level,
                                         MultiFab&   source,
                                         const Real& flow_dt,
                                         const Real& time,
-                                        const int   numGhost,
+                                        const int   state_ghosts,
+                                        const int   source_ghosts,
                                         const bool  do_move,
                                         MultiFab*   u_mac)
 {
@@ -301,7 +328,8 @@ SprayParticleContainer::updateParticles(const int&  level,
   const int specIndx = PeleC::FirstSpec;
   // Start the ParIter, which loops over separate sets of particles in different boxes
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
-    const Box& tile_box = pti.growntilebox(numGhost);
+    const Box& tile_box = pti.growntilebox(state_ghosts);
+    const Box& src_box = pti.growntilebox(source_ghosts);
     const long Np = pti.numParticles();
     ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
     // Get particle attributes if StructOfArrays are used
@@ -654,7 +682,7 @@ SprayParticleContainer::updateParticles(const int&  level,
             for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
               Real cur_coef = -coef[aindx]*sub_source*num_ppp;
               IntVect cur_indx = indx_array[aindx];
-              AMREX_ASSERT(tile_box.contains(cur_indx));
+              AMREX_ASSERT(src_box.contains(cur_indx));
               if (mom_trans) {
                 for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
                   const int nf = momIndx + dir;

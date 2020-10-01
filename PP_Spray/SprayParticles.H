@@ -115,19 +115,19 @@ public:
   ///
   void moveKick(amrex::MultiFab& state, amrex::MultiFab& source,
                 const int level, const amrex::Real& dt,
-                const amrex::Real time, const bool isVirtual,
-                const bool isGhost, const int tmp_src_width,
-                amrex::MultiFab* u_mac = nullptr);
+                const amrex::Real time, const bool isVirtualPart,
+                const bool isGhostPart, const int state_ghosts,
+                const int source_ghosts, amrex::MultiFab* u_mac = nullptr);
 
   ///
   /// Update and move positions of the particles
   ///
   void moveKickDrift(amrex::MultiFab& state, amrex::MultiFab& source,
                      const int level, const amrex::Real& dt,
-                     const amrex::Real time, const bool isVirtual,
-                     const bool isGhost, const int tmp_src_width,
-                     const bool do_move, const int where_width,
-                     amrex::MultiFab* u_mac = nullptr);
+                     const amrex::Real time, const bool isVirtualPart,
+                     const bool isGhostPart, const int state_ghosts,
+                     const int source_ghosts, const bool do_move,
+                     const int where_width, amrex::MultiFab* u_mac = nullptr);
 
   ///
   /// Update particles
@@ -137,20 +137,21 @@ public:
                        amrex::MultiFab&   source,
                        const amrex::Real& flow_dt,
                        const amrex::Real& time,
-                       const int          numGhost,
+                       const int          state_ghosts,
+                       const int          source_ghosts,
                        const bool         do_move,
                        amrex::MultiFab*   u_mac);
 
   ///
   /// Sum boundary and copy temporary source term
   ///
-  inline void transferSource(const int&       tmp_src_width,
+  inline void transferSource(const int&       source_ghosts,
                              const int&       level,
                              amrex::MultiFab& tmp_source,
                              amrex::MultiFab& source)
   {
     BL_PROFILE("ParticleContainer::transferSource()");
-    const int nghost = amrex::min(source.nGrow(), tmp_src_width);
+    const int nghost = amrex::min(source.nGrow(), source_ghosts);
     tmp_source.SumBoundary(Geom(level).periodicity());
     amrex::MultiFab::Add(source, tmp_source, 0, 0, source.nComp(), nghost);
     tmp_source.setVal(0.);
