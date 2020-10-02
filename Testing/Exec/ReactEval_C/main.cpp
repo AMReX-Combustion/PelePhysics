@@ -260,9 +260,12 @@ main (int   argc,
     BL_PROFILE_VAR_NS("Allocs",Allocs);
     BL_PROFILE_VAR_NS("Flatten",mainflatten);
 #ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+    const auto tiling = MFItInfo().SetDynamic(true);
+#pragma omp parallel
+#else
+    const bool tiling = TilingIfNotGPU();
 #endif
-    for ( MFIter mfi(mf,TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+    for ( MFIter mfi(mf,tiling); mfi.isValid(); ++mfi) {
 
       const Box& box  = mfi.tilebox();
       int nc          = box.numPts();

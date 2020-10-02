@@ -9,7 +9,6 @@
 #include <nvector/nvector_serial.h>    /* access to serial N_Vector            */
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
 #include <nvector/nvector_cuda.h>
-#include <sunmatrix/sunmatrix_sparse.h>
 #include <sunmatrix/sunmatrix_cusparse.h>
 #include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver      */
 #include <sunlinsol/sunlinsol_spgmr.h> /* access to SPGMR SUNLinearSolver     */
@@ -144,12 +143,7 @@ fKernelComputeAJsys(int ncells, void *user_data, realtype *u_d, realtype *csr_va
 AMREX_GPU_DEVICE
 inline
 void 
-fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d);
-
-AMREX_GPU_DEVICE
-inline
-void 
-fKernelComputeAJchemCuSolver(int ncells, void *user_data, realtype *u_d, realtype *Jdata);
+fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *Jdata);
 
 // CUSTOM
 __global__
@@ -164,18 +158,14 @@ struct _SUNLinearSolverContent_Dense_custom {
     int                nsubsys;       /* number of subsystems */
     int                subsys_size;   /* size of each subsystem */
     int                subsys_nnz;
-        N_Vector           d_values;      /* device  array of matrix A values */
-    int*               d_colind;      /* device array of column indices for a subsystem */
-    int*               d_rowptr;      /* device array of rowptrs for a subsystem */
-    cudaStream_t       stream;
     int                nbBlocks;
     int                nbThreads;
+    cudaStream_t       stream;
 };
 
 typedef struct _SUNLinearSolverContent_Dense_custom *SUNLinearSolverContent_Dense_custom; 
 
 SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, 
-                                       int nsubsys, int subsys_size, int subsys_nnz, 
                                        cudaStream_t stream);
 
 SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S); 

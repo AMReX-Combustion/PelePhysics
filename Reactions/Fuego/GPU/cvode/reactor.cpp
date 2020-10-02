@@ -13,10 +13,6 @@ using namespace amrex;
 #define SUN_CUSP_NUM_SUBSYS(S)     ( SUN_CUSP_CONTENT(S)->nsubsys )
 #define SUN_CUSP_SUBSYS_NNZ(S)     ( SUN_CUSP_CONTENT(S)->subsys_nnz ) 
 
-#define SUN_CUSP_DCOLIND(S)        ( SUN_CUSP_CONTENT(S)->d_colind ) 
-#define SUN_CUSP_DROWPTR(S)        ( SUN_CUSP_CONTENT(S)->d_rowptr )
-#define SUN_CUSP_DVALUES(S)        ( SUN_CUSP_CONTENT(S)->d_values )
-
 #define SUN_CUSP_LASTFLAG(S)       ( SUN_CUSP_CONTENT(S)->last_flag )
 #define SUN_CUSP_STREAM(S)         ( SUN_CUSP_CONTENT(S)->stream )
 #define SUN_CUSP_NBLOCK(S)         ( SUN_CUSP_CONTENT(S)->nbBlocks )
@@ -275,6 +271,9 @@ int react(const amrex::Box& box,
             cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
+            cusolver_status = cusolverSpSetStream(user_data->cusolverHandle, stream);
+            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+            
             cusparse_status = cusparseCreateMatDescr(&(user_data->descrA)); 
             assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
 
@@ -334,31 +333,35 @@ int react(const amrex::Box& box,
             BL_PROFILE_VAR_START(AllocsCVODE);
             user_data->csr_row_count_d = (int*) The_Managed_Arena()->alloc((NUM_SPECIES+2) * sizeof(int));
             user_data->csr_col_index_d = (int*) The_Managed_Arena()->alloc(user_data->NNZ * sizeof(int));
-            user_data->csr_jac_d       = (double*) The_Managed_Arena()->alloc(user_data->NNZ * NCELLS * sizeof(int));
+            //user_data->csr_jac_d       = (double*) The_Managed_Arena()->alloc(user_data->NNZ * NCELLS * sizeof(int));
             BL_PROFILE_VAR_STOP(AllocsCVODE);
 
             cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
             cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
             cudaError_t      cuda_status     = cudaSuccess;
-            int retval;
 
             cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
-
-            cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
+            
+            cusolver_status = cusolverSpSetStream(user_data->cusolverHandle, stream);
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-            A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, (NUM_SPECIES + 1), (NUM_SPECIES + 1), user_data->NNZ, user_data->cuSPHandle);
+            cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
+            
+            cusparse_status = cusparseSetStream(user_data->cuSPHandle, stream);
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
+
+            A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, (NUM_SPECIES + 1), (NUM_SPECIES + 1), 
+                                               user_data->NNZ, user_data->cuSPHandle);
             if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
 
-            retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
+            int retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
             if(check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1)) return(1);
 
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 0); 
             SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_d, user_data->csr_col_index_d);
-            cuda_status = cudaDeviceSynchronize();
-            assert(cuda_status == cudaSuccess);
             BL_PROFILE_VAR_STOP(SparsityStuff);
 
         } else {
@@ -369,15 +372,27 @@ int react(const amrex::Box& box,
             BL_PROFILE_VAR_START(AllocsCVODE);
             user_data->csr_row_count_d = (int*) The_Managed_Arena()->alloc((NUM_SPECIES+2) * sizeof(int));
             user_data->csr_col_index_d = (int*) The_Managed_Arena()->alloc(user_data->NNZ * sizeof(int));
-            user_data->csr_jac_d       = (double*) The_Managed_Arena()->alloc(user_data->NNZ * NCELLS * sizeof(int));
+            //user_data->csr_jac_d       = (double*) The_Managed_Arena()->alloc(user_data->NNZ * NCELLS * sizeof(int));
             BL_PROFILE_VAR_STOP(AllocsCVODE);
 
-            A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ * NCELLS, CSR_MAT);
-            if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
+            cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
+
+            cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
+            
+            cusparse_status = cusparseSetStream(user_data->cuSPHandle, stream);
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
+
+            A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, (NUM_SPECIES + 1), (NUM_SPECIES + 1), 
+                                               user_data->NNZ, user_data->cuSPHandle);
+            if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
+
+            int retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
+            if(check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1)) return(1);
 
             BL_PROFILE_VAR_START(SparsityStuff);
-            SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
-            SPARSITY_PREPROC_SYST_CSR( (int*)SUNSparseMatrix_IndexValues(A), (int*)SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
+            SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 0); 
+            SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_d, user_data->csr_col_index_d);
             BL_PROFILE_VAR_STOP(SparsityStuff);
         }
 
@@ -491,7 +506,7 @@ int react(const amrex::Box& box,
 
     } else {
         /* Create dense SUNLinearSolver object for use by CVode */ 
-        LS = SUNLinSol_dense_custom(y, A, NCELLS, (NUM_SPECIES+1), user_data->NNZ, stream);
+        LS = SUNLinSol_dense_custom(y, A, stream); //NCELLS, (NUM_SPECIES+1), user_data->NNZ, stream);
         if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
 
         /* Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode */
@@ -557,9 +572,9 @@ int react(const amrex::Box& box,
     if (user_data->ianalytical_jacobian == 1) {
         The_Managed_Arena()->free(user_data->csr_row_count_d);
         The_Managed_Arena()->free(user_data->csr_col_index_d);
-        The_Managed_Arena()->free(user_data->csr_jac_d);
         if (user_data->isolve_type == iterative_gmres_solve) {
             The_Managed_Arena()->free(user_data->csr_val_d);
+            The_Managed_Arena()->free(user_data->csr_jac_d);
 
             cusolverStatus_t cusolver_status = cusolverSpDestroy(user_data->cusolverHandle);
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
@@ -572,6 +587,9 @@ int react(const amrex::Box& box,
             cusolverStatus_t cusolver_status = cusolverSpDestroy(user_data->cusolverHandle);
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
+            cusparseStatus_t cusparse_status = cusparseDestroy(user_data->cuSPHandle);
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
+        } else {
             cusparseStatus_t cusparse_status = cusparseDestroy(user_data->cuSPHandle);
             assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
         }
@@ -744,33 +762,31 @@ int react(realtype *rY_in,    realtype *rY_src_in,
             BL_PROFILE_VAR_START(AllocsCVODE);
             cudaMallocManaged(&(user_data->csr_row_count_d), (NUM_SPECIES+2) * sizeof(int));
             cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
-            cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
+            //cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
             BL_PROFILE_VAR_STOP(AllocsCVODE);
 
             cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
             cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
-            cudaError_t      cuda_status     = cudaSuccess;
-            int retval;
 
             cusolver_status = cusolverSpCreate(&(user_data->cusolverHandle));
             assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
             cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
-            assert(cusolver_status == CUSOLVER_STATUS_SUCCESS);
+            assert(cusolver_status == CUSPARSE_STATUS_SUCCESS);
+            
+            cusparse_status = cusparseSetStream(user_data->cuSPHandle, stream);
+            assert(cusolver_status == CUSPARSE_STATUS_SUCCESS);
 
-            A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, (NUM_SPECIES + 1), (NUM_SPECIES + 1), user_data->NNZ, user_data->cuSPHandle);
+            A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, (NUM_SPECIES + 1), (NUM_SPECIES + 1), 
+                                               user_data->NNZ, user_data->cuSPHandle);
             if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
 
-            retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
+            int retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
             if(check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1)) return(1);
 
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 0); 
             SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_d, user_data->csr_col_index_d);
-            cuda_status = cudaDeviceSynchronize();
-            assert(cuda_status == cudaSuccess);
-            //SPARSITY_PREPROC_CSR(SUNMatrix_cuSparse_IndexValues(A), SUNMatrix_cuSparse_IndexPointers(A), &HP, 1, 0); 
-            //SPARSITY_PREPROC_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
             BL_PROFILE_VAR_STOP(SparsityStuff);
 
         } else {
@@ -781,16 +797,29 @@ int react(realtype *rY_in,    realtype *rY_src_in,
             BL_PROFILE_VAR_START(AllocsCVODE);
             cudaMallocManaged(&(user_data->csr_row_count_d), (NUM_SPECIES+2) * sizeof(int));
             cudaMallocManaged(&(user_data->csr_col_index_d), user_data->NNZ * sizeof(int));
-            cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
+            //cudaMallocManaged(&(user_data->csr_jac_d), user_data->NNZ * NCELLS * sizeof(double));
             BL_PROFILE_VAR_STOP(AllocsCVODE);
 
-            A = SUNSparseMatrix(neq_tot, neq_tot, user_data->NNZ * NCELLS, CSR_MAT);
-            if (check_flag((void *)A, "SUNSparseMatrix", 0)) return(1);
+            cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
+
+            cusparse_status = cusparseCreate(&(user_data->cuSPHandle));
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
+            
+            cusparse_status = cusparseSetStream(user_data->cuSPHandle, stream);
+            assert(cusparse_status == CUSPARSE_STATUS_SUCCESS);
+
+            A = SUNMatrix_cuSparse_NewBlockCSR(NCELLS, (NUM_SPECIES + 1), (NUM_SPECIES + 1), 
+                                               user_data->NNZ, user_data->cuSPHandle);
+            if (check_flag((void *)A, "SUNMatrix_cuSparse_NewBlockCSR", 0)) return(1);
+
+            int retval = SUNMatrix_cuSparse_SetFixedPattern(A, 1); 
+            if(check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1)) return(1);
 
             BL_PROFILE_VAR_START(SparsityStuff);
-            SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 1); 
-            SPARSITY_PREPROC_SYST_CSR( (int*)SUNSparseMatrix_IndexValues(A), (int*)SUNSparseMatrix_IndexPointers(A), &HP, NCELLS, 0); 
+            SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_d, user_data->csr_row_count_d, &HP, 1, 0); 
+            SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_d, user_data->csr_col_index_d);
             BL_PROFILE_VAR_STOP(SparsityStuff);
+
         }
 
     }
@@ -901,7 +930,7 @@ int react(realtype *rY_in,    realtype *rY_src_in,
 
     } else {
         /* Create dense SUNLinearSolver object for use by CVode */ 
-        LS = SUNLinSol_dense_custom(y, A, NCELLS, (NUM_SPECIES+1), user_data->NNZ, stream);
+        LS = SUNLinSol_dense_custom(y, A, stream); //NCELLS, (NUM_SPECIES+1), user_data->NNZ, stream);
         if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
 
         /* Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode */
@@ -966,8 +995,8 @@ int react(realtype *rY_in,    realtype *rY_src_in,
     if (user_data->ianalytical_jacobian == 1) {
         cudaFree(user_data->csr_row_count_d);
         cudaFree(user_data->csr_col_index_d);
-        cudaFree(user_data->csr_jac_d);
         if (user_data->isolve_type == iterative_gmres_solve) {
+            cudaFree(user_data->csr_jac_d);
             cudaFree(user_data->csr_val_d);
 
             cusolverStatus_t cusolver_status = cusolverSpDestroy(user_data->cusolverHandle);
@@ -1192,72 +1221,27 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 
     /* Fixed Indices and Pointers for Jacobian Matrix */
     BL_PROFILE_VAR("cJac::SparsityStuff",cJacSparsityStuff);
-    int consP;
-    if (udata->ireactor_type == 1){
-        consP = 0 ;
-    } else {
-        consP = 1;
-    }
-    
-    if (udata->isolve_type == sparse_cusolver_solve) {
-        Jdata   = SUNMatrix_cuSparse_Data(J);
-        if ((SUNMatrix_cuSparse_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
-           (SUNMatrix_cuSparse_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
-           (SUNMatrix_cuSparse_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
-                Print() << "Jac error: matrix is wrong size!\n";
-                return 1;
-        }
-    } else {
-        SPARSITY_PREPROC_SYST_CSR( (int*) SUNSparseMatrix_IndexValues(J), (int*) SUNSparseMatrix_IndexPointers(J), 
-                                  &consP, udata->ncells_d[0], 0); 
-        /* Create empty chem Jacobian matrix (if not done already) */
-        //if (udata->R == NULL) {
-        //  udata->R = SUNSparseMatrix(SUNSparseMatrix_Rows(J),
-        //          SUNSparseMatrix_Columns(J),
-        //          SUNSparseMatrix_NNZ(J), CSR_MAT);
-        //}
-        /* check that vector/matrix dimensions match up */
-        if ((SUNSparseMatrix_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
-            (SUNSparseMatrix_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
-            (SUNSparseMatrix_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
-                Print() << "Jac error: matrix is wrong size!\n";
-                return 1;
-        }
+    Jdata   = SUNMatrix_cuSparse_Data(J);
+    if ((SUNMatrix_cuSparse_Rows(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) || 
+       (SUNMatrix_cuSparse_Columns(J) != (udata->neqs_per_cell[0]+1)*(udata->ncells_d[0])) ||
+       (SUNMatrix_cuSparse_NNZ(J) != udata->ncells_d[0] * udata->NNZ )) {
+            Print() << "Jac error: matrix is wrong size!\n";
+            return 1;
     }
     BL_PROFILE_VAR_STOP(cJacSparsityStuff);
 
     BL_PROFILE_VAR("Jacobian()", fKernelJac );
-    if (udata->isolve_type == sparse_cusolver_solve) {
-        /* GPU tests */
-        const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-        launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
-            [=] AMREX_GPU_DEVICE () noexcept {
-                for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-                     icell < udata->ncells_d[0]; icell += stride) {
-                         fKernelComputeAJchemCuSolver(icell, user_data, yvec_d, Jdata);
-                }
-        }); 
-    } else {
-        /* GPU tests */
-        const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
-        launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
-            [=] AMREX_GPU_DEVICE () noexcept {
-                for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-                     icell < udata->ncells_d[0]; icell += stride) {
-                         fKernelComputeAJchem(icell, user_data, yvec_d);
-                }
-        }); 
-    }
+    const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
+    launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+        [=] AMREX_GPU_DEVICE () noexcept {
+            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+                 icell < udata->ncells_d[0]; icell += stride) {
+                     fKernelComputeAJchem(icell, user_data, yvec_d, Jdata);
+            }
+    }); 
     cuda_status = cudaStreamSynchronize(udata->stream);  
     assert(cuda_status == cudaSuccess);
     BL_PROFILE_VAR_STOP(fKernelJac);
-
-    if (udata->isolve_type == sparse_solve) {
-        BL_PROFILE_VAR("cJac::memcpy",cJacmemcpy);
-        realtype *Jdata = SUNSparseMatrix_Data(J); 
-        std::memcpy(Jdata, udata->csr_jac_d, sizeof(realtype)*udata->NNZ*(udata->ncells_d[0]));
-        BL_PROFILE_VAR_STOP(cJacmemcpy);
-    }
 
     return(0);
 
@@ -1332,7 +1316,7 @@ fKernelSpec(int icell, void *user_data,
 AMREX_GPU_DEVICE
 inline
 void 
-fKernelComputeAJchemCuSolver(int ncell, void *user_data, realtype *u_d, realtype *Jdata)
+fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *Jdata)
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
 
@@ -1388,72 +1372,6 @@ fKernelComputeAJchemCuSolver(int ncell, void *user_data, realtype *u_d, realtype
       for (int j = 0; j < nbVals; j++) {
           int idx_cell = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j ];
               csr_jac_cell[ udata->csr_row_count_d[i-1] + j ] = Jmat_pt[ idx_cell * (udata->neqs_per_cell[0]+1) + i - 1 ]; 
-      }
-  }
-
-}
-
-
-
-AMREX_GPU_DEVICE
-inline
-void 
-fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d)
-{
-  UserData udata = static_cast<CVodeUserData*>(user_data);
-
-  Real mw[NUM_SPECIES];
-  GpuArray<Real,NUM_SPECIES> massfrac;
-  GpuArray<Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
-  Real rho_pt, temp_pt;
-
-  int u_offset   = ncell * (NUM_SPECIES + 1); 
-  int jac_offset = ncell * (udata->NNZ); 
-
-  realtype* u_curr               = u_d + u_offset;
-  realtype* csr_jac_cell         = udata->csr_jac_d + jac_offset;
-  
-  /* MW CGS */
-  get_mw(mw);
-
-  /* rho */ 
-  rho_pt = 0.0;
-  for (int n = 0; n < NUM_SPECIES; n++) {
-      rho_pt = rho_pt + u_curr[n];
-  }
-
-  /* Yks, C CGS*/
-  for (int i = 0; i < NUM_SPECIES; i++){
-      massfrac[i] = u_curr[i] / rho_pt;
-  }
-
-  /* temp */
-  temp_pt = u_curr[NUM_SPECIES];
-
-  /* Additional var needed */
-  int consP;
-  if (udata->ireactor_type == 1){
-      consP = 0 ;
-  } else {
-      consP = 1;
-  }
-  EOS::RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP); 
-
-  /* renorm the DenseMat */
-  for (int i = 0; i < udata->neqs_per_cell[0]; i++){
-      for (int k = 0; k < udata->neqs_per_cell[0]; k++){
-          Jmat_pt[k*(udata->neqs_per_cell[0]+1)+i] = Jmat_pt[k*(udata->neqs_per_cell[0]+1)+i] * mw[i] / mw[k];
-      }
-      Jmat_pt[i*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] = Jmat_pt[i*(udata->neqs_per_cell[0]+1)+udata->neqs_per_cell[0]] / mw[i]; 
-      Jmat_pt[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+i] = Jmat_pt[udata->neqs_per_cell[0]*(udata->neqs_per_cell[0]+1)+i] * mw[i]; 
-  }
-  /* Fill the Sps Mat */
-  int nbVals;
-  for (int i = 1; i < udata->neqs_per_cell[0]+2; i++) {
-      nbVals = udata->csr_row_count_d[i]-udata->csr_row_count_d[i-1];
-      for (int j = 0; j < nbVals; j++) {
-          int idx_cell = udata->csr_col_index_d[ udata->csr_row_count_d[i-1] + j - 1] - 1 ;
-              csr_jac_cell[ udata->csr_row_count_d[i-1] + j - 1 ] = Jmat_pt[ idx_cell * (udata->neqs_per_cell[0]+1) + i - 1 ]; 
       }
   }
 
@@ -1593,80 +1511,26 @@ fKernelDenseSolve(int ncell, realtype *x_d, realtype *b_d,
 /* 
  * CUSTOM SOLVER STUFF
  */
-SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, 
-                                       int nsubsys, int subsys_size, int subsys_nnz, cudaStream_t stream) 
+SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, cudaStream_t stream)
 {
-  SUNLinearSolver S;
-  SUNLinearSolverContent_Dense_custom content;
-
   /* Check that required arguments are not NULL */
   if (y == NULL || A == NULL) return(NULL);
 
   /* Check compatibility with supplied SUNMatrix and N_Vector */
   if (N_VGetVectorID(y) != SUNDIALS_NVEC_CUDA) return(NULL);
-  if (SUNMatGetID(A) != SUNMATRIX_SPARSE) return(NULL); 
+  if (SUNMatGetID(A) != SUNMATRIX_CUSPARSE) return(NULL); 
 
-  /* Matrix should be square */
-  if (SUNSparseMatrix_Columns(A) != SUNSparseMatrix_Rows(A)) return(NULL);
-
-  /* Check that it is a CSR matrix */
-  if (SUNSparseMatrix_SparseType(A) != CSR_MAT) return(NULL);
+  /* Matrix and vector dimensions must agree */
+  if (N_VGetLength(y) != SUNMatrix_cuSparse_Columns(A)) return(NULL);
 
   /* Check that the vector is using managed memory */
   if (!N_VIsManagedMemory_Cuda(y)) return(NULL);
 
-  /* Matrix and vector dimensions must agree */
-  if (N_VGetLength(y) != SUNSparseMatrix_Columns(A)) return(NULL);
-
-  /* All subsystems must be the same size */ 
-  if (SUNSparseMatrix_Columns(A) != (subsys_size * nsubsys)) return(NULL);
-
-  /* Number of nonzeros per subsys must be the same */
-  if (SUNSparseMatrix_NNZ(A) != (subsys_nnz * nsubsys)) return(NULL);
-
-  /* Allocate device memory for the matrix */
-  int *d_colind, *d_rowptr;
-  N_Vector d_values;
-
-  d_colind = NULL;
-  d_rowptr = NULL;
-  d_values = NULL;
-
-  //cudaError_t cuerr;
-  //cuerr = cudaMalloc(&d_colind, sizeof(int) * (subsys_nnz * nsubsys));
-  //if (cuerr != cudaSuccess) return(NULL); 
-
-  //cuerr = cudaMalloc(&d_rowptr, sizeof(int) * (subsys_size * nsubsys + 1));
-  //if (cuerr != cudaSuccess) { cudaFree(d_colind); return(NULL); }
-
-  d_values = N_VNewManaged_Cuda(subsys_nnz * nsubsys);
-
-  /* copy matrix stuff to the device */
-  //cuerr = cudaMemcpy(d_colind, SUNSparseMatrix_IndexValues(A),
-  //          sizeof(int) * subsys_nnz * nsubsys, cudaMemcpyHostToDevice);
-  //if (cuerr != cudaSuccess) { 
-  //        cudaFree(d_rowptr); 
-  //        cudaFree(d_colind); 
-  //        N_VDestroy(d_values);
-  //        return(NULL); 
-  //};
-
-  //cuerr = cudaMemcpy(d_rowptr, SUNSparseMatrix_IndexPointers(A),
-  //          sizeof(int) * (subsys_size * nsubsys + 1), cudaMemcpyHostToDevice);
-  //if (cuerr != cudaSuccess) { 
-  //        cudaFree(d_rowptr); 
-  //        cudaFree(d_colind); 
-  //        N_VDestroy(d_values);
-  //        return(NULL); 
-  //};
-
   /* Create an empty linear solver */
+  SUNLinearSolver S;
   S = NULL;
   S = SUNLinSolNewEmpty(); 
   if (S == NULL) { 
-     //cudaFree(d_rowptr); 
-     //cudaFree(d_colind); 
-     N_VDestroy(d_values);
      return(NULL);
   }
 
@@ -1677,12 +1541,10 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A,
   S->ops->free       = SUNLinSolFree_Dense_custom;
 
   /* Create content */
+  SUNLinearSolverContent_Dense_custom content;
   content = NULL; 
   content = (SUNLinearSolverContent_Dense_custom) malloc(sizeof *content);
   if (content == NULL) { 
-      //cudaFree(d_rowptr); 
-      //cudaFree(d_colind); 
-      N_VDestroy(d_values);
       SUNLinSolFree(S); 
       return(NULL); 
   }
@@ -1692,13 +1554,10 @@ SUNLinearSolver SUNLinSol_dense_custom(N_Vector y, SUNMatrix A,
 
   /* Fill content */ 
   content->last_flag   = 0;
-  content->nsubsys     = nsubsys;
-  content->subsys_size = subsys_size;
-  content->subsys_nnz  = subsys_nnz;
-  content->d_values    = d_values;
-  content->d_colind    = d_colind;
-  content->d_rowptr    = d_rowptr; 
-  content->nbBlocks    = std::max(1,nsubsys/32); 
+  content->nsubsys     = SUNMatrix_cuSparse_NumBlocks(A);
+  content->subsys_size = SUNMatrix_cuSparse_BlockRows(A);
+  content->subsys_nnz  = SUNMatrix_cuSparse_BlockNNZ(A);
+  content->nbBlocks    = std::max(1,content->nsubsys/32); 
   content->nbThreads   = 32;
   content->stream      = stream; 
 
@@ -1713,19 +1572,6 @@ SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S)
 
 int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A) 
 {
-  cudaError_t cuerr = cudaSuccess;
-
-  realtype *data_d   = N_VGetDeviceArrayPointer_Cuda(SUN_CUSP_DVALUES(S));
-
-  BL_PROFILE_VAR("SETUP::MemCpyMatrix",MemCpyMatrix);
-  cuerr = cudaMemcpy(data_d, SUNSparseMatrix_Data(A),
-                     sizeof(double) * (SUN_CUSP_SUBSYS_NNZ(S) * SUN_CUSP_NUM_SUBSYS(S)), cudaMemcpyHostToDevice);
-  if (cuerr != cudaSuccess) {
-      SUN_CUSP_LASTFLAG(S) = SUNLS_MEM_FAIL;
-      Abort("\nPB MEMCPY\n");
-  }
-  BL_PROFILE_VAR_STOP(MemCpyMatrix);
-
   return(SUNLS_SUCCESS);
 }
 
@@ -1738,7 +1584,7 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   realtype *x_d      = N_VGetDeviceArrayPointer_Cuda(x);
   realtype *b_d      = N_VGetDeviceArrayPointer_Cuda(b);
 
-  realtype *data_d   = N_VGetDeviceArrayPointer_Cuda(SUN_CUSP_DVALUES(S));
+  realtype *d_data    = SUNMatrix_cuSparse_Data(A);
 
   BL_PROFILE_VAR("fKernelDenseSolve()", fKernelDenseSolve);
   const auto ec = Gpu::ExecutionConfig(SUN_CUSP_NUM_SUBSYS(S));  
@@ -1751,9 +1597,8 @@ int SUNLinSolSolve_Dense_custom(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   //                  SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), data_d);
   //        }
   //    }); 
-  //fKernelDenseSolve<<<ec.numBlocks, ec.numThreads, ec.sharedMem, SUN_CUSP_STREAM(S)>>>(SUN_CUSP_NUM_SUBSYS(S), x_d, b_d, 
   fKernelDenseSolve<<<SUN_CUSP_NBLOCK(S), SUN_CUSP_NTHREAD(S), ec.sharedMem, SUN_CUSP_STREAM(S)>>>
-                   (SUN_CUSP_NUM_SUBSYS(S), x_d, b_d, SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), data_d);
+                   (SUN_CUSP_NUM_SUBSYS(S), x_d, b_d, SUN_CUSP_SUBSYS_SIZE(S), SUN_CUSP_SUBSYS_NNZ(S), d_data);
 
   cuda_status = cudaStreamSynchronize(SUN_CUSP_STREAM(S));  
   assert(cuda_status == cudaSuccess);
@@ -1767,11 +1612,6 @@ int SUNLinSolFree_Dense_custom(SUNLinearSolver S)
 {
   /* return with success if already freed */
   if (S == NULL) return(SUNLS_SUCCESS);
-
-  /* free stuff in the content structure */
-  //cudaFree(SUN_CUSP_DCOLIND(S));
-  //cudaFree(SUN_CUSP_DROWPTR(S));
-  N_VDestroy(SUN_CUSP_DVALUES(S)); 
 
   /* free content structure */
   if (S->content) {
@@ -1840,7 +1680,12 @@ static void PrintFinalStats(void *cvodeMem)
   flag = CVodeGetNumLinConvFails(cvodeMem, &ncfl);
   check_flag(&flag, "CVodeGetNumLinConvFails", 1);
 
-  Print() <<"\nFinal Statistics: \n";
+#ifdef _OPENMP
+  Print() <<"\nFinal Statistics: " << "(thread:" << omp_get_thread_num() << ", ";
+  Print() << "cvodeMem:" << cvodeMem << ")\n";
+#else
+  Print() <<"\nFinal Statistics:\n";
+#endif
   Print() <<"lenrw      = " << lenrw   <<"    leniw         = " << leniw   << "\n";
   Print() <<"lenrwLS    = " << lenrwLS <<"    leniwLS       = " << leniwLS << "\n";
   Print() <<"nSteps     = " << nst     <<"\n";
