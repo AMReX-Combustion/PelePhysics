@@ -72,38 +72,14 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
 
   const Real strttime = ParallelDescriptor::second();
 
-  MultiFab* state_ptr;
-
-  // ********************************************************************************
-  // We only make a new state_ptr if the boxArray of the state differs from the
-  // boxArray onto which the particles are decomposed
-  // ********************************************************************************
-  bool tempState = false;
-
-  if (this->OnSameGrids(level, state)) {
-    state_ptr = &state;
-  } else {
-    state_ptr = new MultiFab(this->m_gdb->ParticleBoxArray(level),
-                             this->m_gdb->ParticleDistributionMap(level),
-                             state.nComp(), state.nGrow());
-    state_ptr->setVal(0.);
-    state_ptr->copy(state,0,0,state.nComp());
-    state_ptr->FillBoundary(Geom(level).periodicity());
-    tempState = true;
-  }
-
   BL_PROFILE_VAR("SprayParticles::updateParticles()", UPD_PART);
-  updateParticles(level, (*state_ptr), source, dt, time, state_ghosts, source_ghosts, do_move, u_mac);
+  updateParticles(level, state, source, dt, time, state_ghosts, source_ghosts, do_move, u_mac);
   BL_PROFILE_VAR_STOP(UPD_PART);
 
   // Fill ghost cells after we've synced up ..
   // TODO: Check to see if this is needed at all
   // if (level > 0)
   //   source.FillBoundary(Geom(level).periodicity());
-
-  // Only delete this if in fact we created it.  Note we didn't change state_ptr so
-  // we don't need to copy anything back into state
-  if (tempState) delete state_ptr;
 
   // ********************************************************************************
 
