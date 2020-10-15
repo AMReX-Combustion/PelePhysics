@@ -38,6 +38,8 @@ loglevel  = 1                       # amount of diagnostic output
 				    
 refine_grid = True                  # True to enable refinement
 
+# Print information
+specformat = 'mole'
 #POSSIBLY MODIFY THIS IF RESTORE IN XML WITH KNOWN NAME
 if (dilution > 0.0):
     label_xml = 'FFdil-'+mechanism 
@@ -161,12 +163,23 @@ else:
 f.write_csv(label_xml +'-'+ label+'.csv', quiet=True)
 
 # PeleLM PMF file: MKS and mass fractions !
-nz = f.flame.n_points
-csv_file = str("pmf"+label_xml +'-'+ label+".txt")
-with open(csv_file, 'w') as outfile:
-    writer = csv.writer(outfile, delimiter=' ', quotechar=' ', quoting=csv.QUOTE_MINIMAL)
-    writer.writerow(['VARIABLES = "X" "temp" "u" "rho"']+['"Y_'+x+'"' for x in gas.species_names])
-    writer.writerow(['ZONE I=' + str(nz) + ' FORMAT=POINT' + ' SPECFORMAT=MASS'])
-    for kk in range(len(f.grid)):
-        f.set_gas_state(kk)
-        writer.writerow([f.grid[kk],gas.T, f.u[kk], gas.density]+list(gas.Y))
+if (specformat == 'mole'):
+    nz = f.flame.n_points
+    csv_file = str("pmf"+label_xml +'-'+ label+"X.txt")
+    with open(csv_file, 'w') as outfile:
+        writer = csv.writer(outfile, delimiter=' ', quotechar=' ', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(['VARIABLES = "X" "temp" "u" "rho"']+['"X_'+x+'"' for x in gas.species_names])
+        writer.writerow(['ZONE I=' + str(nz) + ' FORMAT=POINT' + ' SPECFORMAT=MOLE'])
+        for kk in range(len(f.grid)):
+            f.set_gas_state(kk)
+            writer.writerow([f.grid[kk],gas.T, f.u[kk], gas.density]+list(gas.X))
+if (specformat == 'mass'):
+    nz = f.flame.n_points
+    csv_file = str("pmf"+label_xml +'-'+ label+"Y.txt")
+    with open(csv_file, 'w') as outfile:
+        writer = csv.writer(outfile, delimiter=' ', quotechar=' ', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(['VARIABLES = "X" "temp" "u" "rho"']+['"Y_'+x+'"' for x in gas.species_names])
+        writer.writerow(['ZONE I=' + str(nz) + ' FORMAT=POINT' + ' SPECFORMAT=MASS'])
+        for kk in range(len(f.grid)):
+            f.set_gas_state(kk)
+            writer.writerow([f.grid[kk],gas.T, f.u[kk], gas.density]+list(gas.Y))
