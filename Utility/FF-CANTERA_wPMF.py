@@ -165,8 +165,8 @@ nz = f.flame.n_points
 csv_file = str("pmf"+label_xml +'-'+ label+".txt")
 with open(csv_file, 'w') as outfile:
     writer = csv.writer(outfile, delimiter=' ', quotechar=' ', quoting=csv.QUOTE_MINIMAL)
-    writer.writerow(['VARIABLES = "X" "temp" "u" "rho"']+['"'+x+'"' for x in gas.species_names])
-    writer.writerow(['ZONE I=' + str(nz) + ' FORMAT=POINT'])
+    writer.writerow(['VARIABLES = "X" "temp" "u" "rho"']+['"Y_'+x+'"' for x in gas.species_names])
+    writer.writerow(['ZONE I=' + str(nz) + ' FORMAT=POINT' + ' SPECFORMAT=MASS'])
     for kk in range(len(f.grid)):
         f.set_gas_state(kk)
         writer.writerow([f.grid[kk],gas.T, f.u[kk], gas.density]+list(gas.Y))
