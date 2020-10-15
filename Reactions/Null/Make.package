@@ -1,0 +1,3 @@
+Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/Null
+CEXE_headers += reactor.h  
+CEXE_sources += reactor.cpp
