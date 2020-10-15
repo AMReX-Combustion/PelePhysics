@@ -938,7 +938,7 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
 
 /* Analytical Jacobian evaluation */
 int cJac(realtype /* tn */, N_Vector u, N_Vector /* fu */, SUNMatrix J,
-         void *user_data, N_Vector /* tmp1 */, N_Vector /* tmp2 */, N_Vector /* tmp3 */){
+         void *user_data, N_Vector tmp1, N_Vector /* tmp2 */, N_Vector /* tmp3 */){
 
   /* Make local copies of pointers to input data (big M) */
   realtype *ydata  = N_VGetArrayPointer(u);
@@ -1009,6 +1009,11 @@ int cJac(realtype /* tn */, N_Vector u, N_Vector /* fu */, SUNMatrix J,
           std::cout << std::endl;
       }
       std::cout << "*** END CHEM Jac ***" << std::endl;
+      CVodeGetErrWeights(cvode_mem, tmp1);
+      for (int k = 0; k < N_VGetLength(tmp1); k++){
+        std::cout << N_VGetArrayPointer(tmp1)[k] << " ";
+      }
+      std::cout << std::endl;
   }
   BL_PROFILE_VAR_STOP(DenseJac);
 
