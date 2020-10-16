@@ -9,6 +9,9 @@ namespace PMF
   amrex::Gpu::ManagedVector<amrex::Real> pmf_X;
   amrex::Gpu::ManagedVector<amrex::Real> pmf_Y;
 
+  AMREX_GPU_DEVICE_MANAGED amrex::Real* d_pmf_X = nullptr;
+  AMREX_GPU_DEVICE_MANAGED amrex::Real* d_pmf_Y = nullptr;
+
   amrex::Vector<std::string> pmf_names;
 }
 
@@ -101,5 +104,8 @@ PMF::read_pmf(const std::string& myfile)
       sinput >> PMF::pmf_Y[j * PMF::pmf_N + i];
     }
   }
+
+  PMF::d_pmf_X = PMF::pmf_X.dataPtr();
+  PMF::d_pmf_Y = PMF::pmf_Y.dataPtr();
 }
 
