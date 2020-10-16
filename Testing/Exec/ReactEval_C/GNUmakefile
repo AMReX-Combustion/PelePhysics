@@ -50,10 +50,10 @@ ifeq ($(FUEGO_GAS), TRUE)
   Reactions_dir   = Fuego
   Transport_dir   = Simple
 else
+  Eos_dir         = GammaLaw
   Chemistry_Model = Null
-  Eos_dir       = GammaLaw
-  Reactions_dir = Fuego
-  Transport_dir = Constant
+  Reactions_dir   = Null
+  Transport_dir   = Constant
 endif
 
 Bpack   := ./Make.package

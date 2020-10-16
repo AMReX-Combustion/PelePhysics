@@ -28,7 +28,7 @@ main (int   argc,
     
       std::vector<int> npts(3,1);
       for (int i = 0; i < BL_SPACEDIM; ++i) {
-	npts[i] = 128;
+          npts[i] = 128;
       }
     
       Box domain(IntVect(D_DECL(0,0,0)),
@@ -36,8 +36,8 @@ main (int   argc,
 
       std::vector<Real> plo(3,0), phi(3,0), dx(3,1);
       for (int i=0; i<BL_SPACEDIM; ++i) {
-	phi[i] = domain.length(i);
-	dx[i] = (phi[i] - plo[i])/domain.length(i);
+          phi[i] = domain.length(i);
+          dx[i] = (phi[i] - plo[i])/domain.length(i);
       }
     
       int max_size = 32;
@@ -63,17 +63,17 @@ main (int   argc,
 #endif
       for (MFIter mfi(mass_frac,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
-	const Box& gbox = mfi.tilebox();
+          const Box& gbox = mfi.tilebox();
 
-	Array4<Real> const& Y_a    = mass_frac.array(mfi);
-	Array4<Real> const& T_a    = temperature.array(mfi);
-	Array4<Real> const& rho_a  = density.array(mfi);
+          Array4<Real> const& Y_a    = mass_frac.array(mfi);
+          Array4<Real> const& T_a    = temperature.array(mfi);
+          Array4<Real> const& rho_a  = density.array(mfi);
 
-	amrex::ParallelFor(gbox, 
-	    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-		initialize_data(i, j, k, Y_a, T_a, rho_a, 
-				dx, plo, phi);
-	});
+          amrex::ParallelFor(gbox, 
+              [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+                  initialize_data(i, j, k, Y_a, T_a, rho_a, 
+                                  dx, plo, phi);
+          });
 
       }
 
@@ -95,21 +95,21 @@ main (int   argc,
 #endif
       for (MFIter mfi(mass_frac,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
-	const Box& gbox = mfi.tilebox();
+          const Box& gbox = mfi.tilebox();
 
-	Array4<Real> const& Y_a    = mass_frac.array(mfi);
-	Array4<Real> const& T_a    = temperature.array(mfi);
-	Array4<Real> const& rho_a  = density.array(mfi);
-	Array4<Real> const& D_a    = D.array(mfi);
-	Array4<Real> const& mu_a   = mu.array(mfi);
-	Array4<Real> const& xi_a   = xi.array(mfi);
-	Array4<Real> const& lam_a  = lam.array(mfi);
+          Array4<Real> const& Y_a    = mass_frac.array(mfi);
+          Array4<Real> const& T_a    = temperature.array(mfi);
+          Array4<Real> const& rho_a  = density.array(mfi);
+          Array4<Real> const& D_a    = D.array(mfi);
+          Array4<Real> const& mu_a   = mu.array(mfi);
+          Array4<Real> const& xi_a   = xi.array(mfi);
+          Array4<Real> const& lam_a  = lam.array(mfi);
 
-	amrex::launch(gbox, [=] AMREX_GPU_DEVICE(amrex::Box const& tbx) {
-		get_transport_coeffs(tbx,
-				Y_a, T_a, rho_a, 
-				D_a, mu_a, xi_a, lam_a);
-	});
+          amrex::launch(gbox, [=] AMREX_GPU_DEVICE(amrex::Box const& tbx) {
+                    get_transport_coeffs(tbx,
+                                         Y_a, T_a, rho_a, 
+                                         D_a, mu_a, xi_a, lam_a);
+          });
       }
 
       transport_close();

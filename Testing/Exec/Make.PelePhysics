@@ -71,19 +71,17 @@ ifeq ($(USE_F90_PP),TRUE)
     INCLUDE_LOCATIONS += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
     VPATH_LOCATIONS   += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
 endif
-ifdef Chemistry_Model
-  ifeq ($(Eos_dir), GammaLaw)
-    ifneq ($(Chemistry_Model), Null)
-      $(error Chemistry_Model definition not compatible with Eos_Dir=GammaLaw)
-    endif
+ifeq ($(Eos_dir), GammaLaw)
+  ifneq ($(Chemistry_Model), Null)
+    $(error Chemistry_Model definition not compatible with Eos_Dir=GammaLaw)
   endif
-  CHEM_HOME = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models/$(Chemistry_Model)
-  CHEM_ALL  = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models
-  VPATH_LOCATIONS += $(CHEM_HOME) $(CHEM_ALL)
-  Bpack += $(CHEM_HOME)/Make.package \
-           $(CHEM_ALL)/Make.package
-  Blocs += $(CHEM_HOME) $(CHEM_ALL)
 endif
+CHEM_HOME = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models/$(Chemistry_Model)
+CHEM_ALL  = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models
+VPATH_LOCATIONS += $(CHEM_HOME) $(CHEM_ALL)
+Bpack += $(CHEM_HOME)/Make.package \
+         $(CHEM_ALL)/Make.package
+Blocs += $(CHEM_HOME) $(CHEM_ALL)
 Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
 
 # Transport
@@ -145,9 +143,7 @@ INCLUDE_LOCATIONS +=  $(AMREX_HOME)/Tools/C_scripts
 
 MNAMES := EOS=$(EOS_PATH) REACTIONS=$(REACTIONS_PATH)
 MNAMES += TRANSPORT=$(TRAN_HOME)
-ifdef Chemistry_Model
-  MNAMES += CHEMISTRY=$(Chemistry_Model)
-endif
+MNAMES += CHEMISTRY=$(Chemistry_Model)
 
 include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
 
