@@ -28,7 +28,7 @@ int react(const Box& box,
           Real &time) {
 
     /* Initial time and time to reach after integration */
-    time_init = time;
+    Real time_init = time;
 
 #ifdef MOD_REACTOR
     /* If reactor mode is activated, update time to perform subcycling */
@@ -51,7 +51,7 @@ int react_2(const Box& box,
           Real &time) {
 
     /* Initial time and time to reach after integration */
-    time_init = time;
+    Real time_init = time;
 
 #ifdef MOD_REACTOR
     /* If reactor mode is activated, update time to perform subcycling */
@@ -62,12 +62,12 @@ int react_2(const Box& box,
 }
 
 /* Main routine for CVode integration: classic version */
-int react(realtype *rY_in, realtype *rY_src_in, 
-          realtype *rX_in, realtype *rX_src_in,
-          realtype &dt_react, realtype &time){
+int react(amrex::Real *rY_in, amrex::Real *rY_src_in, 
+          amrex::Real *rX_in, amrex::Real *rX_src_in,
+          amrex::Real &dt_react, amrex::Real &time) {
 
     /* Initial time and time to reach after integration */
-    time_init = time;
+    Real time_init = time;
 
 #ifdef MOD_REACTOR
     /* If reactor mode is activated, update time */
@@ -78,7 +78,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 }
 
 /* Free memory */
-void reactor_close(){ }
+void reactor_close() {}
 
 
 /* End of file  */

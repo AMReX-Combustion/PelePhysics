@@ -27,7 +27,7 @@ ifeq ($(FUEGO_GAS), TRUE)
 else
   Eos_dir         = GammaLaw
   Chemistry_Model = Null
-  Reactions_dir   = Fuego
+  Reactions_dir   = Null
   Transport_dir   = Constant
 endif
 
