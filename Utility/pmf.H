@@ -14,6 +14,9 @@ namespace PMF {
   extern amrex::Gpu::ManagedVector<amrex::Real> pmf_X;
   extern amrex::Gpu::ManagedVector<amrex::Real> pmf_Y;
 
+  extern AMREX_GPU_DEVICE_MANAGED amrex::Real* d_pmf_X;
+  extern AMREX_GPU_DEVICE_MANAGED amrex::Real* d_pmf_Y;
+
   extern amrex::Vector<std::string> pmf_names;
 
   void read_pmf(const std::string& myfile);
@@ -33,9 +36,6 @@ namespace PMF {
     amrex::Real ylo = 0.0, yhi = 0.0, x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0,
       dydx = 0.0;
 
-    auto d_pmf_X = PMF::pmf_X.dataPtr();
-    auto d_pmf_Y = PMF::pmf_Y.dataPtr();
-    
     if (pmf_do_average) {
       if (xlo < d_pmf_X[0]) {
         lo_loside = 0;
