@@ -89,11 +89,12 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   // If we are debugging, make sure to check all particles
   if (level > 0 && sub_cycle && do_move && !isVirtualPart) {
     ParticleLocData pld;
-    for (ParConstIterType pti(*this, level); pti.isValid(); ++pti) {
-      auto& ptile = ParticlesAt(level, pti);
-      auto src = ptile.getParticleTileData();
-      for (int k = 0; k != ptile.numParticles(); ++k) {
-        SuperParticleType p = src.getSuperParticle(k);
+    for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
+      const long Np = pti.numParticles();
+      ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
+      AMREX_FOR_1D ( Np, i,
+      {
+        ParticleType& p = pstruct[i];
         if (p.id() > 0) {
           if (!this->Where(p, pld, level, level, where_width)) {
             if (p.id() == GhostParticleID) {
@@ -103,27 +104,24 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
             }
           }
         }
-      }
+      });
     }
   }
 #else
   // Otherwise, assume all particles are ghost particles
   if (level > 0 && sub_cycle && do_move && isGhostPart) {
     ParticleLocData pld;
-    for (ParConstIterType pti(*this, level); pti.isValid(); ++pti) {
-      auto& ptile = ParticlesAt(level, pti);
-      auto src = ptile.getParticleTileData();
-      for (int k = 0; k != ptile.numParticles(); ++k) {
-        SuperParticleType p = src.getSuperParticle(k);
-        //  TODO: Double check this for correctness and figure out what it is doing
+    for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
+      const int Np = pti.numParticles();
+      ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
+      AMREX_FOR_1D ( Np, i,
+      {
+        ParticleType& p = pstruct[i];
         if (p.id() > 0) {
-          if (!this->Where(p, pld, level, level, where_width)) {
-            if (p.id() == GhostParticleID) {
-              p.id() = -1;
-            }
-          }
+          if (!this->Where(p, pld, level, level, where_width))
+            p.id() = -1;
         }
-      }
+      });
     }
   }
 #endif
