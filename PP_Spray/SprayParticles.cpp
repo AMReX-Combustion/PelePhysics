@@ -89,39 +89,35 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   // If we are debugging, make sure to check all particles
   if (level > 0 && sub_cycle && do_move && !isVirtualPart) {
     ParticleLocData pld;
-    for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
-      const long Np = pti.numParticles();
-      ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
-      AMREX_FOR_1D ( Np, i,
-      {
-        ParticleType& p = pstruct[i];
+    for (auto& kv : GetParticles(level)) {
+      auto& ptile = kv.second;
+      for (int k = 0; k < ptile.GetArrayOfStructs().numParticles(); ++k) {
+        ParticleType& p = ptile.GetArrayOfStructs()[k];
         if (p.id() > 0) {
           if (!this->Where(p, pld, level, level, where_width)) {
-            if (p.id() == GhostParticleID) {
+            if (p.id() == GhostParitcleID) {
               p.id() = -1;
             } else {
               Abort("Trying to remove non-ghost particle");
             }
           }
         }
-      });
+      }
     }
   }
 #else
   // Otherwise, assume all particles are ghost particles
   if (level > 0 && sub_cycle && do_move && isGhostPart) {
     ParticleLocData pld;
-    for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
-      const int Np = pti.numParticles();
-      ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
-      AMREX_FOR_1D ( Np, i,
-      {
-        ParticleType& p = pstruct[i];
+    for (auto& kv : GetParticles(level)) {
+      auto& ptile = kv.second;
+      for (int k = 0; k < ptile.GetArrayOfStructs().numParticles(); ++k) {
+        ParticleType& p = ptile.GetArrayOfStructs()[k];
         if (p.id() > 0) {
           if (!this->Where(p, pld, level, level, where_width))
             p.id() = -1;
         }
-      });
+      }
     }
   }
 #endif
