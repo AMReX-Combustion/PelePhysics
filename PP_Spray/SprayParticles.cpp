@@ -95,7 +95,7 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
         ParticleType& p = ptile.GetArrayOfStructs()[k];
         if (p.id() > 0) {
           if (!this->Where(p, pld, level, level, where_width)) {
-            if (p.id() == GhostParitcleID) {
+            if (p.id() == GhostParticleID) {
               p.id() = -1;
             } else {
               Abort("Trying to remove non-ghost particle");
