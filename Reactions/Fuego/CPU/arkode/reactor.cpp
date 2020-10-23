@@ -620,11 +620,9 @@ int check_flag(void *flagvalue, const char *funcname, int opt)
     return(0);
 }
 
-
-/* Alloc Data for ARKODE */
 UserData AllocUserData(int reactor_type, int num_cells)
 {
-    Print() << "   Allocating data\n";
+    Print() << "Allocating data for ARKODE\n";
 
     /* Make local copies of pointers in user_data */
     UserData data_wk = (UserData) malloc(sizeof *data_wk);
