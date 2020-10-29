@@ -140,6 +140,10 @@ main (int   argc,
     } else if (fuel_name == "NC12H26") {
       fuel_idx  = NC12H26_ID;
 #endif
+#ifdef IC8H18_ID
+    } else if (fuel_name == "IC8H18") {
+      fuel_idx  = IC8H18_ID;
+#endif
     }
 
     EOS::init();
