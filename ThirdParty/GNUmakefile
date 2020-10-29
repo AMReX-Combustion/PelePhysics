@@ -26,7 +26,11 @@ else
     ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),pgi))
       CCOMPILER = pgicc
     else
-      $(error Unknown COMP setting)
+      ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),llvm))
+        CCOMPILER = clang
+      else
+        $(error Unknown COMP setting)
+      endif
     endif
   endif
 endif
