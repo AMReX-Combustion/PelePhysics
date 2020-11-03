@@ -28,32 +28,32 @@
 /**********************************/
 typedef struct CVodeUserData {
     /* LS gamma */
-    double gamma_d;
+    double gamma_h;
     /* dt on device */
     double dt_save;
     /* nb of cells to integrate */
-    int ncells_d[1]; 
+    int ncells_h; 
     /* nb of eq per cell */
-    int neqs_per_cell[1];
+    int neqs_per_cell_h;
     /* HP/UV react */
-    int ireactor_type;
+    int ireactor_type_h;
     /* Are we using a AJ */
     int ianalytical_jacobian;
     /* Are we using a IS or DS */
-    int isolve_type;
+    int isolve_type_h;
     /* energy related variables */
-    double *rhoe_init = NULL;
-    double *rhoesrc_ext = NULL;
-    double *rYsrc = NULL;
+    double *rhoe_init_h = NULL;
+    double *rhoesrc_ext_h = NULL;
+    double *rYsrc_h = NULL;
     /* verbose level */
     int iverbose;
     // Sparse
     /* Precond sparse stuff */
-    int NNZ; 
-    int* csr_row_count_d;
-    int* csr_col_index_d;
-    double* csr_val_d;
-    double* csr_jac_d;
+    int NNZ_h; 
+    int* csr_row_count_h;
+    int* csr_col_index_h;
+    double* csr_val_h;
+    double* csr_jac_h;
     SUNMatrix R = NULL;
     /* CUDA cusolver */
     void *buffer_qr = NULL;
@@ -64,7 +64,33 @@ typedef struct CVodeUserData {
     cudaStream_t stream;
     int nbBlocks;
     int nbThreads;
+    void* UD_d; 
 }* UserData;
+
+typedef struct CVodeUserDataDevice {
+    /* LS gamma */
+    double gamma_d;
+    /* dt on device */
+    double dt_save_d;
+    /* nb of cells to integrate */
+    int ncells_d; 
+    /* nb of eq per cell */
+    int neqs_per_cell_d;
+    /* HP/UV react */
+    int ireactor_type_d;
+    /* Are we using a IS or DS */
+    int isolve_type_d;
+    /* energy related variables */
+    double *rhoe_init_d = NULL;
+    double *rhoesrc_ext_d = NULL;
+    double *rYsrc_d = NULL;
+    /* Precond sparse stuff */
+    int NNZ_d; 
+    int* csr_row_count_d;
+    int* csr_col_index_d;
+    double* csr_val_d;
+    double* csr_jac_d;
+}* UserDataDevice;
 
 /* Functions Called by the Solver */
 static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void *user_data);
@@ -72,12 +98,6 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void *user_data);
 /**********************************/
 /* Functions Called by the main program */
 int reactor_info(int cvode_iE, int Ncells);
-
-int react(realtype *rY_in, realtype *rY_src_in,
-          realtype *rX_in, realtype *rX_src_in,
-          realtype &dt_react, realtype &time,
-          int cvode_iE, int Ncells,
-          cudaStream_t stream);
 
 int react(const amrex::Box& box,
           amrex::Array4<amrex::Real> const& rY_in,
@@ -92,6 +112,7 @@ int react(const amrex::Box& box,
           const int &cvode_iE,
           cudaStream_t stream);
 
+#ifdef AMREX_USE_CUDA
 static int Precond(realtype tn, N_Vector u, N_Vector fu, booleantype jok,
                    booleantype *jcurPtr, realtype gamma, void *user_data);
 
@@ -100,6 +121,7 @@ static int PSolve(realtype tn, N_Vector u, N_Vector fu, N_Vector r,
 
 static int cJac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J,
                 void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+#endif
 
 void reactor_close();
 
@@ -114,9 +136,9 @@ void SetTypValsODE(const std::vector<double>& ExtTypVals);
 
 void SetTolFactODE(double relative_tol,double absolute_tol);
 
-void* sunalloc(size_t mem_size);
+//void* sunalloc(size_t mem_size);
 
-void sunfree(void* ptr);
+//void sunfree(void* ptr);
 
 /**********************************/
 /* Device crap               */
@@ -125,10 +147,11 @@ void sunfree(void* ptr);
 AMREX_GPU_DEVICE
 inline
 void
-fKernelSpec(int ncells, void *user_data, 
+fKernelSpec(int ncells, double dt_save, int reactor_type, 
             realtype *yvec_d, realtype *ydot_d,  
             double *rhoX_init, double *rhoXsrc_ext, double *rYs);
 
+#ifdef AMREX_USE_CUDA
 // JACOBIANS
 AMREX_GPU_DEVICE
 inline
@@ -144,6 +167,7 @@ AMREX_GPU_DEVICE
 inline
 void 
 fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *Jdata);
+#endif
 
 // CUSTOM
 __global__
