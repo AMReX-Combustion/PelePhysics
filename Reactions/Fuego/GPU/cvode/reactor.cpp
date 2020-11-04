@@ -394,13 +394,12 @@ int react(const amrex::Box& box,
 
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_h, user_data->csr_row_count_h, &HP, 1, 0); 
-            SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_h, user_data->csr_col_index_h);
-            BL_PROFILE_VAR_STOP(SparsityStuff);
-
             amrex::Gpu::htod_memcpy(user_data->csr_col_index_d,user_data->csr_col_index_h,
                                     sizeof(user_data->csr_col_index_h));
             amrex::Gpu::htod_memcpy(user_data->csr_row_count_d,user_data->csr_row_count_h,
                                     sizeof(user_data->csr_row_count_h));
+            SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_h, user_data->csr_col_index_h);
+            BL_PROFILE_VAR_STOP(SparsityStuff);
         } else {
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,1);
@@ -431,13 +430,13 @@ int react(const amrex::Box& box,
 
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_h, user_data->csr_row_count_h, &HP, 1, 0); 
-            SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_h, user_data->csr_col_index_h);
-            BL_PROFILE_VAR_STOP(SparsityStuff);
-
+            //SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_h, user_data->csr_col_index_h);
             amrex::Gpu::htod_memcpy(user_data->csr_col_index_d,user_data->csr_col_index_h,
                                     sizeof(user_data->csr_col_index_h));
             amrex::Gpu::htod_memcpy(user_data->csr_row_count_d,user_data->csr_row_count_h,
                                     sizeof(user_data->csr_row_count_h));
+            SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_d, user_data->csr_col_index_d);
+            BL_PROFILE_VAR_STOP(SparsityStuff);
         }
     }
 #endif
@@ -890,6 +889,7 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 
     /* Fixed Indices and Pointers for Jacobian Matrix */
     BL_PROFILE_VAR("cJac::SparsityStuff",cJacSparsityStuff);
+    Print() << "Dans cJac ? \n";
     realtype *Jdata   = SUNMatrix_cuSparse_Data(J);
     if ((SUNMatrix_cuSparse_Rows(J) != (udata->neqs_per_cell+1)*(udata->ncells)) || 
        (SUNMatrix_cuSparse_Columns(J) != (udata->neqs_per_cell+1)*(udata->ncells)) ||
@@ -1043,6 +1043,8 @@ fKernelComputeAJchem(int ncell,
   int nbVals;
   for (int i = 1; i < NEQS+2; i++) {
       nbVals = csr_row_count[i] - csr_row_count[i-1];
+      //std::cout << "nbVals ? "<< nbVals <<std::endl;  
+      printf("nbVals %d \n", nbVals);
       for (int j = 0; j < nbVals; j++) {
           int idx_cell = csr_col_index[ csr_row_count[i-1] + j ];
               csr_jac_cell[ csr_row_count[i-1] + j ] = Jmat_pt[ idx_cell * (NEQS+1) + i - 1 ]; 
@@ -1388,6 +1390,7 @@ static int check_flag(void *flagvalue, const char *funcname, int opt)
       if (ParallelDescriptor::IOProcessor()) {
           fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
                   funcname);
+          Abort("abort");
       }
       return(1); 
   }
@@ -1398,6 +1401,7 @@ static int check_flag(void *flagvalue, const char *funcname, int opt)
           if (ParallelDescriptor::IOProcessor()) {
               fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n\n",
                       funcname, *errflag);
+              Abort("abort");
           }
           return(1); 
       }
@@ -1407,6 +1411,7 @@ static int check_flag(void *flagvalue, const char *funcname, int opt)
       if (ParallelDescriptor::IOProcessor()) {
           fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
                   funcname);
+          Abort("abort");
       }
       return(1); 
   }
