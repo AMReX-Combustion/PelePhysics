@@ -232,18 +232,16 @@ int react(const amrex::Box& box,
 
     /* User data -- host and device needed */
     UserData user_data;
-    //UserDataDevice user_data_device;
 
     BL_PROFILE_VAR("AllocsInCVODE", AllocsCVODE);
     user_data   = (CVodeUserData *) The_Arena()->alloc(sizeof(struct CVodeUserData));  
-    //user_data_device = (CVodeUserDataDevice *) The_Device_Arena()->alloc(sizeof(struct CVodeUserDataDevice));  
     BL_PROFILE_VAR_STOP(AllocsCVODE);
 
-    user_data->ncells             = NCELLS;
-    user_data->neqs_per_cell      = NUM_SPECIES;  // fix that it is confusing
-    user_data->ireactor_type      = reactor_type; 
+    user_data->ncells               = NCELLS;
+    user_data->neqs_per_cell        = NUM_SPECIES;  // fix that it is confusing
+    user_data->ireactor_type        = reactor_type; 
     user_data->ianalytical_jacobian = ianalytical_jacobian;
-    user_data->isolve_type        = isolve_type; 
+    user_data->isolve_type          = isolve_type; 
     user_data->iverbose             = iverbose;
     user_data->stream               = stream;
     user_data->nbBlocks             = std::max(1,NCELLS/32);
@@ -282,12 +280,10 @@ int react(const amrex::Box& box,
             SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(user_data->csr_col_index_h, user_data->csr_row_count_h, &HP,1);
             BL_PROFILE_VAR_STOP(SparsityStuff);
 
-            amrex::Gpu::htod_memcpy(user_data->csr_col_index_d,user_data->csr_col_index_h,
-                                    sizeof(user_data->csr_col_index_h));
-                                    //sizeof(user_data->NNZ * sizeof(int)));
-            amrex::Gpu::htod_memcpy(user_data->csr_row_count_d,user_data->csr_row_count_h,
-                                    sizeof(user_data->csr_row_count_h));
-                                    //sizeof(sizeof(int)));
+            amrex::Gpu::htod_memcpy(&user_data->csr_col_index_d,&user_data->csr_col_index_h,
+                                    sizeof(user_data->NNZ * sizeof(int)));
+            amrex::Gpu::htod_memcpy(&user_data->csr_row_count_d,&user_data->csr_row_count_h,
+                                    sizeof((NUM_SPECIES+2) * sizeof(int)));
 
             // Create Sparse batch QR solver
             // qr info and matrix descriptor
@@ -361,12 +357,13 @@ int react(const amrex::Box& box,
             SPARSITY_INFO_SYST(&(user_data->NNZ),&HP,1);
             BL_PROFILE_VAR_STOP(SparsityStuff);
 
+            //Print() << " Doind ->alloc \n";
             BL_PROFILE_VAR_START(AllocsCVODE);
             user_data->csr_row_count_h = (int*) The_Arena()->alloc((NUM_SPECIES+2) * sizeof(int));
             user_data->csr_col_index_h = (int*) The_Arena()->alloc(user_data->NNZ * sizeof(int));
 
-            user_data->csr_row_count_d = (int*) The_Device_Arena()->alloc((NUM_SPECIES+2) * sizeof(int));
-            user_data->csr_col_index_d = (int*) The_Device_Arena()->alloc(user_data->NNZ * sizeof(int));
+            //user_data->csr_row_count_d = (int*) The_Device_Arena()->alloc((NUM_SPECIES+2) * sizeof(int));
+            //user_data->csr_col_index_d = (int*) The_Device_Arena()->alloc(user_data->NNZ * sizeof(int));
             BL_PROFILE_VAR_STOP(AllocsCVODE);
 
             cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
@@ -394,10 +391,13 @@ int react(const amrex::Box& box,
 
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_h, user_data->csr_row_count_h, &HP, 1, 0); 
-            amrex::Gpu::htod_memcpy(user_data->csr_col_index_d,user_data->csr_col_index_h,
+            amrex::Gpu::htod_memcpy(&user_data->csr_col_index_d,&user_data->csr_col_index_h,
                                     sizeof(user_data->csr_col_index_h));
-            amrex::Gpu::htod_memcpy(user_data->csr_row_count_d,user_data->csr_row_count_h,
+            amrex::Gpu::htod_memcpy(&user_data->csr_row_count_d,&user_data->csr_row_count_h,
                                     sizeof(user_data->csr_row_count_h));
+            //for (int i = 0; i < NUM_SPECIES + 2; i++) {
+            //    printf("BEG row count for %d = %d \n", i, user_data->csr_row_count_h[i]);
+            //}
             SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_h, user_data->csr_col_index_h);
             BL_PROFILE_VAR_STOP(SparsityStuff);
         } else {
@@ -430,12 +430,11 @@ int react(const amrex::Box& box,
 
             BL_PROFILE_VAR_START(SparsityStuff);
             SPARSITY_PREPROC_SYST_CSR(user_data->csr_col_index_h, user_data->csr_row_count_h, &HP, 1, 0); 
-            //SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_h, user_data->csr_col_index_h);
-            amrex::Gpu::htod_memcpy(user_data->csr_col_index_d,user_data->csr_col_index_h,
+            amrex::Gpu::htod_memcpy(&user_data->csr_col_index_d,&user_data->csr_col_index_h,
                                     sizeof(user_data->csr_col_index_h));
-            amrex::Gpu::htod_memcpy(user_data->csr_row_count_d,user_data->csr_row_count_h,
+            amrex::Gpu::htod_memcpy(&user_data->csr_row_count_d,&user_data->csr_row_count_h,
                                     sizeof(user_data->csr_row_count_h));
-            SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_d, user_data->csr_col_index_d);
+            SUNMatrix_cuSparse_CopyToDevice(A, NULL, user_data->csr_row_count_h, user_data->csr_col_index_h);
             BL_PROFILE_VAR_STOP(SparsityStuff);
         }
     }
@@ -462,11 +461,6 @@ int react(const amrex::Box& box,
 
     BL_PROFILE_VAR_START(AllocsCVODE);
     /* Define vectors to be used later in creact */
-    //user_data->rhoe_init_h   = (double*) The_Arena()->alloc(NCELLS* sizeof(double));
-    //user_data->rhoesrc_ext_h = (double*) The_Arena()->alloc(NCELLS* sizeof(double));
-    //user_data->rYsrc_h       = (double*) The_Arena()->alloc(NCELLS*NUM_SPECIES*sizeof(double));
-
-
     user_data->rhoe_init_d   = (double*) The_Device_Arena()->alloc(NCELLS* sizeof(double));
     user_data->rhoesrc_ext_d = (double*) The_Device_Arena()->alloc(NCELLS* sizeof(double));
     user_data->rYsrc_d       = (double*) The_Device_Arena()->alloc(NCELLS*NUM_SPECIES*sizeof(double));
@@ -633,9 +627,6 @@ int react(const amrex::Box& box,
     {
         SUNMatDestroy(A);
     }
-    //The_Arena()->free(user_data->rhoe_init_h);
-    //The_Arena()->free(user_data->rhoesrc_ext_h);
-    //The_Arena()->free(user_data->rYsrc_h);
 
     The_Device_Arena()->free(user_data->rhoe_init_d);
     The_Device_Arena()->free(user_data->rhoesrc_ext_d);
@@ -643,10 +634,11 @@ int react(const amrex::Box& box,
 
 #ifdef AMREX_USE_CUDA
     if (user_data->ianalytical_jacobian == 1) {
+        //Print() << " Doind ->free \n";
+        //The_Device_Arena()->free(user_data->csr_row_count_d);
+        //The_Device_Arena()->free(user_data->csr_col_index_d);
         The_Arena()->free(user_data->csr_row_count_h);
         The_Arena()->free(user_data->csr_col_index_h);
-        The_Device_Arena()->free(user_data->csr_row_count_d);
-        The_Device_Arena()->free(user_data->csr_col_index_d);
         if (user_data->isolve_type == iterative_gmres_solve) {
             The_Arena()->free(user_data->csr_val_h);
             The_Arena()->free(user_data->csr_jac_h);
@@ -673,7 +665,6 @@ int react(const amrex::Box& box,
     }
 #endif
 
-    //The_Device_Arena()->free(user_data_device);
     The_Arena()->free(user_data);
 
     N_VDestroy(atol);          /* Free the atol vector */
@@ -889,7 +880,7 @@ static int cJac(realtype t, N_Vector y_in, N_Vector fy, SUNMatrix J,
 
     /* Fixed Indices and Pointers for Jacobian Matrix */
     BL_PROFILE_VAR("cJac::SparsityStuff",cJacSparsityStuff);
-    Print() << "Dans cJac ? \n";
+    //Print() << "Dans cJac ? \n";
     realtype *Jdata   = SUNMatrix_cuSparse_Data(J);
     if ((SUNMatrix_cuSparse_Rows(J) != (udata->neqs_per_cell+1)*(udata->ncells)) || 
        (SUNMatrix_cuSparse_Columns(J) != (udata->neqs_per_cell+1)*(udata->ncells)) ||
@@ -1043,8 +1034,7 @@ fKernelComputeAJchem(int ncell,
   int nbVals;
   for (int i = 1; i < NEQS+2; i++) {
       nbVals = csr_row_count[i] - csr_row_count[i-1];
-      //std::cout << "nbVals ? "<< nbVals <<std::endl;  
-      printf("nbVals %d \n", nbVals);
+      //printf("nbVals %d \n", nbVals);
       for (int j = 0; j < nbVals; j++) {
           int idx_cell = csr_col_index[ csr_row_count[i-1] + j ];
               csr_jac_cell[ csr_row_count[i-1] + j ] = Jmat_pt[ idx_cell * (NEQS+1) + i - 1 ]; 
