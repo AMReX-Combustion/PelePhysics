@@ -28,32 +28,39 @@
 /**********************************/
 typedef struct CVodeUserData {
     /* LS gamma */
-    double gamma_h;
-    /* dt on device */
+    double gamma;
+    /* dt */
     double dt_save;
     /* nb of cells to integrate */
-    int ncells_h; 
+    int ncells; 
     /* nb of eq per cell */
-    int neqs_per_cell_h;
+    int neqs_per_cell;
     /* HP/UV react */
-    int ireactor_type_h;
+    int ireactor_type;
     /* Are we using a AJ */
     int ianalytical_jacobian;
     /* Are we using a IS or DS */
-    int isolve_type_h;
+    int isolve_type;
     /* energy related variables */
-    double *rhoe_init_h = NULL;
-    double *rhoesrc_ext_h = NULL;
-    double *rYsrc_h = NULL;
+    //double *rhoe_init_h = NULL;
+    //double *rhoesrc_ext_h = NULL;
+    //double *rYsrc_h = NULL;
+    double *rhoe_init_d = NULL;
+    double *rhoesrc_ext_d = NULL;
+    double *rYsrc_d = NULL;
     /* verbose level */
     int iverbose;
     // Sparse
     /* Precond sparse stuff */
-    int NNZ_h; 
+    int NNZ; 
     int* csr_row_count_h;
     int* csr_col_index_h;
+    int* csr_row_count_d;
+    int* csr_col_index_d;
     double* csr_val_h;
     double* csr_jac_h;
+    double* csr_val_d;
+    double* csr_jac_d;
     SUNMatrix R = NULL;
     /* CUDA cusolver */
     void *buffer_qr = NULL;
@@ -64,33 +71,13 @@ typedef struct CVodeUserData {
     cudaStream_t stream;
     int nbBlocks;
     int nbThreads;
-    void* UD_d; 
+    /* device stuff */
+    //void* UD_d; 
+    /* energy related variables */
 }* UserData;
 
-typedef struct CVodeUserDataDevice {
-    /* LS gamma */
-    double gamma_d;
-    /* dt on device */
-    double dt_save_d;
-    /* nb of cells to integrate */
-    int ncells_d; 
-    /* nb of eq per cell */
-    int neqs_per_cell_d;
-    /* HP/UV react */
-    int ireactor_type_d;
-    /* Are we using a IS or DS */
-    int isolve_type_d;
-    /* energy related variables */
-    double *rhoe_init_d = NULL;
-    double *rhoesrc_ext_d = NULL;
-    double *rYsrc_d = NULL;
-    /* Precond sparse stuff */
-    int NNZ_d; 
-    int* csr_row_count_d;
-    int* csr_col_index_d;
-    double* csr_val_d;
-    double* csr_jac_d;
-}* UserDataDevice;
+//typedef struct CVodeUserDataDevice {
+//}* UserDataDevice;
 
 /* Functions Called by the Solver */
 static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void *user_data);
@@ -166,7 +153,10 @@ fKernelComputeAJsys(int ncells, void *user_data, realtype *u_d, realtype *csr_va
 AMREX_GPU_DEVICE
 inline
 void 
-fKernelComputeAJchem(int ncells, void *user_data, realtype *u_d, realtype *Jdata);
+fKernelComputeAJchem(int ncells, 
+                     int nnz, int reactor_type, int neqs,
+                     int *csr_row_count, int *csr_col_index, 
+                     realtype *u_d, realtype *Jdata);
 #endif
 
 // CUSTOM
