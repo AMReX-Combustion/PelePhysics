@@ -14,6 +14,10 @@ import csv
 #################################################################
 # Parameter values :
 
+# Output format
+specformat = 'mole'   # mole or mass
+units      = 'CGS'    #MKS or CGS
+
 # Mixture
 mechanism        = 'drm19'
 fuel_species     = 'CH4'
@@ -39,7 +43,6 @@ loglevel  = 1                       # amount of diagnostic output
 refine_grid = True                  # True to enable refinement
 
 # Print information
-specformat = 'mole'
 #POSSIBLY MODIFY THIS IF RESTORE IN XML WITH KNOWN NAME
 if (dilution > 0.0):
     label_xml = 'FFdil-'+mechanism 
@@ -176,7 +179,10 @@ if (specformat == 'mole'):
         writer.writerow(['ZONE I=' + str(nz) + ' FORMAT=POINT' + ' SPECFORMAT=MOLE'])
         for kk in range(len(f.grid)):
             f.set_gas_state(kk)
-            writer.writerow([f.grid[kk],gas.T, f.u[kk], gas.density]+list(gas.X))
+            if (units == "MKS"): 
+                writer.writerow([f.grid[kk],gas.T, f.u[kk], gas.density]+list(gas.X))
+            else:
+                writer.writerow([f.grid[kk]*1e2,gas.T, f.u[kk]*1e2, gas.density*1e-3]+list(gas.X))
 if (specformat == 'mass'):
     nz = f.flame.n_points
     csv_file = str("pmf"+label_xml +'-'+ label+"Y.txt")
@@ -186,4 +192,7 @@ if (specformat == 'mass'):
         writer.writerow(['ZONE I=' + str(nz) + ' FORMAT=POINT' + ' SPECFORMAT=MASS'])
         for kk in range(len(f.grid)):
             f.set_gas_state(kk)
-            writer.writerow([f.grid[kk],gas.T, f.u[kk], gas.density]+list(gas.Y))
+            if (units == "MKS"): 
+                writer.writerow([f.grid[kk],gas.T, f.u[kk], gas.density]+list(gas.Y))
+            else:
+                writer.writerow([f.grid[kk]*1e2,gas.T, f.u[kk]*1e2, gas.density*1e-3]+list(gas.Y))
