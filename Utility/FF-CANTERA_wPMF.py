@@ -18,7 +18,7 @@ import csv
 mechanism        = 'drm19'
 fuel_species     = 'CH4'
 fuel_species_dil = 'H2'
-restore          = 'yes'
+restore          = 'no'
 	
 # General
 p            = 101325           # pressure [Pa]
