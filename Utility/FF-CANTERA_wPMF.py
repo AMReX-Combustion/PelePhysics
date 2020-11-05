@@ -53,8 +53,11 @@ else:
 gas                = Solution(mechanism + '.cti','gas')
 m                  = gas.n_species
 
-stoich_fuel_O2     = gas.n_atoms(fuel_species,'C') + 0.25*gas.n_atoms(fuel_species,'H')
-stoich_dil_O2      = 0.25*gas.n_atoms(fuel_species_dil,'H') 
+if ("C" in fuel_species):
+    stoich_fuel_O2     = gas.n_atoms(fuel_species,'C') + 0.25*gas.n_atoms(fuel_species,'H')
+else:
+    stoich_fuel_O2     = 0.25*gas.n_atoms(fuel_species,'H')
+stoich_dil_O2      = 0.25*gas.n_atoms(fuel_species_dil,'H')    # If your dil is something ELSE than H2 it wont work 
 stoich_hyb         = (1.0 - dilution) * stoich_fuel_O2 + dilution * stoich_dil_O2
 air_N2_O2_ratio    = 3.76
 
@@ -67,7 +70,8 @@ in2   = gas.species_index('N2')
 # Mixture composition
 x = np.zeros(m,'d')
 x[ifuel]  = phi * (1.0 - dilution) 
-x[idil]   = phi * dilution
+if (dilution > 0.0):
+    x[idil]   = phi * dilution
 x[io2]    = stoich_hyb
 x[in2]    = stoich_hyb*air_N2_O2_ratio
 
