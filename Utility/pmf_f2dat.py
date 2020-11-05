@@ -16,8 +16,21 @@ lines = f.readlines()
 f.close()
 
 nl = len(lines)
-ns = int(lines[14].split()[-1].split(':')[-1])
-np = int(lines[15].split()[-1].split(':')[-1])
+
+for l in lines:
+    split = l.strip().split(':')
+    if 'umber of states' in split[0]:
+        ns = int(split[-1])
+        break
+
+for l in lines:
+    split = l.strip().split(':')
+    if 'umber of x data points' in split[0]:
+        np = int(split[-1])
+        break
+
+print('Number of states per point',ns)
+print('Number of points',np)
 
 in_dat = False
 nl_hdr = 0
