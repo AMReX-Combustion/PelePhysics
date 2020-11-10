@@ -41,11 +41,11 @@ int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 /* Functions Called by the Program */
 extern "C"
 {
-    int reactor_init(const int* cvode_iE, const int* Ncells);
+    int reactor_init(int cvode_iE, int Ncells);
 
-    int react(realtype *rY_in, realtype *rY_src_in, 
-		realtype *rX_in, realtype *rX_src_in, 
-		realtype *dt_react, realtype *time);
+    int react(realtype *rY_in, realtype *rY_src_in,
+              realtype *rX_in, realtype *rX_src_in,
+              realtype &dt_react, realtype &time);
 
     void reactor_close();
 }
@@ -61,7 +61,7 @@ UserData AllocUserData(int iE, int num_cells);
 
 void FreeUserData(UserData data);
 
-void SetTypValsODE(std::vector<double> ExtTypVals);
+void SetTypValsODE(const std::vector<double>& ExtTypVals);
 
 void SetTolFactODE(double relative_tol,double absolute_tol);
 

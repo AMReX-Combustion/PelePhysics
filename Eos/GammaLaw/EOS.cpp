@@ -21,7 +21,8 @@ close()
 
 void
 speciesNames(amrex::Vector<std::string>& spn) {
-  spn.push_back("AIR");
+  spn.resize(1);
+  spn[0] = "AIR";
 }
 
 void

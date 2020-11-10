@@ -50,7 +50,6 @@ class CPickler(CMill):
         self.reactionIndex = []
         self.lowT = 100.0
         self.highT = 10000.0
-        #print 'INIT PICKLER'
         return
 
 
@@ -77,383 +76,10 @@ class CPickler(CMill):
         return
 
 
-    def _statics(self,mechanism):
-        self._write()
-        self._write(self.line(' Inverse molecular weights'))
-        self._write('static const double imw[%d] = {' % (self.nSpecies))
-        self._indent()
-        for i in range(0,self.nSpecies):
-            species = self.species[i]
-            text = '1.0 / %f' % (species.weight)
-            if (i<self.nSpecies-1):
-               text += ',  '
-            else:
-               text += '};  '
-            self._write(text + self.line('%s' % species.symbol))
-        self._outdent()
-        self._write()
-
-        self._write()
-        nReactions = len(mechanism.reaction())
-        self._write()
-        self._write('static double fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('static double low_A[%d], low_beta[%d], low_Ea[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('static double rev_A[%d], rev_beta[%d], rev_Ea[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('static double troe_a[%d],troe_Ts[%d], troe_Tss[%d], troe_Tsss[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions))
-        self._write('static double sri_a[%d], sri_b[%d], sri_c[%d], sri_d[%d], sri_e[%d];'
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('static double activation_units[%d], prefactor_units[%d], phase_units[%d];'
-                    % (nReactions,nReactions,nReactions))
-        self._write('static int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('static double *TB[%d];' 
-                    % (nReactions))
-
-        self._write()
-        self._write('static double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('static double low_A_DEF[%d], low_beta_DEF[%d], low_Ea_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('static double rev_A_DEF[%d], rev_beta_DEF[%d], rev_Ea_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('static double troe_a_DEF[%d],troe_Ts_DEF[%d], troe_Tss_DEF[%d], troe_Tsss_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions))
-        self._write('static double sri_a_DEF[%d], sri_b_DEF[%d], sri_c_DEF[%d], sri_d_DEF[%d], sri_e_DEF[%d];'
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('static double activation_units_DEF[%d], prefactor_units_DEF[%d], phase_units_DEF[%d];'
-                    % (nReactions,nReactions,nReactions))
-        self._write('static int is_PD_DEF[%d], troe_len_DEF[%d], sri_len_DEF[%d], nTB_DEF[%d], *TBid_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('static double *TB_DEF[%d];' 
-                    % (nReactions))
-
-        # build reverse reaction map
-        rmap = {}
-        for i, reaction in zip(range(nReactions), mechanism.reaction()):
-            rmap[reaction.orig_id-1] = i
-        
-        self._write('static int rxn_map[%d] = {%s};' % (nReactions, ",".join(str(rmap[x]) for x in range(len(rmap)))))
-
-
-        self._write('')
-        self._write('void GET_REACTION_MAP(int *rmap)')
-        self._write('{')
-        self._indent()
-        self._write('for (int i=0; i<%d; ++i) {' % (nReactions))
-        self._indent()        
-        self._write('rmap[i] = rxn_map[i] + 1;')
-        self._outdent()
-        self._write('}')
-        self._outdent()
-        self._write('}')
-        self._write()
-        self._write("")
-        self._write("#include <ReactionData.H>")
-        self._write("double* GetParamPtr(int                reaction_id,")
-        self._write("                    REACTION_PARAMETER param_id,")
-        self._write("                    int                species_id,")
-        self._write("                    int                get_default)")
-        self._write("{")
-        if nReactions == 0:
-            self._write("  printf(\"No reactions in this model\");")
-            self._write("  abort();")
-            self._write("  return 0;")
-        else:
-            self._write("  double* ret = 0;")
-            self._write("  if (reaction_id<0 || reaction_id>=%d) {" % (nReactions))
-            self._write("    printf(\"Bad reaction id = %d\",reaction_id);")
-            self._write("    abort();")
-            self._write("  };")
-            self._write("  int mrid = rxn_map[reaction_id];")
-            self._write()
-            self._write("  if (param_id == THIRD_BODY) {")
-            self._write("    if (species_id<0 || species_id>=%d) {" % (self.nSpecies))
-            self._write("      printf(\"GetParamPtr: Bad species id = %d\",species_id);")
-            self._write("      abort();")
-            self._write("    }")
-            self._write("    if (get_default) {")
-            self._write("      for (int i=0; i<nTB_DEF[mrid]; ++i) {")
-            self._write("        if (species_id == TBid_DEF[mrid][i]) {")
-            self._write("          ret = &(TB_DEF[mrid][i]);")
-            self._write("        }")
-            self._write("      }")
-            self._write("    }")
-            self._write("    else {")
-            self._write("      for (int i=0; i<nTB[mrid]; ++i) {")
-            self._write("        if (species_id == TBid[mrid][i]) {")
-            self._write("          ret = &(TB[mrid][i]);")
-            self._write("        }")
-            self._write("      }")
-            self._write("    }")
-            self._write("    if (ret == 0) {")
-            self._write("      printf(\"GetParamPtr: No TB for reaction id = %d\",reaction_id);")
-            self._write("      abort();")
-            self._write("    }")
-            self._write("  }")
-            self._write("  else {")
-            self._write("    if (     param_id == FWD_A)     {ret = (get_default ? &(fwd_A_DEF[mrid]) : &(fwd_A[mrid]));}")
-            self._write("      else if (param_id == FWD_BETA)  {ret = (get_default ? &(fwd_beta_DEF[mrid]) : &(fwd_beta[mrid]));}")
-            self._write("      else if (param_id == FWD_EA)    {ret = (get_default ? &(fwd_Ea_DEF[mrid]) : &(fwd_Ea[mrid]));}")
-            self._write("      else if (param_id == LOW_A)     {ret = (get_default ? &(low_A_DEF[mrid]) : &(low_A[mrid]));}")
-            self._write("      else if (param_id == LOW_BETA)  {ret = (get_default ? &(low_beta_DEF[mrid]) : &(low_beta[mrid]));}")
-            self._write("      else if (param_id == LOW_EA)    {ret = (get_default ? &(low_Ea_DEF[mrid]) : &(low_Ea[mrid]));}")
-            self._write("      else if (param_id == REV_A)     {ret = (get_default ? &(rev_A_DEF[mrid]) : &(rev_A[mrid]));}")
-            self._write("      else if (param_id == REV_BETA)  {ret = (get_default ? &(rev_beta_DEF[mrid]) : &(rev_beta[mrid]));}")
-            self._write("      else if (param_id == REV_EA)    {ret = (get_default ? &(rev_Ea_DEF[mrid]) : &(rev_Ea[mrid]));}")
-            self._write("      else if (param_id == TROE_A)    {ret = (get_default ? &(troe_a_DEF[mrid]) : &(troe_a[mrid]));}")
-            self._write("      else if (param_id == TROE_TS)   {ret = (get_default ? &(troe_Ts_DEF[mrid]) : &(troe_Ts[mrid]));}")
-            self._write("      else if (param_id == TROE_TSS)  {ret = (get_default ? &(troe_Tss_DEF[mrid]) : &(troe_Tss[mrid]));}")
-            self._write("      else if (param_id == TROE_TSSS) {ret = (get_default ? &(troe_Tsss_DEF[mrid]) : &(troe_Tsss[mrid]));}")
-            self._write("      else if (param_id == SRI_A)     {ret = (get_default ? &(sri_a_DEF[mrid]) : &(sri_a[mrid]));}")
-            self._write("      else if (param_id == SRI_B)     {ret = (get_default ? &(sri_b_DEF[mrid]) : &(sri_b[mrid]));}")
-            self._write("      else if (param_id == SRI_C)     {ret = (get_default ? &(sri_c_DEF[mrid]) : &(sri_c[mrid]));}")
-            self._write("      else if (param_id == SRI_D)     {ret = (get_default ? &(sri_d_DEF[mrid]) : &(sri_d[mrid]));}")
-            self._write("      else if (param_id == SRI_E)     {ret = (get_default ? &(sri_e_DEF[mrid]) : &(sri_e[mrid]));}")
-            self._write("    else {")
-            self._write("      printf(\"GetParamPtr: Unknown parameter id\");")
-            self._write("      abort();")
-            self._write("    }")
-            self._write("  }")
-            self._write("  return ret;")
-        
-        self._write("}")
-        self._write()
-        self._write("void ResetAllParametersToDefault()")
-        self._write("{")
-        self._write("    for (int i=0; i<%d; i++) {" % (nReactions))
-        self._write("        if (nTB[i] != 0) {")
-        self._write("            nTB[i] = 0;")
-        self._write("            free(TB[i]);")
-        self._write("            free(TBid[i]);")
-        self._write("        }")
-        self._write("")
-        self._write("        fwd_A[i]    = fwd_A_DEF[i];")
-        self._write("        fwd_beta[i] = fwd_beta_DEF[i];")
-        self._write("        fwd_Ea[i]   = fwd_Ea_DEF[i];")
-        self._write("")
-        self._write("        low_A[i]    = low_A_DEF[i];")
-        self._write("        low_beta[i] = low_beta_DEF[i];")
-        self._write("        low_Ea[i]   = low_Ea_DEF[i];")
-        self._write("")
-        self._write("        rev_A[i]    = rev_A_DEF[i];")
-        self._write("        rev_beta[i] = rev_beta_DEF[i];")
-        self._write("        rev_Ea[i]   = rev_Ea_DEF[i];")
-        self._write("")
-        self._write("        troe_a[i]    = troe_a_DEF[i];")
-        self._write("        troe_Ts[i]   = troe_Ts_DEF[i];")
-        self._write("        troe_Tss[i]  = troe_Tss_DEF[i];")
-        self._write("        troe_Tsss[i] = troe_Tsss_DEF[i];")
-        self._write("")
-        self._write("        sri_a[i] = sri_a_DEF[i];")
-        self._write("        sri_b[i] = sri_b_DEF[i];")
-        self._write("        sri_c[i] = sri_c_DEF[i];")
-        self._write("        sri_d[i] = sri_d_DEF[i];")
-        self._write("        sri_e[i] = sri_e_DEF[i];")
-        self._write("")
-        self._write("        is_PD[i]    = is_PD_DEF[i];")
-        self._write("        troe_len[i] = troe_len_DEF[i];")
-        self._write("        sri_len[i]  = sri_len_DEF[i];")
-        self._write("")
-        self._write("        activation_units[i] = activation_units_DEF[i];")
-        self._write("        prefactor_units[i]  = prefactor_units_DEF[i];")
-        self._write("        phase_units[i]      = phase_units_DEF[i];")
-        self._write("")
-        self._write("        nTB[i]  = nTB_DEF[i];")
-        self._write("        if (nTB[i] != 0) {")
-        self._write("           TB[i] = (double *) malloc(sizeof(double) * nTB[i]);")
-        self._write("           TBid[i] = (int *) malloc(sizeof(int) * nTB[i]);")
-        self._write("           for (int j=0; j<nTB[i]; j++) {")
-        self._write("             TB[i][j] = TB_DEF[i][j];")
-        self._write("             TBid[i][j] = TBid_DEF[i][j];")
-        self._write("           }")
-        self._write("        }")
-        self._write("    }")
-        self._write("}")
-        self._write()
-        self._write("void SetAllDefaults()")
-        self._write("{")
-        self._write("    for (int i=0; i<%d; i++) {" % (nReactions))
-        self._write("        if (nTB_DEF[i] != 0) {")
-        self._write("            nTB_DEF[i] = 0;")
-        self._write("            free(TB_DEF[i]);")
-        self._write("            free(TBid_DEF[i]);")
-        self._write("        }")
-        self._write("")
-        self._write("        fwd_A_DEF[i]    = fwd_A[i];")
-        self._write("        fwd_beta_DEF[i] = fwd_beta[i];")
-        self._write("        fwd_Ea_DEF[i]   = fwd_Ea[i];")
-        self._write("")
-        self._write("        low_A_DEF[i]    = low_A[i];")
-        self._write("        low_beta_DEF[i] = low_beta[i];")
-        self._write("        low_Ea_DEF[i]   = low_Ea[i];")
-        self._write("")
-        self._write("        rev_A_DEF[i]    = rev_A[i];")
-        self._write("        rev_beta_DEF[i] = rev_beta[i];")
-        self._write("        rev_Ea_DEF[i]   = rev_Ea[i];")
-        self._write("")
-        self._write("        troe_a_DEF[i]    = troe_a[i];")
-        self._write("        troe_Ts_DEF[i]   = troe_Ts[i];")
-        self._write("        troe_Tss_DEF[i]  = troe_Tss[i];")
-        self._write("        troe_Tsss_DEF[i] = troe_Tsss[i];")
-        self._write("")
-        self._write("        sri_a_DEF[i] = sri_a[i];")
-        self._write("        sri_b_DEF[i] = sri_b[i];")
-        self._write("        sri_c_DEF[i] = sri_c[i];")
-        self._write("        sri_d_DEF[i] = sri_d[i];")
-        self._write("        sri_e_DEF[i] = sri_e[i];")
-        self._write("")
-        self._write("        is_PD_DEF[i]    = is_PD[i];")
-        self._write("        troe_len_DEF[i] = troe_len[i];")
-        self._write("        sri_len_DEF[i]  = sri_len[i];")
-        self._write("")
-        self._write("        activation_units_DEF[i] = activation_units[i];")
-        self._write("        prefactor_units_DEF[i]  = prefactor_units[i];")
-        self._write("        phase_units_DEF[i]      = phase_units[i];")
-        self._write("")
-        self._write("        nTB_DEF[i]  = nTB[i];")
-        self._write("        if (nTB_DEF[i] != 0) {")
-        self._write("           TB_DEF[i] = (double *) malloc(sizeof(double) * nTB_DEF[i]);")
-        self._write("           TBid_DEF[i] = (int *) malloc(sizeof(int) * nTB_DEF[i]);")
-        self._write("           for (int j=0; j<nTB_DEF[i]; j++) {")
-        self._write("             TB_DEF[i][j] = TB[i][j];")
-        self._write("             TBid_DEF[i][j] = TBid[i][j];")
-        self._write("           }")
-        self._write("        }")
-        self._write("    }")
-        self._write("}")
-                
-        return
-
-
-    def _statics_chop(self,mechanism):
-
-        nReactions = len(mechanism.reaction())
-        nSpecies = len(mechanism.species())
-
-        ispecial   = self.reactionIndex[5:7]
-
-        nspecial   = ispecial[1]   - ispecial[0]
-
-        self._write()
-
-        self._write('#ifndef AMREX_USE_CUDA')
-        self._write('namespace thermo')
-        self._write('{')
-        self._indent()
-        self._write('double fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double low_A[%d], low_beta[%d], low_Ea[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double rev_A[%d], rev_beta[%d], rev_Ea[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double troe_a[%d],troe_Ts[%d], troe_Tss[%d], troe_Tsss[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions))
-        self._write('double sri_a[%d], sri_b[%d], sri_c[%d], sri_d[%d], sri_e[%d];'
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('double activation_units[%d], prefactor_units[%d], phase_units[%d];'
-                    % (nReactions,nReactions,nReactions))
-        self._write('int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('double *TB[%d];' 
-                    % (nReactions))
-
-        if nspecial > 0:  
-                self._write('double prefactor_units_rev[%d], activation_units_rev[%d];' 
-                            % (nReactions,nReactions))
-
-        self._write('std::vector<std::vector<double>> kiv(%d); ' % (nReactions))
-        self._write('std::vector<std::vector<double>> nuv(%d); ' % (nReactions))
-
-        self._write()
-        self._write('double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double low_A_DEF[%d], low_beta_DEF[%d], low_Ea_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double rev_A_DEF[%d], rev_beta_DEF[%d], rev_Ea_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double troe_a_DEF[%d],troe_Ts_DEF[%d], troe_Tss_DEF[%d], troe_Tsss_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions))
-        self._write('double sri_a_DEF[%d], sri_b_DEF[%d], sri_c_DEF[%d], sri_d_DEF[%d], sri_e_DEF[%d];'
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('double activation_units_DEF[%d], prefactor_units_DEF[%d], phase_units_DEF[%d];'
-                    % (nReactions,nReactions,nReactions))
-        self._write('int is_PD_DEF[%d], troe_len_DEF[%d], sri_len_DEF[%d], nTB_DEF[%d], *TBid_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('double *TB_DEF[%d];' 
-                    % (nReactions))
-        self._write('std::vector<int> rxn_map;')
-
-        self._outdent()
-
-        self._write('};')
-
-        self._write()
-
-        self._write('using namespace thermo;')
-        self._write('#endif')
-        self._write()
-
-
-        self._write(self.line(' Inverse molecular weights'))
-        self._write(self.line(' TODO: check necessity on CPU'))
-        self._write('static AMREX_GPU_DEVICE_MANAGED double imw[%d] = {' %nSpecies )
-        self._indent()
-        for i in range(0,self.nSpecies):
-            species = self.species[i]
-            text = '1.0 / %f' % (species.weight)
-            if (i<self.nSpecies-1):
-               text += ',  '
-            else:
-               text += '};  '
-            self._write(text + self.line('%s' % species.symbol))
-        self._outdent()
-        self._write()
-
-        self._write(self.line(' Inverse molecular weights'))
-        self._write(self.line(' TODO: check necessity because redundant with molecularWeight'))
-        self._write('static AMREX_GPU_DEVICE_MANAGED double molecular_weights[%d] = {' %nSpecies )
-        self._indent()
-        for i in range(0,self.nSpecies):
-            species = self.species[i]
-            text = '%f' % (species.weight)
-            if (i<self.nSpecies-1):
-               text += ',  '
-            else:
-               text += '};  '
-            self._write(text + self.line('%s' % species.symbol))
-        self._outdent()
-        self._write()
-
-        self._write('AMREX_GPU_HOST_DEVICE')
-        self._write('void get_imw(double imw_new[]){')
-        ##self._write('#pragma unroll')
-        self._indent()
-        self._write('for(int i = 0; i<%d; ++i) imw_new[i] = imw[i];' %nSpecies )
-        self._outdent()
-        self._write('}')
-        self._write()
-
-        self._write(self.line(' TODO: check necessity because redundant with CKWT'))
-        self._write('AMREX_GPU_HOST_DEVICE')
-        self._write('void get_mw(double mw_new[]){')
-        ##self._write('#pragma unroll')
-        self._indent()
-        self._write('for(int i = 0; i<%d; ++i) mw_new[i] = molecular_weights[i];' %nSpecies )
-        self._outdent()
-        self._write('}')
-        self._write()
-
-
-
-        self._write()
-
-        return
-
-
+    ##########################
+    #This is the main routine
+    #called in weaver/weaver/mills/Mill.py
+    ##########################
     def _renderDocument_CHOP(self, mechanism, options=None):
 
         reorder_reactions=False
@@ -501,12 +127,11 @@ class CPickler(CMill):
             self._setSpecies(mechanism)
             self.reactionIndex = mechanism._sort_reactions()
 
-        #HEADER
+        #chemistry_file.H
         self._includes(True)
-
         self._header_chop(mechanism)
         self._namespace(mechanism)
-        #HEADER
+        #chemistry_file.H
 
         self._includes_chop()
         self._statics_chop(mechanism)
@@ -637,190 +262,15 @@ class CPickler(CMill):
         #AF: dummy gjs routines
         self._emptygjs(mechanism)
 
-        ### MECH HEADER
+        ### MECH HEADER -- second file starts here
         self._print_mech_header(mechanism)
         ### MECH HEADER
 
         return
 
 
-    def _renderDocument(self, mechanism, options=None):
 
-        reorder_reactions=False
-
-        if(reorder_reactions):
-
-            plot_react_matrix = True
-            use_tsp = True #traveling salesman reordering
-
-            if(plot_react_matrix):
-                import matplotlib.pyplot as mplt
-                (fig,ax)=mplt.subplots(1,4,figsize=(20,5))
-                rmat=mechanism._get_reaction_matrix()
-                ax[0].matshow(rmat)
-
-            #sort reactions by type
-            self.reactionIndex = mechanism._sort_reactions()
-            if(plot_react_matrix):
-                rmat=mechanism._get_reaction_matrix()
-                ax[1].matshow(rmat)
-
-            #reorder reactions
-            if(use_tsp):
-                mechanism._sort_reactions_within_type_tsp(self.reactionIndex)
-            else:
-                mechanism._sort_reactions_within_type_random(self.reactionIndex)
-            if(plot_react_matrix):
-                rmat=mechanism._get_reaction_matrix()
-                ax[2].matshow(rmat)
-
-            #reorder species
-            if(use_tsp):
-                mechanism._sort_species_ids_tsp()
-            else:
-                mechanism._sort_species_ids_random()
-            if(plot_react_matrix):
-                rmat=mechanism._get_reaction_matrix()
-                ax[3].matshow(rmat)
-                mplt.savefig("rmat_all.pdf")
-
-            #set species after reordering    
-            self._setSpecies(mechanism)
-
-        else:
-            self._setSpecies(mechanism)
-            self.reactionIndex = mechanism._sort_reactions()
-
-        self._includes(False)
-        self._declarations(mechanism)
-        self._statics(mechanism)
-        self._ckinit(mechanism)
-
-        #self._main(mechanism)
-
-        # chemkin wrappers
-        self._ckindx(mechanism)
-        self._ckxnum(mechanism)
-        self._cksnum(mechanism)
-        self._cksyme(mechanism)
-        self._cksyms(mechanism)
-        self._ckrp(mechanism)
-        
-        self._ckpx(mechanism)
-        self._ckpy(mechanism)
-        self._vckpy(mechanism)
-        self._ckpc(mechanism)
-        self._ckrhox(mechanism)
-        self._ckrhoy(mechanism)
-        self._ckrhoc(mechanism)
-        self._ckwt(mechanism)
-        self._ckawt(mechanism)
-        self._ckmmwy(mechanism)
-        self._ckmmwx(mechanism)
-        self._ckmmwc(mechanism)
-        self._ckytx(mechanism)
-        self._vckytx(mechanism)
-        self._ckytcp(mechanism)
-        self._ckytcr(mechanism)
-        self._ckxty(mechanism)
-        self._ckxtcp(mechanism)
-        self._ckxtcr(mechanism)
-        self._ckctx(mechanism)
-        self._ckcty(mechanism)
-        
-        self._ckcpor(mechanism)
-        self._ckhort(mechanism)
-        self._cksor(mechanism)
-        
-        self._ckcvml(mechanism)
-        self._ckcpml(mechanism)
-        self._ckuml(mechanism)
-        self._ckhml(mechanism)
-        self._ckgml(mechanism)
-        self._ckaml(mechanism)
-        self._cksml(mechanism)
-        
-        self._ckcvms(mechanism)
-        self._ckcpms(mechanism)
-        self._ckums(mechanism)
-        self._ckhms(mechanism)
-        self._vckhms(mechanism)
-        self._ckgms(mechanism)
-        self._ckams(mechanism)
-        self._cksms(mechanism)
-
-        self._ckcpbl(mechanism)
-        self._ckcpbs(mechanism)
-        self._ckcvbl(mechanism)
-        self._ckcvbs(mechanism)
-        
-        self._ckhbml(mechanism)
-        self._ckhbms(mechanism)
-        self._ckubml(mechanism)
-        self._ckubms(mechanism)
-        self._cksbml(mechanism)
-        self._cksbms(mechanism)
-        self._ckgbml(mechanism)
-        self._ckgbms(mechanism)
-        self._ckabml(mechanism)
-        self._ckabms(mechanism)
-
-        self._ckwc(mechanism)
-        self._ckwyp(mechanism)
-        self._ckwxp(mechanism)
-        self._ckwyr(mechanism)
-        self._vckwyr(mechanism)
-        self._ckwxr(mechanism)
-        
-        self._ckqc(mechanism)
-        self._ckkfkr(mechanism)
-        self._ckqyp(mechanism)
-        self._ckqxp(mechanism)
-        self._ckqyr(mechanism)
-        self._ckqxr(mechanism)
-
-        self._cknu(mechanism)
-        self._ckncf(mechanism)
-        
-        self._ckabe(mechanism)
-        
-        self._ckeqc(mechanism)
-        self._ckeqyp(mechanism)
-        self._ckeqxp(mechanism)
-        self._ckeqyr(mechanism)
-        self._ckeqxr(mechanism)
-        
-        # Fuego Functions
-        self._productionRate(mechanism)
-        self._vproductionRate(mechanism)
-        #self._DproductionRatePYJAC(mechanism)
-        self._DproductionRatePrecond(mechanism)
-        self._DproductionRate(mechanism)
-        self._sparsity(mechanism)
-        self._ajac(mechanism)
-        self._ajacPrecond(mechanism)
-        self._dthermodT(mechanism)
-        self._progressRate(mechanism)
-        self._progressRateFR(mechanism)
-        self._equilibriumConstants(mechanism)
-        self._thermo(mechanism)
-        self._molecularWeight(mechanism)
-        self._atomicWeight(mechanism)
-        self._T_given_ey(mechanism)
-        self._T_given_hy(mechanism)
-        self._getCriticalParameters(mechanism)
-        #AF: add transport data
-        self._trans(mechanism)
-        self._endfile(mechanism)
-        return
-
-
-    def _end(self):
-        self._timestamp()
-        self._rep += self.footer()
-        return
-
-
+    #Pieces for the file chemistry_file.H#
     def _includes(self, header):
         self._rep += [
             '#include <math.h>',
@@ -837,115 +287,6 @@ class CPickler(CMill):
             self._rep += [
                 '#include <stdlib.h>'
             ]
-
-        return
-
-
-    def _includes_chop(self):
-        self._rep += [
-            '#include "chemistry_file.H"'
-            ]
-        return
-
-    def _print_mech_header(self, mechanism):
-        self._write()
-        self._write("#ifndef MECHANISM_h")
-        self._write("#define MECHANISM_h")
-        self._write()
-        self._write("#if 0")
-        self._write("/* Elements")
-        nb_elem = 0
-        for element in mechanism.element():
-            self._write('%d  %s' % (element.id, element.symbol) )
-            nb_elem += 1
-        self._write('*/')
-        self._write("#endif")
-        self._write()
-        self._write('/* Species */')
-        nb_spec = 0
-        for species in mechanism.species():
-            s = species.symbol.strip()
-            # Ionic species
-            if s[-1] == '-': s = s[:-1] + 'n'
-            if s[-1] == '+': s = s[:-1] + 'p'
-            # Excited species
-            s = s.replace('*', 'D')
-            # Remove other characters not allowed in preprocessor defines
-            s = s.replace('-', '').replace('(','').replace(')','')
-            self._write('#define %s_ID %d' % (s, species.id))
-            nb_spec += 1
-        self._write()
-        self._write("#define NUM_ELEMENTS %d" % (nb_elem))
-        self._write("#define NUM_SPECIES %d" % (nb_spec))
-        self._write("#define NUM_REACTIONS %d" %(len(mechanism.reaction())))
-        self._write()
-        self._write("#define NUM_FIT 4")
-        self._write("#endif")
-
-        return
-
-
-    def _endfile(self, mechanism):
-        self._rep += [
-            '',
-            '}'
-            ]
-
-    def _namespace(self,mechanism):
-
-        self._write()
-
-        self._write('#ifndef AMREX_USE_CUDA')
-        self._write('namespace thermo')
-        self._write('{')
-
-        self._indent()
-
-        nReactions = len(mechanism.reaction())
-        self._write()
-        self._write('extern double fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('extern double low_A[%d], low_beta[%d], low_Ea[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('extern double rev_A[%d], rev_beta[%d], rev_Ea[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('extern double troe_a[%d],troe_Ts[%d], troe_Tss[%d], troe_Tsss[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions))
-        self._write('extern double sri_a[%d], sri_b[%d], sri_c[%d], sri_d[%d], sri_e[%d];'
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('extern double activation_units[%d], prefactor_units[%d], phase_units[%d];'
-                    % (nReactions,nReactions,nReactions))
-        self._write('extern int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('extern double *TB[%d];' 
-                    % (nReactions))
-
-        self._write('extern std::vector<std::vector<double>> kiv; ')
-        self._write('extern std::vector<std::vector<double>> nuv; ')
-
-        self._write()
-        self._write('extern double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('extern double low_A_DEF[%d], low_beta_DEF[%d], low_Ea_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('extern double rev_A_DEF[%d], rev_beta_DEF[%d], rev_Ea_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('extern double troe_a_DEF[%d],troe_Ts_DEF[%d], troe_Tss_DEF[%d], troe_Tsss_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions))
-        self._write('extern double sri_a_DEF[%d], sri_b_DEF[%d], sri_c_DEF[%d], sri_d_DEF[%d], sri_e_DEF[%d];'
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('extern double activation_units_DEF[%d], prefactor_units_DEF[%d], phase_units_DEF[%d];'
-                    % (nReactions,nReactions,nReactions))
-        self._write('extern int is_PD_DEF[%d], troe_len_DEF[%d], sri_len_DEF[%d], nTB_DEF[%d], *TBid_DEF[%d];' 
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('extern double *TB_DEF[%d];' 
-                    % (nReactions))
-        self._write('extern std::vector<int> rxn_map;')
-
-        self._outdent()
-
-        self._write('}')
-        self._write('#endif')
 
         return
 
@@ -1081,7 +422,7 @@ class CPickler(CMill):
             'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST(int * nJdata, int * consP, int NCELLS);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, int * consP);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
-            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS);',
+            'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP);',
             'AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base);',
@@ -1148,708 +489,196 @@ class CPickler(CMill):
                 'AMREX_GPU_HOST_DEVICE void sgjsolve_simplified(double* A, double* x, double* b);',
                 '}',
                 ]
+
         return
 
 
-    def _declarations(self, mechanism):
+    def _namespace(self,mechanism):
+        self._write()
+        self._write('#ifndef AMREX_USE_CUDA')
+        self._write('namespace thermo')
+        self._write('{')
+
+        self._indent()
+
+        nReactions = len(mechanism.reaction())
+        self._write()
+        self._write('extern double fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double low_A[%d], low_beta[%d], low_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double rev_A[%d], rev_beta[%d], rev_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double troe_a[%d],troe_Ts[%d], troe_Tss[%d], troe_Tsss[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double sri_a[%d], sri_b[%d], sri_c[%d], sri_d[%d], sri_e[%d];'
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double activation_units[%d], prefactor_units[%d], phase_units[%d];'
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double *TB[%d];' 
+                    % (nReactions))
+
+        self._write('extern std::vector<std::vector<double>> kiv; ')
+        self._write('extern std::vector<std::vector<double>> nuv; ')
+
+        self._write()
+        self._write('extern double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double low_A_DEF[%d], low_beta_DEF[%d], low_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double rev_A_DEF[%d], rev_beta_DEF[%d], rev_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern double troe_a_DEF[%d],troe_Ts_DEF[%d], troe_Tss_DEF[%d], troe_Tsss_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double sri_a_DEF[%d], sri_b_DEF[%d], sri_c_DEF[%d], sri_d_DEF[%d], sri_e_DEF[%d];'
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double activation_units_DEF[%d], prefactor_units_DEF[%d], phase_units_DEF[%d];'
+                    % (nReactions,nReactions,nReactions))
+        self._write('extern int is_PD_DEF[%d], troe_len_DEF[%d], sri_len_DEF[%d], nTB_DEF[%d], *TBid_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('extern double *TB_DEF[%d];' 
+                    % (nReactions))
+        self._write('extern std::vector<int> rxn_map;')
+
+        self._outdent()
+
+        self._write('}')
+        self._write('#endif')
+
+        return
+    #Pieces for the file chemistry_file.H#
+
+
+
+    #Pieces for mechanism.cpp
+    def _includes_chop(self):
         self._rep += [
-            '',
-            '#if defined(BL_FORT_USE_UPPERCASE)',
-            '#define CKINDX CKINDX',
-            '#define CKINIT CKINIT',
-            '#define CKFINALIZE CKFINALIZE',
-            '#define CKXNUM CKXNUM',
-            '#define CKSYME CKSYME',
-            '#define CKSYMS CKSYMS',
-            '#define CKRP CKRP',
-            '#define CKPX CKPX',
-            '#define CKPY CKPY',
-            '#define CKPC CKPC',
-            '#define CKRHOX CKRHOX',
-            '#define CKRHOY CKRHOY',
-            '#define CKRHOC CKRHOC',
-            '#define CKWT CKWT',
-            '#define CKAWT CKAWT',
-            '#define CKMMWY CKMMWY',
-            '#define CKMMWX CKMMWX',
-            '#define CKMMWC CKMMWC',
-            '#define CKYTX CKYTX',
-            '#define CKYTCP CKYTCP',
-            '#define CKYTCR CKYTCR',
-            '#define CKXTY CKXTY',
-            '#define CKXTCP CKXTCP',
-            '#define CKXTCR CKXTCR',
-            '#define CKCTX CKCTX',
-            '#define CKCTY CKCTY',
-            '#define CKCPOR CKCPOR',
-            '#define CKHORT CKHORT',
-            '#define CKSOR CKSOR',
-            '#define CKCVML CKCVML',
-            '#define CKCPML CKCPML',
-            '#define CKUML CKUML',
-            '#define CKHML CKHML',
-            '#define CKGML CKGML',
-            '#define CKAML CKAML',
-            '#define CKSML CKSML',
-            '#define CKCVMS CKCVMS',
-            '#define CKCPMS CKCPMS',
-            '#define CKUMS CKUMS',
-            '#define CKHMS CKHMS',
-            '#define CKGMS CKGMS',
-            '#define CKAMS CKAMS',
-            '#define CKSMS CKSMS',
-            '#define CKCPBL CKCPBL',
-            '#define CKCPBS CKCPBS',
-            '#define CKCVBL CKCVBL',
-            '#define CKCVBS CKCVBS',
-            '#define CKHBML CKHBML',
-            '#define CKHBMS CKHBMS',
-            '#define CKUBML CKUBML',
-            '#define CKUBMS CKUBMS',
-            '#define CKSBML CKSBML',
-            '#define CKSBMS CKSBMS',
-            '#define CKGBML CKGBML',
-            '#define CKGBMS CKGBMS',
-            '#define CKABML CKABML',
-            '#define CKABMS CKABMS',
-            '#define CKWC CKWC',
-            '#define CKWYP CKWYP',
-            '#define CKWXP CKWXP',
-            '#define CKWYR CKWYR',
-            '#define CKWXR CKWXR',
-            '#define CKQC CKQC',
-            '#define CKKFKR CKKFKR',
-            '#define CKQYP CKQYP',
-            '#define CKQXP CKQXP',
-            '#define CKQYR CKQYR',
-            '#define CKQXR CKQXR',
-            '#define CKNU CKNU',
-            '#define CKINU CKINU',
-            '#define CKNCF CKNCF',
-            '#define CKABE CKABE',
-            '#define CKEQC CKEQC',
-            '#define CKEQYP CKEQYP',
-            '#define CKEQXP CKEQXP',
-            '#define CKEQYR CKEQYR',
-            '#define CKEQXR CKEQXR',
-            '#define DWDOT DWDOT',
-            #'#ifdef USE_PYJAC',
-            #'#define DWDOT_PYJAC DWDOT_PYJAC',
-            #'#endif',
-            '#define DWDOT_PRECOND DWDOT_PRECOND',
-            '#define SPARSITY_INFO SPARSITY_INFO',
-            '#define SPARSITY_INFO_PRECOND SPARSITY_INFO_PRECOND',
-            '#define SPARSITY_PREPROC SPARSITY_PREPROC',
-            '#define SPARSITY_PREPROC_PRECOND SPARSITY_PREPROC_PRECOND',
-            '#define SPARSITY_PREPROC_PRECOND_GPU SPARSITY_PREPROC_PRECOND_GPU',
-            '#define VCKHMS VCKHMS',
-            '#define VCKPY VCKPY',
-            '#define VCKWYR VCKWYR',
-            '#define VCKYTX VCKYTX',
-            '#define GET_T_GIVEN_EY GET_T_GIVEN_EY',
-            '#define GET_T_GIVEN_HY GET_T_GIVEN_HY',
-            '#define GET_REACTION_MAP GET_REACTION_MAP',
-            '#define GET_CRITPARAMS GET_CRITPARAMS',
-            '#elif defined(BL_FORT_USE_LOWERCASE)',
-            '#define CKINDX ckindx',
-            '#define CKINIT ckinit',
-            '#define CKFINALIZE ckfinalize',
-            '#define CKXNUM ckxnum',
-            '#define CKSYME cksyme',
-            '#define CKSYMS cksyms',
-            '#define CKRP ckrp',
-            '#define CKPX ckpx',
-            '#define CKPY ckpy',
-            '#define CKPC ckpc',
-            '#define CKRHOX ckrhox',
-            '#define CKRHOY ckrhoy',
-            '#define CKRHOC ckrhoc',
-            '#define CKWT ckwt',
-            '#define CKAWT ckawt',
-            '#define CKMMWY ckmmwy',
-            '#define CKMMWX ckmmwx',
-            '#define CKMMWC ckmmwc',
-            '#define CKYTX ckytx',
-            '#define CKYTCP ckytcp',
-            '#define CKYTCR ckytcr',
-            '#define CKXTY ckxty',
-            '#define CKXTCP ckxtcp',
-            '#define CKXTCR ckxtcr',
-            '#define CKCTX ckctx',
-            '#define CKCTY ckcty',
-            '#define CKCPOR ckcpor',
-            '#define CKHORT ckhort',
-            '#define CKSOR cksor',
-            '#define CKCVML ckcvml',
-            '#define CKCPML ckcpml',
-            '#define CKUML ckuml',
-            '#define CKHML ckhml',
-            '#define CKGML ckgml',
-            '#define CKAML ckaml',
-            '#define CKSML cksml',
-            '#define CKCVMS ckcvms',
-            '#define CKCPMS ckcpms',
-            '#define CKUMS ckums',
-            '#define CKHMS ckhms',
-            '#define CKGMS ckgms',
-            '#define CKAMS ckams',
-            '#define CKSMS cksms',
-            '#define CKCPBL ckcpbl',
-            '#define CKCPBS ckcpbs',
-            '#define CKCVBL ckcvbl',
-            '#define CKCVBS ckcvbs',
-            '#define CKHBML ckhbml',
-            '#define CKHBMS ckhbms',
-            '#define CKUBML ckubml',
-            '#define CKUBMS ckubms',
-            '#define CKSBML cksbml',
-            '#define CKSBMS cksbms',
-            '#define CKGBML ckgbml',
-            '#define CKGBMS ckgbms',
-            '#define CKABML ckabml',
-            '#define CKABMS ckabms',
-            '#define CKWC ckwc',
-            '#define CKWYP ckwyp',
-            '#define CKWXP ckwxp',
-            '#define CKWYR ckwyr',
-            '#define CKWXR ckwxr',
-            '#define CKQC ckqc',
-            '#define CKKFKR ckkfkr',
-            '#define CKQYP ckqyp',
-            '#define CKQXP ckqxp',
-            '#define CKQYR ckqyr',
-            '#define CKQXR ckqxr',
-            '#define CKNU cknu',
-            '#define CKINU ckinu',
-            '#define CKNCF ckncf',
-            '#define CKABE ckabe',
-            '#define CKEQC ckeqc',
-            '#define CKEQYP ckeqyp',
-            '#define CKEQXP ckeqxp',
-            '#define CKEQYR ckeqyr',
-            '#define CKEQXR ckeqxr',
-            '#define DWDOT dwdot',
-            #'#ifdef USE_PYJAC',
-            #'#define DWDOT_PYJAC dwdot_pyjac',
-            #'#endif',
-            '#define DWDOT_PRECOND dwdot_precond',
-            '#define SPARSITY_INFO sparsity_info',
-            '#define SPARSITY_INFO_PRECOND sparsity_info_precond',
-            '#define SPARSITY_PREPROC sparsity_preproc',
-            '#define SPARSITY_PREPROC_PRECOND sparsity_preproc_precond',
-            '#define SPARSITY_PREPROC_PRECOND_GPU sparsity_preproc_precond_gpu',
-            '#define VCKHMS vckhms',
-            '#define VCKPY vckpy',
-            '#define VCKWYR vckwyr',
-            '#define VCKYTX vckytx',
-            '#define GET_T_GIVEN_EY get_t_given_ey',
-            '#define GET_T_GIVEN_HY get_t_given_hy',
-            '#define GET_REACTION_MAP get_reaction_map',
-            '#define GET_CRITPARAMS get_critparams',
-            '#elif defined(BL_FORT_USE_UNDERSCORE)',
-            '#define CKINDX ckindx_',
-            '#define CKINIT ckinit_',
-            '#define CKFINALIZE ckfinalize_',
-            '#define CKXNUM ckxnum_',
-            '#define CKSYME cksyme_',
-            '#define CKSYMS cksyms_',
-            '#define CKRP ckrp_',
-            '#define CKPX ckpx_',
-            '#define CKPY ckpy_',
-            '#define CKPC ckpc_',
-            '#define CKRHOX ckrhox_',
-            '#define CKRHOY ckrhoy_',
-            '#define CKRHOC ckrhoc_',
-            '#define CKWT ckwt_',
-            '#define CKAWT ckawt_',
-            '#define CKMMWY ckmmwy_',
-            '#define CKMMWX ckmmwx_',
-            '#define CKMMWC ckmmwc_',
-            '#define CKYTX ckytx_',
-            '#define CKYTCP ckytcp_',
-            '#define CKYTCR ckytcr_',
-            '#define CKXTY ckxty_',
-            '#define CKXTCP ckxtcp_',
-            '#define CKXTCR ckxtcr_',
-            '#define CKCTX ckctx_',
-            '#define CKCTY ckcty_',
-            '#define CKCPOR ckcpor_',
-            '#define CKHORT ckhort_',
-            '#define CKSOR cksor_',
-            '#define CKCVML ckcvml_',
-            '#define CKCPML ckcpml_',
-            '#define CKUML ckuml_',
-            '#define CKHML ckhml_',
-            '#define CKGML ckgml_',
-            '#define CKAML ckaml_',
-            '#define CKSML cksml_',
-            '#define CKCVMS ckcvms_',
-            '#define CKCPMS ckcpms_',
-            '#define CKUMS ckums_',
-            '#define CKHMS ckhms_',
-            '#define CKGMS ckgms_',
-            '#define CKAMS ckams_',
-            '#define CKSMS cksms_',
-            '#define CKCPBL ckcpbl_',
-            '#define CKCPBS ckcpbs_',
-            '#define CKCVBL ckcvbl_',
-            '#define CKCVBS ckcvbs_',
-            '#define CKHBML ckhbml_',
-            '#define CKHBMS ckhbms_',
-            '#define CKUBML ckubml_',
-            '#define CKUBMS ckubms_',
-            '#define CKSBML cksbml_',
-            '#define CKSBMS cksbms_',
-            '#define CKGBML ckgbml_',
-            '#define CKGBMS ckgbms_',
-            '#define CKABML ckabml_',
-            '#define CKABMS ckabms_',
-            '#define CKWC ckwc_',
-            '#define CKWYP ckwyp_',
-            '#define CKWXP ckwxp_',
-            '#define CKWYR ckwyr_',
-            '#define CKWXR ckwxr_',
-            '#define CKQC ckqc_',
-            '#define CKKFKR ckkfkr_',
-            '#define CKQYP ckqyp_',
-            '#define CKQXP ckqxp_',
-            '#define CKQYR ckqyr_',
-            '#define CKQXR ckqxr_',
-            '#define CKNU cknu_',
-            '#define CKINU ckinu_',
-            '#define CKNCF ckncf_',
-            '#define CKABE ckabe_',
-            '#define CKEQC ckeqc_',
-            '#define CKEQYP ckeqyp_',
-            '#define CKEQXP ckeqxp_',
-            '#define CKEQYR ckeqyr_',
-            '#define CKEQXR ckeqxr_',
-            '#define DWDOT dwdot_',
-            #'#ifdef USE_PYJAC',
-            #'#define DWDOT_PYJAC dwdot_pyjac_',
-            #'#endif',
-            '#define DWDOT_PRECOND dwdot_precond_',
-            '#define SPARSITY_INFO sparsity_info_',
-            '#define SPARSITY_INFO_PRECOND sparsity_info_precond_ ',
-            '#define SPARSITY_PREPROC sparsity_preproc_',
-            '#define SPARSITY_PREPROC_PRECOND sparsity_preproc_precond_',
-            '#define SPARSITY_PREPROC_PRECOND_GPU sparsity_preproc_precond_gpu_',
-            '#define VCKHMS vckhms_',
-            '#define VCKPY vckpy_',
-            '#define VCKWYR vckwyr_',
-            '#define VCKYTX vckytx_',
-            '#define GET_T_GIVEN_EY get_t_given_ey_',
-            '#define GET_T_GIVEN_HY get_t_given_hy_',
-            '#define GET_REACTION_MAP get_reaction_map_',
-            '#define GET_CRITPARAMS get_critparams_',
-            '#endif','',
-            self.line('function declarations'),
-            '#if defined(BL_FORT_USE_UPPERCASE)',
-            '#define egtransetEPS EGTRANSETEPS',
-            '#elif defined(BL_FORT_USE_LOWERCASE)',
-            '#define egtransetEPS egtranseteps',
-            '#elif defined(BL_FORT_USE_UNDERSCORE)',
-            '#define egtransetEPS egtranseteps_',
-            '#endif',
-            '#if defined(BL_FORT_USE_UPPERCASE)',
-            '#define egtransetSIG EGTRANSETSIG',
-            '#elif defined(BL_FORT_USE_LOWERCASE)',
-            '#define egtransetSIG egtransetsig',
-            '#elif defined(BL_FORT_USE_UNDERSCORE)',
-            '#define egtransetSIG egtransetsig_',
-            '#endif',
-            'extern "C"',
-            '{',
-            'void egtransetEPS(double *  EPS);',
-            'void egtransetSIG(double* SIG);',
-            'void atomicWeight(double *  awt);',
-            'void molecularWeight(double *  wt);',
-            'void gibbs(double *  species, double *  tc);',
-            'void helmholtz(double *  species, double *  tc);',
-            'void speciesInternalEnergy(double *  species, double *  tc);',
-            'void speciesEnthalpy(double *  species, double *  tc);',
-            'void speciesEntropy(double *  species, double *  tc);',
-            'void cp_R(double *  species, double *  tc);',
-            'void cv_R(double *  species, double *  tc);',
-            'void equilibriumConstants(double *  kc, double *  g_RT, double T);',
-            'void productionRate(double *  wdot, double *  sc, double T);',
-            'void comp_k_f(double *  tc, double invT, double *  k_f);',
-            'void comp_Kc(double *  tc, double invT, double *  Kc);',
-            'void comp_qfqr(double *  q_f, double *  q_r, double *  sc, double *  tc, double invT);',
-            'void progressRate(double *  qdot, double *  speciesConc, double T);',
-            'void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);',
-            'void CKINIT'+sym+'();',
-            'void CKFINALIZE'+sym+'();',
-            'void CKINDX'+sym+'(int * mm, int * kk, int * ii, int * nfit );',
-            'void CKXNUM'+sym+'(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);',
-            'void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);',
-            'void CKSYME(int * kname, int * lenkname);',
-            'void CKSYMS(int * kname, int * lenkname);',
-            'void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa);',
-            'void CKPX'+sym+'(double *  rho, double *  T, double *  x, double *  P);',
-            'void CKPY'+sym+'(double *  rho, double *  T, double *  y, double *  P);',
-            'void CKPC'+sym+'(double *  rho, double *  T, double *  c, double *  P);',
-            'void CKRHOX'+sym+'(double *  P, double *  T, double *  x, double *  rho);',
-            'void CKRHOY'+sym+'(double *  P, double *  T, double *  y, double *  rho);',
-            'void CKRHOC'+sym+'(double *  P, double *  T, double *  c, double *  rho);',
-            'void CKWT'+sym+'(double *  wt);',
-            'void CKAWT'+sym+'(double *  awt);',
-            'void CKMMWY'+sym+'(double *  y, double *  wtm);',
-            'void CKMMWX'+sym+'(double *  x, double *  wtm);',
-            'void CKMMWC'+sym+'(double *  c, double *  wtm);',
-            'void CKYTX'+sym+'(double *  y, double *  x);',
-            'void CKYTCP'+sym+'(double *  P, double *  T, double *  y, double *  c);',
-            'void CKYTCR'+sym+'(double *  rho, double *  T, double *  y, double *  c);',
-            'void CKXTY'+sym+'(double *  x, double *  y);',
-            'void CKXTCP'+sym+'(double *  P, double *  T, double *  x, double *  c);',
-            'void CKXTCR'+sym+'(double *  rho, double *  T, double *  x, double *  c);',
-            'void CKCTX'+sym+'(double *  c, double *  x);',
-            'void CKCTY'+sym+'(double *  c, double *  y);',
-            'void CKCPOR'+sym+'(double *  T, double *  cpor);',
-            'void CKHORT'+sym+'(double *  T, double *  hort);',
-            'void CKSOR'+sym+'(double *  T, double *  sor);',
-            
-            'void CKCVML'+sym+'(double *  T, double *  cvml);',
-            'void CKCPML'+sym+'(double *  T, double *  cvml);',
-            'void CKUML'+sym+'(double *  T, double *  uml);',
-            'void CKHML'+sym+'(double *  T, double *  uml);',
-            'void CKGML'+sym+'(double *  T, double *  gml);',
-            'void CKAML'+sym+'(double *  T, double *  aml);',
-            'void CKSML'+sym+'(double *  T, double *  sml);',
-            
-            'void CKCVMS'+sym+'(double *  T, double *  cvms);',
-            'void CKCPMS'+sym+'(double *  T, double *  cvms);',
-            'void CKUMS'+sym+'(double *  T, double *  ums);',
-            'void CKHMS'+sym+'(double *  T, double *  ums);',
-            'void CKGMS'+sym+'(double *  T, double *  gms);',
-            'void CKAMS'+sym+'(double *  T, double *  ams);',
-            'void CKSMS'+sym+'(double *  T, double *  sms);',
-            
-            'void CKCPBL'+sym+'(double *  T, double *  x, double *  cpbl);',
-            'void CKCPBS'+sym+'(double *  T, double *  y, double *  cpbs);',
-            'void CKCVBL'+sym+'(double *  T, double *  x, double *  cpbl);',
-            'void CKCVBS'+sym+'(double *  T, double *  y, double *  cpbs);',
-            
-            'void CKHBML'+sym+'(double *  T, double *  x, double *  hbml);',
-            'void CKHBMS'+sym+'(double *  T, double *  y, double *  hbms);',
-            'void CKUBML'+sym+'(double *  T, double *  x, double *  ubml);',
-            'void CKUBMS'+sym+'(double *  T, double *  y, double *  ubms);',
-            'void CKSBML'+sym+'(double *  P, double *  T, double *  x, double *  sbml);',
-            'void CKSBMS'+sym+'(double *  P, double *  T, double *  y, double *  sbms);',
-            'void CKGBML'+sym+'(double *  P, double *  T, double *  x, double *  gbml);',
-            'void CKGBMS'+sym+'(double *  P, double *  T, double *  y, double *  gbms);',
-            'void CKABML'+sym+'(double *  P, double *  T, double *  x, double *  abml);',
-            'void CKABMS'+sym+'(double *  P, double *  T, double *  y, double *  abms);',
-
-            
-            'void CKWC'+sym+'(double *  T, double *  C, double *  wdot);',
-            'void CKWYP'+sym+'(double *  P, double *  T, double *  y, double *  wdot);',
-            'void CKWXP'+sym+'(double *  P, double *  T, double *  x, double *  wdot);',
-            'void CKWYR'+sym+'(double *  rho, double *  T, double *  y, double *  wdot);',
-            'void CKWXR'+sym+'(double *  rho, double *  T, double *  x, double *  wdot);',
-
-            
-            'void CKQC'+sym+'(double *  T, double *  C, double *  qdot);',
-            'void CKKFKR(double *  P, double *  T, double *  x, double *  q_f, double *  q_r);',
-            'void CKQYP'+sym+'(double *  P, double *  T, double *  y, double *  qdot);',
-            'void CKQXP'+sym+'(double *  P, double *  T, double *  x, double *  qdot);',
-            'void CKQYR'+sym+'(double *  rho, double *  T, double *  y, double *  qdot);',
-            'void CKQXR'+sym+'(double *  rho, double *  T, double *  x, double *  qdot);',
-            
-            'void CKNU'+sym+'(int * kdim, int * nuki);',
-            'void CKINU'+sym+'(int * i, int * nspec, int * ki, int * nu);',
-            'void CKNCF'+sym+'(int * ncf);',
-            
-            'void CKABE'+sym+'(double *  a, double *  b, double *  e );',
-            'void CKEQC'+sym+'(double *  T, double *  C , double *  eqcon );',
-            'void CKEQYP'+sym+'(double *  P, double *  T, double *  y, double *  eqcon);',
-            'void CKEQXP'+sym+'(double *  P, double *  T, double *  x, double *  eqcon);',
-            'void CKEQYR'+sym+'(double *  rho, double *  T, double *  y, double *  eqcon);',
-            'void CKEQXR'+sym+'(double *  rho, double *  T, double *  x, double *  eqcon);',
-            'void DWDOT(double *  J, double *  sc, double *  T, int * consP);',
-            #'#ifdef USE_PYJAC',
-            #'void DWDOT_PYJAC(double *  J, double *  sc, double *  Tp, double *  Press);',
-            #'#endif',
-            'void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);',
-            'void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);',
-            'void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);',
-            'void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);',
-            'void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * consP);',
-            'void SPARSITY_PREPROC_PRECOND_GPU(int * rowPtr, int * colIndx, int * consP);',
-            'void aJacobian(double *  J, double *  sc, double T, int consP);',
-            'void aJacobian_precond(double *  J, double *  sc, double T, int HP);',
-            'void dcvpRdT(double *  species, double *  tc);',
-            'void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);',
-            'void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);',
-            'void GET_REACTION_MAP(int *  rmap);',
-            self.line('vector version'),
-            'void vproductionRate(int npt, double *  wdot, double *  c, double *  T);',
-            'void VCKHMS'+sym+'(int *  np, double *  T, double *  ums);',
-            'void VCKPY'+sym+'(int *  np, double *  rho, double *  T, double *  y, double *  P);',
-            'void VCKWYR'+sym+'(int *  np, double *  rho, double *  T,',
-            '            double *  y,',
-            '            double *  wdot);',
-            'void VCKYTX'+sym+'(int *  np, double *  y, double *  x);',
-            'void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT);',
-            'void vcomp_gibbs(int npt, double *  g_RT, double *  tc);',
-            'void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT);',
-            
-            'void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);',
+            '#include "chemistry_file.H"'
             ]
-        nReactions = len(mechanism.reaction())
-        if nReactions <= 50:
-            self._rep += [
-                'void vcomp_wdot(int npt, double *  wdot, double *  mixture, double *  sc,',
-                '                double *  k_f_s, double *  Kc_s,',
-                '                double *  tc, double *  invT, double *  T);',
-                ]
-        else:
-            for i in range(0,nReactions,50):
-                self._rep += [
-                    'void vcomp_wdot_%d_%d(int npt, double *  wdot, double *  mixture, double *  sc,' % (i+1,min(i+50,nReactions)),
-                    '                double *  k_f_s, double *  Kc_s,',
-                    '                double *  tc, double *  invT, double *  T);',
-                    ]                
         return
 
 
-    def _main(self, mechanism):
-        self._write()
-        self._write()
-        self._write(self.line('optional test program'))
-        self._write('int main()')
-        self._write('{')
-        self._indent()
-
-        nSpecies = len(mechanism.species())
+    def _statics_chop(self,mechanism):
         nReactions = len(mechanism.reaction())
-
-        # declarations
-        self._write('int species;')
-        self._write('int reaction;')
-
-        self._write('double T;')
-        self._write('double q_dot[%d];' % nReactions)
-        self._write('double wdot[%d];' % nSpecies)
-        self._write('double sc[%d];' % nSpecies)
-        self._write('double uml[%d];' % nSpecies)
-        self._write('double rckdummy[%d];' % nSpecies)
-        self._write('int    ickdummy[%d];' % nSpecies)
-
-        # set the temperature
-        self._write()
-        self._write('T = 1000.0;')
-
-        # compute ckuml 
-        self._write()
-        self._write(self.line('compute the internal energy'))
-        self._write('CKUML(&T, ickdummy, rckdummy, uml);')
-        
-        # print
-        self._write()
-        self._write('for (species = 0; species < %d; ++species) {' % nSpecies)
-        self._indent()
-        self._write('printf(" e: %5d   %15.7e\\n", species+1, uml[species]);')
-        self._outdent()
-        self._write('}')
-
-
-        # compute the gibbs free energy
-        # self._write()
-        # self._write(self.line('compute the Gibbs free energy'))
-        # self._write('gibbs(g_RT, T);')
-
-        # compute the equilibrium constants
-        # self._write()
-        # self._write(self.line('compute the equilibrium constants'))
-        # self._write('equilibriumConstants(kc, g_RT, T);')
-
-        self._write('for (species = 0; species < %d; ++species) {' % nSpecies)
-        self._indent()
-        self._write('sc[species] = 1.0e6;')
-        self._outdent()
-        self._write('}')
-
-        # compute the production rates
-        self._write()
-        self._write(self.line('compute the production rate'))
-        self._write('productionRate(wdot, sc, T);')
-
-        # compute the progress rates
-        # self._write()
-        # self._write(self.line('compute the progress rates'))
-        # self._write('progressRate(q_dot, sc, T);')
-
-        # print
-        self._write()
-        self._write('for (species = 0; species < %d; ++species) {' % nSpecies)
-        self._indent()
-        self._write('printf("%5d   %15.7e\\n", species+1, wdot[species]);')
-        self._outdent()
-        self._write('}')
-
-        # print
-        # self._write()
-        # self._write('for (reaction = 0; reaction < %d; ++reaction) {' % nReactions)
-        # self._indent()
-        # self._write('printf("%5d | %15.7e\\n", reaction+1, q_dot[reaction]);')
-        # self._write('}')
-        # self._outdent()
-
-        # done
-        self._write()
-        self._write('return 0;')
-
-        self._outdent()
-        self._write('}')
-        return
-
-    def _ckinit(self, mechanism):
-
-        nElement = len(mechanism.element())
         nSpecies = len(mechanism.species())
-        nReactions = len(mechanism.reaction())
-        
+
+        ispecial   = self.reactionIndex[5:7]
+
+        nspecial   = ispecial[1]   - ispecial[0]
+
         self._write()
-        self._write(self.line(' Finalizes parameter database'))
-        self._write('void CKFINALIZE()')
+
+        self._write('#ifndef AMREX_USE_CUDA')
+        self._write('namespace thermo')
         self._write('{')
-        self._write('  for (int i=0; i<%d; ++i) {' % (nReactions))
-        self._write('    free(TB[i]); TB[i] = 0; ')
-        self._write('    free(TBid[i]); TBid[i] = 0;')
-        self._write('    nTB[i] = 0;')
+        self._indent()
+        self._write('double fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double low_A[%d], low_beta[%d], low_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double rev_A[%d], rev_beta[%d], rev_Ea[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double troe_a[%d],troe_Ts[%d], troe_Tss[%d], troe_Tsss[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions))
+        self._write('double sri_a[%d], sri_b[%d], sri_c[%d], sri_d[%d], sri_e[%d];'
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('double activation_units[%d], prefactor_units[%d], phase_units[%d];'
+                    % (nReactions,nReactions,nReactions))
+        self._write('int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('double *TB[%d];' 
+                    % (nReactions))
+
+        if nspecial > 0:  
+                self._write('double prefactor_units_rev[%d], activation_units_rev[%d];' 
+                            % (nReactions,nReactions))
+
+        self._write('std::vector<std::vector<double>> kiv(%d); ' % (nReactions))
+        self._write('std::vector<std::vector<double>> nuv(%d); ' % (nReactions))
+
         self._write()
-        self._write('    free(TB_DEF[i]); TB_DEF[i] = 0; ')
-        self._write('    free(TBid_DEF[i]); TBid_DEF[i] = 0;')
-        self._write('    nTB_DEF[i] = 0;')
-        self._write('  }')
+        self._write('double fwd_A_DEF[%d], fwd_beta_DEF[%d], fwd_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double low_A_DEF[%d], low_beta_DEF[%d], low_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double rev_A_DEF[%d], rev_beta_DEF[%d], rev_Ea_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions))
+        self._write('double troe_a_DEF[%d],troe_Ts_DEF[%d], troe_Tss_DEF[%d], troe_Tsss_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions))
+        self._write('double sri_a_DEF[%d], sri_b_DEF[%d], sri_c_DEF[%d], sri_d_DEF[%d], sri_e_DEF[%d];'
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('double activation_units_DEF[%d], prefactor_units_DEF[%d], phase_units_DEF[%d];'
+                    % (nReactions,nReactions,nReactions))
+        self._write('int is_PD_DEF[%d], troe_len_DEF[%d], sri_len_DEF[%d], nTB_DEF[%d], *TBid_DEF[%d];' 
+                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
+        self._write('double *TB_DEF[%d];' 
+                    % (nReactions))
+        self._write('std::vector<int> rxn_map;')
+
+        self._outdent()
+
+        self._write('};')
+
+        self._write()
+
+        self._write('using namespace thermo;')
+        self._write('#endif')
+        self._write()
+
+
+        self._write(self.line(' Inverse molecular weights'))
+        self._write(self.line(' TODO: check necessity on CPU'))
+        self._write('static AMREX_GPU_DEVICE_MANAGED double imw[%d] = {' %nSpecies )
+        self._indent()
+        for i in range(0,self.nSpecies):
+            species = self.species[i]
+            text = '1.0 / %f' % (species.weight)
+            if (i<self.nSpecies-1):
+               text += ',  '
+            else:
+               text += '};  '
+            self._write(text + self.line('%s' % species.symbol))
+        self._outdent()
+        self._write()
+
+        self._write(self.line(' Inverse molecular weights'))
+        self._write(self.line(' TODO: check necessity because redundant with molecularWeight'))
+        self._write('static AMREX_GPU_DEVICE_MANAGED double molecular_weights[%d] = {' %nSpecies )
+        self._indent()
+        for i in range(0,self.nSpecies):
+            species = self.species[i]
+            text = '%f' % (species.weight)
+            if (i<self.nSpecies-1):
+               text += ',  '
+            else:
+               text += '};  '
+            self._write(text + self.line('%s' % species.symbol))
+        self._outdent()
+        self._write()
+
+        self._write('AMREX_GPU_HOST_DEVICE')
+        self._write('void get_imw(double imw_new[]){')
+        ##self._write('#pragma unroll')
+        self._indent()
+        self._write('for(int i = 0; i<%d; ++i) imw_new[i] = imw[i];' %nSpecies )
+        self._outdent()
         self._write('}')
         self._write()
-        self._write(self.line(' Initializes parameter database'))
-        self._write('void CKINIT'+sym+'()')
-        self._write('{')
 
+        self._write(self.line(' TODO: check necessity because redundant with CKWT'))
+        self._write('AMREX_GPU_HOST_DEVICE')
+        self._write('void get_mw(double mw_new[]){')
+        ##self._write('#pragma unroll')
         self._indent()
-
-        # build reverse reaction map
-        rmap = {}
-        for i, reaction in zip(range(nReactions), mechanism.reaction()):
-            rmap[reaction.orig_id-1] = i
-
-        for j in range(nReactions):
-            reaction = mechanism.reaction()[rmap[j]]
-            id = reaction.id - 1
-
-            ki = []
-            nu = []
-            for symbol, coefficient in reaction.reactants:
-                ki.append(mechanism.species(symbol).id)
-                nu.append(-coefficient)
-            for symbol, coefficient in reaction.products:
-                ki.append(mechanism.species(symbol).id)
-                nu.append(coefficient)
-
-            self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-            kistr = "{" + ','.join(str(x) for x in ki) + "}"
-            nustr = "{" + ','.join(str(x) for x in nu) + "}"
-            self._write("kiv[%d] = %s;" % (id,kistr))
-            self._write("nuv[%d] = %s;" % (id,nustr))
-
-            A, beta, E = reaction.arrhenius
-            self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-            self._write("fwd_A[%d]     = %.17g;" % (id,A))
-            self._write("fwd_beta[%d]  = %.17g;" % (id,beta))
-            self._write("fwd_Ea[%d]    = %.17g;" % (id,E))
-
-            if (reaction.rev):
-                Ar, betar, Er = reaction.rev
-                self._write("rev_A[%d]     = %.17g;" % (id,Ar))
-                self._write("rev_beta[%d]  = %.17g;" % (id,betar))
-                self._write("rev_Ea[%d]    = %.17g;" % (id,Er))
-                dim_rev       = self._phaseSpaceUnits(reaction.products)
-                if not thirdBody:
-                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
-                elif not low:
-                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], -dim_rev)
-                else:
-                    uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
-                self._write("prefactor_units_rev[%d]  = %.17g;" % (id,uc_rev.value))
-                aeuc_rev = self._activationEnergyUnits(reaction.units["activation"])
-                self._write("activation_units_rev[%d] = %.17g;" % (id,aeuc_rev / Rc / kelvin))
-
-            dim = self._phaseSpaceUnits(reaction.reactants)
-            thirdBody = reaction.thirdBody
-            low = reaction.low
-            if not thirdBody:
-                uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 3 !PD, !TB
-            elif not low:
-                uc = self._prefactorUnits(reaction.units["prefactor"], -dim) # Case 2 !PD, TB
-            else:
-                uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 1 PD, TB
-                low_A, low_beta, low_E = low
-                self._write("low_A[%d]     = %.17g;" % (id,low_A))
-                self._write("low_beta[%d]  = %.17g;" % (id,low_beta))
-                self._write("low_Ea[%d]    = %.17g;" % (id,low_E))
-                if reaction.troe:
-                    troe = reaction.troe
-                    ntroe = len(troe)
-                    is_troe = True
-                    self._write("troe_a[%d]    = %.17g;" % (id,troe[0]))
-                    if ntroe>1:
-                        self._write("troe_Tsss[%d] = %.17g;" % (id,troe[1]))
-                    if ntroe>2:
-                        self._write("troe_Ts[%d]   = %.17g;" % (id,troe[2]))
-                    if ntroe>3:
-                        self._write("troe_Tss[%d]  = %.17g;" % (id,troe[3]))
-                    self._write("troe_len[%d]  = %d;" % (id,ntroe))
-                if reaction.sri:
-                    sri = reaction.sri
-                    nsri = len(sri)
-                    is_sri = True
-                    self._write("sri_a[%d]     = %.17g;" % (id,sri[0]))
-                    if nsri>1:
-                        self._write("sri_b[%d]     = %.17g;" % (id,sri[1]))
-                    if nsri>2:
-                        self._write("sri_c[%d]     = %.17g;" % (id,sri[2]))
-                    if nsri>3:
-                        self._write("sri_d[%d]     = %.17g;" % (id,sri[3]))
-                    if nsri>4:
-                        self._write("sri_e[%d]     = %.17g;" % (id,sri[4]))
-                    self._write("sri_len[%d]   = %d;" % (id,nsri))
-
-            self._write("prefactor_units[%d]  = %.17g;" % (id,uc.value))
-            aeuc = self._activationEnergyUnits(reaction.units["activation"])
-            self._write("activation_units[%d] = %.17g;" % (id,aeuc / Rc / kelvin))
-            self._write("phase_units[%d]      = 1e-%d;" % (id,dim*6))
-
-            if low:
-                self._write("is_PD[%d] = 1;" % (id) )
-            else:
-                self._write("is_PD[%d] = 0;" % (id) )
-
-
-            if thirdBody:
-                efficiencies = reaction.efficiencies
-                if (len(efficiencies) > 1):
-                    self._write("nTB[%d] = %d;" % (id, len(efficiencies)))
-                    self._write("TB[%d] = (double *) malloc(%d * sizeof(double));" % (id, len(efficiencies)))
-                    self._write("TBid[%d] = (int *) malloc(%d * sizeof(int));" % (id, len(efficiencies)))
-                    for i, eff in enumerate(efficiencies):
-                        symbol, efficiency = eff
-                        self._write("TBid[%d][%d] = %.17g; TB[%d][%d] = %.17g; // %s"
-                                    % (id, i, mechanism.species(symbol).id, id, i, efficiency, symbol ))
-                else:
-                    self._write("nTB[%d] = 0;" % (id))
-            else:
-                self._write("nTB[%d] = 0;" % (id))
-
-            self._write()
-
-        self._write("SetAllDefaults();")
+        self._write('for(int i = 0; i<%d; ++i) mw_new[i] = molecular_weights[i];' %nSpecies )
         self._outdent()
-        self._write("}")
+        self._write('}')
         self._write()
-            
+
+        self._write()
+
         return
 
 
@@ -1866,8 +695,6 @@ class CPickler(CMill):
         self._write()
 
         self._indent()
-
-
 
         # build reverse reaction map
         rmap = {}
@@ -2218,135 +1045,32 @@ class CPickler(CMill):
         return
 
 
-    def _thermo(self, mechanism):
-        speciesInfo = self._analyzeThermodynamics(mechanism)
 
-        self._gibbs(speciesInfo)
-        self._helmholtz(speciesInfo)
-        self._cv(speciesInfo)
-        self._cp(speciesInfo)
-        self._speciesInternalEnergy(speciesInfo)
-        self._speciesEnthalpy(speciesInfo)
-        self._speciesEntropy(speciesInfo)
+    ################################
+    # CHEMKIN WRAPPERS
+    ################################
 
-        return
-
-    def _thermo_GPU(self, mechanism):
-        speciesInfo = self._analyzeThermodynamics(mechanism)
-
-        self._gibbs_GPU(speciesInfo)
-        self._helmholtz_GPU(speciesInfo)
-        ##self._dcvpRdT_GPU(speciesInfo)
-        self._cv_GPU(speciesInfo)
-        self._cp_GPU(speciesInfo)
-        self._speciesInternalEnergy_GPU(speciesInfo)
-        self._speciesEnthalpy_GPU(speciesInfo)
-        self._speciesEntropy_GPU(speciesInfo)
-
-
-        return
-
-    def _trans(self, mechanism):
-        speciesTransport = self._analyzeTransport(mechanism)
-        NLITE=0
-        idxLightSpecs = []
-        for spec in self.species:
-            if spec.weight < 5.0:
-                NLITE+=1
-                idxLightSpecs.append(spec.id)
-        self._miscTransInfo(KK=self.nSpecies, NLITE=NLITE, do_declarations=True)
-        self._wt(True)
-        self._eps(mechanism, speciesTransport, True)
-        self._sig(mechanism, speciesTransport, True)
-        self._dip(mechanism, speciesTransport, True)
-        self._pol(mechanism, speciesTransport, True)
-        self._zrot(mechanism, speciesTransport, True)
-        self._nlin(mechanism, speciesTransport, True)
-
-        self._viscosity(speciesTransport, True, NTFit=50)
-        self._diffcoefs(speciesTransport, True, NTFit=50)
-        self._lightSpecs(idxLightSpecs, True)
-        self._thermaldiffratios(speciesTransport, idxLightSpecs, True, NTFit=50)
-
-        return
-
-
-    def _trans_chop(self, mechanism):
-        speciesTransport = self._analyzeTransport(mechanism)
-        NLITE=0
-        idxLightSpecs = []
-        for spec in self.species:
-            if spec.weight < 5.0:
-                NLITE+=1
-                idxLightSpecs.append(spec.id)
-        self._miscTransInfo(KK=self.nSpecies, NLITE=NLITE, do_declarations=False)
-        self._wt(False)
-        self._eps(mechanism, speciesTransport, False)
-        self._sig(mechanism, speciesTransport, False)
-        self._dip(mechanism, speciesTransport, False)
-        self._pol(mechanism, speciesTransport, False)
-        self._zrot(mechanism, speciesTransport, False)
-        self._nlin(mechanism, speciesTransport, False)
-
-        self._viscosity(speciesTransport, False, NTFit=50)
-        self._diffcoefs(speciesTransport, False, NTFit=50)
-        self._lightSpecs(idxLightSpecs, False)
-        self._thermaldiffratios(speciesTransport, idxLightSpecs, False, NTFit=50)
-
-        return
-
-
-    def _dthermodT(self, mechanism):
-        speciesInfo = self._analyzeThermodynamics(mechanism)
-        self._dcvpdT(speciesInfo)
+    def _ckindx(self, mechanism):
+        self._write()
+        self._write()
+        self._write(self.line('A few mechanism parameters'))
+        self._write('void CKINDX'+sym+'(int * mm, int * kk, int * ii, int * nfit)')
+        self._write('{')
+        self._indent()
+        self._write('*mm = %d;' % len(mechanism.element()))
+        self._write('*kk = %d;' % len(mechanism.species()))
+        self._write('*ii = %d;' % len(mechanism.reaction()))
+        self._write('*nfit = -1; ' + self.line(
+            'Why do you need this anyway ? '))
+        
+        # done
+        self._outdent()
+        self._write('}')
         return
 
 
     def _ckxnum(self, mechanism):
         self._write()
-        # self._write()
-        # self._write(self.line(' strtok_r: re-entrant (threadsafe) version of strtok, helper function for tokenizing strings '))
-        # self._write('char *strtok_r(char *s, const char *delim, char **save_ptr)')
-        # self._write('{')
-        # self._indent()
-        # self._write('char *token;')
-        # self._write()
-        # self._write('if (s == NULL)')
-        # self._indent()
-        # self._write('s = *save_ptr;')
-        # self._outdent()
-        # self._write()
-        # self._write('/* Scan leading delimiters.  */')
-        # self._write('s += strspn (s, delim);')
-        # self._write('if (*s == \'\\0\')')
-        # self._write('{')
-        # self._indent()
-        # self._write('*save_ptr = s;')
-        # self._write('return NULL;')
-        # self._outdent()
-        # self._write('}')
-        # self._write()
-        # self._write('/* Find the end of the token.  */')
-        # self._write('token = s;')
-        # self._write('s = strpbrk (token, delim);')
-        # self._write('if (s == NULL)')
-        # self._indent()
-        # self._write('/* This token finishes the string.  */')
-        # self._write('*save_ptr = __rawmemchr (token, \'\\0\');')
-        # self._outdent()
-        # self._write('else')
-        # self._write('{')
-        # self._indent()
-        # self._write('/* Terminate the token and make *SAVE_PTR point past it.  */')
-        # self._write('*s = \'\\0\';')
-        # self._write('*save_ptr = s + 1;')
-        # self._outdent()
-        # self._write('}')
-        # self._write('return token;')
-        # self._outdent()
-        # self._write('}')
-        # self._write()
-
         self._write()
         self._write()
         self._write(self.line(' ckxnum... for parsing strings '))
@@ -2392,6 +1116,7 @@ class CPickler(CMill):
         self._write('}')
         return
 
+
     def _cksnum(self, mechanism):
         self._write()
         self._write()
@@ -2407,28 +1132,9 @@ class CPickler(CMill):
         self._write('}')
         return
 
-    def _ckrp(self, mechanism):
-        self._write()
-        self._write()
-        self._write(
-            self.line(' Returns R, Rc, Patm' ))
-        self._write('void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa)')
-        self._write('{')
-        self._indent()
-        
-        self._write(' *ru  = %1.14e; ' % (R * mole * kelvin / erg))
-        self._write(' *ruc = %.20f; ' % (Rc * mole * kelvin / cal))
-        self._write(' *pa  = %g; ' % (Patm) )
-        
-        # done
-        self._outdent()
-        self._write('}')
-        return
 
     def _cksyme_str(self, mechanism):
-
         nElement = len(mechanism.element())
-
         self._write()
         self._write()
         self._write(
@@ -2436,17 +1142,17 @@ class CPickler(CMill):
         self._write('void CKSYME_STR'+sym+'(amrex::Vector<std::string>& ename)')
         self._write('{')
         self._indent()
+        self._write('ename.resize(%d);' % nElement)
         for element in mechanism.element():
-            self._write('ename.push_back("%s");' % element.symbol)
+            self._write('ename[%d] = "%s";' %(element.id, element.symbol))
         # done
         self._outdent()
         self._write('}')
         return
 
-    def _cksyme(self, mechanism):
 
+    def _cksyme(self, mechanism):
         nElement = len(mechanism.element())
-        
         self._write()
         self._write()
         self._write(
@@ -2479,11 +1185,10 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         return
+        
 
     def _cksyms_str(self, mechanism):
-
         nSpecies = len(mechanism.species())  
-
         self._write() 
         self._write()
         self._write(
@@ -2491,17 +1196,17 @@ class CPickler(CMill):
         self._write('void CKSYMS_STR'+sym+'(amrex::Vector<std::string>& kname)')
         self._write('{')
         self._indent()
+        self._write('kname.resize(%d);' % nSpecies)
         for species in mechanism.species():
-            self._write('kname.push_back("%s");' % species.symbol)
+            self._write('kname[%d] = "%s";' %(species.id, species.symbol))
 
         self._outdent() 
         self._write('}') 
         return
 
-    def _cksyms(self, mechanism):
 
+    def _cksyms(self, mechanism):
         nSpecies = len(mechanism.species())
-        
         self._write()
         self._write()
         self._write(
@@ -2536,25 +1241,25 @@ class CPickler(CMill):
         return
 
 
-    def _ckindx(self, mechanism):
+    def _ckrp(self, mechanism):
         self._write()
         self._write()
-        self._write(self.line('A few mechanism parameters'))
-        self._write('void CKINDX'+sym+'(int * mm, int * kk, int * ii, int * nfit)')
+        self._write(
+            self.line(' Returns R, Rc, Patm' ))
+        self._write('void CKRP'+sym+'(double *  ru, double *  ruc, double *  pa)')
         self._write('{')
         self._indent()
-        self._write('*mm = %d;' % len(mechanism.element()))
-        self._write('*kk = %d;' % len(mechanism.species()))
-        self._write('*ii = %d;' % len(mechanism.reaction()))
-        self._write('*nfit = -1; ' + self.line(
-            'Why do you need this anyway ? '))
+        
+        self._write(' *ru  = %1.14e; ' % (R * mole * kelvin / erg))
+        self._write(' *ruc = %.20f; ' % (Rc * mole * kelvin / cal))
+        self._write(' *pa  = %g; ' % (Patm) )
         
         # done
         self._outdent()
         self._write('}')
         return
         
-        
+
     def _ckpx(self, mechanism):
         self._write()
         self._write()
@@ -2572,7 +1277,7 @@ class CPickler(CMill):
                 species.id, species.weight) + self.line('%s' % species.symbol))
 
         self._write(
-            '*P = *rho * %g * (*T) / XW; ' % (R*kelvin*mole/erg)
+            '*P = *rho * %1.14e * (*T) / XW; ' % (R*kelvin*mole/erg)
             + self.line('P = rho*R*T/W'))
         
         self._write()
@@ -2581,6 +1286,7 @@ class CPickler(CMill):
 
         self._write('}')
         return
+
 
     def _ckpy(self, mechanism):
         self._write()
@@ -2599,7 +1305,7 @@ class CPickler(CMill):
 
         self.line('YOW holds the reciprocal of the mean molecular wt')
         self._write(
-            '*P = *rho * %g * (*T) * YOW; ' % (R*kelvin*mole/erg)
+            '*P = *rho * %1.14e * (*T) * YOW; ' % (R*kelvin*mole/erg)
             + self.line('P = rho*R*T/W'))
         
         
@@ -2644,7 +1350,7 @@ class CPickler(CMill):
         self._write('for (int i=0; i<(*np); i++) {')
         self._indent()
         self._write(
-            'P[i] = rho[i] * %g * T[i] * YOW[i]; ' % (R*kelvin*mole/erg)
+            'P[i] = rho[i] * %1.14e * T[i] * YOW[i]; ' % (R*kelvin*mole/erg)
             + self.line('P = rho*R*T/W'))
         self._outdent()
         self._write('}')
@@ -2657,7 +1363,8 @@ class CPickler(CMill):
         self._write('#endif')
 
         return 
- 
+
+
     def _ckpc(self, mechanism):
         self._write()
         self._write()
@@ -2687,7 +1394,7 @@ class CPickler(CMill):
 
         self.line('W/sumC holds the mean molecular wt')
         self._write(
-            '*P = *rho * %g * (*T) * sumC / W; ' % (R*kelvin*mole/erg)
+            '*P = *rho * %1.14e * (*T) * sumC / W; ' % (R*kelvin*mole/erg)
             + self.line('P = rho*R*T/W'))
         
         self._write()
@@ -2697,6 +1404,7 @@ class CPickler(CMill):
         self._write('}')
 
         return 
+
 
     def _ckrhox(self, mechanism):
         self._write()
@@ -2715,7 +1423,7 @@ class CPickler(CMill):
                 species.id, species.weight) + self.line('%s' % species.symbol))
 
         self._write(
-            '*rho = *P * XW / (%g * (*T)); ' % (R*kelvin*mole/erg)
+            '*rho = *P * XW / (%1.14e * (*T)); ' % (R*kelvin*mole/erg)
             + self.line('rho = P*W/(R*T)'))
         
         self._write()
@@ -2724,6 +1432,7 @@ class CPickler(CMill):
 
         self._write('}')
         return
+
 
     def _ckrhoy(self, mechanism):
         species = self.species
@@ -2750,11 +1459,12 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         self._write('')
-        self._write('*rho = *P / (%g * (*T) * YOW);' % (R * mole * kelvin / erg) + self.line('rho = P*W/(R*T)'))
+        self._write('*rho = *P / (%1.14e * (*T) * YOW);' % (R * mole * kelvin / erg) + self.line('rho = P*W/(R*T)'))
         self._write('return;')
         self._outdent()
         self._write('}')
         return 
+
 
     def _ckrhoc(self, mechanism):
         self._write()
@@ -2784,7 +1494,7 @@ class CPickler(CMill):
 
         self.line('W/sumC holds the mean molecular wt')
         self._write(
-            '*rho = *P * W / (sumC * (*T) * %g); ' % (R*kelvin*mole/erg)
+            '*rho = *P * W / (sumC * (*T) * %1.14e); ' % (R*kelvin*mole/erg)
             + self.line('rho = PW/(R*T)'))
         
         self._write()
@@ -2795,42 +1505,383 @@ class CPickler(CMill):
 
         return 
 
-    def _ckwt(self, mechanism):
 
+    def _ckwt(self, mechanism):
         self._write()
         self._write()
         self._write(self.line('get molecular weight for all species'))
         self._write('void CKWT'+sym+'( double *  wt)')
         self._write('{')
         self._indent()
-
         # call molecularWeight
         self._write('get_mw(wt);')
-        
         self._outdent()
-
         self._write('}')
-
         return
+
       
     def _ckawt(self, mechanism):
-
         self._write()
         self._write()
         self._write(self.line('get atomic weight for all elements'))
         self._write('void CKAWT'+sym+'( double *  awt)')
         self._write('{')
         self._indent()
-
         # call atomicWeight
         self._write('atomicWeight(awt);')
-        
         self._outdent()
-
         self._write('}')
         self._write()
+        return
+
+
+    def _ckmmwy(self, mechanism):
+        self._write()
+        self._write(self.line('given y[species]: mass fractions'))
+        self._write(self.line('returns mean molecular weight (gm/mole)'))
+        self._write('AMREX_GPU_HOST_DEVICE void CKMMWY'+sym+'(double *  y,  double *  wtm)')
+        self._write('{')
+        self._indent()
+        species = self.species
+        nSpec = len(species)
+        self._write('double YOW = 0;')
+        self._write('double tmp[%d];' % (nSpec))
+        self._write('')
+        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
+        self._write('{')
+        self._indent()
+        self._write('tmp[i] = y[i]*imw[i];')
+        self._outdent()
+        self._write('}')
+        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
+        self._write('{')
+        self._indent()
+        self._write('YOW += tmp[i];')
+        self._outdent()
+        self._write('}')
+        self._write('')
+        self._write('*wtm = 1.0 / YOW;')
+        self._write('return;')
+        self._outdent()
+        self._write('}')
+
+        return 
+ 
+
+    def _ckmmwx(self, mechanism):
+        self._write()
+        self._write()
+        self._write(self.line('given x[species]: mole fractions'))
+        self._write(self.line('returns mean molecular weight (gm/mole)'))
+        self._write('void CKMMWX'+sym+'(double *  x,  double *  wtm)')
+        self._write('{')
+        self._indent()
+        self._write('double XW = 0;'+self.line(' see Eq 4 in CK Manual'))
+        # molecular weights of all species
+        for species in self.species:
+            self._write('XW += x[%d]*%f; ' % (
+                species.id, species.weight) + self.line('%s' % species.symbol))
+        self._write('*wtm = XW;')
+        self._write()
+        self._write('return;')
+        self._outdent()
+        self._write('}')
+
+        return 
+
+ 
+    def _ckmmwc(self, mechanism):
+        self._write()
+        self._write()
+        self._write(self.line('given c[species]: molar concentration'))
+        self._write(self.line('returns mean molecular weight (gm/mole)'))
+        self._write('void CKMMWC'+sym+'(double *  c,  double *  wtm)')
+        self._write('{')
+        self._indent()
+        self._write('int id; ' + self.line('loop counter'))
+        self._write(self.line('See Eq 5 in CK Manual'))
+        self._write('double W = 0;')
+        self._write('double sumC = 0;')
+        # molecular weights of all species
+        for species in self.species:
+            self._write('W += c[%d]*%f; ' % (
+                species.id, species.weight) + self.line('%s' % species.symbol))
+        self._write()
+        self._write('for (id = 0; id < %d; ++id) {' % self.nSpecies)
+        self._indent()
+        self._write('sumC += c[id];')
+        self._outdent()
+        self._write('}')
+        self._write(self.line(' CK provides no guard against divison by zero'))
+        self._write('*wtm = W/sumC;')
+        self._write()
+        self._write('return;')
+        self._outdent()
+        self._write('}')
+
+        return 
+
+
+    def _ckytx(self, mechanism):
+        self._write()
+        self._write()
+        self._write(self.line(
+            'convert y[species] (mass fracs) to x[species] (mole fracs)'))
+        self._write('AMREX_GPU_HOST_DEVICE void CKYTX'+sym+'(double *  y,  double *  x)')
+        self._write('{')
+        self._indent()
+
+        species = self.species
+        nSpec = len(species)
+        self._write('double YOW = 0;')
+        self._write('double tmp[%d];' % (nSpec))
+        self._write('')
+        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
+        self._write('{')
+        self._indent()
+        self._write('tmp[i] = y[i]*imw[i];')
+        self._outdent()
+        self._write('}')
+        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
+        self._write('{')
+        self._indent()
+        self._write('YOW += tmp[i];')
+        self._outdent()
+        self._write('}')
+        self._write('')
+        self._write('double YOWINV = 1.0/YOW;')
+        self._write('')
+        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
+        self._write('{')
+        self._indent()
+        self._write('x[i] = y[i]*imw[i]*YOWINV;')
+        self._outdent()
+        self._write('}')
+        self._write('return;')
+        self._outdent()
+        self._write('}')
+
+        return 
+
+ 
+    def _vckytx(self, mechanism):
+        self._write()
+        self._write()
+        self._write('#ifndef AMREX_USE_CUDA')
+        self._write(self.line(
+            'convert y[npoints*species] (mass fracs) to x[npoints*species] (mole fracs)'))
+        self._write('void VCKYTX'+sym+'(int *  np, double *  y,  double *  x)')
+        self._write('{')
+        self._indent()
+
+        species = self.species
+        nSpec = len(species)
+        self._write('double YOW[*np];')
+        self._write('for (int i=0; i<(*np); i++) {')
+        self._indent()
+        self._write('YOW[i] = 0.0;')
+        self._outdent()
+        self._write('}')        
+        self._write('')
+        self._write('for (int n=0; n<%d; n++) {' % (nSpec))
+        self._indent()
+        self._write('for (int i=0; i<(*np); i++) {')
+        self._indent()
+        self._write('x[n*(*np)+i] = y[n*(*np)+i] * imw[n];')
+        self._write('YOW[i] += x[n*(*np)+i];')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+
+        self._write('')
+
+        self._write('for (int i=0; i<(*np); i++) {')
+        self._indent()
+        self._write('YOW[i] = 1.0/YOW[i];')
+        self._outdent()
+        self._write('}')
+
+        self._write('')
+        
+        self._write('for (int n=0; n<%d; n++) {' % (nSpec))
+        self._indent()
+        self._write('for (int i=0; i<(*np); i++) {')
+        self._indent()
+        self._write('x[n*(*np)+i] *=  YOW[i];')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._write('#else') 
+        self._write(self.line('TODO: remove this on GPU'))
+        self._write('void VCKYTX'+sym+'(int *  np, double *  y,  double *  x)')
+        self._write('{')
+        self._write('}')
+        self._write('#endif') 
+
+        return 
+
+
+    def _ckytcp(self, mechanism):
+        self._write()
+        self._write()
+        self._write(self.line(
+            'convert y[species] (mass fracs) to c[species] (molar conc)'))
+        self._write('void CKYTCP'+sym+'(double *  P, double *  T, double *  y,  double *  c)')
+        self._write('{')
+        self._indent()
+
+        species = self.species
+        nSpec = len(species)
+        self._write('double YOW = 0;')
+        self._write('double PWORT;')
+        self._write('')
+        self._write(self.line('Compute inverse of mean molecular wt first'))
+        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
+        self._write('{')
+        self._indent()
+        self._write('c[i] = y[i]*imw[i];')
+        self._outdent()
+        self._write('}')
+        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
+        self._write('{')
+        self._indent()
+        self._write('YOW += c[i];')
+        self._outdent()
+        self._write('}')
+        self._write('')
+        self._write(self.line('PW/RT (see Eq. 7)'))
+        self._write('PWORT = (*P)/(YOW * %1.14e * (*T)); ' % (R*kelvin*mole/erg) )
+
+        # now compute conversion
+        self._write(self.line('Now compute conversion'))
+        self._write('')
+        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
+        self._write('{')
+        self._indent()
+        self._write('c[i] = PWORT * y[i] * imw[i];')
+        self._outdent()
+        self._write('}')
+        self._write('return;')
+        self._outdent()
+        self._write('}')
+
+        return 
+
+
+    def _ckytcr(self, mechanism):
+        self._write()
+        self._write()
+        self._write(self.line(
+            'convert y[species] (mass fracs) to c[species] (molar conc)'))
+        self._write('AMREX_GPU_HOST_DEVICE void CKYTCR'+sym+'(double *  rho, double *  T, double *  y,  double *  c)')
+        self._write('{')
+        self._indent()
+        species = self.species
+        nSpec = len(species)
+        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
+        self._write('{')
+        self._indent()
+        self._write('c[i] = (*rho)  * y[i] * imw[i];')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+
+        return 
+
+
+
+    #Pieces for mechanism.h#
+    def _print_mech_header(self, mechanism):
+        self._write()
+        self._write("#ifndef MECHANISM_h")
+        self._write("#define MECHANISM_h")
+        self._write()
+        self._write("#if 0")
+        self._write("/* Elements")
+        nb_elem = 0
+        for element in mechanism.element():
+            self._write('%d  %s' % (element.id, element.symbol) )
+            nb_elem += 1
+        self._write('*/')
+        self._write("#endif")
+        self._write()
+        self._write('/* Species */')
+        nb_spec = 0
+        for species in mechanism.species():
+            s = species.symbol.strip()
+            # Ionic species
+            if s[-1] == '-': s = s[:-1] + 'n'
+            if s[-1] == '+': s = s[:-1] + 'p'
+            # Excited species
+            s = s.replace('*', 'D')
+            # Remove other characters not allowed in preprocessor defines
+            s = s.replace('-', '').replace('(','').replace(')','')
+            self._write('#define %s_ID %d' % (s, species.id))
+            nb_spec += 1
+        self._write()
+        self._write("#define NUM_ELEMENTS %d" % (nb_elem))
+        self._write("#define NUM_SPECIES %d" % (nb_spec))
+        self._write("#define NUM_REACTIONS %d" %(len(mechanism.reaction())))
+        self._write()
+        self._write("#define NUM_FIT 4")
+        self._write("#endif")
 
         return
+
+    #Pieces for mechanism.h#
+
+
+
+    def _thermo_GPU(self, mechanism):
+        speciesInfo = self._analyzeThermodynamics(mechanism)
+
+        self._gibbs_GPU(speciesInfo)
+        self._helmholtz_GPU(speciesInfo)
+        ##self._dcvpRdT_GPU(speciesInfo)
+        self._cv_GPU(speciesInfo)
+        self._cp_GPU(speciesInfo)
+        self._speciesInternalEnergy_GPU(speciesInfo)
+        self._speciesEnthalpy_GPU(speciesInfo)
+        self._speciesEntropy_GPU(speciesInfo)
+
+        return
+
+
+    def _trans_chop(self, mechanism):
+        speciesTransport = self._analyzeTransport(mechanism)
+        NLITE=0
+        idxLightSpecs = []
+        for spec in self.species:
+            if spec.weight < 5.0:
+                NLITE+=1
+                idxLightSpecs.append(spec.id)
+        self._miscTransInfo(KK=self.nSpecies, NLITE=NLITE, do_declarations=False)
+        self._wt(False)
+        self._eps(mechanism, speciesTransport, False)
+        self._sig(mechanism, speciesTransport, False)
+        self._dip(mechanism, speciesTransport, False)
+        self._pol(mechanism, speciesTransport, False)
+        self._zrot(mechanism, speciesTransport, False)
+        self._nlin(mechanism, speciesTransport, False)
+
+        self._viscosity(speciesTransport, False, NTFit=50)
+        self._diffcoefs(speciesTransport, False, NTFit=50)
+        self._lightSpecs(idxLightSpecs, False)
+        self._thermaldiffratios(speciesTransport, idxLightSpecs, False, NTFit=50)
+
+        return
+
+
+    def _dthermodT(self, mechanism):
+        speciesInfo = self._analyzeThermodynamics(mechanism)
+        self._dcvpdT(speciesInfo)
+        return
+
       
     def _ckcvml(self, mechanism):
         self._write()
@@ -2859,7 +1910,7 @@ class CPickler(CMill):
         self._write(self.line('convert to chemkin units'))
         self._write('for (id = 0; id < %d; ++id) {' % self.nSpecies)
         self._indent()
-        self._write('cvml[id] *= %g;' % (R*kelvin*mole/erg) )
+        self._write('cvml[id] *= %1.14e;' % (R*kelvin*mole/erg) )
         self._outdent()
         self._write('}')
        
@@ -2868,6 +1919,7 @@ class CPickler(CMill):
         self._write('}')
 
         return
+
        
     def _ckcpml(self, mechanism):
         self._write()
@@ -2896,7 +1948,7 @@ class CPickler(CMill):
         self._write(self.line('convert to chemkin units'))
         self._write('for (id = 0; id < %d; ++id) {' % self.nSpecies)
         self._indent()
-        self._write('cpml[id] *= %g;' % (R*kelvin*mole/erg) )
+        self._write('cpml[id] *= %1.14e;' % (R*kelvin*mole/erg) )
         self._outdent()
         self._write('}')
        
@@ -2925,7 +1977,7 @@ class CPickler(CMill):
             'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2946,6 +1998,7 @@ class CPickler(CMill):
 
         return
       
+
     def _ckhml(self, mechanism):
         self._write()
         self._write()
@@ -2965,7 +2018,7 @@ class CPickler(CMill):
             'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -2986,6 +2039,7 @@ class CPickler(CMill):
 
         return
     
+
     def _ckgml(self, mechanism):
         self._write()
         self._write()
@@ -3005,7 +2059,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -3025,6 +2079,7 @@ class CPickler(CMill):
         self._write('}')
 
         return
+
     
     def _ckaml(self, mechanism):
         self._write()
@@ -3045,7 +2100,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -3065,6 +2120,7 @@ class CPickler(CMill):
         self._write('}')
 
         return
+
    
     def _cksml(self, mechanism):
         self._write()
@@ -3092,7 +2148,7 @@ class CPickler(CMill):
         self._write(self.line('convert to chemkin units'))
         self._write('for (id = 0; id < %d; ++id) {' % self.nSpecies)
         self._indent()
-        self._write('sml[id] *= %g;' % (R*kelvin*mole/erg) )
+        self._write('sml[id] *= %1.14e;' % (R*kelvin*mole/erg) )
         self._outdent()
         self._write('}')
        
@@ -3101,6 +2157,7 @@ class CPickler(CMill):
         self._write('}')
 
         return
+
  
     def _ckums(self, mechanism):
         self._write()
@@ -3118,7 +2175,7 @@ class CPickler(CMill):
             'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -3154,7 +2211,7 @@ class CPickler(CMill):
             'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -3173,6 +2230,7 @@ class CPickler(CMill):
         self._write('}')
 
         return
+
 
     def _vckhms(self, mechanism):
         self._write()
@@ -3215,7 +2273,7 @@ class CPickler(CMill):
         self._indent()
         self._write('for (int i=0; i<(*np); i++) {')
         self._indent()
-        self._write('hms[n*(*np)+i] *= %g * T[i] * imw[n];' % (R*kelvin*mole/erg))
+        self._write('hms[n*(*np)+i] *= %1.14e * T[i] * imw[n];' % (R*kelvin*mole/erg))
         self._outdent()
         self._write('}')
         self._outdent()
@@ -3248,7 +2306,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -3284,7 +2342,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -3332,12 +2390,12 @@ class CPickler(CMill):
             self._write('cvms[%d] *= %20.15e; ' % (
                 species.id, ROW) + self.line('%s' % species.symbol))
 
-       
         self._outdent()
 
         self._write('}')
 
         return
+
 
     def _ckcpms(self, mechanism):
         self._write()
@@ -3367,12 +2425,12 @@ class CPickler(CMill):
             self._write('cpms[%d] *= %20.15e; ' % (
                 species.id, ROW) + self.line('%s' % species.symbol))
 
-       
         self._outdent()
 
         self._write('}')
 
         return
+
 
     def _cksms(self, mechanism):
         self._write()
@@ -3401,12 +2459,12 @@ class CPickler(CMill):
             self._write('sms[%d] *= %20.15e; ' % (
                 species.id, ROW) + self.line('%s' % species.symbol))
 
-       
         self._outdent()
 
         self._write('}')
 
         return
+
     
     def _ckcpbl(self, mechanism):
         self._write()
@@ -3442,13 +2500,14 @@ class CPickler(CMill):
         self._write('}')
 
         self._write()
-        self._write('*cpbl = result * %g;' % (R*kelvin*mole/erg) )
+        self._write('*cpbl = result * %1.14e;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
         self._write('}')
 
         return
+
  
     def _ckcpbs(self, mechanism):
         self._write()
@@ -3491,13 +2550,14 @@ class CPickler(CMill):
         self._write('}')
 
         self._write()
-        self._write('*cpbs = result * %g;' % (R*kelvin*mole/erg) )
+        self._write('*cpbs = result * %1.14e;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
         self._write('}')
 
         return
+
 
     def _ckcvbl(self, mechanism):
         self._write()
@@ -3533,7 +2593,7 @@ class CPickler(CMill):
         self._write('}')
 
         self._write()
-        self._write('*cvbl = result * %g;' % (R*kelvin*mole/erg) )
+        self._write('*cvbl = result * %1.14e;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
@@ -3571,7 +2631,7 @@ class CPickler(CMill):
                 species.id, species.id, species.id) + self.line('%s' % species.symbol))
 
         self._write()
-        self._write('*cvbs = result * %g;' % (R*kelvin*mole/erg) )
+        self._write('*cvbs = result * %1.14e;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
@@ -3600,7 +2660,7 @@ class CPickler(CMill):
         self._write(
             'double hml[%d]; ' % self.nSpecies + self.line(' temporary storage'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -3646,7 +2706,7 @@ class CPickler(CMill):
             'double hml[%d], tmp[%d]; ' % (self.nSpecies,self.nSpecies) + self.line(' temporary storage'))
         
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -3695,7 +2755,7 @@ class CPickler(CMill):
         self._write(
             'double uml[%d]; ' % self.nSpecies + self.line(' temporary energy array'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -3740,7 +2800,7 @@ class CPickler(CMill):
             'double ums[%d]; ' % self.nSpecies + self.line(' temporary energy array'))
         
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         
         # call routine
@@ -3803,7 +2863,7 @@ class CPickler(CMill):
 
         self._write()
         
-        self._write('*sbml = result * %g;' % (R*kelvin*mole/erg) )
+        self._write('*sbml = result * %1.14e;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
@@ -3860,7 +2920,7 @@ class CPickler(CMill):
                         (species.id, species.id, species.id, smallnum) )
 
         self._write(self.line('Scale by R/W'))
-        self._write('*sbms = result * %g * YOW;' % (R*kelvin*mole/erg) )
+        self._write('*sbms = result * %1.14e * YOW;' % (R*kelvin*mole/erg) )
         
         self._outdent()
 
@@ -3889,7 +2949,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         self._write(
             'double gort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -3939,7 +2999,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         self._write(
             'double gort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -4003,7 +3063,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         self._write(
             'double aort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -4053,7 +3113,7 @@ class CPickler(CMill):
             'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'double RT = %g*tT; ' % (R*kelvin*mole/erg)
+            'double RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
             + self.line('R*T'))
         self._write(
             'double aort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -4158,7 +3218,7 @@ class CPickler(CMill):
                 species.id, species.id) + self.line('%s' % species.symbol))
  
         self._write(self.line('PW/RT (see Eq. 7)'))
-        self._write('PWORT = (*P)/(YOW * %g * (*T)); ' % (R*kelvin*mole/erg) )
+        self._write('PWORT = (*P)/(YOW * %1.14e * (*T)); ' % (R*kelvin*mole/erg) )
         
         self._write(self.line('multiply by 1e6 so c goes to SI'))
         self._write('PWORT *= 1e6; ')
@@ -4203,7 +3263,7 @@ class CPickler(CMill):
 
         self._write('double c[%d]; ' % self.nSpecies + self.line('temporary storage'))
         
-        self._write('double PORT = 1e6 * (*P)/(%g * (*T)); ' % (R*kelvin*mole/erg) +
+        self._write('double PORT = 1e6 * (*P)/(%1.14e * (*T)); ' % (R*kelvin*mole/erg) +
                     self.line('1e6 * P/RT so c goes to SI units'))
         
         # now compute conversion
@@ -4545,266 +3605,7 @@ class CPickler(CMill):
 
         return
                             
-    
-    def _ckmmwy(self, mechanism):
-        self._write()
-        self._write(self.line('given y[species]: mass fractions'))
-        self._write(self.line('returns mean molecular weight (gm/mole)'))
-        self._write('AMREX_GPU_HOST_DEVICE void CKMMWY'+sym+'(double *  y,  double *  wtm)')
-        self._write('{')
-        self._indent()
-        species = self.species
-        nSpec = len(species)
-        self._write('double YOW = 0;')
-        self._write('double tmp[%d];' % (nSpec))
-        self._write('')
-        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
-        self._write('{')
-        self._indent()
-        self._write('tmp[i] = y[i]*imw[i];')
-        self._outdent()
-        self._write('}')
-        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
-        self._write('{')
-        self._indent()
-        self._write('YOW += tmp[i];')
-        self._outdent()
-        self._write('}')
-        self._write('')
-        self._write('*wtm = 1.0 / YOW;')
-        self._write('return;')
-        self._outdent()
-        self._write('}')
-        return 
  
-    def _ckmmwx(self, mechanism):
-        self._write()
-        self._write()
-        self._write(self.line('given x[species]: mole fractions'))
-        self._write(self.line('returns mean molecular weight (gm/mole)'))
-        self._write('void CKMMWX'+sym+'(double *  x,  double *  wtm)')
-        self._write('{')
-        self._indent()
-
-        self._write('double XW = 0;'+self.line(' see Eq 4 in CK Manual'))
-        
-        # molecular weights of all species
-        for species in self.species:
-            self._write('XW += x[%d]*%f; ' % (
-                species.id, species.weight) + self.line('%s' % species.symbol))
-
-        self._write('*wtm = XW;')
-        
-        self._write()
-        self._write('return;')
-        self._outdent()
-
-        self._write('}')
-
-        return 
- 
-    def _ckmmwc(self, mechanism):
-        self._write()
-        self._write()
-        self._write(self.line('given c[species]: molar concentration'))
-        self._write(self.line('returns mean molecular weight (gm/mole)'))
-        self._write('void CKMMWC'+sym+'(double *  c,  double *  wtm)')
-        self._write('{')
-        self._indent()
-
-        self._write('int id; ' + self.line('loop counter'))
-        self._write(self.line('See Eq 5 in CK Manual'))
-        self._write('double W = 0;')
-        self._write('double sumC = 0;')
-        
-        # molecular weights of all species
-        for species in self.species:
-            self._write('W += c[%d]*%f; ' % (
-                species.id, species.weight) + self.line('%s' % species.symbol))
-
-        self._write()
-        self._write('for (id = 0; id < %d; ++id) {' % self.nSpecies)
-        self._indent()
-        self._write('sumC += c[id];')
-        self._outdent()
-        self._write('}')
-
-        self._write(self.line(' CK provides no guard against divison by zero'))
-        self._write('*wtm = W/sumC;')
-        
-        self._write()
-        self._write('return;')
-        self._outdent()
-
-        self._write('}')
-
-        return 
- 
-    def _ckytx(self, mechanism):
-        self._write()
-        self._write()
-        self._write(self.line(
-            'convert y[species] (mass fracs) to x[species] (mole fracs)'))
-        self._write('AMREX_GPU_HOST_DEVICE void CKYTX'+sym+'(double *  y,  double *  x)')
-        self._write('{')
-        self._indent()
-
-        species = self.species
-        nSpec = len(species)
-        self._write('double YOW = 0;')
-        self._write('double tmp[%d];' % (nSpec))
-        self._write('')
-        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
-        self._write('{')
-        self._indent()
-        self._write('tmp[i] = y[i]*imw[i];')
-        self._outdent()
-        self._write('}')
-        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
-        self._write('{')
-        self._indent()
-        self._write('YOW += tmp[i];')
-        self._outdent()
-        self._write('}')
-        self._write('')
-        self._write('double YOWINV = 1.0/YOW;')
-        self._write('')
-        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
-        self._write('{')
-        self._indent()
-        self._write('x[i] = y[i]*imw[i]*YOWINV;')
-        self._outdent()
-        self._write('}')
-        self._write('return;')
-        self._outdent()
-        self._write('}')
-        return 
- 
-    def _vckytx(self, mechanism):
-        self._write()
-        self._write()
-        self._write('#ifndef AMREX_USE_CUDA')
-        self._write(self.line(
-            'convert y[npoints*species] (mass fracs) to x[npoints*species] (mole fracs)'))
-        self._write('void VCKYTX'+sym+'(int *  np, double *  y,  double *  x)')
-        self._write('{')
-        self._indent()
-
-        species = self.species
-        nSpec = len(species)
-        self._write('double YOW[*np];')
-        self._write('for (int i=0; i<(*np); i++) {')
-        self._indent()
-        self._write('YOW[i] = 0.0;')
-        self._outdent()
-        self._write('}')        
-        self._write('')
-        self._write('for (int n=0; n<%d; n++) {' % (nSpec))
-        self._indent()
-        self._write('for (int i=0; i<(*np); i++) {')
-        self._indent()
-        self._write('x[n*(*np)+i] = y[n*(*np)+i] * imw[n];')
-        self._write('YOW[i] += x[n*(*np)+i];')
-        self._outdent()
-        self._write('}')
-        self._outdent()
-        self._write('}')
-
-        self._write('')
-
-        self._write('for (int i=0; i<(*np); i++) {')
-        self._indent()
-        self._write('YOW[i] = 1.0/YOW[i];')
-        self._outdent()
-        self._write('}')
-
-        self._write('')
-        
-        self._write('for (int n=0; n<%d; n++) {' % (nSpec))
-        self._indent()
-        self._write('for (int i=0; i<(*np); i++) {')
-        self._indent()
-        self._write('x[n*(*np)+i] *=  YOW[i];')
-        self._outdent()
-        self._write('}')
-        self._outdent()
-        self._write('}')
-        self._outdent()
-        self._write('}')
-        self._write('#else') 
-        self._write(self.line('TODO: remove this on GPU'))
-        self._write('void VCKYTX'+sym+'(int *  np, double *  y,  double *  x)')
-        self._write('{')
-        self._write('}')
-        self._write('#endif') 
-        return 
- 
-    def _ckytcp(self, mechanism):
-        self._write()
-        self._write()
-        self._write(self.line(
-            'convert y[species] (mass fracs) to c[species] (molar conc)'))
-        self._write('void CKYTCP'+sym+'(double *  P, double *  T, double *  y,  double *  c)')
-        self._write('{')
-        self._indent()
-
-
-        species = self.species
-        nSpec = len(species)
-        self._write('double YOW = 0;')
-        self._write('double PWORT;')
-        self._write('')
-        self._write(self.line('Compute inverse of mean molecular wt first'))
-        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
-        self._write('{')
-        self._indent()
-        self._write('c[i] = y[i]*imw[i];')
-        self._outdent()
-        self._write('}')
-        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
-        self._write('{')
-        self._indent()
-        self._write('YOW += c[i];')
-        self._outdent()
-        self._write('}')
-        self._write('')
-        self._write(self.line('PW/RT (see Eq. 7)'))
-        self._write('PWORT = (*P)/(YOW * %g * (*T)); ' % (R*kelvin*mole/erg) )
-
-        # now compute conversion
-        self._write(self.line('Now compute conversion'))
-        self._write('')
-        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
-        self._write('{')
-        self._indent()
-        self._write('c[i] = PWORT * y[i] * imw[i];')
-        self._outdent()
-        self._write('}')
-        self._write('return;')
-        self._outdent()
-        self._write('}')
-        return 
- 
-    def _ckytcr(self, mechanism):
-        self._write()
-        self._write()
-        self._write(self.line(
-            'convert y[species] (mass fracs) to c[species] (molar conc)'))
-        self._write('AMREX_GPU_HOST_DEVICE void CKYTCR'+sym+'(double *  rho, double *  T, double *  y,  double *  c)')
-        self._write('{')
-        self._indent()
-        species = self.species
-        nSpec = len(species)
-        self._write('for (int i = 0; i < %d; i++)' % (nSpec))
-        self._write('{')
-        self._indent()
-        self._write('c[i] = (*rho)  * y[i] * imw[i];')
-        self._outdent()
-        self._write('}')
-        self._outdent()
-        self._write('}')
-        return 
-
     def _ckxty(self, mechanism):
         self._write()
         self._write()
@@ -4847,7 +3648,7 @@ class CPickler(CMill):
         self._indent()
 
         self._write('int id; ' + self.line('loop counter'))
-        self._write('double PORT = (*P)/(%g * (*T)); ' % (R*kelvin*mole/erg) +
+        self._write('double PORT = (*P)/(%1.14e * (*T)); ' % (R*kelvin*mole/erg) +
                     self.line('P/RT'))
         # now compute conversion
         self._write()
@@ -5121,7 +3922,7 @@ class CPickler(CMill):
 
         self._write('double c[%d]; ' % nSpecies + self.line('temporary storage'))
         
-        self._write('double PORT = 1e6 * (*P)/(%g * (*T)); ' % (R*kelvin*mole/erg) +
+        self._write('double PORT = 1e6 * (*P)/(%1.14e * (*T)); ' % (R*kelvin*mole/erg) +
                     self.line('1e6 * P/RT so c goes to SI units'))
         
         # now compute conversion
@@ -5181,7 +3982,7 @@ class CPickler(CMill):
                 species.id, species.id) + self.line('%s' % species.symbol))
  
         self._write(self.line('PW/RT (see Eq. 7)'))
-        self._write('PWORT = (*P)/(YOW * %g * (*T)); ' % (R*kelvin*mole/erg) )
+        self._write('PWORT = (*P)/(YOW * %1.14e * (*T)); ' % (R*kelvin*mole/erg) )
         
         self._write(self.line('multiply by 1e6 so c goes to SI'))
         self._write('PWORT *= 1e6; ')
@@ -5230,7 +4031,7 @@ class CPickler(CMill):
 
         self._write('double c[%d]; ' % nSpecies + self.line('temporary storage'))
         
-        self._write('double PORT = 1e6 * (*P)/(%g * (*T)); ' % (R*kelvin*mole/erg) +
+        self._write('double PORT = 1e6 * (*P)/(%1.14e * (*T)); ' % (R*kelvin*mole/erg) +
                     self.line('1e6 * P/RT so c goes to SI units'))
         
         # now compute conversion
@@ -5799,7 +4600,7 @@ class CPickler(CMill):
         self._write('double ru, T, uvel, wtm, p, rho, gam, son, xm, sum, drdy, eta, cp, cv ;')
         self._write('double *  y; ' + self.line('mass frac pointer'))
         self._write()
-        self._write('ru = %g;' % (R * mole * kelvin / erg))
+        self._write('ru = %1.14e;' % (R * mole * kelvin / erg))
         self._write()
         self._write('psc = rwrk[0];')
         self._write('rho1 = rwrk[1];')
@@ -5923,43 +4724,6 @@ class CPickler(CMill):
 	return
     
 # Fuego's core routines section begins here
-    def _molecularWeight(self, mechanism):
-
-        import pyre
-        periodic = pyre.handbook.periodicTable()
-        
-        nSpecies = len(mechanism.species())
-        self._write()
-        self._write()
-        self._write(self.line('save molecular weights into array'))
-        self._write('void molecularWeight(double *  wt)')
-        self._write('{')
-        self._indent()
-
-        #wtTab=np.zeros(nSpecies)
-
-        # molecular weights of all species
-        for species in mechanism.species():
-
-            weight = 0.0 #species.molecularWeight()
-            for elem, coef in species.composition:
-                aw = mechanism.element(elem).weight
-                if not aw:
-                    aw = periodic.symbol(elem.capitalize()).atomicWeight
-                weight += coef * aw
-
-            self._write('wt[%d] = %f; ' % (
-                species.id, weight) + self.line('%s' % species.symbol))
-
-        self._write()
-        self._write('return;')
-        self._outdent()
-
-        self._write('}')
-
-        return 
-
-
     def _atomicWeight(self, mechanism):
 
         self._write()
@@ -6298,7 +5062,7 @@ class CPickler(CMill):
             self._write("/* Evaluate the kfs */")
             #self._write("double k_f[%d];"% nclassd)
             #self._write("double Corr[%d];" % nclassd)
-            self._write("double k_f, Corr;")
+            self._write("double k_f, k_r, Corr;")
             if ntroe > 0:
                 self._write("double redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;")
             if nsri > 0:
@@ -6553,11 +5317,11 @@ class CPickler(CMill):
         self._write('{')
         self._indent()
         self._outdent()
-        self._write('#ifdef __INTEL_COMPILER')
-        self._indent()
-        self._write('#pragma simd')
-        self._outdent()
-        self._write('#endif')
+        # self._write('#ifdef __INTEL_COMPILER')
+        # self._indent()
+        # self._write('#pragma simd')
+        # self._outdent()
+        # self._write('#endif')
         self._indent()
         self._write('for (int i=0; i<%d; ++i) {' % (nReactions))
         self._indent()
@@ -6588,11 +5352,11 @@ class CPickler(CMill):
         self._write()
         
         self._outdent()
-        self._write('#ifdef __INTEL_COMPILER')
-        self._indent()
-        self._write(' #pragma simd')
-        self._outdent()
-        self._write('#endif')
+        # self._write('#ifdef __INTEL_COMPILER')
+        # self._indent()
+        # self._write(' #pragma simd')
+        # self._outdent()
+        # self._write('#endif')
         self._indent()
         self._write('for (int i=0; i<%d; ++i) {' % (nReactions))
         self._indent()
@@ -6681,13 +5445,13 @@ class CPickler(CMill):
             if ntroe >= 4:
                 self._outdent()
                 self._outdent()
-                self._write('#ifdef __INTEL_COMPILER')
-                self._indent()
-                self._indent()
-                self._write(' #pragma simd')
-                self._outdent()
-                self._outdent()
-                self._write('#endif')
+                # self._write('#ifdef __INTEL_COMPILER')
+                # self._indent()
+                # self._indent()
+                # self._write(' #pragma simd')
+                # self._outdent()
+                # self._outdent()
+                # self._write('#endif')
                 self._indent()
                 self._indent()
             self._write("for (int i=%d; i<%d; i++)" %(itroe[0],itroe[1]))
@@ -6734,13 +5498,13 @@ class CPickler(CMill):
             if nsri >= 4:
                 self._outdent()
                 self._outdent()
-                self._write('#ifdef __INTEL_COMPILER')
-                self._indent()
-                self._indent()
-                self._write(' #pragma simd')
-                self._outdent()
-                self._outdent()
-                self._write('#endif')
+                # self._write('#ifdef __INTEL_COMPILER')
+                # self._indent()
+                # self._indent()
+                # self._write(' #pragma simd')
+                # self._outdent()
+                # self._outdent()
+                # self._write('#endif')
                 self._indent()
                 self._indent()
             self._write("for (int i=%d; i<%d; i++)" %(isri[0],isri[1]))
@@ -6787,11 +5551,11 @@ class CPickler(CMill):
             else:
                 if nlindemann >= 4:
                     self._outdent()
-                    self._write('#ifdef __INTEL_COMPILER')
-                    self._indent()
-                    self._write(' #pragma simd')
-                    self._outdent()
-                    self._write('#endif')
+                    # self._write('#ifdef __INTEL_COMPILER')
+                    # self._indent()
+                    # self._write(' #pragma simd')
+                    # self._outdent()
+                    # self._write('#endif')
                     self._indent()
                 self._write("for (int i=%d; i<%d; i++)" % (ilindemann[0], ilindemann[1]))
                 self._write("{")
@@ -7339,7 +6103,7 @@ class CPickler(CMill):
 
         ####
         self._write(self.line('compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0'))
-        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int *  colVals, int *  rowPtrs, int * consP, int NCELLS)')
+        self._write('AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base)')
         self._write('{')
         self._indent()
 
@@ -7357,6 +6121,34 @@ class CPickler(CMill):
         self._write('aJacobian(J, c, 1500.0, *consP);')
 
         self._write()
+        self._write('if (base == 1) {')
+        self._indent()
+        self._write('rowPtrs[0] = 1;')
+        self._write('int nJdata_tmp = 1;')
+        self._write('for (int nc=0; nc<NCELLS; nc++) {')
+        self._indent()
+        self._write('offset = nc * %d;' % (nSpecies+1))
+        self._write('for (int l=0; l<%d; l++) {' % (nSpecies+1))
+        self._indent()
+        self._write('for (int k=0; k<%d; k++) {' % (nSpecies+1))
+        self._indent()
+        self._write('if(J[%d*k + l] != 0.0) {' % (nSpecies+1))
+        self._indent()
+        self._write('colVals[nJdata_tmp-1] = k+1 + offset; ')
+        self._write('nJdata_tmp = nJdata_tmp + 1; ')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+        self._write('rowPtrs[offset + (l + 1)] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
+        self._outdent()
+        self._write('}')
+         
+        self._outdent()
+        self._write('} else {')
+        self._indent()
         self._write('rowPtrs[0] = 0;')
         self._write('int nJdata_tmp = 0;')
         self._write('for (int nc=0; nc<NCELLS; nc++) {')
@@ -7375,6 +6167,8 @@ class CPickler(CMill):
         self._outdent()
         self._write('}')
         self._write('rowPtrs[offset + (l + 1)] = nJdata_tmp;')
+        self._outdent()
+        self._write('}')
         self._outdent()
         self._write('}')
         self._outdent()
@@ -9299,11 +8093,11 @@ class CPickler(CMill):
         self._write()
 
         self._outdent()
-        self._write('#ifdef __INTEL_COMPILER')
-        self._indent()
-        self._write(' #pragma simd')
-        self._outdent()
-        self._write('#endif')
+        # self._write('#ifdef __INTEL_COMPILER')
+        # self._indent()
+        # self._write(' #pragma simd')
+        # self._outdent()
+        # self._write('#endif')
         self._indent()
         self._write('for (int i=0; i<npt; i++) {')
         self._indent()
@@ -9355,11 +8149,11 @@ class CPickler(CMill):
 
         self._write('void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT)')
         self._write('{')
-        self._write('#ifdef __INTEL_COMPILER')
-        self._indent()
-        self._write('#pragma simd')
-        self._outdent()
-        self._write('#endif')
+        # self._write('#ifdef __INTEL_COMPILER')
+        # self._indent()
+        # self._write('#pragma simd')
+        # self._outdent()
+        # self._write('#endif')
         self._indent()
         self._write('for (int i=0; i<npt; i++) {')
         self._indent()
@@ -9400,11 +8194,11 @@ class CPickler(CMill):
 
         self._write('void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT)')
         self._write('{')
-        self._write('#ifdef __INTEL_COMPILER')
-        self._indent()
-        self._write('#pragma simd')
-        self._outdent()
-        self._write('#endif')
+        # self._write('#ifdef __INTEL_COMPILER')
+        # self._indent()
+        # self._write('#pragma simd')
+        # self._outdent()
+        # self._write('#endif')
         self._indent()
         self._write('for (int i=0; i<npt; i++) {')
         self._indent()
@@ -9462,11 +8256,11 @@ class CPickler(CMill):
         nsimple    = isimple[1]    - isimple[0]
         nspecial   = ispecial[1]   - ispecial[0]
 
-        self._write('#ifdef __INTEL_COMPILER')
-        self._indent()
-        self._write('#pragma simd')
-        self._outdent()
-        self._write('#endif')
+        # self._write('#ifdef __INTEL_COMPILER')
+        # self._indent()
+        # self._write('#pragma simd')
+        # self._outdent()
+        # self._write('#endif')
         self._indent()
         self._write('for (int i=0; i<npt; i++) {')
         self._indent()
@@ -10867,41 +9661,6 @@ class CPickler(CMill):
         return
 
 
-    #def _miscTransInfo_chop(self, KK, NLITE, NO=4):
-
-    #    self._write()
-    #    self._write()
-    #    LENIMC = 4*KK+NLITE
-    #    self._generateTransRoutineInteger_chop(["egtransetLENIMC", "LENIMC"], LENIMC)
-
-    #    self._write()
-    #    self._write()
-    #    LENRMC = (19+2*NO+NO*NLITE)*KK+(15+NO)*KK**2
-    #    self._generateTransRoutineInteger_chop(["egtransetLENRMC", "LENRMC"], LENRMC)
-
-    #    self._write()
-    #    self._write()
-    #    self._generateTransRoutineInteger_chop(["egtransetNO", "NO"], NO)
-
-    #    self._write()
-    #    self._write()
-    #    self._generateTransRoutineInteger_chop(["egtransetKK", "KK"], KK)
-
-    #    self._write()
-    #    self._write()
-    #    self._generateTransRoutineInteger_chop(["egtransetNLITE", "NLITE"], NLITE)
-
-    #    self._write()
-    #    self._write()
-    #    self._write(self.line('Patm in ergs/cm3'))
-    #    self._write('void egtransetPATM(double* PATM) {')
-    #    self._indent()
-    #    self._write('*PATM =   0.1013250000000000E+07;}')
-    #    self._outdent()
-
-    #    return
-
-
     def _wt(self, do_declarations):
 
         self._write()
@@ -11941,15 +10700,6 @@ class CPickler(CMill):
 
         return
 
-    #def _generateTransRoutineInteger_chop(self, nametab, expression):
-
-    #    self._write('void %s(int* %s ) {' % (nametab[0], nametab[1]))
-    #    self._indent()
-    #    self._write('*%s = %d;}' % (nametab[1], expression ))
-    #    self._outdent()
-
-    #    return
-
 
     def _getCVdRspecies(self, t, species):
 
@@ -12039,8 +10789,6 @@ class CPickler(CMill):
             dip = m1.dip
             pol = m1.pol
             zrot = m1.zrot
-
-            #print "TRANSPORT DATA FOR SPEC", species.symbol, " is", lin, eps, sig, dip, pol, zrot 
 
             transdata[species] = [lin, eps, sig, dip, pol, zrot]
 
@@ -12456,6 +11204,16 @@ class CPickler(CMill):
         self._write('amrex::Abort("sgjsolve_simplified not implemented, choose a different solver ");')
         self._outdent()
         self._write('}')
+
+
+    ####################
+    #unused
+    ####################
+    def _end(self):
+        self._timestamp()
+        self._rep += self.footer()
+        return
+
 
 # version
 __id__ = "$Id$"

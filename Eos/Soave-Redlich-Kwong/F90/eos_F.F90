@@ -14,7 +14,8 @@ module eos_module
   use amrex_constants_module
   use fuego_chemistry
   use eos_type_module
-  use chemistry_module, only : nspecies, Ru, inv_mwt, chemistry_init, chemistry_initialized, spec_names, elem_names, molecular_weight
+  ! use chemistry_module, only : nspecies, Ru, inv_mwt, chemistry_init, chemistry_initialized, spec_names, elem_names, molecular_weight
+  ! With restructured chemistry above all comes from fuego_chemistry module
 
   implicit none
 
@@ -450,7 +451,8 @@ subroutine eos_re(state)
     Temp2 = (state%T * state%dAmdT - state%am)*(-Bi(i)*K1 + InvEosT3Denom*Bi(i))/state%bm
     state%ei(i) = ek(i) + Temp1 + Temp2
  end do
- state%cv = state%cv + state%T*state%d2AmdT2* (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
+ ! Non-ideal Cv is already calculated in SRK_EOS_Get_T_GivenRhoE
+ ! state%cv = state%cv + state%T*state%d2AmdT2* (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
  state%dPdT = Rm*InvEosT1Denom - state%dAmdT*InvEosT2Denom
  state%dpdtau = -Rm*state%T*InvEosT1Denom*InvEosT1Denom + state%am*(2.0*tau+state%bm)*InvEosT2Denom*InvEosT2Denom
  call ckcpbs(state % T, state % massfrac, Cpig)
@@ -833,12 +835,12 @@ subroutine SRK_EOS_Get_rho_givenTP(state)
 
   ! Calculate the roots of cubic EOS to calculate Compressibility factor
   call Calc_CompressFactor_Z(state%Z,state%am,state%bm,state%P,state%T,state%wbar)
-  
+
   state%rho = state%P * state%Wbar/(state%Z*Ru*state%T)
 
   ! Specific volume
   tau = 1.0d0/state%rho
-  
+
 end subroutine SRK_EOS_Get_rho_givenTP
 !================================================================!
 ! Given a mixture composition calculate mixture internal energy  !
@@ -991,6 +993,8 @@ subroutine SRK_EOS_Get_TE_givenRhoP(state)
 
   ! Update temperature in the state 
   state%T = Tnp1
+  ! recompute dAmdT at updated temperature (we've already done this for Am)
+  call Calc_dAmdT(state%T,state%massFrac,state%dAmdT)
 
   K1 = (1.0d0/state%bm)*log(1.0d0+state%bm/tau)
 
@@ -1068,12 +1072,12 @@ subroutine SRK_EOS_Get_T_GivenRhoE(state,lierr)
      call ckcvbs(Tn, state % massfrac, state % cv)
 
      ! Calculate real gas Cv
-     state%cv = state%cv - Tn*state%d2AmdT2*K1
+     state%cv = state%cv + Tn*state%d2AmdT2*K1
 
      ! Compute the non-linear equation
      fzero = -state%e + Eig + (Tn*state%dAmdT-state%am)*K1
-     dT = fzero/state%cv
      
+     dT = fzero/state%cv
      ! Update the temperature
      Tnp1 = Tn - dT
 
@@ -1744,8 +1748,6 @@ subroutine SRK_EOS_GetSpeciesTau(state)
      state%taui(i) = Temp2/Temp1
 
   end do
-
-!!$  print*,'Test tau,k', tau, sum(state%massFrac(:)*state%taui(:))
 
 end subroutine SRK_EOS_GetSpeciesTau
 !=================================================================!

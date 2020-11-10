@@ -12,8 +12,8 @@
 
 /* Species */
 #define N2_ID 0
-#define SnCH2_ID 1
-#define TnCH2_ID 2
+#define SCH2_ID 1
+#define TCH2_ID 2
 #define O_ID 3
 #define H2_ID 4
 #define H_ID 5
@@ -35,11 +35,11 @@
 #define HCCO_ID 21
 #define C2H2_ID 22
 #define C3H3_ID 23
-#define AnC3H5_ID 24
-#define NnC3H7_ID 25
+#define AC3H5_ID 24
+#define NC3H7_ID 25
 #define C2H6_ID 26
-#define PnC3H4_ID 27
-#define AnC3H4_ID 28
+#define PC3H4_ID 27
+#define AC3H4_ID 28
 #define A1_ID 29
 #define A1n_ID 30
 #define C5H5_ID 31
@@ -54,7 +54,7 @@
 #define A1CHO_ID 40
 #define A1CH3_ID 41
 #define C7H15_ID 42
-#define NnC7H16_ID 43
+#define NC7H16_ID 43
 #define A1C2HD_ID 44
 #define A2n_ID 45
 #define A1C2H_ID 46

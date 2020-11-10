@@ -308,8 +308,7 @@ module fuego_chemistry
             integer, intent(inout) :: nu(*)
         end subroutine
 
-        subroutine ckncf(mdim,ncf) bind(c,name='CKNCF')
-            integer, intent(in   ) :: mdim
+        subroutine ckncf(ncf) bind(c,name='CKNCF')
             integer, intent(inout) :: ncf(*)
         end subroutine
 

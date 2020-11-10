@@ -32,21 +32,21 @@ ifeq ($(USE_ACC), TRUE)
   DEFINES += -DACC
 endif
 
-all: $(executable) 
-	$(SILENT) $(RM) AMReX_buildInfo.cpp
-	@echo SUCCESS
-
 # EOS
 # Both Fortran and cpp can be loaded for EOS
-EOS_HOME_F90 := $(EOS_HOME)/F90
 EOS_PATH := $(EOS_HOME)/$(strip $(Eos_dir))
-EOS_PATH_F90 := $(EOS_PATH)/F90
-include $(EOS_HOME_F90)/Make.package
 include $(EOS_PATH)/Make.package
-include $(EOS_PATH_F90)/Make.package
-EXTERN_CORE       += $(EOS_HOME_F90) $(EOS_PATH_F90)
-INCLUDE_LOCATIONS += $(EOS_HOME) $(EOS_HOME_F90) $(EOS_PATH) $(EOS_PATH_F90)
-VPATH_LOCATIONS   += $(EOS_HOME) $(EOS_HOME_F90) $(EOS_PATH) $(EOS_PATH_F90)
+INCLUDE_LOCATIONS += $(EOS_HOME) $(EOS_PATH) 
+VPATH_LOCATIONS   += $(EOS_HOME) $(EOS_PATH) 
+ifeq ($(USE_F90_PP),TRUE) 
+    EOS_HOME_F90 := $(EOS_HOME)/F90
+    EOS_PATH_F90 := $(EOS_PATH)/F90
+    include $(EOS_HOME_F90)/Make.package
+    include $(EOS_PATH_F90)/Make.package
+    EXTERN_CORE       += $(EOS_HOME_F90) $(EOS_PATH_F90)
+    INCLUDE_LOCATIONS += $(EOS_HOME_F90) $(EOS_PATH_F90)
+    VPATH_LOCATIONS   += $(EOS_HOME_F90) $(EOS_PATH_F90)
+endif
 ifeq ($(Eos_dir), Fuego)
   TRANSPORT_TYPE := IDEAL_GAS
 else
@@ -60,34 +60,36 @@ Bpack             += $(EOS_PATH)/Make.package
 Blocs             += $(EOS_PATH)
 
 # Reactions
-REACTIONS_HOME_F90 := $(REACTIONS_HOME)/F90
 REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
-REACTIONS_PATH_F90 := $(REACTIONS_PATH)/F90
 include $(REACTIONS_PATH)/Make.package
-EXTERN_CORE       += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)  
-INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_HOME_F90) $(REACTIONS_PATH) $(REACTIONS_PATH_F90)
-VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_HOME_F90) $(REACTIONS_PATH) $(REACTIONS_PATH_F90)
-ifdef Chemistry_Model
-  ifeq ($(Eos_dir), GammaLaw)
-    ifneq ($(Chemistry_Model), Null)
-      $(error Chemistry_Model definition not compatible with Eos_Dir=GammaLaw)
-    endif
-  endif
-  CHEM_HOME = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models/$(Chemistry_Model)
-  CHEM_ALL  = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models
-  VPATH_LOCATIONS += $(CHEM_HOME) $(CHEM_ALL)
-  Bpack += $(CHEM_HOME)/Make.package \
-           $(CHEM_ALL)/Make.package
-  Blocs += $(CHEM_HOME) $(CHEM_ALL)
+INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
+VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH) 
+ifeq ($(USE_F90_PP),TRUE) 
+    REACTIONS_HOME_F90 := $(REACTIONS_HOME)/F90
+    REACTIONS_PATH_F90 := $(REACTIONS_PATH)/F90
+    EXTERN_CORE       += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)  
+    INCLUDE_LOCATIONS += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
+    VPATH_LOCATIONS   += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
 endif
+ifeq ($(Eos_dir), GammaLaw)
+  ifneq ($(Chemistry_Model), Null)
+    $(error Chemistry_Model definition not compatible with Eos_Dir=GammaLaw)
+  endif
+endif
+CHEM_HOME = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models/$(Chemistry_Model)
+CHEM_ALL  = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models
+VPATH_LOCATIONS += $(CHEM_HOME) $(CHEM_ALL)
+Bpack += $(CHEM_HOME)/Make.package \
+         $(CHEM_ALL)/Make.package
+Blocs += $(CHEM_HOME) $(CHEM_ALL)
+Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
 
 # Transport
 TRAN_PATH := $(TRAN_HOME)/$(strip $(Transport_dir))
-ifeq ($(TRANSPORT_CPP),TRUE) 
-    include $(TRAN_PATH)/Make.package
-    INCLUDE_LOCATIONS += $(TRAN_PATH)
-    VPATH_LOCATIONS   += $(TRAN_PATH)
-else
+include $(TRAN_PATH)/Make.package
+INCLUDE_LOCATIONS += $(TRAN_PATH)
+VPATH_LOCATIONS   += $(TRAN_PATH)
+ifeq ($(USE_F90_PP),TRUE) 
     TRAN_HOME_F90 := $(TRAN_HOME)/F90
     TRAN_PATH_F90 := $(TRAN_PATH)/F90
     include $(TRAN_HOME_F90)/Make.package
@@ -95,12 +97,12 @@ else
     EXTERN_CORE       += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
     INCLUDE_LOCATIONS += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
     VPATH_LOCATIONS   += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
+    Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
 endif
 USE_FUEGO = FALSE
-Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
 
-Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism \
-           $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
+Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism
+
 ifeq ($(Transport_dir), Simple)
   DEFINES += -DSIMPLE_TRANSPORT
 endif
@@ -133,11 +135,6 @@ EXTERN_TEMPLATE := $(PELE_PHYSICS_HOME)/Testing/Source/extern_probin.template
 
 EXTERN_PARAMETERS := $(shell $(AMREX_HOME)/Tools/F_scripts/findparams.py $(EXTERN_CORE))
 
-extern.f90: $(EXTERN_PARAMETERS) $(EXTERN_TEMPLATE)
-	$(AMREX_HOME)/Tools/F_scripts/write_probin.py \
-           -t $(EXTERN_TEMPLATE) -o extern.f90 -n extern \
-           --pa "$(EXTERN_PARAMETERS)" 
-
 # job_info support
 CEXE_sources += AMReX_buildInfo.cpp
 CEXE_headers += $(AMREX_HOME)/Tools/C_scripts/buildInfo.H
@@ -146,9 +143,26 @@ INCLUDE_LOCATIONS +=  $(AMREX_HOME)/Tools/C_scripts
 
 MNAMES := EOS=$(EOS_PATH) REACTIONS=$(REACTIONS_PATH)
 MNAMES += TRANSPORT=$(TRAN_HOME)
-ifdef Chemistry_Model
-  MNAMES += CHEMISTRY=$(Chemistry_Model)
+MNAMES += CHEMISTRY=$(Chemistry_Model)
+
+include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
+
+ifeq ($(shell uname),Darwin)
+  all: $(executable)
+	install_name_tool -add_rpath $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib $(executable)
+	$(SILENT) $(RM) AMReX_buildInfo.cpp
+	@echo SUCCESS
+else
+  all: $(executable)
+	$(SILENT) $(RM) AMReX_buildInfo.cpp
+	@echo SUCCESS
 endif
+
+include $(AMREX_HOME)/Tools/GNUMake/Make.rules
+
+clean::
+	$(SILENT) $(RM) extern.f90 extern_parameters.cpp extern_parameters_F.H extern_parameters.H extern.f90
+	$(SILENT) $(RM) AMReX_buildInfo.cpp
 
 AMReX_buildInfo.cpp:
 	$(AMREX_HOME)/Tools/C_scripts/makebuildinfo_C.py \
@@ -158,11 +172,25 @@ AMReX_buildInfo.cpp:
           --MODULES "$(MNAMES)" \
           --GIT "$(TOP) $(AMREX_HOME) $(PELE_PHYSICS_HOME)"
 
-include $(AMREX_HOME)/Tools/GNUMake/Make.rules
+extern.f90: $(EXTERN_PARAMETERS) $(EXTERN_TEMPLATE)
+	$(AMREX_HOME)/Tools/F_scripts/write_probin.py \
+           -t $(EXTERN_TEMPLATE) -o extern.f90 -n extern \
+           --pa "$(EXTERN_PARAMETERS)"
 
-clean::
-	$(SILENT) $(RM) extern.f90
-	$(SILENT) $(RM) AMReX_buildInfo.cpp
+ifeq ($(USE_SUNDIALS_PP),TRUE)
+  TPL:
+	cd $(PELE_PHYSICS_HOME)/ThirdParty; make AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_KLU_PP=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP)
+
+  TPLclean:
+	cd $(PELE_PHYSICS_HOME)/ThirdParty; make AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_KLU_PP=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) clean
+
+  TPLrealclean:
+	cd $(PELE_PHYSICS_HOME)/ThirdParty; make AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_KLU_PP=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) realclean
+else
+  TPL:
+  TPLclean:
+  TPLrealclean:
+endif
 
 
 #-----------------------------------------------------------------------------

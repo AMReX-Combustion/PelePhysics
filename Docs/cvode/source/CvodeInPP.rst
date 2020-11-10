@@ -570,32 +570,7 @@ To run on GPUs, `AMREX` should be build with CUDA enabled. To do so, add this li
 
     USE_CUDA   = TRUE
 
-Then, the CUDA features of CVODE are enabled in `PelePhysics` via a specific ``USE_CUDA_SUNDIALS_PP`` flag:
-
-.. code-block:: c++
-
-    ...
-    #######################
-    # ODE solver OPTIONS on GPU: SUNDIALS 
-    #######################
-    # Activates use of SUNDIALS: CVODE (default)
-    USE_SUNDIALS_PP = TRUE
-    ifeq ($(USE_SUNDIALS_PP), TRUE)  
-        # provide location of sundials lib if needed 
-        #SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
-        # use ARKODE: if FALSE then CVODE is used
-        USE_ARKODE_PP = FALSE
-        # use KLU sparse features -- only useful if CVODE is used on CPU
-        USE_KLU_PP = FALSE
-        # Activates GPU version
-        USE_CUDA_SUNDIALS_PP = TRUE
-    else
-      # Activates use of Hari explicit RK
-      # will only work if USE_SUNDIALS_PP = FALSE
-      USE_RK64_PP = FALSE
-    endif
-    #######################
-    ...
+This should activate the CUDA features of CVODE in `PelePhysics` too.
 
 
 The input file
@@ -672,8 +647,6 @@ The full file reads as follows:
     #######################
     # Activates use of SUNDIALS: CVODE (default)
     USE_SUNDIALS_PP = TRUE
-    
-    USE_CUDA_CVODE = TRUE
     
     ##############################################
     ifeq ($(FUEGO_GAS), TRUE)

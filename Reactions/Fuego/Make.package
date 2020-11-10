@@ -1,5 +1,5 @@
 ifeq ($(USE_SUNDIALS_PP), TRUE)
-    ifeq ($(USE_CUDA_SUNDIALS_PP), TRUE)
+    ifeq ($(USE_CUDA), TRUE)
         ifeq ($(USE_ARKODE_PP), TRUE)
             Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU/arkode
         else
@@ -21,9 +21,13 @@ else
         CEXE_headers += reactor.h  
         CEXE_sources += reactor.cpp
     else
-        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/F90
-        F90EXE_sources += react_type.F90
-        F90EXE_sources += reactor.F90
-        FEXE_headers   += reactor.H
+        ifeq ($(USE_F90_PP),TRUE)
+            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/F90
+            F90EXE_sources += react_type.F90
+            F90EXE_sources += reactor.F90
+            FEXE_headers   += reactor_F.H
+        else
+            $(error Activate USE_F90_PP to use dvode)
+        endif
     endif
 endif
