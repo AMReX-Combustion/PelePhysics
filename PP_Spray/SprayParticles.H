@@ -2,9 +2,9 @@
 #define _SPRAYPARTICLES_H_
 
 #include <AMReX_Geometry.H>
-#include "AMReX_Particles.H"
-#include "AMReX_AmrParticles.H"
-#include "AMReX_Amr.H"
+#include <AMReX_Particles.H>
+#include <AMReX_AmrParticles.H>
+#include <AMReX_Amr.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_Gpu.H>
 #include "SprayFuelData.H"
@@ -22,6 +22,22 @@
 #define NAI_SPR 0
 #endif
 
+enum SprayComps {
+  heat_tran = 0,
+  mass_tran,
+  mom_tran,
+  pstateVel,
+  pstateT,
+  pstateRho,
+  pstateDia,
+  pstateY,
+  rhoIndx,
+  momIndx,
+  engIndx,
+  utempIndx,
+  specIndx,
+  NumIndx
+};
 
 class MyParIter
   : public amrex::ParIter<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>
@@ -61,16 +77,17 @@ public:
   using PairIndex = std::pair<int, int>;
   using HostVectReal = amrex::Gpu::HostVector<amrex::Real>;
   using HostVectInt = amrex::Gpu::HostVector<int>;
+  using GpuArrayInt = amrex::GpuArray<int, SprayComps::NumIndx>;
 
   SprayParticleContainer(amrex::Amr* amr, amrex::BCRec* _phys_bc, const amrex::Real parcelSize)
     : amrex::AmrParticleContainer<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>(amr),
       m_setFuelData(false),
+      m_injectVel(0.),
+      m_parcelSize(parcelSize),
       sub_cycle(amr->subCycle()),
       phys_bc(_phys_bc),
-      m_injectVel(0.),
-      m_parcelSize(parcelSize)
+      m_sprayRefT(-1.)
   {
-    nstate = NSR_SPR;
     init_bcs();
   }
 
@@ -82,11 +99,17 @@ public:
                      const HostVectReal& fuelCp,
                      const HostVectReal& fuelLatent,
                      const HostVectInt&  fuelIndx,
-                     amrex::Real         ref_T)
+                     amrex::Real         ref_T,
+                     GpuArrayInt&        sprayIndices)
   {
     HostVectReal fuelEnth(NUM_SPECIES);
     EOS::T2Hi(ref_T, fuelEnth.dataPtr());
     m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelIndx);
+    m_sprayRefT = ref_T;
+    for (int i = 0; i < SprayComps::NumIndx; ++i) {
+      AMREX_ASSERT(sprayIndices[i] >= 0);
+      m_sprayIndx[i] = sprayIndices[i];
+    }
     m_setFuelData = true;
   }
 
@@ -164,14 +187,13 @@ public:
 
   bool injectParticles(amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level);
 
-  void InitSprayParticles(amrex::AmrLevel* pelec, const int& level, const int& num_ppc);
+  void InitSprayParticles();
 
 private:
   bool m_setFuelData;
   amrex::Real m_injectVel;
   // The number of spray droplets per computational particle
   amrex::Real m_parcelSize;
-  int nstate;
   ///
   /// This defines reflect_lo and reflect_hi from phys_bc
   ///
@@ -182,6 +204,8 @@ private:
   bool reflect_lo[AMREX_SPACEDIM];
   bool reflect_hi[AMREX_SPACEDIM];
   SprayDataContainer m_fuelData;
+  amrex::Real m_sprayRefT;
+  amrex::GpuArray<int, SprayComps::NumIndx> m_sprayIndx;
 };
 
 #endif

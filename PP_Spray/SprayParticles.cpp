@@ -1,8 +1,10 @@
 
-#include <SprayParticles.H>
+#include "SprayParticles.H"
 #include <AMReX_Particles.H>
 #include <AMReX_ParticleReduce.H>
-#include "Constants.H"
+#ifdef SPRAY_PELE_LM
+#include "PeleLM.H"
+#endif
 #include "Transport.H"
 #include "Drag.H"
 
@@ -91,7 +93,7 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
     ParticleLocData pld;
     for (auto& kv : GetParticles(level)) {
       auto& ptile = kv.second;
-      for (int k = 0; k < ptile.GetArrayOfStructs().numParticles(); ++k) {
+      for (Long k = 0; k < ptile.GetArrayOfStructs().numParticles(); ++k) {
         ParticleType& p = ptile.GetArrayOfStructs()[k];
         if (p.id() > 0) {
           if (!this->Where(p, pld, level, level, where_width)) {
@@ -111,7 +113,7 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
     ParticleLocData pld;
     for (auto& kv : GetParticles(level)) {
       auto& ptile = kv.second;
-      for (int k = 0; k < ptile.GetArrayOfStructs().numParticles(); ++k) {
+      for (Long k = 0; k < ptile.GetArrayOfStructs().numParticles(); ++k) {
         ParticleType& p = ptile.GetArrayOfStructs()[k];
         if (p.id() > 0) {
           if (!this->Where(p, pld, level, level, where_width))
@@ -143,9 +145,11 @@ Real
 SprayParticleContainer::estTimestep (int level, Real cfl) const
 {
   BL_PROFILE("ParticleContainer::estTimestep()");
+  AMREX_ASSERT(m_setFuelData);
   // TODO: Clean up this mess and bring the num particle functionality back
   Real dt = std::numeric_limits<Real>::max();
-  if (level >= this->GetParticles().size() || PeleC::particle_mom_tran == 0)
+  if (level >= this->GetParticles().size() ||
+      m_sprayIndx[SprayComps::mom_tran] == 0)
     return dt;
 
   const Real strttime = ParallelDescriptor::second();
@@ -159,7 +163,7 @@ SprayParticleContainer::estTimestep (int level, Real cfl) const
     for (MyParConstIter pti(*this, level); pti.isValid(); ++pti) {
       const AoS& pbox = pti.GetArrayOfStructs();
       const ParticleType* pstruct = pbox().data();
-      const int n = pbox.numParticles();
+      const Long n = pbox.numParticles();
 #ifdef USE_SPRAY_SOA
       auto& attribs = pti.GetAttribs();
       AMREX_D_TERM(const Real * up = attribs[0].data();,
@@ -167,7 +171,7 @@ SprayParticleContainer::estTimestep (int level, Real cfl) const
                    const Real * wp = attribs[2].data(););
 #endif
       reduce_op.eval(n, reduce_data,
-                     [=] AMREX_GPU_DEVICE (const int i) -> ReduceTuple
+                     [=] AMREX_GPU_DEVICE (const Long i) -> ReduceTuple
       {
         const ParticleType& p = pstruct[i];
         // TODO: This assumes that pstateVel = 0 and dxi[0] = dxi[1] = dxi[2]
@@ -182,6 +186,10 @@ SprayParticleContainer::estTimestep (int level, Real cfl) const
                                                            std::abs(p.rdata(2))))*dxi[0];
 #endif
           Real dt_part = (max_mag_vdx > 0.) ? (cfl/max_mag_vdx) : 1.E50;
+#ifdef SPRAY_PELE_LM
+          // Conversion since particle velocities are in cm and dx is in m for PeleLM
+          dt_part *= 100.;
+#endif
           return dt_part;
         }
         return 1.E50;
@@ -270,17 +278,17 @@ SprayParticleContainer::updateParticles(const int&  level,
   EOS::molecular_weight(mw_fluid);
   EOS::inv_molecular_weight(invmw);
   // Extract control parameters for mass, heat, and momentum transfer
-  const int heat_trans = PeleC::particle_heat_tran;
-  const int mass_trans = PeleC::particle_mass_tran;
-  const int mom_trans = PeleC::particle_mom_tran;
+  const int heat_trans = m_sprayIndx[SprayComps::heat_tran];
+  const int mass_trans = m_sprayIndx[SprayComps::mass_tran];
+  const int mom_trans = m_sprayIndx[SprayComps::mom_tran];
   const Real inv_Ru = 1./EOS::RU;
-  const Real ref_T = PeleC::sprayRefT;
+  const Real ref_T = m_sprayRefT;
   // Particle components indices
-  const int pstateVel = PeleC::pstateVel;
-  const int pstateT   = PeleC::pstateT;
-  const int pstateRho = PeleC::pstateRho;
-  const int pstateDia = PeleC::pstateDia;
-  const int pstateY   = PeleC::pstateY;
+  const int pstateVel = m_sprayIndx[SprayComps::pstateVel];
+  const int pstateT   = m_sprayIndx[SprayComps::pstateT];
+  const int pstateRho = m_sprayIndx[SprayComps::pstateRho];
+  const int pstateDia = m_sprayIndx[SprayComps::pstateDia];
+  const int pstateY   = m_sprayIndx[SprayComps::pstateY];
   bool get_xi = false;
   bool get_Ddiag = true;
   bool get_lambda = true;
@@ -289,18 +297,40 @@ SprayParticleContainer::updateParticles(const int&  level,
     get_Ddiag = false;
     get_lambda = false;
   }
+  Real vel_conv = 1.;
+  Real pos_conv = 1.;
+  Real rho_conv = 1.;
+  Real mom_src_conv = 1.;
+  Real mass_src_conv = 1.;
+  Real eng_src_conv = 1.;
+#ifdef SPRAY_PELE_LM
+  vel_conv = 100.;  // Turn m/s to cm/s
+  rho_conv = 0.001; // Turn kg/m^3 to g/cm^3
+  pos_conv = 0.01;  // Turn cm to m for updating position
+  // This makes no sense, conversions should be independent
+  // of dimensions but numerical tests show this isn't the case
+#if AMREX_SPACEDIM == 2
+  mom_src_conv = 1.E-3;
+  mass_src_conv = 1.E-1;
+  eng_src_conv = 1.E-5;
+#elif AMREX_SPACEDIM == 3
+  mom_src_conv = 1.E-5;
+  mass_src_conv = 1.E-3;
+  eng_src_conv = 1.E-7;
+#endif
+#endif
 
   // Component indices for conservative state
-  const int rhoIndx = PeleC::Density;
-  const int momIndx = PeleC::Xmom;
-  const int engIndx = PeleC::Eden;
-  const int utempIndx = PeleC::Temp;
-  const int specIndx = PeleC::FirstSpec;
+  const int rhoIndx = m_sprayIndx[SprayComps::rhoIndx];
+  const int momIndx = m_sprayIndx[SprayComps::momIndx];
+  const int engIndx = m_sprayIndx[SprayComps::engIndx];
+  const int utempIndx = m_sprayIndx[SprayComps::utempIndx];
+  const int specIndx = m_sprayIndx[SprayComps::specIndx];
   // Start the ParIter, which loops over separate sets of particles in different boxes
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
     const Box& tile_box = pti.growntilebox(state_ghosts);
     const Box& src_box = pti.growntilebox(source_ghosts);
-    const long Np = pti.numParticles();
+    const Long Np = pti.numParticles();
     ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
     // Get particle attributes if StructOfArrays are used
 #ifdef USE_SPRAY_SOA
@@ -320,11 +350,11 @@ SprayParticleContainer::updateParticles(const int&  level,
     SprayData fdat = m_fuelData.getSprayData();
     Array4<const Real> const& statearr = state.array(pti);
     Array4<Real> const& sourcearr = source.array(pti);
-#ifdef SPRAY_PELE_LM
-    GpuArray<
-      Array4<const Real>, AMREX_SPACEDIM> const
-      umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti), u_mac[2].array(pti))};
-#endif
+// #ifdef SPRAY_PELE_LM
+//     GpuArray<
+//       Array4<const Real>, AMREX_SPACEDIM> const
+//       umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti), u_mac[2].array(pti))};
+// #endif
     AMREX_FOR_1D ( Np, i,
     {
       ParticleType& p = pstruct[i];
@@ -351,9 +381,9 @@ SprayParticleContainer::updateParticles(const int&  level,
                                   (p.pos(1) - plo[1])*dxi[1] + 0.5,
                                   (p.pos(2) - plo[2])*dxi[2] + 0.5));
         RealVect vel_fluid(RealVect::TheZeroVector());
-#ifdef SPRAY_PELE_LM
-        InterpolateFaceVelocity(len, dom_lo, dom_hi, umac, vel_fluid);
-#endif
+// #ifdef SPRAY_PELE_LM
+//         InterpolateFaceVelocity(len, dom_lo, dom_hi, umac, vel_fluid);
+// #endif
         Real T_fluid = 0.;
         Real rho_fluid = 0.;
         for (int sp = 0; sp != NUM_SPECIES; ++sp) Y_fluid[sp] = 0.;
@@ -365,28 +395,31 @@ SprayParticleContainer::updateParticles(const int&  level,
           AMREX_ASSERT(tile_box.contains(cur_indx));
           Real cur_coef = coef[aindx];
           Real cur_rho = statearr(cur_indx, rhoIndx);
-          rho_fluid += cur_coef*cur_rho;
+          rho_fluid += cur_coef*cur_rho*rho_conv;
           Real inv_rho = 1./cur_rho;
-#ifndef SPRAY_PELE_LM
-          AMREX_D_TERM(Real velx = statearr(cur_indx, momIndx)*inv_rho;
-                       Real ke = 0.5*velx*velx;
-                       vel_fluid[0] += cur_coef*velx;,
-                       Real vely = statearr(cur_indx, momIndx+1)*inv_rho;
-                       ke += 0.5*vely*vely;
-                       vel_fluid[1] += cur_coef*vely;,
-                       Real velz = statearr(cur_indx, momIndx+2)*inv_rho;
-                       ke += 0.5*velz*velz;
-                       vel_fluid[2] += cur_coef*velz;);
-#endif
           for (int sp = 0; sp != NUM_SPECIES; ++sp) {
             int mf_indx = sp + specIndx;
             Real cur_mf = statearr(cur_indx, mf_indx)*inv_rho;
             Y_fluid[sp] += cur_coef*cur_mf;
             mass_frac[sp] = cur_mf;
           }
-          Real intEng = statearr(cur_indx, engIndx)*inv_rho - ke;
+#ifdef SPRAY_PELE_LM
+          inv_rho = 1.; // Since velocity is provided instead of momentum
+#endif
+          AMREX_D_TERM(Real velx = statearr(cur_indx, momIndx)*inv_rho*vel_conv;
+                       Real ke = 0.5*velx*velx;
+                       vel_fluid[0] += cur_coef*velx;,
+                       Real vely = statearr(cur_indx, momIndx+1)*inv_rho*vel_conv;
+                       ke += 0.5*vely*vely;
+                       vel_fluid[1] += cur_coef*vely;,
+                       Real velz = statearr(cur_indx, momIndx+2)*inv_rho*vel_conv;
+                       ke += 0.5*velz*velz;
+                       vel_fluid[2] += cur_coef*velz;);
           Real T_val = statearr(cur_indx, utempIndx);
+#ifndef SPRAY_PELE_LM
+          Real intEng = statearr(cur_indx, engIndx)*inv_rho - ke;
           EOS::EY2T(intEng, mass_frac, T_val);
+#endif
           T_fluid += cur_coef*T_val;
         }
         int isub = 1; // Initialize the number of sub-cycles
@@ -445,14 +478,8 @@ SprayParticleContainer::updateParticles(const int&  level,
               const int fspec = fdat.indx(spf);
               const Real mw_fuel = mw_fluid[fspec];
               // Compute latent heat
-#ifdef LEGACY_SPRAY
-              Real part_latent = fdat.latent(spf)*
-                std::pow(amrex::max((fdat.critT(spf) - T_part)/
-                                    (fdat.critT(spf) - fdat.boilT(spf)), 0.), 0.38);
-#else
               Real part_latent = h_skin[fspec] + fdat.latent(spf)
                 - fdat.cp(spf)*(T_part - ref_T);
-#endif
               L_fuel[spf] = part_latent;
               // Compute the mass fraction of the fuel vapor at droplet surface
               Real pres_sat = EOS::PATM*std::exp(part_latent*inv_Ru*mw_fuel*
@@ -460,10 +487,8 @@ SprayParticleContainer::updateParticles(const int&  level,
               Real Yfv = mw_fuel*pres_sat/(mw_mix*p_fluid + (mw_fuel - mw_mix)*pres_sat);
               Yfv = amrex::max(0., amrex::min(1. - C_eps, Yfv));
               B_M_num[spf] = amrex::max(C_eps, (Yfv - Y_fluid[fspec])/(1. - Yfv));
-#ifndef LEGACY_SPRAY
               Y_skin[fspec] = Yfv + rule*(Y_fluid[fspec] - Yfv);
               sumYSkin += Y_skin[fspec];
-#endif
 #ifdef USE_SPRAY_SOA
               cp_L_av += Yp[spf][i]*fdat.cp(spf);
 #else
@@ -473,11 +498,7 @@ SprayParticleContainer::updateParticles(const int&  level,
             }
             const Real restYSkin = 1. - sumYSkin;
             for (int sp = 0; sp != NUM_SPECIES; ++sp) {
-#ifdef LEGACY_SPRAY
-              Y_skin[sp] = Y_fluid[sp];
-#else
               Y_skin[sp] += restYSkin*Y_fluid[sp];
-#endif
               cp_skin += Y_skin[sp]*cp_n[sp];
               mw_vap += Y_skin[sp]*invmw[sp];
             }
@@ -534,20 +555,18 @@ SprayParticleContainer::updateParticles(const int&  level,
           RealVect part_mom_src(RealVect::TheZeroVector());
           Real fluid_eng_src = 0.;
           if (mom_trans) {
-#ifdef LEGACY_SPRAY
-            Real drag_force = 3.*M_PI*mu_skin*dia_part*(1. + 0.15*std::pow(Reyn, 0.687));
-#else
             Real drag_coef = 0.;
             if (Reyn > 0.)
 	      drag_coef =
 	        (Reyn > 1.) ? 24./Reyn*(1. + std::cbrt(Reyn*Reyn)/6.) : 24./Reyn;
             Real drag_force = 0.125*rho_fluid*drag_coef*M_PI*dia2_part*diff_vel_mag;
-#endif
             part_mom_src = drag_force*diff_vel;
             fluid_mom_src = part_mom_src + vel_part*m_dot;
             // s_d,mu dot u_d
             Real S_dmu_dot_u = part_mom_src.dotProduct(vel_part);
+#ifndef SPRAY_PELE_LM
             fluid_eng_src += S_dmu_dot_u + m_dot*part_ke;
+#endif
             Real inv_tau_var = drag_force*inv_pmass;
             if (isub == 1)
               nsub = amrex::min(amrex::max(nsub, int(flow_dt*inv_tau_var) + 1), nSubMax);
@@ -564,14 +583,8 @@ SprayParticleContainer::updateParticles(const int&  level,
               Real heatC = calcHeatCoeff(ratio, B_M_num[spf], B_eps, C_eps, Nu_0);
               // Convection term
               coeff_heat += heatC;
-#ifdef LEGACY_SPRAY
-              Real htmp = Y_dot[spf]*(cp_n[fspec]*(T_skin - T_part) + L_fuel[spf]);
-              fluid_eng_src += htmp;
-              part_temp_src += htmp;
-#else
               fluid_eng_src += Y_dot[spf]*h_skin[fspec];
               part_temp_src += Y_dot[spf]*L_fuel[spf];
-#endif
             }
             Real conv_src = M_PI*lambda_skin*dia_part*delT*coeff_heat;
             fluid_eng_src += conv_src;
@@ -597,7 +610,7 @@ SprayParticleContainer::updateParticles(const int&  level,
                            Gpu::Atomic::Add(&velp[2][i], part_dt*part_mom_src[2]*inv_pmass););
               if (do_move) {
                 for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
-                  Gpu::Atomic::Add(&p.pos(dir), dt*velp[dir][i]);
+                  Gpu::Atomic::Add(&p.pos(dir), dt*velp[dir][i]*pos_conv);
                   remove_particle = checkWall(p.pos(dir), velp[dir][i],
                                               phi[dir], plo[dir], hi_bound[dir], lo_bound[dir]);
                 }
@@ -624,7 +637,7 @@ SprayParticleContainer::updateParticles(const int&  level,
               // Modify particle position by whole time step
               if (do_move) {
                 for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
-                  Gpu::Atomic::Add(&p.pos(dir), dt*p.rdata(pstateVel+dir));
+                  Gpu::Atomic::Add(&p.pos(dir), dt*p.rdata(pstateVel+dir)*pos_conv);
                   remove_particle = checkWall(p.pos(dir), p.rdata(pstateVel+dir),
                                               phi[dir], plo[dir], hi_bound[dir], lo_bound[dir]);
                 }
@@ -652,21 +665,20 @@ SprayParticleContainer::updateParticles(const int&  level,
             for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
               Real cur_coef = -coef[aindx]*sub_source*num_ppp;
               IntVect cur_indx = indx_array[aindx];
-              AMREX_ASSERT(src_box.contains(cur_indx));
               if (mom_trans) {
                 for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
                   const int nf = momIndx + dir;
-                  Gpu::Atomic::Add(&sourcearr(cur_indx, nf), cur_coef*fluid_mom_src[dir]);
+                  Gpu::Atomic::Add(&sourcearr(cur_indx, nf), cur_coef*fluid_mom_src[dir]*mom_src_conv);
                 }
               }
               if (mass_trans) {
-                Gpu::Atomic::Add(&sourcearr(cur_indx, rhoIndx), cur_coef*m_dot);
+                Gpu::Atomic::Add(&sourcearr(cur_indx, rhoIndx), cur_coef*m_dot*mass_src_conv);
                 for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
                   const int nf = specIndx + fdat.indx(spf);
-                  Gpu::Atomic::Add(&sourcearr(cur_indx, nf), cur_coef*Y_dot[spf]);
+                  Gpu::Atomic::Add(&sourcearr(cur_indx, nf), cur_coef*Y_dot[spf]*mass_src_conv);
                 }
               }
-              Gpu::Atomic::Add(&sourcearr(cur_indx, engIndx), cur_coef*fluid_eng_src);
+              Gpu::Atomic::Add(&sourcearr(cur_indx, engIndx), cur_coef*fluid_eng_src*eng_src_conv);
             }
           }
           // Increment sub-iteration

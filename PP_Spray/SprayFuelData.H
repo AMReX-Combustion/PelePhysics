@@ -2,7 +2,6 @@
 #define SPRAYFUELDATA_H_
 
 #include <AMReX_Gpu.H>
-#include "mechanism.h"
 
 using namespace amrex;
 
