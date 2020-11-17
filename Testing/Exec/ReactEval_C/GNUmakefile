@@ -41,23 +41,13 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
   else
       USE_KLU_PP = TRUE
   endif
-<<<<<<< HEAD
-  ifeq ($(USE_CUDA), TRUE)
-  # Activates GPU version
-  USE_CUDA_SUNDIALS_PP = FALSE
-  endif
-=======
->>>>>>> 9e95165c70bccecf7f25e11f610c6ee52724a013
 else
+  USE_RK64_PP = TRUE
   ifeq ($(USE_RK64_PP), TRUE)
   # Activates use of Hari explicit RK
   # will only work if USE_SUNDIALS_PP = FALSE
-<<<<<<< HEAD
   TRANSPORT_CPP = TRUE
   endif
-=======
-  USE_RK64_PP = TRUE
->>>>>>> 9e95165c70bccecf7f25e11f610c6ee52724a013
 endif
 
 #######################

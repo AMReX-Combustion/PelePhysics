@@ -43,11 +43,11 @@ int reactor_info(int cvode_iE, int Ncells);
 static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void *user_data);
 
 void reactor_close();
-    
+
 int react(realtype *rY_in, realtype *rY_src_in, 
             realtype *rX_in, realtype *rX_src_in, 
             realtype *dt_react, realtype *time,
-            int cvode_iE, int Ncells, cudaStream_t stream,double reltol=1e-6,double abstol=1e-10);
+            int cvode_iE, int Ncells, cudaStream_t stream);
 
 AMREX_GPU_DEVICE
 inline

@@ -27,6 +27,13 @@ typedef struct {
       int ireactor_type;
       int iimplicit_solve;
       int iuse_erkode;
+
+      amrex::Real *Yvect_full = NULL;
+      amrex::Real *rhoX_init = NULL;
+      amrex::Real *rhoXsrc_ext = NULL;
+      amrex::Real *rYsrc = NULL;
+      int *FCunt = NULL;
+      int *mask = NULL;
 } *UserData;
 
 
@@ -39,16 +46,24 @@ int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 
 /**********************************/
 /* Functions Called by the Program */
-extern "C"
-{
-    int reactor_init(int cvode_iE, int Ncells);
+int reactor_init(int cvode_iE, int Ncells);
 
-    int react(realtype *rY_in, realtype *rY_src_in,
-              realtype *rX_in, realtype *rX_src_in,
-              realtype &dt_react, realtype &time);
+int react(realtype *rY_in, realtype *rY_src_in,
+        realtype *rX_in, realtype *rX_src_in,
+        realtype &dt_react, realtype &time);
 
-    void reactor_close();
-}
+int react(const Box& box,
+        Array4<Real> const& rY_in,
+        Array4<Real> const& rY_src_in,
+        Array4<Real> const& T_in,
+        Array4<Real> const& rEner_in,
+        Array4<Real> const& rEner_src_in,
+        Array4<Real> const& FC_in,
+        Array4<int> const& mask,
+        Real &dt_react,
+        Real &time); 
+
+void reactor_close();
 
 
 /**********************************/
@@ -70,6 +85,6 @@ void ReSetTolODE();
 /**********************************/
 /* Main Kernel fct called in solver RHS */
 void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
-		void *user_data);
+        void *user_data);
 
 
