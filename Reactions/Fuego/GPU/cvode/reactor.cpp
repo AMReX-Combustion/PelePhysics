@@ -4,7 +4,7 @@
 #include <EOS.H>
 #include "mechanism.h"
 #include <AMReX_Gpu.H>
-#include <../AMREX_misc.H>
+#include <AMREX_misc.H>
 
 using namespace amrex;
 

@@ -3,12 +3,14 @@
 
 #include <AMReX_FArrayBox.H>
 #include <AMReX_Gpu.H>
+#include <AMReX_CArena.H>
 #include <cmath>
 
 #include "mechanism.h"
 
 #include <EOS.H>
 
+using namespace amrex;
 
 AMREX_GPU_HOST_DEVICE
 inline
@@ -99,13 +101,17 @@ box_unflatten(int icell, int i, int j, int k, int ireactor_type,
  
     FC_in(i,j,k,0) = tmp_FCunt;
 }
-void* sunalloc(size_t mem_size) {
+
+void* sunalloc(size_t mem_size) 
+{
 
   void * ptr = (void*) The_Arena()->alloc(mem_size);
 
   return ptr;
 }
-void sunfree(void* ptr) {
+
+void sunfree(void* ptr) 
+{
   size_t mem_size = dynamic_cast<CArena*>(The_Arena())->sizeOf(ptr);
 
   The_Arena()->free(ptr);

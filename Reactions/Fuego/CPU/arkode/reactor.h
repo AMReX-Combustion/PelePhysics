@@ -13,6 +13,10 @@
 #include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype      */
 #include <sundials/sundials_math.h>
 
+#include <AMReX_FArrayBox.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_iMultiFab.H>
+
 #include <AMReX_Print.H>
 #include <EOS.H>
 /**********************************/
@@ -26,7 +30,8 @@ typedef struct {
       int ianalytical_jacobian;
       int ireactor_type;
       int iimplicit_solve;
-      int iuse_erkode;
+      int iuse_erkstep;
+      int boxcell;
 
       amrex::Real *Yvect_full = NULL;
       amrex::Real *rhoX_init = NULL;
@@ -52,16 +57,16 @@ int react(realtype *rY_in, realtype *rY_src_in,
         realtype *rX_in, realtype *rX_src_in,
         realtype &dt_react, realtype &time);
 
-int react(const Box& box,
-        Array4<Real> const& rY_in,
-        Array4<Real> const& rY_src_in,
-        Array4<Real> const& T_in,
-        Array4<Real> const& rEner_in,
-        Array4<Real> const& rEner_src_in,
-        Array4<Real> const& FC_in,
-        Array4<int> const& mask,
-        Real &dt_react,
-        Real &time); 
+int react(const amrex::Box& box,
+        amrex::Array4<amrex::Real> const& rY_in,
+        amrex::Array4<amrex::Real> const& rY_src_in,
+        amrex::Array4<amrex::Real> const& T_in,
+        amrex::Array4<amrex::Real> const& rEner_in,
+        amrex::Array4<amrex::Real> const& rEner_src_in,
+        amrex::Array4<amrex::Real> const& FC_in,
+        amrex::Array4<int> const& mask,
+        amrex::Real &dt_react,
+        amrex::Real &time); 
 
 void reactor_close();
 

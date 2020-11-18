@@ -4,13 +4,13 @@
 #include "mechanism.h"
 #include <EOS.H>
 #include <AMReX_Gpu.H>
-#include <../AMREX_misc.H>
+#include <AMREX_misc.H>
 
 using namespace amrex;
 
 AMREX_GPU_DEVICE_MANAGED  int eint_rho = 1; // in/out = rhoE/rhoY
 AMREX_GPU_DEVICE_MANAGED  int enth_rho = 2; // in/out = rhoH/rhoY 
-AMREX_GPU_DEVICE_MANAGED int use_erkode=0;
+AMREX_GPU_DEVICE_MANAGED int use_erkstep=0;
 AMREX_GPU_DEVICE_MANAGED Real relTol    = 1.0e-6;
 AMREX_GPU_DEVICE_MANAGED Real absTol    = 1.0e-10;
 
@@ -19,16 +19,16 @@ AMREX_GPU_DEVICE_MANAGED Real absTol    = 1.0e-10;
 int reactor_info(int reactor_type, int Ncells)
 {
     ParmParse pp("ode");
-    pp.query("use_erkode", use_erkode);
-    pp.query("reltol",relTol);
-    pp.query("abstol",absTol);
-    if(use_erkode==1)
+    pp.query("use_erkstep", use_erkstep);
+    pp.query("rtol",relTol);
+    pp.query("atol",absTol);
+    if(use_erkstep==1)
     {
-        Print()<<"Using ERK ODE\n";
+        Print()<<"Using ERK Step on GPU\n";
     }
     else
     {
-        Print()<<"Using ARK ODE\n";
+        Print()<<"Using ARK Step on GPU\n";
     }
     return(0);
 }
@@ -51,10 +51,10 @@ int react(const amrex::Box& box,
     realtype time_init, time_out;
 
     void *arkode_mem    = NULL;
-    N_Vector y         = NULL;
+    N_Vector y          = NULL;
 
     NEQ            = NUM_SPECIES+1;
-    NCELLS         = Ncells;
+    NCELLS         = box.numPts();
     neq_tot        = NEQ * NCELLS;
 
     /* User data */
@@ -76,9 +76,9 @@ int react(const amrex::Box& box,
 
     BL_PROFILE_VAR_START(AllocsARKODE);
     /* Define vectors to be used later in creact */
-    user_data->rhoe_init   = (double*) sunalloc(NCELLS* sizeof(double));
-    user_data->rhoesrc_ext = (double*) sunalloc(NCELLS* sizeof(double));
-    user_data->rYsrc       = (double*) sunalloc(NCELLS*NUM_SPECIES*sizeof(double));
+    user_data->rhoe_init   = (double *) sunalloc(NCELLS* sizeof(double));
+    user_data->rhoesrc_ext = (double *) sunalloc(NCELLS* sizeof(double));
+    user_data->rYsrc       = (double *) sunalloc(NCELLS*NUM_SPECIES*sizeof(double));
     BL_PROFILE_VAR_STOP(AllocsARKODE);
 
     /* Get Device MemCpy of in arrays */
@@ -89,12 +89,15 @@ int react(const amrex::Box& box,
     /* Fill the full box_ncells length vectors from input Array4*/
     const auto len        = amrex::length(box);
     const auto lo         = amrex::lbound(box); 
-    amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+    amrex::ParallelFor(box, 
+    [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept 
+    {
         int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
         box_flatten(icell, i, j, k, user_data->ireactor_type,
                     rY_in, rY_src_in, T_in, 
                     rEner_in, rEner_src_in,
-                    yvec_d, user_data->rYsrc, user_data->rhoe_init, user_data->rhoesrc_ext);
+                    yvec_d, user_data->rYsrc, 
+                    user_data->rhoe_init, user_data->rhoesrc_ext);
     });
     BL_PROFILE_VAR_STOP(FlatStuff);
 
@@ -102,9 +105,9 @@ int react(const amrex::Box& box,
     time_init = time;
     time_out  = time + dt_react;
     
-    if(use_erkode == 0)
+    if(use_erkstep == 0)
     {
-       arkode_mem = ARKStepCreate(cF_RHS, NULL, *time, y);
+        arkode_mem = ARKStepCreate(cF_RHS, NULL, time, y);
         flag = ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
         flag = ARKStepSStolerances(arkode_mem, relTol, absTol); 
         flag = ARKStepResStolerance(arkode_mem, absTol);
@@ -113,11 +116,11 @@ int react(const amrex::Box& box,
     }
     else
     {
-       arkode_mem = ERKStepCreate(cF_RHS, *time, y);
-       flag = ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
-       flag = ERKStepSStolerances(arkode_mem, relTol, absTol); 
-       /* call integrator */
-       flag = ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);      
+        arkode_mem = ERKStepCreate(cF_RHS, time, y);
+        flag = ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
+        flag = ERKStepSStolerances(arkode_mem, relTol, absTol); 
+        /* call integrator */
+        flag = ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);      
     }
 
 #ifdef MOD_REACTOR
@@ -125,19 +128,10 @@ int react(const amrex::Box& box,
     dt_react = time_init - time;
     time  = time_init;
 #endif
-    BL_PROFILE_VAR_START(FlatStuff);
-    /* Update the input/output Array4 rY_in and rEner_in*/
-    amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-        int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
-        box_unflatten(icell, i, j, k, user_data->ireactor_type,
-                    rY_in, T_in, rEner_in, rEner_src_in, FC_in,
-                    yvec_d, user_data->rhoe_init, nfe, dt_react);
-    });
-    BL_PROFILE_VAR_STOP(FlatStuff);
 
     /* Get estimate of how hard the integration process was */
     long int nfe,nfi;
-    if(use_erkode==0)
+    if(use_erkstep==0)
     {
         flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
     }
@@ -145,10 +139,22 @@ int react(const amrex::Box& box,
     {
         flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
     }
+    
+    BL_PROFILE_VAR_START(FlatStuff);
+    /* Update the input/output Array4 rY_in and rEner_in*/
+    amrex::ParallelFor(box, 
+    [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept 
+    {
+        int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+        box_unflatten(icell, i, j, k, user_data->ireactor_type,
+               rY_in, T_in, rEner_in, rEner_src_in, FC_in,
+               yvec_d, user_data->rhoe_init, nfe, dt_react);
+    });
+    BL_PROFILE_VAR_STOP(FlatStuff);
 
     //cleanup
     N_VDestroy(y);          /* Free the y vector */
-    if(use_erkode==0)
+    if(use_erkstep==0)
     {
         ARKStepFree(&arkode_mem);
     }
@@ -177,9 +183,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
     void *arkode_mem    = NULL;
     N_Vector y         = NULL;
 
-    NEQ i          = NUM_SPECIES+1;
+    NEQ            = NUM_SPECIES+1;
     NCELLS         = Ncells;
     neq_tot        = NEQ * NCELLS;
+    Print()<<"Hari.. NEQ,NCELLS,neq_tot:"<<NEQ<<"\t"<<NCELLS<<"\t"<<neq_tot<<"\n";
 
     /* User data */
     UserData user_data;
@@ -200,31 +207,32 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
     BL_PROFILE_VAR_START(AllocsARKODE);
     /* Define vectors to be used later in creact */
-    cudaMalloc(&(user_data->rhoe_init), NCELLS*sizeof(double));
+    cudaMalloc(&(user_data->rhoe_init),   NCELLS*sizeof(double));
     cudaMalloc(&(user_data->rhoesrc_ext), NCELLS*sizeof(double));
-    cudaMalloc(&(user_data->rYsrc), (NCELLS*NEQ)*sizeof(double));
+    cudaMalloc(&(user_data->rYsrc), (NCELLS*NUM_SPECIES)*sizeof(double));
     BL_PROFILE_VAR_STOP(AllocsARKODE);
+    Print()<<"Hari.. done allocating\n";
 
     /* Get Device MemCpy of in arrays */
     /* Get Device pointer of solution vector */
     realtype *yvec_d      = N_VGetDeviceArrayPointer_Cuda(y);
     BL_PROFILE_VAR("AsyncCpy", AsyncCpy);
     // rhoY,T
-    cudaMemcpy(yvec_d, rY_in, sizeof(realtype) * ((NEQ+1)*NCELLS), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(yvec_d, rY_in, sizeof(realtype) * (NEQ*NCELLS), cudaMemcpyHostToDevice);
     // rhoY_src_ext
-    cudaMemcpy(user_data->rYsrc, rY_src_in, (NEQ*NCELLS)*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(user_data->rYsrc, rY_src_in, (NUM_SPECIES*NCELLS) *sizeof(double), cudaMemcpyHostToDevice);
     // rhoE/rhoH
-    cudaMemcpy(user_data->rhoe_init, rX_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
-    cudaMemcpy(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(user_data->rhoe_init, rX_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * NCELLS, cudaMemcpyHostToDevice);
     BL_PROFILE_VAR_STOP(AsyncCpy);
 
     /* Initial time and time to reach after integration */
     time_init = time;
     time_out  = time + dt_react;
     
-    if(use_erkode == 0)
+    if(use_erkstep == 0)
     {
-       arkode_mem = ARKStepCreate(cF_RHS, NULL, *time, y);
+        arkode_mem = ARKStepCreate(cF_RHS, NULL, time, y);
         flag = ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
         flag = ARKStepSStolerances(arkode_mem, relTol, absTol); 
         flag = ARKStepResStolerance(arkode_mem, absTol);
@@ -232,11 +240,13 @@ int react(realtype *rY_in, realtype *rY_src_in,
     }
     else
     {
-       arkode_mem = ERKStepCreate(cF_RHS, *time, y);
-       flag = ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
-       flag = ERKStepSStolerances(arkode_mem, relTol, absTol); 
-       flag = ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);      /* call integrator */
+        arkode_mem = ERKStepCreate(cF_RHS, time, y);
+        flag = ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
+        flag = ERKStepSStolerances(arkode_mem, relTol, absTol); 
+        flag = ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);      /* call integrator */
     }
+
+    Print()<<"Hari.. done with integration\n";
 
 #ifdef MOD_REACTOR
     /* If reactor mode is activated, update time */
@@ -245,9 +255,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
 #endif
     /* Pack data to return in main routine external */
     BL_PROFILE_VAR_START(AsyncCpy);
-    cudaMemcpy(rY_in, yvec_d, ((NEQ+1)*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost);
+    cudaMemcpyAsync(rY_in, yvec_d, (NEQ*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost);
 
-    for  (int i = 0; i < NCELLS; i++) {
+    for  (int i = 0; i < NCELLS; i++) 
+    {
         rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
     }
     BL_PROFILE_VAR_STOP(AsyncCpy);
@@ -255,7 +266,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
     /* Get estimate of how hard the integration process was */
     long int nfe,nfi;
-    if(use_erkode==0)
+    if(use_erkstep==0)
     {
         flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
     }
@@ -266,7 +277,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 
     //cleanup
     N_VDestroy(y);          /* Free the y vector */
-    if(use_erkode==0)
+    if(use_erkstep==0)
     {
         ARKStepFree(&arkode_mem);
     }
@@ -301,14 +312,17 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
 
     const auto ec = Gpu::ExecutionConfig(udata->ncells_d[0]);   
     //launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
-    launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
-            [=] AMREX_GPU_DEVICE () noexcept {
-            for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
-                    icell < udata->ncells_d[0]; icell += stride) {
-            fKernelSpec(icell, user_data, yvec_d, ydot_d, udata->rhoe_init, 
-                    udata->rhoesrc_ext, udata->rYsrc);    
-            }
-            }); 
+    launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>
+        ([=] AMREX_GPU_DEVICE () noexcept 
+         {
+         for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
+                 icell < udata->ncells_d[0]; icell += stride) 
+         {
+         fKernelSpec(icell, user_data, yvec_d, ydot_d, udata->rhoe_init, 
+                 udata->rhoesrc_ext, udata->rYsrc);    
+         }
+
+         }); 
 
     cuda_status = cudaStreamSynchronize(udata->stream);  
     assert(cuda_status == cudaSuccess);
@@ -318,12 +332,7 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
     return(0);
 }
 /******************************************************************************************/
-/**********************************/
-/*
- * CUDA kernels
- */
-AMREX_GPU_DEVICE
-inline void 
+    AMREX_GPU_DEVICE inline void 
 fKernelSpec(int icell, void *user_data, 
         realtype *yvec_d, realtype *ydot_d,  
         double *rhoe_init, double *rhoesrc_ext, double *rYs)
@@ -343,12 +352,14 @@ fKernelSpec(int icell, void *user_data,
 
     /* rho */ 
     rho_pt = 0.0;
-    for (int n = 0; n < NUM_SPECIES; n++) {
+    for (int n = 0; n < NUM_SPECIES; n++) 
+    {
         rho_pt = rho_pt + yvec_d[offset + n];
     }
 
     /* Yks, C CGS*/
-    for (int i = 0; i < NUM_SPECIES; i++){
+    for (int i = 0; i < NUM_SPECIES; i++)
+    {
         massfrac[i] = yvec_d[offset + i] / rho_pt;
     }
 
@@ -359,12 +370,15 @@ fKernelSpec(int icell, void *user_data,
     temp_pt = yvec_d[offset + NUM_SPECIES];
 
     /* Additional var needed */
-    if (udata->ireactor_type == 1){
+    if (udata->ireactor_type == 1)
+    {
         /* UV REACTOR */
         EOS::EY2T(nrg_pt, massfrac.arr, temp_pt);
         EOS::T2Ei(temp_pt, ei_pt.arr);
         EOS::TY2Cv(temp_pt, massfrac.arr, Cv_pt);
-    }else {
+    }
+    else 
+    {
         /* HP REACTOR */
         EOS::HY2T(nrg_pt, massfrac.arr, temp_pt);
         EOS::TY2Cp(temp_pt, massfrac.arr, Cv_pt);
@@ -375,15 +389,11 @@ fKernelSpec(int icell, void *user_data,
 
     /* Fill ydot vect */
     ydot_d[offset + NUM_SPECIES] = rhoesrc_ext[icell];
-    for (int i = 0; i < NUM_SPECIES; i++){
+    for (int i = 0; i < NUM_SPECIES; i++)
+    {
         ydot_d[offset + i]           = cdots_pt[i] + rYs[icell * NUM_SPECIES + i];
-        ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES]  - ydot_d[offset + i] * ei_pt[i];
+        ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES]  
+            - ydot_d[offset + i] * ei_pt[i];
     }
     ydot_d[offset + NUM_SPECIES] = ydot_d[offset + NUM_SPECIES] /(rho_pt * Cv_pt);
-    
-    /* Fill ydot vect */
-    /*ydot_d[offset + NUM_SPECIES] = 1e6;
-    for (int i = 0; i < NUM_SPECIES; i++){
-        ydot_d[offset + i]           = 0.0;
-    }*/
 }
