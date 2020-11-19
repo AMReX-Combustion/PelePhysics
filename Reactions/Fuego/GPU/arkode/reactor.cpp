@@ -13,6 +13,7 @@ AMREX_GPU_DEVICE_MANAGED  int enth_rho = 2; // in/out = rhoH/rhoY
 AMREX_GPU_DEVICE_MANAGED int use_erkstep=0;
 AMREX_GPU_DEVICE_MANAGED Real relTol    = 1.0e-6;
 AMREX_GPU_DEVICE_MANAGED Real absTol    = 1.0e-10;
+Array<Real,NUM_SPECIES+1> typVals = {-1};
 
 /******************************************************************************************/
 /* Initialization routine, called once at the begining of the problem */
@@ -31,6 +32,29 @@ int reactor_info(int reactor_type, int Ncells)
         Print()<<"Using ARK Step on GPU\n";
     }
     return(0);
+}
+/******************************************************************************************/
+void SetTypValsODE(const std::vector<double>& ExtTypVals) 
+{
+    Vector<std::string> kname;
+    EOS::speciesNames(kname);
+
+    Print() << "Set the typVals in PelePhysics: \n  ";
+    int size_ETV = ExtTypVals.size();
+    AMREX_ASSERT(size_ETV == typVals.size());
+    for (int i=0; i<size_ETV-1; i++) {
+        typVals[i] = ExtTypVals[i];
+        Print() << kname[i] << ":" << typVals[i] << "  ";
+    }
+    typVals[size_ETV-1] = ExtTypVals[size_ETV-1];
+    Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";
+}
+/******************************************************************************************/
+void SetTolFactODE(double relative_tol,double absolute_tol) 
+{
+    relTol = relative_tol;
+    absTol = absolute_tol;
+    Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
 }
 /******************************************************************************************/
 /* react call with array4 of data */

@@ -20,7 +20,8 @@
 #include <AMReX_Print.H>
 /**********************************/
 
-typedef struct ARKODEUserData {
+typedef struct ARKODEUserData 
+{
     /* Checks */
     bool reactor_arkode_initialized;
     /* Base items */
@@ -62,9 +63,11 @@ int react(const amrex::Box& box,
           const int &reactor_type,
           cudaStream_t stream); 
 
-AMREX_GPU_DEVICE
-inline
-void
+AMREX_GPU_DEVICE inline void
 fKernelSpec(int ncells, void *user_data, 
             realtype *yvec_d, realtype *ydot_d,  
             double *rhoX_init, double *rhoXsrc_ext, double *rYs);
+
+void SetTypValsODE(const std::vector<double>& ExtTypVals);
+
+void SetTolFactODE(double relative_tol,double absolute_tol);
