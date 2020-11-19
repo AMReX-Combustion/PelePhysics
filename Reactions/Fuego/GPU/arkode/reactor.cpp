@@ -151,7 +151,7 @@ int react(const amrex::Box& box,
                yvec_d, user_data->rhoe_init, nfe, dt_react);
     });
     BL_PROFILE_VAR_STOP(FlatStuff);
-
+    
     //cleanup
     N_VDestroy(y);          /* Free the y vector */
     if(use_erkstep==0)
@@ -166,7 +166,8 @@ int react(const amrex::Box& box,
     sunfree(user_data->rhoe_init);
     sunfree(user_data->rhoesrc_ext);
     sunfree(user_data->rYsrc);
-    sunfree(user_data);
+
+    The_Managed_Arena()->free(user_data);
 
     return nfe;
 }
@@ -186,7 +187,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
     NEQ            = NUM_SPECIES+1;
     NCELLS         = Ncells;
     neq_tot        = NEQ * NCELLS;
-    Print()<<"Hari.. NEQ,NCELLS,neq_tot:"<<NEQ<<"\t"<<NCELLS<<"\t"<<neq_tot<<"\n";
 
     /* User data */
     UserData user_data;
@@ -211,7 +211,6 @@ int react(realtype *rY_in, realtype *rY_src_in,
     cudaMalloc(&(user_data->rhoesrc_ext), NCELLS*sizeof(double));
     cudaMalloc(&(user_data->rYsrc), (NCELLS*NUM_SPECIES)*sizeof(double));
     BL_PROFILE_VAR_STOP(AllocsARKODE);
-    Print()<<"Hari.. done allocating\n";
 
     /* Get Device MemCpy of in arrays */
     /* Get Device pointer of solution vector */
@@ -246,13 +245,13 @@ int react(realtype *rY_in, realtype *rY_src_in,
         flag = ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);      /* call integrator */
     }
 
-    Print()<<"Hari.. done with integration\n";
 
 #ifdef MOD_REACTOR
     /* If reactor mode is activated, update time */
     dt_react = time_init - time;
     time  = time_init;
 #endif
+
     /* Pack data to return in main routine external */
     BL_PROFILE_VAR_START(AsyncCpy);
     cudaMemcpyAsync(rY_in, yvec_d, (NEQ*NCELLS)*sizeof(realtype), cudaMemcpyDeviceToHost);
@@ -314,15 +313,15 @@ static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in,
     //launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem, udata->stream>>>(
     launch_global<<<udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>
         ([=] AMREX_GPU_DEVICE () noexcept 
-         {
+    {
          for (int icell = blockDim.x*blockIdx.x+threadIdx.x, stride = blockDim.x*gridDim.x;
                  icell < udata->ncells_d[0]; icell += stride) 
          {
-         fKernelSpec(icell, user_data, yvec_d, ydot_d, udata->rhoe_init, 
+             fKernelSpec(icell, user_data, yvec_d, ydot_d, udata->rhoe_init, 
                  udata->rhoesrc_ext, udata->rYsrc);    
          }
 
-         }); 
+    }); 
 
     cuda_status = cudaStreamSynchronize(udata->stream);  
     assert(cuda_status == cudaSuccess);
