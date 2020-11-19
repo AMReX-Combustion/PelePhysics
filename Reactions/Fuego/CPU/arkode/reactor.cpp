@@ -171,7 +171,7 @@ int reactor_init(int reactor_type, int Ncells)
     /* Just a sanity check */
     if ( (data->iimplicit_solve == 1) && (data->iuse_erkstep == 1)) 
     {
-        Abort("ERK ODE is for explicit updates, cannot do implict");
+        Abort("ERK ODE is for explicit updates, cannot do implicit");
     }
 
     /* Number of species and cells in mechanism */
