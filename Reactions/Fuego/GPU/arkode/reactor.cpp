@@ -80,6 +80,7 @@ int react(const amrex::Box& box,
     NEQ            = NUM_SPECIES+1;
     NCELLS         = box.numPts();
     neq_tot        = NEQ * NCELLS;
+    AMREX_ASSERT(NCELLS < std::numeric_limits<int>::max());
 
     /* User data */
     UserData user_data;
