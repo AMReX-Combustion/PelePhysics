@@ -6,7 +6,8 @@
 #include <EOS.H>
 /**********************************/
 
-typedef struct {
+typedef struct 
+{
     /* Checks */
     /* Base items */
     int ncells;
@@ -20,17 +21,14 @@ typedef struct {
 
 /**********************************/
 /* Functions Called by the Program */
-extern "C"
-{
-    int reactor_init(const int* reactor_type, const int* Ncells,double rk64_errtol=1e-16,
+int reactor_init(int reactor_type, int Ncells,double rk64_errtol=1e-16,
         int rk64_nsubsteps_guess=10,int rk64_nsusbteps_min=5,int rk64_nsubsteps_max=500);
 
-    int react(double *rY_in, double *rY_src_in, 
-            double *rX_in, double *rX_src_in, 
-            double *dt_react, double *time);
+int react(double *rY_in, double *rY_src_in, 
+        double *rX_in, double *rX_src_in, 
+        double &dt_react, double &time);
 
-    void reactor_close();
-}
+void reactor_close();
 
 void FreeUserData(UserData data);
 
@@ -39,3 +37,7 @@ void fKernelSpec(double *dt, double *yvec_d, double *ydot_d,
 
 UserData AllocUserData(int reactor_type, int num_cells,double rk64_errtol,
         int rk64_nsubsteps_guess,int rk64_nsubsteps_min,int rk64_nsubsteps_max);
+
+void SetTypValsODE(const std::vector<double>& ExtTypVals);
+
+void SetTolFactODE(double relative_tol,double absolute_tol);

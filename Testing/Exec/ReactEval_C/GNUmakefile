@@ -17,9 +17,6 @@ TINY_PROFILE = TRUE
 
 USE_CUDA   = FALSE
 
-ifeq ($(USE_CUDA), TRUE)
-    USE_OMP=FALSE
-endif
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    ?= ../../..
 
@@ -65,7 +62,5 @@ endif
 
 Bpack   := ./Make.package
 Blocs   := .
-
-LIBRARIES += -lnvToolsExt
 
 include $(PELE_PHYSICS_HOME)/Testing/Exec/Make.PelePhysics

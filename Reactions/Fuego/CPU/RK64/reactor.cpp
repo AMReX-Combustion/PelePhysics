@@ -14,6 +14,36 @@ int enth_rho = 2; // in/out = rhoH/rhoY
 double *rhoX_init   = NULL;
 double *rhoXsrc_ext = NULL;
 double *rYsrc       = NULL;
+const int nstages_rk64 = 6;
+const amrex::Real alpha_rk64[6] = 
+{
+    0.218150805229859,  //            3296351145737.0/15110423921029.0,
+    0.256702469801519,  //            1879360555526.0/ 7321162733569.0,
+    0.527402592007520,  //            10797097731880.0/20472212111779.0,
+    0.0484864267224467, //            754636544611.0/15563872110659.0,
+    1.24517071533530,   //            3260218886217.0/ 2618290685819.0,
+    0.412366034843237,  //            5069185909380.0/12292927838509.0
+};
+
+const amrex::Real beta_rk64[6] = 
+{
+    -0.113554138044166,  //-1204558336989.0/10607789004752.0,
+    -0.215118587818400,  //-3028468927040.0/14078136890693.0,
+    -0.0510152146250577, //-455570672869.0/ 8930094212428.0,
+    -1.07992686223881,   //-17275898420483.0/15997285579755.0,
+    -0.248664241213447,  //-2453906524165.0/ 9868353053862.0,
+    0.0
+};
+
+const amrex::Real err_rk64[6] = 
+{
+    -0.0554699315064507, //-530312978447.0/ 9560368366154.0,
+    0.158481845574980,   // 473021958881.0/ 2984707536468.0,
+    -0.0905918835751907, //-947229622805.0/10456009803779.0,
+    -0.219084567203338,  //-2921473878215.0/13334914072261.0,
+    0.164022338959433,   // 1519535112975.0/ 9264196100452.0,
+    0.0426421977505659   // 167623581683.0/ 3930932046784.0
+};
 /**********************************/
 
 #ifdef _OPENMP
@@ -23,15 +53,16 @@ double *rYsrc       = NULL;
 
 /******************************************************************************************/
 /* Initialization routine, called once at the begining of the problem */
-int reactor_init(const int* reactor_type, const int* Ncells,double rk64_errtol,
-        int rk64_nsubsteps_guess,int rk64_nsubsteps_min,int rk64_nsubsteps_max) {
+int reactor_init(int reactor_type, int Ncells,double rk64_errtol,
+        int rk64_nsubsteps_guess,int rk64_nsubsteps_min,int rk64_nsubsteps_max) 
+{
 
 #ifdef _OPENMP
     int omp_thread;
     /* omp thread if applicable */
     omp_thread = omp_get_thread_num(); 
 #endif
-    data = AllocUserData(*reactor_type, *Ncells,rk64_errtol,rk64_nsubsteps_guess,
+    data = AllocUserData(reactor_type,Ncells,rk64_errtol,rk64_nsubsteps_guess,
             rk64_nsubsteps_min,rk64_nsubsteps_max);
 
     /* Define vectors to be used later in creact */
@@ -40,6 +71,16 @@ int reactor_init(const int* reactor_type, const int* Ncells,double rk64_errtol,
     rYsrc       = (double *)  malloc((data->ncells*NUM_SPECIES)*sizeof(double));
 
     return(0);
+}
+/******************************************************************************************/
+void SetTypValsODE(const std::vector<double>& ExtTypVals)
+{
+  //WIP
+}
+/******************************************************************************************/
+void SetTolFactODE(double relative_tol,double absolute_tol)
+{
+  //WIP
 }
 /******************************************************************************************/
 UserData AllocUserData(int reactor_type, int num_cells,double rk64_errtol,
@@ -70,11 +111,11 @@ UserData AllocUserData(int reactor_type, int num_cells,double rk64_errtol,
 /* Main call routine */
 int react(double *rY_in, double *rY_src_in, 
         double *rX_in, double *rX_src_in,
-        double *dt_react, double *time)
+        double &dt_react, double &time)
 {
 
-    double time_init = *time;
-    double time_out  = *time + (*dt_react);
+    double time_init = time;
+    double time_out  = time + dt_react;
     double current_time = time_init;
     double *soln_reg,*carryover_reg,*error_reg,*zero_reg,*rhs;
     double dt_rk,dt_rk_min,dt_rk_max,change_factor;
@@ -85,32 +126,6 @@ int react(double *rY_in, double *rY_src_in,
 
     int neq_tot        = (NUM_SPECIES + 1) * (data->ncells);
 
-    const int nstages_rk64=6;
-    const amrex::Real alpha_rk64[6] = {
-        0.218150805229859,  //            3296351145737.0/15110423921029.0,
-        0.256702469801519,  //            1879360555526.0/ 7321162733569.0,
-        0.527402592007520,  //            10797097731880.0/20472212111779.0,
-        0.0484864267224467, //            754636544611.0/15563872110659.0,
-        1.24517071533530,   //            3260218886217.0/ 2618290685819.0,
-        0.412366034843237,  //            5069185909380.0/12292927838509.0
-    };
-
-    const amrex::Real beta_rk64[6] = {
-        -0.113554138044166,  //-1204558336989.0/10607789004752.0,
-        -0.215118587818400,  //-3028468927040.0/14078136890693.0,
-        -0.0510152146250577, //-455570672869.0/ 8930094212428.0,
-        -1.07992686223881,   //-17275898420483.0/15997285579755.0,
-        -0.248664241213447,  //-2453906524165.0/ 9868353053862.0,
-        0.0};
-
-    const amrex::Real err_rk64[6] = {
-        -0.0554699315064507, //-530312978447.0/ 9560368366154.0,
-        0.158481845574980,   // 473021958881.0/ 2984707536468.0,
-        -0.0905918835751907, //-947229622805.0/10456009803779.0,
-        -0.219084567203338,  //-2921473878215.0/13334914072261.0,
-        0.164022338959433,   // 1519535112975.0/ 9264196100452.0,
-        0.0426421977505659   // 167623581683.0/ 3930932046784.0
-    };
 
 #ifdef _OPENMP
     int omp_thread;
@@ -137,7 +152,7 @@ int react(double *rY_in, double *rY_src_in,
     {
 #endif
 	amrex::Print() <<"BEG : time curr is "<< time_init << 
-            " and dt_react is " << *dt_react << 
+            " and dt_react is " << dt_react << 
             " and final time should be " << time_out << "\n";
     }
 
@@ -160,9 +175,9 @@ int react(double *rY_in, double *rY_src_in,
     std::memcpy(rhoX_init, rX_in, sizeof(double) * data->ncells);
     std::memcpy(rhoXsrc_ext, rX_src_in, sizeof(double) * data->ncells);
 
-    dt_rk     = *dt_react/double(data->nsubsteps_guess);
-    dt_rk_min = *dt_react/double(data->nsubsteps_max);
-    dt_rk_max = *dt_react/double(data->nsubsteps_min);
+    dt_rk     = dt_react/double(data->nsubsteps_guess);
+    dt_rk_min = dt_react/double(data->nsubsteps_max);
+    dt_rk_max = dt_react/double(data->nsubsteps_min);
 
     int nsteps=0;
 
@@ -215,7 +230,7 @@ int react(double *rY_in, double *rY_src_in,
 
     #ifdef MOD_REACTOR
     /* If reactor mode is activated, update time */
-    *time  = time_init + (*dt_react);
+    time  = time_init + dt_react;
     #endif
 
     #ifdef _OPENMP
@@ -226,14 +241,14 @@ int react(double *rY_in, double *rY_src_in,
     {
     #endif
           amrex::Print() <<"END : time curr is "<< current_time << 
-              " and actual dt_react is " << *dt_react << "\n";
+              " and actual dt_react is " << dt_react << "\n";
     }
 
     /* Pack data to return in main routine external */
     std::memcpy(rY_in, soln_reg, neq_tot * sizeof(double));
     for  (int i = 0; i < data->ncells; i++) 
     {
-        rX_in[i] = rX_in[i] + (*dt_react) * rX_src_in[i];
+        rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
     }
 
     return nsteps;
