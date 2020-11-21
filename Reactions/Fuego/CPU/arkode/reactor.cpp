@@ -317,6 +317,10 @@ int reactor_init(int reactor_type, int Ncells)
     /* Free the atol vector */
     N_VDestroy(atol); 
 
+    // FIXME: Only output errors to IO rank, but turn off all error output for now.
+    // Otherwise large runs can output GBs of text.
+    ARKStepSetErrFile(arkode_mem, NULL);
+
     /* Ok we're done ...*/
     if ((data->iverbose > 1) && (omp_thread == 0)) 
     {
