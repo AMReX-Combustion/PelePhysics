@@ -1,18 +1,13 @@
+#include <pmf_data.H>
 #include <pmf.H>
+#include <AMReX_Arena.H>
+#include <AMReX_Gpu.H>
+
+using namespace amrex;
 
 namespace PMF
 {
-  AMREX_GPU_DEVICE_MANAGED unsigned int pmf_N;
-  AMREX_GPU_DEVICE_MANAGED unsigned int pmf_M;
-  AMREX_GPU_DEVICE_MANAGED bool pmf_do_average;
-
-  amrex::Gpu::ManagedVector<amrex::Real> pmf_X;
-  amrex::Gpu::ManagedVector<amrex::Real> pmf_Y;
-
-  AMREX_GPU_DEVICE_MANAGED amrex::Real* d_pmf_X = nullptr;
-  AMREX_GPU_DEVICE_MANAGED amrex::Real* d_pmf_Y = nullptr;
-
-  amrex::Vector<std::string> pmf_names;
+   amrex::Vector<std::string> pmf_names;
 }
 
 static
@@ -40,8 +35,11 @@ checkQuotes(const std::string& str)
 }
 
 void
-PMF::read_pmf(const std::string& myfile)
+PMF::read_pmf(const std::string& myfile, bool do_average)
 {
+
+  PmfData pmf_data;
+   
   std::string firstline, secondline, remaininglines;
   int pos1, pos2;
   int variable_count, line_count;
@@ -87,25 +85,32 @@ PMF::read_pmf(const std::string& myfile)
   }
   amrex::Print() << line_count << " data lines found in PMF file" << std::endl;
 
-  PMF::pmf_N = line_count;
-  PMF::pmf_M = variable_count - 1;
-  PMF::pmf_X.resize(PMF::pmf_N);
-  PMF::pmf_Y.resize(PMF::pmf_N * PMF::pmf_M);
+  pmf_data.pmf_N = line_count;
+  pmf_data.pmf_M = variable_count - 1;
+  pmf_data.pmf_X = (amrex::Real *) The_Arena()->alloc(pmf_data.pmf_N * sizeof(amrex::Real));
+  pmf_data.pmf_Y = (amrex::Real *) The_Arena()->alloc(pmf_data.pmf_N * pmf_data.pmf_M * sizeof(amrex::Real));
 
   iss.clear();
   iss.seekg(0, std::ios::beg);
   std::getline(iss, firstline);
   std::getline(iss, secondline);
-  for (int i = 0; i < PMF::pmf_N; i++) {
+  for (int i = 0; i < pmf_data.pmf_N; i++) {
     std::getline(iss, remaininglines);
     std::istringstream sinput(remaininglines);
-    sinput >> PMF::pmf_X[i];
-    for (int j = 0; j < PMF::pmf_M; j++) {
-      sinput >> PMF::pmf_Y[j * PMF::pmf_N + i];
+    sinput >> pmf_data.pmf_X[i];
+    for (int j = 0; j < pmf_data.pmf_M; j++) {
+      sinput >> pmf_data.pmf_Y[j * pmf_data.pmf_N + i];
     }
   }
 
-  PMF::d_pmf_X = PMF::pmf_X.dataPtr();
-  PMF::d_pmf_Y = PMF::pmf_Y.dataPtr();
+  pmf_data_g = (PmfData *) The_Device_Arena()->alloc(sizeof(pmf_data)); 
+#ifdef AMREX_USE_CUDA
+  amrex::Gpu::htod_memcpy(pmf_data_g,&pmf_data,sizeof(pmf_data)); 
+#else
+  pmf_data_g->pmf_N = line_count;
+  pmf_data_g->pmf_M = variable_count - 1;
+  pmf_data_g->pmf_do_average = do_average;
+  std::memcpy(&pmf_data_g->pmf_X,&pmf_data.pmf_X, sizeof(pmf_data.pmf_X));
+  std::memcpy(&pmf_data_g->pmf_Y,&pmf_data.pmf_Y, sizeof(pmf_data.pmf_Y));
+#endif
 }
-
