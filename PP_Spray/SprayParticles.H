@@ -115,6 +115,46 @@ public:
 
   ~SprayParticleContainer() {}
 
+  void SprayParticleIO (const int                         level,
+                        const bool                        is_checkpoint,
+                        const int                         write_ascii,
+                        const std::string&                dir,
+                        const amrex::Vector<std::string>& sprayFuelNames)
+  {
+    const int pstateVel = m_sprayIndx[SprayComps::pstateVel];
+    const int pstateT   = m_sprayIndx[SprayComps::pstateT];
+    const int pstateRho = m_sprayIndx[SprayComps::pstateRho];
+    const int pstateDia = m_sprayIndx[SprayComps::pstateDia];
+    const int pstateY   = m_sprayIndx[SprayComps::pstateY];
+    amrex::Vector<std::string> real_comp_names(pstateY + NUM_SPECIES);
+    AMREX_D_TERM(real_comp_names[pstateVel] = "xvel";
+                 , real_comp_names[pstateVel + 1] = "yvel";
+                 , real_comp_names[pstateVel + 2] = "zvel";);
+    real_comp_names[pstateT] = "temperature";
+    real_comp_names[pstateDia] = "diam";
+    real_comp_names[pstateRho] = "density";
+    for (int sp = 0; sp != SPRAY_FUEL_NUM; ++sp) {
+      real_comp_names[pstateY + sp] = "spray_mf_" + sprayFuelNames[sp];
+    }
+    amrex::Vector<std::string> int_comp_names;
+    Checkpoint(dir, "particles", is_checkpoint, real_comp_names, int_comp_names);
+    // Here we write ascii information every time we write a checkpoint file
+    if (level == 0 && write_ascii == 1) {
+      // TODO: Would be nice to be able to use file_name_digits
+      // instead of doing this
+      int strlen = dir.length();
+      // Remove the ".temp" from the directory
+      std::string dirout = dir.substr(0, strlen - 5);
+      size_t num_start_loc = dirout.find_last_not_of("0123456789") + 1;
+      std::string dir_path = dir;
+      size_t num_end_path = dir_path.find_last_of("/") + 1;
+      dir_path = dir_path.substr(0,num_end_path);
+      std::string fname =
+        dir_path + "spray" + dirout.substr(num_start_loc, strlen) + ".p3d";
+      WriteAsciiFile(fname);
+    }
+  }
+
   ///
   /// Set the value of particle state for all partilces on a level
   ///
@@ -131,6 +171,36 @@ public:
   inline void setParcelSize(const amrex::Real parcelSize)
   {
     m_parcelSize = parcelSize;
+  }
+
+  ///
+  /// Set appropriate number of ghost cells
+  ///
+  inline void setSprayGridInfo(const int level,
+                               const int finest_level,
+                               const int amr_ncycle,
+                               const int amr_iteration,
+                               const int fine_ref_ratio,
+                               int&      ghost_width,
+                               int&      where_width,
+                               int&      state_width,
+                               int&      source_width)
+  {
+    int stencil_deposition_width = 1;
+    int stencil_interpolation_width = 1;
+    // Set the number of cells on level+1 to hold ghost particles
+    ghost_width = 0;
+    if (level < finest_level) ghost_width = fine_ref_ratio;
+    int ghost_num = 0;
+    if (level > 0)
+      ghost_num += amr_ncycle + stencil_deposition_width;
+    if (fine_ref_ratio == 4) ghost_num += 1;
+    // Set the number of cells used in the where call
+    where_width = amr_ncycle + amr_ncycle/2 - amr_iteration;
+    // Set the number of ghost cells needed for interpolation
+    state_width = stencil_interpolation_width + ghost_num;
+    // Set the number of ghost cells needed for source deposition
+    source_width = stencil_deposition_width + ghost_num;
   }
 
   ///

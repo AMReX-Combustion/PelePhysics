@@ -109,6 +109,7 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
   }
 #else
   // Otherwise, assume all particles are ghost particles
+  // TODO: I dont think this ever gets used
   if (level > 0 && sub_cycle && do_move && isGhostPart) {
     ParticleLocData pld;
     for (auto& kv : GetParticles(level)) {
@@ -300,6 +301,7 @@ SprayParticleContainer::updateParticles(const int&  level,
   Real vel_conv = 1.;
   Real pos_conv = 1.;
   Real rho_conv = 1.;
+  Real eng_conv = 1.;
   Real mom_src_conv = 1.;
   Real mass_src_conv = 1.;
   Real eng_src_conv = 1.;
@@ -307,6 +309,7 @@ SprayParticleContainer::updateParticles(const int&  level,
   vel_conv = 100.;  // Turn m/s to cm/s
   rho_conv = 0.001; // Turn kg/m^3 to g/cm^3
   pos_conv = 0.01;  // Turn cm to m for updating position
+  eng_conv = 1.E4; // For converting enthalpy to CGS
   // This makes no sense, conversions should be independent
   // of dimensions but numerical tests show this isn't the case
 #if AMREX_SPACEDIM == 2
@@ -328,7 +331,8 @@ SprayParticleContainer::updateParticles(const int&  level,
   const int specIndx = m_sprayIndx[SprayComps::specIndx];
   // Start the ParIter, which loops over separate sets of particles in different boxes
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
-    const Box& tile_box = pti.growntilebox(state_ghosts);
+    const Box& tile_box = pti.tilebox();
+    const Box& state_box = pti.growntilebox(state_ghosts);
     const Box& src_box = pti.growntilebox(source_ghosts);
     const Long Np = pti.numParticles();
     ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
@@ -392,7 +396,7 @@ SprayParticleContainer::updateParticles(const int&  level,
         // Extract adjacent values and interpolate fluid at particle location
         for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
           IntVect cur_indx = indx_array[aindx];
-          AMREX_ASSERT(tile_box.contains(cur_indx));
+          AMREX_ASSERT(state_box.contains(cur_indx));
           Real cur_coef = coef[aindx];
           Real cur_rho = statearr(cur_indx, rhoIndx);
           rho_fluid += cur_coef*cur_rho*rho_conv;
@@ -416,7 +420,11 @@ SprayParticleContainer::updateParticles(const int&  level,
                        ke += 0.5*velz*velz;
                        vel_fluid[2] += cur_coef*velz;);
           Real T_val = statearr(cur_indx, utempIndx);
-#ifndef SPRAY_PELE_LM
+#ifdef SPRAY_PELE_LM
+          // Not sure if this is needed
+//           Real intH = statearr(cur_indx, engIndx)/cur_rho*eng_conv;
+//           EOS::HY2T(intH, mass_frac, T_val);
+#else
           Real intEng = statearr(cur_indx, engIndx)*inv_rho - ke;
           EOS::EY2T(intEng, mass_frac, T_val);
 #endif
@@ -665,6 +673,7 @@ SprayParticleContainer::updateParticles(const int&  level,
             for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
               Real cur_coef = -coef[aindx]*sub_source*num_ppp;
               IntVect cur_indx = indx_array[aindx];
+              AMREX_ASSERT(src_box.contains(cur_indx));
               if (mom_trans) {
                 for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
                   const int nf = momIndx + dir;
