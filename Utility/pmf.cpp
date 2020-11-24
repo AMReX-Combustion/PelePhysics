@@ -104,7 +104,7 @@ PMF::read_pmf(const std::string& myfile, bool do_average)
   }
 
   pmf_data_g = (PmfData *) The_Device_Arena()->alloc(sizeof(pmf_data)); 
-#ifdef AMREX_USE_CUDA
+#ifdef AMREX_USE_GPU
   amrex::Gpu::htod_memcpy(pmf_data_g,&pmf_data,sizeof(pmf_data)); 
 #else
   pmf_data_g->pmf_N = line_count;
