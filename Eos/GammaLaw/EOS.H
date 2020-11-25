@@ -281,6 +281,6 @@ RG2dpde(amrex::Real R, amrex::Real /*G*/, amrex::Real& dpde)
   dpde = (gamma - 1.0) * R;
 }
 
-}; // namespace EOS
+} // namespace EOS
 
 #endif
