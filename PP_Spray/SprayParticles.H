@@ -192,15 +192,18 @@ public:
     ghost_width = 0;
     if (level < finest_level) ghost_width = fine_ref_ratio;
     int ghost_num = 0;
-    if (level > 0)
-      ghost_num += amr_ncycle + stencil_deposition_width;
-    if (fine_ref_ratio == 4) ghost_num += 1;
-    // Set the number of cells used in the where call
-    where_width = amr_ncycle + amr_ncycle/2 - amr_iteration;
+    if (level > 0) {
+      ghost_num += amr_ncycle + amr_ncycle/2;
+      // For the initial iters, this will not work so we much have a check
+      ghost_num = amrex::max(3, ghost_num);
+    }
     // Set the number of ghost cells needed for interpolation
     state_width = stencil_interpolation_width + ghost_num;
     // Set the number of ghost cells needed for source deposition
     source_width = stencil_deposition_width + ghost_num;
+    // Set the number of cells used in the where call
+    // TODO: This is now unused. Only caused issues
+    where_width = state_width;
   }
 
   ///
@@ -245,7 +248,22 @@ public:
   {
     BL_PROFILE("ParticleContainer::transferSource()");
     const int nghost = amrex::min(source.nGrow(), source_ghosts);
-    tmp_source.SumBoundary(Geom(level).periodicity());
+    const int ncomp = tmp_source.nComp();
+#ifdef SPRAY_PELE_LM
+    if (level > 0) {
+      amrex::MultiFab tmp_mf(this->m_gdb->ParticleBoxArray(level),
+                             this->m_gdb->ParticleDistributionMap(level),
+                             ncomp, source_ghosts);
+      tmp_mf.setVal(0.);
+      tmp_mf.copy(tmp_source, 0, 0, ncomp, source_ghosts, source_ghosts,
+                  Geom(level).periodicity(), FabArrayBase::ADD);
+      tmp_source.copy(tmp_mf, 0, 0, ncomp, source_ghosts, source_ghosts,
+                      Geom(level).periodicity(), FabArrayBase::COPY);
+    } else
+#endif
+      {
+        tmp_source.SumBoundary(Geom(level).periodicity());
+      }
     amrex::MultiFab::Add(source, tmp_source, 0, 0, source.nComp(), nghost);
     tmp_source.setVal(0.);
   }

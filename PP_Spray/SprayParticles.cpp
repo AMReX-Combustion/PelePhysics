@@ -85,46 +85,6 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
 
   // ********************************************************************************
 
-  // We need to check if ghost particles have moved far enough away from AMR
-  // interface to be considered
-#ifdef AMREX_DEBUG
-  // If we are debugging, make sure to check all particles
-  if (level > 0 && sub_cycle && do_move && !isVirtualPart) {
-    ParticleLocData pld;
-    for (auto& kv : GetParticles(level)) {
-      auto& ptile = kv.second;
-      for (Long k = 0; k < ptile.GetArrayOfStructs().numParticles(); ++k) {
-        ParticleType& p = ptile.GetArrayOfStructs()[k];
-        if (p.id() > 0) {
-          if (!this->Where(p, pld, level, level, where_width)) {
-            if (p.id() == GhostParticleID) {
-              p.id() = -1;
-            } else {
-              Abort("Trying to remove non-ghost particle");
-            }
-          }
-        }
-      }
-    }
-  }
-#else
-  // Otherwise, assume all particles are ghost particles
-  // TODO: I dont think this ever gets used
-  if (level > 0 && sub_cycle && do_move && isGhostPart) {
-    ParticleLocData pld;
-    for (auto& kv : GetParticles(level)) {
-      auto& ptile = kv.second;
-      for (Long k = 0; k < ptile.GetArrayOfStructs().numParticles(); ++k) {
-        ParticleType& p = ptile.GetArrayOfStructs()[k];
-        if (p.id() > 0) {
-          if (!this->Where(p, pld, level, level, where_width))
-            p.id() = -1;
-        }
-      }
-    }
-  }
-#endif
-
   // ********************************************************************************
 
   if (this->m_verbose > 1) {
@@ -151,12 +111,12 @@ SprayParticleContainer::estTimestep (int level, Real cfl) const
   Real dt = std::numeric_limits<Real>::max();
   if (level >= this->GetParticles().size() ||
       m_sprayIndx[SprayComps::mom_tran] == 0)
-    return dt;
+    return -1.;
 
   const Real strttime = ParallelDescriptor::second();
   const Geometry& geom = this->m_gdb->Geom(level);
-  const auto dx = geom.CellSizeArray();
-  const auto dxi = geom.InvCellSizeArray();
+  const auto dx = Geom(level).CellSizeArray();
+  const auto dxi = Geom(level).InvCellSizeArray();
   {
     amrex::ReduceOps<amrex::ReduceOpMin> reduce_op;
     amrex::ReduceData<amrex::Real> reduce_data(reduce_op);
@@ -232,28 +192,20 @@ SprayParticleContainer::updateParticles(const int&  level,
   AMREX_ASSERT(OnSameGrids(level, state));
   AMREX_ASSERT(OnSameGrids(level, source));
   const auto dxi = this->Geom(level).InvCellSizeArray();
+  const auto dx = this->Geom(level).CellSizeArray();
   const auto plo = this->Geom(level).ProbLoArray();
   const auto phi = this->Geom(level).ProbHiArray();
   const auto domain = this->Geom(level).Domain();
   IntVect dom_lo = domain.smallEnd();
   IntVect dom_hi = domain.bigEnd();
-  // Vector to determine boundary type: 1 - reflective,
-  // -1 - not reflective, 0 - periodic
-  int lo_bound[AMREX_SPACEDIM];
-  int hi_bound[AMREX_SPACEDIM];
-  // We are only concerned with domain boundaries that are reflective
+  IntVect lo_bound;
+  IntVect hi_bound;
   for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
     if (!this->Geom(level).isPeriodic(dir)) {
-      if (reflect_lo[dir]) {
-        lo_bound[dir] = 1;
-      } else {
-        lo_bound[dir] = -1;
-      }
-      if (reflect_hi[dir]) {
-        hi_bound[dir] = 1;
-      } else {
-        hi_bound[dir] = -1;
-      }
+      if (reflect_lo[dir]) lo_bound[dir] = 1;
+      else lo_bound[dir] = -1;
+      if (reflect_hi[dir]) hi_bound[dir] = 1;
+      else hi_bound[dir] = -1;
     } else {
       lo_bound[dir] = 0;
       hi_bound[dir] = 0;
@@ -262,7 +214,6 @@ SprayParticleContainer::updateParticles(const int&  level,
     if (!reflect_lo[dir]) dom_lo[dir] -= 100;
     if (!reflect_hi[dir]) dom_hi[dir] += 100;
   }
-  const auto dx = this->Geom(level).CellSizeArray();
   const Real vol = AMREX_D_TERM(dx[0],*dx[1],*dx[2]);
   const Real inv_vol = 1./vol;
   // Set all constants
@@ -396,7 +347,10 @@ SprayParticleContainer::updateParticles(const int&  level,
         // Extract adjacent values and interpolate fluid at particle location
         for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
           IntVect cur_indx = indx_array[aindx];
-          AMREX_ASSERT(state_box.contains(cur_indx));
+#ifdef AMREX_DEBUG
+          if (!state_box.contains(cur_indx))
+            Abort("SprayParticleContainer::updateParticles() -- state box too small");
+#endif
           Real cur_coef = coef[aindx];
           Real cur_rho = statearr(cur_indx, rhoIndx);
           rho_fluid += cur_coef*cur_rho*rho_conv;
@@ -673,7 +627,10 @@ SprayParticleContainer::updateParticles(const int&  level,
             for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
               Real cur_coef = -coef[aindx]*sub_source*num_ppp;
               IntVect cur_indx = indx_array[aindx];
-              AMREX_ASSERT(src_box.contains(cur_indx));
+#ifdef AMREX_DEBUG
+              if (!src_box.contains(cur_indx))
+                Abort("SprayParticleContainer::updateParticles() -- source box too small");
+#endif
               if (mom_trans) {
                 for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
                   const int nf = momIndx + dir;
