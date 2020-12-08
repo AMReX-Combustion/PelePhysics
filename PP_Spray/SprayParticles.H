@@ -10,6 +10,11 @@
 #include "SprayFuelData.H"
 #include "EOS.H"
 
+#ifdef SPRAY_PELE_LM
+#include "pelelm_prob.H"
+#include "pelelm_prob_parm.H"
+#endif
+
 #ifdef USE_SPRAY_SOA
 #define NSR_SPR 0
 #define NSI_SPR 0
@@ -271,11 +276,23 @@ public:
   ///
   /// Insert particles according to some criterion
   ///
-  bool insertParticles(amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level);
+  bool insertParticles(amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level
+#ifdef SPRAY_PELE_LM
+                       , ProbParm const& prob_parm
+#endif
+                       );
 
-  bool injectParticles(amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level);
+  bool injectParticles(amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level
+#ifdef SPRAY_PELE_LM
+                       , ProbParm const& prob_parm
+#endif
+                       );
 
-  void InitSprayParticles();
+  void InitSprayParticles(
+#ifdef SPRAY_PELE_LM
+                          ProbParm const& prob_parm
+#endif
+                          );
 
 private:
   bool m_setFuelData;
