@@ -465,6 +465,8 @@ SprayParticleContainer::updateParticles(const int&  level,
               mw_vap += Y_skin[sp]*invmw[sp];
             }
             mw_vap = 1./mw_vap;
+          } else {
+            mw_vap = mw_mix;
           }
           Real lambda_skin = 0.;
           Real mu_skin = 0.;
@@ -503,6 +505,8 @@ SprayParticleContainer::updateParticles(const int&  level,
               if (mass_trans) {
                 Y_dot[spf] = -amrex::max(M_PI*rhoD*dia_part*Sh_num[spf]*logB, 0.);
                 m_dot += Y_dot[spf];
+              } else {
+                Y_dot[spf] = 0.;
               }
             }
             d_dot = m_dot/(0.5*M_PI*rho_part*dia2_part);
@@ -536,7 +540,7 @@ SprayParticleContainer::updateParticles(const int&  level,
 
           // Solve for energy source terms
           Real part_temp_src = 0.;
-          if (heat_trans && evap_fuel) {
+          if (evap_fuel && (heat_trans || mass_trans)) {
             const Real inv_pm_cp = inv_pmass/cp_L_av;
             Real coeff_heat = 0.;
             for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
@@ -549,8 +553,10 @@ SprayParticleContainer::updateParticles(const int&  level,
               part_temp_src += Y_dot[spf]*L_fuel[spf];
             }
             Real conv_src = M_PI*lambda_skin*dia_part*delT*coeff_heat;
-            fluid_eng_src += conv_src;
-            part_temp_src += conv_src;
+            if (heat_trans) {
+              fluid_eng_src += conv_src;
+              part_temp_src += conv_src;
+            }
             part_temp_src *= inv_pm_cp;
             if (isub == 1 && delT > C_eps) {
               Real inv_tau_T = conv_src*inv_pm_cp/delT;
