@@ -27,23 +27,6 @@
 #define NAI_SPR 0
 #endif
 
-enum SprayComps {
-  heat_tran = 0,
-  mass_tran,
-  mom_tran,
-  pstateVel,
-  pstateT,
-  pstateRho,
-  pstateDia,
-  pstateY,
-  rhoIndx,
-  momIndx,
-  engIndx,
-  utempIndx,
-  specIndx,
-  NumIndx
-};
-
 class MyParIter
   : public amrex::ParIter<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>
 {
@@ -82,7 +65,6 @@ public:
   using PairIndex = std::pair<int, int>;
   using HostVectReal = amrex::Gpu::HostVector<amrex::Real>;
   using HostVectInt = amrex::Gpu::HostVector<int>;
-  using GpuArrayInt = amrex::GpuArray<int, SprayComps::NumIndx>;
 
   SprayParticleContainer(amrex::Amr* amr, amrex::BCRec* _phys_bc, const amrex::Real parcelSize)
     : amrex::AmrParticleContainer<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>(amr),
@@ -105,16 +87,13 @@ public:
                      const HostVectReal& fuelLatent,
                      const HostVectInt&  fuelIndx,
                      amrex::Real         ref_T,
-                     GpuArrayInt&        sprayIndices)
+                     SprayComps          sprayIndices)
   {
     HostVectReal fuelEnth(NUM_SPECIES);
     EOS::T2Hi(ref_T, fuelEnth.dataPtr());
     m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelIndx);
     m_sprayRefT = ref_T;
-    for (int i = 0; i < SprayComps::NumIndx; ++i) {
-      AMREX_ASSERT(sprayIndices[i] >= 0);
-      m_sprayIndx[i] = sprayIndices[i];
-    }
+    m_sprayIndx = sprayIndices;
     m_setFuelData = true;
   }
 
@@ -126,11 +105,11 @@ public:
                         const std::string&                dir,
                         const amrex::Vector<std::string>& sprayFuelNames)
   {
-    const int pstateVel = m_sprayIndx[SprayComps::pstateVel];
-    const int pstateT   = m_sprayIndx[SprayComps::pstateT];
-    const int pstateRho = m_sprayIndx[SprayComps::pstateRho];
-    const int pstateDia = m_sprayIndx[SprayComps::pstateDia];
-    const int pstateY   = m_sprayIndx[SprayComps::pstateY];
+    const int pstateVel = m_sprayIndx.pstateVel;
+    const int pstateT   = m_sprayIndx.pstateT;
+    const int pstateRho = m_sprayIndx.pstateRho;
+    const int pstateDia = m_sprayIndx.pstateDia;
+    const int pstateY   = m_sprayIndx.pstateY;
     amrex::Vector<std::string> real_comp_names(pstateY + NUM_SPECIES);
     AMREX_D_TERM(real_comp_names[pstateVel] = "xvel";
                  , real_comp_names[pstateVel + 1] = "yvel";
@@ -310,7 +289,7 @@ private:
   bool reflect_hi[AMREX_SPACEDIM];
   SprayDataContainer m_fuelData;
   amrex::Real m_sprayRefT;
-  amrex::GpuArray<int, SprayComps::NumIndx> m_sprayIndx;
+  SprayComps m_sprayIndx;
 };
 
 #endif

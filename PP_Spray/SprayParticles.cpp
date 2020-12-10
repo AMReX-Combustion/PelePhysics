@@ -110,7 +110,7 @@ SprayParticleContainer::estTimestep (int level, Real cfl) const
   // TODO: Clean up this mess and bring the num particle functionality back
   Real dt = std::numeric_limits<Real>::max();
   if (level >= this->GetParticles().size() ||
-      m_sprayIndx[SprayComps::mom_tran] == 0)
+      m_sprayIndx.mom_tran == 0)
     return -1.;
 
   const Real strttime = ParallelDescriptor::second();
@@ -230,17 +230,17 @@ SprayParticleContainer::updateParticles(const int&  level,
   EOS::molecular_weight(mw_fluid);
   EOS::inv_molecular_weight(invmw);
   // Extract control parameters for mass, heat, and momentum transfer
-  const int heat_trans = m_sprayIndx[SprayComps::heat_tran];
-  const int mass_trans = m_sprayIndx[SprayComps::mass_tran];
-  const int mom_trans = m_sprayIndx[SprayComps::mom_tran];
+  const int heat_trans = m_sprayIndx.heat_tran;
+  const int mass_trans = m_sprayIndx.mass_tran;
+  const int mom_trans = m_sprayIndx.mom_tran;
   const Real inv_Ru = 1./EOS::RU;
   const Real ref_T = m_sprayRefT;
   // Particle components indices
-  const int pstateVel = m_sprayIndx[SprayComps::pstateVel];
-  const int pstateT   = m_sprayIndx[SprayComps::pstateT];
-  const int pstateRho = m_sprayIndx[SprayComps::pstateRho];
-  const int pstateDia = m_sprayIndx[SprayComps::pstateDia];
-  const int pstateY   = m_sprayIndx[SprayComps::pstateY];
+  const int pstateVel = m_sprayIndx.pstateVel;
+  const int pstateT   = m_sprayIndx.pstateT;
+  const int pstateRho = m_sprayIndx.pstateRho;
+  const int pstateDia = m_sprayIndx.pstateDia;
+  const int pstateY   = m_sprayIndx.pstateY;
   bool get_xi = false;
   bool get_Ddiag = true;
   bool get_lambda = true;
@@ -275,11 +275,11 @@ SprayParticleContainer::updateParticles(const int&  level,
 #endif
 
   // Component indices for conservative state
-  const int rhoIndx = m_sprayIndx[SprayComps::rhoIndx];
-  const int momIndx = m_sprayIndx[SprayComps::momIndx];
-  const int engIndx = m_sprayIndx[SprayComps::engIndx];
-  const int utempIndx = m_sprayIndx[SprayComps::utempIndx];
-  const int specIndx = m_sprayIndx[SprayComps::specIndx];
+  const int rhoIndx = m_sprayIndx.rhoIndx;
+  const int momIndx = m_sprayIndx.momIndx;
+  const int engIndx = m_sprayIndx.engIndx;
+  const int utempIndx = m_sprayIndx.utempIndx;
+  const int specIndx = m_sprayIndx.specIndx;
   // Start the ParIter, which loops over separate sets of particles in different boxes
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
     const Box& tile_box = pti.tilebox();

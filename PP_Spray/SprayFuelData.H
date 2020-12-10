@@ -2,8 +2,40 @@
 #define SPRAYFUELDATA_H_
 
 #include <AMReX_Gpu.H>
+#include "EOS.H"
 
 using namespace amrex;
+
+// Spray flags and indices
+struct SprayComps {
+  int heat_tran;
+  int mass_tran;
+  int mom_tran;
+  int pstateVel;
+  int pstateT;
+  int pstateRho;
+  int pstateDia;
+  int pstateY;
+  int rhoIndx;
+  int momIndx;
+  int engIndx;
+  int utempIndx;
+  int specIndx;
+};
+
+struct PartFluidData
+{
+  RealVect pos_part;
+  RealVect vel_part;
+  Real T_part;
+  Real dia_part;
+  Real rho_part;
+  Real Y_part[SPRAY_FUEL_NUM];
+  RealVect vel_fluid;
+  Real T_fluid;
+  Real rho_fluid;
+  Real Y_fluid[NUM_SPECIES];
+};
 
 struct SprayData
 {
