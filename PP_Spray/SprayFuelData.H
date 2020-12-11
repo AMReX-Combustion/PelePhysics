@@ -11,30 +11,64 @@ struct SprayComps {
   int heat_tran;
   int mass_tran;
   int mom_tran;
-  int pstateVel;
+  int pstateVel; // Particle indices
   int pstateT;
   int pstateRho;
   int pstateDia;
   int pstateY;
-  int rhoIndx;
+  int rhoIndx; // Gas phase indices
   int momIndx;
   int engIndx;
   int utempIndx;
   int specIndx;
 };
 
-struct PartFluidData
+// Structure that contains the interpolated gas phase state
+// and gas phase source values
+struct GasPhaseVals
 {
-  RealVect pos_part;
-  RealVect vel_part;
-  Real T_part;
-  Real dia_part;
-  Real rho_part;
-  Real Y_part[SPRAY_FUEL_NUM];
   RealVect vel_fluid;
   Real T_fluid;
   Real rho_fluid;
+  Real p_fluid;
   Real Y_fluid[NUM_SPECIES];
+  Real mw_mix;
+  Real mw_fluid[NUM_SPECIES];
+  Real invmw[NUM_SPECIES];
+  RealVect fluid_mom_src;
+  Real fluid_mass_src;
+  Real fluid_Y_dot[SPRAY_FUEL_NUM];
+  Real fluid_eng_src;
+  Real ref_T;
+
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+  GasPhaseVals (const RealVect in_vel,
+                const Real     in_T,
+                const Real     in_rho,
+                const Real     in_Y[],
+                const Real     in_mw[],
+                const Real     in_invmw[],
+                const Real     in_refT)
+    : vel_fluid(in_vel),
+      T_fluid(in_T),
+      rho_fluid(in_rho),
+      fluid_mom_src(RealVect::TheZeroVector()),
+      fluid_eng_src(0.),
+      fluid_mass_src(0.),
+      ref_T(in_refT)
+  {
+    mw_mix = 0.;
+    for (int n = 0; n < NUM_SPECIES; ++n) {
+      Y_fluid[n] = in_Y[n];
+      mw_fluid[n] = in_mw[n];
+      invmw[n] = in_invmw[n];
+      mw_mix += Y_fluid[n]*invmw[n];
+    }
+    p_fluid = rho_fluid*EOS::RU*mw_mix*T_fluid;
+    mw_mix = 1./mw_mix;
+    for (int n = 0; n < SPRAY_FUEL_NUM; ++n)
+      fluid_Y_dot[n] = 0.;
+  }
 };
 
 struct SprayData
