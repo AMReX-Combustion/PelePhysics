@@ -366,10 +366,10 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	/* Get estimate of how hard the integration process was */
         long int nfe, nfi, nf;
         if (data->iuse_erkode == 1) {
-            int flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
+            ERKStepGetNumRhsEvals(arkode_mem, &nfe);
             nf=nfe;
         } else {
-            int flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
+            ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
             nf=nfi;
         }
 	return nf;
@@ -458,8 +458,8 @@ void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
 
 
 /* Analytical Jacobian evaluation */
-int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
-		void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3){
+int cJac(realtype /*tn*/, N_Vector u, N_Vector /*fu*/, SUNMatrix J,
+		void *user_data, N_Vector /*tmp1*/, N_Vector /*tmp2*/, N_Vector /*tmp3*/){
 
   /* Make local copies of pointers to input data (big M) */
   realtype *ydata  = N_VGetArrayPointer(u);
@@ -529,40 +529,40 @@ int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
 */
 
 /* Get and print some final statistics */
-void PrintFinalStats(void *arkode_mem, realtype Temp)
+void PrintFinalStats(void *arkode_mem_loc, realtype /*Temp*/)
 {
   long int nst, nst_a, nfe, nfi, nsetups, nje, nfeLS, nni, ncfn, netf;
   int flag;
 
   if (data->iuse_erkode == 1) {
-      flag = ERKStepGetNumSteps(arkode_mem, &nst);
+      flag = ERKStepGetNumSteps(arkode_mem_loc, &nst);
       check_flag(&flag, "ERKStepGetNumSteps", 1);
-      flag = ERKStepGetNumStepAttempts(arkode_mem, &nst_a);
+      flag = ERKStepGetNumStepAttempts(arkode_mem_loc, &nst_a);
       check_flag(&flag, "ERKStepGetNumStepAttempts", 1);
-      flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
+      flag = ERKStepGetNumRhsEvals(arkode_mem_loc, &nfe);
       check_flag(&flag, "ERKStepGetNumRhsEvals", 1);
 
       Print() << "\nFinal Solver Statistics:\n";
       Print() << "   Internal solver steps = " << nst << " (attempted = " << nst_a << ")\n";
       Print() << "   Total RHS evals:  Fe = " << nfe << "\n";
   } else {
-      flag = ARKStepGetNumSteps(arkode_mem, &nst);
+      flag = ARKStepGetNumSteps(arkode_mem_loc, &nst);
       check_flag(&flag, "ARKStepGetNumSteps", 1);
-      flag = ARKStepGetNumStepAttempts(arkode_mem, &nst_a);
+      flag = ARKStepGetNumStepAttempts(arkode_mem_loc, &nst_a);
       check_flag(&flag, "ARKStepGetNumStepAttempts", 1);
-      flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
+      flag = ARKStepGetNumRhsEvals(arkode_mem_loc, &nfe, &nfi);
       check_flag(&flag, "ARKStepGetNumRhsEvals", 1);
-      flag = ARKStepGetNumLinSolvSetups(arkode_mem, &nsetups);
+      flag = ARKStepGetNumLinSolvSetups(arkode_mem_loc, &nsetups);
       check_flag(&flag, "ARKStepGetNumLinSolvSetups", 1);
-      flag = ARKStepGetNumErrTestFails(arkode_mem, &netf);
+      flag = ARKStepGetNumErrTestFails(arkode_mem_loc, &netf);
       check_flag(&flag, "ARKStepGetNumErrTestFails", 1);
-      flag = ARKStepGetNumNonlinSolvIters(arkode_mem, &nni);
+      flag = ARKStepGetNumNonlinSolvIters(arkode_mem_loc, &nni);
       check_flag(&flag, "ARKStepGetNumNonlinSolvIters", 1);
-      flag = ARKStepGetNumNonlinSolvConvFails(arkode_mem, &ncfn);
+      flag = ARKStepGetNumNonlinSolvConvFails(arkode_mem_loc, &ncfn);
       check_flag(&flag, "ARKStepGetNumNonlinSolvConvFails", 1);
-      flag = ARKStepGetNumJacEvals(arkode_mem, &nje);
+      flag = ARKStepGetNumJacEvals(arkode_mem_loc, &nje);
       check_flag(&flag, "ARKStepGetNumJacEvals", 1);
-      flag = ARKStepGetNumLinRhsEvals(arkode_mem, &nfeLS);
+      flag = ARKStepGetNumLinRhsEvals(arkode_mem_loc, &nfeLS);
       check_flag(&flag, "ARKStepGetNumLinRhsEvals", 1);
 
       Print() << "\nFinal Solver Statistics:\n";
@@ -626,10 +626,6 @@ UserData AllocUserData(int reactor_type, int num_cells)
 
     /* Make local copies of pointers in user_data */
     UserData data_wk = (UserData) malloc(sizeof *data_wk);
-    int omp_thread = 0;
-#ifdef _OPENMP
-    omp_thread = omp_get_thread_num(); 
-#endif
 
     /* ParmParse from the inputs file */
     /* TODO change that in the future */ 
