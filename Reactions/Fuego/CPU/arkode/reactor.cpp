@@ -38,6 +38,38 @@ using namespace amrex;
 #endif
 /**********************************/
 
+UserData AllocUserData(int reactor_type, int num_cells)
+{
+    Print() << "Allocating data for ARKODE\n";
+
+    /* Make local copies of pointers in user_data */
+    UserData data_wk = (UserData) malloc(sizeof *data_wk);
+
+    /* ParmParse from the inputs file */
+    /* TODO change that in the future */ 
+    ParmParse pp("ode");
+    pp.query("analytical_jacobian",data_wk->ianalytical_jacobian);
+    ParmParse ppak("arkode");
+    ppak.query("implicit_solve", data_wk->iimplicit_solve);
+    ppak.query("use_erkode", data_wk->iuse_erkode);
+
+    (data_wk->ireactor_type)      = reactor_type;
+
+    (data_wk->ncells)                    = num_cells;
+
+    (data_wk->iverbose)                  = 1;
+
+    (data_wk->reactor_arkode_initialized) = false;
+
+    return(data_wk);
+}
+
+/* Free data memory */
+void FreeUserData(UserData data_wk)
+{
+  free(data_wk);
+}
+
 /**********************************/
 /* Initialization of typVals */
 void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) {
@@ -620,32 +652,6 @@ int check_flag(void *flagvalue, const char *funcname, int opt)
     return(0);
 }
 
-UserData AllocUserData(int reactor_type, int num_cells)
-{
-    Print() << "Allocating data for ARKODE\n";
-
-    /* Make local copies of pointers in user_data */
-    UserData data_wk = (UserData) malloc(sizeof *data_wk);
-
-    /* ParmParse from the inputs file */
-    /* TODO change that in the future */ 
-    ParmParse pp("ode");
-    pp.query("analytical_jacobian",data_wk->ianalytical_jacobian);
-    ParmParse ppak("arkode");
-    ppak.query("implicit_solve", data_wk->iimplicit_solve);
-    ppak.query("use_erkode", data_wk->iuse_erkode);
-
-    (data_wk->ireactor_type)      = reactor_type;
-
-    (data_wk->ncells)                    = num_cells;
-
-    (data_wk->iverbose)                  = 1;
-
-    (data_wk->reactor_arkode_initialized) = false;
-
-    return(data_wk);
-}
-
 
 /* Free memory */
 void reactor_close(){
@@ -669,9 +675,3 @@ void reactor_close(){
   free(rYsrc);
 }
 
-
-/* Free data memory */
-void FreeUserData(UserData data_wk)
-{
-  free(data_wk);
-} 

@@ -57,9 +57,9 @@ int check_flag(void *flagvalue, const char *funcname, int opt);
 
 void PrintFinalStats(void *arkodeMem, realtype Temp);
 
-UserData AllocUserData(int iE, int num_cells);
+// UserData AllocUserData(int iE, int num_cells);
 
-void FreeUserData(UserData data);
+// void FreeUserData(UserData data);
 
 void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
 
