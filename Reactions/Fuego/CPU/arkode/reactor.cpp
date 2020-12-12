@@ -17,12 +17,12 @@ using namespace amrex;
   UserData data      = NULL;
 /* OPTIONS */
   /* energy */
-  double *rhoX_init   = NULL;
-  double *rhoXsrc_ext = NULL;
-  double *rYsrc       = NULL;
-  Array<double,NUM_SPECIES+1> typVals = {-1};
-  double relTol       = 1.0e-10;
-  double absTol       = 1.0e-10;
+  amrex::Real *rhoX_init   = NULL;
+  amrex::Real *rhoXsrc_ext = NULL;
+  amrex::Real *rYsrc       = NULL;
+  Array<amrex::Real,NUM_SPECIES+1> typVals = {-1};
+  amrex::Real relTol       = 1.0e-10;
+  amrex::Real absTol       = 1.0e-10;
 /* REMOVE MAYBE LATER */
   int dense_solve           = 1;
   int eint_rho = 1; // in/out = rhoE/rhoY
@@ -40,7 +40,7 @@ using namespace amrex;
 
 /**********************************/
 /* Initialization of typVals */
-void SetTypValsODE(const std::vector<double>& ExtTypVals) {
+void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) {
     int size_ETV = NUM_SPECIES + 1;
     Vector<std::string> kname;
     EOS::speciesNames(kname);
@@ -64,7 +64,7 @@ void SetTypValsODE(const std::vector<double>& ExtTypVals) {
 
 
 /* Set or update the rel/abs tolerances  */
-void SetTolFactODE(double relative_tol,double absolute_tol) {
+void SetTolFactODE(amrex::Real relative_tol,amrex::Real absolute_tol) {
     relTol = relative_tol;
     absTol = absolute_tol;
 
@@ -267,9 +267,9 @@ int reactor_init(int reactor_type, int Ncells) {
 	}
 
 	/* Define vectors to be used later in creact */
-	rhoX_init   = (double *) malloc(data->ncells*sizeof(double));
-	rhoXsrc_ext = (double *) malloc( data->ncells*sizeof(double));
-	rYsrc       = (double *)  malloc((data->ncells*NUM_SPECIES)*sizeof(double));
+	rhoX_init   = (amrex::Real *) malloc(data->ncells*sizeof(amrex::Real));
+	rhoXsrc_ext = (amrex::Real *) malloc( data->ncells*sizeof(amrex::Real));
+	rYsrc       = (amrex::Real *)  malloc((data->ncells*NUM_SPECIES)*sizeof(amrex::Real));
 
 	/* Free the atol vector */
 	N_VDestroy(atol); 
@@ -314,7 +314,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
 	/* rhoY,T */
 	std::memcpy(yvec_d, rY_in, sizeof(realtype) * ((NUM_SPECIES+1)*data->ncells));
 	/* rhoY_src_ext */
-	std::memcpy(rYsrc, rY_src_in, (NUM_SPECIES * data->ncells)*sizeof(double));
+	std::memcpy(rYsrc, rY_src_in, (NUM_SPECIES * data->ncells)*sizeof(amrex::Real));
 	/* rhoE/rhoH */
 	std::memcpy(rhoX_init, rX_in, sizeof(realtype) * data->ncells);
 	std::memcpy(rhoXsrc_ext, rX_src_in, sizeof(realtype) * data->ncells);
