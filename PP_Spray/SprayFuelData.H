@@ -60,13 +60,13 @@ struct GasPhaseVals
   Real T_fluid;
   Real rho_fluid;
   Real p_fluid;
-  Real Y_fluid[NUM_SPECIES];
+  GpuArray<Real,NUM_SPECIES> Y_fluid;
   Real mw_mix;
-  Real mw_fluid[NUM_SPECIES];
-  Real invmw[NUM_SPECIES];
+  GpuArray<Real,NUM_SPECIES> mw_fluid;
+  GpuArray<Real,NUM_SPECIES> invmw;
   RealVect fluid_mom_src;
   Real fluid_mass_src;
-  Real fluid_Y_dot[SPRAY_FUEL_NUM];
+  GpuArray<Real,SPRAY_FUEL_NUM> fluid_Y_dot;
   Real fluid_eng_src;
   Real ref_T;
 
@@ -74,9 +74,9 @@ struct GasPhaseVals
   GasPhaseVals (const RealVect in_vel,
                 const Real     in_T,
                 const Real     in_rho,
-                const Real     in_Y[],
-                const Real     in_mw[],
-                const Real     in_invmw[],
+                const Real*    in_Y,
+                const Real*    in_mw,
+                const Real*    in_invmw,
                 const Real     in_refT)
     : vel_fluid(in_vel),
       T_fluid(in_T),
@@ -100,6 +100,7 @@ struct GasPhaseVals
   }
 };
 
+// Structure containing values for the liquid sprays
 struct SprayData
 {
   SprayData (const Gpu::DeviceVector<Real>& critT,

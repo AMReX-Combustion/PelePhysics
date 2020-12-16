@@ -234,10 +234,10 @@ SprayParticleContainer::updateParticles(const int&  level,
   const Real inv_vol = 1./vol;
   // Set all constants
   const Real num_ppp = m_parcelSize;
-  Real mw_fluid[NUM_SPECIES];
-  Real invmw[NUM_SPECIES];
-  EOS::molecular_weight(mw_fluid);
-  EOS::inv_molecular_weight(invmw);
+  GpuArray<Real,NUM_SPECIES> mw_fluid;
+  GpuArray<Real,NUM_SPECIES> invmw;
+  EOS::molecular_weight(mw_fluid.data());
+  EOS::inv_molecular_weight(invmw.data());
   const Real ref_T = m_sprayRefT;
   // Particle components indices
   SprayComps SPI = m_sprayIndx;
@@ -288,8 +288,8 @@ SprayParticleContainer::updateParticles(const int&  level,
     {
       ParticleType& p = pstruct[pid];
       if (p.id() > 0) {
-        IntVect indx_array[AMREX_D_PICK(2,4,8)]; // Array of adjacent cells
-        Real weights[AMREX_D_PICK(2,4,8)]; // Array of corresponding weights
+        GpuArray<IntVect, AMREX_D_PICK(2,4,8)> indx_array; // Array of adjacent cells
+        GpuArray<Real,AMREX_D_PICK(2,4,8)> weights; // Array of corresponding weights
         bool remove_particle = false;
         bool mod_interp = false; // If true, set interpolated velocity values to zero
 #ifdef AMREX_USE_EB
@@ -318,24 +318,24 @@ SprayParticleContainer::updateParticles(const int&  level,
               flags_array(i  ,j  ,k  ).isRegular()) do_reg_interp = true;
         }
         if (do_reg_interp) {
-          trilinear_interp(p.pos(), plo, dxi, indx_array, weights);
+          trilinear_interp(p.pos(), plo, dxi, indx_array.data(), weights.data());
         } else {
           mod_interp = fe_interp(p.pos(), ip, jp, kp, dx, dxi, plo, flags_array, ccent_fab,
                                  bcent_fab, apx_fab, apy_fab, apz_fab, volfrac_fab,
-                                 indx_array, weights);
+                                 indx_array.data(), weights.data());
         }
 #else
-        trilinear_interp(p.pos(), plo, dxi, indx_array, weights);
+        trilinear_interp(p.pos(), plo, dxi, indx_array.data(), weights.data());
 #endif // AMREX_USE_EB
         // Interpolate fluid state
         Real T_fluid = 0.;
         Real rho_fluid = 0.;
-        Real Y_fluid[NUM_SPECIES];
+        GpuArray<Real,NUM_SPECIES> Y_fluid;
         for (int n = 0; n < NUM_SPECIES; ++n)
           Y_fluid[n] = 0.;
         RealVect vel_fluid(RealVect::TheZeroVector());
         {
-          Real mass_frac[NUM_SPECIES];
+          GpuArray<Real,NUM_SPECIES> mass_frac;
           for (int aindx = 0.; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
             IntVect cur_indx = indx_array[aindx];
             Real cw = weights[aindx];
@@ -364,15 +364,15 @@ SprayParticleContainer::updateParticles(const int&  level,
             Real T_i = statearr(cur_indx, SPI.utempIndx);
 #ifndef SPRAY_PELE_LM
             Real intEng = statearr(cur_indx, SPI.engIndx)*inv_rho - ke;
-            EOS::EY2T(intEng, mass_frac, T_i);
+            EOS::EY2T(intEng, mass_frac.data(), T_i);
 #endif
             T_fluid += cw*T_i;
           }
           rho_fluid *= SPU.rho_conv;
         }
         if (mod_interp) vel_fluid = RealVect::TheZeroVector();
-        GasPhaseVals gpv(vel_fluid, T_fluid, rho_fluid, Y_fluid,
-                         mw_fluid, invmw, ref_T);
+        GasPhaseVals gpv(vel_fluid, T_fluid, rho_fluid, Y_fluid.data(),
+                         mw_fluid.data(), invmw.data(), ref_T);
         remove_particle = calculateSpraySource(flow_dt, do_move, gpv, SPI, fdat,
                                                p, attribs, pid);
         // Modify particle position by whole time step

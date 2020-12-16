@@ -115,7 +115,7 @@ bool calculateSpraySource (const Real    flow_dt,
                            SprayData     fdat,
                            SprayParticleContainer::ParticleType& p,
                            const std::array<SprayParticleContainer::SoA::RealVector, NAR_SPR>& attribs,
-                           const int i)
+                           const int pid)
 {
   const Real rule = 1./3.;
   const Real inv_Ru = 1./EOS::RU;
@@ -131,21 +131,21 @@ bool calculateSpraySource (const Real    flow_dt,
     get_Ddiag = false;
     get_lambda = false;
   }
-  Real Y_skin[NUM_SPECIES];
-  Real h_skin[NUM_SPECIES];
-  Real cp_n[NUM_SPECIES];
-  Real Ddiag[NUM_SPECIES];
-  Real B_M_num[SPRAY_FUEL_NUM];
-  Real Sh_num[SPRAY_FUEL_NUM];
-  Real L_fuel[SPRAY_FUEL_NUM];
-  Real Y_dot[SPRAY_FUEL_NUM];
+  GpuArray<Real, NUM_SPECIES> Y_skin;
+  GpuArray<Real, NUM_SPECIES> h_skin;
+  GpuArray<Real, NUM_SPECIES> cp_n;
+  GpuArray<Real, NUM_SPECIES> Ddiag;
+  GpuArray<Real, SPRAY_FUEL_NUM> B_M_num;
+  GpuArray<Real, SPRAY_FUEL_NUM> Sh_num;
+  GpuArray<Real, SPRAY_FUEL_NUM> L_fuel;
+  GpuArray<Real, SPRAY_FUEL_NUM> Y_dot;
 #ifdef USE_SPRAY_SOA
-  RealVect vel_part(AMREX_D_DECL(attribs[SPI.pstateVel].data()[i],
-                                 attribs[SPI.pstateVel+1].data()[i],
-                                 attribs[SPI.pstateVel+2].data()[i]));
-  Real T_part = attribs[SPI.pstateT].data()[i];
-  Real dia_part = attribs[SPI.pstateDia].data()[i];
-  Real rho_part = attribs[SPI.pstateRho].data()[i];
+  RealVect vel_part(AMREX_D_DECL(attribs[SPI.pstateVel].data()[pid],
+                                 attribs[SPI.pstateVel+1].data()[pid],
+                                 attribs[SPI.pstateVel+2].data()[pid]));
+  Real T_part = attribs[SPI.pstateT].data()[pid];
+  Real dia_part = attribs[SPI.pstateDia].data()[pid];
+  Real rho_part = attribs[SPI.pstateRho].data()[pid];
 #else
   RealVect vel_part(AMREX_D_DECL(p.rdata(SPI.pstateVel),
                                  p.rdata(SPI.pstateVel+1),
@@ -165,8 +165,8 @@ bool calculateSpraySource (const Real    flow_dt,
     Real delT = amrex::max(gpv.T_fluid - T_part, 0.);
     Real T_skin = T_part + rule*delT;
     // Calculate the C_p at the skin temperature for each species
-    EOS::T2Cpi(T_skin, cp_n);
-    EOS::T2Hi(T_part, h_skin);
+    EOS::T2Cpi(T_skin, cp_n.data());
+    EOS::T2Hi(T_part, h_skin.data());
     if (SPI.heat_tran || SPI.mass_tran) {
       for (int n = 0; n < NUM_SPECIES; ++n)
         Y_skin[n] = 0.;
@@ -197,7 +197,7 @@ bool calculateSpraySource (const Real    flow_dt,
         Y_skin[fspec] = Yfv + rule*(gpv.Y_fluid[fspec] - Yfv);
         sumYSkin += Y_skin[fspec];
 #ifdef USE_SPRAY_SOA
-        cp_L_av += attribs[SPI.pstateY+spf].data()[i]*fdat.cp(spf);
+        cp_L_av += attribs[SPI.pstateY+spf].data()[pid]*fdat.cp(spf);
 #else
         cp_L_av += p.rdata(SPI.pstateY+spf)*fdat.cp(spf);
 #endif
@@ -217,8 +217,8 @@ bool calculateSpraySource (const Real    flow_dt,
     Real mu_skin = 0.;
     Real xi_skin = 0.;
     transport(get_xi, get_mu, get_lambda, get_Ddiag,
-              T_skin, gpv.rho_fluid, Y_skin, Ddiag,
-              mu_skin, xi_skin, lambda_skin);
+              T_skin, gpv.rho_fluid, Y_skin.data(),
+              Ddiag.data(), mu_skin, xi_skin, lambda_skin);
     // Ensure gas is not all fuel to allow evaporation
     bool evap_fuel = (sumYFuel >= 1.) ? false : true;
     RealVect diff_vel = gpv.vel_fluid - vel_part;
@@ -307,24 +307,22 @@ bool calculateSpraySource (const Real    flow_dt,
     if (isub == 1)
       dt = flow_dt/Real(nsub);
     const Real part_dt = 0.5*dt;
-    bool remove_particle = false;
     AMREX_D_TERM(vel_part[0] += part_dt*part_mom_src[0]*inv_pmass;,
                  vel_part[1] += part_dt*part_mom_src[1]*inv_pmass;,
                  vel_part[2] += part_dt*part_mom_src[2]*inv_pmass;);
     T_part += part_dt*part_temp_src;
     Real new_dia = dia_part + part_dt*d_dot;
-    if (new_dia < dia_eps) remove_particle = true;
+    if (new_dia < dia_eps) return true;
     else dia_part = new_dia;
-    if (remove_particle) return true;
     gpv.fluid_mass_src += m_dot;
     ++isub;
   }
 #ifdef USE_SPRAY_SOA
-  AMREX_D_TERM(attribs[SPI.pstateVel].data()[i] = vel_part[0];,
-               attribs[SPI.pstateVel+1].data()[i] = vel_part[1];,
-               attribs[SPI.pstateVel+2].data()[i] = vel_part[2];);
-  attribs[SPI.pstateT].data()[i] = T_part;
-  attribs[SPI.pstateDia].data()[i] = dia_part;
+  AMREX_D_TERM(attribs[SPI.pstateVel].data()[pid] = vel_part[0];,
+               attribs[SPI.pstateVel+1].data()[pid] = vel_part[1];,
+               attribs[SPI.pstateVel+2].data()[pid] = vel_part[2];);
+  attribs[SPI.pstateT].data()[pid] = T_part;
+  attribs[SPI.pstateDia].data()[pid] = dia_part;
 #else
   AMREX_D_TERM(p.rdata(SPI.pstateVel) = vel_part[0];,
                p.rdata(SPI.pstateVel+1) = vel_part[1];,
