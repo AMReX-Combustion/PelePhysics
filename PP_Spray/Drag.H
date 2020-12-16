@@ -12,53 +12,6 @@ using namespace amrex;
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
-void AdjIndexWeights (const RealVect& len,
-                      IntVect*        indx_array,
-                      Real*           coef,
-                      const IntVect&  dom_lo,
-                      const IntVect&  dom_hi)
-{
-  // Compute distances for trilinear interpolation
-  IntVect indx(AMREX_D_DECL(amrex::Math::floor(len[0]),
-                            amrex::Math::floor(len[1]),
-                            amrex::Math::floor(len[2])));
-  RealVect delL(AMREX_D_DECL(len[0] - indx[0], len[1] - indx[1], len[2] - indx[2]));
-  int iin[2] = {amrex::max(indx[0] - 1, dom_lo[0]),
-                amrex::min(indx[0], dom_hi[0])};
-  Real ssx[2] = {1. - delL[0], delL[0]};
-  int aindx = 0;
-#if AMREX_SPACEDIM > 1
-  int jjn[2] = {amrex::max(indx[1] - 1, dom_lo[1]),
-                amrex::min(indx[1], dom_hi[1])};
-  Real ssy[2] = {1. - delL[1], delL[1]};
-#if AMREX_SPACEDIM == 3
-  int kkn[2] = {amrex::max(indx[2] - 1, dom_lo[2]),
-                amrex::min(indx[2], dom_hi[2])};
-  Real ssz[2] = {1. - delL[2], delL[2]};
-  for (int kk = 0; kk != 2; ++kk) {
-    int zindx = kkn[kk];
-#endif
-    for (int jj = 0; jj != 2; ++jj) {
-      int yindx = jjn[jj];
-#endif
-      for (int ii = 0; ii != 2; ++ii) {
-        int xindx = iin[ii];
-        AMREX_D_TERM(indx_array[aindx][0] = xindx;,
-                     indx_array[aindx][1] = yindx;,
-                     indx_array[aindx][2] = zindx;);
-        coef[aindx] = AMREX_D_TERM(ssx[ii],*ssy[jj],*ssz[kk]);
-        ++aindx;
-      }
-#if AMREX_SPACEDIM > 1
-    }
-#if AMREX_SPACEDIM == 3
-  }
-#endif
-#endif
-}
-
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
 void InterpolateFaceVelocity (const RealVect& len,
                               const IntVect&  dom_lo,
                               const IntVect&  dom_hi,
@@ -160,12 +113,9 @@ bool calculateSpraySource (const Real    flow_dt,
                            GasPhaseVals& gpv,
                            SprayComps    SPI,
                            SprayData     fdat,
-                           SprayParticleContainer::ParticleType& p
-#ifdef USE_SPRAY_SOA
-                           , std::array<SprayParticleContainer::SoA::RealVector, NAR_SPR>& attribs,
-                           const int i
-#endif
-                           )
+                           SprayParticleContainer::ParticleType& p,
+                           const std::array<SprayParticleContainer::SoA::RealVector, NAR_SPR>& attribs,
+                           const int i)
 {
   const Real rule = 1./3.;
   const Real inv_Ru = 1./EOS::RU;

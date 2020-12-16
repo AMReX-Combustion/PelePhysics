@@ -23,6 +23,35 @@ struct SprayComps {
   int specIndx;
 };
 
+// Units for sprays
+struct SprayUnits {
+#ifdef SPRAY_PELE_LM
+  Real vel_conv = 100.;  // Turn m/s to cm/s
+  Real rho_conv = 0.001; // Turn kg/m^3 to g/cm^3
+  Real pos_conv = 0.01;  // Turn cm to m for updating position
+  Real eng_conv = 1.E4; // For converting enthalpy to CGS
+  // This makes no sense, conversions should be independent
+  // of dimensions but numerical tests show this isn't the case
+#if AMREX_SPACEDIM == 2
+  Real mom_src_conv = 1.E-3;
+  Real mass_src_conv = 1.E-1;
+  Real eng_src_conv = 1.E-5;
+#elif AMREX_SPACEDIM == 3
+  Real mom_src_conv = 1.E-5;
+  Real mass_src_conv = 1.E-3;
+  Real eng_src_conv = 1.E-7;
+#endif
+#else
+  Real vel_conv = 1.;
+  Real pos_conv = 1.;
+  Real rho_conv = 1.;
+  Real eng_conv = 1.;
+  Real mom_src_conv = 1.;
+  Real mass_src_conv = 1.;
+  Real eng_src_conv = 1.;
+#endif
+};
+
 // Structure that contains the interpolated gas phase state
 // and gas phase source values
 struct GasPhaseVals
