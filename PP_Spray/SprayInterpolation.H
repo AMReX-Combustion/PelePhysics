@@ -205,7 +205,7 @@ void get_interp_mapping (const amrex::RealVect& pos,
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-bool fe_interp(const amrex::RealVect& pos,
+void fe_interp(const amrex::RealVect& pos,
                const int ip, const int jp, const int kp,
                const amrex::RealVect& dx,
                const amrex::RealVect& dxi,
@@ -241,7 +241,7 @@ bool fe_interp(const amrex::RealVect& pos,
         indx_array[aindx] = {ip,jp,kp};
         weights[aindx] = 0.;
       }
-      return false;
+      return;
     }
 
     amrex::Real par_dot_EB(2.);
@@ -307,8 +307,9 @@ bool fe_interp(const amrex::RealVect& pos,
     // therefore inside the wall). Although this shouldn't occur often, it could
     // for fast moving particles.  Set the fluid velocity to zero and use the
     // cell value for remaining items.
-    if( flags(ip,jp,kp).isSingleValued() and (par_dot_EB <= tolerance)){
-        amrex::Abort("Particle has penetrated an EB wall");
+    if((flags(ip,jp,kp).isSingleValued() and (par_dot_EB <= tolerance)) ||
+       flags(ip,jp,kp).isCovered()){
+        amrex::Abort("SprayInterpolation.H::fe_interp(): Particle has penetrated an EB wall");
     // The particle is near the EB. It is either
     // 1) between the cell centroid and the EB, or
     // 2) one or more cells in the 2^3 stencil is covered.
@@ -321,7 +322,6 @@ bool fe_interp(const amrex::RealVect& pos,
           weights[aindx] = 0.;
         }
         weights[0] = 1.;
-        return true; // Return true so that interpolated velocities are set to zero
     } else {
         amrex::GpuArray<amrex::GpuArray<amrex::Real, 3>, 8> nodes;
 
@@ -379,7 +379,7 @@ bool fe_interp(const amrex::RealVect& pos,
           weights[aindx] *= rw;
         }
     }
-    return false;
+    return;
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -395,52 +395,65 @@ void reflect_wall(SprayParticleContainer::ParticleType& p,
                   amrex::Array4<const amrex::Real> const& bcent,
                   amrex::Array4<const amrex::Real> const& bnorm)
 {
-
     const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
-
-    // If the particle is inside a cut-cell, verify that it is on the correct
-    // side of the EB before trying to interpolate.
-    if(flags(ip,jp,kp).isSingleValued()){
-        // Make outward facing normal be negative
-        const amrex::RealVect normal = {-bnorm(ip,jp,kp,0), -bnorm(ip,jp,kp,1), -bnorm(ip,jp,kp,2)};
-
-        // Projection of vector pointing from EB centroid to particle onto EB normal
-        amrex::Real par_dot_EB = (p.pos(0) - (ip + 0.5 + bcent(ip,jp,kp,0))*dx[0] - plo[0])*normal[0] +
-                                 (p.pos(1) - (jp + 0.5 + bcent(ip,jp,kp,1))*dx[1] - plo[1])*normal[1] +
-                                 (p.pos(2) - (kp + 0.5 + bcent(ip,jp,kp,2))*dx[2] - plo[2])*normal[2];
-        amrex::Real part_radius = p.rdata(SPI.pstateDia)/2.;
-        bool redirect = false;
-        if (par_dot_EB < tolerance) {
-          p.pos(0) -= 2.*par_dot_EB*normal[0];
-          p.pos(1) -= 2.*par_dot_EB*normal[1];
-          p.pos(2) -= 2.*par_dot_EB*normal[2];
-          redirect = true;
-        } else if (par_dot_EB < part_radius) {
-          amrex::Real diff = part_radius - par_dot_EB;
-          p.pos(0) += diff*normal[0];
-          p.pos(1) += diff*normal[1];
-          p.pos(2) += diff*normal[2];
-          redirect = true;
-        }
-        if (redirect) {
-          // Plane ref point
-          amrex::Real Nw_Vp = 0.;
+    // Determine the location of the particle after moving
+    const amrex::RealVect lx = (p.pos() - plo)*dxi;
+    const amrex::IntVect ijk = lx.floor();
+    const int ipn = ijk[0]; const int jpn = ijk[1]; const int kpn = ijk[2];
+    amrex::RealVect normal;
+    amrex::RealVect bcentv;
+    amrex::IntVect bloc;
+    bool check_part = false;
+    // If particle has moved into a cut-cell
+    if (flags(ipn,jpn,kpn).isSingleValued()) {
+      // Use the normal and boundary centroid from the new cell
+      bloc = {ipn, jpn, kpn};
+      normal = {-bnorm(ipn,jpn,kpn,0), -bnorm(ipn,jpn,kpn,1), -bnorm(ipn,jpn,kpn,2)};
+      bcentv = {bcent(ipn,jpn,kpn,0), bcent(ipn,jpn,kpn,1), bcent(ipn,jpn,kpn,2)};
+      check_part = true;
+      // If the particle has moved into a covered cell
+    } else if (flags(ipn,jpn,kpn).isCovered()) {
+      // and if the cell the particle came from is a cut-cell
+      if (flags(ip,jp,kp).isSingleValued()) {
+        // Use the normal and boundary centroid from the previous cell
+        bloc = {ip, jp, kp};
+        normal = {-bnorm(ip,jp,kp,0), -bnorm(ip,jp,kp,1), -bnorm(ip,jp,kp,2)};
+        bcentv = {bcent(ip,jp,kp,0), bcent(ip,jp,kp,1), bcent(ip,jp,kp,2)};
+        // otherwise an error has occurred
+      } else {
+        amrex::Abort("SprayInterpolation::reflect_wall: Particle is outside EB");
+      }
+      check_part = true;
+    }
+    if (check_part) {
+      // Projection of vector pointing from EB centroid to particle onto EB normal
+      const amrex::Real par_dot_EB =
+        (p.pos(0) - (bloc[0] + 0.5 + bcentv[0])*dx[0] - plo[0])*normal[0] +
+        (p.pos(1) - (bloc[1] + 0.5 + bcentv[1])*dx[1] - plo[1])*normal[1] +
+        (p.pos(2) - (bloc[2] + 0.5 + bcentv[2])*dx[2] - plo[2])*normal[2];
+      // Check if particle is on the wrong side of the EB
+      if (par_dot_EB < tolerance) {
+        p.pos(0) -= 2.*par_dot_EB*normal[0];
+        p.pos(1) -= 2.*par_dot_EB*normal[1];
+        p.pos(2) -= 2.*par_dot_EB*normal[2];
+        // Plane ref point
+        amrex::Real Nw_Vp = 0.;
+        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+          Nw_Vp += normal[dir]*p.rdata(SPI.pstateVel+dir);
+        // Parcel normal velocity
+        const amrex::RealVect Vpn = {Nw_Vp*normal[0],
+                                     Nw_Vp*normal[1],
+                                     Nw_Vp*normal[2]};
+        // Parcel tangential velocity
+        amrex::RealVect Vpt = {p.rdata(SPI.pstateVel) - Vpn[0],
+                               p.rdata(SPI.pstateVel+1) - Vpn[1],
+                               p.rdata(SPI.pstateVel+2) - Vpn[2]};
+        // Rebound particle if it moving toward the wall
+        if (Nw_Vp < 0.) {
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
-            Nw_Vp += normal[dir]*p.rdata(SPI.pstateVel+dir);
-          // Parcel normal velocity
-          const amrex::RealVect Vpn = {Nw_Vp*normal[0],
-                                       Nw_Vp*normal[1],
-                                       Nw_Vp*normal[2]};
-          // Parcel tangential velocity
-          amrex::RealVect Vpt = {p.rdata(SPI.pstateVel) - Vpn[0],
-                                 p.rdata(SPI.pstateVel+1) - Vpn[1],
-                                 p.rdata(SPI.pstateVel+2) - Vpn[2]};
-          // Rebound particle if it moving toward the wall
-          if (Nw_Vp < 0.) {
-            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
-              p.rdata(SPI.pstateVel+dir) = -Vpn[dir] + Vpt[dir];
-          }
+            p.rdata(SPI.pstateVel+dir) = -Vpn[dir] + Vpt[dir];
         }
+      }
     }
 }
 #endif // AMREX_USE_EB

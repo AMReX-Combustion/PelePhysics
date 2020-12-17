@@ -291,7 +291,6 @@ SprayParticleContainer::updateParticles(const int&  level,
         GpuArray<IntVect, AMREX_D_PICK(2,4,8)> indx_array; // Array of adjacent cells
         GpuArray<Real,AMREX_D_PICK(2,4,8)> weights; // Array of corresponding weights
         bool remove_particle = false;
-        bool mod_interp = false; // If true, set interpolated velocity values to zero
 #ifdef AMREX_USE_EB
         // Cell containing particle centroid
         AMREX_D_TERM(
@@ -320,9 +319,9 @@ SprayParticleContainer::updateParticles(const int&  level,
         if (do_reg_interp) {
           trilinear_interp(p.pos(), plo, dxi, indx_array.data(), weights.data());
         } else {
-          mod_interp = fe_interp(p.pos(), ip, jp, kp, dx, dxi, plo, flags_array, ccent_fab,
-                                 bcent_fab, apx_fab, apy_fab, apz_fab, volfrac_fab,
-                                 indx_array.data(), weights.data());
+          fe_interp(p.pos(), ip, jp, kp, dx, dxi, plo, flags_array, ccent_fab,
+                    bcent_fab, apx_fab, apy_fab, apz_fab, volfrac_fab,
+                    indx_array.data(), weights.data());
         }
 #else
         trilinear_interp(p.pos(), plo, dxi, indx_array.data(), weights.data());
@@ -370,7 +369,6 @@ SprayParticleContainer::updateParticles(const int&  level,
           }
           rho_fluid *= SPU.rho_conv;
         }
-        if (mod_interp) vel_fluid = RealVect::TheZeroVector();
         GasPhaseVals gpv(vel_fluid, T_fluid, rho_fluid, Y_fluid.data(),
                          mw_fluid.data(), invmw.data(), ref_T);
         remove_particle = calculateSpraySource(flow_dt, do_move, gpv, SPI, fdat,
@@ -390,7 +388,8 @@ SprayParticleContainer::updateParticles(const int&  level,
           }
 #ifdef AMREX_USE_EB
           // Check if particle is at EB wall
-          reflect_wall(p, SPI, SPU, ip, jp, kp, dx, dxi, plo, flags_array,
+          reflect_wall(p, SPI, SPU, ip, jp, kp,
+                       dx, dxi, plo, flags_array,
                        ccent_fab, bcent_fab, bnorm_fab);
 #endif
         }
