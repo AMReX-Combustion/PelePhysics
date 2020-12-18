@@ -107,11 +107,13 @@ struct SprayData
              const Gpu::DeviceVector<Real>& boilT,
              const Gpu::DeviceVector<Real>& fuelCp,
              const Gpu::DeviceVector<Real>& fuelLatent,
+             const Gpu::DeviceVector<Real>& fuelSigma,
              const Gpu::DeviceVector<int>&  fuelIndx)
     : m_critT_ptr(critT.dataPtr()),
       m_boilT_ptr(boilT.dataPtr()),
       m_fuelCp_ptr(fuelCp.dataPtr()),
       m_fuelLatent_ptr(fuelLatent.dataPtr()),
+      m_fuelSigma_ptr(fuelSigma.dataPtr()),
       m_fuelIndx_ptr(fuelIndx.dataPtr())
   {}
 
@@ -139,6 +141,13 @@ struct SprayData
     return m_fuelLatent_ptr[fuelSpecIndx];
   }
 
+  // Surface tension of liquid fuel for splash model
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+  Real sigma (const int fuelSpecIndx) const
+  {
+    return m_fuelSigma_ptr[fuelSpecIndx];
+  }
+
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
   int indx (const int fuelSpecIndx) const
   {
@@ -151,6 +160,7 @@ private:
   const Real * m_boilT_ptr;
   const Real * m_fuelCp_ptr;
   const Real * m_fuelLatent_ptr;
+  const Real * m_fuelSigma_ptr;
   const int * m_fuelIndx_ptr;
 };
 
@@ -163,6 +173,7 @@ public:
               const Gpu::HostVector<Real>& fuelCp,
               const Gpu::HostVector<Real>& refFuelH,
               const Gpu::HostVector<Real>& fuelLatent,
+              const Gpu::HostVector<Real>& fuelSigma,
               const Gpu::HostVector<int>&  fuelIndx)
   {
     const int nfspec = SPRAY_FUEL_NUM;
@@ -170,6 +181,7 @@ public:
     m_boilT.resize(nfspec);
     m_fuelCp.resize(nfspec);
     m_fuelLatent.resize(nfspec);
+    m_fuelSigma.resize(nfspec);
     m_fuelIndx.resize(nfspec);
     Gpu::HostVector<Real> tmpFuelLatent(nfspec);
     for (int i = 0; i != nfspec; ++i) {
@@ -187,13 +199,15 @@ public:
               m_fuelCp.begin());
     Gpu::copy(Gpu::hostToDevice, tmpFuelLatent.begin(), tmpFuelLatent.end(),
               m_fuelLatent.begin());
+    Gpu::copy(Gpu::hostToDevice, fuelSigma.begin(), fuelSigma.end(),
+              m_fuelSigma.begin());
     Gpu::copy(Gpu::hostToDevice, fuelIndx.begin(), fuelIndx.end(),
               m_fuelIndx.begin());
   }
 
   SprayData getSprayData()
   {
-    return SprayData(m_critT, m_boilT, m_fuelCp, m_fuelLatent, m_fuelIndx);
+    return SprayData(m_critT, m_boilT, m_fuelCp, m_fuelLatent, m_fuelSigma, m_fuelIndx);
   }
 
 private:
@@ -203,6 +217,7 @@ private:
   Gpu::DeviceVector<Real> m_boilT;
   Gpu::DeviceVector<Real> m_fuelCp;
   Gpu::DeviceVector<Real> m_fuelLatent;
+  Gpu::DeviceVector<Real> m_fuelSigma;
   Gpu::DeviceVector<int>  m_fuelIndx;
 };
 

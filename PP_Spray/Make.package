@@ -1,6 +1,6 @@
 CEXE_headers += SprayParticles.H SprayFuelData.H
 CEXE_sources += SprayParticles.cpp
-CEXE_headers += Drag.H
+CEXE_headers += Drag.H SprayWall.H
 ifeq ($(USE_EB), TRUE)
    CEXE_headers += SprayInterpolation.H
 endif

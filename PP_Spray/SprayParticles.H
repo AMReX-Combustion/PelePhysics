@@ -85,13 +85,14 @@ public:
                      const HostVectReal& boilT,
                      const HostVectReal& fuelCp,
                      const HostVectReal& fuelLatent,
+                     const HostVectReal& fuelSigma,
                      const HostVectInt&  fuelIndx,
                      amrex::Real         ref_T,
                      SprayComps          sprayIndices)
   {
     HostVectReal fuelEnth(NUM_SPECIES);
     EOS::T2Hi(ref_T, fuelEnth.dataPtr());
-    m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelIndx);
+    m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelSigma, fuelIndx);
     m_sprayRefT = ref_T;
     m_sprayIndx = sprayIndices;
     m_setFuelData = true;

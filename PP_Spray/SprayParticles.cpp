@@ -8,6 +8,7 @@
 #include "Transport.H"
 #include "Drag.H"
 #include "SprayInterpolation.H"
+#include "SprayWalls.H"
 #ifdef AMREX_USE_EB
 #include <AMReX_EBFArrayBox.H>
 #endif
@@ -212,23 +213,18 @@ SprayParticleContainer::updateParticles(const int&  level,
   const auto bndrynorm = &(factory.getBndryNormal());
   const auto volfrac = &(factory.getVolFrac());
 #endif
-  IntVect dom_lo = domain.smallEnd();
-  IntVect dom_hi = domain.bigEnd();
-  IntVect lo_bound;
-  IntVect hi_bound;
+  IntVect bndry_lo; // Designation for boundary types
+  IntVect bndry_hi; // 0 - Periodic, 1 - Reflective, -1 - Non-reflective
   for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
     if (!this->Geom(level).isPeriodic(dir)) {
-      if (reflect_lo[dir]) lo_bound[dir] = 1;
-      else lo_bound[dir] = -1;
-      if (reflect_hi[dir]) hi_bound[dir] = 1;
-      else hi_bound[dir] = -1;
+      if (reflect_lo[dir]) bndry_lo[dir] = 1;
+      else bndry_lo[dir] = -1;
+      if (reflect_hi[dir]) bndry_hi[dir] = 1;
+      else bndry_hi[dir] = -1;
     } else {
-      lo_bound[dir] = 0;
-      hi_bound[dir] = 0;
+      bndry_lo[dir] = 0;
+      bndry_hi[dir] = 0;
     }
-    // Only concerned with reflective boundaries
-    if (!reflect_lo[dir]) dom_lo[dir] -= 100;
-    if (!reflect_hi[dir]) dom_hi[dir] += 100;
   }
   const Real vol = AMREX_D_TERM(dx[0],*dx[1],*dx[2]);
   const Real inv_vol = 1./vol;
@@ -279,7 +275,7 @@ SprayParticleContainer::updateParticles(const int&  level,
 // #endif
     amrex::ParallelFor(Np,
       [pstruct,statearr,sourcearr,plo,phi,dx,dxi,do_move,SPI,SPU,fdat,src_box,
-       state_box,hi_bound,lo_bound,flow_dt,mw_fluid,invmw,ref_T,inv_vol,num_ppp,attribs
+       state_box,bndry_hi,bndry_lo,flow_dt,mw_fluid,invmw,ref_T,inv_vol,num_ppp,attribs
 #ifdef AMREX_USE_EB
        ,flags_array,apx_fab,apy_fab,apz_fab,ccent_fab,bcent_fab,bnorm_fab,volfrac_fab,eb_in_box
 #endif
@@ -291,6 +287,8 @@ SprayParticleContainer::updateParticles(const int&  level,
         GpuArray<IntVect, AMREX_D_PICK(2,4,8)> indx_array; // Array of adjacent cells
         GpuArray<Real,AMREX_D_PICK(2,4,8)> weights; // Array of corresponding weights
         bool remove_particle = false;
+        const RealVect lx = (p.pos() - plo)*dxi;
+        const IntVect ijk = lx.floor();
 #ifdef AMREX_USE_EB
         // Cell containing particle centroid
         AMREX_D_TERM(
@@ -382,16 +380,12 @@ SprayParticleContainer::updateParticles(const int&  level,
             Real& cvel = p.rdata(SPI.pstateVel+dir);
 #endif
             Gpu::Atomic::Add(&p.pos(dir), flow_dt*cvel*SPU.pos_conv);
-            // Check if particle is at normal boundary wall or leaves the domain
-            remove_particle = checkWall(p.pos(dir), cvel, phi[dir], plo[dir],
-                                        hi_bound[dir], lo_bound[dir]);
           }
+          impose_wall(p, SPI, SPU, ijk, dx, dxi,
 #ifdef AMREX_USE_EB
-          // Check if particle is at EB wall
-          reflect_wall(p, SPI, SPU, ip, jp, kp,
-                       dx, dxi, plo, flags_array,
-                       ccent_fab, bcent_fab, bnorm_fab);
+                      flags_array, ccent_fab, bcent_fab, bnorm_fab,
 #endif
+                      plo, phi, bndry_lo, bndry_hi);
         }
         if (remove_particle) p.id() = -1;
         for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
