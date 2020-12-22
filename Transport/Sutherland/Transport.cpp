@@ -8,16 +8,20 @@ transport_init()
    TransParm trans_parm;
 
    // Default
-   trans_parm.const_viscosity = 0.0;
+   trans_parm.Prandtl_number = 0.7;
+   trans_parm.viscosity_mu_ref = 17.16;
+   trans_parm.viscosity_T_ref = 273.15;
+   trans_parm.viscosity_S = 110.4;
    trans_parm.const_bulk_viscosity = 0.0;
-   trans_parm.const_conductivity = 0.0;
-   trans_parm.const_diffusivity = 0.0;
+   trans_parm.const_diffusivity = 1.0;
 
    // User-specified
    amrex::ParmParse pp("transport");
-   pp.query("const_viscosity",      trans_parm.const_viscosity);
+   pp.query("Prandtl_number",       trans_parm.Prandtl_number);
+   pp.query("viscosity_mu_ref",     trans_parm.viscosity_mu_ref);
+   pp.query("viscosity_T_ref",      trans_parm.viscosity_T_ref);
+   pp.query("viscosity_S",          trans_parm.viscosity_S);
    pp.query("const_bulk_viscosity", trans_parm.const_bulk_viscosity);
-   pp.query("const_conductivity",   trans_parm.const_conductivity);
    pp.query("const_diffusivity",    trans_parm.const_diffusivity);
 
    /* GPU */

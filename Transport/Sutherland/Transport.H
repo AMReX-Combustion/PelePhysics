@@ -23,9 +23,9 @@ void transport(
       bool wtr_get_mu,
       bool wtr_get_lam,
       bool wtr_get_Ddiag,
-      amrex::Real& /*Tloc*/,
-      amrex::Real& /*rholoc*/,
-      amrex::Real* /*Yloc*/,
+      amrex::Real& Tloc,
+      amrex::Real& rholoc,
+      amrex::Real* Yloc,
       amrex::Real* Ddiag,
       amrex::Real& mu,
       amrex::Real& xi,
@@ -33,12 +33,22 @@ void transport(
       TransParm const* trans_parm)
 {
 
-  if (wtr_get_lam) {
-    lam = trans_parm->const_conductivity;
+  if (wtr_get_mu) {
+    mu = trans_parm->viscosity_mu_ref
+          * std::pow(( Tloc / trans_parm->viscosity_T_ref ),1.5)
+          * ( trans_parm->viscosity_T_ref + trans_parm->viscosity_S )
+          / ( Tloc + trans_parm->viscosity_S );
   }
 
-  if (wtr_get_mu) {
-    mu = trans_parm->const_viscosity;
+  if (wtr_get_lam) {
+    amrex::Real muloc = trans_parm->viscosity_mu_ref
+                      * std::pow(( Tloc / trans_parm->viscosity_T_ref ),1.5)
+                      * ( trans_parm->viscosity_T_ref + trans_parm->viscosity_S )
+                      / ( Tloc + trans_parm->viscosity_S );
+      
+    amrex::Real Cpmix;
+    CKCPBS(&Tloc, Yloc, &Cpmix);
+    lam = muloc * Cpmix / trans_parm->Prandtl_number;
   }
 
   if (wtr_get_xi) {

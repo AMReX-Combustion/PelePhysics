@@ -4,10 +4,12 @@
 #include <AMReX_REAL.H>
 
 struct TransParm {
-    amrex::Real const_viscosity;
+    amrex::Real Prandtl_number;
+    amrex::Real viscosity_mu_ref;
+    amrex::Real viscosity_T_ref;
+    amrex::Real viscosity_S;
     amrex::Real const_bulk_viscosity;
     amrex::Real const_diffusivity;
-    amrex::Real const_conductivity;
 };
 
 extern TransParm *trans_parm_g;
