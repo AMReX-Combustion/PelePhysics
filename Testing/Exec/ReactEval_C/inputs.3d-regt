@@ -13,8 +13,8 @@ ode.rtol = 1e-10
 ode.atol = 1e-10
 
 cvode.solve_type = GMRES    # OPTIONS ARE - dense sparse GMRES sparse_custom GMRES_custom diag
-#arkode.implicit_solve = 1
-#arkode.use_erkode     = 0
+#ode.implicit_solve = 1
+#ode.use_erkstep    = 0
 
 # DRM19
 #ode.typ_vals = 1.e-7 3.e-9 1.e-8 3.e-5 7.e-8 1.e-6 1.e-7 5.e-9 1.e-9 9.e-7 6.e-6 1.e-6 1.7e-8 1.9e-8 7.4e-7 6.7e-9 3.5e-7 1.6e-8 1.3e-8 1.e-4 1.8e-33 2300

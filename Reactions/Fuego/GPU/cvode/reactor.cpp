@@ -1738,19 +1738,4 @@ static int check_flag(void *flagvalue, const char *funcname, int opt)
 
   return(0);
 }
-
-void* sunalloc(size_t mem_size) {
-
-  void * ptr = (void*) The_Arena()->alloc(mem_size);
-
-  return ptr;
-}
-
-void sunfree(void* ptr) {
-  size_t mem_size = dynamic_cast<CArena*>(The_Arena())->sizeOf(ptr);
-
-  The_Arena()->free(ptr);
-
-}
-
 /* End of file  */

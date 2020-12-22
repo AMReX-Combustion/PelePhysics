@@ -13,6 +13,10 @@
 #include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype      */
 #include <sundials/sundials_math.h>
 
+#include <AMReX_FArrayBox.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_iMultiFab.H>
+
 #include <AMReX_Print.H>
 #include <EOS.H>
 /**********************************/
@@ -26,7 +30,15 @@ typedef struct {
       int ianalytical_jacobian;
       int ireactor_type;
       int iimplicit_solve;
-      int iuse_erkode;
+      int iuse_erkstep;
+      int boxcell;
+
+      amrex::Real *Yvect_full = NULL;
+      amrex::Real *rhoX_init = NULL;
+      amrex::Real *rhoXsrc_ext = NULL;
+      amrex::Real *rYsrc = NULL;
+      int *FCunt = NULL;
+      int *mask = NULL;
 } *UserData;
 
 
@@ -39,16 +51,24 @@ int cJac(realtype tn, N_Vector y, N_Vector fy, SUNMatrix J,
 
 /**********************************/
 /* Functions Called by the Program */
-extern "C"
-{
-    int reactor_init(int cvode_iE, int Ncells);
+int reactor_init(int cvode_iE, int Ncells);
 
-    int react(realtype *rY_in, realtype *rY_src_in,
-              realtype *rX_in, realtype *rX_src_in,
-              realtype &dt_react, realtype &time);
+int react(realtype *rY_in, realtype *rY_src_in,
+        realtype *rX_in, realtype *rX_src_in,
+        realtype &dt_react, realtype &time);
 
-    void reactor_close();
-}
+int react(const amrex::Box& box,
+        amrex::Array4<amrex::Real> const& rY_in,
+        amrex::Array4<amrex::Real> const& rY_src_in,
+        amrex::Array4<amrex::Real> const& T_in,
+        amrex::Array4<amrex::Real> const& rEner_in,
+        amrex::Array4<amrex::Real> const& rEner_src_in,
+        amrex::Array4<amrex::Real> const& FC_in,
+        amrex::Array4<int> const& mask,
+        amrex::Real &dt_react,
+        amrex::Real &time); 
+
+void reactor_close();
 
 
 /**********************************/
@@ -70,6 +90,6 @@ void ReSetTolODE();
 /**********************************/
 /* Main Kernel fct called in solver RHS */
 void fKernelSpec(realtype *dt, realtype *yvec_d, realtype *ydot_d,
-		void *user_data);
+        void *user_data);
 
 
