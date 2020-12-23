@@ -3,7 +3,7 @@
 void CKSYMS(int * kname, int * plenkname) {}
 
 /* Returns R, Rc, Patm */
-void CKRP(double *  ru, double *  ruc, double *  pa)
+void CKRP(amrex::Real *  ru, amrex::Real *  ruc, amrex::Real *  pa)
 {
      *ru  = 8.31446261815324e+07; 
      *ruc = 1.98721558317399615845; 
@@ -18,7 +18,7 @@ AMREX_GPU_HOST_DEVICE void CKFINALIZE()
 {
 }
 
-AMREX_GPU_HOST_DEVICE void CKWC(double *  T, double *  C,  double *  wdot)
+AMREX_GPU_HOST_DEVICE void CKWC(amrex::Real *  T, amrex::Real *  C,  amrex::Real *  wdot)
 {
      wdot[0] = 0.0e0;
 }
