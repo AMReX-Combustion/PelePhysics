@@ -220,6 +220,7 @@ public:
                        const amrex::Real& time,
                        const int          state_ghosts,
                        const int          source_ghosts,
+                       const bool         isActive,
                        const bool         do_move,
                        amrex::MultiFab*   u_mac);
 

@@ -78,9 +78,11 @@ SprayParticleContainer::moveKickDrift (MultiFab&   state,
     return;
 
   const Real strttime = ParallelDescriptor::second();
+  bool isActive = (isVirtualPart || isGhostPart) ? false : true;
 
   BL_PROFILE_VAR("SprayParticles::updateParticles()", UPD_PART);
-  updateParticles(level, state, source, dt, time, state_ghosts, source_ghosts, do_move, u_mac);
+  updateParticles(level, state, source, dt, time, state_ghosts,
+                  source_ghosts, isActive, do_move, u_mac);
   BL_PROFILE_VAR_STOP(UPD_PART);
 
   // Fill ghost cells after we've synced up ..
@@ -190,6 +192,7 @@ SprayParticleContainer::updateParticles(const int&  level,
                                         const Real& time,
                                         const int   state_ghosts,
                                         const int   source_ghosts,
+                                        const bool  isActive,
                                         const bool  do_move,
                                         MultiFab*   u_mac)
 {
@@ -238,12 +241,23 @@ SprayParticleContainer::updateParticles(const int&  level,
   // Particle components indices
   SprayComps SPI = m_sprayIndx;
   SprayUnits SPU;
+  SprayParticleContainer::AoS p_splash;
   // Start the ParIter, which loops over separate sets of particles in different boxes
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
     const Box& tile_box = pti.tilebox();
     const Box& state_box = pti.growntilebox(state_ghosts);
     const Box& src_box = pti.growntilebox(source_ghosts);
     const Long Np = pti.numParticles();
+    // Number of secondary particles created from each particle
+    Gpu::DeviceVector<int> Ns_vec(Np,-1);
+    Gpu::DeviceVector<Real> dt_vec(Np);
+    Gpu::DeviceVector<Real> betamax_vec(Np);
+    Gpu::DeviceVector<Real> norm_vec(AMREX_SPACEDIM*Np);
+    int* Ns_pp = Ns_vec.data();
+    // Amount of time splashed droplets have to travel after hitting the wall
+    Real* dt_pp = dt_vec.data();
+    Real* betamax_pp = betamax_vec.data();
+    Real* norm_pp = norm_vec.data();
     ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
     // Get particle attributes if StructOfArrays are used
     auto& attribs = pti.GetAttribs();
@@ -254,7 +268,7 @@ SprayParticleContainer::updateParticles(const int&  level,
     bool eb_in_box = true;
     const EBFArrayBox& interp_fab = static_cast<EBFArrayBox const&>(state[pti]);
     const EBCellFlagFab& flags = interp_fab.getEBCellFlagFab();
-    if (flags.getType(state_box) == FabType::regular) eb_in_box = false;
+    if (flags.getType(state_box) == FabType::regular || !do_move) eb_in_box = false;
     // Cell centroids
     const auto& ccent_fab = cellcent->array(pti);
     // Centroid of EB
@@ -275,7 +289,8 @@ SprayParticleContainer::updateParticles(const int&  level,
 // #endif
     amrex::ParallelFor(Np,
       [pstruct,statearr,sourcearr,plo,phi,dx,dxi,do_move,SPI,SPU,fdat,src_box,
-       state_box,bndry_hi,bndry_lo,flow_dt,mw_fluid,invmw,ref_T,inv_vol,num_ppp,attribs
+       state_box,bndry_hi,bndry_lo,flow_dt,mw_fluid,invmw,ref_T,inv_vol,num_ppp,attribs,
+       Ns_pp, dt_pp, betamax_pp, norm_pp
 #ifdef AMREX_USE_EB
        ,flags_array,apx_fab,apy_fab,apz_fab,ccent_fab,bcent_fab,bnorm_fab,volfrac_fab,eb_in_box
 #endif
@@ -369,8 +384,11 @@ SprayParticleContainer::updateParticles(const int&  level,
         }
         GasPhaseVals gpv(vel_fluid, T_fluid, rho_fluid, Y_fluid.data(),
                          mw_fluid.data(), invmw.data(), ref_T);
+        // These are used in the splash model so they are returned
+        Real Reyn = 0.;
+        Real nu = 0.;
         remove_particle = calculateSpraySource(flow_dt, do_move, gpv, SPI, fdat,
-                                               p, attribs, pid);
+                                               p, attribs, pid, Reyn, nu);
         // Modify particle position by whole time step
         if (do_move) {
           for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
@@ -381,11 +399,16 @@ SprayParticleContainer::updateParticles(const int&  level,
 #endif
             Gpu::Atomic::Add(&p.pos(dir), flow_dt*cvel*SPU.pos_conv);
           }
-          impose_wall(p, SPI, SPU, ijk, dx, dxi,
+          RealVect norm_rv;
+          impose_wall(p, SPI, SPU, gpv, ijk, dx, dxi, Reyn, nu, fdat.sigma(0),
 #ifdef AMREX_USE_EB
                       flags_array, ccent_fab, bcent_fab, bnorm_fab,
 #endif
-                      plo, phi, bndry_lo, bndry_hi);
+                      plo, phi, bndry_lo, bndry_hi, Ns_pp[pid], dt_pp[pid],
+                      betamax_pp[pid], norm_rv);
+          if (Ns_pp[pid] > 0)
+            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+              norm_pp[pid*AMREX_SPACEDIM+dir] = norm_rv[dir];
         }
         if (remove_particle) p.id() = -1;
         for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
@@ -417,5 +440,61 @@ SprayParticleContainer::updateParticles(const int&  level,
         }
       } // End of p.id() > 0 check
     }); // End of loop over particles
-  }
+    // Apply splash model but only for active particles
+    if (eb_in_box && isActive) {
+      SprayParticleContainer::AoS pp_parts;
+      Gpu::HostVector<int> Ns_cpu(Np);
+      Gpu::copy(Gpu::deviceToHost, Ns_vec.begin(), Ns_vec.end(), Ns_cpu.begin());
+      bool hasSplash = false; // Check if any drops have splashed
+      for (int pid = 0; pid < Np; ++pid)
+        if (Ns_cpu[pid] > 0) hasSplash = true;
+      if (hasSplash) {
+        Gpu::HostVector<Real> dt_cpu(Np);
+        Gpu::HostVector<Real> betamax_cpu(Np);
+        Gpu::HostVector<Real> norm_cpu(AMREX_SPACEDIM*Np);
+        Gpu::copy(Gpu::deviceToHost, dt_vec.begin(), dt_vec.end(), dt_cpu.begin());
+        Gpu::copy(Gpu::deviceToHost, betamax_vec.begin(), betamax_vec.end(), betamax_cpu.begin());
+        Gpu::copy(Gpu::deviceToHost, norm_vec.begin(), norm_vec.end(), norm_cpu.begin());
+        for (int pid = 0; pid < Np; ++pid) {
+          const int nsp = Ns_vec[pid]; // Number of drops created from splash
+          Print() << nsp << std::endl;
+          if (nsp > 0) {
+            ParticleType& p = pstruct[pid];
+            const Real T_part = p.rdata(SPI.pstateT);
+            const Real dia_part = p.rdata(SPI.pstateDia);
+            const Real rho_part = p.rdata(SPI.pstateRho);
+            const int nindx = AMREX_SPACEDIM*pid;
+            RealVect norm = {AMREX_D_DECL(norm_cpu[nindx], norm_cpu[nindx+1], norm_cpu[nindx+2])};
+            RealVect pos = {AMREX_D_DECL(p.pos(0), p.pos(1), p.pos(2))};
+            // Find two tangent vectors by taking the cross product with an axis
+            RealVect tan1, tan2;
+            RealVect testvec = {AMREX_D_DECL(0.,0.,-1.)};
+            // Ensure normal vector does not align with test axis
+            if (norm == testvec || norm == -testvec) testvec = {AMREX_D_DECL(0.,1.,0.)};
+            find_tangents(testvec, norm, tan1, tan2);
+            Real Unorm, new_dia;
+            splash_vel_dia(nsp, dia_part, rho_part, fdat.sigma(0), betamax_cpu[pid], Unorm, new_dia);
+            for (int psp = 0; psp < nsp; ++psp) {
+              ParticleType pnew;
+              pnew.id() = ParticleType::NextID();
+              pnew.cpu() = ParallelDescriptor::MyProc();
+              pnew.rdata(SPI.pstateDia) = new_dia;
+              pnew.rdata(SPI.pstateT) = T_part;
+              pnew.rdata(SPI.pstateRho) = rho_part;
+              for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+                pnew.rdata(SPI.pstateY+spf) = p.rdata(SPI.pstateY+spf);
+              for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+                pnew.rdata(SPI.pstateVel+dir) = p.rdata(SPI.pstateVel+dir);
+              create_splash_droplet(pnew, SPI, Unorm, flow_dt, pos, norm, tan1, tan2);
+              p_splash.push_back(pnew);
+            }
+            // Invalidate current particle
+            p.id() = -1;
+          } // if (nsp > 0)
+        } // for (int pid...
+      } // if (hasSplash)
+    } // if (eb_in_box && isActive)
+  } // for (MyParIter pit...
+  if (p_splash.size() > 0)
+    this->AddParticlesAtLevel(p_splash, level);
 }

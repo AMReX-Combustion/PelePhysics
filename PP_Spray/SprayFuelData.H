@@ -13,8 +13,8 @@ struct SprayComps {
   int mom_tran;
   int pstateVel; // Particle indices
   int pstateT;
-  int pstateRho;
   int pstateDia;
+  int pstateRho;
   int pstateY;
   int rhoIndx; // Gas phase indices
   int momIndx;
@@ -186,10 +186,7 @@ public:
     Gpu::HostVector<Real> tmpFuelLatent(nfspec);
     for (int i = 0; i != nfspec; ++i) {
       const int specIndx = fuelIndx[i];
-      tmpFuelLatent[i] = fuelLatent[i];
-#ifndef LEGACY_SPRAY
-      tmpFuelLatent[i] -= refFuelH[specIndx];
-#endif
+      tmpFuelLatent[i] = fuelLatent[i] - refFuelH[specIndx];
     }
     Gpu::copy(Gpu::hostToDevice, critT.begin(), critT.end(),
               m_critT.begin());

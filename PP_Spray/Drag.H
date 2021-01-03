@@ -115,7 +115,9 @@ bool calculateSpraySource (const Real    flow_dt,
                            SprayData     fdat,
                            SprayParticleContainer::ParticleType& p,
                            const std::array<SprayParticleContainer::SoA::RealVector, NAR_SPR>& attribs,
-                           const int pid)
+                           const int pid,
+                           Real& Reyn,
+                           Real& nu)
 {
   const Real rule = 1./3.;
   const Real inv_Ru = 1./EOS::RU;
@@ -224,7 +226,8 @@ bool calculateSpraySource (const Real    flow_dt,
     RealVect diff_vel = gpv.vel_fluid - vel_part;
     Real diff_vel_mag = diff_vel.vectorLength();
     // Local Reynolds number
-    Real Reyn = gpv.rho_fluid*diff_vel_mag*dia_part/mu_skin;
+    Reyn = gpv.rho_fluid*diff_vel_mag*dia_part/mu_skin;
+    nu = mu_skin/gpv.rho_fluid;
     Real Nu_0 = 1.;
     // Solve mass transfer source terms
     Real m_dot = 0.;
