@@ -292,6 +292,8 @@ main (int   argc,
 #else
 #ifndef CVODE_BOXINTEG
       extra_cells = nc - (nc / ode_ncells) * ode_ncells; 
+#else
+      ode_ncells    = nc;
 #endif
 #endif
 
