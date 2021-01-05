@@ -63,7 +63,7 @@ class FMC(Application):
         outputFileHeader  = self._openOutput(save_header)
         count_lines = 0
         for line in lines:
-            if ('include "chemistry_file.H"') in line:
+            if ('ifndef MECHANISM_CPP') in line:
                 line_start_core = count_lines
                 break;
             outputFileHeader.write(line)
