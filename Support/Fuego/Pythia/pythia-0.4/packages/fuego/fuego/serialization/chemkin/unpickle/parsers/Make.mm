@@ -27,6 +27,7 @@ EXPORT_PYTHON_MODULES = \
     ChemkinParser.py \
     Elements.py \
     Parameters.py \
+    QssSpecies.py \
     Reactions.py \
     Species.py \
     Thermo.py \

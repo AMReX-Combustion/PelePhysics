@@ -26,7 +26,6 @@ class Registrar(BaseRegistrar):
         self.registry[id] = entity
         for alias in aliases:
             self.registry[alias] = entity
-
         return
 
 
