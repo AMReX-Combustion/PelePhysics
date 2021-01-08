@@ -6,12 +6,10 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
                   SprayComps SPI,
                   SprayUnits SPU,
                   GasPhaseVals gpv,
+                  SprayData fdat,
                   const amrex::IntVect& ijkp,
                   const amrex::RealVect& dx,
                   const amrex::RealVect& dxi,
-                  const amrex::Real Reyn,
-                  const amrex::Real nu,
-                  const amrex::Real sigma,
 #ifdef AMREX_USE_EB
                   amrex::Array4<const EBCellFlag> const& flags,
                   amrex::Array4<const amrex::Real> const& ccent,
@@ -30,9 +28,8 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
     const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
     // Splash threshold
     const amrex::Real K_splash = 57.7;
-    // TODO: This depends on the fluid and the surface and should not be constant
-    // This is the value for heptane on stainless steel
-    amrex::Real cangle = 140.*M_PI/180.;
+    amrex::Real sigma = fdat.sigma;
+    amrex::Real cangle = fdat.cangle;
     // Determine the location of the particle after moving
     const amrex::RealVect lx = (p.pos() - plo)*dxi;
     const amrex::IntVect ijk = lx.floor();
@@ -118,28 +115,35 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
                         p.rdata(SPI.pstateVel+2) - Vpn[2])};
         const amrex::Real rho_fluid = gpv.rho_fluid;
         const amrex::Real dia_part = p.rdata(SPI.pstateDia);
-        const amrex::Real rho_part = p.rdata(SPI.pstateRho);
+        amrex::Real rho_part = 0.;
+        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+          rho_part += p.rdata(SPI.pstateY+spf)*fdat.rho(spf);
         const amrex::Real d3 = pow(dia_part, 3);
         // Weber number
-        const amrex::Real We = rho_fluid*dia_part*Nw_Vp*Nw_Vp/sigma;
-        const amrex::Real sqReyn = sqrt(Reyn);
-        const amrex::Real Kv = sqrt(We)*sqrt(sqReyn);
-        // This determines if the particle is reflected off the wall
-        // or placed at the wall
+        amrex::Real mu_part = 0.;
+        for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf)
+          mu_part += p.rdata(SPI.pstateY+spf)*fdat.mu(spf);
+        const amrex::Real We = rho_part*dia_part*Nw_Vp*Nw_Vp/sigma;
+        const amrex::Real Re_L = std::abs(Nw_Vp)*dia_part*rho_part/mu_part;
+        const amrex::Real sqReyn = sqrt(Re_L);
+        const amrex::Real Kv = sqrt(We)*pow(Re_L, 0.25);
+        // dis_fact = 2 -> Particle is reflected off of the wall
+        // dis_fact = 1 -> Particle is placed on the wall
         amrex::Real dis_fact = 2.;
-        if (Kv > K_splash) {
+        if (Kv > K_splash && sigma > 0.) {
           dis_fact = 1.; // Place particle at wall
           beta_max =
             sqrt((12. + We)/(3.*(1. - std::cos(cangle)) + 4.*We/sqReyn));
           // Number of secondary drops formed
           amrex::Real Ns =
-            std::abs(Nw_Vp)/(20.*std::sqrt(nu))*std::pow(M_PI*M_PI*rho_fluid*d3/sigma, 0.25);
+            std::abs(Nw_Vp)/(20.*std::sqrt(mu_part/rho_part))*std::pow(M_PI*M_PI*rho_fluid*d3/sigma, 0.25);
           Ns_pp = int(Ns);
           // This is the dt to move the secondary droplets
           dt_pp = par_dot_EB/Nw_Vp;
           // Only retain the tangential velocities
           Vpn = RealVect::TheZeroVector();
         }
+        // TODO: Make else so that the droplet sticks to the wall
         for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
           norm_pp[dir] = normal[dir];
           p.pos(dir) -= dis_fact*par_dot_EB*normal[dir];
@@ -166,16 +170,14 @@ void find_tangents (const amrex::RealVect& testvec,
 }
 
 void splash_vel_dia (const int Ns,
+                     const amrex::Real sigma,
+                     const amrex::Real cangle,
                      const amrex::Real dia_part,
                      const amrex::Real rho_part,
-                     const amrex::Real sigma,
                      const amrex::Real beta_max,
                      amrex::Real& vel_pp,
                      amrex::Real& dia_pp)
 {
-  // TODO: This depends on the fluid and the surface and should not be constant
-  // This is the contact angle for heptane on stainless steel
-  amrex::Real cangle = 140.*M_PI/180.;
   amrex::Real d_max = beta_max*dia_part;
   amrex::Real pmass = M_PI/6.*rho_part*dia_part*dia_part*dia_part;
   // Mass and diameter of secondary drops

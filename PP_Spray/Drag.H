@@ -115,9 +115,7 @@ bool calculateSpraySource (const Real    flow_dt,
                            SprayData     fdat,
                            SprayParticleContainer::ParticleType& p,
                            const std::array<SprayParticleContainer::SoA::RealVector, NAR_SPR>& attribs,
-                           const int pid,
-                           Real& Reyn,
-                           Real& nu)
+                           const int pid)
 {
   const Real rule = 1./3.;
   const Real inv_Ru = 1./EOS::RU;
@@ -147,14 +145,18 @@ bool calculateSpraySource (const Real    flow_dt,
                                  attribs[SPI.pstateVel+2].data()[pid]));
   Real T_part = attribs[SPI.pstateT].data()[pid];
   Real dia_part = attribs[SPI.pstateDia].data()[pid];
-  Real rho_part = attribs[SPI.pstateRho].data()[pid];
+  Real rho_part = 0.;
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+    rho_part += attribs[SPI.pstateY+spf].data()[pid]*fdat.rho(spf);
 #else
   RealVect vel_part(AMREX_D_DECL(p.rdata(SPI.pstateVel),
                                  p.rdata(SPI.pstateVel+1),
                                  p.rdata(SPI.pstateVel+2)));
   Real T_part = p.rdata(SPI.pstateT);
   Real dia_part = p.rdata(SPI.pstateDia);
-  Real rho_part = p.rdata(SPI.pstateRho);
+  Real rho_part = 0.;
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+    rho_part += p.rdata(SPI.pstateY+spf)*fdat.rho(spf);
 #endif
   Real dt = flow_dt;
   int isub = 1;
@@ -183,17 +185,35 @@ bool calculateSpraySource (const Real    flow_dt,
     Real cp_L_av = 0.; // Cp of the liquid state
     Real mw_vap = 0.; // Average molar mass of vapor mixture
     if (SPI.heat_tran || SPI.mass_tran) {
+      GpuArray<Real, SPRAY_FUEL_NUM> x_v;
+      Real sum_xv = 0.; // Sum x_v
+      Real sum_mw_xv = 0.; // Sum mw_v*x_v
+      Real nt = 0.; // Total moles of liquid
+      // This computes the mass fractions in the vapor
+      // The equation is a normalized version of y_v = x_vi*mw_i/((1 - sum_k x_vk) + sum_j x_vj mw_j)
+      // x_vi = x_li*p_sat/(p_gas*mw_gas)
+      // x_li = (y_li/mw_i)/(sum_j y_lj/mw_j)
       for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
         const int fspec = fdat.indx(spf);
         const Real mw_fuel = gpv.mw_fluid[fspec];
         // Compute latent heat
         Real part_latent = h_skin[fspec] + fdat.latent(spf)
-          - fdat.cp(spf)*(T_part - gpv.ref_T);
+          - fdat.cp(spf)*(T_part - fdat.ref_T);
         L_fuel[spf] = part_latent;
         // Compute the mass fraction of the fuel vapor at droplet surface
         Real pres_sat = EOS::PATM*std::exp(part_latent*inv_Ru*mw_fuel*
                                            (1./fdat.boilT(spf) - 1./T_part)) + C_eps;
-        Real Yfv = mw_fuel*pres_sat/(gpv.mw_mix*gpv.p_fluid + (mw_fuel - gpv.mw_mix)*pres_sat);
+        Real x_l = p.rdata(SPI.pstateY+spf)/mw_fuel;
+        Real x_vc = x_l*pres_sat;
+        nt += x_l;
+        sum_xv += x_vc;
+        x_v[spf] = mw_fuel*x_vc;
+        sum_mw_xv += x_v[spf];
+      }
+      Real totalmwx = gpv.mw_mix*(nt*gpv.p_fluid - sum_xv) + sum_mw_xv;
+      for(int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+        const int fspec = fdat.indx(spf);
+        Real Yfv = x_v[spf]/totalmwx;
         Yfv = amrex::max(0., amrex::min(1. - C_eps, Yfv));
         B_M_num[spf] = amrex::max(C_eps, (Yfv - gpv.Y_fluid[fspec])/(1. - Yfv));
         Y_skin[fspec] = Yfv + rule*(gpv.Y_fluid[fspec] - Yfv);
@@ -226,8 +246,7 @@ bool calculateSpraySource (const Real    flow_dt,
     RealVect diff_vel = gpv.vel_fluid - vel_part;
     Real diff_vel_mag = diff_vel.vectorLength();
     // Local Reynolds number
-    Reyn = gpv.rho_fluid*diff_vel_mag*dia_part/mu_skin;
-    nu = mu_skin/gpv.rho_fluid;
+    Real Reyn = gpv.rho_fluid*diff_vel_mag*dia_part/mu_skin;
     Real Nu_0 = 1.;
     // Solve mass transfer source terms
     Real m_dot = 0.;
@@ -324,12 +343,17 @@ bool calculateSpraySource (const Real    flow_dt,
   AMREX_D_TERM(attribs[SPI.pstateVel].data()[pid] = vel_part[0];,
                attribs[SPI.pstateVel+1].data()[pid] = vel_part[1];,
                attribs[SPI.pstateVel+2].data()[pid] = vel_part[2];);
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+    attribs[SPI.pstateY+spf].data()[pid] += Y_dot[spf];
   attribs[SPI.pstateT].data()[pid] = T_part;
   attribs[SPI.pstateDia].data()[pid] = dia_part;
 #else
   AMREX_D_TERM(p.rdata(SPI.pstateVel) = vel_part[0];,
                p.rdata(SPI.pstateVel+1) = vel_part[1];,
                p.rdata(SPI.pstateVel+2) = vel_part[2];);
+  Real new_rho_part = 0.;
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+    p.rdata(SPI.pstateY+spf) += Y_dot[spf];
   p.rdata(SPI.pstateT) = T_part;
   p.rdata(SPI.pstateDia) = dia_part;
 #endif

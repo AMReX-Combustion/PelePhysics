@@ -18,10 +18,10 @@
 #ifdef USE_SPRAY_SOA
 #define NSR_SPR 0
 #define NSI_SPR 0
-#define NAR_SPR AMREX_SPACEDIM+3+SPRAY_FUEL_NUM
+#define NAR_SPR AMREX_SPACEDIM+2+SPRAY_FUEL_NUM
 #define NAI_SPR 0
 #else
-#define NSR_SPR AMREX_SPACEDIM+3+SPRAY_FUEL_NUM
+#define NSR_SPR AMREX_SPACEDIM+2+SPRAY_FUEL_NUM
 #define NSI_SPR 0
 #define NAR_SPR 0
 #define NAI_SPR 0
@@ -66,14 +66,11 @@ public:
   using HostVectReal = amrex::Gpu::HostVector<amrex::Real>;
   using HostVectInt = amrex::Gpu::HostVector<int>;
 
-  SprayParticleContainer(amrex::Amr* amr, amrex::BCRec* _phys_bc, const amrex::Real parcelSize)
+  SprayParticleContainer(amrex::Amr* amr, amrex::BCRec* _phys_bc)
     : amrex::AmrParticleContainer<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>(amr),
       m_setFuelData(false),
       m_injectVel(0.),
-      m_parcelSize(parcelSize),
-      sub_cycle(amr->subCycle()),
-      phys_bc(_phys_bc),
-      m_sprayRefT(-1.)
+      phys_bc(_phys_bc)
   {
     init_bcs();
   }
@@ -85,15 +82,20 @@ public:
                      const HostVectReal& boilT,
                      const HostVectReal& fuelCp,
                      const HostVectReal& fuelLatent,
-                     const HostVectReal& fuelSigma,
+                     const HostVectReal& fuelRho,
+                     const HostVectReal& fuelMu,
                      const HostVectInt&  fuelIndx,
+                     SprayComps          sprayIndices,
+                     amrex::Real         parcelSize,
                      amrex::Real         ref_T,
-                     SprayComps          sprayIndices)
+                     amrex::Real         fuelSigma,
+                     amrex::Real         fuelTheta)
   {
+    m_parcelSize = parcelSize;
     HostVectReal fuelEnth(NUM_SPECIES);
     EOS::T2Hi(ref_T, fuelEnth.dataPtr());
-    m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelSigma, fuelIndx);
-    m_sprayRefT = ref_T;
+    m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelRho,
+                     fuelMu, fuelIndx, parcelSize, ref_T, fuelSigma, fuelTheta);
     m_sprayIndx = sprayIndices;
     m_setFuelData = true;
   }
@@ -108,7 +110,6 @@ public:
   {
     const int pstateVel = m_sprayIndx.pstateVel;
     const int pstateT   = m_sprayIndx.pstateT;
-    const int pstateRho = m_sprayIndx.pstateRho;
     const int pstateDia = m_sprayIndx.pstateDia;
     const int pstateY   = m_sprayIndx.pstateY;
     amrex::Vector<std::string> real_comp_names(pstateY + NUM_SPECIES);
@@ -117,7 +118,6 @@ public:
                  , real_comp_names[pstateVel + 2] = "zvel";);
     real_comp_names[pstateT] = "temperature";
     real_comp_names[pstateDia] = "diam";
-    real_comp_names[pstateRho] = "density";
     for (int sp = 0; sp != SPRAY_FUEL_NUM; ++sp) {
       real_comp_names[pstateY + sp] = "spray_mf_" + sprayFuelNames[sp];
     }
@@ -149,14 +149,6 @@ public:
   /// Compute a maximum time step based on the particle velocities and a particle CFL number
   ///
   amrex::Real estTimestep(int level, amrex::Real cfl) const;
-
-  ///
-  /// Set the number of particles per parcel
-  ///
-  inline void setParcelSize(const amrex::Real parcelSize)
-  {
-    m_parcelSize = parcelSize;
-  }
 
   ///
   /// Set appropriate number of ghost cells
@@ -285,12 +277,10 @@ private:
   ///
   void init_bcs();
 
-  bool sub_cycle;
   amrex::BCRec* phys_bc;
   bool reflect_lo[AMREX_SPACEDIM];
   bool reflect_hi[AMREX_SPACEDIM];
   SprayDataContainer m_fuelData;
-  amrex::Real m_sprayRefT;
   SprayComps m_sprayIndx;
 };
 
