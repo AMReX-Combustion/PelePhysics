@@ -16,7 +16,7 @@
 void transport_init();
 void transport_close();
 
-AMREX_GPU_HOST_DEVICE
+AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void transport(
       bool wtr_get_xi,
