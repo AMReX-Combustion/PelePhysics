@@ -1763,7 +1763,7 @@ void productionRate(amrex::Real *  wdot, amrex::Real *  sc, amrex::Real T)
     }
 
     amrex::Real qdot, q_f[84], q_r[84];
-    amrex::Real sc_qss[0];
+    amrex::Real sc_qss[1];
     comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
 
     for (int i = 0; i < 21; ++i) {
@@ -2817,7 +2817,7 @@ void progressRate(amrex::Real *  qdot, amrex::Real *  sc, amrex::Real T)
     }
 
     amrex::Real q_f[84], q_r[84];
-    amrex::Real sc_qss[0];
+    amrex::Real sc_qss[1];
     comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
 
     for (int i = 0; i < 84; ++i) {
@@ -2841,7 +2841,7 @@ void progressRateFR(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, a
         comp_Kc(tc,invT,Kc_save);
     }
 
-    amrex::Real sc_qss[0];
+    amrex::Real sc_qss[1];
     comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
 
     return;

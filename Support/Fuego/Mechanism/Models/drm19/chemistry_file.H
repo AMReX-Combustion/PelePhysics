@@ -44,7 +44,7 @@ void vcomp_wdot_51_84(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amre
 void CKINU(int * i, int * nspec, int * ki, int * nu);
 /* PROD RATE STUFF  */
 void productionRate(amrex::Real *  wdot, amrex::Real *  sc, amrex::Real T);
-void comp_qfqr(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real * sc_qss, amrex::Real *  tc, amrex::Real invT);
+void comp_qfqr(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real * qss_sc, amrex::Real *  tc, amrex::Real invT);
 void comp_k_f(amrex::Real *  tc, amrex::Real invT, amrex::Real *  k_f);
 void comp_Kc(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc);
 void progressRate(amrex::Real *  qdot, amrex::Real *  speciesConc, amrex::Real T);
@@ -5335,7 +5335,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amr
     amrex::Real invT = 1.0 / tc[1];
 
     amrex::Real qdot, q_f[84], q_r[84];
-    amrex::Real sc_qss[0];
+    amrex::Real sc_qss[1];
     comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
 
     for (int i = 0; i < 21; ++i) {
