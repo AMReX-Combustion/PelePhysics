@@ -7,21 +7,21 @@ void transport_init()
     TransParm trans_parm;
 
     /* CPU */
-    trans_parm.trans_wt   = (amrex::Real*) The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
-    trans_parm.trans_iwt  = (amrex::Real*) The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
-    trans_parm.trans_eps  = (amrex::Real*) The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);    
-    trans_parm.trans_sig  = (amrex::Real*) The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
-    trans_parm.trans_dip  = (amrex::Real*) The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
-    trans_parm.trans_pol  = (amrex::Real*) The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
-    trans_parm.trans_zrot = (amrex::Real*) The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
+    trans_parm.trans_wt   = (amrex::Real*) amrex::The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
+    trans_parm.trans_iwt  = (amrex::Real*) amrex::The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
+    trans_parm.trans_eps  = (amrex::Real*) amrex::The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);    
+    trans_parm.trans_sig  = (amrex::Real*) amrex::The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
+    trans_parm.trans_dip  = (amrex::Real*) amrex::The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
+    trans_parm.trans_pol  = (amrex::Real*) amrex::The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
+    trans_parm.trans_zrot = (amrex::Real*) amrex::The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
 
-    trans_parm.trans_fitmu   = (amrex::Real*) The_Arena()->alloc(
+    trans_parm.trans_fitmu   = (amrex::Real*) amrex::The_Arena()->alloc(
                               sizeof(amrex::Real) * trans_parm.array_size * trans_parm.fit_length);
     trans_parm.trans_fitlam  = (amrex::Real*) amrex::The_Arena()->alloc(
                               sizeof(amrex::Real) * trans_parm.array_size * trans_parm.fit_length);
-    trans_parm.trans_fitdbin = (amrex::Real*) The_Arena()->alloc(
+    trans_parm.trans_fitdbin = (amrex::Real*) amrex::The_Arena()->alloc(
                                sizeof(amrex::Real) * trans_parm.array_size * trans_parm.array_size * trans_parm.fit_length);
-    trans_parm.trans_nlin    = (int*) The_Arena()->alloc(sizeof(int) * trans_parm.array_size);
+    trans_parm.trans_nlin    = (int*) amrex::The_Arena()->alloc(sizeof(int) * trans_parm.array_size);
 
     egtransetWT(trans_parm.trans_wt);
     egtransetEPS(trans_parm.trans_eps);
@@ -39,7 +39,7 @@ void transport_init()
     }
 
     /* GPU */
-    trans_parm_g = (TransParm *) The_Device_Arena()->alloc(sizeof(trans_parm));
+    trans_parm_g = (TransParm *) amrex::The_Device_Arena()->alloc(sizeof(trans_parm));
 #ifdef AMREX_USE_CUDA
     amrex::Gpu::htod_memcpy(trans_parm_g, &trans_parm, sizeof(trans_parm));
 #else

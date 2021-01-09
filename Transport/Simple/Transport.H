@@ -11,7 +11,6 @@
 
 #include "mechanism.h"
 #include "chemistry_file.H"
-#include "chemistry_K.H"
 
 void transport_init();
 void transport_close();

@@ -21,7 +21,7 @@ transport_init()
    pp.query("const_diffusivity",    trans_parm.const_diffusivity);
 
    /* GPU */
-   trans_parm_g = (TransParm *) The_Device_Arena()->alloc(sizeof(trans_parm));
+   trans_parm_g = (TransParm *) amrex::The_Device_Arena()->alloc(sizeof(trans_parm));
 #ifdef AMREX_USE_GPU
    amrex::Gpu::htod_memcpy(trans_parm_g, &trans_parm, sizeof(trans_parm));
 #else
