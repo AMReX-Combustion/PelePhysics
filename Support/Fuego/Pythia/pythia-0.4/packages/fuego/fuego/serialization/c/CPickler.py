@@ -4700,7 +4700,7 @@ class CPickler(CMill):
                     else:
                         conc = "pow(sc[%d], %f)" % (self.ordered_idx_map[symbol], coefficient)
                     phi += [conc]
-            if else:
+            else:
                 if symbol == r:
                     if coefficient > 1:
                         phi += ["%f" % coefficient]
@@ -5343,13 +5343,13 @@ class CPickler(CMill):
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
                     s1 = 'J[%d] += %.17g * dqdT; /* dwdot[%s]/dT */' % \
-                        (nSpecies*(nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
+                        (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
 
         else:
 
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 dqdc_s = dqdc_simple_d('',k)
                 if dqdc_s:
                     self._write('/* d()/d[%s] */' % all_dict[k][0])
@@ -5357,14 +5357,14 @@ class CPickler(CMill):
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
                             if all_dict[m][1] != 0:
-                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
+                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                                 s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                                 s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], all_dict[k][0])
                                 self._write(s1.ljust(30) + s2)
             self._write('/* d()/dT */')
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT;' % (nSpecies*(nSpecies+1)+m, all_dict[m][1])
+                    s1 = 'J[%d] += %.17g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=').replace('+= -1 *', '-=')
                     s2 = '/* dwdot[%s]/dT */' % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
