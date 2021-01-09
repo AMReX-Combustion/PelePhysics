@@ -504,7 +504,7 @@ class CPickler(CMill):
         self._write(
             self.line(' PROD RATE STUFF '))
         self._write('void productionRate(amrex::Real *  wdot, amrex::Real *  sc, amrex::Real T);')
-        self._write('void comp_qfqr(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real *  tc, amrex::Real invT);')
+        self._write('void comp_qfqr(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real * qss_sc, amrex::Real *  tc, amrex::Real invT);')
         self._write('void comp_k_f(amrex::Real *  tc, amrex::Real invT, amrex::Real *  k_f);')
         self._write('void comp_Kc(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc);')
         self._write('void progressRate(amrex::Real *  qdot, amrex::Real *  speciesConc, amrex::Real T);')
@@ -1907,7 +1907,7 @@ class CPickler(CMill):
         else:
             self._write()
             self._write('amrex::Real qdot, q_f[%d], q_r[%d];' % (nReactions,nReactions))
-            self._write('amrex::Real sc_qss[%d];' % (self.nQSSspecies))
+            self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
             if (self.nQSSspecies > 0):
                 self._write('/* Fill sc_qss here*/')
                 self._write('comp_qss_sc(sc, sc_qss, tc, invT);')
@@ -4685,20 +4685,36 @@ class CPickler(CMill):
         phi = []
 
         for symbol, coefficient in sorted(reagents,key=lambda x:mechanism.species(x[0]).id):
-            if symbol == r:
-                if coefficient > 1:
-                    phi += ["%f" % coefficient]
-                    if ((coefficient-1) == 1.0):
+            if symbol not in self.qss_species_list:
+                if symbol == r:
+                    if coefficient > 1:
+                        phi += ["%f" % coefficient]
+                        if ((coefficient-1) == 1.0):
+                            conc = "sc[%d]" % (self.ordered_idx_map[symbol])
+                        else:
+                            conc = "pow(sc[%d],%f)" % (self.ordered_idx_map[symbol], (coefficient-1))
+                        phi += [conc]
+                else:
+                    if (coefficient == 1.0):
                         conc = "sc[%d]" % (self.ordered_idx_map[symbol])
                     else:
-                        conc = "pow(sc[%d],%f)" % (self.ordered_idx_map[symbol], (coefficient-1))
+                        conc = "pow(sc[%d], %f)" % (self.ordered_idx_map[symbol], coefficient)
                     phi += [conc]
-            else:
-                if (coefficient == 1.0):
-                    conc = "sc[%d]" % (self.ordered_idx_map[symbol])
+            if else:
+                if symbol == r:
+                    if coefficient > 1:
+                        phi += ["%f" % coefficient]
+                        if ((coefficient-1) == 1.0):
+                            conc = "sc_qss[%d]" % (self.ordered_idx_map[symbol] - self.nSpecies)
+                        else:
+                            conc = "pow(sc_qss[%d],%f)" % (self.ordered_idx_map[symbol] - self.nSpecies, (coefficient-1))
+                        phi += [conc]
                 else:
-                    conc = "pow(sc[%d], %f)" % (self.ordered_idx_map[symbol], coefficient)
-                phi += [conc]
+                    if (coefficient == 1.0):
+                        conc = "sc_qss[%d]" % (self.ordered_idx_map[symbol] - self.nSpecies)
+                    else:
+                        conc = "pow(sc_qss[%d], %f)" % (self.ordered_idx_map[symbol] - self.nSpecies, coefficient)
+                    phi += [conc]
 
         if phi:
             return "*".join(phi)
@@ -4780,7 +4796,7 @@ class CPickler(CMill):
 
 
     def _ajac_GPU(self, mechanism):
-        nSpecies = len(mechanism.species())
+        nSpecies = self.nSpecies
         nReactions = len(mechanism.reaction())
 
         self._write()
@@ -4833,20 +4849,26 @@ class CPickler(CMill):
         self._write()
 
         self._write(self.line('compute the Gibbs free energy'))
-        self._write('amrex::Real g_RT[%d];' % (nSpecies))
+        self._write('amrex::Real g_RT[%d];' % (self.nSpecies))
         self._write('gibbs(g_RT, tc);')
+        if (self.nQSSspecies > 0):
+            self._write('amrex::Real g_RT_qss[%d];' % (self.nQSSspecies))
+            self._write('gibbs_qss(g_RT_qss, tc);')
 
         self._write()
 
         self._write(self.line('compute the species enthalpy'))
-        self._write('amrex::Real h_RT[%d];' % (nSpecies))
+        self._write('amrex::Real h_RT[%d];' % (self.nSpecies))
         self._write('speciesEnthalpy(h_RT, tc);')
+        if (self.nQSSspecies > 0):
+            self._write('amrex::Real h_RT_qss[%d];' % (self.nQSSspecies))
+            self._write('speciesEnthalpy_qss(h_RT_qss, tc);')
 
         self._write()
 
         self._write('amrex::Real phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;') 
         self._write('amrex::Real dlnkfdT, dlnk0dT, dlnKcdT, dkrdT, dqdT;')
-        self._write('amrex::Real dqdci, dcdc_fac, dqdc[%d];' % (nSpecies))
+        self._write('amrex::Real dqdci, dcdc_fac, dqdc[%d];' % (self.nSpecies))
         self._write('amrex::Real Pr, fPr, F, k_0, logPr;') 
         self._write('amrex::Real logFcent, troe_c, troe_n, troePr_den, troePr, troe;')
         self._write('amrex::Real Fcent1, Fcent2, Fcent3, Fcent;')
@@ -4856,7 +4878,6 @@ class CPickler(CMill):
         self._write('const amrex::Real log10e = 1.0/log(10.0);')
 
         for i, reaction in zip(range(nReactions), mechanism.reaction()):
-
             lt = reaction.lt
             if lt:
                 print "Landau-Teller reactions are not supported"
@@ -4963,13 +4984,12 @@ class CPickler(CMill):
             print '_ajac_reaction: wrong case ', rcase
             exit(1)
 
-        nSpecies = len(mechanism.species())
-        rea_dict = {}
-        pro_dict = {}
-        all_dict = {}
+        rea_dict = OrderedDict()
+        pro_dict = OrderedDict()
+        all_dict = OrderedDict()
         sumNuk = 0
         for symbol, coefficient in reaction.reactants:
-            k = mechanism.species(symbol).id
+            k = self.ordered_idx_map[symbol]
             sumNuk -= coefficient
             if k in rea_dict:
                 coe_old = rea_dict[k][1]
@@ -4977,14 +4997,15 @@ class CPickler(CMill):
             else:
                 rea_dict[k] = (symbol,  coefficient)
         for symbol, coefficient in reaction.products:
-            k = mechanism.species(symbol).id
+            k = self.ordered_idx_map[symbol]
             sumNuk += coefficient
             if k in pro_dict:
                 coe_old = pro_dict[k][1]
                 pro_dict[k] = (symbol, coefficient+coe_old)
             else:
                 pro_dict[k] = (symbol, coefficient)
-        for k in range(nSpecies):
+        for k in range(self.nSpecies):
+            # QSS at the end so we should be good
             if k in rea_dict and k in pro_dict:
                 sr, nur = rea_dict[k]
                 sp, nup = pro_dict[k]
@@ -5003,7 +5024,7 @@ class CPickler(CMill):
             if isPD or has_alpha:
                 print 'FIXME: irreversible reaction in _ajac_reaction may not work'
                 self._write('/* FIXME: irreversible reaction in _ajac_reaction may not work*/')
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 if k in sorted_reactants and k in sorted_products:
                     print 'FIXME: irreversible reaction in _ajac_reaction may not work'
                     self._write('/* FIXME: irreversible reaction in _ajac_reaction may not work*/')
@@ -5145,20 +5166,34 @@ class CPickler(CMill):
             terms = []
             for symbol, coefficient in sorted(sorted_reactants,
                                               key=lambda x: mechanism.species(x[0]).id):
-                k = mechanism.species(symbol).id
-                if coefficient == 1.0:
-                    terms.append('h_RT[%d]' % (k))
+                if symbol not in self.qss_species_list:
+                    k = self.ordered_idx_map[symbol]
+                    if coefficient == 1.0:
+                        terms.append('h_RT[%d]' % (k))
+                    else:
+                        terms.append('%f*h_RT[%d]' % (coefficient, k))
                 else:
-                    terms.append('%f*h_RT[%d]' % (coefficient, k))
+                    k = self.ordered_idx_map[symbol] - self.nSpecies
+                    if coefficient == 1.0:
+                        terms.append('h_RT_qss[%d]' % (k))
+                    else:
+                        terms.append('%f*h_RT_qss[%d]' % (coefficient, k))
             dlnKcdT_s += '-(' + ' + '.join(terms) + ')'
             terms = []
             for symbol, coefficient in sorted(sorted_products,
                                               key=lambda x: mechanism.species(x[0]).id):
-                k = mechanism.species(symbol).id
-                if coefficient == 1.0:
-                    terms.append('h_RT[%d]' % (k))
+                if symbol not in self.qss_species_list:
+                    k = self.ordered_idx_map[symbol]
+                    if coefficient == 1.0:
+                        terms.append('h_RT[%d]' % (k))
+                    else:
+                        terms.append('%f*h_RT[%d]' % (coefficient, k))
                 else:
-                    terms.append('%f*h_RT[%d]' % (coefficient, k))
+                    k = self.ordered_idx_map[symbol] - self.nSpecies
+                    if coefficient == 1.0:
+                        terms.append('h_RT_qss[%d]' % (k))
+                    else:
+                        terms.append('%f*h_RT_qss[%d]' % (coefficient, k))
             dlnKcdT_s += ' + (' + ' + '.join(terms) + ')'
             if sumNuk > 0:
                 dlnKcdT_s += ' - %f' % sumNuk
@@ -5187,6 +5222,7 @@ class CPickler(CMill):
                 self._write('dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);' % Corr_s)
 
         self._write("/* update wdot */")
+        # only the nSpecies transported in all_dict
         for k in sorted(all_dict.keys()):
             s, nu = all_dict[k]
             if nu == 1:
@@ -5241,7 +5277,7 @@ class CPickler(CMill):
             self._write('if (consP) {')
             self._indent()
 
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 dqdc_s = self._Denhancement_d(mechanism,reaction,k,True)
                 if dqdc_s != "0":
                     if isPD:
@@ -5263,7 +5299,7 @@ class CPickler(CMill):
                     #
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
-                            s1 = 'J[%d] += %.17g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
+                            s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                             s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                             s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], symb_k)
                             self._write(s1.ljust(30) + s2)
@@ -5273,7 +5309,7 @@ class CPickler(CMill):
             self._write('else {')
             self._indent()
 
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 dqdc_s = self._Denhancement_d(mechanism,reaction,k,False)
                 if dqdc_s != '0':
                     if isPD:
@@ -5291,11 +5327,11 @@ class CPickler(CMill):
                 if dqdc_s:
                     self._write('dqdc[%d] = %s;' % (k,dqdc_s))
 
-            self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+            self._write('for (int k=0; k<%d; k++) {' % self.nSpecies)
             self._indent()
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((nSpecies+1), m, all_dict[m][1])
+                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
             self._outdent()
@@ -6022,7 +6058,7 @@ class CPickler(CMill):
 
         self._write()
         self._write('amrex::Real qdot, q_f[%d], q_r[%d];' % (nReactions,nReactions))
-        self._write('amrex::Real sc_qss[%d];' % (self.nQSSspecies))
+        self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
         if (self.nQSSspecies > 0):
             self._write('/* Fill sc_qss here*/')
             self._write('comp_qss_sc(sc, sc_qss, tc, invT);')
@@ -6591,7 +6627,7 @@ class CPickler(CMill):
         else:
             self._write()
             self._write('amrex::Real q_f[%d], q_r[%d];' % (nReactions,nReactions))
-            self._write('amrex::Real sc_qss[%d];' % (self.nQSSspecies))
+            self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
             if (self.nQSSspecies > 0):
                 self._write('/* Fill sc_qss here*/')
                 self._write('comp_qss_sc(sc, sc_qss, tc, invT);')
@@ -6658,7 +6694,7 @@ class CPickler(CMill):
             self._write("}")
 
             self._write()
-            self._write('amrex::Real sc_qss[%d];' % (self.nQSSspecies))
+            self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
             if (self.nQSSspecies > 0):
                 self._write('/* Fill sc_qss here*/')
                 self._write('comp_qss_sc(sc, sc_qss, tc, invT);')
