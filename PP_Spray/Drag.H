@@ -351,7 +351,6 @@ bool calculateSpraySource (const Real    flow_dt,
   AMREX_D_TERM(p.rdata(SPI.pstateVel) = vel_part[0];,
                p.rdata(SPI.pstateVel+1) = vel_part[1];,
                p.rdata(SPI.pstateVel+2) = vel_part[2];);
-  Real new_rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
     p.rdata(SPI.pstateY+spf) += Y_dot[spf];
   p.rdata(SPI.pstateT) = T_part;

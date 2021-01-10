@@ -293,7 +293,6 @@ void fe_interp(const amrex::RealVect& pos,
     const int dk = k - kp; // 0 or 1
 
     // Count the number of non-connected cells in the stencil
-    int aindx = 0;
     int covered = 0;
     for(int kk(-1); kk<1; kk++){
       for(int jj(-1); jj<1; jj++){
