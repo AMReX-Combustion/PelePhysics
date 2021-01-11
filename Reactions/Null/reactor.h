@@ -5,6 +5,7 @@
 #include <AMReX_iMultiFab.H>
 #include <EOS.H>
 
+#ifdef AMREX_USE_GPU
 #ifdef AMREX_USE_CUDA
 typedef cudaStream_t DEVICE_STREAM_TYPE;
 typedef cudaError_t  DEVICE_ERROR_TYPE;
@@ -13,6 +14,7 @@ typedef cudaError_t  DEVICE_ERROR_TYPE;
 typedef hipStream_t DEVICE_STREAM_TYPE;
 typedef hipError_t  DEVICE_ERROR_TYPE;
 #define DEVICE_SUCCESS hipSuccess
+#endif
 #endif
 
 /**********************************/
