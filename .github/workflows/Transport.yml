@@ -34,7 +34,7 @@ jobs:
         ./Pele2d.gnu.DEBUG.MPI.ex inputs.2d-transportConstant
 
   # Simple Transport GNU7.5 and MPI support
-  Constant_MPI:
+  Simple_MPI:
     name: GNU@7.5 MPI [Simple]
     runs-on: ubuntu-latest
     env: 
