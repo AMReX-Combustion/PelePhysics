@@ -31,7 +31,7 @@ jobs:
     - name: Run
       working-directory: ./Testing/Exec/TranEval
       run: |
-        ./Pele2d.gnu.DEBUG.MPI.ex inputs.2d_Constant
+        ./Pele2d.gnu.MPI.ex inputs.2d_Constant
 
   # Sutherland Transport GNU7.5 and MPI support
   Sutherland_MPI:
@@ -57,7 +57,7 @@ jobs:
     - name: Run
       working-directory: ./Testing/Exec/TranEval
       run: |
-        ./Pele2d.gnu.DEBUG.MPI.ex inputs.2d_Sutherland
+        ./Pele2d.gnu.MPI.ex inputs.2d_Sutherland
 
   # Simple Transport GNU7.5 and MPI support
   Simple_MPI:
@@ -83,7 +83,7 @@ jobs:
     - name: Run
       working-directory: ./Testing/Exec/TranEval
       run: |
-        ./Pele2d.gnu.DEBUG.MPI.ex inputs.2d_Simple
+        ./Pele2d.gnu.MPI.ex inputs.2d_Simple
 
   # Constant Transport CUDA and MPI support
   Constant_CUDA:
@@ -105,6 +105,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_dir=Constant
 
   # Sutherland Transport CUDA and MPI support
@@ -127,6 +129,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_dir=Sutherland
 
   # Simple Transport CUDA and MPI support
@@ -149,4 +153,6 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_dir=Simple
