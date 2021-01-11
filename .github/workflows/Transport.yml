@@ -1,0 +1,60 @@
+name: CI_Transport                                                                                                                                           
+on: 
+   workflow_dispatch:
+   push:
+     branches: [ development ]
+   pull_request:
+     branches: [ development ]
+
+jobs:
+  # Constant Transport GNU7.5 and MPI support
+  Constant_MPI:
+    name: GNU@7.5 MPI [Constant]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        make -j 2 COMP=gnu Transport_dir=Constant
+    - name: Run
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        ./Pele2d.gnu.DEBUG.MPI.ex inputs.2d-transportConstant
+
+  # Simple Transport GNU7.5 and MPI support
+  Constant_MPI:
+    name: GNU@7.5 MPI [Simple]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        make -j 2 COMP=gnu Transport_dir=Simple
+    - name: Run
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        ./Pele2d.gnu.DEBUG.MPI.ex inputs.2d
