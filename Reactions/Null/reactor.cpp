@@ -42,7 +42,7 @@ int react(const Box& box,
           Real &time
 #ifdef AMREX_USE_GPU
           , const int &reactor_type
-          , cudaStream_t stream
+          , DEVICE_STREAM_TYPE stream
 #endif
           ) {
 

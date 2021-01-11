@@ -5,6 +5,16 @@
 #include <AMReX_iMultiFab.H>
 #include <EOS.H>
 
+#ifdef AMREX_USE_CUDA
+typedef cudaStream_t DEVICE_STREAM_TYPE;
+typedef cudaError_t  DEVICE_ERROR_TYPE;
+#define DEVICE_SUCCESS cudaSuccess
+#else
+typedef hipStream_t DEVICE_STREAM_TYPE;
+typedef hipError_t  DEVICE_ERROR_TYPE;
+#define DEVICE_SUCCESS hipSuccess
+#endif
+
 /**********************************/
 /* Functions Called by the Program */
 int reactor_init(int cvode_iE, int Ncells);
@@ -24,7 +34,7 @@ int react(const amrex::Box& box,
           amrex::Real &time
 #ifdef AMREX_USE_GPU
           , const int reactor_type
-          , cudaStream_t stream
+          , DEVICE_STREAM_TYPE stream
 #endif
           );
 
