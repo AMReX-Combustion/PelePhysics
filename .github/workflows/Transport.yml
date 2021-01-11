@@ -159,10 +159,10 @@ jobs:
 
   # Constant Transport HIP and MPI support
   Constant_HIP:
-    name: HIPROCm@3.8 MPI [Constant]
-    runs-on: ubuntu-latest
+    name: HIPROCm@3.8 GFortran@9.3 [Constant]
+    runs-on: ubuntu-20.04
     env: 
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+      {CXXFLAGS: "-fno-operator-names"}
     steps:
     - uses: actions/checkout@v2
     - name: System Dependencies
@@ -179,4 +179,8 @@ jobs:
       run: |
         source /etc/profile.d/rocm.sh
         hipcc --version
-        make -j 2 COMP=gnu USE_HIP=TRUE Transport_dir=Constant
+        ls /opt/rocm-4.0.0/
+        ls /opt/rocm-4.0.0/llvm/bin
+        ls /opt/rocm-4.0.0/llvm/include
+        make help COMP=gnu USE_HIP=TRUE Transport_dir=Constant
+        make -j 2 COMP=gnu VERBOSE=TRUE USE_HIP=TRUE Transport_dir=Constant
