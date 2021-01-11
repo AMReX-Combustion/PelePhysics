@@ -8222,6 +8222,7 @@ void aJacobian(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP)
     J[483] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;
 }
 
+#endif
 /* Transport function declarations  */
 
 
@@ -10557,7 +10558,6 @@ void egtransetCOFTD(amrex::Real* COFTD) {
     COFTD[166] = -3.64844875E-07;
     COFTD[167] = 6.03054876E-11;
 }
-#endif
 
 #ifndef AMREX_USE_GPU
 /* Initializes parameter database */

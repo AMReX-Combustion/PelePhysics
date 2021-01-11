@@ -163,7 +163,6 @@ class CPickler(CMill):
         self.QSS_SRnet = np.zeros([self.nQSSspecies, len(mechanism.reaction())], 'd')
         self.QSS_SCnet = np.zeros([self.nQSSspecies, self.nQSSspecies], 'd')
 
-        #print
         print "FULL SPECIES LIST WITH TRANSPORTED FIRST AND QSS LAST: "
         for all_species in self.all_species:
             print all_species.symbol, " ", all_species.id, " ", all_species.mech_id, " ", all_species.weight
@@ -222,6 +221,22 @@ class CPickler(CMill):
             # 0/ntroe/nsri/nlindem/nTB/nSimple/nWeird
             # 0/1    /2   /3      /4  /5      /6
             self.reactionIndex = mechanism._sort_reactions()
+
+        #QSS        
+        if (self.nQSSspecies > 0):
+            print("\n\n\n\n---------------------------------")
+            print("+++++++++QSS INFO++++++++++++++++")
+            print("---------------------------------")
+            print "QSS species list =", self.qss_species_list
+            self._setQSSreactions(mechanism)
+            self._getQSSnetworks(mechanism)   # sets up QSS subnetwork
+            self._QSSvalidation(mechanism)    # Perform tests to ensure QSS species are good candidates
+            self._QSSCoupling(mechanism)      # No quad coupling and fill SC network
+            print("\n\n\n\n---------------------------------")
+            print("+++++++++INIT NEEDS DICT+++++++++")
+            print("---------------------------------")
+            self._setQSSneeds(mechanism) # Fill "need" dict (which species a species depends upon)
+            self._setQSSisneeded(mechanism) # Fill "is_needed" dict (which species needs that particular species)
 
         #chemistry_file.H
         self._write('#ifndef CHEMISTRY_FILE_H')
@@ -299,6 +314,26 @@ class CPickler(CMill):
         #self._ckgms(mechanism)
         #self._ckams(mechanism)
         self._cksms(mechanism)
+
+        #QSS        
+        if (self.nQSSspecies > 0):
+            print("\n\n\n\n---------------------------------")
+            print("+++++++++GROUPS++++++++++++++++++")
+            print("---------------------------------")
+            self._getQSSgroups(mechanism) # Figure out dependencies
+            print("\n\n\n\n---------------------------------")
+            print("+++++++++QSS SORTING+++++++++++++")
+            print("---------------------------------")
+            self._sortQSScomputation(mechanism) # Sort out order of group eval
+            print("\n\n\n\n---------------------------------")
+            print("+++++++++QSS EVAL++++++++++++++++")
+            print("---------------------------------")
+            self._sortQSSsolution_elements(mechanism) # Actually gauss-pivot the matrix to get algebraic expr
+            print("\n\n\n\n---------------------------------")
+            print("+++++++++QSS PRINTING++++++++++++")
+            print("---------------------------------")
+            self._QSScomponentFunctions(mechanism) # Print those expr in the mechanism.cpp
+
 
         # prod rate related
         self._productionRate_GPU(mechanism) # GPU version
@@ -516,6 +551,11 @@ class CPickler(CMill):
         self._write('void CKQYR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  qdot);')
         self._write('void CKQXR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  qdot);')
         self._write('void aJacobian(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP);')
+        self._write('#endif')
+        self._write()
+        self._write()
+        self._write(
+            self.line(' ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp '))
         self._write(
             self.line(' Transport function declarations '))
         self._write('void egtransetLENIMC(int* LENIMC);')
@@ -536,12 +576,6 @@ class CPickler(CMill):
         self._write('void egtransetCOFD(amrex::Real* COFD);')
         self._write('void egtransetKTDIF(int* KTDIF);')
         self._write('void egtransetCOFTD(amrex::Real* COFTD);')
-        self._write('#endif')
-
-        self._write()
-        self._write()
-        self._write(
-            self.line(' ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp '))
         self._write(
             self.line(' INIT and FINALIZE stuff '))
         self._write('void CKINIT();')
@@ -1717,10 +1751,11 @@ class CPickler(CMill):
             nclassd = nReactions - nspecial
             #nCorr   = n3body + ntroe + nsri + nlindemann
 
+            # reacs are sorted here
             for i in range(nReactions):
                 self._write()
                 reaction = mechanism.reaction(id=i)
-                self._write(self.line('reaction %d: %s' % (reaction.id, reaction.equation())))
+                self._write(self.line('reaction %d: %s' % (reaction.orig_id, reaction.equation())))
                 if (len(reaction.ford) > 0):
                     self._write("qf[%d] = %s;" % (i, self._QSSsortedPhaseSpace(mechanism, reaction.ford)))
                 else:
@@ -1774,6 +1809,7 @@ class CPickler(CMill):
             for i, reaction in zip(range(nReactions), mechanism.reaction()):
                 rmap[reaction.orig_id-1] = i
 
+            # Loop like you're going through them in the mech.Linp order
             for i in range(nReactions):
                 reaction = mechanism.reaction()[rmap[i]]
                 idx = reaction.id - 1
@@ -3898,7 +3934,7 @@ class CPickler(CMill):
                     self._write( "nuki[ %d * kd + %d ] += +%f ;"
                         % (mechanism.species(symbol).id, reaction.id-1, coefficient))
                 else:
-                    self._write( "nuki[ %d * kd + %d ] += +%f ;"
+                    self._write( "nuki_qss[ %d * kd + %d ] += +%f ;"
                         % (self.ordered_idx_map[symbol]-self.nSpecies, reaction.id-1, coefficient))
        
         self._outdent()
@@ -3948,6 +3984,17 @@ class CPickler(CMill):
         # compute the reference concentration
         self._write(self.line('reference concentration: P_atm / (RT) in inverse mol/m^3'))
         self._write('amrex::Real refC = %g / %g / T;' % (atm.value, R.value))
+        self._write()
+    
+        # QSS
+        self._write(
+            'amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
+            + self.line('temperature cache'))
+        if (self.nQSSspecies > 0):
+            if (self.nQSSspecies > 0):
+                self._write('amrex::Real g_RT_qss[%d];' % (self.nQSSspecies))
+                self._write('gibbs_qss(g_RT_qss, tc);')
+         
 
         # compute the equilibrium constants
         for reaction in mechanism.reaction():
@@ -3973,7 +4020,11 @@ class CPickler(CMill):
             else:
                 factor = "%f * " % coefficient
                     
-            terms.append("%sg_RT[%d]" % (factor, mechanism.species(symbol).id))
+            if symbol not in self.qss_species_list:
+                terms.append("%sg_RT[%d]" % (factor, self.ordered_idx_map[symbol]))
+            else:
+                terms.append("%sg_RT_qss[%d]" % (factor, self.ordered_idx_map[symbol] -  self.nSpecies))
+
             dim -= coefficient
         dG += '(' + ' + '.join(terms) + ')'
 
@@ -3984,7 +4035,11 @@ class CPickler(CMill):
                 factor = ""
             else:
                 factor = "%f * " % coefficient
-            terms.append("%sg_RT[%d]" % (factor, mechanism.species(symbol).id))
+            if symbol not in self.qss_species_list:
+                terms.append("%sg_RT[%d]" % (factor, self.ordered_idx_map[symbol]))
+            else:
+                terms.append("%sg_RT_qss[%d]" % (factor, self.ordered_idx_map[symbol] -  self.nSpecies))
+
             dim += coefficient
         dG += ' - (' + ' + '.join(terms) + ')'
 
@@ -4089,9 +4144,6 @@ class CPickler(CMill):
         return
 
     def __ckeqcontent(self, mechanism):
-        nSpecies = len(mechanism.species())
-        nReactions = len(mechanism.reaction())
-
         self._write(
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
@@ -4099,7 +4151,7 @@ class CPickler(CMill):
             'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
-            'amrex::Real gort[%d]; ' % nSpecies + self.line(' temporary storage'))
+            'amrex::Real gort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
 
         # compute the gibbs free energy
         self._write()
@@ -4134,7 +4186,7 @@ class CPickler(CMill):
     # JACOBIAN #
 
     def _ajacPrecond(self, mechanism):
-        nSpecies = len(mechanism.species())
+        nSpecies = self.nSpecies
         nReactions = len(mechanism.reaction())
 
         self._write()
@@ -4185,12 +4237,18 @@ class CPickler(CMill):
         self._write(self.line('compute the Gibbs free energy'))
         self._write('amrex::Real g_RT[%d];' % (nSpecies))
         self._write('gibbs(g_RT, tc);')
+        if (self.nQSSspecies > 0):
+            self._write('amrex::Real g_RT_qss[%d];' % (self.nQSSspecies))
+            self._write('gibbs_qss(g_RT_qss, tc);')
 
         self._write()
 
         self._write(self.line('compute the species enthalpy'))
         self._write('amrex::Real h_RT[%d];' % (nSpecies))
         self._write('speciesEnthalpy(h_RT, tc);')
+        if (self.nQSSspecies > 0):
+            self._write('amrex::Real h_RT_qss[%d];' % (self.nQSSspecies))
+            self._write('speciesEnthalpy_qss(h_RT_qss, tc);')
 
         self._write()
 
@@ -4206,7 +4264,6 @@ class CPickler(CMill):
         self._write('const amrex::Real log10e = 1.0/log(10.0);')
 
         for i, reaction in zip(range(nReactions), mechanism.reaction()):
-
             lt = reaction.lt
             if lt:
                 print "Landau-Teller reactions are not supported"
@@ -4308,13 +4365,12 @@ class CPickler(CMill):
             print '_ajac_reaction: wrong case ', rcase
             exit(1)
 
-        nSpecies = len(mechanism.species())
         rea_dict = {}
         pro_dict = {}
         all_dict = {}
         sumNuk = 0
         for symbol, coefficient in reaction.reactants:
-            k = mechanism.species(symbol).id
+            k = self.ordered_idx_map[symbol]
             sumNuk -= coefficient
             if k in rea_dict:
                 coe_old = rea_dict[k][1]
@@ -4322,14 +4378,14 @@ class CPickler(CMill):
             else:
                 rea_dict[k] = (symbol,  coefficient)
         for symbol, coefficient in reaction.products:
-            k = mechanism.species(symbol).id
+            k = self.ordered_idx_map[symbol]
             sumNuk += coefficient
             if k in pro_dict:
                 coe_old = pro_dict[k][1]
                 pro_dict[k] = (symbol, coefficient+coe_old)
             else:
                 pro_dict[k] = (symbol, coefficient)
-        for k in range(nSpecies):
+        for k in range(self.nSpecies):
             if k in rea_dict and k in pro_dict:
                 sr, nur = rea_dict[k]
                 sp, nup = pro_dict[k]
@@ -4348,7 +4404,7 @@ class CPickler(CMill):
             if isPD or has_alpha:
                 print 'FIXME: irreversible reaction in _ajac_reaction may not work'
                 self._write('/* FIXME: irreversible reaction in _ajac_reaction may not work*/')
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 if k in sorted_reactants and k in sorted_products:
                     print 'FIXME: irreversible reaction in _ajac_reaction may not work'
                     self._write('/* FIXME: irreversible reaction in _ajac_reaction may not work*/')
@@ -4490,20 +4546,32 @@ class CPickler(CMill):
             terms = []
             for symbol, coefficient in sorted(sorted_reactants,
                                               key=lambda x: mechanism.species(x[0]).id):
-                k = mechanism.species(symbol).id
-                if coefficient == 1.0:
-                    terms.append('h_RT[%d]' % (k))
+                k = self.ordered_idx_map[symbol]
+                if symbol not in self.qss_species_list:
+                    if coefficient == 1.0:
+                        terms.append('h_RT[%d]' % (k))
+                    else:
+                        terms.append('%f*h_RT[%d]' % (coefficient, k))
                 else:
-                    terms.append('%f*h_RT[%d]' % (coefficient, k))
+                    if coefficient == 1.0:
+                        terms.append('h_RT_qss[%d]' % (k))
+                    else:
+                        terms.append('%f*h_RT_qss[%d]' % (coefficient, k))
             dlnKcdT_s += '-(' + ' + '.join(terms) + ')'
             terms = []
             for symbol, coefficient in sorted(sorted_products,
                                               key=lambda x: mechanism.species(x[0]).id):
-                k = mechanism.species(symbol).id
-                if coefficient == 1.0:
-                    terms.append('h_RT[%d]' % (k))
+                k = self.ordered_idx_map[symbol]
+                if symbol not in self.qss_species_list:
+                    if coefficient == 1.0:
+                        terms.append('h_RT[%d]' % (k))
+                    else:
+                        terms.append('%f*h_RT[%d]' % (coefficient, k))
                 else:
-                    terms.append('%f*h_RT[%d]' % (coefficient, k))
+                    if coefficient == 1.0:
+                        terms.append('h_RT_qss[%d]' % (k))
+                    else:
+                        terms.append('%f*h_RT_qss[%d]' % (coefficient, k))
             dlnKcdT_s += ' + (' + ' + '.join(terms) + ')'
             if sumNuk > 0:
                 dlnKcdT_s += ' - %f' % sumNuk
@@ -4618,7 +4686,7 @@ class CPickler(CMill):
             #self._write('else {')
             #self._indent()
 
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 dqdc_s = self._Denhancement_d(mechanism,reaction,k,False)
                 if dqdc_s != '0':
                     if isPD:
@@ -4638,11 +4706,11 @@ class CPickler(CMill):
                 else:
                     self._write('dqdc[%d] = 0.0;' % k)
 
-            self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+            self._write('for (int k=0; k<%d; k++) {' % self.nSpecies)
             self._indent()
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((nSpecies+1), m, all_dict[m][1])
+                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
             #self._outdent()
@@ -4654,13 +4722,13 @@ class CPickler(CMill):
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
                     s1 = 'J[%d] += %.17g * dqdT; /* dwdot[%s]/dT */' % \
-                        (nSpecies*(nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
+                        (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
 
         else:
 
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 dqdc_s = dqdc_simple_precond('',k)
                 if dqdc_s:
                     self._write('/* d()/d[%s] */' % all_dict[k][0])
@@ -4668,14 +4736,14 @@ class CPickler(CMill):
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
                             if all_dict[m][1] != 0:
-                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
+                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                                 s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                                 s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], all_dict[k][0])
                                 self._write(s1.ljust(30) + s2)
             self._write('/* d()/dT */')
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT;' % (nSpecies*(nSpecies+1)+m, all_dict[m][1])
+                    s1 = 'J[%d] += %.17g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=').replace('+= -1 *', '-=')
                     s2 = '/* dwdot[%s]/dT */' % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
@@ -4700,7 +4768,7 @@ class CPickler(CMill):
                     else:
                         conc = "pow(sc[%d], %f)" % (self.ordered_idx_map[symbol], coefficient)
                     phi += [conc]
-            if else:
+            else:
                 if symbol == r:
                     if coefficient > 1:
                         phi += ["%f" % coefficient]
@@ -4759,17 +4827,15 @@ class CPickler(CMill):
 
 
     def _DproductionRatePrecond(self, mechanism):
-        nSpecies = self.nSpecies
-
         self._write()
         self._write(self.line('compute an approx to the reaction Jacobian (for preconditioning)'))
         self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)')
         self._write('{')
         self._indent()
 
-        self._write('amrex::Real c[%d];' % (nSpecies))
+        self._write('amrex::Real c[%d];' % (self.nSpecies))
         self._write()
-        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._write('for (int k=0; k<%d; k++) {' % self.nSpecies)
         self._indent()
         self._write('c[k] = 1.e6 * sc[k];')
         self._outdent()
@@ -4781,10 +4847,10 @@ class CPickler(CMill):
         self._write()
         self._write('/* dwdot[k]/dT */')
         self._write('/* dTdot/d[X] */')
-        self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+        self._write('for (int k=0; k<%d; k++) {' % self.nSpecies)
         self._indent()
-        self._write('J[%d+k] *= 1.e-6;' % (nSpecies*(nSpecies+1)))
-        self._write('J[k*%d+%d] *= 1.e6;' % (nSpecies+1, nSpecies))
+        self._write('J[%d+k] *= 1.e-6;' % (self.nSpecies*(self.nSpecies+1)))
+        self._write('J[k*%d+%d] *= 1.e6;' % (self.nSpecies+1, self.nSpecies))
         self._outdent()
         self._write('}')
 
@@ -4796,7 +4862,6 @@ class CPickler(CMill):
 
 
     def _ajac_GPU(self, mechanism):
-        nSpecies = self.nSpecies
         nReactions = len(mechanism.reaction())
 
         self._write()
@@ -4809,7 +4874,7 @@ class CPickler(CMill):
 
         self._write()
 
-        self._write('for (int i=0; i<%d; i++) {' % (nSpecies+1)**2)
+        self._write('for (int i=0; i<%d; i++) {' % (self.nSpecies+1)**2)
         self._indent()
         self._write('J[i] = 0.0;')
         self._outdent()
@@ -4817,8 +4882,8 @@ class CPickler(CMill):
         
         self._write()
 
-        self._write('amrex::Real wdot[%d];' % (nSpecies))
-        self._write('for (int k=0; k<%d; k++) {' % (nSpecies))
+        self._write('amrex::Real wdot[%d];' % (self.nSpecies))
+        self._write('for (int k=0; k<%d; k++) {' % (self.nSpecies))
         self._indent()
         self._write('wdot[k] = 0.0;')
         self._outdent()
@@ -4840,7 +4905,7 @@ class CPickler(CMill):
 
         self._write(self.line('compute the mixture concentration'))
         self._write('amrex::Real mixture = 0.0;')
-        self._write('for (int k = 0; k < %d; ++k) {' % nSpecies)
+        self._write('for (int k = 0; k < %d; ++k) {' % self.nSpecies)
         self._indent()
         self._write('mixture += sc[k];')
         self._outdent()
@@ -4895,7 +4960,7 @@ class CPickler(CMill):
                 self._ajac_reaction_d(mechanism, reaction, 3)
             self._write()
 
-        self._write('amrex::Real c_R[%d], dcRdT[%d], e_RT[%d];' % (nSpecies, nSpecies, nSpecies))
+        self._write('amrex::Real c_R[%d], dcRdT[%d], e_RT[%d];' % (self.nSpecies, self.nSpecies, self.nSpecies))
         self._write('amrex::Real * eh_RT;')
         self._write('if (consP) {')
         self._indent()
@@ -4920,13 +4985,13 @@ class CPickler(CMill):
         self._write()
 
         self._write('amrex::Real cmix = 0.0, ehmix = 0.0, dcmixdT=0.0, dehmixdT=0.0;')
-        self._write('for (int k = 0; k < %d; ++k) {' % nSpecies)
+        self._write('for (int k = 0; k < %d; ++k) {' % self.nSpecies)
         self._indent()
         self._write('cmix += c_R[k]*sc[k];')
         self._write('dcmixdT += dcRdT[k]*sc[k];')
         self._write('ehmix += eh_RT[k]*wdot[k];')
         self._write('dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[%d+k];' % \
-                        (nSpecies*(nSpecies+1)))
+                        (self.nSpecies*(self.nSpecies+1)))
         self._outdent()
         self._write('}')
 
@@ -4938,21 +5003,21 @@ class CPickler(CMill):
         self._write('amrex::Real dehmixdc;')
 
         self._write('/* dTdot/d[X] */')
-        self._write('for (int k = 0; k < %d; ++k) {' % nSpecies)
+        self._write('for (int k = 0; k < %d; ++k) {' % self.nSpecies)
         self._indent()
         self._write('dehmixdc = 0.0;')
-        self._write('for (int m = 0; m < %d; ++m) {' % nSpecies)
+        self._write('for (int m = 0; m < %d; ++m) {' % self.nSpecies)
         self._indent()
-        self._write('dehmixdc += eh_RT[m]*J[k*%s+m];' % (nSpecies+1))
+        self._write('dehmixdc += eh_RT[m]*J[k*%s+m];' % (self.nSpecies+1))
         self._outdent()
         self._write('}')        
-        self._write('J[k*%d+%d] = tmp2*c_R[k] - tmp3*dehmixdc;' % (nSpecies+1,nSpecies))
+        self._write('J[k*%d+%d] = tmp2*c_R[k] - tmp3*dehmixdc;' % (self.nSpecies+1,self.nSpecies))
         self._outdent()
         self._write('}')
 
         self._write('/* dTdot/dT */')
         self._write('J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;' % \
-                        (nSpecies*(nSpecies+1)+nSpecies))
+                        (self.nSpecies*(self.nSpecies+1)+self.nSpecies))
 
         self._outdent()
         self._write()
@@ -5343,13 +5408,13 @@ class CPickler(CMill):
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
                     s1 = 'J[%d] += %.17g * dqdT; /* dwdot[%s]/dT */' % \
-                        (nSpecies*(nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
+                        (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
 
         else:
 
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 dqdc_s = dqdc_simple_d('',k)
                 if dqdc_s:
                     self._write('/* d()/d[%s] */' % all_dict[k][0])
@@ -5357,14 +5422,14 @@ class CPickler(CMill):
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
                             if all_dict[m][1] != 0:
-                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
+                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                                 s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                                 s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], all_dict[k][0])
                                 self._write(s1.ljust(30) + s2)
             self._write('/* d()/dT */')
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT;' % (nSpecies*(nSpecies+1)+m, all_dict[m][1])
+                    s1 = 'J[%d] += %.17g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=').replace('+= -1 *', '-=')
                     s2 = '/* dwdot[%s]/dT */' % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
@@ -6135,7 +6200,7 @@ class CPickler(CMill):
 
         self._write(self.line('compute the Gibbs free energy'))
         if (self.nQSSspecies > 0):
-            self._write('amrex::Real g_RT[%d];' % (self.nSpecies,self.nQSSspecies))
+            self._write('amrex::Real g_RT[%d];' % (self.nSpecies))
             self._write('gibbs(g_RT, tc);')
             if (self.nQSSspecies > 0):
                 self._write('amrex::Real g_RT_qss[%d];' % (self.nQSSspecies))
@@ -7177,7 +7242,6 @@ class CPickler(CMill):
             print '_ajac_reaction: wrong case ', rcase
             exit(1)
 
-        nSpecies = len(mechanism.species())
         rea_dict = {}
         pro_dict = {}
         all_dict = {}
@@ -7198,7 +7262,7 @@ class CPickler(CMill):
                 pro_dict[k] = (symbol, coefficient+coe_old)
             else:
                 pro_dict[k] = (symbol, coefficient)
-        for k in range(nSpecies):
+        for k in range(self.nSpecies):
             if k in rea_dict and k in pro_dict:
                 sr, nur = rea_dict[k]
                 sp, nup = pro_dict[k]
@@ -7217,7 +7281,7 @@ class CPickler(CMill):
             if isPD or has_alpha:
                 print 'FIXME: inreversible reaction in _ajac_reaction may not work'
                 self._write('/* FIXME: inreversible reaction in _ajac_reaction may not work*/')
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 if k in sorted_reactants and k in sorted_products:
                     print 'FIXME: inreversible reaction in _ajac_reaction may not work'
                     self._write('/* FIXME: inreversible reaction in _ajac_reaction may not work*/')
@@ -7419,7 +7483,7 @@ class CPickler(CMill):
             self._write('if (consP) {')
             self._indent()
 
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 dqdc_s = self._Denhancement(mechanism,reaction,k,True)
                 if dqdc_s != "0":
                     if isPD:
@@ -7441,7 +7505,7 @@ class CPickler(CMill):
                     #
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
-                            s1 = 'J[%d] += %.17g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
+                            s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                             s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                             s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], symb_k)
                             self._write(s1.ljust(30) + s2)
@@ -7451,7 +7515,7 @@ class CPickler(CMill):
             self._write('else {')
             self._indent()
 
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 dqdc_s = self._Denhancement(mechanism,reaction,k,False)
                 if dqdc_s != '0':
                     if isPD:
@@ -7469,11 +7533,11 @@ class CPickler(CMill):
                 if dqdc_s:
                     self._write('dqdc[%d] = %s;' % (k,dqdc_s))
 
-            self._write('for (int k=0; k<%d; k++) {' % nSpecies)
+            self._write('for (int k=0; k<%d; k++) {' % self.nSpecies)
             self._indent()
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((nSpecies+1), m, all_dict[m][1])
+                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
             self._outdent()
@@ -7485,11 +7549,11 @@ class CPickler(CMill):
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
                     s1 = 'J[%d] += %.17g * dqdT; /* dwdot[%s]/dT */' % \
-                        (nSpecies*(nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
+                        (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
         else:
-            for k in range(nSpecies):
+            for k in range(self.nSpecies):
                 dqdc_s = dqdc_simple('',k)
                 if dqdc_s:
                     self._write('/* d()/d[%s] */' % all_dict[k][0])
@@ -7497,14 +7561,14 @@ class CPickler(CMill):
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
                             if all_dict[m][1] != 0:
-                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
+                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                                 s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                                 s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], all_dict[k][0])
                                 self._write(s1.ljust(30) + s2)
             self._write('/* d()/dT */')
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT;' % (nSpecies*(nSpecies+1)+m, all_dict[m][1])
+                    s1 = 'J[%d] += %.17g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=').replace('+= -1 *', '-=')
                     s2 = '/* dwdot[%s]/dT */' % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
@@ -8792,24 +8856,6 @@ class CPickler(CMill):
         self._write("}")
         self._write()
 
-        # Now that reactions are sorted:
-        # Get list of reaction indices that involve QSS species
-        # already starts at 0 !!
-        # NEED TO MOVE THAT AT THE BEGINING
-        if (self.nQSSspecies > 0):
-            for i, r in enumerate(mechanism.reaction()):
-                reaction_index = i
-                qss_reaction = False
-
-                agents = list(set(r.reactants + r.products))
-                for symbol, coefficient in agents:
-                    if symbol in self.qss_species_list:
-                        qss_reaction = True
-
-                if qss_reaction:
-                    self.qssReactions.append(reaction_index)
-                    print "found a qss reac ! ", self.qssReactions.index(reaction_index), reaction_index, r.equation()
-            self.nqssReactions = len(self.qssReactions)
             
         #self._write('void GET_REACTION_MAP(int *rmap)')
         #self._write('{')
@@ -9909,6 +9955,1536 @@ class CPickler(CMill):
     #QSS 
     ####################
 
+    # Get list of reaction indices that involve QSS species
+    # already starts at 0 !!
+    def _setQSSreactions(self, mechanism):
+        for i, r in enumerate(mechanism.reaction()):
+            reaction_index = r.id - 1
+            qss_reaction = False
+            agents = list(set(r.reactants + r.products))
+            for symbol, coefficient in agents:
+                if symbol in self.qss_species_list:
+                    qss_reaction = True
+            if qss_reaction:
+                self.qssReactions.append(reaction_index)
+                print "found a qss reac ! ", self.qssReactions.index(reaction_index), reaction_index, r.equation()
+        self.nqssReactions = len(self.qssReactions)
+
+    
+    # Get networks showing which QSS species are involved with one another 
+    # and which reactions each QSS species is involved in
+    def _getQSSnetworks(self, mechanism):
+        # Create QSS networks for mechanism
+        self._createSSnet(mechanism)
+        self._createSRnet(mechanism)
+
+        # Get non-zero indices of networks to be used for coupling
+        # "i" is for row "j" is for column
+        self.QSS_SS_Si, self.QSS_SS_Sj = np.nonzero(self.QSS_SSnet)
+        self.QSS_SR_Si, self.QSS_SR_Rj = np.nonzero(self.QSS_SRnet)
+
+        print("\n\n SS network for QSS: ")
+        print(self.QSS_SSnet)
+        print(" SR network for QSS: ")
+        print(self.QSS_SRnet)
+
+    # create the species-species network
+    def _createSSnet(self, mechanism):
+        # for each reaction in the mechanism
+        for r in mechanism.reaction():
+            slist = []
+            # get a list of species involved in the reactants and products
+            for symbol, coefficient in r.reactants:
+                if symbol in self.qss_species_list:
+                    slist.append(symbol)
+            for symbol, coeffecient in r.products:
+                if symbol in self.qss_species_list:
+                    slist.append(symbol)
+            # if species s1 and species s2 are in the same reaction,
+            # denote they are linked in the species-species network
+            for s1 in slist:
+                for s2 in slist:
+                    # we should not use the original indices, but the reordered one
+                    #self.QSS_SSnet[mechanism.qss_species(s1).id][mechanism.qss_species(s2).id] = 1
+                    self.QSS_SSnet[self.ordered_idx_map[s1] - self.nSpecies][self.ordered_idx_map[s2] - self.nSpecies] = 1
+
+
+    # create the species-reac network
+    def _createSRnet(self, mechanism):
+        # for each reaction in the mechanism
+        for i, r in enumerate(mechanism.reaction()):
+            reactant_list = []
+            product_list = []
+            reaction_number = r.id - 1
+    
+            # get a list of species involved in the reactants and products
+            for symbol, coefficient in r.reactants:
+                if symbol in self.qss_species_list:
+                    reactant_list.append(symbol)
+            for	symbol,	coeffecient in r.products:
+                if symbol in self.qss_species_list:
+                    product_list.append(symbol)
+        
+            # if qss species s is in reaction number i, 
+            # denote they are linked in the Species-Reaction network
+            # with negative if s is a reactant(consumed) and positive if s is a product(produced)
+            for	s in reactant_list:
+                self.QSS_SRnet[self.ordered_idx_map[s] - self.nSpecies][reaction_number] = -1
+            for s in product_list:
+                self.QSS_SRnet[self.ordered_idx_map[s] - self.nSpecies][reaction_number] = 1
+
+    # Check that the QSS given are actually "valid" options
+    # Exit if species is not valid
+    def _QSSvalidation(self, mechanism):
+        # Check that QSS species are all species used in the given mechanism
+        for s in self.qss_species_list:
+            if s not in self.all_species_list:
+                text = 'species '+s+' is not in the mechanism'
+                sys.exit(text)
+
+        # Check that QSS species are consumed/produced at least once to ensure theoretically valid QSS option
+        # (There is more to it than that, but this is a quick catch based on that aspect)
+        for i, symbol in enumerate(self.qss_species_list):
+            consumed = 0
+            produced = 0
+            for j in self.QSS_SR_Rj[self.QSS_SR_Si == i]:
+                reaction = mechanism.reaction(id=j)
+                if any(reactant == symbol for reactant,_ in list(set(reaction.reactants))):
+                    consumed += 1
+                    if reaction.reversible:
+                        produced += 1
+                if any(product == symbol for product,_ in list(set(reaction.products))):
+                    produced += 1
+                    if reaction.reversible:
+                        consumed += 1
+
+            if consumed == 0 or produced == 0:
+                text = 'Uh Oh! QSS species '+symbol+' does not have a balanced consumption/production relationship in mechanism => bad QSS choice'
+                sys.exit(text)
+
+
+    # Determine from QSS_SSnet which QSS species depend on each other specifically
+    def _QSSCoupling(self, mechanism):
+        self.QSS_SCnet = self.QSS_SSnet
+        for i in range(self.nQSSspecies):
+            for j in self.QSS_SS_Sj[self.QSS_SS_Si == i]:
+                if j != i:
+                    count = 0
+                    for r in self.QSS_SR_Rj[self.QSS_SR_Si == j]:
+                        reaction = mechanism.reaction(id=r)
+                        
+                        # we know j is in reaction r. Options are
+                        # IF r is reversible
+                        # j + i <-> prods OR reacts <-> j + i NOT ALLOWED
+                        # all other combinations are fine.
+                        # IF r is not reversible
+                        # j + i -> prods NOT ALLOWED 
+                        # all other combinations are fine
+                        # note that it is assumed no coupling bet same QSS -- this is if i == j 
+
+                        if reaction.reversible:
+                            # QSS spec j is a reactant
+                            if any(reactant == self.qss_species_list[j] for reactant,_ in  list(set(reaction.reactants))):
+                                # Check if QSS species i is a reactant too
+                                if any(reactant == self.qss_species_list[i] for reactant,_ in list(set(reaction.reactants))):
+                                    sys.exit('Quadratic coupling between '+self.qss_species_list[j]+' and '+self.qss_species_list[i]+' in reaction '+reaction.equation()+' not allowed !!!')
+                                # if QSS specices j is a reactant and QSS species i is a product,
+                                # because react is two way then j depend on i and vice-versa
+                                elif any(product == self.qss_species_list[i] for product,_ in list(set(reaction.products))):
+                                    count += 1
+                            # if QSS species j is not a reactant, then it must be a product.
+                            else:
+                                # Check if QSS species i is also a product
+                                if any(product == self.qss_species_list[i] for product,_ in list(set(reaction.products))):
+                                    sys.exit('Quadratic coupling between '+self.qss_species_list[j]+' and '+self.qss_species_list[i]+' not allowed !!!')
+                                # if QSS specices j is a product and QSS species i is a reactant
+                                # because react is two way then j depend on i and vice-versa
+                                elif any(reactant == self.qss_species_list[i] for reactant,_ in list(set(reaction.reactants))):
+                                    count += 1
+                        else:
+                            # QSS spec j is a reactant
+                            if any(reactant == self.qss_species_list[j] for reactant,_ in list(set(reaction.reactants))):
+                                # Check if QSS species i is a reactant too
+                                if any(reactant == self.qss_species_list[i] for reactant,_ in list(set(reaction.reactants))):
+                                    sys.exit('Quadratic coupling between '+self.qss_species_list[j]+' and '+self.qss_species_list[i]+' in reaction '+reaction.equation()+' not allowed !!!')
+                                # if QSS specices j is a reactant and QSS species i is a product
+                                elif any(product == self.qss_species_list[i] for product,_ in list(set(reaction.products))):
+                                    count += 1
+                                    
+                    if count == 0:
+                        # i depends on j
+                        self.QSS_SCnet[i,j] = 0
+                else:
+                    self.QSS_SCnet[i,j] = 0
+                    for r in self.QSS_SR_Rj[self.QSS_SR_Si == j]:
+                        reaction = mechanism.reaction(id=r)
+                        if reaction.reversible:
+                            # QSS j is a reactant
+                            if any(reactant == self.qss_species_list[j] for reactant,_ in  list(set(reaction.reactants))):
+                                for reactant in reaction.reactants:
+                                    spec, coeff = reactant
+                                    if ((spec == self.qss_species_list[j]) and (coeff > 1.0)):
+                                        sys.exit('Quadratic coupling with '+self.qss_species_list[j]+' in reaction '+reaction.equation()+' not allowed !!!')
+                            # if QSS species j is not a reactant, then it must be a product.
+                            else:
+                                for product in reaction.products:
+                                    spec, coeff = product
+                                    if ((spec == self.qss_species_list[j]) and (coeff > 1.0)):
+                                        sys.exit('Quadratic coupling with '+self.qss_species_list[j]+' in reaction '+reaction.equation()+' not allowed !!!')
+                        else:
+                            # QSS spec j is a reactant
+                            if any(reactant == self.qss_species_list[j] for reactant,_ in  list(set(reaction.reactants))):
+                                for reactant in reaction.reactants:
+                                    spec, coeff = reactant
+                                    if ((spec == self.qss_species_list[j]) and (coeff > 1.0)):
+                                        sys.exit('Quadratic coupling with '+self.qss_species_list[j]+' in reaction '+reaction.equation()+' not allowed !!!')
+                        
+        self.QSS_SC_Si, self.QSS_SC_Sj = np.nonzero(self.QSS_SCnet)
+        print("\n\n SC network for QSS: ")
+        print(self.QSS_SCnet)
+
+
+    def _setQSSneeds(self, mechanism):
+        self.needs       = OrderedDict()
+        self.needs_count = OrderedDict()
+
+        self.needs_running       = OrderedDict()
+        self.needs_count_running = OrderedDict()
+        
+        for i in range(self.nQSSspecies):
+            needs_species = []
+            count = 0
+            for j in self.QSS_SC_Sj[self.QSS_SC_Si == i]:
+                if j != i:
+                    needs_species.append(self.qss_species_list[j])
+                    count += 1
+            self.needs[self.qss_species_list[i]] = needs_species
+            self.needs_count[self.qss_species_list[i]] = count
+
+        self.needs_running = self.needs.copy()
+        self.needs_count_running = self.needs_count.copy()
+
+        print "NEEDS report (one per QSS spec): "
+        print(self.needs)
+
+
+    def _setQSSisneeded(self, mechanism):
+        self.is_needed = OrderedDict()
+        self.is_needed_count = OrderedDict()
+
+        self.is_needed_running = OrderedDict()
+        self.is_needed_count_running = OrderedDict()
+
+        for i in range(self.nQSSspecies):
+            is_needed_species = []
+            count = 0
+            for j in self.QSS_SC_Si[self.QSS_SC_Sj == i]:
+                if j != i:
+                    is_needed_species.append(self.qss_species_list[j])
+                    count += 1
+            self.is_needed[self.qss_species_list[i]] = is_needed_species
+            self.is_needed_count[self.qss_species_list[i]] = count
+
+        self.is_needed_running = self.is_needed.copy()
+        self.is_needed_count_running = self.is_needed_count.copy()
+
+        print "IS NEEDED report (one per QSS spec): "
+        print(self.is_needed)
+
+
+    # get two-way dependencies accounted for: (s1 needs s2) and (s2 needs s1) = group
+    def _getQSSgroups(self, mechanism):
+        self.group = OrderedDict()
+        already_accounted_for = []
+        group_count = 0
+        
+        print("\n\nDetermining groups of coupled species now...")
+        print("---------------------------------")
+        all_groups = OrderedDict()
+        check_these = self.needs_running.keys()
+        # Loop through species to tackle the needs group
+        for member in self.needs_running.keys():
+            # Only need to check things that have not already been found 
+            # to be in a group
+            if member in check_these:
+                print "- dealing with group: "+ member
+                potential_group = defaultdict(list)
+                already_accounted_for = defaultdict(list)
+                good_path = OrderedDict()
+                for other in self.needs_running.keys():
+                    good_path[other] = False
+                self._findClosedCycle(mechanism, member, member, already_accounted_for, potential_group, all_groups, good_path)
+                print "** potential group is: ", all_groups
+                print
+                # Remove groupmates from list of species to check; checking these would just lead to us finding a duplicate group
+                for group in all_groups:
+                    checked = set(all_groups[group])
+                    unchecked = set(check_these)
+                    for species in list(checked.intersection(unchecked)):
+                        check_these.remove(species)
+
+                print "   !! Now we just have to check: ", check_these
+
+        print "** Groups of coupled species are: ", all_groups
+
+        # Don't need this now because duplicates are avoided with 
+        # print("\n\nRemove duplicates...")
+        # print("---------------------------------")
+        # Check for duplicates
+        # for group1 in all_groups:
+            # print "- dealing with group 1: "+ group1
+            # for group2 in all_groups:
+                # print "... group 2 is: "+ group2
+                # if group2 != group1 and set(all_groups[group2]).issubset(set(all_groups[group1])):
+                    # all_groups.pop(group2, None)
+                    # print "    !! group 2 is subset of group 1 !! all groups in loop now: ", all_groups
+        # Rename
+        for count, group in enumerate(all_groups):
+            self.group['group_'+str(count)] = all_groups[group]
+        print
+        print "** Final clean self groups are: ", self.group
+
+        self._updateGroupNeeds(mechanism)
+        self._updateGroupDependencies(mechanism)
+
+
+    def _findClosedCycle(self, mechanism, match, species, visited, potential_cycle, all_groups, good_path):
+        # Loop through species
+        print "      Entering Closed Cycle with match, parent: ", match, species
+        visited[match].append(species)
+        potential_cycle[match].append(species)
+        parent = species
+        for need in self.needs_running[species]:
+            child = need
+            print "       x Start level of needs loop"
+            print "       x Child is: "+child
+            if child not in visited[match]:
+                #go a level further !
+                print "         xx Child is not already visited..."  
+                self._findClosedCycle(mechanism, match, child, visited, potential_cycle, all_groups, good_path)
+                print "         We've finshed a recursion! The child that was passed in was: "+child
+                if good_path[child] == False:
+                    potential_cycle[match].remove(child)
+                print
+            else:
+                print "         xx Child has been visited already"
+                if child == match:
+                    print "            Child equals match -> we've found a closed cycle!"
+                    good_path[parent] = True
+                    all_groups[match] = potential_cycle[match]
+                elif good_path[child] == True:
+                    print "            ...we know this leads to a cycle"
+                    good_path[parent] = True
+                    if child not in all_groups[match]:
+                        all_groups[match].append(child)
+                else:
+                    print "            Bad Path!"
+                print "         -- > all_groups is now: ", all_groups
+        if not self.needs_running[species]:
+            print "       x but this is a Dead End.."
+
+
+    # Update group member needs with group names:
+    # group member needs species -> group needs species
+    # group member is needed by species -> group is needed by species
+    def _updateGroupNeeds(self, mechanism):
+
+        print("\n\nUpdating group needs...")
+        print("---------------------------------")
+        
+        for group_key in self.group.keys():
+            print("-Dealing with group "+ group_key)
+            
+            update_needs = []
+            update_is_needed = []
+            update_needs_count = 0
+            update_needed_count = 0
+
+            group_needs = {}
+            group_needs_count = {}
+            group_is_needed = {}
+            group_is_needed_count = {}
+            
+            other_groups = self.group.keys()
+            other_groups.remove(group_key)
+            print "  (other groups are: ", other_groups,")"
+
+            # for each species in the current group
+            for spec in self.group[group_key]:
+                print("... for group member: "+spec)
+                # look at any additional needs that are not already accounted for with the group
+                for need in list(set(self.needs_running[spec]) - set(self.group[group_key])):
+                    print("        An additional not-in-group need is "+ need)
+                    not_in_group = True
+                    # check the other groups to see if the need can be found in one of them
+                    for other_group in other_groups:
+                        # if the other group is not already accounted for 
+                        # and it contains the spec need we're looking for, 
+                        # update the group needs with that group that contains the spec need
+                        if other_group not in update_needs and any(member == need for member in self.group[other_group]):
+                            print("        it is found in a different group. Adding it.")
+                            not_in_group = False
+                            update_needs.append(other_group)
+                            update_needs_count += 1
+                        elif other_group in update_needs and any(member == need for member in self.group[other_group]):
+                            print "        it is foud in a group that was already put in the list due to the fact that another species in the group is needed by the current species."
+                            not_in_group = False
+                    # alternatively, if this is just a solo need that's not in another group, 
+                    # update the group needs with just that need.
+                    if not_in_group and need not in update_needs:
+                        print("        this need was not found in a group ! Adding the spec directly")
+                        update_needs.append(need)
+                        update_needs_count += 1
+                # look at any additional species (outside of the group) that depend on the current group member
+                for needed in list(set(self.is_needed_running[spec]) - set(self.group[group_key])):
+                    print("        An additional not-in-group is-needed is "+ needed)
+                    not_in_group = True
+                    # for the other groups
+                    for other_group in other_groups:
+                        # if the other group hasn't alredy been accounted for and the species is in that group, then that other group depends on a species in the current group
+                        if other_group not in update_is_needed and any(member == needed for member in self.group[other_group]):
+                            print("        it is found in a different group. Adding it.")
+                            not_in_group = False
+                            update_is_needed.append(other_group)
+                            update_needed_count += 1
+                        elif other_group in update_is_needed and any(member == needed for member in self.group[other_group]):
+                            print "        it is foud in a group that was already put in the list due to the fact that another species in the group is needed by the current species."
+                            not_in_group = False
+                    # if the species is not in another group, then that lone species just depends on the current group. 
+                    if not_in_group and needed not in update_is_needed:
+                        print("        this is-needed was not found in a group ! Adding the spec directly")
+                        update_is_needed.append(needed)
+                        update_needed_count += 1
+
+                # del self.needs_running[spec]
+                # del self.needs_count_running[spec]
+                # del self.is_needed_running[spec]
+
+                
+            group_needs[group_key] = update_needs
+            group_needs_count[group_key] = update_needs_count
+            group_is_needed[group_key] = update_is_needed
+            group_is_needed_count[group_key] = update_needed_count
+
+            self.needs_running.update(group_needs)
+            self.needs_count_running.update(group_needs_count)
+            self.is_needed_running.update(group_is_needed)
+            self.is_needed_count_running.update(group_is_needed_count)
+
+            print "So, ", group_key," needs ",update_needs
+            print "So, ", group_key," is-needed is ",update_is_needed
+
+        for group in self.group.keys():
+            for spec in self.group[group]:
+                if spec in self.needs_running:
+                    del self.needs_running[spec]
+                    del self.needs_count_running[spec]
+                    del self.is_needed_running[spec]
+            
+        print
+        print "** This is the final needs running and is_needed running: "
+        print(self.needs_running)
+        print(self.is_needed_running)
+                    
+
+    # Update solo species dependendent on group members with group names:
+    # species needs member -> species needs group
+    # species is needed by group member -> species is needed by group
+    def _updateGroupDependencies(self, mechanism):
+
+        print("\n\nUpdating group dependencies...")
+        print("---------------------------------")
+
+        solo_needs = self.needs_running.copy()
+        solo_needs_count = self.needs_count_running.copy()
+        solo_is_needed = self.is_needed_running.copy()
+        solo_is_needed_count = self.is_needed_count_running.copy()
+
+        # remove the groups because we're just dealing with things that aren't in groups now
+        for group in self.group.keys():
+            del solo_needs[group]
+            del solo_needs_count[group]
+            del solo_is_needed[group]
+            del solo_is_needed_count[group]
+        
+        for solo in solo_needs.keys():
+            print("-Dealing with solo species "+ solo)
+            update_needs = []
+            update_is_needed = []
+            update_needs_count = 0
+            update_needed_count = 0
+            for need in solo_needs[solo]:
+                print("... who needs: "+need)
+                not_in_group = True
+                for group in self.group.keys():
+                    if group not in update_needs and any(member == need for member in self.group[group]):
+                        print "        this species is in group: ", group
+                        not_in_group = False
+                        update_needs.append(group)
+                        update_needs_count += 1
+                    elif group in update_needs and any(member == need for member in self.group[group]):
+                        print "        this group was already put in the list due to the fact that another species in the group is needed by the current species."
+                        not_in_group = False
+                if not_in_group and need not in update_needs:
+                    print("        this need was not found in a group ! Adding the spec directly")
+                    update_needs.append(need)
+                    update_needs_count += 1
+
+            for needed in solo_is_needed[solo]:
+                print("... who is-needed needs are: "+needed)
+                not_in_group = True
+                for group in self.group.keys():
+                    if group not in update_is_needed and any(member == needed for member in self.group[group]):
+                        print "        this species is in group: ", group
+                        not_in_group = False
+                        update_is_needed.append(group)
+                        update_needed_count +=1
+                    if group in update_is_needed and any(member == needed for member in self.group[group]):
+                        print "        this group was already put in the list due to the fact that another species in the group is needed by the current species."
+                        not_in_group = False
+                if not_in_group and needed not in update_is_needed:
+                    print("        this is-needed need was not found in a group ! Adding the spec directly")
+                    update_is_needed.append(needed)
+                    update_needed_count += 1
+
+            solo_needs[solo] = update_needs
+            solo_needs_count[solo] = update_needs_count
+            solo_is_needed[solo] = update_is_needed
+            solo_is_needed_count[solo] = update_needed_count
+
+        self.needs_running.update(solo_needs)
+        self.needs_count_running.update(solo_needs_count)
+        self.is_needed_running.update(solo_is_needed)
+        self.is_needed_count_running.update(solo_is_needed_count)
+       
+        print
+        print "** This is the final needs running and is_needed running: "
+        print(self.needs_running)
+        print(self.is_needed_running)
+
+
+    # Sort order that QSS species need to be computed based on dependencies
+    def _sortQSScomputation(self, mechanism):
+        self.decouple_index = OrderedDict()
+        self.decouple_count = 0
+
+        # look at how many dependencies each component has
+        needs_count_regress = self.needs_count_running.copy()
+
+        # There should always be a component present that loses
+        # all dependencies as you update the computation
+        while 0 in needs_count_regress.values():
+            needs_count_base = needs_count_regress.copy()
+            # for each component (species, group, sup group, etc.) that needs things... 
+            for member in needs_count_base:
+                # if that component doesn't need anything
+                if needs_count_base[member] == 0:
+                    print "-Dealing with member ", member
+                    # solve that component now
+                    self.decouple_index[self.decouple_count] = member
+                    # then delete it out of the updating needs list
+                    del needs_count_regress[member]
+                    # for anything needed by that component
+                    for needed in self.is_needed_running[member]:
+                        # decrease that thing's dependency since it has now been taken care of
+                        needs_count_regress[needed] -= 1
+                    self.decouple_count += 1
+                    
+        # If your decouple count doesn't match the number of components with needs, 
+        # then the system is more complicated than what these functions can handle currently
+        if len(self.decouple_index) != len(self.needs_running):
+            print("WARNING: Some components may not have been taken into account")
+        print
+        print "** order of execution for qss concentration calculations: ", self.decouple_index
+
+    # Components needed to set up QSS algebraic expressions from AX = B, 
+    # where A contains coefficients from qf's and qr's, X contains QSS species concentrations, 
+    # and B contains qf's and qr's
+    # Info stored as: RHS vector (non-QSS and QSS qf's and qr's), 
+    # coefficient of species (diagonal elements of A), coefficient of group mates (coupled off-diagonal elements of A)
+    def _sortQSSsolution_elements(self, mechanism):
+        self.QSS_rhs       = OrderedDict()
+        self.QSS_coeff     = OrderedDict()
+        #self.QSS_groupSp   = OrderedDict()
+        self.QSS_QSS_coeff = OrderedDict()
+
+        # Need to get qfqr_coeff reaction map
+        ispecial      = self.reactionIndex[5:7]
+        nspecial_qss  = 0
+        ispecial_qss  = [0,0]
+        special_first = True
+        
+        # Find out bounds for special reacs in smaller qssReactions list
+        for reac_id in self.qssReactions:
+            if reac_id >= ispecial[0] and reac_id < ispecial[1]:
+                nspecial_qss += 1
+                if special_first:
+                    ispecial_qss[0] = self.qssReactions.index(reac_id)
+                    special_first = False
+                ispecial_qss[1] = self.qssReactions.index(reac_id)+1
+        
+        # remove special reacs for some reason ?
+        self.qfqr_co_idx_map = self.qssReactions
+        if (ispecial_qss[1] - ispecial_qss[0]) > 0:
+            for index in range(ispecial_qss[0], ispecial_qss[1]):
+                del self.qfqr_co_idx_map[index]
+
+        for i in range(self.nQSSspecies):
+            symbol = self.qss_species_list[i]
+            print
+            print "-<>-Dealing with QSS species ", i, symbol
+            print "__________________________________________"
+            coupled = []
+            reactants = []
+            products = []
+            rhs_hold = []
+            coeff_hold = []
+            groupCoeff_hold = defaultdict(list)
+
+            for r in self.QSS_SR_Rj[self.QSS_SR_Si == i]:
+                reaction = mechanism.reaction(id=r)
+                # check this mess of reactions
+                if ((reaction.id-1) != r):
+                    print '\n\nCheck this!!!\n'
+                    sys.exit(1)
+                print "... who is involved in reac ", r,  reaction.equation()
+                print "... reaction ", reaction.id, "is QSS reaction number ", self.qfqr_co_idx_map.index(reaction.id-1)
+
+                direction = self.QSS_SRnet[i][r]
+                #group_flag = False
+
+                # Check if reaction contains other QSS species
+                coupled = [species for species in list(set(self.QSS_SR_Si[self.QSS_SR_Rj == r]))]
+
+                if len(coupled) < 2:
+                    print "        this reaction only involves that QSS "
+                    # if QSS species is a reactant
+                    if direction == -1:
+                        print "        species ", symbol, " in reaction ", r, " is a reactant"
+                        coeff_hold.append('-qf_co['+str(self.qfqr_co_idx_map.index(r))+']')
+                        if reaction.reversible:
+                            rhs_hold.append('-qr_co['+str(self.qfqr_co_idx_map.index(r))+']')
+                    # if QSS species is a product
+                    elif direction == 1:
+                        print "        species ", symbol, " in reaction ", r, " is a product"
+                        rhs_hold.append('-qf_co['+str(self.qfqr_co_idx_map.index(r))+']')
+                        if reaction.reversible:
+                            coeff_hold.append('-qr_co['+str(self.qfqr_co_idx_map.index(r))+']')
+                else:
+                    # note in this case there can only be 2 QSS in one reac  
+                    coupled_qss = [self.qss_species_list[j] for j in coupled]
+                    print "        this reaction couples the following QSS: ", coupled_qss
+
+                    # assumes only 2 QSS can appear in a reac now
+                    for species in coupled_qss:
+                        if species != symbol:
+                            other_qss = species
+                    
+                    #for group in self.group:
+                    #    if set(coupled_qss).issubset(set(self.group[group])):
+                    #        "        (they are both on the same group)"
+                    #        group_flag = True
+                            
+                    # THIS is the right groupCoeff list
+                    #if group_flag:
+
+                    # if QSS species is a reactant (other QSS must be a product to be coupled to be coupled here, or quadratic coupling would have been triggered earlier)
+                    if direction == -1:
+                        print "        species ", symbol, " in reaction ", r, " is a reactant"
+                        coeff_hold.append('-qf_co['+str(self.qfqr_co_idx_map.index(r))+']')
+                        if reaction.reversible:
+                            groupCoeff_hold[other_qss].append('+qr_co['+str(self.qfqr_co_idx_map.index(r))+']')
+                    # if QSS species is a product AND other QSS species is a reactant (not guaranteed; must check that QSS are on opposite sides of equation)
+                    elif direction == 1 and any(reactant == other_qss for reactant,_ in list(set(reaction.reactants))):
+                        print "        species ", symbol, " in reaction ", r, " is a product"
+                        print "        other qss species is ", other_qss
+                        groupCoeff_hold[other_qss].append('+qf_co['+str(self.qfqr_co_idx_map.index(r))+']')
+                        if reaction.reversible:
+                            coeff_hold.append('-qr_co['+str(self.qfqr_co_idx_map.index(r))+']')
+                    # last option is that BOTH QSS are products, but the reaction is only one way, so it doesn't matter. This is ignored in the quadratic coupling check as
+                    # the reverse rate would be zero and thus would not affect anything anyway. 
+                    else:
+                        print "        species ", symbol, " and species ", other_qss, " in irreversible reaction ", r, " are both products"
+                        print "        this reaction does not contribute to any QSS coefficients and is thus ignored"
+                            
+                    #else:
+                    #    print "         but species "+other_qss+" is uni-directionally coupled with "+str(symbol)
+                    #    # if QSS species is a reactant
+                    #    if direction == -1:
+                    #        print("        species ", symbol, " in reaction ", r, " is a reactant")
+                    #        coeff_hold.append('- qf_co['+str(self.qfqr_co_idx_map.index(r))+']')
+                    #    # if QSS species is a product
+                    #    elif direction == 1:
+                    #        print("        species ", symbol, " in reaction ", r, " is a product")
+                    #        #print("MOVE THIS SPECIES TO RHS")
+                    #        #rhs_hold.append('- qf_co['+str(self.qfqr_co_idx_map.index(r))+']*sc_qss['+str(self.qss_species_list.index(other_qss))+']')
+
+                    
+                print
+                print "#####################################################################################################"
+                print "After dealing with QSS species "+symbol+" in  reaction "+str(r)+" we have the following: "
+                print "rhs_hold is ", rhs_hold
+                print "coeff_hold is ", coeff_hold
+                print "groupCoeff_hold is ", groupCoeff_hold
+                print "######################################################################################################"
+                print
+      
+            self.QSS_rhs[symbol]       = " ".join(rhs_hold)
+            self.QSS_coeff[symbol]     = " ".join(coeff_hold)
+            self.QSS_QSS_coeff[symbol] = OrderedDict()
+            for j in range(self.nQSSspecies):
+                if (j != i):
+                    other_qss = self.qss_species_list[j]
+                    if (other_qss in groupCoeff_hold):
+                        self.QSS_QSS_coeff[symbol][other_qss] = " ".join(groupCoeff_hold[other_qss])
+                    else:
+                        self.QSS_QSS_coeff[symbol][other_qss] = "0.0"
+
+            #for group in self.group.keys():
+            #    if any(component == symbol for component in self.group[group]):
+            #        self.QSS_groupSp[symbol] = groupCoeff_hold
+
+            print "HERE IS EVERYTHING: "
+            print
+            print "RHS: ", self.QSS_rhs[symbol]
+            print "SELF: ", self.QSS_coeff[symbol]
+            print "COUPLING: ", self.QSS_QSS_coeff[symbol]
+            #print "GROUP COEFFICIENTS: ", self.QSS_groupSp
+            print
+
+        #for species in self.QSS_groupSp.keys():
+        #    for coeff in self.QSS_groupSp[species].keys():
+        #        self.QSS_groupSp[species][coeff] =" ".join(self.QSS_groupSp[species][coeff])
+
+        #for symbol in self.group.keys():
+        #    for s1 in self.group[symbol]:
+        #        for s2 in self.group[symbol]:
+        #            if s2 != s1 and not self.QSS_groupSp[s1][s2]:
+        #                self.QSS_groupSp[s1][s2] = str(0.0)
+
+        print
+        print
+        print "FINAL LISTS: "
+        print "-------------"
+        print "RHS: ", self.QSS_rhs
+        print "SELF: ", self.QSS_coeff
+        print "COUPLING: ", self.QSS_QSS_coeff
+        #print "GROUP COEFFICIENTS: ", self.QSS_groupSp
+        print
+        print
+
+
+    def _QSScomponentFunctions(self, mechanism):
+        itroe      = self.reactionIndex[0:2]
+        isri       = self.reactionIndex[1:3]
+        ilindemann = self.reactionIndex[2:4]
+        i3body     = self.reactionIndex[3:5] 
+        isimple    = self.reactionIndex[4:6]
+        ispecial   = self.reactionIndex[5:7]
+
+        print "troe index range is: ", itroe
+        print "sri index range is: ", isri
+        print "lindemann index range is: ", ilindemann
+        print "3body index range is: ", i3body
+        print "simple index range is: ", isimple
+        print "special index range is: ", ispecial
+        
+        ntroe_qss      = 0
+        nsri_qss       = 0
+        nlindemann_qss = 0
+        n3body_qss     = 0
+        nsimple_qss    = 0
+        nspecial_qss   = 0
+
+        itroe_qss      = [0,0]
+        isri_qss       = [0,0]
+        ilindemann_qss = [0,0]
+        i3body_qss     = [0,0]
+        isimple_qss    = [0,0]
+        ispecial_qss   = [0,0]
+
+        troe_first      = True
+        sri_first       = True
+        lindemann_first = True
+        threebody_first = True
+        simple_first    = True
+        special_first   = True
+        
+        for reac_id in self.qssReactions:
+            if reac_id >= itroe[0] and reac_id < itroe[1]:
+                print "reaction ", reac_id, mechanism.reaction(id=reac_id).equation(), " goes in troe"
+                ntroe_qss += 1
+                if troe_first:
+                    itroe_qss[0] = self.qssReactions.index(reac_id)
+                    troe_first = False
+                itroe_qss[1] = self.qssReactions.index(reac_id)+1
+            if reac_id >= isri[0] and reac_id < isri[1]:
+                print "reaction ", reac_id, mechanism.reaction(id=reac_id).equation(), " goes in sri"
+                nsri_qss += 1
+                if sri_first:
+                    isri_qss[0] = self.qssReactions.index(reac_id)
+                    sri_first = False
+                isri_qss[1] = self.qssReactions.index(reac_id)+1
+            if reac_id >= ilindemann[0] and reac_id < ilindemann[1]:
+                print "reaction ", reac_id, mechanism.reaction(id=reac_id).equation(), " goes in lindemann"
+                nlindemann_qss += 1
+                if lindemann_first:
+                    ilindemann_qss[0] = self.qssReactions.index(reac_id)
+                    lindemann_first = False
+                ilindemann_qss[1] = self.qssReactions.index(reac_id)+1
+            if reac_id >= i3body[0] and reac_id < i3body[1]:
+                print "reaction ", reac_id, mechanism.reaction(id=reac_id).equation(), " goes in 3body"
+                n3body_qss += 1
+                if threebody_first:
+                    i3body_qss[0] = self.qssReactions.index(reac_id)
+                    threebody_first = False
+                i3body_qss[1] = self.qssReactions.index(reac_id)+1
+            if reac_id >= isimple[0] and reac_id < isimple[1]:
+                #print "reaction ", reac_id, mechanism.reaction(id=reac_id).equation(), " goes in simple"
+                nsimple_qss += 1
+                if simple_first:
+                    isimple_qss[0] = self.qssReactions.index(reac_id)
+                    simple_first = False
+                isimple_qss[1] = self.qssReactions.index(reac_id)+1
+            if reac_id >= ispecial[0] and reac_id < ispecial[1]:
+                print "reaction ", reac_id, mechanism.reaction(id=reac_id).equation(), " goes in special"
+                nspecial_qss += 1
+                if special_first:
+                    ispecial_qss[0] = self.qssReactions.index(reac_id)
+                    special_first = False
+                ispecial_qss[1] = self.qssReactions.index(reac_id)+1
+
+                
+        if len(self.reactionIndex) != 7:
+            print '\n\nCheck this!!!\n'
+            sys.exit(1)
+        
+        # k_f_qss function
+        self._write()
+        self._write('void comp_k_f_qss(double *  tc, double invT, double *  k_f)')
+        self._write('{')
+        self._indent()
+        self._outdent()
+        self._write('#ifdef __INTEL_COMPILER')
+        self._indent()
+        self._write('#pragma simd')
+        self._outdent()
+        self._write('#endif')
+        self._indent()
+        for index, qss_reac in enumerate(self.qssReactions):
+            self._write("k_f[%d] = prefactor_units[%d] * fwd_A[%d]" % (index, qss_reac, qss_reac))
+            self._write("           * exp(fwd_beta[%d] * tc[0] - activation_units[%d] * fwd_Ea[%d] * invT);" % (qss_reac, qss_reac, qss_reac))
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+        self._write('}')
+
+        # Kc_qss
+        self._write()
+        self._write('void comp_Kc_qss(double *  tc, double invT, double *  Kc)')
+        self._write('{')
+        self._indent()
+
+        self._write(self.line('compute the Gibbs free energy'))
+        if (self.nQSSspecies > 0):
+            self._write('double g_RT[%d], g_RT_qss[%d];' % (self.nSpecies,self.nQSSspecies))
+            self._write('gibbs(g_RT, tc);')
+            self._write('gibbs_qss(g_RT_qss, tc);')
+        else:
+            self._write('double g_RT[%d];' % (self.nSpecies))
+            self._write('gibbs(g_RT, tc);')
+
+        self._write()
+
+        for reaction in mechanism.reaction():
+            r = reaction.id - 1
+            if r in self.qssReactions:
+                #print "r is qss reac", reaction.equation(), r, self.qssReactions.index(r), index
+                self._write(self.line('Reaction %s' % reaction.id))
+                KcExpArg = self._sortedKcExpArg(mechanism, reaction)
+                self._write("Kc[%d] = %s;" % (self.qssReactions.index(r),KcExpArg))
+        self._write()
+        
+        self._outdent()
+        self._write('#ifdef __INTEL_COMPILER')
+        self._indent()
+        self._write(' #pragma simd')
+        self._outdent()
+        self._write('#endif')
+        self._indent()
+        self._write('for (int i=0; i<%d; ++i) {' % (self.nqssReactions))
+        self._indent()
+        self._write("Kc[i] = exp(Kc[i]);")
+        self._outdent()
+        self._write("};")
+
+        self._write()
+
+        self._write(self.line('reference concentration: P_atm / (RT) in inverse mol/m^3'))
+        self._write('double refC = %g / %g * invT;' % (atm.value, R.value))
+        self._write('double refCinv = 1 / refC;')
+
+        self._write()
+
+        for reaction in mechanism.reaction():
+            r = reaction.id - 1
+            if r in self.qssReactions:
+                KcConv = self._KcConv(mechanism, reaction)
+                if KcConv:
+                    self._write("Kc[%d] *= %s;" % (self.qssReactions.index(r),KcConv))        
+        
+        self._write()
+
+        self._write('return;')
+        self._outdent()
+        self._write('}')
+
+        
+        # qss coefficients
+        self._write()
+        self._write('void comp_qss_coeff(double *  qf_co, double *  qr_co, double *  sc, double *  tc, double invT)')
+        self._write('{')
+        self._indent()
+
+        nclassd_qss = self.nqssReactions - nspecial_qss
+        nCorr_qss   = n3body_qss + ntroe_qss + nsri_qss + nlindemann_qss
+
+        for i in range(nclassd_qss):
+            self._write()
+            reaction = mechanism.reaction(id=self.qssReactions[i])
+            self._write(self.line('reaction %d: %s' % (reaction.id, reaction.equation())))
+            if (len(reaction.ford) > 0):
+                self._write("qf_co[%d] = %s;" % (i, self._QSSreturnCoeff(mechanism, reaction.ford)))
+            else:
+                self._write("qf_co[%d] = %s;" % (i, self._QSSreturnCoeff(mechanism, reaction.reactants)))
+            if reaction.reversible:
+                self._write("qr_co[%d] = %s;" % (i, self._QSSreturnCoeff(mechanism, reaction.products)))
+            else:
+                self._write("qr_co[%d] = 0.0;" % (i))
+
+        self._write()
+        self._write('double T = tc[1];')
+        self._write()
+        self._write(self.line('compute the mixture concentration'))
+        self._write('double mixture = 0.0;')
+        self._write('for (int i = 0; i < %d; ++i) {' % self.nSpecies)
+        self._indent()
+        self._write('mixture += sc[i];')
+        self._outdent()
+        self._write('}')
+
+        self._write()
+        self._write("double Corr[%d];" % nclassd_qss)
+        self._write('for (int i = 0; i < %d; ++i) {' % nclassd_qss)
+        self._indent()
+        self._write('Corr[i] = 1.0;')
+        self._outdent()
+        self._write('}')
+
+        if ntroe_qss > 0:
+            self._write()
+            self._write(self.line(" troe"))
+            self._write("{")
+            self._indent()
+            self._write("double alpha[%d];" % ntroe_qss)
+            alpha_d = {}
+            for i in range(itroe_qss[0],itroe_qss[1]):
+                ii = i - itroe_qss[0]
+                reaction = mechanism.reaction(id=self.qssReactions[i])
+                if reaction.thirdBody:
+                    alpha = self._enhancement(mechanism, reaction)
+                    if alpha in alpha_d:
+                        self._write("alpha[%d] = %s;" %(ii,alpha_d[alpha]))
+                    else:
+                        self._write("alpha[%d] = %s;" %(ii,alpha))
+                        alpha_d[alpha] = "alpha[%d]" % ii
+
+            if ntroe_qss >= 4:
+                self._outdent()
+                self._outdent()
+                self._write('#ifdef __INTEL_COMPILER')
+                self._indent()
+                self._indent()
+                self._write(' #pragma simd')
+                self._outdent()
+                self._outdent()
+                self._write('#endif')
+                self._indent()
+                self._indent()
+            self._write("double redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;")
+            for i in range(itroe_qss[0], itroe_qss[1]):
+                alpha_index = i - itroe_qss[0]
+                self._write(self.line("Index for alpha is %d" % alpha_index))
+                self._write(self.line("Reaction index is %d" % self.qssReactions[i]))
+                self._write(self.line("QSS reaction list index (corresponds to index needed by k_f_save_qss, Corr, Kc_save_qss) is %d" % i))
+                
+                self._write("redP = alpha[%d] / k_f_save_qss[%d] * phase_units[%d] * low_A[%d] * exp(low_beta[%d] * tc[0] - activation_units[%d] * low_Ea[%d] *invT);" % (alpha_index, i, self.qssReactions[i], self.qssReactions[i], self.qssReactions[i], self.qssReactions[i], self.qssReactions[i]))
+                self._write("F = redP / (1.0 + redP);")
+                self._write("logPred = log10(redP);")
+                self._write('logFcent = log10(')
+                self._write('    (fabs(troe_Tsss[%d]) > 1.e-100 ? (1.-troe_a[%d])*exp(-T/troe_Tsss[%d]) : 0.) ' % (self.qssReactions[i], self.qssReactions[i], self.qssReactions[i]))
+                self._write('    + (fabs(troe_Ts[%d]) > 1.e-100 ? troe_a[%d] * exp(-T/troe_Ts[%d]) : 0.) ' % (self.qssReactions[i], self.qssReactions[i], self.qssReactions[i]))
+                self._write('    + (troe_len[%d] == 4 ? exp(-troe_Tss[%d] * invT) : 0.) );' % (self.qssReactions[i], self.qssReactions[i]))
+                self._write("troe_c = -.4 - .67 * logFcent;")
+                self._write("troe_n = .75 - 1.27 * logFcent;")
+                self._write("troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));")
+                self._write("F_troe = pow(10., logFcent / (1.0 + troe*troe));")
+                self._write("Corr[%d] = F * F_troe;" % i)
+
+            self._outdent()
+            self._write("}")
+
+        if nsri_qss > 0:
+            self._write()
+            self._write(self.line(" SRI"))
+            self._write("{")
+            self._indent()
+            self._write("double alpha[%d];" % nsri_qss)
+            self._write("double redP, F, X, F_sri;")
+            alpha_d = {}
+            for i in range(isri_qss[0],isri_qss[1]):
+                ii = i - isri_qss[0]
+                reaction = mechanism.reaction(id=self.qssReactions[i])
+                if reaction.thirdBody:
+                    alpha = self._enhancement(mechanism, reaction)
+                    if alpha in alpha_d:
+                        self._write("alpha[%d] = %s;" %(ii,alpha_d[alpha]))
+                    else:
+                        self._write("alpha[%d] = %s;" %(ii,alpha))
+                        alpha_d[alpha] = "alpha[%d]" % ii
+
+            if nsri_qss >= 4:
+                self._outdent()
+                self._outdent()
+                self._write('#ifdef __INTEL_COMPILER')
+                self._indent()
+                self._indent()
+                self._write(' #pragma simd')
+                self._outdent()
+                self._outdent()
+                self._write('#endif')
+                self._indent()
+                self._indent()
+            for i in range(isri_qss[0], isri_qss[1]):
+                alpha_index = i - isri_qss[0]
+                self._write(self.line("Index for alpha is %d" % alpha_index))
+                self._write(self.line("Reaction index is %d" % self.qssReactions[i]))
+                self._write(self.line("QSS reaction list index (corresponds to index needed by k_f_save_qss, Corr, Kc_save_qss) is %d" % i))
+
+                self._write("redP = alpha[%d] / k_f_save_qss[%d] * phase_units[%d] * low_A[%d] * exp(low_beta[%d] * tc[0] - activation_units[%d] * low_Ea[%d] *invT);" % (alpha_index, i, self.qssReactions[i], self.qssReactions[i], self.qssReactions[i], self.qssReactions[i], self.qssReactions[i]))
+                self._write("F = redP / (1.0 + redP);")
+                self._write("logPred = log10(redP);")
+                self._write("X = 1.0 / (1.0 + logPred*logPred);")
+                self._write("F_sri = exp(X * log(sri_a[%d] * exp(-sri_b[%d]*invT)" % (self.qssReactions[i], self.qssReactions[i]))
+                self._write("   +  (sri_c[%d] > 1.e-100 ? exp(T/sri_c[%d]) : 0.0) )" % (self.qssReactions[i], self.qssReactions[i]))
+                self._write("   *  (sri_len[%d] > 3 ? sri_d[%d]*exp(sri_e[%d]*tc[0]) : 1.0);" % (self.qssReactions[i], self.qssReactions[i], self.qssReactions[i]))
+                self._write("Corr[%d] = F * F_sri;" % i)
+            
+            self._outdent()
+            self._write("}")
+
+        if nlindemann_qss > 0:
+            self._write()
+            self._write(self.line(" Lindemann"))
+            self._write("{")
+            self._indent()
+            if nlindemann_qss > 1:
+                self._write("double alpha[%d];" % nlindemann_qss)
+            else:
+                self._write("double alpha;")
+
+            for i in range(ilindemann_qss[0],ilindemann_qss[1]):
+                ii = i - ilindemann_qss[0]
+                reaction = mechanism.reaction(id=self.qssReactions[i])
+                if reaction.thirdBody:
+                    alpha = self._enhancement(mechanism, reaction)
+                    if nlindemann_qss > 1:
+                        self._write("alpha[%d] = %s;" %(ii,alpha))
+                    else:
+                        self._write("alpha = %s;" %(alpha))
+
+            if nlindemann_qss == 1:
+                self._write("double redP = alpha / k_f_save_qss[%d] * phase_units[%d] * low_A[%d] * exp(low_beta[%d] * tc[0] - activation_units[%d] * low_Ea[%d] * invT);" 
+                            % (ilindemann_qss[0],self.qssReactions[ilindemann_qss[0]],self.qssReactions[ilindemann_qss[0]],self.qssReactions[ilindemann_qss[0]],self.qssReactions[ilindemann_qss[0]],self.qssReactions[ilindemann_qss[0]]))
+                self._write("Corr[%d] = redP / (1. + redP);" % self.qssReactions.index(ilindemann_qss[0]))
+            else:
+                if nlindemann_qss >= 4:
+                    self._outdent()
+                    self._write('#ifdef __INTEL_COMPILER')
+                    self._indent()
+                    self._write(' #pragma simd')
+                    self._outdent()
+                    self._write('#endif')
+                    self._indent()
+                for i in range(ilindemann_qss[0], ilindemann_qss[1]):
+                    self._write(self.line("Index for alpha is %d" % alpha_index))
+                    self._write(self.line("Reaction index is %d" % self.qssReactions[i]))
+                    self._write(self.line("QSS reaction list index (corresponds to index needed by k_f_save_qss, Corr, Kc_save_qss) is %d" % i))
+                    
+                    self._write("double redP = alpha[%d] / k_f_save_qss[%d] * phase_units[%d] * low_A[%d] * exp(low_beta[%d] * tc[0] - activation_units[%d] * low_Ea[%d] * invT);"
+                                % (alpha_index, i, self.qssReactions[i], self.qssReactions[i], self.qssReactions[i], self.qssReactions[i], self.qssReactions[i]))
+                    self._write("Corr[i] = redP / (1. + redP);" % i)
+
+            self._outdent()
+            self._write("}")
+
+        if n3body_qss > 0:
+            self._write()
+            self._write(self.line(" simple three-body correction"))
+            self._write("{")
+            self._indent()
+            self._write("double alpha;")
+            alpha_save = ""
+            for i in range(i3body_qss[0],i3body_qss[1]):
+                reaction = mechanism.reaction(id=self.qssReactions[i])
+                if reaction.thirdBody:
+                    alpha = self._enhancement(mechanism, reaction)
+                    if alpha != alpha_save:
+                        alpha_save = alpha
+                        self._write("alpha = %s;" % alpha)
+                    self._write("Corr[%d] = alpha;" % i)
+            self._outdent()
+            self._write("}")
+
+        self._write()
+        self._write("for (int i=0; i<%d; i++)" % nclassd_qss)
+        self._write("{")
+        self._indent()
+        self._write("qf_co[i] *= Corr[i] * k_f_save_qss[i];")
+        self._write("qr_co[i] *= Corr[i] * k_f_save_qss[i] / Kc_save_qss[i];")
+        self._outdent()
+        self._write("}")
+        
+        if nspecial_qss > 0:
+
+            print "\n\n ***** WARNING: %d unclassified reactions\n" % nspecial_qss
+
+            self._write()
+            self._write(self.line('unclassified reactions'))
+            self._write('{')
+            self._indent()
+
+            self._write(self.line("reactions: %d to %d" % (ispecial_qss[0]+1,ispecial_qss[1])))
+
+            #self._write('double Kc;                      ' + self.line('equilibrium constant'))
+            self._write('double k_f;                     ' + self.line('forward reaction rate'))
+            self._write('double k_r;                     ' + self.line('reverse reaction rate'))
+            self._write('double q_f;                     ' + self.line('forward progress rate'))
+            self._write('double q_r;                     ' + self.line('reverse progress rate'))
+            self._write('double phi_f;                   '
+                        + self.line('forward phase space factor'))
+            self._write('double phi_r;                   ' + self.line('reverse phase space factor'))
+            self._write('double alpha;                   ' + self.line('enhancement'))
+
+            for i in range(ispecial_qss[0],ispecial_qss[1]):
+                self._write()
+                reaction = mechanism.reaction(id=self.qssReactions[i])
+                self._write(self.line('reaction %d: %s' % (reaction.id, reaction.equation())))
+
+                # compute the rates
+                self._forwardRate(mechanism, reaction)
+                self._reverseRate(mechanism, reaction)
+
+                # store the progress rate
+                self._write("qf_co[%d] = q_f;" % i)
+                self._write("qr_co[%d] = q_r;" % i)
+
+            self._outdent()
+            self._write('}')
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+        self._write('}')
+
+
+        # qss concentrations                                                                                                                                                                                
+        self._write()
+        self._write('void comp_qss_sc(double * sc, double * sc_qss, double * tc, double invT)')
+        self._write('{')
+        self._indent()
+
+        self._write()
+        self._write('double  qf_co[%d], qr_co[%d];' % (self.nqssReactions,self.nqssReactions))
+        self._write('double epsilon = 1e-12;')
+        self._write()
+        self._write('comp_qss_coeff(qf_co, qr_co, sc, tc, invT);')
+        self._write()
+        
+        print
+        print "** self.decouple_index:"
+        print self.decouple_index
+        print self.needs.keys()
+        print self.group.keys()
+        
+        for i in self.decouple_index:
+            symbol = self.decouple_index[i]
+            print "... Dealing with Spec/Group ", symbol
+            if symbol in self.needs.keys():
+                print "    Simple case, single group"
+
+                denominator = symbol+'_denom'
+                numerator = symbol+'_num'
+
+                self._write(self.line('QSS species '+str(self.qss_species_list.index(symbol))+': '+symbol))
+                self._write()
+                # RHS 
+                # cut line if too big !
+                long_line_elements = (self.QSS_rhs[symbol]).split()
+                len_long_line = len(long_line_elements)
+                # if we have more than 7 elements
+                if (len_long_line > 7):
+                    # treat first line separately with the epsilon
+                    self._write('double %s = epsilon %s'% (numerator, " ".join(long_line_elements[0:7])))
+                    # proceed by strides of 7
+                    for kk in xrange(7,len_long_line,7):
+                        # if there are less than 7 elems left then we are at the end of the list
+                        if (len(long_line_elements[kk:kk+7]) < 7):
+                            self._write('                    %s;' % (" ".join(long_line_elements[kk:kk+7])))
+                        # if there are 7 elems we are ...
+                        else:
+                            # either are in the middle of the list
+                            if (len(long_line_elements[kk:]) > 7):
+                                self._write('                    %s' % (" ".join(long_line_elements[kk:kk+7])))
+                            # or at the end but list number was a multiple of 7
+                            else:
+                                self._write('                    %s;' % (" ".join(long_line_elements[kk:kk+7])))
+                # if we have less than 7 elements just write them
+                else:
+                    self._write('double %s = epsilon %s;'% (numerator, self.QSS_rhs[symbol]))
+                # COEFF
+                self._write('double %s = epsilon %s;' % (denominator, self.QSS_coeff[symbol]))
+                self._write()
+                self._write('sc_qss[%s] = %s/%s;' % (self.qss_species_list.index(symbol), numerator, denominator))
+                self._write()
+            if symbol in self.group.keys():
+                print "    Though case. Submatrix has size ", len(self.group[symbol]), "x", len(self.group[symbol])
+                Coeff_subMatrix = [['0'] * len(self.group[symbol]) for i in range(len(self.group[symbol]))]
+                RHS_subMatrix = ['0'] * len(self.group[symbol])
+                gr_species = self.group[symbol]
+                print "    Species involved :", gr_species
+                self._write("/* QSS coupling between " + ("  ").join(gr_species) + "*/")
+                for index, species in enumerate(gr_species):
+                    print "      x Dealing with spec", species, index
+                    self._write(self.line('QSS species '+str(self.qss_species_list.index(species))+': '+species))
+                    self._write()
+
+                    denominator = species+'_denom'
+                    numerator = species+'_num'
+
+                    # RHS 
+                    # cut line if too big !
+                    long_line_elements = (self.QSS_rhs[species]).split()
+                    len_long_line = len(long_line_elements)
+                    # if we have more than 7 elements
+                    if (len_long_line > 7):
+                        # treat first line separately with the epsilon
+                        self._write('double %s = epsilon %s'% (numerator, " ".join(long_line_elements[0:7])))
+                        # proceed by strides of 7
+                        for kk in xrange(7,len_long_line,7):
+                            # if there are less than 7 elems left then we are at the end of the list
+                            if (len(long_line_elements[kk:kk+7]) < 7):
+                                self._write('                    %s;' % (" ".join(long_line_elements[kk:kk+7])))
+                            # if there are 7 elems we are ...
+                            else:
+                                # either are in the middle of the list
+                                if (len(long_line_elements[kk:]) > 7):
+                                    self._write('                    %s' % (" ".join(long_line_elements[kk:kk+7])))
+                                # or at the end but list number was a multiple of 7
+                                else:
+                                    self._write('                    %s;' % (" ".join(long_line_elements[kk:kk+7])))
+                    # if we have less than 7 elements just write them
+                    else:
+                        self._write('double %s = epsilon %s;'% (numerator, self.QSS_rhs[species]))
+                    # COEFF
+                    # cut line if too big !
+                    long_line_elements = (self.QSS_coeff[species]).split()
+                    len_long_line = len(long_line_elements)
+                    # if we have more than 7 elements
+                    if (len_long_line > 7):
+                        # treat first line separately with the epsilon
+                        self._write('double %s = epsilon %s'% (denominator, " ".join(long_line_elements[0:7])))
+                        # proceed by strides of 7
+                        for kk in xrange(7,len_long_line,7):
+                            # if there are less than 7 elems left then we are at the end of the list
+                            if (len(long_line_elements[kk:kk+7]) < 7):
+                                self._write('                    %s;' % (" ".join(long_line_elements[kk:kk+7])))
+                            # if there are 7 elems we are ...
+                            else:
+                                # either are in the middle of the list
+                                if (len(long_line_elements[kk:]) > 7):
+                                    self._write('                    %s' % (" ".join(long_line_elements[kk:kk+7])))
+                                # or at the end but list number was a multiple of 7
+                                else:
+                                    self._write('                    %s;' % (" ".join(long_line_elements[kk:kk+7])))
+                    # if we have less than 7 elements just write them
+                    else:
+                        self._write('double %s = epsilon %s;' % (denominator, self.QSS_coeff[species]))
+                    # RHS
+                    self._write('double '+species+'_rhs = '+numerator+'/'+denominator+';')
+                    self._write()
+
+                    
+                    for j in range(len(gr_species)):
+                        if j == index:
+                            Coeff_subMatrix[index][j] = '1'
+                        else:
+                            if (self.QSS_QSS_coeff[species][gr_species[j]] != "0.0"):
+                                Coeff_subMatrix[index][j] = str(species)+'_'+str(gr_species[j])
+                                # let us assume for now these lines are not too big
+                                self._write('double '+str(species)+'_'+str(gr_species[j])+' = (epsilon '+self.QSS_QSS_coeff[species][gr_species[j]]+')/'+denominator+';')
+                    self._write()
+                    RHS_subMatrix[index] = str(species)+'_rhs'
+
+                #print "A IS "
+                #print Coeff_subMatrix
+                #print "B IS "
+                #print RHS_subMatrix
+                #print
+                A, X, B, intermediate_helpers = self._Gauss_pivoting(Coeff_subMatrix, RHS_subMatrix)
+
+                print "X IS "
+                print X
+                
+                for helper in intermediate_helpers:
+                    self._write('double %s = %s;' % (helper, intermediate_helpers[helper]))
+
+                for count in range(len(gr_species)):
+                    max_index = len(gr_species)-1
+                    #print count
+                    #print max_index
+                    species = gr_species[max_index - count]
+                    #print species
+
+                    # cut line if too big !
+                    long_line_elements = X[max_index - count].split()
+                    len_long_line = len(long_line_elements)
+                    # if we have more than 4 elements
+                    if (len_long_line > 4):
+                        # treat first line separately
+                        self._write('sc_qss['+str(self.qss_species_list.index(species))+'] = '+(" ".join(long_line_elements[0:4])))
+                        # proceed by strides of 4
+                        for kk in xrange(4,len_long_line,4):
+                            # if there are less than 4 elems left then we are at the end of the list
+                            if (len(long_line_elements[kk:kk+4]) < 4):
+                                self._write('                    %s;' % (" ".join(long_line_elements[kk:kk+4])))
+                            # if there are 4 elems we are ...
+                            else:
+                                # either are in the middle of the list
+                                if (len(long_line_elements[kk:]) > 4):
+                                    self._write('                    %s' % (" ".join(long_line_elements[kk:kk+4])))
+                                # or at the end but list number was a multiple of 4
+                                else:
+                                    self._write('                    %s;' % (" ".join(long_line_elements[kk:kk+4])))
+                    # if we have less than 4 elements just write them
+                    else:
+                        self._write('sc_qss['+str(self.qss_species_list.index(species))+'] = '+X[max_index - count]+';')
+                    self._write()
+
+
+        self._write()
+        self._write('return;')
+        self._outdent()
+        self._write('}')
+        
+        return
+
+    def _Gauss_pivoting(self, A, B=None):
+            print
+            print("###")
+            print("IN GAUSS PIVOT")
+            print("###")
+            
+            pivots               = []
+            intermediate_helpers = OrderedDict() 
+            helper_counters = 0
+
+            X = [''] * len(A[0])
+            for i in range(len(A[0])):
+                X[i] = 'X' + str(i)
+
+            if B == None:
+                for i in range(len(A[0])):
+                    B[i] = 'B' + str(i)
+
+            # Get species names:
+            species = ['0' for i in range(len(B))]
+            for member in range(len(B)):
+                hold = str(B[member])
+                hold = hold[:-4]
+                species[member] = hold
+
+            print "Species involved are: ", species
+            print
+            
+            Anum = np.zeros([len(A[0]), len(A[0])])
+            for i in range(len(A[0])):
+                for j in range(len(A[0])):
+                    if A[i][j] != '0':
+                        Anum[i, j] = 1
+
+            print"--A", A
+            print"--B", B
+            #print Anum
+
+            indi, indj = np.nonzero(Anum)
+
+            n = len(B)
+            for k in range(n - 1):
+
+                pivot = A[k][k]
+
+                # swap lines if needed
+                if pivot == 0:
+                    temp = np.array(A[k + 1][:])
+                    A[k + 1][:] = A[k][:]
+                    A[k][:] = temp
+
+                    temp = str(B[k + 1])
+                    B[k + 1] = B[k]
+                    B[k] = temp
+
+                    pivot = A[k][k]
+
+                print 
+                print "   **ROW of pivot ",k, " and pivot is ", pivot 
+                pivots.append(pivot)
+
+                for i in range(k, len(B) - 1):
+                    num = A[i + 1][k]
+                    print "       xx Treating ROW ",i+1, "with numerator ",num, "subst fact will be", num,"/",pivot
+                    if (num == "0"):
+                        print "        !! No need to do anything, already zeroed ... skip"
+                        continue
+                    B = list(B)
+                    print "          - B starts with: "
+                    print "           ", B
+                    if num != '0':
+                        if pivot != '1':
+                            if num != '1':
+                                helper = num + '/' + pivot
+                                helper_name = "H_"+str(helper_counters)
+                                intermediate_helpers[helper_name] = helper
+                                B[i + 1] =  B[i + 1] + ' -' + B[int(k)] + '*' + helper_name
+                                B[i + 1] = '(' + B[i + 1] + ')'
+                                helper_counters += 1
+                            else:
+                                helper = 1 + '/' + pivot
+                                helper_name = "H_"+str(helper_counters)
+                                intermediate_helpers[helper_name] = helper
+                                print " IN THIS CASE !! CHECK THAT ITS OK !! "
+                                B[i + 1] =  B[i + 1] + ' -' + B[int(k)] + '*' + helper_name
+                                B[i + 1] = '(' + B[i + 1] + ')'
+                                helper_counters += 1
+                        else:
+                            if num != '1':
+                                helper = num
+                                helper_name = "H_"+str(helper_counters)
+                                intermediate_helpers[helper_name] = helper
+                                B[i + 1] = B[i + 1] + ' -' + B[int(k)] + '*' + helper_name
+                                B[i + 1] = '(' + B[i + 1] + ')'
+                                helper_counters += 1
+                            else:
+                                B[i + 1] =  B[i + 1] + ' -' + B[int(k)]
+                                B[i + 1] = '(' + B[i + 1] + ')'
+
+                    print "          ... and B ends with: "
+                    print "            ", B
+                  
+                    indi, indj = np.nonzero(Anum)
+
+                    for j in indj[indi == (i + 1)]:
+                        print "          - Dealing with row elem on column ", j, " : ", A[i + 1][j]
+                        if (j == k):
+                            print("            !! 0 ELEM !")
+                            A[i + 1][j] = '0'
+                        else:
+                            if A[i + 1][j] != '0':
+                                if num != '0':
+                                    if pivot != '1':
+                                        if num != '1':
+                                            if A[k][j] != '0':
+                                                A[i + 1][j] = A[i + 1][j] + ' -' + A[k][j] + '*' + helper_name
+                                                A[i + 1][j] = '(' + A[i + 1][j] + ')'
+                                        else:
+                                            if A[k][j] != '0':
+                                                print " IN THIS CASE !! CHECK THAT ITS OK !! "
+                                                A[i + 1][j] = A[i + 1][j] + ' -' + A[k][j] + '*' + helper_name
+                                                A[i + 1][j] = '(' + A[i + 1][j] + ')'
+                                    else:
+                                        if num != '1':
+                                            if A[k][j] != '0':
+                                                A[i + 1][j] = A[i + 1][j] + ' -' + A[k][j] + '*' + helper_name
+                                                A[i + 1][j] = '(' + A[i + 1][j] + ')'
+                                        else:
+                                            if A[k][j] != '0':
+                                                A[i + 1][j] = A[i + 1][j] + ' -' + A[k][j]
+                                                A[i + 1][j] = '(' + A[i + 1][j] + ')'
+                            else:
+                                if num != '0':
+                                    if pivot != '1':
+                                        if num != '1':
+                                            if A[k][j] != '0':
+                                                A[i + 1][j] = ' -' + A[k][j] + '*' + helper_name
+                                                A[i + 1][j] = '(' + A[i + 1][j] + ')'
+                                        else:
+                                            if A[k][j] != '0':
+                                                print " IN THIS CASE !! CHECK THAT ITS OK !! "
+                                                A[i + 1][j] = ' -' + A[k][j] + '*' + helper_name
+                                                A[i + 1][j] = '(' + A[i + 1][j] + ')'
+                                    else:
+                                        if num != '1':
+                                            if A[k][j] != '0':
+                                                A[i + 1][j] = ' -' + A[k][j] + '*' + helper_name
+                                                A[i + 1][j] = '(' + A[i + 1][j] + ')'
+                                        else:
+                                            if A[k][j] != '0':
+                                                A[i + 1][j] = ' -' + A[k][j]
+                                                A[i + 1][j] = '(' + A[i + 1][j] + ')'
+                    print "          ... and updated A is: "
+                    print "             ", A
+
+            for i in range(len(B)):
+                X = list(X)
+                B[i] = str(B[i])
+
+            # start with last elem
+            n = n - 1
+            if A[n][n] != '1':
+                X[n] =  B[n] + '/' + A[n][n] 
+            else:
+                X[n] =  B[n] 
+
+            for i in range(1, n + 1):
+                sumprod = ''
+                for j in range(i):
+                    flag = False
+                    if A[n - i][n - j] != '0':
+                        if flag:
+                            sumprod += ' + '
+                        flag = True
+                        if A[n - i][n - j] == '1':
+                            sumprod += ' (' + str(X[n - j]) + ')'
+                        elif j != 0:
+                            sumprod += ' +' + A[n - i][n - j] + '*' + 'sc_qss[' + str(self.qss_species_list.index(species[n - j])) + ']'
+                        else:
+                            sumprod +=  A[n - i][n - j] + '*' + 'sc_qss[' + str(self.qss_species_list.index(species[n - j])) + ']'
+        
+                if sumprod == '':
+                    if A[n - i][n - i] != '1':
+                        X[n - i] = '(' + B[n - i] + ')/' + A[n - i][n - i]
+                    else:
+                        X[n - i] = B[n - i]
+                else:
+                    if A[n - i][n - i] == '1':
+                        X[n - i] = B[n - i] + ' -(' + sumprod + ')'
+                    else:
+                        X[n - i] = '(' + B[n - i] + ' -(' + sumprod + '))/' + A[n - i][n - i]
+            print 
+            print 
+
+            return A, X, B, intermediate_helpers             
 
     ####################
     #unused

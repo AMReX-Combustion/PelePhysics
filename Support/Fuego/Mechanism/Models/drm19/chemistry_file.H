@@ -56,6 +56,10 @@ void CKQXP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x, amrex::Real *  
 void CKQYR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  qdot);
 void CKQXR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  qdot);
 void aJacobian(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP);
+#endif
+
+
+/* ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp  */
 /* Transport function declarations  */
 void egtransetLENIMC(int* LENIMC);
 void egtransetLENRMC(int* LENRMC);
@@ -75,10 +79,6 @@ void egtransetCOFLAM(amrex::Real* COFLAM);
 void egtransetCOFD(amrex::Real* COFD);
 void egtransetKTDIF(int* KTDIF);
 void egtransetCOFTD(amrex::Real* COFTD);
-#endif
-
-
-/* ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp  */
 /* INIT and FINALIZE stuff  */
 void CKINIT();
 void CKFINALIZE();
@@ -4362,327 +4362,327 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSMS(amrex::Real *  T,  amrex::Real * 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * qss_sc, amrex::Real * tc, amrex::Real invT)
 {
 
-    /*reaction 1: H + CH2 (+M) <=> CH3 (+M) */
+    /*reaction 30: H + CH2 (+M) <=> CH3 (+M) */
     qf[0] = sc[1]*sc[7];
     qr[0] = sc[9];
 
-    /*reaction 2: H + CH3 (+M) <=> CH4 (+M) */
+    /*reaction 31: H + CH3 (+M) <=> CH4 (+M) */
     qf[1] = sc[1]*sc[9];
     qr[1] = sc[10];
 
-    /*reaction 3: H + HCO (+M) <=> CH2O (+M) */
+    /*reaction 33: H + HCO (+M) <=> CH2O (+M) */
     qf[2] = sc[1]*sc[13];
     qr[2] = sc[14];
 
-    /*reaction 4: H + CH2O (+M) <=> CH3O (+M) */
+    /*reaction 35: H + CH2O (+M) <=> CH3O (+M) */
     qf[3] = sc[1]*sc[14];
     qr[3] = sc[15];
 
-    /*reaction 5: H + C2H4 (+M) <=> C2H5 (+M) */
+    /*reaction 38: H + C2H4 (+M) <=> C2H5 (+M) */
     qf[4] = sc[1]*sc[16];
     qr[4] = sc[17];
 
-    /*reaction 6: H + C2H5 (+M) <=> C2H6 (+M) */
+    /*reaction 39: H + C2H5 (+M) <=> C2H6 (+M) */
     qf[5] = sc[1]*sc[17];
     qr[5] = sc[18];
 
-    /*reaction 7: H2 + CO (+M) <=> CH2O (+M) */
+    /*reaction 41: H2 + CO (+M) <=> CH2O (+M) */
     qf[6] = sc[0]*sc[11];
     qr[6] = sc[14];
 
-    /*reaction 8: 2.000000 CH3 (+M) <=> C2H6 (+M) */
+    /*reaction 75: 2.000000 CH3 (+M) <=> C2H6 (+M) */
     qf[7] = pow(sc[9], 2.000000);
     qr[7] = sc[18];
 
-    /*reaction 9: O + H + M <=> OH + M */
+    /*reaction 1: O + H + M <=> OH + M */
     qf[8] = sc[1]*sc[2];
     qr[8] = sc[4];
 
-    /*reaction 10: O + CO + M <=> CO2 + M */
+    /*reaction 8: O + CO + M <=> CO2 + M */
     qf[9] = sc[2]*sc[11];
     qr[9] = sc[12];
 
-    /*reaction 11: H + O2 + M <=> HO2 + M */
+    /*reaction 17: H + O2 + M <=> HO2 + M */
     qf[10] = sc[1]*sc[3];
     qr[10] = sc[6];
 
-    /*reaction 12: 2.000000 H + M <=> H2 + M */
+    /*reaction 23: 2.000000 H + M <=> H2 + M */
     qf[11] = pow(sc[1], 2.000000);
     qr[11] = sc[0];
 
-    /*reaction 13: H + OH + M <=> H2O + M */
+    /*reaction 27: H + OH + M <=> H2O + M */
     qf[12] = sc[1]*sc[4];
     qr[12] = sc[5];
 
-    /*reaction 14: HCO + M <=> H + CO + M */
+    /*reaction 81: HCO + M <=> H + CO + M */
     qf[13] = sc[13];
     qr[13] = sc[1]*sc[11];
 
-    /*reaction 15: O + H2 <=> H + OH */
+    /*reaction 2: O + H2 <=> H + OH */
     qf[14] = sc[0]*sc[2];
     qr[14] = sc[1]*sc[4];
 
-    /*reaction 16: O + HO2 <=> OH + O2 */
+    /*reaction 3: O + HO2 <=> OH + O2 */
     qf[15] = sc[2]*sc[6];
     qr[15] = sc[3]*sc[4];
 
-    /*reaction 17: O + CH2 <=> H + HCO */
+    /*reaction 4: O + CH2 <=> H + HCO */
     qf[16] = sc[2]*sc[7];
     qr[16] = sc[1]*sc[13];
 
-    /*reaction 18: O + CH2(S) <=> H + HCO */
+    /*reaction 5: O + CH2(S) <=> H + HCO */
     qf[17] = sc[2]*sc[8];
     qr[17] = sc[1]*sc[13];
 
-    /*reaction 19: O + CH3 <=> H + CH2O */
+    /*reaction 6: O + CH3 <=> H + CH2O */
     qf[18] = sc[2]*sc[9];
     qr[18] = sc[1]*sc[14];
 
-    /*reaction 20: O + CH4 <=> OH + CH3 */
+    /*reaction 7: O + CH4 <=> OH + CH3 */
     qf[19] = sc[2]*sc[10];
     qr[19] = sc[4]*sc[9];
 
-    /*reaction 21: O + HCO <=> OH + CO */
+    /*reaction 9: O + HCO <=> OH + CO */
     qf[20] = sc[2]*sc[13];
     qr[20] = sc[4]*sc[11];
 
-    /*reaction 22: O + HCO <=> H + CO2 */
+    /*reaction 10: O + HCO <=> H + CO2 */
     qf[21] = sc[2]*sc[13];
     qr[21] = sc[1]*sc[12];
 
-    /*reaction 23: O + CH2O <=> OH + HCO */
+    /*reaction 11: O + CH2O <=> OH + HCO */
     qf[22] = sc[2]*sc[14];
     qr[22] = sc[4]*sc[13];
 
-    /*reaction 24: O + C2H4 <=> CH3 + HCO */
+    /*reaction 12: O + C2H4 <=> CH3 + HCO */
     qf[23] = sc[2]*sc[16];
     qr[23] = sc[9]*sc[13];
 
-    /*reaction 25: O + C2H5 <=> CH3 + CH2O */
+    /*reaction 13: O + C2H5 <=> CH3 + CH2O */
     qf[24] = sc[2]*sc[17];
     qr[24] = sc[9]*sc[14];
 
-    /*reaction 26: O + C2H6 <=> OH + C2H5 */
+    /*reaction 14: O + C2H6 <=> OH + C2H5 */
     qf[25] = sc[2]*sc[18];
     qr[25] = sc[4]*sc[17];
 
-    /*reaction 27: O2 + CO <=> O + CO2 */
+    /*reaction 15: O2 + CO <=> O + CO2 */
     qf[26] = sc[3]*sc[11];
     qr[26] = sc[2]*sc[12];
 
-    /*reaction 28: O2 + CH2O <=> HO2 + HCO */
+    /*reaction 16: O2 + CH2O <=> HO2 + HCO */
     qf[27] = sc[3]*sc[14];
     qr[27] = sc[6]*sc[13];
 
-    /*reaction 29: H + 2.000000 O2 <=> HO2 + O2 */
+    /*reaction 18: H + 2.000000 O2 <=> HO2 + O2 */
     qf[28] = sc[1]*pow(sc[3], 2.000000);
     qr[28] = sc[3]*sc[6];
 
-    /*reaction 30: H + O2 + H2O <=> HO2 + H2O */
+    /*reaction 19: H + O2 + H2O <=> HO2 + H2O */
     qf[29] = sc[1]*sc[3]*sc[5];
     qr[29] = sc[5]*sc[6];
 
-    /*reaction 31: H + O2 + N2 <=> HO2 + N2 */
+    /*reaction 20: H + O2 + N2 <=> HO2 + N2 */
     qf[30] = sc[1]*sc[3]*sc[19];
     qr[30] = sc[6]*sc[19];
 
-    /*reaction 32: H + O2 + AR <=> HO2 + AR */
+    /*reaction 21: H + O2 + AR <=> HO2 + AR */
     qf[31] = sc[1]*sc[3]*sc[20];
     qr[31] = sc[6]*sc[20];
 
-    /*reaction 33: H + O2 <=> O + OH */
+    /*reaction 22: H + O2 <=> O + OH */
     qf[32] = sc[1]*sc[3];
     qr[32] = sc[2]*sc[4];
 
-    /*reaction 34: 2.000000 H + H2 <=> 2.000000 H2 */
+    /*reaction 24: 2.000000 H + H2 <=> 2.000000 H2 */
     qf[33] = sc[0]*pow(sc[1], 2.000000);
     qr[33] = pow(sc[0], 2.000000);
 
-    /*reaction 35: 2.000000 H + H2O <=> H2 + H2O */
+    /*reaction 25: 2.000000 H + H2O <=> H2 + H2O */
     qf[34] = pow(sc[1], 2.000000)*sc[5];
     qr[34] = sc[0]*sc[5];
 
-    /*reaction 36: 2.000000 H + CO2 <=> H2 + CO2 */
+    /*reaction 26: 2.000000 H + CO2 <=> H2 + CO2 */
     qf[35] = pow(sc[1], 2.000000)*sc[12];
     qr[35] = sc[0]*sc[12];
 
-    /*reaction 37: H + HO2 <=> O2 + H2 */
+    /*reaction 28: H + HO2 <=> O2 + H2 */
     qf[36] = sc[1]*sc[6];
     qr[36] = sc[0]*sc[3];
 
-    /*reaction 38: H + HO2 <=> 2.000000 OH */
+    /*reaction 29: H + HO2 <=> 2.000000 OH */
     qf[37] = sc[1]*sc[6];
     qr[37] = pow(sc[4], 2.000000);
 
-    /*reaction 39: H + CH4 <=> CH3 + H2 */
+    /*reaction 32: H + CH4 <=> CH3 + H2 */
     qf[38] = sc[1]*sc[10];
     qr[38] = sc[0]*sc[9];
 
-    /*reaction 40: H + HCO <=> H2 + CO */
+    /*reaction 34: H + HCO <=> H2 + CO */
     qf[39] = sc[1]*sc[13];
     qr[39] = sc[0]*sc[11];
 
-    /*reaction 41: H + CH2O <=> HCO + H2 */
+    /*reaction 36: H + CH2O <=> HCO + H2 */
     qf[40] = sc[1]*sc[14];
     qr[40] = sc[0]*sc[13];
 
-    /*reaction 42: H + CH3O <=> OH + CH3 */
+    /*reaction 37: H + CH3O <=> OH + CH3 */
     qf[41] = sc[1]*sc[15];
     qr[41] = sc[4]*sc[9];
 
-    /*reaction 43: H + C2H6 <=> C2H5 + H2 */
+    /*reaction 40: H + C2H6 <=> C2H5 + H2 */
     qf[42] = sc[1]*sc[18];
     qr[42] = sc[0]*sc[17];
 
-    /*reaction 44: OH + H2 <=> H + H2O */
+    /*reaction 42: OH + H2 <=> H + H2O */
     qf[43] = sc[0]*sc[4];
     qr[43] = sc[1]*sc[5];
 
-    /*reaction 45: 2.000000 OH <=> O + H2O */
+    /*reaction 43: 2.000000 OH <=> O + H2O */
     qf[44] = pow(sc[4], 2.000000);
     qr[44] = sc[2]*sc[5];
 
-    /*reaction 46: OH + HO2 <=> O2 + H2O */
+    /*reaction 44: OH + HO2 <=> O2 + H2O */
     qf[45] = sc[4]*sc[6];
     qr[45] = sc[3]*sc[5];
 
-    /*reaction 47: OH + CH2 <=> H + CH2O */
+    /*reaction 45: OH + CH2 <=> H + CH2O */
     qf[46] = sc[4]*sc[7];
     qr[46] = sc[1]*sc[14];
 
-    /*reaction 48: OH + CH2(S) <=> H + CH2O */
+    /*reaction 46: OH + CH2(S) <=> H + CH2O */
     qf[47] = sc[4]*sc[8];
     qr[47] = sc[1]*sc[14];
 
-    /*reaction 49: OH + CH3 <=> CH2 + H2O */
+    /*reaction 47: OH + CH3 <=> CH2 + H2O */
     qf[48] = sc[4]*sc[9];
     qr[48] = sc[5]*sc[7];
 
-    /*reaction 50: OH + CH3 <=> CH2(S) + H2O */
+    /*reaction 48: OH + CH3 <=> CH2(S) + H2O */
     qf[49] = sc[4]*sc[9];
     qr[49] = sc[5]*sc[8];
 
-    /*reaction 51: OH + CH4 <=> CH3 + H2O */
+    /*reaction 49: OH + CH4 <=> CH3 + H2O */
     qf[50] = sc[4]*sc[10];
     qr[50] = sc[5]*sc[9];
 
-    /*reaction 52: OH + CO <=> H + CO2 */
+    /*reaction 50: OH + CO <=> H + CO2 */
     qf[51] = sc[4]*sc[11];
     qr[51] = sc[1]*sc[12];
 
-    /*reaction 53: OH + HCO <=> H2O + CO */
+    /*reaction 51: OH + HCO <=> H2O + CO */
     qf[52] = sc[4]*sc[13];
     qr[52] = sc[5]*sc[11];
 
-    /*reaction 54: OH + CH2O <=> HCO + H2O */
+    /*reaction 52: OH + CH2O <=> HCO + H2O */
     qf[53] = sc[4]*sc[14];
     qr[53] = sc[5]*sc[13];
 
-    /*reaction 55: OH + C2H6 <=> C2H5 + H2O */
+    /*reaction 53: OH + C2H6 <=> C2H5 + H2O */
     qf[54] = sc[4]*sc[18];
     qr[54] = sc[5]*sc[17];
 
-    /*reaction 56: HO2 + CH2 <=> OH + CH2O */
+    /*reaction 54: HO2 + CH2 <=> OH + CH2O */
     qf[55] = sc[6]*sc[7];
     qr[55] = sc[4]*sc[14];
 
-    /*reaction 57: HO2 + CH3 <=> O2 + CH4 */
+    /*reaction 55: HO2 + CH3 <=> O2 + CH4 */
     qf[56] = sc[6]*sc[9];
     qr[56] = sc[3]*sc[10];
 
-    /*reaction 58: HO2 + CH3 <=> OH + CH3O */
+    /*reaction 56: HO2 + CH3 <=> OH + CH3O */
     qf[57] = sc[6]*sc[9];
     qr[57] = sc[4]*sc[15];
 
-    /*reaction 59: HO2 + CO <=> OH + CO2 */
+    /*reaction 57: HO2 + CO <=> OH + CO2 */
     qf[58] = sc[6]*sc[11];
     qr[58] = sc[4]*sc[12];
 
-    /*reaction 60: CH2 + O2 <=> OH + HCO */
+    /*reaction 58: CH2 + O2 <=> OH + HCO */
     qf[59] = sc[3]*sc[7];
     qr[59] = sc[4]*sc[13];
 
-    /*reaction 61: CH2 + H2 <=> H + CH3 */
+    /*reaction 59: CH2 + H2 <=> H + CH3 */
     qf[60] = sc[0]*sc[7];
     qr[60] = sc[1]*sc[9];
 
-    /*reaction 62: CH2 + CH3 <=> H + C2H4 */
+    /*reaction 60: CH2 + CH3 <=> H + C2H4 */
     qf[61] = sc[7]*sc[9];
     qr[61] = sc[1]*sc[16];
 
-    /*reaction 63: CH2 + CH4 <=> 2.000000 CH3 */
+    /*reaction 61: CH2 + CH4 <=> 2.000000 CH3 */
     qf[62] = sc[7]*sc[10];
     qr[62] = pow(sc[9], 2.000000);
 
-    /*reaction 64: CH2(S) + N2 <=> CH2 + N2 */
+    /*reaction 62: CH2(S) + N2 <=> CH2 + N2 */
     qf[63] = sc[8]*sc[19];
     qr[63] = sc[7]*sc[19];
 
-    /*reaction 65: CH2(S) + AR <=> CH2 + AR */
+    /*reaction 63: CH2(S) + AR <=> CH2 + AR */
     qf[64] = sc[8]*sc[20];
     qr[64] = sc[7]*sc[20];
 
-    /*reaction 66: CH2(S) + O2 <=> H + OH + CO */
+    /*reaction 64: CH2(S) + O2 <=> H + OH + CO */
     qf[65] = sc[3]*sc[8];
     qr[65] = sc[1]*sc[4]*sc[11];
 
-    /*reaction 67: CH2(S) + O2 <=> CO + H2O */
+    /*reaction 65: CH2(S) + O2 <=> CO + H2O */
     qf[66] = sc[3]*sc[8];
     qr[66] = sc[5]*sc[11];
 
-    /*reaction 68: CH2(S) + H2 <=> CH3 + H */
+    /*reaction 66: CH2(S) + H2 <=> CH3 + H */
     qf[67] = sc[0]*sc[8];
     qr[67] = sc[1]*sc[9];
 
-    /*reaction 69: CH2(S) + H2O <=> CH2 + H2O */
+    /*reaction 67: CH2(S) + H2O <=> CH2 + H2O */
     qf[68] = sc[5]*sc[8];
     qr[68] = sc[5]*sc[7];
 
-    /*reaction 70: CH2(S) + CH3 <=> H + C2H4 */
+    /*reaction 68: CH2(S) + CH3 <=> H + C2H4 */
     qf[69] = sc[8]*sc[9];
     qr[69] = sc[1]*sc[16];
 
-    /*reaction 71: CH2(S) + CH4 <=> 2.000000 CH3 */
+    /*reaction 69: CH2(S) + CH4 <=> 2.000000 CH3 */
     qf[70] = sc[8]*sc[10];
     qr[70] = pow(sc[9], 2.000000);
 
-    /*reaction 72: CH2(S) + CO <=> CH2 + CO */
+    /*reaction 70: CH2(S) + CO <=> CH2 + CO */
     qf[71] = sc[8]*sc[11];
     qr[71] = sc[7]*sc[11];
 
-    /*reaction 73: CH2(S) + CO2 <=> CH2 + CO2 */
+    /*reaction 71: CH2(S) + CO2 <=> CH2 + CO2 */
     qf[72] = sc[8]*sc[12];
     qr[72] = sc[7]*sc[12];
 
-    /*reaction 74: CH2(S) + CO2 <=> CO + CH2O */
+    /*reaction 72: CH2(S) + CO2 <=> CO + CH2O */
     qf[73] = sc[8]*sc[12];
     qr[73] = sc[11]*sc[14];
 
-    /*reaction 75: CH3 + O2 <=> O + CH3O */
+    /*reaction 73: CH3 + O2 <=> O + CH3O */
     qf[74] = sc[3]*sc[9];
     qr[74] = sc[2]*sc[15];
 
-    /*reaction 76: CH3 + O2 <=> OH + CH2O */
+    /*reaction 74: CH3 + O2 <=> OH + CH2O */
     qf[75] = sc[3]*sc[9];
     qr[75] = sc[4]*sc[14];
 
-    /*reaction 77: 2.000000 CH3 <=> H + C2H5 */
+    /*reaction 76: 2.000000 CH3 <=> H + C2H5 */
     qf[76] = pow(sc[9], 2.000000);
     qr[76] = sc[1]*sc[17];
 
-    /*reaction 78: CH3 + HCO <=> CH4 + CO */
+    /*reaction 77: CH3 + HCO <=> CH4 + CO */
     qf[77] = sc[9]*sc[13];
     qr[77] = sc[10]*sc[11];
 
-    /*reaction 79: CH3 + CH2O <=> HCO + CH4 */
+    /*reaction 78: CH3 + CH2O <=> HCO + CH4 */
     qf[78] = sc[9]*sc[14];
     qr[78] = sc[10]*sc[13];
 
-    /*reaction 80: CH3 + C2H6 <=> C2H5 + CH4 */
+    /*reaction 79: CH3 + C2H6 <=> C2H5 + CH4 */
     qf[79] = sc[9]*sc[18];
     qr[79] = sc[10]*sc[17];
 
-    /*reaction 81: HCO + H2O <=> H + CO + H2O */
+    /*reaction 80: HCO + H2O <=> H + CO + H2O */
     qf[80] = sc[5]*sc[13];
     qr[80] = sc[1]*sc[5]*sc[11];
 
