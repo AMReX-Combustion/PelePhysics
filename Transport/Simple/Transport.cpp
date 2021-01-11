@@ -49,5 +49,5 @@ void transport_init()
 
 void transport_close()
 {
-  amrex::The_Arena()->free(trans_parm_g);
+  amrex::The_Device_Arena()->free(trans_parm_g);
 }
