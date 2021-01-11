@@ -180,7 +180,5 @@ jobs:
         source /etc/profile.d/rocm.sh
         hipcc --version
         ls /opt/rocm-4.0.0/
-        ls /opt/rocm-4.0.0/llvm/bin
-        ls /opt/rocm-4.0.0/llvm/include
-        make help COMP=gnu USE_HIP=TRUE Transport_dir=Constant
-        make -j 2 COMP=gnu VERBOSE=TRUE USE_HIP=TRUE Transport_dir=Constant
+        make help COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_dir=Constant
+        make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_dir=Constant
