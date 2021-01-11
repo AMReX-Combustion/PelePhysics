@@ -397,10 +397,10 @@ class CPickler(CMill):
         self._ckqyr(mechanism)
         self._ckqxr(mechanism)
         self._ajac(mechanism)
+        self._write('#endif')
 
         # Transport
         self._transport(mechanism)
-        self._write('#endif')
 
         # Basic info
         self._initialization(mechanism)
