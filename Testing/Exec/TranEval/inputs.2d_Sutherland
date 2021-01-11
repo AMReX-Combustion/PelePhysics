@@ -1,0 +1,6 @@
+transport.Prandtl_number       = 0.7
+transport.viscosity_mu_ref     = 17.16
+transport.viscosity_T_ref      = 273.15
+transport.viscosity_S          = 110.4
+transport.const_bulk_viscosity = 0.0
+transport.const_diffusivity    = 1.0
