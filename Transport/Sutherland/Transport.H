@@ -8,6 +8,7 @@
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX.H>
 #include <AMReX_Gpu.H>
+#include <AMReX_ParmParse.H>
 
 #include "mechanism.h"
 #include "chemistry_file.H"
