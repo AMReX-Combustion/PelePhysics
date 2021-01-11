@@ -156,3 +156,27 @@ jobs:
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_dir=Simple
+
+  # Constant Transport HIP and MPI support
+  Constant_HIP:
+    name: HIPROCm@3.8 MPI [Constant]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_hip.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        source /etc/profile.d/rocm.sh
+        hipcc --version
+        make -j 2 COMP=gnu USE_HIP=TRUE Transport_dir=Constant
