@@ -10,7 +10,7 @@ COMP	     = gnu
 FCOMP	     = gfortran
 USE_MPI    = TRUE
 USE_OMP    = FALSE
-USE_CUDA   = TRUE
+USE_CUDA   = FALSE
 USE_HIP    = FALSE
 
 # PelePhysics
