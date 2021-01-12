@@ -15979,6 +15979,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  
     return;
 }
 
+/* gauss-jordan solver external routine */
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void sgjsolve_simplified(amrex::Real* A, amrex::Real* x, amrex::Real* b) {
     amrex::Real scratch_0 = 1.0/A[0];
     amrex::Real scratch_1 = b[0]*scratch_0;
@@ -17252,5 +17253,4 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void sgjsolve(amrex::Real* A, amrex::Real* x
     x[20] = scratch_401;
     x[21] = scratch_458;
 }
-
 #endif

@@ -21,6 +21,27 @@ namespace thermo
 
 using namespace thermo;
 
+
+/*Returns a count of species in a reaction, and their indices */
+/*and stoichiometric coefficients. (Eq 50) */
+void CKINU(int * i, int * nspec, int * ki, int * nu)
+{
+    if (*i < 1) {
+        /*Return max num species per reaction */
+        *nspec = 4;
+    } else {
+        if (*i > 21) {
+            *nspec = -1;
+        } else {
+            *nspec = kiv[*i-1].size();
+            for (int j=0; j<*nspec; ++j) {
+                ki[j] = kiv[*i-1][j] + 1;
+                nu[j] = nuv[*i-1][j];
+            }
+        }
+    }
+}
+
 /* Vectorized stuff  */
 
 /*convert y[npoints*species] (mass fracs) to x[npoints*species] (mole fracs) */
@@ -593,26 +614,6 @@ void vcomp_wdot(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Rea
     }
 }
 
-/*Returns a count of species in a reaction, and their indices */
-/*and stoichiometric coefficients. (Eq 50) */
-void CKINU(int * i, int * nspec, int * ki, int * nu)
-{
-    if (*i < 1) {
-        /*Return max num species per reaction */
-        *nspec = 4;
-    } else {
-        if (*i > 21) {
-            *nspec = -1;
-        } else {
-            *nspec = kiv[*i-1].size();
-            for (int j=0; j<*nspec; ++j) {
-                ki[j] = kiv[*i-1][j] + 1;
-                nu[j] = nuv[*i-1][j];
-            }
-        }
-    }
-}
-
 static amrex::Real T_save = -1;
 #ifdef _OPENMP
 #pragma omp threadprivate(T_save)
@@ -643,7 +644,8 @@ void productionRate(amrex::Real *  wdot, amrex::Real *  sc, amrex::Real T)
     }
 
     amrex::Real qdot, q_f[21], q_r[21];
-    comp_qfqr(q_f, q_r, sc, tc, invT);
+    amrex::Real sc_qss[1];
+    comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
 
     for (int i = 0; i < 9; ++i) {
         wdot[i] = 0.0;
@@ -827,7 +829,7 @@ void comp_Kc(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc)
     return;
 }
 
-void comp_qfqr(amrex::Real *  qf, amrex::Real *  qr, amrex::Real *  sc, amrex::Real *  tc, amrex::Real invT)
+void comp_qfqr(amrex::Real *  qf, amrex::Real *  qr, amrex::Real *  sc, amrex::Real * qss_sc, amrex::Real *  tc, amrex::Real invT)
 {
 
     /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
@@ -987,7 +989,8 @@ void progressRate(amrex::Real *  qdot, amrex::Real *  sc, amrex::Real T)
     }
 
     amrex::Real q_f[21], q_r[21];
-    comp_qfqr(q_f, q_r, sc, tc, invT);
+    amrex::Real sc_qss[1];
+    comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
 
     for (int i = 0; i < 21; ++i) {
         qdot[i] = q_f[i] - q_r[i];
@@ -1010,7 +1013,8 @@ void progressRateFR(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, a
         comp_Kc(tc,invT,Kc_save);
     }
 
-    comp_qfqr(q_f, q_r, sc, tc, invT);
+    amrex::Real sc_qss[1];
+    comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
 
     return;
 }
@@ -2463,6 +2467,7 @@ void aJacobian(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP)
     J[99] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;
 }
 
+#endif
 /* Transport function declarations  */
 
 
@@ -3002,8 +3007,8 @@ void egtransetCOFD(amrex::Real* COFD) {
 
 /*List of specs with small weight, dim NLITE */
 void egtransetKTDIF(int* KTDIF) {
-    KTDIF[0] = 1;
-    KTDIF[1] = 4;
+    KTDIF[0] = 0;
+    KTDIF[1] = 3;
 }
 
 
@@ -3082,7 +3087,6 @@ void egtransetCOFTD(amrex::Real* COFTD) {
     COFTD[70] = -2.18173874E-07;
     COFTD[71] = 3.26958506E-11;
 }
-#endif
 
 #ifndef AMREX_USE_GPU
 /* Initializes parameter database */
@@ -3439,38 +3443,12 @@ void atomicWeight(amrex::Real *  awt)
 
 
 
-
-/* ckxnum... for parsing strings  */
-void CKXNUM(char * line, int * nexp, int * lout, int * nval, amrex::Real *  rval, int * kerr, int lenline )
+/*get atomic weight for all elements */
+void CKAWT( amrex::Real *  awt)
 {
-    int n,i; /*Loop Counters */
-    char cstr[1000];
-    char *saveptr;
-    char *p; /*String Tokens */
-    /* Strip Comments  */
-    for (i=0; i<lenline; ++i) {
-        if (line[i]=='!') {
-            break;
-        }
-        cstr[i] = line[i];
-    }
-    cstr[i] = '\0';
-
-    p = strtok_r(cstr," ", &saveptr);
-    if (!p) {
-        *nval = 0;
-        *kerr = 1;
-        return;
-    }
-    for (n=0; n<*nexp; ++n) {
-        rval[n] = atof(p);
-        p = strtok_r(NULL, " ", &saveptr);
-        if (!p) break;
-    }
-    *nval = n+1;
-    if (*nval < *nexp) *kerr = 1;
-    return;
+    atomicWeight(awt);
 }
+
 
 
 /*Returns the elemental composition  */
@@ -3528,31 +3506,6 @@ void CKSYME_STR(amrex::Vector<std::string>& ename)
 }
 
 
-/* Returns the char strings of element names */
-void CKSYME(int * kname, int * plenkname )
-{
-    int i; /*Loop Counter */
-    int lenkname = *plenkname;
-    /*clear kname */
-    for (i=0; i<lenkname*3; i++) {
-        kname[i] = ' ';
-    }
-
-    /* H  */
-    kname[ 0*lenkname + 0 ] = 'H';
-    kname[ 0*lenkname + 1 ] = ' ';
-
-    /* O  */
-    kname[ 1*lenkname + 0 ] = 'O';
-    kname[ 1*lenkname + 1 ] = ' ';
-
-    /* N  */
-    kname[ 2*lenkname + 0 ] = 'N';
-    kname[ 2*lenkname + 1 ] = ' ';
-
-}
-
-
 /* Returns the vector of strings of species names */
 void CKSYMS_STR(amrex::Vector<std::string>& kname)
 {
@@ -3567,14 +3520,6 @@ void CKSYMS_STR(amrex::Vector<std::string>& kname)
     kname[7] = "H2O2";
     kname[8] = "N2";
 }
-
-
-/*get atomic weight for all elements */
-void CKAWT( amrex::Real *  awt)
-{
-    atomicWeight(awt);
-}
-
 
 /*compute the sparsity pattern of the chemistry Jacobian */
 void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)

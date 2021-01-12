@@ -41,7 +41,7 @@ void vcomp_wdot(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Rea
 void CKINU(int * i, int * nspec, int * ki, int * nu);
 /* PROD RATE STUFF  */
 void productionRate(amrex::Real *  wdot, amrex::Real *  sc, amrex::Real T);
-void comp_qfqr(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real *  tc, amrex::Real invT);
+void comp_qfqr(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real * qss_sc, amrex::Real *  tc, amrex::Real invT);
 void comp_k_f(amrex::Real *  tc, amrex::Real invT, amrex::Real *  k_f);
 void comp_Kc(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc);
 void progressRate(amrex::Real *  qdot, amrex::Real *  speciesConc, amrex::Real T);
@@ -53,6 +53,10 @@ void CKQXP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x, amrex::Real *  
 void CKQYR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  qdot);
 void CKQXR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  qdot);
 void aJacobian(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP);
+#endif
+
+
+/* ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp  */
 /* Transport function declarations  */
 void egtransetLENIMC(int* LENIMC);
 void egtransetLENRMC(int* LENRMC);
@@ -72,19 +76,13 @@ void egtransetCOFLAM(amrex::Real* COFLAM);
 void egtransetCOFD(amrex::Real* COFD);
 void egtransetKTDIF(int* KTDIF);
 void egtransetCOFTD(amrex::Real* COFTD);
-#endif
-
-
-/* ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp  */
 /* INIT and FINALIZE stuff  */
 void CKINIT();
 void CKFINALIZE();
 void atomicWeight(amrex::Real *  awt);
 /* MISC  */
-void CKXNUM(char * line, int * nexp, int * lout, int * nval, amrex::Real *  rval, int * kerr, int lenline);
 void CKNCF(int * ncf);
 void CKSYME_STR(amrex::Vector<std::string>& ename);
-void CKSYME(int * kname, int * lenkname);
 void CKSYMS_STR(amrex::Vector<std::string>& kname);
 void CKAWT(amrex::Real *  awt);
 /* SPARSE INFORMATION  */
@@ -98,6 +96,18 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * in
 void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base);
 
 /* GPU stuff that default to CPU if not compiled with GPU  */
+
+
+/*A few mechanism parameters */
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKINDX(int * mm, int * kk, int * ii, int * nfit)
+{
+    *mm = 3;
+    *kk = 9;
+    *ii = 21;
+    *nfit = -1; /*Why do you need this anyway ?  */
+}
+
+
 /* inverse molecular weights  */
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void get_imw(amrex::Real *imw_new){
@@ -126,6 +136,147 @@ void get_mw(amrex::Real *mw_new){
     mw_new[8] = 28.013400;/*N2 */
 }
 
+
+
+/* Returns R, Rc, Patm */
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKRP(amrex::Real *  ru, amrex::Real *  ruc, amrex::Real *  pa)
+{
+     *ru  = 8.31446261815324e+07; 
+     *ruc = 1.98721558317399615845; 
+     *pa  = 1.01325e+06; 
+}
+
+
+/*Returns the stoichiometric coefficients */
+/*of the reaction mechanism. (Eq 50) */
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKNU(int * kdim,  int * nuki)
+{
+    int kd = (*kdim); 
+    /*Zero nukis */
+    for (int id = 0; id < 9 * kd; ++ id) {
+         nuki[id] = 0; 
+    }
+
+    /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
+    nuki[ 3 * kd + 0 ] += -1.000000 ;
+    nuki[ 1 * kd + 0 ] += -1.000000 ;
+    nuki[ 6 * kd + 0 ] += +1.000000 ;
+
+    /*reaction 2: H2O2 (+M) <=> OH + OH (+M) */
+    nuki[ 7 * kd + 1 ] += -1.000000 ;
+    nuki[ 5 * kd + 1 ] += +1.000000 ;
+    nuki[ 5 * kd + 1 ] += +1.000000 ;
+
+    /*reaction 3: H2 + M <=> H + H + M */
+    nuki[ 0 * kd + 2 ] += -1.000000 ;
+    nuki[ 3 * kd + 2 ] += +1.000000 ;
+    nuki[ 3 * kd + 2 ] += +1.000000 ;
+
+    /*reaction 4: O + O + M <=> O2 + M */
+    nuki[ 4 * kd + 3 ] += -1.000000 ;
+    nuki[ 4 * kd + 3 ] += -1.000000 ;
+    nuki[ 1 * kd + 3 ] += +1.000000 ;
+
+    /*reaction 5: O + H + M <=> OH + M */
+    nuki[ 4 * kd + 4 ] += -1.000000 ;
+    nuki[ 3 * kd + 4 ] += -1.000000 ;
+    nuki[ 5 * kd + 4 ] += +1.000000 ;
+
+    /*reaction 6: H + OH + M <=> H2O + M */
+    nuki[ 3 * kd + 5 ] += -1.000000 ;
+    nuki[ 5 * kd + 5 ] += -1.000000 ;
+    nuki[ 2 * kd + 5 ] += +1.000000 ;
+
+    /*reaction 7: H + O2 <=> O + OH */
+    nuki[ 3 * kd + 6 ] += -1.000000 ;
+    nuki[ 1 * kd + 6 ] += -1.000000 ;
+    nuki[ 4 * kd + 6 ] += +1.000000 ;
+    nuki[ 5 * kd + 6 ] += +1.000000 ;
+
+    /*reaction 8: O + H2 <=> H + OH */
+    nuki[ 4 * kd + 7 ] += -1.000000 ;
+    nuki[ 0 * kd + 7 ] += -1.000000 ;
+    nuki[ 3 * kd + 7 ] += +1.000000 ;
+    nuki[ 5 * kd + 7 ] += +1.000000 ;
+
+    /*reaction 9: H2 + OH <=> H2O + H */
+    nuki[ 0 * kd + 8 ] += -1.000000 ;
+    nuki[ 5 * kd + 8 ] += -1.000000 ;
+    nuki[ 2 * kd + 8 ] += +1.000000 ;
+    nuki[ 3 * kd + 8 ] += +1.000000 ;
+
+    /*reaction 10: O + H2O <=> OH + OH */
+    nuki[ 4 * kd + 9 ] += -1.000000 ;
+    nuki[ 2 * kd + 9 ] += -1.000000 ;
+    nuki[ 5 * kd + 9 ] += +1.000000 ;
+    nuki[ 5 * kd + 9 ] += +1.000000 ;
+
+    /*reaction 11: HO2 + H <=> H2 + O2 */
+    nuki[ 6 * kd + 10 ] += -1.000000 ;
+    nuki[ 3 * kd + 10 ] += -1.000000 ;
+    nuki[ 0 * kd + 10 ] += +1.000000 ;
+    nuki[ 1 * kd + 10 ] += +1.000000 ;
+
+    /*reaction 12: HO2 + H <=> OH + OH */
+    nuki[ 6 * kd + 11 ] += -1.000000 ;
+    nuki[ 3 * kd + 11 ] += -1.000000 ;
+    nuki[ 5 * kd + 11 ] += +1.000000 ;
+    nuki[ 5 * kd + 11 ] += +1.000000 ;
+
+    /*reaction 13: HO2 + O <=> O2 + OH */
+    nuki[ 6 * kd + 12 ] += -1.000000 ;
+    nuki[ 4 * kd + 12 ] += -1.000000 ;
+    nuki[ 1 * kd + 12 ] += +1.000000 ;
+    nuki[ 5 * kd + 12 ] += +1.000000 ;
+
+    /*reaction 14: HO2 + OH <=> H2O + O2 */
+    nuki[ 6 * kd + 13 ] += -1.000000 ;
+    nuki[ 5 * kd + 13 ] += -1.000000 ;
+    nuki[ 2 * kd + 13 ] += +1.000000 ;
+    nuki[ 1 * kd + 13 ] += +1.000000 ;
+
+    /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
+    nuki[ 6 * kd + 14 ] += -1.000000 ;
+    nuki[ 6 * kd + 14 ] += -1.000000 ;
+    nuki[ 7 * kd + 14 ] += +1.000000 ;
+    nuki[ 1 * kd + 14 ] += +1.000000 ;
+
+    /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
+    nuki[ 6 * kd + 15 ] += -1.000000 ;
+    nuki[ 6 * kd + 15 ] += -1.000000 ;
+    nuki[ 7 * kd + 15 ] += +1.000000 ;
+    nuki[ 1 * kd + 15 ] += +1.000000 ;
+
+    /*reaction 17: H2O2 + H <=> H2O + OH */
+    nuki[ 7 * kd + 16 ] += -1.000000 ;
+    nuki[ 3 * kd + 16 ] += -1.000000 ;
+    nuki[ 2 * kd + 16 ] += +1.000000 ;
+    nuki[ 5 * kd + 16 ] += +1.000000 ;
+
+    /*reaction 18: H2O2 + H <=> HO2 + H2 */
+    nuki[ 7 * kd + 17 ] += -1.000000 ;
+    nuki[ 3 * kd + 17 ] += -1.000000 ;
+    nuki[ 6 * kd + 17 ] += +1.000000 ;
+    nuki[ 0 * kd + 17 ] += +1.000000 ;
+
+    /*reaction 19: H2O2 + O <=> OH + HO2 */
+    nuki[ 7 * kd + 18 ] += -1.000000 ;
+    nuki[ 4 * kd + 18 ] += -1.000000 ;
+    nuki[ 5 * kd + 18 ] += +1.000000 ;
+    nuki[ 6 * kd + 18 ] += +1.000000 ;
+
+    /*reaction 20: H2O2 + OH <=> HO2 + H2O */
+    nuki[ 7 * kd + 19 ] += -1.000000 ;
+    nuki[ 5 * kd + 19 ] += -1.000000 ;
+    nuki[ 6 * kd + 19 ] += +1.000000 ;
+    nuki[ 2 * kd + 19 ] += +1.000000 ;
+
+    /*reaction 21: H2O2 + OH <=> HO2 + H2O */
+    nuki[ 7 * kd + 20 ] += -1.000000 ;
+    nuki[ 5 * kd + 20 ] += -1.000000 ;
+    nuki[ 6 * kd + 20 ] += +1.000000 ;
+    nuki[ 2 * kd + 20 ] += +1.000000 ;
+}
 
 
 /*compute Cv/R at the given temperature */
@@ -1252,43 +1403,6 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void speciesEntropy(amrex::Real * species, a
 }
 
 
-/*Returns helmholtz in mass units (Eq 32.) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKAMS(amrex::Real *  T,  amrex::Real *  ams)
-{
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
-    amrex::Real imw[9];
-
-    get_imw(imw);
-
-    helmholtz(ams, tc);
-    for (int i = 0; i < 9; i++)
-    {
-        ams[i] *= RT*imw[i];
-    }
-}
-
-
-/*Returns the entropies in mass units (Eq 28.) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSMS(amrex::Real *  T,  amrex::Real *  sms)
-{
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    speciesEntropy(sms, tc);
-    /*multiply by R/molecularweight */
-    sms[0] *= 4.124360158612479e+07; /*H2 */
-    sms[1] *= 2.598367006935648e+06; /*O2 */
-    sms[2] *= 4.615212712140454e+06; /*H2O */
-    sms[3] *= 8.248720317224957e+07; /*H */
-    sms[4] *= 5.196734013871295e+06; /*O */
-    sms[5] *= 4.888740950630956e+06; /*OH */
-    sms[6] *= 2.519017346487778e+06; /*HO2 */
-    sms[7] *= 2.444370475315478e+06; /*H2O2 */
-    sms[8] *= 2.968030520448514e+06; /*N2 */
-}
-
-
 /*Returns the mean specific heat at CP (Eq. 33) */
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCPBL(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  cpbl)
 {
@@ -1548,558 +1662,6 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSBMS(amrex::Real *  P, amrex::Real * 
     *sbms = result * 8.31446261815324e+07 * YOW;
 }
 
-
-/*Returns mean gibbs free energy in molar units */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKGBML(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  gbml)
-{
-    int id; /*loop counter */
-    amrex::Real result = 0; 
-    /*Log of normalized pressure in cgs units dynes/cm^2 by Patm */
-    amrex::Real logPratio = log ( *P / 1013250.0 ); 
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
-    amrex::Real gort[9]; /* temporary storage */
-    /*Compute g/RT */
-    gibbs(gort, tc);
-
-    /*Compute Eq 44 */
-    for (id = 0; id < 9; ++id) {
-        result += x[id]*(gort[id]+log((x[id]+1e-100))+logPratio);
-    }
-
-    *gbml = result * RT;
-}
-
-
-/*Returns mixture gibbs free energy in mass units */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKGBMS(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  gbms)
-{
-    amrex::Real result = 0; 
-    /*Log of normalized pressure in cgs units dynes/cm^2 by Patm */
-    amrex::Real logPratio = log ( *P / 1013250.0 ); 
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
-    amrex::Real gort[9]; /* temporary storage */
-    amrex::Real x[9]; /* need a ytx conversion */
-    amrex::Real YOW = 0; /*To hold 1/molecularweight */
-    amrex::Real imw[9];
-
-    get_imw(imw);
-
-    /*Compute inverse of mean molecular wt first */
-    YOW += y[0]*imw[0]; /*H2 */
-    YOW += y[1]*imw[1]; /*O2 */
-    YOW += y[2]*imw[2]; /*H2O */
-    YOW += y[3]*imw[3]; /*H */
-    YOW += y[4]*imw[4]; /*O */
-    YOW += y[5]*imw[5]; /*OH */
-    YOW += y[6]*imw[6]; /*HO2 */
-    YOW += y[7]*imw[7]; /*H2O2 */
-    YOW += y[8]*imw[8]; /*N2 */
-    /*Now compute y to x conversion */
-    x[0] = y[0]/(2.015940*YOW); 
-    x[1] = y[1]/(31.998800*YOW); 
-    x[2] = y[2]/(18.015340*YOW); 
-    x[3] = y[3]/(1.007970*YOW); 
-    x[4] = y[4]/(15.999400*YOW); 
-    x[5] = y[5]/(17.007370*YOW); 
-    x[6] = y[6]/(33.006770*YOW); 
-    x[7] = y[7]/(34.014740*YOW); 
-    x[8] = y[8]/(28.013400*YOW); 
-    gibbs(gort, tc);
-    /*Perform computation in Eq 44 */
-    result += x[0]*(gort[0]+log((x[0]+1e-100))+logPratio);
-    result += x[1]*(gort[1]+log((x[1]+1e-100))+logPratio);
-    result += x[2]*(gort[2]+log((x[2]+1e-100))+logPratio);
-    result += x[3]*(gort[3]+log((x[3]+1e-100))+logPratio);
-    result += x[4]*(gort[4]+log((x[4]+1e-100))+logPratio);
-    result += x[5]*(gort[5]+log((x[5]+1e-100))+logPratio);
-    result += x[6]*(gort[6]+log((x[6]+1e-100))+logPratio);
-    result += x[7]*(gort[7]+log((x[7]+1e-100))+logPratio);
-    result += x[8]*(gort[8]+log((x[8]+1e-100))+logPratio);
-    /*Scale by RT/W */
-    *gbms = result * RT * YOW;
-}
-
-
-/*Returns mean helmholtz free energy in molar units */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKABML(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  abml)
-{
-    int id; /*loop counter */
-    amrex::Real result = 0; 
-    /*Log of normalized pressure in cgs units dynes/cm^2 by Patm */
-    amrex::Real logPratio = log ( *P / 1013250.0 ); 
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
-    amrex::Real aort[9]; /* temporary storage */
-    /*Compute g/RT */
-    helmholtz(aort, tc);
-
-    /*Compute Eq 44 */
-    for (id = 0; id < 9; ++id) {
-        result += x[id]*(aort[id]+log((x[id]+1e-100))+logPratio);
-    }
-
-    *abml = result * RT;
-}
-
-
-/*Returns mixture helmholtz free energy in mass units */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKABMS(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  abms)
-{
-    amrex::Real result = 0; 
-    /*Log of normalized pressure in cgs units dynes/cm^2 by Patm */
-    amrex::Real logPratio = log ( *P / 1013250.0 ); 
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
-    amrex::Real aort[9]; /* temporary storage */
-    amrex::Real x[9]; /* need a ytx conversion */
-    amrex::Real YOW = 0; /*To hold 1/molecularweight */
-    amrex::Real imw[9];
-
-    get_imw(imw);
-
-    /*Compute inverse of mean molecular wt first */
-    YOW += y[0]*imw[0]; /*H2 */
-    YOW += y[1]*imw[1]; /*O2 */
-    YOW += y[2]*imw[2]; /*H2O */
-    YOW += y[3]*imw[3]; /*H */
-    YOW += y[4]*imw[4]; /*O */
-    YOW += y[5]*imw[5]; /*OH */
-    YOW += y[6]*imw[6]; /*HO2 */
-    YOW += y[7]*imw[7]; /*H2O2 */
-    YOW += y[8]*imw[8]; /*N2 */
-    /*Now compute y to x conversion */
-    x[0] = y[0]/(2.015940*YOW); 
-    x[1] = y[1]/(31.998800*YOW); 
-    x[2] = y[2]/(18.015340*YOW); 
-    x[3] = y[3]/(1.007970*YOW); 
-    x[4] = y[4]/(15.999400*YOW); 
-    x[5] = y[5]/(17.007370*YOW); 
-    x[6] = y[6]/(33.006770*YOW); 
-    x[7] = y[7]/(34.014740*YOW); 
-    x[8] = y[8]/(28.013400*YOW); 
-    helmholtz(aort, tc);
-    /*Perform computation in Eq 44 */
-    result += x[0]*(aort[0]+log((x[0]+1e-100))+logPratio);
-    result += x[1]*(aort[1]+log((x[1]+1e-100))+logPratio);
-    result += x[2]*(aort[2]+log((x[2]+1e-100))+logPratio);
-    result += x[3]*(aort[3]+log((x[3]+1e-100))+logPratio);
-    result += x[4]*(aort[4]+log((x[4]+1e-100))+logPratio);
-    result += x[5]*(aort[5]+log((x[5]+1e-100))+logPratio);
-    result += x[6]*(aort[6]+log((x[6]+1e-100))+logPratio);
-    result += x[7]*(aort[7]+log((x[7]+1e-100))+logPratio);
-    result += x[8]*(aort[8]+log((x[8]+1e-100))+logPratio);
-    /*Scale by RT/W */
-    *abms = result * RT * YOW;
-}
-
-#ifdef AMREX_USE_GPU
-
-/* GPU version of productionRate: no more use of thermo namespace vectors  */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * tc, amrex::Real invT)
-{
-
-    /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
-    qf[0] = sc[1]*sc[3];
-    qr[0] = sc[6];
-
-    /*reaction 2: H2O2 (+M) <=> OH + OH (+M) */
-    qf[1] = sc[7];
-    qr[1] = sc[5]*sc[5];
-
-    /*reaction 3: H2 + M <=> H + H + M */
-    qf[2] = sc[0];
-    qr[2] = sc[3]*sc[3];
-
-    /*reaction 4: O + O + M <=> O2 + M */
-    qf[3] = sc[4]*sc[4];
-    qr[3] = sc[1];
-
-    /*reaction 5: O + H + M <=> OH + M */
-    qf[4] = sc[3]*sc[4];
-    qr[4] = sc[5];
-
-    /*reaction 6: H + OH + M <=> H2O + M */
-    qf[5] = sc[3]*sc[5];
-    qr[5] = sc[2];
-
-    /*reaction 7: H + O2 <=> O + OH */
-    qf[6] = sc[1]*sc[3];
-    qr[6] = sc[4]*sc[5];
-
-    /*reaction 8: O + H2 <=> H + OH */
-    qf[7] = sc[0]*sc[4];
-    qr[7] = sc[3]*sc[5];
-
-    /*reaction 9: H2 + OH <=> H2O + H */
-    qf[8] = sc[0]*sc[5];
-    qr[8] = sc[2]*sc[3];
-
-    /*reaction 10: O + H2O <=> OH + OH */
-    qf[9] = sc[2]*sc[4];
-    qr[9] = sc[5]*sc[5];
-
-    /*reaction 11: HO2 + H <=> H2 + O2 */
-    qf[10] = sc[3]*sc[6];
-    qr[10] = sc[0]*sc[1];
-
-    /*reaction 12: HO2 + H <=> OH + OH */
-    qf[11] = sc[3]*sc[6];
-    qr[11] = sc[5]*sc[5];
-
-    /*reaction 13: HO2 + O <=> O2 + OH */
-    qf[12] = sc[4]*sc[6];
-    qr[12] = sc[1]*sc[5];
-
-    /*reaction 14: HO2 + OH <=> H2O + O2 */
-    qf[13] = sc[5]*sc[6];
-    qr[13] = sc[1]*sc[2];
-
-    /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
-    qf[14] = sc[6]*sc[6];
-    qr[14] = sc[1]*sc[7];
-
-    /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
-    qf[15] = sc[6]*sc[6];
-    qr[15] = sc[1]*sc[7];
-
-    /*reaction 17: H2O2 + H <=> H2O + OH */
-    qf[16] = sc[3]*sc[7];
-    qr[16] = sc[2]*sc[5];
-
-    /*reaction 18: H2O2 + H <=> HO2 + H2 */
-    qf[17] = sc[3]*sc[7];
-    qr[17] = sc[0]*sc[6];
-
-    /*reaction 19: H2O2 + O <=> OH + HO2 */
-    qf[18] = sc[4]*sc[7];
-    qr[18] = sc[5]*sc[6];
-
-    /*reaction 20: H2O2 + OH <=> HO2 + H2O */
-    qf[19] = sc[5]*sc[7];
-    qr[19] = sc[2]*sc[6];
-
-    /*reaction 21: H2O2 + OH <=> HO2 + H2O */
-    qf[20] = sc[5]*sc[7];
-    qr[20] = sc[2]*sc[6];
-
-    /*compute the mixture concentration */
-    amrex::Real mixture = 0.0;
-    for (int i = 0; i < 9; ++i) {
-        mixture += sc[i];
-    }
-
-    /*compute the Gibbs free energy */
-    amrex::Real g_RT[9];
-    gibbs(g_RT, tc);
-
-    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    amrex::Real refC = 101325 / 8.31446 * invT;
-    amrex::Real refCinv = 1 / refC;
-
-    /* Evaluate the kfs */
-    amrex::Real k_f, k_r, Corr;
-    amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
-
-    // (0):  H + O2 <=> O + OH
-    k_f = 1.0000000000000002e-06 * 3547000000000000 
-               * exp(-0.40600000000000003 * tc[0] - 0.50321666580471969 * (16599) * invT);
-    Corr  = 1.0;
-    qf[6] *= Corr * k_f;
-    qr[6] *= Corr * k_f / exp(g_RT[1] + g_RT[3] - g_RT[4] - g_RT[5]);
-    // (1):  O + H2 <=> H + OH
-    k_f = 1.0000000000000002e-06 * 50800 
-               * exp(2.6699999999999999 * tc[0] - 0.50321666580471969 * (6290) * invT);
-    Corr  = 1.0;
-    qf[7] *= Corr * k_f;
-    qr[7] *= Corr * k_f / exp(g_RT[0] - g_RT[3] + g_RT[4] - g_RT[5]);
-    // (2):  H2 + OH <=> H2O + H
-    k_f = 1.0000000000000002e-06 * 216000000 
-               * exp(1.51 * tc[0] - 0.50321666580471969 * (3430) * invT);
-    Corr  = 1.0;
-    qf[8] *= Corr * k_f;
-    qr[8] *= Corr * k_f / exp(g_RT[0] - g_RT[2] - g_RT[3] + g_RT[5]);
-    // (3):  O + H2O <=> OH + OH
-    k_f = 1.0000000000000002e-06 * 2970000 
-               * exp(2.02 * tc[0] - 0.50321666580471969 * (13400) * invT);
-    Corr  = 1.0;
-    qf[9] *= Corr * k_f;
-    qr[9] *= Corr * k_f / exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[5]);
-    // (4):  H2 + M <=> H + H + M
-    k_f = 1.0000000000000002e-06 * 4.577e+19 
-               * exp(-1.3999999999999999 * tc[0] - 0.50321666580471969 * (104380) * invT);
-    Corr  = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
-    qf[2] *= Corr * k_f;
-    qr[2] *= Corr * k_f / (exp(g_RT[0] - g_RT[3] - g_RT[3]) * refC);
-    // (5):  O + O + M <=> O2 + M
-    k_f = 1.0000000000000002e-12 * 6165000000000000 
-               * exp(-0.5 * tc[0] - 0.50321666580471969 * (0) * invT);
-    Corr  = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
-    qf[3] *= Corr * k_f;
-    qr[3] *= Corr * k_f / (exp(-g_RT[1] + g_RT[4] + g_RT[4]) * refCinv);
-    // (6):  O + H + M <=> OH + M
-    k_f = 1.0000000000000002e-12 * 4.714e+18 
-               * exp(-1 * tc[0] - 0.50321666580471969 * (0) * invT);
-    Corr  = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
-    qf[4] *= Corr * k_f;
-    qr[4] *= Corr * k_f / (exp(g_RT[3] + g_RT[4] - g_RT[5]) * refCinv);
-    // (7):  H + OH + M <=> H2O + M
-    k_f = 1.0000000000000002e-12 * 3.8000000000000004e+22 
-               * exp(-2 * tc[0] - 0.50321666580471969 * (0) * invT);
-    Corr  = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
-    qf[5] *= Corr * k_f;
-    qr[5] *= Corr * k_f / (exp(-g_RT[2] + g_RT[3] + g_RT[5]) * refCinv);
-    // (8):  H + O2 (+M) <=> HO2 (+M)
-    k_f = 1.0000000000000002e-06 * 1475000000000 
-               * exp(0.59999999999999998 * tc[0] - 0.50321666580471969 * (0) * invT);
-    Corr  = mixture + ( 2 - 1)*sc[0] + ( 11 - 1)*sc[2] + ( 0.78000000000000003 - 1)*sc[1];
-    redP = Corr / k_f * 1e-12 * 6.366e+20 
-               * exp(-1.72  * tc[0] - 0.50321666580471969  * (524.79999999999995) *invT);
-    F = redP / (1.0 + redP);
-    logPred = log10(redP);
-    logFcent = log10(
-        (1.-0.80000000000000004)*exp(-tc[1] / 1.0000000000000001e-30) 
-        + 0.80000000000000004 * exp(-tc[1]/1e+30)  
-        + 0.);
-    troe_c = -.4 - .67 * logFcent;
-    troe_n = .75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
-    F_troe = pow(10., logFcent / (1.0 + troe*troe));
-    Corr = F * F_troe;
-    qf[0] *= Corr * k_f;
-    qr[0] *= Corr * k_f / (exp(g_RT[1] + g_RT[3] - g_RT[6]) * refCinv);
-    // (9):  HO2 + H <=> H2 + O2
-    k_f = 1.0000000000000002e-06 * 16600000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (823) * invT);
-    Corr  = 1.0;
-    qf[10] *= Corr * k_f;
-    qr[10] *= Corr * k_f / exp(-g_RT[0] - g_RT[1] + g_RT[3] + g_RT[6]);
-    // (10):  HO2 + H <=> OH + OH
-    k_f = 1.0000000000000002e-06 * 70790000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (295) * invT);
-    Corr  = 1.0;
-    qf[11] *= Corr * k_f;
-    qr[11] *= Corr * k_f / exp(g_RT[3] - g_RT[5] - g_RT[5] + g_RT[6]);
-    // (11):  HO2 + O <=> O2 + OH
-    k_f = 1.0000000000000002e-06 * 32500000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (0) * invT);
-    Corr  = 1.0;
-    qf[12] *= Corr * k_f;
-    qr[12] *= Corr * k_f / exp(-g_RT[1] + g_RT[4] - g_RT[5] + g_RT[6]);
-    // (12):  HO2 + OH <=> H2O + O2
-    k_f = 1.0000000000000002e-06 * 28900000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (-497) * invT);
-    Corr  = 1.0;
-    qf[13] *= Corr * k_f;
-    qr[13] *= Corr * k_f / exp(-g_RT[1] - g_RT[2] + g_RT[5] + g_RT[6]);
-    // (13):  HO2 + HO2 <=> H2O2 + O2
-    k_f = 1.0000000000000002e-06 * 420000000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (11982) * invT);
-    Corr  = 1.0;
-    qf[14] *= Corr * k_f;
-    qr[14] *= Corr * k_f / exp(-g_RT[1] + g_RT[6] + g_RT[6] - g_RT[7]);
-    // (14):  HO2 + HO2 <=> H2O2 + O2
-    k_f = 1.0000000000000002e-06 * 130000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (-1629.3) * invT);
-    Corr  = 1.0;
-    qf[15] *= Corr * k_f;
-    qr[15] *= Corr * k_f / exp(-g_RT[1] + g_RT[6] + g_RT[6] - g_RT[7]);
-    // (15):  H2O2 (+M) <=> OH + OH (+M)
-    k_f = 1 * 295100000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (48430) * invT);
-    Corr  = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
-    redP = Corr / k_f * 1e-6 * 1.202e+17 
-               * exp(0  * tc[0] - 0.50321666580471969  * (45500) *invT);
-    F = redP / (1.0 + redP);
-    logPred = log10(redP);
-    logFcent = log10(
-        (1.-0.5)*exp(-tc[1] / 1.0000000000000001e-30) 
-        + 0.5 * exp(-tc[1]/1e+30)  
-        + 0.);
-    troe_c = -.4 - .67 * logFcent;
-    troe_n = .75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
-    F_troe = pow(10., logFcent / (1.0 + troe*troe));
-    Corr = F * F_troe;
-    qf[1] *= Corr * k_f;
-    qr[1] *= Corr * k_f / (exp(-g_RT[5] - g_RT[5] + g_RT[7]) * refC);
-    // (16):  H2O2 + H <=> H2O + OH
-    k_f = 1.0000000000000002e-06 * 24100000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (3970) * invT);
-    Corr  = 1.0;
-    qf[16] *= Corr * k_f;
-    qr[16] *= Corr * k_f / exp(-g_RT[2] + g_RT[3] - g_RT[5] + g_RT[7]);
-    // (17):  H2O2 + H <=> HO2 + H2
-    k_f = 1.0000000000000002e-06 * 48200000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (7950) * invT);
-    Corr  = 1.0;
-    qf[17] *= Corr * k_f;
-    qr[17] *= Corr * k_f / exp(-g_RT[0] + g_RT[3] - g_RT[6] + g_RT[7]);
-    // (18):  H2O2 + O <=> OH + HO2
-    k_f = 1.0000000000000002e-06 * 9550000 
-               * exp(2 * tc[0] - 0.50321666580471969 * (3970) * invT);
-    Corr  = 1.0;
-    qf[18] *= Corr * k_f;
-    qr[18] *= Corr * k_f / exp(g_RT[4] - g_RT[5] - g_RT[6] + g_RT[7]);
-    // (19):  H2O2 + OH <=> HO2 + H2O
-    k_f = 1.0000000000000002e-06 * 1000000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (0) * invT);
-    Corr  = 1.0;
-    qf[19] *= Corr * k_f;
-    qr[19] *= Corr * k_f / exp(-g_RT[2] + g_RT[5] - g_RT[6] + g_RT[7]);
-    // (20):  H2O2 + OH <=> HO2 + H2O
-    k_f = 1.0000000000000002e-06 * 580000000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (9557) * invT);
-    Corr  = 1.0;
-    qf[20] *= Corr * k_f;
-    qr[20] *= Corr * k_f / exp(-g_RT[2] + g_RT[5] - g_RT[6] + g_RT[7]);
-
-
-    return;
-}
-
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)
-{
-    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
-    amrex::Real invT = 1.0 / tc[1];
-
-    amrex::Real qdot, q_f[21], q_r[21];
-    comp_qfqr(q_f, q_r, sc, tc, invT);
-
-    for (int i = 0; i < 9; ++i) {
-        wdot[i] = 0.0;
-    }
-
-    qdot = q_f[0]-q_r[0];
-    wdot[1] -= qdot;
-    wdot[3] -= qdot;
-    wdot[6] += qdot;
-
-    qdot = q_f[1]-q_r[1];
-    wdot[5] += qdot;
-    wdot[5] += qdot;
-    wdot[7] -= qdot;
-
-    qdot = q_f[2]-q_r[2];
-    wdot[0] -= qdot;
-    wdot[3] += qdot;
-    wdot[3] += qdot;
-
-    qdot = q_f[3]-q_r[3];
-    wdot[1] += qdot;
-    wdot[4] -= qdot;
-    wdot[4] -= qdot;
-
-    qdot = q_f[4]-q_r[4];
-    wdot[3] -= qdot;
-    wdot[4] -= qdot;
-    wdot[5] += qdot;
-
-    qdot = q_f[5]-q_r[5];
-    wdot[2] += qdot;
-    wdot[3] -= qdot;
-    wdot[5] -= qdot;
-
-    qdot = q_f[6]-q_r[6];
-    wdot[1] -= qdot;
-    wdot[3] -= qdot;
-    wdot[4] += qdot;
-    wdot[5] += qdot;
-
-    qdot = q_f[7]-q_r[7];
-    wdot[0] -= qdot;
-    wdot[3] += qdot;
-    wdot[4] -= qdot;
-    wdot[5] += qdot;
-
-    qdot = q_f[8]-q_r[8];
-    wdot[0] -= qdot;
-    wdot[2] += qdot;
-    wdot[3] += qdot;
-    wdot[5] -= qdot;
-
-    qdot = q_f[9]-q_r[9];
-    wdot[2] -= qdot;
-    wdot[4] -= qdot;
-    wdot[5] += qdot;
-    wdot[5] += qdot;
-
-    qdot = q_f[10]-q_r[10];
-    wdot[0] += qdot;
-    wdot[1] += qdot;
-    wdot[3] -= qdot;
-    wdot[6] -= qdot;
-
-    qdot = q_f[11]-q_r[11];
-    wdot[3] -= qdot;
-    wdot[5] += qdot;
-    wdot[5] += qdot;
-    wdot[6] -= qdot;
-
-    qdot = q_f[12]-q_r[12];
-    wdot[1] += qdot;
-    wdot[4] -= qdot;
-    wdot[5] += qdot;
-    wdot[6] -= qdot;
-
-    qdot = q_f[13]-q_r[13];
-    wdot[1] += qdot;
-    wdot[2] += qdot;
-    wdot[5] -= qdot;
-    wdot[6] -= qdot;
-
-    qdot = q_f[14]-q_r[14];
-    wdot[1] += qdot;
-    wdot[6] -= qdot;
-    wdot[6] -= qdot;
-    wdot[7] += qdot;
-
-    qdot = q_f[15]-q_r[15];
-    wdot[1] += qdot;
-    wdot[6] -= qdot;
-    wdot[6] -= qdot;
-    wdot[7] += qdot;
-
-    qdot = q_f[16]-q_r[16];
-    wdot[2] += qdot;
-    wdot[3] -= qdot;
-    wdot[5] += qdot;
-    wdot[7] -= qdot;
-
-    qdot = q_f[17]-q_r[17];
-    wdot[0] += qdot;
-    wdot[3] -= qdot;
-    wdot[6] += qdot;
-    wdot[7] -= qdot;
-
-    qdot = q_f[18]-q_r[18];
-    wdot[4] -= qdot;
-    wdot[5] += qdot;
-    wdot[6] += qdot;
-    wdot[7] -= qdot;
-
-    qdot = q_f[19]-q_r[19];
-    wdot[2] += qdot;
-    wdot[5] -= qdot;
-    wdot[6] += qdot;
-    wdot[7] -= qdot;
-
-    qdot = q_f[20]-q_r[20];
-    wdot[2] += qdot;
-    wdot[5] -= qdot;
-    wdot[6] += qdot;
-    wdot[7] -= qdot;
-
-    return;
-}
-#endif
-
-
 /* get temperature given internal energy in mass units and mass fracs */
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void GET_T_GIVEN_EY(amrex::Real *  e, amrex::Real *  y, amrex::Real *  t, int * ierr)
 {
@@ -2198,85 +1760,6 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void GET_T_GIVEN_HY(amrex::Real *  h, amrex:
     *t = t1;
     *ierr = 0;
     return;
-}
-
-
-/*A few mechanism parameters */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKINDX(int * mm, int * kk, int * ii, int * nfit)
-{
-    *mm = 3;
-    *kk = 9;
-    *ii = 21;
-    *nfit = -1; /*Why do you need this anyway ?  */
-}
-
-
-/* Returns the char strings of species names */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSYMS(int * kname, int * plenkname )
-{
-    int i; /*Loop Counter */
-    int lenkname = *plenkname;
-    /*clear kname */
-    for (i=0; i<lenkname*9; i++) {
-        kname[i] = ' ';
-    }
-
-    /* H2  */
-    kname[ 0*lenkname + 0 ] = 'H';
-    kname[ 0*lenkname + 1 ] = '2';
-    kname[ 0*lenkname + 2 ] = ' ';
-
-    /* O2  */
-    kname[ 1*lenkname + 0 ] = 'O';
-    kname[ 1*lenkname + 1 ] = '2';
-    kname[ 1*lenkname + 2 ] = ' ';
-
-    /* H2O  */
-    kname[ 2*lenkname + 0 ] = 'H';
-    kname[ 2*lenkname + 1 ] = '2';
-    kname[ 2*lenkname + 2 ] = 'O';
-    kname[ 2*lenkname + 3 ] = ' ';
-
-    /* H  */
-    kname[ 3*lenkname + 0 ] = 'H';
-    kname[ 3*lenkname + 1 ] = ' ';
-
-    /* O  */
-    kname[ 4*lenkname + 0 ] = 'O';
-    kname[ 4*lenkname + 1 ] = ' ';
-
-    /* OH  */
-    kname[ 5*lenkname + 0 ] = 'O';
-    kname[ 5*lenkname + 1 ] = 'H';
-    kname[ 5*lenkname + 2 ] = ' ';
-
-    /* HO2  */
-    kname[ 6*lenkname + 0 ] = 'H';
-    kname[ 6*lenkname + 1 ] = 'O';
-    kname[ 6*lenkname + 2 ] = '2';
-    kname[ 6*lenkname + 3 ] = ' ';
-
-    /* H2O2  */
-    kname[ 7*lenkname + 0 ] = 'H';
-    kname[ 7*lenkname + 1 ] = '2';
-    kname[ 7*lenkname + 2 ] = 'O';
-    kname[ 7*lenkname + 3 ] = '2';
-    kname[ 7*lenkname + 4 ] = ' ';
-
-    /* N2  */
-    kname[ 8*lenkname + 0 ] = 'N';
-    kname[ 8*lenkname + 1 ] = '2';
-    kname[ 8*lenkname + 2 ] = ' ';
-
-}
-
-
-/* Returns R, Rc, Patm */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKRP(amrex::Real *  ru, amrex::Real *  ruc, amrex::Real *  pa)
-{
-     *ru  = 8.31446261815324e+07; 
-     *ruc = 1.98721558317399615845; 
-     *pa  = 1.01325e+06; 
 }
 
 
@@ -2492,6 +1975,36 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKMMWC(amrex::Real *  c,  amrex::Real *
     return;
 }
 
+
+/*get Cp/R as a function of T  */
+/*for all species (Eq 19) */
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCPOR(amrex::Real *  T, amrex::Real *  cpor)
+{
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    cp_R(cpor, tc);
+}
+
+
+/*get H/RT as a function of T  */
+/*for all species (Eq 20) */
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKHORT(amrex::Real *  T, amrex::Real *  hort)
+{
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    speciesEnthalpy(hort, tc);
+}
+
+
+/*get S/R as a function of T  */
+/*for all species (Eq 21) */
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSOR(amrex::Real *  T, amrex::Real *  sor)
+{
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    speciesEntropy(sor, tc);
+}
+
 /*convert y[species] (mass fracs) to x[species] (mole fracs) */
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTX(amrex::Real *  y,  amrex::Real *  x)
 {
@@ -2688,36 +2201,6 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCTY(amrex::Real *  c, amrex::Real *  
 }
 
 
-/*get Cp/R as a function of T  */
-/*for all species (Eq 19) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCPOR(amrex::Real *  T, amrex::Real *  cpor)
-{
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    cp_R(cpor, tc);
-}
-
-
-/*get H/RT as a function of T  */
-/*for all species (Eq 20) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKHORT(amrex::Real *  T, amrex::Real *  hort)
-{
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    speciesEnthalpy(hort, tc);
-}
-
-
-/*get S/R as a function of T  */
-/*for all species (Eq 21) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSOR(amrex::Real *  T, amrex::Real *  sor)
-{
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    speciesEntropy(sor, tc);
-}
-
-
 /*get specific heat at constant volume as a function  */
 /*of T for all species (molar units) */
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCVML(amrex::Real *  T,  amrex::Real *  cvml)
@@ -2780,40 +2263,6 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKHML(amrex::Real *  T,  amrex::Real * 
     /*convert to chemkin units */
     for (id = 0; id < 9; ++id) {
         hml[id] *= RT;
-    }
-}
-
-
-/*get standard-state Gibbs energy as a function  */
-/*of T for all species (molar units) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKGML(amrex::Real *  T,  amrex::Real *  gml)
-{
-    int id; /*loop counter */
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
-    gibbs(gml, tc);
-
-    /*convert to chemkin units */
-    for (id = 0; id < 9; ++id) {
-        gml[id] *= RT;
-    }
-}
-
-
-/*get standard-state Helmholtz free energy as a  */
-/*function of T for all species (molar units) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKAML(amrex::Real *  T,  amrex::Real *  aml)
-{
-    int id; /*loop counter */
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
-    helmholtz(aml, tc);
-
-    /*convert to chemkin units */
-    for (id = 0; id < 9; ++id) {
-        aml[id] *= RT;
     }
 }
 
@@ -2911,23 +2360,426 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKHMS(amrex::Real *  T,  amrex::Real * 
 }
 
 
-/*Returns gibbs in mass units (Eq 31.) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKGMS(amrex::Real *  T,  amrex::Real *  gms)
+/*Returns the entropies in mass units (Eq 28.) */
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSMS(amrex::Real *  T,  amrex::Real *  sms)
 {
     amrex::Real tT = *T; /*temporary temperature */
     amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
-    amrex::Real imw[9];
-
-    get_imw(imw);
-
-    gibbs(gms, tc);
-
-    for (int i = 0; i < 9; i++)
-    {
-        gms[i] *= RT*imw[i];
-    }
+    speciesEntropy(sms, tc);
+    /*multiply by R/molecularweight */
+    sms[0] *= 4.124360158612479e+07; /*H2 */
+    sms[1] *= 2.598367006935648e+06; /*O2 */
+    sms[2] *= 4.615212712140454e+06; /*H2O */
+    sms[3] *= 8.248720317224957e+07; /*H */
+    sms[4] *= 5.196734013871295e+06; /*O */
+    sms[5] *= 4.888740950630956e+06; /*OH */
+    sms[6] *= 2.519017346487778e+06; /*HO2 */
+    sms[7] *= 2.444370475315478e+06; /*H2O2 */
+    sms[8] *= 2.968030520448514e+06; /*N2 */
 }
+
+#ifdef AMREX_USE_GPU
+
+/* GPU version of productionRate: no more use of thermo namespace vectors  */
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * qss_sc, amrex::Real * tc, amrex::Real invT)
+{
+
+    /*reaction 9: H + O2 (+M) <=> HO2 (+M) */
+    qf[0] = sc[1]*sc[3];
+    qr[0] = sc[6];
+
+    /*reaction 16: H2O2 (+M) <=> OH + OH (+M) */
+    qf[1] = sc[7];
+    qr[1] = sc[5]*sc[5];
+
+    /*reaction 5: H2 + M <=> H + H + M */
+    qf[2] = sc[0];
+    qr[2] = sc[3]*sc[3];
+
+    /*reaction 6: O + O + M <=> O2 + M */
+    qf[3] = sc[4]*sc[4];
+    qr[3] = sc[1];
+
+    /*reaction 7: O + H + M <=> OH + M */
+    qf[4] = sc[3]*sc[4];
+    qr[4] = sc[5];
+
+    /*reaction 8: H + OH + M <=> H2O + M */
+    qf[5] = sc[3]*sc[5];
+    qr[5] = sc[2];
+
+    /*reaction 1: H + O2 <=> O + OH */
+    qf[6] = sc[1]*sc[3];
+    qr[6] = sc[4]*sc[5];
+
+    /*reaction 2: O + H2 <=> H + OH */
+    qf[7] = sc[0]*sc[4];
+    qr[7] = sc[3]*sc[5];
+
+    /*reaction 3: H2 + OH <=> H2O + H */
+    qf[8] = sc[0]*sc[5];
+    qr[8] = sc[2]*sc[3];
+
+    /*reaction 4: O + H2O <=> OH + OH */
+    qf[9] = sc[2]*sc[4];
+    qr[9] = sc[5]*sc[5];
+
+    /*reaction 10: HO2 + H <=> H2 + O2 */
+    qf[10] = sc[3]*sc[6];
+    qr[10] = sc[0]*sc[1];
+
+    /*reaction 11: HO2 + H <=> OH + OH */
+    qf[11] = sc[3]*sc[6];
+    qr[11] = sc[5]*sc[5];
+
+    /*reaction 12: HO2 + O <=> O2 + OH */
+    qf[12] = sc[4]*sc[6];
+    qr[12] = sc[1]*sc[5];
+
+    /*reaction 13: HO2 + OH <=> H2O + O2 */
+    qf[13] = sc[5]*sc[6];
+    qr[13] = sc[1]*sc[2];
+
+    /*reaction 14: HO2 + HO2 <=> H2O2 + O2 */
+    qf[14] = sc[6]*sc[6];
+    qr[14] = sc[1]*sc[7];
+
+    /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
+    qf[15] = sc[6]*sc[6];
+    qr[15] = sc[1]*sc[7];
+
+    /*reaction 17: H2O2 + H <=> H2O + OH */
+    qf[16] = sc[3]*sc[7];
+    qr[16] = sc[2]*sc[5];
+
+    /*reaction 18: H2O2 + H <=> HO2 + H2 */
+    qf[17] = sc[3]*sc[7];
+    qr[17] = sc[0]*sc[6];
+
+    /*reaction 19: H2O2 + O <=> OH + HO2 */
+    qf[18] = sc[4]*sc[7];
+    qr[18] = sc[5]*sc[6];
+
+    /*reaction 20: H2O2 + OH <=> HO2 + H2O */
+    qf[19] = sc[5]*sc[7];
+    qr[19] = sc[2]*sc[6];
+
+    /*reaction 21: H2O2 + OH <=> HO2 + H2O */
+    qf[20] = sc[5]*sc[7];
+    qr[20] = sc[2]*sc[6];
+
+    /*compute the mixture concentration */
+    amrex::Real mixture = 0.0;
+    for (int i = 0; i < 9; ++i) {
+        mixture += sc[i];
+    }
+
+    /*compute the Gibbs free energy */
+    amrex::Real g_RT[9];
+    gibbs(g_RT, tc);
+
+    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
+    amrex::Real refC = 101325 / 8.31446 * invT;
+    amrex::Real refCinv = 1 / refC;
+
+    /* Evaluate the kfs */
+    amrex::Real k_f, k_r, Corr;
+    amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
+
+    // (0):  H + O2 <=> O + OH
+    k_f = 1.0000000000000002e-06 * 3547000000000000 
+               * exp(-0.40600000000000003 * tc[0] - 0.50321666580471969 * (16599) * invT);
+    Corr  = 1.0;
+    qf[6] *= Corr * k_f;
+    qr[6] *= Corr * k_f / exp(g_RT[1] + g_RT[3] - g_RT[4] - g_RT[5]);
+    // (1):  O + H2 <=> H + OH
+    k_f = 1.0000000000000002e-06 * 50800 
+               * exp(2.6699999999999999 * tc[0] - 0.50321666580471969 * (6290) * invT);
+    Corr  = 1.0;
+    qf[7] *= Corr * k_f;
+    qr[7] *= Corr * k_f / exp(g_RT[0] - g_RT[3] + g_RT[4] - g_RT[5]);
+    // (2):  H2 + OH <=> H2O + H
+    k_f = 1.0000000000000002e-06 * 216000000 
+               * exp(1.51 * tc[0] - 0.50321666580471969 * (3430) * invT);
+    Corr  = 1.0;
+    qf[8] *= Corr * k_f;
+    qr[8] *= Corr * k_f / exp(g_RT[0] - g_RT[2] - g_RT[3] + g_RT[5]);
+    // (3):  O + H2O <=> OH + OH
+    k_f = 1.0000000000000002e-06 * 2970000 
+               * exp(2.02 * tc[0] - 0.50321666580471969 * (13400) * invT);
+    Corr  = 1.0;
+    qf[9] *= Corr * k_f;
+    qr[9] *= Corr * k_f / exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[5]);
+    // (4):  H2 + M <=> H + H + M
+    k_f = 1.0000000000000002e-06 * 4.577e+19 
+               * exp(-1.3999999999999999 * tc[0] - 0.50321666580471969 * (104380) * invT);
+    Corr  = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
+    qf[2] *= Corr * k_f;
+    qr[2] *= Corr * k_f / (exp(g_RT[0] - g_RT[3] - g_RT[3]) * refC);
+    // (5):  O + O + M <=> O2 + M
+    k_f = 1.0000000000000002e-12 * 6165000000000000 
+               * exp(-0.5 * tc[0] - 0.50321666580471969 * (0) * invT);
+    Corr  = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
+    qf[3] *= Corr * k_f;
+    qr[3] *= Corr * k_f / (exp(-g_RT[1] + g_RT[4] + g_RT[4]) * refCinv);
+    // (6):  O + H + M <=> OH + M
+    k_f = 1.0000000000000002e-12 * 4.714e+18 
+               * exp(-1 * tc[0] - 0.50321666580471969 * (0) * invT);
+    Corr  = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
+    qf[4] *= Corr * k_f;
+    qr[4] *= Corr * k_f / (exp(g_RT[3] + g_RT[4] - g_RT[5]) * refCinv);
+    // (7):  H + OH + M <=> H2O + M
+    k_f = 1.0000000000000002e-12 * 3.8000000000000004e+22 
+               * exp(-2 * tc[0] - 0.50321666580471969 * (0) * invT);
+    Corr  = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
+    qf[5] *= Corr * k_f;
+    qr[5] *= Corr * k_f / (exp(-g_RT[2] + g_RT[3] + g_RT[5]) * refCinv);
+    // (8):  H + O2 (+M) <=> HO2 (+M)
+    k_f = 1.0000000000000002e-06 * 1475000000000 
+               * exp(0.59999999999999998 * tc[0] - 0.50321666580471969 * (0) * invT);
+    Corr  = mixture + ( 2 - 1)*sc[0] + ( 11 - 1)*sc[2] + ( 0.78000000000000003 - 1)*sc[1];
+    redP = Corr / k_f * 1e-12 * 6.366e+20 
+               * exp(-1.72  * tc[0] - 0.50321666580471969  * (524.79999999999995) *invT);
+    F = redP / (1.0 + redP);
+    logPred = log10(redP);
+    logFcent = log10(
+        (1.-0.80000000000000004)*exp(-tc[1] / 1.0000000000000001e-30) 
+        + 0.80000000000000004 * exp(-tc[1]/1e+30)  
+        + 0.);
+    troe_c = -.4 - .67 * logFcent;
+    troe_n = .75 - 1.27 * logFcent;
+    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
+    F_troe = pow(10., logFcent / (1.0 + troe*troe));
+    Corr = F * F_troe;
+    qf[0] *= Corr * k_f;
+    qr[0] *= Corr * k_f / (exp(g_RT[1] + g_RT[3] - g_RT[6]) * refCinv);
+    // (9):  HO2 + H <=> H2 + O2
+    k_f = 1.0000000000000002e-06 * 16600000000000 
+               * exp(0 * tc[0] - 0.50321666580471969 * (823) * invT);
+    Corr  = 1.0;
+    qf[10] *= Corr * k_f;
+    qr[10] *= Corr * k_f / exp(-g_RT[0] - g_RT[1] + g_RT[3] + g_RT[6]);
+    // (10):  HO2 + H <=> OH + OH
+    k_f = 1.0000000000000002e-06 * 70790000000000 
+               * exp(0 * tc[0] - 0.50321666580471969 * (295) * invT);
+    Corr  = 1.0;
+    qf[11] *= Corr * k_f;
+    qr[11] *= Corr * k_f / exp(g_RT[3] - g_RT[5] - g_RT[5] + g_RT[6]);
+    // (11):  HO2 + O <=> O2 + OH
+    k_f = 1.0000000000000002e-06 * 32500000000000 
+               * exp(0 * tc[0] - 0.50321666580471969 * (0) * invT);
+    Corr  = 1.0;
+    qf[12] *= Corr * k_f;
+    qr[12] *= Corr * k_f / exp(-g_RT[1] + g_RT[4] - g_RT[5] + g_RT[6]);
+    // (12):  HO2 + OH <=> H2O + O2
+    k_f = 1.0000000000000002e-06 * 28900000000000 
+               * exp(0 * tc[0] - 0.50321666580471969 * (-497) * invT);
+    Corr  = 1.0;
+    qf[13] *= Corr * k_f;
+    qr[13] *= Corr * k_f / exp(-g_RT[1] - g_RT[2] + g_RT[5] + g_RT[6]);
+    // (13):  HO2 + HO2 <=> H2O2 + O2
+    k_f = 1.0000000000000002e-06 * 420000000000000 
+               * exp(0 * tc[0] - 0.50321666580471969 * (11982) * invT);
+    Corr  = 1.0;
+    qf[14] *= Corr * k_f;
+    qr[14] *= Corr * k_f / exp(-g_RT[1] + g_RT[6] + g_RT[6] - g_RT[7]);
+    // (14):  HO2 + HO2 <=> H2O2 + O2
+    k_f = 1.0000000000000002e-06 * 130000000000 
+               * exp(0 * tc[0] - 0.50321666580471969 * (-1629.3) * invT);
+    Corr  = 1.0;
+    qf[15] *= Corr * k_f;
+    qr[15] *= Corr * k_f / exp(-g_RT[1] + g_RT[6] + g_RT[6] - g_RT[7]);
+    // (15):  H2O2 (+M) <=> OH + OH (+M)
+    k_f = 1 * 295100000000000 
+               * exp(0 * tc[0] - 0.50321666580471969 * (48430) * invT);
+    Corr  = mixture + ( 2.5 - 1)*sc[0] + ( 12 - 1)*sc[2];
+    redP = Corr / k_f * 1e-6 * 1.202e+17 
+               * exp(0  * tc[0] - 0.50321666580471969  * (45500) *invT);
+    F = redP / (1.0 + redP);
+    logPred = log10(redP);
+    logFcent = log10(
+        (1.-0.5)*exp(-tc[1] / 1.0000000000000001e-30) 
+        + 0.5 * exp(-tc[1]/1e+30)  
+        + 0.);
+    troe_c = -.4 - .67 * logFcent;
+    troe_n = .75 - 1.27 * logFcent;
+    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
+    F_troe = pow(10., logFcent / (1.0 + troe*troe));
+    Corr = F * F_troe;
+    qf[1] *= Corr * k_f;
+    qr[1] *= Corr * k_f / (exp(-g_RT[5] - g_RT[5] + g_RT[7]) * refC);
+    // (16):  H2O2 + H <=> H2O + OH
+    k_f = 1.0000000000000002e-06 * 24100000000000 
+               * exp(0 * tc[0] - 0.50321666580471969 * (3970) * invT);
+    Corr  = 1.0;
+    qf[16] *= Corr * k_f;
+    qr[16] *= Corr * k_f / exp(-g_RT[2] + g_RT[3] - g_RT[5] + g_RT[7]);
+    // (17):  H2O2 + H <=> HO2 + H2
+    k_f = 1.0000000000000002e-06 * 48200000000000 
+               * exp(0 * tc[0] - 0.50321666580471969 * (7950) * invT);
+    Corr  = 1.0;
+    qf[17] *= Corr * k_f;
+    qr[17] *= Corr * k_f / exp(-g_RT[0] + g_RT[3] - g_RT[6] + g_RT[7]);
+    // (18):  H2O2 + O <=> OH + HO2
+    k_f = 1.0000000000000002e-06 * 9550000 
+               * exp(2 * tc[0] - 0.50321666580471969 * (3970) * invT);
+    Corr  = 1.0;
+    qf[18] *= Corr * k_f;
+    qr[18] *= Corr * k_f / exp(g_RT[4] - g_RT[5] - g_RT[6] + g_RT[7]);
+    // (19):  H2O2 + OH <=> HO2 + H2O
+    k_f = 1.0000000000000002e-06 * 1000000000000 
+               * exp(0 * tc[0] - 0.50321666580471969 * (0) * invT);
+    Corr  = 1.0;
+    qf[19] *= Corr * k_f;
+    qr[19] *= Corr * k_f / exp(-g_RT[2] + g_RT[5] - g_RT[6] + g_RT[7]);
+    // (20):  H2O2 + OH <=> HO2 + H2O
+    k_f = 1.0000000000000002e-06 * 580000000000000 
+               * exp(0 * tc[0] - 0.50321666580471969 * (9557) * invT);
+    Corr  = 1.0;
+    qf[20] *= Corr * k_f;
+    qr[20] *= Corr * k_f / exp(-g_RT[2] + g_RT[5] - g_RT[6] + g_RT[7]);
+
+
+    return;
+}
+
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)
+{
+    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
+    amrex::Real invT = 1.0 / tc[1];
+
+    amrex::Real qdot, q_f[21], q_r[21];
+    amrex::Real sc_qss[1];
+    comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
+
+    for (int i = 0; i < 9; ++i) {
+        wdot[i] = 0.0;
+    }
+
+    qdot = q_f[0]-q_r[0];
+    wdot[1] -= qdot;
+    wdot[3] -= qdot;
+    wdot[6] += qdot;
+
+    qdot = q_f[1]-q_r[1];
+    wdot[5] += qdot;
+    wdot[5] += qdot;
+    wdot[7] -= qdot;
+
+    qdot = q_f[2]-q_r[2];
+    wdot[0] -= qdot;
+    wdot[3] += qdot;
+    wdot[3] += qdot;
+
+    qdot = q_f[3]-q_r[3];
+    wdot[1] += qdot;
+    wdot[4] -= qdot;
+    wdot[4] -= qdot;
+
+    qdot = q_f[4]-q_r[4];
+    wdot[3] -= qdot;
+    wdot[4] -= qdot;
+    wdot[5] += qdot;
+
+    qdot = q_f[5]-q_r[5];
+    wdot[2] += qdot;
+    wdot[3] -= qdot;
+    wdot[5] -= qdot;
+
+    qdot = q_f[6]-q_r[6];
+    wdot[1] -= qdot;
+    wdot[3] -= qdot;
+    wdot[4] += qdot;
+    wdot[5] += qdot;
+
+    qdot = q_f[7]-q_r[7];
+    wdot[0] -= qdot;
+    wdot[3] += qdot;
+    wdot[4] -= qdot;
+    wdot[5] += qdot;
+
+    qdot = q_f[8]-q_r[8];
+    wdot[0] -= qdot;
+    wdot[2] += qdot;
+    wdot[3] += qdot;
+    wdot[5] -= qdot;
+
+    qdot = q_f[9]-q_r[9];
+    wdot[2] -= qdot;
+    wdot[4] -= qdot;
+    wdot[5] += qdot;
+    wdot[5] += qdot;
+
+    qdot = q_f[10]-q_r[10];
+    wdot[0] += qdot;
+    wdot[1] += qdot;
+    wdot[3] -= qdot;
+    wdot[6] -= qdot;
+
+    qdot = q_f[11]-q_r[11];
+    wdot[3] -= qdot;
+    wdot[5] += qdot;
+    wdot[5] += qdot;
+    wdot[6] -= qdot;
+
+    qdot = q_f[12]-q_r[12];
+    wdot[1] += qdot;
+    wdot[4] -= qdot;
+    wdot[5] += qdot;
+    wdot[6] -= qdot;
+
+    qdot = q_f[13]-q_r[13];
+    wdot[1] += qdot;
+    wdot[2] += qdot;
+    wdot[5] -= qdot;
+    wdot[6] -= qdot;
+
+    qdot = q_f[14]-q_r[14];
+    wdot[1] += qdot;
+    wdot[6] -= qdot;
+    wdot[6] -= qdot;
+    wdot[7] += qdot;
+
+    qdot = q_f[15]-q_r[15];
+    wdot[1] += qdot;
+    wdot[6] -= qdot;
+    wdot[6] -= qdot;
+    wdot[7] += qdot;
+
+    qdot = q_f[16]-q_r[16];
+    wdot[2] += qdot;
+    wdot[3] -= qdot;
+    wdot[5] += qdot;
+    wdot[7] -= qdot;
+
+    qdot = q_f[17]-q_r[17];
+    wdot[0] += qdot;
+    wdot[3] -= qdot;
+    wdot[6] += qdot;
+    wdot[7] -= qdot;
+
+    qdot = q_f[18]-q_r[18];
+    wdot[4] -= qdot;
+    wdot[5] += qdot;
+    wdot[6] += qdot;
+    wdot[7] -= qdot;
+
+    qdot = q_f[19]-q_r[19];
+    wdot[2] += qdot;
+    wdot[5] -= qdot;
+    wdot[6] += qdot;
+    wdot[7] -= qdot;
+
+    qdot = q_f[20]-q_r[20];
+    wdot[2] += qdot;
+    wdot[5] -= qdot;
+    wdot[6] += qdot;
+    wdot[7] -= qdot;
+
+    return;
+}
+#endif
+
 
 
 /*compute the production rate for each species */
@@ -3085,720 +2937,6 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKWXR(amrex::Real *  rho, amrex::Real *
     for (id = 0; id < 9; ++id) {
         wdot[id] *= 1.0e-6;
     }
-}
-
-
-/*Returns the stoichiometric coefficients */
-/*of the reaction mechanism. (Eq 50) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKNU(int * kdim,  int * nuki)
-{
-    int id; /*loop counter */
-    int kd = (*kdim); 
-    /*Zero nuki */
-    for (id = 0; id < 9 * kd; ++ id) {
-         nuki[id] = 0; 
-    }
-
-    /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
-    nuki[ 3 * kd + 0 ] += -1.000000 ;
-    nuki[ 1 * kd + 0 ] += -1.000000 ;
-    nuki[ 6 * kd + 0 ] += +1.000000 ;
-
-    /*reaction 2: H2O2 (+M) <=> OH + OH (+M) */
-    nuki[ 7 * kd + 1 ] += -1.000000 ;
-    nuki[ 5 * kd + 1 ] += +1.000000 ;
-    nuki[ 5 * kd + 1 ] += +1.000000 ;
-
-    /*reaction 3: H2 + M <=> H + H + M */
-    nuki[ 0 * kd + 2 ] += -1.000000 ;
-    nuki[ 3 * kd + 2 ] += +1.000000 ;
-    nuki[ 3 * kd + 2 ] += +1.000000 ;
-
-    /*reaction 4: O + O + M <=> O2 + M */
-    nuki[ 4 * kd + 3 ] += -1.000000 ;
-    nuki[ 4 * kd + 3 ] += -1.000000 ;
-    nuki[ 1 * kd + 3 ] += +1.000000 ;
-
-    /*reaction 5: O + H + M <=> OH + M */
-    nuki[ 4 * kd + 4 ] += -1.000000 ;
-    nuki[ 3 * kd + 4 ] += -1.000000 ;
-    nuki[ 5 * kd + 4 ] += +1.000000 ;
-
-    /*reaction 6: H + OH + M <=> H2O + M */
-    nuki[ 3 * kd + 5 ] += -1.000000 ;
-    nuki[ 5 * kd + 5 ] += -1.000000 ;
-    nuki[ 2 * kd + 5 ] += +1.000000 ;
-
-    /*reaction 7: H + O2 <=> O + OH */
-    nuki[ 3 * kd + 6 ] += -1.000000 ;
-    nuki[ 1 * kd + 6 ] += -1.000000 ;
-    nuki[ 4 * kd + 6 ] += +1.000000 ;
-    nuki[ 5 * kd + 6 ] += +1.000000 ;
-
-    /*reaction 8: O + H2 <=> H + OH */
-    nuki[ 4 * kd + 7 ] += -1.000000 ;
-    nuki[ 0 * kd + 7 ] += -1.000000 ;
-    nuki[ 3 * kd + 7 ] += +1.000000 ;
-    nuki[ 5 * kd + 7 ] += +1.000000 ;
-
-    /*reaction 9: H2 + OH <=> H2O + H */
-    nuki[ 0 * kd + 8 ] += -1.000000 ;
-    nuki[ 5 * kd + 8 ] += -1.000000 ;
-    nuki[ 2 * kd + 8 ] += +1.000000 ;
-    nuki[ 3 * kd + 8 ] += +1.000000 ;
-
-    /*reaction 10: O + H2O <=> OH + OH */
-    nuki[ 4 * kd + 9 ] += -1.000000 ;
-    nuki[ 2 * kd + 9 ] += -1.000000 ;
-    nuki[ 5 * kd + 9 ] += +1.000000 ;
-    nuki[ 5 * kd + 9 ] += +1.000000 ;
-
-    /*reaction 11: HO2 + H <=> H2 + O2 */
-    nuki[ 6 * kd + 10 ] += -1.000000 ;
-    nuki[ 3 * kd + 10 ] += -1.000000 ;
-    nuki[ 0 * kd + 10 ] += +1.000000 ;
-    nuki[ 1 * kd + 10 ] += +1.000000 ;
-
-    /*reaction 12: HO2 + H <=> OH + OH */
-    nuki[ 6 * kd + 11 ] += -1.000000 ;
-    nuki[ 3 * kd + 11 ] += -1.000000 ;
-    nuki[ 5 * kd + 11 ] += +1.000000 ;
-    nuki[ 5 * kd + 11 ] += +1.000000 ;
-
-    /*reaction 13: HO2 + O <=> O2 + OH */
-    nuki[ 6 * kd + 12 ] += -1.000000 ;
-    nuki[ 4 * kd + 12 ] += -1.000000 ;
-    nuki[ 1 * kd + 12 ] += +1.000000 ;
-    nuki[ 5 * kd + 12 ] += +1.000000 ;
-
-    /*reaction 14: HO2 + OH <=> H2O + O2 */
-    nuki[ 6 * kd + 13 ] += -1.000000 ;
-    nuki[ 5 * kd + 13 ] += -1.000000 ;
-    nuki[ 2 * kd + 13 ] += +1.000000 ;
-    nuki[ 1 * kd + 13 ] += +1.000000 ;
-
-    /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
-    nuki[ 6 * kd + 14 ] += -1.000000 ;
-    nuki[ 6 * kd + 14 ] += -1.000000 ;
-    nuki[ 7 * kd + 14 ] += +1.000000 ;
-    nuki[ 1 * kd + 14 ] += +1.000000 ;
-
-    /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
-    nuki[ 6 * kd + 15 ] += -1.000000 ;
-    nuki[ 6 * kd + 15 ] += -1.000000 ;
-    nuki[ 7 * kd + 15 ] += +1.000000 ;
-    nuki[ 1 * kd + 15 ] += +1.000000 ;
-
-    /*reaction 17: H2O2 + H <=> H2O + OH */
-    nuki[ 7 * kd + 16 ] += -1.000000 ;
-    nuki[ 3 * kd + 16 ] += -1.000000 ;
-    nuki[ 2 * kd + 16 ] += +1.000000 ;
-    nuki[ 5 * kd + 16 ] += +1.000000 ;
-
-    /*reaction 18: H2O2 + H <=> HO2 + H2 */
-    nuki[ 7 * kd + 17 ] += -1.000000 ;
-    nuki[ 3 * kd + 17 ] += -1.000000 ;
-    nuki[ 6 * kd + 17 ] += +1.000000 ;
-    nuki[ 0 * kd + 17 ] += +1.000000 ;
-
-    /*reaction 19: H2O2 + O <=> OH + HO2 */
-    nuki[ 7 * kd + 18 ] += -1.000000 ;
-    nuki[ 4 * kd + 18 ] += -1.000000 ;
-    nuki[ 5 * kd + 18 ] += +1.000000 ;
-    nuki[ 6 * kd + 18 ] += +1.000000 ;
-
-    /*reaction 20: H2O2 + OH <=> HO2 + H2O */
-    nuki[ 7 * kd + 19 ] += -1.000000 ;
-    nuki[ 5 * kd + 19 ] += -1.000000 ;
-    nuki[ 6 * kd + 19 ] += +1.000000 ;
-    nuki[ 2 * kd + 19 ] += +1.000000 ;
-
-    /*reaction 21: H2O2 + OH <=> HO2 + H2O */
-    nuki[ 7 * kd + 20 ] += -1.000000 ;
-    nuki[ 5 * kd + 20 ] += -1.000000 ;
-    nuki[ 6 * kd + 20 ] += +1.000000 ;
-    nuki[ 2 * kd + 20 ] += +1.000000 ;
-}
-
-
-/*Returns the arrehenius coefficients  */
-/*for all reactions */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKABE( amrex::Real *  a, amrex::Real *  b, amrex::Real *  e)
-{
-    // (8):  H + O2 (+M) <=> HO2 (+M)
-    a[0] = 1475000000000;
-    b[0] = 0.59999999999999998;
-    e[0] = 0;
-
-    // (15):  H2O2 (+M) <=> OH + OH (+M)
-    a[1] = 295100000000000;
-    b[1] = 0;
-    e[1] = 48430;
-
-    // (4):  H2 + M <=> H + H + M
-    a[2] = 4.577e+19;
-    b[2] = -1.3999999999999999;
-    e[2] = 104380;
-
-    // (5):  O + O + M <=> O2 + M
-    a[3] = 6165000000000000;
-    b[3] = -0.5;
-    e[3] = 0;
-
-    // (6):  O + H + M <=> OH + M
-    a[4] = 4.714e+18;
-    b[4] = -1;
-    e[4] = 0;
-
-    // (7):  H + OH + M <=> H2O + M
-    a[5] = 3.8000000000000004e+22;
-    b[5] = -2;
-    e[5] = 0;
-
-    // (0):  H + O2 <=> O + OH
-    a[6] = 3547000000000000;
-    b[6] = -0.40600000000000003;
-    e[6] = 16599;
-
-    // (1):  O + H2 <=> H + OH
-    a[7] = 50800;
-    b[7] = 2.6699999999999999;
-    e[7] = 6290;
-
-    // (2):  H2 + OH <=> H2O + H
-    a[8] = 216000000;
-    b[8] = 1.51;
-    e[8] = 3430;
-
-    // (3):  O + H2O <=> OH + OH
-    a[9] = 2970000;
-    b[9] = 2.02;
-    e[9] = 13400;
-
-    // (9):  HO2 + H <=> H2 + O2
-    a[10] = 16600000000000;
-    b[10] = 0;
-    e[10] = 823;
-
-    // (10):  HO2 + H <=> OH + OH
-    a[11] = 70790000000000;
-    b[11] = 0;
-    e[11] = 295;
-
-    // (11):  HO2 + O <=> O2 + OH
-    a[12] = 32500000000000;
-    b[12] = 0;
-    e[12] = 0;
-
-    // (12):  HO2 + OH <=> H2O + O2
-    a[13] = 28900000000000;
-    b[13] = 0;
-    e[13] = -497;
-
-    // (13):  HO2 + HO2 <=> H2O2 + O2
-    a[14] = 420000000000000;
-    b[14] = 0;
-    e[14] = 11982;
-
-    // (14):  HO2 + HO2 <=> H2O2 + O2
-    a[15] = 130000000000;
-    b[15] = 0;
-    e[15] = -1629.3;
-
-    // (16):  H2O2 + H <=> H2O + OH
-    a[16] = 24100000000000;
-    b[16] = 0;
-    e[16] = 3970;
-
-    // (17):  H2O2 + H <=> HO2 + H2
-    a[17] = 48200000000000;
-    b[17] = 0;
-    e[17] = 7950;
-
-    // (18):  H2O2 + O <=> OH + HO2
-    a[18] = 9550000;
-    b[18] = 2;
-    e[18] = 3970;
-
-    // (19):  H2O2 + OH <=> HO2 + H2O
-    a[19] = 1000000000000;
-    b[19] = 0;
-    e[19] = 0;
-
-    // (20):  H2O2 + OH <=> HO2 + H2O
-    a[20] = 580000000000000;
-    b[20] = 0;
-    e[20] = 9557;
-
-
-    return;
-}
-
-
-/*compute the equilibrium constants for each reaction */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void equilibriumConstants(amrex::Real *  kc, amrex::Real *  g_RT, amrex::Real T)
-{
-    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    amrex::Real refC = 101325 / 8.31446 / T;
-
-    /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
-    kc[0] = 1.0 / (refC) * exp((g_RT[3] + g_RT[1]) - (g_RT[6]));
-
-    /*reaction 2: H2O2 (+M) <=> OH + OH (+M) */
-    kc[1] = refC * exp((g_RT[7]) - (g_RT[5] + g_RT[5]));
-
-    /*reaction 3: H2 + M <=> H + H + M */
-    kc[2] = refC * exp((g_RT[0]) - (g_RT[3] + g_RT[3]));
-
-    /*reaction 4: O + O + M <=> O2 + M */
-    kc[3] = 1.0 / (refC) * exp((g_RT[4] + g_RT[4]) - (g_RT[1]));
-
-    /*reaction 5: O + H + M <=> OH + M */
-    kc[4] = 1.0 / (refC) * exp((g_RT[4] + g_RT[3]) - (g_RT[5]));
-
-    /*reaction 6: H + OH + M <=> H2O + M */
-    kc[5] = 1.0 / (refC) * exp((g_RT[3] + g_RT[5]) - (g_RT[2]));
-
-    /*reaction 7: H + O2 <=> O + OH */
-    kc[6] = exp((g_RT[3] + g_RT[1]) - (g_RT[4] + g_RT[5]));
-
-    /*reaction 8: O + H2 <=> H + OH */
-    kc[7] = exp((g_RT[4] + g_RT[0]) - (g_RT[3] + g_RT[5]));
-
-    /*reaction 9: H2 + OH <=> H2O + H */
-    kc[8] = exp((g_RT[0] + g_RT[5]) - (g_RT[2] + g_RT[3]));
-
-    /*reaction 10: O + H2O <=> OH + OH */
-    kc[9] = exp((g_RT[4] + g_RT[2]) - (g_RT[5] + g_RT[5]));
-
-    /*reaction 11: HO2 + H <=> H2 + O2 */
-    kc[10] = exp((g_RT[6] + g_RT[3]) - (g_RT[0] + g_RT[1]));
-
-    /*reaction 12: HO2 + H <=> OH + OH */
-    kc[11] = exp((g_RT[6] + g_RT[3]) - (g_RT[5] + g_RT[5]));
-
-    /*reaction 13: HO2 + O <=> O2 + OH */
-    kc[12] = exp((g_RT[6] + g_RT[4]) - (g_RT[1] + g_RT[5]));
-
-    /*reaction 14: HO2 + OH <=> H2O + O2 */
-    kc[13] = exp((g_RT[6] + g_RT[5]) - (g_RT[2] + g_RT[1]));
-
-    /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
-    kc[14] = exp((g_RT[6] + g_RT[6]) - (g_RT[7] + g_RT[1]));
-
-    /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
-    kc[15] = exp((g_RT[6] + g_RT[6]) - (g_RT[7] + g_RT[1]));
-
-    /*reaction 17: H2O2 + H <=> H2O + OH */
-    kc[16] = exp((g_RT[7] + g_RT[3]) - (g_RT[2] + g_RT[5]));
-
-    /*reaction 18: H2O2 + H <=> HO2 + H2 */
-    kc[17] = exp((g_RT[7] + g_RT[3]) - (g_RT[6] + g_RT[0]));
-
-    /*reaction 19: H2O2 + O <=> OH + HO2 */
-    kc[18] = exp((g_RT[7] + g_RT[4]) - (g_RT[5] + g_RT[6]));
-
-    /*reaction 20: H2O2 + OH <=> HO2 + H2O */
-    kc[19] = exp((g_RT[7] + g_RT[5]) - (g_RT[6] + g_RT[2]));
-
-    /*reaction 21: H2O2 + OH <=> HO2 + H2O */
-    kc[20] = exp((g_RT[7] + g_RT[5]) - (g_RT[6] + g_RT[2]));
-
-    return;
-}
-
-
-/*Returns the equil constants for each reaction */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKEQC(amrex::Real *  T, amrex::Real *  C, amrex::Real *  eqcon)
-{
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real gort[9]; /* temporary storage */
-
-    /*compute the Gibbs free energy */
-    gibbs(gort, tc);
-
-    /*compute the equilibrium constants */
-    equilibriumConstants(eqcon, gort, tT);
-
-    /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
-    eqcon[0] *= 1e+06; 
-
-    /*reaction 2: H2O2 (+M) <=> OH + OH (+M) */
-    eqcon[1] *= 1e-06; 
-
-    /*reaction 3: H2 + M <=> H + H + M */
-    eqcon[2] *= 1e-06; 
-
-    /*reaction 4: O + O + M <=> O2 + M */
-    eqcon[3] *= 1e+06; 
-
-    /*reaction 5: O + H + M <=> OH + M */
-    eqcon[4] *= 1e+06; 
-
-    /*reaction 6: H + OH + M <=> H2O + M */
-    eqcon[5] *= 1e+06; 
-
-    /*reaction 7: H + O2 <=> O + OH */
-    /*eqcon[6] *= 1;  */
-
-    /*reaction 8: O + H2 <=> H + OH */
-    /*eqcon[7] *= 1;  */
-
-    /*reaction 9: H2 + OH <=> H2O + H */
-    /*eqcon[8] *= 1;  */
-
-    /*reaction 10: O + H2O <=> OH + OH */
-    /*eqcon[9] *= 1;  */
-
-    /*reaction 11: HO2 + H <=> H2 + O2 */
-    /*eqcon[10] *= 1;  */
-
-    /*reaction 12: HO2 + H <=> OH + OH */
-    /*eqcon[11] *= 1;  */
-
-    /*reaction 13: HO2 + O <=> O2 + OH */
-    /*eqcon[12] *= 1;  */
-
-    /*reaction 14: HO2 + OH <=> H2O + O2 */
-    /*eqcon[13] *= 1;  */
-
-    /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
-    /*eqcon[14] *= 1;  */
-
-    /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
-    /*eqcon[15] *= 1;  */
-
-    /*reaction 17: H2O2 + H <=> H2O + OH */
-    /*eqcon[16] *= 1;  */
-
-    /*reaction 18: H2O2 + H <=> HO2 + H2 */
-    /*eqcon[17] *= 1;  */
-
-    /*reaction 19: H2O2 + O <=> OH + HO2 */
-    /*eqcon[18] *= 1;  */
-
-    /*reaction 20: H2O2 + OH <=> HO2 + H2O */
-    /*eqcon[19] *= 1;  */
-
-    /*reaction 21: H2O2 + OH <=> HO2 + H2O */
-    /*eqcon[20] *= 1;  */
-}
-
-
-/*Returns the equil constants for each reaction */
-/*Given P, T, and mass fractions */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKEQYP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y, amrex::Real *  eqcon)
-{
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real gort[9]; /* temporary storage */
-
-    /*compute the Gibbs free energy */
-    gibbs(gort, tc);
-
-    /*compute the equilibrium constants */
-    equilibriumConstants(eqcon, gort, tT);
-
-    /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
-    eqcon[0] *= 1e+06; 
-
-    /*reaction 2: H2O2 (+M) <=> OH + OH (+M) */
-    eqcon[1] *= 1e-06; 
-
-    /*reaction 3: H2 + M <=> H + H + M */
-    eqcon[2] *= 1e-06; 
-
-    /*reaction 4: O + O + M <=> O2 + M */
-    eqcon[3] *= 1e+06; 
-
-    /*reaction 5: O + H + M <=> OH + M */
-    eqcon[4] *= 1e+06; 
-
-    /*reaction 6: H + OH + M <=> H2O + M */
-    eqcon[5] *= 1e+06; 
-
-    /*reaction 7: H + O2 <=> O + OH */
-    /*eqcon[6] *= 1;  */
-
-    /*reaction 8: O + H2 <=> H + OH */
-    /*eqcon[7] *= 1;  */
-
-    /*reaction 9: H2 + OH <=> H2O + H */
-    /*eqcon[8] *= 1;  */
-
-    /*reaction 10: O + H2O <=> OH + OH */
-    /*eqcon[9] *= 1;  */
-
-    /*reaction 11: HO2 + H <=> H2 + O2 */
-    /*eqcon[10] *= 1;  */
-
-    /*reaction 12: HO2 + H <=> OH + OH */
-    /*eqcon[11] *= 1;  */
-
-    /*reaction 13: HO2 + O <=> O2 + OH */
-    /*eqcon[12] *= 1;  */
-
-    /*reaction 14: HO2 + OH <=> H2O + O2 */
-    /*eqcon[13] *= 1;  */
-
-    /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
-    /*eqcon[14] *= 1;  */
-
-    /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
-    /*eqcon[15] *= 1;  */
-
-    /*reaction 17: H2O2 + H <=> H2O + OH */
-    /*eqcon[16] *= 1;  */
-
-    /*reaction 18: H2O2 + H <=> HO2 + H2 */
-    /*eqcon[17] *= 1;  */
-
-    /*reaction 19: H2O2 + O <=> OH + HO2 */
-    /*eqcon[18] *= 1;  */
-
-    /*reaction 20: H2O2 + OH <=> HO2 + H2O */
-    /*eqcon[19] *= 1;  */
-
-    /*reaction 21: H2O2 + OH <=> HO2 + H2O */
-    /*eqcon[20] *= 1;  */
-}
-
-
-/*Returns the equil constants for each reaction */
-/*Given P, T, and mole fractions */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKEQXP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x, amrex::Real *  eqcon)
-{
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real gort[9]; /* temporary storage */
-
-    /*compute the Gibbs free energy */
-    gibbs(gort, tc);
-
-    /*compute the equilibrium constants */
-    equilibriumConstants(eqcon, gort, tT);
-
-    /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
-    eqcon[0] *= 1e+06; 
-
-    /*reaction 2: H2O2 (+M) <=> OH + OH (+M) */
-    eqcon[1] *= 1e-06; 
-
-    /*reaction 3: H2 + M <=> H + H + M */
-    eqcon[2] *= 1e-06; 
-
-    /*reaction 4: O + O + M <=> O2 + M */
-    eqcon[3] *= 1e+06; 
-
-    /*reaction 5: O + H + M <=> OH + M */
-    eqcon[4] *= 1e+06; 
-
-    /*reaction 6: H + OH + M <=> H2O + M */
-    eqcon[5] *= 1e+06; 
-
-    /*reaction 7: H + O2 <=> O + OH */
-    /*eqcon[6] *= 1;  */
-
-    /*reaction 8: O + H2 <=> H + OH */
-    /*eqcon[7] *= 1;  */
-
-    /*reaction 9: H2 + OH <=> H2O + H */
-    /*eqcon[8] *= 1;  */
-
-    /*reaction 10: O + H2O <=> OH + OH */
-    /*eqcon[9] *= 1;  */
-
-    /*reaction 11: HO2 + H <=> H2 + O2 */
-    /*eqcon[10] *= 1;  */
-
-    /*reaction 12: HO2 + H <=> OH + OH */
-    /*eqcon[11] *= 1;  */
-
-    /*reaction 13: HO2 + O <=> O2 + OH */
-    /*eqcon[12] *= 1;  */
-
-    /*reaction 14: HO2 + OH <=> H2O + O2 */
-    /*eqcon[13] *= 1;  */
-
-    /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
-    /*eqcon[14] *= 1;  */
-
-    /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
-    /*eqcon[15] *= 1;  */
-
-    /*reaction 17: H2O2 + H <=> H2O + OH */
-    /*eqcon[16] *= 1;  */
-
-    /*reaction 18: H2O2 + H <=> HO2 + H2 */
-    /*eqcon[17] *= 1;  */
-
-    /*reaction 19: H2O2 + O <=> OH + HO2 */
-    /*eqcon[18] *= 1;  */
-
-    /*reaction 20: H2O2 + OH <=> HO2 + H2O */
-    /*eqcon[19] *= 1;  */
-
-    /*reaction 21: H2O2 + OH <=> HO2 + H2O */
-    /*eqcon[20] *= 1;  */
-}
-
-
-/*Returns the equil constants for each reaction */
-/*Given rho, T, and mass fractions */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKEQYR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  eqcon)
-{
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real gort[9]; /* temporary storage */
-
-    /*compute the Gibbs free energy */
-    gibbs(gort, tc);
-
-    /*compute the equilibrium constants */
-    equilibriumConstants(eqcon, gort, tT);
-
-    /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
-    eqcon[0] *= 1e+06; 
-
-    /*reaction 2: H2O2 (+M) <=> OH + OH (+M) */
-    eqcon[1] *= 1e-06; 
-
-    /*reaction 3: H2 + M <=> H + H + M */
-    eqcon[2] *= 1e-06; 
-
-    /*reaction 4: O + O + M <=> O2 + M */
-    eqcon[3] *= 1e+06; 
-
-    /*reaction 5: O + H + M <=> OH + M */
-    eqcon[4] *= 1e+06; 
-
-    /*reaction 6: H + OH + M <=> H2O + M */
-    eqcon[5] *= 1e+06; 
-
-    /*reaction 7: H + O2 <=> O + OH */
-    /*eqcon[6] *= 1;  */
-
-    /*reaction 8: O + H2 <=> H + OH */
-    /*eqcon[7] *= 1;  */
-
-    /*reaction 9: H2 + OH <=> H2O + H */
-    /*eqcon[8] *= 1;  */
-
-    /*reaction 10: O + H2O <=> OH + OH */
-    /*eqcon[9] *= 1;  */
-
-    /*reaction 11: HO2 + H <=> H2 + O2 */
-    /*eqcon[10] *= 1;  */
-
-    /*reaction 12: HO2 + H <=> OH + OH */
-    /*eqcon[11] *= 1;  */
-
-    /*reaction 13: HO2 + O <=> O2 + OH */
-    /*eqcon[12] *= 1;  */
-
-    /*reaction 14: HO2 + OH <=> H2O + O2 */
-    /*eqcon[13] *= 1;  */
-
-    /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
-    /*eqcon[14] *= 1;  */
-
-    /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
-    /*eqcon[15] *= 1;  */
-
-    /*reaction 17: H2O2 + H <=> H2O + OH */
-    /*eqcon[16] *= 1;  */
-
-    /*reaction 18: H2O2 + H <=> HO2 + H2 */
-    /*eqcon[17] *= 1;  */
-
-    /*reaction 19: H2O2 + O <=> OH + HO2 */
-    /*eqcon[18] *= 1;  */
-
-    /*reaction 20: H2O2 + OH <=> HO2 + H2O */
-    /*eqcon[19] *= 1;  */
-
-    /*reaction 21: H2O2 + OH <=> HO2 + H2O */
-    /*eqcon[20] *= 1;  */
-}
-
-
-/*Returns the equil constants for each reaction */
-/*Given rho, T, and mole fractions */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKEQXR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  eqcon)
-{
-    amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
-    amrex::Real gort[9]; /* temporary storage */
-
-    /*compute the Gibbs free energy */
-    gibbs(gort, tc);
-
-    /*compute the equilibrium constants */
-    equilibriumConstants(eqcon, gort, tT);
-
-    /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
-    eqcon[0] *= 1e+06; 
-
-    /*reaction 2: H2O2 (+M) <=> OH + OH (+M) */
-    eqcon[1] *= 1e-06; 
-
-    /*reaction 3: H2 + M <=> H + H + M */
-    eqcon[2] *= 1e-06; 
-
-    /*reaction 4: O + O + M <=> O2 + M */
-    eqcon[3] *= 1e+06; 
-
-    /*reaction 5: O + H + M <=> OH + M */
-    eqcon[4] *= 1e+06; 
-
-    /*reaction 6: H + OH + M <=> H2O + M */
-    eqcon[5] *= 1e+06; 
-
-    /*reaction 7: H + O2 <=> O + OH */
-    /*eqcon[6] *= 1;  */
-
-    /*reaction 8: O + H2 <=> H + OH */
-    /*eqcon[7] *= 1;  */
-
-    /*reaction 9: H2 + OH <=> H2O + H */
-    /*eqcon[8] *= 1;  */
-
-    /*reaction 10: O + H2O <=> OH + OH */
-    /*eqcon[9] *= 1;  */
-
-    /*reaction 11: HO2 + H <=> H2 + O2 */
-    /*eqcon[10] *= 1;  */
-
-    /*reaction 12: HO2 + H <=> OH + OH */
-    /*eqcon[11] *= 1;  */
-
-    /*reaction 13: HO2 + O <=> O2 + OH */
-    /*eqcon[12] *= 1;  */
-
-    /*reaction 14: HO2 + OH <=> H2O + O2 */
-    /*eqcon[13] *= 1;  */
-
-    /*reaction 15: HO2 + HO2 <=> H2O2 + O2 */
-    /*eqcon[14] *= 1;  */
-
-    /*reaction 16: HO2 + HO2 <=> H2O2 + O2 */
-    /*eqcon[15] *= 1;  */
-
-    /*reaction 17: H2O2 + H <=> H2O + OH */
-    /*eqcon[16] *= 1;  */
-
-    /*reaction 18: H2O2 + H <=> HO2 + H2 */
-    /*eqcon[17] *= 1;  */
-
-    /*reaction 19: H2O2 + O <=> OH + HO2 */
-    /*eqcon[18] *= 1;  */
-
-    /*reaction 20: H2O2 + OH <=> HO2 + H2O */
-    /*eqcon[19] *= 1;  */
-
-    /*reaction 21: H2O2 + OH <=> HO2 + H2O */
-    /*eqcon[20] *= 1;  */
 }
 
 
