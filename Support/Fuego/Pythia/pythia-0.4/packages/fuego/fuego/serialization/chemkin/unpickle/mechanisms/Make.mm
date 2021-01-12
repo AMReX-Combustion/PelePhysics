@@ -31,6 +31,8 @@ EXPORT_PYTHON_MODULES = \
     MechanismExceptions.py \
     ReactionDb.py \
     ReactionDeclaration.py \
+    QssSpeciesDb.py \
+    QssSpeciesDeclaration.py \
     SpeciesDb.py \
     SpeciesDeclaration.py \
     ThermoDb.py \

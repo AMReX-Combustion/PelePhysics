@@ -34,6 +34,8 @@ EXPORT_PYTHON_MODULES = \
     ReactionSet.py \
     Species.py \
     SpeciesSet.py \
+    QssSpecies.py \
+    QssSpeciesSet.py \
     Thermodynamics.py \
     __init__.py \
 

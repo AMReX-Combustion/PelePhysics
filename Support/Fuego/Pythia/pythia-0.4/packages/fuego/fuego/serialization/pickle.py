@@ -15,7 +15,7 @@ def save(mechanism, format="chemkin"):
 
     import journal
     journal.debug("fuego").log("pickling mechanism, format='%s')" % format)
-
+    
     factory = registrar().retrieve(format)
     if not factory:
         journal.error("fuego").log("unknown mechanism file format '%s'" % format)

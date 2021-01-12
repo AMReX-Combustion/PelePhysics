@@ -26,20 +26,25 @@ main (int   argc,
       EOS::init();
       transport_init();
     
-      std::vector<int> npts(3,1);
-      for (int i = 0; i < BL_SPACEDIM; ++i) {
+      // Define geometry
+      Array<int,AMREX_SPACEDIM> npts {AMREX_D_DECL(1,1,1)};;
+      for (int i = 0; i < AMREX_SPACEDIM; ++i) {
           npts[i] = 128;
       }
     
-      Box domain(IntVect(D_DECL(0,0,0)),
-                 IntVect(D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
+      Box domain(IntVect(AMREX_D_DECL(0,0,0)),
+                 IntVect(AMREX_D_DECL(npts[0]-1,npts[1]-1,npts[2]-1)));
 
-      std::vector<Real> plo(3,0), phi(3,0), dx(3,1);
-      for (int i=0; i<BL_SPACEDIM; ++i) {
-          phi[i] = domain.length(i);
-          dx[i] = (phi[i] - plo[i])/domain.length(i);
-      }
-    
+      RealBox real_box({AMREX_D_DECL(-1.0,-1.0,-1.0)},
+                       {AMREX_D_DECL( 1.0, 1.0, 1.0)});
+
+      int coord = 0;   
+
+      Array<int,AMREX_SPACEDIM> is_periodic {AMREX_D_DECL(1,1,1)};
+
+      Geometry geom(domain, real_box, coord, is_periodic);
+
+      // Define BoxArray
       int max_size = 32;
       pp.query("max_size",max_size);
       BoxArray ba(domain);
@@ -50,29 +55,31 @@ main (int   argc,
       ppa.query("plot_file",pltfile);
 
       DistributionMapping dm{ba};
-
       int num_grow = 0;
+
+      // Data MFs
       MultiFab mass_frac(ba,dm,NUM_SPECIES,num_grow);
       MultiFab temperature(ba,dm,1,num_grow);
       MultiFab density(ba,dm,1,num_grow);
 
-      IntVect tilesize(D_DECL(10240,8,32));
+      IntVect tilesize(AMREX_D_DECL(10240,8,32));
+
+      const auto geomdata = geom.data();
     
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
       for (MFIter mfi(mass_frac,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
-          const Box& gbox = mfi.tilebox();
+          const Box& bx = mfi.tilebox();
 
-          Array4<Real> const& Y_a    = mass_frac.array(mfi);
-          Array4<Real> const& T_a    = temperature.array(mfi);
-          Array4<Real> const& rho_a  = density.array(mfi);
+          auto const& Y_a    = mass_frac.array(mfi);
+          auto const& T_a    = temperature.array(mfi);
+          auto const& rho_a  = density.array(mfi);
 
-          amrex::ParallelFor(gbox, 
-              [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-                  initialize_data(i, j, k, Y_a, T_a, rho_a, 
-                                  dx, plo, phi);
+          amrex::ParallelFor(bx, [Y_a, T_a, rho_a, geomdata]
+          AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+             initialize_data(i, j, k, Y_a, T_a, rho_a, geomdata);
           });
 
       }
@@ -89,6 +96,9 @@ main (int   argc,
       MultiFab mu(ba,dm,1,num_grow);
       MultiFab xi(ba,dm,1,num_grow);
       MultiFab lam(ba,dm,1,num_grow);
+
+      // Get the transport data pointer
+      TransParm const* ltransparm = trans_parm_g;
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -108,7 +118,7 @@ main (int   argc,
           amrex::launch(gbox, [=] AMREX_GPU_DEVICE(amrex::Box const& tbx) {
                     get_transport_coeffs(tbx,
                                          Y_a, T_a, rho_a, 
-                                         D_a, mu_a, xi_a, lam_a);
+                                         D_a, mu_a, xi_a, lam_a, ltransparm);
           });
       }
 

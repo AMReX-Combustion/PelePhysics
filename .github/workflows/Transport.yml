@@ -31,7 +31,33 @@ jobs:
     - name: Run
       working-directory: ./Testing/Exec/TranEval
       run: |
-        ./Pele2d.gnu.DEBUG.MPI.ex inputs.2d-transportConstant
+        ./Pele2d.gnu.MPI.ex inputs.2d_Constant
+
+  # Sutherland Transport GNU7.5 and MPI support
+  Sutherland_MPI:
+    name: GNU@7.5 MPI [Sutherland]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        make -j 2 COMP=gnu Transport_dir=Sutherland
+    - name: Run
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        ./Pele2d.gnu.MPI.ex inputs.2d_Sutherland
 
   # Simple Transport GNU7.5 and MPI support
   Simple_MPI:
@@ -57,4 +83,148 @@ jobs:
     - name: Run
       working-directory: ./Testing/Exec/TranEval
       run: |
-        ./Pele2d.gnu.DEBUG.MPI.ex inputs.2d
+        ./Pele2d.gnu.MPI.ex inputs.2d_Simple
+
+  # Constant Transport CUDA and MPI support
+  Constant_CUDA:
+    name: CUDA@11.0.1 MPI [Constant]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_nvcc.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_dir=Constant
+
+  # Sutherland Transport CUDA and MPI support
+  Sutherland_CUDA:
+    name: CUDA@11.0.1 MPI [Sutherland]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_nvcc.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_dir=Sutherland
+
+  # Simple Transport CUDA and MPI support
+  Simple_CUDA:
+    name: CUDA@11.0.1 MPI [Simple]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_nvcc.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_dir=Simple
+
+  # Constant Transport HIP support
+  Constant_HIP:
+    name: HIPROCm@3.8 GFortran@9.3 [Constant]
+    runs-on: ubuntu-20.04
+    env: 
+      {CXXFLAGS: "-fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_hip.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        source /etc/profile.d/rocm.sh
+        hipcc --version
+        make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_dir=Constant
+
+  # Sutherland Transport HIP support
+  Sutherland_HIP:
+    name: HIPROCm@3.8 GFortran@9.3 [Sutherland]
+    runs-on: ubuntu-20.04
+    env: 
+      {CXXFLAGS: "-fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_hip.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        source /etc/profile.d/rocm.sh
+        hipcc --version
+        make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_dir=Sutherland
+
+  # Simple Transport HIP support
+  Simple_HIP:
+    name: HIPROCm@3.8 GFortran@9.3 [Simple]
+    runs-on: ubuntu-20.04
+    env: 
+      {CXXFLAGS: "-fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_hip.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/TranEval
+      run: |
+        source /etc/profile.d/rocm.sh
+        hipcc --version
+        make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_dir=Simple

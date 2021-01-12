@@ -26,6 +26,9 @@ def species():
     from Species import Species
     return Species()
 
+def qss_species():
+    from QssSpecies import QssSpecies
+    return QssSpecies()
 
 def thermo():
     from Thermo import Thermo

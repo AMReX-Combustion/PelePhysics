@@ -19,14 +19,14 @@ def load(filename, format=None, mechanism=None):
     import journal
     journal.debug("fuego").log("loading file '%s', format='%s')" % (filename, format))
 
-    print " "
-    print "***** CHECK file names (mech, thDB, trDB) ?", mechanism._name, mechanism._thermdb, mechanism._transdb
     if not mechanism:
         from mechanisms.Mechanism import Mechanism
         mechanism = Mechanism(filename)
 
     if not format:
         format = guessMechanismType(filename)
+ 
+    print "***** Using format", format
 
     factory = registrar().retrieve(format)
 
@@ -34,15 +34,14 @@ def load(filename, format=None, mechanism=None):
         journal.error("fuego").log("unknown mechanism file format '%s'" % format)
         return None
 
-    #print " *****JE VAIS INITIALIZER PARSER ..."
-    # GO TO ~/CODES/PelePhysics/Support/Fuego/Pythia/pythia-0.4/packages/fuego/fuego/serialization/chemkin/unpickle/parsers
+    # GO TO packages/fuego/fuego/serialization/chemkin/unpickle/parsers
     parser = factory.parser()
 
     file = locate(filename)
     if not file:
         return None
 
-    print "***** I'll PARSE NOW ... file is ?", filename
+    # chemkin/unpickle/parsers/ChemkinParser.py
     parser.parse(mechanism, file)
 
     return mechanism

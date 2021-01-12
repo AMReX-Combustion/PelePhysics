@@ -3,7 +3,7 @@ DIM        = 2
 PRECISION  = DOUBLE
 PROFILE    = FALSE
 VERBOSE    = FALSE
-DEBUG      = TRUE
+DEBUG      = FALSE
 
 # Compiler
 COMP	     = gnu
@@ -11,6 +11,7 @@ FCOMP	     = gfortran
 USE_MPI    = TRUE
 USE_OMP    = FALSE
 USE_CUDA   = FALSE
+USE_HIP    = FALSE
 
 # PelePhysics
 FUEGO_GAS  = TRUE

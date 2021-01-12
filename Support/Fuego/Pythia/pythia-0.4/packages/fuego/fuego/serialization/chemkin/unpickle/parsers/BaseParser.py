@@ -25,11 +25,13 @@ class BaseParser(Parser):
         self._tokenizer.unfetch(token)
         return self.anEndSection(token)
 
-
     def aSpeciesSection(self, token):
         self._tokenizer.unfetch(token)
         return self.anEndSection(token)
-        
+
+    def aQssSpeciesSection(self, token):
+        self._tokenizer.unfetch(token)
+        return self.anEndSection(token)
 
     def aThermoSection(self, token):
         self._tokenizer.unfetch(token)
@@ -42,7 +44,6 @@ class BaseParser(Parser):
     def aReactionSection(self, token):
         self._tokenizer.unfetch(token)
         return self.anEndSection(token)
-        
 
     def anEndSection(self, token):
         return 1
