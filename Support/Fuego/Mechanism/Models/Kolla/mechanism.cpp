@@ -15,32 +15,10 @@ namespace thermo
     amrex::Real activation_units[29], prefactor_units[29], phase_units[29];
     int is_PD[29], troe_len[29], sri_len[29], nTB[29], *TBid[29];
     amrex::Real *TB[29];
-    std::vector<std::vector<amrex::Real>> kiv(29); 
-    std::vector<std::vector<amrex::Real>> nuv(29); 
 };
 
 using namespace thermo;
 
-
-/*Returns a count of species in a reaction, and their indices */
-/*and stoichiometric coefficients. (Eq 50) */
-void CKINU(int * i, int * nspec, int * ki, int * nu)
-{
-    if (*i < 1) {
-        /*Return max num species per reaction */
-        *nspec = 4;
-    } else {
-        if (*i > 29) {
-            *nspec = -1;
-        } else {
-            *nspec = kiv[*i-1].size();
-            for (int j=0; j<*nspec; ++j) {
-                ki[j] = kiv[*i-1][j] + 1;
-                nu[j] = nuv[*i-1][j];
-            }
-        }
-    }
-}
 
 /* Vectorized stuff  */
 
@@ -4212,8 +4190,6 @@ void CKINIT()
 {
 
     // (0):  H + O2 <=> O + OH
-    kiv[8] = {5,1,2,3};
-    nuv[8] = {-1,-1,1,1};
     // (0):  H + O2 <=> O + OH
     fwd_A[8]     = 3547000000000000;
     fwd_beta[8]  = -0.40600000000000003;
@@ -4225,8 +4201,6 @@ void CKINIT()
     nTB[8] = 0;
 
     // (1):  O + H2 <=> H + OH
-    kiv[9] = {2,0,5,3};
-    nuv[9] = {-1,-1,1,1};
     // (1):  O + H2 <=> H + OH
     fwd_A[9]     = 50800;
     fwd_beta[9]  = 2.6699999999999999;
@@ -4238,8 +4212,6 @@ void CKINIT()
     nTB[9] = 0;
 
     // (2):  H2 + OH <=> H2O + H
-    kiv[10] = {0,3,4,5};
-    nuv[10] = {-1,-1,1,1};
     // (2):  H2 + OH <=> H2O + H
     fwd_A[10]     = 216000000;
     fwd_beta[10]  = 1.51;
@@ -4251,8 +4223,6 @@ void CKINIT()
     nTB[10] = 0;
 
     // (3):  O + H2O <=> OH + OH
-    kiv[11] = {2,4,3,3};
-    nuv[11] = {-1,-1,1,1};
     // (3):  O + H2O <=> OH + OH
     fwd_A[11]     = 2970000;
     fwd_beta[11]  = 2.02;
@@ -4264,8 +4234,6 @@ void CKINIT()
     nTB[11] = 0;
 
     // (4):  H2 + M <=> H + H + M
-    kiv[3] = {0,5,5};
-    nuv[3] = {-1,1,1};
     // (4):  H2 + M <=> H + H + M
     fwd_A[3]     = 4.577e+19;
     fwd_beta[3]  = -1.3999999999999999;
@@ -4283,8 +4251,6 @@ void CKINIT()
     TBid[3][3] = 9; TB[3][3] = 3.7999999999999998; // CO2
 
     // (5):  O + O + M <=> O2 + M
-    kiv[4] = {2,2,1};
-    nuv[4] = {-1,-1,1};
     // (5):  O + O + M <=> O2 + M
     fwd_A[4]     = 6165000000000000;
     fwd_beta[4]  = -0.5;
@@ -4302,8 +4268,6 @@ void CKINIT()
     TBid[4][3] = 9; TB[4][3] = 3.7999999999999998; // CO2
 
     // (6):  O + H + M <=> OH + M
-    kiv[5] = {2,5,3};
-    nuv[5] = {-1,-1,1};
     // (6):  O + H + M <=> OH + M
     fwd_A[5]     = 4.714e+18;
     fwd_beta[5]  = -1;
@@ -4321,8 +4285,6 @@ void CKINIT()
     TBid[5][3] = 9; TB[5][3] = 3.7999999999999998; // CO2
 
     // (7):  H + OH + M <=> H2O + M
-    kiv[6] = {5,3,4};
-    nuv[6] = {-1,-1,1};
     // (7):  H + OH + M <=> H2O + M
     fwd_A[6]     = 3.8000000000000004e+22;
     fwd_beta[6]  = -2;
@@ -4340,8 +4302,6 @@ void CKINIT()
     TBid[6][3] = 9; TB[6][3] = 3.7999999999999998; // CO2
 
     // (8):  H + O2 (+M) <=> HO2 (+M)
-    kiv[0] = {5,1,6};
-    nuv[0] = {-1,-1,1};
     // (8):  H + O2 (+M) <=> HO2 (+M)
     fwd_A[0]     = 1475000000000;
     fwd_beta[0]  = 0.59999999999999998;
@@ -4367,8 +4327,6 @@ void CKINIT()
     TBid[0][4] = 9; TB[0][4] = 3.7999999999999998; // CO2
 
     // (9):  HO2 + H <=> H2 + O2
-    kiv[12] = {6,5,0,1};
-    nuv[12] = {-1,-1,1,1};
     // (9):  HO2 + H <=> H2 + O2
     fwd_A[12]     = 16600000000000;
     fwd_beta[12]  = 0;
@@ -4380,8 +4338,6 @@ void CKINIT()
     nTB[12] = 0;
 
     // (10):  HO2 + H <=> OH + OH
-    kiv[13] = {6,5,3,3};
-    nuv[13] = {-1,-1,1,1};
     // (10):  HO2 + H <=> OH + OH
     fwd_A[13]     = 70790000000000;
     fwd_beta[13]  = 0;
@@ -4393,8 +4349,6 @@ void CKINIT()
     nTB[13] = 0;
 
     // (11):  HO2 + O <=> O2 + OH
-    kiv[14] = {6,2,1,3};
-    nuv[14] = {-1,-1,1,1};
     // (11):  HO2 + O <=> O2 + OH
     fwd_A[14]     = 32500000000000;
     fwd_beta[14]  = 0;
@@ -4406,8 +4360,6 @@ void CKINIT()
     nTB[14] = 0;
 
     // (12):  HO2 + OH <=> H2O + O2
-    kiv[15] = {6,3,4,1};
-    nuv[15] = {-1,-1,1,1};
     // (12):  HO2 + OH <=> H2O + O2
     fwd_A[15]     = 28900000000000;
     fwd_beta[15]  = 0;
@@ -4419,8 +4371,6 @@ void CKINIT()
     nTB[15] = 0;
 
     // (13):  HO2 + HO2 <=> H2O2 + O2
-    kiv[16] = {6,6,7,1};
-    nuv[16] = {-1,-1,1,1};
     // (13):  HO2 + HO2 <=> H2O2 + O2
     fwd_A[16]     = 420000000000000;
     fwd_beta[16]  = 0;
@@ -4432,8 +4382,6 @@ void CKINIT()
     nTB[16] = 0;
 
     // (14):  HO2 + HO2 <=> H2O2 + O2
-    kiv[17] = {6,6,7,1};
-    nuv[17] = {-1,-1,1,1};
     // (14):  HO2 + HO2 <=> H2O2 + O2
     fwd_A[17]     = 130000000000;
     fwd_beta[17]  = 0;
@@ -4445,8 +4393,6 @@ void CKINIT()
     nTB[17] = 0;
 
     // (15):  H2O2 (+M) <=> OH + OH (+M)
-    kiv[1] = {7,3,3};
-    nuv[1] = {-1,1,1};
     // (15):  H2O2 (+M) <=> OH + OH (+M)
     fwd_A[1]     = 295100000000000;
     fwd_beta[1]  = 0;
@@ -4471,8 +4417,6 @@ void CKINIT()
     TBid[1][3] = 9; TB[1][3] = 3.7999999999999998; // CO2
 
     // (16):  H2O2 + H <=> H2O + OH
-    kiv[18] = {7,5,4,3};
-    nuv[18] = {-1,-1,1,1};
     // (16):  H2O2 + H <=> H2O + OH
     fwd_A[18]     = 24100000000000;
     fwd_beta[18]  = 0;
@@ -4484,8 +4428,6 @@ void CKINIT()
     nTB[18] = 0;
 
     // (17):  H2O2 + H <=> HO2 + H2
-    kiv[19] = {7,5,6,0};
-    nuv[19] = {-1,-1,1,1};
     // (17):  H2O2 + H <=> HO2 + H2
     fwd_A[19]     = 48200000000000;
     fwd_beta[19]  = 0;
@@ -4497,8 +4439,6 @@ void CKINIT()
     nTB[19] = 0;
 
     // (18):  H2O2 + O <=> OH + HO2
-    kiv[20] = {7,2,3,6};
-    nuv[20] = {-1,-1,1,1};
     // (18):  H2O2 + O <=> OH + HO2
     fwd_A[20]     = 9550000;
     fwd_beta[20]  = 2;
@@ -4510,8 +4450,6 @@ void CKINIT()
     nTB[20] = 0;
 
     // (19):  H2O2 + OH <=> HO2 + H2O
-    kiv[21] = {7,3,6,4};
-    nuv[21] = {-1,-1,1,1};
     // (19):  H2O2 + OH <=> HO2 + H2O
     fwd_A[21]     = 1000000000000;
     fwd_beta[21]  = 0;
@@ -4523,8 +4461,6 @@ void CKINIT()
     nTB[21] = 0;
 
     // (20):  H2O2 + OH <=> HO2 + H2O
-    kiv[22] = {7,3,6,4};
-    nuv[22] = {-1,-1,1,1};
     // (20):  H2O2 + OH <=> HO2 + H2O
     fwd_A[22]     = 580000000000000;
     fwd_beta[22]  = 0;
@@ -4536,8 +4472,6 @@ void CKINIT()
     nTB[22] = 0;
 
     // (21):  CO + O (+M) <=> CO2 (+M)
-    kiv[2] = {8,2,9};
-    nuv[2] = {-1,-1,1};
     // (21):  CO + O (+M) <=> CO2 (+M)
     fwd_A[2]     = 18000000000;
     fwd_beta[2]  = 0;
@@ -4558,8 +4492,6 @@ void CKINIT()
     TBid[2][3] = 9; TB[2][3] = 3.7999999999999998; // CO2
 
     // (22):  CO + O2 <=> CO2 + O
-    kiv[23] = {8,1,9,2};
-    nuv[23] = {-1,-1,1,1};
     // (22):  CO + O2 <=> CO2 + O
     fwd_A[23]     = 2530000000000;
     fwd_beta[23]  = 0;
@@ -4571,8 +4503,6 @@ void CKINIT()
     nTB[23] = 0;
 
     // (23):  CO + HO2 <=> CO2 + OH
-    kiv[24] = {8,6,9,3};
-    nuv[24] = {-1,-1,1,1};
     // (23):  CO + HO2 <=> CO2 + OH
     fwd_A[24]     = 30100000000000;
     fwd_beta[24]  = 0;
@@ -4584,8 +4514,6 @@ void CKINIT()
     nTB[24] = 0;
 
     // (24):  CO + OH <=> CO2 + H
-    kiv[25] = {8,3,9,5};
-    nuv[25] = {-1,-1,1,1};
     // (24):  CO + OH <=> CO2 + H
     fwd_A[25]     = 222900;
     fwd_beta[25]  = 1.8899999999999999;
@@ -4597,8 +4525,6 @@ void CKINIT()
     nTB[25] = 0;
 
     // (25):  HCO + M <=> H + CO + M
-    kiv[7] = {10,5,8};
-    nuv[7] = {-1,1,1};
     // (25):  HCO + M <=> H + CO + M
     fwd_A[7]     = 474850000000;
     fwd_beta[7]  = 0.65900000000000003;
@@ -4616,8 +4542,6 @@ void CKINIT()
     TBid[7][3] = 9; TB[7][3] = 3.7999999999999998; // CO2
 
     // (26):  HCO + O2 <=> CO + HO2
-    kiv[26] = {10,1,8,6};
-    nuv[26] = {-1,-1,1,1};
     // (26):  HCO + O2 <=> CO + HO2
     fwd_A[26]     = 7580000000000;
     fwd_beta[26]  = 0;
@@ -4629,8 +4553,6 @@ void CKINIT()
     nTB[26] = 0;
 
     // (27):  HCO + H <=> CO + H2
-    kiv[27] = {10,5,8,0};
-    nuv[27] = {-1,-1,1,1};
     // (27):  HCO + H <=> CO + H2
     fwd_A[27]     = 72300000000000;
     fwd_beta[27]  = 0;
@@ -4642,8 +4564,6 @@ void CKINIT()
     nTB[27] = 0;
 
     // (28):  HCO + O <=> CO2 + H
-    kiv[28] = {10,2,9,5};
-    nuv[28] = {-1,-1,1,1};
     // (28):  HCO + O <=> CO2 + H
     fwd_A[28]     = 30000000000000;
     fwd_beta[28]  = 0;

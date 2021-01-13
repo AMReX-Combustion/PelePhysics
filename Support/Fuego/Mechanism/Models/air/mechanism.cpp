@@ -15,32 +15,10 @@ namespace thermo
     amrex::Real activation_units[0], prefactor_units[0], phase_units[0];
     int is_PD[0], troe_len[0], sri_len[0], nTB[0], *TBid[0];
     amrex::Real *TB[0];
-    std::vector<std::vector<amrex::Real>> kiv(0); 
-    std::vector<std::vector<amrex::Real>> nuv(0); 
 };
 
 using namespace thermo;
 
-
-/*Returns a count of species in a reaction, and their indices */
-/*and stoichiometric coefficients. (Eq 50) */
-void CKINU(int * i, int * nspec, int * ki, int * nu)
-{
-    if (*i < 1) {
-        /*Return max num species per reaction */
-        *nspec = 0;
-    } else {
-        if (*i > 0) {
-            *nspec = -1;
-        } else {
-            *nspec = kiv[*i-1].size();
-            for (int j=0; j<*nspec; ++j) {
-                ki[j] = kiv[*i-1][j] + 1;
-                nu[j] = nuv[*i-1][j];
-            }
-        }
-    }
-}
 
 /* Vectorized stuff  */
 

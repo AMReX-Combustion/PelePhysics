@@ -15,32 +15,10 @@ namespace thermo
     amrex::Real activation_units[4], prefactor_units[4], phase_units[4];
     int is_PD[4], troe_len[4], sri_len[4], nTB[4], *TBid[4];
     amrex::Real *TB[4];
-    std::vector<std::vector<amrex::Real>> kiv(4); 
-    std::vector<std::vector<amrex::Real>> nuv(4); 
 };
 
 using namespace thermo;
 
-
-/*Returns a count of species in a reaction, and their indices */
-/*and stoichiometric coefficients. (Eq 50) */
-void CKINU(int * i, int * nspec, int * ki, int * nu)
-{
-    if (*i < 1) {
-        /*Return max num species per reaction */
-        *nspec = 4;
-    } else {
-        if (*i > 4) {
-            *nspec = -1;
-        } else {
-            *nspec = kiv[*i-1].size();
-            for (int j=0; j<*nspec; ++j) {
-                ki[j] = kiv[*i-1][j] + 1;
-                nu[j] = nuv[*i-1][j];
-            }
-        }
-    }
-}
 
 /* Vectorized stuff  */
 
@@ -1334,8 +1312,6 @@ void CKINIT()
 {
 
     // (0):  2.000000 CH4 + O2 => 2.000000 CO + 4.000000 H2
-    kiv[0] = {0,1,4,6};
-    nuv[0] = {-2.0,-1,2.0,4.0};
     // (0):  2.000000 CH4 + O2 => 2.000000 CO + 4.000000 H2
     fwd_A[0]     = 39100000000000;
     fwd_beta[0]  = 0;
@@ -1347,8 +1323,6 @@ void CKINIT()
     nTB[0] = 0;
 
     // (1):  CH4 + H2O <=> CO + 3.000000 H2
-    kiv[1] = {0,2,4,6};
-    nuv[1] = {-1,-1,1,3.0};
     // (1):  CH4 + H2O <=> CO + 3.000000 H2
     fwd_A[1]     = 300000000000;
     fwd_beta[1]  = 0;
@@ -1360,8 +1334,6 @@ void CKINIT()
     nTB[1] = 0;
 
     // (2):  2.000000 H2 + O2 => 2.000000 H2O
-    kiv[2] = {6,1,2};
-    nuv[2] = {-2.0,-1,2.0};
     // (2):  2.000000 H2 + O2 => 2.000000 H2O
     fwd_A[2]     = 6.045e+18;
     fwd_beta[2]  = -1;
@@ -1373,8 +1345,6 @@ void CKINIT()
     nTB[2] = 0;
 
     // (3):  CO + H2O <=> CO2 + H2
-    kiv[3] = {4,2,5,6};
-    nuv[3] = {-1,-1,1,1};
     // (3):  CO + H2O <=> CO2 + H2
     fwd_A[3]     = 2750000000000;
     fwd_beta[3]  = 0;
