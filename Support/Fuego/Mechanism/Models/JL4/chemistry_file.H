@@ -154,27 +154,27 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKNU(int * kdim,  int * nuki)
     }
 
     /*reaction 1: 2.000000 CH4 + O2 => 2.000000 CO + 4.000000 H2 */
-    nuki[ 0 * kd + 0 ] += -2.000000 ;
-    nuki[ 1 * kd + 0 ] += -1.000000 ;
-    nuki[ 4 * kd + 0 ] += +2.000000 ;
-    nuki[ 6 * kd + 0 ] += +4.000000 ;
+    nuki[ 0 * kd + 0 ] += -2 ;
+    nuki[ 1 * kd + 0 ] += -1 ;
+    nuki[ 4 * kd + 0 ] += +2 ;
+    nuki[ 6 * kd + 0 ] += +4 ;
 
     /*reaction 2: CH4 + H2O <=> CO + 3.000000 H2 */
-    nuki[ 0 * kd + 1 ] += -1.000000 ;
-    nuki[ 2 * kd + 1 ] += -1.000000 ;
-    nuki[ 4 * kd + 1 ] += +1.000000 ;
-    nuki[ 6 * kd + 1 ] += +3.000000 ;
+    nuki[ 0 * kd + 1 ] += -1 ;
+    nuki[ 2 * kd + 1 ] += -1 ;
+    nuki[ 4 * kd + 1 ] += +1 ;
+    nuki[ 6 * kd + 1 ] += +3 ;
 
     /*reaction 3: 2.000000 H2 + O2 => 2.000000 H2O */
-    nuki[ 6 * kd + 2 ] += -2.000000 ;
-    nuki[ 1 * kd + 2 ] += -1.000000 ;
-    nuki[ 2 * kd + 2 ] += +2.000000 ;
+    nuki[ 6 * kd + 2 ] += -2 ;
+    nuki[ 1 * kd + 2 ] += -1 ;
+    nuki[ 2 * kd + 2 ] += +2 ;
 
     /*reaction 4: CO + H2O <=> CO2 + H2 */
-    nuki[ 4 * kd + 3 ] += -1.000000 ;
-    nuki[ 2 * kd + 3 ] += -1.000000 ;
-    nuki[ 5 * kd + 3 ] += +1.000000 ;
-    nuki[ 6 * kd + 3 ] += +1.000000 ;
+    nuki[ 4 * kd + 3 ] += -1 ;
+    nuki[ 2 * kd + 3 ] += -1 ;
+    nuki[ 5 * kd + 3 ] += +1 ;
+    nuki[ 6 * kd + 3 ] += +1 ;
 }
 
 
@@ -1716,7 +1716,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCP(amrex::Real *  P, amrex::Real * 
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  c)
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCR(amrex::Real *  rho, amrex::Real * /* T */, amrex::Real *  y,  amrex::Real *  c)
 {
     amrex::Real imw[7];
 
@@ -1771,7 +1771,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCP(amrex::Real *  P, amrex::Real * 
 
 
 /*convert x[species] (mole fracs) to c[species] (molar conc) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  c)
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCR(amrex::Real *  rho, amrex::Real * /* T */, amrex::Real *  x, amrex::Real *  c)
 {
     int id; /*loop counter */
     amrex::Real XW = 0; /*See Eq 4, 11 in CK Manual */

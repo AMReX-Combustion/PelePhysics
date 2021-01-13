@@ -152,20 +152,20 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKNU(int * kdim,  int * nuki)
     }
 
     /*reaction 1: 2.000000 CH4 + 3.000000 O2 => 2.000000 CO + 4.000000 H2O */
-    nuki[ 2 * kd + 0 ] += -2.000000 ;
-    nuki[ 0 * kd + 0 ] += -3.000000 ;
-    nuki[ 3 * kd + 0 ] += +2.000000 ;
-    nuki[ 1 * kd + 0 ] += +4.000000 ;
+    nuki[ 2 * kd + 0 ] += -2 ;
+    nuki[ 0 * kd + 0 ] += -3 ;
+    nuki[ 3 * kd + 0 ] += +2 ;
+    nuki[ 1 * kd + 0 ] += +4 ;
 
     /*reaction 2: 2.000000 CO + O2 => 2.000000 CO2 */
-    nuki[ 3 * kd + 1 ] += -2.000000 ;
-    nuki[ 0 * kd + 1 ] += -1.000000 ;
-    nuki[ 4 * kd + 1 ] += +2.000000 ;
+    nuki[ 3 * kd + 1 ] += -2 ;
+    nuki[ 0 * kd + 1 ] += -1 ;
+    nuki[ 4 * kd + 1 ] += +2 ;
 
     /*reaction 3: 2.000000 CO2 => 2.000000 CO + O2 */
-    nuki[ 4 * kd + 2 ] += -2.000000 ;
-    nuki[ 3 * kd + 2 ] += +2.000000 ;
-    nuki[ 0 * kd + 2 ] += +1.000000 ;
+    nuki[ 4 * kd + 2 ] += -2 ;
+    nuki[ 3 * kd + 2 ] += +2 ;
+    nuki[ 0 * kd + 2 ] += +1 ;
 }
 
 
@@ -1583,7 +1583,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCP(amrex::Real *  P, amrex::Real * 
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  c)
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCR(amrex::Real *  rho, amrex::Real * /* T */, amrex::Real *  y,  amrex::Real *  c)
 {
     amrex::Real imw[6];
 
@@ -1636,7 +1636,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCP(amrex::Real *  P, amrex::Real * 
 
 
 /*convert x[species] (mole fracs) to c[species] (molar conc) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  c)
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCR(amrex::Real *  rho, amrex::Real * /* T */, amrex::Real *  x, amrex::Real *  c)
 {
     int id; /*loop counter */
     amrex::Real XW = 0; /*See Eq 4, 11 in CK Manual */

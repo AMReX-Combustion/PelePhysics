@@ -16516,7 +16516,7 @@ void egtransetCOFLAM(amrex::Real* COFLAM) {
     COFLAM[190] = -7.46184920E-01;
     COFLAM[191] = 2.29240275E-02;
     COFLAM[192] = -1.77209721E+01;
-    COFLAM[193] = 7.36216062E+00;
+    COFLAM[193] = 7.36216061E+00;
     COFLAM[194] = -6.11089543E-01;
     COFLAM[195] = 1.64273679E-02;
     COFLAM[196] = -1.80139132E+01;
@@ -16524,7 +16524,7 @@ void egtransetCOFLAM(amrex::Real* COFLAM) {
     COFLAM[198] = -6.00090479E-01;
     COFLAM[199] = 1.55359162E-02;
     COFLAM[200] = -1.72838492E+01;
-    COFLAM[201] = 6.97737723E+00;
+    COFLAM[201] = 6.97737722E+00;
     COFLAM[202] = -5.47365626E-01;
     COFLAM[203] = 1.30795303E-02;
     COFLAM[204] = -1.79582416E+01;
@@ -31341,7 +31341,7 @@ void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
 
     amrex::IntVect iv(AMREX_D_DECL(0,0,0));
     amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
             for (int k=0; k<52; k++) {
                 c_d[k] = 1.0/ 52.000000 ;
             }
@@ -31382,7 +31382,7 @@ void SPARSITY_INFO_SYST( int * nJdata, int * consP, int NCELLS)
 
     amrex::IntVect iv(AMREX_D_DECL(0,0,0));
     amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
             for (int k=0; k<52; k++) {
                 c_d[k] = 1.0/ 52.000000 ;
             }
@@ -31427,7 +31427,7 @@ void SPARSITY_INFO_SYST_SIMPLIFIED( int * nJdata, int * consP)
 
     amrex::IntVect iv(AMREX_D_DECL(0,0,0));
     amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
             for (int k=0; k<52; k++) {
                 c_d[k] = 1.0/ 52.000000 ;
             }
@@ -31474,7 +31474,7 @@ void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, int * consP, int NCELL
 
     amrex::IntVect iv(AMREX_D_DECL(0,0,0));
     amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
             for (int k=0; k<52; k++) {
                 c_d[k] = 1.0/ 52.000000 ;
             }
@@ -31519,7 +31519,7 @@ void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS,
 
     amrex::IntVect iv(AMREX_D_DECL(0,0,0));
     amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
             for (int k=0; k<52; k++) {
                 c_d[k] = 1.0/ 52.000000 ;
             }
@@ -31581,7 +31581,7 @@ void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCE
 
     amrex::IntVect iv(AMREX_D_DECL(0,0,0));
     amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
             for (int k=0; k<52; k++) {
                 c_d[k] = 1.0/ 52.000000 ;
             }
@@ -31651,7 +31651,7 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * in
 
     amrex::IntVect iv(AMREX_D_DECL(0,0,0));
     amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
             for (int k=0; k<52; k++) {
                 c_d[k] = 1.0/ 52.000000 ;
             }
@@ -31699,7 +31699,7 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * con
 
     amrex::IntVect iv(AMREX_D_DECL(0,0,0));
     amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
+        [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
             for (int k=0; k<52; k++) {
                 c_d[k] = 1.0/ 52.000000 ;
             }

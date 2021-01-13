@@ -166,165 +166,165 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKNU(int * kdim,  int * nuki)
     }
 
     /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
-    nuki[ 0 * kd + 0 ] += -1.000000 ;
-    nuki[ 5 * kd + 0 ] += -1.000000 ;
-    nuki[ 6 * kd + 0 ] += +1.000000 ;
+    nuki[ 0 * kd + 0 ] += -1 ;
+    nuki[ 5 * kd + 0 ] += -1 ;
+    nuki[ 6 * kd + 0 ] += +1 ;
 
     /*reaction 2: H2O2 (+M) <=> OH + OH (+M) */
-    nuki[ 7 * kd + 1 ] += -1.000000 ;
-    nuki[ 3 * kd + 1 ] += +1.000000 ;
-    nuki[ 3 * kd + 1 ] += +1.000000 ;
+    nuki[ 7 * kd + 1 ] += -1 ;
+    nuki[ 3 * kd + 1 ] += +1 ;
+    nuki[ 3 * kd + 1 ] += +1 ;
 
     /*reaction 3: H2 + M <=> H + H + M */
-    nuki[ 1 * kd + 2 ] += -1.000000 ;
-    nuki[ 0 * kd + 2 ] += +1.000000 ;
-    nuki[ 0 * kd + 2 ] += +1.000000 ;
+    nuki[ 1 * kd + 2 ] += -1 ;
+    nuki[ 0 * kd + 2 ] += +1 ;
+    nuki[ 0 * kd + 2 ] += +1 ;
 
     /*reaction 4: O + O + M <=> O2 + M */
-    nuki[ 2 * kd + 3 ] += -1.000000 ;
-    nuki[ 2 * kd + 3 ] += -1.000000 ;
-    nuki[ 5 * kd + 3 ] += +1.000000 ;
+    nuki[ 2 * kd + 3 ] += -1 ;
+    nuki[ 2 * kd + 3 ] += -1 ;
+    nuki[ 5 * kd + 3 ] += +1 ;
 
     /*reaction 5: O + H + M <=> OH + M */
-    nuki[ 2 * kd + 4 ] += -1.000000 ;
-    nuki[ 0 * kd + 4 ] += -1.000000 ;
-    nuki[ 3 * kd + 4 ] += +1.000000 ;
+    nuki[ 2 * kd + 4 ] += -1 ;
+    nuki[ 0 * kd + 4 ] += -1 ;
+    nuki[ 3 * kd + 4 ] += +1 ;
 
     /*reaction 6: H2O + M <=> H + OH + M */
-    nuki[ 4 * kd + 5 ] += -1.000000 ;
-    nuki[ 0 * kd + 5 ] += +1.000000 ;
-    nuki[ 3 * kd + 5 ] += +1.000000 ;
+    nuki[ 4 * kd + 5 ] += -1 ;
+    nuki[ 0 * kd + 5 ] += +1 ;
+    nuki[ 3 * kd + 5 ] += +1 ;
 
     /*reaction 7: H + O2 <=> O + OH */
-    nuki[ 0 * kd + 6 ] += -1.000000 ;
-    nuki[ 5 * kd + 6 ] += -1.000000 ;
-    nuki[ 2 * kd + 6 ] += +1.000000 ;
-    nuki[ 3 * kd + 6 ] += +1.000000 ;
+    nuki[ 0 * kd + 6 ] += -1 ;
+    nuki[ 5 * kd + 6 ] += -1 ;
+    nuki[ 2 * kd + 6 ] += +1 ;
+    nuki[ 3 * kd + 6 ] += +1 ;
 
     /*reaction 8: O + H2 <=> H + OH */
-    nuki[ 2 * kd + 7 ] += -1.000000 ;
-    nuki[ 1 * kd + 7 ] += -1.000000 ;
-    nuki[ 0 * kd + 7 ] += +1.000000 ;
-    nuki[ 3 * kd + 7 ] += +1.000000 ;
+    nuki[ 2 * kd + 7 ] += -1 ;
+    nuki[ 1 * kd + 7 ] += -1 ;
+    nuki[ 0 * kd + 7 ] += +1 ;
+    nuki[ 3 * kd + 7 ] += +1 ;
 
     /*reaction 9: O + H2 <=> H + OH */
-    nuki[ 2 * kd + 8 ] += -1.000000 ;
-    nuki[ 1 * kd + 8 ] += -1.000000 ;
-    nuki[ 0 * kd + 8 ] += +1.000000 ;
-    nuki[ 3 * kd + 8 ] += +1.000000 ;
+    nuki[ 2 * kd + 8 ] += -1 ;
+    nuki[ 1 * kd + 8 ] += -1 ;
+    nuki[ 0 * kd + 8 ] += +1 ;
+    nuki[ 3 * kd + 8 ] += +1 ;
 
     /*reaction 10: H2 + OH <=> H2O + H */
-    nuki[ 1 * kd + 9 ] += -1.000000 ;
-    nuki[ 3 * kd + 9 ] += -1.000000 ;
-    nuki[ 4 * kd + 9 ] += +1.000000 ;
-    nuki[ 0 * kd + 9 ] += +1.000000 ;
+    nuki[ 1 * kd + 9 ] += -1 ;
+    nuki[ 3 * kd + 9 ] += -1 ;
+    nuki[ 4 * kd + 9 ] += +1 ;
+    nuki[ 0 * kd + 9 ] += +1 ;
 
     /*reaction 11: OH + OH <=> O + H2O */
-    nuki[ 3 * kd + 10 ] += -1.000000 ;
-    nuki[ 3 * kd + 10 ] += -1.000000 ;
-    nuki[ 2 * kd + 10 ] += +1.000000 ;
-    nuki[ 4 * kd + 10 ] += +1.000000 ;
+    nuki[ 3 * kd + 10 ] += -1 ;
+    nuki[ 3 * kd + 10 ] += -1 ;
+    nuki[ 2 * kd + 10 ] += +1 ;
+    nuki[ 4 * kd + 10 ] += +1 ;
 
     /*reaction 12: H2 + AR <=> H + H + AR */
-    nuki[ 1 * kd + 11 ] += -1.000000 ;
-    nuki[ 9 * kd + 11 ] += -1.000000 ;
-    nuki[ 0 * kd + 11 ] += +1.000000 ;
-    nuki[ 0 * kd + 11 ] += +1.000000 ;
-    nuki[ 9 * kd + 11 ] += +1.000000 ;
+    nuki[ 1 * kd + 11 ] += -1 ;
+    nuki[ 9 * kd + 11 ] += -1 ;
+    nuki[ 0 * kd + 11 ] += +1 ;
+    nuki[ 0 * kd + 11 ] += +1 ;
+    nuki[ 9 * kd + 11 ] += +1 ;
 
     /*reaction 13: H2 + HE <=> H + H + HE */
-    nuki[ 1 * kd + 12 ] += -1.000000 ;
-    nuki[ 10 * kd + 12 ] += -1.000000 ;
-    nuki[ 0 * kd + 12 ] += +1.000000 ;
-    nuki[ 0 * kd + 12 ] += +1.000000 ;
-    nuki[ 10 * kd + 12 ] += +1.000000 ;
+    nuki[ 1 * kd + 12 ] += -1 ;
+    nuki[ 10 * kd + 12 ] += -1 ;
+    nuki[ 0 * kd + 12 ] += +1 ;
+    nuki[ 0 * kd + 12 ] += +1 ;
+    nuki[ 10 * kd + 12 ] += +1 ;
 
     /*reaction 14: O + O + AR <=> O2 + AR */
-    nuki[ 2 * kd + 13 ] += -1.000000 ;
-    nuki[ 2 * kd + 13 ] += -1.000000 ;
-    nuki[ 9 * kd + 13 ] += -1.000000 ;
-    nuki[ 5 * kd + 13 ] += +1.000000 ;
-    nuki[ 9 * kd + 13 ] += +1.000000 ;
+    nuki[ 2 * kd + 13 ] += -1 ;
+    nuki[ 2 * kd + 13 ] += -1 ;
+    nuki[ 9 * kd + 13 ] += -1 ;
+    nuki[ 5 * kd + 13 ] += +1 ;
+    nuki[ 9 * kd + 13 ] += +1 ;
 
     /*reaction 15: O + O + HE <=> O2 + HE */
-    nuki[ 2 * kd + 14 ] += -1.000000 ;
-    nuki[ 2 * kd + 14 ] += -1.000000 ;
-    nuki[ 10 * kd + 14 ] += -1.000000 ;
-    nuki[ 5 * kd + 14 ] += +1.000000 ;
-    nuki[ 10 * kd + 14 ] += +1.000000 ;
+    nuki[ 2 * kd + 14 ] += -1 ;
+    nuki[ 2 * kd + 14 ] += -1 ;
+    nuki[ 10 * kd + 14 ] += -1 ;
+    nuki[ 5 * kd + 14 ] += +1 ;
+    nuki[ 10 * kd + 14 ] += +1 ;
 
     /*reaction 16: H2O + H2O <=> H + OH + H2O */
-    nuki[ 4 * kd + 15 ] += -1.000000 ;
-    nuki[ 4 * kd + 15 ] += -1.000000 ;
-    nuki[ 0 * kd + 15 ] += +1.000000 ;
-    nuki[ 3 * kd + 15 ] += +1.000000 ;
-    nuki[ 4 * kd + 15 ] += +1.000000 ;
+    nuki[ 4 * kd + 15 ] += -1 ;
+    nuki[ 4 * kd + 15 ] += -1 ;
+    nuki[ 0 * kd + 15 ] += +1 ;
+    nuki[ 3 * kd + 15 ] += +1 ;
+    nuki[ 4 * kd + 15 ] += +1 ;
 
     /*reaction 17: HO2 + H <=> H2 + O2 */
-    nuki[ 6 * kd + 16 ] += -1.000000 ;
-    nuki[ 0 * kd + 16 ] += -1.000000 ;
-    nuki[ 1 * kd + 16 ] += +1.000000 ;
-    nuki[ 5 * kd + 16 ] += +1.000000 ;
+    nuki[ 6 * kd + 16 ] += -1 ;
+    nuki[ 0 * kd + 16 ] += -1 ;
+    nuki[ 1 * kd + 16 ] += +1 ;
+    nuki[ 5 * kd + 16 ] += +1 ;
 
     /*reaction 18: HO2 + H <=> OH + OH */
-    nuki[ 6 * kd + 17 ] += -1.000000 ;
-    nuki[ 0 * kd + 17 ] += -1.000000 ;
-    nuki[ 3 * kd + 17 ] += +1.000000 ;
-    nuki[ 3 * kd + 17 ] += +1.000000 ;
+    nuki[ 6 * kd + 17 ] += -1 ;
+    nuki[ 0 * kd + 17 ] += -1 ;
+    nuki[ 3 * kd + 17 ] += +1 ;
+    nuki[ 3 * kd + 17 ] += +1 ;
 
     /*reaction 19: HO2 + O <=> O2 + OH */
-    nuki[ 6 * kd + 18 ] += -1.000000 ;
-    nuki[ 2 * kd + 18 ] += -1.000000 ;
-    nuki[ 5 * kd + 18 ] += +1.000000 ;
-    nuki[ 3 * kd + 18 ] += +1.000000 ;
+    nuki[ 6 * kd + 18 ] += -1 ;
+    nuki[ 2 * kd + 18 ] += -1 ;
+    nuki[ 5 * kd + 18 ] += +1 ;
+    nuki[ 3 * kd + 18 ] += +1 ;
 
     /*reaction 20: HO2 + OH <=> H2O + O2 */
-    nuki[ 6 * kd + 19 ] += -1.000000 ;
-    nuki[ 3 * kd + 19 ] += -1.000000 ;
-    nuki[ 4 * kd + 19 ] += +1.000000 ;
-    nuki[ 5 * kd + 19 ] += +1.000000 ;
+    nuki[ 6 * kd + 19 ] += -1 ;
+    nuki[ 3 * kd + 19 ] += -1 ;
+    nuki[ 4 * kd + 19 ] += +1 ;
+    nuki[ 5 * kd + 19 ] += +1 ;
 
     /*reaction 21: HO2 + HO2 <=> H2O2 + O2 */
-    nuki[ 6 * kd + 20 ] += -1.000000 ;
-    nuki[ 6 * kd + 20 ] += -1.000000 ;
-    nuki[ 7 * kd + 20 ] += +1.000000 ;
-    nuki[ 5 * kd + 20 ] += +1.000000 ;
+    nuki[ 6 * kd + 20 ] += -1 ;
+    nuki[ 6 * kd + 20 ] += -1 ;
+    nuki[ 7 * kd + 20 ] += +1 ;
+    nuki[ 5 * kd + 20 ] += +1 ;
 
     /*reaction 22: HO2 + HO2 <=> H2O2 + O2 */
-    nuki[ 6 * kd + 21 ] += -1.000000 ;
-    nuki[ 6 * kd + 21 ] += -1.000000 ;
-    nuki[ 7 * kd + 21 ] += +1.000000 ;
-    nuki[ 5 * kd + 21 ] += +1.000000 ;
+    nuki[ 6 * kd + 21 ] += -1 ;
+    nuki[ 6 * kd + 21 ] += -1 ;
+    nuki[ 7 * kd + 21 ] += +1 ;
+    nuki[ 5 * kd + 21 ] += +1 ;
 
     /*reaction 23: H2O2 + H <=> H2O + OH */
-    nuki[ 7 * kd + 22 ] += -1.000000 ;
-    nuki[ 0 * kd + 22 ] += -1.000000 ;
-    nuki[ 4 * kd + 22 ] += +1.000000 ;
-    nuki[ 3 * kd + 22 ] += +1.000000 ;
+    nuki[ 7 * kd + 22 ] += -1 ;
+    nuki[ 0 * kd + 22 ] += -1 ;
+    nuki[ 4 * kd + 22 ] += +1 ;
+    nuki[ 3 * kd + 22 ] += +1 ;
 
     /*reaction 24: H2O2 + H <=> HO2 + H2 */
-    nuki[ 7 * kd + 23 ] += -1.000000 ;
-    nuki[ 0 * kd + 23 ] += -1.000000 ;
-    nuki[ 6 * kd + 23 ] += +1.000000 ;
-    nuki[ 1 * kd + 23 ] += +1.000000 ;
+    nuki[ 7 * kd + 23 ] += -1 ;
+    nuki[ 0 * kd + 23 ] += -1 ;
+    nuki[ 6 * kd + 23 ] += +1 ;
+    nuki[ 1 * kd + 23 ] += +1 ;
 
     /*reaction 25: H2O2 + O <=> OH + HO2 */
-    nuki[ 7 * kd + 24 ] += -1.000000 ;
-    nuki[ 2 * kd + 24 ] += -1.000000 ;
-    nuki[ 3 * kd + 24 ] += +1.000000 ;
-    nuki[ 6 * kd + 24 ] += +1.000000 ;
+    nuki[ 7 * kd + 24 ] += -1 ;
+    nuki[ 2 * kd + 24 ] += -1 ;
+    nuki[ 3 * kd + 24 ] += +1 ;
+    nuki[ 6 * kd + 24 ] += +1 ;
 
     /*reaction 26: H2O2 + OH <=> HO2 + H2O */
-    nuki[ 7 * kd + 25 ] += -1.000000 ;
-    nuki[ 3 * kd + 25 ] += -1.000000 ;
-    nuki[ 6 * kd + 25 ] += +1.000000 ;
-    nuki[ 4 * kd + 25 ] += +1.000000 ;
+    nuki[ 7 * kd + 25 ] += -1 ;
+    nuki[ 3 * kd + 25 ] += -1 ;
+    nuki[ 6 * kd + 25 ] += +1 ;
+    nuki[ 4 * kd + 25 ] += +1 ;
 
     /*reaction 27: H2O2 + OH <=> HO2 + H2O */
-    nuki[ 7 * kd + 26 ] += -1.000000 ;
-    nuki[ 3 * kd + 26 ] += -1.000000 ;
-    nuki[ 6 * kd + 26 ] += +1.000000 ;
-    nuki[ 4 * kd + 26 ] += +1.000000 ;
+    nuki[ 7 * kd + 26 ] += -1 ;
+    nuki[ 3 * kd + 26 ] += -1 ;
+    nuki[ 6 * kd + 26 ] += +1 ;
+    nuki[ 4 * kd + 26 ] += +1 ;
 }
 
 
@@ -2610,7 +2610,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCP(amrex::Real *  P, amrex::Real * 
 
 
 /*convert y[species] (mass fracs) to c[species] (molar conc) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  c)
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCR(amrex::Real *  rho, amrex::Real * /* T */, amrex::Real *  y,  amrex::Real *  c)
 {
     amrex::Real imw[13];
 
@@ -2677,7 +2677,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCP(amrex::Real *  P, amrex::Real * 
 
 
 /*convert x[species] (mole fracs) to c[species] (molar conc) */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  c)
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCR(amrex::Real *  rho, amrex::Real * /* T */, amrex::Real *  x, amrex::Real *  c)
 {
     int id; /*loop counter */
     amrex::Real XW = 0; /*See Eq 4, 11 in CK Manual */
