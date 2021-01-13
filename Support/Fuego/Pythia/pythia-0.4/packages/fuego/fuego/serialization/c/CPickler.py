@@ -2887,7 +2887,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert y[species] (mass fracs) to c[species] (molar conc)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  c)')
+        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCR'+sym+'(amrex::Real *  rho, amrex::Real * /*T*/, amrex::Real * y,  amrex::Real * c)')
         self._write('{')
         self._indent()
         self._write('amrex::Real imw[%d];' % (self.nSpecies))
@@ -2970,7 +2970,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert x[species] (mole fracs) to c[species] (molar conc)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  c)')
+        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCR'+sym+'(amrex::Real *  rho, amrex::Real * /*T*/,, amrex::Real *  x, amrex::Real *  c)')
         self._write('{')
         self._indent()
 
