@@ -2886,7 +2886,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert y[species] (mass fracs) to c[species] (molar conc)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  c)')
+        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCR'+sym+'(amrex::Real *  rho, amrex::Real * /* T */, amrex::Real *  y,  amrex::Real *  c)')
         self._write('{')
         self._indent()
         self._write('amrex::Real imw[%d];' % (self.nSpecies))
@@ -2969,7 +2969,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert x[species] (mole fracs) to c[species] (molar conc)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  c)')
+        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCR'+sym+'(amrex::Real *  rho, amrex::Real * /* T */, amrex::Real *  x, amrex::Real *  c)')
         self._write('{')
         self._indent()
 
@@ -3923,18 +3923,18 @@ class CPickler(CMill):
             self._write(self.line('reaction %d: %s' % (reaction.id, reaction.equation())))
             for symbol, coefficient in reaction.reactants:
                 if symbol not in self.qss_species_list:
-                    self._write( "nuki[ %d * kd + %d ] += -%f ;"
+                    self._write( "nuki[ %d * kd + %d ] += -%d ;"
                         % (self.ordered_idx_map[symbol], reaction.id-1, coefficient))
                 else:
-                    self._write( "nuki_qss[ %d * kd + %d ] += -%f ;"
+                    self._write( "nuki_qss[ %d * kd + %d ] += -%d ;"
                         % (self.ordered_idx_map[symbol]-self.nSpecies, reaction.id-1, coefficient))
 
             for symbol, coefficient in reaction.products:
                 if symbol not in self.qss_species_list:
-                    self._write( "nuki[ %d * kd + %d ] += +%f ;"
+                    self._write( "nuki[ %d * kd + %d ] += +%d ;"
                         % (mechanism.species(symbol).id, reaction.id-1, coefficient))
                 else:
-                    self._write( "nuki_qss[ %d * kd + %d ] += +%f ;"
+                    self._write( "nuki_qss[ %d * kd + %d ] += +%d ;"
                         % (self.ordered_idx_map[symbol]-self.nSpecies, reaction.id-1, coefficient))
        
         self._outdent()
@@ -9279,7 +9279,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {')
+        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9340,7 +9340,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {')
+        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9409,7 +9409,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {')
+        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9481,7 +9481,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {')
+        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9547,7 +9547,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {')
+        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9642,7 +9642,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {')
+        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9752,7 +9752,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {')
+        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9822,7 +9822,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept {')
+        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
