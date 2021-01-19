@@ -560,6 +560,7 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
 
       /* Offset in case several cells */
       int offset = tid * (NUM_SPECIES + 1);
+      data_wk->boxcell = 0;
 
       /* MW CGS */
       CKWT(molecular_weight);
@@ -579,7 +580,7 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
       }
 
       /* NRG CGS */
-      energy = (data_wk->rhoX_init[data->boxcell + tid] + data_wk->rhoXsrc_ext[data_wk->boxcell + tid] * dt) /rho;
+      energy = (data_wk->rhoX_init[data_wk->boxcell + tid] + data_wk->rhoXsrc_ext[data_wk->boxcell + tid] * dt) /rho;
 
       if (data_wk->ireactor_type == eint_rho){
           /* UV REACTOR */
