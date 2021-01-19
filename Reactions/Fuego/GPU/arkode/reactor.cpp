@@ -31,6 +31,8 @@ int reactor_info(int reactor_type, int Ncells)
     {
         Print()<<"Using ARK Step on GPU\n";
     }
+    Print() << "Setting ARK/ERKODE tolerances rtol = " << relTol 
+                << " atol = " << absTol << " in PelePhysics \n";
     return(0);
 }
 /******************************************************************************************/
@@ -50,12 +52,12 @@ void SetTypValsODE(const std::vector<double>& ExtTypVals)
     Print() << "Temp:"<< typVals[size_ETV-1] <<  " \n";
 }
 /******************************************************************************************/
-void SetTolFactODE(double relative_tol,double absolute_tol) 
+/*void SetTolFactODE(double relative_tol,double absolute_tol) 
 {
     relTol = relative_tol;
     absTol = absolute_tol;
     Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
-}
+}*/
 /******************************************************************************************/
 /* react call with array4 of data */
 int react(const amrex::Box& box,

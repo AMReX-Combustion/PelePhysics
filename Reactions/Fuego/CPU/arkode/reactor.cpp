@@ -18,7 +18,7 @@ void *arkode_mem    = NULL;
 UserData data      = NULL;
 Real time_init    = 0.0;
 Array<Real,NUM_SPECIES+1> typVals = {-1};
-Real relTol       = 1.0e-10;
+Real relTol       = 1.0e-6;
 Real absTol       = 1.0e-10;
 /* REMOVE MAYBE LATER */
 int dense_solve           = 1;
@@ -74,11 +74,11 @@ void SetTolFactODE(Real relative_tol,Real absolute_tol)
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num();
 #endif
-
+/*
     if (omp_thread == 0)
     {
         Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
-    }
+    }*/
 }
 //===========================================================
 /* Function to ReSet the Tolerances */
@@ -105,7 +105,7 @@ void ReSetTolODE()
         if ((data->iverbose > 0) && (omp_thread == 0)) 
         {
             Print() << "Setting ARK/ERKODE tolerances rtol = " << relTol 
-                << " atolfact = " << absTol << " in PelePhysics \n";
+                << " atol = " << absTol << " in PelePhysics \n";
         }
         for  (int i = 0; i < data->ncells; i++) 
         {
@@ -926,11 +926,11 @@ int check_flag(void *flagvalue, const char *funcname, int opt)
 //===========================================================
 UserData AllocUserData(int reactor_type, int num_cells)
 {
-
     /* Make local copies of pointers in user_data */
     UserData data_wk = (UserData) malloc(sizeof *data_wk);
     int omp_thread = 0;
-    Real relative_tol,absolute_tol;
+    amrex::Real relative_tol = 1.0e-6;
+    amrex::Real absolute_tol = 1.0e-10;
 
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num();
