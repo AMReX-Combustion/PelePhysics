@@ -1,6 +1,58 @@
 #ifndef _SPRAYINTERPOLATION_H_
 #define _SPRAYINTERPOLATION_H_
 
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+void InterpolateFaceVelocity (const RealVect& len,
+                              const IntVect&  dom_lo,
+                              const IntVect&  dom_hi,
+                              GpuArray<Array4<Real const>, AMREX_SPACEDIM> const& umac,
+                              RealVect&       vel_fluid)
+{
+  for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+    RealVect face_len(AMREX_D_DECL(len[0] + (dir == 0)*0.5,
+                                   len[1] + (dir == 1)*0.5,
+                                   len[2] + (dir == 2)*0.5));
+    // Compute distances for trilinear interpolation
+    IntVect indx(AMREX_D_DECL(amrex::Math::floor(face_len[0]),
+                              amrex::Math::floor(face_len[1]),
+                              amrex::Math::floor(face_len[2])));
+    RealVect delL(AMREX_D_DECL(face_len[0] - indx[0],
+                               face_len[1] - indx[1],
+                               face_len[2] - indx[2]));
+    int iin[2] = {amrex::max(indx[0] - 1, dom_lo[0]),
+                  amrex::min(indx[0], dom_hi[0])};
+    Real ssx[2] = {1. - delL[0], delL[0]};
+    int zindx = 0;
+    int yindx = 0;
+    int xindx = 0;
+#if AMREX_SPACEDIM > 1
+    int jjn[2] = {amrex::max(indx[1] - 1, dom_lo[1]),
+                  amrex::min(indx[1], dom_hi[1])};
+    Real ssy[2] = {1. - delL[1], delL[1]};
+#if AMREX_SPACEDIM == 3
+    int kkn[2] = {amrex::max(indx[2] - 1, dom_lo[2]),
+                  amrex::min(indx[2], dom_hi[2])};
+    Real ssz[2] = {1. - delL[2], delL[2]};
+    for (int kk = 0; kk != 2; ++kk) {
+      zindx = kkn[kk];
+#endif
+      for (int jj = 0; jj != 2; ++jj) {
+        yindx = jjn[jj];
+#endif
+        for (int ii = 0; ii != 2; ++ii) {
+          xindx = iin[ii];
+          vel_fluid[dir] += (umac[dir])(xindx, yindx, zindx, 0)*
+            AMREX_D_TERM(ssx[ii],*ssy[jj],*ssz[kk]);
+        }
+#if AMREX_SPACEDIM > 1
+      }
+#if AMREX_SPACEDIM == 3
+    }
+#endif
+#endif
+  }
+}
+
 // Slightly modified from MFIX code
 
 /****************************************************************
@@ -101,7 +153,8 @@ amrex::Real dfdeta (const int dir,
     amrex::Real a2 = (nodes[2][dir] - nodes[0][dir]);
     amrex::Real a4 = (nodes[0][dir] - nodes[1][dir] + nodes[3][dir] - nodes[2][dir]);
     amrex::Real a6 = (nodes[0][dir] - nodes[2][dir] - nodes[4][dir] + nodes[6][dir]);
-    amrex::Real a7 = (nodes[1][dir] - nodes[3][dir] + nodes[2][dir] + nodes[4][dir] - nodes[5][dir] + nodes[7][dir] - nodes[6][dir] - nodes[0][dir]);
+    amrex::Real a7 = (nodes[1][dir] - nodes[3][dir] + nodes[2][dir] + nodes[4][dir] -
+                      nodes[5][dir] + nodes[7][dir] - nodes[6][dir] - nodes[0][dir]);
 
     return a2 + a4*xi + a6*zeta + a7*xi*zeta;
 }
@@ -117,7 +170,8 @@ amrex::Real dfdzeta (const int dir,
     amrex::Real a3 = (nodes[4][dir] - nodes[0][dir]);
     amrex::Real a5 = (nodes[0][dir] - nodes[1][dir] - nodes[4][dir] + nodes[5][dir]);
     amrex::Real a6 = (nodes[0][dir] - nodes[2][dir] - nodes[4][dir] + nodes[6][dir]);
-    amrex::Real a7 = (nodes[1][dir] - nodes[3][dir] + nodes[2][dir] + nodes[4][dir] - nodes[5][dir] + nodes[7][dir] - nodes[6][dir] - nodes[0][dir]);
+    amrex::Real a7 = (nodes[1][dir] - nodes[3][dir] + nodes[2][dir] + nodes[4][dir] -
+                      nodes[5][dir] + nodes[7][dir] - nodes[6][dir] - nodes[0][dir]);
 
     return a3 + a5*xi + a6*eta + a7*xi*eta;
 }
@@ -129,14 +183,6 @@ void get_interp_mapping (const amrex::RealVect& pos,
                          amrex::Real& eta,
                          amrex::Real& zeta)
 {
-
-#if(0)
-    amrex::Print() << 0
-                   << "  xi: " << xi << "  "
-                   << " eta: " << eta << "  "
-                   << "zeta: " << zeta << std::endl;
-#endif
-
     int lc(0);
     amrex::Real err(1.0);
 
@@ -173,15 +219,6 @@ void get_interp_mapping (const amrex::RealVect& pos,
         amrex::Real detJ_zeta = df0dxi   * (df1deta*f2     - f1*df2deta)
                               - df0deta  * (df1dxi*f2      - f1*df2dxi)
                               + f0       * (df1dxi*df2deta - df1deta*df2dxi);
-
-#if(0)
-        amrex::Print() << std::endl << std::endl;
-        amrex::Print() << "detJ      " << detJ << std::endl;
-        amrex::Print() << "detJ_xi   " << detJ_xi << std::endl;
-        amrex::Print() << "detJ_eta  " << detJ_eta << std::endl;
-        amrex::Print() << "detJ_zeta " << detJ_zeta << std::endl;
-        amrex::Print() << std::endl << std::endl;
-#endif
         amrex::Real new_xi   = xi   - detJ_xi   / detJ;
         amrex::Real new_eta  = eta  - detJ_eta  / detJ;
         amrex::Real new_zeta = zeta - detJ_zeta / detJ;
@@ -192,16 +229,7 @@ void get_interp_mapping (const amrex::RealVect& pos,
         xi   = new_xi;
         eta  = new_eta;
         zeta = new_zeta;
-
-#if(0)
-    amrex::Print() << lc
-                   << "  xi: " << xi << "  "
-                   << " eta: " << eta << "  "
-                   << "zeta: " << zeta << "  "
-                   << " err: " << err << std::endl;
-#endif
     }
-
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE

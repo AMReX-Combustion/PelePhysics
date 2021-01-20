@@ -1,5 +1,5 @@
-#ifndef SPRAYFUELDATA_H_
-#define SPRAYFUELDATA_H_
+#ifndef _SPRAYFUELDATA_H_
+#define _SPRAYFUELDATA_H_
 
 #include <AMReX_Gpu.H>
 #include "EOS.H"
@@ -49,6 +49,24 @@ struct SprayUnits {
   Real mass_src_conv = 1.;
   Real eng_src_conv = 1.;
 #endif
+};
+
+// Structure that contains the values for secondary
+// droplets that form during impingement
+struct SprayRefl
+{
+  Real Unorm;
+  Real dt_pp; // Time remaining to convect reflected drops
+  Real dia_refl;
+  int Ns_refl = 0;
+  GpuArray<Real,SPRAY_FUEL_NUM> Y_refl;
+  RealVect norm; // Normal to surface
+  RealVect tanBeta; // Tangent vector along particle path
+  RealVect tanPsi; // Tangent normal to particle path
+  Real omega; // Used to compute the deviation angle for particle
+  Real expomega;
+  Real beta_mean; // Mean ejection angle in degrees
+  Real beta_stdv; // Standard dev ejection angle in degrees
 };
 
 // Structure that contains the interpolated gas phase state
@@ -102,7 +120,6 @@ struct SprayData
   Real num_ppp; // Parcel size
   Real ref_T;
   Real sigma; // Surface tension
-  Real cangle; // Contact angle
 
   SprayData (const Gpu::DeviceVector<Real>& critT,
              const Gpu::DeviceVector<Real>& boilT,
@@ -113,8 +130,7 @@ struct SprayData
              const Gpu::DeviceVector<int>&  fuelIndx,
              const Real in_num_ppp,
              const Real in_ref_T,
-             const Real in_sigma,
-             const Real in_theta)
+             const Real in_sigma)
     : m_critT_ptr(critT.dataPtr()),
       m_boilT_ptr(boilT.dataPtr()),
       m_fuelCp_ptr(fuelCp.dataPtr()),
@@ -124,8 +140,7 @@ struct SprayData
       m_fuelIndx_ptr(fuelIndx.dataPtr()),
       num_ppp(in_num_ppp),
       ref_T(in_ref_T),
-      sigma(in_sigma),
-      cangle(in_theta*M_PI/180.)
+      sigma(in_sigma)
   {}
 
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -196,13 +211,11 @@ public:
               const Gpu::HostVector<int>&  fuelIndx,
               Real in_num_ppp,
               Real in_ref_T,
-              Real in_sigma,
-              Real in_theta)
+              Real in_sigma)
   {
     num_ppp = in_num_ppp;
     ref_T = in_ref_T;
     fuelSigma = in_sigma;
-    fuelTheta = in_theta;
     const int nfspec = SPRAY_FUEL_NUM;
     m_critT.resize(nfspec);
     m_boilT.resize(nfspec);
@@ -235,7 +248,7 @@ public:
   SprayData getSprayData()
   {
     return SprayData(m_critT, m_boilT, m_fuelCp, m_fuelLatent, m_fuelRho,
-                     m_fuelMu, m_fuelIndx, num_ppp, ref_T, fuelSigma, fuelTheta);
+                     m_fuelMu, m_fuelIndx, num_ppp, ref_T, fuelSigma);
   }
 
 private:
@@ -251,7 +264,6 @@ private:
   Real num_ppp;
   Real ref_T;
   Real fuelSigma; // Surface tension
-  Real fuelTheta; // Contact angle
 };
 
 #endif

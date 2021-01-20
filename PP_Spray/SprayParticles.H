@@ -89,13 +89,14 @@ public:
                      amrex::Real         parcelSize,
                      amrex::Real         ref_T,
                      amrex::Real         fuelSigma,
-                     amrex::Real         fuelTheta)
+                     amrex::Real         in_T_wall)
   {
     m_parcelSize = parcelSize;
+    T_wall = in_T_wall;
     HostVectReal fuelEnth(NUM_SPECIES);
     EOS::T2Hi(ref_T, fuelEnth.dataPtr());
     m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelRho,
-                     fuelMu, fuelIndx, parcelSize, ref_T, fuelSigma, fuelTheta);
+                     fuelMu, fuelIndx, parcelSize, ref_T, fuelSigma);
     m_sprayIndx = sprayIndices;
     m_setFuelData = true;
   }
@@ -272,6 +273,8 @@ private:
   amrex::Real m_injectVel;
   // The number of spray droplets per computational particle
   amrex::Real m_parcelSize;
+  // Temperature of walls
+  amrex::Real T_wall;
   ///
   /// This defines reflect_lo and reflect_hi from phys_bc
   ///
