@@ -57,7 +57,7 @@ jobs:
     - name: Run
       working-directory: ./Testing/Exec/EosEval
       run: |
-        ./Pele2d.MPI.ex inputs.2d
+        ./Pele2d.gnu.ex inputs.2d
 
   # Fuego EOS CUDA support
   Fuego_CUDA:
