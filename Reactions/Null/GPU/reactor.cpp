@@ -91,7 +91,7 @@ int react(amrex::Real *rY_in, amrex::Real *rY_src_in,
           amrex::Real *rX_in, amrex::Real *rX_src_in,
           amrex::Real &dt_react, amrex::Real &time,
           int cvode_iE, int Ncells,
-          cudaStream_t stream) {
+          gpuStream_t stream) {
 
     /* Initial time and time to reach after integration */
     Real time_init = time;
