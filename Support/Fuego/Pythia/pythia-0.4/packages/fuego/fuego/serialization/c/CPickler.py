@@ -608,7 +608,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line(' inverse molecular weights '))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE')
         self._write('void get_imw(amrex::Real *imw_new){')
         self._indent()
         for i in range(0,self.nSpecies):
@@ -620,7 +620,7 @@ class CPickler(CMill):
         self._write()
 
         self._write(self.line(' molecular weights '))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE')
         self._write('void get_mw(amrex::Real *mw_new){')
         self._indent()
         for i in range(0,self.nSpecies):
@@ -808,7 +808,7 @@ class CPickler(CMill):
     def _generateThermoRoutine_GPU(self, name, expressionGenerator, speciesInfo, QSS_flag, needsInvT=0):
         lowT, highT, midpoints = speciesInfo
 
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void %s(amrex::Real * species, amrex::Real *  tc)' % name)
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void %s(amrex::Real * species, amrex::Real *  tc)' % name)
         self._write('{')
         self._indent()
         # declarations
@@ -940,7 +940,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns helmholtz in mass units (Eq 32.)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKAMS'+sym+'(amrex::Real *  T,  amrex::Real *  ams)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKAMS'+sym+'(amrex::Real *  T,  amrex::Real *  ams)')
         self._write('{')
         self._indent()
 
@@ -976,7 +976,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the entropies in mass units (Eq 28.)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSMS'+sym+'(amrex::Real *  T,  amrex::Real *  sms)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSMS'+sym+'(amrex::Real *  T,  amrex::Real *  sms)')
         self._write('{')
         self._indent()
 
@@ -1008,7 +1008,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the mean specific heat at CP (Eq. 33)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCPBL'+sym+'(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  cpbl)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPBL'+sym+'(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  cpbl)')
         self._write('{')
         self._indent()
 
@@ -1049,7 +1049,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the mean specific heat at CP (Eq. 34)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCPBS'+sym+'(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  cpbs)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPBS'+sym+'(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  cpbs)')
         self._write('{')
         self._indent()
 
@@ -1098,7 +1098,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the mean specific heat at CV (Eq. 35)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCVBL'+sym+'(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  cvbl)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVBL'+sym+'(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  cvbl)')
         self._write('{')
         self._indent()
 
@@ -1138,7 +1138,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the mean specific heat at CV (Eq. 36)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCVBS'+sym+'(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  cvbs)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVBS'+sym+'(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  cvbs)')
         self._write('{')
         self._indent()
 
@@ -1181,7 +1181,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the mean enthalpy of the mixture in molar units'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKHBML'+sym+'(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  hbml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHBML'+sym+'(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  hbml)')
         self._write('{')
         self._indent()
 
@@ -1224,7 +1224,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns mean enthalpy of mixture in mass units'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKHBMS'+sym+'(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  hbms)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHBMS'+sym+'(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  hbms)')
         self._write('{')
         self._indent()
 
@@ -1276,7 +1276,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('get mean internal energy in molar units'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKUBML'+sym+'(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  ubml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUBML'+sym+'(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  ubml)')
         self._write('{')
         self._indent()
 
@@ -1319,7 +1319,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('get mean internal energy in mass units'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKUBMS'+sym+'(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  ubms)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUBMS'+sym+'(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  ubms)')
         self._write('{')
         self._indent()
 
@@ -1369,7 +1369,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('get mixture entropy in molar units'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSBML'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  sbml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSBML'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  sbml)')
         self._write('{')
         self._indent()
 
@@ -1414,7 +1414,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('get mixture entropy in mass units'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSBMS'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  sbms)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSBMS'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  sbms)')
         self._write('{')
         self._indent()
 
@@ -1478,7 +1478,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns mean gibbs free energy in molar units'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKGBML'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  gbml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKGBML'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  gbml)')
         self._write('{')
         self._indent()
 
@@ -1527,7 +1527,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns mixture gibbs free energy in mass units'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKGBMS'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  gbms)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKGBMS'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  gbms)')
         self._write('{')
         self._indent()
 
@@ -1596,7 +1596,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns mean helmholtz free energy in molar units'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKABML'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  abml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKABML'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  abml)')
         self._write('{')
         self._indent()
 
@@ -1645,7 +1645,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns mixture helmholtz free energy in mass units'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKABMS'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  abms)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKABMS'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  abms)')
         self._write('{')
         self._indent()
 
@@ -1744,7 +1744,7 @@ class CPickler(CMill):
         # qdot
         self._write()
         self._write(self.line(' GPU version of productionRate: no more use of thermo namespace vectors '))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * qss_sc, amrex::Real * tc, amrex::Real invT)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * qss_sc, amrex::Real * tc, amrex::Real invT)')
         self._write('{')
         self._indent()
 
@@ -1932,7 +1932,7 @@ class CPickler(CMill):
 
 
         # main function
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)')
         self._write('{')
         self._indent()
 
@@ -1994,7 +1994,7 @@ class CPickler(CMill):
 
         # QSS routine on the GPU
         if (self.nQSSspecies > 0):
-            self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void  comp_qss_sc(amrex::Real * sc, amrex::Real * sc_qss, amrex::Real * tc, double invT)')
+            self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  comp_qss_sc(amrex::Real * sc, amrex::Real * sc_qss, amrex::Real * tc, double invT)')
             self._write('{')
             self._indent()
             self._write('for (int i = 0; i < %d; ++i) { ' % (self.nQSSspecies)) 
@@ -2196,7 +2196,7 @@ class CPickler(CMill):
     def _T_given_ey(self, mechanism):
         self._write()
         self._write(self.line(' get temperature given internal energy in mass units and mass fracs'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void GET_T_GIVEN_EY(amrex::Real *  e, amrex::Real *  y, amrex::Real *  t, int * ierr)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_T_GIVEN_EY(amrex::Real *  e, amrex::Real *  y, amrex::Real *  t, int * ierr)')
         self._write('{')
         self._write('#ifdef CONVERGENCE')
         self._indent()
@@ -2262,7 +2262,7 @@ class CPickler(CMill):
 
     def _T_given_hy(self, mechanism):
         self._write(self.line(' get temperature given enthalpy in mass units and mass fracs'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void GET_T_GIVEN_HY(amrex::Real *  h, amrex::Real *  y, amrex::Real *  t, int * ierr)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_T_GIVEN_HY(amrex::Real *  h, amrex::Real *  y, amrex::Real *  t, int * ierr)')
         self._write('{')
         self._write('#ifdef CONVERGENCE')
         self._indent()
@@ -2332,7 +2332,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('A few mechanism parameters'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKINDX'+sym+'(int * mm, int * kk, int * ii, int * nfit)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKINDX'+sym+'(int * mm, int * kk, int * ii, int * nfit)')
         self._write('{')
         self._indent()
         self._write('*mm = %d;' % len(mechanism.element()))
@@ -2351,7 +2351,7 @@ class CPickler(CMill):
         self._write()
         self._write(
             self.line(' Returns the char strings of species names'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSYMS'+sym+'(int * kname, int * plenkname )')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSYMS'+sym+'(int * kname, int * plenkname )')
         self._write('{')
         self._indent()
         
@@ -2383,7 +2383,7 @@ class CPickler(CMill):
         self._write()
         self._write(
             self.line(' Returns R, Rc, Patm' ))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKRP'+sym+'(amrex::Real *  ru, amrex::Real *  ruc, amrex::Real *  pa)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKRP'+sym+'(amrex::Real *  ru, amrex::Real *  ruc, amrex::Real *  pa)')
         self._write('{')
         self._indent()
         
@@ -2400,7 +2400,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute P = rhoRT/W(x)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKPX'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  P)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKPX'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  P)')
         self._write('{')
         self._indent()
 
@@ -2429,7 +2429,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute P = rhoRT/W(y)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKPY'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  P)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKPY'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  P)')
         self._write('{')
         self._indent()
 
@@ -2507,7 +2507,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute P = rhoRT/W(c)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKPC'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  c,  amrex::Real *  P)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKPC'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  c,  amrex::Real *  P)')
         
         self._write('{')
         self._indent()
@@ -2547,7 +2547,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute rho = PW(x)/RT'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKRHOX'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  rho)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKRHOX'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  rho)')
         self._write('{')
         self._indent()
 
@@ -2575,7 +2575,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute rho = P*W(y)/RT'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKRHOY'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  rho)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKRHOY'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  rho)')
         self._write('{')
         self._indent()
         self._write('amrex::Real YOW = 0;')
@@ -2608,7 +2608,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Compute rho = P*W(c)/(R*T)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKRHOC'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  c,  amrex::Real *  rho)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKRHOC'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  c,  amrex::Real *  rho)')
         
         self._write('{')
         self._indent()
@@ -2647,7 +2647,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('get molecular weight for all species'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKWT'+sym+'( amrex::Real *  wt)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWT'+sym+'( amrex::Real *  wt)')
         self._write('{')
         self._indent()
         # call molecularWeight
@@ -2661,7 +2661,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('given y[species]: mass fractions'))
         self._write(self.line('returns mean molecular weight (gm/mole)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKMMWY'+sym+'(amrex::Real *  y,  amrex::Real *  wtm)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKMMWY'+sym+'(amrex::Real *  y,  amrex::Real *  wtm)')
         self._write('{')
         self._indent()
         self._write('amrex::Real YOW = 0;')
@@ -2694,7 +2694,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('given x[species]: mole fractions'))
         self._write(self.line('returns mean molecular weight (gm/mole)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKMMWX'+sym+'(amrex::Real *  x,  amrex::Real *  wtm)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKMMWX'+sym+'(amrex::Real *  x,  amrex::Real *  wtm)')
         self._write('{')
         self._indent()
         self._write('amrex::Real XW = 0;'+self.line(' see Eq 4 in CK Manual'))
@@ -2715,7 +2715,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('given c[species]: molar concentration'))
         self._write(self.line('returns mean molecular weight (gm/mole)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKMMWC'+sym+'(amrex::Real *  c,  amrex::Real *  wtm)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKMMWC'+sym+'(amrex::Real *  c,  amrex::Real *  wtm)')
         self._write('{')
         self._indent()
         self._write('int id; ' + self.line('loop counter'))
@@ -2746,7 +2746,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert y[species] (mass fracs) to x[species] (mole fracs)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTX'+sym+'(amrex::Real *  y,  amrex::Real *  x)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKYTX'+sym+'(amrex::Real *  y,  amrex::Real *  x)')
         self._write('{')
         self._indent()
 
@@ -2841,7 +2841,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert y[species] (mass fracs) to c[species] (molar conc)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  c)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKYTCP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  c)')
         self._write('{')
         self._indent()
 
@@ -2887,7 +2887,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert y[species] (mass fracs) to c[species] (molar conc)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKYTCR'+sym+'(amrex::Real *  rho, amrex::Real * /*T*/, amrex::Real * y,  amrex::Real * c)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKYTCR'+sym+'(amrex::Real *  rho, amrex::Real * /*T*/, amrex::Real * y,  amrex::Real * c)')
         self._write('{')
         self._indent()
         self._write('amrex::Real imw[%d];' % (self.nSpecies))
@@ -2909,7 +2909,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert x[species] (mole fracs) to y[species] (mass fracs)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTY'+sym+'(amrex::Real *  x,  amrex::Real *  y)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKXTY'+sym+'(amrex::Real *  x,  amrex::Real *  y)')
         self._write('{')
         self._indent()
 
@@ -2943,7 +2943,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert x[species] (mole fracs) to c[species] (molar conc)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  c)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKXTCP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  c)')
         self._write('{')
         self._indent()
 
@@ -2970,7 +2970,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert x[species] (mole fracs) to c[species] (molar conc)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKXTCR'+sym+'(amrex::Real *  rho, amrex::Real * /*T*/, amrex::Real *  x, amrex::Real *  c)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKXTCR'+sym+'(amrex::Real *  rho, amrex::Real * /*T*/, amrex::Real *  x, amrex::Real *  c)')
         self._write('{')
         self._indent()
 
@@ -3006,7 +3006,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert c[species] (molar conc) to x[species] (mole fracs)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCTX'+sym+'(amrex::Real *  c, amrex::Real *  x)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCTX'+sym+'(amrex::Real *  c, amrex::Real *  x)')
         self._write('{')
         self._indent()
 
@@ -3042,7 +3042,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(
             'convert c[species] (molar conc) to y[species] (mass fracs)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCTY'+sym+'(amrex::Real *  c, amrex::Real *  y)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCTY'+sym+'(amrex::Real *  c, amrex::Real *  y)')
         self._write('{')
         self._indent()
 
@@ -3074,7 +3074,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get Cp/R as a function of T '))
         self._write(self.line('for all species (Eq 19)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCPOR'+sym+'(amrex::Real *  T, amrex::Real *  cpor)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPOR'+sym+'(amrex::Real *  T, amrex::Real *  cpor)')
         self._write('{')
         self._indent()
 
@@ -3097,7 +3097,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get H/RT as a function of T '))
         self._write(self.line('for all species (Eq 20)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKHORT'+sym+'(amrex::Real *  T, amrex::Real *  hort)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHORT'+sym+'(amrex::Real *  T, amrex::Real *  hort)')
         self._write('{')
         self._indent()
 
@@ -3120,7 +3120,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get S/R as a function of T '))
         self._write(self.line('for all species (Eq 21)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSOR'+sym+'(amrex::Real *  T, amrex::Real *  sor)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSOR'+sym+'(amrex::Real *  T, amrex::Real *  sor)')
         self._write('{')
         self._indent()
 
@@ -3143,7 +3143,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get specific heat at constant volume as a function '))
         self._write(self.line('of T for all species (molar units)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCVML'+sym+'(amrex::Real *  T,  amrex::Real *  cvml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVML'+sym+'(amrex::Real *  T,  amrex::Real *  cvml)')
         self._write('{')
         self._indent()
 
@@ -3178,7 +3178,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get specific heat at constant pressure as a '))
         self._write(self.line('function of T for all species (molar units)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCPML'+sym+'(amrex::Real *  T,  amrex::Real *  cpml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPML'+sym+'(amrex::Real *  T,  amrex::Real *  cpml)')
         self._write('{')
         self._indent()
 
@@ -3213,7 +3213,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get internal energy as a function '))
         self._write(self.line('of T for all species (molar units)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKUML'+sym+'(amrex::Real *  T,  amrex::Real *  uml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUML'+sym+'(amrex::Real *  T,  amrex::Real *  uml)')
         self._write('{')
         self._indent()
 
@@ -3250,7 +3250,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get enthalpy as a function '))
         self._write(self.line('of T for all species (molar units)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKHML'+sym+'(amrex::Real *  T,  amrex::Real *  hml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHML'+sym+'(amrex::Real *  T,  amrex::Real *  hml)')
         self._write('{')
         self._indent()
 
@@ -3287,7 +3287,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get standard-state Gibbs energy as a function '))
         self._write(self.line('of T for all species (molar units)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKGML'+sym+'(amrex::Real *  T,  amrex::Real *  gml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKGML'+sym+'(amrex::Real *  T,  amrex::Real *  gml)')
         self._write('{')
         self._indent()
 
@@ -3324,7 +3324,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('get standard-state Helmholtz free energy as a '))
         self._write(self.line('function of T for all species (molar units)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKAML'+sym+'(amrex::Real *  T,  amrex::Real *  aml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKAML'+sym+'(amrex::Real *  T,  amrex::Real *  aml)')
         self._write('{')
         self._indent()
 
@@ -3360,7 +3360,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the standard-state entropies in molar units'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKSML'+sym+'(amrex::Real *  T,  amrex::Real *  sml)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSML'+sym+'(amrex::Real *  T,  amrex::Real *  sml)')
         self._write('{')
         self._indent()
 
@@ -3394,7 +3394,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the specific heats at constant volume'))
         self._write(self.line('in mass units (Eq. 29)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCVMS'+sym+'(amrex::Real *  T,  amrex::Real *  cvms)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVMS'+sym+'(amrex::Real *  T,  amrex::Real *  cvms)')
         self._write('{')
         self._indent()
 
@@ -3427,7 +3427,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the specific heats at constant pressure'))
         self._write(self.line('in mass units (Eq. 26)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKCPMS'+sym+'(amrex::Real *  T,  amrex::Real *  cpms)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPMS'+sym+'(amrex::Real *  T,  amrex::Real *  cpms)')
         self._write('{')
         self._indent()
 
@@ -3459,7 +3459,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns internal energy in mass units (Eq 30.)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKUMS'+sym+'(amrex::Real *  T,  amrex::Real *  ums)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUMS'+sym+'(amrex::Real *  T,  amrex::Real *  ums)')
         self._write('{')
         self._indent()
 
@@ -3496,7 +3496,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns enthalpy in mass units (Eq 27.)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKHMS'+sym+'(amrex::Real *  T,  amrex::Real *  hms)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHMS'+sym+'(amrex::Real *  T,  amrex::Real *  hms)')
         self._write('{')
         self._indent()
 
@@ -3581,7 +3581,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns gibbs in mass units (Eq 31.)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKGMS'+sym+'(amrex::Real *  T,  amrex::Real *  gms)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKGMS'+sym+'(amrex::Real *  T,  amrex::Real *  gms)')
         self._write('{')
         self._indent()
 
@@ -3618,7 +3618,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the production rate for each species'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKWC'+sym+'(amrex::Real *  T, amrex::Real *  C,  amrex::Real *  wdot)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWC'+sym+'(amrex::Real *  T, amrex::Real *  C,  amrex::Real *  wdot)')
         self._write('{')
         self._indent()
 
@@ -3657,7 +3657,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the molar production rate of species'))
         self._write(self.line('Given P, T, and mass fractions'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKWYP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  wdot)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWYP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  wdot)')
         self._write('{')
         self._indent()
 
@@ -3714,7 +3714,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the molar production rate of species'))
         self._write(self.line('Given P, T, and mole fractions'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKWXP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  wdot)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWXP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  wdot)')
         self._write('{')
         self._indent()
 
@@ -3756,7 +3756,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the molar production rate of species'))
         self._write(self.line('Given rho, T, and mass fractions'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKWYR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  wdot)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWYR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  wdot)')
         self._write('{')
         self._indent()
 
@@ -3843,7 +3843,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the molar production rate of species'))
         self._write(self.line('Given rho, T, and mole fractions'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKWXR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  wdot)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWXR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  wdot)')
         self._write('{')
         self._indent()
 
@@ -3900,9 +3900,9 @@ class CPickler(CMill):
         self._write(self.line('Returns the stoichiometric coefficients'))
         self._write(self.line('of the reaction mechanism. (Eq 50)'))
         if (self.nQSSspecies > 0):
-            self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKNU'+sym+'(int * kdim,  int * nuki, int * nuki_qss)')
+            self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKNU'+sym+'(int * kdim,  int * nuki, int * nuki_qss)')
         else:
-            self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKNU'+sym+'(int * kdim,  int * nuki)')
+            self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKNU'+sym+'(int * kdim,  int * nuki)')
         self._write('{')
         self._indent()
  
@@ -3951,7 +3951,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the arrehenius coefficients '))
         self._write(self.line('for all reactions'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKABE'+sym+'( amrex::Real *  a, amrex::Real *  b, amrex::Real *  e)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKABE'+sym+'( amrex::Real *  a, amrex::Real *  b, amrex::Real *  e)')
         self._write('{')
         self._indent()
 
@@ -3980,7 +3980,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the equilibrium constants for each reaction'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void equilibriumConstants(amrex::Real *  kc, amrex::Real *  g_RT, amrex::Real T)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void equilibriumConstants(amrex::Real *  kc, amrex::Real *  g_RT, amrex::Real T)')
         self._write('{')
         self._indent()
 
@@ -4069,7 +4069,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('Returns the equil constants for each reaction'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKEQC'+sym+'(amrex::Real *  T, amrex::Real *  C, amrex::Real *  eqcon)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKEQC'+sym+'(amrex::Real *  T, amrex::Real *  C, amrex::Real *  eqcon)')
         self._write('{')
         self._indent()
 
@@ -4086,7 +4086,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the equil constants for each reaction'))
         self._write(self.line('Given P, T, and mass fractions'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKEQYP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y, amrex::Real *  eqcon)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKEQYP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y, amrex::Real *  eqcon)')
         self._write('{')
         self._indent()
 
@@ -4103,7 +4103,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the equil constants for each reaction'))
         self._write(self.line('Given P, T, and mole fractions'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKEQXP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x, amrex::Real *  eqcon)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKEQXP'+sym+'(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x, amrex::Real *  eqcon)')
         self._write('{')
         self._indent()
 
@@ -4120,7 +4120,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the equil constants for each reaction'))
         self._write(self.line('Given rho, T, and mass fractions'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKEQYR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  eqcon)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKEQYR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  eqcon)')
         self._write('{')
         self._indent()
 
@@ -4137,7 +4137,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line('Returns the equil constants for each reaction'))
         self._write(self.line('Given rho, T, and mole fractions'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void CKEQXR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  eqcon)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKEQXR'+sym+'(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  eqcon)')
         self._write('{')
         self._indent()
 
@@ -4194,7 +4194,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute an approx to the reaction Jacobian'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)')
         self._write('{')
         self._indent()
 
@@ -4832,7 +4832,7 @@ class CPickler(CMill):
     def _DproductionRatePrecond(self, mechanism):
         self._write()
         self._write(self.line('compute an approx to the reaction Jacobian (for preconditioning)'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)')
         self._write('{')
         self._indent()
 
@@ -4870,7 +4870,7 @@ class CPickler(CMill):
         self._write()
         self._write('#ifdef AMREX_USE_GPU')
         self._write(self.line('compute the reaction Jacobian on GPU'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE')
         self._write('void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)')
         self._write('{')
         self._indent()
@@ -5443,7 +5443,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute the reaction Jacobian'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * consP)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * consP)')
         self._write('{')
         self._indent()
 
@@ -5478,7 +5478,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line(' gauss-jordan solver external routine'))
         self._write(self.line(' Replace this routine with the one generated by the Gauss Jordan solver of DW'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void sgjsolve(amrex::Real* /*A*/, amrex::Real* /*x*/, amrex::Real* /*b*/) {')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void sgjsolve(amrex::Real* /*A*/, amrex::Real* /*x*/, amrex::Real* /*b*/) {')
         self._indent()
         self._write('amrex::Abort("sgjsolve not implemented, choose a different solver ");')
         self._outdent()
@@ -5486,7 +5486,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line(' Replace this routine with the one generated by the Gauss Jordan solver of DW'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void sgjsolve_simplified(amrex::Real* /*A*/, amrex::Real* /*x*/, amrex::Real* /*b*/) {')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void sgjsolve_simplified(amrex::Real* /*A*/, amrex::Real* /*x*/, amrex::Real* /*b*/) {')
         self._indent()
         self._write('amrex::Abort("sgjsolve_simplified not implemented, choose a different solver ");')
         self._outdent()
@@ -9283,7 +9283,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
+        self._write('    [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int l=0; l<%d; l++) {' % (nSpecies))
         self._write('            c_d[l] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9344,7 +9344,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
+        self._write('    [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9413,7 +9413,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
+        self._write('    [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9485,7 +9485,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
+        self._write('    [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9551,7 +9551,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
+        self._write('    [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9646,7 +9646,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
+        self._write('    [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9756,7 +9756,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
+        self._write('    [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -9826,7 +9826,7 @@ class CPickler(CMill):
         self._write()
         self._write('amrex::IntVect iv(AMREX_D_DECL(0,0,0));')
         self._write('amrex::ParallelFor(amrex::Box(iv,iv),')
-        self._write('    [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
+        self._write('    [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {')
         self._write('        for (int k=0; k<%d; k++) {' % (nSpecies))
         self._write('            c_d[k] = 1.0/ %f ;' % (nSpecies))
         self._write('        }')
@@ -12217,7 +12217,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute an approx to the SPS Jacobian'))
-        self._write('AMREX_GPU_DEVICE AMREX_FORCE_INLINE void SLJ_PRECOND_CSC(amrex::Real *  Jsps, int * indx, int * len, amrex::Real * sc, amrex::Real * Tp, int * HP, amrex::Real * gamma)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void SLJ_PRECOND_CSC(amrex::Real *  Jsps, int * indx, int * len, amrex::Real * sc, amrex::Real * Tp, int * HP, amrex::Real * gamma)')
         self._write('{')
         self._indent()
 
