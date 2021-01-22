@@ -1,4 +1,4 @@
-ifeq ($(USE_CUDA), TRUE)
+ifeq ($(filter $(USE_CUDA) $(USE_HIP), TRUE),)
     Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Null/GPU
 else
     Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Null/CPU
