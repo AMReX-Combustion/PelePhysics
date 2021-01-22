@@ -23,12 +23,6 @@ int reactor_init(int reactor_type, int /*ode_ncells*/) {
     return(0); 
 }
 
-#ifdef AMREX_USE_GPU
-int reactor_info(int /*reactor_type*/, int /*ode_ncells*/) {
-    return(0); 
-}
-#endif
-
 /* Main routine for CVode integration: integrate a Box version 1*/
 int react(const Box& box,
           Array4<Real> const& rY_in,
@@ -39,23 +33,11 @@ int react(const Box& box,
           Array4<Real> const& FC_in,
           Array4<int> const& mask,
           Real &dt_react,
-          Real &time
-#ifdef AMREX_USE_GPU
-          , const int &reactor_type
-          , DEVICE_STREAM_TYPE stream
-#endif
-          ) {
+          Real &time) {
 
     int omp_thread = 0;
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num(); 
-#endif
-
-    // Reactor type
-#ifdef AMREX_USE_GPU
-    int reactor_type_lcl = reactor_type;
-#else
-    int reactor_type_lcl = ireactor_type;
 #endif
 
     // Define types
@@ -92,7 +74,7 @@ int react(const Box& box,
         Real energy_loc = renergy_loc / rho_loc;
         // Get curr estimate of T
         Real T_loc    = T_in(i,j,k,0);
-        if (reactor_type_lcl == eint_rho){
+        if (ireactor_type == eint_rho){
             EOS::EY2T(energy_loc,Y_loc,T_loc);
         } else {
             EOS::HY2T(energy_loc,Y_loc,T_loc);

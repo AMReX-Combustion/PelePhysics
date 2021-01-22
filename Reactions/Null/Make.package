@@ -1,2 +1,7 @@
+ifeq ($(USE_CUDA), TRUE)
+    Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Null/GPU
+else
+    Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Null/CPU
+endif
 CEXE_headers += reactor.h  
 CEXE_sources += reactor.cpp
