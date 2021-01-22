@@ -11,7 +11,6 @@ enum splash_type
 
 // Determine the type of particle impact at the wall
 // Return 0 - rebound, 1 - deposit, 2 - splash, 3 - thermal breakup
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
 splash_type splash_criteria (const Real Kv,
                              const Real Tstar,
                              const Real alpha)
@@ -52,7 +51,6 @@ bool tile_at_bndry (const Box& in_box,
 }
 
 // Find tangents along surface
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void find_tangents (const RealVect& testvec,
                     const RealVect& norm,
                     RealVect& tanBeta,
@@ -70,7 +68,6 @@ void find_tangents (const RealVect& testvec,
 }
 
 // Compute the angles of reflecting droplets
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void compute_angles (const Real& alpha,
                      const Real& Tstar,
                      const Real& We,
@@ -103,7 +100,6 @@ void compute_angles (const Real& alpha,
   SPRF.beta_stdv = std::sqrt(amrex::max(-2.*term1 + term2, 0.));
 }
 
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void impose_wall (SprayParticleContainer::ParticleType& p,
                   SprayComps SPI,
                   SprayUnits SPU,
@@ -115,14 +111,15 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
                   const RealVect& phi,
 #ifdef AMREX_USE_EB
                   const bool use_EB,
-                  Array4<const EBCellFlag> const& flags,
-                  Array4<const Real> const& bcent,
-                  Array4<const Real> const& bnorm,
+                  const EBCellFlagFab& flags,
+                  const CutFab& bcent,
+                  const CutFab& bnorm,
 #endif
                   const IntVect& bndry_lo,
                   const IntVect& bndry_hi,
                   const Real T_wall,
-                  SprayRefl& SPRF)
+                  SprayRefl& SPRF,
+                  RealVect& pos)
 {
   const Real tolerance = std::numeric_limits<Real>::epsilon();
   Real sigma = fdat.sigma;
@@ -166,20 +163,20 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
 #ifdef AMREX_USE_EB
   if (use_EB) {
     // If particle has moved into a cut-cell
-    if (flags(ipn,jpn,kpn).isSingleValued() && !check_part) {
+    if (flags(ijk).isSingleValued() && !check_part) {
       // Use the normal and boundary centroid from the new cell
       bloc = {ipn, jpn, kpn};
-      normal = {-bnorm(ipn,jpn,kpn,0), -bnorm(ipn,jpn,kpn,1), -bnorm(ipn,jpn,kpn,2)};
-      bcentv = {bcent(ipn,jpn,kpn,0), bcent(ipn,jpn,kpn,1), bcent(ipn,jpn,kpn,2)};
+      normal = {-bnorm(ijk,0), -bnorm(ijk,1), -bnorm(ijk,2)};
+      bcentv = {bcent(ijk,0), bcent(ijk,1), bcent(ijk,2)};
       check_part = true;
       // If the particle has moved into a covered cell
-    } else if (flags(ipn,jpn,kpn).isCovered() && !check_part) {
+    } else if (flags(ijk).isCovered() && !check_part) {
       // and if the cell the particle came from is a cut-cell
-      if (flags(ip,jp,kp).isSingleValued()) {
+      if (flags(ijkp).isSingleValued()) {
         // Use the normal and boundary centroid from the previous cell
         bloc = {ip, jp, kp};
-        normal = {-bnorm(ip,jp,kp,0), -bnorm(ip,jp,kp,1), -bnorm(ip,jp,kp,2)};
-        bcentv = {bcent(ip,jp,kp,0), bcent(ip,jp,kp,1), bcent(ip,jp,kp,2)};
+        normal = {-bnorm(ijkp,0), -bnorm(ijkp,1), -bnorm(ijkp,2)};
+        bcentv = {bcent(ijkp,0), bcent(ijkp,1), bcent(ijkp,2)};
         // otherwise an error has occurred
       } else {
         Abort("SprayInterpolation::reflect_wall: Particle is outside EB");
@@ -221,9 +218,9 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
         Real Tstar = 0.; // Average sum Y_i T_wall/T_boil,i
         for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
           const int ysp = SPI.pstateY + spf;
-          mu_part += p.rdata(ysp)*fdat.mu(spf);
-          rho_part += p.rdata(ysp)*fdat.rho(spf);
-          Tstar += T_wall*p.rdata(ysp)/fdat.boilT(spf);
+          mu_part += p.rdata(ysp)*fdat.mu[spf];
+          rho_part += p.rdata(ysp)*fdat.rho[spf];
+          Tstar += T_wall*p.rdata(ysp)/fdat.boilT[spf];
         }
         const Real dia_part = p.rdata(SPI.pstateDia);
         const Real d3 = pow(dia_part, 3);
@@ -308,6 +305,7 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
       // TODO: Make else so that the droplet sticks to the wall
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
         SPRF.norm[dir] = normal[dir];
+        pos[dir] -= dis_fact*par_dot_EB*normal[dir];
         p.pos(dir) -= dis_fact*par_dot_EB*normal[dir];
         p.rdata(SPI.pstateVel+dir) = -Vpn[dir] + Vpt[dir];
       }
@@ -315,7 +313,6 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
   } // if (check_part)
 }
 
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void create_splash_droplet (SprayParticleContainer::ParticleType& p,
                             SprayComps SPI,
                             SprayRefl SPRF)

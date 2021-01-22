@@ -61,7 +61,9 @@ bool calculateSpraySource (const Real    flow_dt,
                            SprayComps    SPI,
                            SprayData     fdat,
                            SprayParticleContainer::ParticleType& p,
+#ifdef USE_SPRAY_SOA
                            const std::array<SprayParticleContainer::SoA::RealVector, NAR_SPR>& attribs,
+#endif
                            const int pid,
                            TransParm const* trans_parm)
 {
@@ -86,30 +88,32 @@ bool calculateSpraySource (const Real    flow_dt,
   GpuArray<Real, SPRAY_FUEL_NUM> B_M_num;
   GpuArray<Real, SPRAY_FUEL_NUM> Sh_num;
   GpuArray<Real, SPRAY_FUEL_NUM> L_fuel;
-  GpuArray<Real, SPRAY_FUEL_NUM> Y_dot;
+  GpuArray<Real, SPRAY_FUEL_NUM> mi_dot;
+  GpuArray<Real, SPRAY_FUEL_NUM> Y_part;
 #ifdef USE_SPRAY_SOA
   RealVect vel_part(AMREX_D_DECL(attribs[SPI.pstateVel].data()[pid],
                                  attribs[SPI.pstateVel+1].data()[pid],
                                  attribs[SPI.pstateVel+2].data()[pid]));
   Real T_part = attribs[SPI.pstateT].data()[pid];
   Real dia_part = attribs[SPI.pstateDia].data()[pid];
-  Real rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-    rho_part += attribs[SPI.pstateY+spf].data()[pid]*fdat.rho(spf);
+    Y_part[spf] = attribs[SPI.pstateY+spf].data()[pid];
 #else
   RealVect vel_part(AMREX_D_DECL(p.rdata(SPI.pstateVel),
                                  p.rdata(SPI.pstateVel+1),
                                  p.rdata(SPI.pstateVel+2)));
   Real T_part = p.rdata(SPI.pstateT);
   Real dia_part = p.rdata(SPI.pstateDia);
-  Real rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-    rho_part += p.rdata(SPI.pstateY+spf)*fdat.rho(spf);
+    Y_part[spf] = p.rdata(SPI.pstateY+spf);
 #endif
   Real dt = flow_dt;
   int isub = 1;
   int nsub = 1;
   while (isub <= nsub) {
+    Real rho_part = 0.;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+      rho_part += Y_part[spf]*fdat.rho[spf];
     Real dia2_part = dia_part*dia_part;
     Real pmass = M_PI/6.*rho_part*dia_part*dia2_part;
     Real part_ke = 0.5*vel_part.radSquared();
@@ -142,16 +146,16 @@ bool calculateSpraySource (const Real    flow_dt,
       // x_vi = x_li*p_sat/(p_gas*mw_gas)
       // x_li = (y_li/mw_i)/(sum_j y_lj/mw_j)
       for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-        const int fspec = fdat.indx(spf);
+        const int fspec = fdat.indx[spf];
         const Real mw_fuel = gpv.mw_fluid[fspec];
         // Compute latent heat
-        Real part_latent = h_skin[fspec] + fdat.latent(spf)
-          - fdat.cp(spf)*(T_part - fdat.ref_T);
+        Real part_latent = h_skin[fspec] + fdat.latent[spf]
+          - fdat.cp[spf]*(T_part - fdat.ref_T);
         L_fuel[spf] = part_latent;
         // Compute the mass fraction of the fuel vapor at droplet surface
         Real pres_sat = EOS::PATM*std::exp(part_latent*inv_Ru*mw_fuel*
-                                           (1./fdat.boilT(spf) - 1./T_part)) + C_eps;
-        Real x_l = p.rdata(SPI.pstateY+spf)/mw_fuel;
+                                           (1./fdat.boilT[spf] - 1./T_part)) + C_eps;
+        Real x_l = Y_part[spf]/mw_fuel;
         Real x_vc = x_l*pres_sat;
         nt += x_l;
         sum_xv += x_vc;
@@ -160,17 +164,13 @@ bool calculateSpraySource (const Real    flow_dt,
       }
       Real totalmwx = gpv.mw_mix*(nt*gpv.p_fluid - sum_xv) + sum_mw_xv;
       for(int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        const int fspec = fdat.indx(spf);
+        const int fspec = fdat.indx[spf];
         Real Yfv = x_v[spf]/totalmwx;
         Yfv = amrex::max(0., amrex::min(1. - C_eps, Yfv));
         B_M_num[spf] = amrex::max(C_eps, (Yfv - gpv.Y_fluid[fspec])/(1. - Yfv));
         Y_skin[fspec] = Yfv + rule*(gpv.Y_fluid[fspec] - Yfv);
         sumYSkin += Y_skin[fspec];
-#ifdef USE_SPRAY_SOA
-        cp_L_av += attribs[SPI.pstateY+spf].data()[pid]*fdat.cp(spf);
-#else
-        cp_L_av += p.rdata(SPI.pstateY+spf)*fdat.cp(spf);
-#endif
+        cp_L_av += Y_part[spf]*fdat.cp[spf];
         sumYFuel += gpv.Y_fluid[fspec];
       }
       const Real restYSkin = 1. - sumYSkin;
@@ -204,7 +204,7 @@ bool calculateSpraySource (const Real    flow_dt,
       Real powR = amrex::max(std::pow(Reyn, 0.077), 1.);
       Nu_0 = 1. + powR*std::cbrt(1. + Reyn*Pr_skin);
       for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-        const int fspec = fdat.indx(spf);
+        const int fspec = fdat.indx[spf];
         // Convert mass diffusion coefficient from mixture average
         // to binary for fuel only, not concerned with other species
         Ddiag[fspec] *= mw_vap*gpv.invmw[fspec];
@@ -217,11 +217,11 @@ bool calculateSpraySource (const Real    flow_dt,
         Real Sh_0 = 1. + powR*std::cbrt(1. + Reyn*Sc_skin);
         Sh_num[spf] = 2. + (Sh_0 - 2.)*invFM;
         if (SPI.mass_tran) {
-          Y_dot[spf] = -amrex::max(M_PI*rhoD*dia_part*Sh_num[spf]*logB, 0.);
-          gpv.fluid_Y_dot[spf] += Y_dot[spf];
-          m_dot += Y_dot[spf];
+          mi_dot[spf] = -amrex::max(M_PI*rhoD*dia_part*Sh_num[spf]*logB, 0.);
+          gpv.fluid_Y_dot[spf] += mi_dot[spf];
+          m_dot += mi_dot[spf];
         } else {
-          Y_dot[spf] = 0.;
+          mi_dot[spf] = 0.;
         }
       }
       d_dot = m_dot/(0.5*M_PI*rho_part*dia2_part);
@@ -255,13 +255,13 @@ bool calculateSpraySource (const Real    flow_dt,
       const Real inv_pm_cp = inv_pmass/cp_L_av;
       Real coeff_heat = 0.;
       for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-        const int fspec = fdat.indx(spf);
+        const int fspec = fdat.indx[spf];
         Real ratio = cp_n[fspec]*Sh_num[spf]*Ddiag[fspec]/lambda_skin;
         Real heatC = calcHeatCoeff(ratio, B_M_num[spf], B_eps, C_eps, Nu_0);
         // Convection term
         coeff_heat += heatC;
-        gpv.fluid_eng_src += Y_dot[spf]*h_skin[fspec];
-        part_temp_src += Y_dot[spf]*L_fuel[spf];
+        gpv.fluid_eng_src += mi_dot[spf]*h_skin[fspec];
+        part_temp_src += mi_dot[spf]*L_fuel[spf];
       }
       Real conv_src = M_PI*lambda_skin*dia_part*delT*coeff_heat;
       if (SPI.heat_tran) {
@@ -285,6 +285,9 @@ bool calculateSpraySource (const Real    flow_dt,
     if (new_dia < dia_eps) return true;
     else dia_part = new_dia;
     gpv.fluid_mass_src += m_dot;
+    Real new_mass = pmass + m_dot*part_dt;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+      Y_part[spf] = (Y_part[spf]*pmass + mi_dot[spf]*part_dt)/new_mass;
     ++isub;
   }
 #ifdef USE_SPRAY_SOA
@@ -292,7 +295,7 @@ bool calculateSpraySource (const Real    flow_dt,
                attribs[SPI.pstateVel+1].data()[pid] = vel_part[1];,
                attribs[SPI.pstateVel+2].data()[pid] = vel_part[2];);
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-    attribs[SPI.pstateY+spf].data()[pid] += Y_dot[spf];
+    attribs[SPI.pstateY+spf].data()[pid] = Y_part[spf];
   attribs[SPI.pstateT].data()[pid] = T_part;
   attribs[SPI.pstateDia].data()[pid] = dia_part;
 #else
@@ -300,7 +303,7 @@ bool calculateSpraySource (const Real    flow_dt,
                p.rdata(SPI.pstateVel+1) = vel_part[1];,
                p.rdata(SPI.pstateVel+2) = vel_part[2];);
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-    p.rdata(SPI.pstateY+spf) += Y_dot[spf];
+    p.rdata(SPI.pstateY+spf) = Y_part[spf];
   p.rdata(SPI.pstateT) = T_part;
   p.rdata(SPI.pstateDia) = dia_part;
 #endif

@@ -32,7 +32,7 @@ class MyParIter
 {
 public:
   using amrex::ParIter<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>::ParIter;
-
+#ifdef USE_SPRAY_SOA
   std::array<RealVector, NAR_SPR>& GetAttribs() {
     return GetStructOfArrays().GetRealData();
   }
@@ -40,6 +40,7 @@ public:
   RealVector& GetAttribs(int comp) {
     return GetStructOfArrays().GetRealData(comp);
   }
+#endif
 };
 
 class MyParConstIter
@@ -47,7 +48,7 @@ class MyParConstIter
 {
 public:
   using amrex::ParConstIter<NSR_SPR,NSI_SPR,NAR_SPR,NSI_SPR>::ParConstIter;
-
+#ifdef USE_SPRAY_SOA
   const std::array<RealVector, NAR_SPR>& GetAttribs() const {
     return GetStructOfArrays().GetRealData();
   }
@@ -55,6 +56,7 @@ public:
   const RealVector& GetAttribs(int comp) const {
     return GetStructOfArrays().GetRealData(comp);
   }
+#endif
 };
 
 class SprayParticleContainer

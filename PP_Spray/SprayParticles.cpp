@@ -130,7 +130,7 @@ SprayParticleContainer::estTimestep (int level, Real cfl) const
     using ReduceTuple = typename decltype(reduce_data)::Type;
     for (MyParConstIter pti(*this, level); pti.isValid(); ++pti) {
       const AoS& pbox = pti.GetArrayOfStructs();
-      const SprayParticleContainer::ParticleType* pstruct = pbox().data();
+      const ParticleType* pstruct = pbox().data();
       const Long n = pbox.numParticles();
 #ifdef USE_SPRAY_SOA
       auto& attribs = pti.GetAttribs();
@@ -141,7 +141,7 @@ SprayParticleContainer::estTimestep (int level, Real cfl) const
       reduce_op.eval(n, reduce_data,
                      [=] AMREX_GPU_DEVICE (const Long i) -> ReduceTuple
       {
-        const SprayParticleContainer::ParticleType& p = pstruct[i];
+        const ParticleType& p = pstruct[i];
         // TODO: This assumes that pstateVel = 0 and dxi[0] = dxi[1] = dxi[2]
         if (p.id() > 0) {
 #ifdef USE_SPRAY_SOA
@@ -231,11 +231,6 @@ SprayParticleContainer::updateParticles(const int&  level,
   }
   const Real vol = AMREX_D_TERM(dx[0],*dx[1],*dx[2]);
   const Real inv_vol = 1./vol;
-  // Set all constants
-  GpuArray<Real,NUM_SPECIES> mw_fluid;
-  GpuArray<Real,NUM_SPECIES> invmw;
-  EOS::molecular_weight(mw_fluid.data());
-  EOS::inv_molecular_weight(invmw.data());
   // Particle components indices
   SprayComps SPI = m_sprayIndx;
   SprayUnits SPU;
@@ -246,9 +241,11 @@ SprayParticleContainer::updateParticles(const int&  level,
     const Box& state_box = pti.growntilebox(state_ghosts);
     const Box& src_box = pti.growntilebox(source_ghosts);
     const Long Np = pti.numParticles();
-    SprayParticleContainer::ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
+    ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
+#ifdef USE_SPRAY_SOA
     // Get particle attributes if StructOfArrays are used
     auto& attribs = pti.GetAttribs();
+#endif
     SprayData fdat = m_fuelData.getSprayData();
     Array4<const Real> const& statearr = state.array(pti);
     Array4<Real> const& sourcearr = source.array(pti);
@@ -287,14 +284,21 @@ SprayParticleContainer::updateParticles(const int&  level,
 // #endif
     amrex::ParallelFor(Np,
       [pstruct,statearr,sourcearr,plo,phi,dx,dxi,do_move,SPI,SPU,fdat,src_box,
-       state_box,bndry_hi,bndry_lo,flow_dt,mw_fluid,invmw,inv_vol,attribs,ltransparm
+       state_box,bndry_hi,bndry_lo,flow_dt,inv_vol,ltransparm
+#ifdef USE_SPRAY_SOA
+       ,attribs
+#endif
 #ifdef AMREX_USE_EB
        ,flags_array,apx_fab,apy_fab,apz_fab,ccent_fab,bcent_fab,bnorm_fab,volfrac_fab,eb_in_box
 #endif
        ]
     AMREX_GPU_DEVICE (int pid) noexcept
     {
-      SprayParticleContainer::ParticleType& p = pstruct[pid];
+      GpuArray<Real,NUM_SPECIES> mw_fluid;
+      GpuArray<Real,NUM_SPECIES> invmw;
+      EOS::molecular_weight(mw_fluid.data());
+      EOS::inv_molecular_weight(invmw.data());
+      ParticleType& p = pstruct[pid];
       if (p.id() > 0) {
         GpuArray<IntVect, AMREX_D_PICK(2,4,8)> indx_array; // Array of adjacent cells
         GpuArray<Real,AMREX_D_PICK(2,4,8)> weights; // Array of corresponding weights
@@ -382,7 +386,11 @@ SprayParticleContainer::updateParticles(const int&  level,
         GasPhaseVals gpv(vel_fluid, T_fluid, rho_fluid, Y_fluid.data(),
                          mw_fluid.data(), invmw.data());
         remove_particle =
-          calculateSpraySource(flow_dt, do_move, gpv, SPI, fdat, p, attribs, pid, ltransparm);
+          calculateSpraySource(flow_dt, do_move, gpv, SPI, fdat, p, pid,
+#ifdef USE_SPRAY_SOA
+                               attribs,
+#endif
+                               ltransparm);
         // Modify particle position by whole time step
         if (do_move) {
           for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
@@ -416,7 +424,7 @@ SprayParticleContainer::updateParticles(const int&  level,
           if (SPI.mass_tran) {
             Gpu::Atomic::Add(&sourcearr(cur_indx, SPI.rhoIndx), cur_coef*gpv.fluid_mass_src*SPU.mass_src_conv);
             for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-              const int nf = SPI.specIndx + fdat.indx(spf);
+              const int nf = SPI.specIndx + fdat.indx[spf];
               Gpu::Atomic::Add(&sourcearr(cur_indx, nf), cur_coef*gpv.fluid_Y_dot[spf]*SPU.mass_src_conv);
             }
           }
@@ -431,11 +439,16 @@ SprayParticleContainer::updateParticles(const int&  level,
 #endif
     // Check if particles have gone outside of walls
     if (do_move && Np > 0 && at_bounds) {
+      SprayData fdatCPU = m_fuelData.getSprayData();
       PairIndex index(pti.index(), pti.LocalTileIndex());
       auto& ptile = GetParticles(level)[index];
       auto& pval = ptile.GetArrayOfStructs();
+#ifdef AMREX_USE_EB
+      const CutFab& bnorm = bndrynorm->operator[](pti);
+      const CutFab& bcent = bndrycent->operator[](pti);
+#endif
       for (int pid = 0; pid < Np; ++pid) {
-        SprayParticleContainer::ParticleType& p = pval[pid];
+        ParticleType& p = pval[pid];
         if (p.id() > 0) {
           RealVect pos = {AMREX_D_DECL(p.pos(0), p.pos(1), p.pos(2))};
           const RealVect lx = (p.pos() - plo)*dxi;
@@ -443,23 +456,25 @@ SprayParticleContainer::updateParticles(const int&  level,
           const Real T_part = p.rdata(SPI.pstateT);
           const Real dia_part = p.rdata(SPI.pstateDia);
           SprayRefl SPRF; // Structure holding data for reflected particles
-          impose_wall(p, SPI, SPU, fdat, ijk, dx, dxi, plo, phi,
+          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+            SPRF.Y_refl[spf] = p.rdata(SPI.pstateY+spf);
+          impose_wall(p, SPI, SPU, fdatCPU, ijk, dx, dxi, plo, phi,
 #ifdef AMREX_USE_EB
-                      eb_in_box, flags_array, bcent_fab, bnorm_fab,
+                      eb_in_box, flags, bcent, bnorm,
 #endif
-                      bndry_lo, bndry_hi, T_wall, SPRF);
+                      bndry_lo, bndry_hi, T_wall, SPRF, pos);
           if (SPRF.Ns_refl > 0 && isActive) {
             for (int nsp = 0; nsp < SPRF.Ns_refl; ++nsp) {
-              SprayParticleContainer::ParticleType pnew;
+              ParticleType pnew;
               pnew.id() = ParticleType::NextID();
               pnew.cpu() = ParallelDescriptor::MyProc();
               pnew.rdata(SPI.pstateDia) = SPRF.dia_refl;
               pnew.rdata(SPI.pstateT) = T_part;
               for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-                pnew.rdata(SPI.pstateY+spf) = p.rdata(SPI.pstateY+spf);
+                pnew.rdata(SPI.pstateY+spf) = SPRF.Y_refl[spf];
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                pnew.rdata(SPI.pstateVel+dir) = p.rdata(SPI.pstateVel+dir);
-                pnew.pos(dir) = p.pos(dir);
+                pnew.rdata(SPI.pstateVel+dir) = 0.;
+                pnew.pos(dir) = pos[dir];
               }
               create_splash_droplet(pnew, SPI, SPRF);
               ptile.push_back(pnew);

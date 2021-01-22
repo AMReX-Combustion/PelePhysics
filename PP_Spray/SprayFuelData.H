@@ -7,7 +7,8 @@
 using namespace amrex;
 
 // Spray flags and indices
-struct SprayComps {
+struct SprayComps
+{
   int heat_tran;
   int mass_tran;
   int mom_tran;
@@ -23,7 +24,8 @@ struct SprayComps {
 };
 
 // Units for sprays
-struct SprayUnits {
+struct SprayUnits
+{
 #ifdef SPRAY_PELE_LM
   Real vel_conv = 100.;  // Turn m/s to cm/s
   Real rho_conv = 0.001; // Turn kg/m^3 to g/cm^3
@@ -120,81 +122,38 @@ struct SprayData
   Real num_ppp; // Parcel size
   Real ref_T;
   Real sigma; // Surface tension
+  GpuArray<Real, SPRAY_FUEL_NUM> critT;
+  GpuArray<Real, SPRAY_FUEL_NUM> boilT;
+  GpuArray<Real, SPRAY_FUEL_NUM> cp;
+  GpuArray<Real, SPRAY_FUEL_NUM> latent;
+  GpuArray<Real, SPRAY_FUEL_NUM> rho;
+  GpuArray<Real, SPRAY_FUEL_NUM> mu;
+  GpuArray<int, SPRAY_FUEL_NUM> indx;
 
-  SprayData (const Gpu::DeviceVector<Real>& critT,
-             const Gpu::DeviceVector<Real>& boilT,
-             const Gpu::DeviceVector<Real>& fuelCp,
-             const Gpu::DeviceVector<Real>& fuelLatent,
-             const Gpu::DeviceVector<Real>& fuelRho,
-             const Gpu::DeviceVector<Real>& fuelMu,
-             const Gpu::DeviceVector<int>&  fuelIndx,
+  SprayData (const Real* in_critT,
+             const Real* in_boilT,
+             const Real* in_fuelCp,
+             const Real* in_fuelLatent,
+             const Real* in_fuelRho,
+             const Real* in_fuelMu,
+             const int* in_fuelIndx,
              const Real in_num_ppp,
              const Real in_ref_T,
              const Real in_sigma)
-    : m_critT_ptr(critT.dataPtr()),
-      m_boilT_ptr(boilT.dataPtr()),
-      m_fuelCp_ptr(fuelCp.dataPtr()),
-      m_fuelLatent_ptr(fuelLatent.dataPtr()),
-      m_fuelRho_ptr(fuelRho.dataPtr()),
-      m_fuelMu_ptr(fuelMu.dataPtr()),
-      m_fuelIndx_ptr(fuelIndx.dataPtr()),
-      num_ppp(in_num_ppp),
+    : num_ppp(in_num_ppp),
       ref_T(in_ref_T),
       sigma(in_sigma)
-  {}
-
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-  Real critT (const int fuelSpecIndx) const
   {
-    return m_critT_ptr[fuelSpecIndx];
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      critT[spf] = in_critT[spf];
+      boilT[spf] = in_boilT[spf];
+      cp[spf] = in_fuelCp[spf];
+      latent[spf] = in_fuelLatent[spf];
+      rho[spf] = in_fuelRho[spf];
+      mu[spf] = in_fuelMu[spf];
+      indx[spf] = in_fuelIndx[spf];
+    }
   }
-
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-  Real boilT (const int fuelSpecIndx) const
-  {
-    return m_boilT_ptr[fuelSpecIndx];
-  }
-
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-  Real cp (const int fuelSpecIndx) const
-  {
-    return m_fuelCp_ptr[fuelSpecIndx];
-  }
-
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-  Real latent (const int fuelSpecIndx) const
-  {
-    return m_fuelLatent_ptr[fuelSpecIndx];
-  }
-
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-  Real rho (const int fuelSpecIndx) const
-  {
-    return m_fuelRho_ptr[fuelSpecIndx];
-  }
-
-  // Surface tension of liquid fuel for splash model
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-  Real mu (const int fuelSpecIndx) const
-  {
-    return m_fuelMu_ptr[fuelSpecIndx];
-  }
-
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-  int indx (const int fuelSpecIndx) const
-  {
-    return m_fuelIndx_ptr[fuelSpecIndx];
-  }
-
-private:
-
-  const Real * m_critT_ptr;
-  const Real * m_boilT_ptr;
-  const Real * m_fuelCp_ptr;
-  const Real * m_fuelLatent_ptr;
-  const Real * m_fuelRho_ptr;
-  const Real * m_fuelMu_ptr;
-  const int * m_fuelIndx_ptr;
 };
 
 class SprayDataContainer
@@ -224,43 +183,35 @@ public:
     m_fuelRho.resize(nfspec);
     m_fuelMu.resize(nfspec);
     m_fuelIndx.resize(nfspec);
-    Gpu::HostVector<Real> tmpFuelLatent(nfspec);
     for (int i = 0; i != nfspec; ++i) {
       const int specIndx = fuelIndx[i];
-      tmpFuelLatent[i] = fuelLatent[i] - refFuelH[specIndx];
+      m_fuelLatent[i] = fuelLatent[i] - refFuelH[specIndx];
+      m_critT[i] = critT[i];
+      m_boilT[i] = boilT[i];
+      m_fuelCp[i] = fuelCp[i];
+      m_fuelRho[i] = fuelRho[i];
+      m_fuelMu[i] = fuelMu[i];
+      m_fuelIndx[i] = fuelIndx[i];
     }
-    Gpu::copy(Gpu::hostToDevice, critT.begin(), critT.end(),
-              m_critT.begin());
-    Gpu::copy(Gpu::hostToDevice, boilT.begin(), boilT.end(),
-              m_boilT.begin());
-    Gpu::copy(Gpu::hostToDevice, fuelCp.begin(), fuelCp.end(),
-              m_fuelCp.begin());
-    Gpu::copy(Gpu::hostToDevice, tmpFuelLatent.begin(), tmpFuelLatent.end(),
-              m_fuelLatent.begin());
-    Gpu::copy(Gpu::hostToDevice, fuelRho.begin(), fuelRho.end(),
-              m_fuelRho.begin());
-    Gpu::copy(Gpu::hostToDevice, fuelMu.begin(), fuelMu.end(),
-              m_fuelMu.begin());
-    Gpu::copy(Gpu::hostToDevice, fuelIndx.begin(), fuelIndx.end(),
-              m_fuelIndx.begin());
   }
 
   SprayData getSprayData()
   {
-    return SprayData(m_critT, m_boilT, m_fuelCp, m_fuelLatent, m_fuelRho,
-                     m_fuelMu, m_fuelIndx, num_ppp, ref_T, fuelSigma);
+    return SprayData(m_critT.data(), m_boilT.data(), m_fuelCp.data(),
+                     m_fuelLatent.data(), m_fuelRho.data(), m_fuelMu.data(),
+                     m_fuelIndx.data(), num_ppp, ref_T, fuelSigma);
   }
 
 private:
 
   // Vectors with constant reference values
-  Gpu::DeviceVector<Real> m_critT;
-  Gpu::DeviceVector<Real> m_boilT;
-  Gpu::DeviceVector<Real> m_fuelCp;
-  Gpu::DeviceVector<Real> m_fuelLatent;
-  Gpu::DeviceVector<Real> m_fuelRho;
-  Gpu::DeviceVector<Real> m_fuelMu;
-  Gpu::DeviceVector<int>  m_fuelIndx;
+  Vector<Real> m_critT;
+  Vector<Real> m_boilT;
+  Vector<Real> m_fuelCp;
+  Vector<Real> m_fuelLatent;
+  Vector<Real> m_fuelRho;
+  Vector<Real> m_fuelMu;
+  Vector<int>  m_fuelIndx;
   Real num_ppp;
   Real ref_T;
   Real fuelSigma; // Surface tension
