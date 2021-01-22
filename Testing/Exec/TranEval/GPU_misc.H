@@ -8,7 +8,7 @@
 #include <EOS.H>
 
 AMREX_GPU_DEVICE
-inline
+AMREX_FORCE_INLINE
 void
 initialize_data(int i, int j, int k,  
 		amrex::Array4<amrex::Real> const& spec,
