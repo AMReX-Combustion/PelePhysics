@@ -26,7 +26,7 @@ int react(amrex::Real *rY_in, amrex::Real *rY_src_in,
 	      amrex::Real *rX_in, amrex::Real *rX_src_in, 
 	      amrex::Real &dt_react, amrex::Real &time,
          int cvode_iE, int Ncells,
-         cudaStream_t stream);
+         amrex::gpuStream_t stream);
 
 void reactor_close();
 
