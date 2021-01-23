@@ -237,9 +237,9 @@ SprayParticleContainer::updateParticles(const int&  level,
   TransParm const* ltransparm = trans_parm_g;
   // Start the ParIter, which loops over separate sets of particles in different boxes
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
-    const Box& tile_box = pti.tilebox();
-    const Box& state_box = pti.growntilebox(state_ghosts);
-    const Box& src_box = pti.growntilebox(source_ghosts);
+    const Box tile_box = pti.tilebox();
+    const Box state_box = pti.growntilebox(state_ghosts);
+    const Box src_box = pti.growntilebox(source_ghosts);
     const Long Np = pti.numParticles();
     ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
 #ifdef USE_SPRAY_SOA
@@ -432,56 +432,72 @@ SprayParticleContainer::updateParticles(const int&  level,
         }
       } // End of p.id() > 0 check
     }); // End of loop over particles
-    // Check if tile has walls
-    bool at_bounds = tile_at_bndry(tile_box, bndry_lo, bndry_hi, domain);
+  } // for (int MyParIter pti..
+  if (do_move) {
+    // Loop back over particles to see if any have interacted with walls
+    // This should occur on the host
+    for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
+      const Box tile_box = pti.tilebox();
+      const Box state_box = pti.growntilebox(state_ghosts);
+      const Long Np = pti.numParticles();
+      // Check if tile has walls
+      bool at_bounds = tile_at_bndry(tile_box, bndry_lo, bndry_hi, domain);
 #ifdef AMREX_USE_EB
-    if (eb_in_box) at_bounds = true;
+      const EBFArrayBox& interp_fab = static_cast<EBFArrayBox const&>(state[pti]);
+      const EBCellFlagFab& flags = interp_fab.getEBCellFlagFab();
+      bool eb_in_box = false;
+      if (flags.getType(state_box) != FabType::regular) {
+        eb_in_box = true;
+        at_bounds = true;
+      }
 #endif
-    // Check if particles have gone outside of walls
-    if (do_move && Np > 0 && at_bounds) {
-      SprayData fdatCPU = m_fuelData.getSprayData();
-      PairIndex index(pti.index(), pti.LocalTileIndex());
-      auto& ptile = GetParticles(level)[index];
-      auto& pval = ptile.GetArrayOfStructs();
+      // Check if particles have gone outside of walls
+      if (Np > 0 && at_bounds) {
+        SprayData fdatCPU = m_fuelData.getSprayData();
+        PairIndex index(pti.index(), pti.LocalTileIndex());
+        auto& ptile = GetParticles(level)[index];
+        auto& pval = ptile.GetArrayOfStructs();
 #ifdef AMREX_USE_EB
-      const CutFab& bnorm = bndrynorm->operator[](pti);
-      const CutFab& bcent = bndrycent->operator[](pti);
+        const CutFab& bnorm = bndrynorm->operator[](pti);
+        const CutFab& bcent = bndrycent->operator[](pti);
 #endif
-      for (int pid = 0; pid < Np; ++pid) {
-        ParticleType& p = pval[pid];
-        if (p.id() > 0) {
-          RealVect pos = {AMREX_D_DECL(p.pos(0), p.pos(1), p.pos(2))};
-          const RealVect lx = (p.pos() - plo)*dxi;
-          const IntVect ijk = lx.floor();
-          const Real T_part = p.rdata(SPI.pstateT);
-          const Real dia_part = p.rdata(SPI.pstateDia);
-          SprayRefl SPRF; // Structure holding data for reflected particles
-          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-            SPRF.Y_refl[spf] = p.rdata(SPI.pstateY+spf);
-          impose_wall(p, SPI, SPU, fdatCPU, ijk, dx, dxi, plo, phi,
+        for (int pid = 0; pid < Np; ++pid) {
+          ParticleType& p = pval[pid];
+          if (p.id() > 0) {
+            RealVect pos = {AMREX_D_DECL(p.pos(0), p.pos(1), p.pos(2))};
+            const RealVect lx = (p.pos() - plo)*dxi;
+            const IntVect ijk = lx.floor();
+            const Real T_part = p.rdata(SPI.pstateT);
+            const Real dia_part = p.rdata(SPI.pstateDia);
+            SprayRefl SPRF; // Structure holding data for reflected particles
+            for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+              SPRF.Y_refl[spf] = p.rdata(SPI.pstateY+spf);
+            impose_wall(p, SPI, SPU, fdatCPU, ijk, dx, dxi, plo, phi,
 #ifdef AMREX_USE_EB
-                      eb_in_box, flags, bcent, bnorm,
+                        eb_in_box, flags, bcent, bnorm,
 #endif
-                      bndry_lo, bndry_hi, T_wall, SPRF, pos);
-          if (SPRF.Ns_refl > 0 && isActive) {
-            for (int nsp = 0; nsp < SPRF.Ns_refl; ++nsp) {
-              ParticleType pnew;
-              pnew.id() = ParticleType::NextID();
-              pnew.cpu() = ParallelDescriptor::MyProc();
-              pnew.rdata(SPI.pstateDia) = SPRF.dia_refl;
-              pnew.rdata(SPI.pstateT) = T_part;
-              for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-                pnew.rdata(SPI.pstateY+spf) = SPRF.Y_refl[spf];
-              for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                pnew.rdata(SPI.pstateVel+dir) = 0.;
-                pnew.pos(dir) = pos[dir];
+                        bndry_lo, bndry_hi, T_wall, SPRF, pos);
+            if (SPRF.Ns_refl > 0 && isActive) {
+              SPRF.Ns_refl = 0;
+              for (int nsp = 0; nsp < SPRF.Ns_refl; ++nsp) {
+                ParticleType pnew;
+                pnew.id() = ParticleType::NextID();
+                pnew.cpu() = ParallelDescriptor::MyProc();
+                pnew.rdata(SPI.pstateDia) = SPRF.dia_refl;
+                pnew.rdata(SPI.pstateT) = T_part;
+                for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+                  pnew.rdata(SPI.pstateY+spf) = SPRF.Y_refl[spf];
+                for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+                  pnew.rdata(SPI.pstateVel+dir) = 0.;
+                  pnew.pos(dir) = pos[dir];
+                }
+                create_splash_droplet(pnew, SPI, SPRF);
+                ptile.push_back(pnew);
               }
-              create_splash_droplet(pnew, SPI, SPRF);
-              ptile.push_back(pnew);
-            }
-          } // if (Ns_refl > 0)
-        } // if (p.id() > 0)
-      } // for (int pid...
-    } // if (do_move && Np > 0 && at_bounds)
-  } // for (MyParIter pti ...
+            } // if (Ns_refl > 0)
+          } // if (p.id() > 0)
+        } // for (int pid...
+      } // if (do_move && Np > 0 && at_bounds)
+    } // for (MyParIter pti ...
+  } // if (do_move)
 }

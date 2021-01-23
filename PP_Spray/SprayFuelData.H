@@ -71,6 +71,16 @@ struct SprayRefl
   Real beta_stdv; // Standard dev ejection angle in degrees
 };
 
+// Struct to hold wall film data
+struct WallFilm
+{
+  RealVect pos;
+  Real T_film;
+  GpuArray<Real,SPRAY_FUEL_NUM> Y_film;
+  Real dia_film;
+  Real h_film; // Film height at center
+};
+
 // Structure that contains the interpolated gas phase state
 // and gas phase source values
 struct GasPhaseVals

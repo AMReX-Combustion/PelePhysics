@@ -149,7 +149,7 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
           p.id() = -1;
           return;
         case 1: // Reflective, set vectors and locations
-          normal[dir] = -1.;
+          normal[dir] = fact;
           bcentv[dir] = fact*0.5;
           bloc[dir] = ijk[dir];
           check_part = true;
