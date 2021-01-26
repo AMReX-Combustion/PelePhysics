@@ -1,0 +1,156 @@
+name: CI_Reaction                                                                                                                                          
+on: 
+   workflow_dispatch:
+   push:
+     branches: [ development ]
+   pull_request:
+     branches: [ development ]
+
+jobs:
+  # Fuego DRM GNU7.5
+  FuegoDRM:
+    name: GNU@7.5 [Fuego-DRM]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval_C
+      run: |
+        make -j 2 COMP=gnu Eos_dir=Fuego Chemistry_Model=drm19
+    - name: Run
+      working-directory: ./Testing/Exec/ReactEval_C
+      run: |
+        ./Pele3d.gnu.ex inputs.3d
+
+  # Fuego LiDryer GNU7.5
+  FuegoLiDryer:
+    name: GNU@7.5 [Fuego-LiDryer]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval_C
+      run: |
+        make -j 2 COMP=gnu Eos_dir=Fuego Chemistry_Model=LiDryer
+    - name: Run
+      working-directory: ./Testing/Exec/ReactEval_C
+      run: |
+        ./Pele3d.gnu.ex inputs.3d
+
+  # Fuego DRM CUDA support
+  FuegoDRM_CUDA:
+    name: CUDA@11.0.1 [FuegoDRM]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_nvcc.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval_C
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=drm19
+
+  # Fuego LiDryer CUDA support
+  FuegoLiDryer_CUDA:
+    name: CUDA@11.0.1 [FuegoLiDryer]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_nvcc.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval_C
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
+
+  # Fuego DRM HIP support
+  FuegoDRM_HIP:
+    name: HIPROCm@3.8 GFortran@9.3 [FuegoDRM]
+    runs-on: ubuntu-20.04
+    env: 
+      {CXXFLAGS: "-fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_hip.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval_C
+      run: |
+        source /etc/profile.d/rocm.sh
+        hipcc --version
+        make -j 2 COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=drm19
+
+  # Fuego LiDryer HIP support
+  FuegoLiDryer_HIP:
+    name: HIPROCm@3.8 GFortran@9.3 [FuegoLiDryer]
+    runs-on: ubuntu-20.04
+    env: 
+      {CXXFLAGS: "-fno-operator-names"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_hip.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval_C
+      run: |
+        source /etc/profile.d/rocm.sh
+        hipcc --version
+        make -j 2 COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
