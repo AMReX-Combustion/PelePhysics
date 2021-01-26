@@ -27,6 +27,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval_C
       run: |
+        make TPL COMP=gnu Eos_dir=Fuego Chemistry_Model=drm19
         make -j 2 COMP=gnu Eos_dir=Fuego Chemistry_Model=drm19
     - name: Run
       working-directory: ./Testing/Exec/ReactEval_C
@@ -53,6 +54,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval_C
       run: |
+        make TPL COMP=gnu Eos_dir=Fuego Chemistry_Model=LiDryer
         make -j 2 COMP=gnu Eos_dir=Fuego Chemistry_Model=LiDryer
     - name: Run
       working-directory: ./Testing/Exec/ReactEval_C
@@ -81,6 +83,7 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        make TPL COMP=gnu USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=drm19
         make -j 2 COMP=gnu USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=drm19
 
   # Fuego LiDryer CUDA support
@@ -105,6 +108,7 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        make TPL COMP=gnu USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
         make -j 2 COMP=gnu USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
 
   # Fuego DRM HIP support
@@ -129,6 +133,7 @@ jobs:
       run: |
         source /etc/profile.d/rocm.sh
         hipcc --version
+        make TPL COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=drm19
         make -j 2 COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=drm19
 
   # Fuego LiDryer HIP support
@@ -153,4 +158,5 @@ jobs:
       run: |
         source /etc/profile.d/rocm.sh
         hipcc --version
+        make TPL COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer 
         make -j 2 COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
