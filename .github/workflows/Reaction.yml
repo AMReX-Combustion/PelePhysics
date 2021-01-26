@@ -32,7 +32,7 @@ jobs:
     - name: Run
       working-directory: ./Testing/Exec/ReactEval_C
       run: |
-        ./Pele3d.gnu.ex inputs.3d
+        ./Pele3d.gnu.ex inputs.3d-regt
 
   # Fuego LiDryer GNU7.5
   FuegoLiDryer:
@@ -59,7 +59,7 @@ jobs:
     - name: Run
       working-directory: ./Testing/Exec/ReactEval_C
       run: |
-        ./Pele3d.gnu.ex inputs.3d
+        ./Pele3d.gnu.ex inputs.3d-regt
 
   # Fuego DRM CUDA support
   FuegoDRM_CUDA:
@@ -83,8 +83,8 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make TPL COMP=gnu USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=drm19
-        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=drm19
+        make TPL COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=drm19
+        make -j 2 COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=drm19
 
   # Fuego LiDryer CUDA support
   FuegoLiDryer_CUDA:
@@ -108,8 +108,8 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make TPL COMP=gnu USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
-        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
+        make TPL COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
+        make -j 2 COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
 
   # Fuego DRM HIP support
   FuegoDRM_HIP:
