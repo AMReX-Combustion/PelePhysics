@@ -6,7 +6,7 @@ VERBOSE    = FALSE
 DEBUG      = FALSE
 
 # Compiler
-COMP	     = gcc
+COMP	     = gnu
 FCOMP	     = gfortran
 USE_MPI    = FALSE
 USE_OMP    = FALSE
@@ -15,7 +15,7 @@ USE_HIP    = FALSE
 
 # PelePhysics
 FUEGO_GAS  = TRUE
-TINY_PROFILE = TRUE
+TINY_PROFILE = FALSE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    ?= ../../..
