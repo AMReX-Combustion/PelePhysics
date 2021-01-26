@@ -7,8 +7,11 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
+#ifdef AMREX_USE_GPU
 #include <AMReX_SUNMemory.H>
+#endif
 #include "mechanism.h"
+#include <GPU_misc.H>
 
 #include <PlotFileFromMF.H>
 #include <EOS.H>
@@ -27,74 +30,20 @@ static std::string ODE_SOLVER = "RK64";
 
 using namespace amrex;
 
-AMREX_GPU_HOST_DEVICE
-inline
-void
-initialize_data(int i, int j, int k, int fuel_id, 
-                Array4<Real> const& rhoY,
-                Array4<Real> const& frcExt,
-                Array4<Real> const& rhoE,
-                Array4<Real> const& frcEExt,
-                const GpuArray<Real, AMREX_SPACEDIM>&  dx, 
-                const GpuArray<Real, AMREX_SPACEDIM>&  plo, 
-                const GpuArray<Real, AMREX_SPACEDIM>&  phi ) noexcept
-{
-    Real Temp_lo = 2000.0;
-    Real Temp_hi = 2500.0;
-    Real dTemp = 100.0;
-    Real pressure = 1013250.0;
-    Real density, energy, temp;
-    GpuArray<Real,NUM_SPECIES> X;
-    GpuArray<Real,NUM_SPECIES> Y;
-    Real y = plo[1] + (j+0.5)*dx[1];
-    //Real x = plo[0] + (i+0.5)*dx[0];
-    Real pi = 3.1415926535897932;
-    GpuArray<Real,3> L;
-    GpuArray<Real,3> P;
-
-    for (int n = 0; n < AMREX_SPACEDIM; n++) {
-        L[n] = phi[n] - plo[n];
-        P[n] = L[n] / 4.0;
-    }
-    // Y
-    for (int n = 0; n < NUM_SPECIES; n++) {
-        X[n] = 0.0;
-    }
-    X[O2_ID]   = 0.2;
-    X[fuel_id] = 0.1;
-    X[N2_ID]   = 0.7;
-    EOS::X2Y(&X[0],&Y[0]);
-    // T
-    temp =  Temp_lo + (Temp_hi-Temp_lo)*y/L[1] + dTemp * std::sin(2.0*pi*y/P[1]);
-    // get rho and E 
-    EOS::PYT2RE(pressure, &Y[0], temp, density, energy);
-    // Fill vect
-    for (int n = 0; n < NUM_SPECIES; n++) {
-        rhoY(i,j,k,n) = Y[n]*density;   
-        frcExt(i,j,k,n) = 0.0;
-    }
-    rhoY(i,j,k,NUM_SPECIES) = temp; 
-
-    rhoE(i,j,k) = energy * density; 
-
-    frcEExt(i,j,k) = 0.0;
-}
-
 int
 main (int   argc,
       char* argv[])
 {
   Initialize(argc,argv);
+#ifdef AMREX_USE_GPU
   amrex::sundials::MemoryHelper::Initialize(); /* TODO: this ideally (I think) will go in the amrex::Initialize */
+#endif
   {
     BL_PROFILE_VAR("main::main()", pmain);
 
     ParmParse pp;
     std::string fuel_name;
     pp.get("fuel_name", fuel_name);
-
-    int max_grid_size = 16;
-    pp.query("max_grid_size",max_grid_size);
 
     std::string pltfile;
     bool do_plt = false;
@@ -161,7 +110,7 @@ main (int   argc,
       // Set ODE tolerances
       SetTolFactODE(rtol,atol);
 
-#ifdef AMREX_USE_CUDA
+#ifdef AMREX_USE_GPU
       reactor_info(ode_iE, ode_ncells);
 #else
       reactor_init(ode_iE, ode_ncells);
@@ -169,50 +118,59 @@ main (int   argc,
     }
     BL_PROFILE_VAR_STOP(reactInfo);
 
-    std::array<int,3> ncells = {D_DECL(1,1,1)};
+    // Define geometry
+    std::array<int,3> ncells = {AMREX_D_DECL(1,1,1)};
     if (pp.countval("ncells") == 1) {
       pp.get("ncells",ncells[0]);
-      ncells = {D_DECL(ncells[0],1,1)};
+      ncells = {AMREX_D_DECL(ncells[0],1,1)};
     }
     else if (pp.countval("ncells") >= AMREX_SPACEDIM) {
       Vector<int> nc(AMREX_SPACEDIM);
       pp.getarr("ncells",nc,0,AMREX_SPACEDIM);
-      ncells = {D_DECL(nc[0],nc[1],nc[2])};
+      ncells = {AMREX_D_DECL(nc[0],nc[1],nc[2])};
     }
     else {
       Abort("ncells has to have length 1 or spacedim");
     }
     
-    Box domain(IntVect(D_DECL(0,0,0)),
-               IntVect(D_DECL(ncells[0]-1,ncells[1]-1,ncells[2]-1)));
+    Box domain(IntVect(AMREX_D_DECL(0,0,0)),
+               IntVect(AMREX_D_DECL(ncells[0]-1,ncells[1]-1,ncells[2]-1)));
 
     Print() << "Integrating "<< domain.numPts() << " cells for: " << dt << " seconds" << std::endl;
 
+    RealBox real_box({AMREX_D_DECL(-1.0,-1.0,-1.0)},
+                     {AMREX_D_DECL( 1.0, 1.0, 1.0)});
+
+    int coord = 0;   
+
+    Array<int,AMREX_SPACEDIM> is_periodic {AMREX_D_DECL(1,1,1)};
+
+    Geometry geom(domain, real_box, coord, is_periodic);
+
+    // Define BoxArray
+    int max_grid_size = 16;
+    pp.query("max_grid_size",max_grid_size);
     BoxArray ba(domain);
     ba.maxSize(max_grid_size);
 
-    /* Additional defs to initialize domain */
-    GpuArray<Real, AMREX_SPACEDIM>  plo = {D_DECL(0,0,0)};
-    GpuArray<Real, AMREX_SPACEDIM>  dx  = {D_DECL(1,1,1)};
-    GpuArray<Real, AMREX_SPACEDIM>  phi = {D_DECL(Real(domain.length(0)),
-                                                  Real(domain.length(1)),
-                                                  Real(domain.length(2)))};
+    DistributionMapping dm(ba);
+    int num_grow = 0;
 
     /* Create MultiFabs with no ghost cells */
-    DistributionMapping dm(ba);
-    MultiFab mf(ba, dm, NUM_SPECIES + 1, 0);
-    MultiFab rY_source_ext(ba,dm,NUM_SPECIES,0);
-    MultiFab mfE(ba, dm, 1, 0);
-    MultiFab rY_source_energy_ext(ba,dm,1,0);
-    MultiFab temperature(ba,dm,1,0);
-    MultiFab fctCount(ba,dm,1,0);
-    iMultiFab dummyMask(ba,dm,1,0);
+    MultiFab mf(ba, dm, NUM_SPECIES + 1, num_grow);
+    MultiFab rY_source_ext(ba,dm,NUM_SPECIES, num_grow);
+    MultiFab mfE(ba, dm, 1, num_grow);
+    MultiFab rY_source_energy_ext(ba,dm,1,num_grow);
+    MultiFab temperature(ba,dm,1,num_grow);
+    MultiFab fctCount(ba,dm,1,num_grow);
+    iMultiFab dummyMask(ba,dm,1,num_grow);
     dummyMask.setVal(1);
 
-    FabArrayBase::mfiter_tile_size = IntVect(D_DECL(1024,1024,1024));
+    FabArrayBase::mfiter_tile_size = IntVect(AMREX_D_DECL(1024,1024,1024));
 
     /* INIT */
     BL_PROFILE_VAR("main::initialize_data()", InitData);
+    const auto geomdata = geom.data();
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -230,7 +188,7 @@ main (int   argc,
       {
         initialize_data(i, j, k, fuel_idx, 
                         rY_a, rYs_a, E_a, rE_a,
-                        dx, plo, phi);
+                        geomdata);
       });
     }
     BL_PROFILE_VAR_STOP(InitData);
@@ -288,8 +246,7 @@ main (int   argc,
       auto const& fc      = fctCount.array(mfi);
       auto const& mask    = dummyMask.array(mfi);
 
-#ifdef AMREX_USE_CUDA
-      cudaError_t cuda_status = cudaSuccess;
+#ifdef AMREX_USE_GPU
       ode_ncells    = nc;
 #else
 #ifndef CVODE_BOXINTEG
@@ -364,13 +321,13 @@ main (int   argc,
         Real dt_incr = dt/ndt;
         for (int ii = 0; ii < ndt; ++ii)
         {
-#ifdef AMREX_USE_CUDA
+#ifdef AMREX_USE_GPU
           react(box,
                 rhoY, frcExt, T,
                 rhoE, frcEExt,
                 fc, mask,
                 dt_incr, time,
-                ode_iE, Gpu::gpuStream());
+                ode_iE, amrex::Gpu::gpuStream());
 #else
           react(box,
                   rhoY, frcExt, T,
@@ -429,7 +386,7 @@ main (int   argc,
       BL_PROFILE_VAR_STOP(PlotFile);
     }
     
-#ifndef AMREX_USE_CUDA
+#ifndef AMREX_USE_GPU
     reactor_close();
 #endif
     transport_close();

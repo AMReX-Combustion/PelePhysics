@@ -1,21 +1,21 @@
+# AMReX
+DIM        = 3
 PRECISION  = DOUBLE
 PROFILE    = FALSE
-
+VERBOSE    = FALSE
 DEBUG      = FALSE
 
-DIM        = 3
-
-COMP	   = gcc
-FCOMP	   = gfortran
-
-USE_MPI    = TRUE
+# Compiler
+COMP	     = gcc
+FCOMP	     = gfortran
+USE_MPI    = FALSE
 USE_OMP    = FALSE
-
-FUEGO_GAS  = TRUE
-
-TINY_PROFILE = TRUE
-
 USE_CUDA   = FALSE
+USE_HIP    = FALSE
+
+# PelePhysics
+FUEGO_GAS  = TRUE
+TINY_PROFILE = TRUE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    ?= ../../..
