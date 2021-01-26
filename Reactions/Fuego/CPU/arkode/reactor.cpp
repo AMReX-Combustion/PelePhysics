@@ -560,7 +560,6 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
 
       /* Offset in case several cells */
       int offset = tid * (NUM_SPECIES + 1);
-      data_wk->boxcell = 0;
 
       /* MW CGS */
       CKWT(molecular_weight);
@@ -665,6 +664,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     std::memcpy(data->rhoX_init, rX_in, sizeof(realtype) * data->ncells);
     std::memcpy(data->rhoXsrc_ext, rX_src_in, sizeof(realtype) * data->ncells);
 
+    data->boxcell   = 0; 
     if (data->iimplicit_solve == 1) 
     {
         //set explicit rhs to null
@@ -929,8 +929,6 @@ UserData AllocUserData(int reactor_type, int num_cells)
     /* Make local copies of pointers in user_data */
     UserData data_wk = (UserData) malloc(sizeof *data_wk);
     int omp_thread = 0;
-    amrex::Real relative_tol = 1.0e-6;
-    amrex::Real absolute_tol = 1.0e-10;
 
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num();
@@ -948,8 +946,8 @@ UserData AllocUserData(int reactor_type, int num_cells)
     pp.query("analytical_jacobian",data_wk->ianalytical_jacobian);
     pp.query("implicit_solve", data_wk->iimplicit_solve);
     pp.query("use_erkstep", data_wk->iuse_erkstep);
-    pp.query("rtol",relative_tol);
-    pp.query("atol",absolute_tol);
+    pp.query("rtol",relTol);
+    pp.query("atol",absTol);
 
     (data_wk->ireactor_type)      = reactor_type;
 
