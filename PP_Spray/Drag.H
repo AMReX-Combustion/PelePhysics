@@ -163,7 +163,7 @@ bool calculateSpraySource (const Real    flow_dt,
         sum_mw_xv += x_v[spf];
       }
       Real totalmwx = gpv.mw_mix*(nt*gpv.p_fluid - sum_xv) + sum_mw_xv;
-      for(int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         const int fspec = fdat.indx[spf];
         Real Yfv = x_v[spf]/totalmwx;
         Yfv = amrex::max(0., amrex::min(1. - C_eps, Yfv));
@@ -282,12 +282,19 @@ bool calculateSpraySource (const Real    flow_dt,
                  vel_part[2] += part_dt*part_mom_src[2]*inv_pmass;);
     T_part += part_dt*part_temp_src;
     Real new_dia = dia_part + part_dt*d_dot;
-    if (new_dia < dia_eps) return true;
-    else dia_part = new_dia;
+    if (new_dia > dia_eps) {
+      dia_part = new_dia;
+      Real new_mass = pmass + m_dot*part_dt;
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+        Y_part[spf] = (Y_part[spf]*pmass + mi_dot[spf]*part_dt)/new_mass;
+    } else {
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+        mi_dot[spf] += Y_part[spf]*pmass;
+      m_dot += pmass;
+      p.id() = -1;
+      isub = nsub + 1;
+    }
     gpv.fluid_mass_src += m_dot;
-    Real new_mass = pmass + m_dot*part_dt;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-      Y_part[spf] = (Y_part[spf]*pmass + mi_dot[spf]*part_dt)/new_mass;
     ++isub;
   }
 #ifdef USE_SPRAY_SOA

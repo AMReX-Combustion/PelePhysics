@@ -112,21 +112,22 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
 #ifdef AMREX_USE_EB
                   const bool use_EB,
                   const EBCellFlagFab& flags,
-                  const CutFab& bcent,
-                  const CutFab& bnorm,
+                  Array4<Real const> const& bcent,
+                  Array4<Real const> const& bnorm,
 #endif
                   const IntVect& bndry_lo,
                   const IntVect& bndry_hi,
                   const Real T_wall,
                   SprayRefl& SPRF,
-                  RealVect& pos)
+                  RealVect& pos,
+                  bool isActive)
 {
   const Real tolerance = std::numeric_limits<Real>::epsilon();
   Real sigma = fdat.sigma;
   // Determine the location of the particle after moving
   const RealVect lx = (p.pos() - plo)*dxi;
   const IntVect ijk = lx.floor();
-  AMREX_D_TERM(const int ipn = ijk[0];, const int jpn = ijk[1];, const int kpn = ijk[2];);
+  AMREX_D_TERM(const int i = ijk[0];, const int j = ijk[1];, const int k = ijk[2];);
   AMREX_D_TERM(const int ip = ijkp[0];, const int jp = ijkp[1];, const int kp = ijkp[2];);
   RealVect normal(RealVect::TheZeroVector()); // Normal vector to boundary face
   RealVect bcentv(RealVect::TheZeroVector()); // Point on boundary face
@@ -165,9 +166,9 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
     // If particle has moved into a cut-cell
     if (flags(ijk).isSingleValued() && !check_part) {
       // Use the normal and boundary centroid from the new cell
-      bloc = {ipn, jpn, kpn};
-      normal = {-bnorm(ijk,0), -bnorm(ijk,1), -bnorm(ijk,2)};
-      bcentv = {bcent(ijk,0), bcent(ijk,1), bcent(ijk,2)};
+      bloc = {i, j, k};
+      normal = {-bnorm(i,j,k,0), -bnorm(i,j,k,1), -bnorm(i,j,k,2)};
+      bcentv = {bcent(i,j,k,0), bcent(i,j,k,1), bcent(i,j,k,2)};
       check_part = true;
       // If the particle has moved into a covered cell
     } else if (flags(ijk).isCovered() && !check_part) {
@@ -175,8 +176,8 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
       if (flags(ijkp).isSingleValued()) {
         // Use the normal and boundary centroid from the previous cell
         bloc = {ip, jp, kp};
-        normal = {-bnorm(ijkp,0), -bnorm(ijkp,1), -bnorm(ijkp,2)};
-        bcentv = {bcent(ijkp,0), bcent(ijkp,1), bcent(ijkp,2)};
+        normal = {-bnorm(ip,jp,kp,0), -bnorm(ip,jp,kp,1), -bnorm(ip,jp,kp,2)};
+        bcentv = {bcent(ip,jp,kp,0), bcent(ip,jp,kp,1), bcent(ip,jp,kp,2)};
         // otherwise an error has occurred
       } else {
         Abort("SprayInterpolation::reflect_wall: Particle is outside EB");
@@ -211,7 +212,7 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
       // dis_fact = 1 -> Particle is placed on the wall
       Real dis_fact = 2.;
       // If using a splash model
-      if (sigma > 0.) {
+      if (sigma > 0. && isActive) {
         Real mu_part = 0.;
         Real rho_part = 0.;
         // TODO: Determine correct method for handling multi-component liquids

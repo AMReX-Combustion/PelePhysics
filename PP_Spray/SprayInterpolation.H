@@ -71,13 +71,12 @@ void trilinear_interp (const amrex::RealVect& pos,
 
     AMREX_D_TERM(int i = ijk[0];, int j = ijk[1];, int k = ijk[2];);
 
-
     const amrex::RealVect sx_hi = lx - ijk;
     const amrex::RealVect sx_lo = 1 - sx_hi;
     amrex::GpuArray<amrex::GpuArray<amrex::Real,AMREX_SPACEDIM>,2> ssv;
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      ssv[dir][0] = sx_lo[dir];
-      ssv[dir][1] = sx_hi[dir];
+      ssv[0][dir] = sx_lo[dir];
+      ssv[1][dir] = sx_hi[dir];
     }
     int cc = 0;
 #if AMREX_SPACEDIM == 3
@@ -90,7 +89,7 @@ void trilinear_interp (const amrex::RealVect& pos,
           AMREX_D_TERM(indx_array[cc][0] = i + ii;,
                        indx_array[cc][1] = j + jj;,
                        indx_array[cc][2] = k + kk;);
-          weights[cc] = AMREX_D_TERM(ssv[0][ii+1],*ssv[1][jj+1],*ssv[2][kk+1]);
+          weights[cc] = AMREX_D_TERM(ssv[ii+1][0],*ssv[jj+1][1],*ssv[kk+1][2]);
           cc++;
         }
 #if AMREX_SPACEDIM > 1

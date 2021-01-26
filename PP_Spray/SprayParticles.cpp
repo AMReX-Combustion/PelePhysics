@@ -392,7 +392,7 @@ SprayParticleContainer::updateParticles(const int&  level,
 #endif
                                ltransparm);
         // Modify particle position by whole time step
-        if (do_move) {
+        if (do_move && SPI.mom_tran) {
           for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
 #ifdef USE_SPRAY_SOA
             Real& cvel = attribs[SPI.pstateVel+dir].data()[pid];
@@ -438,7 +438,7 @@ SprayParticleContainer::updateParticles(const int&  level,
     // This should occur on the host
     for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
       const Box tile_box = pti.tilebox();
-      const Box state_box = pti.growntilebox(state_ghosts);
+      const Box source_box = pti.growntilebox(source_ghosts);
       const Long Np = pti.numParticles();
       // Check if tile has walls
       bool at_bounds = tile_at_bndry(tile_box, bndry_lo, bndry_hi, domain);
@@ -446,7 +446,7 @@ SprayParticleContainer::updateParticles(const int&  level,
       const EBFArrayBox& interp_fab = static_cast<EBFArrayBox const&>(state[pti]);
       const EBCellFlagFab& flags = interp_fab.getEBCellFlagFab();
       bool eb_in_box = false;
-      if (flags.getType(state_box) != FabType::regular) {
+      if (flags.getType(source_box) != FabType::regular) {
         eb_in_box = true;
         at_bounds = true;
       }
@@ -458,8 +458,12 @@ SprayParticleContainer::updateParticles(const int&  level,
         auto& ptile = GetParticles(level)[index];
         auto& pval = ptile.GetArrayOfStructs();
 #ifdef AMREX_USE_EB
-        const CutFab& bnorm = bndrynorm->operator[](pti);
-        const CutFab& bcent = bndrycent->operator[](pti);
+        Array4<const Real> bcent_fab;
+        Array4<const Real> bnorm_fab;
+        if (eb_in_box) {
+          bcent_fab = bndrycent->array(pti);
+          bnorm_fab = bndrynorm->array(pti);
+        }
 #endif
         for (int pid = 0; pid < Np; ++pid) {
           ParticleType& p = pval[pid];
@@ -474,11 +478,10 @@ SprayParticleContainer::updateParticles(const int&  level,
               SPRF.Y_refl[spf] = p.rdata(SPI.pstateY+spf);
             impose_wall(p, SPI, SPU, fdatCPU, ijk, dx, dxi, plo, phi,
 #ifdef AMREX_USE_EB
-                        eb_in_box, flags, bcent, bnorm,
+                        eb_in_box, flags, bcent_fab, bnorm_fab,
 #endif
-                        bndry_lo, bndry_hi, T_wall, SPRF, pos);
+                        bndry_lo, bndry_hi, T_wall, SPRF, pos, isActive);
             if (SPRF.Ns_refl > 0 && isActive) {
-              SPRF.Ns_refl = 0;
               for (int nsp = 0; nsp < SPRF.Ns_refl; ++nsp) {
                 ParticleType pnew;
                 pnew.id() = ParticleType::NextID();
