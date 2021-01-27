@@ -551,7 +551,7 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
       realtype massfrac[NUM_SPECIES];
       realtype Xi[NUM_SPECIES] = {0.0};
       realtype cdot[NUM_SPECIES], molecular_weight[NUM_SPECIES];
-      realtype cX;
+      realtype cX = 0.0;
       realtype temp, energy;
       realtype dt;
 
