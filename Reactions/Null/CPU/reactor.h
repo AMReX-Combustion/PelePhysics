@@ -1,10 +1,9 @@
 #include <math.h>
-
 #include <AMReX_FArrayBox.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_iMultiFab.H>
-
 #include <EOS.H>
+
 /**********************************/
 /* Functions Called by the Program */
 int reactor_init(int cvode_iE, int Ncells);

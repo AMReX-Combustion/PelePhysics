@@ -7,6 +7,7 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_SUNMemory.H>
 #include "mechanism.h"
 
 #include <PlotFileFromMF.H>
@@ -84,6 +85,7 @@ main (int   argc,
       char* argv[])
 {
   Initialize(argc,argv);
+  amrex::sundials::MemoryHelper::Initialize(); /* TODO: this ideally (I think) will go in the amrex::Initialize */
   {
     BL_PROFILE_VAR("main::main()", pmain);
 
@@ -292,6 +294,8 @@ main (int   argc,
 #else
 #ifndef CVODE_BOXINTEG
       extra_cells = nc - (nc / ode_ncells) * ode_ncells; 
+#else
+      ode_ncells    = nc;
 #endif
 #endif
 

@@ -52,7 +52,6 @@ class Parser(object):
             self._info.log("token: %s" % token)
 
             done = token.identify(self)
-            #print "toto", token
 
         return
 

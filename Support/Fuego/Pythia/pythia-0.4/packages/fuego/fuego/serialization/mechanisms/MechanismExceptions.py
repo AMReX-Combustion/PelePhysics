@@ -38,6 +38,20 @@ class DuplicateSpecies(Exception):
         return "duplicate species '%s'" % self._symbol
 
 
+# qss species
+
+class DuplicateQssSpecies(Exception):
+
+
+    def __init__(self, symbol):
+        self._symbol = symbol
+        return
+
+
+    def __str__(self):
+        return "duplicate QSS species '%s'" % self._symbol
+
+
 # thermo
 
 class DuplicateThermalProperties(Exception):

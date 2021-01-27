@@ -15,7 +15,7 @@
 class Mechanism(object):
 
 
-    from MechanismExceptions import DuplicateElement, DuplicateSpecies, DuplicateThermalProperties, DuplicateTransProperties
+    from MechanismExceptions import DuplicateElement, DuplicateSpecies, DuplicateQssSpecies, DuplicateThermalProperties, DuplicateTransProperties
 
 
     # housekeeping
@@ -28,6 +28,7 @@ class Mechanism(object):
         print "Mechanism '%s'" % self._source
         print "    elements:", self._elements.size()
         print "     species:", self._species.size()
+        print " qss species:", self._qss_species.size()
         print "      thermo:", self._thermoDb.size()
         print "      trans:", self._transDb.size()
         print "   reactions:", self._reactions.size()
@@ -77,8 +78,29 @@ class Mechanism(object):
         return self._species
 
 
-    # thermo
+    # qss species
 
+    def declareQssSpecies(self, qss_species):
+        symbol = qss_species.symbol
+        duplicate = self._qss_species.find(symbol)
+
+        self._qss_species.qss_species(qss_species)
+
+        if duplicate:
+            raise self.DuplicateQssSpecies(symbol)
+
+        return
+
+
+    def qss_species(self, symbol=None):
+        return self._qss_species.find(symbol)
+
+
+    def qss_speciesDeclarations(self):
+        return self._qss_species
+
+
+    # thermo
 
     def declareThermalProperties(self, species):
         symbol = species.symbol
@@ -166,7 +188,6 @@ class Mechanism(object):
     def reaction(self, species=None):
         return self._reactions.find(species)
 
-
     def reactionDeclarations(self):
         return self._reactions
         
@@ -183,6 +204,9 @@ class Mechanism(object):
 
         from SpeciesDb import SpeciesDb
         self._species = SpeciesDb()
+
+        from QssSpeciesDb import QssSpeciesDb
+        self._qss_species = QssSpeciesDb()
         
         from ThermoDb import ThermoDb
         self._thermoDb = ThermoDb()

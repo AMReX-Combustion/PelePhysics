@@ -17,7 +17,7 @@ import journal
 class Mechanism(object):
 
 
-    from MechanismExceptions import DuplicateElement, DuplicateSpecies, DuplicateThermalProperties
+    from MechanismExceptions import DuplicateElement, DuplicateSpecies, DuplicateQssSpecies, DuplicateThermalProperties
 
 
     # housekeeping
@@ -39,6 +39,7 @@ class Mechanism(object):
         print "Mechanism '%s'" % self._name
         print "    elements:", self._elements.size()
         print "     species:", self._species.size()
+        print " qss species:", self._qss_species.size()
         print "   reactions:", self._reactions.size()
 
 
@@ -75,6 +76,20 @@ class Mechanism(object):
     def species(self, symbol=None):
         return self._species.find(symbol)
 
+    # qss species
+    
+    def newQssSpecies(self, symbol, locator=None):
+        duplicate = self._qss_species.find(symbol)
+
+        qss_species = self._qss_species.qss_species(symbol, locator)
+
+        if duplicate:
+            raise self.DuplicateQssSpecies(symbol)
+
+        return qss_species
+
+    def qss_species(self, symbol=None):
+        return self._qss_species.find(symbol)
 
     # thermal properties are recorded directly in the species
 
@@ -460,19 +475,21 @@ class Mechanism(object):
     # other methods  
 
     def __init__(self, name=""):
-        from ElementSet import ElementSet
-        from SpeciesSet import SpeciesSet
-        from ReactionSet import ReactionSet
+        from ElementSet    import ElementSet
+        from SpeciesSet    import SpeciesSet
+        from QssSpeciesSet import QssSpeciesSet
+        from ReactionSet   import ReactionSet
 
         self._name = name
         self._thermdb = "therm.dat"
         self._transdb = "tran.dat"
         self._externalDb = None
 
-        self._elements = ElementSet()
-        self._species = SpeciesSet()
-        self._reactions = ReactionSet()
-
+        self._elements    = ElementSet()
+        self._species     = SpeciesSet()
+        self._qss_species = QssSpeciesSet()
+        self._reactions   = ReactionSet()
+        
         self._thermoRange = ()
 
         self._info = journal.debug("fuego.serialization")

@@ -4,9 +4,11 @@
 #include <EOS.H>
 #include "mechanism.h"
 #include <AMReX_Gpu.H>
+#include <AMReX_SUNMemory.H>
 #include <AMREX_misc.H>
 
 using namespace amrex;
+using namespace amrex::sundials;
 
 #define SUN_CUSP_CONTENT(S)        ( (SUNLinearSolverContent_Dense_custom)(S->content) )
 #define SUN_CUSP_SUBSYS_SIZE(S)    ( SUN_CUSP_CONTENT(S)->subsys_size )
@@ -400,8 +402,9 @@ int react(const amrex::Box& box,
 
     /* Definition of main vector */
     //y = N_VNewManaged_Cuda(neq_tot);
-    y = N_VMakeWithManagedAllocator_Cuda(neq_tot, sunalloc, sunfree);
-    if(check_flag((void*)y, "N_VMakeWithManagedAllocator_Cuda", 0)) return(1);
+    //y = N_VMakeWithManagedAllocator_Cuda(neq_tot, sunalloc, sunfree);
+    y = N_VNewWithMemHelp_Cuda(neq_tot, /*use_managed_mem=*/true, *The_SUNMemory_Helper());
+    if(check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0)) return(1);
 
     /* Use a non-default cuda stream for kernel execution */
     N_VSetCudaStream_Cuda(y, &stream);
@@ -446,7 +449,7 @@ int react(const amrex::Box& box,
     if (check_flag(&flag, "CVodeInit", 1)) return(1);
     
     /* Definition of tolerances: one for each species */
-    atol  = N_VNew_Cuda(neq_tot);
+    atol  = N_VClone(y);
     ratol = N_VGetHostArrayPointer_Cuda(atol);
     if (typVals[0]>0) {
         printf("Setting CVODE tolerances rtol = %14.8e atolfact = %14.8e in PelePhysics \n",relTol, absTol);
@@ -826,8 +829,9 @@ int react(realtype *rY_in,    realtype *rY_src_in,
 
 
     /* Definition of main vector */
-    y = N_VNewManaged_Cuda(neq_tot);
-    if(check_flag((void*)y, "N_VNewManaged_Cuda", 0)) return(1);
+    //y = N_VNewManaged_Cuda(neq_tot);
+    y = N_VNewWithMemHelp_Cuda(neq_tot, /*use_managed_mem=*/true, *The_SUNMemory_Helper());
+    if(check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0)) return(1);
 
     /* Use a non-default cuda stream for kernel execution */
     N_VSetCudaStream_Cuda(y, &stream);
@@ -870,7 +874,7 @@ int react(realtype *rY_in,    realtype *rY_src_in,
     if (check_flag(&flag, "CVodeInit", 1)) return(1);
     
     /* Definition of tolerances: one for each species */
-    atol  = N_VNew_Cuda(neq_tot);
+    atol  = N_VClone(y);
     ratol = N_VGetHostArrayPointer_Cuda(atol);
     if (typVals[0]>0) {
         Print() << "Setting CVODE tolerances rtol = " << relTol << " atolfact = " << absTol << " in PelePhysics \n";

@@ -26,7 +26,7 @@ class ChemkinParser(BaseParser):
         import journal
         from fuego.serialization.chemkin.unpickle.tokens.Token import Token
 
-        #print "JE PARSE"
+        print "Hello Chemkin Parser !!"
 
         Token._constructed = 0
         Token._destructed = 0
@@ -45,9 +45,12 @@ class ChemkinParser(BaseParser):
         from Species import Species
         self._speciesParser = Species(mechanism, tokenizer)
 
+        from QssSpecies import QssSpecies
+        self._qss_speciesParser = QssSpecies(mechanism, tokenizer)
+
         from Thermo import Thermo
         self._thermoParser = Thermo(mechanism, tokenizer)
-
+        
         #if doTrans/='n':
         from Trans import Trans
         self._transParser = Trans(mechanism, tokenizer)
@@ -56,7 +59,6 @@ class ChemkinParser(BaseParser):
         self._reactionParser = Reactions(mechanism, tokenizer)
 
         # enter the parsing loop
-
         return BaseParser.parse(self, scanner, tokenizer)
 
 
@@ -67,6 +69,10 @@ class ChemkinParser(BaseParser):
 
     def aSpeciesSection(self, token):
         return self._speciesParser.aSpeciesSection(token)
+
+    def aQssSpeciesSection(self, token):
+        return self._qss_speciesParser.aQssSpeciesSection(token)
+        #return self._qss_speciesParser.aSpeciesSection(token)
 
     def aThermoSection(self, token):
         return self._thermoParser.aThermoSection(token)
@@ -83,6 +89,7 @@ class ChemkinParser(BaseParser):
     def onEndOfFile(self):
         self._elementParser.onEndOfFile()
         self._speciesParser.onEndOfFile()
+        self._qss_speciesParser.onEndOfFile()
         self._thermoParser.onEndOfFile()
         #if doTrans/='n':
         self._transParser.onEndOfFile()
@@ -100,15 +107,16 @@ class ChemkinParser(BaseParser):
 
     def __init__(self):
         
-        #print " J'INITIALISE PARSER ..."
         BaseParser.__init__(self)
 
         # the table of declared species
         self._species = {}
+        self._qss_species = {}
 
         # section parsers
         self._elementParser = None
         self._speciesParser = None
+        self._qss_speciesParser = None
         self._thermoParser = None
         self._transParser = None
         self._reactionParser = None
@@ -122,6 +130,9 @@ class ChemkinParser(BaseParser):
 
         species = self._speciesParser._scanner._pattern()
         print "Species parser (%d): %s" % (len(species), species)
+
+        qss_species = self._qss_speciesParser._scanner._pattern()
+        print "QSS Species Parser (%d): %s" % (len(qss_species), qss_species)
 
         thermo = self._thermoParser._scanner._pattern()
         print "Thermo parser (%d): %s" % (len(thermo), thermo)
