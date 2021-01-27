@@ -549,7 +549,7 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
   for (int tid = 0; tid < data_wk->ncells; tid ++) {
       /* Tmp vars */
       realtype massfrac[NUM_SPECIES];
-      realtype Xi[NUM_SPECIES];
+      realtype Xi[NUM_SPECIES] = {0.0};
       realtype cdot[NUM_SPECIES], molecular_weight[NUM_SPECIES];
       realtype cX;
       realtype temp, energy;
