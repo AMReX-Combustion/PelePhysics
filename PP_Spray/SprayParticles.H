@@ -219,6 +219,22 @@ public:
                        const bool         do_move,
                        amrex::MultiFab*   u_mac);
 
+  // Modify particles based on walls
+  // This creates new particles from splashing,
+  // consolidates particles to wall films,
+  // and removes particles that have left the domain
+  void wallImpingement (const int& level,
+                        const amrex::Real& flow_dt,
+                        const amrex::Real& time,
+#ifdef AMREX_USE_EB
+                        const amrex::FabArray<amrex::EBCellFlagFab>& flagmf,
+                        const amrex::MultiCutFab* bndrycent,
+                        const amrex::MultiCutFab* bndrynorm,
+#endif
+                        const int   state_ghosts,
+                        const int   source_ghosts,
+                        const bool  isActive);
+
   ///
   /// Sum boundary and copy temporary source term
   ///

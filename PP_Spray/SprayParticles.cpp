@@ -8,7 +8,7 @@
 #include "Transport.H"
 #include "Drag.H"
 #include "SprayInterpolation.H"
-#include "SprayWalls.H"
+#include "WallFunctions.H"
 #ifdef AMREX_USE_EB
 #include <AMReX_EBFArrayBox.H>
 #endif
@@ -210,9 +210,10 @@ SprayParticleContainer::updateParticles(const int&  level,
   const auto domain = this->Geom(level).Domain();
 #ifdef AMREX_USE_EB
   const auto& factory = dynamic_cast<EBFArrayBoxFactory const&>(state.Factory());
+  const auto& flagmf = factory.getMultiEBCellFlagFab();
   const auto cellcent = &(factory.getCentroid());
   const auto bndrycent = &(factory.getBndryCent());
-  const auto areafrac = factory.getAreaFrac();
+  const auto bndryarea = &(factory.getBndryArea());
   const auto bndrynorm = &(factory.getBndryNormal());
   const auto volfrac = &(factory.getVolFrac());
 #endif
@@ -240,6 +241,7 @@ SprayParticleContainer::updateParticles(const int&  level,
     const Box tile_box = pti.tilebox();
     const Box state_box = pti.growntilebox(state_ghosts);
     const Box src_box = pti.growntilebox(source_ghosts);
+    bool at_bounds = tile_at_bndry(tile_box, bndry_lo, bndry_hi, domain);
     const Long Np = pti.numParticles();
     ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
 #ifdef USE_SPRAY_SOA
@@ -256,10 +258,8 @@ SprayParticleContainer::updateParticles(const int&  level,
     Array4<const Real> ccent_fab;
     Array4<const Real> bcent_fab;
     Array4<const Real> bnorm_fab;
+    Array4<const Real> barea_fab;
     Array4<const Real> volfrac_fab;
-    Array4<const Real> apx_fab;
-    Array4<const Real> apy_fab;
-    Array4<const Real> apz_fab;
     const auto& flags_array = flags.array();
     if (flags.getType(state_box) == FabType::regular) {
       eb_in_box = false;
@@ -268,13 +268,11 @@ SprayParticleContainer::updateParticles(const int&  level,
       ccent_fab = cellcent->array(pti);
       // Centroid of EB
       bcent_fab = bndrycent->array(pti);
+      // Area of EB face
+      barea_fab = bndryarea->array(pti);
       // Normal of EB
       bnorm_fab = bndrynorm->array(pti);
       volfrac_fab = volfrac->array(pti);
-      // Area fractions
-      apx_fab = areafrac[0]->array(pti);
-      apy_fab = areafrac[1]->array(pti);
-      apz_fab = areafrac[2]->array(pti);
     }
 #endif
 // #ifdef SPRAY_PELE_LM
@@ -284,12 +282,12 @@ SprayParticleContainer::updateParticles(const int&  level,
 // #endif
     amrex::ParallelFor(Np,
       [pstruct,statearr,sourcearr,plo,phi,dx,dxi,do_move,SPI,SPU,fdat,src_box,
-       state_box,bndry_hi,bndry_lo,flow_dt,inv_vol,ltransparm
+       state_box,bndry_hi,bndry_lo,flow_dt,inv_vol,ltransparm,at_bounds
 #ifdef USE_SPRAY_SOA
        ,attribs
 #endif
 #ifdef AMREX_USE_EB
-       ,flags_array,apx_fab,apy_fab,apz_fab,ccent_fab,bcent_fab,bnorm_fab,volfrac_fab,eb_in_box
+       ,flags_array,ccent_fab,bcent_fab,bnorm_fab,barea_fab,volfrac_fab,eb_in_box
 #endif
        ]
     AMREX_GPU_DEVICE (int pid) noexcept
@@ -303,8 +301,23 @@ SprayParticleContainer::updateParticles(const int&  level,
         GpuArray<IntVect, AMREX_D_PICK(2,4,8)> indx_array; // Array of adjacent cells
         GpuArray<Real,AMREX_D_PICK(2,4,8)> weights; // Array of corresponding weights
         bool remove_particle = false;
-        const RealVect lx = (p.pos() - plo)*dxi;
-        const IntVect ijk = lx.floor();
+        RealVect lx = (p.pos() - plo)*dxi + 0.5;
+        IntVect ijk = lx.floor(); // Upper cell center
+        bool is_wall_film = false;
+        Real face_area = 0.;
+        if (at_bounds) {
+          IntVect bflags(IntVect::TheZeroVector());
+          // Check if particle has left the domain, is wall film,
+          // or is boundary adjacent and must be shifted
+          bool left_dom =
+            check_bounds(p.pos(), plo, phi, dx, bndry_lo, bndry_hi, ijk, bflags);
+          if (left_dom) Abort("Particle has incorrectly left domain");
+          for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+            if (bflags[dir] != 0) is_wall_film = true;
+          if (is_wall_film) {
+            face_area = dx[0]*dx[0];
+          }
+        }
 #ifdef AMREX_USE_EB
         // Cell containing particle centroid
         AMREX_D_TERM(
@@ -330,15 +343,21 @@ SprayParticleContainer::updateParticles(const int&  level,
               flags_array(i-1,j  ,k  ).isRegular() and
               flags_array(i  ,j  ,k  ).isRegular()) do_reg_interp = true;
         }
+        bool eb_wall_film = false;
         if (do_reg_interp) {
-          trilinear_interp(p.pos(), plo, dxi, indx_array.data(), weights.data());
+          trilinear_interp(ijk, lx, indx_array.data(), weights.data());
         } else {
-          fe_interp(p.pos(), ip, jp, kp, dx, dxi, plo, flags_array, ccent_fab,
-                    bcent_fab, apx_fab, apy_fab, apz_fab, volfrac_fab,
-                    indx_array.data(), weights.data());
+          eb_wall_film =
+            fe_interp(p.pos(), ip, jp, kp, dx, dxi, plo, flags_array,
+                      ccent_fab, bcent_fab, bnorm_fab, volfrac_fab,
+                      indx_array.data(), weights.data());
+        }
+        if (eb_wall_film) {
+          is_wall_film = true;
+          face_area = barea_fab(ip,jp,kp);
         }
 #else
-        trilinear_interp(p.pos(), plo, dxi, indx_array.data(), weights.data());
+        trilinear_interp(ijk, lx, indx_array.data(), weights.data());
 #endif // AMREX_USE_EB
         // Interpolate fluid state
         Real T_fluid = 0.;
@@ -385,22 +404,26 @@ SprayParticleContainer::updateParticles(const int&  level,
         }
         GasPhaseVals gpv(vel_fluid, T_fluid, rho_fluid, Y_fluid.data(),
                          mw_fluid.data(), invmw.data());
-        remove_particle =
-          calculateSpraySource(flow_dt, do_move, gpv, SPI, fdat, p, pid,
+        if (!is_wall_film) {
+          remove_particle =
+            calculateSpraySource(flow_dt, do_move, gpv, SPI, fdat, p, pid,
 #ifdef USE_SPRAY_SOA
-                               attribs,
+                                 attribs,
 #endif
-                               ltransparm);
-        // Modify particle position by whole time step
-        if (do_move && SPI.mom_tran) {
-          for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+                                 ltransparm);
+          // Modify particle position by whole time step
+          if (do_move && SPI.mom_tran) {
+            for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
 #ifdef USE_SPRAY_SOA
-            Real& cvel = attribs[SPI.pstateVel+dir].data()[pid];
+              const Real cvel = attribs[SPI.pstateVel+dir].data()[pid];
 #else
-            Real& cvel = p.rdata(SPI.pstateVel+dir);
+              const Real cvel = p.rdata(SPI.pstateVel+dir);
 #endif
-            Gpu::Atomic::Add(&p.pos(dir), flow_dt*cvel*SPU.pos_conv);
+              Gpu::Atomic::Add(&p.pos(dir), flow_dt*cvel*SPU.pos_conv);
+            }
           }
+        } else {
+          //remove_particle = calculateWallFilmSource(flow_dt, gpv, SPI, fdat, p, ltransparm);
         }
         if (remove_particle) p.id() = -1;
         for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
@@ -434,73 +457,10 @@ SprayParticleContainer::updateParticles(const int&  level,
     }); // End of loop over particles
   } // for (int MyParIter pti..
   if (do_move) {
-    // Loop back over particles to see if any have interacted with walls
-    // This should occur on the host
-    for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
-      const Box tile_box = pti.tilebox();
-      const Box source_box = pti.growntilebox(source_ghosts);
-      const Long Np = pti.numParticles();
-      // Check if tile has walls
-      bool at_bounds = tile_at_bndry(tile_box, bndry_lo, bndry_hi, domain);
+    wallImpingement(level, flow_dt, time,
 #ifdef AMREX_USE_EB
-      const EBFArrayBox& interp_fab = static_cast<EBFArrayBox const&>(state[pti]);
-      const EBCellFlagFab& flags = interp_fab.getEBCellFlagFab();
-      bool eb_in_box = false;
-      if (flags.getType(source_box) != FabType::regular) {
-        eb_in_box = true;
-        at_bounds = true;
-      }
+                    flagmf, bndrycent, bndrynorm,
 #endif
-      // Check if particles have gone outside of walls
-      if (Np > 0 && at_bounds) {
-        SprayData fdatCPU = m_fuelData.getSprayData();
-        PairIndex index(pti.index(), pti.LocalTileIndex());
-        auto& ptile = GetParticles(level)[index];
-        auto& pval = ptile.GetArrayOfStructs();
-#ifdef AMREX_USE_EB
-        Array4<const Real> bcent_fab;
-        Array4<const Real> bnorm_fab;
-        if (eb_in_box) {
-          bcent_fab = bndrycent->array(pti);
-          bnorm_fab = bndrynorm->array(pti);
-        }
-#endif
-        for (int pid = 0; pid < Np; ++pid) {
-          ParticleType& p = pval[pid];
-          if (p.id() > 0) {
-            RealVect pos = {AMREX_D_DECL(p.pos(0), p.pos(1), p.pos(2))};
-            const RealVect lx = (p.pos() - plo)*dxi;
-            const IntVect ijk = lx.floor();
-            const Real T_part = p.rdata(SPI.pstateT);
-            const Real dia_part = p.rdata(SPI.pstateDia);
-            SprayRefl SPRF; // Structure holding data for reflected particles
-            for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-              SPRF.Y_refl[spf] = p.rdata(SPI.pstateY+spf);
-            impose_wall(p, SPI, SPU, fdatCPU, ijk, dx, dxi, plo, phi,
-#ifdef AMREX_USE_EB
-                        eb_in_box, flags, bcent_fab, bnorm_fab,
-#endif
-                        bndry_lo, bndry_hi, T_wall, SPRF, pos, isActive);
-            if (SPRF.Ns_refl > 0 && isActive) {
-              for (int nsp = 0; nsp < SPRF.Ns_refl; ++nsp) {
-                ParticleType pnew;
-                pnew.id() = ParticleType::NextID();
-                pnew.cpu() = ParallelDescriptor::MyProc();
-                pnew.rdata(SPI.pstateDia) = SPRF.dia_refl;
-                pnew.rdata(SPI.pstateT) = T_part;
-                for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-                  pnew.rdata(SPI.pstateY+spf) = SPRF.Y_refl[spf];
-                for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                  pnew.rdata(SPI.pstateVel+dir) = 0.;
-                  pnew.pos(dir) = pos[dir];
-                }
-                create_splash_droplet(pnew, SPI, SPRF);
-                ptile.push_back(pnew);
-              }
-            } // if (Ns_refl > 0)
-          } // if (p.id() > 0)
-        } // for (int pid...
-      } // if (do_move && Np > 0 && at_bounds)
-    } // for (MyParIter pti ...
-  } // if (do_move)
+                    state_ghosts, source_ghosts, isActive);
+  }
 }

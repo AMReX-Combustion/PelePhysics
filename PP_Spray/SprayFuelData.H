@@ -12,15 +12,19 @@ struct SprayComps
   int heat_tran;
   int mass_tran;
   int mom_tran;
-  int pstateVel; // Particle indices
-  int pstateT;
-  int pstateDia;
-  int pstateY;
+  int pstateVel = 0; // Particle indices
+  int pstateT = AMREX_SPACEDIM;
+  int pstateDia = pstateT + 1;
+  int pstateY = pstateDia + 1;
   int rhoIndx; // Gas phase indices
   int momIndx;
   int engIndx;
   int utempIndx;
   int specIndx;
+  int wf_vol = 0; // Wall film indices
+  int wf_temp = 1;
+  int wf_Y = 2;
+  int wf_num = wf_Y + SPRAY_FUEL_NUM;
 };
 
 // Units for sprays
@@ -62,6 +66,7 @@ struct SprayRefl
   Real dia_refl;
   int Ns_refl = 0;
   GpuArray<Real,SPRAY_FUEL_NUM> Y_refl;
+  RealVect pos_refl;
   RealVect norm; // Normal to surface
   RealVect tanBeta; // Tangent vector along particle path
   RealVect tanPsi; // Tangent normal to particle path
@@ -69,16 +74,6 @@ struct SprayRefl
   Real expomega;
   Real beta_mean; // Mean ejection angle in degrees
   Real beta_stdv; // Standard dev ejection angle in degrees
-};
-
-// Struct to hold wall film data
-struct WallFilm
-{
-  RealVect pos;
-  Real T_film;
-  GpuArray<Real,SPRAY_FUEL_NUM> Y_film;
-  Real dia_film;
-  Real h_film; // Film height at center
 };
 
 // Structure that contains the interpolated gas phase state

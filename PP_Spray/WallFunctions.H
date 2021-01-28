@@ -1,16 +1,23 @@
-#ifndef _SPRAYWALLS_H_
-#define _SPRAYWALLS_H_
+#ifndef _WALLFUNCTIONS_H_
+#define _WALLFUNCTIONS_H_
+
+#include "SprayInterpolation.H"
+#include "SprayFuelData.H"
+
+using namespace amrex;
 
 enum splash_type
 {
   rebound = 0,
   deposit,
   splash,
-  thermal_breakup
+  thermal_breakup,
+  no_impact
 };
 
 // Determine the type of particle impact at the wall
 // Return 0 - rebound, 1 - deposit, 2 - splash, 3 - thermal breakup
+AMREX_INLINE
 splash_type splash_criteria (const Real Kv,
                              const Real Tstar,
                              const Real alpha)
@@ -28,6 +35,7 @@ splash_type splash_criteria (const Real Kv,
 }
 
 // Check if tile is adjacent to non-periodic boundaries
+AMREX_INLINE
 bool tile_at_bndry (const Box& in_box,
                     const IntVect& bndry_lo,
                     const IntVect& bndry_hi,
@@ -51,6 +59,7 @@ bool tile_at_bndry (const Box& in_box,
 }
 
 // Find tangents along surface
+AMREX_INLINE
 void find_tangents (const RealVect& testvec,
                     const RealVect& norm,
                     RealVect& tanBeta,
@@ -68,6 +77,7 @@ void find_tangents (const RealVect& testvec,
 }
 
 // Compute the angles of reflecting droplets
+AMREX_INLINE
 void compute_angles (const Real& alpha,
                      const Real& Tstar,
                      const Real& We,
@@ -100,84 +110,74 @@ void compute_angles (const Real& alpha,
   SPRF.beta_stdv = std::sqrt(amrex::max(-2.*term1 + term2, 0.));
 }
 
-void impose_wall (SprayParticleContainer::ParticleType& p,
-                  SprayComps SPI,
-                  SprayUnits SPU,
-                  SprayData fdat,
-                  const IntVect& ijkp,
-                  const RealVect& dx,
-                  const RealVect& dxi,
-                  const RealVect& plo,
-                  const RealVect& phi,
+AMREX_INLINE
+splash_type impose_wall (SprayParticleContainer::ParticleType& p,
+                         SprayComps SPI,
+                         SprayUnits SPU,
+                         SprayData fdat,
+                         IntVect& ijk,
+                         const RealVect& dx,
+                         const RealVect& dxi,
+                         const RealVect& plo,
+                         const RealVect& phi,
 #ifdef AMREX_USE_EB
-                  const bool use_EB,
-                  const EBCellFlagFab& flags,
-                  Array4<Real const> const& bcent,
-                  Array4<Real const> const& bnorm,
+                         const bool use_EB,
+                         Array4<EBCellFlag const> const& flags,
+                         Array4<Real const> const& bcent,
+                         Array4<Real const> const& bnorm,
 #endif
-                  const IntVect& bndry_lo,
-                  const IntVect& bndry_hi,
-                  const Real T_wall,
-                  SprayRefl& SPRF,
-                  RealVect& pos,
-                  bool isActive)
+                         const IntVect& bndry_lo,
+                         const IntVect& bndry_hi,
+                         const Real dt,
+                         const Real T_wall,
+                         SprayRefl& SPRF,
+                         bool isActive)
 {
   const Real tolerance = std::numeric_limits<Real>::epsilon();
   Real sigma = fdat.sigma;
-  // Determine the location of the particle after moving
-  const RealVect lx = (p.pos() - plo)*dxi;
-  const IntVect ijk = lx.floor();
   AMREX_D_TERM(const int i = ijk[0];, const int j = ijk[1];, const int k = ijk[2];);
-  AMREX_D_TERM(const int ip = ijkp[0];, const int jp = ijkp[1];, const int kp = ijkp[2];);
   RealVect normal(RealVect::TheZeroVector()); // Normal vector to boundary face
   RealVect bcentv(RealVect::TheZeroVector()); // Point on boundary face
+  RealVect pvel =
+    {AMREX_D_DECL(p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel+1), p.rdata(SPI.pstateVel+2))};
   IntVect bloc(ijk); // Index of nearest cell center
   bool check_part = false; // Check if particle is reflected
   // First check if particle has exited the domain through a Cartesian boundary
-  for (int hilo = 0; hilo < 2; ++hilo) {
-    Real fact = 1.;
-    if (hilo == 1) fact = -1.;
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-      Real dom_loc = plo[dir];
-      int bndry_flag = bndry_lo[dir];
-      if (hilo == 1) {
-        dom_loc = phi[dir];
-        bndry_flag = bndry_hi[dir];
-      }
-      if (fact*(p.pos(dir) - dom_loc) < 0.) {
-        switch (bndry_flag) {
-        case -1 : // Non-reflective, remove particle
-          p.id() = -1;
-          return;
-        case 1: // Reflective, set vectors and locations
-          normal[dir] = fact;
-          bcentv[dir] = fact*0.5;
-          bloc[dir] = ijk[dir];
-          check_part = true;
-          break;
-        default:
-          break;
-        }
-      }
+  IntVect bflags(IntVect::TheZeroVector());
+  bool left_dom =
+    check_bounds(p.pos(), plo, phi, dx, bndry_lo, bndry_hi, bloc, bflags);
+  if (left_dom) {
+    p.id() = -1;
+    return splash_type::no_impact;
+  }
+  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+    if (bflags[dir] != 0) {
+      normal[dir] = -bflags[dir];
+      bcentv[dir] = -0.5*bflags[dir];
+      check_part = true;
     }
   }
 #ifdef AMREX_USE_EB
-  if (use_EB) {
+  if (use_EB && !check_part) {
     // If particle has moved into a cut-cell
-    if (flags(ijk).isSingleValued() && !check_part) {
+    if (flags(ijk).isSingleValued()) {
       // Use the normal and boundary centroid from the new cell
-      bloc = {i, j, k};
       normal = {-bnorm(i,j,k,0), -bnorm(i,j,k,1), -bnorm(i,j,k,2)};
       bcentv = {bcent(i,j,k,0), bcent(i,j,k,1), bcent(i,j,k,2)};
       check_part = true;
       // If the particle has moved into a covered cell
-    } else if (flags(ijk).isCovered() && !check_part) {
+    } else if (flags(ijk).isCovered()) {
+      // Determine the previous cell center and use that
+      RealVect prev_loc(p.pos());
+      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+        prev_loc[dir] -= dt*pvel[dir];
+      IntVect ijk_prev = prev_loc.floor();
       // and if the cell the particle came from is a cut-cell
-      if (flags(ijkp).isSingleValued()) {
+      if (flags(ijk_prev).isSingleValued()) {
         // Use the normal and boundary centroid from the previous cell
-        bloc = {ip, jp, kp};
-        normal = {-bnorm(ip,jp,kp,0), -bnorm(ip,jp,kp,1), -bnorm(ip,jp,kp,2)};
-        bcentv = {bcent(ip,jp,kp,0), bcent(ip,jp,kp,1), bcent(ip,jp,kp,2)};
+        bloc = ijk_prev;
+        normal = {-bnorm(ijk_prev,0), -bnorm(ijk_prev,1), -bnorm(ijk_prev,2)};
+        bcentv = {bcent(ijk_prev,0), bcent(ijk_prev,1), bcent(ijk_prev,2)};
         // otherwise an error has occurred
       } else {
         Abort("SprayInterpolation::reflect_wall: Particle is outside EB");
@@ -186,6 +186,7 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
     }
   }
 #endif
+  splash_type splash_flag = splash_type::no_impact;
   if (check_part) {
     // Projection of vector pointing from EB centroid to particle onto EB normal
     const Real par_dot_EB =
@@ -194,22 +195,20 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
                    (p.pos(2) - (bloc[2] + 0.5 + bcentv[2])*dx[2] - plo[2])*normal[2]);
     // Check if particle is on the wrong side of the EB
     if (par_dot_EB < tolerance) {
+      splash_flag = splash_type::rebound;
       // Plane ref point
       Real Nw_Vp = 0.;
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
-        Nw_Vp += normal[dir]*p.rdata(SPI.pstateVel+dir);
+        Nw_Vp += normal[dir]*pvel[dir];
       // Parcel normal velocity
       RealVect Vpn =
         {AMREX_D_DECL(Nw_Vp*normal[0],
                       Nw_Vp*normal[1],
                       Nw_Vp*normal[2])};
       // Parcel tangential velocity
-      RealVect Vpt =
-        {AMREX_D_DECL(p.rdata(SPI.pstateVel) - Vpn[0],
-                      p.rdata(SPI.pstateVel+1) - Vpn[1],
-                      p.rdata(SPI.pstateVel+2) - Vpn[2])};
+      RealVect Vpt = pvel - Vpn;
       // dis_fact = 2 -> Particle is reflected off of the wall
-      // dis_fact = 1 -> Particle is placed on the wall
+      // dis_fact = 1 -> Particle is placed at the wall
       Real dis_fact = 2.;
       // If using a splash model
       if (sigma > 0. && isActive) {
@@ -231,33 +230,23 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
         const Real Re_L = std::abs(Nw_Vp)*dia_part*rho_part/mu_part;
         const Real sqReyn = std::sqrt(Re_L);
         const Real Kv = std::sqrt(We)*std::pow(Re_L, 0.25);
-        Real umag = 0.;
-        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
-          umag += std::pow(p.rdata(SPI.pstateVel+dir), 2);
-        umag = std::sqrt(umag);
+        Real umag = pvel.vectorLength();
         // Inclination of on-coming particle to surface in radians
         const Real alpha = std::asin(std::abs(Nw_Vp)/umag);
         // TODO: Add functionality for wet walls
         bool dry = true;
-        splash_type part_crit = splash_criteria(Kv, Tstar, alpha);
+        splash_flag = splash_criteria(Kv, Tstar, alpha);
         // Boundary layer thickness of particle estimate provided by
         // Pasandideh-Fard et al. 1996
         const Real delta = 2.*dia_part/sqReyn;
-        // part_crit == 0, then particle rebounds, no breakup, no deposit
-        if (part_crit != splash_type::rebound) {
-          dis_fact = 1.; // Place particle at wall
-          // Only retain the tangential velocities
+        // splash_flag == 0, then particle rebounds, no breakup, no deposit
+        if (splash_flag != splash_type::rebound) {
+          dis_fact = 1.- 1.E-8; // Place particle at wall
+          // Make droplet stationary
+          Vpt = RealVect::TheZeroVector();
           Vpn = RealVect::TheZeroVector();
-          // If part_crit == 1, particle is completely deposited onto the wall
-          if (part_crit == splash_type::deposit) {
-            // Make droplet stationary
-            Vpt = RealVect::TheZeroVector();
-            // Solve for the max diameter using the volume of a dome shape of height delta
-            p.rdata(SPI.pstateDia) = 2.*std::sqrt((6.*pmass/(M_PI*rho_part*delta) - delta*delta)/3.);
-            // TODO: Particle should become wall film, not disappear
-            p.id() = -1;
-            // Otherwise, secondary drops are formed from splashing or thermal breakup
-          } else {
+          // If splash_flag == 1, particle is completely deposited onto the wall
+          if (splash_flag != splash_type::deposit) {
             // Determine diameter of secondary droplets
             Real expon = 3.6*(alpha/M_PI)*(alpha/M_PI);
             if (dry)
@@ -269,7 +258,7 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
             // If thermal breakup, all mass is converted to secondary droplets
             Real splash_mass = pmass;
             // If splash, some mass rebounds and some deposits
-            if (part_crit == splash_type::splash) {
+            if (splash_flag == splash_type::splash) {
               // Determine the fraction of the droplet mass
               // that forms secondary drops from Kuhnke 2004
               // TODO: This is incomplete by always assuming a dry wall
@@ -277,10 +266,9 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
               splash_mass *= amrex::min(1., (Tstar - 0.8)/0.3*(1. - B) + B);
               // Mass deposited into wall film
               Real depot_mass = pmass - splash_mass;
-              // Solve for the max diameter using the volume of a dome shape of height delta
-              p.rdata(SPI.pstateDia) = 2.*std::sqrt((6.*depot_mass/(M_PI*rho_part*delta) - delta*delta)/3.);
-              // TODO: Particle should become wall film if splash occurs
-              p.id() = -1;
+              // Original particle now represents deposited wall film
+              // The diameter is set to represent the mass of remaining liquid
+              p.rdata(SPI.pstateDia) = std::cbrt(6./(M_PI*rho_part));
             } else {
               p.id() = -1;
             }
@@ -295,25 +283,25 @@ void impose_wall (SprayParticleContainer::ParticleType& p,
             // This is the dt to move the secondary droplets
             SPRF.dt_pp = par_dot_EB/Nw_Vp;
             // Test vector for finding tangents
-            RealVect testvec = {AMREX_D_DECL(-p.rdata(SPI.pstateVel),
-                                             -p.rdata(SPI.pstateVel+1),
-                                             -p.rdata(SPI.pstateVel+2))};
+            RealVect testvec = -pvel;
             // Find two tangent vectors by taking the cross product with the velocity vector
             find_tangents(testvec, normal, SPRF.tanBeta, SPRF.tanPsi);
           }
-        } // if (part_crit != splash_type::rebound)
+        } // if (splash_flag != splash_type::rebound)
       } // if (sigma > 0)
       // TODO: Make else so that the droplet sticks to the wall
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
         SPRF.norm[dir] = normal[dir];
-        pos[dir] -= dis_fact*par_dot_EB*normal[dir];
+        SPRF.pos_refl[dir] -= par_dot_EB*normal[dir];
         p.pos(dir) -= dis_fact*par_dot_EB*normal[dir];
         p.rdata(SPI.pstateVel+dir) = -Vpn[dir] + Vpt[dir];
       }
     } // if (par_dot_EB < tolerance)
   } // if (check_part)
+  return splash_flag;
 }
 
+AMREX_INLINE
 void create_splash_droplet (SprayParticleContainer::ParticleType& p,
                             SprayComps SPI,
                             SprayRefl SPRF)
@@ -349,4 +337,4 @@ void create_splash_droplet (SprayParticleContainer::ParticleType& p,
   }
 }
 
-#endif // _SPRAYWALLS_H_
+#endif // _WALLFUNCTIONS_H_

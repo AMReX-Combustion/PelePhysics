@@ -1,38 +1,41 @@
 #ifndef _SPRAYINTERPOLATION_H_
 #define _SPRAYINTERPOLATION_H_
 
+#include <AMReX_RealVect.H>
+#include <AMReX_EBMultiFabUtil.H>
+
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void InterpolateFaceVelocity (const RealVect& len,
-                              const IntVect&  dom_lo,
-                              const IntVect&  dom_hi,
-                              GpuArray<Array4<Real const>, AMREX_SPACEDIM> const& umac,
-                              RealVect&       vel_fluid)
+void InterpolateFaceVelocity (const amrex::RealVect& len,
+                              const amrex::IntVect& dom_lo,
+                              const amrex::IntVect& dom_hi,
+                              amrex::GpuArray<amrex::Array4<amrex::Real const>, AMREX_SPACEDIM> const& umac,
+                              amrex::RealVect& vel_fluid)
 {
   for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
-    RealVect face_len(AMREX_D_DECL(len[0] + (dir == 0)*0.5,
-                                   len[1] + (dir == 1)*0.5,
-                                   len[2] + (dir == 2)*0.5));
+    amrex::RealVect face_len(AMREX_D_DECL(len[0] + (dir == 0)*0.5,
+                                          len[1] + (dir == 1)*0.5,
+                                          len[2] + (dir == 2)*0.5));
     // Compute distances for trilinear interpolation
-    IntVect indx(AMREX_D_DECL(amrex::Math::floor(face_len[0]),
+    amrex::IntVect indx(AMREX_D_DECL(amrex::Math::floor(face_len[0]),
                               amrex::Math::floor(face_len[1]),
                               amrex::Math::floor(face_len[2])));
-    RealVect delL(AMREX_D_DECL(face_len[0] - indx[0],
-                               face_len[1] - indx[1],
-                               face_len[2] - indx[2]));
+    amrex::RealVect delL(AMREX_D_DECL(face_len[0] - indx[0],
+                                      face_len[1] - indx[1],
+                                      face_len[2] - indx[2]));
     int iin[2] = {amrex::max(indx[0] - 1, dom_lo[0]),
                   amrex::min(indx[0], dom_hi[0])};
-    Real ssx[2] = {1. - delL[0], delL[0]};
+    amrex::Real ssx[2] = {1. - delL[0], delL[0]};
     int zindx = 0;
     int yindx = 0;
     int xindx = 0;
 #if AMREX_SPACEDIM > 1
     int jjn[2] = {amrex::max(indx[1] - 1, dom_lo[1]),
                   amrex::min(indx[1], dom_hi[1])};
-    Real ssy[2] = {1. - delL[1], delL[1]};
+    amrex::Real ssy[2] = {1. - delL[1], delL[1]};
 #if AMREX_SPACEDIM == 3
     int kkn[2] = {amrex::max(indx[2] - 1, dom_lo[2]),
                   amrex::min(indx[2], dom_hi[2])};
-    Real ssz[2] = {1. - delL[2], delL[2]};
+    amrex::Real ssz[2] = {1. - delL[2], delL[2]};
     for (int kk = 0; kk != 2; ++kk) {
       zindx = kkn[kk];
 #endif
@@ -53,6 +56,45 @@ void InterpolateFaceVelocity (const RealVect& len,
   }
 }
 
+// Check if outside of bounds of Cartesian grid
+// Return IntVect that where the flags are per direction
+// 0 - Not outside domain or at periodic boundary
+// -1 - Outside lower reflective domain
+// 1 - Outside upper reflective domain
+// And true is returned if outside non-reflective domain
+// If near a domain, ijk is shifted inward for interpolation purposes
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
+bool check_bounds (const amrex::RealVect pos,
+                   const amrex::RealVect plo,
+                   const amrex::RealVect phi,
+                   const amrex::RealVect dx,
+                   const amrex::IntVect bndry_lo,
+                   const amrex::IntVect bndry_hi,
+                   amrex::IntVect& ijk,
+                   amrex::IntVect& dflags)
+{
+  for (int hilo = 0; hilo < 2; ++hilo) {
+    amrex::Real fact = (hilo == 0) ? 1. : -1.;
+    amrex::RealVect dom_ex = (hilo == 0) ? plo : phi;
+    amrex::IntVect bndry_flag = (hilo == 0) ? bndry_lo : bndry_hi;
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      amrex::Real dom_loc = dom_ex[dir];
+      int bflag = bndry_flag[dir];
+      if (bflag != 0) { // Not periodic
+        amrex::Real diff = fact*(pos[dir] - dom_loc);
+        if (diff < 0.) {
+          if (bflag == 1) dflags[dir] = -int(fact);
+          else return true;
+          // Adjacent to non-periodic boundary, shift interpolation cells
+        } else if (diff < 0.5*dx[dir]) {
+          ijk[dir] += fact;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 // Slightly modified from MFIX code
 
 /****************************************************************
@@ -60,19 +102,15 @@ void InterpolateFaceVelocity (const RealVect& len,
  ***************************************************************/
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void trilinear_interp (const amrex::RealVect& pos,
-                       const amrex::RealVect& plo,
-                       const amrex::RealVect& dxi,
+void trilinear_interp (const amrex::IntVect& ijk,
+                       const amrex::RealVect& lx,
                        amrex::IntVect* indx_array,
                        amrex::Real* weights)
 {
-    const amrex::RealVect lx = (pos - plo)*dxi + 0.5;
-    const amrex::IntVect ijk = lx.floor();
-
     AMREX_D_TERM(int i = ijk[0];, int j = ijk[1];, int k = ijk[2];);
 
     const amrex::RealVect sx_hi = lx - ijk;
-    const amrex::RealVect sx_lo = 1 - sx_hi;
+    const amrex::RealVect sx_lo = 1. - sx_hi;
     amrex::GpuArray<amrex::GpuArray<amrex::Real,AMREX_SPACEDIM>,2> ssv;
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       ssv[0][dir] = sx_lo[dir];
@@ -232,17 +270,15 @@ void get_interp_mapping (const amrex::RealVect& pos,
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void fe_interp(const amrex::RealVect& pos,
+bool fe_interp(const amrex::RealVect& pos,
                const int ip, const int jp, const int kp,
                const amrex::RealVect& dx,
                const amrex::RealVect& dxi,
                const amrex::RealVect& plo,
-               amrex::Array4<const EBCellFlag> const& flags,
+               amrex::Array4<const amrex::EBCellFlag> const& flags,
                amrex::Array4<const amrex::Real> const& ccent,
                amrex::Array4<const amrex::Real> const& bcent,
-               amrex::Array4<const amrex::Real> const& apx,
-               amrex::Array4<const amrex::Real> const& apy,
-               amrex::Array4<const amrex::Real> const& apz,
+               amrex::Array4<const amrex::Real> const& bnorm,
                amrex::Array4<const amrex::Real> const& vfrac,
                amrex::IntVect* indx_array,
                amrex::Real* weights)
@@ -268,7 +304,7 @@ void fe_interp(const amrex::RealVect& pos,
         indx_array[aindx] = {ip,jp,kp};
         weights[aindx] = 0.;
       }
-      return;
+      return false;
     }
 
     amrex::Real par_dot_EB(2.);
@@ -277,19 +313,8 @@ void fe_interp(const amrex::RealVect& pos,
     // If the particle is inside a cut-cell, verify that it is on the correct
     // side of the EB before trying to interpolate.
     if(flags(ip,jp,kp).isSingleValued()){
-
-        const Real adx = apx(ip+1,jp  ,kp  ) - apx(ip  ,jp  ,kp  );
-        const Real ady = apy(ip  ,jp+1,kp  ) - apy(ip  ,jp  ,kp  );
-        const Real adz = apz(ip  ,jp  ,kp+1) - apz(ip  ,jp  ,kp  );
-
-        const Real apnorm = std::sqrt(adx*adx + ady*ady + adz*adz);
-
-        // Temporary sanity check.
-        AMREX_ASSERT_WITH_MESSAGE( apnorm > std::numeric_limits<amrex::Real>::epsilon(),
-            "Invalid EB normal. Not sure how to interpolate!");
-        // EB normal
-        const amrex::Real apnorminv = 1. / apnorm;
-        const amrex::RealVect normal = {adx*apnorminv, ady*apnorminv, adz*apnorminv};
+        const amrex::RealVect normal =
+          {-bnorm(ip, jp, kp, 0), -bnorm(ip, jp, kp, 1), -bnorm(ip, jp, kp, 2)};
 
         // Projection of vector pointing from EB centroid to particle onto EB normal
         par_dot_EB = (pos[0] - (ip + 0.5 + bcent(ip,jp,kp,0))*dx[0] - plo[0])*normal[0] +
@@ -335,7 +360,12 @@ void fe_interp(const amrex::RealVect& pos,
     // cell value for remaining items.
     if((flags(ip,jp,kp).isSingleValued() and (par_dot_EB <= tolerance)) ||
        flags(ip,jp,kp).isCovered()){
-        amrex::Abort("SprayInterpolation.H::fe_interp(): Particle has penetrated an EB wall");
+        for (int aindx = 0; aindx < 8; ++aindx) {
+          indx_array[aindx] = {ip,jp,kp};
+          weights[aindx] = 0.;
+        }
+        weights[0] = 1.;
+        return true;
     // The particle is near the EB. It is either
     // 1) between the cell centroid and the EB, or
     // 2) one or more cells in the 2^3 stencil is covered.
@@ -405,7 +435,7 @@ void fe_interp(const amrex::RealVect& pos,
           weights[aindx] *= rw;
         }
     }
-    return;
+    return false;
 }
 
 #endif // AMREX_USE_EB
