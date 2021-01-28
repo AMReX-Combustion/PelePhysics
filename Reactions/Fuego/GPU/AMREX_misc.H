@@ -12,8 +12,8 @@
 
 using namespace amrex;
 
-AMREX_GPU_HOST_DEVICE
-inline
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
 void
 box_flatten(int icell, int i, int j, int k, int ireactor_type, 
         amrex::Array4<amrex::Real> const& rhoY,
@@ -58,8 +58,8 @@ box_flatten(int icell, int i, int j, int k, int ireactor_type,
 }
 
 
-AMREX_GPU_HOST_DEVICE
-inline
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
 void
 box_unflatten(int icell, int i, int j, int k, int ireactor_type, 
         amrex::Array4<amrex::Real> const& rhoY,

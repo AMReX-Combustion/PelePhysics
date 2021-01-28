@@ -1,28 +1,30 @@
+# AMReX
+DIM        = 2
 PRECISION  = DOUBLE
 PROFILE    = FALSE
+VERBOSE    = FALSE
+DEBUG      = FALSE
 
-DEBUG      = TRUE
-
-DIM        = 2
-
-COMP	   = gcc
-FCOMP	   = gfortran
-
+# Compiler
+COMP	     = gnu
+FCOMP	     = gfortran
 USE_MPI    = FALSE
-USE_OMP    = TRUE
+USE_OMP    = FALSE
+USE_CUDA   = FALSE
+USE_HIP    = FALSE
 
+# PelePhysics
 FUEGO_GAS  = TRUE
+USE_SUNDIALS_PP = FALSE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    := ../../..
 
-USE_SUNDIALS_PP = TRUE
-
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   Chemistry_Model = LiDryer
-  Reactions_dir   = Fuego
-  Transport_dir   = Simple
+  Reactions_dir   = Null
+  Transport_dir   = Constant
 else
   Eos_dir         = GammaLaw
   Chemistry_Model = Null

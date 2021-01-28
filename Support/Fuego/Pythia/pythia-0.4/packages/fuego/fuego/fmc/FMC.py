@@ -35,16 +35,18 @@ class FMC(Application):
 
         timer = pyre.monitors.timer("fuego")
         if not input:
-            print "Loading '%s'" % (mechanismFile),
+            print "\nLoading '%s' as input file" % (mechanismFile)
         else:
-            print "Loading '%s' using '%s' parser" % (mechanismFile, input),
+            print "\nLoading '%s' using '%s' parser" % (mechanismFile, input)
 
         timer.start()
 
         mechanism = fuego.serialization.mechanism()
         if thermo:
+            print "Loading '%s' as thermo file" % (thermo)
             mechanism.externalThermoDatabase(thermo)
         if trans:
+            print "Loading '%s' as thermo file" % (trans)
             mechanism.externalTransDatabase(trans)
         mechanism = fuego.serialization.load(
             filename=mechanismFile, format=input, mechanism=mechanism)
@@ -53,7 +55,7 @@ class FMC(Application):
 
         timer.reset()
         timer.start()
-        print "Converting into '%s' format" % output,
+        print "\nConverting into '%s' format" % output
         lines        = fuego.serialization.save(mechanism, output)
         print "... done (%g sec)" % timer.stop()
 
@@ -63,7 +65,7 @@ class FMC(Application):
         outputFileHeader  = self._openOutput(save_header)
         count_lines = 0
         for line in lines:
-            if ('include "chemistry_file.H"') in line:
+            if ('ifndef MECHANISM_CPP') in line:
                 line_start_core = count_lines
                 break;
             outputFileHeader.write(line)

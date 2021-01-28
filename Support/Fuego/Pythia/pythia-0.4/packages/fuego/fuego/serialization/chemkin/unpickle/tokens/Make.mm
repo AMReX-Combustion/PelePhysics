@@ -45,7 +45,9 @@ EXPORT_PYTHON_MODULES = \
     ReactionUnitsE.py \
     RegularExpressions.py \
     SpeciesName.py \
+    QssSpeciesName.py \
     SpeciesSection.py \
+    QssSpeciesSection.py \
     TemperatureRange.py \
     ThermoLine.py \
     ThermoSection.py \

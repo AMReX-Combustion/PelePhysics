@@ -26,6 +26,7 @@ EXPORT_PYTHON_MODULES = \
     BaseScanner.py \
     Elements.py \
     Parameters.py \
+    QssSpecies.py \
     Reactions.py \
     Sections.py \
     Species.py \

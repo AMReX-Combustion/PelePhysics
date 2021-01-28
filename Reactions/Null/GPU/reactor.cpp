@@ -3,11 +3,6 @@
 using namespace amrex;
 
 /**********************************/
-/* Global Variables */
-  int ireactor_type;
-  int eint_rho = 1; // in/out = rhoE/rhoY
-  int enth_rho = 2; // in/out = rhoH/rhoY 
-/**********************************/
 
 /**********************************/
 /* Set or update typVals */
@@ -16,12 +11,7 @@ void SetTypValsODE(const std::vector<double>& ExtTypVals) {}
 /* Set or update the rel/abs tolerances  */
 void SetTolFactODE(double relative_tol,double absolute_tol) {}
 
-/* Function to ReSet the tol of the cvode object directly */
-void ReSetTolODE() {}
-
-/* Initialization routine, called once at the begining of the problem */
-int reactor_init(int reactor_type, int ode_ncells) { 
-    ireactor_type = reactor_type;
+int reactor_info(int /*reactor_type*/, int /*ode_ncells*/) {
     return(0); 
 }
 
@@ -35,12 +25,18 @@ int react(const Box& box,
           Array4<Real> const& FC_in,
           Array4<int> const& mask,
           Real &dt_react,
-          Real &time) {
+          Real &time, 
+          const int &reactor_type,
+          amrex::gpuStream_t stream) {
 
     int omp_thread = 0;
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num(); 
 #endif
+
+    // Define types
+    constexpr int eint_rho = 1; // in/out = rhoE/rhoY
+    constexpr int enth_rho = 2; // in/out = rhoH/rhoY 
 
     /* Initial time and time to reach after integration */
     Real time_init = time;
@@ -72,7 +68,7 @@ int react(const Box& box,
         Real energy_loc = renergy_loc / rho_loc;
         // Get curr estimate of T
         Real T_loc    = T_in(i,j,k,0);
-        if (ireactor_type == eint_rho){
+        if (reactor_type == eint_rho){
             EOS::EY2T(energy_loc,Y_loc,T_loc);
         } else {
             EOS::HY2T(energy_loc,Y_loc,T_loc);
@@ -93,7 +89,9 @@ int react(const Box& box,
 /* Main routine for CVode integration: classic version */
 int react(amrex::Real *rY_in, amrex::Real *rY_src_in, 
           amrex::Real *rX_in, amrex::Real *rX_src_in,
-          amrex::Real &dt_react, amrex::Real &time) {
+          amrex::Real &dt_react, amrex::Real &time,
+          int cvode_iE, int Ncells,
+          gpuStream_t stream) {
 
     /* Initial time and time to reach after integration */
     Real time_init = time;
@@ -108,6 +106,5 @@ int react(amrex::Real *rY_in, amrex::Real *rY_src_in,
 
 /* Free memory */
 void reactor_close() {}
-
 
 /* End of file  */

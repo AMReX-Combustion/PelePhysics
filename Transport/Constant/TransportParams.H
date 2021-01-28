@@ -1,22 +1,14 @@
-#ifndef _TRANSPORT_PARAMS_H_
-#define _TRANSPORT_PARAMS_H_
+#ifndef TRANSPORT_PARAMS_H
+#define TRANSPORT_PARAMS_H
 
 #include <AMReX_REAL.H>
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_Arena.H>
-#include <AMReX_ParmParse.H>
 
-namespace transport_params {
+struct TransParm {
+    amrex::Real const_viscosity;
+    amrex::Real const_bulk_viscosity;
+    amrex::Real const_diffusivity;
+    amrex::Real const_conductivity;
+};
 
-void init();
-void finalize();
-
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real const_viscosity;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real const_bulk_viscosity;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real const_diffusivity;
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real const_conductivity;
-
-
-} // namespace transport_params
-
+extern TransParm *trans_parm_g;
 #endif

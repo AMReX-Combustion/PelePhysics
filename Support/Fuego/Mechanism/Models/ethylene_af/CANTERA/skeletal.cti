@@ -1,0 +1,1072 @@
+units(length='cm', time='s', quantity='mol', act_energy='cal/mol')
+
+ideal_gas(name='gas',
+          elements="N H O C",
+          species="""N2      H       H2      O       OH      
+                     O2      H2O2    H2O     HO2     CO      
+                     CH3     CH2O    CO2     CH4     C2H2    
+                     C2H4    CH2CO   C2H6    C       CH      
+                     HCO     TXCH2   SXCH2   C2H3    C2H5    
+                     HCCO    CH3CHO  CH2CHO  C2H5O""",
+          reactions='all',
+          transport='Mix',
+          initial_state=state(temperature=300.0, pressure=OneAtm))
+
+#-------------------------------------------------------------------------------
+# Species data
+#Mechanism contains 29 species and 172 reactions.
+#-------------------------------------------------------------------------------
+
+species(name='N2',
+        atoms='N:2',
+        thermo=(NASA([300.00, 1000.00],
+                     [ 3.29867700E+00,  1.40824040E-03, -3.96322200E-06,
+                       5.64151500E-09, -2.44485400E-12, -1.02089990E+03,
+                       3.95037200E+00]),
+                NASA([1000.00, 5000.00],
+                     [ 2.92664000E+00,  1.48797680E-03, -5.68476000E-07,
+                       1.00970380E-10, -6.75335100E-15, -9.22797700E+02,
+                       5.98052800E+00])),
+        transport=gas_transport(geom='linear',
+                                diam=3.621,
+                                well_depth=97.53,
+                                polar=1.76,
+                                rot_relax=4.0),
+        note='121286')
+
+species(name='H',
+        atoms='H:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 2.50000000E+00,  7.05332819E-13, -1.99591964E-15,
+                       2.30081632E-18, -9.27732332E-22,  2.54736599E+04,
+                      -4.46682853E-01]),
+                NASA([1000.00, 3500.00],
+                     [ 2.50000001E+00, -2.30842973E-11,  1.61561948E-14,
+                      -4.73515235E-18,  4.98197357E-22,  2.54736599E+04,
+                      -4.46682914E-01])),
+        transport=gas_transport(geom='atom',
+                                diam=2.05,
+                                well_depth=145.0),
+        note='L7/88')
+
+species(name='H2',
+        atoms='H:2',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 2.34433112E+00,  7.98052075E-03, -1.94781510E-05,
+                       2.01572094E-08, -7.37611761E-12, -9.17935173E+02,
+                       6.83010238E-01]),
+                NASA([1000.00, 3500.00],
+                     [ 3.33727920E+00, -4.94024731E-05,  4.99456778E-07,
+                      -1.79566394E-10,  2.00255376E-14, -9.50158922E+02,
+                      -3.20502331E+00])),
+        transport=gas_transport(geom='linear',
+                                diam=2.92,
+                                well_depth=38.0,
+                                polar=0.79,
+                                rot_relax=280.0),
+        note='TPIS78')
+
+species(name='O',
+        atoms='O:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 3.16826710E+00, -3.27931884E-03,  6.64306396E-06,
+                      -6.12806624E-09,  2.11265971E-12,  2.91222592E+04,
+                       2.05193346E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 2.56942078E+00, -8.59741137E-05,  4.19484589E-08,
+                      -1.00177799E-11,  1.22833691E-15,  2.92175791E+04,
+                       4.78433864E+00])),
+        transport=gas_transport(geom='atom',
+                                diam=2.75,
+                                well_depth=80.0),
+        note='L1/90')
+
+species(name='OH',
+        atoms='H:1 O:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 4.12530561E+00, -3.22544939E-03,  6.52764691E-06,
+                      -5.79853643E-09,  2.06237379E-12,  3.38153812E+03,
+                      -6.90432960E-01]),
+                NASA([1000.00, 6000.00],
+                     [ 2.86472886E+00,  1.05650448E-03, -2.59082758E-07,
+                       3.05218674E-11, -1.33195876E-15,  3.71885774E+03,
+                       5.70164073E+00])),
+        transport=gas_transport(geom='linear',
+                                diam=2.75,
+                                well_depth=80.0),
+        note='S9/01')
+
+species(name='O2',
+        atoms='O:2',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 3.78245636E+00, -2.99673416E-03,  9.84730201E-06,
+                      -9.68129509E-09,  3.24372837E-12, -1.06394356E+03,
+                       3.65767573E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 3.28253784E+00,  1.48308754E-03, -7.57966669E-07,
+                       2.09470555E-10, -2.16717794E-14, -1.08845772E+03,
+                       5.45323129E+00])),
+        transport=gas_transport(geom='linear',
+                                diam=3.458,
+                                well_depth=107.4,
+                                polar=1.6,
+                                rot_relax=3.8),
+        note='TPIS89')
+
+species(name='H2O2',
+        atoms='H:2 O:2',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 4.27611269E+00, -5.42822417E-04,  1.67335701E-05,
+                      -2.15770813E-08,  8.62454363E-12, -1.77025821E+04,
+                       3.43505074E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 4.16500285E+00,  4.90831694E-03, -1.90139225E-06,
+                       3.71185986E-10, -2.87908305E-14, -1.78617877E+04,
+                       2.91615662E+00])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=3.458,
+                                well_depth=107.4,
+                                rot_relax=3.8),
+        note='L7/88')
+
+species(name='H2O',
+        atoms='H:2 O:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 4.19864056E+00, -2.03643410E-03,  6.52040211E-06,
+                      -5.48797062E-09,  1.77197817E-12, -3.02937267E+04,
+                      -8.49032208E-01]),
+                NASA([1000.00, 3500.00],
+                     [ 3.03399249E+00,  2.17691804E-03, -1.64072518E-07,
+                      -9.70419870E-11,  1.68200992E-14, -3.00042971E+04,
+                       4.96677010E+00])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=2.605,
+                                well_depth=572.4,
+                                dipole=1.844,
+                                rot_relax=4.0),
+        note='L8/89')
+
+species(name='HO2',
+        atoms='H:1 O:2',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 4.30179801E+00, -4.74912051E-03,  2.11582891E-05,
+                      -2.42763894E-08,  9.29225124E-12,  2.94808040E+02,
+                       3.71666245E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 4.01721090E+00,  2.23982013E-03, -6.33658150E-07,
+                       1.14246370E-10, -1.07908535E-14,  1.11856713E+02,
+                       3.78510215E+00])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=3.458,
+                                well_depth=107.4,
+                                rot_relax=1.0),
+        note='L5/89')
+
+species(name='CO',
+        atoms='C:1 O:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 3.57953347E+00, -6.10353680E-04,  1.01681433E-06,
+                       9.07005884E-10, -9.04424499E-13, -1.43440860E+04,
+                       3.50840928E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 2.71518561E+00,  2.06252743E-03, -9.98825771E-07,
+                       2.30053008E-10, -2.03647716E-14, -1.41518724E+04,
+                       7.81868772E+00])),
+        transport=gas_transport(geom='linear',
+                                diam=3.65,
+                                well_depth=98.1,
+                                polar=1.95,
+                                rot_relax=1.8),
+        note='TPIS79')
+
+species(name='CH3',
+        atoms='H:3 C:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 3.65717970E+00,  2.12659790E-03,  5.45838830E-06,
+                      -6.61810030E-09,  2.46570740E-12,  1.64227160E+04,
+                       1.67353540E+00]),
+                NASA([1000.00, 6000.00],
+                     [ 2.97812060E+00,  5.79785200E-03, -1.97558000E-06,
+                       3.07297900E-10, -1.79174160E-14,  1.65095130E+04,
+                       4.72247990E+00])),
+        transport=gas_transport(geom='linear',
+                                diam=3.8,
+                                well_depth=144.0),
+        note='METHYLIU0702')
+
+species(name='CH2O',
+        atoms='H:2 C:1 O:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 4.79372315E+00, -9.90833369E-03,  3.73220008E-05,
+                      -3.79285261E-08,  1.31772652E-11, -1.43089567E+04,
+                       6.02812900E-01]),
+                NASA([1000.00, 3500.00],
+                     [ 1.76069008E+00,  9.20000082E-03, -4.42258813E-06,
+                       1.00641212E-09, -8.83855640E-14, -1.39958323E+04,
+                       1.36563230E+01])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=3.59,
+                                well_depth=498.0,
+                                rot_relax=2.0),
+        note='L8/88')
+
+species(name='CO2',
+        atoms='C:1 O:2',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 2.35677352E+00,  8.98459677E-03, -7.12356269E-06,
+                       2.45919022E-09, -1.43699548E-13, -4.83719697E+04,
+                       9.90105222E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 3.85746029E+00,  4.41437026E-03, -2.21481404E-06,
+                       5.23490188E-10, -4.72084164E-14, -4.87591660E+04,
+                       2.27163806E+00])),
+        transport=gas_transport(geom='linear',
+                                diam=3.763,
+                                well_depth=244.0,
+                                polar=2.65,
+                                rot_relax=2.1),
+        note='L7/88')
+
+species(name='CH4',
+        atoms='H:4 C:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 5.14911468E+00, -1.36622009E-02,  4.91453921E-05,
+                      -4.84246767E-08,  1.66603441E-11, -1.02465983E+04,
+                      -4.63848842E+00]),
+                NASA([1000.00, 6000.00],
+                     [ 1.65326226E+00,  1.00263099E-02, -3.31661238E-06,
+                       5.36483138E-10, -3.14696758E-14, -1.00095936E+04,
+                       9.90506283E+00])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=3.746,
+                                well_depth=141.4,
+                                polar=2.6,
+                                rot_relax=13.0),
+        note='g8/99')
+
+species(name='C2H2',
+        atoms='H:2 C:2',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 8.08681094E-01,  2.33615629E-02, -3.55171815E-05,
+                       2.80152437E-08, -8.50072974E-12,  2.64289807E+04,
+                       1.39397051E+01]),
+                NASA([1000.00, 3500.00],
+                     [ 4.14756964E+00,  5.96166664E-03, -2.37294852E-06,
+                       4.67412171E-10, -3.61235213E-14,  2.59359992E+04,
+                      -1.23028121E+00])),
+        transport=gas_transport(geom='linear',
+                                diam=4.1,
+                                well_depth=209.0,
+                                rot_relax=2.5),
+        note='L1/91')
+
+species(name='C2H4',
+        atoms='H:4 C:2',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 3.95920148E+00, -7.57052247E-03,  5.70990292E-05,
+                      -6.91588753E-08,  2.69884373E-11,  5.08977593E+03,
+                       4.09733096E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 2.03611116E+00,  1.46454151E-02, -6.71077915E-06,
+                       1.47222923E-09, -1.25706061E-13,  4.93988614E+03,
+                       1.03053693E+01])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=3.971,
+                                well_depth=280.8,
+                                rot_relax=1.5),
+        note='L1/91')
+
+species(name='CH2CO',
+        atoms='H:2 C:2 O:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 2.13583630E+00,  1.81188721E-02, -1.73947474E-05,
+                       9.34397568E-09, -2.01457615E-12, -7.04291804E+03,
+                       1.22156480E+01]),
+                NASA([1000.00, 3500.00],
+                     [ 4.51129732E+00,  9.00359745E-03, -4.16939635E-06,
+                       9.23345882E-10, -7.94838201E-14, -7.55105311E+03,
+                       6.32247205E-01])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=3.97,
+                                well_depth=436.0,
+                                rot_relax=2.0),
+        note='L5/90')
+
+species(name='C2H6',
+        atoms='H:6 C:2',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 4.29142492E+00, -5.50154270E-03,  5.99438288E-05,
+                      -7.08466285E-08,  2.68685771E-11, -1.15222055E+04,
+                       2.66682316E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 1.07188150E+00,  2.16852677E-02, -1.00256067E-05,
+                       2.21412001E-09, -1.90002890E-13, -1.14263932E+04,
+                       1.51156107E+01])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=4.302,
+                                well_depth=252.3,
+                                rot_relax=1.5),
+        note='L8/88')
+
+species(name='C',
+        atoms='C:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 2.55423955E+00, -3.21537724E-04,  7.33792245E-07,
+                      -7.32234889E-10,  2.66521446E-13,  8.54438832E+04,
+                       4.53130848E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 2.49266888E+00,  4.79889284E-05, -7.24335020E-08,
+                       3.74291029E-11, -4.87277893E-15,  8.54512953E+04,
+                       4.80150373E+00])),
+        transport=gas_transport(geom='atom',
+                                diam=3.298,
+                                well_depth=71.4),
+        note='L11/88')
+
+species(name='CH',
+        atoms='H:1 C:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 3.48981665E+00,  3.23835541E-04, -1.68899065E-06,
+                       3.16217327E-09, -1.40609067E-12,  7.07972934E+04,
+                       2.08401108E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 2.87846473E+00,  9.70913681E-04,  1.44445655E-07,
+                      -1.30687849E-10,  1.76079383E-14,  7.10124364E+04,
+                       5.48497999E+00])),
+        transport=gas_transport(geom='linear',
+                                diam=2.75,
+                                well_depth=80.0),
+        note='TPIS79')
+
+species(name='HCO',
+        atoms='H:1 C:1 O:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 4.22118584E+00, -3.24392532E-03,  1.37799446E-05,
+                      -1.33144093E-08,  4.33768865E-12,  3.83956496E+03,
+                       3.39437243E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 2.77217438E+00,  4.95695526E-03, -2.48445613E-06,
+                       5.89161778E-10, -5.33508711E-14,  4.01191815E+03,
+                       9.79834492E+00])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=3.59,
+                                well_depth=498.0),
+        note='L12/89')
+
+species(name='TXCH2',
+        atoms='H:2 C:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 3.76267867E+00,  9.68872143E-04,  2.79489841E-06,
+                      -3.85091153E-09,  1.68741719E-12,  4.60040401E+04,
+                       1.56253185E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 2.87410113E+00,  3.65639292E-03, -1.40894597E-06,
+                       2.60179549E-10, -1.87727567E-14,  4.62636040E+04,
+                       6.17119324E+00])),
+        transport=gas_transport(geom='linear',
+                                diam=3.8,
+                                well_depth=144.0),
+        note='LS/93')
+
+species(name='SXCH2',
+        atoms='H:2 C:1',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 4.19860411E+00, -2.36661419E-03,  8.23296220E-06,
+                      -6.68815981E-09,  1.94314737E-12,  5.04968163E+04,
+                      -7.69118967E-01]),
+                NASA([1000.00, 3500.00],
+                     [ 2.29203842E+00,  4.65588637E-03, -2.01191947E-06,
+                       4.17906000E-10, -3.39716365E-14,  5.09259997E+04,
+                       8.62650169E+00])),
+        transport=gas_transport(geom='linear',
+                                diam=3.8,
+                                well_depth=144.0),
+        note='LS/93')
+
+species(name='C2H3',
+        atoms='H:3 C:2',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 3.21246645E+00,  1.51479162E-03,  2.59209412E-05,
+                      -3.57657847E-08,  1.47150873E-11,  3.48598468E+04,
+                       8.51054025E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 3.01672400E+00,  1.03302292E-02, -4.68082349E-06,
+                       1.01763288E-09, -8.62607041E-14,  3.46128739E+04,
+                       7.78732378E+00])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=4.1,
+                                well_depth=209.0,
+                                rot_relax=1.0),
+        note='L2/92')
+
+species(name='C2H5',
+        atoms='H:5 C:2',
+        thermo=(NASA([200.00, 1000.00],
+                     [ 4.30646568E+00, -4.18658892E-03,  4.97142807E-05,
+                      -5.99126606E-08,  2.30509004E-11,  1.28416265E+04,
+                       4.70720924E+00]),
+                NASA([1000.00, 3500.00],
+                     [ 1.95465642E+00,  1.73972722E-02, -7.98206668E-06,
+                       1.75217689E-09, -1.49641576E-13,  1.28575200E+04,
+                       1.34624343E+01])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=4.302,
+                                well_depth=252.3,
+                                rot_relax=1.5),
+        note='L12/92')
+
+species(name='HCCO',
+        atoms='H:1 C:2 O:1',
+        thermo=(NASA([300.00, 1000.00],
+                     [ 2.25172140E+00,  1.76550210E-02, -2.37291010E-05,
+                       1.72757590E-08, -5.06648110E-12,  2.00594490E+04,
+                       1.24904170E+01]),
+                NASA([1000.00, 4000.00],
+                     [ 5.62820580E+00,  4.08534010E-03, -1.59345470E-06,
+                       2.86260520E-10, -1.94078320E-14,  1.93272150E+04,
+                      -3.93025950E+00])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=2.5,
+                                well_depth=150.0,
+                                rot_relax=1.0),
+        note='SRIC91')
+
+species(name='CH3CHO',
+        atoms='H:4 C:2 O:1',
+        thermo=(NASA([300.00, 1000.00],
+                     [ 1.40653856E+00,  2.16984438E-02, -1.47573265E-05,
+                       7.30435478E-09, -2.09119467E-12, -2.17973223E+04,
+                       1.77513265E+01]),
+                NASA([1000.00, 3000.00],
+                     [ 2.68543112E+00,  1.76802373E-02, -8.65402739E-06,
+                       2.03680589E-09, -1.87630935E-13, -2.21653701E+04,
+                       1.11635653E+01])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=3.97,
+                                well_depth=436.0,
+                                rot_relax=2.0),
+        note='G3B3')
+
+species(name='CH2CHO',
+        atoms='H:3 C:2 O:1',
+        thermo=(NASA([300.00, 1000.00],
+                     [ 1.09685733E+00,  2.20228796E-02, -1.44583444E-05,
+                       3.00779578E-09,  6.08992877E-13,  1.06943322E+03,
+                       1.90094813E+01]),
+                NASA([1000.00, 3000.00],
+                     [ 2.42606357E+00,  1.72400021E-02, -9.77132119E-06,
+                       2.66555672E-09, -2.82120078E-13,  8.33106990E+02,
+                       1.26038737E+01])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=3.97,
+                                well_depth=436.0,
+                                rot_relax=2.0),
+        note='G3B3')
+
+species(name='C2H5O',
+        atoms='H:5 C:2 O:1',
+        thermo=(NASA([300.00, 1000.00],
+                     [ 4.94420708E-01,  2.71774434E-02, -1.65909010E-05,
+                       5.15204200E-09, -6.48496915E-13, -3.35252925E+03,
+                       2.28079378E+01]),
+                NASA([1000.00, 5000.00],
+                     [ 2.46262349E+00,  2.09503959E-02, -9.39291750E-06,
+                       1.56440627E-09,  0.00000000E+00, -3.83932658E+03,
+                       1.28738847E+01])),
+        transport=gas_transport(geom='nonlinear',
+                                diam=4.41,
+                                well_depth=470.6,
+                                rot_relax=1.5),
+        note='000000')
+
+#-------------------------------------------------------------------------------
+# Reaction data
+#-------------------------------------------------------------------------------
+
+# Reaction 1
+three_body_reaction('2.0 H + M <=> H2 + M', [1.780000e+18, -1.0, 0.0],
+                    efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 H2:0.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:0.0 CO2:0.0 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0')
+
+# Reaction 2
+reaction('2.0 H + H2 <=> 2.0 H2', [9.000000e+16, -0.6, 0.0])
+
+# Reaction 3
+reaction('O + H2 <=> H + OH', [4.590000e+04, 2.7, 6259.56])
+
+# Reaction 4
+three_body_reaction('H + O + M <=> OH + M', [9.430000e+18, -1.0, 0.0],
+                    efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0')
+
+# Reaction 5
+three_body_reaction('2.0 O + M <=> O2 + M', [1.200000e+17, -1.0, 0.0],
+                    efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.4 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:15.4 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0')
+
+# Reaction 6
+falloff_reaction('2.0 OH (+ M) <=> H2O2 (+ M)',
+                 kf=[1.110000e+14, -0.37, 0.0],
+                 kf0=[2.010000e+17, -0.58, -2292.07],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.7346, T3=94.0, T1=1756.0, T2=5182.0))
+
+# Reaction 7
+three_body_reaction('H + OH + M <=> H2O + M', [4.400000e+22, -2.0, 0.0],
+                    efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:6.3 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0')
+
+# Reaction 8
+reaction('2.0 OH <=> O + H2O', [3.970000e+04, 2.4, -2110.42])
+
+# Reaction 9
+reaction('OH + H2 <=> H + H2O', [1.730000e+08, 1.51, 3429.73])
+
+# Reaction 10
+reaction('2.0 H + H2O <=> H2 + H2O', [5.620000e+19, -1.25, 0.0])
+
+# Reaction 11
+falloff_reaction('H + O2 (+ M) <=> HO2 (+ M)',
+                 kf=[5.120000e+12, 0.44, 0.0],
+                 kf0=[6.330000e+19, -1.4, 0.0],
+                 efficiencies='O2:0.85 CH2CHO:0.0 C:0.0 CH:0.0 CO:1.09 H2:0.75 HCO:0.0 C2H5O:0.0 H2O:11.89 CO2:2.18 TXCH2:0.0 CH3CHO:0.0 SXCH2:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.5, T3=0.0, T1=10000000000.0))
+
+# Reaction 12
+reaction('H + O2 <=> O + OH', [2.640000e+16, -0.67, 17041.11])
+
+# Reaction 13
+reaction('H2 + O2 <=> HO2 + H', [5.920000e+05, 2.43, 53501.43])
+
+# Reaction 14
+reaction('HO2 + OH <=> H2O + O2', [2.380000e+13, 0.0, -499.52],
+         options='duplicate')
+
+# Reaction 15
+reaction('HO2 + H <=> 2.0 OH', [7.490000e+13, 0.0, 635.76])
+
+# Reaction 16
+reaction('HO2 + O <=> OH + O2', [4.000000e+13, 0.0, 0.0])
+
+# Reaction 17
+reaction('HO2 + H <=> O + H2O', [3.970000e+12, 0.0, 671.61])
+
+# Reaction 18
+reaction('HO2 + OH <=> H2O + O2', [1.000000e+16, 0.0, 17330.31],
+         options='duplicate')
+
+# Reaction 19
+reaction('H2O2 + O <=> HO2 + OH', [9.630000e+06, 2.0, 3969.89])
+
+# Reaction 20
+reaction('H2O2 + H <=> H2O + OH', [2.410000e+13, 0.0, 3969.89])
+
+# Reaction 21
+reaction('H2O2 + H <=> HO2 + H2', [6.050000e+06, 2.0, 5200.76])
+
+# Reaction 22
+reaction('H2O2 + OH <=> HO2 + H2O', [2.670000e+41, -7.0, 37600.38],
+         options='duplicate')
+
+# Reaction 23
+reaction('H2O2 + OH <=> HO2 + H2O', [2.000000e+12, 0.0, 427.82],
+         options='duplicate')
+
+# Reaction 24
+reaction('C + O2 <=> CO + O', [5.800000e+13, 0.0, 576.0])
+
+# Reaction 25
+reaction('C + OH <=> CO + H', [5.000000e+13, 0.0, 0.0])
+
+# Reaction 26
+reaction('CH + OH <=> HCO + H', [3.000000e+13, 0.0, 0.0])
+
+# Reaction 27
+reaction('CH + H2 <=> TXCH2 + H', [1.080000e+14, 0.0, 3109.46])
+
+# Reaction 28
+reaction('CH + O <=> CO + H', [5.700000e+13, 0.0, 0.0])
+
+# Reaction 29
+reaction('CH + O2 <=> HCO + O', [6.710000e+13, 0.0, 0.0])
+
+# Reaction 30
+reaction('CH + H <=> C + H2', [1.650000e+14, 0.0, 0.0])
+
+# Reaction 31
+falloff_reaction('CH + H2 (+ M) <=> CH3 (+ M)',
+                 kf=[1.970000e+12, 0.43, -370.46],
+                 kf0=[4.820000e+25, -2.8, 590.34],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.578, T3=122.0, T1=2535.0, T2=9365.0))
+
+# Reaction 32
+reaction('CH + H2O <=> CH2O + H', [5.710000e+12, 0.0, -755.26])
+
+# Reaction 33
+falloff_reaction('TXCH2 + H (+ M) <=> CH3 (+ M)',
+                 kf=[6.000000e+14, 0.0, 0.0],
+                 kf0=[1.040000e+26, -2.76, 1598.95],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.562, T3=91.0, T1=5836.0, T2=8552.0))
+
+# Reaction 34
+reaction('TXCH2 + O2 => OH + H + CO', [5.000000e+12, 0.0, 1500.96])
+
+# Reaction 35
+reaction('TXCH2 + O2 <=> CH2O + O', [2.400000e+12, 0.0, 1500.96])
+
+# Reaction 36
+reaction('TXCH2 + OH <=> CH2O + H', [2.000000e+13, 0.0, 0.0])
+
+# Reaction 37
+reaction('TXCH2 + HO2 <=> CH2O + OH', [2.000000e+13, 0.0, 0.0])
+
+# Reaction 38
+reaction('TXCH2 + O2 => CO2 + 2.0 H', [5.800000e+12, 0.0, 1500.96])
+
+# Reaction 39
+reaction('TXCH2 + OH <=> CH + H2O', [1.130000e+07, 2.0, 2999.52])
+
+# Reaction 40
+reaction('TXCH2 + O <=> HCO + H', [8.000000e+13, 0.0, 0.0])
+
+# Reaction 41
+reaction('TXCH2 + H2 <=> H + CH3', [5.000000e+05, 2.0, 7229.92])
+
+# Reaction 42
+reaction('SXCH2 + H2O <=> TXCH2 + H2O', [3.000000e+13, 0.0, 0.0])
+
+# Reaction 43
+reaction('SXCH2 + H <=> CH + H2', [3.000000e+13, 0.0, 0.0])
+
+# Reaction 44
+reaction('SXCH2 + O2 <=> H + OH + CO', [2.800000e+13, 0.0, 0.0])
+
+# Reaction 45
+reaction('SXCH2 + O <=> CO + H2', [1.500000e+13, 0.0, 0.0])
+
+# Reaction 46
+reaction('SXCH2 + O2 <=> CO + H2O', [1.200000e+13, 0.0, 0.0])
+
+# Reaction 47
+reaction('SXCH2 + H2 <=> CH3 + H', [7.000000e+13, 0.0, 0.0])
+
+# Reaction 48
+reaction('SXCH2 + O <=> HCO + H', [1.500000e+13, 0.0, 0.0])
+
+# Reaction 49
+reaction('SXCH2 + H2O => H2 + CH2O', [6.820000e+10, 0.25, -934.51])
+
+# Reaction 50
+reaction('SXCH2 + OH <=> CH2O + H', [3.000000e+13, 0.0, 0.0])
+
+# Reaction 51
+reaction('CH3 + OH => H2 + CH2O', [8.000000e+09, 0.0, -1754.3])
+
+# Reaction 52
+reaction('CH3 + H2O2 <=> CH4 + HO2', [2.450000e+04, 2.47, 5179.25])
+
+# Reaction 53
+reaction('CH3 + O2 <=> CH2O + OH', [5.870000e+11, 0.0, 13840.82])
+
+# Reaction 54
+reaction('CH3 + CH <=> C2H3 + H', [3.000000e+13, 0.0, 0.0])
+
+# Reaction 55
+reaction('CH3 + O <=> CH2O + H', [5.060000e+13, 0.0, 0.0])
+
+# Reaction 56
+reaction('CH3 + C <=> C2H2 + H', [5.000000e+13, 0.0, 0.0])
+
+# Reaction 57
+falloff_reaction('CH3 + H (+ M) <=> CH4 (+ M)',
+                 kf=[6.920000e+13, 0.18, 0.0],
+                 kf0=[3.470000e+38, -6.3, 5074.09],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.5 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:6.0 CO2:2.0 CH4:3.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.783, T3=74.0, T1=2941.0, T2=6964.0))
+
+# Reaction 58
+reaction('CH3 + OH <=> TXCH2 + H2O', [5.600000e+07, 1.6, 5420.65])
+
+# Reaction 59
+reaction('CH3 + SXCH2 <=> C2H4 + H', [1.200000e+13, 0.0, -571.22])
+
+# Reaction 60
+reaction('CH3 + OH <=> SXCH2 + H2O', [6.440000e+17, -1.34, 1417.3])
+
+# Reaction 61
+reaction('2.0 CH3 <=> C2H5 + H', [6.840000e+12, 0.1, 10599.9])
+
+# Reaction 62
+reaction('CH3 + HO2 <=> CH4 + O2', [3.610000e+12, 0.0, 0.0])
+
+# Reaction 63
+reaction('CH3 + TXCH2 <=> C2H4 + H', [1.000000e+14, 0.0, 0.0])
+
+# Reaction 64
+reaction('CH3 + O => H + H2 + CO', [3.370000e+13, 0.0, 0.0])
+
+# Reaction 65
+reaction('CH4 + CH <=> C2H4 + H', [6.000000e+13, 0.0, 0.0])
+
+# Reaction 66
+reaction('CH4 + SXCH2 <=> 2.0 CH3', [1.600000e+13, 0.0, -571.22])
+
+# Reaction 67
+reaction('CH4 + O <=> CH3 + OH', [1.020000e+09, 1.5, 8599.43])
+
+# Reaction 68
+reaction('CH4 + OH <=> CH3 + H2O', [1.000000e+08, 1.6, 3119.02])
+
+# Reaction 69
+reaction('CH4 + TXCH2 <=> 2.0 CH3', [2.460000e+06, 2.0, 8269.6])
+
+# Reaction 70
+reaction('CH4 + H <=> CH3 + H2', [6.600000e+08, 1.62, 10841.3])
+
+# Reaction 71
+falloff_reaction('TXCH2 + CO (+ M) <=> CH2CO (+ M)',
+                 kf=[8.100000e+11, 0.5, 4510.04],
+                 kf0=[2.690000e+33, -5.11, 7096.08],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.5907, T3=275.0, T1=1226.0, T2=5185.0))
+
+# Reaction 72
+reaction('SXCH2 + CO <=> TXCH2 + CO', [9.000000e+12, 0.0, 0.0])
+
+# Reaction 73
+reaction('CO + O2 <=> CO2 + O', [1.120000e+12, 0.0, 47700.76])
+
+# Reaction 74
+reaction('CO + OH <=> CO2 + H', [8.780000e+10, 0.03, -16.73],
+         options='duplicate')
+
+# Reaction 75
+falloff_reaction('CO + H2 (+ M) <=> CH2O (+ M)',
+                 kf=[4.300000e+07, 1.5, 79600.86],
+                 kf0=[5.070000e+27, -3.42, 84349.9],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.932, T3=197.0, T1=1540.0, T2=10300.0))
+
+# Reaction 76
+falloff_reaction('CH + CO (+ M) <=> HCCO (+ M)',
+                 kf=[5.000000e+13, 0.0, 0.0],
+                 kf0=[2.690000e+28, -3.74, 1935.95],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.5757, T3=237.0, T1=1652.0, T2=5069.0))
+
+# Reaction 77
+reaction('CO + OH <=> CO2 + H', [8.000000e+11, 0.14, 7351.82],
+         options='duplicate')
+
+# Reaction 78
+falloff_reaction('CO + O (+ M) <=> CO2 (+ M)',
+                 kf=[1.360000e+10, 0.0, 2385.28],
+                 kf0=[1.170000e+24, -2.79, 4192.16],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=1.0, T3=1.0, T1=10000000.0, T2=10000000.0))
+
+# Reaction 79
+reaction('CO + HO2 <=> CO2 + OH', [3.010000e+13, 0.0, 22999.52])
+
+# Reaction 80
+reaction('HCO + H <=> CO + H2', [1.200000e+14, 0.0, 0.0])
+
+# Reaction 81
+falloff_reaction('HCO + H (+ M) <=> CH2O (+ M)',
+                 kf=[1.090000e+12, 0.48, -260.52],
+                 kf0=[2.470000e+24, -2.57, 425.43],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.7824, T3=271.0, T1=2755.0, T2=6570.0))
+
+# Reaction 82
+reaction('CH3 + HCO <=> CH3CHO', [5.000000e+13, 0.0, 0.0])
+
+# Reaction 83
+three_body_reaction('HCO + M <=> CO + H + M', [1.870000e+17, -1.0, 17000.48],
+                    efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:0.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0')
+
+# Reaction 84
+reaction('HCO + H2O <=> CO + H + H2O', [2.240000e+18, -1.0, 17000.48])
+
+# Reaction 85
+reaction('HCO + O <=> CO + OH', [3.000000e+13, 0.0, 0.0])
+
+# Reaction 86
+reaction('HCO + OH <=> CO + H2O', [3.020000e+13, 0.0, 0.0])
+
+# Reaction 87
+reaction('CH3 + HCO <=> CH4 + CO', [2.650000e+13, 0.0, 0.0])
+
+# Reaction 88
+reaction('HCO + O <=> CO2 + H', [3.000000e+13, 0.0, 0.0])
+
+# Reaction 89
+reaction('HCO + O2 <=> CO + HO2', [1.200000e+10, 0.81, -726.58])
+
+# Reaction 90
+reaction('CH2O + H <=> HCO + H2', [5.740000e+07, 1.9, 2741.4])
+
+# Reaction 91
+reaction('CH2O + O <=> HCO + OH', [3.900000e+13, 0.0, 3539.67])
+
+# Reaction 92
+reaction('CH3 + CH2O <=> CH4 + HCO', [3.320000e+03, 2.81, 5860.42])
+
+# Reaction 93
+reaction('CH2O + OH <=> HCO + H2O', [3.430000e+09, 1.18, -446.94])
+
+# Reaction 94
+reaction('CH2O + CH <=> CH2CO + H', [9.460000e+13, 0.0, -516.25])
+
+# Reaction 95
+reaction('CH2O + O2 <=> HCO + HO2', [1.000000e+14, 0.0, 40000.0])
+
+# Reaction 96
+reaction('CH2O + HO2 <=> HCO + H2O2', [5.600000e+06, 2.0, 12000.48])
+
+# Reaction 97
+reaction('2.0 H + CO2 <=> H2 + CO2', [5.500000e+20, -2.0, 0.0])
+
+# Reaction 98
+reaction('SXCH2 + CO2 <=> TXCH2 + CO2', [7.000000e+12, 0.0, 0.0])
+
+# Reaction 99
+reaction('SXCH2 + CO2 <=> CH2O + CO', [1.400000e+13, 0.0, 0.0])
+
+# Reaction 100
+reaction('CH + CO2 <=> HCO + CO', [1.900000e+14, 0.0, 15791.11])
+
+# Reaction 101
+reaction('C2H2 + O <=> TXCH2 + CO', [1.250000e+07, 2.0, 1900.1])
+
+# Reaction 102
+reaction('C2H2 + OH <=> CH3 + CO', [1.280000e+09, 0.73, 2578.87])
+
+# Reaction 103
+falloff_reaction('C2H2 + H (+ M) <=> C2H3 (+ M)',
+                 kf=[1.710000e+10, 1.27, 2707.93],
+                 kf0=[6.340000e+31, -4.66, 3781.07],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.2122, T3=1.0, T1=-10210.0))
+
+# Reaction 104
+reaction('C2H2 + OH <=> CH2CO + H', [7.530000e+06, 1.55, 2105.64])
+
+# Reaction 105
+reaction('C2H2 + O <=> HCCO + H', [8.100000e+06, 2.0, 1900.1])
+
+# Reaction 106
+reaction('C2H3 + OH <=> C2H2 + H2O', [5.000000e+12, 0.0, 0.0])
+
+# Reaction 107
+reaction('C2H3 + O2 <=> CH2CHO + O', [3.030000e+11, 0.29, 11.95])
+
+# Reaction 108
+reaction('C2H3 + O <=> CH2CHO', [1.030000e+13, 0.21, -427.82])
+
+# Reaction 109
+reaction('C2H3 + H <=> C2H2 + H2', [3.000000e+13, 0.0, 0.0])
+
+# Reaction 110
+reaction('C2H3 + CH3 <=> C2H2 + CH4', [9.030000e+12, 0.0, -764.82])
+
+# Reaction 111
+reaction('C2H3 + O2 <=> HCO + CH2O', [4.580000e+16, -1.39, 1015.77])
+
+# Reaction 112
+falloff_reaction('C2H3 + H (+ M) <=> C2H4 (+ M)',
+                 kf=[6.080000e+12, 0.27, 279.64],
+                 kf0=[1.400000e+30, -3.86, 3319.79],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.782, T3=207.5, T1=2663.0, T2=6095.0))
+
+# Reaction 113
+reaction('C2H3 + H2O2 <=> C2H4 + HO2', [1.210000e+10, 0.0, -595.12])
+
+# Reaction 114
+reaction('C2H3 + O2 <=> C2H2 + HO2', [1.340000e+06, 1.61, -384.8])
+
+# Reaction 115
+reaction('C2H4 + CH3 <=> C2H3 + CH4', [2.270000e+05, 2.0, 9199.33])
+
+# Reaction 116
+falloff_reaction('C2H4 + H (+ M) <=> C2H5 (+ M)',
+                 kf=[1.370000e+09, 1.46, 1355.16],
+                 kf0=[2.030000e+39, -6.64, 5769.6],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=-0.569, T3=299.0, T1=-9147.0, T2=152.4))
+
+# Reaction 117
+reaction('C2H4 + O2 => CH3 + CO2 + H', [4.900000e+12, 0.42, 75800.67])
+
+# Reaction 118
+reaction('C2H4 + OH <=> C2H3 + H2O', [1.310000e-01, 4.2, -860.42])
+
+# Reaction 119
+reaction('C2H4 + OH <=> C2H5O', [3.750000e+36, -7.8, 7060.23])
+
+# Reaction 120
+reaction('C2H4 + O <=> CH2CHO + H', [7.660000e+09, 0.88, 1140.06])
+
+# Reaction 121
+reaction('C2H4 + O <=> CH3 + HCO', [3.890000e+08, 1.36, 886.71])
+
+# Reaction 122
+reaction('C2H4 + O2 <=> C2H3 + HO2', [4.220000e+13, 0.0, 62100.86])
+
+# Reaction 123
+reaction('C2H4 + H <=> C2H3 + H2', [1.270000e+05, 2.75, 11649.14])
+
+# Reaction 124
+reaction('C2H4 + O <=> TXCH2 + CH2O', [7.150000e+04, 2.47, 929.73])
+
+# Reaction 125
+reaction('C2H5 + HO2 <=> C2H4 + H2O2', [3.000000e+11, 0.0, 0.0])
+
+# Reaction 126
+falloff_reaction('C2H5 + H (+ M) <=> C2H6 (+ M)',
+                 kf=[5.210000e+17, -0.99, 1579.83],
+                 kf0=[1.990000e+41, -7.08, 6684.99],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.8422, T3=125.0, T1=2219.0, T2=6882.0))
+
+# Reaction 127
+reaction('C2H5 + HO2 <=> C2H5O + OH', [3.100000e+13, 0.0, 0.0])
+
+# Reaction 128
+reaction('C2H5 + O <=> C2H5O', [3.170000e+13, 0.03, -394.36])
+
+# Reaction 129
+reaction('C2H5 + H <=> C2H4 + H2', [2.000000e+12, 0.0, 0.0])
+
+# Reaction 130
+reaction('C2H5 + O2 <=> C2H4 + HO2', [1.920000e+07, 1.02, -2033.94])
+
+# Reaction 131
+reaction('C2H5 + HO2 <=> C2H6 + O2', [3.000000e+11, 0.0, 0.0])
+
+# Reaction 132
+reaction('C2H5 + CH3 <=> C2H4 + CH4', [1.180000e+04, 2.45, 2920.65])
+
+# Reaction 133
+reaction('C2H6 + SXCH2 <=> C2H5 + CH3', [4.000000e+13, 0.0, -549.71])
+
+# Reaction 134
+reaction('C2H6 + CH3 <=> C2H5 + CH4', [8.430000e+14, 0.0, 22256.21])
+
+# Reaction 135
+reaction('C2H6 + O <=> C2H5 + OH', [3.170000e+01, 3.8, 3130.98])
+
+# Reaction 136
+falloff_reaction('C2H6 (+ M) <=> 2.0 CH3 (+ M)',
+                 kf=[1.880000e+50, -9.72, 107342.26],
+                 kf0=[3.720000e+65, -13.14, 101579.83],
+                 efficiencies='CH2CHO:0.0 C:0.0 CH:0.0 CO:1.75 H2:2.0 HCO:0.0 SXCH2:0.0 C2H5O:0.0 H2O:12.0 CO2:3.6 CH4:2.0 TXCH2:0.0 C2H6:3.0 CH3CHO:0.0 C2H3:0.0 HCCO:0.0 C2H5:0.0',
+                 falloff=Troe(A=0.39, T3=100.0, T1=1900.0, T2=6000.0))
+
+# Reaction 137
+reaction('C2H6 + HO2 <=> C2H5 + H2O2', [2.610000e+02, 3.37, 15913.0])
+
+# Reaction 138
+reaction('C2H6 + H <=> C2H5 + H2', [1.700000e+05, 2.7, 5740.92])
+
+# Reaction 139
+reaction('C2H6 + OH <=> C2H5 + H2O', [1.610000e+06, 2.22, 740.92])
+
+# Reaction 140
+reaction('HCCO + O2 <=> OH + 2.0 CO', [4.200000e+10, 0.0, 853.25])
+
+# Reaction 141
+reaction('HCCO + O <=> H + 2.0 CO', [1.000000e+14, 0.0, 0.0])
+
+# Reaction 142
+reaction('HCCO + CH3 <=> C2H4 + CO', [5.000000e+13, 0.0, 0.0])
+
+# Reaction 143
+reaction('HCCO + H <=> SXCH2 + CO', [1.000000e+14, 0.0, 0.0])
+
+# Reaction 144
+reaction('CH2CO + H <=> CH3 + CO', [1.500000e+09, 1.38, 614.24])
+
+# Reaction 145
+reaction('CH2CO + TXCH2 <=> C2H4 + CO', [1.000000e+12, 0.0, 0.0])
+
+# Reaction 146
+reaction('CH2CO + O <=> HCCO + OH', [1.000000e+13, 0.0, 7999.52])
+
+# Reaction 147
+reaction('CH2CO + CH3 <=> HCCO + CH4', [7.500000e+12, 0.0, 12999.52])
+
+# Reaction 148
+reaction('CH2CO + O <=> TXCH2 + CO2', [1.750000e+12, 0.0, 1350.38])
+
+# Reaction 149
+reaction('CH2CO + CH3 <=> C2H5 + CO', [9.000000e+10, 0.0, 0.0])
+
+# Reaction 150
+reaction('CH2CO + OH <=> HCCO + H2O', [7.500000e+12, 0.0, 2000.48])
+
+# Reaction 151
+reaction('CH2CO + H <=> HCCO + H2', [5.000000e+13, 0.0, 7999.52])
+
+# Reaction 152
+reaction('CH2CO + TXCH2 <=> HCCO + CH3', [3.600000e+13, 0.0, 10999.04])
+
+# Reaction 153
+reaction('CH2CHO + O <=> CH2O + HCO', [3.170000e+13, 0.03, -394.36])
+
+# Reaction 154
+reaction('CH2CHO <=> CH2CO + H', [1.320000e+34, -6.57, 49457.46])
+
+# Reaction 155
+reaction('CH2CHO + OH <=> H2O + CH2CO', [1.200000e+13, 0.0, 0.0])
+
+# Reaction 156
+reaction('CH2CHO + H <=> CH2CO + H2', [1.100000e+13, 0.0, 0.0])
+
+# Reaction 157
+reaction('CH2CHO + O2 => OH + CO + CH2O', [1.810000e+10, 0.0, 0.0])
+
+# Reaction 158
+reaction('CH2CHO <=> CH3 + CO', [6.510000e+34, -6.87, 47194.07])
+
+# Reaction 159
+reaction('CH2CHO + O2 => OH + 2.0 HCO', [2.350000e+10, 0.0, 0.0])
+
+# Reaction 160
+reaction('CH2CHO + H <=> CH3 + HCO', [2.200000e+13, 0.0, 0.0])
+
+# Reaction 161
+reaction('CH3CHO + O => CH3 + CO + OH', [2.920000e+12, 0.0, 1809.27])
+
+# Reaction 162
+reaction('CH3CHO + O2 => CH3 + CO + HO2', [3.010000e+13, 0.0, 39149.14])
+
+# Reaction 163
+reaction('CH3CHO + OH => CH3 + CO + H2O', [2.340000e+10, 0.73, -1113.77])
+
+# Reaction 164
+reaction('CH3CHO + H <=> CH2CHO + H2', [2.050000e+09, 1.16, 2404.4])
+
+# Reaction 165
+reaction('CH3CHO + H => CH3 + CO + H2', [2.050000e+09, 1.16, 2404.4])
+
+# Reaction 166
+reaction('CH3CHO + O <=> CH2CHO + OH', [2.920000e+12, 0.0, 1809.27])
+
+# Reaction 167
+reaction('CH3CHO + CH3 => CH3 + CO + CH4', [2.720000e+06, 1.77, 5920.17])
+
+# Reaction 168
+reaction('CH3CHO + HO2 => CH3 + CO + H2O2', [3.010000e+12, 0.0, 11924.0])
+
+# Reaction 169
+reaction('C2H5O <=> CH3 + CH2O', [1.320000e+20, -2.02, 20750.48])
+
+# Reaction 170
+reaction('C2H5O <=> CH3CHO + H', [5.450000e+15, -0.69, 22229.92])
+
+# Reaction 171
+reaction('C2H5O + O2 <=> CH3CHO + HO2', [2.290000e+10, 0.0, 874.76])
+
+# Reaction 172
+reaction('SXCH2 + N2 <=> TXCH2 + N2', [1.500000e+13, 0.0, 599.9])
+
