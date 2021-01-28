@@ -18,7 +18,7 @@ void *arkode_mem    = NULL;
 UserData data      = NULL;
 Real time_init    = 0.0;
 Array<Real,NUM_SPECIES+1> typVals = {-1};
-Real relTol       = 1.0e-10;
+Real relTol       = 1.0e-6;
 Real absTol       = 1.0e-10;
 /* REMOVE MAYBE LATER */
 int dense_solve           = 1;
@@ -74,11 +74,11 @@ void SetTolFactODE(Real relative_tol,Real absolute_tol)
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num();
 #endif
-
+/*
     if (omp_thread == 0)
     {
         Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
-    }
+    }*/
 }
 //===========================================================
 /* Function to ReSet the Tolerances */
@@ -105,7 +105,7 @@ void ReSetTolODE()
         if ((data->iverbose > 0) && (omp_thread == 0)) 
         {
             Print() << "Setting ARK/ERKODE tolerances rtol = " << relTol 
-                << " atolfact = " << absTol << " in PelePhysics \n";
+                << " atol = " << absTol << " in PelePhysics \n";
         }
         for  (int i = 0; i < data->ncells; i++) 
         {
@@ -549,9 +549,9 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
   for (int tid = 0; tid < data_wk->ncells; tid ++) {
       /* Tmp vars */
       realtype massfrac[NUM_SPECIES];
-      realtype Xi[NUM_SPECIES];
+      realtype Xi[NUM_SPECIES] = {0.0};
       realtype cdot[NUM_SPECIES], molecular_weight[NUM_SPECIES];
-      realtype cX;
+      realtype cX = 0.0;
       realtype temp, energy;
       realtype dt;
 
@@ -579,7 +579,7 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
       }
 
       /* NRG CGS */
-      energy = (data_wk->rhoX_init[data->boxcell + tid] + data_wk->rhoXsrc_ext[data_wk->boxcell + tid] * dt) /rho;
+      energy = (data_wk->rhoX_init[data_wk->boxcell + tid] + data_wk->rhoXsrc_ext[data_wk->boxcell + tid] * dt) /rho;
 
       if (data_wk->ireactor_type == eint_rho){
           /* UV REACTOR */
@@ -664,6 +664,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     std::memcpy(data->rhoX_init, rX_in, sizeof(realtype) * data->ncells);
     std::memcpy(data->rhoXsrc_ext, rX_src_in, sizeof(realtype) * data->ncells);
 
+    data->boxcell   = 0; 
     if (data->iimplicit_solve == 1) 
     {
         //set explicit rhs to null
@@ -925,11 +926,9 @@ int check_flag(void *flagvalue, const char *funcname, int opt)
 //===========================================================
 UserData AllocUserData(int reactor_type, int num_cells)
 {
-
     /* Make local copies of pointers in user_data */
     UserData data_wk = (UserData) malloc(sizeof *data_wk);
     int omp_thread = 0;
-    Real relative_tol,absolute_tol;
 
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num();
@@ -947,8 +946,8 @@ UserData AllocUserData(int reactor_type, int num_cells)
     pp.query("analytical_jacobian",data_wk->ianalytical_jacobian);
     pp.query("implicit_solve", data_wk->iimplicit_solve);
     pp.query("use_erkstep", data_wk->iuse_erkstep);
-    pp.query("rtol",relative_tol);
-    pp.query("atol",absolute_tol);
+    pp.query("rtol",relTol);
+    pp.query("atol",absTol);
 
     (data_wk->ireactor_type)      = reactor_type;
 

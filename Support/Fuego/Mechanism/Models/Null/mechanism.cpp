@@ -1,6 +1,6 @@
 #include "chemistry_file.H"
 
-void CKSYMS(int * kname, int * plenkname) {}
+void CKSYMS_STR(amrex::Vector<std::string>& kname) {}
 
 /* Returns R, Rc, Patm */
 void CKRP(amrex::Real *  ru, amrex::Real *  ruc, amrex::Real *  pa)
