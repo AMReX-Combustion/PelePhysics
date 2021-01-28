@@ -230,7 +230,7 @@ int react(realtype *rY_in, realtype *rY_src_in,
     user_data->nbThreads               = 32;
 
     //y = N_VNewManaged_Cuda(neq_tot);
-    y = N_VNewWithMemHelp_Cuda(neq_tot, /*use_managed_mem=*/true, *The_SUNMemory_Helper());
+    y = N_VNewWithMemHelp_Cuda(neq_tot, /*use_managed_mem=*/true, *amrex::sundials::The_SUNMemory_Helper());
     N_VSetCudaStream_Cuda(y, &stream);
 
 
