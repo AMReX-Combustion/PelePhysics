@@ -2,7 +2,9 @@
 #define _SPRAYINTERPOLATION_H_
 
 #include <AMReX_RealVect.H>
+#ifdef AMREX_USE_EB
 #include <AMReX_EBMultiFabUtil.H>
+#endif
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void InterpolateFaceVelocity (const amrex::RealVect& len,

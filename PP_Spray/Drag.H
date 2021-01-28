@@ -110,12 +110,11 @@ bool calculateSpraySource (const Real    flow_dt,
   Real dt = flow_dt;
   int isub = 1;
   int nsub = 1;
+  Real rho_part = 0.;
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+    rho_part += Y_part[spf]*fdat.rho[spf];
+  Real pmass = M_PI/6.*rho_part*std::pow(dia_part, 3);
   while (isub <= nsub) {
-    Real rho_part = 0.;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-      rho_part += Y_part[spf]*fdat.rho[spf];
-    Real dia2_part = dia_part*dia_part;
-    Real pmass = M_PI/6.*rho_part*dia_part*dia2_part;
     Real part_ke = 0.5*vel_part.radSquared();
     // Model the fuel vapor using the one-third rule
     Real delT = amrex::max(gpv.T_fluid - T_part, 0.);
@@ -198,7 +197,6 @@ bool calculateSpraySource (const Real    flow_dt,
     Real Nu_0 = 1.;
     // Solve mass transfer source terms
     Real m_dot = 0.;
-    Real d_dot = 0.;
     if ((SPI.mass_tran || SPI.heat_tran) && evap_fuel) {
       Real Pr_skin = mu_skin*cp_skin/lambda_skin;
       Real powR = amrex::max(std::pow(Reyn, 0.077), 1.);
@@ -224,7 +222,6 @@ bool calculateSpraySource (const Real    flow_dt,
           mi_dot[spf] = 0.;
         }
       }
-      d_dot = m_dot/(0.5*M_PI*rho_part*dia2_part);
       Real inv_tau_d = -m_dot/(3.*pmass);
       if (isub == 1)
         nsub = amrex::min(int(flow_dt*inv_tau_d) + 1, nSubMax);
@@ -237,7 +234,8 @@ bool calculateSpraySource (const Real    flow_dt,
       if (Reyn > 0.)
         drag_coef =
           (Reyn > 1.) ? 24./Reyn*(1. + std::cbrt(Reyn*Reyn)/6.) : 24./Reyn;
-      Real drag_force = 0.125*gpv.rho_fluid*drag_coef*M_PI*dia2_part*diff_vel_mag;
+      Real drag_force =
+        0.125*gpv.rho_fluid*drag_coef*M_PI*dia_part*dia_part*diff_vel_mag;
       part_mom_src = drag_force*diff_vel;
       gpv.fluid_mom_src += part_mom_src + vel_part*m_dot;
       // s_d,mu dot u_d
@@ -277,17 +275,20 @@ bool calculateSpraySource (const Real    flow_dt,
     if (isub == 1)
       dt = flow_dt/Real(nsub);
     const Real part_dt = 0.5*dt;
+    // Update particle components
     AMREX_D_TERM(vel_part[0] += part_dt*part_mom_src[0]*inv_pmass;,
                  vel_part[1] += part_dt*part_mom_src[1]*inv_pmass;,
                  vel_part[2] += part_dt*part_mom_src[2]*inv_pmass;);
     T_part += part_dt*part_temp_src;
-    Real new_dia = dia_part + part_dt*d_dot;
-    if (new_dia > dia_eps) {
-      dia_part = new_dia;
-      Real new_mass = pmass + m_dot*part_dt;
-      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-        Y_part[spf] = (Y_part[spf]*pmass + mi_dot[spf]*part_dt)/new_mass;
-    } else {
+    Real new_mass = pmass + m_dot*part_dt;
+    rho_part = 0.;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      Y_part[spf] = (Y_part[spf]*pmass + mi_dot[spf]*part_dt)/new_mass;
+      rho_part += Y_part[spf]*fdat.rho[spf];
+    }
+    pmass = new_mass;
+    dia_part = std::cbrt(6.*pmass/(M_PI*rho_part));
+    if (dia_part < dia_eps) {
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
         mi_dot[spf] += Y_part[spf]*pmass;
       m_dot += pmass;
