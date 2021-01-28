@@ -65,6 +65,7 @@ void SetTypValsODE(const std::vector<Real>& ExtTypVals)
 }
 //===========================================================
 /* Set or update the rel/abs tolerances  */
+/*
 void SetTolFactODE(Real relative_tol,Real absolute_tol) 
 {
     relTol = relative_tol;
@@ -74,12 +75,11 @@ void SetTolFactODE(Real relative_tol,Real absolute_tol)
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num();
 #endif
-/*
     if (omp_thread == 0)
     {
         Print() << "Set RTOL, ATOL = "<<relTol<< " "<<absTol<<  " in PelePhysics\n";
-    }*/
-}
+    }
+}*/
 //===========================================================
 /* Function to ReSet the Tolerances */
 void ReSetTolODE() 
@@ -964,7 +964,7 @@ UserData AllocUserData(int reactor_type, int num_cells)
     (data_wk->FCunt)       = new  int[data_wk->ncells];
     (data_wk->mask)        = new  int[data_wk->ncells];
     
-    SetTolFactODE(relative_tol,absolute_tol);
+    //SetTolFactODE(relTol,absTol);
 
     return(data_wk);
 }
