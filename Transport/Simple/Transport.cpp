@@ -1,11 +1,10 @@
 #include <Transport.H>
 
 TransParm *trans_parm_g;
+TransParm trans_parm;
 
 void transport_init() 
 {
-    TransParm trans_parm;
-
     /* CPU */
     trans_parm.trans_wt   = (amrex::Real*) amrex::The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
     trans_parm.trans_iwt  = (amrex::Real*) amrex::The_Arena()->alloc(sizeof(amrex::Real) * trans_parm.array_size);
@@ -40,7 +39,7 @@ void transport_init()
 
     /* GPU */
     trans_parm_g = (TransParm *) amrex::The_Device_Arena()->alloc(sizeof(trans_parm));
-#ifdef AMREX_USE_CUDA
+#ifdef AMREX_USE_GPU
     amrex::Gpu::htod_memcpy(trans_parm_g, &trans_parm, sizeof(trans_parm));
 #else
     std::memcpy(trans_parm_g, &trans_parm, sizeof(trans_parm));
@@ -49,5 +48,17 @@ void transport_init()
 
 void transport_close()
 {
-  amrex::The_Device_Arena()->free(trans_parm_g);
+    amrex::The_Device_Arena()->free(trans_parm_g);
+
+    amrex::The_Arena()->free(trans_parm.trans_wt);
+    amrex::The_Arena()->free(trans_parm.trans_iwt);
+    amrex::The_Arena()->free(trans_parm.trans_eps);
+    amrex::The_Arena()->free(trans_parm.trans_sig);
+    amrex::The_Arena()->free(trans_parm.trans_dip);
+    amrex::The_Arena()->free(trans_parm.trans_pol);
+    amrex::The_Arena()->free(trans_parm.trans_zrot);
+    amrex::The_Arena()->free(trans_parm.trans_fitmu);
+    amrex::The_Arena()->free(trans_parm.trans_fitlam);
+    amrex::The_Arena()->free(trans_parm.trans_fitdbin);
+    amrex::The_Arena()->free(trans_parm.trans_nlin);
 }
