@@ -13,6 +13,9 @@
 #ifdef SPRAY_PELE_LM
 #include "pelelm_prob.H"
 #include "pelelm_prob_parm.H"
+#else
+#include "prob.H"
+#include "prob_parm.H"
 #endif
 
 #ifdef USE_SPRAY_SOA
@@ -91,10 +94,10 @@ public:
                      amrex::Real         parcelSize,
                      amrex::Real         ref_T,
                      amrex::Real         fuelSigma,
-                     amrex::Real         in_T_wall)
+                     amrex::Real         in_wallT)
   {
     m_parcelSize = parcelSize;
-    T_wall = in_T_wall;
+    m_wallT = in_wallT;
     HostVectReal fuelEnth(NUM_SPECIES);
     EOS::T2Hi(ref_T, fuelEnth.dataPtr());
     m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelRho,
@@ -268,21 +271,27 @@ public:
   ///
   /// Insert particles according to some criterion
   ///
-  bool insertParticles(amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level
+  bool insertParticles(amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level,
 #ifdef SPRAY_PELE_LM
-                       , ProbParm const& prob_parm
+                       ProbParm const& prob_parm
+#else
+                       ProbParmHost const& prob_parm
 #endif
                        );
 
-  bool injectParticles(amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level
+  bool injectParticles(amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level,
 #ifdef SPRAY_PELE_LM
-                       , ProbParm const& prob_parm
+                       ProbParm const& prob_parm
+#else
+                       ProbParmHost const& prob_parm
 #endif
                        );
 
   void InitSprayParticles(
 #ifdef SPRAY_PELE_LM
                           ProbParm const& prob_parm
+#else
+                          ProbParmHost const& prob_parm
 #endif
                           );
 
@@ -292,7 +301,7 @@ private:
   // The number of spray droplets per computational particle
   amrex::Real m_parcelSize;
   // Temperature of walls
-  amrex::Real T_wall;
+  amrex::Real m_wallT;
   ///
   /// This defines reflect_lo and reflect_hi from phys_bc
   ///

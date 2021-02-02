@@ -23,7 +23,8 @@ struct SprayComps
   int specIndx;
   int wf_vol = 0; // Wall film indices
   int wf_temp = 1;
-  int wf_Y = 2;
+  int wf_pres = 2;
+  int wf_Y = 3;
   int wf_num = wf_Y + SPRAY_FUEL_NUM;
 };
 

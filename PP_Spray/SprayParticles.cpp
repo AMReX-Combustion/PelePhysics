@@ -230,6 +230,7 @@ SprayParticleContainer::updateParticles(const int&  level,
       bndry_hi[dir] = 0;
     }
   }
+  const Real wallT = m_wallT;
   const Real vol = AMREX_D_TERM(dx[0],*dx[1],*dx[2]);
   const Real inv_vol = 1./vol;
   // Particle components indices
@@ -282,7 +283,7 @@ SprayParticleContainer::updateParticles(const int&  level,
 // #endif
     amrex::ParallelFor(Np,
       [pstruct,statearr,sourcearr,plo,phi,dx,dxi,do_move,SPI,SPU,fdat,src_box,
-       state_box,bndry_hi,bndry_lo,flow_dt,inv_vol,ltransparm,at_bounds
+       state_box,bndry_hi,bndry_lo,flow_dt,inv_vol,ltransparm,at_bounds,wallT
 #ifdef USE_SPRAY_SOA
        ,attribs
 #endif
@@ -315,7 +316,8 @@ SprayParticleContainer::updateParticles(const int&  level,
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
             if (bflags[dir] != 0) is_wall_film = true;
           if (is_wall_film) {
-            face_area = dx[0]*dx[0];
+            // TODO: Assumes grid spacing is uniform in all directions
+            face_area = AMREX_D_TERM(1.,*dx[0],*dx[0]);
           }
         }
 #ifdef AMREX_USE_EB
@@ -406,9 +408,9 @@ SprayParticleContainer::updateParticles(const int&  level,
                          mw_fluid.data(), invmw.data());
         if (!is_wall_film) {
           remove_particle =
-            calculateSpraySource(flow_dt, do_move, gpv, SPI, fdat, p, pid,
+            calculateSpraySource(flow_dt, do_move, gpv, SPI, fdat, p,
 #ifdef USE_SPRAY_SOA
-                                 attribs,
+                                 attribs, pid,
 #endif
                                  ltransparm);
           // Modify particle position by whole time step
@@ -423,7 +425,12 @@ SprayParticleContainer::updateParticles(const int&  level,
             }
           }
         } else {
-          //remove_particle = calculateWallFilmSource(flow_dt, gpv, SPI, fdat, p, ltransparm);
+          remove_particle =
+            calculateWallFilmSource(flow_dt, gpv, SPI, fdat, p,
+#ifdef USE_SPRAY_SOA
+                                    attribs, pid,
+#endif
+                                    wallT, face_area, ltransparm);
         }
         if (remove_particle) p.id() = -1;
         for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {

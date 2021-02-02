@@ -51,6 +51,52 @@ Real calcHeatCoeff (const Real& ratio,
   return Nu_num*logB/B_T;
 }
 
+// Compute the vapor mass fractions and
+// latent heat
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+void calcVaporY (const SprayData& fdat,
+                 const GasPhaseVals& gpv,
+                 const Real& T_in,
+                 const Real& C_eps,
+                 const Real* Y_in,
+                 const Real* h_skin,
+                 Real* Y_vapor,
+                 Real* L_fuel)
+{
+  GpuArray<Real, SPRAY_FUEL_NUM> x_v;
+  Real sum_xv = 0.; // Sum x_v
+  Real sum_mw_xv = 0.; // Sum mw_v*x_v
+  Real nt = 0.; // Total moles of liquid
+  // This computes the mass fractions in the vapor
+  // The equation is a normalized version of y_v = x_vi*mw_i/((1 - sum_k x_vk) + sum_j x_vj mw_j)
+  // x_vi = x_li*p_sat/(p_gas*mw_gas)
+  // x_li = (y_li/mw_i)/(sum_j y_lj/mw_j)
+  for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
+    const int fspec = fdat.indx[spf];
+    const Real mw_fuel = gpv.mw_fluid[fspec];
+    // Compute latent heat
+    Real part_latent = h_skin[fspec] + fdat.latent[spf]
+      - fdat.cp[spf]*(T_in - fdat.ref_T);
+    L_fuel[spf] = part_latent;
+    // Compute the mass fraction of the fuel vapor at droplet surface
+    Real pres_sat = EOS::PATM*std::exp(part_latent*mw_fuel/EOS::RU*
+                                       (1./fdat.boilT[spf] - 1./T_in)) + C_eps;
+    Real x_l = Y_in[spf]/mw_fuel;
+    Real x_vc = x_l*pres_sat;
+    nt += x_l;
+    sum_xv += x_vc;
+    x_v[spf] = mw_fuel*x_vc;
+    sum_mw_xv += x_v[spf];
+  }
+  Real totalmwx = gpv.mw_mix*(nt*gpv.p_fluid - sum_xv) + sum_mw_xv;
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+    const int fspec = fdat.indx[spf];
+    Real Yfv = x_v[spf]/totalmwx;
+    Y_vapor[spf] = amrex::max(0., amrex::min(1. - C_eps, Yfv));
+  }
+}
+
 // Compute source terms and update particles
 // Return true if particle should be removed
 AMREX_GPU_DEVICE
@@ -63,8 +109,8 @@ bool calculateSpraySource (const Real    flow_dt,
                            SprayParticleContainer::ParticleType& p,
 #ifdef USE_SPRAY_SOA
                            const std::array<SprayParticleContainer::SoA::RealVector, NAR_SPR>& attribs,
-#endif
                            const int pid,
+#endif
                            TransParm const* trans_parm)
 {
   const Real rule = 1./3.;
@@ -90,6 +136,7 @@ bool calculateSpraySource (const Real    flow_dt,
   GpuArray<Real, SPRAY_FUEL_NUM> L_fuel;
   GpuArray<Real, SPRAY_FUEL_NUM> mi_dot;
   GpuArray<Real, SPRAY_FUEL_NUM> Y_part;
+  GpuArray<Real, SPRAY_FUEL_NUM> Y_vapor;
 #ifdef USE_SPRAY_SOA
   RealVect vel_part(AMREX_D_DECL(attribs[SPI.pstateVel].data()[pid],
                                  attribs[SPI.pstateVel+1].data()[pid],
@@ -136,36 +183,11 @@ bool calculateSpraySource (const Real    flow_dt,
     Real cp_L_av = 0.; // Cp of the liquid state
     Real mw_vap = 0.; // Average molar mass of vapor mixture
     if (SPI.heat_tran || SPI.mass_tran) {
-      GpuArray<Real, SPRAY_FUEL_NUM> x_v;
-      Real sum_xv = 0.; // Sum x_v
-      Real sum_mw_xv = 0.; // Sum mw_v*x_v
-      Real nt = 0.; // Total moles of liquid
-      // This computes the mass fractions in the vapor
-      // The equation is a normalized version of y_v = x_vi*mw_i/((1 - sum_k x_vk) + sum_j x_vj mw_j)
-      // x_vi = x_li*p_sat/(p_gas*mw_gas)
-      // x_li = (y_li/mw_i)/(sum_j y_lj/mw_j)
-      for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-        const int fspec = fdat.indx[spf];
-        const Real mw_fuel = gpv.mw_fluid[fspec];
-        // Compute latent heat
-        Real part_latent = h_skin[fspec] + fdat.latent[spf]
-          - fdat.cp[spf]*(T_part - fdat.ref_T);
-        L_fuel[spf] = part_latent;
-        // Compute the mass fraction of the fuel vapor at droplet surface
-        Real pres_sat = EOS::PATM*std::exp(part_latent*inv_Ru*mw_fuel*
-                                           (1./fdat.boilT[spf] - 1./T_part)) + C_eps;
-        Real x_l = Y_part[spf]/mw_fuel;
-        Real x_vc = x_l*pres_sat;
-        nt += x_l;
-        sum_xv += x_vc;
-        x_v[spf] = mw_fuel*x_vc;
-        sum_mw_xv += x_v[spf];
-      }
-      Real totalmwx = gpv.mw_mix*(nt*gpv.p_fluid - sum_xv) + sum_mw_xv;
+      calcVaporY(fdat, gpv, T_part, C_eps, Y_part.data(),
+                 h_skin.data(), Y_vapor.data(), L_fuel.data());
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         const int fspec = fdat.indx[spf];
-        Real Yfv = x_v[spf]/totalmwx;
-        Yfv = amrex::max(0., amrex::min(1. - C_eps, Yfv));
+        Real Yfv = Y_vapor[spf];
         B_M_num[spf] = amrex::max(C_eps, (Yfv - gpv.Y_fluid[fspec])/(1. - Yfv));
         Y_skin[fspec] = Yfv + rule*(gpv.Y_fluid[fspec] - Yfv);
         sumYSkin += Y_skin[fspec];

@@ -3,36 +3,9 @@
 
 #include "SprayInterpolation.H"
 #include "SprayFuelData.H"
+#include "Drag.H"
 
 using namespace amrex;
-
-enum splash_type
-{
-  rebound = 0,
-  deposit,
-  splash,
-  thermal_breakup,
-  no_impact
-};
-
-// Determine the type of particle impact at the wall
-// Return 0 - rebound, 1 - deposit, 2 - splash, 3 - thermal breakup
-AMREX_INLINE
-splash_type splash_criteria (const Real Kv,
-                             const Real Tstar,
-                             const Real alpha)
-{
-  Real Kcrit = 20. + 2.*alpha/M_PI*20.;
-  if (Tstar < 1.1) {
-    Kcrit = 130.;
-    if (Tstar < 1.)
-      Kcrit = 54. + 76.*std::exp(13.*(Tstar - 1.));
-    if (Kv < Kcrit) return splash_type::deposit;
-    else return splash_type::splash;
-  }
-  if (Kv < Kcrit) return splash_type::rebound;
-  return splash_type::thermal_breakup;
-}
 
 // Check if tile is adjacent to non-periodic boundaries
 AMREX_INLINE
@@ -57,6 +30,116 @@ bool tile_at_bndry (const Box& in_box,
   }
   return false;
 }
+
+/****************************************************************
+ Functions computing wall film source terms
+ ***************************************************************/
+
+AMREX_GPU_DEVICE AMREX_INLINE
+bool calculateWallFilmSource (const Real flow_dt,
+                              GasPhaseVals& gpv,
+                              const SprayComps& SPI,
+                              const SprayData& fdat,
+                              SprayParticleContainer::ParticleType& p,
+#ifdef USE_SPRAY_SOA
+                              const std::array<SprayParticleContainer::SoA::RealVector, NAR_SPR>& attribs,
+                              const int pid,
+#endif
+                              const Real T_wall,
+                              const Real face_area,
+                              TransParm const* trans_parm)
+{
+  const Real C_eps = 1.E-15;
+  const Real B_eps = 1.E-7;
+  bool get_xi = false;
+  bool get_Ddiag = false;
+  bool get_lambda = true;
+  bool get_mu = true;
+  GpuArray<Real, SPRAY_FUEL_NUM> Y_film;
+  GpuArray<Real, SPRAY_FUEL_NUM> Y_vapor;
+  GpuArray<Real, SPRAY_FUEL_NUM> L_fuel;
+  GpuArray<Real, SPRAY_FUEL_NUM> mi_dot;
+  GpuArray<Real, NUM_SPECIES> Y_skin;
+  GpuArray<Real, NUM_SPECIES> h_skin;
+  GpuArray<Real, NUM_SPECIES> Ddiag;
+  // Get particle variables
+  // Note: the diameter is set assuming a sphere
+  // of the same volume as the film
+#ifdef USE_SPRAY_SOA
+  Real T_film = attribs[SPI.pstateT].data()[pid];
+  Real dia_film = attribs[SPI.pstateDia].data()[pid];
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+    Y_film[spf] = attribs[SPI.pstateY+spf].data()[pid];
+#else
+  Real T_film = p.rdata(SPI.pstateT);
+  Real dia_film = p.rdata(SPI.pstateDia);
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+    Y_film[spf] = p.rdata(SPI.pstateY+spf);
+#endif
+  Real rho_film = 0.;
+  Real cp_film = 0.;
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+    rho_film += Y_film[spf]*fdat.rho[spf];
+    cp_film += Y_film[spf]*fdat.cp[spf];
+  }
+  Real vol = 4./3.*M_PI*std::pow(dia_film, 3);
+  Real ht_film = vol/face_area; // Film thickness
+  EOS::T2Hi(T_film, h_skin.data());
+  calcVaporY(fdat, gpv, T_film, C_eps, Y_film.data(), h_skin.data(),
+             Y_vapor.data(), L_fuel.data());
+  // TODO: Does this make sense
+  Real T_vapor = 0.5*(T_film + gpv.T_fluid);
+  Real lambda_vapor = 0.;
+  Real mu_vapor = 0.;
+  Real xi_vapor = 0.;
+  transport(get_xi, get_mu, get_lambda, get_Ddiag, T_vapor,
+            gpv.rho_fluid, Y_vapor.data(), Ddiag.data(), mu_vapor,
+            xi_vapor, lambda_vapor, trans_parm);
+  // Must estimate a convective heat transfer coefficient
+  // TODO: Figure out what the best way to estimate the HTC
+  // TODO: Finish wall film model implementation
+  Real dTdy = (T_film - T_wall)/ht_film;
+  Real HTC = -lambda_vapor*dTdy/(T_film - T_vapor);
+  Real qconv = HTC*(gpv.T_fluid - T_film);
+  return false;
+}
+
+/****************************************************************
+ Functions for imposing wall boundaries including adding
+ splashed droplets, modifying particles to be wall film,
+ and rebounding particles. These occur on the host
+ ***************************************************************/
+
+enum splash_type
+{
+  rebound = 0,
+  deposit,
+  splash,
+  thermal_breakup,
+  no_impact,
+  wall_film
+};
+
+// Determine the type of particle impact at the wall
+// Return 0 - rebound, 1 - deposit, 2 - splash, 3 - thermal breakup
+AMREX_INLINE
+splash_type splash_criteria (const Real Kv,
+                             const Real Tstar,
+                             const Real alpha)
+{
+  Real Kcrit = 20. + 2.*alpha/M_PI*20.;
+  if (Tstar < 1.1) {
+    Kcrit = 130.;
+    if (Tstar < 1.)
+      Kcrit = 54. + 76.*std::exp(13.*(Tstar - 1.));
+    if (Kv < Kcrit) return splash_type::deposit;
+    else return splash_type::splash;
+  }
+  if (Kv < Kcrit) return splash_type::rebound;
+  return splash_type::thermal_breakup;
+}
+
+
 
 // Find tangents along surface
 AMREX_INLINE
@@ -195,6 +278,11 @@ splash_type impose_wall (SprayParticleContainer::ParticleType& p,
                    (p.pos(2) - (bloc[2] + 0.5 + bcentv[2])*dx[2] - plo[2])*normal[2]);
     // Check if particle is on the wrong side of the EB
     if (par_dot_EB < tolerance) {
+      // If particle is stationary, that means it
+      // was designated a wall film previously
+      // TODO: This is not a very good way to do this
+      if (pvel == RealVect::TheZeroVector())
+        return splash_type::wall_film;
       splash_flag = splash_type::rebound;
       // Plane ref point
       Real Nw_Vp = 0.;
@@ -245,8 +333,15 @@ splash_type impose_wall (SprayParticleContainer::ParticleType& p,
           // Make droplet stationary
           Vpt = RealVect::TheZeroVector();
           Vpn = RealVect::TheZeroVector();
+          // Energy loss due to viscious dissipation during impact
+          Real E_diss = 4.*M_PI/3.*rho_part*Nw_Vp*Nw_Vp*d3/sqReyn;
           // If splash_flag == 1, particle is completely deposited onto the wall
-          if (splash_flag != splash_type::deposit) {
+          if (splash_flag == splash_type::deposit) {
+            Real depot_vol = pmass/rho_part;
+            // Assume deposited film is a dome shape of height delta, determine the diameter
+            Real depot_dia = 2.*std::sqrt((6.*depot_vol/M_PI - std::pow(delta, 3))/(3.*delta));
+            Real depot_area = M_PI*(depot_dia*depot_dia/4. + delta*delta) + M_PI*depot_dia*depot_dia/4.;
+          } else {
             // Determine diameter of secondary droplets
             Real expon = 3.6*(alpha/M_PI)*(alpha/M_PI);
             if (dry)
@@ -255,6 +350,8 @@ splash_type impose_wall (SprayParticleContainer::ParticleType& p,
               SPRF.dia_refl = dia_part*2.2*std::exp(expon)*std::pow(We, -0.36);
             // Compute angles of reflecting droplets
             compute_angles(alpha, Tstar, We, dry, SPRF);
+            // Energy loss due to viscious dissipation during impact
+            Real E_diss = 4.*M_PI/3.*rho_part*Nw_Vp*Nw_Vp*d3/sqReyn;
             // If thermal breakup, all mass is converted to secondary droplets
             Real splash_mass = pmass;
             // If splash, some mass rebounds and some deposits
@@ -266,6 +363,11 @@ splash_type impose_wall (SprayParticleContainer::ParticleType& p,
               splash_mass *= amrex::min(1., (Tstar - 0.8)/0.3*(1. - B) + B);
               // Mass deposited into wall film
               Real depot_mass = pmass - splash_mass;
+              Real depot_vol = depot_mass/rho_part;
+              // Assume deposited film is a dome shape of height delta, determine the diameter
+              Real depot_dia = 2.*std::sqrt((6.*depot_vol/M_PI - std::pow(delta, 3))/(3.*delta));
+              Real depot_area = M_PI*(depot_dia*depot_dia/4. + delta*delta) + M_PI*depot_dia*depot_dia/4.;
+              Real prev_area = M_PI*dia_part*dia_part;
               // Original particle now represents deposited wall film
               // The diameter is set to represent the mass of remaining liquid
               p.rdata(SPI.pstateDia) = std::cbrt(6./(M_PI*rho_part));
