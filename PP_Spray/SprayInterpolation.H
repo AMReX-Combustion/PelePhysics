@@ -272,7 +272,7 @@ void get_interp_mapping (const amrex::RealVect& pos,
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-bool fe_interp(const amrex::RealVect& pos,
+void fe_interp(const amrex::RealVect& pos,
                const int ip, const int jp, const int kp,
                const amrex::RealVect& dx,
                const amrex::RealVect& dxi,
@@ -306,7 +306,7 @@ bool fe_interp(const amrex::RealVect& pos,
         indx_array[aindx] = {ip,jp,kp};
         weights[aindx] = 0.;
       }
-      return false;
+      return;
     }
 
     amrex::Real par_dot_EB(2.);
@@ -362,12 +362,7 @@ bool fe_interp(const amrex::RealVect& pos,
     // cell value for remaining items.
     if((flags(ip,jp,kp).isSingleValued() and (par_dot_EB <= tolerance)) ||
        flags(ip,jp,kp).isCovered()){
-        for (int aindx = 0; aindx < 8; ++aindx) {
-          indx_array[aindx] = {ip,jp,kp};
-          weights[aindx] = 0.;
-        }
-        weights[0] = 1.;
-        return true;
+        Abort("Particle has penetrated EB boundary");
     // The particle is near the EB. It is either
     // 1) between the cell centroid and the EB, or
     // 2) one or more cells in the 2^3 stencil is covered.
@@ -437,7 +432,7 @@ bool fe_interp(const amrex::RealVect& pos,
           weights[aindx] *= rw;
         }
     }
-    return false;
+    return;
 }
 
 #endif // AMREX_USE_EB

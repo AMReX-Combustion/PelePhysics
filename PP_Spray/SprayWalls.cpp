@@ -72,7 +72,7 @@ SprayParticleContainer::wallImpingement (const int&  level,
       // the wall film at each location
       IArrayBox film_id(src_box, 1);
       film_id.setVal<RunOn::Host>(-1, src_box, 0, 1);
-      SprayData fdat = m_fuelData.getSprayData();
+      SprayData const* fdat = m_fuelData.get();
       auto& ptile = GetParticles(level)[index];
       auto& pval = ptile.GetArrayOfStructs();
 #ifdef AMREX_USE_EB
@@ -91,17 +91,44 @@ SprayParticleContainer::wallImpingement (const int&  level,
           IntVect ijk = lx.floor(); // Closest cell center
           const Real T_part = p.rdata(SPI.pstateT);
           const Real dia_part = p.rdata(SPI.pstateDia);
-          SprayRefl SPRF; // Structure holding data for reflected particles
-          SPRF.pos_refl = p.pos();
-          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-            SPRF.Y_refl[spf] = p.rdata(SPI.pstateY+spf);
-          splash_type splash_flag =
-            impose_wall(p, SPI, SPU, fdat, ijk, dx, dxi, plo, phi,
+          splash_type splash_flag = splash_type::no_impact;
+          // Check if particle is already wall film
+          if (T_part > 0.) {
+            SprayRefl SPRF; // Structure holding data for reflected particles
+            SPRF.pos_refl = p.pos();
+            for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+              SPRF.Y_refl[spf] = p.rdata(SPI.pstateY+spf);
+            bool dry_wall = true;
+            if (film_id(ijk,0) > 0) dry_wall = false;
+            splash_flag =
+              impose_wall(p, SPI, SPU, *fdat, ijk, dx, dxi, plo, phi,
 #ifdef AMREX_USE_EB
-                        eb_in_box, flags_fab, bcent_fab, bnorm_fab,
+                          eb_in_box, flags_fab, bcent_fab, bnorm_fab,
 #endif
-                        bndry_lo, bndry_hi, flow_dt, m_wallT, SPRF,
-                        isActive);
+                          bndry_lo, bndry_hi, flow_dt, m_wallT, SPRF,
+                          isActive, dry_wall);
+            // Only add active particles, not ghost or virtual
+            if (SPRF.Ns_refl > 0 && isActive) {
+              for (int nsp = 0; nsp < SPRF.Ns_refl; ++nsp) {
+                ParticleType pnew;
+                pnew.id() = ParticleType::NextID();
+                pnew.cpu() = ParallelDescriptor::MyProc();
+                pnew.rdata(SPI.pstateDia) = SPRF.dia_refl;
+                pnew.rdata(SPI.pstateT) = T_part;
+                for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+                  pnew.rdata(SPI.pstateY+spf) = SPRF.Y_refl[spf];
+                for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+                  pnew.rdata(SPI.pstateVel+dir) = 0.;
+                  pnew.pos(dir) = SPRF.pos_refl[dir];
+                }
+                create_splash_droplet(pnew, SPI, SPRF);
+                ptile.push_back(pnew);
+              }
+            } // if (Ns_refl > 0)
+          } else {
+            splash_flag = splash_type::wall_film;
+            p.rdata(SPI.pstateT) *= -1.;
+          }
           // Check if droplet is deposited, splashes, or is already a wall film
           if (splash_flag == splash_type::deposit ||
               splash_flag == splash_type::splash ||
@@ -116,26 +143,8 @@ SprayParticleContainer::wallImpingement (const int&  level,
             wall_film(ijk, SPI.wf_vol) += new_vol;
             wall_film(ijk, SPI.wf_temp) += new_vol*p.rdata(SPI.pstateT);
             for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-              wall_film(ijk, SPI.wf_Y+spf) += new_vol*SPRF.Y_refl[spf];
+              wall_film(ijk, SPI.wf_Y+spf) += new_vol*p.rdata(SPI.pstateY+spf);
           }
-          // Only add active particles, not ghost or virtual
-          if (SPRF.Ns_refl > 0 && isActive) {
-            for (int nsp = 0; nsp < SPRF.Ns_refl; ++nsp) {
-              ParticleType pnew;
-              pnew.id() = ParticleType::NextID();
-              pnew.cpu() = ParallelDescriptor::MyProc();
-              pnew.rdata(SPI.pstateDia) = SPRF.dia_refl;
-              pnew.rdata(SPI.pstateT) = T_part;
-              for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-                pnew.rdata(SPI.pstateY+spf) = SPRF.Y_refl[spf];
-              for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                pnew.rdata(SPI.pstateVel+dir) = 0.;
-                pnew.pos(dir) = SPRF.pos_refl[dir];
-              }
-              create_splash_droplet(pnew, SPI, SPRF);
-              ptile.push_back(pnew);
-            }
-          } // if (Ns_refl > 0)
         } // if (p.id() > 0)
       } // for (int pid...
       for (int wfl = 0; wfl < film_locs.size(); ++wfl) {
@@ -147,8 +156,9 @@ SprayParticleContainer::wallImpingement (const int&  level,
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
           p.rdata(SPI.pstateY+spf) = wall_film(ijk, SPI.wf_Y+spf)/vol;
         p.rdata(SPI.pstateDia) = 2.*std::cbrt(3.*vol/(4.*M_PI));
+        // For wall films, the temperature is set to a negative value
         // TODO: Determine better way to model the wall film temperature
-        p.rdata(SPI.pstateT) = T;
+        p.rdata(SPI.pstateT) = -T;
       }
     } // if (do_move && Np > 0 && at_bounds)
   } // for (MyParIter pti ...

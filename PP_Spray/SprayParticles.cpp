@@ -249,7 +249,7 @@ SprayParticleContainer::updateParticles(const int&  level,
     // Get particle attributes if StructOfArrays are used
     auto& attribs = pti.GetAttribs();
 #endif
-    SprayData fdat = m_fuelData.getSprayData();
+    SprayData const* fdat = m_fuelData.get();
     Array4<const Real> const& statearr = state.array(pti);
     Array4<Real> const& sourcearr = source.array(pti);
 #ifdef AMREX_USE_EB
@@ -306,6 +306,8 @@ SprayParticleContainer::updateParticles(const int&  level,
         IntVect ijk = lx.floor(); // Upper cell center
         bool is_wall_film = false;
         Real face_area = 0.;
+        // If the temperature is a negative value, the particle is a wall film
+        if (p.rdata(SPI.pstateT) < 0.) is_wall_film = true;
         if (at_bounds) {
           IntVect bflags(IntVect::TheZeroVector());
           // Check if particle has left the domain, is wall film,
@@ -313,13 +315,13 @@ SprayParticleContainer::updateParticles(const int&  level,
           bool left_dom =
             check_bounds(p.pos(), plo, phi, dx, bndry_lo, bndry_hi, ijk, bflags);
           if (left_dom) Abort("Particle has incorrectly left domain");
-          for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
-            if (bflags[dir] != 0) is_wall_film = true;
           if (is_wall_film) {
             // TODO: Assumes grid spacing is uniform in all directions
             face_area = AMREX_D_TERM(1.,*dx[0],*dx[0]);
           }
         }
+        // Length from cell center to boundary face center
+        Real diff_cent = 0.5*dx[0];
 #ifdef AMREX_USE_EB
         // Cell containing particle centroid
         AMREX_D_TERM(
@@ -345,18 +347,21 @@ SprayParticleContainer::updateParticles(const int&  level,
               flags_array(i-1,j  ,k  ).isRegular() and
               flags_array(i  ,j  ,k  ).isRegular()) do_reg_interp = true;
         }
-        bool eb_wall_film = false;
         if (do_reg_interp) {
           trilinear_interp(ijk, lx, indx_array.data(), weights.data());
         } else {
-          eb_wall_film =
-            fe_interp(p.pos(), ip, jp, kp, dx, dxi, plo, flags_array,
-                      ccent_fab, bcent_fab, bnorm_fab, volfrac_fab,
-                      indx_array.data(), weights.data());
+          fe_interp(p.pos(), ip, jp, kp, dx, dxi, plo, flags_array,
+                    ccent_fab, bcent_fab, bnorm_fab, volfrac_fab,
+                    indx_array.data(), weights.data());
         }
-        if (eb_wall_film) {
-          is_wall_film = true;
+        bool eb_wall_film = false;
+        if (is_wall_film && flags_array(ip,jp,kp).isSingleValued()) {
+          eb_wall_film = true;
           face_area = barea_fab(ip,jp,kp);
+          diff_cent = 0.;
+          for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+            diff_cent += std::pow(bcent_fab(ip,jp,kp,dir) - ccent_fab(ip,jp,kp,dir), 2);
+          diff_cent = std::sqrt(diff_cent);
         }
 #else
         trilinear_interp(ijk, lx, indx_array.data(), weights.data());
@@ -408,7 +413,7 @@ SprayParticleContainer::updateParticles(const int&  level,
                          mw_fluid.data(), invmw.data());
         if (!is_wall_film) {
           remove_particle =
-            calculateSpraySource(flow_dt, do_move, gpv, SPI, fdat, p,
+            calculateSpraySource(flow_dt, do_move, gpv, SPI, *fdat, p,
 #ifdef USE_SPRAY_SOA
                                  attribs, pid,
 #endif
@@ -426,11 +431,11 @@ SprayParticleContainer::updateParticles(const int&  level,
           }
         } else {
           remove_particle =
-            calculateWallFilmSource(flow_dt, gpv, SPI, fdat, p,
+            calculateWallFilmSource(flow_dt, gpv, SPI, *fdat, p,
 #ifdef USE_SPRAY_SOA
                                     attribs, pid,
 #endif
-                                    wallT, face_area, ltransparm);
+                                    wallT, face_area, diff_cent, ltransparm);
         }
         if (remove_particle) p.id() = -1;
         for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
@@ -440,7 +445,7 @@ SprayParticleContainer::updateParticles(const int&  level,
           if (!flags_array(cur_indx).isRegular())
             cvol *= 1./(volfrac_fab(cur_indx));
 #endif
-          Real cur_coef = -weights[aindx]*fdat.num_ppp*cvol;
+          Real cur_coef = -weights[aindx]*fdat->num_ppp*cvol;
 #ifdef AMREX_DEBUG
           if (!src_box.contains(cur_indx))
             Abort("SprayParticleContainer::updateParticles() -- source box too small");
@@ -454,7 +459,7 @@ SprayParticleContainer::updateParticles(const int&  level,
           if (SPI.mass_tran) {
             Gpu::Atomic::Add(&sourcearr(cur_indx, SPI.rhoIndx), cur_coef*gpv.fluid_mass_src*SPU.mass_src_conv);
             for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-              const int nf = SPI.specIndx + fdat.indx[spf];
+              const int nf = SPI.specIndx + fdat->indx[spf];
               Gpu::Atomic::Add(&sourcearr(cur_indx, nf), cur_coef*gpv.fluid_Y_dot[spf]*SPU.mass_src_conv);
             }
           }

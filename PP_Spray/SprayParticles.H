@@ -9,6 +9,7 @@
 #include <AMReX_Gpu.H>
 #include "SprayFuelData.H"
 #include "EOS.H"
+#include <memory>
 
 #ifdef SPRAY_PELE_LM
 #include "pelelm_prob.H"
@@ -71,42 +72,44 @@ public:
   using HostVectReal = amrex::Gpu::HostVector<amrex::Real>;
   using HostVectInt = amrex::Gpu::HostVector<int>;
 
-  SprayParticleContainer(amrex::Amr* amr, amrex::BCRec* _phys_bc)
+  SprayParticleContainer(amrex::Amr* amr,
+                         amrex::BCRec* _phys_bc,
+                         SprayData fdat,
+                         SprayComps SPI,
+                         const amrex::Real parcelSize,
+                         const amrex::Real wallT)
     : amrex::AmrParticleContainer<NSR_SPR,NSI_SPR,NAR_SPR,NAI_SPR>(amr),
       m_setFuelData(false),
       m_injectVel(0.),
-      phys_bc(_phys_bc)
+      phys_bc(_phys_bc),
+      m_parcelSize(parcelSize),
+      m_wallT(wallT),
+      m_sprayIndx(SPI)
   {
+    m_fuelData = std::make_unique<SprayData>();
+    m_fuelData->build(fdat);
     init_bcs();
   }
 
   ///
   /// Set fuel data
   ///
-  void buildFuelData(const HostVectReal& critT,
-                     const HostVectReal& boilT,
-                     const HostVectReal& fuelCp,
-                     const HostVectReal& fuelLatent,
-                     const HostVectReal& fuelRho,
-                     const HostVectReal& fuelMu,
-                     const HostVectInt&  fuelIndx,
-                     SprayComps          sprayIndices,
-                     amrex::Real         parcelSize,
-                     amrex::Real         ref_T,
-                     amrex::Real         fuelSigma,
-                     amrex::Real         in_wallT)
-  {
-    m_parcelSize = parcelSize;
-    m_wallT = in_wallT;
-    HostVectReal fuelEnth(NUM_SPECIES);
-    EOS::T2Hi(ref_T, fuelEnth.dataPtr());
-    m_fuelData.build(critT, boilT, fuelCp, fuelEnth, fuelLatent, fuelRho,
-                     fuelMu, fuelIndx, parcelSize, ref_T, fuelSigma);
-    m_sprayIndx = sprayIndices;
-    m_setFuelData = true;
-  }
+//   void buildFuelData(const SprayDataContainer in_fuelData,
+//                      const SprayComps sprayIndices,
+//                      const amrex::Real parcelSize,
+//                      const amrex::Real wallT)
+//   {
+//     m_fuelData = in_fuelData;
+//     m_sprayIndx = sprayIndices;
+//     m_parcelSize = parcelSize;
+//     m_wallT = wallT;
+//     m_setFuelData = true;
+//   }
 
-  ~SprayParticleContainer() {}
+  ~SprayParticleContainer()
+  {
+    m_fuelData.reset();
+  }
 
   void SprayParticleIO (const int                         level,
                         const bool                        is_checkpoint,
@@ -118,7 +121,7 @@ public:
     const int pstateT   = m_sprayIndx.pstateT;
     const int pstateDia = m_sprayIndx.pstateDia;
     const int pstateY   = m_sprayIndx.pstateY;
-    amrex::Vector<std::string> real_comp_names(pstateY + NUM_SPECIES);
+    amrex::Vector<std::string> real_comp_names(pstateY + SPRAY_FUEL_NUM);
     AMREX_D_TERM(real_comp_names[pstateVel] = "xvel";
                  , real_comp_names[pstateVel + 1] = "yvel";
                  , real_comp_names[pstateVel + 2] = "zvel";);
@@ -310,7 +313,7 @@ private:
   amrex::BCRec* phys_bc;
   bool reflect_lo[AMREX_SPACEDIM];
   bool reflect_hi[AMREX_SPACEDIM];
-  SprayDataContainer m_fuelData;
+  std::unique_ptr<SprayData> m_fuelData;
   SprayComps m_sprayIndx;
 };
 
