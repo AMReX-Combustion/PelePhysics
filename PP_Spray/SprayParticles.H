@@ -82,29 +82,14 @@ public:
       m_setFuelData(false),
       m_injectVel(0.),
       phys_bc(_phys_bc),
+      m_sprayIndx(SPI),
       m_parcelSize(parcelSize),
-      m_wallT(wallT),
-      m_sprayIndx(SPI)
+      m_wallT(wallT)
   {
     m_fuelData = std::make_unique<SprayData>();
     m_fuelData->build(fdat);
     init_bcs();
   }
-
-  ///
-  /// Set fuel data
-  ///
-//   void buildFuelData(const SprayDataContainer in_fuelData,
-//                      const SprayComps sprayIndices,
-//                      const amrex::Real parcelSize,
-//                      const amrex::Real wallT)
-//   {
-//     m_fuelData = in_fuelData;
-//     m_sprayIndx = sprayIndices;
-//     m_parcelSize = parcelSize;
-//     m_wallT = wallT;
-//     m_setFuelData = true;
-//   }
 
   ~SprayParticleContainer()
   {

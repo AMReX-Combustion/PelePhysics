@@ -300,7 +300,7 @@ SprayParticleContainer::updateParticles(const int&  level,
       ParticleType& p = pstruct[pid];
       if (p.id() > 0) {
         GpuArray<IntVect, AMREX_D_PICK(2,4,8)> indx_array; // Array of adjacent cells
-        GpuArray<Real,AMREX_D_PICK(2,4,8)> weights; // Array of corresponding weights
+        GpuArray<Real, AMREX_D_PICK(2,4,8)> weights; // Array of corresponding weights
         bool remove_particle = false;
         RealVect lx = (p.pos() - plo)*dxi + 0.5;
         IntVect ijk = lx.floor(); // Upper cell center

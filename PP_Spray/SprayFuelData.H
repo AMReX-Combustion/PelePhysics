@@ -17,6 +17,8 @@ struct SprayComps
   int pstateT = AMREX_SPACEDIM;
   int pstateDia = pstateT + 1;
   int pstateY = pstateDia + 1;
+  int pstateVol = pstateVel; // Used when particle is wall film
+  int pstateHt = pstateDia; // Used when particle is wall film
   int rhoIndx; // Gas phase indices
   int momIndx;
   int engIndx;
@@ -24,7 +26,7 @@ struct SprayComps
   int specIndx;
   int wf_vol = 0; // Wall film indices
   int wf_temp = 1;
-  int wf_pres = 2;
+  int wf_ht = 2; // Film height
   int wf_Y = 3;
   int wf_num = wf_Y + SPRAY_FUEL_NUM;
 };

@@ -52,6 +52,7 @@ bool calculateWallFilmSource (const Real flow_dt,
 {
   const Real C_eps = 1.E-15;
   const Real B_eps = 1.E-7;
+  const Real ht_tol = 2.E-6;
   bool get_xi = false;
   bool get_Ddiag = true;
   bool get_lambda = true;
@@ -62,7 +63,6 @@ bool calculateWallFilmSource (const Real flow_dt,
   GpuArray<Real, SPRAY_FUEL_NUM> mi_dot;
   GpuArray<Real, NUM_SPECIES> Y_skin;
   GpuArray<Real, NUM_SPECIES> h_skin;
-  GpuArray<Real, NUM_SPECIES> cp_n;
   GpuArray<Real, NUM_SPECIES> Ddiag;
   for (int sp = 0; sp < NUM_SPECIES; ++sp)
     Y_skin[sp] = 0.;
@@ -72,93 +72,85 @@ bool calculateWallFilmSource (const Real flow_dt,
   // and temperature is set to a negative value
 #ifdef USE_SPRAY_SOA
   Real T_film = -attribs[SPI.pstateT].data()[pid];
-  Real dia_film = attribs[SPI.pstateDia].data()[pid];
+  Real vol = attribs[SPI.pstateVol].data()[pid];
+  Real ht_film = attribs[SPI.pstateHt].data()[pid];
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
     Y_film[spf] = attribs[SPI.pstateY+spf].data()[pid];
 #else
   Real T_film = -p.rdata(SPI.pstateT);
-  Real dia_film = p.rdata(SPI.pstateDia);
+  Real vol = p.rdata(SPI.pstateVol);
+  Real ht_film = p.rdata(SPI.pstateHt);
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
     Y_film[spf] = p.rdata(SPI.pstateY+spf);
 #endif
-  Real vol = 4./3.*M_PI*std::pow(dia_film, 3);
-  Real ht_film = vol/face_area; // Film thickness
-  // TODO: Does this make sense
-  Real T_vapor = 0.5*(T_film + gpv.T_fluid);
+  Real T_i = gpv.T_fluid;
+  Real area_film = vol/ht_film;
+  Real dia_film = std::sqrt(4.*area_film/M_PI);
   EOS::T2Hi(T_film, h_skin.data());
-  EOS::T2Cpi(T_vapor, cp_n.data());
   calcVaporY(fdat, gpv, T_film, C_eps, Y_film.data(), h_skin.data(),
              Y_vapor.data(), L_fuel.data());
+  Real T_vapor = 0.5*(T_film + T_i);
   Real sumYSkin = 0.;
   Real sumYFuel = 0.;
   Real rho_film = 0.;
-  Real cp_film = 0.;
   Real lambda_film = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
     rho_film += Y_film[spf]*fdat.rho[spf];
-    cp_film += Y_film[spf]*fdat.cp[spf];
     lambda_film += Y_film[spf]*fdat.lambda[spf];
-    Y_skin[fspec] = Y_vapor[spf] + gpv.Y_fluid[fspec];
+    Y_skin[fspec] = 0.5*(Y_vapor[spf] + gpv.Y_fluid[fspec]);
     sumYSkin += Y_skin[fspec];
   }
-  Real pmass = vol*rho_film;
   const Real restYSkin = 1. - sumYSkin;
   Real mw_vap = 0.;
-  Real cp_skin = 0.;
   for (int sp = 0; sp < NUM_SPECIES; ++sp) {
     Y_skin[sp] += restYSkin*gpv.Y_fluid[sp];
     mw_vap += Y_skin[sp]*gpv.invmw[sp];
-    cp_skin += Y_skin[sp]*cp_n[sp];
   }
   mw_vap = 1./mw_vap;
+  Real pmass = vol*rho_film;
   Real lambda_skin = 0.;
   Real mu_skin = 0.;
   Real xi_skin = 0.;
   transport(get_xi, get_mu, get_lambda, get_Ddiag, T_vapor,
             gpv.rho_fluid, Y_skin.data(), Ddiag.data(), mu_skin,
             xi_skin, lambda_skin, trans_parm);
-  Real Pr = mu_skin*cp_skin/lambda_skin;
-  Real umag_fluid = gpv.vel_fluid.vectorLength();
-  // Must estimate a convective heat transfer coefficient
-  // TODO: Figure out what the best way to estimate the HTC
-  // Currently, we find dT/dy = (T_i - T_vapor)/dy
-  // where dy is the distance from the cell center to the top of
-  // the wall film
-  Real diff_y = diff_cent - ht_film;
-  Real q_y0 = lambda_skin*(gpv.T_fluid - T_vapor)/diff_y;
-  Real HTC = q_y0/(gpv.T_fluid - T_film);
-  // Heat convection with gas
-  Real qconv = HTC*(gpv.T_fluid - T_film);
-  gpv.fluid_eng_src += qconv;
-  // Heat conduction with wall
-  Real qcond = 2.*lambda_film*(T_wall - T_film)/ht_film;
+  Real dy_i = diff_cent - ht_film; // Distance from film surface to cell center
+  // Determine the mass evaporation values
   Real m_dot = 0.;
   Real qvap = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
     Ddiag[fspec] *= mw_vap*gpv.invmw[fspec];
-    Real Sc = mu_skin/Ddiag[fspec];
-    Real h_m = HTC/(rho_film*cp_film)*std::pow(Pr/Sc, 2./3.);
-    mi_dot[spf] = rho_film*h_m*std::log((1. - gpv.Y_fluid[fspec])/(1. - Y_skin[fspec]));
-    gpv.fluid_Y_dot[spf] += mi_dot[spf];
+    // TODO: Ensure condensed mass does not exceed gas phase mass
+    mi_dot[spf] = -Ddiag[fspec]/(1. - Y_vapor[spf])*(gpv.Y_fluid[fspec] - Y_vapor[spf])/dy_i;
     m_dot += mi_dot[spf];
     qvap += mi_dot[spf]*L_fuel[spf];
-    gpv.fluid_eng_src += mi_dot[spf]*h_skin[spf];
+    gpv.fluid_Y_dot[spf] += mi_dot[spf];
+    gpv.fluid_eng_src += mi_dot[spf]*h_skin[fspec];
   }
+  gpv.fluid_mass_src = m_dot;
+  // Determine the temperature at wall film surface using energy balance
+  Real fs1 = lambda_skin*ht_film;
+  Real fs2 = lambda_film*dy_i;
+  Real T_s = (fs1*T_i + fs2*T_wall - ht_film*dy_i*qvap)/(fs1 + fs2);
+  Real qconv = lambda_skin*(T_i - T_s)/dy_i;
+  gpv.fluid_eng_src += qconv;
+  // Update film height
   Real new_mass = pmass + flow_dt*m_dot;
-  Real new_cp = 0.;
   Real new_rho = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Real newY = (Y_film[spf]*pmass + mi_dot[spf]*flow_dt)/new_mass;
     p.rdata(SPI.pstateY+spf) = newY;
-    new_cp += newY*fdat.cp[spf];
     new_rho += newY*fdat.rho[spf];
   }
-  Real sumq = qconv + qvap + qcond;
-  // Make sure temperature is set to negative value
-  p.rdata(SPI.pstateT) = -(face_area*flow_dt*sumq + pmass*cp_film*T_film)/(new_mass*new_cp);
-  p.rdata(SPI.pstateDia) = std::cbrt(6.*new_mass/(M_PI*new_rho));
+  Real new_vol = new_mass/new_rho;
+  p.rdata(SPI.pstateVol) = new_vol;
+  // Adjust the height by assuming radius remains unchanged
+  Real new_ht = 4.*new_vol/(M_PI*dia_film*dia_film);
+  p.rdata(SPI.pstateHt) = new_ht;
+  p.rdata(SPI.pstateT) = -0.5*(T_s + T_wall);
+  if (new_ht < ht_tol) p.id() = -1;
   return false;
 }
 
@@ -347,10 +339,6 @@ splash_type impose_wall (SprayParticleContainer::ParticleType& p,
                       Nw_Vp*normal[2])};
       // Parcel tangential velocity
       RealVect Vpt = pvel - Vpn;
-      // Factor of par_dot_EB to shift particle location by
-      // dis_fact = 2 -> Particle is reflected off of the wall
-      // dis_fact = 1 -> Particle is placed at the wall
-      Real dis_fact = 2.;
       // If using a splash model
       if (sigma > 0. && isActive) {
         Real mu_part = 0.;
@@ -382,19 +370,20 @@ splash_type impose_wall (SprayParticleContainer::ParticleType& p,
         const Real delta = 2.*dia_part/sqReyn;
         // splash_flag == 0, then particle rebounds, no breakup, no deposit
         if (splash_flag != splash_type::rebound) {
-          dis_fact = 1. + 1.E-4; // Place particle at wall
-          // Make droplet stationary
-          Vpt = RealVect::TheZeroVector();
-          Vpn = RealVect::TheZeroVector();
           // Energy loss due to viscious dissipation during impact
           Real E_diss = 4.*M_PI/3.*rho_part*Nw_Vp*Nw_Vp*d3/sqReyn;
           // If splash_flag == 1, particle is completely deposited onto the wall
           if (splash_flag == splash_type::deposit) {
             // TODO: Determine better way to estimate wall film temperature, diameter, etc
-            //Real depot_vol = pmass/rho_part;
+            Real depot_vol = pmass/rho_part;
             // Assume deposited film is a dome shape of height delta, determine the diameter
-            //Real depot_dia = 2.*std::sqrt((6.*depot_vol/M_PI - std::pow(delta, 3))/(3.*delta));
-            //Real depot_area = M_PI*(depot_dia*depot_dia/4. + delta*delta) + M_PI*depot_dia*depot_dia/4.;
+            Real depot_dia = 2.*std::sqrt((6.*depot_vol/M_PI - std::pow(delta, 3))/(3.*delta));
+            // Now estimate the height to be a cylinder of diameter depot_dia
+            Real depot_height = 4.*depot_vol/(M_PI*depot_dia*depot_dia);
+            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+              p.rdata(SPI.pstateVel+dir) = 0.;
+            p.rdata(SPI.pstateVol) = depot_vol;
+            p.rdata(SPI.pstateHt) = depot_height;
           } else {
             // Determine diameter of secondary droplets
             Real expon = 3.6*(alpha/M_PI)*(alpha/M_PI);
@@ -404,8 +393,6 @@ splash_type impose_wall (SprayParticleContainer::ParticleType& p,
               SPRF.dia_refl = dia_part*2.2*std::exp(expon)*std::pow(We, -0.36);
             // Compute angles of reflecting droplets
             compute_angles(alpha, Tstar, We, dry_wall, SPRF);
-            // Energy loss due to viscious dissipation during impact
-            Real E_diss = 4.*M_PI/3.*rho_part*Nw_Vp*Nw_Vp*d3/sqReyn;
             // If thermal breakup, all mass is converted to secondary droplets
             Real splash_mass = pmass;
             // If splash, some mass rebounds and some deposits
@@ -420,11 +407,12 @@ splash_type impose_wall (SprayParticleContainer::ParticleType& p,
               Real depot_vol = depot_mass/rho_part;
               // Assume deposited film is a dome shape of height delta, determine the diameter
               Real depot_dia = 2.*std::sqrt((6.*depot_vol/M_PI - std::pow(delta, 3))/(3.*delta));
-              Real depot_area = M_PI*(depot_dia*depot_dia/4. + delta*delta) + M_PI*depot_dia*depot_dia/4.;
-              Real prev_area = M_PI*dia_part*dia_part;
-              // Original particle now represents deposited wall film
-              // The diameter is set to represent the mass of remaining liquid
-              p.rdata(SPI.pstateDia) = std::cbrt(6.*depot_mass/(M_PI*rho_part));
+              // Now estimate the height to be a cylinder of diameter depot_dia
+              Real depot_height = 4.*depot_vol/(M_PI*depot_dia*depot_dia);
+              for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+                p.rdata(SPI.pstateVel+dir) = 0.;
+              p.rdata(SPI.pstateVol) = depot_vol;
+              p.rdata(SPI.pstateHt) = depot_height;
             } else {
               p.id() = -1;
             }
@@ -444,12 +432,20 @@ splash_type impose_wall (SprayParticleContainer::ParticleType& p,
             find_tangents(testvec, normal, SPRF.tanBeta, SPRF.tanPsi);
           }
         } // if (splash_flag != splash_type::rebound)
-      } // if (sigma > 0)
-      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-        SPRF.norm[dir] = normal[dir];
-        SPRF.pos_refl[dir] -= par_dot_EB*normal[dir];
-        p.pos(dir) -= dis_fact*par_dot_EB*normal[dir];
-        p.rdata(SPI.pstateVel+dir) = -Vpn[dir] + Vpt[dir];
+      } // if (sigma > 0.)
+      // Reflect particle
+      if (sigma < 0. || splash_flag == splash_type::rebound) {
+        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+          p.pos(dir) -= 2.*par_dot_EB*normal[dir];
+          p.rdata(SPI.pstateVel+dir) = -Vpn[dir] + Vpt[dir];
+        }
+      } else {
+        // Or place particle at wall
+        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+          SPRF.norm[dir] = normal[dir];
+          SPRF.pos_refl[dir] -= par_dot_EB*normal[dir];
+          p.pos(dir) -= (1. + 1.E-4)*par_dot_EB*normal[dir];
+        }
       }
     } // if (par_dot_EB < tolerance)
   } // if (check_part)

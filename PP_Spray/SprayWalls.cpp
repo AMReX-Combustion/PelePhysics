@@ -139,9 +139,12 @@ SprayParticleContainer::wallImpingement (const int&  level,
             } else {
               p.id() = -1;
             }
-            Real new_vol = 4./3.*M_PI*std::pow(0.5*p.rdata(SPI.pstateDia), 3);
+            // Velocity component now holds the volume
+            Real new_vol = p.rdata(SPI.pstateVol);
             wall_film(ijk, SPI.wf_vol) += new_vol;
             wall_film(ijk, SPI.wf_temp) += new_vol*p.rdata(SPI.pstateT);
+            Real drop_height = p.rdata(SPI.pstateHt);
+            wall_film(ijk, SPI.wf_ht) += drop_height;
             for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
               wall_film(ijk, SPI.wf_Y+spf) += new_vol*p.rdata(SPI.pstateY+spf);
           }
@@ -155,7 +158,10 @@ SprayParticleContainer::wallImpingement (const int&  level,
         ParticleType& p = pval[pid];
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
           p.rdata(SPI.pstateY+spf) = wall_film(ijk, SPI.wf_Y+spf)/vol;
-        p.rdata(SPI.pstateDia) = 2.*std::cbrt(3.*vol/(4.*M_PI));
+        // Diameter index will hold height
+        p.rdata(SPI.pstateHt) = wall_film(ijk, SPI.wf_ht);
+        // Velocity index will hold volume
+        p.rdata(SPI.pstateVol) = vol;
         // For wall films, the temperature is set to a negative value
         // TODO: Determine better way to model the wall film temperature
         p.rdata(SPI.pstateT) = -T;

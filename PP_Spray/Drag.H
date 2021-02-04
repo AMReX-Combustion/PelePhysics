@@ -91,7 +91,6 @@ void calcVaporY (const SprayData& fdat,
   }
   Real totalmwx = gpv.mw_mix*(nt*gpv.p_fluid - sum_xv) + sum_mw_xv;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    const int fspec = fdat.indx[spf];
     Real Yfv = x_v[spf]/totalmwx;
     Y_vapor[spf] = amrex::max(0., amrex::min(1. - C_eps, Yfv));
   }
