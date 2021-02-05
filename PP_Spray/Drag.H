@@ -116,6 +116,7 @@ bool calculateSpraySource (const Real    flow_dt,
   const Real inv_Ru = 1./EOS::RU;
   const Real C_eps = 1.E-15;
   const Real B_eps = 1.E-7;
+  const Real Y_eps = 1.E-4;
   const Real dia_eps = 2.E-6;
   const int nSubMax = 100;
   bool get_xi = false;
@@ -158,7 +159,8 @@ bool calculateSpraySource (const Real    flow_dt,
   int nsub = 1;
   Real rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-    rho_part += Y_part[spf]*fdat.rho[spf];
+    rho_part += Y_part[spf]/fdat.rho[spf];
+  rho_part = 1./rho_part;
   Real pmass = M_PI/6.*rho_part*std::pow(dia_part, 3);
   while (isub <= nsub) {
     Real part_ke = 0.5*vel_part.radSquared();
@@ -218,6 +220,21 @@ bool calculateSpraySource (const Real    flow_dt,
     Real Nu_0 = 1.;
     // Solve mass transfer source terms
     Real m_dot = 0.;
+    // First, check if the droplet temperature exceeds the boiling temperature
+    for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
+      const int fspec = fdat.indx[spf];
+      if (T_part > fdat.boilT[spf] - 1. && Y_part[spf] > Y_eps) {
+        T_part = fdat.boilT[spf] - 1.E-6; // Cap particle temperature at boiling temperature
+        mi_dot[spf] = 2.*M_PI*dia_part*lambda_skin/cp_skin*
+          (1. + 0.23*std::sqrt(Reyn))*std::log(1. + cp_skin*(gpv.T_fluid - T_part)/L_fuel[spf]);
+        gpv.fluid_Y_dot[spf] += mi_dot[spf];
+        gpv.fluid_eng_src += mi_dot[spf]*h_skin[fspec];
+        m_dot += mi_dot[spf];
+        evap_fuel = false;
+      } else {
+        mi_dot[spf] = 0.;
+      }
+    }
     if ((SPI.mass_tran || SPI.heat_tran) && evap_fuel) {
       Real Pr_skin = mu_skin*cp_skin/lambda_skin;
       Real powR = amrex::max(std::pow(Reyn, 0.077), 1.);
@@ -304,9 +321,10 @@ bool calculateSpraySource (const Real    flow_dt,
     Real new_mass = pmass + m_dot*part_dt;
     rho_part = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      Y_part[spf] = (Y_part[spf]*pmass + mi_dot[spf]*part_dt)/new_mass;
-      rho_part += Y_part[spf]*fdat.rho[spf];
+      Y_part[spf] = amrex::max(0., (Y_part[spf]*pmass + mi_dot[spf]*part_dt)/new_mass);
+      rho_part += Y_part[spf]/fdat.rho[spf];
     }
+    rho_part = 1./rho_part;
     pmass = new_mass;
     dia_part = std::cbrt(6.*pmass/(M_PI*rho_part));
     if (dia_part < dia_eps) {

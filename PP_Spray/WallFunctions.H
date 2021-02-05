@@ -53,6 +53,7 @@ bool calculateWallFilmSource (const Real flow_dt,
   const Real C_eps = 1.E-15;
   const Real B_eps = 1.E-7;
   const Real ht_tol = 2.E-6;
+  const Real part_dt = 0.5*flow_dt;
   bool get_xi = false;
   bool get_Ddiag = true;
   bool get_lambda = true;
@@ -94,13 +95,16 @@ bool calculateWallFilmSource (const Real flow_dt,
   Real sumYFuel = 0.;
   Real rho_film = 0.;
   Real lambda_film = 0.;
+  Real cp_film = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
-    rho_film += Y_film[spf]*fdat.rho[spf];
+    rho_film += Y_film[spf]/fdat.rho[spf];
     lambda_film += Y_film[spf]*fdat.lambda[spf];
+    cp_film += Y_film[spf]*fdat.cp[spf];
     Y_skin[fspec] = 0.5*(Y_vapor[spf] + gpv.Y_fluid[fspec]);
     sumYSkin += Y_skin[fspec];
   }
+  rho_part = 1./rho_part;
   const Real restYSkin = 1. - sumYSkin;
   Real mw_vap = 0.;
   for (int sp = 0; sp < NUM_SPECIES; ++sp) {
@@ -123,7 +127,7 @@ bool calculateWallFilmSource (const Real flow_dt,
     const int fspec = fdat.indx[spf];
     Ddiag[fspec] *= mw_vap*gpv.invmw[fspec];
     // TODO: Ensure condensed mass does not exceed gas phase mass
-    mi_dot[spf] = -Ddiag[fspec]/(1. - Y_vapor[spf])*(gpv.Y_fluid[fspec] - Y_vapor[spf])/dy_i;
+    mi_dot[spf] = -Ddiag[fspec]/(1. - Y_vapor[spf])*(gpv.Y_fluid[fspec] - Y_skin[fspec])/dy_i;
     m_dot += mi_dot[spf];
     qvap += mi_dot[spf]*L_fuel[spf];
     gpv.fluid_Y_dot[spf] += mi_dot[spf];
@@ -137,13 +141,14 @@ bool calculateWallFilmSource (const Real flow_dt,
   Real qconv = lambda_skin*(T_i - T_s)/dy_i;
   gpv.fluid_eng_src += qconv;
   // Update film height
-  Real new_mass = pmass + flow_dt*m_dot;
+  Real new_mass = pmass + part_dt*m_dot;
   Real new_rho = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    Real newY = (Y_film[spf]*pmass + mi_dot[spf]*flow_dt)/new_mass;
+    Real newY = (Y_film[spf]*pmass + mi_dot[spf]*part_dt)/new_mass;
     p.rdata(SPI.pstateY+spf) = newY;
-    new_rho += newY*fdat.rho[spf];
+    new_rho += newY/fdat.rho[spf];
   }
+  new_rho = 1./new_rho;
   Real new_vol = new_mass/new_rho;
   p.rdata(SPI.pstateVol) = new_vol;
   // Adjust the height by assuming radius remains unchanged
@@ -348,9 +353,10 @@ splash_type impose_wall (SprayParticleContainer::ParticleType& p,
         for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
           const int ysp = SPI.pstateY + spf;
           mu_part += p.rdata(ysp)*fdat.mu[spf];
-          rho_part += p.rdata(ysp)*fdat.rho[spf];
+          rho_part += p.rdata(ysp)/fdat.rho[spf];
           Tstar += T_wall*p.rdata(ysp)/fdat.boilT[spf];
         }
+        rho_part = 1./rho_part;
         const Real dia_part = p.rdata(SPI.pstateDia);
         const Real d3 = pow(dia_part, 3);
         const Real pmass = M_PI/6.*rho_part*d3;
