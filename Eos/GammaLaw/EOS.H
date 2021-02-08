@@ -12,7 +12,7 @@
 
 namespace EOS {
 
-extern AMREX_GPU_DEVICE_MANAGED amrex::Real gamma;
+constexpr amrex::Real gamma = 1.4;
 constexpr amrex::Real RU = 8.31446261815324e7;
 constexpr amrex::Real RUC  = 1.98721558317399615845;
 constexpr amrex::Real PATM = 1.01325e+06;
