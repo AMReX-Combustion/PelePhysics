@@ -6,17 +6,18 @@
 using namespace amrex;
 
 void
-SprayParticleContainer::wallImpingement (const int&  level,
-                                         const Real& flow_dt,
-                                         const Real& time,
+SprayParticleContainer::wallImpingement(
+  const int& level,
+  const Real& flow_dt,
+  const Real& time,
 #ifdef AMREX_USE_EB
-                                         const FabArray<EBCellFlagFab>& flagmf,
-                                         const MultiCutFab* bndrycent,
-                                         const MultiCutFab* bndrynorm,
+  const FabArray<EBCellFlagFab>& flagmf,
+  const MultiCutFab* bndrycent,
+  const MultiCutFab* bndrynorm,
 #endif
-                                         const int   state_ghosts,
-                                         const int   source_ghosts,
-                                         const bool  isActive)
+  const int state_ghosts,
+  const int source_ghosts,
+  const bool isActive)
 {
   BL_PROFILE("ParticleContainer::wallImpingement()");
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
@@ -32,10 +33,14 @@ SprayParticleContainer::wallImpingement (const int&  level,
   IntVect bndry_hi; // 0 - Periodic, 1 - Reflective, -1 - Non-reflective
   for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
     if (!this->Geom(level).isPeriodic(dir)) {
-      if (reflect_lo[dir]) bndry_lo[dir] = 1;
-      else bndry_lo[dir] = -1;
-      if (reflect_hi[dir]) bndry_hi[dir] = 1;
-      else bndry_hi[dir] = -1;
+      if (reflect_lo[dir])
+        bndry_lo[dir] = 1;
+      else
+        bndry_lo[dir] = -1;
+      if (reflect_hi[dir])
+        bndry_hi[dir] = 1;
+      else
+        bndry_hi[dir] = -1;
     } else {
       bndry_lo[dir] = 0;
       bndry_hi[dir] = 0;
@@ -54,8 +59,6 @@ SprayParticleContainer::wallImpingement (const int&  level,
     // Check if tile has walls
     bool at_bounds = tile_at_bndry(tile_box, bndry_lo, bndry_hi, domain);
 #ifdef AMREX_USE_EB
-    // const EBFArrayBox& interp_fab = static_cast<EBFArrayBox const&>(state[pti]);
-    // const EBCellFlagFab& flags = interp_fab.getEBCellFlagFab();
     const EBCellFlagFab& flags = flagmf[pti];
     bool eb_in_box = false;
     if (flags.getType(src_box) != FabType::regular) {
@@ -87,7 +90,7 @@ SprayParticleContainer::wallImpingement (const int&  level,
       for (int pid = 0; pid < Np; ++pid) {
         ParticleType& p = pval[pid];
         if (p.id() > 0) {
-          const RealVect lx = (p.pos() - plo)*dxi;
+          const RealVect lx = (p.pos() - plo) * dxi;
           IntVect ijk = lx.floor(); // Closest cell center
           const Real T_part = p.rdata(SPI.pstateT);
           const Real dia_part = p.rdata(SPI.pstateDia);
@@ -97,16 +100,16 @@ SprayParticleContainer::wallImpingement (const int&  level,
             SprayRefl SPRF; // Structure holding data for reflected particles
             SPRF.pos_refl = p.pos();
             for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-              SPRF.Y_refl[spf] = p.rdata(SPI.pstateY+spf);
+              SPRF.Y_refl[spf] = p.rdata(SPI.pstateY + spf);
             bool dry_wall = true;
-            if (film_id(ijk,0) > 0) dry_wall = false;
-            splash_flag =
-              impose_wall(p, SPI, SPU, *fdat, ijk, dx, dxi, plo, phi,
+            if (film_id(ijk, 0) > 0)
+              dry_wall = false;
+            splash_flag = impose_wall(
+              p, SPI, SPU, *fdat, ijk, dx, dxi, plo, phi,
 #ifdef AMREX_USE_EB
-                          eb_in_box, flags_fab, bcent_fab, bnorm_fab,
+              eb_in_box, flags_fab, bcent_fab, bnorm_fab,
 #endif
-                          bndry_lo, bndry_hi, flow_dt, m_wallT, SPRF,
-                          isActive, dry_wall);
+              bndry_lo, bndry_hi, flow_dt, m_wallT, SPRF, isActive, dry_wall);
             // Only add active particles, not ghost or virtual
             if (SPRF.Ns_refl > 0 && isActive) {
               for (int nsp = 0; nsp < SPRF.Ns_refl; ++nsp) {
@@ -116,9 +119,9 @@ SprayParticleContainer::wallImpingement (const int&  level,
                 pnew.rdata(SPI.pstateDia) = SPRF.dia_refl;
                 pnew.rdata(SPI.pstateT) = T_part;
                 for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-                  pnew.rdata(SPI.pstateY+spf) = SPRF.Y_refl[spf];
+                  pnew.rdata(SPI.pstateY + spf) = SPRF.Y_refl[spf];
                 for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                  pnew.rdata(SPI.pstateVel+dir) = 0.;
+                  pnew.rdata(SPI.pstateVel + dir) = 0.;
                   pnew.pos(dir) = SPRF.pos_refl[dir];
                 }
                 create_splash_droplet(pnew, SPI, SPRF);
@@ -130,11 +133,12 @@ SprayParticleContainer::wallImpingement (const int&  level,
             p.rdata(SPI.pstateT) *= -1.;
           }
           // Check if droplet is deposited, splashes, or is already a wall film
-          if (splash_flag == splash_type::deposit ||
-              splash_flag == splash_type::splash ||
-              splash_flag == splash_type::wall_film) {
-            if (film_id(ijk,0) < 0) {
-              film_id(ijk,0) = pid;
+          if (
+            splash_flag == splash_type::deposit ||
+            splash_flag == splash_type::splash ||
+            splash_flag == splash_type::wall_film) {
+            if (film_id(ijk, 0) < 0) {
+              film_id(ijk, 0) = pid;
               film_locs.push_back(ijk);
             } else {
               p.id() = -1;
@@ -142,22 +146,23 @@ SprayParticleContainer::wallImpingement (const int&  level,
             // Velocity component now holds the volume
             Real new_vol = p.rdata(SPI.pstateVol);
             wall_film(ijk, SPI.wf_vol) += new_vol;
-            wall_film(ijk, SPI.wf_temp) += new_vol*p.rdata(SPI.pstateT);
+            wall_film(ijk, SPI.wf_temp) += new_vol * p.rdata(SPI.pstateT);
             Real drop_height = p.rdata(SPI.pstateHt);
             wall_film(ijk, SPI.wf_ht) += drop_height;
             for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-              wall_film(ijk, SPI.wf_Y+spf) += new_vol*p.rdata(SPI.pstateY+spf);
+              wall_film(ijk, SPI.wf_Y + spf) +=
+                new_vol * p.rdata(SPI.pstateY + spf);
           }
         } // if (p.id() > 0)
-      } // for (int pid...
+      }   // for (int pid...
       for (int wfl = 0; wfl < film_locs.size(); ++wfl) {
         IntVect ijk = film_locs[wfl];
         int pid = film_id(ijk, 0);
         Real vol = wall_film(ijk, SPI.wf_vol);
-        Real T = wall_film(ijk, SPI.wf_temp)/vol;
+        Real T = wall_film(ijk, SPI.wf_temp) / vol;
         ParticleType& p = pval[pid];
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-          p.rdata(SPI.pstateY+spf) = wall_film(ijk, SPI.wf_Y+spf)/vol;
+          p.rdata(SPI.pstateY + spf) = wall_film(ijk, SPI.wf_Y + spf) / vol;
         // Diameter index will hold height
         p.rdata(SPI.pstateHt) = wall_film(ijk, SPI.wf_ht);
         // Velocity index will hold volume
@@ -167,5 +172,5 @@ SprayParticleContainer::wallImpingement (const int&  level,
         p.rdata(SPI.pstateT) = -T;
       }
     } // if (do_move && Np > 0 && at_bounds)
-  } // for (MyParIter pti ...
+  }   // for (MyParIter pti ...
 }

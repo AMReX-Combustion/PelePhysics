@@ -18,6 +18,12 @@
 #include "SootModel.H"
 #include "SootModel_derive.H"
 
+static amrex::Box
+the_same_box(const amrex::Box& b)
+{
+  return b;
+}
+
 using namespace amrex;
 
 namespace SootConst
