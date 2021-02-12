@@ -24,46 +24,21 @@ the_same_box(const amrex::Box& b)
   return b;
 }
 
-using namespace amrex;
-
-namespace SootConst
-{
-  AMREX_GPU_DEVICE_MANAGED Real V0 = 0.;
-  AMREX_GPU_DEVICE_MANAGED Real S0 = 0.;
-  AMREX_GPU_DEVICE_MANAGED Real SootDensityC = 0.;
-  AMREX_GPU_DEVICE_MANAGED Real colFact = 0.;
-  AMREX_GPU_DEVICE_MANAGED Real colFact23 = 0.;
-  AMREX_GPU_DEVICE_MANAGED Real colFact16 = 0.;
-  AMREX_GPU_DEVICE_MANAGED Real colFactPi23 = 0.;
-  AMREX_GPU_DEVICE_MANAGED Real dimerVol = 0.;
-  AMREX_GPU_DEVICE_MANAGED Real nuclVol = 0.;
-  AMREX_GPU_DEVICE_MANAGED Real nuclSurf = 0.;
-#if NUM_SOOT_MOMENTS == 3
-  AMREX_GPU_DEVICE_MANAGED Real MomOrderV[3] = {0., 1., 0.};
-  AMREX_GPU_DEVICE_MANAGED Real MomOrderS[3] = {0., 0., 1.};
-  AMREX_GPU_DEVICE_MANAGED Real unitConv[4] = {0., 0., 0., 0.};
-#elif NUM_SOOT_MOMENTS == 6
-  AMREX_GPU_DEVICE_MANAGED Real MomOrderV[6] = {0., 1., 0., 2., 1., 0.};
-  AMREX_GPU_DEVICE_MANAGED Real MomOrderS[6] = {0., 0., 1., 0., 1., 2.};
-  AMREX_GPU_DEVICE_MANAGED Real unitConv[7] = {0., 0., 0., 0., 0., 0., 0.};
-#endif
-  AMREX_GPU_DEVICE_MANAGED int refIndx[NUM_SOOT_GS] = {-1};
-};
-
 // Default constructor
 SootModel::SootModel()
-  :
-  m_sootVerbosity(0),
-  m_readSootParams(false),
-  m_memberDataDefined(false),
-  m_conserveMass(true),
-  m_PAHindx(-1),
-  m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
-  local_soot_dt(1.E18),
-  m_maxDtRate(-1.),
-  m_reactDataFilled(false),
-  m_gasSpecNames(NUM_SOOT_GS, "")
+  : m_sootVerbosity(0),
+    m_readSootParams(false),
+    m_memberDataDefined(false),
+    m_conserveMass(true),
+    m_PAHindx(-1),
+    m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
+    local_soot_dt(1.E18),
+    m_maxDtRate(-1.),
+    m_reactDataFilled(false),
+    m_gasSpecNames(NUM_SOOT_GS, "")
 {
+  m_sootData = std::make_unique<SootData>();
+  m_sootReact = std::make_unique<SootReaction>();
   m_sootVarName[NUM_SOOT_MOMENTS] = "soot_N0";
   m_sootVarName[0] = "soot_N";
   m_sootVarName[1] = "soot_fv";
@@ -83,7 +58,7 @@ SootModel::define()
   // This should be called after readSootParams()
   AMREX_ASSERT(m_readSootParams);
   // Relevant species names for the surface chemistry model
-  // TODO: Currently must correspond to GasSpecIndx enum in SootModel.H
+  // TODO: Currently must correspond to GasSpecIndx enum in Constants_Soot.H
   m_gasSpecNames = {"H2", "H", "OH", "H2O", "CO", "C2H2", "O2", m_PAHname};
   // Number of accounted for PAH particles (hard-coded)
   const int numPAH = 3;
@@ -98,29 +73,32 @@ SootModel::define()
 
   // Determine which PAH inception species is being used
   bool corrPAH = false;
+  Real dimerVol;
   for (int cpah = 0; cpah != numPAH; ++cpah) {
     if (PAH_names[cpah] == m_PAHname) {
       m_gammaStick = PAH_gammas[cpah];
-      SootConst::dimerVol = 2.*PAH_numC[cpah];
+      dimerVol = 2. * PAH_numC[cpah];
       corrPAH = true;
     }
   }
-  SootConst::nuclVol = 2.*SootConst::dimerVol;
-  SootConst::nuclSurf = std::pow(SootConst::nuclVol, 2./3.);
+
   if (!corrPAH) {
-    Abort(m_PAHname + " not recognized as PAH inception species. Must be " +
-          PAH_names[0] + ", " + PAH_names[1] + ", or " + PAH_names[2]);
+    Abort(
+      m_PAHname + " not recognized as PAH inception species. Must be " +
+      PAH_names[0] + ", " + PAH_names[1] + ", or " + PAH_names[2]);
   }
   Vector<std::string> spec_names(NUM_SPECIES);
   EOS::speciesNames(spec_names);
   // Loop over all species
   for (int i = 0; i != NUM_SPECIES; ++i) {
     // Check if species is the PAH inceptor
-    if (spec_names[i] == m_PAHname) m_PAHindx = i;
+    if (spec_names[i] == m_PAHname)
+      m_PAHindx = i;
     // Check if species matches others for surface reactions
     for (int sootSpec = 0; sootSpec != ngs; ++sootSpec) {
-      if (spec_names[i] == m_gasSpecNames[sootSpec])
-        SootConst::refIndx[sootSpec] = i;
+      if (spec_names[i] == m_gasSpecNames[sootSpec]) {
+        m_sootData->refIndx[sootSpec] = i;
+      }
     }
   }
   // Return error if no PAH inception species is specified in mechanism
@@ -129,13 +107,15 @@ SootModel::define()
   }
   // Return error if not all soot species are present
   for (int sootSpec = 0; sootSpec != ngs; ++sootSpec) {
-    if (SootConst::refIndx[sootSpec] == -1)
-      Abort("Species " + m_gasSpecNames[sootSpec] +
-            " must be present in PelePhysics mechanism");
+    if (m_sootData->refIndx[sootSpec] == -1) {
+      Abort(
+        "Species " + m_gasSpecNames[sootSpec] +
+        " must be present in PelePhysics mechanism");
+    }
   }
 
   // Assign moment factor member data
-  defineMemberData();
+  defineMemberData(dimerVol);
   // From SootModel_react.cpp
   // Initialize reaction and species member data
   initializeReactData();
@@ -169,112 +149,104 @@ SootModel::readSootParams()
 
 // Define all member data
 void
-SootModel::defineMemberData()
+SootModel::defineMemberData(const Real dimerVol)
 {
   if (m_sootVerbosity) {
     Print() << "SootModel::defineMemberData(): Defining member data"
             << std::endl;
   }
-
-  SootConst::V0 = SootConst::SootMolarMass/(SootConst::avogadros*SootConst::SootDensity); // cm^3
-  SootConst::S0 = std::pow(36.*M_PI, 1./3.)*std::pow(SootConst::V0, 2./3.); // cm^2
-  SootConst::SootDensityC = SootConst::SootChi*SootConst::S0;
-  SootConst::colFact = M_PI*EOS::RU/(2.*SootConst::avogadros*SootConst::SootDensity);
-  SootConst::colFact23 = std::pow(SootConst::V0, 2./3.);
-  SootConst::colFact16 = std::pow(SootConst::V0, 1./6.); // Units: cm^0.5
-  SootConst::colFactPi23 = std::pow(6./M_PI, 2./3.);
-  Gpu::HostVector<Real> dimerExp6(9);
-  Gpu::HostVector<Real> nuclVolExp3(11);
-  Gpu::HostVector<Real> nuclVolExp6(11);
-  Gpu::HostVector<Real> momFact(NUM_SOOT_MOMENTS);
-  Gpu::HostVector<Real> ssfmCoagFact(NUM_SOOT_VARS);
-  Gpu::HostVector<Real> sscnCoagFact(NUM_SOOT_MOMENTS);
-  Gpu::HostVector<Real> smallOxidFact(NUM_SOOT_VARS);
-  Gpu::HostVector<Real> fragFact(NUM_SOOT_MOMENTS);
+  SootConst sc;
+  Real nuclVol = 2. * dimerVol;
+  Real nuclSurf = std::pow(nuclVol, 2. / 3.);
+  m_sootData->nuclVol = nuclVol;
+  m_sootData->nuclSurf = nuclSurf;
   // Compute V_nucl and V_dimer to fractional powers
   for (int i = 0; i != 9; ++i) {
-    Real exponent = 2.*(Real)i - 3.;
-    dimerExp6[i] = std::pow(SootConst::dimerVol, exponent/6.);
+    Real exponent = 2. * (Real)i - 3.;
+    m_sootData->dime6[i] = std::pow(dimerVol, exponent / 6.);
   }
   for (int i = 0; i != 11; ++i) {
     Real exponent = (Real)i - 3.;
-    nuclVolExp3[i] = std::pow(SootConst::nuclVol, exponent/3.);
-    nuclVolExp6[i] = std::pow(SootConst::nuclVol, exponent/6.);
+    m_sootData->nve3[i] = std::pow(nuclVol, exponent / 3.);
+    m_sootData->nve6[i] = std::pow(nuclVol, exponent / 6.);
   }
 
   for (int i = 0; i != NUM_SOOT_MOMENTS; ++i) {
     // Used to convert moments to mol of C
-    SootConst::unitConv[i] = std::pow(SootConst::V0, SootConst::MomOrderV[i])*
-      std::pow(SootConst::S0, SootConst::MomOrderS[i])*SootConst::avogadros;
+    m_sootData->unitConv[i] = std::pow(sc.V0, sc.MomOrderV[i]) *
+                              std::pow(sc.S0, sc.MomOrderS[i]) * sc.avogadros;
     // Used for computing nucleation source term
-    momFact[i] = std::pow(SootConst::nuclVol, SootConst::MomOrderV[i])*
-      std::pow(SootConst::nuclSurf, SootConst::MomOrderS[i]);
+    m_sootData->momFact[i] =
+      std::pow(nuclVol, sc.MomOrderV[i]) * std::pow(nuclSurf, sc.MomOrderS[i]);
   }
   // and to convert the weight of the delta function
-  SootConst::unitConv[NUM_SOOT_MOMENTS] = SootConst::avogadros;
+  m_sootData->unitConv[NUM_SOOT_MOMENTS] = sc.avogadros;
 
   // Coagulation, oxidation, and fragmentation factors
-  const Real lambdaCoagFact =
-    1./(std::pow(6.*SootConst::SootMolarMass/(M_PI*SootConst::SootDensity*SootConst::avogadros), 1./3.));
+  m_sootData->lambdaCF =
+    1. /
+    (std::pow(
+      6. * sc.SootMolarMass / (M_PI * sc.SootDensity * sc.avogadros), 1. / 3.));
   for (int i = 0; i != NUM_SOOT_MOMENTS; ++i) {
-    const Real expFact = SootConst::MomOrderV[i] + 2./3.*SootConst::MomOrderS[i];
+    const Real expFact = sc.MomOrderV[i] + 2. / 3. * sc.MomOrderS[i];
     const Real factor = (std::pow(2., expFact - 1.) - 1.);
-    ssfmCoagFact[i] =
-      std::pow(2., 2.5)*factor*std::pow(SootConst::nuclVol, expFact + 1./6.);
-    sscnCoagFact[i] = factor*std::pow(SootConst::nuclVol, expFact);
-    smallOxidFact[i] = std::pow(SootConst::nuclVol, expFact - 1./3.);
-    fragFact[i] = std::pow(2., 1. - SootConst::MomOrderV[i] - SootConst::MomOrderS[i]) - 1.;
+    m_sootData->ssfmCF[i] =
+      std::pow(2., 2.5) * factor * std::pow(nuclVol, expFact + 1. / 6.);
+    m_sootData->sscnCF[i] = factor * std::pow(nuclVol, expFact);
+    m_sootData->smallOF[i] = std::pow(nuclVol, expFact - 1. / 3.);
+    m_sootData->fragFact[i] =
+      std::pow(2., 1. - sc.MomOrderV[i] - sc.MomOrderS[i]) - 1.;
   }
-  const Real ne32 = nuclVolExp3[2 + 3];
-  const Real ne3m = nuclVolExp3[-1 + 3];
-  ssfmCoagFact[NUM_SOOT_MOMENTS] = std::pow(2., 2.5)*
-    std::pow(1./SootConst::nuclVol, 0.5)*ne32;
-  smallOxidFact[NUM_SOOT_MOMENTS] = ne3m;
+  const Real ne32 = m_sootData->nve3[2 + 3];
+  const Real ne3m = m_sootData->nve3[-1 + 3];
+  m_sootData->ssfmCF[NUM_SOOT_MOMENTS] =
+    std::pow(2., 2.5) * std::pow(1. / nuclVol, 0.5) * ne32;
+  m_sootData->smallOF[NUM_SOOT_MOMENTS] = ne3m;
 
   // Beta and dimer factors
   // cm^0.5 mol^-1
-  const Real dnfact = 4.*std::sqrt(2.)*SootConst::colFact16*
-    SootConst::colFactPi23*SootConst::avogadros;
-  m_betaDimerFact = dnfact*std::pow(0.5*SootConst::dimerVol, 1./6.);
-  m_betaNuclFact = 2.2*dnfact*dimerExp6[2];
+  const Real dnfact =
+    4. * std::sqrt(2.) * sc.colFact16 * sc.colFactPi23 * sc.avogadros;
+  m_betaDimerFact = dnfact * std::pow(0.5 * dimerVol, 1. / 6.);
+  m_betaNuclFact = 2.2 * dnfact * m_sootData->dime6[2];
 
   /// Condensation factor
-  const Real condFact = std::sqrt((1./SootConst::nuclVol) + (1./SootConst::dimerVol))*
-    std::pow((std::pow(SootConst::nuclVol, 1./3.) + std::pow(SootConst::dimerVol, 1./3.)), 2.);
-  // Build the vectors in the data container
-  m_SootDataContainer.build(dimerExp6, nuclVolExp3, nuclVolExp6, momFact,
-                            ssfmCoagFact, sscnCoagFact, smallOxidFact,
-                            fragFact, condFact, lambdaCoagFact);
+  m_sootData->condFact =
+    std::sqrt((1. / nuclVol) + (1. / dimerVol)) *
+    std::pow((std::pow(nuclVol, 1. / 3.) + std::pow(dimerVol, 1. / 3.)), 2.);
   m_memberDataDefined = true;
 }
 
 // Add derive plot variables
 void
-SootModel::addSootDerivePlotVars(DeriveList&           derive_lst,
-                                 const DescriptorList& desc_lst)
+SootModel::addSootDerivePlotVars(
+  DeriveList& derive_lst, const DescriptorList& desc_lst)
 {
   // Add in soot variables
   Vector<std::string> sootNames = {"rho_soot", "soot_dp", "soot_np"};
-  derive_lst.add("soot_vars",IndexType::TheCellType(),sootNames.size(),
-                 sootNames,soot_genvars, the_same_box);
-  derive_lst.addComponent("soot_vars",desc_lst,0,PeleC::Density, NVAR);
+  derive_lst.add(
+    "soot_vars", IndexType::TheCellType(), sootNames.size(), sootNames,
+    soot_genvars, the_same_box);
+  derive_lst.addComponent("soot_vars", desc_lst, 0, PeleC::Density, NVAR);
 
   // Variables associated with the second mode (large particles)
   Vector<std::string> large_part_names = {"NL", "VL", "SL"};
-  derive_lst.add("soot_large_particles",IndexType::TheCellType(),
-                 large_part_names.size(),large_part_names,
-                 soot_largeparticledata, the_same_box);
-  derive_lst.addComponent("soot_large_particles",desc_lst,0,PeleC::Density, NVAR);
+  derive_lst.add(
+    "soot_large_particles", IndexType::TheCellType(), large_part_names.size(),
+    large_part_names, soot_largeparticledata, the_same_box);
+  derive_lst.addComponent(
+    "soot_large_particles", desc_lst, 0, PeleC::Density, NVAR);
 }
 
 // Add soot source term
 void
-SootModel::addSootSourceTerm(const Box&                vbox,
-                             Array4<const Real> const& Qstate,
-                             Array4<const Real> const& coeff_state,
-                             Array4<Real> const&       soot_state,
-                             const Real                time,
-                             const Real                dt) const
+SootModel::addSootSourceTerm(
+  const Box& vbox,
+  Array4<const Real> const& Qstate,
+  Array4<const Real> const& coeff_state,
+  Array4<Real> const& soot_state,
+  const Real time,
+  const Real dt) const
 {
   AMREX_ASSERT(m_memberDataDefined);
   BL_PROFILE("SootModel::addSootSourceTerm");
@@ -298,129 +270,134 @@ SootModel::addSootSourceTerm(const Box&                vbox,
   EOS::molecular_weight(mw_fluid);
 
   // H2 absorbs the error from surface reactions
-  const int absorbIndx = SootConst::GasSpecIndx::indxH2;
-  const int absorbIndxN = SootConst::refIndx[absorbIndx];
+  const int absorbIndx = SootGasSpecIndx::indxH2;
+  const int absorbIndxN = m_sootData->refIndx[absorbIndx];
   const int absorbIndxP = specIndx + absorbIndxN;
 
-  SootData sd = m_SootDataContainer.getSootData();
-  SootReactions sr = m_SootReactionContainer.getSootReactions();
+  SootConst sc;
+  SootData const* sd = m_sootData.get();
+  SootReaction const* sr = m_sootReact.get();
   amrex::ParallelFor(vbox, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-      Real Hi[NUM_SPECIES];
-      Real omega_src[NUM_SOOT_GS];
-      // Molar concentrations (mol/cm^3)
-      Real xi_n[NUM_SOOT_GS];
-      // Array of moment values M_xy (cm^(3(x + 2/3y))cm^(-3))
-      // M00, M10, M01,..., N0
-      Real moments[NUM_SOOT_VARS];
-      /*
-        These are the values inside the terms in fracMom
-        momFV[NUM_SOOT_MOMENTS] - Weight of the delta function
-        momFV[NUM_SOOT_MOMENTS+1] - modeCoef
-        where modeCoef signifies the number of modes to be used
-        If the moments are effectively zero, modeCoef = 0 and only 1 mode is used
-        Otherwise, modeCoef = 1 and both modes are used
-        The rest of the momFV values are used in fracMom fact1 = momFV[0],
-        fact2 = momFV[1]^volOrd, fact2 = momFV[2]^surfOrd, etc.
-      */
-      Real momFV[NUM_SOOT_VARS+1];
-      // Array of source terms for moment equations
-      Real mom_src[NUM_SOOT_VARS];
-      const Real rho = Qstate(i, j, k, qRhoIndx);
-      const Real T = Qstate(i, j, k, qTempIndx);
-      // Dynamic viscosity
-      const Real mu = coeff_state(i, j, k, dComp_mu);
-      // Compute species enthalpy
-      EOS::T2Hi(T, Hi);
-      // Extract mass fractions for gas phases corresponding to GasSpecIndx
-      // Compute the average molar mass (g/mol)
-      Real molarMass = 0.;
-      for (int sp = 0; sp != NUM_SOOT_GS; ++sp) {
-        const int specConvIndx = SootConst::refIndx[sp];
-        const int peleIndx = qSpecIndx + specConvIndx;
-        Real cn = Qstate(i, j, k, peleIndx);
-        Real conv = cn/mw_fluid[specConvIndx];
-        xi_n[sp] = rho*conv;
-        molarMass += conv;
-        // Reset the reaction source term
-        omega_src[sp] = 0.;
-      }
-      molarMass = 1./molarMass;
-      // Molar concentration of the PAH inception species
-      Real xi_PAH = xi_n[SootConst::GasSpecIndx::indxPAH];
-      // Extract moment values
-      for (int mom = 0; mom != NUM_SOOT_VARS; ++mom) {
-        const int peleIndx = qSootIndx + mom;
-        moments[mom] = Qstate(i, j, k, peleIndx);
-        // Reset moment source
-        mom_src[mom] = 0.;
-      }
-      // Convert moments from CGS to mol of C
-      SootConst::convertCGStoMol(moments);
-      // Clip moments
-      sd.clipMoments(moments);
-      // Compute constant values used throughout
-      // (R*T*Pi/(2*A*rho_soot))^(1/2)
-      const Real convT = std::sqrt(SootConst::colFact*T);
-      // Constant for free molecular collisions
-      const Real colConst = convT*SootConst::colFactPi23*
-        SootConst::colFact16*SootConst::avogadros;
-      // Collision frequency between two dimer in the free
-      // molecular regime with van der Waals enhancement
-      // Units: cm^3/mol-s
-      const Real betaNucl = convT*betaNF;
-      // Compute the vector of factors used for moment interpolation
-      sd.computeFracMomVect(moments, momFV);
-      // Compute the dimerization rate
-      const Real dimerRate = sr.dimerRate(T, xi_PAH);
-      // Estimate [DIMER]
-      Real dimerConc = sd.dimerization(convT, betaNucl, dimerRate, momFV);
-      // Add the nucleation source term to mom_src
-      sd.nucleationMomSrc(betaNucl, dimerConc, mom_src);
-      // Add the condensation source term to mom_src
-      sd.condensationMomSrc(colConst, dimerConc, momFV, mom_src);
-      // Add the coagulation source term to mom_src
-      sd.coagulationMomSrc(colConst, T, mu, rho, molarMass, momFV, mom_src);
-      Real surf = SootConst::S0*sd.fracMom(0., 1., momFV);
-      // Reaction rates for surface growth (k_sg), oxidation (k_ox),
-      // and fragmentation (k_o2)
-      Real k_sg = 0.;
-      Real k_ox = 0.;
-      Real k_o2 = 0.;
-      // Compute the species reaction source terms into omega_src
-      sr.chemicalSrc(T, surf, xi_n, moments, k_sg, k_ox, k_o2, omega_src);
-      // Compute the continuity and energy source term
-      Real rho_src = 0.;
-      Real eng_src = 0.;
-      for (int sp = 0; sp != NUM_SOOT_GS; ++sp) {
-        // Convert from local gas species index to global gas species index
-        const int specConvIndx = SootConst::refIndx[sp];
-        // Convert to proper units
-        omega_src[sp] *= mw_fluid[specConvIndx];
-        const int peleIndx = specIndx + specConvIndx;
-        soot_state(i, j, k, peleIndx) += omega_src[sp];
-        rho_src += omega_src[sp];
-        eng_src += omega_src[sp]*Hi[specConvIndx];
-      }
-      // Add the surface growth source to mom_src
-      sd.surfaceGrowthMomSrc(k_sg, momFV, mom_src);
-      sd.oxidFragMomSrc(k_ox, k_o2, momFV, mom_src);
-      // Convert moment source terms back to CGS units
-      SootConst::convertMoltoCGS(mom_src, moments);
-      if (conserveMass) {
-        // Difference between mass lost from fluid and mass gained to soot
-        Real del_rho_dot = rho_src + mom_src[1]*SootConst::SootDensity;
-        // Add that mass to H2
-        soot_state(i, j, k, absorbIndxP) -= del_rho_dot;
-        rho_src -= del_rho_dot;
-        eng_src -= Hi[absorbIndxN]*del_rho_dot;
-      }
-      // Add density source term
-      soot_state(i, j, k, rhoIndx) += rho_src;
-      soot_state(i, j, k, engIndx) -= eng_src;
-      // Add moment source terms
-      for (int mom = 0; mom != NUM_SOOT_VARS; ++mom) {
-        const int peleIndx = sootIndx + mom;
-        soot_state(i, j, k, peleIndx) += mom_src[mom];
-      }
-    });
+    GpuArray<Real, NUM_SPECIES> Hi;
+    GpuArray<Real, NUM_SOOT_GS> omega_src;
+    // Molar concentrations (mol/cm^3)
+    GpuArray<Real, NUM_SOOT_GS> xi_n;
+    // Array of moment values M_xy (cm^(3(x + 2/3y))cm^(-3))
+    // M00, M10, M01,..., N0
+    GpuArray<Real, NUM_SOOT_VARS> moments;
+    Real* momentsPtr = moments.data();
+    /*
+      These are the values inside the terms in fracMom
+      momFV[NUM_SOOT_MOMENTS] - Weight of the delta function
+      momFV[NUM_SOOT_MOMENTS+1] - modeCoef
+      where modeCoef signifies the number of modes to be used
+      If the moments are effectively zero, modeCoef = 0 and only 1 mode is used
+      Otherwise, modeCoef = 1 and both modes are used
+      The rest of the momFV values are used in fracMom fact1 = momFV[0],
+      fact2 = momFV[1]^volOrd, fact2 = momFV[2]^surfOrd, etc.
+    */
+    GpuArray<Real, NUM_SOOT_VARS + 1> mom_fv;
+    Real* mom_fvPtr = mom_fv.data();
+    // Array of source terms for moment equations
+    GpuArray<Real, NUM_SOOT_VARS> mom_src;
+    Real* mom_srcPtr = mom_src.data();
+    const Real rho = Qstate(i, j, k, qRhoIndx) * sc.rho_conv;
+    const Real T = Qstate(i, j, k, qTempIndx);
+    // Dynamic viscosity
+    const Real mu = coeff_state(i, j, k, dComp_mu);
+    // Compute species enthalpy
+    EOS::T2Hi(T, Hi.data());
+    // Extract mass fractions for gas phases corresponding to GasSpecIndx
+    // Compute the average molar mass (g/mol) or (kg/mol)
+    Real molarMass = 0.;
+    for (int sp = 0; sp != NUM_SOOT_GS; ++sp) {
+      const int specConvIndx = sd->refIndx[sp];
+      const int peleIndx = qSpecIndx + specConvIndx;
+      Real cn = Qstate(i, j, k, peleIndx);
+      Real conv = cn / mw_fluid[specConvIndx];
+      xi_n[sp] = rho * conv;
+      molarMass += conv;
+      // Reset the reaction source term
+      omega_src[sp] = 0.;
+    }
+    molarMass = 1. / molarMass;
+    // Molar concentration of the PAH inception species
+    Real xi_PAH = xi_n[SootGasSpecIndx::indxPAH];
+    // Extract moment values
+    for (int mom = 0; mom != NUM_SOOT_VARS; ++mom) {
+      const int peleIndx = qSootIndx + mom;
+      moments[mom] = Qstate(i, j, k, peleIndx);
+      // Reset moment source
+      mom_src[mom] = 0.;
+    }
+    // Convert moments from CGS/SI to mol of C
+    sd->convertToMol(moments.data());
+    // Clip moments
+    sd->clipMoments(moments.data());
+    // Compute constant values used throughout
+    // (R*T*Pi/(2*A*rho_soot))^(1/2)
+    const Real convT = std::sqrt(sc.colFact * T);
+    // Constant for free molecular collisions
+    const Real colConst = convT * sc.colFactPi23 * sc.colFact16 * sc.avogadros;
+    // Collision frequency between two dimer in the free
+    // molecular regime with van der Waals enhancement
+    // Units: cm^3/mol-s
+    const Real betaNucl = convT * betaNF;
+    // Compute the vector of factors used for moment interpolation
+    sd->computeFracMomVect(moments.data(), mom_fvPtr);
+    // Compute the dimerization rate
+    const Real dimerRate = sr->dimerRate(T, xi_PAH);
+    // Estimate [DIMER]
+    Real dimerConc = sd->dimerization(convT, betaNucl, dimerRate, mom_fvPtr);
+    // Add the nucleation source term to mom_src
+    sd->nucleationMomSrc(betaNucl, dimerConc, mom_srcPtr);
+    // Add the condensation source term to mom_src
+    sd->condensationMomSrc(colConst, dimerConc, mom_fvPtr, mom_srcPtr);
+    // Add the coagulation source term to mom_src
+    sd->coagulationMomSrc(
+      colConst, T, mu, rho, molarMass, mom_fvPtr, mom_srcPtr);
+    Real surf = sc.S0 * sd->fracMom(0., 1., mom_fvPtr);
+    // Reaction rates for surface growth (k_sg), oxidation (k_ox),
+    // and fragmentation (k_o2)
+    Real k_sg = 0.;
+    Real k_ox = 0.;
+    Real k_o2 = 0.;
+    // Compute the species reaction source terms into omega_src
+    sr->chemicalSrc(
+      T, surf, xi_n.data(), moments.data(), k_sg, k_ox, k_o2, omega_src.data());
+    // Compute the continuity and energy source term
+    Real rho_src = 0.;
+    Real eng_src = 0.;
+    for (int sp = 0; sp != NUM_SOOT_GS; ++sp) {
+      // Convert from local gas species index to global gas species index
+      const int specConvIndx = sd->refIndx[sp];
+      // Convert to proper units
+      omega_src[sp] *= mw_fluid[specConvIndx];
+      const int peleIndx = specIndx + specConvIndx;
+      soot_state(i, j, k, peleIndx) += omega_src[sp] * sc.mass_src_conv;
+      rho_src += omega_src[sp];
+      eng_src += omega_src[sp] * Hi[specConvIndx];
+    }
+    // Add the surface growth source to mom_src
+    sd->surfaceGrowthMomSrc(k_sg, mom_fvPtr, mom_srcPtr);
+    sd->oxidFragMomSrc(k_ox, k_o2, mom_fvPtr, mom_srcPtr);
+    // Convert moment source terms back to CGS/SI units
+    sd->convertFromMol(mom_srcPtr, momentsPtr);
+    if (conserveMass) {
+      // Difference between mass lost from fluid and mass gained to soot
+      Real del_rho_dot = rho_src + mom_src[1] * sc.SootDensity;
+      // Add that mass to H2
+      soot_state(i, j, k, absorbIndxP) -= del_rho_dot * sc.mass_src_conv;
+      rho_src -= del_rho_dot;
+      eng_src -= Hi[absorbIndxN] * del_rho_dot;
+    }
+    // Add density source term
+    soot_state(i, j, k, rhoIndx) += rho_src * sc.mass_src_conv;
+    soot_state(i, j, k, engIndx) -= eng_src * sc.eng_src_conv;
+    // Add moment source terms
+    for (int mom = 0; mom != NUM_SOOT_VARS; ++mom) {
+      const int peleIndx = sootIndx + mom;
+      soot_state(i, j, k, peleIndx) += mom_src[mom];
+    }
+  });
 }

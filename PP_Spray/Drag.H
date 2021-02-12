@@ -7,6 +7,8 @@
 #include <AMReX_ParIter.H>
 #include <AMReX_Particles.H>
 #include <AMReX_REAL.H>
+#include <Transport.H>
+#include <TransportParams.H>
 
 using namespace amrex;
 

@@ -279,22 +279,6 @@ public:
     tmp_source.setVal(0.);
   }
 
-  ///
-  /// Insert particles according to some criterion
-  ///
-  bool insertParticles(
-    amrex::Real time,
-    amrex::Real dt,
-    int nstep,
-    int level,
-    int finest_level,
-#ifdef SPRAY_PELE_LM
-    ProbParm const& prob_parm
-#else
-    ProbParmHost const& prob_parm
-#endif
-  );
-
   bool injectParticles(
     amrex::Real time,
     amrex::Real dt,
@@ -304,7 +288,8 @@ public:
 #ifdef SPRAY_PELE_LM
     ProbParm const& prob_parm
 #else
-    ProbParmHost const& prob_parm
+    ProbParmHost const& prob_parm,
+    ProbParmDevice const& prob_parm_d
 #endif
   );
 
@@ -312,7 +297,7 @@ public:
 #ifdef SPRAY_PELE_LM
     ProbParm const& prob_parm
 #else
-    ProbParmHost const& prob_parm
+    ProbParmHost const& prob_parm, ProbParmDevice const& prob_parm_d
 #endif
   );
 

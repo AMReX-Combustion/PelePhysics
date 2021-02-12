@@ -19,8 +19,6 @@
 #include "SootData.H"
 #include "SootReactions.H"
 
-using namespace amrex;
-
 class SootModel
 {
 public:
@@ -32,7 +30,11 @@ public:
   //
   // Destructor
   //
-  ~SootModel() {};
+  ~SootModel()
+  {
+    m_sootData.reset();
+    m_sootReact.reset();
+  };
 
   //
   // Define instance of class
@@ -47,28 +49,24 @@ public:
   //
   // Define member data
   //
-  void defineMemberData();
+  void defineMemberData(const Real dimerVol);
 
   //
   // Define the derived variable list (SootModel_setup.cpp)
   //
-  void addSootDerivePlotVars(DeriveList&           derive_lst,
-                             const DescriptorList& desc_lst);
+  void
+  addSootDerivePlotVars(DeriveList& derive_lst, const DescriptorList& desc_lst);
 
   //
   // Compute HMOM source term
   //
-  void addSootSourceTerm(const Box&                vbox,
-                         Array4<const Real> const& Qstate,
-                         Array4<const Real> const& coeff_state,
-                         Array4<Real> const&       soot_state,
-                         const Real                time,
-                         const Real                dt) const;
-
-  inline SootData getSootData()
-  {
-    return m_SootDataContainer.getSootData();
-  }
+  void addSootSourceTerm(
+    const Box& vbox,
+    Array4<const Real> const& Qstate,
+    Array4<const Real> const& coeff_state,
+    Array4<Real> const& soot_state,
+    const Real time,
+    const Real dt) const;
 
   /***********************************************************************
     Reaction functions (SootModel_react.cpp)
@@ -86,7 +84,7 @@ public:
   //
   inline void setTimeStep(const Real soot_dt)
   {
-    local_soot_dt = amrex::min(local_soot_dt, m_maxDtRate*soot_dt);
+    local_soot_dt = amrex::min(local_soot_dt, m_maxDtRate * soot_dt);
   }
 
   //
@@ -109,21 +107,26 @@ public:
     return m_sootVarName[indx];
   }
 
+  //
+  // Return pointer to soot data
+  //
+  inline SootData* getSootData() { return m_sootData.get(); }
+
   /***********************************************************************
     Member data
   ***********************************************************************/
 
 public:
-
-  /// Units for moments are cm^3(x + 2/3y)/cm^3
-  /// Units for the weight of the delta function are 1/cm^3
+  /// Units for moments are L^3(x + 2/3y)/L^3
+  /// Units for the weight of the delta function are 1/L^3
+  /// Where L is cm for PeleC and m for PeleLM
 
   /// Verbosity for soot model
   int m_sootVerbosity;
-  /// Container for soot data and soot specific functions
-  SootDataContainer m_SootDataContainer;
-  /// Container for soot reaction
-  SootReactionContainer m_SootReactionContainer;
+  /// Pointer to soot data and soot specific functions
+  std::unique_ptr<SootData> m_sootData;
+  /// Pointer for soot reaction data
+  std::unique_ptr<SootReaction> m_sootReact;
   /// Bool for checking if parameters have been read from input file
   bool m_readSootParams;
   /// Bool for checking if member data has all been defined
