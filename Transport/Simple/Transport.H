@@ -15,7 +15,7 @@
 void transport_init();
 void transport_close();
 
-AMREX_GPU_DEVICE 
+AMREX_GPU_HOST_DEVICE 
 AMREX_FORCE_INLINE
 void comp_pure_bulk(
       amrex::Real Tloc, 
@@ -77,7 +77,7 @@ void comp_pure_bulk(
 }
 
 
-AMREX_GPU_DEVICE
+AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void transport(
       bool wtr_get_xi,
@@ -221,7 +221,7 @@ void transport(
 }
 
 
-AMREX_GPU_DEVICE
+AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void get_transport_coeffs(
       amrex::Box const& bx,

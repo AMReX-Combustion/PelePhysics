@@ -29,9 +29,9 @@ typedef struct {
       int iverbose;
       int ianalytical_jacobian;
       int ireactor_type;
-      int iimplicit_solve;
-      int iuse_erkstep;
-      int boxcell;
+      int iimplicit_solve = 0;
+      int iuse_erkstep = 0;
+      int boxcell = 0;
 
       amrex::Real *Yvect_full = NULL;
       amrex::Real *rhoX_init = NULL;

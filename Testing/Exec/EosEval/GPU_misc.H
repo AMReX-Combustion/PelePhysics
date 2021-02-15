@@ -8,17 +8,19 @@
 #include <EOS.H>
 
 AMREX_GPU_HOST_DEVICE
-inline
+AMREX_FORCE_INLINE
 void
 initialize_data(int i, int j, int k,  
 		amrex::Array4<amrex::Real> const& mf,
 		amrex::Array4<amrex::Real> const& temp,
 		amrex::Array4<amrex::Real> const& rho,
 		amrex::Array4<amrex::Real> const& energy,
-                std::vector<amrex::Real> dx, 
-		std::vector<amrex::Real> plo, 
-		std::vector<amrex::Real> phi ) noexcept
+		amrex::GeometryData const& geomdata) noexcept
 {
+   const amrex::Real* plo = geomdata.ProbLo();
+   const amrex::Real* phi = geomdata.ProbHi();
+   const amrex::Real* dx  = geomdata.CellSize();
+
 	amrex::Real dTemp = 5.0;
 	amrex::Real dRho = 0.005;
 	amrex::Real denergy = 100.0;
@@ -73,11 +75,11 @@ initialize_data(int i, int j, int k,
 
 
 AMREX_GPU_HOST_DEVICE
-inline
+AMREX_FORCE_INLINE
 void
 get_cp(int i, int j, int k,  
-	amrex::Array4<amrex::Real> const& mf,
-	amrex::Array4<amrex::Real> const& temp,
+	amrex::Array4<const amrex::Real> const& mf,
+	amrex::Array4<const amrex::Real> const& temp,
 	amrex::Array4<amrex::Real> const& cp) noexcept 
 {
 
@@ -90,11 +92,11 @@ get_cp(int i, int j, int k,
 }
 
 AMREX_GPU_HOST_DEVICE
-inline
+AMREX_FORCE_INLINE
 void
 get_cv(int i, int j, int k,  
-	amrex::Array4<amrex::Real> const& mf,
-	amrex::Array4<amrex::Real> const& temp,
+	amrex::Array4<const amrex::Real> const& mf,
+	amrex::Array4<const amrex::Real> const& temp,
 	amrex::Array4<amrex::Real> const& cv) noexcept 
 {
 
@@ -108,12 +110,12 @@ get_cv(int i, int j, int k,
 
 
 AMREX_GPU_HOST_DEVICE
-inline
+AMREX_FORCE_INLINE
 void
 get_T_from_EY(int i, int j, int k,  
-	amrex::Array4<amrex::Real> const& mf,
+	amrex::Array4<const amrex::Real> const& mf,
 	amrex::Array4<amrex::Real> const& temp,
-	amrex::Array4<amrex::Real> const& energy) noexcept 
+	amrex::Array4<const amrex::Real> const& energy) noexcept 
 {
 
 	amrex::GpuArray<amrex::Real,NUM_SPECIES> mf_pt;

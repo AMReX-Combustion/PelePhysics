@@ -108,7 +108,7 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE)
 
 $(ONE_SUNDIALS_SRC_FILE):
 	@mkdir -p $(SUNDIALS_SOURCE_DIR)
-	@git clone https://github.com/LLNL/sundials $(SUNDIALS_SOURCE_DIR)
+	@[ "$(shell ls -A $(SUNDIALS_SOURCE_DIR))" ] || git clone https://github.com/LLNL/sundials $(SUNDIALS_SOURCE_DIR)
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
 	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
