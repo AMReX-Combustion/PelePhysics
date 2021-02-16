@@ -30,8 +30,8 @@ module actual_transport_module
   real(amrex_real), save, allocatable :: Afac(:,:)
   real(amrex_real), save, allocatable :: Bfac(:,:)
   real(amrex_real), save, allocatable :: Sigmaij(:,:)
-  real(amrex_real), parameter :: Avna = 6.022140857e23
-  real(amrex_real), parameter :: PI = 4 * atan (1.0)
+  real(amrex_real), parameter :: Avna = 6.022140857d23
+  real(amrex_real), parameter :: PI = 4.0d0 * atan (1.0d0)
   real(amrex_real), save, allocatable :: Kappai(:)
 
 contains
@@ -104,7 +104,7 @@ contains
 
     Afac(1,1) = 6.32402d0;     Afac(1,2) = 50.41190d0;  Afac(1,3) = -51.68010d0; Afac(1,4) = 1189.020d0
 
-    Afac(2,1) = 0.12102e-2;    Afac(2,2) = -0.11536e-2; Afac(2,3) = -0.62571e-2; Afac(2,4) = 0.37283d-1
+    Afac(2,1) = 0.12102d-2;    Afac(2,2) = -0.11536d-2; Afac(2,3) = -0.62571d-2; Afac(2,4) = 0.37283d-1
 
     Afac(3,1) = 5.28346d0;     Afac(3,2) = 254.209d0;   Afac(3,3) = -168.48100d0; Afac(3,4) = 3898.27000d0
 
@@ -116,16 +116,16 @@ contains
 
     Afac(7,1) = 24.27450d0;    Afac(7,2) = 3.44945d0;   Afac(7,3) = -11.29130d0; Afac(7,4) = 69.34660d0
 
-    Afac(8,1) = 0.79716d0;     Afac(8,2) = 1.11764d0;   Afac(8,3) = 0.12348e-1; Afac(8,4) = -4.11661d0 
+    Afac(8,1) = 0.79716d0;     Afac(8,2) = 1.11764d0;   Afac(8,3) = 0.12348d-1; Afac(8,4) = -4.11661d0
 
-    Afac(9,1) = -0.23816d0;    Afac(9,2) = 0.67695e-1;  Afac(9,3) = -0.81630d0; Afac(9,4) = 4.02528d0
+    Afac(9,1) = -0.23816d0;    Afac(9,2) = 0.67695d-1;  Afac(9,3) = -0.81630d0; Afac(9,4) = 4.02528d0
 
-    Afac(10,1) = 0.68629e-1;   Afac(10,2) = 0.34793d0;  Afac(10,3) = 0.59256d0; Afac(10,4) = -0.72663d0
+    Afac(10,1) = 0.68629d-1;   Afac(10,2) = 0.34793d0;  Afac(10,3) = 0.59256d0; Afac(10,4) = -0.72663d0
 
     A_cst = 1.16145d0;  B_cst = 0.14874d0
     C_cst = 0.52487d0;  D_cst = 0.77320d0
     E_cst = 2.16178d0;  F_cst = 2.43787d0
-    G_cst = -6.435e-4;  H_cst = 7.27371d0
+    G_cst = -6.435d-4;  H_cst = 7.27371d0
     S_cst = 18.0323d0;  W_cst = -0.76830d0
 
     Bfac(1,1) = 2.41657d0;   Bfac(1,2) = 0.74824d0;   Bfac(1,3) = -0.91858d0;  Bfac(1,4) = 121.721d0
@@ -141,7 +141,7 @@ contains
     do j = 1,nspecies
        do i = 1,nspecies
 !!$         Sigmaij(i,j) = sqrt(sig(i)*sig(j))*1e-8  ! converted into cm
-          Sigmaij(i,j) = 0.5d0*(sig(i)+sig(j))*1e-8  ! converted into cm
+          Sigmaij(i,j) = 0.5d0*(sig(i)+sig(j))*1d-8  ! converted into cm
        end do
     end do
 
@@ -788,7 +788,7 @@ contains
     real(amrex_real) :: sumMWij,lambda_p,beta
     real(amrex_real) :: y,G1,G2,eta_P, H2
     real(amrex_real) :: A(10), B(7)
-    real(amrex_real), parameter :: dpFactor = 297.2069113e6
+    real(amrex_real), parameter :: dpFactor = 297.2069113d+6
 
 
     real(amrex_real)  :: scr
@@ -838,7 +838,7 @@ contains
        end do
 
 
-       Mw_m = MW_m **2
+       Mw_m = MW_m * MW_m
 
        sigma_M = sigma_M_3**(1.0d0/3.0d0)
 
@@ -852,7 +852,7 @@ contains
 
        Tcm = 1.2593d0*Epsilon_M              ! K
 
-       Vcm = 1.8887*sigma_M_3                ! cm3/mol
+       Vcm = 1.8887d0*sigma_M_3                ! cm3/mol
 
        Omega_M = Omega_M*InvSigma3          
 
@@ -873,7 +873,7 @@ contains
        
        G2 = (A(1)*(1.0d0-exp(-A(4)*y))/y + A(2)*G1*exp(A(5)*y) + A(3)*G1)/(A(1)*A(4)+A(2)+A(3))
 
-       eta_P = (36.344e-6*sqrt(MW_m*Tcm)/(Vcm**(2.0d0/3.0d0)))*A(7)*y*y*G2*exp(A(8) + A(9)/Tstar + A(10)/(Tstar*Tstar))
+       eta_P = (36.344d-6*sqrt(MW_m*Tcm)/(Vcm**(2.0d0/3.0d0)))*A(7)*y*y*G2*exp(A(8) + A(9)/Tstar + A(10)/(Tstar*Tstar))
 
        ! Viscosity
 !      if (which % wtr_get_mu) then
@@ -903,9 +903,9 @@ contains
 
        H2 = (B(1)*(1.0d0-exp(-B(4)*y))/y + B(2)*G1*exp(B(5)*y) + B(3)*G1)/(B(1)*B(4)+B(2)+B(3))
 
-       lambda_p = 3.039e-4*sqrt(Tcm/MW_m)/(Vcm**(2.0d0/3.0d0))*B(7)*y*y*H2*sqrt(Tstar)  ! (cal/cm s K)
+       lambda_p = 3.039d-4*sqrt(Tcm/MW_m)/(Vcm**(2.0d0/3.0d0))*B(7)*y*y*H2*sqrt(Tstar)  ! (cal/cm s K)
 
-       lambda_p = lambda_p* 4.184e+7   ! erg/(cm s K)
+       lambda_p = lambda_p* 4.184d+7   ! erg/(cm s K)
 
        beta = (1.0d0/H2)+B(6)*y  ! Non-dimensional 
 
