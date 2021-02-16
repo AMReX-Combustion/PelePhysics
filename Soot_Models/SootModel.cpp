@@ -247,7 +247,7 @@ void
 SootModel::addSootSourceTerm(
   const Box& vbox,
   Array4<const Real> const& Qstate,
-  Array4<const Real> const& coeff_state,
+  Array4<const Real> const& coeff_mu,
   Array4<Real> const& soot_state,
   const Real time,
   const Real dt) const
@@ -309,7 +309,7 @@ SootModel::addSootSourceTerm(
     const Real rho = Qstate(i, j, k, qRhoIndx) * sc.rho_conv;
     const Real T = Qstate(i, j, k, qTempIndx);
     // Dynamic viscosity
-    const Real mu = coeff_state(i, j, k, dComp_mu);
+    const Real mu = coeff_mu(i, j, k);
     // Compute species enthalpy
     EOS::T2Hi(T, Hi.data());
     // Extract mass fractions for gas phases corresponding to GasSpecIndx

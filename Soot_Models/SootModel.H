@@ -63,7 +63,7 @@ public:
   void addSootSourceTerm(
     const Box& vbox,
     Array4<const Real> const& Qstate,
-    Array4<const Real> const& coeff_state,
+    Array4<const Real> const& coeff_mu,
     Array4<Real> const& soot_state,
     const Real time,
     const Real dt) const;
