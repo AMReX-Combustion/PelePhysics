@@ -962,7 +962,7 @@ RTY2transport(amrex::Real R, amrex::Real T, amrex::Real Y[],
     + am * (2.0*tau + bm) * InvEosT2Denom*InvEosT2Denom;
   
   for (int ii = 0; ii < NUM_SPECIES; ii++) {
-    Rmk = Rm * inv_mwt[ii];
+    Rmk = EOS::RU * inv_mwt[ii];
     dpdYk[ii] = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom
       + EOS::Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom
 		       + am * InvEosT2Denom * InvEosT3Denom);
@@ -982,7 +982,7 @@ RTY2transport(amrex::Real R, amrex::Real T, amrex::Real Y[],
     }
     dijY[ii][ii] = wbar * inv_mwt[ii];   
     for (int jj = 0; jj < NUM_SPECIES; jj++) {
-      dijY[ii][jj] -= diP[ii] * dpdYk[jj]
+      dijY[ii][jj] += - diP[ii] * dpdYk[jj]
 	+ wbar * Y[ii] *InvEosT1Denom * (EOS::Bi[ii] * inv_mwt[jj]
 					 + EOS::Bi[jj] * inv_mwt[ii])
 	+ Y[ii] * InvEosT1Denom * InvEosT1Denom * EOS::Bi[ii] * EOS::Bi[jj]
