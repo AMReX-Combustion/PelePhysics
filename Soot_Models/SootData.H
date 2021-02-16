@@ -27,7 +27,7 @@ struct SootData : Gpu::Managed
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   convertToMol(Real moments[]) const
   {
-    for (int i = 0; i != NUM_SOOT_VARS; ++i)
+    for (int i = 0; i < NUM_SOOT_VARS; ++i)
       moments[i] /= unitConv[i];
   }
 
@@ -35,7 +35,7 @@ struct SootData : Gpu::Managed
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   convertFromMol(Real mom_src[]) const
   {
-    for (int i = 0; i != NUM_SOOT_VARS; ++i)
+    for (int i = 0; i < NUM_SOOT_VARS; ++i)
       mom_src[i] *= unitConv[i];
   }
 
@@ -43,7 +43,7 @@ struct SootData : Gpu::Managed
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   convertFromMol(Real mom_src[], Real moments[]) const
   {
-    for (int i = 0; i != NUM_SOOT_VARS; ++i) {
+    for (int i = 0; i < NUM_SOOT_VARS; ++i) {
       mom_src[i] *= unitConv[i];
       moments[i] *= unitConv[i];
     }
@@ -53,7 +53,7 @@ struct SootData : Gpu::Managed
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   initialSmallMomVals(Real moments[]) const
   {
-    for (int i = 0; i != NUM_SOOT_MOMENTS; ++i) {
+    for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
       moments[i] =
         sc.smallWeight *
         std::pow(nuclVol, 3. * (sc.MomOrderV[i] + 2. / 3. * sc.MomOrderS[i]));

@@ -13,6 +13,28 @@
 
 using namespace amrex;
 
+struct SootComps
+{
+  int qRhoIndx = -1;
+  int qTempIndx = -1;
+  int qSpecIndx = -1;
+  int qSootIndx = -1;
+  int rhoIndx = -1;
+  int engIndx = -1;
+  int specIndx = -1;
+  int sootIndx = -1;
+  bool checkIndices()
+  {
+    if (
+      qRhoIndx < 0 || qTempIndx < 0 || qSpecIndx < 0 || qSootIndx < 0 ||
+      rhoIndx < 0 || engIndx < 0 || specIndx < 0 || specIndx < 0 ||
+      sootIndx < 0) {
+      return false;
+    }
+    return true;
+  }
+};
+
 // Local gas species index, not the same as what comes from PelePhysics
 // Use gasIndxtoPeleP to convert between
 enum SootGasSpecIndx {

@@ -27,6 +27,8 @@ the_same_box(const amrex::Box& b)
 // Default constructor
 SootModel::SootModel()
   : m_sootVerbosity(0),
+    m_sootIndx(),
+    m_setIndx(false),
     m_readSootParams(false),
     m_memberDataDefined(false),
     m_conserveMass(true),
@@ -74,7 +76,7 @@ SootModel::define()
   // Determine which PAH inception species is being used
   bool corrPAH = false;
   Real dimerVol;
-  for (int cpah = 0; cpah != numPAH; ++cpah) {
+  for (int cpah = 0; cpah < numPAH; ++cpah) {
     if (PAH_names[cpah] == m_PAHname) {
       m_gammaStick = PAH_gammas[cpah];
       dimerVol = 2. * PAH_numC[cpah];
@@ -90,12 +92,12 @@ SootModel::define()
   Vector<std::string> spec_names(NUM_SPECIES);
   EOS::speciesNames(spec_names);
   // Loop over all species
-  for (int i = 0; i != NUM_SPECIES; ++i) {
+  for (int i = 0; i < NUM_SPECIES; ++i) {
     // Check if species is the PAH inceptor
     if (spec_names[i] == m_PAHname)
       m_PAHindx = i;
     // Check if species matches others for surface reactions
-    for (int sootSpec = 0; sootSpec != ngs; ++sootSpec) {
+    for (int sootSpec = 0; sootSpec < ngs; ++sootSpec) {
       if (spec_names[i] == m_gasSpecNames[sootSpec]) {
         m_sootData->refIndx[sootSpec] = i;
       }
@@ -106,7 +108,7 @@ SootModel::define()
     Abort("PAH inception species was not found in PelePhysics mechanism");
   }
   // Return error if not all soot species are present
-  for (int sootSpec = 0; sootSpec != ngs; ++sootSpec) {
+  for (int sootSpec = 0; sootSpec < ngs; ++sootSpec) {
     if (m_sootData->refIndx[sootSpec] == -1) {
       Abort(
         "Species " + m_gasSpecNames[sootSpec] +
@@ -124,6 +126,8 @@ SootModel::define()
     Print() << "SootModel::define(): Soot model successfully defined"
             << std::endl;
   }
+  // Double check indices are set
+  m_setIndx = m_sootIndx.checkIndices();
 }
 
 // Read soot related inputs
@@ -161,17 +165,17 @@ SootModel::defineMemberData(const Real dimerVol)
   m_sootData->nuclVol = nuclVol;
   m_sootData->nuclSurf = nuclSurf;
   // Compute V_nucl and V_dimer to fractional powers
-  for (int i = 0; i != 9; ++i) {
+  for (int i = 0; i < 9; ++i) {
     Real exponent = 2. * (Real)i - 3.;
     m_sootData->dime6[i] = std::pow(dimerVol, exponent / 6.);
   }
-  for (int i = 0; i != 11; ++i) {
+  for (int i = 0; i < 11; ++i) {
     Real exponent = (Real)i - 3.;
     m_sootData->nve3[i] = std::pow(nuclVol, exponent / 3.);
     m_sootData->nve6[i] = std::pow(nuclVol, exponent / 6.);
   }
 
-  for (int i = 0; i != NUM_SOOT_MOMENTS; ++i) {
+  for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
     // Used to convert moments to mol of C
     m_sootData->unitConv[i] = std::pow(sc.V0, sc.MomOrderV[i]) *
                               std::pow(sc.S0, sc.MomOrderS[i]) * sc.avogadros;
@@ -187,7 +191,7 @@ SootModel::defineMemberData(const Real dimerVol)
     1. /
     (std::pow(
       6. * sc.SootMolarMass / (M_PI * sc.SootDensity * sc.avogadros), 1. / 3.));
-  for (int i = 0; i != NUM_SOOT_MOMENTS; ++i) {
+  for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
     const Real expFact = sc.MomOrderV[i] + 2. / 3. * sc.MomOrderS[i];
     const Real factor = (std::pow(2., expFact - 1.) - 1.);
     m_sootData->ssfmCF[i] =
@@ -249,35 +253,36 @@ SootModel::addSootSourceTerm(
   const Real dt) const
 {
   AMREX_ASSERT(m_memberDataDefined);
+  AMREX_ASSERT(m_setIndx);
   BL_PROFILE("SootModel::addSootSourceTerm");
   if (m_sootVerbosity && ParallelDescriptor::IOProcessor()) {
     Print() << "SootModel::addSootSourceTerm(): Adding soot source term to "
             << vbox << std::endl;
   }
   // Primitive components
-  const int qRhoIndx = QRHO;
-  const int qTempIndx = QTEMP;
-  const int qSpecIndx = QFS;
-  const int qSootIndx = QFSOOT;
-  const int rhoIndx = URHO;
-  const int engIndx = UEDEN;
-  const int specIndx = UFS;
-  const int sootIndx = UFSOOT;
+  const int qRhoIndx = m_sootIndx.qRhoIndx;
+  const int qTempIndx = m_sootIndx.qTempIndx;
+  const int qSpecIndx = m_sootIndx.qSpecIndx;
+  const int qSootIndx = m_sootIndx.qSootIndx;
+  const int rhoIndx = m_sootIndx.rhoIndx;
+  const int engIndx = m_sootIndx.engIndx;
+  const int specIndx = m_sootIndx.specIndx;
+  const int sootIndx = m_sootIndx.sootIndx;
   const Real betaNF = m_betaNuclFact;
 
   const bool conserveMass = m_conserveMass;
-  Real mw_fluid[NUM_SPECIES];
-  EOS::molecular_weight(mw_fluid);
 
   // H2 absorbs the error from surface reactions
   const int absorbIndx = SootGasSpecIndx::indxH2;
   const int absorbIndxN = m_sootData->refIndx[absorbIndx];
   const int absorbIndxP = specIndx + absorbIndxN;
 
-  SootConst sc;
   SootData const* sd = m_sootData.get();
   SootReaction const* sr = m_sootReact.get();
   amrex::ParallelFor(vbox, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+    SootConst sc;
+    Real mw_fluid[NUM_SPECIES];
+    EOS::molecular_weight(mw_fluid);
     GpuArray<Real, NUM_SPECIES> Hi;
     GpuArray<Real, NUM_SOOT_GS> omega_src;
     // Molar concentrations (mol/cm^3)
@@ -310,7 +315,7 @@ SootModel::addSootSourceTerm(
     // Extract mass fractions for gas phases corresponding to GasSpecIndx
     // Compute the average molar mass (g/mol) or (kg/mol)
     Real molarMass = 0.;
-    for (int sp = 0; sp != NUM_SOOT_GS; ++sp) {
+    for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
       const int specConvIndx = sd->refIndx[sp];
       const int peleIndx = qSpecIndx + specConvIndx;
       Real cn = Qstate(i, j, k, peleIndx);
@@ -324,7 +329,7 @@ SootModel::addSootSourceTerm(
     // Molar concentration of the PAH inception species
     Real xi_PAH = xi_n[SootGasSpecIndx::indxPAH];
     // Extract moment values
-    for (int mom = 0; mom != NUM_SOOT_VARS; ++mom) {
+    for (int mom = 0; mom < NUM_SOOT_VARS; ++mom) {
       const int peleIndx = qSootIndx + mom;
       moments[mom] = Qstate(i, j, k, peleIndx);
       // Reset moment source
@@ -368,7 +373,7 @@ SootModel::addSootSourceTerm(
     // Compute the continuity and energy source term
     Real rho_src = 0.;
     Real eng_src = 0.;
-    for (int sp = 0; sp != NUM_SOOT_GS; ++sp) {
+    for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
       // Convert from local gas species index to global gas species index
       const int specConvIndx = sd->refIndx[sp];
       // Convert to proper units
@@ -395,7 +400,7 @@ SootModel::addSootSourceTerm(
     soot_state(i, j, k, rhoIndx) += rho_src * sc.mass_src_conv;
     soot_state(i, j, k, engIndx) -= eng_src * sc.eng_src_conv;
     // Add moment source terms
-    for (int mom = 0; mom != NUM_SOOT_VARS; ++mom) {
+    for (int mom = 0; mom < NUM_SOOT_VARS; ++mom) {
       const int peleIndx = sootIndx + mom;
       soot_state(i, j, k, peleIndx) += mom_src[mom];
     }

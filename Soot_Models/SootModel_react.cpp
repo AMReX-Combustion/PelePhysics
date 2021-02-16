@@ -19,13 +19,14 @@ void
 SootModel::initializeReactData()
 {
   SootConst sc;
+  m_sootReact->SootDensityC = sc.SootDensityC;
+  m_sootReact->SootChi = sc.SootChi;
   // Be sure that all other member data has been filled
   AMREX_ASSERT(m_memberDataDefined);
   if (m_sootVerbosity) {
     Print() << "SootModel::initializeReactData(): Filling reaction data"
             << std::endl;
   }
-  const int nsr = NUM_SOOT_REACT;
   // Units are CGS
   // Demonstration of reaction indices using a fake reaction
   // Soot-H + 2OH + C2H2 <=> Soot-* + 4H + 2CO

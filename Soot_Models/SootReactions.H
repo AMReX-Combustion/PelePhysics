@@ -5,7 +5,8 @@
 
 struct SootReaction : Gpu::Managed
 {
-  SootConst sc;
+  Real SootDensityC;
+  Real SootChi;
   // Vectors of the forward and backward per-exponential rates,
   // temperature exponents, and activation energies/R
   GpuArray<Real, NUM_SOOT_REACT> A_f;
@@ -61,18 +62,18 @@ struct SootReaction : Gpu::Managed
     GpuArray<Real, NUM_SOOT_REACT> w_bkwd;
     const Real invT = 1. / T;
     // Loop over reactions
-    for (int i = 0; i != nsr; ++i) {
+    for (int i = 0; i < nsr; ++i) {
       k_fwd[i] = A_f[i] * std::pow(T, n_f[i]) * std::exp(-ER_f[i] * invT);
       k_bkwd[i] = A_b[i] * std::pow(T, n_b[i]) * std::exp(-ER_b[i] * invT);
       Real fwdM = 1.;
-      for (int j = 0; j != rNum[i]; ++j) {
+      for (int j = 0; j < rNum[i]; ++j) {
         // Reactant gas species index
         const int rIndx = nIndx_f[3 * i + j];
         fwdM *= std::pow(xi_n[rIndx], nu_f[3 * i + j]);
       }
       w_fwd[i] = k_fwd[i] * fwdM;
       Real bkwdM = 1.;
-      for (int j = 0; j != pNum[i]; ++j) {
+      for (int j = 0; j < pNum[i]; ++j) {
         // Product gas species index
         const int pIndx = nIndx_b[3 * i + j];
         bkwdM *= std::pow(xi_n[pIndx], nu_b[3 * i + j]);
@@ -85,13 +86,12 @@ struct SootReaction : Gpu::Managed
     // Determine the concentration of hydrogenated and radical soot surface
     // sites Quasi-steady state for surface radical sites on soot
     GpuArray<Real, SootIndx::numSootSpecs> C_Soot;
-    C_Soot[SootIndx::indxSootS] = fSootStar * sc.SootDensityC * moments[2];
-    C_Soot[SootIndx::indxSootH] =
-      (1. - fSootStar) * sc.SootDensityC * moments[2];
+    C_Soot[SootIndx::indxSootS] = fSootStar * SootDensityC * moments[2];
+    C_Soot[SootIndx::indxSootH] = (1. - fSootStar) * SootDensityC * moments[2];
     // TODO: The last two reaction (6 and 7) are special
     // they are not treated the same in this loop
     // TODO: Currently assumes soot is involved in every reaction on both sides
-    for (int i = 0; i != nsr - 2; ++i) {
+    for (int i = 0; i < nsr - 2; ++i) {
       int sootIndx = sIndx_f[i];
       w_fwd[i] *= C_Soot[sootIndx];
       sootIndx = sIndx_b[i];
@@ -100,17 +100,17 @@ struct SootReaction : Gpu::Managed
     // TODO: This is specific to the hardcoded 6th reaction, not universal
     w_fwd[5] *= surf;
     // Loop over gas species and solve for omegas
-    for (int i = 0; i != nsr; ++i) {
+    for (int i = 0; i < nsr; ++i) {
       // Creation/destruction rates for the i-th reaction
       Real rate = w_fwd[i] - w_bkwd[i];
       // Loop over reactant species and subtract nu'_(i,r)*rate
-      for (int r = 0; r != rNum[i]; ++r) {
+      for (int r = 0; r < rNum[i]; ++r) {
         const int rIndx = nIndx_f[3 * i + r];
         Real nup = nu_f[3 * i + r];
         omega_src[rIndx] -= nup * rate;
       }
       // Loop over product species and add nu"_(i,r)*rate
-      for (int p = 0; p != pNum[i]; ++p) {
+      for (int p = 0; p < pNum[i]; ++p) {
         const int pIndx = nIndx_b[3 * i + p];
         Real nupp = nu_b[3 * i + p];
         omega_src[pIndx] += nupp * rate;
@@ -146,7 +146,7 @@ struct SootReaction : Gpu::Managed
     Real& k_o2) const
   {
     k_sg = w_fwd[3] * fSootStar;
-    k_ox = w_fwd[4] * fSootStar + w_fwd[5] * 0.5 / sc.SootChi;
+    k_ox = w_fwd[4] * fSootStar + w_fwd[5] * 0.5 / SootChi;
     k_o2 = w_fwd[4] * fSootStar;
   }
 };

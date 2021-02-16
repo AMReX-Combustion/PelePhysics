@@ -80,6 +80,11 @@ public:
     Inline functions
   ***********************************************************************/
   //
+  // Set the indices for primitive and conservative variables
+  //
+  inline void setIndices(SootComps sootIndx) { m_sootIndx = sootIndx; }
+
+  //
   // Assign the member data for the time step
   //
   inline void setTimeStep(const Real soot_dt)
@@ -123,6 +128,9 @@ public:
 
   /// Verbosity for soot model
   int m_sootVerbosity;
+  /// Soot component indices
+  SootComps m_sootIndx;
+  bool m_setIndx;
   /// Pointer to soot data and soot specific functions
   std::unique_ptr<SootData> m_sootData;
   /// Pointer for soot reaction data
