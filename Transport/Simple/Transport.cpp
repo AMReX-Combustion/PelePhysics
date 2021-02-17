@@ -94,8 +94,8 @@ void transport_init()
       CKSYMS_STR(spec_names_kappa);
       for (int i = 0; i < trans_parm.array_size; i++) {
 	if (spec_names_kappa[i] == "H2O") {
-	  //trans_parm.Kappai[i] = 0.075908;
-	  trans_parm.Kappai[i] = 0.076;
+	  trans_parm.Kappai[i] = 0.075908;
+	  //trans_parm.Kappai[i] = 0.076;
 	} else if (spec_names_kappa[i] == "CH3OH") {
 	  trans_parm.Kappai[i] = 0.215175;
 	} else if (spec_names_kappa[i] == "CH3CH2OH") {
