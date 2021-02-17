@@ -18,6 +18,14 @@ struct TransParm {
     int* trans_nlin;
     int array_size = NUM_SPECIES;
     int fit_length = NUM_FIT;
+#ifdef PELEPHYSICS_NONIDEAL_EOS
+    amrex::Real Avna = 6.022140857e23;
+    amrex::Real* Afac;
+    amrex::Real* Bfac;
+    amrex::Real* Sigmaij;
+    amrex::Real* Kappai;
+    amrex::Real* omega;
+#endif
 };
 
 extern TransParm *trans_parm_g;

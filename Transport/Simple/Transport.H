@@ -76,6 +76,156 @@ void comp_pure_bulk(
       }
 }
 
+#ifdef PELEPHYSICS_NONIDEAL_EOS
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+nonIdeal_Chung(
+  bool wtr_get_mu,
+  bool wtr_get_lam,
+  amrex::Real& Temp,
+  amrex::Real* Xloc,
+  amrex::Real& rholoc,
+  amrex::Real& wbar,
+  amrex::Real& mu,
+  amrex::Real& xi,
+  amrex::Real& lam,
+  TransParm const* trans_parm)
+{
+  amrex::Real sigma_M_3 = 0.0;
+  amrex::Real Epsilon_M = 0.0;
+  amrex::Real Omega_M = 0.0;
+  amrex::Real MW_m = 0.0;
+  amrex::Real DP_m_4 = 0.0;
+  amrex::Real KappaM = 0.0;
+
+  // Note: all the square roots could be precalculated
+
+  for (int i = 0; i < NUM_SPECIES; ++i) {
+    for (int j = 0; j < NUM_SPECIES; ++j) {
+      amrex::Real T2 = trans_parm->trans_sig[i] * trans_parm->trans_sig[j];
+      amrex::Real T3 = T2 * std::sqrt(T2);
+      sigma_M_3 += Xloc[i] * Xloc[j] * T3;
+
+      amrex::Real Epsilon_ij = std::sqrt(trans_parm->trans_eps[i] * trans_parm->trans_eps[j]);
+      Epsilon_M += Xloc[i] * Xloc[j] * Epsilon_ij * T3;
+
+      amrex::Real Omega_ij = 0.5*(trans_parm->omega[i] + trans_parm->omega[j]);
+      Omega_M += Xloc[i] * Xloc[j] * Omega_ij * T3;
+
+      amrex::Real MW_ij = 2.0/(trans_parm->trans_iwt[i] + trans_parm->trans_iwt[j]);
+      MW_m += Xloc[i] * Xloc[j] * Epsilon_ij * T2 * std::sqrt(MW_ij);
+
+      DP_m_4 += Xloc[i] * Xloc[j] * trans_parm->trans_dip[i] * trans_parm->trans_dip[i]
+	* trans_parm->trans_dip[j] * trans_parm->trans_dip[j] / (T3*Epsilon_ij);
+
+      KappaM += Xloc[i] * Xloc[j] * std::sqrt(trans_parm->Kappai[i] * trans_parm->Kappai[j]);
+    }
+  }
+
+  MW_m *= MW_m;
+  amrex::Real sigma_M = std::cbrt(sigma_M_3);
+  amrex::Real InvSigma1 = 1.0 / sigma_M;
+  amrex::Real InvSigma3 = 1.0 / sigma_M_3;
+  Epsilon_M *= InvSigma3;
+  amrex::Real Tstar = Temp / Epsilon_M;
+  amrex::Real Tcm = 1.2593* Epsilon_M;
+  amrex::Real Vcm = 1.8887 * sigma_M_3;
+  Omega_M *= InvSigma3;
+  MW_m = MW_m * InvSigma3 * InvSigma1 / (Epsilon_M * Epsilon_M);
+  DP_m_4 = DP_m_4 * sigma_M_3 * Epsilon_M;
+  amrex::Real DP_red_4 =  297.2069113e6 * DP_m_4 / (Vcm * Vcm * Tcm * Tcm);
+  amrex::Real y = Vcm * rholoc / (6.0 * wbar);
+  amrex::Real A[10];
+  for (int i = 0; i<10; ++i) {
+    A[i] = trans_parm->Afac[4*i] + trans_parm->Afac[4*i+1] * Omega_M + trans_parm->Afac[4*i+2] * DP_red_4 + trans_parm->Afac[4*i+3]*KappaM;
+  }
+  amrex::Real G1 = (1.0 - 0.5*y)/((1.0-y)*(1.0-y)*(1.0-y));
+  amrex::Real G2 = ( A[0]*(1.0 - std::exp(-A[3]*y))/y + A[1] * G1 * std::exp(A[4] * y)
+	+ A[2]*G1 ) / (A[0]*A[3] + A[1] + A[2]);
+  amrex::Real eta_P = (36.344e-6*std::sqrt(MW_m*Tcm)/std::pow(Vcm, 2.0/3.0) )
+    *A[6]*y*y*G2*exp(A[7] + A[8]/Tstar + A[9]/(Tstar*Tstar));
+
+  // Set nonideal viscosity
+  if (wtr_get_mu) {
+    mu = mu * (1.0/G2 + A[5] * y ) + eta_P;
+  }
+
+  amrex::Real B[7];
+  for (int i = 0; i<7; ++i) {
+    B[i] = trans_parm->Bfac[i*4] + trans_parm->Bfac[i*4+1]*Omega_M + trans_parm->Bfac[i*4+2]*DP_red_4 + trans_parm->Bfac[i*4+3] * KappaM;
+  }
+  amrex::Real H2 = ( B[0]*(1.0-std::exp(-B[3]*y))/y + B[1]*G1*std::exp(B[4]*y) + B[2]*G1 )
+    / (B[0]*B[3] + B[1] + B[2]);
+
+  amrex::Real lambda_p = 3.039e-4 * std::sqrt(Tcm/MW_m)/std::pow(Vcm, 2.0/3.0)
+    * B[6] * y * y * H2 * std::sqrt(Tstar);
+
+  lambda_p *= 4.184e+7; // erg/(cm s K)
+  amrex::Real beta = 1.0/H2 + B[5]*y;
+
+  // Set nonideal conductivity
+  if (wtr_get_lam) {
+    lam = lam*beta + lambda_p;
+    //lam = H2;
+    //mu = H2;
+    //xi = beta;
+  }
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+nonIdeal_Binary_Diff(
+  amrex::Real* Xloc,
+  amrex::Real* Yloc,
+  amrex::Real* logT,
+  amrex::Real& rholoc,
+  amrex::Real& Tloc,
+  amrex::Real* Ddiag,
+  TransParm const* trans_parm)
+{
+  amrex::Real term1, term2, Upsilonij;
+  amrex::Real dbintemp;
+  const amrex::Real Pst = 1013250.00;
+  const amrex::Real Ru = 8.31446261815324e7;
+  int idx_ij, idx_ik, idx_jk;
+  for (int i = 0; i < NUM_SPECIES; ++i) {
+    term1 = 0.0;
+    term2 = 0.0;
+    for (int j = 0; j < NUM_SPECIES; ++j) {
+      idx_ij = i + NUM_SPECIES * j;
+      if (i != j) {
+	dbintemp = trans_parm->trans_fitdbin[4 * (idx_ij)] +
+	  trans_parm->trans_fitdbin[1 + 4 * (idx_ij)] * logT[0] +
+	  trans_parm->trans_fitdbin[2 + 4 * (idx_ij)] * logT[1] +
+	  trans_parm->trans_fitdbin[3 + 4 * (idx_ij)] * logT[2];
+	dbintemp = std::exp(dbintemp);
+
+	Upsilonij = 0.0;
+	for (int k = 0; k < NUM_SPECIES; ++k) {
+	  idx_ik = i + NUM_SPECIES * k;
+	  idx_jk = j + NUM_SPECIES * k;
+	  Upsilonij += trans_parm->trans_iwt[k] * Yloc[k] * (
+						 8.0 * (trans_parm->Sigmaij[idx_ik]*trans_parm->Sigmaij[idx_ik]*trans_parm->Sigmaij[idx_ik] +
+							trans_parm->Sigmaij[idx_jk]*trans_parm->Sigmaij[idx_jk]*trans_parm->Sigmaij[idx_jk])
+						 - 6.0 * (trans_parm->Sigmaij[idx_ik]*trans_parm->Sigmaij[idx_ik] +
+							  trans_parm->Sigmaij[idx_jk]*trans_parm->Sigmaij[idx_jk] ) * trans_parm->Sigmaij[idx_ij]
+						 - 3.0 * std::pow((trans_parm->Sigmaij[idx_ik]*trans_parm->Sigmaij[idx_ik] -
+								   trans_parm->Sigmaij[idx_jk]*trans_parm->Sigmaij[idx_jk] ),2.0) / trans_parm->Sigmaij[idx_ij]
+						 + trans_parm->Sigmaij[idx_ij]*trans_parm->Sigmaij[idx_ij]*trans_parm->Sigmaij[idx_ij] );
+	}
+	Upsilonij = Upsilonij * rholoc * trans_parm->Avna * 3.141592653589793 / 12.0 + 1.0;
+	dbintemp = dbintemp * Pst / (Ru * Tloc * Upsilonij); // * wbar/rholoc
+	term1 += Yloc[j];
+	term2 += Xloc[j] / dbintemp;
+      }
+    }
+    Ddiag[i] = trans_parm->trans_wt[i] * term1 / term2; // * rholoc / wbar
+  }
+}
+#endif // nonideal
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
@@ -178,6 +328,10 @@ void transport(
         }
         lam = lam * lam * lam * lam; // lam = lam^4
       }
+      // Add nonideal corrections if necessary
+#ifdef PELEPHYSICS_NONIDEAL_EOS
+      nonIdeal_Chung(wtr_get_mu, wtr_get_lam, Tloc, Xloc, rholoc, wbar, mu, xi, lam, trans_parm);
+#endif
 
       if (wtr_get_Ddiag) {
         //       for (int i = 0; i < NUM_SPECIES ; ++i){
@@ -192,8 +346,10 @@ void transport(
         //          dbinloc(i+NUM_SPECIES*i) = 0.0;
         //       }
 
+#ifdef PELEPHYSICS_NONIDEAL_EOS
+	nonIdeal_Binary_Diff(Xloc, Yloc, logT, rholoc, Tloc, Ddiag, trans_parm);
+#else
         amrex::Real term1, term2, dbintemp;
-
         for (int i = 0; i < NUM_SPECIES; ++i) {
           term1 = 0.0;
           term2 = 0.0;
@@ -211,12 +367,13 @@ void transport(
         }
 
         // Call CKRP ?
-        amrex::Real Ru = 8.31446261815324e7;;
+        amrex::Real Ru = 8.31446261815324e7;
         pscale = Patm * wbar / (Ru * Tloc * rholoc);
 
         for (int i = 0; i < NUM_SPECIES; ++i) {
           Ddiag[i] = rholoc * pscale * Ddiag[i];
         }
+#endif
       }
 }
 
