@@ -272,6 +272,7 @@ class CPickler(CMill):
 
         self._T_given_ey(mechanism)
         self._T_given_hy(mechanism)
+        self._getCriticalParameters(mechanism)
         #self._cksyms(mechanism)
 
         self._ckpx(mechanism)
@@ -12307,7 +12308,7 @@ class CPickler(CMill):
         self._write()
         self._write()
         self._write(self.line('compute the critical parameters for each species'))
-        self._write('void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::Real *  acentric_i)')
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::Real *  acentric_i)')
         self._write('{')
         self._write()
         self._indent()

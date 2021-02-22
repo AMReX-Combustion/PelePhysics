@@ -2,14 +2,14 @@
 
 namespace EOS {
 
-  bool initialized=false;
+  AMREX_GPU_DEVICE_MANAGED bool initialized=false;
   
-  amrex::Real Tc[NUM_SPECIES];
-  amrex::Real Bi[NUM_SPECIES];
-  amrex::Real oneOverTc[NUM_SPECIES];
-  amrex::Real sqrtOneOverTc[NUM_SPECIES];
-  amrex::Real sqrtAsti[NUM_SPECIES];
-  amrex::Real Fomega[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED amrex::Real Tc[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED amrex::Real Bi[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED amrex::Real oneOverTc[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED amrex::Real sqrtOneOverTc[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED amrex::Real sqrtAsti[NUM_SPECIES];
+  AMREX_GPU_DEVICE_MANAGED amrex::Real Fomega[NUM_SPECIES];
   
 void init() 
 {
