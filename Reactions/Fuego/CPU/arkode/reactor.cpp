@@ -2,7 +2,7 @@
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include "mechanism.h"
-#include <EOS.H>
+#include <PelePhysics.H>
 #include <AMREX_misc.H>
 
 using namespace amrex;
@@ -41,7 +41,7 @@ void SetTypValsODE(const std::vector<Real>& ExtTypVals)
 {
     int size_ETV = NUM_SPECIES + 1;
     Vector<std::string> kname;
-    EOS::speciesNames(kname);
+    pele::physics::eos::speciesNames(kname);
     int omp_thread = 0;
 
 #ifdef _OPENMP
@@ -405,12 +405,13 @@ int react(const Box& box,
                 mass_frac[n] = yvec_d[n] * rho_inv;
             }
             Enrg_loc = data->rhoX_init[0] / rho;
+            auto eos = pele::physics::PhysicsType::eos();
             if (data->ireactor_type == 1)
             {
-                EOS::EY2T(Enrg_loc,mass_frac,temp);
+                eos.EY2T(Enrg_loc,mass_frac,temp);
             } else 
             {
-                EOS::HY2T(Enrg_loc,mass_frac,temp);
+                eos.HY2T(Enrg_loc,mass_frac,temp);
             }
             yvec_d[NUM_SPECIES] = temp;
             BL_PROFILE_VAR_STOP(FlatStuff);
@@ -494,12 +495,13 @@ int react(const Box& box,
                 + (dummy_time - time_init) * data->rhoXsrc_ext[0]; 
 
             Enrg_loc          = rEner_in(i,j,k,0) * rho_inv;
+            auto eos = pele::physics::PhysicsType::eos();
             if (data->ireactor_type == 1)
             {
-                EOS::EY2T(Enrg_loc,mass_frac,temp);
+                eos.EY2T(Enrg_loc,mass_frac,temp);
             } else 
             {
-                EOS::HY2T(Enrg_loc,mass_frac,temp);
+                eos.HY2T(Enrg_loc,mass_frac,temp);
             }
             T_in(i,j,k,0) = temp;
             BL_PROFILE_VAR_STOP(FlatStuff);
@@ -581,18 +583,19 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
       /* NRG CGS */
       energy = (data_wk->rhoX_init[data_wk->boxcell + tid] + data_wk->rhoXsrc_ext[data_wk->boxcell + tid] * dt) /rho;
 
+      auto eos = pele::physics::PhysicsType::eos();
       if (data_wk->ireactor_type == eint_rho){
           /* UV REACTOR */
-          EOS::EY2T(energy, massfrac, temp);
-          EOS::TY2Cv(temp, massfrac, cX);
-          EOS::T2Ei(temp, Xi);
+          eos.EY2T(energy, massfrac, temp);
+          eos.TY2Cv(temp, massfrac, cX);
+          eos.T2Ei(temp, Xi);
       } else if (data_wk->ireactor_type == enth_rho) {
           /* HP REACTOR */
-          EOS::HY2T(energy, massfrac, temp);
-          EOS::TY2Cp(temp, massfrac, cX);
-          EOS::T2Hi(temp, Xi);
+          eos.HY2T(energy, massfrac, temp);
+          eos.TY2Cp(temp, massfrac, cX);
+          eos.T2Hi(temp, Xi);
       }
-      EOS::RTY2WDOT(rho, temp, massfrac, cdot);
+      eos.RTY2WDOT(rho, temp, massfrac, cdot);
 
       /* Fill ydot vect */
       ydot_d[offset + NUM_SPECIES] = data_wk->rhoXsrc_ext[data_wk->boxcell + tid];
@@ -793,7 +796,8 @@ int cJac(realtype tn, N_Vector u, N_Vector fu, SUNMatrix J,
         {
             consP = 1;
         }
-        EOS::RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
+        auto eos = pele::physics::PhysicsType::eos();
+        eos.RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
         /* fill the sunMat */
         for (int k = 0; k < NUM_SPECIES; k++)
         {

@@ -5,7 +5,7 @@
 #include <AMReX_Gpu.H>
 #include <cmath>
 
-#include <EOS.H>
+#include <PelePhysics.H>
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
@@ -61,7 +61,8 @@ initialize_data(int i, int j, int k,
 	}
 	mf(i,j,k,NUM_SPECIES-1) = 1.0 - dummy;
         // compute real E + perturb it for future tests
-	EOS::T2Ei(temp(i,j,k), ei.arr);
+        auto eos = pele::physics::PhysicsType::eos();
+        eos.T2Ei(temp(i,j,k), ei.arr);
 	energy(i,j,k) = 0.0;
 	for (int n = 0; n < NUM_SPECIES; n++) {
 	    energy(i,j,k) = energy(i,j,k) + mf(i,j,k,n) * ei[n];
@@ -88,7 +89,8 @@ get_cp(int i, int j, int k,
 		mf_pt[n] = mf(i,j,k,n);
 	}
 
-	EOS::TY2Cp(temp(i,j,k), mf_pt.arr, cp(i,j,k));
+        auto eos = pele::physics::PhysicsType::eos();
+        eos.TY2Cp(temp(i,j,k), mf_pt.arr, cp(i,j,k));
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -105,7 +107,8 @@ get_cv(int i, int j, int k,
 		mf_pt[n] = mf(i,j,k,n);
 	}
 
-	EOS::TY2Cv(temp(i,j,k), mf_pt.arr, cv(i,j,k));
+        auto eos = pele::physics::PhysicsType::eos();
+	eos.TY2Cv(temp(i,j,k), mf_pt.arr, cv(i,j,k));
 }
 
 
@@ -123,7 +126,8 @@ get_T_from_EY(int i, int j, int k,
 		mf_pt[n] = mf(i,j,k,n);
 	}
 
-	EOS::EY2T(energy(i,j,k), mf_pt.arr, temp(i,j,k));
+        auto eos = pele::physics::PhysicsType::eos();
+	eos.EY2T(energy(i,j,k), mf_pt.arr, temp(i,j,k));
 }
 
 

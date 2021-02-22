@@ -1,16 +1,8 @@
 #include "EOS.H"
 
-namespace EOS {
-
-void init() 
-{
-  CKINIT();
-}
-
-void close()
-{
-  CKFINALIZE();
-}
+namespace pele {
+namespace physics {
+namespace eos {
 
 void
 speciesNames(amrex::Vector<std::string>& spn) {
@@ -66,3 +58,5 @@ element_compositionCHON(int ecompCHON[])
 }
 
 } // namespace EOS
+} // namespace physics
+} // namespace pele

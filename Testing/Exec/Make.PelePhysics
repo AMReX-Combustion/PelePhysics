@@ -32,6 +32,14 @@ ifeq ($(USE_ACC), TRUE)
   DEFINES += -DACC
 endif
 
+# PelePhysics
+PP_SRC_HOME = $(PELE_PHYSICS_HOME)/Source
+EXTERN_CORE       += $(PP_SRC_HOME)
+INCLUDE_LOCATIONS += $(PP_SRC_HOME)
+VPATH_LOCATIONS   += $(PP_SRC_HOME)
+Bpack             += $(PP_SRC_HOME)/Make.package
+Blocs             += $(PP_SRC_HOME)
+
 # EOS
 # Both Fortran and cpp can be loaded for EOS
 EOS_PATH := $(EOS_HOME)/$(strip $(Eos_dir))

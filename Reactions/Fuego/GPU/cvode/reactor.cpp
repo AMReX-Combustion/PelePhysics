@@ -1,7 +1,7 @@
 #include <reactor.h> 
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
-#include <EOS.H>
+#include <PelePhysics.H>
 #include "mechanism.h"
 #include <AMReX_Gpu.H>
 #include <AMReX_SUNMemory.H>
@@ -38,7 +38,7 @@ AMREX_GPU_DEVICE_MANAGED Real absTol    = 1.0e-10;
 /* Set or update typVals */
 void SetTypValsODE(const std::vector<double>& ExtTypVals) {
     Vector<std::string> kname;
-    EOS::speciesNames(kname);
+    pele::physics::eos::speciesNames(kname);
 
     Print() << "Set the typVals in PelePhysics: \n  ";
     int size_ETV = ExtTypVals.size();
@@ -1293,19 +1293,20 @@ fKernelSpec(int icell, void *user_data,
   temp_pt = yvec_d[offset + NUM_SPECIES];
 
   /* Additional var needed */
+  auto eos = pele::physics::PhysicsType::eos();
   if (udata->ireactor_type == eint_rho){
       /* UV REACTOR */
-      EOS::EY2T(nrg_pt, massfrac.arr, temp_pt);
-      EOS::T2Ei(temp_pt, ei_pt.arr);
-      EOS::TY2Cv(temp_pt, massfrac.arr, Cv_pt);
+      eos.EY2T(nrg_pt, massfrac.arr, temp_pt);
+      eos.T2Ei(temp_pt, ei_pt.arr);
+      eos.TY2Cv(temp_pt, massfrac.arr, Cv_pt);
   } else {
       /* HP REACTOR */
-      EOS::HY2T(nrg_pt, massfrac.arr, temp_pt);
-      EOS::TY2Cp(temp_pt, massfrac.arr, Cv_pt);
-      EOS::T2Hi(temp_pt, ei_pt.arr);
+      eos.HY2T(nrg_pt, massfrac.arr, temp_pt);
+      eos.TY2Cp(temp_pt, massfrac.arr, Cv_pt);
+      eos.T2Hi(temp_pt, ei_pt.arr);
   }
 
-  EOS::RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
+  eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
 
   /* Fill ydot vect */
   ydot_d[offset + NUM_SPECIES] = rhoesrc_ext[icell];
@@ -1359,7 +1360,8 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *Jdata)
   } else {
       consP = 1;
   }
-  EOS::RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP); 
+  auto eos = pele::physics::PhysicsType::eos();
+  eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP); 
 
   /* renorm the DenseMat */
   for (int i = 0; i < udata->neqs_per_cell[0]; i++){
@@ -1419,7 +1421,8 @@ fKernelComputeallAJ(int ncell, void *user_data, realtype *u_d, double * csr_val_
   temp_pt = u_curr[NUM_SPECIES];
 
   /* Activities */
-  EOS::RTY2C(rho_pt, temp_pt, massfrac.arr, activity.arr);
+  auto eos = pele::physics::PhysicsType::eos();
+  eos.RTY2C(rho_pt, temp_pt, massfrac.arr, activity.arr);
 
   /* Additional var needed */
   int consP;

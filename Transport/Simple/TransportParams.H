@@ -4,29 +4,33 @@
 #include <AMReX_REAL.H>
 #include "mechanism.h"
 
-struct TransParm {
-    amrex::Real* trans_wt;
-    amrex::Real* trans_iwt;
-    amrex::Real* trans_eps;
-    amrex::Real* trans_sig;
-    amrex::Real* trans_dip;
-    amrex::Real* trans_pol;
-    amrex::Real* trans_zrot;
-    amrex::Real* trans_fitmu;
-    amrex::Real* trans_fitlam;
-    amrex::Real* trans_fitdbin;
-    int* trans_nlin;
-    int array_size = NUM_SPECIES;
-    int fit_length = NUM_FIT;
-#ifdef PELEPHYSICS_NONIDEAL_EOS
-    amrex::Real Avna = 6.022140857e23;
-    amrex::Real* Afac;
-    amrex::Real* Bfac;
-    amrex::Real* Sigmaij;
-    amrex::Real* Kappai;
-    amrex::Real* omega;
-#endif
+namespace pele {
+namespace physics {
+namespace transport {
+struct TransParm
+{
+  // FIXME potentially move these into the transport struct constructor
+  amrex::Real* trans_wt = nullptr;
+  amrex::Real* trans_iwt = nullptr;
+  amrex::Real* trans_eps = nullptr;
+  amrex::Real* trans_sig = nullptr;
+  amrex::Real* trans_dip = nullptr;
+  amrex::Real* trans_pol = nullptr;
+  amrex::Real* trans_zrot = nullptr;
+  amrex::Real* trans_fitmu = nullptr;
+  amrex::Real* trans_fitlam = nullptr;
+  amrex::Real* trans_fitdbin = nullptr;
+  int* trans_nlin = nullptr;
+  amrex::Real* Afac = nullptr;
+  amrex::Real* Bfac = nullptr;
+  amrex::Real* Sigmaij = nullptr;
+  amrex::Real* Kappai = nullptr;
+  amrex::Real* omega = nullptr;
 };
 
-extern TransParm *trans_parm_g;
+extern TransParm trans_parm;
+extern TransParm* trans_parm_g;
+} // namespace transport
+} // namespace physics
+} // namespace pele
 #endif

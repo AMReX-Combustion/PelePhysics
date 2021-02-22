@@ -8,7 +8,7 @@
 
 #include "mechanism.h"
 
-#include <EOS.H>
+#include <PelePhysics.H>
 
 using namespace amrex;
 
@@ -49,10 +49,11 @@ box_flatten(int icell, int i, int j, int k, int ireactor_type,
         mass_frac[n] = tmp_vect[offset_yvec + n] * rho_inv;
     }
     Enrg_loc = tmp_vect_energy[icell] / rho;
+    auto eos = pele::physics::PhysicsType::eos();
     if (ireactor_type == 1){
-        EOS::EY2T(Enrg_loc,mass_frac,temp);
+        eos.EY2T(Enrg_loc,mass_frac,temp);
     } else {
-        EOS::HY2T(Enrg_loc,mass_frac,temp);
+        eos.HY2T(Enrg_loc,mass_frac,temp);
     }
     tmp_vect[offset_yvec + NUM_SPECIES] = temp;
 }
@@ -92,10 +93,11 @@ box_unflatten(int icell, int i, int j, int k, int ireactor_type,
         mass_frac[n] = rhoY(i,j,k,n) * rho_inv;
     }
     Enrg_loc = rhoE(i,j,k,0) / rho;
+    auto eos = pele::physics::PhysicsType::eos();
     if (ireactor_type == 1){
-        EOS::EY2T(Enrg_loc,mass_frac,temp);
+        eos.EY2T(Enrg_loc,mass_frac,temp);
     } else {
-        EOS::HY2T(Enrg_loc,mass_frac,temp);
+        eos.HY2T(Enrg_loc,mass_frac,temp);
     }
     T_in(i,j,k,0) = temp;  
  

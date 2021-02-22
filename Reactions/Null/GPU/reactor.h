@@ -2,7 +2,7 @@
 #include <AMReX_FArrayBox.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_iMultiFab.H>
-#include <EOS.H>
+#include <PelePhysics.H>
 
 /**********************************/
 /* Functions Called by the Program */
