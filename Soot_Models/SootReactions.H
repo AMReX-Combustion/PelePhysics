@@ -139,7 +139,7 @@ struct SootReaction : Gpu::Managed
   // Compute the surface chemistry rates (1/s)
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE void computeSurfRates(
     const Real w_fwd[],
-    const Real w_bkwd[],
+    const Real* /*w_bkwd*/,
     const Real& fSootStar,
     Real& k_sg,
     Real& k_ox,

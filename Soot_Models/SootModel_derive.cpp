@@ -1,6 +1,5 @@
 
 #include <AMReX_CONSTANTS.H>
-#include <PeleC.H>
 #include <SootModel.H>
 #include "SootModel_derive.H"
 
@@ -19,21 +18,21 @@ soot_largeparticledata(
   const int level)
 {
   SootConst sc;
-  const Real V0 = sc.V0;
-  const Real S0 = sc.S0;
+  const Real V0 = sc.V0/std::pow(sc.len_conv, 3);
+  const Real S0 = sc.S0/std::pow(sc.len_conv, 2);
   auto const dat = datafab.array();
   auto sl = slfab.array();
   amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-    Real M00 = dat(i, j, k, UFSOOT);
-    Real M01 = dat(i, j, k, UFSOOT + 2) / M00;
-    Real M10 = dat(i, j, k, UFSOOT + 1) / M00;
-    Real N0 = dat(i, j, k, UFSOOT + NUM_SOOT_VARS - 1);
+    Real M00 = dat(i, j, k, 0) + 1.E-30;
+    Real M01 = dat(i, j, k, 2) / M00;
+    Real M10 = dat(i, j, k, 1) / M00;
+    Real N0 = dat(i, j, k, NUM_SOOT_MOMENTS);
     // N_L
     sl(i, j, k, dcomp) = M00 - N0;
     // V_L
-    sl(i, j, k, dcomp + 1) = (M10 - N0 * V0) / (M00 - N0 + 1.E-30);
+    sl(i, j, k, dcomp + 1) = (M10 - N0 * V0) / (M00 - N0);
     // S_L
-    sl(i, j, k, dcomp + 2) = (M01 - N0 * S0) / (M00 - N0 + 1.E-30);
+    sl(i, j, k, dcomp + 2) = (M01 - N0 * S0) / (M00 - N0);
   });
 }
 
@@ -50,14 +49,13 @@ soot_genvars(
   const int level)
 {
   SootConst sc;
-  const Real sootRho = sc.SootDensity;
+  const Real sootRho = sc.SootDensity/sc.rho_conv;
   auto const dat = datafab.array();
   auto sl = slfab.array();
   amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-    Real rho = dat(i, j, k, URHO);
-    Real M00 = dat(i, j, k, UFSOOT);
-    Real fv = dat(i, j, k, UFSOOT + 1);
-    Real Sf = dat(i, j, k, UFSOOT + 2);
+    Real M00 = dat(i, j, k, 0) + 1.E-30;
+    Real fv = dat(i, j, k, 1);
+    Real Sf = dat(i, j, k, 2);
     Real Vs = fv / M00;
     Real Ss = Sf / M00;
     // Soot mass is volume * density

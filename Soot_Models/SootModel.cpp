@@ -11,8 +11,12 @@
 #include <AMReX_CONSTANTS.H>
 #include <AMReX_FArrayBox.H>
 
-// PeleC include statements
+// Pele include statements
+#ifdef SOOT_PELE_LM
+#include "PeleLM.H"
+#else
 #include "PeleC.H"
+#endif
 
 // PeleC-MP include statements
 #include "SootModel.H"
@@ -59,6 +63,10 @@ SootModel::define()
   const int ngs = NUM_SOOT_GS;
   // This should be called after readSootParams()
   AMREX_ASSERT(m_readSootParams);
+  // Double check indices are set
+  m_setIndx = m_sootIndx.checkIndices();
+  if (!m_setIndx)
+    Abort("SootModel::define(): Must set indices before defining");
   // Relevant species names for the surface chemistry model
   // TODO: Currently must correspond to GasSpecIndx enum in Constants_Soot.H
   m_gasSpecNames = {"H2", "H", "OH", "H2O", "CO", "C2H2", "O2", m_PAHname};
@@ -126,8 +134,6 @@ SootModel::define()
     Print() << "SootModel::define(): Soot model successfully defined"
             << std::endl;
   }
-  // Double check indices are set
-  m_setIndx = m_sootIndx.checkIndices();
 }
 
 // Read soot related inputs
@@ -179,12 +185,15 @@ SootModel::defineMemberData(const Real dimerVol)
     // Used to convert moments to mol of C
     m_sootData->unitConv[i] = std::pow(sc.V0, sc.MomOrderV[i]) *
                               std::pow(sc.S0, sc.MomOrderS[i]) * sc.avogadros;
+    // First convert moments from SI to CGS, only necessary for PeleLM
+    const Real expFact = 3. * sc.MomOrderV[i] + 2. * sc.MomOrderS[i];
+    m_sootData->unitConv[i] *= std::pow(sc.len_conv, 3. - expFact);
     // Used for computing nucleation source term
     m_sootData->momFact[i] =
       std::pow(nuclVol, sc.MomOrderV[i]) * std::pow(nuclSurf, sc.MomOrderS[i]);
   }
   // and to convert the weight of the delta function
-  m_sootData->unitConv[NUM_SOOT_MOMENTS] = sc.avogadros;
+  m_sootData->unitConv[NUM_SOOT_MOMENTS] = sc.avogadros * std::pow(sc.len_conv, 3);
 
   // Coagulation, oxidation, and fragmentation factors
   m_sootData->lambdaCF =
@@ -226,12 +235,18 @@ void
 SootModel::addSootDerivePlotVars(
   DeriveList& derive_lst, const DescriptorList& desc_lst)
 {
+  // Double check indices are set
+  m_setIndx = m_sootIndx.checkIndices();
+  if (!m_setIndx)
+    Abort("SootModel::addSootDerivePlotVars(): Must set indices first");
   // Add in soot variables
   Vector<std::string> sootNames = {"rho_soot", "soot_dp", "soot_np"};
   derive_lst.add(
     "soot_vars", IndexType::TheCellType(), sootNames.size(), sootNames,
     soot_genvars, the_same_box);
-  derive_lst.addComponent("soot_vars", desc_lst, 0, PeleC::Density, NVAR);
+  derive_lst.addComponent(
+    "soot_vars", desc_lst, State_Type, m_sootIndx.qSootIndx,
+    NUM_SOOT_MOMENTS + 1);
 
   // Variables associated with the second mode (large particles)
   Vector<std::string> large_part_names = {"NL", "VL", "SL"};
@@ -239,7 +254,8 @@ SootModel::addSootDerivePlotVars(
     "soot_large_particles", IndexType::TheCellType(), large_part_names.size(),
     large_part_names, soot_largeparticledata, the_same_box);
   derive_lst.addComponent(
-    "soot_large_particles", desc_lst, 0, PeleC::Density, NVAR);
+    "soot_large_particles", desc_lst, State_Type, m_sootIndx.qSootIndx,
+    NUM_SOOT_MOMENTS + 1);
 }
 
 // Add soot source term
@@ -289,7 +305,7 @@ SootModel::addSootSourceTerm(
     GpuArray<Real, NUM_SOOT_GS> xi_n;
     // Array of moment values M_xy (cm^(3(x + 2/3y))cm^(-3))
     // M00, M10, M01,..., N0
-    GpuArray<Real, NUM_SOOT_VARS> moments;
+    GpuArray<Real, NUM_SOOT_MOMENTS + 1> moments;
     Real* momentsPtr = moments.data();
     /*
       These are the values inside the terms in fracMom
@@ -301,24 +317,30 @@ SootModel::addSootSourceTerm(
       The rest of the momFV values are used in fracMom fact1 = momFV[0],
       fact2 = momFV[1]^volOrd, fact2 = momFV[2]^surfOrd, etc.
     */
-    GpuArray<Real, NUM_SOOT_VARS + 1> mom_fv;
+    GpuArray<Real, NUM_SOOT_MOMENTS + 2> mom_fv;
     Real* mom_fvPtr = mom_fv.data();
     // Array of source terms for moment equations
-    GpuArray<Real, NUM_SOOT_VARS> mom_src;
+    GpuArray<Real, NUM_SOOT_MOMENTS + 1> mom_src;
     Real* mom_srcPtr = mom_src.data();
     const Real rho = Qstate(i, j, k, qRhoIndx) * sc.rho_conv;
     const Real T = Qstate(i, j, k, qTempIndx);
     // Dynamic viscosity
-    const Real mu = coeff_mu(i, j, k);
+    const Real mu = coeff_mu(i, j, k) * sc.mu_conv;
     // Compute species enthalpy
     EOS::T2Hi(T, Hi.data());
     // Extract mass fractions for gas phases corresponding to GasSpecIndx
-    // Compute the average molar mass (g/mol) or (kg/mol)
+    // Compute the average molar mass (g/mol)
     Real molarMass = 0.;
     for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
       const int specConvIndx = sd->refIndx[sp];
       const int peleIndx = qSpecIndx + specConvIndx;
+      // State provided by PeleLM is the concentration, rhoY
+#ifdef SOOT_PELE_LM
+      Real cn = Qstate(i, j, k, peleIndx) / Qstate(i, j, k, qRhoIndx);
+#else
       Real cn = Qstate(i, j, k, peleIndx);
+#endif
+      if (cn < 2.E-10) cn = 0.;
       Real conv = cn / mw_fluid[specConvIndx];
       xi_n[sp] = rho * conv;
       molarMass += conv;
@@ -329,13 +351,13 @@ SootModel::addSootSourceTerm(
     // Molar concentration of the PAH inception species
     Real xi_PAH = xi_n[SootGasSpecIndx::indxPAH];
     // Extract moment values
-    for (int mom = 0; mom < NUM_SOOT_VARS; ++mom) {
+    for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
       const int peleIndx = qSootIndx + mom;
       moments[mom] = Qstate(i, j, k, peleIndx);
       // Reset moment source
       mom_src[mom] = 0.;
     }
-    // Convert moments from CGS/SI to mol of C
+    // Convert moments from CGS to mol of C
     sd->convertToMol(moments.data());
     // Clip moments
     sd->clipMoments(moments.data());
@@ -400,7 +422,7 @@ SootModel::addSootSourceTerm(
     soot_state(i, j, k, rhoIndx) += rho_src * sc.mass_src_conv;
     soot_state(i, j, k, engIndx) -= eng_src * sc.eng_src_conv;
     // Add moment source terms
-    for (int mom = 0; mom < NUM_SOOT_VARS; ++mom) {
+    for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
       const int peleIndx = sootIndx + mom;
       soot_state(i, j, k, peleIndx) += mom_src[mom];
     }

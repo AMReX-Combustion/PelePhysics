@@ -11,7 +11,7 @@
 #include <AMReX_Vector.H>
 #include <AMReX_Derive.H>
 
-// PeleC and PelePhysics include statements
+// Pele include statements
 #include "EOS.H"
 #include "IndexDefines.H"
 
@@ -108,7 +108,7 @@ public:
   //
   inline std::string sootVariableName(const int indx) const
   {
-    AMREX_ASSERT(indx >= 0 && indx < NUM_SOOT_VARS);
+    AMREX_ASSERT(indx >= 0 && indx < NUM_SOOT_MOMENTS + 1);
     return m_sootVarName[indx];
   }
 

@@ -4,9 +4,6 @@
 #include <AMReX_Print.H>
 #include <AMReX_Vector.H>
 
-// PeleC include statements
-#include <PeleC.H>
-
 // PeleC-Physics include statements
 #include <EOS.H>
 

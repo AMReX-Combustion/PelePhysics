@@ -59,18 +59,15 @@ enum SootIndx {
 struct SootConst
 {
 #ifdef SOOT_PELE_LM
+  Real len_conv = 100.; // Turn m to cm
   Real rho_conv = 0.001; // Turn kg/m^3 to g/cm^3
-  // This makes no sense, conversions should be independent
-  // of dimensions but numerical tests show this isn't the case
-#if AMREX_SPACEDIM == 2
-  Real mass_src_conv = 1.E-1;
-  Real eng_src_conv = 1.E-5;
-#elif AMREX_SPACEDIM == 3
-  Real mass_src_conv = 1.E-3;
-  Real eng_src_conv = 1.E-7;
-#endif
+  Real mu_conv = 10.;
+  Real mass_src_conv = 1000.;
+  Real eng_src_conv = 1.E-1;
 #else
+  Real len_conv = 1.;
   Real rho_conv = 1.;
+  Real mu_conv = 1.;
   Real mass_src_conv = 1.;
   Real eng_src_conv = 1.;
 #endif
@@ -81,7 +78,7 @@ struct SootConst
   /// Surface density of hydrogenate sites (1/cm^2)
   Real SootChi = 1.7E15;
   // Small weight used for initialization and clipping
-  Real smallWeight = 1.E-26;
+  Real smallWeight = 1.E-20;
   /// Soot fractal dimension
   Real SootDf = 1.8;
   /// Coefficients for fit to small surface area change
@@ -93,7 +90,7 @@ struct SootConst
   // Increase in number of carbon atoms for surface reactions
   Real dVol = 2.;
   /// Avogadro's number in 1/mol
-  // TODO: Should be pulling this value from PeleC/constants
+  // TODO: Should be pulling this value from PeleMP/constants
   Real avogadros = 6.02214076E23;
 #if NUM_SOOT_MOMENTS == 3
   /// Volume moment orders

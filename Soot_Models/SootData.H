@@ -18,16 +18,16 @@ struct SootData : Gpu::Managed
   GpuArray<Real, 11> nve3;
   GpuArray<Real, 11> nve6;
   GpuArray<Real, NUM_SOOT_MOMENTS> momFact;
-  GpuArray<Real, NUM_SOOT_VARS> ssfmCF;
+  GpuArray<Real, NUM_SOOT_MOMENTS + 1> ssfmCF;
   GpuArray<Real, NUM_SOOT_MOMENTS> sscnCF;
-  GpuArray<Real, NUM_SOOT_VARS> smallOF;
+  GpuArray<Real, NUM_SOOT_MOMENTS + 1> smallOF;
   GpuArray<Real, NUM_SOOT_MOMENTS> fragFact;
 
   // Convert moments from CGS/SI to mol of C
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   convertToMol(Real moments[]) const
   {
-    for (int i = 0; i < NUM_SOOT_VARS; ++i)
+    for (int i = 0; i < NUM_SOOT_MOMENTS + 1; ++i)
       moments[i] /= unitConv[i];
   }
 
@@ -35,7 +35,7 @@ struct SootData : Gpu::Managed
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   convertFromMol(Real mom_src[]) const
   {
-    for (int i = 0; i < NUM_SOOT_VARS; ++i)
+    for (int i = 0; i < NUM_SOOT_MOMENTS + 1; ++i)
       mom_src[i] *= unitConv[i];
   }
 
@@ -43,7 +43,7 @@ struct SootData : Gpu::Managed
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   convertFromMol(Real mom_src[], Real moments[]) const
   {
-    for (int i = 0; i < NUM_SOOT_VARS; ++i) {
+    for (int i = 0; i < NUM_SOOT_MOMENTS + 1; ++i) {
       mom_src[i] *= unitConv[i];
       moments[i] *= unitConv[i];
     }

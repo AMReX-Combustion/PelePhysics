@@ -109,8 +109,8 @@ struct GasPhaseVals
       T_fluid(in_T),
       rho_fluid(in_rho),
       fluid_mom_src(RealVect::TheZeroVector()),
-      fluid_eng_src(0.),
-      fluid_mass_src(0.)
+      fluid_mass_src(0.),
+      fluid_eng_src(0.)
   {
     mw_mix = 0.;
     for (int n = 0; n < NUM_SPECIES; ++n) {

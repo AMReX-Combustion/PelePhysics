@@ -279,7 +279,7 @@ impose_wall(
 #endif
   const IntVect& bndry_lo,
   const IntVect& bndry_hi,
-  const Real dt,
+  const Real /*dt*/,
   const Real T_wall,
   SprayRefl& SPRF,
   bool isActive,
@@ -493,7 +493,10 @@ impose_wall(
 AMREX_INLINE
 void
 create_splash_droplet(
-  SprayParticleContainer::ParticleType& p, SprayComps SPI, SprayRefl SPRF)
+  SprayParticleContainer::ParticleType& p,
+  SprayComps SPI,
+  SprayRefl SPRF,
+  SprayUnits SPU)
 {
   Real rand1 = amrex::Random();
   Real mean = SPRF.beta_mean;
@@ -514,14 +517,14 @@ create_splash_droplet(
   }
   Real costhetad = std::cos(beta);
   Real sinthetad = std::sin(beta);
-  Real un = SPRF.Unorm * sinthetad;
-  Real utBeta = SPRF.Unorm * costhetad * std::cos(psi);
-  Real utPsi = SPRF.Unorm * costhetad * std::sin(psi);
+  AMREX_D_TERM(Real un = SPRF.Unorm * sinthetad;
+               , Real utBeta = SPRF.Unorm * costhetad * std::cos(psi);
+               , Real utPsi = SPRF.Unorm * costhetad * std::sin(psi););
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     Real pvel = AMREX_D_TERM(
       un * SPRF.norm[dir], +utBeta * SPRF.tanBeta[dir],
       +utPsi * SPRF.tanPsi[dir]);
-    Gpu::Atomic::Add(&p.pos(dir), SPRF.dt_pp * pvel);
+    Gpu::Atomic::Add(&p.pos(dir), SPRF.dt_pp * pvel * SPU.pos_conv);
     Gpu::Atomic::Add(&p.rdata(SPI.pstateVel + dir), pvel);
   }
 }

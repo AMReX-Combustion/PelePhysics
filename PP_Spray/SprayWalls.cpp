@@ -48,7 +48,6 @@ SprayParticleContainer::wallImpingement(
   }
   SprayComps SPI = m_sprayIndx;
   SprayUnits SPU;
-  TransParm const* ltransparm = trans_parm_g;
   // Loop back over particles to see if any have interacted with walls
   // This should occur on the host
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
@@ -124,7 +123,7 @@ SprayParticleContainer::wallImpingement(
                   pnew.rdata(SPI.pstateVel + dir) = 0.;
                   pnew.pos(dir) = SPRF.pos_refl[dir];
                 }
-                create_splash_droplet(pnew, SPI, SPRF);
+                create_splash_droplet(pnew, SPI, SPRF, SPU);
                 ptile.push_back(pnew);
               }
             } // if (Ns_refl > 0)

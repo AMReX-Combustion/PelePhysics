@@ -68,7 +68,7 @@ SprayParticleContainer::moveKickDrift(
   const int state_ghosts,
   const int source_ghosts,
   const bool do_move,
-  const int where_width,
+  const int /*where_width*/,
   MultiFab* u_mac)
 {
   BL_PROFILE("ParticleContainer::moveKickDrift()");
@@ -118,7 +118,6 @@ Real
 SprayParticleContainer::estTimestep(int level, Real cfl) const
 {
   BL_PROFILE("ParticleContainer::estTimestep()");
-  AMREX_ASSERT(m_setFuelData);
   // TODO: Clean up this mess and bring the num particle functionality back
   Real dt = std::numeric_limits<Real>::max();
   if (level >= this->GetParticles().size() || m_sprayIndx.mom_tran == 0)
@@ -203,7 +202,6 @@ SprayParticleContainer::updateParticles(
   const bool do_move,
   MultiFab* u_mac)
 {
-  AMREX_ASSERT(m_setFuelData);
   AMREX_ASSERT(OnSameGrids(level, state));
   AMREX_ASSERT(OnSameGrids(level, source));
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
@@ -227,7 +225,7 @@ SprayParticleContainer::updateParticles(
 #endif
   IntVect bndry_lo; // Designation for boundary types
   IntVect bndry_hi; // 0 - Periodic, 1 - Reflective, -1 - Non-reflective
-  for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     if (!this->Geom(level).isPeriodic(dir)) {
       if (reflect_lo[dir])
         bndry_lo[dir] = 1;
@@ -451,7 +449,7 @@ SprayParticleContainer::updateParticles(
               ltransparm);
             // Modify particle position by whole time step
             if (do_move && SPI.mom_tran) {
-              for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+              for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
 #ifdef USE_SPRAY_SOA
                 const Real cvel = attribs[SPI.pstateVel + dir].data()[pid];
 #else
@@ -470,7 +468,7 @@ SprayParticleContainer::updateParticles(
           }
           if (remove_particle)
             p.id() = -1;
-          for (int aindx = 0; aindx != AMREX_D_PICK(2, 4, 8); ++aindx) {
+          for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
             IntVect cur_indx = indx_array[aindx];
             Real cvol = inv_vol;
 #ifdef AMREX_USE_EB
@@ -485,7 +483,7 @@ SprayParticleContainer::updateParticles(
                 "small");
 #endif
             if (SPI.mom_tran) {
-              for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+              for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                 const int nf = SPI.momIndx + dir;
                 Gpu::Atomic::Add(
                   &sourcearr(cur_indx, nf),
@@ -496,7 +494,7 @@ SprayParticleContainer::updateParticles(
               Gpu::Atomic::Add(
                 &sourcearr(cur_indx, SPI.rhoIndx),
                 cur_coef * gpv.fluid_mass_src * SPU.mass_src_conv);
-              for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
+              for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
                 const int nf = SPI.specIndx + fdat->indx[spf];
                 Gpu::Atomic::Add(
                   &sourcearr(cur_indx, nf),

@@ -82,12 +82,11 @@ public:
     const amrex::Real parcelSize,
     const amrex::Real wallT)
     : amrex::AmrParticleContainer<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>(amr),
-      m_setFuelData(false),
       m_injectVel(0.),
-      phys_bc(_phys_bc),
-      m_sprayIndx(SPI),
       m_parcelSize(parcelSize),
-      m_wallT(wallT)
+      m_wallT(wallT),
+      phys_bc(_phys_bc),
+      m_sprayIndx(SPI)
   {
     m_fuelData = std::make_unique<SprayData>();
     m_fuelData->build(fdat);
@@ -302,7 +301,6 @@ public:
   );
 
 private:
-  bool m_setFuelData;
   amrex::Real m_injectVel;
   // The number of spray droplets per computational particle
   amrex::Real m_parcelSize;
