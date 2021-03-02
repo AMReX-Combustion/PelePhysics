@@ -78,7 +78,7 @@ struct SootConst
   /// Surface density of hydrogenate sites (1/cm^2)
   Real SootChi = 1.7E15;
   // Small weight used for initialization and clipping
-  Real smallWeight = 1.E-20;
+  Real smallWeight = 1.E-26;
   /// Soot fractal dimension
   Real SootDf = 1.8;
   /// Coefficients for fit to small surface area change

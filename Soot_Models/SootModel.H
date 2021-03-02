@@ -55,7 +55,10 @@ public:
   // Define the derived variable list (SootModel_setup.cpp)
   //
   void
-  addSootDerivePlotVars(DeriveList& derive_lst, const DescriptorList& desc_lst);
+  addSootDerivePlotVars(DeriveList& derive_lst,
+                        const DescriptorList& desc_lst,
+                        const int rhoIndx,
+                        const int sootIndx);
 
   //
   // Compute HMOM source term

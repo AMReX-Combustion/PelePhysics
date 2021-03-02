@@ -233,19 +233,24 @@ SootModel::defineMemberData(const Real dimerVol)
 // Add derive plot variables
 void
 SootModel::addSootDerivePlotVars(
-  DeriveList& derive_lst, const DescriptorList& desc_lst)
+  DeriveList& derive_lst,
+  const DescriptorList& desc_lst,
+  const int rhoIndx,
+  const int sootIndx)
 {
   // Double check indices are set
   m_setIndx = m_sootIndx.checkIndices();
   if (!m_setIndx)
     Abort("SootModel::addSootDerivePlotVars(): Must set indices first");
   // Add in soot variables
-  Vector<std::string> sootNames = {"rho_soot", "soot_dp", "soot_np"};
+  Vector<std::string> sootNames = {"rho_soot", "sum_rho_soot", "soot_dp", "soot_np"};
   derive_lst.add(
     "soot_vars", IndexType::TheCellType(), sootNames.size(), sootNames,
     soot_genvars, the_same_box);
   derive_lst.addComponent(
-    "soot_vars", desc_lst, State_Type, m_sootIndx.qSootIndx,
+    "soot_vars", desc_lst, State_Type, rhoIndx, 1);
+  derive_lst.addComponent(
+    "soot_vars", desc_lst, State_Type, sootIndx,
     NUM_SOOT_MOMENTS + 1);
 
   // Variables associated with the second mode (large particles)
@@ -254,7 +259,7 @@ SootModel::addSootDerivePlotVars(
     "soot_large_particles", IndexType::TheCellType(), large_part_names.size(),
     large_part_names, soot_largeparticledata, the_same_box);
   derive_lst.addComponent(
-    "soot_large_particles", desc_lst, State_Type, m_sootIndx.qSootIndx,
+    "soot_large_particles", desc_lst, State_Type, sootIndx,
     NUM_SOOT_MOMENTS + 1);
 }
 

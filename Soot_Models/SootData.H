@@ -56,7 +56,7 @@ struct SootData : Gpu::Managed
     for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
       moments[i] =
         sc.smallWeight *
-        std::pow(nuclVol, 3. * (sc.MomOrderV[i] + 2. / 3. * sc.MomOrderS[i]));
+        std::pow(nuclVol, 3. * sc.MomOrderV[i] + 2. * sc.MomOrderS[i]);
     }
     moments[NUM_SOOT_MOMENTS] = sc.smallWeight;
     convertFromMol(moments);
