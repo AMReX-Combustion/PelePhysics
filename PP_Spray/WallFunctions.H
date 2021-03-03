@@ -279,7 +279,7 @@ impose_wall(
 #endif
   const IntVect& bndry_lo,
   const IntVect& bndry_hi,
-  const Real /*dt*/,
+  const Real dt,
   const Real T_wall,
   SprayRefl& SPRF,
   bool isActive,
