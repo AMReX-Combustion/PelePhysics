@@ -776,6 +776,10 @@ struct SimpleTransport
       }
     }
   }
+  template <class... Args>
+  AMREX_GPU_HOST_DEVICE SimpleTransport(Args...)
+  {
+  }
 };
 } // namespace transport
 using TransportType = transport::SimpleTransport;

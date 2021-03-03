@@ -168,6 +168,10 @@ struct Sutherland
       }
     }
   }
+  template <class... Args>
+  AMREX_GPU_HOST_DEVICE Sutherland(Args...)
+  {
+  }
 };
 } // namespace transport
 using TransportType = transport::Sutherland;

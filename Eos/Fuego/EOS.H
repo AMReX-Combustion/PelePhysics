@@ -341,6 +341,11 @@ struct Fuego
     dpde = (G - 1.0) * R;
     dpdr_e = P / R;
   }
+
+  template <class... Args>
+  AMREX_GPU_HOST_DEVICE Fuego(Args...)
+  {
+  }
 };
 } // namespace eos
 using EosType = eos::Fuego;

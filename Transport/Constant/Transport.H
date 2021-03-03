@@ -153,6 +153,11 @@ struct ConstTransport
       }
     }
   }
+
+  template <class... Args>
+  AMREX_GPU_HOST_DEVICE ConstTransport(Args...)
+  {
+  }
 };
 } // namespace transport
 using TransportType = transport::ConstTransport;

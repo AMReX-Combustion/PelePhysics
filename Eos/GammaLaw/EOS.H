@@ -318,6 +318,10 @@ struct GammaLaw
     dpdr_e = P / R;
   }
 
+  template <class... Args>
+  AMREX_GPU_HOST_DEVICE GammaLaw(Args...)
+  {
+  }
   amrex::Real gamma{1.4};
 };
 

@@ -956,9 +956,8 @@ struct SRK
     }
   }
 
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  SRK()
+  template <class... Args>
+  AMREX_GPU_HOST_DEVICE SRK(Args...)
   {
     // Note maybe these should be placed in mechanism.H and computed
     // there instead of every time the EOS is initialized
