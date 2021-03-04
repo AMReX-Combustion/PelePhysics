@@ -10,22 +10,6 @@
 namespace pele {
 namespace physics {
 
-struct LESModel
-{
-  using eos_type = LESModel;
-  using transport_type = LESModel;
-
-  static std::string identifier() { return "Bruce's AwesomeLESModel"; }
-
-  // template<typename Args...>
-  // AMREX_GPU_DEVICE
-  // AMREX_FORCE_INLINE
-  // void RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T,
-  // const Args&&... args){
-  //   eos.RYP2T(R, Y, P, T, std::forward<Args>(args)...);
-  // }
-};
-
 template <typename T>
 struct is_eos_type
 {
