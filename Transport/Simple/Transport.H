@@ -442,7 +442,7 @@ struct BinaryDiff
     amrex::Real& rholoc,
     amrex::Real& Tloc,
     amrex::Real* Ddiag,
-    TransParm const* trans_parm)
+    TransParm const* tparm)
   {
     amrex::Real term1, term2, dbintemp;
     for (int i = 0; i < NUM_SPECIES; ++i) {
@@ -451,15 +451,15 @@ struct BinaryDiff
       for (int j = 0; j < NUM_SPECIES; ++j) {
         if (i != j) {
           dbintemp =
-            trans_parm->trans_fitdbin[4 * (i + NUM_SPECIES * j)] +
-            trans_parm->trans_fitdbin[1 + 4 * (i + NUM_SPECIES * j)] * logT[0] +
-            trans_parm->trans_fitdbin[2 + 4 * (i + NUM_SPECIES * j)] * logT[1] +
-            trans_parm->trans_fitdbin[3 + 4 * (i + NUM_SPECIES * j)] * logT[2];
+            tparm->trans_fitdbin[4 * (i + NUM_SPECIES * j)] +
+            tparm->trans_fitdbin[1 + 4 * (i + NUM_SPECIES * j)] * logT[0] +
+            tparm->trans_fitdbin[2 + 4 * (i + NUM_SPECIES * j)] * logT[1] +
+            tparm->trans_fitdbin[3 + 4 * (i + NUM_SPECIES * j)] * logT[2];
           term1 = term1 + Yloc[j];
           term2 = term2 + Xloc[j] / std::exp(dbintemp);
         }
       }
-      Ddiag[i] = trans_parm->trans_wt[i] * term1 / term2 / wbar;
+      Ddiag[i] = tparm->trans_wt[i] * term1 / term2 / wbar;
     }
 
     // Call CKRP ?
@@ -487,7 +487,7 @@ struct BinaryDiff<eos::SRK>
     amrex::Real& rholoc,
     amrex::Real& Tloc,
     amrex::Real* Ddiag,
-    TransParm const* trans_parm)
+    TransParm const* tparm)
   {
     amrex::Real term1, term2, Upsilonij;
     amrex::Real dbintemp;
@@ -499,10 +499,10 @@ struct BinaryDiff<eos::SRK>
       for (int j = 0; j < NUM_SPECIES; ++j) {
         idx_ij = i + NUM_SPECIES * j;
         if (i != j) {
-          dbintemp = trans_parm->trans_fitdbin[4 * (idx_ij)] +
-                     trans_parm->trans_fitdbin[1 + 4 * (idx_ij)] * logT[0] +
-                     trans_parm->trans_fitdbin[2 + 4 * (idx_ij)] * logT[1] +
-                     trans_parm->trans_fitdbin[3 + 4 * (idx_ij)] * logT[2];
+          dbintemp = tparm->trans_fitdbin[4 * (idx_ij)] +
+                     tparm->trans_fitdbin[1 + 4 * (idx_ij)] * logT[0] +
+                     tparm->trans_fitdbin[2 + 4 * (idx_ij)] * logT[1] +
+                     tparm->trans_fitdbin[3 + 4 * (idx_ij)] * logT[2];
           dbintemp = std::exp(dbintemp);
 
           Upsilonij = 0.0;
@@ -510,24 +510,24 @@ struct BinaryDiff<eos::SRK>
             idx_ik = i + NUM_SPECIES * k;
             idx_jk = j + NUM_SPECIES * k;
             Upsilonij +=
-              trans_parm->trans_iwt[k] * Yloc[k] *
+              tparm->trans_iwt[k] * Yloc[k] *
               (8.0 *
-                 (trans_parm->Sigmaij[idx_ik] * trans_parm->Sigmaij[idx_ik] *
-                    trans_parm->Sigmaij[idx_ik] +
-                  trans_parm->Sigmaij[idx_jk] * trans_parm->Sigmaij[idx_jk] *
-                    trans_parm->Sigmaij[idx_jk]) -
+                 (tparm->Sigmaij[idx_ik] * tparm->Sigmaij[idx_ik] *
+                    tparm->Sigmaij[idx_ik] +
+                  tparm->Sigmaij[idx_jk] * tparm->Sigmaij[idx_jk] *
+                    tparm->Sigmaij[idx_jk]) -
                6.0 *
-                 (trans_parm->Sigmaij[idx_ik] * trans_parm->Sigmaij[idx_ik] +
-                  trans_parm->Sigmaij[idx_jk] * trans_parm->Sigmaij[idx_jk]) *
-                 trans_parm->Sigmaij[idx_ij] -
+                 (tparm->Sigmaij[idx_ik] * tparm->Sigmaij[idx_ik] +
+                  tparm->Sigmaij[idx_jk] * tparm->Sigmaij[idx_jk]) *
+                 tparm->Sigmaij[idx_ij] -
                3.0 *
                  std::pow(
-                   (trans_parm->Sigmaij[idx_ik] * trans_parm->Sigmaij[idx_ik] -
-                    trans_parm->Sigmaij[idx_jk] * trans_parm->Sigmaij[idx_jk]),
+                   (tparm->Sigmaij[idx_ik] * tparm->Sigmaij[idx_ik] -
+                    tparm->Sigmaij[idx_jk] * tparm->Sigmaij[idx_jk]),
                    2.0) /
-                 trans_parm->Sigmaij[idx_ij] +
-               trans_parm->Sigmaij[idx_ij] * trans_parm->Sigmaij[idx_ij] *
-                 trans_parm->Sigmaij[idx_ij]);
+                 tparm->Sigmaij[idx_ij] +
+               tparm->Sigmaij[idx_ij] * tparm->Sigmaij[idx_ij] *
+                 tparm->Sigmaij[idx_ij]);
           }
           Upsilonij =
             Upsilonij * rholoc * Constants::Avna * 3.141592653589793 / 12.0 +
@@ -538,7 +538,7 @@ struct BinaryDiff<eos::SRK>
           term2 += Xloc[j] / dbintemp;
         }
       }
-      Ddiag[i] = trans_parm->trans_wt[i] * term1 / term2; // * rholoc / wbar
+      Ddiag[i] = tparm->trans_wt[i] * term1 / term2; // * rholoc / wbar
     }
   }
 };
@@ -556,7 +556,7 @@ struct SimpleTransport
     amrex::Real Tloc,
     amrex::Real* muloc,
     amrex::Real* xiloc,
-    TransParm const* trans_parm)
+    TransParm const* tparm)
   {
     amrex::Real cvk[NUM_SPECIES];
     amrex::Real cvkint[NUM_SPECIES];
@@ -569,21 +569,21 @@ struct SimpleTransport
     CKCVMS(&Tloc, cvk);
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      if (trans_parm->trans_nlin[i] == 0) {
+      if (tparm->trans_nlin[i] == 0) {
         cvkint[i] = 0.0;
         cvkrot[i] = 0.0;
-      } else if (trans_parm->trans_nlin[i] == 1) {
-        cvkint[i] = cvk[i] * trans_parm->trans_wt[i] / Constants::RU - 1.50;
+      } else if (tparm->trans_nlin[i] == 1) {
+        cvkint[i] = cvk[i] * tparm->trans_wt[i] / Constants::RU - 1.50;
         cvkrot[i] = 1.0;
       } else {
-        cvkint[i] = cvk[i] * trans_parm->trans_wt[i] / Constants::RU - 1.50;
+        cvkint[i] = cvk[i] * tparm->trans_wt[i] / Constants::RU - 1.50;
         cvkrot[i] = 1.5;
       }
     }
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      epskoverTstd = trans_parm->trans_eps[i] / 298.0;
-      epskoverT = trans_parm->trans_eps[i] / Tloc;
+      epskoverTstd = tparm->trans_eps[i] / 298.0;
+      epskoverT = tparm->trans_eps[i] / Tloc;
       Fnorm[i] = 1.0 + 0.50 * pi3_2 * std::sqrt(epskoverTstd) +
                  (2.0 + .50 * M_PI * M_PI) * epskoverTstd +
                  pi3_2 * std::sqrt(epskoverTstd) * epskoverTstd;
@@ -594,7 +594,7 @@ struct SimpleTransport
     }
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      if (trans_parm->trans_nlin[i] == 0) {
+      if (tparm->trans_nlin[i] == 0) {
         xiloc[i] = 0.0;
       } else {
         //   zrot/crot approximately zint / cint by assuming vibrational
@@ -603,7 +603,7 @@ struct SimpleTransport
         xiloc[i] =
           0.250 * M_PI *
           (cvkint[i] / (cvkint[i] + 1.50) * cvkint[i] / (cvkint[i] + 1.50)) *
-          trans_parm->trans_zrot[i] / cvkrot[i] * Fnorm[i] / FofT[i] * muloc[i];
+          tparm->trans_zrot[i] / cvkrot[i] * Fnorm[i] / FofT[i] * muloc[i];
       }
     }
   }
@@ -622,7 +622,7 @@ struct SimpleTransport
     amrex::Real& mu,
     amrex::Real& xi,
     amrex::Real& lam,
-    TransParm const* trans_parm)
+    TransParm const* tparm)
   {
     amrex::Real trace = 1.e-15;
     // Call CKRP ?
@@ -653,18 +653,18 @@ struct SimpleTransport
     }
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      wbar = wbar + Yloc[i] * trans_parm->trans_iwt[i];
+      wbar = wbar + Yloc[i] * tparm->trans_iwt[i];
     }
     wbar = 1.0 / wbar;
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      Xloc[i] = Yloc[i] * wbar * trans_parm->trans_iwt[i];
+      Xloc[i] = Yloc[i] * wbar * tparm->trans_iwt[i];
     }
     if (wtr_get_mu) {
       for (int i = 0; i < NUM_SPECIES; ++i) {
-        muloc[i] = trans_parm->trans_fitmu[4 * i] +
-                   trans_parm->trans_fitmu[1 + 4 * i] * logT[0] +
-                   trans_parm->trans_fitmu[2 + 4 * i] * logT[1] +
-                   trans_parm->trans_fitmu[3 + 4 * i] * logT[2];
+        muloc[i] = tparm->trans_fitmu[4 * i] +
+                   tparm->trans_fitmu[1 + 4 * i] * logT[0] +
+                   tparm->trans_fitmu[2 + 4 * i] * logT[1] +
+                   tparm->trans_fitmu[3 + 4 * i] * logT[2];
         muloc[i] = std::exp(muloc[i]);
       }
 
@@ -680,7 +680,7 @@ struct SimpleTransport
       //  shear viscosity
 
       if (wtr_get_xi) {
-        comp_pure_bulk(Tloc, muloc, xiloc, trans_parm);
+        comp_pure_bulk(Tloc, muloc, xiloc, tparm);
         xi = 0.0;
         for (int i = 0; i < NUM_SPECIES; ++i) {
           xi = xi + Xloc[i] * (std::sqrt(std::sqrt(
@@ -694,10 +694,10 @@ struct SimpleTransport
 
     if (wtr_get_lam) {
       for (int i = 0; i < NUM_SPECIES; ++i) {
-        lamloc[i] = trans_parm->trans_fitlam[4 * i] +
-                    trans_parm->trans_fitlam[1 + 4 * i] * logT[0] +
-                    trans_parm->trans_fitlam[2 + 4 * i] * logT[1] +
-                    trans_parm->trans_fitlam[3 + 4 * i] * logT[2];
+        lamloc[i] = tparm->trans_fitlam[4 * i] +
+                    tparm->trans_fitlam[1 + 4 * i] * logT[0] +
+                    tparm->trans_fitlam[2 + 4 * i] * logT[1] +
+                    tparm->trans_fitlam[3 + 4 * i] * logT[2];
         lamloc[i] = std::exp(lamloc[i]);
       }
 
@@ -712,11 +712,11 @@ struct SimpleTransport
     // Add nonideal corrections if necessary
     SRKChungCorrections<EosType>()(
       wtr_get_mu, wtr_get_lam, Tloc, Xloc, rholoc, wbar, mu, xi, lam,
-      trans_parm);
+      tparm);
 
     if (wtr_get_Ddiag) {
       BinaryDiff<EosType>()(
-        wbar, Xloc, Yloc, logT, rholoc, Tloc, Ddiag, trans_parm);
+        wbar, Xloc, Yloc, logT, rholoc, Tloc, Ddiag, tparm);
     }
   }
 
@@ -731,7 +731,7 @@ struct SimpleTransport
     amrex::Array4<amrex::Real> const& mu_out,
     amrex::Array4<amrex::Real> const& xi_out,
     amrex::Array4<amrex::Real> const& lam_out,
-    TransParm const* trans_parm)
+    TransParm const* tparm)
   {
     const auto lo = amrex::lbound(bx);
     const auto hi = amrex::ubound(bx);
@@ -762,7 +762,7 @@ struct SimpleTransport
 
           transport(
             wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, T, rho, massloc,
-            Ddiag, muloc, xiloc, lamloc, trans_parm);
+            Ddiag, muloc, xiloc, lamloc, tparm);
 
           //   mu, xi and lambda are stored after D in the diffusion multifab
           for (int n = 0; n < NUM_SPECIES; ++n) {

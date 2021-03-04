@@ -79,35 +79,35 @@ struct Sutherland
     amrex::Real& mu,
     amrex::Real& xi,
     amrex::Real& lam,
-    TransParm const* trans_parm)
+    TransParm const* tparm)
   {
 
     if (wtr_get_mu) {
-      mu = trans_parm->viscosity_mu_ref *
-           std::pow((Tloc / trans_parm->viscosity_T_ref), 1.5) *
-           (trans_parm->viscosity_T_ref + trans_parm->viscosity_S) /
-           (Tloc + trans_parm->viscosity_S);
+      mu = tparm->viscosity_mu_ref *
+           std::pow((Tloc / tparm->viscosity_T_ref), 1.5) *
+           (tparm->viscosity_T_ref + tparm->viscosity_S) /
+           (Tloc + tparm->viscosity_S);
     }
 
     if (wtr_get_lam) {
       amrex::Real muloc =
-        trans_parm->viscosity_mu_ref *
-        std::pow((Tloc / trans_parm->viscosity_T_ref), 1.5) *
-        (trans_parm->viscosity_T_ref + trans_parm->viscosity_S) /
-        (Tloc + trans_parm->viscosity_S);
+        tparm->viscosity_mu_ref *
+        std::pow((Tloc / tparm->viscosity_T_ref), 1.5) *
+        (tparm->viscosity_T_ref + tparm->viscosity_S) /
+        (Tloc + tparm->viscosity_S);
 
       amrex::Real Cpmix;
       CKCPBS(&Tloc, Yloc, &Cpmix);
-      lam = muloc * Cpmix / trans_parm->Prandtl_number;
+      lam = muloc * Cpmix / tparm->Prandtl_number;
     }
 
     if (wtr_get_xi) {
-      xi = trans_parm->const_bulk_viscosity;
+      xi = tparm->const_bulk_viscosity;
     }
 
     if (wtr_get_Ddiag) {
       for (int i = 0; i < NUM_SPECIES; ++i) {
-        Ddiag[i] = trans_parm->const_diffusivity;
+        Ddiag[i] = tparm->const_diffusivity;
       }
     }
   }
@@ -123,7 +123,7 @@ struct Sutherland
     amrex::Array4<amrex::Real> const& mu_out,
     amrex::Array4<amrex::Real> const& xi_out,
     amrex::Array4<amrex::Real> const& lam_out,
-    TransParm const* trans_parm)
+    TransParm const* tparm)
   {
     const auto lo = amrex::lbound(bx);
     const auto hi = amrex::ubound(bx);
@@ -154,7 +154,7 @@ struct Sutherland
 
           transport(
             wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, T, rho, massloc,
-            Ddiag, muloc, xiloc, lamloc, trans_parm);
+            Ddiag, muloc, xiloc, lamloc, tparm);
 
           // mu, xi and lambda are stored after D in the diffusion multifab
           for (int n = 0; n < NUM_SPECIES; ++n) {

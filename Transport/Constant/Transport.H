@@ -75,24 +75,24 @@ struct ConstTransport
     amrex::Real& mu,
     amrex::Real& xi,
     amrex::Real& lam,
-    TransParm const* trans_parm)
+    TransParm const* tparm)
   {
 
     if (wtr_get_lam) {
-      lam = trans_parm->const_conductivity;
+      lam = tparm->const_conductivity;
     }
 
     if (wtr_get_mu) {
-      mu = trans_parm->const_viscosity;
+      mu = tparm->const_viscosity;
     }
 
     if (wtr_get_xi) {
-      xi = trans_parm->const_bulk_viscosity;
+      xi = tparm->const_bulk_viscosity;
     }
 
     if (wtr_get_Ddiag) {
       for (int i = 0; i < NUM_SPECIES; ++i) {
-        Ddiag[i] = trans_parm->const_diffusivity;
+        Ddiag[i] = tparm->const_diffusivity;
       }
     }
   }
@@ -108,7 +108,7 @@ struct ConstTransport
     amrex::Array4<amrex::Real> const& mu_out,
     amrex::Array4<amrex::Real> const& xi_out,
     amrex::Array4<amrex::Real> const& lam_out,
-    TransParm const* trans_parm)
+    TransParm const* tparm)
   {
     const auto lo = amrex::lbound(bx);
     const auto hi = amrex::ubound(bx);
@@ -139,7 +139,7 @@ struct ConstTransport
 
           transport(
             wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, T, rho, massloc,
-            Ddiag, muloc, xiloc, lamloc, trans_parm);
+            Ddiag, muloc, xiloc, lamloc, tparm);
 
           // mu, xi and lambda are stored after D in the diffusion multifab
           for (int n = 0; n < NUM_SPECIES; ++n) {
