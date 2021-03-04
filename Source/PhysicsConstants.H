@@ -8,6 +8,7 @@ namespace physics {
 
 struct Constants
 {
+  static constexpr amrex::Real gamma = 1.4;
   static constexpr amrex::Real RU = 8.31446261815324e7;
   static constexpr amrex::Real RUC = 1.98721558317399615845;
   static constexpr amrex::Real PATM = 1.01325e+06;

@@ -304,7 +304,7 @@ struct CloseTransport<eos::SRK>
 #endif
 
 template <typename EOSType>
-struct SRKChungCorrections
+struct NonIdealChungCorrections
 {
   template <class... Args>
   AMREX_GPU_HOST_DEVICE
@@ -317,7 +317,7 @@ struct SRKChungCorrections
 // FIXME remove ifdef when compiling in all the EOS
 #ifdef PELEC_USE_SRK
 template <>
-struct SRKChungCorrections<eos::SRK>
+struct NonIdealChungCorrections<eos::SRK>
 {
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
@@ -421,9 +421,6 @@ struct SRKChungCorrections<eos::SRK>
     // Set nonideal conductivity
     if (wtr_get_lam) {
       lam = lam * beta + lambda_p;
-      // lam = H2;
-      // mu = H2;
-      // xi = beta;
     }
   }
 };
@@ -710,7 +707,7 @@ struct SimpleTransport
       lam = lam * lam * lam * lam; // lam = lam^4
     }
     // Add nonideal corrections if necessary
-    SRKChungCorrections<EosType>()(
+    NonIdealChungCorrections<EosType>()(
       wtr_get_mu, wtr_get_lam, Tloc, Xloc, rholoc, wbar, mu, xi, lam,
       tparm);
 
