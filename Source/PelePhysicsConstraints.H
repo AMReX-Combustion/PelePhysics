@@ -1,5 +1,4 @@
 #include <type_traits>
-#include <iostream>
 
 namespace pele {
 namespace physics {
