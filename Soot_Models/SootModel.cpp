@@ -149,7 +149,7 @@ SootModel::readSootParams()
             << std::endl;
   }
   // Set the maximum allowable change for variables during soot source terms
-  m_maxDtRate = 0.2;
+  m_maxDtRate = 0.05;
   pp.query("max_dt_rate", m_maxDtRate);
   // Determines if mass is conserved by adding lost mass to H2
   m_conserveMass = false;
@@ -243,7 +243,7 @@ SootModel::addSootDerivePlotVars(
   if (!m_setIndx)
     Abort("SootModel::addSootDerivePlotVars(): Must set indices first");
   // Add in soot variables
-  Vector<std::string> sootNames = {"rho_soot", "sum_rho_soot", "soot_dp", "soot_np"};
+  Vector<std::string> sootNames = {"rho_soot", "sum_rho_soot"};
   derive_lst.add(
     "soot_vars", IndexType::TheCellType(), sootNames.size(), sootNames,
     soot_genvars, the_same_box);
@@ -254,7 +254,7 @@ SootModel::addSootDerivePlotVars(
     NUM_SOOT_MOMENTS + 1);
 
   // Variables associated with the second mode (large particles)
-  Vector<std::string> large_part_names = {"NL", "VL", "SL"};
+  Vector<std::string> large_part_names = {"NL", "rho_soot_L", "soot_S_L"};
   derive_lst.add(
     "soot_large_particles", IndexType::TheCellType(), large_part_names.size(),
     large_part_names, soot_largeparticledata, the_same_box);
