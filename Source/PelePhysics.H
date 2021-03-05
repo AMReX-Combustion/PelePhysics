@@ -23,6 +23,24 @@ struct is_transport_type
     std::is_base_of<typename T::transport_type, T>::value;
 };
 
+// FIXME enable this and the static_assert below once we compile in all the EOSs
+// template <typename EosModel, typename TransportModel>
+// struct is_valid_physics_combination : public std::true_type
+// {
+// };
+
+// template <>
+// struct is_valid_physics_combination<eos::GammaLaw, transport::SimpleTransport>
+//   : public std::false_type
+// {
+// };
+
+// template <>
+// struct is_valid_physics_combination<eos::SRK, transport::ConstTransport>
+//   : public std::false_type
+// {
+// };
+
 template <typename EosModel, typename TransportModel>
 struct PelePhysics
 {
@@ -32,6 +50,9 @@ struct PelePhysics
   static_assert(
     is_transport_type<TransportModel>::value,
     "PelePhysics must have Transport model as its second argument");
+  // static_assert(
+  //   is_valid_physics_combination<EosModel, TransportModel>::value,
+  //   "Invalid physics combination attempted");
 
   using eos_type = typename EosModel::eos_type;
   using transport_type = typename TransportModel::transport_type;
@@ -46,15 +67,13 @@ struct PelePhysics
   }
 
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE
-  static eos_type eos(Args... args)
+  AMREX_GPU_HOST_DEVICE static eos_type eos(Args... args)
   {
     return eos_type(std::forward<Args>(args)...);
   }
 
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE
-  static transport_type transport(Args... args)
+  AMREX_GPU_HOST_DEVICE static transport_type transport(Args... args)
   {
     return transport_type(std::forward<Args>(args)...);
   }
