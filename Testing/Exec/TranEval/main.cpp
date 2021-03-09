@@ -5,12 +5,10 @@
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
 
-#include <Transport.H>
 #include <PlotFileFromMF.H>
 #include "mechanism.h"
 #include <GPU_misc.H>
-
-#include <EOS.H>
+#include <PelePhysics.H>
 
 using namespace amrex;
 
@@ -23,8 +21,8 @@ main (int   argc,
 
       ParmParse pp;
 
-      EOS::init();
-      transport_init();
+      pele::physics::transport::InitTransport<
+        pele::physics::PhysicsType::eos_type>()();
     
       // Define geometry
       Array<int,AMREX_SPACEDIM> npts {AMREX_D_DECL(1,1,1)};;
@@ -98,7 +96,7 @@ main (int   argc,
       MultiFab lam(ba,dm,1,num_grow);
 
       // Get the transport data pointer
-      TransParm const* ltransparm = trans_parm_g;
+      pele::physics::transport::TransParm const* ltransparm = pele::physics::transport::trans_parm_g;
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -116,15 +114,16 @@ main (int   argc,
           Array4<Real> const& lam_a  = lam.array(mfi);
 
           amrex::launch(gbox, [=] AMREX_GPU_DEVICE(amrex::Box const& tbx) {
-                    get_transport_coeffs(tbx,
+                    auto trans = pele::physics::PhysicsType::transport();
+                    trans.get_transport_coeffs(tbx,
                                          Y_a, T_a, rho_a, 
                                          D_a, mu_a, xi_a, lam_a, ltransparm);
           });
       }
 
-      transport_close();
-      EOS::close();
-
+      pele::physics::transport::CloseTransport<
+        pele::physics::PhysicsType::eos_type>()();
+      
       MultiFab VarPlt(ba,dm,NUM_SPECIES+3,num_grow);
       MultiFab::Copy(VarPlt,D,0,0,NUM_SPECIES,num_grow);
       MultiFab::Copy(VarPlt,mu,0,NUM_SPECIES,1,num_grow);

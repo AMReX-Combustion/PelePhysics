@@ -2,7 +2,7 @@
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include "mechanism.h"
-#include <EOS.H>
+#include <PelePhysics.H>
 
 /**********************************/
 UserData data      = NULL;
@@ -305,21 +305,22 @@ void fKernelSpec(double *dt, double *yvec_d, double *ydot_d,
         /* NRG CGS */
         energy = (rhoX_init[tid] + rhoXsrc_ext[tid]*(*dt)) /rho;
 
+        auto eos = pele::physics::PhysicsType::eos();
         if (data_wk->ireactor_type == eint_rho)
         {
             /* UV REACTOR */
-            EOS::EY2T(energy, massfrac, temp);
-            EOS::TY2Cv(temp, massfrac, cX);
-            EOS::T2Ei(temp, Xi);
+            eos.EY2T(energy, massfrac, temp);
+            eos.TY2Cv(temp, massfrac, cX);
+            eos.T2Ei(temp, Xi);
         } 
         else 
         {
             /* HP REACTOR */
-            EOS::HY2T(energy, massfrac, temp);
-            EOS::TY2Cp(temp, massfrac, cX);
-            EOS::T2Hi(temp, Xi);
+            eos.HY2T(energy, massfrac, temp);
+            eos.TY2Cp(temp, massfrac, cX);
+            eos.T2Hi(temp, Xi);
         }
-        EOS::RTY2WDOT(rho, temp, massfrac, cdot);
+        eos.RTY2WDOT(rho, temp, massfrac, cdot);
 
         /* Fill ydot vect */
         ydot_d[offset + NUM_SPECIES] = rhoXsrc_ext[tid];

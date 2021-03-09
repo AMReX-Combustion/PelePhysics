@@ -11,8 +11,7 @@
 #include "mechanism.h"
 
 #include <PlotFileFromMF.H>
-#include <EOS.H>
-#include <Transport.H>
+#include <PelePhysics.H>
 #include <reactor.h>
 
 #ifndef USE_RK64_PP
@@ -63,11 +62,13 @@ initialize_data(int i, int j, int k, int fuel_id,
     X[O2_ID]   = 0.2;
     X[fuel_id] = 0.1;
     X[N2_ID]   = 0.7;
-    EOS::X2Y(&X[0],&Y[0]);
+    auto eos = pele::physics::PhysicsType::eos();
+
+    eos.X2Y(&X[0],&Y[0]);
     // T
     temp =  Temp_lo + (Temp_hi-Temp_lo)*y/L[1] + dTemp * std::sin(2.0*pi*y/P[1]);
     // get rho and E 
-    EOS::PYT2RE(pressure, &Y[0], temp, density, energy);
+    eos.PYT2RE(pressure, &Y[0], temp, density, energy);
     // Fill vect
     for (int n = 0; n < NUM_SPECIES; n++) {
         rhoY(i,j,k,n) = Y[n]*density;   
@@ -148,8 +149,8 @@ main (int   argc,
 #endif
     }
 
-    EOS::init();
-    transport_init();
+    pele::physics::transport::InitTransport<
+      pele::physics::PhysicsType::eos_type>()();
 
     BL_PROFILE_VAR("main::reactor_info()", reactInfo);
 
@@ -432,9 +433,9 @@ main (int   argc,
 #ifndef AMREX_USE_CUDA
     reactor_close();
 #endif
-    transport_close();
-    EOS::close();
-    
+    pele::physics::transport::CloseTransport<
+      pele::physics::PhysicsType::eos_type>()();
+
     BL_PROFILE_VAR_STOP(pmain);
   }
   Finalize();

@@ -68,10 +68,11 @@ int react(const Box& box,
         Real energy_loc = renergy_loc / rho_loc;
         // Get curr estimate of T
         Real T_loc    = T_in(i,j,k,0);
+        auto eos = pele::physics::PhysicsType::eos();
         if (reactor_type == eint_rho){
-            EOS::EY2T(energy_loc,Y_loc,T_loc);
+            eos.EY2T(energy_loc,Y_loc,T_loc);
         } else {
-            EOS::HY2T(energy_loc,Y_loc,T_loc);
+            eos.HY2T(energy_loc,Y_loc,T_loc);
         }
         T_in(i,j,k,0) = T_loc;
         /* Dummy */

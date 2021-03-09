@@ -2,7 +2,7 @@
 #include <AMReX_ParmParse.H>
 #include <chemistry_file.H>
 #include "mechanism.h"
-#include <EOS.H>
+#include <PelePhysics.H>
 #include <AMReX_Gpu.H>
 #include <AMReX_SUNMemory.H>
 #include <AMREX_misc.H>
@@ -40,7 +40,7 @@ int reactor_info(int reactor_type, int Ncells)
 void SetTypValsODE(const std::vector<double>& ExtTypVals) 
 {
     Vector<std::string> kname;
-    EOS::speciesNames(kname);
+    pele::physics::eos::speciesNames(kname);
 
     Print() << "Set the typVals in PelePhysics: \n  ";
     int size_ETV = ExtTypVals.size();
@@ -398,22 +398,23 @@ fKernelSpec(int icell, void *user_data,
     temp_pt = yvec_d[offset + NUM_SPECIES];
 
     /* Additional var needed */
+    auto eos = pele::physics::PhysicsType::eos();
     if (udata->ireactor_type == 1)
     {
         /* UV REACTOR */
-        EOS::EY2T(nrg_pt, massfrac.arr, temp_pt);
-        EOS::T2Ei(temp_pt, ei_pt.arr);
-        EOS::TY2Cv(temp_pt, massfrac.arr, Cv_pt);
+        eos.EY2T(nrg_pt, massfrac.arr, temp_pt);
+        eos.T2Ei(temp_pt, ei_pt.arr);
+        eos.TY2Cv(temp_pt, massfrac.arr, Cv_pt);
     }
     else 
     {
         /* HP REACTOR */
-        EOS::HY2T(nrg_pt, massfrac.arr, temp_pt);
-        EOS::TY2Cp(temp_pt, massfrac.arr, Cv_pt);
-        EOS::T2Hi(temp_pt, ei_pt.arr);
+        eos.HY2T(nrg_pt, massfrac.arr, temp_pt);
+        eos.TY2Cp(temp_pt, massfrac.arr, Cv_pt);
+        eos.T2Hi(temp_pt, ei_pt.arr);
     }
 
-    EOS::RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
+    eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
 
     /* Fill ydot vect */
     ydot_d[offset + NUM_SPECIES] = rhoesrc_ext[icell];

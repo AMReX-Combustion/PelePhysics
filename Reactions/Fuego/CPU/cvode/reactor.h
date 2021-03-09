@@ -24,7 +24,7 @@
 #include <AMReX_iMultiFab.H>
 
 #include <AMReX_Print.H>
-#include <EOS.H>
+#include <PelePhysics.H>
 /**********************************/
 
 typedef struct {

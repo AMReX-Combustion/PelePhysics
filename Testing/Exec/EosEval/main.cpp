@@ -9,7 +9,7 @@
 #include "mechanism.h"
 #include <GPU_misc.H>
 
-#include <EOS.H>
+#include <PelePhysics.H>
 
 using namespace amrex;
 
@@ -22,8 +22,6 @@ main (int   argc,
 
       ParmParse pp;
 
-      EOS::init();
-    
       // Define geometry
       Array<int,AMREX_SPACEDIM> npts {AMREX_D_DECL(1,1,1)};;
       for (int i = 0; i < AMREX_SPACEDIM; ++i) {
@@ -150,8 +148,6 @@ main (int   argc,
 
       std::string outfile = amrex::Concatenate(pltfile,1); // Need a number other than zero for reg test to pass
       PlotFileFromMF(VarPlt,outfile);
-
-      EOS::close();
 
     }
 

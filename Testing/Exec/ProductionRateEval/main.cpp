@@ -7,7 +7,7 @@
 #include <AMReX_ParmParse.H>
 
 #include <mechanism.h>
-#include <EOS.H>
+#include <PelePhysics.H>
 #include <AMReX_GpuDevice.H>
 
 #include <PlotFileFromMF.H>
@@ -78,7 +78,6 @@ main (int   argc,
   Initialize(argc,argv);
   {
     amrex::Print() << " Initialization of EOS (CPP)... \n";
-    EOS::init();
       
     ParmParse pp;
     int nc = 512;
@@ -148,7 +147,7 @@ main (int   argc,
                     Real Yl[NUM_SPECIES];
                     Real Wl[NUM_SPECIES];
                     for (int n=0; n<NUM_SPECIES; ++n) Yl[n] = mf(i,j,k,n);
-                    EOS::RTY2WDOT(rho(i,j,k), temp(i,j,k), Yl, Wl);
+                    eos.RTY2WDOT(rho(i,j,k), temp(i,j,k), Yl, Wl);
                     for (int n=0; n<NUM_SPECIES; ++n) wdot(i,j,k,n) = Wl[n];
                   });
 
@@ -161,7 +160,7 @@ main (int   argc,
       PlotFileFromMF(wdots,outfile);
     }
   }
-  
+
   Finalize();
 
   return 0;

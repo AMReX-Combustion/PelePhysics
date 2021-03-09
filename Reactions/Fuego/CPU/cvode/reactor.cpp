@@ -49,7 +49,7 @@ using namespace amrex;
 void SetTypValsODE(const std::vector<double>& ExtTypVals) {
     int size_ETV = (NUM_SPECIES + 1);
     Vector<std::string> kname;
-    EOS::speciesNames(kname);
+    pele::physics::eos::speciesNames(kname);
     int omp_thread = 0;
 #ifdef _OPENMP
     omp_thread = omp_get_thread_num();
@@ -457,10 +457,11 @@ int react(const Box& box,
             mass_frac[n] = yvec_d[n] * rho_inv;
         }
         Enrg_loc = data->rhoX_init[0] / rho;
+        auto eos = pele::physics::PhysicsType::eos();
         if (data->ireactor_type == 1){
-            EOS::EY2T(Enrg_loc,mass_frac,temp);
+            eos.EY2T(Enrg_loc,mass_frac,temp);
         } else {
-            EOS::HY2T(Enrg_loc,mass_frac,temp);
+            eos.HY2T(Enrg_loc,mass_frac,temp);
         }
         yvec_d[NUM_SPECIES] = temp;
         BL_PROFILE_VAR_STOP(FlatStuff);
@@ -504,10 +505,11 @@ int react(const Box& box,
         }
         rEner_in(i,j,k,0) = data->rhoX_init[0] + (dummy_time - time_init) * data->rhoXsrc_ext[0]; 
         Enrg_loc          = rEner_in(i,j,k,0) * rho_inv;
+        auto eos = pele::physics::PhysicsType::eos();
         if (data->ireactor_type == 1){
-            EOS::EY2T(Enrg_loc,mass_frac,temp);
+            eos.EY2T(Enrg_loc,mass_frac,temp);
         } else {
-            EOS::HY2T(Enrg_loc,mass_frac,temp);
+            eos.HY2T(Enrg_loc,mass_frac,temp);
         }
         T_in(i,j,k,0) = temp;
         BL_PROFILE_VAR_STOP(FlatStuff);
@@ -761,10 +763,11 @@ int react(realtype *rY_in, realtype *rY_src_in,
         nrg_loc = rX_in[i] * rho_inv;
         // recompute T
         temp = rY_in[offset + NUM_SPECIES];
+        auto eos = pele::physics::PhysicsType::eos();
         if (data->ireactor_type == eint_rho){
-            EOS::EY2T(nrg_loc,mass_frac,temp);
+            eos.EY2T(nrg_loc,mass_frac,temp);
         } else {
-            EOS::HY2T(nrg_loc,mass_frac,temp);
+            eos.HY2T(nrg_loc,mass_frac,temp);
         }
         // store T in y
         yvec_d[offset + NUM_SPECIES] = temp;
@@ -820,10 +823,11 @@ int react(realtype *rY_in, realtype *rY_src_in,
         // get energy
         nrg_loc = rX_in[i] * rho_inv;
         // recompute T
+        auto eos = pele::physics::PhysicsType::eos();
         if (data->ireactor_type == eint_rho){
-            EOS::EY2T(nrg_loc,mass_frac,temp);
+            eos.EY2T(nrg_loc,mass_frac,temp);
         } else {
-            EOS::HY2T(nrg_loc,mass_frac,temp);
+            eos.HY2T(nrg_loc,mass_frac,temp);
         }
         // store T in rY_in
         rY_in[offset + NUM_SPECIES] = temp;
@@ -908,18 +912,19 @@ void fKernelSpec(realtype *t, realtype *yvec_d, realtype *ydot_d,
       /* NRG CGS */
       energy = (data_wk->rhoX_init[data->boxcell + tid] + data_wk->rhoXsrc_ext[data_wk->boxcell + tid] * dt) /rho;
 
+      auto eos = pele::physics::PhysicsType::eos();
       if (data_wk->ireactor_type == eint_rho){
           /* UV REACTOR */
-          EOS::EY2T(energy, massfrac, temp);
-          EOS::TY2Cv(temp, massfrac, cX);
-          EOS::T2Ei(temp, Xi);
+          eos.EY2T(energy, massfrac, temp);
+          eos.TY2Cv(temp, massfrac, cX);
+          eos.T2Ei(temp, Xi);
       } else if (data_wk->ireactor_type == enth_rho) {
           /* HP REACTOR */
-          EOS::HY2T(energy, massfrac, temp);
-          EOS::TY2Cp(temp, massfrac, cX);
-          EOS::T2Hi(temp, Xi);
+          eos.HY2T(energy, massfrac, temp);
+          eos.TY2Cp(temp, massfrac, cX);
+          eos.T2Hi(temp, Xi);
       }
-      EOS::RTY2WDOT(rho, temp, massfrac, cdot);
+      eos.RTY2WDOT(rho, temp, massfrac, cdot);
 
       /* Fill ydot vect */
       ydot_d[offset + NUM_SPECIES] = data_wk->rhoXsrc_ext[data_wk->boxcell + tid];
@@ -981,7 +986,8 @@ int cJac(realtype /* tn */, N_Vector u, N_Vector /* fu */, SUNMatrix J,
       } else {
           consP = 1;
       }
-      EOS::RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
+      auto eos = pele::physics::PhysicsType::eos();
+      eos.RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
       /* fill the sunMat */
       for (int k = 0; k < NUM_SPECIES; k++){
           J_col_k = SM_COLUMN_D(J,offset + k);
@@ -1057,7 +1063,8 @@ int cJac_sps(realtype /* tn */, N_Vector u, N_Vector /* fu */, SUNMatrix J,
       /* Do we recompute Jac ? */
       if (fabs(temp - temp_save_lcl) > 1.0) {
           int consP = data_wk->ireactor_type == eint_rho ? 0 : 1;
-          EOS::RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
+          auto eos = pele::physics::PhysicsType::eos();
+          eos.RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
           temp_save_lcl = temp;
           /* rescale */
           for (int i = 0; i < NUM_SPECIES; i++) {
@@ -1139,7 +1146,8 @@ int cJac_KLU(realtype /* tn */, N_Vector u, N_Vector /* fu */, SUNMatrix J,
       if (fabs(temp - temp_save_lcl) > 1.0) {
           /* NRG CGS */
           int consP = data_wk->ireactor_type == eint_rho ? 0 : 1;
-          EOS::RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
+          auto eos = pele::physics::PhysicsType::eos();
+          eos.RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
           temp_save_lcl = temp;
           /* rescale */
           for (int i = 0; i < NUM_SPECIES; i++) {
@@ -1211,7 +1219,8 @@ int Precond_custom(realtype /* tn */, N_Vector u, N_Vector /* fu */, booleantype
           /* temp */
           temp = udata[offset + NUM_SPECIES];
           /* Activities */
-          EOS::RTY2C(rho, temp, massfrac, activity);
+          auto eos = pele::physics::PhysicsType::eos();
+          eos.RTY2C(rho, temp, massfrac, activity);
           /* Do we recompute Jac ? */
           if (fabs(temp - temp_save_lcl) > 1.0) {
               /* Formalism */
@@ -1309,7 +1318,8 @@ int Precond_sparse(realtype /* tn */, N_Vector u, N_Vector /* fu */, booleantype
           /* temp */
           realtype temp = udata[offset + NUM_SPECIES];
           /* Activities */
-          EOS::RTY2C(rho, temp, massfrac, activity);
+          auto eos = pele::physics::PhysicsType::eos();
+          eos.RTY2C(rho, temp, massfrac, activity);
           /* Do we recompute Jac ? */
           if (fabs(temp - temp_save_lcl) > 1.0) {
               /* Formalism */
@@ -1418,7 +1428,8 @@ int Precond(realtype /* tn */, N_Vector u, N_Vector /* fu */, booleantype jok,
       /* temp */
       temp = udata[NUM_SPECIES];
       /* Activities */
-      EOS::RTY2C(rho, temp, massfrac, activity);
+      auto eos = pele::physics::PhysicsType::eos();
+      eos.RTY2C(rho, temp, massfrac, activity);
       /* jok = SUNFALSE: Generate Jbd from scratch and copy to P */
       /* Make local copies of problem variables, for efficiency. */
       int consP;
