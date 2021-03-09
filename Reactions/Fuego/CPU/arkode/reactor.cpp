@@ -495,7 +495,6 @@ int react(const Box& box,
                 + (dummy_time - time_init) * data->rhoXsrc_ext[0]; 
 
             Enrg_loc          = rEner_in(i,j,k,0) * rho_inv;
-            auto eos = pele::physics::PhysicsType::eos();
             if (data->ireactor_type == 1)
             {
                 eos.EY2T(Enrg_loc,mass_frac,temp);
