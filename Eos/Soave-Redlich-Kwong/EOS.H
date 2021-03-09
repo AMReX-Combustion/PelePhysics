@@ -13,6 +13,12 @@ namespace pele {
 namespace physics {
 namespace eos {
 
+void atomic_weightsCHON(amrex::Real atwCHON[]);
+
+void element_compositionCHON(int ecompCHON[]);
+
+void speciesNames(amrex::Vector<std::string>& spn);
+
 struct SRK
 {
   using eos_type = SRK;
