@@ -98,7 +98,7 @@ SootModel::define()
       PAH_names[0] + ", " + PAH_names[1] + ", or " + PAH_names[2]);
   }
   Vector<std::string> spec_names(NUM_SPECIES);
-  EOS::speciesNames(spec_names);
+  pele::physics::eos::speciesNames(spec_names);
   // Loop over all species
   for (int i = 0; i < NUM_SPECIES; ++i) {
     // Check if species is the PAH inceptor
@@ -184,7 +184,8 @@ SootModel::defineMemberData(const Real dimerVol)
   for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
     // Used to convert moments to mol of C
     m_sootData->unitConv[i] = std::pow(sc.V0, sc.MomOrderV[i]) *
-                              std::pow(sc.S0, sc.MomOrderS[i]) * sc.avogadros;
+                              std::pow(sc.S0, sc.MomOrderS[i]) *
+                              pele::physics::Constants::Avna;
     // First convert moments from SI to CGS, only necessary for PeleLM
     const Real expFact = 3. * sc.MomOrderV[i] + 2. * sc.MomOrderS[i];
     m_sootData->unitConv[i] *= std::pow(sc.len_conv, 3. - expFact);
@@ -193,13 +194,15 @@ SootModel::defineMemberData(const Real dimerVol)
       std::pow(nuclVol, sc.MomOrderV[i]) * std::pow(nuclSurf, sc.MomOrderS[i]);
   }
   // and to convert the weight of the delta function
-  m_sootData->unitConv[NUM_SOOT_MOMENTS] = sc.avogadros * std::pow(sc.len_conv, 3);
+  m_sootData->unitConv[NUM_SOOT_MOMENTS] =
+    pele::physics::Constants::Avna * std::pow(sc.len_conv, 3);
 
   // Coagulation, oxidation, and fragmentation factors
   m_sootData->lambdaCF =
-    1. /
-    (std::pow(
-      6. * sc.SootMolarMass / (M_PI * sc.SootDensity * sc.avogadros), 1. / 3.));
+    1. / (std::pow(
+           6. * sc.SootMolarMass /
+             (M_PI * sc.SootDensity * pele::physics::Constants::Avna),
+           1. / 3.));
   for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
     const Real expFact = sc.MomOrderV[i] + 2. / 3. * sc.MomOrderS[i];
     const Real factor = (std::pow(2., expFact - 1.) - 1.);
@@ -218,8 +221,8 @@ SootModel::defineMemberData(const Real dimerVol)
 
   // Beta and dimer factors
   // cm^0.5 mol^-1
-  const Real dnfact =
-    4. * std::sqrt(2.) * sc.colFact16 * sc.colFactPi23 * sc.avogadros;
+  const Real dnfact = 4. * std::sqrt(2.) * sc.colFact16 * sc.colFactPi23 *
+                      pele::physics::Constants::Avna;
   m_betaDimerFact = dnfact * std::pow(0.5 * dimerVol, 1. / 6.);
   m_betaNuclFact = 2.2 * dnfact * m_sootData->dime6[2];
 
@@ -247,11 +250,9 @@ SootModel::addSootDerivePlotVars(
   derive_lst.add(
     "soot_vars", IndexType::TheCellType(), sootNames.size(), sootNames,
     soot_genvars, the_same_box);
+  derive_lst.addComponent("soot_vars", desc_lst, State_Type, rhoIndx, 1);
   derive_lst.addComponent(
-    "soot_vars", desc_lst, State_Type, rhoIndx, 1);
-  derive_lst.addComponent(
-    "soot_vars", desc_lst, State_Type, sootIndx,
-    NUM_SOOT_MOMENTS + 1);
+    "soot_vars", desc_lst, State_Type, sootIndx, NUM_SOOT_MOMENTS + 1);
 
   // Variables associated with the second mode (large particles)
   Vector<std::string> large_part_names = {"NL", "rho_soot_L", "soot_S_L"};
@@ -301,9 +302,10 @@ SootModel::addSootSourceTerm(
   SootData const* sd = m_sootData.get();
   SootReaction const* sr = m_sootReact.get();
   amrex::ParallelFor(vbox, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+    auto eos = pele::physics::PhysicsType::eos();
     SootConst sc;
-    Real mw_fluid[NUM_SPECIES];
-    EOS::molecular_weight(mw_fluid);
+    GpuArray<Real, NUM_SPECIES> mw_fluid;
+    eos.molecular_weight(mw_fluid.data());
     GpuArray<Real, NUM_SPECIES> Hi;
     GpuArray<Real, NUM_SOOT_GS> omega_src;
     // Molar concentrations (mol/cm^3)
@@ -332,7 +334,7 @@ SootModel::addSootSourceTerm(
     // Dynamic viscosity
     const Real mu = coeff_mu(i, j, k) * sc.mu_conv;
     // Compute species enthalpy
-    EOS::T2Hi(T, Hi.data());
+    eos.T2Hi(T, Hi.data());
     // Extract mass fractions for gas phases corresponding to GasSpecIndx
     // Compute the average molar mass (g/mol)
     Real molarMass = 0.;
@@ -345,7 +347,8 @@ SootModel::addSootSourceTerm(
 #else
       Real cn = Qstate(i, j, k, peleIndx);
 #endif
-      if (cn < 2.E-10) cn = 0.;
+      if (cn < 2.E-10)
+        cn = 0.;
       Real conv = cn / mw_fluid[specConvIndx];
       xi_n[sp] = rho * conv;
       molarMass += conv;
@@ -370,7 +373,8 @@ SootModel::addSootSourceTerm(
     // (R*T*Pi/(2*A*rho_soot))^(1/2)
     const Real convT = std::sqrt(sc.colFact * T);
     // Constant for free molecular collisions
-    const Real colConst = convT * sc.colFactPi23 * sc.colFact16 * sc.avogadros;
+    const Real colConst =
+      convT * sc.colFactPi23 * sc.colFact16 * pele::physics::Constants::Avna;
     // Collision frequency between two dimer in the free
     // molecular regime with van der Waals enhancement
     // Units: cm^3/mol-s

@@ -59,7 +59,7 @@ enum SootIndx {
 struct SootConst
 {
 #ifdef SOOT_PELE_LM
-  Real len_conv = 100.; // Turn m to cm
+  Real len_conv = 100.;  // Turn m to cm
   Real rho_conv = 0.001; // Turn kg/m^3 to g/cm^3
   Real mu_conv = 10.;
   Real mass_src_conv = 1000.;
@@ -89,9 +89,6 @@ struct SootConst
   Real SootAs = 3. / SootDf - 1.;
   // Increase in number of carbon atoms for surface reactions
   Real dVol = 2.;
-  /// Avogadro's number in 1/mol
-  // TODO: Should be pulling this value from PeleMP/constants
-  Real avogadros = 6.02214076E23;
 #if NUM_SOOT_MOMENTS == 3
   /// Volume moment orders
   GpuArray<Real, 3> MomOrderV = {{0., 1., 0.}};
@@ -102,13 +99,14 @@ struct SootConst
   GpuArray<Real, 6> MomOrderS = {{0., 0., 1., 0., 1., 2.}};
 #endif
   // Volume of smallest soot particles, units L^3
-  Real V0 = SootMolarMass / (avogadros * SootDensity);
+  Real V0 = SootMolarMass / (pele::physics::Constants::Avna * SootDensity);
   // Surface area of smallest soot particles, units L^2
   Real S0 = std::pow(36. * M_PI, 1. / 3.) * std::pow(V0, 2. / 3.);
   // Surface density (mol of C)
   Real SootDensityC = SootChi * S0;
   // Pi*R/(2*A*rho_soot)
-  Real colFact = M_PI * EOS::RU / (2. * avogadros * SootDensity);
+  Real colFact = M_PI * pele::physics::Constants::RU /
+                 (2. * pele::physics::Constants::Avna * SootDensity);
   // (M_soot/(A*rho_soot))^2/3
   Real colFact23 = std::pow(V0, 2. / 3.);
   // (M_soot/(A*rho_soot))^1/6, units sqrt(L)

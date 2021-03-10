@@ -1,7 +1,7 @@
 #ifndef _SPRAYFUELDATA_H_
 #define _SPRAYFUELDATA_H_
 
-#include "EOS.H"
+#include "PelePhysics.H"
 #include <AMReX_RealVect.H>
 #include <AMReX_Gpu.H>
 #include <AMReX_GpuMemory.H>
@@ -119,7 +119,7 @@ struct GasPhaseVals
       invmw[n] = in_invmw[n];
       mw_mix += Y_fluid[n] * invmw[n];
     }
-    p_fluid = rho_fluid * EOS::RU * mw_mix * T_fluid;
+    p_fluid = rho_fluid * pele::physics::Constants::RU * mw_mix * T_fluid;
     mw_mix = 1. / mw_mix;
     for (int n = 0; n < SPRAY_FUEL_NUM; ++n)
       fluid_Y_dot[n] = 0.;

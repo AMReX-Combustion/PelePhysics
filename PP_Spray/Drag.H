@@ -8,7 +8,6 @@
 #include <AMReX_Particles.H>
 #include <AMReX_REAL.H>
 #include <Transport.H>
-#include <TransportParams.H>
 
 using namespace amrex;
 
@@ -90,17 +89,19 @@ calcVaporY(
       h_skin[fspec] + fdat.latent[spf] - fdat.cp[spf] * (T_in - fdat.ref_T);
     L_fuel[spf] = part_latent;
     // Compute the mass fraction of the fuel vapor at droplet surface
-    Real pres_sat =
-      EOS::PATM *
-        std::exp(part_latent * mw_fuel / EOS::RU * (1. / boilT - 1. / T_in)) +
-      C_eps;
+    Real pres_sat = pele::physics::Constants::PATM *
+                      std::exp(
+                        part_latent * mw_fuel / pele::physics::Constants::RU *
+                        (1. / boilT - 1. / T_in)) +
+                    C_eps;
     // Modify Watsons power law to find H_vapor at standard conditions
     Real Hboil = fdat.ref_latent[spf] *
                  std::pow((critT - fdat.ref_T) / (critT - boilT), -0.38);
     // Estimate the boiling temperature at the gas phase pressure using
     // Clasius-Clapeyron relation
     L_boilT[spf] =
-      1. / (std::log(EOS::PATM / gpv.p_fluid) * EOS::RU / (Hboil * mw_fuel) +
+      1. / (std::log(pele::physics::Constants::PATM / gpv.p_fluid) *
+              pele::physics::Constants::RU / (Hboil * mw_fuel) +
             1. / boilT);
     Real x_l = Y_in[spf] / mw_fuel;
     Real x_vc = x_l * pres_sat;
@@ -132,10 +133,11 @@ calculateSpraySource(
   const std::array<SprayParticleContainer::SoA::RealVector, NAR_SPR>& attribs,
   const int pid,
 #endif
-  TransParm const* trans_parm)
+  pele::physics::transport::TransParm const* trans_parm)
 {
+  auto eos = pele::physics::PhysicsType::eos();
   const Real rule = 1. / 3.;
-  const Real inv_Ru = 1. / EOS::RU;
+  const Real inv_Ru = 1. / pele::physics::Constants::RU;
   const Real C_eps = 1.E-15;
   const Real B_eps = 1.E-7;
   const Real Y_eps = 1.E-4;
@@ -192,8 +194,8 @@ calculateSpraySource(
     Real delT = amrex::max(gpv.T_fluid - T_part, 0.);
     Real T_skin = T_part + rule * delT;
     // Calculate the C_p at the skin temperature for each species
-    EOS::T2Cpi(T_skin, cp_n.data());
-    EOS::T2Hi(T_part, h_skin.data());
+    eos.T2Cpi(T_skin, cp_n.data());
+    eos.T2Hi(T_part, h_skin.data());
     if (SPI.heat_tran || SPI.mass_tran) {
       for (int n = 0; n < NUM_SPECIES; ++n)
         Y_skin[n] = 0.;
@@ -234,7 +236,8 @@ calculateSpraySource(
     Real lambda_skin = 0.;
     Real mu_skin = 0.;
     Real xi_skin = 0.;
-    transport(
+    auto trans = pele::physics::PhysicsType::transport();
+    trans.transport(
       get_xi, get_mu, get_lambda, get_Ddiag, T_skin, gpv.rho_fluid,
       Y_skin.data(), Ddiag.data(), mu_skin, xi_skin, lambda_skin, trans_parm);
     // Ensure gas is not all fuel to allow evaporation
@@ -246,25 +249,6 @@ calculateSpraySource(
     Real Nu_0 = 1.;
     // Solve mass transfer source terms
     Real m_dot = 0.;
-    // First, check if the droplet temperature exceeds the boiling temperature
-    for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
-      const int fspec = fdat.indx[spf];
-      Real Tboil = L_boilT[spf];
-      if (T_part > Tboil - 1. && Y_part[spf] > Y_eps) {
-        T_part =
-          Tboil - 1.E-6; // Cap particle temperature at boiling temperature
-        mi_dot[spf] = -amrex::max(
-          0., 2. * M_PI * lambda_skin / L_fuel[spf] *
-                (1. + 0.23 * std::sqrt(Reyn)) * (gpv.T_fluid - T_part));
-        gpv.fluid_Y_dot[spf] += mi_dot[spf];
-        gpv.fluid_eng_src += mi_dot[spf] * h_skin[fspec];
-        m_dot += mi_dot[spf];
-        evap_fuel =
-          false; // Temperature remains fixed until component is evaporated
-      } else {
-        mi_dot[spf] = 0.;
-      }
-    }
     if ((SPI.mass_tran || SPI.heat_tran) && evap_fuel) {
       Real Pr_skin = mu_skin * cp_skin / lambda_skin;
       Real powR = amrex::max(std::pow(Reyn, 0.077), 1.);
@@ -283,8 +267,23 @@ calculateSpraySource(
         Real Sh_0 = 1. + powR * std::cbrt(1. + Reyn * Sc_skin);
         Sh_num[spf] = 2. + (Sh_0 - 2.) * invFM;
         if (SPI.mass_tran) {
-          mi_dot[spf] =
-            -amrex::max(M_PI * rhoD * dia_part * Sh_num[spf] * logB, 0.);
+          Real Tboil = L_boilT[spf];
+          Real delT = T_part - Tboil;
+          if (delT > 0. && Y_part[spf] > Y_eps) {
+            Real alpha = 0.;
+            if (delT > 25.) {
+              alpha = 13800. * std::pow(delT, 0.39);
+            } else if (delT > 5.) {
+              alpha = 27. * std::pow(delT, 2.33);
+            } else {
+              alpha = 760. * std::pow(delT, 0.26);
+            }
+            mi_dot[spf] =
+              M_PI * dia_part * dia_part * alpha * delT / L_fuel[spf];
+          } else {
+            mi_dot[spf] =
+              -amrex::max(M_PI * rhoD * dia_part * Sh_num[spf] * logB, 0.);
+          }
           gpv.fluid_Y_dot[spf] += mi_dot[spf];
           m_dot += mi_dot[spf];
         } else {

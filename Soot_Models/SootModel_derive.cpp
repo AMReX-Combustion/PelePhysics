@@ -18,9 +18,9 @@ soot_largeparticledata(
   const int level)
 {
   SootConst sc;
-  const Real sootRho = sc.SootDensity/sc.rho_conv;
-  const Real V0 = sc.V0/std::pow(sc.len_conv, 3);
-  const Real S0 = sc.S0/std::pow(sc.len_conv, 2);
+  const Real sootRho = sc.SootDensity / sc.rho_conv;
+  const Real V0 = sc.V0 / std::pow(sc.len_conv, 3);
+  const Real S0 = sc.S0 / std::pow(sc.len_conv, 2);
   auto const dat = datafab.array();
   auto sl = slfab.array(dcomp);
   amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
@@ -51,7 +51,7 @@ soot_genvars(
   const int level)
 {
   SootConst sc;
-  const Real sootRho = sc.SootDensity/sc.rho_conv;
+  const Real sootRho = sc.SootDensity / sc.rho_conv;
   auto const dat = datafab.array();
   auto sl = slfab.array(dcomp);
   amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {

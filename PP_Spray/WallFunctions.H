@@ -52,8 +52,9 @@ calculateWallFilmSource(
   const Real T_wall,
   const Real face_area,
   const Real diff_cent,
-  TransParm const* trans_parm)
+  pele::physics::transport::TransParm const* trans_parm)
 {
+  auto eos = pele::physics::PhysicsType::eos();
   const Real C_eps = 1.E-15;
   const Real B_eps = 1.E-7;
   const Real ht_tol = 2.E-6;
@@ -93,7 +94,7 @@ calculateWallFilmSource(
   Real T_i = gpv.T_fluid;
   Real area_film = vol / ht_film;
   Real dia_film = std::sqrt(4. * area_film / M_PI);
-  EOS::T2Hi(T_film, h_skin.data());
+  eos.T2Hi(T_film, h_skin.data());
   calcVaporY(
     fdat, gpv, T_film, C_eps, Y_film.data(), h_skin.data(), Y_vapor.data(),
     L_fuel.data(), L_boilT.data());
@@ -123,7 +124,8 @@ calculateWallFilmSource(
   Real lambda_skin = 0.;
   Real mu_skin = 0.;
   Real xi_skin = 0.;
-  transport(
+  auto trans = pele::physics::PhysicsType::transport();
+  trans.transport(
     get_xi, get_mu, get_lambda, get_Ddiag, T_vapor, gpv.rho_fluid,
     Y_skin.data(), Ddiag.data(), mu_skin, xi_skin, lambda_skin, trans_parm);
   Real dy_i = diff_cent - ht_film; // Distance from film surface to cell center

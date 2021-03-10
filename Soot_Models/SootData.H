@@ -2,7 +2,7 @@
 #ifndef _SOOTDATA_H_
 #define _SOOTDATA_H_
 
-#include "EOS.H"
+#include "PelePhysics.H"
 #include "Constants_Soot.H"
 
 struct SootData : Gpu::Managed
@@ -279,10 +279,12 @@ struct SootData : Gpu::Managed
     // Free molecular collision coefficient with van der Waals enhancements
     const Real C_fm = 2.2 * colConst;
     // Continuum collision coefficient
-    const Real C_cn = 8. * EOS::RU * T / (3. * mu);
+    const Real C_cn = 8. * pele::physics::Constants::RU * T / (3. * mu);
     // Mean free path for finite nudsen number correction in continuum regimes
     const Real lambda =
-      3. * mu / rho * std::sqrt(M_PI * molMass / (8. * EOS::RU * T)) * lambdaCF;
+      3. * mu / rho *
+      std::sqrt(M_PI * molMass / (8. * pele::physics::Constants::RU * T)) *
+      lambdaCF;
     Real weightDelta2 = std::pow(momFV[dwIndx], 2);
     for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
       // Collisions between two first mode particles
@@ -760,7 +762,8 @@ struct SootData : Gpu::Managed
     // Units: 1/s
     const Real stav = sc.SootAv;
     const Real stas = sc.SootAs;
-    const Real Cfm = sc.colFactPi23 * convT * sc.colFact16 * sc.avogadros;
+    const Real Cfm =
+      sc.colFactPi23 * convT * sc.colFact16 * pele::physics::Constants::Avna;
     const Real SN =
       fracMom(2. * stav, 2. * stas, momFV) * getDimerExp6(-3) +
       2. * fracMom(stav, stas, momFV) * getDimerExp6(-1) +

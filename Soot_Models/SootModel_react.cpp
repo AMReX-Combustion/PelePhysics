@@ -45,7 +45,7 @@ SootModel::initializeReactData()
   // 1. Soot-H + OH <=> Soot-* + H2O
   m_sootReact->A_f[0] = 6.72E1;
   m_sootReact->n_f[0] = 3.33;
-  m_sootReact->ER_f[0] = 6.09E10 / EOS::RU;
+  m_sootReact->ER_f[0] = 6.09E10 / pele::physics::Constants::RU;
   m_sootReact->rNum[0] = 1;
   m_sootReact->nIndx_f[3 * 0 + 0] = SootGasSpecIndx::indxOH;
   m_sootReact->nu_f[0 * 3 + 0] = 1.;
@@ -53,7 +53,7 @@ SootModel::initializeReactData()
 
   m_sootReact->A_b[0] = 6.44E-1;
   m_sootReact->n_b[0] = 3.79;
-  m_sootReact->ER_b[0] = 27.96E10 / EOS::RU;
+  m_sootReact->ER_b[0] = 27.96E10 / pele::physics::Constants::RU;
   m_sootReact->pNum[0] = 1;
   m_sootReact->nIndx_b[0 * 3 + 0] = SootGasSpecIndx::indxH2O;
   m_sootReact->nu_b[0 * 3 + 0] = 1.;
@@ -62,7 +62,7 @@ SootModel::initializeReactData()
   // 2. Soot-H + H <=> Soot-* + H2
   m_sootReact->A_f[1] = 1.0E8;
   m_sootReact->n_f[1] = 1.80;
-  m_sootReact->ER_f[1] = 68.42E10 / EOS::RU;
+  m_sootReact->ER_f[1] = 68.42E10 / pele::physics::Constants::RU;
   m_sootReact->rNum[1] = 1;
   m_sootReact->nIndx_f[1 * 3 + 0] = SootGasSpecIndx::indxH;
   m_sootReact->nu_f[1 * 3 + 0] = 1.;
@@ -70,7 +70,7 @@ SootModel::initializeReactData()
 
   m_sootReact->A_b[1] = 8.68E4;
   m_sootReact->n_b[1] = 2.36;
-  m_sootReact->ER_b[1] = 25.46E10 / EOS::RU;
+  m_sootReact->ER_b[1] = 25.46E10 / pele::physics::Constants::RU;
   m_sootReact->pNum[1] = 1;
   m_sootReact->nIndx_b[1 * 3 + 0] = SootGasSpecIndx::indxH2;
   m_sootReact->nu_b[1 * 3 + 0] = 1.;
@@ -79,7 +79,7 @@ SootModel::initializeReactData()
   // 3. Soot-H <=> Soot-* + H
   m_sootReact->A_f[2] = 1.13E16;
   m_sootReact->n_f[2] = -0.06;
-  m_sootReact->ER_f[2] = 476.05E10 / EOS::RU;
+  m_sootReact->ER_f[2] = 476.05E10 / pele::physics::Constants::RU;
   m_sootReact->rNum[2] = 0;
   m_sootReact->sIndx_f[2] = SootIndx::indxSootH;
 
@@ -94,7 +94,7 @@ SootModel::initializeReactData()
   // 4. Soot-* + C2H2 => Soot-H
   m_sootReact->A_f[3] = 2.52E9;
   m_sootReact->n_f[3] = 1.10;
-  m_sootReact->ER_f[3] = 17.13E10 / EOS::RU;
+  m_sootReact->ER_f[3] = 17.13E10 / pele::physics::Constants::RU;
   m_sootReact->rNum[3] = 1;
   m_sootReact->nIndx_f[3 * 3 + 0] = SootGasSpecIndx::indxC2H2;
   m_sootReact->nu_f[3 * 3 + 0] = 1.;
@@ -105,7 +105,7 @@ SootModel::initializeReactData()
   // 5. Soot-* + O2 => Soot-* + 2CO
   m_sootReact->A_f[4] = 2.20E12;
   m_sootReact->n_f[4] = 0.;
-  m_sootReact->ER_f[4] = 31.38E10 / EOS::RU;
+  m_sootReact->ER_f[4] = 31.38E10 / pele::physics::Constants::RU;
   m_sootReact->rNum[4] = 1;
   m_sootReact->nIndx_f[4 * 3 + 0] = SootGasSpecIndx::indxO2;
   m_sootReact->nu_f[4 * 3 + 0] = 1.;
@@ -121,7 +121,8 @@ SootModel::initializeReactData()
   // reaction probability, 8.94*sqrt(T)*probGamma*A
   Real probGamma = 0.13;
   // FIXME: Find out what the units for this are
-  m_sootReact->A_f[5] = 8.94 * probGamma * sc.avogadros * 100.;
+  m_sootReact->A_f[5] =
+    8.94 * probGamma * pele::physics::Constants::Avna * 100.;
   m_sootReact->n_f[5] = 0.5;
   m_sootReact->ER_f[5] = 0.;
   m_sootReact->rNum[5] = 1;

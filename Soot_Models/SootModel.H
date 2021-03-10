@@ -12,7 +12,7 @@
 #include <AMReX_Derive.H>
 
 // Pele include statements
-#include "EOS.H"
+#include "PelePhysics.H"
 #include "IndexDefines.H"
 
 #include "Constants_Soot.H"
@@ -54,11 +54,11 @@ public:
   //
   // Define the derived variable list (SootModel_setup.cpp)
   //
-  void
-  addSootDerivePlotVars(DeriveList& derive_lst,
-                        const DescriptorList& desc_lst,
-                        const int rhoIndx,
-                        const int sootIndx);
+  void addSootDerivePlotVars(
+    DeriveList& derive_lst,
+    const DescriptorList& desc_lst,
+    const int rhoIndx,
+    const int sootIndx);
 
   //
   // Compute HMOM source term

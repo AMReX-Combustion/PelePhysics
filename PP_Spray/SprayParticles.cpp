@@ -246,7 +246,8 @@ SprayParticleContainer::updateParticles(
   // Particle components indices
   SprayComps SPI = m_sprayIndx;
   SprayUnits SPU;
-  TransParm const* ltransparm = trans_parm_g;
+  pele::physics::transport::TransParm const* ltransparm =
+    pele::physics::transport::trans_parm_g;
   // Start the ParIter, which loops over separate sets of particles in different
   // boxes
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
@@ -307,10 +308,11 @@ SprayParticleContainer::updateParticles(
            eb_in_box
 #endif
     ] AMREX_GPU_DEVICE(int pid) noexcept {
+        auto eos = pele::physics::PhysicsType::eos();
         GpuArray<Real, NUM_SPECIES> mw_fluid;
         GpuArray<Real, NUM_SPECIES> invmw;
-        EOS::molecular_weight(mw_fluid.data());
-        EOS::inv_molecular_weight(invmw.data());
+        eos.molecular_weight(mw_fluid.data());
+        eos.inv_molecular_weight(invmw.data());
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
           GpuArray<IntVect, AMREX_D_PICK(2, 4, 8)>
@@ -431,7 +433,7 @@ SprayParticleContainer::updateParticles(
               Real T_i = statearr(cur_indx, SPI.utempIndx);
 #ifndef SPRAY_PELE_LM
               Real intEng = statearr(cur_indx, SPI.engIndx) * inv_rho - ke;
-              EOS::EY2T(intEng, mass_frac.data(), T_i);
+              eos.EY2T(intEng, mass_frac.data(), T_i);
 #endif
               T_fluid += cw * T_i;
             }
