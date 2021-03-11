@@ -35,7 +35,12 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
       DEFINES += -DCVODE_BOXINTEG
       USE_KLU_PP = FALSE
   else
-      USE_KLU_PP = FALSE
+      ifeq ($(USE_HIP), TRUE)
+          DEFINES += -DCVODE_BOXINTEG
+          USE_KLU_PP = FALSE
+      else
+         USE_KLU_PP = TRUE
+      endif
   endif
 else
   USE_RK64_PP = TRUE
