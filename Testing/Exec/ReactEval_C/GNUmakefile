@@ -1,21 +1,20 @@
+# AMReX
+DIM        = 3
 PRECISION  = DOUBLE
 PROFILE    = FALSE
-
+VERBOSE    = FALSE
 DEBUG      = FALSE
 
-DIM        = 3
-
-COMP	   = gcc
-FCOMP	   = gfortran
-
-USE_MPI    = TRUE
+# Compiler
+COMP	     = gnu
+USE_MPI    = FALSE
 USE_OMP    = FALSE
-
-FUEGO_GAS  = TRUE
-
-TINY_PROFILE = TRUE
-
 USE_CUDA   = FALSE
+USE_HIP    = FALSE
+
+# PelePhysics
+FUEGO_GAS  = TRUE
+TINY_PROFILE = FALSE
 
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    ?= ../../..
@@ -36,7 +35,7 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
       DEFINES += -DCVODE_BOXINTEG
       USE_KLU_PP = FALSE
   else
-      USE_KLU_PP = TRUE
+      USE_KLU_PP = FALSE
   endif
 else
   USE_RK64_PP = TRUE
