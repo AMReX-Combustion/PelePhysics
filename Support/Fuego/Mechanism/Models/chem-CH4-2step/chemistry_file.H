@@ -1,78 +1,17 @@
 #ifndef CHEMISTRY_FILE_H
 #define CHEMISTRY_FILE_H
 
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <vector>
 #include <AMReX_Gpu.H>
 #include <AMReX_REAL.H>
+#include <mechanism.h>
 
-/* PURE CPU stuff -- no use on GPU  */
-#ifndef AMREX_USE_GPU
-namespace thermo
-{
-
-    extern amrex::Real fwd_A[3], fwd_beta[3], fwd_Ea[3];
-    extern amrex::Real low_A[3], low_beta[3], low_Ea[3];
-    extern amrex::Real rev_A[3], rev_beta[3], rev_Ea[3];
-    extern amrex::Real troe_a[3],troe_Ts[3], troe_Tss[3], troe_Tsss[3];
-    extern amrex::Real sri_a[3], sri_b[3], sri_c[3], sri_d[3], sri_e[3];
-    extern amrex::Real activation_units[3], prefactor_units[3], phase_units[3];
-    extern int is_PD[3], troe_len[3], sri_len[3], nTB[3], *TBid[3];
-    extern amrex::Real *TB[3];
-}
-/* Vectorized stuff  */
-void VCKYTX(int *  np, amrex::Real *  y, amrex::Real *  x);
-void VCKHMS(int *  np, amrex::Real *  T, amrex::Real *  ums);
-void VCKWYR(int *  np, amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  wdot);
-void VCKPY(int *  np, amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  P);
-void vproductionRate(int npt, amrex::Real *  wdot, amrex::Real *  c, amrex::Real *  T);
-void vcomp_k_f(int npt, amrex::Real *  k_f_s, amrex::Real *  tc, amrex::Real *  invT);
-void vcomp_gibbs(int npt, amrex::Real *  g_RT, amrex::Real *  tc);
-void vcomp_Kc(int npt, amrex::Real *  Kc_s, amrex::Real *  g_RT, amrex::Real *  invT);
-void vcomp_wdot(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-/* MISC  */
-/* PROD RATE STUFF  */
-void productionRate(amrex::Real *  wdot, amrex::Real *  sc, amrex::Real T);
-void comp_qfqr(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real * qss_sc, amrex::Real *  tc, amrex::Real invT);
-void comp_k_f(amrex::Real *  tc, amrex::Real invT, amrex::Real *  k_f);
-void comp_Kc(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc);
-void progressRate(amrex::Real *  qdot, amrex::Real *  speciesConc, amrex::Real T);
-void progressRateFR(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  speciesConc, amrex::Real T);
-void CKKFKR(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x, amrex::Real *  q_f, amrex::Real *  q_r);
-void CKQC(amrex::Real *  T, amrex::Real *  C, amrex::Real *  qdot);
-void CKQYP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y, amrex::Real *  qdot);
-void CKQXP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x, amrex::Real *  qdot);
-void CKQYR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  qdot);
-void CKQXR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  qdot);
-void aJacobian(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP);
-#endif
 
 
 /* ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp  */
-/* Transport function declarations  */
-void egtransetLENIMC(int* LENIMC);
-void egtransetLENRMC(int* LENRMC);
-void egtransetNO(int* NO);
-void egtransetKK(int* KK);
-void egtransetNLITE(int* NLITE);
-void egtransetPATM(amrex::Real* PATM);
-void egtransetWT(amrex::Real* WT);
-void egtransetEPS(amrex::Real* EPS);
-void egtransetSIG(amrex::Real* SIG);
-void egtransetDIP(amrex::Real* DIP);
-void egtransetPOL(amrex::Real* POL);
-void egtransetZROT(amrex::Real* ZROT);
-void egtransetNLIN(int* NLIN);
-void egtransetCOFETA(amrex::Real* COFETA);
-void egtransetCOFLAM(amrex::Real* COFLAM);
-void egtransetCOFD(amrex::Real* COFD);
-void egtransetKTDIF(int* KTDIF);
-void egtransetCOFTD(amrex::Real* COFTD);
 /* INIT and FINALIZE stuff  */
 void CKINIT();
 void CKFINALIZE();
@@ -1271,6 +1210,67 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_T_GIVEN_HY(amrex::Real *  h, a
 }
 
 
+/*compute the critical parameters for each species */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::Real *  acentric_i)
+{
+
+    amrex::Real   EPS[6];
+    amrex::Real   SIG[6];
+    amrex::Real    wt[6];
+    amrex::Real avogadro = 6.02214199e23;
+    amrex::Real boltzmann = 1.3806503e-16; //we work in CGS
+    amrex::Real Rcst = 83.144598; //in bar [CGS] !
+
+    egtransetEPS(EPS);
+    egtransetSIG(SIG);
+    get_mw(wt);
+
+    /*species 0: O2 */
+    /*Imported from NIST */
+    Tci[0] = 154.581000 ; 
+    ai[0] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[0],2.0) / (pow(31.998800,2.0) * 50.430466); 
+    bi[0] = 0.08664 * Rcst * Tci[0] / (31.998800 * 50.430466); 
+    acentric_i[0] = 0.022200 ;
+
+    /*species 1: H2O */
+    /*Imported from NIST */
+    Tci[1] = 647.096000 ; 
+    ai[1] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[1],2.0) / (pow(18.015340,2.0) * 220.640000); 
+    bi[1] = 0.08664 * Rcst * Tci[1] / (18.015340 * 220.640000); 
+    acentric_i[1] = 0.344300 ;
+
+    /*species 2: CH4 */
+    /*Imported from NIST */
+    Tci[2] = 190.560000 ; 
+    ai[2] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[2],2.0) / (pow(16.043030,2.0) * 45.990000); 
+    bi[2] = 0.08664 * Rcst * Tci[2] / (16.043030 * 45.990000); 
+    acentric_i[2] = 0.011000 ;
+
+    /*species 3: CO */
+    /*Imported from NIST */
+    Tci[3] = 132.850000 ; 
+    ai[3] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[3],2.0) / (pow(28.010000,2.0) * 34.940000); 
+    bi[3] = 0.08664 * Rcst * Tci[3] / (28.010000 * 34.940000); 
+    acentric_i[3] = 0.045000 ;
+
+    /*species 4: CO2 */
+    /*Imported from NIST */
+    Tci[4] = 304.120000 ; 
+    ai[4] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[4],2.0) / (pow(44.009950,2.0) * 73.740000); 
+    bi[4] = 0.08664 * Rcst * Tci[4] / (44.009950 * 73.740000); 
+    acentric_i[4] = 0.225000 ;
+
+    /*species 5: N2 */
+    /*Imported from NIST */
+    Tci[5] = 126.192000 ; 
+    ai[5] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[5],2.0) / (pow(28.013400,2.0) * 33.958000); 
+    bi[5] = 0.08664 * Rcst * Tci[5] / (28.013400 * 33.958000); 
+    acentric_i[5] = 0.037200 ;
+
+    return;
+}
+
+
 /*Compute P = rhoRT/W(x) */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKPX(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  P)
 {
@@ -1841,7 +1841,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSMS(amrex::Real *  T,  amrex::Re
     sms[5] *= 2.968030520448514e+06; /*N2 */
 }
 
-#ifdef AMREX_USE_GPU
 
 /* GPU version of productionRate: no more use of thermo namespace vectors  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * qss_sc, amrex::Real * tc, amrex::Real invT)
@@ -1930,7 +1929,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     return;
 }
-#endif
 
 
 
@@ -2357,7 +2355,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J,
     return;
 }
 
-#ifdef AMREX_USE_GPU
 /*compute the reaction Jacobian on GPU */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
@@ -2530,7 +2527,6 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
 
 return;
 }
-#endif
 
 
 /*compute the reaction Jacobian */
