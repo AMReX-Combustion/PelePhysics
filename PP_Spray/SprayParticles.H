@@ -86,14 +86,26 @@ public:
       m_parcelSize(parcelSize),
       m_wallT(wallT),
       phys_bc(_phys_bc),
+      m_sprayData(nullptr),
+      d_sprayData(nullptr),
       m_sprayIndx(SPI)
   {
-    m_fuelData = std::make_unique<SprayData>();
-    m_fuelData->build(fdat);
+    m_sprayData = new SprayData{};
+    d_sprayData = (SprayData*)amrex::The_Arena()->alloc(sizeof(SprayData));
+    m_sprayData->build(fdat);
+#ifdef AMREX_USE_GPU
+    amrex::Gpu::htod_memcpy(d_sprayData, m_sprayData, sizeof(SprayData));
+#else
+    std::memcpy(d_sprayData, m_sprayData, sizeof(SprayData));
+#endif
     init_bcs();
   }
 
-  ~SprayParticleContainer() { m_fuelData.reset(); }
+  ~SprayParticleContainer()
+  {
+    delete m_sprayData;
+    amrex::The_Arena()->free(d_sprayData);
+  }
 
   void SprayParticleIO(
     const int level,
@@ -314,7 +326,8 @@ private:
   amrex::BCRec* phys_bc;
   bool reflect_lo[AMREX_SPACEDIM];
   bool reflect_hi[AMREX_SPACEDIM];
-  std::unique_ptr<SprayData> m_fuelData;
+  SprayData* m_sprayData;
+  SprayData* d_sprayData;
   SprayComps m_sprayIndx;
 };
 

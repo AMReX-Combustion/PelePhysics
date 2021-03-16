@@ -5,7 +5,7 @@
 #include "PelePhysics.H"
 #include "Constants_Soot.H"
 
-struct SootData : Gpu::Managed
+struct SootData
 {
   SootConst sc;
   Real nuclVol;

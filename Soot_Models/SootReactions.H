@@ -3,7 +3,7 @@
 
 #include "Constants_Soot.H"
 
-struct SootReaction : Gpu::Managed
+struct SootReaction
 {
   Real SootDensityC;
   Real SootChi;

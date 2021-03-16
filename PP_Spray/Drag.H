@@ -372,6 +372,13 @@ calculateSpraySource(
     gpv.fluid_mass_src += m_dot;
     ++isub;
   }
+  if (nsub > 1) {
+    gpv.fluid_eng_src /= Real(nsub);
+    gpv.fluid_mass_src /= Real(nsub);
+    gpv.fluid_mom_src /= Real(nsub);
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+      gpv.fluid_Y_dot[spf] /= Real(nsub);
+  }
 #ifdef USE_SPRAY_SOA
   AMREX_D_TERM(attribs[SPI.pstateVel].data()[pid] = vel_part[0];
                , attribs[SPI.pstateVel + 1].data()[pid] = vel_part[1];

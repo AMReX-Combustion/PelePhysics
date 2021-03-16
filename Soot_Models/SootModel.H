@@ -32,9 +32,11 @@ public:
   //
   ~SootModel()
   {
-    m_sootData.reset();
-    m_sootReact.reset();
-  };
+    delete m_sootData;
+    delete m_sootReact;
+    amrex::The_Arena()->free(d_sootData);
+    amrex::The_Arena()->free(d_sootReact);
+  }
 
   //
   // Define instance of class
@@ -118,7 +120,8 @@ public:
   //
   // Return pointer to soot data
   //
-  inline SootData* getSootData() { return m_sootData.get(); }
+  inline SootData* getSootData() { return m_sootData; }
+  inline SootData* getSootData_d() { return d_sootData; }
 
   /***********************************************************************
     Member data
@@ -135,9 +138,12 @@ public:
   SootComps m_sootIndx;
   bool m_setIndx;
   /// Pointer to soot data and soot specific functions
-  std::unique_ptr<SootData> m_sootData;
+  SootData* m_sootData;
   /// Pointer for soot reaction data
-  std::unique_ptr<SootReaction> m_sootReact;
+  SootReaction* m_sootReact;
+  /// Pointers for data on device
+  SootData* d_sootData;
+  SootReaction* d_sootReact;
   /// Bool for checking if parameters have been read from input file
   bool m_readSootParams;
   /// Bool for checking if member data has all been defined
@@ -161,6 +167,8 @@ public:
   // Maximum allowable change for mass fractions, density, or moments
   // to adjust the time step
   Real m_maxDtRate;
+  // Number of subcycles to use during source calculations
+  Real m_numSubcycles;
 
   /***********************************************************************
     Reaction member data

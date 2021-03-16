@@ -80,7 +80,6 @@ SprayParticleContainer::moveKickDrift(
   if (level >= this->GetParticles().size())
     return;
 
-  const Real strttime = ParallelDescriptor::second();
   bool isActive = (isVirtualPart || isGhostPart) ? false : true;
 
   BL_PROFILE_VAR("SprayParticles::updateParticles()", UPD_PART);
@@ -98,20 +97,6 @@ SprayParticleContainer::moveKickDrift(
 
   // ********************************************************************************
 
-  if (this->m_verbose > 1) {
-    Real stoptime = ParallelDescriptor::second() - strttime;
-    ParallelDescriptor::ReduceRealMax(
-      stoptime, ParallelDescriptor::IOProcessorNumber());
-    if (ParallelDescriptor::IOProcessor()) {
-      if (do_move) {
-        Print() << "SprayParticleContainer::moveKickDrift() time: " << stoptime
-                << '\n';
-      } else {
-        Print() << "SprayParticleContainer::moveKick() time: " << stoptime
-                << '\n';
-      }
-    }
-  }
 }
 
 Real
@@ -123,7 +108,6 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
   if (level >= this->GetParticles().size() || m_sprayIndx.mom_tran == 0)
     return -1.;
 
-  const Real strttime = ParallelDescriptor::second();
   const Geometry& geom = this->m_gdb->Geom(level);
   const auto dx = Geom(level).CellSizeArray();
   const auto dxi = Geom(level).InvCellSizeArray();
@@ -178,14 +162,6 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
   if (m_injectVel > 0.)
     dt = amrex::min(dt, cfl * dx[0] / m_injectVel);
 
-  if (this->m_verbose > 1) {
-    Real stoptime = ParallelDescriptor::second() - strttime;
-    ParallelDescriptor::ReduceRealMax(
-      stoptime, ParallelDescriptor::IOProcessorNumber());
-    if (ParallelDescriptor::IOProcessor())
-      std::cout << "SprayParticleContainer::estTimestep() time: " << stoptime
-                << '\n';
-  }
   return dt;
 }
 
@@ -261,7 +237,7 @@ SprayParticleContainer::updateParticles(
     // Get particle attributes if StructOfArrays are used
     auto& attribs = pti.GetAttribs();
 #endif
-    SprayData const* fdat = m_fuelData.get();
+    const SprayData* fdat = d_sprayData;
     Array4<const Real> const& statearr = state.array(pti);
     Array4<Real> const& sourcearr = source.array(pti);
 #ifdef AMREX_USE_EB

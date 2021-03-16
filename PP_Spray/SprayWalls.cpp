@@ -74,7 +74,7 @@ SprayParticleContainer::wallImpingement(
       // the wall film at each location
       IArrayBox film_id(src_box, 1);
       film_id.setVal<RunOn::Host>(-1, src_box, 0, 1);
-      SprayData const* fdat = m_fuelData.get();
+      const SprayData* fdat = m_sprayData;
       auto& ptile = GetParticles(level)[index];
       auto& pval = ptile.GetArrayOfStructs();
 #ifdef AMREX_USE_EB

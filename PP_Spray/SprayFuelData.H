@@ -127,7 +127,7 @@ struct GasPhaseVals
 };
 
 // Structure containing values for the liquid sprays
-struct SprayData : amrex::Gpu::Managed
+struct SprayData
 {
   Real num_ppp; // Parcel size
   Real ref_T;
