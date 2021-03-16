@@ -1,4 +1,4 @@
-CEXE_sources+=SootReaction.cpp
+CEXE_sources+=mechanism.cpp
 
 #VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
 
