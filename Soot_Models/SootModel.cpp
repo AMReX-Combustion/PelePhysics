@@ -44,7 +44,7 @@ SootModel::SootModel()
     m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
     local_soot_dt(1.E18),
     m_maxDtRate(-1.),
-    m_numSubcycles(1),
+    m_numSubcycles(2),
     m_reactDataFilled(false),
     m_gasSpecNames(NUM_SOOT_GS, "")
 {
@@ -329,7 +329,7 @@ SootModel::addSootSourceTerm(
     eos.molecular_weight(mw_fluid.data());
     GpuArray<Real, NUM_SPECIES> Hi;
     GpuArray<Real, NUM_SOOT_GS> omega_src;
-    GpuArray<Real, NUM_SOOT_GS> rho_Y;
+    GpuArray<Real, NUM_SPECIES> rho_Y;
     // Molar concentrations (mol/cm^3)
     GpuArray<Real, NUM_SOOT_GS> xi_n;
     // Array of moment values M_xy (cm^(3(x + 2/3y))cm^(-3))
@@ -358,9 +358,8 @@ SootModel::addSootSourceTerm(
     // Compute species enthalpy
     eos.T2Hi(T, Hi.data());
     // Extract mass fractions for gas phases corresponding to GasSpecIndx
-    for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
-      const int specConvIndx = sd->refIndx[sp];
-      const int peleIndx = qSpecIndx + specConvIndx;
+    for (int sp = 0; sp < NUM_SPECIES; ++sp) {
+      const int peleIndx = qSpecIndx + sp;
       // State provided by PeleLM is the concentration, rhoY
 #ifdef SOOT_PELE_LM
       Real cn = Qstate(i, j, k, peleIndx) / Qstate(i, j, k, qRhoIndx);
@@ -397,17 +396,16 @@ SootModel::addSootSourceTerm(
     while (isub <= nsub) {
       // Compute the average molar mass (g/mol)
       Real molarMass = 0.;
+      for (int sp = 0; sp < NUM_SPECIES; ++sp) {
+        molarMass += rho_Y[sp] / mw_fluid[sp];
+      }
+      molarMass = rho / molarMass;
       for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
-        const int specConvIndx = sd->refIndx[sp];
-        Real cn = rho_Y[sp];
-        Real conv = cn / mw_fluid[specConvIndx];
-        xi_n[sp] = conv;
-        molarMass += conv;
+        const int spcc = sd->refIndx[sp];
+        xi_n[sp] = rho_Y[spcc] / mw_fluid[spcc];
         // Reset the reaction source term
         omega_src[sp] = 0.;
       }
-      // Add small value in case none of the species are present
-      molarMass = 1. / (molarMass + 1.E-20);
       for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
         // Reset moment source
         mom_src[mom] = 0.;
@@ -446,14 +444,14 @@ SootModel::addSootSourceTerm(
       // Update species concentrations within subcycle
       for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
         // Convert from local gas species index to global gas species index
-        const int specConvIndx = sd->refIndx[sp];
+        const int spcc = sd->refIndx[sp];
         // Convert to proper units
-        omega_src[sp] *= mw_fluid[specConvIndx];
-        const int peleIndx = specIndx + specConvIndx;
-        rho_Y[sp] += sootdt * omega_src[sp];
+        omega_src[sp] *= mw_fluid[spcc];
+        const int peleIndx = specIndx + spcc;
+        rho_Y[spcc] += sootdt * omega_src[sp];
         soot_state(i, j, k, peleIndx) += omega_src[sp] * sc.mass_src_conv / Real(nsub);
         rho_src += omega_src[sp] / Real(nsub);
-        eng_src += omega_src[sp] * Hi[specConvIndx] / Real(nsub);
+        eng_src += omega_src[sp] * Hi[spcc] / Real(nsub);
         rho += sootdt * omega_src[sp];
       }
       isub++;
