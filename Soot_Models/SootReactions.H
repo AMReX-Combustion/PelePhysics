@@ -9,27 +9,27 @@ struct SootReaction
   Real SootChi;
   // Vectors of the forward and backward per-exponential rates,
   // temperature exponents, and activation energies/R
-  GpuArray<Real, NUM_SOOT_REACT> A_f;
-  GpuArray<Real, NUM_SOOT_REACT> n_f;
-  GpuArray<Real, NUM_SOOT_REACT> ER_f;
-  GpuArray<Real, NUM_SOOT_REACT> A_b;
-  GpuArray<Real, NUM_SOOT_REACT> n_b;
-  GpuArray<Real, NUM_SOOT_REACT> ER_b;
+  GpuArray<Real, NUM_SOOT_REACT> A_f = {{0.}};
+  GpuArray<Real, NUM_SOOT_REACT> n_f = {{0.}};
+  GpuArray<Real, NUM_SOOT_REACT> ER_f = {{0.}};
+  GpuArray<Real, NUM_SOOT_REACT> A_b = {{0.}};
+  GpuArray<Real, NUM_SOOT_REACT> n_b = {{0.}};
+  GpuArray<Real, NUM_SOOT_REACT> ER_b = {{0.}};
   // Vector of number of reactants and products
-  GpuArray<int, NUM_SOOT_REACT> rNum;
-  GpuArray<int, NUM_SOOT_REACT> pNum;
+  GpuArray<int, NUM_SOOT_REACT> rNum = {{0}};
+  GpuArray<int, NUM_SOOT_REACT> pNum = {{0}};
   // Vector of species indices
   // Maximum 3 species per reaction side
-  GpuArray<int, 3 * NUM_SOOT_REACT> nIndx_f;
-  GpuArray<int, 3 * NUM_SOOT_REACT> nIndx_b;
+  GpuArray<int, 3 * NUM_SOOT_REACT> nIndx_f = {{0}};
+  GpuArray<int, 3 * NUM_SOOT_REACT> nIndx_b = {{0}};
   // Soot surface reaction reference indexing
   // Forward and backward reaction soot indices
   // TODO: Assumes only 1 mole of soot is on each side
-  GpuArray<int, NUM_SOOT_REACT> sIndx_f;
-  GpuArray<int, NUM_SOOT_REACT> sIndx_b;
+  GpuArray<int, NUM_SOOT_REACT> sIndx_f = {{0}};
+  GpuArray<int, NUM_SOOT_REACT> sIndx_b = {{0}};
   // Vector of stoichiometric coefficients
-  GpuArray<Real, 3 * NUM_SOOT_REACT> nu_f;
-  GpuArray<Real, 3 * NUM_SOOT_REACT> nu_b;
+  GpuArray<Real, 3 * NUM_SOOT_REACT> nu_f = {{0.}};
+  GpuArray<Real, 3 * NUM_SOOT_REACT> nu_b = {{0.}};
 
   // Compute the dimerization rate
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE Real
