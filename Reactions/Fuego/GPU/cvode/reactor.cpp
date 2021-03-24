@@ -938,41 +938,39 @@ fKernelSpec(int icell, double dt_save, int reactor_type,
             realtype *yvec_d, realtype *ydot_d,  
             double *rhoe_init, double *rhoesrc_ext, double *rYs)
 {
-  Real mw[NUM_SPECIES];
-  GpuArray<Real,NUM_SPECIES> massfrac;
-  GpuArray<Real,NUM_SPECIES> ei_pt;
-  GpuArray<Real,NUM_SPECIES> cdots_pt;
-  Real Cv_pt, rho_pt, temp_pt, nrg_pt;
-
   int offset = icell * (NUM_SPECIES + 1); 
 
   /* MW CGS */
+  Real mw[NUM_SPECIES] = {0.0};
   get_mw(mw);
 
   /* rho */ 
-  rho_pt = 0.0;
+  Real rho_pt = 0.0;
   for (int n = 0; n < NUM_SPECIES; n++) {
       rho_pt = rho_pt + yvec_d[offset + n];
   }
 
   /* Yks, C CGS*/
+  GpuArray<Real,NUM_SPECIES> massfrac;
   for (int i = 0; i < NUM_SPECIES; i++){
       massfrac[i] = yvec_d[offset + i] / rho_pt;
   }
 
   /* NRG CGS */
-  nrg_pt = (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) /rho_pt;
+  Real nrg_pt = (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) /rho_pt;
 
   /* temp */
-  temp_pt = yvec_d[offset + NUM_SPECIES];
+  Real temp_pt = yvec_d[offset + NUM_SPECIES];
 
   /* Additional var needed */
+  GpuArray<Real,NUM_SPECIES> ei_pt;
+  Real Cv_pt = 0.0;
   auto eos = pele::physics::PhysicsType::eos();
   if ( reactor_type == 1){
       /* UV REACTOR */
       eos.EY2T(nrg_pt, massfrac.arr, temp_pt);
-      eos.T2Ei(temp_pt, ei_pt.arr);
       eos.TY2Cv(temp_pt, massfrac.arr, Cv_pt);
+      eos.T2Ei(temp_pt, ei_pt.arr);
   } else {
       /* HP REACTOR */
       eos.HY2T(nrg_pt, massfrac.arr, temp_pt);
@@ -980,6 +978,7 @@ fKernelSpec(int icell, double dt_save, int reactor_type,
       eos.T2Hi(temp_pt, ei_pt.arr);
   }
 
+  GpuArray<Real,NUM_SPECIES> cdots_pt;
   eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
 
   /* Fill ydot vect */
@@ -1000,33 +999,31 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *Jdata)
 {
   UserData udata = static_cast<CVodeUserData*>(user_data);
 
-  Real mw[NUM_SPECIES];
-  GpuArray<Real,NUM_SPECIES> massfrac;
-  GpuArray<Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
-  Real rho_pt, temp_pt;
 
   int u_offset      = ncell * (NUM_SPECIES + 1); 
   int jac_offset = ncell * (udata->NNZ); 
 
-  realtype* u_curr  = u_d + u_offset;
-  realtype* csr_jac_cell         = Jdata + jac_offset;
+  realtype* u_curr       = u_d + u_offset;
+  realtype* csr_jac_cell = Jdata + jac_offset;
   
   /* MW CGS */
+  Real mw[NUM_SPECIES] = {0.0};
   get_mw(mw);
 
   /* rho */ 
-  rho_pt = 0.0;
+  Real rho_pt = 0.0;
   for (int n = 0; n < NUM_SPECIES; n++) {
       rho_pt = rho_pt + u_curr[n];
   }
 
   /* Yks, C CGS*/
+  GpuArray<Real,NUM_SPECIES> massfrac;
   for (int i = 0; i < NUM_SPECIES; i++){
       massfrac[i] = u_curr[i] / rho_pt;
   }
 
   /* temp */
-  temp_pt = u_curr[NUM_SPECIES];
+  Real temp_pt = u_curr[NUM_SPECIES];
 
   /* Additional var needed */
   int consP;
@@ -1035,6 +1032,7 @@ fKernelComputeAJchem(int ncell, void *user_data, realtype *u_d, realtype *Jdata)
   } else {
       consP = 1;
   }
+  GpuArray<Real,(NUM_SPECIES+1)*(NUM_SPECIES+1)> Jmat_pt;
   auto eos = pele::physics::PhysicsType::eos();
   eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP); 
 
