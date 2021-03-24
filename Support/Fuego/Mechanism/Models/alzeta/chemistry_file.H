@@ -1,108 +1,17 @@
 #ifndef CHEMISTRY_FILE_H
 #define CHEMISTRY_FILE_H
 
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <vector>
 #include <AMReX_Gpu.H>
 #include <AMReX_REAL.H>
+#include <mechanism.h>
 
-/* PURE CPU stuff -- no use on GPU  */
-#ifndef AMREX_USE_GPU
-namespace thermo
-{
-
-    extern amrex::Real fwd_A[518], fwd_beta[518], fwd_Ea[518];
-    extern amrex::Real low_A[518], low_beta[518], low_Ea[518];
-    extern amrex::Real rev_A[518], rev_beta[518], rev_Ea[518];
-    extern amrex::Real troe_a[518],troe_Ts[518], troe_Tss[518], troe_Tsss[518];
-    extern amrex::Real sri_a[518], sri_b[518], sri_c[518], sri_d[518], sri_e[518];
-    extern amrex::Real activation_units[518], prefactor_units[518], phase_units[518];
-    extern int is_PD[518], troe_len[518], sri_len[518], nTB[518], *TBid[518];
-    extern amrex::Real *TB[518];
-}
-/* Vectorized stuff  */
-void VCKYTX(int *  np, amrex::Real *  y, amrex::Real *  x);
-void VCKHMS(int *  np, amrex::Real *  T, amrex::Real *  ums);
-void VCKWYR(int *  np, amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  wdot);
-void VCKPY(int *  np, amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  P);
-void vproductionRate(int npt, amrex::Real *  wdot, amrex::Real *  c, amrex::Real *  T);
-void vcomp_k_f(int npt, amrex::Real *  k_f_s, amrex::Real *  tc, amrex::Real *  invT);
-void vcomp_gibbs(int npt, amrex::Real *  g_RT, amrex::Real *  tc);
-void vcomp_Kc(int npt, amrex::Real *  Kc_s, amrex::Real *  g_RT, amrex::Real *  invT);
-void vcomp_wdot_1_50(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-void vcomp_wdot_51_100(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-void vcomp_wdot_101_150(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-void vcomp_wdot_151_200(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-void vcomp_wdot_201_250(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-void vcomp_wdot_251_300(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-void vcomp_wdot_301_350(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-void vcomp_wdot_351_400(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-void vcomp_wdot_401_450(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-void vcomp_wdot_451_500(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-void vcomp_wdot_501_518(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,
-                amrex::Real *  k_f_s, amrex::Real *  Kc_s,
-                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);
-/* MISC  */
-/* PROD RATE STUFF  */
-void productionRate(amrex::Real *  wdot, amrex::Real *  sc, amrex::Real T);
-void comp_qfqr(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real * qss_sc, amrex::Real *  tc, amrex::Real invT);
-void comp_k_f(amrex::Real *  tc, amrex::Real invT, amrex::Real *  k_f);
-void comp_Kc(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc);
-void progressRate(amrex::Real *  qdot, amrex::Real *  speciesConc, amrex::Real T);
-void progressRateFR(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  speciesConc, amrex::Real T);
-void CKKFKR(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x, amrex::Real *  q_f, amrex::Real *  q_r);
-void CKQC(amrex::Real *  T, amrex::Real *  C, amrex::Real *  qdot);
-void CKQYP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y, amrex::Real *  qdot);
-void CKQXP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x, amrex::Real *  qdot);
-void CKQYR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  qdot);
-void CKQXR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  qdot);
-void aJacobian(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP);
-#endif
 
 
 /* ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp  */
-/* Transport function declarations  */
-void egtransetLENIMC(int* LENIMC);
-void egtransetLENRMC(int* LENRMC);
-void egtransetNO(int* NO);
-void egtransetKK(int* KK);
-void egtransetNLITE(int* NLITE);
-void egtransetPATM(amrex::Real* PATM);
-void egtransetWT(amrex::Real* WT);
-void egtransetEPS(amrex::Real* EPS);
-void egtransetSIG(amrex::Real* SIG);
-void egtransetDIP(amrex::Real* DIP);
-void egtransetPOL(amrex::Real* POL);
-void egtransetZROT(amrex::Real* ZROT);
-void egtransetNLIN(int* NLIN);
-void egtransetCOFETA(amrex::Real* COFETA);
-void egtransetCOFLAM(amrex::Real* COFLAM);
-void egtransetCOFD(amrex::Real* COFD);
-void egtransetKTDIF(int* KTDIF);
-void egtransetCOFTD(amrex::Real* COFTD);
 /* INIT and FINALIZE stuff  */
 void CKINIT();
 void CKFINALIZE();
@@ -9435,6 +9344,472 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_T_GIVEN_HY(amrex::Real *  h, a
 }
 
 
+/*compute the critical parameters for each species */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::Real *  acentric_i)
+{
+
+    amrex::Real   EPS[72];
+    amrex::Real   SIG[72];
+    amrex::Real    wt[72];
+    amrex::Real avogadro = 6.02214199e23;
+    amrex::Real boltzmann = 1.3806503e-16; //we work in CGS
+    amrex::Real Rcst = 83.144598; //in bar [CGS] !
+
+    egtransetEPS(EPS);
+    egtransetSIG(SIG);
+    get_mw(wt);
+
+    /*species 0: H2 */
+    /*Imported from NIST */
+    Tci[0] = 33.145000 ; 
+    ai[0] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[0],2.0) / (pow(2.015880,2.0) * 12.964000); 
+    bi[0] = 0.08664 * Rcst * Tci[0] / (2.015880 * 12.964000); 
+    acentric_i[0] = -0.219000 ;
+
+    /*species 1: H */
+    Tci[1] = 1.316 * EPS[1] ; 
+    ai[1] = (5.55 * pow(avogadro,2.0) * EPS[1]*boltzmann * pow(1e-8*SIG[1],3.0) ) / (pow(wt[1],2.0)); 
+    bi[1] = 0.855 * avogadro * pow(1e-8*SIG[1],3.0) / (wt[1]); 
+    acentric_i[1] = 0.0 ;
+
+    /*species 2: O */
+    Tci[2] = 1.316 * EPS[2] ; 
+    ai[2] = (5.55 * pow(avogadro,2.0) * EPS[2]*boltzmann * pow(1e-8*SIG[2],3.0) ) / (pow(wt[2],2.0)); 
+    bi[2] = 0.855 * avogadro * pow(1e-8*SIG[2],3.0) / (wt[2]); 
+    acentric_i[2] = 0.0 ;
+
+    /*species 3: O2 */
+    /*Imported from NIST */
+    Tci[3] = 154.581000 ; 
+    ai[3] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[3],2.0) / (pow(31.998800,2.0) * 50.430466); 
+    bi[3] = 0.08664 * Rcst * Tci[3] / (31.998800 * 50.430466); 
+    acentric_i[3] = 0.022200 ;
+
+    /*species 4: OH */
+    Tci[4] = 1.316 * EPS[4] ; 
+    ai[4] = (5.55 * pow(avogadro,2.0) * EPS[4]*boltzmann * pow(1e-8*SIG[4],3.0) ) / (pow(wt[4],2.0)); 
+    bi[4] = 0.855 * avogadro * pow(1e-8*SIG[4],3.0) / (wt[4]); 
+    acentric_i[4] = 0.0 ;
+
+    /*species 5: H2O */
+    /*Imported from NIST */
+    Tci[5] = 647.096000 ; 
+    ai[5] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[5],2.0) / (pow(18.015340,2.0) * 220.640000); 
+    bi[5] = 0.08664 * Rcst * Tci[5] / (18.015340 * 220.640000); 
+    acentric_i[5] = 0.344300 ;
+
+    /*species 6: HO2 */
+    Tci[6] = 1.316 * EPS[6] ; 
+    ai[6] = (5.55 * pow(avogadro,2.0) * EPS[6]*boltzmann * pow(1e-8*SIG[6],3.0) ) / (pow(wt[6],2.0)); 
+    bi[6] = 0.855 * avogadro * pow(1e-8*SIG[6],3.0) / (wt[6]); 
+    acentric_i[6] = 0.0 ;
+
+    /*species 7: H2O2 */
+    Tci[7] = 1.316 * EPS[7] ; 
+    ai[7] = (5.55 * pow(avogadro,2.0) * EPS[7]*boltzmann * pow(1e-8*SIG[7],3.0) ) / (pow(wt[7],2.0)); 
+    bi[7] = 0.855 * avogadro * pow(1e-8*SIG[7],3.0) / (wt[7]); 
+    acentric_i[7] = 0.0 ;
+
+    /*species 8: C */
+    Tci[8] = 1.316 * EPS[8] ; 
+    ai[8] = (5.55 * pow(avogadro,2.0) * EPS[8]*boltzmann * pow(1e-8*SIG[8],3.0) ) / (pow(wt[8],2.0)); 
+    bi[8] = 0.855 * avogadro * pow(1e-8*SIG[8],3.0) / (wt[8]); 
+    acentric_i[8] = 0.0 ;
+
+    /*species 9: CH */
+    Tci[9] = 1.316 * EPS[9] ; 
+    ai[9] = (5.55 * pow(avogadro,2.0) * EPS[9]*boltzmann * pow(1e-8*SIG[9],3.0) ) / (pow(wt[9],2.0)); 
+    bi[9] = 0.855 * avogadro * pow(1e-8*SIG[9],3.0) / (wt[9]); 
+    acentric_i[9] = 0.0 ;
+
+    /*species 10: CH2 */
+    Tci[10] = 1.316 * EPS[10] ; 
+    ai[10] = (5.55 * pow(avogadro,2.0) * EPS[10]*boltzmann * pow(1e-8*SIG[10],3.0) ) / (pow(wt[10],2.0)); 
+    bi[10] = 0.855 * avogadro * pow(1e-8*SIG[10],3.0) / (wt[10]); 
+    acentric_i[10] = 0.0 ;
+
+    /*species 11: CH2(S) */
+    Tci[11] = 1.316 * EPS[11] ; 
+    ai[11] = (5.55 * pow(avogadro,2.0) * EPS[11]*boltzmann * pow(1e-8*SIG[11],3.0) ) / (pow(wt[11],2.0)); 
+    bi[11] = 0.855 * avogadro * pow(1e-8*SIG[11],3.0) / (wt[11]); 
+    acentric_i[11] = 0.0 ;
+
+    /*species 12: CH3 */
+    Tci[12] = 1.316 * EPS[12] ; 
+    ai[12] = (5.55 * pow(avogadro,2.0) * EPS[12]*boltzmann * pow(1e-8*SIG[12],3.0) ) / (pow(wt[12],2.0)); 
+    bi[12] = 0.855 * avogadro * pow(1e-8*SIG[12],3.0) / (wt[12]); 
+    acentric_i[12] = 0.0 ;
+
+    /*species 13: CH4 */
+    /*Imported from NIST */
+    Tci[13] = 190.560000 ; 
+    ai[13] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[13],2.0) / (pow(16.043030,2.0) * 45.990000); 
+    bi[13] = 0.08664 * Rcst * Tci[13] / (16.043030 * 45.990000); 
+    acentric_i[13] = 0.011000 ;
+
+    /*species 14: CO */
+    /*Imported from NIST */
+    Tci[14] = 132.850000 ; 
+    ai[14] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[14],2.0) / (pow(28.010000,2.0) * 34.940000); 
+    bi[14] = 0.08664 * Rcst * Tci[14] / (28.010000 * 34.940000); 
+    acentric_i[14] = 0.045000 ;
+
+    /*species 15: CO2 */
+    /*Imported from NIST */
+    Tci[15] = 304.120000 ; 
+    ai[15] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[15],2.0) / (pow(44.009950,2.0) * 73.740000); 
+    bi[15] = 0.08664 * Rcst * Tci[15] / (44.009950 * 73.740000); 
+    acentric_i[15] = 0.225000 ;
+
+    /*species 16: HCO */
+    Tci[16] = 1.316 * EPS[16] ; 
+    ai[16] = (5.55 * pow(avogadro,2.0) * EPS[16]*boltzmann * pow(1e-8*SIG[16],3.0) ) / (pow(wt[16],2.0)); 
+    bi[16] = 0.855 * avogadro * pow(1e-8*SIG[16],3.0) / (wt[16]); 
+    acentric_i[16] = 0.0 ;
+
+    /*species 17: CH2O */
+    Tci[17] = 1.316 * EPS[17] ; 
+    ai[17] = (5.55 * pow(avogadro,2.0) * EPS[17]*boltzmann * pow(1e-8*SIG[17],3.0) ) / (pow(wt[17],2.0)); 
+    bi[17] = 0.855 * avogadro * pow(1e-8*SIG[17],3.0) / (wt[17]); 
+    acentric_i[17] = 0.0 ;
+
+    /*species 18: CH2OH */
+    Tci[18] = 1.316 * EPS[18] ; 
+    ai[18] = (5.55 * pow(avogadro,2.0) * EPS[18]*boltzmann * pow(1e-8*SIG[18],3.0) ) / (pow(wt[18],2.0)); 
+    bi[18] = 0.855 * avogadro * pow(1e-8*SIG[18],3.0) / (wt[18]); 
+    acentric_i[18] = 0.0 ;
+
+    /*species 19: CH3O */
+    Tci[19] = 1.316 * EPS[19] ; 
+    ai[19] = (5.55 * pow(avogadro,2.0) * EPS[19]*boltzmann * pow(1e-8*SIG[19],3.0) ) / (pow(wt[19],2.0)); 
+    bi[19] = 0.855 * avogadro * pow(1e-8*SIG[19],3.0) / (wt[19]); 
+    acentric_i[19] = 0.0 ;
+
+    /*species 20: CH3OH */
+    /*Imported from NIST */
+    Tci[20] = 512.640000 ; 
+    ai[20] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[20],2.0) / (pow(32.042000,2.0) * 80.970000); 
+    bi[20] = 0.08664 * Rcst * Tci[20] / (32.042000 * 80.970000); 
+    acentric_i[20] = 0.565000 ;
+
+    /*species 21: C2H */
+    Tci[21] = 1.316 * EPS[21] ; 
+    ai[21] = (5.55 * pow(avogadro,2.0) * EPS[21]*boltzmann * pow(1e-8*SIG[21],3.0) ) / (pow(wt[21],2.0)); 
+    bi[21] = 0.855 * avogadro * pow(1e-8*SIG[21],3.0) / (wt[21]); 
+    acentric_i[21] = 0.0 ;
+
+    /*species 22: C2H2 */
+    /*Imported from NIST */
+    Tci[22] = 308.300000 ; 
+    ai[22] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[22],2.0) / (pow(26.038000,2.0) * 61.140000); 
+    bi[22] = 0.08664 * Rcst * Tci[22] / (26.038000 * 61.140000); 
+    acentric_i[22] = 0.189000 ;
+
+    /*species 23: C2H3 */
+    Tci[23] = 1.316 * EPS[23] ; 
+    ai[23] = (5.55 * pow(avogadro,2.0) * EPS[23]*boltzmann * pow(1e-8*SIG[23],3.0) ) / (pow(wt[23],2.0)); 
+    bi[23] = 0.855 * avogadro * pow(1e-8*SIG[23],3.0) / (wt[23]); 
+    acentric_i[23] = 0.0 ;
+
+    /*species 24: C2H4 */
+    /*Imported from NIST */
+    Tci[24] = 282.340000 ; 
+    ai[24] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[24],2.0) / (pow(28.054000,2.0) * 50.410000); 
+    bi[24] = 0.08664 * Rcst * Tci[24] / (28.054000 * 50.410000); 
+    acentric_i[24] = 0.087000 ;
+
+    /*species 25: C2H5 */
+    Tci[25] = 1.316 * EPS[25] ; 
+    ai[25] = (5.55 * pow(avogadro,2.0) * EPS[25]*boltzmann * pow(1e-8*SIG[25],3.0) ) / (pow(wt[25],2.0)); 
+    bi[25] = 0.855 * avogadro * pow(1e-8*SIG[25],3.0) / (wt[25]); 
+    acentric_i[25] = 0.0 ;
+
+    /*species 26: C2H6 */
+    /*Imported from NIST */
+    Tci[26] = 305.320000 ; 
+    ai[26] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[26],2.0) / (pow(30.070120,2.0) * 48.720000); 
+    bi[26] = 0.08664 * Rcst * Tci[26] / (30.070120 * 48.720000); 
+    acentric_i[26] = 0.099000 ;
+
+    /*species 27: HCCO */
+    Tci[27] = 1.316 * EPS[27] ; 
+    ai[27] = (5.55 * pow(avogadro,2.0) * EPS[27]*boltzmann * pow(1e-8*SIG[27],3.0) ) / (pow(wt[27],2.0)); 
+    bi[27] = 0.855 * avogadro * pow(1e-8*SIG[27],3.0) / (wt[27]); 
+    acentric_i[27] = 0.0 ;
+
+    /*species 28: CH2CO */
+    Tci[28] = 1.316 * EPS[28] ; 
+    ai[28] = (5.55 * pow(avogadro,2.0) * EPS[28]*boltzmann * pow(1e-8*SIG[28],3.0) ) / (pow(wt[28],2.0)); 
+    bi[28] = 0.855 * avogadro * pow(1e-8*SIG[28],3.0) / (wt[28]); 
+    acentric_i[28] = 0.0 ;
+
+    /*species 29: HCCOH */
+    Tci[29] = 1.316 * EPS[29] ; 
+    ai[29] = (5.55 * pow(avogadro,2.0) * EPS[29]*boltzmann * pow(1e-8*SIG[29],3.0) ) / (pow(wt[29],2.0)); 
+    bi[29] = 0.855 * avogadro * pow(1e-8*SIG[29],3.0) / (wt[29]); 
+    acentric_i[29] = 0.0 ;
+
+    /*species 30: N */
+    Tci[30] = 1.316 * EPS[30] ; 
+    ai[30] = (5.55 * pow(avogadro,2.0) * EPS[30]*boltzmann * pow(1e-8*SIG[30],3.0) ) / (pow(wt[30],2.0)); 
+    bi[30] = 0.855 * avogadro * pow(1e-8*SIG[30],3.0) / (wt[30]); 
+    acentric_i[30] = 0.0 ;
+
+    /*species 31: NH */
+    Tci[31] = 1.316 * EPS[31] ; 
+    ai[31] = (5.55 * pow(avogadro,2.0) * EPS[31]*boltzmann * pow(1e-8*SIG[31],3.0) ) / (pow(wt[31],2.0)); 
+    bi[31] = 0.855 * avogadro * pow(1e-8*SIG[31],3.0) / (wt[31]); 
+    acentric_i[31] = 0.0 ;
+
+    /*species 32: NH2 */
+    Tci[32] = 1.316 * EPS[32] ; 
+    ai[32] = (5.55 * pow(avogadro,2.0) * EPS[32]*boltzmann * pow(1e-8*SIG[32],3.0) ) / (pow(wt[32],2.0)); 
+    bi[32] = 0.855 * avogadro * pow(1e-8*SIG[32],3.0) / (wt[32]); 
+    acentric_i[32] = 0.0 ;
+
+    /*species 33: NH3 */
+    Tci[33] = 1.316 * EPS[33] ; 
+    ai[33] = (5.55 * pow(avogadro,2.0) * EPS[33]*boltzmann * pow(1e-8*SIG[33],3.0) ) / (pow(wt[33],2.0)); 
+    bi[33] = 0.855 * avogadro * pow(1e-8*SIG[33],3.0) / (wt[33]); 
+    acentric_i[33] = 0.0 ;
+
+    /*species 34: NNH */
+    Tci[34] = 1.316 * EPS[34] ; 
+    ai[34] = (5.55 * pow(avogadro,2.0) * EPS[34]*boltzmann * pow(1e-8*SIG[34],3.0) ) / (pow(wt[34],2.0)); 
+    bi[34] = 0.855 * avogadro * pow(1e-8*SIG[34],3.0) / (wt[34]); 
+    acentric_i[34] = 0.0 ;
+
+    /*species 35: NO */
+    /*Imported from NIST */
+    Tci[35] = 180.000000 ; 
+    ai[35] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[35],2.0) / (pow(30.006000,2.0) * 64.800000); 
+    bi[35] = 0.08664 * Rcst * Tci[35] / (30.006000 * 64.800000); 
+    acentric_i[35] = 0.582000 ;
+
+    /*species 36: NO2 */
+    Tci[36] = 1.316 * EPS[36] ; 
+    ai[36] = (5.55 * pow(avogadro,2.0) * EPS[36]*boltzmann * pow(1e-8*SIG[36],3.0) ) / (pow(wt[36],2.0)); 
+    bi[36] = 0.855 * avogadro * pow(1e-8*SIG[36],3.0) / (wt[36]); 
+    acentric_i[36] = 0.0 ;
+
+    /*species 37: N2O */
+    /*Imported from NIST */
+    Tci[37] = 309.600000 ; 
+    ai[37] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[37],2.0) / (pow(44.013000,2.0) * 72.550000); 
+    bi[37] = 0.08664 * Rcst * Tci[37] / (44.013000 * 72.550000); 
+    acentric_i[37] = 0.162000 ;
+
+    /*species 38: HNO */
+    Tci[38] = 1.316 * EPS[38] ; 
+    ai[38] = (5.55 * pow(avogadro,2.0) * EPS[38]*boltzmann * pow(1e-8*SIG[38],3.0) ) / (pow(wt[38],2.0)); 
+    bi[38] = 0.855 * avogadro * pow(1e-8*SIG[38],3.0) / (wt[38]); 
+    acentric_i[38] = 0.0 ;
+
+    /*species 39: CN */
+    Tci[39] = 1.316 * EPS[39] ; 
+    ai[39] = (5.55 * pow(avogadro,2.0) * EPS[39]*boltzmann * pow(1e-8*SIG[39],3.0) ) / (pow(wt[39],2.0)); 
+    bi[39] = 0.855 * avogadro * pow(1e-8*SIG[39],3.0) / (wt[39]); 
+    acentric_i[39] = 0.0 ;
+
+    /*species 40: HCN */
+    Tci[40] = 1.316 * EPS[40] ; 
+    ai[40] = (5.55 * pow(avogadro,2.0) * EPS[40]*boltzmann * pow(1e-8*SIG[40],3.0) ) / (pow(wt[40],2.0)); 
+    bi[40] = 0.855 * avogadro * pow(1e-8*SIG[40],3.0) / (wt[40]); 
+    acentric_i[40] = 0.0 ;
+
+    /*species 41: H2CN */
+    Tci[41] = 1.316 * EPS[41] ; 
+    ai[41] = (5.55 * pow(avogadro,2.0) * EPS[41]*boltzmann * pow(1e-8*SIG[41],3.0) ) / (pow(wt[41],2.0)); 
+    bi[41] = 0.855 * avogadro * pow(1e-8*SIG[41],3.0) / (wt[41]); 
+    acentric_i[41] = 0.0 ;
+
+    /*species 42: HCNN */
+    Tci[42] = 1.316 * EPS[42] ; 
+    ai[42] = (5.55 * pow(avogadro,2.0) * EPS[42]*boltzmann * pow(1e-8*SIG[42],3.0) ) / (pow(wt[42],2.0)); 
+    bi[42] = 0.855 * avogadro * pow(1e-8*SIG[42],3.0) / (wt[42]); 
+    acentric_i[42] = 0.0 ;
+
+    /*species 43: HCNO */
+    Tci[43] = 1.316 * EPS[43] ; 
+    ai[43] = (5.55 * pow(avogadro,2.0) * EPS[43]*boltzmann * pow(1e-8*SIG[43],3.0) ) / (pow(wt[43],2.0)); 
+    bi[43] = 0.855 * avogadro * pow(1e-8*SIG[43],3.0) / (wt[43]); 
+    acentric_i[43] = 0.0 ;
+
+    /*species 44: HOCN */
+    Tci[44] = 1.316 * EPS[44] ; 
+    ai[44] = (5.55 * pow(avogadro,2.0) * EPS[44]*boltzmann * pow(1e-8*SIG[44],3.0) ) / (pow(wt[44],2.0)); 
+    bi[44] = 0.855 * avogadro * pow(1e-8*SIG[44],3.0) / (wt[44]); 
+    acentric_i[44] = 0.0 ;
+
+    /*species 45: HNCO */
+    Tci[45] = 1.316 * EPS[45] ; 
+    ai[45] = (5.55 * pow(avogadro,2.0) * EPS[45]*boltzmann * pow(1e-8*SIG[45],3.0) ) / (pow(wt[45],2.0)); 
+    bi[45] = 0.855 * avogadro * pow(1e-8*SIG[45],3.0) / (wt[45]); 
+    acentric_i[45] = 0.0 ;
+
+    /*species 46: NCO */
+    Tci[46] = 1.316 * EPS[46] ; 
+    ai[46] = (5.55 * pow(avogadro,2.0) * EPS[46]*boltzmann * pow(1e-8*SIG[46],3.0) ) / (pow(wt[46],2.0)); 
+    bi[46] = 0.855 * avogadro * pow(1e-8*SIG[46],3.0) / (wt[46]); 
+    acentric_i[46] = 0.0 ;
+
+    /*species 47: N2 */
+    /*Imported from NIST */
+    Tci[47] = 126.192000 ; 
+    ai[47] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[47],2.0) / (pow(28.013400,2.0) * 33.958000); 
+    bi[47] = 0.08664 * Rcst * Tci[47] / (28.013400 * 33.958000); 
+    acentric_i[47] = 0.037200 ;
+
+    /*species 48: AR */
+    /*Imported from NIST */
+    Tci[48] = 150.860000 ; 
+    ai[48] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[48],2.0) / (pow(39.948000,2.0) * 48.980000); 
+    bi[48] = 0.08664 * Rcst * Tci[48] / (39.948000 * 48.980000); 
+    acentric_i[48] = -0.002000 ;
+
+    /*species 49: C3H7 */
+    Tci[49] = 1.316 * EPS[49] ; 
+    ai[49] = (5.55 * pow(avogadro,2.0) * EPS[49]*boltzmann * pow(1e-8*SIG[49],3.0) ) / (pow(wt[49],2.0)); 
+    bi[49] = 0.855 * avogadro * pow(1e-8*SIG[49],3.0) / (wt[49]); 
+    acentric_i[49] = 0.0 ;
+
+    /*species 50: C3H8 */
+    /*Imported from NIST */
+    Tci[50] = 369.830000 ; 
+    ai[50] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[50],2.0) / (pow(44.097210,2.0) * 42.480000); 
+    bi[50] = 0.08664 * Rcst * Tci[50] / (44.097210 * 42.480000); 
+    acentric_i[50] = 0.152000 ;
+
+    /*species 51: CH2CHO */
+    Tci[51] = 1.316 * EPS[51] ; 
+    ai[51] = (5.55 * pow(avogadro,2.0) * EPS[51]*boltzmann * pow(1e-8*SIG[51],3.0) ) / (pow(wt[51],2.0)); 
+    bi[51] = 0.855 * avogadro * pow(1e-8*SIG[51],3.0) / (wt[51]); 
+    acentric_i[51] = 0.0 ;
+
+    /*species 52: CH3CHO */
+    Tci[52] = 1.316 * EPS[52] ; 
+    ai[52] = (5.55 * pow(avogadro,2.0) * EPS[52]*boltzmann * pow(1e-8*SIG[52],3.0) ) / (pow(wt[52],2.0)); 
+    bi[52] = 0.855 * avogadro * pow(1e-8*SIG[52],3.0) / (wt[52]); 
+    acentric_i[52] = 0.0 ;
+
+    /*species 53: HF */
+    Tci[53] = 1.316 * EPS[53] ; 
+    ai[53] = (5.55 * pow(avogadro,2.0) * EPS[53]*boltzmann * pow(1e-8*SIG[53],3.0) ) / (pow(wt[53],2.0)); 
+    bi[53] = 0.855 * avogadro * pow(1e-8*SIG[53],3.0) / (wt[53]); 
+    acentric_i[53] = 0.0 ;
+
+    /*species 54: F */
+    Tci[54] = 1.316 * EPS[54] ; 
+    ai[54] = (5.55 * pow(avogadro,2.0) * EPS[54]*boltzmann * pow(1e-8*SIG[54],3.0) ) / (pow(wt[54],2.0)); 
+    bi[54] = 0.855 * avogadro * pow(1e-8*SIG[54],3.0) / (wt[54]); 
+    acentric_i[54] = 0.0 ;
+
+    /*species 55: F2 */
+    Tci[55] = 1.316 * EPS[55] ; 
+    ai[55] = (5.55 * pow(avogadro,2.0) * EPS[55]*boltzmann * pow(1e-8*SIG[55],3.0) ) / (pow(wt[55],2.0)); 
+    bi[55] = 0.855 * avogadro * pow(1e-8*SIG[55],3.0) / (wt[55]); 
+    acentric_i[55] = 0.0 ;
+
+    /*species 56: CH3F */
+    Tci[56] = 1.316 * EPS[56] ; 
+    ai[56] = (5.55 * pow(avogadro,2.0) * EPS[56]*boltzmann * pow(1e-8*SIG[56],3.0) ) / (pow(wt[56],2.0)); 
+    bi[56] = 0.855 * avogadro * pow(1e-8*SIG[56],3.0) / (wt[56]); 
+    acentric_i[56] = 0.0 ;
+
+    /*species 57: CH2F2 */
+    Tci[57] = 1.316 * EPS[57] ; 
+    ai[57] = (5.55 * pow(avogadro,2.0) * EPS[57]*boltzmann * pow(1e-8*SIG[57],3.0) ) / (pow(wt[57],2.0)); 
+    bi[57] = 0.855 * avogadro * pow(1e-8*SIG[57],3.0) / (wt[57]); 
+    acentric_i[57] = 0.0 ;
+
+    /*species 58: CHF3 */
+    Tci[58] = 1.316 * EPS[58] ; 
+    ai[58] = (5.55 * pow(avogadro,2.0) * EPS[58]*boltzmann * pow(1e-8*SIG[58],3.0) ) / (pow(wt[58],2.0)); 
+    bi[58] = 0.855 * avogadro * pow(1e-8*SIG[58],3.0) / (wt[58]); 
+    acentric_i[58] = 0.0 ;
+
+    /*species 59: CF4 */
+    Tci[59] = 1.316 * EPS[59] ; 
+    ai[59] = (5.55 * pow(avogadro,2.0) * EPS[59]*boltzmann * pow(1e-8*SIG[59],3.0) ) / (pow(wt[59],2.0)); 
+    bi[59] = 0.855 * avogadro * pow(1e-8*SIG[59],3.0) / (wt[59]); 
+    acentric_i[59] = 0.0 ;
+
+    /*species 60: CH2F */
+    Tci[60] = 1.316 * EPS[60] ; 
+    ai[60] = (5.55 * pow(avogadro,2.0) * EPS[60]*boltzmann * pow(1e-8*SIG[60],3.0) ) / (pow(wt[60],2.0)); 
+    bi[60] = 0.855 * avogadro * pow(1e-8*SIG[60],3.0) / (wt[60]); 
+    acentric_i[60] = 0.0 ;
+
+    /*species 61: CHF2 */
+    Tci[61] = 1.316 * EPS[61] ; 
+    ai[61] = (5.55 * pow(avogadro,2.0) * EPS[61]*boltzmann * pow(1e-8*SIG[61],3.0) ) / (pow(wt[61],2.0)); 
+    bi[61] = 0.855 * avogadro * pow(1e-8*SIG[61],3.0) / (wt[61]); 
+    acentric_i[61] = 0.0 ;
+
+    /*species 62: CF3 */
+    Tci[62] = 1.316 * EPS[62] ; 
+    ai[62] = (5.55 * pow(avogadro,2.0) * EPS[62]*boltzmann * pow(1e-8*SIG[62],3.0) ) / (pow(wt[62],2.0)); 
+    bi[62] = 0.855 * avogadro * pow(1e-8*SIG[62],3.0) / (wt[62]); 
+    acentric_i[62] = 0.0 ;
+
+    /*species 63: CHF */
+    Tci[63] = 1.316 * EPS[63] ; 
+    ai[63] = (5.55 * pow(avogadro,2.0) * EPS[63]*boltzmann * pow(1e-8*SIG[63],3.0) ) / (pow(wt[63],2.0)); 
+    bi[63] = 0.855 * avogadro * pow(1e-8*SIG[63],3.0) / (wt[63]); 
+    acentric_i[63] = 0.0 ;
+
+    /*species 64: CF2 */
+    Tci[64] = 1.316 * EPS[64] ; 
+    ai[64] = (5.55 * pow(avogadro,2.0) * EPS[64]*boltzmann * pow(1e-8*SIG[64],3.0) ) / (pow(wt[64],2.0)); 
+    bi[64] = 0.855 * avogadro * pow(1e-8*SIG[64],3.0) / (wt[64]); 
+    acentric_i[64] = 0.0 ;
+
+    /*species 65: CF */
+    Tci[65] = 1.316 * EPS[65] ; 
+    ai[65] = (5.55 * pow(avogadro,2.0) * EPS[65]*boltzmann * pow(1e-8*SIG[65],3.0) ) / (pow(wt[65],2.0)); 
+    bi[65] = 0.855 * avogadro * pow(1e-8*SIG[65],3.0) / (wt[65]); 
+    acentric_i[65] = 0.0 ;
+
+    /*species 66: CF3O */
+    Tci[66] = 1.316 * EPS[66] ; 
+    ai[66] = (5.55 * pow(avogadro,2.0) * EPS[66]*boltzmann * pow(1e-8*SIG[66],3.0) ) / (pow(wt[66],2.0)); 
+    bi[66] = 0.855 * avogadro * pow(1e-8*SIG[66],3.0) / (wt[66]); 
+    acentric_i[66] = 0.0 ;
+
+    /*species 67: CF2O */
+    Tci[67] = 1.316 * EPS[67] ; 
+    ai[67] = (5.55 * pow(avogadro,2.0) * EPS[67]*boltzmann * pow(1e-8*SIG[67],3.0) ) / (pow(wt[67],2.0)); 
+    bi[67] = 0.855 * avogadro * pow(1e-8*SIG[67],3.0) / (wt[67]); 
+    acentric_i[67] = 0.0 ;
+
+    /*species 68: CHFO */
+    Tci[68] = 1.316 * EPS[68] ; 
+    ai[68] = (5.55 * pow(avogadro,2.0) * EPS[68]*boltzmann * pow(1e-8*SIG[68],3.0) ) / (pow(wt[68],2.0)); 
+    bi[68] = 0.855 * avogadro * pow(1e-8*SIG[68],3.0) / (wt[68]); 
+    acentric_i[68] = 0.0 ;
+
+    /*species 69: CFO */
+    Tci[69] = 1.316 * EPS[69] ; 
+    ai[69] = (5.55 * pow(avogadro,2.0) * EPS[69]*boltzmann * pow(1e-8*SIG[69],3.0) ) / (pow(wt[69],2.0)); 
+    bi[69] = 0.855 * avogadro * pow(1e-8*SIG[69],3.0) / (wt[69]); 
+    acentric_i[69] = 0.0 ;
+
+    /*species 70: iC3H7 */
+    Tci[70] = 1.316 * EPS[70] ; 
+    ai[70] = (5.55 * pow(avogadro,2.0) * EPS[70]*boltzmann * pow(1e-8*SIG[70],3.0) ) / (pow(wt[70],2.0)); 
+    bi[70] = 0.855 * avogadro * pow(1e-8*SIG[70],3.0) / (wt[70]); 
+    acentric_i[70] = 0.0 ;
+
+    /*species 71: nC3H7 */
+    Tci[71] = 1.316 * EPS[71] ; 
+    ai[71] = (5.55 * pow(avogadro,2.0) * EPS[71]*boltzmann * pow(1e-8*SIG[71],3.0) ) / (pow(wt[71],2.0)); 
+    bi[71] = 0.855 * avogadro * pow(1e-8*SIG[71],3.0) / (wt[71]); 
+    acentric_i[71] = 0.0 ;
+
+    return;
+}
+
+
 /*Compute P = rhoRT/W(x) */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKPX(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  P)
 {
@@ -10995,7 +11370,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSMS(amrex::Real *  T,  amrex::Re
     sms[71] *= 1.929591382478141e+06; /*nC3H7 */
 }
 
-#ifdef AMREX_USE_GPU
 
 /* GPU version of productionRate: no more use of thermo namespace vectors  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * qss_sc, amrex::Real * tc, amrex::Real invT)
@@ -19646,7 +20020,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     return;
 }
-#endif
 
 
 
@@ -50466,7 +50839,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J,
     return;
 }
 
-#ifdef AMREX_USE_GPU
 /*compute the reaction Jacobian on GPU */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
@@ -82463,7 +82835,6 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
 
 return;
 }
-#endif
 
 
 /*compute the reaction Jacobian */
