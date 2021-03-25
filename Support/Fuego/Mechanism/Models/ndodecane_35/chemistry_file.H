@@ -1,191 +1,6972 @@
-#include <math.h>
+#ifndef CHEMISTRY_FILE_H
+#define CHEMISTRY_FILE_H
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <vector>
 #include <AMReX_Gpu.H>
+#include <AMReX_REAL.H>
+#include <mechanism.h>
 
-extern "C"
+
+
+/* ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp  */
+/* INIT and FINALIZE stuff  */
+void CKINIT();
+void CKFINALIZE();
+void atomicWeight(amrex::Real *  awt);
+/* MISC  */
+void CKNCF(int * ncf);
+void CKSYME_STR(amrex::Vector<std::string>& ename);
+void CKSYMS_STR(amrex::Vector<std::string>& kname);
+void CKAWT(amrex::Real *  awt);
+/* SPARSE INFORMATION  */
+void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);
+void SPARSITY_INFO_SYST(int * nJdata, int * consP, int NCELLS);
+void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, int * consP);
+void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, int * consP, int NCELLS);
+void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);
+void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);
+void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP);
+void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base);
+
+/* GPU stuff that default to CPU if not compiled with GPU  */
+
+
+/*A few mechanism parameters */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKINDX(int * mm, int * kk, int * ii, int * nfit)
 {
-AMREX_GPU_HOST_DEVICE void get_imw(double imw_new[]);
-AMREX_GPU_HOST_DEVICE void get_mw(double mw_new[]);
-void egtransetEPS(double *  EPS);
-void egtransetSIG(double* SIG);
-void atomicWeight(double *  awt);
-void molecularWeight(double *  wt);
-AMREX_GPU_HOST_DEVICE void gibbs(double *  species, double *  tc);
-AMREX_GPU_HOST_DEVICE void helmholtz(double *  species, double *  tc);
-AMREX_GPU_HOST_DEVICE void speciesInternalEnergy(double *  species, double *  tc);
-AMREX_GPU_HOST_DEVICE void speciesEnthalpy(double *  species, double *  tc);
-AMREX_GPU_HOST_DEVICE void speciesEntropy(double *  species, double *  tc);
-AMREX_GPU_HOST_DEVICE void cp_R(double *  species, double *  tc);
-AMREX_GPU_HOST_DEVICE void cv_R(double *  species, double *  tc);
-void equilibriumConstants(double *  kc, double *  g_RT, double T);
-AMREX_GPU_HOST_DEVICE void productionRate(double *  wdot, double *  sc, double T);
-AMREX_GPU_HOST_DEVICE void comp_qfqr(double *  q_f, double *  q_r, double *  sc, double *  tc, double invT);
-#ifndef AMREX_USE_CUDA
-void comp_k_f(double *  tc, double invT, double *  k_f);
-void comp_Kc(double *  tc, double invT, double *  Kc);
-#endif
-AMREX_GPU_HOST_DEVICE void progressRate(double *  qdot, double *  speciesConc, double T);
-AMREX_GPU_HOST_DEVICE void progressRateFR(double *  q_f, double *  q_r, double *  speciesConc, double T);
-AMREX_GPU_HOST_DEVICE void CKINIT();
-AMREX_GPU_HOST_DEVICE void CKFINALIZE();
-#ifndef AMREX_USE_CUDA
-void GET_REACTION_MAP(int *  rmap);
-void SetAllDefaults();
-#endif
-void CKINDX(int * mm, int * kk, int * ii, int * nfit );
-void CKXNUM(char * line, int * nexp, int * lout, int * nval, double *  rval, int * kerr, int lenline);
-void CKSNUM(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double *  rval, int * kerr, int lenline, int lenkray);
-void CKSYME(int * kname, int * lenkname);
-void CKSYMS(int * kname, int * lenkname);
-void CKRP(double *  ru, double *  ruc, double *  pa);
-void CKPX(double *  rho, double *  T, double *  x, double *  P);
-AMREX_GPU_HOST_DEVICE void CKPY(double *  rho, double *  T, double *  y, double *  P);
-void CKPC(double *  rho, double *  T, double *  c, double *  P);
-void CKRHOX(double *  P, double *  T, double *  x, double *  rho);
-void CKRHOY(double *  P, double *  T, double *  y, double *  rho);
-void CKRHOC(double *  P, double *  T, double *  c, double *  rho);
-void CKWT(double *  wt);
-void CKAWT(double *  awt);
-void CKMMWY(double *  y, double *  wtm);
-void CKMMWX(double *  x, double *  wtm);
-void CKMMWC(double *  c, double *  wtm);
-AMREX_GPU_HOST_DEVICE void CKYTX(double *  y, double *  x);
-void CKYTCP(double *  P, double *  T, double *  y, double *  c);
-void CKYTCR(double *  rho, double *  T, double *  y, double *  c);
-void CKXTY(double *  x, double *  y);
-void CKXTCP(double *  P, double *  T, double *  x, double *  c);
-void CKXTCR(double *  rho, double *  T, double *  x, double *  c);
-void CKCTX(double *  c, double *  x);
-void CKCTY(double *  c, double *  y);
-void CKCPOR(double *  T, double *  cpor);
-void CKHORT(double *  T, double *  hort);
-void CKSOR(double *  T, double *  sor);
-void CKCVML(double *  T, double *  cvml);
-void CKCPML(double *  T, double *  cvml);
-void CKUML(double *  T, double *  uml);
-void CKHML(double *  T, double *  uml);
-void CKGML(double *  T, double *  gml);
-void CKAML(double *  T, double *  aml);
-void CKSML(double *  T, double *  sml);
-AMREX_GPU_HOST_DEVICE void CKCVMS(double *  T, double *  cvms);
-AMREX_GPU_HOST_DEVICE void CKCPMS(double *  T, double *  cvms);
-AMREX_GPU_HOST_DEVICE void CKUMS(double *  T, double *  ums);
-AMREX_GPU_HOST_DEVICE void CKHMS(double *  T, double *  ums);
-void CKGMS(double *  T, double *  gms);
-void CKAMS(double *  T, double *  ams);
-void CKSMS(double *  T, double *  sms);
-void CKCPBL(double *  T, double *  x, double *  cpbl);
-void CKCPBS(double *  T, double *  y, double *  cpbs);
-void CKCVBL(double *  T, double *  x, double *  cpbl);
-AMREX_GPU_HOST_DEVICE void CKCVBS(double *  T, double *  y, double *  cpbs);
-void CKHBML(double *  T, double *  x, double *  hbml);
-void CKHBMS(double *  T, double *  y, double *  hbms);
-void CKUBML(double *  T, double *  x, double *  ubml);
-AMREX_GPU_HOST_DEVICE void CKUBMS(double *  T, double *  y, double *  ubms);
-void CKSBML(double *  P, double *  T, double *  x, double *  sbml);
-void CKSBMS(double *  P, double *  T, double *  y, double *  sbms);
-void CKGBML(double *  P, double *  T, double *  x, double *  gbml);
-void CKGBMS(double *  P, double *  T, double *  y, double *  gbms);
-void CKABML(double *  P, double *  T, double *  x, double *  abml);
-void CKABMS(double *  P, double *  T, double *  y, double *  abms);
-void CKWC(double *  T, double *  C, double *  wdot);
-void CKWYP(double *  P, double *  T, double *  y, double *  wdot);
-void CKWXP(double *  P, double *  T, double *  x, double *  wdot);
-AMREX_GPU_HOST_DEVICE void CKWYR(double *  rho, double *  T, double *  y, double *  wdot);
-void CKWXR(double *  rho, double *  T, double *  x, double *  wdot);
-void CKQC(double *  T, double *  C, double *  qdot);
-void CKKFKR(double *  P, double *  T, double *  x, double *  q_f, double *  q_r);
-void CKQYP(double *  P, double *  T, double *  y, double *  qdot);
-void CKQXP(double *  P, double *  T, double *  x, double *  qdot);
-void CKQYR(double *  rho, double *  T, double *  y, double *  qdot);
-void CKQXR(double *  rho, double *  T, double *  x, double *  qdot);
-void CKNU(int * kdim, int * nuki);
-void CKNCF(int * mdim, int * ncf);
-void CKABE(double *  a, double *  b, double *  e );
-void CKEQC(double *  T, double *  C , double *  eqcon );
-void CKEQYP(double *  P, double *  T, double *  y, double *  eqcon);
-void CKEQXP(double *  P, double *  T, double *  x, double *  eqcon);
-void CKEQYR(double *  rho, double *  T, double *  y, double *  eqcon);
-void CKEQXR(double *  rho, double *  T, double *  x, double *  eqcon);
-void CKCHRG(int * kcharge);
-AMREX_GPU_HOST_DEVICE void DWDOT(double *  J, double *  sc, double *  T, int * consP);
-AMREX_GPU_HOST_DEVICE void DWDOT_PRECOND(double *  J, double *  sc, double *  Tp, int * HP);
-AMREX_GPU_HOST_DEVICE void SLJ_PRECOND_CSC(double *  Jsps, int * indx, int * len, double * sc, double * Tp, int * HP, double * gamma);
-AMREX_GPU_HOST_DEVICE void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);
-AMREX_GPU_HOST_DEVICE void SPARSITY_INFO_PRECOND(int * nJdata, int * consP);
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC(int * rowVals, int * colPtrs, int * consP, int NCELLS);
-#ifndef AMREX_USE_CUDA
-void SPARSITY_PREPROC_PRECOND(int * rowVals, int * colPtrs, int * indx, int * consP);
+    *mm = 4;
+    *kk = 35;
+    *ii = 0;
+    *nfit = -1; /*Why do you need this anyway ?  */
+}
+
+
+/* inverse molecular weights  */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void get_imw(amrex::Real *imw_new){
+    imw_new[0] = 1.0/170.341020;/*NC12H26 */
+    imw_new[1] = 1.0/1.007970;/*H */
+    imw_new[2] = 1.0/15.999400;/*O */
+    imw_new[3] = 1.0/17.007370;/*OH */
+    imw_new[4] = 1.0/33.006770;/*HO2 */
+    imw_new[5] = 1.0/2.015940;/*H2 */
+    imw_new[6] = 1.0/18.015340;/*H2O */
+    imw_new[7] = 1.0/34.014740;/*H2O2 */
+    imw_new[8] = 1.0/31.998800;/*O2 */
+    imw_new[9] = 1.0/15.035060;/*CH3 */
+    imw_new[10] = 1.0/16.043030;/*CH4 */
+    imw_new[11] = 1.0/30.026490;/*CH2O */
+    imw_new[12] = 1.0/28.010550;/*CO */
+    imw_new[13] = 1.0/44.009950;/*CO2 */
+    imw_new[14] = 1.0/26.038240;/*C2H2 */
+    imw_new[15] = 1.0/28.054180;/*C2H4 */
+    imw_new[16] = 1.0/30.070120;/*C2H6 */
+    imw_new[17] = 1.0/43.045610;/*CH2CHO */
+    imw_new[18] = 1.0/41.073300;/*aC3H5 */
+    imw_new[19] = 1.0/42.081270;/*C3H6 */
+    imw_new[20] = 1.0/56.064730;/*C2H3CHO */
+    imw_new[21] = 1.0/55.100390;/*C4H7 */
+    imw_new[22] = 1.0/56.108360;/*C4H81 */
+    imw_new[23] = 1.0/69.127480;/*C5H9 */
+    imw_new[24] = 1.0/70.135450;/*C5H10 */
+    imw_new[25] = 1.0/84.162540;/*C6H12 */
+    imw_new[26] = 1.0/98.189630;/*C7H14 */
+    imw_new[27] = 1.0/112.216720;/*C8H16 */
+    imw_new[28] = 1.0/126.243810;/*C9H18 */
+    imw_new[29] = 1.0/127.251780;/*PXC9H19 */
+    imw_new[30] = 1.0/140.270900;/*C10H20 */
+    imw_new[31] = 1.0/168.325080;/*C12H24 */
+    imw_new[32] = 1.0/201.331850;/*C12H25O2 */
+    imw_new[33] = 1.0/216.323280;/*OC12H23OOH */
+    imw_new[34] = 1.0/28.013400;/*N2 */
+}
+
+/* molecular weights  */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void get_mw(amrex::Real *mw_new){
+    mw_new[0] = 170.341020;/*NC12H26 */
+    mw_new[1] = 1.007970;/*H */
+    mw_new[2] = 15.999400;/*O */
+    mw_new[3] = 17.007370;/*OH */
+    mw_new[4] = 33.006770;/*HO2 */
+    mw_new[5] = 2.015940;/*H2 */
+    mw_new[6] = 18.015340;/*H2O */
+    mw_new[7] = 34.014740;/*H2O2 */
+    mw_new[8] = 31.998800;/*O2 */
+    mw_new[9] = 15.035060;/*CH3 */
+    mw_new[10] = 16.043030;/*CH4 */
+    mw_new[11] = 30.026490;/*CH2O */
+    mw_new[12] = 28.010550;/*CO */
+    mw_new[13] = 44.009950;/*CO2 */
+    mw_new[14] = 26.038240;/*C2H2 */
+    mw_new[15] = 28.054180;/*C2H4 */
+    mw_new[16] = 30.070120;/*C2H6 */
+    mw_new[17] = 43.045610;/*CH2CHO */
+    mw_new[18] = 41.073300;/*aC3H5 */
+    mw_new[19] = 42.081270;/*C3H6 */
+    mw_new[20] = 56.064730;/*C2H3CHO */
+    mw_new[21] = 55.100390;/*C4H7 */
+    mw_new[22] = 56.108360;/*C4H81 */
+    mw_new[23] = 69.127480;/*C5H9 */
+    mw_new[24] = 70.135450;/*C5H10 */
+    mw_new[25] = 84.162540;/*C6H12 */
+    mw_new[26] = 98.189630;/*C7H14 */
+    mw_new[27] = 112.216720;/*C8H16 */
+    mw_new[28] = 126.243810;/*C9H18 */
+    mw_new[29] = 127.251780;/*PXC9H19 */
+    mw_new[30] = 140.270900;/*C10H20 */
+    mw_new[31] = 168.325080;/*C12H24 */
+    mw_new[32] = 201.331850;/*C12H25O2 */
+    mw_new[33] = 216.323280;/*OC12H23OOH */
+    mw_new[34] = 28.013400;/*N2 */
+}
+
+
+
+/* Returns R, Rc, Patm */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKRP(amrex::Real *  ru, amrex::Real *  ruc, amrex::Real *  pa)
+{
+     *ru  = 8.31446261815324e+07; 
+     *ruc = 1.98721558317399615845; 
+     *pa  = 1.01325e+06; 
+}
+
+
+/*compute Cv/R at the given temperature */
+/*tc contains precomputed powers of T, tc[0] = log(T) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cv_R(amrex::Real * species, amrex::Real *  tc)
+{
+
+    /*temperature */
+    amrex::Real T = tc[1];
+
+    /*species with midpoint at T=1391 kelvin */
+    if (T < 1391) {
+        /*species 0: NC12H26 */
+        species[0] =
+            -3.62181594e+00
+            +1.47237711e-01 * tc[1]
+            -9.43970271e-05 * tc[2]
+            +3.07441268e-08 * tc[3]
+            -4.03602230e-12 * tc[4];
+        /*species 31: C12H24 */
+        species[31] =
+            -3.96342681e+00
+            +1.43992360e-01 * tc[1]
+            -9.61384015e-05 * tc[2]
+            +3.30174473e-08 * tc[3]
+            -4.62398190e-12 * tc[4];
+    } else {
+        /*species 0: NC12H26 */
+        species[0] =
+            +3.75095037e+01
+            +5.63550048e-02 * tc[1]
+            -1.91493200e-05 * tc[2]
+            +2.96024862e-09 * tc[3]
+            -1.71244150e-13 * tc[4];
+        /*species 31: C12H24 */
+        species[31] =
+            +3.64002111e+01
+            +5.26230753e-02 * tc[1]
+            -1.78624319e-05 * tc[2]
+            +2.75949863e-09 * tc[3]
+            -1.59562499e-13 * tc[4];
+    }
+
+    /*species with midpoint at T=1000 kelvin */
+    if (T < 1000) {
+        /*species 1: H */
+        species[1] =
+            +1.50000000e+00
+            +7.05332819e-13 * tc[1]
+            -1.99591964e-15 * tc[2]
+            +2.30081632e-18 * tc[3]
+            -9.27732332e-22 * tc[4];
+        /*species 2: O */
+        species[2] =
+            +2.16826710e+00
+            -3.27931884e-03 * tc[1]
+            +6.64306396e-06 * tc[2]
+            -6.12806624e-09 * tc[3]
+            +2.11265971e-12 * tc[4];
+        /*species 3: OH */
+        species[3] =
+            +3.12530561e+00
+            -3.22544939e-03 * tc[1]
+            +6.52764691e-06 * tc[2]
+            -5.79853643e-09 * tc[3]
+            +2.06237379e-12 * tc[4];
+        /*species 4: HO2 */
+        species[4] =
+            +3.30179801e+00
+            -4.74912051e-03 * tc[1]
+            +2.11582891e-05 * tc[2]
+            -2.42763894e-08 * tc[3]
+            +9.29225124e-12 * tc[4];
+        /*species 5: H2 */
+        species[5] =
+            +1.34433112e+00
+            +7.98052075e-03 * tc[1]
+            -1.94781510e-05 * tc[2]
+            +2.01572094e-08 * tc[3]
+            -7.37611761e-12 * tc[4];
+        /*species 6: H2O */
+        species[6] =
+            +3.19864056e+00
+            -2.03643410e-03 * tc[1]
+            +6.52040211e-06 * tc[2]
+            -5.48797062e-09 * tc[3]
+            +1.77197817e-12 * tc[4];
+        /*species 7: H2O2 */
+        species[7] =
+            +3.27611269e+00
+            -5.42822417e-04 * tc[1]
+            +1.67335701e-05 * tc[2]
+            -2.15770813e-08 * tc[3]
+            +8.62454363e-12 * tc[4];
+        /*species 8: O2 */
+        species[8] =
+            +2.78245636e+00
+            -2.99673416e-03 * tc[1]
+            +9.84730201e-06 * tc[2]
+            -9.68129509e-09 * tc[3]
+            +3.24372837e-12 * tc[4];
+        /*species 9: CH3 */
+        species[9] =
+            +2.67359040e+00
+            +2.01095175e-03 * tc[1]
+            +5.73021856e-06 * tc[2]
+            -6.87117425e-09 * tc[3]
+            +2.54385734e-12 * tc[4];
+        /*species 10: CH4 */
+        species[10] =
+            +4.14987613e+00
+            -1.36709788e-02 * tc[1]
+            +4.91800599e-05 * tc[2]
+            -4.84743026e-08 * tc[3]
+            +1.66693956e-11 * tc[4];
+        /*species 11: CH2O */
+        species[11] =
+            +3.79372315e+00
+            -9.90833369e-03 * tc[1]
+            +3.73220008e-05 * tc[2]
+            -3.79285261e-08 * tc[3]
+            +1.31772652e-11 * tc[4];
+        /*species 12: CO */
+        species[12] =
+            +2.57953347e+00
+            -6.10353680e-04 * tc[1]
+            +1.01681433e-06 * tc[2]
+            +9.07005884e-10 * tc[3]
+            -9.04424499e-13 * tc[4];
+        /*species 13: CO2 */
+        species[13] =
+            +1.35677352e+00
+            +8.98459677e-03 * tc[1]
+            -7.12356269e-06 * tc[2]
+            +2.45919022e-09 * tc[3]
+            -1.43699548e-13 * tc[4];
+        /*species 14: C2H2 */
+        species[14] =
+            -1.91318906e-01
+            +2.33615629e-02 * tc[1]
+            -3.55171815e-05 * tc[2]
+            +2.80152437e-08 * tc[3]
+            -8.50072974e-12 * tc[4];
+        /*species 15: C2H4 */
+        species[15] =
+            +2.95920148e+00
+            -7.57052247e-03 * tc[1]
+            +5.70990292e-05 * tc[2]
+            -6.91588753e-08 * tc[3]
+            +2.69884373e-11 * tc[4];
+        /*species 16: C2H6 */
+        species[16] =
+            +3.29142492e+00
+            -5.50154270e-03 * tc[1]
+            +5.99438288e-05 * tc[2]
+            -7.08466285e-08 * tc[3]
+            +2.68685771e-11 * tc[4];
+        /*species 17: CH2CHO */
+        species[17] =
+            +2.40906240e+00
+            +1.07385740e-02 * tc[1]
+            +1.89149250e-06 * tc[2]
+            -7.15858310e-09 * tc[3]
+            +2.86738510e-12 * tc[4];
+        /*species 18: aC3H5 */
+        species[18] =
+            +3.63183500e-01
+            +1.98138210e-02 * tc[1]
+            +1.24970600e-05 * tc[2]
+            -3.33555550e-08 * tc[3]
+            +1.58465710e-11 * tc[4];
+        /*species 19: C3H6 */
+        species[19] =
+            +4.93307000e-01
+            +2.09251800e-02 * tc[1]
+            +4.48679400e-06 * tc[2]
+            -1.66891200e-08 * tc[3]
+            +7.15814600e-12 * tc[4];
+        /*species 20: C2H3CHO */
+        species[20] =
+            +2.71349800e-01
+            +2.62310540e-02 * tc[1]
+            -9.29123050e-06 * tc[2]
+            -4.78372720e-09 * tc[3]
+            +3.34805430e-12 * tc[4];
+        /*species 21: C4H7 */
+        species[21] =
+            -2.55505680e-01
+            +3.96788570e-02 * tc[1]
+            -2.28980860e-05 * tc[2]
+            +2.13529730e-09 * tc[3]
+            +2.30963750e-12 * tc[4];
+        /*species 22: C4H81 */
+        species[22] =
+            +1.81138000e-01
+            +3.08533800e-02 * tc[1]
+            +5.08652470e-06 * tc[2]
+            -2.46548880e-08 * tc[3]
+            +1.11101930e-11 * tc[4];
+        /*species 23: C5H9 */
+        species[23] =
+            -3.41901110e+00
+            +4.04303890e-02 * tc[1]
+            +6.78023390e-06 * tc[2]
+            -3.37247420e-08 * tc[3]
+            +1.51167130e-11 * tc[4];
+        /*species 32: C12H25O2 */
+        species[32] =
+            +4.31404000e+00
+            +8.93873000e-02 * tc[1]
+            +1.45351000e-05 * tc[2]
+            -7.49250000e-08 * tc[3]
+            +3.35325000e-11 * tc[4];
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +7.80733000e+00
+            +6.50623000e-02 * tc[1]
+            +6.95058000e-05 * tc[2]
+            -1.26905000e-07 * tc[3]
+            +5.10991000e-11 * tc[4];
+        /*species 34: N2 */
+        species[34] =
+            +2.29867700e+00
+            +1.40824040e-03 * tc[1]
+            -3.96322200e-06 * tc[2]
+            +5.64151500e-09 * tc[3]
+            -2.44485400e-12 * tc[4];
+    } else {
+        /*species 1: H */
+        species[1] =
+            +1.50000001e+00
+            -2.30842973e-11 * tc[1]
+            +1.61561948e-14 * tc[2]
+            -4.73515235e-18 * tc[3]
+            +4.98197357e-22 * tc[4];
+        /*species 2: O */
+        species[2] =
+            +1.56942078e+00
+            -8.59741137e-05 * tc[1]
+            +4.19484589e-08 * tc[2]
+            -1.00177799e-11 * tc[3]
+            +1.22833691e-15 * tc[4];
+        /*species 3: OH */
+        species[3] =
+            +1.86472886e+00
+            +1.05650448e-03 * tc[1]
+            -2.59082758e-07 * tc[2]
+            +3.05218674e-11 * tc[3]
+            -1.33195876e-15 * tc[4];
+        /*species 4: HO2 */
+        species[4] =
+            +3.01721090e+00
+            +2.23982013e-03 * tc[1]
+            -6.33658150e-07 * tc[2]
+            +1.14246370e-10 * tc[3]
+            -1.07908535e-14 * tc[4];
+        /*species 5: H2 */
+        species[5] =
+            +2.33727920e+00
+            -4.94024731e-05 * tc[1]
+            +4.99456778e-07 * tc[2]
+            -1.79566394e-10 * tc[3]
+            +2.00255376e-14 * tc[4];
+        /*species 6: H2O */
+        species[6] =
+            +2.03399249e+00
+            +2.17691804e-03 * tc[1]
+            -1.64072518e-07 * tc[2]
+            -9.70419870e-11 * tc[3]
+            +1.68200992e-14 * tc[4];
+        /*species 7: H2O2 */
+        species[7] =
+            +3.16500285e+00
+            +4.90831694e-03 * tc[1]
+            -1.90139225e-06 * tc[2]
+            +3.71185986e-10 * tc[3]
+            -2.87908305e-14 * tc[4];
+        /*species 8: O2 */
+        species[8] =
+            +2.28253784e+00
+            +1.48308754e-03 * tc[1]
+            -7.57966669e-07 * tc[2]
+            +2.09470555e-10 * tc[3]
+            -2.16717794e-14 * tc[4];
+        /*species 9: CH3 */
+        species[9] =
+            +1.28571772e+00
+            +7.23990037e-03 * tc[1]
+            -2.98714348e-06 * tc[2]
+            +5.95684644e-10 * tc[3]
+            -4.67154394e-14 * tc[4];
+        /*species 10: CH4 */
+        species[10] =
+            -9.25148505e-01
+            +1.33909467e-02 * tc[1]
+            -5.73285809e-06 * tc[2]
+            +1.22292535e-09 * tc[3]
+            -1.01815230e-13 * tc[4];
+        /*species 11: CH2O */
+        species[11] =
+            +7.60690080e-01
+            +9.20000082e-03 * tc[1]
+            -4.42258813e-06 * tc[2]
+            +1.00641212e-09 * tc[3]
+            -8.83855640e-14 * tc[4];
+        /*species 12: CO */
+        species[12] =
+            +1.71518561e+00
+            +2.06252743e-03 * tc[1]
+            -9.98825771e-07 * tc[2]
+            +2.30053008e-10 * tc[3]
+            -2.03647716e-14 * tc[4];
+        /*species 13: CO2 */
+        species[13] =
+            +2.85746029e+00
+            +4.41437026e-03 * tc[1]
+            -2.21481404e-06 * tc[2]
+            +5.23490188e-10 * tc[3]
+            -4.72084164e-14 * tc[4];
+        /*species 14: C2H2 */
+        species[14] =
+            +3.14756964e+00
+            +5.96166664e-03 * tc[1]
+            -2.37294852e-06 * tc[2]
+            +4.67412171e-10 * tc[3]
+            -3.61235213e-14 * tc[4];
+        /*species 15: C2H4 */
+        species[15] =
+            +1.03611116e+00
+            +1.46454151e-02 * tc[1]
+            -6.71077915e-06 * tc[2]
+            +1.47222923e-09 * tc[3]
+            -1.25706061e-13 * tc[4];
+        /*species 16: C2H6 */
+        species[16] =
+            +7.18815000e-02
+            +2.16852677e-02 * tc[1]
+            -1.00256067e-05 * tc[2]
+            +2.21412001e-09 * tc[3]
+            -1.90002890e-13 * tc[4];
+        /*species 17: CH2CHO */
+        species[17] =
+            +4.97566990e+00
+            +8.13059140e-03 * tc[1]
+            -2.74362450e-06 * tc[2]
+            +4.07030410e-10 * tc[3]
+            -2.17601710e-14 * tc[4];
+        /*species 18: aC3H5 */
+        species[18] =
+            +5.50078770e+00
+            +1.43247310e-02 * tc[1]
+            -5.67816320e-06 * tc[2]
+            +1.10808010e-09 * tc[3]
+            -9.03638870e-14 * tc[4];
+        /*species 19: C3H6 */
+        species[19] =
+            +5.73225700e+00
+            +1.49083400e-02 * tc[1]
+            -4.94989900e-06 * tc[2]
+            +7.21202200e-10 * tc[3]
+            -3.76620400e-14 * tc[4];
+        /*species 20: C2H3CHO */
+        species[20] =
+            +4.81118680e+00
+            +1.71142560e-02 * tc[1]
+            -7.48341610e-06 * tc[2]
+            +1.42522490e-09 * tc[3]
+            -9.17468410e-14 * tc[4];
+        /*species 21: C4H7 */
+        species[21] =
+            +6.01348350e+00
+            +2.26345580e-02 * tc[1]
+            -9.25454700e-06 * tc[2]
+            +1.68079270e-09 * tc[3]
+            -1.04086170e-13 * tc[4];
+        /*species 22: C4H81 */
+        species[22] =
+            +1.05358410e+00
+            +3.43505070e-02 * tc[1]
+            -1.58831970e-05 * tc[2]
+            +3.30896620e-09 * tc[3]
+            -2.53610450e-13 * tc[4];
+        /*species 23: C5H9 */
+        species[23] =
+            +9.13864000e+00
+            +2.27141380e-02 * tc[1]
+            -7.79104630e-06 * tc[2]
+            +1.18765220e-09 * tc[3]
+            -6.59324480e-14 * tc[4];
+        /*species 32: C12H25O2 */
+        species[32] =
+            +2.74782000e+01
+            +5.37539000e-02 * tc[1]
+            -1.68186000e-05 * tc[2]
+            +2.51367000e-09 * tc[3]
+            -1.47208000e-13 * tc[4];
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +2.26731000e+01
+            +6.16392000e-02 * tc[1]
+            -2.09836000e-05 * tc[2]
+            +3.33166000e-09 * tc[3]
+            -2.03590000e-13 * tc[4];
+        /*species 34: N2 */
+        species[34] =
+            +1.92664000e+00
+            +1.48797680e-03 * tc[1]
+            -5.68476000e-07 * tc[2]
+            +1.00970380e-10 * tc[3]
+            -6.75335100e-15 * tc[4];
+    }
+
+    /*species with midpoint at T=1392 kelvin */
+    if (T < 1392) {
+        /*species 24: C5H10 */
+        species[24] =
+            -2.06223481e+00
+            +5.74218294e-02 * tc[1]
+            -3.74486890e-05 * tc[2]
+            +1.27364989e-08 * tc[3]
+            -1.79609789e-12 * tc[4];
+        /*species 25: C6H12 */
+        species[25] =
+            -2.35275205e+00
+            +6.98655426e-02 * tc[1]
+            -4.59408022e-05 * tc[2]
+            +1.56967343e-08 * tc[3]
+            -2.21296175e-12 * tc[4];
+        /*species 26: C7H14 */
+        species[26] =
+            -2.67720549e+00
+            +8.24611601e-02 * tc[1]
+            -5.46504108e-05 * tc[2]
+            +1.87862303e-08 * tc[3]
+            -2.65737983e-12 * tc[4];
+        /*species 27: C8H16 */
+        species[27] =
+            -2.89226915e+00
+            +9.46066357e-02 * tc[1]
+            -6.27385521e-05 * tc[2]
+            +2.15158309e-08 * tc[3]
+            -3.02718683e-12 * tc[4];
+        /*species 28: C9H18 */
+        species[28] =
+            -3.16108263e+00
+            +1.06958297e-01 * tc[1]
+            -7.10973244e-05 * tc[2]
+            +2.43971077e-08 * tc[3]
+            -3.42771547e-12 * tc[4];
+        /*species 30: C10H20 */
+        species[30] =
+            -3.42901688e+00
+            +1.19305598e-01 * tc[1]
+            -7.94489025e-05 * tc[2]
+            +2.72736596e-08 * tc[3]
+            -3.82718373e-12 * tc[4];
+    } else {
+        /*species 24: C5H10 */
+        species[24] =
+            +1.35851539e+01
+            +2.24072471e-02 * tc[1]
+            -7.63348025e-06 * tc[2]
+            +1.18188966e-09 * tc[3]
+            -6.84385139e-14 * tc[4];
+        /*species 25: C6H12 */
+        species[25] =
+            +1.68337529e+01
+            +2.67377658e-02 * tc[1]
+            -9.10036773e-06 * tc[2]
+            +1.40819768e-09 * tc[3]
+            -8.15124244e-14 * tc[4];
+        /*species 26: C7H14 */
+        species[26] =
+            +2.00898039e+01
+            +3.10607878e-02 * tc[1]
+            -1.05644793e-05 * tc[2]
+            +1.63405780e-09 * tc[3]
+            -9.45598219e-14 * tc[4];
+        /*species 27: C8H16 */
+        species[27] =
+            +2.33540125e+01
+            +3.53666462e-02 * tc[1]
+            -1.20208388e-05 * tc[2]
+            +1.85855053e-09 * tc[3]
+            -1.07522262e-13 * tc[4];
+        /*species 28: C9H18 */
+        species[28] =
+            +2.66142176e+01
+            +3.96825287e-02 * tc[1]
+            -1.34819446e-05 * tc[2]
+            +2.08390452e-09 * tc[3]
+            -1.20539294e-13 * tc[4];
+        /*species 30: C10H20 */
+        species[30] =
+            +2.98753903e+01
+            +4.39971526e-02 * tc[1]
+            -1.49425530e-05 * tc[2]
+            +2.30917678e-09 * tc[3]
+            -1.33551477e-13 * tc[4];
+    }
+
+    /*species with midpoint at T=1390 kelvin */
+    if (T < 1390) {
+        /*species 29: PXC9H19 */
+        species[29] =
+            -2.04387292e+00
+            +1.05617283e-01 * tc[1]
+            -6.68199971e-05 * tc[2]
+            +2.14486166e-08 * tc[3]
+            -2.77404275e-12 * tc[4];
+    } else {
+        /*species 29: PXC9H19 */
+        species[29] =
+            +2.73097514e+01
+            +4.12657344e-02 * tc[1]
+            -1.40383289e-05 * tc[2]
+            +2.17174871e-09 * tc[3]
+            -1.25692307e-13 * tc[4];
+    }
+    return;
+}
+
+
+/*compute Cp/R at the given temperature */
+/*tc contains precomputed powers of T, tc[0] = log(T) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cp_R(amrex::Real * species, amrex::Real *  tc)
+{
+
+    /*temperature */
+    amrex::Real T = tc[1];
+
+    /*species with midpoint at T=1391 kelvin */
+    if (T < 1391) {
+        /*species 0: NC12H26 */
+        species[0] =
+            -2.62181594e+00
+            +1.47237711e-01 * tc[1]
+            -9.43970271e-05 * tc[2]
+            +3.07441268e-08 * tc[3]
+            -4.03602230e-12 * tc[4];
+        /*species 31: C12H24 */
+        species[31] =
+            -2.96342681e+00
+            +1.43992360e-01 * tc[1]
+            -9.61384015e-05 * tc[2]
+            +3.30174473e-08 * tc[3]
+            -4.62398190e-12 * tc[4];
+    } else {
+        /*species 0: NC12H26 */
+        species[0] =
+            +3.85095037e+01
+            +5.63550048e-02 * tc[1]
+            -1.91493200e-05 * tc[2]
+            +2.96024862e-09 * tc[3]
+            -1.71244150e-13 * tc[4];
+        /*species 31: C12H24 */
+        species[31] =
+            +3.74002111e+01
+            +5.26230753e-02 * tc[1]
+            -1.78624319e-05 * tc[2]
+            +2.75949863e-09 * tc[3]
+            -1.59562499e-13 * tc[4];
+    }
+
+    /*species with midpoint at T=1000 kelvin */
+    if (T < 1000) {
+        /*species 1: H */
+        species[1] =
+            +2.50000000e+00
+            +7.05332819e-13 * tc[1]
+            -1.99591964e-15 * tc[2]
+            +2.30081632e-18 * tc[3]
+            -9.27732332e-22 * tc[4];
+        /*species 2: O */
+        species[2] =
+            +3.16826710e+00
+            -3.27931884e-03 * tc[1]
+            +6.64306396e-06 * tc[2]
+            -6.12806624e-09 * tc[3]
+            +2.11265971e-12 * tc[4];
+        /*species 3: OH */
+        species[3] =
+            +4.12530561e+00
+            -3.22544939e-03 * tc[1]
+            +6.52764691e-06 * tc[2]
+            -5.79853643e-09 * tc[3]
+            +2.06237379e-12 * tc[4];
+        /*species 4: HO2 */
+        species[4] =
+            +4.30179801e+00
+            -4.74912051e-03 * tc[1]
+            +2.11582891e-05 * tc[2]
+            -2.42763894e-08 * tc[3]
+            +9.29225124e-12 * tc[4];
+        /*species 5: H2 */
+        species[5] =
+            +2.34433112e+00
+            +7.98052075e-03 * tc[1]
+            -1.94781510e-05 * tc[2]
+            +2.01572094e-08 * tc[3]
+            -7.37611761e-12 * tc[4];
+        /*species 6: H2O */
+        species[6] =
+            +4.19864056e+00
+            -2.03643410e-03 * tc[1]
+            +6.52040211e-06 * tc[2]
+            -5.48797062e-09 * tc[3]
+            +1.77197817e-12 * tc[4];
+        /*species 7: H2O2 */
+        species[7] =
+            +4.27611269e+00
+            -5.42822417e-04 * tc[1]
+            +1.67335701e-05 * tc[2]
+            -2.15770813e-08 * tc[3]
+            +8.62454363e-12 * tc[4];
+        /*species 8: O2 */
+        species[8] =
+            +3.78245636e+00
+            -2.99673416e-03 * tc[1]
+            +9.84730201e-06 * tc[2]
+            -9.68129509e-09 * tc[3]
+            +3.24372837e-12 * tc[4];
+        /*species 9: CH3 */
+        species[9] =
+            +3.67359040e+00
+            +2.01095175e-03 * tc[1]
+            +5.73021856e-06 * tc[2]
+            -6.87117425e-09 * tc[3]
+            +2.54385734e-12 * tc[4];
+        /*species 10: CH4 */
+        species[10] =
+            +5.14987613e+00
+            -1.36709788e-02 * tc[1]
+            +4.91800599e-05 * tc[2]
+            -4.84743026e-08 * tc[3]
+            +1.66693956e-11 * tc[4];
+        /*species 11: CH2O */
+        species[11] =
+            +4.79372315e+00
+            -9.90833369e-03 * tc[1]
+            +3.73220008e-05 * tc[2]
+            -3.79285261e-08 * tc[3]
+            +1.31772652e-11 * tc[4];
+        /*species 12: CO */
+        species[12] =
+            +3.57953347e+00
+            -6.10353680e-04 * tc[1]
+            +1.01681433e-06 * tc[2]
+            +9.07005884e-10 * tc[3]
+            -9.04424499e-13 * tc[4];
+        /*species 13: CO2 */
+        species[13] =
+            +2.35677352e+00
+            +8.98459677e-03 * tc[1]
+            -7.12356269e-06 * tc[2]
+            +2.45919022e-09 * tc[3]
+            -1.43699548e-13 * tc[4];
+        /*species 14: C2H2 */
+        species[14] =
+            +8.08681094e-01
+            +2.33615629e-02 * tc[1]
+            -3.55171815e-05 * tc[2]
+            +2.80152437e-08 * tc[3]
+            -8.50072974e-12 * tc[4];
+        /*species 15: C2H4 */
+        species[15] =
+            +3.95920148e+00
+            -7.57052247e-03 * tc[1]
+            +5.70990292e-05 * tc[2]
+            -6.91588753e-08 * tc[3]
+            +2.69884373e-11 * tc[4];
+        /*species 16: C2H6 */
+        species[16] =
+            +4.29142492e+00
+            -5.50154270e-03 * tc[1]
+            +5.99438288e-05 * tc[2]
+            -7.08466285e-08 * tc[3]
+            +2.68685771e-11 * tc[4];
+        /*species 17: CH2CHO */
+        species[17] =
+            +3.40906240e+00
+            +1.07385740e-02 * tc[1]
+            +1.89149250e-06 * tc[2]
+            -7.15858310e-09 * tc[3]
+            +2.86738510e-12 * tc[4];
+        /*species 18: aC3H5 */
+        species[18] =
+            +1.36318350e+00
+            +1.98138210e-02 * tc[1]
+            +1.24970600e-05 * tc[2]
+            -3.33555550e-08 * tc[3]
+            +1.58465710e-11 * tc[4];
+        /*species 19: C3H6 */
+        species[19] =
+            +1.49330700e+00
+            +2.09251800e-02 * tc[1]
+            +4.48679400e-06 * tc[2]
+            -1.66891200e-08 * tc[3]
+            +7.15814600e-12 * tc[4];
+        /*species 20: C2H3CHO */
+        species[20] =
+            +1.27134980e+00
+            +2.62310540e-02 * tc[1]
+            -9.29123050e-06 * tc[2]
+            -4.78372720e-09 * tc[3]
+            +3.34805430e-12 * tc[4];
+        /*species 21: C4H7 */
+        species[21] =
+            +7.44494320e-01
+            +3.96788570e-02 * tc[1]
+            -2.28980860e-05 * tc[2]
+            +2.13529730e-09 * tc[3]
+            +2.30963750e-12 * tc[4];
+        /*species 22: C4H81 */
+        species[22] =
+            +1.18113800e+00
+            +3.08533800e-02 * tc[1]
+            +5.08652470e-06 * tc[2]
+            -2.46548880e-08 * tc[3]
+            +1.11101930e-11 * tc[4];
+        /*species 23: C5H9 */
+        species[23] =
+            -2.41901110e+00
+            +4.04303890e-02 * tc[1]
+            +6.78023390e-06 * tc[2]
+            -3.37247420e-08 * tc[3]
+            +1.51167130e-11 * tc[4];
+        /*species 32: C12H25O2 */
+        species[32] =
+            +5.31404000e+00
+            +8.93873000e-02 * tc[1]
+            +1.45351000e-05 * tc[2]
+            -7.49250000e-08 * tc[3]
+            +3.35325000e-11 * tc[4];
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +8.80733000e+00
+            +6.50623000e-02 * tc[1]
+            +6.95058000e-05 * tc[2]
+            -1.26905000e-07 * tc[3]
+            +5.10991000e-11 * tc[4];
+        /*species 34: N2 */
+        species[34] =
+            +3.29867700e+00
+            +1.40824040e-03 * tc[1]
+            -3.96322200e-06 * tc[2]
+            +5.64151500e-09 * tc[3]
+            -2.44485400e-12 * tc[4];
+    } else {
+        /*species 1: H */
+        species[1] =
+            +2.50000001e+00
+            -2.30842973e-11 * tc[1]
+            +1.61561948e-14 * tc[2]
+            -4.73515235e-18 * tc[3]
+            +4.98197357e-22 * tc[4];
+        /*species 2: O */
+        species[2] =
+            +2.56942078e+00
+            -8.59741137e-05 * tc[1]
+            +4.19484589e-08 * tc[2]
+            -1.00177799e-11 * tc[3]
+            +1.22833691e-15 * tc[4];
+        /*species 3: OH */
+        species[3] =
+            +2.86472886e+00
+            +1.05650448e-03 * tc[1]
+            -2.59082758e-07 * tc[2]
+            +3.05218674e-11 * tc[3]
+            -1.33195876e-15 * tc[4];
+        /*species 4: HO2 */
+        species[4] =
+            +4.01721090e+00
+            +2.23982013e-03 * tc[1]
+            -6.33658150e-07 * tc[2]
+            +1.14246370e-10 * tc[3]
+            -1.07908535e-14 * tc[4];
+        /*species 5: H2 */
+        species[5] =
+            +3.33727920e+00
+            -4.94024731e-05 * tc[1]
+            +4.99456778e-07 * tc[2]
+            -1.79566394e-10 * tc[3]
+            +2.00255376e-14 * tc[4];
+        /*species 6: H2O */
+        species[6] =
+            +3.03399249e+00
+            +2.17691804e-03 * tc[1]
+            -1.64072518e-07 * tc[2]
+            -9.70419870e-11 * tc[3]
+            +1.68200992e-14 * tc[4];
+        /*species 7: H2O2 */
+        species[7] =
+            +4.16500285e+00
+            +4.90831694e-03 * tc[1]
+            -1.90139225e-06 * tc[2]
+            +3.71185986e-10 * tc[3]
+            -2.87908305e-14 * tc[4];
+        /*species 8: O2 */
+        species[8] =
+            +3.28253784e+00
+            +1.48308754e-03 * tc[1]
+            -7.57966669e-07 * tc[2]
+            +2.09470555e-10 * tc[3]
+            -2.16717794e-14 * tc[4];
+        /*species 9: CH3 */
+        species[9] =
+            +2.28571772e+00
+            +7.23990037e-03 * tc[1]
+            -2.98714348e-06 * tc[2]
+            +5.95684644e-10 * tc[3]
+            -4.67154394e-14 * tc[4];
+        /*species 10: CH4 */
+        species[10] =
+            +7.48514950e-02
+            +1.33909467e-02 * tc[1]
+            -5.73285809e-06 * tc[2]
+            +1.22292535e-09 * tc[3]
+            -1.01815230e-13 * tc[4];
+        /*species 11: CH2O */
+        species[11] =
+            +1.76069008e+00
+            +9.20000082e-03 * tc[1]
+            -4.42258813e-06 * tc[2]
+            +1.00641212e-09 * tc[3]
+            -8.83855640e-14 * tc[4];
+        /*species 12: CO */
+        species[12] =
+            +2.71518561e+00
+            +2.06252743e-03 * tc[1]
+            -9.98825771e-07 * tc[2]
+            +2.30053008e-10 * tc[3]
+            -2.03647716e-14 * tc[4];
+        /*species 13: CO2 */
+        species[13] =
+            +3.85746029e+00
+            +4.41437026e-03 * tc[1]
+            -2.21481404e-06 * tc[2]
+            +5.23490188e-10 * tc[3]
+            -4.72084164e-14 * tc[4];
+        /*species 14: C2H2 */
+        species[14] =
+            +4.14756964e+00
+            +5.96166664e-03 * tc[1]
+            -2.37294852e-06 * tc[2]
+            +4.67412171e-10 * tc[3]
+            -3.61235213e-14 * tc[4];
+        /*species 15: C2H4 */
+        species[15] =
+            +2.03611116e+00
+            +1.46454151e-02 * tc[1]
+            -6.71077915e-06 * tc[2]
+            +1.47222923e-09 * tc[3]
+            -1.25706061e-13 * tc[4];
+        /*species 16: C2H6 */
+        species[16] =
+            +1.07188150e+00
+            +2.16852677e-02 * tc[1]
+            -1.00256067e-05 * tc[2]
+            +2.21412001e-09 * tc[3]
+            -1.90002890e-13 * tc[4];
+        /*species 17: CH2CHO */
+        species[17] =
+            +5.97566990e+00
+            +8.13059140e-03 * tc[1]
+            -2.74362450e-06 * tc[2]
+            +4.07030410e-10 * tc[3]
+            -2.17601710e-14 * tc[4];
+        /*species 18: aC3H5 */
+        species[18] =
+            +6.50078770e+00
+            +1.43247310e-02 * tc[1]
+            -5.67816320e-06 * tc[2]
+            +1.10808010e-09 * tc[3]
+            -9.03638870e-14 * tc[4];
+        /*species 19: C3H6 */
+        species[19] =
+            +6.73225700e+00
+            +1.49083400e-02 * tc[1]
+            -4.94989900e-06 * tc[2]
+            +7.21202200e-10 * tc[3]
+            -3.76620400e-14 * tc[4];
+        /*species 20: C2H3CHO */
+        species[20] =
+            +5.81118680e+00
+            +1.71142560e-02 * tc[1]
+            -7.48341610e-06 * tc[2]
+            +1.42522490e-09 * tc[3]
+            -9.17468410e-14 * tc[4];
+        /*species 21: C4H7 */
+        species[21] =
+            +7.01348350e+00
+            +2.26345580e-02 * tc[1]
+            -9.25454700e-06 * tc[2]
+            +1.68079270e-09 * tc[3]
+            -1.04086170e-13 * tc[4];
+        /*species 22: C4H81 */
+        species[22] =
+            +2.05358410e+00
+            +3.43505070e-02 * tc[1]
+            -1.58831970e-05 * tc[2]
+            +3.30896620e-09 * tc[3]
+            -2.53610450e-13 * tc[4];
+        /*species 23: C5H9 */
+        species[23] =
+            +1.01386400e+01
+            +2.27141380e-02 * tc[1]
+            -7.79104630e-06 * tc[2]
+            +1.18765220e-09 * tc[3]
+            -6.59324480e-14 * tc[4];
+        /*species 32: C12H25O2 */
+        species[32] =
+            +2.84782000e+01
+            +5.37539000e-02 * tc[1]
+            -1.68186000e-05 * tc[2]
+            +2.51367000e-09 * tc[3]
+            -1.47208000e-13 * tc[4];
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +2.36731000e+01
+            +6.16392000e-02 * tc[1]
+            -2.09836000e-05 * tc[2]
+            +3.33166000e-09 * tc[3]
+            -2.03590000e-13 * tc[4];
+        /*species 34: N2 */
+        species[34] =
+            +2.92664000e+00
+            +1.48797680e-03 * tc[1]
+            -5.68476000e-07 * tc[2]
+            +1.00970380e-10 * tc[3]
+            -6.75335100e-15 * tc[4];
+    }
+
+    /*species with midpoint at T=1392 kelvin */
+    if (T < 1392) {
+        /*species 24: C5H10 */
+        species[24] =
+            -1.06223481e+00
+            +5.74218294e-02 * tc[1]
+            -3.74486890e-05 * tc[2]
+            +1.27364989e-08 * tc[3]
+            -1.79609789e-12 * tc[4];
+        /*species 25: C6H12 */
+        species[25] =
+            -1.35275205e+00
+            +6.98655426e-02 * tc[1]
+            -4.59408022e-05 * tc[2]
+            +1.56967343e-08 * tc[3]
+            -2.21296175e-12 * tc[4];
+        /*species 26: C7H14 */
+        species[26] =
+            -1.67720549e+00
+            +8.24611601e-02 * tc[1]
+            -5.46504108e-05 * tc[2]
+            +1.87862303e-08 * tc[3]
+            -2.65737983e-12 * tc[4];
+        /*species 27: C8H16 */
+        species[27] =
+            -1.89226915e+00
+            +9.46066357e-02 * tc[1]
+            -6.27385521e-05 * tc[2]
+            +2.15158309e-08 * tc[3]
+            -3.02718683e-12 * tc[4];
+        /*species 28: C9H18 */
+        species[28] =
+            -2.16108263e+00
+            +1.06958297e-01 * tc[1]
+            -7.10973244e-05 * tc[2]
+            +2.43971077e-08 * tc[3]
+            -3.42771547e-12 * tc[4];
+        /*species 30: C10H20 */
+        species[30] =
+            -2.42901688e+00
+            +1.19305598e-01 * tc[1]
+            -7.94489025e-05 * tc[2]
+            +2.72736596e-08 * tc[3]
+            -3.82718373e-12 * tc[4];
+    } else {
+        /*species 24: C5H10 */
+        species[24] =
+            +1.45851539e+01
+            +2.24072471e-02 * tc[1]
+            -7.63348025e-06 * tc[2]
+            +1.18188966e-09 * tc[3]
+            -6.84385139e-14 * tc[4];
+        /*species 25: C6H12 */
+        species[25] =
+            +1.78337529e+01
+            +2.67377658e-02 * tc[1]
+            -9.10036773e-06 * tc[2]
+            +1.40819768e-09 * tc[3]
+            -8.15124244e-14 * tc[4];
+        /*species 26: C7H14 */
+        species[26] =
+            +2.10898039e+01
+            +3.10607878e-02 * tc[1]
+            -1.05644793e-05 * tc[2]
+            +1.63405780e-09 * tc[3]
+            -9.45598219e-14 * tc[4];
+        /*species 27: C8H16 */
+        species[27] =
+            +2.43540125e+01
+            +3.53666462e-02 * tc[1]
+            -1.20208388e-05 * tc[2]
+            +1.85855053e-09 * tc[3]
+            -1.07522262e-13 * tc[4];
+        /*species 28: C9H18 */
+        species[28] =
+            +2.76142176e+01
+            +3.96825287e-02 * tc[1]
+            -1.34819446e-05 * tc[2]
+            +2.08390452e-09 * tc[3]
+            -1.20539294e-13 * tc[4];
+        /*species 30: C10H20 */
+        species[30] =
+            +3.08753903e+01
+            +4.39971526e-02 * tc[1]
+            -1.49425530e-05 * tc[2]
+            +2.30917678e-09 * tc[3]
+            -1.33551477e-13 * tc[4];
+    }
+
+    /*species with midpoint at T=1390 kelvin */
+    if (T < 1390) {
+        /*species 29: PXC9H19 */
+        species[29] =
+            -1.04387292e+00
+            +1.05617283e-01 * tc[1]
+            -6.68199971e-05 * tc[2]
+            +2.14486166e-08 * tc[3]
+            -2.77404275e-12 * tc[4];
+    } else {
+        /*species 29: PXC9H19 */
+        species[29] =
+            +2.83097514e+01
+            +4.12657344e-02 * tc[1]
+            -1.40383289e-05 * tc[2]
+            +2.17174871e-09 * tc[3]
+            -1.25692307e-13 * tc[4];
+    }
+    return;
+}
+
+
+/*compute the g/(RT) at the given temperature */
+/*tc contains precomputed powers of T, tc[0] = log(T) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void gibbs(amrex::Real * species, amrex::Real *  tc)
+{
+
+    /*temperature */
+    amrex::Real T = tc[1];
+    amrex::Real invT = 1 / T;
+
+    /*species with midpoint at T=1391 kelvin */
+    if (T < 1391) {
+        /*species 0: NC12H26 */
+        species[0] =
+            -4.006542530000000e+04 * invT
+            -5.272127854000000e+01
+            +2.621815940000000e+00 * tc[0]
+            -7.361885550000000e-02 * tc[1]
+            +1.573283785000000e-05 * tc[2]
+            -2.562010566666667e-09 * tc[3]
+            +2.018011150000000e-13 * tc[4];
+        /*species 31: C12H24 */
+        species[31] =
+            -2.463452990000000e+04 * invT
+            -5.587931381000000e+01
+            +2.963426810000000e+00 * tc[0]
+            -7.199618000000001e-02 * tc[1]
+            +1.602306691666667e-05 * tc[2]
+            -2.751453941666667e-09 * tc[3]
+            +2.311990950000000e-13 * tc[4];
+    } else {
+        /*species 0: NC12H26 */
+        species[0] =
+            -5.488434650000000e+04 * invT
+            +2.111804257000000e+02
+            -3.850950370000000e+01 * tc[0]
+            -2.817750240000000e-02 * tc[1]
+            +3.191553333333333e-06 * tc[2]
+            -2.466873850000000e-10 * tc[3]
+            +8.562207500000000e-15 * tc[4];
+        /*species 31: C12H24 */
+        species[31] =
+            -3.894059620000000e+04 * invT
+            +2.022928741000000e+02
+            -3.740021110000000e+01 * tc[0]
+            -2.631153765000000e-02 * tc[1]
+            +2.977071983333333e-06 * tc[2]
+            -2.299582191666667e-10 * tc[3]
+            +7.978124949999999e-15 * tc[4];
+    }
+
+    /*species with midpoint at T=1000 kelvin */
+    if (T < 1000) {
+        /*species 1: H */
+        species[1] =
+            +2.547365990000000e+04 * invT
+            +2.946682853000000e+00
+            -2.500000000000000e+00 * tc[0]
+            -3.526664095000000e-13 * tc[1]
+            +3.326532733333333e-16 * tc[2]
+            -1.917346933333333e-19 * tc[3]
+            +4.638661660000000e-23 * tc[4];
+        /*species 2: O */
+        species[2] =
+            +2.912225920000000e+04 * invT
+            +1.116333640000000e+00
+            -3.168267100000000e+00 * tc[0]
+            +1.639659420000000e-03 * tc[1]
+            -1.107177326666667e-06 * tc[2]
+            +5.106721866666666e-10 * tc[3]
+            -1.056329855000000e-13 * tc[4];
+        /*species 3: OH */
+        species[3] =
+            +3.381538120000000e+03 * invT
+            +4.815738570000000e+00
+            -4.125305610000000e+00 * tc[0]
+            +1.612724695000000e-03 * tc[1]
+            -1.087941151666667e-06 * tc[2]
+            +4.832113691666666e-10 * tc[3]
+            -1.031186895000000e-13 * tc[4];
+        /*species 4: HO2 */
+        species[4] =
+            +2.948080400000000e+02 * invT
+            +5.851355599999999e-01
+            -4.301798010000000e+00 * tc[0]
+            +2.374560255000000e-03 * tc[1]
+            -3.526381516666666e-06 * tc[2]
+            +2.023032450000000e-09 * tc[3]
+            -4.646125620000001e-13 * tc[4];
+        /*species 5: H2 */
+        species[5] =
+            -9.179351730000000e+02 * invT
+            +1.661320882000000e+00
+            -2.344331120000000e+00 * tc[0]
+            -3.990260375000000e-03 * tc[1]
+            +3.246358500000000e-06 * tc[2]
+            -1.679767450000000e-09 * tc[3]
+            +3.688058805000000e-13 * tc[4];
+        /*species 6: H2O */
+        species[6] =
+            -3.029372670000000e+04 * invT
+            +5.047672768000000e+00
+            -4.198640560000000e+00 * tc[0]
+            +1.018217050000000e-03 * tc[1]
+            -1.086733685000000e-06 * tc[2]
+            +4.573308850000000e-10 * tc[3]
+            -8.859890850000000e-14 * tc[4];
+        /*species 7: H2O2 */
+        species[7] =
+            -1.770258210000000e+04 * invT
+            +8.410619499999998e-01
+            -4.276112690000000e+00 * tc[0]
+            +2.714112085000000e-04 * tc[1]
+            -2.788928350000000e-06 * tc[2]
+            +1.798090108333333e-09 * tc[3]
+            -4.312271815000000e-13 * tc[4];
+        /*species 8: O2 */
+        species[8] =
+            -1.063943560000000e+03 * invT
+            +1.247806300000001e-01
+            -3.782456360000000e+00 * tc[0]
+            +1.498367080000000e-03 * tc[1]
+            -1.641217001666667e-06 * tc[2]
+            +8.067745908333334e-10 * tc[3]
+            -1.621864185000000e-13 * tc[4];
+        /*species 9: CH3 */
+        species[9] =
+            +1.644499880000000e+04 * invT
+            +2.069026070000000e+00
+            -3.673590400000000e+00 * tc[0]
+            -1.005475875000000e-03 * tc[1]
+            -9.550364266666668e-07 * tc[2]
+            +5.725978541666666e-10 * tc[3]
+            -1.271928670000000e-13 * tc[4];
+        /*species 10: CH4 */
+        species[10] =
+            -1.024664760000000e+04 * invT
+            +9.791179889999999e+00
+            -5.149876130000000e+00 * tc[0]
+            +6.835489400000000e-03 * tc[1]
+            -8.196676650000000e-06 * tc[2]
+            +4.039525216666667e-09 * tc[3]
+            -8.334697800000000e-13 * tc[4];
+        /*species 11: CH2O */
+        species[11] =
+            -1.430895670000000e+04 * invT
+            +4.190910250000000e+00
+            -4.793723150000000e+00 * tc[0]
+            +4.954166845000000e-03 * tc[1]
+            -6.220333466666666e-06 * tc[2]
+            +3.160710508333333e-09 * tc[3]
+            -6.588632600000000e-13 * tc[4];
+        /*species 12: CO */
+        species[12] =
+            -1.434408600000000e+04 * invT
+            +7.112418999999992e-02
+            -3.579533470000000e+00 * tc[0]
+            +3.051768400000000e-04 * tc[1]
+            -1.694690550000000e-07 * tc[2]
+            -7.558382366666667e-11 * tc[3]
+            +4.522122495000000e-14 * tc[4];
+        /*species 13: CO2 */
+        species[13] =
+            -4.837196970000000e+04 * invT
+            -7.544278700000000e+00
+            -2.356773520000000e+00 * tc[0]
+            -4.492298385000000e-03 * tc[1]
+            +1.187260448333333e-06 * tc[2]
+            -2.049325183333333e-10 * tc[3]
+            +7.184977399999999e-15 * tc[4];
+        /*species 14: C2H2 */
+        species[14] =
+            +2.642898070000000e+04 * invT
+            -1.313102400600000e+01
+            -8.086810940000000e-01 * tc[0]
+            -1.168078145000000e-02 * tc[1]
+            +5.919530250000000e-06 * tc[2]
+            -2.334603641666667e-09 * tc[3]
+            +4.250364870000000e-13 * tc[4];
+        /*species 15: C2H4 */
+        species[15] =
+            +5.089775930000000e+03 * invT
+            -1.381294799999999e-01
+            -3.959201480000000e+00 * tc[0]
+            +3.785261235000000e-03 * tc[1]
+            -9.516504866666667e-06 * tc[2]
+            +5.763239608333333e-09 * tc[3]
+            -1.349421865000000e-12 * tc[4];
+        /*species 16: C2H6 */
+        species[16] =
+            -1.152220550000000e+04 * invT
+            +1.624601760000000e+00
+            -4.291424920000000e+00 * tc[0]
+            +2.750771350000000e-03 * tc[1]
+            -9.990638133333334e-06 * tc[2]
+            +5.903885708333334e-09 * tc[3]
+            -1.343428855000000e-12 * tc[4];
+        /*species 17: CH2CHO */
+        species[17] =
+            +6.200000000000000e+01 * invT
+            -6.162391100000001e+00
+            -3.409062400000000e+00 * tc[0]
+            -5.369287000000000e-03 * tc[1]
+            -3.152487500000000e-07 * tc[2]
+            +5.965485916666667e-10 * tc[3]
+            -1.433692550000000e-13 * tc[4];
+        /*species 18: aC3H5 */
+        species[18] =
+            +1.924562900000000e+04 * invT
+            -1.581003050000000e+01
+            -1.363183500000000e+00 * tc[0]
+            -9.906910499999999e-03 * tc[1]
+            -2.082843333333333e-06 * tc[2]
+            +2.779629583333333e-09 * tc[3]
+            -7.923285500000000e-13 * tc[4];
+        /*species 19: C3H6 */
+        species[19] =
+            +1.074826000000000e+03 * invT
+            -1.465203300000000e+01
+            -1.493307000000000e+00 * tc[0]
+            -1.046259000000000e-02 * tc[1]
+            -7.477990000000000e-07 * tc[2]
+            +1.390760000000000e-09 * tc[3]
+            -3.579073000000000e-13 * tc[4];
+        /*species 20: C2H3CHO */
+        species[20] =
+            -9.335734399999999e+03 * invT
+            -1.822672720000000e+01
+            -1.271349800000000e+00 * tc[0]
+            -1.311552700000000e-02 * tc[1]
+            +1.548538416666667e-06 * tc[2]
+            +3.986439333333333e-10 * tc[3]
+            -1.674027150000000e-13 * tc[4];
+        /*species 21: C4H7 */
+        species[21] =
+            +2.265332800000000e+04 * invT
+            -2.269338368000000e+01
+            -7.444943200000000e-01 * tc[0]
+            -1.983942850000000e-02 * tc[1]
+            +3.816347666666667e-06 * tc[2]
+            -1.779414416666667e-10 * tc[3]
+            -1.154818750000000e-13 * tc[4];
+        /*species 22: C4H81 */
+        species[22] =
+            -1.790400400000000e+03 * invT
+            -1.988133100000000e+01
+            -1.181138000000000e+00 * tc[0]
+            -1.542669000000000e-02 * tc[1]
+            -8.477541166666667e-07 * tc[2]
+            +2.054574000000000e-09 * tc[3]
+            -5.555096499999999e-13 * tc[4];
+        /*species 23: C5H9 */
+        species[23] =
+            +2.812188700000000e+03 * invT
+            -3.887825510000000e+01
+            +2.419011100000000e+00 * tc[0]
+            -2.021519450000000e-02 * tc[1]
+            -1.130038983333333e-06 * tc[2]
+            +2.810395166666667e-09 * tc[3]
+            -7.558356500000001e-13 * tc[4];
+        /*species 32: C12H25O2 */
+        species[32] =
+            -2.989180000000000e+04 * invT
+            -1.166006000000000e+01
+            -5.314040000000000e+00 * tc[0]
+            -4.469365000000000e-02 * tc[1]
+            -2.422516666666667e-06 * tc[2]
+            +6.243750000000000e-09 * tc[3]
+            -1.676625000000000e-12 * tc[4];
+        /*species 33: OC12H23OOH */
+        species[33] =
+            -6.653610000000001e+04 * invT
+            +1.965780000000001e+00
+            -8.807330000000000e+00 * tc[0]
+            -3.253115000000000e-02 * tc[1]
+            -1.158430000000000e-05 * tc[2]
+            +1.057541666666667e-08 * tc[3]
+            -2.554955000000000e-12 * tc[4];
+        /*species 34: N2 */
+        species[34] =
+            -1.020899900000000e+03 * invT
+            -6.516950000000001e-01
+            -3.298677000000000e+00 * tc[0]
+            -7.041202000000000e-04 * tc[1]
+            +6.605369999999999e-07 * tc[2]
+            -4.701262500000001e-10 * tc[3]
+            +1.222427000000000e-13 * tc[4];
+    } else {
+        /*species 1: H */
+        species[1] =
+            +2.547365990000000e+04 * invT
+            +2.946682924000000e+00
+            -2.500000010000000e+00 * tc[0]
+            +1.154214865000000e-11 * tc[1]
+            -2.692699133333334e-15 * tc[2]
+            +3.945960291666667e-19 * tc[3]
+            -2.490986785000000e-23 * tc[4];
+        /*species 2: O */
+        species[2] =
+            +2.921757910000000e+04 * invT
+            -2.214917859999999e+00
+            -2.569420780000000e+00 * tc[0]
+            +4.298705685000000e-05 * tc[1]
+            -6.991409816666667e-09 * tc[2]
+            +8.348149916666666e-13 * tc[3]
+            -6.141684549999999e-17 * tc[4];
+        /*species 3: OH */
+        species[3] =
+            +3.718857740000000e+03 * invT
+            -2.836911870000000e+00
+            -2.864728860000000e+00 * tc[0]
+            -5.282522400000000e-04 * tc[1]
+            +4.318045966666667e-08 * tc[2]
+            -2.543488950000000e-12 * tc[3]
+            +6.659793800000000e-17 * tc[4];
+        /*species 4: HO2 */
+        species[4] =
+            +1.118567130000000e+02 * invT
+            +2.321087500000001e-01
+            -4.017210900000000e+00 * tc[0]
+            -1.119910065000000e-03 * tc[1]
+            +1.056096916666667e-07 * tc[2]
+            -9.520530833333334e-12 * tc[3]
+            +5.395426750000000e-16 * tc[4];
+        /*species 5: H2 */
+        species[5] =
+            -9.501589220000000e+02 * invT
+            +6.542302510000000e+00
+            -3.337279200000000e+00 * tc[0]
+            +2.470123655000000e-05 * tc[1]
+            -8.324279633333333e-08 * tc[2]
+            +1.496386616666667e-11 * tc[3]
+            -1.001276880000000e-15 * tc[4];
+        /*species 6: H2O */
+        species[6] =
+            -3.000429710000000e+04 * invT
+            -1.932777610000000e+00
+            -3.033992490000000e+00 * tc[0]
+            -1.088459020000000e-03 * tc[1]
+            +2.734541966666666e-08 * tc[2]
+            +8.086832250000000e-12 * tc[3]
+            -8.410049600000000e-16 * tc[4];
+        /*species 7: H2O2 */
+        species[7] =
+            -1.786178770000000e+04 * invT
+            +1.248846229999999e+00
+            -4.165002850000000e+00 * tc[0]
+            -2.454158470000000e-03 * tc[1]
+            +3.168987083333333e-07 * tc[2]
+            -3.093216550000000e-11 * tc[3]
+            +1.439541525000000e-15 * tc[4];
+        /*species 8: O2 */
+        species[8] =
+            -1.088457720000000e+03 * invT
+            -2.170693450000000e+00
+            -3.282537840000000e+00 * tc[0]
+            -7.415437700000000e-04 * tc[1]
+            +1.263277781666667e-07 * tc[2]
+            -1.745587958333333e-11 * tc[3]
+            +1.083588970000000e-15 * tc[4];
+        /*species 9: CH3 */
+        species[9] =
+            +1.677558430000000e+04 * invT
+            -6.194354070000000e+00
+            -2.285717720000000e+00 * tc[0]
+            -3.619950185000000e-03 * tc[1]
+            +4.978572466666667e-07 * tc[2]
+            -4.964038700000000e-11 * tc[3]
+            +2.335771970000000e-15 * tc[4];
+        /*species 10: CH4 */
+        species[10] =
+            -9.468344590000001e+03 * invT
+            -1.836246650500000e+01
+            -7.485149500000000e-02 * tc[0]
+            -6.695473350000000e-03 * tc[1]
+            +9.554763483333333e-07 * tc[2]
+            -1.019104458333333e-10 * tc[3]
+            +5.090761500000000e-15 * tc[4];
+        /*species 11: CH2O */
+        species[11] =
+            -1.399583230000000e+04 * invT
+            -1.189563292000000e+01
+            -1.760690080000000e+00 * tc[0]
+            -4.600000410000000e-03 * tc[1]
+            +7.370980216666666e-07 * tc[2]
+            -8.386767666666666e-11 * tc[3]
+            +4.419278200000001e-15 * tc[4];
+        /*species 12: CO */
+        species[12] =
+            -1.415187240000000e+04 * invT
+            -5.103502110000000e+00
+            -2.715185610000000e+00 * tc[0]
+            -1.031263715000000e-03 * tc[1]
+            +1.664709618333334e-07 * tc[2]
+            -1.917108400000000e-11 * tc[3]
+            +1.018238580000000e-15 * tc[4];
+        /*species 13: CO2 */
+        species[13] =
+            -4.875916600000000e+04 * invT
+            +1.585822230000000e+00
+            -3.857460290000000e+00 * tc[0]
+            -2.207185130000000e-03 * tc[1]
+            +3.691356733333334e-07 * tc[2]
+            -4.362418233333334e-11 * tc[3]
+            +2.360420820000000e-15 * tc[4];
+        /*species 14: C2H2 */
+        species[14] =
+            +2.593599920000000e+04 * invT
+            +5.377850850000001e+00
+            -4.147569640000000e+00 * tc[0]
+            -2.980833320000000e-03 * tc[1]
+            +3.954914200000000e-07 * tc[2]
+            -3.895101425000000e-11 * tc[3]
+            +1.806176065000000e-15 * tc[4];
+        /*species 15: C2H4 */
+        species[15] =
+            +4.939886140000000e+03 * invT
+            -8.269258140000002e+00
+            -2.036111160000000e+00 * tc[0]
+            -7.322707550000000e-03 * tc[1]
+            +1.118463191666667e-06 * tc[2]
+            -1.226857691666667e-10 * tc[3]
+            +6.285303050000000e-15 * tc[4];
+        /*species 16: C2H6 */
+        species[16] =
+            -1.142639320000000e+04 * invT
+            -1.404372920000000e+01
+            -1.071881500000000e+00 * tc[0]
+            -1.084263385000000e-02 * tc[1]
+            +1.670934450000000e-06 * tc[2]
+            -1.845100008333333e-10 * tc[3]
+            +9.500144500000000e-15 * tc[4];
+        /*species 17: CH2CHO */
+        species[17] =
+            -9.695000000000000e+02 * invT
+            +1.100775780000000e+01
+            -5.975669900000000e+00 * tc[0]
+            -4.065295700000000e-03 * tc[1]
+            +4.572707500000000e-07 * tc[2]
+            -3.391920083333333e-11 * tc[3]
+            +1.088008550000000e-15 * tc[4];
+        /*species 18: aC3H5 */
+        species[18] =
+            +1.748244900000000e+04 * invT
+            +1.774383770000000e+01
+            -6.500787700000000e+00 * tc[0]
+            -7.162365500000000e-03 * tc[1]
+            +9.463605333333332e-07 * tc[2]
+            -9.234000833333333e-11 * tc[3]
+            +4.518194349999999e-15 * tc[4];
+        /*species 19: C3H6 */
+        species[19] =
+            -9.235703000000000e+02 * invT
+            +2.004560700000000e+01
+            -6.732257000000000e+00 * tc[0]
+            -7.454170000000000e-03 * tc[1]
+            +8.249831666666666e-07 * tc[2]
+            -6.010018333333334e-11 * tc[3]
+            +1.883102000000000e-15 * tc[4];
+        /*species 20: C2H3CHO */
+        species[20] =
+            -1.078405400000000e+04 * invT
+            +1.066998720000000e+01
+            -5.811186800000000e+00 * tc[0]
+            -8.557128000000001e-03 * tc[1]
+            +1.247236016666667e-06 * tc[2]
+            -1.187687416666667e-10 * tc[3]
+            +4.587342050000000e-15 * tc[4];
+        /*species 21: C4H7 */
+        species[21] =
+            +2.095500800000000e+04 * invT
+            +1.590279150000000e+01
+            -7.013483500000000e+00 * tc[0]
+            -1.131727900000000e-02 * tc[1]
+            +1.542424500000000e-06 * tc[2]
+            -1.400660583333333e-10 * tc[3]
+            +5.204308500000000e-15 * tc[4];
+        /*species 22: C4H81 */
+        species[22] =
+            -2.139723100000000e+03 * invT
+            -1.348961690000000e+01
+            -2.053584100000000e+00 * tc[0]
+            -1.717525350000000e-02 * tc[1]
+            +2.647199500000000e-06 * tc[2]
+            -2.757471833333334e-10 * tc[3]
+            +1.268052250000000e-14 * tc[4];
+        /*species 23: C5H9 */
+        species[23] =
+            -1.721835900000000e+03 * invT
+            +4.326452500000000e+01
+            -1.013864000000000e+01 * tc[0]
+            -1.135706900000000e-02 * tc[1]
+            +1.298507716666667e-06 * tc[2]
+            -9.897101666666667e-11 * tc[3]
+            +3.296622400000000e-15 * tc[4];
+        /*species 32: C12H25O2 */
+        species[32] =
+            -3.741180000000000e+04 * invT
+            +1.375992000000000e+02
+            -2.847820000000000e+01 * tc[0]
+            -2.687695000000000e-02 * tc[1]
+            +2.803100000000000e-06 * tc[2]
+            -2.094725000000000e-10 * tc[3]
+            +7.360400000000000e-15 * tc[4];
+        /*species 33: OC12H23OOH */
+        species[33] =
+            -7.182580000000000e+04 * invT
+            +1.014393000000000e+02
+            -2.367310000000000e+01 * tc[0]
+            -3.081960000000000e-02 * tc[1]
+            +3.497266666666667e-06 * tc[2]
+            -2.776383333333333e-10 * tc[3]
+            +1.017950000000000e-14 * tc[4];
+        /*species 34: N2 */
+        species[34] =
+            -9.227977000000000e+02 * invT
+            -3.053888000000000e+00
+            -2.926640000000000e+00 * tc[0]
+            -7.439884000000000e-04 * tc[1]
+            +9.474600000000001e-08 * tc[2]
+            -8.414198333333333e-12 * tc[3]
+            +3.376675500000000e-16 * tc[4];
+    }
+
+    /*species with midpoint at T=1392 kelvin */
+    if (T < 1392) {
+        /*species 24: C5H10 */
+        species[24] =
+            -4.465466660000000e+03 * invT
+            -3.333621381000000e+01
+            +1.062234810000000e+00 * tc[0]
+            -2.871091470000000e-02 * tc[1]
+            +6.241448166666667e-06 * tc[2]
+            -1.061374908333333e-09 * tc[3]
+            +8.980489449999999e-14 * tc[4];
+        /*species 25: C6H12 */
+        species[25] =
+            -7.343686170000000e+03 * invT
+            -3.666482115000000e+01
+            +1.352752050000000e+00 * tc[0]
+            -3.493277130000000e-02 * tc[1]
+            +7.656800366666667e-06 * tc[2]
+            -1.308061191666667e-09 * tc[3]
+            +1.106480875000000e-13 * tc[4];
+        /*species 26: C7H14 */
+        species[26] =
+            -1.021686010000000e+04 * invT
+            -4.018400869000000e+01
+            +1.677205490000000e+00 * tc[0]
+            -4.123058005000000e-02 * tc[1]
+            +9.108401800000000e-06 * tc[2]
+            -1.565519191666667e-09 * tc[3]
+            +1.328689915000000e-13 * tc[4];
+        /*species 27: C8H16 */
+        species[27] =
+            -1.310745590000000e+04 * invT
+            -4.308016725000000e+01
+            +1.892269150000000e+00 * tc[0]
+            -4.730331785000000e-02 * tc[1]
+            +1.045642535000000e-05 * tc[2]
+            -1.792985908333333e-09 * tc[3]
+            +1.513593415000000e-13 * tc[4];
+        /*species 28: C9H18 */
+        species[28] =
+            -1.598908470000000e+04 * invT
+            -4.628559543000000e+01
+            +2.161082630000000e+00 * tc[0]
+            -5.347914850000000e-02 * tc[1]
+            +1.184955406666667e-05 * tc[2]
+            -2.033092308333333e-09 * tc[3]
+            +1.713857735000000e-13 * tc[4];
+        /*species 30: C10H20 */
+        species[30] =
+            -1.887083650000000e+04 * invT
+            -4.948615518000000e+01
+            +2.429016880000000e+00 * tc[0]
+            -5.965279900000000e-02 * tc[1]
+            +1.324148375000000e-05 * tc[2]
+            -2.272804966666667e-09 * tc[3]
+            +1.913591865000000e-13 * tc[4];
+    } else {
+        /*species 24: C5H10 */
+        species[24] =
+            -1.008982050000000e+04 * invT
+            +6.695354750000000e+01
+            -1.458515390000000e+01 * tc[0]
+            -1.120362355000000e-02 * tc[1]
+            +1.272246708333333e-06 * tc[2]
+            -9.849080500000001e-11 * tc[3]
+            +3.421925695000000e-15 * tc[4];
+        /*species 25: C6H12 */
+        species[25] =
+            -1.420628600000000e+04 * invT
+            +8.621563800000001e+01
+            -1.783375290000000e+01 * tc[0]
+            -1.336888290000000e-02 * tc[1]
+            +1.516727955000000e-06 * tc[2]
+            -1.173498066666667e-10 * tc[3]
+            +4.075621220000000e-15 * tc[4];
+        /*species 26: C7H14 */
+        species[26] =
+            -1.832600650000000e+04 * invT
+            +1.055289147000000e+02
+            -2.108980390000000e+01 * tc[0]
+            -1.553039390000000e-02 * tc[1]
+            +1.760746550000000e-06 * tc[2]
+            -1.361714833333333e-10 * tc[3]
+            +4.727991095000000e-15 * tc[4];
+        /*species 27: C8H16 */
+        species[27] =
+            -2.244856740000000e+04 * invT
+            +1.248917285000000e+02
+            -2.435401250000000e+01 * tc[0]
+            -1.768332310000000e-02 * tc[1]
+            +2.003473133333334e-06 * tc[2]
+            -1.548792108333333e-10 * tc[3]
+            +5.376113100000000e-15 * tc[4];
+        /*species 28: C9H18 */
+        species[28] =
+            -2.657090610000000e+04 * invT
+            +1.442328406000000e+02
+            -2.761421760000000e+01 * tc[0]
+            -1.984126435000000e-02 * tc[1]
+            +2.246990766666667e-06 * tc[2]
+            -1.736587100000000e-10 * tc[3]
+            +6.026964700000000e-15 * tc[4];
+        /*species 30: C10H20 */
+        species[30] =
+            -3.069373070000000e+04 * invT
+            +1.635805623000000e+02
+            -3.087539030000000e+01 * tc[0]
+            -2.199857630000000e-02 * tc[1]
+            +2.490425500000000e-06 * tc[2]
+            -1.924313983333333e-10 * tc[3]
+            +6.677573850000000e-15 * tc[4];
+    }
+
+    /*species with midpoint at T=1390 kelvin */
+    if (T < 1390) {
+        /*species 29: PXC9H19 */
+        species[29] =
+            -6.808185120000000e+03 * invT
+            -4.339577212000000e+01
+            +1.043872920000000e+00 * tc[0]
+            -5.280864150000000e-02 * tc[1]
+            +1.113666618333333e-05 * tc[2]
+            -1.787384716666667e-09 * tc[3]
+            +1.387021375000000e-13 * tc[4];
+    } else {
+        /*species 29: PXC9H19 */
+        species[29] =
+            -1.745160300000000e+04 * invT
+            +1.451476484000000e+02
+            -2.830975140000000e+01 * tc[0]
+            -2.063286720000000e-02 * tc[1]
+            +2.339721483333333e-06 * tc[2]
+            -1.809790591666667e-10 * tc[3]
+            +6.284615349999999e-15 * tc[4];
+    }
+    return;
+}
+
+
+/*compute the a/(RT) at the given temperature */
+/*tc contains precomputed powers of T, tc[0] = log(T) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void helmholtz(amrex::Real * species, amrex::Real *  tc)
+{
+
+    /*temperature */
+    amrex::Real T = tc[1];
+    amrex::Real invT = 1 / T;
+
+    /*species with midpoint at T=1391 kelvin */
+    if (T < 1391) {
+        /*species 0: NC12H26 */
+        species[0] =
+            -4.00654253e+04 * invT
+            -5.37212785e+01
+            +2.62181594e+00 * tc[0]
+            -7.36188555e-02 * tc[1]
+            +1.57328378e-05 * tc[2]
+            -2.56201057e-09 * tc[3]
+            +2.01801115e-13 * tc[4];
+        /*species 31: C12H24 */
+        species[31] =
+            -2.46345299e+04 * invT
+            -5.68793138e+01
+            +2.96342681e+00 * tc[0]
+            -7.19961800e-02 * tc[1]
+            +1.60230669e-05 * tc[2]
+            -2.75145394e-09 * tc[3]
+            +2.31199095e-13 * tc[4];
+    } else {
+        /*species 0: NC12H26 */
+        species[0] =
+            -5.48843465e+04 * invT
+            +2.10180426e+02
+            -3.85095037e+01 * tc[0]
+            -2.81775024e-02 * tc[1]
+            +3.19155333e-06 * tc[2]
+            -2.46687385e-10 * tc[3]
+            +8.56220750e-15 * tc[4];
+        /*species 31: C12H24 */
+        species[31] =
+            -3.89405962e+04 * invT
+            +2.01292874e+02
+            -3.74002111e+01 * tc[0]
+            -2.63115377e-02 * tc[1]
+            +2.97707198e-06 * tc[2]
+            -2.29958219e-10 * tc[3]
+            +7.97812495e-15 * tc[4];
+    }
+
+    /*species with midpoint at T=1000 kelvin */
+    if (T < 1000) {
+        /*species 1: H */
+        species[1] =
+            +2.54736599e+04 * invT
+            +1.94668285e+00
+            -2.50000000e+00 * tc[0]
+            -3.52666409e-13 * tc[1]
+            +3.32653273e-16 * tc[2]
+            -1.91734693e-19 * tc[3]
+            +4.63866166e-23 * tc[4];
+        /*species 2: O */
+        species[2] =
+            +2.91222592e+04 * invT
+            +1.16333640e-01
+            -3.16826710e+00 * tc[0]
+            +1.63965942e-03 * tc[1]
+            -1.10717733e-06 * tc[2]
+            +5.10672187e-10 * tc[3]
+            -1.05632985e-13 * tc[4];
+        /*species 3: OH */
+        species[3] =
+            +3.38153812e+03 * invT
+            +3.81573857e+00
+            -4.12530561e+00 * tc[0]
+            +1.61272470e-03 * tc[1]
+            -1.08794115e-06 * tc[2]
+            +4.83211369e-10 * tc[3]
+            -1.03118689e-13 * tc[4];
+        /*species 4: HO2 */
+        species[4] =
+            +2.94808040e+02 * invT
+            -4.14864440e-01
+            -4.30179801e+00 * tc[0]
+            +2.37456025e-03 * tc[1]
+            -3.52638152e-06 * tc[2]
+            +2.02303245e-09 * tc[3]
+            -4.64612562e-13 * tc[4];
+        /*species 5: H2 */
+        species[5] =
+            -9.17935173e+02 * invT
+            +6.61320882e-01
+            -2.34433112e+00 * tc[0]
+            -3.99026037e-03 * tc[1]
+            +3.24635850e-06 * tc[2]
+            -1.67976745e-09 * tc[3]
+            +3.68805881e-13 * tc[4];
+        /*species 6: H2O */
+        species[6] =
+            -3.02937267e+04 * invT
+            +4.04767277e+00
+            -4.19864056e+00 * tc[0]
+            +1.01821705e-03 * tc[1]
+            -1.08673369e-06 * tc[2]
+            +4.57330885e-10 * tc[3]
+            -8.85989085e-14 * tc[4];
+        /*species 7: H2O2 */
+        species[7] =
+            -1.77025821e+04 * invT
+            -1.58938050e-01
+            -4.27611269e+00 * tc[0]
+            +2.71411208e-04 * tc[1]
+            -2.78892835e-06 * tc[2]
+            +1.79809011e-09 * tc[3]
+            -4.31227182e-13 * tc[4];
+        /*species 8: O2 */
+        species[8] =
+            -1.06394356e+03 * invT
+            -8.75219370e-01
+            -3.78245636e+00 * tc[0]
+            +1.49836708e-03 * tc[1]
+            -1.64121700e-06 * tc[2]
+            +8.06774591e-10 * tc[3]
+            -1.62186418e-13 * tc[4];
+        /*species 9: CH3 */
+        species[9] =
+            +1.64449988e+04 * invT
+            +1.06902607e+00
+            -3.67359040e+00 * tc[0]
+            -1.00547588e-03 * tc[1]
+            -9.55036427e-07 * tc[2]
+            +5.72597854e-10 * tc[3]
+            -1.27192867e-13 * tc[4];
+        /*species 10: CH4 */
+        species[10] =
+            -1.02466476e+04 * invT
+            +8.79117989e+00
+            -5.14987613e+00 * tc[0]
+            +6.83548940e-03 * tc[1]
+            -8.19667665e-06 * tc[2]
+            +4.03952522e-09 * tc[3]
+            -8.33469780e-13 * tc[4];
+        /*species 11: CH2O */
+        species[11] =
+            -1.43089567e+04 * invT
+            +3.19091025e+00
+            -4.79372315e+00 * tc[0]
+            +4.95416684e-03 * tc[1]
+            -6.22033347e-06 * tc[2]
+            +3.16071051e-09 * tc[3]
+            -6.58863260e-13 * tc[4];
+        /*species 12: CO */
+        species[12] =
+            -1.43440860e+04 * invT
+            -9.28875810e-01
+            -3.57953347e+00 * tc[0]
+            +3.05176840e-04 * tc[1]
+            -1.69469055e-07 * tc[2]
+            -7.55838237e-11 * tc[3]
+            +4.52212249e-14 * tc[4];
+        /*species 13: CO2 */
+        species[13] =
+            -4.83719697e+04 * invT
+            -8.54427870e+00
+            -2.35677352e+00 * tc[0]
+            -4.49229839e-03 * tc[1]
+            +1.18726045e-06 * tc[2]
+            -2.04932518e-10 * tc[3]
+            +7.18497740e-15 * tc[4];
+        /*species 14: C2H2 */
+        species[14] =
+            +2.64289807e+04 * invT
+            -1.41310240e+01
+            -8.08681094e-01 * tc[0]
+            -1.16807815e-02 * tc[1]
+            +5.91953025e-06 * tc[2]
+            -2.33460364e-09 * tc[3]
+            +4.25036487e-13 * tc[4];
+        /*species 15: C2H4 */
+        species[15] =
+            +5.08977593e+03 * invT
+            -1.13812948e+00
+            -3.95920148e+00 * tc[0]
+            +3.78526124e-03 * tc[1]
+            -9.51650487e-06 * tc[2]
+            +5.76323961e-09 * tc[3]
+            -1.34942187e-12 * tc[4];
+        /*species 16: C2H6 */
+        species[16] =
+            -1.15222055e+04 * invT
+            +6.24601760e-01
+            -4.29142492e+00 * tc[0]
+            +2.75077135e-03 * tc[1]
+            -9.99063813e-06 * tc[2]
+            +5.90388571e-09 * tc[3]
+            -1.34342886e-12 * tc[4];
+        /*species 17: CH2CHO */
+        species[17] =
+            +6.20000000e+01 * invT
+            -7.16239110e+00
+            -3.40906240e+00 * tc[0]
+            -5.36928700e-03 * tc[1]
+            -3.15248750e-07 * tc[2]
+            +5.96548592e-10 * tc[3]
+            -1.43369255e-13 * tc[4];
+        /*species 18: aC3H5 */
+        species[18] =
+            +1.92456290e+04 * invT
+            -1.68100305e+01
+            -1.36318350e+00 * tc[0]
+            -9.90691050e-03 * tc[1]
+            -2.08284333e-06 * tc[2]
+            +2.77962958e-09 * tc[3]
+            -7.92328550e-13 * tc[4];
+        /*species 19: C3H6 */
+        species[19] =
+            +1.07482600e+03 * invT
+            -1.56520330e+01
+            -1.49330700e+00 * tc[0]
+            -1.04625900e-02 * tc[1]
+            -7.47799000e-07 * tc[2]
+            +1.39076000e-09 * tc[3]
+            -3.57907300e-13 * tc[4];
+        /*species 20: C2H3CHO */
+        species[20] =
+            -9.33573440e+03 * invT
+            -1.92267272e+01
+            -1.27134980e+00 * tc[0]
+            -1.31155270e-02 * tc[1]
+            +1.54853842e-06 * tc[2]
+            +3.98643933e-10 * tc[3]
+            -1.67402715e-13 * tc[4];
+        /*species 21: C4H7 */
+        species[21] =
+            +2.26533280e+04 * invT
+            -2.36933837e+01
+            -7.44494320e-01 * tc[0]
+            -1.98394285e-02 * tc[1]
+            +3.81634767e-06 * tc[2]
+            -1.77941442e-10 * tc[3]
+            -1.15481875e-13 * tc[4];
+        /*species 22: C4H81 */
+        species[22] =
+            -1.79040040e+03 * invT
+            -2.08813310e+01
+            -1.18113800e+00 * tc[0]
+            -1.54266900e-02 * tc[1]
+            -8.47754117e-07 * tc[2]
+            +2.05457400e-09 * tc[3]
+            -5.55509650e-13 * tc[4];
+        /*species 23: C5H9 */
+        species[23] =
+            +2.81218870e+03 * invT
+            -3.98782551e+01
+            +2.41901110e+00 * tc[0]
+            -2.02151945e-02 * tc[1]
+            -1.13003898e-06 * tc[2]
+            +2.81039517e-09 * tc[3]
+            -7.55835650e-13 * tc[4];
+        /*species 32: C12H25O2 */
+        species[32] =
+            -2.98918000e+04 * invT
+            -1.26600600e+01
+            -5.31404000e+00 * tc[0]
+            -4.46936500e-02 * tc[1]
+            -2.42251667e-06 * tc[2]
+            +6.24375000e-09 * tc[3]
+            -1.67662500e-12 * tc[4];
+        /*species 33: OC12H23OOH */
+        species[33] =
+            -6.65361000e+04 * invT
+            +9.65780000e-01
+            -8.80733000e+00 * tc[0]
+            -3.25311500e-02 * tc[1]
+            -1.15843000e-05 * tc[2]
+            +1.05754167e-08 * tc[3]
+            -2.55495500e-12 * tc[4];
+        /*species 34: N2 */
+        species[34] =
+            -1.02089990e+03 * invT
+            -1.65169500e+00
+            -3.29867700e+00 * tc[0]
+            -7.04120200e-04 * tc[1]
+            +6.60537000e-07 * tc[2]
+            -4.70126250e-10 * tc[3]
+            +1.22242700e-13 * tc[4];
+    } else {
+        /*species 1: H */
+        species[1] =
+            +2.54736599e+04 * invT
+            +1.94668292e+00
+            -2.50000001e+00 * tc[0]
+            +1.15421486e-11 * tc[1]
+            -2.69269913e-15 * tc[2]
+            +3.94596029e-19 * tc[3]
+            -2.49098679e-23 * tc[4];
+        /*species 2: O */
+        species[2] =
+            +2.92175791e+04 * invT
+            -3.21491786e+00
+            -2.56942078e+00 * tc[0]
+            +4.29870569e-05 * tc[1]
+            -6.99140982e-09 * tc[2]
+            +8.34814992e-13 * tc[3]
+            -6.14168455e-17 * tc[4];
+        /*species 3: OH */
+        species[3] =
+            +3.71885774e+03 * invT
+            -3.83691187e+00
+            -2.86472886e+00 * tc[0]
+            -5.28252240e-04 * tc[1]
+            +4.31804597e-08 * tc[2]
+            -2.54348895e-12 * tc[3]
+            +6.65979380e-17 * tc[4];
+        /*species 4: HO2 */
+        species[4] =
+            +1.11856713e+02 * invT
+            -7.67891250e-01
+            -4.01721090e+00 * tc[0]
+            -1.11991006e-03 * tc[1]
+            +1.05609692e-07 * tc[2]
+            -9.52053083e-12 * tc[3]
+            +5.39542675e-16 * tc[4];
+        /*species 5: H2 */
+        species[5] =
+            -9.50158922e+02 * invT
+            +5.54230251e+00
+            -3.33727920e+00 * tc[0]
+            +2.47012365e-05 * tc[1]
+            -8.32427963e-08 * tc[2]
+            +1.49638662e-11 * tc[3]
+            -1.00127688e-15 * tc[4];
+        /*species 6: H2O */
+        species[6] =
+            -3.00042971e+04 * invT
+            -2.93277761e+00
+            -3.03399249e+00 * tc[0]
+            -1.08845902e-03 * tc[1]
+            +2.73454197e-08 * tc[2]
+            +8.08683225e-12 * tc[3]
+            -8.41004960e-16 * tc[4];
+        /*species 7: H2O2 */
+        species[7] =
+            -1.78617877e+04 * invT
+            +2.48846230e-01
+            -4.16500285e+00 * tc[0]
+            -2.45415847e-03 * tc[1]
+            +3.16898708e-07 * tc[2]
+            -3.09321655e-11 * tc[3]
+            +1.43954153e-15 * tc[4];
+        /*species 8: O2 */
+        species[8] =
+            -1.08845772e+03 * invT
+            -3.17069345e+00
+            -3.28253784e+00 * tc[0]
+            -7.41543770e-04 * tc[1]
+            +1.26327778e-07 * tc[2]
+            -1.74558796e-11 * tc[3]
+            +1.08358897e-15 * tc[4];
+        /*species 9: CH3 */
+        species[9] =
+            +1.67755843e+04 * invT
+            -7.19435407e+00
+            -2.28571772e+00 * tc[0]
+            -3.61995018e-03 * tc[1]
+            +4.97857247e-07 * tc[2]
+            -4.96403870e-11 * tc[3]
+            +2.33577197e-15 * tc[4];
+        /*species 10: CH4 */
+        species[10] =
+            -9.46834459e+03 * invT
+            -1.93624665e+01
+            -7.48514950e-02 * tc[0]
+            -6.69547335e-03 * tc[1]
+            +9.55476348e-07 * tc[2]
+            -1.01910446e-10 * tc[3]
+            +5.09076150e-15 * tc[4];
+        /*species 11: CH2O */
+        species[11] =
+            -1.39958323e+04 * invT
+            -1.28956329e+01
+            -1.76069008e+00 * tc[0]
+            -4.60000041e-03 * tc[1]
+            +7.37098022e-07 * tc[2]
+            -8.38676767e-11 * tc[3]
+            +4.41927820e-15 * tc[4];
+        /*species 12: CO */
+        species[12] =
+            -1.41518724e+04 * invT
+            -6.10350211e+00
+            -2.71518561e+00 * tc[0]
+            -1.03126372e-03 * tc[1]
+            +1.66470962e-07 * tc[2]
+            -1.91710840e-11 * tc[3]
+            +1.01823858e-15 * tc[4];
+        /*species 13: CO2 */
+        species[13] =
+            -4.87591660e+04 * invT
+            +5.85822230e-01
+            -3.85746029e+00 * tc[0]
+            -2.20718513e-03 * tc[1]
+            +3.69135673e-07 * tc[2]
+            -4.36241823e-11 * tc[3]
+            +2.36042082e-15 * tc[4];
+        /*species 14: C2H2 */
+        species[14] =
+            +2.59359992e+04 * invT
+            +4.37785085e+00
+            -4.14756964e+00 * tc[0]
+            -2.98083332e-03 * tc[1]
+            +3.95491420e-07 * tc[2]
+            -3.89510143e-11 * tc[3]
+            +1.80617607e-15 * tc[4];
+        /*species 15: C2H4 */
+        species[15] =
+            +4.93988614e+03 * invT
+            -9.26925814e+00
+            -2.03611116e+00 * tc[0]
+            -7.32270755e-03 * tc[1]
+            +1.11846319e-06 * tc[2]
+            -1.22685769e-10 * tc[3]
+            +6.28530305e-15 * tc[4];
+        /*species 16: C2H6 */
+        species[16] =
+            -1.14263932e+04 * invT
+            -1.50437292e+01
+            -1.07188150e+00 * tc[0]
+            -1.08426339e-02 * tc[1]
+            +1.67093445e-06 * tc[2]
+            -1.84510001e-10 * tc[3]
+            +9.50014450e-15 * tc[4];
+        /*species 17: CH2CHO */
+        species[17] =
+            -9.69500000e+02 * invT
+            +1.00077578e+01
+            -5.97566990e+00 * tc[0]
+            -4.06529570e-03 * tc[1]
+            +4.57270750e-07 * tc[2]
+            -3.39192008e-11 * tc[3]
+            +1.08800855e-15 * tc[4];
+        /*species 18: aC3H5 */
+        species[18] =
+            +1.74824490e+04 * invT
+            +1.67438377e+01
+            -6.50078770e+00 * tc[0]
+            -7.16236550e-03 * tc[1]
+            +9.46360533e-07 * tc[2]
+            -9.23400083e-11 * tc[3]
+            +4.51819435e-15 * tc[4];
+        /*species 19: C3H6 */
+        species[19] =
+            -9.23570300e+02 * invT
+            +1.90456070e+01
+            -6.73225700e+00 * tc[0]
+            -7.45417000e-03 * tc[1]
+            +8.24983167e-07 * tc[2]
+            -6.01001833e-11 * tc[3]
+            +1.88310200e-15 * tc[4];
+        /*species 20: C2H3CHO */
+        species[20] =
+            -1.07840540e+04 * invT
+            +9.66998720e+00
+            -5.81118680e+00 * tc[0]
+            -8.55712800e-03 * tc[1]
+            +1.24723602e-06 * tc[2]
+            -1.18768742e-10 * tc[3]
+            +4.58734205e-15 * tc[4];
+        /*species 21: C4H7 */
+        species[21] =
+            +2.09550080e+04 * invT
+            +1.49027915e+01
+            -7.01348350e+00 * tc[0]
+            -1.13172790e-02 * tc[1]
+            +1.54242450e-06 * tc[2]
+            -1.40066058e-10 * tc[3]
+            +5.20430850e-15 * tc[4];
+        /*species 22: C4H81 */
+        species[22] =
+            -2.13972310e+03 * invT
+            -1.44896169e+01
+            -2.05358410e+00 * tc[0]
+            -1.71752535e-02 * tc[1]
+            +2.64719950e-06 * tc[2]
+            -2.75747183e-10 * tc[3]
+            +1.26805225e-14 * tc[4];
+        /*species 23: C5H9 */
+        species[23] =
+            -1.72183590e+03 * invT
+            +4.22645250e+01
+            -1.01386400e+01 * tc[0]
+            -1.13570690e-02 * tc[1]
+            +1.29850772e-06 * tc[2]
+            -9.89710167e-11 * tc[3]
+            +3.29662240e-15 * tc[4];
+        /*species 32: C12H25O2 */
+        species[32] =
+            -3.74118000e+04 * invT
+            +1.36599200e+02
+            -2.84782000e+01 * tc[0]
+            -2.68769500e-02 * tc[1]
+            +2.80310000e-06 * tc[2]
+            -2.09472500e-10 * tc[3]
+            +7.36040000e-15 * tc[4];
+        /*species 33: OC12H23OOH */
+        species[33] =
+            -7.18258000e+04 * invT
+            +1.00439300e+02
+            -2.36731000e+01 * tc[0]
+            -3.08196000e-02 * tc[1]
+            +3.49726667e-06 * tc[2]
+            -2.77638333e-10 * tc[3]
+            +1.01795000e-14 * tc[4];
+        /*species 34: N2 */
+        species[34] =
+            -9.22797700e+02 * invT
+            -4.05388800e+00
+            -2.92664000e+00 * tc[0]
+            -7.43988400e-04 * tc[1]
+            +9.47460000e-08 * tc[2]
+            -8.41419833e-12 * tc[3]
+            +3.37667550e-16 * tc[4];
+    }
+
+    /*species with midpoint at T=1392 kelvin */
+    if (T < 1392) {
+        /*species 24: C5H10 */
+        species[24] =
+            -4.46546666e+03 * invT
+            -3.43362138e+01
+            +1.06223481e+00 * tc[0]
+            -2.87109147e-02 * tc[1]
+            +6.24144817e-06 * tc[2]
+            -1.06137491e-09 * tc[3]
+            +8.98048945e-14 * tc[4];
+        /*species 25: C6H12 */
+        species[25] =
+            -7.34368617e+03 * invT
+            -3.76648212e+01
+            +1.35275205e+00 * tc[0]
+            -3.49327713e-02 * tc[1]
+            +7.65680037e-06 * tc[2]
+            -1.30806119e-09 * tc[3]
+            +1.10648088e-13 * tc[4];
+        /*species 26: C7H14 */
+        species[26] =
+            -1.02168601e+04 * invT
+            -4.11840087e+01
+            +1.67720549e+00 * tc[0]
+            -4.12305800e-02 * tc[1]
+            +9.10840180e-06 * tc[2]
+            -1.56551919e-09 * tc[3]
+            +1.32868991e-13 * tc[4];
+        /*species 27: C8H16 */
+        species[27] =
+            -1.31074559e+04 * invT
+            -4.40801672e+01
+            +1.89226915e+00 * tc[0]
+            -4.73033178e-02 * tc[1]
+            +1.04564254e-05 * tc[2]
+            -1.79298591e-09 * tc[3]
+            +1.51359342e-13 * tc[4];
+        /*species 28: C9H18 */
+        species[28] =
+            -1.59890847e+04 * invT
+            -4.72855954e+01
+            +2.16108263e+00 * tc[0]
+            -5.34791485e-02 * tc[1]
+            +1.18495541e-05 * tc[2]
+            -2.03309231e-09 * tc[3]
+            +1.71385773e-13 * tc[4];
+        /*species 30: C10H20 */
+        species[30] =
+            -1.88708365e+04 * invT
+            -5.04861552e+01
+            +2.42901688e+00 * tc[0]
+            -5.96527990e-02 * tc[1]
+            +1.32414838e-05 * tc[2]
+            -2.27280497e-09 * tc[3]
+            +1.91359186e-13 * tc[4];
+    } else {
+        /*species 24: C5H10 */
+        species[24] =
+            -1.00898205e+04 * invT
+            +6.59535475e+01
+            -1.45851539e+01 * tc[0]
+            -1.12036235e-02 * tc[1]
+            +1.27224671e-06 * tc[2]
+            -9.84908050e-11 * tc[3]
+            +3.42192569e-15 * tc[4];
+        /*species 25: C6H12 */
+        species[25] =
+            -1.42062860e+04 * invT
+            +8.52156380e+01
+            -1.78337529e+01 * tc[0]
+            -1.33688829e-02 * tc[1]
+            +1.51672796e-06 * tc[2]
+            -1.17349807e-10 * tc[3]
+            +4.07562122e-15 * tc[4];
+        /*species 26: C7H14 */
+        species[26] =
+            -1.83260065e+04 * invT
+            +1.04528915e+02
+            -2.10898039e+01 * tc[0]
+            -1.55303939e-02 * tc[1]
+            +1.76074655e-06 * tc[2]
+            -1.36171483e-10 * tc[3]
+            +4.72799110e-15 * tc[4];
+        /*species 27: C8H16 */
+        species[27] =
+            -2.24485674e+04 * invT
+            +1.23891728e+02
+            -2.43540125e+01 * tc[0]
+            -1.76833231e-02 * tc[1]
+            +2.00347313e-06 * tc[2]
+            -1.54879211e-10 * tc[3]
+            +5.37611310e-15 * tc[4];
+        /*species 28: C9H18 */
+        species[28] =
+            -2.65709061e+04 * invT
+            +1.43232841e+02
+            -2.76142176e+01 * tc[0]
+            -1.98412643e-02 * tc[1]
+            +2.24699077e-06 * tc[2]
+            -1.73658710e-10 * tc[3]
+            +6.02696470e-15 * tc[4];
+        /*species 30: C10H20 */
+        species[30] =
+            -3.06937307e+04 * invT
+            +1.62580562e+02
+            -3.08753903e+01 * tc[0]
+            -2.19985763e-02 * tc[1]
+            +2.49042550e-06 * tc[2]
+            -1.92431398e-10 * tc[3]
+            +6.67757385e-15 * tc[4];
+    }
+
+    /*species with midpoint at T=1390 kelvin */
+    if (T < 1390) {
+        /*species 29: PXC9H19 */
+        species[29] =
+            -6.80818512e+03 * invT
+            -4.43957721e+01
+            +1.04387292e+00 * tc[0]
+            -5.28086415e-02 * tc[1]
+            +1.11366662e-05 * tc[2]
+            -1.78738472e-09 * tc[3]
+            +1.38702138e-13 * tc[4];
+    } else {
+        /*species 29: PXC9H19 */
+        species[29] =
+            -1.74516030e+04 * invT
+            +1.44147648e+02
+            -2.83097514e+01 * tc[0]
+            -2.06328672e-02 * tc[1]
+            +2.33972148e-06 * tc[2]
+            -1.80979059e-10 * tc[3]
+            +6.28461535e-15 * tc[4];
+    }
+    return;
+}
+
+
+/*compute the e/(RT) at the given temperature */
+/*tc contains precomputed powers of T, tc[0] = log(T) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesInternalEnergy(amrex::Real * species, amrex::Real *  tc)
+{
+
+    /*temperature */
+    amrex::Real T = tc[1];
+    amrex::Real invT = 1 / T;
+
+    /*species with midpoint at T=1391 kelvin */
+    if (T < 1391) {
+        /*species 0: NC12H26 */
+        species[0] =
+            -3.62181594e+00
+            +7.36188555e-02 * tc[1]
+            -3.14656757e-05 * tc[2]
+            +7.68603170e-09 * tc[3]
+            -8.07204460e-13 * tc[4]
+            -4.00654253e+04 * invT;
+        /*species 31: C12H24 */
+        species[31] =
+            -3.96342681e+00
+            +7.19961800e-02 * tc[1]
+            -3.20461338e-05 * tc[2]
+            +8.25436183e-09 * tc[3]
+            -9.24796380e-13 * tc[4]
+            -2.46345299e+04 * invT;
+    } else {
+        /*species 0: NC12H26 */
+        species[0] =
+            +3.75095037e+01
+            +2.81775024e-02 * tc[1]
+            -6.38310667e-06 * tc[2]
+            +7.40062155e-10 * tc[3]
+            -3.42488300e-14 * tc[4]
+            -5.48843465e+04 * invT;
+        /*species 31: C12H24 */
+        species[31] =
+            +3.64002111e+01
+            +2.63115377e-02 * tc[1]
+            -5.95414397e-06 * tc[2]
+            +6.89874658e-10 * tc[3]
+            -3.19124998e-14 * tc[4]
+            -3.89405962e+04 * invT;
+    }
+
+    /*species with midpoint at T=1000 kelvin */
+    if (T < 1000) {
+        /*species 1: H */
+        species[1] =
+            +1.50000000e+00
+            +3.52666409e-13 * tc[1]
+            -6.65306547e-16 * tc[2]
+            +5.75204080e-19 * tc[3]
+            -1.85546466e-22 * tc[4]
+            +2.54736599e+04 * invT;
+        /*species 2: O */
+        species[2] =
+            +2.16826710e+00
+            -1.63965942e-03 * tc[1]
+            +2.21435465e-06 * tc[2]
+            -1.53201656e-09 * tc[3]
+            +4.22531942e-13 * tc[4]
+            +2.91222592e+04 * invT;
+        /*species 3: OH */
+        species[3] =
+            +3.12530561e+00
+            -1.61272470e-03 * tc[1]
+            +2.17588230e-06 * tc[2]
+            -1.44963411e-09 * tc[3]
+            +4.12474758e-13 * tc[4]
+            +3.38153812e+03 * invT;
+        /*species 4: HO2 */
+        species[4] =
+            +3.30179801e+00
+            -2.37456025e-03 * tc[1]
+            +7.05276303e-06 * tc[2]
+            -6.06909735e-09 * tc[3]
+            +1.85845025e-12 * tc[4]
+            +2.94808040e+02 * invT;
+        /*species 5: H2 */
+        species[5] =
+            +1.34433112e+00
+            +3.99026037e-03 * tc[1]
+            -6.49271700e-06 * tc[2]
+            +5.03930235e-09 * tc[3]
+            -1.47522352e-12 * tc[4]
+            -9.17935173e+02 * invT;
+        /*species 6: H2O */
+        species[6] =
+            +3.19864056e+00
+            -1.01821705e-03 * tc[1]
+            +2.17346737e-06 * tc[2]
+            -1.37199266e-09 * tc[3]
+            +3.54395634e-13 * tc[4]
+            -3.02937267e+04 * invT;
+        /*species 7: H2O2 */
+        species[7] =
+            +3.27611269e+00
+            -2.71411208e-04 * tc[1]
+            +5.57785670e-06 * tc[2]
+            -5.39427032e-09 * tc[3]
+            +1.72490873e-12 * tc[4]
+            -1.77025821e+04 * invT;
+        /*species 8: O2 */
+        species[8] =
+            +2.78245636e+00
+            -1.49836708e-03 * tc[1]
+            +3.28243400e-06 * tc[2]
+            -2.42032377e-09 * tc[3]
+            +6.48745674e-13 * tc[4]
+            -1.06394356e+03 * invT;
+        /*species 9: CH3 */
+        species[9] =
+            +2.67359040e+00
+            +1.00547588e-03 * tc[1]
+            +1.91007285e-06 * tc[2]
+            -1.71779356e-09 * tc[3]
+            +5.08771468e-13 * tc[4]
+            +1.64449988e+04 * invT;
+        /*species 10: CH4 */
+        species[10] =
+            +4.14987613e+00
+            -6.83548940e-03 * tc[1]
+            +1.63933533e-05 * tc[2]
+            -1.21185757e-08 * tc[3]
+            +3.33387912e-12 * tc[4]
+            -1.02466476e+04 * invT;
+        /*species 11: CH2O */
+        species[11] =
+            +3.79372315e+00
+            -4.95416684e-03 * tc[1]
+            +1.24406669e-05 * tc[2]
+            -9.48213152e-09 * tc[3]
+            +2.63545304e-12 * tc[4]
+            -1.43089567e+04 * invT;
+        /*species 12: CO */
+        species[12] =
+            +2.57953347e+00
+            -3.05176840e-04 * tc[1]
+            +3.38938110e-07 * tc[2]
+            +2.26751471e-10 * tc[3]
+            -1.80884900e-13 * tc[4]
+            -1.43440860e+04 * invT;
+        /*species 13: CO2 */
+        species[13] =
+            +1.35677352e+00
+            +4.49229839e-03 * tc[1]
+            -2.37452090e-06 * tc[2]
+            +6.14797555e-10 * tc[3]
+            -2.87399096e-14 * tc[4]
+            -4.83719697e+04 * invT;
+        /*species 14: C2H2 */
+        species[14] =
+            -1.91318906e-01
+            +1.16807815e-02 * tc[1]
+            -1.18390605e-05 * tc[2]
+            +7.00381092e-09 * tc[3]
+            -1.70014595e-12 * tc[4]
+            +2.64289807e+04 * invT;
+        /*species 15: C2H4 */
+        species[15] =
+            +2.95920148e+00
+            -3.78526124e-03 * tc[1]
+            +1.90330097e-05 * tc[2]
+            -1.72897188e-08 * tc[3]
+            +5.39768746e-12 * tc[4]
+            +5.08977593e+03 * invT;
+        /*species 16: C2H6 */
+        species[16] =
+            +3.29142492e+00
+            -2.75077135e-03 * tc[1]
+            +1.99812763e-05 * tc[2]
+            -1.77116571e-08 * tc[3]
+            +5.37371542e-12 * tc[4]
+            -1.15222055e+04 * invT;
+        /*species 17: CH2CHO */
+        species[17] =
+            +2.40906240e+00
+            +5.36928700e-03 * tc[1]
+            +6.30497500e-07 * tc[2]
+            -1.78964578e-09 * tc[3]
+            +5.73477020e-13 * tc[4]
+            +6.20000000e+01 * invT;
+        /*species 18: aC3H5 */
+        species[18] =
+            +3.63183500e-01
+            +9.90691050e-03 * tc[1]
+            +4.16568667e-06 * tc[2]
+            -8.33888875e-09 * tc[3]
+            +3.16931420e-12 * tc[4]
+            +1.92456290e+04 * invT;
+        /*species 19: C3H6 */
+        species[19] =
+            +4.93307000e-01
+            +1.04625900e-02 * tc[1]
+            +1.49559800e-06 * tc[2]
+            -4.17228000e-09 * tc[3]
+            +1.43162920e-12 * tc[4]
+            +1.07482600e+03 * invT;
+        /*species 20: C2H3CHO */
+        species[20] =
+            +2.71349800e-01
+            +1.31155270e-02 * tc[1]
+            -3.09707683e-06 * tc[2]
+            -1.19593180e-09 * tc[3]
+            +6.69610860e-13 * tc[4]
+            -9.33573440e+03 * invT;
+        /*species 21: C4H7 */
+        species[21] =
+            -2.55505680e-01
+            +1.98394285e-02 * tc[1]
+            -7.63269533e-06 * tc[2]
+            +5.33824325e-10 * tc[3]
+            +4.61927500e-13 * tc[4]
+            +2.26533280e+04 * invT;
+        /*species 22: C4H81 */
+        species[22] =
+            +1.81138000e-01
+            +1.54266900e-02 * tc[1]
+            +1.69550823e-06 * tc[2]
+            -6.16372200e-09 * tc[3]
+            +2.22203860e-12 * tc[4]
+            -1.79040040e+03 * invT;
+        /*species 23: C5H9 */
+        species[23] =
+            -3.41901110e+00
+            +2.02151945e-02 * tc[1]
+            +2.26007797e-06 * tc[2]
+            -8.43118550e-09 * tc[3]
+            +3.02334260e-12 * tc[4]
+            +2.81218870e+03 * invT;
+        /*species 32: C12H25O2 */
+        species[32] =
+            +4.31404000e+00
+            +4.46936500e-02 * tc[1]
+            +4.84503333e-06 * tc[2]
+            -1.87312500e-08 * tc[3]
+            +6.70650000e-12 * tc[4]
+            -2.98918000e+04 * invT;
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +7.80733000e+00
+            +3.25311500e-02 * tc[1]
+            +2.31686000e-05 * tc[2]
+            -3.17262500e-08 * tc[3]
+            +1.02198200e-11 * tc[4]
+            -6.65361000e+04 * invT;
+        /*species 34: N2 */
+        species[34] =
+            +2.29867700e+00
+            +7.04120200e-04 * tc[1]
+            -1.32107400e-06 * tc[2]
+            +1.41037875e-09 * tc[3]
+            -4.88970800e-13 * tc[4]
+            -1.02089990e+03 * invT;
+    } else {
+        /*species 1: H */
+        species[1] =
+            +1.50000001e+00
+            -1.15421486e-11 * tc[1]
+            +5.38539827e-15 * tc[2]
+            -1.18378809e-18 * tc[3]
+            +9.96394714e-23 * tc[4]
+            +2.54736599e+04 * invT;
+        /*species 2: O */
+        species[2] =
+            +1.56942078e+00
+            -4.29870569e-05 * tc[1]
+            +1.39828196e-08 * tc[2]
+            -2.50444497e-12 * tc[3]
+            +2.45667382e-16 * tc[4]
+            +2.92175791e+04 * invT;
+        /*species 3: OH */
+        species[3] =
+            +1.86472886e+00
+            +5.28252240e-04 * tc[1]
+            -8.63609193e-08 * tc[2]
+            +7.63046685e-12 * tc[3]
+            -2.66391752e-16 * tc[4]
+            +3.71885774e+03 * invT;
+        /*species 4: HO2 */
+        species[4] =
+            +3.01721090e+00
+            +1.11991006e-03 * tc[1]
+            -2.11219383e-07 * tc[2]
+            +2.85615925e-11 * tc[3]
+            -2.15817070e-15 * tc[4]
+            +1.11856713e+02 * invT;
+        /*species 5: H2 */
+        species[5] =
+            +2.33727920e+00
+            -2.47012365e-05 * tc[1]
+            +1.66485593e-07 * tc[2]
+            -4.48915985e-11 * tc[3]
+            +4.00510752e-15 * tc[4]
+            -9.50158922e+02 * invT;
+        /*species 6: H2O */
+        species[6] =
+            +2.03399249e+00
+            +1.08845902e-03 * tc[1]
+            -5.46908393e-08 * tc[2]
+            -2.42604967e-11 * tc[3]
+            +3.36401984e-15 * tc[4]
+            -3.00042971e+04 * invT;
+        /*species 7: H2O2 */
+        species[7] =
+            +3.16500285e+00
+            +2.45415847e-03 * tc[1]
+            -6.33797417e-07 * tc[2]
+            +9.27964965e-11 * tc[3]
+            -5.75816610e-15 * tc[4]
+            -1.78617877e+04 * invT;
+        /*species 8: O2 */
+        species[8] =
+            +2.28253784e+00
+            +7.41543770e-04 * tc[1]
+            -2.52655556e-07 * tc[2]
+            +5.23676387e-11 * tc[3]
+            -4.33435588e-15 * tc[4]
+            -1.08845772e+03 * invT;
+        /*species 9: CH3 */
+        species[9] =
+            +1.28571772e+00
+            +3.61995018e-03 * tc[1]
+            -9.95714493e-07 * tc[2]
+            +1.48921161e-10 * tc[3]
+            -9.34308788e-15 * tc[4]
+            +1.67755843e+04 * invT;
+        /*species 10: CH4 */
+        species[10] =
+            -9.25148505e-01
+            +6.69547335e-03 * tc[1]
+            -1.91095270e-06 * tc[2]
+            +3.05731338e-10 * tc[3]
+            -2.03630460e-14 * tc[4]
+            -9.46834459e+03 * invT;
+        /*species 11: CH2O */
+        species[11] =
+            +7.60690080e-01
+            +4.60000041e-03 * tc[1]
+            -1.47419604e-06 * tc[2]
+            +2.51603030e-10 * tc[3]
+            -1.76771128e-14 * tc[4]
+            -1.39958323e+04 * invT;
+        /*species 12: CO */
+        species[12] =
+            +1.71518561e+00
+            +1.03126372e-03 * tc[1]
+            -3.32941924e-07 * tc[2]
+            +5.75132520e-11 * tc[3]
+            -4.07295432e-15 * tc[4]
+            -1.41518724e+04 * invT;
+        /*species 13: CO2 */
+        species[13] =
+            +2.85746029e+00
+            +2.20718513e-03 * tc[1]
+            -7.38271347e-07 * tc[2]
+            +1.30872547e-10 * tc[3]
+            -9.44168328e-15 * tc[4]
+            -4.87591660e+04 * invT;
+        /*species 14: C2H2 */
+        species[14] =
+            +3.14756964e+00
+            +2.98083332e-03 * tc[1]
+            -7.90982840e-07 * tc[2]
+            +1.16853043e-10 * tc[3]
+            -7.22470426e-15 * tc[4]
+            +2.59359992e+04 * invT;
+        /*species 15: C2H4 */
+        species[15] =
+            +1.03611116e+00
+            +7.32270755e-03 * tc[1]
+            -2.23692638e-06 * tc[2]
+            +3.68057308e-10 * tc[3]
+            -2.51412122e-14 * tc[4]
+            +4.93988614e+03 * invT;
+        /*species 16: C2H6 */
+        species[16] =
+            +7.18815000e-02
+            +1.08426339e-02 * tc[1]
+            -3.34186890e-06 * tc[2]
+            +5.53530003e-10 * tc[3]
+            -3.80005780e-14 * tc[4]
+            -1.14263932e+04 * invT;
+        /*species 17: CH2CHO */
+        species[17] =
+            +4.97566990e+00
+            +4.06529570e-03 * tc[1]
+            -9.14541500e-07 * tc[2]
+            +1.01757603e-10 * tc[3]
+            -4.35203420e-15 * tc[4]
+            -9.69500000e+02 * invT;
+        /*species 18: aC3H5 */
+        species[18] =
+            +5.50078770e+00
+            +7.16236550e-03 * tc[1]
+            -1.89272107e-06 * tc[2]
+            +2.77020025e-10 * tc[3]
+            -1.80727774e-14 * tc[4]
+            +1.74824490e+04 * invT;
+        /*species 19: C3H6 */
+        species[19] =
+            +5.73225700e+00
+            +7.45417000e-03 * tc[1]
+            -1.64996633e-06 * tc[2]
+            +1.80300550e-10 * tc[3]
+            -7.53240800e-15 * tc[4]
+            -9.23570300e+02 * invT;
+        /*species 20: C2H3CHO */
+        species[20] =
+            +4.81118680e+00
+            +8.55712800e-03 * tc[1]
+            -2.49447203e-06 * tc[2]
+            +3.56306225e-10 * tc[3]
+            -1.83493682e-14 * tc[4]
+            -1.07840540e+04 * invT;
+        /*species 21: C4H7 */
+        species[21] =
+            +6.01348350e+00
+            +1.13172790e-02 * tc[1]
+            -3.08484900e-06 * tc[2]
+            +4.20198175e-10 * tc[3]
+            -2.08172340e-14 * tc[4]
+            +2.09550080e+04 * invT;
+        /*species 22: C4H81 */
+        species[22] =
+            +1.05358410e+00
+            +1.71752535e-02 * tc[1]
+            -5.29439900e-06 * tc[2]
+            +8.27241550e-10 * tc[3]
+            -5.07220900e-14 * tc[4]
+            -2.13972310e+03 * invT;
+        /*species 23: C5H9 */
+        species[23] =
+            +9.13864000e+00
+            +1.13570690e-02 * tc[1]
+            -2.59701543e-06 * tc[2]
+            +2.96913050e-10 * tc[3]
+            -1.31864896e-14 * tc[4]
+            -1.72183590e+03 * invT;
+        /*species 32: C12H25O2 */
+        species[32] =
+            +2.74782000e+01
+            +2.68769500e-02 * tc[1]
+            -5.60620000e-06 * tc[2]
+            +6.28417500e-10 * tc[3]
+            -2.94416000e-14 * tc[4]
+            -3.74118000e+04 * invT;
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +2.26731000e+01
+            +3.08196000e-02 * tc[1]
+            -6.99453333e-06 * tc[2]
+            +8.32915000e-10 * tc[3]
+            -4.07180000e-14 * tc[4]
+            -7.18258000e+04 * invT;
+        /*species 34: N2 */
+        species[34] =
+            +1.92664000e+00
+            +7.43988400e-04 * tc[1]
+            -1.89492000e-07 * tc[2]
+            +2.52425950e-11 * tc[3]
+            -1.35067020e-15 * tc[4]
+            -9.22797700e+02 * invT;
+    }
+
+    /*species with midpoint at T=1392 kelvin */
+    if (T < 1392) {
+        /*species 24: C5H10 */
+        species[24] =
+            -2.06223481e+00
+            +2.87109147e-02 * tc[1]
+            -1.24828963e-05 * tc[2]
+            +3.18412472e-09 * tc[3]
+            -3.59219578e-13 * tc[4]
+            -4.46546666e+03 * invT;
+        /*species 25: C6H12 */
+        species[25] =
+            -2.35275205e+00
+            +3.49327713e-02 * tc[1]
+            -1.53136007e-05 * tc[2]
+            +3.92418358e-09 * tc[3]
+            -4.42592350e-13 * tc[4]
+            -7.34368617e+03 * invT;
+        /*species 26: C7H14 */
+        species[26] =
+            -2.67720549e+00
+            +4.12305800e-02 * tc[1]
+            -1.82168036e-05 * tc[2]
+            +4.69655757e-09 * tc[3]
+            -5.31475966e-13 * tc[4]
+            -1.02168601e+04 * invT;
+        /*species 27: C8H16 */
+        species[27] =
+            -2.89226915e+00
+            +4.73033178e-02 * tc[1]
+            -2.09128507e-05 * tc[2]
+            +5.37895772e-09 * tc[3]
+            -6.05437366e-13 * tc[4]
+            -1.31074559e+04 * invT;
+        /*species 28: C9H18 */
+        species[28] =
+            -3.16108263e+00
+            +5.34791485e-02 * tc[1]
+            -2.36991081e-05 * tc[2]
+            +6.09927692e-09 * tc[3]
+            -6.85543094e-13 * tc[4]
+            -1.59890847e+04 * invT;
+        /*species 30: C10H20 */
+        species[30] =
+            -3.42901688e+00
+            +5.96527990e-02 * tc[1]
+            -2.64829675e-05 * tc[2]
+            +6.81841490e-09 * tc[3]
+            -7.65436746e-13 * tc[4]
+            -1.88708365e+04 * invT;
+    } else {
+        /*species 24: C5H10 */
+        species[24] =
+            +1.35851539e+01
+            +1.12036235e-02 * tc[1]
+            -2.54449342e-06 * tc[2]
+            +2.95472415e-10 * tc[3]
+            -1.36877028e-14 * tc[4]
+            -1.00898205e+04 * invT;
+        /*species 25: C6H12 */
+        species[25] =
+            +1.68337529e+01
+            +1.33688829e-02 * tc[1]
+            -3.03345591e-06 * tc[2]
+            +3.52049420e-10 * tc[3]
+            -1.63024849e-14 * tc[4]
+            -1.42062860e+04 * invT;
+        /*species 26: C7H14 */
+        species[26] =
+            +2.00898039e+01
+            +1.55303939e-02 * tc[1]
+            -3.52149310e-06 * tc[2]
+            +4.08514450e-10 * tc[3]
+            -1.89119644e-14 * tc[4]
+            -1.83260065e+04 * invT;
+        /*species 27: C8H16 */
+        species[27] =
+            +2.33540125e+01
+            +1.76833231e-02 * tc[1]
+            -4.00694627e-06 * tc[2]
+            +4.64637633e-10 * tc[3]
+            -2.15044524e-14 * tc[4]
+            -2.24485674e+04 * invT;
+        /*species 28: C9H18 */
+        species[28] =
+            +2.66142176e+01
+            +1.98412643e-02 * tc[1]
+            -4.49398153e-06 * tc[2]
+            +5.20976130e-10 * tc[3]
+            -2.41078588e-14 * tc[4]
+            -2.65709061e+04 * invT;
+        /*species 30: C10H20 */
+        species[30] =
+            +2.98753903e+01
+            +2.19985763e-02 * tc[1]
+            -4.98085100e-06 * tc[2]
+            +5.77294195e-10 * tc[3]
+            -2.67102954e-14 * tc[4]
+            -3.06937307e+04 * invT;
+    }
+
+    /*species with midpoint at T=1390 kelvin */
+    if (T < 1390) {
+        /*species 29: PXC9H19 */
+        species[29] =
+            -2.04387292e+00
+            +5.28086415e-02 * tc[1]
+            -2.22733324e-05 * tc[2]
+            +5.36215415e-09 * tc[3]
+            -5.54808550e-13 * tc[4]
+            -6.80818512e+03 * invT;
+    } else {
+        /*species 29: PXC9H19 */
+        species[29] =
+            +2.73097514e+01
+            +2.06328672e-02 * tc[1]
+            -4.67944297e-06 * tc[2]
+            +5.42937177e-10 * tc[3]
+            -2.51384614e-14 * tc[4]
+            -1.74516030e+04 * invT;
+    }
+    return;
+}
+
+
+/*compute the h/(RT) at the given temperature (Eq 20) */
+/*tc contains precomputed powers of T, tc[0] = log(T) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEnthalpy(amrex::Real * species, amrex::Real *  tc)
+{
+
+    /*temperature */
+    amrex::Real T = tc[1];
+    amrex::Real invT = 1 / T;
+
+    /*species with midpoint at T=1391 kelvin */
+    if (T < 1391) {
+        /*species 0: NC12H26 */
+        species[0] =
+            -2.62181594e+00
+            +7.36188555e-02 * tc[1]
+            -3.14656757e-05 * tc[2]
+            +7.68603170e-09 * tc[3]
+            -8.07204460e-13 * tc[4]
+            -4.00654253e+04 * invT;
+        /*species 31: C12H24 */
+        species[31] =
+            -2.96342681e+00
+            +7.19961800e-02 * tc[1]
+            -3.20461338e-05 * tc[2]
+            +8.25436183e-09 * tc[3]
+            -9.24796380e-13 * tc[4]
+            -2.46345299e+04 * invT;
+    } else {
+        /*species 0: NC12H26 */
+        species[0] =
+            +3.85095037e+01
+            +2.81775024e-02 * tc[1]
+            -6.38310667e-06 * tc[2]
+            +7.40062155e-10 * tc[3]
+            -3.42488300e-14 * tc[4]
+            -5.48843465e+04 * invT;
+        /*species 31: C12H24 */
+        species[31] =
+            +3.74002111e+01
+            +2.63115377e-02 * tc[1]
+            -5.95414397e-06 * tc[2]
+            +6.89874658e-10 * tc[3]
+            -3.19124998e-14 * tc[4]
+            -3.89405962e+04 * invT;
+    }
+
+    /*species with midpoint at T=1000 kelvin */
+    if (T < 1000) {
+        /*species 1: H */
+        species[1] =
+            +2.50000000e+00
+            +3.52666409e-13 * tc[1]
+            -6.65306547e-16 * tc[2]
+            +5.75204080e-19 * tc[3]
+            -1.85546466e-22 * tc[4]
+            +2.54736599e+04 * invT;
+        /*species 2: O */
+        species[2] =
+            +3.16826710e+00
+            -1.63965942e-03 * tc[1]
+            +2.21435465e-06 * tc[2]
+            -1.53201656e-09 * tc[3]
+            +4.22531942e-13 * tc[4]
+            +2.91222592e+04 * invT;
+        /*species 3: OH */
+        species[3] =
+            +4.12530561e+00
+            -1.61272470e-03 * tc[1]
+            +2.17588230e-06 * tc[2]
+            -1.44963411e-09 * tc[3]
+            +4.12474758e-13 * tc[4]
+            +3.38153812e+03 * invT;
+        /*species 4: HO2 */
+        species[4] =
+            +4.30179801e+00
+            -2.37456025e-03 * tc[1]
+            +7.05276303e-06 * tc[2]
+            -6.06909735e-09 * tc[3]
+            +1.85845025e-12 * tc[4]
+            +2.94808040e+02 * invT;
+        /*species 5: H2 */
+        species[5] =
+            +2.34433112e+00
+            +3.99026037e-03 * tc[1]
+            -6.49271700e-06 * tc[2]
+            +5.03930235e-09 * tc[3]
+            -1.47522352e-12 * tc[4]
+            -9.17935173e+02 * invT;
+        /*species 6: H2O */
+        species[6] =
+            +4.19864056e+00
+            -1.01821705e-03 * tc[1]
+            +2.17346737e-06 * tc[2]
+            -1.37199266e-09 * tc[3]
+            +3.54395634e-13 * tc[4]
+            -3.02937267e+04 * invT;
+        /*species 7: H2O2 */
+        species[7] =
+            +4.27611269e+00
+            -2.71411208e-04 * tc[1]
+            +5.57785670e-06 * tc[2]
+            -5.39427032e-09 * tc[3]
+            +1.72490873e-12 * tc[4]
+            -1.77025821e+04 * invT;
+        /*species 8: O2 */
+        species[8] =
+            +3.78245636e+00
+            -1.49836708e-03 * tc[1]
+            +3.28243400e-06 * tc[2]
+            -2.42032377e-09 * tc[3]
+            +6.48745674e-13 * tc[4]
+            -1.06394356e+03 * invT;
+        /*species 9: CH3 */
+        species[9] =
+            +3.67359040e+00
+            +1.00547588e-03 * tc[1]
+            +1.91007285e-06 * tc[2]
+            -1.71779356e-09 * tc[3]
+            +5.08771468e-13 * tc[4]
+            +1.64449988e+04 * invT;
+        /*species 10: CH4 */
+        species[10] =
+            +5.14987613e+00
+            -6.83548940e-03 * tc[1]
+            +1.63933533e-05 * tc[2]
+            -1.21185757e-08 * tc[3]
+            +3.33387912e-12 * tc[4]
+            -1.02466476e+04 * invT;
+        /*species 11: CH2O */
+        species[11] =
+            +4.79372315e+00
+            -4.95416684e-03 * tc[1]
+            +1.24406669e-05 * tc[2]
+            -9.48213152e-09 * tc[3]
+            +2.63545304e-12 * tc[4]
+            -1.43089567e+04 * invT;
+        /*species 12: CO */
+        species[12] =
+            +3.57953347e+00
+            -3.05176840e-04 * tc[1]
+            +3.38938110e-07 * tc[2]
+            +2.26751471e-10 * tc[3]
+            -1.80884900e-13 * tc[4]
+            -1.43440860e+04 * invT;
+        /*species 13: CO2 */
+        species[13] =
+            +2.35677352e+00
+            +4.49229839e-03 * tc[1]
+            -2.37452090e-06 * tc[2]
+            +6.14797555e-10 * tc[3]
+            -2.87399096e-14 * tc[4]
+            -4.83719697e+04 * invT;
+        /*species 14: C2H2 */
+        species[14] =
+            +8.08681094e-01
+            +1.16807815e-02 * tc[1]
+            -1.18390605e-05 * tc[2]
+            +7.00381092e-09 * tc[3]
+            -1.70014595e-12 * tc[4]
+            +2.64289807e+04 * invT;
+        /*species 15: C2H4 */
+        species[15] =
+            +3.95920148e+00
+            -3.78526124e-03 * tc[1]
+            +1.90330097e-05 * tc[2]
+            -1.72897188e-08 * tc[3]
+            +5.39768746e-12 * tc[4]
+            +5.08977593e+03 * invT;
+        /*species 16: C2H6 */
+        species[16] =
+            +4.29142492e+00
+            -2.75077135e-03 * tc[1]
+            +1.99812763e-05 * tc[2]
+            -1.77116571e-08 * tc[3]
+            +5.37371542e-12 * tc[4]
+            -1.15222055e+04 * invT;
+        /*species 17: CH2CHO */
+        species[17] =
+            +3.40906240e+00
+            +5.36928700e-03 * tc[1]
+            +6.30497500e-07 * tc[2]
+            -1.78964578e-09 * tc[3]
+            +5.73477020e-13 * tc[4]
+            +6.20000000e+01 * invT;
+        /*species 18: aC3H5 */
+        species[18] =
+            +1.36318350e+00
+            +9.90691050e-03 * tc[1]
+            +4.16568667e-06 * tc[2]
+            -8.33888875e-09 * tc[3]
+            +3.16931420e-12 * tc[4]
+            +1.92456290e+04 * invT;
+        /*species 19: C3H6 */
+        species[19] =
+            +1.49330700e+00
+            +1.04625900e-02 * tc[1]
+            +1.49559800e-06 * tc[2]
+            -4.17228000e-09 * tc[3]
+            +1.43162920e-12 * tc[4]
+            +1.07482600e+03 * invT;
+        /*species 20: C2H3CHO */
+        species[20] =
+            +1.27134980e+00
+            +1.31155270e-02 * tc[1]
+            -3.09707683e-06 * tc[2]
+            -1.19593180e-09 * tc[3]
+            +6.69610860e-13 * tc[4]
+            -9.33573440e+03 * invT;
+        /*species 21: C4H7 */
+        species[21] =
+            +7.44494320e-01
+            +1.98394285e-02 * tc[1]
+            -7.63269533e-06 * tc[2]
+            +5.33824325e-10 * tc[3]
+            +4.61927500e-13 * tc[4]
+            +2.26533280e+04 * invT;
+        /*species 22: C4H81 */
+        species[22] =
+            +1.18113800e+00
+            +1.54266900e-02 * tc[1]
+            +1.69550823e-06 * tc[2]
+            -6.16372200e-09 * tc[3]
+            +2.22203860e-12 * tc[4]
+            -1.79040040e+03 * invT;
+        /*species 23: C5H9 */
+        species[23] =
+            -2.41901110e+00
+            +2.02151945e-02 * tc[1]
+            +2.26007797e-06 * tc[2]
+            -8.43118550e-09 * tc[3]
+            +3.02334260e-12 * tc[4]
+            +2.81218870e+03 * invT;
+        /*species 32: C12H25O2 */
+        species[32] =
+            +5.31404000e+00
+            +4.46936500e-02 * tc[1]
+            +4.84503333e-06 * tc[2]
+            -1.87312500e-08 * tc[3]
+            +6.70650000e-12 * tc[4]
+            -2.98918000e+04 * invT;
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +8.80733000e+00
+            +3.25311500e-02 * tc[1]
+            +2.31686000e-05 * tc[2]
+            -3.17262500e-08 * tc[3]
+            +1.02198200e-11 * tc[4]
+            -6.65361000e+04 * invT;
+        /*species 34: N2 */
+        species[34] =
+            +3.29867700e+00
+            +7.04120200e-04 * tc[1]
+            -1.32107400e-06 * tc[2]
+            +1.41037875e-09 * tc[3]
+            -4.88970800e-13 * tc[4]
+            -1.02089990e+03 * invT;
+    } else {
+        /*species 1: H */
+        species[1] =
+            +2.50000001e+00
+            -1.15421486e-11 * tc[1]
+            +5.38539827e-15 * tc[2]
+            -1.18378809e-18 * tc[3]
+            +9.96394714e-23 * tc[4]
+            +2.54736599e+04 * invT;
+        /*species 2: O */
+        species[2] =
+            +2.56942078e+00
+            -4.29870569e-05 * tc[1]
+            +1.39828196e-08 * tc[2]
+            -2.50444497e-12 * tc[3]
+            +2.45667382e-16 * tc[4]
+            +2.92175791e+04 * invT;
+        /*species 3: OH */
+        species[3] =
+            +2.86472886e+00
+            +5.28252240e-04 * tc[1]
+            -8.63609193e-08 * tc[2]
+            +7.63046685e-12 * tc[3]
+            -2.66391752e-16 * tc[4]
+            +3.71885774e+03 * invT;
+        /*species 4: HO2 */
+        species[4] =
+            +4.01721090e+00
+            +1.11991006e-03 * tc[1]
+            -2.11219383e-07 * tc[2]
+            +2.85615925e-11 * tc[3]
+            -2.15817070e-15 * tc[4]
+            +1.11856713e+02 * invT;
+        /*species 5: H2 */
+        species[5] =
+            +3.33727920e+00
+            -2.47012365e-05 * tc[1]
+            +1.66485593e-07 * tc[2]
+            -4.48915985e-11 * tc[3]
+            +4.00510752e-15 * tc[4]
+            -9.50158922e+02 * invT;
+        /*species 6: H2O */
+        species[6] =
+            +3.03399249e+00
+            +1.08845902e-03 * tc[1]
+            -5.46908393e-08 * tc[2]
+            -2.42604967e-11 * tc[3]
+            +3.36401984e-15 * tc[4]
+            -3.00042971e+04 * invT;
+        /*species 7: H2O2 */
+        species[7] =
+            +4.16500285e+00
+            +2.45415847e-03 * tc[1]
+            -6.33797417e-07 * tc[2]
+            +9.27964965e-11 * tc[3]
+            -5.75816610e-15 * tc[4]
+            -1.78617877e+04 * invT;
+        /*species 8: O2 */
+        species[8] =
+            +3.28253784e+00
+            +7.41543770e-04 * tc[1]
+            -2.52655556e-07 * tc[2]
+            +5.23676387e-11 * tc[3]
+            -4.33435588e-15 * tc[4]
+            -1.08845772e+03 * invT;
+        /*species 9: CH3 */
+        species[9] =
+            +2.28571772e+00
+            +3.61995018e-03 * tc[1]
+            -9.95714493e-07 * tc[2]
+            +1.48921161e-10 * tc[3]
+            -9.34308788e-15 * tc[4]
+            +1.67755843e+04 * invT;
+        /*species 10: CH4 */
+        species[10] =
+            +7.48514950e-02
+            +6.69547335e-03 * tc[1]
+            -1.91095270e-06 * tc[2]
+            +3.05731338e-10 * tc[3]
+            -2.03630460e-14 * tc[4]
+            -9.46834459e+03 * invT;
+        /*species 11: CH2O */
+        species[11] =
+            +1.76069008e+00
+            +4.60000041e-03 * tc[1]
+            -1.47419604e-06 * tc[2]
+            +2.51603030e-10 * tc[3]
+            -1.76771128e-14 * tc[4]
+            -1.39958323e+04 * invT;
+        /*species 12: CO */
+        species[12] =
+            +2.71518561e+00
+            +1.03126372e-03 * tc[1]
+            -3.32941924e-07 * tc[2]
+            +5.75132520e-11 * tc[3]
+            -4.07295432e-15 * tc[4]
+            -1.41518724e+04 * invT;
+        /*species 13: CO2 */
+        species[13] =
+            +3.85746029e+00
+            +2.20718513e-03 * tc[1]
+            -7.38271347e-07 * tc[2]
+            +1.30872547e-10 * tc[3]
+            -9.44168328e-15 * tc[4]
+            -4.87591660e+04 * invT;
+        /*species 14: C2H2 */
+        species[14] =
+            +4.14756964e+00
+            +2.98083332e-03 * tc[1]
+            -7.90982840e-07 * tc[2]
+            +1.16853043e-10 * tc[3]
+            -7.22470426e-15 * tc[4]
+            +2.59359992e+04 * invT;
+        /*species 15: C2H4 */
+        species[15] =
+            +2.03611116e+00
+            +7.32270755e-03 * tc[1]
+            -2.23692638e-06 * tc[2]
+            +3.68057308e-10 * tc[3]
+            -2.51412122e-14 * tc[4]
+            +4.93988614e+03 * invT;
+        /*species 16: C2H6 */
+        species[16] =
+            +1.07188150e+00
+            +1.08426339e-02 * tc[1]
+            -3.34186890e-06 * tc[2]
+            +5.53530003e-10 * tc[3]
+            -3.80005780e-14 * tc[4]
+            -1.14263932e+04 * invT;
+        /*species 17: CH2CHO */
+        species[17] =
+            +5.97566990e+00
+            +4.06529570e-03 * tc[1]
+            -9.14541500e-07 * tc[2]
+            +1.01757603e-10 * tc[3]
+            -4.35203420e-15 * tc[4]
+            -9.69500000e+02 * invT;
+        /*species 18: aC3H5 */
+        species[18] =
+            +6.50078770e+00
+            +7.16236550e-03 * tc[1]
+            -1.89272107e-06 * tc[2]
+            +2.77020025e-10 * tc[3]
+            -1.80727774e-14 * tc[4]
+            +1.74824490e+04 * invT;
+        /*species 19: C3H6 */
+        species[19] =
+            +6.73225700e+00
+            +7.45417000e-03 * tc[1]
+            -1.64996633e-06 * tc[2]
+            +1.80300550e-10 * tc[3]
+            -7.53240800e-15 * tc[4]
+            -9.23570300e+02 * invT;
+        /*species 20: C2H3CHO */
+        species[20] =
+            +5.81118680e+00
+            +8.55712800e-03 * tc[1]
+            -2.49447203e-06 * tc[2]
+            +3.56306225e-10 * tc[3]
+            -1.83493682e-14 * tc[4]
+            -1.07840540e+04 * invT;
+        /*species 21: C4H7 */
+        species[21] =
+            +7.01348350e+00
+            +1.13172790e-02 * tc[1]
+            -3.08484900e-06 * tc[2]
+            +4.20198175e-10 * tc[3]
+            -2.08172340e-14 * tc[4]
+            +2.09550080e+04 * invT;
+        /*species 22: C4H81 */
+        species[22] =
+            +2.05358410e+00
+            +1.71752535e-02 * tc[1]
+            -5.29439900e-06 * tc[2]
+            +8.27241550e-10 * tc[3]
+            -5.07220900e-14 * tc[4]
+            -2.13972310e+03 * invT;
+        /*species 23: C5H9 */
+        species[23] =
+            +1.01386400e+01
+            +1.13570690e-02 * tc[1]
+            -2.59701543e-06 * tc[2]
+            +2.96913050e-10 * tc[3]
+            -1.31864896e-14 * tc[4]
+            -1.72183590e+03 * invT;
+        /*species 32: C12H25O2 */
+        species[32] =
+            +2.84782000e+01
+            +2.68769500e-02 * tc[1]
+            -5.60620000e-06 * tc[2]
+            +6.28417500e-10 * tc[3]
+            -2.94416000e-14 * tc[4]
+            -3.74118000e+04 * invT;
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +2.36731000e+01
+            +3.08196000e-02 * tc[1]
+            -6.99453333e-06 * tc[2]
+            +8.32915000e-10 * tc[3]
+            -4.07180000e-14 * tc[4]
+            -7.18258000e+04 * invT;
+        /*species 34: N2 */
+        species[34] =
+            +2.92664000e+00
+            +7.43988400e-04 * tc[1]
+            -1.89492000e-07 * tc[2]
+            +2.52425950e-11 * tc[3]
+            -1.35067020e-15 * tc[4]
+            -9.22797700e+02 * invT;
+    }
+
+    /*species with midpoint at T=1392 kelvin */
+    if (T < 1392) {
+        /*species 24: C5H10 */
+        species[24] =
+            -1.06223481e+00
+            +2.87109147e-02 * tc[1]
+            -1.24828963e-05 * tc[2]
+            +3.18412472e-09 * tc[3]
+            -3.59219578e-13 * tc[4]
+            -4.46546666e+03 * invT;
+        /*species 25: C6H12 */
+        species[25] =
+            -1.35275205e+00
+            +3.49327713e-02 * tc[1]
+            -1.53136007e-05 * tc[2]
+            +3.92418358e-09 * tc[3]
+            -4.42592350e-13 * tc[4]
+            -7.34368617e+03 * invT;
+        /*species 26: C7H14 */
+        species[26] =
+            -1.67720549e+00
+            +4.12305800e-02 * tc[1]
+            -1.82168036e-05 * tc[2]
+            +4.69655757e-09 * tc[3]
+            -5.31475966e-13 * tc[4]
+            -1.02168601e+04 * invT;
+        /*species 27: C8H16 */
+        species[27] =
+            -1.89226915e+00
+            +4.73033178e-02 * tc[1]
+            -2.09128507e-05 * tc[2]
+            +5.37895772e-09 * tc[3]
+            -6.05437366e-13 * tc[4]
+            -1.31074559e+04 * invT;
+        /*species 28: C9H18 */
+        species[28] =
+            -2.16108263e+00
+            +5.34791485e-02 * tc[1]
+            -2.36991081e-05 * tc[2]
+            +6.09927692e-09 * tc[3]
+            -6.85543094e-13 * tc[4]
+            -1.59890847e+04 * invT;
+        /*species 30: C10H20 */
+        species[30] =
+            -2.42901688e+00
+            +5.96527990e-02 * tc[1]
+            -2.64829675e-05 * tc[2]
+            +6.81841490e-09 * tc[3]
+            -7.65436746e-13 * tc[4]
+            -1.88708365e+04 * invT;
+    } else {
+        /*species 24: C5H10 */
+        species[24] =
+            +1.45851539e+01
+            +1.12036235e-02 * tc[1]
+            -2.54449342e-06 * tc[2]
+            +2.95472415e-10 * tc[3]
+            -1.36877028e-14 * tc[4]
+            -1.00898205e+04 * invT;
+        /*species 25: C6H12 */
+        species[25] =
+            +1.78337529e+01
+            +1.33688829e-02 * tc[1]
+            -3.03345591e-06 * tc[2]
+            +3.52049420e-10 * tc[3]
+            -1.63024849e-14 * tc[4]
+            -1.42062860e+04 * invT;
+        /*species 26: C7H14 */
+        species[26] =
+            +2.10898039e+01
+            +1.55303939e-02 * tc[1]
+            -3.52149310e-06 * tc[2]
+            +4.08514450e-10 * tc[3]
+            -1.89119644e-14 * tc[4]
+            -1.83260065e+04 * invT;
+        /*species 27: C8H16 */
+        species[27] =
+            +2.43540125e+01
+            +1.76833231e-02 * tc[1]
+            -4.00694627e-06 * tc[2]
+            +4.64637633e-10 * tc[3]
+            -2.15044524e-14 * tc[4]
+            -2.24485674e+04 * invT;
+        /*species 28: C9H18 */
+        species[28] =
+            +2.76142176e+01
+            +1.98412643e-02 * tc[1]
+            -4.49398153e-06 * tc[2]
+            +5.20976130e-10 * tc[3]
+            -2.41078588e-14 * tc[4]
+            -2.65709061e+04 * invT;
+        /*species 30: C10H20 */
+        species[30] =
+            +3.08753903e+01
+            +2.19985763e-02 * tc[1]
+            -4.98085100e-06 * tc[2]
+            +5.77294195e-10 * tc[3]
+            -2.67102954e-14 * tc[4]
+            -3.06937307e+04 * invT;
+    }
+
+    /*species with midpoint at T=1390 kelvin */
+    if (T < 1390) {
+        /*species 29: PXC9H19 */
+        species[29] =
+            -1.04387292e+00
+            +5.28086415e-02 * tc[1]
+            -2.22733324e-05 * tc[2]
+            +5.36215415e-09 * tc[3]
+            -5.54808550e-13 * tc[4]
+            -6.80818512e+03 * invT;
+    } else {
+        /*species 29: PXC9H19 */
+        species[29] =
+            +2.83097514e+01
+            +2.06328672e-02 * tc[1]
+            -4.67944297e-06 * tc[2]
+            +5.42937177e-10 * tc[3]
+            -2.51384614e-14 * tc[4]
+            -1.74516030e+04 * invT;
+    }
+    return;
+}
+
+
+/*compute the S/R at the given temperature (Eq 21) */
+/*tc contains precomputed powers of T, tc[0] = log(T) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEntropy(amrex::Real * species, amrex::Real *  tc)
+{
+
+    /*temperature */
+    amrex::Real T = tc[1];
+
+    /*species with midpoint at T=1391 kelvin */
+    if (T < 1391) {
+        /*species 0: NC12H26 */
+        species[0] =
+            -2.62181594e+00 * tc[0]
+            +1.47237711e-01 * tc[1]
+            -4.71985136e-05 * tc[2]
+            +1.02480423e-08 * tc[3]
+            -1.00900558e-12 * tc[4]
+            +5.00994626e+01 ;
+        /*species 31: C12H24 */
+        species[31] =
+            -2.96342681e+00 * tc[0]
+            +1.43992360e-01 * tc[1]
+            -4.80692008e-05 * tc[2]
+            +1.10058158e-08 * tc[3]
+            -1.15599547e-12 * tc[4]
+            +5.29158870e+01 ;
+    } else {
+        /*species 0: NC12H26 */
+        species[0] =
+            +3.85095037e+01 * tc[0]
+            +5.63550048e-02 * tc[1]
+            -9.57466000e-06 * tc[2]
+            +9.86749540e-10 * tc[3]
+            -4.28110375e-14 * tc[4]
+            -1.72670922e+02 ;
+        /*species 31: C12H24 */
+        species[31] =
+            +3.74002111e+01 * tc[0]
+            +5.26230753e-02 * tc[1]
+            -8.93121595e-06 * tc[2]
+            +9.19832877e-10 * tc[3]
+            -3.98906247e-14 * tc[4]
+            -1.64892663e+02 ;
+    }
+
+    /*species with midpoint at T=1000 kelvin */
+    if (T < 1000) {
+        /*species 1: H */
+        species[1] =
+            +2.50000000e+00 * tc[0]
+            +7.05332819e-13 * tc[1]
+            -9.97959820e-16 * tc[2]
+            +7.66938773e-19 * tc[3]
+            -2.31933083e-22 * tc[4]
+            -4.46682853e-01 ;
+        /*species 2: O */
+        species[2] =
+            +3.16826710e+00 * tc[0]
+            -3.27931884e-03 * tc[1]
+            +3.32153198e-06 * tc[2]
+            -2.04268875e-09 * tc[3]
+            +5.28164927e-13 * tc[4]
+            +2.05193346e+00 ;
+        /*species 3: OH */
+        species[3] =
+            +4.12530561e+00 * tc[0]
+            -3.22544939e-03 * tc[1]
+            +3.26382346e-06 * tc[2]
+            -1.93284548e-09 * tc[3]
+            +5.15593447e-13 * tc[4]
+            -6.90432960e-01 ;
+        /*species 4: HO2 */
+        species[4] =
+            +4.30179801e+00 * tc[0]
+            -4.74912051e-03 * tc[1]
+            +1.05791445e-05 * tc[2]
+            -8.09212980e-09 * tc[3]
+            +2.32306281e-12 * tc[4]
+            +3.71666245e+00 ;
+        /*species 5: H2 */
+        species[5] =
+            +2.34433112e+00 * tc[0]
+            +7.98052075e-03 * tc[1]
+            -9.73907550e-06 * tc[2]
+            +6.71906980e-09 * tc[3]
+            -1.84402940e-12 * tc[4]
+            +6.83010238e-01 ;
+        /*species 6: H2O */
+        species[6] =
+            +4.19864056e+00 * tc[0]
+            -2.03643410e-03 * tc[1]
+            +3.26020105e-06 * tc[2]
+            -1.82932354e-09 * tc[3]
+            +4.42994543e-13 * tc[4]
+            -8.49032208e-01 ;
+        /*species 7: H2O2 */
+        species[7] =
+            +4.27611269e+00 * tc[0]
+            -5.42822417e-04 * tc[1]
+            +8.36678505e-06 * tc[2]
+            -7.19236043e-09 * tc[3]
+            +2.15613591e-12 * tc[4]
+            +3.43505074e+00 ;
+        /*species 8: O2 */
+        species[8] =
+            +3.78245636e+00 * tc[0]
+            -2.99673416e-03 * tc[1]
+            +4.92365101e-06 * tc[2]
+            -3.22709836e-09 * tc[3]
+            +8.10932092e-13 * tc[4]
+            +3.65767573e+00 ;
+        /*species 9: CH3 */
+        species[9] =
+            +3.67359040e+00 * tc[0]
+            +2.01095175e-03 * tc[1]
+            +2.86510928e-06 * tc[2]
+            -2.29039142e-09 * tc[3]
+            +6.35964335e-13 * tc[4]
+            +1.60456433e+00 ;
+        /*species 10: CH4 */
+        species[10] =
+            +5.14987613e+00 * tc[0]
+            -1.36709788e-02 * tc[1]
+            +2.45900299e-05 * tc[2]
+            -1.61581009e-08 * tc[3]
+            +4.16734890e-12 * tc[4]
+            -4.64130376e+00 ;
+        /*species 11: CH2O */
+        species[11] =
+            +4.79372315e+00 * tc[0]
+            -9.90833369e-03 * tc[1]
+            +1.86610004e-05 * tc[2]
+            -1.26428420e-08 * tc[3]
+            +3.29431630e-12 * tc[4]
+            +6.02812900e-01 ;
+        /*species 12: CO */
+        species[12] =
+            +3.57953347e+00 * tc[0]
+            -6.10353680e-04 * tc[1]
+            +5.08407165e-07 * tc[2]
+            +3.02335295e-10 * tc[3]
+            -2.26106125e-13 * tc[4]
+            +3.50840928e+00 ;
+        /*species 13: CO2 */
+        species[13] =
+            +2.35677352e+00 * tc[0]
+            +8.98459677e-03 * tc[1]
+            -3.56178134e-06 * tc[2]
+            +8.19730073e-10 * tc[3]
+            -3.59248870e-14 * tc[4]
+            +9.90105222e+00 ;
+        /*species 14: C2H2 */
+        species[14] =
+            +8.08681094e-01 * tc[0]
+            +2.33615629e-02 * tc[1]
+            -1.77585907e-05 * tc[2]
+            +9.33841457e-09 * tc[3]
+            -2.12518243e-12 * tc[4]
+            +1.39397051e+01 ;
+        /*species 15: C2H4 */
+        species[15] =
+            +3.95920148e+00 * tc[0]
+            -7.57052247e-03 * tc[1]
+            +2.85495146e-05 * tc[2]
+            -2.30529584e-08 * tc[3]
+            +6.74710933e-12 * tc[4]
+            +4.09733096e+00 ;
+        /*species 16: C2H6 */
+        species[16] =
+            +4.29142492e+00 * tc[0]
+            -5.50154270e-03 * tc[1]
+            +2.99719144e-05 * tc[2]
+            -2.36155428e-08 * tc[3]
+            +6.71714427e-12 * tc[4]
+            +2.66682316e+00 ;
+        /*species 17: CH2CHO */
+        species[17] =
+            +3.40906240e+00 * tc[0]
+            +1.07385740e-02 * tc[1]
+            +9.45746250e-07 * tc[2]
+            -2.38619437e-09 * tc[3]
+            +7.16846275e-13 * tc[4]
+            +9.57145350e+00 ;
+        /*species 18: aC3H5 */
+        species[18] =
+            +1.36318350e+00 * tc[0]
+            +1.98138210e-02 * tc[1]
+            +6.24853000e-06 * tc[2]
+            -1.11185183e-08 * tc[3]
+            +3.96164275e-12 * tc[4]
+            +1.71732140e+01 ;
+        /*species 19: C3H6 */
+        species[19] =
+            +1.49330700e+00 * tc[0]
+            +2.09251800e-02 * tc[1]
+            +2.24339700e-06 * tc[2]
+            -5.56304000e-09 * tc[3]
+            +1.78953650e-12 * tc[4]
+            +1.61453400e+01 ;
+        /*species 20: C2H3CHO */
+        species[20] =
+            +1.27134980e+00 * tc[0]
+            +2.62310540e-02 * tc[1]
+            -4.64561525e-06 * tc[2]
+            -1.59457573e-09 * tc[3]
+            +8.37013575e-13 * tc[4]
+            +1.94980770e+01 ;
+        /*species 21: C4H7 */
+        species[21] =
+            +7.44494320e-01 * tc[0]
+            +3.96788570e-02 * tc[1]
+            -1.14490430e-05 * tc[2]
+            +7.11765767e-10 * tc[3]
+            +5.77409375e-13 * tc[4]
+            +2.34378780e+01 ;
+        /*species 22: C4H81 */
+        species[22] =
+            +1.18113800e+00 * tc[0]
+            +3.08533800e-02 * tc[1]
+            +2.54326235e-06 * tc[2]
+            -8.21829600e-09 * tc[3]
+            +2.77754825e-12 * tc[4]
+            +2.10624690e+01 ;
+        /*species 23: C5H9 */
+        species[23] =
+            -2.41901110e+00 * tc[0]
+            +4.04303890e-02 * tc[1]
+            +3.39011695e-06 * tc[2]
+            -1.12415807e-08 * tc[3]
+            +3.77917825e-12 * tc[4]
+            +3.64592440e+01 ;
+        /*species 32: C12H25O2 */
+        species[32] =
+            +5.31404000e+00 * tc[0]
+            +8.93873000e-02 * tc[1]
+            +7.26755000e-06 * tc[2]
+            -2.49750000e-08 * tc[3]
+            +8.38312500e-12 * tc[4]
+            +1.69741000e+01 ;
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +8.80733000e+00 * tc[0]
+            +6.50623000e-02 * tc[1]
+            +3.47529000e-05 * tc[2]
+            -4.23016667e-08 * tc[3]
+            +1.27747750e-11 * tc[4]
+            +6.84155000e+00 ;
+        /*species 34: N2 */
+        species[34] =
+            +3.29867700e+00 * tc[0]
+            +1.40824040e-03 * tc[1]
+            -1.98161100e-06 * tc[2]
+            +1.88050500e-09 * tc[3]
+            -6.11213500e-13 * tc[4]
+            +3.95037200e+00 ;
+    } else {
+        /*species 1: H */
+        species[1] =
+            +2.50000001e+00 * tc[0]
+            -2.30842973e-11 * tc[1]
+            +8.07809740e-15 * tc[2]
+            -1.57838412e-18 * tc[3]
+            +1.24549339e-22 * tc[4]
+            -4.46682914e-01 ;
+        /*species 2: O */
+        species[2] =
+            +2.56942078e+00 * tc[0]
+            -8.59741137e-05 * tc[1]
+            +2.09742295e-08 * tc[2]
+            -3.33925997e-12 * tc[3]
+            +3.07084227e-16 * tc[4]
+            +4.78433864e+00 ;
+        /*species 3: OH */
+        species[3] =
+            +2.86472886e+00 * tc[0]
+            +1.05650448e-03 * tc[1]
+            -1.29541379e-07 * tc[2]
+            +1.01739558e-11 * tc[3]
+            -3.32989690e-16 * tc[4]
+            +5.70164073e+00 ;
+        /*species 4: HO2 */
+        species[4] =
+            +4.01721090e+00 * tc[0]
+            +2.23982013e-03 * tc[1]
+            -3.16829075e-07 * tc[2]
+            +3.80821233e-11 * tc[3]
+            -2.69771337e-15 * tc[4]
+            +3.78510215e+00 ;
+        /*species 5: H2 */
+        species[5] =
+            +3.33727920e+00 * tc[0]
+            -4.94024731e-05 * tc[1]
+            +2.49728389e-07 * tc[2]
+            -5.98554647e-11 * tc[3]
+            +5.00638440e-15 * tc[4]
+            -3.20502331e+00 ;
+        /*species 6: H2O */
+        species[6] =
+            +3.03399249e+00 * tc[0]
+            +2.17691804e-03 * tc[1]
+            -8.20362590e-08 * tc[2]
+            -3.23473290e-11 * tc[3]
+            +4.20502480e-15 * tc[4]
+            +4.96677010e+00 ;
+        /*species 7: H2O2 */
+        species[7] =
+            +4.16500285e+00 * tc[0]
+            +4.90831694e-03 * tc[1]
+            -9.50696125e-07 * tc[2]
+            +1.23728662e-10 * tc[3]
+            -7.19770763e-15 * tc[4]
+            +2.91615662e+00 ;
+        /*species 8: O2 */
+        species[8] =
+            +3.28253784e+00 * tc[0]
+            +1.48308754e-03 * tc[1]
+            -3.78983334e-07 * tc[2]
+            +6.98235183e-11 * tc[3]
+            -5.41794485e-15 * tc[4]
+            +5.45323129e+00 ;
+        /*species 9: CH3 */
+        species[9] =
+            +2.28571772e+00 * tc[0]
+            +7.23990037e-03 * tc[1]
+            -1.49357174e-06 * tc[2]
+            +1.98561548e-10 * tc[3]
+            -1.16788599e-14 * tc[4]
+            +8.48007179e+00 ;
+        /*species 10: CH4 */
+        species[10] =
+            +7.48514950e-02 * tc[0]
+            +1.33909467e-02 * tc[1]
+            -2.86642905e-06 * tc[2]
+            +4.07641783e-10 * tc[3]
+            -2.54538075e-14 * tc[4]
+            +1.84373180e+01 ;
+        /*species 11: CH2O */
+        species[11] =
+            +1.76069008e+00 * tc[0]
+            +9.20000082e-03 * tc[1]
+            -2.21129406e-06 * tc[2]
+            +3.35470707e-10 * tc[3]
+            -2.20963910e-14 * tc[4]
+            +1.36563230e+01 ;
+        /*species 12: CO */
+        species[12] =
+            +2.71518561e+00 * tc[0]
+            +2.06252743e-03 * tc[1]
+            -4.99412886e-07 * tc[2]
+            +7.66843360e-11 * tc[3]
+            -5.09119290e-15 * tc[4]
+            +7.81868772e+00 ;
+        /*species 13: CO2 */
+        species[13] =
+            +3.85746029e+00 * tc[0]
+            +4.41437026e-03 * tc[1]
+            -1.10740702e-06 * tc[2]
+            +1.74496729e-10 * tc[3]
+            -1.18021041e-14 * tc[4]
+            +2.27163806e+00 ;
+        /*species 14: C2H2 */
+        species[14] =
+            +4.14756964e+00 * tc[0]
+            +5.96166664e-03 * tc[1]
+            -1.18647426e-06 * tc[2]
+            +1.55804057e-10 * tc[3]
+            -9.03088033e-15 * tc[4]
+            -1.23028121e+00 ;
+        /*species 15: C2H4 */
+        species[15] =
+            +2.03611116e+00 * tc[0]
+            +1.46454151e-02 * tc[1]
+            -3.35538958e-06 * tc[2]
+            +4.90743077e-10 * tc[3]
+            -3.14265152e-14 * tc[4]
+            +1.03053693e+01 ;
+        /*species 16: C2H6 */
+        species[16] =
+            +1.07188150e+00 * tc[0]
+            +2.16852677e-02 * tc[1]
+            -5.01280335e-06 * tc[2]
+            +7.38040003e-10 * tc[3]
+            -4.75007225e-14 * tc[4]
+            +1.51156107e+01 ;
+        /*species 17: CH2CHO */
+        species[17] =
+            +5.97566990e+00 * tc[0]
+            +8.13059140e-03 * tc[1]
+            -1.37181225e-06 * tc[2]
+            +1.35676803e-10 * tc[3]
+            -5.44004275e-15 * tc[4]
+            -5.03208790e+00 ;
+        /*species 18: aC3H5 */
+        species[18] =
+            +6.50078770e+00 * tc[0]
+            +1.43247310e-02 * tc[1]
+            -2.83908160e-06 * tc[2]
+            +3.69360033e-10 * tc[3]
+            -2.25909717e-14 * tc[4]
+            -1.12430500e+01 ;
+        /*species 19: C3H6 */
+        species[19] =
+            +6.73225700e+00 * tc[0]
+            +1.49083400e-02 * tc[1]
+            -2.47494950e-06 * tc[2]
+            +2.40400733e-10 * tc[3]
+            -9.41551000e-15 * tc[4]
+            -1.33133500e+01 ;
+        /*species 20: C2H3CHO */
+        species[20] =
+            +5.81118680e+00 * tc[0]
+            +1.71142560e-02 * tc[1]
+            -3.74170805e-06 * tc[2]
+            +4.75074967e-10 * tc[3]
+            -2.29367102e-14 * tc[4]
+            -4.85880040e+00 ;
+        /*species 21: C4H7 */
+        species[21] =
+            +7.01348350e+00 * tc[0]
+            +2.26345580e-02 * tc[1]
+            -4.62727350e-06 * tc[2]
+            +5.60264233e-10 * tc[3]
+            -2.60215425e-14 * tc[4]
+            -8.88930800e+00 ;
+        /*species 22: C4H81 */
+        species[22] =
+            +2.05358410e+00 * tc[0]
+            +3.43505070e-02 * tc[1]
+            -7.94159850e-06 * tc[2]
+            +1.10298873e-09 * tc[3]
+            -6.34026125e-14 * tc[4]
+            +1.55432010e+01 ;
+        /*species 23: C5H9 */
+        species[23] =
+            +1.01386400e+01 * tc[0]
+            +2.27141380e-02 * tc[1]
+            -3.89552315e-06 * tc[2]
+            +3.95884067e-10 * tc[3]
+            -1.64831120e-14 * tc[4]
+            -3.31258850e+01 ;
+        /*species 32: C12H25O2 */
+        species[32] =
+            +2.84782000e+01 * tc[0]
+            +5.37539000e-02 * tc[1]
+            -8.40930000e-06 * tc[2]
+            +8.37890000e-10 * tc[3]
+            -3.68020000e-14 * tc[4]
+            -1.09121000e+02 ;
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +2.36731000e+01 * tc[0]
+            +6.16392000e-02 * tc[1]
+            -1.04918000e-05 * tc[2]
+            +1.11055333e-09 * tc[3]
+            -5.08975000e-14 * tc[4]
+            -7.77662000e+01 ;
+        /*species 34: N2 */
+        species[34] =
+            +2.92664000e+00 * tc[0]
+            +1.48797680e-03 * tc[1]
+            -2.84238000e-07 * tc[2]
+            +3.36567933e-11 * tc[3]
+            -1.68833775e-15 * tc[4]
+            +5.98052800e+00 ;
+    }
+
+    /*species with midpoint at T=1392 kelvin */
+    if (T < 1392) {
+        /*species 24: C5H10 */
+        species[24] =
+            -1.06223481e+00 * tc[0]
+            +5.74218294e-02 * tc[1]
+            -1.87243445e-05 * tc[2]
+            +4.24549963e-09 * tc[3]
+            -4.49024472e-13 * tc[4]
+            +3.22739790e+01 ;
+        /*species 25: C6H12 */
+        species[25] =
+            -1.35275205e+00 * tc[0]
+            +6.98655426e-02 * tc[1]
+            -2.29704011e-05 * tc[2]
+            +5.23224477e-09 * tc[3]
+            -5.53240438e-13 * tc[4]
+            +3.53120691e+01 ;
+        /*species 26: C7H14 */
+        species[26] =
+            -1.67720549e+00 * tc[0]
+            +8.24611601e-02 * tc[1]
+            -2.73252054e-05 * tc[2]
+            +6.26207677e-09 * tc[3]
+            -6.64344957e-13 * tc[4]
+            +3.85068032e+01 ;
+        /*species 27: C8H16 */
+        species[27] =
+            -1.89226915e+00 * tc[0]
+            +9.46066357e-02 * tc[1]
+            -3.13692761e-05 * tc[2]
+            +7.17194363e-09 * tc[3]
+            -7.56796708e-13 * tc[4]
+            +4.11878981e+01 ;
+        /*species 28: C9H18 */
+        species[28] =
+            -2.16108263e+00 * tc[0]
+            +1.06958297e-01 * tc[1]
+            -3.55486622e-05 * tc[2]
+            +8.13236923e-09 * tc[3]
+            -8.56928867e-13 * tc[4]
+            +4.41245128e+01 ;
+        /*species 30: C10H20 */
+        species[30] =
+            -2.42901688e+00 * tc[0]
+            +1.19305598e-01 * tc[1]
+            -3.97244513e-05 * tc[2]
+            +9.09121987e-09 * tc[3]
+            -9.56795932e-13 * tc[4]
+            +4.70571383e+01 ;
+    } else {
+        /*species 24: C5H10 */
+        species[24] =
+            +1.45851539e+01 * tc[0]
+            +2.24072471e-02 * tc[1]
+            -3.81674012e-06 * tc[2]
+            +3.93963220e-10 * tc[3]
+            -1.71096285e-14 * tc[4]
+            -5.23683936e+01 ;
+        /*species 25: C6H12 */
+        species[25] =
+            +1.78337529e+01 * tc[0]
+            +2.67377658e-02 * tc[1]
+            -4.55018387e-06 * tc[2]
+            +4.69399227e-10 * tc[3]
+            -2.03781061e-14 * tc[4]
+            -6.83818851e+01 ;
+        /*species 26: C7H14 */
+        species[26] =
+            +2.10898039e+01 * tc[0]
+            +3.10607878e-02 * tc[1]
+            -5.28223965e-06 * tc[2]
+            +5.44685933e-10 * tc[3]
+            -2.36399555e-14 * tc[4]
+            -8.44391108e+01 ;
+        /*species 27: C8H16 */
+        species[27] =
+            +2.43540125e+01 * tc[0]
+            +3.53666462e-02 * tc[1]
+            -6.01041940e-06 * tc[2]
+            +6.19516843e-10 * tc[3]
+            -2.68805655e-14 * tc[4]
+            -1.00537716e+02 ;
+        /*species 28: C9H18 */
+        species[28] =
+            +2.76142176e+01 * tc[0]
+            +3.96825287e-02 * tc[1]
+            -6.74097230e-06 * tc[2]
+            +6.94634840e-10 * tc[3]
+            -3.01348235e-14 * tc[4]
+            -1.16618623e+02 ;
+        /*species 30: C10H20 */
+        species[30] =
+            +3.08753903e+01 * tc[0]
+            +4.39971526e-02 * tc[1]
+            -7.47127650e-06 * tc[2]
+            +7.69725593e-10 * tc[3]
+            -3.33878693e-14 * tc[4]
+            -1.32705172e+02 ;
+    }
+
+    /*species with midpoint at T=1390 kelvin */
+    if (T < 1390) {
+        /*species 29: PXC9H19 */
+        species[29] =
+            -1.04387292e+00 * tc[0]
+            +1.05617283e-01 * tc[1]
+            -3.34099986e-05 * tc[2]
+            +7.14953887e-09 * tc[3]
+            -6.93510688e-13 * tc[4]
+            +4.23518992e+01 ;
+    } else {
+        /*species 29: PXC9H19 */
+        species[29] =
+            +2.83097514e+01 * tc[0]
+            +4.12657344e-02 * tc[1]
+            -7.01916445e-06 * tc[2]
+            +7.23916237e-10 * tc[3]
+            -3.14230767e-14 * tc[4]
+            -1.16837897e+02 ;
+    }
+    return;
+}
+
+
+/*Returns the mean specific heat at CP (Eq. 33) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPBL(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  cpbl)
+{
+    int id; /*loop counter */
+    amrex::Real result = 0; 
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real cpor[35]; /* temporary storage */
+    cp_R(cpor, tc);
+
+    /*perform dot product */
+    for (id = 0; id < 35; ++id) {
+        result += x[id]*cpor[id];
+    }
+
+    *cpbl = result * 8.31446261815324e+07;
+}
+
+
+/*Returns the mean specific heat at CP (Eq. 34) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPBS(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  cpbs)
+{
+    amrex::Real result = 0; 
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real cpor[35], tresult[35]; /* temporary storage */
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    cp_R(cpor, tc);
+
+    for (int i = 0; i < 35; i++)
+    {
+        tresult[i] = cpor[i]*y[i]*imw[i];
+
+    }
+    for (int i = 0; i < 35; i++)
+    {
+        result += tresult[i];
+    }
+
+    *cpbs = result * 8.31446261815324e+07;
+}
+
+
+/*Returns the mean specific heat at CV (Eq. 35) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVBL(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  cvbl)
+{
+    int id; /*loop counter */
+    amrex::Real result = 0; 
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real cvor[35]; /* temporary storage */
+    cv_R(cvor, tc);
+
+    /*perform dot product */
+    for (id = 0; id < 35; ++id) {
+        result += x[id]*cvor[id];
+    }
+
+    *cvbl = result * 8.31446261815324e+07;
+}
+
+
+/*Returns the mean specific heat at CV (Eq. 36) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVBS(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  cvbs)
+{
+    amrex::Real result = 0; 
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real cvor[35]; /* temporary storage */
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    cv_R(cvor, tc);
+
+    /*multiply by y/molecularweight */
+    result += cvor[0]*y[0]*imw[0]; /*NC12H26 */
+    result += cvor[1]*y[1]*imw[1]; /*H */
+    result += cvor[2]*y[2]*imw[2]; /*O */
+    result += cvor[3]*y[3]*imw[3]; /*OH */
+    result += cvor[4]*y[4]*imw[4]; /*HO2 */
+    result += cvor[5]*y[5]*imw[5]; /*H2 */
+    result += cvor[6]*y[6]*imw[6]; /*H2O */
+    result += cvor[7]*y[7]*imw[7]; /*H2O2 */
+    result += cvor[8]*y[8]*imw[8]; /*O2 */
+    result += cvor[9]*y[9]*imw[9]; /*CH3 */
+    result += cvor[10]*y[10]*imw[10]; /*CH4 */
+    result += cvor[11]*y[11]*imw[11]; /*CH2O */
+    result += cvor[12]*y[12]*imw[12]; /*CO */
+    result += cvor[13]*y[13]*imw[13]; /*CO2 */
+    result += cvor[14]*y[14]*imw[14]; /*C2H2 */
+    result += cvor[15]*y[15]*imw[15]; /*C2H4 */
+    result += cvor[16]*y[16]*imw[16]; /*C2H6 */
+    result += cvor[17]*y[17]*imw[17]; /*CH2CHO */
+    result += cvor[18]*y[18]*imw[18]; /*aC3H5 */
+    result += cvor[19]*y[19]*imw[19]; /*C3H6 */
+    result += cvor[20]*y[20]*imw[20]; /*C2H3CHO */
+    result += cvor[21]*y[21]*imw[21]; /*C4H7 */
+    result += cvor[22]*y[22]*imw[22]; /*C4H81 */
+    result += cvor[23]*y[23]*imw[23]; /*C5H9 */
+    result += cvor[24]*y[24]*imw[24]; /*C5H10 */
+    result += cvor[25]*y[25]*imw[25]; /*C6H12 */
+    result += cvor[26]*y[26]*imw[26]; /*C7H14 */
+    result += cvor[27]*y[27]*imw[27]; /*C8H16 */
+    result += cvor[28]*y[28]*imw[28]; /*C9H18 */
+    result += cvor[29]*y[29]*imw[29]; /*PXC9H19 */
+    result += cvor[30]*y[30]*imw[30]; /*C10H20 */
+    result += cvor[31]*y[31]*imw[31]; /*C12H24 */
+    result += cvor[32]*y[32]*imw[32]; /*C12H25O2 */
+    result += cvor[33]*y[33]*imw[33]; /*OC12H23OOH */
+    result += cvor[34]*y[34]*imw[34]; /*N2 */
+
+    *cvbs = result * 8.31446261815324e+07;
+}
+
+
+/*Returns the mean enthalpy of the mixture in molar units */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHBML(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  hbml)
+{
+    int id; /*loop counter */
+    amrex::Real result = 0; 
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real hml[35]; /* temporary storage */
+    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
+    speciesEnthalpy(hml, tc);
+
+    /*perform dot product */
+    for (id = 0; id < 35; ++id) {
+        result += x[id]*hml[id];
+    }
+
+    *hbml = result * RT;
+}
+
+
+/*Returns mean enthalpy of mixture in mass units */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHBMS(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  hbms)
+{
+    amrex::Real result = 0;
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real hml[35], tmp[35]; /* temporary storage */
+    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    speciesEnthalpy(hml, tc);
+
+    int id;
+    for (id = 0; id < 35; ++id) {
+        tmp[id] = y[id]*hml[id]*imw[id];
+    }
+    for (id = 0; id < 35; ++id) {
+        result += tmp[id];
+    }
+
+    *hbms = result * RT;
+}
+
+
+/*get mean internal energy in molar units */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUBML(amrex::Real *  T, amrex::Real *  x,  amrex::Real *  ubml)
+{
+    int id; /*loop counter */
+    amrex::Real result = 0; 
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real uml[35]; /* temporary energy array */
+    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
+    speciesInternalEnergy(uml, tc);
+
+    /*perform dot product */
+    for (id = 0; id < 35; ++id) {
+        result += x[id]*uml[id];
+    }
+
+    *ubml = result * RT;
+}
+
+
+/*get mean internal energy in mass units */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUBMS(amrex::Real *  T, amrex::Real *  y,  amrex::Real *  ubms)
+{
+    amrex::Real result = 0;
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real ums[35]; /* temporary energy array */
+    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    speciesInternalEnergy(ums, tc);
+
+    /*perform dot product + scaling by wt */
+    result += y[0]*ums[0]*imw[0]; /*NC12H26 */
+    result += y[1]*ums[1]*imw[1]; /*H */
+    result += y[2]*ums[2]*imw[2]; /*O */
+    result += y[3]*ums[3]*imw[3]; /*OH */
+    result += y[4]*ums[4]*imw[4]; /*HO2 */
+    result += y[5]*ums[5]*imw[5]; /*H2 */
+    result += y[6]*ums[6]*imw[6]; /*H2O */
+    result += y[7]*ums[7]*imw[7]; /*H2O2 */
+    result += y[8]*ums[8]*imw[8]; /*O2 */
+    result += y[9]*ums[9]*imw[9]; /*CH3 */
+    result += y[10]*ums[10]*imw[10]; /*CH4 */
+    result += y[11]*ums[11]*imw[11]; /*CH2O */
+    result += y[12]*ums[12]*imw[12]; /*CO */
+    result += y[13]*ums[13]*imw[13]; /*CO2 */
+    result += y[14]*ums[14]*imw[14]; /*C2H2 */
+    result += y[15]*ums[15]*imw[15]; /*C2H4 */
+    result += y[16]*ums[16]*imw[16]; /*C2H6 */
+    result += y[17]*ums[17]*imw[17]; /*CH2CHO */
+    result += y[18]*ums[18]*imw[18]; /*aC3H5 */
+    result += y[19]*ums[19]*imw[19]; /*C3H6 */
+    result += y[20]*ums[20]*imw[20]; /*C2H3CHO */
+    result += y[21]*ums[21]*imw[21]; /*C4H7 */
+    result += y[22]*ums[22]*imw[22]; /*C4H81 */
+    result += y[23]*ums[23]*imw[23]; /*C5H9 */
+    result += y[24]*ums[24]*imw[24]; /*C5H10 */
+    result += y[25]*ums[25]*imw[25]; /*C6H12 */
+    result += y[26]*ums[26]*imw[26]; /*C7H14 */
+    result += y[27]*ums[27]*imw[27]; /*C8H16 */
+    result += y[28]*ums[28]*imw[28]; /*C9H18 */
+    result += y[29]*ums[29]*imw[29]; /*PXC9H19 */
+    result += y[30]*ums[30]*imw[30]; /*C10H20 */
+    result += y[31]*ums[31]*imw[31]; /*C12H24 */
+    result += y[32]*ums[32]*imw[32]; /*C12H25O2 */
+    result += y[33]*ums[33]*imw[33]; /*OC12H23OOH */
+    result += y[34]*ums[34]*imw[34]; /*N2 */
+
+    *ubms = result * RT;
+}
+
+
+/*get mixture entropy in molar units */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSBML(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  sbml)
+{
+    int id; /*loop counter */
+    amrex::Real result = 0; 
+    /*Log of normalized pressure in cgs units dynes/cm^2 by Patm */
+    amrex::Real logPratio = log ( *P / 1013250.0 ); 
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real sor[35]; /* temporary storage */
+    speciesEntropy(sor, tc);
+
+    /*Compute Eq 42 */
+    for (id = 0; id < 35; ++id) {
+        result += x[id]*(sor[id]-log((x[id]+1e-100))-logPratio);
+    }
+
+    *sbml = result * 8.31446261815324e+07;
+}
+
+
+/*get mixture entropy in mass units */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSBMS(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  sbms)
+{
+    amrex::Real result = 0; 
+    /*Log of normalized pressure in cgs units dynes/cm^2 by Patm */
+    amrex::Real logPratio = log ( *P / 1013250.0 ); 
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real sor[35]; /* temporary storage */
+    amrex::Real x[35]; /* need a ytx conversion */
+    amrex::Real YOW = 0; /*See Eq 4, 6 in CK Manual */
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    /*Compute inverse of mean molecular wt first */
+    YOW += y[0]*imw[0]; /*NC12H26 */
+    YOW += y[1]*imw[1]; /*H */
+    YOW += y[2]*imw[2]; /*O */
+    YOW += y[3]*imw[3]; /*OH */
+    YOW += y[4]*imw[4]; /*HO2 */
+    YOW += y[5]*imw[5]; /*H2 */
+    YOW += y[6]*imw[6]; /*H2O */
+    YOW += y[7]*imw[7]; /*H2O2 */
+    YOW += y[8]*imw[8]; /*O2 */
+    YOW += y[9]*imw[9]; /*CH3 */
+    YOW += y[10]*imw[10]; /*CH4 */
+    YOW += y[11]*imw[11]; /*CH2O */
+    YOW += y[12]*imw[12]; /*CO */
+    YOW += y[13]*imw[13]; /*CO2 */
+    YOW += y[14]*imw[14]; /*C2H2 */
+    YOW += y[15]*imw[15]; /*C2H4 */
+    YOW += y[16]*imw[16]; /*C2H6 */
+    YOW += y[17]*imw[17]; /*CH2CHO */
+    YOW += y[18]*imw[18]; /*aC3H5 */
+    YOW += y[19]*imw[19]; /*C3H6 */
+    YOW += y[20]*imw[20]; /*C2H3CHO */
+    YOW += y[21]*imw[21]; /*C4H7 */
+    YOW += y[22]*imw[22]; /*C4H81 */
+    YOW += y[23]*imw[23]; /*C5H9 */
+    YOW += y[24]*imw[24]; /*C5H10 */
+    YOW += y[25]*imw[25]; /*C6H12 */
+    YOW += y[26]*imw[26]; /*C7H14 */
+    YOW += y[27]*imw[27]; /*C8H16 */
+    YOW += y[28]*imw[28]; /*C9H18 */
+    YOW += y[29]*imw[29]; /*PXC9H19 */
+    YOW += y[30]*imw[30]; /*C10H20 */
+    YOW += y[31]*imw[31]; /*C12H24 */
+    YOW += y[32]*imw[32]; /*C12H25O2 */
+    YOW += y[33]*imw[33]; /*OC12H23OOH */
+    YOW += y[34]*imw[34]; /*N2 */
+    /*Now compute y to x conversion */
+    x[0] = y[0]/(170.341020*YOW); 
+    x[1] = y[1]/(1.007970*YOW); 
+    x[2] = y[2]/(15.999400*YOW); 
+    x[3] = y[3]/(17.007370*YOW); 
+    x[4] = y[4]/(33.006770*YOW); 
+    x[5] = y[5]/(2.015940*YOW); 
+    x[6] = y[6]/(18.015340*YOW); 
+    x[7] = y[7]/(34.014740*YOW); 
+    x[8] = y[8]/(31.998800*YOW); 
+    x[9] = y[9]/(15.035060*YOW); 
+    x[10] = y[10]/(16.043030*YOW); 
+    x[11] = y[11]/(30.026490*YOW); 
+    x[12] = y[12]/(28.010550*YOW); 
+    x[13] = y[13]/(44.009950*YOW); 
+    x[14] = y[14]/(26.038240*YOW); 
+    x[15] = y[15]/(28.054180*YOW); 
+    x[16] = y[16]/(30.070120*YOW); 
+    x[17] = y[17]/(43.045610*YOW); 
+    x[18] = y[18]/(41.073300*YOW); 
+    x[19] = y[19]/(42.081270*YOW); 
+    x[20] = y[20]/(56.064730*YOW); 
+    x[21] = y[21]/(55.100390*YOW); 
+    x[22] = y[22]/(56.108360*YOW); 
+    x[23] = y[23]/(69.127480*YOW); 
+    x[24] = y[24]/(70.135450*YOW); 
+    x[25] = y[25]/(84.162540*YOW); 
+    x[26] = y[26]/(98.189630*YOW); 
+    x[27] = y[27]/(112.216720*YOW); 
+    x[28] = y[28]/(126.243810*YOW); 
+    x[29] = y[29]/(127.251780*YOW); 
+    x[30] = y[30]/(140.270900*YOW); 
+    x[31] = y[31]/(168.325080*YOW); 
+    x[32] = y[32]/(201.331850*YOW); 
+    x[33] = y[33]/(216.323280*YOW); 
+    x[34] = y[34]/(28.013400*YOW); 
+    speciesEntropy(sor, tc);
+    /*Perform computation in Eq 42 and 43 */
+    result += x[0]*(sor[0]-log((x[0]+1e-100))-logPratio);
+    result += x[1]*(sor[1]-log((x[1]+1e-100))-logPratio);
+    result += x[2]*(sor[2]-log((x[2]+1e-100))-logPratio);
+    result += x[3]*(sor[3]-log((x[3]+1e-100))-logPratio);
+    result += x[4]*(sor[4]-log((x[4]+1e-100))-logPratio);
+    result += x[5]*(sor[5]-log((x[5]+1e-100))-logPratio);
+    result += x[6]*(sor[6]-log((x[6]+1e-100))-logPratio);
+    result += x[7]*(sor[7]-log((x[7]+1e-100))-logPratio);
+    result += x[8]*(sor[8]-log((x[8]+1e-100))-logPratio);
+    result += x[9]*(sor[9]-log((x[9]+1e-100))-logPratio);
+    result += x[10]*(sor[10]-log((x[10]+1e-100))-logPratio);
+    result += x[11]*(sor[11]-log((x[11]+1e-100))-logPratio);
+    result += x[12]*(sor[12]-log((x[12]+1e-100))-logPratio);
+    result += x[13]*(sor[13]-log((x[13]+1e-100))-logPratio);
+    result += x[14]*(sor[14]-log((x[14]+1e-100))-logPratio);
+    result += x[15]*(sor[15]-log((x[15]+1e-100))-logPratio);
+    result += x[16]*(sor[16]-log((x[16]+1e-100))-logPratio);
+    result += x[17]*(sor[17]-log((x[17]+1e-100))-logPratio);
+    result += x[18]*(sor[18]-log((x[18]+1e-100))-logPratio);
+    result += x[19]*(sor[19]-log((x[19]+1e-100))-logPratio);
+    result += x[20]*(sor[20]-log((x[20]+1e-100))-logPratio);
+    result += x[21]*(sor[21]-log((x[21]+1e-100))-logPratio);
+    result += x[22]*(sor[22]-log((x[22]+1e-100))-logPratio);
+    result += x[23]*(sor[23]-log((x[23]+1e-100))-logPratio);
+    result += x[24]*(sor[24]-log((x[24]+1e-100))-logPratio);
+    result += x[25]*(sor[25]-log((x[25]+1e-100))-logPratio);
+    result += x[26]*(sor[26]-log((x[26]+1e-100))-logPratio);
+    result += x[27]*(sor[27]-log((x[27]+1e-100))-logPratio);
+    result += x[28]*(sor[28]-log((x[28]+1e-100))-logPratio);
+    result += x[29]*(sor[29]-log((x[29]+1e-100))-logPratio);
+    result += x[30]*(sor[30]-log((x[30]+1e-100))-logPratio);
+    result += x[31]*(sor[31]-log((x[31]+1e-100))-logPratio);
+    result += x[32]*(sor[32]-log((x[32]+1e-100))-logPratio);
+    result += x[33]*(sor[33]-log((x[33]+1e-100))-logPratio);
+    result += x[34]*(sor[34]-log((x[34]+1e-100))-logPratio);
+    /*Scale by R/W */
+    *sbms = result * 8.31446261815324e+07 * YOW;
+}
+
+/* get temperature given internal energy in mass units and mass fracs */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_T_GIVEN_EY(amrex::Real *  e, amrex::Real *  y, amrex::Real *  t, int * ierr)
+{
+#ifdef CONVERGENCE
+    const int maxiter = 5000;
+    const amrex::Real tol  = 1.e-12;
 #else
-AMREX_GPU_HOST_DEVICE void SPARSITY_PREPROC_PRECOND(int * rowPtr, int * colIndx, int * consP);
+    const int maxiter = 200;
+    const amrex::Real tol  = 1.e-6;
 #endif
-AMREX_GPU_HOST_DEVICE void aJacobian(double *  J, double *  sc, double T, int consP);
-AMREX_GPU_HOST_DEVICE void aJacobian_precond(double *  J, double *  sc, double T, int HP);
-AMREX_GPU_HOST_DEVICE void dcvpRdT(double *  species, double *  tc);
-AMREX_GPU_HOST_DEVICE void GET_T_GIVEN_EY(double *  e, double *  y, double *  t, int *ierr);
-void GET_T_GIVEN_HY(double *  h, double *  y, double *  t, int *ierr);
-void GET_CRITPARAMS(double *  Tci, double *  ai, double *  bi, double *  acentric_i);
-/*vector version */
-void VCKYTX(int *  np, double *  y, double *  x);
-void VCKHMS(int *  np, double *  T, double *  ums);
-void VCKWYR(int *  np, double *  rho, double *  T,
-            double *  y,
-            double *  wdot);
-#ifndef AMREX_USE_CUDA
-void vproductionRate(int npt, double *  wdot, double *  c, double *  T);
-void VCKPY(int *  np, double *  rho, double *  T, double *  y, double *  P);
-void vcomp_k_f(int npt, double *  k_f_s, double *  tc, double *  invT);
-void vcomp_gibbs(int npt, double *  g_RT, double *  tc);
-void vcomp_Kc(int npt, double *  Kc_s, double *  g_RT, double *  invT);
-void vcomp_wdot(int npt, double *  wdot, double *  mixture, double *  sc,
-                double *  k_f_s, double *  Kc_s,
-                double *  tc, double *  invT, double *  T);
-#endif
-/*Transport function declarations */
-void egtransetLENIMC(int* LENIMC);
-void egtransetLENRMC(int* LENRMC);
-void egtransetNO(int* NO);
-void egtransetKK(int* KK);
-void egtransetNLITE(int* NLITE);
-void egtransetPATM(double* PATM);
-void egtransetWT(double* WT);
-void egtransetEPS(double* EPS);
-void egtransetSIG(double* SIG);
-void egtransetDIP(double* DIP);
-void egtransetPOL(double* POL);
-void egtransetZROT(double* ZROT);
-void egtransetNLIN(int* NLIN);
-void egtransetCOFETA(double* COFETA);
-void egtransetCOFLAM(double* COFLAM);
-void egtransetCOFD(double* COFD);
-void egtransetKTDIF(int* KTDIF);
+    amrex::Real ein  = *e;
+    amrex::Real tmin = 90;/*max lower bound for thermo def */
+    amrex::Real tmax = 4000;/*min upper bound for thermo def */
+    amrex::Real e1,emin,emax,cv,t1,dt;
+    int i;/* loop counter */
+    CKUBMS(&tmin, y, &emin);
+    CKUBMS(&tmax, y, &emax);
+    if (ein < emin) {
+        /*Linear Extrapolation below tmin */
+        CKCVBS(&tmin, y, &cv);
+        *t = tmin - (emin-ein)/cv;
+        *ierr = 1;
+        return;
+    }
+    if (ein > emax) {
+        /*Linear Extrapolation above tmax */
+        CKCVBS(&tmax, y, &cv);
+        *t = tmax - (emax-ein)/cv;
+        *ierr = 1;
+        return;
+    }
+    t1 = *t;
+    if (t1 < tmin || t1 > tmax) {
+        t1 = tmin + (tmax-tmin)/(emax-emin)*(ein-emin);
+    }
+    for (i = 0; i < maxiter; ++i) {
+        CKUBMS(&t1,y,&e1);
+        CKCVBS(&t1,y,&cv);
+        dt = (ein - e1) / cv;
+        if (dt > 100.) { dt = 100.; }
+        else if (dt < -100.) { dt = -100.; }
+        else if (fabs(dt) < tol) break;
+        else if (t1+dt == t1) break;
+        t1 += dt;
+    }
+    *t = t1;
+    *ierr = 0;
+    return;
 }
 
-#ifndef AMREX_USE_CUDA
-namespace thermo
+/* get temperature given enthalpy in mass units and mass fracs */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_T_GIVEN_HY(amrex::Real *  h, amrex::Real *  y, amrex::Real *  t, int * ierr)
 {
-    extern std::vector<double> imw;
-
-    extern double fwd_A[0], fwd_beta[0], fwd_Ea[0];
-    extern double low_A[0], low_beta[0], low_Ea[0];
-    extern double rev_A[0], rev_beta[0], rev_Ea[0];
-    extern double troe_a[0],troe_Ts[0], troe_Tss[0], troe_Tsss[0];
-    extern double sri_a[0], sri_b[0], sri_c[0], sri_d[0], sri_e[0];
-    extern double activation_units[0], prefactor_units[0], phase_units[0];
-    extern int is_PD[0], troe_len[0], sri_len[0], nTB[0], *TBid[0];
-    extern double *TB[0];
-
-    extern double fwd_A_DEF[0], fwd_beta_DEF[0], fwd_Ea_DEF[0];
-    extern double low_A_DEF[0], low_beta_DEF[0], low_Ea_DEF[0];
-    extern double rev_A_DEF[0], rev_beta_DEF[0], rev_Ea_DEF[0];
-    extern double troe_a_DEF[0],troe_Ts_DEF[0], troe_Tss_DEF[0], troe_Tsss_DEF[0];
-    extern double sri_a_DEF[0], sri_b_DEF[0], sri_c_DEF[0], sri_d_DEF[0], sri_e_DEF[0];
-    extern double activation_units_DEF[0], prefactor_units_DEF[0], phase_units_DEF[0];
-    extern int is_PD_DEF[0], troe_len_DEF[0], sri_len_DEF[0], nTB_DEF[0], *TBid_DEF[0];
-    extern double *TB_DEF[0];
-    extern std::vector<int> rxn_map;
+#ifdef CONVERGENCE
+    const int maxiter = 5000;
+    const amrex::Real tol  = 1.e-12;
+#else
+    const int maxiter = 200;
+    const amrex::Real tol  = 1.e-6;
+#endif
+    amrex::Real hin  = *h;
+    amrex::Real tmin = 90;/*max lower bound for thermo def */
+    amrex::Real tmax = 4000;/*min upper bound for thermo def */
+    amrex::Real h1,hmin,hmax,cp,t1,dt;
+    int i;/* loop counter */
+    CKHBMS(&tmin, y, &hmin);
+    CKHBMS(&tmax, y, &hmax);
+    if (hin < hmin) {
+        /*Linear Extrapolation below tmin */
+        CKCPBS(&tmin, y, &cp);
+        *t = tmin - (hmin-hin)/cp;
+        *ierr = 1;
+        return;
+    }
+    if (hin > hmax) {
+        /*Linear Extrapolation above tmax */
+        CKCPBS(&tmax, y, &cp);
+        *t = tmax - (hmax-hin)/cp;
+        *ierr = 1;
+        return;
+    }
+    t1 = *t;
+    if (t1 < tmin || t1 > tmax) {
+        t1 = tmin + (tmax-tmin)/(hmax-hmin)*(hin-hmin);
+    }
+    for (i = 0; i < maxiter; ++i) {
+        CKHBMS(&t1,y,&h1);
+        CKCPBS(&t1,y,&cp);
+        dt = (hin - h1) / cp;
+        if (dt > 100.) { dt = 100.; }
+        else if (dt < -100.) { dt = -100.; }
+        else if (fabs(dt) < tol) break;
+        else if (t1+dt == t1) break;
+        t1 += dt;
+    }
+    *t = t1;
+    *ierr = 0;
+    return;
 }
+
+
+/*compute the critical parameters for each species */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::Real *  acentric_i)
+{
+
+    amrex::Real   EPS[35];
+    amrex::Real   SIG[35];
+    amrex::Real    wt[35];
+    amrex::Real avogadro = 6.02214199e23;
+    amrex::Real boltzmann = 1.3806503e-16; //we work in CGS
+    amrex::Real Rcst = 83.144598; //in bar [CGS] !
+
+    egtransetEPS(EPS);
+    egtransetSIG(SIG);
+    get_mw(wt);
+
+    /*species 0: NC12H26 */
+    Tci[0] = 1.316 * EPS[0] ; 
+    ai[0] = (5.55 * pow(avogadro,2.0) * EPS[0]*boltzmann * pow(1e-8*SIG[0],3.0) ) / (pow(wt[0],2.0)); 
+    bi[0] = 0.855 * avogadro * pow(1e-8*SIG[0],3.0) / (wt[0]); 
+    acentric_i[0] = 0.0 ;
+
+    /*species 1: H */
+    Tci[1] = 1.316 * EPS[1] ; 
+    ai[1] = (5.55 * pow(avogadro,2.0) * EPS[1]*boltzmann * pow(1e-8*SIG[1],3.0) ) / (pow(wt[1],2.0)); 
+    bi[1] = 0.855 * avogadro * pow(1e-8*SIG[1],3.0) / (wt[1]); 
+    acentric_i[1] = 0.0 ;
+
+    /*species 2: O */
+    Tci[2] = 1.316 * EPS[2] ; 
+    ai[2] = (5.55 * pow(avogadro,2.0) * EPS[2]*boltzmann * pow(1e-8*SIG[2],3.0) ) / (pow(wt[2],2.0)); 
+    bi[2] = 0.855 * avogadro * pow(1e-8*SIG[2],3.0) / (wt[2]); 
+    acentric_i[2] = 0.0 ;
+
+    /*species 3: OH */
+    Tci[3] = 1.316 * EPS[3] ; 
+    ai[3] = (5.55 * pow(avogadro,2.0) * EPS[3]*boltzmann * pow(1e-8*SIG[3],3.0) ) / (pow(wt[3],2.0)); 
+    bi[3] = 0.855 * avogadro * pow(1e-8*SIG[3],3.0) / (wt[3]); 
+    acentric_i[3] = 0.0 ;
+
+    /*species 4: HO2 */
+    Tci[4] = 1.316 * EPS[4] ; 
+    ai[4] = (5.55 * pow(avogadro,2.0) * EPS[4]*boltzmann * pow(1e-8*SIG[4],3.0) ) / (pow(wt[4],2.0)); 
+    bi[4] = 0.855 * avogadro * pow(1e-8*SIG[4],3.0) / (wt[4]); 
+    acentric_i[4] = 0.0 ;
+
+    /*species 5: H2 */
+    /*Imported from NIST */
+    Tci[5] = 33.145000 ; 
+    ai[5] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[5],2.0) / (pow(2.015880,2.0) * 12.964000); 
+    bi[5] = 0.08664 * Rcst * Tci[5] / (2.015880 * 12.964000); 
+    acentric_i[5] = -0.219000 ;
+
+    /*species 6: H2O */
+    /*Imported from NIST */
+    Tci[6] = 647.096000 ; 
+    ai[6] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[6],2.0) / (pow(18.015340,2.0) * 220.640000); 
+    bi[6] = 0.08664 * Rcst * Tci[6] / (18.015340 * 220.640000); 
+    acentric_i[6] = 0.344300 ;
+
+    /*species 7: H2O2 */
+    Tci[7] = 1.316 * EPS[7] ; 
+    ai[7] = (5.55 * pow(avogadro,2.0) * EPS[7]*boltzmann * pow(1e-8*SIG[7],3.0) ) / (pow(wt[7],2.0)); 
+    bi[7] = 0.855 * avogadro * pow(1e-8*SIG[7],3.0) / (wt[7]); 
+    acentric_i[7] = 0.0 ;
+
+    /*species 8: O2 */
+    /*Imported from NIST */
+    Tci[8] = 154.581000 ; 
+    ai[8] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[8],2.0) / (pow(31.998800,2.0) * 50.430466); 
+    bi[8] = 0.08664 * Rcst * Tci[8] / (31.998800 * 50.430466); 
+    acentric_i[8] = 0.022200 ;
+
+    /*species 9: CH3 */
+    Tci[9] = 1.316 * EPS[9] ; 
+    ai[9] = (5.55 * pow(avogadro,2.0) * EPS[9]*boltzmann * pow(1e-8*SIG[9],3.0) ) / (pow(wt[9],2.0)); 
+    bi[9] = 0.855 * avogadro * pow(1e-8*SIG[9],3.0) / (wt[9]); 
+    acentric_i[9] = 0.0 ;
+
+    /*species 10: CH4 */
+    /*Imported from NIST */
+    Tci[10] = 190.560000 ; 
+    ai[10] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[10],2.0) / (pow(16.043030,2.0) * 45.990000); 
+    bi[10] = 0.08664 * Rcst * Tci[10] / (16.043030 * 45.990000); 
+    acentric_i[10] = 0.011000 ;
+
+    /*species 11: CH2O */
+    Tci[11] = 1.316 * EPS[11] ; 
+    ai[11] = (5.55 * pow(avogadro,2.0) * EPS[11]*boltzmann * pow(1e-8*SIG[11],3.0) ) / (pow(wt[11],2.0)); 
+    bi[11] = 0.855 * avogadro * pow(1e-8*SIG[11],3.0) / (wt[11]); 
+    acentric_i[11] = 0.0 ;
+
+    /*species 12: CO */
+    /*Imported from NIST */
+    Tci[12] = 132.850000 ; 
+    ai[12] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[12],2.0) / (pow(28.010000,2.0) * 34.940000); 
+    bi[12] = 0.08664 * Rcst * Tci[12] / (28.010000 * 34.940000); 
+    acentric_i[12] = 0.045000 ;
+
+    /*species 13: CO2 */
+    /*Imported from NIST */
+    Tci[13] = 304.120000 ; 
+    ai[13] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[13],2.0) / (pow(44.009950,2.0) * 73.740000); 
+    bi[13] = 0.08664 * Rcst * Tci[13] / (44.009950 * 73.740000); 
+    acentric_i[13] = 0.225000 ;
+
+    /*species 14: C2H2 */
+    /*Imported from NIST */
+    Tci[14] = 308.300000 ; 
+    ai[14] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[14],2.0) / (pow(26.038000,2.0) * 61.140000); 
+    bi[14] = 0.08664 * Rcst * Tci[14] / (26.038000 * 61.140000); 
+    acentric_i[14] = 0.189000 ;
+
+    /*species 15: C2H4 */
+    /*Imported from NIST */
+    Tci[15] = 282.340000 ; 
+    ai[15] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[15],2.0) / (pow(28.054000,2.0) * 50.410000); 
+    bi[15] = 0.08664 * Rcst * Tci[15] / (28.054000 * 50.410000); 
+    acentric_i[15] = 0.087000 ;
+
+    /*species 16: C2H6 */
+    /*Imported from NIST */
+    Tci[16] = 305.320000 ; 
+    ai[16] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[16],2.0) / (pow(30.070120,2.0) * 48.720000); 
+    bi[16] = 0.08664 * Rcst * Tci[16] / (30.070120 * 48.720000); 
+    acentric_i[16] = 0.099000 ;
+
+    /*species 17: CH2CHO */
+    Tci[17] = 1.316 * EPS[17] ; 
+    ai[17] = (5.55 * pow(avogadro,2.0) * EPS[17]*boltzmann * pow(1e-8*SIG[17],3.0) ) / (pow(wt[17],2.0)); 
+    bi[17] = 0.855 * avogadro * pow(1e-8*SIG[17],3.0) / (wt[17]); 
+    acentric_i[17] = 0.0 ;
+
+    /*species 18: aC3H5 */
+    Tci[18] = 1.316 * EPS[18] ; 
+    ai[18] = (5.55 * pow(avogadro,2.0) * EPS[18]*boltzmann * pow(1e-8*SIG[18],3.0) ) / (pow(wt[18],2.0)); 
+    bi[18] = 0.855 * avogadro * pow(1e-8*SIG[18],3.0) / (wt[18]); 
+    acentric_i[18] = 0.0 ;
+
+    /*species 19: C3H6 */
+    Tci[19] = 1.316 * EPS[19] ; 
+    ai[19] = (5.55 * pow(avogadro,2.0) * EPS[19]*boltzmann * pow(1e-8*SIG[19],3.0) ) / (pow(wt[19],2.0)); 
+    bi[19] = 0.855 * avogadro * pow(1e-8*SIG[19],3.0) / (wt[19]); 
+    acentric_i[19] = 0.0 ;
+
+    /*species 20: C2H3CHO */
+    Tci[20] = 1.316 * EPS[20] ; 
+    ai[20] = (5.55 * pow(avogadro,2.0) * EPS[20]*boltzmann * pow(1e-8*SIG[20],3.0) ) / (pow(wt[20],2.0)); 
+    bi[20] = 0.855 * avogadro * pow(1e-8*SIG[20],3.0) / (wt[20]); 
+    acentric_i[20] = 0.0 ;
+
+    /*species 21: C4H7 */
+    Tci[21] = 1.316 * EPS[21] ; 
+    ai[21] = (5.55 * pow(avogadro,2.0) * EPS[21]*boltzmann * pow(1e-8*SIG[21],3.0) ) / (pow(wt[21],2.0)); 
+    bi[21] = 0.855 * avogadro * pow(1e-8*SIG[21],3.0) / (wt[21]); 
+    acentric_i[21] = 0.0 ;
+
+    /*species 22: C4H81 */
+    Tci[22] = 1.316 * EPS[22] ; 
+    ai[22] = (5.55 * pow(avogadro,2.0) * EPS[22]*boltzmann * pow(1e-8*SIG[22],3.0) ) / (pow(wt[22],2.0)); 
+    bi[22] = 0.855 * avogadro * pow(1e-8*SIG[22],3.0) / (wt[22]); 
+    acentric_i[22] = 0.0 ;
+
+    /*species 23: C5H9 */
+    Tci[23] = 1.316 * EPS[23] ; 
+    ai[23] = (5.55 * pow(avogadro,2.0) * EPS[23]*boltzmann * pow(1e-8*SIG[23],3.0) ) / (pow(wt[23],2.0)); 
+    bi[23] = 0.855 * avogadro * pow(1e-8*SIG[23],3.0) / (wt[23]); 
+    acentric_i[23] = 0.0 ;
+
+    /*species 24: C5H10 */
+    Tci[24] = 1.316 * EPS[24] ; 
+    ai[24] = (5.55 * pow(avogadro,2.0) * EPS[24]*boltzmann * pow(1e-8*SIG[24],3.0) ) / (pow(wt[24],2.0)); 
+    bi[24] = 0.855 * avogadro * pow(1e-8*SIG[24],3.0) / (wt[24]); 
+    acentric_i[24] = 0.0 ;
+
+    /*species 25: C6H12 */
+    Tci[25] = 1.316 * EPS[25] ; 
+    ai[25] = (5.55 * pow(avogadro,2.0) * EPS[25]*boltzmann * pow(1e-8*SIG[25],3.0) ) / (pow(wt[25],2.0)); 
+    bi[25] = 0.855 * avogadro * pow(1e-8*SIG[25],3.0) / (wt[25]); 
+    acentric_i[25] = 0.0 ;
+
+    /*species 26: C7H14 */
+    Tci[26] = 1.316 * EPS[26] ; 
+    ai[26] = (5.55 * pow(avogadro,2.0) * EPS[26]*boltzmann * pow(1e-8*SIG[26],3.0) ) / (pow(wt[26],2.0)); 
+    bi[26] = 0.855 * avogadro * pow(1e-8*SIG[26],3.0) / (wt[26]); 
+    acentric_i[26] = 0.0 ;
+
+    /*species 27: C8H16 */
+    Tci[27] = 1.316 * EPS[27] ; 
+    ai[27] = (5.55 * pow(avogadro,2.0) * EPS[27]*boltzmann * pow(1e-8*SIG[27],3.0) ) / (pow(wt[27],2.0)); 
+    bi[27] = 0.855 * avogadro * pow(1e-8*SIG[27],3.0) / (wt[27]); 
+    acentric_i[27] = 0.0 ;
+
+    /*species 28: C9H18 */
+    Tci[28] = 1.316 * EPS[28] ; 
+    ai[28] = (5.55 * pow(avogadro,2.0) * EPS[28]*boltzmann * pow(1e-8*SIG[28],3.0) ) / (pow(wt[28],2.0)); 
+    bi[28] = 0.855 * avogadro * pow(1e-8*SIG[28],3.0) / (wt[28]); 
+    acentric_i[28] = 0.0 ;
+
+    /*species 29: PXC9H19 */
+    Tci[29] = 1.316 * EPS[29] ; 
+    ai[29] = (5.55 * pow(avogadro,2.0) * EPS[29]*boltzmann * pow(1e-8*SIG[29],3.0) ) / (pow(wt[29],2.0)); 
+    bi[29] = 0.855 * avogadro * pow(1e-8*SIG[29],3.0) / (wt[29]); 
+    acentric_i[29] = 0.0 ;
+
+    /*species 30: C10H20 */
+    Tci[30] = 1.316 * EPS[30] ; 
+    ai[30] = (5.55 * pow(avogadro,2.0) * EPS[30]*boltzmann * pow(1e-8*SIG[30],3.0) ) / (pow(wt[30],2.0)); 
+    bi[30] = 0.855 * avogadro * pow(1e-8*SIG[30],3.0) / (wt[30]); 
+    acentric_i[30] = 0.0 ;
+
+    /*species 31: C12H24 */
+    Tci[31] = 1.316 * EPS[31] ; 
+    ai[31] = (5.55 * pow(avogadro,2.0) * EPS[31]*boltzmann * pow(1e-8*SIG[31],3.0) ) / (pow(wt[31],2.0)); 
+    bi[31] = 0.855 * avogadro * pow(1e-8*SIG[31],3.0) / (wt[31]); 
+    acentric_i[31] = 0.0 ;
+
+    /*species 32: C12H25O2 */
+    Tci[32] = 1.316 * EPS[32] ; 
+    ai[32] = (5.55 * pow(avogadro,2.0) * EPS[32]*boltzmann * pow(1e-8*SIG[32],3.0) ) / (pow(wt[32],2.0)); 
+    bi[32] = 0.855 * avogadro * pow(1e-8*SIG[32],3.0) / (wt[32]); 
+    acentric_i[32] = 0.0 ;
+
+    /*species 33: OC12H23OOH */
+    Tci[33] = 1.316 * EPS[33] ; 
+    ai[33] = (5.55 * pow(avogadro,2.0) * EPS[33]*boltzmann * pow(1e-8*SIG[33],3.0) ) / (pow(wt[33],2.0)); 
+    bi[33] = 0.855 * avogadro * pow(1e-8*SIG[33],3.0) / (wt[33]); 
+    acentric_i[33] = 0.0 ;
+
+    /*species 34: N2 */
+    /*Imported from NIST */
+    Tci[34] = 126.192000 ; 
+    ai[34] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[34],2.0) / (pow(28.013400,2.0) * 33.958000); 
+    bi[34] = 0.08664 * Rcst * Tci[34] / (28.013400 * 33.958000); 
+    acentric_i[34] = 0.037200 ;
+
+    return;
+}
+
+
+/*Compute P = rhoRT/W(x) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKPX(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  P)
+{
+    amrex::Real XW = 0;/* To hold mean molecular wt */
+    XW += x[0]*170.341020; /*NC12H26 */
+    XW += x[1]*1.007970; /*H */
+    XW += x[2]*15.999400; /*O */
+    XW += x[3]*17.007370; /*OH */
+    XW += x[4]*33.006770; /*HO2 */
+    XW += x[5]*2.015940; /*H2 */
+    XW += x[6]*18.015340; /*H2O */
+    XW += x[7]*34.014740; /*H2O2 */
+    XW += x[8]*31.998800; /*O2 */
+    XW += x[9]*15.035060; /*CH3 */
+    XW += x[10]*16.043030; /*CH4 */
+    XW += x[11]*30.026490; /*CH2O */
+    XW += x[12]*28.010550; /*CO */
+    XW += x[13]*44.009950; /*CO2 */
+    XW += x[14]*26.038240; /*C2H2 */
+    XW += x[15]*28.054180; /*C2H4 */
+    XW += x[16]*30.070120; /*C2H6 */
+    XW += x[17]*43.045610; /*CH2CHO */
+    XW += x[18]*41.073300; /*aC3H5 */
+    XW += x[19]*42.081270; /*C3H6 */
+    XW += x[20]*56.064730; /*C2H3CHO */
+    XW += x[21]*55.100390; /*C4H7 */
+    XW += x[22]*56.108360; /*C4H81 */
+    XW += x[23]*69.127480; /*C5H9 */
+    XW += x[24]*70.135450; /*C5H10 */
+    XW += x[25]*84.162540; /*C6H12 */
+    XW += x[26]*98.189630; /*C7H14 */
+    XW += x[27]*112.216720; /*C8H16 */
+    XW += x[28]*126.243810; /*C9H18 */
+    XW += x[29]*127.251780; /*PXC9H19 */
+    XW += x[30]*140.270900; /*C10H20 */
+    XW += x[31]*168.325080; /*C12H24 */
+    XW += x[32]*201.331850; /*C12H25O2 */
+    XW += x[33]*216.323280; /*OC12H23OOH */
+    XW += x[34]*28.013400; /*N2 */
+    *P = *rho * 8.31446261815324e+07 * (*T) / XW; /*P = rho*R*T/W */
+
+    return;
+}
+
+
+/*Compute P = rhoRT/W(y) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKPY(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  P)
+{
+    amrex::Real YOW = 0;/* for computing mean MW */
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    YOW += y[0]*imw[0]; /*NC12H26 */
+    YOW += y[1]*imw[1]; /*H */
+    YOW += y[2]*imw[2]; /*O */
+    YOW += y[3]*imw[3]; /*OH */
+    YOW += y[4]*imw[4]; /*HO2 */
+    YOW += y[5]*imw[5]; /*H2 */
+    YOW += y[6]*imw[6]; /*H2O */
+    YOW += y[7]*imw[7]; /*H2O2 */
+    YOW += y[8]*imw[8]; /*O2 */
+    YOW += y[9]*imw[9]; /*CH3 */
+    YOW += y[10]*imw[10]; /*CH4 */
+    YOW += y[11]*imw[11]; /*CH2O */
+    YOW += y[12]*imw[12]; /*CO */
+    YOW += y[13]*imw[13]; /*CO2 */
+    YOW += y[14]*imw[14]; /*C2H2 */
+    YOW += y[15]*imw[15]; /*C2H4 */
+    YOW += y[16]*imw[16]; /*C2H6 */
+    YOW += y[17]*imw[17]; /*CH2CHO */
+    YOW += y[18]*imw[18]; /*aC3H5 */
+    YOW += y[19]*imw[19]; /*C3H6 */
+    YOW += y[20]*imw[20]; /*C2H3CHO */
+    YOW += y[21]*imw[21]; /*C4H7 */
+    YOW += y[22]*imw[22]; /*C4H81 */
+    YOW += y[23]*imw[23]; /*C5H9 */
+    YOW += y[24]*imw[24]; /*C5H10 */
+    YOW += y[25]*imw[25]; /*C6H12 */
+    YOW += y[26]*imw[26]; /*C7H14 */
+    YOW += y[27]*imw[27]; /*C8H16 */
+    YOW += y[28]*imw[28]; /*C9H18 */
+    YOW += y[29]*imw[29]; /*PXC9H19 */
+    YOW += y[30]*imw[30]; /*C10H20 */
+    YOW += y[31]*imw[31]; /*C12H24 */
+    YOW += y[32]*imw[32]; /*C12H25O2 */
+    YOW += y[33]*imw[33]; /*OC12H23OOH */
+    YOW += y[34]*imw[34]; /*N2 */
+    *P = *rho * 8.31446261815324e+07 * (*T) * YOW; /*P = rho*R*T/W */
+
+    return;
+}
+
+
+/*Compute P = rhoRT/W(c) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKPC(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  c,  amrex::Real *  P)
+{
+    int id; /*loop counter */
+    /*See Eq 5 in CK Manual */
+    amrex::Real W = 0;
+    amrex::Real sumC = 0;
+    W += c[0]*170.341020; /*NC12H26 */
+    W += c[1]*1.007970; /*H */
+    W += c[2]*15.999400; /*O */
+    W += c[3]*17.007370; /*OH */
+    W += c[4]*33.006770; /*HO2 */
+    W += c[5]*2.015940; /*H2 */
+    W += c[6]*18.015340; /*H2O */
+    W += c[7]*34.014740; /*H2O2 */
+    W += c[8]*31.998800; /*O2 */
+    W += c[9]*15.035060; /*CH3 */
+    W += c[10]*16.043030; /*CH4 */
+    W += c[11]*30.026490; /*CH2O */
+    W += c[12]*28.010550; /*CO */
+    W += c[13]*44.009950; /*CO2 */
+    W += c[14]*26.038240; /*C2H2 */
+    W += c[15]*28.054180; /*C2H4 */
+    W += c[16]*30.070120; /*C2H6 */
+    W += c[17]*43.045610; /*CH2CHO */
+    W += c[18]*41.073300; /*aC3H5 */
+    W += c[19]*42.081270; /*C3H6 */
+    W += c[20]*56.064730; /*C2H3CHO */
+    W += c[21]*55.100390; /*C4H7 */
+    W += c[22]*56.108360; /*C4H81 */
+    W += c[23]*69.127480; /*C5H9 */
+    W += c[24]*70.135450; /*C5H10 */
+    W += c[25]*84.162540; /*C6H12 */
+    W += c[26]*98.189630; /*C7H14 */
+    W += c[27]*112.216720; /*C8H16 */
+    W += c[28]*126.243810; /*C9H18 */
+    W += c[29]*127.251780; /*PXC9H19 */
+    W += c[30]*140.270900; /*C10H20 */
+    W += c[31]*168.325080; /*C12H24 */
+    W += c[32]*201.331850; /*C12H25O2 */
+    W += c[33]*216.323280; /*OC12H23OOH */
+    W += c[34]*28.013400; /*N2 */
+
+    for (id = 0; id < 35; ++id) {
+        sumC += c[id];
+    }
+    *P = *rho * 8.31446261815324e+07 * (*T) * sumC / W; /*P = rho*R*T/W */
+
+    return;
+}
+
+
+/*Compute rho = PW(x)/RT */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKRHOX(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  rho)
+{
+    amrex::Real XW = 0;/* To hold mean molecular wt */
+    XW += x[0]*170.341020; /*NC12H26 */
+    XW += x[1]*1.007970; /*H */
+    XW += x[2]*15.999400; /*O */
+    XW += x[3]*17.007370; /*OH */
+    XW += x[4]*33.006770; /*HO2 */
+    XW += x[5]*2.015940; /*H2 */
+    XW += x[6]*18.015340; /*H2O */
+    XW += x[7]*34.014740; /*H2O2 */
+    XW += x[8]*31.998800; /*O2 */
+    XW += x[9]*15.035060; /*CH3 */
+    XW += x[10]*16.043030; /*CH4 */
+    XW += x[11]*30.026490; /*CH2O */
+    XW += x[12]*28.010550; /*CO */
+    XW += x[13]*44.009950; /*CO2 */
+    XW += x[14]*26.038240; /*C2H2 */
+    XW += x[15]*28.054180; /*C2H4 */
+    XW += x[16]*30.070120; /*C2H6 */
+    XW += x[17]*43.045610; /*CH2CHO */
+    XW += x[18]*41.073300; /*aC3H5 */
+    XW += x[19]*42.081270; /*C3H6 */
+    XW += x[20]*56.064730; /*C2H3CHO */
+    XW += x[21]*55.100390; /*C4H7 */
+    XW += x[22]*56.108360; /*C4H81 */
+    XW += x[23]*69.127480; /*C5H9 */
+    XW += x[24]*70.135450; /*C5H10 */
+    XW += x[25]*84.162540; /*C6H12 */
+    XW += x[26]*98.189630; /*C7H14 */
+    XW += x[27]*112.216720; /*C8H16 */
+    XW += x[28]*126.243810; /*C9H18 */
+    XW += x[29]*127.251780; /*PXC9H19 */
+    XW += x[30]*140.270900; /*C10H20 */
+    XW += x[31]*168.325080; /*C12H24 */
+    XW += x[32]*201.331850; /*C12H25O2 */
+    XW += x[33]*216.323280; /*OC12H23OOH */
+    XW += x[34]*28.013400; /*N2 */
+    *rho = *P * XW / (8.31446261815324e+07 * (*T)); /*rho = P*W/(R*T) */
+
+    return;
+}
+
+
+/*Compute rho = P*W(y)/RT */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKRHOY(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  rho)
+{
+    amrex::Real YOW = 0;
+    amrex::Real tmp[35];
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    for (int i = 0; i < 35; i++)
+    {
+        tmp[i] = y[i]*imw[i];
+    }
+    for (int i = 0; i < 35; i++)
+    {
+        YOW += tmp[i];
+    }
+
+    *rho = *P / (8.31446261815324e+07 * (*T) * YOW);/*rho = P*W/(R*T) */
+    return;
+}
+
+
+/*Compute rho = P*W(c)/(R*T) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKRHOC(amrex::Real *  P, amrex::Real *  T, amrex::Real *  c,  amrex::Real *  rho)
+{
+    int id; /*loop counter */
+    /*See Eq 5 in CK Manual */
+    amrex::Real W = 0;
+    amrex::Real sumC = 0;
+    W += c[0]*170.341020; /*NC12H26 */
+    W += c[1]*1.007970; /*H */
+    W += c[2]*15.999400; /*O */
+    W += c[3]*17.007370; /*OH */
+    W += c[4]*33.006770; /*HO2 */
+    W += c[5]*2.015940; /*H2 */
+    W += c[6]*18.015340; /*H2O */
+    W += c[7]*34.014740; /*H2O2 */
+    W += c[8]*31.998800; /*O2 */
+    W += c[9]*15.035060; /*CH3 */
+    W += c[10]*16.043030; /*CH4 */
+    W += c[11]*30.026490; /*CH2O */
+    W += c[12]*28.010550; /*CO */
+    W += c[13]*44.009950; /*CO2 */
+    W += c[14]*26.038240; /*C2H2 */
+    W += c[15]*28.054180; /*C2H4 */
+    W += c[16]*30.070120; /*C2H6 */
+    W += c[17]*43.045610; /*CH2CHO */
+    W += c[18]*41.073300; /*aC3H5 */
+    W += c[19]*42.081270; /*C3H6 */
+    W += c[20]*56.064730; /*C2H3CHO */
+    W += c[21]*55.100390; /*C4H7 */
+    W += c[22]*56.108360; /*C4H81 */
+    W += c[23]*69.127480; /*C5H9 */
+    W += c[24]*70.135450; /*C5H10 */
+    W += c[25]*84.162540; /*C6H12 */
+    W += c[26]*98.189630; /*C7H14 */
+    W += c[27]*112.216720; /*C8H16 */
+    W += c[28]*126.243810; /*C9H18 */
+    W += c[29]*127.251780; /*PXC9H19 */
+    W += c[30]*140.270900; /*C10H20 */
+    W += c[31]*168.325080; /*C12H24 */
+    W += c[32]*201.331850; /*C12H25O2 */
+    W += c[33]*216.323280; /*OC12H23OOH */
+    W += c[34]*28.013400; /*N2 */
+
+    for (id = 0; id < 35; ++id) {
+        sumC += c[id];
+    }
+    *rho = *P * W / (sumC * (*T) * 8.31446261815324e+07); /*rho = PW/(R*T) */
+
+    return;
+}
+
+
+/*get molecular weight for all species */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWT( amrex::Real *  wt)
+{
+    get_mw(wt);
+}
+
+/*given y[species]: mass fractions */
+/*returns mean molecular weight (gm/mole) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKMMWY(amrex::Real *  y,  amrex::Real *  wtm)
+{
+    amrex::Real YOW = 0;
+    amrex::Real tmp[35];
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    for (int i = 0; i < 35; i++)
+    {
+        tmp[i] = y[i]*imw[i];
+    }
+    for (int i = 0; i < 35; i++)
+    {
+        YOW += tmp[i];
+    }
+
+    *wtm = 1.0 / YOW;
+    return;
+}
+
+
+/*given x[species]: mole fractions */
+/*returns mean molecular weight (gm/mole) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKMMWX(amrex::Real *  x,  amrex::Real *  wtm)
+{
+    amrex::Real XW = 0;/* see Eq 4 in CK Manual */
+    XW += x[0]*170.341020; /*NC12H26 */
+    XW += x[1]*1.007970; /*H */
+    XW += x[2]*15.999400; /*O */
+    XW += x[3]*17.007370; /*OH */
+    XW += x[4]*33.006770; /*HO2 */
+    XW += x[5]*2.015940; /*H2 */
+    XW += x[6]*18.015340; /*H2O */
+    XW += x[7]*34.014740; /*H2O2 */
+    XW += x[8]*31.998800; /*O2 */
+    XW += x[9]*15.035060; /*CH3 */
+    XW += x[10]*16.043030; /*CH4 */
+    XW += x[11]*30.026490; /*CH2O */
+    XW += x[12]*28.010550; /*CO */
+    XW += x[13]*44.009950; /*CO2 */
+    XW += x[14]*26.038240; /*C2H2 */
+    XW += x[15]*28.054180; /*C2H4 */
+    XW += x[16]*30.070120; /*C2H6 */
+    XW += x[17]*43.045610; /*CH2CHO */
+    XW += x[18]*41.073300; /*aC3H5 */
+    XW += x[19]*42.081270; /*C3H6 */
+    XW += x[20]*56.064730; /*C2H3CHO */
+    XW += x[21]*55.100390; /*C4H7 */
+    XW += x[22]*56.108360; /*C4H81 */
+    XW += x[23]*69.127480; /*C5H9 */
+    XW += x[24]*70.135450; /*C5H10 */
+    XW += x[25]*84.162540; /*C6H12 */
+    XW += x[26]*98.189630; /*C7H14 */
+    XW += x[27]*112.216720; /*C8H16 */
+    XW += x[28]*126.243810; /*C9H18 */
+    XW += x[29]*127.251780; /*PXC9H19 */
+    XW += x[30]*140.270900; /*C10H20 */
+    XW += x[31]*168.325080; /*C12H24 */
+    XW += x[32]*201.331850; /*C12H25O2 */
+    XW += x[33]*216.323280; /*OC12H23OOH */
+    XW += x[34]*28.013400; /*N2 */
+    *wtm = XW;
+
+    return;
+}
+
+/*given c[species]: molar concentration */
+/*returns mean molecular weight (gm/mole) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKMMWC(amrex::Real *  c,  amrex::Real *  wtm)
+{
+    int id; /*loop counter */
+    /*See Eq 5 in CK Manual */
+    amrex::Real W = 0;
+    amrex::Real sumC = 0;
+    W += c[0]*170.341020; /*NC12H26 */
+    W += c[1]*1.007970; /*H */
+    W += c[2]*15.999400; /*O */
+    W += c[3]*17.007370; /*OH */
+    W += c[4]*33.006770; /*HO2 */
+    W += c[5]*2.015940; /*H2 */
+    W += c[6]*18.015340; /*H2O */
+    W += c[7]*34.014740; /*H2O2 */
+    W += c[8]*31.998800; /*O2 */
+    W += c[9]*15.035060; /*CH3 */
+    W += c[10]*16.043030; /*CH4 */
+    W += c[11]*30.026490; /*CH2O */
+    W += c[12]*28.010550; /*CO */
+    W += c[13]*44.009950; /*CO2 */
+    W += c[14]*26.038240; /*C2H2 */
+    W += c[15]*28.054180; /*C2H4 */
+    W += c[16]*30.070120; /*C2H6 */
+    W += c[17]*43.045610; /*CH2CHO */
+    W += c[18]*41.073300; /*aC3H5 */
+    W += c[19]*42.081270; /*C3H6 */
+    W += c[20]*56.064730; /*C2H3CHO */
+    W += c[21]*55.100390; /*C4H7 */
+    W += c[22]*56.108360; /*C4H81 */
+    W += c[23]*69.127480; /*C5H9 */
+    W += c[24]*70.135450; /*C5H10 */
+    W += c[25]*84.162540; /*C6H12 */
+    W += c[26]*98.189630; /*C7H14 */
+    W += c[27]*112.216720; /*C8H16 */
+    W += c[28]*126.243810; /*C9H18 */
+    W += c[29]*127.251780; /*PXC9H19 */
+    W += c[30]*140.270900; /*C10H20 */
+    W += c[31]*168.325080; /*C12H24 */
+    W += c[32]*201.331850; /*C12H25O2 */
+    W += c[33]*216.323280; /*OC12H23OOH */
+    W += c[34]*28.013400; /*N2 */
+
+    for (id = 0; id < 35; ++id) {
+        sumC += c[id];
+    }
+    /* CK provides no guard against divison by zero */
+    *wtm = W/sumC;
+
+    return;
+}
+
+
+/*get Cp/R as a function of T  */
+/*for all species (Eq 19) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPOR(amrex::Real *  T, amrex::Real *  cpor)
+{
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    cp_R(cpor, tc);
+}
+
+
+/*get H/RT as a function of T  */
+/*for all species (Eq 20) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHORT(amrex::Real *  T, amrex::Real *  hort)
+{
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    speciesEnthalpy(hort, tc);
+}
+
+
+/*get S/R as a function of T  */
+/*for all species (Eq 21) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSOR(amrex::Real *  T, amrex::Real *  sor)
+{
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    speciesEntropy(sor, tc);
+}
+
+/*convert y[species] (mass fracs) to x[species] (mole fracs) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKYTX(amrex::Real *  y,  amrex::Real *  x)
+{
+    amrex::Real YOW = 0;
+    amrex::Real tmp[35];
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    for (int i = 0; i < 35; i++)
+    {
+        tmp[i] = y[i]*imw[i];
+    }
+    for (int i = 0; i < 35; i++)
+    {
+        YOW += tmp[i];
+    }
+
+    amrex::Real YOWINV = 1.0/YOW;
+
+    for (int i = 0; i < 35; i++)
+    {
+        x[i] = y[i]*imw[i]*YOWINV;
+    }
+    return;
+}
+
+
+/*convert y[species] (mass fracs) to c[species] (molar conc) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKYTCP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  c)
+{
+    amrex::Real YOW = 0;
+    amrex::Real PWORT;
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    /*Compute inverse of mean molecular wt first */
+    for (int i = 0; i < 35; i++)
+    {
+        c[i] = y[i]*imw[i];
+    }
+    for (int i = 0; i < 35; i++)
+    {
+        YOW += c[i];
+    }
+
+    /*PW/RT (see Eq. 7) */
+    PWORT = (*P)/(YOW * 8.31446261815324e+07 * (*T)); 
+    /*Now compute conversion */
+
+    for (int i = 0; i < 35; i++)
+    {
+        c[i] = PWORT * y[i] * imw[i];
+    }
+    return;
+}
+
+
+/*convert y[species] (mass fracs) to c[species] (molar conc) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKYTCR(amrex::Real *  rho, amrex::Real * /*T*/, amrex::Real * y,  amrex::Real * c)
+{
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    for (int i = 0; i < 35; i++)
+    {
+        c[i] = (*rho)  * y[i] * imw[i];
+    }
+}
+
+
+/*convert x[species] (mole fracs) to y[species] (mass fracs) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKXTY(amrex::Real *  x,  amrex::Real *  y)
+{
+    amrex::Real XW = 0; /*See Eq 4, 9 in CK Manual */
+    /*Compute mean molecular wt first */
+    XW += x[0]*170.341020; /*NC12H26 */
+    XW += x[1]*1.007970; /*H */
+    XW += x[2]*15.999400; /*O */
+    XW += x[3]*17.007370; /*OH */
+    XW += x[4]*33.006770; /*HO2 */
+    XW += x[5]*2.015940; /*H2 */
+    XW += x[6]*18.015340; /*H2O */
+    XW += x[7]*34.014740; /*H2O2 */
+    XW += x[8]*31.998800; /*O2 */
+    XW += x[9]*15.035060; /*CH3 */
+    XW += x[10]*16.043030; /*CH4 */
+    XW += x[11]*30.026490; /*CH2O */
+    XW += x[12]*28.010550; /*CO */
+    XW += x[13]*44.009950; /*CO2 */
+    XW += x[14]*26.038240; /*C2H2 */
+    XW += x[15]*28.054180; /*C2H4 */
+    XW += x[16]*30.070120; /*C2H6 */
+    XW += x[17]*43.045610; /*CH2CHO */
+    XW += x[18]*41.073300; /*aC3H5 */
+    XW += x[19]*42.081270; /*C3H6 */
+    XW += x[20]*56.064730; /*C2H3CHO */
+    XW += x[21]*55.100390; /*C4H7 */
+    XW += x[22]*56.108360; /*C4H81 */
+    XW += x[23]*69.127480; /*C5H9 */
+    XW += x[24]*70.135450; /*C5H10 */
+    XW += x[25]*84.162540; /*C6H12 */
+    XW += x[26]*98.189630; /*C7H14 */
+    XW += x[27]*112.216720; /*C8H16 */
+    XW += x[28]*126.243810; /*C9H18 */
+    XW += x[29]*127.251780; /*PXC9H19 */
+    XW += x[30]*140.270900; /*C10H20 */
+    XW += x[31]*168.325080; /*C12H24 */
+    XW += x[32]*201.331850; /*C12H25O2 */
+    XW += x[33]*216.323280; /*OC12H23OOH */
+    XW += x[34]*28.013400; /*N2 */
+    /*Now compute conversion */
+    amrex::Real XWinv = 1.0/XW;
+    y[0] = x[0]*170.341020*XWinv; 
+    y[1] = x[1]*1.007970*XWinv; 
+    y[2] = x[2]*15.999400*XWinv; 
+    y[3] = x[3]*17.007370*XWinv; 
+    y[4] = x[4]*33.006770*XWinv; 
+    y[5] = x[5]*2.015940*XWinv; 
+    y[6] = x[6]*18.015340*XWinv; 
+    y[7] = x[7]*34.014740*XWinv; 
+    y[8] = x[8]*31.998800*XWinv; 
+    y[9] = x[9]*15.035060*XWinv; 
+    y[10] = x[10]*16.043030*XWinv; 
+    y[11] = x[11]*30.026490*XWinv; 
+    y[12] = x[12]*28.010550*XWinv; 
+    y[13] = x[13]*44.009950*XWinv; 
+    y[14] = x[14]*26.038240*XWinv; 
+    y[15] = x[15]*28.054180*XWinv; 
+    y[16] = x[16]*30.070120*XWinv; 
+    y[17] = x[17]*43.045610*XWinv; 
+    y[18] = x[18]*41.073300*XWinv; 
+    y[19] = x[19]*42.081270*XWinv; 
+    y[20] = x[20]*56.064730*XWinv; 
+    y[21] = x[21]*55.100390*XWinv; 
+    y[22] = x[22]*56.108360*XWinv; 
+    y[23] = x[23]*69.127480*XWinv; 
+    y[24] = x[24]*70.135450*XWinv; 
+    y[25] = x[25]*84.162540*XWinv; 
+    y[26] = x[26]*98.189630*XWinv; 
+    y[27] = x[27]*112.216720*XWinv; 
+    y[28] = x[28]*126.243810*XWinv; 
+    y[29] = x[29]*127.251780*XWinv; 
+    y[30] = x[30]*140.270900*XWinv; 
+    y[31] = x[31]*168.325080*XWinv; 
+    y[32] = x[32]*201.331850*XWinv; 
+    y[33] = x[33]*216.323280*XWinv; 
+    y[34] = x[34]*28.013400*XWinv; 
+
+    return;
+}
+
+
+/*convert x[species] (mole fracs) to c[species] (molar conc) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKXTCP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  c)
+{
+    int id; /*loop counter */
+    amrex::Real PORT = (*P)/(8.31446261815324e+07 * (*T)); /*P/RT */
+
+    /*Compute conversion, see Eq 10 */
+    for (id = 0; id < 35; ++id) {
+        c[id] = x[id]*PORT;
+    }
+
+    return;
+}
+
+
+/*convert x[species] (mole fracs) to c[species] (molar conc) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKXTCR(amrex::Real *  rho, amrex::Real * /*T*/, amrex::Real *  x, amrex::Real *  c)
+{
+    int id; /*loop counter */
+    amrex::Real XW = 0; /*See Eq 4, 11 in CK Manual */
+    amrex::Real ROW; 
+    /*Compute mean molecular wt first */
+    XW += x[0]*170.341020; /*NC12H26 */
+    XW += x[1]*1.007970; /*H */
+    XW += x[2]*15.999400; /*O */
+    XW += x[3]*17.007370; /*OH */
+    XW += x[4]*33.006770; /*HO2 */
+    XW += x[5]*2.015940; /*H2 */
+    XW += x[6]*18.015340; /*H2O */
+    XW += x[7]*34.014740; /*H2O2 */
+    XW += x[8]*31.998800; /*O2 */
+    XW += x[9]*15.035060; /*CH3 */
+    XW += x[10]*16.043030; /*CH4 */
+    XW += x[11]*30.026490; /*CH2O */
+    XW += x[12]*28.010550; /*CO */
+    XW += x[13]*44.009950; /*CO2 */
+    XW += x[14]*26.038240; /*C2H2 */
+    XW += x[15]*28.054180; /*C2H4 */
+    XW += x[16]*30.070120; /*C2H6 */
+    XW += x[17]*43.045610; /*CH2CHO */
+    XW += x[18]*41.073300; /*aC3H5 */
+    XW += x[19]*42.081270; /*C3H6 */
+    XW += x[20]*56.064730; /*C2H3CHO */
+    XW += x[21]*55.100390; /*C4H7 */
+    XW += x[22]*56.108360; /*C4H81 */
+    XW += x[23]*69.127480; /*C5H9 */
+    XW += x[24]*70.135450; /*C5H10 */
+    XW += x[25]*84.162540; /*C6H12 */
+    XW += x[26]*98.189630; /*C7H14 */
+    XW += x[27]*112.216720; /*C8H16 */
+    XW += x[28]*126.243810; /*C9H18 */
+    XW += x[29]*127.251780; /*PXC9H19 */
+    XW += x[30]*140.270900; /*C10H20 */
+    XW += x[31]*168.325080; /*C12H24 */
+    XW += x[32]*201.331850; /*C12H25O2 */
+    XW += x[33]*216.323280; /*OC12H23OOH */
+    XW += x[34]*28.013400; /*N2 */
+    ROW = (*rho) / XW;
+
+    /*Compute conversion, see Eq 11 */
+    for (id = 0; id < 35; ++id) {
+        c[id] = x[id]*ROW;
+    }
+
+    return;
+}
+
+
+/*convert c[species] (molar conc) to x[species] (mole fracs) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCTX(amrex::Real *  c, amrex::Real *  x)
+{
+    int id; /*loop counter */
+    amrex::Real sumC = 0; 
+
+    /*compute sum of c  */
+    for (id = 0; id < 35; ++id) {
+        sumC += c[id];
+    }
+
+    /* See Eq 13  */
+    amrex::Real sumCinv = 1.0/sumC;
+    for (id = 0; id < 35; ++id) {
+        x[id] = c[id]*sumCinv;
+    }
+
+    return;
+}
+
+
+/*convert c[species] (molar conc) to y[species] (mass fracs) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCTY(amrex::Real *  c, amrex::Real *  y)
+{
+    amrex::Real CW = 0; /*See Eq 12 in CK Manual */
+    /*compute denominator in eq 12 first */
+    CW += c[0]*170.341020; /*NC12H26 */
+    CW += c[1]*1.007970; /*H */
+    CW += c[2]*15.999400; /*O */
+    CW += c[3]*17.007370; /*OH */
+    CW += c[4]*33.006770; /*HO2 */
+    CW += c[5]*2.015940; /*H2 */
+    CW += c[6]*18.015340; /*H2O */
+    CW += c[7]*34.014740; /*H2O2 */
+    CW += c[8]*31.998800; /*O2 */
+    CW += c[9]*15.035060; /*CH3 */
+    CW += c[10]*16.043030; /*CH4 */
+    CW += c[11]*30.026490; /*CH2O */
+    CW += c[12]*28.010550; /*CO */
+    CW += c[13]*44.009950; /*CO2 */
+    CW += c[14]*26.038240; /*C2H2 */
+    CW += c[15]*28.054180; /*C2H4 */
+    CW += c[16]*30.070120; /*C2H6 */
+    CW += c[17]*43.045610; /*CH2CHO */
+    CW += c[18]*41.073300; /*aC3H5 */
+    CW += c[19]*42.081270; /*C3H6 */
+    CW += c[20]*56.064730; /*C2H3CHO */
+    CW += c[21]*55.100390; /*C4H7 */
+    CW += c[22]*56.108360; /*C4H81 */
+    CW += c[23]*69.127480; /*C5H9 */
+    CW += c[24]*70.135450; /*C5H10 */
+    CW += c[25]*84.162540; /*C6H12 */
+    CW += c[26]*98.189630; /*C7H14 */
+    CW += c[27]*112.216720; /*C8H16 */
+    CW += c[28]*126.243810; /*C9H18 */
+    CW += c[29]*127.251780; /*PXC9H19 */
+    CW += c[30]*140.270900; /*C10H20 */
+    CW += c[31]*168.325080; /*C12H24 */
+    CW += c[32]*201.331850; /*C12H25O2 */
+    CW += c[33]*216.323280; /*OC12H23OOH */
+    CW += c[34]*28.013400; /*N2 */
+    /*Now compute conversion */
+    amrex::Real CWinv = 1.0/CW;
+    y[0] = c[0]*170.341020*CWinv; 
+    y[1] = c[1]*1.007970*CWinv; 
+    y[2] = c[2]*15.999400*CWinv; 
+    y[3] = c[3]*17.007370*CWinv; 
+    y[4] = c[4]*33.006770*CWinv; 
+    y[5] = c[5]*2.015940*CWinv; 
+    y[6] = c[6]*18.015340*CWinv; 
+    y[7] = c[7]*34.014740*CWinv; 
+    y[8] = c[8]*31.998800*CWinv; 
+    y[9] = c[9]*15.035060*CWinv; 
+    y[10] = c[10]*16.043030*CWinv; 
+    y[11] = c[11]*30.026490*CWinv; 
+    y[12] = c[12]*28.010550*CWinv; 
+    y[13] = c[13]*44.009950*CWinv; 
+    y[14] = c[14]*26.038240*CWinv; 
+    y[15] = c[15]*28.054180*CWinv; 
+    y[16] = c[16]*30.070120*CWinv; 
+    y[17] = c[17]*43.045610*CWinv; 
+    y[18] = c[18]*41.073300*CWinv; 
+    y[19] = c[19]*42.081270*CWinv; 
+    y[20] = c[20]*56.064730*CWinv; 
+    y[21] = c[21]*55.100390*CWinv; 
+    y[22] = c[22]*56.108360*CWinv; 
+    y[23] = c[23]*69.127480*CWinv; 
+    y[24] = c[24]*70.135450*CWinv; 
+    y[25] = c[25]*84.162540*CWinv; 
+    y[26] = c[26]*98.189630*CWinv; 
+    y[27] = c[27]*112.216720*CWinv; 
+    y[28] = c[28]*126.243810*CWinv; 
+    y[29] = c[29]*127.251780*CWinv; 
+    y[30] = c[30]*140.270900*CWinv; 
+    y[31] = c[31]*168.325080*CWinv; 
+    y[32] = c[32]*201.331850*CWinv; 
+    y[33] = c[33]*216.323280*CWinv; 
+    y[34] = c[34]*28.013400*CWinv; 
+
+    return;
+}
+
+
+/*get specific heat at constant volume as a function  */
+/*of T for all species (molar units) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVML(amrex::Real *  T,  amrex::Real *  cvml)
+{
+    int id; /*loop counter */
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    cv_R(cvml, tc);
+
+    /*convert to chemkin units */
+    for (id = 0; id < 35; ++id) {
+        cvml[id] *= 8.31446261815324e+07;
+    }
+}
+
+
+/*get specific heat at constant pressure as a  */
+/*function of T for all species (molar units) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPML(amrex::Real *  T,  amrex::Real *  cpml)
+{
+    int id; /*loop counter */
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    cp_R(cpml, tc);
+
+    /*convert to chemkin units */
+    for (id = 0; id < 35; ++id) {
+        cpml[id] *= 8.31446261815324e+07;
+    }
+}
+
+
+/*get internal energy as a function  */
+/*of T for all species (molar units) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUML(amrex::Real *  T,  amrex::Real *  uml)
+{
+    int id; /*loop counter */
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
+    speciesInternalEnergy(uml, tc);
+
+    /*convert to chemkin units */
+    for (id = 0; id < 35; ++id) {
+        uml[id] *= RT;
+    }
+}
+
+
+/*get enthalpy as a function  */
+/*of T for all species (molar units) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHML(amrex::Real *  T,  amrex::Real *  hml)
+{
+    int id; /*loop counter */
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
+    speciesEnthalpy(hml, tc);
+
+    /*convert to chemkin units */
+    for (id = 0; id < 35; ++id) {
+        hml[id] *= RT;
+    }
+}
+
+
+/*Returns the standard-state entropies in molar units */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSML(amrex::Real *  T,  amrex::Real *  sml)
+{
+    int id; /*loop counter */
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    speciesEntropy(sml, tc);
+
+    /*convert to chemkin units */
+    for (id = 0; id < 35; ++id) {
+        sml[id] *= 8.31446261815324e+07;
+    }
+}
+
+
+/*Returns the specific heats at constant volume */
+/*in mass units (Eq. 29) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVMS(amrex::Real *  T,  amrex::Real *  cvms)
+{
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    cv_R(cvms, tc);
+    /*multiply by R/molecularweight */
+    cvms[0] *= 4.881068939327262e+05; /*NC12H26 */
+    cvms[1] *= 8.248720317224957e+07; /*H */
+    cvms[2] *= 5.196734013871295e+06; /*O */
+    cvms[3] *= 4.888740950630956e+06; /*OH */
+    cvms[4] *= 2.519017346487778e+06; /*HO2 */
+    cvms[5] *= 4.124360158612479e+07; /*H2 */
+    cvms[6] *= 4.615212712140454e+06; /*H2O */
+    cvms[7] *= 2.444370475315478e+06; /*H2O2 */
+    cvms[8] *= 2.598367006935648e+06; /*O2 */
+    cvms[9] *= 5.530049509714786e+06; /*CH3 */
+    cvms[10] *= 5.182601178301878e+06; /*CH4 */
+    cvms[11] *= 2.769042474879095e+06; /*CH2O */
+    cvms[12] *= 2.968332509769797e+06; /*CO */
+    cvms[13] *= 1.889223372931176e+06; /*CO2 */
+    cvms[14] *= 3.193173815954242e+06; /*C2H2 */
+    cvms[15] *= 2.963716144315478e+06; /*C2H4 */
+    cvms[16] *= 2.765024754857393e+06; /*C2H6 */
+    cvms[17] *= 1.931547170118681e+06; /*CH2CHO */
+    cvms[18] *= 2.024298660724422e+06; /*aC3H5 */
+    cvms[19] *= 1.975810762876985e+06; /*C3H6 */
+    cvms[20] *= 1.483011265398627e+06; /*C2H3CHO */
+    cvms[21] *= 1.508966201174482e+06; /*C4H7 */
+    cvms[22] *= 1.481858072157739e+06; /*C4H81 */
+    cvms[23] *= 1.202772416722444e+06; /*C5H9 */
+    cvms[24] *= 1.185486457726191e+06; /*C5H10 */
+    cvms[25] *= 9.879053814384926e+05; /*C6H12 */
+    cvms[26] *= 8.467760412329937e+05; /*C7H14 */
+    cvms[27] *= 7.409290360788695e+05; /*C8H16 */
+    cvms[28] *= 6.586035876256617e+05; /*C9H18 */
+    cvms[29] *= 6.533867438359793e+05; /*PXC9H19 */
+    cvms[30] *= 5.927432288630955e+05; /*C10H20 */
+    cvms[31] *= 4.939526907192463e+05; /*C12H24 */
+    cvms[32] *= 4.129730401897782e+05; /*C12H25O2 */
+    cvms[33] *= 3.843535757294933e+05; /*OC12H23OOH */
+    cvms[34] *= 2.968030520448514e+06; /*N2 */
+}
+
+
+/*Returns the specific heats at constant pressure */
+/*in mass units (Eq. 26) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPMS(amrex::Real *  T,  amrex::Real *  cpms)
+{
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    cp_R(cpms, tc);
+    /*multiply by R/molecularweight */
+    cpms[0] *= 4.881068939327262e+05; /*NC12H26 */
+    cpms[1] *= 8.248720317224957e+07; /*H */
+    cpms[2] *= 5.196734013871295e+06; /*O */
+    cpms[3] *= 4.888740950630956e+06; /*OH */
+    cpms[4] *= 2.519017346487778e+06; /*HO2 */
+    cpms[5] *= 4.124360158612479e+07; /*H2 */
+    cpms[6] *= 4.615212712140454e+06; /*H2O */
+    cpms[7] *= 2.444370475315478e+06; /*H2O2 */
+    cpms[8] *= 2.598367006935648e+06; /*O2 */
+    cpms[9] *= 5.530049509714786e+06; /*CH3 */
+    cpms[10] *= 5.182601178301878e+06; /*CH4 */
+    cpms[11] *= 2.769042474879095e+06; /*CH2O */
+    cpms[12] *= 2.968332509769797e+06; /*CO */
+    cpms[13] *= 1.889223372931176e+06; /*CO2 */
+    cpms[14] *= 3.193173815954242e+06; /*C2H2 */
+    cpms[15] *= 2.963716144315478e+06; /*C2H4 */
+    cpms[16] *= 2.765024754857393e+06; /*C2H6 */
+    cpms[17] *= 1.931547170118681e+06; /*CH2CHO */
+    cpms[18] *= 2.024298660724422e+06; /*aC3H5 */
+    cpms[19] *= 1.975810762876985e+06; /*C3H6 */
+    cpms[20] *= 1.483011265398627e+06; /*C2H3CHO */
+    cpms[21] *= 1.508966201174482e+06; /*C4H7 */
+    cpms[22] *= 1.481858072157739e+06; /*C4H81 */
+    cpms[23] *= 1.202772416722444e+06; /*C5H9 */
+    cpms[24] *= 1.185486457726191e+06; /*C5H10 */
+    cpms[25] *= 9.879053814384926e+05; /*C6H12 */
+    cpms[26] *= 8.467760412329937e+05; /*C7H14 */
+    cpms[27] *= 7.409290360788695e+05; /*C8H16 */
+    cpms[28] *= 6.586035876256617e+05; /*C9H18 */
+    cpms[29] *= 6.533867438359793e+05; /*PXC9H19 */
+    cpms[30] *= 5.927432288630955e+05; /*C10H20 */
+    cpms[31] *= 4.939526907192463e+05; /*C12H24 */
+    cpms[32] *= 4.129730401897782e+05; /*C12H25O2 */
+    cpms[33] *= 3.843535757294933e+05; /*OC12H23OOH */
+    cpms[34] *= 2.968030520448514e+06; /*N2 */
+}
+
+
+/*Returns internal energy in mass units (Eq 30.) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUMS(amrex::Real *  T,  amrex::Real *  ums)
+{
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    speciesInternalEnergy(ums, tc);
+
+    for (int i = 0; i < 35; i++)
+    {
+        ums[i] *= RT*imw[i];
+    }
+}
+
+
+/*Returns enthalpy in mass units (Eq 27.) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHMS(amrex::Real *  T,  amrex::Real *  hms)
+{
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    speciesEnthalpy(hms, tc);
+
+    for (int i = 0; i < 35; i++)
+    {
+        hms[i] *= RT*imw[i];
+    }
+}
+
+
+/*Returns the entropies in mass units (Eq 28.) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSMS(amrex::Real *  T,  amrex::Real *  sms)
+{
+    amrex::Real tT = *T; /*temporary temperature */
+    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    speciesEntropy(sms, tc);
+    /*multiply by R/molecularweight */
+    sms[0] *= 4.881068939327262e+05; /*NC12H26 */
+    sms[1] *= 8.248720317224957e+07; /*H */
+    sms[2] *= 5.196734013871295e+06; /*O */
+    sms[3] *= 4.888740950630956e+06; /*OH */
+    sms[4] *= 2.519017346487778e+06; /*HO2 */
+    sms[5] *= 4.124360158612479e+07; /*H2 */
+    sms[6] *= 4.615212712140454e+06; /*H2O */
+    sms[7] *= 2.444370475315478e+06; /*H2O2 */
+    sms[8] *= 2.598367006935648e+06; /*O2 */
+    sms[9] *= 5.530049509714786e+06; /*CH3 */
+    sms[10] *= 5.182601178301878e+06; /*CH4 */
+    sms[11] *= 2.769042474879095e+06; /*CH2O */
+    sms[12] *= 2.968332509769797e+06; /*CO */
+    sms[13] *= 1.889223372931176e+06; /*CO2 */
+    sms[14] *= 3.193173815954242e+06; /*C2H2 */
+    sms[15] *= 2.963716144315478e+06; /*C2H4 */
+    sms[16] *= 2.765024754857393e+06; /*C2H6 */
+    sms[17] *= 1.931547170118681e+06; /*CH2CHO */
+    sms[18] *= 2.024298660724422e+06; /*aC3H5 */
+    sms[19] *= 1.975810762876985e+06; /*C3H6 */
+    sms[20] *= 1.483011265398627e+06; /*C2H3CHO */
+    sms[21] *= 1.508966201174482e+06; /*C4H7 */
+    sms[22] *= 1.481858072157739e+06; /*C4H81 */
+    sms[23] *= 1.202772416722444e+06; /*C5H9 */
+    sms[24] *= 1.185486457726191e+06; /*C5H10 */
+    sms[25] *= 9.879053814384926e+05; /*C6H12 */
+    sms[26] *= 8.467760412329937e+05; /*C7H14 */
+    sms[27] *= 7.409290360788695e+05; /*C8H16 */
+    sms[28] *= 6.586035876256617e+05; /*C9H18 */
+    sms[29] *= 6.533867438359793e+05; /*PXC9H19 */
+    sms[30] *= 5.927432288630955e+05; /*C10H20 */
+    sms[31] *= 4.939526907192463e+05; /*C12H24 */
+    sms[32] *= 4.129730401897782e+05; /*C12H25O2 */
+    sms[33] *= 3.843535757294933e+05; /*OC12H23OOH */
+    sms[34] *= 2.968030520448514e+06; /*N2 */
+}
+
+
+/* GPU version of productionRate: no more use of thermo namespace vectors  */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * qss_sc, amrex::Real * tc, amrex::Real invT)
+{
+
+    return;
+}
+
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)
+{
+    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
+    amrex::Real invT = 1.0 / tc[1];
+
+
+    for (int i = 0; i < 35; ++i) {
+        wdot[i] = 0.0;
+    }
+
+    return;
+}
+
+
+
+/*compute the production rate for each species */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWC(amrex::Real *  T, amrex::Real *  C,  amrex::Real *  wdot)
+{
+    int id; /*loop counter */
+
+    /*convert to SI */
+    for (id = 0; id < 35; ++id) {
+        C[id] *= 1.0e6;
+    }
+
+    /*convert to chemkin units */
+    productionRate(wdot, C, *T);
+
+    /*convert to chemkin units */
+    for (id = 0; id < 35; ++id) {
+        C[id] *= 1.0e-6;
+        wdot[id] *= 1.0e-6;
+    }
+}
+
+
+/*Returns the molar production rate of species */
+/*Given P, T, and mass fractions */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWYP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  wdot)
+{
+    int id; /*loop counter */
+    amrex::Real c[35]; /*temporary storage */
+    amrex::Real YOW = 0; 
+    amrex::Real PWORT; 
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    /*Compute inverse of mean molecular wt first */
+    YOW += y[0]*imw[0]; /*NC12H26 */
+    YOW += y[1]*imw[1]; /*H */
+    YOW += y[2]*imw[2]; /*O */
+    YOW += y[3]*imw[3]; /*OH */
+    YOW += y[4]*imw[4]; /*HO2 */
+    YOW += y[5]*imw[5]; /*H2 */
+    YOW += y[6]*imw[6]; /*H2O */
+    YOW += y[7]*imw[7]; /*H2O2 */
+    YOW += y[8]*imw[8]; /*O2 */
+    YOW += y[9]*imw[9]; /*CH3 */
+    YOW += y[10]*imw[10]; /*CH4 */
+    YOW += y[11]*imw[11]; /*CH2O */
+    YOW += y[12]*imw[12]; /*CO */
+    YOW += y[13]*imw[13]; /*CO2 */
+    YOW += y[14]*imw[14]; /*C2H2 */
+    YOW += y[15]*imw[15]; /*C2H4 */
+    YOW += y[16]*imw[16]; /*C2H6 */
+    YOW += y[17]*imw[17]; /*CH2CHO */
+    YOW += y[18]*imw[18]; /*aC3H5 */
+    YOW += y[19]*imw[19]; /*C3H6 */
+    YOW += y[20]*imw[20]; /*C2H3CHO */
+    YOW += y[21]*imw[21]; /*C4H7 */
+    YOW += y[22]*imw[22]; /*C4H81 */
+    YOW += y[23]*imw[23]; /*C5H9 */
+    YOW += y[24]*imw[24]; /*C5H10 */
+    YOW += y[25]*imw[25]; /*C6H12 */
+    YOW += y[26]*imw[26]; /*C7H14 */
+    YOW += y[27]*imw[27]; /*C8H16 */
+    YOW += y[28]*imw[28]; /*C9H18 */
+    YOW += y[29]*imw[29]; /*PXC9H19 */
+    YOW += y[30]*imw[30]; /*C10H20 */
+    YOW += y[31]*imw[31]; /*C12H24 */
+    YOW += y[32]*imw[32]; /*C12H25O2 */
+    YOW += y[33]*imw[33]; /*OC12H23OOH */
+    YOW += y[34]*imw[34]; /*N2 */
+    /*PW/RT (see Eq. 7) */
+    PWORT = (*P)/(YOW * 8.31446261815324e+07 * (*T)); 
+    /*multiply by 1e6 so c goes to SI */
+    PWORT *= 1e6; 
+    /*Now compute conversion (and go to SI) */
+    c[0] = PWORT * y[0]*imw[0]; 
+    c[1] = PWORT * y[1]*imw[1]; 
+    c[2] = PWORT * y[2]*imw[2]; 
+    c[3] = PWORT * y[3]*imw[3]; 
+    c[4] = PWORT * y[4]*imw[4]; 
+    c[5] = PWORT * y[5]*imw[5]; 
+    c[6] = PWORT * y[6]*imw[6]; 
+    c[7] = PWORT * y[7]*imw[7]; 
+    c[8] = PWORT * y[8]*imw[8]; 
+    c[9] = PWORT * y[9]*imw[9]; 
+    c[10] = PWORT * y[10]*imw[10]; 
+    c[11] = PWORT * y[11]*imw[11]; 
+    c[12] = PWORT * y[12]*imw[12]; 
+    c[13] = PWORT * y[13]*imw[13]; 
+    c[14] = PWORT * y[14]*imw[14]; 
+    c[15] = PWORT * y[15]*imw[15]; 
+    c[16] = PWORT * y[16]*imw[16]; 
+    c[17] = PWORT * y[17]*imw[17]; 
+    c[18] = PWORT * y[18]*imw[18]; 
+    c[19] = PWORT * y[19]*imw[19]; 
+    c[20] = PWORT * y[20]*imw[20]; 
+    c[21] = PWORT * y[21]*imw[21]; 
+    c[22] = PWORT * y[22]*imw[22]; 
+    c[23] = PWORT * y[23]*imw[23]; 
+    c[24] = PWORT * y[24]*imw[24]; 
+    c[25] = PWORT * y[25]*imw[25]; 
+    c[26] = PWORT * y[26]*imw[26]; 
+    c[27] = PWORT * y[27]*imw[27]; 
+    c[28] = PWORT * y[28]*imw[28]; 
+    c[29] = PWORT * y[29]*imw[29]; 
+    c[30] = PWORT * y[30]*imw[30]; 
+    c[31] = PWORT * y[31]*imw[31]; 
+    c[32] = PWORT * y[32]*imw[32]; 
+    c[33] = PWORT * y[33]*imw[33]; 
+    c[34] = PWORT * y[34]*imw[34]; 
+
+    /*convert to chemkin units */
+    productionRate(wdot, c, *T);
+
+    /*convert to chemkin units */
+    for (id = 0; id < 35; ++id) {
+        wdot[id] *= 1.0e-6;
+    }
+}
+
+
+/*Returns the molar production rate of species */
+/*Given P, T, and mole fractions */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWXP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  wdot)
+{
+    int id; /*loop counter */
+    amrex::Real c[35]; /*temporary storage */
+    amrex::Real PORT = 1e6 * (*P)/(8.31446261815324e+07 * (*T)); /*1e6 * P/RT so c goes to SI units */
+
+    /*Compute conversion, see Eq 10 */
+    for (id = 0; id < 35; ++id) {
+        c[id] = x[id]*PORT;
+    }
+
+    /*convert to chemkin units */
+    productionRate(wdot, c, *T);
+
+    /*convert to chemkin units */
+    for (id = 0; id < 35; ++id) {
+        wdot[id] *= 1.0e-6;
+    }
+}
+
+
+/*Returns the molar production rate of species */
+/*Given rho, T, and mass fractions */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWYR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y,  amrex::Real *  wdot)
+{
+    int id; /*loop counter */
+    amrex::Real c[35]; /*temporary storage */
+    amrex::Real imw[35];
+
+    get_imw(imw);
+
+    /*See Eq 8 with an extra 1e6 so c goes to SI */
+    c[0] = 1e6 * (*rho) * y[0]*imw[0]; 
+    c[1] = 1e6 * (*rho) * y[1]*imw[1]; 
+    c[2] = 1e6 * (*rho) * y[2]*imw[2]; 
+    c[3] = 1e6 * (*rho) * y[3]*imw[3]; 
+    c[4] = 1e6 * (*rho) * y[4]*imw[4]; 
+    c[5] = 1e6 * (*rho) * y[5]*imw[5]; 
+    c[6] = 1e6 * (*rho) * y[6]*imw[6]; 
+    c[7] = 1e6 * (*rho) * y[7]*imw[7]; 
+    c[8] = 1e6 * (*rho) * y[8]*imw[8]; 
+    c[9] = 1e6 * (*rho) * y[9]*imw[9]; 
+    c[10] = 1e6 * (*rho) * y[10]*imw[10]; 
+    c[11] = 1e6 * (*rho) * y[11]*imw[11]; 
+    c[12] = 1e6 * (*rho) * y[12]*imw[12]; 
+    c[13] = 1e6 * (*rho) * y[13]*imw[13]; 
+    c[14] = 1e6 * (*rho) * y[14]*imw[14]; 
+    c[15] = 1e6 * (*rho) * y[15]*imw[15]; 
+    c[16] = 1e6 * (*rho) * y[16]*imw[16]; 
+    c[17] = 1e6 * (*rho) * y[17]*imw[17]; 
+    c[18] = 1e6 * (*rho) * y[18]*imw[18]; 
+    c[19] = 1e6 * (*rho) * y[19]*imw[19]; 
+    c[20] = 1e6 * (*rho) * y[20]*imw[20]; 
+    c[21] = 1e6 * (*rho) * y[21]*imw[21]; 
+    c[22] = 1e6 * (*rho) * y[22]*imw[22]; 
+    c[23] = 1e6 * (*rho) * y[23]*imw[23]; 
+    c[24] = 1e6 * (*rho) * y[24]*imw[24]; 
+    c[25] = 1e6 * (*rho) * y[25]*imw[25]; 
+    c[26] = 1e6 * (*rho) * y[26]*imw[26]; 
+    c[27] = 1e6 * (*rho) * y[27]*imw[27]; 
+    c[28] = 1e6 * (*rho) * y[28]*imw[28]; 
+    c[29] = 1e6 * (*rho) * y[29]*imw[29]; 
+    c[30] = 1e6 * (*rho) * y[30]*imw[30]; 
+    c[31] = 1e6 * (*rho) * y[31]*imw[31]; 
+    c[32] = 1e6 * (*rho) * y[32]*imw[32]; 
+    c[33] = 1e6 * (*rho) * y[33]*imw[33]; 
+    c[34] = 1e6 * (*rho) * y[34]*imw[34]; 
+
+    /*call productionRate */
+    productionRate(wdot, c, *T);
+
+    /*convert to chemkin units */
+    for (id = 0; id < 35; ++id) {
+        wdot[id] *= 1.0e-6;
+    }
+}
+
+
+/*Returns the molar production rate of species */
+/*Given rho, T, and mole fractions */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWXR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x,  amrex::Real *  wdot)
+{
+    int id; /*loop counter */
+    amrex::Real c[35]; /*temporary storage */
+    amrex::Real XW = 0; /*See Eq 4, 11 in CK Manual */
+    amrex::Real ROW; 
+    /*Compute mean molecular wt first */
+    XW += x[0]*170.341020; /*NC12H26 */
+    XW += x[1]*1.007970; /*H */
+    XW += x[2]*15.999400; /*O */
+    XW += x[3]*17.007370; /*OH */
+    XW += x[4]*33.006770; /*HO2 */
+    XW += x[5]*2.015940; /*H2 */
+    XW += x[6]*18.015340; /*H2O */
+    XW += x[7]*34.014740; /*H2O2 */
+    XW += x[8]*31.998800; /*O2 */
+    XW += x[9]*15.035060; /*CH3 */
+    XW += x[10]*16.043030; /*CH4 */
+    XW += x[11]*30.026490; /*CH2O */
+    XW += x[12]*28.010550; /*CO */
+    XW += x[13]*44.009950; /*CO2 */
+    XW += x[14]*26.038240; /*C2H2 */
+    XW += x[15]*28.054180; /*C2H4 */
+    XW += x[16]*30.070120; /*C2H6 */
+    XW += x[17]*43.045610; /*CH2CHO */
+    XW += x[18]*41.073300; /*aC3H5 */
+    XW += x[19]*42.081270; /*C3H6 */
+    XW += x[20]*56.064730; /*C2H3CHO */
+    XW += x[21]*55.100390; /*C4H7 */
+    XW += x[22]*56.108360; /*C4H81 */
+    XW += x[23]*69.127480; /*C5H9 */
+    XW += x[24]*70.135450; /*C5H10 */
+    XW += x[25]*84.162540; /*C6H12 */
+    XW += x[26]*98.189630; /*C7H14 */
+    XW += x[27]*112.216720; /*C8H16 */
+    XW += x[28]*126.243810; /*C9H18 */
+    XW += x[29]*127.251780; /*PXC9H19 */
+    XW += x[30]*140.270900; /*C10H20 */
+    XW += x[31]*168.325080; /*C12H24 */
+    XW += x[32]*201.331850; /*C12H25O2 */
+    XW += x[33]*216.323280; /*OC12H23OOH */
+    XW += x[34]*28.013400; /*N2 */
+    /*Extra 1e6 factor to take c to SI */
+    ROW = 1e6*(*rho) / XW;
+
+    /*Compute conversion, see Eq 11 */
+    for (id = 0; id < 35; ++id) {
+        c[id] = x[id]*ROW;
+    }
+
+    /*convert to chemkin units */
+    productionRate(wdot, c, *T);
+
+    /*convert to chemkin units */
+    for (id = 0; id < 35; ++id) {
+        wdot[id] *= 1.0e-6;
+    }
+}
+
+
+/*compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature */
+/*tc contains precomputed powers of T, tc[0] = log(T) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void dcvpRdT(amrex::Real * species, amrex::Real *  tc)
+{
+
+    /*temperature */
+    amrex::Real T = tc[1];
+
+    /*species with midpoint at T=1391 kelvin */
+    if (T < 1391) {
+        /*species 0: NC12H26 */
+        species[0] =
+            +1.47237711e-01
+            -1.88794054e-04 * tc[1]
+            +9.22323804e-08 * tc[2]
+            -1.61440892e-11 * tc[3];
+        /*species 31: C12H24 */
+        species[31] =
+            +1.43992360e-01
+            -1.92276803e-04 * tc[1]
+            +9.90523419e-08 * tc[2]
+            -1.84959276e-11 * tc[3];
+    } else {
+        /*species 0: NC12H26 */
+        species[0] =
+            +5.63550048e-02
+            -3.82986400e-05 * tc[1]
+            +8.88074586e-09 * tc[2]
+            -6.84976600e-13 * tc[3];
+        /*species 31: C12H24 */
+        species[31] =
+            +5.26230753e-02
+            -3.57248638e-05 * tc[1]
+            +8.27849589e-09 * tc[2]
+            -6.38249996e-13 * tc[3];
+    }
+
+    /*species with midpoint at T=1000 kelvin */
+    if (T < 1000) {
+        /*species 1: H */
+        species[1] =
+            +7.05332819e-13
+            -3.99183928e-15 * tc[1]
+            +6.90244896e-18 * tc[2]
+            -3.71092933e-21 * tc[3];
+        /*species 2: O */
+        species[2] =
+            -3.27931884e-03
+            +1.32861279e-05 * tc[1]
+            -1.83841987e-08 * tc[2]
+            +8.45063884e-12 * tc[3];
+        /*species 3: OH */
+        species[3] =
+            -3.22544939e-03
+            +1.30552938e-05 * tc[1]
+            -1.73956093e-08 * tc[2]
+            +8.24949516e-12 * tc[3];
+        /*species 4: HO2 */
+        species[4] =
+            -4.74912051e-03
+            +4.23165782e-05 * tc[1]
+            -7.28291682e-08 * tc[2]
+            +3.71690050e-11 * tc[3];
+        /*species 5: H2 */
+        species[5] =
+            +7.98052075e-03
+            -3.89563020e-05 * tc[1]
+            +6.04716282e-08 * tc[2]
+            -2.95044704e-11 * tc[3];
+        /*species 6: H2O */
+        species[6] =
+            -2.03643410e-03
+            +1.30408042e-05 * tc[1]
+            -1.64639119e-08 * tc[2]
+            +7.08791268e-12 * tc[3];
+        /*species 7: H2O2 */
+        species[7] =
+            -5.42822417e-04
+            +3.34671402e-05 * tc[1]
+            -6.47312439e-08 * tc[2]
+            +3.44981745e-11 * tc[3];
+        /*species 8: O2 */
+        species[8] =
+            -2.99673416e-03
+            +1.96946040e-05 * tc[1]
+            -2.90438853e-08 * tc[2]
+            +1.29749135e-11 * tc[3];
+        /*species 9: CH3 */
+        species[9] =
+            +2.01095175e-03
+            +1.14604371e-05 * tc[1]
+            -2.06135228e-08 * tc[2]
+            +1.01754294e-11 * tc[3];
+        /*species 10: CH4 */
+        species[10] =
+            -1.36709788e-02
+            +9.83601198e-05 * tc[1]
+            -1.45422908e-07 * tc[2]
+            +6.66775824e-11 * tc[3];
+        /*species 11: CH2O */
+        species[11] =
+            -9.90833369e-03
+            +7.46440016e-05 * tc[1]
+            -1.13785578e-07 * tc[2]
+            +5.27090608e-11 * tc[3];
+        /*species 12: CO */
+        species[12] =
+            -6.10353680e-04
+            +2.03362866e-06 * tc[1]
+            +2.72101765e-09 * tc[2]
+            -3.61769800e-12 * tc[3];
+        /*species 13: CO2 */
+        species[13] =
+            +8.98459677e-03
+            -1.42471254e-05 * tc[1]
+            +7.37757066e-09 * tc[2]
+            -5.74798192e-13 * tc[3];
+        /*species 14: C2H2 */
+        species[14] =
+            +2.33615629e-02
+            -7.10343630e-05 * tc[1]
+            +8.40457311e-08 * tc[2]
+            -3.40029190e-11 * tc[3];
+        /*species 15: C2H4 */
+        species[15] =
+            -7.57052247e-03
+            +1.14198058e-04 * tc[1]
+            -2.07476626e-07 * tc[2]
+            +1.07953749e-10 * tc[3];
+        /*species 16: C2H6 */
+        species[16] =
+            -5.50154270e-03
+            +1.19887658e-04 * tc[1]
+            -2.12539886e-07 * tc[2]
+            +1.07474308e-10 * tc[3];
+        /*species 17: CH2CHO */
+        species[17] =
+            +1.07385740e-02
+            +3.78298500e-06 * tc[1]
+            -2.14757493e-08 * tc[2]
+            +1.14695404e-11 * tc[3];
+        /*species 18: aC3H5 */
+        species[18] =
+            +1.98138210e-02
+            +2.49941200e-05 * tc[1]
+            -1.00066665e-07 * tc[2]
+            +6.33862840e-11 * tc[3];
+        /*species 19: C3H6 */
+        species[19] =
+            +2.09251800e-02
+            +8.97358800e-06 * tc[1]
+            -5.00673600e-08 * tc[2]
+            +2.86325840e-11 * tc[3];
+        /*species 20: C2H3CHO */
+        species[20] =
+            +2.62310540e-02
+            -1.85824610e-05 * tc[1]
+            -1.43511816e-08 * tc[2]
+            +1.33922172e-11 * tc[3];
+        /*species 21: C4H7 */
+        species[21] =
+            +3.96788570e-02
+            -4.57961720e-05 * tc[1]
+            +6.40589190e-09 * tc[2]
+            +9.23855000e-12 * tc[3];
+        /*species 22: C4H81 */
+        species[22] =
+            +3.08533800e-02
+            +1.01730494e-05 * tc[1]
+            -7.39646640e-08 * tc[2]
+            +4.44407720e-11 * tc[3];
+        /*species 23: C5H9 */
+        species[23] =
+            +4.04303890e-02
+            +1.35604678e-05 * tc[1]
+            -1.01174226e-07 * tc[2]
+            +6.04668520e-11 * tc[3];
+        /*species 32: C12H25O2 */
+        species[32] =
+            +8.93873000e-02
+            +2.90702000e-05 * tc[1]
+            -2.24775000e-07 * tc[2]
+            +1.34130000e-10 * tc[3];
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +6.50623000e-02
+            +1.39011600e-04 * tc[1]
+            -3.80715000e-07 * tc[2]
+            +2.04396400e-10 * tc[3];
+        /*species 34: N2 */
+        species[34] =
+            +1.40824040e-03
+            -7.92644400e-06 * tc[1]
+            +1.69245450e-08 * tc[2]
+            -9.77941600e-12 * tc[3];
+    } else {
+        /*species 1: H */
+        species[1] =
+            -2.30842973e-11
+            +3.23123896e-14 * tc[1]
+            -1.42054571e-17 * tc[2]
+            +1.99278943e-21 * tc[3];
+        /*species 2: O */
+        species[2] =
+            -8.59741137e-05
+            +8.38969178e-08 * tc[1]
+            -3.00533397e-11 * tc[2]
+            +4.91334764e-15 * tc[3];
+        /*species 3: OH */
+        species[3] =
+            +1.05650448e-03
+            -5.18165516e-07 * tc[1]
+            +9.15656022e-11 * tc[2]
+            -5.32783504e-15 * tc[3];
+        /*species 4: HO2 */
+        species[4] =
+            +2.23982013e-03
+            -1.26731630e-06 * tc[1]
+            +3.42739110e-10 * tc[2]
+            -4.31634140e-14 * tc[3];
+        /*species 5: H2 */
+        species[5] =
+            -4.94024731e-05
+            +9.98913556e-07 * tc[1]
+            -5.38699182e-10 * tc[2]
+            +8.01021504e-14 * tc[3];
+        /*species 6: H2O */
+        species[6] =
+            +2.17691804e-03
+            -3.28145036e-07 * tc[1]
+            -2.91125961e-10 * tc[2]
+            +6.72803968e-14 * tc[3];
+        /*species 7: H2O2 */
+        species[7] =
+            +4.90831694e-03
+            -3.80278450e-06 * tc[1]
+            +1.11355796e-09 * tc[2]
+            -1.15163322e-13 * tc[3];
+        /*species 8: O2 */
+        species[8] =
+            +1.48308754e-03
+            -1.51593334e-06 * tc[1]
+            +6.28411665e-10 * tc[2]
+            -8.66871176e-14 * tc[3];
+        /*species 9: CH3 */
+        species[9] =
+            +7.23990037e-03
+            -5.97428696e-06 * tc[1]
+            +1.78705393e-09 * tc[2]
+            -1.86861758e-13 * tc[3];
+        /*species 10: CH4 */
+        species[10] =
+            +1.33909467e-02
+            -1.14657162e-05 * tc[1]
+            +3.66877605e-09 * tc[2]
+            -4.07260920e-13 * tc[3];
+        /*species 11: CH2O */
+        species[11] =
+            +9.20000082e-03
+            -8.84517626e-06 * tc[1]
+            +3.01923636e-09 * tc[2]
+            -3.53542256e-13 * tc[3];
+        /*species 12: CO */
+        species[12] =
+            +2.06252743e-03
+            -1.99765154e-06 * tc[1]
+            +6.90159024e-10 * tc[2]
+            -8.14590864e-14 * tc[3];
+        /*species 13: CO2 */
+        species[13] =
+            +4.41437026e-03
+            -4.42962808e-06 * tc[1]
+            +1.57047056e-09 * tc[2]
+            -1.88833666e-13 * tc[3];
+        /*species 14: C2H2 */
+        species[14] =
+            +5.96166664e-03
+            -4.74589704e-06 * tc[1]
+            +1.40223651e-09 * tc[2]
+            -1.44494085e-13 * tc[3];
+        /*species 15: C2H4 */
+        species[15] =
+            +1.46454151e-02
+            -1.34215583e-05 * tc[1]
+            +4.41668769e-09 * tc[2]
+            -5.02824244e-13 * tc[3];
+        /*species 16: C2H6 */
+        species[16] =
+            +2.16852677e-02
+            -2.00512134e-05 * tc[1]
+            +6.64236003e-09 * tc[2]
+            -7.60011560e-13 * tc[3];
+        /*species 17: CH2CHO */
+        species[17] =
+            +8.13059140e-03
+            -5.48724900e-06 * tc[1]
+            +1.22109123e-09 * tc[2]
+            -8.70406840e-14 * tc[3];
+        /*species 18: aC3H5 */
+        species[18] =
+            +1.43247310e-02
+            -1.13563264e-05 * tc[1]
+            +3.32424030e-09 * tc[2]
+            -3.61455548e-13 * tc[3];
+        /*species 19: C3H6 */
+        species[19] =
+            +1.49083400e-02
+            -9.89979800e-06 * tc[1]
+            +2.16360660e-09 * tc[2]
+            -1.50648160e-13 * tc[3];
+        /*species 20: C2H3CHO */
+        species[20] =
+            +1.71142560e-02
+            -1.49668322e-05 * tc[1]
+            +4.27567470e-09 * tc[2]
+            -3.66987364e-13 * tc[3];
+        /*species 21: C4H7 */
+        species[21] =
+            +2.26345580e-02
+            -1.85090940e-05 * tc[1]
+            +5.04237810e-09 * tc[2]
+            -4.16344680e-13 * tc[3];
+        /*species 22: C4H81 */
+        species[22] =
+            +3.43505070e-02
+            -3.17663940e-05 * tc[1]
+            +9.92689860e-09 * tc[2]
+            -1.01444180e-12 * tc[3];
+        /*species 23: C5H9 */
+        species[23] =
+            +2.27141380e-02
+            -1.55820926e-05 * tc[1]
+            +3.56295660e-09 * tc[2]
+            -2.63729792e-13 * tc[3];
+        /*species 32: C12H25O2 */
+        species[32] =
+            +5.37539000e-02
+            -3.36372000e-05 * tc[1]
+            +7.54101000e-09 * tc[2]
+            -5.88832000e-13 * tc[3];
+        /*species 33: OC12H23OOH */
+        species[33] =
+            +6.16392000e-02
+            -4.19672000e-05 * tc[1]
+            +9.99498000e-09 * tc[2]
+            -8.14360000e-13 * tc[3];
+        /*species 34: N2 */
+        species[34] =
+            +1.48797680e-03
+            -1.13695200e-06 * tc[1]
+            +3.02911140e-10 * tc[2]
+            -2.70134040e-14 * tc[3];
+    }
+
+    /*species with midpoint at T=1392 kelvin */
+    if (T < 1392) {
+        /*species 24: C5H10 */
+        species[24] =
+            +5.74218294e-02
+            -7.48973780e-05 * tc[1]
+            +3.82094967e-08 * tc[2]
+            -7.18439156e-12 * tc[3];
+        /*species 25: C6H12 */
+        species[25] =
+            +6.98655426e-02
+            -9.18816044e-05 * tc[1]
+            +4.70902029e-08 * tc[2]
+            -8.85184700e-12 * tc[3];
+        /*species 26: C7H14 */
+        species[26] =
+            +8.24611601e-02
+            -1.09300822e-04 * tc[1]
+            +5.63586909e-08 * tc[2]
+            -1.06295193e-11 * tc[3];
+        /*species 27: C8H16 */
+        species[27] =
+            +9.46066357e-02
+            -1.25477104e-04 * tc[1]
+            +6.45474927e-08 * tc[2]
+            -1.21087473e-11 * tc[3];
+        /*species 28: C9H18 */
+        species[28] =
+            +1.06958297e-01
+            -1.42194649e-04 * tc[1]
+            +7.31913231e-08 * tc[2]
+            -1.37108619e-11 * tc[3];
+        /*species 30: C10H20 */
+        species[30] =
+            +1.19305598e-01
+            -1.58897805e-04 * tc[1]
+            +8.18209788e-08 * tc[2]
+            -1.53087349e-11 * tc[3];
+    } else {
+        /*species 24: C5H10 */
+        species[24] =
+            +2.24072471e-02
+            -1.52669605e-05 * tc[1]
+            +3.54566898e-09 * tc[2]
+            -2.73754056e-13 * tc[3];
+        /*species 25: C6H12 */
+        species[25] =
+            +2.67377658e-02
+            -1.82007355e-05 * tc[1]
+            +4.22459304e-09 * tc[2]
+            -3.26049698e-13 * tc[3];
+        /*species 26: C7H14 */
+        species[26] =
+            +3.10607878e-02
+            -2.11289586e-05 * tc[1]
+            +4.90217340e-09 * tc[2]
+            -3.78239288e-13 * tc[3];
+        /*species 27: C8H16 */
+        species[27] =
+            +3.53666462e-02
+            -2.40416776e-05 * tc[1]
+            +5.57565159e-09 * tc[2]
+            -4.30089048e-13 * tc[3];
+        /*species 28: C9H18 */
+        species[28] =
+            +3.96825287e-02
+            -2.69638892e-05 * tc[1]
+            +6.25171356e-09 * tc[2]
+            -4.82157176e-13 * tc[3];
+        /*species 30: C10H20 */
+        species[30] =
+            +4.39971526e-02
+            -2.98851060e-05 * tc[1]
+            +6.92753034e-09 * tc[2]
+            -5.34205908e-13 * tc[3];
+    }
+
+    /*species with midpoint at T=1390 kelvin */
+    if (T < 1390) {
+        /*species 29: PXC9H19 */
+        species[29] =
+            +1.05617283e-01
+            -1.33639994e-04 * tc[1]
+            +6.43458498e-08 * tc[2]
+            -1.10961710e-11 * tc[3];
+    } else {
+        /*species 29: PXC9H19 */
+        species[29] =
+            +4.12657344e-02
+            -2.80766578e-05 * tc[1]
+            +6.51524613e-09 * tc[2]
+            -5.02769228e-13 * tc[3];
+    }
+    return;
+}
+
+/*compute an approx to the reaction Jacobian */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)
+{
+    for (int i=0; i<1296; i++) {
+        J[i] = 0.0;
+    }
+
+    amrex::Real wdot[35];
+    for (int k=0; k<35; k++) {
+        wdot[k] = 0.0;
+    }
+
+    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
+    amrex::Real invT = 1.0 / tc[1];
+    amrex::Real invT2 = invT * invT;
+
+    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
+    amrex::Real refC = 101325 / 8.31446 / T;
+    amrex::Real refCinv = 1.0 / refC;
+
+    /*compute the mixture concentration */
+    amrex::Real mixture = 0.0;
+    for (int k = 0; k < 35; ++k) {
+        mixture += sc[k];
+    }
+
+    /*compute the Gibbs free energy */
+    amrex::Real g_RT[35];
+    gibbs(g_RT, tc);
+
+    /*compute the species enthalpy */
+    amrex::Real h_RT[35];
+    speciesEnthalpy(h_RT, tc);
+
+    amrex::Real phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;
+    amrex::Real dlnkfdT, dlnk0dT, dlnKcdT, dkrdT, dqdT;
+    amrex::Real dqdci, dcdc_fac, dqdc[35];
+    amrex::Real Pr, fPr, F, k_0, logPr;
+    amrex::Real logFcent, troe_c, troe_n, troePr_den, troePr, troe;
+    amrex::Real Fcent1, Fcent2, Fcent3, Fcent;
+    amrex::Real dlogFdc, dlogFdn, dlogFdcn_fac;
+    amrex::Real dlogPrdT, dlogfPrdT, dlogFdT, dlogFcentdT, dlogFdlogPr, dlnCorrdT;
+    const amrex::Real ln10 = log(10.0);
+    const amrex::Real log10e = 1.0/log(10.0);
+    amrex::Real c_R[35], dcRdT[35], e_RT[35];
+    amrex::Real * eh_RT;
+    if (HP) {
+        cp_R(c_R, tc);
+        dcvpRdT(dcRdT, tc);
+        eh_RT = &h_RT[0];
+    }
+    else {
+        cv_R(c_R, tc);
+        dcvpRdT(dcRdT, tc);
+        speciesInternalEnergy(e_RT, tc);
+        eh_RT = &e_RT[0];
+    }
+
+    amrex::Real cmix = 0.0, ehmix = 0.0, dcmixdT=0.0, dehmixdT=0.0;
+    for (int k = 0; k < 35; ++k) {
+        cmix += c_R[k]*sc[k];
+        dcmixdT += dcRdT[k]*sc[k];
+        ehmix += eh_RT[k]*wdot[k];
+        dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[1260+k];
+    }
+
+    amrex::Real cmixinv = 1.0/cmix;
+    amrex::Real tmp1 = ehmix*cmixinv;
+    amrex::Real tmp3 = cmixinv*T;
+    amrex::Real tmp2 = tmp1*tmp3;
+    amrex::Real dehmixdc;
+    /* dTdot/d[X] */
+    for (int k = 0; k < 35; ++k) {
+        dehmixdc = 0.0;
+        for (int m = 0; m < 35; ++m) {
+            dehmixdc += eh_RT[m]*J[k*36+m];
+        }
+        J[k*36+35] = tmp2*c_R[k] - tmp3*dehmixdc;
+    }
+    /* dTdot/dT */
+    J[1295] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;
+}
+
+/*compute an approx to the reaction Jacobian (for preconditioning) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)
+{
+    amrex::Real c[35];
+
+    for (int k=0; k<35; k++) {
+        c[k] = 1.e6 * sc[k];
+    }
+
+    aJacobian_precond(J, c, *Tp, *HP);
+
+    /* dwdot[k]/dT */
+    /* dTdot/d[X] */
+    for (int k=0; k<35; k++) {
+        J[1260+k] *= 1.e-6;
+        J[k*36+35] *= 1.e6;
+    }
+
+    return;
+}
+
+/*compute the reaction Jacobian on GPU */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
+{
+
+    for (int i=0; i<1296; i++) {
+        J[i] = 0.0;
+    }
+
+    amrex::Real wdot[35];
+    for (int k=0; k<35; k++) {
+        wdot[k] = 0.0;
+    }
+
+    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
+    amrex::Real invT = 1.0 / tc[1];
+    amrex::Real invT2 = invT * invT;
+
+    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
+    amrex::Real refC = 101325 / 8.31446 / T;
+    amrex::Real refCinv = 1.0 / refC;
+
+    /*compute the mixture concentration */
+    amrex::Real mixture = 0.0;
+    for (int k = 0; k < 35; ++k) {
+        mixture += sc[k];
+    }
+
+    /*compute the Gibbs free energy */
+    amrex::Real g_RT[35];
+    gibbs(g_RT, tc);
+
+    /*compute the species enthalpy */
+    amrex::Real h_RT[35];
+    speciesEnthalpy(h_RT, tc);
+
+    amrex::Real phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;
+    amrex::Real dlnkfdT, dlnk0dT, dlnKcdT, dkrdT, dqdT;
+    amrex::Real dqdci, dcdc_fac, dqdc[35];
+    amrex::Real Pr, fPr, F, k_0, logPr;
+    amrex::Real logFcent, troe_c, troe_n, troePr_den, troePr, troe;
+    amrex::Real Fcent1, Fcent2, Fcent3, Fcent;
+    amrex::Real dlogFdc, dlogFdn, dlogFdcn_fac;
+    amrex::Real dlogPrdT, dlogfPrdT, dlogFdT, dlogFcentdT, dlogFdlogPr, dlnCorrdT;
+    const amrex::Real ln10 = log(10.0);
+    const amrex::Real log10e = 1.0/log(10.0);
+    amrex::Real c_R[35], dcRdT[35], e_RT[35];
+    amrex::Real * eh_RT;
+    if (consP) {
+        cp_R(c_R, tc);
+        dcvpRdT(dcRdT, tc);
+        eh_RT = &h_RT[0];
+    }
+    else {
+        cv_R(c_R, tc);
+        dcvpRdT(dcRdT, tc);
+        speciesInternalEnergy(e_RT, tc);
+        eh_RT = &e_RT[0];
+    }
+
+    amrex::Real cmix = 0.0, ehmix = 0.0, dcmixdT=0.0, dehmixdT=0.0;
+    for (int k = 0; k < 35; ++k) {
+        cmix += c_R[k]*sc[k];
+        dcmixdT += dcRdT[k]*sc[k];
+        ehmix += eh_RT[k]*wdot[k];
+        dehmixdT += invT*(c_R[k]-eh_RT[k])*wdot[k] + eh_RT[k]*J[1260+k];
+    }
+
+    amrex::Real cmixinv = 1.0/cmix;
+    amrex::Real tmp1 = ehmix*cmixinv;
+    amrex::Real tmp3 = cmixinv*T;
+    amrex::Real tmp2 = tmp1*tmp3;
+    amrex::Real dehmixdc;
+    /* dTdot/d[X] */
+    for (int k = 0; k < 35; ++k) {
+        dehmixdc = 0.0;
+        for (int m = 0; m < 35; ++m) {
+            dehmixdc += eh_RT[m]*J[k*36+m];
+        }
+        J[k*36+35] = tmp2*c_R[k] - tmp3*dehmixdc;
+    }
+    /* dTdot/dT */
+    J[1295] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;
+
+return;
+}
+
+
+/*compute the reaction Jacobian */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * consP)
+{
+    amrex::Real c[35];
+
+    for (int k=0; k<35; k++) {
+        c[k] = 1.e6 * sc[k];
+    }
+
+    aJacobian(J, c, *Tp, *consP);
+
+    /* dwdot[k]/dT */
+    /* dTdot/d[X] */
+    for (int k=0; k<35; k++) {
+        J[1260+k] *= 1.e-6;
+        J[k*36+35] *= 1.e6;
+    }
+
+    return;
+}
+
+/* gauss-jordan solver external routine */
+/* Replace this routine with the one generated by the Gauss Jordan solver of DW */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void sgjsolve(amrex::Real* /*A*/, amrex::Real* /*x*/, amrex::Real* /*b*/) {
+    amrex::Abort("sgjsolve not implemented, choose a different solver ");
+}
+
+/* Replace this routine with the one generated by the Gauss Jordan solver of DW */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void sgjsolve_simplified(amrex::Real* /*A*/, amrex::Real* /*x*/, amrex::Real* /*b*/) {
+    amrex::Abort("sgjsolve_simplified not implemented, choose a different solver ");
+}
+
 #endif
