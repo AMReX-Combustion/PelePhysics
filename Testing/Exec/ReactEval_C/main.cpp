@@ -107,7 +107,9 @@ main (int   argc,
 #endif
     {
       // Set ODE tolerances
+#ifndef USE_ARKODE_PP
       SetTolFactODE(rtol,atol);
+#endif
 
 #ifdef AMREX_USE_GPU
       reactor_info(ode_iE, ode_ncells);
