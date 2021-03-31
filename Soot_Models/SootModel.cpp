@@ -92,7 +92,7 @@ SootModel::define()
   bool corrPAH = false;
   Real dimerVol;
   for (int cpah = 0; cpah < numPAH; ++cpah) {
-    if (PAH_names[cpah] == m_PAHname) {
+    if (PAH_names[cpah] == m_inceptPAH) {
       m_gammaStick = PAH_gammas[cpah];
       dimerVol = 2. * PAH_numC[cpah];
       corrPAH = true;
@@ -156,7 +156,10 @@ void
 SootModel::readSootParams()
 {
   ParmParse pp("soot");
-  pp.get("incept_pah", m_PAHname);
+  pp.get("incept_pah", m_inceptPAH);
+  m_PAHname = m_inceptPAH;
+  // Necessary if species names differ from A2, A3, or A4
+  pp.query("pah_name", m_PAHname);
   m_sootVerbosity = 0;
   pp.query("v", m_sootVerbosity);
   if (m_sootVerbosity) {
@@ -434,9 +437,11 @@ SootModel::addSootSourceTerm(
       // Compute the species reaction source terms into omega_src
       sr->chemicalSrc(
         T, surf, xi_n.data(), moments.data(), k_sg, k_ox, k_o2, omega_src.data());
-      // Add the surface growth source to mom_src
-      sd->surfaceGrowthMomSrc(k_sg, mom_fvPtr, mom_srcPtr);
-      sd->oxidFragMomSrc(k_ox, k_o2, mom_fvPtr, mom_srcPtr);
+      if (moments[1] * sc.V0 * pele::physics::Constants::Avna > 1.E-12) {
+        // Add the surface growth source to mom_src
+        sd->surfaceGrowthMomSrc(k_sg, mom_fvPtr, mom_srcPtr);
+        sd->oxidFragMomSrc(k_ox, k_o2, mom_fvPtr, mom_srcPtr);
+      }
       // Update moments within subcycle
       for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
         moments[mom] += sootdt*mom_src[mom];

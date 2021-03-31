@@ -155,6 +155,8 @@ public:
   // TODO: Make these vectors in case multiple inception species are used
   /// Species index of PAH
   int m_PAHindx;
+  /// PAH inception path to be used, must be A2, A3, or A4
+  std::string m_inceptPAH;
   /// Name of PAH used for inception
   std::string m_PAHname;
   Real m_gammaStick;
