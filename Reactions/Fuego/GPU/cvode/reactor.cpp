@@ -546,10 +546,10 @@ int react(const amrex::Box& box,
     /* Create the linear solver object */
     if (user_data->isolve_type == iterative_gmres_solve) {
         if (user_data->ianalytical_jacobian == 0) { 
-            LS = SUNSPGMR(y, PREC_NONE, 0);
+            LS = SUNLinSol_SPGMR(y, PREC_NONE, 0);
             if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
         } else { 
-            LS = SUNSPGMR(y, PREC_LEFT, 0);
+            LS = SUNLinSol_SPGMR(y, PREC_LEFT, 0);
             if(check_flag((void *)LS, "SUNDenseLinearSolver", 0)) return(1);
         }
 
