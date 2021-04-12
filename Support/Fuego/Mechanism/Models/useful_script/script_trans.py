@@ -41,7 +41,7 @@ for l in linesTR:
     l = l.strip()
     ts = l.split()
     if len(ts)>6 and ts[0] in spec_list:
-        outlines[ts[0]] = '%-19s%1d%10.3f%10.3f%10.3f%10.3f%10.3f          ' % (ts[0],int(ts[1]),float(ts[2]),float(ts[3]),float(ts[4]),float(ts[5]),float(ts[6]))
+        outlines[ts[0]] = '%-19s%1d%10.3f%10.3f%10.3f%10.3f%10.3f' % (ts[0],int(ts[1]),float(ts[2]),float(ts[3]),float(ts[4]),float(ts[5]),float(ts[6]))
 
 # go through the list of species and find a match in the tran.dat file
 # if several entries can be found the last one is kept
