@@ -16,6 +16,7 @@ from Element import Element
 
 # the elements
 
+Electron     = Element(  0, "E",  "Electron",       0.0005485801)
 Hydrogen     = Element(  1, "H",  "Hydrogen",       1.00797)
 Helium       = Element(  2, "He", "Helium",         4.00260)
 Lithium      = Element(  3, "Li", "Lithium",        6.939)
@@ -126,7 +127,7 @@ Lawrencium   = Element(103, "Lw", "Lawrencium",   269.)
 # the atomic number index
 
 elements = [
-    Hydrogen, Helium, Lithium, Beryllium, Boron, Carbon, Nitrogen, Oxygen,
+    Electron, Hydrogen, Helium, Lithium, Beryllium, Boron, Carbon, Nitrogen, Oxygen,
     Fluorine, Neon, Sodium, Magnesium, Aluminum, Silicon, Phosphorus, Sulfur,
     Chlorine, Argon, Potassium, Calcium, Scandium, Titanium, Vanadium, Chromium,
     Manganese, Iron, Cobalt, Nickel, Copper, Zinc, Gallium, Germanium, Arsenic,
