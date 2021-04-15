@@ -36,26 +36,19 @@ for i in range(idx_beg+1,idx_end):
 
 print("Found ", len(spec_list), " species in mechanism")
 
+outlines = {}
+for l in linesTR:
+    l = l.strip()
+    ts = l.split()
+    if len(ts)>6 and ts[0] in spec_list:
+        outlines[ts[0]] = '%-19s%1d%10.3f%10.3f%10.3f%10.3f%10.3f' % (ts[0],int(ts[1]),float(ts[2]),float(ts[3]),float(ts[4]),float(ts[5]),float(ts[6]))
+
 # go through the list of species and find a match in the tran.dat file
 # if several entries can be found the last one is kept
 tran_list = []
-for i, spec in enumerate(spec_list):
-    tran_tmp = []
-    print("Taking care of", spec.strip())
-    for  j, line in enumerate(linesTR):
-        if line.split():
-            if line.split()[0] == spec.strip():
-                #print("Found it in tranfile", (line.split("!")[0]).strip())
-                tran_tmp.append((line.split("!")[0]).strip()+"          ")
-                #tran_list.append((line.split("!")[0]).strip()+"          ")
-    if len(tran_tmp) > 1:
-        print("  --> WARNING found additional entries in ",file1, ", taking the last one.")
-    tran_list.append(tran_tmp[-1])
-
-#if len(tran_list)!=len(spec_list):
-#    print("PROBLEM !! Len tran_list is ",len(tran_list), " when len spec_list is ",len(spec_list))
-#    STOP
-
+for spec in spec_list:
+    tran_list.append(outlines[spec])
+    
 # generate txt file with transport data, to append in the chem.inp
 csv_file = 'TRANFILE_APPEND.txt'
 with open(csv_file, 'w') as outfile:

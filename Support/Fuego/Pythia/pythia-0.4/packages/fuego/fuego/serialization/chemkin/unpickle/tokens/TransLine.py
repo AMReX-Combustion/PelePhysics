@@ -18,7 +18,7 @@ from RegularExpressions import eol, whitespaceOpt
 class TransLine(Token):
 
 
-    pattern = r"(?P<tran_line>.{19,19})(?P<tran_type>[0-2])(?P<tran_line_2>.{60,60})" + eol
+    pattern = r"(?P<tran_line>.{19,19})(?P<tran_type>[0-2])(?P<tran_line_2>.*$)"
 
 
     def identify(self, auth):
