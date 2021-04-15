@@ -236,6 +236,8 @@ int react(const amrex::Box& box,
     NCELLS         = box.numPts();
     neq_tot        = (NUM_SPECIES + 1) * NCELLS;
 
+    Gpu::streamSynchronize();
+
     /* User data -- host and device needed */
     UserData user_data;
 
@@ -504,6 +506,8 @@ int react(const amrex::Box& box,
     });
     BL_PROFILE_VAR_STOP(FlatStuff);
 
+    Gpu::Device::streamSynchronize();
+
     amrex::Real time_init = time;
     amrex::Real time_out  = time + dt_react;
 
@@ -618,6 +622,8 @@ int react(const amrex::Box& box,
     dt_react = time_init - time;
     time = time_init;
 #endif
+
+    Gpu::Device::streamSynchronize();
 
     long int nfe;
     flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
