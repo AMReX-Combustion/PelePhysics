@@ -44,6 +44,7 @@ SootModel::SootModel()
     m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
     local_soot_dt(1.E18),
     m_maxDtRate(-1.),
+    m_Tcutoff(-1.),
     m_numSubcycles(2),
     m_reactDataFilled(false),
     m_gasSpecNames(NUM_SOOT_GS, "")
@@ -169,6 +170,8 @@ SootModel::readSootParams()
   // Set the maximum allowable change for variables during soot source terms
   m_maxDtRate = 0.05;
   pp.query("max_dt_rate", m_maxDtRate);
+  m_Tcutoff = 300.;
+  pp.query("temp_cutoff", m_Tcutoff);
   // Recommend using subcycles for PeleLM, since timestep is much bigger
 #ifdef SOOT_PELE_LM
   m_numSubcycles = 10;
@@ -317,6 +320,7 @@ SootModel::addSootSourceTerm(
   const Real betaNF = m_betaNuclFact;
 
   const bool conserveMass = m_conserveMass;
+  const Real Tcutoff = m_Tcutoff;
 
   // H2 absorbs the error from surface reactions
   const int absorbIndx = SootGasSpecIndx::indxH2;
@@ -328,11 +332,13 @@ SootModel::addSootSourceTerm(
   amrex::ParallelFor(vbox, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     auto eos = pele::physics::PhysicsType::eos();
     SootConst sc;
-    GpuArray<Real, NUM_SPECIES> mw_fluid;
-    eos.molecular_weight(mw_fluid.data());
+    GpuArray<Real, NUM_SPECIES> mw_fluidF;
+    GpuArray<Real, NUM_SOOT_GS> mw_fluid;
+    eos.molecular_weight(mw_fluidF.data());
     GpuArray<Real, NUM_SPECIES> Hi;
     GpuArray<Real, NUM_SOOT_GS> omega_src;
-    GpuArray<Real, NUM_SPECIES> rho_Y;
+    GpuArray<Real, NUM_SOOT_GS> rho_Y;
+    GpuArray<Real, NUM_SPECIES> rho_YF;
     // Molar concentrations (mol/cm^3)
     GpuArray<Real, NUM_SOOT_GS> xi_n;
     // Array of moment values M_xy (cm^(3(x + 2/3y))cm^(-3))
@@ -365,12 +371,17 @@ SootModel::addSootSourceTerm(
       const int peleIndx = qSpecIndx + sp;
       // State provided by PeleLM is the concentration, rhoY
 #ifdef SOOT_PELE_LM
-      Real cn = Qstate(i, j, k, peleIndx) / Qstate(i, j, k, qRhoIndx);
+      rho_YF[sp] = Qstate(i, j, k, peleIndx) * sc.rho_conv;
 #else
-      Real cn = Qstate(i, j, k, peleIndx);
+      rho_YF[sp] = rho * Qstate(i, j, k, peleIndx);
 #endif
-      rho_Y[sp] = rho * cn;
     }
+    // Compute the average molar mass (g/mol)
+    Real molarMass = 0.;
+    for (int sp = 0; sp < NUM_SPECIES; ++sp) {
+      molarMass += rho_YF[sp] / mw_fluidF[sp];
+    }
+    molarMass = rho / molarMass;
     Real rho_src = 0.;
     Real eng_src = 0.;
     // Extract moment values
@@ -378,10 +389,13 @@ SootModel::addSootSourceTerm(
       const int peleIndx = qSootIndx + mom;
       moments[mom] = Qstate(i, j, k, peleIndx);
     }
+    for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
+      const int spcc = sd->refIndx[sp];
+      rho_Y[sp] = rho_YF[spcc];
+      mw_fluid[sp] = mw_fluidF[spcc];
+    }
     // Convert moments from CGS to mol of C
     sd->convertToMol(moments.data());
-    // Clip moments
-    sd->clipMoments(moments.data());
     // Compute constant values used throughout
     // (R*T*Pi/(2*A*rho_soot))^(1/2)
     const Real convT = std::sqrt(sc.colFact * T);
@@ -397,15 +411,8 @@ SootModel::addSootSourceTerm(
     int isub = 1;
     // Subcycling
     while (isub <= nsub) {
-      // Compute the average molar mass (g/mol)
-      Real molarMass = 0.;
-      for (int sp = 0; sp < NUM_SPECIES; ++sp) {
-        molarMass += rho_Y[sp] / mw_fluid[sp];
-      }
-      molarMass = rho / molarMass;
       for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
-        const int spcc = sd->refIndx[sp];
-        xi_n[sp] = rho_Y[spcc] / mw_fluid[spcc];
+        xi_n[sp] = rho_Y[sp] / mw_fluid[sp];
         // Reset the reaction source term
         omega_src[sp] = 0.;
       }
@@ -413,6 +420,8 @@ SootModel::addSootSourceTerm(
         // Reset moment source
         mom_src[mom] = 0.;
       }
+      // Clip moments
+      sd->clipMoments(moments.data());
       // Molar concentration of the PAH inception species
       Real xi_PAH = xi_n[SootGasSpecIndx::indxPAH];
       // Compute the vector of factors used for moment interpolation
@@ -442,25 +451,32 @@ SootModel::addSootSourceTerm(
         sd->surfaceGrowthMomSrc(k_sg, mom_fvPtr, mom_srcPtr);
         sd->oxidFragMomSrc(k_ox, k_o2, mom_fvPtr, mom_srcPtr);
       }
-      // Update moments within subcycle
-      for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
-        moments[mom] += sootdt*mom_src[mom];
+      if (isub == 1) {
+        // Check number of subcycles
+        if (T < Tcutoff) nsub = 1.;
+        sootdt = dt / Real(nsub);
       }
       // Update species concentrations within subcycle
       for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
         // Convert from local gas species index to global gas species index
         const int spcc = sd->refIndx[sp];
         // Convert to proper units
-        omega_src[sp] *= mw_fluid[spcc];
+        omega_src[sp] *= mw_fluid[sp];
         const int peleIndx = specIndx + spcc;
-        rho_Y[spcc] += sootdt * omega_src[sp];
+        rho_Y[sp] += sootdt * omega_src[sp];
         soot_state(i, j, k, peleIndx) += omega_src[sp] * sc.mass_src_conv / Real(nsub);
-        rho_src += omega_src[sp] / Real(nsub);
-        eng_src += omega_src[sp] * Hi[spcc] / Real(nsub);
+        rho_src += omega_src[sp];
+        eng_src += omega_src[sp] * (Hi[spcc] - T * pele::physics::Constants::RU / mw_fluid[sp]);
         rho += sootdt * omega_src[sp];
+      }
+      // Update moments within subcycle
+      for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
+        moments[mom] += sootdt * mom_src[mom];
       }
       isub++;
     }
+    rho_src /= Real(nsub);
+    eng_src /= Real(nsub);
     // Convert moment source terms back to CGS/SI units
     sd->convertFromMol(momentsPtr);
     // Add moment source terms
@@ -476,7 +492,7 @@ SootModel::addSootSourceTerm(
       // Add that mass to H2
       soot_state(i, j, k, absorbIndxP) -= del_rho_dot * sc.mass_src_conv;
       rho_src -= del_rho_dot;
-      eng_src -= Hi[absorbIndxN] * del_rho_dot;
+      eng_src -= del_rho_dot * (Hi[absorbIndxN] - T * pele::physics::Constants::RU / mw_fluidF[absorbIndxN] * T);
     }
     // Add density source term
     soot_state(i, j, k, rhoIndx) += rho_src * sc.mass_src_conv;

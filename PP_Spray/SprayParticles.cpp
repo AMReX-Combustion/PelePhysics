@@ -96,7 +96,6 @@ SprayParticleContainer::moveKickDrift(
   // ********************************************************************************
 
   // ********************************************************************************
-
 }
 
 Real
@@ -273,7 +272,7 @@ SprayParticleContainer::updateParticles(
     amrex::ParallelFor(
       Np, [pstruct, statearr, sourcearr, plo, phi, dx, dxi, do_move, SPI, SPU,
            fdat, src_box, state_box, bndry_hi, bndry_lo, flow_dt, inv_vol,
-           ltransparm, at_bounds, wallT
+           ltransparm, at_bounds, wallT, isActive
 #ifdef USE_SPRAY_SOA
            ,
            attribs
@@ -318,6 +317,7 @@ SprayParticleContainer::updateParticles(
           }
           // Length from cell center to boundary face center
           Real diff_cent = 0.5 * dx[0];
+          bool do_fe_interp = true;
 #ifdef AMREX_USE_EB
           // Cell containing particle centroid
           AMREX_D_TERM(const int ip = static_cast<int>(
@@ -332,9 +332,8 @@ SprayParticleContainer::updateParticles(
                            (p.pos(1) - plo[1]) * dxi[1] + 0.5));
                        , const int k = static_cast<int>(amrex::Math::floor(
                            (p.pos(2) - plo[2]) * dxi[2] + 0.5)););
-          bool do_reg_interp = false;
           if (!eb_in_box) {
-            do_reg_interp = true;
+            do_fe_interp = false;
           } else {
             // All cells in the stencil are regular. Use
             // traditional trilinear interpolation
@@ -347,15 +346,15 @@ SprayParticleContainer::updateParticles(
               flags_array(i, j - 1, k).isRegular() and
               flags_array(i - 1, j, k).isRegular() and
               flags_array(i, j, k).isRegular())
-              do_reg_interp = true;
+              do_fe_interp = false;
           }
-          if (do_reg_interp) {
-            trilinear_interp(ijk, lx, indx_array.data(), weights.data());
-          } else {
+          if (do_fe_interp) {
             fe_interp(
               p.pos(), ip, jp, kp, dx, dxi, plo, flags_array, ccent_fab,
               bcent_fab, bnorm_fab, volfrac_fab, indx_array.data(),
               weights.data());
+          } else {
+            trilinear_interp(ijk, lx, indx_array.data(), weights.data());
           }
           bool eb_wall_film = false;
           if (is_wall_film && flags_array(ip, jp, kp).isSingleValued()) {
@@ -368,7 +367,7 @@ SprayParticleContainer::updateParticles(
             diff_cent = std::sqrt(diff_cent);
           }
 #else
-        trilinear_interp(ijk, lx, indx_array.data(), weights.data());
+          trilinear_interp(ijk, lx, indx_array.data(), weights.data());
 #endif // AMREX_USE_EB
        // Interpolate fluid state
           Real T_fluid = 0.;
@@ -431,7 +430,7 @@ SprayParticleContainer::updateParticles(
 #ifdef USE_SPRAY_SOA
                 const Real cvel = attribs[SPI.pstateVel + dir].data()[pid];
 #else
-              const Real cvel = p.rdata(SPI.pstateVel+dir);
+                const Real cvel = p.rdata(SPI.pstateVel+dir);
 #endif
                 Gpu::Atomic::Add(&p.pos(dir), flow_dt * cvel * SPU.pos_conv);
               }
@@ -483,15 +482,37 @@ SprayParticleContainer::updateParticles(
               &sourcearr(cur_indx, SPI.engIndx),
               cur_coef * gpv.fluid_eng_src * SPU.eng_src_conv);
           }
-        } // End of p.id() > 0 check
-      }); // End of loop over particles
-  }       // for (int MyParIter pti..
-  if (do_move) {
-    wallImpingement(
-      level, flow_dt, time,
+          // Solve for splash model/wall film formation
+          if (at_bounds && do_move) {
+            IntVect ijk_prev = ijk;
+            lx = (p.pos() - plo) * dxi + 0.5;
+            ijk = lx.floor();
+            const Real T_part = p.rdata(SPI.pstateT);
+            const Real dia_part = p.rdata(SPI.pstateDia);
+            IntVect bloc(ijk);
+            RealVect normal;
+            RealVect bcentv;
+            bool dry_wall = false; // TODO: Implement this check
+            bool wall_check = check_wall(
+              p, ijk, ijk_prev, dx, plo, phi,
 #ifdef AMREX_USE_EB
-      flagmf, bndrycent, bndrynorm,
+              eb_in_box, flags_array, bcent_fab, bnorm_fab,
 #endif
-      state_ghosts, source_ghosts, isActive);
-  }
+              bndry_lo, bndry_hi, bloc, normal, bcentv);
+            if (wall_check) {
+              splash_type splash_flag = splash_type::no_impact;
+              if (T_part > 0.) {
+                SprayRefl SPRF;
+                SPRF.pos_refl = p.pos();
+                for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+                  SPRF.Y_refl[spf] = p.rdata(SPI.pstateY + spf);
+                splash_flag = impose_wall(
+                  p, SPI, SPU, *fdat, dx, plo, phi, wallT, bloc, normal, bcentv,
+                  SPRF, isActive, dry_wall);
+              } // TODO: Add check for if it is wall film
+            }
+          } // if (at_bounds...
+        }   // End of p.id() > 0 check
+      });   // End of loop over particles
+  }         // for (int MyParIter pti..
 }

@@ -328,7 +328,9 @@ calculateSpraySource(
         Real heatC = calcHeatCoeff(ratio, B_M_num[spf], B_eps, C_eps, Nu_0);
         // Convection term
         coeff_heat += heatC;
-        gpv.fluid_eng_src += mi_dot[spf] * h_skin[fspec];
+        gpv.fluid_eng_src +=
+          mi_dot[spf] * (h_skin[fspec] - pele::physics::Constants::RU /
+                                           gpv.mw_fluid[fspec] * gpv.T_fluid);
         part_temp_src += mi_dot[spf] * L_fuel[spf];
       }
       Real conv_src = M_PI * lambda_skin * dia_part * delT * coeff_heat;

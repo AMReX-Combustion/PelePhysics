@@ -63,7 +63,7 @@ struct SootConst
   Real rho_conv = 0.001; // Turn kg/m^3 to g/cm^3
   Real mu_conv = 10.;
   Real mass_src_conv = 1000.;
-  Real eng_src_conv = 1.E-1;
+  Real eng_src_conv = 0.1;
 #else
   Real len_conv = 1.;
   Real rho_conv = 1.;
