@@ -182,14 +182,14 @@ struct SootData
       // Oxidation of the small particles
       Real small = -factOx * smallOF[i] * weightDelta;
       // Oxidation of the larger particles
-      Real factLarge =
+      Real fracLarge =
         fracMomLarge(sc.MomOrderV[i] - 1., sc.MomOrderS[i] + 1., momFV);
       Real large =
-        -factOx * (sc.MomOrderV[i] + 2. / 3. * sc.MomOrderS[i]) * factLarge;
+        -factOx * (sc.MomOrderV[i] + 2. / 3. * sc.MomOrderS[i]) * fracLarge;
       // Add oxidation source
       mom_src[i] += large + small;
       // Add fragmentation source
-      mom_src[i] += fragFact[i] * factO2 * factLarge;
+      mom_src[i] += fragFact[i] * factO2 * fracLarge;
     }
     Real fracLarge = fracMomLarge(-1., 1., momFV);
     Real small = -factOx * smallOF[dwIndx] * weightDelta;
@@ -297,7 +297,7 @@ struct SootData
                    sscnCF[i] * weightDelta2;
       Real prodss = ss_fm * ss_cn;
       // Harmonic mean for transitional regime
-      Real ss = (prodss == 0.) ? 0. : prodss / (ss_fm + ss_cn);
+      Real ss = (std::abs(prodss) < 1.E-50) ? 0. : prodss / (ss_fm + ss_cn);
 
       // Collision between a particle in each mode
       // Collision model: "Splashing"
@@ -310,7 +310,7 @@ struct SootData
       Real sl_cn = C_cn * CNCoagSL(i, lambda, momFV);
       Real prodsl = sl_fm * sl_cn;
       // Harmonic mean for transitional regime
-      Real sl = (prodsl == 0.) ? 0. : prodsl / (sl_fm + sl_cn);
+      Real sl = (std::abs(prodsl) < 1.E-50) ? 0. : prodsl / (sl_fm + sl_cn);
       // Collision between two second mode particles
       // Collision model: Pure aggregation
       // S_(i+j) = S_i + S_j
@@ -320,7 +320,7 @@ struct SootData
       Real ll_cn = C_cn * CNCoagLL(i, lambda, momFV);
       Real prodll = ll_fm * ll_cn;
       // Harmonic mean for transitional regime
-      Real ll = (prodll == 0.) ? 0. : prodll / (ll_fm + ll_cn);
+      Real ll = (std::abs(prodll) < 1.E-50) ? 0. : prodll / (ll_fm + ll_cn);
       mom_src[i] += (ss + sl + ll);
     }
     // Free molecular regime
@@ -330,14 +330,14 @@ struct SootData
       -4. * C_cn * (1. + 1.257 * lambda * getNuclExp3(-1)) * weightDelta2;
     // Harmonic mean for transitional regime
     Real prodss = ss_fm * ss_cn;
-    Real ss = (prodss == 0.) ? 0. : prodss / (ss_fm + ss_cn);
+    Real ss = (std::abs(prodss) < 1.E-50) ? 0. : prodss / (ss_fm + ss_cn);
     // Free molecular regime
     Real sl_fm = C_fm * FMCoagSL(dwIndx, momFV);
     // Continuum regime
     Real sl_cn = C_cn * CNCoagSL(dwIndx, lambda, momFV);
     // Harmonic mean for transitional regime
     Real prodsl = sl_fm * sl_cn;
-    Real sl = (prodsl == 0.) ? 0. : prodsl / (sl_fm + sl_cn);
+    Real sl = (std::abs(prodsl) < 1.E-50) ? 0. : prodsl / (sl_fm + sl_cn);
     mom_src[dwIndx] += (ss + sl);
   }
 

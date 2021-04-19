@@ -42,7 +42,6 @@ SootModel::SootModel()
     m_conserveMass(true),
     m_PAHindx(-1),
     m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
-    local_soot_dt(1.E18),
     m_maxDtRate(-1.),
     m_Tcutoff(-1.),
     m_numSubcycles(2),
@@ -337,7 +336,6 @@ SootModel::addSootSourceTerm(
     eos.molecular_weight(mw_fluidF.data());
     GpuArray<Real, NUM_SPECIES> Hi;
     GpuArray<Real, NUM_SOOT_GS> omega_src;
-    GpuArray<Real, NUM_SOOT_GS> rho_Y;
     GpuArray<Real, NUM_SPECIES> rho_YF;
     // Molar concentrations (mol/cm^3)
     GpuArray<Real, NUM_SOOT_GS> xi_n;
@@ -388,11 +386,14 @@ SootModel::addSootSourceTerm(
     for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
       const int peleIndx = qSootIndx + mom;
       moments[mom] = Qstate(i, j, k, peleIndx);
+      mom_src[mom] = 0.;
     }
     for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
       const int spcc = sd->refIndx[sp];
-      rho_Y[sp] = rho_YF[spcc];
       mw_fluid[sp] = mw_fluidF[spcc];
+      xi_n[sp] = rho_YF[spcc] / mw_fluid[sp];
+      // Reset the reaction source term
+      omega_src[sp] = 0.;
     }
     // Convert moments from CGS to mol of C
     sd->convertToMol(moments.data());
@@ -411,15 +412,6 @@ SootModel::addSootSourceTerm(
     int isub = 1;
     // Subcycling
     while (isub <= nsub) {
-      for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
-        xi_n[sp] = rho_Y[sp] / mw_fluid[sp];
-        // Reset the reaction source term
-        omega_src[sp] = 0.;
-      }
-      for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
-        // Reset moment source
-        mom_src[mom] = 0.;
-      }
       // Clip moments
       sd->clipMoments(moments.data());
       // Molar concentration of the PAH inception species
@@ -454,6 +446,12 @@ SootModel::addSootSourceTerm(
       if (isub == 1) {
         // Check number of subcycles
         if (T < Tcutoff) nsub = 1.;
+        // Increase subcycles to prevent concentration to go negative
+        for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
+          if (xi_n[sp] > 1.E-30) {
+            nsub = amrex::max(nsub, int(-dt * omega_src[sp] / xi_n[sp]) + 1);
+          }
+        }
         sootdt = dt / Real(nsub);
       }
       // Update species concentrations within subcycle
@@ -461,17 +459,21 @@ SootModel::addSootSourceTerm(
         // Convert from local gas species index to global gas species index
         const int spcc = sd->refIndx[sp];
         // Convert to proper units
+        xi_n[sp] += sootdt * omega_src[sp];
         omega_src[sp] *= mw_fluid[sp];
         const int peleIndx = specIndx + spcc;
-        rho_Y[sp] += sootdt * omega_src[sp];
         soot_state(i, j, k, peleIndx) += omega_src[sp] * sc.mass_src_conv / Real(nsub);
         rho_src += omega_src[sp];
         eng_src += omega_src[sp] * (Hi[spcc] - T * pele::physics::Constants::RU / mw_fluid[sp]);
         rho += sootdt * omega_src[sp];
+        omega_src[sp] = 0.; // Reset omega source
       }
       // Update moments within subcycle
       for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
+        const int peleIndx = sootIndx + mom;
         moments[mom] += sootdt * mom_src[mom];
+        soot_state(i, j, k, peleIndx) += mom_src[mom] * sd->unitConv[mom] / Real(nsub);
+        mom_src[mom] = 0.; // Reset moment source
       }
       isub++;
     }
@@ -479,12 +481,6 @@ SootModel::addSootSourceTerm(
     eng_src /= Real(nsub);
     // Convert moment source terms back to CGS/SI units
     sd->convertFromMol(momentsPtr);
-    // Add moment source terms
-    for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
-      const int qPeleIndx = qSootIndx + mom;
-      const int peleIndx = sootIndx + mom;
-      soot_state(i, j, k, peleIndx) += (moments[mom] - Qstate(i, j, k, qPeleIndx)) / dt;
-    }
     if (conserveMass) {
       // Difference between mass lost from fluid and mass gained to soot
       Real diff_vol = soot_state(i, j, k, sootIndx + 1);
@@ -492,10 +488,95 @@ SootModel::addSootSourceTerm(
       // Add that mass to H2
       soot_state(i, j, k, absorbIndxP) -= del_rho_dot * sc.mass_src_conv;
       rho_src -= del_rho_dot;
-      eng_src -= del_rho_dot * (Hi[absorbIndxN] - T * pele::physics::Constants::RU / mw_fluidF[absorbIndxN] * T);
+      eng_src -= del_rho_dot * (Hi[absorbIndxN] - T * pele::physics::Constants::RU / mw_fluidF[absorbIndxN]);
     }
     // Add density source term
     soot_state(i, j, k, rhoIndx) += rho_src * sc.mass_src_conv;
     soot_state(i, j, k, engIndx) += eng_src * sc.eng_src_conv;
   });
+}
+
+// Compute time step estimate for soot
+Real
+SootModel::estSootDt(
+  const Box& vbox,
+  Array4<const Real> const& Qstate) const
+{
+  // Primitive components
+  const int qRhoIndx = m_sootIndx.qRhoIndx;
+  const int qTempIndx = m_sootIndx.qTempIndx;
+  const int qSpecIndx = m_sootIndx.qSpecIndx;
+  const int qSootIndx = m_sootIndx.qSootIndx;
+  const Real maxDtRate = m_maxDtRate;
+
+  const SootData* sd = d_sootData;
+  const SootReaction* sr = d_sootReact;
+  ReduceOps<ReduceOpMin> reduce_op;
+  ReduceData<Real> reduce_data(reduce_op);
+  using ReduceTuple = typename decltype(reduce_data)::Type;
+  Real soot_dt = std::numeric_limits<Real>::max();
+  BL_PROFILE("estSootDt()");
+  reduce_op.eval(
+                 vbox, reduce_data,
+                 [=] AMREX_GPU_DEVICE(int i, int j, int k) -> ReduceTuple {
+    auto eos = pele::physics::PhysicsType::eos();
+    SootConst sc;
+    GpuArray<Real, NUM_SPECIES> mw_fluidF;
+    GpuArray<Real, NUM_SOOT_GS> mw_fluid;
+    eos.molecular_weight(mw_fluidF.data());
+    GpuArray<Real, NUM_SOOT_GS> omega_src;
+    GpuArray<Real, NUM_SOOT_GS> rho_Y;
+    GpuArray<Real, NUM_SOOT_GS> xi_n;
+    GpuArray<Real, NUM_SOOT_MOMENTS + 1> moments;
+    Real* momentsPtr = moments.data();
+    GpuArray<Real, NUM_SOOT_MOMENTS + 2> mom_fv;
+    Real* mom_fvPtr = mom_fv.data();
+    const Real rho = Qstate(i, j, k, qRhoIndx) * sc.rho_conv;
+    const Real T = Qstate(i, j, k, qTempIndx);
+    for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
+      const int peleIndx = qSootIndx + mom;
+      moments[mom] = Qstate(i, j, k, peleIndx);
+    }
+    for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
+      const int spcc = sd->refIndx[sp];
+      const int peleIndx = qSpecIndx + spcc;
+#ifdef SOOT_PELE_LM
+      rho_Y[sp] = Qstate(i, j, k, peleIndx) * sc.rho_conv;
+#else
+      rho_Y[sp] = rho * Qstate(i, j, k, peleIndx);
+#endif
+      mw_fluid[sp] = mw_fluidF[spcc];
+    }
+    sd->convertToMol(moments.data());
+    sd->computeFracMomVect(moments.data(), mom_fvPtr);
+    for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
+      xi_n[sp] = rho_Y[sp] / mw_fluid[sp];
+      omega_src[sp] = 0.;
+    }
+    Real surf = sc.S0 * sd->fracMom(0., 1., mom_fvPtr);
+    Real k_sg = 0.;
+    Real k_ox = 0.;
+    Real k_o2 = 0.;
+    // Compute the species reaction source terms into omega_src
+    sr->chemicalSrc(
+      T, surf, xi_n.data(), moments.data(), k_sg, k_ox, k_o2, omega_src.data());
+    Real rho_src = 0.;
+    for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
+      rho_src += omega_src[sp] * mw_fluid[sp];
+    }
+    Real maxrate = 0.;
+    for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
+      Real Y_n = rho_Y[sp] / rho;
+      Real dydt = std::abs(omega_src[sp] * mw_fluid[sp] - Y_n * rho_src) / rho;
+      Real newrate = dydt / maxDtRate;
+      if (newrate > maxrate) {
+        maxrate = amrex::max(maxrate, newrate);
+      }
+    }
+    return 1. / (maxrate + 1.E-12);
+  });
+  ReduceTuple hv = reduce_data.value();
+  Real ldt_cpu = amrex::get<0>(hv);
+  soot_dt = amrex::min(soot_dt, ldt_cpu);
+  return soot_dt;
 }

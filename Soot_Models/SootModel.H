@@ -73,6 +73,13 @@ public:
     const Real time,
     const Real dt) const;
 
+  //
+  // Estimate the soot time step
+  //
+  Real estSootDt(
+    const Box& vbox,
+    Array4<const Real> const& Qstate) const;
+
   /***********************************************************************
     Reaction functions (SootModel_react.cpp)
   ***********************************************************************/
@@ -88,25 +95,6 @@ public:
   // Set the indices for primitive and conservative variables
   //
   inline void setIndices(SootComps sootIndx) { m_sootIndx = sootIndx; }
-
-  //
-  // Assign the member data for the time step
-  //
-  inline void setTimeStep(const Real soot_dt)
-  {
-    local_soot_dt = amrex::min(local_soot_dt, m_maxDtRate * soot_dt);
-  }
-
-  //
-  // Return the estimated soot time step and reset the member variable
-  //
-  inline Real estSootTimeStep()
-  {
-    Real cur_dt = local_soot_dt;
-    // Reset time step
-    local_soot_dt = 1.E18;
-    return cur_dt;
-  }
 
   //
   // Return string of the names of each variable
@@ -164,9 +152,7 @@ public:
   // Name of soot variables to output (moments and weight of delta function)
   Vector<std::string> m_sootVarName;
 
-  // Time step estimation
-  Real local_soot_dt;
-  // Maximum allowable change for mass fractions, density, or moments
+  // Maximum allowable change for mass concentrations
   // to adjust the time step
   Real m_maxDtRate;
   // Temperature cutoff, any temparatures below this will only do one subcycle
