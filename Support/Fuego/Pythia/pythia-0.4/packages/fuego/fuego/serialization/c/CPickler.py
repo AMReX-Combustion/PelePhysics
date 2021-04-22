@@ -484,7 +484,7 @@ class CPickler(CMill):
             self._write('void comp_k_f_qss(amrex::Real *  tc, amrex::Real invT, amrex::Real *  k_f_qss);')
             self._write('void comp_Kc_qss(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc_qss);')
             self._write('void comp_qss_coeff(amrex::Real *  qf_co, amrex::Real *  qr_co, amrex::Real *  sc, amrex::Real *  tc, amrex::Real invT);')
-            self._write('void comp_sc_qss(amrex::Real * sc, amrex::Real * sc_qss, amrex::Real  * tc, amrex::Real  invT);')
+            self._write('void comp_sc_qss_cpu(amrex::Real * sc, amrex::Real * sc_qss, amrex::Real  * tc, amrex::Real  invT);')
 
         self._write('void progressRate(amrex::Real *  qdot, amrex::Real *  speciesConc, amrex::Real T);')
         #self._write('void progressRateFR(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  speciesConc, amrex::Real T);')
@@ -6099,7 +6099,7 @@ class CPickler(CMill):
         self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
         if (self.nQSSspecies > 0):
             self._write('/* Fill sc_qss here*/')
-            self._write('comp_sc_qss(sc, sc_qss, tc, invT);')
+            self._write('comp_sc_qss_cpu(sc, sc_qss, tc, invT);')
         self._write('comp_qfqr_cpu(q_f, q_r, sc, sc_qss, tc, invT);');
 
         self._write()
@@ -6772,7 +6772,7 @@ class CPickler(CMill):
             self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
             if (self.nQSSspecies > 0):
                 self._write('/* Fill sc_qss here*/')
-                self._write('comp_sc_qss(sc, sc_qss, tc, invT);')
+                self._write('comp_sc_qss_cpu(sc, sc_qss, tc, invT);')
             self._write('comp_qfqr_cpu(q_f, q_r, sc, sc_qss, tc, invT);');
             self._write()
             self._write('for (int i = 0; i < %d; ++i) {' % nReactions)
@@ -7179,7 +7179,7 @@ class CPickler(CMill):
         if (self.nQSSspecies > 0):
             self._write('/* Fill sc_qss here*/')
             self._write('amrex::Real sc_qss[%d];' % self.nQSSspecies)
-            self._write('comp_sc_qss(sc, sc_qss, tc, invT);')
+            self._write('comp_sc_qss_cpu(sc, sc_qss, tc, invT);')
 
         self._write()
 
@@ -11006,7 +11006,7 @@ class CPickler(CMill):
 
         # qss concentrations                                                                                                                                                                                
         self._write()
-        self._write('void comp_sc_qss(amrex::Real * sc, amrex::Real * sc_qss, amrex::Real * tc, amrex::Real invT)')
+        self._write('void comp_sc_qss_cpu(amrex::Real * sc, amrex::Real * sc_qss, amrex::Real * tc, amrex::Real invT)')
         self._write('{')
         self._indent()
 
