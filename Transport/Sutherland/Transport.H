@@ -10,8 +10,7 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_ParmParse.H>
 
-#include "mechanism.h"
-#include "chemistry_file.H"
+#include "mechanism.H"
 #include "TransportParams.H"
 
 namespace pele {

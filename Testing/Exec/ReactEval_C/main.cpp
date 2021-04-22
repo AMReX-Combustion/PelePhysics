@@ -10,7 +10,7 @@
 #ifdef AMREX_USE_GPU
 #include <AMReX_SUNMemory.H>
 #endif
-#include "mechanism.h"
+#include "mechanism.H"
 #include <GPU_misc.H>
 
 #include <PlotFileFromMF.H>

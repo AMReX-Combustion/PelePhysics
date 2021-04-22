@@ -1,8 +1,7 @@
 #include <reactor.h> 
 #include <AMReX_ParmParse.H>
-#include <chemistry_file.H>
 #include <PelePhysics.H>
-#include "mechanism.h"
+#include "mechanism.H"
 #include <AMReX_Gpu.H>
 #include <AMReX_SUNMemory.H>
 #include <AMREX_misc.H>

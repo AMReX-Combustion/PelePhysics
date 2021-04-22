@@ -7,7 +7,7 @@
 
 #include <main_F.H>
 #include <PlotFileFromMF.H>
-#include "mechanism.h"
+#include "mechanism.H"
 
 std::string inputs_name = "";
 

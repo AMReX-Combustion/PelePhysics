@@ -6,7 +6,7 @@
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
 
-#include <mechanism.h>
+#include <mechanism.H>
 #include <PelePhysics.H>
 #include <AMReX_GpuDevice.H>
 

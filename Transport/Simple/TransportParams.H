@@ -2,7 +2,7 @@
 #define TRANSPORT_PARAMS_H
 
 #include <AMReX_REAL.H>
-#include "mechanism.h"
+#include "mechanism.H"
 
 namespace pele {
 namespace physics {

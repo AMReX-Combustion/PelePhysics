@@ -1,7 +1,6 @@
 #include <reactor.h> 
 #include <AMReX_ParmParse.H>
-#include <chemistry_file.H>
-#include "mechanism.h"
+#include "mechanism.H"
 #include <AMREX_misc.H>
 
 #define SUN_CUSP_CONTENT(S)        ( (SUNLinearSolverContent_Sparse_custom)(S->content) )

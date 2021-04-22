@@ -5,7 +5,7 @@
 #include <AMReX_Gpu.H>
 #include <cmath>
 
-#include "mechanism.h"
+#include "mechanism.H"
 
 #include <PelePhysics.H>
 

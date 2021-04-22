@@ -5,8 +5,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
 
-#include "mechanism.h"
-#include "chemistry_file.H"
+#include "mechanism.H"
 #include "PhysicsConstants.H"
 
 namespace pele {

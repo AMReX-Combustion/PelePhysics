@@ -6,7 +6,7 @@
 #include <AMReX_CArena.H>
 #include <cmath>
 
-#include "mechanism.h"
+#include "mechanism.H"
 
 #include <PelePhysics.H>
 

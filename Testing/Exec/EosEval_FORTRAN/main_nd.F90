@@ -2,7 +2,7 @@ module main_module
 
   use amrex_fort_module, only : amrex_real
 
-#include "mechanism.h"
+#include "mechanism.H"
 
   implicit none
 

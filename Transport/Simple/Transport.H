@@ -9,8 +9,7 @@
 #include <AMReX_GpuQualifiers.H>
 #include <TransportParams.H>
 
-#include "mechanism.h"
-#include "chemistry_file.H"
+#include "mechanism.H"
 #include "EOS.H"
 #include "PhysicsConstants.H"
 
