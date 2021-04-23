@@ -11061,7 +11061,7 @@ class CPickler(CMill):
                 # COEFF
                 self._write('amrex::Real %s = epsilon %s;' % (denominator, self.QSS_coeff[symbol]))
                 self._write()
-                self._write('sc_qss[%s] = %s/%s;' % (self.qss_species_list.index(symbol), numerator, denominator))
+                self._write('sc_qss[%s] = - %s/%s;' % (self.qss_species_list.index(symbol), numerator, denominator))
                 self._write()
             if symbol in self.group.keys():
                 print "    Though case. Submatrix has size ", len(self.group[symbol]), "x", len(self.group[symbol])
@@ -11127,7 +11127,7 @@ class CPickler(CMill):
                     else:
                         self._write('amrex::Real %s = epsilon %s;' % (denominator, self.QSS_coeff[species]))
                     # RHS
-                    self._write('amrex::Real '+species+'_rhs = '+numerator+'/'+denominator+';')
+                    self._write('amrex::Real '+species+'_rhs = -'+numerator+'/'+denominator+';')
                     self._write()
 
                     
@@ -11152,6 +11152,7 @@ class CPickler(CMill):
                 print "X IS "
                 print X
                 
+                self._write('/* Putting it all together */')
                 for helper in intermediate_helpers:
                     self._write('amrex::Real %s = %s;' % (helper, intermediate_helpers[helper]))
 
