@@ -334,7 +334,6 @@ class CPickler(CMill):
         #self._ckabms(mechanism)
         self._T_given_ey(mechanism)
         self._T_given_hy(mechanism)
-        self._getCriticalParameters(mechanism)
         #self._cksyms(mechanism)
         self._ckpx(mechanism)
         self._ckpy(mechanism)
@@ -400,6 +399,7 @@ class CPickler(CMill):
         # Transport
         self._write()
         self._transport(mechanism)
+        self._getCriticalParameters(mechanism)
         # GS routines 
         self._emptygjs(mechanism)
         self._write()
