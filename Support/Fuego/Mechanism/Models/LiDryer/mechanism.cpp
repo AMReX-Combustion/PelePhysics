@@ -51,7 +51,7 @@ void productionRate_cpu(amrex::Real *  wdot, amrex::Real *  sc, amrex::Real T)
 
     amrex::Real qdot, q_f[21], q_r[21];
     amrex::Real sc_qss[1];
-    comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
+    comp_qfqr_cpu(q_f, q_r, sc, sc_qss, tc, invT);
 
     for (int i = 0; i < 9; ++i) {
         wdot[i] = 0.0;
@@ -235,7 +235,7 @@ void comp_Kc(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc)
     return;
 }
 
-void comp_qfqr_cpu(amrex::Real *  qf, amrex::Real *  qr, amrex::Real *  sc, amrex::Real * qss_sc, amrex::Real *  tc, amrex::Real invT)
+void comp_qfqr_cpu(amrex::Real *  qf, amrex::Real *  qr, amrex::Real *  sc, amrex::Real * sc_qss, amrex::Real *  tc, amrex::Real invT)
 {
 
     /*reaction 1: H + O2 (+M) <=> HO2 (+M) */
@@ -329,6 +329,9 @@ void comp_qfqr_cpu(amrex::Real *  qf, amrex::Real *  qr, amrex::Real *  sc, amre
     for (int i = 0; i < 9; ++i) {
         mixture += sc[i];
     }
+    for (int i = 0; i < 0; ++i) {
+        mixture += sc_qss[i];
+    }
 
     amrex::Real Corr[21];
     for (int i = 0; i < 21; ++i) {
@@ -396,7 +399,7 @@ void progressRate(amrex::Real *  qdot, amrex::Real *  sc, amrex::Real T)
 
     amrex::Real q_f[21], q_r[21];
     amrex::Real sc_qss[1];
-    comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
+    comp_qfqr_cpu(q_f, q_r, sc, sc_qss, tc, invT);
 
     for (int i = 0; i < 21; ++i) {
         qdot[i] = q_f[i] - q_r[i];
@@ -581,6 +584,7 @@ void aJacobian_cpu(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP
     amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     amrex::Real invT = 1.0 / tc[1];
     amrex::Real invT2 = invT * invT;
+
 
     /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
     amrex::Real refC = 101325 / 8.31446 / T;
@@ -1796,8 +1800,7 @@ void aJacobian_cpu(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP
         cp_R(c_R, tc);
         dcvpRdT(dcRdT, tc);
         eh_RT = &h_RT[0];
-    }
-    else {
+    } else {
         cv_R(c_R, tc);
         dcvpRdT(dcRdT, tc);
         speciesInternalEnergy(e_RT, tc);
@@ -2187,7 +2190,7 @@ void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
             for (int l=0; l<9; l++) {
                 c_d[l] = 1.0/ 9.000000 ;
             }
-            aJacobian(J_d, c_d, 1500.0, *consP);
+            aJacobian_cpu(J_d, c_d, 1500.0, *consP);
     });
 
 #ifdef AMREX_USE_GPU
@@ -2228,7 +2231,7 @@ void SPARSITY_INFO_SYST( int * nJdata, int * consP, int NCELLS)
             for (int k=0; k<9; k++) {
                 c_d[k] = 1.0/ 9.000000 ;
             }
-            aJacobian(J_d, c_d, 1500.0, *consP);
+            aJacobian_cpu(J_d, c_d, 1500.0, *consP);
     });
 
 #ifdef AMREX_USE_GPU
@@ -2320,7 +2323,7 @@ void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, int * consP, int NCELL
             for (int k=0; k<9; k++) {
                 c_d[k] = 1.0/ 9.000000 ;
             }
-            aJacobian(J_d, c_d, 1500.0, *consP);
+            aJacobian_cpu(J_d, c_d, 1500.0, *consP);
     });
 
 #ifdef AMREX_USE_GPU
@@ -2365,7 +2368,7 @@ void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS,
             for (int k=0; k<9; k++) {
                 c_d[k] = 1.0/ 9.000000 ;
             }
-            aJacobian(J_d, c_d, 1500.0, *consP);
+            aJacobian_cpu(J_d, c_d, 1500.0, *consP);
     });
 
 #ifdef AMREX_USE_GPU
@@ -2427,7 +2430,7 @@ void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCE
             for (int k=0; k<9; k++) {
                 c_d[k] = 1.0/ 9.000000 ;
             }
-            aJacobian(J_d, c_d, 1500.0, *consP);
+            aJacobian_cpu(J_d, c_d, 1500.0, *consP);
     });
 
 #ifdef AMREX_USE_GPU

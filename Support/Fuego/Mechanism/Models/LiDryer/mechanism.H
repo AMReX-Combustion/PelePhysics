@@ -52,7 +52,7 @@ namespace thermo
 }
 /* PROD RATE STUFF  */
 void productionRate_cpu(amrex::Real *  wdot, amrex::Real *  sc, amrex::Real T);
-void comp_qfqr_cpu(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real * qss_sc, amrex::Real *  tc, amrex::Real invT);
+void comp_qfqr_cpu(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real * sc_qss, amrex::Real *  tc, amrex::Real invT);
 void comp_k_f(amrex::Real *  tc, amrex::Real invT, amrex::Real *  k_f);
 void comp_Kc(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc);
 void progressRate(amrex::Real *  qdot, amrex::Real *  speciesConc, amrex::Real T);
@@ -2313,7 +2313,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSMS(amrex::Real *  T,  amrex::Re
 
 
 /* GPU version of productionRate: no more use of thermo namespace vectors  */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * qss_sc, amrex::Real * tc, amrex::Real invT)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * sc_qss, amrex::Real * tc, amrex::Real invT)
 {
 
     /*reaction 9: H + O2 (+M) <=> HO2 (+M) */
@@ -4157,6 +4157,7 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     amrex::Real invT = 1.0 / tc[1];
     amrex::Real invT2 = invT * invT;
+
 
     /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
     amrex::Real refC = 101325 / 8.31446 / T;
