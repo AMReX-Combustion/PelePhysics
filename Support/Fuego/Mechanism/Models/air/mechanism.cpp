@@ -446,7 +446,7 @@ void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
             for (int l=0; l<2; l++) {
                 c_d[l] = 1.0/ 2.000000 ;
             }
-            aJacobian_cpu(J_d, c_d, 1500.0, *consP);
+            aJacobian(J_d, c_d, 1500.0, *consP);
     });
 
 #ifdef AMREX_USE_GPU
@@ -487,7 +487,7 @@ void SPARSITY_INFO_SYST( int * nJdata, int * consP, int NCELLS)
             for (int k=0; k<2; k++) {
                 c_d[k] = 1.0/ 2.000000 ;
             }
-            aJacobian_cpu(J_d, c_d, 1500.0, *consP);
+            aJacobian(J_d, c_d, 1500.0, *consP);
     });
 
 #ifdef AMREX_USE_GPU
@@ -579,7 +579,7 @@ void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, int * consP, int NCELL
             for (int k=0; k<2; k++) {
                 c_d[k] = 1.0/ 2.000000 ;
             }
-            aJacobian_cpu(J_d, c_d, 1500.0, *consP);
+            aJacobian(J_d, c_d, 1500.0, *consP);
     });
 
 #ifdef AMREX_USE_GPU
@@ -624,7 +624,7 @@ void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS,
             for (int k=0; k<2; k++) {
                 c_d[k] = 1.0/ 2.000000 ;
             }
-            aJacobian_cpu(J_d, c_d, 1500.0, *consP);
+            aJacobian(J_d, c_d, 1500.0, *consP);
     });
 
 #ifdef AMREX_USE_GPU
@@ -686,7 +686,7 @@ void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCE
             for (int k=0; k<2; k++) {
                 c_d[k] = 1.0/ 2.000000 ;
             }
-            aJacobian_cpu(J_d, c_d, 1500.0, *consP);
+            aJacobian(J_d, c_d, 1500.0, *consP);
     });
 
 #ifdef AMREX_USE_GPU
