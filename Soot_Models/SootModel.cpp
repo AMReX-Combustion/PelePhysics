@@ -50,8 +50,8 @@ SootModel::SootModel()
 {
   m_sootData = new SootData{};
   m_sootReact = new SootReaction{};
-  d_sootData = (SootData*)amrex::The_Arena()->alloc(sizeof(SootData));
-  d_sootReact = (SootReaction*)amrex::The_Arena()->alloc(sizeof(SootReaction));
+  d_sootData = static_cast<SootData*>(amrex::The_Arena()->alloc(sizeof(SootData)));
+  d_sootReact = static_cast<SootReaction*>(amrex::The_Arena()->alloc(sizeof(SootReaction)));
   m_sootVarName[NUM_SOOT_MOMENTS] = "soot_N0";
   m_sootVarName[0] = "soot_N";
   m_sootVarName[1] = "soot_fv";
@@ -137,13 +137,8 @@ SootModel::define()
   // Initialize reaction and species member data
   initializeReactData();
 
-#ifdef AMREX_USE_GPU
-  amrex::Gpu::htod_memcpy(d_sootData, m_sootData, sizeof(SootData));
-  amrex::Gpu::htod_memcpy(d_sootReact, m_sootReact, sizeof(SootReaction));
-#else
-  std::memcpy(d_sootData, m_sootData, sizeof(SootData));
-  std::memcpy(d_sootReact, m_sootReact, sizeof(SootReaction));
-#endif
+  amrex::Gpu::copy(amrex::Gpu::hostToDevice, m_sootData, m_sootData + 1, d_sootData);
+  amrex::Gpu::copy(amrex::Gpu::hostToDevice, m_sootReact, m_sootReact + 1, d_sootReact);
 
   if (m_sootVerbosity && ParallelDescriptor::IOProcessor()) {
     Print() << "SootModel::define(): Soot model successfully defined"
