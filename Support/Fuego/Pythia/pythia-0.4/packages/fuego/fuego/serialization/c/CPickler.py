@@ -9995,7 +9995,7 @@ class CPickler(CMill):
                             else:
                                 # Check if QSS species i is also a product
                                 if any(product == self.qss_species_list[i] for product,_ in list(set(reaction.products))):
-                                    sys.exit('Quadratic coupling between '+self.qss_species_list[j]+' and '+self.qss_species_list[i]+' not allowed !!!')
+                                    sys.exit('Quadratic coupling between '+self.qss_species_list[j]+' and '+self.qss_species_list[i]+' in reaction '+reaction.equation()+' not allowed !!!')
                                 # if QSS specices j is a product and QSS species i is a reactant
                                 # because react is two way then j depend on i and vice-versa
                                 elif any(reactant == self.qss_species_list[i] for reactant,_ in list(set(reaction.reactants))):
@@ -10017,6 +10017,7 @@ class CPickler(CMill):
                     self.QSS_SCnet[i,j] = 0
                     for r in self.QSS_SR_Rj[self.QSS_SR_Si == j]:
                         reaction = mechanism.reaction(id=r)
+                        species_appearances = 0
 
                         # put forth any pathological case
                         if any(reactant == self.qss_species_list[j] for reactant,_ in  list(set(reaction.reactants))):
@@ -10028,21 +10029,27 @@ class CPickler(CMill):
                             if any(reactant == self.qss_species_list[j] for reactant,_ in  list(set(reaction.reactants))):
                                 for reactant in reaction.reactants:
                                     spec, coeff = reactant
-                                    if ((spec == self.qss_species_list[j]) and (coeff > 1.0)):
-                                        sys.exit('Quadratic coupling with '+self.qss_species_list[j]+' in reaction '+reaction.equation()+' not allowed !!!')
+                                    if (spec == self.qss_species_list[j]):
+                                        species_appearances += 1
+                                        if ( (coeff > 1.0) or (species_appearances > 1) ):
+                                            sys.exit('Quadratic coupling of '+self.qss_species_list[j]+' with itself in reaction '+reaction.equation()+' not allowed !!!')
                             # if QSS species j is not a reactant, then it must be a product.
                             else:
                                 for product in reaction.products:
                                     spec, coeff = product
-                                    if ((spec == self.qss_species_list[j]) and (coeff > 1.0)):
-                                        sys.exit('Quadratic coupling with '+self.qss_species_list[j]+' in reaction '+reaction.equation()+' not allowed !!!')
+                                    if (spec == self.qss_species_list[j]): 
+                                        species_appearances += 1
+                                        if ( (coeff > 1.0) or (species_appearances > 1) ):
+                                            sys.exit('Quadratic coupling of '+self.qss_species_list[j]+' with itself in reaction '+reaction.equation()+' not allowed !!!')
                         else:
                             # QSS spec j is a reactant
                             if any(reactant == self.qss_species_list[j] for reactant,_ in  list(set(reaction.reactants))):
                                 for reactant in reaction.reactants:
                                     spec, coeff = reactant
-                                    if ((spec == self.qss_species_list[j]) and (coeff > 1.0)):
-                                        sys.exit('Quadratic coupling with '+self.qss_species_list[j]+' in reaction '+reaction.equation()+' not allowed !!!')
+                                    if (spec == self.qss_species_list[j]):
+                                        species_appearances += 1
+                                        if ( (coeff > 1.0) or (species_appearances > 1) ):
+                                            sys.exit('Quadratic coupling of '+self.qss_species_list[j]+' with itself in reaction '+reaction.equation()+' not allowed !!!')
                         
         self.QSS_SC_Si, self.QSS_SC_Sj = np.nonzero(self.QSS_SCnet)
         print("\n\n SC network for QSS: ")
