@@ -1619,83 +1619,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_T_GIVEN_HY(amrex::Real *  h, a
 }
 
 
-/*compute the critical parameters for each species */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::Real *  acentric_i)
-{
-
-    amrex::Real   EPS[9];
-    amrex::Real   SIG[9];
-    amrex::Real    wt[9];
-    amrex::Real avogadro = 6.02214199e23;
-    amrex::Real boltzmann = 1.3806503e-16; //we work in CGS
-    amrex::Real Rcst = 83.144598; //in bar [CGS] !
-
-    egtransetEPS(EPS);
-    egtransetSIG(SIG);
-    get_mw(wt);
-
-    /*species 0: H2 */
-    /*Imported from NIST */
-    Tci[0] = 33.145000 ; 
-    ai[0] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[0],2.0) / (pow(2.015880,2.0) * 12.964000); 
-    bi[0] = 0.08664 * Rcst * Tci[0] / (2.015880 * 12.964000); 
-    acentric_i[0] = -0.219000 ;
-
-    /*species 1: O2 */
-    /*Imported from NIST */
-    Tci[1] = 154.581000 ; 
-    ai[1] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[1],2.0) / (pow(31.998800,2.0) * 50.430466); 
-    bi[1] = 0.08664 * Rcst * Tci[1] / (31.998800 * 50.430466); 
-    acentric_i[1] = 0.022200 ;
-
-    /*species 2: H2O */
-    /*Imported from NIST */
-    Tci[2] = 647.096000 ; 
-    ai[2] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[2],2.0) / (pow(18.015340,2.0) * 220.640000); 
-    bi[2] = 0.08664 * Rcst * Tci[2] / (18.015340 * 220.640000); 
-    acentric_i[2] = 0.344300 ;
-
-    /*species 3: H */
-    Tci[3] = 1.316 * EPS[3] ; 
-    ai[3] = (5.55 * pow(avogadro,2.0) * EPS[3]*boltzmann * pow(1e-8*SIG[3],3.0) ) / (pow(wt[3],2.0)); 
-    bi[3] = 0.855 * avogadro * pow(1e-8*SIG[3],3.0) / (wt[3]); 
-    acentric_i[3] = 0.0 ;
-
-    /*species 4: O */
-    Tci[4] = 1.316 * EPS[4] ; 
-    ai[4] = (5.55 * pow(avogadro,2.0) * EPS[4]*boltzmann * pow(1e-8*SIG[4],3.0) ) / (pow(wt[4],2.0)); 
-    bi[4] = 0.855 * avogadro * pow(1e-8*SIG[4],3.0) / (wt[4]); 
-    acentric_i[4] = 0.0 ;
-
-    /*species 5: OH */
-    Tci[5] = 1.316 * EPS[5] ; 
-    ai[5] = (5.55 * pow(avogadro,2.0) * EPS[5]*boltzmann * pow(1e-8*SIG[5],3.0) ) / (pow(wt[5],2.0)); 
-    bi[5] = 0.855 * avogadro * pow(1e-8*SIG[5],3.0) / (wt[5]); 
-    acentric_i[5] = 0.0 ;
-
-    /*species 6: HO2 */
-    Tci[6] = 1.316 * EPS[6] ; 
-    ai[6] = (5.55 * pow(avogadro,2.0) * EPS[6]*boltzmann * pow(1e-8*SIG[6],3.0) ) / (pow(wt[6],2.0)); 
-    bi[6] = 0.855 * avogadro * pow(1e-8*SIG[6],3.0) / (wt[6]); 
-    acentric_i[6] = 0.0 ;
-
-    /*species 7: H2O2 */
-    Tci[7] = 1.316 * EPS[7] ; 
-    ai[7] = (5.55 * pow(avogadro,2.0) * EPS[7]*boltzmann * pow(1e-8*SIG[7],3.0) ) / (pow(wt[7],2.0)); 
-    bi[7] = 0.855 * avogadro * pow(1e-8*SIG[7],3.0) / (wt[7]); 
-    acentric_i[7] = 0.0 ;
-
-    /*species 8: N2 */
-    /*Imported from NIST */
-    Tci[8] = 126.192000 ; 
-    ai[8] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[8],2.0) / (pow(28.013400,2.0) * 33.958000); 
-    bi[8] = 0.08664 * Rcst * Tci[8] / (28.013400 * 33.958000); 
-    acentric_i[8] = 0.037200 ;
-
-    return;
-}
-
-
 /*Compute P = rhoRT/W(x) */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKPX(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  P)
 {
@@ -6067,6 +5990,83 @@ void egtransetCOFTD(amrex::Real* COFTD) {
     COFTD[69] = 4.45343451E-04;
     COFTD[70] = -2.18173874E-07;
     COFTD[71] = 3.26958506E-11;
+}
+
+
+/*compute the critical parameters for each species */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::Real *  acentric_i)
+{
+
+    amrex::Real   EPS[9];
+    amrex::Real   SIG[9];
+    amrex::Real    wt[9];
+    amrex::Real avogadro = 6.02214199e23;
+    amrex::Real boltzmann = 1.3806503e-16; //we work in CGS
+    amrex::Real Rcst = 83.144598; //in bar [CGS] !
+
+    egtransetEPS(EPS);
+    egtransetSIG(SIG);
+    get_mw(wt);
+
+    /*species 0: H2 */
+    /*Imported from NIST */
+    Tci[0] = 33.145000 ; 
+    ai[0] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[0],2.0) / (pow(2.015880,2.0) * 12.964000); 
+    bi[0] = 0.08664 * Rcst * Tci[0] / (2.015880 * 12.964000); 
+    acentric_i[0] = -0.219000 ;
+
+    /*species 1: O2 */
+    /*Imported from NIST */
+    Tci[1] = 154.581000 ; 
+    ai[1] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[1],2.0) / (pow(31.998800,2.0) * 50.430466); 
+    bi[1] = 0.08664 * Rcst * Tci[1] / (31.998800 * 50.430466); 
+    acentric_i[1] = 0.022200 ;
+
+    /*species 2: H2O */
+    /*Imported from NIST */
+    Tci[2] = 647.096000 ; 
+    ai[2] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[2],2.0) / (pow(18.015340,2.0) * 220.640000); 
+    bi[2] = 0.08664 * Rcst * Tci[2] / (18.015340 * 220.640000); 
+    acentric_i[2] = 0.344300 ;
+
+    /*species 3: H */
+    Tci[3] = 1.316 * EPS[3] ; 
+    ai[3] = (5.55 * pow(avogadro,2.0) * EPS[3]*boltzmann * pow(1e-8*SIG[3],3.0) ) / (pow(wt[3],2.0)); 
+    bi[3] = 0.855 * avogadro * pow(1e-8*SIG[3],3.0) / (wt[3]); 
+    acentric_i[3] = 0.0 ;
+
+    /*species 4: O */
+    Tci[4] = 1.316 * EPS[4] ; 
+    ai[4] = (5.55 * pow(avogadro,2.0) * EPS[4]*boltzmann * pow(1e-8*SIG[4],3.0) ) / (pow(wt[4],2.0)); 
+    bi[4] = 0.855 * avogadro * pow(1e-8*SIG[4],3.0) / (wt[4]); 
+    acentric_i[4] = 0.0 ;
+
+    /*species 5: OH */
+    Tci[5] = 1.316 * EPS[5] ; 
+    ai[5] = (5.55 * pow(avogadro,2.0) * EPS[5]*boltzmann * pow(1e-8*SIG[5],3.0) ) / (pow(wt[5],2.0)); 
+    bi[5] = 0.855 * avogadro * pow(1e-8*SIG[5],3.0) / (wt[5]); 
+    acentric_i[5] = 0.0 ;
+
+    /*species 6: HO2 */
+    Tci[6] = 1.316 * EPS[6] ; 
+    ai[6] = (5.55 * pow(avogadro,2.0) * EPS[6]*boltzmann * pow(1e-8*SIG[6],3.0) ) / (pow(wt[6],2.0)); 
+    bi[6] = 0.855 * avogadro * pow(1e-8*SIG[6],3.0) / (wt[6]); 
+    acentric_i[6] = 0.0 ;
+
+    /*species 7: H2O2 */
+    Tci[7] = 1.316 * EPS[7] ; 
+    ai[7] = (5.55 * pow(avogadro,2.0) * EPS[7]*boltzmann * pow(1e-8*SIG[7],3.0) ) / (pow(wt[7],2.0)); 
+    bi[7] = 0.855 * avogadro * pow(1e-8*SIG[7],3.0) / (wt[7]); 
+    acentric_i[7] = 0.0 ;
+
+    /*species 8: N2 */
+    /*Imported from NIST */
+    Tci[8] = 126.192000 ; 
+    ai[8] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[8],2.0) / (pow(28.013400,2.0) * 33.958000); 
+    bi[8] = 0.08664 * Rcst * Tci[8] / (28.013400 * 33.958000); 
+    acentric_i[8] = 0.037200 ;
+
+    return;
 }
 
 /* gauss-jordan solver external routine */
