@@ -27,39 +27,7 @@
 #define NUM_FIT 4
 
 
-
-/* PURE CPU stuff -- no use on GPU. Defined in mechanism.cpp  */
-#ifndef AMREX_USE_GPU
-namespace thermo
-{
-
-    extern amrex::Real fwd_A[0], fwd_beta[0], fwd_Ea[0];
-    extern amrex::Real low_A[0], low_beta[0], low_Ea[0];
-    extern amrex::Real rev_A[0], rev_beta[0], rev_Ea[0];
-    extern amrex::Real troe_a[0],troe_Ts[0], troe_Tss[0], troe_Tsss[0];
-    extern amrex::Real sri_a[0], sri_b[0], sri_c[0], sri_d[0], sri_e[0];
-    extern amrex::Real activation_units[0], prefactor_units[0], phase_units[0];
-    extern int is_PD[0], troe_len[0], sri_len[0], nTB[0], *TBid[0];
-    extern amrex::Real *TB[0];
-}
-/* PROD RATE STUFF  */
-void productionRate_cpu(amrex::Real *  wdot, amrex::Real *  sc, amrex::Real T);
-void comp_qfqr_cpu(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real * sc_qss, amrex::Real *  tc, amrex::Real invT);
-void comp_k_f(amrex::Real *  tc, amrex::Real invT, amrex::Real *  k_f);
-void comp_Kc(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc);
-void progressRate(amrex::Real *  qdot, amrex::Real *  speciesConc, amrex::Real T);
-void CKQC(amrex::Real *  T, amrex::Real *  C, amrex::Real *  qdot);
-void CKQYP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  y, amrex::Real *  qdot);
-void CKQXP(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x, amrex::Real *  qdot);
-void CKQYR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  qdot);
-void CKQXR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  qdot);
-void aJacobian_cpu(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP);
-#endif
-
 /* ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp  */
-/* INIT and FINALIZE  */
-void CKINIT();
-void CKFINALIZE();
 void atomicWeight(amrex::Real *  awt);
 /* MISC  */
 void CKAWT(amrex::Real *  awt);

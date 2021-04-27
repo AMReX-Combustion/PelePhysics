@@ -6,8 +6,4 @@
 
 void CKSYMS_STR(amrex::Vector<std::string>& kname) {}
 
-void CKINIT() {}
-
-void CKFINALIZE() {}
-
 #endif

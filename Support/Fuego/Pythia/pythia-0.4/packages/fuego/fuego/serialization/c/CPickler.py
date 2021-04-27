@@ -222,7 +222,7 @@ class CPickler(CMill):
             # 0/1    /2   /3      /4  /5      /6
             self.reactionIndex = mechanism._sort_reactions()
 
-        #QSS        
+        #QSS  -- sort reactions/networks/check validity of QSSs      
         if (self.nQSSspecies > 0):
             print("\n\n\n\n---------------------------------")
             print("+++++++++QSS INFO++++++++++++++++")
@@ -238,28 +238,20 @@ class CPickler(CMill):
             self._setQSSneeds(mechanism) # Fill "need" dict (which species a species depends upon)
             self._setQSSisneeded(mechanism) # Fill "is_needed" dict (which species needs that particular species)
 
-
-        #mechanism.cpp
+        #This is for file mechanism.cpp
         self._write('#ifndef MECHANISM_CPP')
         self._write('#define MECHANISM_CPP')
         self._write()
         self._mechanism_includes()
         self._write()
-        self._write(self.line(' PURE CPU stuff '))
-        self._write('#ifndef AMREX_USE_GPU')
-        self._mechanism_statics(mechanism)
-        # Vectorization
-        # Deactivate vectorized CPU stuff for now
-        #self._write()
-        #self._write(self.line(' Vectorized stuff '))
-        #self._vckytx(mechanism)
-        #self._vckhms(mechanism)
-        #self._vckwyr(mechanism)
-        #self._vckpy(mechanism)
-        #self._vproductionRate(mechanism)
-        # Prod rate related
-        #QSS        
+
+        #QSS    -- NOTE 04/26/21 for now we still need the old CPU versions of all production rate related
+        # routines. We need to conserve the thermo namespace and all the A/beta/Eq/TB etc machinery for when
+        # there are some QSS involved. Please do not delete :)   
         if (self.nQSSspecies > 0):
+            self._write(self.line(' PURE CPU stuff '))
+            self._write('#ifndef AMREX_USE_GPU')
+            self._mechanism_statics(mechanism)
             print("\n\n\n\n---------------------------------")
             print("+++++++++GROUPS++++++++++++++++++")
             print("---------------------------------")
@@ -276,22 +268,24 @@ class CPickler(CMill):
             print("+++++++++QSS PRINTING++++++++++++")
             print("---------------------------------")
             self._QSScomponentFunctions(mechanism) # Print those expr in the mechanism.cpp
-
-        self._productionRate(mechanism)
-        self._progressRate(mechanism)
-        #self._progressRateFR(mechanism)
-        #self._ckkfkr(mechanism)
-        self._ckqc(mechanism)
-        self._ckqyp(mechanism)
-        self._ckqxp(mechanism)
-        self._ckqyr(mechanism)
-        self._ckqxr(mechanism)
-        self._ajac(mechanism)
-        self._write("#endif")
-        self._write()
+            # NOTE: this productionRate routine is similar to the GPU one. This one uses the thermo namespace
+            self._productionRate(mechanism)
+            self._progressRate(mechanism)
+            #self._progressRateFR(mechanism)
+            #self._ckkfkr(mechanism)
+            self._ckqc(mechanism)
+            self._ckqyp(mechanism)
+            self._ckqxp(mechanism)
+            self._ckqyr(mechanism)
+            self._ckqxr(mechanism)
+            self._ajac(mechanism)
+            # Basic info
+            #self._ckinu(mechanism)
+            self._initialization(mechanism)
+            self._write("#endif")
+            self._write()
+        
         # Basic info
-        #self._ckinu(mechanism)
-        self._initialization(mechanism)
         self._atomicWeight(mechanism)
         self._ckawt(mechanism)
         #self._ckxnum(mechanism)
@@ -302,13 +296,18 @@ class CPickler(CMill):
         # All sparsity preproc functions -- CPU 
         self._sparsity(mechanism)
         self._write('#endif')
-        #mechanism.cpp
+        #END file mechanism.cpp
 
 
         ### MECH HEADER -- second file starts here
         self._write("#ifndef MECHANISM_H")
         self._write("#define MECHANISM_H")
         self._print_mech_header(mechanism)
+        #QSS    -- NOTE 04/26/21 for now we still need the old CPU versions of all production rate related
+        # routines. We need to conserve the thermo namespace and all the A/beta/Eq/TB etc machinery for when
+        # there are some QSS involved. Please do not delete :)   
+        if (self.nQSSspecies > 0):
+            self._chem_file_CPUonly_decl(mechanism)
         self._chem_file_decl(mechanism)
         # Basic info
         self._ckindx(mechanism)
@@ -417,8 +416,7 @@ class CPickler(CMill):
 
 
     #Pieces for the file mechanism.H#
-    def _chem_file_decl(self, mechanism):
-
+    def _chem_file_CPUonly_decl(self, mechanism):
         self._write()
         self._write()
         self._write(
@@ -495,15 +493,18 @@ class CPickler(CMill):
         self._write('void CKQYR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  qdot);')
         self._write('void CKQXR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  qdot);')
         self._write('void aJacobian_cpu(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP);')
-        self._write('#endif')
-
-        self._write()
-        self._write(
-            self.line(' ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp '))
         self._write(
             self.line(' INIT and FINALIZE '))
         self._write('void CKINIT();')
         self._write('void CKFINALIZE();')
+        self._write('#endif')
+        return
+
+
+    def _chem_file_decl(self, mechanism):
+        self._write()
+        self._write(
+            self.line(' ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp '))
         self._write('void atomicWeight(amrex::Real *  awt);')
         self._write(
             self.line(' MISC '))
@@ -8821,7 +8822,6 @@ class CPickler(CMill):
         self._write(self.line(' Initializes parameter database'))
         self._write('void CKINIT'+sym+'()')
         self._write('{')
-        self._write('#ifndef AMREX_USE_GPU')
         self._indent()
 
         # build reverse reaction map
@@ -8933,7 +8933,6 @@ class CPickler(CMill):
                 self._write("nTB[%d] = 0;" % (id))
 
         self._outdent()
-        self._write('#endif')
         self._write("}")
         self._write()
 
@@ -8941,7 +8940,6 @@ class CPickler(CMill):
         self._write(self.line(' Finalizes parameter database'))
         self._write('void CKFINALIZE()')
         self._write('{')
-        self._write('#ifndef AMREX_USE_GPU')
         self._indent()
         self._write('for (int i=0; i<%d; ++i) {' % (nReactions))
         self._write('    free(TB[i]); TB[i] = 0; ')
@@ -8953,7 +8951,6 @@ class CPickler(CMill):
         #self._write('    nTB_DEF[i] = 0;')
         self._write('}')
         self._outdent()
-        self._write('#endif')
         self._write('}')
 
         return

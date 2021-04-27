@@ -23,9 +23,6 @@
 #define NUM_REACTIONS 0
 
 /* ALWAYS on CPU stuff -- can have different def depending on if we are CPU or GPU based. Defined in mechanism.cpp  */
-/* INIT and FINALIZE  */
-void CKINIT();
-void CKFINALIZE();
 /* MISC  */
 void CKSYMS_STR(amrex::Vector<std::string>& kname);
 
