@@ -34,9 +34,6 @@ main (int   argc,
       char* argv[])
 {
   Initialize(argc,argv);
-#ifdef AMREX_USE_GPU
-  amrex::sundials::MemoryHelper::Initialize(); /* TODO: this ideally (I think) will go in the amrex::Initialize */
-#endif
   {
     BL_PROFILE_VAR("main::main()", pmain);
 

@@ -6,8 +6,6 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
             Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU/cvode
         endif
         Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU
-        CEXE_headers += AMReX_SUNMemory.H
-        CEXE_sources += AMReX_SUNMemory.cpp
     else
        ifeq ($(USE_HIP), TRUE)
           ifeq ($(USE_ARKODE_PP), TRUE)
