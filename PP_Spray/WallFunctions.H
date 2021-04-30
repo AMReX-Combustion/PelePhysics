@@ -56,6 +56,7 @@ calculateWallFilmSource(
   pele::physics::transport::TransParm const* trans_parm)
 {
   auto eos = pele::physics::PhysicsType::eos();
+  SprayUnits SPU;
   const Real C_eps = 1.E-15;
   const Real B_eps = 1.E-7;
   const Real ht_tol = 2.E-6;
@@ -96,6 +97,9 @@ calculateWallFilmSource(
   Real area_film = vol / ht_film;
   Real dia_film = std::sqrt(4. * area_film / M_PI);
   eos.T2Hi(T_film, h_skin.data());
+  for (int n = 0; n < NUM_SPECIES; ++n) {
+    h_skin[n] *= SPU.eng_conv;
+  }
   calcVaporY(
     fdat, gpv, T_film, C_eps, Y_film.data(), h_skin.data(), Y_vapor.data(),
     L_fuel.data(), L_boilT.data());
@@ -129,13 +133,15 @@ calculateWallFilmSource(
   trans.transport(
     get_xi, get_mu, get_lambda, get_Ddiag, T_vapor, gpv.rho_fluid,
     Y_skin.data(), Ddiag.data(), mu_skin, xi_skin, lambda_skin, trans_parm);
+  mu_skin *= SPU.mu_conv;
+  lambda_skin *= SPU.lambda_conv;
   Real dy_i = diff_cent - ht_film; // Distance from film surface to cell center
   // Determine the mass evaporation values
   Real m_dot = 0.;
   Real qvap = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
-    Ddiag[fspec] *= mw_vap * gpv.invmw[fspec];
+    Ddiag[fspec] *= mw_vap * gpv.invmw[fspec] * SPU.rhod_conv;
     // TODO: Ensure condensed mass does not exceed gas phase mass
     mi_dot[spf] = -Ddiag[fspec] / (1. - Y_vapor[spf]) *
                   (gpv.Y_fluid[fspec] - Y_skin[fspec]) / dy_i;
@@ -337,7 +343,6 @@ splash_type
 impose_wall(
   SprayParticleContainer::ParticleType& p,
   SprayComps SPI,
-  SprayUnits SPU,
   SprayData fdat,
   const RealVect& dx,
   const RealVect& plo,
@@ -387,7 +392,7 @@ impose_wall(
       }
       rho_part = 1. / rho_part;
       const Real dia_part = p.rdata(SPI.pstateDia);
-      const Real d3 = pow(dia_part, 3);
+      const Real d3 = std::pow(dia_part, 3);
       const Real pmass = M_PI / 6. * rho_part * d3;
       // Weber number
       const Real We = rho_part * dia_part * Nw_Vp * Nw_Vp / sigma;
@@ -533,7 +538,7 @@ create_splash_droplet(
     Real pvel = AMREX_D_TERM(
       un * SPRF.norm[dir], +utBeta * SPRF.tanBeta[dir],
       +utPsi * SPRF.tanPsi[dir]);
-    Gpu::Atomic::Add(&p.pos(dir), SPRF.dt_pp * pvel * SPU.pos_conv);
+    Gpu::Atomic::Add(&p.pos(dir), SPRF.dt_pp * pvel);
     Gpu::Atomic::Add(&p.rdata(SPI.pstateVel + dir), pvel);
   }
 }

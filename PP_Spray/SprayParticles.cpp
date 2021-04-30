@@ -141,11 +141,6 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
                                                            std::abs(p.rdata(2))))*dxi[0];
 #endif
             Real dt_part = (max_mag_vdx > 0.) ? (cfl / max_mag_vdx) : 1.E50;
-#ifdef SPRAY_PELE_LM
-            // Conversion since particle velocities are in cm and dx is in m
-            // for PeleLM
-            dt_part *= 100.;
-#endif
             return dt_part;
           }
           return 1.E50;
@@ -220,7 +215,6 @@ SprayParticleContainer::updateParticles(
   const Real inv_vol = 1. / vol;
   // Particle components indices
   SprayComps SPI = m_sprayIndx;
-  SprayUnits SPU;
   pele::physics::transport::TransParm const* ltransparm =
     pele::physics::transport::trans_parm_g;
   // Start the ParIter, which loops over separate sets of particles in different
@@ -270,9 +264,9 @@ SprayParticleContainer::updateParticles(
     //       u_mac[2].array(pti))};
     // #endif
     amrex::ParallelFor(
-      Np, [pstruct, statearr, sourcearr, plo, phi, dx, dxi, do_move, SPI, SPU,
-           fdat, src_box, state_box, bndry_hi, bndry_lo, flow_dt, inv_vol,
-           ltransparm, at_bounds, wallT, isActive
+      Np, [pstruct, statearr, sourcearr, plo, phi, dx, dxi, do_move, SPI, fdat,
+           src_box, state_box, bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm,
+           at_bounds, wallT, isActive
 #ifdef USE_SPRAY_SOA
            ,
            attribs
@@ -284,10 +278,15 @@ SprayParticleContainer::updateParticles(
 #endif
     ] AMREX_GPU_DEVICE(int pid) noexcept {
         auto eos = pele::physics::PhysicsType::eos();
+        SprayUnits SPU;
         GpuArray<Real, NUM_SPECIES> mw_fluid;
         GpuArray<Real, NUM_SPECIES> invmw;
         eos.molecular_weight(mw_fluid.data());
         eos.inv_molecular_weight(invmw.data());
+        for (int n = 0; n < NUM_SPECIES; ++n) {
+          mw_fluid[n] *= SPU.mass_conv;
+          invmw[n] /= SPU.mass_conv;
+        }
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
           GpuArray<IntVect, AMREX_D_PICK(2, 4, 8)>
@@ -400,8 +399,7 @@ SprayParticleContainer::updateParticles(
 #endif
               Real ke = 0.;
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                Real vel = statearr(cur_indx, SPI.momIndx + dir) * inv_rho *
-                           SPU.vel_conv;
+                Real vel = statearr(cur_indx, SPI.momIndx + dir) * inv_rho;
                 vel_fluid[dir] += cw * vel;
                 ke += vel * vel / 2.;
               }
@@ -412,7 +410,6 @@ SprayParticleContainer::updateParticles(
 #endif
               T_fluid += cw * T_i;
             }
-            rho_fluid *= SPU.rho_conv;
           }
           GasPhaseVals gpv(
             vel_fluid, T_fluid, rho_fluid, Y_fluid.data(), mw_fluid.data(),
@@ -430,9 +427,9 @@ SprayParticleContainer::updateParticles(
 #ifdef USE_SPRAY_SOA
                 const Real cvel = attribs[SPI.pstateVel + dir].data()[pid];
 #else
-                const Real cvel = p.rdata(SPI.pstateVel+dir);
+                const Real cvel = p.rdata(SPI.pstateVel + dir);
 #endif
-                Gpu::Atomic::Add(&p.pos(dir), flow_dt * cvel * SPU.pos_conv);
+                Gpu::Atomic::Add(&p.pos(dir), flow_dt * cvel);
               }
             }
           } else {
@@ -463,24 +460,21 @@ SprayParticleContainer::updateParticles(
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                 const int nf = SPI.momIndx + dir;
                 Gpu::Atomic::Add(
-                  &sourcearr(cur_indx, nf),
-                  cur_coef * gpv.fluid_mom_src[dir] * SPU.mom_src_conv);
+                  &sourcearr(cur_indx, nf), cur_coef * gpv.fluid_mom_src[dir]);
               }
             }
             if (SPI.mass_tran) {
               Gpu::Atomic::Add(
                 &sourcearr(cur_indx, SPI.rhoIndx),
-                cur_coef * gpv.fluid_mass_src * SPU.mass_src_conv);
+                cur_coef * gpv.fluid_mass_src);
               for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
                 const int nf = SPI.specIndx + fdat->indx[spf];
                 Gpu::Atomic::Add(
-                  &sourcearr(cur_indx, nf),
-                  cur_coef * gpv.fluid_Y_dot[spf] * SPU.mass_src_conv);
+                  &sourcearr(cur_indx, nf), cur_coef * gpv.fluid_Y_dot[spf]);
               }
             }
             Gpu::Atomic::Add(
-              &sourcearr(cur_indx, SPI.engIndx),
-              cur_coef * gpv.fluid_eng_src * SPU.eng_src_conv);
+              &sourcearr(cur_indx, SPI.engIndx), cur_coef * gpv.fluid_eng_src);
           }
           // Solve for splash model/wall film formation
           if (at_bounds && do_move) {
@@ -507,7 +501,7 @@ SprayParticleContainer::updateParticles(
                 for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
                   SPRF.Y_refl[spf] = p.rdata(SPI.pstateY + spf);
                 splash_flag = impose_wall(
-                  p, SPI, SPU, *fdat, dx, plo, phi, wallT, bloc, normal, bcentv,
+                  p, SPI, *fdat, dx, plo, phi, wallT, bloc, normal, bcentv,
                   SPRF, isActive, dry_wall);
               } // TODO: Add check for if it is wall film
             }

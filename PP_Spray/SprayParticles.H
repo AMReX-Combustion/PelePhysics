@@ -91,9 +91,11 @@ public:
       m_sprayIndx(SPI)
   {
     m_sprayData = new SprayData{};
-    d_sprayData = static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
+    d_sprayData =
+      static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
     m_sprayData->build(fdat);
-    amrex::Gpu::copy(amrex::Gpu::hostToDevice, m_sprayData, m_sprayData + 1, d_sprayData);
+    amrex::Gpu::copy(
+      amrex::Gpu::hostToDevice, m_sprayData, m_sprayData + 1, d_sprayData);
     init_bcs();
   }
 

@@ -71,7 +71,10 @@ calcVaporY(
   Real* L_fuel,
   Real* L_boilT)
 {
+  SprayUnits SPU;
   GpuArray<Real, SPRAY_FUEL_NUM> x_v;
+  Real RU = pele::physics::Constants::RU * SPU.ru_conv;
+  Real PATM = pele::physics::Constants::PATM * SPU.pres_conv;
   Real sum_xv = 0.;    // Sum x_v
   Real sum_mw_xv = 0.; // Sum mw_v*x_v
   Real nt = 0.;        // Total moles of liquid
@@ -79,7 +82,7 @@ calcVaporY(
   // The equation is a normalized version of y_v = x_vi*mw_i/((1 - sum_k x_vk) +
   // sum_j x_vj mw_j) x_vi = x_li*p_sat/(p_gas*mw_gas) x_li = (y_li/mw_i)/(sum_j
   // y_lj/mw_j)
-  for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
     const Real critT = fdat.critT[spf];
     const Real boilT = fdat.boilT[spf];
@@ -89,20 +92,16 @@ calcVaporY(
       h_skin[fspec] + fdat.latent[spf] - fdat.cp[spf] * (T_in - fdat.ref_T);
     L_fuel[spf] = part_latent;
     // Compute the mass fraction of the fuel vapor at droplet surface
-    Real pres_sat = pele::physics::Constants::PATM *
-                      std::exp(
-                        part_latent * mw_fuel / pele::physics::Constants::RU *
-                        (1. / boilT - 1. / T_in)) +
-                    C_eps;
+    Real pres_sat =
+      PATM * std::exp(part_latent * mw_fuel / RU * (1. / boilT - 1. / T_in)) +
+      C_eps;
     // Modify Watsons power law to find H_vapor at standard conditions
     Real Hboil = fdat.ref_latent[spf] *
                  std::pow((critT - fdat.ref_T) / (critT - boilT), -0.38);
     // Estimate the boiling temperature at the gas phase pressure using
     // Clasius-Clapeyron relation
     L_boilT[spf] =
-      1. / (std::log(pele::physics::Constants::PATM / gpv.p_fluid) *
-              pele::physics::Constants::RU / (Hboil * mw_fuel) +
-            1. / boilT);
+      1. / (std::log(PATM / gpv.p_fluid) * RU / (Hboil * mw_fuel) + 1. / boilT);
     Real x_l = Y_in[spf] / mw_fuel;
     Real x_vc = x_l * pres_sat;
     nt += x_l;
@@ -136,8 +135,8 @@ calculateSpraySource(
   pele::physics::transport::TransParm const* trans_parm)
 {
   auto eos = pele::physics::PhysicsType::eos();
+  SprayUnits SPU;
   const Real rule = 1. / 3.;
-  const Real inv_Ru = 1. / pele::physics::Constants::RU;
   const Real C_eps = 1.E-15;
   const Real B_eps = 1.E-7;
   const Real Y_eps = 1.E-4;
@@ -197,11 +196,17 @@ calculateSpraySource(
     eos.T2Cpi(T_skin, cp_n.data());
     eos.T2Hi(T_part, h_skin.data());
     if (SPI.heat_tran || SPI.mass_tran) {
-      for (int n = 0; n < NUM_SPECIES; ++n)
+      for (int n = 0; n < NUM_SPECIES; ++n) {
         Y_skin[n] = 0.;
+        h_skin[n] *= SPU.eng_conv;
+        cp_n[n] *= SPU.eng_conv;
+      }
     } else {
-      for (int n = 0; n < NUM_SPECIES; ++n)
+      for (int n = 0; n < NUM_SPECIES; ++n) {
         Y_skin[n] = gpv.Y_fluid[n];
+        h_skin[n] *= SPU.eng_conv;
+        cp_n[n] *= SPU.eng_conv;
+      }
     }
     // Solve for state of the vapor and mass transfer coefficient B_M
     Real sumYSkin = 0.;
@@ -236,10 +241,13 @@ calculateSpraySource(
     Real lambda_skin = 0.;
     Real mu_skin = 0.;
     Real xi_skin = 0.;
+    Real rho_cgs = gpv.rho_fluid / SPU.rho_conv;
     auto trans = pele::physics::PhysicsType::transport();
     trans.transport(
-      get_xi, get_mu, get_lambda, get_Ddiag, T_skin, gpv.rho_fluid,
-      Y_skin.data(), Ddiag.data(), mu_skin, xi_skin, lambda_skin, trans_parm);
+      get_xi, get_mu, get_lambda, get_Ddiag, T_skin, rho_cgs, Y_skin.data(),
+      Ddiag.data(), mu_skin, xi_skin, lambda_skin, trans_parm);
+    mu_skin *= SPU.mu_conv;
+    lambda_skin *= SPU.lambda_conv;
     // Ensure gas is not all fuel to allow evaporation
     bool evap_fuel = (sumYFuel >= 1.) ? false : true;
     RealVect diff_vel = gpv.vel_fluid - vel_part;
@@ -253,11 +261,11 @@ calculateSpraySource(
       Real Pr_skin = mu_skin * cp_skin / lambda_skin;
       Real powR = amrex::max(std::pow(Reyn, 0.077), 1.);
       Nu_0 = 1. + powR * std::cbrt(1. + Reyn * Pr_skin);
-      for (int spf = 0; spf != SPRAY_FUEL_NUM; ++spf) {
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         const int fspec = fdat.indx[spf];
         // Convert mass diffusion coefficient from mixture average
         // to binary for fuel only, not concerned with other species
-        Ddiag[fspec] *= mw_vap * gpv.invmw[fspec];
+        Ddiag[fspec] *= mw_vap * gpv.invmw[fspec] * SPU.rhod_conv;
         const Real rhoD = Ddiag[fspec];
         const Real Sc_skin = mu_skin / rhoD;
         const Real B_M = B_M_num[spf];
@@ -268,8 +276,8 @@ calculateSpraySource(
         Sh_num[spf] = 2. + (Sh_0 - 2.) * invFM;
         if (SPI.mass_tran) {
           Real Tboil = L_boilT[spf];
-          Real delT = T_part - Tboil;
-          if (delT > 0. && Y_part[spf] > Y_eps) {
+          Real delT = amrex::max(0., T_part - Tboil);
+          if (T_part > Tboil && Y_part[spf] > Y_eps) {
             Real alpha = 0.;
             if (delT > 25.) {
               alpha = 13800. * std::pow(delT, 0.39);
@@ -329,8 +337,9 @@ calculateSpraySource(
         // Convection term
         coeff_heat += heatC;
         gpv.fluid_eng_src +=
-          mi_dot[spf] * (h_skin[fspec] - pele::physics::Constants::RU /
-                                           gpv.mw_fluid[fspec] * gpv.T_fluid);
+          mi_dot[spf] *
+          (h_skin[fspec] - pele::physics::Constants::RU * SPU.ru_conv /
+                             gpv.mw_fluid[fspec] * gpv.T_fluid);
         part_temp_src += mi_dot[spf] * L_fuel[spf];
       }
       Real conv_src = M_PI * lambda_skin * dia_part * delT * coeff_heat;

@@ -36,29 +36,24 @@ struct SprayComps
 struct SprayUnits
 {
 #ifdef SPRAY_PELE_LM
-  Real vel_conv = 100.;  // Turn m/s to cm/s
-  Real rho_conv = 0.001; // Turn kg/m^3 to g/cm^3
-  Real pos_conv = 0.01;  // Turn cm to m for updating position
-  Real eng_conv = 1.E4;  // For converting enthalpy to CGS
-  // This makes no sense, conversions should be independent
-  // of dimensions but numerical tests show this isn't the case
-#if AMREX_SPACEDIM == 2
-  Real mom_src_conv = 1.E-3;
-  Real mass_src_conv = 1.E-1;
-  Real eng_src_conv = 1.E-5;
-#elif AMREX_SPACEDIM == 3
-  Real mom_src_conv = 1.E-5;
-  Real mass_src_conv = 1.E-3;
-  Real eng_src_conv = 1.E-7;
-#endif
+  // For converting CGS to MKS
+  Real ru_conv = 1.E-7;
+  Real eng_conv = 1.E-4;
+  Real rho_conv = 1.E3;
+  Real mass_conv = 1.E-3;
+  Real rhod_conv = 0.1; // rho D conversion
+  Real mu_conv = 0.1;
+  Real lambda_conv = 1.E-5;
+  Real pres_conv = 0.1;
 #else
-  Real vel_conv = 1.;
-  Real pos_conv = 1.;
-  Real rho_conv = 1.;
+  Real ru_conv = 1.;
   Real eng_conv = 1.;
-  Real mom_src_conv = 1.;
-  Real mass_src_conv = 1.;
-  Real eng_src_conv = 1.;
+  Real rho_conv = 1.;
+  Real mass_conv = 1.;
+  Real rhod_conv = 1.;
+  Real mu_conv = 1.;
+  Real lambda_conv = 1.;
+  Real pres_conv = 1.;
 #endif
 };
 
@@ -112,6 +107,7 @@ struct GasPhaseVals
       fluid_mass_src(0.),
       fluid_eng_src(0.)
   {
+    SprayUnits SPU;
     mw_mix = 0.;
     for (int n = 0; n < NUM_SPECIES; ++n) {
       Y_fluid[n] = in_Y[n];
@@ -119,7 +115,8 @@ struct GasPhaseVals
       invmw[n] = in_invmw[n];
       mw_mix += Y_fluid[n] * invmw[n];
     }
-    p_fluid = rho_fluid * pele::physics::Constants::RU * mw_mix * T_fluid;
+    p_fluid =
+      rho_fluid * pele::physics::Constants::RU * mw_mix * T_fluid * SPU.ru_conv;
     mw_mix = 1. / mw_mix;
     for (int n = 0; n < SPRAY_FUEL_NUM; ++n)
       fluid_Y_dot[n] = 0.;
@@ -144,6 +141,7 @@ struct SprayData
 
   void build(SprayData& fdat)
   {
+    // Convert input values from CGS to MKS for PeleLM
     num_ppp = fdat.num_ppp;
     ref_T = fdat.ref_T;
     sigma = fdat.sigma;
