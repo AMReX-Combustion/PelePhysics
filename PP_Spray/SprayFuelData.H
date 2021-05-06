@@ -20,11 +20,15 @@ struct SprayComps
   int pstateY = pstateDia + 1;
   int pstateVol = pstateVel; // Used when particle is wall film
   int pstateHt = pstateDia;  // Used when particle is wall film
-  int rhoIndx;               // Gas phase indices
+  int rhoIndx; // Component indices for conservative variable data structure
   int momIndx;
   int engIndx;
   int utempIndx;
   int specIndx;
+  int rhoSrcIndx; // Component indices for spray source data structure
+  int momSrcIndx;
+  int engSrcIndx;
+  int specSrcIndx;
   int wf_vol = 0; // Wall film indices
   int wf_temp = 1;
   int wf_ht = 2; // Film height

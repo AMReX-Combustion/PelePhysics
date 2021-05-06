@@ -458,23 +458,24 @@ SprayParticleContainer::updateParticles(
 #endif
             if (SPI.mom_tran) {
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-                const int nf = SPI.momIndx + dir;
+                const int nf = SPI.momSrcIndx + dir;
                 Gpu::Atomic::Add(
                   &sourcearr(cur_indx, nf), cur_coef * gpv.fluid_mom_src[dir]);
               }
             }
             if (SPI.mass_tran) {
               Gpu::Atomic::Add(
-                &sourcearr(cur_indx, SPI.rhoIndx),
+                &sourcearr(cur_indx, SPI.rhoSrcIndx),
                 cur_coef * gpv.fluid_mass_src);
               for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-                const int nf = SPI.specIndx + fdat->indx[spf];
+                const int nf = SPI.specSrcIndx + spf;
                 Gpu::Atomic::Add(
                   &sourcearr(cur_indx, nf), cur_coef * gpv.fluid_Y_dot[spf]);
               }
             }
             Gpu::Atomic::Add(
-              &sourcearr(cur_indx, SPI.engIndx), cur_coef * gpv.fluid_eng_src);
+              &sourcearr(cur_indx, SPI.engSrcIndx),
+              cur_coef * gpv.fluid_eng_src);
           }
           // Solve for splash model/wall film formation
           if (at_bounds && do_move) {

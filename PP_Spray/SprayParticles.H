@@ -284,8 +284,50 @@ public:
     {
       tmp_source.SumBoundary(Geom(level).periodicity());
     }
-    amrex::MultiFab::Add(source, tmp_source, 0, 0, source.nComp(), nghost);
-    tmp_source.setVal(0.);
+    if (tmp_source.nComp() == source.nComp()) {
+      amrex::MultiFab::Add(source, tmp_source, 0, 0, source.nComp(), nghost);
+      tmp_source.setVal(0.);
+    } else {
+      for (amrex::MFIter mfi(source, amrex::TilingIfNotGPU()); mfi.isValid();
+           ++mfi) {
+        const amrex::Box vbox = mfi.growntilebox(nghost);
+        auto const& spraydot = tmp_source.array(mfi);
+        auto const& ext_src = source.array(mfi);
+        addSpraySrc(vbox, spraydot, ext_src);
+      }
+    }
+  }
+
+  ///
+  /// Add spray source term data (with components AMREX_SPACEDIM +
+  /// SPRAY_FUEL_NUM + 2) to data containing total number of conservative
+  /// variables
+  ///
+  inline void addSpraySrc(
+    const amrex::Box& vbox,
+    amrex::Array4<amrex::Real> const& spraydot,
+    amrex::Array4<amrex::Real> const& ext_src)
+  {
+    const int ncomp = spraydot.nComp();
+    SprayData* fdat = d_sprayData;
+    SprayComps SPI = m_sprayIndx;
+    amrex::ParallelFor(
+      vbox, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+          ext_src(i, j, k, SPI.momIndx + dir) +=
+            spraydot(i, j, k, SPI.momSrcIndx + dir);
+        }
+        ext_src(i, j, k, SPI.rhoIndx) += spraydot(i, j, k, SPI.rhoSrcIndx);
+        ext_src(i, j, k, SPI.engIndx) += spraydot(i, j, k, SPI.engSrcIndx);
+        for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
+          const int ecomp = SPI.specIndx + fdat->indx[sp];
+          ext_src(i, j, k, ecomp) += spraydot(i, j, k, SPI.specSrcIndx + sp);
+        }
+        // Reset the spray source term
+        for (int n = 0; n < ncomp; ++n) {
+          spraydot(i, j, k, n) = 0.;
+        }
+      });
   }
 
   bool injectParticles(
