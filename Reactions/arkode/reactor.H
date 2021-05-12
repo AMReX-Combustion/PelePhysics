@@ -67,6 +67,7 @@ int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void* user_data);
 
 int check_flag(void* flagvalue, const char* funcname, int opt);
 
+// React for array4
 int react(
   const amrex::Box& box,
   amrex::Array4<amrex::Real> const& rY_in,
@@ -79,6 +80,22 @@ int react(
   amrex::Real& dt_react,
   amrex::Real& time,
   const int& reactor_type
+#ifdef AMREX_USE_GPU
+  ,
+  amrex::gpuStream_t stream
+#endif
+);
+
+// React for 1d array
+int react(
+  realtype* rY_in,
+  realtype* rY_src_in,
+  realtype* rX_in,
+  realtype* rX_src_in,
+  realtype& dt_react,
+  realtype& time,
+  int reactor_type,
+  int Ncells
 #ifdef AMREX_USE_GPU
   ,
   amrex::gpuStream_t stream

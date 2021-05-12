@@ -24,6 +24,7 @@ reactor_init(int reactor_type, int Ncells)
   return (0);
 }
 
+// React with array4
 int
 react(
   const amrex::Box& box,
@@ -175,6 +176,147 @@ react(
   amrex::The_Device_Arena()->free(user_data->rYsrc_d);
 
   amrex::The_Arena()->free(user_data);
+
+  return nfe;
+}
+
+// React for 1d array
+int
+react(
+  realtype* rY_in,
+  realtype* rY_src_in,
+  realtype* rX_in,
+  realtype* rX_src_in,
+  realtype& dt_react,
+  realtype& time,
+  int reactor_type,
+  int Ncells
+#ifdef AMREX_USE_GPU
+  ,
+  amrex::gpuStream_t stream
+#endif
+)
+{
+  int NCELLS, NEQ, neq_tot, flag;
+  realtype time_init, time_out;
+  void* arkode_mem = NULL;
+  N_Vector y = NULL;
+  NEQ = NUM_SPECIES + 1;
+  NCELLS = Ncells;
+  neq_tot = NEQ * NCELLS;
+  UserData user_data;
+  BL_PROFILE_VAR("AllocsInARKODE", AllocsARKODE);
+  user_data =
+    (ARKODEUserData*)The_Arena()->alloc(sizeof(struct ARKODEUserData));
+  BL_PROFILE_VAR_STOP(AllocsARKODE);
+  user_data->ncells_d = NCELLS;
+  user_data->neqs_per_cell = NEQ;
+  user_data->ireactor_type = reactor_type;
+  user_data->iverbose = 1;
+  user_data->stream = stream;
+  user_data->nbBlocks = std::max(1, NCELLS / 32);
+  user_data->nbThreads = 32;
+
+#if defined(AMREX_USE_CUDA)
+  y = N_VNewWithMemHelp_Cuda(
+    neq_tot, /*use_managed_mem=*/true, *The_SUNMemory_Helper());
+  if (check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
+    return (1);
+  SUNCudaExecPolicy* stream_exec_policy =
+    new SUNCudaThreadDirectExecPolicy(256, stream);
+  SUNCudaExecPolicy* reduce_exec_policy =
+    new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
+#elif defined(AMREX_USE_HIP)
+  y = N_VNewWithMemHelp_Hip(
+    neq_tot, /*use_managed_mem=*/true, *The_SUNMemory_Helper());
+  if (check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
+    return (1);
+  SUNHipExecPolicy* stream_exec_policy =
+    new SUNHipThreadDirectExecPolicy(256, stream);
+  SUNHipExecPolicy* reduce_exec_policy =
+    new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
+#else
+  y = N_VNew_Serial(neq_tot);
+  if (check_flag((void*)y, "N_VNew_Serial", 0))
+    return (1);
+#endif
+
+  BL_PROFILE_VAR_START(AllocsARKODE);
+  user_data->rhoe_init_d =
+    (double*)The_Device_Arena()->alloc(NCELLS * sizeof(double));
+  user_data->rhoesrc_ext_d =
+    (double*)The_Device_Arena()->alloc(NCELLS * sizeof(double));
+  user_data->rYsrc_d =
+    (double*)The_Device_Arena()->alloc(NCELLS * NUM_SPECIES * sizeof(double));
+  BL_PROFILE_VAR_STOP(AllocsARKODE);
+
+#if defined(AMREX_USE_CUDA)
+  realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
+#elif defined(AMREX_USE_HIP)
+  realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
+#else
+  realtype* yvec_d = N_VGetArrayPointer(y);
+#endif
+
+  BL_PROFILE_VAR("AsyncCpy", AsyncCpy);
+  Gpu::htod_memcpy_async(yvec_d, rY_in, sizeof(realtype) * (NEQ * NCELLS));
+  Gpu::htod_memcpy_async(
+    user_data->rYsrc_d, rY_src_in, (NUM_SPECIES * NCELLS) * sizeof(realtype));
+  Gpu::htod_memcpy_async(
+    user_data->rhoe_init_d, rX_in, sizeof(realtype) * NCELLS);
+  Gpu::htod_memcpy_async(
+    user_data->rhoesrc_ext_d, rX_src_in, sizeof(realtype) * NCELLS);
+  BL_PROFILE_VAR_STOP(AsyncCpy);
+
+  time_init = time;
+  time_out = time + dt_react;
+
+  if (use_erkstep == 0) {
+    arkode_mem = ARKStepCreate(cF_RHS, NULL, time, y);
+    flag = ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
+    flag = ARKStepSStolerances(arkode_mem, relTol, absTol);
+    flag = ARKStepResStolerance(arkode_mem, absTol);
+    flag = ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
+  } else {
+    arkode_mem = ERKStepCreate(cF_RHS, time, y);
+    flag = ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
+    flag = ERKStepSStolerances(arkode_mem, relTol, absTol);
+    flag = ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
+  }
+
+#ifdef MOD_REACTOR
+  dt_react = time_init - time;
+  time = time_init;
+#endif
+
+  BL_PROFILE_VAR_START(AsyncCpy);
+  Gpu::dtoh_memcpy_async(rY_in, yvec_d, (NEQ * NCELLS) * sizeof(realtype));
+  for (int i = 0; i < NCELLS; i++) {
+    rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
+  }
+  BL_PROFILE_VAR_STOP(AsyncCpy);
+
+  long int nfe, nfi;
+  if (use_erkstep == 0) {
+    flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
+  } else {
+    flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
+  }
+
+  N_VDestroy(y);
+  if (use_erkstep == 0) {
+    ARKStepFree(&arkode_mem);
+  } else {
+    ERKStepFree(&arkode_mem);
+  }
+
+  The_Device_Arena()->free(user_data->rhoe_init_d);
+  The_Device_Arena()->free(user_data->rhoesrc_ext_d);
+  The_Device_Arena()->free(user_data->rYsrc_d);
+
+  The_Arena()->free(user_data);
 
   return nfe;
 }
