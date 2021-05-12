@@ -213,7 +213,9 @@ react(
   user_data->neqs_per_cell = NEQ;
   user_data->ireactor_type = reactor_type;
   user_data->iverbose = 1;
+#ifdef AMREX_USE_GPU
   user_data->stream = stream;
+#endif
   user_data->nbBlocks = std::max(1, NCELLS / 32);
   user_data->nbThreads = 32;
 
@@ -263,6 +265,7 @@ react(
 #endif
 
   BL_PROFILE_VAR("AsyncCpy", AsyncCpy);
+#ifdef AMREX_USE_GPU
   amrex::Gpu::htod_memcpy_async(
     yvec_d, rY_in, sizeof(realtype) * (NEQ * NCELLS));
   amrex::Gpu::htod_memcpy_async(
@@ -271,6 +274,13 @@ react(
     user_data->rhoe_init_d, rX_in, sizeof(realtype) * NCELLS);
   amrex::Gpu::htod_memcpy_async(
     user_data->rhoesrc_ext_d, rX_src_in, sizeof(realtype) * NCELLS);
+#else
+  std::memcpy(yvec_d, rY_in, sizeof(realtype) * (NEQ * NCELLS));
+  std::memcpy(
+    user_data->rYsrc_d, rY_src_in, (NUM_SPECIES * NCELLS) * sizeof(realtype));
+  std::memcpy(user_data->rhoe_init_d, rX_in, sizeof(realtype) * NCELLS);
+  std::memcpy(user_data->rhoesrc_ext_d, rX_src_in, sizeof(realtype) * NCELLS);
+#endif
   BL_PROFILE_VAR_STOP(AsyncCpy);
 
   time_init = time;
@@ -295,7 +305,11 @@ react(
 #endif
 
   BL_PROFILE_VAR_START(AsyncCpy);
+#ifdef AMREX_USE_GPU
   amrex::Gpu::dtoh_memcpy_async(
+#else
+  std::memcpy(
+#endif
     rY_in, yvec_d, (NEQ * NCELLS) * sizeof(realtype));
   for (int i = 0; i < NCELLS; i++) {
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
