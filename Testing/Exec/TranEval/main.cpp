@@ -6,7 +6,7 @@
 #include <AMReX_ParmParse.H>
 
 #include <PlotFileFromMF.H>
-#include "mechanism.h"
+#include "mechanism.H"
 #include <GPU_misc.H>
 #include <PelePhysics.H>
 

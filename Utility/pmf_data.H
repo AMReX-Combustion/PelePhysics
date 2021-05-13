@@ -3,7 +3,7 @@
 
 #include <AMReX_REAL.H>
 #include <AMReX_GpuContainers.H>
-#include <mechanism.h>
+#include <mechanism.H>
 
 // Define a data structure to hold the PMF data,
 struct PmfData {

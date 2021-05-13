@@ -3,7 +3,7 @@
 
 #include <AMReX_REAL.H>
 #include <AMReX_GpuContainers.H>
-#include <mechanism.h>
+#include <mechanism.H>
 #include <pmf_data.H>
 
 namespace PMF {

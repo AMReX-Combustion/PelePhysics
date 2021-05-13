@@ -61,7 +61,7 @@ for j in range(1,ns+1):
         sys.exit('Different number of values read for y_data than x_data')
 
 mech = sys.argv[2]
-mech_file = os.environ['PELE_PHYSICS_HOME'] + '/Support/Fuego/Mechanism/Models/' + mech + '/mechanism.h'
+mech_file = os.environ['PELE_PHYSICS_HOME'] + '/Support/Fuego/Mechanism/Models/' + mech + '/mechanism.H'
 print('grabbing species list from ' + mech_file)
 try:
     f = open(mech_file)

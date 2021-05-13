@@ -7,8 +7,7 @@
 #include <AMReX_Arena.H>
 #include <AMReX_ParmParse.H>
 
-#include "mechanism.h"
-#include "chemistry_file.H"
+#include "mechanism.H"
 #include "PhysicsConstants.H"
 
 namespace pele {
