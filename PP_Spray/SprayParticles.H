@@ -157,6 +157,11 @@ public:
   amrex::Real estTimestep(int level, amrex::Real cfl) const;
 
   ///
+  /// Reset the particle ID in case we need to reinitialize the particles
+  ///
+  inline void resetID(const int id) { ParticleType::NextID(id); }
+
+  ///
   /// Set appropriate number of ghost cells
   ///
   inline void setSprayGridInfo(
@@ -179,8 +184,6 @@ public:
     int ghost_num = 0;
     if (level > 0) {
       ghost_num += amr_ncycle + amr_ncycle / 2;
-      // For the initial iters, this will not work so we much have a check
-      ghost_num = amrex::max(3, ghost_num);
     }
     // Set the number of ghost cells needed for interpolation
     state_width = stencil_interpolation_width + ghost_num;
