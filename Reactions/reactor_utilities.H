@@ -1,5 +1,5 @@
-#ifndef AMREX_MISC_H_
-#define AMREX_MISC_H_
+#ifndef _REACTOR_UTILITIES_H_
+#define _REACTOR_UTILITIES_H_
 
 #include <cmath>
 #include <AMReX_FArrayBox.H>
