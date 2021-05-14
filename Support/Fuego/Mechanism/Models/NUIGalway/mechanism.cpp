@@ -1,7 +1,7 @@
 #ifndef MECHANISM_CPP
 #define MECHANISM_CPP
 
-#include "chemistry_file.H"
+#include "mechanism.H"
 
 
 
@@ -1148,4 +1148,3 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * con
 }
 
 #endif
-
