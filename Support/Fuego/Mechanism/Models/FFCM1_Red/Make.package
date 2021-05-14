@@ -1,6 +1,6 @@
-CEXE_headers+=chemistry_file.H
+CEXE_headers+=mechanism.H
 
-CEXE_sources+=FFCM1_Red.cpp
+CEXE_sources+=mechanism.cpp
 
 LIBRARIES += 
 
