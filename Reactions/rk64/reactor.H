@@ -4,8 +4,7 @@
 #include <AMReX_Print.H>
 #include <AMReX_ParmParse.H>
 
-#include "chemistry_file.H"
-#include "mechanism.h"
+#include "mechanism.H"
 #include "PelePhysics.H"
 
 typedef struct

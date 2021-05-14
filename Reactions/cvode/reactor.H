@@ -26,8 +26,7 @@
 
 #include "reactor_utilities.H"
 #include "PelePhysics.H"
-#include "chemistry_file.H"
-#include "mechanism.h"
+#include "mechanism.H"
 
 #ifdef AMREX_USE_CUDA
 #include <cuda_runtime.h>
