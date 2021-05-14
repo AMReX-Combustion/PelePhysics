@@ -1,49 +1,31 @@
 ifeq ($(USE_SUNDIALS_PP), TRUE)
     ifeq ($(USE_CUDA), TRUE)
-        ifeq ($(USE_ARKODE_PP), TRUE)
-            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU/arkode
-        else
-            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU/cvode
-        endif
+        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU/cvode
         Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU
         CEXE_headers += AMReX_SUNMemory.H
         CEXE_sources += AMReX_SUNMemory.cpp
     else
        ifeq ($(USE_HIP), TRUE)
-          ifeq ($(USE_ARKODE_PP), TRUE)
-             Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU/arkode
-          else
-             Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU/cvode
-          endif
+          Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU/cvode
           Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/GPU
           CEXE_headers += AMReX_SUNMemory.H
           CEXE_sources += AMReX_SUNMemory.cpp
        else
-           ifeq ($(USE_ARKODE_PP), TRUE)
-               Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU/arkode
-           else
-               Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU/cvode
-               f90EXE_sources += mod_cvode.f90
-           endif
-           Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
+          Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU/cvode
+          f90EXE_sources += mod_cvode.f90
+          Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU
        endif
     endif
     CEXE_headers += reactor.h  
     CEXE_headers += AMReX_misc.H
     CEXE_sources += reactor.cpp
 else 
-    ifeq ($(USE_RK64_PP), TRUE)
-        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/CPU/RK64
-        CEXE_headers += reactor.h  
-        CEXE_sources += reactor.cpp
+    ifeq ($(USE_F90_PP),TRUE)
+        Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/F90
+        F90EXE_sources += react_type.F90
+        F90EXE_sources += reactor.F90
+        FEXE_headers   += reactor_F.H
     else
-        ifeq ($(USE_F90_PP),TRUE)
-            Blocs   += $(PELE_PHYSICS_HOME)/Reactions/Fuego/F90
-            F90EXE_sources += react_type.F90
-            F90EXE_sources += reactor.F90
-            FEXE_headers   += reactor_F.H
-        else
-            $(error Activate USE_F90_PP to use dvode)
-        endif
+        $(error Activate USE_F90_PP to use dvode)
     endif
 endif

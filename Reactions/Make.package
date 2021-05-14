@@ -1,0 +1,6 @@
+CEXE_headers += reactor_utilities.H
+
+ifneq (, $(filter TRUE, $(USE_CUDA) $(USE_HIP)))
+    CEXE_headers += AMReX_SUNMemory.H
+    CEXE_sources += AMReX_SUNMemory.cpp
+endif
