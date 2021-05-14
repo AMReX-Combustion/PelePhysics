@@ -108,25 +108,25 @@ jobs:
         make -j 2 COMP=gnu USE_CUDA=TRUE Eos_dir=GammaLaw Chemistry_Model=Null
 
   # Fuego EOS HIP support
-  Fuego_HIP:
-    name: HIPROCm@3.8 GFortran@9.3 [Fuego]
-    runs-on: ubuntu-20.04
-    env: 
-      {CXXFLAGS: "-fno-operator-names"}
-    steps:
-    - uses: actions/checkout@v2
-    - name: System Dependencies
-      run: .github/workflows/dependencies/dependencies_hip.sh
-    - name: AMReX
-      run: |
-         mkdir build
-         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-    - name: Build
-      env:
-         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-      working-directory: ./Testing/Exec/EosEval
-      run: |
-        source /etc/profile.d/rocm.sh
-        hipcc --version
-        make -j 2 COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
+  #Fuego_HIP:
+  #  name: HIPROCm@3.8 GFortran@9.3 [Fuego]
+  #  runs-on: ubuntu-20.04
+  #  env: 
+  #    {CXXFLAGS: "-fno-operator-names"}
+  #  steps:
+  #  - uses: actions/checkout@v2
+  #  - name: System Dependencies
+  #    run: .github/workflows/dependencies/dependencies_hip.sh
+  #  - name: AMReX
+  #    run: |
+  #       mkdir build
+  #       git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+  #  - name: Build
+  #    env:
+  #       AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+  #       PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+  #    working-directory: ./Testing/Exec/EosEval
+  #    run: |
+  #      source /etc/profile.d/rocm.sh
+  #      hipcc --version
+  #      make -j 2 COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
