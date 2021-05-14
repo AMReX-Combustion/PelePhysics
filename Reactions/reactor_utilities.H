@@ -7,7 +7,7 @@
 #include <AMReX_CArena.H>
 
 #include "PelePhysics.H"
-#include "mechanism.h"
+#include "mechanism.H"
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
