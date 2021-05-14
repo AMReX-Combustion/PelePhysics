@@ -17,8 +17,7 @@
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_math.h>
 
-#include "chemistry_file.H"
-#include "mechanism.h"
+#include "mechanism.H"
 #include "PelePhysics.H"
 #include "reactor_utilities.H"
 
