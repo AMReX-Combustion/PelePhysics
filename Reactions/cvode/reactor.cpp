@@ -465,12 +465,12 @@ react(
 
 #if defined(AMREX_USE_CUDA)
   y = N_VNewWithMemHelp_Cuda(
-    neq_tot, /*use_managed_mem=*/true, *The_SUNMemory_Helper());
+    neq_tot, /*use_managed_mem=*/true, *amrex::sundials::The_SUNMemory_Helper());
   if (check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
     return (1);
 #elif defined(AMREX_USE_HIP)
   y = N_VNewWithMemHelp_Hip(
-    neq_tot, /*use_managed_mem=*/true, *The_SUNMemory_Helper());
+    neq_tot, /*use_managed_mem=*/true, *amrex::sundials::The_SUNMemory_Helper());
   if (check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
     return (1);
 #else
