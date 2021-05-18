@@ -104,6 +104,22 @@ int react(
 #endif
 );
 
+// React for 1d array
+int react(
+  realtype* rY_in,
+  realtype* rY_src_in,
+  realtype* rX_in,
+  realtype* rX_src_in,
+  realtype& dt_react,
+  realtype& time,
+  int reactor_type,
+  int Ncells
+#ifdef AMREX_USE_GPU
+  ,
+  amrex::gpuStream_t stream
+#endif
+);
+
 #ifdef AMREX_USE_CUDA
 static int Precond(
   realtype tn,
@@ -142,9 +158,9 @@ static int check_flag(void* flagvalue, const char* funcname, int opt);
 
 static void PrintFinalStats(void* cvode_mem);
 
-// void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
+void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
 
-// void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
+void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
