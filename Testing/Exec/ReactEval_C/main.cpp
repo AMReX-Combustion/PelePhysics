@@ -15,7 +15,7 @@
 
 #include <PlotFileFromMF.H>
 #include <PelePhysics.H>
-#include <reactor.h>
+#include <reactor.H>
 
 #ifndef USE_RK64_PP
 #ifdef USE_ARKODE_PP 
@@ -311,7 +311,7 @@ main (int   argc,
           for (int ii = 0; ii < ndt; ++ii) {
             tmp_fc[i] += react(tmp_vect + i*(NUM_SPECIES+1), tmp_src_vect + i*NUM_SPECIES,
                                tmp_vect_energy + i, tmp_src_vect_energy + i,
-                               dt_incr, time);
+                               dt_incr, time, ode_iE, nCells);
             dt_incr =  dt/ndt;
           }
         }
@@ -387,9 +387,6 @@ main (int   argc,
       BL_PROFILE_VAR_STOP(PlotFile);
     }
     
-#ifndef AMREX_USE_GPU
-    reactor_close();
-#endif
     pele::physics::transport::CloseTransport<
       pele::physics::PhysicsType::eos_type>()();
 
