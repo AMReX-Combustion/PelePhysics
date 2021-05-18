@@ -328,7 +328,7 @@ check_wall(
         bcentv = {bcent(ijk_prev, 0), bcent(ijk_prev, 1), bcent(ijk_prev, 2)};
         // otherwise an error has occurred
       } else {
-        Abort("SprayInterpolation::reflect_wall: Particle is outside EB");
+        Abort("WallFunctions::check_wall: Particle is outside EB");
       }
       wall_check = true;
     }
