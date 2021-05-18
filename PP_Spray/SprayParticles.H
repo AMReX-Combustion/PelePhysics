@@ -276,12 +276,12 @@ public:
         this->m_gdb->ParticleBoxArray(level),
         this->m_gdb->ParticleDistributionMap(level), ncomp, source_ghosts);
       tmp_mf.setVal(0.);
-      tmp_mf.copy(
+      tmp_mf.ParallelAdd(
         tmp_source, 0, 0, ncomp, source_ghosts, source_ghosts,
-        Geom(level).periodicity(), FabArrayBase::ADD);
-      tmp_source.copy(
+        Geom(level).periodicity());
+      tmp_source.ParallelCopy(
         tmp_mf, 0, 0, ncomp, source_ghosts, source_ghosts,
-        Geom(level).periodicity(), FabArrayBase::COPY);
+        Geom(level).periodicity());
     } else
 #endif
     {
