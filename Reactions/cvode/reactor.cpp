@@ -783,7 +783,7 @@ react(
   // System sizes
   int NCELLS  = Ncells;
   int NEQ     = NUM_SPECIES+1;            // rhoYs + rhoH
-  int NEQSTOT = NEQSTOT * NCELLS;
+  int NEQSTOT = NEQ * NCELLS;
 
   // Allocate CVODE data
   BL_PROFILE_VAR("AllocsInCVODE", AllocsCVODE);
@@ -813,7 +813,7 @@ react(
 #ifdef AMREX_USE_GPU
   // For now, Abort() is analytical_jac required on GPU.
   if (user_data->ianalytical_jacobian == 1) {
-     amrex::Abort("ode.analytical_jacobian = 1 currently unavailable on GPU"),
+     amrex::Abort("ode.analytical_jacobian = 1 currently unavailable on GPU");
   }
 #endif
 
