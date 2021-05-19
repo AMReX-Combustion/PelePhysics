@@ -276,32 +276,20 @@ AMREX_INLINE
 bool
 check_wall(
   SprayParticleContainer::ParticleType& p,
-  const IntVect ijk,
-  const IntVect ijk_prev,
-  const RealVect& dx,
-  const RealVect& plo,
-  const RealVect& phi,
+  const IntVect bflags,
+  const IntVect ijkc,
+  const IntVect ijkc_prev,
 #ifdef AMREX_USE_EB
   const bool use_EB,
   Array4<EBCellFlag const> const& flags,
   Array4<Real const> const& bcent,
   Array4<Real const> const& bnorm,
 #endif
-  const IntVect& bndry_lo,
-  const IntVect& bndry_hi,
   IntVect& bloc,
   RealVect& normal,
   RealVect& bcentv)
 {
   bool wall_check = false; // Check if particle is reflected
-  // First check if particle has exited the domain through a Cartesian boundary
-  IntVect bflags(IntVect::TheZeroVector());
-  bool left_dom =
-    check_bounds(p.pos(), plo, phi, dx, bndry_lo, bndry_hi, bloc, bflags);
-  if (left_dom) {
-    p.id() = -1;
-    return false;
-  }
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     if (bflags[dir] != 0) {
       normal[dir] = -bflags[dir];
@@ -312,20 +300,20 @@ check_wall(
 #ifdef AMREX_USE_EB
   if (use_EB && !wall_check) {
     // If particle has moved into a cut-cell
-    if (flags(ijk).isSingleValued()) {
+    if (flags(ijkc).isSingleValued()) {
       // Use the normal and boundary centroid from the new cell
-      normal = {-bnorm(ijk, 0), -bnorm(ijk, 1), -bnorm(ijk, 2)};
-      bcentv = {bcent(ijk, 0), bcent(ijk, 1), bcent(ijk, 2)};
+      normal = {-bnorm(ijkc, 0), -bnorm(ijkc, 1), -bnorm(ijkc, 2)};
+      bcentv = {bcent(ijkc, 0), bcent(ijkc, 1), bcent(ijkc, 2)};
       wall_check = true;
       // If the particle has moved into a covered cell
-    } else if (flags(ijk).isCovered()) {
+    } else if (flags(ijkc).isCovered()) {
       // If the cell the particle came from is a cut-cell
-      if (flags(ijk_prev).isSingleValued()) {
+      if (flags(ijkc_prev).isSingleValued()) {
         // Use the normal and boundary centroid from the previous cell
-        bloc = ijk_prev;
+        bloc = ijkc_prev;
         normal = {
-          -bnorm(ijk_prev, 0), -bnorm(ijk_prev, 1), -bnorm(ijk_prev, 2)};
-        bcentv = {bcent(ijk_prev, 0), bcent(ijk_prev, 1), bcent(ijk_prev, 2)};
+          -bnorm(ijkc_prev, 0), -bnorm(ijkc_prev, 1), -bnorm(ijkc_prev, 2)};
+        bcentv = {bcent(ijkc_prev, 0), bcent(ijkc_prev, 1), bcent(ijkc_prev, 2)};
         // otherwise an error has occurred
       } else {
         Abort("WallFunctions::check_wall: Particle is outside EB");

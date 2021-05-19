@@ -296,6 +296,8 @@ SprayParticleContainer::updateParticles(
           bool remove_particle = false;
           RealVect lx = (p.pos() - plo) * dxi + 0.5;
           IntVect ijk = lx.floor(); // Upper cell center
+          RealVect lxc = (p.pos() - plo) * dxi;
+          IntVect ijkc = lxc.floor(); // Cell with particle
           bool is_wall_film = false;
           Real face_area = 0.;
           // If the temperature is a negative value, the particle is a wall film
@@ -316,8 +318,9 @@ SprayParticleContainer::updateParticles(
           }
           // Length from cell center to boundary face center
           Real diff_cent = 0.5 * dx[0];
-          bool do_fe_interp = true;
+          bool do_fe_interp = false;
 #ifdef AMREX_USE_EB
+          do_fe_interp = true;
           // Cell containing particle centroid
           AMREX_D_TERM(const int ip = static_cast<int>(
                          amrex::Math::floor((p.pos(0) - plo[0]) * dxi[0]));
@@ -478,34 +481,43 @@ SprayParticleContainer::updateParticles(
               cur_coef * gpv.fluid_eng_src);
           }
           // Solve for splash model/wall film formation
-          if (at_bounds && do_move) {
-            IntVect ijk_prev = ijk;
+          if ((at_bounds || do_fe_interp) && do_move) {
+            IntVect ijkc_prev = ijkc;
             lx = (p.pos() - plo) * dxi + 0.5;
             ijk = lx.floor();
+            lxc = (p.pos() - plo) * dxi;
+            ijkc = lxc.floor(); // New cell center
             const Real T_part = p.rdata(SPI.pstateT);
             const Real dia_part = p.rdata(SPI.pstateDia);
-            IntVect bloc(ijk);
+            IntVect bloc(ijkc);
             RealVect normal;
             RealVect bcentv;
             bool dry_wall = false; // TODO: Implement this check
-            bool wall_check = check_wall(
-              p, ijk, ijk_prev, dx, plo, phi,
+            // First check if particle has exited the domain through a Cartesian boundary
+            IntVect bflags(IntVect::TheZeroVector());
+            bool left_dom = check_bounds(p.pos(), plo, phi, dx, bndry_lo, bndry_hi, ijk, bflags);
+            if (left_dom) {
+              p.id() = -1;
+            } else {
+              bool wall_check = check_wall(
+                p, bflags, ijkc, ijkc_prev,
 #ifdef AMREX_USE_EB
-              eb_in_box, flags_array, bcent_fab, bnorm_fab,
+                eb_in_box, flags_array, bcent_fab, bnorm_fab,
 #endif
-              bndry_lo, bndry_hi, bloc, normal, bcentv);
-            if (wall_check) {
-              splash_type splash_flag = splash_type::no_impact;
-              if (T_part > 0.) {
-                SprayRefl SPRF;
-                SPRF.pos_refl = p.pos();
-                for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
-                  SPRF.Y_refl[spf] = p.rdata(SPI.pstateY + spf);
-                splash_flag = impose_wall(
-                  p, SPI, *fdat, dx, plo, phi, wallT, bloc, normal, bcentv,
-                  SPRF, isActive, dry_wall);
-              } // TODO: Add check for if it is wall film
-            }
+                bloc, normal, bcentv);
+              if (wall_check) {
+                splash_type splash_flag = splash_type::no_impact;
+                if (T_part > 0.) {
+                  SprayRefl SPRF;
+                  SPRF.pos_refl = p.pos();
+                  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+                    SPRF.Y_refl[spf] = p.rdata(SPI.pstateY + spf);
+                  splash_flag = impose_wall(
+                    p, SPI, *fdat, dx, plo, phi, wallT, bloc, normal, bcentv,
+                    SPRF, isActive, dry_wall);
+                }
+              } // if (wall_check)
+            } // if (left_dom)
           } // if (at_bounds...
         }   // End of p.id() > 0 check
       });   // End of loop over particles
