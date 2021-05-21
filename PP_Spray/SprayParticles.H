@@ -289,7 +289,6 @@ public:
     }
     if (tmp_source.nComp() == source.nComp()) {
       amrex::MultiFab::Add(source, tmp_source, 0, 0, source.nComp(), nghost);
-      tmp_source.setVal(0.);
     } else {
       for (amrex::MFIter mfi(source, amrex::TilingIfNotGPU()); mfi.isValid();
            ++mfi) {
@@ -299,6 +298,7 @@ public:
         addSpraySrc(vbox, spraydot, ext_src);
       }
     }
+    tmp_source.setVal(0.);
   }
 
   ///
@@ -308,7 +308,7 @@ public:
   ///
   inline void addSpraySrc(
     const amrex::Box& vbox,
-    amrex::Array4<amrex::Real> const& spraydot,
+    amrex::Array4<const amrex::Real> const& spraydot,
     amrex::Array4<amrex::Real> const& ext_src)
   {
     const int ncomp = spraydot.nComp();
@@ -325,10 +325,6 @@ public:
         for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
           const int ecomp = SPI.specIndx + fdat->indx[sp];
           ext_src(i, j, k, ecomp) += spraydot(i, j, k, SPI.specSrcIndx + sp);
-        }
-        // Reset the spray source term
-        for (int n = 0; n < ncomp; ++n) {
-          spraydot(i, j, k, n) = 0.;
         }
       });
   }
