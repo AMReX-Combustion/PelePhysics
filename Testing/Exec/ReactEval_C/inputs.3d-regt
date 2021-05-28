@@ -1,10 +1,13 @@
-ncells = 2 256 2
+ncells = 8 64 8
 max_grid_size  = 16
 plotfile = plt
 fuel_name = CH4
+reactFormat = 1dArray
+
 
 ode.dt  = 1.e-05
 ode.ndt = 1
+ode.ode_ncells = 1024
 ode.reactor_type  = 1 # 1=full e, 2=full h
 ode.verbose = 1
 ode.use_typ_vals = 0
