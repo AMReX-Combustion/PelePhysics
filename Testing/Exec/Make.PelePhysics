@@ -4,9 +4,9 @@ PELE_PHYSICS_HOME ?= $(PELE_HOME)/PelePhysics
 
 TOP := $(PELE_PHYSICS_HOME)
 
-EOS_HOME     ?= $(PELE_PHYSICS_HOME)/Eos
+EOS_HOME       ?= $(PELE_PHYSICS_HOME)/Eos
 REACTIONS_HOME ?= $(PELE_PHYSICS_HOME)/Reactions
-TRAN_HOME    ?= $(PELE_PHYSICS_HOME)/Transport
+TRAN_HOME      ?= $(PELE_PHYSICS_HOME)/Transport
 
 EBASE = Pele
 
@@ -69,6 +69,7 @@ Blocs             += $(EOS_PATH)
 
 # Reactions
 REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
+include $(REACTIONS_HOME)/Make.package
 include $(REACTIONS_PATH)/Make.package
 INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
 VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH) 
