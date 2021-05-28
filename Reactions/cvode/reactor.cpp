@@ -795,7 +795,7 @@ react(
   // System sizes
   int NCELLS  = Ncells;
   int NEQ     = NUM_SPECIES+1;            // rhoYs + rhoH
-  int NEQSTOT = NEQSTOT * NCELLS;
+  int NEQSTOT = NEQ * NCELLS;
 
   // Allocate CVODE data
   BL_PROFILE_VAR("AllocsInCVODE", AllocsCVODE);
