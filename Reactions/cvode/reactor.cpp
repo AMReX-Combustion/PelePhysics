@@ -825,7 +825,7 @@ react(
 #ifdef AMREX_USE_GPU
   // For now, Abort() is analytical_jac required on GPU.
   if (user_data->ianalytical_jacobian == 1) {
-     amrex::Abort("ode.analytical_jacobian = 1 currently unavailable on GPU"),
+     amrex::Abort("ode.analytical_jacobian = 1 currently unavailable on GPU");
   }
 #endif
 
