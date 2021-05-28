@@ -240,6 +240,10 @@ react(
   NCELLS = box.numPts();
   neq_tot = (NUM_SPECIES + 1) * NCELLS;
 
+#ifdef AMREX_USE_GPU
+  Gpu::streamSynchronize();
+#endif
+
   UserData user_data;
 
   BL_PROFILE_VAR("AllocsInCVODE", AllocsCVODE);
@@ -529,6 +533,10 @@ react(
   });
   BL_PROFILE_VAR_STOP(FlatStuff);
 
+#ifdef AMREX_USE_GPU
+  Gpu::Device::streamSynchronize();
+#endif
+
   amrex::Real time_init = time;
   amrex::Real time_out = time + dt_react;
 
@@ -576,11 +584,11 @@ react(
 
   if (user_data->isolve_type == iterative_gmres_solve) {
     if (user_data->ianalytical_jacobian == 0) {
-      LS = SUNSPGMR(y, PREC_NONE, 0);
+      LS = SUNLinSol_SPGMR(y, PREC_NONE, 0);
       if (check_flag((void*)LS, "SUNDenseLinearSolver", 0))
         return (1);
     } else {
-      LS = SUNSPGMR(y, PREC_LEFT, 0);
+      LS = SUNLinSol_SPGMR(y, PREC_LEFT, 0);
       if (check_flag((void*)LS, "SUNDenseLinearSolver", 0))
         return (1);
     }
@@ -649,6 +657,10 @@ react(
 #ifdef MOD_REACTOR
   dt_react = time_init - time;
   time = time_init;
+#endif
+
+#ifdef AMREX_USE_GPU
+  Gpu::Device::streamSynchronize();
 #endif
 
   long int nfe;
@@ -942,14 +954,14 @@ react(
   // Define and set CVODE linear solver
   if (user_data->isolve_type == iterative_gmres_solve) {
     if (user_data->ianalytical_jacobian == 0) {
-      LS = SUNSPGMR(y, PREC_NONE, 0);
+      LS = SUNLinSol_SPGMR(y, PREC_NONE, 0);
       if (check_flag((void*)LS, "SUNDenseLinearSolver", 0))
         return (1);
     } else {
 #ifdef AMREX_USE_GPU
      amrex::Abort("ode.analytical_jacobian = 1 currently unavailable on GPU"),
 #endif
-      LS = SUNSPGMR(y, PREC_LEFT, 0);
+      LS = SUNLinSol_SPGMR(y, PREC_LEFT, 0);
       if (check_flag((void*)LS, "SUNDenseLinearSolver", 0))
         return (1);
     }
