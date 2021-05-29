@@ -186,6 +186,7 @@ reactor_init(int reactor_type, int Ncells)
   return (0);
 }
 
+// React for Array4s
 int
 react(
   const amrex::Box& box,
@@ -205,15 +206,21 @@ react(
 #endif
 )
 {
-  N_Vector y = NULL;
-  SUNLinearSolver LS = NULL;
-  SUNMatrix A = NULL;
-  void* cvode_mem = NULL;
-  int flag;
-  int NCELLS, neq_tot;
-  N_Vector atol;
-  realtype* ratol;
 
+  // -------------------------------------------------------------
+  // CVODE structs
+  N_Vector y = NULL;             // Solution vector
+  SUNLinearSolver LS = NULL;     // Linear solver used in Newton solve
+  SUNMatrix A = NULL;            // Chem. jacobian, if provided
+  void* cvode_mem = NULL;        // CVODE internal memory pointer
+  N_Vector atol;                 // Component-wise abs. tolerance
+  realtype* ratol;               // Rel. tolerance
+
+  // temporary to catch CVODE exceptions
+  int flag;
+
+  // -------------------------------------------------------------
+  // ParmParse integrator options
   ParmParse pp("ode");
   int ianalytical_jacobian = 0;
   pp.query("analytical_jacobian", ianalytical_jacobian);
@@ -237,19 +244,27 @@ react(
     isolve_type = iterative_gmres_solve;
   }
 
-  NCELLS = box.numPts();
-  neq_tot = (NUM_SPECIES + 1) * NCELLS;
+  int NCELLS  = box.numPts();
+  int NEQ     = NUM_SPECIES+1;            // rhoYs + rhoH
+  int neq_tot = (NUM_SPECIES + 1) * NCELLS;
 
 #ifdef AMREX_USE_GPU
   Gpu::streamSynchronize();
 #endif
 
-  UserData user_data;
-
+  // Allocate CVODE data
   BL_PROFILE_VAR("AllocsInCVODE", AllocsCVODE);
+  UserData user_data;
   user_data = (CVodeUserData*)The_Arena()->alloc(sizeof(struct CVodeUserData));
+  user_data->rhoe_init_d =
+    (double*)The_Device_Arena()->alloc(NCELLS * sizeof(double));
+  user_data->rhoesrc_ext_d =
+    (double*)The_Device_Arena()->alloc(NCELLS * sizeof(double));
+  user_data->rYsrc_d =
+    (double*)The_Device_Arena()->alloc(NCELLS * NUM_SPECIES * sizeof(double));
   BL_PROFILE_VAR_STOP(AllocsCVODE);
 
+  // Initialize CVODE options
   user_data->ncells = NCELLS;
   user_data->neqs_per_cell = NUM_SPECIES;
   user_data->ireactor_type = reactor_type;
@@ -467,6 +482,7 @@ react(
   }
 #endif
 
+  // create solution Nvector
 #if defined(AMREX_USE_CUDA)
   y = N_VNewWithMemHelp_Cuda(
     neq_tot, /*use_managed_mem=*/true, *amrex::sundials::The_SUNMemory_Helper());
@@ -483,6 +499,7 @@ react(
     return (1);
 #endif
 
+  // On GPU, define execution policy
 #if defined(AMREX_USE_CUDA)
   SUNCudaExecPolicy* stream_exec_policy =
     new SUNCudaThreadDirectExecPolicy(256, stream);
@@ -497,21 +514,14 @@ react(
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
 #endif
 
+  // Create CVODE object, specifying a Backward-Difference Formula method
   cvode_mem = CVodeCreate(CV_BDF);
   if (check_flag((void*)cvode_mem, "CVodeCreate", 0))
     return (1);
-
   flag = CVodeSetUserData(cvode_mem, static_cast<void*>(user_data));
 
-  BL_PROFILE_VAR_START(AllocsCVODE);
-  user_data->rhoe_init_d =
-    (double*)The_Device_Arena()->alloc(NCELLS * sizeof(double));
-  user_data->rhoesrc_ext_d =
-    (double*)The_Device_Arena()->alloc(NCELLS * sizeof(double));
-  user_data->rYsrc_d =
-    (double*)The_Device_Arena()->alloc(NCELLS * NUM_SPECIES * sizeof(double));
-  BL_PROFILE_VAR_STOP(AllocsCVODE);
-
+  // -------------------------------------------------------------
+  // Initialize solution vector
 #if defined(AMREX_USE_CUDA)
   realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
 #elif defined(AMREX_USE_HIP)
@@ -547,6 +557,8 @@ react(
   if (check_flag(&flag, "CVodeInit", 1))
     return (1);
 
+  // -------------------------------------------------------------
+  // Define CVODE tolerances
   atol = N_VClone(y);
 #if defined(AMREX_USE_CUDA)
   ratol = N_VGetHostArrayPointer_Cuda(atol);
@@ -576,6 +588,7 @@ react(
 #elif defined(AMREX_USE_HIP)
   N_VCopyToDevice_Hip(atol);
 #endif
+
   // Call CVodeSVtolerances to specify the scalar relative tolerance
   // and vector absolute tolerances
   flag = CVodeSVtolerances(cvode_mem, relTol, atol);
@@ -602,7 +615,7 @@ react(
       return (1);
 
     if (user_data->ianalytical_jacobian == 1) {
-#if defined(AMREX_USE_CUDA)
+#ifdef AMREX_USE_CUDA
       flag = CVodeSetPreconditioner(cvode_mem, Precond, PSolve);
       if (check_flag(&flag, "CVodeSetPreconditioner", 1))
         return (1);
@@ -611,7 +624,7 @@ react(
 #endif
     }
 
-#if defined(AMREX_USE_CUDA)
+#ifdef AMREX_USE_CUDA
   } else if (user_data->isolve_type == sparse_cusolver_solve) {
     LS = SUNLinSol_cuSolverSp_batchQR(y, A, user_data->cusolverHandle);
     if (check_flag((void*)LS, "SUNLinSol_cuSolverSp_batchQR", 0))
@@ -640,6 +653,8 @@ react(
 #endif
   }
 
+  // -------------------------------------------------------------
+  // Other CVODE options
   flag = CVodeSetMaxNumSteps(cvode_mem, 100000);
   if (check_flag(&flag, "CVodeSetMaxNumSteps", 1))
     return (1);
@@ -648,6 +663,8 @@ react(
   if (check_flag(&flag, "CVodeSetMaxOrd", 1))
     return (1);
 
+  // -------------------------------------------------------------
+  // Actual CVODE solve
   BL_PROFILE_VAR("AroundCVODE", AroundCVODE);
   flag = CVode(cvode_mem, time_out, y, &time_init, CV_NORMAL);
   if (check_flag(&flag, "CVode", 1))
@@ -734,8 +751,7 @@ react(
   return nfe;
 }
 
-// React for 1d array
-// CPU/GPU versions are fully split for now
+// React for 1d arrays
 int
 react(
   realtype *rY_in,
@@ -796,6 +812,10 @@ react(
   int NCELLS  = Ncells;
   int NEQ     = NUM_SPECIES+1;            // rhoYs + rhoH
   int NEQSTOT = NEQ * NCELLS;
+
+#ifdef AMREX_USE_GPU
+  Gpu::streamSynchronize();
+#endif
 
   // Allocate CVODE data
   BL_PROFILE_VAR("AllocsInCVODE", AllocsCVODE);
@@ -896,13 +916,10 @@ react(
 #endif
   BL_PROFILE_VAR_STOP(AsyncCpy);
 
-  // TODO: somehow this version is missing the initilization of temp
-  // done in box_flatten in the Array4 versions and directly in here in the CPU version
-
   // -------------------------------------------------------------
   // Initialize integrator
-  realtype time_init = time;
-  realtype time_out  = time + dt_react;
+  amrex::Real time_init = time;
+  amrex::Real time_out  = time + dt_react;
 
   /* Call CVodeInit to initialize the integrator memory and specify the
    * user's right hand side function, the inital time, and
