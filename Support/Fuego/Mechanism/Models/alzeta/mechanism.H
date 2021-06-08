@@ -1,11 +1,6 @@
 #ifndef MECHANISM_H
 #define MECHANISM_H
 
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <vector>
 #include <AMReX_Gpu.H>
 #include <AMReX_REAL.H>
 
