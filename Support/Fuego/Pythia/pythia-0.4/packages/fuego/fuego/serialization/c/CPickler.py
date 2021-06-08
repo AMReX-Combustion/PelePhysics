@@ -9801,11 +9801,6 @@ class CPickler(CMill):
     def _print_mech_header(self, mechanism):
         self._write()
         self._rep += [
-            '#include <math.h>',
-            '#include <stdio.h>',
-            '#include <string.h>',
-            '#include <stdlib.h>',
-            '#include <vector>',
             '#include <AMReX_Gpu.H>',
             '#include <AMReX_REAL.H>'
         ]
