@@ -158,7 +158,7 @@ public:
   // Temperature cutoff, any temparatures below this will only do one subcycle
   Real m_Tcutoff;
   // Number of subcycles to use during source calculations
-  Real m_numSubcycles;
+  int m_numSubcycles;
 
   /***********************************************************************
     Reaction member data

@@ -39,7 +39,7 @@ tile_at_bndry(
  Functions computing wall film source terms
  ***************************************************************/
 
-AMREX_GPU_DEVICE AMREX_INLINE bool
+AMREX_GPU_DEVICE AMREX_INLINE void
 calculateWallFilmSource(
   const Real flow_dt,
   GasPhaseVals& gpv,
@@ -69,7 +69,7 @@ calculateWallFilmSource(
   GpuArray<Real, SPRAY_FUEL_NUM> Y_vapor;
   GpuArray<Real, SPRAY_FUEL_NUM> L_fuel;
   GpuArray<Real, SPRAY_FUEL_NUM> mi_dot;
-  GpuArray<Real, SPRAY_FUEL_NUM> L_boilT;
+  GpuArray<Real, SPRAY_FUEL_NUM> cBoilT;
   GpuArray<Real, NUM_SPECIES> Y_skin;
   GpuArray<Real, NUM_SPECIES> h_skin;
   GpuArray<Real, NUM_SPECIES> Ddiag;
@@ -92,6 +92,7 @@ calculateWallFilmSource(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
     Y_film[spf] = p.rdata(SPI.pstateY + spf);
 #endif
+  calcBoilT(fdat, gpv, cBoilT.data());
   // TODO: Add model for when T > T_boil
   Real T_i = gpv.T_fluid;
   Real area_film = vol / ht_film;
@@ -101,8 +102,8 @@ calculateWallFilmSource(
     h_skin[n] *= SPU.eng_conv;
   }
   calcVaporY(
-    fdat, gpv, T_film, C_eps, Y_film.data(), h_skin.data(), Y_vapor.data(),
-    L_fuel.data(), L_boilT.data());
+    fdat, gpv, T_film, C_eps, Y_film.data(), h_skin.data(), cBoilT.data(),
+    Y_vapor.data(), L_fuel.data());
   Real T_vapor = 0.5 * (T_film + T_i);
   Real sumYSkin = 0.;
   Real sumYFuel = 0.;
@@ -174,7 +175,6 @@ calculateWallFilmSource(
   p.rdata(SPI.pstateT) = -0.5 * (T_s + T_wall);
   if (new_ht < ht_tol)
     p.id() = -1;
-  return false;
 }
 
 /****************************************************************
@@ -341,7 +341,8 @@ impose_wall(
   const RealVect bcentv,
   SprayRefl& SPRF,
   bool isActive,
-  const bool dry_wall)
+  const bool dry_wall,
+  amrex::RandomEngine const& engine)
 {
   const Real tolerance = std::numeric_limits<Real>::epsilon();
   Real sigma = fdat.sigma;
@@ -432,7 +433,7 @@ impose_wall(
             // Determine the fraction of the droplet mass
             // that forms secondary drops from Kuhnke 2004
             // TODO: This is incomplete by always assuming a dry wall
-            const Real B = 0.2 + 0.6 * amrex::Random();
+            const Real B = 0.2 + 0.6 * amrex::Random(engine);
             splash_mass *= amrex::min(1., (Tstar - 0.8) / 0.3 * (1. - B) + B);
             // Mass deposited into wall film
             Real depot_mass = pmass - splash_mass;
@@ -491,8 +492,6 @@ impose_wall(
   return splash_flag;
 }
 
-AMREX_GPU_HOST_DEVICE
-AMREX_INLINE
 void
 create_splash_droplet(
   SprayParticleContainer::ParticleType& p,

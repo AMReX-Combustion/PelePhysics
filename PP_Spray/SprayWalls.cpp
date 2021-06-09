@@ -33,7 +33,7 @@ SprayParticleContainer::wallImpingement(
   const auto domain = this->Geom(level).Domain();
   IntVect bndry_lo; // Designation for boundary types
   IntVect bndry_hi; // 0 - Periodic, 1 - Reflective, -1 - Non-reflective
-  for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     if (!this->Geom(level).isPeriodic(dir)) {
       if (reflect_lo[dir])
         bndry_lo[dir] = 1;

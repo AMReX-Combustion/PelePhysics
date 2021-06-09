@@ -263,7 +263,7 @@ SprayParticleContainer::updateParticles(
     //       umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti),
     //       u_mac[2].array(pti))};
     // #endif
-    amrex::ParallelFor(
+    amrex::ParallelForRNG(
       Np, [pstruct, statearr, sourcearr, plo, phi, dx, dxi, do_move, SPI, fdat,
            src_box, state_box, bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm,
            at_bounds, wallT, isActive
@@ -276,7 +276,7 @@ SprayParticleContainer::updateParticles(
            flags_array, ccent_fab, bcent_fab, bnorm_fab, barea_fab, volfrac_fab,
            eb_in_box
 #endif
-    ] AMREX_GPU_DEVICE(int pid) noexcept {
+    ] AMREX_GPU_DEVICE(int pid, amrex::RandomEngine const& engine) noexcept {
         auto eos = pele::physics::PhysicsType::eos();
         SprayUnits SPU;
         GpuArray<Real, NUM_SPECIES> mw_fluid;
@@ -293,7 +293,6 @@ SprayParticleContainer::updateParticles(
             indx_array; // Array of adjacent cells
           GpuArray<Real, AMREX_D_PICK(2, 4, 8)>
             weights; // Array of corresponding weights
-          bool remove_particle = false;
           RealVect lx = (p.pos() - plo) * dxi + 0.5;
           IntVect ijk = lx.floor(); // Upper cell center
           RealVect lxc = (p.pos() - plo) * dxi;
@@ -418,7 +417,7 @@ SprayParticleContainer::updateParticles(
             vel_fluid, T_fluid, rho_fluid, Y_fluid.data(), mw_fluid.data(),
             invmw.data());
           if (!is_wall_film) {
-            remove_particle = calculateSpraySource(
+            calculateSpraySource(
               flow_dt, do_move, gpv, SPI, *fdat, p,
 #ifdef USE_SPRAY_SOA
               attribs, pid,
@@ -436,15 +435,13 @@ SprayParticleContainer::updateParticles(
               }
             }
           } else {
-            remove_particle = calculateWallFilmSource(
+            calculateWallFilmSource(
               flow_dt, gpv, SPI, *fdat, p,
 #ifdef USE_SPRAY_SOA
               attribs, pid,
 #endif
               wallT, face_area, diff_cent, ltransparm);
           }
-          if (remove_particle)
-            p.id() = -1;
           for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
             IntVect cur_indx = indx_array[aindx];
             Real cvol = inv_vol;
@@ -514,7 +511,7 @@ SprayParticleContainer::updateParticles(
                     SPRF.Y_refl[spf] = p.rdata(SPI.pstateY + spf);
                   splash_flag = impose_wall(
                     p, SPI, *fdat, dx, plo, phi, wallT, bloc, normal, bcentv,
-                    SPRF, isActive, dry_wall);
+                    SPRF, isActive, dry_wall, engine);
                 }
               } // if (wall_check)
             } // if (left_dom)

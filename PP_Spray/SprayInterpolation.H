@@ -14,7 +14,7 @@ InterpolateFaceVelocity(
   amrex::GpuArray<amrex::Array4<amrex::Real const>, AMREX_SPACEDIM> const& umac,
   amrex::RealVect& vel_fluid)
 {
-  for (int dir = 0; dir != AMREX_SPACEDIM; ++dir) {
+  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     amrex::RealVect face_len(AMREX_D_DECL(
       len[0] + (dir == 0) * 0.5, len[1] + (dir == 1) * 0.5,
       len[2] + (dir == 2) * 0.5));
@@ -38,13 +38,13 @@ InterpolateFaceVelocity(
     int kkn[2] = {
       amrex::max(indx[2] - 1, dom_lo[2]), amrex::min(indx[2], dom_hi[2])};
     amrex::Real ssz[2] = {1. - delL[2], delL[2]};
-    for (int kk = 0; kk != 2; ++kk) {
+    for (int kk = 0; kk < 2; ++kk) {
       zindx = kkn[kk];
 #endif
-      for (int jj = 0; jj != 2; ++jj) {
+      for (int jj = 0; jj < 2; ++jj) {
         yindx = jjn[jj];
 #endif
-        for (int ii = 0; ii != 2; ++ii) {
+        for (int ii = 0; ii < 2; ++ii) {
           xindx = iin[ii];
           vel_fluid[dir] += (umac[dir])(xindx, yindx, zindx, 0) *
                             AMREX_D_TERM(ssx[ii], *ssy[jj], *ssz[kk]);
