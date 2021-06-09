@@ -76,9 +76,7 @@ public:
   //
   // Estimate the soot time step
   //
-  Real estSootDt(
-    const Box& vbox,
-    Array4<const Real> const& Qstate) const;
+  Real estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const;
 
   /***********************************************************************
     Reaction functions (SootModel_react.cpp)

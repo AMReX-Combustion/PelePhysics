@@ -291,6 +291,7 @@ calculateSpraySource(
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         const int fspec = fdat.indx[spf];
         Real Yfv = Y_vapor[spf];
+        mi_dot[spf] = 0.;
         B_M_num[spf] =
           amrex::max(C_eps, (Yfv - gpv.Y_fluid[fspec]) / (1. - Yfv));
         Y_skin[fspec] = Yfv + rule * (gpv.Y_fluid[fspec] - Yfv);
@@ -403,12 +404,14 @@ calculateSpraySource(
       const Real inv_pm_cp = inv_pmass / cp_part;
       Real coeff_heat = 0.;
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        const int fspec = fdat.indx[spf];
-        Real ratio = cp_n[fspec] * Sh_num[spf] * Ddiag[fspec] / lambda_skin;
-        Real heatC = calcHeatCoeff(ratio, B_M_num[spf], B_eps, C_eps, Nu_0);
-        // Convection term
-        coeff_heat += heatC;
-        part_temp_src += mi_dot[spf] * L_fuel[spf];
+        if (Y_part[spf] > 0.) {
+          const int fspec = fdat.indx[spf];
+          Real ratio = cp_n[fspec] * Sh_num[spf] * Ddiag[fspec] / lambda_skin;
+          Real heatC = calcHeatCoeff(ratio, B_M_num[spf], B_eps, C_eps, Nu_0);
+          // Convection term
+          coeff_heat += heatC;
+          part_temp_src += mi_dot[spf] * L_fuel[spf];
+        }
       }
       Real conv_src = M_PI * lambda_skin * dia_part * delT * coeff_heat;
       gpv.fluid_eng_src += conv_src;

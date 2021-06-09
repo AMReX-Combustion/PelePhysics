@@ -313,7 +313,8 @@ check_wall(
         bloc = ijkc_prev;
         normal = {
           -bnorm(ijkc_prev, 0), -bnorm(ijkc_prev, 1), -bnorm(ijkc_prev, 2)};
-        bcentv = {bcent(ijkc_prev, 0), bcent(ijkc_prev, 1), bcent(ijkc_prev, 2)};
+        bcentv = {
+          bcent(ijkc_prev, 0), bcent(ijkc_prev, 1), bcent(ijkc_prev, 2)};
         // otherwise an error has occurred
       } else {
         Abort("WallFunctions::check_wall: Particle is outside EB");

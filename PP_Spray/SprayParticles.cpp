@@ -490,9 +490,11 @@ SprayParticleContainer::updateParticles(
             RealVect normal;
             RealVect bcentv;
             bool dry_wall = false; // TODO: Implement this check
-            // First check if particle has exited the domain through a Cartesian boundary
+            // First check if particle has exited the domain through a Cartesian
+            // boundary
             IntVect bflags(IntVect::TheZeroVector());
-            bool left_dom = check_bounds(p.pos(), plo, phi, dx, bndry_lo, bndry_hi, ijk, bflags);
+            bool left_dom = check_bounds(
+              p.pos(), plo, phi, dx, bndry_lo, bndry_hi, ijk, bflags);
             if (left_dom) {
               p.id() = -1;
             } else {
@@ -514,9 +516,9 @@ SprayParticleContainer::updateParticles(
                     SPRF, isActive, dry_wall, engine);
                 }
               } // if (wall_check)
-            } // if (left_dom)
-          } // if (at_bounds...
-        }   // End of p.id() > 0 check
-      });   // End of loop over particles
-  }         // for (int MyParIter pti..
+            }   // if (left_dom)
+          }     // if (at_bounds...
+        }       // End of p.id() > 0 check
+      });       // End of loop over particles
+  }             // for (int MyParIter pti..
 }
