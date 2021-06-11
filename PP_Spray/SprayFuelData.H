@@ -141,6 +141,8 @@ struct SprayData
   GpuArray<Real, SPRAY_FUEL_NUM> rho;
   GpuArray<Real, SPRAY_FUEL_NUM> mu;
   GpuArray<Real, SPRAY_FUEL_NUM> lambda;
+  // 3 coefficients for Antoine equation and conversion to appropriate units
+  GpuArray<Real, SPRAY_FUEL_NUM * 4> psat_coef;
   GpuArray<int, SPRAY_FUEL_NUM> indx;
 
   void build(SprayData& fdat)
@@ -158,6 +160,9 @@ struct SprayData
       rho[spf] = fdat.rho[spf];
       lambda[spf] = fdat.lambda[spf];
       mu[spf] = fdat.mu[spf];
+      for (int cf = 0; cf < 4; ++cf) {
+        psat_coef[4 * spf + cf] = fdat.psat_coef[4 * spf + cf];
+      }
       indx[spf] = fdat.indx[spf];
     }
   }

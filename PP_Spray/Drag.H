@@ -121,6 +121,7 @@ calcBoilT(const SprayData& fdat, const GasPhaseVals& gpv, Real* cBoilT)
     cBoilT[spf] =
       1. / (std::log(PATM / gpv.p_fluid) * RU / (Hboil_ref * mw_fuel) +
             1. / boilT_ref);
+    cBoilT[spf] = amrex::min(critT, cBoilT[spf]);
   }
 }
 
@@ -161,10 +162,11 @@ calcVaporY(
       h_part[fspec] + fdat.latent[spf] - fdat.cp[spf] * (T_part - fdat.ref_T);
     L_fuel[spf] = part_latent;
     // Compute the saturation pressure at the current particle temperature
-    Real pres_sat =
-      PATM *
-        std::exp(part_latent * mw_fuel / RU * (1. / boilT_ref - 1. / T_part)) +
-      C_eps;
+    Real a = fdat.psat_coef[4 * spf];
+    Real b = fdat.psat_coef[4 * spf + 1];
+    Real c = fdat.psat_coef[4 * spf + 2];
+    Real d = fdat.psat_coef[4 * spf + 3]; // For converting to Pa or dyne/cm^2
+    Real pres_sat = d * std::pow(10., a - b / (T_part + c));
     Real x_l = Y_l[spf] / mw_fuel;
     Real x_vc = x_l * pres_sat;
     nt += x_l;
@@ -264,7 +266,6 @@ calculateSpraySource(
     Real hg_g = 0.; // Enthalpy at gas temperature
     if (SPI.mass_tran) {
       for (int n = 0; n < NUM_SPECIES; ++n) {
-        Y_skin[n] = 0.;
         h_part[n] *= SPU.eng_conv;
         h_fluid[n] *= SPU.eng_conv;
         cp_n[n] *= SPU.eng_conv;
@@ -279,7 +280,7 @@ calculateSpraySource(
       }
     }
     // Solve for state of the vapor and mass transfer coefficient B_M
-    Real sumYSkin = 0.;
+    Real sumYSkin = 0.; // Mass fraction of the fuel in the vapor phase
     Real sumYFuel = 0.; // Mass fraction of the fuel in the gas phase
     Real cp_skin = 0.;  // Averaged C_p at particle surface
     Real cp_part = 0.;  // Cp of the liquid state
@@ -299,9 +300,13 @@ calculateSpraySource(
         cp_part += Y_part[spf] * fdat.cp[spf];
         sumYFuel += gpv.Y_fluid[fspec];
       }
-      const Real restYSkin = 1. - sumYSkin;
+      Real restYfluid = 1. - sumYFuel;
+      Real restYSkin = 1. - sumYSkin;
+      Real renorm = restYSkin / restYfluid;
       for (int sp = 0; sp < NUM_SPECIES; ++sp) {
-        Y_skin[sp] += restYSkin * gpv.Y_fluid[sp];
+        if (Y_skin[sp] == 0.) {
+          Y_skin[sp] = gpv.Y_fluid[sp] * renorm;
+        }
         cp_skin += Y_skin[sp] * cp_n[sp];
         mw_vap += Y_skin[sp] * gpv.invmw[sp];
       }
@@ -312,7 +317,8 @@ calculateSpraySource(
     Real lambda_skin = 0.;
     Real mu_skin = 0.;
     Real xi_skin = 0.;
-    Real rho_cgs = gpv.rho_fluid / SPU.rho_conv;
+    Real rho_skin = gpv.rho_fluid; // TODO: Check if this should be modeled
+    Real rho_cgs = rho_skin / SPU.rho_conv;
     auto trans = pele::physics::PhysicsType::transport();
     trans.transport(
       get_xi, get_mu, get_lambda, get_Ddiag, T_skin, rho_cgs, Y_skin.data(),
@@ -324,7 +330,7 @@ calculateSpraySource(
     RealVect diff_vel = gpv.vel_fluid - vel_part;
     Real diff_vel_mag = diff_vel.vectorLength();
     // Local Reynolds number
-    Real Reyn = gpv.rho_fluid * diff_vel_mag * dia_part / mu_skin;
+    Real Reyn = rho_skin * diff_vel_mag * dia_part / mu_skin;
     Real Nu_0 = 1.;
     // Solve mass transfer source terms
     Real m_dot = 0.;
@@ -383,8 +389,8 @@ calculateSpraySource(
         drag_coef = (Reyn > 1.)
                       ? 24. / Reyn * (1. + std::cbrt(Reyn * Reyn) / 6.)
                       : 24. / Reyn;
-      Real drag_force = 0.125 * gpv.rho_fluid * drag_coef * M_PI * dia_part *
-                        dia_part * diff_vel_mag;
+      Real drag_force =  0.125 * rho_skin * drag_coef * M_PI * dia_part *
+                         dia_part * diff_vel_mag;
       part_mom_src = drag_force * diff_vel;
       gpv.fluid_mom_src += part_mom_src;
       // s_d,mu dot u_d
