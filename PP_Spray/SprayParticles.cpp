@@ -299,11 +299,11 @@ SprayParticleContainer::updateParticles(
           IntVect ijkc = lxc.floor(); // Cell with particle
           bool is_wall_film = false;
           Real face_area = 0.;
+          IntVect bflags(IntVect::TheZeroVector());
           // If the temperature is a negative value, the particle is a wall film
           if (p.rdata(SPI.pstateT) < 0.)
             is_wall_film = true;
           if (at_bounds) {
-            IntVect bflags(IntVect::TheZeroVector());
             // Check if particle has left the domain, is wall film,
             // or is boundary adjacent and must be shifted
             bool left_dom = check_bounds(
@@ -355,7 +355,8 @@ SprayParticleContainer::updateParticles(
               bcent_fab, bnorm_fab, volfrac_fab, indx_array.data(),
               weights.data());
           } else {
-            trilinear_interp(ijk, lx, indx_array.data(), weights.data());
+            trilinear_interp(
+              ijk, lx, indx_array.data(), weights.data(), bflags);
           }
           bool eb_wall_film = false;
           if (is_wall_film && flags_array(ip, jp, kp).isSingleValued()) {
@@ -368,7 +369,7 @@ SprayParticleContainer::updateParticles(
             diff_cent = std::sqrt(diff_cent);
           }
 #else
-          trilinear_interp(ijk, lx, indx_array.data(), weights.data());
+          trilinear_interp(ijk, lx, indx_array.data(), weights.data(), bflags);
 #endif // AMREX_USE_EB
        // Interpolate fluid state
           Real T_fluid = 0.;

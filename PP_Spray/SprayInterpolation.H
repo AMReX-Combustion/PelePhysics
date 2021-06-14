@@ -63,6 +63,8 @@ InterpolateFaceVelocity(
 // 0 - Not outside domain or at periodic boundary
 // -1 - Outside lower reflective domain
 // 1 - Outside upper reflective domain
+// -2 - Adjacent to lower reflective domain boundary
+// 2 - Adjacent to upper reflective domain boundary
 // And true is returned if outside non-reflective domain
 // If near a domain, ijk is shifted inward for interpolation purposes
 AMREX_GPU_HOST_DEVICE AMREX_INLINE bool
@@ -92,6 +94,7 @@ check_bounds(
             return true;
           // Adjacent to non-periodic boundary, shift interpolation cells
         } else if (diff < 0.5 * dx[dir]) {
+          dflags[dir] = -2 * int(fact);
           ijk[dir] += fact;
         }
       }
@@ -111,16 +114,28 @@ trilinear_interp(
   const amrex::IntVect& ijk,
   const amrex::RealVect& lx,
   amrex::IntVect* indx_array,
-  amrex::Real* weights)
+  amrex::Real* weights,
+  const amrex::IntVect& bflags)
 {
+  // Note: if near a reflective boundary, ijk has been shifted in check_bounds
   AMREX_D_TERM(int i = ijk[0];, int j = ijk[1];, int k = ijk[2];);
 
   const amrex::RealVect sx_hi = lx - ijk;
   const amrex::RealVect sx_lo = 1. - sx_hi;
   amrex::GpuArray<amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>, 2> ssv;
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    ssv[0][dir] = sx_lo[dir];
-    ssv[1][dir] = sx_hi[dir];
+    // Check if adjacent to upper boundary
+    // or lower boundary and make it zeroth-order interpolation
+    if (bflags[dir] > 1) {
+      ssv[0][dir] = 0.;
+      ssv[1][dir] = 1.;
+    } else if (bflags[dir] < -1) {
+      ssv[0][dir] = 1.;
+      ssv[1][dir] = 0.;
+    } else {
+      ssv[0][dir] = sx_lo[dir];
+      ssv[1][dir] = sx_hi[dir];
+    }
   }
   int cc = 0;
 #if AMREX_SPACEDIM == 3

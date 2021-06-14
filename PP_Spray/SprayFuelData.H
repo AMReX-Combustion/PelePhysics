@@ -114,7 +114,7 @@ struct GasPhaseVals
     SprayUnits SPU;
     mw_mix = 0.;
     for (int n = 0; n < NUM_SPECIES; ++n) {
-      Y_fluid[n] = in_Y[n];
+      Y_fluid[n] = amrex::min(1., amrex::max(in_Y[n], 0.));
       mw_fluid[n] = in_mw[n];
       invmw[n] = in_invmw[n];
       mw_mix += Y_fluid[n] * invmw[n];

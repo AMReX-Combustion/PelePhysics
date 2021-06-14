@@ -291,7 +291,7 @@ check_wall(
 {
   bool wall_check = false; // Check if particle is reflected
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-    if (bflags[dir] != 0) {
+    if (bflags[dir] == -1 || bflags[dir] == 1) {
       normal[dir] = -bflags[dir];
       bcentv[dir] = -0.5 * bflags[dir];
       wall_check = true;

@@ -389,8 +389,8 @@ calculateSpraySource(
         drag_coef = (Reyn > 1.)
                       ? 24. / Reyn * (1. + std::cbrt(Reyn * Reyn) / 6.)
                       : 24. / Reyn;
-      Real drag_force =  0.125 * rho_skin * drag_coef * M_PI * dia_part *
-                         dia_part * diff_vel_mag;
+      Real drag_force = 0.125 * rho_skin * drag_coef * M_PI * dia_part *
+                        dia_part * diff_vel_mag;
       part_mom_src = drag_force * diff_vel;
       gpv.fluid_mom_src += part_mom_src;
       // s_d,mu dot u_d
