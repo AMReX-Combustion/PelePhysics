@@ -269,6 +269,7 @@ calculateSpraySource(
         h_part[n] *= SPU.eng_conv;
         h_fluid[n] *= SPU.eng_conv;
         cp_n[n] *= SPU.eng_conv;
+        Y_skin[n] = 0.;
         hg_s += gpv.Y_fluid[n] * h_part[n];
         hg_g += gpv.Y_fluid[n] * h_fluid[n];
       }
