@@ -212,7 +212,6 @@ calculateSpraySource(
   const Real rule = 1. / 3.;
   const Real C_eps = 1.E-15;
   const Real B_eps = 1.E-7;
-  const Real Y_eps = 1.E-4;
   const Real mass_eps = 8.E-18 * SPU.mass_conv;
   const int nSubMax = 100;
   bool get_xi = false;
