@@ -82,7 +82,7 @@ AMREX_FORCE_INLINE
 Real
 calcFlashVaporRate(const Real& dh, const Real& coeff, const Real& Gf)
 {
-  if (dh < 0.)
+  if (dh <= 1.E-5)
     return 0.;
   Real tol = 1.E-4;
   Real Grat = 1.E-5;
@@ -481,14 +481,13 @@ calculateSpraySource(
   Real part_ke = 0.5 * vel_part.radSquared();
   gpv.fluid_eng_src += part_ke * mdot_total;
   gpv.fluid_mom_src += vel_part * mdot_total;
-  Real RT = pele::physics::Constants::RU * SPU.ru_conv * gpv.T_fluid;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
     Real oldY = p.rdata(SPI.pstateY + spf);
     Real newY = Y_part[spf];
     Real midot = (newY * pmass - oldY * startmass) / (0.5 * flow_dt);
     gpv.fluid_Y_dot[spf] = midot;
-    gpv.fluid_eng_src += midot * (h_part[fspec] - RT * gpv.invmw[fspec]);
+    gpv.fluid_eng_src += midot * h_part[fspec];
   }
 #ifdef USE_SPRAY_SOA
   AMREX_D_TERM(attribs[SPI.pstateVel].data()[pid] = vel_part[0];
