@@ -255,7 +255,6 @@ calculateSpraySource(
   Real dt = flow_dt;
   int isub = 1;
   int nsub = 1;
-  bool dosub = true; // Flag to turn subcycling off
   Real rho_part = 0.;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
     rho_part += Y_part[spf] / fdat.rho[spf];
@@ -265,11 +264,6 @@ calculateSpraySource(
   eos.T2Hi(gpv.T_fluid, h_fluid.data());
   calcBoilT(fdat, gpv, cBoilT.data());
   while (isub <= nsub) {
-    Real Tc = 0.;
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      Tc += Y_part[spf] * fdat.critT[spf];
-    }
-    T_part = amrex::min(T_part, Tc);
     // Model the fuel vapor using the one-third rule
     Real delT = amrex::max(gpv.T_fluid - T_part, 0.);
     Real T_skin = T_part + rule * delT;
@@ -368,13 +362,8 @@ calculateSpraySource(
           Real Sh_0 = 1. + powR * std::cbrt(1. + Reyn * Sc_skin);
           Sh_num[spf] = 2. + (Sh_0 - 2.) * invFM;
           Real Tboil = cBoilT[spf];
-          Real Tcrit = fdat.critT[spf];
-          // If temperature exceeds critical temperature, mass is instantly
-          // evaporated
-          if (T_part > 0.999 * Tcrit) {
-            mi_dot[spf] = -Y_part[spf] * pmass / (0.5 * flow_dt);
-            dosub = false;
-          } else if (T_part > Tboil) {
+          // Apply flash boiling model when necessary
+          if (T_part > Tboil) {
             Real delTb = T_part - Tboil;
             Real alpha = calcAlpha(delTb);
             Real Gf = M_PI * dia_part * dia_part * alpha * delTb / L_fuel[spf];
@@ -389,7 +378,7 @@ calculateSpraySource(
           }
           m_dot += mi_dot[spf];
         }
-        if (isub == 1 && dosub) {
+        if (isub == 1) {
           Real inv_tau_d = -m_dot / (3. * pmass);
           nsub =
             amrex::max(nsub, amrex::min(int(flow_dt * inv_tau_d) + 1, nSubMax));
@@ -414,7 +403,7 @@ calculateSpraySource(
 #ifndef SPRAY_PELE_LM
       gpv.fluid_eng_src += S_dmu_dot_u;
 #endif
-      if (isub == 1 && dosub) {
+      if (isub == 1) {
         Real inv_tau_var = drag_force * inv_pmass;
         nsub =
           amrex::min(amrex::max(nsub, int(flow_dt * inv_tau_var) + 1), nSubMax);
@@ -438,7 +427,7 @@ calculateSpraySource(
       Real conv_src = M_PI * lambda_skin * dia_part * delT * coeff_heat;
       gpv.fluid_eng_src += conv_src;
       part_temp_src = (part_temp_src + conv_src) * inv_pm_cp;
-      if (isub == 1 && delT > C_eps && dosub) {
+      if (isub == 1 && delT > C_eps) {
         Real inv_tau_T = conv_src * inv_pm_cp / delT;
         nsub =
           amrex::min(amrex::max(nsub, int(flow_dt * inv_tau_T) + 1), nSubMax);
