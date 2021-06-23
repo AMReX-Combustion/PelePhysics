@@ -265,6 +265,11 @@ calculateSpraySource(
   eos.T2Hi(gpv.T_fluid, h_fluid.data());
   calcBoilT(fdat, gpv, cBoilT.data());
   while (isub <= nsub) {
+    Real Tc = 0.;
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+      Tc += Y_part[spf] * fdat.critT[spf];
+    }
+    T_part = amrex::min(T_part, Tc);
     // Model the fuel vapor using the one-third rule
     Real delT = amrex::max(gpv.T_fluid - T_part, 0.);
     Real T_skin = T_part + rule * delT;
@@ -366,7 +371,7 @@ calculateSpraySource(
           Real Tcrit = fdat.critT[spf];
           // If temperature exceeds critical temperature, mass is instantly
           // evaporated
-          if (T_part > Tcrit) {
+          if (T_part > 0.999 * Tcrit) {
             mi_dot[spf] = -Y_part[spf] * pmass / (0.5 * flow_dt);
             dosub = false;
           } else if (T_part > Tboil) {
@@ -460,12 +465,9 @@ calculateSpraySource(
       pmass = new_mass;
       dia_part = std::cbrt(6. * pmass / (M_PI * rho_part));
     } else {
-      m_dot -= new_mass / part_dt;
       pmass = 0.;
-      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        Y_part[spf] = 0.;
-      }
       p.id() = -1;
+      nsub = isub;
       isub = nsub + 1;
     }
     ++isub;
