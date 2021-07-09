@@ -71,7 +71,7 @@ calculateWallFilmSource(
   GpuArray<Real, SPRAY_FUEL_NUM> mi_dot;
   GpuArray<Real, SPRAY_FUEL_NUM> cBoilT;
   GpuArray<Real, NUM_SPECIES> Y_skin;
-  GpuArray<Real, NUM_SPECIES> h_skin;
+  GpuArray<Real, NUM_SPECIES> h_part;
   GpuArray<Real, NUM_SPECIES> Ddiag;
   for (int sp = 0; sp < NUM_SPECIES; ++sp)
     Y_skin[sp] = 0.;
@@ -99,10 +99,10 @@ calculateWallFilmSource(
   Real dia_film = std::sqrt(4. * area_film / M_PI);
   eos.T2Hi(T_film, h_skin.data());
   for (int n = 0; n < NUM_SPECIES; ++n) {
-    h_skin[n] *= SPU.eng_conv;
+    h_part[n] *= SPU.eng_conv;
   }
   calcVaporY(
-    fdat, gpv, T_film, C_eps, Y_film.data(), h_skin.data(), cBoilT.data(),
+    fdat, gpv, T_film, C_eps, Y_film.data(), h_part.data(), cBoilT.data(),
     Y_vapor.data(), L_fuel.data());
   Real T_vapor = 0.5 * (T_film + T_i);
   Real sumYSkin = 0.;
@@ -117,12 +117,17 @@ calculateWallFilmSource(
     cp_film += Y_film[spf] * fdat.cp[spf];
     Y_skin[fspec] = 0.5 * (Y_vapor[spf] + gpv.Y_fluid[fspec]);
     sumYSkin += Y_skin[fspec];
+    sumYFuel += gpv.Y_fluid[fspec];
   }
   rho_film = 1. / rho_film;
   const Real restYSkin = 1. - sumYSkin;
+  const Real restYfluid = 1. - sumYFuel;
+  Real renorm = restYSkin / restYfluid;
   Real mw_vap = 0.;
   for (int sp = 0; sp < NUM_SPECIES; ++sp) {
-    Y_skin[sp] += restYSkin * gpv.Y_fluid[sp];
+    if (Y_skin[sp] == 0.) {
+      Y_skin[sp] = gpv.Y_fluid[sp] * renorm;
+    }
     mw_vap += Y_skin[sp] * gpv.invmw[sp];
   }
   mw_vap = 1. / mw_vap;
@@ -145,7 +150,7 @@ calculateWallFilmSource(
     Ddiag[fspec] *= mw_vap * gpv.invmw[fspec] * SPU.rhod_conv;
     // TODO: Ensure condensed mass does not exceed gas phase mass
     mi_dot[spf] = -Ddiag[fspec] / (1. - Y_vapor[spf]) *
-                  (gpv.Y_fluid[fspec] - Y_skin[fspec]) / dy_i;
+                  (gpv.Y_fluid[fspec] - Y_vapor[spf]) / dy_i;
     m_dot += mi_dot[spf];
     qvap += mi_dot[spf] * L_fuel[spf];
     gpv.fluid_Y_dot[spf] += mi_dot[spf];

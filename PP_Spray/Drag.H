@@ -210,6 +210,8 @@ calculateSpraySource(
   auto eos = pele::physics::PhysicsType::eos();
   SprayUnits SPU;
   const Real rule = 1. / 3.;
+  // Advance half dt per function call
+  const Real dtmod = 0.5;
   const Real C_eps = 1.E-15;
   const Real B_eps = 1.E-7;
   const Real mass_eps = 8.E-18 * SPU.mass_conv;
@@ -364,7 +366,8 @@ calculateSpraySource(
           Real Tboil = cBoilT[spf];
           // Apply flash boiling model when necessary
           if (T_part > Tboil) {
-            Real delTb = T_part - Tboil;
+            // Max operation necessary for LLVM compiler
+            Real delTb = amrex::max(0., T_part - Tboil);
             Real alpha = calcAlpha(delTb);
             Real Gf = M_PI * dia_part * dia_part * alpha * delTb / L_fuel[spf];
             Real dh = (hg_g - hg_s) / L_fuel[spf];
@@ -435,7 +438,7 @@ calculateSpraySource(
     }
     if (isub == 1)
       dt = flow_dt / Real(nsub);
-    const Real part_dt = 0.5 * dt;
+    const Real part_dt = dtmod * dt;
     // Update particle components
     AMREX_D_TERM(vel_part[0] += part_dt * part_mom_src[0] * inv_pmass;
                  , vel_part[1] += part_dt * part_mom_src[1] * inv_pmass;
@@ -467,16 +470,17 @@ calculateSpraySource(
   }
   // Must add any mass related sources at the end in case
   // some species disappear completely
-  Real mdot_total = (pmass - startmass) / (0.5 * flow_dt);
+  Real mdot_total = (pmass - startmass) / (dtmod * flow_dt);
   gpv.fluid_mass_src = mdot_total;
   Real part_ke = 0.5 * vel_part.radSquared();
   gpv.fluid_eng_src += part_ke * mdot_total;
-  gpv.fluid_mom_src += vel_part * mdot_total;
+  if (SPI.mom_tran)
+    gpv.fluid_mom_src += vel_part * mdot_total;
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
     Real oldY = p.rdata(SPI.pstateY + spf);
     Real newY = Y_part[spf];
-    Real midot = (newY * pmass - oldY * startmass) / (0.5 * flow_dt);
+    Real midot = (newY * pmass - oldY * startmass) / (dtmod * flow_dt);
     gpv.fluid_Y_dot[spf] = midot;
     gpv.fluid_eng_src += midot * h_part[fspec];
   }
