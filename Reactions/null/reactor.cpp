@@ -91,7 +91,7 @@ react(
   amrex::Real& time,
   int cvode_iE,
   int Ncells,
-  gpuStream_t stream)
+  amrex::gpuStream_t stream)
 {
   amrex::Real time_init = time;
 #ifdef MOD_REACTOR
