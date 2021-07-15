@@ -18,6 +18,7 @@ reactor_info(int /*reactor_type*/, int /*ode_ncells*/)
   return (0);
 }
 
+// Array4 version
 int
 react(
   const amrex::Box& box,
@@ -79,6 +80,7 @@ react(
   return 0;
 }
 
+// 1D version
 int
 react(
   amrex::Real* rY_in,
