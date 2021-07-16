@@ -23,12 +23,12 @@ PELE_PHYSICS_HOME    := ../../..
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   Chemistry_Model = LiDryer
-  Reactions_dir   = Null
+  Reactions_dir   = null
   Transport_dir   = Constant
 else
   Eos_dir         = GammaLaw
   Chemistry_Model = Null
-  Reactions_dir   = Null
+  Reactions_dir   = null
   Transport_dir   = Constant
 endif
 

@@ -20,12 +20,12 @@ USE_SUNDIALS_PP = FALSE
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   Chemistry_Model = air
-  Reactions_dir   = Null
+  Reactions_dir   = null
   Transport_dir   = Simple
 else
   Eos_dir         = GammaLaw
   Chemistry_Model = Null
-  Reactions_dir   = Null
+  Reactions_dir   = null
   Transport_dir   = Constant
 endif
 

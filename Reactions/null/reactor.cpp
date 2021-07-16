@@ -18,6 +18,7 @@ reactor_info(int /*reactor_type*/, int /*ode_ncells*/)
   return (0);
 }
 
+// Array4 version
 int
 react(
   const amrex::Box& box,
@@ -79,6 +80,7 @@ react(
   return 0;
 }
 
+// 1D version
 int
 react(
   amrex::Real* rY_in,
@@ -89,7 +91,7 @@ react(
   amrex::Real& time,
   int cvode_iE,
   int Ncells,
-  gpuStream_t stream)
+  amrex::gpuStream_t stream)
 {
   amrex::Real time_init = time;
 #ifdef MOD_REACTOR
@@ -132,15 +134,16 @@ reactor_init(int reactor_type, int /*ode_ncells*/)
 int
 react(
   const amrex::Box& box,
-  amrex::Array4<Real> const& rY_in,
-  amrex::Array4<Real> const& rY_src_in,
-  amrex::Array4<Real> const& T_in,
-  amrex::Array4<Real> const& rEner_in,
-  amrex::Array4<Real> const& rEner_src_in,
-  amrex::Array4<Real> const& FC_in,
+  amrex::Array4<amrex::Real> const& rY_in,
+  amrex::Array4<amrex::Real> const& rY_src_in,
+  amrex::Array4<amrex::Real> const& T_in,
+  amrex::Array4<amrex::Real> const& rEner_in,
+  amrex::Array4<amrex::Real> const& rEner_src_in,
+  amrex::Array4<amrex::Real> const& FC_in,
   amrex::Array4<int> const& mask,
-  Real& dt_react,
-  Real& time)
+  amrex::Real& dt_react,
+  amrex::Real& time,
+  const int& reactor_type)
 {
   int omp_thread = 0;
 #ifdef _OPENMP
@@ -150,29 +153,29 @@ react(
   constexpr int eint_rho = 1;
   constexpr int enth_rho = 2;
 
-  Real time_init = time;
+  amrex::Real time_init = time;
 
   ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-    Real renergy_loc =
+    amrex::Real renergy_loc =
       rEner_in(i, j, k, 0) + rEner_src_in(i, j, k, 0) * dt_react;
     rEner_in(i, j, k, 0) = renergy_loc;
-    Real rY_loc[NUM_SPECIES];
+    amrex::Real rY_loc[NUM_SPECIES];
     for (int n = 0; n < NUM_SPECIES; n++) {
       rY_loc[n] = rY_in(i, j, k, n) + rY_src_in(i, j, k, n) * dt_react;
       rY_in(i, j, k, n) = rY_loc[n];
     }
-    Real rho_loc = 0.0;
+    amrex::Real rho_loc = 0.0;
     for (int n = 0; n < NUM_SPECIES; n++) {
       rho_loc += rY_loc[n];
     }
-    Real Y_loc[NUM_SPECIES];
+    amrex::Real Y_loc[NUM_SPECIES];
     for (int n = 0; n < NUM_SPECIES; n++) {
       Y_loc[n] = rY_loc[n] / rho_loc;
     }
-    Real energy_loc = renergy_loc / rho_loc;
-    Real T_loc = T_in(i, j, k, 0);
+    amrex::Real energy_loc = renergy_loc / rho_loc;
+    amrex::Real T_loc = T_in(i, j, k, 0);
     auto eos = pele::physics::PhysicsType::eos();
-    if (ireactor_type == eint_rho) {
+    if (reactor_type == eint_rho) {
       eos.EY2T(energy_loc, Y_loc, T_loc);
     } else {
       eos.HY2T(energy_loc, Y_loc, T_loc);
@@ -196,7 +199,7 @@ react(
   amrex::Real& dt_react,
   amrex::Real& time)
 {
-  Real time_init = time;
+  amrex::Real time_init = time;
 #ifdef MOD_REACTOR
   time = time_init + dt_react;
 #endif

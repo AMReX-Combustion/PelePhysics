@@ -56,7 +56,8 @@ int react(
   amrex::Array4<amrex::Real> const& FC_in,
   amrex::Array4<int> const& mask,
   amrex::Real& dt_react,
-  amrex::Real& time);
+  amrex::Real& time,
+  const int& reactor_type);
 
 int react(
   amrex::Real* rY_in,
@@ -74,4 +75,5 @@ void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
 
 void ReSetTolODE();
 
+#endif
 #endif

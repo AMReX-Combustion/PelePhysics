@@ -1,6 +1,8 @@
 #ifndef _REACTOR_H_
 #define _REACTOR_H_
 
+//#include <AMREX_misc.H>
+
 #include <AMReX_Gpu.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_MultiFab.H>
@@ -24,7 +26,6 @@
 #include <sunlinsol/sunlinsol_klu.h>
 #endif
 
-#include "reactor_utilities.H"
 #include "PelePhysics.H"
 #include "mechanism.H"
 
@@ -44,6 +45,106 @@
 #endif
 
 #include "AMReX_SUNMemory.H"
+
+#ifdef AMREX_USE_GPU
+
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+void
+box_flatten(
+  int icell,
+  int i,
+  int j,
+  int k,
+  int ireactor_type,
+  amrex::Array4<amrex::Real> const& rhoY,
+  amrex::Array4<amrex::Real> const& frcExt,
+  amrex::Array4<amrex::Real> const& temperature,
+  amrex::Array4<amrex::Real> const& rhoE,
+  amrex::Array4<amrex::Real> const& frcEExt,
+  amrex::Real* tmp_vect,
+  amrex::Real* tmp_src_vect,
+  amrex::Real* tmp_vect_energy,
+  amrex::Real* tmp_src_vect_energy) noexcept
+{
+  amrex::Real mass_frac[NUM_SPECIES];
+  amrex::Real rho = 0.0;
+  amrex::Real Enrg_loc;
+  amrex::Real temp;
+
+  int offset_yvec = icell * (NUM_SPECIES + 1);
+  int offset_spec = icell * (NUM_SPECIES);
+
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    tmp_vect[offset_yvec + n] = rhoY(i, j, k, n);
+    tmp_src_vect[offset_spec + n] = frcExt(i, j, k, n);
+    rho += tmp_vect[offset_yvec + n];
+  }
+  amrex::Real rho_inv = 1.0 / rho;
+  temp = temperature(i, j, k, 0);
+  tmp_vect_energy[icell] = rhoE(i, j, k, 0);
+  tmp_src_vect_energy[icell] = frcEExt(i, j, k, 0);
+
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    mass_frac[n] = tmp_vect[offset_yvec + n] * rho_inv;
+  }
+  Enrg_loc = tmp_vect_energy[icell] / rho;
+  auto eos = pele::physics::PhysicsType::eos();
+  if (ireactor_type == 1) {
+    eos.EY2T(Enrg_loc, mass_frac, temp);
+  } else {
+    eos.HY2T(Enrg_loc, mass_frac, temp);
+  }
+  tmp_vect[offset_yvec + NUM_SPECIES] = temp;
+}
+
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+void
+box_unflatten(
+  int icell,
+  int i,
+  int j,
+  int k,
+  int ireactor_type,
+  amrex::Array4<amrex::Real> const& rhoY,
+  amrex::Array4<amrex::Real> const& T_in,
+  amrex::Array4<amrex::Real> const& rhoE,
+  amrex::Array4<amrex::Real> const& frcEExt,
+  amrex::Array4<amrex::Real> const& FC_in,
+  amrex::Real* tmp_vect,
+  amrex::Real* tmp_vect_energy,
+  long int const& tmp_FCunt,
+  amrex::Real dt) noexcept
+{
+  amrex::Real mass_frac[NUM_SPECIES];
+  amrex::Real rho = 0.0;
+  amrex::Real Enrg_loc;
+  amrex::Real temp;
+
+  int offset_yvec = icell * (NUM_SPECIES + 1);
+
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    rhoY(i, j, k, n) = tmp_vect[offset_yvec + n];
+    rho += tmp_vect[offset_yvec + n];
+  }
+  amrex::Real rho_inv = 1.0 / rho;
+  temp = tmp_vect[offset_yvec + NUM_SPECIES];
+  rhoE(i, j, k, 0) = tmp_vect_energy[icell] + dt * frcEExt(i, j, k, 0);
+
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    mass_frac[n] = rhoY(i, j, k, n) * rho_inv;
+  }
+  Enrg_loc = rhoE(i, j, k, 0) / rho;
+  auto eos = pele::physics::PhysicsType::eos();
+  if (ireactor_type == 1) {
+    eos.EY2T(Enrg_loc, mass_frac, temp);
+  } else {
+    eos.HY2T(Enrg_loc, mass_frac, temp);
+  }
+  T_in(i, j, k, 0) = temp;
+  FC_in(i, j, k, 0) = tmp_FCunt;
+}
 
 typedef struct CVodeUserData
 {
@@ -211,6 +312,327 @@ int SUNLinSolSolve_Dense_custom(
 int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A);
 
 int SUNLinSolFree_Dense_custom(SUNLinearSolver S);
+#endif
+
+#else
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+box_flatten(
+  int icell,
+  int i,
+  int j,
+  int k,
+  int ireactor_type,
+  amrex::Array4<amrex::Real> const& rhoY,
+  amrex::Array4<amrex::Real> const& frcExt,
+  amrex::Array4<amrex::Real> const& temperature,
+  amrex::Array4<amrex::Real> const& rhoE,
+  amrex::Array4<amrex::Real> const& frcEExt,
+  amrex::Array4<int> const& mask,
+  amrex::Real* tmp_vect,
+  amrex::Real* tmp_src_vect,
+  amrex::Real* tmp_vect_energy,
+  amrex::Real* tmp_src_vect_energy,
+  int* tmp_mask_vect) noexcept
+{
+  amrex::Real mass_frac[NUM_SPECIES];
+  amrex::Real rho = 0.0;
+  amrex::Real Enrg_loc;
+  amrex::Real temp;
+
+  int offset_yvec = icell * (NUM_SPECIES + 1);
+  int offset_spec = icell * (NUM_SPECIES);
+
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    tmp_vect[offset_yvec + n] = rhoY(i, j, k, n);
+    tmp_src_vect[offset_spec + n] = frcExt(i, j, k, n);
+    rho += tmp_vect[offset_yvec + n];
+  }
+  amrex::Real rho_inv = 1.0 / rho;
+  temp = temperature(i, j, k);
+  tmp_vect_energy[icell] = rhoE(i, j, k);
+  tmp_src_vect_energy[icell] = frcEExt(i, j, k);
+  tmp_mask_vect[i] = mask(i, j, k);
+
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    mass_frac[n] = tmp_vect[offset_yvec + n] * rho_inv;
+  }
+  Enrg_loc = tmp_vect_energy[icell] / rho;
+  auto eos = pele::physics::PhysicsType::eos();
+  if (ireactor_type == 1) {
+    eos.EY2T(Enrg_loc, mass_frac, temp);
+  } else {
+    eos.HY2T(Enrg_loc, mass_frac, temp);
+  }
+  tmp_vect[offset_yvec + NUM_SPECIES] = temp;
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+box_unflatten(
+  int icell,
+  int i,
+  int j,
+  int k,
+  int ireactor_type,
+  amrex::Array4<amrex::Real> const& rhoY,
+  amrex::Array4<amrex::Real> const& T_in,
+  amrex::Array4<amrex::Real> const& rhoE,
+  amrex::Array4<amrex::Real> const& frcEExt,
+  amrex::Array4<amrex::Real> const& FC_in,
+  amrex::Real* tmp_vect,
+  amrex::Real* tmp_vect_energy,
+  int* tmp_FCunt,
+  amrex::Real dt) noexcept
+{
+  amrex::Real mass_frac[NUM_SPECIES];
+  amrex::Real rho = 0.0;
+  amrex::Real Enrg_loc;
+  amrex::Real temp;
+
+  int offset_yvec = icell * (NUM_SPECIES + 1);
+
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    rhoY(i, j, k, n) = tmp_vect[offset_yvec + n];
+    rho += tmp_vect[offset_yvec + n];
+  }
+  amrex::Real rho_inv = 1.0 / rho;
+  temp = tmp_vect[offset_yvec + NUM_SPECIES];
+  rhoE(i, j, k) = tmp_vect_energy[icell] + dt * frcEExt(i, j, k, 0);
+
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    mass_frac[n] = rhoY(i, j, k, n) * rho_inv;
+  }
+  Enrg_loc = rhoE(i, j, k) / rho;
+  auto eos = pele::physics::PhysicsType::eos();
+  if (ireactor_type == 1) {
+    eos.EY2T(Enrg_loc, mass_frac, temp);
+  } else {
+    eos.HY2T(Enrg_loc, mass_frac, temp);
+  }
+  T_in(i, j, k) = temp;
+
+  FC_in(i, j, k) = tmp_FCunt[icell];
+}
+
+typedef struct
+{
+  bool FirstTimePrecond;
+  bool reactor_cvode_initialized;
+  bool actual_ok_to_react;
+  int ncells;
+  int iverbose;
+  int isolve_type;
+  int ianalytical_jacobian;
+  int ireactor_type;
+  int boxcell;
+  amrex::Real* Yvect_full = NULL;
+  amrex::Real* rhoX_init = NULL;
+  amrex::Real* rhoXsrc_ext = NULL;
+  amrex::Real* rYsrc = NULL;
+  int* FCunt = NULL;
+  int* mask = NULL;
+
+  int NNZ;
+  SUNMatrix* PS;
+  realtype** Jdata = NULL;
+  int** rowVals = NULL;
+  int** rowPtrs = NULL;
+  int** colPtrs = NULL;
+  int** colVals = NULL;
+  int* indx = NULL;
+  realtype** JSPSmat = NULL;
+#ifdef USE_KLU_PP
+  klu_common* Common;
+  klu_symbolic** Symbolic;
+  klu_numeric** Numeric;
+#else
+  realtype**(**Jbd);
+  realtype**(**P);
+  sunindextype*(**pivot);
+#endif
+  SUNMatrix PSc;
+  int* colVals_c;
+  int* rowPtrs_c;
+} * UserData;
+
+int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void* user_data);
+
+int cJac(
+  realtype tn,
+  N_Vector y,
+  N_Vector fy,
+  SUNMatrix J,
+  void* user_data,
+  N_Vector tmp1,
+  N_Vector tmp2,
+  N_Vector tmp3);
+
+int cJac_sps(
+  realtype tn,
+  N_Vector y,
+  N_Vector fy,
+  SUNMatrix J,
+  void* user_data,
+  N_Vector tmp1,
+  N_Vector tmp2,
+  N_Vector tmp3);
+
+int PSolve_custom(
+  realtype tn,
+  N_Vector u,
+  N_Vector fu,
+  N_Vector r,
+  N_Vector z,
+  realtype gamma,
+  realtype delta,
+  int lr,
+  void* user_data);
+
+int Precond_custom(
+  realtype tn,
+  N_Vector u,
+  N_Vector fu,
+  booleantype jok,
+  booleantype* jcurPtr,
+  realtype gamma,
+  void* user_data);
+
+#ifdef USE_KLU_PP
+int cJac_KLU(
+  realtype tn,
+  N_Vector y,
+  N_Vector fy,
+  SUNMatrix J,
+  void* user_data,
+  N_Vector tmp1,
+  N_Vector tmp2,
+  N_Vector tmp3);
+
+int PSolve_sparse(
+  realtype tn,
+  N_Vector u,
+  N_Vector fu,
+  N_Vector r,
+  N_Vector z,
+  realtype gamma,
+  realtype delta,
+  int lr,
+  void* user_data);
+int Precond_sparse(
+  realtype tn,
+  N_Vector u,
+  N_Vector fu,
+  booleantype jok,
+  booleantype* jcurPtr,
+  realtype gamma,
+  void* user_data);
+#else
+int PSolve(
+  realtype tn,
+  N_Vector u,
+  N_Vector fu,
+  N_Vector r,
+  N_Vector z,
+  realtype gamma,
+  realtype delta,
+  int lr,
+  void* user_data);
+
+int Precond(
+  realtype tn,
+  N_Vector u,
+  N_Vector fu,
+  booleantype jok,
+  booleantype* jcurPtr,
+  realtype gamma,
+  void* user_data);
+#endif
+
+int reactor_init(int cvode_iE, int Ncells);
+
+int react(
+  const amrex::Box& box,
+  amrex::Array4<amrex::Real> const& rY_in,
+  amrex::Array4<amrex::Real> const& rY_src_in,
+  amrex::Array4<amrex::Real> const& T_in,
+  amrex::Array4<amrex::Real> const& rEner_in,
+  amrex::Array4<amrex::Real> const& rEner_src_in,
+  amrex::Array4<amrex::Real> const& FC_in,
+  amrex::Array4<int> const& mask,
+  amrex::Real& dt_react,
+  amrex::Real& time,
+  const int& reactor_type);
+
+int react_2(
+  const amrex::Box& box,
+  amrex::Array4<amrex::Real> const& rY_in,
+  amrex::Array4<amrex::Real> const& rY_src_in,
+  amrex::Array4<amrex::Real> const& T_in,
+  amrex::Array4<amrex::Real> const& rEner_in,
+  amrex::Array4<amrex::Real> const& rEner_src_in,
+  amrex::Array4<amrex::Real> const& FC_in,
+  amrex::Array4<int> const& mask,
+  amrex::Real& dt_react,
+  amrex::Real& time);
+
+int react(
+  amrex::Real* rY_in,
+  amrex::Real* rY_src_in,
+  amrex::Real* rX_in,
+  amrex::Real* rX_src_in,
+  amrex::Real& dt_react,
+  amrex::Real& time);
+
+void reactor_close();
+
+int check_flag(void* flagvalue, const char* funcname, int opt);
+
+void PrintFinalStats(void* cvodeMem, amrex::Real Temp);
+
+UserData AllocUserData(int iE, int num_cells);
+
+void FreeUserData(UserData data);
+
+void check_state(N_Vector yvec);
+
+void SetTypValsODE(const std::vector<double>& ExtTypVals);
+
+void SetTolFactODE(double relative_tol, double absolute_tol);
+
+void ReSetTolODE();
+
+void
+fKernelSpec(realtype* dt, realtype* yvec_d, realtype* ydot_d, void* user_data);
+
+struct _SUNLinearSolverContent_Sparse_custom
+{
+  sunindextype last_flag;
+  int reactor_type;
+  int nsubsys;     // number of subsystems
+  int subsys_size; // size of each subsystem
+  int subsys_nnz;
+};
+
+typedef struct _SUNLinearSolverContent_Sparse_custom*
+  SUNLinearSolverContent_Sparse_custom;
+
+SUNLinearSolver SUNLinSol_sparse_custom(
+  N_Vector y,
+  SUNMatrix A,
+  int reactor_type,
+  int nsubsys,
+  int subsys_size,
+  int subsys_nnz);
+
+SUNLinearSolver_Type SUNLinSolGetType_Sparse_custom(SUNLinearSolver S);
+
+int SUNLinSolSolve_Sparse_custom(
+  SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b, realtype tol);
+
 #endif
 
 #endif
