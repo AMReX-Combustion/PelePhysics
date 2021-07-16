@@ -6,7 +6,7 @@ VERBOSE    = FALSE
 DEBUG      = FALSE
 
 # Compiler
-COMP	     = gnu
+COMP	   = gnu
 USE_MPI    = FALSE
 USE_OMP    = FALSE
 USE_CUDA   = FALSE
@@ -32,14 +32,12 @@ USE_RK64_PP = FALSE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
   USE_ARKODE_PP = FALSE
   ifeq ($(USE_CUDA), TRUE)
-      DEFINES += -DCVODE_BOXINTEG
       USE_KLU_PP = FALSE
   else
       ifeq ($(USE_HIP), TRUE)
-          DEFINES += -DCVODE_BOXINTEG
           USE_KLU_PP = FALSE
       else
-         USE_KLU_PP = TRUE
+          USE_KLU_PP = FALSE
       endif
   endif
 else
@@ -55,12 +53,12 @@ endif
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
   Chemistry_Model = drm19
-  Reactions_dir   = Fuego
+  Reactions_dir   = cvode
   Transport_dir   = Simple
 else
   Eos_dir         = GammaLaw
   Chemistry_Model = Null
-  Reactions_dir   = Null
+  Reactions_dir   = null
   Transport_dir   = Constant
 endif
 
