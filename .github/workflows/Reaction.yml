@@ -1,0 +1,170 @@
+name: CI_Reaction                                                                                                                                          
+on: 
+   workflow_dispatch:
+   push:
+     branches: [ development ]
+   pull_request:
+     branches: [ development ]
+
+jobs:
+  # Cvode DRM GNU7.5
+  cvodeDRM:
+    name: GNU@7.5 [cvode-DRM]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        make TPL COMP=gnu Eos_dir=Fuego Reactions_dir=cvode Chemistry_Model=drm19
+        make -j 2 COMP=gnu Eos_dir=Fuego Reactions_dir=cvode Chemistry_Model=drm19
+    - name: Run_Array4
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        ./Pele3d.gnu.ex inputs.3d_Array4
+    - name: Run_1dArray
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        ./Pele3d.gnu.ex inputs.3d_1dArray
+
+  # Cvode LiDryer GNU7.5
+  cvodeLiDryer:
+    name: GNU@7.5 [cvode-LiDryer]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        make TPL COMP=gnu Eos_dir=Fuego Reactions_dir=cvode Chemistry_Model=LiDryer
+        make -j 2 COMP=gnu Eos_dir=Fuego Reactions_dir=cvode Chemistry_Model=LiDryer
+    - name: Run_Array4
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        ./Pele3d.gnu.ex inputs.3d_Array4 fuel_name=H2
+    - name: Run_1dArray
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        ./Pele3d.gnu.ex inputs.3d_1dArray fuel_name=H2
+
+#  # Fuego DRM CUDA support
+#  FuegoDRM_CUDA:
+#    name: CUDA@11.0.1 [FuegoDRM]
+#    runs-on: ubuntu-latest
+#    env: 
+#      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+#    steps:
+#    - uses: actions/checkout@v2
+#    - name: System Dependencies
+#      run: .github/workflows/dependencies/dependencies_nvcc.sh
+#    - name: AMReX
+#      run: |
+#         mkdir build
+#         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+#    - name: Build
+#      env:
+#         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+#         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+#      working-directory: ./Testing/Exec/ReactEval_C
+#      run: |
+#        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+#        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+#        make TPL COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=drm19
+#        make -j 2 COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=drm19
+#
+#  # Fuego LiDryer CUDA support
+#  FuegoLiDryer_CUDA:
+#    name: CUDA@11.0.1 [FuegoLiDryer]
+#    runs-on: ubuntu-latest
+#    env: 
+#      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+#    steps:
+#    - uses: actions/checkout@v2
+#    - name: System Dependencies
+#      run: .github/workflows/dependencies/dependencies_nvcc.sh
+#    - name: AMReX
+#      run: |
+#         mkdir build
+#         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+#    - name: Build
+#      env:
+#         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+#         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+#      working-directory: ./Testing/Exec/ReactEval_C
+#      run: |
+#        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+#        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+#        make TPL COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
+#        make -j 2 COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
+#
+#  # Fuego DRM HIP support
+#  FuegoDRM_HIP:
+#    name: HIPROCm@3.8 GFortran@9.3 [FuegoDRM]
+#    runs-on: ubuntu-20.04
+#    env: 
+#      {CXXFLAGS: "-fno-operator-names"}
+#    steps:
+#    - uses: actions/checkout@v2
+#    - name: System Dependencies
+#      run: .github/workflows/dependencies/dependencies_hip.sh
+#    - name: AMReX
+#      run: |
+#         mkdir build
+#         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+#    - name: Build
+#      env:
+#         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+#         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+#      working-directory: ./Testing/Exec/ReactEval_C
+#      run: |
+#        source /etc/profile.d/rocm.sh
+#        hipcc --version
+#        make TPL COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=drm19
+#        make -j 2 COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=drm19
+#
+#  # Fuego LiDryer HIP support
+#  FuegoLiDryer_HIP:
+#    name: HIPROCm@3.8 GFortran@9.3 [FuegoLiDryer]
+#    runs-on: ubuntu-20.04
+#    env: 
+#      {CXXFLAGS: "-fno-operator-names"}
+#    steps:
+#    - uses: actions/checkout@v2
+#    - name: System Dependencies
+#      run: .github/workflows/dependencies/dependencies_hip.sh
+#    - name: AMReX
+#      run: |
+#         mkdir build
+#         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+#    - name: Build
+#      env:
+#         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+#         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+#      working-directory: ./Testing/Exec/ReactEval_C
+#      run: |
+#        source /etc/profile.d/rocm.sh
+#        hipcc --version
+#        make TPL COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer 
+#        make -j 2 COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
