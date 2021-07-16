@@ -580,11 +580,11 @@ react(
 
   if (user_data->isolve_type == iterative_gmres_solve) {
     if (user_data->ianalytical_jacobian == 0) {
-      LS = SUNSPGMR(y, PREC_NONE, 0);
+      LS = SUNLinSol_SPGMR(y, PREC_NONE, 0);
       if (check_flag((void*)LS, "SUNDenseLinearSolver", 0))
         return (1);
     } else {
-      LS = SUNSPGMR(y, PREC_LEFT, 0);
+      LS = SUNLinSol_SPGMR(y, PREC_LEFT, 0);
       if (check_flag((void*)LS, "SUNDenseLinearSolver", 0))
         return (1);
     }
@@ -1772,11 +1772,11 @@ reactor_init(int reactor_type, int ode_ncells)
 
     // Create the linear solver object
     if (data->ianalytical_jacobian == 0) {
-      LS = SUNSPGMR(y, PREC_NONE, 0);
+      LS = SUNLinSol_SPGMR(y, PREC_NONE, 0);
       if (check_flag((void*)LS, "SUNDenseLinearSolver", 0))
         return (1);
     } else {
-      LS = SUNSPGMR(y, PREC_LEFT, 0);
+      LS = SUNLinSol_SPGMR(y, PREC_LEFT, 0);
       if (check_flag((void*)LS, "SUNDenseLinearSolver", 0))
         return (1);
     }
@@ -1879,8 +1879,8 @@ reactor_init(int reactor_type, int ode_ncells)
     return (1);
 
   // Set the num of steps to wait inbetween Jac evals
-  flag = CVodeSetMaxStepsBetweenJac(cvode_mem, 100);
-  if (check_flag(&flag, "CVodeSetMaxStepsBetweenJac", 1))
+  flag = CVodeSetJacEvalFrequency(cvode_mem, 100);
+  if (check_flag(&flag, "CVodeSetJacEvalFrequency", 1))
     return (1);
 
   N_VDestroy(atol);
