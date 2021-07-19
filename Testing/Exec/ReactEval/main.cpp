@@ -124,12 +124,10 @@ main (int   argc,
     {
       // Set ODE tolerances
 #ifndef USE_ARKODE_PP
-      SetTolFactODE(rtol,atol);
+      //SetTolFactODE(rtol,atol);
 #endif
 
 #ifdef AMREX_USE_GPU
-      reactor_info(ode_iE, ode_ncells);
-#else
       reactor_init(ode_iE, ode_ncells);
 #endif
     }
@@ -234,7 +232,8 @@ main (int   argc,
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     {
-      if (use_typ_vals) {
+#ifndef USE_ARKODE_PP
+      /*if (use_typ_vals) {
         Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
         Vector<double> typ_vals(NUM_SPECIES+1);
         ppode.getarr("typ_vals", typ_vals,0,NUM_SPECIES+1);
@@ -242,7 +241,8 @@ main (int   argc,
           typ_vals[i] = std::max(typ_vals[i],1.e-10);
         }
         SetTypValsODE(typ_vals);
-      }
+      }*/
+#endif
     }
 
     Print() << " \n STARTING THE ADVANCE \n";
@@ -299,7 +299,9 @@ main (int   argc,
 
       // -------------------------------------------------------------
       // Integration with 1dArray raw pointer react function
-      } else if (reactFunc == 2) {
+      }
+#ifndef AMREX_USE_GPU 
+      else if (reactFunc == 2) {
 
           // On GPU, integrate the entirely box at once
           // othewise use the user-input ode_ncells
@@ -379,6 +381,7 @@ main (int   argc,
           delete[] tmp_fc;
           delete[] tmp_mask;
       }
+#endif
     }
     BL_PROFILE_VAR_STOP(Advance);
 
