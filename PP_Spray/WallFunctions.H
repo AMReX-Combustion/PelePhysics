@@ -99,10 +99,10 @@ calculateWallFilmSource(
   Real dia_film = std::sqrt(4. * area_film / M_PI);
   eos.T2Hi(T_film, h_skin.data());
   for (int n = 0; n < NUM_SPECIES; ++n) {
-    h_part[n] *= SPU.eng_conv;
+    h_skin[n] *= SPU.eng_conv;
   }
   calcVaporY(
-    fdat, gpv, T_film, C_eps, Y_film.data(), h_part.data(), cBoilT.data(),
+    fdat, gpv, T_film, C_eps, Y_film.data(), h_skin.data(), cBoilT.data(),
     Y_vapor.data(), L_fuel.data());
   Real T_vapor = 0.5 * (T_film + T_i);
   Real sumYSkin = 0.;
