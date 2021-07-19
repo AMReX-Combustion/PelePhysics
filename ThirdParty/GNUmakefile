@@ -6,6 +6,7 @@ COMP            ?= gcc
 DEBUG           ?= FALSE
 USE_CUDA        ?= FALSE
 USE_KLU_PP      ?= FALSE
+CUDA_ARCH       ?= 70
 
 #SS_VERSION=5.7.2
 SS_VERSION=5.4.0
