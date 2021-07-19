@@ -70,6 +70,7 @@ Blocs             += $(EOS_PATH)
 # Reactions
 REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
 include $(REACTIONS_PATH)/Make.package
+include $(REACTIONS_HOME)/Make.package
 INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
 VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH) 
 ifeq ($(USE_F90_PP),TRUE) 
