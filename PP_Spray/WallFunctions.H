@@ -71,7 +71,7 @@ calculateWallFilmSource(
   GpuArray<Real, SPRAY_FUEL_NUM> mi_dot;
   GpuArray<Real, SPRAY_FUEL_NUM> cBoilT;
   GpuArray<Real, NUM_SPECIES> Y_skin;
-  GpuArray<Real, NUM_SPECIES> h_part;
+  GpuArray<Real, NUM_SPECIES> h_skin;
   GpuArray<Real, NUM_SPECIES> Ddiag;
   for (int sp = 0; sp < NUM_SPECIES; ++sp)
     Y_skin[sp] = 0.;
