@@ -157,8 +157,8 @@ jobs:
         make -j 2 COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=drm19
 
   # Cvode LiDryer CUDA support
-  cvodeDRM_CUDA:
-    name: CUDA@11.0.1 [cvode-LyDrier]
+  cvodeLiDryer_CUDA:
+    name: CUDA@11.0.1 [cvode-LiDryer]
     runs-on: ubuntu-latest
     env: 
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
