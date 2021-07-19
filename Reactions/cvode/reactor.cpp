@@ -23,7 +23,7 @@ int enth_rho = 2;
 Array<Real, NUM_SPECIES + 1> typVals = {-1};
 Real relTol = 1.0e-10;
 Real absTol = 1.0e-10;
-/*
+
 void
 SetTypValsODE(const std::vector<double>& ExtTypVals)
 {
@@ -49,7 +49,7 @@ SetTolFactODE(double relative_tol, double absolute_tol)
   Print() << "Set RTOL, ATOL = " << relTol << " " << absTol
           << " in PelePhysics\n";
 }
-*/
+
 int
 reactor_init(int reactor_type, int Ncells)
 {
@@ -772,6 +772,352 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
   BL_PROFILE_VAR_STOP(fKernelSpec);
 
   return (0);
+}
+
+// React for 1d arrays
+int
+react(
+  realtype *rY_in,
+  realtype *rY_src_in, 
+  realtype *rX_in,
+  realtype *rX_src_in,
+  realtype &dt_react,
+  realtype &time,
+  int reactor_type,
+  int Ncells
+#ifdef AMREX_USE_GPU
+  ,
+  amrex::gpuStream_t stream
+#endif
+)
+{
+  // -------------------------------------------------------------
+  // CVODE structs
+  N_Vector y = NULL;             // Solution vector
+  SUNLinearSolver LS = NULL;     // Linear solver used in Newton solve
+  SUNMatrix A = NULL;            // Chem. jacobian, if provided
+  void* cvode_mem = NULL;        // CVODE internal memory pointer
+  N_Vector atol;                 // Component-wise abs. tolerance
+  realtype* ratol;               // Rel. tolerance
+
+  // temporary to catch CVODE exceptions
+  int flag;
+
+  // -------------------------------------------------------------
+  // ParmParse integrator options
+  ParmParse pp("ode");
+  int ianalytical_jacobian = 0;
+  pp.query("analytical_jacobian", ianalytical_jacobian);
+  int iverbose = 1;
+  pp.query("verbose", iverbose);
+
+  std::string solve_type_str = "none";
+  ParmParse ppcv("cvode");
+  ppcv.query("solve_type", solve_type_str);
+  /*
+  sparse_solve          = 1;
+  sparse_cusolver_solve = 5;
+  iterative_gmres_solve = 99;
+  */
+  int isolve_type = -1;
+  if (solve_type_str == "sparse_custom") {        // Direct solve using custom GaussJordan routine
+    isolve_type = sparse_solve;
+  } else if (solve_type_str == "sparse") {        // Direct sparse solve using cuSolver (CUDA only !)
+    isolve_type = sparse_cusolver_solve;
+  } else if (solve_type_str == "GMRES") {         // Iter. solve using JFNK
+    isolve_type = iterative_gmres_solve;
+  }
+
+  // -------------------------------------------------------------
+  // Build CVODE data
+
+  // System sizes
+  int NCELLS  = Ncells;
+  int NEQ     = NUM_SPECIES+1;            // rhoYs + rhoH
+  int NEQSTOT = NEQ * NCELLS;
+
+#ifdef AMREX_USE_GPU
+  Gpu::streamSynchronize();
+#endif
+
+  // Allocate CVODE data
+  BL_PROFILE_VAR("AllocsInCVODE", AllocsCVODE);
+  UserData user_data;
+  user_data = (CVodeUserData*)The_Arena()->alloc(sizeof(struct CVodeUserData));
+  user_data->rhoe_init_d =
+    (double*)The_Device_Arena()->alloc(NCELLS * sizeof(double));
+  user_data->rhoesrc_ext_d =
+    (double*)The_Device_Arena()->alloc(NCELLS * sizeof(double));
+  user_data->rYsrc_d =
+    (double*)The_Device_Arena()->alloc(NCELLS * NUM_SPECIES * sizeof(double));
+  BL_PROFILE_VAR_STOP(AllocsCVODE);
+
+  // Initialize CVODE options
+  user_data->ncells = NCELLS;
+  user_data->neqs_per_cell = NUM_SPECIES;
+  user_data->ireactor_type = reactor_type;
+  user_data->ianalytical_jacobian = ianalytical_jacobian;
+  user_data->isolve_type = isolve_type;
+  user_data->iverbose = iverbose;
+  user_data->nbBlocks = std::max(1, NCELLS / 32);
+#ifdef AMREX_USE_GPU
+  user_data->stream = stream;
+#endif
+  user_data->nbThreads = 32;
+ 
+#ifdef AMREX_USE_GPU
+  // For now, Abort() is analytical_jac required on GPU.
+  if (user_data->ianalytical_jacobian == 1) {
+     amrex::Abort("ode.analytical_jacobian = 1 currently unavailable on GPU");
+  }
+#endif
+
+  // create solution Nvector
+#if defined(AMREX_USE_CUDA)
+  y = N_VNewWithMemHelp_Cuda(
+    NEQSTOT, /*use_managed_mem=*/true, *amrex::sundials::The_SUNMemory_Helper());
+  if (check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
+    return (1);
+#elif defined(AMREX_USE_HIP)
+  y = N_VNewWithMemHelp_Hip(
+    NEQSTOT, /*use_managed_mem=*/true, *amrex::sundials::The_SUNMemory_Helper());
+  if (check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
+    return (1);
+#else
+  y = N_VNew_Serial(NEQSTOT);
+  if (check_flag((void*)y, "N_VNew_Serial", 0))
+    return (1);
+#endif
+
+  // On GPU, define execution policy
+#if defined(AMREX_USE_CUDA)
+  SUNCudaExecPolicy* stream_exec_policy =
+    new SUNCudaThreadDirectExecPolicy(256, stream);
+  SUNCudaExecPolicy* reduce_exec_policy =
+    new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
+#elif defined(AMREX_USE_HIP)
+  SUNHipExecPolicy* stream_exec_policy =
+    new SUNHipThreadDirectExecPolicy(256, stream);
+  SUNHipExecPolicy* reduce_exec_policy =
+    new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
+#endif
+
+  // Create CVODE object, specifying a Backward-Difference Formula method
+  cvode_mem = CVodeCreate(CV_BDF);
+  if (check_flag((void*)cvode_mem, "CVodeCreate", 0))
+    return (1);
+  flag = CVodeSetUserData(cvode_mem, static_cast<void*>(user_data));
+
+  // -------------------------------------------------------------
+  // Initialize solution vector
+#if defined(AMREX_USE_CUDA)
+  realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
+#elif defined(AMREX_USE_HIP)
+  realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
+#else
+  realtype* yvec_d = N_VGetArrayPointer(y);
+#endif
+
+  BL_PROFILE_VAR("AsyncCpy", AsyncCpy);
+#ifdef AMREX_USE_GPU
+  amrex::Gpu::htod_memcpy_async(
+    yvec_d, rY_in, sizeof(realtype) * (NEQSTOT));
+  amrex::Gpu::htod_memcpy_async(
+    user_data->rYsrc_d, rY_src_in, (NUM_SPECIES * NCELLS) * sizeof(realtype));
+  amrex::Gpu::htod_memcpy_async(
+    user_data->rhoe_init_d, rX_in, sizeof(realtype) * NCELLS);
+  amrex::Gpu::htod_memcpy_async(
+    user_data->rhoesrc_ext_d, rX_src_in, sizeof(realtype) * NCELLS);
+#else
+  std::memcpy(yvec_d, rY_in, sizeof(realtype) * (NEQSTOT));
+  std::memcpy(
+    user_data->rYsrc_d, rY_src_in, (NUM_SPECIES * NCELLS) * sizeof(realtype));
+  std::memcpy(user_data->rhoe_init_d, rX_in, sizeof(realtype) * NCELLS);
+  std::memcpy(user_data->rhoesrc_ext_d, rX_src_in, sizeof(realtype) * NCELLS);
+#endif
+  BL_PROFILE_VAR_STOP(AsyncCpy);
+
+  // -------------------------------------------------------------
+  // Initialize integrator
+  amrex::Real time_init = time;
+  amrex::Real time_out  = time + dt_react;
+
+  /* Call CVodeInit to initialize the integrator memory and specify the
+   * user's right hand side function, the inital time, and
+   * initial dependent variable vector y. */
+  flag = CVodeInit(cvode_mem, cF_RHS, time_init, y);
+  if (check_flag(&flag, "CVodeInit", 1)) {
+     return(1);
+  }
+
+  // -------------------------------------------------------------
+  // Define CVODE tolerances
+  atol = N_VClone(y);
+#if defined(AMREX_USE_CUDA)
+  ratol = N_VGetHostArrayPointer_Cuda(atol);
+#elif defined(AMREX_USE_HIP)
+  ratol = N_VGetHostArrayPointer_Hip(atol);
+#else
+  ratol = N_VGetArrayPointer(atol);
+#endif
+  if (typVals[0] > 0) {
+    printf(
+      "Setting CVODE tolerances rtol = %14.8e atolfact = %14.8e in PelePhysics "
+      "\n",
+      relTol, absTol);
+    for (int i = 0; i < NCELLS; i++) {
+      int offset = i * (NUM_SPECIES + 1);
+      for (int k = 0; k < NUM_SPECIES + 1; k++) {
+        ratol[offset + k] = typVals[k] * absTol;
+      }
+    }
+  } else {
+    for (int i = 0; i < NEQSTOT; i++) {
+      ratol[i] = absTol;
+    }
+  }
+#if defined(AMREX_USE_CUDA)
+  N_VCopyToDevice_Cuda(atol);
+#elif defined(AMREX_USE_HIP)
+  N_VCopyToDevice_Hip(atol);
+#endif
+  // Call CVodeSVtolerances to specify the scalar relative tolerance
+  // and vector absolute tolerances
+  flag = CVodeSVtolerances(cvode_mem, relTol, atol);
+  if (check_flag(&flag, "CVodeSVtolerances", 1)) {
+    return (1);
+  }
+
+  // -------------------------------------------------------------
+  // Define and set CVODE linear solver
+  if (user_data->isolve_type == iterative_gmres_solve) {
+    if (user_data->ianalytical_jacobian == 0) {
+      LS = SUNLinSol_SPGMR(y, PREC_NONE, 0);
+      if (check_flag((void*)LS, "SUNDenseLinearSolver", 0))
+        return (1);
+    } else {
+#ifdef AMREX_USE_GPU
+     amrex::Abort("ode.analytical_jacobian = 1 currently unavailable on GPU"),
+#endif
+      LS = SUNLinSol_SPGMR(y, PREC_LEFT, 0);
+      if (check_flag((void*)LS, "SUNDenseLinearSolver", 0))
+        return (1);
+    }
+
+    flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
+    if (check_flag(&flag, "CVodeSetLinearSolver", 1))
+      return (1);
+
+    flag = CVodeSetJacTimes(cvode_mem, NULL, NULL);
+    if (check_flag(&flag, "CVodeSetJacTimes", 1))
+      return (1);
+
+    if (user_data->ianalytical_jacobian == 1) {
+#if defined(AMREX_USE_CUDA)
+      flag = CVodeSetPreconditioner(cvode_mem, Precond, PSolve);
+      if (check_flag(&flag, "CVodeSetPreconditioner", 1))
+        return (1);
+#else
+      Abort("No options for preconditioning on non-CUDA GPUs");
+#endif
+    }
+
+#if defined(AMREX_USE_CUDA)
+  } else if (user_data->isolve_type == sparse_cusolver_solve) {
+    LS = SUNLinSol_cuSolverSp_batchQR(y, A, user_data->cusolverHandle);
+    if (check_flag((void*)LS, "SUNLinSol_cuSolverSp_batchQR", 0))
+      return (1);
+
+    flag = CVodeSetLinearSolver(cvode_mem, LS, A);
+    if (check_flag(&flag, "CVodeSetLinearSolver", 1))
+      return (1);
+
+    flag = CVodeSetJacFn(cvode_mem, cJac);
+    if (check_flag(&flag, "CVodeSetJacFn", 1))
+      return (1);
+
+  } else {
+    LS = SUNLinSol_dense_custom(y, A, stream);
+    if (check_flag((void*)LS, "SUNDenseLinearSolver", 0))
+      return (1);
+
+    flag = CVodeSetLinearSolver(cvode_mem, LS, A);
+    if (check_flag(&flag, "CVodeSetLinearSolver", 1))
+      return (1);
+
+    flag = CVodeSetJacFn(cvode_mem, cJac);
+    if (check_flag(&flag, "CVodeSetJacFn", 1))
+      return (1);
+#endif
+  }
+
+  // -------------------------------------------------------------
+  // Other CVODE options
+  flag = CVodeSetMaxNumSteps(cvode_mem, 100000);
+  if (check_flag(&flag, "CVodeSetMaxNumSteps", 1))
+    return (1);
+
+  flag = CVodeSetMaxOrd(cvode_mem, 2);
+  if (check_flag(&flag, "CVodeSetMaxOrd", 1))
+    return (1);
+
+  // -------------------------------------------------------------
+  // Actual CVODE solve
+  BL_PROFILE_VAR("AroundCVODE", AroundCVODE);
+  flag = CVode(cvode_mem, time_out, y, &time_init, CV_NORMAL);
+  if (check_flag(&flag, "CVode", 1))
+    return (1);
+  BL_PROFILE_VAR_STOP(AroundCVODE);
+
+#ifdef MOD_REACTOR
+  dt_react = time_init - time;
+  time = time_init;
+#endif
+
+  // -------------------------------------------------------------
+  // Get the result back
+  BL_PROFILE_VAR_START(AsyncCpy);
+#ifdef AMREX_USE_GPU
+  amrex::Gpu::dtoh_memcpy_async(
+#else
+  std::memcpy(
+#endif
+    rY_in, yvec_d, (NEQ * NCELLS) * sizeof(realtype));
+  for (int i = 0; i < NCELLS; i++) {
+    rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
+  }
+  BL_PROFILE_VAR_STOP(AsyncCpy);
+
+  // -------------------------------------------------------------
+  // Get the number of RHS evaluations
+  long int nfe;
+  flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
+  if (user_data->iverbose > 1) {
+    PrintFinalStats(cvode_mem);
+  }
+
+  // -------------------------------------------------------------
+  // Clean up memory
+  N_VDestroy(y);
+  CVodeFree(&cvode_mem);
+
+  SUNLinSolFree(LS);
+
+  if (user_data->isolve_type != iterative_gmres_solve) {
+    SUNMatDestroy(A);
+  }
+
+  The_Device_Arena()->free(user_data->rhoe_init_d);
+  The_Device_Arena()->free(user_data->rhoesrc_ext_d);
+  The_Device_Arena()->free(user_data->rYsrc_d);
+
+  The_Arena()->free(user_data);
+
+  N_VDestroy(atol);
+
+  return nfe;
 }
 
 #ifdef AMREX_USE_CUDA
@@ -2105,8 +2451,8 @@ react_2(
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
     box_flatten(
       icell, i, j, k, data->ireactor_type, rY_in, rY_src_in, T_in, rEner_in,
-      rEner_src_in, mask_in, data->Yvect_full, data->rYsrc, data->rhoX_init,
-      data->rhoXsrc_ext, data->mask);
+      rEner_src_in, data->Yvect_full, data->rYsrc, data->rhoX_init,
+      data->rhoXsrc_ext);
   });
   BL_PROFILE_VAR_STOP(FlatStuff);
 
@@ -2123,6 +2469,7 @@ react_2(
   // Integrate data->ncells at a time with CVode The extra cell machinery is not
   // ope yet and most likely produce out of bound errors
   realtype* yvec_d = N_VGetArrayPointer(y);
+  long int nfe, nfeLS;
   for (int i = 0; i < box_ncells + extra_cells; i += data->ncells) {
     if (data->mask[i] != -1) //   TODO: this doesn't really work, but we are not
                              //   using react_2, let alone react_2 + EB.
@@ -2150,7 +2497,6 @@ react_2(
       }
 
       // Get estimate of how hard the integration process was
-      long int nfe, nfeLS;
       flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
       flag = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
       for (int k = 0; k < data->ncells; k++) {
@@ -2180,7 +2526,7 @@ react_2(
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
     box_unflatten(
       icell, i, j, k, data->ireactor_type, rY_in, T_in, rEner_in, rEner_src_in,
-      FC_in, data->Yvect_full, data->rhoX_init, data->FCunt, dt_react);
+      FC_in, data->Yvect_full, data->rhoX_init, nfe, dt_react);
   });
   BL_PROFILE_VAR_STOP(FlatStuff);
 
@@ -2214,7 +2560,9 @@ react(
   realtype* rX_in,
   realtype* rX_src_in,
   realtype& dt_react,
-  realtype& time)
+  realtype& time
+  int reactor_type,
+  int Ncells)
 {
 
   realtype dummy_time;
@@ -2240,7 +2588,7 @@ react(
   // Define full box_ncells length vectors to be integrated piece by piece by
   // CVode
   if ((data->iverbose > 2) && (omp_thread == 0)) {
-    Print() << "Ncells in the box = " << data->ncells << "\n";
+    Print() << "Ncells in the box = " << Ncells << "\n";
   }
 
   BL_PROFILE_VAR("reactor::FlatStuff", FlatStuff);
@@ -2248,13 +2596,13 @@ react(
   // Get Device pointer of solution vector
   realtype* yvec_d = N_VGetArrayPointer(y);
   // rhoY,T
-  std::memcpy(yvec_d, rY_in, sizeof(Real) * ((NUM_SPECIES + 1) * data->ncells));
+  std::memcpy(yvec_d, rY_in, sizeof(Real) * ((NUM_SPECIES + 1) * Ncells));
   // rhoY_src_ext
   std::memcpy(
-    data->rYsrc, rY_src_in, sizeof(Real) * (NUM_SPECIES * data->ncells));
+    data->rYsrc, rY_src_in, sizeof(Real) * (NUM_SPECIES * Ncells));
   // rhoE/rhoH
-  std::memcpy(data->rhoX_init, rX_in, sizeof(Real) * data->ncells);
-  std::memcpy(data->rhoXsrc_ext, rX_src_in, sizeof(Real) * data->ncells);
+  std::memcpy(data->rhoX_init, rX_in, sizeof(Real) * Ncells);
+  std::memcpy(data->rhoXsrc_ext, rX_src_in, sizeof(Real) * Ncells);
   BL_PROFILE_VAR_STOP(FlatStuff);
 
   // Check if y is within physical bounds we may remove that eventually
@@ -2271,7 +2619,7 @@ react(
   // T update with energy and Y
   int offset;
   realtype rho, rho_inv, nrg_loc, temp;
-  for (int i = 0; i < data->ncells; i++) {
+  for (int i = 0; i < Ncells; i++) {
     offset = i * (NUM_SPECIES + 1);
     realtype* mass_frac = rY_in + offset;
     // get rho
@@ -2289,7 +2637,7 @@ react(
     // recompute T
     temp = rY_in[offset + NUM_SPECIES];
     auto eos = pele::physics::PhysicsType::eos();
-    if (data->ireactor_type == eint_rho) {
+    if (reactor_type == eint_rho) {
       eos.EY2T(nrg_loc, mass_frac, temp);
     } else {
       eos.HY2T(nrg_loc, mass_frac, temp);
@@ -2329,13 +2677,13 @@ react(
   BL_PROFILE_VAR_START(FlatStuff);
   // Pack data to return in main routine external
   std::memcpy(
-    rY_in, yvec_d, ((NUM_SPECIES + 1) * data->ncells) * sizeof(realtype));
-  for (int i = 0; i < data->ncells; i++) {
+    rY_in, yvec_d, ((NUM_SPECIES + 1) * Ncells) * sizeof(realtype));
+  for (int i = 0; i < Ncells; i++) {
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
   }
 
   // T update with energy and Y
-  for (int i = 0; i < data->ncells; i++) {
+  for (int i = 0; i < Ncells; i++) {
     offset = i * (NUM_SPECIES + 1);
     realtype* mass_frac = yvec_d + offset;
     // get rho
@@ -2352,7 +2700,7 @@ react(
     nrg_loc = rX_in[i] * rho_inv;
     // recompute T
     auto eos = pele::physics::PhysicsType::eos();
-    if (data->ireactor_type == eint_rho) {
+    if (reactor_type == eint_rho) {
       eos.EY2T(nrg_loc, mass_frac, temp);
     } else {
       eos.HY2T(nrg_loc, mass_frac, temp);

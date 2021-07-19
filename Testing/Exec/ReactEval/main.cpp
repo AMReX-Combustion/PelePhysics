@@ -127,11 +127,7 @@ main (int   argc,
       SetTolFactODE(rtol,atol);
 #endif
 
-#ifdef AMREX_USE_GPU
-      reactor_info(ode_iE, ode_ncells);
-#else
       reactor_init(ode_iE, ode_ncells);
-#endif
     }
     BL_PROFILE_VAR_STOP(reactInfo);
 
@@ -327,8 +323,8 @@ main (int   argc,
             int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
 
             box_flatten(icell, i, j, k, ode_iE, 
-                        rhoY, frcExt, T, rhoE, frcEExt, mask,
-                        tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy, tmp_mask);
+                        rhoY, frcExt, T, rhoE, frcEExt,
+                        tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
           });
 
           for (int icell=nc; icell<nc+extra_cells; icell++) {
@@ -352,7 +348,12 @@ main (int   argc,
              for (int ii = 0; ii < ndt; ++ii) {
                tmp_fc[i] += react(&tmp_vect[i*(NUM_SPECIES+1)], &tmp_src_vect[i*NUM_SPECIES],
                                   &tmp_vect_energy[i], &tmp_src_vect_energy[i],
-                                  dt_incr,time);
+                                  dt_incr,time,ode_iE, ode_ncells
+#ifdef AMREX_USE_GPU
+                                  , amrex::Gpu::gpuStream()
+#endif
+				  );
+
                dt_incr =  dt/ndt;
                for (int ic = i+1; ic < i+ode_ncells ; ++ic) {
                   tmp_fc[ic] = tmp_fc[i];
@@ -368,7 +369,7 @@ main (int   argc,
             int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
             box_unflatten(icell, i, j, k, ode_iE,
                           rhoY, T, rhoE, frcEExt, fc,
-                          tmp_vect, tmp_vect_energy, tmp_fc, dt);
+                          tmp_vect, tmp_vect_energy, tmp_fc[icell], dt);
           });
           BL_PROFILE_VAR_STOP(mainflatten);
 
