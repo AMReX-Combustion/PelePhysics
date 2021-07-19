@@ -226,6 +226,8 @@ main (int   argc,
     // -----------------------------------------------------------------------------
     // Set typical values
     // -----------------------------------------------------------------------------
+#ifndef USE_ARKODE_PP
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -240,6 +242,8 @@ main (int   argc,
         SetTypValsODE(typ_vals);
       }
     }
+
+#endif
 
     Print() << " \n STARTING THE ADVANCE \n";
 
