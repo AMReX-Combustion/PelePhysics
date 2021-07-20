@@ -205,6 +205,21 @@ int react(
 #endif
 );
 
+int react(
+  realtype* rY_in,
+  realtype* rY_src_in,
+  realtype* rX_in,
+  realtype* rX_src_in,
+  realtype& dt_react,
+  realtype& time,
+  int reactor_type,
+  int Ncells
+#ifdef AMREX_USE_GPU
+  ,
+  amrex::gpuStream_t stream
+#endif
+);
+
 #ifdef AMREX_USE_CUDA
 static int Precond(
   realtype tn,
@@ -243,9 +258,9 @@ static int check_flag(void* flagvalue, const char* funcname, int opt);
 
 static void PrintFinalStats(void* cvode_mem);
 
-// void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
+void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
 
-// void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
+void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
@@ -330,12 +345,10 @@ box_flatten(
   amrex::Array4<amrex::Real> const& temperature,
   amrex::Array4<amrex::Real> const& rhoE,
   amrex::Array4<amrex::Real> const& frcEExt,
-  amrex::Array4<int> const& mask,
   amrex::Real* tmp_vect,
   amrex::Real* tmp_src_vect,
   amrex::Real* tmp_vect_energy,
-  amrex::Real* tmp_src_vect_energy,
-  int* tmp_mask_vect) noexcept
+  amrex::Real* tmp_src_vect_energy) noexcept
 {
   amrex::Real mass_frac[NUM_SPECIES];
   amrex::Real rho = 0.0;
@@ -354,7 +367,6 @@ box_flatten(
   temp = temperature(i, j, k);
   tmp_vect_energy[icell] = rhoE(i, j, k);
   tmp_src_vect_energy[icell] = frcEExt(i, j, k);
-  tmp_mask_vect[i] = mask(i, j, k);
 
   for (int n = 0; n < NUM_SPECIES; n++) {
     mass_frac[n] = tmp_vect[offset_yvec + n] * rho_inv;
@@ -385,7 +397,7 @@ box_unflatten(
   amrex::Array4<amrex::Real> const& FC_in,
   amrex::Real* tmp_vect,
   amrex::Real* tmp_vect_energy,
-  int* tmp_FCunt,
+  long int const& tmp_FCunt,
   amrex::Real dt) noexcept
 {
   amrex::Real mass_frac[NUM_SPECIES];
@@ -415,7 +427,7 @@ box_unflatten(
   }
   T_in(i, j, k) = temp;
 
-  FC_in(i, j, k) = tmp_FCunt[icell];
+  FC_in(i, j, k) = tmp_FCunt;
 }
 
 typedef struct
@@ -580,12 +592,19 @@ int react_2(
   amrex::Real& time);
 
 int react(
-  amrex::Real* rY_in,
-  amrex::Real* rY_src_in,
-  amrex::Real* rX_in,
-  amrex::Real* rX_src_in,
-  amrex::Real& dt_react,
-  amrex::Real& time);
+  realtype* rY_in,
+  realtype* rY_src_in,
+  realtype* rX_in,
+  realtype* rX_src_in,
+  realtype& dt_react,
+  realtype& time,
+  int reactor_type,
+  int Ncells
+#ifdef AMREX_USE_GPU
+  ,
+  amrex::gpuStream_t stream
+#endif
+);
 
 void reactor_close();
 
