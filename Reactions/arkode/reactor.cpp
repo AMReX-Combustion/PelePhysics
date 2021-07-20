@@ -12,6 +12,7 @@ amrex::Array<amrex::Real, NUM_SPECIES + 1> typVals = {-1};
 int
 reactor_init(int reactor_type, int Ncells)
 {
+  BL_PROFILE("Pele::reactor_init()");
   amrex::ParmParse pp("ode");
   pp.query("use_erkstep", use_erkstep);
   pp.query("rtol", relTol);
@@ -135,6 +136,7 @@ react(
 #endif
 )
 {
+  BL_PROFILE("Pele::react()");
   int NCELLS, NEQ, neq_tot;
   realtype time_init, time_out;
 
@@ -147,10 +149,8 @@ react(
   AMREX_ASSERT(NCELLS < std::numeric_limits<int>::max());
 
   UserData user_data;
-  BL_PROFILE_VAR("AllocsInARKODE", AllocsARKODE);
   user_data =
     (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
-  BL_PROFILE_VAR_STOP(AllocsARKODE);
   user_data->ncells_d = NCELLS;
   user_data->neqs_per_cell = NEQ;
   user_data->ireactor_type = reactor_type;
@@ -189,14 +189,12 @@ react(
     return (1);
 #endif
 
-  BL_PROFILE_VAR_START(AllocsARKODE);
   user_data->rhoe_init_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * sizeof(amrex::Real));
   user_data->rhoesrc_ext_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * sizeof(amrex::Real));
   user_data->rYsrc_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * NUM_SPECIES * sizeof(amrex::Real));
-  BL_PROFILE_VAR_STOP(AllocsARKODE);
 
 #if defined(AMREX_USE_CUDA)
   realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
@@ -206,7 +204,6 @@ react(
   realtype* yvec_d = N_VGetArrayPointer(y);
 #endif
 
-  BL_PROFILE_VAR("reactor::FlatStuff", FlatStuff);
   const auto len = amrex::length(box);
   const auto lo = amrex::lbound(box);
   amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
@@ -216,7 +213,6 @@ react(
       rEner_in, rEner_src_in, yvec_d, user_data->rYsrc_d,
       user_data->rhoe_init_d, user_data->rhoesrc_ext_d);
   });
-  BL_PROFILE_VAR_STOP(FlatStuff);
 
   time_init = time;
   time_out = time + dt_react;
@@ -250,14 +246,12 @@ react(
     ERKStepGetNumRhsEvals(arkode_mem, &nfe);
   }
 
-  BL_PROFILE_VAR_START(FlatStuff);
   amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
     box_unflatten(
       icell, i, j, k, user_data->ireactor_type, rY_in, T_in, rEner_in,
       rEner_src_in, FC_in, yvec_d, user_data->rhoe_init_d, nfe, dt_react);
   });
-  BL_PROFILE_VAR_STOP(FlatStuff);
 
   N_VDestroy(y);
   if (use_erkstep == 0) {
@@ -292,6 +286,7 @@ react(
 #endif
 )
 {
+  BL_PROFILE("Pele::react()");
   int NCELLS, NEQ, neq_tot;
   realtype time_init, time_out;
   void* arkode_mem = NULL;
@@ -300,10 +295,8 @@ react(
   NCELLS = Ncells;
   neq_tot = NEQ * NCELLS;
   UserData user_data;
-  BL_PROFILE_VAR("AllocsInARKODE", AllocsARKODE);
   user_data =
     (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
-  BL_PROFILE_VAR_STOP(AllocsARKODE);
   user_data->ncells_d = NCELLS;
   user_data->neqs_per_cell = NEQ;
   user_data->ireactor_type = reactor_type;
@@ -342,14 +335,12 @@ react(
     return (1);
 #endif
 
-  BL_PROFILE_VAR_START(AllocsARKODE);
   user_data->rhoe_init_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * sizeof(amrex::Real));
   user_data->rhoesrc_ext_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * sizeof(amrex::Real));
   user_data->rYsrc_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * NUM_SPECIES * sizeof(amrex::Real));
-  BL_PROFILE_VAR_STOP(AllocsARKODE);
 
 #if defined(AMREX_USE_CUDA)
   realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
@@ -359,7 +350,6 @@ react(
   realtype* yvec_d = N_VGetArrayPointer(y);
 #endif
 
-  BL_PROFILE_VAR("AsyncCpy", AsyncCpy);
 #ifdef AMREX_USE_GPU
   amrex::Gpu::htod_memcpy_async(
     yvec_d, rY_in, sizeof(realtype) * (NEQ * NCELLS));
@@ -376,7 +366,6 @@ react(
   std::memcpy(user_data->rhoe_init_d, rX_in, sizeof(realtype) * NCELLS);
   std::memcpy(user_data->rhoesrc_ext_d, rX_src_in, sizeof(realtype) * NCELLS);
 #endif
-  BL_PROFILE_VAR_STOP(AsyncCpy);
 
   time_init = time;
   time_out = time + dt_react;
@@ -399,7 +388,6 @@ react(
   time = time_init;
 #endif
 
-  BL_PROFILE_VAR_START(AsyncCpy);
 #ifdef AMREX_USE_GPU
   amrex::Gpu::dtoh_memcpy_async(
 #else
@@ -409,7 +397,6 @@ react(
   for (int i = 0; i < NCELLS; i++) {
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
   }
-  BL_PROFILE_VAR_STOP(AsyncCpy);
 
   long int nfe, nfi;
   if (use_erkstep == 0) {
@@ -437,8 +424,7 @@ react(
 int
 cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 {
-  BL_PROFILE_VAR("fKernelSpec()", fKernelSpec);
-
+  BL_PROFILE("Pele::cF_RHS()");
 #if defined(AMREX_USE_CUDA)
   realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y_in);
   realtype* ydot_d = N_VGetDeviceArrayPointer_Cuda(ydot_in);
@@ -475,8 +461,6 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 #endif
 
   amrex::Gpu::Device::streamSynchronize();
-
-  BL_PROFILE_VAR_STOP(fKernelSpec);
 
   return (0);
 }
