@@ -155,8 +155,8 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make TPL COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=drm19
-        make -j 2 COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=drm19
+        make TPL COMP=gnu DEBUG=TRUE USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=drm19
+        make -j 2 COMP=gnu DEBUG=TRUE USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=drm19
 
   # Cvode LiDryer CUDA support
   cvodeLiDryer_CUDA:
