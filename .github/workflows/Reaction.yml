@@ -162,9 +162,11 @@ jobs:
   cvodeLiDryer_CUDA:
     name: CUDA@11.0.1 [cvode-LiDryer]
     runs-on: ubuntu-18.04
-    env: 
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{github.token}}
     - uses: actions/checkout@v2
     - name: System Dependencies
       run: .github/workflows/dependencies/dependencies_nvcc.sh
@@ -187,9 +189,11 @@ jobs:
   arkodeDRM_CUDA:
     name: CUDA@11.0.1 [arkode-DRM]
     runs-on: ubuntu-18.04
-    env: 
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{github.token}}
     - uses: actions/checkout@v2
     - name: System Dependencies
       run: .github/workflows/dependencies/dependencies_nvcc.sh
@@ -212,9 +216,11 @@ jobs:
   arkodeLiDryer_CUDA:
     name: CUDA@11.0.1 [arkode-LiDryer]
     runs-on: ubuntu-18.04
-    env: 
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{github.token}}
     - uses: actions/checkout@v2
     - name: System Dependencies
       run: .github/workflows/dependencies/dependencies_nvcc.sh
