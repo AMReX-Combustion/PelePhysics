@@ -3,6 +3,8 @@
 int eint_rho = 1;
 int enth_rho = 2;
 int use_erkstep = 0;
+int rk_method = 40;
+int rk_controller = 0;
 amrex::Real relTol = 1.0e-6;
 amrex::Real absTol = 1.0e-10;
 amrex::Array<amrex::Real, NUM_SPECIES + 1> typVals = {-1};
@@ -10,6 +12,7 @@ amrex::Array<amrex::Real, NUM_SPECIES + 1> typVals = {-1};
 int
 reactor_init(int reactor_type, int Ncells)
 {
+  BL_PROFILE("Pele::reactor_init()");
   amrex::ParmParse pp("ode");
   pp.query("use_erkstep", use_erkstep);
   pp.query("rtol", relTol);
@@ -21,6 +24,95 @@ reactor_init(int reactor_type, int Ncells)
   }
   amrex::Print() << "Setting ARK/ERKODE tolerances rtol = " << relTol
                  << " atol = " << absTol << " in PelePhysics \n";
+
+  pp.query("rk_method", rk_method);
+  pp.query("rk_controller", rk_controller);
+  switch (rk_method) {
+  case 20:
+    rk_method = HEUN_EULER_2_1_2;
+    amrex::Print() << "Using HEUN_EULER_2_1_2 method\n";
+    break;
+  case 30:
+    rk_method = BOGACKI_SHAMPINE_4_2_3;
+    amrex::Print() << "Using BOGACKI_SHAMPINE_4_2_3 method\n";
+    break;
+  case 31:
+    rk_method = ARK324L2SA_ERK_4_2_3;
+    amrex::Print() << "Using ARK324L2SA_ERK_4_2_3 method\n";
+    break;
+  case 40:
+    rk_method = ZONNEVELD_5_3_4;
+    amrex::Print() << "Using ZONNEVELD_5_3_4 method\n";
+    break;
+  case 41:
+    rk_method = ARK436L2SA_ERK_6_3_4;
+    amrex::Print() << "Using ARK436L2SA_ERK_6_3_4 method\n";
+    break;
+  case 42:
+    rk_method = SAYFY_ABURUB_6_3_4;
+    amrex::Print() << "Using SAYFY_ABURUB_6_3_4 method\n";
+    break;
+  case 43:
+    rk_method = ARK437L2SA_ERK_7_3_4;
+    amrex::Print() << "Using ARK437L2SA_ERK_7_3_4 method\n";
+    break;
+  case 50:
+    rk_method = CASH_KARP_6_4_5;
+    amrex::Print() << "Using CASH_KARP_6_4_5 method\n";
+    break;
+  case 51:
+    rk_method = FEHLBERG_6_4_5;
+    amrex::Print() << "Using FEHLBERG_6_4_5 method\n";
+    break;
+  case 52:
+    rk_method = DORMAND_PRINCE_7_4_5;
+    amrex::Print() << "Using DORMAND_PRINCE_7_4_5 method\n";
+    break;
+  case 53:
+    rk_method = ARK548L2SA_ERK_8_4_5;
+    amrex::Print() << "Using ARK548L2SA_ERK_8_4_5 method\n";
+    break;
+  case 54:
+    rk_method = ARK548L2SAb_ERK_8_4_5;
+    amrex::Print() << "Using ARK548L2SAb_ERK_8_4_5 method\n";
+    break;
+  case 60:
+    rk_method = VERNER_8_5_6;
+    amrex::Print() << "Using VERNER_8_5_6 method\n";
+    break;
+  case 80:
+    rk_method = FEHLBERG_13_7_8;
+    amrex::Print() << "Using FEHLBERG_13_7_8 method\n";
+    break;
+  default:
+    rk_method = ZONNEVELD_5_3_4;
+    amrex::Print() << "Using ZONNEVELD_5_3_4 method\n";
+    break;
+  }
+
+  switch (rk_controller) {
+  case 0:
+    rk_controller = ARK_ADAPT_PID;
+    amrex::Print() << "Using the PID controller\n";
+    break;
+  case 1:
+    rk_controller = ARK_ADAPT_PI;
+    amrex::Print() << "Using the PI controller\n";
+    break;
+  case 2:
+    rk_controller = ARK_ADAPT_I;
+    amrex::Print() << "Using the I controller\n";
+    break;
+  case 3:
+    rk_controller = ARK_ADAPT_EXP_GUS;
+    amrex::Print() << "Using the explicit Gustafsson controller\n";
+    break;
+  default:
+    rk_controller = ARK_ADAPT_PID;
+    amrex::Print() << "Using the PID controller\n";
+    break;
+  }
+
   return (0);
 }
 
@@ -44,6 +136,7 @@ react(
 #endif
 )
 {
+  BL_PROFILE("Pele::react()");
   int NCELLS, NEQ, neq_tot;
   realtype time_init, time_out;
 
@@ -56,10 +149,8 @@ react(
   AMREX_ASSERT(NCELLS < std::numeric_limits<int>::max());
 
   UserData user_data;
-  BL_PROFILE_VAR("AllocsInARKODE", AllocsARKODE);
   user_data =
     (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
-  BL_PROFILE_VAR_STOP(AllocsARKODE);
   user_data->ncells_d = NCELLS;
   user_data->neqs_per_cell = NEQ;
   user_data->ireactor_type = reactor_type;
@@ -98,14 +189,12 @@ react(
     return (1);
 #endif
 
-  BL_PROFILE_VAR_START(AllocsARKODE);
   user_data->rhoe_init_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * sizeof(amrex::Real));
   user_data->rhoesrc_ext_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * sizeof(amrex::Real));
   user_data->rYsrc_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * NUM_SPECIES * sizeof(amrex::Real));
-  BL_PROFILE_VAR_STOP(AllocsARKODE);
 
 #if defined(AMREX_USE_CUDA)
   realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
@@ -115,7 +204,6 @@ react(
   realtype* yvec_d = N_VGetArrayPointer(y);
 #endif
 
-  BL_PROFILE_VAR("reactor::FlatStuff", FlatStuff);
   const auto len = amrex::length(box);
   const auto lo = amrex::lbound(box);
   amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
@@ -125,7 +213,6 @@ react(
       rEner_in, rEner_src_in, yvec_d, user_data->rYsrc_d,
       user_data->rhoe_init_d, user_data->rhoesrc_ext_d);
   });
-  BL_PROFILE_VAR_STOP(FlatStuff);
 
   time_init = time;
   time_out = time + dt_react;
@@ -135,11 +222,15 @@ react(
     ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
     ARKStepSStolerances(arkode_mem, relTol, absTol);
     ARKStepResStolerance(arkode_mem, absTol);
+    ARKStepSetTableNum(arkode_mem, -1, rk_method);
+    ARKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, NULL);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   } else {
     arkode_mem = ERKStepCreate(cF_RHS, time, y);
     ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
     ERKStepSStolerances(arkode_mem, relTol, absTol);
+    ERKStepSetTableNum(arkode_mem, rk_method);
+    ERKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, NULL);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   }
 
@@ -155,14 +246,12 @@ react(
     ERKStepGetNumRhsEvals(arkode_mem, &nfe);
   }
 
-  BL_PROFILE_VAR_START(FlatStuff);
   amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
     box_unflatten(
       icell, i, j, k, user_data->ireactor_type, rY_in, T_in, rEner_in,
       rEner_src_in, FC_in, yvec_d, user_data->rhoe_init_d, nfe, dt_react);
   });
-  BL_PROFILE_VAR_STOP(FlatStuff);
 
   N_VDestroy(y);
   if (use_erkstep == 0) {
@@ -197,6 +286,7 @@ react(
 #endif
 )
 {
+  BL_PROFILE("Pele::react()");
   int NCELLS, NEQ, neq_tot;
   realtype time_init, time_out;
   void* arkode_mem = NULL;
@@ -205,10 +295,8 @@ react(
   NCELLS = Ncells;
   neq_tot = NEQ * NCELLS;
   UserData user_data;
-  BL_PROFILE_VAR("AllocsInARKODE", AllocsARKODE);
   user_data =
     (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
-  BL_PROFILE_VAR_STOP(AllocsARKODE);
   user_data->ncells_d = NCELLS;
   user_data->neqs_per_cell = NEQ;
   user_data->ireactor_type = reactor_type;
@@ -247,14 +335,12 @@ react(
     return (1);
 #endif
 
-  BL_PROFILE_VAR_START(AllocsARKODE);
   user_data->rhoe_init_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * sizeof(amrex::Real));
   user_data->rhoesrc_ext_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * sizeof(amrex::Real));
   user_data->rYsrc_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
     NCELLS * NUM_SPECIES * sizeof(amrex::Real));
-  BL_PROFILE_VAR_STOP(AllocsARKODE);
 
 #if defined(AMREX_USE_CUDA)
   realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
@@ -264,7 +350,6 @@ react(
   realtype* yvec_d = N_VGetArrayPointer(y);
 #endif
 
-  BL_PROFILE_VAR("AsyncCpy", AsyncCpy);
 #ifdef AMREX_USE_GPU
   amrex::Gpu::htod_memcpy_async(
     yvec_d, rY_in, sizeof(realtype) * (NEQ * NCELLS));
@@ -281,7 +366,6 @@ react(
   std::memcpy(user_data->rhoe_init_d, rX_in, sizeof(realtype) * NCELLS);
   std::memcpy(user_data->rhoesrc_ext_d, rX_src_in, sizeof(realtype) * NCELLS);
 #endif
-  BL_PROFILE_VAR_STOP(AsyncCpy);
 
   time_init = time;
   time_out = time + dt_react;
@@ -298,13 +382,11 @@ react(
     ERKStepSStolerances(arkode_mem, relTol, absTol);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   }
-
 #ifdef MOD_REACTOR
   dt_react = time_init - time;
   time = time_init;
 #endif
 
-  BL_PROFILE_VAR_START(AsyncCpy);
 #ifdef AMREX_USE_GPU
   amrex::Gpu::dtoh_memcpy_async(
 #else
@@ -314,7 +396,6 @@ react(
   for (int i = 0; i < NCELLS; i++) {
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
   }
-  BL_PROFILE_VAR_STOP(AsyncCpy);
 
   long int nfe, nfi;
   if (use_erkstep == 0) {
@@ -342,8 +423,7 @@ react(
 int
 cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 {
-  BL_PROFILE_VAR("fKernelSpec()", fKernelSpec);
-
+  BL_PROFILE("Pele::cF_RHS()");
 #if defined(AMREX_USE_CUDA)
   realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y_in);
   realtype* ydot_d = N_VGetDeviceArrayPointer_Cuda(ydot_in);
@@ -380,8 +460,6 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 #endif
 
   amrex::Gpu::Device::streamSynchronize();
-
-  BL_PROFILE_VAR_STOP(fKernelSpec);
 
   return (0);
 }

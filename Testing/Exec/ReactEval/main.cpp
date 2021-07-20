@@ -232,6 +232,7 @@ main (int   argc,
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     {
+#ifndef USE_ARKODE_PP
       if (use_typ_vals) {
         Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
         Vector<double> typ_vals(NUM_SPECIES+1);
@@ -241,6 +242,7 @@ main (int   argc,
         }
         SetTypValsODE(typ_vals);
       }
+#endif
     }
 
 #endif
@@ -299,7 +301,8 @@ main (int   argc,
 
       // -------------------------------------------------------------
       // Integration with 1dArray raw pointer react function
-      } else if (reactFunc == 2) {
+      }
+      else if (reactFunc == 2) {
 
           // On GPU, integrate the entirely box at once
           // othewise use the user-input ode_ncells

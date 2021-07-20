@@ -69,6 +69,7 @@ Blocs             += $(EOS_PATH)
 
 # Reactions
 REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
+include $(REACTIONS_HOME)/Make.package
 include $(REACTIONS_PATH)/Make.package
 include $(REACTIONS_HOME)/Make.package
 INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
