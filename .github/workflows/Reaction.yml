@@ -134,10 +134,12 @@ jobs:
   # Cvode DRM CUDA support
   cvodeDRM_CUDA:
     name: CUDA@11.0.1 [cvode-DRM]
-    runs-on: ubuntu-latest
-    env: 
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    runs-on: ubuntu-18.04
     steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{github.token}}
     - uses: actions/checkout@v2
     - name: System Dependencies
       run: .github/workflows/dependencies/dependencies_nvcc.sh
