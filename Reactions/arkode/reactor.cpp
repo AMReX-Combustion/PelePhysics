@@ -3,6 +3,8 @@
 int eint_rho = 1;
 int enth_rho = 2;
 int use_erkstep = 0;
+int rk_method = 40;
+int rk_controller = 0;
 amrex::Real relTol = 1.0e-6;
 amrex::Real absTol = 1.0e-10;
 amrex::Array<amrex::Real, NUM_SPECIES + 1> typVals = {-1};
@@ -22,6 +24,95 @@ reactor_init(int reactor_type, int Ncells)
   }
   amrex::Print() << "Setting ARK/ERKODE tolerances rtol = " << relTol
                  << " atol = " << absTol << " in PelePhysics \n";
+
+  pp.query("rk_method", rk_method);
+  pp.query("rk_controller", rk_controller);
+  switch (rk_method) {
+  case 20:
+    rk_method = HEUN_EULER_2_1_2;
+    amrex::Print() << "Using HEUN_EULER_2_1_2 method\n";
+    break;
+  case 30:
+    rk_method = BOGACKI_SHAMPINE_4_2_3;
+    amrex::Print() << "Using BOGACKI_SHAMPINE_4_2_3 method\n";
+    break;
+  case 31:
+    rk_method = ARK324L2SA_ERK_4_2_3;
+    amrex::Print() << "Using ARK324L2SA_ERK_4_2_3 method\n";
+    break;
+  case 40:
+    rk_method = ZONNEVELD_5_3_4;
+    amrex::Print() << "Using ZONNEVELD_5_3_4 method\n";
+    break;
+  case 41:
+    rk_method = ARK436L2SA_ERK_6_3_4;
+    amrex::Print() << "Using ARK436L2SA_ERK_6_3_4 method\n";
+    break;
+  case 42:
+    rk_method = SAYFY_ABURUB_6_3_4;
+    amrex::Print() << "Using SAYFY_ABURUB_6_3_4 method\n";
+    break;
+  case 43:
+    rk_method = ARK437L2SA_ERK_7_3_4;
+    amrex::Print() << "Using ARK437L2SA_ERK_7_3_4 method\n";
+    break;
+  case 50:
+    rk_method = CASH_KARP_6_4_5;
+    amrex::Print() << "Using CASH_KARP_6_4_5 method\n";
+    break;
+  case 51:
+    rk_method = FEHLBERG_6_4_5;
+    amrex::Print() << "Using FEHLBERG_6_4_5 method\n";
+    break;
+  case 52:
+    rk_method = DORMAND_PRINCE_7_4_5;
+    amrex::Print() << "Using DORMAND_PRINCE_7_4_5 method\n";
+    break;
+  case 53:
+    rk_method = ARK548L2SA_ERK_8_4_5;
+    amrex::Print() << "Using ARK548L2SA_ERK_8_4_5 method\n";
+    break;
+  case 54:
+    rk_method = ARK548L2SAb_ERK_8_4_5;
+    amrex::Print() << "Using ARK548L2SAb_ERK_8_4_5 method\n";
+    break;
+  case 60:
+    rk_method = VERNER_8_5_6;
+    amrex::Print() << "Using VERNER_8_5_6 method\n";
+    break;
+  case 80:
+    rk_method = FEHLBERG_13_7_8;
+    amrex::Print() << "Using FEHLBERG_13_7_8 method\n";
+    break;
+  default:
+    rk_method = ZONNEVELD_5_3_4;
+    amrex::Print() << "Using ZONNEVELD_5_3_4 method\n";
+    break;
+  }
+
+  switch (rk_controller) {
+  case 0:
+    rk_controller = ARK_ADAPT_PID;
+    amrex::Print() << "Using the PID controller\n";
+    break;
+  case 1:
+    rk_controller = ARK_ADAPT_PI;
+    amrex::Print() << "Using the PI controller\n";
+    break;
+  case 2:
+    rk_controller = ARK_ADAPT_I;
+    amrex::Print() << "Using the I controller\n";
+    break;
+  case 3:
+    rk_controller = ARK_ADAPT_EXP_GUS;
+    amrex::Print() << "Using the explicit Gustafsson controller\n";
+    break;
+  default:
+    rk_controller = ARK_ADAPT_PID;
+    amrex::Print() << "Using the PID controller\n";
+    break;
+  }
+
   return (0);
 }
 
@@ -131,11 +222,15 @@ react(
     ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
     ARKStepSStolerances(arkode_mem, relTol, absTol);
     ARKStepResStolerance(arkode_mem, absTol);
+    ARKStepSetTableNum(arkode_mem, -1, rk_method);
+    ARKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, NULL);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   } else {
     arkode_mem = ERKStepCreate(cF_RHS, time, y);
     ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
     ERKStepSStolerances(arkode_mem, relTol, absTol);
+    ERKStepSetTableNum(arkode_mem, rk_method);
+    ERKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, NULL);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   }
 
