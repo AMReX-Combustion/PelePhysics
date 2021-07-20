@@ -494,9 +494,9 @@ fKernelSpec(
 
   amrex::Real temp_pt = yvec_d[offset + NUM_SPECIES];
 
-  auto eos = pele::physics::PhysicsType::eos();
   amrex::Real Cv_pt = 0.0;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
+  auto eos = pele::physics::PhysicsType::eos();
   if (reactor_type == 1) {
     eos.EY2T(nrg_pt, massfrac.arr, temp_pt);
     eos.T2Ei(temp_pt, ei_pt.arr);
