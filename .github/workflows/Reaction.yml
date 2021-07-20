@@ -155,13 +155,13 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make TPL COMP=gnu DEBUG=TRUE USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=drm19
-        make -j 2 COMP=gnu DEBUG=TRUE USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=drm19
+        make TPL COMP=gnu USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=drm19
+        make -j 2 COMP=gnu USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=drm19
 
   # Cvode LiDryer CUDA support
   cvodeLiDryer_CUDA:
     name: CUDA@11.0.1 [cvode-LiDryer]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     env: 
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
@@ -180,13 +180,13 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make TPL COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=LiDryer
-        make -j 2 COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=LiDryer
+        make TPL COMP=gnu USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=LiDryer
+        make -j 2 COMP=gnu USE_CUDA=TRUE Reactions_dir=cvode Chemistry_Model=LiDryer
 
   # ARKode DRM CUDA support
   arkodeDRM_CUDA:
     name: CUDA@11.0.1 [arkode-DRM]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     env: 
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
@@ -205,13 +205,13 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make TPL COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=drm19
-        make -j 2 COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=drm19
+        make TPL COMP=gnu USE_CUDA=TRUE Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=drm19
+        make -j 2 COMP=gnu USE_CUDA=TRUE Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=drm19
 
   # ARKode LiDryer CUDA support
   arkodeLiDryer_CUDA:
     name: CUDA@11.0.1 [arkode-LiDryer]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     env: 
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
@@ -230,8 +230,8 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make TPL COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=LiDryer
-        make -j 2 COMP=gnu USE_MPI=TRUE USE_CUDA=TRUE Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=LiDryer
+        make TPL COMP=gnu USE_CUDA=TRUE Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=LiDryer
+        make -j 2 COMP=gnu USE_CUDA=TRUE Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=LiDryer
 
 #  # Fuego DRM HIP support
 #  FuegoDRM_HIP:

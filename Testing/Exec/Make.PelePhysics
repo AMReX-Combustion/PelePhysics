@@ -169,6 +169,10 @@ endif
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
 
+ifeq ($(USE_CUDA),TRUE)
+   CXXFLAGS+=-Xptxas --disable-optimizer-constants
+endif
+
 clean::
 	$(SILENT) $(RM) extern.f90 extern_parameters.cpp extern_parameters_F.H extern_parameters.H extern.f90
 	$(SILENT) $(RM) AMReX_buildInfo.cpp
