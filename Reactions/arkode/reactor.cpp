@@ -489,7 +489,8 @@ fKernelSpec(
     massfrac[i] = yvec_d[offset + i] / rho_pt;
   }
 
-  const amrex::Real nrg_pt = (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) / rho_pt;
+  const amrex::Real nrg_pt =
+    (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) / rho_pt;
 
   amrex::Real temp_pt = yvec_d[offset + NUM_SPECIES];
 
@@ -512,11 +513,9 @@ fKernelSpec(
   ydot_d[offset + NUM_SPECIES] = rhoesrc_ext[icell];
   for (int i = 0; i < NUM_SPECIES; i++) {
     ydot_d[offset + i] = cdots_pt[i] + rYs[icell * NUM_SPECIES + i];
-    ydot_d[offset + NUM_SPECIES] =
-      ydot_d[offset + NUM_SPECIES] - ydot_d[offset + i] * ei_pt[i];
+    ydot_d[offset + NUM_SPECIES] -= ydot_d[offset + i] * ei_pt[i];
   }
-  ydot_d[offset + NUM_SPECIES] =
-    ydot_d[offset + NUM_SPECIES] / (rho_pt * Cv_pt);
+  ydot_d[offset + NUM_SPECIES] /= (rho_pt * Cv_pt);
 }
 
 // Check function return value...
