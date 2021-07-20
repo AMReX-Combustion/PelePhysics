@@ -427,7 +427,7 @@ box_unflatten(
   }
   T_in(i, j, k) = temp;
 
-  FC_in(i, j, k) = tmp_FCunt[icell];
+  FC_in(i, j, k) = tmp_FCunt;
 }
 
 typedef struct

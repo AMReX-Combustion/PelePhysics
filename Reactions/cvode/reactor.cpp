@@ -2546,7 +2546,7 @@ react_2(
   }
 
   // Get estimate of how hard the integration process was
-  long int nfe, nfeLS;
+  //long int nfe, nfeLS;
   flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
   flag = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
   return nfe + nfeLS;
@@ -2560,7 +2560,7 @@ react(
   realtype* rX_in,
   realtype* rX_src_in,
   realtype& dt_react,
-  realtype& time
+  realtype& time,
   int reactor_type,
   int Ncells)
 {
