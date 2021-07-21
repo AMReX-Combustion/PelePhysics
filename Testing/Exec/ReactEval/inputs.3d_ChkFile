@@ -4,6 +4,8 @@ plotfile = plt
 fuel_name = CH4
 reactFormat = Array4
 initFromFile = 1
+# At the current time, the following file must have been 
+# generated with PeleLM.
 initFile = chemicalData00051
 
 ode.dt  = 1.e-05

@@ -211,6 +211,12 @@ main (int   argc,
         dmaps[0] = DistributionMapping(grids[0], ParallelDescriptor::NProcs());
     } else {
         // Read chkfile header to get the geometry/BAs info
+        //
+
+        if (ode_iE==1) {
+            Abort("The option to read in chemical data is currently only available with PeleLM data
+                   and requires ode_iE=2");
+        }
 
         std::string File(chkfile + "/Header");
         VisMF::IO_Buffer io_buffer(VisMF::GetIOBufferSize());
