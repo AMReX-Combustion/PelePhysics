@@ -474,6 +474,8 @@ int SUNLinSolFree_Dense_custom(SUNLinearSolver S);
 //CPU specific cvode functions
 //===================================================================
 #ifndef AMREX_USE_GPU
+UserData AllocUserData(int reactor_type, int num_cells);
+
 int cJac(
   realtype tn,
   N_Vector y,
