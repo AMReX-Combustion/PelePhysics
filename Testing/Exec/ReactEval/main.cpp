@@ -160,6 +160,7 @@ main (int   argc,
     Vector<BoxArray> grids;
     Vector<DistributionMapping> dmaps;
 
+    BL_PROFILE_VAR("main::geometry_setup", GeomSetup);
     if ( initFromChk == 0 ) {
         // -----------------------------------------------------------------------------
         // Resize vectors
@@ -300,12 +301,13 @@ main (int   argc,
                    << " cells on " << grids[lev].size() 
                    << " boxes for " << dt/std::pow(2,lev) << " seconds \n";
         }
-
     }
+    BL_PROFILE_VAR_STOP(GeomSetup);
 
     // -----------------------------------------------------------------------------
-    // Create MultiFabs with no ghost cells
+    // Create MFs and generate initial data
     // -----------------------------------------------------------------------------
+    BL_PROFILE_VAR("main::initialize_data()", InitData);
     int num_grow = 0;
     Vector<MultiFab> mf(finest_level+1);
     Vector<MultiFab> rY_source_ext(finest_level+1);
@@ -329,7 +331,6 @@ main (int   argc,
     // -----------------------------------------------------------------------------
     // Initialize data
     // -----------------------------------------------------------------------------
-    BL_PROFILE_VAR("main::initialize_data()", InitData);
     if ( initFromChk == 0 ) {
        for(int lev = 0; lev <= finest_level; ++lev)
        {
@@ -449,7 +450,7 @@ main (int   argc,
 
     for(int lev = 0; lev <= finest_level; ++lev)
     {
-       BL_PROFILE_VAR("Advance"+std::to_string(lev),Advance);
+       BL_PROFILE_VAR("Advance_Level"+std::to_string(lev),Advance);
 #ifdef AMREX_USE_OMP
        const auto tiling = MFItInfo().SetDynamic(true);
 #pragma omp parallel
@@ -493,6 +494,7 @@ main (int   argc,
 #endif
                    );
               dt_incr =  dt_lev/ndt;
+              Gpu::Device::streamSynchronize();
             }
             BL_PROFILE_VAR_STOP(ReactInLoop);
 
@@ -563,6 +565,7 @@ main (int   argc,
                   for (int ic = i+1; ic < i+ode_ncells ; ++ic) {
                      tmp_fc[ic] = tmp_fc[i];
                   }
+                  Gpu::Device::streamSynchronize();
                }
             }
             BL_PROFILE_VAR_STOP(ReactInLoop);
