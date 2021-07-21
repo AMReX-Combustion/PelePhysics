@@ -214,8 +214,7 @@ main (int   argc,
         //
 
         if (ode_iE==1) {
-            Abort("The option to read in chemical data is currently only available with PeleLM data
-                   and requires ode_iE=2");
+            Abort("The option to read in chemical data is currently only available with PeleLM data and requires ode_iE=2");
         }
 
         std::string File(chkfile + "/Header");
