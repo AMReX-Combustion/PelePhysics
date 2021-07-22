@@ -144,7 +144,6 @@ main (int   argc,
 #ifndef USE_ARKODE_PP
       SetTolFactODE(rtol,atol);
 #endif
-
       reactor_init(ode_iE, ode_ncells);
     }
     BL_PROFILE_VAR_STOP(reactInfo);
@@ -373,6 +372,7 @@ main (int   argc,
           VisMF::Read(forcingIn,
                       amrex::MultiFabFileFullPrefix(lev, chkfile, level_prefix, "ChemForcing"));
           // Copy into our local data holders
+          // and convert from MKS -> CGS since we have PeleLM data
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -426,24 +426,54 @@ main (int   argc,
     // Set typical values
     // -----------------------------------------------------------------------------
 #ifndef USE_ARKODE_PP
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     {
-#ifndef USE_ARKODE_PP
       if (use_typ_vals) {
-        Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
-        Vector<double> typ_vals(NUM_SPECIES+1);
-        ppode.getarr("typ_vals", typ_vals,0,NUM_SPECIES+1);
-        for (int i = 0; i < NUM_SPECIES; ++i) {
-          typ_vals[i] = std::max(typ_vals[i],1.e-10);
+        Vector<Real> typ_vals(NUM_SPECIES+1,1.0e-10);
+        if (ppode.contains("typ_vals")) {
+           Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
+           ppode.getarr("typ_vals", typ_vals,0,NUM_SPECIES+1);
+           for (int i = 0; i < NUM_SPECIES; ++i) {
+             typ_vals[i] = std::max(typ_vals[i],1.e-10);
+           }
+        } else {
+           Print() << "Using typical values from the initial data for the absolute tolerances of the ode solver.\n";
+           for (int lev = 0; lev <= finest_level; ++lev) {           
+               /*
+               Pretty sure TypVal should be rhoYs in CGS, but keep that around just in case.
+               MultiFab massFrac(grids[lev],dmaps[lev],NUM_SPECIES,0);
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+               for (MFIter mfi(mf[lev],TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+                  const Box& box = mfi.tilebox();
+                  auto const& rhoYs = mf[lev].const_array(mfi);
+                  auto const& Ys    = massFrac.array(mfi);
+                  ParallelFor(box,
+                  [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+                  {
+                     amrex::Real rho = 0.0;
+                     for (int n = 0; n < NUM_SPECIES; n++) {
+                        rho += rhoYs(i,j,k,n);
+                     }
+                     amrex::Real rhoinv = 1.0/rho;
+                     for (int n = 0; n < NUM_SPECIES; n++) {
+                        Ys(i,j,k,n) = rhoYs(i,j,k,n) * rhoinv;
+                     }
+                  });
+               }
+               */
+               for (int i = 0; i < NUM_SPECIES; ++i) {
+                   typ_vals[i] = std::max(typ_vals[i],mf[lev].max(i));
+               }
+               typ_vals[NUM_SPECIES] = std::max(typ_vals[NUM_SPECIES],mf[lev].max(NUM_SPECIES));
+           }
         }
         SetTypValsODE(typ_vals);
       }
-#endif
     }
-
 #endif
 
     Print() << " \n STARTING THE ADVANCE \n";
@@ -455,6 +485,7 @@ main (int   argc,
 
     for(int lev = 0; lev <= finest_level; ++lev)
     {
+       Real lvl_strt = ParallelDescriptor::second();
        BL_PROFILE_VAR("Advance_Level"+std::to_string(lev),Advance);
 #ifdef AMREX_USE_OMP
        const auto tiling = MFItInfo().SetDynamic(true);
@@ -595,6 +626,9 @@ main (int   argc,
           }
        }
        BL_PROFILE_VAR_STOP(Advance);
+       Real lvl_run_time = ParallelDescriptor::second() - lvl_strt;
+       ParallelDescriptor::ReduceRealMax(lvl_run_time, ParallelDescriptor::IOProcessorNumber());
+       amrex::Print() << "   >> Level " << lev << " advance: " << lvl_run_time << "\n";
     }
 
     // TODO multilevel max.
