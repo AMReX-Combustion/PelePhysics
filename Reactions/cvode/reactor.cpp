@@ -242,6 +242,10 @@ react(
   NCELLS = box.numPts();
   neq_tot = (NUM_SPECIES + 1) * NCELLS;
 
+#ifdef AMREX_USE_OMP
+  Gpu::streamSynchronize();
+#endif
+
   UserData user_data;
 
   BL_PROFILE_VAR("AllocsInCVODE", AllocsCVODE);
@@ -533,6 +537,10 @@ react(
   });
   BL_PROFILE_VAR_STOP(FlatStuff);
 
+#ifdef AMREX_USE_OMP
+  Gpu::Device::streamSynchronize();
+#endif
+
   amrex::Real time_init = time;
   amrex::Real time_out = time + dt_react;
 
@@ -653,6 +661,10 @@ react(
 #ifdef MOD_REACTOR
   dt_react = time_init - time;
   time = time_init;
+#endif
+
+#ifdef AMREX_USE_OMP
+  Gpu::Device::streamSynchronize();
 #endif
 
   long int nfe;
