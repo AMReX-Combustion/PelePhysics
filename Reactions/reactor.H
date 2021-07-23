@@ -48,6 +48,21 @@
 
 #include "AMReX_SUNMemory.H"
 
+extern amrex::Array<double, NUM_SPECIES + 1> typVals;
+extern int eint_rho; // in/out = rhoE/rhoY
+extern int enth_rho; // in/out = rhoH/rhoY
+extern amrex::Real relTol;
+extern amrex::Real absTol;
+extern amrex::Real time_init;
+extern int dense_solve;
+extern int sparse_solve;
+extern int iterative_gmres_solve;
+extern int sparse_solve_custom;
+extern int iterative_gmres_solve_custom;
+extern int hack_dump_sparsity_pattern;
+extern int sparse_cusolver_solve;
+extern int sparse_custom_solve;
+
 //===================================================================
 //initialize and close reactor functions
 //===================================================================
@@ -60,7 +75,7 @@ void reactor_close();
 //User data to feed CPU/GPU sundials handle
 //===================================================================
 #ifdef AMREX_USE_GPU
-typedef struct CVodeUserData
+ struct CVODEUserData
 {
   amrex::Real gamma;
   amrex::Real dt_save;
@@ -93,10 +108,11 @@ typedef struct CVodeUserData
   amrex::gpuStream_t stream;
   int nbBlocks;
   int nbThreads;
-} * UserDataCVODE;
+};
 #else
-typedef struct
+ struct CVODEUserData
 {
+  amrex::Real dt_save;
   bool FirstTimePrecond;
   bool reactor_cvode_initialized;
   bool actual_ok_to_react;
@@ -134,10 +150,10 @@ typedef struct
   SUNMatrix PSc;
   int* colVals_c;
   int* rowPtrs_c;
-} * UserDataCVODE;
+};
 #endif
 
-typedef struct ARKODEUserData
+ struct ARKODEUserData
 {
   bool reactor_arkode_initialized;
   int ncells_d;
@@ -150,19 +166,17 @@ typedef struct ARKODEUserData
   amrex::Real* rYsrc_d = NULL;
 #ifdef AMREX_USE_GPU
   amrex::gpuStream_t stream;
-#endif
   int nbBlocks;
   int nbThreads;
-} * UserDataARKODE;
-//===================================================================
-
+#endif
+};
 //===================================================================
 //Box flattening functions
 //===================================================================
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
-void
-box_flatten(
+#ifdef AMREX_USE_GPU
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+#endif
+void box_flatten(
   int icell,
   int i,
   int j,
@@ -176,41 +190,11 @@ box_flatten(
   amrex::Real* tmp_vect,
   amrex::Real* tmp_src_vect,
   amrex::Real* tmp_vect_energy,
-  amrex::Real* tmp_src_vect_energy) noexcept
-{
-  amrex::Real mass_frac[NUM_SPECIES];
-  amrex::Real rho = 0.0;
-  amrex::Real Enrg_loc;
-  amrex::Real temp;
+  amrex::Real* tmp_src_vect_energy);
 
-  int offset_yvec = icell * (NUM_SPECIES + 1);
-  int offset_spec = icell * (NUM_SPECIES);
-
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    tmp_vect[offset_yvec + n] = rhoY(i, j, k, n);
-    tmp_src_vect[offset_spec + n] = frcExt(i, j, k, n);
-    rho += tmp_vect[offset_yvec + n];
-  }
-  amrex::Real rho_inv = 1.0 / rho;
-  temp = temperature(i, j, k, 0);
-  tmp_vect_energy[icell] = rhoE(i, j, k, 0);
-  tmp_src_vect_energy[icell] = frcEExt(i, j, k, 0);
-
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    mass_frac[n] = tmp_vect[offset_yvec + n] * rho_inv;
-  }
-  Enrg_loc = tmp_vect_energy[icell] / rho;
-  auto eos = pele::physics::PhysicsType::eos();
-  if (ireactor_type == 1) {
-    eos.EY2T(Enrg_loc, mass_frac, temp);
-  } else {
-    eos.HY2T(Enrg_loc, mass_frac, temp);
-  }
-  tmp_vect[offset_yvec + NUM_SPECIES] = temp;
-}
-
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
+#ifdef AMREX_USE_GPU
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+#endif
 void
 box_unflatten(
   int icell,
@@ -226,48 +210,23 @@ box_unflatten(
   amrex::Real* tmp_vect,
   amrex::Real* tmp_vect_energy,
   long int const& tmp_FCunt,
-  amrex::Real dt) noexcept
-{
-  amrex::Real mass_frac[NUM_SPECIES];
-  amrex::Real rho = 0.0;
-  amrex::Real Enrg_loc;
-  amrex::Real temp;
+  amrex::Real dt);
 
-  int offset_yvec = icell * (NUM_SPECIES + 1);
-
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    rhoY(i, j, k, n) = tmp_vect[offset_yvec + n];
-    rho += tmp_vect[offset_yvec + n];
-  }
-  amrex::Real rho_inv = 1.0 / rho;
-  temp = tmp_vect[offset_yvec + NUM_SPECIES];
-  rhoE(i, j, k, 0) = tmp_vect_energy[icell] + dt * frcEExt(i, j, k, 0);
-
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    mass_frac[n] = rhoY(i, j, k, n) * rho_inv;
-  }
-  Enrg_loc = rhoE(i, j, k, 0) / rho;
-  auto eos = pele::physics::PhysicsType::eos();
-  if (ireactor_type == 1) {
-    eos.EY2T(Enrg_loc, mass_frac, temp);
-  } else {
-    eos.HY2T(Enrg_loc, mass_frac, temp);
-  }
-  T_in(i, j, k, 0) = temp;
-  FC_in(i, j, k, 0) = tmp_FCunt;
-}
 //===================================================================
+//Tolerances
+//===================================================================
+void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
+void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
 
 
 //===================================================================
 //RHS computation functions
 //===================================================================
 static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void* user_data);
-
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
-void
-fKernelSpec(
+#ifdef AMREX_USE_GPU
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE 
+#endif
+void fKernelSpec(
   int icell,
   double dt_save,
   int reactor_type,
@@ -275,54 +234,7 @@ fKernelSpec(
   realtype* ydot_d,
   double* rhoe_init,
   double* rhoesrc_ext,
-  double* rYs)
-{
-  int offset = icell * (NUM_SPECIES + 1);
-
-  Real mw[NUM_SPECIES] = {0.0};
-  get_mw(mw);
-
-  Real rho_pt = 0.0;
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    rho_pt = rho_pt + yvec_d[offset + n];
-  }
-
-  GpuArray<Real, NUM_SPECIES> massfrac;
-  for (int i = 0; i < NUM_SPECIES; i++) {
-    massfrac[i] = yvec_d[offset + i] / rho_pt;
-  }
-
-  Real nrg_pt = (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) / rho_pt;
-
-  Real temp_pt = yvec_d[offset + NUM_SPECIES];
-
-  GpuArray<Real, NUM_SPECIES> ei_pt;
-  Real Cv_pt = 0.0;
-  auto eos = pele::physics::PhysicsType::eos();
-  if (reactor_type == 1) {
-    eos.EY2T(nrg_pt, massfrac.arr, temp_pt);
-    eos.TY2Cv(temp_pt, massfrac.arr, Cv_pt);
-    eos.T2Ei(temp_pt, ei_pt.arr);
-  } else {
-    eos.HY2T(nrg_pt, massfrac.arr, temp_pt);
-    eos.TY2Cp(temp_pt, massfrac.arr, Cv_pt);
-    eos.T2Hi(temp_pt, ei_pt.arr);
-  }
-
-  GpuArray<Real, NUM_SPECIES> cdots_pt;
-  eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
-
-  ydot_d[offset + NUM_SPECIES] = rhoesrc_ext[icell];
-  for (int i = 0; i < NUM_SPECIES; i++) {
-    ydot_d[offset + i] = cdots_pt[i] + rYs[icell * NUM_SPECIES + i];
-    ydot_d[offset + NUM_SPECIES] =
-      ydot_d[offset + NUM_SPECIES] - ydot_d[offset + i] * ei_pt[i];
-  }
-  ydot_d[offset + NUM_SPECIES] =
-    ydot_d[offset + NUM_SPECIES] / (rho_pt * Cv_pt);
-}
-//===================================================================
-
+  double* rYs);
 
 //===================================================================
 //Different variants of react calls
@@ -401,15 +313,7 @@ static int cJac(
 //Stats and checks
 //===================================================================
 static int check_flag(void* flagvalue, const char* funcname, int opt);
-static void PrintFinalStats(void* cvode_mem);
-//===================================================================
-
-
-//===================================================================
-//Tolerances
-//===================================================================
-void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
-void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
+static void PrintFinalStats(void* cvode_mem,amrex::Real Temp);
 //===================================================================
 
 
@@ -474,7 +378,7 @@ int SUNLinSolFree_Dense_custom(SUNLinearSolver S);
 //CPU specific cvode functions
 //===================================================================
 #ifndef AMREX_USE_GPU
-UserData AllocUserData(int reactor_type, int num_cells);
+CVODEUserData* AllocUserData(int reactor_type, int num_cells);
 
 int cJac(
   realtype tn,
@@ -579,9 +483,7 @@ int react_2(
   amrex::Real& dt_react,
   amrex::Real& time);
 
-UserData AllocUserData(int iE, int num_cells);
-
-void FreeUserData(UserData data);
+void FreeUserData(CVODEUserData *data);
 
 void check_state(N_Vector yvec);
 
