@@ -1769,8 +1769,16 @@ class CPickler(CMill):
                 aeuc = self._activationEnergyUnits(reaction.units["activation"])
 
                 self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-                self._write("k_f = %.17g * %.17g " % (uc.value,A)) 
-                self._write("           * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);" % (beta, aeuc / Rc / kelvin, E))
+                self._write("k_f = %.17g" % (uc.value * A)) 
+                if (beta == 0) and (E == 0):
+                    self._write("           ;")
+                else:
+                  if (E == 0):
+                      self._write("           * exp(%.17g * tc[0]);" % (beta))
+                  elif (beta == 0):
+                      self._write("           * exp(- %.17g * invT);" % ((aeuc / Rc / kelvin) * E))
+                  else:
+                      self._write("           * exp(%.17g * tc[0] - %.17g * invT);" % (beta, (aeuc / Rc / kelvin) * E))
 
                 if not thirdBody:
                     self._write("Corr  = 1.0;")
@@ -2003,7 +2011,10 @@ class CPickler(CMill):
             if (dim == 1.0):
                 conversion = "*".join(["refC"])
             else:
-                conversion = "*".join(["pow(refC,%f)" % dim])
+                if (dim == 2.0):
+                    conversion = "*".join(["(refC * refC)"])
+                else:
+                    conversion = "*".join(["pow(refC,%f)" % dim])
         else:
             if (dim == -1.0):
                 conversion = "*".join(["refCinv"])
@@ -4011,7 +4022,10 @@ class CPickler(CMill):
             if (dim == 1.0):
                 conversion = "*".join(["refC"]) + ' * '
             else:
-                conversion = "*".join(["pow(refC,%f)" % dim]) + ' * '
+                if (dim == 2.0):
+                    conversion = "*".join(["(refC * refC)"]) + ' * '
+                else:
+                    conversion = "*".join(["pow(refC,%f)" % dim]) + ' * '
         else:
             if (dim == -1.0):
                 conversion = "1.0 / (" + "*".join(["refC"]) + ') * '
@@ -12235,8 +12249,8 @@ class CPickler(CMill):
             self._write(self.line('Imported from NIST'))
             self._write('Tci[%d] = %f ; ' % (
                 species.id,TabulatedCriticalParams[species.symbol]["Tci"]))
-            self._write('ai[%d] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[%d],2.0) / (pow(%f,2.0) * %f); ' % (
-                species.id,species.id,TabulatedCriticalParams[species.symbol]["wt"],TabulatedCriticalParams[species.symbol]["Pci"]))
+            self._write('ai[%d] = 1e6 * 0.42748 * Rcst * Rcst * Tci[%d] * Tci[%d] / (%f * %f * %f); ' % (
+                species.id,species.id,species.id,TabulatedCriticalParams[species.symbol]["wt"],TabulatedCriticalParams[species.symbol]["wt"],TabulatedCriticalParams[species.symbol]["Pci"]))
             self._write('bi[%d] = 0.08664 * Rcst * Tci[%d] / (%f * %f); ' % (
                 species.id,species.id,TabulatedCriticalParams[species.symbol]["wt"],TabulatedCriticalParams[species.symbol]["Pci"]))
             self._write('acentric_i[%d] = %f ;'
@@ -12247,8 +12261,8 @@ class CPickler(CMill):
             self._write(self.line('species %d: %s' % (species.id, species.symbol)))
             self._write('Tci[%d] = 1.316 * EPS[%d] ; ' % (
                 species.id,species.id))
-            self._write('ai[%d] = (5.55 * pow(avogadro,2.0) * EPS[%d]*boltzmann * pow(1e-8*SIG[%d],3.0) ) / (pow(wt[%d],2.0)); ' % (
-                species.id,species.id,species.id,species.id))
+            self._write('ai[%d] = (5.55 * avogadro * avogadro * EPS[%d]*boltzmann * pow(1e-8*SIG[%d],3.0) ) / (wt[%d] * wt[%d]); ' % (
+                species.id,species.id,species.id,species.id,species.id))
             self._write('bi[%d] = 0.855 * avogadro * pow(1e-8*SIG[%d],3.0) / (wt[%d]); ' % (
                 species.id,species.id,species.id))
             self._write('acentric_i[%d] = 0.0 ;'
