@@ -316,7 +316,13 @@ static int cJac(
 //Stats and checks
 //===================================================================
 int check_flag(void* flagvalue, const char* funcname, int opt);
+
+//FIXME: make them the same
+#ifdef AMREX_USE_GPU
+static void PrintFinalStats(void* cvode_mem);
+#else
 static void PrintFinalStats(void* cvode_mem,amrex::Real Temp);
+#endif
 //===================================================================
 
 

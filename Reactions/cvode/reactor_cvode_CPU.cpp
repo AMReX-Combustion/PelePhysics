@@ -191,7 +191,7 @@ int reactor_init(int reactor_type, int ode_ncells)
     if (check_flag(&flag, "CVDlsSetLinearSolver", 1))
       return (1);
 
-  } else if (data->isolve_type == sparse_solve_custom) {
+  } else if (data->isolve_type == sparse_custom_solve) {
     if ((data->iverbose > 0) && (omp_thread == 0)) {
       Print() << "\n--> Using a custom Direct Sparse Solver\n";
     }
@@ -270,7 +270,7 @@ int reactor_init(int reactor_type, int ode_ncells)
       Abort("Sparse Solver requires an Analytical J");
     }
 #endif
-    if (data->isolve_type == sparse_solve_custom) {
+    if (data->isolve_type == sparse_custom_solve) {
       Abort("Custom sparse solver requires an Analytical J");
     }
   } else {
@@ -329,7 +329,7 @@ int reactor_init(int reactor_type, int ode_ncells)
       if (check_flag(&flag, "CVodeSetJacFn", 1))
         return (1);
 
-    } else if (data->isolve_type == sparse_solve_custom) {
+    } else if (data->isolve_type == sparse_custom_solve) {
       if ((data->iverbose > 0) && (omp_thread == 0)) {
         Print() << "    With a Sparse Analytical J\n";
       }
@@ -1881,7 +1881,7 @@ CVODEUserData* AllocUserData(int reactor_type, int num_cells)
   dense_solve           = 1;
   sparse_solve          = 5;
   iterative_gmres_solve = 99;
-  sparse_solve_custom   = 101;
+  sparse_custom_solve   = 101;
   iterative_gmres_solve_custom = 199;
   hack_dump_sparsity_pattern = -5;
   */
@@ -1892,7 +1892,7 @@ CVODEUserData* AllocUserData(int reactor_type, int num_cells)
   } else if (solve_type_str == "GMRES") {
     data_wk->isolve_type = iterative_gmres_solve;
   } else if (solve_type_str == "sparse_custom") {
-    data_wk->isolve_type = sparse_solve_custom;
+    data_wk->isolve_type = sparse_custom_solve;
   } else if (solve_type_str == "GMRES_custom") {
     data_wk->isolve_type = iterative_gmres_solve_custom;
   } else if (solve_type_str == "diag") {
@@ -2055,7 +2055,7 @@ CVODEUserData* AllocUserData(int reactor_type, int num_cells)
                    100.0
               << " % fill-in pattern\n";
     }
-  } else if (data_wk->isolve_type == sparse_solve_custom) {
+  } else if (data_wk->isolve_type == sparse_custom_solve) {
     // Number of non zero elements
     SPARSITY_INFO_SYST(&(data_wk->NNZ), &HP, 1);
     data_wk->PSc = SUNSparseMatrix(
@@ -2280,7 +2280,7 @@ FreeUserData(CVODEUserData *data_wk)
     delete[] data_wk->rowPtrs;
     delete[] data_wk->PS;
     delete[] data_wk->JSPSmat;
-  } else if (data_wk->isolve_type == sparse_solve_custom) {
+  } else if (data_wk->isolve_type == sparse_custom_solve) {
     SUNMatDestroy(A);
     SUNMatDestroy(data_wk->PSc);
   } else if (data_wk->isolve_type == hack_dump_sparsity_pattern) {
