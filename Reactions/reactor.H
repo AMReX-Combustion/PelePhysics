@@ -62,6 +62,9 @@ extern int iterative_gmres_solve_custom;
 extern int hack_dump_sparsity_pattern;
 extern int sparse_cusolver_solve;
 extern int sparse_custom_solve;
+extern int use_erkstep;
+extern int rk_method;
+extern int rk_controller;
 
 //===================================================================
 //initialize and close reactor functions
@@ -166,9 +169,9 @@ void reactor_close();
   amrex::Real* rYsrc_d = NULL;
 #ifdef AMREX_USE_GPU
   amrex::gpuStream_t stream;
+#endif
   int nbBlocks;
   int nbThreads;
-#endif
 };
 //===================================================================
 //Box flattening functions
@@ -312,7 +315,7 @@ static int cJac(
 //===================================================================
 //Stats and checks
 //===================================================================
-static int check_flag(void* flagvalue, const char* funcname, int opt);
+int check_flag(void* flagvalue, const char* funcname, int opt);
 static void PrintFinalStats(void* cvode_mem,amrex::Real Temp);
 //===================================================================
 

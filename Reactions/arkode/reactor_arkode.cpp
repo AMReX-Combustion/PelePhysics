@@ -1,16 +1,6 @@
-#include "reactor.H"
+#include "../reactor.H"
 
-int eint_rho = 1;
-int enth_rho = 2;
-int use_erkstep = 0;
-int rk_method = 40;
-int rk_controller = 0;
-amrex::Real relTol = 1.0e-6;
-amrex::Real absTol = 1.0e-10;
-amrex::Array<amrex::Real, NUM_SPECIES + 1> typVals = {-1};
-
-int
-reactor_init(int reactor_type, int Ncells)
+int reactor_init(int reactor_type, int Ncells)
 {
   BL_PROFILE("Pele::reactor_init()");
   amrex::ParmParse pp("ode");
@@ -148,7 +138,7 @@ react(
   neq_tot = NEQ * NCELLS;
   AMREX_ASSERT(NCELLS < std::numeric_limits<int>::max());
 
-  UserData user_data;
+  ARKODEUserData *user_data;
   user_data =
     (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
   user_data->ncells_d = NCELLS;
@@ -294,7 +284,7 @@ react(
   NEQ = NUM_SPECIES + 1;
   NCELLS = Ncells;
   neq_tot = NEQ * NCELLS;
-  UserData user_data;
+  ARKODEUserData *user_data;
   user_data =
     (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
   user_data->ncells_d = NCELLS;
@@ -420,8 +410,7 @@ react(
   return nfe;
 }
 
-int
-cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
+int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 {
   BL_PROFILE("Pele::cF_RHS()");
 #if defined(AMREX_USE_CUDA)
@@ -435,7 +424,7 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
   realtype* ydot_d = N_VGetArrayPointer(ydot_in);
 #endif
 
-  UserData udata = static_cast<ARKODEUserData*>(user_data);
+  ARKODEUserData *udata = static_cast<ARKODEUserData*>(user_data);
   udata->dt_save = t;
 
 #ifdef AMREX_USE_GPU
@@ -460,104 +449,6 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 #endif
 
   amrex::Gpu::Device::streamSynchronize();
-
-  return (0);
-}
-
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
-void
-fKernelSpec(
-  int icell,
-  amrex::Real dt_save,
-  int reactor_type,
-  realtype* yvec_d,
-  realtype* ydot_d,
-  amrex::Real* rhoe_init,
-  amrex::Real* rhoesrc_ext,
-  amrex::Real* rYs)
-{
-  const int offset = icell * (NUM_SPECIES + 1);
-
-  amrex::Real rho_pt = 0.0;
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    rho_pt += yvec_d[offset + n];
-  }
-
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};
-  for (int i = 0; i < NUM_SPECIES; i++) {
-    massfrac[i] = yvec_d[offset + i] / rho_pt;
-  }
-
-  const amrex::Real nrg_pt =
-    (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) / rho_pt;
-
-  amrex::Real temp_pt = yvec_d[offset + NUM_SPECIES];
-
-  amrex::Real Cv_pt = 0.0;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
-  auto eos = pele::physics::PhysicsType::eos();
-  if (reactor_type == 1) {
-    eos.EY2T(nrg_pt, massfrac.arr, temp_pt);
-    eos.T2Ei(temp_pt, ei_pt.arr);
-    eos.TY2Cv(temp_pt, massfrac.arr, Cv_pt);
-  } else {
-    eos.HY2T(nrg_pt, massfrac.arr, temp_pt);
-    eos.TY2Cp(temp_pt, massfrac.arr, Cv_pt);
-    eos.T2Hi(temp_pt, ei_pt.arr);
-  }
-
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> cdots_pt = {0.0};
-  eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
-
-  ydot_d[offset + NUM_SPECIES] = rhoesrc_ext[icell];
-  for (int i = 0; i < NUM_SPECIES; i++) {
-    ydot_d[offset + i] = cdots_pt[i] + rYs[icell * NUM_SPECIES + i];
-    ydot_d[offset + NUM_SPECIES] -= ydot_d[offset + i] * ei_pt[i];
-  }
-  ydot_d[offset + NUM_SPECIES] /= (rho_pt * Cv_pt);
-}
-
-// Check function return value...
-//     opt == 0 means SUNDIALS function allocates memory so check if
-//              returned NULL pointer
-//     opt == 1 means SUNDIALS function returns a flag so check if
-//              flag >= 0
-//     opt == 2 means function allocates memory so check if returned
-//              NULL pointer
-int
-check_flag(void* flagvalue, const char* funcname, int opt)
-{
-  int* errflag;
-
-  if (opt == 0 && flagvalue == NULL) {
-    if (amrex::ParallelDescriptor::IOProcessor()) {
-      fprintf(
-        stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
-        funcname);
-      amrex::Abort("abort");
-    }
-    return (1);
-  } else if (opt == 1) {
-    errflag = (int*)flagvalue;
-    if (*errflag < 0) {
-      if (amrex::ParallelDescriptor::IOProcessor()) {
-        fprintf(
-          stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n\n", funcname,
-          *errflag);
-        amrex::Abort("abort");
-      }
-      return (1);
-    }
-  } else if (opt == 2 && flagvalue == NULL) {
-    if (amrex::ParallelDescriptor::IOProcessor()) {
-      fprintf(
-        stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
-        funcname);
-      amrex::Abort("abort");
-    }
-    return (1);
-  }
 
   return (0);
 }
