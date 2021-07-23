@@ -1297,60 +1297,6 @@ cJac(
 }
 #endif
 
-AMREX_GPU_DEVICE
-AMREX_FORCE_INLINE
-void
-fKernelSpec(
-  int icell,
-  amrex::Real dt_save,
-  int reactor_type,
-  realtype* yvec_d,
-  realtype* ydot_d,
-  amrex::Real* rhoe_init,
-  amrex::Real* rhoesrc_ext,
-  amrex::Real* rYs)
-{
-  const int offset = icell * (NUM_SPECIES + 1);
-
-  amrex::Real rho_pt = 0.0;
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    rho_pt += yvec_d[offset + n];
-  }
-
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};
-  for (int i = 0; i < NUM_SPECIES; i++) {
-    massfrac[i] = yvec_d[offset + i] / rho_pt;
-  }
-
-  const amrex::Real nrg_pt =
-    (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) / rho_pt;
-
-  amrex::Real temp_pt = yvec_d[offset + NUM_SPECIES];
-
-  amrex::Real Cv_pt = 0.0;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
-  auto eos = pele::physics::PhysicsType::eos();
-  if (reactor_type == 1) {
-    eos.EY2T(nrg_pt, massfrac.arr, temp_pt);
-    eos.T2Ei(temp_pt, ei_pt.arr);
-    eos.TY2Cv(temp_pt, massfrac.arr, Cv_pt);
-  } else {
-    eos.HY2T(nrg_pt, massfrac.arr, temp_pt);
-    eos.TY2Cp(temp_pt, massfrac.arr, Cv_pt);
-    eos.T2Hi(temp_pt, ei_pt.arr);
-  }
-
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> cdots_pt = {0.0};
-  eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
-
-  ydot_d[offset + NUM_SPECIES] = rhoesrc_ext[icell];
-  for (int i = 0; i < NUM_SPECIES; i++) {
-    ydot_d[offset + i] = cdots_pt[i] + rYs[icell * NUM_SPECIES + i];
-    ydot_d[offset + NUM_SPECIES] -= ydot_d[offset + i] * ei_pt[i];
-  }
-  ydot_d[offset + NUM_SPECIES] /= (rho_pt * Cv_pt);
-}
-
 #ifdef AMREX_USE_CUDA
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
@@ -1742,4 +1688,3 @@ PrintFinalStats(void* cvodeMem)
   Print() << "nConvfail  = " << ncfn << "    nLinConvfail  = " << ncfl
           << "\n\n";
 }
-
