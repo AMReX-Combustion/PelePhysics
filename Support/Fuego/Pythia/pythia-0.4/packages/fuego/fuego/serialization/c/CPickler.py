@@ -2140,7 +2140,10 @@ class CPickler(CMill):
                 if (float(coefficient) == 1.0):
                     conc = "sc[%d]" % self.ordered_idx_map[symbol]
                 else:
-                    conc = "pow(sc[%d], %f)" % (self.ordered_idx_map[symbol], float(coefficient))
+                    if (float(coefficient) == 2.0):
+                        conc = "(sc[%d] * sc[%d])" % (self.ordered_idx_map[symbol], self.ordered_idx_map[symbol])
+                    else:
+                        conc = "pow(sc[%d], %f)" % (self.ordered_idx_map[symbol], float(coefficient))
                 phi += [conc]
         return "*".join(phi)
 
