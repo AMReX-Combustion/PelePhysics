@@ -1854,9 +1854,9 @@ class CPickler(CMill):
                     self._write("qr[%d] *= Corr * k_r;" % idx)
                 else:
                     if KcConv:
-                        self._write("qr[%d] *= Corr * k_f / (exp(%s) * %s);" % (idx,KcExpArg,KcConv))        
+                        self._write("qr[%d] *= Corr * k_f * exp(-(%s)) / (%s);" % (idx,KcExpArg,KcConv))        
                     else:
-                        self._write("qr[%d] *= Corr * k_f / exp(%s);" % (idx,KcExpArg))
+                        self._write("qr[%d] *= Corr * k_f * exp(-(%s));" % (idx,KcExpArg))
 
             self._write()
 
