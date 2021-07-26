@@ -1780,9 +1780,10 @@ class CPickler(CMill):
                   else:
                       self._write("           * exp(%.17g * tc[0] - %.17g * invT);" % (beta, (aeuc / Rc / kelvin) * E))
 
+                alpha = 1.0;
                 if not thirdBody:
-                    self._write("Corr  = 1.0;")
-                    self._write("qf[%d] *= Corr * k_f;" % idx)
+                    #self._write("Corr  = 1.0;")
+                    self._write("qf[%d] *= k_f;" % idx)
                 elif not low:
                     alpha = self._enhancement_d_with_QSS(mechanism, reaction)
                     self._write("Corr  = %s;" %(alpha))
@@ -1851,12 +1852,21 @@ class CPickler(CMill):
                         sys.exit(1)
                     self._write("k_r = %.17g * %.17g " % (uc_rev.value,Ar)) 
                     self._write("           * exp(%.17g * tc[0] - %.17g * %.17g * invT);" % (betar, aeuc / Rc / kelvin, Er))
-                    self._write("qr[%d] *= Corr * k_r;" % idx)
+                    if (alpha == 1.0):
+                        self._write("qr[%d] *= k_r;" % idx)
+                    else:
+                        self._write("qr[%d] *= Corr * k_r;" % idx)
                 else:
                     if KcConv:
-                        self._write("qr[%d] *= Corr * k_f * exp(-(%s)) / (%s);" % (idx,KcExpArg,KcConv))        
+                        if (alpha == 1.0):
+                            self._write("qr[%d] *= k_f * exp(-(%s)) / (%s);" % (idx,KcExpArg,KcConv))
+                        else:
+                            self._write("qr[%d] *= Corr * k_f * exp(-(%s)) / (%s);" % (idx,KcExpArg,KcConv))
                     else:
-                        self._write("qr[%d] *= Corr * k_f * exp(-(%s));" % (idx,KcExpArg))
+                        if (alpha == 1.0):
+                            self._write("qr[%d] *= k_f * exp(-(%s));" % (idx,KcExpArg))
+                        else:
+                            self._write("qr[%d] *= Corr * k_f * exp(-(%s));" % (idx,KcExpArg))
 
             self._write()
 
