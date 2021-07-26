@@ -1,13 +1,11 @@
-#include<reactor.H>
+#includ "reactor.H"
 
-using namespace amrex;
-
-Array<double, NUM_SPECIES + 1> typVals={-1};
+amrex::Array<double, NUM_SPECIES + 1> typVals={-1};
 int eint_rho=1; // in/out = rhoE/rhoY
 int enth_rho=2; // in/out = rhoH/rhoY
-Real relTol=1e-10;
-Real absTol=1e-10;
-Real time_init=0.0;
+amrex::Real relTol=1e-6;
+amrex::Real absTol=1e-10;
+amrex::Real time_init=0.0;
 int dense_solve = 1;
 int sparse_solve = 5;
 int iterative_gmres_solve = 99;
@@ -19,14 +17,11 @@ int use_erkstep = 0;
 int rk_method = 40;
 int rk_controller = 0;
 
-
-//===================================================================
-//Tolerances
 //===================================================================
 void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
 {
   int size_ETV = ExtTypVals.size();
-  Vector<std::string> kname;
+  amrex::Vector<std::string> kname;
   pele::physics::eos::speciesNames(kname);
   int omp_thread = 0;
 

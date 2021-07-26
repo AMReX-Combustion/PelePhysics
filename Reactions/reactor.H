@@ -75,7 +75,7 @@ void reactor_close();
 
 
 //===================================================================
-//User data to feed CPU/GPU sundials handle
+//User data to feed into CPU/GPU sundials handle
 //===================================================================
 #ifdef AMREX_USE_GPU
  struct CVODEUserData
@@ -273,7 +273,7 @@ box_unflatten(
 //===================================================================
 
 //===================================================================
-//Tolerances
+//Tolerance setting with typical values
 //===================================================================
 void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
 void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
@@ -410,28 +410,7 @@ static int cJac(
   N_Vector tmp1,
   N_Vector tmp2,
   N_Vector tmp3);
-#endif
-//===================================================================
 
-//===================================================================
-//Stats and checks
-//===================================================================
-int check_flag(void* flagvalue, const char* funcname, int opt);
-
-//FIXME: make them the same
-#ifdef AMREX_USE_GPU
-static void PrintFinalStats(void* cvode_mem);
-#else
-static void PrintFinalStats(void* cvode_mem,amrex::Real Temp);
-#endif
-//===================================================================
-
-
-//===================================================================
-// CUDA specific Jacobian functions
-//===================================================================
-#ifdef AMREX_USE_CUDA
-// JACOBIANS
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void fKernelComputeallAJ(
@@ -483,6 +462,20 @@ int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A);
 int SUNLinSolFree_Dense_custom(SUNLinearSolver S);
 #endif
 //===================================================================
+
+//===================================================================
+//Stats and checks
+//===================================================================
+int check_flag(void* flagvalue, const char* funcname, int opt);
+
+//FIXME: make them the same
+#ifdef AMREX_USE_GPU
+static void PrintFinalStats(void* cvode_mem);
+#else
+static void PrintFinalStats(void* cvode_mem,amrex::Real Temp);
+#endif
+//===================================================================
+
 
 //===================================================================
 //CPU specific cvode functions

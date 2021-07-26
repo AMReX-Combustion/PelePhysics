@@ -1,4 +1,4 @@
-#include "../reactor.H"
+#include "reactor.H"
 
 int reactor_init(int reactor_type, int Ncells)
 {

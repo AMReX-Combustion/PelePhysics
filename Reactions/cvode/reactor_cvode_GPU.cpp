@@ -1,4 +1,4 @@
-#include "../reactor.H"
+#include "reactor.H"
 
 using namespace amrex;
 
