@@ -1674,6 +1674,22 @@ class CPickler(CMill):
             nclassd = nReactions - nspecial
             #nCorr   = n3body + ntroe + nsri + nlindemann
 
+            # reacs are sorted here
+            for i in range(nReactions):
+                self._write()
+                reaction = mechanism.reaction(id=i)
+                self._write(self.line('reaction %d: %s' % (reaction.orig_id, reaction.equation())))
+                if (len(reaction.ford) > 0):
+                    self._write("qf[%d] = %s;" % (i, self._QSSsortedPhaseSpace(mechanism, reaction.ford)))
+                else:
+                    self._write("qf[%d] = %s;" % (i, self._QSSsortedPhaseSpace(mechanism, reaction.reactants)))
+                if reaction.reversible:
+                    self._write("qr[%d] = %s;" % (i, self._QSSsortedPhaseSpace(mechanism, reaction.products)))
+                else:
+                    self._write("qr[%d] = 0.0;" % (i))
+
+            self._write()
+
             # Mixt concentration for PD & TB
             self._write(self.line('compute the mixture concentration'))
             self._write('amrex::Real mixture = 0.0;')
@@ -1727,14 +1743,6 @@ class CPickler(CMill):
             for i in range(nReactions):
                 reaction = mechanism.reaction(id=i)
                 idx = reaction.id - 1
-                if (len(reaction.ford) > 0):
-                    forward_sc = self._QSSsortedPhaseSpace(mechanism, reaction.ford)
-                else:
-                    forward_sc = self._QSSsortedPhaseSpace(mechanism, reaction.reactants)
-                if reaction.reversible:
-                    reverse_sc = self._QSSsortedPhaseSpace(mechanism, reaction.products)
-                else:
-                    reverse_sc = "0.0"
 
                 KcExpArg = self._sortedKcExpArg(mechanism, reaction)
                 KcConv = self._KcConv(mechanism, reaction)
@@ -1774,11 +1782,12 @@ class CPickler(CMill):
 
                 alpha = 1.0;
                 if not thirdBody:
-                    self._write("qf[%d] = k_f * (%s);" % (idx, forward_sc))
+                    #self._write("Corr  = 1.0;")
+                    self._write("qf[%d] *= k_f;" % idx)
                 elif not low:
                     alpha = self._enhancement_d_with_QSS(mechanism, reaction)
                     self._write("Corr  = %s;" %(alpha))
-                    self._write("qf[%d] = Corr * k_f * (%s);" % (idx, forward_sc))
+                    self._write("qf[%d] *= Corr * k_f;" % idx)
                 else:
                     alpha = self._enhancement_d_with_QSS(mechanism, reaction)
                     self._write("Corr  = %s;" %(alpha))
@@ -1811,7 +1820,7 @@ class CPickler(CMill):
                         self._write("troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));")
                         self._write("F_troe = pow(10., logFcent / (1.0 + troe*troe));")
                         self._write("Corr = F * F_troe;")
-                        self._write("qf[%d] = Corr * k_f * (%s);" % (idx, forward_sc))
+                        self._write("qf[%d] *= Corr * k_f;" % idx)
                     elif reaction.sri:
                         self._write("F = redP / (1.0 + redP);")
                         self._write("logPred = log10(redP);")
@@ -1826,10 +1835,10 @@ class CPickler(CMill):
                             self._write("   +  0. ") 
                         self._write("   *  (%d > 3 ? %.17g*exp(%.17g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
                         self._write("Corr = F * F_sri;")
-                        self._write("qf[%d] = Corr * k_f * (%s);" % (idx, forward_sc))
+                        self._write("qf[%d] *= Corr * k_f;" % idx)
                     elif (nlindemann > 0):
                         self._write("Corr = redP / (1. + redP);")
-                        self._write("qf[%d] = Corr * k_f * (%s);" % (idx, forward_sc))
+                        self._write("qf[%d] *= Corr * k_f;" % idx)
 
                 if reaction.rev:
                     Ar, betar, Er = reaction.rev
@@ -1844,20 +1853,20 @@ class CPickler(CMill):
                     self._write("k_r = %.17g * %.17g " % (uc_rev.value,Ar)) 
                     self._write("           * exp(%.17g * tc[0] - %.17g * %.17g * invT);" % (betar, aeuc / Rc / kelvin, Er))
                     if (alpha == 1.0):
-                        self._write("qr[%d] = k_r * (%s);" % (idx, reverse_sc))
+                        self._write("qr[%d] *= k_r;" % idx)
                     else:
-                        self._write("qr[%d] = Corr * k_r * (%s);" % (idx, reverse_sc))
+                        self._write("qr[%d] *= Corr * k_r;" % idx)
                 else:
                     if KcConv:
                         if (alpha == 1.0):
-                            self._write("qr[%d] = k_f * exp(-(%s)) / (%s) * (%s);" % (idx,KcExpArg,KcConv,reverse_sc))
+                            self._write("qr[%d] *= k_f * exp(-(%s)) / (%s);" % (idx,KcExpArg,KcConv))
                         else:
-                            self._write("qr[%d] = Corr * k_f * exp(-(%s)) / (%s) * (%s);" % (idx,KcExpArg,KcConv,reverse_sc))
+                            self._write("qr[%d] *= Corr * k_f * exp(-(%s)) / (%s);" % (idx,KcExpArg,KcConv))
                     else:
                         if (alpha == 1.0):
-                            self._write("qr[%d] = k_f * exp(-(%s)) * (%s);" % (idx,KcExpArg,reverse_sc))
+                            self._write("qr[%d] *= k_f * exp(-(%s));" % (idx,KcExpArg))
                         else:
-                            self._write("qr[%d] = Corr * k_f * exp(-(%s)) * (%s);" % (idx,KcExpArg,reverse_sc))
+                            self._write("qr[%d] *= Corr * k_f * exp(-(%s));" % (idx,KcExpArg))
 
             self._write()
 
