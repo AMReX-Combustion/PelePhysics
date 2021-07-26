@@ -1,4 +1,4 @@
-#includ "reactor.H"
+#include "reactor.H"
 
 amrex::Array<double, NUM_SPECIES + 1> typVals={-1};
 int eint_rho=1; // in/out = rhoE/rhoY
@@ -37,12 +37,12 @@ void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
 
   if (omp_thread == 0) 
   {
-    Print() << "Set the typVals in PelePhysics: \n  ";
+    amrex::Print() << "Set the typVals in PelePhysics: \n  ";
     for (int i = 0; i < size_ETV - 1; i++) 
     {
-      Print() << kname[i] << ":" << typVals[i] << "  ";
+      amrex::Print() << kname[i] << ":" << typVals[i] << "  ";
     }
-    Print() << "Temp:" << typVals[size_ETV - 1] << " \n";
+    amrex::Print() << "Temp:" << typVals[size_ETV - 1] << " \n";
   }
 
 }
@@ -56,7 +56,7 @@ void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol)
   relTol = relative_tol;
   absTol = absolute_tol;
   if(omp_thread == 0){
-  Print() << "Set RTOL, ATOL = " << relTol << " " << absTol
+  amrex::Print() << "Set RTOL, ATOL = " << relTol << " " << absTol
           << " in PelePhysics\n";
   }
 
