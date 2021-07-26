@@ -4222,7 +4222,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[19] *= Corr * k_f / exp(g_RT[2] - g_RT[4] - g_RT[9] + g_RT[10]);
     // (7):  O + CO + M <=> CO2 + M
     k_f = 602.00000000000011
-               * exp(- 1509.6499974141591 * inv);
+               * exp(- 1509.6499974141591 * invT);
     Corr  = mixture + ( 2 - 1)*sc[0] + ( 6 - 1)*sc[3] + ( 6 - 1)*sc[5] + ( 2 - 1)*sc[10] + ( 1.5 - 1)*sc[11] + ( 3.5 - 1)*sc[12] + ( 3 - 1)*sc[18] + ( 0.5 - 1)*sc[20];
     qf[9] *= Corr * k_f;
     qr[9] *= Corr * k_f / (exp(g_RT[2] + g_RT[11] - g_RT[12]) * refCinv);
@@ -4240,7 +4240,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[21] *= Corr * k_f / exp(-g_RT[1] + g_RT[2] - g_RT[12] + g_RT[13]);
     // (10):  O + CH2O <=> OH + HCO
     k_f = 39000000.000000007
-               * exp(- 1781.3869969487077 * inv);
+               * exp(- 1781.3869969487077 * invT);
     Corr  = 1.0;
     qf[22] *= Corr * k_f;
     qr[22] *= Corr * k_f / exp(g_RT[2] - g_RT[4] - g_RT[13] + g_RT[14]);
@@ -4264,13 +4264,13 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[25] *= Corr * k_f / exp(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[18]);
     // (14):  O2 + CO <=> O + CO2
     k_f = 2500000.0000000005
-               * exp(- 24053.756625465601 * inv);
+               * exp(- 24053.756625465601 * invT);
     Corr  = 1.0;
     qf[26] *= Corr * k_f;
     qr[26] *= Corr * k_f / exp(-g_RT[2] + g_RT[3] + g_RT[11] - g_RT[12]);
     // (15):  O2 + CH2O <=> HO2 + HCO
     k_f = 100000000.00000001
-               * exp(- 20128.666632188786 * inv);
+               * exp(- 20128.666632188786 * invT);
     Corr  = 1.0;
     qf[27] *= Corr * k_f;
     qr[27] *= Corr * k_f / exp(g_RT[3] - g_RT[6] - g_RT[13] + g_RT[14]);
@@ -4306,7 +4306,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[31] *= Corr * k_f / (exp(g_RT[1] + g_RT[3] - g_RT[6] + g_RT[20] - g_RT[20]) * refCinv);
     // (21):  H + O2 <=> O + OH
     k_f = 83000000.000000015
-               * exp(- 7252.8618042434246 * inv);
+               * exp(- 7252.8618042434246 * invT);
     Corr  = 1.0;
     qf[32] *= Corr * k_f;
     qr[32] *= Corr * k_f / exp(g_RT[1] - g_RT[2] + g_RT[3] - g_RT[4]);
@@ -4342,13 +4342,13 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[12] *= Corr * k_f / (exp(g_RT[1] + g_RT[4] - g_RT[5]) * refCinv);
     // (27):  H + HO2 <=> O2 + H2
     k_f = 28000000.000000004
-               * exp(- 537.43539907944057 * inv);
+               * exp(- 537.43539907944057 * invT);
     Corr  = 1.0;
     qf[36] *= Corr * k_f;
     qr[36] *= Corr * k_f / exp(-g_RT[0] + g_RT[1] - g_RT[3] + g_RT[6]);
     // (28):  H + HO2 <=> 2.000000 OH
     k_f = 134000000.00000001
-               * exp(- 319.54258278599701 * inv);
+               * exp(- 319.54258278599701 * invT);
     Corr  = 1.0;
     qf[37] *= Corr * k_f;
     qr[37] *= Corr * k_f / exp(g_RT[1] - 2.000000*g_RT[4] + g_RT[6]);
@@ -4529,7 +4529,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[44] *= Corr * k_f / exp(-g_RT[2] + 2.000000*g_RT[4] - g_RT[5]);
     // (43):  OH + HO2 <=> O2 + H2O
     k_f = 29000000.000000004
-               * exp(- -251.60833290235985 * inv);
+               * exp(- -251.60833290235985 * invT);
     Corr  = 1.0;
     qf[45] *= Corr * k_f;
     qr[45] *= Corr * k_f / exp(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6]);
@@ -4607,13 +4607,13 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[57] *= Corr * k_f / exp(-g_RT[4] + g_RT[6] + g_RT[9] - g_RT[15]);
     // (56):  HO2 + CO <=> OH + CO2
     k_f = 150000000.00000003
-               * exp(- 11875.913312991384 * inv);
+               * exp(- 11875.913312991384 * invT);
     Corr  = 1.0;
     qf[58] *= Corr * k_f;
     qr[58] *= Corr * k_f / exp(-g_RT[4] + g_RT[6] + g_RT[11] - g_RT[12]);
     // (57):  CH2 + O2 <=> OH + HCO
     k_f = 13200000.000000002
-               * exp(- 754.82499870707954 * inv);
+               * exp(- 754.82499870707954 * invT);
     Corr  = 1.0;
     qf[59] *= Corr * k_f;
     qr[59] *= Corr * k_f / exp(g_RT[3] - g_RT[4] + g_RT[7] - g_RT[13]);
@@ -4637,13 +4637,13 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[62] *= Corr * k_f / exp(g_RT[7] - 2.000000*g_RT[9] + g_RT[10]);
     // (61):  CH2(S) + N2 <=> CH2 + N2
     k_f = 15000000.000000002
-               * exp(- 301.92999948283182 * inv);
+               * exp(- 301.92999948283182 * invT);
     Corr  = 1.0;
     qf[63] *= Corr * k_f;
     qr[63] *= Corr * k_f / exp(-g_RT[7] + g_RT[8] + g_RT[19] - g_RT[19]);
     // (62):  CH2(S) + AR <=> CH2 + AR
     k_f = 9000000.0000000019
-               * exp(- 301.92999948283182 * inv);
+               * exp(- 301.92999948283182 * invT);
     Corr  = 1.0;
     qf[64] *= Corr * k_f;
     qr[64] *= Corr * k_f / exp(-g_RT[7] + g_RT[8] + g_RT[20] - g_RT[20]);
@@ -4673,13 +4673,13 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[68] *= Corr * k_f / exp(g_RT[5] - g_RT[5] - g_RT[7] + g_RT[8]);
     // (67):  CH2(S) + CH3 <=> H + C2H4
     k_f = 12000000.000000002
-               * exp(- -286.83349950869024 * inv);
+               * exp(- -286.83349950869024 * invT);
     Corr  = 1.0;
     qf[69] *= Corr * k_f;
     qr[69] *= Corr * k_f / exp(-g_RT[1] + g_RT[8] + g_RT[9] - g_RT[16]);
     // (68):  CH2(S) + CH4 <=> 2.000000 CH3
     k_f = 16000000.000000002
-               * exp(- -286.83349950869024 * inv);
+               * exp(- -286.83349950869024 * invT);
     Corr  = 1.0;
     qf[70] *= Corr * k_f;
     qr[70] *= Corr * k_f / exp(g_RT[8] - 2.000000*g_RT[9] + g_RT[10]);
@@ -4703,13 +4703,13 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[73] *= Corr * k_f / exp(g_RT[8] - g_RT[11] + g_RT[12] - g_RT[14]);
     // (72):  CH3 + O2 <=> O + CH3O
     k_f = 26750000.000000004
-               * exp(- 14492.639975175927 * inv);
+               * exp(- 14492.639975175927 * invT);
     Corr  = 1.0;
     qf[74] *= Corr * k_f;
     qr[74] *= Corr * k_f / exp(-g_RT[2] + g_RT[3] + g_RT[9] - g_RT[15]);
     // (73):  CH3 + O2 <=> OH + CH2O
     k_f = 36000.000000000007
-               * exp(- 4498.7569922941939 * inv);
+               * exp(- 4498.7569922941939 * invT);
     Corr  = 1.0;
     qf[75] *= Corr * k_f;
     qr[75] *= Corr * k_f / exp(g_RT[3] - g_RT[4] + g_RT[9] - g_RT[14]);
@@ -4770,7 +4770,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[13] *= Corr * k_f / (exp(-g_RT[1] - g_RT[11] + g_RT[13]) * refC);
     // (81):  HCO + O2 <=> HO2 + CO
     k_f = 7600000.0000000009
-               * exp(- 201.28666632188788 * inv);
+               * exp(- 201.28666632188788 * invT);
     Corr  = 1.0;
     qf[81] *= Corr * k_f;
     qr[81] *= Corr * k_f / exp(g_RT[3] - g_RT[6] - g_RT[11] + g_RT[13]);
@@ -4782,7 +4782,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     qr[82] *= Corr * k_f / exp(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[15]);
     // (83):  C2H5 + O2 <=> HO2 + C2H4
     k_f = 840000.00000000012
-               * exp(- 1949.9645799932887 * inv);
+               * exp(- 1949.9645799932887 * invT);
     Corr  = 1.0;
     qf[83] *= Corr * k_f;
     qr[83] *= Corr * k_f / exp(g_RT[3] - g_RT[6] - g_RT[16] + g_RT[17]);
