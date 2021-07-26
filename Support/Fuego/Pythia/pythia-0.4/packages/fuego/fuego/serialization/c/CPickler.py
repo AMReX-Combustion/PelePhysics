@@ -1804,26 +1804,23 @@ class CPickler(CMill):
                         self._write("logPred = log10(redP);")
                         self._write('logFcent = log10(')
                         if (abs(troe[1]) > 1.e-100):
-                            if(troe[0] < 0):
-                                self._write('    (1.+%.17g)*exp(-tc[1] / %.17g) ' % (-troe[0],troe[1]))
-                            else:
-                                self._write('    (1.-%.17g)*exp(-tc[1] / %.17g) ' % (troe[0],troe[1]))
+                            self._write('    (%.17g)*exp(-tc[1] * %.17g)' % (1.0 - troe[0],1 / troe[1]))
                         else:
-                            self._write('     0. ' )
+                            self._write('     0.0 ' )
                         if (abs(troe[2]) > 1.e-100):
-                            self._write('    + %.17g * exp(-tc[1]/%.17g)  ' % (troe[0],troe[2]))
+                            self._write('    + %.17g * exp(-tc[1] * %.17g)' % (troe[0], 1 / troe[2]))
                         else:
-                            self._write('    + 0. ')
+                            self._write('    + 0.0 ')
                         if (ntroe == 4):
                             if(troe[3] < 0):
                                 self._write('    + exp(%.17g * invT));' % -troe[3])
                             else:
                                 self._write('    + exp(-%.17g * invT));' % troe[3])
                         else:
-                            self._write('    + 0.);' )
-                        self._write("troe_c = -.4 - .67 * logFcent;")
-                        self._write("troe_n = .75 - 1.27 * logFcent;")
-                        self._write("troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));")
+                            self._write('    + 0.0);' )
+                        self._write("troe_c = -0.4 - 0.67 * logFcent;")
+                        self._write("troe_n = 0.75 - 1.27 * logFcent;")
+                        self._write("troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));")
                         self._write("F_troe = pow(10., logFcent / (1.0 + troe*troe));")
                         self._write("Corr = F * F_troe;")
                         self._write("qf[%d] *= Corr * k_f;" % idx)

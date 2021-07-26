@@ -4337,12 +4337,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     F = redP / (1.0 + redP);
     logPred = log10(redP);
     logFcent = log10(
-        (1.-0.68000000000000005)*exp(-tc[1] / 78) 
-        + 0.68000000000000005 * exp(-tc[1]/1995)  
+        (0.31999999999999995)*exp(-tc[1] * 0.01282051282051282)
+        + 0.68000000000000005 * exp(-tc[1] * 0.00050125313283208019)
         + exp(-5590 * invT));
-    troe_c = -.4 - .67 * logFcent;
-    troe_n = .75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
+    troe_c = -0.4 - 0.67 * logFcent;
+    troe_n = 0.75 - 1.27 * logFcent;
+    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
     F_troe = pow(10., logFcent / (1.0 + troe*troe));
     Corr = F * F_troe;
     qf[0] *= Corr * k_f;
@@ -4356,12 +4356,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     F = redP / (1.0 + redP);
     logPred = log10(redP);
     logFcent = log10(
-        (1.-0.78300000000000003)*exp(-tc[1] / 74) 
-        + 0.78300000000000003 * exp(-tc[1]/2941)  
+        (0.21699999999999997)*exp(-tc[1] * 0.013513513513513514)
+        + 0.78300000000000003 * exp(-tc[1] * 0.00034002040122407346)
         + exp(-6964 * invT));
-    troe_c = -.4 - .67 * logFcent;
-    troe_n = .75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
+    troe_c = -0.4 - 0.67 * logFcent;
+    troe_n = 0.75 - 1.27 * logFcent;
+    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
     F_troe = pow(10., logFcent / (1.0 + troe*troe));
     Corr = F * F_troe;
     qf[1] *= Corr * k_f;
@@ -4380,12 +4380,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     F = redP / (1.0 + redP);
     logPred = log10(redP);
     logFcent = log10(
-        (1.-0.78239999999999998)*exp(-tc[1] / 271) 
-        + 0.78239999999999998 * exp(-tc[1]/2755)  
+        (0.21760000000000002)*exp(-tc[1] * 0.0036900369003690036)
+        + 0.78239999999999998 * exp(-tc[1] * 0.00036297640653357529)
         + exp(-6570 * invT));
-    troe_c = -.4 - .67 * logFcent;
-    troe_n = .75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
+    troe_c = -0.4 - 0.67 * logFcent;
+    troe_n = 0.75 - 1.27 * logFcent;
+    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
     F_troe = pow(10., logFcent / (1.0 + troe*troe));
     Corr = F * F_troe;
     qf[2] *= Corr * k_f;
@@ -4404,12 +4404,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     F = redP / (1.0 + redP);
     logPred = log10(redP);
     logFcent = log10(
-        (1.-0.75800000000000001)*exp(-tc[1] / 94) 
-        + 0.75800000000000001 * exp(-tc[1]/1555)  
+        (0.24199999999999999)*exp(-tc[1] * 0.010638297872340425)
+        + 0.75800000000000001 * exp(-tc[1] * 0.00064308681672025725)
         + exp(-4200 * invT));
-    troe_c = -.4 - .67 * logFcent;
-    troe_n = .75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
+    troe_c = -0.4 - 0.67 * logFcent;
+    troe_n = 0.75 - 1.27 * logFcent;
+    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
     F_troe = pow(10., logFcent / (1.0 + troe*troe));
     Corr = F * F_troe;
     qf[3] *= Corr * k_f;
@@ -4433,12 +4433,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     F = redP / (1.0 + redP);
     logPred = log10(redP);
     logFcent = log10(
-        (1.-0.97529999999999994)*exp(-tc[1] / 210) 
-        + 0.97529999999999994 * exp(-tc[1]/984)  
+        (0.024700000000000055)*exp(-tc[1] * 0.0047619047619047623)
+        + 0.97529999999999994 * exp(-tc[1] * 0.0010162601626016261)
         + exp(-4374 * invT));
-    troe_c = -.4 - .67 * logFcent;
-    troe_n = .75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
+    troe_c = -0.4 - 0.67 * logFcent;
+    troe_n = 0.75 - 1.27 * logFcent;
+    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
     F_troe = pow(10., logFcent / (1.0 + troe*troe));
     Corr = F * F_troe;
     qf[4] *= Corr * k_f;
@@ -4452,12 +4452,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     F = redP / (1.0 + redP);
     logPred = log10(redP);
     logFcent = log10(
-        (1.-0.84219999999999995)*exp(-tc[1] / 125) 
-        + 0.84219999999999995 * exp(-tc[1]/2219)  
+        (0.15780000000000005)*exp(-tc[1] * 0.0080000000000000002)
+        + 0.84219999999999995 * exp(-tc[1] * 0.00045065344749887338)
         + exp(-6882 * invT));
-    troe_c = -.4 - .67 * logFcent;
-    troe_n = .75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
+    troe_c = -0.4 - 0.67 * logFcent;
+    troe_n = 0.75 - 1.27 * logFcent;
+    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
     F_troe = pow(10., logFcent / (1.0 + troe*troe));
     Corr = F * F_troe;
     qf[5] *= Corr * k_f;
@@ -4476,12 +4476,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     F = redP / (1.0 + redP);
     logPred = log10(redP);
     logFcent = log10(
-        (1.-0.93200000000000005)*exp(-tc[1] / 197) 
-        + 0.93200000000000005 * exp(-tc[1]/1540)  
+        (0.067999999999999949)*exp(-tc[1] * 0.005076142131979695)
+        + 0.93200000000000005 * exp(-tc[1] * 0.00064935064935064935)
         + exp(-10300 * invT));
-    troe_c = -.4 - .67 * logFcent;
-    troe_n = .75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
+    troe_c = -0.4 - 0.67 * logFcent;
+    troe_n = 0.75 - 1.27 * logFcent;
+    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
     F_troe = pow(10., logFcent / (1.0 + troe*troe));
     Corr = F * F_troe;
     qf[6] *= Corr * k_f;
@@ -4660,12 +4660,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     F = redP / (1.0 + redP);
     logPred = log10(redP);
     logFcent = log10(
-        (1.-0.53249999999999997)*exp(-tc[1] / 151) 
-        + 0.53249999999999997 * exp(-tc[1]/1038)  
+        (0.46750000000000003)*exp(-tc[1] * 0.0066225165562913907)
+        + 0.53249999999999997 * exp(-tc[1] * 0.00096339113680154141)
         + exp(-4970 * invT));
-    troe_c = -.4 - .67 * logFcent;
-    troe_n = .75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));
+    troe_c = -0.4 - 0.67 * logFcent;
+    troe_n = 0.75 - 1.27 * logFcent;
+    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
     F_troe = pow(10., logFcent / (1.0 + troe*troe));
     Corr = F * F_troe;
     qf[7] *= Corr * k_f;
