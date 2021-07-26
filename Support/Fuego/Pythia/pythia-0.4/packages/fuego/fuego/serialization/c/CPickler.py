@@ -2109,13 +2109,19 @@ class CPickler(CMill):
         for i, eff in enumerate(efficiencies):
             symbol, efficiency = eff
             if symbol not in self.qss_species_list:
-                factor = "( %.17g - 1)" % (efficiency)
+                factor = "(%.17g)" % (efficiency - 1)
                 conc = "sc[%d]" % self.ordered_idx_map[symbol]
-                alpha.append("%s*%s" % (factor, conc))
+                if ((efficiency - 1) == 1):
+                    alpha.append("%s" % (conc))
+                else:
+                    alpha.append("%s*%s" % (factor, conc))
             else:
-                factor = "( %.17g - 1)" % (efficiency)
+                factor = "(%.17g)" % (efficiency - 1)
                 conc = "sc_qss[%d]" % (self.ordered_idx_map[symbol] - self.nSpecies)
-                alpha.append("%s*%s" % (factor, conc))
+                if ((efficiency - 1) == 1):
+                    alpha.append("%s" % (conc))
+                else:
+                    alpha.append("%s*%s" % (factor, conc))
 
         return " + ".join(alpha).replace('+ -','- ')
 
