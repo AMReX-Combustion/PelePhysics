@@ -1739,9 +1739,15 @@ class CPickler(CMill):
             for i, reaction in zip(range(nReactions), mechanism.reaction()):
                 rmap[reaction.orig_id-1] = i
 
+            # reacs are sorted here
+            #for i in range(nReactions):
+            #    self._write()
+            #    self._write(self.line('reaction %d: %s' % (reaction.orig_id, reaction.equation())))
+            #self._write()
+
             # Loop like you're going through them in the mech.Linp order
             for i in range(nReactions):
-                reaction = mechanism.reaction(id=i)
+                reaction = mechanism.reaction()[rmap[i]]
                 idx = reaction.id - 1
 
                 KcExpArg = self._sortedKcExpArg(mechanism, reaction)
