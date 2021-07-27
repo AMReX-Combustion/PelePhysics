@@ -1941,7 +1941,7 @@ class CPickler(CMill):
 
             # Loop like you're going through them in the mech.Linp order
             for i in range(nReactions):
-                reaction = mechanism.reaction()[rmap[i]]
+                reaction = mechanism.reaction(id=i)
                 idx = reaction.id - 1
                 if (len(reaction.ford) > 0):
                     forward_sc = self._QSSsortedPhaseSpace(mechanism, reaction.ford)
