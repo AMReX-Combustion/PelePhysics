@@ -5374,7 +5374,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
     amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     amrex::Real invT = 1.0 / tc[1];
 
-    amrex::Real qdot[84];
+    amrex::Real qdot[84] = {0.0};
     amrex::Real sc_qss[1];
     comp_qdot(qdot, sc, sc_qss, tc, invT);
 

@@ -2092,7 +2092,7 @@ class CPickler(CMill):
             self._write()
         else:
             self._write()
-            self._write('amrex::Real qdot[%d];' % (nReactions))
+            self._write('amrex::Real qdot[%d] = {0.0};' % (nReactions))
             self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
             if (self.nQSSspecies > 0):
                 self._write('/* Fill sc_qss here*/')
