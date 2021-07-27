@@ -1953,7 +1953,7 @@ class CPickler(CMill):
                     reverse_sc = "0.0"
 
                 KcExpArg = self._sortedKcExpArg(mechanism, reaction)
-                KcConv = self._KcConv(mechanism, reaction)
+                KcConvInv = self._KcConvInv(mechanism, reaction)
 
                 A, beta, E = reaction.arrhenius
                 dim = self._phaseSpaceUnits(reaction.reactants)
@@ -2061,11 +2061,11 @@ class CPickler(CMill):
                     else:
                         self._write("qr = Corr * k_r * (%s);" % (reverse_sc))
                 else:
-                    if KcConv:
+                    if KcConvInv:
                         if (alpha == 1.0):
-                            self._write("qr = k_f * exp(-(%s)) / (%s) * (%s);" % (KcExpArg,KcConv,reverse_sc))
+                            self._write("qr = k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
                         else:
-                            self._write("qr = Corr * k_f * exp(-(%s)) / (%s) * (%s);" % (KcExpArg,KcConv,reverse_sc))
+                            self._write("qr = Corr * k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
                     else:
                         if (alpha == 1.0):
                             self._write("qr = k_f * exp(-(%s)) * (%s);" % (KcExpArg,reverse_sc))
@@ -2236,6 +2236,32 @@ class CPickler(CMill):
                 conversion = "*".join(["refCinv"])
             else:
                 conversion = "*".join(["pow(refCinv,%f)" % abs(dim)])
+
+        return conversion
+
+    def _KcConvInv(self, mechanism, reaction):
+        dim = 0
+        for symbol, coefficient in reaction.reactants:
+            dim -= coefficient
+        # flip the signs
+        for symbol, coefficient in reaction.products:
+            dim += coefficient
+
+        if dim == 0:
+            conversion = ""
+        elif dim > 0:
+            if (dim == 1.0):
+                conversion = "*".join(["refCinv"])
+            else:
+                if (dim == 2.0):
+                    conversion = "*".join(["(refCinv * refCinv)"])
+                else:
+                    conversion = "*".join(["pow(refCinv, %f)" % dim])
+        else:
+            if (dim == -1.0):
+                conversion = "*".join(["refC"])
+            else:
+                conversion = "*".join(["pow(refC, %f)" % abs(dim)])
 
         return conversion
 
