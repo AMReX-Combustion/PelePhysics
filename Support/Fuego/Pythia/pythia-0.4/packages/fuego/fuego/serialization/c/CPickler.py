@@ -1733,7 +1733,6 @@ class CPickler(CMill):
             if nsri > 0:
                 self._write("amrex::Real redP, F, X, F_sri;")
             self._write()
-            self._write("const amrex::Real precomputed = log(10);")
 
             # build reverse reaction map
             rmap = {}
@@ -1822,7 +1821,7 @@ class CPickler(CMill):
                         self._write("troe_c = -0.4 - 0.67 * logFcent;")
                         self._write("troe_n = 0.75 - 1.27 * logFcent;")
                         self._write("troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));")
-                        self._write("F_troe = exp(precomputed * (logFcent / (1.0 + troe*troe)));")
+                        self._write("F_troe = pow(10, logFcent / (1.0 + troe*troe));")
                         self._write("Corr = F * F_troe;")
                         self._write("qf[%d] *= Corr * k_f;" % idx)
                     elif reaction.sri:
