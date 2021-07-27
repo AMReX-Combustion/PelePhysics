@@ -4829,6 +4829,7 @@ class CPickler(CMill):
     def _DproductionRatePrecond(self, mechanism):
         self._write()
         self._write(self.line('compute an approx to the reaction Jacobian (for preconditioning)'))
+        self._write('#ifdef COMPUTE_JACOBIAN')
         self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)')
         self._write('{')
         self._indent()
@@ -4858,6 +4859,7 @@ class CPickler(CMill):
         self._write('return;')
         self._outdent()
         self._write('}')
+        self._write('#endif')
         return
 
 
@@ -5453,6 +5455,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute the reaction Jacobian'))
+        self._write('#ifdef COMPUTE_JACOBIAN')
         self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * consP)')
         self._write('{')
         self._indent()
@@ -5482,6 +5485,7 @@ class CPickler(CMill):
         self._write('return;')
         self._outdent()
         self._write('}')
+        self._write('#endif')
         self._write()
         return
 
