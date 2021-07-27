@@ -1934,11 +1934,6 @@ class CPickler(CMill):
                 self._write("amrex::Real redP, F, X, F_sri;")
             self._write()
 
-            # build reverse reaction map
-            rmap = {}
-            for i, reaction in zip(range(nReactions), mechanism.reaction()):
-                rmap[reaction.orig_id-1] = i
-
             # Loop like you're going through them in the mech.Linp order
             for i in range(nReactions):
                 reaction = mechanism.reaction(id=i)
