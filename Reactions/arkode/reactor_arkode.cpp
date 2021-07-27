@@ -148,8 +148,8 @@ react(
 #ifdef AMREX_USE_GPU
   user_data->stream = stream;
 #endif
-  user_data->nbBlocks = std::max(1, NCELLS / 32);
   user_data->nbThreads = 32;
+  user_data->nbBlocks = std::max(1, NCELLS / user_data->nbThreads);
 
 #if defined(AMREX_USE_CUDA)
   y = N_VNewWithMemHelp_Cuda(
