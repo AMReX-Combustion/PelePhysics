@@ -2100,14 +2100,10 @@ class CPickler(CMill):
             self._write('comp_qdot(qdot, sc, sc_qss, tc, invT);');
 
         self._write()
-        self._write('for (int i = 0; i < %d; ++i) {' % nSpecies)
-        self._indent()
-        self._write('wdot[i] = 0.0;')
-        self._outdent()
-        self._write('}')
+
+        wdots = [""] * nSpecies
 
         for i in range(nReactions):
-            self._write()
             reaction = mechanism.reaction(id=i)
             all_agents = list(set(reaction.reactants + reaction.products))
             agents = []
@@ -2124,15 +2120,25 @@ class CPickler(CMill):
                 for b in reaction.reactants:
                     if b == a:
                         if coefficient == 1.0:
-                            self._write("wdot[%d] -= qdot[%d];" % (self.ordered_idx_map[symbol], i))
+                            wdots[self.ordered_idx_map[symbol]] += " - qdot[%d]" % (i)
+                            #self._write("wdot[%d] -= qdot[%d];" % (self.ordered_idx_map[symbol], i))
                         else:
-                            self._write("wdot[%d] -= %f * qdot[%d];" % (self.ordered_idx_map[symbol], coefficient, i))
+                            wdots[self.ordered_idx_map[symbol]] += " - (%f) * qdot[%d]" % (coefficient, i)
+                            #self._write("wdot[%d] -= %f * qdot[%d];" % (self.ordered_idx_map[symbol], coefficient, i))
                 for b in reaction.products: 
                     if b == a:
                         if coefficient == 1.0:
-                            self._write("wdot[%d] += qdot[%d];" % (self.ordered_idx_map[symbol], i))
+                            wdots[self.ordered_idx_map[symbol]] += " + qdot[%d]" % (i)
+                            #self._write("wdot[%d] += qdot[%d];" % (self.ordered_idx_map[symbol], i))
                         else:
-                            self._write("wdot[%d] += %f * qdot[%d];" % (self.ordered_idx_map[symbol], coefficient, i))
+                            wdots[self.ordered_idx_map[symbol]] += " + (%f) * qdot[%d]" % (coefficient, i)
+                            #self._write("wdot[%d] += %f * qdot[%d];" % (self.ordered_idx_map[symbol], coefficient, i))
+
+        for i in range(nSpecies):
+            if wdots[i] == "":
+                self._write("wdot[%d] = 0.0;" % (i))
+            else:
+                self._write("wdot[%d] = %s;" % (i, wdots[i]))
 
         self._write()
         self._write('return;')
