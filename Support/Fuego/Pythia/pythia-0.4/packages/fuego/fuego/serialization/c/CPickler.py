@@ -1751,7 +1751,7 @@ class CPickler(CMill):
                 idx = reaction.id - 1
 
                 KcExpArg = self._sortedKcExpArg(mechanism, reaction)
-                KcConv = self._KcConv(mechanism, reaction)
+                KcConvInv = self._KcConvInv(mechanism, reaction)
 
                 A, beta, E = reaction.arrhenius
                 dim = self._phaseSpaceUnits(reaction.reactants)
@@ -1860,11 +1860,11 @@ class CPickler(CMill):
                     else:
                         self._write("qr[%d] *= Corr * k_r;" % idx)
                 else:
-                    if KcConv:
+                    if KcConvInv:
                         if (alpha == 1.0):
-                            self._write("qr[%d] *= k_f * exp(-(%s)) / (%s);" % (idx,KcExpArg,KcConv))
+                            self._write("qr[%d] *= k_f * exp(-(%s)) * (%s);" % (idx,KcExpArg,KcConvInv))
                         else:
-                            self._write("qr[%d] *= Corr * k_f * exp(-(%s)) / (%s);" % (idx,KcExpArg,KcConv))
+                            self._write("qr[%d] *= Corr * k_f * exp(-(%s)) * (%s);" % (idx,KcExpArg,KcConvInv))
                     else:
                         if (alpha == 1.0):
                             self._write("qr[%d] *= k_f * exp(-(%s));" % (idx,KcExpArg))
