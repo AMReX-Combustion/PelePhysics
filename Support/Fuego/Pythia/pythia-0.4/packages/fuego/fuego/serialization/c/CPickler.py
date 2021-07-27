@@ -1733,6 +1733,7 @@ class CPickler(CMill):
             if nsri > 0:
                 self._write("amrex::Real redP, F, X, F_sri;")
             self._write()
+            self._write("const amrex::Real precomputed = log(10);")
 
             # build reverse reaction map
             rmap = {}
@@ -1780,11 +1781,11 @@ class CPickler(CMill):
                     self._write("           ;")
                 else:
                   if (E == 0):
-                      self._write("           * exp(%.17g * tc[0]);" % (beta))
+                      self._write("           * exp((%.17g) * tc[0]);" % (beta))
                   elif (beta == 0):
-                      self._write("           * exp(- %.17g * invT);" % ((aeuc / Rc / kelvin) * E))
+                      self._write("           * exp(-(%.17g) * invT);" % ((aeuc / Rc / kelvin) * E))
                   else:
-                      self._write("           * exp(%.17g * tc[0] - %.17g * invT);" % (beta, (aeuc / Rc / kelvin) * E))
+                      self._write("           * exp((%.17g) * tc[0] - (%.17g) * invT);" % (beta, (aeuc / Rc / kelvin) * E))
 
                 alpha = 1.0;
                 if not thirdBody:
@@ -1821,7 +1822,7 @@ class CPickler(CMill):
                         self._write("troe_c = -0.4 - 0.67 * logFcent;")
                         self._write("troe_n = 0.75 - 1.27 * logFcent;")
                         self._write("troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));")
-                        self._write("F_troe = pow(10., logFcent / (1.0 + troe*troe));")
+                        self._write("F_troe = exp(precomputed * (logFcent / (1.0 + troe*troe)));")
                         self._write("Corr = F * F_troe;")
                         self._write("qf[%d] *= Corr * k_f;" % idx)
                     elif reaction.sri:
@@ -4187,6 +4188,8 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute an approx to the reaction Jacobian'))
+
+        self._write('#ifdef COMPUTE_JACOBIAN')
         self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)')
         self._write('{')
         self._indent()
@@ -4338,6 +4341,7 @@ class CPickler(CMill):
 
         self._outdent()
         self._write('}')
+        self._write('#endif')
         return
 
     def _ajac_reaction_precond(self, mechanism, reaction, rcase):
@@ -4862,6 +4866,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute the reaction Jacobian on GPU'))
+        self._write('#ifdef COMPUTE_JACOBIAN')
         self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE')
         self._write('void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)')
         self._write('{')
@@ -5031,6 +5036,7 @@ class CPickler(CMill):
         self._write()
         self._write('return;')
         self._write('}')
+        self._write('#endif')
         self._write()
         return
 
