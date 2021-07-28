@@ -15271,7 +15271,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     amrex::Real refCinv = 1 / refC;
 
     /* Evaluate the kfs */
-    amrex::Real k_f, k_r, Corr;
+    amrex::Real k_f, Corr;
     amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
 
     // (0):  CH3 + H (+M) <=> CH4 (+M)
@@ -18109,7 +18109,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qdot(amrex::Real * qdot, amre
     amrex::Real refCinv = 1 / refC;
 
     /* Evaluate the kfs */
-    amrex::Real qf, qr, k_f, k_r, Corr;
+    amrex::Real qf, qr, k_f, Corr;
     amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
 
     // (0):  CH3 + H (+M) <=> CH4 (+M)
