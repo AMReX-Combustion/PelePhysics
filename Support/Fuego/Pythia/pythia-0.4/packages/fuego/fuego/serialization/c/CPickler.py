@@ -1880,11 +1880,48 @@ class CPickler(CMill):
 
         self._write()
 
-
-        self._write()
-        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qdot(amrex::Real * qdot, amrex::Real * sc, amrex::Real * sc_qss, amrex::Real * tc, amrex::Real invT)')
+        # main function
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)')
         self._write('{')
         self._indent()
+
+        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('amrex::Real invT = 1.0 / tc[1];')
+        self._write()
+        
+        if (nReactions == 0):
+            self._write()
+        else:
+            if (self.nQSSspecies > 0):
+                self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
+                self._write('/* Fill sc_qss here*/')
+                self._write('comp_sc_qss(sc, sc_qss, tc, invT);')
+                self._write()
+
+            self._write(self.line('reference concentration: P_atm / (RT) in inverse mol/m^3'))
+            self._write('amrex::Real refC = %g / %g * invT;' % (atm.value, R.value))
+            self._write('amrex::Real refCinv = 1 / refC;')
+
+            self._write()
+            
+            # kfs
+            self._write("// Evaluate the kfs")
+            #self._write("amrex::Real k_f[%d];"% nclassd)
+            #self._write("amrex::Real Corr[%d];" % nclassd)
+            self._write("amrex::Real k_f, Corr;")
+            if ntroe > 0:
+                self._write("amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;")
+            if nsri > 0:
+                self._write("amrex::Real redP, F, X, F_sri;")
+            #self._write()
+
+        self._write()
+        self._write('for (int i = 0; i < %d; ++i) {' % nSpecies)
+        self._indent()
+        self._write('wdot[i] = 0.0;')
+        self._outdent()
+        self._write('}')
+        self._write()
 
         if (nReactions > 0):
             nclassd = nReactions - nspecial
@@ -1914,28 +1951,12 @@ class CPickler(CMill):
             if (self.nQSSspecies > 0):
                 self._write('amrex::Real g_RT_qss[%d];' % (self.nQSSspecies))
                 self._write('gibbs_qss(g_RT_qss, tc);')
-
-            self._write()
-
-            self._write(self.line('reference concentration: P_atm / (RT) in inverse mol/m^3'))
-            self._write('amrex::Real refC = %g / %g * invT;' % (atm.value, R.value))
-            self._write('amrex::Real refCinv = 1 / refC;')
-
-            self._write()
-            
-            # kfs
-            self._write("/* Evaluate the kfs */")
-            #self._write("amrex::Real k_f[%d];"% nclassd)
-            #self._write("amrex::Real Corr[%d];" % nclassd)
-            self._write("amrex::Real qf, qr, k_f, Corr;")
-            if ntroe > 0:
-                self._write("amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;")
-            if nsri > 0:
-                self._write("amrex::Real redP, F, X, F_sri;")
             self._write()
 
             # Loop like you're going through them in the mech.Linp order
             for i in range(nReactions):
+                self._write('{')
+                self._indent()
                 reaction = mechanism.reaction(id=i)
                 idx = reaction.id - 1
                 if (len(reaction.ford) > 0):
@@ -1985,11 +2006,11 @@ class CPickler(CMill):
 
                 alpha = 1.0;
                 if not thirdBody:
-                    self._write("qf = k_f * (%s);" % (forward_sc))
+                    self._write("amrex::Real qf = k_f * (%s);" % (forward_sc))
                 elif not low:
                     alpha = self._enhancement_d_with_QSS(mechanism, reaction)
                     self._write("Corr  = %s;" %(alpha))
-                    self._write("qf = Corr * k_f * (%s);" % (forward_sc))
+                    self._write("amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
                 else:
                     alpha = self._enhancement_d_with_QSS(mechanism, reaction)
                     self._write("Corr  = %s;" %(alpha))
@@ -2019,7 +2040,7 @@ class CPickler(CMill):
                         self._write("troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));")
                         self._write("F_troe = pow(10, logFcent / (1.0 + troe*troe));")
                         self._write("Corr = F * F_troe;")
-                        self._write("qf = Corr * k_f * (%s);" % (forward_sc))
+                        self._write("amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
                     elif reaction.sri:
                         self._write("F = redP / (1.0 + redP);")
                         self._write("logPred = log10(redP);")
@@ -2034,10 +2055,10 @@ class CPickler(CMill):
                             self._write("   +  0. ") 
                         self._write("   *  (%d > 3 ? %.15g*exp(%.15g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
                         self._write("Corr = F * F_sri;")
-                        self._write("qf = Corr * k_f * (%s);" % (forward_sc))
+                        self._write("amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
                     elif (nlindemann > 0):
                         self._write("Corr = redP / (1. + redP);")
-                        self._write("qf = Corr * k_f * (%s);" % (forward_sc))
+                        self._write("amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
 
                 if reaction.rev:
                     Ar, betar, Er = reaction.rev
@@ -2052,95 +2073,54 @@ class CPickler(CMill):
                     self._write("k_r = %.15g * %.15g " % (uc_rev.value,Ar)) 
                     self._write("           * exp(%.15g * tc[0] - %.15g * %.15g * invT);" % (betar, aeuc / Rc / kelvin, Er))
                     if (alpha == 1.0):
-                        self._write("qr = k_r * (%s);" % (reverse_sc))
+                        self._write("amrex::Real qr = k_r * (%s);" % (reverse_sc))
                     else:
-                        self._write("qr = Corr * k_r * (%s);" % (reverse_sc))
+                        self._write("amrex::Real qr = Corr * k_r * (%s);" % (reverse_sc))
                 else:
                     if KcConvInv:
                         if (alpha == 1.0):
-                            self._write("qr = k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
+                            self._write("amrex::Real qr = k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
                         else:
-                            self._write("qr = Corr * k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
+                            self._write("amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
                     else:
                         if (alpha == 1.0):
-                            self._write("qr = k_f * exp(-(%s)) * (%s);" % (KcExpArg,reverse_sc))
+                            self._write("amrex::Real qr = k_f * exp(-(%s)) * (%s);" % (KcExpArg,reverse_sc))
                         else:
-                            self._write("qr = Corr * k_f * exp(-(%s)) * (%s);" % (KcExpArg,reverse_sc))
+                            self._write("amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s);" % (KcExpArg,reverse_sc))
 
-                self._write("qdot[%d] = qf - qr;" % (idx))
+                self._write("amrex::Real qdot = qf - qr;")
 
-            self._write()
-
-        self._write()
-        self._write('return;')
-        self._outdent()
-        self._write('}')
-
-        self._write()
-
-
-
-        # main function
-        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)')
-        self._write('{')
-        self._indent()
-
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
-        self._write('amrex::Real invT = 1.0 / tc[1];')
-        
-        if (nReactions == 0):
-            self._write()
-        else:
-            self._write()
-            self._write('amrex::Real qdot[%d] = {0.0};' % (nReactions))
-            self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
-            if (self.nQSSspecies > 0):
-                self._write('/* Fill sc_qss here*/')
-                self._write('comp_sc_qss(sc, sc_qss, tc, invT);')
-            self._write('comp_qdot(qdot, sc, sc_qss, tc, invT);');
-
-        self._write()
-
-        wdots = [""] * nSpecies
-
-        for i in range(nReactions):
-            reaction = mechanism.reaction(id=i)
-            all_agents = list(set(reaction.reactants + reaction.products))
-            agents = []
-            # remove QSS species from agents
-            for symbol, coefficient in all_agents:
-                if symbol not in self.qss_species_list:
-                    agents.append((symbol, coefficient))
-            agents = sorted(agents, key=lambda x: mechanism.species(x[0]).id)
-            # note that a species might appear as both reactant and product
-            # a species might alos appear twice or more on on each side
-            # agents is a set that contains unique (symbol, coefficient)
-            for a in agents:
-                symbol, coefficient = a
-                for b in reaction.reactants:
-                    if b == a:
-                        if coefficient == 1.0:
-                            wdots[self.ordered_idx_map[symbol]] += " - qdot[%d]" % (i)
-                            #self._write("wdot[%d] -= qdot[%d];" % (self.ordered_idx_map[symbol], i))
-                        else:
-                            wdots[self.ordered_idx_map[symbol]] += " - (%f) * qdot[%d]" % (coefficient, i)
-                            #self._write("wdot[%d] -= %f * qdot[%d];" % (self.ordered_idx_map[symbol], coefficient, i))
-                for b in reaction.products: 
-                    if b == a:
-                        if coefficient == 1.0:
-                            wdots[self.ordered_idx_map[symbol]] += " + qdot[%d]" % (i)
-                            #self._write("wdot[%d] += qdot[%d];" % (self.ordered_idx_map[symbol], i))
-                        else:
-                            wdots[self.ordered_idx_map[symbol]] += " + (%f) * qdot[%d]" % (coefficient, i)
-                            #self._write("wdot[%d] += %f * qdot[%d];" % (self.ordered_idx_map[symbol], coefficient, i))
-
-        for i in range(nSpecies):
-            if wdots[i] == "":
-                self._write("wdot[%d] = 0.0;" % (i))
-            else:
-                self._write("wdot[%d] = %s;" % (i, wdots[i]))
+                reaction = mechanism.reaction(id=i)
+                all_agents = list(set(reaction.reactants + reaction.products))
+                agents = []
+                # remove QSS species from agents
+                for symbol, coefficient in all_agents:
+                    if symbol not in self.qss_species_list:
+                        agents.append((symbol, coefficient))
+                agents = sorted(agents, key=lambda x: mechanism.species(x[0]).id)
+                # note that a species might appear as both reactant and product
+                # a species might alos appear twice or more on on each side
+                # agents is a set that contains unique (symbol, coefficient)
+                for a in agents:
+                    symbol, coefficient = a
+                    for b in reaction.reactants:
+                        if b == a:
+                            if coefficient == 1.0:
+                                self._write("wdot[%d] -= qdot;" % (self.ordered_idx_map[symbol]))
+                            else:
+                                self._write("wdot[%d] -= %f * qdot;" % (self.ordered_idx_map[symbol], coefficient))
+                    for b in reaction.products: 
+                        if b == a:
+                            if coefficient == 1.0:
+                                self._write("wdot[%d] += qdot;" % (self.ordered_idx_map[symbol]))
+                            else:
+                                self._write("wdot[%d] += %f * qdot;" % (self.ordered_idx_map[symbol], coefficient))
+                self._outdent()
+                self._write('}')
+                self._write()
 
         self._write()
+
         self._write('return;')
         self._outdent()
         self._write('}')
