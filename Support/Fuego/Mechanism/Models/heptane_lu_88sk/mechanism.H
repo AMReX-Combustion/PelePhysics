@@ -18091,9 +18091,19 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     return;
 }
 
-
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qdot(amrex::Real * qdot, amrex::Real * sc, amrex::Real * sc_qss, amrex::Real * tc, amrex::Real invT)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)
 {
+    const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache
+    const amrex::Real invT = 1.0 / tc[1];
+
+    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
+    const amrex::Real refC = 101325 / 8.31446 * invT;
+    const amrex::Real refCinv = 1 / refC;
+
+    for (int i = 0; i < 88; ++i) {
+        wdot[i] = 0.0;
+    }
+
     /*compute the mixture concentration */
     amrex::Real mixture = 0.0;
     for (int i = 0; i < 88; ++i) {
@@ -18104,3315 +18114,5810 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qdot(amrex::Real * qdot, amre
     amrex::Real g_RT[88];
     gibbs(g_RT, tc);
 
-    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    amrex::Real refC = 101325 / 8.31446 * invT;
-    amrex::Real refCinv = 1 / refC;
+    {
+        // (0):  CH3 + H (+M) <=> CH4 (+M)
+        const amrex::Real k_f = 2138000000
+                   * exp((-0.4) * tc[0]);
+        amrex::Real Corr = mixture + sc[1] + (4)*sc[5] + sc[6] + (2)*sc[8];
+        const amrex::Real redP = Corr / k_f * 3.31e+18 
+                   * exp(-4 * tc[0] - 1060.78073151635 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            1 * exp(-tc[1] * 1e+15)
+            + exp(-40 * invT));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+        Corr = F * F_troe;
+        const amrex::Real qf = Corr * k_f * (sc[0]*sc[9]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[0] + g_RT[9] - g_RT[10])) * (refC) * (sc[10]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+    }
 
-    /* Evaluate the kfs */
-    amrex::Real qf, qr, k_f, Corr;
-    amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
+    {
+        // (14):  H + C2H4 (+M) <=> C2H5 (+M)
+        const amrex::Real k_f = 1081000
+                   * exp((0.45) * tc[0] - (916.860765096199) * invT);
+        amrex::Real Corr = mixture + sc[1] + (4)*sc[5] + sc[6] + (2)*sc[8];
+        const amrex::Real redP = Corr / k_f * 1.112e+22 
+                   * exp(-5 * tc[0] - 2238.30772949939 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            + 1 * exp(-tc[1] * 0.0105263157894737)
+            + exp(-200 * invT));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+        Corr = F * F_troe;
+        const amrex::Real qf = Corr * k_f * (sc[0]*sc[16]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[0] + g_RT[16] - g_RT[17])) * (refC) * (sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[16] -= qdot;
+        wdot[17] += qdot;
+    }
 
-    // (0):  CH3 + H (+M) <=> CH4 (+M)
-    k_f = 2138000000
-               * exp((-0.4) * tc[0]);
-    Corr  = mixture + sc[1] + (4)*sc[5] + sc[6] + (2)*sc[8];
-    redP = Corr / k_f * 1e-12 * 3.31e+30 
-               * exp(-4  * tc[0] - 0.50321666580472  * (2108) *invT);
-    F = redP / (1.0 + redP);
-    logPred = log10(redP);
-    logFcent = log10(
-        (1)*exp(-tc[1] * 1e+15)
-        + 0 * exp(-tc[1] * 1e+15)
-        + exp(-40 * invT));
-    troe_c = -0.4 - 0.67 * logFcent;
-    troe_n = 0.75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-    F_troe = pow(10, logFcent / (1.0 + troe*troe));
-    Corr = F * F_troe;
-    qf = Corr * k_f * (sc[0]*sc[9]);
-    qr = Corr * k_f * exp(-(g_RT[0] + g_RT[9] - g_RT[10])) * (refC) * (sc[10]);
-    qdot[0] = qf - qr;
-    // (14):  H + C2H4 (+M) <=> C2H5 (+M)
-    k_f = 1081000
-               * exp((0.45) * tc[0] - (916.860765096199) * invT);
-    Corr  = mixture + sc[1] + (4)*sc[5] + sc[6] + (2)*sc[8];
-    redP = Corr / k_f * 1e-12 * 1.112e+34 
-               * exp(-5  * tc[0] - 0.50321666580472  * (4448) *invT);
-    F = redP / (1.0 + redP);
-    logPred = log10(redP);
-    logFcent = log10(
-        (0)*exp(-tc[1] * 1e+15)
-        + 1 * exp(-tc[1] * 0.0105263157894737)
-        + exp(-200 * invT));
-    troe_c = -0.4 - 0.67 * logFcent;
-    troe_n = 0.75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-    F_troe = pow(10, logFcent / (1.0 + troe*troe));
-    Corr = F * F_troe;
-    qf = Corr * k_f * (sc[0]*sc[16]);
-    qr = Corr * k_f * exp(-(g_RT[0] + g_RT[16] - g_RT[17])) * (refC) * (sc[17]);
-    qdot[1] = qf - qr;
-    // (21):  CH3 + CH3 (+M) <=> C2H6 (+M)
-    k_f = 92140000000
-               * exp((-1.17) * tc[0] - (319.945156118641) * invT);
-    Corr  = mixture + sc[1] + (4)*sc[5] + sc[6] + (2)*sc[8];
-    redP = Corr / k_f * 1e-12 * 1.135e+36 
-               * exp(-5.246  * tc[0] - 0.50321666580472  * (1705) *invT);
-    F = redP / (1.0 + redP);
-    logPred = log10(redP);
-    logFcent = log10(
-        (0.595)*exp(-tc[1] * 0.000892857142857143)
-        + 0.405 * exp(-tc[1] * 0.014367816091954)
-        + exp(-1e+15 * invT));
-    troe_c = -0.4 - 0.67 * logFcent;
-    troe_n = 0.75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-    F_troe = pow(10, logFcent / (1.0 + troe*troe));
-    Corr = F * F_troe;
-    qf = Corr * k_f * (sc[9]*sc[9]);
-    qr = Corr * k_f * exp(-(g_RT[9] + g_RT[9] - g_RT[15])) * (refC) * (sc[15]);
-    qdot[2] = qf - qr;
-    // (23):  H + O2 (+M) <=> HO2 (+M)
-    k_f = 1475000
-               * exp((0.6) * tc[0]);
-    Corr  = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
-    redP = Corr / k_f * 1e-12 * 3.5e+16 
-               * exp(-0.41  * tc[0] - 0.50321666580472  * (-1116) *invT);
-    F = redP / (1.0 + redP);
-    logPred = log10(redP);
-    logFcent = log10(
-        (0.5)*exp(-tc[1] * 1e+30)
-        + 0.5 * exp(-tc[1] * 1e-30)
-        + exp(-1e+100 * invT));
-    troe_c = -0.4 - 0.67 * logFcent;
-    troe_n = 0.75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-    F_troe = pow(10, logFcent / (1.0 + troe*troe));
-    Corr = F * F_troe;
-    qf = Corr * k_f * (sc[0]*sc[3]);
-    qr = Corr * k_f * exp(-(g_RT[0] + g_RT[3] - g_RT[11])) * (refC) * (sc[11]);
-    qdot[3] = qf - qr;
-    // (48):  OH + OH (+M) <=> H2O2 (+M)
-    k_f = 123600000
-               * exp((-0.37) * tc[0]);
-    Corr  = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
-    redP = Corr / k_f * 1e-12 * 3.041e+30 
-               * exp(-4.63  * tc[0] - 0.50321666580472  * (2049) *invT);
-    F = redP / (1.0 + redP);
-    logPred = log10(redP);
-    logFcent = log10(
-        (0.53)*exp(-tc[1] * 0.01)
-        + 0.47 * exp(-tc[1] * 0.0005)
-        + exp(-1e+15 * invT));
-    troe_c = -0.4 - 0.67 * logFcent;
-    troe_n = 0.75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-    F_troe = pow(10, logFcent / (1.0 + troe*troe));
-    Corr = F * F_troe;
-    qf = Corr * k_f * (sc[4]*sc[4]);
-    qr = Corr * k_f * exp(-(g_RT[4] + g_RT[4] - g_RT[12])) * (refC) * (sc[12]);
-    qdot[4] = qf - qr;
-    // (55):  C2H3 + H (+M) <=> C2H4 (+M)
-    k_f = 6100000
-               * exp((0.27) * tc[0] - (140.900666425322) * invT);
-    Corr  = mixture;
-    redP = Corr / k_f * 1e-12 * 9.8e+29 
-               * exp(-3.86  * tc[0] - 0.50321666580472  * (3320) *invT);
-    F = redP / (1.0 + redP);
-    logPred = log10(redP);
-    logFcent = log10(
-        (0.218)*exp(-tc[1] * 0.00480769230769231)
-        + 0.782 * exp(-tc[1] * 0.000375516334960571)
-        + exp(-6095 * invT));
-    troe_c = -0.4 - 0.67 * logFcent;
-    troe_n = 0.75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-    F_troe = pow(10, logFcent / (1.0 + troe*troe));
-    Corr = F * F_troe;
-    qf = Corr * k_f * (sc[0]*sc[19]);
-    qr = Corr * k_f * exp(-(g_RT[0] - g_RT[16] + g_RT[19])) * (refC) * (sc[16]);
-    qdot[5] = qf - qr;
-    // (57):  C2H2 + H (+M) <=> C2H3 (+M)
-    k_f = 311000
-               * exp((0.58) * tc[0] - (1302.82794776842) * invT);
-    Corr  = mixture + sc[1] + (4)*sc[5] + sc[6] + (2)*sc[8];
-    redP = Corr / k_f * 1e-12 * 2.254e+40 
-               * exp(-7.269  * tc[0] - 0.50321666580472  * (6577) *invT);
-    F = redP / (1.0 + redP);
-    logPred = log10(redP);
-    logFcent = log10(
-        (0)*exp(-tc[1] * 1e+15)
-        + 1 * exp(-tc[1] * 0.00148148148148148)
-        + exp(-1e+15 * invT));
-    troe_c = -0.4 - 0.67 * logFcent;
-    troe_n = 0.75 - 1.27 * logFcent;
-    troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-    F_troe = pow(10, logFcent / (1.0 + troe*troe));
-    Corr = F * F_troe;
-    qf = Corr * k_f * (sc[0]*sc[18]);
-    qr = Corr * k_f * exp(-(g_RT[0] + g_RT[18] - g_RT[19])) * (refC) * (sc[19]);
-    qdot[6] = qf - qr;
-    // (24):  CO + O (+M) <=> CO2 (+M)
-    k_f = 18000
-               * exp(-(1199.66853127845) * invT);
-    Corr  = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
-    redP = Corr / k_f * 1e-12 * 1.35e+24 
-               * exp(-2.788  * tc[0] - 0.50321666580472  * (4191) *invT);
-    Corr = redP / (1. + redP);
-    qf = Corr * k_f * (sc[2]*sc[6]);
-    qr = Corr * k_f * exp(-(g_RT[2] + g_RT[6] - g_RT[8])) * (refC) * (sc[8]);
-    qdot[7] = qf - qr;
-    // (37):  CH3O (+M) <=> CH2O + H (+M)
-    k_f = 54500000000000
-               * exp(-(6793.42498836372) * invT);
-    Corr  = mixture;
-    redP = Corr / k_f * 1e-6 * 2.344e+25 
-               * exp(-2.7  * tc[0] - 0.50321666580472  * (30600) *invT);
-    Corr = redP / (1. + redP);
-    qf = Corr * k_f * (sc[14]);
-    qr = Corr * k_f * exp(-(-g_RT[0] - g_RT[13] + g_RT[14])) * (refCinv) * (sc[0]*sc[13]);
-    qdot[8] = qf - qr;
-    // (38):  C2H4 (+M) <=> C2H2 + H2 (+M)
-    k_f = 18000000000000
-               * exp(-(38244.4666011587) * invT);
-    Corr  = mixture;
-    redP = Corr / k_f * 1e-6 * 1.5e+15 
-               * exp(0  * tc[0] - 0.50321666580472  * (55443) *invT);
-    Corr = redP / (1. + redP);
-    qf = Corr * k_f * (sc[16]);
-    qr = Corr * k_f * exp(-(-g_RT[1] + g_RT[16] - g_RT[18])) * (refCinv) * (sc[1]*sc[18]);
-    qdot[9] = qf - qr;
-    // (81):  CH3CO (+M) <=> CH3 + CO (+M)
-    k_f = 3000000000000
-               * exp(-(8413.78265225491) * invT);
-    Corr  = mixture;
-    redP = Corr / k_f * 1e-6 * 1.2e+15 
-               * exp(0  * tc[0] - 0.50321666580472  * (12518) *invT);
-    Corr = redP / (1. + redP);
-    qf = Corr * k_f * (sc[22]);
-    qr = Corr * k_f * exp(-(-g_RT[6] - g_RT[9] + g_RT[22])) * (refCinv) * (sc[6]*sc[9]);
-    qdot[10] = qf - qr;
-    // (1):  CH4 + H <=> CH3 + H2
-    k_f = 0.01727
-               * exp((3) * tc[0] - (4138.45385957801) * invT);
-    qf = k_f * (sc[0]*sc[10]);
-    k_r = 1e-06 * 661 
-               * exp(3 * tc[0] - 0.50321666580472 * 7744 * invT);
-    qr = k_r * (sc[1]*sc[9]);
-    qdot[11] = qf - qr;
-    // (2):  CH4 + OH <=> CH3 + H2O
-    k_f = 0.193
-               * exp((2.4) * tc[0] - (1059.77429818474) * invT);
-    qf = k_f * (sc[4]*sc[10]);
-    k_r = 1e-06 * 31990 
-               * exp(2.4 * tc[0] - 0.50321666580472 * 16780 * invT);
-    qr = k_r * (sc[5]*sc[9]);
-    qdot[12] = qf - qr;
-    // (3):  CH4 + O <=> CH3 + OH
-    k_f = 3150000
-               * exp((0.5) * tc[0] - (5178.09949113057) * invT);
-    qf = k_f * (sc[2]*sc[10]);
-    k_r = 1e-06 * 52960000000 
-               * exp(0.5 * tc[0] - 0.50321666580472 * 7715 * invT);
-    qr = k_r * (sc[4]*sc[9]);
-    qdot[13] = qf - qr;
-    // (4):  C2H6 + CH3 <=> C2H5 + CH4
-    k_f = 1.51e-13
-               * exp((6) * tc[0] - (3042.95117812114) * invT);
-    qf = k_f * (sc[9]*sc[15]);
-    k_r = 1e-06 * 9.649e-10 
-               * exp(6.56 * tc[0] - 0.50321666580472 * 10220 * invT);
-    qr = k_r * (sc[10]*sc[17]);
-    qdot[14] = qf - qr;
-    // (5):  HCO + OH <=> CO + H2O
-    k_f = 102000000
-               ;
-    qf = k_f * (sc[4]*sc[7]);
-    k_r = 1e-06 * 2.896e+15 
-               * exp(0 * tc[0] - 0.50321666580472 * 105200 * invT);
-    qr = k_r * (sc[5]*sc[6]);
-    qdot[15] = qf - qr;
-    // (6):  CO + OH <=> CO2 + H
-    k_f = 0.14
-               * exp((1.95) * tc[0] - (-677.832848838957) * invT);
-    qf = k_f * (sc[4]*sc[6]);
-    k_r = 1e-06 * 15680000 
-               * exp(1.95 * tc[0] - 0.50321666580472 * 20990 * invT);
-    qr = k_r * (sc[0]*sc[8]);
-    qdot[16] = qf - qr;
-    // (7):  H + O2 <=> O + OH
-    k_f = 197000000
-               * exp(-(8323.20365241006) * invT);
-    qf = k_f * (sc[0]*sc[3]);
-    k_r = 1e-06 * 15550000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 425 * invT);
-    qr = k_r * (sc[2]*sc[4]);
-    qdot[17] = qf - qr;
-    // (8):  O + H2 <=> H + OH
-    k_f = 0.0508
-               * exp((2.67) * tc[0] - (3166.2392612433) * invT);
-    qf = k_f * (sc[1]*sc[2]);
-    k_r = 1e-06 * 22310 
-               * exp(2.67 * tc[0] - 0.50321666580472 * 4197 * invT);
-    qr = k_r * (sc[0]*sc[4]);
-    qdot[18] = qf - qr;
-    // (9):  O + H2O <=> OH + OH
-    k_f = 2.97
-               * exp((2.02) * tc[0] - (6743.10332178324) * invT);
-    qf = k_f * (sc[2]*sc[5]);
-    k_r = 1e-06 * 301300 
-               * exp(2.02 * tc[0] - 0.50321666580472 * -3850 * invT);
-    qr = k_r * (sc[4]*sc[4]);
-    qdot[19] = qf - qr;
-    // (10):  OH + H2 <=> H + H2O
-    k_f = 216
-               * exp((1.51) * tc[0] - (1726.03316371019) * invT);
-    qf = k_f * (sc[1]*sc[4]);
-    k_r = 1e-06 * 935200000 
-               * exp(1.51 * tc[0] - 0.50321666580472 * 18580 * invT);
-    qr = k_r * (sc[0]*sc[5]);
-    qdot[20] = qf - qr;
-    // (11):  HCO + M <=> H + CO + M
-    k_f = 186000000000
-               * exp((-1) * tc[0] - (8554.68331868023) * invT);
-    Corr  = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
-    qf = Corr * k_f * (sc[7]);
-    k_r = 1e-12 * 64670000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * -442 * invT);
-    qr = Corr * k_r * (sc[0]*sc[6]);
-    qdot[21] = qf - qr;
-    // (12):  H2O2 + OH <=> H2O + HO2
-    k_f = 1000000
-               ;
-    qf = k_f * (sc[4]*sc[12]);
-    k_r = 1e-06 * 168500000000 
-               * exp(0.33 * tc[0] - 0.50321666580472 * 31460 * invT);
-    qr = k_r * (sc[5]*sc[11]);
-    qdot[22] = qf - qr;
-    // (13):  C2H4 + O <=> CH3 + HCO
-    k_f = 10.2
-               * exp((1.88) * tc[0] - (90.0757831790448) * invT);
-    qf = k_f * (sc[2]*sc[16]);
-    k_r = 1e-06 * 285100000 
-               * exp(1.05 * tc[0] - 0.50321666580472 * 31770 * invT);
-    qr = k_r * (sc[7]*sc[9]);
-    qdot[23] = qf - qr;
-    // (15):  C2H6 + H <=> C2H5 + H2
-    k_f = 0.000554
-               * exp((3.5) * tc[0] - (2600.12051221299) * invT);
-    qf = k_f * (sc[0]*sc[15]);
-    k_r = 1e-06 * 0.1355 
-               * exp(4.06 * tc[0] - 0.50321666580472 * 8857 * invT);
-    qr = k_r * (sc[1]*sc[17]);
-    qdot[24] = qf - qr;
-    // (16):  C2H5 + O2 <=> C2H4 + HO2
-    k_f = 1.22e+24
-               * exp((-5.76) * tc[0] - (5082.48832462767) * invT);
-    qf = k_f * (sc[3]*sc[17]);
-    k_r = 1e-06 * 1.259e+30 
-               * exp(-5.63 * tc[0] - 0.50321666580472 * 22300 * invT);
-    qr = k_r * (sc[11]*sc[16]);
-    qdot[25] = qf - qr;
-    // (17):  C2H6 + OH <=> C2H5 + H2O
-    k_f = 58
-               * exp((1.73) * tc[0] - (583.731332333475) * invT);
-    qf = k_f * (sc[4]*sc[15]);
-    k_r = 1e-06 * 61420 
-               * exp(2.29 * tc[0] - 0.50321666580472 * 20000 * invT);
-    qr = k_r * (sc[5]*sc[17]);
-    qdot[26] = qf - qr;
-    // (18):  C2H6 + O <=> C2H5 + OH
-    k_f = 13
-               * exp((2.13) * tc[0] - (2611.6944955265) * invT);
-    qf = k_f * (sc[2]*sc[15]);
-    k_r = 1e-06 * 1397 
-               * exp(2.69 * tc[0] - 0.50321666580472 * 6785 * invT);
-    qr = k_r * (sc[4]*sc[17]);
-    qdot[27] = qf - qr;
-    // (19):  CH3 + HO2 <=> CH3O + OH
-    k_f = 11000000
-               ;
-    qf = k_f * (sc[9]*sc[11]);
-    k_r = 1e-06 * 478000000000000 
-               * exp(-0.35 * tc[0] - 0.50321666580472 * 24550 * invT);
-    qr = k_r * (sc[4]*sc[14]);
-    qdot[28] = qf - qr;
-    // (20):  CO + HO2 <=> CO2 + OH
-    k_f = 30100000
-               * exp(-(11573.9833135086) * invT);
-    qf = k_f * (sc[6]*sc[11]);
-    k_r = 1e-06 * 6.435e+15 
-               * exp(-0.33 * tc[0] - 0.50321666580472 * 84610 * invT);
-    qr = k_r * (sc[4]*sc[8]);
-    qdot[29] = qf - qr;
-    // (22):  H2O + M <=> H + OH + M
-    k_f = 1.837e+21
-               * exp((-3) * tc[0] - (61694.3632276586) * invT);
-    Corr  = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
-    qf = Corr * k_f * (sc[5]);
-    k_r = 1e-12 * 2.25e+22 
-               * exp(-2 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = Corr * k_r * (sc[0]*sc[4]);
-    qdot[30] = qf - qr;
-    // (25):  CO + O2 <=> CO2 + O
-    k_f = 16200000
-               * exp(-(24003.4349588851) * invT);
-    qf = k_f * (sc[3]*sc[6]);
-    k_r = 1e-06 * 143300000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 53920 * invT);
-    qr = k_r * (sc[2]*sc[8]);
-    qdot[31] = qf - qr;
-    // (26):  HCO + H <=> CO + H2
-    k_f = 73400000
-               ;
-    qf = k_f * (sc[0]*sc[7]);
-    k_r = 1e-06 * 481300000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 90000 * invT);
-    qr = k_r * (sc[1]*sc[6]);
-    qdot[32] = qf - qr;
-    // (27):  HCO + O <=> CO + OH
-    k_f = 30200000
-               ;
-    qf = k_f * (sc[2]*sc[7]);
-    k_r = 1e-06 * 86970000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 87900 * invT);
-    qr = k_r * (sc[4]*sc[6]);
-    qdot[33] = qf - qr;
-    // (28):  CH2O + M <=> HCO + H + M
-    k_f = 6.283e+23
-               * exp((-3.57) * tc[0] - (46899.7932529999) * invT);
-    Corr  = mixture;
-    qf = Corr * k_f * (sc[13]);
-    k_r = 1e-12 * 2.66e+24 
-               * exp(-2.57 * tc[0] - 0.50321666580472 * 427 * invT);
-    qr = Corr * k_r * (sc[0]*sc[7]);
-    qdot[34] = qf - qr;
-    // (29):  CH2O + OH <=> HCO + H2O
-    k_f = 3430
-               * exp((1.18) * tc[0] - (-224.93784961471) * invT);
-    qf = k_f * (sc[4]*sc[13]);
-    k_r = 1e-06 * 1186000000 
-               * exp(1.18 * tc[0] - 0.50321666580472 * 29380 * invT);
-    qr = k_r * (sc[5]*sc[7]);
-    qdot[35] = qf - qr;
-    // (30):  CH2O + H <=> HCO + H2
-    k_f = 933.4
-               * exp((1.5) * tc[0] - (1497.57279743485) * invT);
-    qf = k_f * (sc[0]*sc[13]);
-    k_r = 1e-06 * 74530000 
-               * exp(1.5 * tc[0] - 0.50321666580472 * 17650 * invT);
-    qr = k_r * (sc[1]*sc[7]);
-    qdot[36] = qf - qr;
-    // (31):  CH2O + O <=> HCO + OH
-    k_f = 416000
-               * exp((0.57) * tc[0] - (1389.88443095264) * invT);
-    qf = k_f * (sc[2]*sc[13]);
-    k_r = 1e-06 * 14590000000 
-               * exp(0.57 * tc[0] - 0.50321666580472 * 15340 * invT);
-    qr = k_r * (sc[4]*sc[7]);
-    qdot[37] = qf - qr;
-    // (32):  CH3 + OH <=> CH2O + H2
-    k_f = 22500000
-               * exp(-(2163.83166296029) * invT);
-    qf = k_f * (sc[4]*sc[9]);
-    k_r = 1e-06 * 675600000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 76020 * invT);
-    qr = k_r * (sc[1]*sc[13]);
-    qdot[38] = qf - qr;
-    // (33):  CH3 + O <=> CH2O + H
-    k_f = 80000000
-               ;
-    qf = k_f * (sc[2]*sc[9]);
-    k_r = 1e-06 * 1.055e+15 
-               * exp(0 * tc[0] - 0.50321666580472 * 69630 * invT);
-    qr = k_r * (sc[0]*sc[13]);
-    qdot[39] = qf - qr;
-    // (34):  CH3 + O2 <=> CH3O + O
-    k_f = 1995000000000
-               * exp((-1.57) * tc[0] - (14698.9588081559) * invT);
-    qf = k_f * (sc[3]*sc[9]);
-    k_r = 1e-06 * 3.585e+18 
-               * exp(-1.59 * tc[0] - 0.50321666580472 * -1631 * invT);
-    qr = k_r * (sc[2]*sc[14]);
-    qdot[40] = qf - qr;
-    // (35):  CH2O + CH3 <=> HCO + CH4
-    k_f = 3.636e-12
-               * exp((5.42) * tc[0] - (502.21023247311) * invT);
-    qf = k_f * (sc[9]*sc[13]);
-    k_r = 1e-06 * 7.584e-06 
-               * exp(5.42 * tc[0] - 0.50321666580472 * 16150 * invT);
-    qr = k_r * (sc[7]*sc[10]);
-    qdot[41] = qf - qr;
-    // (36):  HCO + CH3 <=> CH4 + CO
-    k_f = 121000000
-               ;
-    qf = k_f * (sc[7]*sc[9]);
-    k_r = 1e-06 * 2.073e+16 
-               * exp(0 * tc[0] - 0.50321666580472 * 90480 * invT);
-    qr = k_r * (sc[6]*sc[10]);
-    qdot[42] = qf - qr;
-    // (39):  HO2 + O <=> OH + O2
-    k_f = 32500000
-               ;
-    qf = k_f * (sc[2]*sc[11]);
-    k_r = 1e-06 * 785700000000000 
-               * exp(-0.33 * tc[0] - 0.50321666580472 * 55390 * invT);
-    qr = k_r * (sc[3]*sc[4]);
-    qdot[43] = qf - qr;
-    // (40):  HCO + HO2 <=> CH2O + O2
-    k_f = 29740
-               * exp((0.33) * tc[0] - (-1942.91954667202) * invT);
-    qf = k_f * (sc[7]*sc[11]);
-    k_r = 1e-06 * 20500000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 38950 * invT);
-    qr = k_r * (sc[3]*sc[13]);
-    qdot[44] = qf - qr;
-    // (41):  CH3O + O2 <=> CH2O + HO2
-    k_f = 55000
-               * exp(-(1219.79719791064) * invT);
-    qf = k_f * (sc[3]*sc[14]);
-    k_r = 1e-06 * 1318000000 
-               * exp(0.35 * tc[0] - 0.50321666580472 * 31390 * invT);
-    qr = k_r * (sc[11]*sc[13]);
-    qdot[45] = qf - qr;
-    // (42):  CH3 + HO2 <=> CH4 + O2
-    k_f = 3600000
-               ;
-    qf = k_f * (sc[9]*sc[11]);
-    k_r = 1e-06 * 5.177e+15 
-               * exp(-0.33 * tc[0] - 0.50321666580472 * 57960 * invT);
-    qr = k_r * (sc[3]*sc[10]);
-    qdot[46] = qf - qr;
-    // (43):  HCO + O2 <=> CO + HO2
-    k_f = 7580000
-               * exp(-(206.318832979935) * invT);
-    qf = k_f * (sc[3]*sc[7]);
-    k_r = 1e-06 * 902900000000 
-               * exp(0.33 * tc[0] - 0.50321666580472 * 32930 * invT);
-    qr = k_r * (sc[6]*sc[11]);
-    qdot[47] = qf - qr;
-    // (44):  HO2 + H <=> OH + OH
-    k_f = 70800000
-               * exp(-(150.964999741416) * invT);
-    qf = k_f * (sc[0]*sc[11]);
-    k_r = 1e-06 * 135200000000000 
-               * exp(-0.33 * tc[0] - 0.50321666580472 * 39570 * invT);
-    qr = k_r * (sc[4]*sc[4]);
-    qdot[48] = qf - qr;
-    // (45):  HO2 + H <=> H2 + O2
-    k_f = 16600000
-               * exp(-(412.63766595987) * invT);
-    qf = k_f * (sc[0]*sc[11]);
-    k_r = 1e-06 * 913800000000000 
-               * exp(-0.33 * tc[0] - 0.50321666580472 * 58300 * invT);
-    qr = k_r * (sc[1]*sc[3]);
-    qdot[49] = qf - qr;
-    // (46):  HO2 + OH <=> H2O + O2
-    k_f = 28900000
-               * exp(-(-251.60833290236) * invT);
-    qf = k_f * (sc[4]*sc[11]);
-    k_r = 1e-06 * 6.888e+15 
-               * exp(-0.33 * tc[0] - 0.50321666580472 * 72140 * invT);
-    qr = k_r * (sc[3]*sc[5]);
-    qdot[50] = qf - qr;
-    // (47):  H2O2 + O2 <=> HO2 + HO2
-    k_f = 594200000000
-               * exp((-0.66) * tc[0] - (26745.9657875209) * invT);
-    qf = k_f * (sc[3]*sc[12]);
-    k_r = 1e-06 * 420000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 11980 * invT);
-    qr = k_r * (sc[11]*sc[11]);
-    qdot[51] = qf - qr;
-    // (49):  H2O2 + H <=> H2O + OH
-    k_f = 24100000
-               * exp(-(1997.77016324474) * invT);
-    qf = k_f * (sc[0]*sc[12]);
-    k_r = 1e-06 * 7750000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 74700 * invT);
-    qr = k_r * (sc[4]*sc[5]);
-    qdot[52] = qf - qr;
-    // (50):  CH4 + HO2 <=> CH3 + H2O2
-    k_f = 342000
-               * exp(-(9707.04948337304) * invT);
-    qf = k_f * (sc[10]*sc[11]);
-    k_r = 1e-06 * 336500000000 
-               * exp(-0.33 * tc[0] - 0.50321666580472 * 2502 * invT);
-    qr = k_r * (sc[9]*sc[12]);
-    qdot[53] = qf - qr;
-    // (51):  CH2O + HO2 <=> HCO + H2O2
-    k_f = 5.82e-09
-               * exp((4.53) * tc[0] - (3299.59167768155) * invT);
-    qf = k_f * (sc[11]*sc[13]);
-    k_r = 1e-06 * 0.01194 
-               * exp(4.2 * tc[0] - 0.50321666580472 * 4921 * invT);
-    qr = k_r * (sc[7]*sc[12]);
-    qdot[54] = qf - qr;
-    // (52):  OH + M <=> O + H + M
-    k_f = 3.909e+16
-               * exp((-2) * tc[0] - (52988.714909237) * invT);
-    Corr  = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
-    qf = Corr * k_f * (sc[4]);
-    k_r = 1e-12 * 4.72e+18 
-               * exp(-1 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = Corr * k_r * (sc[0]*sc[2]);
-    qdot[55] = qf - qr;
-    // (53):  O2 + M <=> O + O + M
-    k_f = 647300000000000
-               * exp((-1.5) * tc[0] - (61140.8248952734) * invT);
-    Corr  = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
-    qf = Corr * k_f * (sc[3]);
-    k_r = 1e-12 * 6.17e+15 
-               * exp(-0.5 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = Corr * k_r * (sc[2]*sc[2]);
-    qdot[56] = qf - qr;
-    // (54):  H2 + M <=> H + H + M
-    k_f = 45700000000000
-               * exp((-1.4) * tc[0] - (52535.8199100127) * invT);
-    Corr  = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
-    qf = Corr * k_f * (sc[1]);
-    k_r = 1e-12 * 2.423e+15 
-               * exp(-0.4 * tc[0] - 0.50321666580472 * -3040 * invT);
-    qr = Corr * k_r * (sc[0]*sc[0]);
-    qdot[57] = qf - qr;
-    // (56):  C2H5 + C2H3 <=> C2H4 + C2H4
-    k_f = 576500000
-               * exp((-0.63) * tc[0] - (1253.00949785375) * invT);
-    qf = k_f * (sc[17]*sc[19]);
-    k_r = 1e-06 * 482000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 71530 * invT);
-    qr = k_r * (sc[16]*sc[16]);
-    qdot[58] = qf - qr;
-    // (58):  C2H4 + H <=> C2H3 + H2
-    k_f = 8.42e-09
-               * exp((4.62) * tc[0] - (1299.80864777359) * invT);
-    qf = k_f * (sc[0]*sc[16]);
-    k_r = 1e-06 * 0.5723 
-               * exp(3.79 * tc[0] - 0.50321666580472 * 3233 * invT);
-    qr = k_r * (sc[1]*sc[19]);
-    qdot[59] = qf - qr;
-    // (59):  C2H4 + OH <=> C2H3 + H2O
-    k_f = 20500000
-               * exp(-(2994.13916153808) * invT);
-    qf = k_f * (sc[4]*sc[16]);
-    k_r = 1e-06 * 6.033e+15 
-               * exp(-0.83 * tc[0] - 0.50321666580472 * 21760 * invT);
-    qr = k_r * (sc[5]*sc[19]);
-    qdot[60] = qf - qr;
-    // (60):  C2H2 + O2 <=> HCCO + OH
-    k_f = 200
-               * exp((1.5) * tc[0] - (15146.8216407221) * invT);
-    qf = k_f * (sc[3]*sc[18]);
-    k_r = 1e-06 * 223200 
-               * exp(1.5 * tc[0] - 0.50321666580472 * 25400 * invT);
-    qr = k_r * (sc[4]*sc[21]);
-    qdot[61] = qf - qr;
-    // (61):  C2H3 + O2 <=> C2H2 + HO2
-    k_f = 2.12e-12
-               * exp((6) * tc[0] - (4772.50685849196) * invT);
-    qf = k_f * (sc[3]*sc[19]);
-    k_r = 1e-06 * 1.114e-07 
-               * exp(6.33 * tc[0] - 0.50321666580472 * 17570 * invT);
-    qr = k_r * (sc[11]*sc[18]);
-    qdot[62] = qf - qr;
-    // (62):  H2O2 + O <=> OH + HO2
-    k_f = 9.55
-               * exp((2) * tc[0] - (1997.77016324474) * invT);
-    qf = k_f * (sc[2]*sc[12]);
-    k_r = 1e-06 * 163200 
-               * exp(2.33 * tc[0] - 0.50321666580472 * 18180 * invT);
-    qr = k_r * (sc[4]*sc[11]);
-    qdot[63] = qf - qr;
-    // (63):  C2H2 + O <=> HCCO + H
-    k_f = 14.3
-               * exp((2) * tc[0] - (956.111665028967) * invT);
-    qf = k_f * (sc[2]*sc[18]);
-    k_r = 1e-06 * 202100 
-               * exp(2 * tc[0] - 0.50321666580472 * 13310 * invT);
-    qr = k_r * (sc[0]*sc[21]);
-    qdot[64] = qf - qr;
-    // (64):  C2H2 + OH <=> CH2CO + H
-    k_f = 2.19e-10
-               * exp((4.5) * tc[0] - (-503.21666580472) * invT);
-    qf = k_f * (sc[4]*sc[18]);
-    k_r = 1e-06 * 0.002161 
-               * exp(4.5 * tc[0] - 0.50321666580472 * 19660 * invT);
-    qr = k_r * (sc[0]*sc[20]);
-    qdot[65] = qf - qr;
-    // (65):  CH2CO + H <=> CH3 + CO
-    k_f = 11000000
-               * exp(-(1710.93666373605) * invT);
-    qf = k_f * (sc[0]*sc[20]);
-    k_r = 1e-06 * 2400000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 40200 * invT);
-    qr = k_r * (sc[6]*sc[9]);
-    qdot[66] = qf - qr;
-    // (66):  CH2CO + O <=> HCCO + OH
-    k_f = 10000000
-               * exp(-(4025.73332643776) * invT);
-    qf = k_f * (sc[2]*sc[20]);
-    k_r = 1e-06 * 14320000000 
-               * exp(0 * tc[0] - 0.50321666580472 * -1255 * invT);
-    qr = k_r * (sc[4]*sc[21]);
-    qdot[67] = qf - qr;
-    // (67):  CH2CO + OH <=> HCCO + H2O
-    k_f = 10000000
-               * exp(-(1006.43333160944) * invT);
-    qf = k_f * (sc[4]*sc[20]);
-    k_r = 1e-06 * 141200000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 9995 * invT);
-    qr = k_r * (sc[5]*sc[21]);
-    qdot[68] = qf - qr;
-    // (68):  CH2CO + H <=> HCCO + H2
-    k_f = 200000000
-               * exp(-(4025.73332643776) * invT);
-    qf = k_f * (sc[0]*sc[20]);
-    k_r = 1e-06 * 652200000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 840 * invT);
-    qr = k_r * (sc[1]*sc[21]);
-    qdot[69] = qf - qr;
-    // (69):  HCCO + OH <=> HCO + HCO
-    k_f = 10000000
-               ;
-    qf = k_f * (sc[4]*sc[21]);
-    k_r = 1e-06 * 241100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 40360 * invT);
-    qr = k_r * (sc[7]*sc[7]);
-    qdot[70] = qf - qr;
-    // (70):  HCCO + H <=> CH2(S) + CO
-    k_f = 110000000
-               ;
-    qf = k_f * (sc[0]*sc[21]);
-    k_r = 1e-06 * 2046000000000 
-               * exp(0.89 * tc[0] - 0.50321666580472 * 27830 * invT);
-    qr = k_r * (sc[6]*sc[50]);
-    qdot[71] = qf - qr;
-    // (71):  HCCO + O <=> H + CO + CO
-    k_f = 80000000
-               ;
-    qf = k_f * (sc[2]*sc[21]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[0]*sc[6]*sc[6]);
-    qdot[72] = qf - qr;
-    // (72):  C2H6 + O2 <=> C2H5 + HO2
-    k_f = 60300000
-               * exp(-(26101.8484552908) * invT);
-    qf = k_f * (sc[3]*sc[15]);
-    k_r = 1e-06 * 267900000 
-               * exp(0.89 * tc[0] - 0.50321666580472 * -1922 * invT);
-    qr = k_r * (sc[11]*sc[17]);
-    qdot[73] = qf - qr;
-    // (73):  C2H6 + HO2 <=> C2H5 + H2O2
-    k_f = 13200000
-               * exp(-(10300.8451490226) * invT);
-    qf = k_f * (sc[11]*sc[15]);
-    k_r = 1e-06 * 82980000000 
-               * exp(0.24 * tc[0] - 0.50321666580472 * 7852 * invT);
-    qr = k_r * (sc[12]*sc[17]);
-    qdot[74] = qf - qr;
-    // (74):  CH3 + C2H3 <=> CH4 + C2H2
-    k_f = 392000
-               ;
-    qf = k_f * (sc[9]*sc[19]);
-    k_r = 1e-06 * 29620000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 66050 * invT);
-    qr = k_r * (sc[10]*sc[18]);
-    qdot[75] = qf - qr;
-    // (75):  CH3 + C2H5 <=> CH4 + C2H4
-    k_f = 19500000
-               * exp((-0.5) * tc[0]);
-    qf = k_f * (sc[9]*sc[17]);
-    k_r = 1e-06 * 2.895e+16 
-               * exp(-0.7 * tc[0] - 0.50321666580472 * 70170 * invT);
-    qr = k_r * (sc[10]*sc[16]);
-    qdot[76] = qf - qr;
-    // (76):  C2H3 + H <=> C2H2 + H2
-    k_f = 20000000
-               * exp(-(1258.0416645118) * invT);
-    qf = k_f * (sc[0]*sc[19]);
-    k_r = 1e-06 * 13310000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 68080 * invT);
-    qr = k_r * (sc[1]*sc[18]);
-    qdot[77] = qf - qr;
-    // (77):  C2H5 + H <=> CH3 + CH3
-    k_f = 36100000
-               ;
-    qf = k_f * (sc[0]*sc[17]);
-    k_r = 1e-06 * 5.446e+16 
-               * exp(-1.03 * tc[0] - 0.50321666580472 * 16980 * invT);
-    qr = k_r * (sc[9]*sc[9]);
-    qdot[78] = qf - qr;
-    // (78):  C2H3 + O2 <=> CH2O + HCO
-    k_f = 1.7e+23
-               * exp((-5.31) * tc[0] - (3270.90832773068) * invT);
-    qf = k_f * (sc[3]*sc[19]);
-    k_r = 1e-06 * 1.657e+29 
-               * exp(-5.31 * tc[0] - 0.50321666580472 * 93050 * invT);
-    qr = k_r * (sc[7]*sc[13]);
-    qdot[79] = qf - qr;
-    // (79):  C2H6 <=> C2H5 + H
-    k_f = 2.783e+21
-               * exp((-1.56) * tc[0] - (52233.8899105299) * invT);
-    qf = k_f * (sc[15]);
-    k_r = 1e-06 * 36100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[0]*sc[17]);
-    qdot[80] = qf - qr;
-    // (80):  C2H4 + CH3 <=> C2H3 + CH4
-    k_f = 6.62e-06
-               * exp((3.7) * tc[0] - (4780.55832514484) * invT);
-    qf = k_f * (sc[9]*sc[16]);
-    k_r = 1e-06 * 1.44 
-               * exp(4.02 * tc[0] - 0.50321666580472 * 5472 * invT);
-    qr = k_r * (sc[10]*sc[19]);
-    qdot[81] = qf - qr;
-    // (82):  CH3CHO <=> CH3 + HCO
-    k_f = 2.614e+15
-               * exp((0.15) * tc[0] - (40534.1024305702) * invT);
-    qf = k_f * (sc[24]);
-    k_r = 1e-06 * 20000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[7]*sc[9]);
-    qdot[82] = qf - qr;
-    // (83):  CH3CHO + O2 <=> CH3CO + HO2
-    k_f = 30100000
-               * exp(-(19700.9324662548) * invT);
-    qf = k_f * (sc[3]*sc[24]);
-    k_r = 1e-06 * 85520000000 
-               * exp(0.32 * tc[0] - 0.50321666580472 * -1940 * invT);
-    qr = k_r * (sc[11]*sc[22]);
-    qdot[83] = qf - qr;
-    // (84):  CH3CHO + OH <=> CH3CO + H2O
-    k_f = 2
-               * exp((1.8) * tc[0] - (654.181665546136) * invT);
-    qf = k_f * (sc[4]*sc[24]);
-    k_r = 1e-06 * 1354000 
-               * exp(1.79 * tc[0] - 0.50321666580472 * 32850 * invT);
-    qr = k_r * (sc[5]*sc[22]);
-    qdot[84] = qf - qr;
-    // (85):  CH3CHO + H <=> CH3CO + H2
-    k_f = 13400000
-               * exp(-(1660.61499715557) * invT);
-    qf = k_f * (sc[0]*sc[24]);
-    k_r = 1e-06 * 2096000000000 
-               * exp(-0.01 * tc[0] - 0.50321666580472 * 19690 * invT);
-    qr = k_r * (sc[1]*sc[22]);
-    qdot[85] = qf - qr;
-    // (86):  CH3CHO + O <=> CH3CO + OH
-    k_f = 5940000
-               * exp(-(940.008731723216) * invT);
-    qf = k_f * (sc[2]*sc[24]);
-    k_r = 1e-06 * 408000000000 
-               * exp(-0.01 * tc[0] - 0.50321666580472 * 16170 * invT);
-    qr = k_r * (sc[4]*sc[22]);
-    qdot[86] = qf - qr;
-    // (87):  CH3CHO + HO2 <=> CH3CO + H2O2
-    k_f = 3010000
-               * exp(-(5998.34265639226) * invT);
-    qf = k_f * (sc[11]*sc[24]);
-    k_r = 1e-06 * 12100000000000 
-               * exp(-0.34 * tc[0] - 0.50321666580472 * 12010 * invT);
-    qr = k_r * (sc[12]*sc[22]);
-    qdot[87] = qf - qr;
-    // (88):  CH3CHO + CH3 <=> CH3CO + CH4
-    k_f = 2.608
-               * exp((1.78) * tc[0] - (2974.5137115717) * invT);
-    qf = k_f * (sc[9]*sc[24]);
-    k_r = 1e-06 * 10660000 
-               * exp(1.77 * tc[0] - 0.50321666580472 * 22780 * invT);
-    qr = k_r * (sc[10]*sc[22]);
-    qdot[88] = qf - qr;
-    // (89):  C3H5-A <=> C2H2 + CH3
-    k_f = 2.397e+48
-               * exp((-9.9) * tc[0] - (41304.0239292514) * invT);
-    qf = k_f * (sc[47]);
-    k_r = 1e-06 * 2.61e+46 
-               * exp(-9.82 * tc[0] - 0.50321666580472 * 36950 * invT);
-    qr = k_r * (sc[9]*sc[18]);
-    qdot[89] = qf - qr;
-    // (90):  C3H6 <=> C2H3 + CH3
-    k_f = 2.73e+62
-               * exp((-13.28) * tc[0] - (61996.2932271415) * invT);
-    qf = k_f * (sc[26]);
-    k_r = 1e-06 * 4.712e+59 
-               * exp(-13.19 * tc[0] - 0.50321666580472 * 29540 * invT);
-    qr = k_r * (sc[9]*sc[19]);
-    qdot[90] = qf - qr;
-    // (91):  C2H2 + CH3 <=> C3H4-A + H
-    k_f = 67400000000000
-               * exp((-2.08) * tc[0] - (15896.6144727711) * invT);
-    qf = k_f * (sc[9]*sc[18]);
-    k_r = 1e-06 * 1.149e+16 
-               * exp(-0.7 * tc[0] - 0.50321666580472 * 15790 * invT);
-    qr = k_r * (sc[0]*sc[25]);
-    qdot[91] = qf - qr;
-    // (92):  C3H6 <=> C3H5-A + H
-    k_f = 2.01e+61
-               * exp((-13.26) * tc[0] - (59631.1748978593) * invT);
-    qf = k_f * (sc[26]);
-    k_r = 1e-06 * 4.887e+56 
-               * exp(-12.25 * tc[0] - 0.50321666580472 * 28080 * invT);
-    qr = k_r * (sc[0]*sc[47]);
-    qdot[92] = qf - qr;
-    // (93):  C3H6 + O <=> CH2CO + CH3 + H
-    k_f = 25
-               * exp((1.76) * tc[0] - (38.2444666011587) * invT);
-    qf = k_f * (sc[2]*sc[26]);
-    k_r = 1e-12 * 1 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[0]*sc[9]*sc[20]);
-    qdot[93] = qf - qr;
-    // (94):  C3H6 + O <=> C2H5 + HCO
-    k_f = 15.8
-               * exp((1.76) * tc[0] - (-611.911465618539) * invT);
-    qf = k_f * (sc[2]*sc[26]);
-    k_r = 1e-06 * 140200 
-               * exp(1.88 * tc[0] - 0.50321666580472 * 26510 * invT);
-    qr = k_r * (sc[7]*sc[17]);
-    qdot[94] = qf - qr;
-    // (95):  C3H6 + HO2 <=> C3H5-A + H2O2
-    k_f = 150000
-               * exp(-(7140.64448776897) * invT);
-    qf = k_f * (sc[11]*sc[26]);
-    k_r = 1e-06 * 586700 
-               * exp(1.33 * tc[0] - 0.50321666580472 * 9759 * invT);
-    qr = k_r * (sc[12]*sc[47]);
-    qdot[95] = qf - qr;
-    // (96):  C3H6 + OH <=> C3H5-A + H2O
-    k_f = 3.12
-               * exp((2) * tc[0] - (-149.958566409806) * invT);
-    qf = k_f * (sc[4]*sc[26]);
-    k_r = 1e-06 * 6194000 
-               * exp(2.01 * tc[0] - 0.50321666580472 * 31880 * invT);
-    qr = k_r * (sc[5]*sc[47]);
-    qdot[96] = qf - qr;
-    // (97):  C4H6 <=> C2H3 + C2H3
-    k_f = 4.027e+19
-               * exp((-1) * tc[0] - (49390.7157487332) * invT);
-    qf = k_f * (sc[27]);
-    k_r = 1e-06 * 12600000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[19]*sc[19]);
-    qdot[97] = qf - qr;
-    // (98):  C4H6 + OH <=> C2H5 + CH2CO
-    k_f = 1000000
-               ;
-    qf = k_f * (sc[4]*sc[27]);
-    k_r = 1e-06 * 3730000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 30020 * invT);
-    qr = k_r * (sc[17]*sc[20]);
-    qdot[98] = qf - qr;
-    // (99):  C4H6 + OH <=> CH2O + C3H5-A
-    k_f = 1000000
-               ;
-    qf = k_f * (sc[4]*sc[27]);
-    k_r = 1e-06 * 3501000 
-               * exp(0 * tc[0] - 0.50321666580472 * 71060 * invT);
-    qr = k_r * (sc[13]*sc[47]);
-    qdot[99] = qf - qr;
-    // (100):  C4H6 + OH <=> C2H3 + CH3CHO
-    k_f = 1000000
-               ;
-    qf = k_f * (sc[4]*sc[27]);
-    k_r = 1e-06 * 543700000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 18550 * invT);
-    qr = k_r * (sc[19]*sc[24]);
-    qdot[100] = qf - qr;
-    // (101):  C4H6 + O <=> C2H4 + CH2CO
-    k_f = 1000000
-               ;
-    qf = k_f * (sc[2]*sc[27]);
-    k_r = 1e-06 * 637700000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 94340 * invT);
-    qr = k_r * (sc[16]*sc[20]);
-    qdot[101] = qf - qr;
-    // (102):  C4H6 + O <=> CH2O + C3H4-A
-    k_f = 1000000
-               ;
-    qf = k_f * (sc[2]*sc[27]);
-    k_r = 1e-06 * 1075000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 79050 * invT);
-    qr = k_r * (sc[13]*sc[25]);
-    qdot[102] = qf - qr;
-    // (103):  C2H4 + O2 <=> C2H3 + HO2
-    k_f = 40000000
-               * exp(-(29287.2099498347) * invT);
-    qf = k_f * (sc[3]*sc[16]);
-    k_r = 1e-06 * 49390000000000 
-               * exp(-0.5 * tc[0] - 0.50321666580472 * 1368 * invT);
-    qr = k_r * (sc[11]*sc[19]);
-    qdot[103] = qf - qr;
-    // (104):  CH2O + M <=> CO + H2 + M
-    k_f = 1.826e+26
-               * exp((-4.42) * tc[0] - (43840.2359249072) * invT);
-    Corr  = mixture;
-    qf = Corr * k_f * (sc[13]);
-    k_r = 1e-12 * 5.07e+27 
-               * exp(-3.42 * tc[0] - 0.50321666580472 * 84350 * invT);
-    qr = Corr * k_r * (sc[1]*sc[6]);
-    qdot[104] = qf - qr;
-    // (105):  NC3H7 <=> CH3 + C2H4
-    k_f = 228400000000000
-               * exp((-0.55) * tc[0] - (14291.353308854) * invT);
-    qf = k_f * (sc[28]);
-    k_r = 1e-06 * 410000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 7204 * invT);
-    qr = k_r * (sc[9]*sc[16]);
-    qdot[105] = qf - qr;
-    // (106):  NC3H7 <=> H + C3H6
-    k_f = 2.667e+15
-               * exp((-0.64) * tc[0] - (18528.4376349298) * invT);
-    qf = k_f * (sc[28]);
-    k_r = 1e-06 * 10000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 2500 * invT);
-    qr = k_r * (sc[0]*sc[26]);
-    qdot[106] = qf - qr;
-    // (107):  NC3H7 + O2 <=> C3H6 + HO2
-    k_f = 300000
-               * exp(-(1509.64999741416) * invT);
-    qf = k_f * (sc[3]*sc[28]);
-    k_r = 1e-06 * 200000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 17500 * invT);
-    qr = k_r * (sc[11]*sc[26]);
-    qdot[107] = qf - qr;
-    // (108):  C3H6 + O <=> C3H5-A + OH
-    k_f = 524000
-               * exp((0.7) * tc[0] - (2960.92686159497) * invT);
-    qf = k_f * (sc[2]*sc[26]);
-    k_r = 1e-06 * 105500000000 
-               * exp(0.71 * tc[0] - 0.50321666580472 * 20820 * invT);
-    qr = k_r * (sc[4]*sc[47]);
-    qdot[108] = qf - qr;
-    // (109):  C3H6 + H <=> C3H5-A + H2
-    k_f = 0.173
-               * exp((2.5) * tc[0] - (1254.01593118536) * invT);
-    qf = k_f * (sc[0]*sc[26]);
-    k_r = 1e-06 * 79330 
-               * exp(2.51 * tc[0] - 0.50321666580472 * 19520 * invT);
-    qr = k_r * (sc[1]*sc[47]);
-    qdot[109] = qf - qr;
-    // (110):  C3H6 + H <=> C2H4 + CH3
-    k_f = 4.83e+27
-               * exp((-5.81) * tc[0] - (9309.50831738731) * invT);
-    qf = k_f * (sc[0]*sc[26]);
-    k_r = 1e-06 * 2.313e+33 
-               * exp(-5.9 * tc[0] - 0.50321666580472 * 31620 * invT);
-    qr = k_r * (sc[9]*sc[16]);
-    qdot[110] = qf - qr;
-    // (111):  C5H9 <=> C3H5-A + C2H4
-    k_f = 25000000000000
-               * exp(-(22644.7499612124) * invT);
-    qf = k_f * (sc[35]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[16]*sc[47]);
-    qdot[111] = qf - qr;
-    // (112):  C5H9 <=> C4H6 + CH3
-    k_f = 1.339e+15
-               * exp((-0.52) * tc[0] - (19283.2626336369) * invT);
-    qf = k_f * (sc[35]);
-    k_r = 1e-06 * 175000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 7600 * invT);
-    qr = k_r * (sc[9]*sc[27]);
-    qdot[112] = qf - qr;
-    // (113):  C4H7 <=> C4H6 + H
-    k_f = 120000000000000
-               * exp(-(24808.5816241727) * invT);
-    qf = k_f * (sc[29]);
-    k_r = 1e-06 * 40000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 1300 * invT);
-    qr = k_r * (sc[0]*sc[27]);
-    qdot[113] = qf - qr;
-    // (114):  C4H7 <=> C2H4 + C2H3
-    k_f = 100000000000
-               * exp(-(18619.0166347746) * invT);
-    qf = k_f * (sc[29]);
-    k_r = 1e-06 * 50000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 7000 * invT);
-    qr = k_r * (sc[16]*sc[19]);
-    qdot[114] = qf - qr;
-    // (115):  C4H8-1 + C4H6 <=> C4H7 + C4H7
-    k_f = 2350000
-               * exp(-(23510.2826263965) * invT);
-    qf = k_f * (sc[27]*sc[30]);
-    k_r = 1e-06 * 1600000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[29]*sc[29]);
-    qdot[115] = qf - qr;
-    // (116):  C4H7 + CH3 <=> C4H6 + CH4
-    k_f = 8000000
-               ;
-    qf = k_f * (sc[9]*sc[29]);
-    k_r = 1e-06 * 70500000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 57280 * invT);
-    qr = k_r * (sc[10]*sc[27]);
-    qdot[116] = qf - qr;
-    // (117):  C3H5-A + C4H7 <=> C3H6 + C4H6
-    k_f = 6310000
-               ;
-    qf = k_f * (sc[29]*sc[47]);
-    k_r = 1e-06 * 10000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 50000 * invT);
-    qr = k_r * (sc[26]*sc[27]);
-    qdot[117] = qf - qr;
-    // (118):  C4H7 + O2 <=> C4H6 + HO2
-    k_f = 1000
-               ;
-    qf = k_f * (sc[3]*sc[29]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 17000 * invT);
-    qr = k_r * (sc[11]*sc[27]);
-    qdot[118] = qf - qr;
-    // (119):  H + C4H7 <=> C4H6 + H2
-    k_f = 31600000
-               ;
-    qf = k_f * (sc[0]*sc[29]);
-    k_r = 1e-06 * 10660000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 56810 * invT);
-    qr = k_r * (sc[1]*sc[27]);
-    qdot[119] = qf - qr;
-    // (120):  C2H5 + C4H7 <=> C4H6 + C2H6
-    k_f = 3980000
-               ;
-    qf = k_f * (sc[17]*sc[29]);
-    k_r = 1e-06 * 3211000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 49840 * invT);
-    qr = k_r * (sc[15]*sc[27]);
-    qdot[120] = qf - qr;
-    // (121):  C2H5 + C4H7 <=> C2H4 + C4H8-1
-    k_f = 9.24
-               * exp((1.5) * tc[0] - (-484.09443250414) * invT);
-    qf = k_f * (sc[17]*sc[29]);
-    k_r = 1e-06 * 780.7 
-               * exp(2.91 * tc[0] - 0.50321666580472 * 50960 * invT);
-    qr = k_r * (sc[16]*sc[30]);
-    qdot[121] = qf - qr;
-    // (122):  C2H3 + C4H7 <=> C2H4 + C4H6
-    k_f = 3980000
-               ;
-    qf = k_f * (sc[19]*sc[29]);
-    k_r = 1e-06 * 11570000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 57710 * invT);
-    qr = k_r * (sc[16]*sc[27]);
-    qdot[122] = qf - qr;
-    // (123):  C4H8-1 <=> C3H5-A + CH3
-    k_f = 5e+15
-               * exp(-(35728.3832721351) * invT);
-    qf = k_f * (sc[30]);
-    k_r = 1e-06 * 5000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[9]*sc[47]);
-    qdot[123] = qf - qr;
-    // (124):  C4H8-1 <=> C2H3 + C2H5
-    k_f = 1e+19
-               * exp((-1) * tc[0] - (48696.2767499227) * invT);
-    qf = k_f * (sc[30]);
-    k_r = 1e-06 * 9000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[17]*sc[19]);
-    qdot[124] = qf - qr;
-    // (125):  C4H8-1 <=> H + C4H7
-    k_f = 4.107e+18
-               * exp((-1) * tc[0] - (48988.1424160895) * invT);
-    qf = k_f * (sc[30]);
-    k_r = 1e-06 * 50000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[0]*sc[29]);
-    qdot[125] = qf - qr;
-    // (126):  C4H8-1 + CH3 <=> C4H7 + CH4
-    k_f = 100000
-               * exp(-(3673.48166037445) * invT);
-    qf = k_f * (sc[9]*sc[30]);
-    k_r = 1e-06 * 600000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 17860 * invT);
-    qr = k_r * (sc[10]*sc[29]);
-    qdot[126] = qf - qr;
-    // (127):  C4H8-1 + H <=> C4H7 + H2
-    k_f = 50000000
-               * exp(-(1962.54499663841) * invT);
-    qf = k_f * (sc[0]*sc[30]);
-    k_r = 1e-06 * 40000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 25200 * invT);
-    qr = k_r * (sc[1]*sc[29]);
-    qdot[127] = qf - qr;
-    // (128):  C4H8-1 + OH <=> C4H7 + H2O
-    k_f = 22500000
-               * exp(-(1115.63134808906) * invT);
-    qf = k_f * (sc[4]*sc[30]);
-    k_r = 1e-06 * 4772000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 26470 * invT);
-    qr = k_r * (sc[5]*sc[29]);
-    qdot[128] = qf - qr;
-    // (129):  C4H8-1 + C3H5-A <=> C4H7 + C3H6
-    k_f = 79000
-               * exp(-(6239.88665597852) * invT);
-    qf = k_f * (sc[30]*sc[47]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 17500 * invT);
-    qr = k_r * (sc[26]*sc[29]);
-    qdot[129] = qf - qr;
-    // (130):  C4H8-1 + HO2 <=> C4H7 + H2O2
-    k_f = 1400000
-               * exp(-(7497.92832049032) * invT);
-    qf = k_f * (sc[11]*sc[30]);
-    k_r = 1e-06 * 316000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 13000 * invT);
-    qr = k_r * (sc[12]*sc[29]);
-    qdot[130] = qf - qr;
-    // (131):  C4H8-1 + O2 <=> C4H7 + HO2
-    k_f = 27000000
-               * exp(-(16706.7933047167) * invT);
-    qf = k_f * (sc[3]*sc[30]);
-    k_r = 1e-06 * 300000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[11]*sc[29]);
-    qdot[131] = qf - qr;
-    // (132):  PC4H9 <=> C2H5 + C2H4
-    k_f = 7.497e+17
-               * exp((-1.41) * tc[0] - (14885.1489745036) * invT);
-    qf = k_f * (sc[31]);
-    k_r = 1e-06 * 330000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 7200 * invT);
-    qr = k_r * (sc[16]*sc[17]);
-    qdot[132] = qf - qr;
-    // (133):  PC4H9 <=> C4H8-1 + H
-    k_f = 1.159e+17
-               * exp((-1.17) * tc[0] - (19202.7479671081) * invT);
-    qf = k_f * (sc[31]);
-    k_r = 1e-06 * 10000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 2900 * invT);
-    qr = k_r * (sc[0]*sc[30]);
-    qdot[133] = qf - qr;
-    // (134):  PC4H9 + O2 <=> C4H8-1 + HO2
-    k_f = 3e-25
-               * exp(-(1509.64999741416) * invT);
-    qf = k_f * (sc[3]*sc[31]);
-    k_r = 1e-06 * 2e-19 
-               * exp(0 * tc[0] - 0.50321666580472 * 17500 * invT);
-    qr = k_r * (sc[11]*sc[30]);
-    qdot[134] = qf - qr;
-    // (135):  CH3COCH2 <=> CH2CO + CH3
-    k_f = 100000000000000
-               * exp(-(15599.7166399463) * invT);
-    qf = k_f * (sc[32]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 6000 * invT);
-    qr = k_r * (sc[9]*sc[20]);
-    qdot[135] = qf - qr;
-    // (136):  C2H5CO <=> C2H5 + CO
-    k_f = 1.834e+15
-               * exp((-0.73) * tc[0] - (6496.52715553893) * invT);
-    qf = k_f * (sc[34]);
-    k_r = 1e-06 * 151000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 4810 * invT);
-    qr = k_r * (sc[6]*sc[17]);
-    qdot[136] = qf - qr;
-    // (137):  C2H5CHO + H <=> C2H5CO + H2
-    k_f = 40000000
-               * exp(-(2113.50999637982) * invT);
-    qf = k_f * (sc[0]*sc[33]);
-    k_r = 1e-06 * 5854000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 20590 * invT);
-    qr = k_r * (sc[1]*sc[34]);
-    qdot[137] = qf - qr;
-    // (138):  C2H5CHO + O <=> C2H5CO + OH
-    k_f = 5000000
-               * exp(-(900.757831790448) * invT);
-    qf = k_f * (sc[2]*sc[33]);
-    k_r = 1e-06 * 321400000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 16080 * invT);
-    qr = k_r * (sc[4]*sc[34]);
-    qdot[138] = qf - qr;
-    // (139):  C2H5CHO + OH <=> C2H5CO + H2O
-    k_f = 26900
-               * exp((0.76) * tc[0] - (-171.093666373605) * invT);
-    qf = k_f * (sc[4]*sc[33]);
-    k_r = 1e-06 * 17050000000 
-               * exp(0.76 * tc[0] - 0.50321666580472 * 31200 * invT);
-    qr = k_r * (sc[5]*sc[34]);
-    qdot[139] = qf - qr;
-    // (140):  C2H5CHO + CH3 <=> C2H5CO + CH4
-    k_f = 2.608
-               * exp((1.78) * tc[0] - (2974.5137115717) * invT);
-    qf = k_f * (sc[9]*sc[33]);
-    k_r = 1e-06 * 9972000 
-               * exp(1.78 * tc[0] - 0.50321666580472 * 22780 * invT);
-    qr = k_r * (sc[10]*sc[34]);
-    qdot[140] = qf - qr;
-    // (141):  C2H5CHO + HO2 <=> C2H5CO + H2O2
-    k_f = 2800000
-               * exp(-(6843.74665494419) * invT);
-    qf = k_f * (sc[11]*sc[33]);
-    k_r = 1e-06 * 10530000000000 
-               * exp(-0.33 * tc[0] - 0.50321666580472 * 13680 * invT);
-    qr = k_r * (sc[12]*sc[34]);
-    qdot[141] = qf - qr;
-    // (142):  C2H5CHO + C2H5 <=> C2H5CO + C2H6
-    k_f = 1000000
-               * exp(-(4025.73332643776) * invT);
-    qf = k_f * (sc[17]*sc[33]);
-    k_r = 1e-06 * 598400000000000 
-               * exp(-0.57 * tc[0] - 0.50321666580472 * 20700 * invT);
-    qr = k_r * (sc[15]*sc[34]);
-    qdot[142] = qf - qr;
-    // (143):  C2H5CHO <=> C2H5 + HCO
-    k_f = 9.85e+18
-               * exp((-0.73) * tc[0] - (41117.8337629036) * invT);
-    qf = k_f * (sc[33]);
-    k_r = 1e-06 * 18100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[7]*sc[17]);
-    qdot[143] = qf - qr;
-    // (144):  C2H5CHO + O2 <=> C2H5CO + HO2
-    k_f = 10050000
-               * exp(-(20480.9182982521) * invT);
-    qf = k_f * (sc[3]*sc[33]);
-    k_r = 1e-06 * 26720000000 
-               * exp(0.33 * tc[0] - 0.50321666580472 * -396 * invT);
-    qr = k_r * (sc[11]*sc[34]);
-    qdot[144] = qf - qr;
-    // (145):  C2H5CHO + C2H3 <=> C2H5CO + C2H4
-    k_f = 1700000
-               * exp(-(4247.14865939183) * invT);
-    qf = k_f * (sc[19]*sc[33]);
-    k_r = 1e-06 * 3661000000 
-               * exp(0.83 * tc[0] - 0.50321666580472 * 24180 * invT);
-    qr = k_r * (sc[16]*sc[34]);
-    qdot[145] = qf - qr;
-    // (146):  C2H5CHO + C3H5-A <=> C2H5CO + C3H6
-    k_f = 1700000
-               * exp(-(4247.14865939183) * invT);
-    qf = k_f * (sc[33]*sc[47]);
-    k_r = 1e-06 * 10000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 28000 * invT);
-    qr = k_r * (sc[26]*sc[34]);
-    qdot[146] = qf - qr;
-    // (147):  C5H10-1 <=> C2H5 + C3H5-A
-    k_f = 9.173e+20
-               * exp((-1.63) * tc[0] - (37233.0011028912) * invT);
-    qf = k_f * (sc[36]);
-    k_r = 1e-06 * 4000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * -596 * invT);
-    qr = k_r * (sc[17]*sc[47]);
-    qdot[147] = qf - qr;
-    // (148):  C5H10-1 + H <=> C5H9 + H2
-    k_f = 28000000
-               * exp(-(2012.86666321888) * invT);
-    qf = k_f * (sc[0]*sc[36]);
-    k_r = 1e-06 * 1000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 14000 * invT);
-    qr = k_r * (sc[1]*sc[35]);
-    qdot[148] = qf - qr;
-    // (149):  C5H10-1 + O <=> C5H9 + OH
-    k_f = 0.254
-               * exp((2.56) * tc[0] - (-568.634832359333) * invT);
-    qf = k_f * (sc[2]*sc[36]);
-    k_r = 1e-06 * 700000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 29900 * invT);
-    qr = k_r * (sc[4]*sc[35]);
-    qdot[149] = qf - qr;
-    // (150):  C5H10-1 + O <=> PC4H9 + HCO
-    k_f = 100000
-               ;
-    qf = k_f * (sc[2]*sc[36]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[7]*sc[31]);
-    qdot[150] = qf - qr;
-    // (151):  C5H10-1 + O <=> NC3H7 + CH3CO
-    k_f = 100000
-               ;
-    qf = k_f * (sc[2]*sc[36]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[22]*sc[28]);
-    qdot[151] = qf - qr;
-    // (152):  C5H10-1 + OH <=> C5H9 + H2O
-    k_f = 5.12
-               * exp((2) * tc[0] - (-149.958566409806) * invT);
-    qf = k_f * (sc[4]*sc[36]);
-    k_r = 1e-06 * 20600000 
-               * exp(2.16 * tc[0] - 0.50321666580472 * 34970 * invT);
-    qr = k_r * (sc[5]*sc[35]);
-    qdot[152] = qf - qr;
-    // (153):  C5H10-1 + OH <=> PC4H9 + CH2O
-    k_f = 100000
-               ;
-    qf = k_f * (sc[4]*sc[36]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[13]*sc[31]);
-    qdot[153] = qf - qr;
-    // (154):  C5H10-1 + OH <=> NC3H7 + CH3CHO
-    k_f = 100000
-               ;
-    qf = k_f * (sc[4]*sc[36]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[24]*sc[28]);
-    qdot[154] = qf - qr;
-    // (155):  C5H10-1 + CH3 <=> C5H9 + CH4
-    k_f = 100000
-               * exp(-(3673.48166037445) * invT);
-    qf = k_f * (sc[9]*sc[36]);
-    k_r = 1e-06 * 600000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 17900 * invT);
-    qr = k_r * (sc[10]*sc[35]);
-    qdot[155] = qf - qr;
-    // (156):  H2O2 + H <=> H2 + HO2
-    k_f = 48200000
-               * exp(-(4000.57249314752) * invT);
-    qf = k_f * (sc[0]*sc[12]);
-    k_r = 1e-06 * 1875000000000 
-               * exp(0.33 * tc[0] - 0.50321666580472 * 24260 * invT);
-    qr = k_r * (sc[1]*sc[11]);
-    qdot[156] = qf - qr;
-    // (157):  HCO + O <=> CO2 + H
-    k_f = 30000000
-               ;
-    qf = k_f * (sc[2]*sc[7]);
-    k_r = 1e-06 * 9.677e+15 
-               * exp(0 * tc[0] - 0.50321666580472 * 110200 * invT);
-    qr = k_r * (sc[0]*sc[8]);
-    qdot[157] = qf - qr;
-    // (158):  CH3CO + H <=> CH2CO + H2
-    k_f = 20000000
-               ;
-    qf = k_f * (sc[0]*sc[22]);
-    k_r = 1e-06 * 5.626e+17 
-               * exp(-1.13 * tc[0] - 0.50321666580472 * 63700 * invT);
-    qr = k_r * (sc[1]*sc[20]);
-    qdot[158] = qf - qr;
-    // (159):  CH3CO + O <=> CH2CO + OH
-    k_f = 20000000
-               ;
-    qf = k_f * (sc[2]*sc[22]);
-    k_r = 1e-06 * 5.951e+18 
-               * exp(-1.13 * tc[0] - 0.50321666580472 * 120700 * invT);
-    qr = k_r * (sc[4]*sc[20]);
-    qdot[159] = qf - qr;
-    // (160):  CH3CO + CH3 <=> CH2CO + CH4
-    k_f = 50000000
-               ;
-    qf = k_f * (sc[9]*sc[22]);
-    k_r = 1e-06 * 8.197e+17 
-               * exp(-0.67 * tc[0] - 0.50321666580472 * 79830 * invT);
-    qr = k_r * (sc[10]*sc[20]);
-    qdot[160] = qf - qr;
-    // (161):  C2H4 + O <=> CH2CHO + H
-    k_f = 3.39
-               * exp((1.88) * tc[0] - (90.0757831790448) * invT);
-    qf = k_f * (sc[2]*sc[16]);
-    k_r = 1e-06 * 9481000 
-               * exp(1.79 * tc[0] - 0.50321666580472 * 16050 * invT);
-    qr = k_r * (sc[0]*sc[23]);
-    qdot[161] = qf - qr;
-    // (162):  C2H5 + O <=> CH3CHO + H
-    k_f = 50000000
-               ;
-    qf = k_f * (sc[2]*sc[17]);
-    k_r = 1e-06 * 550500000000000 
-               * exp(0.11 * tc[0] - 0.50321666580472 * 74390 * invT);
-    qr = k_r * (sc[0]*sc[24]);
-    qdot[162] = qf - qr;
-    // (163):  C2H3 + C2H4 <=> C4H6 + H
-    k_f = 500000
-               * exp(-(3673.48166037445) * invT);
-    qf = k_f * (sc[16]*sc[19]);
-    k_r = 1e-06 * 10000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 4700 * invT);
-    qr = k_r * (sc[0]*sc[27]);
-    qdot[163] = qf - qr;
-    // (164):  C2H5O + M <=> CH3 + CH2O + M
-    k_f = 1.35e+32
-               * exp((-6.96) * tc[0] - (11976.5566461523) * invT);
-    Corr  = mixture;
-    qf = Corr * k_f * (sc[37]);
-    k_r = 1e-12 * 6.442e+36 
-               * exp(-6.99 * tc[0] - 0.50321666580472 * 16850 * invT);
-    qr = Corr * k_r * (sc[9]*sc[13]);
-    qdot[164] = qf - qr;
-    // (165):  C2H5O + O2 <=> CH3CHO + HO2
-    k_f = 42800
-               * exp(-(552.028682387778) * invT);
-    qf = k_f * (sc[3]*sc[37]);
-    k_r = 1e-06 * 387200000 
-               * exp(0.44 * tc[0] - 0.50321666580472 * 31880 * invT);
-    qr = k_r * (sc[11]*sc[24]);
-    qdot[165] = qf - qr;
-    // (166):  H2O2 + O2 <=> HO2 + HO2
-    k_f = 183900000
-               * exp((-0.66) * tc[0] - (19897.1869659186) * invT);
-    qf = k_f * (sc[3]*sc[12]);
-    k_r = 1e-06 * 130000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * -1629 * invT);
-    qr = k_r * (sc[11]*sc[11]);
-    qdot[166] = qf - qr;
-    // (167):  C2H3 + O2 <=> CH2CHO + O
-    k_f = 350000000
-               * exp((-0.61) * tc[0] - (2646.91966213283) * invT);
-    qf = k_f * (sc[3]*sc[19]);
-    k_r = 1e-06 * 2589000000000 
-               * exp(0.12 * tc[0] - 0.50321666580472 * 6459 * invT);
-    qr = k_r * (sc[2]*sc[23]);
-    qdot[167] = qf - qr;
-    // (168):  CH3O2 + M <=> CH3 + O2 + M
-    k_f = 4.343e+21
-               * exp((-3.42) * tc[0] - (15333.0118070698) * invT);
-    Corr  = mixture;
-    qf = Corr * k_f * (sc[38]);
-    k_r = 1e-12 * 5.44e+25 
-               * exp(-3.3 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = Corr * k_r * (sc[3]*sc[9]);
-    qdot[168] = qf - qr;
-    // (169):  CH3O2H <=> CH3O + OH
-    k_f = 631000000000000
-               * exp(-(21286.0649635396) * invT);
-    qf = k_f * (sc[39]);
-    k_r = 1e-06 * 116600000000 
-               * exp(0.6 * tc[0] - 0.50321666580472 * -1771 * invT);
-    qr = k_r * (sc[4]*sc[14]);
-    qdot[169] = qf - qr;
-    // (170):  C3H2 + O2 <=> HCCO + CO + H
-    k_f = 50000000
-               ;
-    qf = k_f * (sc[3]*sc[49]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[0]*sc[6]*sc[21]);
-    qdot[170] = qf - qr;
-    // (171):  CH3O2 + CH2O <=> CH3O2H + HCO
-    k_f = 1990000
-               * exp(-(5867.50632328303) * invT);
-    qf = k_f * (sc[13]*sc[38]);
-    k_r = 1e-06 * 8504000000000 
-               * exp(-0.5 * tc[0] - 0.50321666580472 * 7009 * invT);
-    qr = k_r * (sc[7]*sc[39]);
-    qdot[171] = qf - qr;
-    // (172):  C2H4 + CH3O2 <=> C2H3 + CH3O2H
-    k_f = 2230000
-               * exp(-(8650.29448518313) * invT);
-    qf = k_f * (sc[16]*sc[38]);
-    k_r = 1e-06 * 8.112e+15 
-               * exp(-1.33 * tc[0] - 0.50321666580472 * -1489 * invT);
-    qr = k_r * (sc[19]*sc[39]);
-    qdot[172] = qf - qr;
-    // (173):  CH4 + CH3O2 <=> CH3 + CH3O2H
-    k_f = 181000
-               * exp(-(9299.44398407122) * invT);
-    qf = k_f * (sc[10]*sc[38]);
-    k_r = 1e-06 * 370800000000 
-               * exp(-0.5 * tc[0] - 0.50321666580472 * -1327 * invT);
-    qr = k_r * (sc[9]*sc[39]);
-    qdot[173] = qf - qr;
-    // (174):  C2H5 + HO2 <=> C2H5O + OH
-    k_f = 32000000
-               ;
-    qf = k_f * (sc[11]*sc[17]);
-    k_r = 1e-06 * 3.075e+15 
-               * exp(-0.32 * tc[0] - 0.50321666580472 * 27490 * invT);
-    qr = k_r * (sc[4]*sc[37]);
-    qdot[174] = qf - qr;
-    // (175):  CH3O2 + CH3 <=> CH3O + CH3O
-    k_f = 7000000
-               * exp(-(-503.21666580472) * invT);
-    qf = k_f * (sc[9]*sc[38]);
-    k_r = 1e-06 * 2.971e+16 
-               * exp(-0.93 * tc[0] - 0.50321666580472 * 28310 * invT);
-    qr = k_r * (sc[14]*sc[14]);
-    qdot[175] = qf - qr;
-    // (176):  CH3O2 + C2H5 <=> CH3O + C2H5O
-    k_f = 7000000
-               * exp(-(-503.21666580472) * invT);
-    qf = k_f * (sc[17]*sc[38]);
-    k_r = 1e-06 * 6.569e+16 
-               * exp(-0.9 * tc[0] - 0.50321666580472 * 31260 * invT);
-    qr = k_r * (sc[14]*sc[37]);
-    qdot[176] = qf - qr;
-    // (177):  CH3O2 + HO2 <=> CH3O2H + O2
-    k_f = 17500
-               * exp(-(-1648.03458051046) * invT);
-    qf = k_f * (sc[11]*sc[38]);
-    k_r = 1e-06 * 51560000000000 
-               * exp(-0.83 * tc[0] - 0.50321666580472 * 34880 * invT);
-    qr = k_r * (sc[3]*sc[39]);
-    qdot[177] = qf - qr;
-    // (178):  H2O2 + OH <=> H2O + HO2
-    k_f = 580000000
-               * exp(-(4810.75132509312) * invT);
-    qf = k_f * (sc[4]*sc[12]);
-    k_r = 1e-06 * 97710000000000 
-               * exp(0.33 * tc[0] - 0.50321666580472 * 41020 * invT);
-    qr = k_r * (sc[5]*sc[11]);
-    qdot[178] = qf - qr;
-    // (179):  CH3O2 + CH3O2 <=> O2 + CH3O + CH3O
-    k_f = 14000000000
-               * exp((-1.61) * tc[0] - (935.982998396779) * invT);
-    qf = k_f * (sc[38]*sc[38]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[3]*sc[14]*sc[14]);
-    qdot[179] = qf - qr;
-    // (180):  C2H6 + CH3O2 <=> C2H5 + CH3O2H
-    k_f = 13200000
-               * exp(-(10300.8451490226) * invT);
-    qf = k_f * (sc[15]*sc[38]);
-    k_r = 1e-06 * 172800000000 
-               * exp(0.06 * tc[0] - 0.50321666580472 * 4832 * invT);
-    qr = k_r * (sc[17]*sc[39]);
-    qdot[180] = qf - qr;
-    // (181):  C2H5O + M <=> CH3CHO + H + M
-    k_f = 1.16e+29
-               * exp((-5.89) * tc[0] - (12716.2851448853) * invT);
-    Corr  = mixture;
-    qf = Corr * k_f * (sc[37]);
-    k_r = 1e-12 * 3.063e+30 
-               * exp(-4.78 * tc[0] - 0.50321666580472 * 6100 * invT);
-    qr = Corr * k_r * (sc[0]*sc[24]);
-    qdot[181] = qf - qr;
-    // (182):  CH3O2 + CH3CHO <=> CH3O2H + CH3CO
-    k_f = 3010000
-               * exp(-(5998.34265639226) * invT);
-    qf = k_f * (sc[24]*sc[38]);
-    k_r = 1e-06 * 25190000000000 
-               * exp(-0.51 * tc[0] - 0.50321666580472 * 8991 * invT);
-    qr = k_r * (sc[22]*sc[39]);
-    qdot[182] = qf - qr;
-    // (183):  C2H3CO <=> C2H3 + CO
-    k_f = 304300000000000
-               * exp((-0.46) * tc[0] - (15353.140473702) * invT);
-    qf = k_f * (sc[40]);
-    k_r = 1e-06 * 151000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 4810 * invT);
-    qr = k_r * (sc[6]*sc[19]);
-    qdot[183] = qf - qr;
-    // (184):  C2H3CHO + OH <=> C2H3CO + H2O
-    k_f = 9.24
-               * exp((1.5) * tc[0] - (-484.09443250414) * invT);
-    qf = k_f * (sc[4]*sc[41]);
-    k_r = 1e-06 * 21470000 
-               * exp(1.48 * tc[0] - 0.50321666580472 * 35510 * invT);
-    qr = k_r * (sc[5]*sc[40]);
-    qdot[184] = qf - qr;
-    // (185):  C2H3CHO + H <=> C2H3CO + H2
-    k_f = 13400000
-               * exp(-(1660.61499715557) * invT);
-    qf = k_f * (sc[0]*sc[41]);
-    k_r = 1e-06 * 7191000000000 
-               * exp(-0.02 * tc[0] - 0.50321666580472 * 24620 * invT);
-    qr = k_r * (sc[1]*sc[40]);
-    qdot[185] = qf - qr;
-    // (186):  C2H3CHO + O <=> C2H3CO + OH
-    k_f = 5940000
-               * exp(-(940.008731723216) * invT);
-    qf = k_f * (sc[2]*sc[41]);
-    k_r = 1e-06 * 1400000000000 
-               * exp(-0.02 * tc[0] - 0.50321666580472 * 21090 * invT);
-    qr = k_r * (sc[4]*sc[40]);
-    qdot[186] = qf - qr;
-    // (187):  C2H3CHO + HO2 <=> C2H3CO + H2O2
-    k_f = 3010000
-               * exp(-(5998.34265639226) * invT);
-    qf = k_f * (sc[11]*sc[41]);
-    k_r = 1e-06 * 41520000000000 
-               * exp(-0.35 * tc[0] - 0.50321666580472 * 16940 * invT);
-    qr = k_r * (sc[12]*sc[40]);
-    qdot[187] = qf - qr;
-    // (188):  C2H3CHO + CH3 <=> C2H3CO + CH4
-    k_f = 2.608
-               * exp((1.78) * tc[0] - (2974.5137115717) * invT);
-    qf = k_f * (sc[9]*sc[41]);
-    k_r = 1e-06 * 36560000 
-               * exp(1.76 * tc[0] - 0.50321666580472 * 27710 * invT);
-    qr = k_r * (sc[10]*sc[40]);
-    qdot[188] = qf - qr;
-    // (189):  C2H3CHO + CH3O2 <=> C2H3CO + CH3O2H
-    k_f = 3010000
-               * exp(-(5998.34265639226) * invT);
-    qf = k_f * (sc[38]*sc[41]);
-    k_r = 1e-06 * 86450000000000 
-               * exp(-0.53 * tc[0] - 0.50321666580472 * 13920 * invT);
-    qr = k_r * (sc[39]*sc[40]);
-    qdot[189] = qf - qr;
-    // (190):  C3H5O <=> C2H3CHO + H
-    k_f = 100000000000000
-               * exp(-(14643.6049749173) * invT);
-    qf = k_f * (sc[42]);
-    k_r = 1e-06 * 771400000000 
-               * exp(0.48 * tc[0] - 0.50321666580472 * 17750 * invT);
-    qr = k_r * (sc[0]*sc[41]);
-    qdot[190] = qf - qr;
-    // (191):  C3H5O <=> C2H3 + CH2O
-    k_f = 2028000000000
-               * exp((0.09) * tc[0] - (11855.7846463592) * invT);
-    qf = k_f * (sc[42]);
-    k_r = 1e-06 * 150000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 10600 * invT);
-    qr = k_r * (sc[13]*sc[19]);
-    qdot[191] = qf - qr;
-    // (192):  C3H5O + O2 <=> C2H3CHO + HO2
-    k_f = 1000000
-               * exp(-(3019.29999482832) * invT);
-    qf = k_f * (sc[3]*sc[42]);
-    k_r = 1e-06 * 128800000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 32000 * invT);
-    qr = k_r * (sc[11]*sc[41]);
-    qdot[192] = qf - qr;
-    // (193):  C3H5-A + HO2 <=> C3H5O + OH
-    k_f = 7000000
-               * exp(-(-503.21666580472) * invT);
-    qf = k_f * (sc[11]*sc[47]);
-    k_r = 1e-06 * 20410000000000 
-               * exp(-0.16 * tc[0] - 0.50321666580472 * 12260 * invT);
-    qr = k_r * (sc[4]*sc[42]);
-    qdot[193] = qf - qr;
-    // (194):  C3H5-A + CH3O2 <=> C3H5O + CH3O
-    k_f = 7000000
-               * exp(-(-503.21666580472) * invT);
-    qf = k_f * (sc[38]*sc[47]);
-    k_r = 1e-06 * 1.994e+15 
-               * exp(-0.74 * tc[0] - 0.50321666580472 * 17020 * invT);
-    qr = k_r * (sc[14]*sc[42]);
-    qdot[194] = qf - qr;
-    // (195):  C3H6 + CH3O2 <=> C3H5-A + CH3O2H
-    k_f = 324000
-               * exp(-(7497.92832049032) * invT);
-    qf = k_f * (sc[26]*sc[38]);
-    k_r = 1e-06 * 20000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 15000 * invT);
-    qr = k_r * (sc[39]*sc[47]);
-    qdot[195] = qf - qr;
-    // (196):  CH3 + OH <=> CH2(S) + H2O
-    k_f = 26500000
-               * exp(-(1100.03163144912) * invT);
-    qf = k_f * (sc[4]*sc[9]);
-    k_r = 1e-06 * 32360000000 
-               * exp(0.89 * tc[0] - 0.50321666580472 * 1211 * invT);
-    qr = k_r * (sc[5]*sc[50]);
-    qdot[196] = qf - qr;
-    // (197):  C4H7O <=> CH3CHO + C2H3
-    k_f = 794000000000000
-               * exp(-(9561.11665028967) * invT);
-    qf = k_f * (sc[43]);
-    k_r = 1e-06 * 10000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 20000 * invT);
-    qr = k_r * (sc[19]*sc[24]);
-    qdot[197] = qf - qr;
-    // (198):  C4H7O <=> C2H3CHO + CH3
-    k_f = 794000000000000
-               * exp(-(9561.11665028967) * invT);
-    qf = k_f * (sc[43]);
-    k_r = 1e-06 * 10000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 20000 * invT);
-    qr = k_r * (sc[9]*sc[41]);
-    qdot[198] = qf - qr;
-    // (199):  C4H7 + HO2 <=> C4H7O + OH
-    k_f = 7000000
-               * exp(-(-503.21666580472) * invT);
-    qf = k_f * (sc[11]*sc[29]);
-    k_r = 1e-06 * 100800000000 
-               * exp(0.26 * tc[0] - 0.50321666580472 * 16890 * invT);
-    qr = k_r * (sc[4]*sc[43]);
-    qdot[199] = qf - qr;
-    // (200):  C4H7 + CH3O2 <=> C4H7O + CH3O
-    k_f = 7000000
-               * exp(-(-503.21666580472) * invT);
-    qf = k_f * (sc[29]*sc[38]);
-    k_r = 1e-06 * 9844000000000 
-               * exp(-0.32 * tc[0] - 0.50321666580472 * 21650 * invT);
-    qr = k_r * (sc[14]*sc[43]);
-    qdot[200] = qf - qr;
-    // (201):  C4H8-1 + OH <=> NC3H7 + CH2O
-    k_f = 1000000
-               ;
-    qf = k_f * (sc[4]*sc[30]);
-    k_r = 1e-06 * 1620000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 13230 * invT);
-    qr = k_r * (sc[13]*sc[28]);
-    qdot[201] = qf - qr;
-    // (202):  C4H8-1 + O <=> C3H6 + CH2O
-    k_f = 0.723
-               * exp((2.34) * tc[0] - (-528.377499094956) * invT);
-    qf = k_f * (sc[2]*sc[30]);
-    k_r = 1e-06 * 200000 
-               * exp(2.34 * tc[0] - 0.50321666580472 * 80280 * invT);
-    qr = k_r * (sc[13]*sc[26]);
-    qdot[202] = qf - qr;
-    // (203):  C4H8-1 + O <=> CH3CHO + C2H4
-    k_f = 13000000
-               * exp(-(427.734165934012) * invT);
-    qf = k_f * (sc[2]*sc[30]);
-    k_r = 1e-06 * 2070000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 85100 * invT);
-    qr = k_r * (sc[16]*sc[24]);
-    qdot[203] = qf - qr;
-    // (204):  C4H8-1 + O <=> CH3CO + C2H5
-    k_f = 13000000
-               * exp(-(427.734165934012) * invT);
-    qf = k_f * (sc[2]*sc[30]);
-    k_r = 1e-06 * 2350000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 38150 * invT);
-    qr = k_r * (sc[17]*sc[22]);
-    qdot[204] = qf - qr;
-    // (205):  C4H8-1 + OH <=> CH3CHO + C2H5
-    k_f = 1000000
-               ;
-    qf = k_f * (sc[4]*sc[30]);
-    k_r = 1e-06 * 9330000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 19930 * invT);
-    qr = k_r * (sc[17]*sc[24]);
-    qdot[205] = qf - qr;
-    // (206):  C4H8-1 + OH <=> CH3CO + C2H6
-    k_f = 500000
-               ;
-    qf = k_f * (sc[4]*sc[30]);
-    k_r = 1e-06 * 9830000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 32430 * invT);
-    qr = k_r * (sc[15]*sc[22]);
-    qdot[206] = qf - qr;
-    // (207):  C4H8-1 + O <=> C2H5CO + CH3
-    k_f = 13000000
-               * exp(-(427.734165934012) * invT);
-    qf = k_f * (sc[2]*sc[30]);
-    k_r = 1e-06 * 480000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 32550 * invT);
-    qr = k_r * (sc[9]*sc[34]);
-    qdot[207] = qf - qr;
-    // (208):  C4H8-1 + OH <=> C2H5CHO + CH3
-    k_f = 1000000
-               ;
-    qf = k_f * (sc[4]*sc[30]);
-    k_r = 1e-06 * 49500000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 16940 * invT);
-    qr = k_r * (sc[9]*sc[33]);
-    qdot[208] = qf - qr;
-    // (209):  C4H8-1 + OH <=> C2H5CO + CH4
-    k_f = 500000
-               ;
-    qf = k_f * (sc[4]*sc[30]);
-    k_r = 1e-06 * 22000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 34270 * invT);
-    qr = k_r * (sc[10]*sc[34]);
-    qdot[209] = qf - qr;
-    // (210):  C4H8-1 + CH3O2 <=> C4H7 + CH3O2H
-    k_f = 1400000
-               * exp(-(7497.92832049032) * invT);
-    qf = k_f * (sc[30]*sc[38]);
-    k_r = 1e-06 * 316000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 13000 * invT);
-    qr = k_r * (sc[29]*sc[39]);
-    qdot[210] = qf - qr;
-    // (211):  C4H8OOH1-3O2 <=> C4H8OOH1-3 + O2
-    k_f = 5.601e+22
-               * exp((-2.23) * tc[0] - (19102.1046339472) * invT);
-    qf = k_f * (sc[44]);
-    k_r = 1e-06 * 7540000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[3]*sc[45]);
-    qdot[211] = qf - qr;
-    // (212):  C4H8OOH1-3O2 <=> NC4KET13 + OH
-    k_f = 25000000000
-               * exp(-(10768.836648221) * invT);
-    qf = k_f * (sc[44]);
-    k_r = 1e-06 * 6893 
-               * exp(1.3 * tc[0] - 0.50321666580472 * 44700 * invT);
-    qr = k_r * (sc[4]*sc[51]);
-    qdot[212] = qf - qr;
-    // (213):  C4H8OOH1-3 <=> OH + CH2O + C3H6
-    k_f = 66370000000000
-               * exp((-0.16) * tc[0] - (15046.1783075611) * invT);
-    qf = k_f * (sc[45]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[13]*sc[26]);
-    qdot[213] = qf - qr;
-    // (214):  PC4H9O2 <=> C4H8OOH1-3
-    k_f = 25000000000
-               * exp(-(10492.0674820284) * invT);
-    qf = k_f * (sc[46]);
-    k_r = 1 * 3231000000 
-               * exp(-0.14 * tc[0] - 0.50321666580472 * 7871 * invT);
-    qr = k_r * (sc[45]);
-    qdot[214] = qf - qr;
-    // (215):  C2H5CHO + CH3O2 <=> C2H5CO + CH3O2H
-    k_f = 3010000
-               * exp(-(5998.34265639226) * invT);
-    qf = k_f * (sc[33]*sc[38]);
-    k_r = 1e-06 * 23580000000000 
-               * exp(-0.51 * tc[0] - 0.50321666580472 * 8983 * invT);
-    qr = k_r * (sc[34]*sc[39]);
-    qdot[215] = qf - qr;
-    // (216):  C2H5CHO + C4H7 <=> C2H5CO + C4H8-1
-    k_f = 1700000
-               * exp(-(4247.14865939183) * invT);
-    qf = k_f * (sc[29]*sc[33]);
-    k_r = 1e-06 * 10000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 28000 * invT);
-    qr = k_r * (sc[30]*sc[34]);
-    qdot[216] = qf - qr;
-    // (217):  C3H4-A + HO2 <=> C2H4 + CO + OH
-    k_f = 1000000
-               * exp(-(7045.03332126608) * invT);
-    qf = k_f * (sc[11]*sc[25]);
-    k_r = 1e-12 * 1 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[6]*sc[16]);
-    qdot[217] = qf - qr;
-    // (218):  C3H4-A + HO2 <=> C3H3 + H2O2
-    k_f = 30000000
-               * exp(-(7045.03332126608) * invT);
-    qf = k_f * (sc[11]*sc[25]);
-    k_r = 1e-06 * 1.551e+16 
-               * exp(-1.38 * tc[0] - 0.50321666580472 * 44000 * invT);
-    qr = k_r * (sc[12]*sc[48]);
-    qdot[218] = qf - qr;
-    // (219):  C3H6 + O2 <=> C3H5-A + HO2
-    k_f = 4000000
-               * exp(-(20078.3449656083) * invT);
-    qf = k_f * (sc[3]*sc[26]);
-    k_r = 1e-06 * 33320000000 
-               * exp(0.34 * tc[0] - 0.50321666580472 * -556 * invT);
-    qr = k_r * (sc[11]*sc[47]);
-    qdot[219] = qf - qr;
-    // (220):  C3H6 + CH3 <=> C3H5-A + CH4
-    k_f = 2.21e-06
-               * exp((3.5) * tc[0] - (2855.75457844178) * invT);
-    qf = k_f * (sc[9]*sc[26]);
-    k_r = 1e-06 * 26.47 
-               * exp(3.51 * tc[0] - 0.50321666580472 * 23180 * invT);
-    qr = k_r * (sc[10]*sc[47]);
-    qdot[220] = qf - qr;
-    // (221):  C3H6 + C2H5 <=> C3H5-A + C2H6
-    k_f = 100000
-               * exp(-(4931.52332488625) * invT);
-    qf = k_f * (sc[17]*sc[26]);
-    k_r = 1e-06 * 536900 
-               * exp(1.33 * tc[0] - 0.50321666580472 * 16440 * invT);
-    qr = k_r * (sc[15]*sc[47]);
-    qdot[221] = qf - qr;
-    // (222):  C3H5-A + HO2 <=> C2H3 + CH2O + OH
-    k_f = 1e-24
-               ;
-    qf = k_f * (sc[11]*sc[47]);
-    k_r = 1e-12 * 1e-30 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[13]*sc[19]);
-    qdot[222] = qf - qr;
-    // (223):  C3H5-A + H <=> C3H4-A + H2
-    k_f = 18100000
-               ;
-    qf = k_f * (sc[0]*sc[47]);
-    k_r = 1e-06 * 12300000000000 
-               * exp(0.12 * tc[0] - 0.50321666580472 * 47230 * invT);
-    qr = k_r * (sc[1]*sc[25]);
-    qdot[223] = qf - qr;
-    // (224):  C3H5-A + CH3 <=> C3H4-A + CH4
-    k_f = 100000
-               ;
-    qf = k_f * (sc[9]*sc[47]);
-    k_r = 1e-06 * 4921000000000 
-               * exp(0.05 * tc[0] - 0.50321666580472 * 47780 * invT);
-    qr = k_r * (sc[10]*sc[25]);
-    qdot[224] = qf - qr;
-    // (225):  C3H5-A + C2H5 <=> C2H6 + C3H4-A
-    k_f = 400000
-               ;
-    qf = k_f * (sc[17]*sc[47]);
-    k_r = 1e-06 * 1802000000000 
-               * exp(0.05 * tc[0] - 0.50321666580472 * 40330 * invT);
-    qr = k_r * (sc[15]*sc[25]);
-    qdot[225] = qf - qr;
-    // (226):  C3H5-A + C2H5 <=> C2H4 + C3H6
-    k_f = 400000
-               ;
-    qf = k_f * (sc[17]*sc[47]);
-    k_r = 1e-06 * 6.937e+16 
-               * exp(-1.33 * tc[0] - 0.50321666580472 * 52800 * invT);
-    qr = k_r * (sc[16]*sc[26]);
-    qdot[226] = qf - qr;
-    // (227):  C3H5-A + C2H3 <=> C2H4 + C3H4-A
-    k_f = 1000000
-               ;
-    qf = k_f * (sc[19]*sc[47]);
-    k_r = 1e-06 * 16240000000000 
-               * exp(0.05 * tc[0] - 0.50321666580472 * 48190 * invT);
-    qr = k_r * (sc[16]*sc[25]);
-    qdot[227] = qf - qr;
-    // (228):  C3H4-A + C3H6 <=> C3H5-A + C3H5-A
-    k_f = 839100000000
-               * exp((-1.29) * tc[0] - (16953.369470961) * invT);
-    qf = k_f * (sc[25]*sc[26]);
-    k_r = 1e-06 * 1000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[47]*sc[47]);
-    qdot[228] = qf - qr;
-    // (229):  C3H5-A + O2 <=> C2H3CHO + OH
-    k_f = 24700000
-               * exp((-0.44) * tc[0] - (11584.0476468246) * invT);
-    qf = k_f * (sc[3]*sc[47]);
-    k_r = 1e-06 * 190300000000000 
-               * exp(-0.8 * tc[0] - 0.50321666580472 * 74880 * invT);
-    qr = k_r * (sc[4]*sc[41]);
-    qdot[229] = qf - qr;
-    // (230):  C3H4-A + M <=> C3H3 + H + M
-    k_f = 114300000000
-               * exp(-(35225.1666063304) * invT);
-    Corr  = mixture;
-    qf = Corr * k_f * (sc[25]);
-    k_r = 1e-12 * 1.798e+15 
-               * exp(-0.38 * tc[0] - 0.50321666580472 * 10610 * invT);
-    qr = Corr * k_r * (sc[0]*sc[48]);
-    qdot[230] = qf - qr;
-    // (231):  C3H4-A + O2 <=> C3H3 + HO2
-    k_f = 40000000
-               * exp(-(19705.9646329128) * invT);
-    qf = k_f * (sc[3]*sc[25]);
-    k_r = 1e-06 * 117500000000 
-               * exp(0.3 * tc[0] - 0.50321666580472 * 38 * invT);
-    qr = k_r * (sc[11]*sc[48]);
-    qdot[231] = qf - qr;
-    // (232):  C3H3 + H <=> C3H2 + H2
-    k_f = 50000000
-               ;
-    qf = k_f * (sc[0]*sc[48]);
-    k_r = 1e-06 * 38530000000 
-               * exp(0.38 * tc[0] - 0.50321666580472 * 4600 * invT);
-    qr = k_r * (sc[1]*sc[49]);
-    qdot[232] = qf - qr;
-    // (233):  C3H4-A + OH <=> C3H3 + H2O
-    k_f = 10
-               * exp((2) * tc[0] - (503.21666580472) * invT);
-    qf = k_f * (sc[4]*sc[25]);
-    k_r = 1e-06 * 7003000 
-               * exp(1.97 * tc[0] - 0.50321666580472 * 34520 * invT);
-    qr = k_r * (sc[5]*sc[48]);
-    qdot[233] = qf - qr;
-    // (234):  C3H4-A + O <=> C2H4 + CO
-    k_f = 7800000
-               * exp(-(805.146665287552) * invT);
-    qf = k_f * (sc[2]*sc[25]);
-    k_r = 1e-06 * 82800000000000 
-               * exp(-0.21 * tc[0] - 0.50321666580472 * 124800 * invT);
-    qr = k_r * (sc[6]*sc[16]);
-    qdot[234] = qf - qr;
-    // (235):  C3H2 + OH <=> C2H2 + HCO
-    k_f = 50000000
-               ;
-    qf = k_f * (sc[4]*sc[49]);
-    k_r = 1e-06 * 2.907e+20 
-               * exp(-1.39 * tc[0] - 0.50321666580472 * 78520 * invT);
-    qr = k_r * (sc[7]*sc[18]);
-    qdot[235] = qf - qr;
-    // (236):  C3H5-A <=> C3H4-A + H
-    k_f = 6.663e+15
-               * exp((-0.43) * tc[0] - (31813.3576121744) * invT);
-    qf = k_f * (sc[47]);
-    k_r = 1e-06 * 240000000000 
-               * exp(0.69 * tc[0] - 0.50321666580472 * 3007 * invT);
-    qr = k_r * (sc[0]*sc[25]);
-    qdot[236] = qf - qr;
-    // (237):  C3H4-A + H <=> C3H3 + H2
-    k_f = 20
-               * exp((2) * tc[0] - (2516.0833290236) * invT);
-    qf = k_f * (sc[0]*sc[25]);
-    k_r = 1e-06 * 3235000 
-               * exp(1.97 * tc[0] - 0.50321666580472 * 23360 * invT);
-    qr = k_r * (sc[1]*sc[48]);
-    qdot[237] = qf - qr;
-    // (238):  C3H4-A + CH3 <=> C3H3 + CH4
-    k_f = 3.67e-08
-               * exp((4.01) * tc[0] - (3436.96982744624) * invT);
-    qf = k_f * (sc[9]*sc[25]);
-    k_r = 1e-06 * 0.1551 
-               * exp(3.98 * tc[0] - 0.50321666580472 * 25670 * invT);
-    qr = k_r * (sc[10]*sc[48]);
-    qdot[238] = qf - qr;
-    // (239):  C3H4-A + C3H5-A <=> C3H3 + C3H6
-    k_f = 200000
-               * exp(-(3874.76832669634) * invT);
-    qf = k_f * (sc[25]*sc[47]);
-    k_r = 1e-06 * 2.644e+19 
-               * exp(-2.71 * tc[0] - 0.50321666580472 * 42140 * invT);
-    qr = k_r * (sc[26]*sc[48]);
-    qdot[239] = qf - qr;
-    // (240):  C3H3 + OH <=> C3H2 + H2O
-    k_f = 10000000
-               ;
-    qf = k_f * (sc[4]*sc[48]);
-    k_r = 1e-06 * 1.343e+15 
-               * exp(0 * tc[0] - 0.50321666580472 * 15680 * invT);
-    qr = k_r * (sc[5]*sc[49]);
-    qdot[240] = qf - qr;
-    // (241):  C3H3 + O2 <=> CH2CO + HCO
-    k_f = 30100
-               * exp(-(1444.23183085955) * invT);
-    qf = k_f * (sc[3]*sc[48]);
-    k_r = 1e-06 * 488100000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 59470 * invT);
-    qr = k_r * (sc[7]*sc[20]);
-    qdot[241] = qf - qr;
-    // (242):  PC4H9O2 <=> PC4H9 + O2
-    k_f = 6.155e+19
-               * exp((-1.38) * tc[0] - (17869.2238027256) * invT);
-    qf = k_f * (sc[46]);
-    k_r = 1e-06 * 4520000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[3]*sc[31]);
-    qdot[242] = qf - qr;
-    // (243):  CH2CHO <=> CH2CO + H
-    k_f = 3.094e+15
-               * exp((-0.26) * tc[0] - (25573.4709561959) * invT);
-    qf = k_f * (sc[23]);
-    k_r = 1e-06 * 50000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 12300 * invT);
-    qr = k_r * (sc[0]*sc[20]);
-    qdot[243] = qf - qr;
-    // (244):  CH2CHO + O2 <=> CH2O + CO + OH
-    k_f = 20000000
-               * exp(-(2113.50999637982) * invT);
-    qf = k_f * (sc[3]*sc[23]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[6]*sc[13]);
-    qdot[244] = qf - qr;
-    // (245):  NC4KET13 <=> CH3CHO + CH2CHO + OH
-    k_f = 1.05e+16
-               * exp(-(20933.8132974763) * invT);
-    qf = k_f * (sc[51]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[23]*sc[24]);
-    qdot[245] = qf - qr;
-    // (246):  C3H5-A + O2 <=> C3H4-A + HO2
-    k_f = 2.18e+15
-               * exp((-2.85) * tc[0] - (15478.9446401532) * invT);
-    qf = k_f * (sc[3]*sc[47]);
-    k_r = 1e-06 * 2.69e+19 
-               * exp(-2.4 * tc[0] - 0.50321666580472 * 20500 * invT);
-    qr = k_r * (sc[11]*sc[25]);
-    qdot[246] = qf - qr;
-    // (247):  C3H5-A + O2 <=> CH2CHO + CH2O
-    k_f = 7140000000
-               * exp((-1.21) * tc[0] - (10592.7108151893) * invT);
-    qf = k_f * (sc[3]*sc[47]);
-    k_r = 1e-06 * 4.944e+16 
-               * exp(-1.4 * tc[0] - 0.50321666580472 * 88620 * invT);
-    qr = k_r * (sc[13]*sc[23]);
-    qdot[247] = qf - qr;
-    // (248):  C3H5-A + O2 <=> C2H2 + CH2O + OH
-    k_f = 9.72e+23
-               * exp((-5.71) * tc[0] - (10793.9974815112) * invT);
-    qf = k_f * (sc[3]*sc[47]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[13]*sc[18]);
-    qdot[248] = qf - qr;
-    // (249):  HCCO + O2 <=> CO2 + HCO
-    k_f = 240000
-               * exp(-(-429.747032597231) * invT);
-    qf = k_f * (sc[3]*sc[21]);
-    k_r = 1e-06 * 147400000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 133600 * invT);
-    qr = k_r * (sc[7]*sc[8]);
-    qdot[249] = qf - qr;
-    // (250):  CH3 + O2 <=> CH2O + OH
-    k_f = 747000
-               * exp(-(7170.83748771726) * invT);
-    qf = k_f * (sc[3]*sc[9]);
-    k_r = 1e-06 * 777800000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 67770 * invT);
-    qr = k_r * (sc[4]*sc[13]);
-    qdot[250] = qf - qr;
-    // (251):  C2H4 + H2 <=> CH3 + CH3
-    k_f = 3767000
-               * exp((0.83) * tc[0] - (42627.4837603178) * invT);
-    qf = k_f * (sc[1]*sc[16]);
-    k_r = 1e-06 * 100000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 32000 * invT);
-    qr = k_r * (sc[9]*sc[9]);
-    qdot[251] = qf - qr;
-    // (252):  NC3H7CHO + O2 <=> NC3H7CO + HO2
-    k_f = 20000000
-               * exp((0.5) * tc[0] - (21235.7432969592) * invT);
-    qf = k_f * (sc[3]*sc[52]);
-    k_r = 1e-06 * 10000000 
-               * exp(0.5 * tc[0] - 0.50321666580472 * 4000 * invT);
-    qr = k_r * (sc[11]*sc[53]);
-    qdot[252] = qf - qr;
-    // (253):  NC3H7CHO + OH <=> NC3H7CO + H2O
-    k_f = 26900
-               * exp((0.76) * tc[0] - (-171.093666373605) * invT);
-    qf = k_f * (sc[4]*sc[52]);
-    k_r = 1e-06 * 18520000000 
-               * exp(0.75 * tc[0] - 0.50321666580472 * 31220 * invT);
-    qr = k_r * (sc[5]*sc[53]);
-    qdot[253] = qf - qr;
-    // (254):  NC3H7CHO + H <=> NC3H7CO + H2
-    k_f = 40000000
-               * exp(-(2113.50999637982) * invT);
-    qf = k_f * (sc[0]*sc[52]);
-    k_r = 1e-06 * 18000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 24000 * invT);
-    qr = k_r * (sc[1]*sc[53]);
-    qdot[254] = qf - qr;
-    // (255):  NC3H7CHO + O <=> NC3H7CO + OH
-    k_f = 5000000
-               * exp(-(900.757831790448) * invT);
-    qf = k_f * (sc[2]*sc[52]);
-    k_r = 1e-06 * 1000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 19000 * invT);
-    qr = k_r * (sc[4]*sc[53]);
-    qdot[255] = qf - qr;
-    // (256):  NC3H7CHO + HO2 <=> NC3H7CO + H2O2
-    k_f = 2800000
-               * exp(-(6843.74665494419) * invT);
-    qf = k_f * (sc[11]*sc[52]);
-    k_r = 1e-06 * 1000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 10000 * invT);
-    qr = k_r * (sc[12]*sc[53]);
-    qdot[256] = qf - qr;
-    // (257):  NC3H7CHO + CH3 <=> NC3H7CO + CH4
-    k_f = 1700000
-               * exp(-(4247.14865939183) * invT);
-    qf = k_f * (sc[9]*sc[52]);
-    k_r = 1e-06 * 15000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 28000 * invT);
-    qr = k_r * (sc[10]*sc[53]);
-    qdot[257] = qf - qr;
-    // (258):  NC3H7CHO + CH3O2 <=> NC3H7CO + CH3O2H
-    k_f = 1000000
-               * exp(-(4780.55832514484) * invT);
-    qf = k_f * (sc[38]*sc[52]);
-    k_r = 1e-06 * 25000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 10000 * invT);
-    qr = k_r * (sc[39]*sc[53]);
-    qdot[258] = qf - qr;
-    // (259):  NC3H7CO <=> NC3H7 + CO
-    k_f = 5.325e+15
-               * exp((-0.86) * tc[0] - (6743.10332178324) * invT);
-    qf = k_f * (sc[53]);
-    k_r = 1e-06 * 150000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 4800 * invT);
-    qr = k_r * (sc[6]*sc[28]);
-    qdot[259] = qf - qr;
-    // (260):  C2H5COCH2 <=> CH2CO + C2H5
-    k_f = 15700000000000
-               * exp(-(15096.4999741416) * invT);
-    qf = k_f * (sc[54]);
-    k_r = 1e-06 * 211000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 7350 * invT);
-    qr = k_r * (sc[17]*sc[20]);
-    qdot[260] = qf - qr;
-    // (261):  NC3H7COCH2 <=> NC3H7 + CH2CO
-    k_f = 1.226e+18
-               * exp((-1.4) * tc[0] - (21864.7641292151) * invT);
-    qf = k_f * (sc[55]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 11600 * invT);
-    qr = k_r * (sc[20]*sc[28]);
-    qdot[261] = qf - qr;
-    // (262):  NC4H9CHO + O2 <=> NC4H9CO + HO2
-    k_f = 20000000
-               * exp((0.5) * tc[0] - (21235.7432969592) * invT);
-    qf = k_f * (sc[3]*sc[56]);
-    k_r = 1e-06 * 10000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 40000 * invT);
-    qr = k_r * (sc[11]*sc[57]);
-    qdot[262] = qf - qr;
-    // (263):  NC4H9CHO + OH <=> NC4H9CO + H2O
-    k_f = 26900
-               * exp((0.76) * tc[0] - (-171.093666373605) * invT);
-    qf = k_f * (sc[4]*sc[56]);
-    k_r = 1e-06 * 21430000000 
-               * exp(0.73 * tc[0] - 0.50321666580472 * 31240 * invT);
-    qr = k_r * (sc[5]*sc[57]);
-    qdot[263] = qf - qr;
-    // (264):  NC4H9CHO + H <=> NC4H9CO + H2
-    k_f = 40000000
-               * exp(-(2113.50999637982) * invT);
-    qf = k_f * (sc[0]*sc[56]);
-    k_r = 1e-06 * 18000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 24000 * invT);
-    qr = k_r * (sc[1]*sc[57]);
-    qdot[264] = qf - qr;
-    // (265):  NC4H9CHO + O <=> NC4H9CO + OH
-    k_f = 5000000
-               * exp(-(900.757831790448) * invT);
-    qf = k_f * (sc[2]*sc[56]);
-    k_r = 1e-06 * 1000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 19000 * invT);
-    qr = k_r * (sc[4]*sc[57]);
-    qdot[265] = qf - qr;
-    // (266):  NC4H9CHO + HO2 <=> NC4H9CO + H2O2
-    k_f = 2800000
-               * exp(-(6843.74665494419) * invT);
-    qf = k_f * (sc[11]*sc[56]);
-    k_r = 1e-06 * 1000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 10000 * invT);
-    qr = k_r * (sc[12]*sc[57]);
-    qdot[266] = qf - qr;
-    // (267):  NC4H9CHO + CH3 <=> NC4H9CO + CH4
-    k_f = 1700000
-               * exp(-(4247.14865939183) * invT);
-    qf = k_f * (sc[9]*sc[56]);
-    k_r = 1e-06 * 15000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 28000 * invT);
-    qr = k_r * (sc[10]*sc[57]);
-    qdot[267] = qf - qr;
-    // (268):  NC4H9CHO + CH3O2 <=> NC4H9CO + CH3O2H
-    k_f = 1000000
-               * exp(-(4780.55832514484) * invT);
-    qf = k_f * (sc[38]*sc[56]);
-    k_r = 1e-06 * 25000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 10000 * invT);
-    qr = k_r * (sc[39]*sc[57]);
-    qdot[268] = qf - qr;
-    // (269):  NC4H9CO <=> PC4H9 + CO
-    k_f = 100000000000
-               * exp(-(4830.87999172531) * invT);
-    qf = k_f * (sc[57]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[6]*sc[31]);
-    qdot[269] = qf - qr;
-    // (270):  CH2(S) + CH4 <=> CH3 + CH3
-    k_f = 40000000
-               ;
-    qf = k_f * (sc[10]*sc[50]);
-    k_r = 1e-06 * 5.429e+15 
-               * exp(-0.89 * tc[0] - 0.50321666580472 * 15650 * invT);
-    qr = k_r * (sc[9]*sc[9]);
-    qdot[270] = qf - qr;
-    // (271):  CH2(S) + C2H6 <=> CH3 + C2H5
-    k_f = 120000000
-               ;
-    qf = k_f * (sc[15]*sc[50]);
-    k_r = 1e-06 * 104100000000000 
-               * exp(-0.33 * tc[0] - 0.50321666580472 * 19820 * invT);
-    qr = k_r * (sc[9]*sc[17]);
-    qdot[271] = qf - qr;
-    // (272):  CH2(S) + O2 <=> CO + OH + H
-    k_f = 70000000
-               ;
-    qf = k_f * (sc[3]*sc[50]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[0]*sc[4]*sc[6]);
-    qdot[272] = qf - qr;
-    // (273):  CH2(S) + H2 <=> CH3 + H
-    k_f = 70000000
-               ;
-    qf = k_f * (sc[1]*sc[50]);
-    k_r = 1e-06 * 2.482e+17 
-               * exp(-0.89 * tc[0] - 0.50321666580472 * 16130 * invT);
-    qr = k_r * (sc[0]*sc[9]);
-    qdot[273] = qf - qr;
-    // (274):  CH2(S) + O <=> CO + H + H
-    k_f = 30000000
-               ;
-    qf = k_f * (sc[2]*sc[50]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[0]*sc[0]*sc[6]);
-    qdot[274] = qf - qr;
-    // (275):  CH2(S) + OH <=> CH2O + H
-    k_f = 30000000
-               ;
-    qf = k_f * (sc[4]*sc[50]);
-    k_r = 1e-06 * 3.194e+18 
-               * exp(-0.89 * tc[0] - 0.50321666580472 * 87860 * invT);
-    qr = k_r * (sc[0]*sc[13]);
-    qdot[275] = qf - qr;
-    // (276):  CH2(S) + CO2 <=> CH2O + CO
-    k_f = 3000000
-               ;
-    qf = k_f * (sc[8]*sc[50]);
-    k_r = 1e-06 * 2.852e+15 
-               * exp(-0.89 * tc[0] - 0.50321666580472 * 65520 * invT);
-    qr = k_r * (sc[6]*sc[13]);
-    qdot[276] = qf - qr;
-    // (277):  CH2(S) + CH3 <=> C2H4 + H
-    k_f = 20000000
-               ;
-    qf = k_f * (sc[9]*sc[50]);
-    k_r = 1e-06 * 2.671e+15 
-               * exp(-0.06 * tc[0] - 0.50321666580472 * 68840 * invT);
-    qr = k_r * (sc[0]*sc[16]);
-    qdot[277] = qf - qr;
-    // (278):  CH2(S) + CH2CO <=> C2H4 + CO
-    k_f = 160000000
-               ;
-    qf = k_f * (sc[20]*sc[50]);
-    k_r = 1e-06 * 4.596e+15 
-               * exp(-0.06 * tc[0] - 0.50321666580472 * 105600 * invT);
-    qr = k_r * (sc[6]*sc[16]);
-    qdot[278] = qf - qr;
-    // (279):  NC7H16 <=> H + C7H15-1
-    k_f = 1.34e+88
-               * exp((-21.17) * tc[0] - (71859.339876914) * invT);
-    qf = k_f * (sc[58]);
-    k_r = 1e-06 * 3.374e+82 
-               * exp(-20.22 * tc[0] - 0.50321666580472 * 39610 * invT);
-    qr = k_r * (sc[0]*sc[59]);
-    qdot[279] = qf - qr;
-    // (280):  NC7H16 <=> H + C7H15-2
-    k_f = 6.5e+87
-               * exp((-21.01) * tc[0] - (70198.7248797584) * invT);
-    qf = k_f * (sc[58]);
-    k_r = 1e-06 * 5.207e+80 
-               * exp(-19.67 * tc[0] - 0.50321666580472 * 38890 * invT);
-    qr = k_r * (sc[0]*sc[60]);
-    qdot[280] = qf - qr;
-    // (281):  NC7H16 <=> H + C7H15-3
-    k_f = 6.5e+87
-               * exp((-21.01) * tc[0] - (70198.7248797584) * invT);
-    qf = k_f * (sc[58]);
-    k_r = 1e-06 * 5.207e+80 
-               * exp(-19.67 * tc[0] - 0.50321666580472 * 38890 * invT);
-    qr = k_r * (sc[0]*sc[61]);
-    qdot[281] = qf - qr;
-    // (282):  NC7H16 <=> H + C7H15-4
-    k_f = 3.25e+87
-               * exp((-21.01) * tc[0] - (70198.7248797584) * invT);
-    qf = k_f * (sc[58]);
-    k_r = 1e-06 * 5.187e+80 
-               * exp(-19.67 * tc[0] - 0.50321666580472 * 38890 * invT);
-    qr = k_r * (sc[0]*sc[62]);
-    qdot[282] = qf - qr;
-    // (283):  NC7H16 <=> PC4H9 + NC3H7
-    k_f = 1.415e+78
-               * exp((-17.71) * tc[0] - (60738.2515626297) * invT);
-    qf = k_f * (sc[58]);
-    k_r = 1e-06 * 1.363e+68 
-               * exp(-16.11 * tc[0] - 0.50321666580472 * 32460 * invT);
-    qr = k_r * (sc[28]*sc[31]);
-    qdot[283] = qf - qr;
-    // (284):  NC7H16 + H <=> C7H15-1 + H2
-    k_f = 0.188
-               * exp((2.75) * tc[0] - (3160.20066125364) * invT);
-    qf = k_f * (sc[0]*sc[58]);
-    k_r = 1e-06 * 8926 
-               * exp(2.7 * tc[0] - 0.50321666580472 * 10550 * invT);
-    qr = k_r * (sc[1]*sc[59]);
-    qdot[284] = qf - qr;
-    // (285):  NC7H16 + H <=> C7H15-2 + H2
-    k_f = 2.6
-               * exp((2.4) * tc[0] - (2249.8817128129) * invT);
-    qf = k_f * (sc[0]*sc[58]);
-    k_r = 1e-06 * 3928 
-               * exp(2.74 * tc[0] - 0.50321666580472 * 11260 * invT);
-    qr = k_r * (sc[1]*sc[60]);
-    qdot[285] = qf - qr;
-    // (286):  NC7H16 + H <=> C7H15-3 + H2
-    k_f = 2.6
-               * exp((2.4) * tc[0] - (2249.8817128129) * invT);
-    qf = k_f * (sc[0]*sc[58]);
-    k_r = 1e-06 * 3928 
-               * exp(2.74 * tc[0] - 0.50321666580472 * 11260 * invT);
-    qr = k_r * (sc[1]*sc[61]);
-    qdot[286] = qf - qr;
-    // (287):  NC7H16 + H <=> C7H15-4 + H2
-    k_f = 1.3
-               * exp((2.4) * tc[0] - (2249.8817128129) * invT);
-    qf = k_f * (sc[0]*sc[58]);
-    k_r = 1e-06 * 3913 
-               * exp(2.74 * tc[0] - 0.50321666580472 * 11260 * invT);
-    qr = k_r * (sc[1]*sc[62]);
-    qdot[287] = qf - qr;
-    // (288):  NC7H16 + O <=> C7H15-1 + OH
-    k_f = 0.193
-               * exp((2.68) * tc[0] - (1869.95313013034) * invT);
-    qf = k_f * (sc[2]*sc[58]);
-    k_r = 1e-06 * 4025 
-               * exp(2.63 * tc[0] - 0.50321666580472 * 5893 * invT);
-    qr = k_r * (sc[4]*sc[59]);
-    qdot[288] = qf - qr;
-    // (289):  NC7H16 + O <=> C7H15-2 + OH
-    k_f = 0.0954
-               * exp((2.71) * tc[0] - (1059.77429818474) * invT);
-    qf = k_f * (sc[2]*sc[58]);
-    k_r = 1e-06 * 63.3 
-               * exp(3.05 * tc[0] - 0.50321666580472 * 6798 * invT);
-    qr = k_r * (sc[4]*sc[60]);
-    qdot[289] = qf - qr;
-    // (290):  NC7H16 + O <=> C7H15-3 + OH
-    k_f = 0.0954
-               * exp((2.71) * tc[0] - (1059.77429818474) * invT);
-    qf = k_f * (sc[2]*sc[58]);
-    k_r = 1e-06 * 63.3 
-               * exp(3.05 * tc[0] - 0.50321666580472 * 6798 * invT);
-    qr = k_r * (sc[4]*sc[61]);
-    qdot[290] = qf - qr;
-    // (291):  NC7H16 + O <=> C7H15-4 + OH
-    k_f = 0.0477
-               * exp((2.71) * tc[0] - (1059.77429818474) * invT);
-    qf = k_f * (sc[2]*sc[58]);
-    k_r = 1e-06 * 63.06 
-               * exp(3.05 * tc[0] - 0.50321666580472 * 6798 * invT);
-    qr = k_r * (sc[4]*sc[62]);
-    qdot[291] = qf - qr;
-    // (292):  NC7H16 + OH <=> C7H15-1 + H2O
-    k_f = 10500
-               * exp((0.97) * tc[0] - (800.114498629504) * invT);
-    qf = k_f * (sc[4]*sc[58]);
-    k_r = 1e-06 * 15000000000 
-               * exp(1.05 * tc[0] - 0.50321666580472 * 23330 * invT);
-    qr = k_r * (sc[5]*sc[59]);
-    qdot[292] = qf - qr;
-    // (293):  NC7H16 + OH <=> C7H15-2 + H2O
-    k_f = 94
-               * exp((1.61) * tc[0] - (-17.6125833031652) * invT);
-    qf = k_f * (sc[4]*sc[58]);
-    k_r = 1e-06 * 614800 
-               * exp(1.95 * tc[0] - 0.50321666580472 * 21910 * invT);
-    qr = k_r * (sc[5]*sc[60]);
-    qdot[293] = qf - qr;
-    // (294):  NC7H16 + OH <=> C7H15-3 + H2O
-    k_f = 94
-               * exp((1.61) * tc[0] - (-17.6125833031652) * invT);
-    qf = k_f * (sc[4]*sc[58]);
-    k_r = 1e-06 * 614800 
-               * exp(1.95 * tc[0] - 0.50321666580472 * 21910 * invT);
-    qr = k_r * (sc[5]*sc[61]);
-    qdot[294] = qf - qr;
-    // (295):  NC7H16 + OH <=> C7H15-4 + H2O
-    k_f = 47
-               * exp((1.61) * tc[0] - (-17.6125833031652) * invT);
-    qf = k_f * (sc[4]*sc[58]);
-    k_r = 1e-06 * 612500 
-               * exp(1.95 * tc[0] - 0.50321666580472 * 21910 * invT);
-    qr = k_r * (sc[5]*sc[62]);
-    qdot[295] = qf - qr;
-    // (296):  NC7H16 + HO2 <=> C7H15-1 + H2O2
-    k_f = 16800000
-               * exp(-(10285.7486490485) * invT);
-    qf = k_f * (sc[11]*sc[58]);
-    k_r = 1e-06 * 20500000000000 
-               * exp(-0.38 * tc[0] - 0.50321666580472 * 8399 * invT);
-    qr = k_r * (sc[12]*sc[59]);
-    qdot[296] = qf - qr;
-    // (297):  NC7H16 + HO2 <=> C7H15-2 + H2O2
-    k_f = 11200000
-               * exp(-(8901.90281808549) * invT);
-    qf = k_f * (sc[11]*sc[58]);
-    k_r = 1e-06 * 434800000000 
-               * exp(0.01 * tc[0] - 0.50321666580472 * 8165 * invT);
-    qr = k_r * (sc[12]*sc[60]);
-    qdot[297] = qf - qr;
-    // (298):  NC7H16 + HO2 <=> C7H15-3 + H2O2
-    k_f = 11200000
-               * exp(-(8901.90281808549) * invT);
-    qf = k_f * (sc[11]*sc[58]);
-    k_r = 1e-06 * 434800000000 
-               * exp(0.01 * tc[0] - 0.50321666580472 * 8165 * invT);
-    qr = k_r * (sc[12]*sc[61]);
-    qdot[298] = qf - qr;
-    // (299):  NC7H16 + HO2 <=> C7H15-4 + H2O2
-    k_f = 5600000
-               * exp(-(8901.90281808549) * invT);
-    qf = k_f * (sc[11]*sc[58]);
-    k_r = 1e-06 * 433200000000 
-               * exp(0.01 * tc[0] - 0.50321666580472 * 8165 * invT);
-    qr = k_r * (sc[12]*sc[62]);
-    qdot[299] = qf - qr;
-    // (300):  NC7H16 + CH3 <=> C7H15-1 + CH4
-    k_f = 9.04e-07
-               * exp((3.65) * tc[0] - (3600.01202716696) * invT);
-    qf = k_f * (sc[9]*sc[58]);
-    k_r = 1e-06 * 1.121 
-               * exp(3.6 * tc[0] - 0.50321666580472 * 11910 * invT);
-    qr = k_r * (sc[10]*sc[59]);
-    qdot[300] = qf - qr;
-    // (301):  NC7H16 + CH3 <=> C7H15-2 + CH4
-    k_f = 0.0541
-               * exp((2.26) * tc[0] - (3666.93984371899) * invT);
-    qf = k_f * (sc[9]*sc[58]);
-    k_r = 1e-06 * 2135 
-               * exp(2.6 * tc[0] - 0.50321666580472 * 14550 * invT);
-    qr = k_r * (sc[10]*sc[60]);
-    qdot[301] = qf - qr;
-    // (302):  NC7H16 + CH3 <=> C7H15-3 + CH4
-    k_f = 0.0541
-               * exp((2.26) * tc[0] - (3666.93984371899) * invT);
-    qf = k_f * (sc[9]*sc[58]);
-    k_r = 1e-06 * 2135 
-               * exp(2.6 * tc[0] - 0.50321666580472 * 14550 * invT);
-    qr = k_r * (sc[10]*sc[61]);
-    qdot[302] = qf - qr;
-    // (303):  NC7H16 + CH3 <=> C7H15-4 + CH4
-    k_f = 0.02705
-               * exp((2.26) * tc[0] - (3666.93984371899) * invT);
-    qf = k_f * (sc[9]*sc[58]);
-    k_r = 1e-06 * 2127 
-               * exp(2.6 * tc[0] - 0.50321666580472 * 14550 * invT);
-    qr = k_r * (sc[10]*sc[62]);
-    qdot[303] = qf - qr;
-    // (304):  NC7H16 + O2 <=> C7H15-1 + HO2
-    k_f = 60000000
-               * exp(-(26569.8399544892) * invT);
-    qf = k_f * (sc[3]*sc[58]);
-    k_r = 1e-06 * 51750000000 
-               * exp(0.28 * tc[0] - 0.50321666580472 * -406 * invT);
-    qr = k_r * (sc[11]*sc[59]);
-    qdot[304] = qf - qr;
-    // (305):  NC7H16 + O2 <=> C7H15-2 + HO2
-    k_f = 40000000
-               * exp(-(25236.3157901067) * invT);
-    qf = k_f * (sc[3]*sc[58]);
-    k_r = 1e-06 * 1098000000 
-               * exp(0.67 * tc[0] - 0.50321666580472 * -541 * invT);
-    qr = k_r * (sc[11]*sc[60]);
-    qdot[305] = qf - qr;
-    // (306):  NC7H16 + O2 <=> C7H15-3 + HO2
-    k_f = 40000000
-               * exp(-(25236.3157901067) * invT);
-    qf = k_f * (sc[3]*sc[58]);
-    k_r = 1e-06 * 1098000000 
-               * exp(0.67 * tc[0] - 0.50321666580472 * -541 * invT);
-    qr = k_r * (sc[11]*sc[61]);
-    qdot[306] = qf - qr;
-    // (307):  NC7H16 + O2 <=> C7H15-4 + HO2
-    k_f = 20000000
-               * exp(-(25236.3157901067) * invT);
-    qf = k_f * (sc[3]*sc[58]);
-    k_r = 1e-06 * 1094000000 
-               * exp(0.67 * tc[0] - 0.50321666580472 * -541 * invT);
-    qr = k_r * (sc[11]*sc[62]);
-    qdot[307] = qf - qr;
-    // (308):  NC7H16 + C2H5 <=> C7H15-1 + C2H6
-    k_f = 100000
-               * exp(-(6743.10332178324) * invT);
-    qf = k_f * (sc[17]*sc[58]);
-    k_r = 1e-06 * 320000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 12300 * invT);
-    qr = k_r * (sc[15]*sc[59]);
-    qdot[308] = qf - qr;
-    // (309):  NC7H16 + C2H5 <=> C7H15-2 + C2H6
-    k_f = 100000
-               * exp(-(5233.45332436908) * invT);
-    qf = k_f * (sc[17]*sc[58]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 12900 * invT);
-    qr = k_r * (sc[15]*sc[60]);
-    qdot[309] = qf - qr;
-    // (310):  NC7H16 + C2H5 <=> C7H15-3 + C2H6
-    k_f = 100000
-               * exp(-(5233.45332436908) * invT);
-    qf = k_f * (sc[17]*sc[58]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 12900 * invT);
-    qr = k_r * (sc[15]*sc[61]);
-    qdot[310] = qf - qr;
-    // (311):  NC7H16 + C2H5 <=> C7H15-4 + C2H6
-    k_f = 50000
-               * exp(-(5233.45332436908) * invT);
-    qf = k_f * (sc[17]*sc[58]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 12900 * invT);
-    qr = k_r * (sc[15]*sc[62]);
-    qdot[311] = qf - qr;
-    // (312):  NC7H16 + C2H3 <=> C7H15-1 + C2H4
-    k_f = 1000000
-               * exp(-(9057.89998448495) * invT);
-    qf = k_f * (sc[19]*sc[58]);
-    k_r = 1e-06 * 2570000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 25400 * invT);
-    qr = k_r * (sc[16]*sc[59]);
-    qdot[312] = qf - qr;
-    // (313):  NC7H16 + C2H3 <=> C7H15-2 + C2H4
-    k_f = 800000
-               * exp(-(8454.03998551929) * invT);
-    qf = k_f * (sc[19]*sc[58]);
-    k_r = 1e-06 * 2000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 24200 * invT);
-    qr = k_r * (sc[16]*sc[60]);
-    qdot[313] = qf - qr;
-    // (314):  NC7H16 + C2H3 <=> C7H15-3 + C2H4
-    k_f = 800000
-               * exp(-(8454.03998551929) * invT);
-    qf = k_f * (sc[19]*sc[58]);
-    k_r = 1e-06 * 2000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 24200 * invT);
-    qr = k_r * (sc[16]*sc[61]);
-    qdot[314] = qf - qr;
-    // (315):  NC7H16 + C2H3 <=> C7H15-4 + C2H4
-    k_f = 400000
-               * exp(-(8454.03998551929) * invT);
-    qf = k_f * (sc[19]*sc[58]);
-    k_r = 1e-06 * 2000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 24200 * invT);
-    qr = k_r * (sc[16]*sc[62]);
-    qdot[315] = qf - qr;
-    // (316):  NC7H16 + CH3O2 <=> C7H15-1 + CH3O2H
-    k_f = 12100000
-               * exp(-(10280.7164823904) * invT);
-    qf = k_f * (sc[38]*sc[58]);
-    k_r = 1e-06 * 3600000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 9800 * invT);
-    qr = k_r * (sc[39]*sc[59]);
-    qdot[316] = qf - qr;
-    // (317):  NC7H16 + CH3O2 <=> C7H15-2 + CH3O2H
-    k_f = 8064000
-               * exp(-(8906.93498474354) * invT);
-    qf = k_f * (sc[38]*sc[58]);
-    k_r = 1e-06 * 237600000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 3700 * invT);
-    qr = k_r * (sc[39]*sc[60]);
-    qdot[317] = qf - qr;
-    // (318):  NC7H16 + CH3O2 <=> C7H15-3 + CH3O2H
-    k_f = 8064000
-               * exp(-(8906.93498474354) * invT);
-    qf = k_f * (sc[38]*sc[58]);
-    k_r = 1e-06 * 237600000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 3700 * invT);
-    qr = k_r * (sc[39]*sc[61]);
-    qdot[318] = qf - qr;
-    // (319):  NC7H16 + CH3O2 <=> C7H15-4 + CH3O2H
-    k_f = 4032000
-               * exp(-(8906.93498474354) * invT);
-    qf = k_f * (sc[38]*sc[58]);
-    k_r = 1e-06 * 237600000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 3700 * invT);
-    qr = k_r * (sc[39]*sc[62]);
-    qdot[319] = qf - qr;
-    // (320):  NC7H16 + C7H15-1 <=> C7H15-2 + NC7H16
-    k_f = 100000
-               * exp(-(5233.45332436908) * invT);
-    qf = k_f * (sc[58]*sc[59]);
-    k_r = 1e-06 * 150000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 12300 * invT);
-    qr = k_r * (sc[58]*sc[60]);
-    qdot[320] = qf - qr;
-    // (321):  NC7H16 + C7H15-1 <=> C7H15-3 + NC7H16
-    k_f = 100000
-               * exp(-(5233.45332436908) * invT);
-    qf = k_f * (sc[58]*sc[59]);
-    k_r = 1e-06 * 150000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 12300 * invT);
-    qr = k_r * (sc[58]*sc[61]);
-    qdot[321] = qf - qr;
-    // (322):  NC7H16 + C7H15-1 <=> C7H15-4 + NC7H16
-    k_f = 50000
-               * exp(-(5233.45332436908) * invT);
-    qf = k_f * (sc[58]*sc[59]);
-    k_r = 1e-06 * 150000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 12300 * invT);
-    qr = k_r * (sc[58]*sc[62]);
-    qdot[322] = qf - qr;
-    // (323):  NC7H16 + C7H15-2 <=> C7H15-3 + NC7H16
-    k_f = 100000
-               * exp(-(5233.45332436908) * invT);
-    qf = k_f * (sc[58]*sc[60]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 10400 * invT);
-    qr = k_r * (sc[58]*sc[61]);
-    qdot[323] = qf - qr;
-    // (324):  NC7H16 + C7H15-2 <=> C7H15-4 + NC7H16
-    k_f = 50000
-               * exp(-(5233.45332436908) * invT);
-    qf = k_f * (sc[58]*sc[60]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 10400 * invT);
-    qr = k_r * (sc[58]*sc[62]);
-    qdot[324] = qf - qr;
-    // (325):  NC7H16 + C7H15-3 <=> C7H15-4 + NC7H16
-    k_f = 50000
-               * exp(-(5233.45332436908) * invT);
-    qf = k_f * (sc[58]*sc[61]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 10400 * invT);
-    qr = k_r * (sc[58]*sc[62]);
-    qdot[325] = qf - qr;
-    // (326):  C7H15-2 <=> PC4H9 + C3H6
-    k_f = 2.218e+16
-               * exp((-0.89) * tc[0] - (15161.9181406962) * invT);
-    qf = k_f * (sc[60]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 8200 * invT);
-    qr = k_r * (sc[26]*sc[31]);
-    qdot[326] = qf - qr;
-    // (327):  C7H15-2 <=> C7H14-2 + H
-    k_f = 2.71e+15
-               * exp((-0.72) * tc[0] - (18915.9144675994) * invT);
-    qf = k_f * (sc[60]);
-    k_r = 1e-06 * 10000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 2900 * invT);
-    qr = k_r * (sc[0]*sc[63]);
-    qdot[327] = qf - qr;
-    // (328):  C7H15-3 <=> C4H8-1 + NC3H7
-    k_f = 9.633e+17
-               * exp((-1.42) * tc[0] - (15388.3656403083) * invT);
-    qf = k_f * (sc[61]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 7700 * invT);
-    qr = k_r * (sc[28]*sc[30]);
-    qdot[328] = qf - qr;
-    // (329):  C7H15-3 <=> C7H14-2 + H
-    k_f = 2.71e+15
-               * exp((-0.72) * tc[0] - (18915.9144675994) * invT);
-    qf = k_f * (sc[61]);
-    k_r = 1e-06 * 10000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 2900 * invT);
-    qr = k_r * (sc[0]*sc[63]);
-    qdot[329] = qf - qr;
-    // (330):  C7H15-3 <=> C7H14-3 + H
-    k_f = 2.018e+15
-               * exp((-0.66) * tc[0] - (18961.2039675218) * invT);
-    qf = k_f * (sc[61]);
-    k_r = 1e-06 * 10000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 2900 * invT);
-    qr = k_r * (sc[0]*sc[64]);
-    qdot[330] = qf - qr;
-    // (331):  C7H15-4 <=> C2H5 + C5H10-1
-    k_f = 5.426e+16
-               * exp((-0.89) * tc[0] - (15393.3978069664) * invT);
-    qf = k_f * (sc[62]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 8200 * invT);
-    qr = k_r * (sc[17]*sc[36]);
-    qdot[331] = qf - qr;
-    // (332):  C7H15-4 <=> C7H14-3 + H
-    k_f = 4.02e+15
-               * exp((-0.66) * tc[0] - (18961.2039675218) * invT);
-    qf = k_f * (sc[62]);
-    k_r = 1e-06 * 10000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 2900 * invT);
-    qr = k_r * (sc[0]*sc[64]);
-    qdot[332] = qf - qr;
-    // (333):  C7H15-2 + O2 <=> C7H14-2 + HO2
-    k_f = 3e-15
-               * exp(-(1509.64999741416) * invT);
-    qf = k_f * (sc[3]*sc[60]);
-    k_r = 1e-06 * 3.793e-09 
-               * exp(0.05 * tc[0] - 0.50321666580472 * 18270 * invT);
-    qr = k_r * (sc[11]*sc[63]);
-    qdot[333] = qf - qr;
-    // (334):  C7H15-3 + O2 <=> C7H14-2 + HO2
-    k_f = 3e-15
-               * exp(-(1509.64999741416) * invT);
-    qf = k_f * (sc[3]*sc[61]);
-    k_r = 1e-06 * 3.793e-09 
-               * exp(0.05 * tc[0] - 0.50321666580472 * 18270 * invT);
-    qr = k_r * (sc[11]*sc[63]);
-    qdot[334] = qf - qr;
-    // (335):  C7H15-3 + O2 <=> C7H14-3 + HO2
-    k_f = 3e-15
-               * exp(-(1509.64999741416) * invT);
-    qf = k_f * (sc[3]*sc[61]);
-    k_r = 1e-06 * 5.094e-09 
-               * exp(-0.01 * tc[0] - 0.50321666580472 * 18180 * invT);
-    qr = k_r * (sc[11]*sc[64]);
-    qdot[335] = qf - qr;
-    // (336):  C7H15-4 + O2 <=> C7H14-3 + HO2
-    k_f = 6e-15
-               * exp(-(1509.64999741416) * invT);
-    qf = k_f * (sc[3]*sc[62]);
-    k_r = 1e-06 * 5.113e-09 
-               * exp(-0.01 * tc[0] - 0.50321666580472 * 18180 * invT);
-    qr = k_r * (sc[11]*sc[64]);
-    qdot[336] = qf - qr;
-    // (337):  C7H15-1 <=> C7H15-3
-    k_f = 1386000000
-               * exp((0.98) * tc[0] - (16988.5946375673) * invT);
-    qf = k_f * (sc[59]);
-    k_r = 1 * 44100000 
-               * exp(1.38 * tc[0] - 0.50321666580472 * 36280 * invT);
-    qr = k_r * (sc[61]);
-    qdot[337] = qf - qr;
-    // (338):  C7H15-1 <=> C7H15-4
-    k_f = 2541000000
-               * exp((0.35) * tc[0] - (9943.56131630126) * invT);
-    qf = k_f * (sc[59]);
-    k_r = 1 * 161100000 
-               * exp(0.74 * tc[0] - 0.50321666580472 * 22280 * invT);
-    qr = k_r * (sc[62]);
-    qdot[338] = qf - qr;
-    // (339):  C7H15-2 <=> C7H15-3
-    k_f = 958700000
-               * exp((1.39) * tc[0] - (19977.7016324474) * invT);
-    qf = k_f * (sc[60]);
-    k_r = 1 * 958700000 
-               * exp(1.39 * tc[0] - 0.50321666580472 * 39700 * invT);
-    qr = k_r * (sc[61]);
-    qdot[339] = qf - qr;
-    // (340):  C7H15-1 <=> C7H15-2
-    k_f = 547800000
-               * exp((1.62) * tc[0] - (19504.6779665909) * invT);
-    qf = k_f * (sc[59]);
-    k_r = 1 * 17430000 
-               * exp(2.01 * tc[0] - 0.50321666580472 * 41280 * invT);
-    qr = k_r * (sc[60]);
-    qdot[340] = qf - qr;
-    // (341):  C7H14-2 + OH <=> C2H5CHO + PC4H9
-    k_f = 100000
-               * exp(-(-2012.86666321888) * invT);
-    qf = k_f * (sc[4]*sc[63]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[31]*sc[33]);
-    qdot[341] = qf - qr;
-    // (342):  C7H14-3 + OH <=> C2H5CHO + PC4H9
-    k_f = 100000
-               * exp(-(-2012.86666321888) * invT);
-    qf = k_f * (sc[4]*sc[64]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[31]*sc[33]);
-    qdot[342] = qf - qr;
-    // (343):  C7H14-2 + O <=> CH3CHO + C5H10-1
-    k_f = 100000
-               * exp(-(-528.377499094956) * invT);
-    qf = k_f * (sc[2]*sc[63]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[24]*sc[36]);
-    qdot[343] = qf - qr;
-    // (344):  C7H14-3 + O <=> CH3CHO + C5H10-1
-    k_f = 100000
-               * exp(-(-528.377499094956) * invT);
-    qf = k_f * (sc[2]*sc[64]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[24]*sc[36]);
-    qdot[344] = qf - qr;
-    // (345):  C7H14-2 <=> C4H7 + NC3H7
-    k_f = 1e+16
-               * exp(-(35728.3832721351) * invT);
-    qf = k_f * (sc[63]);
-    k_r = 1e-06 * 10000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[28]*sc[29]);
-    qdot[345] = qf - qr;
-    // (346):  C7H14-3 <=> C4H7 + NC3H7
-    k_f = 1e+16
-               * exp(-(35728.3832721351) * invT);
-    qf = k_f * (sc[64]);
-    k_r = 1e-06 * 10000000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[28]*sc[29]);
-    qdot[346] = qf - qr;
-    // (347):  C7H15O2-1 <=> C7H15-1 + O2
-    k_f = 2.657e+20
-               * exp((-1.67) * tc[0] - (17813.8699694871) * invT);
-    qf = k_f * (sc[65]);
-    k_r = 1e-06 * 4520000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[3]*sc[59]);
-    qdot[347] = qf - qr;
-    // (348):  C7H15O2-2 <=> C7H15-2 + O2
-    k_f = 1.357e+23
-               * exp((-2.36) * tc[0] - (18956.1718008638) * invT);
-    qf = k_f * (sc[66]);
-    k_r = 1e-06 * 7540000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[3]*sc[60]);
-    qdot[348] = qf - qr;
-    // (349):  C7H15O2-3 <=> C7H15-3 + O2
-    k_f = 9.879e+21
-               * exp((-1.97) * tc[0] - (19051.7829673667) * invT);
-    qf = k_f * (sc[67]);
-    k_r = 1e-06 * 7540000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[3]*sc[61]);
-    qdot[349] = qf - qr;
-    // (350):  C7H15O2-4 <=> C7H15-4 + O2
-    k_f = 1.357e+23
-               * exp((-2.36) * tc[0] - (18956.1718008638) * invT);
-    qf = k_f * (sc[68]);
-    k_r = 1e-06 * 7540000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[3]*sc[62]);
-    qdot[350] = qf - qr;
-    // (351):  C7H15O2-1 <=> C7H14OOH1-3
-    k_f = 25000000000
-               * exp(-(10492.0674820284) * invT);
-    qf = k_f * (sc[65]);
-    k_r = 1 * 2653000000 
-               * exp(-0.11 * tc[0] - 0.50321666580472 * 8240 * invT);
-    qr = k_r * (sc[69]);
-    qdot[351] = qf - qr;
-    // (352):  C7H15O2-2 <=> C7H14OOH2-3
-    k_f = 200000000000
-               * exp(-(13511.3674768567) * invT);
-    qf = k_f * (sc[66]);
-    k_r = 1 * 22620000000 
-               * exp(-0.11 * tc[0] - 0.50321666580472 * 14270 * invT);
-    qr = k_r * (sc[70]);
-    qdot[352] = qf - qr;
-    // (353):  C7H15O2-2 <=> C7H14OOH2-4
-    k_f = 25000000000
-               * exp(-(10492.0674820284) * invT);
-    qf = k_f * (sc[66]);
-    k_r = 1 * 2827000000 
-               * exp(-0.11 * tc[0] - 0.50321666580472 * 8270 * invT);
-    qr = k_r * (sc[71]);
-    qdot[353] = qf - qr;
-    // (354):  C7H15O2-3 <=> C7H14OOH3-2
-    k_f = 200000000000
-               * exp(-(13511.3674768567) * invT);
-    qf = k_f * (sc[67]);
-    k_r = 1 * 310700000000 
-               * exp(-0.51 * tc[0] - 0.50321666580472 * 14080 * invT);
-    qr = k_r * (sc[72]);
-    qdot[354] = qf - qr;
-    // (355):  C7H15O2-3 <=> C7H14OOH3-4
-    k_f = 200000000000
-               * exp(-(13511.3674768567) * invT);
-    qf = k_f * (sc[67]);
-    k_r = 1 * 310700000000 
-               * exp(-0.51 * tc[0] - 0.50321666580472 * 14080 * invT);
-    qr = k_r * (sc[73]);
-    qdot[355] = qf - qr;
-    // (356):  C7H15O2-3 <=> C7H14OOH3-5
-    k_f = 25000000000
-               * exp(-(10492.0674820284) * invT);
-    qf = k_f * (sc[67]);
-    k_r = 1 * 38840000000 
-               * exp(-0.51 * tc[0] - 0.50321666580472 * 8080 * invT);
-    qr = k_r * (sc[74]);
-    qdot[356] = qf - qr;
-    // (357):  C7H15O2-4 <=> C7H14OOH4-2
-    k_f = 50000000000
-               * exp(-(10492.0674820284) * invT);
-    qf = k_f * (sc[68]);
-    k_r = 1 * 5655000000 
-               * exp(-0.11 * tc[0] - 0.50321666580472 * 8270 * invT);
-    qr = k_r * (sc[75]);
-    qdot[357] = qf - qr;
-    // (358):  C7H15O2-4 <=> C7H14OOH4-3
-    k_f = 400000000000
-               * exp(-(13511.3674768567) * invT);
-    qf = k_f * (sc[68]);
-    k_r = 1 * 45240000000 
-               * exp(-0.11 * tc[0] - 0.50321666580472 * 14270 * invT);
-    qr = k_r * (sc[76]);
-    qdot[358] = qf - qr;
-    // (359):  C7H14OOH2-3 <=> C7H14-2 + HO2
-    k_f = 1.61e+20
-               * exp((-2.52) * tc[0] - (10743.6758149308) * invT);
-    qf = k_f * (sc[70]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 11530 * invT);
-    qr = k_r * (sc[11]*sc[63]);
-    qdot[359] = qf - qr;
-    // (360):  C7H14OOH3-2 <=> C7H14-2 + HO2
-    k_f = 1.61e+20
-               * exp((-2.52) * tc[0] - (10743.6758149308) * invT);
-    qf = k_f * (sc[72]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 11530 * invT);
-    qr = k_r * (sc[11]*sc[63]);
-    qdot[360] = qf - qr;
-    // (361):  C7H14OOH3-4 <=> C7H14-3 + HO2
-    k_f = 1.199e+20
-               * exp((-2.46) * tc[0] - (10285.7486490485) * invT);
-    qf = k_f * (sc[73]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 10530 * invT);
-    qr = k_r * (sc[11]*sc[64]);
-    qdot[361] = qf - qr;
-    // (362):  C7H14OOH4-3 <=> C7H14-3 + HO2
-    k_f = 2.389e+20
-               * exp((-2.46) * tc[0] - (10285.7486490485) * invT);
-    qf = k_f * (sc[76]);
-    k_r = 1e-06 * 100000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 10530 * invT);
-    qr = k_r * (sc[11]*sc[64]);
-    qdot[362] = qf - qr;
-    // (363):  C7H14OOH1-3 <=> C7H14O1-3 + OH
-    k_f = 75000000000
-               * exp(-(7674.05415352198) * invT);
-    qf = k_f * (sc[69]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[81]);
-    qdot[363] = qf - qr;
-    // (364):  C7H14OOH2-4 <=> C7H14O2-4 + OH
-    k_f = 75000000000
-               * exp(-(7674.05415352198) * invT);
-    qf = k_f * (sc[71]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[82]);
-    qdot[364] = qf - qr;
-    // (365):  C7H14OOH4-2 <=> C7H14O2-4 + OH
-    k_f = 75000000000
-               * exp(-(7674.05415352198) * invT);
-    qf = k_f * (sc[75]);
-    k_r = 1e-06 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[82]);
-    qdot[365] = qf - qr;
-    // (366):  C7H14OOH2-4 <=> OH + CH3CHO + C5H10-1
-    k_f = 5.364e+17
-               * exp((-1.4) * tc[0] - (13461.0458102763) * invT);
-    qf = k_f * (sc[71]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[24]*sc[36]);
-    qdot[366] = qf - qr;
-    // (367):  C7H14OOH3-5 <=> OH + C2H5CHO + C4H8-1
-    k_f = 2.47e+18
-               * exp((-1.55) * tc[0] - (13596.9143100435) * invT);
-    qf = k_f * (sc[74]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[30]*sc[33]);
-    qdot[367] = qf - qr;
-    // (368):  C7H14OOH4-2 <=> OH + NC3H7CHO + C3H6
-    k_f = 1.3e+18
-               * exp((-1.49) * tc[0] - (13486.2066435665) * invT);
-    qf = k_f * (sc[75]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[26]*sc[52]);
-    qdot[368] = qf - qr;
-    // (369):  C7H14OOH1-3O2 <=> C7H14OOH1-3 + O2
-    k_f = 1.367e+23
-               * exp((-2.37) * tc[0] - (18941.0753008896) * invT);
-    qf = k_f * (sc[77]);
-    k_r = 1e-06 * 7540000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[3]*sc[69]);
-    qdot[369] = qf - qr;
-    // (370):  C7H14OOH2-4O2 <=> C7H14OOH2-4 + O2
-    k_f = 1.389e+23
-               * exp((-2.38) * tc[0] - (18920.9466342575) * invT);
-    qf = k_f * (sc[78]);
-    k_r = 1e-06 * 7540000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[3]*sc[71]);
-    qdot[370] = qf - qr;
-    // (371):  C7H14OOH3-5O2 <=> C7H14OOH3-5 + O2
-    k_f = 1.389e+23
-               * exp((-2.38) * tc[0] - (18920.9466342575) * invT);
-    qf = k_f * (sc[79]);
-    k_r = 1e-06 * 7540000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[3]*sc[74]);
-    qdot[371] = qf - qr;
-    // (372):  C7H14OOH4-2O2 <=> C7H14OOH4-2 + O2
-    k_f = 6.969e+22
-               * exp((-2.38) * tc[0] - (18920.9466342575) * invT);
-    qf = k_f * (sc[80]);
-    k_r = 1e-06 * 7540000000000 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[3]*sc[75]);
-    qdot[372] = qf - qr;
-    // (373):  C7H14OOH1-3O2 <=> NC7KET13 + OH
-    k_f = 25000000000
-               * exp(-(10768.836648221) * invT);
-    qf = k_f * (sc[77]);
-    k_r = 1e-06 * 3303 
-               * exp(1.41 * tc[0] - 0.50321666580472 * 45040 * invT);
-    qr = k_r * (sc[4]*sc[83]);
-    qdot[373] = qf - qr;
-    // (374):  C7H14OOH2-4O2 <=> NC7KET24 + OH
-    k_f = 12500000000
-               * exp(-(8982.41748461425) * invT);
-    qf = k_f * (sc[78]);
-    k_r = 1e-06 * 161.5 
-               * exp(1.83 * tc[0] - 0.50321666580472 * 44200 * invT);
-    qr = k_r * (sc[4]*sc[84]);
-    qdot[374] = qf - qr;
-    // (375):  C7H14OOH3-5O2 <=> NC7KET35 + OH
-    k_f = 12500000000
-               * exp(-(8982.41748461425) * invT);
-    qf = k_f * (sc[79]);
-    k_r = 1e-06 * 161.5 
-               * exp(1.83 * tc[0] - 0.50321666580472 * 44200 * invT);
-    qr = k_r * (sc[4]*sc[85]);
-    qdot[375] = qf - qr;
-    // (376):  C7H14OOH4-2O2 <=> NC7KET42 + OH
-    k_f = 12500000000
-               * exp(-(8982.41748461425) * invT);
-    qf = k_f * (sc[80]);
-    k_r = 1e-06 * 161.5 
-               * exp(1.83 * tc[0] - 0.50321666580472 * 44200 * invT);
-    qr = k_r * (sc[4]*sc[86]);
-    qdot[376] = qf - qr;
-    // (377):  NC7KET13 <=> NC4H9CHO + CH2CHO + OH
-    k_f = 1.05e+16
-               * exp(-(20933.8132974763) * invT);
-    qf = k_f * (sc[83]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[23]*sc[56]);
-    qdot[377] = qf - qr;
-    // (378):  NC7KET24 <=> NC3H7CHO + CH3COCH2 + OH
-    k_f = 1.05e+16
-               * exp(-(20933.8132974763) * invT);
-    qf = k_f * (sc[84]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[32]*sc[52]);
-    qdot[378] = qf - qr;
-    // (379):  NC7KET35 <=> C2H5CHO + C2H5COCH2 + OH
-    k_f = 1.05e+16
-               * exp(-(20933.8132974763) * invT);
-    qf = k_f * (sc[85]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[33]*sc[54]);
-    qdot[379] = qf - qr;
-    // (380):  NC7KET42 <=> CH3CHO + NC3H7COCH2 + OH
-    k_f = 1.05e+16
-               * exp(-(20933.8132974763) * invT);
-    qf = k_f * (sc[86]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[4]*sc[24]*sc[55]);
-    qdot[380] = qf - qr;
-    // (381):  C7H14O2-4 + OH <=> CH3CO + C5H10-1 + H2O
-    k_f = 2500000
-               ;
-    qf = k_f * (sc[4]*sc[82]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[5]*sc[22]*sc[36]);
-    qdot[381] = qf - qr;
-    // (382):  C7H14O1-3 + OH <=> C2H4 + NC4H9CO + H2O
-    k_f = 2500000
-               ;
-    qf = k_f * (sc[4]*sc[81]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[5]*sc[16]*sc[57]);
-    qdot[382] = qf - qr;
-    // (383):  C7H14O2-4 + OH <=> C3H6 + NC3H7CO + H2O
-    k_f = 2500000
-               ;
-    qf = k_f * (sc[4]*sc[82]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[5]*sc[26]*sc[53]);
-    qdot[383] = qf - qr;
-    // (384):  C7H14O2-4 + HO2 <=> CH3CO + C5H10-1 + H2O2
-    k_f = 5000000
-               * exp(-(8906.93498474354) * invT);
-    qf = k_f * (sc[11]*sc[82]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[12]*sc[22]*sc[36]);
-    qdot[384] = qf - qr;
-    // (385):  C7H14O1-3 + HO2 <=> C2H4 + NC4H9CO + H2O2
-    k_f = 5000000
-               * exp(-(8906.93498474354) * invT);
-    qf = k_f * (sc[11]*sc[81]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[12]*sc[16]*sc[57]);
-    qdot[385] = qf - qr;
-    // (386):  C7H14O2-4 + HO2 <=> C3H6 + NC3H7CO + H2O2
-    k_f = 5000000
-               * exp(-(8906.93498474354) * invT);
-    qf = k_f * (sc[11]*sc[82]);
-    k_r = 1e-12 * 0 
-               * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
-    qr = k_r * (sc[12]*sc[26]*sc[53]);
-    qdot[386] = qf - qr;
+    {
+        // (21):  CH3 + CH3 (+M) <=> C2H6 (+M)
+        const amrex::Real k_f = 92140000000
+                   * exp((-1.17) * tc[0] - (319.945156118641) * invT);
+        amrex::Real Corr = mixture + sc[1] + (4)*sc[5] + sc[6] + (2)*sc[8];
+        const amrex::Real redP = Corr / k_f * 1.135e+24 
+                   * exp(-5.246 * tc[0] - 857.984415197047 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            0.595 * exp(-tc[1] * 0.000892857142857143)
+            + 0.405 * exp(-tc[1] * 0.014367816091954)
+            + exp(-1e+15 * invT));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+        Corr = F * F_troe;
+        const amrex::Real qf = Corr * k_f * (sc[9]*sc[9]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[9] + g_RT[9] - g_RT[15])) * (refC) * (sc[15]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[9] -= qdot;
+        wdot[15] += qdot;
+    }
 
+    {
+        // (23):  H + O2 (+M) <=> HO2 (+M)
+        const amrex::Real k_f = 1475000
+                   * exp((0.6) * tc[0]);
+        amrex::Real Corr = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
+        const amrex::Real redP = Corr / k_f * 35000 
+                   * exp(-0.41 * tc[0] - -561.589799038067 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            0.5 * exp(-tc[1] * 1e+30)
+            + 0.5 * exp(-tc[1] * 1e-30)
+            + exp(-1e+100 * invT));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+        Corr = F * F_troe;
+        const amrex::Real qf = Corr * k_f * (sc[0]*sc[3]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[0] + g_RT[3] - g_RT[11])) * (refC) * (sc[11]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+    }
 
-    return;
-}
+    {
+        // (48):  OH + OH (+M) <=> H2O2 (+M)
+        const amrex::Real k_f = 123600000
+                   * exp((-0.37) * tc[0]);
+        amrex::Real Corr = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
+        const amrex::Real redP = Corr / k_f * 3.041e+18 
+                   * exp(-4.63 * tc[0] - 1031.09094823387 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            0.53 * exp(-tc[1] * 0.01)
+            + 0.47 * exp(-tc[1] * 0.0005)
+            + exp(-1e+15 * invT));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+        Corr = F * F_troe;
+        const amrex::Real qf = Corr * k_f * (sc[4]*sc[4]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[4] + g_RT[4] - g_RT[12])) * (refC) * (sc[12]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[4] -= qdot;
+        wdot[12] += qdot;
+    }
 
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)
-{
-    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
-    amrex::Real invT = 1.0 / tc[1];
+    {
+        // (55):  C2H3 + H (+M) <=> C2H4 (+M)
+        const amrex::Real k_f = 6100000
+                   * exp((0.27) * tc[0] - (140.900666425322) * invT);
+        amrex::Real Corr = mixture;
+        const amrex::Real redP = Corr / k_f * 9.8e+17 
+                   * exp(-3.86 * tc[0] - 1670.67933047167 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            0.218 * exp(-tc[1] * 0.00480769230769231)
+            + 0.782 * exp(-tc[1] * 0.000375516334960571)
+            + exp(-6095 * invT));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+        Corr = F * F_troe;
+        const amrex::Real qf = Corr * k_f * (sc[0]*sc[19]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[0] - g_RT[16] + g_RT[19])) * (refC) * (sc[16]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[16] += qdot;
+        wdot[19] -= qdot;
+    }
 
-    amrex::Real qdot[387] = {0.0};
-    amrex::Real sc_qss[1];
-    comp_qdot(qdot, sc, sc_qss, tc, invT);
+    {
+        // (57):  C2H2 + H (+M) <=> C2H3 (+M)
+        const amrex::Real k_f = 311000
+                   * exp((0.58) * tc[0] - (1302.82794776842) * invT);
+        amrex::Real Corr = mixture + sc[1] + (4)*sc[5] + sc[6] + (2)*sc[8];
+        const amrex::Real redP = Corr / k_f * 2.254e+28 
+                   * exp(-7.269 * tc[0] - 3309.65601099764 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            + 1 * exp(-tc[1] * 0.00148148148148148)
+            + exp(-1e+15 * invT));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
+        Corr = F * F_troe;
+        const amrex::Real qf = Corr * k_f * (sc[0]*sc[18]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[0] + g_RT[18] - g_RT[19])) * (refC) * (sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[18] -= qdot;
+        wdot[19] += qdot;
+    }
 
-    wdot[0] =  - qdot[0] - qdot[1] - qdot[3] - qdot[5] - qdot[6] + qdot[8] - qdot[11] + qdot[16] - qdot[17] + qdot[18] + qdot[20] + qdot[21] - qdot[24] + qdot[30] - qdot[32] + qdot[34] - qdot[36] + qdot[39] - qdot[48] - qdot[49] - qdot[52] + qdot[55] + qdot[57] + qdot[57] - qdot[59] + qdot[64] + qdot[65] - qdot[66] - qdot[69] - qdot[71] + qdot[72] - qdot[77] - qdot[78] + qdot[80] - qdot[85] + qdot[91] + qdot[92] + qdot[93] + qdot[106] - qdot[109] - qdot[110] + qdot[113] - qdot[119] + qdot[125] - qdot[127] + qdot[133] - qdot[137] - qdot[148] - qdot[156] + qdot[157] - qdot[158] + qdot[161] + qdot[162] + qdot[163] + qdot[170] + qdot[181] - qdot[185] + qdot[190] - qdot[223] + qdot[230] - qdot[232] + qdot[236] - qdot[237] + qdot[243] - qdot[254] - qdot[264] + qdot[272] + qdot[273] + qdot[274] + qdot[274] + qdot[275] + qdot[277] + qdot[279] + qdot[280] + qdot[281] + qdot[282] - qdot[284] - qdot[285] - qdot[286] - qdot[287] + qdot[327] + qdot[329] + qdot[330] + qdot[332];
-    wdot[1] =  + qdot[9] + qdot[11] - qdot[18] - qdot[20] + qdot[24] + qdot[32] + qdot[36] + qdot[38] + qdot[49] - qdot[57] + qdot[59] + qdot[69] + qdot[77] + qdot[85] + qdot[104] + qdot[109] + qdot[119] + qdot[127] + qdot[137] + qdot[148] + qdot[156] + qdot[158] + qdot[185] + qdot[223] + qdot[232] + qdot[237] - qdot[251] + qdot[254] + qdot[264] - qdot[273] + qdot[284] + qdot[285] + qdot[286] + qdot[287];
-    wdot[2] =  - qdot[7] - qdot[13] + qdot[17] - qdot[18] - qdot[19] - qdot[23] - qdot[27] + qdot[31] - qdot[33] - qdot[37] - qdot[39] + qdot[40] - qdot[43] + qdot[55] + qdot[56] + qdot[56] - qdot[63] - qdot[64] - qdot[67] - qdot[72] - qdot[86] - qdot[93] - qdot[94] - qdot[101] - qdot[102] - qdot[108] - qdot[138] - qdot[149] - qdot[150] - qdot[151] - qdot[157] - qdot[159] - qdot[161] - qdot[162] + qdot[167] - qdot[186] - qdot[202] - qdot[203] - qdot[204] - qdot[207] - qdot[234] - qdot[255] - qdot[265] - qdot[274] - qdot[288] - qdot[289] - qdot[290] - qdot[291] - qdot[343] - qdot[344];
-    wdot[3] =  - qdot[3] - qdot[17] - qdot[25] - qdot[31] - qdot[40] + qdot[43] + qdot[44] - qdot[45] + qdot[46] - qdot[47] + qdot[49] + qdot[50] - qdot[51] - qdot[56] - qdot[61] - qdot[62] - qdot[73] - qdot[79] - qdot[83] - qdot[103] - qdot[107] - qdot[118] - qdot[131] - qdot[134] - qdot[144] - qdot[165] - qdot[166] - qdot[167] + qdot[168] - qdot[170] + qdot[177] + qdot[179] - qdot[192] + qdot[211] - qdot[219] - qdot[229] - qdot[231] - qdot[241] + qdot[242] - qdot[244] - qdot[246] - qdot[247] - qdot[248] - qdot[249] - qdot[250] - qdot[252] - qdot[262] - qdot[272] - qdot[304] - qdot[305] - qdot[306] - qdot[307] - qdot[333] - qdot[334] - qdot[335] - qdot[336] + qdot[347] + qdot[348] + qdot[349] + qdot[350] + qdot[369] + qdot[370] + qdot[371] + qdot[372];
-    wdot[4] =  - qdot[4] - qdot[4] - qdot[12] + qdot[13] - qdot[15] - qdot[16] + qdot[17] + qdot[18] + qdot[19] + qdot[19] - qdot[20] - qdot[22] - qdot[26] + qdot[27] + qdot[28] + qdot[29] + qdot[30] + qdot[33] - qdot[35] + qdot[37] - qdot[38] + qdot[43] + qdot[48] + qdot[48] - qdot[50] + qdot[52] - qdot[55] - qdot[60] + qdot[61] + qdot[63] - qdot[65] + qdot[67] - qdot[68] - qdot[70] - qdot[84] + qdot[86] - qdot[96] - qdot[98] - qdot[99] - qdot[100] + qdot[108] - qdot[128] + qdot[138] - qdot[139] + qdot[149] - qdot[152] - qdot[153] - qdot[154] + qdot[159] + qdot[169] + qdot[174] - qdot[178] - qdot[184] + qdot[186] + qdot[193] - qdot[196] + qdot[199] - qdot[201] - qdot[205] - qdot[206] - qdot[208] - qdot[209] + qdot[212] + qdot[213] + qdot[217] + qdot[222] + qdot[229] - qdot[233] - qdot[235] - qdot[240] + qdot[244] + qdot[245] + qdot[248] + qdot[250] - qdot[253] + qdot[255] - qdot[263] + qdot[265] + qdot[272] - qdot[275] + qdot[288] + qdot[289] + qdot[290] + qdot[291] - qdot[292] - qdot[293] - qdot[294] - qdot[295] - qdot[341] - qdot[342] + qdot[363] + qdot[364] + qdot[365] + qdot[366] + qdot[367] + qdot[368] + qdot[373] + qdot[374] + qdot[375] + qdot[376] + qdot[377] + qdot[378] + qdot[379] + qdot[380] - qdot[381] - qdot[382] - qdot[383];
-    wdot[5] =  + qdot[12] + qdot[15] - qdot[19] + qdot[20] + qdot[22] + qdot[26] - qdot[30] + qdot[35] + qdot[50] + qdot[52] + qdot[60] + qdot[68] + qdot[84] + qdot[96] + qdot[128] + qdot[139] + qdot[152] + qdot[178] + qdot[184] + qdot[196] + qdot[233] + qdot[240] + qdot[253] + qdot[263] + qdot[292] + qdot[293] + qdot[294] + qdot[295] + qdot[381] + qdot[382] + qdot[383];
-    wdot[6] =  - qdot[7] + qdot[10] + qdot[15] - qdot[16] + qdot[21] - qdot[29] - qdot[31] + qdot[32] + qdot[33] + qdot[42] + qdot[47] + qdot[66] + qdot[71] + qdot[72] + qdot[72] + qdot[104] + qdot[136] + qdot[170] + qdot[183] + qdot[217] + qdot[234] + qdot[244] + qdot[259] + qdot[269] + qdot[272] + qdot[274] + qdot[276] + qdot[278];
-    wdot[7] =  - qdot[15] - qdot[21] + qdot[23] - qdot[32] - qdot[33] + qdot[34] + qdot[35] + qdot[36] + qdot[37] + qdot[41] - qdot[42] - qdot[44] - qdot[47] + qdot[54] + qdot[70] + qdot[70] + qdot[79] + qdot[82] + qdot[94] + qdot[143] + qdot[150] - qdot[157] + qdot[171] + qdot[235] + qdot[241] + qdot[249];
-    wdot[8] =  + qdot[7] + qdot[16] + qdot[29] + qdot[31] + qdot[157] + qdot[249] - qdot[276];
-    wdot[9] =  - qdot[0] - qdot[2] - qdot[2] + qdot[10] + qdot[11] + qdot[12] + qdot[13] - qdot[14] + qdot[23] - qdot[28] - qdot[38] - qdot[39] - qdot[40] - qdot[41] - qdot[42] - qdot[46] + qdot[53] + qdot[66] - qdot[75] - qdot[76] + qdot[78] + qdot[78] - qdot[81] + qdot[82] - qdot[88] + qdot[89] + qdot[90] - qdot[91] + qdot[93] + qdot[105] + qdot[110] + qdot[112] - qdot[116] + qdot[123] - qdot[126] + qdot[135] - qdot[140] - qdot[155] - qdot[160] + qdot[164] + qdot[168] + qdot[173] - qdot[175] - qdot[188] - qdot[196] + qdot[198] + qdot[207] + qdot[208] - qdot[220] - qdot[224] - qdot[238] - qdot[250] + qdot[251] + qdot[251] - qdot[257] - qdot[267] + qdot[270] + qdot[270] + qdot[271] + qdot[273] - qdot[277] - qdot[300] - qdot[301] - qdot[302] - qdot[303];
-    wdot[10] =  + qdot[0] - qdot[11] - qdot[12] - qdot[13] + qdot[14] + qdot[41] + qdot[42] + qdot[46] - qdot[53] + qdot[75] + qdot[76] + qdot[81] + qdot[88] + qdot[116] + qdot[126] + qdot[140] + qdot[155] + qdot[160] - qdot[173] + qdot[188] + qdot[209] + qdot[220] + qdot[224] + qdot[238] + qdot[257] + qdot[267] - qdot[270] + qdot[300] + qdot[301] + qdot[302] + qdot[303];
-    wdot[11] =  + qdot[3] + qdot[22] + qdot[25] - qdot[28] - qdot[29] - qdot[43] - qdot[44] + qdot[45] - qdot[46] + qdot[47] - qdot[48] - qdot[49] - qdot[50] + qdot[51] + qdot[51] - qdot[53] - qdot[54] + qdot[62] + qdot[63] + qdot[73] - qdot[74] + qdot[83] - qdot[87] - qdot[95] + qdot[103] + qdot[107] + qdot[118] - qdot[130] + qdot[131] + qdot[134] - qdot[141] + qdot[144] + qdot[156] + qdot[165] + qdot[166] + qdot[166] - qdot[174] - qdot[177] + qdot[178] - qdot[187] + qdot[192] - qdot[193] - qdot[199] - qdot[217] - qdot[218] + qdot[219] - qdot[222] + qdot[231] + qdot[246] + qdot[252] - qdot[256] + qdot[262] - qdot[266] - qdot[296] - qdot[297] - qdot[298] - qdot[299] + qdot[304] + qdot[305] + qdot[306] + qdot[307] + qdot[333] + qdot[334] + qdot[335] + qdot[336] + qdot[359] + qdot[360] + qdot[361] + qdot[362] - qdot[384] - qdot[385] - qdot[386];
-    wdot[12] =  + qdot[4] - qdot[22] - qdot[51] - qdot[52] + qdot[53] + qdot[54] - qdot[63] + qdot[74] + qdot[87] + qdot[95] + qdot[130] + qdot[141] - qdot[156] - qdot[166] - qdot[178] + qdot[187] + qdot[218] + qdot[256] + qdot[266] + qdot[296] + qdot[297] + qdot[298] + qdot[299] + qdot[384] + qdot[385] + qdot[386];
-    wdot[13] =  + qdot[8] - qdot[34] - qdot[35] - qdot[36] - qdot[37] + qdot[38] + qdot[39] - qdot[41] + qdot[44] + qdot[45] - qdot[54] + qdot[79] + qdot[99] + qdot[102] - qdot[104] + qdot[153] + qdot[164] - qdot[171] + qdot[191] + qdot[201] + qdot[202] + qdot[213] + qdot[222] + qdot[244] + qdot[247] + qdot[248] + qdot[250] + qdot[275] + qdot[276];
-    wdot[14] =  - qdot[8] + qdot[28] + qdot[40] - qdot[45] + qdot[169] + qdot[175] + qdot[175] + qdot[176] + qdot[179] + qdot[179] + qdot[194] + qdot[200];
-    wdot[15] =  + qdot[2] - qdot[14] - qdot[24] - qdot[26] - qdot[27] - qdot[73] - qdot[74] - qdot[80] + qdot[120] + qdot[142] - qdot[180] + qdot[206] + qdot[221] + qdot[225] - qdot[271] + qdot[308] + qdot[309] + qdot[310] + qdot[311];
-    wdot[16] =  - qdot[1] + qdot[5] - qdot[9] - qdot[23] + qdot[25] + qdot[58] + qdot[58] - qdot[59] - qdot[60] + qdot[76] - qdot[81] + qdot[101] - qdot[103] + qdot[105] + qdot[110] + qdot[111] + qdot[114] + qdot[121] + qdot[122] + qdot[132] + qdot[145] - qdot[161] - qdot[163] - qdot[172] + qdot[203] + qdot[217] + qdot[226] + qdot[227] + qdot[234] - qdot[251] + qdot[277] + qdot[278] + qdot[312] + qdot[313] + qdot[314] + qdot[315] + qdot[382] + qdot[385];
-    wdot[17] =  + qdot[1] + qdot[14] + qdot[24] - qdot[25] + qdot[26] + qdot[27] - qdot[58] + qdot[73] + qdot[74] - qdot[76] - qdot[78] + qdot[80] + qdot[94] + qdot[98] - qdot[120] - qdot[121] + qdot[124] + qdot[132] + qdot[136] - qdot[142] + qdot[143] + qdot[147] - qdot[162] - qdot[174] - qdot[176] + qdot[180] + qdot[204] + qdot[205] - qdot[221] - qdot[225] - qdot[226] + qdot[260] + qdot[271] - qdot[308] - qdot[309] - qdot[310] - qdot[311] + qdot[331];
-    wdot[18] =  - qdot[6] + qdot[9] - qdot[61] + qdot[62] - qdot[64] - qdot[65] + qdot[75] + qdot[77] + qdot[89] - qdot[91] + qdot[235] + qdot[248];
-    wdot[19] =  - qdot[5] + qdot[6] - qdot[58] + qdot[59] + qdot[60] - qdot[62] - qdot[75] - qdot[77] - qdot[79] + qdot[81] + qdot[90] + qdot[97] + qdot[97] + qdot[100] + qdot[103] + qdot[114] - qdot[122] + qdot[124] - qdot[145] - qdot[163] - qdot[167] + qdot[172] + qdot[183] + qdot[191] + qdot[197] + qdot[222] - qdot[227] - qdot[312] - qdot[313] - qdot[314] - qdot[315];
-    wdot[20] =  + qdot[65] - qdot[66] - qdot[67] - qdot[68] - qdot[69] + qdot[93] + qdot[98] + qdot[101] + qdot[135] + qdot[158] + qdot[159] + qdot[160] + qdot[241] + qdot[243] + qdot[260] + qdot[261] - qdot[278];
-    wdot[21] =  + qdot[61] + qdot[64] + qdot[67] + qdot[68] + qdot[69] - qdot[70] - qdot[71] - qdot[72] + qdot[170] - qdot[249];
-    wdot[22] =  - qdot[10] + qdot[83] + qdot[84] + qdot[85] + qdot[86] + qdot[87] + qdot[88] + qdot[151] - qdot[158] - qdot[159] - qdot[160] + qdot[182] + qdot[204] + qdot[206] + qdot[381] + qdot[384];
-    wdot[23] =  + qdot[161] + qdot[167] - qdot[243] - qdot[244] + qdot[245] + qdot[247] + qdot[377];
-    wdot[24] =  - qdot[82] - qdot[83] - qdot[84] - qdot[85] - qdot[86] - qdot[87] - qdot[88] + qdot[100] + qdot[154] + qdot[162] + qdot[165] + qdot[181] - qdot[182] + qdot[197] + qdot[203] + qdot[205] + qdot[245] + qdot[343] + qdot[344] + qdot[366] + qdot[380];
-    wdot[25] =  + qdot[91] + qdot[102] - qdot[217] - qdot[218] + qdot[223] + qdot[224] + qdot[225] + qdot[227] - qdot[228] - qdot[230] - qdot[231] - qdot[233] - qdot[234] + qdot[236] - qdot[237] - qdot[238] - qdot[239] + qdot[246];
-    wdot[26] =  - qdot[90] - qdot[92] - qdot[93] - qdot[94] - qdot[95] - qdot[96] + qdot[106] + qdot[107] - qdot[108] - qdot[109] - qdot[110] + qdot[117] + qdot[129] + qdot[146] - qdot[195] + qdot[202] + qdot[213] - qdot[219] - qdot[220] - qdot[221] + qdot[226] - qdot[228] + qdot[239] + qdot[326] + qdot[368] + qdot[383] + qdot[386];
-    wdot[27] =  - qdot[97] - qdot[98] - qdot[99] - qdot[100] - qdot[101] - qdot[102] + qdot[112] + qdot[113] - qdot[115] + qdot[116] + qdot[117] + qdot[118] + qdot[119] + qdot[120] + qdot[122] + qdot[163];
-    wdot[28] =  - qdot[105] - qdot[106] - qdot[107] + qdot[151] + qdot[154] + qdot[201] + qdot[259] + qdot[261] + qdot[283] + qdot[328] + qdot[345] + qdot[346];
-    wdot[29] =  - qdot[113] - qdot[114] + qdot[115] + qdot[115] - qdot[116] - qdot[117] - qdot[118] - qdot[119] - qdot[120] - qdot[121] - qdot[122] + qdot[125] + qdot[126] + qdot[127] + qdot[128] + qdot[129] + qdot[130] + qdot[131] - qdot[199] - qdot[200] + qdot[210] - qdot[216] + qdot[345] + qdot[346];
-    wdot[30] =  - qdot[115] + qdot[121] - qdot[123] - qdot[124] - qdot[125] - qdot[126] - qdot[127] - qdot[128] - qdot[129] - qdot[130] - qdot[131] + qdot[133] + qdot[134] - qdot[201] - qdot[202] - qdot[203] - qdot[204] - qdot[205] - qdot[206] - qdot[207] - qdot[208] - qdot[209] - qdot[210] + qdot[216] + qdot[328] + qdot[367];
-    wdot[31] =  - qdot[132] - qdot[133] - qdot[134] + qdot[150] + qdot[153] + qdot[242] + qdot[269] + qdot[283] + qdot[326] + qdot[341] + qdot[342];
-    wdot[32] =  - qdot[135] + qdot[378];
-    wdot[33] =  - qdot[137] - qdot[138] - qdot[139] - qdot[140] - qdot[141] - qdot[142] - qdot[143] - qdot[144] - qdot[145] - qdot[146] + qdot[208] - qdot[215] - qdot[216] + qdot[341] + qdot[342] + qdot[367] + qdot[379];
-    wdot[34] =  - qdot[136] + qdot[137] + qdot[138] + qdot[139] + qdot[140] + qdot[141] + qdot[142] + qdot[144] + qdot[145] + qdot[146] + qdot[207] + qdot[209] + qdot[215] + qdot[216];
-    wdot[35] =  - qdot[111] - qdot[112] + qdot[148] + qdot[149] + qdot[152] + qdot[155];
-    wdot[36] =  - qdot[147] - qdot[148] - qdot[149] - qdot[150] - qdot[151] - qdot[152] - qdot[153] - qdot[154] - qdot[155] + qdot[331] + qdot[343] + qdot[344] + qdot[366] + qdot[381] + qdot[384];
-    wdot[37] =  - qdot[164] - qdot[165] + qdot[174] + qdot[176] - qdot[181];
-    wdot[38] =  - qdot[168] - qdot[171] - qdot[172] - qdot[173] - qdot[175] - qdot[176] - qdot[177] - qdot[179] - qdot[179] - qdot[180] - qdot[182] - qdot[189] - qdot[194] - qdot[195] - qdot[200] - qdot[210] - qdot[215] - qdot[258] - qdot[268] - qdot[316] - qdot[317] - qdot[318] - qdot[319];
-    wdot[39] =  - qdot[169] + qdot[171] + qdot[172] + qdot[173] + qdot[177] + qdot[180] + qdot[182] + qdot[189] + qdot[195] + qdot[210] + qdot[215] + qdot[258] + qdot[268] + qdot[316] + qdot[317] + qdot[318] + qdot[319];
-    wdot[40] =  - qdot[183] + qdot[184] + qdot[185] + qdot[186] + qdot[187] + qdot[188] + qdot[189];
-    wdot[41] =  - qdot[184] - qdot[185] - qdot[186] - qdot[187] - qdot[188] - qdot[189] + qdot[190] + qdot[192] + qdot[198] + qdot[229];
-    wdot[42] =  - qdot[190] - qdot[191] - qdot[192] + qdot[193] + qdot[194];
-    wdot[43] =  - qdot[197] - qdot[198] + qdot[199] + qdot[200];
-    wdot[44] =  - qdot[211] - qdot[212];
-    wdot[45] =  + qdot[211] - qdot[213] + qdot[214];
-    wdot[46] =  - qdot[214] - qdot[242];
-    wdot[47] =  - qdot[89] + qdot[92] + qdot[95] + qdot[96] + qdot[99] + qdot[108] + qdot[109] + qdot[111] - qdot[117] + qdot[123] - qdot[129] - qdot[146] + qdot[147] - qdot[193] - qdot[194] + qdot[195] + qdot[219] + qdot[220] + qdot[221] - qdot[222] - qdot[223] - qdot[224] - qdot[225] - qdot[226] - qdot[227] + qdot[228] + qdot[228] - qdot[229] - qdot[236] - qdot[239] - qdot[246] - qdot[247] - qdot[248];
-    wdot[48] =  + qdot[218] + qdot[230] + qdot[231] - qdot[232] + qdot[233] + qdot[237] + qdot[238] + qdot[239] - qdot[240] - qdot[241];
-    wdot[49] =  - qdot[170] + qdot[232] - qdot[235] + qdot[240];
-    wdot[50] =  + qdot[71] + qdot[196] - qdot[270] - qdot[271] - qdot[272] - qdot[273] - qdot[274] - qdot[275] - qdot[276] - qdot[277] - qdot[278];
-    wdot[51] =  + qdot[212] - qdot[245];
-    wdot[52] =  - qdot[252] - qdot[253] - qdot[254] - qdot[255] - qdot[256] - qdot[257] - qdot[258] + qdot[368] + qdot[378];
-    wdot[53] =  + qdot[252] + qdot[253] + qdot[254] + qdot[255] + qdot[256] + qdot[257] + qdot[258] - qdot[259] + qdot[383] + qdot[386];
-    wdot[54] =  - qdot[260] + qdot[379];
-    wdot[55] =  - qdot[261] + qdot[380];
-    wdot[56] =  - qdot[262] - qdot[263] - qdot[264] - qdot[265] - qdot[266] - qdot[267] - qdot[268] + qdot[377];
-    wdot[57] =  + qdot[262] + qdot[263] + qdot[264] + qdot[265] + qdot[266] + qdot[267] + qdot[268] - qdot[269] + qdot[382] + qdot[385];
-    wdot[58] =  - qdot[279] - qdot[280] - qdot[281] - qdot[282] - qdot[283] - qdot[284] - qdot[285] - qdot[286] - qdot[287] - qdot[288] - qdot[289] - qdot[290] - qdot[291] - qdot[292] - qdot[293] - qdot[294] - qdot[295] - qdot[296] - qdot[297] - qdot[298] - qdot[299] - qdot[300] - qdot[301] - qdot[302] - qdot[303] - qdot[304] - qdot[305] - qdot[306] - qdot[307] - qdot[308] - qdot[309] - qdot[310] - qdot[311] - qdot[312] - qdot[313] - qdot[314] - qdot[315] - qdot[316] - qdot[317] - qdot[318] - qdot[319] - qdot[320] + qdot[320] - qdot[321] + qdot[321] - qdot[322] + qdot[322] - qdot[323] + qdot[323] - qdot[324] + qdot[324] - qdot[325] + qdot[325];
-    wdot[59] =  + qdot[279] + qdot[284] + qdot[288] + qdot[292] + qdot[296] + qdot[300] + qdot[304] + qdot[308] + qdot[312] + qdot[316] - qdot[320] - qdot[321] - qdot[322] - qdot[337] - qdot[338] - qdot[340] + qdot[347];
-    wdot[60] =  + qdot[280] + qdot[285] + qdot[289] + qdot[293] + qdot[297] + qdot[301] + qdot[305] + qdot[309] + qdot[313] + qdot[317] + qdot[320] - qdot[323] - qdot[324] - qdot[326] - qdot[327] - qdot[333] - qdot[339] + qdot[340] + qdot[348];
-    wdot[61] =  + qdot[281] + qdot[286] + qdot[290] + qdot[294] + qdot[298] + qdot[302] + qdot[306] + qdot[310] + qdot[314] + qdot[318] + qdot[321] + qdot[323] - qdot[325] - qdot[328] - qdot[329] - qdot[330] - qdot[334] - qdot[335] + qdot[337] + qdot[339] + qdot[349];
-    wdot[62] =  + qdot[282] + qdot[287] + qdot[291] + qdot[295] + qdot[299] + qdot[303] + qdot[307] + qdot[311] + qdot[315] + qdot[319] + qdot[322] + qdot[324] + qdot[325] - qdot[331] - qdot[332] - qdot[336] + qdot[338] + qdot[350];
-    wdot[63] =  + qdot[327] + qdot[329] + qdot[333] + qdot[334] - qdot[341] - qdot[343] - qdot[345] + qdot[359] + qdot[360];
-    wdot[64] =  + qdot[330] + qdot[332] + qdot[335] + qdot[336] - qdot[342] - qdot[344] - qdot[346] + qdot[361] + qdot[362];
-    wdot[65] =  - qdot[347] - qdot[351];
-    wdot[66] =  - qdot[348] - qdot[352] - qdot[353];
-    wdot[67] =  - qdot[349] - qdot[354] - qdot[355] - qdot[356];
-    wdot[68] =  - qdot[350] - qdot[357] - qdot[358];
-    wdot[69] =  + qdot[351] - qdot[363] + qdot[369];
-    wdot[70] =  + qdot[352] - qdot[359];
-    wdot[71] =  + qdot[353] - qdot[364] - qdot[366] + qdot[370];
-    wdot[72] =  + qdot[354] - qdot[360];
-    wdot[73] =  + qdot[355] - qdot[361];
-    wdot[74] =  + qdot[356] - qdot[367] + qdot[371];
-    wdot[75] =  + qdot[357] - qdot[365] - qdot[368] + qdot[372];
-    wdot[76] =  + qdot[358] - qdot[362];
-    wdot[77] =  - qdot[369] - qdot[373];
-    wdot[78] =  - qdot[370] - qdot[374];
-    wdot[79] =  - qdot[371] - qdot[375];
-    wdot[80] =  - qdot[372] - qdot[376];
-    wdot[81] =  + qdot[363] - qdot[382] - qdot[385];
-    wdot[82] =  + qdot[364] + qdot[365] - qdot[381] - qdot[383] - qdot[384] - qdot[386];
-    wdot[83] =  + qdot[373] - qdot[377];
-    wdot[84] =  + qdot[374] - qdot[378];
-    wdot[85] =  + qdot[375] - qdot[379];
-    wdot[86] =  + qdot[376] - qdot[380];
-    wdot[87] = 0.0;
+    {
+        // (24):  CO + O (+M) <=> CO2 (+M)
+        const amrex::Real k_f = 18000
+                   * exp(-(1199.66853127845) * invT);
+        amrex::Real Corr = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
+        const amrex::Real redP = Corr / k_f * 1350000000000 
+                   * exp(-2.788 * tc[0] - 2108.98104638758 * invT);
+        Corr = redP / (1.0 + redP);
+        const amrex::Real qf = Corr * k_f * (sc[2]*sc[6]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[2] + g_RT[6] - g_RT[8])) * (refC) * (sc[8]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[6] -= qdot;
+        wdot[8] += qdot;
+    }
+
+    {
+        // (37):  CH3O (+M) <=> CH2O + H (+M)
+        const amrex::Real k_f = 54500000000000
+                   * exp(-(6793.42498836372) * invT);
+        amrex::Real Corr = mixture;
+        const amrex::Real redP = Corr / k_f * 2.344e+19 
+                   * exp(-2.7 * tc[0] - 15398.4299736244 * invT);
+        Corr = redP / (1.0 + redP);
+        const amrex::Real qf = Corr * k_f * (sc[14]);
+        const amrex::Real qr = Corr * k_f * exp(-(-g_RT[0] - g_RT[13] + g_RT[14])) * (refCinv) * (sc[0]*sc[13]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[13] += qdot;
+        wdot[14] -= qdot;
+    }
+
+    {
+        // (38):  C2H4 (+M) <=> C2H2 + H2 (+M)
+        const amrex::Real k_f = 18000000000000
+                   * exp(-(38244.4666011587) * invT);
+        amrex::Real Corr = mixture;
+        const amrex::Real redP = Corr / k_f * 1500000000 
+                   * exp(0 * tc[0] - 27899.8416022111 * invT);
+        Corr = redP / (1.0 + redP);
+        const amrex::Real qf = Corr * k_f * (sc[16]);
+        const amrex::Real qr = Corr * k_f * exp(-(-g_RT[1] + g_RT[16] - g_RT[18])) * (refCinv) * (sc[1]*sc[18]);
+        const amrex::Real qdot = qf - qr;
+        wdot[1] += qdot;
+        wdot[16] -= qdot;
+        wdot[18] += qdot;
+    }
+
+    {
+        // (81):  CH3CO (+M) <=> CH3 + CO (+M)
+        const amrex::Real k_f = 3000000000000
+                   * exp(-(8413.78265225491) * invT);
+        amrex::Real Corr = mixture;
+        const amrex::Real redP = Corr / k_f * 1200000000 
+                   * exp(0 * tc[0] - 6299.26622254348 * invT);
+        Corr = redP / (1.0 + redP);
+        const amrex::Real qf = Corr * k_f * (sc[22]);
+        const amrex::Real qr = Corr * k_f * exp(-(-g_RT[6] - g_RT[9] + g_RT[22])) * (refCinv) * (sc[6]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[6] += qdot;
+        wdot[9] += qdot;
+        wdot[22] -= qdot;
+    }
+
+    {
+        // (1):  CH4 + H <=> CH3 + H2
+        const amrex::Real k_f = 0.01727
+                   * exp((3) * tc[0] - (4138.45385957801) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[10]);
+        k_r = 1e-06 * 661 
+                   * exp(3 * tc[0] - 0.50321666580472 * 7744 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[9] += qdot;
+        wdot[10] -= qdot;
+    }
+
+    {
+        // (2):  CH4 + OH <=> CH3 + H2O
+        const amrex::Real k_f = 0.193
+                   * exp((2.4) * tc[0] - (1059.77429818474) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[10]);
+        k_r = 1e-06 * 31990 
+                   * exp(2.4 * tc[0] - 0.50321666580472 * 16780 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[9] += qdot;
+        wdot[10] -= qdot;
+    }
+
+    {
+        // (3):  CH4 + O <=> CH3 + OH
+        const amrex::Real k_f = 3150000
+                   * exp((0.5) * tc[0] - (5178.09949113057) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[10]);
+        k_r = 1e-06 * 52960000000 
+                   * exp(0.5 * tc[0] - 0.50321666580472 * 7715 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[9] += qdot;
+        wdot[10] -= qdot;
+    }
+
+    {
+        // (4):  C2H6 + CH3 <=> C2H5 + CH4
+        const amrex::Real k_f = 1.51e-13
+                   * exp((6) * tc[0] - (3042.95117812114) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[15]);
+        k_r = 1e-06 * 9.649e-10 
+                   * exp(6.56 * tc[0] - 0.50321666580472 * 10220 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[15] -= qdot;
+        wdot[17] += qdot;
+    }
+
+    {
+        // (5):  HCO + OH <=> CO + H2O
+        const amrex::Real k_f = 102000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[7]);
+        k_r = 1e-06 * 2.896e+15 
+                   * exp(0 * tc[0] - 0.50321666580472 * 105200 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[6]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[6] += qdot;
+        wdot[7] -= qdot;
+    }
+
+    {
+        // (6):  CO + OH <=> CO2 + H
+        const amrex::Real k_f = 0.14
+                   * exp((1.95) * tc[0] - (-677.832848838957) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[6]);
+        k_r = 1e-06 * 15680000 
+                   * exp(1.95 * tc[0] - 0.50321666580472 * 20990 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[8]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[4] -= qdot;
+        wdot[6] -= qdot;
+        wdot[8] += qdot;
+    }
+
+    {
+        // (7):  H + O2 <=> O + OH
+        const amrex::Real k_f = 197000000
+                   * exp(-(8323.20365241006) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[3]);
+        k_r = 1e-06 * 15550000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 425 * invT);
+        const amrex::Real qr = k_r * (sc[2]*sc[4]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[2] += qdot;
+        wdot[3] -= qdot;
+        wdot[4] += qdot;
+    }
+
+    {
+        // (8):  O + H2 <=> H + OH
+        const amrex::Real k_f = 0.0508
+                   * exp((2.67) * tc[0] - (3166.2392612433) * invT);
+        const amrex::Real qf = k_f * (sc[1]*sc[2]);
+        k_r = 1e-06 * 22310 
+                   * exp(2.67 * tc[0] - 0.50321666580472 * 4197 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[4]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[1] -= qdot;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+    }
+
+    {
+        // (9):  O + H2O <=> OH + OH
+        const amrex::Real k_f = 2.97
+                   * exp((2.02) * tc[0] - (6743.10332178324) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[5]);
+        k_r = 1e-06 * 301300 
+                   * exp(2.02 * tc[0] - 0.50321666580472 * -3850 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[4]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[4] += qdot;
+        wdot[5] -= qdot;
+    }
+
+    {
+        // (10):  OH + H2 <=> H + H2O
+        const amrex::Real k_f = 216
+                   * exp((1.51) * tc[0] - (1726.03316371019) * invT);
+        const amrex::Real qf = k_f * (sc[1]*sc[4]);
+        k_r = 1e-06 * 935200000 
+                   * exp(1.51 * tc[0] - 0.50321666580472 * 18580 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[5]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[1] -= qdot;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+    }
+
+    {
+        // (11):  HCO + M <=> H + CO + M
+        const amrex::Real k_f = 186000000000
+                   * exp((-1) * tc[0] - (8554.68331868023) * invT);
+        const amrex::Real Corr = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
+        const amrex::Real qf = Corr * k_f * (sc[7]);
+        k_r = 1e-12 * 64670000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * -442 * invT);
+        const amrex::Real qr = Corr * k_r * (sc[0]*sc[6]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[6] += qdot;
+        wdot[7] -= qdot;
+    }
+
+    {
+        // (12):  H2O2 + OH <=> H2O + HO2
+        const amrex::Real k_f = 1000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[12]);
+        k_r = 1e-06 * 168500000000 
+                   * exp(0.33 * tc[0] - 0.50321666580472 * 31460 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[11]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[11] += qdot;
+        wdot[12] -= qdot;
+    }
+
+    {
+        // (13):  C2H4 + O <=> CH3 + HCO
+        const amrex::Real k_f = 10.2
+                   * exp((1.88) * tc[0] - (90.0757831790448) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[16]);
+        k_r = 1e-06 * 285100000 
+                   * exp(1.05 * tc[0] - 0.50321666580472 * 31770 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[7] += qdot;
+        wdot[9] += qdot;
+        wdot[16] -= qdot;
+    }
+
+    {
+        // (15):  C2H6 + H <=> C2H5 + H2
+        const amrex::Real k_f = 0.000554
+                   * exp((3.5) * tc[0] - (2600.12051221299) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[15]);
+        k_r = 1e-06 * 0.1355 
+                   * exp(4.06 * tc[0] - 0.50321666580472 * 8857 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[15] -= qdot;
+        wdot[17] += qdot;
+    }
+
+    {
+        // (16):  C2H5 + O2 <=> C2H4 + HO2
+        const amrex::Real k_f = 1.22e+24
+                   * exp((-5.76) * tc[0] - (5082.48832462767) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[17]);
+        k_r = 1e-06 * 1.259e+30 
+                   * exp(-5.63 * tc[0] - 0.50321666580472 * 22300 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[16]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[16] += qdot;
+        wdot[17] -= qdot;
+    }
+
+    {
+        // (17):  C2H6 + OH <=> C2H5 + H2O
+        const amrex::Real k_f = 58
+                   * exp((1.73) * tc[0] - (583.731332333475) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[15]);
+        k_r = 1e-06 * 61420 
+                   * exp(2.29 * tc[0] - 0.50321666580472 * 20000 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[15] -= qdot;
+        wdot[17] += qdot;
+    }
+
+    {
+        // (18):  C2H6 + O <=> C2H5 + OH
+        const amrex::Real k_f = 13
+                   * exp((2.13) * tc[0] - (2611.6944955265) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[15]);
+        k_r = 1e-06 * 1397 
+                   * exp(2.69 * tc[0] - 0.50321666580472 * 6785 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[15] -= qdot;
+        wdot[17] += qdot;
+    }
+
+    {
+        // (19):  CH3 + HO2 <=> CH3O + OH
+        const amrex::Real k_f = 11000000
+                   ;
+        const amrex::Real qf = k_f * (sc[9]*sc[11]);
+        k_r = 1e-06 * 478000000000000 
+                   * exp(-0.35 * tc[0] - 0.50321666580472 * 24550 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[14]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[9] -= qdot;
+        wdot[11] -= qdot;
+        wdot[14] += qdot;
+    }
+
+    {
+        // (20):  CO + HO2 <=> CO2 + OH
+        const amrex::Real k_f = 30100000
+                   * exp(-(11573.9833135086) * invT);
+        const amrex::Real qf = k_f * (sc[6]*sc[11]);
+        k_r = 1e-06 * 6.435e+15 
+                   * exp(-0.33 * tc[0] - 0.50321666580472 * 84610 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[8]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[6] -= qdot;
+        wdot[8] += qdot;
+        wdot[11] -= qdot;
+    }
+
+    {
+        // (22):  H2O + M <=> H + OH + M
+        const amrex::Real k_f = 1.837e+21
+                   * exp((-3) * tc[0] - (61694.3632276586) * invT);
+        const amrex::Real Corr = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
+        const amrex::Real qf = Corr * k_f * (sc[5]);
+        k_r = 1e-12 * 2.25e+22 
+                   * exp(-2 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = Corr * k_r * (sc[0]*sc[4]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[4] += qdot;
+        wdot[5] -= qdot;
+    }
+
+    {
+        // (25):  CO + O2 <=> CO2 + O
+        const amrex::Real k_f = 16200000
+                   * exp(-(24003.4349588851) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[6]);
+        k_r = 1e-06 * 143300000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 53920 * invT);
+        const amrex::Real qr = k_r * (sc[2]*sc[8]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] += qdot;
+        wdot[3] -= qdot;
+        wdot[6] -= qdot;
+        wdot[8] += qdot;
+    }
+
+    {
+        // (26):  HCO + H <=> CO + H2
+        const amrex::Real k_f = 73400000
+                   ;
+        const amrex::Real qf = k_f * (sc[0]*sc[7]);
+        k_r = 1e-06 * 481300000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 90000 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[6]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[6] += qdot;
+        wdot[7] -= qdot;
+    }
+
+    {
+        // (27):  HCO + O <=> CO + OH
+        const amrex::Real k_f = 30200000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[7]);
+        k_r = 1e-06 * 86970000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 87900 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[6]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[6] += qdot;
+        wdot[7] -= qdot;
+    }
+
+    {
+        // (28):  CH2O + M <=> HCO + H + M
+        const amrex::Real k_f = 6.283e+23
+                   * exp((-3.57) * tc[0] - (46899.7932529999) * invT);
+        const amrex::Real Corr = mixture;
+        const amrex::Real qf = Corr * k_f * (sc[13]);
+        k_r = 1e-12 * 2.66e+24 
+                   * exp(-2.57 * tc[0] - 0.50321666580472 * 427 * invT);
+        const amrex::Real qr = Corr * k_r * (sc[0]*sc[7]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[7] += qdot;
+        wdot[13] -= qdot;
+    }
+
+    {
+        // (29):  CH2O + OH <=> HCO + H2O
+        const amrex::Real k_f = 3430
+                   * exp((1.18) * tc[0] - (-224.93784961471) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[13]);
+        k_r = 1e-06 * 1186000000 
+                   * exp(1.18 * tc[0] - 0.50321666580472 * 29380 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[7]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[7] += qdot;
+        wdot[13] -= qdot;
+    }
+
+    {
+        // (30):  CH2O + H <=> HCO + H2
+        const amrex::Real k_f = 933.4
+                   * exp((1.5) * tc[0] - (1497.57279743485) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[13]);
+        k_r = 1e-06 * 74530000 
+                   * exp(1.5 * tc[0] - 0.50321666580472 * 17650 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[7]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[7] += qdot;
+        wdot[13] -= qdot;
+    }
+
+    {
+        // (31):  CH2O + O <=> HCO + OH
+        const amrex::Real k_f = 416000
+                   * exp((0.57) * tc[0] - (1389.88443095264) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[13]);
+        k_r = 1e-06 * 14590000000 
+                   * exp(0.57 * tc[0] - 0.50321666580472 * 15340 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[7]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[7] += qdot;
+        wdot[13] -= qdot;
+    }
+
+    {
+        // (32):  CH3 + OH <=> CH2O + H2
+        const amrex::Real k_f = 22500000
+                   * exp(-(2163.83166296029) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[9]);
+        k_r = 1e-06 * 675600000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 76020 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[13]);
+        const amrex::Real qdot = qf - qr;
+        wdot[1] += qdot;
+        wdot[4] -= qdot;
+        wdot[9] -= qdot;
+        wdot[13] += qdot;
+    }
+
+    {
+        // (33):  CH3 + O <=> CH2O + H
+        const amrex::Real k_f = 80000000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[9]);
+        k_r = 1e-06 * 1.055e+15 
+                   * exp(0 * tc[0] - 0.50321666580472 * 69630 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[13]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[2] -= qdot;
+        wdot[9] -= qdot;
+        wdot[13] += qdot;
+    }
+
+    {
+        // (34):  CH3 + O2 <=> CH3O + O
+        const amrex::Real k_f = 1995000000000
+                   * exp((-1.57) * tc[0] - (14698.9588081559) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[9]);
+        k_r = 1e-06 * 3.585e+18 
+                   * exp(-1.59 * tc[0] - 0.50321666580472 * -1631 * invT);
+        const amrex::Real qr = k_r * (sc[2]*sc[14]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] += qdot;
+        wdot[3] -= qdot;
+        wdot[9] -= qdot;
+        wdot[14] += qdot;
+    }
+
+    {
+        // (35):  CH2O + CH3 <=> HCO + CH4
+        const amrex::Real k_f = 3.636e-12
+                   * exp((5.42) * tc[0] - (502.21023247311) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[13]);
+        k_r = 1e-06 * 7.584e-06 
+                   * exp(5.42 * tc[0] - 0.50321666580472 * 16150 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[10]);
+        const amrex::Real qdot = qf - qr;
+        wdot[7] += qdot;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[13] -= qdot;
+    }
+
+    {
+        // (36):  HCO + CH3 <=> CH4 + CO
+        const amrex::Real k_f = 121000000
+                   ;
+        const amrex::Real qf = k_f * (sc[7]*sc[9]);
+        k_r = 1e-06 * 2.073e+16 
+                   * exp(0 * tc[0] - 0.50321666580472 * 90480 * invT);
+        const amrex::Real qr = k_r * (sc[6]*sc[10]);
+        const amrex::Real qdot = qf - qr;
+        wdot[6] += qdot;
+        wdot[7] -= qdot;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+    }
+
+    {
+        // (39):  HO2 + O <=> OH + O2
+        const amrex::Real k_f = 32500000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[11]);
+        k_r = 1e-06 * 785700000000000 
+                   * exp(-0.33 * tc[0] - 0.50321666580472 * 55390 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[4]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[3] += qdot;
+        wdot[4] += qdot;
+        wdot[11] -= qdot;
+    }
+
+    {
+        // (40):  HCO + HO2 <=> CH2O + O2
+        const amrex::Real k_f = 29740
+                   * exp((0.33) * tc[0] - (-1942.91954667202) * invT);
+        const amrex::Real qf = k_f * (sc[7]*sc[11]);
+        k_r = 1e-06 * 20500000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 38950 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[13]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[7] -= qdot;
+        wdot[11] -= qdot;
+        wdot[13] += qdot;
+    }
+
+    {
+        // (41):  CH3O + O2 <=> CH2O + HO2
+        const amrex::Real k_f = 55000
+                   * exp(-(1219.79719791064) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[14]);
+        k_r = 1e-06 * 1318000000 
+                   * exp(0.35 * tc[0] - 0.50321666580472 * 31390 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[13]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[13] += qdot;
+        wdot[14] -= qdot;
+    }
+
+    {
+        // (42):  CH3 + HO2 <=> CH4 + O2
+        const amrex::Real k_f = 3600000
+                   ;
+        const amrex::Real qf = k_f * (sc[9]*sc[11]);
+        k_r = 1e-06 * 5.177e+15 
+                   * exp(-0.33 * tc[0] - 0.50321666580472 * 57960 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[10]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[11] -= qdot;
+    }
+
+    {
+        // (43):  HCO + O2 <=> CO + HO2
+        const amrex::Real k_f = 7580000
+                   * exp(-(206.318832979935) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[7]);
+        k_r = 1e-06 * 902900000000 
+                   * exp(0.33 * tc[0] - 0.50321666580472 * 32930 * invT);
+        const amrex::Real qr = k_r * (sc[6]*sc[11]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[6] += qdot;
+        wdot[7] -= qdot;
+        wdot[11] += qdot;
+    }
+
+    {
+        // (44):  HO2 + H <=> OH + OH
+        const amrex::Real k_f = 70800000
+                   * exp(-(150.964999741416) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[11]);
+        k_r = 1e-06 * 135200000000000 
+                   * exp(-0.33 * tc[0] - 0.50321666580472 * 39570 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[4]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[4] += qdot;
+        wdot[4] += qdot;
+        wdot[11] -= qdot;
+    }
+
+    {
+        // (45):  HO2 + H <=> H2 + O2
+        const amrex::Real k_f = 16600000
+                   * exp(-(412.63766595987) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[11]);
+        k_r = 1e-06 * 913800000000000 
+                   * exp(-0.33 * tc[0] - 0.50321666580472 * 58300 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[3]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[3] += qdot;
+        wdot[11] -= qdot;
+    }
+
+    {
+        // (46):  HO2 + OH <=> H2O + O2
+        const amrex::Real k_f = 28900000
+                   * exp(-(-251.60833290236) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[11]);
+        k_r = 1e-06 * 6.888e+15 
+                   * exp(-0.33 * tc[0] - 0.50321666580472 * 72140 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[5]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[11] -= qdot;
+    }
+
+    {
+        // (47):  H2O2 + O2 <=> HO2 + HO2
+        const amrex::Real k_f = 594200000000
+                   * exp((-0.66) * tc[0] - (26745.9657875209) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[12]);
+        k_r = 1e-06 * 420000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 11980 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[11]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[11] += qdot;
+        wdot[12] -= qdot;
+    }
+
+    {
+        // (49):  H2O2 + H <=> H2O + OH
+        const amrex::Real k_f = 24100000
+                   * exp(-(1997.77016324474) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[12]);
+        k_r = 1e-06 * 7750000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 74700 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[5]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[4] += qdot;
+        wdot[5] += qdot;
+        wdot[12] -= qdot;
+    }
+
+    {
+        // (50):  CH4 + HO2 <=> CH3 + H2O2
+        const amrex::Real k_f = 342000
+                   * exp(-(9707.04948337304) * invT);
+        const amrex::Real qf = k_f * (sc[10]*sc[11]);
+        k_r = 1e-06 * 336500000000 
+                   * exp(-0.33 * tc[0] - 0.50321666580472 * 2502 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[12]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[10] -= qdot;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+    }
+
+    {
+        // (51):  CH2O + HO2 <=> HCO + H2O2
+        const amrex::Real k_f = 5.82e-09
+                   * exp((4.53) * tc[0] - (3299.59167768155) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[13]);
+        k_r = 1e-06 * 0.01194 
+                   * exp(4.2 * tc[0] - 0.50321666580472 * 4921 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[12]);
+        const amrex::Real qdot = qf - qr;
+        wdot[7] += qdot;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[13] -= qdot;
+    }
+
+    {
+        // (52):  OH + M <=> O + H + M
+        const amrex::Real k_f = 3.909e+16
+                   * exp((-2) * tc[0] - (52988.714909237) * invT);
+        const amrex::Real Corr = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
+        const amrex::Real qf = Corr * k_f * (sc[4]);
+        k_r = 1e-12 * 4.72e+18 
+                   * exp(-1 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = Corr * k_r * (sc[0]*sc[2]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[2] += qdot;
+        wdot[4] -= qdot;
+    }
+
+    {
+        // (53):  O2 + M <=> O + O + M
+        const amrex::Real k_f = 647300000000000
+                   * exp((-1.5) * tc[0] - (61140.8248952734) * invT);
+        const amrex::Real Corr = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
+        const amrex::Real qf = Corr * k_f * (sc[3]);
+        k_r = 1e-12 * 6.17e+15 
+                   * exp(-0.5 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = Corr * k_r * (sc[2]*sc[2]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] += qdot;
+        wdot[2] += qdot;
+        wdot[3] -= qdot;
+    }
+
+    {
+        // (54):  H2 + M <=> H + H + M
+        const amrex::Real k_f = 45700000000000
+                   * exp((-1.4) * tc[0] - (52535.8199100127) * invT);
+        const amrex::Real Corr = mixture + (1.5)*sc[1] + (11)*sc[5] + (0.9)*sc[6] + (2.8)*sc[8];
+        const amrex::Real qf = Corr * k_f * (sc[1]);
+        k_r = 1e-12 * 2.423e+15 
+                   * exp(-0.4 * tc[0] - 0.50321666580472 * -3040 * invT);
+        const amrex::Real qr = Corr * k_r * (sc[0]*sc[0]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[0] += qdot;
+        wdot[1] -= qdot;
+    }
+
+    {
+        // (56):  C2H5 + C2H3 <=> C2H4 + C2H4
+        const amrex::Real k_f = 576500000
+                   * exp((-0.63) * tc[0] - (1253.00949785375) * invT);
+        const amrex::Real qf = k_f * (sc[17]*sc[19]);
+        k_r = 1e-06 * 482000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 71530 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[16]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[16] += qdot;
+        wdot[17] -= qdot;
+        wdot[19] -= qdot;
+    }
+
+    {
+        // (58):  C2H4 + H <=> C2H3 + H2
+        const amrex::Real k_f = 8.42e-09
+                   * exp((4.62) * tc[0] - (1299.80864777359) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[16]);
+        k_r = 1e-06 * 0.5723 
+                   * exp(3.79 * tc[0] - 0.50321666580472 * 3233 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[16] -= qdot;
+        wdot[19] += qdot;
+    }
+
+    {
+        // (59):  C2H4 + OH <=> C2H3 + H2O
+        const amrex::Real k_f = 20500000
+                   * exp(-(2994.13916153808) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[16]);
+        k_r = 1e-06 * 6.033e+15 
+                   * exp(-0.83 * tc[0] - 0.50321666580472 * 21760 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[16] -= qdot;
+        wdot[19] += qdot;
+    }
+
+    {
+        // (60):  C2H2 + O2 <=> HCCO + OH
+        const amrex::Real k_f = 200
+                   * exp((1.5) * tc[0] - (15146.8216407221) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[18]);
+        k_r = 1e-06 * 223200 
+                   * exp(1.5 * tc[0] - 0.50321666580472 * 25400 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[21]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[4] += qdot;
+        wdot[18] -= qdot;
+        wdot[21] += qdot;
+    }
+
+    {
+        // (61):  C2H3 + O2 <=> C2H2 + HO2
+        const amrex::Real k_f = 2.12e-12
+                   * exp((6) * tc[0] - (4772.50685849196) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[19]);
+        k_r = 1e-06 * 1.114e-07 
+                   * exp(6.33 * tc[0] - 0.50321666580472 * 17570 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[18]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[18] += qdot;
+        wdot[19] -= qdot;
+    }
+
+    {
+        // (62):  H2O2 + O <=> OH + HO2
+        const amrex::Real k_f = 9.55
+                   * exp((2) * tc[0] - (1997.77016324474) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[12]);
+        k_r = 1e-06 * 163200 
+                   * exp(2.33 * tc[0] - 0.50321666580472 * 18180 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[11]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[11] += qdot;
+        wdot[12] -= qdot;
+    }
+
+    {
+        // (63):  C2H2 + O <=> HCCO + H
+        const amrex::Real k_f = 14.3
+                   * exp((2) * tc[0] - (956.111665028967) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[18]);
+        k_r = 1e-06 * 202100 
+                   * exp(2 * tc[0] - 0.50321666580472 * 13310 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[21]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[2] -= qdot;
+        wdot[18] -= qdot;
+        wdot[21] += qdot;
+    }
+
+    {
+        // (64):  C2H2 + OH <=> CH2CO + H
+        const amrex::Real k_f = 2.19e-10
+                   * exp((4.5) * tc[0] - (-503.21666580472) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[18]);
+        k_r = 1e-06 * 0.002161 
+                   * exp(4.5 * tc[0] - 0.50321666580472 * 19660 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[20]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[4] -= qdot;
+        wdot[18] -= qdot;
+        wdot[20] += qdot;
+    }
+
+    {
+        // (65):  CH2CO + H <=> CH3 + CO
+        const amrex::Real k_f = 11000000
+                   * exp(-(1710.93666373605) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[20]);
+        k_r = 1e-06 * 2400000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 40200 * invT);
+        const amrex::Real qr = k_r * (sc[6]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[6] += qdot;
+        wdot[9] += qdot;
+        wdot[20] -= qdot;
+    }
+
+    {
+        // (66):  CH2CO + O <=> HCCO + OH
+        const amrex::Real k_f = 10000000
+                   * exp(-(4025.73332643776) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[20]);
+        k_r = 1e-06 * 14320000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * -1255 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[21]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[20] -= qdot;
+        wdot[21] += qdot;
+    }
+
+    {
+        // (67):  CH2CO + OH <=> HCCO + H2O
+        const amrex::Real k_f = 10000000
+                   * exp(-(1006.43333160944) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[20]);
+        k_r = 1e-06 * 141200000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 9995 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[21]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[20] -= qdot;
+        wdot[21] += qdot;
+    }
+
+    {
+        // (68):  CH2CO + H <=> HCCO + H2
+        const amrex::Real k_f = 200000000
+                   * exp(-(4025.73332643776) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[20]);
+        k_r = 1e-06 * 652200000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 840 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[21]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[20] -= qdot;
+        wdot[21] += qdot;
+    }
+
+    {
+        // (69):  HCCO + OH <=> HCO + HCO
+        const amrex::Real k_f = 10000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[21]);
+        k_r = 1e-06 * 241100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 40360 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[7]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[7] += qdot;
+        wdot[7] += qdot;
+        wdot[21] -= qdot;
+    }
+
+    {
+        // (70):  HCCO + H <=> CH2(S) + CO
+        const amrex::Real k_f = 110000000
+                   ;
+        const amrex::Real qf = k_f * (sc[0]*sc[21]);
+        k_r = 1e-06 * 2046000000000 
+                   * exp(0.89 * tc[0] - 0.50321666580472 * 27830 * invT);
+        const amrex::Real qr = k_r * (sc[6]*sc[50]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[6] += qdot;
+        wdot[21] -= qdot;
+        wdot[50] += qdot;
+    }
+
+    {
+        // (71):  HCCO + O <=> H + CO + CO
+        const amrex::Real k_f = 80000000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[21]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[6]*sc[6]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[2] -= qdot;
+        wdot[6] += qdot;
+        wdot[6] += qdot;
+        wdot[21] -= qdot;
+    }
+
+    {
+        // (72):  C2H6 + O2 <=> C2H5 + HO2
+        const amrex::Real k_f = 60300000
+                   * exp(-(26101.8484552908) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[15]);
+        k_r = 1e-06 * 267900000 
+                   * exp(0.89 * tc[0] - 0.50321666580472 * -1922 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[15] -= qdot;
+        wdot[17] += qdot;
+    }
+
+    {
+        // (73):  C2H6 + HO2 <=> C2H5 + H2O2
+        const amrex::Real k_f = 13200000
+                   * exp(-(10300.8451490226) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[15]);
+        k_r = 1e-06 * 82980000000 
+                   * exp(0.24 * tc[0] - 0.50321666580472 * 7852 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[15] -= qdot;
+        wdot[17] += qdot;
+    }
+
+    {
+        // (74):  CH3 + C2H3 <=> CH4 + C2H2
+        const amrex::Real k_f = 392000
+                   ;
+        const amrex::Real qf = k_f * (sc[9]*sc[19]);
+        k_r = 1e-06 * 29620000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 66050 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[18]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[18] += qdot;
+        wdot[19] -= qdot;
+    }
+
+    {
+        // (75):  CH3 + C2H5 <=> CH4 + C2H4
+        const amrex::Real k_f = 19500000
+                   * exp((-0.5) * tc[0]);
+        const amrex::Real qf = k_f * (sc[9]*sc[17]);
+        k_r = 1e-06 * 2.895e+16 
+                   * exp(-0.7 * tc[0] - 0.50321666580472 * 70170 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[16]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[16] += qdot;
+        wdot[17] -= qdot;
+    }
+
+    {
+        // (76):  C2H3 + H <=> C2H2 + H2
+        const amrex::Real k_f = 20000000
+                   * exp(-(1258.0416645118) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[19]);
+        k_r = 1e-06 * 13310000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 68080 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[18]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[18] += qdot;
+        wdot[19] -= qdot;
+    }
+
+    {
+        // (77):  C2H5 + H <=> CH3 + CH3
+        const amrex::Real k_f = 36100000
+                   ;
+        const amrex::Real qf = k_f * (sc[0]*sc[17]);
+        k_r = 1e-06 * 5.446e+16 
+                   * exp(-1.03 * tc[0] - 0.50321666580472 * 16980 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[9] += qdot;
+        wdot[9] += qdot;
+        wdot[17] -= qdot;
+    }
+
+    {
+        // (78):  C2H3 + O2 <=> CH2O + HCO
+        const amrex::Real k_f = 1.7e+23
+                   * exp((-5.31) * tc[0] - (3270.90832773068) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[19]);
+        k_r = 1e-06 * 1.657e+29 
+                   * exp(-5.31 * tc[0] - 0.50321666580472 * 93050 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[13]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[7] += qdot;
+        wdot[13] += qdot;
+        wdot[19] -= qdot;
+    }
+
+    {
+        // (79):  C2H6 <=> C2H5 + H
+        const amrex::Real k_f = 2.783e+21
+                   * exp((-1.56) * tc[0] - (52233.8899105299) * invT);
+        const amrex::Real qf = k_f * (sc[15]);
+        k_r = 1e-06 * 36100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[15] -= qdot;
+        wdot[17] += qdot;
+    }
+
+    {
+        // (80):  C2H4 + CH3 <=> C2H3 + CH4
+        const amrex::Real k_f = 6.62e-06
+                   * exp((3.7) * tc[0] - (4780.55832514484) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[16]);
+        k_r = 1e-06 * 1.44 
+                   * exp(4.02 * tc[0] - 0.50321666580472 * 5472 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[16] -= qdot;
+        wdot[19] += qdot;
+    }
+
+    {
+        // (82):  CH3CHO <=> CH3 + HCO
+        const amrex::Real k_f = 2.614e+15
+                   * exp((0.15) * tc[0] - (40534.1024305702) * invT);
+        const amrex::Real qf = k_f * (sc[24]);
+        k_r = 1e-06 * 20000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[7] += qdot;
+        wdot[9] += qdot;
+        wdot[24] -= qdot;
+    }
+
+    {
+        // (83):  CH3CHO + O2 <=> CH3CO + HO2
+        const amrex::Real k_f = 30100000
+                   * exp(-(19700.9324662548) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[24]);
+        k_r = 1e-06 * 85520000000 
+                   * exp(0.32 * tc[0] - 0.50321666580472 * -1940 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[22]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[22] += qdot;
+        wdot[24] -= qdot;
+    }
+
+    {
+        // (84):  CH3CHO + OH <=> CH3CO + H2O
+        const amrex::Real k_f = 2
+                   * exp((1.8) * tc[0] - (654.181665546136) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[24]);
+        k_r = 1e-06 * 1354000 
+                   * exp(1.79 * tc[0] - 0.50321666580472 * 32850 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[22]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[22] += qdot;
+        wdot[24] -= qdot;
+    }
+
+    {
+        // (85):  CH3CHO + H <=> CH3CO + H2
+        const amrex::Real k_f = 13400000
+                   * exp(-(1660.61499715557) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[24]);
+        k_r = 1e-06 * 2096000000000 
+                   * exp(-0.01 * tc[0] - 0.50321666580472 * 19690 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[22]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[22] += qdot;
+        wdot[24] -= qdot;
+    }
+
+    {
+        // (86):  CH3CHO + O <=> CH3CO + OH
+        const amrex::Real k_f = 5940000
+                   * exp(-(940.008731723216) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[24]);
+        k_r = 1e-06 * 408000000000 
+                   * exp(-0.01 * tc[0] - 0.50321666580472 * 16170 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[22]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[22] += qdot;
+        wdot[24] -= qdot;
+    }
+
+    {
+        // (87):  CH3CHO + HO2 <=> CH3CO + H2O2
+        const amrex::Real k_f = 3010000
+                   * exp(-(5998.34265639226) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[24]);
+        k_r = 1e-06 * 12100000000000 
+                   * exp(-0.34 * tc[0] - 0.50321666580472 * 12010 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[22]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[22] += qdot;
+        wdot[24] -= qdot;
+    }
+
+    {
+        // (88):  CH3CHO + CH3 <=> CH3CO + CH4
+        const amrex::Real k_f = 2.608
+                   * exp((1.78) * tc[0] - (2974.5137115717) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[24]);
+        k_r = 1e-06 * 10660000 
+                   * exp(1.77 * tc[0] - 0.50321666580472 * 22780 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[22]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[22] += qdot;
+        wdot[24] -= qdot;
+    }
+
+    {
+        // (89):  C3H5-A <=> C2H2 + CH3
+        const amrex::Real k_f = 2.397e+48
+                   * exp((-9.9) * tc[0] - (41304.0239292514) * invT);
+        const amrex::Real qf = k_f * (sc[47]);
+        k_r = 1e-06 * 2.61e+46 
+                   * exp(-9.82 * tc[0] - 0.50321666580472 * 36950 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[18]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[18] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (90):  C3H6 <=> C2H3 + CH3
+        const amrex::Real k_f = 2.73e+62
+                   * exp((-13.28) * tc[0] - (61996.2932271415) * invT);
+        const amrex::Real qf = k_f * (sc[26]);
+        k_r = 1e-06 * 4.712e+59 
+                   * exp(-13.19 * tc[0] - 0.50321666580472 * 29540 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[19] += qdot;
+        wdot[26] -= qdot;
+    }
+
+    {
+        // (91):  C2H2 + CH3 <=> C3H4-A + H
+        const amrex::Real k_f = 67400000000000
+                   * exp((-2.08) * tc[0] - (15896.6144727711) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[18]);
+        k_r = 1e-06 * 1.149e+16 
+                   * exp(-0.7 * tc[0] - 0.50321666580472 * 15790 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[25]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[9] -= qdot;
+        wdot[18] -= qdot;
+        wdot[25] += qdot;
+    }
+
+    {
+        // (92):  C3H6 <=> C3H5-A + H
+        const amrex::Real k_f = 2.01e+61
+                   * exp((-13.26) * tc[0] - (59631.1748978593) * invT);
+        const amrex::Real qf = k_f * (sc[26]);
+        k_r = 1e-06 * 4.887e+56 
+                   * exp(-12.25 * tc[0] - 0.50321666580472 * 28080 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[26] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (93):  C3H6 + O <=> CH2CO + CH3 + H
+        const amrex::Real k_f = 25
+                   * exp((1.76) * tc[0] - (38.2444666011587) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[26]);
+        k_r = 1e-12 * 1 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[9]*sc[20]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[2] -= qdot;
+        wdot[9] += qdot;
+        wdot[20] += qdot;
+        wdot[26] -= qdot;
+    }
+
+    {
+        // (94):  C3H6 + O <=> C2H5 + HCO
+        const amrex::Real k_f = 15.8
+                   * exp((1.76) * tc[0] - (-611.911465618539) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[26]);
+        k_r = 1e-06 * 140200 
+                   * exp(1.88 * tc[0] - 0.50321666580472 * 26510 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[7] += qdot;
+        wdot[17] += qdot;
+        wdot[26] -= qdot;
+    }
+
+    {
+        // (95):  C3H6 + HO2 <=> C3H5-A + H2O2
+        const amrex::Real k_f = 150000
+                   * exp(-(7140.64448776897) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[26]);
+        k_r = 1e-06 * 586700 
+                   * exp(1.33 * tc[0] - 0.50321666580472 * 9759 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[26] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (96):  C3H6 + OH <=> C3H5-A + H2O
+        const amrex::Real k_f = 3.12
+                   * exp((2) * tc[0] - (-149.958566409806) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[26]);
+        k_r = 1e-06 * 6194000 
+                   * exp(2.01 * tc[0] - 0.50321666580472 * 31880 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[26] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (97):  C4H6 <=> C2H3 + C2H3
+        const amrex::Real k_f = 4.027e+19
+                   * exp((-1) * tc[0] - (49390.7157487332) * invT);
+        const amrex::Real qf = k_f * (sc[27]);
+        k_r = 1e-06 * 12600000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[19]*sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[19] += qdot;
+        wdot[19] += qdot;
+        wdot[27] -= qdot;
+    }
+
+    {
+        // (98):  C4H6 + OH <=> C2H5 + CH2CO
+        const amrex::Real k_f = 1000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[27]);
+        k_r = 1e-06 * 3730000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 30020 * invT);
+        const amrex::Real qr = k_r * (sc[17]*sc[20]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[17] += qdot;
+        wdot[20] += qdot;
+        wdot[27] -= qdot;
+    }
+
+    {
+        // (99):  C4H6 + OH <=> CH2O + C3H5-A
+        const amrex::Real k_f = 1000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[27]);
+        k_r = 1e-06 * 3501000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 71060 * invT);
+        const amrex::Real qr = k_r * (sc[13]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[13] += qdot;
+        wdot[27] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (100):  C4H6 + OH <=> C2H3 + CH3CHO
+        const amrex::Real k_f = 1000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[27]);
+        k_r = 1e-06 * 543700000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 18550 * invT);
+        const amrex::Real qr = k_r * (sc[19]*sc[24]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[19] += qdot;
+        wdot[24] += qdot;
+        wdot[27] -= qdot;
+    }
+
+    {
+        // (101):  C4H6 + O <=> C2H4 + CH2CO
+        const amrex::Real k_f = 1000000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[27]);
+        k_r = 1e-06 * 637700000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 94340 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[20]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[16] += qdot;
+        wdot[20] += qdot;
+        wdot[27] -= qdot;
+    }
+
+    {
+        // (102):  C4H6 + O <=> CH2O + C3H4-A
+        const amrex::Real k_f = 1000000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[27]);
+        k_r = 1e-06 * 1075000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 79050 * invT);
+        const amrex::Real qr = k_r * (sc[13]*sc[25]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[13] += qdot;
+        wdot[25] += qdot;
+        wdot[27] -= qdot;
+    }
+
+    {
+        // (103):  C2H4 + O2 <=> C2H3 + HO2
+        const amrex::Real k_f = 40000000
+                   * exp(-(29287.2099498347) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[16]);
+        k_r = 1e-06 * 49390000000000 
+                   * exp(-0.5 * tc[0] - 0.50321666580472 * 1368 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[16] -= qdot;
+        wdot[19] += qdot;
+    }
+
+    {
+        // (104):  CH2O + M <=> CO + H2 + M
+        const amrex::Real k_f = 1.826e+26
+                   * exp((-4.42) * tc[0] - (43840.2359249072) * invT);
+        const amrex::Real Corr = mixture;
+        const amrex::Real qf = Corr * k_f * (sc[13]);
+        k_r = 1e-12 * 5.07e+27 
+                   * exp(-3.42 * tc[0] - 0.50321666580472 * 84350 * invT);
+        const amrex::Real qr = Corr * k_r * (sc[1]*sc[6]);
+        const amrex::Real qdot = qf - qr;
+        wdot[1] += qdot;
+        wdot[6] += qdot;
+        wdot[13] -= qdot;
+    }
+
+    {
+        // (105):  NC3H7 <=> CH3 + C2H4
+        const amrex::Real k_f = 228400000000000
+                   * exp((-0.55) * tc[0] - (14291.353308854) * invT);
+        const amrex::Real qf = k_f * (sc[28]);
+        k_r = 1e-06 * 410000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 7204 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[16]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[16] += qdot;
+        wdot[28] -= qdot;
+    }
+
+    {
+        // (106):  NC3H7 <=> H + C3H6
+        const amrex::Real k_f = 2.667e+15
+                   * exp((-0.64) * tc[0] - (18528.4376349298) * invT);
+        const amrex::Real qf = k_f * (sc[28]);
+        k_r = 1e-06 * 10000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 2500 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[26]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[26] += qdot;
+        wdot[28] -= qdot;
+    }
+
+    {
+        // (107):  NC3H7 + O2 <=> C3H6 + HO2
+        const amrex::Real k_f = 300000
+                   * exp(-(1509.64999741416) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[28]);
+        k_r = 1e-06 * 200000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 17500 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[26]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[26] += qdot;
+        wdot[28] -= qdot;
+    }
+
+    {
+        // (108):  C3H6 + O <=> C3H5-A + OH
+        const amrex::Real k_f = 524000
+                   * exp((0.7) * tc[0] - (2960.92686159497) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[26]);
+        k_r = 1e-06 * 105500000000 
+                   * exp(0.71 * tc[0] - 0.50321666580472 * 20820 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[26] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (109):  C3H6 + H <=> C3H5-A + H2
+        const amrex::Real k_f = 0.173
+                   * exp((2.5) * tc[0] - (1254.01593118536) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[26]);
+        k_r = 1e-06 * 79330 
+                   * exp(2.51 * tc[0] - 0.50321666580472 * 19520 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[26] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (110):  C3H6 + H <=> C2H4 + CH3
+        const amrex::Real k_f = 4.83e+27
+                   * exp((-5.81) * tc[0] - (9309.50831738731) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[26]);
+        k_r = 1e-06 * 2.313e+33 
+                   * exp(-5.9 * tc[0] - 0.50321666580472 * 31620 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[16]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[9] += qdot;
+        wdot[16] += qdot;
+        wdot[26] -= qdot;
+    }
+
+    {
+        // (111):  C5H9 <=> C3H5-A + C2H4
+        const amrex::Real k_f = 25000000000000
+                   * exp(-(22644.7499612124) * invT);
+        const amrex::Real qf = k_f * (sc[35]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[35] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (112):  C5H9 <=> C4H6 + CH3
+        const amrex::Real k_f = 1.339e+15
+                   * exp((-0.52) * tc[0] - (19283.2626336369) * invT);
+        const amrex::Real qf = k_f * (sc[35]);
+        k_r = 1e-06 * 175000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 7600 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[27]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[27] += qdot;
+        wdot[35] -= qdot;
+    }
+
+    {
+        // (113):  C4H7 <=> C4H6 + H
+        const amrex::Real k_f = 120000000000000
+                   * exp(-(24808.5816241727) * invT);
+        const amrex::Real qf = k_f * (sc[29]);
+        k_r = 1e-06 * 40000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 1300 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[27]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[27] += qdot;
+        wdot[29] -= qdot;
+    }
+
+    {
+        // (114):  C4H7 <=> C2H4 + C2H3
+        const amrex::Real k_f = 100000000000
+                   * exp(-(18619.0166347746) * invT);
+        const amrex::Real qf = k_f * (sc[29]);
+        k_r = 1e-06 * 50000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 7000 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[19] += qdot;
+        wdot[29] -= qdot;
+    }
+
+    {
+        // (115):  C4H8-1 + C4H6 <=> C4H7 + C4H7
+        const amrex::Real k_f = 2350000
+                   * exp(-(23510.2826263965) * invT);
+        const amrex::Real qf = k_f * (sc[27]*sc[30]);
+        k_r = 1e-06 * 1600000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[29]*sc[29]);
+        const amrex::Real qdot = qf - qr;
+        wdot[27] -= qdot;
+        wdot[29] += qdot;
+        wdot[29] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (116):  C4H7 + CH3 <=> C4H6 + CH4
+        const amrex::Real k_f = 8000000
+                   ;
+        const amrex::Real qf = k_f * (sc[9]*sc[29]);
+        k_r = 1e-06 * 70500000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 57280 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[27]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[27] += qdot;
+        wdot[29] -= qdot;
+    }
+
+    {
+        // (117):  C3H5-A + C4H7 <=> C3H6 + C4H6
+        const amrex::Real k_f = 6310000
+                   ;
+        const amrex::Real qf = k_f * (sc[29]*sc[47]);
+        k_r = 1e-06 * 10000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 50000 * invT);
+        const amrex::Real qr = k_r * (sc[26]*sc[27]);
+        const amrex::Real qdot = qf - qr;
+        wdot[26] += qdot;
+        wdot[27] += qdot;
+        wdot[29] -= qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (118):  C4H7 + O2 <=> C4H6 + HO2
+        const amrex::Real k_f = 1000
+                   ;
+        const amrex::Real qf = k_f * (sc[3]*sc[29]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 17000 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[27]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[27] += qdot;
+        wdot[29] -= qdot;
+    }
+
+    {
+        // (119):  H + C4H7 <=> C4H6 + H2
+        const amrex::Real k_f = 31600000
+                   ;
+        const amrex::Real qf = k_f * (sc[0]*sc[29]);
+        k_r = 1e-06 * 10660000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 56810 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[27]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[27] += qdot;
+        wdot[29] -= qdot;
+    }
+
+    {
+        // (120):  C2H5 + C4H7 <=> C4H6 + C2H6
+        const amrex::Real k_f = 3980000
+                   ;
+        const amrex::Real qf = k_f * (sc[17]*sc[29]);
+        k_r = 1e-06 * 3211000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 49840 * invT);
+        const amrex::Real qr = k_r * (sc[15]*sc[27]);
+        const amrex::Real qdot = qf - qr;
+        wdot[15] += qdot;
+        wdot[17] -= qdot;
+        wdot[27] += qdot;
+        wdot[29] -= qdot;
+    }
+
+    {
+        // (121):  C2H5 + C4H7 <=> C2H4 + C4H8-1
+        const amrex::Real k_f = 9.24
+                   * exp((1.5) * tc[0] - (-484.09443250414) * invT);
+        const amrex::Real qf = k_f * (sc[17]*sc[29]);
+        k_r = 1e-06 * 780.7 
+                   * exp(2.91 * tc[0] - 0.50321666580472 * 50960 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[30]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[17] -= qdot;
+        wdot[29] -= qdot;
+        wdot[30] += qdot;
+    }
+
+    {
+        // (122):  C2H3 + C4H7 <=> C2H4 + C4H6
+        const amrex::Real k_f = 3980000
+                   ;
+        const amrex::Real qf = k_f * (sc[19]*sc[29]);
+        k_r = 1e-06 * 11570000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 57710 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[27]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[19] -= qdot;
+        wdot[27] += qdot;
+        wdot[29] -= qdot;
+    }
+
+    {
+        // (123):  C4H8-1 <=> C3H5-A + CH3
+        const amrex::Real k_f = 5e+15
+                   * exp(-(35728.3832721351) * invT);
+        const amrex::Real qf = k_f * (sc[30]);
+        k_r = 1e-06 * 5000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[30] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (124):  C4H8-1 <=> C2H3 + C2H5
+        const amrex::Real k_f = 1e+19
+                   * exp((-1) * tc[0] - (48696.2767499227) * invT);
+        const amrex::Real qf = k_f * (sc[30]);
+        k_r = 1e-06 * 9000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[17]*sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[17] += qdot;
+        wdot[19] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (125):  C4H8-1 <=> H + C4H7
+        const amrex::Real k_f = 4.107e+18
+                   * exp((-1) * tc[0] - (48988.1424160895) * invT);
+        const amrex::Real qf = k_f * (sc[30]);
+        k_r = 1e-06 * 50000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[29]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[29] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (126):  C4H8-1 + CH3 <=> C4H7 + CH4
+        const amrex::Real k_f = 100000
+                   * exp(-(3673.48166037445) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[30]);
+        k_r = 1e-06 * 600000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 17860 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[29]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[29] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (127):  C4H8-1 + H <=> C4H7 + H2
+        const amrex::Real k_f = 50000000
+                   * exp(-(1962.54499663841) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[30]);
+        k_r = 1e-06 * 40000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 25200 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[29]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[29] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (128):  C4H8-1 + OH <=> C4H7 + H2O
+        const amrex::Real k_f = 22500000
+                   * exp(-(1115.63134808906) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[30]);
+        k_r = 1e-06 * 4772000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 26470 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[29]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[29] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (129):  C4H8-1 + C3H5-A <=> C4H7 + C3H6
+        const amrex::Real k_f = 79000
+                   * exp(-(6239.88665597852) * invT);
+        const amrex::Real qf = k_f * (sc[30]*sc[47]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 17500 * invT);
+        const amrex::Real qr = k_r * (sc[26]*sc[29]);
+        const amrex::Real qdot = qf - qr;
+        wdot[26] += qdot;
+        wdot[29] += qdot;
+        wdot[30] -= qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (130):  C4H8-1 + HO2 <=> C4H7 + H2O2
+        const amrex::Real k_f = 1400000
+                   * exp(-(7497.92832049032) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[30]);
+        k_r = 1e-06 * 316000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 13000 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[29]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[29] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (131):  C4H8-1 + O2 <=> C4H7 + HO2
+        const amrex::Real k_f = 27000000
+                   * exp(-(16706.7933047167) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[30]);
+        k_r = 1e-06 * 300000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[29]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[29] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (132):  PC4H9 <=> C2H5 + C2H4
+        const amrex::Real k_f = 7.497e+17
+                   * exp((-1.41) * tc[0] - (14885.1489745036) * invT);
+        const amrex::Real qf = k_f * (sc[31]);
+        k_r = 1e-06 * 330000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 7200 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[17] += qdot;
+        wdot[31] -= qdot;
+    }
+
+    {
+        // (133):  PC4H9 <=> C4H8-1 + H
+        const amrex::Real k_f = 1.159e+17
+                   * exp((-1.17) * tc[0] - (19202.7479671081) * invT);
+        const amrex::Real qf = k_f * (sc[31]);
+        k_r = 1e-06 * 10000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 2900 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[30]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[30] += qdot;
+        wdot[31] -= qdot;
+    }
+
+    {
+        // (134):  PC4H9 + O2 <=> C4H8-1 + HO2
+        const amrex::Real k_f = 3e-25
+                   * exp(-(1509.64999741416) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[31]);
+        k_r = 1e-06 * 2e-19 
+                   * exp(0 * tc[0] - 0.50321666580472 * 17500 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[30]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[30] += qdot;
+        wdot[31] -= qdot;
+    }
+
+    {
+        // (135):  CH3COCH2 <=> CH2CO + CH3
+        const amrex::Real k_f = 100000000000000
+                   * exp(-(15599.7166399463) * invT);
+        const amrex::Real qf = k_f * (sc[32]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 6000 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[20]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[20] += qdot;
+        wdot[32] -= qdot;
+    }
+
+    {
+        // (136):  C2H5CO <=> C2H5 + CO
+        const amrex::Real k_f = 1.834e+15
+                   * exp((-0.73) * tc[0] - (6496.52715553893) * invT);
+        const amrex::Real qf = k_f * (sc[34]);
+        k_r = 1e-06 * 151000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 4810 * invT);
+        const amrex::Real qr = k_r * (sc[6]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[6] += qdot;
+        wdot[17] += qdot;
+        wdot[34] -= qdot;
+    }
+
+    {
+        // (137):  C2H5CHO + H <=> C2H5CO + H2
+        const amrex::Real k_f = 40000000
+                   * exp(-(2113.50999637982) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[33]);
+        k_r = 1e-06 * 5854000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 20590 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[33] -= qdot;
+        wdot[34] += qdot;
+    }
+
+    {
+        // (138):  C2H5CHO + O <=> C2H5CO + OH
+        const amrex::Real k_f = 5000000
+                   * exp(-(900.757831790448) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[33]);
+        k_r = 1e-06 * 321400000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 16080 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[33] -= qdot;
+        wdot[34] += qdot;
+    }
+
+    {
+        // (139):  C2H5CHO + OH <=> C2H5CO + H2O
+        const amrex::Real k_f = 26900
+                   * exp((0.76) * tc[0] - (-171.093666373605) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[33]);
+        k_r = 1e-06 * 17050000000 
+                   * exp(0.76 * tc[0] - 0.50321666580472 * 31200 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[33] -= qdot;
+        wdot[34] += qdot;
+    }
+
+    {
+        // (140):  C2H5CHO + CH3 <=> C2H5CO + CH4
+        const amrex::Real k_f = 2.608
+                   * exp((1.78) * tc[0] - (2974.5137115717) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[33]);
+        k_r = 1e-06 * 9972000 
+                   * exp(1.78 * tc[0] - 0.50321666580472 * 22780 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[33] -= qdot;
+        wdot[34] += qdot;
+    }
+
+    {
+        // (141):  C2H5CHO + HO2 <=> C2H5CO + H2O2
+        const amrex::Real k_f = 2800000
+                   * exp(-(6843.74665494419) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[33]);
+        k_r = 1e-06 * 10530000000000 
+                   * exp(-0.33 * tc[0] - 0.50321666580472 * 13680 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[33] -= qdot;
+        wdot[34] += qdot;
+    }
+
+    {
+        // (142):  C2H5CHO + C2H5 <=> C2H5CO + C2H6
+        const amrex::Real k_f = 1000000
+                   * exp(-(4025.73332643776) * invT);
+        const amrex::Real qf = k_f * (sc[17]*sc[33]);
+        k_r = 1e-06 * 598400000000000 
+                   * exp(-0.57 * tc[0] - 0.50321666580472 * 20700 * invT);
+        const amrex::Real qr = k_r * (sc[15]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[15] += qdot;
+        wdot[17] -= qdot;
+        wdot[33] -= qdot;
+        wdot[34] += qdot;
+    }
+
+    {
+        // (143):  C2H5CHO <=> C2H5 + HCO
+        const amrex::Real k_f = 9.85e+18
+                   * exp((-0.73) * tc[0] - (41117.8337629036) * invT);
+        const amrex::Real qf = k_f * (sc[33]);
+        k_r = 1e-06 * 18100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[7] += qdot;
+        wdot[17] += qdot;
+        wdot[33] -= qdot;
+    }
+
+    {
+        // (144):  C2H5CHO + O2 <=> C2H5CO + HO2
+        const amrex::Real k_f = 10050000
+                   * exp(-(20480.9182982521) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[33]);
+        k_r = 1e-06 * 26720000000 
+                   * exp(0.33 * tc[0] - 0.50321666580472 * -396 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[33] -= qdot;
+        wdot[34] += qdot;
+    }
+
+    {
+        // (145):  C2H5CHO + C2H3 <=> C2H5CO + C2H4
+        const amrex::Real k_f = 1700000
+                   * exp(-(4247.14865939183) * invT);
+        const amrex::Real qf = k_f * (sc[19]*sc[33]);
+        k_r = 1e-06 * 3661000000 
+                   * exp(0.83 * tc[0] - 0.50321666580472 * 24180 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[19] -= qdot;
+        wdot[33] -= qdot;
+        wdot[34] += qdot;
+    }
+
+    {
+        // (146):  C2H5CHO + C3H5-A <=> C2H5CO + C3H6
+        const amrex::Real k_f = 1700000
+                   * exp(-(4247.14865939183) * invT);
+        const amrex::Real qf = k_f * (sc[33]*sc[47]);
+        k_r = 1e-06 * 10000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 28000 * invT);
+        const amrex::Real qr = k_r * (sc[26]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[26] += qdot;
+        wdot[33] -= qdot;
+        wdot[34] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (147):  C5H10-1 <=> C2H5 + C3H5-A
+        const amrex::Real k_f = 9.173e+20
+                   * exp((-1.63) * tc[0] - (37233.0011028912) * invT);
+        const amrex::Real qf = k_f * (sc[36]);
+        k_r = 1e-06 * 4000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * -596 * invT);
+        const amrex::Real qr = k_r * (sc[17]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[17] += qdot;
+        wdot[36] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (148):  C5H10-1 + H <=> C5H9 + H2
+        const amrex::Real k_f = 28000000
+                   * exp(-(2012.86666321888) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[36]);
+        k_r = 1e-06 * 1000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 14000 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[35]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[35] += qdot;
+        wdot[36] -= qdot;
+    }
+
+    {
+        // (149):  C5H10-1 + O <=> C5H9 + OH
+        const amrex::Real k_f = 0.254
+                   * exp((2.56) * tc[0] - (-568.634832359333) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[36]);
+        k_r = 1e-06 * 700000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 29900 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[35]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[35] += qdot;
+        wdot[36] -= qdot;
+    }
+
+    {
+        // (150):  C5H10-1 + O <=> PC4H9 + HCO
+        const amrex::Real k_f = 100000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[36]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[31]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[7] += qdot;
+        wdot[31] += qdot;
+        wdot[36] -= qdot;
+    }
+
+    {
+        // (151):  C5H10-1 + O <=> NC3H7 + CH3CO
+        const amrex::Real k_f = 100000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[36]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[22]*sc[28]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[22] += qdot;
+        wdot[28] += qdot;
+        wdot[36] -= qdot;
+    }
+
+    {
+        // (152):  C5H10-1 + OH <=> C5H9 + H2O
+        const amrex::Real k_f = 5.12
+                   * exp((2) * tc[0] - (-149.958566409806) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[36]);
+        k_r = 1e-06 * 20600000 
+                   * exp(2.16 * tc[0] - 0.50321666580472 * 34970 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[35]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[35] += qdot;
+        wdot[36] -= qdot;
+    }
+
+    {
+        // (153):  C5H10-1 + OH <=> PC4H9 + CH2O
+        const amrex::Real k_f = 100000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[36]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[13]*sc[31]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[13] += qdot;
+        wdot[31] += qdot;
+        wdot[36] -= qdot;
+    }
+
+    {
+        // (154):  C5H10-1 + OH <=> NC3H7 + CH3CHO
+        const amrex::Real k_f = 100000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[36]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[24]*sc[28]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[24] += qdot;
+        wdot[28] += qdot;
+        wdot[36] -= qdot;
+    }
+
+    {
+        // (155):  C5H10-1 + CH3 <=> C5H9 + CH4
+        const amrex::Real k_f = 100000
+                   * exp(-(3673.48166037445) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[36]);
+        k_r = 1e-06 * 600000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 17900 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[35]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[35] += qdot;
+        wdot[36] -= qdot;
+    }
+
+    {
+        // (156):  H2O2 + H <=> H2 + HO2
+        const amrex::Real k_f = 48200000
+                   * exp(-(4000.57249314752) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[12]);
+        k_r = 1e-06 * 1875000000000 
+                   * exp(0.33 * tc[0] - 0.50321666580472 * 24260 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[11]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[11] += qdot;
+        wdot[12] -= qdot;
+    }
+
+    {
+        // (157):  HCO + O <=> CO2 + H
+        const amrex::Real k_f = 30000000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[7]);
+        k_r = 1e-06 * 9.677e+15 
+                   * exp(0 * tc[0] - 0.50321666580472 * 110200 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[8]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[2] -= qdot;
+        wdot[7] -= qdot;
+        wdot[8] += qdot;
+    }
+
+    {
+        // (158):  CH3CO + H <=> CH2CO + H2
+        const amrex::Real k_f = 20000000
+                   ;
+        const amrex::Real qf = k_f * (sc[0]*sc[22]);
+        k_r = 1e-06 * 5.626e+17 
+                   * exp(-1.13 * tc[0] - 0.50321666580472 * 63700 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[20]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[20] += qdot;
+        wdot[22] -= qdot;
+    }
+
+    {
+        // (159):  CH3CO + O <=> CH2CO + OH
+        const amrex::Real k_f = 20000000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[22]);
+        k_r = 1e-06 * 5.951e+18 
+                   * exp(-1.13 * tc[0] - 0.50321666580472 * 120700 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[20]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[20] += qdot;
+        wdot[22] -= qdot;
+    }
+
+    {
+        // (160):  CH3CO + CH3 <=> CH2CO + CH4
+        const amrex::Real k_f = 50000000
+                   ;
+        const amrex::Real qf = k_f * (sc[9]*sc[22]);
+        k_r = 1e-06 * 8.197e+17 
+                   * exp(-0.67 * tc[0] - 0.50321666580472 * 79830 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[20]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[20] += qdot;
+        wdot[22] -= qdot;
+    }
+
+    {
+        // (161):  C2H4 + O <=> CH2CHO + H
+        const amrex::Real k_f = 3.39
+                   * exp((1.88) * tc[0] - (90.0757831790448) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[16]);
+        k_r = 1e-06 * 9481000 
+                   * exp(1.79 * tc[0] - 0.50321666580472 * 16050 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[23]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[2] -= qdot;
+        wdot[16] -= qdot;
+        wdot[23] += qdot;
+    }
+
+    {
+        // (162):  C2H5 + O <=> CH3CHO + H
+        const amrex::Real k_f = 50000000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[17]);
+        k_r = 1e-06 * 550500000000000 
+                   * exp(0.11 * tc[0] - 0.50321666580472 * 74390 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[24]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[2] -= qdot;
+        wdot[17] -= qdot;
+        wdot[24] += qdot;
+    }
+
+    {
+        // (163):  C2H3 + C2H4 <=> C4H6 + H
+        const amrex::Real k_f = 500000
+                   * exp(-(3673.48166037445) * invT);
+        const amrex::Real qf = k_f * (sc[16]*sc[19]);
+        k_r = 1e-06 * 10000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 4700 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[27]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[16] -= qdot;
+        wdot[19] -= qdot;
+        wdot[27] += qdot;
+    }
+
+    {
+        // (164):  C2H5O + M <=> CH3 + CH2O + M
+        const amrex::Real k_f = 1.35e+32
+                   * exp((-6.96) * tc[0] - (11976.5566461523) * invT);
+        const amrex::Real Corr = mixture;
+        const amrex::Real qf = Corr * k_f * (sc[37]);
+        k_r = 1e-12 * 6.442e+36 
+                   * exp(-6.99 * tc[0] - 0.50321666580472 * 16850 * invT);
+        const amrex::Real qr = Corr * k_r * (sc[9]*sc[13]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[13] += qdot;
+        wdot[37] -= qdot;
+    }
+
+    {
+        // (165):  C2H5O + O2 <=> CH3CHO + HO2
+        const amrex::Real k_f = 42800
+                   * exp(-(552.028682387778) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[37]);
+        k_r = 1e-06 * 387200000 
+                   * exp(0.44 * tc[0] - 0.50321666580472 * 31880 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[24]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[24] += qdot;
+        wdot[37] -= qdot;
+    }
+
+    {
+        // (166):  H2O2 + O2 <=> HO2 + HO2
+        const amrex::Real k_f = 183900000
+                   * exp((-0.66) * tc[0] - (19897.1869659186) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[12]);
+        k_r = 1e-06 * 130000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * -1629 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[11]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[11] += qdot;
+        wdot[12] -= qdot;
+    }
+
+    {
+        // (167):  C2H3 + O2 <=> CH2CHO + O
+        const amrex::Real k_f = 350000000
+                   * exp((-0.61) * tc[0] - (2646.91966213283) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[19]);
+        k_r = 1e-06 * 2589000000000 
+                   * exp(0.12 * tc[0] - 0.50321666580472 * 6459 * invT);
+        const amrex::Real qr = k_r * (sc[2]*sc[23]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] += qdot;
+        wdot[3] -= qdot;
+        wdot[19] -= qdot;
+        wdot[23] += qdot;
+    }
+
+    {
+        // (168):  CH3O2 + M <=> CH3 + O2 + M
+        const amrex::Real k_f = 4.343e+21
+                   * exp((-3.42) * tc[0] - (15333.0118070698) * invT);
+        const amrex::Real Corr = mixture;
+        const amrex::Real qf = Corr * k_f * (sc[38]);
+        k_r = 1e-12 * 5.44e+25 
+                   * exp(-3.3 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = Corr * k_r * (sc[3]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[9] += qdot;
+        wdot[38] -= qdot;
+    }
+
+    {
+        // (169):  CH3O2H <=> CH3O + OH
+        const amrex::Real k_f = 631000000000000
+                   * exp(-(21286.0649635396) * invT);
+        const amrex::Real qf = k_f * (sc[39]);
+        k_r = 1e-06 * 116600000000 
+                   * exp(0.6 * tc[0] - 0.50321666580472 * -1771 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[14]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[14] += qdot;
+        wdot[39] -= qdot;
+    }
+
+    {
+        // (170):  C3H2 + O2 <=> HCCO + CO + H
+        const amrex::Real k_f = 50000000
+                   ;
+        const amrex::Real qf = k_f * (sc[3]*sc[49]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[6]*sc[21]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[3] -= qdot;
+        wdot[6] += qdot;
+        wdot[21] += qdot;
+        wdot[49] -= qdot;
+    }
+
+    {
+        // (171):  CH3O2 + CH2O <=> CH3O2H + HCO
+        const amrex::Real k_f = 1990000
+                   * exp(-(5867.50632328303) * invT);
+        const amrex::Real qf = k_f * (sc[13]*sc[38]);
+        k_r = 1e-06 * 8504000000000 
+                   * exp(-0.5 * tc[0] - 0.50321666580472 * 7009 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[39]);
+        const amrex::Real qdot = qf - qr;
+        wdot[7] += qdot;
+        wdot[13] -= qdot;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+    }
+
+    {
+        // (172):  C2H4 + CH3O2 <=> C2H3 + CH3O2H
+        const amrex::Real k_f = 2230000
+                   * exp(-(8650.29448518313) * invT);
+        const amrex::Real qf = k_f * (sc[16]*sc[38]);
+        k_r = 1e-06 * 8.112e+15 
+                   * exp(-1.33 * tc[0] - 0.50321666580472 * -1489 * invT);
+        const amrex::Real qr = k_r * (sc[19]*sc[39]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] -= qdot;
+        wdot[19] += qdot;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+    }
+
+    {
+        // (173):  CH4 + CH3O2 <=> CH3 + CH3O2H
+        const amrex::Real k_f = 181000
+                   * exp(-(9299.44398407122) * invT);
+        const amrex::Real qf = k_f * (sc[10]*sc[38]);
+        k_r = 1e-06 * 370800000000 
+                   * exp(-0.5 * tc[0] - 0.50321666580472 * -1327 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[39]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[10] -= qdot;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+    }
+
+    {
+        // (174):  C2H5 + HO2 <=> C2H5O + OH
+        const amrex::Real k_f = 32000000
+                   ;
+        const amrex::Real qf = k_f * (sc[11]*sc[17]);
+        k_r = 1e-06 * 3.075e+15 
+                   * exp(-0.32 * tc[0] - 0.50321666580472 * 27490 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[37]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[11] -= qdot;
+        wdot[17] -= qdot;
+        wdot[37] += qdot;
+    }
+
+    {
+        // (175):  CH3O2 + CH3 <=> CH3O + CH3O
+        const amrex::Real k_f = 7000000
+                   * exp(-(-503.21666580472) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[38]);
+        k_r = 1e-06 * 2.971e+16 
+                   * exp(-0.93 * tc[0] - 0.50321666580472 * 28310 * invT);
+        const amrex::Real qr = k_r * (sc[14]*sc[14]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[14] += qdot;
+        wdot[14] += qdot;
+        wdot[38] -= qdot;
+    }
+
+    {
+        // (176):  CH3O2 + C2H5 <=> CH3O + C2H5O
+        const amrex::Real k_f = 7000000
+                   * exp(-(-503.21666580472) * invT);
+        const amrex::Real qf = k_f * (sc[17]*sc[38]);
+        k_r = 1e-06 * 6.569e+16 
+                   * exp(-0.9 * tc[0] - 0.50321666580472 * 31260 * invT);
+        const amrex::Real qr = k_r * (sc[14]*sc[37]);
+        const amrex::Real qdot = qf - qr;
+        wdot[14] += qdot;
+        wdot[17] -= qdot;
+        wdot[37] += qdot;
+        wdot[38] -= qdot;
+    }
+
+    {
+        // (177):  CH3O2 + HO2 <=> CH3O2H + O2
+        const amrex::Real k_f = 17500
+                   * exp(-(-1648.03458051046) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[38]);
+        k_r = 1e-06 * 51560000000000 
+                   * exp(-0.83 * tc[0] - 0.50321666580472 * 34880 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[39]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[11] -= qdot;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+    }
+
+    {
+        // (178):  H2O2 + OH <=> H2O + HO2
+        const amrex::Real k_f = 580000000
+                   * exp(-(4810.75132509312) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[12]);
+        k_r = 1e-06 * 97710000000000 
+                   * exp(0.33 * tc[0] - 0.50321666580472 * 41020 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[11]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[11] += qdot;
+        wdot[12] -= qdot;
+    }
+
+    {
+        // (179):  CH3O2 + CH3O2 <=> O2 + CH3O + CH3O
+        const amrex::Real k_f = 14000000000
+                   * exp((-1.61) * tc[0] - (935.982998396779) * invT);
+        const amrex::Real qf = k_f * (sc[38]*sc[38]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[14]*sc[14]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[14] += qdot;
+        wdot[14] += qdot;
+        wdot[38] -= qdot;
+        wdot[38] -= qdot;
+    }
+
+    {
+        // (180):  C2H6 + CH3O2 <=> C2H5 + CH3O2H
+        const amrex::Real k_f = 13200000
+                   * exp(-(10300.8451490226) * invT);
+        const amrex::Real qf = k_f * (sc[15]*sc[38]);
+        k_r = 1e-06 * 172800000000 
+                   * exp(0.06 * tc[0] - 0.50321666580472 * 4832 * invT);
+        const amrex::Real qr = k_r * (sc[17]*sc[39]);
+        const amrex::Real qdot = qf - qr;
+        wdot[15] -= qdot;
+        wdot[17] += qdot;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+    }
+
+    {
+        // (181):  C2H5O + M <=> CH3CHO + H + M
+        const amrex::Real k_f = 1.16e+29
+                   * exp((-5.89) * tc[0] - (12716.2851448853) * invT);
+        const amrex::Real Corr = mixture;
+        const amrex::Real qf = Corr * k_f * (sc[37]);
+        k_r = 1e-12 * 3.063e+30 
+                   * exp(-4.78 * tc[0] - 0.50321666580472 * 6100 * invT);
+        const amrex::Real qr = Corr * k_r * (sc[0]*sc[24]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[24] += qdot;
+        wdot[37] -= qdot;
+    }
+
+    {
+        // (182):  CH3O2 + CH3CHO <=> CH3O2H + CH3CO
+        const amrex::Real k_f = 3010000
+                   * exp(-(5998.34265639226) * invT);
+        const amrex::Real qf = k_f * (sc[24]*sc[38]);
+        k_r = 1e-06 * 25190000000000 
+                   * exp(-0.51 * tc[0] - 0.50321666580472 * 8991 * invT);
+        const amrex::Real qr = k_r * (sc[22]*sc[39]);
+        const amrex::Real qdot = qf - qr;
+        wdot[22] += qdot;
+        wdot[24] -= qdot;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+    }
+
+    {
+        // (183):  C2H3CO <=> C2H3 + CO
+        const amrex::Real k_f = 304300000000000
+                   * exp((-0.46) * tc[0] - (15353.140473702) * invT);
+        const amrex::Real qf = k_f * (sc[40]);
+        k_r = 1e-06 * 151000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 4810 * invT);
+        const amrex::Real qr = k_r * (sc[6]*sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[6] += qdot;
+        wdot[19] += qdot;
+        wdot[40] -= qdot;
+    }
+
+    {
+        // (184):  C2H3CHO + OH <=> C2H3CO + H2O
+        const amrex::Real k_f = 9.24
+                   * exp((1.5) * tc[0] - (-484.09443250414) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[41]);
+        k_r = 1e-06 * 21470000 
+                   * exp(1.48 * tc[0] - 0.50321666580472 * 35510 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[40]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[40] += qdot;
+        wdot[41] -= qdot;
+    }
+
+    {
+        // (185):  C2H3CHO + H <=> C2H3CO + H2
+        const amrex::Real k_f = 13400000
+                   * exp(-(1660.61499715557) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[41]);
+        k_r = 1e-06 * 7191000000000 
+                   * exp(-0.02 * tc[0] - 0.50321666580472 * 24620 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[40]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[40] += qdot;
+        wdot[41] -= qdot;
+    }
+
+    {
+        // (186):  C2H3CHO + O <=> C2H3CO + OH
+        const amrex::Real k_f = 5940000
+                   * exp(-(940.008731723216) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[41]);
+        k_r = 1e-06 * 1400000000000 
+                   * exp(-0.02 * tc[0] - 0.50321666580472 * 21090 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[40]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[40] += qdot;
+        wdot[41] -= qdot;
+    }
+
+    {
+        // (187):  C2H3CHO + HO2 <=> C2H3CO + H2O2
+        const amrex::Real k_f = 3010000
+                   * exp(-(5998.34265639226) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[41]);
+        k_r = 1e-06 * 41520000000000 
+                   * exp(-0.35 * tc[0] - 0.50321666580472 * 16940 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[40]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[40] += qdot;
+        wdot[41] -= qdot;
+    }
+
+    {
+        // (188):  C2H3CHO + CH3 <=> C2H3CO + CH4
+        const amrex::Real k_f = 2.608
+                   * exp((1.78) * tc[0] - (2974.5137115717) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[41]);
+        k_r = 1e-06 * 36560000 
+                   * exp(1.76 * tc[0] - 0.50321666580472 * 27710 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[40]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[40] += qdot;
+        wdot[41] -= qdot;
+    }
+
+    {
+        // (189):  C2H3CHO + CH3O2 <=> C2H3CO + CH3O2H
+        const amrex::Real k_f = 3010000
+                   * exp(-(5998.34265639226) * invT);
+        const amrex::Real qf = k_f * (sc[38]*sc[41]);
+        k_r = 1e-06 * 86450000000000 
+                   * exp(-0.53 * tc[0] - 0.50321666580472 * 13920 * invT);
+        const amrex::Real qr = k_r * (sc[39]*sc[40]);
+        const amrex::Real qdot = qf - qr;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+        wdot[40] += qdot;
+        wdot[41] -= qdot;
+    }
+
+    {
+        // (190):  C3H5O <=> C2H3CHO + H
+        const amrex::Real k_f = 100000000000000
+                   * exp(-(14643.6049749173) * invT);
+        const amrex::Real qf = k_f * (sc[42]);
+        k_r = 1e-06 * 771400000000 
+                   * exp(0.48 * tc[0] - 0.50321666580472 * 17750 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[41]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[41] += qdot;
+        wdot[42] -= qdot;
+    }
+
+    {
+        // (191):  C3H5O <=> C2H3 + CH2O
+        const amrex::Real k_f = 2028000000000
+                   * exp((0.09) * tc[0] - (11855.7846463592) * invT);
+        const amrex::Real qf = k_f * (sc[42]);
+        k_r = 1e-06 * 150000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 10600 * invT);
+        const amrex::Real qr = k_r * (sc[13]*sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[13] += qdot;
+        wdot[19] += qdot;
+        wdot[42] -= qdot;
+    }
+
+    {
+        // (192):  C3H5O + O2 <=> C2H3CHO + HO2
+        const amrex::Real k_f = 1000000
+                   * exp(-(3019.29999482832) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[42]);
+        k_r = 1e-06 * 128800000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 32000 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[41]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[41] += qdot;
+        wdot[42] -= qdot;
+    }
+
+    {
+        // (193):  C3H5-A + HO2 <=> C3H5O + OH
+        const amrex::Real k_f = 7000000
+                   * exp(-(-503.21666580472) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[47]);
+        k_r = 1e-06 * 20410000000000 
+                   * exp(-0.16 * tc[0] - 0.50321666580472 * 12260 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[42]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[11] -= qdot;
+        wdot[42] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (194):  C3H5-A + CH3O2 <=> C3H5O + CH3O
+        const amrex::Real k_f = 7000000
+                   * exp(-(-503.21666580472) * invT);
+        const amrex::Real qf = k_f * (sc[38]*sc[47]);
+        k_r = 1e-06 * 1.994e+15 
+                   * exp(-0.74 * tc[0] - 0.50321666580472 * 17020 * invT);
+        const amrex::Real qr = k_r * (sc[14]*sc[42]);
+        const amrex::Real qdot = qf - qr;
+        wdot[14] += qdot;
+        wdot[38] -= qdot;
+        wdot[42] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (195):  C3H6 + CH3O2 <=> C3H5-A + CH3O2H
+        const amrex::Real k_f = 324000
+                   * exp(-(7497.92832049032) * invT);
+        const amrex::Real qf = k_f * (sc[26]*sc[38]);
+        k_r = 1e-06 * 20000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 15000 * invT);
+        const amrex::Real qr = k_r * (sc[39]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[26] -= qdot;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (196):  CH3 + OH <=> CH2(S) + H2O
+        const amrex::Real k_f = 26500000
+                   * exp(-(1100.03163144912) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[9]);
+        k_r = 1e-06 * 32360000000 
+                   * exp(0.89 * tc[0] - 0.50321666580472 * 1211 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[50]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[9] -= qdot;
+        wdot[50] += qdot;
+    }
+
+    {
+        // (197):  C4H7O <=> CH3CHO + C2H3
+        const amrex::Real k_f = 794000000000000
+                   * exp(-(9561.11665028967) * invT);
+        const amrex::Real qf = k_f * (sc[43]);
+        k_r = 1e-06 * 10000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 20000 * invT);
+        const amrex::Real qr = k_r * (sc[19]*sc[24]);
+        const amrex::Real qdot = qf - qr;
+        wdot[19] += qdot;
+        wdot[24] += qdot;
+        wdot[43] -= qdot;
+    }
+
+    {
+        // (198):  C4H7O <=> C2H3CHO + CH3
+        const amrex::Real k_f = 794000000000000
+                   * exp(-(9561.11665028967) * invT);
+        const amrex::Real qf = k_f * (sc[43]);
+        k_r = 1e-06 * 10000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 20000 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[41]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[41] += qdot;
+        wdot[43] -= qdot;
+    }
+
+    {
+        // (199):  C4H7 + HO2 <=> C4H7O + OH
+        const amrex::Real k_f = 7000000
+                   * exp(-(-503.21666580472) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[29]);
+        k_r = 1e-06 * 100800000000 
+                   * exp(0.26 * tc[0] - 0.50321666580472 * 16890 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[43]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[11] -= qdot;
+        wdot[29] -= qdot;
+        wdot[43] += qdot;
+    }
+
+    {
+        // (200):  C4H7 + CH3O2 <=> C4H7O + CH3O
+        const amrex::Real k_f = 7000000
+                   * exp(-(-503.21666580472) * invT);
+        const amrex::Real qf = k_f * (sc[29]*sc[38]);
+        k_r = 1e-06 * 9844000000000 
+                   * exp(-0.32 * tc[0] - 0.50321666580472 * 21650 * invT);
+        const amrex::Real qr = k_r * (sc[14]*sc[43]);
+        const amrex::Real qdot = qf - qr;
+        wdot[14] += qdot;
+        wdot[29] -= qdot;
+        wdot[38] -= qdot;
+        wdot[43] += qdot;
+    }
+
+    {
+        // (201):  C4H8-1 + OH <=> NC3H7 + CH2O
+        const amrex::Real k_f = 1000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[30]);
+        k_r = 1e-06 * 1620000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 13230 * invT);
+        const amrex::Real qr = k_r * (sc[13]*sc[28]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[13] += qdot;
+        wdot[28] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (202):  C4H8-1 + O <=> C3H6 + CH2O
+        const amrex::Real k_f = 0.723
+                   * exp((2.34) * tc[0] - (-528.377499094956) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[30]);
+        k_r = 1e-06 * 200000 
+                   * exp(2.34 * tc[0] - 0.50321666580472 * 80280 * invT);
+        const amrex::Real qr = k_r * (sc[13]*sc[26]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[13] += qdot;
+        wdot[26] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (203):  C4H8-1 + O <=> CH3CHO + C2H4
+        const amrex::Real k_f = 13000000
+                   * exp(-(427.734165934012) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[30]);
+        k_r = 1e-06 * 2070000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 85100 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[24]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[16] += qdot;
+        wdot[24] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (204):  C4H8-1 + O <=> CH3CO + C2H5
+        const amrex::Real k_f = 13000000
+                   * exp(-(427.734165934012) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[30]);
+        k_r = 1e-06 * 2350000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 38150 * invT);
+        const amrex::Real qr = k_r * (sc[17]*sc[22]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[17] += qdot;
+        wdot[22] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (205):  C4H8-1 + OH <=> CH3CHO + C2H5
+        const amrex::Real k_f = 1000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[30]);
+        k_r = 1e-06 * 9330000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 19930 * invT);
+        const amrex::Real qr = k_r * (sc[17]*sc[24]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[17] += qdot;
+        wdot[24] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (206):  C4H8-1 + OH <=> CH3CO + C2H6
+        const amrex::Real k_f = 500000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[30]);
+        k_r = 1e-06 * 9830000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 32430 * invT);
+        const amrex::Real qr = k_r * (sc[15]*sc[22]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[15] += qdot;
+        wdot[22] += qdot;
+        wdot[30] -= qdot;
+    }
+
+    {
+        // (207):  C4H8-1 + O <=> C2H5CO + CH3
+        const amrex::Real k_f = 13000000
+                   * exp(-(427.734165934012) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[30]);
+        k_r = 1e-06 * 480000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 32550 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[9] += qdot;
+        wdot[30] -= qdot;
+        wdot[34] += qdot;
+    }
+
+    {
+        // (208):  C4H8-1 + OH <=> C2H5CHO + CH3
+        const amrex::Real k_f = 1000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[30]);
+        k_r = 1e-06 * 49500000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 16940 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[33]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[9] += qdot;
+        wdot[30] -= qdot;
+        wdot[33] += qdot;
+    }
+
+    {
+        // (209):  C4H8-1 + OH <=> C2H5CO + CH4
+        const amrex::Real k_f = 500000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[30]);
+        k_r = 1e-06 * 22000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 34270 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[10] += qdot;
+        wdot[30] -= qdot;
+        wdot[34] += qdot;
+    }
+
+    {
+        // (210):  C4H8-1 + CH3O2 <=> C4H7 + CH3O2H
+        const amrex::Real k_f = 1400000
+                   * exp(-(7497.92832049032) * invT);
+        const amrex::Real qf = k_f * (sc[30]*sc[38]);
+        k_r = 1e-06 * 316000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 13000 * invT);
+        const amrex::Real qr = k_r * (sc[29]*sc[39]);
+        const amrex::Real qdot = qf - qr;
+        wdot[29] += qdot;
+        wdot[30] -= qdot;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+    }
+
+    {
+        // (211):  C4H8OOH1-3O2 <=> C4H8OOH1-3 + O2
+        const amrex::Real k_f = 5.601e+22
+                   * exp((-2.23) * tc[0] - (19102.1046339472) * invT);
+        const amrex::Real qf = k_f * (sc[44]);
+        k_r = 1e-06 * 7540000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[45]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[44] -= qdot;
+        wdot[45] += qdot;
+    }
+
+    {
+        // (212):  C4H8OOH1-3O2 <=> NC4KET13 + OH
+        const amrex::Real k_f = 25000000000
+                   * exp(-(10768.836648221) * invT);
+        const amrex::Real qf = k_f * (sc[44]);
+        k_r = 1e-06 * 6893 
+                   * exp(1.3 * tc[0] - 0.50321666580472 * 44700 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[51]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[44] -= qdot;
+        wdot[51] += qdot;
+    }
+
+    {
+        // (213):  C4H8OOH1-3 <=> OH + CH2O + C3H6
+        const amrex::Real k_f = 66370000000000
+                   * exp((-0.16) * tc[0] - (15046.1783075611) * invT);
+        const amrex::Real qf = k_f * (sc[45]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[13]*sc[26]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[13] += qdot;
+        wdot[26] += qdot;
+        wdot[45] -= qdot;
+    }
+
+    {
+        // (214):  PC4H9O2 <=> C4H8OOH1-3
+        const amrex::Real k_f = 25000000000
+                   * exp(-(10492.0674820284) * invT);
+        const amrex::Real qf = k_f * (sc[46]);
+        k_r = 1 * 3231000000 
+                   * exp(-0.14 * tc[0] - 0.50321666580472 * 7871 * invT);
+        const amrex::Real qr = k_r * (sc[45]);
+        const amrex::Real qdot = qf - qr;
+        wdot[45] += qdot;
+        wdot[46] -= qdot;
+    }
+
+    {
+        // (215):  C2H5CHO + CH3O2 <=> C2H5CO + CH3O2H
+        const amrex::Real k_f = 3010000
+                   * exp(-(5998.34265639226) * invT);
+        const amrex::Real qf = k_f * (sc[33]*sc[38]);
+        k_r = 1e-06 * 23580000000000 
+                   * exp(-0.51 * tc[0] - 0.50321666580472 * 8983 * invT);
+        const amrex::Real qr = k_r * (sc[34]*sc[39]);
+        const amrex::Real qdot = qf - qr;
+        wdot[33] -= qdot;
+        wdot[34] += qdot;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+    }
+
+    {
+        // (216):  C2H5CHO + C4H7 <=> C2H5CO + C4H8-1
+        const amrex::Real k_f = 1700000
+                   * exp(-(4247.14865939183) * invT);
+        const amrex::Real qf = k_f * (sc[29]*sc[33]);
+        k_r = 1e-06 * 10000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 28000 * invT);
+        const amrex::Real qr = k_r * (sc[30]*sc[34]);
+        const amrex::Real qdot = qf - qr;
+        wdot[29] -= qdot;
+        wdot[30] += qdot;
+        wdot[33] -= qdot;
+        wdot[34] += qdot;
+    }
+
+    {
+        // (217):  C3H4-A + HO2 <=> C2H4 + CO + OH
+        const amrex::Real k_f = 1000000
+                   * exp(-(7045.03332126608) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[25]);
+        k_r = 1e-12 * 1 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[6]*sc[16]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[6] += qdot;
+        wdot[11] -= qdot;
+        wdot[16] += qdot;
+        wdot[25] -= qdot;
+    }
+
+    {
+        // (218):  C3H4-A + HO2 <=> C3H3 + H2O2
+        const amrex::Real k_f = 30000000
+                   * exp(-(7045.03332126608) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[25]);
+        k_r = 1e-06 * 1.551e+16 
+                   * exp(-1.38 * tc[0] - 0.50321666580472 * 44000 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[48]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[25] -= qdot;
+        wdot[48] += qdot;
+    }
+
+    {
+        // (219):  C3H6 + O2 <=> C3H5-A + HO2
+        const amrex::Real k_f = 4000000
+                   * exp(-(20078.3449656083) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[26]);
+        k_r = 1e-06 * 33320000000 
+                   * exp(0.34 * tc[0] - 0.50321666580472 * -556 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[26] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (220):  C3H6 + CH3 <=> C3H5-A + CH4
+        const amrex::Real k_f = 2.21e-06
+                   * exp((3.5) * tc[0] - (2855.75457844178) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[26]);
+        k_r = 1e-06 * 26.47 
+                   * exp(3.51 * tc[0] - 0.50321666580472 * 23180 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[26] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (221):  C3H6 + C2H5 <=> C3H5-A + C2H6
+        const amrex::Real k_f = 100000
+                   * exp(-(4931.52332488625) * invT);
+        const amrex::Real qf = k_f * (sc[17]*sc[26]);
+        k_r = 1e-06 * 536900 
+                   * exp(1.33 * tc[0] - 0.50321666580472 * 16440 * invT);
+        const amrex::Real qr = k_r * (sc[15]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[15] += qdot;
+        wdot[17] -= qdot;
+        wdot[26] -= qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (222):  C3H5-A + HO2 <=> C2H3 + CH2O + OH
+        const amrex::Real k_f = 1e-24
+                   ;
+        const amrex::Real qf = k_f * (sc[11]*sc[47]);
+        k_r = 1e-12 * 1e-30 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[13]*sc[19]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[11] -= qdot;
+        wdot[13] += qdot;
+        wdot[19] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (223):  C3H5-A + H <=> C3H4-A + H2
+        const amrex::Real k_f = 18100000
+                   ;
+        const amrex::Real qf = k_f * (sc[0]*sc[47]);
+        k_r = 1e-06 * 12300000000000 
+                   * exp(0.12 * tc[0] - 0.50321666580472 * 47230 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[25]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[25] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (224):  C3H5-A + CH3 <=> C3H4-A + CH4
+        const amrex::Real k_f = 100000
+                   ;
+        const amrex::Real qf = k_f * (sc[9]*sc[47]);
+        k_r = 1e-06 * 4921000000000 
+                   * exp(0.05 * tc[0] - 0.50321666580472 * 47780 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[25]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[25] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (225):  C3H5-A + C2H5 <=> C2H6 + C3H4-A
+        const amrex::Real k_f = 400000
+                   ;
+        const amrex::Real qf = k_f * (sc[17]*sc[47]);
+        k_r = 1e-06 * 1802000000000 
+                   * exp(0.05 * tc[0] - 0.50321666580472 * 40330 * invT);
+        const amrex::Real qr = k_r * (sc[15]*sc[25]);
+        const amrex::Real qdot = qf - qr;
+        wdot[15] += qdot;
+        wdot[17] -= qdot;
+        wdot[25] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (226):  C3H5-A + C2H5 <=> C2H4 + C3H6
+        const amrex::Real k_f = 400000
+                   ;
+        const amrex::Real qf = k_f * (sc[17]*sc[47]);
+        k_r = 1e-06 * 6.937e+16 
+                   * exp(-1.33 * tc[0] - 0.50321666580472 * 52800 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[26]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[17] -= qdot;
+        wdot[26] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (227):  C3H5-A + C2H3 <=> C2H4 + C3H4-A
+        const amrex::Real k_f = 1000000
+                   ;
+        const amrex::Real qf = k_f * (sc[19]*sc[47]);
+        k_r = 1e-06 * 16240000000000 
+                   * exp(0.05 * tc[0] - 0.50321666580472 * 48190 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[25]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[19] -= qdot;
+        wdot[25] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (228):  C3H4-A + C3H6 <=> C3H5-A + C3H5-A
+        const amrex::Real k_f = 839100000000
+                   * exp((-1.29) * tc[0] - (16953.369470961) * invT);
+        const amrex::Real qf = k_f * (sc[25]*sc[26]);
+        k_r = 1e-06 * 1000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[47]*sc[47]);
+        const amrex::Real qdot = qf - qr;
+        wdot[25] -= qdot;
+        wdot[26] -= qdot;
+        wdot[47] += qdot;
+        wdot[47] += qdot;
+    }
+
+    {
+        // (229):  C3H5-A + O2 <=> C2H3CHO + OH
+        const amrex::Real k_f = 24700000
+                   * exp((-0.44) * tc[0] - (11584.0476468246) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[47]);
+        k_r = 1e-06 * 190300000000000 
+                   * exp(-0.8 * tc[0] - 0.50321666580472 * 74880 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[41]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[4] += qdot;
+        wdot[41] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (230):  C3H4-A + M <=> C3H3 + H + M
+        const amrex::Real k_f = 114300000000
+                   * exp(-(35225.1666063304) * invT);
+        const amrex::Real Corr = mixture;
+        const amrex::Real qf = Corr * k_f * (sc[25]);
+        k_r = 1e-12 * 1.798e+15 
+                   * exp(-0.38 * tc[0] - 0.50321666580472 * 10610 * invT);
+        const amrex::Real qr = Corr * k_r * (sc[0]*sc[48]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[25] -= qdot;
+        wdot[48] += qdot;
+    }
+
+    {
+        // (231):  C3H4-A + O2 <=> C3H3 + HO2
+        const amrex::Real k_f = 40000000
+                   * exp(-(19705.9646329128) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[25]);
+        k_r = 1e-06 * 117500000000 
+                   * exp(0.3 * tc[0] - 0.50321666580472 * 38 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[48]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[25] -= qdot;
+        wdot[48] += qdot;
+    }
+
+    {
+        // (232):  C3H3 + H <=> C3H2 + H2
+        const amrex::Real k_f = 50000000
+                   ;
+        const amrex::Real qf = k_f * (sc[0]*sc[48]);
+        k_r = 1e-06 * 38530000000 
+                   * exp(0.38 * tc[0] - 0.50321666580472 * 4600 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[49]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[48] -= qdot;
+        wdot[49] += qdot;
+    }
+
+    {
+        // (233):  C3H4-A + OH <=> C3H3 + H2O
+        const amrex::Real k_f = 10
+                   * exp((2) * tc[0] - (503.21666580472) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[25]);
+        k_r = 1e-06 * 7003000 
+                   * exp(1.97 * tc[0] - 0.50321666580472 * 34520 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[48]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[25] -= qdot;
+        wdot[48] += qdot;
+    }
+
+    {
+        // (234):  C3H4-A + O <=> C2H4 + CO
+        const amrex::Real k_f = 7800000
+                   * exp(-(805.146665287552) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[25]);
+        k_r = 1e-06 * 82800000000000 
+                   * exp(-0.21 * tc[0] - 0.50321666580472 * 124800 * invT);
+        const amrex::Real qr = k_r * (sc[6]*sc[16]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[6] += qdot;
+        wdot[16] += qdot;
+        wdot[25] -= qdot;
+    }
+
+    {
+        // (235):  C3H2 + OH <=> C2H2 + HCO
+        const amrex::Real k_f = 50000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[49]);
+        k_r = 1e-06 * 2.907e+20 
+                   * exp(-1.39 * tc[0] - 0.50321666580472 * 78520 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[18]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[7] += qdot;
+        wdot[18] += qdot;
+        wdot[49] -= qdot;
+    }
+
+    {
+        // (236):  C3H5-A <=> C3H4-A + H
+        const amrex::Real k_f = 6.663e+15
+                   * exp((-0.43) * tc[0] - (31813.3576121744) * invT);
+        const amrex::Real qf = k_f * (sc[47]);
+        k_r = 1e-06 * 240000000000 
+                   * exp(0.69 * tc[0] - 0.50321666580472 * 3007 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[25]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[25] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (237):  C3H4-A + H <=> C3H3 + H2
+        const amrex::Real k_f = 20
+                   * exp((2) * tc[0] - (2516.0833290236) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[25]);
+        k_r = 1e-06 * 3235000 
+                   * exp(1.97 * tc[0] - 0.50321666580472 * 23360 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[48]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[25] -= qdot;
+        wdot[48] += qdot;
+    }
+
+    {
+        // (238):  C3H4-A + CH3 <=> C3H3 + CH4
+        const amrex::Real k_f = 3.67e-08
+                   * exp((4.01) * tc[0] - (3436.96982744624) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[25]);
+        k_r = 1e-06 * 0.1551 
+                   * exp(3.98 * tc[0] - 0.50321666580472 * 25670 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[48]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[25] -= qdot;
+        wdot[48] += qdot;
+    }
+
+    {
+        // (239):  C3H4-A + C3H5-A <=> C3H3 + C3H6
+        const amrex::Real k_f = 200000
+                   * exp(-(3874.76832669634) * invT);
+        const amrex::Real qf = k_f * (sc[25]*sc[47]);
+        k_r = 1e-06 * 2.644e+19 
+                   * exp(-2.71 * tc[0] - 0.50321666580472 * 42140 * invT);
+        const amrex::Real qr = k_r * (sc[26]*sc[48]);
+        const amrex::Real qdot = qf - qr;
+        wdot[25] -= qdot;
+        wdot[26] += qdot;
+        wdot[47] -= qdot;
+        wdot[48] += qdot;
+    }
+
+    {
+        // (240):  C3H3 + OH <=> C3H2 + H2O
+        const amrex::Real k_f = 10000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[48]);
+        k_r = 1e-06 * 1.343e+15 
+                   * exp(0 * tc[0] - 0.50321666580472 * 15680 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[49]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[48] -= qdot;
+        wdot[49] += qdot;
+    }
+
+    {
+        // (241):  C3H3 + O2 <=> CH2CO + HCO
+        const amrex::Real k_f = 30100
+                   * exp(-(1444.23183085955) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[48]);
+        k_r = 1e-06 * 488100000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 59470 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[20]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[7] += qdot;
+        wdot[20] += qdot;
+        wdot[48] -= qdot;
+    }
+
+    {
+        // (242):  PC4H9O2 <=> PC4H9 + O2
+        const amrex::Real k_f = 6.155e+19
+                   * exp((-1.38) * tc[0] - (17869.2238027256) * invT);
+        const amrex::Real qf = k_f * (sc[46]);
+        k_r = 1e-06 * 4520000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[31]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[31] += qdot;
+        wdot[46] -= qdot;
+    }
+
+    {
+        // (243):  CH2CHO <=> CH2CO + H
+        const amrex::Real k_f = 3.094e+15
+                   * exp((-0.26) * tc[0] - (25573.4709561959) * invT);
+        const amrex::Real qf = k_f * (sc[23]);
+        k_r = 1e-06 * 50000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 12300 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[20]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[20] += qdot;
+        wdot[23] -= qdot;
+    }
+
+    {
+        // (244):  CH2CHO + O2 <=> CH2O + CO + OH
+        const amrex::Real k_f = 20000000
+                   * exp(-(2113.50999637982) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[23]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[6]*sc[13]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[4] += qdot;
+        wdot[6] += qdot;
+        wdot[13] += qdot;
+        wdot[23] -= qdot;
+    }
+
+    {
+        // (245):  NC4KET13 <=> CH3CHO + CH2CHO + OH
+        const amrex::Real k_f = 1.05e+16
+                   * exp(-(20933.8132974763) * invT);
+        const amrex::Real qf = k_f * (sc[51]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[23]*sc[24]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[23] += qdot;
+        wdot[24] += qdot;
+        wdot[51] -= qdot;
+    }
+
+    {
+        // (246):  C3H5-A + O2 <=> C3H4-A + HO2
+        const amrex::Real k_f = 2.18e+15
+                   * exp((-2.85) * tc[0] - (15478.9446401532) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[47]);
+        k_r = 1e-06 * 2.69e+19 
+                   * exp(-2.4 * tc[0] - 0.50321666580472 * 20500 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[25]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[25] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (247):  C3H5-A + O2 <=> CH2CHO + CH2O
+        const amrex::Real k_f = 7140000000
+                   * exp((-1.21) * tc[0] - (10592.7108151893) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[47]);
+        k_r = 1e-06 * 4.944e+16 
+                   * exp(-1.4 * tc[0] - 0.50321666580472 * 88620 * invT);
+        const amrex::Real qr = k_r * (sc[13]*sc[23]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[13] += qdot;
+        wdot[23] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (248):  C3H5-A + O2 <=> C2H2 + CH2O + OH
+        const amrex::Real k_f = 9.72e+23
+                   * exp((-5.71) * tc[0] - (10793.9974815112) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[47]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[13]*sc[18]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[4] += qdot;
+        wdot[13] += qdot;
+        wdot[18] += qdot;
+        wdot[47] -= qdot;
+    }
+
+    {
+        // (249):  HCCO + O2 <=> CO2 + HCO
+        const amrex::Real k_f = 240000
+                   * exp(-(-429.747032597231) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[21]);
+        k_r = 1e-06 * 147400000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 133600 * invT);
+        const amrex::Real qr = k_r * (sc[7]*sc[8]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[7] += qdot;
+        wdot[8] += qdot;
+        wdot[21] -= qdot;
+    }
+
+    {
+        // (250):  CH3 + O2 <=> CH2O + OH
+        const amrex::Real k_f = 747000
+                   * exp(-(7170.83748771726) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[9]);
+        k_r = 1e-06 * 777800000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 67770 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[13]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[4] += qdot;
+        wdot[9] -= qdot;
+        wdot[13] += qdot;
+    }
+
+    {
+        // (251):  C2H4 + H2 <=> CH3 + CH3
+        const amrex::Real k_f = 3767000
+                   * exp((0.83) * tc[0] - (42627.4837603178) * invT);
+        const amrex::Real qf = k_f * (sc[1]*sc[16]);
+        k_r = 1e-06 * 100000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 32000 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[1] -= qdot;
+        wdot[9] += qdot;
+        wdot[9] += qdot;
+        wdot[16] -= qdot;
+    }
+
+    {
+        // (252):  NC3H7CHO + O2 <=> NC3H7CO + HO2
+        const amrex::Real k_f = 20000000
+                   * exp((0.5) * tc[0] - (21235.7432969592) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[52]);
+        k_r = 1e-06 * 10000000 
+                   * exp(0.5 * tc[0] - 0.50321666580472 * 4000 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[53]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[52] -= qdot;
+        wdot[53] += qdot;
+    }
+
+    {
+        // (253):  NC3H7CHO + OH <=> NC3H7CO + H2O
+        const amrex::Real k_f = 26900
+                   * exp((0.76) * tc[0] - (-171.093666373605) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[52]);
+        k_r = 1e-06 * 18520000000 
+                   * exp(0.75 * tc[0] - 0.50321666580472 * 31220 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[53]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[52] -= qdot;
+        wdot[53] += qdot;
+    }
+
+    {
+        // (254):  NC3H7CHO + H <=> NC3H7CO + H2
+        const amrex::Real k_f = 40000000
+                   * exp(-(2113.50999637982) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[52]);
+        k_r = 1e-06 * 18000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 24000 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[53]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[52] -= qdot;
+        wdot[53] += qdot;
+    }
+
+    {
+        // (255):  NC3H7CHO + O <=> NC3H7CO + OH
+        const amrex::Real k_f = 5000000
+                   * exp(-(900.757831790448) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[52]);
+        k_r = 1e-06 * 1000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 19000 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[53]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[52] -= qdot;
+        wdot[53] += qdot;
+    }
+
+    {
+        // (256):  NC3H7CHO + HO2 <=> NC3H7CO + H2O2
+        const amrex::Real k_f = 2800000
+                   * exp(-(6843.74665494419) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[52]);
+        k_r = 1e-06 * 1000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 10000 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[53]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[52] -= qdot;
+        wdot[53] += qdot;
+    }
+
+    {
+        // (257):  NC3H7CHO + CH3 <=> NC3H7CO + CH4
+        const amrex::Real k_f = 1700000
+                   * exp(-(4247.14865939183) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[52]);
+        k_r = 1e-06 * 15000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 28000 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[53]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[52] -= qdot;
+        wdot[53] += qdot;
+    }
+
+    {
+        // (258):  NC3H7CHO + CH3O2 <=> NC3H7CO + CH3O2H
+        const amrex::Real k_f = 1000000
+                   * exp(-(4780.55832514484) * invT);
+        const amrex::Real qf = k_f * (sc[38]*sc[52]);
+        k_r = 1e-06 * 25000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 10000 * invT);
+        const amrex::Real qr = k_r * (sc[39]*sc[53]);
+        const amrex::Real qdot = qf - qr;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+        wdot[52] -= qdot;
+        wdot[53] += qdot;
+    }
+
+    {
+        // (259):  NC3H7CO <=> NC3H7 + CO
+        const amrex::Real k_f = 5.325e+15
+                   * exp((-0.86) * tc[0] - (6743.10332178324) * invT);
+        const amrex::Real qf = k_f * (sc[53]);
+        k_r = 1e-06 * 150000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 4800 * invT);
+        const amrex::Real qr = k_r * (sc[6]*sc[28]);
+        const amrex::Real qdot = qf - qr;
+        wdot[6] += qdot;
+        wdot[28] += qdot;
+        wdot[53] -= qdot;
+    }
+
+    {
+        // (260):  C2H5COCH2 <=> CH2CO + C2H5
+        const amrex::Real k_f = 15700000000000
+                   * exp(-(15096.4999741416) * invT);
+        const amrex::Real qf = k_f * (sc[54]);
+        k_r = 1e-06 * 211000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 7350 * invT);
+        const amrex::Real qr = k_r * (sc[17]*sc[20]);
+        const amrex::Real qdot = qf - qr;
+        wdot[17] += qdot;
+        wdot[20] += qdot;
+        wdot[54] -= qdot;
+    }
+
+    {
+        // (261):  NC3H7COCH2 <=> NC3H7 + CH2CO
+        const amrex::Real k_f = 1.226e+18
+                   * exp((-1.4) * tc[0] - (21864.7641292151) * invT);
+        const amrex::Real qf = k_f * (sc[55]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 11600 * invT);
+        const amrex::Real qr = k_r * (sc[20]*sc[28]);
+        const amrex::Real qdot = qf - qr;
+        wdot[20] += qdot;
+        wdot[28] += qdot;
+        wdot[55] -= qdot;
+    }
+
+    {
+        // (262):  NC4H9CHO + O2 <=> NC4H9CO + HO2
+        const amrex::Real k_f = 20000000
+                   * exp((0.5) * tc[0] - (21235.7432969592) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[56]);
+        k_r = 1e-06 * 10000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 40000 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[57]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[56] -= qdot;
+        wdot[57] += qdot;
+    }
+
+    {
+        // (263):  NC4H9CHO + OH <=> NC4H9CO + H2O
+        const amrex::Real k_f = 26900
+                   * exp((0.76) * tc[0] - (-171.093666373605) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[56]);
+        k_r = 1e-06 * 21430000000 
+                   * exp(0.73 * tc[0] - 0.50321666580472 * 31240 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[57]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[56] -= qdot;
+        wdot[57] += qdot;
+    }
+
+    {
+        // (264):  NC4H9CHO + H <=> NC4H9CO + H2
+        const amrex::Real k_f = 40000000
+                   * exp(-(2113.50999637982) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[56]);
+        k_r = 1e-06 * 18000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 24000 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[57]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[56] -= qdot;
+        wdot[57] += qdot;
+    }
+
+    {
+        // (265):  NC4H9CHO + O <=> NC4H9CO + OH
+        const amrex::Real k_f = 5000000
+                   * exp(-(900.757831790448) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[56]);
+        k_r = 1e-06 * 1000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 19000 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[57]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[56] -= qdot;
+        wdot[57] += qdot;
+    }
+
+    {
+        // (266):  NC4H9CHO + HO2 <=> NC4H9CO + H2O2
+        const amrex::Real k_f = 2800000
+                   * exp(-(6843.74665494419) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[56]);
+        k_r = 1e-06 * 1000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 10000 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[57]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[56] -= qdot;
+        wdot[57] += qdot;
+    }
+
+    {
+        // (267):  NC4H9CHO + CH3 <=> NC4H9CO + CH4
+        const amrex::Real k_f = 1700000
+                   * exp(-(4247.14865939183) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[56]);
+        k_r = 1e-06 * 15000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 28000 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[57]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[56] -= qdot;
+        wdot[57] += qdot;
+    }
+
+    {
+        // (268):  NC4H9CHO + CH3O2 <=> NC4H9CO + CH3O2H
+        const amrex::Real k_f = 1000000
+                   * exp(-(4780.55832514484) * invT);
+        const amrex::Real qf = k_f * (sc[38]*sc[56]);
+        k_r = 1e-06 * 25000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 10000 * invT);
+        const amrex::Real qr = k_r * (sc[39]*sc[57]);
+        const amrex::Real qdot = qf - qr;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+        wdot[56] -= qdot;
+        wdot[57] += qdot;
+    }
+
+    {
+        // (269):  NC4H9CO <=> PC4H9 + CO
+        const amrex::Real k_f = 100000000000
+                   * exp(-(4830.87999172531) * invT);
+        const amrex::Real qf = k_f * (sc[57]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[6]*sc[31]);
+        const amrex::Real qdot = qf - qr;
+        wdot[6] += qdot;
+        wdot[31] += qdot;
+        wdot[57] -= qdot;
+    }
+
+    {
+        // (270):  CH2(S) + CH4 <=> CH3 + CH3
+        const amrex::Real k_f = 40000000
+                   ;
+        const amrex::Real qf = k_f * (sc[10]*sc[50]);
+        k_r = 1e-06 * 5.429e+15 
+                   * exp(-0.89 * tc[0] - 0.50321666580472 * 15650 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[9] += qdot;
+        wdot[10] -= qdot;
+        wdot[50] -= qdot;
+    }
+
+    {
+        // (271):  CH2(S) + C2H6 <=> CH3 + C2H5
+        const amrex::Real k_f = 120000000
+                   ;
+        const amrex::Real qf = k_f * (sc[15]*sc[50]);
+        k_r = 1e-06 * 104100000000000 
+                   * exp(-0.33 * tc[0] - 0.50321666580472 * 19820 * invT);
+        const amrex::Real qr = k_r * (sc[9]*sc[17]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] += qdot;
+        wdot[15] -= qdot;
+        wdot[17] += qdot;
+        wdot[50] -= qdot;
+    }
+
+    {
+        // (272):  CH2(S) + O2 <=> CO + OH + H
+        const amrex::Real k_f = 70000000
+                   ;
+        const amrex::Real qf = k_f * (sc[3]*sc[50]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[4]*sc[6]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[3] -= qdot;
+        wdot[4] += qdot;
+        wdot[6] += qdot;
+        wdot[50] -= qdot;
+    }
+
+    {
+        // (273):  CH2(S) + H2 <=> CH3 + H
+        const amrex::Real k_f = 70000000
+                   ;
+        const amrex::Real qf = k_f * (sc[1]*sc[50]);
+        k_r = 1e-06 * 2.482e+17 
+                   * exp(-0.89 * tc[0] - 0.50321666580472 * 16130 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[9]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[1] -= qdot;
+        wdot[9] += qdot;
+        wdot[50] -= qdot;
+    }
+
+    {
+        // (274):  CH2(S) + O <=> CO + H + H
+        const amrex::Real k_f = 30000000
+                   ;
+        const amrex::Real qf = k_f * (sc[2]*sc[50]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[0]*sc[6]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[0] += qdot;
+        wdot[2] -= qdot;
+        wdot[6] += qdot;
+        wdot[50] -= qdot;
+    }
+
+    {
+        // (275):  CH2(S) + OH <=> CH2O + H
+        const amrex::Real k_f = 30000000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[50]);
+        k_r = 1e-06 * 3.194e+18 
+                   * exp(-0.89 * tc[0] - 0.50321666580472 * 87860 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[13]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[4] -= qdot;
+        wdot[13] += qdot;
+        wdot[50] -= qdot;
+    }
+
+    {
+        // (276):  CH2(S) + CO2 <=> CH2O + CO
+        const amrex::Real k_f = 3000000
+                   ;
+        const amrex::Real qf = k_f * (sc[8]*sc[50]);
+        k_r = 1e-06 * 2.852e+15 
+                   * exp(-0.89 * tc[0] - 0.50321666580472 * 65520 * invT);
+        const amrex::Real qr = k_r * (sc[6]*sc[13]);
+        const amrex::Real qdot = qf - qr;
+        wdot[6] += qdot;
+        wdot[8] -= qdot;
+        wdot[13] += qdot;
+        wdot[50] -= qdot;
+    }
+
+    {
+        // (277):  CH2(S) + CH3 <=> C2H4 + H
+        const amrex::Real k_f = 20000000
+                   ;
+        const amrex::Real qf = k_f * (sc[9]*sc[50]);
+        k_r = 1e-06 * 2.671e+15 
+                   * exp(-0.06 * tc[0] - 0.50321666580472 * 68840 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[16]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[9] -= qdot;
+        wdot[16] += qdot;
+        wdot[50] -= qdot;
+    }
+
+    {
+        // (278):  CH2(S) + CH2CO <=> C2H4 + CO
+        const amrex::Real k_f = 160000000
+                   ;
+        const amrex::Real qf = k_f * (sc[20]*sc[50]);
+        k_r = 1e-06 * 4.596e+15 
+                   * exp(-0.06 * tc[0] - 0.50321666580472 * 105600 * invT);
+        const amrex::Real qr = k_r * (sc[6]*sc[16]);
+        const amrex::Real qdot = qf - qr;
+        wdot[6] += qdot;
+        wdot[16] += qdot;
+        wdot[20] -= qdot;
+        wdot[50] -= qdot;
+    }
+
+    {
+        // (279):  NC7H16 <=> H + C7H15-1
+        const amrex::Real k_f = 1.34e+88
+                   * exp((-21.17) * tc[0] - (71859.339876914) * invT);
+        const amrex::Real qf = k_f * (sc[58]);
+        k_r = 1e-06 * 3.374e+82 
+                   * exp(-20.22 * tc[0] - 0.50321666580472 * 39610 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[59]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[58] -= qdot;
+        wdot[59] += qdot;
+    }
+
+    {
+        // (280):  NC7H16 <=> H + C7H15-2
+        const amrex::Real k_f = 6.5e+87
+                   * exp((-21.01) * tc[0] - (70198.7248797584) * invT);
+        const amrex::Real qf = k_f * (sc[58]);
+        k_r = 1e-06 * 5.207e+80 
+                   * exp(-19.67 * tc[0] - 0.50321666580472 * 38890 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[58] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (281):  NC7H16 <=> H + C7H15-3
+        const amrex::Real k_f = 6.5e+87
+                   * exp((-21.01) * tc[0] - (70198.7248797584) * invT);
+        const amrex::Real qf = k_f * (sc[58]);
+        k_r = 1e-06 * 5.207e+80 
+                   * exp(-19.67 * tc[0] - 0.50321666580472 * 38890 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[58] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (282):  NC7H16 <=> H + C7H15-4
+        const amrex::Real k_f = 3.25e+87
+                   * exp((-21.01) * tc[0] - (70198.7248797584) * invT);
+        const amrex::Real qf = k_f * (sc[58]);
+        k_r = 1e-06 * 5.187e+80 
+                   * exp(-19.67 * tc[0] - 0.50321666580472 * 38890 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[58] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (283):  NC7H16 <=> PC4H9 + NC3H7
+        const amrex::Real k_f = 1.415e+78
+                   * exp((-17.71) * tc[0] - (60738.2515626297) * invT);
+        const amrex::Real qf = k_f * (sc[58]);
+        k_r = 1e-06 * 1.363e+68 
+                   * exp(-16.11 * tc[0] - 0.50321666580472 * 32460 * invT);
+        const amrex::Real qr = k_r * (sc[28]*sc[31]);
+        const amrex::Real qdot = qf - qr;
+        wdot[28] += qdot;
+        wdot[31] += qdot;
+        wdot[58] -= qdot;
+    }
+
+    {
+        // (284):  NC7H16 + H <=> C7H15-1 + H2
+        const amrex::Real k_f = 0.188
+                   * exp((2.75) * tc[0] - (3160.20066125364) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[58]);
+        k_r = 1e-06 * 8926 
+                   * exp(2.7 * tc[0] - 0.50321666580472 * 10550 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[59]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[58] -= qdot;
+        wdot[59] += qdot;
+    }
+
+    {
+        // (285):  NC7H16 + H <=> C7H15-2 + H2
+        const amrex::Real k_f = 2.6
+                   * exp((2.4) * tc[0] - (2249.8817128129) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[58]);
+        k_r = 1e-06 * 3928 
+                   * exp(2.74 * tc[0] - 0.50321666580472 * 11260 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[58] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (286):  NC7H16 + H <=> C7H15-3 + H2
+        const amrex::Real k_f = 2.6
+                   * exp((2.4) * tc[0] - (2249.8817128129) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[58]);
+        k_r = 1e-06 * 3928 
+                   * exp(2.74 * tc[0] - 0.50321666580472 * 11260 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[58] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (287):  NC7H16 + H <=> C7H15-4 + H2
+        const amrex::Real k_f = 1.3
+                   * exp((2.4) * tc[0] - (2249.8817128129) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[58]);
+        k_r = 1e-06 * 3913 
+                   * exp(2.74 * tc[0] - 0.50321666580472 * 11260 * invT);
+        const amrex::Real qr = k_r * (sc[1]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[1] += qdot;
+        wdot[58] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (288):  NC7H16 + O <=> C7H15-1 + OH
+        const amrex::Real k_f = 0.193
+                   * exp((2.68) * tc[0] - (1869.95313013034) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[58]);
+        k_r = 1e-06 * 4025 
+                   * exp(2.63 * tc[0] - 0.50321666580472 * 5893 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[59]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[58] -= qdot;
+        wdot[59] += qdot;
+    }
+
+    {
+        // (289):  NC7H16 + O <=> C7H15-2 + OH
+        const amrex::Real k_f = 0.0954
+                   * exp((2.71) * tc[0] - (1059.77429818474) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[58]);
+        k_r = 1e-06 * 63.3 
+                   * exp(3.05 * tc[0] - 0.50321666580472 * 6798 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[58] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (290):  NC7H16 + O <=> C7H15-3 + OH
+        const amrex::Real k_f = 0.0954
+                   * exp((2.71) * tc[0] - (1059.77429818474) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[58]);
+        k_r = 1e-06 * 63.3 
+                   * exp(3.05 * tc[0] - 0.50321666580472 * 6798 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[58] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (291):  NC7H16 + O <=> C7H15-4 + OH
+        const amrex::Real k_f = 0.0477
+                   * exp((2.71) * tc[0] - (1059.77429818474) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[58]);
+        k_r = 1e-06 * 63.06 
+                   * exp(3.05 * tc[0] - 0.50321666580472 * 6798 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[58] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (292):  NC7H16 + OH <=> C7H15-1 + H2O
+        const amrex::Real k_f = 10500
+                   * exp((0.97) * tc[0] - (800.114498629504) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[58]);
+        k_r = 1e-06 * 15000000000 
+                   * exp(1.05 * tc[0] - 0.50321666580472 * 23330 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[59]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[58] -= qdot;
+        wdot[59] += qdot;
+    }
+
+    {
+        // (293):  NC7H16 + OH <=> C7H15-2 + H2O
+        const amrex::Real k_f = 94
+                   * exp((1.61) * tc[0] - (-17.6125833031652) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[58]);
+        k_r = 1e-06 * 614800 
+                   * exp(1.95 * tc[0] - 0.50321666580472 * 21910 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[58] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (294):  NC7H16 + OH <=> C7H15-3 + H2O
+        const amrex::Real k_f = 94
+                   * exp((1.61) * tc[0] - (-17.6125833031652) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[58]);
+        k_r = 1e-06 * 614800 
+                   * exp(1.95 * tc[0] - 0.50321666580472 * 21910 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[58] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (295):  NC7H16 + OH <=> C7H15-4 + H2O
+        const amrex::Real k_f = 47
+                   * exp((1.61) * tc[0] - (-17.6125833031652) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[58]);
+        k_r = 1e-06 * 612500 
+                   * exp(1.95 * tc[0] - 0.50321666580472 * 21910 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[58] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (296):  NC7H16 + HO2 <=> C7H15-1 + H2O2
+        const amrex::Real k_f = 16800000
+                   * exp(-(10285.7486490485) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[58]);
+        k_r = 1e-06 * 20500000000000 
+                   * exp(-0.38 * tc[0] - 0.50321666580472 * 8399 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[59]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[58] -= qdot;
+        wdot[59] += qdot;
+    }
+
+    {
+        // (297):  NC7H16 + HO2 <=> C7H15-2 + H2O2
+        const amrex::Real k_f = 11200000
+                   * exp(-(8901.90281808549) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[58]);
+        k_r = 1e-06 * 434800000000 
+                   * exp(0.01 * tc[0] - 0.50321666580472 * 8165 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[58] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (298):  NC7H16 + HO2 <=> C7H15-3 + H2O2
+        const amrex::Real k_f = 11200000
+                   * exp(-(8901.90281808549) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[58]);
+        k_r = 1e-06 * 434800000000 
+                   * exp(0.01 * tc[0] - 0.50321666580472 * 8165 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[58] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (299):  NC7H16 + HO2 <=> C7H15-4 + H2O2
+        const amrex::Real k_f = 5600000
+                   * exp(-(8901.90281808549) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[58]);
+        k_r = 1e-06 * 433200000000 
+                   * exp(0.01 * tc[0] - 0.50321666580472 * 8165 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[58] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (300):  NC7H16 + CH3 <=> C7H15-1 + CH4
+        const amrex::Real k_f = 9.04e-07
+                   * exp((3.65) * tc[0] - (3600.01202716696) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[58]);
+        k_r = 1e-06 * 1.121 
+                   * exp(3.6 * tc[0] - 0.50321666580472 * 11910 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[59]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[58] -= qdot;
+        wdot[59] += qdot;
+    }
+
+    {
+        // (301):  NC7H16 + CH3 <=> C7H15-2 + CH4
+        const amrex::Real k_f = 0.0541
+                   * exp((2.26) * tc[0] - (3666.93984371899) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[58]);
+        k_r = 1e-06 * 2135 
+                   * exp(2.6 * tc[0] - 0.50321666580472 * 14550 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[58] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (302):  NC7H16 + CH3 <=> C7H15-3 + CH4
+        const amrex::Real k_f = 0.0541
+                   * exp((2.26) * tc[0] - (3666.93984371899) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[58]);
+        k_r = 1e-06 * 2135 
+                   * exp(2.6 * tc[0] - 0.50321666580472 * 14550 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[58] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (303):  NC7H16 + CH3 <=> C7H15-4 + CH4
+        const amrex::Real k_f = 0.02705
+                   * exp((2.26) * tc[0] - (3666.93984371899) * invT);
+        const amrex::Real qf = k_f * (sc[9]*sc[58]);
+        k_r = 1e-06 * 2127 
+                   * exp(2.6 * tc[0] - 0.50321666580472 * 14550 * invT);
+        const amrex::Real qr = k_r * (sc[10]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[9] -= qdot;
+        wdot[10] += qdot;
+        wdot[58] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (304):  NC7H16 + O2 <=> C7H15-1 + HO2
+        const amrex::Real k_f = 60000000
+                   * exp(-(26569.8399544892) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[58]);
+        k_r = 1e-06 * 51750000000 
+                   * exp(0.28 * tc[0] - 0.50321666580472 * -406 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[59]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[58] -= qdot;
+        wdot[59] += qdot;
+    }
+
+    {
+        // (305):  NC7H16 + O2 <=> C7H15-2 + HO2
+        const amrex::Real k_f = 40000000
+                   * exp(-(25236.3157901067) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[58]);
+        k_r = 1e-06 * 1098000000 
+                   * exp(0.67 * tc[0] - 0.50321666580472 * -541 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[58] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (306):  NC7H16 + O2 <=> C7H15-3 + HO2
+        const amrex::Real k_f = 40000000
+                   * exp(-(25236.3157901067) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[58]);
+        k_r = 1e-06 * 1098000000 
+                   * exp(0.67 * tc[0] - 0.50321666580472 * -541 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[58] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (307):  NC7H16 + O2 <=> C7H15-4 + HO2
+        const amrex::Real k_f = 20000000
+                   * exp(-(25236.3157901067) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[58]);
+        k_r = 1e-06 * 1094000000 
+                   * exp(0.67 * tc[0] - 0.50321666580472 * -541 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[58] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (308):  NC7H16 + C2H5 <=> C7H15-1 + C2H6
+        const amrex::Real k_f = 100000
+                   * exp(-(6743.10332178324) * invT);
+        const amrex::Real qf = k_f * (sc[17]*sc[58]);
+        k_r = 1e-06 * 320000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 12300 * invT);
+        const amrex::Real qr = k_r * (sc[15]*sc[59]);
+        const amrex::Real qdot = qf - qr;
+        wdot[15] += qdot;
+        wdot[17] -= qdot;
+        wdot[58] -= qdot;
+        wdot[59] += qdot;
+    }
+
+    {
+        // (309):  NC7H16 + C2H5 <=> C7H15-2 + C2H6
+        const amrex::Real k_f = 100000
+                   * exp(-(5233.45332436908) * invT);
+        const amrex::Real qf = k_f * (sc[17]*sc[58]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 12900 * invT);
+        const amrex::Real qr = k_r * (sc[15]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[15] += qdot;
+        wdot[17] -= qdot;
+        wdot[58] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (310):  NC7H16 + C2H5 <=> C7H15-3 + C2H6
+        const amrex::Real k_f = 100000
+                   * exp(-(5233.45332436908) * invT);
+        const amrex::Real qf = k_f * (sc[17]*sc[58]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 12900 * invT);
+        const amrex::Real qr = k_r * (sc[15]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[15] += qdot;
+        wdot[17] -= qdot;
+        wdot[58] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (311):  NC7H16 + C2H5 <=> C7H15-4 + C2H6
+        const amrex::Real k_f = 50000
+                   * exp(-(5233.45332436908) * invT);
+        const amrex::Real qf = k_f * (sc[17]*sc[58]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 12900 * invT);
+        const amrex::Real qr = k_r * (sc[15]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[15] += qdot;
+        wdot[17] -= qdot;
+        wdot[58] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (312):  NC7H16 + C2H3 <=> C7H15-1 + C2H4
+        const amrex::Real k_f = 1000000
+                   * exp(-(9057.89998448495) * invT);
+        const amrex::Real qf = k_f * (sc[19]*sc[58]);
+        k_r = 1e-06 * 2570000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 25400 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[59]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[19] -= qdot;
+        wdot[58] -= qdot;
+        wdot[59] += qdot;
+    }
+
+    {
+        // (313):  NC7H16 + C2H3 <=> C7H15-2 + C2H4
+        const amrex::Real k_f = 800000
+                   * exp(-(8454.03998551929) * invT);
+        const amrex::Real qf = k_f * (sc[19]*sc[58]);
+        k_r = 1e-06 * 2000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 24200 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[19] -= qdot;
+        wdot[58] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (314):  NC7H16 + C2H3 <=> C7H15-3 + C2H4
+        const amrex::Real k_f = 800000
+                   * exp(-(8454.03998551929) * invT);
+        const amrex::Real qf = k_f * (sc[19]*sc[58]);
+        k_r = 1e-06 * 2000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 24200 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[19] -= qdot;
+        wdot[58] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (315):  NC7H16 + C2H3 <=> C7H15-4 + C2H4
+        const amrex::Real k_f = 400000
+                   * exp(-(8454.03998551929) * invT);
+        const amrex::Real qf = k_f * (sc[19]*sc[58]);
+        k_r = 1e-06 * 2000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 24200 * invT);
+        const amrex::Real qr = k_r * (sc[16]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[16] += qdot;
+        wdot[19] -= qdot;
+        wdot[58] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (316):  NC7H16 + CH3O2 <=> C7H15-1 + CH3O2H
+        const amrex::Real k_f = 12100000
+                   * exp(-(10280.7164823904) * invT);
+        const amrex::Real qf = k_f * (sc[38]*sc[58]);
+        k_r = 1e-06 * 3600000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 9800 * invT);
+        const amrex::Real qr = k_r * (sc[39]*sc[59]);
+        const amrex::Real qdot = qf - qr;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+        wdot[58] -= qdot;
+        wdot[59] += qdot;
+    }
+
+    {
+        // (317):  NC7H16 + CH3O2 <=> C7H15-2 + CH3O2H
+        const amrex::Real k_f = 8064000
+                   * exp(-(8906.93498474354) * invT);
+        const amrex::Real qf = k_f * (sc[38]*sc[58]);
+        k_r = 1e-06 * 237600000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 3700 * invT);
+        const amrex::Real qr = k_r * (sc[39]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+        wdot[58] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (318):  NC7H16 + CH3O2 <=> C7H15-3 + CH3O2H
+        const amrex::Real k_f = 8064000
+                   * exp(-(8906.93498474354) * invT);
+        const amrex::Real qf = k_f * (sc[38]*sc[58]);
+        k_r = 1e-06 * 237600000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 3700 * invT);
+        const amrex::Real qr = k_r * (sc[39]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+        wdot[58] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (319):  NC7H16 + CH3O2 <=> C7H15-4 + CH3O2H
+        const amrex::Real k_f = 4032000
+                   * exp(-(8906.93498474354) * invT);
+        const amrex::Real qf = k_f * (sc[38]*sc[58]);
+        k_r = 1e-06 * 237600000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 3700 * invT);
+        const amrex::Real qr = k_r * (sc[39]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[38] -= qdot;
+        wdot[39] += qdot;
+        wdot[58] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (320):  NC7H16 + C7H15-1 <=> C7H15-2 + NC7H16
+        const amrex::Real k_f = 100000
+                   * exp(-(5233.45332436908) * invT);
+        const amrex::Real qf = k_f * (sc[58]*sc[59]);
+        k_r = 1e-06 * 150000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 12300 * invT);
+        const amrex::Real qr = k_r * (sc[58]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[58] -= qdot;
+        wdot[58] += qdot;
+        wdot[59] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (321):  NC7H16 + C7H15-1 <=> C7H15-3 + NC7H16
+        const amrex::Real k_f = 100000
+                   * exp(-(5233.45332436908) * invT);
+        const amrex::Real qf = k_f * (sc[58]*sc[59]);
+        k_r = 1e-06 * 150000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 12300 * invT);
+        const amrex::Real qr = k_r * (sc[58]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[58] -= qdot;
+        wdot[58] += qdot;
+        wdot[59] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (322):  NC7H16 + C7H15-1 <=> C7H15-4 + NC7H16
+        const amrex::Real k_f = 50000
+                   * exp(-(5233.45332436908) * invT);
+        const amrex::Real qf = k_f * (sc[58]*sc[59]);
+        k_r = 1e-06 * 150000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 12300 * invT);
+        const amrex::Real qr = k_r * (sc[58]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[58] -= qdot;
+        wdot[58] += qdot;
+        wdot[59] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (323):  NC7H16 + C7H15-2 <=> C7H15-3 + NC7H16
+        const amrex::Real k_f = 100000
+                   * exp(-(5233.45332436908) * invT);
+        const amrex::Real qf = k_f * (sc[58]*sc[60]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 10400 * invT);
+        const amrex::Real qr = k_r * (sc[58]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[58] -= qdot;
+        wdot[58] += qdot;
+        wdot[60] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (324):  NC7H16 + C7H15-2 <=> C7H15-4 + NC7H16
+        const amrex::Real k_f = 50000
+                   * exp(-(5233.45332436908) * invT);
+        const amrex::Real qf = k_f * (sc[58]*sc[60]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 10400 * invT);
+        const amrex::Real qr = k_r * (sc[58]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[58] -= qdot;
+        wdot[58] += qdot;
+        wdot[60] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (325):  NC7H16 + C7H15-3 <=> C7H15-4 + NC7H16
+        const amrex::Real k_f = 50000
+                   * exp(-(5233.45332436908) * invT);
+        const amrex::Real qf = k_f * (sc[58]*sc[61]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 10400 * invT);
+        const amrex::Real qr = k_r * (sc[58]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[58] -= qdot;
+        wdot[58] += qdot;
+        wdot[61] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (326):  C7H15-2 <=> PC4H9 + C3H6
+        const amrex::Real k_f = 2.218e+16
+                   * exp((-0.89) * tc[0] - (15161.9181406962) * invT);
+        const amrex::Real qf = k_f * (sc[60]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 8200 * invT);
+        const amrex::Real qr = k_r * (sc[26]*sc[31]);
+        const amrex::Real qdot = qf - qr;
+        wdot[26] += qdot;
+        wdot[31] += qdot;
+        wdot[60] -= qdot;
+    }
+
+    {
+        // (327):  C7H15-2 <=> C7H14-2 + H
+        const amrex::Real k_f = 2.71e+15
+                   * exp((-0.72) * tc[0] - (18915.9144675994) * invT);
+        const amrex::Real qf = k_f * (sc[60]);
+        k_r = 1e-06 * 10000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 2900 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[63]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[60] -= qdot;
+        wdot[63] += qdot;
+    }
+
+    {
+        // (328):  C7H15-3 <=> C4H8-1 + NC3H7
+        const amrex::Real k_f = 9.633e+17
+                   * exp((-1.42) * tc[0] - (15388.3656403083) * invT);
+        const amrex::Real qf = k_f * (sc[61]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 7700 * invT);
+        const amrex::Real qr = k_r * (sc[28]*sc[30]);
+        const amrex::Real qdot = qf - qr;
+        wdot[28] += qdot;
+        wdot[30] += qdot;
+        wdot[61] -= qdot;
+    }
+
+    {
+        // (329):  C7H15-3 <=> C7H14-2 + H
+        const amrex::Real k_f = 2.71e+15
+                   * exp((-0.72) * tc[0] - (18915.9144675994) * invT);
+        const amrex::Real qf = k_f * (sc[61]);
+        k_r = 1e-06 * 10000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 2900 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[63]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[61] -= qdot;
+        wdot[63] += qdot;
+    }
+
+    {
+        // (330):  C7H15-3 <=> C7H14-3 + H
+        const amrex::Real k_f = 2.018e+15
+                   * exp((-0.66) * tc[0] - (18961.2039675218) * invT);
+        const amrex::Real qf = k_f * (sc[61]);
+        k_r = 1e-06 * 10000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 2900 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[64]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[61] -= qdot;
+        wdot[64] += qdot;
+    }
+
+    {
+        // (331):  C7H15-4 <=> C2H5 + C5H10-1
+        const amrex::Real k_f = 5.426e+16
+                   * exp((-0.89) * tc[0] - (15393.3978069664) * invT);
+        const amrex::Real qf = k_f * (sc[62]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 8200 * invT);
+        const amrex::Real qr = k_r * (sc[17]*sc[36]);
+        const amrex::Real qdot = qf - qr;
+        wdot[17] += qdot;
+        wdot[36] += qdot;
+        wdot[62] -= qdot;
+    }
+
+    {
+        // (332):  C7H15-4 <=> C7H14-3 + H
+        const amrex::Real k_f = 4.02e+15
+                   * exp((-0.66) * tc[0] - (18961.2039675218) * invT);
+        const amrex::Real qf = k_f * (sc[62]);
+        k_r = 1e-06 * 10000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 2900 * invT);
+        const amrex::Real qr = k_r * (sc[0]*sc[64]);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] += qdot;
+        wdot[62] -= qdot;
+        wdot[64] += qdot;
+    }
+
+    {
+        // (333):  C7H15-2 + O2 <=> C7H14-2 + HO2
+        const amrex::Real k_f = 3e-15
+                   * exp(-(1509.64999741416) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[60]);
+        k_r = 1e-06 * 3.793e-09 
+                   * exp(0.05 * tc[0] - 0.50321666580472 * 18270 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[63]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[60] -= qdot;
+        wdot[63] += qdot;
+    }
+
+    {
+        // (334):  C7H15-3 + O2 <=> C7H14-2 + HO2
+        const amrex::Real k_f = 3e-15
+                   * exp(-(1509.64999741416) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[61]);
+        k_r = 1e-06 * 3.793e-09 
+                   * exp(0.05 * tc[0] - 0.50321666580472 * 18270 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[63]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[61] -= qdot;
+        wdot[63] += qdot;
+    }
+
+    {
+        // (335):  C7H15-3 + O2 <=> C7H14-3 + HO2
+        const amrex::Real k_f = 3e-15
+                   * exp(-(1509.64999741416) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[61]);
+        k_r = 1e-06 * 5.094e-09 
+                   * exp(-0.01 * tc[0] - 0.50321666580472 * 18180 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[64]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[61] -= qdot;
+        wdot[64] += qdot;
+    }
+
+    {
+        // (336):  C7H15-4 + O2 <=> C7H14-3 + HO2
+        const amrex::Real k_f = 6e-15
+                   * exp(-(1509.64999741416) * invT);
+        const amrex::Real qf = k_f * (sc[3]*sc[62]);
+        k_r = 1e-06 * 5.113e-09 
+                   * exp(-0.01 * tc[0] - 0.50321666580472 * 18180 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[64]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] -= qdot;
+        wdot[11] += qdot;
+        wdot[62] -= qdot;
+        wdot[64] += qdot;
+    }
+
+    {
+        // (337):  C7H15-1 <=> C7H15-3
+        const amrex::Real k_f = 1386000000
+                   * exp((0.98) * tc[0] - (16988.5946375673) * invT);
+        const amrex::Real qf = k_f * (sc[59]);
+        k_r = 1 * 44100000 
+                   * exp(1.38 * tc[0] - 0.50321666580472 * 36280 * invT);
+        const amrex::Real qr = k_r * (sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[59] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (338):  C7H15-1 <=> C7H15-4
+        const amrex::Real k_f = 2541000000
+                   * exp((0.35) * tc[0] - (9943.56131630126) * invT);
+        const amrex::Real qf = k_f * (sc[59]);
+        k_r = 1 * 161100000 
+                   * exp(0.74 * tc[0] - 0.50321666580472 * 22280 * invT);
+        const amrex::Real qr = k_r * (sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[59] -= qdot;
+        wdot[62] += qdot;
+    }
+
+    {
+        // (339):  C7H15-2 <=> C7H15-3
+        const amrex::Real k_f = 958700000
+                   * exp((1.39) * tc[0] - (19977.7016324474) * invT);
+        const amrex::Real qf = k_f * (sc[60]);
+        k_r = 1 * 958700000 
+                   * exp(1.39 * tc[0] - 0.50321666580472 * 39700 * invT);
+        const amrex::Real qr = k_r * (sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[60] -= qdot;
+        wdot[61] += qdot;
+    }
+
+    {
+        // (340):  C7H15-1 <=> C7H15-2
+        const amrex::Real k_f = 547800000
+                   * exp((1.62) * tc[0] - (19504.6779665909) * invT);
+        const amrex::Real qf = k_f * (sc[59]);
+        k_r = 1 * 17430000 
+                   * exp(2.01 * tc[0] - 0.50321666580472 * 41280 * invT);
+        const amrex::Real qr = k_r * (sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[59] -= qdot;
+        wdot[60] += qdot;
+    }
+
+    {
+        // (341):  C7H14-2 + OH <=> C2H5CHO + PC4H9
+        const amrex::Real k_f = 100000
+                   * exp(-(-2012.86666321888) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[63]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[31]*sc[33]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[31] += qdot;
+        wdot[33] += qdot;
+        wdot[63] -= qdot;
+    }
+
+    {
+        // (342):  C7H14-3 + OH <=> C2H5CHO + PC4H9
+        const amrex::Real k_f = 100000
+                   * exp(-(-2012.86666321888) * invT);
+        const amrex::Real qf = k_f * (sc[4]*sc[64]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[31]*sc[33]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[31] += qdot;
+        wdot[33] += qdot;
+        wdot[64] -= qdot;
+    }
+
+    {
+        // (343):  C7H14-2 + O <=> CH3CHO + C5H10-1
+        const amrex::Real k_f = 100000
+                   * exp(-(-528.377499094956) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[63]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[24]*sc[36]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[24] += qdot;
+        wdot[36] += qdot;
+        wdot[63] -= qdot;
+    }
+
+    {
+        // (344):  C7H14-3 + O <=> CH3CHO + C5H10-1
+        const amrex::Real k_f = 100000
+                   * exp(-(-528.377499094956) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[64]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[24]*sc[36]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[24] += qdot;
+        wdot[36] += qdot;
+        wdot[64] -= qdot;
+    }
+
+    {
+        // (345):  C7H14-2 <=> C4H7 + NC3H7
+        const amrex::Real k_f = 1e+16
+                   * exp(-(35728.3832721351) * invT);
+        const amrex::Real qf = k_f * (sc[63]);
+        k_r = 1e-06 * 10000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[28]*sc[29]);
+        const amrex::Real qdot = qf - qr;
+        wdot[28] += qdot;
+        wdot[29] += qdot;
+        wdot[63] -= qdot;
+    }
+
+    {
+        // (346):  C7H14-3 <=> C4H7 + NC3H7
+        const amrex::Real k_f = 1e+16
+                   * exp(-(35728.3832721351) * invT);
+        const amrex::Real qf = k_f * (sc[64]);
+        k_r = 1e-06 * 10000000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[28]*sc[29]);
+        const amrex::Real qdot = qf - qr;
+        wdot[28] += qdot;
+        wdot[29] += qdot;
+        wdot[64] -= qdot;
+    }
+
+    {
+        // (347):  C7H15O2-1 <=> C7H15-1 + O2
+        const amrex::Real k_f = 2.657e+20
+                   * exp((-1.67) * tc[0] - (17813.8699694871) * invT);
+        const amrex::Real qf = k_f * (sc[65]);
+        k_r = 1e-06 * 4520000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[59]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[59] += qdot;
+        wdot[65] -= qdot;
+    }
+
+    {
+        // (348):  C7H15O2-2 <=> C7H15-2 + O2
+        const amrex::Real k_f = 1.357e+23
+                   * exp((-2.36) * tc[0] - (18956.1718008638) * invT);
+        const amrex::Real qf = k_f * (sc[66]);
+        k_r = 1e-06 * 7540000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[60]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[60] += qdot;
+        wdot[66] -= qdot;
+    }
+
+    {
+        // (349):  C7H15O2-3 <=> C7H15-3 + O2
+        const amrex::Real k_f = 9.879e+21
+                   * exp((-1.97) * tc[0] - (19051.7829673667) * invT);
+        const amrex::Real qf = k_f * (sc[67]);
+        k_r = 1e-06 * 7540000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[61]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[61] += qdot;
+        wdot[67] -= qdot;
+    }
+
+    {
+        // (350):  C7H15O2-4 <=> C7H15-4 + O2
+        const amrex::Real k_f = 1.357e+23
+                   * exp((-2.36) * tc[0] - (18956.1718008638) * invT);
+        const amrex::Real qf = k_f * (sc[68]);
+        k_r = 1e-06 * 7540000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[62]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[62] += qdot;
+        wdot[68] -= qdot;
+    }
+
+    {
+        // (351):  C7H15O2-1 <=> C7H14OOH1-3
+        const amrex::Real k_f = 25000000000
+                   * exp(-(10492.0674820284) * invT);
+        const amrex::Real qf = k_f * (sc[65]);
+        k_r = 1 * 2653000000 
+                   * exp(-0.11 * tc[0] - 0.50321666580472 * 8240 * invT);
+        const amrex::Real qr = k_r * (sc[69]);
+        const amrex::Real qdot = qf - qr;
+        wdot[65] -= qdot;
+        wdot[69] += qdot;
+    }
+
+    {
+        // (352):  C7H15O2-2 <=> C7H14OOH2-3
+        const amrex::Real k_f = 200000000000
+                   * exp(-(13511.3674768567) * invT);
+        const amrex::Real qf = k_f * (sc[66]);
+        k_r = 1 * 22620000000 
+                   * exp(-0.11 * tc[0] - 0.50321666580472 * 14270 * invT);
+        const amrex::Real qr = k_r * (sc[70]);
+        const amrex::Real qdot = qf - qr;
+        wdot[66] -= qdot;
+        wdot[70] += qdot;
+    }
+
+    {
+        // (353):  C7H15O2-2 <=> C7H14OOH2-4
+        const amrex::Real k_f = 25000000000
+                   * exp(-(10492.0674820284) * invT);
+        const amrex::Real qf = k_f * (sc[66]);
+        k_r = 1 * 2827000000 
+                   * exp(-0.11 * tc[0] - 0.50321666580472 * 8270 * invT);
+        const amrex::Real qr = k_r * (sc[71]);
+        const amrex::Real qdot = qf - qr;
+        wdot[66] -= qdot;
+        wdot[71] += qdot;
+    }
+
+    {
+        // (354):  C7H15O2-3 <=> C7H14OOH3-2
+        const amrex::Real k_f = 200000000000
+                   * exp(-(13511.3674768567) * invT);
+        const amrex::Real qf = k_f * (sc[67]);
+        k_r = 1 * 310700000000 
+                   * exp(-0.51 * tc[0] - 0.50321666580472 * 14080 * invT);
+        const amrex::Real qr = k_r * (sc[72]);
+        const amrex::Real qdot = qf - qr;
+        wdot[67] -= qdot;
+        wdot[72] += qdot;
+    }
+
+    {
+        // (355):  C7H15O2-3 <=> C7H14OOH3-4
+        const amrex::Real k_f = 200000000000
+                   * exp(-(13511.3674768567) * invT);
+        const amrex::Real qf = k_f * (sc[67]);
+        k_r = 1 * 310700000000 
+                   * exp(-0.51 * tc[0] - 0.50321666580472 * 14080 * invT);
+        const amrex::Real qr = k_r * (sc[73]);
+        const amrex::Real qdot = qf - qr;
+        wdot[67] -= qdot;
+        wdot[73] += qdot;
+    }
+
+    {
+        // (356):  C7H15O2-3 <=> C7H14OOH3-5
+        const amrex::Real k_f = 25000000000
+                   * exp(-(10492.0674820284) * invT);
+        const amrex::Real qf = k_f * (sc[67]);
+        k_r = 1 * 38840000000 
+                   * exp(-0.51 * tc[0] - 0.50321666580472 * 8080 * invT);
+        const amrex::Real qr = k_r * (sc[74]);
+        const amrex::Real qdot = qf - qr;
+        wdot[67] -= qdot;
+        wdot[74] += qdot;
+    }
+
+    {
+        // (357):  C7H15O2-4 <=> C7H14OOH4-2
+        const amrex::Real k_f = 50000000000
+                   * exp(-(10492.0674820284) * invT);
+        const amrex::Real qf = k_f * (sc[68]);
+        k_r = 1 * 5655000000 
+                   * exp(-0.11 * tc[0] - 0.50321666580472 * 8270 * invT);
+        const amrex::Real qr = k_r * (sc[75]);
+        const amrex::Real qdot = qf - qr;
+        wdot[68] -= qdot;
+        wdot[75] += qdot;
+    }
+
+    {
+        // (358):  C7H15O2-4 <=> C7H14OOH4-3
+        const amrex::Real k_f = 400000000000
+                   * exp(-(13511.3674768567) * invT);
+        const amrex::Real qf = k_f * (sc[68]);
+        k_r = 1 * 45240000000 
+                   * exp(-0.11 * tc[0] - 0.50321666580472 * 14270 * invT);
+        const amrex::Real qr = k_r * (sc[76]);
+        const amrex::Real qdot = qf - qr;
+        wdot[68] -= qdot;
+        wdot[76] += qdot;
+    }
+
+    {
+        // (359):  C7H14OOH2-3 <=> C7H14-2 + HO2
+        const amrex::Real k_f = 1.61e+20
+                   * exp((-2.52) * tc[0] - (10743.6758149308) * invT);
+        const amrex::Real qf = k_f * (sc[70]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 11530 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[63]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] += qdot;
+        wdot[63] += qdot;
+        wdot[70] -= qdot;
+    }
+
+    {
+        // (360):  C7H14OOH3-2 <=> C7H14-2 + HO2
+        const amrex::Real k_f = 1.61e+20
+                   * exp((-2.52) * tc[0] - (10743.6758149308) * invT);
+        const amrex::Real qf = k_f * (sc[72]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 11530 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[63]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] += qdot;
+        wdot[63] += qdot;
+        wdot[72] -= qdot;
+    }
+
+    {
+        // (361):  C7H14OOH3-4 <=> C7H14-3 + HO2
+        const amrex::Real k_f = 1.199e+20
+                   * exp((-2.46) * tc[0] - (10285.7486490485) * invT);
+        const amrex::Real qf = k_f * (sc[73]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 10530 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[64]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] += qdot;
+        wdot[64] += qdot;
+        wdot[73] -= qdot;
+    }
+
+    {
+        // (362):  C7H14OOH4-3 <=> C7H14-3 + HO2
+        const amrex::Real k_f = 2.389e+20
+                   * exp((-2.46) * tc[0] - (10285.7486490485) * invT);
+        const amrex::Real qf = k_f * (sc[76]);
+        k_r = 1e-06 * 100000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 10530 * invT);
+        const amrex::Real qr = k_r * (sc[11]*sc[64]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] += qdot;
+        wdot[64] += qdot;
+        wdot[76] -= qdot;
+    }
+
+    {
+        // (363):  C7H14OOH1-3 <=> C7H14O1-3 + OH
+        const amrex::Real k_f = 75000000000
+                   * exp(-(7674.05415352198) * invT);
+        const amrex::Real qf = k_f * (sc[69]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[81]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[69] -= qdot;
+        wdot[81] += qdot;
+    }
+
+    {
+        // (364):  C7H14OOH2-4 <=> C7H14O2-4 + OH
+        const amrex::Real k_f = 75000000000
+                   * exp(-(7674.05415352198) * invT);
+        const amrex::Real qf = k_f * (sc[71]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[82]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[71] -= qdot;
+        wdot[82] += qdot;
+    }
+
+    {
+        // (365):  C7H14OOH4-2 <=> C7H14O2-4 + OH
+        const amrex::Real k_f = 75000000000
+                   * exp(-(7674.05415352198) * invT);
+        const amrex::Real qf = k_f * (sc[75]);
+        k_r = 1e-06 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[82]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[75] -= qdot;
+        wdot[82] += qdot;
+    }
+
+    {
+        // (366):  C7H14OOH2-4 <=> OH + CH3CHO + C5H10-1
+        const amrex::Real k_f = 5.364e+17
+                   * exp((-1.4) * tc[0] - (13461.0458102763) * invT);
+        const amrex::Real qf = k_f * (sc[71]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[24]*sc[36]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[24] += qdot;
+        wdot[36] += qdot;
+        wdot[71] -= qdot;
+    }
+
+    {
+        // (367):  C7H14OOH3-5 <=> OH + C2H5CHO + C4H8-1
+        const amrex::Real k_f = 2.47e+18
+                   * exp((-1.55) * tc[0] - (13596.9143100435) * invT);
+        const amrex::Real qf = k_f * (sc[74]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[30]*sc[33]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[30] += qdot;
+        wdot[33] += qdot;
+        wdot[74] -= qdot;
+    }
+
+    {
+        // (368):  C7H14OOH4-2 <=> OH + NC3H7CHO + C3H6
+        const amrex::Real k_f = 1.3e+18
+                   * exp((-1.49) * tc[0] - (13486.2066435665) * invT);
+        const amrex::Real qf = k_f * (sc[75]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[26]*sc[52]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[26] += qdot;
+        wdot[52] += qdot;
+        wdot[75] -= qdot;
+    }
+
+    {
+        // (369):  C7H14OOH1-3O2 <=> C7H14OOH1-3 + O2
+        const amrex::Real k_f = 1.367e+23
+                   * exp((-2.37) * tc[0] - (18941.0753008896) * invT);
+        const amrex::Real qf = k_f * (sc[77]);
+        k_r = 1e-06 * 7540000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[69]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[69] += qdot;
+        wdot[77] -= qdot;
+    }
+
+    {
+        // (370):  C7H14OOH2-4O2 <=> C7H14OOH2-4 + O2
+        const amrex::Real k_f = 1.389e+23
+                   * exp((-2.38) * tc[0] - (18920.9466342575) * invT);
+        const amrex::Real qf = k_f * (sc[78]);
+        k_r = 1e-06 * 7540000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[71]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[71] += qdot;
+        wdot[78] -= qdot;
+    }
+
+    {
+        // (371):  C7H14OOH3-5O2 <=> C7H14OOH3-5 + O2
+        const amrex::Real k_f = 1.389e+23
+                   * exp((-2.38) * tc[0] - (18920.9466342575) * invT);
+        const amrex::Real qf = k_f * (sc[79]);
+        k_r = 1e-06 * 7540000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[74]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[74] += qdot;
+        wdot[79] -= qdot;
+    }
+
+    {
+        // (372):  C7H14OOH4-2O2 <=> C7H14OOH4-2 + O2
+        const amrex::Real k_f = 6.969e+22
+                   * exp((-2.38) * tc[0] - (18920.9466342575) * invT);
+        const amrex::Real qf = k_f * (sc[80]);
+        k_r = 1e-06 * 7540000000000 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[3]*sc[75]);
+        const amrex::Real qdot = qf - qr;
+        wdot[3] += qdot;
+        wdot[75] += qdot;
+        wdot[80] -= qdot;
+    }
+
+    {
+        // (373):  C7H14OOH1-3O2 <=> NC7KET13 + OH
+        const amrex::Real k_f = 25000000000
+                   * exp(-(10768.836648221) * invT);
+        const amrex::Real qf = k_f * (sc[77]);
+        k_r = 1e-06 * 3303 
+                   * exp(1.41 * tc[0] - 0.50321666580472 * 45040 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[83]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[77] -= qdot;
+        wdot[83] += qdot;
+    }
+
+    {
+        // (374):  C7H14OOH2-4O2 <=> NC7KET24 + OH
+        const amrex::Real k_f = 12500000000
+                   * exp(-(8982.41748461425) * invT);
+        const amrex::Real qf = k_f * (sc[78]);
+        k_r = 1e-06 * 161.5 
+                   * exp(1.83 * tc[0] - 0.50321666580472 * 44200 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[84]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[78] -= qdot;
+        wdot[84] += qdot;
+    }
+
+    {
+        // (375):  C7H14OOH3-5O2 <=> NC7KET35 + OH
+        const amrex::Real k_f = 12500000000
+                   * exp(-(8982.41748461425) * invT);
+        const amrex::Real qf = k_f * (sc[79]);
+        k_r = 1e-06 * 161.5 
+                   * exp(1.83 * tc[0] - 0.50321666580472 * 44200 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[85]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[79] -= qdot;
+        wdot[85] += qdot;
+    }
+
+    {
+        // (376):  C7H14OOH4-2O2 <=> NC7KET42 + OH
+        const amrex::Real k_f = 12500000000
+                   * exp(-(8982.41748461425) * invT);
+        const amrex::Real qf = k_f * (sc[80]);
+        k_r = 1e-06 * 161.5 
+                   * exp(1.83 * tc[0] - 0.50321666580472 * 44200 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[86]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[80] -= qdot;
+        wdot[86] += qdot;
+    }
+
+    {
+        // (377):  NC7KET13 <=> NC4H9CHO + CH2CHO + OH
+        const amrex::Real k_f = 1.05e+16
+                   * exp(-(20933.8132974763) * invT);
+        const amrex::Real qf = k_f * (sc[83]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[23]*sc[56]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[23] += qdot;
+        wdot[56] += qdot;
+        wdot[83] -= qdot;
+    }
+
+    {
+        // (378):  NC7KET24 <=> NC3H7CHO + CH3COCH2 + OH
+        const amrex::Real k_f = 1.05e+16
+                   * exp(-(20933.8132974763) * invT);
+        const amrex::Real qf = k_f * (sc[84]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[32]*sc[52]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[32] += qdot;
+        wdot[52] += qdot;
+        wdot[84] -= qdot;
+    }
+
+    {
+        // (379):  NC7KET35 <=> C2H5CHO + C2H5COCH2 + OH
+        const amrex::Real k_f = 1.05e+16
+                   * exp(-(20933.8132974763) * invT);
+        const amrex::Real qf = k_f * (sc[85]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[33]*sc[54]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[33] += qdot;
+        wdot[54] += qdot;
+        wdot[85] -= qdot;
+    }
+
+    {
+        // (380):  NC7KET42 <=> CH3CHO + NC3H7COCH2 + OH
+        const amrex::Real k_f = 1.05e+16
+                   * exp(-(20933.8132974763) * invT);
+        const amrex::Real qf = k_f * (sc[86]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[4]*sc[24]*sc[55]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] += qdot;
+        wdot[24] += qdot;
+        wdot[55] += qdot;
+        wdot[86] -= qdot;
+    }
+
+    {
+        // (381):  C7H14O2-4 + OH <=> CH3CO + C5H10-1 + H2O
+        const amrex::Real k_f = 2500000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[82]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[22]*sc[36]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[22] += qdot;
+        wdot[36] += qdot;
+        wdot[82] -= qdot;
+    }
+
+    {
+        // (382):  C7H14O1-3 + OH <=> C2H4 + NC4H9CO + H2O
+        const amrex::Real k_f = 2500000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[81]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[16]*sc[57]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[16] += qdot;
+        wdot[57] += qdot;
+        wdot[81] -= qdot;
+    }
+
+    {
+        // (383):  C7H14O2-4 + OH <=> C3H6 + NC3H7CO + H2O
+        const amrex::Real k_f = 2500000
+                   ;
+        const amrex::Real qf = k_f * (sc[4]*sc[82]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[5]*sc[26]*sc[53]);
+        const amrex::Real qdot = qf - qr;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[26] += qdot;
+        wdot[53] += qdot;
+        wdot[82] -= qdot;
+    }
+
+    {
+        // (384):  C7H14O2-4 + HO2 <=> CH3CO + C5H10-1 + H2O2
+        const amrex::Real k_f = 5000000
+                   * exp(-(8906.93498474354) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[82]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[22]*sc[36]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[22] += qdot;
+        wdot[36] += qdot;
+        wdot[82] -= qdot;
+    }
+
+    {
+        // (385):  C7H14O1-3 + HO2 <=> C2H4 + NC4H9CO + H2O2
+        const amrex::Real k_f = 5000000
+                   * exp(-(8906.93498474354) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[81]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[16]*sc[57]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[16] += qdot;
+        wdot[57] += qdot;
+        wdot[81] -= qdot;
+    }
+
+    {
+        // (386):  C7H14O2-4 + HO2 <=> C3H6 + NC3H7CO + H2O2
+        const amrex::Real k_f = 5000000
+                   * exp(-(8906.93498474354) * invT);
+        const amrex::Real qf = k_f * (sc[11]*sc[82]);
+        k_r = 1e-12 * 0 
+                   * exp(0 * tc[0] - 0.50321666580472 * 0 * invT);
+        const amrex::Real qr = k_r * (sc[12]*sc[26]*sc[53]);
+        const amrex::Real qdot = qf - qr;
+        wdot[11] -= qdot;
+        wdot[12] += qdot;
+        wdot[26] += qdot;
+        wdot[53] += qdot;
+        wdot[82] -= qdot;
+    }
+
 
     return;
 }

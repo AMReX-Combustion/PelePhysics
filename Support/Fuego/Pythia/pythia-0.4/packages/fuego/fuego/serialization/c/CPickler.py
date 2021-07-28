@@ -1885,8 +1885,8 @@ class CPickler(CMill):
         self._write('{')
         self._indent()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
-        self._write('amrex::Real invT = 1.0 / tc[1];')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache')
+        self._write('const amrex::Real invT = 1.0 / tc[1];')
         self._write()
         
         if (nReactions == 0):
@@ -1894,26 +1894,16 @@ class CPickler(CMill):
         else:
             if (self.nQSSspecies > 0):
                 self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
-                self._write('/* Fill sc_qss here*/')
+                self._write('// Fill sc_qss here')
                 self._write('comp_sc_qss(sc, sc_qss, tc, invT);')
                 self._write()
 
             self._write(self.line('reference concentration: P_atm / (RT) in inverse mol/m^3'))
-            self._write('amrex::Real refC = %g / %g * invT;' % (atm.value, R.value))
-            self._write('amrex::Real refCinv = 1 / refC;')
+            self._write('const amrex::Real refC = %g / %g * invT;' % (atm.value, R.value))
+            self._write('const amrex::Real refCinv = 1 / refC;')
 
-            self._write()
-            
-            # kfs
-            self._write("// Evaluate the kfs")
-            #self._write("amrex::Real k_f[%d];"% nclassd)
-            #self._write("amrex::Real Corr[%d];" % nclassd)
-            self._write("amrex::Real k_f, Corr;")
-            if ntroe > 0:
-                self._write("amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;")
             if nsri > 0:
-                self._write("amrex::Real redP, F, X, F_sri;")
-            #self._write()
+                self._write("amrex::Real X, F_sri;")
 
         self._write()
         self._write('for (int i = 0; i < %d; ++i) {' % nSpecies)
@@ -1993,7 +1983,7 @@ class CPickler(CMill):
                 aeuc = self._activationEnergyUnits(reaction.units["activation"])
 
                 self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-                self._write("k_f = %.15g" % (uc.value * A)) 
+                self._write("const amrex::Real k_f = %.15g" % (uc.value * A)) 
                 if (beta == 0) and (E == 0):
                     self._write("           ;")
                 else:
@@ -2006,26 +1996,28 @@ class CPickler(CMill):
 
                 alpha = 1.0;
                 if not thirdBody:
-                    self._write("amrex::Real qf = k_f * (%s);" % (forward_sc))
+                    self._write("const amrex::Real qf = k_f * (%s);" % (forward_sc))
                 elif not low:
                     alpha = self._enhancement_d_with_QSS(mechanism, reaction)
-                    self._write("Corr  = %s;" %(alpha))
-                    self._write("amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
+                    self._write("const amrex::Real Corr = %s;" %(alpha))
+                    self._write("const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
                 else:
                     alpha = self._enhancement_d_with_QSS(mechanism, reaction)
-                    self._write("Corr  = %s;" %(alpha))
-                    self._write("redP = Corr / k_f * 1e-%d * %.15g " % (dim*6, low_A)) 
-                    self._write("           * exp(%.15g  * tc[0] - %.15g  * (%.15g) *invT);" % (low_beta, aeuc / Rc / kelvin, low_E))
+                    self._write("amrex::Real Corr = %s;" %(alpha))
+                    self._write("const amrex::Real redP = Corr / k_f * %.15g " % (10**(-dim*6) * low_A))
+                    self._write("           * exp(%.15g * tc[0] - %.15g * invT);" % (low_beta, aeuc / Rc / kelvin * low_E))
                     if reaction.troe:
-                        self._write("F = redP / (1.0 + redP);")
-                        self._write("logPred = log10(redP);")
-                        self._write('logFcent = log10(')
+                        self._write("const amrex::Real F = redP / (1.0 + redP);")
+                        self._write("const amrex::Real logPred = log10(redP);")
+                        self._write('const amrex::Real logFcent = log10(')
                         if (abs(troe[1]) > 1.e-100):
-                            self._write('    (%.15g)*exp(-tc[1] * %.15g)' % (1.0 - troe[0],1 / troe[1]))
+                            if (1.0 - troe[0] != 0):
+                                self._write('    %.15g * exp(-tc[1] * %.15g)' % (1.0 - troe[0],1 / troe[1]))
                         else:
                             self._write('     0.0 ' )
                         if (abs(troe[2]) > 1.e-100):
-                            self._write('    + %.15g * exp(-tc[1] * %.15g)' % (troe[0], 1 / troe[2]))
+                            if (troe[0] != 0):
+                                self._write('    + %.15g * exp(-tc[1] * %.15g)' % (troe[0], 1 / troe[2]))
                         else:
                             self._write('    + 0.0 ')
                         if (ntroe == 4):
@@ -2035,30 +2027,30 @@ class CPickler(CMill):
                                 self._write('    + exp(-%.15g * invT));' % troe[3])
                         else:
                             self._write('    + 0.0);' )
-                        self._write("troe_c = -0.4 - 0.67 * logFcent;")
-                        self._write("troe_n = 0.75 - 1.27 * logFcent;")
-                        self._write("troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));")
-                        self._write("F_troe = pow(10, logFcent / (1.0 + troe*troe));")
+                        self._write("const amrex::Real troe_c = -0.4 - 0.67 * logFcent;")
+                        self._write("const amrex::Real troe_n = 0.75 - 1.27 * logFcent;")
+                        self._write("const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));")
+                        self._write("const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));")
                         self._write("Corr = F * F_troe;")
-                        self._write("amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
+                        self._write("const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
                     elif reaction.sri:
-                        self._write("F = redP / (1.0 + redP);")
-                        self._write("logPred = log10(redP);")
+                        self._write("const amrex::Real F = redP / (1.0 + redP);")
+                        self._write("const amrex::Real logPred = log10(redP);")
                         self._write("X = 1.0 / (1.0 + logPred*logPred);")
                         if (sri[1] < 0):
-                            self._write("F_sri = exp(X * log(%.15g * exp(%.15g*invT)" % (sri[0],-sri[1]))
+                            self._write("F_sri = exp(X * log(%.15g * exp(%.15g * invT)" % (sri[0],-sri[1]))
                         else:
-                            self._write("F_sri = exp(X * log(%.15g * exp(-%.15g*invT)" % (sri[0],sri[1]))
+                            self._write("F_sri = exp(X * log(%.15g * exp(-%.15g * invT)" % (sri[0],sri[1]))
                         if (sri[2] > 1.e-100):
-                            self._write("   +  exp(tc[0]/%.15g) " % sri[2])
+                            self._write("   +  exp(tc[0] / %.15g) " % sri[2])
                         else:
                             self._write("   +  0. ") 
-                        self._write("   *  (%d > 3 ? %.15g*exp(%.15g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
+                        self._write("   *  (%d > 3 ? %.15g * exp(%.15g * tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
                         self._write("Corr = F * F_sri;")
-                        self._write("amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
+                        self._write("const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
                     elif (nlindemann > 0):
-                        self._write("Corr = redP / (1. + redP);")
-                        self._write("amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
+                        self._write("Corr = redP / (1.0 + redP);")
+                        self._write("const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
 
                 if reaction.rev:
                     Ar, betar, Er = reaction.rev
@@ -2073,22 +2065,22 @@ class CPickler(CMill):
                     self._write("k_r = %.15g * %.15g " % (uc_rev.value,Ar)) 
                     self._write("           * exp(%.15g * tc[0] - %.15g * %.15g * invT);" % (betar, aeuc / Rc / kelvin, Er))
                     if (alpha == 1.0):
-                        self._write("amrex::Real qr = k_r * (%s);" % (reverse_sc))
+                        self._write("const amrex::Real qr = k_r * (%s);" % (reverse_sc))
                     else:
-                        self._write("amrex::Real qr = Corr * k_r * (%s);" % (reverse_sc))
+                        self._write("const amrex::Real qr = Corr * k_r * (%s);" % (reverse_sc))
                 else:
                     if KcConvInv:
                         if (alpha == 1.0):
-                            self._write("amrex::Real qr = k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
+                            self._write("const amrex::Real qr = k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
                         else:
-                            self._write("amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
+                            self._write("const amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
                     else:
                         if (alpha == 1.0):
-                            self._write("amrex::Real qr = k_f * exp(-(%s)) * (%s);" % (KcExpArg,reverse_sc))
+                            self._write("const amrex::Real qr = k_f * exp(-(%s)) * (%s);" % (KcExpArg,reverse_sc))
                         else:
-                            self._write("amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s);" % (KcExpArg,reverse_sc))
+                            self._write("const amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s);" % (KcExpArg,reverse_sc))
 
-                self._write("amrex::Real qdot = qf - qr;")
+                self._write("const amrex::Real qdot = qf - qr;")
 
                 reaction = mechanism.reaction(id=i)
                 all_agents = list(set(reaction.reactants + reaction.products))
