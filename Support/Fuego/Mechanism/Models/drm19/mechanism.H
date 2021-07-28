@@ -6417,7 +6417,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void dcvpRdT(amrex::Real * species, con
 }
 
 /*compute an approx to the reaction Jacobian */
-#ifdef COMPUTE_JACOBIAN
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)
 {
     for (int i=0; i<484; i++) {
@@ -10905,7 +10905,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
 #endif
 
 /*compute an approx to the reaction Jacobian (for preconditioning) */
-#ifdef COMPUTE_JACOBIAN
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)
 {
     amrex::Real c[21];
@@ -10928,7 +10928,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J,
 #endif
 
 /*compute the reaction Jacobian on GPU */
-#ifdef COMPUTE_JACOBIAN
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
 {
@@ -16072,7 +16072,7 @@ return;
 
 
 /*compute the reaction Jacobian */
-#ifdef COMPUTE_JACOBIAN
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * consP)
 {
     amrex::Real c[21];
