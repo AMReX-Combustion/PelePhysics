@@ -4723,16 +4723,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)
 {
-    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
-    amrex::Real invT = 1.0 / tc[1];
+    const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache
+    const amrex::Real invT = 1.0 / tc[1];
 
     /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
-    amrex::Real refC = 101325 / 8.31446 * invT;
-    amrex::Real refCinv = 1 / refC;
-
-    // Evaluate the kfs
-    amrex::Real k_f, Corr;
-    amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
+    const amrex::Real refC = 101325 / 8.31446 * invT;
+    const amrex::Real refCinv = 1 / refC;
 
     for (int i = 0; i < 21; ++i) {
         wdot[i] = 0.0;
@@ -4750,25 +4746,25 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (29):  H + CH2 (+M) <=> CH3 (+M)
-        k_f = 25000000000
+        const amrex::Real k_f = 25000000000
                    * exp((-0.8) * tc[0]);
-        Corr  = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
-        redP = Corr / k_f * 1e-12 * 3.2e+27 
-                   * exp(-3.14  * tc[0] - 0.50321666580472  * (1230) *invT);
-        F = redP / (1.0 + redP);
-        logPred = log10(redP);
-        logFcent = log10(
-            (0.32)*exp(-tc[1] * 0.0128205128205128)
+        amrex::Real Corr = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
+        const amrex::Real redP = Corr / k_f * 3.2e+15 
+                   * exp(-3.14  * tc[0] - 618.956498939805 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            (0.32) * exp(-tc[1] * 0.0128205128205128)
             + 0.68 * exp(-tc[1] * 0.00050125313283208)
             + exp(-5590 * invT));
-        troe_c = -0.4 - 0.67 * logFcent;
-        troe_n = 0.75 - 1.27 * logFcent;
-        troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-        F_troe = pow(10, logFcent / (1.0 + troe*troe));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
         Corr = F * F_troe;
-        amrex::Real qf = Corr * k_f * (sc[1]*sc[7]);
-        amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[7] - g_RT[9])) * (refC) * (sc[9]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = Corr * k_f * (sc[1]*sc[7]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[7] - g_RT[9])) * (refC) * (sc[9]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[7] -= qdot;
         wdot[9] += qdot;
@@ -4776,25 +4772,25 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (30):  H + CH3 (+M) <=> CH4 (+M)
-        k_f = 12700000000
+        const amrex::Real k_f = 12700000000
                    * exp((-0.63) * tc[0] - (192.731983003208) * invT);
-        Corr  = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
-        redP = Corr / k_f * 1e-12 * 2.477e+33 
-                   * exp(-4.76  * tc[0] - 0.50321666580472  * (2440) *invT);
-        F = redP / (1.0 + redP);
-        logPred = log10(redP);
-        logFcent = log10(
-            (0.217)*exp(-tc[1] * 0.0135135135135135)
+        amrex::Real Corr = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
+        const amrex::Real redP = Corr / k_f * 2.477e+21 
+                   * exp(-4.76  * tc[0] - 1227.84866456352 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            (0.217) * exp(-tc[1] * 0.0135135135135135)
             + 0.783 * exp(-tc[1] * 0.000340020401224073)
             + exp(-6964 * invT));
-        troe_c = -0.4 - 0.67 * logFcent;
-        troe_n = 0.75 - 1.27 * logFcent;
-        troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-        F_troe = pow(10, logFcent / (1.0 + troe*troe));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
         Corr = F * F_troe;
-        amrex::Real qf = Corr * k_f * (sc[1]*sc[9]);
-        amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[9] - g_RT[10])) * (refC) * (sc[10]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = Corr * k_f * (sc[1]*sc[9]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[9] - g_RT[10])) * (refC) * (sc[10]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[9] -= qdot;
         wdot[10] += qdot;
@@ -4802,25 +4798,25 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (32):  H + HCO (+M) <=> CH2O (+M)
-        k_f = 1090000
+        const amrex::Real k_f = 1090000
                    * exp((0.48) * tc[0] - (-130.836333109227) * invT);
-        Corr  = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
-        redP = Corr / k_f * 1e-12 * 1.35e+24 
-                   * exp(-2.57  * tc[0] - 0.50321666580472  * (1425) *invT);
-        F = redP / (1.0 + redP);
-        logPred = log10(redP);
-        logFcent = log10(
-            (0.2176)*exp(-tc[1] * 0.003690036900369)
+        amrex::Real Corr = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
+        const amrex::Real redP = Corr / k_f * 1350000000000 
+                   * exp(-2.57  * tc[0] - 717.083748771726 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            (0.2176) * exp(-tc[1] * 0.003690036900369)
             + 0.7824 * exp(-tc[1] * 0.000362976406533575)
             + exp(-6570 * invT));
-        troe_c = -0.4 - 0.67 * logFcent;
-        troe_n = 0.75 - 1.27 * logFcent;
-        troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-        F_troe = pow(10, logFcent / (1.0 + troe*troe));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
         Corr = F * F_troe;
-        amrex::Real qf = Corr * k_f * (sc[1]*sc[13]);
-        amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[13] - g_RT[14])) * (refC) * (sc[14]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = Corr * k_f * (sc[1]*sc[13]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[13] - g_RT[14])) * (refC) * (sc[14]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[13] -= qdot;
         wdot[14] += qdot;
@@ -4828,25 +4824,25 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (34):  H + CH2O (+M) <=> CH3O (+M)
-        k_f = 540000
+        const amrex::Real k_f = 540000
                    * exp((0.454) * tc[0] - (1308.36333109227) * invT);
-        Corr  = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18];
-        redP = Corr / k_f * 1e-12 * 2.2e+30 
-                   * exp(-4.8  * tc[0] - 0.50321666580472  * (5560) *invT);
-        F = redP / (1.0 + redP);
-        logPred = log10(redP);
-        logFcent = log10(
-            (0.242)*exp(-tc[1] * 0.0106382978723404)
+        amrex::Real Corr = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18];
+        const amrex::Real redP = Corr / k_f * 2.2e+18 
+                   * exp(-4.8  * tc[0] - 2797.88466187424 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            (0.242) * exp(-tc[1] * 0.0106382978723404)
             + 0.758 * exp(-tc[1] * 0.000643086816720257)
             + exp(-4200 * invT));
-        troe_c = -0.4 - 0.67 * logFcent;
-        troe_n = 0.75 - 1.27 * logFcent;
-        troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-        F_troe = pow(10, logFcent / (1.0 + troe*troe));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
         Corr = F * F_troe;
-        amrex::Real qf = Corr * k_f * (sc[1]*sc[14]);
-        amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[14] - g_RT[15])) * (refC) * (sc[15]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = Corr * k_f * (sc[1]*sc[14]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[14] - g_RT[15])) * (refC) * (sc[15]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[14] -= qdot;
         wdot[15] += qdot;
@@ -4854,25 +4850,25 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (37):  H + C2H4 (+M) <=> C2H5 (+M)
-        k_f = 1080000
+        const amrex::Real k_f = 1080000
                    * exp((0.454) * tc[0] - (915.85433176459) * invT);
-        Corr  = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
-        redP = Corr / k_f * 1e-12 * 1.2e+42 
-                   * exp(-7.62  * tc[0] - 0.50321666580472  * (6970) *invT);
-        F = redP / (1.0 + redP);
-        logPred = log10(redP);
-        logFcent = log10(
-            (0.0247000000000001)*exp(-tc[1] * 0.00476190476190476)
+        amrex::Real Corr = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
+        const amrex::Real redP = Corr / k_f * 1.2e+30 
+                   * exp(-7.62  * tc[0] - 3507.4201606589 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            (0.0247000000000001) * exp(-tc[1] * 0.00476190476190476)
             + 0.9753 * exp(-tc[1] * 0.00101626016260163)
             + exp(-4374 * invT));
-        troe_c = -0.4 - 0.67 * logFcent;
-        troe_n = 0.75 - 1.27 * logFcent;
-        troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-        F_troe = pow(10, logFcent / (1.0 + troe*troe));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
         Corr = F * F_troe;
-        amrex::Real qf = Corr * k_f * (sc[1]*sc[16]);
-        amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[16] - g_RT[17])) * (refC) * (sc[17]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = Corr * k_f * (sc[1]*sc[16]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[16] - g_RT[17])) * (refC) * (sc[17]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[16] -= qdot;
         wdot[17] += qdot;
@@ -4880,25 +4876,25 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (38):  H + C2H5 (+M) <=> C2H6 (+M)
-        k_f = 521000000000
+        const amrex::Real k_f = 521000000000
                    * exp((-0.99) * tc[0] - (795.082331971457) * invT);
-        Corr  = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
-        redP = Corr / k_f * 1e-12 * 1.99e+41 
-                   * exp(-7.08  * tc[0] - 0.50321666580472  * (6685) *invT);
-        F = redP / (1.0 + redP);
-        logPred = log10(redP);
-        logFcent = log10(
-            (0.1578)*exp(-tc[1] * 0.008)
+        amrex::Real Corr = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
+        const amrex::Real redP = Corr / k_f * 1.99e+29 
+                   * exp(-7.08  * tc[0] - 3364.00341090455 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            (0.1578) * exp(-tc[1] * 0.008)
             + 0.8422 * exp(-tc[1] * 0.000450653447498873)
             + exp(-6882 * invT));
-        troe_c = -0.4 - 0.67 * logFcent;
-        troe_n = 0.75 - 1.27 * logFcent;
-        troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-        F_troe = pow(10, logFcent / (1.0 + troe*troe));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
         Corr = F * F_troe;
-        amrex::Real qf = Corr * k_f * (sc[1]*sc[17]);
-        amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[17] - g_RT[18])) * (refC) * (sc[18]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = Corr * k_f * (sc[1]*sc[17]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[17] - g_RT[18])) * (refC) * (sc[18]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[17] -= qdot;
         wdot[18] += qdot;
@@ -4906,25 +4902,25 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (40):  H2 + CO (+M) <=> CH2O (+M)
-        k_f = 43
+        const amrex::Real k_f = 43
                    * exp((1.5) * tc[0] - (40056.0465980557) * invT);
-        Corr  = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
-        redP = Corr / k_f * 1e-12 * 5.07e+27 
-                   * exp(-3.42  * tc[0] - 0.50321666580472  * (84350) *invT);
-        F = redP / (1.0 + redP);
-        logPred = log10(redP);
-        logFcent = log10(
-            (0.0679999999999999)*exp(-tc[1] * 0.0050761421319797)
+        amrex::Real Corr = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
+        const amrex::Real redP = Corr / k_f * 5.07e+15 
+                   * exp(-3.42  * tc[0] - 42446.3257606281 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            (0.0679999999999999) * exp(-tc[1] * 0.0050761421319797)
             + 0.932 * exp(-tc[1] * 0.000649350649350649)
             + exp(-10300 * invT));
-        troe_c = -0.4 - 0.67 * logFcent;
-        troe_n = 0.75 - 1.27 * logFcent;
-        troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-        F_troe = pow(10, logFcent / (1.0 + troe*troe));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
         Corr = F * F_troe;
-        amrex::Real qf = Corr * k_f * (sc[0]*sc[11]);
-        amrex::Real qr = Corr * k_f * exp(-(g_RT[0] + g_RT[11] - g_RT[14])) * (refC) * (sc[14]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = Corr * k_f * (sc[0]*sc[11]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[0] + g_RT[11] - g_RT[14])) * (refC) * (sc[14]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] -= qdot;
         wdot[11] -= qdot;
         wdot[14] += qdot;
@@ -4932,37 +4928,37 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (74):  2.000000 CH3 (+M) <=> C2H6 (+M)
-        k_f = 21200000000
+        const amrex::Real k_f = 21200000000
                    * exp((-0.97) * tc[0] - (311.994332798926) * invT);
-        Corr  = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
-        redP = Corr / k_f * 1e-12 * 1.77e+50 
-                   * exp(-9.67  * tc[0] - 0.50321666580472  * (6220) *invT);
-        F = redP / (1.0 + redP);
-        logPred = log10(redP);
-        logFcent = log10(
-            (0.4675)*exp(-tc[1] * 0.00662251655629139)
+        amrex::Real Corr = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
+        const amrex::Real redP = Corr / k_f * 1.77e+38 
+                   * exp(-9.67  * tc[0] - 3130.00766130536 * invT);
+        const amrex::Real F = redP / (1.0 + redP);
+        const amrex::Real logPred = log10(redP);
+        const amrex::Real logFcent = log10(
+            (0.4675) * exp(-tc[1] * 0.00662251655629139)
             + 0.5325 * exp(-tc[1] * 0.000963391136801541)
             + exp(-4970 * invT));
-        troe_c = -0.4 - 0.67 * logFcent;
-        troe_n = 0.75 - 1.27 * logFcent;
-        troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));
-        F_troe = pow(10, logFcent / (1.0 + troe*troe));
+        const amrex::Real troe_c = -0.4 - 0.67 * logFcent;
+        const amrex::Real troe_n = 0.75 - 1.27 * logFcent;
+        const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));
+        const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));
         Corr = F * F_troe;
-        amrex::Real qf = Corr * k_f * ((sc[9] * sc[9]));
-        amrex::Real qr = Corr * k_f * exp(-(2.000000*g_RT[9] - g_RT[18])) * (refC) * (sc[18]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = Corr * k_f * ((sc[9] * sc[9]));
+        const amrex::Real qr = Corr * k_f * exp(-(2.000000*g_RT[9] - g_RT[18])) * (refC) * (sc[18]);
+        const amrex::Real qdot = qf - qr;
         wdot[9] -= 2.000000 * qdot;
         wdot[18] += qdot;
     }
 
     {
         // (0):  O + H + M <=> OH + M
-        k_f = 500000
+        const amrex::Real k_f = 500000
                    * exp((-1) * tc[0]);
-        Corr  = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
-        amrex::Real qf = Corr * k_f * (sc[1]*sc[2]);
-        amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[2] - g_RT[4])) * (refC) * (sc[4]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real Corr = mixture + sc[0] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18] + (-0.3)*sc[20];
+        const amrex::Real qf = Corr * k_f * (sc[1]*sc[2]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[2] - g_RT[4])) * (refC) * (sc[4]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[2] -= qdot;
         wdot[4] += qdot;
@@ -4970,12 +4966,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (7):  O + CO + M <=> CO2 + M
-        k_f = 602
+        const amrex::Real k_f = 602
                    * exp(-(1509.64999741416) * invT);
-        Corr  = mixture + sc[0] + (5)*sc[3] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + (2.5)*sc[12] + (2)*sc[18] + (-0.5)*sc[20];
-        amrex::Real qf = Corr * k_f * (sc[2]*sc[11]);
-        amrex::Real qr = Corr * k_f * exp(-(g_RT[2] + g_RT[11] - g_RT[12])) * (refC) * (sc[12]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real Corr = mixture + sc[0] + (5)*sc[3] + (5)*sc[5] + sc[10] + (0.5)*sc[11] + (2.5)*sc[12] + (2)*sc[18] + (-0.5)*sc[20];
+        const amrex::Real qf = Corr * k_f * (sc[2]*sc[11]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[2] + g_RT[11] - g_RT[12])) * (refC) * (sc[12]);
+        const amrex::Real qdot = qf - qr;
         wdot[2] -= qdot;
         wdot[11] -= qdot;
         wdot[12] += qdot;
@@ -4983,12 +4979,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (16):  H + O2 + M <=> HO2 + M
-        k_f = 2800000
+        const amrex::Real k_f = 2800000
                    * exp((-0.86) * tc[0]);
-        Corr  = mixture + (-1)*sc[3] + (-1)*sc[5] + (-0.25)*sc[11] + (0.5)*sc[12] + (0.5)*sc[18] + (-1)*sc[19] + (-1)*sc[20];
-        amrex::Real qf = Corr * k_f * (sc[1]*sc[3]);
-        amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[3] - g_RT[6])) * (refC) * (sc[6]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real Corr = mixture + (-1)*sc[3] + (-1)*sc[5] + (-0.25)*sc[11] + (0.5)*sc[12] + (0.5)*sc[18] + (-1)*sc[19] + (-1)*sc[20];
+        const amrex::Real qf = Corr * k_f * (sc[1]*sc[3]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[3] - g_RT[6])) * (refC) * (sc[6]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[3] -= qdot;
         wdot[6] += qdot;
@@ -4996,24 +4992,24 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (22):  2.000000 H + M <=> H2 + M
-        k_f = 1000000
+        const amrex::Real k_f = 1000000
                    * exp((-1) * tc[0]);
-        Corr  = mixture + (-1)*sc[0] + (-1)*sc[5] + sc[10] + (-1)*sc[12] + (2)*sc[18] + (-0.37)*sc[20];
-        amrex::Real qf = Corr * k_f * ((sc[1] * sc[1]));
-        amrex::Real qr = Corr * k_f * exp(-(-g_RT[0] + 2.000000*g_RT[1])) * (refC) * (sc[0]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real Corr = mixture + (-1)*sc[0] + (-1)*sc[5] + sc[10] + (-1)*sc[12] + (2)*sc[18] + (-0.37)*sc[20];
+        const amrex::Real qf = Corr * k_f * ((sc[1] * sc[1]));
+        const amrex::Real qr = Corr * k_f * exp(-(-g_RT[0] + 2.000000*g_RT[1])) * (refC) * (sc[0]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] += qdot;
         wdot[1] -= 2.000000 * qdot;
     }
 
     {
         // (26):  H + OH + M <=> H2O + M
-        k_f = 22000000000
+        const amrex::Real k_f = 22000000000
                    * exp((-2) * tc[0]);
-        Corr  = mixture + (-0.27)*sc[0] + (2.65)*sc[5] + sc[10] + (2)*sc[18] + (-0.62)*sc[20];
-        amrex::Real qf = Corr * k_f * (sc[1]*sc[4]);
-        amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[4] - g_RT[5])) * (refC) * (sc[5]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real Corr = mixture + (-0.27)*sc[0] + (2.65)*sc[5] + sc[10] + (2)*sc[18] + (-0.62)*sc[20];
+        const amrex::Real qf = Corr * k_f * (sc[1]*sc[4]);
+        const amrex::Real qr = Corr * k_f * exp(-(g_RT[1] + g_RT[4] - g_RT[5])) * (refC) * (sc[5]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[4] -= qdot;
         wdot[5] += qdot;
@@ -5021,12 +5017,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (80):  HCO + M <=> H + CO + M
-        k_f = 187000000000
+        const amrex::Real k_f = 187000000000
                    * exp((-1) * tc[0] - (8554.68331868023) * invT);
-        Corr  = mixture + sc[0] + (-1)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18];
-        amrex::Real qf = Corr * k_f * (sc[13]);
-        amrex::Real qr = Corr * k_f * exp(-(-g_RT[1] - g_RT[11] + g_RT[13])) * (refCinv) * (sc[1]*sc[11]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real Corr = mixture + sc[0] + (-1)*sc[5] + sc[10] + (0.5)*sc[11] + sc[12] + (2)*sc[18];
+        const amrex::Real qf = Corr * k_f * (sc[13]);
+        const amrex::Real qr = Corr * k_f * exp(-(-g_RT[1] - g_RT[11] + g_RT[13])) * (refCinv) * (sc[1]*sc[11]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[11] += qdot;
         wdot[13] -= qdot;
@@ -5034,11 +5030,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (1):  O + H2 <=> H + OH
-        k_f = 0.05
+        const amrex::Real k_f = 0.05
                    * exp((2.67) * tc[0] - (3165.23282791169) * invT);
-        amrex::Real qf = k_f * (sc[0]*sc[2]);
-        amrex::Real qr = k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[2] - g_RT[4])) * (sc[1]*sc[4]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[0]*sc[2]);
+        const amrex::Real qr = k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[2] - g_RT[4])) * (sc[1]*sc[4]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] -= qdot;
         wdot[1] += qdot;
         wdot[2] -= qdot;
@@ -5047,11 +5043,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (2):  O + HO2 <=> OH + O2
-        k_f = 20000000
+        const amrex::Real k_f = 20000000
                    ;
-        amrex::Real qf = k_f * (sc[2]*sc[6]);
-        amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[3] - g_RT[4] + g_RT[6])) * (sc[3]*sc[4]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[2]*sc[6]);
+        const amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[3] - g_RT[4] + g_RT[6])) * (sc[3]*sc[4]);
+        const amrex::Real qdot = qf - qr;
         wdot[2] -= qdot;
         wdot[3] += qdot;
         wdot[4] += qdot;
@@ -5060,11 +5056,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (3):  O + CH2 <=> H + HCO
-        k_f = 80000000
+        const amrex::Real k_f = 80000000
                    ;
-        amrex::Real qf = k_f * (sc[2]*sc[7]);
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT[7] - g_RT[13])) * (sc[1]*sc[13]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[2]*sc[7]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT[7] - g_RT[13])) * (sc[1]*sc[13]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[2] -= qdot;
         wdot[7] -= qdot;
@@ -5073,11 +5069,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (4):  O + CH2(S) <=> H + HCO
-        k_f = 15000000
+        const amrex::Real k_f = 15000000
                    ;
-        amrex::Real qf = k_f * (sc[2]*sc[8]);
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT[8] - g_RT[13])) * (sc[1]*sc[13]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[2]*sc[8]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT[8] - g_RT[13])) * (sc[1]*sc[13]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[2] -= qdot;
         wdot[8] -= qdot;
@@ -5086,11 +5082,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (5):  O + CH3 <=> H + CH2O
-        k_f = 84300000
+        const amrex::Real k_f = 84300000
                    ;
-        amrex::Real qf = k_f * (sc[2]*sc[9]);
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT[9] - g_RT[14])) * (sc[1]*sc[14]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[2]*sc[9]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT[9] - g_RT[14])) * (sc[1]*sc[14]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[2] -= qdot;
         wdot[9] -= qdot;
@@ -5099,11 +5095,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (6):  O + CH4 <=> OH + CH3
-        k_f = 1020
+        const amrex::Real k_f = 1020
                    * exp((1.5) * tc[0] - (4327.66332592059) * invT);
-        amrex::Real qf = k_f * (sc[2]*sc[10]);
-        amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[9] + g_RT[10])) * (sc[4]*sc[9]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[2]*sc[10]);
+        const amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[9] + g_RT[10])) * (sc[4]*sc[9]);
+        const amrex::Real qdot = qf - qr;
         wdot[2] -= qdot;
         wdot[4] += qdot;
         wdot[9] += qdot;
@@ -5112,11 +5108,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (8):  O + HCO <=> OH + CO
-        k_f = 30000000
+        const amrex::Real k_f = 30000000
                    ;
-        amrex::Real qf = k_f * (sc[2]*sc[13]);
-        amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[11] + g_RT[13])) * (sc[4]*sc[11]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[2]*sc[13]);
+        const amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[11] + g_RT[13])) * (sc[4]*sc[11]);
+        const amrex::Real qdot = qf - qr;
         wdot[2] -= qdot;
         wdot[4] += qdot;
         wdot[11] += qdot;
@@ -5125,11 +5121,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (9):  O + HCO <=> H + CO2
-        k_f = 30000000
+        const amrex::Real k_f = 30000000
                    ;
-        amrex::Real qf = k_f * (sc[2]*sc[13]);
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[2] - g_RT[12] + g_RT[13])) * (sc[1]*sc[12]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[2]*sc[13]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[2] - g_RT[12] + g_RT[13])) * (sc[1]*sc[12]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[2] -= qdot;
         wdot[12] += qdot;
@@ -5138,11 +5134,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (10):  O + CH2O <=> OH + HCO
-        k_f = 39000000
+        const amrex::Real k_f = 39000000
                    * exp(-(1781.38699694871) * invT);
-        amrex::Real qf = k_f * (sc[2]*sc[14]);
-        amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[13] + g_RT[14])) * (sc[4]*sc[13]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[2]*sc[14]);
+        const amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[13] + g_RT[14])) * (sc[4]*sc[13]);
+        const amrex::Real qdot = qf - qr;
         wdot[2] -= qdot;
         wdot[4] += qdot;
         wdot[13] += qdot;
@@ -5151,11 +5147,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (11):  O + C2H4 <=> CH3 + HCO
-        k_f = 19.2
+        const amrex::Real k_f = 19.2
                    * exp((1.83) * tc[0] - (110.707666477038) * invT);
-        amrex::Real qf = k_f * (sc[2]*sc[16]);
-        amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[9] - g_RT[13] + g_RT[16])) * (sc[9]*sc[13]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[2]*sc[16]);
+        const amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[9] - g_RT[13] + g_RT[16])) * (sc[9]*sc[13]);
+        const amrex::Real qdot = qf - qr;
         wdot[2] -= qdot;
         wdot[9] += qdot;
         wdot[13] += qdot;
@@ -5164,11 +5160,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (12):  O + C2H5 <=> CH3 + CH2O
-        k_f = 132000000
+        const amrex::Real k_f = 132000000
                    ;
-        amrex::Real qf = k_f * (sc[2]*sc[17]);
-        amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[9] - g_RT[14] + g_RT[17])) * (sc[9]*sc[14]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[2]*sc[17]);
+        const amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[9] - g_RT[14] + g_RT[17])) * (sc[9]*sc[14]);
+        const amrex::Real qdot = qf - qr;
         wdot[2] -= qdot;
         wdot[9] += qdot;
         wdot[14] += qdot;
@@ -5177,11 +5173,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (13):  O + C2H6 <=> OH + C2H5
-        k_f = 89.8
+        const amrex::Real k_f = 89.8
                    * exp((1.92) * tc[0] - (2863.30282842885) * invT);
-        amrex::Real qf = k_f * (sc[2]*sc[18]);
-        amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[18])) * (sc[4]*sc[17]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[2]*sc[18]);
+        const amrex::Real qr = k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[18])) * (sc[4]*sc[17]);
+        const amrex::Real qdot = qf - qr;
         wdot[2] -= qdot;
         wdot[4] += qdot;
         wdot[17] += qdot;
@@ -5190,11 +5186,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (14):  O2 + CO <=> O + CO2
-        k_f = 2500000
+        const amrex::Real k_f = 2500000
                    * exp(-(24053.7566254656) * invT);
-        amrex::Real qf = k_f * (sc[3]*sc[11]);
-        amrex::Real qr = k_f * exp(-(-g_RT[2] + g_RT[3] + g_RT[11] - g_RT[12])) * (sc[2]*sc[12]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[3]*sc[11]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[2] + g_RT[3] + g_RT[11] - g_RT[12])) * (sc[2]*sc[12]);
+        const amrex::Real qdot = qf - qr;
         wdot[2] += qdot;
         wdot[3] -= qdot;
         wdot[11] -= qdot;
@@ -5203,11 +5199,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (15):  O2 + CH2O <=> HO2 + HCO
-        k_f = 100000000
+        const amrex::Real k_f = 100000000
                    * exp(-(20128.6666321888) * invT);
-        amrex::Real qf = k_f * (sc[3]*sc[14]);
-        amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[13] + g_RT[14])) * (sc[6]*sc[13]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[3]*sc[14]);
+        const amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[13] + g_RT[14])) * (sc[6]*sc[13]);
+        const amrex::Real qdot = qf - qr;
         wdot[3] -= qdot;
         wdot[6] += qdot;
         wdot[13] += qdot;
@@ -5216,11 +5212,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (17):  H + 2.000000 O2 <=> HO2 + O2
-        k_f = 300000000
+        const amrex::Real k_f = 300000000
                    * exp((-1.72) * tc[0]);
-        amrex::Real qf = k_f * (sc[1]*(sc[3] * sc[3]));
-        amrex::Real qr = k_f * exp(-(g_RT[1] + 2.000000*g_RT[3] - g_RT[3] - g_RT[6])) * (refC) * (sc[3]*sc[6]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*(sc[3] * sc[3]));
+        const amrex::Real qr = k_f * exp(-(g_RT[1] + 2.000000*g_RT[3] - g_RT[3] - g_RT[6])) * (refC) * (sc[3]*sc[6]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[3] -= 2.000000 * qdot;
         wdot[3] += qdot;
@@ -5229,11 +5225,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (18):  H + O2 + H2O <=> HO2 + H2O
-        k_f = 9380000
+        const amrex::Real k_f = 9380000
                    * exp((-0.76) * tc[0]);
-        amrex::Real qf = k_f * (sc[1]*sc[3]*sc[5]);
-        amrex::Real qr = k_f * exp(-(g_RT[1] + g_RT[3] + g_RT[5] - g_RT[5] - g_RT[6])) * (refC) * (sc[5]*sc[6]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*sc[3]*sc[5]);
+        const amrex::Real qr = k_f * exp(-(g_RT[1] + g_RT[3] + g_RT[5] - g_RT[5] - g_RT[6])) * (refC) * (sc[5]*sc[6]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[3] -= qdot;
         wdot[5] -= qdot;
@@ -5243,11 +5239,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (19):  H + O2 + N2 <=> HO2 + N2
-        k_f = 375000000
+        const amrex::Real k_f = 375000000
                    * exp((-1.72) * tc[0]);
-        amrex::Real qf = k_f * (sc[1]*sc[3]*sc[19]);
-        amrex::Real qr = k_f * exp(-(g_RT[1] + g_RT[3] - g_RT[6] + g_RT[19] - g_RT[19])) * (refC) * (sc[6]*sc[19]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*sc[3]*sc[19]);
+        const amrex::Real qr = k_f * exp(-(g_RT[1] + g_RT[3] - g_RT[6] + g_RT[19] - g_RT[19])) * (refC) * (sc[6]*sc[19]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[3] -= qdot;
         wdot[6] += qdot;
@@ -5257,11 +5253,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (20):  H + O2 + AR <=> HO2 + AR
-        k_f = 700000
+        const amrex::Real k_f = 700000
                    * exp((-0.8) * tc[0]);
-        amrex::Real qf = k_f * (sc[1]*sc[3]*sc[20]);
-        amrex::Real qr = k_f * exp(-(g_RT[1] + g_RT[3] - g_RT[6] + g_RT[20] - g_RT[20])) * (refC) * (sc[6]*sc[20]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*sc[3]*sc[20]);
+        const amrex::Real qr = k_f * exp(-(g_RT[1] + g_RT[3] - g_RT[6] + g_RT[20] - g_RT[20])) * (refC) * (sc[6]*sc[20]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[3] -= qdot;
         wdot[6] += qdot;
@@ -5271,11 +5267,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (21):  H + O2 <=> O + OH
-        k_f = 83000000
+        const amrex::Real k_f = 83000000
                    * exp(-(7252.86180424342) * invT);
-        amrex::Real qf = k_f * (sc[1]*sc[3]);
-        amrex::Real qr = k_f * exp(-(g_RT[1] - g_RT[2] + g_RT[3] - g_RT[4])) * (sc[2]*sc[4]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*sc[3]);
+        const amrex::Real qr = k_f * exp(-(g_RT[1] - g_RT[2] + g_RT[3] - g_RT[4])) * (sc[2]*sc[4]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[2] += qdot;
         wdot[3] -= qdot;
@@ -5284,11 +5280,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (23):  2.000000 H + H2 <=> 2.000000 H2
-        k_f = 90000
+        const amrex::Real k_f = 90000
                    * exp((-0.6) * tc[0]);
-        amrex::Real qf = k_f * (sc[0]*(sc[1] * sc[1]));
-        amrex::Real qr = k_f * exp(-(g_RT[0] - 2.000000*g_RT[0] + 2.000000*g_RT[1])) * (refC) * ((sc[0] * sc[0]));
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[0]*(sc[1] * sc[1]));
+        const amrex::Real qr = k_f * exp(-(g_RT[0] - 2.000000*g_RT[0] + 2.000000*g_RT[1])) * (refC) * ((sc[0] * sc[0]));
+        const amrex::Real qdot = qf - qr;
         wdot[0] -= qdot;
         wdot[0] += 2.000000 * qdot;
         wdot[1] -= 2.000000 * qdot;
@@ -5296,11 +5292,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (24):  2.000000 H + H2O <=> H2 + H2O
-        k_f = 60000000
+        const amrex::Real k_f = 60000000
                    * exp((-1.25) * tc[0]);
-        amrex::Real qf = k_f * ((sc[1] * sc[1])*sc[5]);
-        amrex::Real qr = k_f * exp(-(-g_RT[0] + 2.000000*g_RT[1] + g_RT[5] - g_RT[5])) * (refC) * (sc[0]*sc[5]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * ((sc[1] * sc[1])*sc[5]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[0] + 2.000000*g_RT[1] + g_RT[5] - g_RT[5])) * (refC) * (sc[0]*sc[5]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] += qdot;
         wdot[1] -= 2.000000 * qdot;
         wdot[5] -= qdot;
@@ -5309,11 +5305,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (25):  2.000000 H + CO2 <=> H2 + CO2
-        k_f = 550000000
+        const amrex::Real k_f = 550000000
                    * exp((-2) * tc[0]);
-        amrex::Real qf = k_f * ((sc[1] * sc[1])*sc[12]);
-        amrex::Real qr = k_f * exp(-(-g_RT[0] + 2.000000*g_RT[1] + g_RT[12] - g_RT[12])) * (refC) * (sc[0]*sc[12]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * ((sc[1] * sc[1])*sc[12]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[0] + 2.000000*g_RT[1] + g_RT[12] - g_RT[12])) * (refC) * (sc[0]*sc[12]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] += qdot;
         wdot[1] -= 2.000000 * qdot;
         wdot[12] -= qdot;
@@ -5322,11 +5318,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (27):  H + HO2 <=> O2 + H2
-        k_f = 28000000
+        const amrex::Real k_f = 28000000
                    * exp(-(537.435399079441) * invT);
-        amrex::Real qf = k_f * (sc[1]*sc[6]);
-        amrex::Real qr = k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[3] + g_RT[6])) * (sc[0]*sc[3]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*sc[6]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[3] + g_RT[6])) * (sc[0]*sc[3]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] += qdot;
         wdot[1] -= qdot;
         wdot[3] += qdot;
@@ -5335,11 +5331,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (28):  H + HO2 <=> 2.000000 OH
-        k_f = 134000000
+        const amrex::Real k_f = 134000000
                    * exp(-(319.542582785997) * invT);
-        amrex::Real qf = k_f * (sc[1]*sc[6]);
-        amrex::Real qr = k_f * exp(-(g_RT[1] - 2.000000*g_RT[4] + g_RT[6])) * ((sc[4] * sc[4]));
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*sc[6]);
+        const amrex::Real qr = k_f * exp(-(g_RT[1] - 2.000000*g_RT[4] + g_RT[6])) * ((sc[4] * sc[4]));
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[4] += 2.000000 * qdot;
         wdot[6] -= qdot;
@@ -5347,11 +5343,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (31):  H + CH4 <=> CH3 + H2
-        k_f = 660
+        const amrex::Real k_f = 660
                    * exp((1.62) * tc[0] - (5454.86865732316) * invT);
-        amrex::Real qf = k_f * (sc[1]*sc[10]);
-        amrex::Real qr = k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[9] + g_RT[10])) * (sc[0]*sc[9]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*sc[10]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[9] + g_RT[10])) * (sc[0]*sc[9]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] += qdot;
         wdot[1] -= qdot;
         wdot[9] += qdot;
@@ -5360,11 +5356,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (33):  H + HCO <=> H2 + CO
-        k_f = 73400000
+        const amrex::Real k_f = 73400000
                    ;
-        amrex::Real qf = k_f * (sc[1]*sc[13]);
-        amrex::Real qr = k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[11] + g_RT[13])) * (sc[0]*sc[11]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*sc[13]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[11] + g_RT[13])) * (sc[0]*sc[11]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] += qdot;
         wdot[1] -= qdot;
         wdot[11] += qdot;
@@ -5373,11 +5369,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (35):  H + CH2O <=> HCO + H2
-        k_f = 23000
+        const amrex::Real k_f = 23000
                    * exp((1.05) * tc[0] - (1648.03458051046) * invT);
-        amrex::Real qf = k_f * (sc[1]*sc[14]);
-        amrex::Real qr = k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[13] + g_RT[14])) * (sc[0]*sc[13]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*sc[14]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[13] + g_RT[14])) * (sc[0]*sc[13]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] += qdot;
         wdot[1] -= qdot;
         wdot[13] += qdot;
@@ -5386,11 +5382,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (36):  H + CH3O <=> OH + CH3
-        k_f = 32000000
+        const amrex::Real k_f = 32000000
                    ;
-        amrex::Real qf = k_f * (sc[1]*sc[15]);
-        amrex::Real qr = k_f * exp(-(g_RT[1] - g_RT[4] - g_RT[9] + g_RT[15])) * (sc[4]*sc[9]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*sc[15]);
+        const amrex::Real qr = k_f * exp(-(g_RT[1] - g_RT[4] - g_RT[9] + g_RT[15])) * (sc[4]*sc[9]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
         wdot[4] += qdot;
         wdot[9] += qdot;
@@ -5399,11 +5395,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (39):  H + C2H6 <=> C2H5 + H2
-        k_f = 115
+        const amrex::Real k_f = 115
                    * exp((1.9) * tc[0] - (3789.22149350954) * invT);
-        amrex::Real qf = k_f * (sc[1]*sc[18]);
-        amrex::Real qr = k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[18])) * (sc[0]*sc[17]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[1]*sc[18]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[18])) * (sc[0]*sc[17]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] += qdot;
         wdot[1] -= qdot;
         wdot[17] += qdot;
@@ -5412,11 +5408,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (41):  OH + H2 <=> H + H2O
-        k_f = 216
+        const amrex::Real k_f = 216
                    * exp((1.51) * tc[0] - (1726.03316371019) * invT);
-        amrex::Real qf = k_f * (sc[0]*sc[4]);
-        amrex::Real qr = k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[4] - g_RT[5])) * (sc[1]*sc[5]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[0]*sc[4]);
+        const amrex::Real qr = k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[4] - g_RT[5])) * (sc[1]*sc[5]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] -= qdot;
         wdot[1] += qdot;
         wdot[4] -= qdot;
@@ -5425,11 +5421,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (42):  2.000000 OH <=> O + H2O
-        k_f = 0.0357
+        const amrex::Real k_f = 0.0357
                    * exp((2.4) * tc[0] - (-1061.78716484796) * invT);
-        amrex::Real qf = k_f * ((sc[4] * sc[4]));
-        amrex::Real qr = k_f * exp(-(-g_RT[2] + 2.000000*g_RT[4] - g_RT[5])) * (sc[2]*sc[5]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * ((sc[4] * sc[4]));
+        const amrex::Real qr = k_f * exp(-(-g_RT[2] + 2.000000*g_RT[4] - g_RT[5])) * (sc[2]*sc[5]);
+        const amrex::Real qdot = qf - qr;
         wdot[2] += qdot;
         wdot[4] -= 2.000000 * qdot;
         wdot[5] += qdot;
@@ -5437,11 +5433,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (43):  OH + HO2 <=> O2 + H2O
-        k_f = 29000000
+        const amrex::Real k_f = 29000000
                    * exp(-(-251.60833290236) * invT);
-        amrex::Real qf = k_f * (sc[4]*sc[6]);
-        amrex::Real qr = k_f * exp(-(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6])) * (sc[3]*sc[5]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[4]*sc[6]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6])) * (sc[3]*sc[5]);
+        const amrex::Real qdot = qf - qr;
         wdot[3] += qdot;
         wdot[4] -= qdot;
         wdot[5] += qdot;
@@ -5450,11 +5446,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (44):  OH + CH2 <=> H + CH2O
-        k_f = 20000000
+        const amrex::Real k_f = 20000000
                    ;
-        amrex::Real qf = k_f * (sc[4]*sc[7]);
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[4] + g_RT[7] - g_RT[14])) * (sc[1]*sc[14]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[4]*sc[7]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[4] + g_RT[7] - g_RT[14])) * (sc[1]*sc[14]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[4] -= qdot;
         wdot[7] -= qdot;
@@ -5463,11 +5459,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (45):  OH + CH2(S) <=> H + CH2O
-        k_f = 30000000
+        const amrex::Real k_f = 30000000
                    ;
-        amrex::Real qf = k_f * (sc[4]*sc[8]);
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[4] + g_RT[8] - g_RT[14])) * (sc[1]*sc[14]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[4]*sc[8]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[4] + g_RT[8] - g_RT[14])) * (sc[1]*sc[14]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[4] -= qdot;
         wdot[8] -= qdot;
@@ -5476,11 +5472,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (46):  OH + CH3 <=> CH2 + H2O
-        k_f = 56
+        const amrex::Real k_f = 56
                    * exp((1.6) * tc[0] - (2727.43432866158) * invT);
-        amrex::Real qf = k_f * (sc[4]*sc[9]);
-        amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[7] + g_RT[9])) * (sc[5]*sc[7]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[4]*sc[9]);
+        const amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[7] + g_RT[9])) * (sc[5]*sc[7]);
+        const amrex::Real qdot = qf - qr;
         wdot[4] -= qdot;
         wdot[5] += qdot;
         wdot[7] += qdot;
@@ -5489,11 +5485,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (47):  OH + CH3 <=> CH2(S) + H2O
-        k_f = 25010000
+        const amrex::Real k_f = 25010000
                    ;
-        amrex::Real qf = k_f * (sc[4]*sc[9]);
-        amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[8] + g_RT[9])) * (sc[5]*sc[8]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[4]*sc[9]);
+        const amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[8] + g_RT[9])) * (sc[5]*sc[8]);
+        const amrex::Real qdot = qf - qr;
         wdot[4] -= qdot;
         wdot[5] += qdot;
         wdot[8] += qdot;
@@ -5502,11 +5498,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (48):  OH + CH4 <=> CH3 + H2O
-        k_f = 100
+        const amrex::Real k_f = 100
                    * exp((1.6) * tc[0] - (1570.03599731073) * invT);
-        amrex::Real qf = k_f * (sc[4]*sc[10]);
-        amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[9] + g_RT[10])) * (sc[5]*sc[9]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[4]*sc[10]);
+        const amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[9] + g_RT[10])) * (sc[5]*sc[9]);
+        const amrex::Real qdot = qf - qr;
         wdot[4] -= qdot;
         wdot[5] += qdot;
         wdot[9] += qdot;
@@ -5515,11 +5511,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (49):  OH + CO <=> H + CO2
-        k_f = 47.6
+        const amrex::Real k_f = 47.6
                    * exp((1.228) * tc[0] - (35.2251666063304) * invT);
-        amrex::Real qf = k_f * (sc[4]*sc[11]);
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[4] + g_RT[11] - g_RT[12])) * (sc[1]*sc[12]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[4]*sc[11]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[4] + g_RT[11] - g_RT[12])) * (sc[1]*sc[12]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[4] -= qdot;
         wdot[11] -= qdot;
@@ -5528,11 +5524,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (50):  OH + HCO <=> H2O + CO
-        k_f = 50000000
+        const amrex::Real k_f = 50000000
                    ;
-        amrex::Real qf = k_f * (sc[4]*sc[13]);
-        amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[11] + g_RT[13])) * (sc[5]*sc[11]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[4]*sc[13]);
+        const amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[11] + g_RT[13])) * (sc[5]*sc[11]);
+        const amrex::Real qdot = qf - qr;
         wdot[4] -= qdot;
         wdot[5] += qdot;
         wdot[11] += qdot;
@@ -5541,11 +5537,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (51):  OH + CH2O <=> HCO + H2O
-        k_f = 3430
+        const amrex::Real k_f = 3430
                    * exp((1.18) * tc[0] - (-224.93784961471) * invT);
-        amrex::Real qf = k_f * (sc[4]*sc[14]);
-        amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[13] + g_RT[14])) * (sc[5]*sc[13]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[4]*sc[14]);
+        const amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[13] + g_RT[14])) * (sc[5]*sc[13]);
+        const amrex::Real qdot = qf - qr;
         wdot[4] -= qdot;
         wdot[5] += qdot;
         wdot[13] += qdot;
@@ -5554,11 +5550,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (52):  OH + C2H6 <=> C2H5 + H2O
-        k_f = 3.54
+        const amrex::Real k_f = 3.54
                    * exp((2.12) * tc[0] - (437.798499250106) * invT);
-        amrex::Real qf = k_f * (sc[4]*sc[18]);
-        amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[18])) * (sc[5]*sc[17]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[4]*sc[18]);
+        const amrex::Real qr = k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[18])) * (sc[5]*sc[17]);
+        const amrex::Real qdot = qf - qr;
         wdot[4] -= qdot;
         wdot[5] += qdot;
         wdot[17] += qdot;
@@ -5567,11 +5563,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (53):  HO2 + CH2 <=> OH + CH2O
-        k_f = 20000000
+        const amrex::Real k_f = 20000000
                    ;
-        amrex::Real qf = k_f * (sc[6]*sc[7]);
-        amrex::Real qr = k_f * exp(-(-g_RT[4] + g_RT[6] + g_RT[7] - g_RT[14])) * (sc[4]*sc[14]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[6]*sc[7]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[4] + g_RT[6] + g_RT[7] - g_RT[14])) * (sc[4]*sc[14]);
+        const amrex::Real qdot = qf - qr;
         wdot[4] += qdot;
         wdot[6] -= qdot;
         wdot[7] -= qdot;
@@ -5580,11 +5576,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (54):  HO2 + CH3 <=> O2 + CH4
-        k_f = 1000000
+        const amrex::Real k_f = 1000000
                    ;
-        amrex::Real qf = k_f * (sc[6]*sc[9]);
-        amrex::Real qr = k_f * exp(-(-g_RT[3] + g_RT[6] + g_RT[9] - g_RT[10])) * (sc[3]*sc[10]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[6]*sc[9]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[3] + g_RT[6] + g_RT[9] - g_RT[10])) * (sc[3]*sc[10]);
+        const amrex::Real qdot = qf - qr;
         wdot[3] += qdot;
         wdot[6] -= qdot;
         wdot[9] -= qdot;
@@ -5593,11 +5589,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (55):  HO2 + CH3 <=> OH + CH3O
-        k_f = 20000000
+        const amrex::Real k_f = 20000000
                    ;
-        amrex::Real qf = k_f * (sc[6]*sc[9]);
-        amrex::Real qr = k_f * exp(-(-g_RT[4] + g_RT[6] + g_RT[9] - g_RT[15])) * (sc[4]*sc[15]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[6]*sc[9]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[4] + g_RT[6] + g_RT[9] - g_RT[15])) * (sc[4]*sc[15]);
+        const amrex::Real qdot = qf - qr;
         wdot[4] += qdot;
         wdot[6] -= qdot;
         wdot[9] -= qdot;
@@ -5606,11 +5602,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (56):  HO2 + CO <=> OH + CO2
-        k_f = 150000000
+        const amrex::Real k_f = 150000000
                    * exp(-(11875.9133129914) * invT);
-        amrex::Real qf = k_f * (sc[6]*sc[11]);
-        amrex::Real qr = k_f * exp(-(-g_RT[4] + g_RT[6] + g_RT[11] - g_RT[12])) * (sc[4]*sc[12]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[6]*sc[11]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[4] + g_RT[6] + g_RT[11] - g_RT[12])) * (sc[4]*sc[12]);
+        const amrex::Real qdot = qf - qr;
         wdot[4] += qdot;
         wdot[6] -= qdot;
         wdot[11] -= qdot;
@@ -5619,11 +5615,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (57):  CH2 + O2 <=> OH + HCO
-        k_f = 13200000
+        const amrex::Real k_f = 13200000
                    * exp(-(754.82499870708) * invT);
-        amrex::Real qf = k_f * (sc[3]*sc[7]);
-        amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[4] + g_RT[7] - g_RT[13])) * (sc[4]*sc[13]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[3]*sc[7]);
+        const amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[4] + g_RT[7] - g_RT[13])) * (sc[4]*sc[13]);
+        const amrex::Real qdot = qf - qr;
         wdot[3] -= qdot;
         wdot[4] += qdot;
         wdot[7] -= qdot;
@@ -5632,11 +5628,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (58):  CH2 + H2 <=> H + CH3
-        k_f = 0.5
+        const amrex::Real k_f = 0.5
                    * exp((2) * tc[0] - (3638.25649376812) * invT);
-        amrex::Real qf = k_f * (sc[0]*sc[7]);
-        amrex::Real qr = k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[7] - g_RT[9])) * (sc[1]*sc[9]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[0]*sc[7]);
+        const amrex::Real qr = k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[7] - g_RT[9])) * (sc[1]*sc[9]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] -= qdot;
         wdot[1] += qdot;
         wdot[7] -= qdot;
@@ -5645,11 +5641,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (59):  CH2 + CH3 <=> H + C2H4
-        k_f = 40000000
+        const amrex::Real k_f = 40000000
                    ;
-        amrex::Real qf = k_f * (sc[7]*sc[9]);
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[7] + g_RT[9] - g_RT[16])) * (sc[1]*sc[16]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[7]*sc[9]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[7] + g_RT[9] - g_RT[16])) * (sc[1]*sc[16]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[7] -= qdot;
         wdot[9] -= qdot;
@@ -5658,11 +5654,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (60):  CH2 + CH4 <=> 2.000000 CH3
-        k_f = 2.46
+        const amrex::Real k_f = 2.46
                    * exp((2) * tc[0] - (4161.60182620503) * invT);
-        amrex::Real qf = k_f * (sc[7]*sc[10]);
-        amrex::Real qr = k_f * exp(-(g_RT[7] - 2.000000*g_RT[9] + g_RT[10])) * ((sc[9] * sc[9]));
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[7]*sc[10]);
+        const amrex::Real qr = k_f * exp(-(g_RT[7] - 2.000000*g_RT[9] + g_RT[10])) * ((sc[9] * sc[9]));
+        const amrex::Real qdot = qf - qr;
         wdot[7] -= qdot;
         wdot[9] += 2.000000 * qdot;
         wdot[10] -= qdot;
@@ -5670,11 +5666,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (61):  CH2(S) + N2 <=> CH2 + N2
-        k_f = 15000000
+        const amrex::Real k_f = 15000000
                    * exp(-(301.929999482832) * invT);
-        amrex::Real qf = k_f * (sc[8]*sc[19]);
-        amrex::Real qr = k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[19] - g_RT[19])) * (sc[7]*sc[19]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[8]*sc[19]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[19] - g_RT[19])) * (sc[7]*sc[19]);
+        const amrex::Real qdot = qf - qr;
         wdot[7] += qdot;
         wdot[8] -= qdot;
         wdot[19] -= qdot;
@@ -5683,11 +5679,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (62):  CH2(S) + AR <=> CH2 + AR
-        k_f = 9000000
+        const amrex::Real k_f = 9000000
                    * exp(-(301.929999482832) * invT);
-        amrex::Real qf = k_f * (sc[8]*sc[20]);
-        amrex::Real qr = k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[20] - g_RT[20])) * (sc[7]*sc[20]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[8]*sc[20]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[20] - g_RT[20])) * (sc[7]*sc[20]);
+        const amrex::Real qdot = qf - qr;
         wdot[7] += qdot;
         wdot[8] -= qdot;
         wdot[20] -= qdot;
@@ -5696,11 +5692,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (63):  CH2(S) + O2 <=> H + OH + CO
-        k_f = 28000000
+        const amrex::Real k_f = 28000000
                    ;
-        amrex::Real qf = k_f * (sc[3]*sc[8]);
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[3] - g_RT[4] + g_RT[8] - g_RT[11])) * (refCinv) * (sc[1]*sc[4]*sc[11]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[3]*sc[8]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[3] - g_RT[4] + g_RT[8] - g_RT[11])) * (refCinv) * (sc[1]*sc[4]*sc[11]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[3] -= qdot;
         wdot[4] += qdot;
@@ -5710,11 +5706,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (64):  CH2(S) + O2 <=> CO + H2O
-        k_f = 12000000
+        const amrex::Real k_f = 12000000
                    ;
-        amrex::Real qf = k_f * (sc[3]*sc[8]);
-        amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[5] + g_RT[8] - g_RT[11])) * (sc[5]*sc[11]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[3]*sc[8]);
+        const amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[5] + g_RT[8] - g_RT[11])) * (sc[5]*sc[11]);
+        const amrex::Real qdot = qf - qr;
         wdot[3] -= qdot;
         wdot[5] += qdot;
         wdot[8] -= qdot;
@@ -5723,11 +5719,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (65):  CH2(S) + H2 <=> CH3 + H
-        k_f = 70000000
+        const amrex::Real k_f = 70000000
                    ;
-        amrex::Real qf = k_f * (sc[0]*sc[8]);
-        amrex::Real qr = k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[8] - g_RT[9])) * (sc[1]*sc[9]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[0]*sc[8]);
+        const amrex::Real qr = k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[8] - g_RT[9])) * (sc[1]*sc[9]);
+        const amrex::Real qdot = qf - qr;
         wdot[0] -= qdot;
         wdot[1] += qdot;
         wdot[8] -= qdot;
@@ -5736,11 +5732,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (66):  CH2(S) + H2O <=> CH2 + H2O
-        k_f = 30000000
+        const amrex::Real k_f = 30000000
                    ;
-        amrex::Real qf = k_f * (sc[5]*sc[8]);
-        amrex::Real qr = k_f * exp(-(g_RT[5] - g_RT[5] - g_RT[7] + g_RT[8])) * (sc[5]*sc[7]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[5]*sc[8]);
+        const amrex::Real qr = k_f * exp(-(g_RT[5] - g_RT[5] - g_RT[7] + g_RT[8])) * (sc[5]*sc[7]);
+        const amrex::Real qdot = qf - qr;
         wdot[5] -= qdot;
         wdot[5] += qdot;
         wdot[7] += qdot;
@@ -5749,11 +5745,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (67):  CH2(S) + CH3 <=> H + C2H4
-        k_f = 12000000
+        const amrex::Real k_f = 12000000
                    * exp(-(-286.83349950869) * invT);
-        amrex::Real qf = k_f * (sc[8]*sc[9]);
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[8] + g_RT[9] - g_RT[16])) * (sc[1]*sc[16]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[8]*sc[9]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[8] + g_RT[9] - g_RT[16])) * (sc[1]*sc[16]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[8] -= qdot;
         wdot[9] -= qdot;
@@ -5762,11 +5758,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (68):  CH2(S) + CH4 <=> 2.000000 CH3
-        k_f = 16000000
+        const amrex::Real k_f = 16000000
                    * exp(-(-286.83349950869) * invT);
-        amrex::Real qf = k_f * (sc[8]*sc[10]);
-        amrex::Real qr = k_f * exp(-(g_RT[8] - 2.000000*g_RT[9] + g_RT[10])) * ((sc[9] * sc[9]));
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[8]*sc[10]);
+        const amrex::Real qr = k_f * exp(-(g_RT[8] - 2.000000*g_RT[9] + g_RT[10])) * ((sc[9] * sc[9]));
+        const amrex::Real qdot = qf - qr;
         wdot[8] -= qdot;
         wdot[9] += 2.000000 * qdot;
         wdot[10] -= qdot;
@@ -5774,11 +5770,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (69):  CH2(S) + CO <=> CH2 + CO
-        k_f = 9000000
+        const amrex::Real k_f = 9000000
                    ;
-        amrex::Real qf = k_f * (sc[8]*sc[11]);
-        amrex::Real qr = k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[11] - g_RT[11])) * (sc[7]*sc[11]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[8]*sc[11]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[11] - g_RT[11])) * (sc[7]*sc[11]);
+        const amrex::Real qdot = qf - qr;
         wdot[7] += qdot;
         wdot[8] -= qdot;
         wdot[11] -= qdot;
@@ -5787,11 +5783,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (70):  CH2(S) + CO2 <=> CH2 + CO2
-        k_f = 7000000
+        const amrex::Real k_f = 7000000
                    ;
-        amrex::Real qf = k_f * (sc[8]*sc[12]);
-        amrex::Real qr = k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[12] - g_RT[12])) * (sc[7]*sc[12]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[8]*sc[12]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[12] - g_RT[12])) * (sc[7]*sc[12]);
+        const amrex::Real qdot = qf - qr;
         wdot[7] += qdot;
         wdot[8] -= qdot;
         wdot[12] -= qdot;
@@ -5800,11 +5796,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (71):  CH2(S) + CO2 <=> CO + CH2O
-        k_f = 14000000
+        const amrex::Real k_f = 14000000
                    ;
-        amrex::Real qf = k_f * (sc[8]*sc[12]);
-        amrex::Real qr = k_f * exp(-(g_RT[8] - g_RT[11] + g_RT[12] - g_RT[14])) * (sc[11]*sc[14]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[8]*sc[12]);
+        const amrex::Real qr = k_f * exp(-(g_RT[8] - g_RT[11] + g_RT[12] - g_RT[14])) * (sc[11]*sc[14]);
+        const amrex::Real qdot = qf - qr;
         wdot[8] -= qdot;
         wdot[11] += qdot;
         wdot[12] -= qdot;
@@ -5813,11 +5809,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (72):  CH3 + O2 <=> O + CH3O
-        k_f = 26750000
+        const amrex::Real k_f = 26750000
                    * exp(-(14492.6399751759) * invT);
-        amrex::Real qf = k_f * (sc[3]*sc[9]);
-        amrex::Real qr = k_f * exp(-(-g_RT[2] + g_RT[3] + g_RT[9] - g_RT[15])) * (sc[2]*sc[15]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[3]*sc[9]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[2] + g_RT[3] + g_RT[9] - g_RT[15])) * (sc[2]*sc[15]);
+        const amrex::Real qdot = qf - qr;
         wdot[2] += qdot;
         wdot[3] -= qdot;
         wdot[9] -= qdot;
@@ -5826,11 +5822,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (73):  CH3 + O2 <=> OH + CH2O
-        k_f = 36000
+        const amrex::Real k_f = 36000
                    * exp(-(4498.75699229419) * invT);
-        amrex::Real qf = k_f * (sc[3]*sc[9]);
-        amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[4] + g_RT[9] - g_RT[14])) * (sc[4]*sc[14]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[3]*sc[9]);
+        const amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[4] + g_RT[9] - g_RT[14])) * (sc[4]*sc[14]);
+        const amrex::Real qdot = qf - qr;
         wdot[3] -= qdot;
         wdot[4] += qdot;
         wdot[9] -= qdot;
@@ -5839,11 +5835,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (75):  2.000000 CH3 <=> H + C2H5
-        k_f = 4990000
+        const amrex::Real k_f = 4990000
                    * exp((0.1) * tc[0] - (5334.09665753003) * invT);
-        amrex::Real qf = k_f * ((sc[9] * sc[9]));
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + 2.000000*g_RT[9] - g_RT[17])) * (sc[1]*sc[17]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * ((sc[9] * sc[9]));
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + 2.000000*g_RT[9] - g_RT[17])) * (sc[1]*sc[17]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[9] -= 2.000000 * qdot;
         wdot[17] += qdot;
@@ -5851,11 +5847,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (76):  CH3 + HCO <=> CH4 + CO
-        k_f = 26480000
+        const amrex::Real k_f = 26480000
                    ;
-        amrex::Real qf = k_f * (sc[9]*sc[13]);
-        amrex::Real qr = k_f * exp(-(g_RT[9] - g_RT[10] - g_RT[11] + g_RT[13])) * (sc[10]*sc[11]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[9]*sc[13]);
+        const amrex::Real qr = k_f * exp(-(g_RT[9] - g_RT[10] - g_RT[11] + g_RT[13])) * (sc[10]*sc[11]);
+        const amrex::Real qdot = qf - qr;
         wdot[9] -= qdot;
         wdot[10] += qdot;
         wdot[11] += qdot;
@@ -5864,11 +5860,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (77):  CH3 + CH2O <=> HCO + CH4
-        k_f = 0.00332
+        const amrex::Real k_f = 0.00332
                    * exp((2.81) * tc[0] - (2948.84966161566) * invT);
-        amrex::Real qf = k_f * (sc[9]*sc[14]);
-        amrex::Real qr = k_f * exp(-(g_RT[9] - g_RT[10] - g_RT[13] + g_RT[14])) * (sc[10]*sc[13]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[9]*sc[14]);
+        const amrex::Real qr = k_f * exp(-(g_RT[9] - g_RT[10] - g_RT[13] + g_RT[14])) * (sc[10]*sc[13]);
+        const amrex::Real qdot = qf - qr;
         wdot[9] -= qdot;
         wdot[10] += qdot;
         wdot[13] += qdot;
@@ -5877,11 +5873,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (78):  CH3 + C2H6 <=> C2H5 + CH4
-        k_f = 6.14
+        const amrex::Real k_f = 6.14
                    * exp((1.74) * tc[0] - (5258.61415765932) * invT);
-        amrex::Real qf = k_f * (sc[9]*sc[18]);
-        amrex::Real qr = k_f * exp(-(g_RT[9] - g_RT[10] - g_RT[17] + g_RT[18])) * (sc[10]*sc[17]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[9]*sc[18]);
+        const amrex::Real qr = k_f * exp(-(g_RT[9] - g_RT[10] - g_RT[17] + g_RT[18])) * (sc[10]*sc[17]);
+        const amrex::Real qdot = qf - qr;
         wdot[9] -= qdot;
         wdot[10] += qdot;
         wdot[17] += qdot;
@@ -5890,11 +5886,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (79):  HCO + H2O <=> H + CO + H2O
-        k_f = 2244000000000
+        const amrex::Real k_f = 2244000000000
                    * exp((-1) * tc[0] - (8554.68331868023) * invT);
-        amrex::Real qf = k_f * (sc[5]*sc[13]);
-        amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[5] - g_RT[5] - g_RT[11] + g_RT[13])) * (refCinv) * (sc[1]*sc[5]*sc[11]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[5]*sc[13]);
+        const amrex::Real qr = k_f * exp(-(-g_RT[1] + g_RT[5] - g_RT[5] - g_RT[11] + g_RT[13])) * (refCinv) * (sc[1]*sc[5]*sc[11]);
+        const amrex::Real qdot = qf - qr;
         wdot[1] += qdot;
         wdot[5] -= qdot;
         wdot[5] += qdot;
@@ -5904,11 +5900,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (81):  HCO + O2 <=> HO2 + CO
-        k_f = 7600000
+        const amrex::Real k_f = 7600000
                    * exp(-(201.286666321888) * invT);
-        amrex::Real qf = k_f * (sc[3]*sc[13]);
-        amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[11] + g_RT[13])) * (sc[6]*sc[11]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[3]*sc[13]);
+        const amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[11] + g_RT[13])) * (sc[6]*sc[11]);
+        const amrex::Real qdot = qf - qr;
         wdot[3] -= qdot;
         wdot[6] += qdot;
         wdot[11] += qdot;
@@ -5917,11 +5913,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (82):  CH3O + O2 <=> HO2 + CH2O
-        k_f = 4.28e-19
+        const amrex::Real k_f = 4.28e-19
                    * exp((7.6) * tc[0] - (-1776.35483029066) * invT);
-        amrex::Real qf = k_f * (sc[3]*sc[15]);
-        amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[15])) * (sc[6]*sc[14]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[3]*sc[15]);
+        const amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[15])) * (sc[6]*sc[14]);
+        const amrex::Real qdot = qf - qr;
         wdot[3] -= qdot;
         wdot[6] += qdot;
         wdot[14] += qdot;
@@ -5930,11 +5926,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
 
     {
         // (83):  C2H5 + O2 <=> HO2 + C2H4
-        k_f = 840000
+        const amrex::Real k_f = 840000
                    * exp(-(1949.96457999329) * invT);
-        amrex::Real qf = k_f * (sc[3]*sc[17]);
-        amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[16] + g_RT[17])) * (sc[6]*sc[16]);
-        amrex::Real qdot = qf - qr;
+        const amrex::Real qf = k_f * (sc[3]*sc[17]);
+        const amrex::Real qr = k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[16] + g_RT[17])) * (sc[6]*sc[16]);
+        const amrex::Real qdot = qf - qr;
         wdot[3] -= qdot;
         wdot[6] += qdot;
         wdot[16] += qdot;
