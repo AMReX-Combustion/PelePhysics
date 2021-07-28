@@ -732,17 +732,17 @@ class CPickler(CMill):
     def _generateThermoRoutine_GPU(self, name, expressionGenerator, speciesInfo, QSS_flag, needsInvT=0):
         lowT, highT, midpoints = speciesInfo
 
-        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void %s(amrex::Real * species, amrex::Real *  tc)' % name)
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void %s(amrex::Real * species, const amrex::Real *  tc)' % name)
         self._write('{')
         self._indent()
         # declarations
         self._write()
         self._write(self.line('temperature'))
-        self._write('amrex::Real T = tc[1];')
+        self._write('const amrex::Real T = tc[1];')
         if needsInvT != 0:
-           self._write('amrex::Real invT = 1 / T;')
+           self._write('const amrex::Real invT = 1 / T;')
         if needsInvT == 2:
-           self._write('amrex::Real invT2 = invT*invT;')
+           self._write('const amrex::Real invT2 = invT*invT;')
                     
         for midT, speciesList in midpoints.items():
             self._write('')
@@ -873,7 +873,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -909,7 +909,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -944,7 +944,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real cpor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -984,7 +984,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real cpor[%d], tresult[%d]; ' % (self.nSpecies,self.nSpecies) + self.line(' temporary storage'))
@@ -1034,7 +1034,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real cvor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -1073,7 +1073,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real cvor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -1117,7 +1117,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real hml[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -1159,7 +1159,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real hml[%d], tmp[%d]; ' % (self.nSpecies,self.nSpecies) + self.line(' temporary storage'))
@@ -1212,7 +1212,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real uml[%d]; ' % self.nSpecies + self.line(' temporary energy array'))
@@ -1254,7 +1254,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real ums[%d]; ' % self.nSpecies + self.line(' temporary energy array'))
@@ -1307,7 +1307,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real sor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -1351,7 +1351,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real sor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -1416,7 +1416,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -1464,7 +1464,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -1534,7 +1534,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -1582,7 +1582,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3275,7 +3275,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3298,7 +3298,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3321,7 +3321,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3346,7 +3346,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3381,7 +3381,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3416,7 +3416,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3453,7 +3453,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3490,7 +3490,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3527,7 +3527,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3563,7 +3563,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3595,7 +3595,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3628,7 +3628,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3660,7 +3660,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3697,7 +3697,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3782,7 +3782,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -4183,7 +4183,7 @@ class CPickler(CMill):
     
         # QSS
         self._write(
-            'amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
+            'const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
             + self.line('temperature cache'))
         if (self.nQSSspecies > 0):
             if (self.nQSSspecies > 0):
@@ -4346,7 +4346,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real gort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -4412,7 +4412,7 @@ class CPickler(CMill):
         
         self._write()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('amrex::Real invT = 1.0 / tc[1];')
         self._write('amrex::Real invT2 = invT * invT;')
 
@@ -5094,7 +5094,7 @@ class CPickler(CMill):
         
         self._write()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('amrex::Real invT = 1.0 / tc[1];')
         self._write('amrex::Real invT2 = invT * invT;')
 
@@ -5894,13 +5894,8 @@ class CPickler(CMill):
         self._write(self.line('compute the Gibbs free energy'))
         self._write('for (int i=0; i<npt; i++) {')
         self._indent()
-        self._write('amrex::Real tg[5], g[%d];' % nSpecies)
-        self._write('tg[0] = tc[0*npt+i];')
-        self._write('tg[1] = tc[1*npt+i];')
-        self._write('tg[2] = tc[2*npt+i];')
-        self._write('tg[3] = tc[3*npt+i];')
-        self._write('tg[4] = tc[4*npt+i];')
-        self._write()
+        self._write('const amrex::Real tg[5] = {tc[0*npt+i], tc[1*npt+i], tc[2*npt+i], tc[3*npt+i], tc[4*npt+i]};')
+        self._write('amrex::Real g[%d];' % nSpecies)
         self._write('gibbs(g, tg);')
         self._write()
         for ispec in range(nSpecies):
@@ -6325,7 +6320,7 @@ class CPickler(CMill):
         self._write('{')
         self._indent()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('amrex::Real invT = 1.0 / tc[1];')
         
         self._write()
@@ -6995,7 +6990,7 @@ class CPickler(CMill):
         self._write('{')
         self._indent()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('amrex::Real invT = 1.0 / tc[1];')
         
         self._write()
@@ -7066,7 +7061,7 @@ class CPickler(CMill):
 
         if (nReactions > 0):
 
-            self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+            self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
             self._write('amrex::Real invT = 1.0 / tc[1];')
             
             self._write()
@@ -7418,14 +7413,14 @@ class CPickler(CMill):
         
         self._write()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('amrex::Real invT = 1.0 / tc[1];')
         self._write('amrex::Real invT2 = invT * invT;')
 
         self._write()
 
         if (self.nQSSspecies > 0):
-            self._write('/* Fill sc_qss here*/')
+            self._write('// Fill sc_qss here')
             self._write('amrex::Real sc_qss[%d];' % self.nQSSspecies)
             self._write('comp_sc_qss_cpu(sc, sc_qss, tc, invT);')
 
@@ -10928,7 +10923,7 @@ class CPickler(CMill):
         
         # k_f_qss function
         self._write()
-        self._write('void comp_k_f_qss(amrex::Real *  tc, amrex::Real invT, amrex::Real *  k_f)')
+        self._write('void comp_k_f_qss(const amrex::Real * tc, amrex::Real invT, amrex::Real * k_f)')
         self._write('{')
         self._indent()
         self._outdent()
@@ -10949,7 +10944,7 @@ class CPickler(CMill):
 
         # Kc_qss
         self._write()
-        self._write('void comp_Kc_qss(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc)')
+        self._write('void comp_Kc_qss(const amrex::Real * tc, amrex::Real invT, amrex::Real * Kc)')
         self._write('{')
         self._indent()
 
@@ -11696,7 +11691,7 @@ class CPickler(CMill):
         self._write()
 
         self._write(
-            'amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
+            'const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
             + self.line('temperature cache'))
 
         self._write()
@@ -11859,7 +11854,7 @@ class CPickler(CMill):
         self._write()
 
         self._write(
-            'amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
+            'const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
             + self.line('temperature cache'))
 
         self._write()
