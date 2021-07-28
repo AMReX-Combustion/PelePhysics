@@ -1775,16 +1775,16 @@ class CPickler(CMill):
                 aeuc = self._activationEnergyUnits(reaction.units["activation"])
 
                 self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-                self._write("k_f = %.17g" % (uc.value * A)) 
+                self._write("k_f = %.15g" % (uc.value * A)) 
                 if (beta == 0) and (E == 0):
                     self._write("           ;")
                 else:
                   if (E == 0):
-                      self._write("           * exp((%.17g) * tc[0]);" % (beta))
+                      self._write("           * exp((%.15g) * tc[0]);" % (beta))
                   elif (beta == 0):
-                      self._write("           * exp(-(%.17g) * invT);" % ((aeuc / Rc / kelvin) * E))
+                      self._write("           * exp(-(%.15g) * invT);" % ((aeuc / Rc / kelvin) * E))
                   else:
-                      self._write("           * exp((%.17g) * tc[0] - (%.17g) * invT);" % (beta, (aeuc / Rc / kelvin) * E))
+                      self._write("           * exp((%.15g) * tc[0] - (%.15g) * invT);" % (beta, (aeuc / Rc / kelvin) * E))
 
                 alpha = 1.0;
                 if not thirdBody:
@@ -1797,25 +1797,25 @@ class CPickler(CMill):
                 else:
                     alpha = self._enhancement_d_with_QSS(mechanism, reaction)
                     self._write("Corr  = %s;" %(alpha))
-                    self._write("redP = Corr / k_f * 1e-%d * %.17g " % (dim*6, low_A)) 
-                    self._write("           * exp(%.17g  * tc[0] - %.17g  * (%.17g) *invT);" % (low_beta, aeuc / Rc / kelvin, low_E))
+                    self._write("redP = Corr / k_f * 1e-%d * %.15g " % (dim*6, low_A)) 
+                    self._write("           * exp(%.15g  * tc[0] - %.15g  * (%.15g) *invT);" % (low_beta, aeuc / Rc / kelvin, low_E))
                     if reaction.troe:
                         self._write("F = redP / (1.0 + redP);")
                         self._write("logPred = log10(redP);")
                         self._write('logFcent = log10(')
                         if (abs(troe[1]) > 1.e-100):
-                            self._write('    (%.17g)*exp(-tc[1] * %.17g)' % (1.0 - troe[0],1 / troe[1]))
+                            self._write('    (%.15g)*exp(-tc[1] * %.15g)' % (1.0 - troe[0],1 / troe[1]))
                         else:
                             self._write('     0.0 ' )
                         if (abs(troe[2]) > 1.e-100):
-                            self._write('    + %.17g * exp(-tc[1] * %.17g)' % (troe[0], 1 / troe[2]))
+                            self._write('    + %.15g * exp(-tc[1] * %.15g)' % (troe[0], 1 / troe[2]))
                         else:
                             self._write('    + 0.0 ')
                         if (ntroe == 4):
                             if(troe[3] < 0):
-                                self._write('    + exp(%.17g * invT));' % -troe[3])
+                                self._write('    + exp(%.15g * invT));' % -troe[3])
                             else:
-                                self._write('    + exp(-%.17g * invT));' % troe[3])
+                                self._write('    + exp(-%.15g * invT));' % troe[3])
                         else:
                             self._write('    + 0.0);' )
                         self._write("troe_c = -0.4 - 0.67 * logFcent;")
@@ -1829,14 +1829,14 @@ class CPickler(CMill):
                         self._write("logPred = log10(redP);")
                         self._write("X = 1.0 / (1.0 + logPred*logPred);")
                         if (sri[1] < 0):
-                            self._write("F_sri = exp(X * log(%.17g * exp(%.17g*invT)" % (sri[0],-sri[1]))
+                            self._write("F_sri = exp(X * log(%.15g * exp(%.15g*invT)" % (sri[0],-sri[1]))
                         else:
-                            self._write("F_sri = exp(X * log(%.17g * exp(-%.17g*invT)" % (sri[0],sri[1]))
+                            self._write("F_sri = exp(X * log(%.15g * exp(-%.15g*invT)" % (sri[0],sri[1]))
                         if (sri[2] > 1.e-100):
-                            self._write("   +  exp(tc[0]/%.17g) " % sri[2])
+                            self._write("   +  exp(tc[0]/%.15g) " % sri[2])
                         else:
                             self._write("   +  0. ") 
-                        self._write("   *  (%d > 3 ? %.17g*exp(%.17g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
+                        self._write("   *  (%d > 3 ? %.15g*exp(%.15g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
                         self._write("Corr = F * F_sri;")
                         self._write("qf[%d] *= Corr * k_f;" % idx)
                     elif (nlindemann > 0):
@@ -1853,8 +1853,8 @@ class CPickler(CMill):
                     else:
                         print("REV reaction cannot be PD")
                         sys.exit(1)
-                    self._write("k_r = %.17g * %.17g " % (uc_rev.value,Ar)) 
-                    self._write("           * exp(%.17g * tc[0] - %.17g * %.17g * invT);" % (betar, aeuc / Rc / kelvin, Er))
+                    self._write("k_r = %.15g * %.15g " % (uc_rev.value,Ar)) 
+                    self._write("           * exp(%.15g * tc[0] - %.15g * %.15g * invT);" % (betar, aeuc / Rc / kelvin, Er))
                     if (alpha == 1.0):
                         self._write("qr[%d] *= k_r;" % idx)
                     else:
@@ -1972,16 +1972,16 @@ class CPickler(CMill):
                 aeuc = self._activationEnergyUnits(reaction.units["activation"])
 
                 self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-                self._write("k_f = %.17g" % (uc.value * A)) 
+                self._write("k_f = %.15g" % (uc.value * A)) 
                 if (beta == 0) and (E == 0):
                     self._write("           ;")
                 else:
                   if (E == 0):
-                      self._write("           * exp((%.17g) * tc[0]);" % (beta))
+                      self._write("           * exp((%.15g) * tc[0]);" % (beta))
                   elif (beta == 0):
-                      self._write("           * exp(-(%.17g) * invT);" % ((aeuc / Rc / kelvin) * E))
+                      self._write("           * exp(-(%.15g) * invT);" % ((aeuc / Rc / kelvin) * E))
                   else:
-                      self._write("           * exp((%.17g) * tc[0] - (%.17g) * invT);" % (beta, (aeuc / Rc / kelvin) * E))
+                      self._write("           * exp((%.15g) * tc[0] - (%.15g) * invT);" % (beta, (aeuc / Rc / kelvin) * E))
 
                 alpha = 1.0;
                 if not thirdBody:
@@ -1993,25 +1993,25 @@ class CPickler(CMill):
                 else:
                     alpha = self._enhancement_d_with_QSS(mechanism, reaction)
                     self._write("Corr  = %s;" %(alpha))
-                    self._write("redP = Corr / k_f * 1e-%d * %.17g " % (dim*6, low_A)) 
-                    self._write("           * exp(%.17g  * tc[0] - %.17g  * (%.17g) *invT);" % (low_beta, aeuc / Rc / kelvin, low_E))
+                    self._write("redP = Corr / k_f * 1e-%d * %.15g " % (dim*6, low_A)) 
+                    self._write("           * exp(%.15g  * tc[0] - %.15g  * (%.15g) *invT);" % (low_beta, aeuc / Rc / kelvin, low_E))
                     if reaction.troe:
                         self._write("F = redP / (1.0 + redP);")
                         self._write("logPred = log10(redP);")
                         self._write('logFcent = log10(')
                         if (abs(troe[1]) > 1.e-100):
-                            self._write('    (%.17g)*exp(-tc[1] * %.17g)' % (1.0 - troe[0],1 / troe[1]))
+                            self._write('    (%.15g)*exp(-tc[1] * %.15g)' % (1.0 - troe[0],1 / troe[1]))
                         else:
                             self._write('     0.0 ' )
                         if (abs(troe[2]) > 1.e-100):
-                            self._write('    + %.17g * exp(-tc[1] * %.17g)' % (troe[0], 1 / troe[2]))
+                            self._write('    + %.15g * exp(-tc[1] * %.15g)' % (troe[0], 1 / troe[2]))
                         else:
                             self._write('    + 0.0 ')
                         if (ntroe == 4):
                             if(troe[3] < 0):
-                                self._write('    + exp(%.17g * invT));' % -troe[3])
+                                self._write('    + exp(%.15g * invT));' % -troe[3])
                             else:
-                                self._write('    + exp(-%.17g * invT));' % troe[3])
+                                self._write('    + exp(-%.15g * invT));' % troe[3])
                         else:
                             self._write('    + 0.0);' )
                         self._write("troe_c = -0.4 - 0.67 * logFcent;")
@@ -2025,14 +2025,14 @@ class CPickler(CMill):
                         self._write("logPred = log10(redP);")
                         self._write("X = 1.0 / (1.0 + logPred*logPred);")
                         if (sri[1] < 0):
-                            self._write("F_sri = exp(X * log(%.17g * exp(%.17g*invT)" % (sri[0],-sri[1]))
+                            self._write("F_sri = exp(X * log(%.15g * exp(%.15g*invT)" % (sri[0],-sri[1]))
                         else:
-                            self._write("F_sri = exp(X * log(%.17g * exp(-%.17g*invT)" % (sri[0],sri[1]))
+                            self._write("F_sri = exp(X * log(%.15g * exp(-%.15g*invT)" % (sri[0],sri[1]))
                         if (sri[2] > 1.e-100):
-                            self._write("   +  exp(tc[0]/%.17g) " % sri[2])
+                            self._write("   +  exp(tc[0]/%.15g) " % sri[2])
                         else:
                             self._write("   +  0. ") 
-                        self._write("   *  (%d > 3 ? %.17g*exp(%.17g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
+                        self._write("   *  (%d > 3 ? %.15g*exp(%.15g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
                         self._write("Corr = F * F_sri;")
                         self._write("qf = Corr * k_f * (%s);" % (forward_sc))
                     elif (nlindemann > 0):
@@ -2049,8 +2049,8 @@ class CPickler(CMill):
                     else:
                         print("REV reaction cannot be PD")
                         sys.exit(1)
-                    self._write("k_r = %.17g * %.17g " % (uc_rev.value,Ar)) 
-                    self._write("           * exp(%.17g * tc[0] - %.17g * %.17g * invT);" % (betar, aeuc / Rc / kelvin, Er))
+                    self._write("k_r = %.15g * %.15g " % (uc_rev.value,Ar)) 
+                    self._write("           * exp(%.15g * tc[0] - %.15g * %.15g * invT);" % (betar, aeuc / Rc / kelvin, Er))
                     if (alpha == 1.0):
                         self._write("qr = k_r * (%s);" % (reverse_sc))
                     else:
@@ -2325,7 +2325,7 @@ class CPickler(CMill):
         for i, eff in enumerate(efficiencies):
             symbol, efficiency = eff
             if symbol not in self.qss_species_list:
-                factor = "( %.17g - 1)" % (efficiency)
+                factor = "( %.15g - 1)" % (efficiency)
                 conc = "sc[%d]" % self.ordered_idx_map[symbol]
                 alpha.append("%s*%s" % (factor, conc))
 
@@ -2351,14 +2351,14 @@ class CPickler(CMill):
         for i, eff in enumerate(efficiencies):
             symbol, efficiency = eff
             if symbol not in self.qss_species_list:
-                factor = "(%.17g)" % (efficiency - 1)
+                factor = "(%.15g)" % (efficiency - 1)
                 conc = "sc[%d]" % self.ordered_idx_map[symbol]
                 if ((efficiency - 1) == 1):
                     alpha.append("%s" % (conc))
                 else:
                     alpha.append("%s*%s" % (factor, conc))
             else:
-                factor = "(%.17g)" % (efficiency - 1)
+                factor = "(%.15g)" % (efficiency - 1)
                 conc = "sc_qss[%d]" % (self.ordered_idx_map[symbol] - self.nSpecies)
                 if ((efficiency - 1) == 1):
                     alpha.append("%s" % (conc))
@@ -4180,9 +4180,9 @@ class CPickler(CMill):
             reaction   = mechanism.reaction(id=j)
             A, beta, E = reaction.arrhenius
             self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-            self._write("a[%d] = %.17g;" %(j,A))
-            self._write("b[%d] = %.17g;" %(j,beta))
-            self._write("e[%d] = %.17g;" %(j,E))
+            self._write("a[%d] = %.15g;" %(j,A))
+            self._write("b[%d] = %.15g;" %(j,beta))
+            self._write("e[%d] = %.15g;" %(j,E))
             self._write()
 
         self._write()
@@ -4659,21 +4659,21 @@ class CPickler(CMill):
         self._write('/* forward */')
         self._write("phi_f = %s;" % self._QSSsortedPhaseSpace(mechanism, sorted_reactants))
         #
-        self._write("k_f = %.17g * %.17g" % (uc.value,A))
-        self._write("            * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
+        self._write("k_f = %.15g * %.15g" % (uc.value,A))
+        self._write("            * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
                     %(beta,aeuc / Rc / kelvin,E))
         #
-        self._write("dlnkfdT = %.17g * invT + %.17g *  (%.17g)  * invT2;"
+        self._write("dlnkfdT = %.15g * invT + %.15g *  (%.15g)  * invT2;"
                     %(beta,aeuc / Rc / kelvin,E))
 
         if isPD:
             low_A, low_beta, low_E = reaction.low
             self._write('/* pressure-fall-off */')
-            self._write("k_0 = %.17g * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
+            self._write("k_0 = %.15g * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
                         %(low_A,low_beta,aeuc / Rc / kelvin,low_E))
             self._write('Pr = 1e-%d * alpha / k_f * k_0;' % (dim*6))
             self._write('fPr = Pr / (1.0+Pr);')
-            self._write("dlnk0dT = %.17g * invT + %.17g * (%.17g) * invT2;"
+            self._write("dlnk0dT = %.15g * invT + %.15g * (%.15g) * invT2;"
                         %(low_beta,aeuc / Rc / kelvin,low_E))
             self._write('dlogPrdT = log10e*(dlnk0dT - dlnkfdT);')
             self._write('dlogfPrdT = dlogPrdT / (1.0+Pr);')
@@ -4689,24 +4689,24 @@ class CPickler(CMill):
                 self._write("logPr = log10(Pr);")
                 if (abs(troe[1]) > 1.e-100):
                     if (troe[0] < 0):
-                        self._write('Fcent1 = (1.+%.17g)*exp(-T/%.17g);'
+                        self._write('Fcent1 = (1.+%.15g)*exp(-T/%.15g);'
                                 %(-troe[0],troe[1]))
                     else:
-                        self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
+                        self._write('Fcent1 = (1.-%.15g)*exp(-T/%.15g);'
                                 %(troe[0],troe[1]))
                 else:
                     self._write('Fcent1 = 0.;')
                 if (abs(troe[2]) > 1.e-100):
-                    self._write('Fcent2 = %.17g * exp(-T/%.17g);'
+                    self._write('Fcent2 = %.15g * exp(-T/%.15g);'
                                 %(troe[0],troe[2]))
                 else:
                     self._write('Fcent2 = 0.;')
                 if (ntroe == 4):
                     if (troe[3] < 0):
-                        self._write('Fcent3 = exp(%.17g * invT);'
+                        self._write('Fcent3 = exp(%.15g * invT);'
                                 % -troe[3] )
                     else:
-                        self._write('Fcent3 = exp(-%.17g * invT);'
+                        self._write('Fcent3 = exp(-%.15g * invT);'
                                 % troe[3] )
                 else:
                     self._write('Fcent3 = 0.;')
@@ -4721,17 +4721,17 @@ class CPickler(CMill):
 
                 self._write("dlogFcentdT = log10e/Fcent*( ")
                 if (abs(troe[1]) > 1.e-100):
-                    self._write("    -Fcent1/%.17g"
+                    self._write("    -Fcent1/%.15g"
                                 % troe[1] )
                 else:
                     self._write("    +0.")
                 if (abs(troe[2]) > 1.e-100):
-                    self._write("    -Fcent2/%.17g"
+                    self._write("    -Fcent2/%.15g"
                                 % troe[2] )
                 else:
                     self._write("    +0.")
                 if (ntroe == 4):
-                    self._write("    + Fcent3*%.17g*invT2);"
+                    self._write("    + Fcent3*%.15g*invT2);"
                                 % troe[3] )
                 else:
                     self._write("    + 0.);")
@@ -4836,9 +4836,9 @@ class CPickler(CMill):
             elif nu == -1:
                 self._write('wdot[%d] -= q; /* %s */' % (k, s))
             elif nu > 0:
-                self._write('wdot[%d] += %.17g * q; /* %s */' % (k, nu, s))
+                self._write('wdot[%d] += %.15g * q; /* %s */' % (k, nu, s))
             elif nu < 0:
-                self._write('wdot[%d] -= %.17g * q; /* %s */' % (k, -nu, s))
+                self._write('wdot[%d] -= %.15g * q; /* %s */' % (k, -nu, s))
 
         if isPD:
             self._write('/* for convenience */')
@@ -4905,7 +4905,7 @@ class CPickler(CMill):
             #        #
             #        for m in sorted(all_dict.keys()):
             #            if all_dict[m][1] != 0:
-            #                s1 = 'J[%d] += %.17g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
+            #                s1 = 'J[%d] += %.15g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
             #                s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
             #                s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], symb_k)
             #                self._write(s1.ljust(30) + s2)
@@ -4939,7 +4939,7 @@ class CPickler(CMill):
             self._indent()
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
+                    s1 = 'J[%d*k+%d] += %.15g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
             #self._outdent()
@@ -4950,7 +4950,7 @@ class CPickler(CMill):
 
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT; /* dwdot[%s]/dT */' % \
+                    s1 = 'J[%d] += %.15g * dqdT; /* dwdot[%s]/dT */' % \
                         (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
@@ -4965,14 +4965,14 @@ class CPickler(CMill):
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
                             if all_dict[m][1] != 0:
-                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
+                                s1 = 'J[%d] += %.15g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                                 s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                                 s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], all_dict[k][0])
                                 self._write(s1.ljust(30) + s2)
             self._write('/* d()/dT */')
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
+                    s1 = 'J[%d] += %.15g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=').replace('+= -1 *', '-=')
                     s2 = '/* dwdot[%s]/dT */' % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
@@ -5043,13 +5043,13 @@ class CPickler(CMill):
                 for i, eff in enumerate(efficiencies):
                     symbol, efficiency = eff
                     if self.ordered_idx_map[symbol] == kid:
-                        return "(%.17g - 1)" % (efficiency)
+                        return "(%.15g - 1)" % (efficiency)
                 return "0"
             else:
                 for i, eff in enumerate(efficiencies):
                     symbol, efficiency = eff
                     if self.ordered_idx_map[symbol] == kid:
-                        return "%.17g" % (efficiency)
+                        return "%.15g" % (efficiency)
                 return "1"
 
     # JACOBIAN #
@@ -5359,21 +5359,21 @@ class CPickler(CMill):
         self._write('/* forward */')
         self._write("phi_f = %s;" % self._QSSsortedPhaseSpace(mechanism, sorted_reactants))
         #
-        self._write("k_f = %.17g * %.17g" % (uc.value,A))
-        self._write("            * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
+        self._write("k_f = %.15g * %.15g" % (uc.value,A))
+        self._write("            * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
                     %(beta,aeuc / Rc / kelvin,E))
         #
-        self._write("dlnkfdT = %.17g * invT + %.17g *  %.17g  * invT2;"
+        self._write("dlnkfdT = %.15g * invT + %.15g *  %.15g  * invT2;"
                     %(beta,aeuc / Rc / kelvin,E))
 
         if isPD:
             low_A, low_beta, low_E = reaction.low
             self._write('/* pressure-fall-off */')
-            self._write("k_0 = %.17g * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
+            self._write("k_0 = %.15g * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
                         %(low_A,low_beta,aeuc / Rc / kelvin,low_E))
             self._write('Pr = 1e-%d * alpha / k_f * k_0;' % (dim*6))
             self._write('fPr = Pr / (1.0+Pr);')
-            self._write("dlnk0dT = %.17g * invT + %.17g * (%.17g) * invT2;"
+            self._write("dlnk0dT = %.15g * invT + %.15g * (%.15g) * invT2;"
                         %(low_beta,aeuc / Rc / kelvin,low_E))
             self._write('dlogPrdT = log10e*(dlnk0dT - dlnkfdT);')
             self._write('dlogfPrdT = dlogPrdT / (1.0+Pr);')
@@ -5389,24 +5389,24 @@ class CPickler(CMill):
                 self._write("logPr = log10(Pr);")
                 if (abs(troe[1]) > 1.e-100):
                     if (troe[0] < 0):
-                        self._write('Fcent1 = (1.+%.17g)*exp(-T/%.17g);'
+                        self._write('Fcent1 = (1.+%.15g)*exp(-T/%.15g);'
                                 %(-troe[0],troe[1]))
                     else:
-                        self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
+                        self._write('Fcent1 = (1.-%.15g)*exp(-T/%.15g);'
                                 %(troe[0],troe[1]))
                 else:
                     self._write('Fcent1 = 0.;')
                 if (abs(troe[2]) > 1.e-100):
-                    self._write('Fcent2 = %.17g * exp(-T/%.17g);'
+                    self._write('Fcent2 = %.15g * exp(-T/%.15g);'
                                 %(troe[0],troe[2]))
                 else:
                     self._write('Fcent2 = 0.;')
                 if (ntroe == 4):
                     if (troe[3] < 0):
-                        self._write('Fcent3 = exp(%.17g * invT);'
+                        self._write('Fcent3 = exp(%.15g * invT);'
                                 % -troe[3] )
                     else:
-                        self._write('Fcent3 = exp(-%.17g * invT);'
+                        self._write('Fcent3 = exp(-%.15g * invT);'
                                 % troe[3] )
                 else:
                     self._write('Fcent3 = 0.;')
@@ -5421,17 +5421,17 @@ class CPickler(CMill):
 
                 self._write("dlogFcentdT = log10e/Fcent*( ")
                 if (abs(troe[1]) > 1.e-100):
-                    self._write("    -Fcent1/%.17g"
+                    self._write("    -Fcent1/%.15g"
                                 % troe[1] )
                 else:
                     self._write("    0.")
                 if (abs(troe[2]) > 1.e-100):
-                    self._write("    -Fcent2/%.17g"
+                    self._write("    -Fcent2/%.15g"
                                 % troe[2] )
                 else:
                     self._write("    0.")
                 if (ntroe == 4):
-                    self._write("    + Fcent3*%.17g*invT2);"
+                    self._write("    + Fcent3*%.15g*invT2);"
                                 % troe[3] )
                 else:
                     self._write("    + 0.);")
@@ -5539,9 +5539,9 @@ class CPickler(CMill):
             elif nu == -1:
                 self._write('wdot[%d] -= q; /* %s */' % (k, s))
             elif nu > 0:
-                self._write('wdot[%d] += %.17g * q; /* %s */' % (k, nu, s))
+                self._write('wdot[%d] += %.15g * q; /* %s */' % (k, nu, s))
             elif nu < 0:
-                self._write('wdot[%d] -= %.17g * q; /* %s */' % (k, -nu, s))
+                self._write('wdot[%d] -= %.15g * q; /* %s */' % (k, -nu, s))
 
         if isPD:
             self._write('/* for convenience */')
@@ -5608,7 +5608,7 @@ class CPickler(CMill):
                     #
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
-                            s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
+                            s1 = 'J[%d] += %.15g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                             s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                             s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], symb_k)
                             self._write(s1.ljust(30) + s2)
@@ -5640,7 +5640,7 @@ class CPickler(CMill):
             self._indent()
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
+                    s1 = 'J[%d*k+%d] += %.15g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
             self._outdent()
@@ -5651,7 +5651,7 @@ class CPickler(CMill):
 
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT; /* dwdot[%s]/dT */' % \
+                    s1 = 'J[%d] += %.15g * dqdT; /* dwdot[%s]/dT */' % \
                         (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
@@ -5666,14 +5666,14 @@ class CPickler(CMill):
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
                             if all_dict[m][1] != 0:
-                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
+                                s1 = 'J[%d] += %.15g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                                 s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                                 s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], all_dict[k][0])
                                 self._write(s1.ljust(30) + s2)
             self._write('/* d()/dT */')
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
+                    s1 = 'J[%d] += %.15g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=').replace('+= -1 *', '-=')
                     s2 = '/* dwdot[%s]/dT */' % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
@@ -7821,9 +7821,9 @@ class CPickler(CMill):
             elif nu == -1:
                 self._write('wdot[%d] -= q; /* %s */' % (k, s))
             elif nu > 0:
-                self._write('wdot[%d] += %.17g * q; /* %s */' % (k, nu, s))
+                self._write('wdot[%d] += %.15g * q; /* %s */' % (k, nu, s))
             elif nu < 0:
-                self._write('wdot[%d] -= %.17g * q; /* %s */' % (k, -nu, s))
+                self._write('wdot[%d] -= %.15g * q; /* %s */' % (k, -nu, s))
 
         if isPD:
             self._write('/* for convenience */')
@@ -7890,7 +7890,7 @@ class CPickler(CMill):
                     #
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
-                            s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
+                            s1 = 'J[%d] += %.15g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                             s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                             s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], symb_k)
                             self._write(s1.ljust(30) + s2)
@@ -7922,7 +7922,7 @@ class CPickler(CMill):
             self._indent()
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
+                    s1 = 'J[%d*k+%d] += %.15g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
             self._outdent()
@@ -7933,7 +7933,7 @@ class CPickler(CMill):
 
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT; /* dwdot[%s]/dT */' % \
+                    s1 = 'J[%d] += %.15g * dqdT; /* dwdot[%s]/dT */' % \
                         (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
@@ -7946,14 +7946,14 @@ class CPickler(CMill):
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
                             if all_dict[m][1] != 0:
-                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
+                                s1 = 'J[%d] += %.15g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                                 s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                                 s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], all_dict[k][0])
                                 self._write(s1.ljust(30) + s2)
             self._write('/* d()/dT */')
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
+                    s1 = 'J[%d] += %.15g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=').replace('+= -1 *', '-=')
                     s2 = '/* dwdot[%s]/dT */' % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
@@ -9110,18 +9110,18 @@ class CPickler(CMill):
 
             A, beta, E = reaction.arrhenius
             self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-            self._write("fwd_A[%d]     = %.17g;" % (id,A))
-            self._write("fwd_beta[%d]  = %.17g;" % (id,beta))
-            self._write("fwd_Ea[%d]    = %.17g;" % (id,E))
+            self._write("fwd_A[%d]     = %.15g;" % (id,A))
+            self._write("fwd_beta[%d]  = %.15g;" % (id,beta))
+            self._write("fwd_Ea[%d]    = %.15g;" % (id,E))
 
             thirdBody = reaction.thirdBody
             low = reaction.low
 
             if (reaction.rev):
                 Ar, betar, Er = reaction.rev
-                self._write("rev_A[%d]     = %.17g;" % (id,Ar))
-                self._write("rev_beta[%d]  = %.17g;" % (id,betar))
-                self._write("rev_Ea[%d]    = %.17g;" % (id,Er))
+                self._write("rev_A[%d]     = %.15g;" % (id,Ar))
+                self._write("rev_beta[%d]  = %.15g;" % (id,betar))
+                self._write("rev_Ea[%d]    = %.15g;" % (id,Er))
                 dim_rev       = self._phaseSpaceUnits(reaction.products)
                 if not thirdBody:
                     uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
@@ -9129,9 +9129,9 @@ class CPickler(CMill):
                     uc_rev = self._prefactorUnits(reaction.units["prefactor"], -dim_rev)
                 else:
                     uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
-                self._write("prefactor_units_rev[%d]  = %.17g;" % (id,uc_rev.value))
+                self._write("prefactor_units_rev[%d]  = %.15g;" % (id,uc_rev.value))
                 aeuc_rev = self._activationEnergyUnits(reaction.units["activation"])
-                self._write("activation_units_rev[%d] = %.17g;" % (id,aeuc_rev / Rc / kelvin))
+                self._write("activation_units_rev[%d] = %.15g;" % (id,aeuc_rev / Rc / kelvin))
 
             if (len(reaction.ford) > 0) :
                 if (reaction.rev):
@@ -9147,39 +9147,39 @@ class CPickler(CMill):
             else:
                 uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 1 PD, TB
                 low_A, low_beta, low_E = low
-                self._write("low_A[%d]     = %.17g;" % (id,low_A))
-                self._write("low_beta[%d]  = %.17g;" % (id,low_beta))
-                self._write("low_Ea[%d]    = %.17g;" % (id,low_E))
+                self._write("low_A[%d]     = %.15g;" % (id,low_A))
+                self._write("low_beta[%d]  = %.15g;" % (id,low_beta))
+                self._write("low_Ea[%d]    = %.15g;" % (id,low_E))
                 if reaction.troe:
                     troe = reaction.troe
                     ntroe = len(troe)
                     is_troe = True
-                    self._write("troe_a[%d]    = %.17g;" % (id,troe[0]))
+                    self._write("troe_a[%d]    = %.15g;" % (id,troe[0]))
                     if ntroe>1:
-                        self._write("troe_Tsss[%d] = %.17g;" % (id,troe[1]))
+                        self._write("troe_Tsss[%d] = %.15g;" % (id,troe[1]))
                     if ntroe>2:
-                        self._write("troe_Ts[%d]   = %.17g;" % (id,troe[2]))
+                        self._write("troe_Ts[%d]   = %.15g;" % (id,troe[2]))
                     if ntroe>3:
-                        self._write("troe_Tss[%d]  = %.17g;" % (id,troe[3]))
+                        self._write("troe_Tss[%d]  = %.15g;" % (id,troe[3]))
                     self._write("troe_len[%d]  = %d;" % (id,ntroe))
                 if reaction.sri:
                     sri = reaction.sri
                     nsri = len(sri)
                     is_sri = True
-                    self._write("sri_a[%d]     = %.17g;" % (id,sri[0]))
+                    self._write("sri_a[%d]     = %.15g;" % (id,sri[0]))
                     if nsri>1:
-                        self._write("sri_b[%d]     = %.17g;" % (id,sri[1]))
+                        self._write("sri_b[%d]     = %.15g;" % (id,sri[1]))
                     if nsri>2:
-                        self._write("sri_c[%d]     = %.17g;" % (id,sri[2]))
+                        self._write("sri_c[%d]     = %.15g;" % (id,sri[2]))
                     if nsri>3:
-                        self._write("sri_d[%d]     = %.17g;" % (id,sri[3]))
+                        self._write("sri_d[%d]     = %.15g;" % (id,sri[3]))
                     if nsri>4:
-                        self._write("sri_e[%d]     = %.17g;" % (id,sri[4]))
+                        self._write("sri_e[%d]     = %.15g;" % (id,sri[4]))
                     self._write("sri_len[%d]   = %d;" % (id,nsri))
 
-            self._write("prefactor_units[%d]  = %.17g;" % (id,uc.value))
+            self._write("prefactor_units[%d]  = %.15g;" % (id,uc.value))
             aeuc = self._activationEnergyUnits(reaction.units["activation"])
-            self._write("activation_units[%d] = %.17g;" % (id,aeuc / Rc / kelvin))
+            self._write("activation_units[%d] = %.15g;" % (id,aeuc / Rc / kelvin))
             self._write("phase_units[%d]      = pow(10,-%f);" % (id,dim*6))
 
             if low:
@@ -9196,11 +9196,11 @@ class CPickler(CMill):
                     for i, eff in enumerate(efficiencies):
                         symbol, efficiency = eff
                         if symbol in self.qss_species_list:
-                            self._write("TBid[%d][%d] = %.17g; TB[%d][%d] = %.17g; // %s %s"
+                            self._write("TBid[%d][%d] = %.15g; TB[%d][%d] = %.15g; // %s %s"
                                          % (id, i, (self.ordered_idx_map[symbol] - self.nSpecies) , id, i, efficiency, symbol, ' (QSS)' ))
                             print 'WARNING: Some QSS species appear as TB and will been ignored in QSS conc eval !! ', reaction.equation(), symbol
                         else: 
-                            self._write("TBid[%d][%d] = %.17g; TB[%d][%d] = %.17g; // %s"
+                            self._write("TBid[%d][%d] = %.15g; TB[%d][%d] = %.15g; // %s"
                                     % (id, i, self.ordered_idx_map[symbol], id, i, efficiency, symbol ))
                 else:
                     self._write("nTB[%d] = 0;" % (id))
