@@ -1727,7 +1727,7 @@ class CPickler(CMill):
             self._write("/* Evaluate the kfs */")
             #self._write("amrex::Real k_f[%d];"% nclassd)
             #self._write("amrex::Real Corr[%d];" % nclassd)
-            self._write("amrex::Real k_f, k_r, Corr;")
+            self._write("amrex::Real k_f, Corr;")
             if ntroe > 0:
                 self._write("amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;")
             if nsri > 0:
@@ -1927,7 +1927,7 @@ class CPickler(CMill):
             self._write("/* Evaluate the kfs */")
             #self._write("amrex::Real k_f[%d];"% nclassd)
             #self._write("amrex::Real Corr[%d];" % nclassd)
-            self._write("amrex::Real qf, qr, k_f, k_r, Corr;")
+            self._write("amrex::Real qf, qr, k_f, Corr;")
             if ntroe > 0:
                 self._write("amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;")
             if nsri > 0:
