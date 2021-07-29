@@ -99,6 +99,9 @@ struct GasPhaseVals
 
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE GasPhaseVals()
     : vel_fluid(RealVect::TheZeroVector()),
+      T_fluid(0.),
+      rho_fluid(0.),
+      fluid_mom_src(RealVect::TheZeroVector()),
       fluid_mass_src(0.),
       fluid_eng_src(0.)
   {
