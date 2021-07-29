@@ -145,11 +145,11 @@ react(
   user_data->neqs_per_cell = NEQ;
   user_data->ireactor_type = reactor_type;
   user_data->iverbose = 1;
-//#ifdef AMREX_USE_GPU
-//  user_data->stream = stream;
-//#endif
-//  user_data->nbThreads = 32;
-//  user_data->nbBlocks = std::max(1, NCELLS / user_data->nbThreads);
+  //#ifdef AMREX_USE_GPU
+  //  user_data->stream = stream;
+  //#endif
+  //  user_data->nbThreads = 32;
+  //  user_data->nbBlocks = std::max(1, NCELLS / user_data->nbThreads);
 
 #if defined(AMREX_USE_CUDA)
   y = N_VNewWithMemHelp_Cuda(
@@ -427,19 +427,19 @@ int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
   ARKODEUserData *udata = static_cast<ARKODEUserData*>(user_data);
   udata->dt_save = t;
 
-// Manual launch for fKernelSpec
-//  const auto ec = amrex::Gpu::ExecutionConfig(udata->ncells_d);
-//  amrex::launch_global<<<
-//    udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
-//    [=] AMREX_GPU_DEVICE() noexcept {
-//      for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-//               stride = blockDim.x * gridDim.x;
-//           icell < udata->ncells_d; icell += stride) {
-//        fKernelSpec(
-//          icell, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
-//          udata->rhoe_init_d, udata->rhoesrc_ext_d, udata->rYsrc_d);
-//      }
-//    });
+  // Manual launch for fKernelSpec
+  //  const auto ec = amrex::Gpu::ExecutionConfig(udata->ncells_d);
+  //  amrex::launch_global<<<
+  //    udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+  //    [=] AMREX_GPU_DEVICE() noexcept {
+  //      for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+  //               stride = blockDim.x * gridDim.x;
+  //           icell < udata->ncells_d; icell += stride) {
+  //        fKernelSpec(
+  //          icell, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
+  //          udata->rhoe_init_d, udata->rhoesrc_ext_d, udata->rYsrc_d);
+  //      }
+  //    });
   amrex::ParallelFor(udata->ncells_d, [=] AMREX_GPU_DEVICE(int icell) noexcept {
     fKernelSpec(
       icell, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
@@ -451,3 +451,103 @@ int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
   return (0);
 }
 
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+void
+fKernelSpec(
+  int icell,
+  amrex::Real dt_save,
+  int reactor_type,
+  realtype* yvec_d,
+  realtype* ydot_d,
+  amrex::Real* rhoe_init,
+  amrex::Real* rhoesrc_ext,
+  amrex::Real* rYs)
+{
+  const int offset = icell * (NUM_SPECIES + 1);
+
+  amrex::Real rho_pt = 0.0;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    massfrac[i] = yvec_d[offset + n];
+    rho_pt += massfrac[i];
+  }
+  const amrex::Real rho_pt_inv = 1.0 / rho_pt;
+
+  for (int i = 0; i < NUM_SPECIES; i++) {
+    massfrac[i] *= rho_pt_inv;
+  }
+
+  const amrex::Real nrg_pt =
+    (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) * rho_pt_inv;
+
+  amrex::Real temp_pt = yvec_d[offset + NUM_SPECIES];
+
+  amrex::Real Cv_pt = 0.0;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
+  auto eos = pele::physics::PhysicsType::eos();
+  if (reactor_type == 1) {
+    eos.EY2T(nrg_pt, massfrac.arr, temp_pt);
+    eos.T2Ei(temp_pt, ei_pt.arr);
+    eos.TY2Cv(temp_pt, massfrac.arr, Cv_pt);
+  } else {
+    eos.HY2T(nrg_pt, massfrac.arr, temp_pt);
+    eos.TY2Cp(temp_pt, massfrac.arr, Cv_pt);
+    eos.T2Hi(temp_pt, ei_pt.arr);
+  }
+
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> cdots_pt = {0.0};
+  eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
+
+  amrex::Real rhoesrc = rhoesrc_ext[icell];
+  for (int i = 0; i < NUM_SPECIES; i++) {
+    const amrex::Real cdot_rYs = cdots_pt[i] + rYs[icell * NUM_SPECIES + i];
+    ydot_d[offset + i] = cdot_rYs;
+    rhoesrc -= cdot_rYs * ei_pt[i];
+  }
+  ydot_d[offset + NUM_SPECIES] = rhoesrc * (rho_pt_inv / Cv_pt);
+}
+
+// Check function return value...
+//     opt == 0 means SUNDIALS function allocates memory so check if
+//              returned NULL pointer
+//     opt == 1 means SUNDIALS function returns a flag so check if
+//              flag >= 0
+//     opt == 2 means function allocates memory so check if returned
+//              NULL pointer
+int
+check_flag(void* flagvalue, const char* funcname, int opt)
+{
+  int* errflag;
+
+  if (opt == 0 && flagvalue == NULL) {
+    if (amrex::ParallelDescriptor::IOProcessor()) {
+      fprintf(
+        stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
+        funcname);
+      amrex::Abort("abort");
+    }
+    return (1);
+  } else if (opt == 1) {
+    errflag = (int*)flagvalue;
+    if (*errflag < 0) {
+      if (amrex::ParallelDescriptor::IOProcessor()) {
+        fprintf(
+          stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n\n", funcname,
+          *errflag);
+        amrex::Abort("abort");
+      }
+      return (1);
+    }
+  } else if (opt == 2 && flagvalue == NULL) {
+    if (amrex::ParallelDescriptor::IOProcessor()) {
+      fprintf(
+        stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
+        funcname);
+      amrex::Abort("abort");
+    }
+    return (1);
+  }
+
+  return (0);
+}
