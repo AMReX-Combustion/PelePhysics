@@ -12,7 +12,7 @@ jobs:
     name: GNU@7.5 [cvode-DRM]
     runs-on: ubuntu-latest
     env: 
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -DCOMPILE_JACOBIAN"}
     steps:
     - uses: actions/checkout@v2
     - name: System Dependencies
@@ -43,7 +43,7 @@ jobs:
     name: GNU@7.5 [cvode-LiDryer]
     runs-on: ubuntu-latest
     env: 
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -DCOMPILE_JACOBIAN"}
     steps:
     - uses: actions/checkout@v2
     - name: System Dependencies
