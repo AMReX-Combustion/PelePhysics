@@ -172,7 +172,7 @@ struct Fuego
       WDOT[n] *= mw[n];
   }
 
-#ifdef COMPUTE_JACOBIAN
+#ifdef COMPILE_JACOBIAN
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void RTY2JAC(
