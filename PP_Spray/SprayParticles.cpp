@@ -362,7 +362,6 @@ SprayParticleContainer::updateParticles(
           trilinear_interp(ijk, lx, indx_array.data(), weights.data(), bflags);
 #endif // AMREX_USE_EB
        // Interpolate fluid state
-          RealVect vel_fluid(RealVect::TheZeroVector());
           {
             GpuArray<Real, NUM_SPECIES> mass_frac;
             for (int aindx = 0.; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {

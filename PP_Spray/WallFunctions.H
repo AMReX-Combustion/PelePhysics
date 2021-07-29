@@ -403,8 +403,6 @@ impose_wall(
       const Real delta = 2. * dia_part / sqReyn;
       // splash_flag == 0, then particle rebounds, no breakup, no deposit
       if (splash_flag != splash_type::rebound) {
-        // Energy loss due to viscious dissipation during impact
-        Real E_diss = 4. * M_PI / 3. * rho_part * Nw_Vp * Nw_Vp * d3 / sqReyn;
         // If splash_flag == 1, particle is completely deposited onto the wall
         if (splash_flag == splash_type::deposit) {
           // TODO: Determine better way to estimate wall film temperature,
