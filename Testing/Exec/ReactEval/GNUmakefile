@@ -21,7 +21,7 @@ PELE_PHYSICS_HOME    ?= ../../..
 
 #######################
 # this flag activates the subcycling mode in the D/Cvode routines
-DEFINES  += -DMOD_REACTOR
+DEFINES  += -DMOD_REACTOR -DCOMPILE_JACOBIAN
 
 #######################
 # ODE solver OPTIONS: DVODE (default) / SUNDIALS / RK explicit
