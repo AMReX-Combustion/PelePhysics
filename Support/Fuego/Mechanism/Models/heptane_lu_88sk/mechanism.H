@@ -338,11 +338,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKRP(amrex::Real *  ru, amrex::Rea
 
 /*compute Cv/R at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cv_R(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cv_R(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
+    const amrex::Real T = tc[1];
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -1706,11 +1706,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cv_R(amrex::Real * species, amrex:
 
 /*compute Cp/R at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cp_R(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cp_R(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
+    const amrex::Real T = tc[1];
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -3074,12 +3074,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cp_R(amrex::Real * species, amrex:
 
 /*compute the g/(RT) at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void gibbs(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void gibbs(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
-    amrex::Real invT = 1 / T;
+    const amrex::Real T = tc[1];
+    const amrex::Real invT = 1 / T;
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -4795,12 +4795,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void gibbs(amrex::Real * species, amrex
 
 /*compute the a/(RT) at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void helmholtz(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void helmholtz(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
-    amrex::Real invT = 1 / T;
+    const amrex::Real T = tc[1];
+    const amrex::Real invT = 1 / T;
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -6516,12 +6516,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void helmholtz(amrex::Real * species, a
 
 /*compute the e/(RT) at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesInternalEnergy(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesInternalEnergy(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
-    amrex::Real invT = 1 / T;
+    const amrex::Real T = tc[1];
+    const amrex::Real invT = 1 / T;
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -8061,12 +8061,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesInternalEnergy(amrex::Real 
 
 /*compute the h/(RT) at the given temperature (Eq 20) */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEnthalpy(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEnthalpy(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
-    amrex::Real invT = 1 / T;
+    const amrex::Real T = tc[1];
+    const amrex::Real invT = 1 / T;
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -9606,11 +9606,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEnthalpy(amrex::Real * spec
 
 /*compute the S/R at the given temperature (Eq 21) */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEntropy(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEntropy(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
+    const amrex::Real T = tc[1];
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -11154,7 +11154,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPBL(amrex::Real *  T, amrex::Re
     int id; /*loop counter */
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real cpor[88]; /* temporary storage */
     cp_R(cpor, tc);
 
@@ -11172,7 +11172,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPBS(amrex::Real *  T, amrex::Re
 {
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real cpor[88], tresult[88]; /* temporary storage */
     amrex::Real imw[88];
 
@@ -11200,7 +11200,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVBL(amrex::Real *  T, amrex::Re
     int id; /*loop counter */
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real cvor[88]; /* temporary storage */
     cv_R(cvor, tc);
 
@@ -11218,7 +11218,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVBS(amrex::Real *  T, amrex::Re
 {
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real cvor[88]; /* temporary storage */
     amrex::Real imw[88];
 
@@ -11326,7 +11326,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHBML(amrex::Real *  T, amrex::Re
     int id; /*loop counter */
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real hml[88]; /* temporary storage */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     speciesEnthalpy(hml, tc);
@@ -11345,7 +11345,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHBMS(amrex::Real *  T, amrex::Re
 {
     amrex::Real result = 0;
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real hml[88], tmp[88]; /* temporary storage */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     amrex::Real imw[88];
@@ -11372,7 +11372,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUBML(amrex::Real *  T, amrex::Re
     int id; /*loop counter */
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real uml[88]; /* temporary energy array */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     speciesInternalEnergy(uml, tc);
@@ -11391,7 +11391,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUBMS(amrex::Real *  T, amrex::Re
 {
     amrex::Real result = 0;
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real ums[88]; /* temporary energy array */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     amrex::Real imw[88];
@@ -11502,7 +11502,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSBML(amrex::Real *  P, amrex::Re
     /*Log of normalized pressure in cgs units dynes/cm^2 by Patm */
     amrex::Real logPratio = log ( *P / 1013250.0 ); 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real sor[88]; /* temporary storage */
     speciesEntropy(sor, tc);
 
@@ -11522,7 +11522,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSBMS(amrex::Real *  P, amrex::Re
     /*Log of normalized pressure in cgs units dynes/cm^2 by Patm */
     amrex::Real logPratio = log ( *P / 1013250.0 ); 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real sor[88]; /* temporary storage */
     amrex::Real x[88]; /* need a ytx conversion */
     amrex::Real YOW = 0; /*See Eq 4, 6 in CK Manual */
@@ -12674,7 +12674,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKMMWC(amrex::Real *  c,  amrex::R
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPOR(amrex::Real *  T, amrex::Real *  cpor)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cp_R(cpor, tc);
 }
 
@@ -12684,7 +12684,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPOR(amrex::Real *  T, amrex::Re
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHORT(amrex::Real *  T, amrex::Real *  hort)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     speciesEnthalpy(hort, tc);
 }
 
@@ -12694,7 +12694,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHORT(amrex::Real *  T, amrex::Re
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSOR(amrex::Real *  T, amrex::Real *  sor)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     speciesEntropy(sor, tc);
 }
 
@@ -13295,7 +13295,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVML(amrex::Real *  T,  amrex::R
 {
     int id; /*loop counter */
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cv_R(cvml, tc);
 
     /*convert to chemkin units */
@@ -13311,7 +13311,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPML(amrex::Real *  T,  amrex::R
 {
     int id; /*loop counter */
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cp_R(cpml, tc);
 
     /*convert to chemkin units */
@@ -13327,7 +13327,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUML(amrex::Real *  T,  amrex::Re
 {
     int id; /*loop counter */
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     speciesInternalEnergy(uml, tc);
 
@@ -13344,7 +13344,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHML(amrex::Real *  T,  amrex::Re
 {
     int id; /*loop counter */
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     speciesEnthalpy(hml, tc);
 
@@ -13360,7 +13360,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSML(amrex::Real *  T,  amrex::Re
 {
     int id; /*loop counter */
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     speciesEntropy(sml, tc);
 
     /*convert to chemkin units */
@@ -13375,7 +13375,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSML(amrex::Real *  T,  amrex::Re
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVMS(amrex::Real *  T,  amrex::Real *  cvms)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cv_R(cvms, tc);
     /*multiply by R/molecularweight */
     cvms[0] *= 8.248720317224957e+07; /*H */
@@ -13474,7 +13474,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVMS(amrex::Real *  T,  amrex::R
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPMS(amrex::Real *  T,  amrex::Real *  cpms)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cp_R(cpms, tc);
     /*multiply by R/molecularweight */
     cpms[0] *= 8.248720317224957e+07; /*H */
@@ -13572,7 +13572,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPMS(amrex::Real *  T,  amrex::R
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUMS(amrex::Real *  T,  amrex::Real *  ums)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     amrex::Real imw[88];
 
@@ -13591,7 +13591,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUMS(amrex::Real *  T,  amrex::Re
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHMS(amrex::Real *  T,  amrex::Real *  hms)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     amrex::Real imw[88];
 
@@ -13610,7 +13610,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHMS(amrex::Real *  T,  amrex::Re
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSMS(amrex::Real *  T,  amrex::Real *  sms)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     speciesEntropy(sms, tc);
     /*multiply by R/molecularweight */
     sms[0] *= 8.248720317224957e+07; /*H */
@@ -24400,11 +24400,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWXR(amrex::Real *  rho, amrex::R
 
 /*compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void dcvpRdT(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void dcvpRdT(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
+    const amrex::Real T = tc[1];
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -25590,7 +25590,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void dcvpRdT(amrex::Real * species, amr
 }
 
 /*compute an approx to the reaction Jacobian */
-#ifdef COMPUTE_JACOBIAN
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)
 {
     for (int i=0; i<7921; i++) {
@@ -25602,7 +25602,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
         wdot[k] = 0.0;
     }
 
-    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
+    const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     amrex::Real invT = 1.0 / tc[1];
     amrex::Real invT2 = invT * invT;
 
@@ -46177,7 +46177,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
 #endif
 
 /*compute an approx to the reaction Jacobian (for preconditioning) */
-#ifdef COMPUTE_JACOBIAN
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)
 {
     amrex::Real c[88];
@@ -46200,7 +46200,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J,
 #endif
 
 /*compute the reaction Jacobian on GPU */
-#ifdef COMPUTE_JACOBIAN
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
 {
@@ -46214,7 +46214,7 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
         wdot[k] = 0.0;
     }
 
-    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
+    const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     amrex::Real invT = 1.0 / tc[1];
     amrex::Real invT2 = invT * invT;
 
@@ -67383,7 +67383,7 @@ return;
 
 
 /*compute the reaction Jacobian */
-#ifdef COMPUTE_JACOBIAN
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * consP)
 {
     amrex::Real c[88];
