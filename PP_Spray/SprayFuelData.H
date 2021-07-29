@@ -97,33 +97,29 @@ struct GasPhaseVals
   GpuArray<Real, SPRAY_FUEL_NUM> fluid_Y_dot;
   Real fluid_eng_src;
 
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE GasPhaseVals(
-    const RealVect in_vel,
-    const Real in_T,
-    const Real in_rho,
-    const Real* in_Y,
-    const Real* in_mw,
-    const Real* in_invmw)
-    : vel_fluid(in_vel),
-      T_fluid(in_T),
-      rho_fluid(in_rho),
-      fluid_mom_src(RealVect::TheZeroVector()),
+  AMREX_GPU_DEVICE AMREX_FORCE_INLINE GasPhaseVals()
+    : vel_fluid(RealVect::TheZeroVector()),
       fluid_mass_src(0.),
       fluid_eng_src(0.)
+  {
+    for (int n = 0; n < NUM_SPECIES; ++n) {
+      Y_fluid[n] = 0.;
+    }
+    for (int n = 0; n < SPRAY_FUEL_NUM; ++n) {
+      fluid_Y_dot[n] = 0.;
+    }
+  }
+
+  AMREX_GPU_DEVICE AMREX_FORCE_INLINE void define()
   {
     SprayUnits SPU;
     mw_mix = 0.;
     for (int n = 0; n < NUM_SPECIES; ++n) {
-      Y_fluid[n] = amrex::min(1., amrex::max(in_Y[n], 0.));
-      mw_fluid[n] = in_mw[n];
-      invmw[n] = in_invmw[n];
       mw_mix += Y_fluid[n] * invmw[n];
     }
     p_fluid =
       rho_fluid * pele::physics::Constants::RU * mw_mix * T_fluid * SPU.ru_conv;
     mw_mix = 1. / mw_mix;
-    for (int n = 0; n < SPRAY_FUEL_NUM; ++n)
-      fluid_Y_dot[n] = 0.;
   }
 };
 

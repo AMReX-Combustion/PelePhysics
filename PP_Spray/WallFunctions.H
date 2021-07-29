@@ -347,8 +347,8 @@ impose_wall(
   const RealVect bcentv,
   SprayRefl& SPRF,
   bool isActive,
-  const bool dry_wall,
-  amrex::RandomEngine const& engine)
+  const bool dry_wall)
+//  amrex::RandomEngine const& engine) // Degrades performance significantly
 {
   const Real tolerance = std::numeric_limits<Real>::epsilon();
   Real sigma = fdat.sigma;
@@ -439,7 +439,9 @@ impose_wall(
             // Determine the fraction of the droplet mass
             // that forms secondary drops from Kuhnke 2004
             // TODO: This is incomplete by always assuming a dry wall
-            const Real B = 0.2 + 0.6 * amrex::Random(engine);
+            // TODO: Random(engine) degrades performance too much, must add
+            // random values here somehow
+            const Real B = 0.2 + 0.6; //* amrex::Random(engine);
             splash_mass *= amrex::min(1., (Tstar - 0.8) / 0.3 * (1. - B) + B);
             // Mass deposited into wall film
             Real depot_mass = pmass - splash_mass;

@@ -82,11 +82,9 @@ SprayParticleContainer::moveKickDrift(
 
   bool isActive = (isVirtualPart || isGhostPart) ? false : true;
 
-  BL_PROFILE_VAR("SprayParticles::updateParticles()", UPD_PART);
   updateParticles(
     level, state, source, dt, time, state_ghosts, source_ghosts, isActive,
     do_move, u_mac);
-  BL_PROFILE_VAR_STOP(UPD_PART);
 
   // Fill ghost cells after we've synced up ..
   // TODO: Check to see if this is needed at all
@@ -172,6 +170,7 @@ SprayParticleContainer::updateParticles(
   const bool do_move,
   MultiFab* u_mac)
 {
+  BL_PROFILE("SprayParticleContainer::updateParticles()");
   AMREX_ASSERT(OnSameGrids(level, state));
   AMREX_ASSERT(OnSameGrids(level, source));
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
@@ -263,7 +262,7 @@ SprayParticleContainer::updateParticles(
     //       umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti),
     //       u_mac[2].array(pti))};
     // #endif
-    amrex::ParallelForRNG(
+    amrex::ParallelFor(
       Np, [pstruct, statearr, sourcearr, plo, phi, dx, dxi, do_move, SPI, fdat,
            src_box, state_box, bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm,
            at_bounds, wallT, isActive
@@ -276,19 +275,18 @@ SprayParticleContainer::updateParticles(
            flags_array, ccent_fab, bcent_fab, bnorm_fab, barea_fab, volfrac_fab,
            eb_in_box
 #endif
-    ] AMREX_GPU_DEVICE(int pid, amrex::RandomEngine const& engine) noexcept {
-        auto eos = pele::physics::PhysicsType::eos();
-        SprayUnits SPU;
-        GpuArray<Real, NUM_SPECIES> mw_fluid;
-        GpuArray<Real, NUM_SPECIES> invmw;
-        eos.molecular_weight(mw_fluid.data());
-        eos.inv_molecular_weight(invmw.data());
-        for (int n = 0; n < NUM_SPECIES; ++n) {
-          mw_fluid[n] *= SPU.mass_conv;
-          invmw[n] /= SPU.mass_conv;
-        }
+    ] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
+          auto eos = pele::physics::PhysicsType::eos();
+          SprayUnits SPU;
+          GasPhaseVals gpv;
+          eos.molecular_weight(gpv.mw_fluid.data());
+          eos.inv_molecular_weight(gpv.invmw.data());
+          for (int n = 0; n < NUM_SPECIES; ++n) {
+            gpv.mw_fluid[n] *= SPU.mass_conv;
+            gpv.invmw[n] /= SPU.mass_conv;
+          }
           GpuArray<IntVect, AMREX_D_PICK(2, 4, 8)>
             indx_array; // Array of adjacent cells
           GpuArray<Real, AMREX_D_PICK(2, 4, 8)>
@@ -321,18 +319,10 @@ SprayParticleContainer::updateParticles(
 #ifdef AMREX_USE_EB
           do_fe_interp = true;
           // Cell containing particle centroid
-          AMREX_D_TERM(const int ip = static_cast<int>(
-                         amrex::Math::floor((p.pos(0) - plo[0]) * dxi[0]));
-                       , const int jp = static_cast<int>(
-                           amrex::Math::floor((p.pos(1) - plo[1]) * dxi[1]));
-                       , const int kp = static_cast<int>(
-                           amrex::Math::floor((p.pos(2) - plo[2]) * dxi[2])););
-          AMREX_D_TERM(const int i = static_cast<int>(amrex::Math::floor(
-                         (p.pos(0) - plo[0]) * dxi[0] + 0.5));
-                       , const int j = static_cast<int>(amrex::Math::floor(
-                           (p.pos(1) - plo[1]) * dxi[1] + 0.5));
-                       , const int k = static_cast<int>(amrex::Math::floor(
-                           (p.pos(2) - plo[2]) * dxi[2] + 0.5)););
+          AMREX_D_TERM(const int ip = ijkc[0];, const int jp = ijkc[1];
+                       , const int kp = ijkc[2];);
+          AMREX_D_TERM(const int i = ijk[0];, const int j = ijk[1];
+                       , const int k = ijk[2];);
           if (!eb_in_box) {
             do_fe_interp = false;
           } else {
@@ -372,11 +362,6 @@ SprayParticleContainer::updateParticles(
           trilinear_interp(ijk, lx, indx_array.data(), weights.data(), bflags);
 #endif // AMREX_USE_EB
        // Interpolate fluid state
-          Real T_fluid = 0.;
-          Real rho_fluid = 0.;
-          GpuArray<Real, NUM_SPECIES> Y_fluid;
-          for (int n = 0; n < NUM_SPECIES; ++n)
-            Y_fluid[n] = 0.;
           RealVect vel_fluid(RealVect::TheZeroVector());
           {
             GpuArray<Real, NUM_SPECIES> mass_frac;
@@ -389,12 +374,12 @@ SprayParticleContainer::updateParticles(
                       "too small");
 #endif
               Real cur_rho = statearr(cur_indx, SPI.rhoIndx);
-              rho_fluid += cw * cur_rho;
+              gpv.rho_fluid += cw * cur_rho;
               Real inv_rho = 1. / cur_rho;
               for (int n = 0; n < NUM_SPECIES; ++n) {
                 int sp = n + SPI.specIndx;
                 Real cur_mf = statearr(cur_indx, sp) * inv_rho;
-                Y_fluid[n] += cw * cur_mf;
+                gpv.Y_fluid[n] += cw * cur_mf;
                 mass_frac[n] = cur_mf;
               }
 #ifdef SPRAY_PELE_LM
@@ -403,7 +388,7 @@ SprayParticleContainer::updateParticles(
               Real ke = 0.;
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                 Real vel = statearr(cur_indx, SPI.momIndx + dir) * inv_rho;
-                vel_fluid[dir] += cw * vel;
+                gpv.vel_fluid[dir] += cw * vel;
                 ke += vel * vel / 2.;
               }
               Real T_i = statearr(cur_indx, SPI.utempIndx);
@@ -411,12 +396,11 @@ SprayParticleContainer::updateParticles(
               Real intEng = statearr(cur_indx, SPI.engIndx) * inv_rho - ke;
               eos.EY2T(intEng, mass_frac.data(), T_i);
 #endif
-              T_fluid += cw * T_i;
+              gpv.T_fluid += cw * T_i;
             }
           }
-          GasPhaseVals gpv(
-            vel_fluid, T_fluid, rho_fluid, Y_fluid.data(), mw_fluid.data(),
-            invmw.data());
+          // Solve for avg mw and pressure at droplet location
+          gpv.define();
           if (!is_wall_film) {
             calculateSpraySource(
               flow_dt, do_move, gpv, SPI, *fdat, p,
@@ -514,7 +498,7 @@ SprayParticleContainer::updateParticles(
                     SPRF.Y_refl[spf] = p.rdata(SPI.pstateY + spf);
                   splash_flag = impose_wall(
                     p, SPI, *fdat, dx, plo, phi, wallT, bloc, normal, bcentv,
-                    SPRF, isActive, dry_wall, engine);
+                    SPRF, isActive, dry_wall);
                 }
               } // if (wall_check)
             }   // if (left_dom)
