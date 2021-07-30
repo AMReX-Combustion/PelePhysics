@@ -299,13 +299,13 @@ void fKernelSpec(int icell,
   amrex::Real rho_pt = 0.0;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};
   for (int n = 0; n < NUM_SPECIES; n++) {
-    massfrac[i] = yvec_d[offset + n];
+    massfrac[n] = yvec_d[offset + n];
     rho_pt += massfrac[i];
   }
   const amrex::Real rho_pt_inv = 1.0 / rho_pt;
 
-  for (int i = 0; i < NUM_SPECIES; i++) {
-    massfrac[i] *= rho_pt_inv;
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    massfrac[n] *= rho_pt_inv;
   }
 
   const amrex::Real nrg_pt =
@@ -330,10 +330,10 @@ void fKernelSpec(int icell,
   eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
 
   amrex::Real rhoesrc = rhoesrc_ext[icell];
-  for (int i = 0; i < NUM_SPECIES; i++) {
-    const amrex::Real cdot_rYs = cdots_pt[i] + rYs[icell * NUM_SPECIES + i];
-    ydot_d[offset + i] = cdot_rYs;
-    rhoesrc -= cdot_rYs * ei_pt[i];
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    const amrex::Real cdot_rYs = cdots_pt[n] + rYs[icell * NUM_SPECIES + n];
+    ydot_d[offset + n] = cdot_rYs;
+    rhoesrc -= cdot_rYs * ei_pt[n];
   }
   ydot_d[offset + NUM_SPECIES] = rhoesrc * (rho_pt_inv / Cv_pt);
 }
