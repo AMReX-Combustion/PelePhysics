@@ -66,6 +66,12 @@ extern int use_erkstep;
 extern int rk_method;
 extern int rk_controller;
 
+#ifdef AMREX_USE_OMP
+#pragma omp threadprivate(time_init)
+#pragma omp threadprivate(typVals)
+#pragma omp threadprivate(relTol, absTol)
+#endif
+
 //===================================================================
 //initialize and close reactor functions
 //===================================================================
