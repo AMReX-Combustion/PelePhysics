@@ -300,7 +300,7 @@ void fKernelSpec(int icell,
   amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};
   for (int n = 0; n < NUM_SPECIES; n++) {
     massfrac[n] = yvec_d[offset + n];
-    rho_pt += massfrac[i];
+    rho_pt += massfrac[n];
   }
   const amrex::Real rho_pt_inv = 1.0 / rho_pt;
 
