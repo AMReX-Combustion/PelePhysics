@@ -14,18 +14,15 @@ SUNMatrix A = NULL;
 void* cvode_mem = NULL;
 CVODEUserData *data = NULL;
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp threadprivate(y, LS, A)
 #pragma omp threadprivate(cvode_mem, data)
-#pragma omp threadprivate(time_init)
-#pragma omp threadprivate(typVals)
-#pragma omp threadprivate(relTol, absTol)
 #endif
 
 void ReSetTolODE()
 {
   int omp_thread = 0;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
   omp_thread = omp_get_thread_num();
 #endif
 
@@ -87,7 +84,7 @@ int reactor_init(int reactor_type, int ode_ncells)
   BL_PROFILE_VAR("reactInit", reactInit);
 
   int omp_thread = 0;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
   omp_thread = omp_get_thread_num();
 #endif
   // Total number of eq to integrate
@@ -386,7 +383,7 @@ react(
 {
 
   int omp_thread = 0;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
   omp_thread = omp_get_thread_num();
 #endif
 
@@ -537,7 +534,7 @@ react_2(
   realtype dummy_time;
   int flag;
   int omp_thread = 0;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
   omp_thread = omp_get_thread_num();
 #endif
 
@@ -694,7 +691,7 @@ react(
   realtype dummy_time;
   int flag;
   int omp_thread = 0;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
   omp_thread = omp_get_thread_num();
 #endif
 
@@ -1864,7 +1861,7 @@ CVODEUserData* AllocUserData(int reactor_type, int num_cells)
   // Make local copies of pointers in user_data
   CVODEUserData *data_wk = (CVODEUserData *)malloc(sizeof *data_wk);
   int omp_thread = 0;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
   omp_thread = omp_get_thread_num();
 #endif
 
