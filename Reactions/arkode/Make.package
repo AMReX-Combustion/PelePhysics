@@ -1,2 +1,2 @@
-#CEXE_headers += reactor.H
+CEXE_headers += reactor_utils.H
 CEXE_sources += reactor_arkode.cpp

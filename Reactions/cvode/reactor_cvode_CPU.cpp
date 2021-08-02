@@ -573,7 +573,7 @@ react_2(
   ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
     box_flatten(
-      icell, i, j, k, data->ireactor_type, rY_in, rY_src_in, T_in, rEner_in,
+      icell, box_ncells, i, j, k, data->ireactor_type, rY_in, rY_src_in, T_in, rEner_in,
       rEner_src_in, data->Yvect_full, data->rYsrc, data->rhoX_init,
       data->rhoXsrc_ext);
   });
@@ -648,7 +648,7 @@ react_2(
   ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
     box_unflatten(
-      icell, i, j, k, data->ireactor_type, rY_in, T_in, rEner_in, rEner_src_in,
+      icell, box_ncells, i, j, k, data->ireactor_type, rY_in, T_in, rEner_in, rEner_src_in,
       FC_in, data->Yvect_full, data->rhoX_init, nfe, dt_react);
   });
   BL_PROFILE_VAR_STOP(FlatStuff);
@@ -860,7 +860,7 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
   udata->dt_save = t;
   
   BL_PROFILE_VAR("fKernelSpec()", fKernelSpec);
-  fKernelSpec(icell,udata->dt_save, udata->ireactor_type,
+  fKernelSpec(icell,udata->ncells, udata->dt_save, udata->ireactor_type,
           y_d, ydot_d, udata->rhoX_init, 
           udata->rhoXsrc_ext, udata->rYsrc);
   BL_PROFILE_VAR_STOP(fKernelSpec);

@@ -47,6 +47,7 @@
 #endif
 
 #include "AMReX_SUNMemory.H"
+#include "reactor_utils.H"
 
 extern amrex::Array<double, NUM_SPECIES + 1> typVals;
 extern int eint_rho; // in/out = rhoE/rhoY
@@ -179,12 +180,14 @@ void reactor_close();
   int nbBlocks;
   int nbThreads;
 };
+
 //===================================================================
 //Box flattening functions
 //===================================================================
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void box_flatten(
   int icell,
+  int ncells,
   int i,
   int j,
   int k,
@@ -201,39 +204,39 @@ void box_flatten(
 {
   amrex::Real mass_frac[NUM_SPECIES];
   amrex::Real rho = 0.0;
-  amrex::Real Enrg_loc;
-  amrex::Real temp;
-
-  int offset_yvec = icell * (NUM_SPECIES + 1);
-  int offset_spec = icell * (NUM_SPECIES);
-
   for (int n = 0; n < NUM_SPECIES; n++) {
-    tmp_vect[offset_yvec + n] = rhoY(i, j, k, n);
-    tmp_src_vect[offset_spec + n] = frcExt(i, j, k, n);
-    rho += tmp_vect[offset_yvec + n];
+    const int idx = sunvec_index(n, icell, ncells);
+    const int idx2 = sunspec_index(n, icell, ncells);
+    const amrex::Real rhoYn = rhoY(i, j, k, n);
+    tmp_vect[idx] = rhoYn;
+    tmp_src_vect[idx2] = frcExt(i, j, k, n);
+    rho += rhoYn;
+    mass_frac[n] = rhoYn;
   }
-  amrex::Real rho_inv = 1.0 / rho;
-  temp = temperature(i, j, k, 0);
+  const amrex::Real rho_inv = 1.0 / rho;
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    mass_frac[n] *= rho_inv;
+  }
+
+  amrex::Real temp = temperature(i, j, k, 0);
   tmp_vect_energy[icell] = rhoE(i, j, k, 0);
   tmp_src_vect_energy[icell] = frcEExt(i, j, k, 0);
 
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    mass_frac[n] = tmp_vect[offset_yvec + n] * rho_inv;
-  }
-  Enrg_loc = tmp_vect_energy[icell] / rho;
+  amrex::Real Enrg_loc = tmp_vect_energy[icell] * rho_inv;
   auto eos = pele::physics::PhysicsType::eos();
   if (ireactor_type == 1) {
     eos.EY2T(Enrg_loc, mass_frac, temp);
   } else {
     eos.HY2T(Enrg_loc, mass_frac, temp);
   }
-  tmp_vect[offset_yvec + NUM_SPECIES] = temp;
+  tmp_vect[sunvec_index(NUM_SPECIES, icell, ncells)] = temp;
 }
 //===================================================================
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void
 box_unflatten(
   int icell,
+  int ncells,
   int i,
   int j,
   int k,
@@ -250,23 +253,21 @@ box_unflatten(
 {
   amrex::Real mass_frac[NUM_SPECIES];
   amrex::Real rho = 0.0;
-  amrex::Real Enrg_loc;
-  amrex::Real temp;
-
-  int offset_yvec = icell * (NUM_SPECIES + 1);
-
   for (int n = 0; n < NUM_SPECIES; n++) {
-    rhoY(i, j, k, n) = tmp_vect[offset_yvec + n];
-    rho += tmp_vect[offset_yvec + n];
+    const amrex::Real rhoYn = tmp_vect[sunvec_index(n, icell, ncells)];
+    rhoY(i, j, k, n) = rhoYn;
+    rho += rhoYn;
+    mass_frac[n] = rhoYn;
   }
-  amrex::Real rho_inv = 1.0 / rho;
-  temp = tmp_vect[offset_yvec + NUM_SPECIES];
+  const amrex::Real rho_inv = 1.0 / rho;
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    mass_frac[n] *= rho_inv;
+  }
+
+  amrex::Real temp = tmp_vect[sunvec_index(NUM_SPECIES, icell, ncells)];
   rhoE(i, j, k, 0) = tmp_vect_energy[icell] + dt * frcEExt(i, j, k, 0);
 
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    mass_frac[n] = rhoY(i, j, k, n) * rho_inv;
-  }
-  Enrg_loc = rhoE(i, j, k, 0) / rho;
+  amrex::Real Enrg_loc = rhoE(i, j, k, 0) * rho_inv;
   auto eos = pele::physics::PhysicsType::eos();
   if (ireactor_type == 1) {
     eos.EY2T(Enrg_loc, mass_frac, temp);
@@ -291,7 +292,7 @@ void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
 static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void* user_data);
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void fKernelSpec(int icell,
+void fKernelSpec(int icell, int ncells,
   double dt_save,
   int reactor_type,
   realtype* yvec_d,
@@ -300,12 +301,10 @@ void fKernelSpec(int icell,
   amrex::Real* rhoesrc_ext,
   amrex::Real* rYs)
 {
-  const int offset = icell * (NUM_SPECIES + 1);
-
   amrex::Real rho_pt = 0.0;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};
   for (int n = 0; n < NUM_SPECIES; n++) {
-    massfrac[n] = yvec_d[offset + n];
+    massfrac[n] = yvec_d[sunvec_index(n, icell, ncells)];
     rho_pt += massfrac[n];
   }
   const amrex::Real rho_pt_inv = 1.0 / rho_pt;
@@ -317,7 +316,7 @@ void fKernelSpec(int icell,
   const amrex::Real nrg_pt =
     (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) * rho_pt_inv;
 
-  amrex::Real temp_pt = yvec_d[offset + NUM_SPECIES];
+  amrex::Real temp_pt = yvec_d[sunvec_index(NUM_SPECIES, icell, ncells)];
 
   amrex::Real Cv_pt = 0.0;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
@@ -337,11 +336,11 @@ void fKernelSpec(int icell,
 
   amrex::Real rhoesrc = rhoesrc_ext[icell];
   for (int n = 0; n < NUM_SPECIES; n++) {
-    const amrex::Real cdot_rYs = cdots_pt[n] + rYs[icell * NUM_SPECIES + n];
-    ydot_d[offset + n] = cdot_rYs;
+    const amrex::Real cdot_rYs = cdots_pt[n] + rYs[sunspec_index(n, icell, ncells)];
+    ydot_d[sunvec_index(n, icell, ncells)] = cdot_rYs;
     rhoesrc -= cdot_rYs * ei_pt[n];
   }
-  ydot_d[offset + NUM_SPECIES] = rhoesrc * (rho_pt_inv / Cv_pt);
+  ydot_d[sunvec_index(NUM_SPECIES, icell, ncells)] = rhoesrc * (rho_pt_inv / Cv_pt);
 }
 //===================================================================
 

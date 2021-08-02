@@ -1,4 +1,4 @@
-#CEXE_headers += reactor.H
+CEXE_headers += reactor_utils.H
 ifneq (, $(filter TRUE, $(USE_CUDA) $(USE_HIP)))
         CEXE_sources += reactor_cvode_GPU.cpp
 else
