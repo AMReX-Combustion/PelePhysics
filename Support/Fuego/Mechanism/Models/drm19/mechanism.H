@@ -4175,7 +4175,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     amrex::Real refCinv = 1 / refC;
 
     /* Evaluate the kfs */
-    amrex::Real k_f, Corr;
+    amrex::Real k_f, k_r, Corr;
     amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
 
     // (0):  O + H + M <=> OH + M
