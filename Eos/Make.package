@@ -1,0 +1,2 @@
+CEXE_headers += EOS.H GammaLaw.H Fuego.H SRK.H
+CEXE_sources += EOS.cpp

@@ -297,14 +297,14 @@ Additionally, the ``FUEGO_GAS`` flag should be set to true and the chemistry mod
     
     #######################
     ifeq ($(FUEGO_GAS), TRUE)
-      Eos_dir         = Fuego
+      Eos_Model       = Fuego
       Chemistry_Model = drm19
       Reactions_dir   = Fuego
-      Transport_dir   = Simple
+      Transport_Model = Simple
     else
-      Eos_dir       = GammaLaw
-      Reactions_dir = Null
-      Transport_dir = Constant
+      Eos_Model       = GammaLaw
+      Reactions_dir   = Null
+      Transport_Model = Constant
     endif
     
     Bpack   := ./Make.package
@@ -650,14 +650,14 @@ The full file reads as follows:
     
     ##############################################
     ifeq ($(FUEGO_GAS), TRUE)
-      Eos_dir         = Fuego
+      Eos_Model       = Fuego
       Chemistry_Model = drm19
       Reactions_dir   = Fuego
-      Transport_dir   = Simple
+      Transport_Model   = Simple
     else
-      Eos_dir       = GammaLaw
+      Eos_Model       = GammaLaw
       Reactions_dir = Null
-      Transport_dir = Constant
+      Transport_Model = Constant
     endif
 
     Bpack   := ./Make.package

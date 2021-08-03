@@ -131,8 +131,8 @@ main (int   argc,
 #endif
     }
 
-    pele::physics::transport::InitTransport<
-      pele::physics::PhysicsType::eos_type>()();
+    pele::physics::transport::TransportParams<pele::physics::PhysicsType::transport_type> trans_parms;
+    trans_parms.allocate();
 
     /* Initialize reactor object inside OMP region, including tolerances */
     BL_PROFILE_VAR("main::reactor_info()", reactInfo);
@@ -658,8 +658,7 @@ main (int   argc,
         BL_PROFILE_VAR_STOP(PlotFile);
     }
     
-    pele::physics::transport::CloseTransport<
-      pele::physics::PhysicsType::eos_type>()();
+    trans_parms.deallocate();
 
     BL_PROFILE_VAR_STOP(pmain);
 

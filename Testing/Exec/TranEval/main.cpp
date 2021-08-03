@@ -21,8 +21,8 @@ main (int   argc,
 
       ParmParse pp;
 
-      pele::physics::transport::InitTransport<
-        pele::physics::PhysicsType::eos_type>()();
+      pele::physics::transport::TransportParams<pele::physics::PhysicsType::transport_type> trans_parms;
+      trans_parms.allocate();
     
       // Define geometry
       Array<int,AMREX_SPACEDIM> npts {AMREX_D_DECL(1,1,1)};;
@@ -96,7 +96,7 @@ main (int   argc,
       MultiFab lam(ba,dm,1,num_grow);
 
       // Get the transport data pointer
-      pele::physics::transport::TransParm const* ltransparm = pele::physics::transport::trans_parm_g;
+      auto const* ltransparm = trans_parms.device_trans_parm();
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -121,8 +121,7 @@ main (int   argc,
           });
       }
 
-      pele::physics::transport::CloseTransport<
-        pele::physics::PhysicsType::eos_type>()();
+      trans_parms.deallocate();
       
       MultiFab VarPlt(ba,dm,NUM_SPECIES+3,num_grow);
       MultiFab::Copy(VarPlt,D,0,0,NUM_SPECIES,num_grow);

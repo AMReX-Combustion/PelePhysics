@@ -1,2 +1,0 @@
-F90EXE_sources += eos_F.F90
-FEXE_headers += eos_F.H

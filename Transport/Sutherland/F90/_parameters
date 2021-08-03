@@ -1,8 +1,0 @@
-Prandtl_number       real     0.7d0
-viscosity_mu_ref     real     17.16d0
-viscosity_T_ref      real     273.15d0
-viscosity_S          real     110.4d0
-const_bulk_viscosity real     0.d0
-const_diffusivity    real     1.0d0
-
-

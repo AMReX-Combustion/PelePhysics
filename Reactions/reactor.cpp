@@ -22,7 +22,7 @@ void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
 {
   int size_ETV = ExtTypVals.size();
   amrex::Vector<std::string> kname;
-  pele::physics::eos::speciesNames(kname);
+  pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(kname);
   int omp_thread = 0;
 
 #ifdef _OPENMP
