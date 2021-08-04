@@ -67,7 +67,7 @@ extern int rk_method;
 extern int rk_controller;
 
 extern int rk64_nsubsteps_guess;
-extern int rk64_nsusbteps_min;
+extern int rk64_nsubsteps_min;
 extern int rk64_nsubsteps_max;
 
 #ifdef AMREX_USE_OMP
@@ -81,6 +81,7 @@ extern int rk64_nsubsteps_max;
 //initialize and close reactor functions
 //===================================================================
 int reactor_init(int reactor_type, int Ncells);
+int reactor_init_rk64(int reactor_type, int Ncells);
 void reactor_close();
 //===================================================================
 
@@ -372,6 +373,39 @@ int react(
         );
 
 int react(
+        realtype* rY_in,
+        realtype* rY_src_in,
+        realtype* rX_in,
+        realtype* rX_src_in,
+        realtype& dt_react,
+        realtype& time,
+        int reactor_type,
+        int Ncells
+#ifdef AMREX_USE_GPU
+        ,
+        amrex::gpuStream_t stream
+#endif
+        );
+
+int react_rk64(
+        const amrex::Box& box,
+        amrex::Array4<amrex::Real> const& rY_in,
+        amrex::Array4<amrex::Real> const& rY_src_in,
+        amrex::Array4<amrex::Real> const& T_in,
+        amrex::Array4<amrex::Real> const& rEner_in,
+        amrex::Array4<amrex::Real> const& rEner_src_in,
+        amrex::Array4<amrex::Real> const& FC_in,
+        amrex::Array4<int> const& mask,
+        amrex::Real& dt_react,
+        amrex::Real& time,
+        const int& reactor_type
+#ifdef AMREX_USE_GPU
+        ,
+        amrex::gpuStream_t stream
+#endif
+        );
+
+int react_rk64(
         realtype* rY_in,
         realtype* rY_src_in,
         realtype* rX_in,

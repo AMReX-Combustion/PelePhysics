@@ -589,7 +589,7 @@ main (int   argc,
                Real dt_lev = dt/std::pow(2,lev);
                Real dt_incr = dt_lev/ndt;
                for (int ii = 0; ii < ndt; ++ii) {
-                  tmp_fc[i] += react(&tmp_vect[i*(NUM_SPECIES+1)], &tmp_src_vect[i*NUM_SPECIES],
+                  tmp_fc[i] += react_rk64(&tmp_vect[i*(NUM_SPECIES+1)], &tmp_src_vect[i*NUM_SPECIES],
                                      &tmp_vect_energy[i], &tmp_src_vect_energy[i],
                                      dt_incr,time,ode_iE, ode_ncells
 #ifdef AMREX_USE_GPU

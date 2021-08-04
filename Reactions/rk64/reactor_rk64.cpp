@@ -1,6 +1,6 @@
 #include "reactor.H"
 
-int reactor_init(int reactor_type,int Ncells)
+int reactor_init_rk64(int reactor_type,int Ncells)
 {
     amrex::ParmParse pp("ode");
     pp.query("atol", absTol);
@@ -12,49 +12,49 @@ int reactor_init(int reactor_type,int Ncells)
 }
 
 int
-react(
+react_rk64(
         amrex::Real* rY_in,
         amrex::Real* rY_src_in,
         amrex::Real* rX_in,
         amrex::Real* rX_src_in,
         amrex::Real& dt_react,
-        amrex::Real& time
+        amrex::Real& time,
         int reactor_type,
-        int Ncells,
+        int Ncells
 #ifdef AMREX_USE_GPU
         ,
-        amrex::gpuStream_t stream)
+        amrex::gpuStream_t stream
 #endif
+        )
 {
 
-#include "rk64params.H"
 
     amrex::Real time_init = time;
     amrex::Real time_out = time + dt_react;
-    amrex::Real current_time = time_init;
-    amrex::Real *soln_reg, *carryover_reg, *error_reg, *zero_reg, *rhs;
-    amrex::Real dt_rk, dt_rk_min, dt_rk_max, change_factor;
     const amrex::Real tinyval = 1e-50;
-    int neq=(NUM_SPECIES+1);
-
 
     //capture reactor type
     int captured_reactor_type    = reactor_type;
     int captured_nsubsteps_guess = rk64_nsubsteps_guess;
-    int captured_nsubsteps_min   = rk64_nsusbteps_min;
-    int captured_nsubsteps_max   = rk64_nsusbteps_max;
+    int captured_nsubsteps_min   = rk64_nsubsteps_min;
+    int captured_nsubsteps_max   = rk64_nsubsteps_max;
+    amrex::Real captured_abstol  = absTol;
     
     int *nstepsvec;
-    nstepsvec = new int[NCells]();
+    nstepsvec = new int[Ncells]();
 
     amrex::ParallelFor(Ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept 
     {
         amrex::Real soln_reg[NUM_SPECIES+1];
         amrex::Real carryover_reg[NUM_SPECIES+1];
         amrex::Real error_reg[NUM_SPECIES+1];
-        amrex::Real zero_reg[NUM_SPECIES+1];
         amrex::Real rhs[NUM_SPECIES+1];
         amrex::Real rYsrc[NUM_SPECIES];
+        amrex::Real dt_rk, dt_rk_min, dt_rk_max, change_factor;
+        amrex::Real current_time = time_init;
+        int neq=(NUM_SPECIES+1);
+
+        #include "rkparams.H"
 
         for(int sp=0;sp<neq;sp++)
         {
@@ -78,12 +78,11 @@ react(
         }
 
         int nsteps = 0;
-        amrex::Real change_factor;
         while (current_time < time_out) 
         {
             for(int sp=0;sp<neq;sp++)
             {
-                    eror_reg[sp]=0.0;
+                    error_reg[sp]=0.0;
             }
             for (int stage = 0; stage < nstages_rk64; stage++) 
             {
@@ -113,12 +112,12 @@ react(
 
             if (max_err < captured_abstol) 
             {
-                change_factor = beta * pow((data->errtol / max_err), exp1_rk64);
+                change_factor = betaerr_rk64 * pow((captured_abstol / max_err), exp1_rk64);
                 dt_rk = std::min(dt_rk_max, dt_rk * change_factor);
             } 
             else 
             {
-                change_factor = beta * pow((data->errtol / max_err), exp2_rk64);
+                change_factor = betaerr_rk64 * pow((captured_abstol / max_err), exp2_rk64);
                 dt_rk = std::max(dt_rk_min, dt_rk * change_factor);
             }
         }
@@ -128,7 +127,7 @@ react(
         {
             rY_in[icell*neq+sp]=soln_reg[sp];
         }
-        rX_in[icell] = rhoe_init[0] + dt_react*rhoesrc_init[0];
+        rX_in[icell] = rhoe_init[0] + dt_react*rhoesrc_ext[0];
     });
 
 #ifdef MOD_REACTOR
@@ -145,7 +144,7 @@ time = time_out;
 }
 
     int
-react(
+react_rk64(
         const amrex::Box& box,
         amrex::Array4<amrex::Real> const& rY_in,
         amrex::Array4<amrex::Real> const& rY_src_in,
@@ -163,33 +162,36 @@ react(
 #endif
      )
 {
+
     amrex::Real time_init = time;
     amrex::Real time_out = time + dt_react;
-    amrex::Real current_time = time_init;
     const amrex::Real tinyval = 1e-50;
-    int neq=(NUM_SPECIES+1);
-
 
     //capture reactor type
     int captured_reactor_type    = reactor_type;
     int captured_nsubsteps_guess = rk64_nsubsteps_guess;
-    int captured_nsubsteps_min   = rk64_nsusbteps_min;
-    int captured_nsubsteps_max   = rk64_nsusbteps_max;
+    int captured_nsubsteps_min   = rk64_nsubsteps_min;
+    int captured_nsubsteps_max   = rk64_nsubsteps_max;
+    amrex::Real captured_abstol  = absTol;
     
     int *nstepsvec;
     int Ncells=box.numPts();
     const auto len = amrex::length(box);
     const auto lo = amrex::lbound(box);
-    nstepsvec = new int[NCells]();
+    nstepsvec = new int[Ncells]();
 
     amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i,int j,int k) noexcept 
     {
         amrex::Real soln_reg[NUM_SPECIES+1];
         amrex::Real carryover_reg[NUM_SPECIES+1];
         amrex::Real error_reg[NUM_SPECIES+1];
-        amrex::Real zero_reg[NUM_SPECIES+1];
         amrex::Real rhs[NUM_SPECIES+1];
+
         amrex::Real rYsrc[NUM_SPECIES];
+        amrex::Real mass_frac[NUM_SPECIES];
+        int neq=(NUM_SPECIES+1);
+
+        #include "rkparams.H"
     
         amrex::Real dt_rk, dt_rk_min, dt_rk_max, change_factor;
         amrex::Real rho;
@@ -202,9 +204,13 @@ react(
             error_reg[sp]     = 0.0;
             rhs[sp]           = 0.0;
         }
+        amrex::Real rho_inv = 1.0 / rho;
+        for(int sp=0;sp<NUM_SPECIES;sp++)
+        {
+            mass_frac[sp]=rY_in(i,j,k,sp)*rho_inv;
+        }
         rhs[NUM_SPECIES]       = 0.0;
         error_reg[NUM_SPECIES] = 0.0;
-        amrex::Real rho_inv = 1.0 / rho;
         amrex::Real temp = T_in(i, j, k, 0);
     
         amrex::Real Enrg_loc = rEner_in(i,j,k,0)/rho;
@@ -218,12 +224,13 @@ react(
             eos.HY2T(Enrg_loc, mass_frac, temp);
         }
         soln_reg[NUM_SPECIES] = temp;
+        carryover_reg[NUM_SPECIES] = soln_reg[NUM_SPECIES];
 
         dt_rk = dt_react / amrex::Real(captured_nsubsteps_guess);
         dt_rk_min = dt_react / amrex::Real(captured_nsubsteps_max);
         dt_rk_max = dt_react / amrex::Real(captured_nsubsteps_min);
         
-        current_time = time_init;
+        amrex::Real current_time = time_init;
         amrex::Real rhoe_init[]={rEner_in(i,j,k,0)};
         amrex::Real rhoesrc_ext[]={rEner_src_in(i,j,k,0)};
 
@@ -237,7 +244,7 @@ react(
         {
             for(int sp=0;sp<neq;sp++)
             {
-                    eror_reg[sp]=0.0;
+                    error_reg[sp]=0.0;
             }
             for (int stage = 0; stage < nstages_rk64; stage++) 
             {
@@ -267,12 +274,12 @@ react(
 
             if (max_err < captured_abstol) 
             {
-                change_factor = beta * pow((data->errtol / max_err), exp1_rk64);
+                change_factor = betaerr_rk64 * pow((captured_abstol / max_err), exp1_rk64);
                 dt_rk = std::min(dt_rk_max, dt_rk * change_factor);
             } 
             else 
             {
-                change_factor = beta * pow((data->errtol / max_err), exp2_rk64);
+                change_factor = betaerr_rk64 * pow((captured_abstol / max_err), exp2_rk64);
                 dt_rk = std::max(dt_rk_min, dt_rk * change_factor);
             }
         }
@@ -283,9 +290,26 @@ react(
         for(int sp=0;sp<NUM_SPECIES;sp++)
         {
             rY_in(i,j,k,sp) = soln_reg[sp];
+            rho += rY_in(i,j,k,sp);
         }
-        T_in(i,j,k,0)     = soln_reg[NUM_SPECIES];
-        rEner_in(i,j,k,0) = rhoe_init[0] + dt_react*rhoesrc_init[0];
+        rho_inv = 1.0 / rho;
+        for(int sp=0;sp<NUM_SPECIES;sp++)
+        {
+            mass_frac[sp]=rY_in(i,j,k,sp)*rho_inv;
+        }
+        temp     = soln_reg[NUM_SPECIES];
+        rEner_in(i,j,k,0) = rhoe_init[0] + dt_react*rhoesrc_ext[0];
+        Enrg_loc = rEner_in(i,j,k,0) * rho_inv;
+    
+        if (captured_reactor_type == 1) 
+        {
+            eos.EY2T(Enrg_loc, mass_frac, temp);
+        } 
+        else 
+        {
+            eos.HY2T(Enrg_loc, mass_frac, temp);
+        }
+        T_in(i, j, k, 0) = temp;
         FC_in(i,j,k,0)    = nsteps;
     });
 

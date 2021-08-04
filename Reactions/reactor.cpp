@@ -17,7 +17,7 @@ int use_erkstep = 0;
 int rk_method = 40;
 int rk_controller = 0;
 int rk64_nsubsteps_guess = 10;
-int rk64_nsusbteps_min   = 5;
+int rk64_nsubsteps_min   = 5;
 int rk64_nsubsteps_max   = 500;
 
 //===================================================================
