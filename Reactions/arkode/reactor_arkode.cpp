@@ -145,11 +145,11 @@ react(
   user_data->neqs_per_cell = NEQ;
   user_data->ireactor_type = reactor_type;
   user_data->iverbose = 1;
-#ifdef AMREX_USE_GPU
-  user_data->stream = stream;
-#endif
-  user_data->nbBlocks = std::max(1, NCELLS / 32);
-  user_data->nbThreads = 32;
+//#ifdef AMREX_USE_GPU
+//  user_data->stream = stream;
+//#endif
+//  user_data->nbThreads = 32;
+//  user_data->nbBlocks = std::max(1, NCELLS / user_data->nbThreads);
 
 #if defined(AMREX_USE_CUDA)
   y = N_VNewWithMemHelp_Cuda(
@@ -427,26 +427,24 @@ int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
   ARKODEUserData *udata = static_cast<ARKODEUserData*>(user_data);
   udata->dt_save = t;
 
-#ifdef AMREX_USE_GPU
-  const auto ec = amrex::Gpu::ExecutionConfig(udata->ncells_d);
-  amrex::launch_global<<<
-    udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
-    [=] AMREX_GPU_DEVICE() noexcept {
-      for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
-               stride = blockDim.x * gridDim.x;
-           icell < udata->ncells_d; icell += stride) {
-        fKernelSpec(
-          icell, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
-          udata->rhoe_init_d, udata->rhoesrc_ext_d, udata->rYsrc_d);
-      }
-    });
-#else
-  for (int icell = 0; icell < udata->ncells_d; icell++) {
+// Manual launch for fKernelSpec
+//  const auto ec = amrex::Gpu::ExecutionConfig(udata->ncells_d);
+//  amrex::launch_global<<<
+//    udata->nbBlocks, udata->nbThreads, ec.sharedMem, udata->stream>>>(
+//    [=] AMREX_GPU_DEVICE() noexcept {
+//      for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+//               stride = blockDim.x * gridDim.x;
+//           icell < udata->ncells_d; icell += stride) {
+//        fKernelSpec(
+//          icell, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
+//          udata->rhoe_init_d, udata->rhoesrc_ext_d, udata->rYsrc_d);
+//      }
+//    });
+  amrex::ParallelFor(udata->ncells_d, [=] AMREX_GPU_DEVICE(int icell) noexcept {
     fKernelSpec(
       icell, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
       udata->rhoe_init_d, udata->rhoesrc_ext_d, udata->rYsrc_d);
-  }
-#endif
+  });
 
   amrex::Gpu::Device::streamSynchronize();
 
