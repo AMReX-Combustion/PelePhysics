@@ -564,7 +564,7 @@ main (int   argc,
             {
               int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
 
-              box_flatten(icell, i, j, k, ode_iE, 
+              box_flatten(icell, nCells, i, j, k, ode_iE, 
                           rhoY, frcExt, T, rhoE, frcEExt,
                           tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
             });
@@ -611,7 +611,7 @@ main (int   argc,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
               int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
-              box_unflatten(icell, i, j, k, ode_iE,
+              box_unflatten(icell, nCells, i, j, k, ode_iE,
                             rhoY, T, rhoE, frcEExt, fc,
                             tmp_vect, tmp_vect_energy, tmp_fc[icell], dt);
             });

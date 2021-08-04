@@ -492,7 +492,7 @@ react(
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
 
     box_flatten(
-      icell, i, j, k, user_data->ireactor_type, rY_in, rY_src_in, T_in,
+      icell, NCELLS, i, j, k, user_data->ireactor_type, rY_in, rY_src_in, T_in,
       rEner_in, rEner_src_in, yvec_d, user_data->rYsrc_d,
       user_data->rhoe_init_d, user_data->rhoesrc_ext_d);
   });
@@ -636,7 +636,7 @@ react(
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
 
     box_unflatten(
-      icell, i, j, k, user_data->ireactor_type, rY_in, T_in, rEner_in,
+      icell, NCELLS, i, j, k, user_data->ireactor_type, rY_in, T_in, rEner_in,
       rEner_src_in, FC_in, yvec_d, user_data->rhoe_init_d, nfe, dt_react);
   });
   BL_PROFILE_VAR_STOP(FlatStuff);
@@ -729,7 +729,7 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
                stride = blockDim.x * gridDim.x;
            icell < udata->ncells; icell += stride) {
         fKernelSpec(
-          icell, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
+          icell, udata->ncells, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
           udata->rhoe_init_d, udata->rhoesrc_ext_d, udata->rYsrc_d);
       }
     });
@@ -737,7 +737,7 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 #else
   for (int icell = 0; icell < udata->ncells; icell++) {
     fKernelSpec(
-      icell, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
+      icell, udata->ncells, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
       udata->rhoe_init_d, udata->rhoesrc_ext_d, udata->rYsrc_d);
   }
 #endif
