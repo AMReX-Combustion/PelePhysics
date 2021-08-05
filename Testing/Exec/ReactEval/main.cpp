@@ -7,9 +7,13 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
+
+#ifdef USE_SUNDIALS_PP
 #ifdef AMREX_USE_GPU
 #include <AMReX_SUNMemory.H>
 #endif
+#endif
+
 #include "mechanism.H"
 #include <GPU_misc.H>
 
@@ -42,8 +46,13 @@ main (int   argc,
       char* argv[])
 {
   Initialize(argc,argv);
+
+#ifdef USE_SUNDIALS_PP
+
 #ifdef AMREX_USE_GPU
   amrex::sundials::MemoryHelper::Initialize(); /* TODO: this ideally (I think) will go in the amrex::Initialize */
+#endif
+
 #endif
   {
 
@@ -516,13 +525,14 @@ main (int   argc,
             Real time = 0.0;
             Real dt_lev = dt/std::pow(2,lev);
             Real dt_incr = dt_lev/ndt;
+            int tmp_fc;
 
             Print() << "  [" << lev << "]" << " integrating " << nc << " cells \n";
             /* Solve */
             BL_PROFILE_VAR_START(ReactInLoop);
             for (int ii = 0; ii < ndt; ++ii)
             {
-              react(box, rhoY, frcExt, T,
+              tmp_fc=react(box, rhoY, frcExt, T,
                     rhoE, frcEExt, fc, mask,
                     dt_incr, time, ode_iE
 #ifdef AMREX_USE_GPU
@@ -550,15 +560,33 @@ main (int   argc,
 
             BL_PROFILE_VAR_START(Allocs);
             int nCells               =  nc+extra_cells;
+
+#ifdef AMREX_USE_GPU
+            auto tmp_vect_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+                        nCells * (NUM_SPECIES+1) * sizeof(amrex::Real));
+            auto tmp_src_vect_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+                        nCells * NUM_SPECIES * sizeof(amrex::Real));
+            auto tmp_vect_energy_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+                        nCells * sizeof(amrex::Real));
+            auto tmp_src_vect_energy_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+                        nCells * sizeof(amrex::Real));
+            auto tmp_fc_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+                        nCells * sizeof(amrex::Real));
+            auto tmp_mask_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+                        nCells * sizeof(amrex::Real));
+#endif
+
             auto tmp_vect            =  new Real[nCells * (NUM_SPECIES+1)];
             auto tmp_src_vect        =  new Real[nCells * NUM_SPECIES];
             auto tmp_vect_energy     =  new Real[nCells];
             auto tmp_src_vect_energy =  new Real[nCells];
             auto tmp_fc              =  new int[nCells];
-            auto tmp_mask            =  new int[nCells];
+            auto tmp_mask           =  new int[nCells];
+        
             BL_PROFILE_VAR_STOP(Allocs);
 
             BL_PROFILE_VAR_START(mainflatten);
+#ifndef AMREX_USE_GPU
             ParallelFor(box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
@@ -579,23 +607,42 @@ main (int   argc,
               tmp_src_vect_energy[icell]                  = frcEExt(0,0,0);
               tmp_mask[icell]                             = mask(0,0,0);
             }
+#else
+            ParallelFor(box,
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+              int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+
+              box_flatten(icell, i, j, k, ode_iE, 
+                          rhoY, frcExt, T, rhoE, frcEExt,
+                          tmp_vect_d, tmp_src_vect_d, tmp_vect_energy_d, tmp_src_vect_energy_d);
+            });
+
+            Gpu::copy(Gpu::deviceToHost, tmp_vect_d, tmp_vect_d+nCells*(NUM_SPECIES+1), tmp_vect);
+            Gpu::copy(Gpu::deviceToHost, tmp_src_vect_d, tmp_src_vect_d+nCells*NUM_SPECIES, tmp_src_vect);
+            Gpu::copy(Gpu::deviceToHost, tmp_vect_energy_d, tmp_vect_energy_d+nCells, tmp_vect_energy);
+            Gpu::copy(Gpu::deviceToHost, tmp_src_vect_energy_d, tmp_src_vect_energy_d+nCells, tmp_src_vect_energy);
+#endif
             BL_PROFILE_VAR_STOP(mainflatten);
 
             /* Solve */
             BL_PROFILE_VAR_START(ReactInLoop);
+            //amrex::Print()<<"1darray Temp before:"<<tmp_vect[NUM_SPECIES]<<"\n";
             for(int i = 0; i < nCells; i+=ode_ncells) {
                tmp_fc[i] = 0;
                Real time = 0.0;
                Real dt_lev = dt/std::pow(2,lev);
                Real dt_incr = dt_lev/ndt;
                for (int ii = 0; ii < ndt; ++ii) {
-                  tmp_fc[i] += react_rk64(&tmp_vect[i*(NUM_SPECIES+1)], &tmp_src_vect[i*NUM_SPECIES],
+                  tmp_fc[i] += react(&tmp_vect[i*(NUM_SPECIES+1)], &tmp_src_vect[i*NUM_SPECIES],
                                      &tmp_vect_energy[i], &tmp_src_vect_energy[i],
                                      dt_incr,time,ode_iE, ode_ncells
 #ifdef AMREX_USE_GPU
                                      , amrex::Gpu::gpuStream()
 #endif
                   );
+
+                  //amrex::Print()<<"nsteps:"<<tmp_fc[i]<<"\n";
 
                   dt_incr =  dt_lev/ndt;
                   for (int ic = i+1; ic < i+ode_ncells ; ++ic) {
@@ -604,9 +651,11 @@ main (int   argc,
                   Gpu::Device::streamSynchronize();
                }
             }
+            //amrex::Print()<<"1darray Temp after:"<<tmp_vect[NUM_SPECIES]<<"\n";
             BL_PROFILE_VAR_STOP(ReactInLoop);
 
             BL_PROFILE_VAR_START(mainflatten);
+#ifndef AMREX_USE_GPU
             ParallelFor(box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
@@ -615,6 +664,23 @@ main (int   argc,
                             rhoY, T, rhoE, frcEExt, fc,
                             tmp_vect, tmp_vect_energy, tmp_fc[icell], dt);
             });
+#else
+
+            Gpu::copy(Gpu::hostToDevice, tmp_vect, tmp_vect+nCells*(NUM_SPECIES+1), tmp_vect_d);
+            Gpu::copy(Gpu::hostToDevice, tmp_src_vect, tmp_src_vect+nCells*NUM_SPECIES, tmp_src_vect_d);
+            Gpu::copy(Gpu::hostToDevice, tmp_vect_energy, tmp_vect_energy+nCells, tmp_vect_energy_d);
+            Gpu::copy(Gpu::hostToDevice, tmp_src_vect_energy, tmp_src_vect_energy+nCells, tmp_src_vect_energy_d);
+            Gpu::copy(Gpu::hostToDevice, tmp_fc, tmp_fc+nCells, tmp_fc_d);
+            
+            ParallelFor(box,
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+              int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+              box_unflatten(icell, i, j, k, ode_iE,
+                            rhoY, T, rhoE, frcEExt, fc,
+                            tmp_vect_d, tmp_vect_energy_d, tmp_fc_d[icell], dt);
+            });
+#endif
             BL_PROFILE_VAR_STOP(mainflatten);
 
             delete[] tmp_vect;
@@ -623,6 +689,14 @@ main (int   argc,
             delete[] tmp_src_vect_energy;
             delete[] tmp_fc;
             delete[] tmp_mask;
+#ifdef AMREX_USE_GPU
+            amrex::The_Device_Arena()->free(tmp_vect_d);
+            amrex::The_Device_Arena()->free(tmp_src_vect_d);
+            amrex::The_Device_Arena()->free(tmp_vect_energy_d);
+            amrex::The_Device_Arena()->free(tmp_src_vect_energy_d);
+            amrex::The_Device_Arena()->free(tmp_fc_d);
+            amrex::The_Device_Arena()->free(tmp_mask_d);
+#endif
           }
        }
        BL_PROFILE_VAR_STOP(Advance);

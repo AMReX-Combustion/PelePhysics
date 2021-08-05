@@ -1,6 +1,6 @@
 #include "reactor.H"
 
-int reactor_init_rk64(int reactor_type,int Ncells)
+int reactor_init(int reactor_type,int Ncells)
 {
     amrex::ParmParse pp("ode");
     pp.query("atol", absTol);
@@ -12,7 +12,7 @@ int reactor_init_rk64(int reactor_type,int Ncells)
 }
 
 int
-react_rk64(
+react(
         amrex::Real* rY_in,
         amrex::Real* rY_src_in,
         amrex::Real* rX_in,
@@ -144,7 +144,7 @@ time = time_out;
 }
 
     int
-react_rk64(
+react(
         const amrex::Box& box,
         amrex::Array4<amrex::Real> const& rY_in,
         amrex::Array4<amrex::Real> const& rY_src_in,
