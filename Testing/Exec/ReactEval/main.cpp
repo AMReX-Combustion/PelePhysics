@@ -627,7 +627,6 @@ main (int   argc,
 
             /* Solve */
             BL_PROFILE_VAR_START(ReactInLoop);
-            //amrex::Print()<<"1darray Temp before:"<<tmp_vect[NUM_SPECIES]<<"\n";
             for(int i = 0; i < nCells; i+=ode_ncells) {
                tmp_fc[i] = 0;
                Real time = 0.0;
@@ -642,8 +641,6 @@ main (int   argc,
 #endif
                   );
 
-                  //amrex::Print()<<"nsteps:"<<tmp_fc[i]<<"\n";
-
                   dt_incr =  dt_lev/ndt;
                   for (int ic = i+1; ic < i+ode_ncells ; ++ic) {
                      tmp_fc[ic] = tmp_fc[i];
@@ -651,7 +648,6 @@ main (int   argc,
                   Gpu::Device::streamSynchronize();
                }
             }
-            //amrex::Print()<<"1darray Temp after:"<<tmp_vect[NUM_SPECIES]<<"\n";
             BL_PROFILE_VAR_STOP(ReactInLoop);
 
             BL_PROFILE_VAR_START(mainflatten);
