@@ -95,11 +95,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKRP(amrex::Real *  ru, amrex::Rea
 
 /*compute Cv/R at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cv_R(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cv_R(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
+    const amrex::Real T = tc[1];
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -209,11 +209,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cv_R(amrex::Real * species, amrex:
 
 /*compute Cp/R at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cp_R(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cp_R(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
+    const amrex::Real T = tc[1];
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -323,12 +323,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void cp_R(amrex::Real * species, amrex:
 
 /*compute the g/(RT) at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void gibbs(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void gibbs(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
-    amrex::Real invT = 1 / T;
+    const amrex::Real T = tc[1];
+    const amrex::Real invT = 1 / T;
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -466,12 +466,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void gibbs(amrex::Real * species, amrex
 
 /*compute the a/(RT) at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void helmholtz(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void helmholtz(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
-    amrex::Real invT = 1 / T;
+    const amrex::Real T = tc[1];
+    const amrex::Real invT = 1 / T;
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -609,12 +609,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void helmholtz(amrex::Real * species, a
 
 /*compute the e/(RT) at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesInternalEnergy(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesInternalEnergy(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
-    amrex::Real invT = 1 / T;
+    const amrex::Real T = tc[1];
+    const amrex::Real invT = 1 / T;
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -738,12 +738,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesInternalEnergy(amrex::Real 
 
 /*compute the h/(RT) at the given temperature (Eq 20) */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEnthalpy(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEnthalpy(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
-    amrex::Real invT = 1 / T;
+    const amrex::Real T = tc[1];
+    const amrex::Real invT = 1 / T;
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -867,11 +867,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEnthalpy(amrex::Real * spec
 
 /*compute the S/R at the given temperature (Eq 21) */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEntropy(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void speciesEntropy(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
+    const amrex::Real T = tc[1];
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -999,7 +999,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPBL(amrex::Real *  T, amrex::Re
     int id; /*loop counter */
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real cpor[7]; /* temporary storage */
     cp_R(cpor, tc);
 
@@ -1017,7 +1017,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPBS(amrex::Real *  T, amrex::Re
 {
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real cpor[7], tresult[7]; /* temporary storage */
     amrex::Real imw[7];
 
@@ -1045,7 +1045,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVBL(amrex::Real *  T, amrex::Re
     int id; /*loop counter */
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real cvor[7]; /* temporary storage */
     cv_R(cvor, tc);
 
@@ -1063,7 +1063,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVBS(amrex::Real *  T, amrex::Re
 {
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real cvor[7]; /* temporary storage */
     amrex::Real imw[7];
 
@@ -1090,7 +1090,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHBML(amrex::Real *  T, amrex::Re
     int id; /*loop counter */
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real hml[7]; /* temporary storage */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     speciesEnthalpy(hml, tc);
@@ -1109,7 +1109,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHBMS(amrex::Real *  T, amrex::Re
 {
     amrex::Real result = 0;
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real hml[7], tmp[7]; /* temporary storage */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     amrex::Real imw[7];
@@ -1136,7 +1136,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUBML(amrex::Real *  T, amrex::Re
     int id; /*loop counter */
     amrex::Real result = 0; 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real uml[7]; /* temporary energy array */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     speciesInternalEnergy(uml, tc);
@@ -1155,7 +1155,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUBMS(amrex::Real *  T, amrex::Re
 {
     amrex::Real result = 0;
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real ums[7]; /* temporary energy array */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     amrex::Real imw[7];
@@ -1185,7 +1185,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSBML(amrex::Real *  P, amrex::Re
     /*Log of normalized pressure in cgs units dynes/cm^2 by Patm */
     amrex::Real logPratio = log ( *P / 1013250.0 ); 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real sor[7]; /* temporary storage */
     speciesEntropy(sor, tc);
 
@@ -1205,7 +1205,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSBMS(amrex::Real *  P, amrex::Re
     /*Log of normalized pressure in cgs units dynes/cm^2 by Patm */
     amrex::Real logPratio = log ( *P / 1013250.0 ); 
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real sor[7]; /* temporary storage */
     amrex::Real x[7]; /* need a ytx conversion */
     amrex::Real YOW = 0; /*See Eq 4, 6 in CK Manual */
@@ -1547,7 +1547,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKMMWC(amrex::Real *  c,  amrex::R
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPOR(amrex::Real *  T, amrex::Real *  cpor)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cp_R(cpor, tc);
 }
 
@@ -1557,7 +1557,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPOR(amrex::Real *  T, amrex::Re
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHORT(amrex::Real *  T, amrex::Real *  hort)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     speciesEnthalpy(hort, tc);
 }
 
@@ -1567,7 +1567,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHORT(amrex::Real *  T, amrex::Re
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSOR(amrex::Real *  T, amrex::Real *  sor)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     speciesEntropy(sor, tc);
 }
 
@@ -1763,7 +1763,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVML(amrex::Real *  T,  amrex::R
 {
     int id; /*loop counter */
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cv_R(cvml, tc);
 
     /*convert to chemkin units */
@@ -1779,7 +1779,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPML(amrex::Real *  T,  amrex::R
 {
     int id; /*loop counter */
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cp_R(cpml, tc);
 
     /*convert to chemkin units */
@@ -1795,7 +1795,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUML(amrex::Real *  T,  amrex::Re
 {
     int id; /*loop counter */
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     speciesInternalEnergy(uml, tc);
 
@@ -1812,7 +1812,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHML(amrex::Real *  T,  amrex::Re
 {
     int id; /*loop counter */
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     speciesEnthalpy(hml, tc);
 
@@ -1828,7 +1828,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSML(amrex::Real *  T,  amrex::Re
 {
     int id; /*loop counter */
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     speciesEntropy(sml, tc);
 
     /*convert to chemkin units */
@@ -1843,7 +1843,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSML(amrex::Real *  T,  amrex::Re
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVMS(amrex::Real *  T,  amrex::Real *  cvms)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cv_R(cvms, tc);
     /*multiply by R/molecularweight */
     cvms[0] *= 5.182601178301878e+06; /*CH4 */
@@ -1861,7 +1861,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCVMS(amrex::Real *  T,  amrex::R
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPMS(amrex::Real *  T,  amrex::Real *  cpms)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     cp_R(cpms, tc);
     /*multiply by R/molecularweight */
     cpms[0] *= 5.182601178301878e+06; /*CH4 */
@@ -1878,7 +1878,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKCPMS(amrex::Real *  T,  amrex::R
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUMS(amrex::Real *  T,  amrex::Real *  ums)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     amrex::Real imw[7];
 
@@ -1897,7 +1897,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKUMS(amrex::Real *  T,  amrex::Re
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHMS(amrex::Real *  T,  amrex::Real *  hms)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     amrex::Real RT = 8.31446261815324e+07*tT; /*R*T */
     amrex::Real imw[7];
 
@@ -1916,7 +1916,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKHMS(amrex::Real *  T,  amrex::Re
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKSMS(amrex::Real *  T,  amrex::Real *  sms)
 {
     amrex::Real tT = *T; /*temporary temperature */
-    amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
+    const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; /*temperature cache */
     speciesEntropy(sms, tc);
     /*multiply by R/molecularweight */
     sms[0] *= 5.182601178301878e+06; /*CH4 */
@@ -1967,29 +1967,25 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
     amrex::Real k_f, k_r, Corr;
 
     // (0):  2.000000 CH4 + O2 => 2.000000 CO + 4.000000 H2
-    k_f = 1.0000000000000002e-12 * 39100000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (30000) * invT);
-    Corr  = 1.0;
-    qf[0] *= Corr * k_f;
-    qr[0] *= Corr * k_f / (exp(2.000000*g_RT[0] + g_RT[1] - 2.000000*g_RT[4] - 4.000000*g_RT[6]) * pow(refC,3.000000));
+    k_f = 39.1
+               * exp(-(15096.4999741416) * invT);
+    qf[0] *= k_f;
+    qr[0] *= k_f * exp(-(2.000000*g_RT[0] + g_RT[1] - 2.000000*g_RT[4] - 4.000000*g_RT[6])) * (pow(refCinv, 3.000000));
     // (1):  CH4 + H2O <=> CO + 3.000000 H2
-    k_f = 1.0000000000000002e-06 * 300000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (30000) * invT);
-    Corr  = 1.0;
-    qf[1] *= Corr * k_f;
-    qr[1] *= Corr * k_f / (exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000*g_RT[6]) * pow(refC,2.000000));
+    k_f = 300000
+               * exp(-(15096.4999741416) * invT);
+    qf[1] *= k_f;
+    qr[1] *= k_f * exp(-(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000*g_RT[6])) * ((refCinv * refCinv));
     // (2):  2.000000 H2 + O2 => 2.000000 H2O
-    k_f = 1.0000000000000002e-12 * 6.045e+18 
-               * exp(-1 * tc[0] - 0.50321666580471969 * (40000) * invT);
-    Corr  = 1.0;
-    qf[2] *= Corr * k_f;
-    qr[2] *= Corr * k_f / (exp(g_RT[1] - 2.000000*g_RT[2] + 2.000000*g_RT[6]) * refCinv);
+    k_f = 6045000
+               * exp((-1) * tc[0] - (20128.6666321888) * invT);
+    qf[2] *= k_f;
+    qr[2] *= k_f * exp(-(g_RT[1] - 2.000000*g_RT[2] + 2.000000*g_RT[6])) * (refC);
     // (3):  CO + H2O <=> CO2 + H2
-    k_f = 1.0000000000000002e-06 * 2750000000000 
-               * exp(0 * tc[0] - 0.50321666580471969 * (20000) * invT);
-    Corr  = 1.0;
-    qf[3] *= Corr * k_f;
-    qr[3] *= Corr * k_f / exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]);
+    k_f = 2750000
+               * exp(-(10064.3333160944) * invT);
+    qf[3] *= k_f;
+    qr[3] *= k_f * exp(-(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]));
 
 
     return;
@@ -1997,39 +1993,78 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)
 {
-    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
-    amrex::Real invT = 1.0 / tc[1];
+    const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache
+    const amrex::Real invT = 1.0 / tc[1];
 
-    amrex::Real qdot, q_f[4], q_r[4];
-    amrex::Real sc_qss[1];
-    comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
+    /*reference concentration: P_atm / (RT) in inverse mol/m^3 */
+    const amrex::Real refC = 101325 / 8.31446 * invT;
+    const amrex::Real refCinv = 1 / refC;
 
     for (int i = 0; i < 7; ++i) {
         wdot[i] = 0.0;
     }
 
-    qdot = q_f[0]-q_r[0];
-    wdot[0] -= 2.000000 * qdot;
-    wdot[1] -= qdot;
-    wdot[4] += 2.000000 * qdot;
-    wdot[6] += 4.000000 * qdot;
+    /*compute the mixture concentration */
+    amrex::Real mixture = 0.0;
+    for (int i = 0; i < 7; ++i) {
+        mixture += sc[i];
+    }
 
-    qdot = q_f[1]-q_r[1];
-    wdot[0] -= qdot;
-    wdot[2] -= qdot;
-    wdot[4] += qdot;
-    wdot[6] += 3.000000 * qdot;
+    /*compute the Gibbs free energy */
+    amrex::Real g_RT[7];
+    gibbs(g_RT, tc);
 
-    qdot = q_f[2]-q_r[2];
-    wdot[1] -= qdot;
-    wdot[2] += 2.000000 * qdot;
-    wdot[6] -= 2.000000 * qdot;
+    {
+        // (0):  2.000000 CH4 + O2 => 2.000000 CO + 4.000000 H2
+        const amrex::Real k_f = 39.1
+                   * exp(-(15096.4999741416) * invT);
+        const amrex::Real qf = k_f * (pow(sc[0], 0.500000)*pow(sc[1], 1.250000));
+        const amrex::Real qr = k_f * exp(-(2.000000*g_RT[0] + g_RT[1] - 2.000000*g_RT[4] - 4.000000*g_RT[6])) * (pow(refCinv, 3.000000)) * (0.0);
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= 2.000000 * qdot;
+        wdot[1] -= qdot;
+        wdot[4] += 2.000000 * qdot;
+        wdot[6] += 4.000000 * qdot;
+    }
 
-    qdot = q_f[3]-q_r[3];
-    wdot[2] -= qdot;
-    wdot[4] -= qdot;
-    wdot[5] += qdot;
-    wdot[6] += qdot;
+    {
+        // (1):  CH4 + H2O <=> CO + 3.000000 H2
+        const amrex::Real k_f = 300000
+                   * exp(-(15096.4999741416) * invT);
+        const amrex::Real qf = k_f * (sc[0]*sc[2]);
+        const amrex::Real qr = k_f * exp(-(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000*g_RT[6])) * ((refCinv * refCinv)) * (sc[4]*pow(sc[6], 3.000000));
+        const amrex::Real qdot = qf - qr;
+        wdot[0] -= qdot;
+        wdot[2] -= qdot;
+        wdot[4] += qdot;
+        wdot[6] += 3.000000 * qdot;
+    }
+
+    {
+        // (2):  2.000000 H2 + O2 => 2.000000 H2O
+        const amrex::Real k_f = 6045000
+                   * exp((-1) * tc[0] - (20128.6666321888) * invT);
+        const amrex::Real qf = k_f * (pow(sc[1], 1.500000)*pow(sc[6], 0.250000));
+        const amrex::Real qr = k_f * exp(-(g_RT[1] - 2.000000*g_RT[2] + 2.000000*g_RT[6])) * (refC) * (0.0);
+        const amrex::Real qdot = qf - qr;
+        wdot[1] -= qdot;
+        wdot[2] += 2.000000 * qdot;
+        wdot[6] -= 2.000000 * qdot;
+    }
+
+    {
+        // (3):  CO + H2O <=> CO2 + H2
+        const amrex::Real k_f = 2750000
+                   * exp(-(10064.3333160944) * invT);
+        const amrex::Real qf = k_f * (sc[2]*sc[4]);
+        const amrex::Real qr = k_f * exp(-(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6])) * (sc[5]*sc[6]);
+        const amrex::Real qdot = qf - qr;
+        wdot[2] -= qdot;
+        wdot[4] -= qdot;
+        wdot[5] += qdot;
+        wdot[6] += qdot;
+    }
+
 
     return;
 }
@@ -2188,11 +2223,11 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKWXR(amrex::Real *  rho, amrex::R
 
 /*compute d(Cp/R)/dT and d(Cv/R)/dT at the given temperature */
 /*tc contains precomputed powers of T, tc[0] = log(T) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void dcvpRdT(amrex::Real * species, amrex::Real *  tc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void dcvpRdT(amrex::Real * species, const amrex::Real *  tc)
 {
 
     /*temperature */
-    amrex::Real T = tc[1];
+    const amrex::Real T = tc[1];
 
     /*species with midpoint at T=1000 kelvin */
     if (T < 1000) {
@@ -2286,6 +2321,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void dcvpRdT(amrex::Real * species, amr
 }
 
 /*compute an approx to the reaction Jacobian */
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)
 {
     for (int i=0; i<64; i++) {
@@ -2297,7 +2333,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
         wdot[k] = 0.0;
     }
 
-    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
+    const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     amrex::Real invT = 1.0 / tc[1];
     amrex::Real invT2 = invT * invT;
 
@@ -2332,10 +2368,10 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     /*reaction 1: 2.000000 CH4 + O2 => 2.000000 CO + 4.000000 H2 */
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
-    phi_f = pow(sc[0], 2.000000)*sc[1];
-    k_f = 1.0000000000000002e-12 * 39100000000000
-                * exp(0 * tc[0] - 0.50321666580471969 * (30000) * invT);
-    dlnkfdT = 0 * invT + 0.50321666580471969 *  (30000)  * invT2;
+    phi_f = (sc[0] * sc[0])*sc[1];
+    k_f = 1e-12 * 39100000000000
+                * exp(0 * tc[0] - 0.50321666580472 * (30000) * invT);
+    dlnkfdT = 0 * invT + 0.50321666580472 *  (30000)  * invT2;
     /* rate of progress */
     q = k_f*phi_f;
     dqdT = dlnkfdT*k_f*phi_f;
@@ -2366,12 +2402,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
     phi_f = sc[0]*sc[2];
-    k_f = 1.0000000000000002e-06 * 300000000000
-                * exp(0 * tc[0] - 0.50321666580471969 * (30000) * invT);
-    dlnkfdT = 0 * invT + 0.50321666580471969 *  (30000)  * invT2;
+    k_f = 1e-06 * 300000000000
+                * exp(0 * tc[0] - 0.50321666580472 * (30000) * invT);
+    dlnkfdT = 0 * invT + 0.50321666580472 *  (30000)  * invT2;
     /* reverse */
     phi_r = sc[4]*pow(sc[6], 3.000000);
-    Kc = pow(refC,2.000000) * exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000*g_RT[6]);
+    Kc = (refC * refC) * exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000*g_RT[6]);
     k_r = k_f / Kc;
     dlnKcdT = invT * (-(h_RT[0] + h_RT[2]) + (h_RT[4] + 3.000000*h_RT[6]) - 2.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
@@ -2416,10 +2452,10 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     /*reaction 3: 2.000000 H2 + O2 => 2.000000 H2O */
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
-    phi_f = sc[1]*pow(sc[6], 2.000000);
-    k_f = 1.0000000000000002e-12 * 6.045e+18
-                * exp(-1 * tc[0] - 0.50321666580471969 * (40000) * invT);
-    dlnkfdT = -1 * invT + 0.50321666580471969 *  (40000)  * invT2;
+    phi_f = sc[1]*(sc[6] * sc[6]);
+    k_f = 1e-12 * 6.045e+18
+                * exp(-1 * tc[0] - 0.50321666580472 * (40000) * invT);
+    dlnkfdT = -1 * invT + 0.50321666580472 *  (40000)  * invT2;
     /* rate of progress */
     q = k_f*phi_f;
     dqdT = dlnkfdT*k_f*phi_f;
@@ -2446,9 +2482,9 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
     phi_f = sc[2]*sc[4];
-    k_f = 1.0000000000000002e-06 * 2750000000000
-                * exp(0 * tc[0] - 0.50321666580471969 * (20000) * invT);
-    dlnkfdT = 0 * invT + 0.50321666580471969 *  (20000)  * invT2;
+    k_f = 1e-06 * 2750000000000
+                * exp(0 * tc[0] - 0.50321666580472 * (20000) * invT);
+    dlnkfdT = 0 * invT + 0.50321666580472 *  (20000)  * invT2;
     /* reverse */
     phi_r = sc[5]*sc[6];
     Kc = exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]);
@@ -2531,8 +2567,10 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     /* dTdot/dT */
     J[63] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;
 }
+#endif
 
 /*compute an approx to the reaction Jacobian (for preconditioning) */
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)
 {
     amrex::Real c[7];
@@ -2552,8 +2590,10 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J,
 
     return;
 }
+#endif
 
 /*compute the reaction Jacobian on GPU */
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
 {
@@ -2567,7 +2607,7 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
         wdot[k] = 0.0;
     }
 
-    amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
+    const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */
     amrex::Real invT = 1.0 / tc[1];
     amrex::Real invT2 = invT * invT;
 
@@ -2603,10 +2643,10 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     /*reaction 1: 2.000000 CH4 + O2 => 2.000000 CO + 4.000000 H2 */
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
-    phi_f = pow(sc[0], 2.000000)*sc[1];
-    k_f = 1.0000000000000002e-12 * 39100000000000
-                * exp(0 * tc[0] - 0.50321666580471969 * (30000) * invT);
-    dlnkfdT = 0 * invT + 0.50321666580471969 *  30000  * invT2;
+    phi_f = (sc[0] * sc[0])*sc[1];
+    k_f = 1e-12 * 39100000000000
+                * exp(0 * tc[0] - 0.50321666580472 * (30000) * invT);
+    dlnkfdT = 0 * invT + 0.50321666580472 *  30000  * invT2;
     /* rate of progress */
     q = k_f*phi_f;
     dqdT = dlnkfdT*k_f*phi_f;
@@ -2637,12 +2677,12 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
     phi_f = sc[0]*sc[2];
-    k_f = 1.0000000000000002e-06 * 300000000000
-                * exp(0 * tc[0] - 0.50321666580471969 * (30000) * invT);
-    dlnkfdT = 0 * invT + 0.50321666580471969 *  30000  * invT2;
+    k_f = 1e-06 * 300000000000
+                * exp(0 * tc[0] - 0.50321666580472 * (30000) * invT);
+    dlnkfdT = 0 * invT + 0.50321666580472 *  30000  * invT2;
     /* reverse */
     phi_r = sc[4]*pow(sc[6], 3.000000);
-    Kc = pow(refC,2.000000) * exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000*g_RT[6]);
+    Kc = (refC * refC) * exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000*g_RT[6]);
     k_r = k_f / Kc;
     dlnKcdT = invT * (-(h_RT[0] + h_RT[2]) + (h_RT[4] + 3.000000*h_RT[6]) - 2.000000);
     dkrdT = (dlnkfdT - dlnKcdT)*k_r;
@@ -2687,10 +2727,10 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     /*reaction 3: 2.000000 H2 + O2 => 2.000000 H2O */
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
-    phi_f = sc[1]*pow(sc[6], 2.000000);
-    k_f = 1.0000000000000002e-12 * 6.045e+18
-                * exp(-1 * tc[0] - 0.50321666580471969 * (40000) * invT);
-    dlnkfdT = -1 * invT + 0.50321666580471969 *  40000  * invT2;
+    phi_f = sc[1]*(sc[6] * sc[6]);
+    k_f = 1e-12 * 6.045e+18
+                * exp(-1 * tc[0] - 0.50321666580472 * (40000) * invT);
+    dlnkfdT = -1 * invT + 0.50321666580472 *  40000  * invT2;
     /* rate of progress */
     q = k_f*phi_f;
     dqdT = dlnkfdT*k_f*phi_f;
@@ -2717,9 +2757,9 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     /*a non-third-body and non-pressure-fall-off reaction */
     /* forward */
     phi_f = sc[2]*sc[4];
-    k_f = 1.0000000000000002e-06 * 2750000000000
-                * exp(0 * tc[0] - 0.50321666580471969 * (20000) * invT);
-    dlnkfdT = 0 * invT + 0.50321666580471969 *  20000  * invT2;
+    k_f = 1e-06 * 2750000000000
+                * exp(0 * tc[0] - 0.50321666580472 * (20000) * invT);
+    dlnkfdT = 0 * invT + 0.50321666580472 *  20000  * invT2;
     /* reverse */
     phi_r = sc[5]*sc[6];
     Kc = exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]);
@@ -2804,9 +2844,11 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
 
 return;
 }
+#endif
 
 
 /*compute the reaction Jacobian */
+#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * consP)
 {
     amrex::Real c[7];
@@ -2826,6 +2868,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Rea
 
     return;
 }
+#endif
 
 
 /* Transport function declarations  */
@@ -3282,49 +3325,49 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci,
     /*species 0: CH4 */
     /*Imported from NIST */
     Tci[0] = 190.560000 ; 
-    ai[0] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[0],2.0) / (pow(16.043030,2.0) * 45.990000); 
+    ai[0] = 1e6 * 0.42748 * Rcst * Rcst * Tci[0] * Tci[0] / (16.043030 * 16.043030 * 45.990000); 
     bi[0] = 0.08664 * Rcst * Tci[0] / (16.043030 * 45.990000); 
     acentric_i[0] = 0.011000 ;
 
     /*species 1: O2 */
     /*Imported from NIST */
     Tci[1] = 154.581000 ; 
-    ai[1] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[1],2.0) / (pow(31.998800,2.0) * 50.430466); 
+    ai[1] = 1e6 * 0.42748 * Rcst * Rcst * Tci[1] * Tci[1] / (31.998800 * 31.998800 * 50.430466); 
     bi[1] = 0.08664 * Rcst * Tci[1] / (31.998800 * 50.430466); 
     acentric_i[1] = 0.022200 ;
 
     /*species 2: H2O */
     /*Imported from NIST */
     Tci[2] = 647.096000 ; 
-    ai[2] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[2],2.0) / (pow(18.015340,2.0) * 220.640000); 
+    ai[2] = 1e6 * 0.42748 * Rcst * Rcst * Tci[2] * Tci[2] / (18.015340 * 18.015340 * 220.640000); 
     bi[2] = 0.08664 * Rcst * Tci[2] / (18.015340 * 220.640000); 
     acentric_i[2] = 0.344300 ;
 
     /*species 3: N2 */
     /*Imported from NIST */
     Tci[3] = 126.192000 ; 
-    ai[3] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[3],2.0) / (pow(28.013400,2.0) * 33.958000); 
+    ai[3] = 1e6 * 0.42748 * Rcst * Rcst * Tci[3] * Tci[3] / (28.013400 * 28.013400 * 33.958000); 
     bi[3] = 0.08664 * Rcst * Tci[3] / (28.013400 * 33.958000); 
     acentric_i[3] = 0.037200 ;
 
     /*species 4: CO */
     /*Imported from NIST */
     Tci[4] = 132.850000 ; 
-    ai[4] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[4],2.0) / (pow(28.010000,2.0) * 34.940000); 
+    ai[4] = 1e6 * 0.42748 * Rcst * Rcst * Tci[4] * Tci[4] / (28.010000 * 28.010000 * 34.940000); 
     bi[4] = 0.08664 * Rcst * Tci[4] / (28.010000 * 34.940000); 
     acentric_i[4] = 0.045000 ;
 
     /*species 5: CO2 */
     /*Imported from NIST */
     Tci[5] = 304.120000 ; 
-    ai[5] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[5],2.0) / (pow(44.009950,2.0) * 73.740000); 
+    ai[5] = 1e6 * 0.42748 * Rcst * Rcst * Tci[5] * Tci[5] / (44.009950 * 44.009950 * 73.740000); 
     bi[5] = 0.08664 * Rcst * Tci[5] / (44.009950 * 73.740000); 
     acentric_i[5] = 0.225000 ;
 
     /*species 6: H2 */
     /*Imported from NIST */
     Tci[6] = 33.145000 ; 
-    ai[6] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[6],2.0) / (pow(2.015880,2.0) * 12.964000); 
+    ai[6] = 1e6 * 0.42748 * Rcst * Rcst * Tci[6] * Tci[6] / (2.015880 * 2.015880 * 12.964000); 
     bi[6] = 0.08664 * Rcst * Tci[6] / (2.015880 * 12.964000); 
     acentric_i[6] = -0.219000 ;
 

@@ -126,6 +126,7 @@ void CKSYMS_STR(amrex::Vector<std::string>& kname)
 }
 
 /*compute the sparsity pattern of the chemistry Jacobian */
+#ifdef COMPILE_JACOBIAN
 void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
 {
     amrex::Gpu::DeviceVector<amrex::Real> J_v(225);
@@ -163,10 +164,12 @@ void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)
 
     return;
 }
+#endif
 
 
 
 /*compute the sparsity pattern of the system Jacobian */
+#ifdef COMPILE_JACOBIAN
 void SPARSITY_INFO_SYST( int * nJdata, int * consP, int NCELLS)
 {
     amrex::Gpu::DeviceVector<amrex::Real> J_v(225);
@@ -208,10 +211,12 @@ void SPARSITY_INFO_SYST( int * nJdata, int * consP, int NCELLS)
 
     return;
 }
+#endif
 
 
 
 /*compute the sparsity pattern of the simplified (for preconditioning) system Jacobian */
+#ifdef COMPILE_JACOBIAN
 void SPARSITY_INFO_SYST_SIMPLIFIED( int * nJdata, int * consP)
 {
     amrex::Gpu::DeviceVector<amrex::Real> J_v(225);
@@ -253,9 +258,11 @@ void SPARSITY_INFO_SYST_SIMPLIFIED( int * nJdata, int * consP)
 
     return;
 }
+#endif
 
 
 /*compute the sparsity pattern of the chemistry Jacobian in CSC format -- base 0 */
+#ifdef COMPILE_JACOBIAN
 void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)
 {
     int offset_row;
@@ -301,8 +308,10 @@ void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, int * consP, int NCELL
 
     return;
 }
+#endif
 
 /*compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0 */
+#ifdef COMPILE_JACOBIAN
 void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base)
 {
     int offset;
@@ -362,9 +371,11 @@ void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS,
 
     return;
 }
+#endif
 
 /*compute the sparsity pattern of the system Jacobian */
 /*CSR format BASE is user choice */
+#ifdef COMPILE_JACOBIAN
 void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCELLS, int base)
 {
     int offset;
@@ -433,9 +444,11 @@ void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCE
 
     return;
 }
+#endif
 
 /*compute the sparsity pattern of the simplified (for precond) system Jacobian on CPU */
 /*BASE 0 */
+#ifdef COMPILE_JACOBIAN
 void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP)
 {
     amrex::Gpu::DeviceVector<amrex::Real> J_v(225);
@@ -481,9 +494,11 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * in
 
     return;
 }
+#endif
 
 /*compute the sparsity pattern of the simplified (for precond) system Jacobian */
 /*CSR format BASE is under choice */
+#ifdef COMPILE_JACOBIAN
 void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base)
 {
     amrex::Gpu::DeviceVector<amrex::Real> J_v(225);
@@ -546,5 +561,6 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * con
 
     return;
 }
+#endif
 
 #endif

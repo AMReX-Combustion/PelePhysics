@@ -732,17 +732,17 @@ class CPickler(CMill):
     def _generateThermoRoutine_GPU(self, name, expressionGenerator, speciesInfo, QSS_flag, needsInvT=0):
         lowT, highT, midpoints = speciesInfo
 
-        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void %s(amrex::Real * species, amrex::Real *  tc)' % name)
+        self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void %s(amrex::Real * species, const amrex::Real *  tc)' % name)
         self._write('{')
         self._indent()
         # declarations
         self._write()
         self._write(self.line('temperature'))
-        self._write('amrex::Real T = tc[1];')
+        self._write('const amrex::Real T = tc[1];')
         if needsInvT != 0:
-           self._write('amrex::Real invT = 1 / T;')
+           self._write('const amrex::Real invT = 1 / T;')
         if needsInvT == 2:
-           self._write('amrex::Real invT2 = invT*invT;')
+           self._write('const amrex::Real invT2 = invT*invT;')
                     
         for midT, speciesList in midpoints.items():
             self._write('')
@@ -873,7 +873,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -909,7 +909,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -944,7 +944,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real cpor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -984,7 +984,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real cpor[%d], tresult[%d]; ' % (self.nSpecies,self.nSpecies) + self.line(' temporary storage'))
@@ -1034,7 +1034,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real cvor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -1073,7 +1073,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real cvor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -1117,7 +1117,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real hml[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -1159,7 +1159,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real hml[%d], tmp[%d]; ' % (self.nSpecies,self.nSpecies) + self.line(' temporary storage'))
@@ -1212,7 +1212,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real uml[%d]; ' % self.nSpecies + self.line(' temporary energy array'))
@@ -1254,7 +1254,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real ums[%d]; ' % self.nSpecies + self.line(' temporary energy array'))
@@ -1307,7 +1307,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real sor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -1351,7 +1351,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real sor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -1416,7 +1416,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -1464,7 +1464,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -1534,7 +1534,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -1582,7 +1582,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -1739,13 +1739,19 @@ class CPickler(CMill):
             for i, reaction in zip(range(nReactions), mechanism.reaction()):
                 rmap[reaction.orig_id-1] = i
 
+            # reacs are sorted here
+            #for i in range(nReactions):
+            #    self._write()
+            #    self._write(self.line('reaction %d: %s' % (reaction.orig_id, reaction.equation())))
+            #self._write()
+
             # Loop like you're going through them in the mech.Linp order
             for i in range(nReactions):
                 reaction = mechanism.reaction()[rmap[i]]
                 idx = reaction.id - 1
 
                 KcExpArg = self._sortedKcExpArg(mechanism, reaction)
-                KcConv = self._KcConv(mechanism, reaction)
+                KcConvInv = self._KcConvInv(mechanism, reaction)
 
                 A, beta, E = reaction.arrhenius
                 dim = self._phaseSpaceUnits(reaction.reactants)
@@ -1769,12 +1775,21 @@ class CPickler(CMill):
                 aeuc = self._activationEnergyUnits(reaction.units["activation"])
 
                 self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-                self._write("k_f = %.17g * %.17g " % (uc.value,A)) 
-                self._write("           * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);" % (beta, aeuc / Rc / kelvin, E))
+                self._write("k_f = %.15g" % (uc.value * A)) 
+                if (beta == 0) and (E == 0):
+                    self._write("           ;")
+                else:
+                  if (E == 0):
+                      self._write("           * exp((%.15g) * tc[0]);" % (beta))
+                  elif (beta == 0):
+                      self._write("           * exp(-(%.15g) * invT);" % ((aeuc / Rc / kelvin) * E))
+                  else:
+                      self._write("           * exp((%.15g) * tc[0] - (%.15g) * invT);" % (beta, (aeuc / Rc / kelvin) * E))
 
+                alpha = 1.0;
                 if not thirdBody:
-                    self._write("Corr  = 1.0;")
-                    self._write("qf[%d] *= Corr * k_f;" % idx)
+                    #self._write("Corr  = 1.0;")
+                    self._write("qf[%d] *= k_f;" % idx)
                 elif not low:
                     alpha = self._enhancement_d_with_QSS(mechanism, reaction)
                     self._write("Corr  = %s;" %(alpha))
@@ -1782,34 +1797,31 @@ class CPickler(CMill):
                 else:
                     alpha = self._enhancement_d_with_QSS(mechanism, reaction)
                     self._write("Corr  = %s;" %(alpha))
-                    self._write("redP = Corr / k_f * 1e-%d * %.17g " % (dim*6, low_A)) 
-                    self._write("           * exp(%.17g  * tc[0] - %.17g  * (%.17g) *invT);" % (low_beta, aeuc / Rc / kelvin, low_E))
+                    self._write("redP = Corr / k_f * 1e-%d * %.15g " % (dim*6, low_A)) 
+                    self._write("           * exp(%.15g  * tc[0] - %.15g  * (%.15g) *invT);" % (low_beta, aeuc / Rc / kelvin, low_E))
                     if reaction.troe:
                         self._write("F = redP / (1.0 + redP);")
                         self._write("logPred = log10(redP);")
                         self._write('logFcent = log10(')
                         if (abs(troe[1]) > 1.e-100):
-                            if(troe[0] < 0):
-                                self._write('    (1.+%.17g)*exp(-tc[1] / %.17g) ' % (-troe[0],troe[1]))
-                            else:
-                                self._write('    (1.-%.17g)*exp(-tc[1] / %.17g) ' % (troe[0],troe[1]))
+                            self._write('    (%.15g)*exp(-tc[1] * %.15g)' % (1.0 - troe[0],1 / troe[1]))
                         else:
-                            self._write('     0. ' )
+                            self._write('     0.0 ' )
                         if (abs(troe[2]) > 1.e-100):
-                            self._write('    + %.17g * exp(-tc[1]/%.17g)  ' % (troe[0],troe[2]))
+                            self._write('    + %.15g * exp(-tc[1] * %.15g)' % (troe[0], 1 / troe[2]))
                         else:
-                            self._write('    + 0. ')
+                            self._write('    + 0.0 ')
                         if (ntroe == 4):
                             if(troe[3] < 0):
-                                self._write('    + exp(%.17g * invT));' % -troe[3])
+                                self._write('    + exp(%.15g * invT));' % -troe[3])
                             else:
-                                self._write('    + exp(-%.17g * invT));' % troe[3])
+                                self._write('    + exp(-%.15g * invT));' % troe[3])
                         else:
-                            self._write('    + 0.);' )
-                        self._write("troe_c = -.4 - .67 * logFcent;")
-                        self._write("troe_n = .75 - 1.27 * logFcent;")
-                        self._write("troe = (troe_c + logPred) / (troe_n - .14*(troe_c + logPred));")
-                        self._write("F_troe = pow(10., logFcent / (1.0 + troe*troe));")
+                            self._write('    + 0.0);' )
+                        self._write("troe_c = -0.4 - 0.67 * logFcent;")
+                        self._write("troe_n = 0.75 - 1.27 * logFcent;")
+                        self._write("troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));")
+                        self._write("F_troe = pow(10, logFcent / (1.0 + troe*troe));")
                         self._write("Corr = F * F_troe;")
                         self._write("qf[%d] *= Corr * k_f;" % idx)
                     elif reaction.sri:
@@ -1817,14 +1829,14 @@ class CPickler(CMill):
                         self._write("logPred = log10(redP);")
                         self._write("X = 1.0 / (1.0 + logPred*logPred);")
                         if (sri[1] < 0):
-                            self._write("F_sri = exp(X * log(%.17g * exp(%.17g*invT)" % (sri[0],-sri[1]))
+                            self._write("F_sri = exp(X * log(%.15g * exp(%.15g*invT)" % (sri[0],-sri[1]))
                         else:
-                            self._write("F_sri = exp(X * log(%.17g * exp(-%.17g*invT)" % (sri[0],sri[1]))
+                            self._write("F_sri = exp(X * log(%.15g * exp(-%.15g*invT)" % (sri[0],sri[1]))
                         if (sri[2] > 1.e-100):
-                            self._write("   +  exp(tc[0]/%.17g) " % sri[2])
+                            self._write("   +  exp(tc[0]/%.15g) " % sri[2])
                         else:
                             self._write("   +  0. ") 
-                        self._write("   *  (%d > 3 ? %.17g*exp(%.17g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
+                        self._write("   *  (%d > 3 ? %.15g*exp(%.15g*tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
                         self._write("Corr = F * F_sri;")
                         self._write("qf[%d] *= Corr * k_f;" % idx)
                     elif (nlindemann > 0):
@@ -1841,14 +1853,23 @@ class CPickler(CMill):
                     else:
                         print("REV reaction cannot be PD")
                         sys.exit(1)
-                    self._write("k_r = %.17g * %.17g " % (uc_rev.value,Ar)) 
-                    self._write("           * exp(%.17g * tc[0] - %.17g * %.17g * invT);" % (betar, aeuc / Rc / kelvin, Er))
-                    self._write("qr[%d] *= Corr * k_r;" % idx)
-                else:
-                    if KcConv:
-                        self._write("qr[%d] *= Corr * k_f / (exp(%s) * %s);" % (idx,KcExpArg,KcConv))        
+                    self._write("k_r = %.15g * %.15g " % (uc_rev.value,Ar)) 
+                    self._write("           * exp(%.15g * tc[0] - %.15g * %.15g * invT);" % (betar, aeuc / Rc / kelvin, Er))
+                    if (alpha == 1.0):
+                        self._write("qr[%d] *= k_r;" % idx)
                     else:
-                        self._write("qr[%d] *= Corr * k_f / exp(%s);" % (idx,KcExpArg))
+                        self._write("qr[%d] *= Corr * k_r;" % idx)
+                else:
+                    if KcConvInv:
+                        if (alpha == 1.0):
+                            self._write("qr[%d] *= k_f * exp(-(%s)) * (%s);" % (idx,KcExpArg,KcConvInv))
+                        else:
+                            self._write("qr[%d] *= Corr * k_f * exp(-(%s)) * (%s);" % (idx,KcExpArg,KcConvInv))
+                    else:
+                        if (alpha == 1.0):
+                            self._write("qr[%d] *= k_f * exp(-(%s));" % (idx,KcExpArg))
+                        else:
+                            self._write("qr[%d] *= Corr * k_f * exp(-(%s));" % (idx,KcExpArg))
 
             self._write()
 
@@ -1859,25 +1880,30 @@ class CPickler(CMill):
 
         self._write()
 
-
         # main function
         self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)')
         self._write('{')
         self._indent()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
-        self._write('amrex::Real invT = 1.0 / tc[1];')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache')
+        self._write('const amrex::Real invT = 1.0 / tc[1];')
+        self._write()
         
         if (nReactions == 0):
             self._write()
         else:
-            self._write()
-            self._write('amrex::Real qdot, q_f[%d], q_r[%d];' % (nReactions,nReactions))
-            self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
             if (self.nQSSspecies > 0):
-                self._write('/* Fill sc_qss here*/')
+                self._write('amrex::Real sc_qss[%d];' % (max(1, self.nQSSspecies)))
+                self._write('// Fill sc_qss here')
                 self._write('comp_sc_qss(sc, sc_qss, tc, invT);')
-            self._write('comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);');
+                self._write()
+
+            self._write(self.line('reference concentration: P_atm / (RT) in inverse mol/m^3'))
+            self._write('const amrex::Real refC = %g / %g * invT;' % (atm.value, R.value))
+            self._write('const amrex::Real refCinv = 1 / refC;')
+
+            if nsri > 0:
+                self._write("amrex::Real X, F_sri;")
 
         self._write()
         self._write('for (int i = 0; i < %d; ++i) {' % nSpecies)
@@ -1885,37 +1911,208 @@ class CPickler(CMill):
         self._write('wdot[i] = 0.0;')
         self._outdent()
         self._write('}')
+        self._write()
 
-        for i in range(nReactions):
+        if (nReactions > 0):
+            nclassd = nReactions - nspecial
+            #nCorr   = n3body + ntroe + nsri + nlindemann
+
+            # Mixt concentration for PD & TB
+            self._write(self.line('compute the mixture concentration'))
+            self._write('amrex::Real mixture = 0.0;')
+            self._write('for (int i = 0; i < %d; ++i) {' % nSpecies)
+            self._indent()
+            self._write('mixture += sc[i];')
+            self._outdent()
+            self._write('}')
             self._write()
-            self._write("qdot = q_f[%d]-q_r[%d];" % (i,i))
-            reaction = mechanism.reaction(id=i)
-            all_agents = list(set(reaction.reactants + reaction.products))
-            agents = []
-            # remove QSS species from agents
-            for symbol, coefficient in all_agents:
-                if symbol not in self.qss_species_list:
-                    agents.append((symbol, coefficient))
-            agents = sorted(agents, key=lambda x: mechanism.species(x[0]).id)
-            # note that a species might appear as both reactant and product
-            # a species might alos appear twice or more on on each side
-            # agents is a set that contains unique (symbol, coefficient)
-            for a in agents:
-                symbol, coefficient = a
-                for b in reaction.reactants:
-                    if b == a:
-                        if coefficient == 1.0:
-                            self._write("wdot[%d] -= qdot;" % (self.ordered_idx_map[symbol]))
+            if (self.nQSSspecies > 0):
+                self._write('for (int i = 0; i < %d; ++i) {' % self.nQSSspecies)
+                self._indent()
+                self._write('mixture += sc_qss[i];')
+                self._outdent()
+                self._write('}')
+                self._write()
+
+            # Kc stuff
+            self._write(self.line('compute the Gibbs free energy'))
+            self._write('amrex::Real g_RT[%d];' % self.nSpecies)
+            self._write('gibbs(g_RT, tc);')
+            if (self.nQSSspecies > 0):
+                self._write('amrex::Real g_RT_qss[%d];' % (self.nQSSspecies))
+                self._write('gibbs_qss(g_RT_qss, tc);')
+            self._write()
+
+            # Loop like you're going through them in the mech.Linp order
+            for i in range(nReactions):
+                self._write('{')
+                self._indent()
+                reaction = mechanism.reaction(id=i)
+                idx = reaction.id - 1
+                if (len(reaction.ford) > 0):
+                    forward_sc = self._QSSsortedPhaseSpace(mechanism, reaction.ford)
+                else:
+                    forward_sc = self._QSSsortedPhaseSpace(mechanism, reaction.reactants)
+                if reaction.reversible:
+                    reverse_sc = self._QSSsortedPhaseSpace(mechanism, reaction.products)
+                else:
+                    reverse_sc = "0.0"
+
+                KcExpArg = self._sortedKcExpArg(mechanism, reaction)
+                KcConvInv = self._KcConvInv(mechanism, reaction)
+
+                A, beta, E = reaction.arrhenius
+                dim = self._phaseSpaceUnits(reaction.reactants)
+                thirdBody = reaction.thirdBody
+                low = reaction.low
+                if not thirdBody:
+                    uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 3 !PD, !TB
+                elif not low:
+                    uc = self._prefactorUnits(reaction.units["prefactor"], -dim) # Case 2 !PD, TB
+                else:
+                    uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 1 PD, TB
+                    low_A, low_beta, low_E = low
+                    if reaction.troe:
+                        troe = reaction.troe
+                        ntroe = len(troe)
+                        is_troe = True
+                    if reaction.sri:
+                        sri = reaction.sri
+                        nsri = len(sri)
+                        is_sri = True
+                aeuc = self._activationEnergyUnits(reaction.units["activation"])
+
+                self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
+                self._write("const amrex::Real k_f = %.15g" % (uc.value * A)) 
+                if (beta == 0) and (E == 0):
+                    self._write("           ;")
+                else:
+                  if (E == 0):
+                      self._write("           * exp((%.15g) * tc[0]);" % (beta))
+                  elif (beta == 0):
+                      self._write("           * exp(-(%.15g) * invT);" % ((aeuc / Rc / kelvin) * E))
+                  else:
+                      self._write("           * exp((%.15g) * tc[0] - (%.15g) * invT);" % (beta, (aeuc / Rc / kelvin) * E))
+
+                alpha = 1.0;
+                if not thirdBody:
+                    self._write("const amrex::Real qf = k_f * (%s);" % (forward_sc))
+                elif not low:
+                    alpha = self._enhancement_d_with_QSS(mechanism, reaction)
+                    self._write("const amrex::Real Corr = %s;" %(alpha))
+                    self._write("const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
+                else:
+                    alpha = self._enhancement_d_with_QSS(mechanism, reaction)
+                    self._write("amrex::Real Corr = %s;" %(alpha))
+                    self._write("const amrex::Real redP = Corr / k_f * %.15g " % (10**(-dim*6) * low_A))
+                    self._write("           * exp(%.15g * tc[0] - %.15g * invT);" % (low_beta, aeuc / Rc / kelvin * low_E))
+                    if reaction.troe:
+                        self._write("const amrex::Real F = redP / (1.0 + redP);")
+                        self._write("const amrex::Real logPred = log10(redP);")
+                        self._write('const amrex::Real logFcent = log10(')
+                        if (abs(troe[1]) > 1.e-100):
+                            if (1.0 - troe[0] != 0):
+                                self._write('    %.15g * exp(-tc[1] * %.15g)' % (1.0 - troe[0],1 / troe[1]))
                         else:
-                            self._write("wdot[%d] -= %f * qdot;" % (self.ordered_idx_map[symbol], coefficient))
-                for b in reaction.products: 
-                    if b == a:
-                        if coefficient == 1.0:
-                            self._write("wdot[%d] += qdot;" % (self.ordered_idx_map[symbol]))
+                            self._write('     0.0 ' )
+                        if (abs(troe[2]) > 1.e-100):
+                            if (troe[0] != 0):
+                                self._write('    + %.15g * exp(-tc[1] * %.15g)' % (troe[0], 1 / troe[2]))
                         else:
-                            self._write("wdot[%d] += %f * qdot;" % (self.ordered_idx_map[symbol], coefficient))
+                            self._write('    + 0.0 ')
+                        if (ntroe == 4):
+                            if(troe[3] < 0):
+                                self._write('    + exp(%.15g * invT));' % -troe[3])
+                            else:
+                                self._write('    + exp(-%.15g * invT));' % troe[3])
+                        else:
+                            self._write('    + 0.0);' )
+                        self._write("const amrex::Real troe_c = -0.4 - 0.67 * logFcent;")
+                        self._write("const amrex::Real troe_n = 0.75 - 1.27 * logFcent;")
+                        self._write("const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));")
+                        self._write("const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));")
+                        self._write("Corr = F * F_troe;")
+                        self._write("const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
+                    elif reaction.sri:
+                        self._write("const amrex::Real F = redP / (1.0 + redP);")
+                        self._write("const amrex::Real logPred = log10(redP);")
+                        self._write("X = 1.0 / (1.0 + logPred*logPred);")
+                        if (sri[1] < 0):
+                            self._write("F_sri = exp(X * log(%.15g * exp(%.15g * invT)" % (sri[0],-sri[1]))
+                        else:
+                            self._write("F_sri = exp(X * log(%.15g * exp(-%.15g * invT)" % (sri[0],sri[1]))
+                        if (sri[2] > 1.e-100):
+                            self._write("   +  exp(tc[0] / %.15g) " % sri[2])
+                        else:
+                            self._write("   +  0. ") 
+                        self._write("   *  (%d > 3 ? %.15g * exp(%.15g * tc[0]) : 1.0);" % (nsri,sri[3],sri[4]))
+                        self._write("Corr = F * F_sri;")
+                        self._write("const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
+                    elif (nlindemann > 0):
+                        self._write("Corr = redP / (1.0 + redP);")
+                        self._write("const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc))
+
+                if reaction.rev:
+                    Ar, betar, Er = reaction.rev
+                    dim_rev       = self._phaseSpaceUnits(reaction.products)
+                    if not thirdBody:
+                        uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
+                    elif not low:
+                        uc_rev = self._prefactorUnits(reaction.units["prefactor"], -dim_rev)
+                    else:
+                        print("REV reaction cannot be PD")
+                        sys.exit(1)
+                    self._write("const amrex::Real k_r = %.15g * %.15g " % (uc_rev.value,Ar)) 
+                    self._write("           * exp(%.15g * tc[0] - %.15g * %.15g * invT);" % (betar, aeuc / Rc / kelvin, Er))
+                    if (alpha == 1.0):
+                        self._write("const amrex::Real qr = k_r * (%s);" % (reverse_sc))
+                    else:
+                        self._write("const amrex::Real qr = Corr * k_r * (%s);" % (reverse_sc))
+                else:
+                    if KcConvInv:
+                        if (alpha == 1.0):
+                            self._write("const amrex::Real qr = k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
+                        else:
+                            self._write("const amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s) * (%s);" % (KcExpArg,KcConvInv,reverse_sc))
+                    else:
+                        if (alpha == 1.0):
+                            self._write("const amrex::Real qr = k_f * exp(-(%s)) * (%s);" % (KcExpArg,reverse_sc))
+                        else:
+                            self._write("const amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s);" % (KcExpArg,reverse_sc))
+
+                self._write("const amrex::Real qdot = qf - qr;")
+
+                reaction = mechanism.reaction(id=i)
+                all_agents = list(set(reaction.reactants + reaction.products))
+                agents = []
+                # remove QSS species from agents
+                for symbol, coefficient in all_agents:
+                    if symbol not in self.qss_species_list:
+                        agents.append((symbol, coefficient))
+                agents = sorted(agents, key=lambda x: mechanism.species(x[0]).id)
+                # note that a species might appear as both reactant and product
+                # a species might alos appear twice or more on on each side
+                # agents is a set that contains unique (symbol, coefficient)
+                for a in agents:
+                    symbol, coefficient = a
+                    for b in reaction.reactants:
+                        if b == a:
+                            if coefficient == 1.0:
+                                self._write("wdot[%d] -= qdot;" % (self.ordered_idx_map[symbol]))
+                            else:
+                                self._write("wdot[%d] -= %f * qdot;" % (self.ordered_idx_map[symbol], coefficient))
+                    for b in reaction.products: 
+                        if b == a:
+                            if coefficient == 1.0:
+                                self._write("wdot[%d] += qdot;" % (self.ordered_idx_map[symbol]))
+                            else:
+                                self._write("wdot[%d] += %f * qdot;" % (self.ordered_idx_map[symbol], coefficient))
+                self._outdent()
+                self._write('}')
+                self._write()
 
         self._write()
+
         self._write('return;')
         self._outdent()
         self._write('}')
@@ -2003,12 +2200,41 @@ class CPickler(CMill):
             if (dim == 1.0):
                 conversion = "*".join(["refC"])
             else:
-                conversion = "*".join(["pow(refC,%f)" % dim])
+                if (dim == 2.0):
+                    conversion = "*".join(["(refC * refC)"])
+                else:
+                    conversion = "*".join(["pow(refC,%f)" % dim])
         else:
             if (dim == -1.0):
                 conversion = "*".join(["refCinv"])
             else:
                 conversion = "*".join(["pow(refCinv,%f)" % abs(dim)])
+
+        return conversion
+
+    def _KcConvInv(self, mechanism, reaction):
+        dim = 0
+        for symbol, coefficient in reaction.reactants:
+            dim -= coefficient
+        # flip the signs
+        for symbol, coefficient in reaction.products:
+            dim += coefficient
+
+        if dim == 0:
+            conversion = ""
+        elif dim > 0:
+            if (dim == 1.0):
+                conversion = "*".join(["refCinv"])
+            else:
+                if (dim == 2.0):
+                    conversion = "*".join(["(refCinv * refCinv)"])
+                else:
+                    conversion = "*".join(["pow(refCinv, %f)" % dim])
+        else:
+            if (dim == -1.0):
+                conversion = "*".join(["refC"])
+            else:
+                conversion = "*".join(["pow(refC, %f)" % abs(dim)])
 
         return conversion
 
@@ -2071,7 +2297,7 @@ class CPickler(CMill):
         for i, eff in enumerate(efficiencies):
             symbol, efficiency = eff
             if symbol not in self.qss_species_list:
-                factor = "( %.17g - 1)" % (efficiency)
+                factor = "( %.15g - 1)" % (efficiency)
                 conc = "sc[%d]" % self.ordered_idx_map[symbol]
                 alpha.append("%s*%s" % (factor, conc))
 
@@ -2097,13 +2323,19 @@ class CPickler(CMill):
         for i, eff in enumerate(efficiencies):
             symbol, efficiency = eff
             if symbol not in self.qss_species_list:
-                factor = "( %.17g - 1)" % (efficiency)
+                factor = "(%.15g)" % (efficiency - 1)
                 conc = "sc[%d]" % self.ordered_idx_map[symbol]
-                alpha.append("%s*%s" % (factor, conc))
+                if ((efficiency - 1) == 1):
+                    alpha.append("%s" % (conc))
+                else:
+                    alpha.append("%s*%s" % (factor, conc))
             else:
-                factor = "( %.17g - 1)" % (efficiency)
+                factor = "(%.15g)" % (efficiency - 1)
                 conc = "sc_qss[%d]" % (self.ordered_idx_map[symbol] - self.nSpecies)
-                alpha.append("%s*%s" % (factor, conc))
+                if ((efficiency - 1) == 1):
+                    alpha.append("%s" % (conc))
+                else:
+                    alpha.append("%s*%s" % (factor, conc))
 
         return " + ".join(alpha).replace('+ -','- ')
 
@@ -2129,7 +2361,10 @@ class CPickler(CMill):
                 if (float(coefficient) == 1.0):
                     conc = "sc[%d]" % self.ordered_idx_map[symbol]
                 else:
-                    conc = "pow(sc[%d], %f)" % (self.ordered_idx_map[symbol], float(coefficient))
+                    if (float(coefficient) == 2.0):
+                        conc = "(sc[%d] * sc[%d])" % (self.ordered_idx_map[symbol], self.ordered_idx_map[symbol])
+                    else:
+                        conc = "pow(sc[%d], %f)" % (self.ordered_idx_map[symbol], float(coefficient))
                 phi += [conc]
         return "*".join(phi)
 
@@ -3040,7 +3275,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3063,7 +3298,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3086,7 +3321,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3111,7 +3346,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3146,7 +3381,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3181,7 +3416,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3218,7 +3453,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3255,7 +3490,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3292,7 +3527,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3328,7 +3563,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3360,7 +3595,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3393,7 +3628,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         
         # call routine
@@ -3425,7 +3660,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3462,7 +3697,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3547,7 +3782,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real RT = %1.14e*tT; ' % (R*kelvin*mole/erg)
@@ -3917,9 +4152,9 @@ class CPickler(CMill):
             reaction   = mechanism.reaction(id=j)
             A, beta, E = reaction.arrhenius
             self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-            self._write("a[%d] = %.17g;" %(j,A))
-            self._write("b[%d] = %.17g;" %(j,beta))
-            self._write("e[%d] = %.17g;" %(j,E))
+            self._write("a[%d] = %.15g;" %(j,A))
+            self._write("b[%d] = %.15g;" %(j,beta))
+            self._write("e[%d] = %.15g;" %(j,E))
             self._write()
 
         self._write()
@@ -3948,7 +4183,7 @@ class CPickler(CMill):
     
         # QSS
         self._write(
-            'amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
+            'const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
             + self.line('temperature cache'))
         if (self.nQSSspecies > 0):
             if (self.nQSSspecies > 0):
@@ -4011,7 +4246,10 @@ class CPickler(CMill):
             if (dim == 1.0):
                 conversion = "*".join(["refC"]) + ' * '
             else:
-                conversion = "*".join(["pow(refC,%f)" % dim]) + ' * '
+                if (dim == 2.0):
+                    conversion = "*".join(["(refC * refC)"]) + ' * '
+                else:
+                    conversion = "*".join(["pow(refC,%f)" % dim]) + ' * '
         else:
             if (dim == -1.0):
                 conversion = "1.0 / (" + "*".join(["refC"]) + ') * '
@@ -4108,7 +4346,7 @@ class CPickler(CMill):
             'amrex::Real tT = *T; '
             + self.line('temporary temperature'))
         self._write(
-            'amrex::Real tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
+            'const amrex::Real tc[5] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
             + self.line('temperature cache'))
         self._write(
             'amrex::Real gort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
@@ -4151,6 +4389,8 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute an approx to the reaction Jacobian'))
+
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)')
         self._write('{')
         self._indent()
@@ -4172,7 +4412,7 @@ class CPickler(CMill):
         
         self._write()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('amrex::Real invT = 1.0 / tc[1];')
         self._write('amrex::Real invT2 = invT * invT;')
 
@@ -4302,6 +4542,7 @@ class CPickler(CMill):
 
         self._outdent()
         self._write('}')
+        self._write('#endif')
         return
 
     def _ajac_reaction_precond(self, mechanism, reaction, rcase):
@@ -4390,21 +4631,21 @@ class CPickler(CMill):
         self._write('/* forward */')
         self._write("phi_f = %s;" % self._QSSsortedPhaseSpace(mechanism, sorted_reactants))
         #
-        self._write("k_f = %.17g * %.17g" % (uc.value,A))
-        self._write("            * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
+        self._write("k_f = %.15g * %.15g" % (uc.value,A))
+        self._write("            * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
                     %(beta,aeuc / Rc / kelvin,E))
         #
-        self._write("dlnkfdT = %.17g * invT + %.17g *  (%.17g)  * invT2;"
+        self._write("dlnkfdT = %.15g * invT + %.15g *  (%.15g)  * invT2;"
                     %(beta,aeuc / Rc / kelvin,E))
 
         if isPD:
             low_A, low_beta, low_E = reaction.low
             self._write('/* pressure-fall-off */')
-            self._write("k_0 = %.17g * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
+            self._write("k_0 = %.15g * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
                         %(low_A,low_beta,aeuc / Rc / kelvin,low_E))
             self._write('Pr = 1e-%d * alpha / k_f * k_0;' % (dim*6))
             self._write('fPr = Pr / (1.0+Pr);')
-            self._write("dlnk0dT = %.17g * invT + %.17g * (%.17g) * invT2;"
+            self._write("dlnk0dT = %.15g * invT + %.15g * (%.15g) * invT2;"
                         %(low_beta,aeuc / Rc / kelvin,low_E))
             self._write('dlogPrdT = log10e*(dlnk0dT - dlnkfdT);')
             self._write('dlogfPrdT = dlogPrdT / (1.0+Pr);')
@@ -4420,24 +4661,24 @@ class CPickler(CMill):
                 self._write("logPr = log10(Pr);")
                 if (abs(troe[1]) > 1.e-100):
                     if (troe[0] < 0):
-                        self._write('Fcent1 = (1.+%.17g)*exp(-T/%.17g);'
+                        self._write('Fcent1 = (1.+%.15g)*exp(-T/%.15g);'
                                 %(-troe[0],troe[1]))
                     else:
-                        self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
+                        self._write('Fcent1 = (1.-%.15g)*exp(-T/%.15g);'
                                 %(troe[0],troe[1]))
                 else:
                     self._write('Fcent1 = 0.;')
                 if (abs(troe[2]) > 1.e-100):
-                    self._write('Fcent2 = %.17g * exp(-T/%.17g);'
+                    self._write('Fcent2 = %.15g * exp(-T/%.15g);'
                                 %(troe[0],troe[2]))
                 else:
                     self._write('Fcent2 = 0.;')
                 if (ntroe == 4):
                     if (troe[3] < 0):
-                        self._write('Fcent3 = exp(%.17g * invT);'
+                        self._write('Fcent3 = exp(%.15g * invT);'
                                 % -troe[3] )
                     else:
-                        self._write('Fcent3 = exp(-%.17g * invT);'
+                        self._write('Fcent3 = exp(-%.15g * invT);'
                                 % troe[3] )
                 else:
                     self._write('Fcent3 = 0.;')
@@ -4452,20 +4693,16 @@ class CPickler(CMill):
 
                 self._write("dlogFcentdT = log10e/Fcent*( ")
                 if (abs(troe[1]) > 1.e-100):
-                    self._write("    -Fcent1/%.17g"
+                    self._write("    -Fcent1/%.15g"
                                 % troe[1] )
-                else:
-                    self._write("    +0.")
                 if (abs(troe[2]) > 1.e-100):
-                    self._write("    -Fcent2/%.17g"
+                    self._write("    -Fcent2/%.15g"
                                 % troe[2] )
-                else:
-                    self._write("    +0.")
                 if (ntroe == 4):
-                    self._write("    + Fcent3*%.17g*invT2);"
-                                % troe[3] )
-                else:
-                    self._write("    + 0.);")
+                    if (abs(troe[3]) > 1.e-100):
+                        self._write("    + Fcent3*%.15g*invT2"
+                                    % troe[3] )
+                self._write(");")
 
                 self._write("dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;")
                 self._write('dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;')
@@ -4567,9 +4804,9 @@ class CPickler(CMill):
             elif nu == -1:
                 self._write('wdot[%d] -= q; /* %s */' % (k, s))
             elif nu > 0:
-                self._write('wdot[%d] += %.17g * q; /* %s */' % (k, nu, s))
+                self._write('wdot[%d] += %.15g * q; /* %s */' % (k, nu, s))
             elif nu < 0:
-                self._write('wdot[%d] -= %.17g * q; /* %s */' % (k, -nu, s))
+                self._write('wdot[%d] -= %.15g * q; /* %s */' % (k, -nu, s))
 
         if isPD:
             self._write('/* for convenience */')
@@ -4636,7 +4873,7 @@ class CPickler(CMill):
             #        #
             #        for m in sorted(all_dict.keys()):
             #            if all_dict[m][1] != 0:
-            #                s1 = 'J[%d] += %.17g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
+            #                s1 = 'J[%d] += %.15g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
             #                s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
             #                s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], symb_k)
             #                self._write(s1.ljust(30) + s2)
@@ -4670,7 +4907,7 @@ class CPickler(CMill):
             self._indent()
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
+                    s1 = 'J[%d*k+%d] += %.15g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
             #self._outdent()
@@ -4681,7 +4918,7 @@ class CPickler(CMill):
 
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT; /* dwdot[%s]/dT */' % \
+                    s1 = 'J[%d] += %.15g * dqdT; /* dwdot[%s]/dT */' % \
                         (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
@@ -4696,14 +4933,14 @@ class CPickler(CMill):
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
                             if all_dict[m][1] != 0:
-                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
+                                s1 = 'J[%d] += %.15g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                                 s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                                 s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], all_dict[k][0])
                                 self._write(s1.ljust(30) + s2)
             self._write('/* d()/dT */')
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
+                    s1 = 'J[%d] += %.15g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=').replace('+= -1 *', '-=')
                     s2 = '/* dwdot[%s]/dT */' % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
@@ -4774,13 +5011,13 @@ class CPickler(CMill):
                 for i, eff in enumerate(efficiencies):
                     symbol, efficiency = eff
                     if self.ordered_idx_map[symbol] == kid:
-                        return "(%.17g - 1)" % (efficiency)
+                        return "(%.15g - 1)" % (efficiency)
                 return "0"
             else:
                 for i, eff in enumerate(efficiencies):
                     symbol, efficiency = eff
                     if self.ordered_idx_map[symbol] == kid:
-                        return "%.17g" % (efficiency)
+                        return "%.15g" % (efficiency)
                 return "1"
 
     # JACOBIAN #
@@ -4789,6 +5026,7 @@ class CPickler(CMill):
     def _DproductionRatePrecond(self, mechanism):
         self._write()
         self._write(self.line('compute an approx to the reaction Jacobian (for preconditioning)'))
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)')
         self._write('{')
         self._indent()
@@ -4818,6 +5056,7 @@ class CPickler(CMill):
         self._write('return;')
         self._outdent()
         self._write('}')
+        self._write('#endif')
         return
 
 
@@ -4826,6 +5065,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute the reaction Jacobian on GPU'))
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE')
         self._write('void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)')
         self._write('{')
@@ -4850,7 +5090,7 @@ class CPickler(CMill):
         
         self._write()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('amrex::Real invT = 1.0 / tc[1];')
         self._write('amrex::Real invT2 = invT * invT;')
 
@@ -4995,6 +5235,7 @@ class CPickler(CMill):
         self._write()
         self._write('return;')
         self._write('}')
+        self._write('#endif')
         self._write()
         return
 
@@ -5086,21 +5327,21 @@ class CPickler(CMill):
         self._write('/* forward */')
         self._write("phi_f = %s;" % self._QSSsortedPhaseSpace(mechanism, sorted_reactants))
         #
-        self._write("k_f = %.17g * %.17g" % (uc.value,A))
-        self._write("            * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
+        self._write("k_f = %.15g * %.15g" % (uc.value,A))
+        self._write("            * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
                     %(beta,aeuc / Rc / kelvin,E))
         #
-        self._write("dlnkfdT = %.17g * invT + %.17g *  %.17g  * invT2;"
+        self._write("dlnkfdT = %.15g * invT + %.15g *  %.15g  * invT2;"
                     %(beta,aeuc / Rc / kelvin,E))
 
         if isPD:
             low_A, low_beta, low_E = reaction.low
             self._write('/* pressure-fall-off */')
-            self._write("k_0 = %.17g * exp(%.17g * tc[0] - %.17g * (%.17g) * invT);"
+            self._write("k_0 = %.15g * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
                         %(low_A,low_beta,aeuc / Rc / kelvin,low_E))
             self._write('Pr = 1e-%d * alpha / k_f * k_0;' % (dim*6))
             self._write('fPr = Pr / (1.0+Pr);')
-            self._write("dlnk0dT = %.17g * invT + %.17g * (%.17g) * invT2;"
+            self._write("dlnk0dT = %.15g * invT + %.15g * (%.15g) * invT2;"
                         %(low_beta,aeuc / Rc / kelvin,low_E))
             self._write('dlogPrdT = log10e*(dlnk0dT - dlnkfdT);')
             self._write('dlogfPrdT = dlogPrdT / (1.0+Pr);')
@@ -5116,24 +5357,24 @@ class CPickler(CMill):
                 self._write("logPr = log10(Pr);")
                 if (abs(troe[1]) > 1.e-100):
                     if (troe[0] < 0):
-                        self._write('Fcent1 = (1.+%.17g)*exp(-T/%.17g);'
+                        self._write('Fcent1 = (1.+%.15g)*exp(-T/%.15g);'
                                 %(-troe[0],troe[1]))
                     else:
-                        self._write('Fcent1 = (1.-%.17g)*exp(-T/%.17g);'
+                        self._write('Fcent1 = (1.-%.15g)*exp(-T/%.15g);'
                                 %(troe[0],troe[1]))
                 else:
                     self._write('Fcent1 = 0.;')
                 if (abs(troe[2]) > 1.e-100):
-                    self._write('Fcent2 = %.17g * exp(-T/%.17g);'
+                    self._write('Fcent2 = %.15g * exp(-T/%.15g);'
                                 %(troe[0],troe[2]))
                 else:
                     self._write('Fcent2 = 0.;')
                 if (ntroe == 4):
                     if (troe[3] < 0):
-                        self._write('Fcent3 = exp(%.17g * invT);'
+                        self._write('Fcent3 = exp(%.15g * invT);'
                                 % -troe[3] )
                     else:
-                        self._write('Fcent3 = exp(-%.17g * invT);'
+                        self._write('Fcent3 = exp(-%.15g * invT);'
                                 % troe[3] )
                 else:
                     self._write('Fcent3 = 0.;')
@@ -5148,20 +5389,16 @@ class CPickler(CMill):
 
                 self._write("dlogFcentdT = log10e/Fcent*( ")
                 if (abs(troe[1]) > 1.e-100):
-                    self._write("    -Fcent1/%.17g"
+                    self._write("    -Fcent1/%.15g"
                                 % troe[1] )
-                else:
-                    self._write("    0.")
                 if (abs(troe[2]) > 1.e-100):
-                    self._write("    -Fcent2/%.17g"
+                    self._write("    -Fcent2/%.15g"
                                 % troe[2] )
-                else:
-                    self._write("    0.")
                 if (ntroe == 4):
-                    self._write("    + Fcent3*%.17g*invT2);"
-                                % troe[3] )
-                else:
-                    self._write("    + 0.);")
+                    if (abs(troe[3]) > 1.e-100):
+                        self._write("    + Fcent3*%.15g*invT2"
+                                    % troe[3] )
+                self._write(");")
 
                 self._write("dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;")
                 self._write('dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;')
@@ -5266,9 +5503,9 @@ class CPickler(CMill):
             elif nu == -1:
                 self._write('wdot[%d] -= q; /* %s */' % (k, s))
             elif nu > 0:
-                self._write('wdot[%d] += %.17g * q; /* %s */' % (k, nu, s))
+                self._write('wdot[%d] += %.15g * q; /* %s */' % (k, nu, s))
             elif nu < 0:
-                self._write('wdot[%d] -= %.17g * q; /* %s */' % (k, -nu, s))
+                self._write('wdot[%d] -= %.15g * q; /* %s */' % (k, -nu, s))
 
         if isPD:
             self._write('/* for convenience */')
@@ -5335,7 +5572,7 @@ class CPickler(CMill):
                     #
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
-                            s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
+                            s1 = 'J[%d] += %.15g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                             s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                             s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], symb_k)
                             self._write(s1.ljust(30) + s2)
@@ -5367,7 +5604,7 @@ class CPickler(CMill):
             self._indent()
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
+                    s1 = 'J[%d*k+%d] += %.15g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
             self._outdent()
@@ -5378,7 +5615,7 @@ class CPickler(CMill):
 
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT; /* dwdot[%s]/dT */' % \
+                    s1 = 'J[%d] += %.15g * dqdT; /* dwdot[%s]/dT */' % \
                         (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
@@ -5393,14 +5630,14 @@ class CPickler(CMill):
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
                             if all_dict[m][1] != 0:
-                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
+                                s1 = 'J[%d] += %.15g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                                 s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                                 s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], all_dict[k][0])
                                 self._write(s1.ljust(30) + s2)
             self._write('/* d()/dT */')
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
+                    s1 = 'J[%d] += %.15g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=').replace('+= -1 *', '-=')
                     s2 = '/* dwdot[%s]/dT */' % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
@@ -5411,6 +5648,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line('compute the reaction Jacobian'))
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * consP)')
         self._write('{')
         self._indent()
@@ -5440,6 +5678,7 @@ class CPickler(CMill):
         self._write('return;')
         self._outdent()
         self._write('}')
+        self._write('#endif')
         self._write()
         return
 
@@ -5647,13 +5886,8 @@ class CPickler(CMill):
         self._write(self.line('compute the Gibbs free energy'))
         self._write('for (int i=0; i<npt; i++) {')
         self._indent()
-        self._write('amrex::Real tg[5], g[%d];' % nSpecies)
-        self._write('tg[0] = tc[0*npt+i];')
-        self._write('tg[1] = tc[1*npt+i];')
-        self._write('tg[2] = tc[2*npt+i];')
-        self._write('tg[3] = tc[3*npt+i];')
-        self._write('tg[4] = tc[4*npt+i];')
-        self._write()
+        self._write('const amrex::Real tg[5] = {tc[0*npt+i], tc[1*npt+i], tc[2*npt+i], tc[3*npt+i], tc[4*npt+i]};')
+        self._write('amrex::Real g[%d];' % nSpecies)
         self._write('gibbs(g, tg);')
         self._write()
         for ispec in range(nSpecies):
@@ -6078,7 +6312,7 @@ class CPickler(CMill):
         self._write('{')
         self._indent()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('amrex::Real invT = 1.0 / tc[1];')
         
         self._write()
@@ -6748,7 +6982,7 @@ class CPickler(CMill):
         self._write('{')
         self._indent()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('amrex::Real invT = 1.0 / tc[1];')
         
         self._write()
@@ -6819,7 +7053,7 @@ class CPickler(CMill):
 
         if (nReactions > 0):
 
-            self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+            self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
             self._write('amrex::Real invT = 1.0 / tc[1];')
             
             self._write()
@@ -7171,14 +7405,14 @@ class CPickler(CMill):
         
         self._write()
 
-        self._write('amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
+        self._write('const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
         self._write('amrex::Real invT = 1.0 / tc[1];')
         self._write('amrex::Real invT2 = invT * invT;')
 
         self._write()
 
         if (self.nQSSspecies > 0):
-            self._write('/* Fill sc_qss here*/')
+            self._write('// Fill sc_qss here')
             self._write('amrex::Real sc_qss[%d];' % self.nQSSspecies)
             self._write('comp_sc_qss_cpu(sc, sc_qss, tc, invT);')
 
@@ -7546,9 +7780,9 @@ class CPickler(CMill):
             elif nu == -1:
                 self._write('wdot[%d] -= q; /* %s */' % (k, s))
             elif nu > 0:
-                self._write('wdot[%d] += %.17g * q; /* %s */' % (k, nu, s))
+                self._write('wdot[%d] += %.15g * q; /* %s */' % (k, nu, s))
             elif nu < 0:
-                self._write('wdot[%d] -= %.17g * q; /* %s */' % (k, -nu, s))
+                self._write('wdot[%d] -= %.15g * q; /* %s */' % (k, -nu, s))
 
         if isPD:
             self._write('/* for convenience */')
@@ -7615,7 +7849,7 @@ class CPickler(CMill):
                     #
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
-                            s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
+                            s1 = 'J[%d] += %.15g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                             s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                             s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], symb_k)
                             self._write(s1.ljust(30) + s2)
@@ -7647,7 +7881,7 @@ class CPickler(CMill):
             self._indent()
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d*k+%d] += %.17g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
+                    s1 = 'J[%d*k+%d] += %.15g * dqdc[k];' % ((self.nSpecies+1), m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
             self._outdent()
@@ -7658,7 +7892,7 @@ class CPickler(CMill):
 
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT; /* dwdot[%s]/dT */' % \
+                    s1 = 'J[%d] += %.15g * dqdT; /* dwdot[%s]/dT */' % \
                         (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1], all_dict[m][0])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                     self._write(s1)
@@ -7671,14 +7905,14 @@ class CPickler(CMill):
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
                             if all_dict[m][1] != 0:
-                                s1 = 'J[%d] += %.17g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
+                                s1 = 'J[%d] += %.15g * dqdci;' % (k*(self.nSpecies+1)+m, all_dict[m][1])
                                 s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
                                 s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], all_dict[k][0])
                                 self._write(s1.ljust(30) + s2)
             self._write('/* d()/dT */')
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = 'J[%d] += %.17g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
+                    s1 = 'J[%d] += %.15g * dqdT;' % (self.nSpecies*(self.nSpecies+1)+m, all_dict[m][1])
                     s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=').replace('+= -1 *', '-=')
                     s2 = '/* dwdot[%s]/dT */' % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
@@ -8835,18 +9069,18 @@ class CPickler(CMill):
 
             A, beta, E = reaction.arrhenius
             self._write("// (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-            self._write("fwd_A[%d]     = %.17g;" % (id,A))
-            self._write("fwd_beta[%d]  = %.17g;" % (id,beta))
-            self._write("fwd_Ea[%d]    = %.17g;" % (id,E))
+            self._write("fwd_A[%d]     = %.15g;" % (id,A))
+            self._write("fwd_beta[%d]  = %.15g;" % (id,beta))
+            self._write("fwd_Ea[%d]    = %.15g;" % (id,E))
 
             thirdBody = reaction.thirdBody
             low = reaction.low
 
             if (reaction.rev):
                 Ar, betar, Er = reaction.rev
-                self._write("rev_A[%d]     = %.17g;" % (id,Ar))
-                self._write("rev_beta[%d]  = %.17g;" % (id,betar))
-                self._write("rev_Ea[%d]    = %.17g;" % (id,Er))
+                self._write("rev_A[%d]     = %.15g;" % (id,Ar))
+                self._write("rev_beta[%d]  = %.15g;" % (id,betar))
+                self._write("rev_Ea[%d]    = %.15g;" % (id,Er))
                 dim_rev       = self._phaseSpaceUnits(reaction.products)
                 if not thirdBody:
                     uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
@@ -8854,9 +9088,9 @@ class CPickler(CMill):
                     uc_rev = self._prefactorUnits(reaction.units["prefactor"], -dim_rev)
                 else:
                     uc_rev = self._prefactorUnits(reaction.units["prefactor"], 1-dim_rev)
-                self._write("prefactor_units_rev[%d]  = %.17g;" % (id,uc_rev.value))
+                self._write("prefactor_units_rev[%d]  = %.15g;" % (id,uc_rev.value))
                 aeuc_rev = self._activationEnergyUnits(reaction.units["activation"])
-                self._write("activation_units_rev[%d] = %.17g;" % (id,aeuc_rev / Rc / kelvin))
+                self._write("activation_units_rev[%d] = %.15g;" % (id,aeuc_rev / Rc / kelvin))
 
             if (len(reaction.ford) > 0) :
                 if (reaction.rev):
@@ -8872,39 +9106,39 @@ class CPickler(CMill):
             else:
                 uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 1 PD, TB
                 low_A, low_beta, low_E = low
-                self._write("low_A[%d]     = %.17g;" % (id,low_A))
-                self._write("low_beta[%d]  = %.17g;" % (id,low_beta))
-                self._write("low_Ea[%d]    = %.17g;" % (id,low_E))
+                self._write("low_A[%d]     = %.15g;" % (id,low_A))
+                self._write("low_beta[%d]  = %.15g;" % (id,low_beta))
+                self._write("low_Ea[%d]    = %.15g;" % (id,low_E))
                 if reaction.troe:
                     troe = reaction.troe
                     ntroe = len(troe)
                     is_troe = True
-                    self._write("troe_a[%d]    = %.17g;" % (id,troe[0]))
+                    self._write("troe_a[%d]    = %.15g;" % (id,troe[0]))
                     if ntroe>1:
-                        self._write("troe_Tsss[%d] = %.17g;" % (id,troe[1]))
+                        self._write("troe_Tsss[%d] = %.15g;" % (id,troe[1]))
                     if ntroe>2:
-                        self._write("troe_Ts[%d]   = %.17g;" % (id,troe[2]))
+                        self._write("troe_Ts[%d]   = %.15g;" % (id,troe[2]))
                     if ntroe>3:
-                        self._write("troe_Tss[%d]  = %.17g;" % (id,troe[3]))
+                        self._write("troe_Tss[%d]  = %.15g;" % (id,troe[3]))
                     self._write("troe_len[%d]  = %d;" % (id,ntroe))
                 if reaction.sri:
                     sri = reaction.sri
                     nsri = len(sri)
                     is_sri = True
-                    self._write("sri_a[%d]     = %.17g;" % (id,sri[0]))
+                    self._write("sri_a[%d]     = %.15g;" % (id,sri[0]))
                     if nsri>1:
-                        self._write("sri_b[%d]     = %.17g;" % (id,sri[1]))
+                        self._write("sri_b[%d]     = %.15g;" % (id,sri[1]))
                     if nsri>2:
-                        self._write("sri_c[%d]     = %.17g;" % (id,sri[2]))
+                        self._write("sri_c[%d]     = %.15g;" % (id,sri[2]))
                     if nsri>3:
-                        self._write("sri_d[%d]     = %.17g;" % (id,sri[3]))
+                        self._write("sri_d[%d]     = %.15g;" % (id,sri[3]))
                     if nsri>4:
-                        self._write("sri_e[%d]     = %.17g;" % (id,sri[4]))
+                        self._write("sri_e[%d]     = %.15g;" % (id,sri[4]))
                     self._write("sri_len[%d]   = %d;" % (id,nsri))
 
-            self._write("prefactor_units[%d]  = %.17g;" % (id,uc.value))
+            self._write("prefactor_units[%d]  = %.15g;" % (id,uc.value))
             aeuc = self._activationEnergyUnits(reaction.units["activation"])
-            self._write("activation_units[%d] = %.17g;" % (id,aeuc / Rc / kelvin))
+            self._write("activation_units[%d] = %.15g;" % (id,aeuc / Rc / kelvin))
             self._write("phase_units[%d]      = pow(10,-%f);" % (id,dim*6))
 
             if low:
@@ -8921,11 +9155,11 @@ class CPickler(CMill):
                     for i, eff in enumerate(efficiencies):
                         symbol, efficiency = eff
                         if symbol in self.qss_species_list:
-                            self._write("TBid[%d][%d] = %.17g; TB[%d][%d] = %.17g; // %s %s"
+                            self._write("TBid[%d][%d] = %.15g; TB[%d][%d] = %.15g; // %s %s"
                                          % (id, i, (self.ordered_idx_map[symbol] - self.nSpecies) , id, i, efficiency, symbol, ' (QSS)' ))
                             print 'WARNING: Some QSS species appear as TB and will been ignored in QSS conc eval !! ', reaction.equation(), symbol
                         else: 
-                            self._write("TBid[%d][%d] = %.17g; TB[%d][%d] = %.17g; // %s"
+                            self._write("TBid[%d][%d] = %.15g; TB[%d][%d] = %.15g; // %s"
                                     % (id, i, self.ordered_idx_map[symbol], id, i, efficiency, symbol ))
                 else:
                     self._write("nTB[%d] = 0;" % (id))
@@ -9149,6 +9383,7 @@ class CPickler(CMill):
         ####
         self._write()
         self._write(self.line('compute the sparsity pattern of the chemistry Jacobian'))
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('void SPARSITY_INFO( int * nJdata, int * consP, int NCELLS)')
         self._write('{')
         self._indent()
@@ -9204,12 +9439,14 @@ class CPickler(CMill):
         self._outdent()
 
         self._write('}')
+        self._write('#endif')
         self._write()
         self._write()
 
         ####
         self._write()
         self._write(self.line('compute the sparsity pattern of the system Jacobian'))
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('void SPARSITY_INFO_SYST( int * nJdata, int * consP, int NCELLS)')
         self._write('{')
         self._indent()
@@ -9273,12 +9510,14 @@ class CPickler(CMill):
         self._outdent()
 
         self._write('}')
+        self._write('#endif')
         self._write()
         self._write()
 
         ####
         self._write()
         self._write(self.line('compute the sparsity pattern of the simplified (for preconditioning) system Jacobian'))
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('void SPARSITY_INFO_SYST_SIMPLIFIED( int * nJdata, int * consP)')
         self._write('{')
         self._indent()
@@ -9342,12 +9581,14 @@ class CPickler(CMill):
         self._outdent()
 
         self._write('}')
+        self._write('#endif')
         self._write()
         self._write()
 
 
         ####
         self._write(self.line('compute the sparsity pattern of the chemistry Jacobian in CSC format -- base 0'))
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, int * consP, int NCELLS)')
         self._write('{')
         self._indent()
@@ -9412,10 +9653,12 @@ class CPickler(CMill):
         self._outdent()
 
         self._write('}')
+        self._write('#endif')
         self._write()
 
         ####
         self._write(self.line('compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0'))
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base)')
         self._write('{')
         self._indent()
@@ -9506,11 +9749,13 @@ class CPickler(CMill):
         self._write('return;')
         self._outdent()
         self._write('}')
+        self._write('#endif')
         self._write()
 
         ####
         self._write(self.line('compute the sparsity pattern of the system Jacobian'))
         self._write(self.line('CSR format BASE is user choice'))
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, int * consP, int NCELLS, int base)')
         self._write('{')
         self._indent()
@@ -9617,11 +9862,13 @@ class CPickler(CMill):
         self._write('return;')
         self._outdent()
         self._write('}')
+        self._write('#endif')
         self._write()
 
         ####
         self._write(self.line('compute the sparsity pattern of the simplified (for precond) system Jacobian on CPU'))
         self._write(self.line('BASE 0'))
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP)')
         self._write('{')
         self._indent()
@@ -9687,11 +9934,13 @@ class CPickler(CMill):
         self._write('return;')
         self._outdent()
         self._write('}')
+        self._write('#endif')
         self._write()
 
         ####
         self._write(self.line('compute the sparsity pattern of the simplified (for precond) system Jacobian'))
         self._write(self.line('CSR format BASE is under choice'))
+        self._write('#ifdef COMPILE_JACOBIAN')
         self._write('void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base)')
         self._write('{')
         self._indent()
@@ -9788,6 +10037,7 @@ class CPickler(CMill):
         self._write('return;')
         self._outdent()
         self._write('}')
+        self._write('#endif')
         self._write()
         return
 
@@ -10665,7 +10915,7 @@ class CPickler(CMill):
         
         # k_f_qss function
         self._write()
-        self._write('void comp_k_f_qss(amrex::Real *  tc, amrex::Real invT, amrex::Real *  k_f)')
+        self._write('void comp_k_f_qss(const amrex::Real * tc, amrex::Real invT, amrex::Real * k_f)')
         self._write('{')
         self._indent()
         self._outdent()
@@ -10686,7 +10936,7 @@ class CPickler(CMill):
 
         # Kc_qss
         self._write()
-        self._write('void comp_Kc_qss(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc)')
+        self._write('void comp_Kc_qss(const amrex::Real * tc, amrex::Real invT, amrex::Real * Kc)')
         self._write('{')
         self._indent()
 
@@ -11433,7 +11683,7 @@ class CPickler(CMill):
         self._write()
 
         self._write(
-            'amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
+            'const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
             + self.line('temperature cache'))
 
         self._write()
@@ -11596,7 +11846,7 @@ class CPickler(CMill):
         self._write()
 
         self._write(
-            'amrex::Real tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
+            'const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; '
             + self.line('temperature cache'))
 
         self._write()
@@ -12235,8 +12485,8 @@ class CPickler(CMill):
             self._write(self.line('Imported from NIST'))
             self._write('Tci[%d] = %f ; ' % (
                 species.id,TabulatedCriticalParams[species.symbol]["Tci"]))
-            self._write('ai[%d] = 1e6 * 0.42748 * pow(Rcst,2.0) * pow(Tci[%d],2.0) / (pow(%f,2.0) * %f); ' % (
-                species.id,species.id,TabulatedCriticalParams[species.symbol]["wt"],TabulatedCriticalParams[species.symbol]["Pci"]))
+            self._write('ai[%d] = 1e6 * 0.42748 * Rcst * Rcst * Tci[%d] * Tci[%d] / (%f * %f * %f); ' % (
+                species.id,species.id,species.id,TabulatedCriticalParams[species.symbol]["wt"],TabulatedCriticalParams[species.symbol]["wt"],TabulatedCriticalParams[species.symbol]["Pci"]))
             self._write('bi[%d] = 0.08664 * Rcst * Tci[%d] / (%f * %f); ' % (
                 species.id,species.id,TabulatedCriticalParams[species.symbol]["wt"],TabulatedCriticalParams[species.symbol]["Pci"]))
             self._write('acentric_i[%d] = %f ;'
@@ -12247,8 +12497,8 @@ class CPickler(CMill):
             self._write(self.line('species %d: %s' % (species.id, species.symbol)))
             self._write('Tci[%d] = 1.316 * EPS[%d] ; ' % (
                 species.id,species.id))
-            self._write('ai[%d] = (5.55 * pow(avogadro,2.0) * EPS[%d]*boltzmann * pow(1e-8*SIG[%d],3.0) ) / (pow(wt[%d],2.0)); ' % (
-                species.id,species.id,species.id,species.id))
+            self._write('ai[%d] = (5.55 * avogadro * avogadro * EPS[%d]*boltzmann * pow(1e-8*SIG[%d],3.0) ) / (wt[%d] * wt[%d]); ' % (
+                species.id,species.id,species.id,species.id,species.id))
             self._write('bi[%d] = 0.855 * avogadro * pow(1e-8*SIG[%d],3.0) / (wt[%d]); ' % (
                 species.id,species.id,species.id))
             self._write('acentric_i[%d] = 0.0 ;'
