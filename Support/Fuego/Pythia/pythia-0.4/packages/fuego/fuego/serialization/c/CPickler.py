@@ -4695,18 +4695,14 @@ class CPickler(CMill):
                 if (abs(troe[1]) > 1.e-100):
                     self._write("    -Fcent1/%.15g"
                                 % troe[1] )
-                else:
-                    self._write("    +0.")
                 if (abs(troe[2]) > 1.e-100):
                     self._write("    -Fcent2/%.15g"
                                 % troe[2] )
-                else:
-                    self._write("    +0.")
                 if (ntroe == 4):
-                    self._write("    + Fcent3*%.15g*invT2);"
-                                % troe[3] )
-                else:
-                    self._write("    + 0.);")
+                    if (abs(troe[3]) > 1.e-100):
+                        self._write("    + Fcent3*%.15g*invT2"
+                                    % troe[3] )
+                self._write(");")
 
                 self._write("dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;")
                 self._write('dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;')
@@ -5395,18 +5391,14 @@ class CPickler(CMill):
                 if (abs(troe[1]) > 1.e-100):
                     self._write("    -Fcent1/%.15g"
                                 % troe[1] )
-                else:
-                    self._write("    0.")
                 if (abs(troe[2]) > 1.e-100):
                     self._write("    -Fcent2/%.15g"
                                 % troe[2] )
-                else:
-                    self._write("    0.")
                 if (ntroe == 4):
-                    self._write("    + Fcent3*%.15g*invT2);"
-                                % troe[3] )
-                else:
-                    self._write("    + 0.);")
+                    if (abs(troe[3]) > 1.e-100):
+                        self._write("    + Fcent3*%.15g*invT2"
+                                    % troe[3] )
+                self._write(");")
 
                 self._write("dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;")
                 self._write('dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;')
