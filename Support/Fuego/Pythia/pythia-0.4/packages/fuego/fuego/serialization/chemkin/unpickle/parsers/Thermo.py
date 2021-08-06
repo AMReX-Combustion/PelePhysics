@@ -11,7 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from BaseParser import BaseParser
+from __future__ import absolute_import
+from builtins import range
+from .BaseParser import BaseParser
 
 
 class Thermo(BaseParser):

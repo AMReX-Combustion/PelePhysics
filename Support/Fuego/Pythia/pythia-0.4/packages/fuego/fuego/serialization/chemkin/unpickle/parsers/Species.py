@@ -11,7 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from BaseParser import BaseParser
+from __future__ import absolute_import
+from builtins import str
+from .BaseParser import BaseParser
 
 
 class Species(BaseParser):
@@ -23,7 +25,7 @@ class Species(BaseParser):
         try:
             species = self._mechanism.newSpecies(token.name, self.locator())
 
-        except self._mechanism.DuplicateSpecies, msg:
+        except self._mechanism.DuplicateSpecies as msg:
             self.onWarning(str(msg), self.locator())
         
         return 0

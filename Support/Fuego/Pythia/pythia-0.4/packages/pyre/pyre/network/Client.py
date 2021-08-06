@@ -11,6 +11,7 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from builtins import object
 import journal
 
 
@@ -29,7 +30,7 @@ class Client(object):
         try:
             self._socket.connect((host, port))
 
-        except socket.error, error:
+        except socket.error as error:
             number, reason = error
             raise self.ClientException(host, port, number, reason)
 

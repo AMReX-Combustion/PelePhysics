@@ -12,6 +12,8 @@
 # 
 
 
+from __future__ import print_function
+from builtins import object
 class ResourceManager(object):
 
 
@@ -22,7 +24,7 @@ class ResourceManager(object):
     def manage(self, resource, id, aliases=[]):
         existing = self._resources.get(resource)
         if existing:
-            print " *++* existing resource:", `existing`
+            print(" *++* existing resource:", repr(existing))
             pyre.journal.warning()
             
         self._resources[resource] = tuple([id] + aliases)
@@ -38,7 +40,7 @@ class ResourceManager(object):
 
 
     def resources(self):
-        return self._resources.keys()
+        return list(self._resources.keys())
 
 
     def __init__(self, name):

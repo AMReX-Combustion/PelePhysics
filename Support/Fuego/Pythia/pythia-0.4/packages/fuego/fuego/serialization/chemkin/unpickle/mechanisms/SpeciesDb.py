@@ -12,7 +12,8 @@
 #
 
 
-class SpeciesDb:
+from builtins import object
+class SpeciesDb(object):
 
 
     def species(self, species):

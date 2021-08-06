@@ -11,9 +11,10 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 import re
-from Token import Token
-from RegularExpressions import namedInlineParameters
+from .Token import Token
+from .RegularExpressions import namedInlineParameters
 
 
 class ParameterList(Token):

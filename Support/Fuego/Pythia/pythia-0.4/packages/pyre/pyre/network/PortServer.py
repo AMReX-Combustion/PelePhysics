@@ -12,7 +12,8 @@
 # 
 
 
-from PortMonitor import PortMonitor
+from __future__ import absolute_import
+from .PortMonitor import PortMonitor
 
 
 class PortServer(PortMonitor):

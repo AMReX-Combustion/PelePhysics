@@ -14,6 +14,7 @@
 
 # adapted from GvR's Singleton implementation
 
+from builtins import object
 class Singleton(object):
 
 

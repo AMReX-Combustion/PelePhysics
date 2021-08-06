@@ -11,6 +11,7 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import absolute_import
 from pyre.xml.DocumentNode import DocumentNode
 
 class Configuration(DocumentNode):
@@ -33,14 +34,14 @@ class Configuration(DocumentNode):
 # helpers
 def documentNodes():
 
-    from Weaver import Weaver
+    from .Weaver import Weaver
 
-    from Mill import Mill
-    from Author import Author
-    from Organization import Organization
-    from Copyright import Copyright
-    from BannerCharacter import BannerCharacter
-    from BannerWidth import BannerWidth
+    from .Mill import Mill
+    from .Author import Author
+    from .Organization import Organization
+    from .Copyright import Copyright
+    from .BannerCharacter import BannerCharacter
+    from .BannerWidth import BannerWidth
 
     nodes = [
         Weaver,

@@ -12,7 +12,8 @@
 #
 
 
-from Binary import Binary
+from __future__ import absolute_import
+from .Binary import Binary
 
 
 class Range(Binary):

@@ -11,7 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from BaseParser import BaseParser
+from __future__ import print_function
+from __future__ import absolute_import
+from .BaseParser import BaseParser
 
 
 class ChemkinParser(BaseParser):
@@ -26,7 +28,7 @@ class ChemkinParser(BaseParser):
         import journal
         from fuego.serialization.chemkin.unpickle.tokens.Token import Token
 
-        print "Hello Chemkin Parser !!"
+        print("Hello Chemkin Parser !!")
 
         Token._constructed = 0
         Token._destructed = 0
@@ -39,23 +41,23 @@ class ChemkinParser(BaseParser):
         tokenizer._info = journal.debug("fuego")
         
         # section parsers
-        from Elements import Elements
+        from .Elements import Elements
         self._elementParser = Elements(mechanism, tokenizer)
 
-        from Species import Species
+        from .Species import Species
         self._speciesParser = Species(mechanism, tokenizer)
 
-        from QssSpecies import QssSpecies
+        from .QssSpecies import QssSpecies
         self._qss_speciesParser = QssSpecies(mechanism, tokenizer)
 
-        from Thermo import Thermo
+        from .Thermo import Thermo
         self._thermoParser = Thermo(mechanism, tokenizer)
         
         #if doTrans/='n':
-        from Trans import Trans
+        from .Trans import Trans
         self._transParser = Trans(mechanism, tokenizer)
 
-        from Reactions import Reactions
+        from .Reactions import Reactions
         self._reactionParser = Reactions(mechanism, tokenizer)
 
         # enter the parsing loop
@@ -100,8 +102,8 @@ class ChemkinParser(BaseParser):
     # others
 
     def printStatistics(self):
-        print "Chemkin input file: '%s'" % self._filename
-        print "    Tokens: %d-%d" % (Token._constructed, Token._destructed)
+        print("Chemkin input file: '%s'" % self._filename)
+        print("    Tokens: %d-%d" % (Token._constructed, Token._destructed))
         return
     
 
@@ -126,23 +128,23 @@ class ChemkinParser(BaseParser):
 
     def _printScanners(self):
         elements = self._elementParser._scanner._pattern()
-        print "Element parser (%d): %s" % (len(elements), elements)
+        print("Element parser (%d): %s" % (len(elements), elements))
 
         species = self._speciesParser._scanner._pattern()
-        print "Species parser (%d): %s" % (len(species), species)
+        print("Species parser (%d): %s" % (len(species), species))
 
         qss_species = self._qss_speciesParser._scanner._pattern()
-        print "QSS Species Parser (%d): %s" % (len(qss_species), qss_species)
+        print("QSS Species Parser (%d): %s" % (len(qss_species), qss_species))
 
         thermo = self._thermoParser._scanner._pattern()
-        print "Thermo parser (%d): %s" % (len(thermo), thermo)
+        print("Thermo parser (%d): %s" % (len(thermo), thermo))
 
         #if doTrans/='n':
         trans = self._transParser._scanner._pattern()
-        print "Trans parser (%d): %s" % (len(trans), trans)
+        print("Trans parser (%d): %s" % (len(trans), trans))
 
         reaction = self._reactionParser._scanner._pattern()
-        print "Reaction parser (%d): %s" % (len(reaction), reaction)
+        print("Reaction parser (%d): %s" % (len(reaction), reaction))
 
         return
 

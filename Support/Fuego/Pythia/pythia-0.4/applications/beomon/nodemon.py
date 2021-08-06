@@ -11,6 +11,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
 def test():
 
     import socket
@@ -24,9 +25,9 @@ def test():
         if not reads:
             break
 
-        print "read ready:", reads
-        print "write ready:", writes
-        print "exception ready:", excepts
+        print("read ready:", reads)
+        print("write ready:", writes)
+        print("exception ready:", excepts)
 
     return
 

@@ -11,8 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 import pyre
-from EntitySet import EntitySet
+from .EntitySet import EntitySet
 
 
 class Mixture(EntitySet):
@@ -32,8 +33,8 @@ class Mixture(EntitySet):
     def __init__(self, mechanism):
         EntitySet.__init__(self)
 
-        from ElementSet import ElementSet
-        from Species import Species
+        from .ElementSet import ElementSet
+        from .Species import Species
 
         elements = ElementSet(mechanism.element())
 

@@ -14,19 +14,21 @@
 
 # extract a mechanism from a file
 
+from __future__ import print_function
+from __future__ import absolute_import
 def load(filename, format=None, mechanism=None):
 
     import journal
     journal.debug("fuego").log("loading file '%s', format='%s')" % (filename, format))
 
     if not mechanism:
-        from mechanisms.Mechanism import Mechanism
+        from .mechanisms.Mechanism import Mechanism
         mechanism = Mechanism(filename)
 
     if not format:
         format = guessMechanismType(filename)
  
-    print "***** Using format", format
+    print("***** Using format", format)
 
     factory = registrar().retrieve(format)
 
@@ -61,12 +63,12 @@ def loadThermoDatabase(filename, format="chemkin", mechanism=None):
         return None
 
     if not mechanism:
-        from mechanisms.Mechanism import Mechanism
+        from .mechanisms.Mechanism import Mechanism
         mechanism = Mechanism(filename)
 
 
 
-    from chemkin.unpickle.parsers.ThermoDatabaseParser import ThermoDatabaseParser
+    from .chemkin.unpickle.parsers.ThermoDatabaseParser import ThermoDatabaseParser
     parser = ThermoDatabaseParser()
     parser.parse(mechanism, file)
     
@@ -118,16 +120,16 @@ def unpickler(format="chemkin"):
 def registrar():
     global _registrar
     if not _registrar:
-        from Registrar import Registrar
+        from .Registrar import Registrar
         _registrar = Registrar()
 
-        import native
+        from . import native
         _registrar.register(native, native.format(), native.extensions())
 
-        import chemkin
+        from . import chemkin
         _registrar.register(chemkin, chemkin.format(), chemkin.extensions())
 
-        import ckml
+        from . import ckml
         _registrar.register(ckml, ckml.format(), ckml.extensions())
 
     return _registrar

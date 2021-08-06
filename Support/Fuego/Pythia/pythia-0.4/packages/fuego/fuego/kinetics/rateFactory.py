@@ -11,6 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
+from __future__ import division
 import pyre
 from pyre.handbook.units.SI import meter, second, mole, kelvin
 from pyre.handbook.units.length import cm
@@ -30,7 +32,7 @@ def equilibrium(mixture, reaction):
         reagents.append( (mixture.find(species), coefficient) )
         dim += coefficient
 
-    from Equilibrium import Equilibrium
+    from .Equilibrium import Equilibrium
     return Equilibrium(reagents, dim)
 
 
@@ -56,7 +58,7 @@ def forwardRate(mixture, reaction):
     # perform the unit conversion
     A, beta, E = arrhenius
     E *= energyUC
-    A *= prefactorUC / kelvin**beta
+    A *= prefactorUC/ kelvin**beta
     arrhenius = (A, beta, E)
 
     if not low:
@@ -67,11 +69,11 @@ def forwardRate(mixture, reaction):
             rate = pyre.models.kinetics.arrhenius(arrhenius)
 
         if not thirdBody:
-            from Arrhenius import Arrhenius
+            from .Arrhenius import Arrhenius
             return Arrhenius(ps, rate)
 
         phaseEnhancement = enhancement(mixture, reaction)
-        from ThirdBody import ThirdBody
+        from .ThirdBody import ThirdBody
         return ThirdBody(ps, phaseEnhancement, rate)
 
     # the rest are all falloff reactions
@@ -80,7 +82,7 @@ def forwardRate(mixture, reaction):
     prefactorUC = prefactorUnitConversion(reaction.units["prefactor"], exponent)
     A, beta, E = low
     E *= energyUC
-    A *= prefactorUC / kelvin**beta
+    A *= prefactorUC/ kelvin**beta
     low = (A, beta, E)
     phaseEnhancement = enhancement(mixture, reaction)
 
@@ -97,7 +99,7 @@ def forwardRate(mixture, reaction):
     else:
         rate = pyre.models.kinetics.lindemann(arrhenius, low)
 
-    from Falloff import Falloff
+    from .Falloff import Falloff
     return Falloff(ps, phaseEnhancement, rate)
 
 
@@ -108,7 +110,7 @@ def reverseRate(mixture, reaction, equilibriumCalculator, forwardRate):
     reversible = reaction.reversible
 
     if reversible and derived:
-        from ReverseRate import ReverseRate
+        from .ReverseRate import ReverseRate
         return ReverseRate(ps, forwardRate, equilibriumCalculator)
 
     if not reversible:
@@ -116,7 +118,7 @@ def reverseRate(mixture, reaction, equilibriumCalculator, forwardRate):
         prefactorUC = prefactorUnitConversion(reaction.units["prefactor"], exponent)
         rate = pyre.models.kinetics.arrhenius((0*prefactorUC, 0,0))
 
-        from Arrhenius import Arrhenius
+        from .Arrhenius import Arrhenius
         return Arrhenius(ps, rate)
 
     rev = reaction.rev
@@ -134,7 +136,7 @@ def reverseRate(mixture, reaction, equilibriumCalculator, forwardRate):
 
     A, beta, E = rev
     E *= energyUC
-    A *= prefactorUC / kelvin**beta
+    A *= prefactorUC/ kelvin**beta
     rev = (A, beta, E)
 
     rlt = reaction.rlt
@@ -144,23 +146,23 @@ def reverseRate(mixture, reaction, equilibriumCalculator, forwardRate):
         rate = pyre.models.kinetics.arrhenius(reaction.rev)
 
     if not thirdBody:
-        from Arrhenius import Arrhenius
+        from .Arrhenius import Arrhenius
         return Arrhenius(ps, rate)
 
     phaseEnhancement = enhancement(mixture, reaction)
-    from ThirdBody import ThirdBody
+    from .ThirdBody import ThirdBody
     return ThirdBody(ps, phaseEnhancement, rate)
     
 
 def activationEnergyUnits(code):
     if code == "cal/mole":
-        units = cal / mole
+        units = cal/ mole
     elif code == "kcal/mole":
-        units = kcal /mole
+        units = kcal/mole
     elif code == "joules/mole":
-        units = J / mole
+        units = J/ mole
     elif code == "kjoules/mole":
-        units = kJ / mole
+        units = kJ/ mole
     elif code == "kelvins":
         units = gas_constant * kelvin
     else:
@@ -173,9 +175,9 @@ def activationEnergyUnits(code):
 def prefactorUnitConversion(code, exponent):
 
     if code == "mole/cm**3":
-        units = mole / cm**3
+        units = mole/ cm**3
     elif code == "moles":
-        units = mole / cm**3
+        units = mole/ cm**3
     elif code == "molecules":
         avogadro = pyre.handbook.constants.fundamental.avogadro
         units = 1.0 / avogadro / cm**3
@@ -183,7 +185,7 @@ def prefactorUnitConversion(code, exponent):
         pyre.debug.Firewall.hit("unknown prefactor units '%s'" % code)
         return 1
 
-    return units ** exponent / second
+    return units ** exponent/ second
 
 
 def dimPhaseSpace(reagents):
@@ -195,7 +197,7 @@ def dimPhaseSpace(reagents):
 
 
 def phaseSpaceFactor(mixture, reagents):
-    from PhaseSpace import PhaseSpace
+    from .PhaseSpace import PhaseSpace
 
     species = []
     coefficients = []
@@ -215,10 +217,10 @@ def enhancement(mixture, reaction):
     species, coefficient = reaction.thirdBody
     efficiencies = reaction.efficiencies
     if not efficiencies:
-        from ThirdBodyEnhancement import ThirdBodyEnhancement
+        from .ThirdBodyEnhancement import ThirdBodyEnhancement
         return ThidBodyEnhancement(mixture.find(species))
 
-    from EfficiencyEnhancement import EfficiencyEnhancement
+    from .EfficiencyEnhancement import EfficiencyEnhancement
 
     mix = mixture.find("<mixture>")
     resolvedEfficiencies = []

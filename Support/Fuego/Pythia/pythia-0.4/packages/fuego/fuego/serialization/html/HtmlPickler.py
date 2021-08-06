@@ -11,6 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import absolute_import
+from builtins import range
 from weaver.mills.HTMLMill import HTMLMill
 
 
@@ -50,11 +52,11 @@ class HtmlPickler(HTMLMill):
             self.__body = None;
 
     def _style(self):
-        import style
+        from . import style
         self._write( style.string() )
 
     def _speciesScript(self):
-        import speciesScript
+        from . import speciesScript
         self._write( speciesScript.string() )
 
     def _renderDocument(self, mechanism, options=None):

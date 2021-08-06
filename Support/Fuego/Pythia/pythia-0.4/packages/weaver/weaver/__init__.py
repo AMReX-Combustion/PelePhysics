@@ -11,8 +11,9 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import absolute_import
 def registry():
-    import mills
+    from . import mills
     return mills.registry()
 
 

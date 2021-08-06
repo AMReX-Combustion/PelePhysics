@@ -11,6 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from builtins import range
+from builtins import object
 from weaver.mills.PythonMill import PythonMill
 
 from pyre.units.pressure import atm
@@ -21,11 +23,11 @@ from pyre.handbook.constants.fundamental import avogadro
 from pyre.handbook.constants.fundamental import gas_constant as R
 
 smallnum = 1e-100
-R = 8.314e7 * erg/mole/kelvin
+R = (8.314e7 * erg / (mole/kelvin))
 Rc = 1.987 * cal/mole/kelvin
 Patm = 1013250.0
 
-class speciesDb:
+class speciesDb(object):
     def __init__(self, id, name, mwt):
         self.id = id
         self.symbol = name
@@ -451,7 +453,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
         self._write('c = zeroVect()')
-        self._write('PORT = P/(%g * T) ' % (R*kelvin*mole/erg) +
+        self._write('PORT = P/(%g * T) ' % ((R*kelvin*mole / erg).value) +
                     self.line('P/RT'))
         # now compute conversion
         self._write()
@@ -522,7 +524,7 @@ class PythonPickler(PythonMill):
                 species.id, species.weight) + self.line('%s' % species.symbol))
  
         self._write(self.line('PW/RT (see Eq. 7)'))
-        self._write('PWORT = P/(YOW * %g * T) ' % (R*kelvin*mole/erg) )
+        self._write('PWORT = P/(YOW * %g * T) ' % ((R*kelvin*mole / erg).value) )
 
         # now compute conversion
         self._write(self.line('Now compute conversion'))
@@ -613,7 +615,7 @@ class PythonPickler(PythonMill):
             self._write('XW += x[%d]*%f  ' % (
                 species.id, species.weight) + self.line('%s' % species.symbol))
 
-        self._write('P = rho * %g * T / XW ' % (R*kelvin*mole/erg)
+        self._write('P = rho * %g * T / XW ' % ((R*kelvin*mole / erg).value)
             + self.line('P = rho*R*T/W'))
         
         self._write()
@@ -638,7 +640,7 @@ class PythonPickler(PythonMill):
                 species.id, species.weight) + self.line('%s' % species.symbol))
 
         self.line('YOW holds the reciprocal of the mean molecular wt')
-        self._write('P = rho * %g * T * YOW ' % (R*kelvin*mole/erg)
+        self._write('P = rho * %g * T * YOW ' % ((R*kelvin*mole / erg).value)
             + self.line('P = rho*R*T/W'))
         
         self._write()
@@ -674,7 +676,7 @@ class PythonPickler(PythonMill):
 
         self.line('W/sumC holds the mean molecular wt')
         self._write(
-            'P = rho * %g * T * sumC / W ' % (R*kelvin*mole/erg)
+            'P = rho * %g * T * sumC / W ' % ((R*kelvin*mole / erg).value)
             + self.line('P = rho*R*T/W'))
         
         self._write()
@@ -699,7 +701,7 @@ class PythonPickler(PythonMill):
                 species.id, species.weight) + self.line('%s' % species.symbol))
 
         self._write(
-            'rho = P * XW / (%g * T) ' % (R*kelvin*mole/erg)
+            'rho = P * XW / (%g * T) ' % ((R*kelvin*mole / erg).value)
             + self.line('rho = P*W/(R*T)'))
         
         self._write()
@@ -726,7 +728,7 @@ class PythonPickler(PythonMill):
 
         self.line('YOW holds the reciprocal of the mean molecular wt')
         self._write(
-            'rho = P / (%g * T * YOW) ' % (R*kelvin*mole/erg)
+            'rho = P / (%g * T * YOW) ' % ((R*kelvin*mole / erg).value)
             + self.line('rho = P*W/(R*T)'))
         
         
@@ -763,7 +765,7 @@ class PythonPickler(PythonMill):
 
         self.line('W/sumC holds the mean molecular wt')
         self._write(
-            'rho = P * W / (sumC * T * %g) ' % (R*kelvin*mole/erg)
+            'rho = P * W / (sumC * T * %g) ' % ((R*kelvin*mole / erg).value)
             + self.line('rho = PW/(R*T)'))
         
         self._write()
@@ -800,7 +802,7 @@ class PythonPickler(PythonMill):
         # self._write('return ')
         # self._outdent()
                     
-        for midT, speciesList in midpoints.items():
+        for midT, speciesList in list(midpoints.items()):
 
             self._write('')
             self._write(self.line('species with midpoint at T=%g kelvin' % midT))
@@ -933,20 +935,20 @@ class PythonPickler(PythonMill):
 
     def _enthalpyNASA(self, parameters):
         self._write('%+15.8e' % parameters[0])
-        self._write('%+15.8e * tc[1]' % (parameters[1]/2))
-        self._write('%+15.8e * tc[2]' % (parameters[2]/3))
-        self._write('%+15.8e * tc[3]' % (parameters[3]/4))
-        self._write('%+15.8e * tc[4]' % (parameters[4]/5))
+        self._write('%+15.8e * tc[1]' % ((parameters[1] / 2)))
+        self._write('%+15.8e * tc[2]' % ((parameters[2] / 3)))
+        self._write('%+15.8e * tc[3]' % ((parameters[3] / 4)))
+        self._write('%+15.8e * tc[4]' % ((parameters[4] / 5)))
         self._write('%+15.8e / tc[1] ' % (parameters[5]))
         return
 
 
     def _internalEnergy(self, parameters):
         self._write('%+15.8e' % (parameters[0] - 1.0))
-        self._write('%+15.8e * tc[1]' % (parameters[1]/2))
-        self._write('%+15.8e * tc[2]' % (parameters[2]/3))
-        self._write('%+15.8e * tc[3]' % (parameters[3]/4))
-        self._write('%+15.8e * tc[4]' % (parameters[4]/5))
+        self._write('%+15.8e * tc[1]' % ((parameters[1] / 2)))
+        self._write('%+15.8e * tc[2]' % ((parameters[2] / 3)))
+        self._write('%+15.8e * tc[3]' % ((parameters[3] / 4)))
+        self._write('%+15.8e * tc[4]' % ((parameters[4] / 5)))
         self._write('%+15.8e / tc[1] ' % (parameters[5]))
         return
 
@@ -955,28 +957,28 @@ class PythonPickler(PythonMill):
         self._write('%+15.8e / tc[1]' % parameters[5])
         self._write('%+15.8e' % (parameters[0] - parameters[6]))
         self._write('%+15.8e * tc[0]' % (-parameters[0]))
-        self._write('%+15.8e * tc[1]' % (-parameters[1]/2))
-        self._write('%+15.8e * tc[2]' % (-parameters[2]/6))
-        self._write('%+15.8e * tc[3]' % (-parameters[3]/12))
-        self._write('%+15.8e * tc[4] ' % (-parameters[4]/20))
+        self._write('%+15.8e * tc[1]' % ((-parameters[1] / 2)))
+        self._write('%+15.8e * tc[2]' % ((-parameters[2] / 6)))
+        self._write('%+15.8e * tc[3]' % ((-parameters[3] / 12)))
+        self._write('%+15.8e * tc[4] ' % ((-parameters[4] / 20)))
         return
     
     def _helmholtzNASA(self, parameters):
         self._write('%+15.8e / tc[1]' % parameters[5])
         self._write('%+15.8e' % (parameters[0] - parameters[6] - 1.0))
         self._write('%+15.8e * tc[0]' % (-parameters[0]))
-        self._write('%+15.8e * tc[1]' % (-parameters[1]/2))
-        self._write('%+15.8e * tc[2]' % (-parameters[2]/6))
-        self._write('%+15.8e * tc[3]' % (-parameters[3]/12))
-        self._write('%+15.8e * tc[4] ' % (-parameters[4]/20))
+        self._write('%+15.8e * tc[1]' % ((-parameters[1] / 2)))
+        self._write('%+15.8e * tc[2]' % ((-parameters[2] / 6)))
+        self._write('%+15.8e * tc[3]' % ((-parameters[3] / 12)))
+        self._write('%+15.8e * tc[4] ' % ((-parameters[4] / 20)))
         return
 
     def _entropyNASA(self, parameters):
         self._write('%+15.8e * tc[0]' % parameters[0])
         self._write('%+15.8e * tc[1]' % (parameters[1]))
-        self._write('%+15.8e * tc[2]' % (parameters[2]/2))
-        self._write('%+15.8e * tc[3]' % (parameters[3]/3))
-        self._write('%+15.8e * tc[4]' % (parameters[4]/4))
+        self._write('%+15.8e * tc[2]' % ((parameters[2] / 2)))
+        self._write('%+15.8e * tc[3]' % ((parameters[3] / 3)))
+        self._write('%+15.8e * tc[4]' % ((parameters[4] / 4)))
         self._write('%+15.8e ' % (parameters[6]))
         return
 
@@ -1078,7 +1080,7 @@ class PythonPickler(PythonMill):
         self._write(self.line('convert to chemkin units'))
         self._write('for id in range(%d):' % nSpecies)
         self._indent()
-        self._write('cvor[id] *= %g' % (R*kelvin*mole/erg) )
+        self._write('cvor[id] *= %g' % ((R*kelvin*mole / erg).value) )
         self._outdent()
 
         self._write('return cvor')
@@ -1106,7 +1108,7 @@ class PythonPickler(PythonMill):
         self._write(self.line('convert to chemkin units'))
         self._write('for id in range(%d):' % nSpecies)
         self._indent()
-        self._write('cpor[id] *= %g' % (R*kelvin*mole/erg) )
+        self._write('cpor[id] *= %g' % ((R*kelvin*mole / erg).value) )
         self._outdent()
         self._write('return cpor') 
         self._outdent()
@@ -1125,7 +1127,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
 
-        self._write( 'RT = %15.8e*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write( 'RT = %15.8e*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write('uml = speciesInternalEnergy(T)')
@@ -1154,7 +1156,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
 
-        self._write( 'RT = %15.8e*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write( 'RT = %15.8e*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write('hml = speciesEnthalpy(T)')
@@ -1184,7 +1186,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
 
-        self._write('RT = %15.8e*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %15.8e*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write('gml = gibbs(T)')
@@ -1213,7 +1215,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
 
-        self._write('RT = %15.8e*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %15.8e*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write('aml = helmholtz(T)')
@@ -1250,7 +1252,7 @@ class PythonPickler(PythonMill):
         self._write(self.line('convert to chemkin units'))
         self._write('for id in range(%d):' % nSpecies)
         self._indent()
-        self._write('sml[id] *= %g' % (R*kelvin*mole/erg) )
+        self._write('sml[id] *= %g' % ((R*kelvin*mole / erg).value) )
         self._outdent()
         self._write('return sml')
        
@@ -1497,7 +1499,7 @@ class PythonPickler(PythonMill):
             expr += "%g*tc[0]" % beta
         if E != 0:
             uc = self._activationEnergyUnits(reaction.units["activation"])
-            expr += "%+g/tc[1]" % (- uc * E / Rc / kelvin) # catch unit conversion errors!
+            expr += "%+g/tc[1]" % ((- uc * E /  Rc / kelvin)) # catch unit conversion errors!
         expr += ')'
         
         return expr
@@ -1506,9 +1508,9 @@ class PythonPickler(PythonMill):
     def _prefactorUnits(self, code, exponent):
 
         if code == "mole/cm**3":
-            units = mole / cm**3
+            units = (mole /  cm**3)
         elif code == "moles":
-            units = mole / cm**3
+            units = (mole /  cm**3)
         elif code == "molecules":
             import pyre
             units = 1.0 / avogadro / cm**3
@@ -1517,18 +1519,18 @@ class PythonPickler(PythonMill):
             pyre.debug.Firewall.hit("unknown prefactor units '%s'" % code)
             return 1
 
-        return units ** exponent / second
+        return (units ** exponent /  second)
 
 
     def _activationEnergyUnits(self, code):
         if code == "cal/mole":
-            units = cal / mole
+            units = (cal /  mole)
         elif code == "kcal/mole":
-            units = kcal /mole
+            units = (kcal / mole)
         elif code == "joules/mole":
-            units = J / mole
+            units = (J /  mole)
         elif code == "kjoules/mole":
-            units = kJ / mole
+            units = (kJ /  mole)
         elif code == "kelvins":
             units = Rc * kelvin
         else:
@@ -1782,7 +1784,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
         
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write('ums = speciesInternalEnergy(T)')
@@ -1807,7 +1809,7 @@ class PythonPickler(PythonMill):
         self._write('"""%s"""' % docstring)
 
         
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         # call routine
         self._write('hms = speciesEnthalpy(T)')
         
@@ -1830,7 +1832,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
 
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write('ams = helmholtz(T)')
@@ -1854,7 +1856,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
 
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write('gms = gibbs(T)')
@@ -1885,7 +1887,7 @@ class PythonPickler(PythonMill):
         # convert cv/R to cv with mass units
         self._write(self.line('multiply by R/molecularweight'))
         for species in self.species:
-            ROW = (R*kelvin*mole/erg) / species.weight
+            ROW = (((R*kelvin*mole / erg).value)/ species.weight)
             self._write('cvms[%d] *= %15.8e ' % (
                 species.id, ROW) + self.line('%s' % species.symbol))
                     
@@ -1909,7 +1911,7 @@ class PythonPickler(PythonMill):
         # convert cp/R to cp with mass units
         self._write(self.line('multiply by R/molecularweight'))
         for species in self.species:
-            ROW = (R*kelvin*mole/erg) / species.weight
+            ROW = (((R*kelvin*mole / erg).value)/ species.weight)
             self._write('cpms[%d] *= %15.8e ' % (
                 species.id, ROW) + self.line('%s' % species.symbol))
 
@@ -1933,7 +1935,7 @@ class PythonPickler(PythonMill):
         # convert s/R to s with mass units
         self._write(self.line('multiply by R/molecularweight'))
         for species in self.species:
-            ROW = (R*kelvin*mole/erg) / species.weight
+            ROW = (((R*kelvin*mole / erg).value)/ species.weight)
             self._write('sms[%d] *= %15.8e ' % (
                 species.id, ROW) + self.line('%s' % species.symbol))
 
@@ -1967,7 +1969,7 @@ class PythonPickler(PythonMill):
         self._outdent()
 
         self._write()
-        self._write('cpbl = result * %g' % (R*kelvin*mole/erg) )
+        self._write('cpbl = result * %g' % ((R*kelvin*mole / erg).value) )
         
         self._write('return cpbl')
         self._outdent()
@@ -1996,7 +1998,7 @@ class PythonPickler(PythonMill):
                 species.id, species.id, species.weight) + self.line('%s' % species.symbol))
 
         self._write()
-        self._write('cpbs = result * %g' % (R*kelvin*mole/erg) )
+        self._write('cpbs = result * %g' % ((R*kelvin*mole / erg).value) )
         
         self._write('return cpbs')
         self._outdent()
@@ -2027,7 +2029,7 @@ class PythonPickler(PythonMill):
         self._outdent()
 
         self._write()
-        self._write('cvbl = result * %g' % (R*kelvin*mole/erg) )
+        self._write('cvbl = result * %g' % ((R*kelvin*mole / erg).value) )
         
         self._write('return cvbl')
         self._outdent()
@@ -2056,7 +2058,7 @@ class PythonPickler(PythonMill):
                 species.id, species.id, species.weight) + self.line('%s' % species.symbol))
 
         self._write()
-        self._write('cvbs = result * %g' % (R*kelvin*mole/erg) )
+        self._write('cvbs = result * %g' % ((R*kelvin*mole / erg).value) )
         
         self._write('return cvbs')
         self._outdent()
@@ -2074,7 +2076,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
 
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write('hml = speciesEnthalpy(T)')
@@ -2107,7 +2109,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
 
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write('hml = speciesEnthalpy(T)')
@@ -2140,7 +2142,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
 
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write('uml = speciesInternalEnergy(T)')
@@ -2173,7 +2175,7 @@ class PythonPickler(PythonMill):
         self._indent()
         self._write('"""%s"""' % docstring)
 
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write('ums = speciesInternalEnergy(T)')
@@ -2226,7 +2228,7 @@ class PythonPickler(PythonMill):
 
         self._write()
         
-        self._write('sbml = result * %g' % (R*kelvin*mole/erg) )
+        self._write('sbml = result * %g' % ((R*kelvin*mole / erg).value) )
         
         self._write('return sbml')
         self._outdent()
@@ -2264,7 +2266,7 @@ class PythonPickler(PythonMill):
                 species.id, species.weight) + self.line('%s' % species.symbol))
 
         self._write(self.line('Scale by R/W'))
-        self._write('sbms = result * %g * YOW' % (R*kelvin*mole/erg) )
+        self._write('sbms = result * %g * YOW' % ((R*kelvin*mole / erg).value) )
         
         self._write('return sbms')
         self._outdent()
@@ -2286,7 +2288,7 @@ class PythonPickler(PythonMill):
         self._write(self.line('Log of normalized pressure in cgs units dynes/cm^2 by Patm'))
         self._write('import math')
         self._write('logPratio = math.log ( P / 1013250.0 ) ')
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write(self.line('Compute g/RT'))
@@ -2325,7 +2327,7 @@ class PythonPickler(PythonMill):
         self._write(self.line('Log of normalized pressure in cgs units dynes/cm^2 by Patm'))
         self._write('import math')
         self._write('logPratio = math.log ( *P / 1013250.0 ) ')
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # compute inverse of mean molecular weight first (eq 3)
         self._write(self.line('Compute inverse of mean molecular wt first'))
@@ -2370,7 +2372,7 @@ class PythonPickler(PythonMill):
         self._write(self.line('Log of normalized pressure in cgs units dynes/cm^2 by Patm'))
         self._write('import math')
         self._write('logPratio = math.log ( *P / 1013250.0 ) ')
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # call routine
         self._write(self.line('Compute a/RT'))
@@ -2409,7 +2411,7 @@ class PythonPickler(PythonMill):
         self._write(self.line('Log of normalized pressure in cgs units dynes/cm^2 by Patm'))
         self._write('import math')
         self._write('logPratio = math.log ( P / 1013250.0 ) ')
-        self._write('RT = %g*T ' % (R*kelvin*mole/erg) + self.line('R*T'))
+        self._write('RT = %g*T ' % ((R*kelvin*mole / erg).value) + self.line('R*T'))
         
         # compute inverse of mean molecular weight first (eq 3)
         self._write(self.line('Compute inverse of mean molecular wt first'))

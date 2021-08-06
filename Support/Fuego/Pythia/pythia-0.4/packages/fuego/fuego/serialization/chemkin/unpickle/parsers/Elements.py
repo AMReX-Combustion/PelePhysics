@@ -11,7 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from BaseParser import BaseParser
+from __future__ import absolute_import
+from builtins import str
+from .BaseParser import BaseParser
 
 
 class Elements(BaseParser):
@@ -23,7 +25,7 @@ class Elements(BaseParser):
         try:
             element = self._mechanism.newElement(token.name, token.weight, self.locator())
 
-        except self._mechanism.DuplicateElement, msg:
+        except self._mechanism.DuplicateElement as msg:
             self.onWarning(str(msg), self.locator())
         
         return 0

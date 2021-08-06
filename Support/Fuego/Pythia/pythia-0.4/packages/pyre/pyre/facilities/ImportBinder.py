@@ -12,7 +12,8 @@
 #
 
 
-from Binder import Binder
+from __future__ import absolute_import
+from .Binder import Binder
 
 
 class ImportBinder(Binder):
@@ -20,7 +21,7 @@ class ImportBinder(Binder):
 
     def bind(self, name):
         context = {}
-        exec "import %s" % name in context
+        exec("import %s" % name, context)
         component = eval("%s.%s()" % (name, name), context)
         return component
 

@@ -11,8 +11,9 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 import pyre.geometry.operations
-from Transformation import Transformation
+from .Transformation import Transformation
 
 
 class Translation(Transformation):
@@ -27,7 +28,7 @@ class Translation(Transformation):
 
     def notify(self, parent):
         if not self._body:
-            raise "Not enough arguments for translation"
+            raise Exception("Not enough arguments for translation")
         translation = pyre.geometry.operations.translate(body=self._body, vector=self._vector)
         parent.onTranslation(translation)
         return

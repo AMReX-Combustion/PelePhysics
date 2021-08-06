@@ -11,8 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from mass import *
-from volume import *
+from __future__ import absolute_import
+from .mass import *
+from .volume import *
 
 # version
 __id__ = "$Id$"

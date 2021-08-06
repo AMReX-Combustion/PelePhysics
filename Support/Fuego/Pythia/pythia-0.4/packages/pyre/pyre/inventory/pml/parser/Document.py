@@ -12,6 +12,7 @@
 #
 
 
+from __future__ import absolute_import
 from pyre.xml.DocumentNode import DocumentNode
 
 
@@ -33,9 +34,9 @@ class Document(DocumentNode):
 
 def documentNodes():
 
-    from Registry import Registry
-    from Facility import Facility
-    from Property import Property
+    from .Registry import Registry
+    from .Facility import Facility
+    from .Property import Property
 
     nodes = [ Registry, Facility, Property ]
 

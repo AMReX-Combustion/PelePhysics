@@ -11,10 +11,12 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import print_function
+from builtins import object
 import os
 import cgi
 
-class AuthorizationRequest:
+class AuthorizationRequest(object):
 
     def __init__(self):
         self.username = ""
@@ -83,31 +85,31 @@ def missingFields(request, message=""):
 
 
 def reportSuccess(request):
-    print '<html>'
+    print('<html>')
 
-    print '<head>'
-    print '<title>Welcome</title>'
-    print '</head>'
+    print('<head>')
+    print('<title>Welcome</title>')
+    print('</head>')
 
-    print '<body>'
-    print '<h2>Login information:</h2>'
-    print '<table cols="2">'
-    print '<tr><td align="right">username:</td><td>%s</td></tr>' % request.username
-    print '<tr><td align="right">password:</td><td>%s</td></tr>' % request.cleartext
-    print '<tr><td align="right">host:</td><td>%s</td></tr>' % request.origin
-    print '<tr><td align="right">ticket:</td><td>%s</td></tr>' % request.ticket
-    print '<tr><td align="right">attempts:</td><td>%d</td></tr>' % request.attempts
-    print '</table>'
-    print '</body>'
-    print '</html>'
+    print('<body>')
+    print('<h2>Login information:</h2>')
+    print('<table cols="2">')
+    print('<tr><td align="right">username:</td><td>%s</td></tr>' % request.username)
+    print('<tr><td align="right">password:</td><td>%s</td></tr>' % request.cleartext)
+    print('<tr><td align="right">host:</td><td>%s</td></tr>' % request.origin)
+    print('<tr><td align="right">ticket:</td><td>%s</td></tr>' % request.ticket)
+    print('<tr><td align="right">attempts:</td><td>%d</td></tr>' % request.attempts)
+    print('</table>')
+    print('</body>')
+    print('</html>')
 
     return
 
 
 # main
 if __name__ == "__main__":
-    print 'Content-type: text/html'
-    print
+    print('Content-type: text/html')
+    print()
 
     import settings
     settings.configure()

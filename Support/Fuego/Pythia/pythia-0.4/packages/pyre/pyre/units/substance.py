@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from SI import mole, kilo
+from __future__ import absolute_import
+from .SI import mole, kilo
 
 
 # Aliases

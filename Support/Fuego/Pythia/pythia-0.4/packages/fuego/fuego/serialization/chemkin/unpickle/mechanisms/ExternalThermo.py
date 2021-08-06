@@ -12,7 +12,9 @@
 #
 
 
-class ExternalThermo:
+from __future__ import absolute_import
+from builtins import object
+class ExternalThermo(object):
 
 
     def element(self, symbol=None):
@@ -66,10 +68,10 @@ class ExternalThermo:
 
         self._source = source
 
-        from ThermoDb import ThermoDb
+        from .ThermoDb import ThermoDb
         self._thermoDb = ThermoDb()
 
-        from ThermoDeclaration import ThermoDeclaration
+        from .ThermoDeclaration import ThermoDeclaration
         self.thermoFactory = ThermoDeclaration
         
         return

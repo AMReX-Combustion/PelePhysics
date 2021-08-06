@@ -12,8 +12,9 @@
 # 
 
 
+from __future__ import absolute_import
 def registry():
-    from MillRegistrar import MillRegistrar
+    from .MillRegistrar import MillRegistrar
     return MillRegistrar()
 
 

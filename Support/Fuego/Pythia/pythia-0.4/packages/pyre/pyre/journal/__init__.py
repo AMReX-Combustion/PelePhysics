@@ -12,14 +12,15 @@
 #
 
 
+from __future__ import absolute_import
 def journal(default=None):
 
-    from JournalFacility import JournalFacility
+    from .JournalFacility import JournalFacility
     return JournalFacility(default)
 
 
 def file():
-    from File import File
+    from .File import File
     return File()
 
 

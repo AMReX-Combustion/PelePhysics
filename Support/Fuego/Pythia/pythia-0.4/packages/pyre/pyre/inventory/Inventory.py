@@ -12,7 +12,11 @@
 #
 
 
-class Inventory(object):
+from __future__ import absolute_import
+from builtins import object
+from future.utils import with_metaclass
+from .Registrar import Registrar
+class Inventory(with_metaclass(Registrar, object)):
 
 
     # class data
@@ -53,7 +57,7 @@ class Inventory(object):
     def configureProperties(self, registry):
         unknown = []
 
-        for name, value in registry.properties.iteritems():
+        for name, value in registry.properties.items():
             # attempt to look up the public name in the property registries
             try:
                 prop = self._propertyRegistry[name]
@@ -80,7 +84,7 @@ class Inventory(object):
             table[component.name] = component
 
         # iterate over the registry entries
-        for name, conf in registry.facilities.iteritems():
+        for name, conf in registry.facilities.items():
             try:
                 component = table[name]
             except KeyError:
@@ -102,17 +106,17 @@ class Inventory(object):
 
     def components(self):
         table = {}
-        for name, facility in self._facilityRegistry.iteritems():
+        for name, facility in self._facilityRegistry.items():
             table[name] = self.__getattribute__(facility.name)
 
         return table
 
 
     def state(self, registry):
-        for property in self._propertyRegistry.itervalues():
+        for property in self._propertyRegistry.values():
             registry.properties[property.public] = self.__getattribute__(property.name)
 
-        for facility in self._facilityRegistry.itervalues():
+        for facility in self._facilityRegistry.values():
             component = self.__getattribute__(facility.name)
             node = registry.open(component.name)
             component.state(node)
@@ -135,12 +139,11 @@ class Inventory(object):
             pass
 
         # raise an exception
-        raise AttributeError, "'%s' object has no property named '%s'" % (
-            self.__class__.__name__, attribute)
+        raise AttributeError("'%s' object has no property named '%s'" % (
+            self.__class__.__name__, attribute))
 
     # implementation details: data
-    from Registrar import Registrar
-    __metaclass__ = Registrar
+    from .Registrar import Registrar
 
 
 # version

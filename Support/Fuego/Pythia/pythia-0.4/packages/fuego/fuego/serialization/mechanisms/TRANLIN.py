@@ -11,7 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
-from Transport import Transport
+from __future__ import absolute_import
+from .Transport import Transport
 
 
 class TRANLIN(Transport):

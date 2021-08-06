@@ -12,7 +12,8 @@
 # 
 
 
-from File import File
+from __future__ import absolute_import
+from .File import File
 
 
 class NamedPipe(File):

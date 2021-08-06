@@ -12,7 +12,8 @@
 # 
 
 
-class FormField:
+from builtins import object
+class FormField(object):
 
 
     def __init__(self, name, state="ok", value=""):

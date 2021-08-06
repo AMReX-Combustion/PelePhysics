@@ -12,7 +12,8 @@
 # 
 
 
-from LineMill import LineMill
+from __future__ import absolute_import
+from .LineMill import LineMill
 
 class PythonMill(LineMill):
 

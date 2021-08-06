@@ -11,6 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
+from __future__ import absolute_import
 from pyre.components.Component import Component
 
 
@@ -54,7 +56,7 @@ class Application(Component):
 
 
     def usage(self):
-        print "unkown arguments:", self._registry.unknown
+        print("unkown arguments:", self._registry.unknown)
         return
 
 
@@ -69,7 +71,7 @@ class Application(Component):
 
 
     def _createRegistry(self):
-        from ConfigurationRegistry import ConfigurationRegistry
+        from .ConfigurationRegistry import ConfigurationRegistry
         return ConfigurationRegistry(self.name)
 
 
@@ -77,7 +79,7 @@ class Application(Component):
 
         import pyre.journal
         import pyre.facilities
-        from CommandlineParser import CommandlineParser
+        from .CommandlineParser import CommandlineParser
 
         inventory = [
             pyre.journal.journal(),

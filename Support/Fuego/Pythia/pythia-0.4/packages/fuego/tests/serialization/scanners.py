@@ -11,8 +11,9 @@
 #
 
 
+from __future__ import print_function
 def testElementScanner():
-    print "Testing element scanner"
+    print("Testing element scanner")
 
     from pyre.chemistry.unpickle.chemkin.scanners.Elements import Elements
     scanner = Elements()
@@ -32,7 +33,7 @@ def testElementScanner():
     
 
 def testSpeciesScanner():
-    print "Testing species scanner"
+    print("Testing species scanner")
 
     from pyre.chemistry.unpickle.chemkin.scanners.Species import Species
     scanner = Species()
@@ -52,7 +53,7 @@ def testSpeciesScanner():
     
 
 def testThermoScanner():
-    print "Testing thermo scanner"
+    print("Testing thermo scanner")
 
     from pyre.chemistry.unpickle.chemkin.scanners.Thermo import Thermo
     scanner = Thermo()
@@ -71,7 +72,7 @@ def testThermoScanner():
 
 
 def testReactionScanner():
-    print "Testing reaction scanner"
+    print("Testing reaction scanner")
 
     from pyre.chemistry.unpickle.chemkin.scanners.Reactions import Reactions
     scanner = Reactions()
@@ -99,7 +100,7 @@ def testReactionScanner():
 
 def testScanner(scanner, tests):
     for test in tests:
-        print "    {%s}: %s" % (test, scanner.match(test, 0, 0))
+        print("    {%s}: %s" % (test, scanner.match(test, 0, 0)))
 
     return
 

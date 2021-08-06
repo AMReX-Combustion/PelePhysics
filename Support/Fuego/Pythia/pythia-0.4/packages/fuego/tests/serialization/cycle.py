@@ -10,6 +10,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
 import pyre
 
 
@@ -51,11 +52,11 @@ def cycle(options):
 # usage
 
 def usage(program):
-    print "Usage: %s [options ...]" % program
-    print "Options: (default values in brackets)"
-    print "    --file=<mechanism filename> [%s]" % defaults["--file"]
-    print "    --format=<chemkin|ckml> [%s]" % defaults["--file"]
-    print
+    print("Usage: %s [options ...]" % program)
+    print("Options: (default values in brackets)")
+    print("    --file=<mechanism filename> [%s]" % defaults["--file"])
+    print("    --format=<chemkin|ckml> [%s]" % defaults["--file"])
+    print()
     return
         
 

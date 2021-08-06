@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-class GraphvizRenderer:
+from builtins import object
+class GraphvizRenderer(object):
 
 
     def draw(self, graph):
@@ -81,7 +82,7 @@ class GraphvizRenderer:
 def decorate(table, delimiter=","):
     attributes = []
 
-    for attribute, value in table.items():
+    for attribute, value in list(table.items()):
         attributes.append('%s="%s"' % (attribute, value))
     
     return join(attributes, delimiter)

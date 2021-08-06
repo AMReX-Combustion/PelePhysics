@@ -12,7 +12,8 @@
 #
 
 
-from Property import Property
+from __future__ import absolute_import
+from .Property import Property
 
 
 class Integer(Property):

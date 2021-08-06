@@ -12,11 +12,13 @@
 # 
 
 
+from __future__ import absolute_import
+from builtins import object
 class Tokenizer(object):
 
 
     def locator(self):
-        from Locator import Locator
+        from .Locator import Locator
         return Locator(self.filename, self.line, self.column)
 
 
@@ -90,8 +92,8 @@ class Tokenizer(object):
         raise self.EndOfFile()
 
 
-    from EndOfFile import EndOfFile
-    from TokenizationException import TokenizationException
+    from .EndOfFile import EndOfFile
+    from .TokenizationException import TokenizationException
 
     import journal
     _info = journal.debug("pyre.parsing")

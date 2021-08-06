@@ -12,28 +12,29 @@
 # 
 
 
+from __future__ import absolute_import
 def weaver():
-    from DocumentWeaver import DocumentWeaver
+    from .DocumentWeaver import DocumentWeaver
     return DocumentWeaver()
 
 
 def body():
-    from StandardBody import StandardBody
+    from .StandardBody import StandardBody
     return StandardBody()
 
 
 def section():
-    from Section import Section
+    from .Section import Section
     return Section()
 
 
 def stateSelector():
-    from StatesSelection import StatesSelection
+    from .StatesSelection import StatesSelection
     return StatesSelection()
 
 
 def textBlock(message):
-    from TextBlock import TextBlock
+    from .TextBlock import TextBlock
     return TextBlock(message)
 
 

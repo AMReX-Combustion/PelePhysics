@@ -13,6 +13,7 @@
 
 # factory
 
+from __future__ import absolute_import
 def timingCenter():
     global _theTimingCenter
     if _theTimingCenter is None:
@@ -32,7 +33,7 @@ class TimingCenter(ResourceManager):
     def timer(self, name):
         timer = self.find(name)
         if not timer:
-            from Timer import Timer
+            from .Timer import Timer
             timer = Timer(name).activate()
             self.manage(timer, name)
 

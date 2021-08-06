@@ -12,8 +12,10 @@
 #
 
 
+from __future__ import absolute_import
 import journal
 from pyre.components.Component import Component
+from .ChannelFacility import ChannelFacility
 
 
 class Journal(Component):
@@ -40,8 +42,7 @@ class Journal(Component):
     class Inventory(Component.Inventory):
 
 
-        from ChannelFacility import ChannelFacility
-        from DeviceFacility import DeviceFacility
+        from .DeviceFacility import DeviceFacility
 
         inventory = [ 
             ChannelFacility(channel) for channel in journal.journal().channels()

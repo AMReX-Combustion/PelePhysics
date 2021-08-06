@@ -12,8 +12,9 @@
 #
 
 
+from __future__ import absolute_import
 def periodicTable():
-    from elements import periodicTable
+    from .elements import periodicTable
     return periodicTable()
 
 

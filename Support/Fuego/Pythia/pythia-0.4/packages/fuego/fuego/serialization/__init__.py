@@ -11,20 +11,21 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
-from pickle import save, pickler, picklers
-from unpickle import load, loadThermoDatabase, unpickler, unpicklers
+from __future__ import absolute_import
+from .pickle import save, pickler, picklers
+from .unpickle import load, loadThermoDatabase, unpickler, unpicklers
 
 
 def formats():
-    from pickle import registrar as picklers
-    from unpickle import registrar as unpicklers
+    from .pickle import registrar as picklers
+    from .unpickle import registrar as unpicklers
 
     # return (input, output) registered formats
     return (unpicklers().registered(), picklers().registered())
 
 
 def mechanism(filename=""):
-    from mechanisms.Mechanism import Mechanism
+    from .mechanisms.Mechanism import Mechanism
     return Mechanism(filename)
 
 

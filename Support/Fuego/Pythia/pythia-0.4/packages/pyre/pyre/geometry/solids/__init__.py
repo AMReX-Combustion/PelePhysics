@@ -12,23 +12,24 @@
 #
 
 
+from __future__ import absolute_import
 def block(diagonal):
-    from Block import Block
+    from .Block import Block
     return Block(diagonal)
 
 
 def cone(top, bottom, height):
-    from Cone import Cone
+    from .Cone import Cone
     return Cone(top, bottom, height)
 
 
 def cylinder(radius, height):
-    from Cylinder import Cylinder
+    from .Cylinder import Cylinder
     return Cylinder(radius, height)
 
 
 def generalizedCone(major, minor, scale, height):
-    from GeneralizedCone import GeneralizedCone
+    from .GeneralizedCone import GeneralizedCone
     return GeneralizedCone(major, minor, scale, height)
 
 
@@ -43,12 +44,12 @@ def pyramid():
 
 
 def sphere(radius):
-    from Sphere import Sphere
+    from .Sphere import Sphere
     return Sphere(radius)
 
 
 def torus(major, minor):
-    from Torus import Torus
+    from .Torus import Torus
     return Torus(major, minor)
 
 

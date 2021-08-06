@@ -11,23 +11,24 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import print_function
 if __name__ == "__main__":
 
     import fuego
     from fuego import fuego as fuegomodule
 
-    print "copyright information:"
-    print "   ", fuego.copyright()
-    print "   ", fuegomodule.copyright()
+    print("copyright information:")
+    print("   ", fuego.copyright())
+    print("   ", fuegomodule.copyright())
 
-    print
-    print "module information:"
-    print "    file:", fuegomodule.__file__
-    print "    doc:", fuegomodule.__doc__
-    print "    contents:", dir(fuegomodule)
+    print()
+    print("module information:")
+    print("    file:", fuegomodule.__file__)
+    print("    doc:", fuegomodule.__doc__)
+    print("    contents:", dir(fuegomodule))
 
-    print
-    print fuegomodule.hello()
+    print()
+    print(fuegomodule.hello())
 
 # version
 __id__ = "$Id$"

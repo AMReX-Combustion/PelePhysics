@@ -12,6 +12,7 @@
 #
 
 
+from __future__ import print_function
 from pyre.components.Component import Component
 from pyre.applications.Application import Application
 
@@ -52,7 +53,7 @@ class HelloApp(Application):
         self.listProperties()
         self.listComponents()
 
-        print "facility.property = '%s'" % self.inventory.facility.value()
+        print("facility.property = '%s'" % self.inventory.facility.value())
 
         return
 
@@ -64,24 +65,24 @@ class HelloApp(Application):
 
 
     def listProperties(self):
-        print "properties: {"
-        for name, prop in self.inventory.properties().iteritems():
+        print("properties: {")
+        for name, prop in self.inventory.properties().items():
             default = prop.default
             tp = prop.type
             value = self.inventory.__getattribute__(name)
-            print "  (name='%s', type='%s', default='%s', value='%s')" % (name, tp, default, value)
-        print "  }"
+            print("  (name='%s', type='%s', default='%s', value='%s')" % (name, tp, default, value))
+        print("  }")
         return
 
 
     def listComponents(self):
-        print "components: {"
-        for name, facility in self.inventory.facilities().iteritems():
+        print("components: {")
+        for name, facility in self.inventory.facilities().items():
             default = facility.default
             value = self.inventory.__getattribute__(name)
-            print "  (facility='%s', default='%s', component='%s')" % (
-                name, default.name, value.name)
-        print "  }"
+            print("  (facility='%s', default='%s', component='%s')" % (
+                name, default.name, value.name))
+        print("  }")
         return
 
 

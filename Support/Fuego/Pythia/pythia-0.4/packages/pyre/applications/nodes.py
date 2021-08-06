@@ -11,6 +11,8 @@
 # 
 
 
+from __future__ import print_function
+from builtins import range
 def nodes(args):
     # extract user options
     spec = args["--range"]
@@ -67,7 +69,7 @@ def query(maxload, format, port, maxnode):
             break
 
         msg = s.recv(port)
-        print msg
+        print(msg)
         continue
 
         fields = msg.split(':')
@@ -109,9 +111,9 @@ def expand(spec, itemSep, rangeSep):
             lower = int(token[0])
             upper = int(token[1])
             if upper > lower:
-                candidates += range(lower,upper+1)
+                candidates += list(range(lower,upper+1))
             else:
-                candidates += range(lower,upper-1,-1)
+                candidates += list(range(lower,upper-1,-1))
             
                              
     return candidates
@@ -131,19 +133,19 @@ def write(filename, candidates):
 
 def usage(program):
 
-    print "Usage: %s [options ...]" % program
-    print "Options: (default values in brackets)"
-    print "    --range=<range spec> [%s]" % defaults["--range"]
-    print "    --file=<filename> [%s]" % defaults["--file"]
-    print "    --format=<format spec> [%s]" % defaults["--format"]
-    print "    --item-separator=<character> [%s]" % defaults["--item-separator"]
-    print "    --range-separator=<character> [%s]" % defaults["--range-separator"]
-    print "    --port=<daemon port> [%s]" % defaults["--port"]
-    print "    --max-load=<maximum acceptable load> [%s]" % defaults["--max-load"]
-    print "    --max-node=<max node id to query> [%s]" % defaults["--max-node"]
-    print
-    print "Example: (with default values for the separators):"
-    print "    %s --range=1-20,23,54,30-33 --file=beonodes" % program
+    print("Usage: %s [options ...]" % program)
+    print("Options: (default values in brackets)")
+    print("    --range=<range spec> [%s]" % defaults["--range"])
+    print("    --file=<filename> [%s]" % defaults["--file"])
+    print("    --format=<format spec> [%s]" % defaults["--format"])
+    print("    --item-separator=<character> [%s]" % defaults["--item-separator"])
+    print("    --range-separator=<character> [%s]" % defaults["--range-separator"])
+    print("    --port=<daemon port> [%s]" % defaults["--port"])
+    print("    --max-load=<maximum acceptable load> [%s]" % defaults["--max-load"])
+    print("    --max-node=<max node id to query> [%s]" % defaults["--max-node"])
+    print()
+    print("Example: (with default values for the separators):")
+    print("    %s --range=1-20,23,54,30-33 --file=beonodes" % program)
     return
 
 
@@ -171,7 +173,7 @@ if __name__ == "__main__":
 
     nodelist = nodes(args)
     for node in nodelist:
-        print node
+        print(node)
 
 
 # version

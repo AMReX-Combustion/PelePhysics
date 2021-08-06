@@ -11,12 +11,13 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Drawable import Drawable
+from __future__ import absolute_import
+from .Drawable import Drawable
 
 
 def nodeAttributes():
     """return a list of valid attributes for Node"""
-    return Node._validAttributes.keys()
+    return list(Node._validAttributes.keys())
 
 
 class Node(Drawable):

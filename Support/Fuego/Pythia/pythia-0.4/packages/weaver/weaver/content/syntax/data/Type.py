@@ -12,7 +12,8 @@
 # 
 
 
-from NamedNode import NamedNode
+from __future__ import absolute_import
+from .NamedNode import NamedNode
 
 
 class Type(NamedNode):

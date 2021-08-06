@@ -12,11 +12,12 @@
 # 
 
 
+from __future__ import absolute_import
 import pythlets
 _defaultResourceFile = pythlets.resourceFile("ctree.glade")
 
 
-from SimpleRenderer import SimpleRenderer
+from .SimpleRenderer import SimpleRenderer
 
 
 class Explorer(SimpleRenderer):

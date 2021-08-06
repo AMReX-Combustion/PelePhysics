@@ -12,8 +12,9 @@
 # 
 
 
-from Mill import Mill
-from BlockComments import BlockComments
+from __future__ import absolute_import
+from .Mill import Mill
+from .BlockComments import BlockComments
 
 class BlockMill(Mill, BlockComments):
 

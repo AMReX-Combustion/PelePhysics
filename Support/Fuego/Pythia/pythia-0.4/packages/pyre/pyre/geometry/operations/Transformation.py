@@ -11,7 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Composition import Composition
+from __future__ import absolute_import
+from .Composition import Composition
 
 
 class Transformation(Composition):

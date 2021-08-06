@@ -11,8 +11,9 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 import pyre.geometry.solids
-from AbstractNode import AbstractNode
+from .AbstractNode import AbstractNode
 
 
 class GeneralizedCone(AbstractNode):

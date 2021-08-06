@@ -11,8 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Token import Token
-from RegularExpressions import whitespaceOpt, namedInlineNumber
+from __future__ import absolute_import
+from .Token import Token
+from .RegularExpressions import whitespaceOpt, namedInlineNumber
 
 
 class ReactionHV(Token):

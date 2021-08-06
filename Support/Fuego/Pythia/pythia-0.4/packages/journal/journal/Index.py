@@ -12,7 +12,9 @@
 # 
 
 
-from Diagnostic import Diagnostic
+from __future__ import absolute_import
+from builtins import object
+from .Diagnostic import Diagnostic
 
 
 class Index(object):
@@ -23,7 +25,7 @@ class Index(object):
 
 
     def categories(self):
-        return self._index.keys()
+        return list(self._index.keys())
 
 
     def diagnostic(self, name): 
@@ -34,7 +36,7 @@ class Index(object):
             self._index[name] = diagnostic
             return diagnostic
 
-        raise "Unknown error"
+        raise Exception("Unknown error")
 
 
     def init(self, channel, defaultState, fatal=False):

@@ -11,10 +11,11 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 import re
 
-from Token import Token
-from RegularExpressions import eol, whitespaceOpt, species, inlineNumber
+from .Token import Token
+from .RegularExpressions import eol, whitespaceOpt, species, inlineNumber
 
 
 class ReactionEfficiencies(Token):

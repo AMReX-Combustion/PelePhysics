@@ -12,7 +12,8 @@
 # 
 
 
-from Device import Device
+from __future__ import absolute_import
+from .Device import Device
 
 
 class File(Device):

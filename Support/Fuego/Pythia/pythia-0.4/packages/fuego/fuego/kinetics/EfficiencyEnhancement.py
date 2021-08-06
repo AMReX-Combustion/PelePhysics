@@ -12,7 +12,8 @@
 #
 
 
-class EfficiencyEnhancement:
+from builtins import object
+class EfficiencyEnhancement(object):
 
     def __init__(self, mixture, efficiencies):
         self._mixture = mixture

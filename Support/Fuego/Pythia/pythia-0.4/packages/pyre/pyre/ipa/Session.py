@@ -12,6 +12,7 @@
 # 
 
 
+from __future__ import absolute_import
 import pickle
 import journal
 import pyre.network
@@ -24,7 +25,7 @@ class Session(Configurable):
     def login(self, username, cleartext):
         self._info.log("login request for user '%s'" % username)
 
-        from AuthenticationRequest import AuthenticationRequest
+        from .AuthenticationRequest import AuthenticationRequest
         request = AuthenticationRequest(username, password=cleartext)
         ticket = self._authenticate(request)
         return ticket
@@ -33,7 +34,7 @@ class Session(Configurable):
     def resume(self, username, ticket):
         self._info.log("ticketed request for user '%s':'%s'" % (username, ticket))
 
-        from AuthenticationRequest import AuthenticationRequest
+        from .AuthenticationRequest import AuthenticationRequest
         request = AuthenticationRequest(username, ticket=ticket)
         ticket = self._authenticate(request)
         return ticket

@@ -11,8 +11,9 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 import pyre.geometry.operations
-from Transformation import Transformation
+from .Transformation import Transformation
 
 
 class Dilation(Transformation):
@@ -27,7 +28,7 @@ class Dilation(Transformation):
 
     def notify(self, parent):
         if not self._body:
-            raise "Not enough arguments for dilation"
+            raise Exception("Not enough arguments for dilation")
         dilation = pyre.geometry.operations.dilate(body=self._body, scale=self._scale)
         parent.onDilation(dilation)
         return

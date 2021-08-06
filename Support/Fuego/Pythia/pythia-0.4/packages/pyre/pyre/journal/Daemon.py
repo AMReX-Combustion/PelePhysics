@@ -11,7 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
-import journal
+from __future__ import absolute_import
+from . import journal
 from pyre.applications.Daemon import Daemon as BaseDaemon
 
 
@@ -51,7 +52,7 @@ class Daemon(BaseDaemon):
 
 
         import pyre.properties
-        from Server import Server
+        from .Server import Server
 
 
         inventory = (

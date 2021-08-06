@@ -12,10 +12,13 @@
 #
 
 
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import object
 class Mechanism(object):
 
 
-    from MechanismExceptions import DuplicateElement, DuplicateSpecies, DuplicateQssSpecies, DuplicateThermalProperties, DuplicateTransProperties
+    from .MechanismExceptions import DuplicateElement, DuplicateSpecies, DuplicateQssSpecies, DuplicateThermalProperties, DuplicateTransProperties
 
 
     # housekeeping
@@ -25,13 +28,13 @@ class Mechanism(object):
 
 
     def printStatistics(self):
-        print "Mechanism '%s'" % self._source
-        print "    elements:", self._elements.size()
-        print "     species:", self._species.size()
-        print " qss species:", self._qss_species.size()
-        print "      thermo:", self._thermoDb.size()
-        print "      trans:", self._transDb.size()
-        print "   reactions:", self._reactions.size()
+        print("Mechanism '%s'" % self._source)
+        print("    elements:", self._elements.size())
+        print("     species:", self._species.size())
+        print(" qss species:", self._qss_species.size())
+        print("      thermo:", self._thermoDb.size())
+        print("      trans:", self._transDb.size())
+        print("   reactions:", self._reactions.size())
 
 
     # elements
@@ -173,7 +176,7 @@ class Mechanism(object):
         if self._transDb.all():
             return
         else:
-            print "Someting went wrong with your transport"
+            print("Someting went wrong with your transport")
 
         #self._externalDb = self._readExternalThermoDatabase()
         #return
@@ -199,34 +202,34 @@ class Mechanism(object):
 
         self._externalDb = None
 
-        from ElementDb import ElementDb
+        from .ElementDb import ElementDb
         self._elements = ElementDb()
 
-        from SpeciesDb import SpeciesDb
+        from .SpeciesDb import SpeciesDb
         self._species = SpeciesDb()
 
-        from QssSpeciesDb import QssSpeciesDb
+        from .QssSpeciesDb import QssSpeciesDb
         self._qss_species = QssSpeciesDb()
         
-        from ThermoDb import ThermoDb
+        from .ThermoDb import ThermoDb
         self._thermoDb = ThermoDb()
 
-        from TransDb import TransDb
+        from .TransDb import TransDb
         self._transDb = TransDb()
 
-        from ReactionDb import ReactionDb
+        from .ReactionDb import ReactionDb
         self._reactions = ReactionDb()
 
-        from ElementDeclaration import ElementDeclaration
+        from .ElementDeclaration import ElementDeclaration
         self.elementFactory = ElementDeclaration
         
-        from SpeciesDeclaration import SpeciesDeclaration
+        from .SpeciesDeclaration import SpeciesDeclaration
         self.speciesFactory = SpeciesDeclaration
 
-        from ThermoDeclaration import ThermoDeclaration
+        from .ThermoDeclaration import ThermoDeclaration
         self.thermoFactory = ThermoDeclaration
         
-        from ReactionDeclaration import ReactionDeclaration
+        from .ReactionDeclaration import ReactionDeclaration
         self.reactionFactory = ReactionDeclaration
         
         return
@@ -235,7 +238,7 @@ class Mechanism(object):
     def _readExternalThermoDatabase(self):
         import os
         import fuego
-        from ExternalThermo import ExternalThermo
+        from .ExternalThermo import ExternalThermo
 
         therm = fuego.unpickle.chemkin.externalThermoDatabase()
         externalDb = open(therm, "r")

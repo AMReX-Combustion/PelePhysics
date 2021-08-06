@@ -12,6 +12,7 @@
 # 
 
 
+from __future__ import absolute_import
 def format():
     return "chemkin"
 
@@ -21,12 +22,12 @@ def extensions():
 
 
 def parser():
-    from unpickle.parsers.ChemkinParser import ChemkinParser
+    from .unpickle.parsers.ChemkinParser import ChemkinParser
     return ChemkinParser()
 
 
 def pickler():
-    from pickle.ChemkinPickler import ChemkinPickler
+    from .pickle.ChemkinPickler import ChemkinPickler
     return ChemkinPickler()
 
 

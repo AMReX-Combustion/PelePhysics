@@ -12,15 +12,16 @@
 #
 
 
-from Facility import Facility
-from ScriptBinder import ScriptBinder
+from __future__ import absolute_import
+from .Facility import Facility
+from .ScriptBinder import ScriptBinder
 
 class Journal(Facility, ScriptBinder):
 
 
     def __init__(self, default=None):
         if default is None:
-            import journal
+            from . import journal
             default = journal.journal()
             
         Facility.__init__(self, "journal", default=default)

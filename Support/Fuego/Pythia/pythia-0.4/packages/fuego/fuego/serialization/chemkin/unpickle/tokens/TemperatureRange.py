@@ -11,8 +11,10 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Token import Token
-from RegularExpressions import eol, whitespace, whitespaceOpt, namedNumbers_3
+from __future__ import absolute_import
+from builtins import map
+from .Token import Token
+from .RegularExpressions import eol, whitespace, whitespaceOpt, namedNumbers_3
 
 
 class TemperatureRange(Token):
@@ -30,7 +32,7 @@ class TemperatureRange(Token):
 
     def __init__(self, match, groups):
         Token.__init__(self, match, groups)
-        text = map(groups.get, self._patternNames)
+        text = list(map(groups.get, self._patternNames))
         try:
             self.range = tuple(map(float, text))
         except ValueError:

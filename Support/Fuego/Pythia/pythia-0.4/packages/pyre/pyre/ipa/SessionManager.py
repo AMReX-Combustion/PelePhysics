@@ -12,6 +12,7 @@
 # 
 
 
+from __future__ import absolute_import
 from pyre.components.Component import Component
 
 
@@ -24,7 +25,7 @@ class SessionManager(Component):
                 self._selector.watch(self.inventory.timeout.value)
             except:
                 import sys
-                type = sys.exc_type
+                type = sys.exc_info()[0]
                 info = sys.exc_info()[1]
                 self._info.log("unhandled '%s': %s" % (type, info))
 
@@ -68,7 +69,7 @@ class SessionManager(Component):
 
     def _issueTicket(self, selector, socket):
         import pickle
-        from AuthenticationRequest import AuthenticationRequest
+        from .AuthenticationRequest import AuthenticationRequest
 
         ticketOnce = self.inventory.ticketOnce
 
@@ -84,7 +85,7 @@ class SessionManager(Component):
         # check for a ticketed request
         ticket = request.ticket
         if ticket:
-            if not self._tickets.has_key(ticket):
+            if ticket not in self._tickets:
                 self._info.log("got bad ticket '%s'" % (ticket))
                 pickle.dump(0, outbound)
                 return True
@@ -138,7 +139,7 @@ class SessionManager(Component):
         currentTime = time.time()
         duration = self.inventory.ticketDuration
 
-        for ticket, timestamp in self._tickets.items():
+        for ticket, timestamp in list(self._tickets.items()):
             if currentTime - timestamp > duration:
                 self._info.log("removed stale ticket '%s'" % ticket)
                 del self._tickets[ticket]

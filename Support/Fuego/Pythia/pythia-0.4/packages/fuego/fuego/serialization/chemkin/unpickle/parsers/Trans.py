@@ -11,7 +11,10 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from BaseParser import BaseParser
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import str
+from .BaseParser import BaseParser
 
 
 class Trans(BaseParser):
@@ -109,7 +112,7 @@ class Trans(BaseParser):
             self.onError(msg, self.locator())
 
         speciesName = match.group()
-        print speciesName
+        print(speciesName)
 
         species = self._mechanism.species(speciesName)
         if not species:

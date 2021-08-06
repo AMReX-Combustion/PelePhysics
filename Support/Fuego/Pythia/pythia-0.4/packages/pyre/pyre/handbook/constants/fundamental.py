@@ -22,7 +22,7 @@ from pyre.units.SI import joule, kelvin, mole
 #
 
 boltzmann = 1.3806503e-23 * joule/kelvin
-avogadro = 6.02214199e23 / mole
+avogadro = 6.02214199e23/ mole
 
 gas_constant = 8.314472 * joule/(mole*kelvin)
 

@@ -12,7 +12,8 @@
 #
 
 
-class ThirdBodyEnhancement:
+from builtins import object
+class ThirdBodyEnhancement(object):
 
 
     def __init__(self, species):

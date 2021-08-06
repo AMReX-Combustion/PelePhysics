@@ -11,8 +11,10 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import print_function
+from __future__ import absolute_import
 import os
-from Application import Application
+from .Application import Application
 
 
 class Daemon(Application):
@@ -22,7 +24,7 @@ class Daemon(Application):
         self._debug.log("launching daemon...")
 
         if self.inventory.debug:
-            print "debug mode..."
+            print("debug mode...")
             import os
             self._pid = os.getpid()
             self.serve()
@@ -106,10 +108,10 @@ class Daemon(Application):
     def _saveInfo(self):
         try:
             filename = self.inventory.pidfile
-            pidfile = file(filename, "w")
+            pidfile = open(filename, "w")
         except:
             filename = self.Inventory.pidfile
-            pidfile = file(filename, "w")
+            pidfile = open(filename, "w")
 
         self._describe(pidfile)
         pidfile.close()

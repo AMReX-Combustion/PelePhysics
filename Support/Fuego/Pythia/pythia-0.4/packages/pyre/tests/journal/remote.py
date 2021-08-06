@@ -12,6 +12,8 @@
 #
 
 
+from __future__ import print_function
+from builtins import range
 from pyre.applications.Application import Application
 
 
@@ -65,7 +67,7 @@ class RemoteJournalApp(Application):
         server.method = self.method
         server.init(self)
 
-        print "server: installed daemon on port '%d'" % server.port
+        print("server: installed daemon on port '%d'" % server.port)
         server.serve()
 
         return
@@ -76,8 +78,8 @@ class RemoteJournalApp(Application):
 
         if self.port:
 
-            print "client: sending messages to %r:%d using %r" % (
-                self.host, self.port, self.method)
+            print("client: sending messages to %r:%d using %r" % (
+                self.host, self.port, self.method))
             
             journal.remote(self.port, self.host, self.method)
 
@@ -89,7 +91,7 @@ class RemoteJournalApp(Application):
 
 
     def _both(self):
-        print "executing both client and server"
+        print("executing both client and server")
 
         import os
 

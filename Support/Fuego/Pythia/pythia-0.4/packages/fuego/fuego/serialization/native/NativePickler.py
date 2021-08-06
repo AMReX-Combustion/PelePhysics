@@ -122,7 +122,7 @@ class NativePickler(PythonMill):
                 self._write(line)
             
             if reaction.thirdBody:
-                line = '_reaction.thirdBody = %s' % `reaction.thirdBody`
+                line = '_reaction.thirdBody = %s' % repr(reaction.thirdBody)
                 self._write(line)
             
             if reaction.falloff:
@@ -133,31 +133,31 @@ class NativePickler(PythonMill):
                 line = '_reaction.efficiencies = %s' % reaction.efficiencies
                 self._write(line)
 
-            line = '_reaction.arrhenius = %s' % `reaction.arrhenius`
+            line = '_reaction.arrhenius = %s' % repr(reaction.arrhenius)
             self._write(line)
             
             if reaction.low:
-                line = '_reaction.low = %s' % `reaction.low`
+                line = '_reaction.low = %s' % repr(reaction.low)
                 self._write(line)
 
             if reaction.sri:
-                line = '_reaction.sri = %s' % `reaction.sri`
+                line = '_reaction.sri = %s' % repr(reaction.sri)
                 self._write(line)
 
             if reaction.troe:
-                line = '_reaction.troe = %s' % `reaction.troe`
+                line = '_reaction.troe = %s' % repr(reaction.troe)
                 self._write(line)
 
             if reaction.lt:
-                line = '_reaction.lt = %s' % `reaction.lt`
+                line = '_reaction.lt = %s' % repr(reaction.lt)
                 self._write(line)
 
             if reaction.rev:
-                line = '_reaction.rev = %s' % `reaction.rev`
+                line = '_reaction.rev = %s' % repr(reaction.rev)
                 self._write(line)
 
             if reaction.rlt:
-                line = '_reaction.rlt = %s' % `reaction.rlt`
+                line = '_reaction.rlt = %s' % repr(reaction.rlt)
                 self._write(line)
 
         return

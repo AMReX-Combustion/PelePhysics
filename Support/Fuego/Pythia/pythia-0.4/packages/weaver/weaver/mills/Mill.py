@@ -12,8 +12,9 @@
 # 
 
 
-from Indenter import Indenter
-from Stationery import Stationery
+from __future__ import absolute_import
+from .Indenter import Indenter
+from .Stationery import Stationery
 
 
 class Mill(Stationery, Indenter):
@@ -37,7 +38,7 @@ class Mill(Stationery, Indenter):
 
         if userOptions:
 
-            self._debug.line("user options: %s" % `userOptions`)
+            self._debug.line("user options: %s" % repr(userOptions))
             # pull out the defaults
             self._debug.line("extracting default options")
             defaults = userOptions.facilities.get("default")

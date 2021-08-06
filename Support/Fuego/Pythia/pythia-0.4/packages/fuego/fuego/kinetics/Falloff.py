@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from ThirdBody import ThirdBody
+from __future__ import absolute_import
+from .ThirdBody import ThirdBody
 
 
 class Falloff(ThirdBody):

@@ -28,11 +28,11 @@ class Renderer(XMLMill):
         self._write('<facility name="%s">' % registry.name)
 
         self._indent()
-        for property, value in registry.properties.iteritems():
+        for property, value in registry.properties.items():
             self._write('<property name="%s" value="%s"/>' % (property, value))
         self._outdent()
 
-        for facility in registry.facilities.itervalues():
+        for facility in registry.facilities.values():
             self.onRegistry(facility)
 
         self._write('</facility>')

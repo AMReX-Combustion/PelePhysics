@@ -12,6 +12,7 @@
 #
 
 
+from __future__ import print_function
 from pyre.applications.Application import Application
 
 
@@ -19,7 +20,7 @@ class HelloApp(Application):
 
 
     def run(self):
-        print "Hello %s!" % self.inventory.person
+        print("Hello %s!" % self.inventory.person)
 
         registry = self.state()
 
@@ -27,7 +28,7 @@ class HelloApp(Application):
         renderer = pyre.inventory.renderer()
         renderer.initialize()
         document = "\n".join(renderer.render(registry))
-        print document
+        print(document)
 
         return
 

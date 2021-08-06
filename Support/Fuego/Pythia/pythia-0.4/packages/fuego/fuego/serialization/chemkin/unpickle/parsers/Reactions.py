@@ -11,7 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from BaseParser import BaseParser
+from __future__ import print_function
+from __future__ import absolute_import
+from .BaseParser import BaseParser
 
 
 class Reactions(BaseParser):
@@ -96,7 +98,7 @@ class Reactions(BaseParser):
 
 
     def aReactionFORD(self, token):
-        print "ford !!"
+        print("ford !!")
         record = self._currentReaction
         if not record:
             msg = "no current reaction"
@@ -275,7 +277,7 @@ class Reactions(BaseParser):
         import fuego
         self._scanner = fuego.serialization.chemkin.unpickle.scanners.reactions()
 
-        from Parameters import Parameters
+        from .Parameters import Parameters
         self._parameterParser = Parameters(tokenizer)
 
         self._reactionIndex = 0

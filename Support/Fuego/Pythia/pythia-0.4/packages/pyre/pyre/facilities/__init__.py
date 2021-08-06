@@ -14,12 +14,13 @@
 
 # bultin facilities
 
+from __future__ import absolute_import
 def facility(
     name,
     default=None, public=None, binder=None, requirements=None,
     tip="", doc=""):
 
-    from Facility import Facility
+    from .Facility import Facility
     return Facility(name, default, public, binder, requirements)
 
 

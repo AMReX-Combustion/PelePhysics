@@ -11,6 +11,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 from pyre.facilities.Facility import Facility
 from pyre.facilities.ScriptBinder import ScriptBinder
 
@@ -20,7 +21,7 @@ class DeviceFacility(Facility):
 
     def __init__(self, default=None):
         if default is None:
-            from Console import Console
+            from .Console import Console
             default = Console()
 
         Facility.__init__(self, name="device", default=default, binder=self.DeviceBinder())
@@ -42,9 +43,9 @@ class DeviceFacility(Facility):
         def __init__(self):
             ScriptBinder.__init__(self)
 
-            from Console import Console
-            from File import File
-            from Remote import Remote
+            from .Console import Console
+            from .File import File
+            from .Remote import Remote
 
             self._builtins = {
                 "console": Console,

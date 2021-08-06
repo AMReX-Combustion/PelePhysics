@@ -12,9 +12,25 @@
 # 
 
 
+from __future__ import absolute_import
+#!/usr/bin/env python
+# 
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 
+#                               Michael A.G. Aivazis
+#                        California Institute of Technology
+#                        (C) 1998-2003 All Rights Reserved
+# 
+#  <LicenseText>
+# 
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 
+
+
+from builtins import object
 import journal
 import traceback
-from Entry import Entry
+from .Entry import Entry
 
 
 class Diagnostic(object):

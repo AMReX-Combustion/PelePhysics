@@ -12,7 +12,8 @@
 #
 
 
-from Binder import Binder
+from __future__ import absolute_import
+from .Binder import Binder
 
 
 class ScriptBinder(Binder):
@@ -21,7 +22,7 @@ class ScriptBinder(Binder):
     def bind(self, facility, value):
         script = file(self._resolve(value))
         context = {}
-        exec script in context
+        exec(script, context)
         component = eval("%s()" % facility, context)
         return component
 

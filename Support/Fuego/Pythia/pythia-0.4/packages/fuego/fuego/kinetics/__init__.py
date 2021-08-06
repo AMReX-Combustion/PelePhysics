@@ -12,23 +12,24 @@
 #
 
 
+from __future__ import absolute_import
 def mixture(speciesSet):
-    from Mixture import Mixture
+    from .Mixture import Mixture
     return Mixture(speciesSet)
 
 
 def mechanism(mix, proxy):
-    from Mechanism import Mechanism
+    from .Mechanism import Mechanism
     return Mechanism(mix, proxy)
 
 
 def element(symbol, atomicWeight=None):
-    from Element import Element
+    from .Element import Element
     return Element(symbol, atomicWeight)
 
 
 def species(symbol, phase, composition, thermalProperties):
-    from Species import Species
+    from .Species import Species
     return Species(symbol, phase, composition, thermalProperties)
 
 

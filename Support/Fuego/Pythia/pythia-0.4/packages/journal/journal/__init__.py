@@ -13,66 +13,67 @@
 
 # journal
 
+from __future__ import absolute_import
 def journal():
     global _theJournal
     if _theJournal is not None:
         return _theJournal
     
-    from Journal import Journal
+    from .Journal import Journal
     _theJournal = Journal("journal")
     return _theJournal
 
 # channels
 
 def firewall(name):
-    from IndexFirewall import IndexFirewall
+    from .IndexFirewall import IndexFirewall
     return IndexFirewall().diagnostic(name)
 
 
 def debug(name):
-    from IndexDebug import IndexDebug
+    from .IndexDebug import IndexDebug
     return IndexDebug().diagnostic(name)
 
 
 def info(name):
-    from IndexInfo import IndexInfo
+    from .IndexInfo import IndexInfo
     return IndexInfo().diagnostic(name)
 
 
 def warning(name):
-    from IndexWarning import IndexWarning
+    from .IndexWarning import IndexWarning
     return IndexWarning().diagnostic(name)
 
 
 def error(name):
-    from IndexError import IndexError
+    from .IndexError import IndexError
     return IndexError().diagnostic(name)
 
 
 # indices
 
 def firewallIndex():
-    from IndexFirewall import IndexFirewall
+    from .IndexFirewall import IndexFirewall
     return IndexFirewall()
 
 
 def debugIndex():
-    from IndexDebug import IndexDebug
+    from .IndexDebug import IndexDebug
     return IndexDebug()
 
 
 def infoIndex():
-    from IndexInfo import IndexInfo
+    from .IndexInfo import IndexInfo
     return IndexInfo()
 
 
 def warningIndex():
-    from IndexWarning import IndexWarning
+    from .IndexWarning import IndexWarning
     return IndexWarning()
 
 
 def errorIndex():
-    from IndexError import IndexError
+    from .IndexError import IndexError
     return IndexError()
 
 
@@ -81,10 +82,10 @@ def errorIndex():
 def remote(port, host="localhost", mode="udp"):
 
     if mode == "udp":
-        from UDPDevice import UDPDevice
+        from .UDPDevice import UDPDevice
         device = UDPDevice(port, host)
     else:
-        from Console import Console
+        from .Console import Console
         device = Console()
         
     journal().device = device

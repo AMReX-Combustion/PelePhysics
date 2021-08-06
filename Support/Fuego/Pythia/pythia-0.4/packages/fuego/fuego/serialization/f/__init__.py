@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 #                               Michael A.G. Aivazis
@@ -15,7 +16,7 @@ def format():
 
 
 def pickler():
-    from FPickler import FPickler
+    from .FPickler import FPickler
     return FPickler()
 
 

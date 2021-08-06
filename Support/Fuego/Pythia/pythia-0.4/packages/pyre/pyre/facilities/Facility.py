@@ -12,6 +12,7 @@
 #
 
 
+from __future__ import absolute_import
 from pyre.inventory.Trait import Trait
 
 
@@ -26,7 +27,7 @@ class Facility(Trait):
         self.type = "facility"
 
         if binder is None:
-            from ScriptBinder import ScriptBinder
+            from .ScriptBinder import ScriptBinder
             binder = ScriptBinder()
         self.binder = binder
         

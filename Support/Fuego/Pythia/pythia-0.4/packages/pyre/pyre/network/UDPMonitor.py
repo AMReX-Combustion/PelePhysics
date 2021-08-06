@@ -11,7 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
-from Monitor import Monitor
+from __future__ import absolute_import
+from .Monitor import Monitor
 
 
 class UDPMonitor(Monitor):

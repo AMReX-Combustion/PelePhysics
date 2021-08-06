@@ -12,6 +12,8 @@
 # 
 
 
+from builtins import map
+from builtins import object
 class Nodal(object):
 
 

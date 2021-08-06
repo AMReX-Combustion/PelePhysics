@@ -12,9 +12,10 @@
 # 
 
 
+from __future__ import absolute_import
 import journal
 from pyre.parsing.Locator import Locator
-from Node import Node
+from .Node import Node
 
 
 class DocumentNode(Node):

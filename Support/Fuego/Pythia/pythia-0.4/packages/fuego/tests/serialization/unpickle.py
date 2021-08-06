@@ -10,6 +10,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
 import pyre
 
 
@@ -26,15 +27,15 @@ def load(options):
 
     timer = pyre.timers.timer("chemkin-unpickle")
     if not format:
-        print "Loading '%s'" % (file)
+        print("Loading '%s'" % (file))
     else:
-        print "Loading '%s'; assuming '%s' format" % (file, format)
+        print("Loading '%s'; assuming '%s' format" % (file, format))
 
     timer.start()
     mechanism = pyre.chemistry.serialization.load(file, format)
     timer.stop()
 
-    print "Done loading '%s' (%g sec)" % (file, timer.read())
+    print("Done loading '%s' (%g sec)" % (file, timer.read()))
 
     if mechanism:
         mechanism.dump()
@@ -49,11 +50,11 @@ def usage(program):
     formats = pyre.chemistry.serialization.unpicklers().registered()
     supported = "|".join(formats)
     
-    print "Usage: %s [options ...]" % program
-    print "Options: (default values in brackets)"
-    print "    --file=<mechanism filename> [%s]" % defaults["--file"]
-    print "    --format=<%s> [%s]" % (supported, defaults["--format"])
-    print
+    print("Usage: %s [options ...]" % program)
+    print("Options: (default values in brackets)")
+    print("    --file=<mechanism filename> [%s]" % defaults["--file"])
+    print("    --format=<%s> [%s]" % (supported, defaults["--format"]))
+    print()
     return
         
 

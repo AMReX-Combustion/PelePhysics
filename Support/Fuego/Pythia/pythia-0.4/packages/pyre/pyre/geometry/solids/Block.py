@@ -11,7 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Primitive import Primitive
+from __future__ import absolute_import
+from .Primitive import Primitive
 
 
 class Block(Primitive):

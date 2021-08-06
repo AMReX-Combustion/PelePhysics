@@ -10,8 +10,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 import os
-import serialization
+from . import serialization
 
 
 def mixture(speciesSet, type="pyre"):

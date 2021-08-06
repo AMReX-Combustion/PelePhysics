@@ -12,7 +12,8 @@
 # 
 
 
-from Declaration import Declaration
+from __future__ import absolute_import
+from .Declaration import Declaration
 
 
 class ClassDeclaration(Declaration):

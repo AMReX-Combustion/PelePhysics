@@ -12,7 +12,8 @@
 # 
 
 
-from BodyWeaver import BodyWeaver
+from __future__ import absolute_import
+from .BodyWeaver import BodyWeaver
 
 
 class StandardBody(BodyWeaver):

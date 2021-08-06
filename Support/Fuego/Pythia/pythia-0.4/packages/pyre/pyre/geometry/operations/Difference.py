@@ -11,7 +11,9 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Binary import Binary
+from __future__ import absolute_import
+from builtins import str
+from .Binary import Binary
 
 
 class Difference(Binary):

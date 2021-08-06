@@ -11,7 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Property import Property
+from __future__ import absolute_import
+from builtins import str
+from .Property import Property
 
 
 class String(Property):

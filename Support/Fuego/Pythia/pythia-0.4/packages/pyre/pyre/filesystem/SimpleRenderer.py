@@ -12,7 +12,9 @@
 # 
 
 
-from Inspector import Inspector
+from __future__ import print_function
+from __future__ import absolute_import
+from .Inspector import Inspector
 
 
 class SimpleRenderer(Inspector):
@@ -73,7 +75,7 @@ class SimpleRenderer(Inspector):
 
 
     def _render(self, node, code):
-        print "%s(%s) %s" % (self._INDENT*self._indent, code, node.name)
+        print("%s(%s) %s" % (self._INDENT*self._indent, code, node.name))
         return
 
 

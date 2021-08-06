@@ -29,7 +29,7 @@ class Property(Trait):
         value = self._cast(value)
         v = self.validator
         if v and not v(value):
-            raise ValueError, "value '%s' rejected by the '%s' validator" % (value, self.name)
+            raise ValueError("value '%s' rejected by the '%s' validator" % (value, self.name))
             
         instance.__dict__[self.mangled] = value
         return

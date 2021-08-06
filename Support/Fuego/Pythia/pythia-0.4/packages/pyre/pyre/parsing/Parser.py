@@ -12,6 +12,8 @@
 # 
 
 
+from builtins import str
+from builtins import object
 class Parser(object):
 
 
@@ -23,7 +25,7 @@ class Parser(object):
         try:
             self._parse(scanner, tokenizer)
 
-        except scanner.TokenizationException, error:
+        except scanner.TokenizationException as error:
             msg = "-*- tokenization exception -*-"
             self._info.log(msg)
             self.onError(str(error), tokenizer.locator())

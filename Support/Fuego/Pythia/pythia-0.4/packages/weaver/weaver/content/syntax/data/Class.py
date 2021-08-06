@@ -12,7 +12,8 @@
 # 
 
 
-from Type import Type
+from __future__ import absolute_import
+from .Type import Type
 
 
 class Class(Type):

@@ -12,7 +12,8 @@
 #
 
 
-class Declaration:
+from builtins import object
+class Declaration(object):
 
 
     def __init__(self, locator):

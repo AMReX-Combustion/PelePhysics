@@ -11,6 +11,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 from pyre.components.Component import Component
 
 
@@ -39,7 +40,7 @@ class Device(Component):
 
     class Inventory(Component.Inventory):
 
-        from RendererFacility import RendererFacility
+        from .RendererFacility import RendererFacility
 
         inventory = (
             RendererFacility(),

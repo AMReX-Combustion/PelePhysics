@@ -11,11 +11,13 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
+from __future__ import division
 import pyre
 from pyre.handbook.units.SI import kelvin
 
 
-from RateCalculator import RateCalculator
+from .RateCalculator import RateCalculator
 
 
 class ReverseRate(RateCalculator):

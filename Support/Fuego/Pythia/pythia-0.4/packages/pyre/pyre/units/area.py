@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from length import meter, centimeter, inch, foot, mile
+from __future__ import absolute_import
+from .length import meter, centimeter, inch, foot, mile
 
 
 #

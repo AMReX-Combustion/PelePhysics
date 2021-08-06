@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from SI import watt, kilo
+from __future__ import absolute_import
+from .SI import watt, kilo
 
 #
 # Definitions of common power units

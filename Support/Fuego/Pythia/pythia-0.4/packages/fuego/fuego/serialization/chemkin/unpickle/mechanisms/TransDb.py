@@ -12,7 +12,8 @@
 #
 
 
-class TransDb:
+from builtins import object
+class TransDb(object):
 
 
     def all(self, flag=None):

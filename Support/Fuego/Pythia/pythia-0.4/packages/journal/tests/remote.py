@@ -11,6 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import print_function
+from builtins import range
 import pyre
 import journal
 
@@ -62,7 +64,7 @@ def server(port, timeout):
     while 1:
         reads, writes, excepts = select.select([s], [], [], timeout)
         if not reads:
-            print " -- timeout"
+            print(" -- timeout")
             continue
         
         entry = pickle.load(file)
@@ -90,23 +92,23 @@ def client(host, port, sleep):
 
 def usage(program):
 
-    print "Usage: %s [options ...]" % program
-    print "Options: (default values in brackets)"
+    print("Usage: %s [options ...]" % program)
+    print("Options: (default values in brackets)")
 
     # connection
-    print "  connection:"
-    print "    --host=<address> [%s]" % defaults["host"]
-    print "    --port=<int> [%s]" % defaults["port"]
+    print("  connection:")
+    print("    --host=<address> [%s]" % defaults["host"])
+    print("    --port=<int> [%s]" % defaults["port"])
 
     # control
-    print "  control:"
-    print "    --sleep=<double> [%s]" % defaults["sleep"]
-    print "    --timeout=<double> [%s]" % defaults["timeout"]
+    print("  control:")
+    print("    --sleep=<double> [%s]" % defaults["sleep"])
+    print("    --timeout=<double> [%s]" % defaults["timeout"])
 
     # advanced
-    print "  advanced:"
-    print "    --client=<bool> [%s]" % defaults["client"]
-    print "    --server=<bool> [%s]" % defaults["server"]
+    print("  advanced:")
+    print("    --client=<bool> [%s]" % defaults["client"])
+    print("    --server=<bool> [%s]" % defaults["server"])
 
     return
         

@@ -12,7 +12,8 @@
 #
 
 
-class ThermoDb:
+from builtins import object
+class ThermoDb(object):
 
 
     def all(self, flag=None):

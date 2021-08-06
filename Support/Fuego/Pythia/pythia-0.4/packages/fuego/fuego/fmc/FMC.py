@@ -11,6 +11,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
 from pyre.applications.Application import Application
 
 
@@ -34,31 +35,31 @@ class FMC(Application):
 
         timer = pyre.monitors.timer("fuego")
         if not input:
-            print "\nLoading '%s' as input file" % (mechanismFile)
+            print("\nLoading '%s' as input file" % (mechanismFile))
         else:
-            print "\nLoading '%s' using '%s' parser" % (mechanismFile, input)
+            print("\nLoading '%s' using '%s' parser" % (mechanismFile, input))
 
         timer.start()
 
         mechanism = fuego.serialization.mechanism()
         if thermo:
-            print "Loading '%s' as thermo file" % (thermo)
+            print("Loading '%s' as thermo file" % (thermo))
             mechanism.externalThermoDatabase(thermo)
         if trans:
-            print "Loading '%s' as thermo file" % (trans)
+            print("Loading '%s' as thermo file" % (trans))
             mechanism.externalTransDatabase(trans)
         mechanism = fuego.serialization.load(
             filename=mechanismFile, format=input, mechanism=mechanism)
     
-        print "... done (%g sec)" % timer.stop()
+        print("... done (%g sec)" % timer.stop())
 
         timer.reset()
         timer.start()
-        print "\nConverting into '%s' format" % output
+        print("\nConverting into '%s' format" % output)
         lines        = fuego.serialization.save(mechanism, output)
-        print "... done (%g sec)" % timer.stop()
+        print("... done (%g sec)" % timer.stop())
 
-        print "saving in '%s' (header) and '%s'" % (mech_header, save),
+        print("saving in '%s' (header) and '%s'" % (mech_header, save), end=' ')
         timer.reset()
         timer.start()
         outputFile = self._openOutput(save)
@@ -76,7 +77,7 @@ class FMC(Application):
             outputFileHeader.write(line)
             outputFileHeader.write('\n')
 
-        print "... done (%g sec)" % timer.stop()
+        print("... done (%g sec)" % timer.stop())
 
         return
 
@@ -91,7 +92,7 @@ class FMC(Application):
             import sys
             return sys.stdout
 
-        return file(name, "w")
+        return open(name, "w")
 
 
     class Inventory(Application.Inventory):

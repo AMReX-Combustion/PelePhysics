@@ -16,8 +16,10 @@
 # so I placed a Firewall in the constructor
 #
 
-from Token import Token
-from RegularExpressions import namedNumbers_3
+from __future__ import absolute_import
+from builtins import map
+from .Token import Token
+from .RegularExpressions import namedNumbers_3
 
 
 class ArrheniusCoefficients(Token):
@@ -36,10 +38,10 @@ class ArrheniusCoefficients(Token):
         import pyre
         pyre.debug.Firewall.hit("arrhenius coefficients token")
 
-        numbers = map(groups.get, arrhenius)
+        numbers = list(map(groups.get, arrhenius))
 
         try:
-            self.parameters = map(float, numbers)
+            self.parameters = list(map(float, numbers))
         except ValueError:
             # this can't happen because the regexp requires three floats
             import pyre

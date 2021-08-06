@@ -10,6 +10,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
 import pyre
 
 
@@ -20,9 +21,9 @@ def test():
 
     for symbol in symbols:
         element = pyre.chemistry.mechanisms.element(symbol)
-        print
-        print "%s - atomic weight: %g" % (symbol, element.atomicWeight())
-        print "Periodic table: %s" % pyre.handbook.periodicTable().symbol(symbol)
+        print()
+        print("%s - atomic weight: %g" % (symbol, element.atomicWeight()))
+        print("Periodic table: %s" % pyre.handbook.periodicTable().symbol(symbol))
 
     return
 

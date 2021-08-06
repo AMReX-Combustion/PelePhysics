@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Declaration import Declaration
+from __future__ import absolute_import
+from .Declaration import Declaration
 
 
 class TransDeclaration(Declaration):
@@ -34,7 +35,7 @@ class TransDeclaration(Declaration):
             str += ", phase=%s" % self.phase
 
         if self.composition:
-            str += ", composition=%s" % `self.composition`
+            str += ", composition=%s" % repr(self.composition)
 
         str += ", " + Declaration.__str__(self)
 

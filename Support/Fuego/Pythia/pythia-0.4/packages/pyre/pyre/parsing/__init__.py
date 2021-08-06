@@ -12,8 +12,9 @@
 # 
 
 
+from __future__ import absolute_import
 def tokenizer(file):
-    from Tokenizer import Tokenizer
+    from .Tokenizer import Tokenizer
     return Tokenizer(file)
 
 

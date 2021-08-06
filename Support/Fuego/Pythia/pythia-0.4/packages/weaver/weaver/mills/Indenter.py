@@ -12,6 +12,7 @@
 # 
 
 
+from builtins import object
 class Indenter(object):
 
 

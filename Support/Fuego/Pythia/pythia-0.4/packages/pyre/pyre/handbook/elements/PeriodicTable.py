@@ -12,8 +12,11 @@
 #
 
 """create the singleton thePeriodicTable and populate it with the known elements"""
+from __future__ import absolute_import
 
 
+from builtins import range
+from builtins import object
 class PeriodicTable(object):
 
 
@@ -36,7 +39,7 @@ class PeriodicTable(object):
 
 
     def __init__(self):
-        from elements import elements
+        from .elements import elements
 
         self._atomicNumberIndex = elements
         self._nameIndex = createNameIndex(elements)

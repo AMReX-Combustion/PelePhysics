@@ -12,9 +12,10 @@
 #
 
 
+from __future__ import absolute_import
 def renderer(mode="pml"):
     if mode == "pml":
-        from pml.Renderer import Renderer
+        from .pml.Renderer import Renderer
         renderer = Renderer()
     else:
         renderer = None
@@ -26,7 +27,7 @@ def renderer(mode="pml"):
 
 def parser(mode="pml"):
     if mode == "pml":
-        from pml.Parser import Parser
+        from .pml.Parser import Parser
         parser = Parser()
     else:
         parser = None

@@ -10,6 +10,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
 import pyre
 
 
@@ -24,13 +25,13 @@ def load(options):
     format = options["--format"]
 
     timer = pyre.timers.timer("chemkin-unpickle")
-    print "Loading '%s'; assuming '%s' format" % (file, format)
+    print("Loading '%s'; assuming '%s' format" % (file, format))
 
     timer.start()
     db = pyre.chemistry.serialization.loadThermoDatabase(file, format)
     timer.stop()
 
-    print "Done loading '%s' (%g sec)" % (file, timer.read())
+    print("Done loading '%s' (%g sec)" % (file, timer.read()))
 
     if db:
         db.dump()
@@ -45,11 +46,11 @@ def usage(program):
     formats = pyre.chemistry.serialization.unpicklers().registered()
     supported = "|".join(formats)
     
-    print "Usage: %s [options ...]" % program
-    print "Options: (default values in brackets)"
-    print "    --file=<mechanism filename> [%s]" % defaults["--file"]
-    print "    --format=<%s> [%s]" % (supported, defaults["--format"])
-    print
+    print("Usage: %s [options ...]" % program)
+    print("Options: (default values in brackets)")
+    print("    --file=<mechanism filename> [%s]" % defaults["--file"])
+    print("    --format=<%s> [%s]" % (supported, defaults["--format"]))
+    print()
     return
         
 

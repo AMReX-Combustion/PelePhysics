@@ -11,7 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from BaseParser import BaseParser
+from __future__ import absolute_import
+from builtins import str
+from .BaseParser import BaseParser
 
 
 class QssSpecies(BaseParser):
@@ -23,7 +25,7 @@ class QssSpecies(BaseParser):
         try:
             qss_species = self._mechanism.newQssSpecies(token.name, self.locator())
 
-        except self._mechanism.DuplicateQssSpecies, msg:
+        except self._mechanism.DuplicateQssSpecies as msg:
             self.onWarning(str(msg), self.locator())
         
         return 0

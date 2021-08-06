@@ -12,8 +12,9 @@
 #
 
 
+from __future__ import absolute_import
 import pyre.util.range
-from Property import Property
+from .Property import Property
 
 
 class Sequence(Property):

@@ -12,6 +12,7 @@
 #
 
 
+from builtins import object
 class Registry(object):
 
 
@@ -44,12 +45,12 @@ class Registry(object):
 
         listing = [
             ("%s.%s" % (self.name, name), value)
-            for name, value in self.properties.iteritems()
+            for name, value in self.properties.items()
             ]
 
         listing += [
             ("%s.%s" % (self.name, name), value)
-            for facility in self.facilities.itervalues()
+            for facility in self.facilities.values()
             for name, value in facility.list() 
             ]
 

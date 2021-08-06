@@ -12,6 +12,7 @@
 # 
 
 
+from __future__ import absolute_import
 def format():
     return "native"
 
@@ -21,12 +22,12 @@ def extensions():
 
 
 def parser():
-    from NativeParser import NativeParser
+    from .NativeParser import NativeParser
     return NativeParser()
 
 
 def pickler():
-    from NativePickler import NativePickler
+    from .NativePickler import NativePickler
     return NativePickler()
 
 

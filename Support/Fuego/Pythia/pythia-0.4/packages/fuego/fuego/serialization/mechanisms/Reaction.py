@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Entity import Entity
+from __future__ import absolute_import
+from .Entity import Entity
 
 
 class Reaction(Entity):

@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Entity import Entity
+from __future__ import absolute_import
+from .Entity import Entity
 
 
 class QssSpecies(Entity):
@@ -19,7 +20,7 @@ class QssSpecies(Entity):
 
     def thermalParametrization(self, type, lowT, highT, locator, parameters):
         if type == "NASA":
-            from NASA import NASA
+            from .NASA import NASA
             model = NASA(lowT, highT, locator)
             model.parameters = parameters
         else:
@@ -32,7 +33,7 @@ class QssSpecies(Entity):
 
     def transParametrization(self, type, EPS, SIG, DIP, POL, ZROT, locator, parameters):
         #if type == "0":
-        from TRANLIN import TRANLIN
+        from .TRANLIN import TRANLIN
         model = TRANLIN(EPS, SIG, DIP, POL, ZROT, locator)
         model.parameters = parameters
         #elif type == "1":

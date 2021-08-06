@@ -11,6 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
+from builtins import range
 def serve(port=8091):
     return
 
@@ -68,10 +70,10 @@ if __name__ == "__main__":
     nodelist = refresh()
     machinefile(nodelist)
     
-    print "%3d" % len(nodelist), "nodes:",
+    print("%3d" % len(nodelist), "nodes:", end=' ')
     for node, load in nodelist:
-        print node,
-    print
+        print(node, end=' ')
+    print()
 
 
 # version

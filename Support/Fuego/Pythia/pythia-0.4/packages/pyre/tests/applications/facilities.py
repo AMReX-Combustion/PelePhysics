@@ -12,6 +12,7 @@
 #
 
 
+from __future__ import print_function
 import pyre.properties
 from pyre.components.Component import Component
 from pyre.applications.Application import Application
@@ -47,7 +48,7 @@ class HelloApp(Application):
 
 
     def run(self):
-        print "property='%s'" % (self.inventory.facility.value())
+        print("property='%s'" % (self.inventory.facility.value()))
         self._debug.log("journal: '%s'" % self.inventory.journal)
         return
 

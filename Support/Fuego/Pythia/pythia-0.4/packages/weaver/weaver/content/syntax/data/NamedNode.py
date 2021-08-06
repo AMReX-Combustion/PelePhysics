@@ -12,7 +12,8 @@
 # 
 
 
-class NamedNode:
+from builtins import object
+class NamedNode(object):
 
 
     def name(self):

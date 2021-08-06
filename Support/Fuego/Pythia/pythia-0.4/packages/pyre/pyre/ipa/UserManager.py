@@ -12,6 +12,8 @@
 # 
 
 
+from past.builtins import execfile
+from builtins import str
 from pyre.components.Component import Component
 
 
@@ -41,7 +43,7 @@ class UserManager(Component):
 
     def pickle(self):
         text = [ 'users = [' ]
-        text += [ '    ("%s", "%s"),' % record for record in self._users.items() ]
+        text += [ '    ("%s", "%s"),' % record for record in list(self._users.items()) ]
         text += [ '    ]' ]
 
         return text
@@ -88,13 +90,13 @@ class UserManager(Component):
             users = context["users"]
             method = context.get("method", "crypt")
 
-        except EnvironmentError, error:
+        except EnvironmentError as error:
             self._info.log("EnvironmentError: {%s}" % str(error))
             return
-        except LookupError, error:
+        except LookupError as error:
             self._info.log("LookupError: {%s}" % str(error))
             return
-        except StandardError, error:
+        except Exception as error:
             self._info.log("StandardError: {%s}" % str(error))
             return
 

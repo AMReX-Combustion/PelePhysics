@@ -11,8 +11,9 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 import pyre.geometry.operations
-from Transformation import Transformation
+from .Transformation import Transformation
 
 
 class Rotation(Transformation):
@@ -32,7 +33,7 @@ class Rotation(Transformation):
 
     def notify(self, parent):
         if not self._body:
-            raise "Not enough arguments for rotation"
+            raise Exception("Not enough arguments for rotation")
         rotation = pyre.geometry.operations.rotate(
             body=self._body, vector=self._vector, angle=self._angle)
         parent.onRotation(rotation)

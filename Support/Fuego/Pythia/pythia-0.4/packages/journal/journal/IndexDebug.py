@@ -12,7 +12,8 @@
 # 
 
 
-from Index import Index
+from __future__ import absolute_import
+from .Index import Index
 
 
 class IndexDebug(Index):

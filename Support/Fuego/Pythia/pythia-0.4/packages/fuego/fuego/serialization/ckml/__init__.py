@@ -12,6 +12,7 @@
 # 
 
 
+from __future__ import absolute_import
 def format():
     return "ckml"
 
@@ -21,12 +22,12 @@ def extensions():
 
 
 def parser():
-    from unpickle.CkmlParser import CkmlParser
+    from .unpickle.CkmlParser import CkmlParser
     return CkmlParser()
 
 
 def pickler():
-    from pickle.CkmlPickler import CkmlPickler
+    from .pickle.CkmlPickler import CkmlPickler
     return CkmlPickler()
 
 

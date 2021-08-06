@@ -10,6 +10,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
 import pyre
 
 
@@ -22,21 +23,21 @@ def save(options):
 
     timer = pyre.timers.timer("chemkin-unpickle")
     if not input:
-        print "Loading '%s'" % (mechanismFile),
+        print("Loading '%s'" % (mechanismFile), end=' ')
     else:
-        print "Loading '%s' using '%s' parser" % (mechanismFile, input),
+        print("Loading '%s' using '%s' parser" % (mechanismFile, input), end=' ')
 
     timer.start()
     mechanism = pyre.chemistry.serialization.load(mechanismFile, input)
-    print "... done (%g sec)" % timer.stop()
+    print("... done (%g sec)" % timer.stop())
 
     timer.reset()
     timer.start()
-    print "Converting into '%s' format" % output,
+    print("Converting into '%s' format" % output, end=' ')
     lines = pyre.chemistry.serialization.save(mechanism, output)
-    print "... done (%g sec)" % timer.stop()
+    print("... done (%g sec)" % timer.stop())
 
-    print "saving in '%s' ..." % save
+    print("saving in '%s' ..." % save)
     outputFile = openOutput(save)
     for line in lines:
         outputFile.write(line)
@@ -59,13 +60,13 @@ def usage(program):
     inputs = '|'.join(pyre.chemistry.serialization.unpicklers().registered())
     outputs = '|'.join(pyre.chemistry.serialization.picklers().registered())
     
-    print "Usage: %s [options ...]" % program
-    print "Options: (default values in brackets)"
-    print "    --file=<output filename> [%s]" % defaults["--file"]
-    print "    --mechanism=<mechanism filename> [%s]" % defaults["--mechanism"]
-    print "    --input=<%s> [%s]" % (inputs, defaults["--input"])
-    print "    --output=<%s> [%s]" % (outputs, defaults["--output"])
-    print
+    print("Usage: %s [options ...]" % program)
+    print("Options: (default values in brackets)")
+    print("    --file=<output filename> [%s]" % defaults["--file"])
+    print("    --mechanism=<mechanism filename> [%s]" % defaults["--mechanism"])
+    print("    --input=<%s> [%s]" % (inputs, defaults["--input"]))
+    print("    --output=<%s> [%s]" % (outputs, defaults["--output"]))
+    print()
     return
         
 

@@ -11,8 +11,10 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from SI import kilogram
-from SI import kilo, centi, milli
+from __future__ import absolute_import
+from __future__ import division
+from .SI import kilogram
+from .SI import kilo, centi, milli
 
 #
 # Definitions of common mass units

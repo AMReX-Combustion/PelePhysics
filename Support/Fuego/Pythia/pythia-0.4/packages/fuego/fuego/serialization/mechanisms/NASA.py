@@ -11,7 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
-from Thermodynamics import Thermodynamics
+from __future__ import absolute_import
+from .Thermodynamics import Thermodynamics
 
 
 class NASA(Thermodynamics):

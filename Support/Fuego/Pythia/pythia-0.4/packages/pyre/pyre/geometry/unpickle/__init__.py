@@ -12,9 +12,10 @@
 #
 
 
+from __future__ import absolute_import
 def pml(file):
     import pyre.xml
-    from pml.Document import Document
+    from .pml.Document import Document
 
     parser = pyre.xml.parser()
     parser.parse(file, Document(file.name))

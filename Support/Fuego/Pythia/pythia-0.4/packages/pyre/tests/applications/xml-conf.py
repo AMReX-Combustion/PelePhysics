@@ -59,7 +59,7 @@ class HelloApp(Application):
 
         name = self.inventory.file
         if name:
-            out = file(name, "w")
+            out = open(name, "w")
         else:
             import sys
             out = sys.stdout

@@ -12,8 +12,9 @@
 # 
 
 
-from Weaver import Weaver
-from FormField import FormField
+from __future__ import absolute_import
+from .Weaver import Weaver
+from .FormField import FormField
 
 class FormWeaver(Weaver):
 

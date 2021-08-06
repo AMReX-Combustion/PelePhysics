@@ -63,7 +63,7 @@ class CommandlineParser(Component):
 
             # check for assignment
             tokens = candidate.split(self.assignment)
-            self._debug.line("    tokens: %s" % `candidate`)
+            self._debug.line("    tokens: %s" % repr(candidate))
 
             # dangling =
             if len(tokens) > 1 and not tokens[1]:
@@ -93,7 +93,7 @@ class CommandlineParser(Component):
         separator = self.separator
         fields = key.split(separator)
 
-        self._debug.line("    sub: fields=%s" % `fields`)
+        self._debug.line("    sub: fields=%s" % repr(fields))
         node = root
         for field in fields[:-1]:
             self._debug.line("    tokens: looking for node '%s'" % field)

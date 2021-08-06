@@ -12,7 +12,8 @@
 # 
 
 
-from File import File
+from __future__ import absolute_import
+from .File import File
 
 
 class Directory(File):
@@ -36,12 +37,12 @@ class Directory(File):
     def expand(self):
 
         import stat
-        from BlockDevice import BlockDevice
-        from CharacterDevice import CharacterDevice
-        from File import File
-        from Link import Link
-        from NamedPipe import NamedPipe
-        from Socket import Socket
+        from .BlockDevice import BlockDevice
+        from .CharacterDevice import CharacterDevice
+        from .File import File
+        from .Link import Link
+        from .NamedPipe import NamedPipe
+        from .Socket import Socket
 
         subdirectories = []
 
@@ -50,7 +51,7 @@ class Directory(File):
 
         for name in children:
 
-            if self._children.has_key(name): continue
+            if name in self._children: continue
             
             pathname = os.path.join(self.fullname(), name)
             # PORTABILITY: lstat is unix only

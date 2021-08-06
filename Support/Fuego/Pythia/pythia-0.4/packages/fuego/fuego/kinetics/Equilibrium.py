@@ -11,6 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import division
+from builtins import object
 import pyre
 import operator
 from math import exp
@@ -21,7 +23,7 @@ R = pyre.handbook.constants.fundamental.gas_constant
 _refP = atm/R
 
 
-class Equilibrium:
+class Equilibrium(object):
 
 
     def __init__(self, reagents, dim):

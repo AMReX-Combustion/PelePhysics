@@ -12,6 +12,8 @@
 #
 
 
+from __future__ import print_function
+from builtins import object
 class Trait(object):
 
 
@@ -36,7 +38,7 @@ class Trait(object):
 
 
     def __del__(self):
-        print "Trait.__del__: deleted '%s'" % name
+        # print("Trait.__del__: deleted '%s'" % self.name)
         return
 
 

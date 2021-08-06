@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from PeriodicTable import periodicTable
+from __future__ import absolute_import
+from .PeriodicTable import periodicTable
 
 
 # version

@@ -10,6 +10,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
 import pyre
 
 
@@ -25,19 +26,19 @@ def save(options):
     mechanismFile = options["--mechanism"]
 
     timer = pyre.timers.timer("chemkin-unpickle")
-    print "Loading '%s' using '%s' parser" % (mechanismFile, input),
+    print("Loading '%s' using '%s' parser" % (mechanismFile, input), end=' ')
 
     timer.start()
     mechanism = pyre.chemistry.serialization.load(mechanismFile, input)
-    print "... done (%g sec)" % timer.stop()
+    print("... done (%g sec)" % timer.stop())
 
     timer.reset()
     timer.start()
-    print "Converting into '%s' format" % output,
+    print("Converting into '%s' format" % output, end=' ')
     lines = pyre.chemistry.serialization.save(mechanism, output)
-    print "... done (%g sec)" % timer.stop()
+    print("... done (%g sec)" % timer.stop())
 
-    print "saving in '%s' ..." % save
+    print("saving in '%s' ..." % save)
     outputFile = openOutput(save)
     for line in lines:
         outputFile.write(line)
@@ -61,13 +62,13 @@ def usage(program):
     inputs = '|'.join(pyre.chemistry.serialization.unpicklers().registered())
     outputs = '|'.join(pyre.chemistry.serialization.picklers().registered())
     
-    print "Usage: %s [options ...]" % program
-    print "Options: (default values in brackets)"
-    print "    --file=<output filename> [%s]" % defaults["--file"]
-    print "    --mechanism=<mechanism filename> [%s]" % defaults["--mechanism"]
-    print "    --input=<%s> [%s]" % (inputs, defaults["--input"])
-    print "    --output=<%s> [%s]" % (outputs, defaults["--output"])
-    print
+    print("Usage: %s [options ...]" % program)
+    print("Options: (default values in brackets)")
+    print("    --file=<output filename> [%s]" % defaults["--file"])
+    print("    --mechanism=<mechanism filename> [%s]" % defaults["--mechanism"])
+    print("    --input=<%s> [%s]" % (inputs, defaults["--input"]))
+    print("    --output=<%s> [%s]" % (outputs, defaults["--output"]))
+    print()
     return
         
 

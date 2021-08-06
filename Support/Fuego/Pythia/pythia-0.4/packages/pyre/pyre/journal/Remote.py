@@ -12,7 +12,8 @@
 #
 
 
-from Device import Device
+from __future__ import absolute_import
+from .Device import Device
 
 
 class Remote(Device):
@@ -24,7 +25,7 @@ class Remote(Device):
         port = self.inventory.port
         mode = self.inventory.mode
 
-        import journal
+        from . import journal
         return journal.remote(port=port, host=host, mode=mode)
 
 
@@ -36,8 +37,8 @@ class Remote(Device):
     class Inventory(Device.Inventory):
 
         import pyre.properties
-        from NetRenderer import NetRenderer
-        from RendererFacility import RendererFacility
+        from .NetRenderer import NetRenderer
+        from .RendererFacility import RendererFacility
 
         inventory = (
             pyre.properties.str("host", default="localhost"),

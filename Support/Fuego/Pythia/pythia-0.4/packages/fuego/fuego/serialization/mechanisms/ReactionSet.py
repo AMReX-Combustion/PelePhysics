@@ -11,14 +11,15 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from EntitySet import EntitySet
+from __future__ import absolute_import
+from .EntitySet import EntitySet
 
 
 class ReactionSet(EntitySet):
 
 
     def reaction(self, id, locator):
-        from Reaction import Reaction
+        from .Reaction import Reaction
         reaction = Reaction(id, locator)
         self.insert(reaction, reaction)
         return reaction

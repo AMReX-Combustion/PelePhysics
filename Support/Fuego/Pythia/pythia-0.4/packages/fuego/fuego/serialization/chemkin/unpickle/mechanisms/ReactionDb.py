@@ -12,7 +12,8 @@
 #
 
 
-class ReactionDb:
+from builtins import object
+class ReactionDb(object):
 
 
     def reaction(self, reaction):

@@ -12,8 +12,9 @@
 # 
 
 
-from Mill import Mill
-from LineComments import LineComments
+from __future__ import absolute_import
+from .Mill import Mill
+from .LineComments import LineComments
 
 class LineMill(Mill, LineComments):
 

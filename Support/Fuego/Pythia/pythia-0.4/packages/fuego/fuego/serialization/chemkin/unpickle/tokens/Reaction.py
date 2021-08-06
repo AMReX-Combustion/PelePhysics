@@ -11,12 +11,15 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
+from builtins import map
+from builtins import range
 import re
 
-from Token import Token
+from .Token import Token
 
-from RegularExpressions import eol, whitespace, whitespaceOpt
-from RegularExpressions import species, coeff, namedNumbers_3
+from .RegularExpressions import eol, whitespace, whitespaceOpt
+from .RegularExpressions import species, coeff, namedNumbers_3
 
 _maxParticipants = 6 # Maximum number of species on a reaction side
 
@@ -38,7 +41,7 @@ def _makeParticipantOpt(id):
 
 
 def _makeParticipants():
-    participants = [_makeParticipant(0)] + map(_makeParticipantOpt, range(1, _maxParticipants))
+    participants = [_makeParticipant(0)] + list(map(_makeParticipantOpt, list(range(1, _maxParticipants))))
     return "".join(participants) + whitespaceOpt + eol
 
 
@@ -93,9 +96,9 @@ class Reaction(Token):
             import journal
             journal.firewall("fuego").log("Reaction: Unknown arrow '%s'" % arrow)
 
-        paramList = map(groups.get, self._paramNames)
+        paramList = list(map(groups.get, self._paramNames))
         try:
-            self.arrhenius = map(float, paramList)
+            self.arrhenius = list(map(float, paramList))
         except ValueError:
             # this can't happen because the regexp requires three floats here
             import journal

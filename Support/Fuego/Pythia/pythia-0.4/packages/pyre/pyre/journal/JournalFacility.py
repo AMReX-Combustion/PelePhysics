@@ -12,6 +12,7 @@
 #
 
 
+from __future__ import absolute_import
 from pyre.facilities.Facility import Facility
 
 
@@ -20,7 +21,7 @@ class JournalFacility(Facility):
 
     def __init__(self, default=None):
         if default is None:
-            from Journal import Journal
+            from .Journal import Journal
             default = Journal()
             
         Facility.__init__(self, name="journal", default=default)

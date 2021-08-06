@@ -12,7 +12,8 @@
 # 
 
 
-class Thermodynamics:
+from builtins import object
+class Thermodynamics(object):
 
 
     def __init__(self, lowT, highT, locator=None):

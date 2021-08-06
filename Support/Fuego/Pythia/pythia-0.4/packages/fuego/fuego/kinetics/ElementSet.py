@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from EntitySet import EntitySet
+from __future__ import absolute_import
+from .EntitySet import EntitySet
 
 
 class ElementSet(EntitySet):
@@ -24,7 +25,7 @@ class ElementSet(EntitySet):
     def __init__(self, elements):
         EntitySet.__init__(self)
         
-        from Element import Element
+        from .Element import Element
 
         for proxy in elements:
             element = Element(proxy.symbol, proxy.weight)

@@ -11,6 +11,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 from pyre.components.Component import Component
 
 
@@ -24,7 +25,7 @@ class NetRenderer(Component):
 
 
     def _init(self, parent):
-        from journal.NetRenderer import NetRenderer
+        from .journal.NetRenderer import NetRenderer
         renderer = NetRenderer()
         self.renderer = renderer
         

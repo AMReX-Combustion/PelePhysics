@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Arrhenius import Arrhenius
+from __future__ import absolute_import
+from .Arrhenius import Arrhenius
 
 
 class ThirdBody(Arrhenius):

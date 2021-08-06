@@ -12,7 +12,9 @@
 #
 
 
-from Property import Property
+from __future__ import absolute_import
+from builtins import range
+from .Property import Property
 
 
 class Dimensional(Property):
@@ -49,8 +51,8 @@ class Dimensional(Property):
             size = 0
         
         if size != self.len:
-            raise ValueError, "value '%s' is not the same shape as the default '%s'" % (
-                setting, self.default)
+            raise ValueError("value '%s' is not the same shape as the default '%s'" % (
+                setting, self.default))
         
         if self.len == 0:
             tokens = [candidate]
@@ -61,8 +63,8 @@ class Dimensional(Property):
 
         for i in range(size):
             if tokens[i].derivation != target[i].derivation:
-                raise ValueError, "dimension mismatch between input '%s' and target '%s'" % (
-                    setting, self.default)
+                raise ValueError("dimension mismatch between input '%s' and target '%s'" % (
+                    setting, self.default))
 
         return
 

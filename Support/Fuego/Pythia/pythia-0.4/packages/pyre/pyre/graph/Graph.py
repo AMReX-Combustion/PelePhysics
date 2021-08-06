@@ -11,9 +11,10 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Drawable import Drawable
-from Node import Node
-from Edge import Edge
+from __future__ import absolute_import
+from .Drawable import Drawable
+from .Node import Node
+from .Edge import Edge
 
 
 class Graph(Drawable):

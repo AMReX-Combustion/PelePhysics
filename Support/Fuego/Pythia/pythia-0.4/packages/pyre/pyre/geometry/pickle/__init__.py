@@ -12,8 +12,9 @@
 #
 
 
+from __future__ import absolute_import
 def pml(body):
-    from PMLRenderer import PMLRenderer
+    from .PMLRenderer import PMLRenderer
     return PMLRenderer().pickle(body)
 
 

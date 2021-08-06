@@ -12,7 +12,8 @@
 # 
 
 
-from BlockMill import BlockMill
+from __future__ import absolute_import
+from .BlockMill import BlockMill
 
 class HTMLMill(BlockMill):
 

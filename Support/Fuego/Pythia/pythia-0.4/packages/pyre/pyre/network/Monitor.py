@@ -11,6 +11,7 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from builtins import object
 import journal
 
 
@@ -47,7 +48,7 @@ class Monitor(object):
                 self._info.log("successfully installed at port %d" % self._port)
                 return
 
-            except socket.error, error:
+            except socket.error as error:
                 number, message = error
                 s.close()
                 self._info.log("failed to activate server at port %d: %s" % (port, message))

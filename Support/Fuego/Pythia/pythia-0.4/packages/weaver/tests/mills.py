@@ -30,7 +30,7 @@ class Stationery(Application):
             mill.initialize()
 
             if filename:
-                outfile = file(filename, "w")
+                outfile = open(filename, "w")
             else:
                 import sys
                 outfile = sys.stdout

@@ -12,6 +12,7 @@
 # 
 
 
+from builtins import range
 def sequence(spec, rangeSep='-', stepSep=':', itemSep=','):
 
     if not spec:
@@ -44,9 +45,9 @@ def sequence(spec, rangeSep='-', stepSep=':', itemSep=','):
                 step = int(stepspec[1])
                 
             if upper > lower:
-                candidates += range(lower,upper+1,step)
+                candidates += list(range(lower,upper+1,step))
             else:
-                candidates += range(lower,upper-1,-step)
+                candidates += list(range(lower,upper-1,-step))
             
     return candidates
 

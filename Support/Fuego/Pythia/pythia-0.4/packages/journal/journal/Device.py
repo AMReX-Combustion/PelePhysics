@@ -12,7 +12,9 @@
 # 
 
 
-class Device:
+from __future__ import absolute_import
+from builtins import object
+class Device(object):
 
 
     def record(self, entry):
@@ -23,7 +25,7 @@ class Device:
 
     def __init__(self, renderer=None):
         if renderer is None:
-            from Renderer import Renderer
+            from .Renderer import Renderer
             renderer = Renderer()
 
         self.renderer = renderer

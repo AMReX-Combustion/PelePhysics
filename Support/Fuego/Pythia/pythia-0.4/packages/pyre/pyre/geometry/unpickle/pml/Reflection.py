@@ -11,8 +11,9 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 import pyre.geometry.operations
-from Transformation import Transformation
+from .Transformation import Transformation
 
 
 class Reflection(Transformation):
@@ -27,7 +28,7 @@ class Reflection(Transformation):
 
     def notify(self, parent):
         if not self._body:
-            raise "Not enough arguments for reflection"
+            raise Exception("Not enough arguments for reflection")
         reflection = pyre.geometry.operations.reflect(body=self._body, vector=self._vector)
         parent.onReflection(reflection)
         return

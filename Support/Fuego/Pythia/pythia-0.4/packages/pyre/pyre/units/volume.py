@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from length import meter, centimeter, foot, inch
+from __future__ import absolute_import
+from .length import meter, centimeter, foot, inch
 
 #
 # Definitions of common volume units

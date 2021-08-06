@@ -11,8 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from rateFactory import forwardRate, reverseRate, equilibrium
-from EntitySet import EntitySet
+from __future__ import absolute_import
+from .rateFactory import forwardRate, reverseRate, equilibrium
+from .EntitySet import EntitySet
 
 
 class ReactionSet(EntitySet):
@@ -21,7 +22,7 @@ class ReactionSet(EntitySet):
     def __init__(self, mixture, reactions):
         EntitySet.__init__(self)
 
-        from Reaction import Reaction
+        from .Reaction import Reaction
 
         i = 0
         for reaction in reactions:

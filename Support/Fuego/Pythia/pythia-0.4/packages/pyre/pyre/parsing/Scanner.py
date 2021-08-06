@@ -12,6 +12,8 @@
 # 
 
 
+from __future__ import absolute_import
+from builtins import object
 class Scanner(object):
 
 
@@ -69,7 +71,7 @@ class Scanner(object):
     _debugPattern = journal.debug("pyre.parsing.scanner.pattern")
 
 
-    from TokenizationException import TokenizationException
+    from .TokenizationException import TokenizationException
 
             
 # version

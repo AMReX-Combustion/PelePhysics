@@ -11,8 +11,9 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 import pyre.geometry.operations
-from Transformation import Transformation
+from .Transformation import Transformation
 
 
 class Reversal(Transformation):
@@ -22,7 +23,7 @@ class Reversal(Transformation):
 
     def notify(self, parent):
         if not self._body:
-            raise "Not enough arguments for reversal"
+            raise Exception("Not enough arguments for reversal")
         reversal = pyre.geometry.operations.reverse(body=self._body)
         parent.onReversal(reversal)
         return

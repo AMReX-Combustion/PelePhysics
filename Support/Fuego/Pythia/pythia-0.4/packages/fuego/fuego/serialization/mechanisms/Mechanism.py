@@ -11,13 +11,20 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from builtins import zip
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import journal
 
 
 class Mechanism(object):
 
 
-    from MechanismExceptions import DuplicateElement, DuplicateSpecies, DuplicateQssSpecies, DuplicateThermalProperties
+    from .MechanismExceptions import DuplicateElement, DuplicateSpecies, DuplicateQssSpecies, DuplicateThermalProperties
 
 
     # housekeeping
@@ -36,11 +43,11 @@ class Mechanism(object):
 
 
     def printStatistics(self):
-        print "Mechanism '%s'" % self._name
-        print "    elements:", self._elements.size()
-        print "     species:", self._species.size()
-        print " qss species:", self._qss_species.size()
-        print "   reactions:", self._reactions.size()
+        print("Mechanism '%s'" % self._name)
+        print("    elements:", self._elements.size())
+        print("     species:", self._species.size())
+        print(" qss species:", self._qss_species.size())
+        print("   reactions:", self._reactions.size())
 
 
     # elements
@@ -144,7 +151,7 @@ class Mechanism(object):
 
     def reaction(self, species=None, id=None):
         if not self._sorted:
-            print '*** WARNING: reactions have not been sorted'
+            print('*** WARNING: reactions have not been sorted')
         return self._reactions.find(species, id)
 
 
@@ -226,7 +233,7 @@ class Mechanism(object):
 
         reactionmat=npy.zeros((nReactions,nSpecies))
 
-        for i,reaction in zip(range(nReactions),rset):
+        for i,reaction in zip(list(range(nReactions)),rset):
 
             agents = list(set(reaction.reactants+reaction.products))
 
@@ -337,7 +344,7 @@ class Mechanism(object):
 
     def _reorder_species_from_map(self,new_to_old_map):
 
-        from SpeciesSet import SpeciesSet
+        from .SpeciesSet import SpeciesSet
         import copy
 
         nSpecies = len(self.species())
@@ -390,7 +397,7 @@ class Mechanism(object):
 
         if(mat.shape[0] > 1):
 
-            nclus=mat.shape[0]/4
+            nclus=old_div(mat.shape[0],4)
             #nclus=2
 
             clustering = AgglomerativeClustering(n_clusters=nclus, compute_full_tree=True, affinity='l1', linkage='average')
@@ -434,7 +441,7 @@ class Mechanism(object):
                         if new_distance < best_distance: # If the path distance is an improvement,
                             route = new_route # make this the accepted best route
                             best_distance = new_distance # and update the distance corresponding to this route.
-                improvement_factor = 1 - best_distance/distance_to_beat # Calculate how much the route has improved.
+                improvement_factor = 1 - best_distance / distance_to_beat # Calculate how much the route has improved.
             return route # When the route is no longer improving substantially, stop searching and return the route.
         #===============================================================
 
@@ -475,10 +482,10 @@ class Mechanism(object):
     # other methods  
 
     def __init__(self, name=""):
-        from ElementSet    import ElementSet
-        from SpeciesSet    import SpeciesSet
-        from QssSpeciesSet import QssSpeciesSet
-        from ReactionSet   import ReactionSet
+        from .ElementSet    import ElementSet
+        from .SpeciesSet    import SpeciesSet
+        from .QssSpeciesSet import QssSpeciesSet
+        from .ReactionSet   import ReactionSet
 
         self._name = name
         self._thermdb = "therm.dat"
@@ -508,29 +515,29 @@ class Mechanism(object):
 
 
     def dump(self):
-        print
-        print "Statistics:"
-        print "-----------"
+        print()
+        print("Statistics:")
+        print("-----------")
         self.printStatistics()
 
-        print
-        print "Elements:"
-        print "---------"
+        print()
+        print("Elements:")
+        print("---------")
         for element in self.element():
-            print "%6s: %s" % (element.symbol, element)
+            print("%6s: %s" % (element.symbol, element))
             
-        print
-        print "Species:"
-        print "---------"
+        print()
+        print("Species:")
+        print("---------")
         for species in self.species():
-            print "%10s: %s" % (species.symbol, species)
+            print("%10s: %s" % (species.symbol, species))
 
-        print
-        print "Reactions:"
-        print "----------"
+        print()
+        print("Reactions:")
+        print("----------")
         i = 1
         for reaction in self.reaction():
-            print "%4d: %s" % (i, reaction)
+            print("%4d: %s" % (i, reaction))
             i += 1
 
         return

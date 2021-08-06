@@ -12,6 +12,7 @@
 # 
 
 
+from __future__ import absolute_import
 def parse(input, mode="ascii"):
 
     if mode not in _supportedModes:
@@ -21,7 +22,7 @@ def parse(input, mode="ascii"):
 
 
     if mode == "ascii":
-        from ReaderASCII import ReaderASCII as Reader
+        from .ReaderASCII import ReaderASCII as Reader
     else:
         import journal
         journal.firewall("tceplot").log("mode '%s' known but not supported" % mode)

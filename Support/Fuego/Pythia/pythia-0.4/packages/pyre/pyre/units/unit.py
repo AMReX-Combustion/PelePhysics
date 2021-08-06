@@ -11,6 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import division
+from builtins import map
+from builtins import object
 import operator
 
 
@@ -59,7 +62,31 @@ class unit(object):
         if type(other) == type(0) or type(other) == type(0.0):
             return unit(self.value/other, self.derivation)
         
-        value = self.value / other.value
+        value = self.value/ other.value
+        derivation = tuple(map(operator.sub, self.derivation, other.derivation))
+
+        if derivation == self._zero:
+            return value
+
+        return unit(value, derivation)
+
+    def __truediv__(self, other):
+        if type(other) == type(0) or type(other) == type(0.0):
+            return unit(self.value/other, self.derivation)
+
+        value = self.value/ other.value
+        derivation = tuple(map(operator.sub, self.derivation, other.derivation))
+
+        if derivation == self._zero:
+            return value
+
+        return unit(value, derivation)
+
+    def __floordiv__(self, other):
+        if type(other) == type(0) or type(other) == type(0.0):
+            return unit(self.value/other, self.derivation)
+
+        value = self.value/ other.value
         derivation = tuple(map(operator.sub, self.derivation, other.derivation))
 
         if derivation == self._zero:
@@ -109,6 +136,24 @@ class unit(object):
         
         return unit(value, derivation)
 
+    def __rtruediv__(self, other):
+        if type(other) != type(0) and type(other) != type(0.0):
+            raise InvalidOperation("/", other, self)
+
+        value = other/self.value
+        derivation = tuple(map(operator.mul, self._negativeOne, self.derivation))
+
+        return unit(value, derivation)
+
+    def __rfloordiv__(self, other):
+        if type(other) != type(0) and type(other) != type(0.0):
+            raise InvalidOperation("/", other, self)
+
+        value = other/self.value
+        derivation = tuple(map(operator.mul, self._negativeOne, self.derivation))
+
+        return unit(value, derivation)
+
 
     def __float__(self):
         if self.derivation == self._zero: return self.value
@@ -145,7 +190,7 @@ one = dimensionless = unit(1, unit._zero)
 # helpers
                           
 def _strDerivation(labels, exponents):
-    dimensions = filter(None, map(_strUnit, labels, exponents))
+    dimensions = [_f for _f in map(_strUnit, labels, exponents) if _f]
     return "*".join(dimensions)
 
 

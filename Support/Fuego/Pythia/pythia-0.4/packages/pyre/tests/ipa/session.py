@@ -12,6 +12,7 @@
 #
 
 
+from __future__ import print_function
 from pyre.applications.Application import Application
 
 
@@ -22,10 +23,10 @@ class SessionApp(Application):
         session = self.inventory.session
 
         ticket = session.login("aivazis", "mga5demo")
-        print "login: aivazis, ticket:", ticket
+        print("login: aivazis, ticket:", ticket)
  
         ticket = session.login("aivazis", "mga4demo")
-        print "login: aivazis, ticket:", ticket
+        print("login: aivazis, ticket:", ticket)
 
         return
     

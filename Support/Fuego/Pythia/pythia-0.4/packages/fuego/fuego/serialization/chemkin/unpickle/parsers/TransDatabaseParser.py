@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Trans import Trans
+from __future__ import absolute_import
+from .Trans import Trans
 
 
 class TransDatabaseParser(Trans):

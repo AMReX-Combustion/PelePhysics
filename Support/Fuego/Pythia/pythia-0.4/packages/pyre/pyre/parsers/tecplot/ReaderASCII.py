@@ -10,6 +10,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import absolute_import
+from builtins import object
 class ReaderASCII(object):
 
 
@@ -101,7 +103,7 @@ class ReaderASCII(object):
 
 
     def _readFields(self, file):
-        from Nodal import Nodal
+        from .Nodal import Nodal
 
         nodal = Nodal()
         nodal.read(self.nodes, self.variables, file)
@@ -109,7 +111,7 @@ class ReaderASCII(object):
 
 
     def _readMesh(self, file):
-        from Mesh import Mesh
+        from .Mesh import Mesh
 
         mesh = Mesh()
         mesh.read(self.simplices, file)

@@ -12,6 +12,8 @@
 # 
 
 
+from __future__ import absolute_import
+from builtins import object
 class Journal(object):
 
 
@@ -21,7 +23,7 @@ class Journal(object):
 
 
     def entry(self):
-        from Entry import Entry
+        from .Entry import Entry
         return Entry()
 
 
@@ -35,7 +37,7 @@ class Journal(object):
 
 
     def channels(self):
-        return self._channels.keys()
+        return list(self._channels.keys())
 
 
     def __init__(self, name, device=None):
@@ -43,7 +45,7 @@ class Journal(object):
         self._channels = {}
 
         if device is None:
-            from Console import Console
+            from .Console import Console
             device = Console()
         self.device = device
 

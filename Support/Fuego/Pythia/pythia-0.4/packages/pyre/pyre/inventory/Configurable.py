@@ -12,6 +12,8 @@
 #
 
 
+from __future__ import absolute_import
+from builtins import object
 class Configurable(object):
 
 
@@ -51,7 +53,7 @@ class Configurable(object):
 
     def state(self, registry=None):
         if registry is None:
-            from Registry import Registry
+            from .Registry import Registry
             registry = Registry(self.name)
             
         return self.inventory.state(registry)
@@ -80,7 +82,7 @@ class Configurable(object):
 
 
     # inventory
-    from Inventory import Inventory
+    from .Inventory import Inventory
 
 
 # version

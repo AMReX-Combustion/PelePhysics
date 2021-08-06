@@ -12,15 +12,16 @@
 #
 
 
-from Device import Device
+from __future__ import absolute_import
+from .Device import Device
 
 
 class File(Device):
 
 
     def createDevice(self):
-        from journal.File import File
-        logfile = file(self.inventory.name, "w")
+        from .journal.File import File
+        logfile = open(self.inventory.name, "w")
         return File(logfile)
 
 

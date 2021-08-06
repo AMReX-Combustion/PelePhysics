@@ -12,7 +12,8 @@
 # 
 
 
-from Weaver import Weaver
+from __future__ import absolute_import
+from .Weaver import Weaver
 
 
 class TextBlock(Weaver):

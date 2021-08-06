@@ -63,7 +63,7 @@ def _buildRegistry():
     registry = {}
 
     for module in _builtinModules:
-        exec "from %s import %s as mill" % (module, module)
+        exec("from %s import %s as mill" % (module, module))
         names = mill.names
         mills.append(names[0])
         for name in names:

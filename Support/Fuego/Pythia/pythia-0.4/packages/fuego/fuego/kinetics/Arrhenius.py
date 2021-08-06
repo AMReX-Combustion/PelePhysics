@@ -11,11 +11,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 import pyre
 from pyre.handbook.units.SI import kelvin
 
 
-from RateCalculator import RateCalculator
+from .RateCalculator import RateCalculator
 
 
 class Arrhenius(RateCalculator):

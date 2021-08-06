@@ -12,12 +12,13 @@
 # 
 
 
+from __future__ import absolute_import
 def format():
     return "html"
 
 
 def pickler():
-    from HtmlPickler import HtmlPickler
+    from .HtmlPickler import HtmlPickler
     return HtmlPickler()
 
 

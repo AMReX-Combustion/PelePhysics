@@ -12,6 +12,7 @@
 #
 
 
+from __future__ import print_function
 from pyre.applications.Application import Application
 
 
@@ -22,7 +23,7 @@ class UsersApp(Application):
         manager = self._userManager
         manager.authenticate("aivazis", "mga5demo")
         manager.authenticate("aivazis", "mga4demo")
-        print "\n".join(manager.pickle())
+        print("\n".join(manager.pickle()))
         return
     
 

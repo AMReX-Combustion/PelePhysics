@@ -11,7 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
-from Journal import Journal
+from __future__ import absolute_import
+from .Journal import Journal
 
 
 class Server(Journal):
@@ -20,9 +21,9 @@ class Server(Journal):
     def serve(self, timeout=10):
         import pickle
         import select
-        from journal.Entry import Entry
+        from .journal.Entry import Entry
 
-        import journal
+        from . import journal
         theJournal = journal.journal()
         file = self.monitor.socket.makefile("rb")
 

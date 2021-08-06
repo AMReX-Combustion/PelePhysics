@@ -11,6 +11,7 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import absolute_import
 def save(mechanism, format="chemkin"):
 
     import journal
@@ -41,28 +42,28 @@ def pickler(format="chemkin"):
 def registrar():
     global _registrar
     if not _registrar:
-        from Registrar import Registrar
+        from .Registrar import Registrar
         _registrar = Registrar()
 
-        import native
+        from . import native
         _registrar.register(native, native.format())
 
-        import chemkin
+        from . import chemkin
         _registrar.register(chemkin, chemkin.format())
 
-        import ckml
+        from . import ckml
         _registrar.register(ckml, ckml.format())
 
-        import c
+        from . import c
         _registrar.register(c, c.format())
 
-        import f
+        from . import f
         _registrar.register(f, f.format())
 
-        import html
+        from . import html
         _registrar.register(html, html.format())
 
-        import python
+        from . import python
         _registrar.register(python, python.format())
 
     return _registrar

@@ -11,6 +11,7 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from builtins import object
 import journal
 
 
@@ -78,9 +79,9 @@ class Selector(object):
         while self.state:
 
             self._info.log("constructing list of watchers")
-            iwtd = self._input.keys()
-            owtd = self._output.keys()
-            ewtd = self._exception.keys()
+            iwtd = list(self._input.keys())
+            owtd = list(self._output.keys())
+            ewtd = list(self._exception.keys())
 
             self._info.log("input: %s" % iwtd)
             self._info.log("output: %s" % owtd)

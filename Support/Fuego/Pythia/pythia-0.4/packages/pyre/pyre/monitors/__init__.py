@@ -13,8 +13,9 @@
 
 
 # timers
+from __future__ import absolute_import
 def timingCenter():
-    from TimingCenter import timingCenter
+    from .TimingCenter import timingCenter
     return timingCenter()
 
 

@@ -12,7 +12,8 @@
 # 
 
 
-from AbstractNode import AbstractNode
+from __future__ import absolute_import
+from .AbstractNode import AbstractNode
 from pyre.inventory.Registry import Registry
 
 

@@ -12,7 +12,9 @@
 # 
 
 
-class FileSystem:
+from __future__ import absolute_import
+from builtins import object
+class FileSystem(object):
 
     def root(self):
         return self._root
@@ -36,7 +38,7 @@ class FileSystem:
 
     def __init__(self, root):
         import os
-        from Directory import Directory
+        from .Directory import Directory
 
         directory = os.path.abspath(root)
         self._root = Directory(directory, None) 

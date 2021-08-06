@@ -11,7 +11,8 @@
 # 
 
 
-from SelectionWeaver import SelectionWeaver
+from __future__ import absolute_import
+from .SelectionWeaver import SelectionWeaver
 
 
 class StatesSelection(SelectionWeaver):

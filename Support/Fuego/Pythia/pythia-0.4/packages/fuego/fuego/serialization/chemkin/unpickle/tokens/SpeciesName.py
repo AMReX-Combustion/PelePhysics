@@ -11,8 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Token import Token
-from RegularExpressions import species
+from __future__ import absolute_import
+from .Token import Token
+from .RegularExpressions import species
 
 
 class SpeciesName(Token):

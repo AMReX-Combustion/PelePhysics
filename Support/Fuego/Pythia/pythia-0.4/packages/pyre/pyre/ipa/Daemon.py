@@ -11,6 +11,7 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import absolute_import
 from pyre.applications.Daemon import Daemon as BaseDaemon
 
 
@@ -67,8 +68,8 @@ class Daemon(BaseDaemon):
 
         import pyre.facilities
         import pyre.properties
-        from UserManager import UserManager
-        from SessionManager import SessionManager
+        from .UserManager import UserManager
+        from .SessionManager import SessionManager
 
         inventory = [
             pyre.properties.str("db", default="users.db"),

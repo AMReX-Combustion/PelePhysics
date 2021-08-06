@@ -12,8 +12,10 @@
 # 
 
 
-from Weaver import Weaver
-from weaver.mills.HTMLMill import HTMLMill
+from __future__ import print_function
+from __future__ import absolute_import
+from .Weaver import Weaver
+from .weaver.mills.HTMLMill import HTMLMill
 
 
 class DocumentWeaver(Weaver, HTMLMill):
@@ -35,7 +37,7 @@ class DocumentWeaver(Weaver, HTMLMill):
 
     def weave(self):
         for line in self.pickle():
-            print line
+            print(line)
         return
 
 

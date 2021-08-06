@@ -12,7 +12,8 @@
 #
 
 
-class QssSpeciesDb:
+from builtins import object
+class QssSpeciesDb(object):
 
 
     def qss_species(self, qss_species):

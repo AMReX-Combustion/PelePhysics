@@ -12,6 +12,7 @@
 #
 
 
+from __future__ import print_function
 from pyre.applications.Application import Application
 
 
@@ -19,7 +20,7 @@ class HelloApp(Application):
 
 
     def run(self):
-        print "Hello %s!" % self.inventory.name
+        print("Hello %s!" % self.inventory.name)
         self._debug.log("Hello world!")
         return
     

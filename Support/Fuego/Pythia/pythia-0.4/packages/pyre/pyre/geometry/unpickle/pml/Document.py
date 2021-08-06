@@ -11,6 +11,7 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 from pyre.xml.DocumentNode import DocumentNode
 
 
@@ -38,34 +39,34 @@ class Document(DocumentNode):
 
 def documentNodes():
 
-    from Geometry import Geometry
+    from .Geometry import Geometry
 
     # solids
-    from Block import Block
-    from Cone import Cone
-    from Cylinder import Cylinder
-    from Prism import Prism
-    from Pyramid import Pyramid
-    from Sphere import Sphere
-    from Torus import Torus
-    from GeneralizedCone import GeneralizedCone
+    from .Block import Block
+    from .Cone import Cone
+    from .Cylinder import Cylinder
+    from .Prism import Prism
+    from .Pyramid import Pyramid
+    from .Sphere import Sphere
+    from .Torus import Torus
+    from .GeneralizedCone import GeneralizedCone
 
     # compositions
-    from Difference import Difference
-    from Intersection import Intersection
-    from Union import Union
+    from .Difference import Difference
+    from .Intersection import Intersection
+    from .Union import Union
 
     # transformations
-    from Dilation import Dilation
-    from Reflection import Reflection
-    from Reversal import Reversal
-    from Rotation import Rotation
-    from Translation import Translation
+    from .Dilation import Dilation
+    from .Reflection import Reflection
+    from .Reversal import Reversal
+    from .Rotation import Rotation
+    from .Translation import Translation
 
     # data
-    from Angle import Angle
-    from Scale import Scale
-    from Vector import Vector
+    from .Angle import Angle
+    from .Scale import Scale
+    from .Vector import Vector
     
     nodes = [
         Geometry,

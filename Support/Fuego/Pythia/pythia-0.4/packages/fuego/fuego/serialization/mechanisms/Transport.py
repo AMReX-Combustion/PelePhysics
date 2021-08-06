@@ -12,7 +12,8 @@
 # 
 
 
-class Transport:
+from builtins import object
+class Transport(object):
 
 
     def __init__(self, EPS, SIG, DIP, POL, ZROT, locator=None):

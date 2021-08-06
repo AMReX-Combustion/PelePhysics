@@ -11,7 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
-from CommentingStrategy import CommentingStrategy
+from __future__ import absolute_import
+from .CommentingStrategy import CommentingStrategy
 
 
 class LineComments(CommentingStrategy):

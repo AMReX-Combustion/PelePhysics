@@ -12,12 +12,13 @@
 # 
 
 
+from __future__ import absolute_import
 def format():
     return "python"
 
 
 def pickler():
-    from PythonPickler import PythonPickler
+    from .PythonPickler import PythonPickler
     return PythonPickler()
 
 

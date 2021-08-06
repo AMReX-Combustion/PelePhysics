@@ -12,7 +12,8 @@
 # 
 
 
-from Entry import Entry
+from __future__ import absolute_import
+from .Entry import Entry
 
 
 class File(Entry):

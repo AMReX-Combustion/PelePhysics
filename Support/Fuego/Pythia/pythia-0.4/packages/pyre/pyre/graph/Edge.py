@@ -11,12 +11,13 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Drawable import Drawable
+from __future__ import absolute_import
+from .Drawable import Drawable
 
 
 def edgeAttributes():
     """return a list of valid attributes for Edge"""
-    return Edge._validAttributes.keys()
+    return list(Edge._validAttributes.keys())
 
 
 class Edge(Drawable):

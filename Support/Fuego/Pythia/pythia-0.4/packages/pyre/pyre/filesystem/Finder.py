@@ -12,7 +12,8 @@
 # 
 
 
-from Inspector import Inspector
+from __future__ import absolute_import
+from .Inspector import Inspector
 
 
 class Finder(Inspector):

@@ -11,6 +11,7 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import absolute_import
 from pyre.xml.Parser import Parser
 
 
@@ -19,7 +20,7 @@ class CkmlParser(Parser):
 
     def parse(self, mechanism, file):
         # create the document root to hand to the xml Parser
-        from Document import Document
+        from .Document import Document
         root = Document(mechanism, file.name)
         
         # parse

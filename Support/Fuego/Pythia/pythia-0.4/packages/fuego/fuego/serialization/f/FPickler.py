@@ -10,6 +10,10 @@
 # 
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
+from __future__ import print_function
+from builtins import zip
+from builtins import range
+from builtins import object
 from collections import defaultdict
 
 from weaver.mills.CMill import CMill
@@ -26,13 +30,13 @@ import sys
 import numpy as np
 
 smallnum = 1e-100
-R = 8.31451e7 * erg/mole/kelvin
+R = (8.31451e7 * erg / (mole/kelvin))
 Rc = 1.98721558317399617591 * cal/mole/kelvin
 Patm = 1013250.0
 sym  = ""
 fsym = "_"
 
-class speciesDb:
+class speciesDb(object):
     def __init__(self, id, name, mwt):
         self.id = id
         self.symbol = name
@@ -1094,7 +1098,7 @@ class FPickler(CMill):
 
         # build reverse reaction map
         rmap = {}
-        for i, reaction in zip(range(nReactions), mechanism.reaction()):
+        for i, reaction in zip(list(range(nReactions)), mechanism.reaction()):
             rmap[reaction.orig_id-1] = i
 
         for j in range(nReactions):
@@ -1181,7 +1185,7 @@ class FPickler(CMill):
             if 'd' not in mynumber: mynumber = mynumber + 'd0'
             self._write("prefactor_units(%d)  = %s" % (id,mynumber))
             aeuc = self._activationEnergyUnits(reaction.units["activation"])
-            mynumber = format(aeuc / Rc / kelvin, '.17g').replace("e","d")
+            mynumber = format((aeuc /  (Rc / kelvin)), '.17g').replace("e","d")
             if 'd' not in mynumber: mynumber = mynumber + 'd0'
             self._write("activation_units(%d) = %s" % (id,mynumber))
             self._write("phase_units(%d)      = 1d-%d" % (id,dim*6))
@@ -1383,8 +1387,8 @@ class FPickler(CMill):
         self._write('double precision, intent(out) :: ruc')
         self._write('double precision, intent(out) :: pa')
         self._write()
-        self._write('ru  = %fd0 ' % (R * mole * kelvin / erg))
-        self._write('ruc = %.20fd0 ' % (Rc * mole * kelvin / cal))
+        self._write('ru  = %fd0 ' % ((R * mole * kelvin /  erg).value))
+        self._write('ruc = %.20fd0 ' % ((Rc * mole * kelvin /  cal)))
         self._write('pa  = %fd0 ' % (Patm))
         self._outdent()
         self._write()
@@ -1552,7 +1556,7 @@ class FPickler(CMill):
 
         self._write()
         self._write('! YOW holds the reciprocal of the mean molecular wt')
-        expression = format((R*kelvin*mole/erg), '15.8e').replace("e", "d")
+        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
         self._write('P = rho *%s * T * YOW ' % expression + '! P = rho*R*T/W')
         
         self._outdent()
@@ -1705,7 +1709,7 @@ class FPickler(CMill):
         self._outdent()
         self._write('end do')
         self._write()
-        expression = format((R*kelvin*mole/erg), '15.8e').replace("e", "d")
+        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
         self._write('rho = P / (%s * T * YOW) ' % expression + '! rho = P*W/(R*T)')
         self._outdent()
         self._write()
@@ -2084,7 +2088,7 @@ class FPickler(CMill):
         self._write(
             'tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) '
             + '! temperature cache')
-        expression = format((R*kelvin*mole/erg), '15.8e').replace("e", "d")
+        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
         self._write('RT =%s * tT ' % expression + '! R*T')
         
         # call routine
@@ -2130,7 +2134,7 @@ class FPickler(CMill):
         self._write(
             'tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) '
             + '! temperature cache')
-        expression = format((R*kelvin*mole/erg), '15.8e').replace("e", "d")
+        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
         self._write(
             'RT =%s * tT ' % expression
             + '! R*T')
@@ -2187,7 +2191,7 @@ class FPickler(CMill):
         self._indent()
         self._write('do i=1, np')
         self._indent()
-        expression = format((R*kelvin*mole/erg), '15.8e').replace("e", "d")
+        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
         self._write('hms(i,n) = hms(i,n) * (%s * T(i) * imw(n))' % expression)
         self._outdent()
         self._write('end do')
@@ -2307,7 +2311,7 @@ class FPickler(CMill):
         # convert cv/R to cv with mass units
         self._write('! multiply by R/molecularweight')
         for species in self.species:
-            ROW = format((R*kelvin*mole/erg) / species.weight, '20.15e').replace("e", "d")
+            ROW = format(((R*kelvin*mole / erg) / species.weight).value, '20.15e').replace("e", "d")
             self._write('cvms(%d) = cvms(%d) * %s ' % (
                 species.id + 1, species.id + 1, ROW) + '!%s' % species.symbol)
 
@@ -2353,7 +2357,7 @@ class FPickler(CMill):
         # convert cp/R to cp with mass units
         self._write('! multiply by R/molecularweight')
         for species in self.species:
-            ROW = format((R*kelvin*mole/erg) / species.weight, '20.15e').replace("e", "d")
+            ROW = format(((R*kelvin*mole / erg)/ species.weight).value, '20.15e').replace("e", "d")
             self._write('cpms(%d) = cpms(%d) * %s ' % (
                 species.id + 1, species.id + 1, ROW) + '! %s' % species.symbol)
        
@@ -2488,7 +2492,7 @@ class FPickler(CMill):
         self._outdent()
         self._write('end do')
         self._write()
-        expression = format((R*kelvin*mole/erg), '15.8e').replace("e", "d")
+        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
         self._write('cpbs = res *%s' %  expression)
         self._outdent()
         self._write()
@@ -2580,7 +2584,7 @@ class FPickler(CMill):
                 species.id + 1, species.id + 1, species.id + 1) + '! %s' % species.symbol)
 
         self._write()
-        expression = format((R*kelvin*mole/erg), '15.8e').replace("e", "d")
+        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
         self._write('cvbs = res *%s' % expression)
         
         self._outdent()
@@ -2759,7 +2763,7 @@ class FPickler(CMill):
             'tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) '
             + '! temperature cache')
        
-        expression = format((R*kelvin*mole/erg), '15.8e').replace("e", "d")
+        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
         self._write('RT =%s * tT ' % expression + '! R*T')
         
         # call routine
@@ -4974,7 +4978,7 @@ class FPickler(CMill):
         ispecial   = self.reactionIndex[5:7]
 
         if len(self.reactionIndex) != 7:
-            print '\n\nCheck this!!!\n'
+            print('\n\nCheck this!!!\n')
             sys.exit(1)
         
         ntroe      = itroe[1]      - itroe[0]
@@ -5184,7 +5188,7 @@ class FPickler(CMill):
             else:
                 self._write("qr(%d) = 0.d0" % (i+1))
             if reaction.rev:
-                print "reaction.rev not finished"
+                print("reaction.rev not finished")
                 sys.exit(1)
 
         self._write()
@@ -6908,9 +6912,9 @@ class FPickler(CMill):
     def _prefactorUnits(self, code, exponent):
 
         if code == "mole/cm**3":
-            units = mole / cm**3
+            units = (mole /  cm**3)
         elif code == "moles":
-            units = mole / cm**3
+            units = (mole /  cm**3)
         elif code == "molecules":
             import pyre
             units = 1.0 / avogadro / cm**3
@@ -6919,18 +6923,18 @@ class FPickler(CMill):
             pyre.debug.Firewall.hit("unknown prefactor units '%s'" % code)
             return 1
 
-        return units ** exponent / second
+        return (units ** exponent /  second)
 
 
     def _activationEnergyUnits(self, code):
         if code == "cal/mole":
-            units = cal / mole
+            units = (cal /  mole)
         elif code == "kcal/mole":
-            units = kcal /mole
+            units = (kcal / mole)
         elif code == "joules/mole":
-            units = J / mole
+            units = (J /  mole)
         elif code == "kjoules/mole":
-            units = kJ / mole
+            units = (kJ /  mole)
         elif code == "kelvins":
             units = Rc * kelvin
         else:
@@ -7230,7 +7234,7 @@ class FPickler(CMill):
         if needsInvT == 2:
            self._write('invT2 = invT * invT')
 
-        for midT, speciesList in midpoints.items():
+        for midT, speciesList in list(midpoints.items()):
 
             self._write()
             self._write('! species with midpoint at T=%g kelvin' % midT)
@@ -7424,7 +7428,7 @@ class FPickler(CMill):
         AtoCM = 1.0e-8
         DEBYEtoCGS = 1.0e-18
         #temperature increment  
-        dt = (self.highT-self.lowT) / (NTFit-1)
+        dt = (self.highT-self.lowT)/ (NTFit-1)
         #factor dependent upon the molecule
         m_crot = np.zeros(self.nSpecies)
         m_cvib = np.zeros(self.nSpecies)
@@ -7455,26 +7459,26 @@ class FPickler(CMill):
                 #variables
                 #eq. (2)
                 tr = t/ float(speciesTransport[spec][1])
-                conversion = DEBYEtoCGS * DEBYEtoCGS / AtoCM / AtoCM / AtoCM / kb 
+                conversion = (DEBYEtoCGS * DEBYEtoCGS /  (AtoCM / AtoCM / AtoCM / kb))
                 dst = 0.5 * conversion * float(speciesTransport[spec][3])**2 / (float(speciesTransport[spec][1]) \
                         * float(speciesTransport[spec][2])**3)
                 #viscosity of spec at t
                 #eq. (1)
                 conversion = AtoCM * AtoCM
-                visc = (5.0 / 16.0) * np.sqrt(np.pi * self.species[spec.id].weight * kb * t / Na) / \
+                visc = (5.0 / 16.0) * np.sqrt((np.pi * self.species[spec.id].weight * kb * t /  Na))/ \
                     (self.om22_CHEMKIN(tr,dst) * np.pi * \
                     float(speciesTransport[spec][2]) * float(speciesTransport[spec][2]) * conversion)
                 #conductivity of spec at t
                 #eq. (30)
                 conversion = AtoCM * AtoCM
-                m_red = self.species[spec.id].weight / (2.0 * Na)
-                diffcoef = (3.0 / 16.0) * np.sqrt(2.0 * np.pi * kb**3 * t**3 / m_red) /  \
+                m_red = (self.species[spec.id].weight /  (2.0 * Na))
+                diffcoef = (3.0 / 16.0) * np.sqrt(2.0 * np.pi * kb**3 * t**3 / m_red)/  \
                         (10.0 * np.pi * self.om11_CHEMKIN(tr,dst) * float(speciesTransport[spec][2]) * \
                         float(speciesTransport[spec][2]) * conversion)
                 #eq. (19)
                 cv_vib_R = (self._getCVdRspecies(t, spec) - m_cvib[spec.id]) * isatm[spec.id]
                 rho_atm = 10.0 * self.species[spec.id].weight /(RU * t)
-                f_vib = rho_atm * diffcoef / visc
+                f_vib = (rho_atm * diffcoef /  visc)
                 #eq. (20)
                 A = 2.5 - f_vib
                 #eqs. (21) + (32-33)
@@ -7489,10 +7493,10 @@ class FPickler(CMill):
                 cv_trans_R = 3.0 / 2.0 
                 f_trans = 5.0 / 2.0 * (1.0 - 2.0 / np.pi * A / B * cv_rot_R / cv_trans_R )
                 if (int(speciesTransport[spec][0]) == 0):
-                    cond = (visc * RU / self.species[spec.id].weight) * \
+                    cond = ((visc * RU /  self.species[spec.id].weight)) * \
                             (5.0 / 2.0) * cv_trans_R
                 else:
-                    cond = (visc * RU / self.species[spec.id].weight) * \
+                    cond = ((visc * RU /  self.species[spec.id].weight)) * \
                         (f_trans * cv_trans_R + f_rot * cv_rot_R + f_vib * cv_vib_R)
 
                 #log transformation for polyfit
@@ -7577,28 +7581,28 @@ class FPickler(CMill):
         DEBYEtoCGS = 1.0e-18
         AtoCM = 1.0e-8
         #temperature increment  
-        dt = (self.highT-self.lowT) / (NTFit-1)
+        dt = (self.highT-self.lowT)/ (NTFit-1)
         #diff ratios (4 per spec pair involving light species) 
         coftd = []
         k = -1
         for i,spec1 in enumerate(specOrdered):
             if (i != spec1.id):
-                print "Problem in _thermaldiffratios computation"
+                print("Problem in _thermaldiffratios computation")
                 stop
             if spec1.id in lightSpecList:
                 k = k + 1
                 if (lightSpecList[k] != spec1.id):
-                    print "Problem in  _thermaldiffratios computation"
+                    print("Problem in  _thermaldiffratios computation")
                     stop
                 coftd.append([])
                 epsi = float(speciesTransport[spec1][1]) * kb
                 sigi = float(speciesTransport[spec1][2]) * AtoCM
                 poli = float(speciesTransport[spec1][4]) * AtoCM * AtoCM * AtoCM
                 #eq. (12)
-                poliRed = poli / sigi**3
+                poliRed = (poli /  sigi**3)
                 for j,spec2 in enumerate(specOrdered):
                     if (j != spec2.id):
-                        print "Problem in _thermaldiffratios computation"
+                        print("Problem in _thermaldiffratios computation")
                         stop
                     #eq. (53)
                     Wji = (self.species[spec2.id].weight - self.species[spec1.id].weight) / \
@@ -7607,8 +7611,8 @@ class FPickler(CMill):
                     sigj = float(speciesTransport[spec2][2]) * AtoCM
                     dipj = float(speciesTransport[spec2][3]) * DEBYEtoCGS
                     #eq. (13)
-                    dipjRed = dipj / np.sqrt(epsj*sigj**3)
-                    epsRatio = epsj / epsi
+                    dipjRed = (dipj /  np.sqrt(epsj*sigj**3))
+                    epsRatio = (epsj /  epsi)
                     tse = 1.0 + 0.25*poliRed*dipjRed**2*np.sqrt(epsRatio)
                     eok = tse**2 * np.sqrt(float(speciesTransport[spec1][1]) * float(speciesTransport[spec2][1]))
                     #enter the loop on temperature
@@ -7682,30 +7686,30 @@ class FPickler(CMill):
         DEBYEtoCGS = 1.0e-18
         PATM = 0.1013250000000000E+07
         #temperature increment  
-        dt = (self.highT-self.lowT) / (NTFit-1)
+        dt = (self.highT-self.lowT)/ (NTFit-1)
         #diff coefs (4 per spec pair) 
         cofd = []
         for i,spec1 in enumerate(specOrdered):
             cofd.append([])
             if (i != spec1.id):
-                print "Problem in _diffcoefs computation"
+                print("Problem in _diffcoefs computation")
                 stop
             for j,spec2 in enumerate(specOrdered[0:i+1]):
                 if (j != spec2.id):
-                    print "Problem in _diffcoefs computation"
+                    print("Problem in _diffcoefs computation")
                     stop
                 #eq. (9)
                 sigm = (0.5 * (float(speciesTransport[spec1][2]) + float(speciesTransport[spec2][2])) * AtoCM)\
                         * self.Xi(spec1, spec2, speciesTransport)**(1.0/6.0)
                 #eq. (4)
-                m_red = self.species[spec1.id].weight * self.species[spec2.id].weight / \
-                        (self.species[spec1.id].weight + self.species[spec2.id].weight) / Na
+                m_red = (self.species[spec1.id].weight * self.species[spec2.id].weight) /  \
+                        ((self.species[spec1.id].weight + self.species[spec2.id].weight) / Na)
                 #eq. (8) & (14)
                 epsm_k = np.sqrt(float(speciesTransport[spec1][1]) * float(speciesTransport[spec2][1])) \
                         * self.Xi(spec1, spec2, speciesTransport)**2.0
 
                 #eq. (15)
-                conversion = DEBYEtoCGS * DEBYEtoCGS / kb  
+                conversion = (DEBYEtoCGS * DEBYEtoCGS /  kb)  
                 dst = 0.5 * conversion * float(speciesTransport[spec1][3]) * float(speciesTransport[spec2][3]) / \
                     (epsm_k * sigm**3)
                 if self.Xi_bool(spec1, spec2, speciesTransport)==False:
@@ -7715,10 +7719,10 @@ class FPickler(CMill):
                 tlog = []
                 for n in range(NTFit):
                    t = self.lowT + dt*n
-                   tr = t/ epsm_k
+                   tr = (t /  epsm_k)
                    #eq. (3)
                    #note: these are "corrected" in CHEMKIN not in CANTERA... we chose not to
-                   difcoeff = 3.0 / 16.0 * 1 / PATM * (np.sqrt(2.0 * np.pi * t**3 * kb**3 / m_red) / \
+                   difcoeff = 3.0 / 16.0 * 1 / PATM * (np.sqrt(2.0 * np.pi * t**3 * kb**3 / m_red)/ \
                            ( np.pi * sigm * sigm * self.om11_CHEMKIN(tr,dst)))
 
                    #log transformation for polyfit
@@ -7896,17 +7900,17 @@ class FPickler(CMill):
         #conversion coefs
         AtoCM = 1.0e-8
         DEBYEtoCGS = 1.0e-18
-        convert = DEBYEtoCGS / np.sqrt( kb * AtoCM**3.0 )
-        return convert * float(speciesTransport[spec][3]) / \
+        convert = (DEBYEtoCGS /  np.sqrt( kb * AtoCM**3.0 ))
+        return convert * float(speciesTransport[spec][3])/ \
                 np.sqrt(float(speciesTransport[spec][1]) * float(speciesTransport[spec][2])**3.0)
 
 
     def Fcorr(self, t, eps_k):
 
         thtwo = 3.0 / 2.0
-        return 1 + np.pi**(thtwo) / 2.0 * np.sqrt(eps_k / t) + \
-                (np.pi**2 / 4.0 + 2.0) * (eps_k / t) + \
-                (np.pi * eps_k / t)**(thtwo)
+        return 1 + np.pi**(thtwo) / 2.0 * np.sqrt((eps_k /  t)) + \
+                (np.pi**2 / 4.0 + 2.0) * ((eps_k /  t)) + \
+                ((np.pi * eps_k /  t))**(thtwo)
 
 
     #def om11(self, tr, dst):
@@ -8296,14 +8300,14 @@ class FPickler(CMill):
 
     def qinterp(self, x0, x, y):
 
-        val1 = y[0] + (x0-x[0])*(y[1]-y[0]) / (x[1]-x[0])
-        val2 = y[1] + (x0-x[1])*(y[2]-y[1]) / (x[2]-x[1])
-        fac1 = (x0-x[0]) / (x[1]-x[0]) / 2.0
-        fac2 = (x[2]-x0) / (x[2]-x[1]) / 2.0
+        val1 = y[0] + (x0-x[0])*(y[1]-y[0])/ (x[1]-x[0])
+        val2 = y[1] + (x0-x[1])*(y[2]-y[1])/ (x[2]-x[1])
+        fac1 = (x0-x[0])/ ((x[1]-x[0]) / 2.0)
+        fac2 = (x[2]-x0)/ ((x[2]-x[1]) / 2.0)
         if (x0 >= x[1]):
-           val = (val1*fac2+val2) / (1.0+fac2)
+           val = (val1*fac2+val2)/ (1.0+fac2)
         else:
-           val = (val1+val2*fac1) / (1.0+fac1)
+           val = (val1+val2*fac1)/ (1.0+fac1)
         return val
 
 
@@ -8404,7 +8408,7 @@ class FPickler(CMill):
 
             models = species.thermo
             if len(models) > 2:
-                print 'species: ', species
+                print('species: ', species)
                 import pyre
                 pyre.debug.Firewall.hit("unsupported configuration in species.thermo")
                 return
@@ -8443,7 +8447,7 @@ class FPickler(CMill):
 
             models = species.trans
             if len(models) > 2:
-                print 'species: ', species
+                print('species: ', species)
                 import pyre
                 pyre.debug.Firewall.hit("unsupported configuration in species.trans")
                 return
@@ -8660,20 +8664,20 @@ class FPickler(CMill):
 
     def _enthalpyNASA(self, parameters):
         self._write('%s &' % ('%+15.8e' % parameters[0]).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(2)' % (parameters[1]/2)).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(3)' % (parameters[2]/3)).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(4)' % (parameters[3]/4)).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(5)' % (parameters[4]/5)).replace("e", "d"))
+        self._write('%s &' % ('%+15.8e * tc(2)' % ((parameters[1] / 2))).replace("e", "d"))
+        self._write('%s &' % ('%+15.8e * tc(3)' % ((parameters[2] / 3))).replace("e", "d"))
+        self._write('%s &' % ('%+15.8e * tc(4)' % ((parameters[3] / 4))).replace("e", "d"))
+        self._write('%s &' % ('%+15.8e * tc(5)' % ((parameters[4] / 5))).replace("e", "d"))
         self._write('%s' % ('%+15.8e * invT' % (parameters[5])).replace("e", "d"))
         return
 
 
     def _internalEnergy(self, parameters):
         self._write('%s &' % ('%+15.8e' % (parameters[0] - 1.0)).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(2)' % (parameters[1]/2)).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(3)' % (parameters[2]/3)).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(4)' % (parameters[3]/4)).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(5)' % (parameters[4]/5)).replace("e", "d"))
+        self._write('%s &' % ('%+15.8e * tc(2)' % ((parameters[1] / 2))).replace("e", "d"))
+        self._write('%s &' % ('%+15.8e * tc(3)' % ((parameters[2] / 3))).replace("e", "d"))
+        self._write('%s &' % ('%+15.8e * tc(4)' % ((parameters[3] / 4))).replace("e", "d"))
+        self._write('%s &' % ('%+15.8e * tc(5)' % ((parameters[4] / 5))).replace("e", "d"))
         self._write('%s' % ('%+15.8e * invT' % (parameters[5])).replace("e", "d"))
         return
 
@@ -8682,10 +8686,10 @@ class FPickler(CMill):
         self._write('%s &' % ('%+20.15e * invT' % (parameters[5])).replace("e", "d"))
         self._write('%s &' % ('%+20.15e' % (parameters[0] - parameters[6])).replace("e", "d"))
         self._write('%s &' % ('%+20.15e * tc(1)' % (-parameters[0])).replace("e", "d"))
-        self._write('%s &' % ('%+20.15e * tc(2)' % (-parameters[1]/2)).replace("e", "d"))
-        self._write('%s &' % ('%+20.15e * tc(3)' % (-parameters[2]/6)).replace("e", "d"))
-        self._write('%s &' % ('%+20.15e * tc(4)' % (-parameters[3]/12)).replace("e", "d"))
-        self._write('%s' % ('%+20.15e * tc(5)' % (-parameters[4]/20)).replace("e", "d"))
+        self._write('%s &' % ('%+20.15e * tc(2)' % ((-parameters[1] / 2))).replace("e", "d"))
+        self._write('%s &' % ('%+20.15e * tc(3)' % ((-parameters[2] / 6))).replace("e", "d"))
+        self._write('%s &' % ('%+20.15e * tc(4)' % ((-parameters[3] / 12))).replace("e", "d"))
+        self._write('%s' % ('%+20.15e * tc(5)' % ((-parameters[4] / 20))).replace("e", "d"))
         return
     
     #def _helmholtzNASA(self, parameters):

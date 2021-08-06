@@ -11,6 +11,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import print_function
 from pyre.applications.Application import Application
 
 
@@ -29,21 +30,21 @@ class FMC(Application):
 
         timer = pyre.monitors.timer("fuego")
         if not input:
-            print "Loading '%s'" % (mechanismFile),
+            print("Loading '%s'" % (mechanismFile), end=' ')
         else:
-            print "Loading '%s' using '%s' parser" % (mechanismFile, input),
+            print("Loading '%s' using '%s' parser" % (mechanismFile, input), end=' ')
 
         timer.start()
         mechanism = fuego.serialization.load(mechanismFile, input)
-        print "... done (%g sec)" % timer.stop()
+        print("... done (%g sec)" % timer.stop())
 
         timer.reset()
         timer.start()
-        print "Converting into '%s' format" % output,
+        print("Converting into '%s' format" % output, end=' ')
         lines = fuego.serialization.save(mechanism, output)
-        print "... done (%g sec)" % timer.stop()
+        print("... done (%g sec)" % timer.stop())
 
-        print "saving in '%s' ..." % save
+        print("saving in '%s' ..." % save)
         outputFile = self._openOutput(save)
         for line in lines:
             outputFile.write(line)
@@ -62,7 +63,7 @@ class FMC(Application):
             import sys
             return sys.stdout
 
-        return file(name, "w")
+        return open(name, "w")
 
 
     class Inventory(Application.Inventory):

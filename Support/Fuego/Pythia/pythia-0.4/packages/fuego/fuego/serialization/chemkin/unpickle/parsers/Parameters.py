@@ -11,7 +11,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from BaseParser import BaseParser
+from __future__ import absolute_import
+from builtins import map
+from .BaseParser import BaseParser
 
 
 class Parameters(BaseParser):
@@ -85,7 +87,7 @@ class Parameters(BaseParser):
             
     def _convert(self, token):
         try:
-            parameters = map(float, token.parameters)
+            parameters = list(map(float, token.parameters))
         except ValueError:
             msg = "Could not convert /%s/ into a list of numbers" % token.text
             self.onError(msg, self.locator())

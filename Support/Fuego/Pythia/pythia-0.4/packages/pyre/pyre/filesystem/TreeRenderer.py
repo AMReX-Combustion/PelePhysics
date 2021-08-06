@@ -12,7 +12,9 @@
 # 
 
 
-from SimpleRenderer import SimpleRenderer
+from __future__ import print_function
+from __future__ import absolute_import
+from .SimpleRenderer import SimpleRenderer
 
 
 class TreeRenderer(SimpleRenderer):
@@ -56,7 +58,7 @@ class TreeRenderer(SimpleRenderer):
 
 
     def _render(self, node, code):
-        print "%s %s (%s)" % (self._graphic, node.name, code)
+        print("%s %s (%s)" % (self._graphic, node.name, code))
         return
 
 

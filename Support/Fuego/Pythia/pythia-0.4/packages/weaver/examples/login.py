@@ -12,6 +12,7 @@
 # 
 
 
+from __future__ import print_function
 def run():
     from LoginPage import LoginPage
 
@@ -24,8 +25,8 @@ def run():
 # main
 
 if __name__ == "__main__":
-    print 'Content-type: text/html'
-    print
+    print('Content-type: text/html')
+    print()
 
     import settings
     settings.configure()

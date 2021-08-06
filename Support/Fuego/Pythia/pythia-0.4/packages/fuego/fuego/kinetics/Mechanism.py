@@ -12,7 +12,9 @@
 #
 
 
-class Mechanism:
+from __future__ import absolute_import
+from builtins import object
+class Mechanism(object):
 
 
     def reaction(self, id=None):
@@ -20,7 +22,7 @@ class Mechanism:
 
 
     def __init__(self, mixture, mechanism):
-        from ReactionSet import ReactionSet
+        from .ReactionSet import ReactionSet
         self._reactions = ReactionSet(mixture, mechanism.reaction())
         return
 

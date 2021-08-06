@@ -11,7 +11,8 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Binary import Binary
+from __future__ import absolute_import
+from .Binary import Binary
 import pyre.geometry.operations
 
 
@@ -22,7 +23,7 @@ class Difference(Binary):
 
     def notify(self, parent):
         if not self._b1 or not self._b2:
-            raise "Not enough arguments for difference"
+            raise Exception("Not enough arguments for difference")
         
         difference = pyre.geometry.operations.subtract(self._b1, self._b2)
         parent.onDifference(difference)

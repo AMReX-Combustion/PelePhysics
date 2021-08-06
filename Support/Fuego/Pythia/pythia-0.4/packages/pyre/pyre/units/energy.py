@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from SI import joule, kilo, mega, giga
+from __future__ import absolute_import
+from .SI import joule, kilo, mega, giga
 
 
 #

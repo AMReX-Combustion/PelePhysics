@@ -12,10 +12,11 @@
 # 
 
 
+from builtins import object
 import weaver.content
 
 
-class RegistrationPage:
+class RegistrationPage(object):
 
 
     def form(self):

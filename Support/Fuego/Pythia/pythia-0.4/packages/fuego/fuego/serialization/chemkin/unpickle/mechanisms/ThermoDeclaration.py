@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Declaration import Declaration
+from __future__ import absolute_import
+from .Declaration import Declaration
 
 
 class ThermoDeclaration(Declaration):
@@ -38,16 +39,16 @@ class ThermoDeclaration(Declaration):
             str += ", phase=%s" % self.phase
 
         if self.composition:
-            str += ", composition=%s" % `self.composition`
+            str += ", composition=%s" % repr(self.composition)
 
         if self.range:
-            str += ", parametrization range=%s" % `self.range`
+            str += ", parametrization range=%s" % repr(self.range)
 
         if self.lowParameters:
-            str += ", low=%s" % `self.lowParameters`
+            str += ", low=%s" % repr(self.lowParameters)
 
         if self.highParameters:
-            str += ", high=%s" % `self.highParameters`
+            str += ", high=%s" % repr(self.highParameters)
 
         str += ", " + Declaration.__str__(self)
 

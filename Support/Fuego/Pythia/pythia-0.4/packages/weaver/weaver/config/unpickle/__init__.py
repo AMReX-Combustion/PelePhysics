@@ -12,6 +12,7 @@
 # 
 
 
+from __future__ import absolute_import
 def readUserConfiguration():
     import os
 
@@ -21,7 +22,7 @@ def readUserConfiguration():
         return None
     
     try:
-        userfile = file(filename, "r")
+        userfile = open(filename, "r")
     except IOError:
         import journal
         info = journal.info("weaver.config")
@@ -32,13 +33,13 @@ def readUserConfiguration():
     return options
 
 
-def readConfiguration(file):
+def readConfiguration(filen):
 
     import pyre.xml
-    from Configuration import Configuration
+    from .Configuration import Configuration
 
     p = pyre.xml.parser()
-    p.parse(file, Configuration(file.name))
+    p.parse(filen, Configuration(filen.name))
 
     options = p.document().options()
 

@@ -11,7 +11,9 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Transformation import Transformation
+from __future__ import absolute_import
+from builtins import str
+from .Transformation import Transformation
 
 
 class Reflection(Transformation):

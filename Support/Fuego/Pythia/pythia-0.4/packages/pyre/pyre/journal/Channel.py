@@ -11,7 +11,21 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-import journal
+from __future__ import absolute_import
+#!/usr/bin/env python
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                             Michael A.G. Aivazis
+#                      California Institute of Technology
+#                      (C) 1998-2003  All Rights Reserved
+#
+# <LicenseText>
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+
+from . import journal
 from pyre.components.Component import Component
 
 
@@ -35,12 +49,12 @@ class Channel(Component):
 
     def _listing(self, registry):
         listing = [
-            (name, value) for name, value in registry.properties.iteritems()
+            (name, value) for name, value in registry.properties.items()
             ]
 
         listing += [
             ("%s.%s" % (nodename, name), value)
-            for nodename, node in registry.facilities.iteritems()
+            for nodename, node in registry.facilities.items()
             for name, value in self._listing(node)
             ]
 

@@ -12,6 +12,7 @@
 # 
 
 
+from __future__ import print_function
 def run(options):
 
     import journal
@@ -26,14 +27,14 @@ def run(options):
 
 def usage(program):
 
-    print "Usage: %s [options ...]" % program
-    print "Options: (default values in brackets)"
+    print("Usage: %s [options ...]" % program)
+    print("Options: (default values in brackets)")
 
-    print "    --home=<directory> [%s]" % defaults["home"]
-    print "    --logfile=<filename> [%s]" % defaults["logfile"]
-    print "    --pidfile=<filename> [%s]" % defaults["pidfile"]
-    print "    --port=<int> [%s]" % defaults["port"]
-    print "    --timeout=<double> [%s]" % defaults["timeout"]
+    print("    --home=<directory> [%s]" % defaults["home"])
+    print("    --logfile=<filename> [%s]" % defaults["logfile"])
+    print("    --pidfile=<filename> [%s]" % defaults["pidfile"])
+    print("    --port=<int> [%s]" % defaults["port"])
+    print("    --timeout=<double> [%s]" % defaults["timeout"])
 
     return
         

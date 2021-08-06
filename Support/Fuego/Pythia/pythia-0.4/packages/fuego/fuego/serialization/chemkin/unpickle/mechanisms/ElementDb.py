@@ -12,7 +12,8 @@
 #
 
 
-class ElementDb:
+from builtins import object
+class ElementDb(object):
 
 
     def element(self, element):

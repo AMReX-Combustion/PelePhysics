@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from Thermo import Thermo
+from __future__ import absolute_import
+from .Thermo import Thermo
 
 
 class ThermoDatabaseParser(Thermo):

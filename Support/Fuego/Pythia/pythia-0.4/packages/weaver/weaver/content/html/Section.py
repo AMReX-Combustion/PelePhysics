@@ -12,7 +12,8 @@
 # 
 
 
-from Weaver import Weaver
+from __future__ import absolute_import
+from .Weaver import Weaver
 
 
 class Section(Weaver):
@@ -20,7 +21,7 @@ class Section(Weaver):
 
     def paragraph(self, paragraph=None):
         if paragraph is None:
-            from Paragraph import Paragraph
+            from .Paragraph import Paragraph
             paragraph = Paragraph()
             return paragraph
 

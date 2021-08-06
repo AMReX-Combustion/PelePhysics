@@ -12,6 +12,7 @@
 #
 
 
+from __future__ import print_function
 from pyre.applications.Application import Application
 
 
@@ -19,7 +20,7 @@ class HelloApp(Application):
 
 
     def run(self):
-        print "Hello world!"
+        print("Hello world!")
 
         self.inventory.bool = True
         self.inventory.str = "hello"
@@ -35,7 +36,7 @@ class HelloApp(Application):
         self.inventory.range = 0.9
         self.inventory.choice = "yes"
 
-        print "inventory: %r" % self.state().list()
+        print("inventory: %r" % self.state().list())
 
         return
 

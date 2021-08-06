@@ -12,6 +12,7 @@
 #
 
 
+from __future__ import print_function
 import pty
 import pyre.util.subprocesses
 from pyre.applications.Application import Application
@@ -44,11 +45,11 @@ class ExpectApp(Application):
             index -= 1
             r,w,e = select.select([childFd], [], [], 10)
             if not r:
-                raise "timeout"
+                raise Exception("timeout")
 
             if childFd in r:
                 s = os.read(childFd, 10000)
-                print "%d: got {%s}" % (pid, s.strip())
+                print("%d: got {%s}" % (pid, s.strip()))
                 os.write(childFd, "print 1+1%s" % os.linesep)
 
 
@@ -61,7 +62,7 @@ class ExpectApp(Application):
         import os
         os.execvp("python", ("-i",))
         return
-        raise "UNREACHABLE"
+        raise Exception("UNREACHABLE")
     
 
     class Inventory(Application.Inventory):

@@ -12,7 +12,8 @@
 # 
 
 
-class NativeParser:
+from builtins import object
+class NativeParser(object):
 
 
     def parse(self, mechanism, file):
@@ -20,7 +21,7 @@ class NativeParser:
             "mechanism": mechanism
             }
 
-        exec file in context
+        exec(file, context)
         
         return mechanism
 

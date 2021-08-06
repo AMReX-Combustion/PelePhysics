@@ -11,7 +11,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from BaseScanner import BaseScanner
+from __future__ import absolute_import
+from .BaseScanner import BaseScanner
 
 
 class Parameters(BaseScanner):

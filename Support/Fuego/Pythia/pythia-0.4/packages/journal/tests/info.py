@@ -11,23 +11,24 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 
 
+from __future__ import print_function
 if __name__ == "__main__":
 
     import journal
-    print journal.copyright()
+    print(journal.copyright())
 
     info = journal.info("info-1")
     debug = journal.debug("debug")
     info = journal.info("info-2")
 
-    print "state of %s(%s): %s" % (info.name, info.facility, info.state)
+    print("state of %s(%s): %s" % (info.name, info.facility, info.state))
     info.activate()
-    print "state of %s(%s): %s" % (info.name, info.facility, info.state)
+    print("state of %s(%s): %s" % (info.name, info.facility, info.state))
 
     info.log("hello")
 
-    print "info categories:", journal.infoIndex().categories()
-    print "debug categories:", journal.debugIndex().categories()
+    print("info categories:", journal.infoIndex().categories())
+    print("debug categories:", journal.debugIndex().categories())
 
 
 

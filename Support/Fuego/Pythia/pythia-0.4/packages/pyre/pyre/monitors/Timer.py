@@ -22,13 +22,13 @@ class Timer(Resource, Toggle):
 
     def start(self):
         if self.state:
-            self._start = time.clock()
+            self._start = self.get_clock()
 
         return self
 
 
     def stop(self):
-        now = time.clock()
+        now = self.get_clock()
         self._accumulatedTime += now - self._start
         self._start = now
 
@@ -37,7 +37,7 @@ class Timer(Resource, Toggle):
 
     def lap(self):
         if self.state:
-            now = time.clock()
+            now = self.get_clock()
             return self._accumulatedTime + (now - self._start)
 
         return 0
@@ -56,10 +56,16 @@ class Timer(Resource, Toggle):
         Resource.__init__(self, name)
         Toggle.__init__(self)
 
-        self._start = time.clock()
+        self._start = self.get_clock()
         self._accumulatedTime = 0
 
         return
+
+    def get_clock(self):
+        try:
+            return time.clock()
+        except AttributeError:
+            return time.process_time()
 
 
 # version

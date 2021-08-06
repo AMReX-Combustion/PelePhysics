@@ -11,6 +11,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from __future__ import absolute_import
 from pyre.xml.DocumentNode import DocumentNode
 
 
@@ -37,39 +38,39 @@ class Document(DocumentNode):
 
 def documentNodes():
 
-    from Kinetics import Kinetics
+    from .Kinetics import Kinetics
 
-    from Element import Element
+    from .Element import Element
 
-    from Species import Species
-    from Composition import Composition
-    from Atom import Atom
-    from Thermo import Thermo
-    from NASA import NASA
-    from NASA_a1 import NASA_a1
-    from NASA_a2 import NASA_a2
-    from NASA_a3 import NASA_a3
-    from NASA_a4 import NASA_a4
-    from NASA_a5 import NASA_a5
-    from NASA_a6 import NASA_a6
-    from NASA_a7 import NASA_a7
+    from .Species import Species
+    from .Composition import Composition
+    from .Atom import Atom
+    from .Thermo import Thermo
+    from .NASA import NASA
+    from .NASA_a1 import NASA_a1
+    from .NASA_a2 import NASA_a2
+    from .NASA_a3 import NASA_a3
+    from .NASA_a4 import NASA_a4
+    from .NASA_a5 import NASA_a5
+    from .NASA_a6 import NASA_a6
+    from .NASA_a7 import NASA_a7
 
-    from Reaction import Reaction
-    from Duplicate import Duplicate
-    from ReactionUnits import ReactionUnits
-    from Reagents import Reagents
-    from Reactant import Reactant
-    from Product import Product
-    from ReactionRate import ReactionRate
-    from Efficiencies import Efficiencies
-    from Enhancement import Enhancement
-    from Arrhenius import Arrhenius
-    from Reverse import Reverse
-    from LowPressure import LowPressure
-    from SRI import SRI
-    from TROE import TROE
-    from LandauTeller import LandauTeller
-    from ReverseLandauTeller import ReverseLandauTeller
+    from .Reaction import Reaction
+    from .Duplicate import Duplicate
+    from .ReactionUnits import ReactionUnits
+    from .Reagents import Reagents
+    from .Reactant import Reactant
+    from .Product import Product
+    from .ReactionRate import ReactionRate
+    from .Efficiencies import Efficiencies
+    from .Enhancement import Enhancement
+    from .Arrhenius import Arrhenius
+    from .Reverse import Reverse
+    from .LowPressure import LowPressure
+    from .SRI import SRI
+    from .TROE import TROE
+    from .LandauTeller import LandauTeller
+    from .ReverseLandauTeller import ReverseLandauTeller
 
     # primitives
     

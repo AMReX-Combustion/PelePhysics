@@ -12,7 +12,8 @@
 #
 
 
-class EntitySet:
+from builtins import object
+class EntitySet(object):
 
 
     def insert(self, key, entity):

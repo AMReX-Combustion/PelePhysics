@@ -11,11 +11,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
+from builtins import object
 import pyre
 from pyre.handbook.units.SI import kelvin
 
 
-class RateCalculator:
+class RateCalculator(object):
 
 
     def update(self, T):

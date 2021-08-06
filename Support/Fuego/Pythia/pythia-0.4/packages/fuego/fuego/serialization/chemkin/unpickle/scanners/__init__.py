@@ -12,41 +12,42 @@
 #
 
 
+from __future__ import absolute_import
 def sections():
-    from Sections import Sections
+    from .Sections import Sections
     return Sections()
 
 
 def elements():
-    from Elements import Elements
+    from .Elements import Elements
     return Elements()
 
 
 def species():
-    from Species import Species
+    from .Species import Species
     return Species()
 
 def qss_species():
-    from QssSpecies import QssSpecies
+    from .QssSpecies import QssSpecies
     return QssSpecies()
 
 def thermo():
-    from Thermo import Thermo
+    from .Thermo import Thermo
     return Thermo()
 
 
 def trans():
-    from Trans import Trans
+    from .Trans import Trans
     return Trans()
 
 
 def reactions():
-    from Reactions import Reactions
+    from .Reactions import Reactions
     return Reactions()
 
 
 def parameters():
-    from Parameters import Parameters
+    from .Parameters import Parameters
     return Parameters()
 
 
