@@ -70,11 +70,20 @@ Bpack             += $(EOS_PATH)/Make.package
 Blocs             += $(EOS_PATH)
 
 # Reactions
-REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
-include $(REACTIONS_HOME)/Make.package
-include $(REACTIONS_PATH)/Make.package
-INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
-VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH)
+ifeq ($(USE_SUNDIALS_PP),TRUE)
+    REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
+    include $(REACTIONS_HOME)/Make.package
+    include $(REACTIONS_PATH)/Make.package
+    INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
+    VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH)
+endif
+ifeq ($(USE_RK64_PP),TRUE)
+    REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
+    include $(REACTIONS_HOME)/Make.package
+    include $(REACTIONS_PATH)/Make.package
+    INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
+    VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH)
+endif
 ifeq ($(USE_F90_PP),TRUE) 
     REACTIONS_HOME_F90 := $(REACTIONS_HOME)/F90
     REACTIONS_PATH_F90 := $(REACTIONS_PATH)/F90

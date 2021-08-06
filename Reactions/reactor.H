@@ -11,6 +11,7 @@
 #include <AMReX_ParmParse.H>
 #include "PelePhysics.H"
 #include "mechanism.H"
+#include "reactor_utils.H"
 
 #ifdef USE_SUNDIALS_PP
 
@@ -50,8 +51,6 @@
 #ifdef AMREX_USE_HIP
 #include <nvector/nvector_hip.h>
 #endif
-
-#include "reactor_utils.H"
 
 #endif
 

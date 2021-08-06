@@ -16,6 +16,7 @@ USE_HIP    = FALSE
 # PelePhysics
 FUEGO_GAS  = TRUE
 USE_SUNDIALS_PP = FALSE
+USE_RK64_PP = FALSE
 
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_dir         = Fuego
