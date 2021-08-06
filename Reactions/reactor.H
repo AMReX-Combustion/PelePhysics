@@ -84,121 +84,120 @@ extern int rk64_nsubsteps_max;
 #endif
 
 //===================================================================
-//initialize and close reactor functions
+// initialize and close reactor functions
 //===================================================================
 int reactor_init(int reactor_type, int Ncells);
 void reactor_close();
 //===================================================================
 
-
 //===================================================================
-//User data to feed into CPU/GPU sundials handle
+// User data to feed into CPU/GPU sundials handle
 //===================================================================
 #ifdef USE_SUNDIALS_PP
 
 #ifdef AMREX_USE_GPU
 struct CVODEUserData
 {
-    amrex::Real gamma;
-    amrex::Real dt_save;
-    int ncells;
-    int neqs_per_cell;
-    int ireactor_type;
-    int ianalytical_jacobian;
-    int isolve_type;
-    amrex::Real* rhoe_init_d = NULL;
-    amrex::Real* rhoesrc_ext_d = NULL;
-    amrex::Real* rYsrc_d = NULL;
-    int iverbose;
-    int NNZ;
-    int* csr_row_count_h;
-    int* csr_col_index_h;
-    int* csr_row_count_d;
-    int* csr_col_index_d;
-    amrex::Real* csr_val_h;
-    amrex::Real* csr_jac_h;
-    amrex::Real* csr_val_d;
-    amrex::Real* csr_jac_d;
-    SUNMatrix R = NULL;
+  amrex::Real gamma;
+  amrex::Real dt_save;
+  int ncells;
+  int neqs_per_cell;
+  int ireactor_type;
+  int ianalytical_jacobian;
+  int isolve_type;
+  amrex::Real* rhoe_init_d = NULL;
+  amrex::Real* rhoesrc_ext_d = NULL;
+  amrex::Real* rYsrc_d = NULL;
+  int iverbose;
+  int NNZ;
+  int* csr_row_count_h;
+  int* csr_col_index_h;
+  int* csr_row_count_d;
+  int* csr_col_index_d;
+  amrex::Real* csr_val_h;
+  amrex::Real* csr_jac_h;
+  amrex::Real* csr_val_d;
+  amrex::Real* csr_jac_d;
+  SUNMatrix R = NULL;
 #ifdef AMREX_USE_CUDA
-    void* buffer_qr = NULL;
-    csrqrInfo_t info;
-    cusparseMatDescr_t descrA;
-    cusolverSpHandle_t cusolverHandle;
-    cusparseHandle_t cuSPHandle;
+  void* buffer_qr = NULL;
+  csrqrInfo_t info;
+  cusparseMatDescr_t descrA;
+  cusolverSpHandle_t cusolverHandle;
+  cusparseHandle_t cuSPHandle;
 #endif
-    amrex::gpuStream_t stream;
-    int nbBlocks;
-    int nbThreads;
+  amrex::gpuStream_t stream;
+  int nbBlocks;
+  int nbThreads;
 };
 #else
 struct CVODEUserData
 {
-    amrex::Real dt_save;
-    bool FirstTimePrecond;
-    bool reactor_cvode_initialized;
-    bool actual_ok_to_react;
-    int ncells;
-    int iverbose;
-    int isolve_type;
-    int ianalytical_jacobian;
-    int ireactor_type;
-    int boxcell;
-    amrex::Real* Yvect_full = NULL;
-    amrex::Real* rhoX_init = NULL;
-    amrex::Real* rhoXsrc_ext = NULL;
-    amrex::Real* rYsrc = NULL;
-    int* FCunt = NULL;
-    int* mask = NULL;
+  amrex::Real dt_save;
+  bool FirstTimePrecond;
+  bool reactor_cvode_initialized;
+  bool actual_ok_to_react;
+  int ncells;
+  int iverbose;
+  int isolve_type;
+  int ianalytical_jacobian;
+  int ireactor_type;
+  int boxcell;
+  amrex::Real* Yvect_full = NULL;
+  amrex::Real* rhoX_init = NULL;
+  amrex::Real* rhoXsrc_ext = NULL;
+  amrex::Real* rYsrc = NULL;
+  int* FCunt = NULL;
+  int* mask = NULL;
 
-    int NNZ;
-    SUNMatrix* PS;
-    amrex::Real** Jdata = NULL;
-    int** rowVals = NULL;
-    int** rowPtrs = NULL;
-    int** colPtrs = NULL;
-    int** colVals = NULL;
-    int* indx = NULL;
-    amrex::Real** JSPSmat = NULL;
+  int NNZ;
+  SUNMatrix* PS;
+  amrex::Real** Jdata = NULL;
+  int** rowVals = NULL;
+  int** rowPtrs = NULL;
+  int** colPtrs = NULL;
+  int** colVals = NULL;
+  int* indx = NULL;
+  amrex::Real** JSPSmat = NULL;
 #ifdef USE_KLU_PP
-    klu_common* Common;
-    klu_symbolic** Symbolic;
-    klu_numeric** Numeric;
+  klu_common* Common;
+  klu_symbolic** Symbolic;
+  klu_numeric** Numeric;
 #else
-    amrex::Real**(**Jbd);
-    amrex::Real**(**P);
-    sunindextype*(**pivot);
+  amrex::Real**(**Jbd);
+  amrex::Real**(**P);
+  sunindextype*(**pivot);
 #endif
-    SUNMatrix PSc;
-    int* colVals_c;
-    int* rowPtrs_c;
+  SUNMatrix PSc;
+  int* colVals_c;
+  int* rowPtrs_c;
 };
 #endif
 
 struct ARKODEUserData
 {
-    bool reactor_arkode_initialized;
-    int ncells_d;
-    int neqs_per_cell;
-    int iverbose;
-    int ireactor_type;
-    amrex::Real dt_save;
-    amrex::Real* rhoe_init_d = NULL;
-    amrex::Real* rhoesrc_ext_d = NULL;
-    amrex::Real* rYsrc_d = NULL;
+  bool reactor_arkode_initialized;
+  int ncells_d;
+  int neqs_per_cell;
+  int iverbose;
+  int ireactor_type;
+  amrex::Real dt_save;
+  amrex::Real* rhoe_init_d = NULL;
+  amrex::Real* rhoesrc_ext_d = NULL;
+  amrex::Real* rYsrc_d = NULL;
 #ifdef AMREX_USE_GPU
-    amrex::gpuStream_t stream;
+  amrex::gpuStream_t stream;
 #endif
-    int nbBlocks;
-    int nbThreads;
+  int nbBlocks;
+  int nbThreads;
 };
 #endif
 
 //===================================================================
-//Box flattening functions
+// Box flattening functions
 //===================================================================
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void box_flatten(
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
+box_flatten(
   int icell,
   int ncells,
   int i,
@@ -245,8 +244,7 @@ void box_flatten(
   tmp_vect[sunvec_index(NUM_SPECIES, icell, ncells)] = temp;
 }
 //===================================================================
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-    void
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
 box_unflatten(
   int icell,
   int ncells,
@@ -262,7 +260,7 @@ box_unflatten(
   amrex::Real* tmp_vect,
   amrex::Real* tmp_vect_energy,
   long int const& tmp_FCunt,
-  amrex::Real dt) 
+  amrex::Real dt)
 {
   amrex::Real mass_frac[NUM_SPECIES];
   amrex::Real rho = 0.0;
@@ -293,21 +291,22 @@ box_unflatten(
 //===================================================================
 
 //===================================================================
-//Tolerance setting with typical values
+// Tolerance setting with typical values
 //===================================================================
 void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
 void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
 
-
 //===================================================================
-//RHS computation functions
+// RHS computation functions
 //===================================================================
 #ifdef USE_SUNDIALS_PP
 static int cF_RHS(amrex::Real t, N_Vector y_in, N_Vector ydot, void* user_data);
 #endif
 
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void fKernelSpec(int icell, int ncells,
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
+fKernelSpec(
+  int icell,
+  int ncells,
   double dt_save,
   int reactor_type,
   realtype* yvec_d,
@@ -351,124 +350,126 @@ void fKernelSpec(int icell, int ncells,
 
   amrex::Real rhoesrc = rhoesrc_ext[icell];
   for (int n = 0; n < NUM_SPECIES; n++) {
-    const amrex::Real cdot_rYs = cdots_pt[n] + rYs[sunspec_index(n, icell, ncells)];
+    const amrex::Real cdot_rYs =
+      cdots_pt[n] + rYs[sunspec_index(n, icell, ncells)];
     ydot_d[sunvec_index(n, icell, ncells)] = cdot_rYs;
     rhoesrc -= cdot_rYs * ei_pt[n];
   }
-  ydot_d[sunvec_index(NUM_SPECIES, icell, ncells)] = rhoesrc * (rho_pt_inv / Cv_pt);
+  ydot_d[sunvec_index(NUM_SPECIES, icell, ncells)] =
+    rhoesrc * (rho_pt_inv / Cv_pt);
 }
 //===================================================================
 
 //===================================================================
-//Different variants of react calls
+// Different variants of react calls
 //===================================================================
 int react(
-        const amrex::Box& box,
-        amrex::Array4<amrex::Real> const& rY_in,
-        amrex::Array4<amrex::Real> const& rY_src_in,
-        amrex::Array4<amrex::Real> const& T_in,
-        amrex::Array4<amrex::Real> const& rEner_in,
-        amrex::Array4<amrex::Real> const& rEner_src_in,
-        amrex::Array4<amrex::Real> const& FC_in,
-        amrex::Array4<int> const& mask,
-        amrex::Real& dt_react,
-        amrex::Real& time,
-        const int& reactor_type
+  const amrex::Box& box,
+  amrex::Array4<amrex::Real> const& rY_in,
+  amrex::Array4<amrex::Real> const& rY_src_in,
+  amrex::Array4<amrex::Real> const& T_in,
+  amrex::Array4<amrex::Real> const& rEner_in,
+  amrex::Array4<amrex::Real> const& rEner_src_in,
+  amrex::Array4<amrex::Real> const& FC_in,
+  amrex::Array4<int> const& mask,
+  amrex::Real& dt_react,
+  amrex::Real& time,
+  const int& reactor_type
 #ifdef AMREX_USE_GPU
-        ,
-        amrex::gpuStream_t stream
+  ,
+  amrex::gpuStream_t stream
 #endif
-        );
+);
 
 int react(
-        amrex::Real* rY_in,
-        amrex::Real* rY_src_in,
-        amrex::Real* rX_in,
-        amrex::Real* rX_src_in,
-        amrex::Real& dt_react,
-        amrex::Real& time,
-        int reactor_type,
-        int Ncells
+  amrex::Real* rY_in,
+  amrex::Real* rY_src_in,
+  amrex::Real* rX_in,
+  amrex::Real* rX_src_in,
+  amrex::Real& dt_react,
+  amrex::Real& time,
+  int reactor_type,
+  int Ncells
 #ifdef AMREX_USE_GPU
-        ,
-        amrex::gpuStream_t stream
+  ,
+  amrex::gpuStream_t stream
 #endif
-        );
+);
 //===================================================================
 
 //===================================================================
-//CUDA specific things for cvode
+// CUDA specific things for cvode
 //===================================================================
 #ifdef USE_SUNDIALS_PP
 
 #ifdef AMREX_USE_CUDA
 static int Precond(
-        amrex::Real tn,
-        N_Vector u,
-        N_Vector fu,
-        booleantype jok,
-        booleantype* jcurPtr,
-        amrex::Real gamma,
-        void* user_data);
+  amrex::Real tn,
+  N_Vector u,
+  N_Vector fu,
+  booleantype jok,
+  booleantype* jcurPtr,
+  amrex::Real gamma,
+  void* user_data);
 
 static int PSolve(
-        amrex::Real tn,
-        N_Vector u,
-        N_Vector fu,
-        N_Vector r,
-        N_Vector z,
-        amrex::Real gamma,
-        amrex::Real delta,
-        int lr,
-        void* user_data);
+  amrex::Real tn,
+  N_Vector u,
+  N_Vector fu,
+  N_Vector r,
+  N_Vector z,
+  amrex::Real gamma,
+  amrex::Real delta,
+  int lr,
+  void* user_data);
 
 static int cJac(
-        amrex::Real t,
-        N_Vector y,
-        N_Vector fy,
-        SUNMatrix J,
-        void* user_data,
-        N_Vector tmp1,
-        N_Vector tmp2,
-        N_Vector tmp3);
+  amrex::Real t,
+  N_Vector y,
+  N_Vector fy,
+  SUNMatrix J,
+  void* user_data,
+  N_Vector tmp1,
+  N_Vector tmp2,
+  N_Vector tmp3);
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void fKernelComputeallAJ(
-        int ncells, void* user_data, amrex::Real* u_d, amrex::Real* csr_val);
+  int ncells, void* user_data, amrex::Real* u_d, amrex::Real* csr_val);
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void fKernelComputeAJsys(
-        int ncells, void* user_data, amrex::Real* u_d, amrex::Real* csr_val);
+  int ncells, void* user_data, amrex::Real* u_d, amrex::Real* csr_val);
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void fKernelComputeAJchem(
-        int ncells, void* user_data, amrex::Real* u_d, amrex::Real* Jdata);
+  int ncells, void* user_data, amrex::Real* u_d, amrex::Real* Jdata);
 
 // CUSTOM
 __global__ void fKernelDenseSolve(
-        int ncells,
-        amrex::Real* x_d,
-        amrex::Real* b_d,
-        int subsys_size,
-        int subsys_nnz,
-        amrex::Real* csr_val);
+  int ncells,
+  amrex::Real* x_d,
+  amrex::Real* b_d,
+  int subsys_size,
+  int subsys_nnz,
+  amrex::Real* csr_val);
 
 struct _SUNLinearSolverContent_Dense_custom
 {
-    sunindextype last_flag;
-    int nsubsys;
-    int subsys_size;
-    int subsys_nnz;
-    int nbBlocks;
-    int nbThreads;
-    amrex::gpuStream_t stream;
+  sunindextype last_flag;
+  int nsubsys;
+  int subsys_size;
+  int subsys_nnz;
+  int nbBlocks;
+  int nbThreads;
+  amrex::gpuStream_t stream;
 };
 
 typedef struct _SUNLinearSolverContent_Dense_custom*
-SUNLinearSolverContent_Dense_custom;
+  SUNLinearSolverContent_Dense_custom;
 
 SUNLinearSolver
 SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, amrex::gpuStream_t stream);
@@ -476,7 +477,7 @@ SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, amrex::gpuStream_t stream);
 SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S);
 
 int SUNLinSolSolve_Dense_custom(
-        SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b, amrex::Real tol);
+  SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b, amrex::Real tol);
 
 int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A);
 
@@ -487,25 +488,24 @@ int SUNLinSolFree_Dense_custom(SUNLinearSolver S);
 //===================================================================
 
 //===================================================================
-//Stats and checks
+// Stats and checks
 //===================================================================
 int check_flag(void* flagvalue, const char* funcname, int opt);
 
 #ifdef USE_SUNDIALS_PP
 
-//FIXME: make them the same
+// FIXME: make them the same
 #ifdef AMREX_USE_GPU
 static void PrintFinalStats(void* cvode_mem);
 #else
-static void PrintFinalStats(void* cvode_mem,amrex::Real Temp);
+static void PrintFinalStats(void* cvode_mem, amrex::Real Temp);
 #endif
 
 #endif
 //===================================================================
 
-
 //===================================================================
-//CPU specific cvode functions
+// CPU specific cvode functions
 //===================================================================
 #ifdef USE_SUNDIALS_PP
 
@@ -513,109 +513,109 @@ static void PrintFinalStats(void* cvode_mem,amrex::Real Temp);
 CVODEUserData* AllocUserData(int reactor_type, int num_cells);
 
 int cJac(
-        amrex::Real tn,
-        N_Vector y,
-        N_Vector fy,
-        SUNMatrix J,
-        void* user_data,
-        N_Vector tmp1,
-        N_Vector tmp2,
-        N_Vector tmp3);
+  amrex::Real tn,
+  N_Vector y,
+  N_Vector fy,
+  SUNMatrix J,
+  void* user_data,
+  N_Vector tmp1,
+  N_Vector tmp2,
+  N_Vector tmp3);
 
 int cJac_sps(
-        amrex::Real tn,
-        N_Vector y,
-        N_Vector fy,
-        SUNMatrix J,
-        void* user_data,
-        N_Vector tmp1,
-        N_Vector tmp2,
-        N_Vector tmp3);
+  amrex::Real tn,
+  N_Vector y,
+  N_Vector fy,
+  SUNMatrix J,
+  void* user_data,
+  N_Vector tmp1,
+  N_Vector tmp2,
+  N_Vector tmp3);
 
 int PSolve_custom(
-        amrex::Real tn,
-        N_Vector u,
-        N_Vector fu,
-        N_Vector r,
-        N_Vector z,
-        amrex::Real gamma,
-        amrex::Real delta,
-        int lr,
-        void* user_data);
+  amrex::Real tn,
+  N_Vector u,
+  N_Vector fu,
+  N_Vector r,
+  N_Vector z,
+  amrex::Real gamma,
+  amrex::Real delta,
+  int lr,
+  void* user_data);
 
 int Precond_custom(
-        amrex::Real tn,
-        N_Vector u,
-        N_Vector fu,
-        booleantype jok,
-        booleantype* jcurPtr,
-        amrex::Real gamma,
-        void* user_data);
+  amrex::Real tn,
+  N_Vector u,
+  N_Vector fu,
+  booleantype jok,
+  booleantype* jcurPtr,
+  amrex::Real gamma,
+  void* user_data);
 
 #ifdef USE_KLU_PP
 int cJac_KLU(
-        amrex::Real tn,
-        N_Vector y,
-        N_Vector fy,
-        SUNMatrix J,
-        void* user_data,
-        N_Vector tmp1,
-        N_Vector tmp2,
-        N_Vector tmp3);
+  amrex::Real tn,
+  N_Vector y,
+  N_Vector fy,
+  SUNMatrix J,
+  void* user_data,
+  N_Vector tmp1,
+  N_Vector tmp2,
+  N_Vector tmp3);
 
 int PSolve_sparse(
-        amrex::Real tn,
-        N_Vector u,
-        N_Vector fu,
-        N_Vector r,
-        N_Vector z,
-        amrex::Real gamma,
-        amrex::Real delta,
-        int lr,
-        void* user_data);
+  amrex::Real tn,
+  N_Vector u,
+  N_Vector fu,
+  N_Vector r,
+  N_Vector z,
+  amrex::Real gamma,
+  amrex::Real delta,
+  int lr,
+  void* user_data);
 int Precond_sparse(
-        amrex::Real tn,
-        N_Vector u,
-        N_Vector fu,
-        booleantype jok,
-        booleantype* jcurPtr,
-        amrex::Real gamma,
-        void* user_data);
+  amrex::Real tn,
+  N_Vector u,
+  N_Vector fu,
+  booleantype jok,
+  booleantype* jcurPtr,
+  amrex::Real gamma,
+  void* user_data);
 #else
 int PSolve(
-        amrex::Real tn,
-        N_Vector u,
-        N_Vector fu,
-        N_Vector r,
-        N_Vector z,
-        amrex::Real gamma,
-        amrex::Real delta,
-        int lr,
-        void* user_data);
+  amrex::Real tn,
+  N_Vector u,
+  N_Vector fu,
+  N_Vector r,
+  N_Vector z,
+  amrex::Real gamma,
+  amrex::Real delta,
+  int lr,
+  void* user_data);
 
 int Precond(
-        amrex::Real tn,
-        N_Vector u,
-        N_Vector fu,
-        booleantype jok,
-        booleantype* jcurPtr,
-        amrex::Real gamma,
-        void* user_data);
+  amrex::Real tn,
+  N_Vector u,
+  N_Vector fu,
+  booleantype jok,
+  booleantype* jcurPtr,
+  amrex::Real gamma,
+  void* user_data);
 #endif
 
 int react_2(
-        const amrex::Box& box,
-        amrex::Array4<amrex::Real> const& rY_in,
-        amrex::Array4<amrex::Real> const& rY_src_in,
-        amrex::Array4<amrex::Real> const& T_in,
-        amrex::Array4<amrex::Real> const& rEner_in,
-        amrex::Array4<amrex::Real> const& rEner_src_in,
-        amrex::Array4<amrex::Real> const& FC_in,
-        amrex::Array4<int> const& mask,
-        amrex::Real& dt_react,
-        amrex::Real& time);
+  const amrex::Box& box,
+  amrex::Array4<amrex::Real> const& rY_in,
+  amrex::Array4<amrex::Real> const& rY_src_in,
+  amrex::Array4<amrex::Real> const& T_in,
+  amrex::Array4<amrex::Real> const& rEner_in,
+  amrex::Array4<amrex::Real> const& rEner_src_in,
+  amrex::Array4<amrex::Real> const& FC_in,
+  amrex::Array4<int> const& mask,
+  amrex::Real& dt_react,
+  amrex::Real& time);
 
-void FreeUserData(CVODEUserData *data);
+void FreeUserData(CVODEUserData* data);
 
 void check_state(N_Vector yvec);
 
@@ -625,32 +625,31 @@ void ReSetTolODE();
 
 struct _SUNLinearSolverContent_Sparse_custom
 {
-    sunindextype last_flag;
-    int reactor_type;
-    int nsubsys;     // number of subsystems
-    int subsys_size; // size of each subsystem
-    int subsys_nnz;
+  sunindextype last_flag;
+  int reactor_type;
+  int nsubsys;     // number of subsystems
+  int subsys_size; // size of each subsystem
+  int subsys_nnz;
 };
 
 typedef struct _SUNLinearSolverContent_Sparse_custom*
-SUNLinearSolverContent_Sparse_custom;
+  SUNLinearSolverContent_Sparse_custom;
 
 SUNLinearSolver SUNLinSol_sparse_custom(
-        N_Vector y,
-        SUNMatrix A,
-        int reactor_type,
-        int nsubsys,
-        int subsys_size,
-        int subsys_nnz);
+  N_Vector y,
+  SUNMatrix A,
+  int reactor_type,
+  int nsubsys,
+  int subsys_size,
+  int subsys_nnz);
 
 SUNLinearSolver_Type SUNLinSolGetType_Sparse_custom(SUNLinearSolver S);
 
 int SUNLinSolSolve_Sparse_custom(
-        SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b, amrex::Real tol);
+  SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b, amrex::Real tol);
 #endif
 
 #endif
 //===================================================================
-
 
 #endif
