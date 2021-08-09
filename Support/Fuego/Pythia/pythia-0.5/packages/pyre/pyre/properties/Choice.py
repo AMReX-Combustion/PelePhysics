@@ -13,12 +13,11 @@
 
 
 from __future__ import absolute_import
+
 from .Unary import Unary
 
 
 class Choice(Unary):
-
-
     def __call__(self, candidate):
         return candidate in self.value
 
@@ -26,4 +25,4 @@ class Choice(Unary):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

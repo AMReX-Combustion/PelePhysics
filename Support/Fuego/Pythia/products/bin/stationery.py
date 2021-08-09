@@ -17,14 +17,13 @@ from pyre.applications.Application import Application
 
 
 class Stationery(Application):
-
-
     def run(self, *args, **kwds):
 
         filename = self.inventory.name
         language = self.inventory.language
 
         import weaver
+
         mill = weaver.registry().mill(language)
         mill.initialize()
 
@@ -32,19 +31,18 @@ class Stationery(Application):
             outfile = open(filename, "w")
         else:
             import sys
+
             outfile = sys.stdout
 
         for line in mill.pickle():
             outfile.write(line)
-            outfile.write('\n')
-        
-        return
+            outfile.write("\n")
 
+        return
 
     def __init__(self):
         Application.__init__(self, "stationery")
         return
-
 
     class Inventory(Application.Inventory):
 
@@ -53,13 +51,14 @@ class Stationery(Application):
         inventory = (
             pyre.properties.str("name"),
             pyre.properties.str("language", default="python"),
-            )
+        )
 
 
 # main
 
 if __name__ == "__main__":
     import journal
+
     # journal.debug("cmdline.parsing").activate()
     # journal.debug("cmdline.configuration").activate()
     # journal.debug("weaver").activate()

@@ -17,8 +17,6 @@ from pyre.properties.Property import Property
 
 
 class Registrar(type):
-
-
     def __init__(cls, name, bases, dict):
         super(Registrar, cls).__init__(name, bases, dict)
 
@@ -54,11 +52,11 @@ class Registrar(type):
                 propertyRegistry[public] = trait
             elif isinstance(trait, Facility):
                 facilityRegistry[public] = trait
-                #if trait.default is not None:
-                    #componentRegistry[trait.default.name] = trait
-                #else:
-                    #componentRegistry[public] = trait
-                
+                # if trait.default is not None:
+                # componentRegistry[trait.default.name] = trait
+                # else:
+                # componentRegistry[public] = trait
+
             setattr(cls, name, trait)
 
         # update the class record
@@ -73,4 +71,4 @@ class Registrar(type):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

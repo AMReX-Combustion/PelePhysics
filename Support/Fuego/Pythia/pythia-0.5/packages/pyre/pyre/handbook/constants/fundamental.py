@@ -13,7 +13,6 @@
 
 from pyre.units.SI import joule, kelvin, mole
 
-
 # Source: physics.nist.gov/constants
 #
 # Peter J. Mohr and Barry N. Taylor,
@@ -21,10 +20,10 @@ from pyre.units.SI import joule, kelvin, mole
 #    Journal of Physical and Chemical Reference Data, to be published
 #
 
-boltzmann = 1.3806503e-23 * joule/kelvin
-avogadro = 6.02214199e23/ mole
+boltzmann = 1.3806503e-23 * joule / kelvin
+avogadro = 6.02214199e23 / mole
 
-gas_constant = 8.314472 * joule/(mole*kelvin)
+gas_constant = 8.314472 * joule / (mole * kelvin)
 
 # aliases
 

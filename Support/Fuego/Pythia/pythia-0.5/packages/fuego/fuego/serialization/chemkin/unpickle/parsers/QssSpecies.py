@@ -12,24 +12,26 @@
 #
 
 from __future__ import absolute_import
+
 from builtins import str
+
 from .BaseParser import BaseParser
 
 
 class QssSpecies(BaseParser):
 
-
     # the interesting tokens
 
     def aQssSpeciesName(self, token):
         try:
-            qss_species = self._mechanism.newQssSpecies(token.name, self.locator())
+            qss_species = self._mechanism.newQssSpecies(
+                token.name, self.locator()
+            )
 
         except self._mechanism.DuplicateQssSpecies as msg:
             self.onWarning(str(msg), self.locator())
-        
-        return 0
 
+        return 0
 
     # transitions
 
@@ -37,22 +39,25 @@ class QssSpecies(BaseParser):
         self._info.log("species parser: section start")
         self._parse(self._scanner, self._tokenizer)
         return 0
-        
 
     # other methods
 
     def __init__(self, mechanism, tokenizer):
         import pyre
+
         BaseParser.__init__(self, mechanism)
 
         self._tokenizer = tokenizer
 
         import fuego
-        self._scanner = fuego.serialization.chemkin.unpickle.scanners.qss_species()
+
+        self._scanner = (
+            fuego.serialization.chemkin.unpickle.scanners.qss_species()
+        )
 
         return
 
-            
+
 # version
 __id__ = "$Id$"
 

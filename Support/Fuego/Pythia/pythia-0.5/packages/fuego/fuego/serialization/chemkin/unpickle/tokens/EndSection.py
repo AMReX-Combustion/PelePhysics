@@ -12,6 +12,7 @@
 #
 
 from __future__ import absolute_import
+
 from .Token import Token
 
 
@@ -19,13 +20,11 @@ class EndSection(Token):
 
     pattern = r"[Ee][Nn][Dd]"
 
-
     def identify(self, auth):
         return auth.anEndSection(self)
 
-
     def __str__(self):
-         return "{section end}"
+        return "{section end}"
 
 
 # version

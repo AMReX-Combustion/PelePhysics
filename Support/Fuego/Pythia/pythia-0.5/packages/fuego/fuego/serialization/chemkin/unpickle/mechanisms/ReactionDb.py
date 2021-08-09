@@ -13,17 +13,15 @@
 
 
 from builtins import object
+
+
 class ReactionDb(object):
-
-
     def reaction(self, reaction):
         self._reactions.append(reaction)
         return
 
-
     def size(self):
         return len(self._reactions)
-
 
     def find(self, symbol=None):
         if not symbol:
@@ -39,9 +37,8 @@ class ReactionDb(object):
                 if species == symbol:
                     candidates.append(reaction)
                 continue
-                
-        return candidates
 
+        return candidates
 
     def __init__(self):
         self._reactions = []

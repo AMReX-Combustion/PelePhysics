@@ -1,23 +1,23 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 # adapted from GvR's Singleton implementation
 
 from builtins import object
+
+
 class Singleton(object):
-
-
     def __new__(cls, *args, **kwds):
         it = cls.__dict__.get("__it__")
         if it is not None:
@@ -27,7 +27,6 @@ class Singleton(object):
         it.init(*args, **kwds)
         return it
 
-
     def init(self, *args, **kwds):
         """constructor substitute for initializing the singleton"""
         return
@@ -36,4 +35,4 @@ class Singleton(object):
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

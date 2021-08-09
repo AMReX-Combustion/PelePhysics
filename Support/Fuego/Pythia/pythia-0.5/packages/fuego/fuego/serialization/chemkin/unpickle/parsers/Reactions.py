@@ -11,13 +11,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
 from .BaseParser import BaseParser
 
 
 class Reactions(BaseParser):
-
 
     # the interesting tokens
 
@@ -28,8 +27,10 @@ class Reactions(BaseParser):
 
         self._reactionIndex += 1
 
-        record = self._mechanism.newReaction(self._reactionIndex, self.locator())
-        #record.token = token
+        record = self._mechanism.newReaction(
+            self._reactionIndex, self.locator()
+        )
+        # record.token = token
 
         if token._externalProduct != token._externalReactant:
             str = "The third body specification must be identical on both sides of a reaction"
@@ -52,16 +53,13 @@ class Reactions(BaseParser):
 
         return 0
 
-
     def aReactionUnitsA(self, token):
         self._units["prefactor"] = token.units_A
         return 0
 
-
     def aReactionUnitsE(self, token):
         self._units["activation"] = token.units_E
         return 0
-
 
     def someArrheniusCoefficients(self, token):
         record = self._currentReaction
@@ -72,7 +70,6 @@ class Reactions(BaseParser):
 
         record.arrhenius = token.parameters
         return 0
-
 
     def aReactionDuplicate(self, token):
         record = self._currentReaction
@@ -85,7 +82,6 @@ class Reactions(BaseParser):
 
         return 0
 
-
     def someReactionEfficiencies(self, token):
         record = self._currentReaction
         if not record:
@@ -95,7 +91,6 @@ class Reactions(BaseParser):
 
         record.efficiencies += token.efficiencies
         return 0
-
 
     def aReactionFORD(self, token):
         print("ford !!")
@@ -107,7 +102,6 @@ class Reactions(BaseParser):
 
         (record.ford).append(self._parameterParser.extractRaw("FORD", 2))
         return 0
-
 
     def aReactionHV(self, token):
         record = self._currentReaction
@@ -122,9 +116,8 @@ class Reactions(BaseParser):
             return 0
 
         record.radiation = self._parameterParser.extract("HV", 1)
-        
-        return 0
 
+        return 0
 
     def aReactionLT(self, token):
         record = self._currentReaction
@@ -136,7 +129,6 @@ class Reactions(BaseParser):
         record.lt = self._parameterParser.extract("LT", 2)
         return 0
 
-
     def aReactionRLT(self, token):
         record = self._currentReaction
         if not record:
@@ -147,7 +139,6 @@ class Reactions(BaseParser):
         record.rlt = self._parameterParser.extract("RLT", 2)
         return 0
 
-
     def aReactionReverse(self, token):
         record = self._currentReaction
         if not record:
@@ -155,19 +146,18 @@ class Reactions(BaseParser):
             self.onWarning(msg, self.locator())
             return 0
 
-        if not record.reversible: 
-            msg =  "REV specification provided for an irreversible reaction"
+        if not record.reversible:
+            msg = "REV specification provided for an irreversible reaction"
             self.onWarning(msg, self.locator())
             return 0
 
-        if record.low or record.sri or record.troe: 
-            msg =  "ignoring REV specification for this falloff reaction"
+        if record.low or record.sri or record.troe:
+            msg = "ignoring REV specification for this falloff reaction"
             self.onWarning(msg, self.locator())
             return 0
 
         record.rev = self._parameterParser.extract("REV", 3)
         return 0
-
 
     def aReactionLOW(self, token):
         record = self._currentReaction
@@ -176,20 +166,18 @@ class Reactions(BaseParser):
             self.onWarning(msg, self.locator())
             return 0
 
-        if record.rev: 
-            msg =  "ignoring LOW parameters for this reaction with REV specification"
+        if record.rev:
+            msg = "ignoring LOW parameters for this reaction with REV specification"
             self.onWarning(msg, self.locator())
             return 0
 
-        if not record.falloff: 
-            msg =  "LOW parameters provided for a reaction with no parenthesized species"
+        if not record.falloff:
+            msg = "LOW parameters provided for a reaction with no parenthesized species"
             self.onWarning(msg, self.locator())
             return 0
 
-        
         record.low = self._parameterParser.extract("LOW", 3)
         return 0
-
 
     def aReactionSRI(self, token):
         record = self._currentReaction
@@ -198,24 +186,23 @@ class Reactions(BaseParser):
             self.onWarning(msg, self.locator())
             return 0
 
-        if record.rev: 
-            msg =  "ignoring SRI parameters for this reaction with REV specification"
+        if record.rev:
+            msg = "ignoring SRI parameters for this reaction with REV specification"
             self.onWarning(msg, self.locator())
             return 0
 
-        if not record.falloff: 
-            msg =  "SRI parameters provided for a reaction with no parenthesized species"
+        if not record.falloff:
+            msg = "SRI parameters provided for a reaction with no parenthesized species"
             self.onWarning(msg, self.locator())
             return 0
 
         if record.troe:
-            msg =  "ignoring SRI parameters for this reaction with TROE falloff"
+            msg = "ignoring SRI parameters for this reaction with TROE falloff"
             self.onWarning(msg, self.locator())
             return 0
 
         record.sri = self._parameterParser.extractOpt("SRI", 3, 5)
         return 0
-
 
     def aReactionTROE(self, token):
         record = self._currentReaction
@@ -224,25 +211,23 @@ class Reactions(BaseParser):
             self.onWarning(msg, self.locator())
             return 0
 
-        if record.rev: 
-            msg =  "ignoring TROE parameters for this reaction with REV specification"
+        if record.rev:
+            msg = "ignoring TROE parameters for this reaction with REV specification"
             self.onWarning(msg, self.locator())
             return 0
 
-        if not record.falloff: 
-            msg =  "TROE parameters provided for a reaction with no parenthesized species"
+        if not record.falloff:
+            msg = "TROE parameters provided for a reaction with no parenthesized species"
             self.onWarning(msg, self.locator())
             return 0
 
         if record.sri:
-            msg =  "ignoring TROE parameters for this reaction with SRI falloff"
+            msg = "ignoring TROE parameters for this reaction with SRI falloff"
             self.onWarning(msg, self.locator())
             return 0
 
-        
         record.troe = self._parameterParser.extractOpt("TROE", 3, 4)
         return 0
-
 
     # transitions
 
@@ -255,29 +240,33 @@ class Reactions(BaseParser):
         self._parse(self._scanner, self._tokenizer)
         return 0
 
-
     def anEndSection(self, token):
-        if self._currentReaction: self._finishReaction()
+        if self._currentReaction:
+            self._finishReaction()
         self._currentReaction = None
         return 1
 
-
     def onEndOfFile(self):
-        if self._currentReaction: self._finishReaction()
+        if self._currentReaction:
+            self._finishReaction()
         return 1
-
 
     # other methods
 
     def __init__(self, mechanism, tokenizer):
         import pyre
+
         BaseParser.__init__(self, mechanism)
 
         self._tokenizer = tokenizer
         import fuego
-        self._scanner = fuego.serialization.chemkin.unpickle.scanners.reactions()
+
+        self._scanner = (
+            fuego.serialization.chemkin.unpickle.scanners.reactions()
+        )
 
         from .Parameters import Parameters
+
         self._parameterParser = Parameters(tokenizer)
 
         self._reactionIndex = 0
@@ -286,12 +275,12 @@ class Reactions(BaseParser):
 
         return
 
-
     def _finishReaction(self):
         record = self._currentReaction
 
         if not record:
             import journal
+
             pyre.firewall("fuego").log("Null reaction record!")
 
         # Check for valid combinations of options
@@ -309,7 +298,9 @@ class Reactions(BaseParser):
 
         # REV and LT requires RLT
         if record.rev and record.lt and not record.rlt:
-            msg = "Must specify RLT for reactions with REV and LT specifications"
+            msg = (
+                "Must specify RLT for reactions with REV and LT specifications"
+            )
             self.onWarning(msg, self.locator())
             return None
 
@@ -319,9 +310,8 @@ class Reactions(BaseParser):
         self._currentReaction = None
         return
 
-
     def _resolveParticipants(self, token, participants):
-        
+
         resolved = []
         for participant in participants:
             name = participant[0]
@@ -334,12 +324,11 @@ class Reactions(BaseParser):
                 self.onWarning(msg, self.locator())
 
         return resolved
-            
-                
+
     def _unexpectedStatement(self, token):
         str = ""
         return str
-    
+
 
 # version
 __id__ = "$Id$"

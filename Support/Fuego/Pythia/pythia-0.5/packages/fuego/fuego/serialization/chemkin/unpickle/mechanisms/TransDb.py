@@ -13,9 +13,9 @@
 
 
 from builtins import object
+
+
 class TransDb(object):
-
-
     def all(self, flag=None):
 
         if flag is None:
@@ -24,24 +24,20 @@ class TransDb(object):
         self._all = flag
         return
 
-
-    #def range(self, range=None):
+    # def range(self, range=None):
     #    if range is None:
     #        return self._range
 
     #    self._range = range
     #    return
 
-
     def species(self, species):
         self._species.append(species)
         self._index[species.symbol] = species
         return
 
-
     def size(self):
         return len(self._species)
-
 
     def find(self, symbol=None):
         if symbol:
@@ -49,10 +45,9 @@ class TransDb(object):
 
         return self._species
 
-
     def __init__(self):
         self._all = 0
-        #self._range = ()
+        # self._range = ()
 
         self._index = {}
         self._species = []

@@ -16,8 +16,6 @@ from pyre.components.Component import Component
 
 
 class Geometry(Component):
-
-
     def __init__(self, name):
         Component.__init__(self, name, "geometry")
         return
@@ -26,4 +24,4 @@ class Geometry(Component):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

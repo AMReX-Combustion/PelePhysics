@@ -12,22 +12,20 @@
 #
 
 from __future__ import absolute_import
-from .Token import Token
+
 from .RegularExpressions import whitespace
+from .Token import Token
 
 
 class Whitespace(Token):
 
-
     pattern = whitespace
-
 
     def identify(self, auth):
         return auth.aWhitespace(self)
 
-
     def __str__(self):
-         return "{whitespace}"
+        return "{whitespace}"
 
 
 # version

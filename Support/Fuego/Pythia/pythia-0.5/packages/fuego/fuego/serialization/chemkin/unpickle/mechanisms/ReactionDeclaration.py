@@ -12,12 +12,11 @@
 #
 
 from __future__ import absolute_import
+
 from .Declaration import Declaration
 
 
 class ReactionDeclaration(Declaration):
-
-
     def __init__(self, id, locator=None):
         Declaration.__init__(self, locator)
 
@@ -48,7 +47,6 @@ class ReactionDeclaration(Declaration):
 
         return
 
-
     def _reagents(self, composition):
         terms = []
         for species, factor in composition:
@@ -64,13 +62,13 @@ class ReactionDeclaration(Declaration):
         if self.thirdBody:
             thirdBody = ""
             species, factor = self.thirdBody
-            if species == '<mixture>':
-                species = 'M'
+            if species == "<mixture>":
+                species = "M"
 
             if self.falloff:
-                thirdBody += ' (+'
+                thirdBody += " (+"
             else:
-                thirdBody += ' + '
+                thirdBody += " + "
 
             if factor != 1:
                 thirdBody += "%d" % factor
@@ -78,13 +76,11 @@ class ReactionDeclaration(Declaration):
             thirdBody += species
 
             if self.falloff:
-                thirdBody += ')'
-        
+                thirdBody += ")"
+
             reaction += thirdBody
 
         return reaction
-
-
 
     def __str__(self):
 
@@ -97,14 +93,12 @@ class ReactionDeclaration(Declaration):
             str += " => "
 
         str += self._reagents(self.products)
-        
+
         # str += ", " + Declaration.__str__(self)
         return str
 
 
 # helpers
-
-    
 
 
 # version

@@ -12,6 +12,7 @@
 #
 
 from __future__ import absolute_import
+
 from .Drawable import Drawable
 
 
@@ -21,8 +22,6 @@ def edgeAttributes():
 
 
 class Edge(Drawable):
-
-
     def __init__(self, source, sink):
         Drawable.__init__(self)
 
@@ -31,21 +30,20 @@ class Edge(Drawable):
 
         return
 
-
     _validAttributes = {
-        "color" : None,
+        "color": None,
         "decorate": None,
         "dir": None,
-        "fontcolor" : None,
-        "fontname" : None,
-        "fontsize" : None,
-        "id" : None,
-        "label" : None,
-        "layer" : None,
-        "minlen" : None,
-        "style" : None,
-        "weight" : None
-        }
+        "fontcolor": None,
+        "fontname": None,
+        "fontsize": None,
+        "id": None,
+        "label": None,
+        "layer": None,
+        "minlen": None,
+        "style": None,
+        "weight": None,
+    }
 
 
 # version

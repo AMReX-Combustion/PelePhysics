@@ -13,16 +13,19 @@
 
 
 from __future__ import absolute_import
-from builtins import object
-from future.utils import with_metaclass
-from .Registrar import Registrar
-class Inventory(with_metaclass(Registrar, object)):
 
+from builtins import object
+
+from future.utils import with_metaclass
+
+from .Registrar import Registrar
+
+
+class Inventory(with_metaclass(Registrar, object)):
 
     # class data
     delegate = None
     inventory = ()
-
 
     def defaults(self):
         for facility in self._facilityRegistry:
@@ -30,29 +33,27 @@ class Inventory(with_metaclass(Registrar, object)):
             component.defaults()
         return
 
-
     def init(self, parent):
         for facility in self._facilityRegistry:
             component = self.__getattribute__(facility)
             component.init(parent)
         return
 
-
     def configure(self, registry):
         unknown = self.configureProperties(registry)
         unknown += self.configureComponents(registry)
 
-        report = [ ("%s.%s" % (registry.name, name), value) for name, value in unknown ]
+        report = [
+            ("%s.%s" % (registry.name, name), value) for name, value in unknown
+        ]
 
         return report
-
 
     def fini(self):
         for facility in self._facilityRegistry:
             component = self.__getattribute__(facility)
             component.fini()
         return
-
 
     def configureProperties(self, registry):
         unknown = []
@@ -70,8 +71,7 @@ class Inventory(with_metaclass(Registrar, object)):
 
             prop.__set__(self, value)
 
-        return unknown         
-    
+        return unknown
 
     def configureComponents(self, registry):
         unknown = []
@@ -92,17 +92,14 @@ class Inventory(with_metaclass(Registrar, object)):
                 continue
 
             unknown += component.configure(conf)
-        
-        return unknown
 
+        return unknown
 
     def facilities(self):
         return dict(self._facilityRegistry)
 
-
     def properties(self):
         return dict(self._propertyRegistry)
-
 
     def components(self):
         table = {}
@@ -111,18 +108,18 @@ class Inventory(with_metaclass(Registrar, object)):
 
         return table
 
-
     def state(self, registry):
         for property in self._propertyRegistry.values():
-            registry.properties[property.public] = self.__getattribute__(property.name)
+            registry.properties[property.public] = self.__getattribute__(
+                property.name
+            )
 
         for facility in self._facilityRegistry.values():
             component = self.__getattribute__(facility.name)
             node = registry.open(component.name)
             component.state(node)
-            
-        return registry
 
+        return registry
 
     # delegation implementation
     def __getattribute__(self, attribute):
@@ -139,8 +136,10 @@ class Inventory(with_metaclass(Registrar, object)):
             pass
 
         # raise an exception
-        raise AttributeError("'%s' object has no property named '%s'" % (
-            self.__class__.__name__, attribute))
+        raise AttributeError(
+            "'%s' object has no property named '%s'"
+            % (self.__class__.__name__, attribute)
+        )
 
     # implementation details: data
     from .Registrar import Registrar
@@ -149,4 +148,4 @@ class Inventory(with_metaclass(Registrar, object)):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

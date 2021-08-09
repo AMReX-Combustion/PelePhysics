@@ -1,23 +1,22 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 from __future__ import absolute_import
+
 from .SelectionWeaver import SelectionWeaver
 
 
 class StatesSelection(SelectionWeaver):
-
-
     def __init__(self):
         SelectionWeaver.__init__(self)
         self._options = states()
@@ -88,10 +87,10 @@ def states():
         ("MB", "Manitoba"),
         ("ON", "Ontario"),
         ("QU", "Quebec"),
-        ]
+    ]
 
 
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

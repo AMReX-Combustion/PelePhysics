@@ -12,9 +12,11 @@
 #
 
 from __future__ import absolute_import
+
 import re
-from .Token import Token
+
 from .RegularExpressions import namedInlineParameters
+from .Token import Token
 
 
 class ParameterList(Token):
@@ -22,10 +24,8 @@ class ParameterList(Token):
     pattern = namedInlineParameters % "parameter_list"
     whitespace = re.compile("\s+")
 
-
     def identify(self, auth):
         return auth.aParameterList(self)
-
 
     def __init__(self, match, groups):
         Token.__init__(self, match, groups)
@@ -36,7 +36,6 @@ class ParameterList(Token):
 
         return
 
-    
     def __str__(self):
         return "{Parameter list: %s}" % self.parameters
 

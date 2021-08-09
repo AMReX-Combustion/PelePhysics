@@ -13,18 +13,19 @@
 
 
 from __future__ import division
+
 from builtins import object
+
+
 class Entity(object):
 
     _FILENAME_LIMIT = 40
 
-
-    def locator(self,locator):
+    def locator(self, locator):
         self.filename = locator.filename
         self.line = locator.line
         self.column = locator.column
         return
-
 
     def __init__(self, id, locator):
         self.id = id
@@ -38,16 +39,18 @@ class Entity(object):
             self.column = 0
         return
 
-
     def __str__(self):
         filename = self.filename
         if not filename:
             return "<unknown>"
-        
+
         if len(filename) > self._FILENAME_LIMIT:
-            filename = filename[:self._FILENAME_LIMIT//2 - 3] + \
-                       "..." + filename[-self._FILENAME_LIMIT//2 + 3:]
-        
+            filename = (
+                filename[: self._FILENAME_LIMIT // 2 - 3]
+                + "..."
+                + filename[-self._FILENAME_LIMIT // 2 + 3 :]
+            )
+
         return "'%s':(%d, %d)" % (filename, self.line, self.column)
 
 

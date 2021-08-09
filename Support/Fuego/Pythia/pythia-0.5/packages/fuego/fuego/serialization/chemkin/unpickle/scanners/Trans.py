@@ -12,14 +12,16 @@
 #
 
 from __future__ import absolute_import
+
 from .BaseScanner import BaseScanner
 
 
 class Trans(BaseScanner):
-
-
     def _tokenClasses(self):
-        from fuego.serialization.chemkin.unpickle.tokens import transTokenClasses
+        from fuego.serialization.chemkin.unpickle.tokens import (
+            transTokenClasses,
+        )
+
         return transTokenClasses()
 
 

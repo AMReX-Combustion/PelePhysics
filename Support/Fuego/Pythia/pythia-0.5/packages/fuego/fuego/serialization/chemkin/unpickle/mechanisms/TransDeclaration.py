@@ -12,12 +12,11 @@
 #
 
 from __future__ import absolute_import
+
 from .Declaration import Declaration
 
 
 class TransDeclaration(Declaration):
-
-
     def __init__(self, symbol, locator=None):
         Declaration.__init__(self, locator)
 
@@ -26,7 +25,6 @@ class TransDeclaration(Declaration):
         self.composition = []
 
         return
-
 
     def __str__(self):
         str = "symbol='%s'" % self.symbol

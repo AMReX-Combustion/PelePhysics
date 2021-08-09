@@ -15,6 +15,7 @@
 def journald():
 
     from pyre.journal.Daemon import Daemon
+
     app = Daemon()
     app.main()
 
@@ -22,12 +23,13 @@ def journald():
 # main
 if __name__ == "__main__":
     import journal
+
     journal.debug("journald").activate
-    
+
     journald()
-    
+
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

@@ -1,42 +1,39 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 from __future__ import absolute_import
+
 from .File import File
 
 
 class Directory(File):
-
     def fullname(self):
         return self._path
-
 
     def id(self, inspector):
         return inspector.onDirectory(self)
 
-
     def children(self):
         return tuple(self._children.values())
-
 
     def subdirectories(self):
         return tuple(self._subdirectories)
 
-
     def expand(self):
 
         import stat
+
         from .BlockDevice import BlockDevice
         from .CharacterDevice import CharacterDevice
         from .File import File
@@ -47,12 +44,14 @@ class Directory(File):
         subdirectories = []
 
         import os
+
         children = os.listdir(self.fullname())
 
         for name in children:
 
-            if name in self._children: continue
-            
+            if name in self._children:
+                continue
+
             pathname = os.path.join(self.fullname(), name)
             # PORTABILITY: lstat is unix only
             mode = os.lstat(pathname)[stat.ST_MODE]
@@ -80,7 +79,6 @@ class Directory(File):
         self._subdirectories = subdirectories
         return subdirectories
 
-
     def __init__(self, name, parent):
         File.__init__(self, name, parent)
 
@@ -88,6 +86,7 @@ class Directory(File):
             self._path = name
         else:
             import os
+
             self._path = os.path.join(parent.fullname(), name)
 
         self._children = {}
@@ -95,8 +94,7 @@ class Directory(File):
         return
 
 
-
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

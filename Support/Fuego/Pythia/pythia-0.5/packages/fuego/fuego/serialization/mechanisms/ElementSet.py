@@ -12,18 +12,17 @@
 #
 
 from __future__ import absolute_import
+
 from .EntitySet import EntitySet
 
 
 class ElementSet(EntitySet):
-
-
     def element(self, symbol, atomicWeight=None, locator=None):
         from .Element import Element
+
         element = Element(self.size(), symbol, atomicWeight, locator)
         self.insert(symbol, element)
         return element
-
 
 
 # version

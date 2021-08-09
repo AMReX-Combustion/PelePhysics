@@ -15,16 +15,24 @@
 # bultin facilities
 
 from __future__ import absolute_import
+
+
 def facility(
     name,
-    default=None, public=None, binder=None, requirements=None,
-    tip="", doc=""):
+    default=None,
+    public=None,
+    binder=None,
+    requirements=None,
+    tip="",
+    doc="",
+):
 
     from .Facility import Facility
+
     return Facility(name, default, public, binder, requirements)
 
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

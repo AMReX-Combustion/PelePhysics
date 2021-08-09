@@ -13,9 +13,9 @@
 
 
 from builtins import object
+
+
 class Binary(object):
-
-
     def __init__(self, v1, v2):
         self.v1 = v1
         self.v2 = v2
@@ -25,4 +25,4 @@ class Binary(object):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

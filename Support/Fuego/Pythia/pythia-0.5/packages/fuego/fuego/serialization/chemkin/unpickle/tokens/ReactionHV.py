@@ -12,22 +12,20 @@
 #
 
 from __future__ import absolute_import
+
+from .RegularExpressions import namedInlineNumber, whitespaceOpt
 from .Token import Token
-from .RegularExpressions import whitespaceOpt, namedInlineNumber
 
 
 class ReactionHV(Token):
 
-
     pattern = r"[Hh][Vv]"
-
 
     def identify(self, auth):
         return auth.aReactionHV(self)
 
-
     def __str__(self):
-         return "{Radiation}"
+        return "{Radiation}"
 
 
 # version

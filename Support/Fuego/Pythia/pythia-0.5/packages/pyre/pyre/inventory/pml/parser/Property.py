@@ -13,27 +13,25 @@
 
 
 from __future__ import absolute_import
+
 from .AbstractNode import AbstractNode
 
 
 class Property(AbstractNode):
 
-
     tag = "property"
-
 
     def notify(self, parent):
         return parent.onProperty(self)
-
 
     def __init__(self, root, attributes):
         AbstractNode.__init__(self, root, attributes)
         self.name = attributes["name"]
         self.value = attributes.get("value")
         return
-    
+
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

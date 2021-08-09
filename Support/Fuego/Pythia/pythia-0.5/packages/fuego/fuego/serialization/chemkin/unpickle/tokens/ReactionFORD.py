@@ -12,20 +12,18 @@
 #
 
 from __future__ import absolute_import
+
 from .Token import Token
 
 
 class ReactionFORD(Token):
 
-
     pattern = r"[Ff][Oo][Rr][Dd]"
-
 
     def identify(self, auth):
         return auth.aReactionFORD(self)
 
-
-    def __str__(self): 
+    def __str__(self):
         return "{Reaction order}"
 
 

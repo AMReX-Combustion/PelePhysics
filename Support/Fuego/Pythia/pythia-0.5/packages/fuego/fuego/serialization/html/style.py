@@ -2,6 +2,7 @@
 
 __doc__ = """ Style Sheet for use by HtmlPickler """
 
+
 def string():
     return styleString
 

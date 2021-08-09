@@ -12,23 +12,22 @@
 #
 
 from __future__ import absolute_import
+
 import pyre
+
 from .EntitySet import EntitySet
 
 
 class Mixture(EntitySet):
-
-
     def moles(self, symbol, value):
-        
+
         species = self.find(symbol)
         species.updateConcentration(value)
-        
+
         mixture = self.find("<mixture>")
         mixture.updateConcentration(mixture.concentration() + value)
 
         return
-
 
     def __init__(self, mechanism):
         EntitySet.__init__(self)
@@ -43,7 +42,7 @@ class Mixture(EntitySet):
             symbol = proxy.symbol
             weight = molecularWeight(elements, proxy.composition)
             thermo = thermalProperties(proxy.thermo)
-            
+
             species = Species(symbol, weight, thermo)
             self.insert(proxy.symbol, species)
 
@@ -55,12 +54,13 @@ class Mixture(EntitySet):
 
 # helpers
 
+
 def molecularWeight(elements, composition):
     weight = 0.0
-        
+
     for symbol, coefficient in composition:
         weight += coefficient * elements.find(symbol).atomicWeight()
-       
+
     return weight
 
 
@@ -76,10 +76,14 @@ def thermalProperties(thermo):
         low = r2
         high = r1
 
-    pyre.debug.Firewall.verify(low.highT == high.lowT, "bad thermal properties")
+    pyre.debug.Firewall.verify(
+        low.highT == high.lowT, "bad thermal properties"
+    )
     range = (low.lowT, low.highT, high.highT)
-    nasa = pyre.models.thermodynamics.nasa(range, low.parameters, high.parameters)
-    
+    nasa = pyre.models.thermodynamics.nasa(
+        range, low.parameters, high.parameters
+    )
+
     return nasa
 
 

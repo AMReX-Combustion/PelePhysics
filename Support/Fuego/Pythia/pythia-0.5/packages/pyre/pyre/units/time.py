@@ -12,19 +12,18 @@
 #
 
 from __future__ import absolute_import
-from .SI import second
-from .SI import pico, nano, micro, milli
 
+from .SI import micro, milli, nano, pico, second
 
 #
 # Definitions of common time units
 # Data taken from Appendix F of Halliday, Resnick, Walker, "Fundamentals of Physics",
 #     fourth edition, John Willey and Sons, 1993
 
-picosecond = pico*second
-nanosecond = nano*second
-microsecond = micro*second
-millisecond = milli*second
+picosecond = pico * second
+nanosecond = nano * second
+microsecond = micro * second
+millisecond = milli * second
 
 # aliases
 

@@ -12,12 +12,11 @@
 #
 
 from __future__ import absolute_import
+
 from .Entity import Entity
 
 
 class Reaction(Entity):
-
-
     def equation(self):
         str = self._reagents(self.reactants)
 
@@ -28,7 +27,6 @@ class Reaction(Entity):
 
         str += self._reagents(self.products)
         return str
-
 
     def __init__(self, id, locator=None):
         Entity.__init__(self, id, locator)
@@ -58,7 +56,6 @@ class Reaction(Entity):
 
         return
 
-
     def _reagents(self, composition):
         terms = []
         for species, factor in composition:
@@ -74,13 +71,13 @@ class Reaction(Entity):
         if self.thirdBody:
             thirdBody = ""
             species, factor = self.thirdBody
-            if species == '<mixture>':
-                species = 'M'
+            if species == "<mixture>":
+                species = "M"
 
             if self.falloff:
-                thirdBody += ' (+'
+                thirdBody += " (+"
             else:
-                thirdBody += ' + '
+                thirdBody += " + "
 
             if factor != 1:
                 thirdBody += "%f" % factor
@@ -88,13 +85,11 @@ class Reaction(Entity):
             thirdBody += species
 
             if self.falloff:
-                thirdBody += ')'
-        
+                thirdBody += ")"
+
             reaction += thirdBody
 
         return reaction
-
-
 
     def __str__(self):
 

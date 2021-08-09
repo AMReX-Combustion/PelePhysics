@@ -12,16 +12,21 @@
 #
 
 from __future__ import absolute_import
-from builtins import map
-from builtins import range
-import re
 
+import re
+from builtins import map, range
+
+from .RegularExpressions import (
+    coeff,
+    eol,
+    namedNumbers_3,
+    species,
+    whitespace,
+    whitespaceOpt,
+)
 from .Token import Token
 
-from .RegularExpressions import eol, whitespace, whitespaceOpt
-from .RegularExpressions import species, coeff, namedNumbers_3
-
-_maxParticipants = 6 # Maximum number of species on a reaction side
+_maxParticipants = 6  # Maximum number of species on a reaction side
 
 
 def _makeParticipant(id):
@@ -33,15 +38,22 @@ def _makeParticipant(id):
 
 def _makeParticipantOpt(id):
 
-    pattern = r"(" + whitespaceOpt \
-             + r"[+]" + whitespaceOpt + _makeParticipant(id) \
-             + r")?"
-    
+    pattern = (
+        r"("
+        + whitespaceOpt
+        + r"[+]"
+        + whitespaceOpt
+        + _makeParticipant(id)
+        + r")?"
+    )
+
     return pattern
 
 
 def _makeParticipants():
-    participants = [_makeParticipant(0)] + list(map(_makeParticipantOpt, list(range(1, _maxParticipants))))
+    participants = [_makeParticipant(0)] + list(
+        map(_makeParticipantOpt, list(range(1, _maxParticipants)))
+    )
     return "".join(participants) + whitespaceOpt + eol
 
 
@@ -49,29 +61,33 @@ class Reaction(Token):
 
     arrow = r"(?P<reaction_arrow><=>|=>|=)"
     notArrow = r"[^<=>]"
-    
+
     _paramNames = ("reaction_A", "reaction_beta", "reaction_E")
 
     parameters = namedNumbers_3 % _paramNames
 
-    pattern = \
-           r"(?P<reactants>" + notArrow + r"+)" \
-           + whitespaceOpt + arrow + whitespaceOpt \
-           + r"(?P<products>" + notArrow + r"+)" \
-           + whitespace + parameters
-           
-    parenthesizedParticipant = \
-                             r"[(][+]" \
-                             + _makeParticipant(0) \
-                             + r"[)]"
+    pattern = (
+        r"(?P<reactants>"
+        + notArrow
+        + r"+)"
+        + whitespaceOpt
+        + arrow
+        + whitespaceOpt
+        + r"(?P<products>"
+        + notArrow
+        + r"+)"
+        + whitespace
+        + parameters
+    )
+
+    parenthesizedParticipant = r"[(][+]" + _makeParticipant(0) + r"[)]"
 
     pressureDependent = re.compile(parenthesizedParticipant)
 
     participantPattern = re.compile(_makeParticipants())
 
-
-    def identify(self, auth): return auth.aReaction(self)
-
+    def identify(self, auth):
+        return auth.aReaction(self)
 
     def __init__(self, match, groups):
         Token.__init__(self, match, groups)
@@ -81,10 +97,14 @@ class Reaction(Token):
         self._falloff = 0
 
         products = groups["products"].strip()
-        self._products, self._externalProduct = self._extractParticipants(products)
+        self._products, self._externalProduct = self._extractParticipants(
+            products
+        )
 
         reactants = groups["reactants"].strip()
-        self._reactants, self._externalReactant = self._extractParticipants(reactants)
+        self._reactants, self._externalReactant = self._extractParticipants(
+            reactants
+        )
 
         # extract the reaction type
         arrow = groups["reaction_arrow"]
@@ -94,7 +114,10 @@ class Reaction(Token):
             self._reversibleReaction = 1
         else:
             import journal
-            journal.firewall("fuego").log("Reaction: Unknown arrow '%s'" % arrow)
+
+            journal.firewall("fuego").log(
+                "Reaction: Unknown arrow '%s'" % arrow
+            )
 
         paramList = list(map(groups.get, self._paramNames))
         try:
@@ -102,12 +125,12 @@ class Reaction(Token):
         except ValueError:
             # this can't happen because the regexp requires three floats here
             import journal
+
             str = "Could not convert '%s' into a list of numbers" % paramList
             journal.firewall("fuego").log(str)
             return
 
         return
-
 
     def _extractParticipants(self, text):
         thirdBody = None
@@ -123,12 +146,13 @@ class Reaction(Token):
             coeff = self._extractCoefficient(coeff)
             if coeff != 1:
                 import journal
+
                 msg = "Third body '%s' with coefficient=%d" % (species, coeff)
                 journal.firewall("fuego").log(msg)
 
             thirdBody = (species, coeff)
 
-            text = text[:match.start()] + text[match.end():]
+            text = text[: match.start()] + text[match.end() :]
 
         # extract the participants
         match = self.participantPattern.match(text)
@@ -141,37 +165,37 @@ class Reaction(Token):
         participants = []
         for i in range(_maxParticipants):
             species = groups["species_%d" % i]
-            if not species: break
+            if not species:
+                break
             coeff = self._extractCoefficient(groups["coeff_%d" % i])
 
             if species == "M" or species == "m":
                 if thirdBody:
                     str = "more than one species acting as a third body"
                     raise self.TokenizationException(str)
-                    
+
                 thirdBody = ("<mixture>", coeff)
             else:
                 participants.append((species, coeff))
 
         return (participants, thirdBody)
 
-
     def _extractCoefficient(self, coefficient):
 
         # Convert coefficient to an integer
         try:
             c = float(coefficient)
-        except TypeError: # attempt to int(None); set to 1
+        except TypeError:  # attempt to int(None); set to 1
             c = 1
         except ValueError:
             # this can't happen since t he regexp requires a number
             import journal
+
             msg = "Could not convert '%s' into a number" % coefficient
             journal.firewall("fuego").log(str)
             return
 
         return c
-
 
     def __str__(self):
         str = "{reaction: arrhenius=%s" % self.arrhenius

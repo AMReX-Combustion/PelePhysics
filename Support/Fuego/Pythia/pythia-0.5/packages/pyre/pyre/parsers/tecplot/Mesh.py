@@ -1,21 +1,21 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                             Michael A.G. Aivazis
 #                      California Institute of Technology
 #                      (C) 1998-2003  All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 from builtins import object
+
+
 class Mesh(object):
-
-
     def read(self, simplices, file):
 
         count = 0
@@ -23,7 +23,7 @@ class Mesh(object):
         while count < simplices:
             self._dump.log("processing simplex %d" % count)
 
-            simplex = [ (int(node) - 1) for node in file.readline().split() ]
+            simplex = [(int(node) - 1) for node in file.readline().split()]
             self.simplices.append(simplex)
             count += 1
 
@@ -31,13 +31,12 @@ class Mesh(object):
 
         return
 
-
     def __init__(self):
         self.simplices = []
         return
 
-
     import journal
+
     _info = journal.debug("tecplot")
     _dump = journal.debug("tecplot.scanning")
 
@@ -45,4 +44,4 @@ class Mesh(object):
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

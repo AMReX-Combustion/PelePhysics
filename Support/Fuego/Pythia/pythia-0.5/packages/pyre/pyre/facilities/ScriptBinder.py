@@ -13,12 +13,11 @@
 
 
 from __future__ import absolute_import
+
 from .Binder import Binder
 
 
 class ScriptBinder(Binder):
-
-
     def bind(self, facility, value):
         script = file(self._resolve(value))
         context = {}
@@ -26,17 +25,17 @@ class ScriptBinder(Binder):
         component = eval("%s()" % facility, context)
         return component
 
-
     def _resolve(self, name):
         import os
+
         base, ext = os.path.splitext(name)
         if not ext:
             name += ".py"
 
         return name
 
-    
+
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

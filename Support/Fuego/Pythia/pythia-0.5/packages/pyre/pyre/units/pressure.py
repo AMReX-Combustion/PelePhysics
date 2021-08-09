@@ -12,7 +12,8 @@
 #
 
 from __future__ import absolute_import
-from .SI import pascal, kilo, mega, giga
+
+from .SI import giga, kilo, mega, pascal
 
 #
 # Definitions of common pressure units
@@ -29,9 +30,9 @@ from .SI import pascal, kilo, mega, giga
 # aliases
 
 Pa = pascal
-kPa = kilo*pascal
-MPa = mega*pascal
-GPa = giga*pascal
+kPa = kilo * pascal
+MPa = mega * pascal
+GPa = giga * pascal
 
 
 # others

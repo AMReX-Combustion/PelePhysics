@@ -12,25 +12,24 @@
 #
 
 from __future__ import absolute_import
+
 from pyre.facilities.Facility import Facility
 from pyre.facilities.ScriptBinder import ScriptBinder
 
 
 class DeviceFacility(Facility):
-
-
     def __init__(self, default=None):
         if default is None:
             from .Console import Console
+
             default = Console()
 
-        Facility.__init__(self, name="device", default=default, binder=self.DeviceBinder())
+        Facility.__init__(
+            self, name="device", default=default, binder=self.DeviceBinder()
+        )
         return
 
-
     class DeviceBinder(ScriptBinder):
-
-
         def bind(self, facility, value):
             try:
                 return self._builtins[value]()
@@ -38,7 +37,6 @@ class DeviceFacility(Facility):
                 pass
 
             return ScriptBinder.bind(self, facility, value)
-
 
         def __init__(self):
             ScriptBinder.__init__(self)
@@ -51,12 +49,12 @@ class DeviceFacility(Facility):
                 "console": Console,
                 "file": File,
                 "remote": Remote,
-                }
-                
+            }
+
             return
 
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

@@ -12,17 +12,16 @@
 #
 
 from __future__ import absolute_import
+
 from .Token import Token
 
 
 class ReactionDuplicate(Token):
-    
-    pattern = r"[Dd][Uu][Pp]([Ll][Ii][Cc][Aa][Tt][Ee])?"
 
+    pattern = r"[Dd][Uu][Pp]([Ll][Ii][Cc][Aa][Tt][Ee])?"
 
     def identify(self, auth):
         return auth.aReactionDuplicate(self)
-
 
     def __str__(self):
         return "{duplicate reaction}"

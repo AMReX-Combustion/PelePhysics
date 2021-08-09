@@ -1,42 +1,41 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
 import os
+
 from .Application import Application
 
 
 class Daemon(Application):
-
-
     def run(self, *args, **kwds):
         self._debug.log("launching daemon...")
 
         if self.inventory.debug:
             print("debug mode...")
             import os
+
             self._pid = os.getpid()
             self.serve()
             return True
 
         import pyre.util
-        return pyre.util.spawn(self.done, self.respawn)
 
+        return pyre.util.spawn(self.done, self.respawn)
 
     def done(self, pid):
         return True
-
 
     def respawn(self, pid):
         self._debug.log("respawning daemon...")
@@ -46,14 +45,14 @@ class Daemon(Application):
         os.umask(0)
 
         import pyre.util
+
         pyre.util.spawn(self.exit, self.daemon)
         return
 
-
     def exit(self, pid):
         import sys
-        sys.exit(0)
 
+        sys.exit(0)
 
     def daemon(self, pid):
         self._debug.log("daemon running...")
@@ -67,9 +66,8 @@ class Daemon(Application):
 
         self._pid = pid
         self.serve()
-        
+
         return
-    
 
     def serve(self):
         self._debug.log("registering signal handlers")
@@ -82,28 +80,26 @@ class Daemon(Application):
         self._serve()
         return
 
-
     def __init__(self, name):
         Application.__init__(self, name)
         self._pid = None
         return
 
-
     def _defaults(self):
         import pyre.util
+
         tmpdir = pyre.util.tmp()
         self.Inventory.logfile = os.path.join(tmpdir, "%s.log" % self.name)
         self.Inventory.pidfile = os.path.join(tmpdir, "%s.pid" % self.name)
         return
 
-
     def _configure(self):
         import pyre.journal
+
         device = pyre.journal.file()
         device.inventory.name = self.inventory.logfile
         self.inventory.journal.inventory.device = device
         return
-
 
     def _saveInfo(self):
         try:
@@ -118,14 +114,11 @@ class Daemon(Application):
 
         return
 
-
     def _describe(self, pidfile):
         return
 
-
     def _registerSignalHandlers(self):
         return
-
 
     class Inventory(Application.Inventory):
 
@@ -136,10 +129,10 @@ class Daemon(Application):
             pyre.properties.str("home", default="/"),
             pyre.properties.str("pidfile", default="/tmp/daemon.pid"),
             pyre.properties.str("logfile", default="/tmp/daemon.log"),
-            ]
+        ]
 
 
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

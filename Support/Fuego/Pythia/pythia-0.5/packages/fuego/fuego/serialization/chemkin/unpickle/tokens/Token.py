@@ -13,7 +13,6 @@
 
 from pyre.parsing.Token import Token
 
-
 # version
 __id__ = "$Id$"
 

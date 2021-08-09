@@ -12,8 +12,8 @@
 #
 
 from __future__ import absolute_import
-from .unit import unit, dimensionless
 
+from .unit import dimensionless, unit
 
 # basic SI units
 
@@ -27,34 +27,34 @@ candela = unit(1.0, (0, 0, 0, 0, 0, 0, 1))
 
 # the 22 derived SI units with special names
 
-radian = dimensionless                 #  plane angle                                
-steradian = dimensionless              #  solid angle                                
-                                                                                     
-hertz = 1/second                       #  frequency                                  
-                                                                                     
-newton = meter*kilogram/second**2      #  force                                      
-pascal = newton/meter**2               #  pressure                                   
-joule = newton*meter                   #  work, heat                                 
-watt = joule/second                    #  power, radiant flux                        
-                                                                                     
-coulomb = ampere*second                #  electric charge                            
-volt = watt/ampere                     #  electric potential difference              
-farad = coulomb/volt                   #  capacitance                                
-ohm = volt/ampere                      #  electric resistance                        
-siemens = ampere/volt                  #  electric conductance                       
-weber = volt*second                    #  magnetic flux                              
-tesla = weber/meter**2                 #  magnetic flux density                      
-henry = weber/ampere                   #  inductance                                 
-                                                                                     
-celcius = kelvin                       #  Celcius temperature                        
-                                                                                     
-lumen = candela*steradian              #  luminus flux                               
-lux = lumen/meter**2                   #  illuminance                                
-                                                                                     
-becquerel = 1/second                   #  radioactivity                              
-gray = joule/kilogram                  #  absorbed dose                              
-sievert = joule/kilogram               #  dose equivalent                            
-katal = mole/second                    #  catalytic activity                            
+radian = dimensionless  # plane angle
+steradian = dimensionless  # solid angle
+
+hertz = 1 / second  # frequency
+
+newton = meter * kilogram / second ** 2  # force
+pascal = newton / meter ** 2  # pressure
+joule = newton * meter  # work, heat
+watt = joule / second  # power, radiant flux
+
+coulomb = ampere * second  # electric charge
+volt = watt / ampere  # electric potential difference
+farad = coulomb / volt  # capacitance
+ohm = volt / ampere  # electric resistance
+siemens = ampere / volt  # electric conductance
+weber = volt * second  # magnetic flux
+tesla = weber / meter ** 2  # magnetic flux density
+henry = weber / ampere  # inductance
+
+celcius = kelvin  # Celcius temperature
+
+lumen = candela * steradian  # luminus flux
+lux = lumen / meter ** 2  # illuminance
+
+becquerel = 1 / second  # radioactivity
+gray = joule / kilogram  # absorbed dose
+sievert = joule / kilogram  # dose equivalent
+katal = mole / second  # catalytic activity
 
 # prefixes
 
@@ -68,9 +68,9 @@ mega = 1e6
 kilo = 1000
 hecto = 100
 deka = 10
-deci = .1
-centi = .01
-milli = .001
+deci = 0.1
+centi = 0.01
+milli = 0.001
 micro = 1e-6
 nano = 1e-9
 pico = 1e-12

@@ -12,19 +12,21 @@
 #
 
 from __future__ import absolute_import
-from .Token import Token
+
 from .RegularExpressions import whitespace
+from .Token import Token
 
 
 class ThermoSection(Token):
 
+    pattern = (
+        r"[Tt][Hh][Ee][Rr]([Mm][Oo])?("
+        + whitespace
+        + "(?P<thermo_all>[Aa][Ll][Ll]))?"
+    )
 
-    pattern = r"[Tt][Hh][Ee][Rr]([Mm][Oo])?(" + whitespace + "(?P<thermo_all>[Aa][Ll][Ll]))?"
-
-
-    def identify(self, auth): 
+    def identify(self, auth):
         return auth.aThermoSection(self)
-
 
     def __init__(self, match, groups):
         Token.__init__(self, match, groups)
@@ -35,11 +37,10 @@ class ThermoSection(Token):
             self._all = 0
         return
 
-
     def __str__(self):
         return "{Thermo section: all=%d}" % self._all
 
-    
+
 # version
 __id__ = "$Id$"
 

@@ -1,40 +1,37 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 from __future__ import print_function
-from builtins import zip
-from builtins import range
-from builtins import object
-from collections import defaultdict
-
-from weaver.mills.CMill import CMill
-
-from pyre.units.pressure import atm
-from pyre.units.SI import meter, second, mole, kelvin
-from pyre.units.length import cm
-from pyre.units.energy import cal, kcal, J, kJ, erg
-from pyre.handbook.constants.fundamental import boltzmann
-from pyre.handbook.constants.fundamental import avogadro
-from pyre.handbook.constants.fundamental import gas_constant as R
 
 import sys
+from builtins import object, range, zip
+from collections import defaultdict
+
 import numpy as np
+from pyre.handbook.constants.fundamental import avogadro, boltzmann
+from pyre.handbook.constants.fundamental import gas_constant as R
+from pyre.units.energy import J, cal, erg, kcal, kJ
+from pyre.units.length import cm
+from pyre.units.pressure import atm
+from pyre.units.SI import kelvin, meter, mole, second
+from weaver.mills.CMill import CMill
 
 smallnum = 1e-100
-R = (8.31451e7 * erg / (mole/kelvin))
-Rc = 1.98721558317399617591 * cal/mole/kelvin
+R = 8.31451e7 * erg / (mole / kelvin)
+Rc = 1.98721558317399617591 * cal / mole / kelvin
 Patm = 1013250.0
-sym  = ""
+sym = ""
 fsym = "_"
+
 
 class speciesDb(object):
     def __init__(self, id, name, mwt):
@@ -45,8 +42,6 @@ class speciesDb(object):
 
 
 class FPickler(CMill):
-
-
     def __init__(self):
         CMill.__init__(self)
         self.species = []
@@ -54,20 +49,20 @@ class FPickler(CMill):
         self.reactionIndex = []
         self.lowT = 100.0
         self.highT = 10000.0
-        #print 'INIT PICKLER'
+        # print 'INIT PICKLER'
         return
 
-
     def _setSpecies(self, mechanism):
-        """ For internal use """
+        """For internal use"""
         import pyre
+
         periodic = pyre.handbook.periodicTable()
-        
+
         nSpecies = len(mechanism.species())
-        self.species = [ 0.0 for x in range(nSpecies) ]
-        
+        self.species = [0.0 for x in range(nSpecies)]
+
         for species in mechanism.species():
-            weight = 0.0 
+            weight = 0.0
             for elem, coef in species.composition:
                 aw = mechanism.element(elem).weight
                 if not aw:
@@ -80,82 +75,115 @@ class FPickler(CMill):
         self.nSpecies = nSpecies
         return
 
-
-    def _statics(self,mechanism):
+    def _statics(self, mechanism):
         self._write()
-        self._write('! Inverse molecular weights')
-        self._write('double precision, parameter :: imw(%d) = (/ &' % (self.nSpecies))
+        self._write("! Inverse molecular weights")
+        self._write(
+            "double precision, parameter :: imw(%d) = (/ &" % (self.nSpecies)
+        )
         self._indent()
-        for i in range(0,self.nSpecies):
+        for i in range(0, self.nSpecies):
             species = self.species[i]
-            text = '1.d0 / %fd0' % (species.weight)
-            if (i<self.nSpecies-1):
-               text += ',  & '
+            text = "1.d0 / %fd0" % (species.weight)
+            if i < self.nSpecies - 1:
+                text += ",  & "
             else:
-               text += ' /) '
-            self._write(text + '! %s' % species.symbol)
+                text += " /) "
+            self._write(text + "! %s" % species.symbol)
         self._outdent()
 
         self._write()
-        self._write('type :: nonsquare_matrix_double')
-        self._write('   double precision, allocatable :: vector(:)')
-        self._write('end type nonsquare_matrix_double')
+        self._write("type :: nonsquare_matrix_double")
+        self._write("   double precision, allocatable :: vector(:)")
+        self._write("end type nonsquare_matrix_double")
         self._write()
-        self._write('type :: nonsquare_matrix_int')
-        self._write('   integer, allocatable :: vector(:)')
-        self._write('end type nonsquare_matrix_int')
+        self._write("type :: nonsquare_matrix_int")
+        self._write("   integer, allocatable :: vector(:)")
+        self._write("end type nonsquare_matrix_int")
 
         nReactions = len(mechanism.reaction())
         self._write()
-        self._write('double precision, save :: fwd_A(%d), fwd_beta(%d), fwd_Ea(%d)' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double precision, save :: low_A(%d), low_beta(%d), low_Ea(%d)' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double precision, save :: rev_A(%d), rev_beta(%d), rev_Ea(%d)' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double precision, save :: troe_a(%d),troe_Ts(%d), troe_Tss(%d), troe_Tsss(%d)' 
-                    % (nReactions,nReactions,nReactions,nReactions))
-        self._write('double precision, save :: sri_a(%d), sri_b(%d), sri_c(%d), sri_d(%d), sri_e(%d)'
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('double precision, save :: activation_units(%d), prefactor_units(%d), phase_units(%d)'
-                    % (nReactions,nReactions,nReactions))
-        self._write('integer, save :: is_PD(%d), troe_len(%d), sri_len(%d), nTB(%d)' 
-                    % (nReactions,nReactions,nReactions,nReactions))
-        self._write('type(nonsquare_matrix_double) :: TB(%d)' % (nReactions))
-        self._write('type(nonsquare_matrix_int) :: TBid(%d)' % (nReactions))
+        self._write(
+            "double precision, save :: fwd_A(%d), fwd_beta(%d), fwd_Ea(%d)"
+            % (nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "double precision, save :: low_A(%d), low_beta(%d), low_Ea(%d)"
+            % (nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "double precision, save :: rev_A(%d), rev_beta(%d), rev_Ea(%d)"
+            % (nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "double precision, save :: troe_a(%d),troe_Ts(%d), troe_Tss(%d), troe_Tsss(%d)"
+            % (nReactions, nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "double precision, save :: sri_a(%d), sri_b(%d), sri_c(%d), sri_d(%d), sri_e(%d)"
+            % (nReactions, nReactions, nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "double precision, save :: activation_units(%d), prefactor_units(%d), phase_units(%d)"
+            % (nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "integer, save :: is_PD(%d), troe_len(%d), sri_len(%d), nTB(%d)"
+            % (nReactions, nReactions, nReactions, nReactions)
+        )
+        self._write("type(nonsquare_matrix_double) :: TB(%d)" % (nReactions))
+        self._write("type(nonsquare_matrix_int) :: TBid(%d)" % (nReactions))
 
         self._write()
-        self._write('double precision, save :: fwd_A_DEF(%d), fwd_beta_DEF(%d), fwd_Ea_DEF(%d)' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double precision, save :: low_A_DEF(%d), low_beta_DEF(%d), low_Ea_DEF(%d)' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double precision, save :: rev_A_DEF(%d), rev_beta_DEF(%d), rev_Ea_DEF(%d)' 
-                    % (nReactions,nReactions,nReactions))
-        self._write('double precision, save :: troe_a_DEF(%d),troe_Ts_DEF(%d), troe_Tss_DEF(%d), troe_Tsss_DEF(%d)' 
-                    % (nReactions,nReactions,nReactions,nReactions))
-        self._write('double precision, save :: sri_a_DEF(%d), sri_b_DEF(%d), sri_c_DEF(%d), sri_d_DEF(%d), sri_e_DEF(%d)'
-                    % (nReactions,nReactions,nReactions,nReactions,nReactions))
-        self._write('double precision, save :: activation_units_DEF(%d), prefactor_units_DEF(%d), phase_units_DEF(%d)'
-                    % (nReactions,nReactions,nReactions))
-        self._write('integer, save :: is_PD_DEF(%d), troe_len_DEF(%d), sri_len_DEF(%d), nTB_DEF(%d)' 
-                    % (nReactions,nReactions,nReactions,nReactions))
-        self._write('type(nonsquare_matrix_double) :: TB_DEF(%d)' % (nReactions))
-        self._write('type(nonsquare_matrix_int) :: TBid_DEF(%d)' % (nReactions))
+        self._write(
+            "double precision, save :: fwd_A_DEF(%d), fwd_beta_DEF(%d), fwd_Ea_DEF(%d)"
+            % (nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "double precision, save :: low_A_DEF(%d), low_beta_DEF(%d), low_Ea_DEF(%d)"
+            % (nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "double precision, save :: rev_A_DEF(%d), rev_beta_DEF(%d), rev_Ea_DEF(%d)"
+            % (nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "double precision, save :: troe_a_DEF(%d),troe_Ts_DEF(%d), troe_Tss_DEF(%d), troe_Tsss_DEF(%d)"
+            % (nReactions, nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "double precision, save :: sri_a_DEF(%d), sri_b_DEF(%d), sri_c_DEF(%d), sri_d_DEF(%d), sri_e_DEF(%d)"
+            % (nReactions, nReactions, nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "double precision, save :: activation_units_DEF(%d), prefactor_units_DEF(%d), phase_units_DEF(%d)"
+            % (nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "integer, save :: is_PD_DEF(%d), troe_len_DEF(%d), sri_len_DEF(%d), nTB_DEF(%d)"
+            % (nReactions, nReactions, nReactions, nReactions)
+        )
+        self._write(
+            "type(nonsquare_matrix_double) :: TB_DEF(%d)" % (nReactions)
+        )
+        self._write(
+            "type(nonsquare_matrix_int) :: TBid_DEF(%d)" % (nReactions)
+        )
 
         self._write()
-        self._write('! productionRate() static variables')
-        self._write('double precision, save :: T_save = -1')
-        self._write('double precision, save :: k_f_save(%d)' % nReactions)
-        self._write('double precision, save :: Kc_save(%d)' % nReactions)
+        self._write("! productionRate() static variables")
+        self._write("double precision, save :: T_save = -1")
+        self._write("double precision, save :: k_f_save(%d)" % nReactions)
+        self._write("double precision, save :: Kc_save(%d)" % nReactions)
 
         # build reverse reaction map
-        #rmap = {}
-        #for i, reaction in zip(range(nReactions), mechanism.reaction()):
+        # rmap = {}
+        # for i, reaction in zip(range(nReactions), mechanism.reaction()):
         #    rmap[reaction.orig_id-1] = i
         #
-        #self._write('integer, parameter :: rxn_map(%d) = (/ %s /)' % (nReactions, ",".join(str(rmap[x]) for x in range(len(rmap)))))
+        # self._write('integer, parameter :: rxn_map(%d) = (/ %s /)' % (nReactions, ",".join(str(rmap[x]) for x in range(len(rmap)))))
         self._write()
-       
+
         return
 
     def _renderDocument(self, mechanism, options=None):
@@ -165,321 +193,322 @@ class FPickler(CMill):
         self.reactionIndex = mechanism._sort_reactions()
 
         self._start_module()
-        #self._includes()
-        #self._declarations(mechanism)
+        # self._includes()
+        # self._declarations(mechanism)
         self._statics(mechanism)
         self._module_contains(mechanism)
         self._ckinit(mechanism)
 
-        #self._main(mechanism)
+        # self._main(mechanism)
 
         # chemkin wrappers
         self._ckindx(mechanism)
-        #self._ckxnum(mechanism)
-        #self._cksnum(mechanism)
+        # self._ckxnum(mechanism)
+        # self._cksnum(mechanism)
         self._cksyme(mechanism)
         self._cksyms(mechanism)
         self._ckrp(mechanism)
-        
-        #self._ckpx(mechanism)
+
+        # self._ckpx(mechanism)
         self._ckpy(mechanism)
-        #self._vckpy(mechanism)
-        #self._ckpc(mechanism)
-        #self._ckrhox(mechanism)
+        # self._vckpy(mechanism)
+        # self._ckpc(mechanism)
+        # self._ckrhox(mechanism)
         self._ckrhoy(mechanism)
-        #self._ckrhoc(mechanism)
+        # self._ckrhoc(mechanism)
         self._ckwt(mechanism)
-        #self._ckawt(mechanism)
-        #self._ckmmwy(mechanism)
-        #self._ckmmwx(mechanism)
-        #self._ckmmwc(mechanism)
+        # self._ckawt(mechanism)
+        # self._ckmmwy(mechanism)
+        # self._ckmmwx(mechanism)
+        # self._ckmmwc(mechanism)
         self._ckytx(mechanism)
         self._vckytx(mechanism)
-        #self._ckytcp(mechanism)
+        # self._ckytcp(mechanism)
         self._ckytcr(mechanism)
         self._ckxty(mechanism)
-        #self._ckxtcp(mechanism)
-        #self._ckxtcr(mechanism)
-        #self._ckctx(mechanism)
-        #self._ckcty(mechanism)
-        
-        #self._ckcpor(mechanism)
-        #self._ckhort(mechanism)
-        #self._cksor(mechanism)
-        
-        #self._ckcvml(mechanism)
-        #self._ckcpml(mechanism)
-        #self._ckuml(mechanism)
-        #self._ckhml(mechanism)
-        #self._ckgml(mechanism)
-        #self._ckaml(mechanism)
-        #self._cksml(mechanism)
-        
+        # self._ckxtcp(mechanism)
+        # self._ckxtcr(mechanism)
+        # self._ckctx(mechanism)
+        # self._ckcty(mechanism)
+
+        # self._ckcpor(mechanism)
+        # self._ckhort(mechanism)
+        # self._cksor(mechanism)
+
+        # self._ckcvml(mechanism)
+        # self._ckcpml(mechanism)
+        # self._ckuml(mechanism)
+        # self._ckhml(mechanism)
+        # self._ckgml(mechanism)
+        # self._ckaml(mechanism)
+        # self._cksml(mechanism)
+
         self._ckcvms(mechanism)
         self._ckcpms(mechanism)
         self._ckums(mechanism)
         self._ckhms(mechanism)
         self._vckhms(mechanism)
-        #self._ckgms(mechanism)
-        #self._ckams(mechanism)
-        #self._cksms(mechanism)
+        # self._ckgms(mechanism)
+        # self._ckams(mechanism)
+        # self._cksms(mechanism)
 
-        #self._ckcpbl(mechanism)
+        # self._ckcpbl(mechanism)
         self._ckcpbs(mechanism)
-        #self._ckcvbl(mechanism)
+        # self._ckcvbl(mechanism)
         self._ckcvbs(mechanism)
-        
-        #self._ckhbml(mechanism)
-        #self._ckhbms(mechanism)
-        #self._ckubml(mechanism)
+
+        # self._ckhbml(mechanism)
+        # self._ckhbms(mechanism)
+        # self._ckubml(mechanism)
         self._ckubms(mechanism)
-        #self._cksbml(mechanism)
-        #self._cksbms(mechanism)
-        #self._ckgbml(mechanism)
-        #self._ckgbms(mechanism)
-        #self._ckabml(mechanism)
-        #self._ckabms(mechanism)
+        # self._cksbml(mechanism)
+        # self._cksbms(mechanism)
+        # self._ckgbml(mechanism)
+        # self._ckgbms(mechanism)
+        # self._ckabml(mechanism)
+        # self._ckabms(mechanism)
 
         self._ckwc(mechanism)
-        #self._ckwyp(mechanism)
-        #self._ckwxp(mechanism)
-        #self._ckwyr(mechanism)
-        #self._vckwyr(mechanism)
-        #self._ckwxr(mechanism)
+        # self._ckwyp(mechanism)
+        # self._ckwxp(mechanism)
+        # self._ckwyr(mechanism)
+        # self._vckwyr(mechanism)
+        # self._ckwxr(mechanism)
 
-        #self._ckqc(mechanism)
-        #self._ckkfkr(mechanism)
-        #self._ckqyp(mechanism)
-        #self._ckqxp(mechanism)
-        #self._ckqyr(mechanism)
-        #self._ckqxr(mechanism)
+        # self._ckqc(mechanism)
+        # self._ckkfkr(mechanism)
+        # self._ckqyp(mechanism)
+        # self._ckqxp(mechanism)
+        # self._ckqyr(mechanism)
+        # self._ckqxr(mechanism)
 
-        #self._cknu(mechanism)
-        #self._ckncf(mechanism)
+        # self._cknu(mechanism)
+        # self._ckncf(mechanism)
 
-        #self._ckabe(mechanism)
+        # self._ckabe(mechanism)
 
-        #self._ckeqc(mechanism)
-        #self._ckeqyp(mechanism)
-        #self._ckeqxp(mechanism)
-        #self._ckeqyr(mechanism)
-        #self._ckeqxr(mechanism)
-        
+        # self._ckeqc(mechanism)
+        # self._ckeqyp(mechanism)
+        # self._ckeqxp(mechanism)
+        # self._ckeqyr(mechanism)
+        # self._ckeqxr(mechanism)
+
         # Fuego Functions
         self._productionRate(mechanism)
-        #self._vproductionRate(mechanism)
-        #self._DproductionRate(mechanism)
-        #self._ajac(mechanism)
-        #self._dthermodT(mechanism)
-        #self._progressRate(mechanism)
-        #self._progressRateFR(mechanism)
-        #self._equilibriumConstants(mechanism)
+        # self._vproductionRate(mechanism)
+        # self._DproductionRate(mechanism)
+        # self._ajac(mechanism)
+        # self._dthermodT(mechanism)
+        # self._progressRate(mechanism)
+        # self._progressRateFR(mechanism)
+        # self._equilibriumConstants(mechanism)
         self._thermo(mechanism)
         self._molecularWeight(mechanism)
-        #self._atomicWeight(mechanism)
+        # self._atomicWeight(mechanism)
         self._T_given_ey(mechanism)
-        #self._T_given_hy(mechanism)
-        #self._getCriticalParameters(mechanism)
+        # self._T_given_hy(mechanism)
+        # self._getCriticalParameters(mechanism)
         self._trans(mechanism)
         self._end_module()
         return
 
-
     def _start_module(self):
         self._rep += [
-            'module fuego_module',
-            '',
-            '  implicit none',
-            '  private',
-            '  public :: ckcpms',
-            '  public :: ckums',
-            '  public :: ckrhoy',
-            '  public :: ckcvms',
-            '  public :: ckxty',
-            '  public :: ckytcr',
-            '  public :: ckytx',
-            '  public :: ckhms',
-            '  public :: vckytx',
-            '  public :: vckhms',
-            '  public :: ckcvbs',
-            '  public :: ckubms',
-            '  public :: ckcpbs',
-            '  public :: ckpy',
-            '  public :: get_t_given_ey',
-            '  public :: cksyme',
-            '  public :: cksyms',
-            '  public :: ckwt',
-            '  public :: ckrp',
-            '  public :: ckwc',
-            '  public :: ckindx',
-            '  public :: ckinit',
-            '  public :: ckfinalize',
-            '  public :: egtransetCOFTD',
-            '  public :: egtransetKTDIF',
-            '  public :: egtransetCOFD',
-            '  public :: egtransetCOFLAM',
-            '  public :: egtransetCOFETA',
-            '  public :: egtransetNLIN',
-            '  public :: egtransetZROT',
-            '  public :: egtransetPOL',
-            '  public :: egtransetDIP',
-            '  public :: egtransetSIG',
-            '  public :: egtransetEPS',
-            '  public :: egtransetWT',
-            '  public :: egtransetNLITE',
-            '  public :: egtransetKK',
-            '  public :: egtransetNO',
-            '  public :: egtransetLENRMC',
-            '  public :: egtransetLENIMC',
-            ]
+            "module fuego_module",
+            "",
+            "  implicit none",
+            "  private",
+            "  public :: ckcpms",
+            "  public :: ckums",
+            "  public :: ckrhoy",
+            "  public :: ckcvms",
+            "  public :: ckxty",
+            "  public :: ckytcr",
+            "  public :: ckytx",
+            "  public :: ckhms",
+            "  public :: vckytx",
+            "  public :: vckhms",
+            "  public :: ckcvbs",
+            "  public :: ckubms",
+            "  public :: ckcpbs",
+            "  public :: ckpy",
+            "  public :: get_t_given_ey",
+            "  public :: cksyme",
+            "  public :: cksyms",
+            "  public :: ckwt",
+            "  public :: ckrp",
+            "  public :: ckwc",
+            "  public :: ckindx",
+            "  public :: ckinit",
+            "  public :: ckfinalize",
+            "  public :: egtransetCOFTD",
+            "  public :: egtransetKTDIF",
+            "  public :: egtransetCOFD",
+            "  public :: egtransetCOFLAM",
+            "  public :: egtransetCOFETA",
+            "  public :: egtransetNLIN",
+            "  public :: egtransetZROT",
+            "  public :: egtransetPOL",
+            "  public :: egtransetDIP",
+            "  public :: egtransetSIG",
+            "  public :: egtransetEPS",
+            "  public :: egtransetWT",
+            "  public :: egtransetNLITE",
+            "  public :: egtransetKK",
+            "  public :: egtransetNO",
+            "  public :: egtransetLENRMC",
+            "  public :: egtransetLENIMC",
+        ]
         return
 
     def _module_contains(self, mechanism):
-        self._rep += [
-            'contains'
-            ]
+        self._rep += ["contains"]
 
         nReactions = len(mechanism.reaction())
         self._write()
-        #self._write('void GET_REACTION_MAP(int *rmap)')
-        #self._write('{')
-        #self._indent()
-        #self._write('for (int i=0; i<%d; ++i) {' % (nReactions))
-        #self._indent()        
-        #self._write('rmap[i] = rxn_map[i];')
-        #self._outdent()
-        #self._write('}')
-        #self._outdent()
-        #self._write('}')
-        #self._write()
-        #self._write("")
-        #self._write("#include <ReactionData.H>")
-        #self._write("double* GetParamPtr(int                reaction_id,")
-        #self._write("                    REACTION_PARAMETER param_id,")
-        #self._write("                    int                species_id,")
-        #self._write("                    int                get_default)")
-        #self._write("{")
-        #self._write("  double* ret = 0;")
-        #self._write("  if (reaction_id<0 || reaction_id>=%d) {" % (nReactions))
-        #self._write("    printf(\"Bad reaction id = %d\",reaction_id);")
-        #self._write("    abort();")
-        #self._write("  };")
-        #self._write("  int mrid = rxn_map[reaction_id];")
-        #self._write()
-        #self._write("  if (param_id == THIRD_BODY) {")
-        #self._write("    if (species_id<0 || species_id>=%d) {" % (self.nSpecies))
-        #self._write("      printf(\"GetParamPtr: Bad species id = %d\",species_id);")
-        #self._write("      abort();")
-        #self._write("    }")
-        #self._write("    if (get_default) {")
-        #self._write("      for (int i=0; i<nTB_DEF[mrid]; ++i) {")
-        #self._write("        if (species_id == TBid_DEF[mrid][i]) {")
-        #self._write("          ret = &(TB_DEF[mrid][i]);")
-        #self._write("        }")
-        #self._write("      }")
-        #self._write("    }")
-        #self._write("    else {")
-        #self._write("      for (int i=0; i<nTB[mrid]; ++i) {")
-        #self._write("        if (species_id == TBid[mrid][i]) {")
-        #self._write("          ret = &(TB[mrid][i]);")
-        #self._write("        }")
-        #self._write("      }")
-        #self._write("    }")
-        #self._write("    if (ret == 0) {")
-        #self._write("      printf(\"GetParamPtr: No TB for reaction id = %d\",reaction_id);")
-        #self._write("      abort();")
-        #self._write("    }")
-        #self._write("  }")
-        #self._write("  else {")
-        #self._write("    if (     param_id == FWD_A)     {ret = (get_default ? &(fwd_A_DEF[mrid]) : &(fwd_A[mrid]));}")
-        #self._write("      else if (param_id == FWD_BETA)  {ret = (get_default ? &(fwd_beta_DEF[mrid]) : &(fwd_beta[mrid]));}")
-        #self._write("      else if (param_id == FWD_EA)    {ret = (get_default ? &(fwd_Ea_DEF[mrid]) : &(fwd_Ea[mrid]));}")
-        #self._write("      else if (param_id == LOW_A)     {ret = (get_default ? &(low_A_DEF[mrid]) : &(low_A[mrid]));}")
-        #self._write("      else if (param_id == LOW_BETA)  {ret = (get_default ? &(low_beta_DEF[mrid]) : &(low_beta[mrid]));}")
-        #self._write("      else if (param_id == LOW_EA)    {ret = (get_default ? &(low_Ea_DEF[mrid]) : &(low_Ea[mrid]));}")
-        #self._write("      else if (param_id == REV_A)     {ret = (get_default ? &(rev_A_DEF[mrid]) : &(rev_A[mrid]));}")
-        #self._write("      else if (param_id == REV_BETA)  {ret = (get_default ? &(rev_beta_DEF[mrid]) : &(rev_beta[mrid]));}")
-        #self._write("      else if (param_id == REV_EA)    {ret = (get_default ? &(rev_Ea_DEF[mrid]) : &(rev_Ea[mrid]));}")
-        #self._write("      else if (param_id == TROE_A)    {ret = (get_default ? &(troe_a_DEF[mrid]) : &(troe_a[mrid]));}")
-        #self._write("      else if (param_id == TROE_TS)   {ret = (get_default ? &(troe_Ts_DEF[mrid]) : &(troe_Ts[mrid]));}")
-        #self._write("      else if (param_id == TROE_TSS)  {ret = (get_default ? &(troe_Tss_DEF[mrid]) : &(troe_Tss[mrid]));}")
-        #self._write("      else if (param_id == TROE_TSSS) {ret = (get_default ? &(troe_Tsss_DEF[mrid]) : &(troe_Tsss[mrid]));}")
-        #self._write("      else if (param_id == SRI_A)     {ret = (get_default ? &(sri_a_DEF[mrid]) : &(sri_a[mrid]));}")
-        #self._write("      else if (param_id == SRI_B)     {ret = (get_default ? &(sri_b_DEF[mrid]) : &(sri_b[mrid]));}")
-        #self._write("      else if (param_id == SRI_C)     {ret = (get_default ? &(sri_c_DEF[mrid]) : &(sri_c[mrid]));}")
-        #self._write("      else if (param_id == SRI_D)     {ret = (get_default ? &(sri_d_DEF[mrid]) : &(sri_d[mrid]));}")
-        #self._write("      else if (param_id == SRI_E)     {ret = (get_default ? &(sri_e_DEF[mrid]) : &(sri_e[mrid]));}")
-        #self._write("    else {")
-        #self._write("      printf(\"GetParamPtr: Unknown parameter id\");")
-        #self._write("      abort();")
-        #self._write("    }")
-        #self._write("  }")
-        #self._write("  return ret;")
-        #self._write("}")
-        #self._write()
-        #self._write("void ResetAllParametersToDefault()")
-        #self._write("{")
-        #self._write("    for (int i=0; i<%d; i++) {" % (nReactions))
-        #self._write("        if (nTB[i] != 0) {")
-        #self._write("            nTB[i] = 0;")
-        #self._write("            free(TB[i]);")
-        #self._write("            free(TBid[i]);")
-        #self._write("        }")
-        #self._write("")
-        #self._write("        fwd_A[i]    = fwd_A_DEF[i];")
-        #self._write("        fwd_beta[i] = fwd_beta_DEF[i];")
-        #self._write("        fwd_Ea[i]   = fwd_Ea_DEF[i];")
-        #self._write("")
-        #self._write("        low_A[i]    = low_A_DEF[i];")
-        #self._write("        low_beta[i] = low_beta_DEF[i];")
-        #self._write("        low_Ea[i]   = low_Ea_DEF[i];")
-        #self._write("")
-        #self._write("        rev_A[i]    = rev_A_DEF[i];")
-        #self._write("        rev_beta[i] = rev_beta_DEF[i];")
-        #self._write("        rev_Ea[i]   = rev_Ea_DEF[i];")
-        #self._write("")
-        #self._write("        troe_a[i]    = troe_a_DEF[i];")
-        #self._write("        troe_Ts[i]   = troe_Ts_DEF[i];")
-        #self._write("        troe_Tss[i]  = troe_Tss_DEF[i];")
-        #self._write("        troe_Tsss[i] = troe_Tsss_DEF[i];")
-        #self._write("")
-        #self._write("        sri_a[i] = sri_a_DEF[i];")
-        #self._write("        sri_b[i] = sri_b_DEF[i];")
-        #self._write("        sri_c[i] = sri_c_DEF[i];")
-        #self._write("        sri_d[i] = sri_d_DEF[i];")
-        #self._write("        sri_e[i] = sri_e_DEF[i];")
-        #self._write("")
-        #self._write("        is_PD[i]    = is_PD_DEF[i];")
-        #self._write("        troe_len[i] = troe_len_DEF[i];")
-        #self._write("        sri_len[i]  = sri_len_DEF[i];")
-        #self._write("")
-        #self._write("        activation_units[i] = activation_units_DEF[i];")
-        #self._write("        prefactor_units[i]  = prefactor_units_DEF[i];")
-        #self._write("        phase_units[i]      = phase_units_DEF[i];")
-        #self._write("")
-        #self._write("        nTB[i]  = nTB_DEF[i];")
-        #self._write("        if (nTB[i] != 0) {")
-        #self._write("           TB[i] = (double *) malloc(sizeof(double) * nTB[i]);")
-        #self._write("           TBid[i] = (int *) malloc(sizeof(int) * nTB[i]);")
-        #self._write("           for (int j=0; j<nTB[i]; j++) {")
-        #self._write("             TB[i][j] = TB_DEF[i][j];")
-        #self._write("             TBid[i][j] = TBid_DEF[i][j];")
-        #self._write("           }")
-        #self._write("        }")
-        #self._write("    }")
-        #self._write("}")
-        #self._write()
+        # self._write('void GET_REACTION_MAP(int *rmap)')
+        # self._write('{')
+        # self._indent()
+        # self._write('for (int i=0; i<%d; ++i) {' % (nReactions))
+        # self._indent()
+        # self._write('rmap[i] = rxn_map[i];')
+        # self._outdent()
+        # self._write('}')
+        # self._outdent()
+        # self._write('}')
+        # self._write()
+        # self._write("")
+        # self._write("#include <ReactionData.H>")
+        # self._write("double* GetParamPtr(int                reaction_id,")
+        # self._write("                    REACTION_PARAMETER param_id,")
+        # self._write("                    int                species_id,")
+        # self._write("                    int                get_default)")
+        # self._write("{")
+        # self._write("  double* ret = 0;")
+        # self._write("  if (reaction_id<0 || reaction_id>=%d) {" % (nReactions))
+        # self._write("    printf(\"Bad reaction id = %d\",reaction_id);")
+        # self._write("    abort();")
+        # self._write("  };")
+        # self._write("  int mrid = rxn_map[reaction_id];")
+        # self._write()
+        # self._write("  if (param_id == THIRD_BODY) {")
+        # self._write("    if (species_id<0 || species_id>=%d) {" % (self.nSpecies))
+        # self._write("      printf(\"GetParamPtr: Bad species id = %d\",species_id);")
+        # self._write("      abort();")
+        # self._write("    }")
+        # self._write("    if (get_default) {")
+        # self._write("      for (int i=0; i<nTB_DEF[mrid]; ++i) {")
+        # self._write("        if (species_id == TBid_DEF[mrid][i]) {")
+        # self._write("          ret = &(TB_DEF[mrid][i]);")
+        # self._write("        }")
+        # self._write("      }")
+        # self._write("    }")
+        # self._write("    else {")
+        # self._write("      for (int i=0; i<nTB[mrid]; ++i) {")
+        # self._write("        if (species_id == TBid[mrid][i]) {")
+        # self._write("          ret = &(TB[mrid][i]);")
+        # self._write("        }")
+        # self._write("      }")
+        # self._write("    }")
+        # self._write("    if (ret == 0) {")
+        # self._write("      printf(\"GetParamPtr: No TB for reaction id = %d\",reaction_id);")
+        # self._write("      abort();")
+        # self._write("    }")
+        # self._write("  }")
+        # self._write("  else {")
+        # self._write("    if (     param_id == FWD_A)     {ret = (get_default ? &(fwd_A_DEF[mrid]) : &(fwd_A[mrid]));}")
+        # self._write("      else if (param_id == FWD_BETA)  {ret = (get_default ? &(fwd_beta_DEF[mrid]) : &(fwd_beta[mrid]));}")
+        # self._write("      else if (param_id == FWD_EA)    {ret = (get_default ? &(fwd_Ea_DEF[mrid]) : &(fwd_Ea[mrid]));}")
+        # self._write("      else if (param_id == LOW_A)     {ret = (get_default ? &(low_A_DEF[mrid]) : &(low_A[mrid]));}")
+        # self._write("      else if (param_id == LOW_BETA)  {ret = (get_default ? &(low_beta_DEF[mrid]) : &(low_beta[mrid]));}")
+        # self._write("      else if (param_id == LOW_EA)    {ret = (get_default ? &(low_Ea_DEF[mrid]) : &(low_Ea[mrid]));}")
+        # self._write("      else if (param_id == REV_A)     {ret = (get_default ? &(rev_A_DEF[mrid]) : &(rev_A[mrid]));}")
+        # self._write("      else if (param_id == REV_BETA)  {ret = (get_default ? &(rev_beta_DEF[mrid]) : &(rev_beta[mrid]));}")
+        # self._write("      else if (param_id == REV_EA)    {ret = (get_default ? &(rev_Ea_DEF[mrid]) : &(rev_Ea[mrid]));}")
+        # self._write("      else if (param_id == TROE_A)    {ret = (get_default ? &(troe_a_DEF[mrid]) : &(troe_a[mrid]));}")
+        # self._write("      else if (param_id == TROE_TS)   {ret = (get_default ? &(troe_Ts_DEF[mrid]) : &(troe_Ts[mrid]));}")
+        # self._write("      else if (param_id == TROE_TSS)  {ret = (get_default ? &(troe_Tss_DEF[mrid]) : &(troe_Tss[mrid]));}")
+        # self._write("      else if (param_id == TROE_TSSS) {ret = (get_default ? &(troe_Tsss_DEF[mrid]) : &(troe_Tsss[mrid]));}")
+        # self._write("      else if (param_id == SRI_A)     {ret = (get_default ? &(sri_a_DEF[mrid]) : &(sri_a[mrid]));}")
+        # self._write("      else if (param_id == SRI_B)     {ret = (get_default ? &(sri_b_DEF[mrid]) : &(sri_b[mrid]));}")
+        # self._write("      else if (param_id == SRI_C)     {ret = (get_default ? &(sri_c_DEF[mrid]) : &(sri_c[mrid]));}")
+        # self._write("      else if (param_id == SRI_D)     {ret = (get_default ? &(sri_d_DEF[mrid]) : &(sri_d[mrid]));}")
+        # self._write("      else if (param_id == SRI_E)     {ret = (get_default ? &(sri_e_DEF[mrid]) : &(sri_e[mrid]));}")
+        # self._write("    else {")
+        # self._write("      printf(\"GetParamPtr: Unknown parameter id\");")
+        # self._write("      abort();")
+        # self._write("    }")
+        # self._write("  }")
+        # self._write("  return ret;")
+        # self._write("}")
+        # self._write()
+        # self._write("void ResetAllParametersToDefault()")
+        # self._write("{")
+        # self._write("    for (int i=0; i<%d; i++) {" % (nReactions))
+        # self._write("        if (nTB[i] != 0) {")
+        # self._write("            nTB[i] = 0;")
+        # self._write("            free(TB[i]);")
+        # self._write("            free(TBid[i]);")
+        # self._write("        }")
+        # self._write("")
+        # self._write("        fwd_A[i]    = fwd_A_DEF[i];")
+        # self._write("        fwd_beta[i] = fwd_beta_DEF[i];")
+        # self._write("        fwd_Ea[i]   = fwd_Ea_DEF[i];")
+        # self._write("")
+        # self._write("        low_A[i]    = low_A_DEF[i];")
+        # self._write("        low_beta[i] = low_beta_DEF[i];")
+        # self._write("        low_Ea[i]   = low_Ea_DEF[i];")
+        # self._write("")
+        # self._write("        rev_A[i]    = rev_A_DEF[i];")
+        # self._write("        rev_beta[i] = rev_beta_DEF[i];")
+        # self._write("        rev_Ea[i]   = rev_Ea_DEF[i];")
+        # self._write("")
+        # self._write("        troe_a[i]    = troe_a_DEF[i];")
+        # self._write("        troe_Ts[i]   = troe_Ts_DEF[i];")
+        # self._write("        troe_Tss[i]  = troe_Tss_DEF[i];")
+        # self._write("        troe_Tsss[i] = troe_Tsss_DEF[i];")
+        # self._write("")
+        # self._write("        sri_a[i] = sri_a_DEF[i];")
+        # self._write("        sri_b[i] = sri_b_DEF[i];")
+        # self._write("        sri_c[i] = sri_c_DEF[i];")
+        # self._write("        sri_d[i] = sri_d_DEF[i];")
+        # self._write("        sri_e[i] = sri_e_DEF[i];")
+        # self._write("")
+        # self._write("        is_PD[i]    = is_PD_DEF[i];")
+        # self._write("        troe_len[i] = troe_len_DEF[i];")
+        # self._write("        sri_len[i]  = sri_len_DEF[i];")
+        # self._write("")
+        # self._write("        activation_units[i] = activation_units_DEF[i];")
+        # self._write("        prefactor_units[i]  = prefactor_units_DEF[i];")
+        # self._write("        phase_units[i]      = phase_units_DEF[i];")
+        # self._write("")
+        # self._write("        nTB[i]  = nTB_DEF[i];")
+        # self._write("        if (nTB[i] != 0) {")
+        # self._write("           TB[i] = (double *) malloc(sizeof(double) * nTB[i]);")
+        # self._write("           TBid[i] = (int *) malloc(sizeof(int) * nTB[i]);")
+        # self._write("           for (int j=0; j<nTB[i]; j++) {")
+        # self._write("             TB[i][j] = TB_DEF[i][j];")
+        # self._write("             TBid[i][j] = TBid_DEF[i][j];")
+        # self._write("           }")
+        # self._write("        }")
+        # self._write("    }")
+        # self._write("}")
+        # self._write()
         self._write("subroutine SetAllDefaults()")
         self._write()
-        self._write('    implicit none')
+        self._write("    implicit none")
         self._write()
-        self._write('    integer :: i, j')
+        self._write("    integer :: i, j")
         self._write()
         self._write("    do i=1, %d" % (nReactions))
         self._write("        if (nTB_DEF(i) /= 0) then")
         self._write("            nTB_DEF(i) = 0")
-        self._write("            if (allocated(TB_DEF(i) % vector)) deallocate(TB_DEF(i) % vector)")
-        self._write("            if (allocated(TBid_DEF(i) % vector)) deallocate(TBid_DEF(i) % vector)")
+        self._write(
+            "            if (allocated(TB_DEF(i) % vector)) deallocate(TB_DEF(i) % vector)"
+        )
+        self._write(
+            "            if (allocated(TBid_DEF(i) % vector)) deallocate(TBid_DEF(i) % vector)"
+        )
         self._write("        end if")
         self._write("")
         self._write("        fwd_A_DEF(i)    = fwd_A(i)")
@@ -515,11 +544,17 @@ class FPickler(CMill):
         self._write("")
         self._write("        nTB_DEF(i)  = nTB(i)")
         self._write("        if (nTB_DEF(i) /= 0) then")
-        self._write("           if (.not. allocated(TB_DEF(i) % vector)) allocate(TB_DEF(i) % vector(nTB_DEF(i)))")
-        self._write("           if (.not. allocated(TBid_DEF(i) % vector)) allocate(TBid_DEF(i) % vector(nTB_DEF(i)))")
+        self._write(
+            "           if (.not. allocated(TB_DEF(i) % vector)) allocate(TB_DEF(i) % vector(nTB_DEF(i)))"
+        )
+        self._write(
+            "           if (.not. allocated(TBid_DEF(i) % vector)) allocate(TBid_DEF(i) % vector(nTB_DEF(i)))"
+        )
         self._write("           do j=1, nTB_DEF(i)")
         self._write("             TB_DEF(i) % vector(j) = TB(i) % vector(j)")
-        self._write("             TBid_DEF(i) % vector(j) = TBid(i) % vector(j)")
+        self._write(
+            "             TBid_DEF(i) % vector(j) = TBid(i) % vector(j)"
+        )
         self._write("           end do")
         self._write("        end if")
         self._write("    end do")
@@ -530,14 +565,10 @@ class FPickler(CMill):
         return
 
     def _end_module(self):
-        self._rep += [
-            '',
-            'end module fuego_module'
-            ]
+        self._rep += ["", "end module fuego_module"]
         return
 
-
-    #def _includes(self):
+    # def _includes(self):
     #    self._rep += [
     #        '#include <math.h>',
     #        '#include <stdio.h>',
@@ -546,8 +577,7 @@ class FPickler(CMill):
     #        ]
     #    return
 
-
-    #def _declarations(self, mechanism):
+    # def _declarations(self, mechanism):
     #    self._rep += [
     #        '',
     #        '#if defined(BL_FORT_USE_UPPERCASE)',
@@ -963,11 +993,10 @@ class FPickler(CMill):
     #    #            'void vcomp_wdot_%d_%d(int npt, double * restrict wdot, double * restrict mixture, double * restrict sc,' % (i+1,min(i+50,nReactions)),
     #    #            '                double * restrict k_f_s, double * restrict Kc_s,',
     #    #            '                double * restrict tc, double * restrict invT, double * restrict T);',
-    #    #            ]                
+    #    #            ]
     #    return
 
-
-    #def _main(self, mechanism):
+    # def _main(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('optional test program'))
@@ -994,11 +1023,11 @@ class FPickler(CMill):
     #    self._write()
     #    self._write('T = 1000.0;')
 
-    #    # compute ckuml 
+    #    # compute ckuml
     #    self._write()
     #    self._write(self.line('compute the internal energy'))
     #    self._write('CKUML(&T, ickdummy, rckdummy, uml);')
-    #    
+    #
     #    # print
     #    self._write()
     #    self._write('for (species = 0; species < %d; ++species) {' % nSpecies)
@@ -1006,7 +1035,6 @@ class FPickler(CMill):
     #    self._write('printf(" e: %5d   %15.7e\\n", species+1, uml[species]);')
     #    self._outdent()
     #    self._write('}')
-
 
     #    # compute the gibbs free energy
     #    # self._write()
@@ -1063,35 +1091,43 @@ class FPickler(CMill):
         nElement = len(mechanism.element())
         nSpecies = len(mechanism.species())
         nReactions = len(mechanism.reaction())
-        
+
         self._write()
-        self._write('! Finalizes parameter database')
-        self._write('subroutine ckfinalize()')
+        self._write("! Finalizes parameter database")
+        self._write("subroutine ckfinalize()")
         self._write()
-        self._write('  implicit none')
+        self._write("  implicit none")
         self._write()
-        self._write('  integer :: i')
+        self._write("  integer :: i")
         self._write()
-        self._write('  do i=1, %d' % nReactions)
-        self._write('    if (allocated(TB(i) % vector)) deallocate(TB(i) % vector)')
-        self._write('    !TB(i) = 0')
-        self._write('    if (allocated(TBid(i) % vector)) deallocate(TBid(i) % vector)')
-        self._write('    !TBid(i) = 0')
-        self._write('    nTB(i) = 0')
+        self._write("  do i=1, %d" % nReactions)
+        self._write(
+            "    if (allocated(TB(i) % vector)) deallocate(TB(i) % vector)"
+        )
+        self._write("    !TB(i) = 0")
+        self._write(
+            "    if (allocated(TBid(i) % vector)) deallocate(TBid(i) % vector)"
+        )
+        self._write("    !TBid(i) = 0")
+        self._write("    nTB(i) = 0")
         self._write()
-        self._write('    if (allocated(TB_DEF(i) % vector)) deallocate(TB_DEF(i) % vector)')
-        self._write('    !TB_DEF(i) = 0')
-        self._write('    if (allocated(TBid_DEF(i) % vector)) deallocate(TBid_DEF(i) % vector)')
-        self._write('    !TBid_DEF(i) = 0')
-        self._write('    nTB_DEF(i) = 0')
-        self._write('  end do')
+        self._write(
+            "    if (allocated(TB_DEF(i) % vector)) deallocate(TB_DEF(i) % vector)"
+        )
+        self._write("    !TB_DEF(i) = 0")
+        self._write(
+            "    if (allocated(TBid_DEF(i) % vector)) deallocate(TBid_DEF(i) % vector)"
+        )
+        self._write("    !TBid_DEF(i) = 0")
+        self._write("    nTB_DEF(i) = 0")
+        self._write("  end do")
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
         self._write()
-        self._write('! Initializes parameter database')
-        self._write('subroutine ckinit'+sym+'()')
+        self._write("! Initializes parameter database")
+        self._write("subroutine ckinit" + sym + "()")
         self._write()
-        self._write('    implicit none')
+        self._write("    implicit none")
         self._write()
 
         self._indent()
@@ -1099,117 +1135,155 @@ class FPickler(CMill):
         # build reverse reaction map
         rmap = {}
         for i, reaction in zip(list(range(nReactions)), mechanism.reaction()):
-            rmap[reaction.orig_id-1] = i
+            rmap[reaction.orig_id - 1] = i
 
         for j in range(nReactions):
             reaction = mechanism.reaction()[rmap[j]]
-            id = reaction.id # - 1
+            id = reaction.id  # - 1
 
             A, beta, E = reaction.arrhenius
-            self._write("! (%d):  %s" % (reaction.orig_id - 1, reaction.equation()))
-            mynumber = format(A, '.17g').replace("e","d")
-            if 'd' not in mynumber: mynumber = mynumber + 'd0'
-            self._write("fwd_A(%d)     = %s" % (id,mynumber))
-            mynumber = format(beta, '.17g').replace("e","d")
-            if 'd' not in mynumber: mynumber = mynumber + 'd0'
-            self._write("fwd_beta(%d)  = %s" % (id,mynumber))
-            mynumber = format(E, '.17g').replace("e","d")
-            if 'd' not in mynumber: mynumber = mynumber + 'd0'
-            self._write("fwd_Ea(%d)    = %s" % (id,mynumber))
+            self._write(
+                "! (%d):  %s" % (reaction.orig_id - 1, reaction.equation())
+            )
+            mynumber = format(A, ".17g").replace("e", "d")
+            if "d" not in mynumber:
+                mynumber = mynumber + "d0"
+            self._write("fwd_A(%d)     = %s" % (id, mynumber))
+            mynumber = format(beta, ".17g").replace("e", "d")
+            if "d" not in mynumber:
+                mynumber = mynumber + "d0"
+            self._write("fwd_beta(%d)  = %s" % (id, mynumber))
+            mynumber = format(E, ".17g").replace("e", "d")
+            if "d" not in mynumber:
+                mynumber = mynumber + "d0"
+            self._write("fwd_Ea(%d)    = %s" % (id, mynumber))
 
             dim = self._phaseSpaceUnits(reaction.reactants)
             thirdBody = reaction.thirdBody
             low = reaction.low
             if not thirdBody:
-                uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 3 !PD, !TB
+                uc = self._prefactorUnits(
+                    reaction.units["prefactor"], 1 - dim
+                )  # Case 3 !PD, !TB
             elif not low:
-                uc = self._prefactorUnits(reaction.units["prefactor"], -dim) # Case 2 !PD, TB
+                uc = self._prefactorUnits(
+                    reaction.units["prefactor"], -dim
+                )  # Case 2 !PD, TB
             else:
-                uc = self._prefactorUnits(reaction.units["prefactor"], 1-dim) # Case 1 PD, TB
+                uc = self._prefactorUnits(
+                    reaction.units["prefactor"], 1 - dim
+                )  # Case 1 PD, TB
                 low_A, low_beta, low_E = low
-                mynumber = format(low_A, '.17g').replace("e","d")
-                if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                self._write("low_A(%d)     = %s" % (id,mynumber))
-                mynumber = format(low_beta, '.17g').replace("e","d")
-                if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                self._write("low_beta(%d)  = %s" % (id,mynumber))
-                mynumber = format(low_E, '.17g').replace("e","d")
-                if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                self._write("low_Ea(%d)    = %s" % (id,mynumber))
+                mynumber = format(low_A, ".17g").replace("e", "d")
+                if "d" not in mynumber:
+                    mynumber = mynumber + "d0"
+                self._write("low_A(%d)     = %s" % (id, mynumber))
+                mynumber = format(low_beta, ".17g").replace("e", "d")
+                if "d" not in mynumber:
+                    mynumber = mynumber + "d0"
+                self._write("low_beta(%d)  = %s" % (id, mynumber))
+                mynumber = format(low_E, ".17g").replace("e", "d")
+                if "d" not in mynumber:
+                    mynumber = mynumber + "d0"
+                self._write("low_Ea(%d)    = %s" % (id, mynumber))
                 if reaction.troe:
                     troe = reaction.troe
                     ntroe = len(troe)
                     is_troe = True
-                    mynumber = format(troe[0], '.17g').replace("e","d")
-                    if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                    self._write("troe_a(%d)    = %s" % (id,mynumber))
-                    if ntroe>1:
-                        mynumber = format(troe[1], '.17g').replace("e","d")
-                        if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                        self._write("troe_Tsss(%d) = %s" % (id,mynumber))
-                    if ntroe>2:
-                        mynumber = format(troe[2], '.17g').replace("e","d")
-                        if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                        self._write("troe_Ts(%d)   = %s" % (id,mynumber))
-                    if ntroe>3:
-                        mynumber = format(troe[3], '.17g').replace("e","d")
-                        if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                        self._write("troe_Tss(%d)  = %s" % (id,mynumber))
-                    self._write("troe_len(%d)  = %d" % (id,ntroe))
+                    mynumber = format(troe[0], ".17g").replace("e", "d")
+                    if "d" not in mynumber:
+                        mynumber = mynumber + "d0"
+                    self._write("troe_a(%d)    = %s" % (id, mynumber))
+                    if ntroe > 1:
+                        mynumber = format(troe[1], ".17g").replace("e", "d")
+                        if "d" not in mynumber:
+                            mynumber = mynumber + "d0"
+                        self._write("troe_Tsss(%d) = %s" % (id, mynumber))
+                    if ntroe > 2:
+                        mynumber = format(troe[2], ".17g").replace("e", "d")
+                        if "d" not in mynumber:
+                            mynumber = mynumber + "d0"
+                        self._write("troe_Ts(%d)   = %s" % (id, mynumber))
+                    if ntroe > 3:
+                        mynumber = format(troe[3], ".17g").replace("e", "d")
+                        if "d" not in mynumber:
+                            mynumber = mynumber + "d0"
+                        self._write("troe_Tss(%d)  = %s" % (id, mynumber))
+                    self._write("troe_len(%d)  = %d" % (id, ntroe))
                 if reaction.sri:
                     sri = reaction.sri
                     nsri = len(sri)
                     is_sri = True
-                    mynumber = format(sri[0], '.17g').replace("e","d")
-                    if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                    self._write("sri_a(%d)     = %s" % (id,mynumber))
-                    if nsri>1:
-                        mynumber = format(sri[1], '.17g').replace("e","d")
-                        if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                        self._write("sri_b(%d)     = %s" % (id,mynumber))
-                    if nsri>2:
-                        mynumber = format(sri[2], '.17g').replace("e","d")
-                        if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                        self._write("sri_c(%d)     = %s" % (id,mynumber))
-                    if nsri>3:
-                        mynumber = format(sri[3], '.17g').replace("e","d")
-                        if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                        self._write("sri_d(%d)     = %s" % (id,mynumber))
-                    if nsri>4:
-                        mynumber = format(sri[4], '.17g').replace("e","d")
-                        if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                        self._write("sri_e(%d)     = %s" % (id,mynumber))
-                    self._write("sri_len(%d)   = %d" % (id,nsri))
+                    mynumber = format(sri[0], ".17g").replace("e", "d")
+                    if "d" not in mynumber:
+                        mynumber = mynumber + "d0"
+                    self._write("sri_a(%d)     = %s" % (id, mynumber))
+                    if nsri > 1:
+                        mynumber = format(sri[1], ".17g").replace("e", "d")
+                        if "d" not in mynumber:
+                            mynumber = mynumber + "d0"
+                        self._write("sri_b(%d)     = %s" % (id, mynumber))
+                    if nsri > 2:
+                        mynumber = format(sri[2], ".17g").replace("e", "d")
+                        if "d" not in mynumber:
+                            mynumber = mynumber + "d0"
+                        self._write("sri_c(%d)     = %s" % (id, mynumber))
+                    if nsri > 3:
+                        mynumber = format(sri[3], ".17g").replace("e", "d")
+                        if "d" not in mynumber:
+                            mynumber = mynumber + "d0"
+                        self._write("sri_d(%d)     = %s" % (id, mynumber))
+                    if nsri > 4:
+                        mynumber = format(sri[4], ".17g").replace("e", "d")
+                        if "d" not in mynumber:
+                            mynumber = mynumber + "d0"
+                        self._write("sri_e(%d)     = %s" % (id, mynumber))
+                    self._write("sri_len(%d)   = %d" % (id, nsri))
 
-            mynumber = format(uc.value, '.17g').replace("e","d")
-            if 'd' not in mynumber: mynumber = mynumber + 'd0'
-            self._write("prefactor_units(%d)  = %s" % (id,mynumber))
+            mynumber = format(uc.value, ".17g").replace("e", "d")
+            if "d" not in mynumber:
+                mynumber = mynumber + "d0"
+            self._write("prefactor_units(%d)  = %s" % (id, mynumber))
             aeuc = self._activationEnergyUnits(reaction.units["activation"])
-            mynumber = format((aeuc /  (Rc / kelvin)), '.17g').replace("e","d")
-            if 'd' not in mynumber: mynumber = mynumber + 'd0'
-            self._write("activation_units(%d) = %s" % (id,mynumber))
-            self._write("phase_units(%d)      = 1d-%d" % (id,dim*6))
+            mynumber = format((aeuc / (Rc / kelvin)), ".17g").replace("e", "d")
+            if "d" not in mynumber:
+                mynumber = mynumber + "d0"
+            self._write("activation_units(%d) = %s" % (id, mynumber))
+            self._write("phase_units(%d)      = 1d-%d" % (id, dim * 6))
 
             if low:
-                self._write("is_PD(%d) = 1" % (id) )
+                self._write("is_PD(%d) = 1" % (id))
             else:
-                self._write("is_PD(%d) = 0" % (id) )
+                self._write("is_PD(%d) = 0" % (id))
 
             if thirdBody:
                 efficiencies = reaction.efficiencies
                 self._write("nTB(%d) = %d" % (id, len(efficiencies)))
-                self._write("if (.not. allocated(TB(%d) %% vector)) allocate(TB(%d) %% vector(%d))" % (id, id, len(efficiencies)))
-                self._write("if (.not. allocated(TBid(%d) %% vector)) allocate(TBid(%d) %% vector(%d))" % (id, id, len(efficiencies)))
+                self._write(
+                    "if (.not. allocated(TB(%d) %% vector)) allocate(TB(%d) %% vector(%d))"
+                    % (id, id, len(efficiencies))
+                )
+                self._write(
+                    "if (.not. allocated(TBid(%d) %% vector)) allocate(TBid(%d) %% vector(%d))"
+                    % (id, id, len(efficiencies))
+                )
                 for i, eff in enumerate(efficiencies):
                     symbol, efficiency = eff
-                    mynumber = format(mechanism.species(symbol).id, '.17g').replace("e","d")
-                    if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                    self._write("TBid(%d) %% vector(%d) = %s"
-                                % (id, i+1, mynumber))
-                    mynumber = format(efficiency, '.17g').replace("e","d")
-                    if 'd' not in mynumber: mynumber = mynumber + 'd0'
-                    self._write("TB(%d) %% vector(%d) = %s ! %s"
-                                % (id, i+1, mynumber, symbol))
+                    mynumber = format(
+                        mechanism.species(symbol).id, ".17g"
+                    ).replace("e", "d")
+                    if "d" not in mynumber:
+                        mynumber = mynumber + "d0"
+                    self._write(
+                        "TBid(%d) %% vector(%d) = %s" % (id, i + 1, mynumber)
+                    )
+                    mynumber = format(efficiency, ".17g").replace("e", "d")
+                    if "d" not in mynumber:
+                        mynumber = mynumber + "d0"
+                    self._write(
+                        "TB(%d) %% vector(%d) = %s ! %s"
+                        % (id, i + 1, mynumber, symbol)
+                    )
             else:
                 self._write("nTB(%d) = 0" % (id))
 
@@ -1220,30 +1294,29 @@ class FPickler(CMill):
         self._write()
         self._write("end subroutine")
         self._write()
-            
+
         return
 
     def _thermo(self, mechanism):
         speciesInfo = self._analyzeThermodynamics(mechanism)
 
         self._gibbs(speciesInfo)
-        #self._helmholtz(speciesInfo)
+        # self._helmholtz(speciesInfo)
         self._cv(speciesInfo)
         self._cp(speciesInfo)
         self._speciesInternalEnergy(speciesInfo)
         self._speciesEnthalpy(speciesInfo)
-        #self._speciesEntropy(speciesInfo)
+        # self._speciesEntropy(speciesInfo)
 
         return
 
-
     def _trans(self, mechanism):
         speciesTransport = self._analyzeTransport(mechanism)
-        NLITE=0
+        NLITE = 0
         idxLightSpecs = []
         for spec in self.species:
             if spec.weight < 5.0:
-                NLITE+=1
+                NLITE += 1
                 idxLightSpecs.append(spec.id)
         self._miscTransInfo(KK=self.nSpecies, NLITE=NLITE)
         self._wt()
@@ -1261,14 +1334,12 @@ class FPickler(CMill):
 
         return
 
-
-    #def _dthermodT(self, mechanism):
+    # def _dthermodT(self, mechanism):
     #    speciesInfo = self._analyzeThermodynamics(mechanism)
     #    self._dcvpdT(speciesInfo)
     #    return
 
-
-    #def _ckxnum(self, mechanism):
+    # def _ckxnum(self, mechanism):
     #    self._write()
     #    # self._write()
     #    # self._write(self.line(' strtok_r: re-entrant (threadsafe) version of strtok, helper function for tokenizing strings '))
@@ -1358,16 +1429,16 @@ class FPickler(CMill):
     #    self._write('}')
     #    return
 
-    #def _cksnum(self, mechanism):
+    # def _cksnum(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(' cksnum... for parsing strings '))
     #    self._write('void CKSNUM'+sym+'(char * line, int * nexp, int * lout, char * kray, int * nn, int * knum, int * nval, double * restrict rval, int * kerr, int lenline, int lenkray)')
     #    self._write('{')
     #    self._indent()
-    #    
+    #
     #    self._write(self.line('Not done yet ...'))
-    #    
+    #
     #    # done
     #    self._outdent()
     #    self._write('}')
@@ -1375,132 +1446,137 @@ class FPickler(CMill):
 
     def _ckrp(self, mechanism):
         self._write()
-        self._write('! Returns R, Rc, Patm' )
-        self._write('subroutine ckrp'+sym+'(ickwrk, rckwrk, ru, ruc, pa)')
+        self._write("! Returns R, Rc, Patm")
+        self._write("subroutine ckrp" + sym + "(ickwrk, rckwrk, ru, ruc, pa)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('integer, intent(in) :: ickwrk')
-        self._write('double precision, intent(in) :: rckwrk')
-        self._write('double precision, intent(out) :: ru')
-        self._write('double precision, intent(out) :: ruc')
-        self._write('double precision, intent(out) :: pa')
+        self._write("integer, intent(in) :: ickwrk")
+        self._write("double precision, intent(in) :: rckwrk")
+        self._write("double precision, intent(out) :: ru")
+        self._write("double precision, intent(out) :: ruc")
+        self._write("double precision, intent(out) :: pa")
         self._write()
-        self._write('ru  = %fd0 ' % ((R * mole * kelvin /  erg).value))
-        self._write('ruc = %.20fd0 ' % ((Rc * mole * kelvin /  cal)))
-        self._write('pa  = %fd0 ' % (Patm))
+        self._write("ru  = %fd0 " % ((R * mole * kelvin / erg).value))
+        self._write("ruc = %.20fd0 " % ((Rc * mole * kelvin / cal)))
+        self._write("pa  = %fd0 " % (Patm))
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
         return
 
     def _cksyme(self, mechanism):
         nElement = len(mechanism.element())
         self._write()
-        self._write('! Returns the char strings of element names')
-        self._write('subroutine cksyme'+sym+'(kname, plenkname)')
+        self._write("! Returns the char strings of element names")
+        self._write("subroutine cksyme" + sym + "(kname, plenkname)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('integer, intent(out) :: kname(plenkname*%d)' % nElement)
-        self._write('integer, intent(in) :: plenkname')
+        self._write("integer, intent(out) :: kname(plenkname*%d)" % nElement)
+        self._write("integer, intent(in) :: plenkname")
         self._write()
-        self._write('integer :: i')
-        self._write('integer :: lenkname')
+        self._write("integer :: i")
+        self._write("integer :: lenkname")
         self._write()
-        self._write('lenkname = plenkname')
+        self._write("lenkname = plenkname")
         self._write()
-        self._write('!clear kname')
-        self._write('do i=1, lenkname*%d' % nElement)
+        self._write("!clear kname")
+        self._write("do i=1, lenkname*%d" % nElement)
         self._indent()
-        self._write('kname(i) = ichar(\' \')')
+        self._write("kname(i) = ichar(' ')")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._write()
         for element in mechanism.element():
-            self._write('! %s ' % element.symbol)
+            self._write("! %s " % element.symbol)
             ii = 1
             for char in element.symbol:
-                self._write('kname(%d*lenkname+%d) = ichar(\'%s\')' %
-                           (element.id, ii, char.capitalize()))
-                ii = ii+1
-            self._write('kname(%d*lenkname+%d) = ichar(\' \')' %
-                           (element.id, ii))
-            
+                self._write(
+                    "kname(%d*lenkname+%d) = ichar('%s')"
+                    % (element.id, ii, char.capitalize())
+                )
+                ii = ii + 1
+            self._write(
+                "kname(%d*lenkname+%d) = ichar(' ')" % (element.id, ii)
+            )
+
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
         return
-
 
     def _cksyms(self, mechanism):
         nSpecies = len(mechanism.species())
         self._write()
-        self._write('! Returns the char strings of species names')
-        self._write('subroutine cksyms'+sym+'(kname, plenkname)')
+        self._write("! Returns the char strings of species names")
+        self._write("subroutine cksyms" + sym + "(kname, plenkname)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('integer, intent(out) :: kname(plenkname*%d)' % nSpecies)
-        self._write('integer, intent(in) :: plenkname')
+        self._write("integer, intent(out) :: kname(plenkname*%d)" % nSpecies)
+        self._write("integer, intent(in) :: plenkname")
         self._write()
-        self._write('integer :: i')
-        self._write('integer :: lenkname')
+        self._write("integer :: i")
+        self._write("integer :: lenkname")
         self._write()
-        self._write('lenkname = plenkname')
+        self._write("lenkname = plenkname")
         self._write()
-        self._write('!clear kname')
-        self._write('do i=1, lenkname*%d' % nSpecies)
+        self._write("!clear kname")
+        self._write("do i=1, lenkname*%d" % nSpecies)
         self._indent()
-        self._write('kname(i) = ichar(\' \')')
+        self._write("kname(i) = ichar(' ')")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._write()
         for species in mechanism.species():
-            self._write('! %s ' % species.symbol)
+            self._write("! %s " % species.symbol)
             ii = 1
             for char in species.symbol:
-                self._write('kname(%d*lenkname+%d) = ichar(\'%s\')' %
-                           (species.id, ii, char.capitalize()))
-                ii = ii+1
-            self._write('kname(%d*lenkname+%d) = ichar(\' \')' %
-                           (species.id, ii))
-            
+                self._write(
+                    "kname(%d*lenkname+%d) = ichar('%s')"
+                    % (species.id, ii, char.capitalize())
+                )
+                ii = ii + 1
+            self._write(
+                "kname(%d*lenkname+%d) = ichar(' ')" % (species.id, ii)
+            )
+
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
         return
-
 
     def _ckindx(self, mechanism):
         self._write()
-        self._write('! A few mechanism parameters')
-        self._write('subroutine ckindx'+sym+'(iwrk, rwrk, mm, kk, ii, nfit)')
+        self._write("! A few mechanism parameters")
+        self._write(
+            "subroutine ckindx" + sym + "(iwrk, rwrk, mm, kk, ii, nfit)"
+        )
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('integer, intent(out) :: mm')
-        self._write('integer, intent(out) :: kk')
-        self._write('integer, intent(out) :: ii')
-        self._write('integer, intent(out) :: nfit')
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("integer, intent(out) :: mm")
+        self._write("integer, intent(out) :: kk")
+        self._write("integer, intent(out) :: ii")
+        self._write("integer, intent(out) :: nfit")
         self._write()
-        self._write('mm = %d' % len(mechanism.element()))
-        self._write('kk = %d' % len(mechanism.species()))
-        self._write('ii = %d' % len(mechanism.reaction()))
-        self._write('nfit = -1' + ' ! Why do you need this anyway?')
+        self._write("mm = %d" % len(mechanism.element()))
+        self._write("kk = %d" % len(mechanism.species()))
+        self._write("ii = %d" % len(mechanism.reaction()))
+        self._write("nfit = -1" + " ! Why do you need this anyway?")
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
         return
 
-
-    #def _ckpx(self, mechanism):
+    # def _ckpx(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Compute P = rhoRT/W(x)'))
@@ -1510,7 +1586,7 @@ class FPickler(CMill):
 
     #    self._write('double XW = 0;'+
     #                self.line(' To hold mean molecular wt'))
-    #    
+    #
     #    # molecular weights of all species
     #    for species in self.species:
     #        self._write('XW += x[%d]*%f; ' % (
@@ -1519,7 +1595,7 @@ class FPickler(CMill):
     #    self._write(
     #        '*P = *rho * %g * (*T) / XW; ' % (R*kelvin*mole/erg)
     #        + self.line('P = rho*R*T/W'))
-    #    
+    #
     #    self._write()
     #    self._write('return;')
     #    self._outdent()
@@ -1530,42 +1606,47 @@ class FPickler(CMill):
     def _ckpy(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! Compute P = rhoRT/W(y)')
-        self._write('subroutine ckpy'+sym+'(rho, T, y, iwrk, rwrk, P)')
+        self._write("! Compute P = rhoRT/W(y)")
+        self._write("subroutine ckpy" + sym + "(rho, T, y, iwrk, rwrk, P)")
         self._write()
         self._indent()
 
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: rho')
-        self._write('double precision, intent(in) :: T')
-        self._write('double precision, intent(in) :: y(%d)' % nSpec)
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(out) :: P')
+        self._write("double precision, intent(in) :: rho")
+        self._write("double precision, intent(in) :: T")
+        self._write("double precision, intent(in) :: y(%d)" % nSpec)
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(out) :: P")
         self._write()
-        self._write('double precision :: YOW ' + '! for computing mean MW')
+        self._write("double precision :: YOW " + "! for computing mean MW")
         self._write()
-        self._write('YOW = 0.d0')
+        self._write("YOW = 0.d0")
         self._write()
-        
+
         # molecular weights of all species
         for species in self.species:
-            self._write('YOW = YOW + (y(%d) * imw(%d)) ' % (
-                species.id + 1, species.id + 1) + '! %s' % species.symbol)
+            self._write(
+                "YOW = YOW + (y(%d) * imw(%d)) "
+                % (species.id + 1, species.id + 1)
+                + "! %s" % species.symbol
+            )
 
         self._write()
-        self._write('! YOW holds the reciprocal of the mean molecular wt')
-        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
-        self._write('P = rho *%s * T * YOW ' % expression + '! P = rho*R*T/W')
-        
+        self._write("! YOW holds the reciprocal of the mean molecular wt")
+        expression = format((R * kelvin * mole / erg).value, "15.8e").replace(
+            "e", "d"
+        )
+        self._write("P = rho *%s * T * YOW " % expression + "! P = rho*R*T/W")
+
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
-        return 
+        return
 
-    #def _vckpy(self, mechanism):
+    # def _vckpy(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Compute P = rhoRT/W(y)'))
@@ -1580,7 +1661,7 @@ class FPickler(CMill):
     #    self._indent()
     #    self._write('YOW[i] = 0.0;')
     #    self._outdent()
-    #    self._write('}')        
+    #    self._write('}')
     #    self._write('')
     #    self._write('for (int n=0; n<%d; n++) {' % (nSpec))
     #    self._indent()
@@ -1601,21 +1682,21 @@ class FPickler(CMill):
     #        + self.line('P = rho*R*T/W'))
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._write()
     #    self._write('return;')
     #    self._outdent()
 
     #    self._write('}')
 
-    #    return 
- 
-    #def _ckpc(self, mechanism):
+    #    return
+
+    # def _ckpc(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Compute P = rhoRT/W(c)'))
     #    self._write('void CKPC'+sym+'(double * restrict rho, double * restrict T, double * restrict c, int * iwrk, double * restrict rwrk, double * restrict P)')
-    #    
+    #
     #    self._write('{')
     #    self._indent()
 
@@ -1623,7 +1704,7 @@ class FPickler(CMill):
     #    self._write(self.line('See Eq 5 in CK Manual'))
     #    self._write('double W = 0;')
     #    self._write('double sumC = 0;')
-    #    
+    #
     #    # molecular weights of all species
     #    for species in self.species:
     #        self._write('W += c[%d]*%f; ' % (
@@ -1641,16 +1722,16 @@ class FPickler(CMill):
     #    self._write(
     #        '*P = *rho * %g * (*T) * sumC / W; ' % (R*kelvin*mole/erg)
     #        + self.line('P = rho*R*T/W'))
-    #    
+    #
     #    self._write()
     #    self._write('return;')
     #    self._outdent()
 
     #    self._write('}')
 
-    #    return 
+    #    return
 
-    #def _ckrhox(self, mechanism):
+    # def _ckrhox(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Compute rho = PW(x)/RT'))
@@ -1660,7 +1741,7 @@ class FPickler(CMill):
 
     #    self._write('double XW = 0;'+
     #                self.line(' To hold mean molecular wt'))
-    #    
+    #
     #    # molecular weights of all species
     #    for species in self.species:
     #        self._write('XW += x[%d]*%f; ' % (
@@ -1669,7 +1750,7 @@ class FPickler(CMill):
     #    self._write(
     #        '*rho = *P * XW / (%g * (*T)); ' % (R*kelvin*mole/erg)
     #        + self.line('rho = P*W/(R*T)'))
-    #    
+    #
     #    self._write()
     #    self._write('return;')
     #    self._outdent()
@@ -1680,48 +1761,52 @@ class FPickler(CMill):
     def _ckrhoy(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! Compute rho = P*W(y)/RT')
-        self._write('subroutine ckrhoy'+sym+'(P, T, y, iwrk, rwrk, rho)')
+        self._write("! Compute rho = P*W(y)/RT")
+        self._write("subroutine ckrhoy" + sym + "(P, T, y, iwrk, rwrk, rho)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: P')
-        self._write('double precision, intent(in) :: T')
-        self._write('double precision, intent(in) :: y(%d)' % nSpec)
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(out) :: rho')
+        self._write("double precision, intent(in) :: P")
+        self._write("double precision, intent(in) :: T")
+        self._write("double precision, intent(in) :: y(%d)" % nSpec)
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(out) :: rho")
         self._write()
-        self._write('double precision :: YOW, tmp(%d)' % nSpec)
-        self._write('integer :: i')
+        self._write("double precision :: YOW, tmp(%d)" % nSpec)
+        self._write("integer :: i")
         self._write()
-        self._write('YOW = 0.d0')
+        self._write("YOW = 0.d0")
         self._write()
-        self._write('do i=1, %d' % nSpec)
+        self._write("do i=1, %d" % nSpec)
         self._indent()
-        self._write('tmp(i) = y(i) * imw(i)')
+        self._write("tmp(i) = y(i) * imw(i)")
         self._outdent()
-        self._write('end do')
-        self._write('do i=1, %d' % nSpec)
+        self._write("end do")
+        self._write("do i=1, %d" % nSpec)
         self._indent()
-        self._write('YOW = YOW + tmp(i)')
+        self._write("YOW = YOW + tmp(i)")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._write()
-        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
-        self._write('rho = P / (%s * T * YOW) ' % expression + '! rho = P*W/(R*T)')
+        expression = format((R * kelvin * mole / erg).value, "15.8e").replace(
+            "e", "d"
+        )
+        self._write(
+            "rho = P / (%s * T * YOW) " % expression + "! rho = P*W/(R*T)"
+        )
         self._outdent()
         self._write()
-        self._write('end subroutine')
-        return 
- 
-    #def _ckrhoc(self, mechanism):
+        self._write("end subroutine")
+        return
+
+    # def _ckrhoc(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Compute rho = P*W(c)/(R*T)'))
     #    self._write('void CKRHOC'+sym+'(double * restrict P, double * restrict T, double * restrict c, int * iwrk, double * restrict rwrk, double * restrict rho)')
-    #    
+    #
     #    self._write('{')
     #    self._indent()
 
@@ -1729,7 +1814,7 @@ class FPickler(CMill):
     #    self._write(self.line('See Eq 5 in CK Manual'))
     #    self._write('double W = 0;')
     #    self._write('double sumC = 0;')
-    #    
+    #
     #    # molecular weights of all species
     #    for species in self.species:
     #        self._write('W += c[%d]*%f; ' % (
@@ -1746,35 +1831,35 @@ class FPickler(CMill):
     #    self._write(
     #        '*rho = *P * W / (sumC * (*T) * %g); ' % (R*kelvin*mole/erg)
     #        + self.line('rho = PW/(R*T)'))
-    #    
+    #
     #    self._write()
     #    self._write('return;')
     #    self._outdent()
 
     #    self._write('}')
 
-    #    return 
+    #    return
 
     def _ckwt(self, mechanism):
         nSpecies = len(mechanism.species())
         self._write()
-        self._write('! get molecular weight for all species')
-        self._write('subroutine ckwt'+sym+'(iwrk, rwrk, wt)')
+        self._write("! get molecular weight for all species")
+        self._write("subroutine ckwt" + sym + "(iwrk, rwrk, wt)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(out) :: wt(%d)' % nSpecies)
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(out) :: wt(%d)" % nSpecies)
         self._write()
-        self._write('call molecularWeight(wt)')
+        self._write("call molecularWeight(wt)")
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
         return
 
-    #def _ckawt(self, mechanism):
+    # def _ckawt(self, mechanism):
 
     #    self._write()
     #    self._write()
@@ -1785,14 +1870,14 @@ class FPickler(CMill):
 
     #    # call atomicWeight
     #    self._write('atomicWeight(awt);')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
-    #  
-    #def _ckcvml(self, mechanism):
+    #
+    # def _ckcvml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get specific heat at constant volume as a function '))
@@ -1802,7 +1887,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('int id; ' + self.line('loop counter'))
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -1810,10 +1895,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
     #        + self.line('temperature cache'))
-    #    
+    #
     #    # call routine
     #    self._write('cv_R(cvml, tc);')
-    #    
+    #
     #    # convert cv/R to cv
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -1822,14 +1907,14 @@ class FPickler(CMill):
     #    self._write('cvml[id] *= %g;' % (R*kelvin*mole/erg) )
     #    self._outdent()
     #    self._write('}')
-    #   
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
-    #   
-    #def _ckcpml(self, mechanism):
+    #
+    # def _ckcpml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get specific heat at constant pressure as a '))
@@ -1839,7 +1924,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('int id; ' + self.line('loop counter'))
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -1847,10 +1932,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
     #        + self.line('temperature cache'))
-    #    
+    #
     #    # call routine
     #    self._write('cp_R(cpml, tc);')
-    #    
+    #
     #    # convert cp/R to cp
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -1859,14 +1944,14 @@ class FPickler(CMill):
     #    self._write('cpml[id] *= %g;' % (R*kelvin*mole/erg) )
     #    self._outdent()
     #    self._write('}')
-    #   
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
-    # 
-    #def _ckuml(self, mechanism):
+    #
+    # def _ckuml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get internal energy as a function '))
@@ -1876,7 +1961,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('int id; ' + self.line('loop counter'))
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -1887,10 +1972,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double RT = %g*tT; ' % (R*kelvin*mole/erg)
     #        + self.line('R*T'))
-    #    
+    #
     #    # call routine
     #    self._write('speciesInternalEnergy(uml, tc);')
-    #    
+    #
     #    # convert e/RT to e with molar units
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -1899,14 +1984,14 @@ class FPickler(CMill):
     #    self._write('uml[id] *= RT;')
     #    self._outdent()
     #    self._write('}')
-    #   
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
-    #  
-    #def _ckhml(self, mechanism):
+    #
+    # def _ckhml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get enthalpy as a function '))
@@ -1916,7 +2001,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('int id; ' + self.line('loop counter'))
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -1927,10 +2012,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double RT = %g*tT; ' % (R*kelvin*mole/erg)
     #        + self.line('R*T'))
-    #    
+    #
     #    # call routine
     #    self._write('speciesEnthalpy(hml, tc);')
-    #    
+    #
     #    # convert h/RT to h with molar units
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -1939,14 +2024,14 @@ class FPickler(CMill):
     #    self._write('hml[id] *= RT;')
     #    self._outdent()
     #    self._write('}')
-    #   
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
     #
-    #def _ckgml(self, mechanism):
+    # def _ckgml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get standard-state Gibbs energy as a function '))
@@ -1956,7 +2041,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('int id; ' + self.line('loop counter'))
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -1967,10 +2052,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double RT = %g*tT; ' % (R*kelvin*mole/erg)
     #        + self.line('R*T'))
-    #    
+    #
     #    # call routine
     #    self._write('gibbs(gml, tc);')
-    #    
+    #
     #    # convert g/RT to g with molar units
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -1979,14 +2064,14 @@ class FPickler(CMill):
     #    self._write('gml[id] *= RT;')
     #    self._outdent()
     #    self._write('}')
-    #   
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
     #
-    #def _ckaml(self, mechanism):
+    # def _ckaml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get standard-state Helmholtz free energy as a '))
@@ -1996,7 +2081,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('int id; ' + self.line('loop counter'))
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -2007,10 +2092,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double RT = %g*tT; ' % (R*kelvin*mole/erg)
     #        + self.line('R*T'))
-    #    
+    #
     #    # call routine
     #    self._write('helmholtz(aml, tc);')
-    #    
+    #
     #    # convert A/RT to A with molar units
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -2019,14 +2104,14 @@ class FPickler(CMill):
     #    self._write('aml[id] *= RT;')
     #    self._outdent()
     #    self._write('}')
-    #   
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
-   
-    #def _cksml(self, mechanism):
+
+    # def _cksml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the standard-state entropies in molar units'))
@@ -2035,7 +2120,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('int id; ' + self.line('loop counter'))
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -2043,10 +2128,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
     #        + self.line('temperature cache'))
-    #    
+    #
     #    # call routine
     #    self._write('speciesEntropy(sml, tc);')
-    #    
+    #
     #    # convert s/R to s
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -2055,156 +2140,158 @@ class FPickler(CMill):
     #    self._write('sml[id] *= %g;' % (R*kelvin*mole/erg) )
     #    self._outdent()
     #    self._write('}')
-    #   
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
- 
+
     def _ckums(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! Returns internal energy in mass units (Eq 30.)')
-        self._write('subroutine ckums'+sym+'(T, iwrk, rwrk, ums)')
+        self._write("! Returns internal energy in mass units (Eq 30.)")
+        self._write("subroutine ckums" + sym + "(T, iwrk, rwrk, ums)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: T')
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(inout) :: ums(%d)' % nSpec)
+        self._write("double precision, intent(in) :: T")
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(inout) :: ums(%d)" % nSpec)
         self._write()
-        self._write('double precision :: tT, tc(5)')
-        self._write('double precision :: RT')
-        self._write('integer :: i')
+        self._write("double precision :: tT, tc(5)")
+        self._write("double precision :: RT")
+        self._write("integer :: i")
         self._write()
 
         # get temperature cache
+        self._write("tT = T " + "! temporary temperature")
         self._write(
-            'tT = T '
-            + '! temporary temperature')
-        self._write(
-            'tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) '
-            + '! temperature cache')
-        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
-        self._write('RT =%s * tT ' % expression + '! R*T')
-        
+            "tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) "
+            + "! temperature cache"
+        )
+        expression = format((R * kelvin * mole / erg).value, "15.8e").replace(
+            "e", "d"
+        )
+        self._write("RT =%s * tT " % expression + "! R*T")
+
         # call routine
         self._write()
-        self._write('call speciesInternalEnergy(ums, tc)')
+        self._write("call speciesInternalEnergy(ums, tc)")
         self._write()
-        
-        self._write('do i=1, %d' % (nSpec))
+
+        self._write("do i=1, %d" % (nSpec))
         self._indent()
-        self._write('ums(i) = ums(i) * (RT * imw(i))')
+        self._write("ums(i) = ums(i) * (RT * imw(i))")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
- 
+
     def _ckhms(self, mechanism):
         species = self.species
         nSpec = len(species)
         self._write()
-        self._write('! Returns enthalpy in mass units (Eq 27.)')
-        self._write('subroutine ckhms'+sym+'(T, iwrk, rwrk, hms)')
+        self._write("! Returns enthalpy in mass units (Eq 27.)")
+        self._write("subroutine ckhms" + sym + "(T, iwrk, rwrk, hms)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
 
         # get temperature cache
-        self._write('double precision, intent(in) :: T')
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(inout) :: hms(%d)' % nSpec)
+        self._write("double precision, intent(in) :: T")
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(inout) :: hms(%d)" % nSpec)
         self._write()
-        self._write('double precision :: tT, RT')
-        self._write('double precision :: tc(5), h(%d)' % nSpec)
-        self._write('integer :: i')
+        self._write("double precision :: tT, RT")
+        self._write("double precision :: tc(5), h(%d)" % nSpec)
+        self._write("integer :: i")
         self._write()
+        self._write("tT = T " + "! temporary temperature")
         self._write(
-            'tT = T '
-            + '! temporary temperature')
-        self._write(
-            'tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) '
-            + '! temperature cache')
-        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
-        self._write(
-            'RT =%s * tT ' % expression
-            + '! R*T')
-        
+            "tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) "
+            + "! temperature cache"
+        )
+        expression = format((R * kelvin * mole / erg).value, "15.8e").replace(
+            "e", "d"
+        )
+        self._write("RT =%s * tT " % expression + "! R*T")
+
         # call routine
         self._write()
-        self._write('call speciesEnthalpy(hms, tc)')
+        self._write("call speciesEnthalpy(hms, tc)")
         self._write()
-        self._write('do i=1, %d' % (nSpec))
+        self._write("do i=1, %d" % (nSpec))
         self._indent()
-        self._write('hms(i) = hms(i) * (RT * imw(i))')
+        self._write("hms(i) = hms(i) * (RT * imw(i))")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
 
     def _vckhms(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! Returns enthalpy in mass units (Eq 27.)')
-        self._write('subroutine vckhms'+sym+'(np, T, iwrk, rwrk, hms)')
+        self._write("! Returns enthalpy in mass units (Eq 27.)")
+        self._write("subroutine vckhms" + sym + "(np, T, iwrk, rwrk, hms)")
         self._indent()
         self._write()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('integer, intent(in) :: np')
-        self._write('double precision, intent(in) :: T(np)')
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(inout) :: hms(np,%d)' % nSpec)
+        self._write("integer, intent(in) :: np")
+        self._write("double precision, intent(in) :: T(np)")
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(inout) :: hms(np,%d)" % nSpec)
         self._write()
-        self._write('double precision :: tc(5), h(%d)' % nSpec)
-        self._write('integer :: i, n')
+        self._write("double precision :: tc(5), h(%d)" % nSpec)
+        self._write("integer :: i, n")
         self._write()
-        self._write('do i=1, np')
+        self._write("do i=1, np")
         self._indent()
-        self._write('tc(1) = 0.d0')
-        self._write('tc(2) = T(i)')
-        self._write('tc(3) = T(i)*T(i)')
-        self._write('tc(4) = T(i)*T(i)*T(i)')
-        self._write('tc(5) = T(i)*T(i)*T(i)*T(i)')
+        self._write("tc(1) = 0.d0")
+        self._write("tc(2) = T(i)")
+        self._write("tc(3) = T(i)*T(i)")
+        self._write("tc(4) = T(i)*T(i)*T(i)")
+        self._write("tc(5) = T(i)*T(i)*T(i)*T(i)")
         self._write()
-        self._write('call speciesEnthalpy(h, tc)')
+        self._write("call speciesEnthalpy(h, tc)")
         self._write()
         for ispec in range(nSpec):
-            self._write('hms(i, %d) = h(%d)' % (ispec+1, ispec+1))
+            self._write("hms(i, %d) = h(%d)" % (ispec + 1, ispec + 1))
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._write()
-        self._write('do n=1, %d' % (nSpec))
+        self._write("do n=1, %d" % (nSpec))
         self._indent()
-        self._write('do i=1, np')
+        self._write("do i=1, np")
         self._indent()
-        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
-        self._write('hms(i,n) = hms(i,n) * (%s * T(i) * imw(n))' % expression)
+        expression = format((R * kelvin * mole / erg).value, "15.8e").replace(
+            "e", "d"
+        )
+        self._write("hms(i,n) = hms(i,n) * (%s * T(i) * imw(n))" % expression)
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
 
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
 
-    #def _ckams(self, mechanism):
+    # def _ckams(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns helmholtz in mass units (Eq 32.)'))
@@ -2222,10 +2309,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double RT = %g*tT; ' % (R*kelvin*mole/erg)
     #        + self.line('R*T'))
-    #    
+    #
     #    # call routine
     #    self._write('helmholtz(ams, tc);')
-    #    
+    #
     #    species = self.species
     #    nSpec = len(species)
     #    self._write('for (int i = 0; i < %d; i++)' % (nSpec))
@@ -2240,7 +2327,7 @@ class FPickler(CMill):
 
     #    return
 
-    #def _ckgms(self, mechanism):
+    # def _ckgms(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns gibbs in mass units (Eq 31.)'))
@@ -2258,10 +2345,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double RT = %g*tT; ' % (R*kelvin*mole/erg)
     #        + self.line('R*T'))
-    #    
+    #
     #    # call routine
     #    self._write('gibbs(gms, tc);')
-    #    
+    #
     #    species = self.species
     #    nSpec = len(species)
     #    self._write('for (int i = 0; i < %d; i++)' % (nSpec))
@@ -2276,98 +2363,104 @@ class FPickler(CMill):
 
     #    return
 
-
     def _ckcvms(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! Returns the specific heats at constant volume')
-        self._write('! in mass units (Eq. 29)')
-        self._write('subroutine ckcvms'+sym+'(T, iwrk, rwrk, cvms)')
+        self._write("! Returns the specific heats at constant volume")
+        self._write("! in mass units (Eq. 29)")
+        self._write("subroutine ckcvms" + sym + "(T, iwrk, rwrk, cvms)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: T')
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(inout) :: cvms(%d)' % nSpec)
+        self._write("double precision, intent(in) :: T")
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(inout) :: cvms(%d)" % nSpec)
         self._write()
-        self._write('double precision :: tT, tc(5)')
+        self._write("double precision :: tT, tc(5)")
         self._write()
 
         # get temperature cache
+        self._write("tT = T " + "! temporary temperature")
         self._write(
-            'tT = T '
-            + '! temporary temperature')
-        self._write(
-            'tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) '
-            + '! temperature cache')
+            "tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) "
+            + "! temperature cache"
+        )
         self._write()
-        
+
         # call routine
-        self._write('call cv_R(cvms, tc)')
+        self._write("call cv_R(cvms, tc)")
         self._write()
 
         # convert cv/R to cv with mass units
-        self._write('! multiply by R/molecularweight')
+        self._write("! multiply by R/molecularweight")
         for species in self.species:
-            ROW = format(((R*kelvin*mole / erg) / species.weight).value, '20.15e').replace("e", "d")
-            self._write('cvms(%d) = cvms(%d) * %s ' % (
-                species.id + 1, species.id + 1, ROW) + '!%s' % species.symbol)
+            ROW = format(
+                ((R * kelvin * mole / erg) / species.weight).value, "20.15e"
+            ).replace("e", "d")
+            self._write(
+                "cvms(%d) = cvms(%d) * %s "
+                % (species.id + 1, species.id + 1, ROW)
+                + "!%s" % species.symbol
+            )
 
-       
         self._outdent()
 
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
 
     def _ckcpms(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! Returns the specific heats at constant pressure')
-        self._write('! in mass units (Eq. 26)')
-        self._write('subroutine ckcpms'+sym+'(T, iwrk, rwrk, cpms)')
+        self._write("! Returns the specific heats at constant pressure")
+        self._write("! in mass units (Eq. 26)")
+        self._write("subroutine ckcpms" + sym + "(T, iwrk, rwrk, cpms)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: T')
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(inout) :: cpms(%d)' % nSpec)
+        self._write("double precision, intent(in) :: T")
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(inout) :: cpms(%d)" % nSpec)
         self._write()
-        self._write('double precision :: tT, tc(5)')
+        self._write("double precision :: tT, tc(5)")
         self._write()
 
         # get temperature cache
+        self._write("tT = T " + "! temporary temperature")
         self._write(
-            'tT = T '
-            + '! temporary temperature')
-        self._write(
-            'tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) '
-            + '! temperature cache')
-        
+            "tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) "
+            + "! temperature cache"
+        )
+
         # call routine
         self._write()
-        self._write('call cp_R(cpms, tc)')
+        self._write("call cp_R(cpms, tc)")
         self._write()
-        
+
         # convert cp/R to cp with mass units
-        self._write('! multiply by R/molecularweight')
+        self._write("! multiply by R/molecularweight")
         for species in self.species:
-            ROW = format(((R*kelvin*mole / erg)/ species.weight).value, '20.15e').replace("e", "d")
-            self._write('cpms(%d) = cpms(%d) * %s ' % (
-                species.id + 1, species.id + 1, ROW) + '! %s' % species.symbol)
-       
+            ROW = format(
+                ((R * kelvin * mole / erg) / species.weight).value, "20.15e"
+            ).replace("e", "d")
+            self._write(
+                "cpms(%d) = cpms(%d) * %s "
+                % (species.id + 1, species.id + 1, ROW)
+                + "! %s" % species.symbol
+            )
+
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
 
-    #def _cksms(self, mechanism):
+    # def _cksms(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the entropies in mass units (Eq 28.)'))
@@ -2382,10 +2475,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
     #        + self.line('temperature cache'))
-    #    
+    #
     #    # call routine
     #    self._write('speciesEntropy(sms, tc);')
-    #    
+    #
 
     #    # convert s/R to s with mass units
     #    self._write(self.line('multiply by R/molecularweight'))
@@ -2394,14 +2487,14 @@ class FPickler(CMill):
     #        self._write('sms[%d] *= %20.15e; ' % (
     #            species.id, ROW) + self.line('%s' % species.symbol))
 
-    #   
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
     #
-    #def _ckcpbl(self, mechanism):
+    # def _ckcpbl(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the mean specific heat at CP (Eq. 33)'))
@@ -2411,7 +2504,7 @@ class FPickler(CMill):
 
     #    self._write('int id; ' + self.line('loop counter'))
     #    self._write('double result = 0; ')
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -2421,10 +2514,10 @@ class FPickler(CMill):
     #        + self.line('temperature cache'))
     #    self._write(
     #        'double cpor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
-    #    
+    #
     #    # call routine
     #    self._write('cp_R(cpor, tc);')
-    #    
+    #
     #    # dot product
     #    self._write()
     #    self._write(self.line('perform dot product'))
@@ -2436,71 +2529,72 @@ class FPickler(CMill):
 
     #    self._write()
     #    self._write('*cpbl = result * %g;' % (R*kelvin*mole/erg) )
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
- 
+
     def _ckcpbs(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! Returns the mean specific heat at CP (Eq. 34)')
-        self._write('subroutine ckcpbs'+sym+'(T, y, iwrk, rwrk, cpbs)')
+        self._write("! Returns the mean specific heat at CP (Eq. 34)")
+        self._write("subroutine ckcpbs" + sym + "(T, y, iwrk, rwrk, cpbs)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
 
-        self._write('double precision, intent(in) :: T')
-        self._write('double precision, intent(in) :: y(%d)' % self.nSpecies)
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(out) :: cpbs')
+        self._write("double precision, intent(in) :: T")
+        self._write("double precision, intent(in) :: y(%d)" % self.nSpecies)
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(out) :: cpbs")
         self._write()
-        self._write('double precision :: cpor(%d)' % self.nSpecies)
-        self._write('double precision :: tresult(%d)' % self.nSpecies)
-        self._write('double precision :: tT, tc(5)')
-        self._write('double precision :: res')
-        self._write('integer :: i')
+        self._write("double precision :: cpor(%d)" % self.nSpecies)
+        self._write("double precision :: tresult(%d)" % self.nSpecies)
+        self._write("double precision :: tT, tc(5)")
+        self._write("double precision :: res")
+        self._write("integer :: i")
         self._write()
-        self._write('res = 0.d0')
+        self._write("res = 0.d0")
         self._write()
-        
+
         # get temperature cache
+        self._write("tT = T " + "! temporary temperature")
         self._write(
-            'tT = T '
-            + '! temporary temperature')
-        self._write(
-            'tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) '
-            + '! temperature cache')
-        
+            "tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) "
+            + "! temperature cache"
+        )
+
         # call routine
         self._write()
-        self._write('call cp_R(cpor, tc)')
+        self._write("call cp_R(cpor, tc)")
         self._write()
 
-        self._write('do i=1, %d' % nSpec)
+        self._write("do i=1, %d" % nSpec)
         self._indent()
-        self._write('tresult(i) = cpor(i) * y(i) * imw(i)')
+        self._write("tresult(i) = cpor(i) * y(i) * imw(i)")
         self._outdent()
-        self._write('end do')
-        self._write('do i=1, %d' % nSpec)
+        self._write("end do")
+        self._write("do i=1, %d" % nSpec)
         self._indent()
-        self._write('res = res + tresult(i)')
+        self._write("res = res + tresult(i)")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._write()
-        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
-        self._write('cpbs = res *%s' %  expression)
+        expression = format((R * kelvin * mole / erg).value, "15.8e").replace(
+            "e", "d"
+        )
+        self._write("cpbs = res *%s" % expression)
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
-   
-    #def _ckcvbl(self, mechanism):
+
+    # def _ckcvbl(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the mean specific heat at CV (Eq. 35)'))
@@ -2510,7 +2604,7 @@ class FPickler(CMill):
 
     #    self._write('int id; ' + self.line('loop counter'))
     #    self._write('double result = 0; ')
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -2520,10 +2614,10 @@ class FPickler(CMill):
     #        + self.line('temperature cache'))
     #    self._write(
     #        'double cvor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
-    #    
+    #
     #    # call routine
     #    self._write('cv_R(cvor, tc);')
-    #    
+    #
     #    # dot product
     #    self._write()
     #    self._write(self.line('perform dot product'))
@@ -2535,7 +2629,7 @@ class FPickler(CMill):
 
     #    self._write()
     #    self._write('*cvbl = result * %g;' % (R*kelvin*mole/erg) )
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
@@ -2545,55 +2639,59 @@ class FPickler(CMill):
     def _ckcvbs(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! Returns the mean specific heat at CV (Eq. 36)')
-        self._write('subroutine ckcvbs'+sym+'(T, y, iwrk, rwrk, cvbs)')
+        self._write("! Returns the mean specific heat at CV (Eq. 36)")
+        self._write("subroutine ckcvbs" + sym + "(T, y, iwrk, rwrk, cvbs)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
 
-        self._write('double precision, intent(in) :: T')
-        self._write('double precision, intent(in) :: y(%d)' % nSpec)
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(out) :: cvbs')
+        self._write("double precision, intent(in) :: T")
+        self._write("double precision, intent(in) :: y(%d)" % nSpec)
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(out) :: cvbs")
         self._write()
-        self._write('double precision :: cvor(%d)' % nSpec)
-        self._write('double precision :: tT, tc(5)')
-        self._write('double precision :: res')
+        self._write("double precision :: cvor(%d)" % nSpec)
+        self._write("double precision :: tT, tc(5)")
+        self._write("double precision :: res")
         self._write()
-        self._write('res = 0.d0')
-        
+        self._write("res = 0.d0")
+
         # get temperature cache
+        self._write("tT = T " + "! temporary temperature")
         self._write(
-            'tT = T '
-            + '! temporary temperature')
-        self._write(
-            'tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) '
-            + '! temperature cache')
-        
+            "tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) "
+            + "! temperature cache"
+        )
+
         # call routine
         self._write()
-        self._write('call cv_R(cvor, tc)')
+        self._write("call cv_R(cvor, tc)")
         self._write()
-        
+
         # do dot product
-        self._write('! multiply by y/molecularweight')
+        self._write("! multiply by y/molecularweight")
         for species in self.species:
-            self._write('res = res + (cvor(%d) * y(%d) * imw(%d)) ' % (
-                species.id + 1, species.id + 1, species.id + 1) + '! %s' % species.symbol)
+            self._write(
+                "res = res + (cvor(%d) * y(%d) * imw(%d)) "
+                % (species.id + 1, species.id + 1, species.id + 1)
+                + "! %s" % species.symbol
+            )
 
         self._write()
-        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
-        self._write('cvbs = res *%s' % expression)
-        
+        expression = format((R * kelvin * mole / erg).value, "15.8e").replace(
+            "e", "d"
+        )
+        self._write("cvbs = res *%s" % expression)
+
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
 
-    #def _ckhbml(self, mechanism):
+    # def _ckhbml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the mean enthalpy of the mixture in molar units'))
@@ -2603,7 +2701,7 @@ class FPickler(CMill):
 
     #    self._write('int id; ' + self.line('loop counter'))
     #    self._write('double result = 0; ')
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -2616,10 +2714,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double RT = %g*tT; ' % (R*kelvin*mole/erg)
     #        + self.line('R*T'))
-    #    
+    #
     #    # call routine
     #    self._write('speciesEnthalpy(hml, tc);')
-    #    
+    #
     #    # dot product
     #    self._write()
     #    self._write(self.line('perform dot product'))
@@ -2631,15 +2729,14 @@ class FPickler(CMill):
 
     #    self._write()
     #    self._write('*hbml = result * RT;')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
- 
- 
-    #def _ckhbms(self, mechanism):
+
+    # def _ckhbms(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns mean enthalpy of mixture in mass units'))
@@ -2648,7 +2745,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('double result = 0;')
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -2658,11 +2755,11 @@ class FPickler(CMill):
     #        + self.line('temperature cache'))
     #    self._write(
     #        'double hml[%d], tmp[%d]; ' % (self.nSpecies,self.nSpecies) + self.line(' temporary storage'))
-    #    
+    #
     #    self._write(
     #        'double RT = %g*tT; ' % (R*kelvin*mole/erg)
     #        + self.line('R*T'))
-    #    
+    #
     #    # call routine
     #    self._write('speciesEnthalpy(hml, tc);')
 
@@ -2681,14 +2778,14 @@ class FPickler(CMill):
     #    self._write()
     #    # finally, multiply by RT
     #    self._write('*hbms = result * RT;')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
-    #    
+    #
     #    return
     #
-    #def _ckubml(self, mechanism):
+    # def _ckubml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get mean internal energy in molar units'))
@@ -2698,7 +2795,7 @@ class FPickler(CMill):
 
     #    self._write('int id; ' + self.line('loop counter'))
     #    self._write('double result = 0; ')
-    #    
+    #
     #    # get temperature cache
     #    self._write(
     #        'double tT = *T; '
@@ -2711,10 +2808,10 @@ class FPickler(CMill):
     #    self._write(
     #        'double RT = %g*tT; ' % (R*kelvin*mole/erg)
     #        + self.line('R*T'))
-    #    
+    #
     #    # call routine
     #    self._write('speciesInternalEnergy(uml, tc);')
-    #    
+    #
     #    # dot product
     #    self._write()
     #    self._write(self.line('perform dot product'))
@@ -2726,68 +2823,73 @@ class FPickler(CMill):
 
     #    self._write()
     #    self._write('*ubml = result * RT;')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
- 
+
     def _ckubms(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! get mean internal energy in mass units')
-        self._write('subroutine ckubms'+sym+'(T, y, iwrk, rwrk, ubms)')
+        self._write("! get mean internal energy in mass units")
+        self._write("subroutine ckubms" + sym + "(T, y, iwrk, rwrk, ubms)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: T')
-        self._write('double precision, intent(in) :: y(%d)' % nSpec)
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(out) :: ubms')
+        self._write("double precision, intent(in) :: T")
+        self._write("double precision, intent(in) :: y(%d)" % nSpec)
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(out) :: ubms")
         self._write()
-        self._write('double precision :: ums(%d)' % nSpec + ' ! temporary energy array')
-        self._write('double precision :: res')
-        self._write('double precision :: RT, tT, tc(5)')
+        self._write(
+            "double precision :: ums(%d)" % nSpec + " ! temporary energy array"
+        )
+        self._write("double precision :: res")
+        self._write("double precision :: RT, tT, tc(5)")
         self._write()
-        self._write('res = 0.d0')
+        self._write("res = 0.d0")
         self._write()
-        
+
         # get temperature cache
+        self._write("tT = T " + "! temporary temperature")
         self._write(
-            'tT = T '
-            + '! temporary temperature')
-        self._write(
-            'tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) '
-            + '! temperature cache')
-       
-        expression = format((R*kelvin*mole / erg).value, '15.8e').replace("e", "d")
-        self._write('RT =%s * tT ' % expression + '! R*T')
-        
+            "tc = (/ 0.d0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT /) "
+            + "! temperature cache"
+        )
+
+        expression = format((R * kelvin * mole / erg).value, "15.8e").replace(
+            "e", "d"
+        )
+        self._write("RT =%s * tT " % expression + "! R*T")
+
         # call routine
         self._write()
-        self._write('call speciesInternalEnergy(ums, tc)')
+        self._write("call speciesInternalEnergy(ums, tc)")
         self._write()
 
         # convert e/RT to e with mass units
-        self._write('! perform dot product + scaling by wt')
+        self._write("! perform dot product + scaling by wt")
         for species in self.species:
-            self._write('res = res + (y(%d) * ums(%d) * imw(%d)) ' % (
-                species.id + 1, species.id + 1, species.id + 1)
-                        + '! %s' % species.symbol)
+            self._write(
+                "res = res + (y(%d) * ums(%d) * imw(%d)) "
+                % (species.id + 1, species.id + 1, species.id + 1)
+                + "! %s" % species.symbol
+            )
 
         self._write()
         # finally, multiply by RT
-        self._write('ubms = res * RT')
+        self._write("ubms = res * RT")
         self._outdent()
         self._write()
-        self._write('end subroutine')
-        
+        self._write("end subroutine")
+
         return
- 
-    #def _cksbml(self, mechanism):
+
+    # def _cksbml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get mixture entropy in molar units'))
@@ -2797,7 +2899,7 @@ class FPickler(CMill):
 
     #    self._write('int id; ' + self.line('loop counter'))
     #    self._write('double result = 0; ')
-    #    
+    #
     #    # get temperature cache
     #    self._write(self.line('Log of normalized pressure in cgs units dynes/cm^2 by Patm'))
     #    self._write( 'double logPratio = log ( *P / 1013250.0 ); ')
@@ -2809,11 +2911,11 @@ class FPickler(CMill):
     #        + self.line('temperature cache'))
     #    self._write(
     #        'double sor[%d]; ' % self.nSpecies + self.line(' temporary storage'))
-    #    
-    #    
+    #
+    #
     #    # call routine
     #    self._write('speciesEntropy(sor, tc);')
-    #    
+    #
     #    # Equation 42
     #    self._write()
     #    self._write(self.line('Compute Eq 42'))
@@ -2825,16 +2927,16 @@ class FPickler(CMill):
     #    self._write('}')
 
     #    self._write()
-    #    
+    #
     #    self._write('*sbml = result * %g;' % (R*kelvin*mole/erg) )
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-    #def _cksbms(self, mechanism):
+    # def _cksbms(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get mixture entropy in mass units'))
@@ -2843,7 +2945,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('double result = 0; ')
-    #    
+    #
     #    # get temperature cache
     #    self._write(self.line('Log of normalized pressure in cgs units dynes/cm^2 by Patm'))
     #    self._write( 'double logPratio = log ( *P / 1013250.0 ); ')
@@ -2859,23 +2961,23 @@ class FPickler(CMill):
     #        'double x[%d]; ' % self.nSpecies + self.line(' need a ytx conversion'))
 
     #    self._write('double YOW = 0; '+self.line('See Eq 4, 6 in CK Manual'))
-    #    
-    #    
+    #
+    #
     #    # compute inverse of mean molecular weight first (eq 3)
     #    self._write(self.line('Compute inverse of mean molecular wt first'))
     #    for species in self.species:
     #        self._write('YOW += y[%d]*imw[%d]; ' % (
     #            species.id, species.id) + self.line('%s' % species.symbol))
- 
+
     #    # now to ytx
     #    self._write(self.line('Now compute y to x conversion'))
     #    for species in self.species:
     #        self._write('x[%d] = y[%d]/(%f*YOW); ' % (
     #            species.id, species.id, species.weight) )
-    #        
+    #
     #    # call routine
     #    self._write('speciesEntropy(sor, tc);')
-    #    
+    #
     #    # Equation 42 and 43
     #    self._write(self.line('Perform computation in Eq 42 and 43'))
     #    for species in self.species:
@@ -2884,14 +2986,14 @@ class FPickler(CMill):
 
     #    self._write(self.line('Scale by R/W'))
     #    self._write('*sbms = result * %g * YOW;' % (R*kelvin*mole/erg) )
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-    #def _ckgbml(self, mechanism):
+    # def _ckgbml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns mean gibbs free energy in molar units'))
@@ -2901,7 +3003,7 @@ class FPickler(CMill):
 
     #    self._write('int id; ' + self.line('loop counter'))
     #    self._write('double result = 0; ')
-    #    
+    #
     #    # get temperature cache
     #    self._write(self.line('Log of normalized pressure in cgs units dynes/cm^2 by Patm'))
     #    self._write( 'double logPratio = log ( *P / 1013250.0 ); ')
@@ -2916,11 +3018,11 @@ class FPickler(CMill):
     #        + self.line('R*T'))
     #    self._write(
     #        'double gort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
-    #    
+    #
     #    # call routine
     #    self._write(self.line('Compute g/RT'))
     #    self._write('gibbs(gort, tc);')
-    #    
+    #
     #    # Equation 44
     #    self._write()
     #    self._write(self.line('Compute Eq 44'))
@@ -2932,17 +3034,16 @@ class FPickler(CMill):
     #    self._write('}')
 
     #    self._write()
-    #    
+    #
     #    self._write('*gbml = result * RT;')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckgbms(self, mechanism):
+    # def _ckgbms(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns mixture gibbs free energy in mass units'))
@@ -2951,7 +3052,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('double result = 0; ')
-    #    
+    #
     #    # get temperature cache
     #    self._write(self.line('Log of normalized pressure in cgs units dynes/cm^2 by Patm'))
     #    self._write( 'double logPratio = log ( *P / 1013250.0 ); ')
@@ -2972,23 +3073,23 @@ class FPickler(CMill):
     #    self._write(
     #        'double YOW = 0; '
     #        + self.line('To hold 1/molecularweight'))
-    #    
-    #    
+    #
+    #
     #    # compute inverse of mean molecular weight first (eq 3)
     #    self._write(self.line('Compute inverse of mean molecular wt first'))
     #    for species in self.species:
     #        self._write('YOW += y[%d]*imw[%d]; ' % (
     #            species.id, species.id) + self.line('%s' % species.symbol))
- 
+
     #    # now to ytx
     #    self._write(self.line('Now compute y to x conversion'))
     #    for species in self.species:
     #        self._write('x[%d] = y[%d]/(%f*YOW); ' % (
     #            species.id, species.id, species.weight) )
-    #        
+    #
     #    # call routine
     #    self._write('gibbs(gort, tc);')
-    #    
+    #
     #    # Equation 42 and 43
     #    self._write(self.line('Perform computation in Eq 44'))
     #    for species in self.species:
@@ -2997,7 +3098,7 @@ class FPickler(CMill):
 
     #    self._write(self.line('Scale by RT/W'))
     #    self._write('*gbms = result * RT * YOW;')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
@@ -3005,7 +3106,7 @@ class FPickler(CMill):
     #    return
     #
 
-    #def _ckabml(self, mechanism):
+    # def _ckabml(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns mean helmholtz free energy in molar units'))
@@ -3015,7 +3116,7 @@ class FPickler(CMill):
 
     #    self._write('int id; ' + self.line('loop counter'))
     #    self._write('double result = 0; ')
-    #    
+    #
     #    # get temperature cache
     #    self._write(self.line('Log of normalized pressure in cgs units dynes/cm^2 by Patm'))
     #    self._write( 'double logPratio = log ( *P / 1013250.0 ); ')
@@ -3030,11 +3131,11 @@ class FPickler(CMill):
     #        + self.line('R*T'))
     #    self._write(
     #        'double aort[%d]; ' % self.nSpecies + self.line(' temporary storage'))
-    #    
+    #
     #    # call routine
     #    self._write(self.line('Compute g/RT'))
     #    self._write('helmholtz(aort, tc);')
-    #    
+    #
     #    # Equation 44
     #    self._write()
     #    self._write(self.line('Compute Eq 44'))
@@ -3046,9 +3147,9 @@ class FPickler(CMill):
     #    self._write('}')
 
     #    self._write()
-    #    
+    #
     #    self._write('*abml = result * RT;')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
@@ -3056,7 +3157,7 @@ class FPickler(CMill):
     #    return
     #
 
-    #def _ckabms(self, mechanism):
+    # def _ckabms(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns mixture helmholtz free energy in mass units'))
@@ -3065,7 +3166,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('double result = 0; ')
-    #    
+    #
     #    # get temperature cache
     #    self._write(self.line('Log of normalized pressure in cgs units dynes/cm^2 by Patm'))
     #    self._write( 'double logPratio = log ( *P / 1013250.0 ); ')
@@ -3086,23 +3187,23 @@ class FPickler(CMill):
     #    self._write(
     #        'double YOW = 0; '
     #        + self.line('To hold 1/molecularweight'))
-    #    
-    #    
+    #
+    #
     #    # compute inverse of mean molecular weight first (eq 3)
     #    self._write(self.line('Compute inverse of mean molecular wt first'))
     #    for species in self.species:
     #        self._write('YOW += y[%d]*imw[%d]; ' % (
     #            species.id, species.id) + self.line('%s' % species.symbol))
- 
+
     #    # now to ytx
     #    self._write(self.line('Now compute y to x conversion'))
     #    for species in self.species:
     #        self._write('x[%d] = y[%d]/(%f*YOW); ' % (
     #            species.id, species.id, species.weight) )
-    #        
+    #
     #    # call routine
     #    self._write('helmholtz(aort, tc);')
-    #    
+    #
     #    # Equation 42 and 43
     #    self._write(self.line('Perform computation in Eq 44'))
     #    for species in self.species:
@@ -3111,7 +3212,7 @@ class FPickler(CMill):
 
     #    self._write(self.line('Scale by RT/W'))
     #    self._write('*abms = result * RT * YOW;')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
@@ -3121,51 +3222,53 @@ class FPickler(CMill):
 
     def _ckwc(self, mechanism):
         self._write()
-        self._write('! compute the production rate for each species')
-        self._write('subroutine ckwc'+sym+'(T, C, iwrk, rwrk, wdot)')
+        self._write("! compute the production rate for each species")
+        self._write("subroutine ckwc" + sym + "(T, C, iwrk, rwrk, wdot)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: T')
-        self._write('double precision, intent(inout) :: C(%d)' % self.nSpecies)
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(inout) :: wdot(%d)' % self.nSpecies)
+        self._write("double precision, intent(in) :: T")
+        self._write("double precision, intent(inout) :: C(%d)" % self.nSpecies)
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write(
+            "double precision, intent(inout) :: wdot(%d)" % self.nSpecies
+        )
         self._write()
-        self._write('integer :: id' + ' ! loop counter')
+        self._write("integer :: id" + " ! loop counter")
 
         # convert C to SI units
         self._write()
-        self._write('! convert to SI')
-        self._write('do id = 1, %d' % self.nSpecies)
+        self._write("! convert to SI")
+        self._write("do id = 1, %d" % self.nSpecies)
         self._indent()
-        self._write('C(id) = C(id) * 1.0d6')
+        self._write("C(id) = C(id) * 1.0d6")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
 
         # call productionRate
         self._write()
-        self._write('! convert to chemkin units')
-        self._write('call productionRate(wdot, C, T)')
+        self._write("! convert to chemkin units")
+        self._write("call productionRate(wdot, C, T)")
 
         # convert C and wdot to chemkin units
         self._write()
-        self._write('! convert to chemkin units')
-        self._write('do id=1, %d' % self.nSpecies)
+        self._write("! convert to chemkin units")
+        self._write("do id=1, %d" % self.nSpecies)
         self._indent()
-        self._write('C(id) = C(id) * 1.0d-6')
-        self._write('wdot(id) = wdot(id) * 1.0d-6')
+        self._write("C(id) = C(id) * 1.0d-6")
+        self._write("wdot(id) = wdot(id) * 1.0d-6")
         self._outdent()
-        self._write('end do')
-        
+        self._write("end do")
+
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
 
-    #def _ckwyp(self, mechanism):
+    # def _ckwyp(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the molar production rate of species'))
@@ -3179,16 +3282,16 @@ class FPickler(CMill):
     #    self._write('double c[%d]; ' % self.nSpecies + self.line('temporary storage'))
     #    self._write('double YOW = 0; ')
     #    self._write('double PWORT; ')
-    #    
+    #
     #    # compute inverse of mean molecular weight first (eq 3)
     #    self._write(self.line('Compute inverse of mean molecular wt first'))
     #    for species in self.species:
     #        self._write('YOW += y[%d]*imw[%d]; ' % (
     #            species.id, species.id) + self.line('%s' % species.symbol))
- 
+
     #    self._write(self.line('PW/RT (see Eq. 7)'))
     #    self._write('PWORT = (*P)/(YOW * %g * (*T)); ' % (R*kelvin*mole/erg) )
-    #    
+    #
     #    self._write(self.line('multiply by 1e6 so c goes to SI'))
     #    self._write('PWORT *= 1e6; ')
 
@@ -3211,15 +3314,14 @@ class FPickler(CMill):
     #    self._write('wdot[id] *= 1.0e-6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckwxp(self, mechanism):
+    # def _ckwxp(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the molar production rate of species'))
@@ -3231,10 +3333,10 @@ class FPickler(CMill):
     #    self._write('int id; ' + self.line('loop counter'))
 
     #    self._write('double c[%d]; ' % self.nSpecies + self.line('temporary storage'))
-    #    
+    #
     #    self._write('double PORT = 1e6 * (*P)/(%g * (*T)); ' % (R*kelvin*mole/erg) +
     #                self.line('1e6 * P/RT so c goes to SI units'))
-    #    
+    #
     #    # now compute conversion
     #    self._write()
     #    self._write(self.line('Compute conversion, see Eq 10'))
@@ -3243,7 +3345,7 @@ class FPickler(CMill):
     #    self._write('c[id] = x[id]*PORT;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    # call productionRate
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -3257,15 +3359,14 @@ class FPickler(CMill):
     #    self._write('wdot[id] *= 1.0e-6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckwyr(self, mechanism):
+    # def _ckwyr(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the molar production rate of species'))
@@ -3283,7 +3384,7 @@ class FPickler(CMill):
     #    for species in self.species:
     #        self._write('c[%d] = 1e6 * (*rho) * y[%d]*imw[%d]; ' % (
     #            species.id, species.id, species.id) )
-    #        
+    #
     #    # call productionRate
     #    self._write()
     #    self._write(self.line('call productionRate'))
@@ -3297,15 +3398,14 @@ class FPickler(CMill):
     #    self._write('wdot[id] *= 1.0e-6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _vckwyr(self, mechanism):
+    # def _vckwyr(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the molar production rate of species'))
@@ -3343,15 +3443,14 @@ class FPickler(CMill):
     #    self._write('wdot[i] *= 1.0e-6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckwxr(self, mechanism):
+    # def _ckwxr(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the molar production rate of species'))
@@ -3363,10 +3462,10 @@ class FPickler(CMill):
     #    self._write('int id; ' + self.line('loop counter'))
 
     #    self._write('double c[%d]; ' % self.nSpecies + self.line('temporary storage'))
-    #    
+    #
     #    self._write('double XW = 0; '+self.line('See Eq 4, 11 in CK Manual'))
     #    self._write('double ROW; ')
-    #    
+    #
     #    # compute mean molecular weight first (eq 3)
     #    self._write(self.line('Compute mean molecular wt first'))
     #    for species in self.species:
@@ -3383,7 +3482,7 @@ class FPickler(CMill):
     #    self._write('c[id] = x[id]*ROW;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    # call productionRate
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -3397,15 +3496,14 @@ class FPickler(CMill):
     #    self._write('wdot[id] *= 1.0e-6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _cknu(self, mechanism):
+    # def _cknu(self, mechanism):
 
     #    nSpecies  = len(mechanism.species())
     #    nReaction = len(mechanism.reaction())
@@ -3418,7 +3516,6 @@ class FPickler(CMill):
     #    self._write('{')
     #    self._indent()
 
- 
     #    self._write('int id; ' + self.line('loop counter'))
     #    self._write('int kd = (*kdim); ')
     #    self._write(self.line('Zero nuki'))
@@ -3427,7 +3524,7 @@ class FPickler(CMill):
     #    self._write(' nuki[id] = 0; ')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    for reaction in mechanism.reaction():
 
     #        self._write()
@@ -3442,15 +3539,14 @@ class FPickler(CMill):
     #            self._write(
     #                "nuki[ %d * kd + %d ] += +%d ;"
     #                % (mechanism.species(symbol).id, reaction.id-1, coefficient))
-    #   
+    #
     #    # done
     #    self._outdent()
     #    self._write('}')
 
     #    return
 
-
-    #def _ckncf(self, mechanism):
+    # def _ckncf(self, mechanism):
 
     #    nSpecies  = len(mechanism.species())
     #    nElement  = len(mechanism.element())
@@ -3463,7 +3559,6 @@ class FPickler(CMill):
     #    self._write('{')
     #    self._indent()
 
- 
     #    self._write('int id; ' + self.line('loop counter'))
     #    self._write('int kd = (*mdim); ')
     #    self._write(self.line('Zero ncf'))
@@ -3472,7 +3567,7 @@ class FPickler(CMill):
     #    self._write(' ncf[id] = 0; ')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._write()
     #    for species in mechanism.species():
     #       self._write(self.line('%s' % species.symbol))
@@ -3480,9 +3575,9 @@ class FPickler(CMill):
     #           self._write('ncf[ %d * kd + %d ] = %d; ' % (
     #               species.id, mechanism.element(elem).id, coef) +
     #                   self.line('%s' % elem) )
-    #                       
+    #
     #       self._write()
-    #                        
+    #
     #    # done
     #    self._outdent()
 
@@ -3490,8 +3585,7 @@ class FPickler(CMill):
 
     #    return
 
-
-    #def _ckabe(self, mechanism):
+    # def _ckabe(self, mechanism):
 
     #    nElement  = len(mechanism.element())
 
@@ -3518,9 +3612,9 @@ class FPickler(CMill):
     #    self._write('}')
 
     #    return
-    #                        
     #
-    #def _ckmmwy(self, mechanism):
+    #
+    # def _ckmmwy(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('given y[species]: mass fractions'))
@@ -3550,9 +3644,9 @@ class FPickler(CMill):
     #    self._write('return;')
     #    self._outdent()
     #    self._write('}')
-    #    return 
- 
-    #def _ckmmwx(self, mechanism):
+    #    return
+
+    # def _ckmmwx(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('given x[species]: mole fractions'))
@@ -3562,23 +3656,23 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('double XW = 0;'+self.line(' see Eq 4 in CK Manual'))
-    #    
+    #
     #    # molecular weights of all species
     #    for species in self.species:
     #        self._write('XW += x[%d]*%f; ' % (
     #            species.id, species.weight) + self.line('%s' % species.symbol))
 
     #    self._write('*wtm = XW;')
-    #    
+    #
     #    self._write()
     #    self._write('return;')
     #    self._outdent()
 
     #    self._write('}')
 
-    #    return 
- 
-    #def _ckmmwc(self, mechanism):
+    #    return
+
+    # def _ckmmwc(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('given c[species]: molar concentration'))
@@ -3591,7 +3685,7 @@ class FPickler(CMill):
     #    self._write(self.line('See Eq 5 in CK Manual'))
     #    self._write('double W = 0;')
     #    self._write('double sumC = 0;')
-    #    
+    #
     #    # molecular weights of all species
     #    for species in self.species:
     #        self._write('W += c[%d]*%f; ' % (
@@ -3606,108 +3700,112 @@ class FPickler(CMill):
 
     #    self._write(self.line(' CK provides no guard against divison by zero'))
     #    self._write('*wtm = W/sumC;')
-    #    
+    #
     #    self._write()
     #    self._write('return;')
     #    self._outdent()
 
     #    self._write('}')
 
-    #    return 
- 
+    #    return
+
     def _ckytx(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! convert y[species] (mass fracs) to x[species] (mole fracs)')
-        self._write('subroutine ckytx'+sym+'(y, iwrk, rwrk, x)')
+        self._write(
+            "! convert y[species] (mass fracs) to x[species] (mole fracs)"
+        )
+        self._write("subroutine ckytx" + sym + "(y, iwrk, rwrk, x)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: y(%d)' % (nSpec))
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(out) :: x(%d)' % (nSpec))
+        self._write("double precision, intent(in) :: y(%d)" % (nSpec))
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(out) :: x(%d)" % (nSpec))
         self._write()
-        self._write('double precision :: YOW, YOWINV')
-        self._write('integer :: i')
+        self._write("double precision :: YOW, YOWINV")
+        self._write("integer :: i")
         self._write()
-        self._write('YOW = 0.d0')
+        self._write("YOW = 0.d0")
         self._write()
-        self._write('do i=1, %d' % (nSpec))
+        self._write("do i=1, %d" % (nSpec))
         self._indent()
-        self._write('YOW = YOW + y(i) * imw(i)')
+        self._write("YOW = YOW + y(i) * imw(i)")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._write()
-        self._write('YOWINV = 1.d0 / YOW')
+        self._write("YOWINV = 1.d0 / YOW")
         self._write()
-        self._write('do i=1, %d' % (nSpec))
+        self._write("do i=1, %d" % (nSpec))
         self._indent()
-        self._write('x(i) = y(i) * imw(i) * YOWINV')
+        self._write("x(i) = y(i) * imw(i) * YOWINV")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._outdent()
         self._write()
-        self._write('end subroutine')
-        return 
- 
+        self._write("end subroutine")
+        return
+
     def _vckytx(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! convert y(npoints,species) (mass fracs) to x(npoints,species) (mole fracs)')
-        self._write('subroutine vckytx'+sym+'(np, y, iwrk, rwrk, x)')
+        self._write(
+            "! convert y(npoints,species) (mass fracs) to x(npoints,species) (mole fracs)"
+        )
+        self._write("subroutine vckytx" + sym + "(np, y, iwrk, rwrk, x)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('integer, intent(in) :: np')
-        self._write('double precision, intent(in) :: y(np,%d)' % (nSpec))
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(inout) :: x(np,%d)' % (nSpec))
+        self._write("integer, intent(in) :: np")
+        self._write("double precision, intent(in) :: y(np,%d)" % (nSpec))
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(inout) :: x(np,%d)" % (nSpec))
         self._write()
-        self._write('double precision :: YOW(np)')
-        self._write('integer :: i, n')
+        self._write("double precision :: YOW(np)")
+        self._write("integer :: i, n")
         self._write()
-        self._write('do i=1, np')
+        self._write("do i=1, np")
         self._indent()
-        self._write('YOW(i) = 0.d0')
+        self._write("YOW(i) = 0.d0")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._write()
-        self._write('do n=1, %d' % (nSpec))
+        self._write("do n=1, %d" % (nSpec))
         self._indent()
-        self._write('do i=1, np')
+        self._write("do i=1, np")
         self._indent()
-        self._write('x(i,n) = y(i,n) * imw(n)')
-        self._write('YOW(i) = YOW(i) + x(i,n)')
+        self._write("x(i,n) = y(i,n) * imw(n)")
+        self._write("YOW(i) = YOW(i) + x(i,n)")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._write()
-        self._write('do i=1, np')
+        self._write("do i=1, np")
         self._indent()
-        self._write('YOW(i) = 1.d0 / YOW(i)')
+        self._write("YOW(i) = 1.d0 / YOW(i)")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._write()
-        self._write('do n=1, %d' % (nSpec))
+        self._write("do n=1, %d" % (nSpec))
         self._indent()
-        self._write('do i=1, np')
+        self._write("do i=1, np")
         self._indent()
-        self._write('x(i,n) = x(i,n) * YOW(i)')
+        self._write("x(i,n) = x(i,n) * YOW(i)")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._outdent()
         self._write()
-        self._write('end subroutine')
-        return 
- 
-    #def _ckytcp(self, mechanism):
+        self._write("end subroutine")
+        return
+
+    # def _ckytcp(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -3715,7 +3813,6 @@ class FPickler(CMill):
     #    self._write('void CKYTCP'+sym+'(double * restrict P, double * restrict T, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict c)')
     #    self._write('{')
     #    self._indent()
-
 
     #    species = self.species
     #    nSpec = len(species)
@@ -3751,80 +3848,87 @@ class FPickler(CMill):
     #    self._write('return;')
     #    self._outdent()
     #    self._write('}')
-    #    return 
- 
+    #    return
+
     def _ckytcr(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! convert y[species] (mass fracs) to c[species] (molar conc)')
-        self._write('subroutine ckytcr'+sym+'(rho, T, y, iwrk, rwrk, c)')
+        self._write(
+            "! convert y[species] (mass fracs) to c[species] (molar conc)"
+        )
+        self._write("subroutine ckytcr" + sym + "(rho, T, y, iwrk, rwrk, c)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: rho')
-        self._write('double precision, intent(in) :: T')
-        self._write('double precision, intent(in) :: y(%d)' % nSpec)
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(out) :: c(%d)' % nSpec)
+        self._write("double precision, intent(in) :: rho")
+        self._write("double precision, intent(in) :: T")
+        self._write("double precision, intent(in) :: y(%d)" % nSpec)
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(out) :: c(%d)" % nSpec)
         self._write()
-        self._write('integer :: i')
+        self._write("integer :: i")
         self._write()
-        self._write('do i=1, %d' % nSpec)
+        self._write("do i=1, %d" % nSpec)
         self._indent()
-        self._write('c(i) = rho * y(i) * imw(i)')
+        self._write("c(i) = rho * y(i) * imw(i)")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
         self._outdent()
         self._write()
-        self._write('end subroutine')
-        return 
- 
+        self._write("end subroutine")
+        return
+
     def _ckxty(self, mechanism):
         nSpec = len(self.species)
         self._write()
         self._write(
-            '! convert x[species] (mole fracs) to y[species] (mass fracs)')
-        self._write('subroutine ckxty'+sym+'(x, iwrk, rwrk, y)')
+            "! convert x[species] (mole fracs) to y[species] (mass fracs)"
+        )
+        self._write("subroutine ckxty" + sym + "(x, iwrk, rwrk, y)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: x(%d)' % nSpec)
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(out) :: y(%d)' % nSpec)
+        self._write("double precision, intent(in) :: x(%d)" % nSpec)
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(out) :: y(%d)" % nSpec)
         self._write()
-        self._write('double precision :: XW, XWinv')
+        self._write("double precision :: XW, XWinv")
         self._write()
 
-        self._write('XW = 0.d0 ' + '! See Eq 4, 9 in CK Manual')
+        self._write("XW = 0.d0 " + "! See Eq 4, 9 in CK Manual")
         self._write()
-        
+
         # compute mean molecular weight first (eq 3)
-        self._write('! Compute mean molecular wt first')
+        self._write("! Compute mean molecular wt first")
         for species in self.species:
-            expression = format(species.weight, '15.8e').replace("e", "d")
-            self._write('XW = XW + (x(%d) *%s) ' % (
-                species.id + 1, expression) + '! %s' % species.symbol)
- 
+            expression = format(species.weight, "15.8e").replace("e", "d")
+            self._write(
+                "XW = XW + (x(%d) *%s) " % (species.id + 1, expression)
+                + "! %s" % species.symbol
+            )
+
         # now compute conversion
         self._write()
-        self._write('! Now compute conversion')
-        self._write('XWinv = 1.d0 / XW')
+        self._write("! Now compute conversion")
+        self._write("XWinv = 1.d0 / XW")
         for species in self.species:
-            expression = format(species.weight, '15.8e').replace("e", "d")
-            self._write('y(%d) = x(%d) *%s * XWinv ' % (
-                species.id + 1, species.id + 1, expression) )
+            expression = format(species.weight, "15.8e").replace("e", "d")
+            self._write(
+                "y(%d) = x(%d) *%s * XWinv "
+                % (species.id + 1, species.id + 1, expression)
+            )
 
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
-        return 
- 
-    #def _ckxtcp(self, mechanism):
+        return
+
+    # def _ckxtcp(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -3851,9 +3955,9 @@ class FPickler(CMill):
 
     #    self._write('}')
 
-    #    return 
- 
-    #def _ckxtcr(self, mechanism):
+    #    return
+
+    # def _ckxtcr(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -3865,7 +3969,7 @@ class FPickler(CMill):
     #    self._write('int id; ' + self.line('loop counter'))
     #    self._write('double XW = 0; '+self.line('See Eq 4, 11 in CK Manual'))
     #    self._write('double ROW; ')
-    #    
+    #
     #    # compute mean molecular weight first (eq 3)
     #    self._write(self.line('Compute mean molecular wt first'))
     #    for species in self.species:
@@ -3888,9 +3992,9 @@ class FPickler(CMill):
 
     #    self._write('}')
 
-    #    return 
- 
-    #def _ckctx(self, mechanism):
+    #    return
+
+    # def _ckctx(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -3926,9 +4030,9 @@ class FPickler(CMill):
 
     #    self._write('}')
 
-    #    return 
- 
-    #def _ckcty(self, mechanism):
+    #    return
+
+    # def _ckcty(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -3938,7 +4042,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self._write('double CW = 0; '+self.line('See Eq 12 in CK Manual'))
-    #    
+    #
     #    # compute denominator in eq 12
     #    self._write(self.line('compute denominator in eq 12 first'))
     #    for species in self.species:
@@ -3958,9 +4062,9 @@ class FPickler(CMill):
 
     #    self._write('}')
 
-    #    return 
- 
-    #def _ckcpor(self, mechanism):
+    #    return
+
+    # def _ckcpor(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get Cp/R as a function of T '))
@@ -3976,17 +4080,17 @@ class FPickler(CMill):
     #    self._write(
     #        'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
     #        + self.line('temperature cache'))
-    #    
+    #
     #    # call routine
     #    self._write('cp_R(cpor, tc);')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
     #
-    #def _ckhort(self, mechanism):
+    # def _ckhort(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get H/RT as a function of T '))
@@ -4002,17 +4106,17 @@ class FPickler(CMill):
     #    self._write(
     #        'double tc[] = { 0, tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
     #        + self.line('temperature cache'))
-    #    
+    #
     #    # call routine
     #    self._write('speciesEnthalpy(hort, tc);')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
- 
-    #def _cksor(self, mechanism):
+
+    # def _cksor(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('get S/R as a function of T '))
@@ -4028,18 +4132,17 @@ class FPickler(CMill):
     #    self._write(
     #        'double tc[] = { log(tT), tT, tT*tT, tT*tT*tT, tT*tT*tT*tT }; '
     #        + self.line('temperature cache'))
-    #    
+    #
     #    # call routine
     #    self._write('speciesEntropy(sor, tc);')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckqc(self, mechanism):
+    # def _ckqc(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
@@ -4061,7 +4164,7 @@ class FPickler(CMill):
     #    self._write('C[id] *= 1.0e6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    # call productionRate
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -4083,7 +4186,7 @@ class FPickler(CMill):
     #    self._write('qdot[id] *= 1.0e-6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
@@ -4091,11 +4194,11 @@ class FPickler(CMill):
     #    return
 
     #
-    #def _ckkfkr(self, mechanism):
+    # def _ckkfkr(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
-    #    
+    #
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the progress rates of each reactions'))
@@ -4107,10 +4210,10 @@ class FPickler(CMill):
     #    self._write('int id; ' + self.line('loop counter'))
 
     #    self._write('double c[%d]; ' % nSpecies + self.line('temporary storage'))
-    #    
+    #
     #    self._write('double PORT = 1e6 * (*P)/(%g * (*T)); ' % (R*kelvin*mole/erg) +
     #                self.line('1e6 * P/RT so c goes to SI units'))
-    #    
+    #
     #    # now compute conversion
     #    self._write()
     #    self._write(self.line('Compute conversion, see Eq 10'))
@@ -4119,7 +4222,7 @@ class FPickler(CMill):
     #    self._write('c[id] = x[id]*PORT;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    # call progressRateFR
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -4134,19 +4237,18 @@ class FPickler(CMill):
     #    self._write('q_r[id] *= 1.0e-6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckqyp(self, mechanism):
+    # def _ckqyp(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
-    #    
+    #
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the progress rates of each reactions'))
@@ -4160,16 +4262,16 @@ class FPickler(CMill):
     #    self._write('double c[%d]; ' % nSpecies + self.line('temporary storage'))
     #    self._write('double YOW = 0; ')
     #    self._write('double PWORT; ')
-    #    
+    #
     #    # compute inverse of mean molecular weight first (eq 3)
     #    self._write(self.line('Compute inverse of mean molecular wt first'))
     #    for species in self.species:
     #        self._write('YOW += y[%d]*imw[%d]; ' % (
     #            species.id, species.id) + self.line('%s' % species.symbol))
- 
+
     #    self._write(self.line('PW/RT (see Eq. 7)'))
     #    self._write('PWORT = (*P)/(YOW * %g * (*T)); ' % (R*kelvin*mole/erg) )
-    #    
+    #
     #    self._write(self.line('multiply by 1e6 so c goes to SI'))
     #    self._write('PWORT *= 1e6; ')
 
@@ -4192,19 +4294,18 @@ class FPickler(CMill):
     #    self._write('qdot[id] *= 1.0e-6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckqxp(self, mechanism):
+    # def _ckqxp(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
-    #    
+    #
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the progress rates of each reactions'))
@@ -4216,10 +4317,10 @@ class FPickler(CMill):
     #    self._write('int id; ' + self.line('loop counter'))
 
     #    self._write('double c[%d]; ' % nSpecies + self.line('temporary storage'))
-    #    
+    #
     #    self._write('double PORT = 1e6 * (*P)/(%g * (*T)); ' % (R*kelvin*mole/erg) +
     #                self.line('1e6 * P/RT so c goes to SI units'))
-    #    
+    #
     #    # now compute conversion
     #    self._write()
     #    self._write(self.line('Compute conversion, see Eq 10'))
@@ -4228,7 +4329,7 @@ class FPickler(CMill):
     #    self._write('c[id] = x[id]*PORT;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    # call progressRate
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -4242,19 +4343,18 @@ class FPickler(CMill):
     #    self._write('qdot[id] *= 1.0e-6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckqyr(self, mechanism):
+    # def _ckqyr(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
-    #    
+    #
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the progress rates of each reactions'))
@@ -4272,7 +4372,7 @@ class FPickler(CMill):
     #    for species in self.species:
     #        self._write('c[%d] = 1e6 * (*rho) * y[%d]*imw[%d]; ' % (
     #            species.id, species.id, species.id) )
-    #        
+    #
     #    # call progressRate
     #    self._write()
     #    self._write(self.line('call progressRate'))
@@ -4286,19 +4386,18 @@ class FPickler(CMill):
     #    self._write('qdot[id] *= 1.0e-6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckqxr(self, mechanism):
+    # def _ckqxr(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
-    #    
+    #
     #    self._write()
     #    self._write()
     #    self._write(self.line('Returns the progress rates of each reactions'))
@@ -4310,10 +4409,10 @@ class FPickler(CMill):
     #    self._write('int id; ' + self.line('loop counter'))
 
     #    self._write('double c[%d]; ' % nSpecies + self.line('temporary storage'))
-    #    
+    #
     #    self._write('double XW = 0; '+self.line('See Eq 4, 11 in CK Manual'))
     #    self._write('double ROW; ')
-    #    
+    #
     #    # compute mean molecular weight first (eq 3)
     #    self._write(self.line('Compute mean molecular wt first'))
     #    for species in self.species:
@@ -4330,7 +4429,7 @@ class FPickler(CMill):
     #    self._write('c[id] = x[id]*ROW;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    # call progressRate
     #    self._write()
     #    self._write(self.line('convert to chemkin units'))
@@ -4344,7 +4443,7 @@ class FPickler(CMill):
     #    self._write('qdot[id] *= 1.0e-6;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
@@ -4352,7 +4451,7 @@ class FPickler(CMill):
     #    return
 
     #
-    #def __ckeqcontent(self, mechanism):
+    # def __ckeqcontent(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
@@ -4391,12 +4490,11 @@ class FPickler(CMill):
     #        if somepow == 0:
     #            self._write(self.line(
     #                'eqcon[%d] *= %g; ' % (reaction.id-1, (1e-6)**somepow) ) )
-    #            
+    #
     #        else:
-    #            self._write( 'eqcon[%d] *= %g; ' % (reaction.id-1, (1e-6)**somepow) ) 
+    #            self._write( 'eqcon[%d] *= %g; ' % (reaction.id-1, (1e-6)**somepow) )
 
-
-    #def _ckeqc(self, mechanism):
+    # def _ckeqc(self, mechanism):
 
     #    self._write()
     #    self._write()
@@ -4406,7 +4504,7 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self.__ckeqcontent(mechanism)
-    #            
+    #
     #    self._outdent()
 
     #    self._write('}')
@@ -4414,7 +4512,7 @@ class FPickler(CMill):
     #    return
 
     #
-    #def _ckeqyp(self, mechanism):
+    # def _ckeqyp(self, mechanism):
 
     #    import pyre
     #    periodic = pyre.handbook.periodicTable()
@@ -4428,15 +4526,14 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self.__ckeqcontent(mechanism)
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckeqxp(self, mechanism):
+    # def _ckeqxp(self, mechanism):
 
     #    import pyre
     #    periodic = pyre.handbook.periodicTable()
@@ -4450,15 +4547,14 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self.__ckeqcontent(mechanism)
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckeqyr(self, mechanism):
+    # def _ckeqyr(self, mechanism):
 
     #    import pyre
     #    periodic = pyre.handbook.periodicTable()
@@ -4472,15 +4568,14 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self.__ckeqcontent(mechanism)
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-    #def _ckeqxr(self, mechanism):
+    # def _ckeqxr(self, mechanism):
 
     #    import pyre
     #    periodic = pyre.handbook.periodicTable()
@@ -4494,21 +4589,20 @@ class FPickler(CMill):
     #    self._indent()
 
     #    self.__ckeqcontent(mechanism)
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
-
-# Fu#ego Extensions. All functions in this section has the fe prefix
-# Al#l fuctions in this section uses the standard fuego chemkin functions
-    #def _ck_eytt(self, mechanism):
+    # Fu#ego Extensions. All functions in this section has the fe prefix
+    # Al#l fuctions in this section uses the standard fuego chemkin functions
+    # def _ck_eytt(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    lowT,highT,dummy = self._analyzeThermodynamics(mechanism)
-    #    
+    #
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4534,7 +4628,7 @@ class FPickler(CMill):
     #    self._write('return 1;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._write('if (ein > emax) {')
     #    self._indent()
     #    self._write(self.line('Linear Extrapolation above tmax'))
@@ -4556,22 +4650,21 @@ class FPickler(CMill):
     #    self._write('t1 += dt;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._write('*t = t1;')
     #    self._write('return 0;')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
- 
-    #def _ck_hytt(self, mechanism):
+    # def _ck_hytt(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    lowT,highT,dummy = self._analyzeThermodynamics(mechanism)
-    #    
+    #
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4597,7 +4690,7 @@ class FPickler(CMill):
     #    self._write('return 1;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._write('if (hin > hmax) {')
     #    self._indent()
     #    self._write(self.line('Linear Extrapolation above tmax'))
@@ -4619,18 +4712,17 @@ class FPickler(CMill):
     #    self._write('t1 += dt;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._write('*t = t1;')
     #    self._write('return 0;')
-    #    
+    #
     #    self._outdent()
 
     #    self._write('}')
 
     #    return
 
- 
-    #def _ck_phity(self, mechanism):
+    # def _ck_phity(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4641,30 +4733,29 @@ class FPickler(CMill):
 
     #    self._write('double XW  = 0; ')
     #    self._write('int id; ' + self.line('loop counter'))
-    #    
+    #
     #    # compute mean molecular weight first (eq 3)
     #    self._write(self.line('Compute mean molecular wt first'))
     #    for species in self.species:
     #        self._write('y[%d] = phi[%d]*%f;   XW += y[%d]; ' % (
     #            species.id, species.id, species.weight, species.id) +
     #                    self.line('%s' % species.symbol))
- 
+
     #    self._write('for (id = 0; id < %d; ++id) {' % self.nSpecies)
     #    self._indent()
     #    self._write('y[id] = y[id]/XW;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._write()
     #    self._write('return;')
     #    self._outdent()
 
     #    self._write('}')
 
-    #    return 
- 
- 
-    #def _ck_ytphi(self, mechanism):
+    #    return
+
+    # def _ck_ytphi(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4677,7 +4768,7 @@ class FPickler(CMill):
     #        self._write('phi[%d] = y[%d]/%15.8e; ' % (
     #            species.id, species.id, species.weight/1000.0) +
     #                    self.line('%s (wt in kg)' % species.symbol))
- 
+
     #    self._write()
     #    self._write('return;')
     #    self._outdent()
@@ -4686,8 +4777,7 @@ class FPickler(CMill):
 
     #    return
 
-
-    #def _ck_ctyr(self, mechanism):
+    # def _ck_ctyr(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4700,17 +4790,16 @@ class FPickler(CMill):
     #    for species in self.species:
     #        self._write('y[%d] = c[%d] * %f / (*rho); ' % (
     #            species.id, species.id, species.weight) )
-    #    
+    #
     #    self._write()
     #    self._write('return;')
     #    self._outdent()
 
     #    self._write('}')
 
-    #    return 
- 
- 
-    #def _ck_cvrhs(self, mechanism):
+    #    return
+
+    # def _ck_cvrhs(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4743,8 +4832,7 @@ class FPickler(CMill):
     #    self._write('}')
     #    return
 
-
-    #def _ck_cvdim(self, mechanism):
+    # def _ck_cvdim(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4760,8 +4848,7 @@ class FPickler(CMill):
     #    self._write('}')
     #    return
 
- 
-    #def _ck_zndrhs(self, mechanism):
+    # def _ck_zndrhs(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4832,8 +4919,7 @@ class FPickler(CMill):
     #    self._write('}')
     #    return
 
-
-    #def _ck_znddim(self, mechanism):
+    # def _ck_znddim(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4849,7 +4935,7 @@ class FPickler(CMill):
     #    self._write('}')
     #    return
     #
-    #def _ck_mechfile(self, mechanism):
+    # def _ck_mechfile(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4865,7 +4951,7 @@ class FPickler(CMill):
     #    self._write('}')
     #    return
 
-    #def _ck_symnum(self, mechanism):
+    # def _ck_symnum(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4874,11 +4960,11 @@ class FPickler(CMill):
 
     #    self._write('{')
     #    self._indent()
-    #    
+    #
     #    for species in self.species:
     #        self._write('if (strcmp(s1, "%s")==0) return %d; ' % (
     #            species.symbol, species.id))
- 
+
     #    self._write(self.line( 'species name not found' ))
     #    self._write('return -1;')
 
@@ -4886,7 +4972,7 @@ class FPickler(CMill):
     #    self._write('}')
     #    return
     #
-    #def _ck_symname(self, mechanism):
+    # def _ck_symname(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line(
@@ -4899,47 +4985,51 @@ class FPickler(CMill):
     #    for species in self.species:
     #        self._write('if (sn==%d) return "%s"; ' % (
     #            species.id, species.symbol))
- 
+
     #    self._write(self.line( 'species name not found' ))
     #    self._write('return "NOTFOUND";')
 
     #    self._outdent()
     #    self._write('}')
     #    return
-    
-# Fuego's core routines section begins here
+
+    # Fuego's core routines section begins here
     def _molecularWeight(self, mechanism):
         import pyre
+
         periodic = pyre.handbook.periodicTable()
         nSpecies = len(mechanism.species())
         self._write()
-        self._write('! save molecular weights into array')
-        self._write('subroutine molecularWeight(wt)')
+        self._write("! save molecular weights into array")
+        self._write("subroutine molecularWeight(wt)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(out) :: wt(%d)' % nSpecies)
+        self._write("double precision, intent(out) :: wt(%d)" % nSpecies)
         self._write()
 
-        #wtTab=np.zeros(nSpecies)
+        # wtTab=np.zeros(nSpecies)
         # molecular weights of all species
         for species in mechanism.species():
-            weight = 0.0 #species.molecularWeight()
+            weight = 0.0  # species.molecularWeight()
             for elem, coef in species.composition:
                 aw = mechanism.element(elem).weight
                 if not aw:
                     aw = periodic.symbol(elem.capitalize()).atomicWeight
                 weight += coef * aw
 
-            self._write('wt(%d) = %fd0 ' % (species.id + 1, weight) + '! %s' % species.symbol)
+            self._write(
+                "wt(%d) = %fd0 " % (species.id + 1, weight)
+                + "! %s" % species.symbol
+            )
 
         self._write()
         self._outdent()
-        self._write('end subroutine')
-        return 
+        self._write("end subroutine")
+        return
 
-    #def _atomicWeight(self, mechanism):
+    # def _atomicWeight(self, mechanism):
 
     #    self._write()
     #    self._write()
@@ -4963,75 +5053,78 @@ class FPickler(CMill):
 
     #    self._write('}')
 
-    #    return 
+    #    return
 
     def _productionRate(self, mechanism):
 
         nSpecies = len(mechanism.species())
         nReactions = len(mechanism.reaction())
 
-        itroe      = self.reactionIndex[0:2]
-        isri       = self.reactionIndex[1:3]
+        itroe = self.reactionIndex[0:2]
+        isri = self.reactionIndex[1:3]
         ilindemann = self.reactionIndex[2:4]
-        i3body     = self.reactionIndex[3:5] 
-        isimple    = self.reactionIndex[4:6]
-        ispecial   = self.reactionIndex[5:7]
+        i3body = self.reactionIndex[3:5]
+        isimple = self.reactionIndex[4:6]
+        ispecial = self.reactionIndex[5:7]
 
         if len(self.reactionIndex) != 7:
-            print('\n\nCheck this!!!\n')
+            print("\n\nCheck this!!!\n")
             sys.exit(1)
-        
-        ntroe      = itroe[1]      - itroe[0]
-        nsri       = isri[1]       - isri[0]
+
+        ntroe = itroe[1] - itroe[0]
+        nsri = isri[1] - isri[0]
         nlindemann = ilindemann[1] - ilindemann[0]
-        n3body     = i3body[1]     - i3body[0]
-        nsimple    = isimple[1]    - isimple[0]
-        nspecial   = ispecial[1]   - ispecial[0]
+        n3body = i3body[1] - i3body[0]
+        nsimple = isimple[1] - isimple[0]
+        nspecial = ispecial[1] - ispecial[0]
 
         # main function
         self._write()
-        self._write('! compute the production rate for each species')
-        self._write('subroutine productionRate(wdot, sc, T)')
+        self._write("! compute the production rate for each species")
+        self._write("subroutine productionRate(wdot, sc, T)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
 
-        self._write('double precision, intent(inout) :: wdot(%d)' % nSpecies)
-        self._write('double precision, intent(in) :: sc(%d)' % nSpecies)
-        self._write('double precision, intent(in) :: T')
+        self._write("double precision, intent(inout) :: wdot(%d)" % nSpecies)
+        self._write("double precision, intent(in) :: sc(%d)" % nSpecies)
+        self._write("double precision, intent(in) :: T")
         self._write()
-        self._write('double precision :: tc(5)')
-        self._write('double precision :: invT')
-        self._write('double precision :: qdot, q_f(%d), q_r(%d)' % (nReactions, nReactions))
-        self._write('integer :: i')
+        self._write("double precision :: tc(5)")
+        self._write("double precision :: invT")
+        self._write(
+            "double precision :: qdot, q_f(%d), q_r(%d)"
+            % (nReactions, nReactions)
+        )
+        self._write("integer :: i")
 
         self._write()
-        self._write('tc = (/ log(T), T, T*T, T*T*T, T*T*T*T /)')
-        self._write('invT = 1.d0 / tc(2)')
-        
+        self._write("tc = (/ log(T), T, T*T, T*T*T, T*T*T*T /)")
+        self._write("invT = 1.d0 / tc(2)")
+
         self._write()
-        self._write('if (T /= T_save) then')
+        self._write("if (T /= T_save) then")
         self._indent()
-        self._write('T_save = T')
-        self._write('call comp_k_f(tc,invT,k_f_save)');
-        self._write('call comp_Kc(tc,invT,Kc_save)');
+        self._write("T_save = T")
+        self._write("call comp_k_f(tc,invT,k_f_save)")
+        self._write("call comp_Kc(tc,invT,Kc_save)")
         self._outdent()
-        self._write('end if')
+        self._write("end if")
 
         self._write()
-        self._write('call comp_qfqr(q_f, q_r, sc, tc, invT)');
+        self._write("call comp_qfqr(q_f, q_r, sc, tc, invT)")
 
         self._write()
-        self._write('do i=1, %d' % nSpecies)
+        self._write("do i=1, %d" % nSpecies)
         self._indent()
-        self._write('wdot(i) = 0.d0')
+        self._write("wdot(i) = 0.d0")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
 
         for i in range(nReactions):
             self._write()
-            self._write("qdot = q_f(%d)-q_r(%d)" % (i+1,i+1))
+            self._write("qdot = q_f(%d)-q_r(%d)" % (i + 1, i + 1))
             reaction = mechanism.reaction(id=i)
             agents = list(set(reaction.reactants + reaction.products))
             agents = sorted(agents, key=lambda x: mechanism.species(x[0]).id)
@@ -5043,86 +5136,113 @@ class FPickler(CMill):
                 for b in reaction.reactants:
                     if b == a:
                         if coefficient == 1:
-                            self._write("wdot(%d) = wdot(%d) - qdot" % (mechanism.species(symbol).id+1, mechanism.species(symbol).id+1))
+                            self._write(
+                                "wdot(%d) = wdot(%d) - qdot"
+                                % (
+                                    mechanism.species(symbol).id + 1,
+                                    mechanism.species(symbol).id + 1,
+                                )
+                            )
                         else:
-                            self._write("wdot(%d) = wdot(%d) - (%d * qdot)" % (mechanism.species(symbol).id+1,mechanism.species(symbol).id+1, coefficient))
-                for b in reaction.products: 
+                            self._write(
+                                "wdot(%d) = wdot(%d) - (%d * qdot)"
+                                % (
+                                    mechanism.species(symbol).id + 1,
+                                    mechanism.species(symbol).id + 1,
+                                    coefficient,
+                                )
+                            )
+                for b in reaction.products:
                     if b == a:
                         if coefficient == 1:
-                            self._write("wdot(%d) = wdot(%d) + qdot" % (mechanism.species(symbol).id+1,mechanism.species(symbol).id+1))
+                            self._write(
+                                "wdot(%d) = wdot(%d) + qdot"
+                                % (
+                                    mechanism.species(symbol).id + 1,
+                                    mechanism.species(symbol).id + 1,
+                                )
+                            )
                         else:
-                            self._write("wdot(%d) = wdot(%d) + (%d * qdot)" % (mechanism.species(symbol).id+1, mechanism.species(symbol).id+1, coefficient))
-
+                            self._write(
+                                "wdot(%d) = wdot(%d) + (%d * qdot)"
+                                % (
+                                    mechanism.species(symbol).id + 1,
+                                    mechanism.species(symbol).id + 1,
+                                    coefficient,
+                                )
+                            )
 
         self._write()
-        #self._write('return')
+        # self._write('return')
         self._outdent()
 
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         # k_f function
         self._write()
-        self._write('subroutine comp_k_f(tc, invT, k_f)')
+        self._write("subroutine comp_k_f(tc, invT, k_f)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: tc(5)')
-        self._write('double precision, intent(in) :: invT')
-        self._write('double precision, intent(out) :: k_f(%d)' % nReactions)
+        self._write("double precision, intent(in) :: tc(5)")
+        self._write("double precision, intent(in) :: invT")
+        self._write("double precision, intent(out) :: k_f(%d)" % nReactions)
         self._write()
-        self._write('integer :: i')
-        #self._outdent()
-        #self._write('#ifdef __INTEL_COMPILER')
-        #self._indent()
-        #self._write('#pragma simd')
-        #self._outdent()
-        #self._write('#endif')
-        #self._indent()
+        self._write("integer :: i")
+        # self._outdent()
+        # self._write('#ifdef __INTEL_COMPILER')
+        # self._indent()
+        # self._write('#pragma simd')
+        # self._outdent()
+        # self._write('#endif')
+        # self._indent()
         self._write()
-        self._write('do i=1, %d' % nReactions)
+        self._write("do i=1, %d" % nReactions)
         self._indent()
-        self._write("k_f(i) = prefactor_units(i)*fwd_A(i)*exp(fwd_beta(i)*tc(1)-activation_units(i)*fwd_Ea(i)*invT)")
+        self._write(
+            "k_f(i) = prefactor_units(i)*fwd_A(i)*exp(fwd_beta(i)*tc(1)-activation_units(i)*fwd_Ea(i)*invT)"
+        )
         self._outdent()
         self._write("end do")
         self._write()
         self._outdent()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         # Kc
         self._write()
-        self._write('subroutine comp_Kc(tc, invT, Kc)')
+        self._write("subroutine comp_Kc(tc, invT, Kc)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: tc(5)')
-        self._write('double precision, intent(in) :: invT')
-        self._write('double precision, intent(inout) :: Kc(%d)' % nReactions)
+        self._write("double precision, intent(in) :: tc(5)")
+        self._write("double precision, intent(in) :: invT")
+        self._write("double precision, intent(inout) :: Kc(%d)" % nReactions)
         self._write()
-        self._write('double precision :: g_RT(%d)' % nSpecies)
-        self._write('double precision :: refC, refCinv')
-        self._write('integer :: i')
+        self._write("double precision :: g_RT(%d)" % nSpecies)
+        self._write("double precision :: refC, refCinv")
+        self._write("integer :: i")
         self._write()
 
-        self._write('! compute the Gibbs free energy')
-        self._write('call gibbs(g_RT, tc)')
+        self._write("! compute the Gibbs free energy")
+        self._write("call gibbs(g_RT, tc)")
         self._write()
 
         for reaction in mechanism.reaction():
             KcExpArg = self._sortedKcExpArg(mechanism, reaction)
-            self._write("Kc(%d) = %s" % (reaction.id,KcExpArg))
+            self._write("Kc(%d) = %s" % (reaction.id, KcExpArg))
 
         self._write()
-        
-        #self._outdent()
-        #self._write('#ifdef __INTEL_COMPILER')
-        #self._indent()
-        #self._write(' #pragma simd')
-        #self._outdent()
-        #self._write('#endif')
-        #self._indent()
-        self._write('do i=1, %d' % nReactions)
+
+        # self._outdent()
+        # self._write('#ifdef __INTEL_COMPILER')
+        # self._indent()
+        # self._write(' #pragma simd')
+        # self._outdent()
+        # self._write('#endif')
+        # self._indent()
+        self._write("do i=1, %d" % nReactions)
         self._indent()
         self._write("Kc(i) = exp(Kc(i))")
         self._outdent()
@@ -5130,104 +5250,129 @@ class FPickler(CMill):
 
         self._write()
 
-        self._write('! reference concentration: P_atm / (RT) in inverse mol/m^3')
-        self._write('refC = %gd0 / %gd0 * invT' % (atm.value, R.value))
-        self._write('refCinv = 1.d0 / refC')
+        self._write(
+            "! reference concentration: P_atm / (RT) in inverse mol/m^3"
+        )
+        self._write("refC = %gd0 / %gd0 * invT" % (atm.value, R.value))
+        self._write("refCinv = 1.d0 / refC")
 
         self._write()
 
         for reaction in mechanism.reaction():
             KcConv = self._KcConv(mechanism, reaction)
             if KcConv:
-                self._write("Kc(%d) = Kc(%d) * (%s)" % (reaction.id,reaction.id,KcConv))        
-        
+                self._write(
+                    "Kc(%d) = Kc(%d) * (%s)"
+                    % (reaction.id, reaction.id, KcConv)
+                )
+
         self._write()
         self._outdent()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         # qdot
         nclassd = nReactions - nspecial
-        nCorr   = n3body + ntroe + nsri + nlindemann
+        nCorr = n3body + ntroe + nsri + nlindemann
         self._write()
-        self._write('subroutine comp_qfqr(qf, qr, sc, tc, invT)')
+        self._write("subroutine comp_qfqr(qf, qr, sc, tc, invT)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(out) :: qf(%d)' % nReactions)
-        self._write('double precision, intent(out) :: qr(%d)' % nReactions)
-        self._write('double precision, intent(in) :: sc(%d)' % nSpecies)
-        self._write('double precision, intent(in) :: tc(5)')
-        self._write('double precision, intent(in) :: invT')
+        self._write("double precision, intent(out) :: qf(%d)" % nReactions)
+        self._write("double precision, intent(out) :: qr(%d)" % nReactions)
+        self._write("double precision, intent(in) :: sc(%d)" % nSpecies)
+        self._write("double precision, intent(in) :: tc(5)")
+        self._write("double precision, intent(in) :: invT")
         self._write()
-        self._write('double precision :: T')
-        self._write('double precision :: mixture')
-        self._write('double precision :: Corr(%d)' % nclassd)
+        self._write("double precision :: T")
+        self._write("double precision :: mixture")
+        self._write("double precision :: Corr(%d)" % nclassd)
         if ntroe > 0:
-            self._write('double precision :: alpha_troe(%d)' % ntroe)
-            self._write('double precision :: redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe')
+            self._write("double precision :: alpha_troe(%d)" % ntroe)
+            self._write(
+                "double precision :: redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe"
+            )
         if nsri > 0:
-            self._write('double precision :: alpha_sri(%d)' % nsri)
-            self._write('double precision :: X, F_sri')
+            self._write("double precision :: alpha_sri(%d)" % nsri)
+            self._write("double precision :: X, F_sri")
         if nlindemann > 0:
             if nlindemann > 1:
-                self._write("double precision :: alpha_lindemann(%d)" % nlindemann)
+                self._write(
+                    "double precision :: alpha_lindemann(%d)" % nlindemann
+                )
             else:
                 self._write("double precision :: alpha_lindemann")
 
-        self._write('double precision :: tmp1, tmp2, tmp3')
-        self._write('integer :: i')
+        self._write("double precision :: tmp1, tmp2, tmp3")
+        self._write("integer :: i")
         self._write()
 
         for i in range(nclassd):
             reaction = mechanism.reaction(id=i)
-            self._write('! reaction %d: %s' % (reaction.id, reaction.equation()))
-            self._write("qf(%d) = %s" % (i+1, self._sortedPhaseSpace(mechanism, reaction.reactants)))
+            self._write(
+                "! reaction %d: %s" % (reaction.id, reaction.equation())
+            )
+            self._write(
+                "qf(%d) = %s"
+                % (
+                    i + 1,
+                    self._sortedPhaseSpace(mechanism, reaction.reactants),
+                )
+            )
             if reaction.reversible:
-                self._write("qr(%d) = %s" % (i+1, self._sortedPhaseSpace(mechanism, reaction.products)))
+                self._write(
+                    "qr(%d) = %s"
+                    % (
+                        i + 1,
+                        self._sortedPhaseSpace(mechanism, reaction.products),
+                    )
+                )
             else:
-                self._write("qr(%d) = 0.d0" % (i+1))
+                self._write("qr(%d) = 0.d0" % (i + 1))
             if reaction.rev:
                 print("reaction.rev not finished")
                 sys.exit(1)
 
         self._write()
-        self._write('T = tc(2)')
+        self._write("T = tc(2)")
         self._write()
-        self._write('! compute the mixture concentration')
-        self._write('mixture = 0.d0')
-        self._write('do i=1, %d' % nSpecies)
+        self._write("! compute the mixture concentration")
+        self._write("mixture = 0.d0")
+        self._write("do i=1, %d" % nSpecies)
         self._indent()
-        self._write('mixture = mixture + sc(i)')
+        self._write("mixture = mixture + sc(i)")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
 
         self._write()
-        self._write('do i=1, %d' % nclassd)
+        self._write("do i=1, %d" % nclassd)
         self._indent()
-        self._write('Corr(i) = 1.d0')
+        self._write("Corr(i) = 1.d0")
         self._outdent()
-        self._write('end do')
+        self._write("end do")
 
         if ntroe > 0:
             self._write()
             self._write("! troe")
-            #self._write("{")
-            #self._indent()
+            # self._write("{")
+            # self._indent()
             alpha_d = {}
-            for i in range(itroe[0],itroe[1]):
+            for i in range(itroe[0], itroe[1]):
                 ii = i - itroe[0] + 1
                 reaction = mechanism.reaction(id=i)
                 if reaction.thirdBody:
                     alpha = self._enhancement(mechanism, reaction)
                     if alpha in alpha_d:
-                        self._write("alpha_troe(%d) = %s" %(ii,alpha_d[alpha]))
+                        self._write(
+                            "alpha_troe(%d) = %s" % (ii, alpha_d[alpha])
+                        )
                     else:
-                        self._write("alpha_troe(%d) = %s" %(ii,alpha))
+                        self._write("alpha_troe(%d) = %s" % (ii, alpha))
                         alpha_d[alpha] = "alpha_troe(%d)" % ii
             self._write()
 
-            #if ntroe >= 4:
+            # if ntroe >= 4:
             #    self._outdent()
             #    self._outdent()
             #    self._write('#ifdef __INTEL_COMPILER')
@@ -5239,9 +5384,12 @@ class FPickler(CMill):
             #    self._write('#endif')
             #    self._indent()
             #    self._indent()
-            self._write("do i=%d, %d" %(itroe[0]+1,itroe[1]))
+            self._write("do i=%d, %d" % (itroe[0] + 1, itroe[1]))
             self._indent()
-            self._write("redP = alpha_troe(i-%d) / k_f_save(i) * phase_units(i) * low_A(i) * exp(low_beta(i) * tc(1) - activation_units(i) * low_Ea(i) *invT)" % itroe[0])
+            self._write(
+                "redP = alpha_troe(i-%d) / k_f_save(i) * phase_units(i) * low_A(i) * exp(low_beta(i) * tc(1) - activation_units(i) * low_Ea(i) *invT)"
+                % itroe[0]
+            )
             self._write("F = redP / (1.d0 + redP)")
             self._write("logPred = log10(redP)")
             self._write()
@@ -5263,35 +5411,39 @@ class FPickler(CMill):
             self._write("   tmp3 = 0.d0")
             self._write("end if")
             self._write()
-            self._write('logFcent = log10(tmp1+tmp2+tmp3)')
+            self._write("logFcent = log10(tmp1+tmp2+tmp3)")
             self._write("troe_c = -0.4d0 - 0.67d0 * logFcent")
             self._write("troe_n = 0.75d0 - 1.27d0 * logFcent")
-            self._write("troe = (troe_c + logPred) / (troe_n - 0.14d0*(troe_c + logPred))")
+            self._write(
+                "troe = (troe_c + logPred) / (troe_n - 0.14d0*(troe_c + logPred))"
+            )
             self._write("F_troe = 10.d0 ** (logFcent / (1.d0 + troe*troe))")
             self._write("Corr(i) = F * F_troe")
             self._outdent()
-            self._write('end do')
-            #self._outdent()
-            #self._write("}")
+            self._write("end do")
+            # self._outdent()
+            # self._write("}")
 
         if nsri > 0:
             self._write()
             self._write("! SRI")
-            #self._write("{")
-            #self._indent()
+            # self._write("{")
+            # self._indent()
             alpha_d = {}
-            for i in range(isri[0],isri[1]):
+            for i in range(isri[0], isri[1]):
                 ii = i - isri[0] + 1
                 reaction = mechanism.reaction(id=i)
                 if reaction.thirdBody:
                     alpha = self._enhancement(mechanism, reaction)
                     if alpha in alpha_d:
-                        self._write("alpha_sri(%d) = %s" %(ii,alpha_d[alpha]))
+                        self._write(
+                            "alpha_sri(%d) = %s" % (ii, alpha_d[alpha])
+                        )
                     else:
-                        self._write("alpha_sri(%d) = %s" %(ii,alpha))
+                        self._write("alpha_sri(%d) = %s" % (ii, alpha))
                         alpha_d[alpha] = "alpha_sri(%d)" % ii
 
-            #if nsri >= 4:
+            # if nsri >= 4:
             #    self._outdent()
             #    self._outdent()
             #    self._write('#ifdef __INTEL_COMPILER')
@@ -5303,10 +5455,13 @@ class FPickler(CMill):
             #    self._write('#endif')
             #    self._indent()
             #    self._indent()
-            self._write("do i=%d, %d" %(isri[0]+1,isri[1]))
+            self._write("do i=%d, %d" % (isri[0] + 1, isri[1]))
             self._write()
             self._indent()
-            self._write("redP = alpha_sri(i-%d) / k_f_save(i) * phase_units(i) * low_A(i) * exp(low_beta(i) * tc(1) - activation_units(i) * low_Ea(i) *invT)" % itroe[0])
+            self._write(
+                "redP = alpha_sri(i-%d) / k_f_save(i) * phase_units(i) * low_A(i) * exp(low_beta(i) * tc(1) - activation_units(i) * low_Ea(i) *invT)"
+                % itroe[0]
+            )
             self._write("F = redP / (1.d0 + redP)")
             self._write("logPred = log10(redP)")
             self._write("X = 1.d0 / (1.d0 + logPred*logPred)")
@@ -5323,36 +5478,47 @@ class FPickler(CMill):
             self._write("   tmp2 = 0.d0")
             self._write("end if")
             self._write()
-            self._write("F_sri = exp(X*log(sri_a(i)*exp(-sri_b(i)*invT)+tmp1)*tmp2)")
+            self._write(
+                "F_sri = exp(X*log(sri_a(i)*exp(-sri_b(i)*invT)+tmp1)*tmp2)"
+            )
             self._write("Corr(i) = F * F_sri")
             self._outdent()
-            self._write('end do')
+            self._write("end do")
 
-            #self._outdent()
-            #self._write("}")
+            # self._outdent()
+            # self._write("}")
 
         if nlindemann > 0:
             self._write()
             self._write("! Lindemann")
-            #self._write("{")
-            #self._indent()
+            # self._write("{")
+            # self._indent()
 
-            for i in range(ilindemann[0],ilindemann[1]):
+            for i in range(ilindemann[0], ilindemann[1]):
                 ii = i - ilindemann[0] + 1
                 reaction = mechanism.reaction(id=i)
                 if reaction.thirdBody:
                     alpha = self._enhancement(mechanism, reaction)
                     if nlindemann > 1:
-                        self._write("alpha_lindemann(%d) = %s" %(ii,alpha))
+                        self._write("alpha_lindemann(%d) = %s" % (ii, alpha))
                     else:
-                        self._write("alpha_lindemann = %s" %(alpha))
+                        self._write("alpha_lindemann = %s" % (alpha))
 
             if nlindemann == 1:
-                self._write("redP = alpha_lindemann / k_f_save(%d) * phase_units(%d) * low_A(%d) * exp(low_beta(%d) * tc(1) - activation_units(%d) * low_Ea(%d) * invT)" 
-                            % (ilindemann[0],ilindemann[0],ilindemann[0],ilindemann[0],ilindemann[0],ilindemann[0]))
+                self._write(
+                    "redP = alpha_lindemann / k_f_save(%d) * phase_units(%d) * low_A(%d) * exp(low_beta(%d) * tc(1) - activation_units(%d) * low_Ea(%d) * invT)"
+                    % (
+                        ilindemann[0],
+                        ilindemann[0],
+                        ilindemann[0],
+                        ilindemann[0],
+                        ilindemann[0],
+                        ilindemann[0],
+                    )
+                )
                 self._write("Corr(%d) = redP / (1.d0 + redP)" % ilindemann[0])
             else:
-                #if nlindemann >= 4:
+                # if nlindemann >= 4:
                 #    self._outdent()
                 #    self._write('#ifdef __INTEL_COMPILER')
                 #    self._indent()
@@ -5360,14 +5526,16 @@ class FPickler(CMill):
                 #    self._outdent()
                 #    self._write('#endif')
                 #    self._indent()
-                self._write("do i=%d, %d" % (ilindemann[0]+1, ilindemann[1]))
+                self._write("do i=%d, %d" % (ilindemann[0] + 1, ilindemann[1]))
                 self._write()
                 self._indent()
-                self._write("redP = alpha_lindemann(i-%d) / k_f_save(i) * phase_units(i) * low_A(i) * exp(low_beta(i) * tc(1) - activation_units(i) * low_Ea(i) * invT)"
-                            % ilindemann[0])
+                self._write(
+                    "redP = alpha_lindemann(i-%d) / k_f_save(i) * phase_units(i) * low_A(i) * exp(low_beta(i) * tc(1) - activation_units(i) * low_Ea(i) * invT)"
+                    % ilindemann[0]
+                )
                 self._write("Corr(i) = redP / (1.d0 + redP)")
                 self._outdent()
-                self._write('end do')
+                self._write("end do")
 
             self._outdent()
 
@@ -5375,14 +5543,14 @@ class FPickler(CMill):
             self._write()
             self._write("! simple three-body correction")
             alpha_save = ""
-            for i in range(i3body[0],i3body[1]):
+            for i in range(i3body[0], i3body[1]):
                 reaction = mechanism.reaction(id=i)
                 if reaction.thirdBody:
                     alpha = self._enhancement(mechanism, reaction)
                     if alpha != alpha_save:
                         alpha_save = alpha
-                        #self._write("alpha_tb = %s" % alpha)
-                    self._write("Corr(%d) = %s" % (i+1,alpha))
+                        # self._write("alpha_tb = %s" % alpha)
+                    self._write("Corr(%d) = %s" % (i + 1, alpha))
 
         self._write()
         self._write("do i=1, %d" % nclassd)
@@ -5392,7 +5560,7 @@ class FPickler(CMill):
         self._outdent()
         self._write("end do")
 
-        #if nspecial > 0:
+        # if nspecial > 0:
 
         #    print "\n\n ***** WARNING: %d unclassified reactions\n" % nspecial
 
@@ -5441,12 +5609,11 @@ class FPickler(CMill):
 
         self._write()
         self._outdent()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
 
-
-    #def _DproductionRate(self, mechanism):
+    # def _DproductionRate(self, mechanism):
 
     #    species_list = [x.symbol for x in mechanism.species()]
     #    nSpecies = len(species_list)
@@ -5492,8 +5659,7 @@ class FPickler(CMill):
 
     #    return
 
-
-    #def _ajac(self, mechanism):
+    # def _ajac(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
@@ -5509,7 +5675,7 @@ class FPickler(CMill):
     #    self._write('J[i] = 0.0;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._write()
 
     #    self._write('double wdot[%d];' % (nSpecies))
@@ -5518,7 +5684,7 @@ class FPickler(CMill):
     #    self._write('wdot[k] = 0.0;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._write()
 
     #    self._write('double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
@@ -5555,10 +5721,10 @@ class FPickler(CMill):
 
     #    self._write()
 
-    #    self._write('double phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;') 
+    #    self._write('double phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;')
     #    self._write('double dlnkfdT, dlnk0dT, dlnKcdT, dkrdT, dqdT;')
     #    self._write('double dqdci, dcdc_fac, dqdc[%d];' % (nSpecies))
-    #    self._write('double Pr, fPr, F, k_0, logPr;') 
+    #    self._write('double Pr, fPr, F, k_0, logPr;')
     #    self._write('double logFcent, troe_c, troe_n, troePr_den, troePr, troe;')
     #    self._write('double Fcent1, Fcent2, Fcent3, Fcent;')
     #    self._write('double dlogFdc, dlogFdn, dlogFdcn_fac;')
@@ -5635,7 +5801,7 @@ class FPickler(CMill):
     #    self._indent()
     #    self._write('dehmixdc += eh_RT[m]*J[k*%s+m];' % (nSpecies+1))
     #    self._outdent()
-    #    self._write('}')        
+    #    self._write('}')
     #    self._write('J[k*%d+%d] = tmp2*c_R[k] - tmp3*dehmixdc;' % (nSpecies+1,nSpecies))
     #    self._outdent()
     #    self._write('}')
@@ -5648,8 +5814,7 @@ class FPickler(CMill):
     #    self._write('}')
     #    return
 
-
-    #def _ajac_reaction(self, mechanism, reaction, rcase):
+    # def _ajac_reaction(self, mechanism, reaction, rcase):
 
     #    if rcase == 1: # pressure-dependent reaction
     #        isPD = True
@@ -5705,7 +5870,7 @@ class FPickler(CMill):
     #            all_dict[k] = (sp, nup)
 
     #    sorted_reactants = sorted(rea_dict.values())
-    #    sorted_products = sorted(pro_dict.values()) 
+    #    sorted_products = sorted(pro_dict.values())
 
     #    if not reaction.reversible:
     #        if isPD or has_alpha:
@@ -5799,7 +5964,7 @@ class FPickler(CMill):
     #            if isPD:
     #                self._write('Corr = fPr * F;')
     #                self._write('q = Corr * q_nocor;')
-    #            else: 
+    #            else:
     #                self._write('q = alpha * q_nocor;')
 
     #        if isPD:
@@ -5849,7 +6014,7 @@ class FPickler(CMill):
     #            if isPD:
     #                self._write('Corr = fPr * F;')
     #                self._write('q = Corr * q_nocor;')
-    #            else: 
+    #            else:
     #                self._write('q = alpha * q_nocor;')
 
     #        if isPD:
@@ -6003,8 +6168,7 @@ class FPickler(CMill):
 
     #    return
 
-
-    #def _vproductionRate(self, mechanism):
+    # def _vproductionRate(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
@@ -6012,10 +6176,10 @@ class FPickler(CMill):
     #    itroe      = self.reactionIndex[0:2]
     #    isri       = self.reactionIndex[1:3]
     #    ilindemann = self.reactionIndex[2:4]
-    #    i3body     = self.reactionIndex[3:5] 
+    #    i3body     = self.reactionIndex[3:5]
     #    isimple    = self.reactionIndex[4:6]
     #    ispecial   = self.reactionIndex[5:7]
-    #    
+    #
     #    ntroe      = itroe[1]      - itroe[0]
     #    nsri       = isri[1]       - isri[0]
     #    nlindemann = ilindemann[1] - ilindemann[0]
@@ -6060,7 +6224,7 @@ class FPickler(CMill):
     #    self._write('mixture[i] = 0.0;')
     #    self._outdent()
     #    self._write('}')
-    #    
+    #
     #    self._write()
     #    self._write('for (int n=0; n<%d; n++) {' % nSpecies)
     #    self._indent()
@@ -6102,13 +6266,13 @@ class FPickler(CMill):
     #    self._write('for (int i=0; i<npt; i++) {')
     #    self._indent()
     #    for reaction in mechanism.reaction():
-    #        self._write("k_f_s[%d*npt+i] = prefactor_units[%d] * fwd_A[%d] * exp(fwd_beta[%d] * tc[i] - activation_units[%d] * fwd_Ea[%d] * invT[i]);" 
+    #        self._write("k_f_s[%d*npt+i] = prefactor_units[%d] * fwd_A[%d] * exp(fwd_beta[%d] * tc[i] - activation_units[%d] * fwd_Ea[%d] * invT[i]);"
     #                    % (reaction.id-1,reaction.id-1,reaction.id-1,
     #                       reaction.id-1,reaction.id-1,reaction.id-1))
     #    self._outdent()
     #    self._write('}')
     #    self._outdent()
-    #    self._write('}')        
+    #    self._write('}')
 
     #    self._write()
 
@@ -6154,9 +6318,9 @@ class FPickler(CMill):
     #        K_c = self._vKc(mechanism, reaction)
     #        self._write("Kc_s[%d*npt+i] = %s;" % (reaction.id-1,K_c))
     #    self._outdent()
-    #    self._write('}')        
+    #    self._write('}')
     #    self._outdent()
-    #    self._write('}')        
+    #    self._write('}')
 
     #    self._write()
     #    if nReactions <= 50:
@@ -6179,7 +6343,7 @@ class FPickler(CMill):
 
     #    return
 
-    #def _vcomp_wdot(self, mechanism, istart, nr):
+    # def _vcomp_wdot(self, mechanism, istart, nr):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
@@ -6187,10 +6351,10 @@ class FPickler(CMill):
     #    itroe      = self.reactionIndex[0:2]
     #    isri       = self.reactionIndex[1:3]
     #    ilindemann = self.reactionIndex[2:4]
-    #    i3body     = self.reactionIndex[3:5] 
+    #    i3body     = self.reactionIndex[3:5]
     #    isimple    = self.reactionIndex[4:6]
     #    ispecial   = self.reactionIndex[5:7]
-    #    
+    #
     #    ntroe      = itroe[1]      - itroe[0]
     #    nsri       = isri[1]       - isri[0]
     #    nlindemann = ilindemann[1] - ilindemann[0]
@@ -6211,7 +6375,7 @@ class FPickler(CMill):
     #    if istart < isimple[0]:
     #        self._write('double alpha;')
     #    if istart < i3body[0]:
-    #        self._write('double redP, F;') 
+    #        self._write('double redP, F;')
     #    if istart < ilindemann[0]:
     #        self._write('double logPred;')
     #        if ntroe>0:
@@ -6247,28 +6411,27 @@ class FPickler(CMill):
     #            for b in reaction.reactants:
     #                if b == a:
     #                    if coefficient == 1:
-    #                        self._write("wdot[%d*npt+i] -= qdot;" 
+    #                        self._write("wdot[%d*npt+i] -= qdot;"
     #                                    % (mechanism.species(symbol).id))
     #                    else:
-    #                        self._write("wdot[%d*npt+i] -= %d * qdot;" 
+    #                        self._write("wdot[%d*npt+i] -= %d * qdot;"
     #                                    % (mechanism.species(symbol).id, coefficient))
-    #            for b in reaction.products: 
+    #            for b in reaction.products:
     #                if b == a:
     #                    if coefficient == 1:
-    #                        self._write("wdot[%d*npt+i] += qdot;" 
+    #                        self._write("wdot[%d*npt+i] += qdot;"
     #                                    % (mechanism.species(symbol).id))
     #                    else:
-    #                        self._write("wdot[%d*npt+i] += %d * qdot;" 
+    #                        self._write("wdot[%d*npt+i] += %d * qdot;"
     #                                    % (mechanism.species(symbol).id, coefficient))
 
     #    self._outdent()
     #    self._write('}')
-    #    self._outdent()        
+    #    self._outdent()
 
     #    return
 
-
-    #def _progressRate(self, mechanism):
+    # def _progressRate(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
@@ -6276,14 +6439,14 @@ class FPickler(CMill):
     #    itroe      = self.reactionIndex[0:2]
     #    isri       = self.reactionIndex[1:3]
     #    ilindemann = self.reactionIndex[2:4]
-    #    i3body     = self.reactionIndex[3:5] 
+    #    i3body     = self.reactionIndex[3:5]
     #    isimple    = self.reactionIndex[4:6]
     #    ispecial   = self.reactionIndex[5:7]
 
     #    if len(self.reactionIndex) != 7:
     #        print '\n\nCheck this!!!\n'
     #        sys.exit(1)
-    #    
+    #
     #    ntroe      = itroe[1]      - itroe[0]
     #    nsri       = isri[1]       - isri[0]
     #    nlindemann = ilindemann[1] - ilindemann[0]
@@ -6300,7 +6463,7 @@ class FPickler(CMill):
 
     #    self._write('double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
     #    self._write('double invT = 1.0 / tc[1];')
-    #    
+    #
     #    self._write()
     #    self._write('if (T != T_save)')
     #    self._write('{')
@@ -6330,8 +6493,7 @@ class FPickler(CMill):
 
     #    return
 
-
-    #def _initializeRateCalculation(self, mechanism):
+    # def _initializeRateCalculation(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
@@ -6355,7 +6517,6 @@ class FPickler(CMill):
     #    self._write('double phi_r;                   '
     #                + self.line('reverse phase space factor'))
     #    self._write('double alpha;                   ' + self.line('enhancement'))
-
 
     #    self._write('double redP;                    ' + self.line('reduced pressure'))
     #    self._write('double logPred;                 ' + self.line('log of above'))
@@ -6396,11 +6557,10 @@ class FPickler(CMill):
     #    self._write()
     #    self._write(self.line('compute the Gibbs free energy'))
     #    self._write('gibbs(g_RT, tc);')
-    #    
+    #
     #    return
 
-
-    #def _forwardRate(self, mechanism, reaction):
+    # def _forwardRate(self, mechanism, reaction):
 
     #    lt = reaction.lt
     #    if lt:
@@ -6418,7 +6578,7 @@ class FPickler(CMill):
     #        self._write("k_f = k_f_save[%d];" % (reaction.id-1))
     #        self._write("q_f = phi_f * k_f;")
     #        return
-    #        
+    #
     #    alpha = self._enhancement(mechanism, reaction)
     #    self._write("alpha = %s;" % alpha)
 
@@ -6440,11 +6600,11 @@ class FPickler(CMill):
     #    if sri:
     #        self._write("logPred = log10(redP);")
     #        self._write("X = 1.0 / (1.0 + logPred*logPred);")
-    #        self._write("F_sri = exp(X * log(sri_a[%d] * exp(-sri_b[%d]/T)" 
+    #        self._write("F_sri = exp(X * log(sri_a[%d] * exp(-sri_b[%d]/T)"
     #                    % (reaction.id-1,reaction.id-1))
-    #        self._write("   +  (sri_c[%d] > 1.e-100 ? exp(T/sri_c[%d]) : 0.) )" 
+    #        self._write("   +  (sri_c[%d] > 1.e-100 ? exp(T/sri_c[%d]) : 0.) )"
     #                    % (reaction.id-1,reaction.id-1))
-    #        self._write("   *  (sri_len[%d] > 3 ? sri_d[%d]*exp(sri_e[%d]*tc[0]) : 1);" 
+    #        self._write("   *  (sri_len[%d] > 3 ? sri_d[%d]*exp(sri_e[%d]*tc[0]) : 1);"
     #                    % (reaction.id-1,reaction.id-1,reaction.id-1))
     #        self._write("F *= F_sri;")
 
@@ -6456,7 +6616,7 @@ class FPickler(CMill):
     #                    % (reaction.id-1,reaction.id-1,reaction.id-1))
     #        self._write('    + (fabs(troe_Ts[%d]) > 1.e-100 ? troe_a[%d] * exp(-T/troe_Ts[%d]) : 0) '
     #                    % (reaction.id-1,reaction.id-1,reaction.id-1))
-    #        self._write('    + (troe_len[%d] == 4 ? exp(-troe_Tss[%d] * invT) : 0) );' 
+    #        self._write('    + (troe_len[%d] == 4 ? exp(-troe_Tss[%d] * invT) : 0) );'
     #                    % (reaction.id-1,reaction.id-1))
     #        self._write("troe_c = -.4 - .67 * logFcent;")
     #        self._write("troe_n = .75 - 1.27 * logFcent;")
@@ -6467,9 +6627,9 @@ class FPickler(CMill):
     #    self._write("k_f *= F;")
     #    self._write("q_f = phi_f * k_f;")
     #    return
-    #    
+    #
 
-    #def _vforwardRate(self, mechanism, reaction):
+    # def _vforwardRate(self, mechanism, reaction):
 
     #    lt = reaction.lt
     #    if lt:
@@ -6481,13 +6641,13 @@ class FPickler(CMill):
 
     #    phi_f = self._vphaseSpace(mechanism, reaction.reactants)
     #    self._write("phi_f = %s;" % phi_f)
-    #            
+    #
     #    thirdBody = reaction.thirdBody
     #    if not thirdBody:
     #        self._write("k_f = k_f_s[%d*npt+i];" % (reaction.id-1))
     #        self._write("q_f = phi_f * k_f;")
     #        return
-    #        
+    #
     #    alpha = self._venhancement(mechanism, reaction)
     #    self._write("alpha = %s;" % alpha)
 
@@ -6501,18 +6661,18 @@ class FPickler(CMill):
     #        return
 
     #    self._write("k_f = k_f_s[%d*npt+i];" % (reaction.id-1))
-    #    self._write("redP = alpha / k_f * phase_units[%d] * low_A[%d] * exp(low_beta[%d] * tc[i] - activation_units[%d] * low_Ea[%d] * invT[i]);" 
+    #    self._write("redP = alpha / k_f * phase_units[%d] * low_A[%d] * exp(low_beta[%d] * tc[i] - activation_units[%d] * low_Ea[%d] * invT[i]);"
     #                % (reaction.id-1,reaction.id-1,reaction.id-1,reaction.id-1,reaction.id-1))
     #    self._write("F = redP / (1 + redP);")
 
     #    if sri:
     #        self._write("logPred = log10(redP);")
     #        self._write("X = 1.0 / (1.0 + logPred*logPred);")
-    #        self._write("F_sri = exp(X * log(sri_a[%d] * exp(-sri_b[%d]/T[i])" 
+    #        self._write("F_sri = exp(X * log(sri_a[%d] * exp(-sri_b[%d]/T[i])"
     #                    % (reaction.id-1,reaction.id-1))
-    #        self._write("   +  (sri_c[%d] > 1.e-100 ? exp(T[i]/sri_c[%d]) : 0.) )" 
+    #        self._write("   +  (sri_c[%d] > 1.e-100 ? exp(T[i]/sri_c[%d]) : 0.) )"
     #                    % (reaction.id-1,reaction.id-1))
-    #        self._write("   *  (sri_len[%d] > 3 ? sri_d[%d]*exp(sri_e[%d]*tc[i]) : 1.);" 
+    #        self._write("   *  (sri_len[%d] > 3 ? sri_d[%d]*exp(sri_e[%d]*tc[i]) : 1.);"
     #                    % (reaction.id-1,reaction.id-1,reaction.id-1))
     #        self._write("F *= F_sri;")
 
@@ -6524,9 +6684,9 @@ class FPickler(CMill):
     #                    % (reaction.id-1,reaction.id-1,reaction.id-1))
     #        self._write('    + (fabs(troe_Ts[%d]) > 1.e-100 ? troe_a[%d] * exp(-T[i]/troe_Ts[%d]) : 0.) '
     #                    % (reaction.id-1,reaction.id-1,reaction.id-1))
-    #        self._write('    + (troe_len[%d] == 4 ? exp(-troe_Tss[%d] * invT[i]) : 0.) );' 
+    #        self._write('    + (troe_len[%d] == 4 ? exp(-troe_Tss[%d] * invT[i]) : 0.) );'
     #                    % (reaction.id-1,reaction.id-1))
-    #        
+    #
     #        d = .14
     #        self._write("troe_c = -.4 - .67 * logFcent;")
     #        self._write("troe_n = .75 - 1.27 * logFcent;")
@@ -6537,9 +6697,9 @@ class FPickler(CMill):
     #    self._write("k_f *= F;")
     #    self._write("q_f = phi_f * k_f;")
     #    return
-    #    
+    #
 
-    #def _reverseRate(self, mechanism, reaction):
+    # def _reverseRate(self, mechanism, reaction):
     #    if not reaction.reversible:
     #        self._write("q_r = 0.0;")
     #        return
@@ -6563,7 +6723,7 @@ class FPickler(CMill):
 
     #        self._write("q_r[%d] = phi_r * k_r;" % (reaction.id - 1))
     #        return
-    #    
+    #
     #    self._write("Kc = Kc_save[%d];" % (reaction.id-1))
 
     #    self._write("k_r = k_f / Kc;")
@@ -6571,8 +6731,7 @@ class FPickler(CMill):
 
     #    return
 
-
-    #def _vreverseRate(self, mechanism, reaction):
+    # def _vreverseRate(self, mechanism, reaction):
     #    if not reaction.reversible:
     #        self._write("q_r = 0.0;")
     #        return
@@ -6596,7 +6755,7 @@ class FPickler(CMill):
 
     #        self._write("q_f = phi_r * k_r;")
     #        return
-    #    
+    #
     #    self._write("Kc = Kc_s[%d*npt+i];" % (reaction.id-1))
 
     #    self._write("k_r = k_f / Kc;")
@@ -6604,8 +6763,7 @@ class FPickler(CMill):
 
     #    return
 
-
-    #def _progressRateFR(self, mechanism):
+    # def _progressRateFR(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
@@ -6613,14 +6771,14 @@ class FPickler(CMill):
     #    itroe      = self.reactionIndex[0:2]
     #    isri       = self.reactionIndex[1:3]
     #    ilindemann = self.reactionIndex[2:4]
-    #    i3body     = self.reactionIndex[3:5] 
+    #    i3body     = self.reactionIndex[3:5]
     #    isimple    = self.reactionIndex[4:6]
     #    ispecial   = self.reactionIndex[5:7]
 
     #    if len(self.reactionIndex) != 7:
     #        print '\n\nCheck this!!!\n'
     #        sys.exit(1)
-    #    
+    #
     #    ntroe      = itroe[1]      - itroe[0]
     #    nsri       = isri[1]       - isri[0]
     #    nlindemann = ilindemann[1] - ilindemann[0]
@@ -6637,7 +6795,7 @@ class FPickler(CMill):
 
     #    self._write('double tc[] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */')
     #    self._write('double invT = 1.0 / tc[1];')
-    #    
+    #
     #    self._write()
     #    self._write('if (T != T_save)')
     #    self._write('{')
@@ -6659,9 +6817,9 @@ class FPickler(CMill):
 
     #    return
 
-    #def _getCriticalParameters(self, mechanism):
-    #  
-    #    
+    # def _getCriticalParameters(self, mechanism):
+    #
+    #
     #    TabulatedCriticalParams = {
     #      "H2":{'Tci':33.145,"Pci":12.964,"wt":2.01588,"acentric_factor":-0.219},
     #        "O2":{'Tci':154.581,"Pci":50.4304658,"wt":31.9988,"acentric_factor":0.0222},
@@ -6680,8 +6838,8 @@ class FPickler(CMill):
     #        "C2H4":{'Tci':282.34,"Pci":50.41,"wt":28.054,"acentric_factor":0.087},
     #        "N2O":{'Tci':309.60,"Pci":72.55,"wt":44.013,"acentric_factor":0.162}
     #                }
-    #  
-    #    nSpecies = len(mechanism.species()) 
+    #
+    #    nSpecies = len(mechanism.species())
     #    self._write()
     #    self._write()
     #    self._write(self.line('compute the critical parameters for each species'))
@@ -6689,26 +6847,25 @@ class FPickler(CMill):
     #    self._write('{')
     #    self._write()
     #    self._indent()
-    #    
-    #    
+    #
+    #
     #    self._write('double   EPS[%d];'%nSpecies)
     #    self._write('double   SIG[%d];' %nSpecies)
     #    self._write('double    wt[%d];' %nSpecies)
     #    self._write('double avogadro = 6.02214199e23;')
     #    self._write('double boltzmann = 1.3806503e-16; //we work in CGS')
     #    self._write('double Rcst = 83.144598; //in bar [CGS] !')
-    #    
+    #
     #    self._write()
 
     #    self._write('egtransetEPS(EPS);')
     #    self._write('egtransetSIG(SIG);')
     #    self._write('molecularWeight(wt);')
 
-
     #    for species in mechanism.species():
 
     #      if species.symbol in TabulatedCriticalParams:
-    #      
+    #
     #        self._write()
     #        self._write(self.line('species %d: %s' % (species.id, species.symbol)))
     #        self._write(self.line('Imported from NIST'))
@@ -6721,7 +6878,7 @@ class FPickler(CMill):
     #        self._write('acentric_i[%d] = %f ;'
     #            %(species.id,TabulatedCriticalParams[species.symbol]["acentric_factor"]))
     #      else:
-    #                  
+    #
     #        self._write()
     #        self._write(self.line('species %d: %s' % (species.id, species.symbol)))
     #        self._write('Tci[%d] = 1.316 * EPS[%d] ; ' % (
@@ -6732,15 +6889,15 @@ class FPickler(CMill):
     #            species.id,species.id,species.id))
     #        self._write('acentric_i[%d] = 0.0 ;'
     #            %(species.id))
-    #    
+    #
     #    self._write()
     #    self._write('return;')
-    #    self._outdent() 
+    #    self._outdent()
     #    self._write('}')
 
     #    return
 
-    #def _initializeRateCalculationFR(self, mechanism):
+    # def _initializeRateCalculationFR(self, mechanism):
 
     #    nSpecies = len(mechanism.species())
     #    nReactions = len(mechanism.reaction())
@@ -6762,7 +6919,6 @@ class FPickler(CMill):
     #    self._write('double phi_r;                   '
     #                + self.line('reverse phase space factor'))
     #    self._write('double alpha;                   ' + self.line('enhancement'))
-
 
     #    self._write('double redP;                    ' + self.line('reduced pressure'))
     #    self._write('double logPred;                 ' + self.line('log of above'))
@@ -6802,11 +6958,10 @@ class FPickler(CMill):
     #    self._write()
     #    self._write(self.line('compute the Gibbs free energy'))
     #    self._write('gibbs(g_RT, tc);')
-    #    
+    #
     #    return
 
-
-    #def _forwardRateFR(self, mechanism, reaction):
+    # def _forwardRateFR(self, mechanism, reaction):
 
     #    lt = reaction.lt
     #    if lt:
@@ -6824,7 +6979,7 @@ class FPickler(CMill):
     #        self._write("k_f = k_f_save[%d];" % (reaction.id-1))
     #        self._write("q_f[%d] = phi_f * k_f;" % (reaction.id - 1))
     #        return
-    #        
+    #
     #    alpha = self._enhancement(mechanism, reaction)
     #    self._write("alpha = %s;" % alpha)
 
@@ -6846,11 +7001,11 @@ class FPickler(CMill):
     #    if sri:
     #        self._write("logPred = log10(redP);")
     #        self._write("X = 1.0 / (1.0 + logPred*logPred);")
-    #        self._write("F_sri = exp(X * log(sri_a[%d] * exp(-sri_b[%d]/T)" 
+    #        self._write("F_sri = exp(X * log(sri_a[%d] * exp(-sri_b[%d]/T)"
     #                    % (reaction.id-1,reaction.id-1))
-    #        self._write("   +  (sri_c[%d] > 1.e-100 ? exp(T/sri_c[%d]) : 0.) )" 
+    #        self._write("   +  (sri_c[%d] > 1.e-100 ? exp(T/sri_c[%d]) : 0.) )"
     #                    % (reaction.id-1,reaction.id-1))
-    #        self._write("   *  (sri_len[%d] > 3 ? sri_d[%d]*exp(sri_e[%d]*tc[0]) : 1.);" 
+    #        self._write("   *  (sri_len[%d] > 3 ? sri_d[%d]*exp(sri_e[%d]*tc[0]) : 1.);"
     #                    % (reaction.id-1,reaction.id-1,reaction.id-1))
     #        self._write("F *= F_sri;")
 
@@ -6875,9 +7030,9 @@ class FPickler(CMill):
     #    self._write("k_f *= F;")
     #    self._write("q_f[%d] = phi_f * k_f;" % (reaction.id - 1))
     #    return
-    #    
+    #
 
-    #def _reverseRateFR(self, mechanism, reaction):
+    # def _reverseRateFR(self, mechanism, reaction):
     #    if not reaction.reversible:
     #        self._write("q_r[%d] = 0.0;" % (reaction.id - 1))
     #        return
@@ -6900,7 +7055,7 @@ class FPickler(CMill):
 
     #        self._write("q_r[%d] = phi_r * k_r;" % (reaction.id - 1))
     #        return
-    #    
+    #
     #    self._write("Kc = Kc_save[%d];" % (reaction.id-1))
 
     #    self._write("k_r = k_f / Kc;")
@@ -6912,39 +7067,41 @@ class FPickler(CMill):
     def _prefactorUnits(self, code, exponent):
 
         if code == "mole/cm**3":
-            units = (mole /  cm**3)
+            units = mole / cm ** 3
         elif code == "moles":
-            units = (mole /  cm**3)
+            units = mole / cm ** 3
         elif code == "molecules":
             import pyre
-            units = 1.0 / avogadro / cm**3
+
+            units = 1.0 / avogadro / cm ** 3
         else:
             import pyre
+
             pyre.debug.Firewall.hit("unknown prefactor units '%s'" % code)
             return 1
 
-        return (units ** exponent /  second)
-
+        return units ** exponent / second
 
     def _activationEnergyUnits(self, code):
         if code == "cal/mole":
-            units = (cal /  mole)
+            units = cal / mole
         elif code == "kcal/mole":
-            units = (kcal / mole)
+            units = kcal / mole
         elif code == "joules/mole":
-            units = (J /  mole)
+            units = J / mole
         elif code == "kjoules/mole":
-            units = (kJ /  mole)
+            units = kJ / mole
         elif code == "kelvins":
             units = Rc * kelvin
         else:
-            pyre.debug.Firewall.hit("unknown activation energy units '%s'" % code)
+            pyre.debug.Firewall.hit(
+                "unknown activation energy units '%s'" % code
+            )
             return 1
 
         return units
 
-
-    #def _equilibriumConstants(self, mechanism):
+    # def _equilibriumConstants(self, mechanism):
     #    self._write()
     #    self._write()
     #    self._write(self.line('compute the equilibrium constants for each reaction'))
@@ -6972,8 +7129,7 @@ class FPickler(CMill):
 
     #    return
 
-
-    #def _phaseSpace(self, mechanism, reagents):
+    # def _phaseSpace(self, mechanism, reagents):
 
     #    phi = []
 
@@ -6987,14 +7143,15 @@ class FPickler(CMill):
 
         phi = []
 
-        for symbol, coefficient in sorted(reagents,key=lambda x:mechanism.species(x[0]).id):
-            conc = "sc(%d)" % (mechanism.species(symbol).id+1)
+        for symbol, coefficient in sorted(
+            reagents, key=lambda x: mechanism.species(x[0]).id
+        ):
+            conc = "sc(%d)" % (mechanism.species(symbol).id + 1)
             phi += [conc] * coefficient
 
         return "*".join(phi)
 
-
-    #def _DphaseSpace(self, mechanism, reagents, r):
+    # def _DphaseSpace(self, mechanism, reagents, r):
 
     #    phi = []
 
@@ -7013,8 +7170,7 @@ class FPickler(CMill):
     #    else:
     #        return "1.0"
 
-
-    #def _vphaseSpace(self, mechanism, reagents):
+    # def _vphaseSpace(self, mechanism, reagents):
 
     #    phi = []
 
@@ -7024,7 +7180,6 @@ class FPickler(CMill):
 
     #    return "*".join(phi)
 
-
     def _phaseSpaceUnits(self, reagents):
         dim = 0
         for symbol, coefficient in reagents:
@@ -7032,12 +7187,14 @@ class FPickler(CMill):
 
         return dim
 
-
     def _enhancement(self, mechanism, reaction):
         thirdBody = reaction.thirdBody
         if not thirdBody:
             import pyre
-            pyre.debug.Firewall.hit("_enhancement called for a reaction without a third body")
+
+            pyre.debug.Firewall.hit(
+                "_enhancement called for a reaction without a third body"
+            )
             return
 
         species, coefficient = thirdBody
@@ -7051,13 +7208,13 @@ class FPickler(CMill):
         alpha = ["mixture"]
         for i, eff in enumerate(efficiencies):
             symbol, efficiency = eff
-            factor = "(TB(%d) %% vector(%d) - 1)" % (reaction.id, i+1)
-            conc = "sc(%d)" % (mechanism.species(symbol).id+1)
+            factor = "(TB(%d) %% vector(%d) - 1)" % (reaction.id, i + 1)
+            conc = "sc(%d)" % (mechanism.species(symbol).id + 1)
             alpha.append("%s*%s" % (factor, conc))
 
-        return " + ".join(alpha).replace('+ -','- ')
+        return " + ".join(alpha).replace("+ -", "- ")
 
-    #def _Denhancement(self, mechanism, reaction, kid, consP):
+    # def _Denhancement(self, mechanism, reaction, kid, consP):
     #    thirdBody = reaction.thirdBody
     #    if not thirdBody:
     #        import pyre
@@ -7091,7 +7248,7 @@ class FPickler(CMill):
     #                    return "TB[%d][%d]" % (reaction.id-1,i)
     #            return "1"
 
-    #def _venhancement(self, mechanism, reaction):
+    # def _venhancement(self, mechanism, reaction):
     #    thirdBody = reaction.thirdBody
     #    if not thirdBody:
     #        import pyre
@@ -7115,13 +7272,12 @@ class FPickler(CMill):
 
     #    return " + ".join(alpha)
 
-
     def _cv(self, speciesInfo):
 
         self._write()
         self._write()
-        self._write('! compute Cv/R at the given temperature')
-        self._write('! tc contains precomputed powers of T, tc[0] = log(T)')
+        self._write("! compute Cv/R at the given temperature")
+        self._write("! tc contains precomputed powers of T, tc[0] = log(T)")
         self._generateThermoRoutine("cv_R", self._cvNASA, speciesInfo)
 
         return
@@ -7130,13 +7286,13 @@ class FPickler(CMill):
 
         self._write()
         self._write()
-        self._write('! compute Cp/R at the given temperature')
-        self._write('! tc contains precomputed powers of T, tc[0] = log(T)')
+        self._write("! compute Cp/R at the given temperature")
+        self._write("! tc contains precomputed powers of T, tc[0] = log(T)")
         self._generateThermoRoutine("cp_R", self._cpNASA, speciesInfo)
 
         return
 
-    #def _dcvpdT(self, speciesInfo):
+    # def _dcvpdT(self, speciesInfo):
 
     #    self._write()
     #    self._write()
@@ -7148,13 +7304,13 @@ class FPickler(CMill):
 
     def _gibbs(self, speciesInfo):
         self._write()
-        self._write('! compute the g/(RT) at the given temperature')
-        self._write('! tc contains precomputed powers of T, tc[0] = log(T)')
+        self._write("! compute the g/(RT) at the given temperature")
+        self._write("! tc contains precomputed powers of T, tc[0] = log(T)")
         self._generateThermoRoutine("gibbs", self._gibbsNASA, speciesInfo, 1)
 
         return
 
-    #def _helmholtz(self, speciesInfo):
+    # def _helmholtz(self, speciesInfo):
 
     #    self._write()
     #    self._write()
@@ -7164,7 +7320,7 @@ class FPickler(CMill):
 
     #    return
 
-    #def _speciesEntropy(self, speciesInfo):
+    # def _speciesEntropy(self, speciesInfo):
 
     #    self._write()
     #    self._write()
@@ -7177,43 +7333,48 @@ class FPickler(CMill):
     def _speciesInternalEnergy(self, speciesInfo):
 
         self._write()
-        self._write('! compute the e/(RT) at the given temperature')
-        self._write('! tc contains precomputed powers of T, tc[0] = log(T)')
-        self._generateThermoRoutine("speciesInternalEnergy", self._internalEnergy, speciesInfo, 1)
+        self._write("! compute the e/(RT) at the given temperature")
+        self._write("! tc contains precomputed powers of T, tc[0] = log(T)")
+        self._generateThermoRoutine(
+            "speciesInternalEnergy", self._internalEnergy, speciesInfo, 1
+        )
 
         return
 
     def _speciesEnthalpy(self, speciesInfo):
 
         self._write()
-        self._write('! compute the h/(RT) at the given temperature (Eq 20)')
-        self._write('! tc contains precomputed powers of T, tc(1) = log(T)')
-        self._generateThermoRoutine("speciesEnthalpy", self._enthalpyNASA, speciesInfo, 1)
+        self._write("! compute the h/(RT) at the given temperature (Eq 20)")
+        self._write("! tc contains precomputed powers of T, tc(1) = log(T)")
+        self._generateThermoRoutine(
+            "speciesEnthalpy", self._enthalpyNASA, speciesInfo, 1
+        )
 
         return
 
-
-    def _generateThermoRoutine(self, name, expressionGenerator, speciesInfo, needsInvT=0):
+    def _generateThermoRoutine(
+        self, name, expressionGenerator, speciesInfo, needsInvT=0
+    ):
 
         lowT, highT, midpoints = speciesInfo
-        
-        self._write('subroutine %s(species, tc)' % name)
+
+        self._write("subroutine %s(species, tc)" % name)
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
 
         # declarations
         species = self.species
         nSpec = len(species)
         self._write()
-        self._write('double precision, intent(out) :: species(%d)' % nSpec)
-        self._write('double precision, intent(in) :: tc(5)')
+        self._write("double precision, intent(out) :: species(%d)" % nSpec)
+        self._write("double precision, intent(in) :: tc(5)")
         self._write()
-        self._write('double precision :: T')
+        self._write("double precision :: T")
         if needsInvT != 0:
-           self._write('double precision :: invT')
+            self._write("double precision :: invT")
         if needsInvT == 2:
-           self._write('double precision :: invT2')
+            self._write("double precision :: invT2")
 
         # temperature check
         # self._write()
@@ -7226,210 +7387,315 @@ class FPickler(CMill):
         # self._write('return;')
         # self._outdent()
         # self._write('}')
-                    
+
         self._write()
-        self._write('T = tc(2)')
+        self._write("T = tc(2)")
         if needsInvT != 0:
-           self._write('invT = 1.d0 / T')
+            self._write("invT = 1.d0 / T")
         if needsInvT == 2:
-           self._write('invT2 = invT * invT')
+            self._write("invT2 = invT * invT")
 
         for midT, speciesList in list(midpoints.items()):
 
             self._write()
-            self._write('! species with midpoint at T=%g kelvin' % midT)
-            self._write('if (T < %fd0) then' % midT)
+            self._write("! species with midpoint at T=%g kelvin" % midT)
+            self._write("if (T < %fd0) then" % midT)
             self._indent()
 
             for species, lowRange, highRange in speciesList:
-                self._write('! species %d: %s' % ((species.id + 1), species.symbol))
-                self._write('species(%d) = &' % (species.id + 1))
+                self._write(
+                    "! species %d: %s" % ((species.id + 1), species.symbol)
+                )
+                self._write("species(%d) = &" % (species.id + 1))
                 self._indent()
                 expressionGenerator(lowRange.parameters)
                 self._outdent()
 
             self._outdent()
-            self._write('else')
+            self._write("else")
             self._indent()
 
             for species, lowRange, highRange in speciesList:
-                self._write('!species %d: %s' % ((species.id + 1), species.symbol))
-                self._write('species(%d) = &' % (species.id + 1))
+                self._write(
+                    "!species %d: %s" % ((species.id + 1), species.symbol)
+                )
+                self._write("species(%d) = &" % (species.id + 1))
                 self._indent()
                 expressionGenerator(highRange.parameters)
                 self._outdent()
 
             self._outdent()
-            self._write('end if')
-            
+            self._write("end if")
+
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
-
 
     def _miscTransInfo(self, KK, NLITE, NO=4):
 
         self._write()
-        LENIMC = 4*KK+NLITE
-        self._generateTransRoutineInteger(["egtransetLENIMC", "EGTRANSETLENIMC", "egtransetlenimc", "egtransetlenimc_", "LENIMC"], LENIMC)
+        LENIMC = 4 * KK + NLITE
+        self._generateTransRoutineInteger(
+            [
+                "egtransetLENIMC",
+                "EGTRANSETLENIMC",
+                "egtransetlenimc",
+                "egtransetlenimc_",
+                "LENIMC",
+            ],
+            LENIMC,
+        )
 
         self._write()
-        LENRMC = (19+2*NO+NO*NLITE)*KK+(15+NO)*KK**2
-        self._generateTransRoutineInteger(["egtransetLENRMC", "EGTRANSETLENRMC", "egtransetlenrmc", "egtransetlenrmc_", "LENRMC"], LENRMC)
+        LENRMC = (19 + 2 * NO + NO * NLITE) * KK + (15 + NO) * KK ** 2
+        self._generateTransRoutineInteger(
+            [
+                "egtransetLENRMC",
+                "EGTRANSETLENRMC",
+                "egtransetlenrmc",
+                "egtransetlenrmc_",
+                "LENRMC",
+            ],
+            LENRMC,
+        )
 
         self._write()
-        self._generateTransRoutineInteger(["egtransetNO", "EGTRANSETNO", "egtransetno", "egtransetno_", "NO"], NO)
+        self._generateTransRoutineInteger(
+            [
+                "egtransetNO",
+                "EGTRANSETNO",
+                "egtransetno",
+                "egtransetno_",
+                "NO",
+            ],
+            NO,
+        )
 
         self._write()
-        self._generateTransRoutineInteger(["egtransetKK", "EGTRANSETKK", "egtransetkk", "egtransetkk_", "KK"], KK)
+        self._generateTransRoutineInteger(
+            [
+                "egtransetKK",
+                "EGTRANSETKK",
+                "egtransetkk",
+                "egtransetkk_",
+                "KK",
+            ],
+            KK,
+        )
 
         self._write()
-        self._generateTransRoutineInteger(["egtransetNLITE", "EGTRANSETNLITE", "egtransetnlite", "egtransetnlite_", "NLITE"], NLITE)
+        self._generateTransRoutineInteger(
+            [
+                "egtransetNLITE",
+                "EGTRANSETNLITE",
+                "egtransetnlite",
+                "egtransetnlite_",
+                "NLITE",
+            ],
+            NLITE,
+        )
 
-    #    self._write()
-    #    self._write()
-    #    self._write(self.line('Patm in ergs/cm3'))
-    #    self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-    #    self._write('#define egtransetPATM EGTRANSETPATM')
-    #    self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-    #    self._write('#define egtransetPATM egtransetpatm')
-    #    self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-    #    self._write('#define egtransetPATM egtransetpatm_')
-    #    self._write('#endif')
+        #    self._write()
+        #    self._write()
+        #    self._write(self.line('Patm in ergs/cm3'))
+        #    self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+        #    self._write('#define egtransetPATM EGTRANSETPATM')
+        #    self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+        #    self._write('#define egtransetPATM egtransetpatm')
+        #    self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+        #    self._write('#define egtransetPATM egtransetpatm_')
+        #    self._write('#endif')
 
         self._write()
-        self._write('subroutine egtransetPATM(PATM)')
+        self._write("subroutine egtransetPATM(PATM)")
         self._indent()
         self._write()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(out) :: PATM')
+        self._write("double precision, intent(out) :: PATM")
         self._write()
-        self._write('PATM = 0.1013250000000000d+07')
+        self._write("PATM = 0.1013250000000000d+07")
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
-
 
     def _wt(self):
         self._write()
-        self._write('! the molecular weights in g/mol')
+        self._write("! the molecular weights in g/mol")
 
-        #self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        #self._write('#define egtransetWT EGTRANSETWT')
-        #self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        #self._write('#define egtransetWT egtransetwt')
-        #self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        #self._write('#define egtransetWT egtransetwt_')
-        #self._write('#endif')
+        # self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+        # self._write('#define egtransetWT EGTRANSETWT')
+        # self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+        # self._write('#define egtransetWT egtransetwt')
+        # self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+        # self._write('#define egtransetWT egtransetwt_')
+        # self._write('#endif')
 
-        self._write('subroutine %s(%s)' % ("egtransetWT", "WT"))
+        self._write("subroutine %s(%s)" % ("egtransetWT", "WT"))
         self._indent()
         self._write()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(out) :: %s(%d)' % ("WT",len(self.species)))
+        self._write(
+            "double precision, intent(out) :: %s(%d)"
+            % ("WT", len(self.species))
+        )
         self._write()
         for species in self.species:
-            self._write('%s(%d) = %s' % ("WT", species.id+1, format(float(species.weight), '.8e').replace("e","d")))
+            self._write(
+                "%s(%d) = %s"
+                % (
+                    "WT",
+                    species.id + 1,
+                    format(float(species.weight), ".8e").replace("e", "d"),
+                )
+            )
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
-
 
     def _eps(self, speciesTransport):
         self._write()
-        self._write('! the lennard-jones potential well depth eps/kb in K')
+        self._write("! the lennard-jones potential well depth eps/kb in K")
 
-        #i=0
-        #expression=[]
-        #for species in mechanism.species():
+        # i=0
+        # expression=[]
+        # for species in mechanism.species():
         #    expression[i] = float(species.trans[0].eps)
         #    i++
-        self._generateTransRoutineSimple(["egtransetEPS", "EGTRANSETEPS", "egtranseteps", "egtranseteps_", "EPS"], 1, speciesTransport)
+        self._generateTransRoutineSimple(
+            [
+                "egtransetEPS",
+                "EGTRANSETEPS",
+                "egtranseteps",
+                "egtranseteps_",
+                "EPS",
+            ],
+            1,
+            speciesTransport,
+        )
 
         return
-
 
     def _sig(self, speciesTransport):
         self._write()
-        self._write('! the lennard-jones collision diameter in Angstroms')
-        self._generateTransRoutineSimple(["egtransetSIG", "EGTRANSETSIG", "egtransetsig", "egtransetsig_", "SIG"], 2, speciesTransport)
+        self._write("! the lennard-jones collision diameter in Angstroms")
+        self._generateTransRoutineSimple(
+            [
+                "egtransetSIG",
+                "EGTRANSETSIG",
+                "egtransetsig",
+                "egtransetsig_",
+                "SIG",
+            ],
+            2,
+            speciesTransport,
+        )
 
         return
-
 
     def _dip(self, speciesTransport):
         self._write()
-        self._write('! the dipole moment in Debye')
-        self._generateTransRoutineSimple(["egtransetDIP", "EGTRANSETDIP", "egtransetdip", "egtransetdip_", "DIP"], 3, speciesTransport)
+        self._write("! the dipole moment in Debye")
+        self._generateTransRoutineSimple(
+            [
+                "egtransetDIP",
+                "EGTRANSETDIP",
+                "egtransetdip",
+                "egtransetdip_",
+                "DIP",
+            ],
+            3,
+            speciesTransport,
+        )
 
         return
-
 
     def _pol(self, speciesTransport):
         self._write()
-        self._write('! the polarizability in cubic Angstroms')
-        self._generateTransRoutineSimple(["egtransetPOL", "EGTRANSETPOL", "egtransetpol", "egtransetpol_", "POL"], 4, speciesTransport)
+        self._write("! the polarizability in cubic Angstroms")
+        self._generateTransRoutineSimple(
+            [
+                "egtransetPOL",
+                "EGTRANSETPOL",
+                "egtransetpol",
+                "egtransetpol_",
+                "POL",
+            ],
+            4,
+            speciesTransport,
+        )
 
         return
-
 
     def _zrot(self, speciesTransport):
         self._write()
-        self._write('! the rotational relaxation collision number at 298 K')
-        self._generateTransRoutineSimple(["egtransetZROT", "EGTRANSETZROT", "egtransetzrot", "egtransetzrot_", "ZROT"], 5, speciesTransport)
+        self._write("! the rotational relaxation collision number at 298 K")
+        self._generateTransRoutineSimple(
+            [
+                "egtransetZROT",
+                "EGTRANSETZROT",
+                "egtransetzrot",
+                "egtransetzrot_",
+                "ZROT",
+            ],
+            5,
+            speciesTransport,
+        )
 
         return
-
 
     def _nlin(self, speciesTransport):
         self._write()
-        self._write('! 0: monoatomic, 1: linear, 2: nonlinear')
-        #self._generateTransRoutineSimple(["egtransetNLIN", "EGTRANSETNLIN", "egtransetNLIN", "egtransetNLIN_", "NLIN"], 0, speciesTransport)
+        self._write("! 0: monoatomic, 1: linear, 2: nonlinear")
+        # self._generateTransRoutineSimple(["egtransetNLIN", "EGTRANSETNLIN", "egtransetNLIN", "egtransetNLIN_", "NLIN"], 0, speciesTransport)
 
-        #self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        #self._write('#define egtransetNLIN EGTRANSETNLIN')
-        #self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        #self._write('#define egtransetNLIN egtransetnlin')
-        #self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        #self._write('#define egtransetNLIN egtransetnlin_')
-        #self._write('#endif')
+        # self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+        # self._write('#define egtransetNLIN EGTRANSETNLIN')
+        # self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+        # self._write('#define egtransetNLIN egtransetnlin')
+        # self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+        # self._write('#define egtransetNLIN egtransetnlin_')
+        # self._write('#endif')
 
-        self._write('subroutine egtransetNLIN(NLIN)')
+        self._write("subroutine egtransetNLIN(NLIN)")
         self._indent()
         self._write()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('integer, intent(out) :: NLIN(%d)' % (len(speciesTransport)))
+        self._write(
+            "integer, intent(out) :: NLIN(%d)" % (len(speciesTransport))
+        )
         self._write()
         for species in speciesTransport:
-            self._write('%s(%d) = %d' % ('NLIN', species.id+1, int(speciesTransport[species][0])))
+            self._write(
+                "%s(%d) = %d"
+                % ("NLIN", species.id + 1, int(speciesTransport[species][0]))
+            )
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
 
-
     def _viscosity(self, speciesTransport, NTFit):
 
-        #compute single constants in g/cm/s
+        # compute single constants in g/cm/s
         kb = 1.3806503e-16
-        Na = 6.02214199e23 
+        Na = 6.02214199e23
         RU = 8.31447e7
-        #conversion coefs
+        # conversion coefs
         AtoCM = 1.0e-8
         DEBYEtoCGS = 1.0e-18
-        #temperature increment  
-        dt = (self.highT-self.lowT)/ (NTFit-1)
-        #factor dependent upon the molecule
+        # temperature increment
+        dt = (self.highT - self.lowT) / (NTFit - 1)
+        # factor dependent upon the molecule
         m_crot = np.zeros(self.nSpecies)
         m_cvib = np.zeros(self.nSpecies)
         isatm = np.zeros(self.nSpecies)
@@ -7446,60 +7712,104 @@ class FPickler(CMill):
                 m_crot[spec.id] = 1.5
                 m_cvib[spec.id] = 3.0
                 isatm[spec.id] = 1.0
-        #viscosities coefs (4 per spec)
+        # viscosities coefs (4 per spec)
         cofeta = {}
-        #conductivities coefs (4 per spec)
+        # conductivities coefs (4 per spec)
         coflam = {}
         for spec in speciesTransport:
             spvisc = []
             spcond = []
             tlog = []
             for n in range(NTFit):
-                t = self.lowT + dt*n
-                #variables
-                #eq. (2)
-                tr = t/ float(speciesTransport[spec][1])
-                conversion = (DEBYEtoCGS * DEBYEtoCGS /  (AtoCM / AtoCM / AtoCM / kb))
-                dst = 0.5 * conversion * float(speciesTransport[spec][3])**2 / (float(speciesTransport[spec][1]) \
-                        * float(speciesTransport[spec][2])**3)
-                #viscosity of spec at t
-                #eq. (1)
+                t = self.lowT + dt * n
+                # variables
+                # eq. (2)
+                tr = t / float(speciesTransport[spec][1])
+                conversion = (
+                    DEBYEtoCGS * DEBYEtoCGS / (AtoCM / AtoCM / AtoCM / kb)
+                )
+                dst = (
+                    0.5
+                    * conversion
+                    * float(speciesTransport[spec][3]) ** 2
+                    / (
+                        float(speciesTransport[spec][1])
+                        * float(speciesTransport[spec][2]) ** 3
+                    )
+                )
+                # viscosity of spec at t
+                # eq. (1)
                 conversion = AtoCM * AtoCM
-                visc = (5.0 / 16.0) * np.sqrt((np.pi * self.species[spec.id].weight * kb * t /  Na))/ \
-                    (self.om22_CHEMKIN(tr,dst) * np.pi * \
-                    float(speciesTransport[spec][2]) * float(speciesTransport[spec][2]) * conversion)
-                #conductivity of spec at t
-                #eq. (30)
+                visc = (
+                    (5.0 / 16.0)
+                    * np.sqrt(
+                        (np.pi * self.species[spec.id].weight * kb * t / Na)
+                    )
+                    / (
+                        self.om22_CHEMKIN(tr, dst)
+                        * np.pi
+                        * float(speciesTransport[spec][2])
+                        * float(speciesTransport[spec][2])
+                        * conversion
+                    )
+                )
+                # conductivity of spec at t
+                # eq. (30)
                 conversion = AtoCM * AtoCM
-                m_red = (self.species[spec.id].weight /  (2.0 * Na))
-                diffcoef = (3.0 / 16.0) * np.sqrt(2.0 * np.pi * kb**3 * t**3 / m_red)/  \
-                        (10.0 * np.pi * self.om11_CHEMKIN(tr,dst) * float(speciesTransport[spec][2]) * \
-                        float(speciesTransport[spec][2]) * conversion)
-                #eq. (19)
-                cv_vib_R = (self._getCVdRspecies(t, spec) - m_cvib[spec.id]) * isatm[spec.id]
-                rho_atm = 10.0 * self.species[spec.id].weight /(RU * t)
-                f_vib = (rho_atm * diffcoef /  visc)
-                #eq. (20)
+                m_red = self.species[spec.id].weight / (2.0 * Na)
+                diffcoef = (
+                    (3.0 / 16.0)
+                    * np.sqrt(2.0 * np.pi * kb ** 3 * t ** 3 / m_red)
+                    / (
+                        10.0
+                        * np.pi
+                        * self.om11_CHEMKIN(tr, dst)
+                        * float(speciesTransport[spec][2])
+                        * float(speciesTransport[spec][2])
+                        * conversion
+                    )
+                )
+                # eq. (19)
+                cv_vib_R = (
+                    self._getCVdRspecies(t, spec) - m_cvib[spec.id]
+                ) * isatm[spec.id]
+                rho_atm = 10.0 * self.species[spec.id].weight / (RU * t)
+                f_vib = rho_atm * diffcoef / visc
+                # eq. (20)
                 A = 2.5 - f_vib
-                #eqs. (21) + (32-33)
+                # eqs. (21) + (32-33)
                 cv_rot_R = m_crot[spec.id]
-                #note: the T corr is not applied in CANTERA
-                B = (float(speciesTransport[spec][5]) \
-                        * self.Fcorr(298.0, float(speciesTransport[spec][1])) / self.Fcorr(t, float(speciesTransport[spec][1])) \
-                        + (2.0 / np.pi) * ((5.0 / 3.0 ) * cv_rot_R  + f_vib))
-                #eq. (18)
-                f_rot = f_vib * (1.0 + 2.0 / np.pi * A / B )
-                #eq. (17) 
-                cv_trans_R = 3.0 / 2.0 
-                f_trans = 5.0 / 2.0 * (1.0 - 2.0 / np.pi * A / B * cv_rot_R / cv_trans_R )
-                if (int(speciesTransport[spec][0]) == 0):
-                    cond = ((visc * RU /  self.species[spec.id].weight)) * \
-                            (5.0 / 2.0) * cv_trans_R
+                # note: the T corr is not applied in CANTERA
+                B = float(speciesTransport[spec][5]) * self.Fcorr(
+                    298.0, float(speciesTransport[spec][1])
+                ) / self.Fcorr(t, float(speciesTransport[spec][1])) + (
+                    2.0 / np.pi
+                ) * (
+                    (5.0 / 3.0) * cv_rot_R + f_vib
+                )
+                # eq. (18)
+                f_rot = f_vib * (1.0 + 2.0 / np.pi * A / B)
+                # eq. (17)
+                cv_trans_R = 3.0 / 2.0
+                f_trans = (
+                    5.0
+                    / 2.0
+                    * (1.0 - 2.0 / np.pi * A / B * cv_rot_R / cv_trans_R)
+                )
+                if int(speciesTransport[spec][0]) == 0:
+                    cond = (
+                        ((visc * RU / self.species[spec.id].weight))
+                        * (5.0 / 2.0)
+                        * cv_trans_R
+                    )
                 else:
-                    cond = ((visc * RU /  self.species[spec.id].weight)) * \
-                        (f_trans * cv_trans_R + f_rot * cv_rot_R + f_vib * cv_vib_R)
+                    cond = ((visc * RU / self.species[spec.id].weight)) * (
+                        f_trans * cv_trans_R
+                        + f_rot * cv_rot_R
+                        + f_vib * cv_vib_R
+                    )
 
-                #log transformation for polyfit
+                # log transformation for polyfit
                 tlog.append(np.log(t))
                 spvisc.append(np.log(visc))
                 spcond.append(np.log(cond))
@@ -7507,67 +7817,90 @@ class FPickler(CMill):
             cofeta[spec.id] = np.polyfit(tlog, spvisc, 3)
             coflam[spec.id] = np.polyfit(tlog, spcond, 3)
 
-        #header for visco
+        # header for visco
         self._write()
         self._write()
-        self._write('! Poly fits for the viscosities, dim NO*KK')
-        #self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        #self._write('#define egtransetCOFETA EGTRANSETCOFETA')
-        #self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        #self._write('#define egtransetCOFETA egtransetcofeta')
-        #self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        #self._write('#define egtransetCOFETA egtransetcofeta_')
-        #self._write('#endif')
+        self._write("! Poly fits for the viscosities, dim NO*KK")
+        # self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+        # self._write('#define egtransetCOFETA EGTRANSETCOFETA')
+        # self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+        # self._write('#define egtransetCOFETA egtransetcofeta')
+        # self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+        # self._write('#define egtransetCOFETA egtransetcofeta_')
+        # self._write('#endif')
 
-        #visco coefs
-        self._write('subroutine egtransetCOFETA(COFETA)')
+        # visco coefs
+        self._write("subroutine egtransetCOFETA(COFETA)")
         self._indent()
         self._write()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(out) :: COFETA(%d)' % (len(self.species)*4))
+        self._write(
+            "double precision, intent(out) :: COFETA(%d)"
+            % (len(self.species) * 4)
+        )
         self._write()
         for spec in self.species:
             for i in range(4):
-                self._write('%s(%d) = %s' % ('COFETA', spec.id*4+i+1, format(cofeta[spec.id][3-i], '.8e').replace("e", "d")))
+                self._write(
+                    "%s(%d) = %s"
+                    % (
+                        "COFETA",
+                        spec.id * 4 + i + 1,
+                        format(cofeta[spec.id][3 - i], ".8e").replace(
+                            "e", "d"
+                        ),
+                    )
+                )
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
-        #header for cond
+        # header for cond
         self._write()
         self._write()
-        self._write('! Poly fits for the conductivities, dim NO*KK')
-        #self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        #self._write('#define egtransetCOFLAM EGTRANSETCOFLAM')
-        #self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        #self._write('#define egtransetCOFLAM egtransetcoflam')
-        #self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        #self._write('#define egtransetCOFLAM egtransetcoflam_')
-        #self._write('#endif')
+        self._write("! Poly fits for the conductivities, dim NO*KK")
+        # self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+        # self._write('#define egtransetCOFLAM EGTRANSETCOFLAM')
+        # self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+        # self._write('#define egtransetCOFLAM egtransetcoflam')
+        # self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+        # self._write('#define egtransetCOFLAM egtransetcoflam_')
+        # self._write('#endif')
 
-        #visco coefs
-        self._write('subroutine egtransetCOFLAM(COFLAM)')
+        # visco coefs
+        self._write("subroutine egtransetCOFLAM(COFLAM)")
         self._indent()
         self._write()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(out) :: COFLAM(%d)' % (len(self.species)*4))
+        self._write(
+            "double precision, intent(out) :: COFLAM(%d)"
+            % (len(self.species) * 4)
+        )
         self._write()
         for spec in self.species:
             for i in range(4):
-                self._write('%s(%d) = %s' % ('COFLAM', spec.id*4+i+1, format(coflam[spec.id][3-i], '.8e').replace("e","d")))
+                self._write(
+                    "%s(%d) = %s"
+                    % (
+                        "COFLAM",
+                        spec.id * 4 + i + 1,
+                        format(coflam[spec.id][3 - i], ".8e").replace(
+                            "e", "d"
+                        ),
+                    )
+                )
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
-
 
     def _thermaldiffratios(self, speciesTransport, lightSpecList, NTFit):
 
         # This is an overhaul of CHEMKIN version III
-        #REORDERING OF SPECS
+        # REORDERING OF SPECS
         specOrdered = []
         for i in range(self.nSpecies):
             for spec in speciesTransport:
@@ -7575,345 +7908,472 @@ class FPickler(CMill):
                     specOrdered.append(spec)
                     break
 
-        #compute single constants in g/cm/s
+        # compute single constants in g/cm/s
         kb = 1.3806503e-16
-        #conversion coefs
+        # conversion coefs
         DEBYEtoCGS = 1.0e-18
         AtoCM = 1.0e-8
-        #temperature increment  
-        dt = (self.highT-self.lowT)/ (NTFit-1)
-        #diff ratios (4 per spec pair involving light species) 
+        # temperature increment
+        dt = (self.highT - self.lowT) / (NTFit - 1)
+        # diff ratios (4 per spec pair involving light species)
         coftd = []
         k = -1
-        for i,spec1 in enumerate(specOrdered):
-            if (i != spec1.id):
+        for i, spec1 in enumerate(specOrdered):
+            if i != spec1.id:
                 print("Problem in _thermaldiffratios computation")
                 stop
             if spec1.id in lightSpecList:
                 k = k + 1
-                if (lightSpecList[k] != spec1.id):
+                if lightSpecList[k] != spec1.id:
                     print("Problem in  _thermaldiffratios computation")
                     stop
                 coftd.append([])
                 epsi = float(speciesTransport[spec1][1]) * kb
                 sigi = float(speciesTransport[spec1][2]) * AtoCM
-                poli = float(speciesTransport[spec1][4]) * AtoCM * AtoCM * AtoCM
-                #eq. (12)
-                poliRed = (poli /  sigi**3)
-                for j,spec2 in enumerate(specOrdered):
-                    if (j != spec2.id):
+                poli = (
+                    float(speciesTransport[spec1][4]) * AtoCM * AtoCM * AtoCM
+                )
+                # eq. (12)
+                poliRed = poli / sigi ** 3
+                for j, spec2 in enumerate(specOrdered):
+                    if j != spec2.id:
                         print("Problem in _thermaldiffratios computation")
                         stop
-                    #eq. (53)
-                    Wji = (self.species[spec2.id].weight - self.species[spec1.id].weight) / \
-                            (self.species[spec1.id].weight + self.species[spec2.id].weight) 
+                    # eq. (53)
+                    Wji = (
+                        self.species[spec2.id].weight
+                        - self.species[spec1.id].weight
+                    ) / (
+                        self.species[spec1.id].weight
+                        + self.species[spec2.id].weight
+                    )
                     epsj = float(speciesTransport[spec2][1]) * kb
                     sigj = float(speciesTransport[spec2][2]) * AtoCM
                     dipj = float(speciesTransport[spec2][3]) * DEBYEtoCGS
-                    #eq. (13)
-                    dipjRed = (dipj /  np.sqrt(epsj*sigj**3))
-                    epsRatio = (epsj /  epsi)
-                    tse = 1.0 + 0.25*poliRed*dipjRed**2*np.sqrt(epsRatio)
-                    eok = tse**2 * np.sqrt(float(speciesTransport[spec1][1]) * float(speciesTransport[spec2][1]))
-                    #enter the loop on temperature
+                    # eq. (13)
+                    dipjRed = dipj / np.sqrt(epsj * sigj ** 3)
+                    epsRatio = epsj / epsi
+                    tse = 1.0 + 0.25 * poliRed * dipjRed ** 2 * np.sqrt(
+                        epsRatio
+                    )
+                    eok = tse ** 2 * np.sqrt(
+                        float(speciesTransport[spec1][1])
+                        * float(speciesTransport[spec2][1])
+                    )
+                    # enter the loop on temperature
                     spthdiffcoef = []
                     tTab = []
                     for n in range(NTFit):
-                       t = self.lowT + dt*n
-                       tslog = np.log(t) - np.log(eok)
-                       #eq. (53)
-                       thdifcoeff = 15.0 / 2.0 * Wji * (2.0 * self.astar(tslog) + 5.0) * (6.0 * self.cstar(tslog) - 5.0) / \
-                               (self.astar(tslog) * (16.0 * self.astar(tslog) - 12.0 * self.bstar(tslog) + 55.0))
+                        t = self.lowT + dt * n
+                        tslog = np.log(t) - np.log(eok)
+                        # eq. (53)
+                        thdifcoeff = (
+                            15.0
+                            / 2.0
+                            * Wji
+                            * (2.0 * self.astar(tslog) + 5.0)
+                            * (6.0 * self.cstar(tslog) - 5.0)
+                            / (
+                                self.astar(tslog)
+                                * (
+                                    16.0 * self.astar(tslog)
+                                    - 12.0 * self.bstar(tslog)
+                                    + 55.0
+                                )
+                            )
+                        )
 
-                       #log transformation for polyfit
-                       tTab.append(t)
-                       spthdiffcoef.append(thdifcoeff)
+                        # log transformation for polyfit
+                        tTab.append(t)
+                        spthdiffcoef.append(thdifcoeff)
 
                     coftd[k].append(np.polyfit(tTab, spthdiffcoef, 3))
 
-        #header for thermal diff ratios
+        # header for thermal diff ratios
         self._write()
         self._write()
-        self._write('! Poly fits for thermal diff ratios, dim NO*NLITE*KK')
-        #self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        #self._write('#define egtransetCOFTD EGTRANSETCOFTD')
-        #self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        #self._write('#define egtransetCOFTD egtransetcoftd')
-        #self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        #self._write('#define egtransetCOFTD egtransetcoftd_')
-        #self._write('#endif')
+        self._write("! Poly fits for thermal diff ratios, dim NO*NLITE*KK")
+        # self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+        # self._write('#define egtransetCOFTD EGTRANSETCOFTD')
+        # self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+        # self._write('#define egtransetCOFTD egtransetcoftd')
+        # self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+        # self._write('#define egtransetCOFTD egtransetcoftd_')
+        # self._write('#endif')
 
-        #visco coefs
-        self._write('subroutine egtransetCOFTD(COFTD)')
+        # visco coefs
+        self._write("subroutine egtransetCOFTD(COFTD)")
         self._indent()
         self._write()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(out) :: COFTD(%d)' % (len(coftd)*self.nSpecies*4))
+        self._write(
+            "double precision, intent(out) :: COFTD(%d)"
+            % (len(coftd) * self.nSpecies * 4)
+        )
         self._write()
         for i in range(len(coftd)):
             for j in range(self.nSpecies):
                 for k in range(4):
-                    self._write('%s(%d) = %s' % ('COFTD', i*4*self.nSpecies+j*4+k+1, format(coftd[i][j][3-k], '.8e').replace("e","d")))
+                    self._write(
+                        "%s(%d) = %s"
+                        % (
+                            "COFTD",
+                            i * 4 * self.nSpecies + j * 4 + k + 1,
+                            format(coftd[i][j][3 - k], ".8e").replace(
+                                "e", "d"
+                            ),
+                        )
+                    )
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
 
-
     def _diffcoefs(self, speciesTransport, NTFit):
 
-        #REORDERING OF SPECS
+        # REORDERING OF SPECS
         specOrdered = []
         for i in range(self.nSpecies):
             for spec in speciesTransport:
                 if spec.id == i:
                     specOrdered.append(spec)
                     break
-        #checks
-        #for spec in speciesTransport:
+        # checks
+        # for spec in speciesTransport:
         #    print spec.symbol, spec.id
-        #for i in range(self.nSpecies):
+        # for i in range(self.nSpecies):
         #    print i, specOrdered[i].id, specOrdered[i].symbol
-        #stop
+        # stop
 
-        #compute single constants in g/cm/s
+        # compute single constants in g/cm/s
         kb = 1.3806503e-16
-        Na = 6.02214199e23 
-        #conversion coefs
+        Na = 6.02214199e23
+        # conversion coefs
         AtoCM = 1.0e-8
         DEBYEtoCGS = 1.0e-18
-        PATM = 0.1013250000000000E+07
-        #temperature increment  
-        dt = (self.highT-self.lowT)/ (NTFit-1)
-        #diff coefs (4 per spec pair) 
+        PATM = 0.1013250000000000e07
+        # temperature increment
+        dt = (self.highT - self.lowT) / (NTFit - 1)
+        # diff coefs (4 per spec pair)
         cofd = []
-        for i,spec1 in enumerate(specOrdered):
+        for i, spec1 in enumerate(specOrdered):
             cofd.append([])
-            if (i != spec1.id):
+            if i != spec1.id:
                 print("Problem in _diffcoefs computation")
                 stop
-            for j,spec2 in enumerate(specOrdered[0:i+1]):
-                if (j != spec2.id):
+            for j, spec2 in enumerate(specOrdered[0 : i + 1]):
+                if j != spec2.id:
                     print("Problem in _diffcoefs computation")
                     stop
-                #eq. (9)
-                sigm = (0.5 * (float(speciesTransport[spec1][2]) + float(speciesTransport[spec2][2])) * AtoCM)\
-                        * self.Xi(spec1, spec2, speciesTransport)**(1.0/6.0)
-                #eq. (4)
-                m_red = (self.species[spec1.id].weight * self.species[spec2.id].weight) /  \
-                        ((self.species[spec1.id].weight + self.species[spec2.id].weight) / Na)
-                #eq. (8) & (14)
-                epsm_k = np.sqrt(float(speciesTransport[spec1][1]) * float(speciesTransport[spec2][1])) \
-                        * self.Xi(spec1, spec2, speciesTransport)**2.0
+                # eq. (9)
+                sigm = (
+                    0.5
+                    * (
+                        float(speciesTransport[spec1][2])
+                        + float(speciesTransport[spec2][2])
+                    )
+                    * AtoCM
+                ) * self.Xi(spec1, spec2, speciesTransport) ** (1.0 / 6.0)
+                # eq. (4)
+                m_red = (
+                    self.species[spec1.id].weight
+                    * self.species[spec2.id].weight
+                ) / (
+                    (
+                        self.species[spec1.id].weight
+                        + self.species[spec2.id].weight
+                    )
+                    / Na
+                )
+                # eq. (8) & (14)
+                epsm_k = (
+                    np.sqrt(
+                        float(speciesTransport[spec1][1])
+                        * float(speciesTransport[spec2][1])
+                    )
+                    * self.Xi(spec1, spec2, speciesTransport) ** 2.0
+                )
 
-                #eq. (15)
-                conversion = (DEBYEtoCGS * DEBYEtoCGS /  kb)  
-                dst = 0.5 * conversion * float(speciesTransport[spec1][3]) * float(speciesTransport[spec2][3]) / \
-                    (epsm_k * sigm**3)
-                if self.Xi_bool(spec1, spec2, speciesTransport)==False:
+                # eq. (15)
+                conversion = DEBYEtoCGS * DEBYEtoCGS / kb
+                dst = (
+                    0.5
+                    * conversion
+                    * float(speciesTransport[spec1][3])
+                    * float(speciesTransport[spec2][3])
+                    / (epsm_k * sigm ** 3)
+                )
+                if self.Xi_bool(spec1, spec2, speciesTransport) == False:
                     dst = 0.0
-                #enter the loop on temperature
+                # enter the loop on temperature
                 spdiffcoef = []
                 tlog = []
                 for n in range(NTFit):
-                   t = self.lowT + dt*n
-                   tr = (t /  epsm_k)
-                   #eq. (3)
-                   #note: these are "corrected" in CHEMKIN not in CANTERA... we chose not to
-                   difcoeff = 3.0 / 16.0 * 1 / PATM * (np.sqrt(2.0 * np.pi * t**3 * kb**3 / m_red)/ \
-                           ( np.pi * sigm * sigm * self.om11_CHEMKIN(tr,dst)))
+                    t = self.lowT + dt * n
+                    tr = t / epsm_k
+                    # eq. (3)
+                    # note: these are "corrected" in CHEMKIN not in CANTERA... we chose not to
+                    difcoeff = (
+                        3.0
+                        / 16.0
+                        * 1
+                        / PATM
+                        * (
+                            np.sqrt(2.0 * np.pi * t ** 3 * kb ** 3 / m_red)
+                            / (
+                                np.pi
+                                * sigm
+                                * sigm
+                                * self.om11_CHEMKIN(tr, dst)
+                            )
+                        )
+                    )
 
-                   #log transformation for polyfit
-                   tlog.append(np.log(t))
-                   spdiffcoef.append(np.log(difcoeff))
+                    # log transformation for polyfit
+                    tlog.append(np.log(t))
+                    spdiffcoef.append(np.log(difcoeff))
 
                 cofd[i].append(np.polyfit(tlog, spdiffcoef, 3))
 
-        #use the symmetry for upper triangular terms 
-        #note: starting with this would be preferable (only one bigger loop)
-        #note2: or write stuff differently !
-        #for i,spec1 in enumerate(specOrdered):
+        # use the symmetry for upper triangular terms
+        # note: starting with this would be preferable (only one bigger loop)
+        # note2: or write stuff differently !
+        # for i,spec1 in enumerate(specOrdered):
         #    for j,spec2 in enumerate(specOrdered[i+1:]):
         #        cofd[i].append(cofd[spec2.id][spec1.id])
 
-        #header for diffusion coefs
+        # header for diffusion coefs
         self._write()
-        self._write('! Poly fits for the diffusion coefficients, dim NO*KK*KK')
-        #self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        #self._write('#define egtransetCOFD EGTRANSETCOFD')
-        #self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        #self._write('#define egtransetCOFD egtransetcofd')
-        #self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        #self._write('#define egtransetCOFD egtransetcofd_')
-        #self._write('#endif')
+        self._write("! Poly fits for the diffusion coefficients, dim NO*KK*KK")
+        # self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+        # self._write('#define egtransetCOFD EGTRANSETCOFD')
+        # self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+        # self._write('#define egtransetCOFD egtransetcofd')
+        # self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+        # self._write('#define egtransetCOFD egtransetcofd_')
+        # self._write('#endif')
 
-        #coefs
-        self._write('subroutine egtransetCOFD(COFD)')
+        # coefs
+        self._write("subroutine egtransetCOFD(COFD)")
         self._indent()
         self._write()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
         cofd_size = 0
-        for i,spec1 in enumerate(specOrdered):
-            for j,spec2 in enumerate(specOrdered[0:i+1]):
+        for i, spec1 in enumerate(specOrdered):
+            for j, spec2 in enumerate(specOrdered[0 : i + 1]):
                 for k in range(4):
                     cofd_size = cofd_size + 1
-            for j,spec2 in enumerate(specOrdered[i+1:]):
+            for j, spec2 in enumerate(specOrdered[i + 1 :]):
                 for k in range(4):
                     cofd_size = cofd_size + 1
-        self._write('double precision, intent(out) :: COFD(%d)' % (cofd_size))
+        self._write("double precision, intent(out) :: COFD(%d)" % (cofd_size))
         self._write()
-        for i,spec1 in enumerate(specOrdered):
-            #for j,spec2 in enumerate(specOrdered):
-            for j,spec2 in enumerate(specOrdered[0:i+1]):
+        for i, spec1 in enumerate(specOrdered):
+            # for j,spec2 in enumerate(specOrdered):
+            for j, spec2 in enumerate(specOrdered[0 : i + 1]):
                 for k in range(4):
-                    #self._write('%s[%d] = %.8E;' % ('COFD', i*self.nSpecies*4+j*4+k, cofd[j][i][3-k]))
-                    self._write('%s(%d) = %s' % ('COFD', i*self.nSpecies*4+j*4+k+1, format(cofd[i][j][3-k], '.8e').replace("e","d")))
-            for j,spec2 in enumerate(specOrdered[i+1:]):
+                    # self._write('%s[%d] = %.8E;' % ('COFD', i*self.nSpecies*4+j*4+k, cofd[j][i][3-k]))
+                    self._write(
+                        "%s(%d) = %s"
+                        % (
+                            "COFD",
+                            i * self.nSpecies * 4 + j * 4 + k + 1,
+                            format(cofd[i][j][3 - k], ".8e").replace("e", "d"),
+                        )
+                    )
+            for j, spec2 in enumerate(specOrdered[i + 1 :]):
                 for k in range(4):
-                    self._write('%s(%d) = %s' % ('COFD', i*self.nSpecies*4+(j+i+1)*4+k+1, format(cofd[j+i+1][i][3-k], '.8e').replace("e","d")))
+                    self._write(
+                        "%s(%d) = %s"
+                        % (
+                            "COFD",
+                            i * self.nSpecies * 4 + (j + i + 1) * 4 + k + 1,
+                            format(cofd[j + i + 1][i][3 - k], ".8e").replace(
+                                "e", "d"
+                            ),
+                        )
+                    )
         self._outdent()
         self._write()
-        self._write('end subroutine')
-        
-        return
+        self._write("end subroutine")
 
+        return
 
     def _lightSpecs(self, speclist):
-        
-        #header 
-        self._write()
-        self._write('! List of specs with small weight, dim NLITE')
-        #self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        #self._write('#define egtransetKTDIF EGTRANSETKTDIF')
-        #self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        #self._write('#define egtransetKTDIF egtransetktdif')
-        #self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        #self._write('#define egtransetKTDIF egtransetktdif_')
-        #self._write('#endif')
 
-        #coefs
-        self._write('subroutine egtransetKTDIF(KTDIF)')
+        # header
+        self._write()
+        self._write("! List of specs with small weight, dim NLITE")
+        # self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+        # self._write('#define egtransetKTDIF EGTRANSETKTDIF')
+        # self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+        # self._write('#define egtransetKTDIF egtransetktdif')
+        # self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+        # self._write('#define egtransetKTDIF egtransetktdif_')
+        # self._write('#endif')
+
+        # coefs
+        self._write("subroutine egtransetKTDIF(KTDIF)")
         self._indent()
         self._write()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('integer, intent(out) :: KTDIF(%d)' % len(speclist))
+        self._write("integer, intent(out) :: KTDIF(%d)" % len(speclist))
         self._write()
         for i in range(len(speclist)):
-            self._write('%s(%d) = %d' % ('KTDIF', i+1, speclist[i]+1))
+            self._write("%s(%d) = %d" % ("KTDIF", i + 1, speclist[i] + 1))
         self._outdent()
         self._write()
-        self._write('end subroutine')
-        
-        return
+        self._write("end subroutine")
 
+        return
 
     def astar(self, tslog):
 
-        aTab = [.1106910525E+01, -.7065517161E-02,-.1671975393E-01,
-                .1188708609E-01,  .7569367323E-03,-.1313998345E-02,
-                .1720853282E-03]
+        aTab = [
+            0.1106910525e01,
+            -0.7065517161e-02,
+            -0.1671975393e-01,
+            0.1188708609e-01,
+            0.7569367323e-03,
+            -0.1313998345e-02,
+            0.1720853282e-03,
+        ]
 
         B = aTab[6]
         for i in range(6):
-            B = aTab[5-i] + B*tslog
+            B = aTab[5 - i] + B * tslog
 
         return B
-
 
     def bstar(self, tslog):
 
-        bTab = [.1199673577E+01, -.1140928763E+00,-.2147636665E-02,
-                .2512965407E-01, -.3030372973E-02,-.1445009039E-02,
-                .2492954809E-03]
+        bTab = [
+            0.1199673577e01,
+            -0.1140928763e00,
+            -0.2147636665e-02,
+            0.2512965407e-01,
+            -0.3030372973e-02,
+            -0.1445009039e-02,
+            0.2492954809e-03,
+        ]
 
         B = bTab[6]
         for i in range(6):
-            B = bTab[5-i] + B*tslog
+            B = bTab[5 - i] + B * tslog
 
         return B
-
 
     def cstar(self, tslog):
 
-        cTab = [ .8386993788E+00,  .4748325276E-01, .3250097527E-01,
-                -.1625859588E-01, -.2260153363E-02, .1844922811E-02,
-                -.2115417788E-03]
+        cTab = [
+            0.8386993788e00,
+            0.4748325276e-01,
+            0.3250097527e-01,
+            -0.1625859588e-01,
+            -0.2260153363e-02,
+            0.1844922811e-02,
+            -0.2115417788e-03,
+        ]
 
         B = cTab[6]
         for i in range(6):
-            B = cTab[5-i] + B*tslog
+            B = cTab[5 - i] + B * tslog
 
         return B
-
 
     def Xi(self, spec1, spec2, speciesTransport):
 
         dipmin = 1e-20
-        #1 is polar, 2 is nonpolar
-        #err in eq. (11) ?
-        if (float(speciesTransport[spec2][3]) < dipmin) and (float(speciesTransport[spec1][3]) > dipmin):
-            xi = 1.0 + 1.0/4.0 * self.redPol(spec2, speciesTransport)*self.redDip(spec1, speciesTransport) *\
-                    self.redDip(spec1, speciesTransport) *\
-                    np.sqrt(float(speciesTransport[spec1][1]) / float(speciesTransport[spec2][1]))
-        #1 is nonpolar, 2 is polar
-        elif (float(speciesTransport[spec2][3]) > dipmin) and (float(speciesTransport[spec1][3]) < dipmin):
-            xi = 1.0 + 1.0/4.0 * self.redPol(spec1, speciesTransport)*self.redDip(spec2, speciesTransport) *\
-                    self.redDip(spec2, speciesTransport) *\
-                    np.sqrt(float(speciesTransport[spec2][1]) / float(speciesTransport[spec1][1]))
-        #normal case, either both polar or both nonpolar
+        # 1 is polar, 2 is nonpolar
+        # err in eq. (11) ?
+        if (float(speciesTransport[spec2][3]) < dipmin) and (
+            float(speciesTransport[spec1][3]) > dipmin
+        ):
+            xi = 1.0 + 1.0 / 4.0 * self.redPol(
+                spec2, speciesTransport
+            ) * self.redDip(spec1, speciesTransport) * self.redDip(
+                spec1, speciesTransport
+            ) * np.sqrt(
+                float(speciesTransport[spec1][1])
+                / float(speciesTransport[spec2][1])
+            )
+        # 1 is nonpolar, 2 is polar
+        elif (float(speciesTransport[spec2][3]) > dipmin) and (
+            float(speciesTransport[spec1][3]) < dipmin
+        ):
+            xi = 1.0 + 1.0 / 4.0 * self.redPol(
+                spec1, speciesTransport
+            ) * self.redDip(spec2, speciesTransport) * self.redDip(
+                spec2, speciesTransport
+            ) * np.sqrt(
+                float(speciesTransport[spec2][1])
+                / float(speciesTransport[spec1][1])
+            )
+        # normal case, either both polar or both nonpolar
         else:
             xi = 1.0
 
         return xi
 
-
     def Xi_bool(self, spec1, spec2, speciesTransport):
 
         dipmin = 1e-20
-        #1 is polar, 2 is nonpolar
-        #err in eq. (11) ?
-        if (float(speciesTransport[spec2][3]) < dipmin) and (float(speciesTransport[spec1][3]) > dipmin):
+        # 1 is polar, 2 is nonpolar
+        # err in eq. (11) ?
+        if (float(speciesTransport[spec2][3]) < dipmin) and (
+            float(speciesTransport[spec1][3]) > dipmin
+        ):
             xi_b = False
-        #1 is nonpolar, 2 is polar
-        elif (float(speciesTransport[spec2][3]) > dipmin) and (float(speciesTransport[spec1][3]) < dipmin):
+        # 1 is nonpolar, 2 is polar
+        elif (float(speciesTransport[spec2][3]) > dipmin) and (
+            float(speciesTransport[spec1][3]) < dipmin
+        ):
             xi_b = False
-        #normal case, either both polar or both nonpolar
+        # normal case, either both polar or both nonpolar
         else:
             xi_b = True
 
         return xi_b
 
+    def redPol(self, spec, speciesTransport):
 
-    def redPol(self, spec, speciesTransport): 
+        return (
+            float(speciesTransport[spec][4])
+            / float(speciesTransport[spec][2]) ** 3.0
+        )
 
-        return (float(speciesTransport[spec][4]) / float(speciesTransport[spec][2])**3.0)
+    def redDip(self, spec, speciesTransport):
 
-
-    def redDip(self, spec, speciesTransport): 
-
-        #compute single constants in g/cm/s
+        # compute single constants in g/cm/s
         kb = 1.3806503e-16
-        #conversion coefs
+        # conversion coefs
         AtoCM = 1.0e-8
         DEBYEtoCGS = 1.0e-18
-        convert = (DEBYEtoCGS /  np.sqrt( kb * AtoCM**3.0 ))
-        return convert * float(speciesTransport[spec][3])/ \
-                np.sqrt(float(speciesTransport[spec][1]) * float(speciesTransport[spec][2])**3.0)
-
+        convert = DEBYEtoCGS / np.sqrt(kb * AtoCM ** 3.0)
+        return (
+            convert
+            * float(speciesTransport[spec][3])
+            / np.sqrt(
+                float(speciesTransport[spec][1])
+                * float(speciesTransport[spec][2]) ** 3.0
+            )
+        )
 
     def Fcorr(self, t, eps_k):
 
         thtwo = 3.0 / 2.0
-        return 1 + np.pi**(thtwo) / 2.0 * np.sqrt((eps_k /  t)) + \
-                (np.pi**2 / 4.0 + 2.0) * ((eps_k /  t)) + \
-                ((np.pi * eps_k /  t))**(thtwo)
+        return (
+            1
+            + np.pi ** (thtwo) / 2.0 * np.sqrt((eps_k / t))
+            + (np.pi ** 2 / 4.0 + 2.0) * ((eps_k / t))
+            + ((np.pi * eps_k / t)) ** (thtwo)
+        )
 
-
-    #def om11(self, tr, dst):
+    # def om11(self, tr, dst):
 
     #    # This is an overhaul of CANTERA version 2.3
     #    #range of dst
@@ -7968,13 +8428,12 @@ class FPickler(CMill):
     #            1.14187, 1.14187, 1.14187, 1.14187, 1.14187, 1.14187, 1.14187,
     #            1.14187]
 
-
     #    #Find for each fixed tr the poly of deg 6 in dst approx astar values
     #    #store the poly coefs in m_apoly
     #    m_apoly = []
     #    for i in range(37):
     #        dstDeg = 6
-    #        #Polynomial coefficients, highest power first 
+    #        #Polynomial coefficients, highest power first
     #        polycoefs = np.polyfit(dstTab,astarTab[8*(i+1):8*(i+2)],dstDeg)
     #        m_apoly.append(polycoefs)
 
@@ -8005,210 +8464,809 @@ class FPickler(CMill):
 
     #    return self.om22(tr,dst)/astar_interp
 
-
     def om11_CHEMKIN(self, tr, dst):
 
         # This is an overhaul of CANTERA version 2.3
-        #range of dst
+        # range of dst
         dstTab = [0.0, 0.25, 0.50, 0.75, 1.0, 1.5, 2.0, 2.5]
 
-        #range of tr
-        trTab = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
-                1.2, 1.4, 1.6, 1.8, 2.0, 2.5, 3.0, 3.5, 4.0,
-                5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0,
-                18.0, 20.0, 25.0, 30.0, 35.0, 40.0, 50.0, 75.0, 100.0]
+        # range of tr
+        trTab = [
+            0.1,
+            0.2,
+            0.3,
+            0.4,
+            0.5,
+            0.6,
+            0.7,
+            0.8,
+            0.9,
+            1.0,
+            1.2,
+            1.4,
+            1.6,
+            1.8,
+            2.0,
+            2.5,
+            3.0,
+            3.5,
+            4.0,
+            5.0,
+            6.0,
+            7.0,
+            8.0,
+            9.0,
+            10.0,
+            12.0,
+            14.0,
+            16.0,
+            18.0,
+            20.0,
+            25.0,
+            30.0,
+            35.0,
+            40.0,
+            50.0,
+            75.0,
+            100.0,
+        ]
 
-        #tab of omega11 corresp. to (tr, dst)
-        #CANTERA
-        omegaTab = [4.008, 4.002, 4.655, 5.52, 6.454, 8.214, 9.824, 11.31,
-                3.130 , 3.164 , 3.355 , 3.721 , 4.198 , 5.23  , 6.225 , 7.160,
-                2.649 , 2.657 , 2.77  , 3.002 , 3.319 , 4.054 , 4.785 , 5.483 ,
-                2.314 , 2.32  , 2.402 , 2.572 , 2.812 , 3.386 , 3.972 , 4.539 ,
-                2.066 , 2.073 , 2.14  , 2.278 , 2.472 , 2.946 , 3.437 , 3.918 ,
-                1.877 , 1.885 , 1.944 , 2.06  , 2.225 , 2.628 , 3.054 , 3.747 ,
-                1.729 , 1.738 , 1.79  , 1.893 , 2.036 , 2.388 , 2.763 , 3.137 ,
-                1.6122, 1.622 , 1.67  , 1.76  , 1.886 , 2.198 , 2.535 , 2.872 ,
-                1.517 , 1.527 , 1.572 , 1.653 , 1.765 , 2.044 , 2.35  , 2.657 ,
-                1.44  , 1.45  , 1.49  , 1.564 , 1.665 , 1.917 , 2.196 , 2.4780,
-                1.3204, 1.33  , 1.364 , 1.425 , 1.51  , 1.72  , 1.956 , 2.199,
-                1.234 , 1.24  , 1.272 , 1.324 , 1.394 , 1.573 , 1.777 , 1.99,
-                1.168 , 1.176 , 1.202 , 1.246 , 1.306 , 1.46  , 1.64  , 1.827,
-                1.1166, 1.124 , 1.146 , 1.185 , 1.237 , 1.372 , 1.53  , 1.7,
-                1.075 , 1.082 , 1.102 , 1.135 , 1.181 , 1.3   , 1.441 , 1.592,
-                1.0006, 1.005 , 1.02  , 1.046 , 1.08  , 1.17  , 1.278 , 1.397,
-                 .95  ,  .9538,  .9656,  .9852, 1.012 , 1.082 , 1.168 , 1.265,
-                 .9131,  .9162,  .9256,  .9413,  .9626, 1.019 , 1.09  , 1.17,
-                 .8845,  .8871,  .8948,  .9076,  .9252,  .972 , 1.03  , 1.098,
-                 .8428,  .8446,  .850 ,  .859 ,  .8716,  .9053,  .9483,  .9984,
-                 .813 ,  .8142,  .8183,  .825 ,  .8344,  .8598,  .8927,  .9316,
-                 .7898,  .791 ,  .794 ,  .7993,  .8066,  .8265,  .8526,  .8836,
-                 .7711,  .772 ,  .7745,  .7788,  .7846,  .8007,  .822 ,  .8474,
-                 .7555,  .7562,  .7584,  .7619,  .7667,  .78  ,  .7976,  .8189,
-                 .7422,  .743 ,  .7446,  .7475,  .7515,  .7627,  .7776,  .796 ,
-                 .72022, .7206,  .722 ,  .7241,  .7271,  .7354,  .7464,  .76  ,
-                 .7025,  .703 ,  .704 ,  .7055,  .7078,  .7142,  .7228,  .7334,
-                 .68776, .688,   .6888,  .6901,  .6919,  .697 ,  .704 ,  .7125,
-                 .6751,  .6753,  .676 ,  .677 ,  .6785,  .6827,  .6884,  .6955,
-                 .664 ,  .6642,  .6648,  .6657,  .6669,  .6704,  .6752,  .681,
-                 .6414,  .6415,  .6418,  .6425,  .6433,  .6457,  .649 ,  .653,
-                 .6235,  .6236,  .6239,  .6243,  .6249,  .6267,  .629 ,  .632,
-                 .60882, .6089,  .6091,  .6094,  .61  ,  .6112,  .613 ,  .6154,
-                 .5964,  .5964,  .5966,  .597 ,  .5972,  .5983,  .600 ,  .6017,
-                 .5763,  .5763,  .5764,  .5766,  .5768,  .5775,  .5785,  .58,
-                 .5415,  .5415,  .5416,  .5416,  .5418,  .542 ,  .5424,  .543,
-                 .518 ,  .518 ,  .5182,  .5184,  .5184,  .5185,  .5186,  .5187]
+        # tab of omega11 corresp. to (tr, dst)
+        # CANTERA
+        omegaTab = [
+            4.008,
+            4.002,
+            4.655,
+            5.52,
+            6.454,
+            8.214,
+            9.824,
+            11.31,
+            3.130,
+            3.164,
+            3.355,
+            3.721,
+            4.198,
+            5.23,
+            6.225,
+            7.160,
+            2.649,
+            2.657,
+            2.77,
+            3.002,
+            3.319,
+            4.054,
+            4.785,
+            5.483,
+            2.314,
+            2.32,
+            2.402,
+            2.572,
+            2.812,
+            3.386,
+            3.972,
+            4.539,
+            2.066,
+            2.073,
+            2.14,
+            2.278,
+            2.472,
+            2.946,
+            3.437,
+            3.918,
+            1.877,
+            1.885,
+            1.944,
+            2.06,
+            2.225,
+            2.628,
+            3.054,
+            3.747,
+            1.729,
+            1.738,
+            1.79,
+            1.893,
+            2.036,
+            2.388,
+            2.763,
+            3.137,
+            1.6122,
+            1.622,
+            1.67,
+            1.76,
+            1.886,
+            2.198,
+            2.535,
+            2.872,
+            1.517,
+            1.527,
+            1.572,
+            1.653,
+            1.765,
+            2.044,
+            2.35,
+            2.657,
+            1.44,
+            1.45,
+            1.49,
+            1.564,
+            1.665,
+            1.917,
+            2.196,
+            2.4780,
+            1.3204,
+            1.33,
+            1.364,
+            1.425,
+            1.51,
+            1.72,
+            1.956,
+            2.199,
+            1.234,
+            1.24,
+            1.272,
+            1.324,
+            1.394,
+            1.573,
+            1.777,
+            1.99,
+            1.168,
+            1.176,
+            1.202,
+            1.246,
+            1.306,
+            1.46,
+            1.64,
+            1.827,
+            1.1166,
+            1.124,
+            1.146,
+            1.185,
+            1.237,
+            1.372,
+            1.53,
+            1.7,
+            1.075,
+            1.082,
+            1.102,
+            1.135,
+            1.181,
+            1.3,
+            1.441,
+            1.592,
+            1.0006,
+            1.005,
+            1.02,
+            1.046,
+            1.08,
+            1.17,
+            1.278,
+            1.397,
+            0.95,
+            0.9538,
+            0.9656,
+            0.9852,
+            1.012,
+            1.082,
+            1.168,
+            1.265,
+            0.9131,
+            0.9162,
+            0.9256,
+            0.9413,
+            0.9626,
+            1.019,
+            1.09,
+            1.17,
+            0.8845,
+            0.8871,
+            0.8948,
+            0.9076,
+            0.9252,
+            0.972,
+            1.03,
+            1.098,
+            0.8428,
+            0.8446,
+            0.850,
+            0.859,
+            0.8716,
+            0.9053,
+            0.9483,
+            0.9984,
+            0.813,
+            0.8142,
+            0.8183,
+            0.825,
+            0.8344,
+            0.8598,
+            0.8927,
+            0.9316,
+            0.7898,
+            0.791,
+            0.794,
+            0.7993,
+            0.8066,
+            0.8265,
+            0.8526,
+            0.8836,
+            0.7711,
+            0.772,
+            0.7745,
+            0.7788,
+            0.7846,
+            0.8007,
+            0.822,
+            0.8474,
+            0.7555,
+            0.7562,
+            0.7584,
+            0.7619,
+            0.7667,
+            0.78,
+            0.7976,
+            0.8189,
+            0.7422,
+            0.743,
+            0.7446,
+            0.7475,
+            0.7515,
+            0.7627,
+            0.7776,
+            0.796,
+            0.72022,
+            0.7206,
+            0.722,
+            0.7241,
+            0.7271,
+            0.7354,
+            0.7464,
+            0.76,
+            0.7025,
+            0.703,
+            0.704,
+            0.7055,
+            0.7078,
+            0.7142,
+            0.7228,
+            0.7334,
+            0.68776,
+            0.688,
+            0.6888,
+            0.6901,
+            0.6919,
+            0.697,
+            0.704,
+            0.7125,
+            0.6751,
+            0.6753,
+            0.676,
+            0.677,
+            0.6785,
+            0.6827,
+            0.6884,
+            0.6955,
+            0.664,
+            0.6642,
+            0.6648,
+            0.6657,
+            0.6669,
+            0.6704,
+            0.6752,
+            0.681,
+            0.6414,
+            0.6415,
+            0.6418,
+            0.6425,
+            0.6433,
+            0.6457,
+            0.649,
+            0.653,
+            0.6235,
+            0.6236,
+            0.6239,
+            0.6243,
+            0.6249,
+            0.6267,
+            0.629,
+            0.632,
+            0.60882,
+            0.6089,
+            0.6091,
+            0.6094,
+            0.61,
+            0.6112,
+            0.613,
+            0.6154,
+            0.5964,
+            0.5964,
+            0.5966,
+            0.597,
+            0.5972,
+            0.5983,
+            0.600,
+            0.6017,
+            0.5763,
+            0.5763,
+            0.5764,
+            0.5766,
+            0.5768,
+            0.5775,
+            0.5785,
+            0.58,
+            0.5415,
+            0.5415,
+            0.5416,
+            0.5416,
+            0.5418,
+            0.542,
+            0.5424,
+            0.543,
+            0.518,
+            0.518,
+            0.5182,
+            0.5184,
+            0.5184,
+            0.5185,
+            0.5186,
+            0.5187,
+        ]
 
-        #First test on tr
-        if (tr > 75.0):
-            omeg12 = 0.623 - 0.136e-2*tr + 0.346e-5*tr*tr - 0.343e-8*tr*tr*tr
+        # First test on tr
+        if tr > 75.0:
+            omeg12 = (
+                0.623
+                - 0.136e-2 * tr
+                + 0.346e-5 * tr * tr
+                - 0.343e-8 * tr * tr * tr
+            )
         else:
-            #Find tr idx in trTab
-            if (tr <= 0.2):
+            # Find tr idx in trTab
+            if tr <= 0.2:
                 ii = 1
             else:
                 ii = 36
-            for i in range(1,37):
-                if (tr > trTab[i-1]) and (tr <= trTab[i]):
+            for i in range(1, 37):
+                if (tr > trTab[i - 1]) and (tr <= trTab[i]):
                     ii = i
                     break
-            #Find dst idx in dstTab 
-            if (abs(dst) >= 1.0e-5):
-                if (dst <= 0.25):
+            # Find dst idx in dstTab
+            if abs(dst) >= 1.0e-5:
+                if dst <= 0.25:
                     kk = 1
                 else:
                     kk = 6
-                for i in range(1,7):
-                    if (dstTab[i-1] < dst) and (dstTab[i] >= dst):
+                for i in range(1, 7):
+                    if (dstTab[i - 1] < dst) and (dstTab[i] >= dst):
                         kk = i
                         break
-                #Find surrounding values and interpolate
-                #First on dst
-                vert = np.zeros(3) 
+                # Find surrounding values and interpolate
+                # First on dst
+                vert = np.zeros(3)
                 for i in range(3):
-                    arg = np.zeros(3) 
-                    val = np.zeros(3) 
+                    arg = np.zeros(3)
+                    val = np.zeros(3)
                     for k in range(3):
-                      arg[k] = dstTab[kk-1+k]
-                      val[k] = omegaTab[8*(ii-1+i) + (kk-1+k)]
+                        arg[k] = dstTab[kk - 1 + k]
+                        val[k] = omegaTab[8 * (ii - 1 + i) + (kk - 1 + k)]
                     vert[i] = self.qinterp(dst, arg, val)
-                #Second on tr
-                arg = np.zeros(3) 
+                # Second on tr
+                arg = np.zeros(3)
                 for i in range(3):
-                   arg[i] = trTab[ii-1+i]
+                    arg[i] = trTab[ii - 1 + i]
                 omeg12 = self.qinterp(tr, arg, vert)
             else:
-                arg = np.zeros(3) 
-                val = np.zeros(3) 
+                arg = np.zeros(3)
+                val = np.zeros(3)
                 for i in range(3):
-                   arg[i] = trTab[ii-1+i]
-                   val[i] = omegaTab[8*(ii-1+i)]
-                omeg12 =self. qinterp(tr, arg, val)
+                    arg[i] = trTab[ii - 1 + i]
+                    val[i] = omegaTab[8 * (ii - 1 + i)]
+                omeg12 = self.qinterp(tr, arg, val)
 
         return omeg12
-
 
     def om22_CHEMKIN(self, tr, dst):
 
         # This is an overhaul of CANTERA version 2.3
-        #range of dst
+        # range of dst
         dstTab = [0.0, 0.25, 0.50, 0.75, 1.0, 1.5, 2.0, 2.5]
 
-        #range of tr
-        trTab = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
-                1.2, 1.4, 1.6, 1.8, 2.0, 2.5, 3.0, 3.5, 4.0,
-                5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0,
-                18.0, 20.0, 25.0, 30.0, 35.0, 40.0, 50.0, 75.0, 100.0]
+        # range of tr
+        trTab = [
+            0.1,
+            0.2,
+            0.3,
+            0.4,
+            0.5,
+            0.6,
+            0.7,
+            0.8,
+            0.9,
+            1.0,
+            1.2,
+            1.4,
+            1.6,
+            1.8,
+            2.0,
+            2.5,
+            3.0,
+            3.5,
+            4.0,
+            5.0,
+            6.0,
+            7.0,
+            8.0,
+            9.0,
+            10.0,
+            12.0,
+            14.0,
+            16.0,
+            18.0,
+            20.0,
+            25.0,
+            30.0,
+            35.0,
+            40.0,
+            50.0,
+            75.0,
+            100.0,
+        ]
 
-        #tab of omega22 corresp. to (tr, dst)
-        #CANTERA
-        omegaTab = [4.1005, 4.266,  4.833,  5.742,  6.729,  8.624,  10.34,  11.89,
-                3.2626, 3.305,  3.516,  3.914,  4.433,  5.57,   6.637,  7.618,
-                2.8399, 2.836,  2.936,  3.168,  3.511,  4.329,  5.126,  5.874,
-                2.531,  2.522,  2.586,  2.749,  3.004,  3.64,   4.282,  4.895,
-                2.2837, 2.277,  2.329,  2.46,   2.665,  3.187,  3.727,  4.249,
-                2.0838, 2.081,  2.13,   2.243,  2.417,  2.862,  3.329,  3.786,
-                1.922,  1.924,  1.97,   2.072,  2.225,  2.614,  3.028,  3.435,
-                1.7902, 1.795,  1.84,   1.934,  2.07,   2.417,  2.788,  3.156,
-                1.6823, 1.689,  1.733,  1.82,   1.944,  2.258,  2.596,  2.933,
-                1.5929, 1.601,  1.644,  1.725,  1.838,  2.124,  2.435,  2.746,
-                1.4551, 1.465,  1.504,  1.574,  1.67,   1.913,  2.181,  2.451,
-                1.3551, 1.365,  1.4,    1.461,  1.544,  1.754,  1.989,  2.228,
-                1.28,   1.289,  1.321,  1.374,  1.447,  1.63,   1.838,  2.053,
-                1.2219, 1.231,  1.259,  1.306,  1.37,   1.532,  1.718,  1.912,
-                1.1757, 1.184,  1.209,  1.251,  1.307,  1.451,  1.618,  1.795,
-                1.0933, 1.1,    1.119,  1.15,   1.193,  1.304,  1.435,  1.578,
-                1.0388, 1.044,  1.059,  1.083,  1.117,  1.204,  1.31,   1.428,
-                0.99963, 1.004, 1.016,  1.035,  1.062,  1.133,  1.22,   1.319,
-                0.96988, 0.9732, 0.983,  0.9991, 1.021,  1.079,  1.153,  1.236,
-                0.92676, 0.9291, 0.936,  0.9473, 0.9628, 1.005,  1.058,  1.121,
-                0.89616, 0.8979, 0.903,  0.9114, 0.923,  0.9545, 0.9955, 1.044,
-                0.87272, 0.8741, 0.878,  0.8845, 0.8935, 0.9181, 0.9505, 0.9893,
-                0.85379, 0.8549, 0.858,  0.8632, 0.8703, 0.8901, 0.9164, 0.9482,
-                0.83795, 0.8388, 0.8414, 0.8456, 0.8515, 0.8678, 0.8895, 0.916,
-                0.82435, 0.8251, 0.8273, 0.8308, 0.8356, 0.8493, 0.8676, 0.8901,
-                0.80184, 0.8024, 0.8039, 0.8065, 0.8101, 0.8201, 0.8337, 0.8504,
-                0.78363, 0.784,  0.7852, 0.7872, 0.7899, 0.7976, 0.8081, 0.8212,
-                0.76834, 0.7687, 0.7696, 0.7712, 0.7733, 0.7794, 0.7878, 0.7983,
-                0.75518, 0.7554, 0.7562, 0.7575, 0.7592, 0.7642, 0.7711, 0.7797,
-                0.74364, 0.7438, 0.7445, 0.7455, 0.747,  0.7512, 0.7569, 0.7642,
-                0.71982, 0.72,   0.7204, 0.7211, 0.7221, 0.725,  0.7289, 0.7339,
-                0.70097, 0.7011, 0.7014, 0.7019, 0.7026, 0.7047, 0.7076, 0.7112,
-                0.68545, 0.6855, 0.6858, 0.6861, 0.6867, 0.6883, 0.6905, 0.6932,
-                0.67232, 0.6724, 0.6726, 0.6728, 0.6733, 0.6743, 0.6762, 0.6784,
-                0.65099, 0.651,  0.6512, 0.6513, 0.6516, 0.6524, 0.6534, 0.6546,
-                0.61397, 0.6141, 0.6143, 0.6145, 0.6147, 0.6148, 0.6148, 0.6147,
-                0.5887, 0.5889, 0.5894, 0.59,   0.5903, 0.5901, 0.5895, 0.5885]
+        # tab of omega22 corresp. to (tr, dst)
+        # CANTERA
+        omegaTab = [
+            4.1005,
+            4.266,
+            4.833,
+            5.742,
+            6.729,
+            8.624,
+            10.34,
+            11.89,
+            3.2626,
+            3.305,
+            3.516,
+            3.914,
+            4.433,
+            5.57,
+            6.637,
+            7.618,
+            2.8399,
+            2.836,
+            2.936,
+            3.168,
+            3.511,
+            4.329,
+            5.126,
+            5.874,
+            2.531,
+            2.522,
+            2.586,
+            2.749,
+            3.004,
+            3.64,
+            4.282,
+            4.895,
+            2.2837,
+            2.277,
+            2.329,
+            2.46,
+            2.665,
+            3.187,
+            3.727,
+            4.249,
+            2.0838,
+            2.081,
+            2.13,
+            2.243,
+            2.417,
+            2.862,
+            3.329,
+            3.786,
+            1.922,
+            1.924,
+            1.97,
+            2.072,
+            2.225,
+            2.614,
+            3.028,
+            3.435,
+            1.7902,
+            1.795,
+            1.84,
+            1.934,
+            2.07,
+            2.417,
+            2.788,
+            3.156,
+            1.6823,
+            1.689,
+            1.733,
+            1.82,
+            1.944,
+            2.258,
+            2.596,
+            2.933,
+            1.5929,
+            1.601,
+            1.644,
+            1.725,
+            1.838,
+            2.124,
+            2.435,
+            2.746,
+            1.4551,
+            1.465,
+            1.504,
+            1.574,
+            1.67,
+            1.913,
+            2.181,
+            2.451,
+            1.3551,
+            1.365,
+            1.4,
+            1.461,
+            1.544,
+            1.754,
+            1.989,
+            2.228,
+            1.28,
+            1.289,
+            1.321,
+            1.374,
+            1.447,
+            1.63,
+            1.838,
+            2.053,
+            1.2219,
+            1.231,
+            1.259,
+            1.306,
+            1.37,
+            1.532,
+            1.718,
+            1.912,
+            1.1757,
+            1.184,
+            1.209,
+            1.251,
+            1.307,
+            1.451,
+            1.618,
+            1.795,
+            1.0933,
+            1.1,
+            1.119,
+            1.15,
+            1.193,
+            1.304,
+            1.435,
+            1.578,
+            1.0388,
+            1.044,
+            1.059,
+            1.083,
+            1.117,
+            1.204,
+            1.31,
+            1.428,
+            0.99963,
+            1.004,
+            1.016,
+            1.035,
+            1.062,
+            1.133,
+            1.22,
+            1.319,
+            0.96988,
+            0.9732,
+            0.983,
+            0.9991,
+            1.021,
+            1.079,
+            1.153,
+            1.236,
+            0.92676,
+            0.9291,
+            0.936,
+            0.9473,
+            0.9628,
+            1.005,
+            1.058,
+            1.121,
+            0.89616,
+            0.8979,
+            0.903,
+            0.9114,
+            0.923,
+            0.9545,
+            0.9955,
+            1.044,
+            0.87272,
+            0.8741,
+            0.878,
+            0.8845,
+            0.8935,
+            0.9181,
+            0.9505,
+            0.9893,
+            0.85379,
+            0.8549,
+            0.858,
+            0.8632,
+            0.8703,
+            0.8901,
+            0.9164,
+            0.9482,
+            0.83795,
+            0.8388,
+            0.8414,
+            0.8456,
+            0.8515,
+            0.8678,
+            0.8895,
+            0.916,
+            0.82435,
+            0.8251,
+            0.8273,
+            0.8308,
+            0.8356,
+            0.8493,
+            0.8676,
+            0.8901,
+            0.80184,
+            0.8024,
+            0.8039,
+            0.8065,
+            0.8101,
+            0.8201,
+            0.8337,
+            0.8504,
+            0.78363,
+            0.784,
+            0.7852,
+            0.7872,
+            0.7899,
+            0.7976,
+            0.8081,
+            0.8212,
+            0.76834,
+            0.7687,
+            0.7696,
+            0.7712,
+            0.7733,
+            0.7794,
+            0.7878,
+            0.7983,
+            0.75518,
+            0.7554,
+            0.7562,
+            0.7575,
+            0.7592,
+            0.7642,
+            0.7711,
+            0.7797,
+            0.74364,
+            0.7438,
+            0.7445,
+            0.7455,
+            0.747,
+            0.7512,
+            0.7569,
+            0.7642,
+            0.71982,
+            0.72,
+            0.7204,
+            0.7211,
+            0.7221,
+            0.725,
+            0.7289,
+            0.7339,
+            0.70097,
+            0.7011,
+            0.7014,
+            0.7019,
+            0.7026,
+            0.7047,
+            0.7076,
+            0.7112,
+            0.68545,
+            0.6855,
+            0.6858,
+            0.6861,
+            0.6867,
+            0.6883,
+            0.6905,
+            0.6932,
+            0.67232,
+            0.6724,
+            0.6726,
+            0.6728,
+            0.6733,
+            0.6743,
+            0.6762,
+            0.6784,
+            0.65099,
+            0.651,
+            0.6512,
+            0.6513,
+            0.6516,
+            0.6524,
+            0.6534,
+            0.6546,
+            0.61397,
+            0.6141,
+            0.6143,
+            0.6145,
+            0.6147,
+            0.6148,
+            0.6148,
+            0.6147,
+            0.5887,
+            0.5889,
+            0.5894,
+            0.59,
+            0.5903,
+            0.5901,
+            0.5895,
+            0.5885,
+        ]
 
-        #First test on tr
-        if (tr > 75.0):
-            omeg12 = 0.703 - 0.146e-2*tr + 0.357e-5*tr*tr - 0.343e-8*tr*tr*tr
+        # First test on tr
+        if tr > 75.0:
+            omeg12 = (
+                0.703
+                - 0.146e-2 * tr
+                + 0.357e-5 * tr * tr
+                - 0.343e-8 * tr * tr * tr
+            )
         else:
-            #Find tr idx in trTab
-            if (tr <= 0.2):
+            # Find tr idx in trTab
+            if tr <= 0.2:
                 ii = 1
             else:
                 ii = 36
-            for i in range(1,37):
-                if (tr > trTab[i-1]) and (tr <= trTab[i]):
+            for i in range(1, 37):
+                if (tr > trTab[i - 1]) and (tr <= trTab[i]):
                     ii = i
                     break
-            #Find dst idx in dstTab 
-            if (abs(dst) >= 1.0e-5):
-                if (dst <= 0.25):
+            # Find dst idx in dstTab
+            if abs(dst) >= 1.0e-5:
+                if dst <= 0.25:
                     kk = 1
                 else:
                     kk = 6
-                for i in range(1,7):
-                    if (dstTab[i-1] < dst) and (dstTab[i] >= dst):
+                for i in range(1, 7):
+                    if (dstTab[i - 1] < dst) and (dstTab[i] >= dst):
                         kk = i
                         break
-                #Find surrounding values and interpolate
-                #First on dst
-                vert = np.zeros(3) 
+                # Find surrounding values and interpolate
+                # First on dst
+                vert = np.zeros(3)
                 for i in range(3):
-                    arg = np.zeros(3) 
-                    val = np.zeros(3) 
+                    arg = np.zeros(3)
+                    val = np.zeros(3)
                     for k in range(3):
-                      arg[k] = dstTab[kk-1+k]
-                      val[k] = omegaTab[8*(ii-1+i) + (kk-1+k)]
+                        arg[k] = dstTab[kk - 1 + k]
+                        val[k] = omegaTab[8 * (ii - 1 + i) + (kk - 1 + k)]
                     vert[i] = self.qinterp(dst, arg, val)
-                #Second on tr
-                arg = np.zeros(3) 
+                # Second on tr
+                arg = np.zeros(3)
                 for i in range(3):
-                   arg[i] = trTab[ii-1+i]
+                    arg[i] = trTab[ii - 1 + i]
                 omeg12 = self.qinterp(tr, arg, vert)
             else:
-                arg = np.zeros(3) 
-                val = np.zeros(3) 
+                arg = np.zeros(3)
+                val = np.zeros(3)
                 for i in range(3):
-                   arg[i] = trTab[ii-1+i]
-                   val[i] = omegaTab[8*(ii-1+i)]
-                omeg12 =self. qinterp(tr, arg, val)
+                    arg[i] = trTab[ii - 1 + i]
+                    val[i] = omegaTab[8 * (ii - 1 + i)]
+                omeg12 = self.qinterp(tr, arg, val)
 
         return omeg12
 
-
-    #def om22(self, tr, dst):
+    # def om22(self, tr, dst):
 
     #    # This is an overhaul of CANTERA version 2.3
     #    #range of dst
@@ -8260,13 +9318,12 @@ class FPickler(CMill):
     #            0.61397, 0.6141, 0.6143, 0.6145, 0.6147, 0.6148, 0.6148, 0.6147,
     #            0.5887, 0.5889, 0.5894, 0.59,   0.5903, 0.5901, 0.5895, 0.5885]
 
-
     #    #Find for each fixed tr the poly of deg 6 in dst approx omega22 values
     #    #store the poly coefs in m_o22poly
     #    m_o22poly = []
     #    for i in range(37):
     #        dstDeg = 6
-    #        #Polynomial coefficients, highest power first 
+    #        #Polynomial coefficients, highest power first
     #        polycoefs = np.polyfit(dstTab,omegaTab[8*i:8*(i+1)],dstDeg)
     #        m_o22poly.append(polycoefs)
 
@@ -8297,23 +9354,21 @@ class FPickler(CMill):
 
     #    return om22_interp
 
-
     def qinterp(self, x0, x, y):
 
-        val1 = y[0] + (x0-x[0])*(y[1]-y[0])/ (x[1]-x[0])
-        val2 = y[1] + (x0-x[1])*(y[2]-y[1])/ (x[2]-x[1])
-        fac1 = (x0-x[0])/ ((x[1]-x[0]) / 2.0)
-        fac2 = (x[2]-x0)/ ((x[2]-x[1]) / 2.0)
-        if (x0 >= x[1]):
-           val = (val1*fac2+val2)/ (1.0+fac2)
+        val1 = y[0] + (x0 - x[0]) * (y[1] - y[0]) / (x[1] - x[0])
+        val2 = y[1] + (x0 - x[1]) * (y[2] - y[1]) / (x[2] - x[1])
+        fac1 = (x0 - x[0]) / ((x[1] - x[0]) / 2.0)
+        fac2 = (x[2] - x0) / ((x[2] - x[1]) / 2.0)
+        if x0 >= x[1]:
+            val = (val1 * fac2 + val2) / (1.0 + fac2)
         else:
-           val = (val1+val2*fac1)/ (1.0+fac1)
+            val = (val1 + val2 * fac1) / (1.0 + fac1)
         return val
 
+    # def quadInterp(self, x0, x, y):
 
-    #def quadInterp(self, x0, x, y):
-
-    #    dx21 = x[1] - x[0] 
+    #    dx21 = x[1] - x[0]
     #    dx32 = x[2] - x[1]
     #    dx31 = dx21 + dx32
     #    dy32 = y[2] - y[1]
@@ -8321,56 +9376,66 @@ class FPickler(CMill):
     #    a = (dx21*dy32 - dy21*dx32)/(dx21*dx31*dx32)
     #    return a*(x0 - x[0])*(x0 - x[1]) + (dy21/dx21)*(x0 - x[1]) + y[1]
 
-
     def _generateTransRoutineSimple(self, nametab, id, speciesTransport):
 
-        #self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        #self._write('#define %s %s' % (nametab[0], nametab[1]))
-        #self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        #self._write('#define %s %s' % (nametab[0], nametab[2]))
-        #self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        #self._write('#define %s %s' % (nametab[0], nametab[3]))
-        #self._write('#endif')
+        # self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+        # self._write('#define %s %s' % (nametab[0], nametab[1]))
+        # self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+        # self._write('#define %s %s' % (nametab[0], nametab[2]))
+        # self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+        # self._write('#define %s %s' % (nametab[0], nametab[3]))
+        # self._write('#endif')
 
-        self._write('subroutine %s(%s)' % (nametab[0], nametab[4]))
+        self._write("subroutine %s(%s)" % (nametab[0], nametab[4]))
         self._indent()
         self._write()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(out) :: %s(%d)' % (nametab[4],len(speciesTransport)))
+        self._write(
+            "double precision, intent(out) :: %s(%d)"
+            % (nametab[4], len(speciesTransport))
+        )
         self._write()
         for species in speciesTransport:
-            self._write('%s(%d) = %s' % (nametab[4], species.id+1, format(float(speciesTransport[species][id]),'.8e').replace("e","d")))
+            self._write(
+                "%s(%d) = %s"
+                % (
+                    nametab[4],
+                    species.id + 1,
+                    format(
+                        float(speciesTransport[species][id]), ".8e"
+                    ).replace("e", "d"),
+                )
+            )
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
 
     def _generateTransRoutineInteger(self, nametab, expression):
 
-        #self._write('#if defined(BL_FORT_USE_UPPERCASE)')
-        #self._write('#define %s %s' % (nametab[0], nametab[1]))
-        #self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
-        #self._write('#define %s %s' % (nametab[0], nametab[2]))
-        #self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
-        #self._write('#define %s %s' % (nametab[0], nametab[3]))
-        #self._write('#endif')
+        # self._write('#if defined(BL_FORT_USE_UPPERCASE)')
+        # self._write('#define %s %s' % (nametab[0], nametab[1]))
+        # self._write('#elif defined(BL_FORT_USE_LOWERCASE)')
+        # self._write('#define %s %s' % (nametab[0], nametab[2]))
+        # self._write('#elif defined(BL_FORT_USE_UNDERSCORE)')
+        # self._write('#define %s %s' % (nametab[0], nametab[3]))
+        # self._write('#endif')
 
-        self._write('subroutine %s(%s)' % (nametab[0], nametab[4]))
+        self._write("subroutine %s(%s)" % (nametab[0], nametab[4]))
         self._indent()
         self._write()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('integer, intent(out) :: %s' % nametab[4])
+        self._write("integer, intent(out) :: %s" % nametab[4])
         self._write()
-        self._write('%s = %d' % (nametab[4], expression))
+        self._write("%s = %d" % (nametab[4], expression))
         self._outdent()
         self._write()
-        self._write('end subroutine')
+        self._write("end subroutine")
 
         return
-
 
     def _getCVdRspecies(self, t, species):
 
@@ -8394,9 +9459,13 @@ class FPickler(CMill):
         else:
             parameters = highRange.parameters
 
-        return ((parameters[0] - 1.0) + parameters[1] * t + parameters[2] * t * t \
-                + parameters[3] * t * t * t + parameters[4] * t * t * t * t)
-
+        return (
+            (parameters[0] - 1.0)
+            + parameters[1] * t
+            + parameters[2] * t * t
+            + parameters[3] * t * t * t
+            + parameters[4] * t * t * t * t
+        )
 
     def _analyzeThermodynamics(self, mechanism):
         lowT = 0.0
@@ -8408,11 +9477,14 @@ class FPickler(CMill):
 
             models = species.thermo
             if len(models) > 2:
-                print('species: ', species)
+                print("species: ", species)
                 import pyre
-                pyre.debug.Firewall.hit("unsupported configuration in species.thermo")
+
+                pyre.debug.Firewall.hit(
+                    "unsupported configuration in species.thermo"
+                )
                 return
-            
+
             m1 = models[0]
             m2 = models[1]
 
@@ -8432,12 +9504,13 @@ class FPickler(CMill):
             if high < highT:
                 highT = high
 
-            midpoints.setdefault(mid, []).append((species, lowRange, highRange))
-        
+            midpoints.setdefault(mid, []).append(
+                (species, lowRange, highRange)
+            )
+
         self.lowT = lowT
         self.highT = highT
         return lowT, highT, midpoints
-    
 
     def _analyzeTransport(self, mechanism):
 
@@ -8447,11 +9520,14 @@ class FPickler(CMill):
 
             models = species.trans
             if len(models) > 2:
-                print('species: ', species)
+                print("species: ", species)
                 import pyre
-                pyre.debug.Firewall.hit("unsupported configuration in species.trans")
+
+                pyre.debug.Firewall.hit(
+                    "unsupported configuration in species.trans"
+                )
                 return
-            
+
             m1 = models[0]
 
             lin = m1.parameters[0]
@@ -8461,14 +9537,13 @@ class FPickler(CMill):
             pol = m1.pol
             zrot = m1.zrot
 
-            #print "TRANSPORT DATA FOR SPEC", species.symbol, " is", lin, eps, sig, dip, pol, zrot 
+            # print "TRANSPORT DATA FOR SPEC", species.symbol, " is", lin, eps, sig, dip, pol, zrot
 
             transdata[species] = [lin, eps, sig, dip, pol, zrot]
 
         return transdata
 
-
-    #def _Kc(self, mechanism, reaction):
+    # def _Kc(self, mechanism, reaction):
 
     #    dim = 0
     #    dG = ""
@@ -8479,7 +9554,7 @@ class FPickler(CMill):
     #            factor = ""
     #        else:
     #            factor = "%d * " % coefficient
-    #                
+    #
     #        terms.append("%sg_RT[%d]" % (factor, mechanism.species(symbol).id))
     #        dim -= coefficient
     #    dG += '(' + ' + '.join(terms) + ')'
@@ -8531,22 +9606,22 @@ class FPickler(CMill):
 
         terms = []
         for i in range(nSpecies):
-            terms.append('')
+            terms.append("")
         for symbol, coefficient in reaction.reactants:
             if coefficient == 1:
                 factor = " + "
             else:
                 factor = " + %d*" % coefficient
             i = mechanism.species(symbol).id
-            terms[i] += "%sg_RT(%d)"%(factor,i+1)
+            terms[i] += "%sg_RT(%d)" % (factor, i + 1)
 
         for symbol, coefficient in reaction.products:
             if coefficient == 1:
-                factor = " - "    # flip the signs
+                factor = " - "  # flip the signs
             else:
                 factor = " - %d*" % coefficient
             i = mechanism.species(symbol).id
-            terms[i] += "%sg_RT(%d)"%(factor,i+1)
+            terms[i] += "%sg_RT(%d)" % (factor, i + 1)
 
         dG = ""
         for i in range(nSpecies):
@@ -8555,10 +9630,9 @@ class FPickler(CMill):
         if dG[0:3] == " + ":
             return dG[3:]
         else:
-            return "-"+dG[3:]
+            return "-" + dG[3:]
 
-
-    #def _sortedKc(self, mechanism, reaction):
+    # def _sortedKc(self, mechanism, reaction):
     #    conv = self._KcConv(mechanism,reaction)
     #    exparg = self._sortedKcExpArg(mechanism,reaction)
     #    if conv:
@@ -8566,20 +9640,19 @@ class FPickler(CMill):
     #    else:
     #        return 'exp('+exparg+')'
 
-
-    #def _vKc(self, mechanism, reaction):
+    # def _vKc(self, mechanism, reaction):
 
     #    dim = 0
     #    dG = ""
 
     #    terms = []
-    #    for symbol, coefficient in sorted(reaction.reactants, 
+    #    for symbol, coefficient in sorted(reaction.reactants,
     #                                      key=lambda x: mechanism.species(x[0]).id):
     #        if coefficient == 1:
     #            factor = ""
     #        else:
     #            factor = "%d * " % coefficient
-    #                
+    #
     #        terms.append("%sg_RT[%d*npt+i]" % (factor, mechanism.species(symbol).id))
     #        dim -= coefficient
     #    dG += '(' + ' + '.join(terms) + ')'
@@ -8609,8 +9682,7 @@ class FPickler(CMill):
 
     #    return K_c
 
-
-    #def _Kc_exparg(self, mechanism, reaction):
+    # def _Kc_exparg(self, mechanism, reaction):
 
     #    dG = ""
 
@@ -8620,7 +9692,7 @@ class FPickler(CMill):
     #            factor = ""
     #        else:
     #            factor = "%d * " % coefficient
-    #                
+    #
     #        terms.append("%sg_RT[%d]" % (factor, mechanism.species(symbol).id))
     #    dG += '(' + ' + '.join(terms) + ')'
 
@@ -8639,14 +9711,22 @@ class FPickler(CMill):
     #    return dG
 
     def _cpNASA(self, parameters):
-        self._write('%s &' % ('%+15.8e' % parameters[0]).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(2)' % parameters[1]).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(3)' % parameters[2]).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(4)' % parameters[3]).replace("e", "d"))
-        self._write('%s' % ('%+15.8e * tc(5)' % parameters[4]).replace("e", "d"))
+        self._write("%s &" % ("%+15.8e" % parameters[0]).replace("e", "d"))
+        self._write(
+            "%s &" % ("%+15.8e * tc(2)" % parameters[1]).replace("e", "d")
+        )
+        self._write(
+            "%s &" % ("%+15.8e * tc(3)" % parameters[2]).replace("e", "d")
+        )
+        self._write(
+            "%s &" % ("%+15.8e * tc(4)" % parameters[3]).replace("e", "d")
+        )
+        self._write(
+            "%s" % ("%+15.8e * tc(5)" % parameters[4]).replace("e", "d")
+        )
         return
 
-    #def _dcpdTNASA(self, parameters):
+    # def _dcpdTNASA(self, parameters):
     #    self._write('%+15.8e' % parameters[1])
     #    self._write('%+15.8e * tc[1]' % (parameters[2]*2.))
     #    self._write('%+15.8e * tc[2]' % (parameters[3]*3.))
@@ -8654,45 +9734,101 @@ class FPickler(CMill):
     #    return
 
     def _cvNASA(self, parameters):
-        self._write('%s &' % ('%+15.8e' % (parameters[0] - 1.0)).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(2)' % parameters[1]).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(3)' % parameters[2]).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(4)' % parameters[3]).replace("e", "d"))
-        self._write('%s' % ('%+15.8e * tc(5)' % parameters[4]).replace("e", "d"))
+        self._write(
+            "%s &" % ("%+15.8e" % (parameters[0] - 1.0)).replace("e", "d")
+        )
+        self._write(
+            "%s &" % ("%+15.8e * tc(2)" % parameters[1]).replace("e", "d")
+        )
+        self._write(
+            "%s &" % ("%+15.8e * tc(3)" % parameters[2]).replace("e", "d")
+        )
+        self._write(
+            "%s &" % ("%+15.8e * tc(4)" % parameters[3]).replace("e", "d")
+        )
+        self._write(
+            "%s" % ("%+15.8e * tc(5)" % parameters[4]).replace("e", "d")
+        )
         return
-
 
     def _enthalpyNASA(self, parameters):
-        self._write('%s &' % ('%+15.8e' % parameters[0]).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(2)' % ((parameters[1] / 2))).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(3)' % ((parameters[2] / 3))).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(4)' % ((parameters[3] / 4))).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(5)' % ((parameters[4] / 5))).replace("e", "d"))
-        self._write('%s' % ('%+15.8e * invT' % (parameters[5])).replace("e", "d"))
+        self._write("%s &" % ("%+15.8e" % parameters[0]).replace("e", "d"))
+        self._write(
+            "%s &"
+            % ("%+15.8e * tc(2)" % ((parameters[1] / 2))).replace("e", "d")
+        )
+        self._write(
+            "%s &"
+            % ("%+15.8e * tc(3)" % ((parameters[2] / 3))).replace("e", "d")
+        )
+        self._write(
+            "%s &"
+            % ("%+15.8e * tc(4)" % ((parameters[3] / 4))).replace("e", "d")
+        )
+        self._write(
+            "%s &"
+            % ("%+15.8e * tc(5)" % ((parameters[4] / 5))).replace("e", "d")
+        )
+        self._write(
+            "%s" % ("%+15.8e * invT" % (parameters[5])).replace("e", "d")
+        )
         return
-
 
     def _internalEnergy(self, parameters):
-        self._write('%s &' % ('%+15.8e' % (parameters[0] - 1.0)).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(2)' % ((parameters[1] / 2))).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(3)' % ((parameters[2] / 3))).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(4)' % ((parameters[3] / 4))).replace("e", "d"))
-        self._write('%s &' % ('%+15.8e * tc(5)' % ((parameters[4] / 5))).replace("e", "d"))
-        self._write('%s' % ('%+15.8e * invT' % (parameters[5])).replace("e", "d"))
+        self._write(
+            "%s &" % ("%+15.8e" % (parameters[0] - 1.0)).replace("e", "d")
+        )
+        self._write(
+            "%s &"
+            % ("%+15.8e * tc(2)" % ((parameters[1] / 2))).replace("e", "d")
+        )
+        self._write(
+            "%s &"
+            % ("%+15.8e * tc(3)" % ((parameters[2] / 3))).replace("e", "d")
+        )
+        self._write(
+            "%s &"
+            % ("%+15.8e * tc(4)" % ((parameters[3] / 4))).replace("e", "d")
+        )
+        self._write(
+            "%s &"
+            % ("%+15.8e * tc(5)" % ((parameters[4] / 5))).replace("e", "d")
+        )
+        self._write(
+            "%s" % ("%+15.8e * invT" % (parameters[5])).replace("e", "d")
+        )
         return
-
 
     def _gibbsNASA(self, parameters):
-        self._write('%s &' % ('%+20.15e * invT' % (parameters[5])).replace("e", "d"))
-        self._write('%s &' % ('%+20.15e' % (parameters[0] - parameters[6])).replace("e", "d"))
-        self._write('%s &' % ('%+20.15e * tc(1)' % (-parameters[0])).replace("e", "d"))
-        self._write('%s &' % ('%+20.15e * tc(2)' % ((-parameters[1] / 2))).replace("e", "d"))
-        self._write('%s &' % ('%+20.15e * tc(3)' % ((-parameters[2] / 6))).replace("e", "d"))
-        self._write('%s &' % ('%+20.15e * tc(4)' % ((-parameters[3] / 12))).replace("e", "d"))
-        self._write('%s' % ('%+20.15e * tc(5)' % ((-parameters[4] / 20))).replace("e", "d"))
+        self._write(
+            "%s &" % ("%+20.15e * invT" % (parameters[5])).replace("e", "d")
+        )
+        self._write(
+            "%s &"
+            % ("%+20.15e" % (parameters[0] - parameters[6])).replace("e", "d")
+        )
+        self._write(
+            "%s &" % ("%+20.15e * tc(1)" % (-parameters[0])).replace("e", "d")
+        )
+        self._write(
+            "%s &"
+            % ("%+20.15e * tc(2)" % ((-parameters[1] / 2))).replace("e", "d")
+        )
+        self._write(
+            "%s &"
+            % ("%+20.15e * tc(3)" % ((-parameters[2] / 6))).replace("e", "d")
+        )
+        self._write(
+            "%s &"
+            % ("%+20.15e * tc(4)" % ((-parameters[3] / 12))).replace("e", "d")
+        )
+        self._write(
+            "%s"
+            % ("%+20.15e * tc(5)" % ((-parameters[4] / 20))).replace("e", "d")
+        )
         return
-    
-    #def _helmholtzNASA(self, parameters):
+
+    # def _helmholtzNASA(self, parameters):
     #    self._write('%+15.8e * invT' % parameters[5])
     #    self._write('%+15.8e' % (parameters[0] - parameters[6] - 1.0))
     #    self._write('%+15.8e * tc[0]' % (-parameters[0]))
@@ -8702,7 +9838,7 @@ class FPickler(CMill):
     #    self._write('%+15.8e * tc[4];' % (-parameters[4]/20))
     #    return
 
-    #def _entropyNASA(self, parameters):
+    # def _entropyNASA(self, parameters):
     #    self._write('%+15.8e * tc[0]' % parameters[0])
     #    self._write('%+15.8e * tc[1]' % (parameters[1]))
     #    self._write('%+15.8e * tc[2]' % (parameters[2]/2))
@@ -8714,101 +9850,109 @@ class FPickler(CMill):
     def _T_given_ey(self, mechanism):
         nSpec = len(self.species)
         self._write()
-        self._write('! get temperature given internal energy in mass units and mass fracs')
-        self._write('subroutine get_t_given_ey(e, y, iwrk, rwrk, t, ierr)')
+        self._write(
+            "! get temperature given internal energy in mass units and mass fracs"
+        )
+        self._write("subroutine get_t_given_ey(e, y, iwrk, rwrk, t, ierr)")
         self._write()
         self._indent()
-        self._write('implicit none')
+        self._write("implicit none")
         self._write()
-        self._write('double precision, intent(in) :: e')
-        self._write('double precision, intent(in) :: y(%d)' % nSpec)
-        self._write('integer, intent(in) :: iwrk')
-        self._write('double precision, intent(in) :: rwrk')
-        self._write('double precision, intent(out) :: t')
-        self._write('integer, intent(out) :: ierr')
-        self._write()
-        self._outdent()
-        self._write('#ifdef CONVERGENCE')
-        self._indent()
-        self._write('integer, parameter :: maxiter = 5000')
-        self._write('double precision, parameter tol = 1.d-12')
-        self._outdent()
-        self._write('#else')
-        self._indent()
-        self._write('integer, parameter :: maxiter = 200')
-        self._write('double precision, parameter :: tol = 1.d-6')
-        self._outdent()
-        self._write('#endif')
-        self._write()
-        self._indent()
-        self._write('double precision :: ein')
-        self._write('double precision, parameter :: tmin = 90.d0' + ' ! max lower bound for thermo def')
-        self._write('double precision, parameter :: tmax = 4000.d0' + ' ! min upper bound for thermo def')
-        self._write('double precision :: e1,emin,emax,cv,t1,dt')
-        self._write('integer :: i' + ' ! loop counter')
-        self._write()
-        self._write('ein = e')
-        self._write()
-        self._write('call ckubms(tmin, y, iwrk, rwrk, emin)')
-        self._write('call ckubms(tmax, y, iwrk, rwrk, emax)')
-        self._write()
-        self._write('if (ein < emin) then')
-        self._indent()
-        self._write('! Linear Extrapolation below tmin')
-        self._write('call ckcvbs(tmin, y, iwrk, rwrk, cv)')
-        self._write('t = tmin - (emin-ein) / cv')
-        self._write('ierr = 1')
-        self._write('return')
-        self._outdent()
-        self._write('end if')
-        self._write('if (ein > emax) then')
-        self._indent()
-        self._write('! Linear Extrapolation above tmax')
-        self._write('call ckcvbs(tmax, y, iwrk, rwrk, cv)')
-        self._write('t = tmax - (emax - ein) / cv')
-        self._write('ierr = 1')
-        self._write('return')
-        self._outdent()
-        self._write('end if')
-        self._write('t1 = t')
-        self._write('if (t1 < tmin .or. t1 > tmax) then')
-        self._indent()
-        self._write('t1 = tmin + (tmax-tmin)/(emax-emin)*(ein-emin)')
-        self._outdent()
-        self._write('end if')
-        self._write('do i=1, maxiter')
-        self._indent()
-        self._write('call ckubms(t1,y,iwrk,rwrk,e1)')
-        self._write('call ckcvbs(t1,y,iwrk,rwrk,cv)')
-        self._write('dt = (ein - e1) / cv')
-        self._write('if (dt > 100.d0) then')
-        self._indent()
-        self._write('dt = 100.d0')
-        self._outdent()
-        self._write('else if (dt < -100.d0) then')
-        self._indent()
-        self._write('dt = -100.d0')
-        self._outdent()
-        self._write('else if (abs(dt) < tol) then')
-        self._indent()
-        self._write('exit')
-        self._outdent()
-        self._write('else if (t1+dt == t1) then')
-        self._indent()
-        self._write('exit')
-        self._outdent()
-        self._write('end if')
-        self._write('t1 = t1 + dt')
-        self._outdent()
-        self._write('end do')
-        self._write()
-        self._write('t = t1')
-        self._write('ierr = 0')
+        self._write("double precision, intent(in) :: e")
+        self._write("double precision, intent(in) :: y(%d)" % nSpec)
+        self._write("integer, intent(in) :: iwrk")
+        self._write("double precision, intent(in) :: rwrk")
+        self._write("double precision, intent(out) :: t")
+        self._write("integer, intent(out) :: ierr")
         self._write()
         self._outdent()
-        self._write('end subroutine')
+        self._write("#ifdef CONVERGENCE")
+        self._indent()
+        self._write("integer, parameter :: maxiter = 5000")
+        self._write("double precision, parameter tol = 1.d-12")
+        self._outdent()
+        self._write("#else")
+        self._indent()
+        self._write("integer, parameter :: maxiter = 200")
+        self._write("double precision, parameter :: tol = 1.d-6")
+        self._outdent()
+        self._write("#endif")
+        self._write()
+        self._indent()
+        self._write("double precision :: ein")
+        self._write(
+            "double precision, parameter :: tmin = 90.d0"
+            + " ! max lower bound for thermo def"
+        )
+        self._write(
+            "double precision, parameter :: tmax = 4000.d0"
+            + " ! min upper bound for thermo def"
+        )
+        self._write("double precision :: e1,emin,emax,cv,t1,dt")
+        self._write("integer :: i" + " ! loop counter")
+        self._write()
+        self._write("ein = e")
+        self._write()
+        self._write("call ckubms(tmin, y, iwrk, rwrk, emin)")
+        self._write("call ckubms(tmax, y, iwrk, rwrk, emax)")
+        self._write()
+        self._write("if (ein < emin) then")
+        self._indent()
+        self._write("! Linear Extrapolation below tmin")
+        self._write("call ckcvbs(tmin, y, iwrk, rwrk, cv)")
+        self._write("t = tmin - (emin-ein) / cv")
+        self._write("ierr = 1")
+        self._write("return")
+        self._outdent()
+        self._write("end if")
+        self._write("if (ein > emax) then")
+        self._indent()
+        self._write("! Linear Extrapolation above tmax")
+        self._write("call ckcvbs(tmax, y, iwrk, rwrk, cv)")
+        self._write("t = tmax - (emax - ein) / cv")
+        self._write("ierr = 1")
+        self._write("return")
+        self._outdent()
+        self._write("end if")
+        self._write("t1 = t")
+        self._write("if (t1 < tmin .or. t1 > tmax) then")
+        self._indent()
+        self._write("t1 = tmin + (tmax-tmin)/(emax-emin)*(ein-emin)")
+        self._outdent()
+        self._write("end if")
+        self._write("do i=1, maxiter")
+        self._indent()
+        self._write("call ckubms(t1,y,iwrk,rwrk,e1)")
+        self._write("call ckcvbs(t1,y,iwrk,rwrk,cv)")
+        self._write("dt = (ein - e1) / cv")
+        self._write("if (dt > 100.d0) then")
+        self._indent()
+        self._write("dt = 100.d0")
+        self._outdent()
+        self._write("else if (dt < -100.d0) then")
+        self._indent()
+        self._write("dt = -100.d0")
+        self._outdent()
+        self._write("else if (abs(dt) < tol) then")
+        self._indent()
+        self._write("exit")
+        self._outdent()
+        self._write("else if (t1+dt == t1) then")
+        self._indent()
+        self._write("exit")
+        self._outdent()
+        self._write("end if")
+        self._write("t1 = t1 + dt")
+        self._outdent()
+        self._write("end do")
+        self._write()
+        self._write("t = t1")
+        self._write("ierr = 0")
+        self._write()
+        self._outdent()
+        self._write("end subroutine")
 
-    #def _T_given_hy(self, mechanism):
+    # def _T_given_hy(self, mechanism):
     #    self._write(self.line(' get temperature given enthalpy in mass units and mass fracs'))
     #    self._write('void GET_T_GIVEN_HY(double * restrict h, double * restrict y, int * iwrk, double * restrict rwrk, double * restrict t, int * ierr)')
     #    self._write('{')
@@ -8872,7 +10016,9 @@ class FPickler(CMill):
     #    self._write('return;')
     #    self._outdent()
     #    self._write('}')
-# version
-#__id__ = "$Id$"
 
-#  End of file 
+
+# version
+# __id__ = "$Id$"
+
+#  End of file

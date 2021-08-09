@@ -11,14 +11,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
 from pyre.components.Component import Component
 
 
 class Application(Component):
-
-
     def main(self, *args, **kwds):
         self.defaults()
 
@@ -33,12 +31,10 @@ class Application(Component):
 
         return
 
-
     def prime(self):
         parser = self.inventory.commandlineParser
         self._registry.orphans += parser.parse(root=self._registry)
         return self._registry
-
 
     def execute(self, *args, **kwds):
         if self._registry.help:
@@ -50,44 +46,44 @@ class Application(Component):
 
         return
 
-
     def help(self):
         return
-
 
     def usage(self):
         print("unkown arguments:", self._registry.unknown)
         return
 
-
     def __init__(self, name):
         Component.__init__(self, name, "application")
 
         import sys
+
         self.filename = sys.argv[0]
         self._registry = self._createRegistry()
 
         return
 
-
     def _createRegistry(self):
         from .ConfigurationRegistry import ConfigurationRegistry
-        return ConfigurationRegistry(self.name)
 
+        return ConfigurationRegistry(self.name)
 
     class Inventory(Component.Inventory):
 
-        import pyre.journal
         import pyre.facilities
+        import pyre.journal
+
         from .CommandlineParser import CommandlineParser
 
         inventory = [
             pyre.journal.journal(),
-            pyre.facilities.facility("commandlineParser", default=CommandlineParser())
-            ]
+            pyre.facilities.facility(
+                "commandlineParser", default=CommandlineParser()
+            ),
+        ]
 
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

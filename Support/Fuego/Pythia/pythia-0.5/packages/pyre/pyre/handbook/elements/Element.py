@@ -13,9 +13,9 @@
 
 
 from builtins import object
+
+
 class Element(object):
-
-
     def __init__(self, number, symbol, name, weight):
         self.name = name
         self.symbol = symbol
@@ -23,10 +23,13 @@ class Element(object):
         self.atomicWeight = weight
         return
 
-
     def __str__(self):
-        return "%s (%s) - atomic number: %d, atomic weight: %g amu" \
-               % (self.name, self.symbol, self.atomicNumber, self.atomicWeight)
+        return "%s (%s) - atomic number: %d, atomic weight: %g amu" % (
+            self.name,
+            self.symbol,
+            self.atomicNumber,
+            self.atomicWeight,
+        )
 
 
 # version

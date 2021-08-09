@@ -12,16 +12,14 @@
 #
 
 from builtins import object
+
+
 class Element(object):
-
-
     def symbol(self):
         return self._symbol
 
-
     def atomicWeight(self):
         return self._atomicWeight
-
 
     def __init__(self, symbol, atomicWeight=None):
         # normalize symbol according to the conventions for PeriodicTable
@@ -29,21 +27,28 @@ class Element(object):
 
         if not atomicWeight:
             import pyre
+
             element = pyre.handbook.periodicTable().symbol(self._symbol)
             if not element:
                 import journal
-                journal.error("fuego").line("element '%s': no atomic weight information" % symbol)
+
+                journal.error("fuego").line(
+                    "element '%s': no atomic weight information" % symbol
+                )
                 journal.error("fuego").log(
-                    "attempted to look it up in the periodic table as '%s'" % self._symbol)
-                raise pyre.exceptions.UnrecoverableError("unknown element '%s'" % symbol)
-                
+                    "attempted to look it up in the periodic table as '%s'"
+                    % self._symbol
+                )
+                raise pyre.exceptions.UnrecoverableError(
+                    "unknown element '%s'" % symbol
+                )
+
             else:
                 atomicWeight = element.atomicWeight
 
         self._atomicWeight = atomicWeight
-        
-        return
 
+        return
 
     def __str__(self):
         return self._symbol

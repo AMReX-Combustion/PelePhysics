@@ -5653,8 +5653,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
         const amrex::Real qdot = qf - qr;
         wdot[2] += qdot;
         wdot[5] += qdot;
-        wdot[6] += qdot;
         wdot[6] -= 2.000000 * qdot;
+        wdot[6] += qdot;
     }
 
     {
@@ -7488,7 +7488,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/30
         -Fcent2/90000
-        + Fcent3*90000*invT2);
+        + Fcent3*90000*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -7577,7 +7578,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/152
         -Fcent2/22850
-        + Fcent3*10350*invT2);
+        + Fcent3*10350*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -7666,7 +7668,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/258
         -Fcent2/2811
-        + Fcent3*9908*invT2);
+        + Fcent3*9908*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -7755,7 +7758,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/943
         -Fcent2/47310
-        + Fcent3*47110*invT2);
+        + Fcent3*47110*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -7844,7 +7848,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/271
         -Fcent2/2755
-        + Fcent3*6570*invT2);
+        + Fcent3*6570*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -7933,7 +7938,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/197
         -Fcent2/1540
-        + Fcent3*10300*invT2);
+        + Fcent3*10300*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -8022,7 +8028,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/1801
         -Fcent2/33.1
-        + Fcent3*90000*invT2);
+        + Fcent3*90000*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -8111,7 +8118,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/156
         -Fcent2/1675
-        + Fcent3*4530*invT2);
+        + Fcent3*4530*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -8200,7 +8208,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/28
         -Fcent2/1000
-        + Fcent3*2339*invT2);
+        + Fcent3*2339*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -8289,7 +8298,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/37050
         -Fcent2/41490
-        + Fcent3*3980*invT2);
+        + Fcent3*3980*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -8378,7 +8388,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/50
         -Fcent2/600
-        + Fcent3*2780*invT2);
+        + Fcent3*2780*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -8467,7 +8478,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/37050
         -Fcent2/41490
-        + Fcent3*3980*invT2);
+        + Fcent3*3980*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -14123,7 +14135,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/30
         -Fcent2/90000
-        + Fcent3*90000*invT2);
+        + Fcent3*90000*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -14276,7 +14289,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/152
         -Fcent2/22850
-        + Fcent3*10350*invT2);
+        + Fcent3*10350*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -14419,7 +14433,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/258
         -Fcent2/2811
-        + Fcent3*9908*invT2);
+        + Fcent3*9908*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -14562,7 +14577,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/943
         -Fcent2/47310
-        + Fcent3*47110*invT2);
+        + Fcent3*47110*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -14690,7 +14706,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/271
         -Fcent2/2755
-        + Fcent3*6570*invT2);
+        + Fcent3*6570*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -14828,7 +14845,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/197
         -Fcent2/1540
-        + Fcent3*10300*invT2);
+        + Fcent3*10300*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -14961,7 +14979,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/1801
         -Fcent2/33.1
-        + Fcent3*90000*invT2);
+        + Fcent3*90000*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -15109,7 +15128,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/156
         -Fcent2/1675
-        + Fcent3*4530*invT2);
+        + Fcent3*4530*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -15242,7 +15262,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/28
         -Fcent2/1000
-        + Fcent3*2339*invT2);
+        + Fcent3*2339*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -15385,7 +15406,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/37050
         -Fcent2/41490
-        + Fcent3*3980*invT2);
+        + Fcent3*3980*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -15518,7 +15540,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/50
         -Fcent2/600
-        + Fcent3*2780*invT2);
+        + Fcent3*2780*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;
@@ -15661,7 +15684,8 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
     dlogFcentdT = log10e/Fcent*( 
         -Fcent1/37050
         -Fcent2/41490
-        + Fcent3*3980*invT2);
+        + Fcent3*3980*invT2
+    );
     dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;
     dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;
     dlogFdn = dlogFdcn_fac * troePr;

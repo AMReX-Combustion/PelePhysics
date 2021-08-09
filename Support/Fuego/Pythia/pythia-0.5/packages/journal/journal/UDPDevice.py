@@ -13,22 +13,22 @@
 
 
 from __future__ import absolute_import
+
 import pickle
+
 from .Device import Device
 
 
 class UDPDevice(Device):
-
-
     def record(self, entry):
         str = self.renderer.render(entry)
         self._socket.sendto(pickle.dumps(str), self._server)
 
         return
 
-
-    def __init__(self, port, host=''):
+    def __init__(self, port, host=""):
         import socket
+
         from .NetRenderer import NetRenderer
 
         Device.__init__(self, NetRenderer())

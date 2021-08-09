@@ -11,18 +11,15 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from __future__ import absolute_import
-from __future__ import division
+from __future__ import absolute_import, division
+
 import pyre
 from pyre.handbook.units.SI import kelvin
-
 
 from .RateCalculator import RateCalculator
 
 
 class ReverseRate(RateCalculator):
-
-
     def update(self, T=None):
 
         self.phaseSpace = self.phaseSpaceCalculator()
@@ -31,18 +28,17 @@ class ReverseRate(RateCalculator):
 
         return
 
-
     def temperature(self, T):
         return
 
-
-    def __init__(self, phaseSpaceCalculator, forwardRate, equilibriumCalculator):
+    def __init__(
+        self, phaseSpaceCalculator, forwardRate, equilibriumCalculator
+    ):
         RateCalculator.__init__(self, phaseSpaceCalculator, forwardRate)
 
         self.equilibriumCalculator = equilibriumCalculator
 
         return
-
 
     def __call__(self):
         return self.enhancement * self.rate * self.phaseSpace

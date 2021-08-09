@@ -12,21 +12,23 @@
 #
 
 from __future__ import absolute_import
-from .Token import Token
+
 from .RegularExpressions import whitespace
+from .Token import Token
 
 
 class TransSection(Token):
 
+    pattern = (
+        r"[Tt][Rr][Aa][Nn]([Ss])?("
+        + whitespace
+        + "(?P<trans_all>[Aa][Ll][Ll]))?"
+    )
 
-    pattern = r"[Tt][Rr][Aa][Nn]([Ss])?(" + whitespace + "(?P<trans_all>[Aa][Ll][Ll]))?"
-
-
-    def identify(self, auth): 
+    def identify(self, auth):
         return auth.aTransSection(self)
 
-
-    #def __init__(self, match, groups):
+    # def __init__(self, match, groups):
     #    Token.__init__(self, match, groups)
 
     #    if groups["trans_all"]:
@@ -35,11 +37,10 @@ class TransSection(Token):
     #        self._all = 0
     #    return
 
-
     def __str__(self):
         return "{Trans section}"
 
-    
+
 # version
 __id__ = "$Id$"
 

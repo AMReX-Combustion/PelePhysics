@@ -13,12 +13,11 @@
 
 
 from __future__ import absolute_import
+
 from .Binary import Binary
 
 
 class Range(Binary):
-
-
     def __call__(self, candidate):
         return candidate >= self.v1 and candidate < self.v2
 
@@ -26,4 +25,4 @@ class Range(Binary):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

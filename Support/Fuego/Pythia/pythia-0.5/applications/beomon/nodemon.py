@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 #
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                           (C) 2001 All Rights Reserved
-# 
+#
 #  <LicenseText>
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
 from __future__ import print_function
+
+
 def test():
 
-    import socket
     import select
+    import socket
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     while 1:
@@ -30,6 +32,7 @@ def test():
         print("exception ready:", excepts)
 
     return
+
 
 # main
 

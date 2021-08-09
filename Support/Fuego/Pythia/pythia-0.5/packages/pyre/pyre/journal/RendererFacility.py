@@ -12,18 +12,18 @@
 #
 
 from __future__ import absolute_import
+
 from pyre.facilities.Facility import Facility
 
 
 class RendererFacility(Facility):
-
-
     def __init__(self, default=None):
 
         if default is None:
             from .Renderer import Renderer
+
             default = Renderer()
-            
+
         Facility.__init__(self, name="renderer", default=default)
         return
 
@@ -31,4 +31,4 @@ class RendererFacility(Facility):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

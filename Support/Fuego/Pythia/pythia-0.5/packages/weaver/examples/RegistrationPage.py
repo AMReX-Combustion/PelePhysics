@@ -1,35 +1,32 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 from builtins import object
+
 import weaver.content
 
 
 class RegistrationPage(object):
-
-
     def form(self):
         return self._form
-
 
     def render(self):
         self._weaver.weave()
         return
 
-
     def __init__(self, message=""):
-        
+
         body = self._newBody()
 
         if message:
@@ -47,7 +44,6 @@ class RegistrationPage(object):
 
         return
 
-
     def _newWeaver(self):
         w = weaver.content.weaver()
         p = w.properties()
@@ -55,21 +51,19 @@ class RegistrationPage(object):
         p.stylesheet = "/weaver/test-style.html"
         return w
 
-
     def _newBody(self):
         body = weaver.content.body()
         p = body.properties()
         p.style = "test"
         return body
 
-
     def _newMessage(self, text):
         msg = weaver.content.textBlock(text)
         return msg
 
-
     def _newForm(self):
         from RegistrationForm import RegistrationForm
+
         form = RegistrationForm()
         p = form.properties()
         p.project = "test"
@@ -80,4 +74,4 @@ class RegistrationPage(object):
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

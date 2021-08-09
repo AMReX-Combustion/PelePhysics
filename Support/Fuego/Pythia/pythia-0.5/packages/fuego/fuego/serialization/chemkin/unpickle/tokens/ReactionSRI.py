@@ -12,21 +12,19 @@
 #
 
 from __future__ import absolute_import
+
 from .Token import Token
 
 
 class ReactionSRI(Token):
 
-
     pattern = r"[Ss][Rr][Ii]"
-
 
     def identify(self, auth):
         return auth.aReactionSRI(self)
 
-
     def __str__(self):
-         return "{SRI fall off}"
+        return "{SRI fall off}"
 
 
 # version

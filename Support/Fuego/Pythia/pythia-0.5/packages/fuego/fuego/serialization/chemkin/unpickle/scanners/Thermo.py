@@ -12,14 +12,16 @@
 #
 
 from __future__ import absolute_import
+
 from .BaseScanner import BaseScanner
 
 
 class Thermo(BaseScanner):
-
-
     def _tokenClasses(self):
-        from fuego.serialization.chemkin.unpickle.tokens import thermoTokenClasses
+        from fuego.serialization.chemkin.unpickle.tokens import (
+            thermoTokenClasses,
+        )
+
         return thermoTokenClasses()
 
 

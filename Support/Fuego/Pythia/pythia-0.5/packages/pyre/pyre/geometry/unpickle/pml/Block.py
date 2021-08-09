@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 #
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
 from __future__ import absolute_import
+
 import pyre.geometry.solids
+
 from .AbstractNode import AbstractNode
 
 
@@ -20,13 +22,11 @@ class Block(AbstractNode):
 
     tag = "block"
 
-
     def notify(self, parent):
         block = pyre.geometry.solids.block(diagonal=self._diagonal)
         parent.onBlock(block)
 
         return
-
 
     def __init__(self, root, attributes):
         AbstractNode.__init__(self, root, attributes)

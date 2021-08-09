@@ -10,16 +10,17 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from __future__ import print_function
-from __future__ import division
+from __future__ import division, print_function
+
 from builtins import str
+
 import pyre
+from pyre.handbook.units.energy import cal, kcal
+from pyre.handbook.units.length import cm
+from pyre.handbook.units.pressure import atm
 
 # convenient definitions for interactive use
-from pyre.handbook.units.SI import meter, second, mole, kelvin
-from pyre.handbook.units.length import cm
-from pyre.handbook.units.energy import cal, kcal
-from pyre.handbook.units.pressure import atm
+from pyre.handbook.units.SI import kelvin, meter, mole, second
 
 T = 1000.0 * kelvin
 R = pyre.handbook.constants.fundamental.gas_constant
@@ -47,7 +48,7 @@ def test(options):
 
 
 def progressRate(calc, T):
-    print(" --- computing the rate of progress at T = %s" % str(T), end=' ')
+    print(" --- computing the rate of progress at T = %s" % str(T), end=" ")
 
     timer.reset()
     timer.start()
@@ -59,7 +60,7 @@ def progressRate(calc, T):
 
     timer.stop()
     print("... done in %g sec" % timer.read())
-    #print
+    # print
 
     return
 
@@ -67,12 +68,11 @@ def progressRate(calc, T):
 def reactionDetails(reaction):
 
     header = "Reaction %d: " % reaction.id() + str(reaction)
-    line = "-"*len(header)
+    line = "-" * len(header)
 
     print()
     print(header)
     print(line)
-
 
     print()
     print("phase space dimension:", reaction.equlibrium.dimPhaseSpace)
@@ -89,7 +89,7 @@ def reactionDetails(reaction):
     print("            enhancement:", f.enhancement)
     print("           phase factor:", f.phaseSpace)
     print("          reaction rate:", f.rate)
-    #print "               Preduced:", f.rateCalculator.P_red
+    # print "               Preduced:", f.rateCalculator.P_red
     print()
 
     r = reaction.reverseRate
@@ -109,42 +109,51 @@ def reactionDetails(reaction):
     from chemkin_rates import chemkin_rates
 
     n = reaction.id()
-    cq, cK_c = chemkin_rates[n-1]
-    cK_c *= (cm**3/ mole)
-    cq *= (mole/cm**3)/second
+    cq, cK_c = chemkin_rates[n - 1]
+    cK_c *= cm ** 3 / mole
+    cq *= (mole / cm ** 3) / second
 
     print("chemkin:")
     print("    K_c = %s" % cK_c)
     print("      q = %s" % cq)
-    print("  ratio = %g, error = %g" % (q/cq, abs(1.0 - q/cq)))
+    print("  ratio = %g, error = %g" % (q / cq, abs(1.0 - q / cq)))
 
     return
 
 
 def validateRates(calc):
-    
+
     width = 14
     precision = width - 7
 
-    header1 = "".center(4) \
-             + '   ' + "".center(40) \
-             + ' ' + 'progress rate'.center(width+2) \
-             + ' ' + 'chemkin value'.center(width+2)
-             
-    header2 = "Id".center(4) \
-              + ' | ' + "Reaction".center(40) \
-              + ('|' + 'mole/cm^3/s'.center(width+2))*2 \
-              + '|' + 'relative error'.center(width+2)
+    header1 = (
+        "".center(4)
+        + "   "
+        + "".center(40)
+        + " "
+        + "progress rate".center(width + 2)
+        + " "
+        + "chemkin value".center(width + 2)
+    )
 
-    line = "-----+-" + "-"*40 + ("+" + "-"*(width+2))*3
+    header2 = (
+        "Id".center(4)
+        + " | "
+        + "Reaction".center(40)
+        + ("|" + "mole/cm^3/s".center(width + 2)) * 2
+        + "|"
+        + "relative error".center(width + 2)
+    )
+
+    line = "-----+-" + "-" * 40 + ("+" + "-" * (width + 2)) * 3
 
     print(header1)
     print(header2)
     print(line)
 
     i = 0
-    format = "%4d : %-40s" + ("| %%%d.%de " % (width, precision))*3
-    #format = "%4d : %-40s" + "| %s "*2
+    format = "%4d : %-40s" + ("| %%%d.%de " % (width, precision)) * 3
+    # format = "%4d : %-40s" + "| %s "*2
 
     from chemkin_rates import chemkin_rates
 
@@ -152,15 +161,19 @@ def validateRates(calc):
         i += 1
         q_f, q_r = reaction.progressRate()
 
-        if q_f.derivation != (mole/(meter**3/second)).derivation:
-            pyre.debug.Firewall.hit("bad units in forward progress rate for reaction %d" % i)
+        if q_f.derivation != (mole / (meter ** 3 / second)).derivation:
+            pyre.debug.Firewall.hit(
+                "bad units in forward progress rate for reaction %d" % i
+            )
 
-        if q_r.derivation != (mole/(meter**3/second)).derivation:
-            pyre.debug.Firewall.hit("bad units in reverse progress rate for reaction %d" % i)
+        if q_r.derivation != (mole / (meter ** 3 / second)).derivation:
+            pyre.debug.Firewall.hit(
+                "bad units in reverse progress rate for reaction %d" % i
+            )
 
         progress = 1e-6 * (q_f - q_r).value
-        chemkin, k_c = chemkin_rates[i-1]
-        err = abs((progress-chemkin)/chemkin)
+        chemkin, k_c = chemkin_rates[i - 1]
+        err = abs((progress - chemkin) / chemkin)
 
         print(format % (i, str(reaction), progress, chemkin, err))
 
@@ -176,15 +189,19 @@ def mismatches(calc):
         i = reaction.id()
         q_f, q_r = reaction.progressRate()
 
-        if q_f.derivation != (mole/(meter**3/second)).derivation:
-            pyre.debug.Firewall.hit("bad units in forward progress rate for reaction %d" % i)
+        if q_f.derivation != (mole / (meter ** 3 / second)).derivation:
+            pyre.debug.Firewall.hit(
+                "bad units in forward progress rate for reaction %d" % i
+            )
 
-        if q_r.derivation != (mole/(meter**3/second)).derivation:
-            pyre.debug.Firewall.hit("bad units in reverse progress rate for reaction %d" % i)
+        if q_r.derivation != (mole / (meter ** 3 / second)).derivation:
+            pyre.debug.Firewall.hit(
+                "bad units in reverse progress rate for reaction %d" % i
+            )
 
         progress = 1e-6 * (q_f - q_r).value
-        chemkin, k_c = chemkin_rates[i-1]
-        err = abs((progress-chemkin)/chemkin)
+        chemkin, k_c = chemkin_rates[i - 1]
+        err = abs((progress - chemkin) / chemkin)
 
         if err > 1e-2:
             print(" ### reaction %d: mismatch = %g" % (i, err))
@@ -193,36 +210,36 @@ def mismatches(calc):
     return candidates
 
 
-
 def prepareMixture(mechanism):
-    print(" --- preparing a mixture", end=' ')
+    print(" --- preparing a mixture", end=" ")
 
     timer.reset()
     timer.start()
     mix = pyre.chemistry.mixture(mechanism)
 
     from pyre.handbook.units.SI import *
-    c = mole/( (centi*meter)**3)
-    
+
+    c = mole / ((centi * meter) ** 3)
+
     for species in mix.find():
         species.updateConcentration(c)
     mix.find("<mixture>").updateConcentration((mix.size() - 1) * c)
 
-    #mix.find("O").updateConcentration(c)
-    #mix.find("CO").updateConcentration(c)
-    #mix.find("<mixture>").updateConcentration(2*c)
-    
+    # mix.find("O").updateConcentration(c)
+    # mix.find("CO").updateConcentration(c)
+    # mix.find("<mixture>").updateConcentration(2*c)
+
     timer.stop()
     print("... done in %g sec" % timer.read())
     print(" +++ mixture: concentration", mix.find("<mixture>").concentration())
-    #print
+    # print
 
     return mix
 
 
 def calculator(mix, mechanism):
 
-    print(" --- coverting mechanism to a rate calculator", end=' ')
+    print(" --- coverting mechanism to a rate calculator", end=" ")
     timer.reset()
     timer.start()
     calc = pyre.chemistry.mechanism(mix, mechanism)
@@ -230,7 +247,6 @@ def calculator(mix, mechanism):
     print("... done in %g sec" % timer.read())
 
     return calc
-
 
 
 def validateThermo(mixture, T):
@@ -259,17 +275,23 @@ def validateThermo(mixture, T):
 
     width = 18
     precision = width - 7
-    
-    header = "Species".center(12) \
-             + '|' + "cp_R".center(width+2) \
-             + '|' + "h_RT".center(width+2) \
-             + '|' + "s_R".center(width+2) \
-             + '|' + "g_RT".center(width+2)
-    line = "-"*12 + ("+" + "-"*(width+2))*4
+
+    header = (
+        "Species".center(12)
+        + "|"
+        + "cp_R".center(width + 2)
+        + "|"
+        + "h_RT".center(width + 2)
+        + "|"
+        + "s_R".center(width + 2)
+        + "|"
+        + "g_RT".center(width + 2)
+    )
+    line = "-" * 12 + ("+" + "-" * (width + 2)) * 4
 
     print(header)
     print(line)
-    format = "  %-10s" + ("| %%%d.%df " % (width, precision))*4
+    format = "  %-10s" + ("| %%%d.%df " % (width, precision)) * 4
     for symbol, cp_R, h_RT, s_R, g_RT in table:
         print(format % (symbol, cp_R, h_RT, s_R, g_RT))
 
@@ -281,14 +303,15 @@ def validateThermo(mixture, T):
     print(header)
     print(line)
     from cantera_thermo import cantera
-    format = "  %-10s" + ("| %%%d.%de " % (width, precision))*4
+
+    format = "  %-10s" + ("| %%%d.%de " % (width, precision)) * 4
     for symbol, mcp_R, mh_RT, ms_R, mg_RT in table:
         ccp_R, ch_RT, cs_R, cg_RT = cantera[symbol]
-        
-        dcp_R = abs((mcp_R - ccp_R)/mcp_R)
-        dh_RT = abs((mh_RT - ch_RT)/mh_RT)
-        ds_R = abs((ms_R - cs_R)/ms_R)
-        dg_RT = abs((mg_RT - cg_RT)/mg_RT)
+
+        dcp_R = abs((mcp_R - ccp_R) / mcp_R)
+        dh_RT = abs((mh_RT - ch_RT) / mh_RT)
+        ds_R = abs((ms_R - cs_R) / ms_R)
+        dg_RT = abs((mg_RT - cg_RT) / mg_RT)
 
         print(format % (symbol, dcp_R, dh_RT, ds_R, dg_RT))
 
@@ -302,19 +325,20 @@ def load(options):
     file = options["--file"]
     format = options["--format"]
 
-    print(" --- loading mechanism '%s'" % file, end=' ')
+    print(" --- loading mechanism '%s'" % file, end=" ")
 
     timer.start()
     mechanism = pyre.chemistry.serialization.load(file, format)
     timer.stop()
 
     print("... done in %g sec" % timer.read())
-    #mechanism.printStatistics()
+    # mechanism.printStatistics()
 
     return mechanism
 
 
 # usage
+
 
 def usage(program):
     print("Usage: %s [options ...]" % program)
@@ -323,27 +347,24 @@ def usage(program):
     print("    --format=<chemkin|ckml> [%s]" % defaults["--file"])
     print()
     return
-        
 
-defaults = {
-    "--file": "GRIMech-3.0.ck2",
-    "--format": "chemkin"
-    }
+
+defaults = {"--file": "GRIMech-3.0.ck2", "--format": "chemkin"}
 
 # main
 
 if __name__ == "__main__":
-        
+
     # pyre.support.debug.activate("pyre.chemistry.serialization")
     # pyre.support.debug.activate("pyre.chemistry.chemkin-scanner")
     # pyre.support.debug.activate("pyre.chemistry.chemkin-parser")
     # pyre.support.debug.activate("pyre.chemistry.chemkin-tokenizer")
-    
+
     import pyre
 
     options = pyre.applications.main(defaults, usage)
     mechanism, calc = test(options)
-    
+
 
 # version
 __id__ = "$Id$"

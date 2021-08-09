@@ -13,9 +13,9 @@
 
 
 from builtins import object
+
+
 class ThermoDb(object):
-
-
     def all(self, flag=None):
 
         if flag is None:
@@ -24,7 +24,6 @@ class ThermoDb(object):
         self._all = flag
         return
 
-
     def range(self, range=None):
         if range is None:
             return self._range
@@ -32,23 +31,19 @@ class ThermoDb(object):
         self._range = range
         return
 
-
     def species(self, species):
         self._species.append(species)
         self._index[species.symbol] = species
         return
 
-
     def size(self):
         return len(self._species)
-
 
     def find(self, symbol=None):
         if symbol:
             return self._index.get(symbol)
 
         return self._species
-
 
     def __init__(self):
         self._all = 0

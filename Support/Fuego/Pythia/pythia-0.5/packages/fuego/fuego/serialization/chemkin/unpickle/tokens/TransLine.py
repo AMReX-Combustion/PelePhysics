@@ -12,19 +12,19 @@
 #
 
 from __future__ import absolute_import
-from .Token import Token
+
 from .RegularExpressions import eol, whitespaceOpt
+from .Token import Token
 
 
 class TransLine(Token):
 
-
-    pattern = r"(?P<tran_line>.{19,19})(?P<tran_type>[0-2])(?P<tran_line_2>.*$)"
-
+    pattern = (
+        r"(?P<tran_line>.{19,19})(?P<tran_type>[0-2])(?P<tran_line_2>.*$)"
+    )
 
     def identify(self, auth):
         return auth.aTransLine(self)
-
 
     def __init__(self, match, groups):
         Token.__init__(self, match, groups)
@@ -33,7 +33,6 @@ class TransLine(Token):
         self.text_2 = groups["tran_line_2"]
 
         return
-
 
     def __str__(self):
         return "{trans line: %s}" % self.text.strip()

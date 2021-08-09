@@ -11,6 +11,7 @@
 #
 
 from __future__ import print_function
+
 import pyre
 
 
@@ -25,7 +26,7 @@ def save(filename, mechanism):
     lines = pyre.chemistry.serialization.save(mechanism)
 
     for line in lines:
-        file.write(line+'\n')
+        file.write(line + "\n")
 
     file.close()
 
@@ -43,13 +44,14 @@ def cycle(options):
 
     take_2 = load("take_1.ck2")
     # take_2.dump()
-    save_2 ="take_2.ck2"
+    save_2 = "take_2.ck2"
     save("take_2.ck2", take_2)
 
     return take_2
 
 
 # usage
+
 
 def usage(program):
     print("Usage: %s [options ...]" % program)
@@ -58,12 +60,9 @@ def usage(program):
     print("    --format=<chemkin|ckml> [%s]" % defaults["--file"])
     print()
     return
-        
 
-defaults = {
-    "--file": "GRIMech-3.0.ck2",
-    "--format": "chemkin"
-    }
+
+defaults = {"--file": "GRIMech-3.0.ck2", "--format": "chemkin"}
 
 # main
 
@@ -73,7 +72,7 @@ if __name__ == "__main__":
 
     options = pyre.applications.main(defaults, usage)
     mechanism = cycle(options)
-    
+
 
 # version
 __id__ = "$Id$"

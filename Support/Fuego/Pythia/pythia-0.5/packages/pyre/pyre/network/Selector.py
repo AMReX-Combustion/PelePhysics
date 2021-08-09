@@ -1,47 +1,41 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 from builtins import object
+
 import journal
 
 
 class Selector(object):
-
-
     def notifyOnReadReady(self, fd, handler):
         self._input.setdefault(fd, []).append(handler)
         return
-
 
     def notifyOnWriteReady(self, fd, handler):
         self._output.setdefault(fd, []).append(handler)
         return
 
-
     def notifyOnException(self, fd, handler):
         self._exception.setdefault(fd, []).append(handler)
         return
-
 
     def notifyOnInterrupt(self, handler):
         self._interrupt.append(handler)
         return
 
-
     def notifyWhenIdle(self, handler):
         self._idle.append(handler)
         return
-
 
     def watch(self, timeout=None):
         if timeout:
@@ -56,7 +50,6 @@ class Selector(object):
 
         return
 
-
     def __init__(self):
         self.state = True
         self._timeout = self._TIMEOUT
@@ -69,9 +62,8 @@ class Selector(object):
         # clients to notify when there is nothing else to do
         self._idle = []
         self._interrupt = []
-        
-        return
 
+        return
 
     def _watch(self):
         import select
@@ -94,11 +86,13 @@ class Selector(object):
 
             self._info.log("calling select")
             try:
-                reads, writes, excepts = select.select(iwtd, owtd, ewtd, self._timeout)
+                reads, writes, excepts = select.select(
+                    iwtd, owtd, ewtd, self._timeout
+                )
             except select.error:
                 self._info.log("signal received")
                 continue
-                
+
             self._info.log("returned from select")
 
             if not reads and not writes and not excepts:
@@ -116,7 +110,6 @@ class Selector(object):
 
         return
 
-
     def _dispatch(self, handlers, entities):
 
         for fd in entities:
@@ -127,7 +120,6 @@ class Selector(object):
                         del handlers[fd]
 
         return
-
 
     def _cleanup(self):
         self._info.log("cleaning up")
@@ -142,16 +134,15 @@ class Selector(object):
             handler(self)
 
         return
-        
 
     # static members
     _info = journal.debug("pyre.network.selector")
 
     # constants
-    _TIMEOUT = .5
+    _TIMEOUT = 0.5
 
 
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

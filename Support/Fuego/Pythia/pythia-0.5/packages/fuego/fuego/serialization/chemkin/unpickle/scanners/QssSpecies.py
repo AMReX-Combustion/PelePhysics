@@ -12,14 +12,16 @@
 #
 
 from __future__ import absolute_import
+
 from .BaseScanner import BaseScanner
 
 
 class QssSpecies(BaseScanner):
-
-
     def _tokenClasses(self):
-        from fuego.serialization.chemkin.unpickle.tokens import qss_speciesTokenClasses
+        from fuego.serialization.chemkin.unpickle.tokens import (
+            qss_speciesTokenClasses,
+        )
+
         return qss_speciesTokenClasses()
 
 

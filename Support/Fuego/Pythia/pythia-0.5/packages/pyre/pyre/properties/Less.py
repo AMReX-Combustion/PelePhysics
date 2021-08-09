@@ -13,12 +13,11 @@
 
 
 from __future__ import absolute_import
+
 from .Unary import Unary
 
 
 class Less(Unary):
-
-
     def __call__(self, candidate):
         return candidate < self.value
 
@@ -26,4 +25,4 @@ class Less(Unary):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

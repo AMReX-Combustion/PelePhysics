@@ -12,24 +12,26 @@
 #
 
 from __future__ import absolute_import
+
 from builtins import str
+
 from .BaseParser import BaseParser
 
 
 class Elements(BaseParser):
 
-
     # the interesting tokens
 
     def anElementName(self, token):
         try:
-            element = self._mechanism.newElement(token.name, token.weight, self.locator())
+            element = self._mechanism.newElement(
+                token.name, token.weight, self.locator()
+            )
 
         except self._mechanism.DuplicateElement as msg:
             self.onWarning(str(msg), self.locator())
-        
-        return 0
 
+        return 0
 
     # transitions
 
@@ -38,17 +40,20 @@ class Elements(BaseParser):
         self._parse(self._scanner, self._tokenizer)
         return 0
 
-
     # other methods
 
     def __init__(self, mechanism, tokenizer):
         import pyre
+
         BaseParser.__init__(self, mechanism)
 
         self._tokenizer = tokenizer
 
         import fuego
-        self._scanner = fuego.serialization.chemkin.unpickle.scanners.elements()
+
+        self._scanner = (
+            fuego.serialization.chemkin.unpickle.scanners.elements()
+        )
 
         return
 

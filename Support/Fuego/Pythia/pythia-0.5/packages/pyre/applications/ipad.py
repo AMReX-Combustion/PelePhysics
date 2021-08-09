@@ -15,6 +15,7 @@
 def ipad():
 
     from pyre.ipa.Daemon import Daemon
+
     app = Daemon()
     app.main()
 
@@ -22,9 +23,9 @@ def ipad():
 # main
 if __name__ == "__main__":
     ipad()
-    
+
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

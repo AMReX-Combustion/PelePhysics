@@ -16,9 +16,7 @@ from weaver.mills.LineMill import LineMill
 
 class ChemkinPickler(LineMill):
 
-
     names = ["chemkin"]
-
 
     def _renderDocument(self, mechanism, options=None):
 
@@ -29,70 +27,54 @@ class ChemkinPickler(LineMill):
 
         return
 
-
     def pickleElementSection(self, mechanism):
-        self._rep += [
-            '',
-            '! Element section',
-            '',
-            'Elements'
-            ]
+        self._rep += ["", "! Element section", "", "Elements"]
 
-        line = " "*4
-        
+        line = " " * 4
+
         for element in mechanism.element():
             symbol = element.symbol
             if len(line) + len(symbol) > 75:
                 self._rep.append(line)
-                line = " "*4
+                line = " " * 4
 
             line += " " + symbol
 
         self._rep.append(line)
-        self._rep.append('End')
+        self._rep.append("End")
 
         return
 
-
     def pickleSpeciesSection(self, mechanism):
-        self._rep += [
-            '',
-            '! Species section',
-            '',
-            'Species'
-            ]
+        self._rep += ["", "! Species section", "", "Species"]
 
-        line = " "*4
+        line = " " * 4
         for species in mechanism.species():
             symbol = species.symbol
             if len(line) + len(symbol) > 75:
                 self._rep.append(line)
-                line = " "*4
+                line = " " * 4
 
             line += " " + symbol
 
         self._rep.append(line)
-        self._rep.append('End')
+        self._rep.append("End")
 
         return
 
-
     def pickleThermoSection(self, mechanism):
-        self._rep += [
-            '',
-            '! Thermo section',
-            '']
+        self._rep += ["", "! Thermo section", ""]
 
-        line = 'Thermo'
+        line = "Thermo"
         if mechanism.thermoAll():
             line += " All"
         self._rep.append(line)
 
         if mechanism.thermoRange():
-            line = "%15.8g "*3 % mechanism.thermoRange()
+            line = "%15.8g " * 3 % mechanism.thermoRange()
             self._rep.append(line)
 
-        format = "%15.8e"*5 + "%5d"
+        format = "%15.8e" * 5 + "%5d"
 
         for species in mechanism.species():
 
@@ -103,14 +85,15 @@ class ChemkinPickler(LineMill):
 
             # compute line 1
 
-            line_1 = "%-18s" % species.symbol + " "*6 
+            line_1 = "%-18s" % species.symbol + " " * 6
 
             composition = [
                 "%-2s%3d" % (element, factor)
-                for element, factor in species.composition]
+                for element, factor in species.composition
+            ]
 
-            line_1 += "".join(composition[:min(len(composition), 4)])
-            line_1 += (" "*5)*(max(0, 4-len(composition)))
+            line_1 += "".join(composition[: min(len(composition), 4)])
+            line_1 += (" " * 5) * (max(0, 4 - len(composition)))
             line_1 += species.phase.upper()
 
             line_1 += "%10.3f" % species.thermo[1].lowT
@@ -118,18 +101,19 @@ class ChemkinPickler(LineMill):
 
             if species.thermo[1].highT != species.thermo[0].lowT:
                 import journal
+
                 journal.firewall("fuego").hit("bad mechanism")
                 continue
-                
+
             if species.thermo[1].lowT:
                 line_1 += "%10.3f" % species.thermo[1].lowT
             else:
-                line_1 += " "*10
+                line_1 += " " * 10
 
             if len(composition) >= 5:
                 line_1 += "%-2s%2d" % composition[4]
             else:
-                line_1 += " "*4
+                line_1 += " " * 4
 
             line_1 += "1"
             self._rep.append(line_1)
@@ -147,7 +131,7 @@ class ChemkinPickler(LineMill):
             line_2 += "%15.8e" % highParameters[2]
             line_2 += "%15.8e" % highParameters[3]
             line_2 += "%15.8e" % highParameters[4]
-            line_2 += " "*4 + "2"
+            line_2 += " " * 4 + "2"
 
             self._rep.append(line_2)
 
@@ -159,7 +143,7 @@ class ChemkinPickler(LineMill):
             line_3 += "%15.8e" % lowParameters[0]
             line_3 += "%15.8e" % lowParameters[1]
             line_3 += "%15.8e" % lowParameters[2]
-            line_3 += " "*4 + "3"
+            line_3 += " " * 4 + "3"
 
             self._rep.append(line_3)
 
@@ -169,22 +153,21 @@ class ChemkinPickler(LineMill):
             line_4 += "%15.8e" % lowParameters[4]
             line_4 += "%15.8e" % lowParameters[5]
             line_4 += "%15.8e" % lowParameters[6]
-            line_4 += " "*15
-            line_4 += " "*4 + "4"
+            line_4 += " " * 15
+            line_4 += " " * 4 + "4"
 
             self._rep.append(line_4)
 
-        self._rep.append('')
-        self._rep.append('End')
+        self._rep.append("")
+        self._rep.append("End")
 
         return
 
-
     def pickleReactionSection(self, mechanism):
-        self._rep.append('')
-        self._rep.append('! Reaction section')
-        self._rep.append('')
-        self._rep.append('Reactions')
+        self._rep.append("")
+        self._rep.append("! Reaction section")
+        self._rep.append("")
+        self._rep.append("Reactions")
 
         i = 0
 
@@ -192,12 +175,10 @@ class ChemkinPickler(LineMill):
             i += 1
             self.pickleReaction(reaction, i)
 
-
-        self._rep.append('')
-        self._rep.append('End')
+        self._rep.append("")
+        self._rep.append("End")
 
         return
-
 
     def pickleReaction(self, reaction, i):
         lines = []
@@ -215,13 +196,16 @@ class ChemkinPickler(LineMill):
         line += "%10.3g" % reaction.arrhenius[0]
         line += "%10.3g" % reaction.arrhenius[1]
         line += "%10.3g" % reaction.arrhenius[2]
-        line += " "*5 + "! %5d" % i
+        line += " " * 5 + "! %5d" % i
         lines.append(line)
 
         if reaction.efficiencies:
             efficiencies = "    "
             for species, coefficient in reaction.efficiencies:
-                efficiencies += "%s / %4.2f / " % (species, coefficient + 1) # remember adjustment
+                efficiencies += "%s / %4.2f / " % (
+                    species,
+                    coefficient + 1,
+                )  # remember adjustment
 
             lines.append(efficiencies)
 
@@ -261,15 +245,14 @@ class ChemkinPickler(LineMill):
 
         return lines
 
-
     def __init__(self, options=None):
-        LineMill.__init__(self, '!', _FIRSTLINE)
+        LineMill.__init__(self, "!", _FIRSTLINE)
         return
 
 
 # helpers
 
-_FIRSTLINE = '! -*- chemkin -*-'
+_FIRSTLINE = "! -*- chemkin -*-"
 
 
 def _printReagents(reaction, composition):
@@ -282,18 +265,18 @@ def _printReagents(reaction, composition):
         str += species
 
         terms.append(str)
-        
+
     line = " + ".join(terms)
 
     if reaction.thirdBody:
         species, factor = reaction.thirdBody
-        if species == '<mixture>':
-            species = 'M'
+        if species == "<mixture>":
+            species = "M"
 
         if reaction.falloff:
-            line += ' (+'
+            line += " (+"
         else:
-            line += ' + '
+            line += " + "
 
         if factor != 1:
             line += "%d" % factor
@@ -301,8 +284,8 @@ def _printReagents(reaction, composition):
         line += species
 
         if reaction.falloff:
-            line += ')'
-        
+            line += ")"
+
     return line
 
 

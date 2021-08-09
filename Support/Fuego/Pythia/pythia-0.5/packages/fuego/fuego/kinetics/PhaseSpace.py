@@ -11,23 +11,19 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
-from builtins import map
-from builtins import object
-from operator import mul
+from builtins import map, object
 from functools import reduce
+from operator import mul
 
 
 class PhaseSpace(object):
-
-
     def __init__(self, species, coefficients):
         self.species = species
         self.coefficients = coefficients
         return
 
-
     def __call__(self):
-        concentrations = [ species.concentration() for species in self.species ]
+        concentrations = [species.concentration() for species in self.species]
         return reduce(mul, list(map(pow, concentrations, self.coefficients)))
 
 

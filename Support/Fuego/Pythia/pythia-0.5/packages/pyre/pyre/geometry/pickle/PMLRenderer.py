@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 #
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
@@ -17,7 +17,6 @@ from weaver.mills.XMLMill import XMLMill
 
 class PMLRenderer(XMLMill, Visitor):
 
-
     # solids bodies
     def onBlock(self, block):
         line = '<block diagonal="(%s, %s, %s)"/>' % block.diagonal
@@ -25,32 +24,32 @@ class PMLRenderer(XMLMill, Visitor):
         self._write(line)
         return
 
-
     def onCone(self, cone):
         line = '<cone height="%s" topRadius="%s" bottomRadius="%s"/>' % (
-            cone.height, cone.top, cone.bottom)
+            cone.height,
+            cone.top,
+            cone.bottom,
+        )
 
         self._write(line)
         return
-
 
     def onCylinder(self, cylinder):
         line = '<cylinder height="%s" radius="%s"/>' % (
-            cylinder.height, cylinder.radius)
+            cylinder.height,
+            cylinder.radius,
+        )
 
         self._write(line)
         return
-
 
     def onPrism(self, prism):
         # NYI
         return self._abstract("onPrism")
 
-
     def onPyramid(self, pyramid):
         # NYI
         return self._abstract("onPyramid")
-
 
     def onSphere(self, sphere):
         line = '<sphere radius="%s"/>' % sphere.radius
@@ -58,21 +57,20 @@ class PMLRenderer(XMLMill, Visitor):
         self._write(line)
         return
 
-
     def onTorus(self, torus):
         line = '<torus major="%s" minor="%s"/>' % (torus.major, torus.minor)
 
         self._write(line)
         return
 
-
     def onGeneralizedCone(self, cone):
-        line = '<generalized-cone major="%s" minor="%s" scale="%s" height="%s"/>' % (
-            cone.major, cone.minor, cone.scale, cone.height)
+        line = (
+            '<generalized-cone major="%s" minor="%s" scale="%s" height="%s"/>'
+            % (cone.major, cone.minor, cone.scale, cone.height)
+        )
 
         self._write(line)
         return
-
 
     # Euler operations
     def onDifference(self, difference):
@@ -87,7 +85,6 @@ class PMLRenderer(XMLMill, Visitor):
 
         return
 
-
     def onIntersection(self, intersection):
         self._write("<intersection>")
 
@@ -99,7 +96,6 @@ class PMLRenderer(XMLMill, Visitor):
         self._write("</intersection>")
 
         return
-
 
     def onUnion(self, union):
         self._write("<union>")
@@ -113,19 +109,17 @@ class PMLRenderer(XMLMill, Visitor):
 
         return
 
-
     # transformations
     def onDilation(self, dilation):
         self._write("<dilation>")
 
         self._indent()
         body = dilation.body.inspect(self)
-        self._write( "<scale>%g</scale>" % dilation.scale)
+        self._write("<scale>%g</scale>" % dilation.scale)
         self._outdent()
 
         self._write("</dilation>")
         return
-
 
     def onReflection(self, reflection):
         self._write("<reflection>")
@@ -138,7 +132,6 @@ class PMLRenderer(XMLMill, Visitor):
         self._write("</reflection>")
         return
 
-
     def onReversal(self, reversal):
         self._write("<reversal>")
 
@@ -149,9 +142,8 @@ class PMLRenderer(XMLMill, Visitor):
         self._write("</reversal>")
         return
 
-
     def onRotation(self, rotation):
-        self._write( "<rotation>")
+        self._write("<rotation>")
 
         self._indent()
         rotation.body.inspect(self)
@@ -161,7 +153,6 @@ class PMLRenderer(XMLMill, Visitor):
 
         self._write("</rotation>")
         return
-
 
     def onTranslation(self, translation):
         self._write("<translation>")
@@ -174,24 +165,21 @@ class PMLRenderer(XMLMill, Visitor):
         self._write("</translation>")
         return
 
-
     def onGeometry(self, body):
         self._indent()
         body.inspect(self)
         self._outdent()
         return
 
-
     def __init__(self):
         XMLMill.__init__(self)
         return
-            
 
     def _renderDocument(self, body, options=None):
 
-        self._rep += ['', '<!DOCTYPE geometry>', '', '<geometry>', '' ]
+        self._rep += ["", "<!DOCTYPE geometry>", "", "<geometry>", ""]
         self.onGeometry(body)
-        self._rep += ['</geometry>']
+        self._rep += ["</geometry>"]
 
         return
 

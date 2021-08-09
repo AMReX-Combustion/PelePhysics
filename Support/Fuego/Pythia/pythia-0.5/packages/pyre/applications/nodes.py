@@ -1,18 +1,21 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        (C) 1998-2001 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 from __future__ import print_function
+
 from builtins import range
+
+
 def nodes(args):
     # extract user options
     spec = args["--range"]
@@ -38,8 +41,11 @@ def nodes(args):
 
     if not candidates:
         import sys
+
         sys.stderr.write(
-            " ### no valid nodes specified: file '%s' will not be written\n" % filename)
+            " ### no valid nodes specified: file '%s' will not be written\n"
+            % filename
+        )
         return []
 
     if filename:
@@ -50,8 +56,8 @@ def nodes(args):
 
 def query(maxload, format, port, maxnode):
 
-    import socket
     import select
+    import socket
 
     nodelist = []
 
@@ -59,7 +65,7 @@ def query(maxload, format, port, maxnode):
 
     for node in range(maxnode):
         host = format % (node + 1)
-        s.sendto(host, (host,port))
+        s.sendto(host, (host, port))
 
     while 1:
         reads, writes, excepts = select.select([s], [], [], 1.00)
@@ -72,9 +78,9 @@ def query(maxload, format, port, maxnode):
         print(msg)
         continue
 
-        fields = msg.split(':')
+        fields = msg.split(":")
         host = fields[0]
-        #print "host =",host, "load = {", fields[1], "}"
+        # print "host =",host, "load = {", fields[1], "}"
         continue
         load = float(fields[1])
         if load < maxload:
@@ -92,7 +98,7 @@ def userRange(spec, format, itemSep, rangeSep):
         usage(program)
         return []
 
-    candidates = [ format % x for x in ids ]
+    candidates = [format % x for x in ids]
 
     return candidates
 
@@ -111,11 +117,10 @@ def expand(spec, itemSep, rangeSep):
             lower = int(token[0])
             upper = int(token[1])
             if upper > lower:
-                candidates += list(range(lower,upper+1))
+                candidates += list(range(lower, upper + 1))
             else:
-                candidates += list(range(lower,upper-1,-1))
-            
-                             
+                candidates += list(range(lower, upper - 1, -1))
+
     return candidates
 
 
@@ -123,13 +128,14 @@ def write(filename, candidates):
 
     file = open(filename, "w")
     for line in candidates:
-        file.write(line + '\n')
+        file.write(line + "\n")
     file.close()
 
     return
 
 
 # main
+
 
 def usage(program):
 
@@ -138,11 +144,21 @@ def usage(program):
     print("    --range=<range spec> [%s]" % defaults["--range"])
     print("    --file=<filename> [%s]" % defaults["--file"])
     print("    --format=<format spec> [%s]" % defaults["--format"])
-    print("    --item-separator=<character> [%s]" % defaults["--item-separator"])
-    print("    --range-separator=<character> [%s]" % defaults["--range-separator"])
+    print(
+        "    --item-separator=<character> [%s]" % defaults["--item-separator"]
+    )
+    print(
+        "    --range-separator=<character> [%s]"
+        % defaults["--range-separator"]
+    )
     print("    --port=<daemon port> [%s]" % defaults["--port"])
-    print("    --max-load=<maximum acceptable load> [%s]" % defaults["--max-load"])
-    print("    --max-node=<max node id to query> [%s]" % defaults["--max-node"])
+    print(
+        "    --max-load=<maximum acceptable load> [%s]"
+        % defaults["--max-load"]
+    )
+    print(
+        "    --max-node=<max node id to query> [%s]" % defaults["--max-node"]
+    )
     print()
     print("Example: (with default values for the separators):")
     print("    %s --range=1-20,23,54,30-33 --file=beonodes" % program)
@@ -150,23 +166,24 @@ def usage(program):
 
 
 defaults = {
-    "--range" : None,
-    "--format" : "a%03d",
-    "--file" : None,
-    "--item-separator" : ",",
-    "--range-separator" : "-",
-    "--port" : "8092",
-    "--max-load" : ".5",
-    "--max-node" : "100",
-    }
+    "--range": None,
+    "--format": "a%03d",
+    "--file": None,
+    "--item-separator": ",",
+    "--range-separator": "-",
+    "--port": "8092",
+    "--max-load": ".5",
+    "--max-node": "100",
+}
 
 
 if __name__ == "__main__":
 
-    from pythlets.debug import DebugCenter
-    from pythlets.applications import main
-
     import sys
+
+    from pythlets.applications import main
+    from pythlets.debug import DebugCenter
+
     program = sys.argv[0]
 
     args = main(defaults, usage)
@@ -179,4 +196,4 @@ if __name__ == "__main__":
 # version
 __id__ = "$Id: nodes.py,v 1.5 2001/08/23 22:01:46 aivazis Exp $"
 
-#  End of file 
+#  End of file

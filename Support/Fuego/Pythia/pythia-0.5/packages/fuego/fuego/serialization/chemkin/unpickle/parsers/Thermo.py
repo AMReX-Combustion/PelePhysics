@@ -12,12 +12,13 @@
 #
 
 from __future__ import absolute_import
+
 from builtins import range
+
 from .BaseParser import BaseParser
 
 
 class Thermo(BaseParser):
-
 
     # the interesting tokens
 
@@ -31,29 +32,29 @@ class Thermo(BaseParser):
 
         return 0
 
-
     def aThermoLine(self, token):
         if not self._range and self._thermoAll:
             if not self._thermoAllWarned:
                 msg = "THERMO ALL: Expected temperature range definition, not species info"
                 self.onWarning(msg, self.locator())
                 self._thermoAllWarned = 1
-            
+
         # is this the next valid thermo line in the sequence?
         id = token.id - 1
         if id != self._nextId:
-            msg = "Unexpected thermo line: found %d while expecting %d" % \
-                  (token.id, self._nextId + 1)
+            msg = "Unexpected thermo line: found %d while expecting %d" % (
+                token.id,
+                self._nextId + 1,
+            )
             self.onError(msg, self.locator())
 
         # dispatch to appropriate line info parser
-        self._lineParsers[id](token) 
-        
+        self._lineParsers[id](token)
+
         # next valid thermo line is...
         self._nextId = (self._nextId + 1) % 4
 
         return 0
-
 
     # transitions
 
@@ -67,7 +68,6 @@ class Thermo(BaseParser):
 
         return 0
 
-
     def anEndSection(self, token):
         BaseParser.anEndSection(self, token)
 
@@ -80,27 +80,29 @@ class Thermo(BaseParser):
                     candidates.append(s.symbol)
 
             if candidates:
-                msg = "no species information for the folowing species: %s" % candidates
+                msg = (
+                    "no species information for the folowing species: %s"
+                    % candidates
+                )
                 self.onWarning(msg, self.locator())
 
         return 1
 
-
     def onEndOfFile(self):
         # if not self._thermoAll:
-            # msg = "this mechanism requires an external thermo database"
-            # self.onWarning(msg)
+        # msg = "this mechanism requires an external thermo database"
+        # self.onWarning(msg)
 
         self._mechanism.thermoDone()
-            
-        return 1
 
+        return 1
 
     # other methods
 
     def __init__(self, mechanism, tokenizer):
-        import pyre
         import fuego
+        import pyre
+
         BaseParser.__init__(self, mechanism)
 
         self._tokenizer = tokenizer
@@ -113,21 +115,27 @@ class Thermo(BaseParser):
         self._currentRange = None
 
         import re
-        from fuego.serialization.chemkin.unpickle.tokens.RegularExpressions import species
+
+        from fuego.serialization.chemkin.unpickle.tokens.RegularExpressions import (
+            species,
+        )
+
         self._speciesScanner = re.compile(species)
 
-        self._nextId = 0 #line ids are zero-based
+        self._nextId = 0  # line ids are zero-based
 
         self._currentSpecies = None
 
         self._lineParsers = [
-            self._parseLine1, self._parseLine2, self._parseLine3, self._parseLine4
-            ]
+            self._parseLine1,
+            self._parseLine2,
+            self._parseLine3,
+            self._parseLine4,
+        ]
 
         self._thermoAllWarned = 0
 
         return
-
 
     def _parseLine1(self, token):
         text = token.text
@@ -144,12 +152,12 @@ class Thermo(BaseParser):
             msg = "thermo section: undeclared species '%s'" % speciesName
             self.onWarning(msg, self.locator())
             species = self._mechanism.newSpecies(speciesName)
-            
+
         species.locator(self.locator())
 
         # Parse the element coefficient in columns 24-43 (zero-based)
         for i in range(0, 4):
-            offset = 24+i*5
+            offset = 24 + i * 5
             self._extractComposition(token, text, offset, species.composition)
 
         # Get the phase
@@ -176,103 +184,114 @@ class Thermo(BaseParser):
 
         # Save this information
         self._currentSpecies = species
-        
+
         return
 
-
     def _parseLine2(self, token):
-        if not self._currentSpecies: return
+        if not self._currentSpecies:
+            return
 
         text = token.text
 
         # extract the high T range parametrization
         self._parameters = []
         for i in range(0, 5):
-            number = self._extractFloat(token, text, i*15, 15)
+            number = self._extractFloat(token, text, i * 15, 15)
             self._parameters.append(number)
-        
+
         return
 
-
     def _parseLine3(self, token):
-        if not self._currentSpecies: return
+        if not self._currentSpecies:
+            return
 
         text = token.text
 
         # finish extracting the high T range parametrization
         for i in range(0, 2):
-            number = self._extractFloat(token, text, i*15, 15)
+            number = self._extractFloat(token, text, i * 15, 15)
             self._parameters.append(number)
 
         # store in the species
         self._currentSpecies.thermalParametrization(
-            "NASA", self._currentRange[1], self._currentRange[2], self.locator(),
-            self._parameters
-            )
-        
+            "NASA",
+            self._currentRange[1],
+            self._currentRange[2],
+            self.locator(),
+            self._parameters,
+        )
+
         # extract the first part of the low T parameters
         self._parameters = []
         for i in range(2, 5):
-            number = self._extractFloat(token, text, i*15, 15)
+            number = self._extractFloat(token, text, i * 15, 15)
             self._parameters.append(number)
-        
-        return
 
+        return
 
     def _parseLine4(self, token):
         species = self._currentSpecies
-        if not species: return
+        if not species:
+            return
 
         text = token.text
 
         # finish extracting the low T range parametrization
         for i in range(0, 4):
-            number = self._extractFloat(token, text, i*15, 15)
+            number = self._extractFloat(token, text, i * 15, 15)
             self._parameters.append(number)
-        
+
         # store in the species
         self._currentSpecies.thermalParametrization(
-            "NASA", self._currentRange[0], self._currentRange[1], self.locator(),
-            self._parameters
-            )
-        
+            "NASA",
+            self._currentRange[0],
+            self._currentRange[1],
+            self.locator(),
+            self._parameters,
+        )
+
         return
-            
 
     def _extractFloat(self, token, text, offset, width, optional=0):
-        str = text[offset:offset+width].strip()
+        str = text[offset : offset + width].strip()
         if not str:
-            if optional: return None
-            msg = "Expected a required numeric field instead of '%s'" % text[offset:offset+width]
+            if optional:
+                return None
+            msg = (
+                "Expected a required numeric field instead of '%s'"
+                % text[offset : offset + width]
+            )
             locator = self.locator()
             locator.column = offset
             self.onError(msg, locator)
-            
 
         try:
             value = float(str)
         except ValueError:
-            msg = "Could not convert '%s' into a number" % text[offset:offset+width]
+            msg = (
+                "Could not convert '%s' into a number"
+                % text[offset : offset + width]
+            )
             locator = self.locator()
             locator.column = offset
             self.onError(msg, locator)
 
         return value
-            
 
     def _extractComposition(self, token, text, offset, composition):
 
         # Extract the coefficient first:
         #    some files have junk in the element slot when the coefficient is 0
-        coef = text[offset+2:offset+5].strip()
+        coef = text[offset + 2 : offset + 5].strip()
 
         # The coefficient could be blank, which means 0
-        if not coef: return
+        if not coef:
+            return
 
-        coef = self._extractFloat(token, text, offset+2, 3)
+        coef = self._extractFloat(token, text, offset + 2, 3)
 
         # Extract the element name
-        name = text[offset:offset+2].strip()
+        name = text[offset : offset + 2].strip()
         if name and coef:
             element = self._mechanism.element(name)
             if not element:
@@ -281,10 +300,10 @@ class Thermo(BaseParser):
                 locator.column = offset
                 self.onWarning(msg, locator)
 
-            composition.append( (name, coef) )
+            composition.append((name, coef))
 
         return
-        
+
 
 # version
 __id__ = "$Id$"

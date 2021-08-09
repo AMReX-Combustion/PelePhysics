@@ -13,37 +13,35 @@
 
 
 from __future__ import print_function
+
 import pty
+
 import pyre.util.subprocesses
 from pyre.applications.Application import Application
 
 
 class ExpectApp(Application):
-
-
     def run(self):
         pyre.util.subprocesses.spawn_pty(self._read, self._print)
         return
-
 
     def __init__(self):
         Application.__init__(self, "expect")
         return
 
-
     def _read(self, childPid, childFd):
         import os
-        import sys
         import select
         import signal
+        import sys
 
         pid = os.getpid()
-        
-        #print "%d: child pid: %d, child fd: %d" % (pid, childPid, childFd)
+
+        # print "%d: child pid: %d, child fd: %d" % (pid, childPid, childFd)
         index = 10
         while index:
             index -= 1
-            r,w,e = select.select([childFd], [], [], 10)
+            r, w, e = select.select([childFd], [], [], 10)
             if not r:
                 raise Exception("timeout")
 
@@ -52,34 +50,31 @@ class ExpectApp(Application):
                 print("%d: got {%s}" % (pid, s.strip()))
                 os.write(childFd, "print 1+1%s" % os.linesep)
 
-
         os.kill(childPid, signal.SIGHUP)
-        
+
         return
 
-
-    def _print (self, pid):
+    def _print(self, pid):
         import os
+
         os.execvp("python", ("-i",))
         return
         raise Exception("UNREACHABLE")
-    
 
     class Inventory(Application.Inventory):
 
         import pyre.properties
 
-        inventory = [
-            ]
+        inventory = []
 
 
 # main
 if __name__ == "__main__":
     app = ExpectApp()
     app.main()
-    
+
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

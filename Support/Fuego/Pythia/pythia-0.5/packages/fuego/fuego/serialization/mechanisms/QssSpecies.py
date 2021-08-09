@@ -12,37 +12,43 @@
 #
 
 from __future__ import absolute_import
+
 from .Entity import Entity
 
 
 class QssSpecies(Entity):
-
-
     def thermalParametrization(self, type, lowT, highT, locator, parameters):
         if type == "NASA":
             from .NASA import NASA
+
             model = NASA(lowT, highT, locator)
             model.parameters = parameters
         else:
             import pyre
-            pyre.debug.Firewall.hit("unknown thermal parametrization type '%s'" % type)
+
+            pyre.debug.Firewall.hit(
+                "unknown thermal parametrization type '%s'" % type
+            )
             return
 
         self.thermo.append(model)
         return
 
-    def transParametrization(self, type, EPS, SIG, DIP, POL, ZROT, locator, parameters):
-        #if type == "0":
+    def transParametrization(
+        self, type, EPS, SIG, DIP, POL, ZROT, locator, parameters
+    ):
+        # if type == "0":
         from .TRANLIN import TRANLIN
+
         model = TRANLIN(EPS, SIG, DIP, POL, ZROT, locator)
         model.parameters = parameters
-        #elif type == "1":
+        # elif type == "1":
         #    model = TRANNL(EPS, SIG, DIP, POL, ZROT, locator)
         #    model.parameters = parameters
-        #elif type == "2":
+        # elif type == "2":
         #    model = TRANNL(EPS, SIG, DIP, POL, ZROT, locator)
         #    model.parameters = parameters
-        #else:
+        # else:
         #    import pyre
         #    pyre.debug.Firewall.hit("unknown transport parametrization type '%s'" % type)
         #    return
@@ -59,17 +65,22 @@ class QssSpecies(Entity):
         self.trans = []
         return
 
-
     def __str__(self):
         str = "symbol='%s'" % self.symbol
         str += ", phase='%s'" % self.phase
         str += ", composition=%s" % self.composition
 
-
         for p in self.thermo:
             str += ", thermo=([%g, %g]: %s)" % (p.lowT, p.highT, p.parameters)
         for p in self.trans:
-            str += ", trans=([%s, %s, %s, %s, %s]: %s)" % ((p.eps), p.sig, p.dip, p.pol, p.zrot, p.parameters)
+            str += ", trans=([%s, %s, %s, %s, %s]: %s)" % (
+                (p.eps),
+                p.sig,
+                p.dip,
+                p.pol,
+                p.zrot,
+                p.parameters,
+            )
 
         str += ", source=" + Entity.__str__(self)
         return str

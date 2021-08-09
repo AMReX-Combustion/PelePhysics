@@ -13,8 +13,11 @@
 
 
 from __future__ import absolute_import
+
+
 def mechanism(source):
     from .Mechanism import Mechanism
+
     return Mechanism(source)
 
 

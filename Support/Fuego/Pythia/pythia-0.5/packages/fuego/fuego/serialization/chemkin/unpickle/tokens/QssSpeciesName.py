@@ -12,28 +12,25 @@
 #
 
 from __future__ import absolute_import
-from .Token import Token
+
 from .RegularExpressions import species
+from .Token import Token
 
 
 class QssSpeciesName(Token):
 
-
     pattern = species
-
 
     def identify(self, auth):
         return auth.aQssSpeciesName(self)
-
 
     def __init__(self, match, groups):
         Token.__init__(self, match, groups)
         self.name = self.lexeme
         return
 
-    
     def __str__(self):
-         return "{QSS species name=" + self.name + "}"
+        return "{QSS species name=" + self.name + "}"
 
 
 # version

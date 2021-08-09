@@ -1,24 +1,24 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 from __future__ import absolute_import
-from .Mill import Mill
+
 from .BlockComments import BlockComments
+from .Mill import Mill
+
 
 class BlockMill(Mill, BlockComments):
-
-
     def __init__(self, begin, line, end, firstline):
         Mill.__init__(self)
         BlockComments.__init__(self)
@@ -34,4 +34,4 @@ class BlockMill(Mill, BlockComments):
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

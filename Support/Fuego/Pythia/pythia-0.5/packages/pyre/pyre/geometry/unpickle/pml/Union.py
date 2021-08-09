@@ -1,25 +1,26 @@
 #!/usr/bin/env python
 #
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
 from __future__ import absolute_import
-from .Binary import Binary
+
 import pyre.geometry.operations
+
+from .Binary import Binary
 
 
 class Union(Binary):
 
     tag = "union"
-
 
     def notify(self, parent):
         if not self._b1 or not self._b2:

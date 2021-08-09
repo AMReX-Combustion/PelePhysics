@@ -13,13 +13,12 @@
 
 
 from builtins import object
+
+
 class ThirdBodyEnhancement(object):
-
-
     def __init__(self, species):
         self._species = species
         return
-
 
     def __call__(self):
         return self._species.concentration()

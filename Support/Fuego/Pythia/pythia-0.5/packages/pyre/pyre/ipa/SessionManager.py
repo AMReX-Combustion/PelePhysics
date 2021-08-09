@@ -1,36 +1,35 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 from __future__ import absolute_import
+
 from pyre.components.Component import Component
 
 
 class SessionManager(Component):
-
-
     def serve(self):
         while not self._done:
             try:
                 self._selector.watch(self.inventory.timeout.value)
             except:
                 import sys
+
                 type = sys.exc_info()[0]
                 info = sys.exc_info()[1]
                 self._info.log("unhandled '%s': %s" % (type, info))
 
         return
-
 
     def __init__(self, name=None):
         if name is None:
@@ -39,7 +38,7 @@ class SessionManager(Component):
 
         # public data
         self.port = None
-        self.timeout = 30 # seconds
+        self.timeout = 30  # seconds
         self.userManager = None
 
         # private data
@@ -50,10 +49,10 @@ class SessionManager(Component):
 
         return
 
-
     def _init(self, parent):
 
         import pyre.network
+
         self._monitor = pyre.network.monitor("tcp")
         self.port, socket = self._monitor.install(self.port)
 
@@ -66,9 +65,9 @@ class SessionManager(Component):
 
         return
 
-
     def _issueTicket(self, selector, socket):
         import pickle
+
         from .AuthenticationRequest import AuthenticationRequest
 
         ticketOnce = self.inventory.ticketOnce
@@ -90,8 +89,10 @@ class SessionManager(Component):
                 pickle.dump(0, outbound)
                 return True
 
-            if ticket[:len(username)] != username:
-                self._info.log("username does not match ticket '%s'" % (ticket))
+            if ticket[: len(username)] != username:
+                self._info.log(
+                    "username does not match ticket '%s'" % (ticket)
+                )
                 pickle.dump(0, outbound)
                 return True
 
@@ -103,13 +104,16 @@ class SessionManager(Component):
                 del self._tickets[ticket]
 
             import time
+
             if time.time() - expiration > 0:
                 self._info.log("got expired ticket '%s'" % (ticket))
                 pickle.dump(0, outbound)
                 return True
 
-            newTicket = self._createTicket(username, ticket[len(username):])
-            self._info.log("exchanged good ticket '%s' for '%s'" % (ticket, newTicket))
+            newTicket = self._createTicket(username, ticket[len(username) :])
+            self._info.log(
+                "exchanged good ticket '%s' for '%s'" % (ticket, newTicket)
+            )
 
             pickle.dump(newTicket, outbound)
             return True
@@ -121,19 +125,19 @@ class SessionManager(Component):
         if not password:
             pickle.dump(0, outbound)
             return True
-        
+
         ticket = self._createTicket(username, password)
         pickle.dump(ticket, outbound)
 
         inbound.close()
         outbound.close()
         connection.close()
-        
-        return True
 
+        return True
 
     def _idle(self, selector):
         import time
+
         self._info.log("thump")
 
         currentTime = time.time()
@@ -146,11 +150,10 @@ class SessionManager(Component):
 
         return True
 
-
     def _createTicket(self, seed, text):
-        import time
         import random
-        
+        import time
+
         t = list(text)
         random.shuffle(t)
         shuffled = "".join(t)
@@ -160,25 +163,23 @@ class SessionManager(Component):
 
         return ticket
 
-
     def _cleanup(self, selector):
         self._done = True
         return
-        
-        
+
     class Inventory(Component.Inventory):
 
         import pyre.properties
         from pyre.units.time import second
 
         inventory = [
-            pyre.properties.dimensional("timeout", default=10*second),
+            pyre.properties.dimensional("timeout", default=10 * second),
             pyre.properties.bool("ticketOnce", default=True),
             pyre.properties.float("ticketDuration", default=5),
-            ]
+        ]
 
 
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

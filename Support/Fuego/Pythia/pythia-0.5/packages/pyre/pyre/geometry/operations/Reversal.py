@@ -1,27 +1,26 @@
 #!/usr/bin/env python
 #
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 
 from __future__ import absolute_import
+
 from builtins import str
+
 from .Transformation import Transformation
 
 
 class Reversal(Transformation):
-
-
     def inspect(self, visitor):
         return visitor.onReversal(self)
-
 
     def __init__(self, body):
         Transformation.__init__(self, body)
@@ -30,10 +29,8 @@ class Reversal(Transformation):
 
         return
 
-
     def __str__(self):
         return "reversal: body={%s}" % self.body
-
 
 
 # version

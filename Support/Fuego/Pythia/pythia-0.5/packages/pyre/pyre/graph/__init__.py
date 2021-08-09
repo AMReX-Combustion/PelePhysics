@@ -13,16 +13,18 @@
 
 
 from __future__ import absolute_import
+
+
 def graph(name):
     from .Graph import Graph
+
     return Graph(name)
 
 
 def graphviz():
     from .GraphvizRenderer import GraphvizRenderer
+
     return GraphvizRenderer()
-
-
 
 
 # version

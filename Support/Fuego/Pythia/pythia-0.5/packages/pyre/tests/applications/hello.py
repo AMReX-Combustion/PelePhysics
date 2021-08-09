@@ -13,22 +13,19 @@
 
 
 from __future__ import print_function
+
 from pyre.applications.Application import Application
 
 
 class HelloApp(Application):
-
-
     def run(self):
         print("Hello %s!" % self.inventory.name)
         self._debug.log("Hello world!")
         return
-    
 
     def __init__(self):
         Application.__init__(self, "hello")
         return
-
 
     class Inventory(Application.Inventory):
 
@@ -36,16 +33,16 @@ class HelloApp(Application):
 
         inventory = [
             pyre.properties.str("name", default="world"),
-            ]
+        ]
 
 
 # main
 if __name__ == "__main__":
     app = HelloApp()
     app.main()
-    
+
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

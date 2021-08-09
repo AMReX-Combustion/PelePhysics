@@ -12,12 +12,11 @@
 #
 
 from __future__ import absolute_import
+
 from .Declaration import Declaration
 
 
 class ThermoDeclaration(Declaration):
-
-
     def __init__(self, symbol, locator=None):
         Declaration.__init__(self, locator)
 
@@ -30,7 +29,6 @@ class ThermoDeclaration(Declaration):
         self.highParameters = []
 
         return
-
 
     def __str__(self):
         str = "symbol='%s'" % self.symbol

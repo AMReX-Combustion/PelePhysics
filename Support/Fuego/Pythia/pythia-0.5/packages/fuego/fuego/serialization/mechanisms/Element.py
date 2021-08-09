@@ -12,20 +12,18 @@
 #
 
 from __future__ import absolute_import
+
 from .Entity import Entity
 
 
 class Element(Entity):
-
-
     def __init__(self, id, symbol, weight=None, locator=None):
         Entity.__init__(self, id, locator)
-        
+
         self.symbol = symbol
         self.weight = weight
 
         return
-
 
     def __str__(self):
         str = "symbol='%s'" % self.symbol
@@ -35,7 +33,6 @@ class Element(Entity):
         str += ", source=" + Entity.__str__(self)
 
         return str
-
 
     __slots__ = ("symbol", "weight")
 

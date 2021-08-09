@@ -13,30 +13,38 @@
 
 
 from __future__ import absolute_import
+
 from pyre.inventory.Trait import Trait
 
 
 class Facility(Trait):
-
-
     def __init__(
-        self, name, default=None, public=None, 
-        binder=None, requirements=None, tip="", doc="" ):
+        self,
+        name,
+        default=None,
+        public=None,
+        binder=None,
+        requirements=None,
+        tip="",
+        doc="",
+    ):
 
-        Trait.__init__(self, name, default=default, public=public, tip=tip, doc=doc)
+        Trait.__init__(
+            self, name, default=default, public=public, tip=tip, doc=doc
+        )
         self.type = "facility"
 
         if binder is None:
             from .ScriptBinder import ScriptBinder
+
             binder = ScriptBinder()
         self.binder = binder
-        
+
         if requirements is None:
             requirements = []
         self.requirements = requirements
-            
-        return
 
+        return
 
     def __set__(self, instance, component):
 
@@ -52,4 +60,4 @@ class Facility(Trait):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

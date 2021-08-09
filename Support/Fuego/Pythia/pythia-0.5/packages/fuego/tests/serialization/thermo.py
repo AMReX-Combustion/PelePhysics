@@ -11,6 +11,7 @@
 #
 
 from __future__ import print_function
+
 import pyre
 
 
@@ -20,7 +21,7 @@ def load(options):
     # pyre.support.debug.activate("pyre.chemistry.chemkin-scanner")
     # pyre.support.debug.activate("pyre.chemistry.chemkin-parser")
     # pyre.support.debug.activate("pyre.chemistry.chemkin-tokenizer")
-    
+
     file = options["--file"]
     format = options["--format"]
 
@@ -41,23 +42,21 @@ def load(options):
 
 # usage
 
+
 def usage(program):
 
     formats = pyre.chemistry.serialization.unpicklers().registered()
     supported = "|".join(formats)
-    
+
     print("Usage: %s [options ...]" % program)
     print("Options: (default values in brackets)")
     print("    --file=<mechanism filename> [%s]" % defaults["--file"])
     print("    --format=<%s> [%s]" % (supported, defaults["--format"]))
     print()
     return
-        
 
-defaults = {
-    "--file": "therm.dat",
-    "--format": "chemkin"
-    }
+
+defaults = {"--file": "therm.dat", "--format": "chemkin"}
 
 # main
 
@@ -65,7 +64,7 @@ if __name__ == "__main__":
 
     options = pyre.applications.main(defaults, usage)
     db = load(options)
-    
+
 
 # version
 __id__ = "$Id$"

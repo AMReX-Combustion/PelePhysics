@@ -12,14 +12,14 @@
 #
 
 from __future__ import absolute_import
+
 from pyre.facilities.Facility import Facility
 
 
 class ChannelFacility(Facility):
-
-
     def __init__(self, name):
         from .Channel import Channel
+
         Facility.__init__(self, name=name, default=Channel(name))
         return
 
@@ -27,4 +27,4 @@ class ChannelFacility(Facility):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

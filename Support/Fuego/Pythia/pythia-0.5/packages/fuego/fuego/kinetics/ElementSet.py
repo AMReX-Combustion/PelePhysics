@@ -12,19 +12,17 @@
 #
 
 from __future__ import absolute_import
+
 from .EntitySet import EntitySet
 
 
 class ElementSet(EntitySet):
-
-
     def element(self, symbol):
         return self.find(symbol)
 
-
     def __init__(self, elements):
         EntitySet.__init__(self)
-        
+
         from .Element import Element
 
         for proxy in elements:
@@ -32,8 +30,6 @@ class ElementSet(EntitySet):
             self.insert(proxy.symbol, element)
 
         return
-        
-
 
 
 # version

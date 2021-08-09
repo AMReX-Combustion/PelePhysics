@@ -13,12 +13,13 @@
 
 
 from __future__ import print_function
+
 from builtins import object
+
+
 class Trait(object):
 
-
     prefix = "_pRoPeRtY_"
-
 
     def __init__(self, name, default=None, public=None, tip="", doc=""):
         self.doc = doc
@@ -32,15 +33,13 @@ class Trait(object):
             public = name
         self.public = public
 
-        #print "Trait.__init__: created name='%s', public='%s'" % (name, public)
+        # print "Trait.__init__: created name='%s', public='%s'" % (name, public)
 
         return
-
 
     def __del__(self):
         # print("Trait.__del__: deleted '%s'" % self.name)
         return
-
 
     def __get__(self, instance, cls):
         try:
@@ -51,11 +50,11 @@ class Trait(object):
         # instance is None when accessed as a class attribute
         except AttributeError:
             value = cls.__dict__[self.name]
-        
+
         return value
 
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

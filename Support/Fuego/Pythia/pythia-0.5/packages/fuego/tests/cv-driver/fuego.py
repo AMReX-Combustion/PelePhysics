@@ -11,6 +11,7 @@
 #
 
 from __future__ import print_function
+
 import pyre
 
 
@@ -26,7 +27,7 @@ def save(options):
     mechanismFile = options["--mechanism"]
 
     timer = pyre.timers.timer("chemkin-unpickle")
-    print("Loading '%s' using '%s' parser" % (mechanismFile, input), end=' ')
+    print("Loading '%s' using '%s' parser" % (mechanismFile, input), end=" ")
 
     timer.start()
     mechanism = pyre.chemistry.serialization.load(mechanismFile, input)
@@ -34,7 +35,7 @@ def save(options):
 
     timer.reset()
     timer.start()
-    print("Converting into '%s' format" % output, end=' ')
+    print("Converting into '%s' format" % output, end=" ")
     lines = pyre.chemistry.serialization.save(mechanism, output)
     print("... done (%g sec)" % timer.stop())
 
@@ -42,14 +43,15 @@ def save(options):
     outputFile = openOutput(save)
     for line in lines:
         outputFile.write(line)
-        outputFile.write('\n')
-        
+        outputFile.write("\n")
+
     return mechanism
 
 
 def openOutput(file):
     if file == "stdout":
         import sys
+
         return sys.stdout
 
     return open(file, "w")
@@ -57,27 +59,30 @@ def openOutput(file):
 
 # usage
 
+
 def usage(program):
 
-    inputs = '|'.join(pyre.chemistry.serialization.unpicklers().registered())
-    outputs = '|'.join(pyre.chemistry.serialization.picklers().registered())
-    
+    inputs = "|".join(pyre.chemistry.serialization.unpicklers().registered())
+    outputs = "|".join(pyre.chemistry.serialization.picklers().registered())
+
     print("Usage: %s [options ...]" % program)
     print("Options: (default values in brackets)")
     print("    --file=<output filename> [%s]" % defaults["--file"])
-    print("    --mechanism=<mechanism filename> [%s]" % defaults["--mechanism"])
+    print(
+        "    --mechanism=<mechanism filename> [%s]" % defaults["--mechanism"]
+    )
     print("    --input=<%s> [%s]" % (inputs, defaults["--input"]))
     print("    --output=<%s> [%s]" % (outputs, defaults["--output"]))
     print()
     return
-        
+
 
 defaults = {
     "--file": "stdout",
     "--mechanism": "GRIMech-3.0.ck2",
     "--input": "chemkin",
-    "--output": "c"
-    }
+    "--output": "c",
+}
 
 # main
 
@@ -85,7 +90,7 @@ if __name__ == "__main__":
 
     options = pyre.applications.main(defaults, usage)
     mechanism = save(options)
-    
+
 
 # version
 __id__ = "$Id$"

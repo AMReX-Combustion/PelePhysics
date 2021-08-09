@@ -13,12 +13,11 @@
 
 
 from __future__ import absolute_import
+
 from .Binder import Binder
 
 
 class ImportBinder(Binder):
-
-
     def bind(self, name):
         context = {}
         exec("import %s" % name, context)
@@ -29,4 +28,4 @@ class ImportBinder(Binder):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

@@ -1,20 +1,22 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 from __future__ import print_function
+
 from builtins import range
-import pyre
+
 import journal
+import pyre
 
 
 def run(argv):
@@ -24,6 +26,7 @@ def run(argv):
     timeout = float(argv.get("timeout"))
 
     from pyre.util.bool import bool
+
     if bool(argv.get("client")):
         client(host, port, sleep)
         return
@@ -33,6 +36,7 @@ def run(argv):
         return
 
     import os
+
     clientId = os.fork()
 
     if not clientId:
@@ -46,12 +50,13 @@ def run(argv):
 
 
 def server(port, timeout):
+    import pickle
     import select
     import socket
-    import pickle
+
     import journal
-    from journal.Entry import Entry
     import pyre.network
+    from journal.Entry import Entry
 
     # create the monitor
     monitor = pyre.network.monitor("udp")
@@ -66,7 +71,7 @@ def server(port, timeout):
         if not reads:
             print(" -- timeout")
             continue
-        
+
         entry = pickle.load(file)
         journal.journal().record(entry)
 
@@ -76,9 +81,11 @@ def server(port, timeout):
 def client(host, port, sleep):
     # sleep for the requested amount of time
     import select
+
     select.select([], [], [], sleep)
 
     import journal
+
     journal.remote(port, host, mode="udp")
 
     for id in range(5):
@@ -89,6 +96,7 @@ def client(host, port, sleep):
 
 
 # usage
+
 
 def usage(program):
 
@@ -111,7 +119,7 @@ def usage(program):
     print("    --server=<bool> [%s]" % defaults["server"])
 
     return
-        
+
 
 defaults = {
     "host": "localhost",
@@ -120,13 +128,14 @@ defaults = {
     "timeout": "5.0",
     "client": "false",
     "server": "false",
-    }
+}
 
 # main
 
 if __name__ == "__main__":
 
     import pyre.applications
+
     options = pyre.applications.options(defaults, usage)
     run(options)
 
@@ -134,4 +143,4 @@ if __name__ == "__main__":
 # version
 __id__ = "$Id: remote.py,v 1.1.1.1 2003/02/16 04:23:02 aivazis Exp $"
 
-#  End of file 
+#  End of file

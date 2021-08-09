@@ -12,18 +12,17 @@
 #
 
 from __future__ import absolute_import
+
 from .EntitySet import EntitySet
 
 
 class ReactionSet(EntitySet):
-
-
     def reaction(self, id, locator):
         from .Reaction import Reaction
+
         reaction = Reaction(id, locator)
         self.insert(reaction, reaction)
         return reaction
-
 
     def find(self, symbol=None, id=None):
         if id is not None:
@@ -42,7 +41,7 @@ class ReactionSet(EntitySet):
                 if species == symbol:
                     candidates.append(reaction)
                 continue
-                
+
         return candidates
 
 

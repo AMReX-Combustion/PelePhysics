@@ -15,8 +15,6 @@ from pyre.xml.Node import Node
 
 
 class AbstractNode(Node):
-
-
     def __init__(self, root, attributes):
         Node.__init__(self, root)
         return
@@ -25,4 +23,4 @@ class AbstractNode(Node):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

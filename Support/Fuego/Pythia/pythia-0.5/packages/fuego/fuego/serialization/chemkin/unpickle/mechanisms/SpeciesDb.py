@@ -13,25 +13,22 @@
 
 
 from builtins import object
+
+
 class SpeciesDb(object):
-
-
     def species(self, species):
         self._species.append(species)
         self._index[species.symbol] = species
         return
 
-
     def size(self):
         return len(self._species)
-
 
     def find(self, symbol=None):
         if symbol:
             return self._index.get(symbol)
 
         return self._species
-
 
     def __init__(self):
         self._index = {}

@@ -20,6 +20,7 @@ def spawn(onParent, onChild):
         return onParent(pid)
 
     import os
+
     pid = os.getpid()
 
     return onChild(pid)
@@ -33,6 +34,7 @@ def spawn_pty(onParent, onChild):
         return onParent(pid, fd)
 
     import os
+
     pid = os.getpid()
 
     return onChild(pid)
@@ -41,4 +43,4 @@ def spawn_pty(onParent, onChild):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

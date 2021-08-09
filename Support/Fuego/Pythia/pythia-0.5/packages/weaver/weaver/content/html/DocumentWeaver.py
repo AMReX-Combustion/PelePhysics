@@ -1,32 +1,29 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
 from .Weaver import Weaver
 from .weaver.mills.HTMLMill import HTMLMill
 
 
 class DocumentWeaver(Weaver, HTMLMill):
-
-
     def body(self, body=None):
         if body:
             self._body = body
 
         return self._body
-
 
     def javascript(self, library=None):
         if library:
@@ -34,12 +31,10 @@ class DocumentWeaver(Weaver, HTMLMill):
 
         return self._javascript
 
-
     def weave(self):
         for line in self.pickle():
             print(line)
         return
-
 
     def pickle(self):
         self._begin()
@@ -47,19 +42,19 @@ class DocumentWeaver(Weaver, HTMLMill):
         self._end()
         return self._rep
 
-
     def content(self):
         p = self.properties()
-        
+
         content = [
-            '',
-            '<html>',
-            '<head>',
-            '<title>%s</title>' % (p.title),
-            '<link href="%s" title="stylesheet" rel="stylesheet" type="text/css">' % p.stylesheet,
-            '</head>',
-            '',
-            ]
+            "",
+            "<html>",
+            "<head>",
+            "<title>%s</title>" % (p.title),
+            '<link href="%s" title="stylesheet" rel="stylesheet" type="text/css">'
+            % p.stylesheet,
+            "</head>",
+            "",
+        ]
 
         if self._javascript:
             content += self._javascript.content()
@@ -70,18 +65,13 @@ class DocumentWeaver(Weaver, HTMLMill):
         else:
             content += [
                 '<body class="blank">',
-                '<center><h2>This page was left blank accidentally</h2></center>',
-                '</body>',
-                ]
-            
-        content += [
-            '',
-            '</html>',
-            ''
+                "<center><h2>This page was left blank accidentally</h2></center>",
+                "</body>",
             ]
 
-        return content
+        content += ["", "</html>", ""]
 
+        return content
 
     def __init__(self):
         Weaver.__init__(self)
@@ -93,10 +83,7 @@ class DocumentWeaver(Weaver, HTMLMill):
 
         return
 
-
     class Properties(Weaver.Properties, HTMLMill.Properties):
-
-
         def set(self, options):
             HTMLMill.Properties.set(self, options)
 
@@ -110,17 +97,16 @@ class DocumentWeaver(Weaver, HTMLMill):
 
             return
 
-
         def __init__(self):
             HTMLMill.Properties.__init__(self)
 
             self.title = ""
             self.stylesheet = ""
-            
+
             return
 
 
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

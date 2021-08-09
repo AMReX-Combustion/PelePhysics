@@ -13,14 +13,13 @@
 
 
 from builtins import object
+
+
 class NetRenderer(object):
-
-
     def render(self, entry):
         entry.meta["ip"] = self._localip
         entry.meta["host"] = self._localhost
         return entry
-
 
     def __init__(self):
         import socket
@@ -31,9 +30,9 @@ class NetRenderer(object):
         self._localip = localinfo[2][0]
 
         return
-            
+
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

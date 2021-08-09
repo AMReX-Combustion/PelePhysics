@@ -1,31 +1,29 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 import time
-from pyre.applications.Toggle import Toggle
+
 from pyre.applications.Resource import Resource
+from pyre.applications.Toggle import Toggle
 
 
 class Timer(Resource, Toggle):
-
-
     def start(self):
         if self.state:
             self._start = self.get_clock()
 
         return self
-
 
     def stop(self):
         now = self.get_clock()
@@ -34,7 +32,6 @@ class Timer(Resource, Toggle):
 
         return self._accumulatedTime
 
-
     def lap(self):
         if self.state:
             now = self.get_clock()
@@ -42,15 +39,12 @@ class Timer(Resource, Toggle):
 
         return 0
 
-
     def read(self):
         return self._accumulatedTime
-
 
     def reset(self):
         self._accumulatedTime = 0
         return self
-
 
     def __init__(self, name):
         Resource.__init__(self, name)
@@ -71,4 +65,4 @@ class Timer(Resource, Toggle):
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

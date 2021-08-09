@@ -13,17 +13,18 @@
 
 
 from __future__ import absolute_import
+
 from .Facility import Facility
 from .ScriptBinder import ScriptBinder
 
+
 class Journal(Facility, ScriptBinder):
-
-
     def __init__(self, default=None):
         if default is None:
             from . import journal
+
             default = journal.journal()
-            
+
         Facility.__init__(self, "journal", default=default)
         ScriptBinder.__init__(self)
         return
@@ -32,4 +33,4 @@ class Journal(Facility, ScriptBinder):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

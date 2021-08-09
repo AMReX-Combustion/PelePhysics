@@ -27,35 +27,77 @@ number = r"[+-]?(\d+[.]\d*|[.]\d+|\d+)([eE][-+]?\d{1,3})?"
 numberOpt = r"(" + number + r")*"
 namedNumber = r"(?P<%s>" + number + r")"
 
-namedNumbers_3 = namedNumber + whitespace + namedNumber + whitespace + namedNumber
+namedNumbers_3 = (
+    namedNumber + whitespace + namedNumber + whitespace + namedNumber
+)
 
 inlineNumber = r"/" + whitespaceOpt + number + whitespaceOpt + "/"
-inlineNumbers = r"/" + whitespaceOpt \
-                + number + r"(" + whitespace + number + ")*" \
-                + whitespaceOpt + "/"
+inlineNumbers = (
+    r"/"
+    + whitespaceOpt
+    + number
+    + r"("
+    + whitespace
+    + number
+    + ")*"
+    + whitespaceOpt
+    + "/"
+)
 
 namedInlineNumber = r"/" + whitespaceOpt + namedNumber + whitespaceOpt + "/"
 
-namedInlineNumbers = r"/" + whitespaceOpt + r"(?P<%s>" \
-                     + number + r"(" + whitespace + number + r")*" \
-                     + r")" + whitespaceOpt + "/"
+namedInlineNumbers = (
+    r"/"
+    + whitespaceOpt
+    + r"(?P<%s>"
+    + number
+    + r"("
+    + whitespace
+    + number
+    + r")*"
+    + r")"
+    + whitespaceOpt
+    + "/"
+)
 
-namedInlineParameters = r"/" + whitespaceOpt\
-                        + r"(?P<%s>" \
-                        + r"(%s|%s)" % (species, number) \
-                        + r"(" + whitespace + r"(%s|%s)" % (species, number) + r")*" \
-                        + r")" + whitespaceOpt + "/"
+namedInlineParameters = (
+    r"/"
+    + whitespaceOpt
+    + r"(?P<%s>"
+    + r"(%s|%s)" % (species, number)
+    + r"("
+    + whitespace
+    + r"(%s|%s)" % (species, number)
+    + r")*"
+    + r")"
+    + whitespaceOpt
+    + "/"
+)
 
 # Simpler version of the above
-#namedInlineParameters = r"/" + whitespaceOpt + "(?P<%s>[^/]+)" + whitespaceOpt + r"/"
+# namedInlineParameters = r"/" + whitespaceOpt + "(?P<%s>[^/]+)" + whitespaceOpt + r"/"
 
-namedInlineNumbers_2 = r"/" + whitespaceOpt \
-                       + namedNumber + whitespace + namedNumber \
-                       + whitespaceOpt + "/"
+namedInlineNumbers_2 = (
+    r"/"
+    + whitespaceOpt
+    + namedNumber
+    + whitespace
+    + namedNumber
+    + whitespaceOpt
+    + "/"
+)
 
-namedInlineNumbers_3 = r"/" + whitespaceOpt \
-                       + namedNumber + whitespace + namedNumber + whitespace + namedNumber \
-                       + whitespaceOpt + "/"
+namedInlineNumbers_3 = (
+    r"/"
+    + whitespaceOpt
+    + namedNumber
+    + whitespace
+    + namedNumber
+    + whitespace
+    + namedNumber
+    + whitespaceOpt
+    + "/"
+)
 
 
 # version

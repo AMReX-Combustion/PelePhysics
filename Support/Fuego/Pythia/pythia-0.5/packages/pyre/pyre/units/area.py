@@ -12,20 +12,20 @@
 #
 
 from __future__ import absolute_import
-from .length import meter, centimeter, inch, foot, mile
 
+from .length import centimeter, foot, inch, meter, mile
 
 #
 # Definitions of common area units
 # Data taken from Appendix F of Halliday, Resnick, Walker, "Fundamentals of Physics",
 #     fourth edition, John Willey and Sons, 1993
 
-square_meter = meter**2
-square_centimeter = centimeter**2
+square_meter = meter ** 2
+square_centimeter = centimeter ** 2
 
-square_foot = foot**2
-square_inch = inch**2
-square_mile = mile**2
+square_foot = foot ** 2
+square_inch = inch ** 2
+square_mile = mile ** 2
 
 acre = 43560 * square_foot
 hectare = 10000 * square_meter

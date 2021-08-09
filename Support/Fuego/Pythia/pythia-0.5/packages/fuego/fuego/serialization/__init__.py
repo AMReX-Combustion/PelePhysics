@@ -1,18 +1,19 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 from __future__ import absolute_import
-from .pickle import save, pickler, picklers
+
+from .pickle import pickler, picklers, save
 from .unpickle import load, loadThermoDatabase, unpickler, unpicklers
 
 
@@ -26,10 +27,11 @@ def formats():
 
 def mechanism(filename=""):
     from .mechanisms.Mechanism import Mechanism
+
     return Mechanism(filename)
 
 
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

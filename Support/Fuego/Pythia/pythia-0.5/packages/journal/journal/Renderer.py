@@ -1,21 +1,21 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 from builtins import object
+
+
 class Renderer(object):
-
-
     def render(self, entry):
 
         str = []
@@ -23,7 +23,7 @@ class Renderer(object):
 
         if self.header:
             filename = meta["filename"]
-            if (len(filename) > 53):
+            if len(filename) > 53:
                 filename = filename[0:20] + "..." + filename[-30:]
                 meta["filename"] = filename
             str.append(self.header % meta)
@@ -35,7 +35,6 @@ class Renderer(object):
             str.append(self.footer % meta)
 
         return str
-
 
     def __init__(self, header=None, format=None, footer=None):
         if header is None:
@@ -57,4 +56,4 @@ class Renderer(object):
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

@@ -3,8 +3,10 @@
 __doc__ = """ JavaScript for the species section 
 for use by HtmlPickler """
 
+
 def string():
     return scriptString
+
 
 scriptString = """
 <!-- from speciesScript.py -->

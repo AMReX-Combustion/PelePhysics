@@ -13,9 +13,9 @@
 
 
 from builtins import object
+
+
 class Registry(object):
-
-
     def open(self, name):
         self._debug.line("%s: looking for node '%s'" % (self.name, name))
 
@@ -30,32 +30,28 @@ class Registry(object):
         self._debug.log()
         return node
 
-
     def attach(self, node):
         self.facilities[node.name] = node
         return
 
-
     def set(self, name, value):
         self.properties[name] = value
         return
-
 
     def list(self):
 
         listing = [
             ("%s.%s" % (self.name, name), value)
             for name, value in self.properties.items()
-            ]
+        ]
 
         listing += [
             ("%s.%s" % (self.name, name), value)
             for facility in self.facilities.values()
-            for name, value in facility.list() 
-            ]
+            for name, value in facility.list()
+        ]
 
         return listing
-
 
     def __init__(self, name):
         self.name = name
@@ -63,11 +59,13 @@ class Registry(object):
         self.facilities = {}
 
         import journal
+
         self._debug = journal.debug("registry")
-        
+
         return
+
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

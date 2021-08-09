@@ -1,17 +1,18 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 from __future__ import print_function
+
 if __name__ == "__main__":
 
     import journal
@@ -30,4 +31,4 @@ if __name__ == "__main__":
 # version
 __id__ = "$Id: signon.py,v 1.1.1.1 2003/02/16 04:23:02 aivazis Exp $"
 
-#  End of file 
+#  End of file

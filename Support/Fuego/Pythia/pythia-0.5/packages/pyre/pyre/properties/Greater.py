@@ -13,12 +13,11 @@
 
 
 from __future__ import absolute_import
+
 from .Unary import Unary
 
 
 class Greater(Unary):
-
-
     def __call__(self, candidate):
         return candidate > self.value
 
@@ -26,4 +25,4 @@ class Greater(Unary):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

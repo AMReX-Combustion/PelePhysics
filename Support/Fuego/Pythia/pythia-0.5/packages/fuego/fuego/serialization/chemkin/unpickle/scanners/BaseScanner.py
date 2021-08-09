@@ -16,14 +16,13 @@ from pyre.parsing.Scanner import Scanner
 
 class BaseScanner(Scanner):
 
-
     import journal
+
     _info = journal.debug("fuego")
 
-            
+
 # version
 __id__ = "$Id$"
 
 #
 # End of file
-

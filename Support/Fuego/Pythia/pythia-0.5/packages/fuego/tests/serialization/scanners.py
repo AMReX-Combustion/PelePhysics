@@ -12,59 +12,63 @@
 
 
 from __future__ import print_function
+
+
 def testElementScanner():
     print("Testing element scanner")
 
     from pyre.chemistry.unpickle.chemkin.scanners.Elements import Elements
+
     scanner = Elements()
 
     tests = [
-        " ", # Don't send an empty string
+        " ",  # Don't send an empty string
         "!",
         "! This is a comment",
-        "H2", 
-        "H2/1.004/"
-        "H2 / 1.004 /"
-        ]
+        "H2",
+        "H2/1.004/" "H2 / 1.004 /",
+    ]
 
     testScanner(scanner, tests)
 
     return
-    
+
 
 def testSpeciesScanner():
     print("Testing species scanner")
 
     from pyre.chemistry.unpickle.chemkin.scanners.Species import Species
+
     scanner = Species()
 
     tests = [
-        " ", # Don't send an empty string
+        " ",  # Don't send an empty string
         "!",
         "! This is a comment",
-        "H2", 
+        "H2",
         "H2O2++",
-        "CO2(S)"
-        ]
+        "CO2(S)",
+    ]
 
     testScanner(scanner, tests)
 
     return
-    
+
 
 def testThermoScanner():
     print("Testing thermo scanner")
 
     from pyre.chemistry.unpickle.chemkin.scanners.Thermo import Thermo
+
     scanner = Thermo()
 
     tests = [
-        " ", # Don't send an empty string
+        " ",  # Don't send an empty string
         "!",
         "! This is a comment",
-        "THERMO", 
-        "THERMO ALL", 
-        ]
+        "THERMO",
+        "THERMO ALL",
+    ]
 
     testScanner(scanner, tests)
 
@@ -75,10 +79,11 @@ def testReactionScanner():
     print("Testing reaction scanner")
 
     from pyre.chemistry.unpickle.chemkin.scanners.Reactions import Reactions
+
     scanner = Reactions()
 
     tests = [
-        " ", # Don't send an empty string
+        " ",  # Don't send an empty string
         "!",
         "! This is a comment",
         "REACTION",
@@ -91,12 +96,12 @@ def testReactionScanner():
         "SRI / 1.0             2.0   3.0 4.0 5.0 /",
         "TROE / 1.0             2.0   3.0/",
         "TROE / 1.0             2.0   3.0 4.0 /",
-        ]
+    ]
 
     testScanner(scanner, tests)
 
     return
-    
+
 
 def testScanner(scanner, tests):
     for test in tests:

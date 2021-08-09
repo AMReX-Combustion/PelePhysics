@@ -13,16 +13,14 @@
 
 
 from __future__ import absolute_import
+
 from pyre.xml.DocumentNode import DocumentNode
 
 
 class Document(DocumentNode):
-
-
     def onRegistry(self, registry):
         self.registry = registry
         return
-
 
     def __init__(self, source):
         DocumentNode.__init__(self, source, documentNodes())
@@ -32,18 +30,19 @@ class Document(DocumentNode):
 
 # helpers
 
+
 def documentNodes():
 
-    from .Registry import Registry
     from .Facility import Facility
     from .Property import Property
+    from .Registry import Registry
 
-    nodes = [ Registry, Facility, Property ]
+    nodes = [Registry, Facility, Property]
 
     return nodes
 
-    
+
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

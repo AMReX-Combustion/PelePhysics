@@ -16,12 +16,9 @@ from pyre.applications.Application import Application
 
 
 class SimpleApp(Application):
-
-
     def run(self, *args, **kwds):
         self._debug.log("Hello world!")
         return
-
 
     def __init__(self):
         Application.__init__(self, "simple")
@@ -32,13 +29,14 @@ class SimpleApp(Application):
 
 if __name__ == "__main__":
     import journal
+
     journal.debug("simple").activate()
-    
+
     app = SimpleApp()
     app.main()
-    
+
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

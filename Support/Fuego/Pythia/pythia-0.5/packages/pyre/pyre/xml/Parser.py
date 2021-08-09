@@ -1,27 +1,25 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
+
+import xml.sax
 
 import journal
-import xml.sax
 
 
 class Parser(xml.sax.ContentHandler):
-
-
     def document(self):
         return self._documentNode
-
 
     # parsing
     def parse(self, file, documentNode, parserFactory=None):
@@ -46,7 +44,6 @@ class Parser(xml.sax.ContentHandler):
 
         return
 
-
     # content demultiplexing
 
     def startDocument(self):
@@ -54,36 +51,45 @@ class Parser(xml.sax.ContentHandler):
         self._documentNode.setLocator(self._locator)
         return
 
-
     def endDocument(self):
         # break a circular reference introduced above
         self._documentNode.setLocator(None)
         return
 
-        
     def startElement(self, name, attributes):
 
-        line, column = self._locator.getLineNumber(), self._locator.getColumnNumber()
-        self._info.log("startElement: '%s', at (%d, %d)" % (name, line, column))
+        line, column = (
+            self._locator.getLineNumber(),
+            self._locator.getColumnNumber(),
+        )
+        self._info.log(
+            "startElement: '%s', at (%d, %d)" % (name, line, column)
+        )
 
         self._nodeStack.append(self._currentNode)
         self._currentNode = self._documentNode.node(name, attributes)
 
         return
 
-
     def characters(self, content):
         content = content.strip()
-        if content: 
-            line, column = self._locator.getLineNumber(), self._locator.getColumnNumber()
-            self._info.log("characters: '%s', at (%d, %d)" % (content, line, column))
+        if content:
+            line, column = (
+                self._locator.getLineNumber(),
+                self._locator.getColumnNumber(),
+            )
+            self._info.log(
+                "characters: '%s', at (%d, %d)" % (content, line, column)
+            )
             self._currentNode.content(content)
 
         return
 
-
     def endElement(self, name):
-        line, column = self._locator.getLineNumber(), self._locator.getColumnNumber()
+        line, column = (
+            self._locator.getLineNumber(),
+            self._locator.getColumnNumber(),
+        )
         self._info.log("endElement: '%s', at (%d, %d)" % (name, line, column))
 
         node = self._currentNode
@@ -93,7 +99,6 @@ class Parser(xml.sax.ContentHandler):
 
         return
 
-
     # constructor
     def __init__(self):
         xml.sax.ContentHandler.__init__(self)
@@ -102,11 +107,10 @@ class Parser(xml.sax.ContentHandler):
         self._documentNode = None
         return
 
-
     _info = journal.debug("pyre.xml.parsing")
 
 
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

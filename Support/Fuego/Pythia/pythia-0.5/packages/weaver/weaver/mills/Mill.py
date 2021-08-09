@@ -1,25 +1,24 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 from __future__ import absolute_import
+
 from .Indenter import Indenter
 from .Stationery import Stationery
 
 
 class Mill(Stationery, Indenter):
-
-
     def pickle(self, document=None):
 
         self._begin()
@@ -29,10 +28,9 @@ class Mill(Stationery, Indenter):
 
         return self._rep
 
-
     def initialize(self, options=None):
         import weaver.config.unpickle
-         
+
         self._debug.line("reading user configuration")
         userOptions = weaver.config.unpickle.readUserConfiguration()
 
@@ -61,7 +59,6 @@ class Mill(Stationery, Indenter):
 
         return
 
-
     def __init__(self):
         Stationery.__init__(self, "mill")
         Indenter.__init__(self)
@@ -70,67 +67,60 @@ class Mill(Stationery, Indenter):
 
         return
 
-
     def _begin(self):
-        #self._rep = self.header()
+        # self._rep = self.header()
         return
-
 
     def _end(self):
         self._versionId()
-        self._rep += ['', self.line(self._timestamp())]
+        self._rep += ["", self.line(self._timestamp())]
         self._rep += self.footer()
         return
-
 
     def _separator(self):
         self._rep.append(self.line(self.separator()))
         return
 
-
     def _versionId(self):
         format = self.inventory.versionId
 
         if format:
-            self._rep += ['', self.line(" version"), self.line(format)]
+            self._rep += ["", self.line(" version"), self.line(format)]
 
         return
-
 
     def _timestamp(self):
         format = self.inventory.timestampLine
 
         if format:
             import time
+
             timestamp = format % (self.__class__.__name__, time.asctime())
             return timestamp
 
         return ""
 
-
-    def _write(self, text=''):
+    def _write(self, text=""):
         if text:
             self._rep.append(self._margin + text)
         else:
-            self._rep.append('')
+            self._rep.append("")
         return
-
 
     # properties
     class Inventory(Stationery.Inventory):
 
-
         import pyre.properties
-
 
         inventory = (
             pyre.properties.property(
-                "timestampLine", default=" Generated automatically by %s on %s"),
-            pyre.properties.property("versionId", default=' $' + 'Id' + '$'),
-            )
+                "timestampLine", default=" Generated automatically by %s on %s"
+            ),
+            pyre.properties.property("versionId", default=" $" + "Id" + "$"),
+        )
 
 
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

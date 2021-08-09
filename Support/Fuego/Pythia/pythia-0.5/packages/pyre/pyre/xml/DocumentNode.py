@@ -1,29 +1,28 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 from __future__ import absolute_import
+
 import journal
 from pyre.parsing.Locator import Locator
+
 from .Node import Node
 
 
 class DocumentNode(Node):
-
-
     def source(self):
         return self._source
-
 
     def locator(self):
         file = self._source
@@ -32,11 +31,9 @@ class DocumentNode(Node):
 
         return Locator(file, line, column)
 
-
     # the node that represents the root of the document
     def documentNode(self):
         return self
-
 
     def node(self, name, attributes):
         nodeFactory = self._dtd.get(name)
@@ -47,11 +44,9 @@ class DocumentNode(Node):
 
         return nodeFactory(self, attributes)
 
-
     def setLocator(self, locator):
         self._locator = locator
         return
-
 
     def __init__(self, source, nodes):
         Node.__init__(self, None)
@@ -65,6 +60,7 @@ class DocumentNode(Node):
 
 # helpers
 
+
 def createDispatchTable(nodes):
 
     dispatcher = {}
@@ -74,8 +70,7 @@ def createDispatchTable(nodes):
     return dispatcher
 
 
-
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

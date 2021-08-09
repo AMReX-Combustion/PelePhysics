@@ -13,18 +13,22 @@
 
 
 from __future__ import absolute_import
+
+
 def journal(default=None):
 
     from .JournalFacility import JournalFacility
+
     return JournalFacility(default)
 
 
 def file():
     from .File import File
+
     return File()
 
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

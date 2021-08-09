@@ -13,16 +13,15 @@
 
 
 from __future__ import absolute_import
+
 from .Device import Device
 
 
 class Console(Device):
-
-
     def createDevice(self):
         from journal.Console import Console
-        return Console()
 
+        return Console()
 
     def __init__(self):
         Device.__init__(self, "console")
@@ -32,4 +31,4 @@ class Console(Device):
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

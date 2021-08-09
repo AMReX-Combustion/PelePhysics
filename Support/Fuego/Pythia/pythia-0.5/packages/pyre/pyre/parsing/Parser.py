@@ -1,25 +1,23 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
-from builtins import str
-from builtins import object
+from builtins import object, str
+
+
 class Parser(object):
-
-
     def locator(self):
         return self._tokenizer.locator()
-
 
     def parse(self, scanner, tokenizer):
         try:
@@ -36,12 +34,10 @@ class Parser(object):
 
         return
 
-
     def __init__(self):
         self._scanner = None
         self._tokenizer = None
         return
-
 
     def _parse(self, scanner, tokenizer):
 
@@ -61,4 +57,4 @@ class Parser(object):
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

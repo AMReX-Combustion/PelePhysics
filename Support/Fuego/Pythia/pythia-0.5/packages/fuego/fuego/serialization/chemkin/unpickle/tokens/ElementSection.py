@@ -12,6 +12,7 @@
 #
 
 from __future__ import absolute_import
+
 from .Token import Token
 
 
@@ -19,10 +20,8 @@ class ElementSection(Token):
 
     pattern = r"[Ee][Ll][Ee][Mm]([Ee][Nn][Tt][Ss])?"
 
-
     def identify(self, auth):
         return auth.anElementSection(self)
-
 
     def __str__(self):
         return "{Element section}"

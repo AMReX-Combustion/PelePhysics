@@ -12,21 +12,19 @@
 #
 
 from __future__ import absolute_import
+
 from .Token import Token
 
 
 class ReactionSection(Token):
 
-
     pattern = r"[Rr][Ee][Aa][Cc]([Tt][Ii][Oo][Nn][Ss])?"
-
 
     def identify(self, auth):
         return auth.aReactionSection(self)
 
-
     def __str__(self):
-         return "{Reaction section}"
+        return "{Reaction section}"
 
 
 # version

@@ -16,8 +16,6 @@ from pyre.applications.Application import Application
 
 
 class HelloApp(Application):
-
-
     def run(self):
 
         mode = self.inventory.mode
@@ -28,13 +26,14 @@ class HelloApp(Application):
             self.write(registry)
         else:
             import journal
+
             journal.firewall(self.name).log("unknown mode '%s'" % mode)
 
         return
 
-
     def read(self):
         import pyre.inventory
+
         parser = pyre.inventory.parser("pml")
 
         name = self.inventory.file
@@ -47,14 +46,13 @@ class HelloApp(Application):
         self.write(registry)
 
         return
-        
-            
 
     def write(self, registry):
         import pyre.inventory
+
         renderer = pyre.inventory.renderer()
         renderer.initialize()
-        
+
         document = "\n".join(renderer.render(registry))
 
         name = self.inventory.file
@@ -62,17 +60,16 @@ class HelloApp(Application):
             out = open(name, "w")
         else:
             import sys
+
             out = sys.stdout
 
         out.write(document)
 
         return
 
-
     def __init__(self):
         Application.__init__(self, "hello")
         return
-
 
     class Inventory(Application.Inventory):
 
@@ -80,20 +77,21 @@ class HelloApp(Application):
 
         inventory = (
             pyre.properties.str(
-                "mode", default="read",
-                validator=pyre.properties.choice(["read", "write"])),
-
-            pyre.properties.str("file")
-            )
+                "mode",
+                default="read",
+                validator=pyre.properties.choice(["read", "write"]),
+            ),
+            pyre.properties.str("file"),
+        )
 
 
 # main
 if __name__ == "__main__":
     app = HelloApp()
     app.main()
-    
+
 
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

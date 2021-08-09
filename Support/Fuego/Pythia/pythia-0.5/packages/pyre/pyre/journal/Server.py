@@ -1,29 +1,29 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 from __future__ import absolute_import
+
 from .Journal import Journal
 
 
 class Server(Journal):
-
-
     def serve(self, timeout=10):
         import pickle
         import select
-        from .journal.Entry import Entry
 
         from . import journal
+        from .journal.Entry import Entry
+
         theJournal = journal.journal()
         file = self.monitor.socket.makefile("rb")
 
@@ -38,7 +38,6 @@ class Server(Journal):
 
         return
 
-
     def __init__(self):
         Journal.__init__(self)
         self.port = 50000
@@ -46,20 +45,18 @@ class Server(Journal):
         self.monitor = None
         return
 
-
     def _init(self, parent):
         Journal._init(self, parent)
         self.monitor = self._setupMonitor(self.port, self.method)
         return
 
-
     def _setupMonitor(self, port, method):
         import pyre.network
+
         monitor = pyre.network.monitor(method)
         monitor.install(port)
 
         return monitor
-
 
     def _idle(self):
         return
@@ -68,4 +65,4 @@ class Server(Journal):
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

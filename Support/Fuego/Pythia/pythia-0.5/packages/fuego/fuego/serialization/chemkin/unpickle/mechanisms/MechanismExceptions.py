@@ -13,12 +13,11 @@
 
 # elements
 
-class DuplicateElement(Exception):
 
+class DuplicateElement(Exception):
     def __init__(self, symbol):
         self._symbol = symbol
         return
-
 
     def __str__(self):
         return "duplicate element '%s'" % self._symbol
@@ -26,25 +25,20 @@ class DuplicateElement(Exception):
 
 # species
 
+
 class DuplicateSpecies(Exception):
-
-
     def __init__(self, symbol):
         self._symbol = symbol
         return
-
 
     def __str__(self):
         return "duplicate species '%s'" % self._symbol
 
 
 class DuplicateQssSpecies(Exception):
-
-
     def __init__(self, symbol):
         self._symbol = symbol
         return
-
 
     def __str__(self):
         return "duplicate QSS species '%s'" % self._symbol
@@ -52,26 +46,23 @@ class DuplicateQssSpecies(Exception):
 
 # thermo
 
+
 class DuplicateThermalProperties(Exception):
-
-
     def __init__(self, symbol):
         self._symbol = symbol
         return
-
 
     def __str__(self):
         return "duplicate thermodynamic properties for '%s'" % self._symbol
 
+
 # trans
 
+
 class DuplicateTransProperties(Exception):
-
-
     def __init__(self, symbol):
         self._symbol = symbol
         return
-
 
     def __str__(self):
         return "duplicate transport properties for '%s'" % self._symbol

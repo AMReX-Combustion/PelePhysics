@@ -1,26 +1,27 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
 from __future__ import absolute_import
+
 from builtins import object
+
+
 class Tokenizer(object):
-
-
     def locator(self):
         from .Locator import Locator
-        return Locator(self.filename, self.line, self.column)
 
+        return Locator(self.filename, self.line, self.column)
 
     def fetch(self, scanner):
         """Return a token from the input stream"""
@@ -33,14 +34,12 @@ class Tokenizer(object):
             token = self._tokenize(scanner)
 
         return token
-    
-        
+
     def unfetch(self, token):
         """Put a token back into the token stream"""
 
         self._token = token
-        return 
-
+        return
 
     def __init__(self, file):
         self._file = file
@@ -53,7 +52,6 @@ class Tokenizer(object):
         self.text = ""
 
         return
-
 
     # implementation
 
@@ -69,7 +67,10 @@ class Tokenizer(object):
         # attempt to get a token
         token = scanner.match(self.text, self.column)
         if not token:
-            msg = "illegal character, could not match '%s'" % self.text[self.column:]
+            msg = (
+                "illegal character, could not match '%s'"
+                % self.text[self.column :]
+            )
             raise self.TokenizationException(msg)
 
         # store the size of the token
@@ -77,29 +78,29 @@ class Tokenizer(object):
 
         return token
 
-
     def _newLine(self):
         while 1:
             text = self._file.readline()
-            if not text: break
-            
+            if not text:
+                break
+
             self.line = self.line + 1
             text = text[:-1]
             if text:
                 self.column = 0
                 return text
-            
+
         raise self.EndOfFile()
 
+    import journal
 
     from .EndOfFile import EndOfFile
     from .TokenizationException import TokenizationException
 
-    import journal
     _info = journal.debug("pyre.parsing")
 
 
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

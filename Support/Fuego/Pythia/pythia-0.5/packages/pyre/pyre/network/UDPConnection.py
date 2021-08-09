@@ -13,14 +13,13 @@
 
 
 from builtins import object
+
+
 class UDPConnection(object):
-
-
-    def sendto(self, message, port, host=''):
+    def sendto(self, message, port, host=""):
         server = (host, port)
         self._socket.sendto(message, server)
         return
-
 
     def __init__(self):
         import socket

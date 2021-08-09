@@ -13,12 +13,14 @@
 
 
 from __future__ import print_function
+
+
 def test():
     import pyre.units
 
     parser = pyre.units.parser()
     parser = pyre.units.parser()
-    
+
     print("The 7 base SI units:")
     print("             meter: %s" % parser.parse("meter"))
     print("          kilogram: %s" % parser.parse("kilogram"))
@@ -32,12 +34,12 @@ def test():
     print("            radian: %s" % parser.parse("radian"))
     print("         steradian: %s" % parser.parse("steradian"))
     print("             hertz: %s" % parser.parse("hertz"))
-                                                     
+
     print("            newton: %s" % parser.parse("newton"))
     print("            pascal: %s" % parser.parse("pascal"))
     print("             joule: %s" % parser.parse("joule"))
     print("              watt: %s" % parser.parse("watt"))
-                                                     
+
     print("           coulomb: %s" % parser.parse("coulomb"))
     print("              volt: %s" % parser.parse("volt"))
     print("             farad: %s" % parser.parse("farad"))
@@ -46,12 +48,12 @@ def test():
     print("             weber: %s" % parser.parse("weber"))
     print("             tesla: %s" % parser.parse("tesla"))
     print("             henry: %s" % parser.parse("henry"))
-                                                     
+
     print("    degree Celcius: %s" % parser.parse("celcius"))
-                                                     
+
     print("             lumen: %s" % parser.parse("lumen"))
     print("               lux: %s" % parser.parse("lux"))
-                                                     
+
     print("         becquerel: %s" % parser.parse("becquerel"))
     print("              gray: %s" % parser.parse("gray"))
     print("           sievert: %s" % parser.parse("sievert"))
@@ -68,4 +70,4 @@ if __name__ == "__main__":
 # version
 __id__ = "$Id$"
 
-# End of file 
+# End of file

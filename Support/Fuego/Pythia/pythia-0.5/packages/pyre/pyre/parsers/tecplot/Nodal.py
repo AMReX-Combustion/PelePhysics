@@ -1,27 +1,26 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                             Michael A.G. Aivazis
 #                      California Institute of Technology
 #                      (C) 1998-2003  All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
-from builtins import map
-from builtins import object
+from builtins import map, object
+
+
 class Nodal(object):
-
-
     def read(self, points, fields, input):
 
         for zone in fields:
             self.fields[zone] = []
-        
+
         count = 0
         self._info.log("scanning for %d points" % points)
         while 1:
@@ -40,13 +39,12 @@ class Nodal(object):
 
         return
 
-
     def __init__(self):
         self.fields = {}
         return
 
-
     import journal
+
     _info = journal.debug("tecplot")
     _dump = journal.debug("tecplot.scanning")
 
@@ -54,4 +52,4 @@ class Nodal(object):
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file

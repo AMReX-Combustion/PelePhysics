@@ -12,12 +12,11 @@
 #
 
 from __future__ import print_function
+
 from pyre.applications.Application import Application
 
 
 class FMC(Application):
-
-
     def run(self):
 
         import fuego
@@ -30,9 +29,12 @@ class FMC(Application):
 
         timer = pyre.monitors.timer("fuego")
         if not input:
-            print("Loading '%s'" % (mechanismFile), end=' ')
+            print("Loading '%s'" % (mechanismFile), end=" ")
         else:
-            print("Loading '%s' using '%s' parser" % (mechanismFile, input), end=' ')
+            print(
+                "Loading '%s' using '%s' parser" % (mechanismFile, input),
+                end=" ",
+            )
 
         timer.start()
         mechanism = fuego.serialization.load(mechanismFile, input)
@@ -40,7 +42,7 @@ class FMC(Application):
 
         timer.reset()
         timer.start()
-        print("Converting into '%s' format" % output, end=' ')
+        print("Converting into '%s' format" % output, end=" ")
         lines = fuego.serialization.save(mechanism, output)
         print("... done (%g sec)" % timer.stop())
 
@@ -48,23 +50,21 @@ class FMC(Application):
         outputFile = self._openOutput(save)
         for line in lines:
             outputFile.write(line)
-            outputFile.write('\n')
+            outputFile.write("\n")
 
         return mechanism
-
 
     def __init__(self):
         Application.__init__(self, "fmc")
         return
 
-
     def _openOutput(self, name):
         if name == "stdout":
             import sys
+
             return sys.stdout
 
         return open(name, "w")
-
 
     class Inventory(Application.Inventory):
 
@@ -75,20 +75,20 @@ class FMC(Application):
             pyre.properties.str("mechanism", default="GRIMech-3.0.ck2"),
             pyre.properties.str("input", default=""),
             pyre.properties.str("output", default="c"),
-            ]
+        ]
 
 
 # main
 
 if __name__ == "__main__":
     import journal
+
     journal.info("fuego").activate()
     journal.debug("fuego").activate()
 
     app = FMC()
     app.main()
 
-    
 
 # version
 __id__ = "$Id$"

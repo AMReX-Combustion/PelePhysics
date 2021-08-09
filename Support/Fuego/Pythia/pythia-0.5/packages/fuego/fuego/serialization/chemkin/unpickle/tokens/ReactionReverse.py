@@ -12,20 +12,18 @@
 #
 
 from __future__ import absolute_import
+
 from .Token import Token
 
 
 class ReactionReverse(Token):
 
-
     pattern = r"[Rr][Ee][Vv]"
-
 
     def identify(self, auth):
         return auth.aReactionReverse(self)
 
-
-    def __str__(self): 
+    def __str__(self):
         return "{Reverse reaction}"
 
 

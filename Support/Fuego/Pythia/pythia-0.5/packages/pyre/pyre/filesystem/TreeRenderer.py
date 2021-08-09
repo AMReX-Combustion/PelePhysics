@@ -1,25 +1,23 @@
 #!/usr/bin/env python
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 #                               Michael A.G. Aivazis
 #                        California Institute of Technology
 #                        (C) 1998-2003 All Rights Reserved
-# 
+#
 #  <LicenseText>
-# 
+#
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
 from .SimpleRenderer import SimpleRenderer
 
 
 class TreeRenderer(SimpleRenderer):
-
-
     def onDirectory(self, node):
         self._render(node, "d")
 
@@ -35,11 +33,11 @@ class TreeRenderer(SimpleRenderer):
         self._graphic = filler + " +-"
 
         for entry in children[:-1]:
-            #print "%s" % self._filler
+            # print "%s" % self._filler
             entry.id(self)
 
         entry = children[-1]
-        #print "%s" % self._filler
+        # print "%s" % self._filler
         self._graphic = filler + " `-"
         self._filler = filler + "   "
         entry.id(self)
@@ -50,12 +48,10 @@ class TreeRenderer(SimpleRenderer):
 
         return
 
-
     def __init__(self):
         self._filler = ""
         self._graphic = ""
         return
-
 
     def _render(self, node, code):
         print("%s %s (%s)" % (self._graphic, node.name, code))
@@ -65,4 +61,4 @@ class TreeRenderer(SimpleRenderer):
 # version
 __id__ = "$Id$"
 
-#  End of file 
+#  End of file
