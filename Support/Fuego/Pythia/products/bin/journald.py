@@ -14,6 +14,7 @@
 
 def journald():
 
+    import export_paths
     from pyre.journal.Daemon import Daemon
     app = Daemon()
     app.main()

@@ -14,7 +14,6 @@
 
 from __future__ import division
 from builtins import object
-from past.utils import old_div
 class Entity(object):
 
     _FILENAME_LIMIT = 40
@@ -46,8 +45,8 @@ class Entity(object):
             return "<unknown>"
         
         if len(filename) > self._FILENAME_LIMIT:
-            filename = filename[:old_div(self._FILENAME_LIMIT,2) - 3] + \
-                       "..." + filename[old_div(-self._FILENAME_LIMIT,2) + 3:]
+            filename = filename[:self._FILENAME_LIMIT//2 - 3] + \
+                       "..." + filename[-self._FILENAME_LIMIT//2 + 3:]
         
         return "'%s':(%d, %d)" % (filename, self.line, self.column)
 

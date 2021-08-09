@@ -17,7 +17,6 @@ from __future__ import division
 from builtins import zip
 from builtins import range
 from builtins import object
-from past.utils import old_div
 import journal
 
 
@@ -397,7 +396,7 @@ class Mechanism(object):
 
         if(mat.shape[0] > 1):
 
-            nclus=old_div(mat.shape[0],4)
+            nclus=mat.shape[0] // 4
             #nclus=2
 
             clustering = AgglomerativeClustering(n_clusters=nclus, compute_full_tree=True, affinity='l1', linkage='average')

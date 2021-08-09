@@ -15,6 +15,7 @@
 # main
 
 if __name__ == "__main__":
+    import export_paths
     from fuego.fmc.FMC import FMC
     app = FMC()
     app.main()

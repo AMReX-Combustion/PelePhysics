@@ -12,6 +12,7 @@
 #
 
 
+import export_paths
 from pyre.applications.Application import Application
 
 

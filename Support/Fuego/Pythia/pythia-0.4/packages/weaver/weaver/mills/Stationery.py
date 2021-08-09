@@ -12,7 +12,6 @@
 # 
 
 from __future__ import division
-from past.utils import old_div
 import journal
 from pyre.inventory.Configurable import Configurable
 
@@ -66,7 +65,7 @@ class Stationery(Configurable):
     def separator(self):
         options = self.inventory
         banner = options.bannerCharacter
-        cycles = old_div(options.bannerWidth,len(banner))
+        cycles = options.bannerWidth//len(banner)
         separator = ' ' + banner * cycles
         return separator
 
