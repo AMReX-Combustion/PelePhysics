@@ -1,10 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env python
 
 import sys
 import os
-import shutil
-import argparse
-import numpy as np
 
 ####################################################################
 #
