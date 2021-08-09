@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from builtins import input
 import sys
 import os
 
@@ -36,7 +38,7 @@ print("Outputs for EACH mechanisms are redirected in the relevant folder and sho
 print("carefully examined to understand errors and fix them. ")
 print("A badly translated mechanism will lead to trash simulations.\n")
 print("You have been warned. Type 'yes' if you understand and want to pursue. Anything else will abort: ")
-areYouSure = raw_input()
+areYouSure = input()
 
 if (areYouSure == "yes"):
     # make cpp for requested mechs
