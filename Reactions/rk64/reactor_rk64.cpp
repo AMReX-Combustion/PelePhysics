@@ -81,7 +81,7 @@ react(
       }
       for (int stage = 0; stage < nstages_rk64; stage++) {
         fKernelSpec(
-          0, current_time - time_init, captured_reactor_type, soln_reg, rhs,
+          0, 1, current_time - time_init, captured_reactor_type, soln_reg, rhs,
           rhoe_init, rhoesrc_ext, rYsrc);
 
         for (int i = 0; i < neq; i++) {
@@ -227,7 +227,7 @@ react(
       }
       for (int stage = 0; stage < nstages_rk64; stage++) {
         fKernelSpec(
-          0, current_time - time_init, captured_reactor_type, soln_reg, rhs,
+          0, 1,current_time - time_init, captured_reactor_type, soln_reg, rhs,
           rhoe_init, rhoesrc_ext, rYsrc);
 
         for (int i = 0; i < neq; i++) {
