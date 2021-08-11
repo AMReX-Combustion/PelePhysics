@@ -1,20 +1,28 @@
 #!/usr/bin/env bash
 
 function abspath() {
-    pushd . > /dev/null;
-    if [ -d "$1" ]; then
-        cd "$1" || exit;
-        dirs -l +0;
-    else
-        cd "$(dirname "$1")" || exit;
-        cur_dir=$(dirs -l +0);
-        if [ "$cur_dir" == "/" ]; then
-            echo "$cur_dir$(basename "$1")";
+    if which realpath > /dev/null; then
+        if [ -d "$1" ]; then
+            echo "$(realpath "$1")";
         else
-            echo "$cur_dir/$(basename "$1")";
+            echo "$(realpath .)";
         fi;
+    else
+        pushd . > /dev/null;
+        if [ -d "$1" ]; then
+            cd "$1" || exit;
+            dirs -l +0;
+        else
+            cd "$(dirname "$1")" || exit;
+            cur_dir=$(dirs -l +0);
+            if [ "$cur_dir" == "/" ]; then
+                echo "$cur_dir$(basename "$1")";
+            else
+                echo "$cur_dir/$(basename "$1")";
+            fi;
+        fi;
+        popd > /dev/null || exit;
     fi;
-    popd > /dev/null || exit;
 }
 
 if [ -z "${PELE_PHYSICS_HOME+xxx}" ]; then
