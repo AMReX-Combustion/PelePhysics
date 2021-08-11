@@ -1,6 +1,7 @@
-import numpy as np
+#!/usr/bin/env python
+
+from __future__ import print_function
 import sys
-import csv
 
 ####################################################################
 #
