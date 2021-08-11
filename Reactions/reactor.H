@@ -309,8 +309,8 @@ fKernelSpec(
   int ncells,
   double dt_save,
   int reactor_type,
-  realtype* yvec_d,
-  realtype* ydot_d,
+  amrex::Real* yvec_d,
+  amrex::Real* ydot_d,
   amrex::Real* rhoe_init,
   amrex::Real* rhoesrc_ext,
   amrex::Real* rYs)
