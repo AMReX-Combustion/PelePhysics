@@ -21,15 +21,15 @@ USE_SUNDIALS_PP = FALSE
 PELE_PHYSICS_HOME    := ../../..
 
 ifeq ($(FUEGO_GAS), TRUE)
-  Eos_dir         = Fuego
+  Eos_Model       = Fuego
   Chemistry_Model = LiDryer
   Reactions_dir   = null
-  Transport_dir   = Constant
+  Transport_Model = Constant
 else
-  Eos_dir         = GammaLaw
+  Eos_Model       = GammaLaw
   Chemistry_Model = Null
   Reactions_dir   = null
-  Transport_dir   = Constant
+  Transport_Model = Constant
 endif
 
 Bpack   := ./Make.package

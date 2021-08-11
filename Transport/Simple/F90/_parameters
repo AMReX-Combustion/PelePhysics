@@ -1,2 +1,0 @@
-# if true, include bulk viscosity in transport
-use_bulk_viscosity           logical           .true.

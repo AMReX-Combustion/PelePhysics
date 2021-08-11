@@ -14,7 +14,7 @@ struct SRK;
 namespace transport {
 struct ConstTransport;
 struct SimpleTransport;
-struct Sutherland;
+struct SutherlandTransport;
 } // namespace transport
 
 template <typename EosModel, typename TransportModel>

@@ -27,8 +27,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval
       run: |
-        make TPL COMP=gnu Eos_dir=Fuego Reactions_dir=cvode Chemistry_Model=drm19
-        make -j 2 COMP=gnu Eos_dir=Fuego Reactions_dir=cvode Chemistry_Model=drm19
+        make TPL COMP=gnu Eos_Model=Fuego Reactions_dir=cvode Chemistry_Model=drm19
+        make -j 2 COMP=gnu Eos_Model=Fuego Reactions_dir=cvode Chemistry_Model=drm19
     - name: Run_Array4
       working-directory: ./Testing/Exec/ReactEval
       run: |
@@ -58,8 +58,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval
       run: |
-        make TPL COMP=gnu Eos_dir=Fuego Reactions_dir=cvode Chemistry_Model=LiDryer
-        make -j 2 COMP=gnu Eos_dir=Fuego Reactions_dir=cvode Chemistry_Model=LiDryer
+        make TPL COMP=gnu Eos_Model=Fuego Reactions_dir=cvode Chemistry_Model=LiDryer
+        make -j 2 COMP=gnu Eos_Model=Fuego Reactions_dir=cvode Chemistry_Model=LiDryer
     - name: Run_Array4
       working-directory: ./Testing/Exec/ReactEval
       run: |
@@ -89,8 +89,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval
       run: |
-        make TPL COMP=gnu Eos_dir=Fuego Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=drm19
-        make -j 2 COMP=gnu Eos_dir=Fuego Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=drm19
+        make TPL COMP=gnu Eos_Model=Fuego Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=drm19
+        make -j 2 COMP=gnu Eos_Model=Fuego Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=drm19
     - name: Run_Array4
       working-directory: ./Testing/Exec/ReactEval
       run: |
@@ -120,8 +120,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval
       run: |
-        make TPL COMP=gnu Eos_dir=Fuego Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=LiDryer
-        make -j 2 COMP=gnu Eos_dir=Fuego Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=LiDryer
+        make TPL COMP=gnu Eos_Model=Fuego Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=LiDryer
+        make -j 2 COMP=gnu Eos_Model=Fuego Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=LiDryer
     - name: Run_Array4
       working-directory: ./Testing/Exec/ReactEval
       run: |
@@ -261,8 +261,8 @@ jobs:
 #      run: |
 #        source /etc/profile.d/rocm.sh
 #        hipcc --version
-#        make TPL COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=drm19
-#        make -j 2 COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=drm19
+#        make TPL COMP=gnu USE_HIP=TRUE Eos_Model=Fuego Chemistry_Model=drm19
+#        make -j 2 COMP=gnu USE_HIP=TRUE Eos_Model=Fuego Chemistry_Model=drm19
 #
 #  # Fuego LiDryer HIP support
 #  FuegoLiDryer_HIP:
@@ -286,5 +286,5 @@ jobs:
 #      run: |
 #        source /etc/profile.d/rocm.sh
 #        hipcc --version
-#        make TPL COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer 
-#        make -j 2 COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
+#        make TPL COMP=gnu USE_HIP=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer 
+#        make -j 2 COMP=gnu USE_HIP=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer

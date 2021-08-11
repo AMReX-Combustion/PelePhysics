@@ -27,7 +27,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
-        make -j 2 COMP=gnu Transport_dir=Constant
+        make -j 2 COMP=gnu Transport_Model=Constant
     - name: Run
       working-directory: ./Testing/Exec/TranEval
       run: |
@@ -53,7 +53,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
-        make -j 2 COMP=gnu Transport_dir=Sutherland
+        make -j 2 COMP=gnu Transport_Model=Sutherland
     - name: Run
       working-directory: ./Testing/Exec/TranEval
       run: |
@@ -79,7 +79,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
-        make -j 2 COMP=gnu Transport_dir=Simple
+        make -j 2 COMP=gnu Transport_Model=Simple
     - name: Run
       working-directory: ./Testing/Exec/TranEval
       run: |
@@ -107,7 +107,7 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_dir=Constant
+        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Constant
 
   # Sutherland Transport CUDA and MPI support
   Sutherland_CUDA:
@@ -131,7 +131,7 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_dir=Sutherland
+        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Sutherland
 
   # Simple Transport CUDA and MPI support
   Simple_CUDA:
@@ -155,7 +155,7 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_dir=Simple
+        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Simple
 
   # Constant Transport HIP support
   #Constant_HIP:
@@ -179,7 +179,7 @@ jobs:
   #    run: |
   #      source /etc/profile.d/rocm.sh
   #      hipcc --version
-  #      make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_dir=Constant
+  #      make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_Model=Constant
 
   # Sutherland Transport HIP support
   #Sutherland_HIP:
@@ -203,7 +203,7 @@ jobs:
   #    run: |
   #      source /etc/profile.d/rocm.sh
   #      hipcc --version
-  #      make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_dir=Sutherland
+  #      make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_Model=Sutherland
 
   # Simple Transport HIP support
   #Simple_HIP:
@@ -227,4 +227,4 @@ jobs:
   #    run: |
   #      source /etc/profile.d/rocm.sh
   #      hipcc --version
-  #      make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_dir=Simple
+  #      make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_Model=Simple

@@ -27,7 +27,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/EosEval
       run: |
-        make -j 2 COMP=gnu Eos_dir=Fuego Chemistry_Model=LiDryer
+        make -j 2 COMP=gnu Eos_Model=Fuego Chemistry_Model=LiDryer
     - name: Run
       working-directory: ./Testing/Exec/EosEval
       run: |
@@ -53,7 +53,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/EosEval
       run: |
-        make -j 2 COMP=gnu Eos_dir=GammaLaw Chemistry_Model=Null
+        make -j 2 COMP=gnu Eos_Model=GammaLaw Chemistry_Model=Null
     - name: Run
       working-directory: ./Testing/Exec/EosEval
       run: |
@@ -81,7 +81,7 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
+        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer
 
   # Gamma Law EOS CUDA support
   GammaLaw_CUDA:
@@ -105,7 +105,7 @@ jobs:
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
-        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_dir=GammaLaw Chemistry_Model=Null
+        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_Model=GammaLaw Chemistry_Model=Null
 
   # Fuego EOS HIP support
   #Fuego_HIP:
@@ -129,4 +129,4 @@ jobs:
   #    run: |
   #      source /etc/profile.d/rocm.sh
   #      hipcc --version
-  #      make -j 2 COMP=gnu USE_HIP=TRUE Eos_dir=Fuego Chemistry_Model=LiDryer
+  #      make -j 2 COMP=gnu USE_HIP=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer

@@ -18,15 +18,15 @@ FUEGO_GAS  = TRUE
 USE_SUNDIALS_PP = FALSE
 
 ifeq ($(FUEGO_GAS), TRUE)
-  Eos_dir         = Fuego
+  Eos_Model       = Fuego
   Chemistry_Model = air
   Reactions_dir   = null
-  Transport_dir   = Simple
+  Transport_Model = Simple
 else
-  Eos_dir         = GammaLaw
+  Eos_Model       = GammaLaw
   Chemistry_Model = Null
   Reactions_dir   = null
-  Transport_dir   = Constant
+  Transport_Mode  = Constant
 endif
 
 Bpack   := ./Make.package

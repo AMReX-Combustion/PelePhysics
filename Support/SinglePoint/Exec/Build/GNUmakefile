@@ -29,10 +29,10 @@ ifeq ($(FUEGO_GAS), TRUE)
   #Chemistry_Model = grimech30
   #Chemistry_Model = grimech30-noArN
   #Chemistry_Model = drm19
-  Transport_dir   = Constant
-  Transport_dir   = Simple
+  Transport_Model  = Constant
+  Transport_Model  = Simple
 else
-  Transport_dir = Constant
+  Transport_Model  = Constant
 endif
 
 ifeq ($(BUILD_EXEC), TRUE)

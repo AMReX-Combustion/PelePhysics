@@ -3,7 +3,23 @@
 
 #include "mechanism.H"
 
+void
+CKAWT(amrex::Real* /*awt*/)
+{
+}
 
-void CKSYMS_STR(amrex::Vector<std::string>& kname) {}
+void
+CKNCF(int* /*ncf*/)
+{
+}
+
+void
+CKSYME_STR(amrex::Vector<std::string>& /*ename*/)
+{
+}
+void
+CKSYMS_STR(amrex::Vector<std::string>& /*kname*/)
+{
+}
 
 #endif

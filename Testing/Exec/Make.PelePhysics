@@ -44,30 +44,28 @@ Blocs             += $(PP_SRC_HOME)
 
 # EOS
 # Both Fortran and cpp can be loaded for EOS
-EOS_PATH := $(EOS_HOME)/$(strip $(Eos_dir))
-include $(EOS_PATH)/Make.package
-INCLUDE_LOCATIONS += $(EOS_HOME) $(EOS_PATH) 
-VPATH_LOCATIONS   += $(EOS_HOME) $(EOS_PATH) 
-ifeq ($(USE_F90_PP),TRUE) 
-    EOS_HOME_F90 := $(EOS_HOME)/F90
-    EOS_PATH_F90 := $(EOS_PATH)/F90
-    include $(EOS_HOME_F90)/Make.package
-    include $(EOS_PATH_F90)/Make.package
-    EXTERN_CORE       += $(EOS_HOME_F90) $(EOS_PATH_F90)
-    INCLUDE_LOCATIONS += $(EOS_HOME_F90) $(EOS_PATH_F90)
-    VPATH_LOCATIONS   += $(EOS_HOME_F90) $(EOS_PATH_F90)
+ifeq ($(Eos_Model),$(filter $(Eos_Model),GammaLaw))
+   DEFINES += -DUSE_GAMMALAW_EOS
 endif
-ifeq ($(Eos_dir), Fuego)
+ifeq ($(Eos_Model),$(filter $(Eos_Model),Fuego))
+   DEFINES += -DUSE_FUEGO_EOS
+endif
+ifeq ($(Eos_Model),$(filter $(Eos_Model),Soave-Redlich-Kwong))
+   DEFINES += -DUSE_SRK_EOS
+endif
+INCLUDE_LOCATIONS += $(EOS_HOME) 
+VPATH_LOCATIONS   += $(EOS_HOME) 
+ifeq ($(Eos_Model), Fuego)
   TRANSPORT_TYPE := IDEAL_GAS
 else
-  ifeq ($(Eos_dir), GammaLaw)
+  ifeq ($(Eos_Model), GammaLaw)
     TRANSPORT_TYPE := IDEAL_GAS
   else
     TRANSPORT_TYPE := REAL_GAS
   endif
 endif
-Bpack             += $(EOS_PATH)/Make.package
-Blocs             += $(EOS_PATH)
+Bpack             += $(EOS_HOME)/Make.package
+Blocs             += $(EOS_HOME)
 
 # Reactions
 ifeq ($(USE_SUNDIALS_PP),TRUE)
@@ -84,9 +82,9 @@ ifeq ($(USE_F90_PP),TRUE)
     INCLUDE_LOCATIONS += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
     VPATH_LOCATIONS   += $(REACTIONS_HOME_F90) $(REACTIONS_PATH_F90)
 endif
-ifeq ($(Eos_dir), GammaLaw)
+ifeq ($(Eos_Model), GammaLaw)
   ifneq ($(Chemistry_Model), Null)
-    $(error Chemistry_Model definition not compatible with Eos_Dir=GammaLaw)
+    $(error Chemistry_Model definition not compatible with Eos_Model=GammaLaw)
   endif
 endif
 CHEM_HOME = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models/$(Chemistry_Model)
@@ -98,33 +96,25 @@ Blocs += $(CHEM_HOME) $(CHEM_ALL)
 Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
 
 # Transport
-TRAN_PATH := $(TRAN_HOME)/$(strip $(Transport_dir))
-include $(TRAN_PATH)/Make.package
-INCLUDE_LOCATIONS += $(TRAN_PATH)
-VPATH_LOCATIONS   += $(TRAN_PATH)
-ifeq ($(USE_F90_PP),TRUE) 
-    TRAN_HOME_F90 := $(TRAN_HOME)/F90
-    TRAN_PATH_F90 := $(TRAN_PATH)/F90
-    include $(TRAN_HOME_F90)/Make.package
-    include $(TRAN_PATH_F90)/Make.package
-    EXTERN_CORE       += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
-    INCLUDE_LOCATIONS += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
-    VPATH_LOCATIONS   += $(TRAN_HOME_F90) $(TRAN_PATH_F90)
-    Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
-endif
+include $(TRAN_HOME)/Make.package
+INCLUDE_LOCATIONS += $(TRAN_HOME)
+VPATH_LOCATIONS   += $(TRAN_HOME)
 USE_FUEGO = FALSE
 
 Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism
 
-ifeq ($(Transport_dir), Simple)
-  DEFINES += -DSIMPLE_TRANSPORT
+ifeq ($(Transport_Model), Simple)
+  DEFINES += -DUSE_SIMPLE_TRANSPORT
 endif
-ifeq ($(Transport_dir), EGLib)
+ifeq ($(Transport_Model), EGLib)
   DEFINES += -DEGLIB_TRANSPORT
   USE_FUEGO = TRUE
 endif
-ifeq ($(Transport_dir), Constant)
-  DEFINES += -DCONSTANT_TRANSPORT
+ifeq ($(Transport_Model), Constant)
+  DEFINES += -DUSE_CONSTANT_TRANSPORT
+endif
+ifeq ($(Transport_Model), Sutherland)
+  DEFINES += -DUSE_SUTHERLAND_TRANSPORT
 endif
 
 Pdirs 	:= Base Boundary AmrCore Extern/amrdata

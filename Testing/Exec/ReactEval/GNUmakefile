@@ -51,15 +51,15 @@ endif
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
-  Eos_dir         = Fuego
+  Eos_Model       = Fuego
   Chemistry_Model = drm19
   Reactions_dir   = cvode
-  Transport_dir   = Simple
+  Transport_Model = Simple
 else
-  Eos_dir         = GammaLaw
+  Eos_Model       = GammaLaw
   Chemistry_Model = Null
   Reactions_dir   = null
-  Transport_dir   = Constant
+  Transport_Model = Constant
 endif
 
 Bpack   := ./Make.package
