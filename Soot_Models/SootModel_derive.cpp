@@ -31,10 +31,15 @@ soot_largeparticledata(
     Real N_L = M00 - N0;
     // Number density for the second mode (large particles)
     sl(i, j, k, 0) = N_L;
-    // Mass concentration of the second mode
-    sl(i, j, k, 1) = (M10 - N0 * V0) * sootRho;
-    // Surface area for the larger mode
-    sl(i, j, k, 2) = (M01 - N0 * S0);
+    if (N_L < 1.) {
+      sl(i, j, k, 1) = 0.;
+      sl(i, j, k, 2) = 0.;
+    } else {
+      // Mean volume of the second mode
+      sl(i, j, k, 1) = (M10 - N0 * V0) / N_L;
+      // Mean surface area of the second mode
+      sl(i, j, k, 2) = (M01 - N0 * S0) / N_L;
+    }
   });
 }
 

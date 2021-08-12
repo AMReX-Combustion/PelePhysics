@@ -53,7 +53,7 @@ calculateWallFilmSource(
   const Real T_wall,
   const Real face_area,
   const Real diff_cent,
-  pele::physics::transport::TransParm const* trans_parm)
+  pele::physics::transport::TransParm<pele::physics::EosType, pele::physics::TransportType> const* trans_parm)
 {
   auto eos = pele::physics::PhysicsType::eos();
   SprayUnits SPU;

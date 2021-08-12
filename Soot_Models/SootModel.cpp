@@ -107,7 +107,7 @@ SootModel::define()
       PAH_names[0] + ", " + PAH_names[1] + ", or " + PAH_names[2]);
   }
   Vector<std::string> spec_names(NUM_SPECIES);
-  pele::physics::eos::speciesNames(spec_names);
+  pele::physics::eos::speciesNames<pele::physics::EosType>(spec_names);
   // Loop over all species
   for (int i = 0; i < NUM_SPECIES; ++i) {
     // Check if species is the PAH inceptor
@@ -279,7 +279,7 @@ SootModel::addSootDerivePlotVars(
     "soot_vars", desc_lst, State_Type, sootIndx, NUM_SOOT_MOMENTS + 1);
 
   // Variables associated with the second mode (large particles)
-  Vector<std::string> large_part_names = {"NL", "rho_soot_L", "soot_S_L"};
+  Vector<std::string> large_part_names = {"NL", "soot_V_L", "soot_S_L"};
   derive_lst.add(
     "soot_large_particles", IndexType::TheCellType(), large_part_names.size(),
     large_part_names, soot_largeparticledata, the_same_box);

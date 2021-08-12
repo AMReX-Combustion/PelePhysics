@@ -214,8 +214,7 @@ SprayParticleContainer::updateParticles(
   const Real inv_vol = 1. / vol;
   // Particle components indices
   SprayComps SPI = m_sprayIndx;
-  pele::physics::transport::TransParm const* ltransparm =
-    pele::physics::transport::trans_parm_g;
+  auto const* ltransparm = PeleC::trans_parms.device_trans_parm();
   // Start the ParIter, which loops over separate sets of particles in different
   // boxes
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
@@ -424,7 +423,7 @@ SprayParticleContainer::updateParticles(
 #ifdef USE_SPRAY_SOA
               attribs, pid,
 #endif
-              wallT, face_area, diff_cent, ltransparm);
+              wallT, face_area, diff_cent);//, ltransparm);
           }
           for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
             IntVect cur_indx = indx_array[aindx];
