@@ -205,7 +205,9 @@ calculateSpraySource(
   const std::array<SprayParticleContainer::SoA::RealVector, NAR_SPR>& attribs,
   const int pid,
 #endif
-  pele::physics::transport::TransParm<pele::physics::EosType, pele::physics::TransportType> const* trans_parm)
+  pele::physics::transport::TransParm<
+    pele::physics::EosType,
+    pele::physics::TransportType> const* trans_parm)
 {
   auto eos = pele::physics::PhysicsType::eos();
   SprayUnits SPU;
