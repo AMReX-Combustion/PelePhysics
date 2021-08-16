@@ -7170,8 +7170,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
         const amrex::Real qr = k_f * exp(-(2.000000*g_RT[1] + g_RT[2] - 2.000000*g_RT[2])) * (refC) * ((sc[2] * sc[2]));
         const amrex::Real qdot = qf - qr;
         wdot[1] -= 2.000000 * qdot;
-        wdot[2] -= qdot;
         wdot[2] += 2.000000 * qdot;
+        wdot[2] -= qdot;
     }
 
     {

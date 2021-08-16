@@ -2330,11 +2330,17 @@ class CPickler(CMill):
                     else:
                         print("REV reaction cannot be PD")
                         sys.exit(1)
-                    self._write("k_r = %.15g * %.15g " % (uc_rev.value, Ar))
-                    self._write(
-                        "           * exp(%.15g * tc[0] - %.15g * %.15g * invT);"
-                        % (betar, (aeuc / Rc / kelvin), Er)
-                    )
+                    self._write("k_r = %.15g" % (uc_rev.value * Ar))
+                    if betar == 0:
+                        self._write(
+                            "           * exp(- (%.15g) * invT);"
+                            % ((aeuc / Rc / kelvin) * Er)
+                        )
+                    else:
+                        self._write(
+                            "           * exp(%.15g * tc[0] - (%.15g) * invT);"
+                            % (betar, (aeuc / Rc / kelvin) * Er)
+                        )
                     if alpha == 1.0:
                         self._write("qr[%d] *= k_r;" % idx)
                     else:
@@ -2649,13 +2655,27 @@ class CPickler(CMill):
                         print("REV reaction cannot be PD")
                         sys.exit(1)
                     self._write(
-                        "const amrex::Real k_r = %.15g * %.15g "
-                        % (uc_rev.value, Ar)
+                        "const amrex::Real k_r = %.15g" % (uc_rev.value * Ar)
                     )
-                    self._write(
-                        "           * exp(%.15g * tc[0] - %.15g * %.15g * invT);"
-                        % (betar, (aeuc / Rc / kelvin), Er)
-                    )
+                    if betar == 0:
+                        if Er == 0:
+                            self._write(";")
+                        else:
+                            self._write(
+                                "           * exp( - (%.15g) * invT);"
+                                % ((aeuc / Rc / kelvin) * Er)
+                            )
+                    else:
+                        if Er == 0:
+                            self._write(
+                                "           * exp(%.15g * tc[0]);" % (betar)
+                            )
+                        else:
+                            self._write(
+                                "           * exp(%.15g * tc[0] - (%.15g) * invT);"
+                                % (betar, (aeuc / Rc / kelvin) * Er)
+                            )
+
                     if alpha == 1.0:
                         self._write(
                             "const amrex::Real qr = k_r * (%s);" % (reverse_sc)
@@ -8631,16 +8651,24 @@ class CPickler(CMill):
             return
 
         if reaction.rev:
-            self._write(
-                "k_r = prefactor_units_rev[%d] * rev_A[%d] * exp(rev_beta[%d] * tc[0] - activation_units_rev[%d] * rev_Ea[%d] * invT);"
-                % (
-                    reaction.id - 1,
-                    reaction.id - 1,
-                    reaction.id - 1,
-                    reaction.id - 1,
-                    reaction.id - 1,
+            idx = reaction.id - 1
+            if rev_beta[idx] == 0:
+                self._write(
+                    "k_r = %.15g * exp(- (%.15g) * invT);"
+                    % (
+                        prefactor_units_rev[idx] * rev_A[idx],
+                        activation_units_rev[idx] * rev_Ea[idx],
+                    )
                 )
-            )
+            else:
+                self._write(
+                    "k_r = %.15g * exp(rev_beta[%d] * tc[0] - (%.15g) * invT);"
+                    % (
+                        prefactor_units_rev[idx] * rev_A[idx],
+                        idx,
+                        activation_units_rev[idx] * rev_Ea[idx],
+                    )
+                )
 
             thirdBody = reaction.thirdBody
             if thirdBody:
@@ -16277,16 +16305,24 @@ class CPickler(CMill):
             return
 
         if reaction.rev:
-            self._write(
-                "k_r = prefactor_units[%d] * rev_A[%d] * exp(rev_beta[%d] * tc[0] - activation_units[%d] * rev_Ea[%d] * invT);"
-                % (
-                    reaction.id - 1,
-                    reaction.id - 1,
-                    reaction.id - 1,
-                    reaction.id - 1,
-                    reaction.id - 1,
+            idx = reaction.id - 1
+            if rev_beta[idx] == 0:
+                self._write(
+                    "k_r = %.15g * exp(- (%.15g) * invT);"
+                    % (
+                        prefactor_units_rev[idx] * rev_A[idx],
+                        activation_units_rev[idx] * rev_Ea[idx],
+                    )
                 )
-            )
+            else:
+                self._write(
+                    "k_r = %.15g * exp(rev_beta[%d] * tc[0] - (%.15g) * invT);"
+                    % (
+                        prefactor_units_rev[idx] * rev_A[idx],
+                        idx,
+                        activation_units_rev[idx] * rev_Ea[idx],
+                    )
+                )
 
             thirdBody = reaction.thirdBody
             if thirdBody:
