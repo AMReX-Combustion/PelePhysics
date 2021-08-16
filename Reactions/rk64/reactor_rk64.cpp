@@ -108,7 +108,7 @@ react(
       } else {
         change_factor =
           betaerr_rk64 * pow((captured_abstol / max_err), exp2_rk64);
-        dt_rk = std::max(dt_rk_min, dt_rk * change_factor);
+        dt_rk = amrex::max(dt_rk_min, dt_rk * change_factor);
       }
     }
     nstepsvec[icell] = nsteps;
@@ -254,7 +254,7 @@ react(
       } else {
         change_factor =
           betaerr_rk64 * pow((captured_abstol / max_err), exp2_rk64);
-        dt_rk = std::max(dt_rk_min, dt_rk * change_factor);
+        dt_rk = amrex::max(dt_rk_min, dt_rk * change_factor);
       }
     }
 
