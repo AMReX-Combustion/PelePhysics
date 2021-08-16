@@ -104,7 +104,7 @@ react(
       if (max_err < captured_abstol) {
         change_factor =
           betaerr_rk64 * pow((captured_abstol / max_err), exp1_rk64);
-        dt_rk = std::min(dt_rk_max, dt_rk * change_factor);
+        dt_rk = amrex::min(dt_rk_max, dt_rk * change_factor);
       } else {
         change_factor =
           betaerr_rk64 * pow((captured_abstol / max_err), exp2_rk64);
@@ -250,7 +250,7 @@ react(
       if (max_err < captured_abstol) {
         change_factor =
           betaerr_rk64 * pow((captured_abstol / max_err), exp1_rk64);
-        dt_rk = std::min(dt_rk_max, dt_rk * change_factor);
+        dt_rk = amrex::min(dt_rk_max, dt_rk * change_factor);
       } else {
         change_factor =
           betaerr_rk64 * pow((captured_abstol / max_err), exp2_rk64);
