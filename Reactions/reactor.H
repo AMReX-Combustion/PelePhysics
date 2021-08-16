@@ -9,6 +9,11 @@
 #include <AMReX_iMultiFab.H>
 #include <AMReX_Print.H>
 #include <AMReX_ParmParse.H>
+#include "PelePhysics.H"
+#include "mechanism.H"
+#include "reactor_utils.H"
+
+#ifdef USE_SUNDIALS_PP
 
 #include <arkode/arkode_arkstep.h>
 #include <arkode/arkode_erkstep.h>
@@ -28,9 +33,6 @@
 #include <sunlinsol/sunlinsol_klu.h>
 #endif
 
-#include "PelePhysics.H"
-#include "mechanism.H"
-
 #ifdef AMREX_USE_CUDA
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
@@ -42,12 +44,15 @@
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
 #endif
 
+#ifdef AMREX_USE_GPU
+#include "AMReX_SUNMemory.H"
+#endif
+
 #ifdef AMREX_USE_HIP
 #include <nvector/nvector_hip.h>
 #endif
 
-#include "AMReX_SUNMemory.H"
-#include "reactor_utils.H"
+#endif
 
 extern amrex::Array<double, NUM_SPECIES + 1> typVals;
 extern int eint_rho; // in/out = rhoE/rhoY
@@ -67,25 +72,31 @@ extern int use_erkstep;
 extern int rk_method;
 extern int rk_controller;
 
+extern int rk64_nsubsteps_guess;
+extern int rk64_nsubsteps_min;
+extern int rk64_nsubsteps_max;
+
 #ifdef AMREX_USE_OMP
 #pragma omp threadprivate(time_init)
 #pragma omp threadprivate(typVals)
 #pragma omp threadprivate(relTol, absTol)
+#pragma omp threadprivate(nsubsteps_guess, nsubsteps_min, nsubsteps_max)
 #endif
 
 //===================================================================
-//initialize and close reactor functions
+// initialize and close reactor functions
 //===================================================================
 int reactor_init(int reactor_type, int Ncells);
 void reactor_close();
 //===================================================================
 
+//===================================================================
+// User data to feed into CPU/GPU sundials handle
+//===================================================================
+#ifdef USE_SUNDIALS_PP
 
-//===================================================================
-//User data to feed into CPU/GPU sundials handle
-//===================================================================
 #ifdef AMREX_USE_GPU
- struct CVODEUserData
+struct CVODEUserData
 {
   amrex::Real gamma;
   amrex::Real dt_save;
@@ -120,7 +131,7 @@ void reactor_close();
   int nbThreads;
 };
 #else
- struct CVODEUserData
+struct CVODEUserData
 {
   amrex::Real dt_save;
   bool FirstTimePrecond;
@@ -141,21 +152,21 @@ void reactor_close();
 
   int NNZ;
   SUNMatrix* PS;
-  realtype** Jdata = NULL;
+  amrex::Real** Jdata = NULL;
   int** rowVals = NULL;
   int** rowPtrs = NULL;
   int** colPtrs = NULL;
   int** colVals = NULL;
   int* indx = NULL;
-  realtype** JSPSmat = NULL;
+  amrex::Real** JSPSmat = NULL;
 #ifdef USE_KLU_PP
   klu_common* Common;
   klu_symbolic** Symbolic;
   klu_numeric** Numeric;
 #else
-  realtype**(**Jbd);
-  realtype**(**P);
-  sunindextype*(**pivot);
+  amrex::Real**** Jbd;
+  amrex::Real**** P;
+  sunindextype*** pivot;
 #endif
   SUNMatrix PSc;
   int* colVals_c;
@@ -163,7 +174,7 @@ void reactor_close();
 };
 #endif
 
- struct ARKODEUserData
+struct ARKODEUserData
 {
   bool reactor_arkode_initialized;
   int ncells_d;
@@ -180,12 +191,13 @@ void reactor_close();
   int nbBlocks;
   int nbThreads;
 };
+#endif
 
 //===================================================================
-//Box flattening functions
+// Box flattening functions
 //===================================================================
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void box_flatten(
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
+box_flatten(
   int icell,
   int ncells,
   int i,
@@ -232,8 +244,7 @@ void box_flatten(
   tmp_vect[sunvec_index(NUM_SPECIES, icell, ncells)] = temp;
 }
 //===================================================================
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
 box_unflatten(
   int icell,
   int ncells,
@@ -249,7 +260,7 @@ box_unflatten(
   amrex::Real* tmp_vect,
   amrex::Real* tmp_vect_energy,
   long int const& tmp_FCunt,
-  amrex::Real dt) 
+  amrex::Real dt)
 {
   amrex::Real mass_frac[NUM_SPECIES];
   amrex::Real rho = 0.0;
@@ -280,23 +291,26 @@ box_unflatten(
 //===================================================================
 
 //===================================================================
-//Tolerance setting with typical values
+// Tolerance setting with typical values
 //===================================================================
 void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
 void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
 
-
 //===================================================================
-//RHS computation functions
+// RHS computation functions
 //===================================================================
-static int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot, void* user_data);
+#ifdef USE_SUNDIALS_PP
+static int cF_RHS(amrex::Real t, N_Vector y_in, N_Vector ydot, void* user_data);
+#endif
 
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void fKernelSpec(int icell, int ncells,
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
+fKernelSpec(
+  int icell,
+  int ncells,
   double dt_save,
   int reactor_type,
-  realtype* yvec_d,
-  realtype* ydot_d,
+  amrex::Real* yvec_d,
+  amrex::Real* ydot_d,
   amrex::Real* rhoe_init,
   amrex::Real* rhoesrc_ext,
   amrex::Real* rYs)
@@ -336,16 +350,18 @@ void fKernelSpec(int icell, int ncells,
 
   amrex::Real rhoesrc = rhoesrc_ext[icell];
   for (int n = 0; n < NUM_SPECIES; n++) {
-    const amrex::Real cdot_rYs = cdots_pt[n] + rYs[sunspec_index(n, icell, ncells)];
+    const amrex::Real cdot_rYs =
+      cdots_pt[n] + rYs[sunspec_index(n, icell, ncells)];
     ydot_d[sunvec_index(n, icell, ncells)] = cdot_rYs;
     rhoesrc -= cdot_rYs * ei_pt[n];
   }
-  ydot_d[sunvec_index(NUM_SPECIES, icell, ncells)] = rhoesrc * (rho_pt_inv / Cv_pt);
+  ydot_d[sunvec_index(NUM_SPECIES, icell, ncells)] =
+    rhoesrc * (rho_pt_inv / Cv_pt);
 }
 //===================================================================
 
 //===================================================================
-//Different variants of react calls
+// Different variants of react calls
 //===================================================================
 int react(
   const amrex::Box& box,
@@ -366,12 +382,12 @@ int react(
 );
 
 int react(
-  realtype* rY_in,
-  realtype* rY_src_in,
-  realtype* rX_in,
-  realtype* rX_src_in,
-  realtype& dt_react,
-  realtype& time,
+  amrex::Real* rY_in,
+  amrex::Real* rY_src_in,
+  amrex::Real* rX_in,
+  amrex::Real* rX_src_in,
+  amrex::Real& dt_react,
+  amrex::Real& time,
   int reactor_type,
   int Ncells
 #ifdef AMREX_USE_GPU
@@ -382,31 +398,33 @@ int react(
 //===================================================================
 
 //===================================================================
-//CUDA specific things for cvode
+// CUDA specific things for cvode
 //===================================================================
+#ifdef USE_SUNDIALS_PP
+
 #ifdef AMREX_USE_CUDA
 static int Precond(
-  realtype tn,
+  amrex::Real tn,
   N_Vector u,
   N_Vector fu,
   booleantype jok,
   booleantype* jcurPtr,
-  realtype gamma,
+  amrex::Real gamma,
   void* user_data);
 
 static int PSolve(
-  realtype tn,
+  amrex::Real tn,
   N_Vector u,
   N_Vector fu,
   N_Vector r,
   N_Vector z,
-  realtype gamma,
-  realtype delta,
+  amrex::Real gamma,
+  amrex::Real delta,
   int lr,
   void* user_data);
 
 static int cJac(
-  realtype t,
+  amrex::Real t,
   N_Vector y,
   N_Vector fy,
   SUNMatrix J,
@@ -418,26 +436,26 @@ static int cJac(
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void fKernelComputeallAJ(
-  int ncells, void* user_data, realtype* u_d, realtype* csr_val);
+  int ncells, void* user_data, amrex::Real* u_d, amrex::Real* csr_val);
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void fKernelComputeAJsys(
-  int ncells, void* user_data, realtype* u_d, realtype* csr_val);
+  int ncells, void* user_data, amrex::Real* u_d, amrex::Real* csr_val);
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void fKernelComputeAJchem(
-  int ncells, void* user_data, realtype* u_d, realtype* Jdata);
+  int ncells, void* user_data, amrex::Real* u_d, amrex::Real* Jdata);
 
 // CUSTOM
 __global__ void fKernelDenseSolve(
   int ncells,
-  realtype* x_d,
-  realtype* b_d,
+  amrex::Real* x_d,
+  amrex::Real* b_d,
   int subsys_size,
   int subsys_nnz,
-  realtype* csr_val);
+  amrex::Real* csr_val);
 
 struct _SUNLinearSolverContent_Dense_custom
 {
@@ -459,36 +477,43 @@ SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, amrex::gpuStream_t stream);
 SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S);
 
 int SUNLinSolSolve_Dense_custom(
-  SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b, realtype tol);
+  SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b, amrex::Real tol);
 
 int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A);
 
 int SUNLinSolFree_Dense_custom(SUNLinearSolver S);
 #endif
-//===================================================================
 
-//===================================================================
-//Stats and checks
-//===================================================================
-int check_flag(void* flagvalue, const char* funcname, int opt);
-
-//FIXME: make them the same
-#ifdef AMREX_USE_GPU
-static void PrintFinalStats(void* cvode_mem);
-#else
-static void PrintFinalStats(void* cvode_mem,amrex::Real Temp);
 #endif
 //===================================================================
 
+//===================================================================
+// Stats and checks
+//===================================================================
+int check_flag(void* flagvalue, const char* funcname, int opt);
+
+#ifdef USE_SUNDIALS_PP
+
+// FIXME: make them the same
+#ifdef AMREX_USE_GPU
+static void PrintFinalStats(void* cvode_mem);
+#else
+static void PrintFinalStats(void* cvode_mem, amrex::Real Temp);
+#endif
+
+#endif
+//===================================================================
 
 //===================================================================
-//CPU specific cvode functions
+// CPU specific cvode functions
 //===================================================================
+#ifdef USE_SUNDIALS_PP
+
 #ifndef AMREX_USE_GPU
 CVODEUserData* AllocUserData(int reactor_type, int num_cells);
 
 int cJac(
-  realtype tn,
+  amrex::Real tn,
   N_Vector y,
   N_Vector fy,
   SUNMatrix J,
@@ -498,7 +523,7 @@ int cJac(
   N_Vector tmp3);
 
 int cJac_sps(
-  realtype tn,
+  amrex::Real tn,
   N_Vector y,
   N_Vector fy,
   SUNMatrix J,
@@ -508,28 +533,28 @@ int cJac_sps(
   N_Vector tmp3);
 
 int PSolve_custom(
-  realtype tn,
+  amrex::Real tn,
   N_Vector u,
   N_Vector fu,
   N_Vector r,
   N_Vector z,
-  realtype gamma,
-  realtype delta,
+  amrex::Real gamma,
+  amrex::Real delta,
   int lr,
   void* user_data);
 
 int Precond_custom(
-  realtype tn,
+  amrex::Real tn,
   N_Vector u,
   N_Vector fu,
   booleantype jok,
   booleantype* jcurPtr,
-  realtype gamma,
+  amrex::Real gamma,
   void* user_data);
 
 #ifdef USE_KLU_PP
 int cJac_KLU(
-  realtype tn,
+  amrex::Real tn,
   N_Vector y,
   N_Vector fy,
   SUNMatrix J,
@@ -539,42 +564,42 @@ int cJac_KLU(
   N_Vector tmp3);
 
 int PSolve_sparse(
-  realtype tn,
+  amrex::Real tn,
   N_Vector u,
   N_Vector fu,
   N_Vector r,
   N_Vector z,
-  realtype gamma,
-  realtype delta,
+  amrex::Real gamma,
+  amrex::Real delta,
   int lr,
   void* user_data);
 int Precond_sparse(
-  realtype tn,
+  amrex::Real tn,
   N_Vector u,
   N_Vector fu,
   booleantype jok,
   booleantype* jcurPtr,
-  realtype gamma,
+  amrex::Real gamma,
   void* user_data);
 #else
 int PSolve(
-  realtype tn,
+  amrex::Real tn,
   N_Vector u,
   N_Vector fu,
   N_Vector r,
   N_Vector z,
-  realtype gamma,
-  realtype delta,
+  amrex::Real gamma,
+  amrex::Real delta,
   int lr,
   void* user_data);
 
 int Precond(
-  realtype tn,
+  amrex::Real tn,
   N_Vector u,
   N_Vector fu,
   booleantype jok,
   booleantype* jcurPtr,
-  realtype gamma,
+  amrex::Real gamma,
   void* user_data);
 #endif
 
@@ -590,7 +615,7 @@ int react_2(
   amrex::Real& dt_react,
   amrex::Real& time);
 
-void FreeUserData(CVODEUserData *data);
+void FreeUserData(CVODEUserData* data);
 
 void check_state(N_Vector yvec);
 
@@ -621,7 +646,9 @@ SUNLinearSolver SUNLinSol_sparse_custom(
 SUNLinearSolver_Type SUNLinSolGetType_Sparse_custom(SUNLinearSolver S);
 
 int SUNLinSolSolve_Sparse_custom(
-  SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b, realtype tol);
+  SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b, amrex::Real tol);
+#endif
+
 #endif
 //===================================================================
 

@@ -131,6 +131,68 @@ jobs:
       run: |
         ./Pele3d.gnu.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 fuel_name=H2
 
+  # RK64 DRM GNU7.5
+  rk64DRM:
+    name: GNU@7.5 [rk64-DRM]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        make TPL COMP=gnu Eos_dir=Fuego Reactions_dir=rk64 USE_SUNDIALS_PP=FALSE USE_RK64_PP=TRUE Chemistry_Model=drm19
+        make -j 2 COMP=gnu Eos_dir=Fuego Reactions_dir=rk64 USE_SUNDIALS_PP=FALSE USE_RK64_PP=TRUE Chemistry_Model=drm19
+    - name: Run_Array4
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        ./Pele3d.gnu.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100
+    - name: Run_1dArray
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        ./Pele3d.gnu.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100
+
+  # RK64 LiDryer GNU7.5
+  rk64LiDryer:
+    name: GNU@7.5 [rk64-LiDryer]
+    runs-on: ubuntu-latest
+    env: 
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        make TPL COMP=gnu Eos_dir=Fuego Reactions_dir=rk64 USE_SUNDIALS_PP=FALSE USE_RK64_PP=TRUE Chemistry_Model=LiDryer
+        make -j 2 COMP=gnu Eos_dir=Fuego Reactions_dir=rk64 USE_SUNDIALS_PP=FALSE USE_RK64_PP=TRUE Chemistry_Model=LiDryer
+    - name: Run_Array4
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        ./Pele3d.gnu.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 fuel_name=H2
+    - name: Run_1dArray
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        ./Pele3d.gnu.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 fuel_name=H2
+
   # Cvode DRM CUDA support
   cvodeDRM_CUDA:
     name: CUDA@11.0.1 [cvode-DRM]
@@ -238,6 +300,60 @@ jobs:
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
         make TPL COMP=gnu USE_CUDA=TRUE Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=LiDryer
         make -j 2 COMP=gnu USE_CUDA=TRUE Reactions_dir=arkode USE_ARKODE_PP=TRUE Chemistry_Model=LiDryer
+
+  # RK64 DRM CUDA support
+  rk64DRM_CUDA:
+    name: CUDA@11.0.1 [rk64-DRM]
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{github.token}}
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_nvcc.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        make TPL COMP=gnu USE_CUDA=TRUE Reactions_dir=rk64 USE_SUNDIALS_PP=FALSE USE_RK64_PP=TRUE Chemistry_Model=drm19
+        make -j 2 COMP=gnu USE_CUDA=TRUE Reactions_dir=rk64 USE_SUNDIALS_PP=FALSE USE_RK64_PP=TRUE Chemistry_Model=drm19
+
+  # RK64 LiDryer CUDA support
+  rk64LiDryer_CUDA:
+    name: CUDA@11.0.1 [rk64-LiDryer]
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{github.token}}
+    - uses: actions/checkout@v2
+    - name: System Dependencies
+      run: .github/workflows/dependencies/dependencies_nvcc.sh
+    - name: AMReX
+      run: |
+         mkdir build
+         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+    - name: Build
+      env:
+         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+      working-directory: ./Testing/Exec/ReactEval
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        make TPL COMP=gnu USE_CUDA=TRUE Reactions_dir=rk64 USE_SUNDIALS_PP=FALSE USE_RK64_PP=TRUE Chemistry_Model=LiDryer
+        make -j 2 COMP=gnu USE_CUDA=TRUE Reactions_dir=rk64 USE_SUNDIALS_PP=FALSE USE_RK64_PP=TRUE Chemistry_Model=LiDryer
 
 #  # Fuego DRM HIP support
 #  FuegoDRM_HIP:

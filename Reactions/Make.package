@@ -1,8 +1,8 @@
-ifeq ($(USE_SUNDIALS_PP), TRUE)
-      CEXE_headers += reactor.H
-      CEXE_sources += reactor.cpp
-  ifneq (, $(filter TRUE, $(USE_CUDA) $(USE_HIP)))
-      CEXE_headers += AMReX_SUNMemory.H
-      CEXE_sources += AMReX_SUNMemory.cpp
-  endif
+CEXE_headers += reactor.H
+CEXE_sources += reactor.cpp
+ifeq ($(USE_SUNDIALS_PP),TRUE) 
+    ifneq (, $(filter TRUE, $(USE_CUDA) $(USE_HIP)))
+        CEXE_headers += AMReX_SUNMemory.H
+        CEXE_sources += AMReX_SUNMemory.cpp
+    endif
 endif
