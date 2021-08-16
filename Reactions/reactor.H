@@ -164,9 +164,9 @@ struct CVODEUserData
   klu_symbolic** Symbolic;
   klu_numeric** Numeric;
 #else
-  amrex::Real**(**Jbd);
-  amrex::Real**(**P);
-  sunindextype*(**pivot);
+  amrex::Real**** Jbd;
+  amrex::Real**** P;
+  sunindextype*** pivot;
 #endif
   SUNMatrix PSc;
   int* colVals_c;
