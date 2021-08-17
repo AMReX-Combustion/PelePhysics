@@ -80,7 +80,7 @@ extern int rk64_nsubsteps_max;
 #pragma omp threadprivate(time_init)
 #pragma omp threadprivate(typVals)
 #pragma omp threadprivate(relTol, absTol)
-#pragma omp threadprivate(nsubsteps_guess, nsubsteps_min, nsubsteps_max)
+#pragma omp threadprivate(rk64_nsubsteps_guess, rk64_nsubsteps_min, rk64_nsubsteps_max)
 #endif
 
 //===================================================================
