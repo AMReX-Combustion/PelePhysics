@@ -198,12 +198,12 @@ react(
     error_reg[NUM_SPECIES] = 0.0;
     amrex::Real temp = T_in(i, j, k, 0);
 
-    amrex::Real Enrg_loc = rEner_in(i, j, k, 0) / rho;
+    amrex::Real Enrg_loc = rEner_in(i, j, k, 0) * rho_inv;
     auto eos = pele::physics::PhysicsType::eos();
     if (captured_reactor_type == 1) {
-      eos.EY2T(Enrg_loc, mass_frac, temp);
+      eos.REY2T(rho, Enrg_loc, mass_frac, temp);
     } else {
-      eos.HY2T(Enrg_loc, mass_frac, temp);
+      eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
     }
     soln_reg[NUM_SPECIES] = temp;
     carryover_reg[NUM_SPECIES] = soln_reg[NUM_SPECIES];
@@ -274,9 +274,9 @@ react(
     Enrg_loc = rEner_in(i, j, k, 0) * rho_inv;
 
     if (captured_reactor_type == 1) {
-      eos.EY2T(Enrg_loc, mass_frac, temp);
+      eos.REY2T(rho, Enrg_loc, mass_frac, temp);
     } else {
-      eos.HY2T(Enrg_loc, mass_frac, temp);
+      eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
     }
     T_in(i, j, k, 0) = temp;
     FC_in(i, j, k, 0) = nsteps;

@@ -66,9 +66,9 @@ react(
     amrex::Real T_loc = T_in(i, j, k, 0);
     auto eos = pele::physics::PhysicsType::eos();
     if (reactor_type == eint_rho) {
-      eos.EY2T(energy_loc, Y_loc, T_loc);
+      eos.REY2T(rho_loc, energy_loc, Y_loc, T_loc);
     } else {
-      eos.HY2T(energy_loc, Y_loc, T_loc);
+      eos.RHY2T(rho_loc, energy_loc, Y_loc, T_loc);
     }
     T_in(i, j, k, 0) = T_loc;
     FC_in(i, j, k, 0) = 0.0;
@@ -176,9 +176,9 @@ react(
     amrex::Real T_loc = T_in(i, j, k, 0);
     auto eos = pele::physics::PhysicsType::eos();
     if (reactor_type == eint_rho) {
-      eos.EY2T(energy_loc, Y_loc, T_loc);
+      eos.EY2T(rho_loc, energy_loc, Y_loc, T_loc);
     } else {
-      eos.HY2T(energy_loc, Y_loc, T_loc);
+      eos.HY2T(rho_loc, energy_loc, Y_loc, T_loc);
     }
     T_in(i, j, k, 0) = T_loc;
     FC_in(i, j, k, 0) = 0.0;
