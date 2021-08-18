@@ -436,10 +436,17 @@ struct SRK
   void HY2T(amrex::Real /*H*/, amrex::Real* /*Y[]*/, amrex::Real& /*T*/)
   {
     // In SRK this  function is not possible
-    // RHY2T would be possible but is not yet supported
     amrex::Error("HY2T not physically possible for this EoS");
   }
 
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  void RHY2T(amrex::Real /*R*/, amrex::Real /*H*/, amrex::Real* /*Y[]*/, amrex::Real& /*T*/)
+  {
+    // RHY2T is possible but is not yet supported
+    amrex::Error("RHY2T not yet supported for this EoS");
+  }
+  
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)

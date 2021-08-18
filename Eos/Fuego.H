@@ -122,6 +122,13 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  void RHY2T(amrex::Real /*R*/, amrex::Real H, amrex::Real Y[], amrex::Real& T)
+  {
+    HY2T(H, Y, T);
+  }
+  
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   void RYET2P(
     amrex::Real R,
     amrex::Real Y[],
