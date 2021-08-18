@@ -198,6 +198,12 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  void RTY2Ei(amrex::Real /*R*/, amrex::Real T, amrex::Real* /*Y[]*/, amrex::Real Ei[]) {
+    T2Ei(T, Ei);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   void Y2X(amrex::Real Y[], amrex::Real X[]) { CKYTX(Y, X); }
 
   AMREX_GPU_HOST_DEVICE
