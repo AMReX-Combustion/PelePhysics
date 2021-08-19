@@ -436,12 +436,12 @@ react(
       for (int n = 0; n < NUM_SPECIES; n++) {
         mass_frac[n] = yvec_d[n] * rho_inv;
       }
-      Enrg_loc = data->rhoX_init[0] / rho;
+      Enrg_loc = data->rhoX_init[0] * rho_inv;
       auto eos = pele::physics::PhysicsType::eos();
       if (data->ireactor_type == 1) {
-        eos.EY2T(Enrg_loc, mass_frac, temp);
+        eos.REY2T(rho, Enrg_loc, mass_frac, temp);
       } else {
-        eos.HY2T(Enrg_loc, mass_frac, temp);
+        eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
       }
       yvec_d[NUM_SPECIES] = temp;
       BL_PROFILE_VAR_STOP(FlatStuff);
@@ -487,9 +487,9 @@ react(
         data->rhoX_init[0] + (dummy_time - time_init) * data->rhoXsrc_ext[0];
       Enrg_loc = rEner_in(i, j, k, 0) * rho_inv;
       if (data->ireactor_type == 1) {
-        eos.EY2T(Enrg_loc, mass_frac, temp);
+        eos.REY2T(rho, Enrg_loc, mass_frac, temp);
       } else {
-        eos.HY2T(Enrg_loc, mass_frac, temp);
+        eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
       }
       T_in(i, j, k, 0) = temp;
       BL_PROFILE_VAR_STOP(FlatStuff);
@@ -761,9 +761,9 @@ react(
     temp = rY_in[offset + NUM_SPECIES];
     auto eos = pele::physics::PhysicsType::eos();
     if (reactor_type == eint_rho) {
-      eos.EY2T(nrg_loc, mass_frac, temp);
+      eos.REY2T(rho, nrg_loc, mass_frac, temp);
     } else {
-      eos.HY2T(nrg_loc, mass_frac, temp);
+      eos.RHY2T(rho, nrg_loc, mass_frac, temp);
     }
     // store T in y
     yvec_d[offset + NUM_SPECIES] = temp;
@@ -824,9 +824,9 @@ react(
     // recompute T
     auto eos = pele::physics::PhysicsType::eos();
     if (reactor_type == eint_rho) {
-      eos.EY2T(nrg_loc, mass_frac, temp);
+      eos.REY2T(rho, nrg_loc, mass_frac, temp);
     } else {
-      eos.HY2T(nrg_loc, mass_frac, temp);
+      eos.RHY2T(rho, nrg_loc, mass_frac, temp);
     }
     // store T in rY_in
     rY_in[offset + NUM_SPECIES] = temp;
@@ -915,14 +915,14 @@ fKernelSpec(realtype* t, realtype* yvec_d, realtype* ydot_d, void* user_data)
     auto eos = pele::physics::PhysicsType::eos();
     if (data_wk->ireactor_type == eint_rho) {
       // UV REACTOR
-      eos.EY2T(energy, massfrac, temp);
-      eos.TY2Cv(temp, massfrac, cX);
-      eos.T2Ei(temp, Xi);
+      eos.REY2T(rho, energy, massfrac, temp);
+      eos.RTY2Cv(rho, temp, massfrac, cX);
+      eos.RTY2Ei(rho, temp, massfrac, Xi);
     } else if (data_wk->ireactor_type == enth_rho) {
       // HP REACTOR
-      eos.HY2T(energy, massfrac, temp);
-      eos.TY2Cp(temp, massfrac, cX);
-      eos.T2Hi(temp, Xi);
+      eos.RHY2T(rho, energy, massfrac, temp);
+      eos.RTY2Cp(rho, temp, massfrac, cX);
+      eos.RTY2Hi(rho, temp, massfrac, Xi);
     }
     eos.RTY2WDOT(rho, temp, massfrac, cdot);
 

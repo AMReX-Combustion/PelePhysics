@@ -55,6 +55,12 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  void RTY2Ei(amrex::Real /*R*/, amrex::Real T, amrex::Real* /*Y[]*/, amrex::Real Ei[]) {
+    T2Ei(T, Ei);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   void TY2Cv(amrex::Real /*T*/, amrex::Real Y[], amrex::Real& Cv)
   {
     amrex::Real wbar;
@@ -151,7 +157,14 @@ struct GammaLaw
     const amrex::Real Cv = Constants::RU / (wbar * (gamma - 1.0));
     T = H / (Cv * gamma);
   }
-
+  
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  void RHY2T(amrex::Real /*R*/, amrex::Real H, amrex::Real Y[], amrex::Real& T)
+  {
+    HY2T(H, Y, T);
+  }
+  
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)

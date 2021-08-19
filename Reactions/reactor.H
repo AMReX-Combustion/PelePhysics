@@ -237,9 +237,9 @@ box_flatten(
   amrex::Real Enrg_loc = tmp_vect_energy[icell] * rho_inv;
   auto eos = pele::physics::PhysicsType::eos();
   if (ireactor_type == 1) {
-    eos.EY2T(Enrg_loc, mass_frac, temp);
+    eos.REY2T(rho, Enrg_loc, mass_frac, temp);
   } else {
-    eos.HY2T(Enrg_loc, mass_frac, temp);
+    eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
   }
   tmp_vect[sunvec_index(NUM_SPECIES, icell, ncells)] = temp;
 }
@@ -281,9 +281,9 @@ box_unflatten(
   amrex::Real Enrg_loc = rhoE(i, j, k, 0) * rho_inv;
   auto eos = pele::physics::PhysicsType::eos();
   if (ireactor_type == 1) {
-    eos.EY2T(Enrg_loc, mass_frac, temp);
+    eos.REY2T(rho, Enrg_loc, mass_frac, temp);
   } else {
-    eos.HY2T(Enrg_loc, mass_frac, temp);
+    eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
   }
   T_in(i, j, k, 0) = temp;
   FC_in(i, j, k, 0) = tmp_FCunt;
@@ -336,13 +336,13 @@ fKernelSpec(
   amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
   auto eos = pele::physics::PhysicsType::eos();
   if (reactor_type == 1) {
-    eos.EY2T(nrg_pt, massfrac.arr, temp_pt);
-    eos.T2Ei(temp_pt, ei_pt.arr);
-    eos.TY2Cv(temp_pt, massfrac.arr, Cv_pt);
+    eos.REY2T(rho_pt, nrg_pt, massfrac.arr, temp_pt);
+    eos.RTY2Ei(rho_pt, temp_pt, massfrac.arr, ei_pt.arr);
+    eos.RTY2Cv(rho_pt, temp_pt, massfrac.arr, Cv_pt);
   } else {
-    eos.HY2T(nrg_pt, massfrac.arr, temp_pt);
-    eos.TY2Cp(temp_pt, massfrac.arr, Cv_pt);
-    eos.T2Hi(temp_pt, ei_pt.arr);
+    eos.RHY2T(rho_pt, nrg_pt, massfrac.arr, temp_pt);
+    eos.RTY2Hi(rho_pt, temp_pt, massfrac.arr, ei_pt.arr);
+    eos.RTY2Cp(rho_pt, temp_pt, massfrac.arr, Cv_pt);
   }
 
   amrex::GpuArray<amrex::Real, NUM_SPECIES> cdots_pt = {0.0};
