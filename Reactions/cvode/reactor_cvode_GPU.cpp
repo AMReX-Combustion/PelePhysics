@@ -736,7 +736,7 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
                stride = blockDim.x * gridDim.x;
            icell < udata->ncells; icell += stride) {
         fKernelSpec(
-          icell, ncells, dt_save, ireactor_type, yvec_d, ydot_d,
+          icell, ncells, dt_save, reactor_type, yvec_d, ydot_d,
           rhoe_init, rhoesrc_ext, rYsrc);
       }
     });
@@ -744,7 +744,7 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 #else
   for (int icell = 0; icell < udata->ncells; icell++) {
     fKernelSpec(
-      icell, ncells, dt_save, ireactor_type, yvec_d, ydot_d,
+      icell, ncells, dt_save, reactor_type, yvec_d, ydot_d,
       rhoe_init, rhoesrc_ext, rYsrc);
   }
 #endif

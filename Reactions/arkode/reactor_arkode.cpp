@@ -448,7 +448,7 @@ int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
   auto rYsrc = udata->rYsrc_d;
   amrex::ParallelFor(udata->ncells_d, [=] AMREX_GPU_DEVICE(int icell) noexcept {
     fKernelSpec(
-      icell, ncells_d, dt_save, ireactor_type, yvec_d, ydot_d,
+      icell, ncells_d, dt_save, reactor_type, yvec_d, ydot_d,
       rhoe_init, rhoesrc_ext, rYsrc);
   });
 
