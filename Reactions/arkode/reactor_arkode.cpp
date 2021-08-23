@@ -440,7 +440,7 @@ int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 //          udata->rhoe_init_d, udata->rhoesrc_ext_d, udata->rYsrc_d);
 //      }
 //    });
-  auto ncells_d = udata->ncells_d;
+  auto ncells = udata->ncells_d;
   auto dt_save = udata->dt_save;
   auto reactor_type = udata->ireactor_type;
   auto rhoe_init = udata->rhoe_init_d;
@@ -448,7 +448,7 @@ int cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
   auto rYsrc = udata->rYsrc_d;
   amrex::ParallelFor(udata->ncells_d, [=] AMREX_GPU_DEVICE(int icell) noexcept {
     fKernelSpec(
-      icell, ncells_d, dt_save, reactor_type, yvec_d, ydot_d,
+      icell, ncells, dt_save, reactor_type, yvec_d, ydot_d,
       rhoe_init, rhoesrc_ext, rYsrc);
   });
 
