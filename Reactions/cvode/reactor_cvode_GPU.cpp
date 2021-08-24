@@ -718,6 +718,12 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
   CVODEUserData * udata = static_cast<CVODEUserData*>(user_data);
   udata->dt_save = t;
 
+  auto ncells = udata->ncells;
+  auto dt_save = udata->dt_save;
+  auto reactor_type = udata->ireactor_type;
+  auto rhoe_init = udata->rhoe_init_d;
+  auto rhoesrc_ext = udata->rhoesrc_ext_d;
+  auto rYsrc = udata->rYsrc_d;
 #ifdef AMREX_USE_GPU
   const auto ec = Gpu::ExecutionConfig(udata->ncells);
   // launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem,
@@ -729,16 +735,16 @@ cF_RHS(realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
                stride = blockDim.x * gridDim.x;
            icell < udata->ncells; icell += stride) {
         fKernelSpec(
-          icell, udata->ncells, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
-          udata->rhoe_init_d, udata->rhoesrc_ext_d, udata->rYsrc_d);
+          icell, ncells, dt_save, reactor_type, yvec_d, ydot_d,
+          rhoe_init, rhoesrc_ext, rYsrc);
       }
     });
   Gpu::Device::streamSynchronize();
 #else
   for (int icell = 0; icell < udata->ncells; icell++) {
     fKernelSpec(
-      icell, udata->ncells, udata->dt_save, udata->ireactor_type, yvec_d, ydot_d,
-      udata->rhoe_init_d, udata->rhoesrc_ext_d, udata->rYsrc_d);
+      icell, ncells, dt_save, reactor_type, yvec_d, ydot_d,
+      rhoe_init, rhoesrc_ext, rYsrc);
   }
 #endif
 
