@@ -26,7 +26,7 @@ struct SRK
     am = 0.0;
     bm = 0.0;
     AMREX_ASSERT(T > 0.0);
-    amrex::Real sqrtT = std::sqrt(T);
+    const amrex::Real sqrtT = std::sqrt(T);
     amrex::Real amloc[NUM_SPECIES];
 
     // Combine as follows: add diagonal to am in first loop, loop upper triang
@@ -50,7 +50,7 @@ struct SRK
   {
     am = 0.0;
     AMREX_ASSERT(T > 0.0);
-    amrex::Real sqrtT = std::sqrt(T);
+    const amrex::Real sqrtT = std::sqrt(T);
     amrex::Real amloc[NUM_SPECIES];
 
     // Combine as follows: add diagonal to am in first loop, loop upper triang
@@ -83,8 +83,8 @@ struct SRK
   {
     dAmdT = 0.0;
     AMREX_ASSERT(T > 0.0);
-    amrex::Real oneOverT = 1.0 / T;
-    amrex::Real sqrtT = std::sqrt(T);
+    const amrex::Real oneOverT = 1.0 / T;
+    const amrex::Real sqrtT = std::sqrt(T);
     amrex::Real amloc[NUM_SPECIES];
     amrex::Real amlocder[NUM_SPECIES];
 
@@ -108,7 +108,7 @@ struct SRK
   void Calc_dAmdY(amrex::Real T, amrex::Real Y[], amrex::Real dAmdY[])
   {
     AMREX_ASSERT(T > 0.0);
-    amrex::Real sqrtT = std::sqrt(T);
+    const amrex::Real sqrtT = std::sqrt(T);
     amrex::Real amloc[NUM_SPECIES];
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -130,7 +130,7 @@ struct SRK
     amrex::Real T, amrex::Real* /*Y[]*/, amrex::Real d2AmdY2[][NUM_SPECIES])
   {
     AMREX_ASSERT(T > 0.0);
-    amrex::Real sqrtT = std::sqrt(T);
+    const amrex::Real sqrtT = std::sqrt(T);
     amrex::Real amloc[NUM_SPECIES];
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -150,8 +150,8 @@ struct SRK
   void Calc_d2AmdTY(amrex::Real T, amrex::Real Y[], amrex::Real d2AmdTY[])
   {
     AMREX_ASSERT(T > 0.0);
-    amrex::Real oneOverT = 1.0 / T;
-    amrex::Real sqrtT = std::sqrt(T);
+    const amrex::Real oneOverT = 1.0 / T;
+    const amrex::Real sqrtT = std::sqrt(T);
     amrex::Real amloc[NUM_SPECIES];
     amrex::Real amlocder[NUM_SPECIES];
 
@@ -181,7 +181,6 @@ struct SRK
     amrex::Real T,
     amrex::Real Wbar)
   {
-    amrex::Real theta, Z1, Z2, Z3, sqrtQ, third;
     amrex::Real RmT = Constants::RU / Wbar * T;
     amrex::Real B1 = bm * P / RmT;
     amrex::Real R1 = RmT;
@@ -193,18 +192,18 @@ struct SRK
     amrex::Real Q = (alpha * alpha - 3.0 * beta) / 9.0;
     amrex::Real R =
       (2.0 * alpha * alpha * alpha - 9.0 * alpha * beta + 27.0 * gamma) / 54.0;
-    amrex::Real PIval = 3.1415926535897932;
 
     // Multiple roots of cubic
-    third = 1.0 / 3.0;
+    const amrex::Real third = 1.0 / 3.0;
     if ((Q * Q * Q - R * R) > 0) {
-      sqrtQ = std::sqrt(Q);
-      theta = std::acos(R / (Q * sqrtQ));
-      Z1 = -2.0 * sqrtQ * std::cos(theta * third) - alpha * third;
-      Z2 =
-        -2.0 * sqrtQ * std::cos((theta + 2.0 * PIval) * third) - alpha * third;
-      Z3 =
-        -2.0 * sqrtQ * std::cos((theta + 4.0 * PIval) * third) - alpha * third;
+      const amrex::Real sqrtQ = std::sqrt(Q);
+      const amrex::Real theta = std::acos(R / (Q * sqrtQ));
+      const amrex::Real Z1 =
+        -2.0 * sqrtQ * std::cos(theta * third) - alpha * third;
+      const amrex::Real Z2 =
+        -2.0 * sqrtQ * std::cos((theta + 2.0 * M_PI) * third) - alpha * third;
+      const amrex::Real Z3 =
+        -2.0 * sqrtQ * std::cos((theta + 4.0 * M_PI) * third) - alpha * third;
       Z = std::max(Z1, Z2);
       Z = std::max(Z, Z3);
     } else {
@@ -220,9 +219,9 @@ struct SRK
   void Calc_d2AmdT2(amrex::Real T, amrex::Real Y[], amrex::Real& d2AmdT2)
   {
     AMREX_ASSERT(T > 0.0);
-    amrex::Real oneOverT = 1.0 / T;
-    amrex::Real tmp1 = -0.5 * oneOverT;
-    amrex::Real sqrtT = std::sqrt(T);
+    const amrex::Real oneOverT = 1.0 / T;
+    const amrex::Real tmp1 = -0.5 * oneOverT;
+    const amrex::Real sqrtT = std::sqrt(T);
     amrex::Real amloc[NUM_SPECIES];
     amrex::Real amlocder[NUM_SPECIES];
 
@@ -254,15 +253,11 @@ struct SRK
     amrex::Real& d2AmdT2)
   {
     AMREX_ASSERT(T > 0.0);
-    amrex::Real oneOverT = 1.0 / T;
-    amrex::Real tmp1 = -0.5 * oneOverT;
-    amrex::Real sqrtT = std::sqrt(T);
+    const amrex::Real oneOverT = 1.0 / T;
+    const amrex::Real tmp1 = -0.5 * oneOverT;
+    const amrex::Real sqrtT = std::sqrt(T);
     amrex::Real amloc[NUM_SPECIES];
     amrex::Real amlocder[NUM_SPECIES];
-
-    am = 0.0;
-    dAmdT = 0.0;
-    d2AmdT2 = 0.0;
 
     // Compute species-dependent intermediates
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
