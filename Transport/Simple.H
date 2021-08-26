@@ -40,7 +40,7 @@ struct NonIdealChungCorrections<eos::SRK>
     amrex::Real DP_m_4 = 0.0;
     amrex::Real KappaM = 0.0;
 
-    // Note: all the square roots could be precalculated
+    // Note: all the square roots are precalculated for efficiency
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       for (int j = 0; j < NUM_SPECIES; ++j) {

@@ -158,7 +158,6 @@ struct TransParm<eos::SRK, SimpleTransport>
   int* trans_nlin = nullptr;
   amrex::Real* Afac = nullptr;
   amrex::Real* Bfac = nullptr;
-  amrex::Real* Sigmaij = nullptr;
   amrex::Real* sqrtT2ij = nullptr;
   amrex::Real* sqrtEpsilonij = nullptr;
   amrex::Real* sqrtMWij = nullptr;
@@ -224,8 +223,6 @@ struct TransParm<eos::SRK, SimpleTransport>
         sizeof(amrex::Real) * NUM_SPECIES);
       Kappai = (amrex::Real*)amrex::The_Arena()->alloc(
         sizeof(amrex::Real) * NUM_SPECIES);
-      Sigmaij = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
       sqrtT2ij = (amrex::Real*)amrex::The_Arena()->alloc(
         sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
       sqrtEpsilonij = (amrex::Real*)amrex::The_Arena()->alloc(
@@ -313,13 +310,6 @@ struct TransParm<eos::SRK, SimpleTransport>
       Bfac[26] = -60.84100;
       Bfac[27] = 466.7750;
 
-      for (int i = 0; i < NUM_SPECIES; ++i) {
-        for (int j = 0; j < NUM_SPECIES; ++j) {
-          Sigmaij[i * NUM_SPECIES + j] =
-            0.5 * (trans_sig[i] + trans_sig[j]) * 1e-8; // converted to cm
-        }
-      }
-
       // Initialize Kappa, which has nonzero values only for specific polar
       // species
       for (int i = 0; i < NUM_SPECIES; ++i) {
@@ -355,11 +345,11 @@ struct TransParm<eos::SRK, SimpleTransport>
         for (int j = 0; j < NUM_SPECIES; ++j) {
 	  if (i != j) {
 	    const int idx_ij = i + NUM_SPECIES * j;
-	    const amrex::Real S_ij = Sigmaij[idx_ij];
+	    const amrex::Real S_ij = 0.5 * (trans_sig[i] + trans_sig[j]) * 1e-8;  // converted to cm
 	    const amrex::Real S_ij_inv = 1.0 / S_ij;
 	    for (int k = 0; k < NUM_SPECIES; ++k) {
-	      const amrex::Real S_ik = Sigmaij[i + NUM_SPECIES * k];
-	      const amrex::Real S_jk = Sigmaij[j + NUM_SPECIES * k];
+	      const amrex::Real S_ik = 0.5 * (trans_sig[i] + trans_sig[k]) * 1e-8;  // converted to cm
+	      const amrex::Real S_jk = 0.5 * (trans_sig[j] + trans_sig[k]) * 1e-8;  // converted to cm
 	      Upsilonijk[idx_ij*NUM_SPECIES + k] = 
 	        trans_iwt[k] *
 		(8.0 * (S_ik * S_ik * S_ik + S_jk * S_jk * S_jk) -
@@ -395,7 +385,6 @@ struct TransParm<eos::SRK, SimpleTransport>
       amrex::The_Arena()->free(Afac);
       amrex::The_Arena()->free(Bfac);
       amrex::The_Arena()->free(Kappai);
-      amrex::The_Arena()->free(Sigmaij);
       amrex::The_Arena()->free(sqrtT2ij);
       amrex::The_Arena()->free(sqrtEpsilonij);
       amrex::The_Arena()->free(sqrtMWij);
