@@ -187,28 +187,16 @@ struct BinaryDiff<eos::SRK>
             tparm->trans_fitdbin[1 + 4 * idx_ij] * logT[0] +
             tparm->trans_fitdbin[2 + 4 * idx_ij] * logT[1] +
             tparm->trans_fitdbin[3 + 4 * idx_ij] * logT[2];
-          dbintemp = std::exp(dbintemp);
+          dbintemp = std::exp(-dbintemp);
 
           amrex::Real Upsilonij = 0.0;
-          const amrex::Real S_ij = tparm->Sigmaij[idx_ij];
-          const amrex::Real S_ij_inv = 1.0 / S_ij;
           for (int k = 0; k < NUM_SPECIES; ++k) {
-            const amrex::Real S_ik = tparm->Sigmaij[i + NUM_SPECIES * k];
-            const amrex::Real S_jk = tparm->Sigmaij[j + NUM_SPECIES * k];
-
-            Upsilonij +=
-              tparm->trans_iwt[k] * Yloc[k] *
-              (8.0 * (S_ik * S_ik * S_ik + S_jk * S_jk * S_jk) -
-               6.0 * (S_ik * S_ik + S_jk * S_jk) * S_ij -
-               3.0 *
-                 ((S_ik * S_ik - S_jk * S_jk) * (S_ik * S_ik - S_jk * S_jk)) *
-                 S_ij_inv +
-               S_ij * S_ij * S_ij);
+            Upsilonij += tparm->Upsilonijk[idx_ij*NUM_SPECIES + k] * Yloc[k];
           }
           Upsilonij = Upsilonij * rholoc * Constants::Avna * M_PI / 12.0 + 1.0;
-          dbintemp *= Constants::PATM / (Constants::RU * Tloc * Upsilonij);
+          dbintemp *= (Constants::RU * Tloc * Upsilonij) / Constants::PATM  ;
           term1 += Yloc[j];
-          term2 += Xloc[j] / dbintemp;
+          term2 += Xloc[j] * dbintemp;
         }
       }
       Ddiag[i] = tparm->trans_wt[i] * term1 / term2;
