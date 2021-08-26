@@ -11,7 +11,19 @@
 #include <AMReX_ParmParse.H>
 #include "PelePhysics.H"
 #include "mechanism.H"
-#include "reactor_utils.H"
+
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE int
+sunvec_index(const int specie_idx, const int icell, const int /*ncells*/)
+{
+  return icell * (NUM_SPECIES + 1) + specie_idx;
+}
+
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE int
+sunspec_index(const int specie_idx, const int icell, const int /*ncells*/)
+{
+  return icell * NUM_SPECIES + specie_idx;
+}
+
 
 #ifdef USE_SUNDIALS_PP
 

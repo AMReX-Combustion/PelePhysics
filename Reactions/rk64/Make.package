@@ -1,3 +1,0 @@
-CEXE_headers += rkparams.H
-CEXE_sources += reactor_rk64.cpp
-CEXE_headers += reactor_utils.H

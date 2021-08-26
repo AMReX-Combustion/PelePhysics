@@ -1,11 +1,15 @@
-#include "reactor.H"
+#include "ReactorRK64.H"
+
+namespace pele {
+namespace physics {
+namespace reactions {
 
 int
-reactor_init(int reactor_type, int Ncells)
+ReactorRK64::init(int reactor_type, int Ncells)
 {
+  BL_PROFILE("Pele::ReactorRK64::init()");
   amrex::ParmParse pp("ode");
   pp.query("atol", absTol);
-  pp.query("rtol", relTol);
   pp.query("rk64_nsubsteps_guess", rk64_nsubsteps_guess);
   pp.query("rk64_nsubsteps_min", rk64_nsubsteps_min);
   pp.query("rk64_nsubsteps_max", rk64_nsubsteps_max);
@@ -13,7 +17,7 @@ reactor_init(int reactor_type, int Ncells)
 }
 
 int
-react(
+ReactorRK64::react(
   amrex::Real* rY_in,
   amrex::Real* rY_src_in,
   amrex::Real* rX_in,
@@ -28,6 +32,7 @@ react(
 #endif
 )
 {
+  BL_PROFILE("Pele::ReactorRK64::react()");
 
   amrex::Real time_init = time;
   amrex::Real time_out = time + dt_react;
@@ -39,27 +44,24 @@ react(
   int captured_nsubsteps_min = rk64_nsubsteps_min;
   int captured_nsubsteps_max = rk64_nsubsteps_max;
   amrex::Real captured_abstol = absTol;
+  RK64Params rkp;
 
   int* nstepsvec;
   nstepsvec = new int[Ncells]();
 
   amrex::ParallelFor(Ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
-    amrex::Real soln_reg[NUM_SPECIES + 1];
-    amrex::Real carryover_reg[NUM_SPECIES + 1];
-    amrex::Real error_reg[NUM_SPECIES + 1];
-    amrex::Real rhs[NUM_SPECIES + 1];
-    amrex::Real rYsrc[NUM_SPECIES];
+    amrex::Real soln_reg[NUM_SPECIES + 1] = {0.0};
+    amrex::Real carryover_reg[NUM_SPECIES + 1] = {0.0};
+    amrex::Real error_reg[NUM_SPECIES + 1] = {0.0};
+    amrex::Real rhs[NUM_SPECIES + 1] = {0.0};
+    amrex::Real rYsrc[NUM_SPECIES] = {0.0};
     amrex::Real dt_rk, dt_rk_min, dt_rk_max, change_factor;
     amrex::Real current_time = time_init;
     int neq = (NUM_SPECIES + 1);
 
-#include "rkparams.H"
-
     for (int sp = 0; sp < neq; sp++) {
       soln_reg[sp] = rY_in[icell * neq + sp];
       carryover_reg[sp] = soln_reg[sp];
-      error_reg[sp] = 0.0;
-      rhs[sp] = 0.0;
     }
 
     dt_rk = dt_react / amrex::Real(captured_nsubsteps_guess);
@@ -79,15 +81,17 @@ react(
       for (int sp = 0; sp < neq; sp++) {
         error_reg[sp] = 0.0;
       }
-      for (int stage = 0; stage < nstages_rk64; stage++) {
-        fKernelSpec(
+      for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
+        fKernelSpec<ReactorRK64>(
           0, 1, current_time - time_init, captured_reactor_type, soln_reg, rhs,
           rhoe_init, rhoesrc_ext, rYsrc);
 
         for (int i = 0; i < neq; i++) {
-          error_reg[i] += err_rk64[stage] * dt_rk * rhs[i];
-          soln_reg[i] = carryover_reg[i] + alpha_rk64[stage] * dt_rk * rhs[i];
-          carryover_reg[i] = soln_reg[i] + beta_rk64[stage] * dt_rk * rhs[i];
+          error_reg[i] += rkp.err_rk64[stage] * dt_rk * rhs[i];
+          soln_reg[i] =
+            carryover_reg[i] + rkp.alpha_rk64[stage] * dt_rk * rhs[i];
+          carryover_reg[i] =
+            soln_reg[i] + rkp.beta_rk64[stage] * dt_rk * rhs[i];
         }
       }
 
@@ -103,11 +107,11 @@ react(
 
       if (max_err < captured_abstol) {
         change_factor =
-          betaerr_rk64 * pow((captured_abstol / max_err), exp1_rk64);
+          rkp.betaerr_rk64 * pow((captured_abstol / max_err), rkp.exp1_rk64);
         dt_rk = amrex::min<amrex::Real>(dt_rk_max, dt_rk * change_factor);
       } else {
         change_factor =
-          betaerr_rk64 * pow((captured_abstol / max_err), exp2_rk64);
+          rkp.betaerr_rk64 * pow((captured_abstol / max_err), rkp.exp2_rk64);
         dt_rk = amrex::max<amrex::Real>(dt_rk_min, dt_rk * change_factor);
       }
     }
@@ -132,7 +136,7 @@ react(
 }
 
 int
-react(
+ReactorRK64::react(
   const amrex::Box& box,
   amrex::Array4<amrex::Real> const& rY_in,
   amrex::Array4<amrex::Real> const& rY_src_in,
@@ -150,6 +154,7 @@ react(
 #endif
 )
 {
+  BL_PROFILE("Pele::ReactorRK64::react()");
 
   amrex::Real time_init = time;
   amrex::Real time_out = time + dt_react;
@@ -161,6 +166,7 @@ react(
   int captured_nsubsteps_min = rk64_nsubsteps_min;
   int captured_nsubsteps_max = rk64_nsubsteps_max;
   amrex::Real captured_abstol = absTol;
+  RK64Params rkp;
 
   int* nstepsvec;
   int Ncells = box.numPts();
@@ -169,33 +175,26 @@ react(
   nstepsvec = new int[Ncells]();
 
   amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-    amrex::Real soln_reg[NUM_SPECIES + 1];
-    amrex::Real carryover_reg[NUM_SPECIES + 1];
-    amrex::Real error_reg[NUM_SPECIES + 1];
-    amrex::Real rhs[NUM_SPECIES + 1];
-
-    amrex::Real rYsrc[NUM_SPECIES];
-    amrex::Real mass_frac[NUM_SPECIES];
+    amrex::Real soln_reg[NUM_SPECIES + 1] = {0.0};
+    amrex::Real carryover_reg[NUM_SPECIES + 1] = {0.0};
+    amrex::Real error_reg[NUM_SPECIES + 1] = {0.0};
+    amrex::Real rhs[NUM_SPECIES + 1] = {0.0};
+    amrex::Real rYsrc[NUM_SPECIES] = {0.0};
+    amrex::Real mass_frac[NUM_SPECIES] = {0.0};
     int neq = (NUM_SPECIES + 1);
 
-#include "rkparams.H"
-
     amrex::Real dt_rk, dt_rk_min, dt_rk_max, change_factor;
-    amrex::Real rho;
+    amrex::Real rho = 0.0;
 
     for (int sp = 0; sp < NUM_SPECIES; sp++) {
       soln_reg[sp] = rY_in(i, j, k, sp);
       carryover_reg[sp] = soln_reg[sp];
       rho += rY_in(i, j, k, sp);
-      error_reg[sp] = 0.0;
-      rhs[sp] = 0.0;
     }
     amrex::Real rho_inv = 1.0 / rho;
     for (int sp = 0; sp < NUM_SPECIES; sp++) {
       mass_frac[sp] = rY_in(i, j, k, sp) * rho_inv;
     }
-    rhs[NUM_SPECIES] = 0.0;
-    error_reg[NUM_SPECIES] = 0.0;
     amrex::Real temp = T_in(i, j, k, 0);
 
     amrex::Real Enrg_loc = rEner_in(i, j, k, 0) * rho_inv;
@@ -225,15 +224,17 @@ react(
       for (int sp = 0; sp < neq; sp++) {
         error_reg[sp] = 0.0;
       }
-      for (int stage = 0; stage < nstages_rk64; stage++) {
-        fKernelSpec(
-          0, 1,current_time - time_init, captured_reactor_type, soln_reg, rhs,
+      for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
+        fKernelSpec<ReactorRK64>(
+          0, 1, current_time - time_init, captured_reactor_type, soln_reg, rhs,
           rhoe_init, rhoesrc_ext, rYsrc);
 
         for (int i = 0; i < neq; i++) {
-          error_reg[i] += err_rk64[stage] * dt_rk * rhs[i];
-          soln_reg[i] = carryover_reg[i] + alpha_rk64[stage] * dt_rk * rhs[i];
-          carryover_reg[i] = soln_reg[i] + beta_rk64[stage] * dt_rk * rhs[i];
+          error_reg[i] += rkp.err_rk64[stage] * dt_rk * rhs[i];
+          soln_reg[i] =
+            carryover_reg[i] + rkp.alpha_rk64[stage] * dt_rk * rhs[i];
+          carryover_reg[i] =
+            soln_reg[i] + rkp.beta_rk64[stage] * dt_rk * rhs[i];
         }
       }
 
@@ -249,11 +250,11 @@ react(
 
       if (max_err < captured_abstol) {
         change_factor =
-          betaerr_rk64 * pow((captured_abstol / max_err), exp1_rk64);
+          rkp.betaerr_rk64 * pow((captured_abstol / max_err), rkp.exp1_rk64);
         dt_rk = amrex::min<amrex::Real>(dt_rk_max, dt_rk * change_factor);
       } else {
         change_factor =
-          betaerr_rk64 * pow((captured_abstol / max_err), exp2_rk64);
+          rkp.betaerr_rk64 * pow((captured_abstol / max_err), rkp.exp2_rk64);
         dt_rk = amrex::max<amrex::Real>(dt_rk_min, dt_rk * change_factor);
       }
     }
@@ -294,3 +295,7 @@ react(
 
   return (int(avgsteps / amrex::Real(Ncells)));
 }
+
+} // namespace reactions
+} // namespace physics
+} // namespace pele

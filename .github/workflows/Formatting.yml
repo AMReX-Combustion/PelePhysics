@@ -1,0 +1,20 @@
+name: CI_FORMATTING
+
+on:
+   workflow_dispatch:
+   push:
+     branches: [ development ]
+   pull_request:
+     branches: [ development ]
+
+jobs:
+  Formatting:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: DoozyX/clang-format-lint-action@v0.11
+      with:
+        source: './Eos ./Transport ./Reactions'
+        exclude: '.'
+        extensions: 'H,h,cpp'
+        clangFormatVersion: 11
