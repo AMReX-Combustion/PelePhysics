@@ -23,11 +23,11 @@ struct NonIdealChungCorrections<eos::SRK>
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void operator()(
-    bool wtr_get_mu,
-    bool wtr_get_lam,
-    amrex::Real& Temp,
+    const bool wtr_get_mu,
+    const bool wtr_get_lam,
+    const amrex::Real Temp,
     amrex::Real* Xloc,
-    amrex::Real& rholoc,
+    const amrex::Real rholoc,
     amrex::Real& wbar,
     amrex::Real& mu,
     amrex::Real& lam,
