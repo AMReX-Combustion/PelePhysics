@@ -159,6 +159,10 @@ struct TransParm<eos::SRK, SimpleTransport>
   amrex::Real* Afac = nullptr;
   amrex::Real* Bfac = nullptr;
   amrex::Real* Sigmaij = nullptr;
+  amrex::Real* sqrtT2ij = nullptr;
+  amrex::Real* sqrtEpsilonij = nullptr;
+  amrex::Real* sqrtMWij = nullptr;
+  amrex::Real* sqrtKappaij = nullptr;
   amrex::Real* Kappai = nullptr;
   amrex::Real* omega = nullptr;
   bool m_allocated{false};
@@ -220,6 +224,14 @@ struct TransParm<eos::SRK, SimpleTransport>
       Kappai = (amrex::Real*)amrex::The_Arena()->alloc(
         sizeof(amrex::Real) * NUM_SPECIES);
       Sigmaij = (amrex::Real*)amrex::The_Arena()->alloc(
+        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
+      sqrtT2ij = (amrex::Real*)amrex::The_Arena()->alloc(
+        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
+      sqrtEpsilonij = (amrex::Real*)amrex::The_Arena()->alloc(
+        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
+      sqrtMWij = (amrex::Real*)amrex::The_Arena()->alloc(
+        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
+      sqrtKappaij = (amrex::Real*)amrex::The_Arena()->alloc(
         sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
 
       // Initialize coefficients of model
@@ -326,6 +338,15 @@ struct TransParm<eos::SRK, SimpleTransport>
           }
         }
       }
+      for (int i = 0; i < NUM_SPECIES; ++i) {
+        for (int j = 0; j < NUM_SPECIES; ++j) {
+	  const int idx = i * NUM_SPECIES + j;
+          sqrtT2ij[idx] = std::sqrt(trans_sig[i] + trans_sig[j]);
+	  sqrtEpsilonij[idx] = std::sqrt(trans_eps[i] * trans_eps[j]);
+	  sqrtMWij[idx] = std::sqrt(2.0 / (trans_iwt[i] + trans_iwt[j]));
+	  sqrtKappaij[idx] = std::sqrt(Kappai[i] * Kappai[j]);
+        }
+      }
       m_allocated = true;
     }
   }
@@ -349,6 +370,10 @@ struct TransParm<eos::SRK, SimpleTransport>
       amrex::The_Arena()->free(Bfac);
       amrex::The_Arena()->free(Kappai);
       amrex::The_Arena()->free(Sigmaij);
+      amrex::The_Arena()->free(sqrtT2ij);
+      amrex::The_Arena()->free(sqrtEpsilonij);
+      amrex::The_Arena()->free(sqrtMWij);
+      amrex::The_Arena()->free(sqrtKappaij);
       amrex::The_Arena()->free(omega);
     }
   }

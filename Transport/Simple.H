@@ -44,29 +44,28 @@ struct NonIdealChungCorrections<eos::SRK>
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       for (int j = 0; j < NUM_SPECIES; ++j) {
-        const amrex::Real T2 =
-          trans_parm->trans_sig[i] * trans_parm->trans_sig[j];
-        const amrex::Real T3 = T2 * std::sqrt(T2);
-        sigma_M_3 += Xloc[i] * Xloc[j] * T3;
+	const amrex::Real Xij = Xloc[i] * Xloc[j];
+	const int idx = i * NUM_SPECIES + j;
+	
+	const amrex::Real sqrtT2 = trans_parm->sqrtT2ij[idx];
+	const amrex::Real T2 = sqrtT2 * sqrtT2;
+        const amrex::Real T3 = T2 * sqrtT2;
+        sigma_M_3 += Xij * T3;
 
-        const amrex::Real Epsilon_ij =
-          std::sqrt(trans_parm->trans_eps[i] * trans_parm->trans_eps[j]);
-        Epsilon_M += Xloc[i] * Xloc[j] * Epsilon_ij * T3;
+        const amrex::Real Epsilon_ij = trans_parm->sqrtEpsilonij[idx];
+        Epsilon_M += Xij * Epsilon_ij * T3;
 
         const amrex::Real Omega_ij =
           0.5 * (trans_parm->omega[i] + trans_parm->omega[j]);
-        Omega_M += Xloc[i] * Xloc[j] * Omega_ij * T3;
+        Omega_M += Xij * Omega_ij * T3;
 
-        const amrex::Real MW_ij =
-          2.0 / (trans_parm->trans_iwt[i] + trans_parm->trans_iwt[j]);
-        MW_m += Xloc[i] * Xloc[j] * Epsilon_ij * T2 * std::sqrt(MW_ij);
+        MW_m += Xij * Epsilon_ij * T2 * trans_parm->sqrtMWij[idx];
 
-        DP_m_4 += Xloc[i] * Xloc[j] * trans_parm->trans_dip[i] *
+        DP_m_4 += Xij* trans_parm->trans_dip[i] *
                   trans_parm->trans_dip[i] * trans_parm->trans_dip[j] *
                   trans_parm->trans_dip[j] / (T3 * Epsilon_ij);
 
-        KappaM += Xloc[i] * Xloc[j] *
-                  std::sqrt(trans_parm->Kappai[i] * trans_parm->Kappai[j]);
+        KappaM += Xij * trans_parm->sqrtKappaij[idx];
       }
     }
 
