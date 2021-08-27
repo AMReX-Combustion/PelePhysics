@@ -71,7 +71,8 @@ public:
     Array4<const Real> const& coeff_mu,
     Array4<Real> const& soot_state,
     const Real time,
-    const Real dt) const;
+    const Real dt,
+    const bool pres_term = true) const;
 
   //
   // Estimate the soot time step

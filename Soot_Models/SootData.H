@@ -423,6 +423,7 @@ struct SootData
     // Weight of the delta function
     Real dwVal = momFV[NUM_SOOT_MOMENTS];
     Real factor = std::pow(nuclVol, volOrd) * std::pow(nuclSurf, surfOrd);
+    if (momFV[NUM_SOOT_MOMENTS + 1] == 0.) return factor * 1.E-66;
     // Remove the contribution from the first mode
     Real outMom = fracMom(volOrd, surfOrd, momFV) - dwVal * factor;
     // If the moment is negative, return a small (consistent) value
@@ -438,10 +439,8 @@ struct SootData
     // If modeCoef = 0.; only first mode is used
     // If modeCoef = 1.; both modes are used
     const Real modeCoef = momFV[NUM_SOOT_MOMENTS + 1];
-    Real bothPFact = 0.;
-    if (modeCoef > 0.)
-      bothPFact = momFV[NUM_SOOT_MOMENTS] * std::pow(nuclVol, volOrd) *
-                  std::pow(nuclSurf, surfOrd);
+    Real bothPFact = momFV[NUM_SOOT_MOMENTS] * std::pow(nuclVol, volOrd) *
+                     std::pow(nuclSurf, surfOrd) * modeCoef;
 #if NUM_SOOT_MOMENTS == 3
     Real peak = std::pow(momFV[0], 1. - volOrd - surfOrd) *
                 std::pow(momFV[1], volOrd) * std::pow(momFV[2], surfOrd);

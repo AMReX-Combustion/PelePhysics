@@ -296,7 +296,8 @@ SootModel::addSootSourceTerm(
   Array4<const Real> const& coeff_mu,
   Array4<Real> const& soot_state,
   const Real time,
-  const Real dt) const
+  const Real dt,
+  const bool pres_term) const
 {
   AMREX_ASSERT(m_memberDataDefined);
   AMREX_ASSERT(m_setIndx);
@@ -471,6 +472,7 @@ SootModel::addSootSourceTerm(
     }
     Real rho_src = 0.;
     Real eng_src = 0.;
+    Real p_src = 0.;
     for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
       // Convert from local gas species index to global gas species index
       const int spcc = sd->refIndx[sp];
@@ -479,7 +481,8 @@ SootModel::addSootSourceTerm(
       Real omegai = (newrhoY - rho_YF[spcc]) / dt;
       soot_state(i, j, k, peleIndx) += omegai * sc.mass_src_conv;
       rho_src += omegai;
-      eng_src += omegai * (Hi[spcc] - RT / mw_fluid[sp]);
+      eng_src += omegai * Hi[spcc];
+      p_src -= omegai * RT / mw_fluid[sp];
     }
     if (conserveMass) {
       // Difference between mass lost from fluid and mass gained to soot
@@ -488,8 +491,10 @@ SootModel::addSootSourceTerm(
       // Add that mass to H2
       soot_state(i, j, k, absorbIndxP) -= del_rho_dot * sc.mass_src_conv;
       rho_src -= del_rho_dot;
-      eng_src -= del_rho_dot * (Hi[absorbIndxN] - RT / mw_fluidF[absorbIndxN]);
+      eng_src -= del_rho_dot * Hi[absorbIndxN];
+      p_src += del_rho_dot *  RT / mw_fluidF[absorbIndxN];
     }
+    if (pres_term) eng_src += p_src;
     // Add density source term
     soot_state(i, j, k, rhoIndx) += rho_src * sc.mass_src_conv;
     soot_state(i, j, k, engIndx) += eng_src * sc.eng_src_conv;
