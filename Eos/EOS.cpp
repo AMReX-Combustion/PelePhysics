@@ -6,19 +6,19 @@ namespace eos {
 
 template <typename EOSType>
 void
-atomic_weightsCHON(amrex::Real atwCHON[])
+atomic_weightsCHON(amrex::Real* /*atwCHON*/)
 {
 }
 
 template <typename EOSType>
 void
-element_compositionCHON(int ecompCHON[])
+element_compositionCHON(int* /*ecompCHON*/)
 {
 }
 
 template <typename EOSType>
 void
-speciesNames(amrex::Vector<std::string>& spn)
+speciesNames(amrex::Vector<std::string>& /*spn*/)
 {
 }
 
@@ -62,14 +62,18 @@ atomic_weightsCHON<Fuego>(amrex::Real atwCHON[])
     atwCHON[i] = 0.0;
   }
   for (int i = 0; i < NUM_ELEMENTS; i++) {
-    if (ename[i] == "C")
+    if (ename[i] == "C") {
       atwCHON[0] = atw[i];
-    if (ename[i] == "H")
+    }
+    if (ename[i] == "H") {
       atwCHON[1] = atw[i];
-    if (ename[i] == "O")
+    }
+    if (ename[i] == "O") {
       atwCHON[2] = atw[i];
-    if (ename[i] == "N")
+    }
+    if (ename[i] == "N") {
       atwCHON[3] = atw[i];
+    }
   }
 }
 
@@ -80,19 +84,20 @@ element_compositionCHON<Fuego>(int ecompCHON[])
   amrex::Vector<std::string> ename;
   CKSYME_STR(ename);
   // CHON
-  int CHON[4];
-  for (int i = 0; i < 4; i++) {
-    CHON[i] = -1;
-  }
+  int CHON[4] = {-1};
   for (int i = 0; i < NUM_ELEMENTS; i++) {
-    if (ename[i] == "C")
+    if (ename[i] == "C") {
       CHON[0] = i;
-    if (ename[i] == "H")
+    }
+    if (ename[i] == "H") {
       CHON[1] = i;
-    if (ename[i] == "O")
+    }
+    if (ename[i] == "O") {
       CHON[2] = i;
-    if (ename[i] == "N")
+    }
+    if (ename[i] == "N") {
       CHON[3] = i;
+    }
   }
   int ecomp[NUM_SPECIES * NUM_ELEMENTS];
   CKNCF(ecomp);
