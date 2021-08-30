@@ -1,5 +1,5 @@
-name: CI_Reaction                                                                                                                                          
-on: 
+name: CI_Reaction
+on:
    workflow_dispatch:
    push:
      branches: [ development ]
@@ -11,7 +11,7 @@ jobs:
   cvodeDRM:
     name: GNU@7.5 [cvode-DRM]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -42,7 +42,7 @@ jobs:
   cvodeLiDryer:
     name: GNU@7.5 [cvode-LiDryer]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -73,7 +73,7 @@ jobs:
   arkodeDRM:
     name: GNU@7.5 [arkode-DRM]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -104,7 +104,7 @@ jobs:
   arkodeLiDryer:
     name: GNU@7.5 [arkode-LiDryer]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -135,7 +135,7 @@ jobs:
   rk64DRM:
     name: GNU@7.5 [rk64-DRM]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -166,7 +166,7 @@ jobs:
   rk64LiDryer:
     name: GNU@7.5 [rk64-LiDryer]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -215,8 +215,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         make TPL COMP=gnu USE_CUDA=TRUE Chemistry_Model=drm19
         make -j 2 COMP=gnu USE_CUDA=TRUE Chemistry_Model=drm19
 
@@ -242,8 +242,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         make TPL COMP=gnu USE_CUDA=TRUE Chemistry_Model=LiDryer
         make -j 2 COMP=gnu USE_CUDA=TRUE Chemistry_Model=LiDryer
 
@@ -269,8 +269,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         make TPL COMP=gnu USE_CUDA=TRUE Chemistry_Model=drm19
         make -j 2 COMP=gnu USE_CUDA=TRUE Chemistry_Model=drm19
 
@@ -296,8 +296,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         make TPL COMP=gnu USE_CUDA=TRUE Chemistry_Model=LiDryer
         make -j 2 COMP=gnu USE_CUDA=TRUE Chemistry_Model=LiDryer
 
@@ -323,8 +323,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         make TPL COMP=gnu USE_CUDA=TRUE Chemistry_Model=drm19
         make -j 2 COMP=gnu USE_CUDA=TRUE Chemistry_Model=drm19
 
@@ -350,8 +350,8 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/ReactEval
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         make TPL COMP=gnu USE_CUDA=TRUE Chemistry_Model=LiDryer
         make -j 2 COMP=gnu USE_CUDA=TRUE Chemistry_Model=LiDryer
 
@@ -359,7 +359,7 @@ jobs:
 #  FuegoDRM_HIP:
 #    name: HIPROCm@3.8 GFortran@9.3 [FuegoDRM]
 #    runs-on: ubuntu-20.04
-#    env: 
+#    env:
 #      {CXXFLAGS: "-fno-operator-names"}
 #    steps:
 #    - uses: actions/checkout@v2
@@ -384,7 +384,7 @@ jobs:
 #  FuegoLiDryer_HIP:
 #    name: HIPROCm@3.8 GFortran@9.3 [FuegoLiDryer]
 #    runs-on: ubuntu-20.04
-#    env: 
+#    env:
 #      {CXXFLAGS: "-fno-operator-names"}
 #    steps:
 #    - uses: actions/checkout@v2
@@ -402,5 +402,5 @@ jobs:
 #      run: |
 #        source /etc/profile.d/rocm.sh
 #        hipcc --version
-#        make TPL COMP=gnu USE_HIP=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer 
+#        make TPL COMP=gnu USE_HIP=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer
 #        make -j 2 COMP=gnu USE_HIP=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer

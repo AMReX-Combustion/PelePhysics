@@ -1,5 +1,5 @@
-name: CI_EOS                                                                                                                                          
-on: 
+name: CI_EOS
+on:
    workflow_dispatch:
    push:
      branches: [ development ]
@@ -11,7 +11,7 @@ jobs:
   Fuego:
     name: GNU@7.5 [Fuego]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -38,7 +38,7 @@ jobs:
   GammaLaw:
     name: GNU@7.5 [GammaLaw]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -65,7 +65,7 @@ jobs:
   Fuego_CUDA:
     name: CUDA@11.0.1 [Fuego]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -81,7 +81,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/EosEval
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         make TPL COMP=gnu USE_CUDA=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer
         make -j 2 COMP=gnu USE_CUDA=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer
@@ -90,7 +90,7 @@ jobs:
   GammaLaw_CUDA:
     name: CUDA@11.0.1 [GammaLaw]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -106,7 +106,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/EosEval
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         make TPL COMP=gnu USE_CUDA=TRUE Eos_Model=GammaLaw Chemistry_Model=Null
         make -j 2 COMP=gnu USE_CUDA=TRUE Eos_Model=GammaLaw Chemistry_Model=Null
@@ -115,7 +115,7 @@ jobs:
   #Fuego_HIP:
   #  name: HIPROCm@3.8 GFortran@9.3 [Fuego]
   #  runs-on: ubuntu-20.04
-  #  env: 
+  #  env:
   #    {CXXFLAGS: "-fno-operator-names"}
   #  steps:
   #  - uses: actions/checkout@v2

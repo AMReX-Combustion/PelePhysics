@@ -1,5 +1,5 @@
-name: CI_Transport                                                                                                                                           
-on: 
+name: CI_Transport
+on:
    workflow_dispatch:
    push:
      branches: [ development ]
@@ -11,7 +11,7 @@ jobs:
   Constant_MPI:
     name: GNU@7.5 MPI [Constant]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -38,7 +38,7 @@ jobs:
   Sutherland_MPI:
     name: GNU@7.5 MPI [Sutherland]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -65,7 +65,7 @@ jobs:
   Simple_MPI:
     name: GNU@7.5 MPI [Simple]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -92,7 +92,7 @@ jobs:
   Constant_CUDA:
     name: CUDA@11.0.1 MPI [Constant]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -108,7 +108,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         make TPL COMP=gnu USE_CUDA=TRUE Transport_Model=Constant
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Constant
@@ -117,7 +117,7 @@ jobs:
   Sutherland_CUDA:
     name: CUDA@11.0.1 MPI [Sutherland]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -133,7 +133,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         make TPL COMP=gnu USE_CUDA=TRUE Transport_Model=Sutherland
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Sutherland
@@ -142,7 +142,7 @@ jobs:
   Simple_CUDA:
     name: CUDA@11.0.1 MPI [Simple]
     runs-on: ubuntu-latest
-    env: 
+    env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
     - uses: actions/checkout@v2
@@ -158,7 +158,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         make TPL COMP=gnu USE_CUDA=TRUE Transport_Model=Simple
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Simple
@@ -167,7 +167,7 @@ jobs:
   #Constant_HIP:
   #  name: HIPROCm@3.8 GFortran@9.3 [Constant]
   #  runs-on: ubuntu-20.04
-  #  env: 
+  #  env:
   #    {CXXFLAGS: "-fno-operator-names"}
   #  steps:
   #  - uses: actions/checkout@v2
@@ -191,7 +191,7 @@ jobs:
   #Sutherland_HIP:
   #  name: HIPROCm@3.8 GFortran@9.3 [Sutherland]
   #  runs-on: ubuntu-20.04
-  #  env: 
+  #  env:
   #    {CXXFLAGS: "-fno-operator-names"}
   #  steps:
   #  - uses: actions/checkout@v2
@@ -215,7 +215,7 @@ jobs:
   #Simple_HIP:
   #  name: HIPROCm@3.8 GFortran@9.3 [Simple]
   #  runs-on: ubuntu-20.04
-  #  env: 
+  #  env:
   #    {CXXFLAGS: "-fno-operator-names"}
   #  steps:
   #  - uses: actions/checkout@v2
