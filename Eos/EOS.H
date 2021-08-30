@@ -27,16 +27,13 @@ static_assert(true, "Invalid EOS specified");
 namespace eos {
 
 template <typename EOSType>
-void
-atomic_weightsCHON(amrex::Real atwCHON[]);
+void atomic_weightsCHON(amrex::Real atwCHON[]);
 
 template <typename EOSType>
-void
-element_compositionCHON(int ecompCHON[]);
+void element_compositionCHON(int ecompCHON[]);
 
 template <typename EOSType>
-void
-speciesNames(amrex::Vector<std::string>& spn);
+void speciesNames(amrex::Vector<std::string>& spn);
 
 } // namespace eos
 } // namespace physics
