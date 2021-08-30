@@ -27,6 +27,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
+        make TPL COMP=gnu Transport_Model=Constant
         make -j 2 COMP=gnu Transport_Model=Constant
     - name: Run
       working-directory: ./Testing/Exec/TranEval
@@ -53,6 +54,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
+        make TPL COMP=gnu Transport_Model=Sutherland
         make -j 2 COMP=gnu Transport_Model=Sutherland
     - name: Run
       working-directory: ./Testing/Exec/TranEval
@@ -79,6 +81,7 @@ jobs:
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
+        make TPL COMP=gnu Transport_Model=Simple
         make -j 2 COMP=gnu Transport_Model=Simple
     - name: Run
       working-directory: ./Testing/Exec/TranEval
@@ -106,7 +109,8 @@ jobs:
       working-directory: ./Testing/Exec/TranEval
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
+        make TPL COMP=gnu USE_CUDA=TRUE Transport_Model=Constant
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Constant
 
   # Sutherland Transport CUDA and MPI support
@@ -130,7 +134,8 @@ jobs:
       working-directory: ./Testing/Exec/TranEval
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
+        make TPL COMP=gnu USE_CUDA=TRUE Transport_Model=Sutherland
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Sutherland
 
   # Simple Transport CUDA and MPI support
@@ -154,7 +159,8 @@ jobs:
       working-directory: ./Testing/Exec/TranEval
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} 
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH} 
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
+        make TPL COMP=gnu USE_CUDA=TRUE Transport_Model=Simple
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Simple
 
   # Constant Transport HIP support
