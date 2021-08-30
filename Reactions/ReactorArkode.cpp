@@ -462,6 +462,12 @@ ReactorArkode::cF_RHS(
 
   return (0);
 }
+
+void
+ReactorArkode::SetTypValsODE(const std::vector<amrex::Real>& /*ExtTypVals*/)
+{
+  amrex::Print() << "WARNING: ignoring TypVals for this reactor." << std::endl;
+}
 } // namespace reactions
 } // namespace physics
 } // namespace pele

@@ -15,18 +15,15 @@ USE_HIP    = FALSE
 
 # PelePhysics
 FUEGO_GAS  = TRUE
-USE_SUNDIALS_PP = FALSE
-USE_RK64_PP = FALSE
+USE_SUNDIALS_PP = TRUE
 
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_Model       = Fuego
   Chemistry_Model = air
-  Reactions_dir   = null
   Transport_Model = Simple
 else
   Eos_Model       = GammaLaw
   Chemistry_Model = Null
-  Reactions_dir   = null
   Transport_Mode  = Constant
 endif
 

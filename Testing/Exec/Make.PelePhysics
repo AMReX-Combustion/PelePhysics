@@ -16,8 +16,6 @@ EXTERN_CORE ?=
 
 ifeq ($(USE_SUNDIALS_PP),TRUE) 
   include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
-else ifeq ($(USE_RK64_PP),TRUE)
-  DEFINES += -DUSE_RK64_PP
 endif
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
@@ -69,18 +67,9 @@ Blocs             += $(EOS_HOME)
 
 # Reactions
 ifeq ($(USE_SUNDIALS_PP),TRUE)
-    REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
     include $(REACTIONS_HOME)/Make.package
-    include $(REACTIONS_PATH)/Make.package
-    INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
-    VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH)
-endif
-ifeq ($(USE_RK64_PP),TRUE)
-    REACTIONS_PATH := $(REACTIONS_HOME)/$(strip $(Reactions_dir))
-    include $(REACTIONS_HOME)/Make.package
-    include $(REACTIONS_PATH)/Make.package
-    INCLUDE_LOCATIONS += $(REACTIONS_HOME) $(REACTIONS_PATH) 
-    VPATH_LOCATIONS   += $(REACTIONS_HOME) $(REACTIONS_PATH)
+    INCLUDE_LOCATIONS += $(REACTIONS_HOME) 
+    VPATH_LOCATIONS   += $(REACTIONS_HOME)
 endif
 ifeq ($(USE_F90_PP),TRUE) 
     REACTIONS_HOME_F90 := $(REACTIONS_HOME)/F90

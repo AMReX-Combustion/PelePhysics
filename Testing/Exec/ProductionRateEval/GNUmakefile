@@ -32,7 +32,6 @@ Eos_Model       = Fuego
 #Chemistry_Model = LiDryer
 Chemistry_Model = drm19
 #Chemistry_Model = grimech12
-Reactions_dir   = Fuego
 Transport_Model = Simple
 
 CEXE_sources += main.cpp

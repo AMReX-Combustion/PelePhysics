@@ -54,6 +54,8 @@ public:
 #endif
     ) = 0;
 
+  virtual void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) = 0;
+
   virtual ~ReactorBase() = default;
 };
 

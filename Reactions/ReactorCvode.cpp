@@ -7,6 +7,9 @@ int
 ReactorCvode::init(int reactor_type, int Ncells)
 {
   BL_PROFILE("Pele::ReactorCvode::init()");
+  amrex::ParmParse pp("ode");
+  pp.query("rtol", relTol);
+  pp.query("atol", absTol);
   return 0;
 }
 
@@ -84,21 +87,6 @@ ReactorCvode::SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
       amrex::Print() << kname[i] << ":" << typVals[i] << "  ";
     }
     amrex::Print() << "Temp:" << typVals[size_ETV - 1] << " \n";
-  }
-}
-
-void
-ReactorCvode::SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol)
-{
-  int omp_thread = 0;
-#ifdef _OPENMP
-  omp_thread = omp_get_thread_num();
-#endif
-  relTol = relative_tol;
-  absTol = absolute_tol;
-  if (omp_thread == 0) {
-    amrex::Print() << "Set RTOL, ATOL = " << relTol << " " << absTol
-                   << " in PelePhysics\n";
   }
 }
 

@@ -48,6 +48,8 @@ public:
     amrex::gpuStream_t stream
 #endif
     ) override;
+
+  void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) override;
 };
 } // namespace reactions
 } // namespace physics

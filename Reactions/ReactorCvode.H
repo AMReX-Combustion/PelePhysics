@@ -53,8 +53,7 @@ public:
   static int
   cF_RHS(amrex::Real t, N_Vector y_in, N_Vector ydot, void* user_data);
 
-  void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
-  void SetTolFactODE(amrex::Real relative_tol, amrex::Real absolute_tol);
+  void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) override;
 
 private:
   amrex::Real relTol = 1e-6;

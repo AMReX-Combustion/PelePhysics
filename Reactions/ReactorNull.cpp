@@ -96,6 +96,11 @@ ReactorNull::react(
   return 0;
 }
 
+void
+ReactorNull::SetTypValsODE(const std::vector<amrex::Real>& /*ExtTypVals*/)
+{
+  amrex::Print() << "WARNING: ignoring TypVals for this reactor." << std::endl;
+}
 } // namespace reactions
 } // namespace physics
 } // namespace pele

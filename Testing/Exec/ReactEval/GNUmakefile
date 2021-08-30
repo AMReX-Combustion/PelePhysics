@@ -28,9 +28,7 @@ DEFINES  += -DMOD_REACTOR
 #######################
 # Activates use of SUNDIALS: CVODE (default) / ARKODE
 USE_SUNDIALS_PP = TRUE
-USE_RK64_PP = FALSE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
-  USE_ARKODE_PP = FALSE
   ifeq ($(USE_CUDA), TRUE)
       USE_KLU_PP = FALSE
   else
@@ -40,25 +38,16 @@ ifeq ($(USE_SUNDIALS_PP), TRUE)
           USE_KLU_PP = FALSE
       endif
   endif
-else
-  USE_RK64_PP = TRUE
-  ifeq ($(USE_RK64_PP), TRUE)
-  # Activates use of Hari explicit RK
-  # will only work if USE_SUNDIALS_PP = FALSE
-  TRANSPORT_CPP = TRUE
-  endif
 endif
 
 #######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_Model       = Fuego
   Chemistry_Model = drm19
-  Reactions_dir   = cvode
   Transport_Model = Simple
 else
   Eos_Model       = GammaLaw
   Chemistry_Model = Null
-  Reactions_dir   = null
   Transport_Model = Constant
 endif
 

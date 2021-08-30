@@ -19,17 +19,7 @@
 
 #include <PlotFileFromMF.H>
 #include <PelePhysics.H>
-#include <reactor.H>
-
-#ifndef USE_RK64_PP
-#ifdef USE_ARKODE_PP 
-static std::string ODE_SOLVER = "ARKODE";
-#else
-static std::string ODE_SOLVER = "CVODE";
-#endif
-#else
-static std::string ODE_SOLVER = "RK64";
-#endif
+#include <ReactorBase.H>
 
 using namespace amrex;
 
@@ -63,6 +53,10 @@ main (int   argc,
     ParmParse pp;
     std::string fuel_name;
     pp.get("fuel_name", fuel_name);
+
+    std::string chem_integrator = "";
+    pp.get("chem_integrator", chem_integrator);
+
 
     std::string pltfile;
     bool do_plt = false;
@@ -102,23 +96,23 @@ main (int   argc,
 
     Real dt = 1.e-5;
     ppode.query("dt",dt);
-    
+
     int ndt = 1;
-    ppode.query("ndt",ndt); // number of solver calls per dt 
-    
+    ppode.query("ndt",ndt); // number of solver calls per dt
+
     int ode_iE = -1;
     ppode.query("reactor_type",ode_iE); // RHS type, 1: e (PeleC), !1: h (PeleLM)  <------ FIXME!
-    
+
     Real rtol = 1e-10;
     ppode.query("rtol",rtol);
-    
+
     Real atol = 1e-10;
     ppode.query("atol",atol);
 
     int use_typ_vals = 0;
     ppode.query("use_typ_vals",use_typ_vals);
 
-    Print() << "ODE solver: " << ODE_SOLVER << std::endl;
+    Print() << "ODE solver: " << chem_integrator << std::endl;
     Print() << "Type of reactor: " << (ode_iE == 1 ? "e (PeleC)" : "h (PeleLM)") << std::endl; // <---- FIXME
     Print() << "Fuel: " << fuel_name << ", Oxy: O2"  << std::endl;
 
@@ -145,15 +139,12 @@ main (int   argc,
 
     /* Initialize reactor object inside OMP region, including tolerances */
     BL_PROFILE_VAR("main::reactor_info()", reactInfo);
+    std::unique_ptr<pele::physics::reactions::ReactorBase> reactor = pele::physics::reactions::ReactorBase::create(chem_integrator);
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     {
-      // Set ODE tolerances
-#ifndef USE_ARKODE_PP
-      SetTolFactODE(rtol,atol);
-#endif
-      reactor_init(ode_iE, ode_ncells);
+      reactor->init(ode_iE, ode_ncells);
     }
     BL_PROFILE_VAR_STOP(reactInfo);
 
@@ -193,7 +184,7 @@ main (int   argc,
         else {
           Abort("ncells has to have length 1 or spacedim");
         }
-        
+
         Box domain(IntVect(AMREX_D_DECL(0,0,0)),
                    IntVect(AMREX_D_DECL(ncells[0]-1,ncells[1]-1,ncells[2]-1)));
 
@@ -201,7 +192,7 @@ main (int   argc,
         RealBox real_box({AMREX_D_DECL(-1.0,-1.0,-1.0)},
                          {AMREX_D_DECL( 1.0, 1.0, 1.0)});
 
-        int coord = 0;   
+        int coord = 0;
 
         Array<int,AMREX_SPACEDIM> is_periodic {AMREX_D_DECL(1,1,1)};
 
@@ -273,7 +264,7 @@ main (int   argc,
                 prob_hi[i++] = std::stod(word);
             }
         }
-        int coord = 0;   
+        int coord = 0;
         Array<int,AMREX_SPACEDIM> is_periodic {AMREX_D_DECL(1,1,1)};
         RealBox domainSize(prob_lo, prob_hi);
         Box domain;            // Read domain Box
@@ -286,7 +277,7 @@ main (int   argc,
         geoms.resize(finest_level+1);
         grids.resize(finest_level+1);
         dmaps.resize(finest_level+1);
-        
+
         // -----------------------------------------------------------------------------
         // Define geoms, read BoxArray and define dmap
         // -----------------------------------------------------------------------------
@@ -309,9 +300,9 @@ main (int   argc,
 
         for(int lev = 0; lev <= finest_level; ++lev)
         {
-           Print() << "  Level " << lev 
-                   << " integrating " << grids[lev].numPts() 
-                   << " cells on " << grids[lev].size() 
+           Print() << "  Level " << lev
+                   << " integrating " << grids[lev].numPts()
+                   << " cells on " << grids[lev].size()
                    << " boxes for " << dt/std::pow(2,lev) << " seconds \n";
         }
     }
@@ -393,9 +384,9 @@ main (int   argc,
              auto const& rhoH    = mfE[lev].array(mfi);
              auto const& force_Y = rY_source_ext[lev].array(mfi);
              auto const& force_E = rY_source_energy_ext[lev].array(mfi);
-             auto const& rhoYs_in = stateIn.const_array(mfi,AMREX_SPACEDIM+1); 
-             auto const& temp_in  = stateIn.const_array(mfi,AMREX_SPACEDIM+NUM_SPECIES+2); 
-             auto const& rhoh_in  = stateIn.const_array(mfi,AMREX_SPACEDIM+NUM_SPECIES+1); 
+             auto const& rhoYs_in = stateIn.const_array(mfi,AMREX_SPACEDIM+1);
+             auto const& temp_in  = stateIn.const_array(mfi,AMREX_SPACEDIM+NUM_SPECIES+2);
+             auto const& rhoh_in  = stateIn.const_array(mfi,AMREX_SPACEDIM+NUM_SPECIES+1);
              auto const& force_a = forcingIn.const_array(mfi);
              ParallelFor(box,
              [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
@@ -406,7 +397,7 @@ main (int   argc,
                 }
                 temp(i,j,k) = temp_in(i,j,k);
                 rhoH(i,j,k) = rhoh_in(i,j,k) * 10.0;              // with MKS -> CGS conversion
-                force_E(i,j,k) = force_a(i,j,k,NUM_SPECIES) * 10.0;   
+                force_E(i,j,k) = force_a(i,j,k,NUM_SPECIES) * 10.0;
              });
           }
        }
@@ -434,57 +425,57 @@ main (int   argc,
     // -----------------------------------------------------------------------------
     // Set typical values
     // -----------------------------------------------------------------------------
-#ifndef USE_ARKODE_PP
+    if (chem_integrator == "ReactorCvode"){
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-    {
-      if (use_typ_vals) {
-        Vector<Real> typ_vals(NUM_SPECIES+1,1.0e-10);
-        if (ppode.contains("typ_vals")) {
-           Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
-           ppode.getarr("typ_vals", typ_vals,0,NUM_SPECIES+1);
-           for (int i = 0; i < NUM_SPECIES; ++i) {
-             typ_vals[i] = std::max(typ_vals[i],1.e-10);
-           }
-        } else {
-           Print() << "Using typical values from the initial data for the absolute tolerances of the ode solver.\n";
-           for (int lev = 0; lev <= finest_level; ++lev) {           
-               /*
-               Pretty sure TypVal should be rhoYs in CGS, but keep that around just in case.
-               MultiFab massFrac(grids[lev],dmaps[lev],NUM_SPECIES,0);
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-               for (MFIter mfi(mf[lev],TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-                  const Box& box = mfi.tilebox();
-                  auto const& rhoYs = mf[lev].const_array(mfi);
-                  auto const& Ys    = massFrac.array(mfi);
-                  ParallelFor(box,
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                  {
-                     amrex::Real rho = 0.0;
-                     for (int n = 0; n < NUM_SPECIES; n++) {
-                        rho += rhoYs(i,j,k,n);
-                     }
-                     amrex::Real rhoinv = 1.0/rho;
-                     for (int n = 0; n < NUM_SPECIES; n++) {
-                        Ys(i,j,k,n) = rhoYs(i,j,k,n) * rhoinv;
-                     }
-                  });
-               }
-               */
-               for (int i = 0; i < NUM_SPECIES; ++i) {
-                   typ_vals[i] = std::max(typ_vals[i],mf[lev].max(i));
-               }
-               typ_vals[NUM_SPECIES] = std::max(typ_vals[NUM_SPECIES],mf[lev].max(NUM_SPECIES));
-           }
+      {
+        if (use_typ_vals) {
+          Vector<Real> typ_vals(NUM_SPECIES+1,1.0e-10);
+          if (ppode.contains("typ_vals")) {
+            Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
+            ppode.getarr("typ_vals", typ_vals,0,NUM_SPECIES+1);
+            for (int i = 0; i < NUM_SPECIES; ++i) {
+              typ_vals[i] = std::max(typ_vals[i],1.e-10);
+            }
+          } else {
+            Print() << "Using typical values from the initial data for the absolute tolerances of the ode solver.\n";
+            for (int lev = 0; lev <= finest_level; ++lev) {
+              /*
+                Pretty sure TypVal should be rhoYs in CGS, but keep that around just in case.
+                MultiFab massFrac(grids[lev],dmaps[lev],NUM_SPECIES,0);
+                #ifdef AMREX_USE_OMP
+                #pragma omp parallel if (Gpu::notInLaunchRegion())
+                #endif
+                for (MFIter mfi(mf[lev],TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+                const Box& box = mfi.tilebox();
+                auto const& rhoYs = mf[lev].const_array(mfi);
+                auto const& Ys    = massFrac.array(mfi);
+                ParallelFor(box,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+                {
+                amrex::Real rho = 0.0;
+                for (int n = 0; n < NUM_SPECIES; n++) {
+                rho += rhoYs(i,j,k,n);
+                }
+                amrex::Real rhoinv = 1.0/rho;
+                for (int n = 0; n < NUM_SPECIES; n++) {
+                Ys(i,j,k,n) = rhoYs(i,j,k,n) * rhoinv;
+                }
+                });
+                }
+              */
+              for (int i = 0; i < NUM_SPECIES; ++i) {
+                typ_vals[i] = std::max(typ_vals[i], mf[lev].max(i));
+              }
+              typ_vals[NUM_SPECIES] =
+                std::max(typ_vals[NUM_SPECIES], mf[lev].max(NUM_SPECIES));
+            }
+          }
+          reactor->SetTypValsODE(typ_vals);
         }
-        SetTypValsODE(typ_vals);
       }
     }
-#endif
-
     Print() << " \n STARTING THE ADVANCE \n";
 
     /* REACT */
@@ -532,7 +523,7 @@ main (int   argc,
             BL_PROFILE_VAR_START(ReactInLoop);
             for (int ii = 0; ii < ndt; ++ii)
             {
-              tmp_fc=react(box, rhoY, frcExt, T,
+              tmp_fc=reactor->react(box, rhoY, frcExt, T,
                     rhoE, frcEExt, fc, mask,
                     dt_incr, time, ode_iE
 #ifdef AMREX_USE_GPU
@@ -582,7 +573,7 @@ main (int   argc,
             auto tmp_src_vect_energy =  new Real[nCells];
             auto tmp_fc              =  new int[nCells];
             auto tmp_mask           =  new int[nCells];
-        
+
             BL_PROFILE_VAR_STOP(Allocs);
 
             BL_PROFILE_VAR_START(mainflatten);
@@ -592,9 +583,9 @@ main (int   argc,
             {
               int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
 
-              box_flatten(icell, nCells, i, j, k, ode_iE, 
-                          rhoY, frcExt, T, rhoE, frcEExt,
-                          tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
+              pele::physics::reactions::box_flatten<pele::physics::reactions::ReactorBase>(icell, nCells, i, j, k, ode_iE,
+                                                                                           rhoY, frcExt, T, rhoE, frcEExt,
+                                                                                           tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
             });
 
             for (int icell=nc; icell<nc+extra_cells; icell++) {
@@ -603,7 +594,7 @@ main (int   argc,
                 tmp_src_vect[icell*NUM_SPECIES+sp]     = frcExt(0,0,0,sp);
               }
               tmp_vect[icell*(NUM_SPECIES+1)+NUM_SPECIES] = T(0,0,0);
-              tmp_vect_energy[icell]                      = rhoE(0,0,0); 
+              tmp_vect_energy[icell]                      = rhoE(0,0,0);
               tmp_src_vect_energy[icell]                  = frcEExt(0,0,0);
               tmp_mask[icell]                             = mask(0,0,0);
             }
@@ -613,9 +604,9 @@ main (int   argc,
             {
               int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
 
-              box_flatten(icell, nCells, i, j, k, ode_iE, 
-                          rhoY, frcExt, T, rhoE, frcEExt,
-                          tmp_vect_d, tmp_src_vect_d, tmp_vect_energy_d, tmp_src_vect_energy_d);
+              pele::physics::reactions::box_flatten<pele::physics::reactions::ReactorBase>(icell, nCells, i, j, k, ode_iE,
+                                                                                           rhoY, frcExt, T, rhoE, frcEExt,
+                                                                                           tmp_vect_d, tmp_src_vect_d, tmp_vect_energy_d, tmp_src_vect_energy_d);
             });
 
             Gpu::copy(Gpu::deviceToHost, tmp_vect_d, tmp_vect_d+nCells*(NUM_SPECIES+1), tmp_vect);
@@ -633,7 +624,7 @@ main (int   argc,
                Real dt_lev = dt/std::pow(2,lev);
                Real dt_incr = dt_lev/ndt;
                for (int ii = 0; ii < ndt; ++ii) {
-                  tmp_fc[i] += react(&tmp_vect[i*(NUM_SPECIES+1)], &tmp_src_vect[i*NUM_SPECIES],
+                  tmp_fc[i] += reactor->react(&tmp_vect[i*(NUM_SPECIES+1)], &tmp_src_vect[i*NUM_SPECIES],
                                      &tmp_vect_energy[i], &tmp_src_vect_energy[i],
                                      dt_incr,time,ode_iE, ode_ncells
 #ifdef AMREX_USE_GPU
@@ -656,9 +647,9 @@ main (int   argc,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
               int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
-              box_unflatten(icell, nCells, i, j, k, ode_iE,
-                            rhoY, T, rhoE, frcEExt, fc,
-                            tmp_vect, tmp_vect_energy, tmp_fc[icell], dt);
+              pele::physics::reactions::box_unflatten<pele::physics::reactions::ReactorBase>(icell, nCells, i, j, k, ode_iE,
+                                                                                             rhoY, T, rhoE, frcEExt, fc,
+                                                                                             tmp_vect, tmp_vect_energy, tmp_fc[icell], dt);
             });
 #else
 
@@ -667,14 +658,14 @@ main (int   argc,
             Gpu::copy(Gpu::hostToDevice, tmp_vect_energy, tmp_vect_energy+nCells, tmp_vect_energy_d);
             Gpu::copy(Gpu::hostToDevice, tmp_src_vect_energy, tmp_src_vect_energy+nCells, tmp_src_vect_energy_d);
             Gpu::copy(Gpu::hostToDevice, tmp_fc, tmp_fc+nCells, tmp_fc_d);
-            
+
             ParallelFor(box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
               int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
-              box_unflatten(icell, nCells, i, j, k, ode_iE,
-                            rhoY, T, rhoE, frcEExt, fc,
-                            tmp_vect_d, tmp_vect_energy_d, tmp_fc_d[icell], dt);
+              pele::physics::reactions::box_unflatten<pele::physics::reactions::ReactorBase>(icell, nCells, i, j, k, ode_iE,
+                                                                                             rhoY, T, rhoE, frcEExt, fc,
+                                                                                             tmp_vect_d, tmp_vect_energy_d, tmp_fc_d[icell], dt);
             });
 #endif
             BL_PROFILE_VAR_STOP(mainflatten);
@@ -727,7 +718,7 @@ main (int   argc,
                                        plt_VarsName, geoms, 0.0, isteps, refRatios);
         BL_PROFILE_VAR_STOP(PlotFile);
     }
-    
+
     trans_parms.deallocate();
 
     BL_PROFILE_VAR_STOP(pmain);

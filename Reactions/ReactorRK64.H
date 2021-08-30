@@ -83,6 +83,8 @@ public:
 #endif
     ) override;
 
+  void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) override;
+
 private:
   amrex::Real absTol = 1e-10;
   int rk64_nsubsteps_guess = 10;

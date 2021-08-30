@@ -281,18 +281,12 @@ Additionally, the ``FUEGO_GAS`` flag should be set to true and the chemistry mod
     ifeq ($(USE_SUNDIALS_PP), TRUE)
       # provide location of sundials lib if needed
       SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
-      # use ARKODE: if FALSE then CVODE is used
-      USE_ARKODE_PP = FALSE
       # use KLU sparse features -- only useful if CVODE is used
       USE_KLU_PP = FALSE
       ifeq ($(USE_KLU_PP), TRUE)
         # provide location of KLU lib if needed
         SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
       endif
-    else
-      # Activates use of Hari explicit RK
-      # will only work if USE_SUNDIALS_PP = FALSE
-      USE_RK64_PP = FALSE
     endif
     
     #######################

@@ -296,6 +296,11 @@ ReactorRK64::react(
   return (int(avgsteps / amrex::Real(Ncells)));
 }
 
+void
+ReactorRK64::SetTypValsODE(const std::vector<amrex::Real>& /*ExtTypVals*/)
+{
+  amrex::Print() << "WARNING: ignoring TypVals for this reactor." << std::endl;
+}
 } // namespace reactions
 } // namespace physics
 } // namespace pele
