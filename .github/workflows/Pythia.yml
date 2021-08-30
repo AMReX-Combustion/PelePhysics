@@ -1,4 +1,4 @@
-name: CI_PYTHIA
+name: CI_Pythia
 on:
    workflow_dispatch:
    push:
