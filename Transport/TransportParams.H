@@ -334,7 +334,7 @@ struct TransParm<eos::SRK, SimpleTransport>
       for (int i = 0; i < NUM_SPECIES; ++i) {
         for (int j = 0; j < NUM_SPECIES; ++j) {
 	  const int idx = i * NUM_SPECIES + j;
-          sqrtT2ij[idx] = std::sqrt(trans_sig[i] + trans_sig[j]);
+          sqrtT2ij[idx] = std::sqrt(trans_sig[i] * trans_sig[j]);
 	  sqrtEpsilonij[idx] = std::sqrt(trans_eps[i] * trans_eps[j]);
 	  sqrtMWij[idx] = std::sqrt(2.0 / (trans_iwt[i] + trans_iwt[j]));
 	  sqrtKappaij[idx] = std::sqrt(Kappai[i] * Kappai[j]);
