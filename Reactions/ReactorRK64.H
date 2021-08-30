@@ -46,6 +46,8 @@ class ReactorRK64 : public ReactorBase::Register<ReactorRK64>
 public:
   static std::string identifier() { return "ReactorRK64"; }
 
+  using Ordering = YCOrder;
+
   int init(int reactor_type, int Ncells) override;
 
   void close() override {}
@@ -83,6 +85,44 @@ public:
 #endif
     ) override;
 
+  void flatten(
+    const amrex::Box box,
+    const int ncells,
+    const int reactor_type,
+    amrex::Array4<const amrex::Real> const& rhoY,
+    amrex::Array4<const amrex::Real> const& frcExt,
+    amrex::Array4<const amrex::Real> const& temperature,
+    amrex::Array4<const amrex::Real> const& rhoE,
+    amrex::Array4<const amrex::Real> const& frcEExt,
+    amrex::Real* y_vect,
+    amrex::Real* src_vect,
+    amrex::Real* vect_energy,
+    amrex::Real* src_vect_energy) override
+  {
+    flatten_ops.flatten(
+      box, ncells, reactor_type, rhoY, frcExt, temperature, rhoE, frcEExt,
+      y_vect, src_vect, vect_energy, src_vect_energy);
+  }
+
+  void unflatten(
+    const amrex::Box box,
+    const int ncells,
+    const int reactor_type,
+    amrex::Array4<amrex::Real> const& rhoY,
+    amrex::Array4<amrex::Real> const& temperature,
+    amrex::Array4<amrex::Real> const& rhoE,
+    amrex::Array4<amrex::Real> const& frcEExt,
+    amrex::Array4<amrex::Real> const& FC_in,
+    amrex::Real* y_vect,
+    amrex::Real* vect_energy,
+    long int* FCunt,
+    amrex::Real dt) override
+  {
+    flatten_ops.unflatten(
+      box, ncells, reactor_type, rhoY, temperature, rhoE, frcEExt, FC_in,
+      y_vect, vect_energy, FCunt, dt);
+  }
+
   void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) override;
 
 private:
@@ -90,6 +130,7 @@ private:
   int rk64_nsubsteps_guess = 10;
   int rk64_nsubsteps_min = 5;
   int rk64_nsubsteps_max = 500;
+  FlattenOps<Ordering> flatten_ops;
 };
 } // namespace reactions
 } // namespace physics

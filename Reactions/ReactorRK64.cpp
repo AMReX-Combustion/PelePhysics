@@ -5,7 +5,7 @@ namespace physics {
 namespace reactions {
 
 int
-ReactorRK64::init(int reactor_type, int Ncells)
+ReactorRK64::init(int /*reactor_type*/, int /*Ncells*/)
 {
   BL_PROFILE("Pele::ReactorRK64::init()");
   amrex::ParmParse pp("ode");
@@ -82,7 +82,7 @@ ReactorRK64::react(
         error_reg[sp] = 0.0;
       }
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
-        fKernelSpec<ReactorRK64>(
+        fKernelSpec<Ordering>(
           0, 1, current_time - time_init, captured_reactor_type, soln_reg, rhs,
           rhoe_init, rhoesrc_ext, rYsrc);
 
@@ -144,7 +144,7 @@ ReactorRK64::react(
   amrex::Array4<amrex::Real> const& rEner_in,
   amrex::Array4<amrex::Real> const& rEner_src_in,
   amrex::Array4<amrex::Real> const& FC_in,
-  amrex::Array4<int> const& mask,
+  amrex::Array4<int> const& /*mask*/,
   amrex::Real& dt_react,
   amrex::Real& time,
   const int& reactor_type
@@ -225,16 +225,16 @@ ReactorRK64::react(
         error_reg[sp] = 0.0;
       }
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
-        fKernelSpec<ReactorRK64>(
+        fKernelSpec<Ordering>(
           0, 1, current_time - time_init, captured_reactor_type, soln_reg, rhs,
           rhoe_init, rhoesrc_ext, rYsrc);
 
-        for (int i = 0; i < neq; i++) {
-          error_reg[i] += rkp.err_rk64[stage] * dt_rk * rhs[i];
-          soln_reg[i] =
-            carryover_reg[i] + rkp.alpha_rk64[stage] * dt_rk * rhs[i];
-          carryover_reg[i] =
-            soln_reg[i] + rkp.beta_rk64[stage] * dt_rk * rhs[i];
+        for (int ii = 0; ii < neq; ii++) {
+          error_reg[ii] += rkp.err_rk64[stage] * dt_rk * rhs[ii];
+          soln_reg[ii] =
+            carryover_reg[ii] + rkp.alpha_rk64[stage] * dt_rk * rhs[ii];
+          carryover_reg[ii] =
+            soln_reg[ii] + rkp.beta_rk64[stage] * dt_rk * rhs[ii];
         }
       }
 
@@ -242,9 +242,9 @@ ReactorRK64::react(
       nsteps++;
 
       amrex::Real max_err = tinyval;
-      for (int i = 0; i < neq; i++) {
+      for (int ii = 0; ii < neq; ii++) {
         if (fabs(error_reg[i]) > max_err) {
-          max_err = fabs(error_reg[i]);
+          max_err = fabs(error_reg[ii]);
         }
       }
 

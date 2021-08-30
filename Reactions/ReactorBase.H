@@ -54,11 +54,38 @@ public:
 #endif
     ) = 0;
 
+  virtual void flatten(
+    const amrex::Box box,
+    const int ncells,
+    const int reactor_type,
+    amrex::Array4<const amrex::Real> const& rhoY,
+    amrex::Array4<const amrex::Real> const& frcExt,
+    amrex::Array4<const amrex::Real> const& temperature,
+    amrex::Array4<const amrex::Real> const& rhoE,
+    amrex::Array4<const amrex::Real> const& frcEExt,
+    amrex::Real* y_vect,
+    amrex::Real* src_vect,
+    amrex::Real* vect_energy,
+    amrex::Real* src_vect_energy) = 0;
+
+  virtual void unflatten(
+    const amrex::Box box,
+    const int ncells,
+    const int reactor_type,
+    amrex::Array4<amrex::Real> const& rhoY,
+    amrex::Array4<amrex::Real> const& temperature,
+    amrex::Array4<amrex::Real> const& rhoE,
+    amrex::Array4<amrex::Real> const& frcEExt,
+    amrex::Array4<amrex::Real> const& FC_in,
+    amrex::Real* y_vect,
+    amrex::Real* vect_energy,
+    long int* FCunt,
+    amrex::Real dt) = 0;
+
   virtual void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) = 0;
 
   virtual ~ReactorBase() = default;
 };
-
 } // namespace reactions
 } // namespace physics
 } // namespace pele

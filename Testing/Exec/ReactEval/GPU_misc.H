@@ -33,7 +33,7 @@ initialize_data(int i, int j, int k,
    amrex::GpuArray<amrex::Real,NUM_SPECIES> Y;
 
    amrex::Real y = plo[1] + (j+0.5)*dx[1];
-   amrex::Real x = plo[0] + (i+0.5)*dx[0];
+   //amrex::Real x = plo[0] + (i+0.5)*dx[0];
    amrex::Real pi = 3.1415926535897932;
    amrex::GpuArray<amrex::Real,3> L;
    amrex::GpuArray<amrex::Real,3> P;

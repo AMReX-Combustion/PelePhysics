@@ -14,7 +14,7 @@ ReactorNull::react(
   amrex::Array4<amrex::Real> const& rEner_in,
   amrex::Array4<amrex::Real> const& rEner_src_in,
   amrex::Array4<amrex::Real> const& FC_in,
-  amrex::Array4<int> const& mask,
+  amrex::Array4<int> const& /*mask*/,
   amrex::Real& dt_react,
   amrex::Real& time,
   const int& reactor_type
@@ -31,7 +31,6 @@ ReactorNull::react(
 #endif
 
   constexpr int eint_rho = 1;
-  constexpr int enth_rho = 2;
 
   amrex::Real time_init = time;
 
@@ -75,17 +74,17 @@ ReactorNull::react(
 // 1D version
 int
 ReactorNull::react(
-  amrex::Real* rY_in,
-  amrex::Real* rY_src_in,
-  amrex::Real* rX_in,
-  amrex::Real* rX_src_in,
+  amrex::Real* /*rY_in*/,
+  amrex::Real* /*rY_src_in*/,
+  amrex::Real* /*rX_in*/,
+  amrex::Real* /*rX_src_in*/,
   amrex::Real& dt_react,
   amrex::Real& time,
-  int cvode_iE,
-  int Ncells
+  int /*cvode_iE*/,
+  int /*Ncells*/
 #ifdef AMREX_USE_GPU
   ,
-  amrex::gpuStream_t stream
+  amrex::gpuStream_t /*stream*/
 #endif
 )
 {

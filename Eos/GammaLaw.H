@@ -188,8 +188,11 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void
-  RTY2WDOT(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
+  void RTY2WDOT(
+    amrex::Real /*R*/,
+    amrex::Real /*T*/,
+    amrex::Real* /*Y[]*/,
+    amrex::Real* /*WDOT[]*/)
   {
     amrex::Error("RTY2WDOT not physically possible for GammaLaw EoS");
   }
