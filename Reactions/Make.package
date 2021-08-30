@@ -1,5 +1,5 @@
-CEXE_headers += reactor.H ReactorUtils.H ReactorBase.H ReactorRK64.H ReactorArkode.H ReactorNull.H ReactorCvode.H
-CEXE_sources += reactor.cpp ReactorUtils.cpp ReactorRK64.cpp ReactorArkode.cpp ReactorNull.cpp ReactorCvode.cpp
+CEXE_headers += ReactorUtils.H ReactorBase.H ReactorRK64.H ReactorArkode.H ReactorNull.H ReactorCvode.H
+CEXE_sources += ReactorUtils.cpp ReactorRK64.cpp ReactorArkode.cpp ReactorNull.cpp ReactorCvode.cpp
 ifeq ($(USE_SUNDIALS_PP),TRUE) 
     ifneq (, $(filter TRUE, $(USE_CUDA) $(USE_HIP)))
         CEXE_headers += AMReX_SUNMemory.H

@@ -12,7 +12,7 @@
 
 #include <PlotFileFromMF.H>
 #ifdef USE_SUNDIALS_PP
-#include <reactor.h>
+#include <ReactorBase.H>
 #else
 #include <reactor_F.H>
 #endif
@@ -147,6 +147,7 @@ main (int   argc,
                     Real Yl[NUM_SPECIES];
                     Real Wl[NUM_SPECIES];
                     for (int n=0; n<NUM_SPECIES; ++n) Yl[n] = mf(i,j,k,n);
+                    auto eos = pele::physics::PhysicsType::eos();
                     eos.RTY2WDOT(rho(i,j,k), temp(i,j,k), Yl, Wl);
                     for (int n=0; n<NUM_SPECIES; ++n) wdot(i,j,k,n) = Wl[n];
                   });
