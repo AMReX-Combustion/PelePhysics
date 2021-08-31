@@ -19,6 +19,7 @@ ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),gcc gnu g++ mpicc mpicxx))
     CCOMPILER = $(shell $(COMP) --show | awk '{print $$1}')
   else
     CCOMPILER = gcc
+    CXXCOMPILER = g++
   endif
 else
   ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),intel))
