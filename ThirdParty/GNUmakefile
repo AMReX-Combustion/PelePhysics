@@ -24,15 +24,19 @@ ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),gcc gnu g++ mpicc mpicxx))
 else
   ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),intel))
     CCOMPILER = icc
+    CXXCOMPILER = icpc
   else
     ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),pgi))
       CCOMPILER = pgicc
+      CXXCOMPILER = pgiCC
     else
       ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),llvm))
         CCOMPILER = clang
+        CXXCOMPILER = clang++
       else
         ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),hip))
            CCOMPILER = hipcc
+           CXXCOMPILER = hipcc
         else
            $(error Unknown COMP setting)
         endif
