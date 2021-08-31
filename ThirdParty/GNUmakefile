@@ -19,24 +19,19 @@ ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),gcc gnu g++ mpicc mpicxx))
     CCOMPILER = $(shell $(COMP) --show | awk '{print $$1}')
   else
     CCOMPILER = gcc
-    CXXCOMPILER = g++
   endif
 else
   ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),intel))
     CCOMPILER = icc
-    CXXCOMPILER = icpc
   else
     ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),pgi))
       CCOMPILER = pgicc
-      CXXCOMPILER = pgiCC
     else
       ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),llvm))
         CCOMPILER = clang
-        CXXCOMPILER = clang++
       else
         ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),hip))
            CCOMPILER = hipcc
-           CXXCOMPILER = hipcc
         else
            $(error Unknown COMP setting)
         endif
@@ -46,13 +41,13 @@ else
 endif
 
 ifeq ($(USE_MPI),TRUE)
-  ifeq ($(CXXCOMPILER),$(filter $(CXXCOMPILER),mpi))
-    HOST_COMPILER = $(shell $(CXXCOMPILER) --show | awk '{print $$1}')
+  ifeq ($(CCOMPILER),$(filter $(CCOMPILER),mpi))
+    HOST_COMPILER = $(shell $(CCOMPILER) --show | awk '{print $$1}')
   else
-    HOST_COMPILER = $(CXXCOMPILER)
+    HOST_COMPILER = $(CCOMPILER)
   endif
 else
-  HOST_COMPILER = $(CXXCOMPILER)
+  HOST_COMPILER = $(CCOMPILER)
 endif
 
 ifeq ($(USE_CUDA),TRUE)
@@ -85,7 +80,6 @@ endif
 
 ifeq ($(DEBUG),FALSE)
   BUILD_TYPE=Release
-  COMP_FLAGS="-O3 -DNDEBUG"
   DebugSuffix=
 else
   BUILD_TYPE=Debug
@@ -123,9 +117,9 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE)
 	@mkdir -p $(SUNDIALS_BUILD_DIR)
 	cd $(SUNDIALS_BUILD_DIR); cmake -DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON -DCMAKE_INSTALL_PREFIX:STRING=$(INSTALL_PREFIX) \
 			   		-DCMAKE_INSTALL_LIBDIR:STRING=$(INSTALL_PREFIX)/lib -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-					-DCMAKE_C_COMPILER:STRING=$(CCOMPILER) -DCMAKE_CXX_COMPILER:STRING=$(HOST_COMPILER) \
+					-DCMAKE_C_COMPILER:STRING=$(HOST_COMPILER) \
 					$(CUDA_HOST_COMP_DEFINE) -DEXAMPLES_INSTALL_PATH:STRING=$(INSTALL_PREFIX)/examples \
-					-DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) -DCMAKE_C_FLAGS_RELEASE:STRING=$(COMP_FLAGS) \
+					-DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) \
 					$(CUDA_DEFINES) $(HIP_DEFINES) -DENABLE_MPI:BOOL=OFF -DENABLE_OPENMP:BOOL=OFF $(KLU_DEFINES) \
 					-DEXAMPLES_ENABLE_C:BOOL=OFF -DEXAMPLES_ENABLE_CXX:BOOL=OFF -DEXAMPLES_ENABLE_CUDA:BOOL=OFF \
 					-DBUILD_CVODES:BOOL=OFF -DBUILD_IDA:BOOL=OFF -DBUILD_IDAS:BOOL=OFF -DBUILD_KINSOL:BOOL=OFF \
