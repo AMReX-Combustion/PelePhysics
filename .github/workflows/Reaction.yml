@@ -7,9 +7,9 @@ on:
      branches: [ development ]
 
 jobs:
-  # Cvode DRM GNU7.5
+  # Cvode DRM
   cvodeDRM:
-    name: GNU@7.5 [cvode-DRM]
+    name: GCC [cvode-DRM]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -38,9 +38,9 @@ jobs:
       run: |
         ./Pele3d.gnu.ex inputs.3d_1dArray chem_integrator="ReactorCvode"
 
-  # Cvode LiDryer GNU7.5
+  # Cvode LiDryer
   cvodeLiDryer:
-    name: GNU@7.5 [cvode-LiDryer]
+    name: GCC [cvode-LiDryer]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -69,9 +69,9 @@ jobs:
       run: |
         ./Pele3d.gnu.ex inputs.3d_1dArray fuel_name=H2 chem_integrator="ReactorCvode"
 
-  # ARKode DRM GNU7.5
+  # ARKode DRM
   arkodeDRM:
-    name: GNU@7.5 [arkode-DRM]
+    name: GCC [arkode-DRM]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -100,9 +100,9 @@ jobs:
       run: |
         ./Pele3d.gnu.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="ReactorArkode"
 
-  # ARKode LiDryer GNU7.5
+  # ARKode LiDryer
   arkodeLiDryer:
-    name: GNU@7.5 [arkode-LiDryer]
+    name: GCC [arkode-LiDryer]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -131,9 +131,9 @@ jobs:
       run: |
         ./Pele3d.gnu.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 fuel_name=H2 chem_integrator="ReactorArkode"
 
-  # RK64 DRM GNU7.5
+  # RK64 DRM
   rk64DRM:
-    name: GNU@7.5 [rk64-DRM]
+    name: GCC [rk64-DRM]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -162,9 +162,9 @@ jobs:
       run: |
         ./Pele3d.gnu.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="ReactorRK64"
 
-  # RK64 LiDryer GNU7.5
+  # RK64 LiDryer
   rk64LiDryer:
-    name: GNU@7.5 [rk64-LiDryer]
+    name: GCC [rk64-LiDryer]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -195,8 +195,8 @@ jobs:
 
   # Cvode DRM CUDA support
   cvodeDRM_CUDA:
-    name: CUDA@11.0.1 [cvode-DRM]
-    runs-on: ubuntu-18.04
+    name: CUDA [cvode-DRM]
+    runs-on: ubuntu-latest
     steps:
     - name: Cancel previous runs
       uses: styfle/cancel-workflow-action@0.6.0
@@ -222,8 +222,8 @@ jobs:
 
   # Cvode LiDryer CUDA support
   cvodeLiDryer_CUDA:
-    name: CUDA@11.0.1 [cvode-LiDryer]
-    runs-on: ubuntu-18.04
+    name: CUDA [cvode-LiDryer]
+    runs-on: ubuntu-latest
     steps:
     - name: Cancel previous runs
       uses: styfle/cancel-workflow-action@0.6.0
@@ -249,8 +249,8 @@ jobs:
 
   # ARKode DRM CUDA support
   arkodeDRM_CUDA:
-    name: CUDA@11.0.1 [arkode-DRM]
-    runs-on: ubuntu-18.04
+    name: CUDA [arkode-DRM]
+    runs-on: ubuntu-latest
     steps:
     - name: Cancel previous runs
       uses: styfle/cancel-workflow-action@0.6.0
@@ -276,8 +276,8 @@ jobs:
 
   # ARKode LiDryer CUDA support
   arkodeLiDryer_CUDA:
-    name: CUDA@11.0.1 [arkode-LiDryer]
-    runs-on: ubuntu-18.04
+    name: CUDA [arkode-LiDryer]
+    runs-on: ubuntu-latest
     steps:
     - name: Cancel previous runs
       uses: styfle/cancel-workflow-action@0.6.0
@@ -303,8 +303,8 @@ jobs:
 
   # RK64 DRM CUDA support
   rk64DRM_CUDA:
-    name: CUDA@11.0.1 [rk64-DRM]
-    runs-on: ubuntu-18.04
+    name: CUDA [rk64-DRM]
+    runs-on: ubuntu-latest
     steps:
     - name: Cancel previous runs
       uses: styfle/cancel-workflow-action@0.6.0
@@ -330,8 +330,8 @@ jobs:
 
   # RK64 LiDryer CUDA support
   rk64LiDryer_CUDA:
-    name: CUDA@11.0.1 [rk64-LiDryer]
-    runs-on: ubuntu-18.04
+    name: CUDA [rk64-LiDryer]
+    runs-on: ubuntu-latest
     steps:
     - name: Cancel previous runs
       uses: styfle/cancel-workflow-action@0.6.0

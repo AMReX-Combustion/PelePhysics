@@ -7,9 +7,9 @@ on:
      branches: [ development ]
 
 jobs:
-  # Constant Transport GNU7.5 and MPI support
-  Constant_MPI:
-    name: GNU@7.5 MPI [Constant]
+  # Constant Transport
+  Constant:
+    name: GCC [Constant]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -32,11 +32,11 @@ jobs:
     - name: Run
       working-directory: ./Testing/Exec/TranEval
       run: |
-        ./Pele2d.gnu.MPI.ex inputs.2d_Constant
+        ./Pele2d.gnu.ex inputs.2d_Constant
 
-  # Sutherland Transport GNU7.5 and MPI support
-  Sutherland_MPI:
-    name: GNU@7.5 MPI [Sutherland]
+  # Sutherland Transport
+  Sutherland:
+    name: GCC [Sutherland]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -59,11 +59,11 @@ jobs:
     - name: Run
       working-directory: ./Testing/Exec/TranEval
       run: |
-        ./Pele2d.gnu.MPI.ex inputs.2d_Sutherland
+        ./Pele2d.gnu.ex inputs.2d_Sutherland
 
-  # Simple Transport GNU7.5 and MPI support
-  Simple_MPI:
-    name: GNU@7.5 MPI [Simple]
+  # Simple Transport
+  Simple:
+    name: GCC [Simple]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -86,11 +86,11 @@ jobs:
     - name: Run
       working-directory: ./Testing/Exec/TranEval
       run: |
-        ./Pele2d.gnu.MPI.ex inputs.2d_Simple
+        ./Pele2d.gnu.ex inputs.2d_Simple
 
-  # Constant Transport CUDA and MPI support
+  # Constant Transport CUDA
   Constant_CUDA:
-    name: CUDA@11.0.1 MPI [Constant]
+    name: CUDA [Constant]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -113,9 +113,9 @@ jobs:
         make TPL COMP=gnu USE_CUDA=TRUE Transport_Model=Constant
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Constant
 
-  # Sutherland Transport CUDA and MPI support
+  # Sutherland Transport CUDA
   Sutherland_CUDA:
-    name: CUDA@11.0.1 MPI [Sutherland]
+    name: CUDA [Sutherland]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -138,9 +138,9 @@ jobs:
         make TPL COMP=gnu USE_CUDA=TRUE Transport_Model=Sutherland
         make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Sutherland
 
-  # Simple Transport CUDA and MPI support
+  # Simple Transport CUDA
   Simple_CUDA:
-    name: CUDA@11.0.1 MPI [Simple]
+    name: CUDA [Simple]
     runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
@@ -185,7 +185,7 @@ jobs:
   #    run: |
   #      source /etc/profile.d/rocm.sh
   #      hipcc --version
-  #      make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_Model=Constant
+  #      make -j 2 COMP=gnu USE_HIP=TRUE Transport_Model=Constant
 
   # Sutherland Transport HIP support
   #Sutherland_HIP:
@@ -209,7 +209,7 @@ jobs:
   #    run: |
   #      source /etc/profile.d/rocm.sh
   #      hipcc --version
-  #      make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_Model=Sutherland
+  #      make -j 2 COMP=gnu USE_HIP=TRUE Transport_Model=Sutherland
 
   # Simple Transport HIP support
   #Simple_HIP:
@@ -233,4 +233,4 @@ jobs:
   #    run: |
   #      source /etc/profile.d/rocm.sh
   #      hipcc --version
-  #      make -j 2 COMP=gnu USE_MPI=FALSE USE_HIP=TRUE Transport_Model=Simple
+  #      make -j 2 COMP=gnu USE_HIP=TRUE Transport_Model=Simple
