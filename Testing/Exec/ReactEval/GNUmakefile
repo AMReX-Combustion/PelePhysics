@@ -19,28 +19,23 @@ TINY_PROFILE = FALSE
 # define the location of the PELE_PHYSICS top directory
 PELE_PHYSICS_HOME    ?= ../../..
 
-#######################
 # this flag activates the subcycling mode in the D/Cvode routines
 DEFINES  += -DMOD_REACTOR
 
-#######################
-# ODE solver OPTIONS: DVODE (default) / SUNDIALS / RK explicit
-#######################
-# Activates use of SUNDIALS: CVODE (default) / ARKODE
+# Activates use of SUNDIALS
 USE_SUNDIALS_PP = TRUE
 ifeq ($(USE_SUNDIALS_PP), TRUE)
   ifeq ($(USE_CUDA), TRUE)
       USE_KLU_PP = FALSE
   else
       ifeq ($(USE_HIP), TRUE)
-          USE_KLU_PP = FALSE
+	  USE_KLU_PP = FALSE
       else
-          USE_KLU_PP = FALSE
+	  USE_KLU_PP = FALSE
       endif
   endif
 endif
 
-#######################
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_Model       = Fuego
   Chemistry_Model = drm19

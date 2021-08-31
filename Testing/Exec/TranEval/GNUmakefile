@@ -6,16 +6,36 @@ VERBOSE    = FALSE
 DEBUG      = FALSE
 
 # Compiler
-COMP	     = gnu
-FCOMP	     = gfortran
-USE_MPI    = TRUE
+COMP       = gnu
+FCOMP      = gfortran
+USE_MPI    = FALSE
 USE_OMP    = FALSE
 USE_CUDA   = FALSE
 USE_HIP    = FALSE
 
 # PelePhysics
 FUEGO_GAS  = TRUE
+TINY_PROFILE = FALSE
+
+# define the location of the PELE_PHYSICS top directory
+PELE_PHYSICS_HOME    ?= ../../..
+
+# this flag activates the subcycling mode in the D/Cvode routines
+DEFINES  += -DMOD_REACTOR
+
+# Activates use of SUNDIALS
 USE_SUNDIALS_PP = TRUE
+ifeq ($(USE_SUNDIALS_PP), TRUE)
+  ifeq ($(USE_CUDA), TRUE)
+      USE_KLU_PP = FALSE
+  else
+      ifeq ($(USE_HIP), TRUE)
+	  USE_KLU_PP = FALSE
+      else
+	  USE_KLU_PP = FALSE
+      endif
+  endif
+endif
 
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_Model       = Fuego
@@ -24,7 +44,7 @@ ifeq ($(FUEGO_GAS), TRUE)
 else
   Eos_Model       = GammaLaw
   Chemistry_Model = Null
-  Transport_Mode  = Constant
+  Transport_Model = Constant
 endif
 
 Bpack   := ./Make.package
