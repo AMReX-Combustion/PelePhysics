@@ -568,7 +568,7 @@ main(int argc, char* argv[])
           auto tmp_src_vect_energy_d =
             (amrex::Real*)amrex::The_Device_Arena()->alloc(
               nCells * sizeof(amrex::Real));
-          auto tmp_fc_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+          auto tmp_fc_d = (long int*)amrex::The_Device_Arena()->alloc(
             nCells * sizeof(amrex::Real));
           auto tmp_mask_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
             nCells * sizeof(amrex::Real));
