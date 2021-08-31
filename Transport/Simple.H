@@ -40,33 +40,32 @@ struct NonIdealChungCorrections<eos::SRK>
     amrex::Real DP_m_4 = 0.0;
     amrex::Real KappaM = 0.0;
 
-    // Note: all the square roots could be precalculated
+    // Note: all the square roots are precalculated for efficiency
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       for (int j = 0; j < NUM_SPECIES; ++j) {
-        const amrex::Real T2 =
-          trans_parm->trans_sig[i] * trans_parm->trans_sig[j];
-        const amrex::Real T3 = T2 * std::sqrt(T2);
-        sigma_M_3 += Xloc[i] * Xloc[j] * T3;
+	const amrex::Real Xij = Xloc[i] * Xloc[j];
+	const int idx = i * NUM_SPECIES + j;
+	
+	const amrex::Real sqrtT2 = trans_parm->sqrtT2ij[idx];
+	const amrex::Real T2 = sqrtT2 * sqrtT2;
+        const amrex::Real T3 = T2 * sqrtT2;
+        sigma_M_3 += Xij * T3;
 
-        const amrex::Real Epsilon_ij =
-          std::sqrt(trans_parm->trans_eps[i] * trans_parm->trans_eps[j]);
-        Epsilon_M += Xloc[i] * Xloc[j] * Epsilon_ij * T3;
+        const amrex::Real Epsilon_ij = trans_parm->sqrtEpsilonij[idx];
+        Epsilon_M += Xij * Epsilon_ij * T3;
 
         const amrex::Real Omega_ij =
           0.5 * (trans_parm->omega[i] + trans_parm->omega[j]);
-        Omega_M += Xloc[i] * Xloc[j] * Omega_ij * T3;
+        Omega_M += Xij * Omega_ij * T3;
 
-        const amrex::Real MW_ij =
-          2.0 / (trans_parm->trans_iwt[i] + trans_parm->trans_iwt[j]);
-        MW_m += Xloc[i] * Xloc[j] * Epsilon_ij * T2 * std::sqrt(MW_ij);
+        MW_m += Xij * Epsilon_ij * T2 * trans_parm->sqrtMWij[idx];
 
-        DP_m_4 += Xloc[i] * Xloc[j] * trans_parm->trans_dip[i] *
+        DP_m_4 += Xij* trans_parm->trans_dip[i] *
                   trans_parm->trans_dip[i] * trans_parm->trans_dip[j] *
                   trans_parm->trans_dip[j] / (T3 * Epsilon_ij);
 
-        KappaM += Xloc[i] * Xloc[j] *
-                  std::sqrt(trans_parm->Kappai[i] * trans_parm->Kappai[j]);
+        KappaM += Xij * trans_parm->sqrtKappaij[idx];
       }
     }
 
@@ -188,28 +187,16 @@ struct BinaryDiff<eos::SRK>
             tparm->trans_fitdbin[1 + 4 * idx_ij] * logT[0] +
             tparm->trans_fitdbin[2 + 4 * idx_ij] * logT[1] +
             tparm->trans_fitdbin[3 + 4 * idx_ij] * logT[2];
-          dbintemp = std::exp(dbintemp);
+          dbintemp = std::exp(-dbintemp);
 
           amrex::Real Upsilonij = 0.0;
-          const amrex::Real S_ij = tparm->Sigmaij[idx_ij];
-          const amrex::Real S_ij_inv = 1.0 / S_ij;
           for (int k = 0; k < NUM_SPECIES; ++k) {
-            const amrex::Real S_ik = tparm->Sigmaij[i + NUM_SPECIES * k];
-            const amrex::Real S_jk = tparm->Sigmaij[j + NUM_SPECIES * k];
-
-            Upsilonij +=
-              tparm->trans_iwt[k] * Yloc[k] *
-              (8.0 * (S_ik * S_ik * S_ik + S_jk * S_jk * S_jk) -
-               6.0 * (S_ik * S_ik + S_jk * S_jk) * S_ij -
-               3.0 *
-                 ((S_ik * S_ik - S_jk * S_jk) * (S_ik * S_ik - S_jk * S_jk)) *
-                 S_ij_inv +
-               S_ij * S_ij * S_ij);
+            Upsilonij += tparm->Upsilonijk[idx_ij*NUM_SPECIES + k] * Yloc[k];
           }
           Upsilonij = Upsilonij * rholoc * Constants::Avna * M_PI / 12.0 + 1.0;
-          dbintemp *= Constants::PATM / (Constants::RU * Tloc * Upsilonij);
+          dbintemp *= (Constants::RU * Tloc * Upsilonij) / Constants::PATM  ;
           term1 += Yloc[j];
-          term2 += Xloc[j] / dbintemp;
+          term2 += Xloc[j] * dbintemp;
         }
       }
       Ddiag[i] = tparm->trans_wt[i] * term1 / term2;

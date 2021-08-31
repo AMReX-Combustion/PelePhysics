@@ -158,7 +158,11 @@ struct TransParm<eos::SRK, SimpleTransport>
   int* trans_nlin = nullptr;
   amrex::Real* Afac = nullptr;
   amrex::Real* Bfac = nullptr;
-  amrex::Real* Sigmaij = nullptr;
+  amrex::Real* sqrtT2ij = nullptr;
+  amrex::Real* sqrtEpsilonij = nullptr;
+  amrex::Real* sqrtMWij = nullptr;
+  amrex::Real* sqrtKappaij = nullptr;
+  amrex::Real* Upsilonijk = nullptr;
   amrex::Real* Kappai = nullptr;
   amrex::Real* omega = nullptr;
   bool m_allocated{false};
@@ -219,8 +223,16 @@ struct TransParm<eos::SRK, SimpleTransport>
         sizeof(amrex::Real) * NUM_SPECIES);
       Kappai = (amrex::Real*)amrex::The_Arena()->alloc(
         sizeof(amrex::Real) * NUM_SPECIES);
-      Sigmaij = (amrex::Real*)amrex::The_Arena()->alloc(
+      sqrtT2ij = (amrex::Real*)amrex::The_Arena()->alloc(
         sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
+      sqrtEpsilonij = (amrex::Real*)amrex::The_Arena()->alloc(
+        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
+      sqrtMWij = (amrex::Real*)amrex::The_Arena()->alloc(
+        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
+      sqrtKappaij = (amrex::Real*)amrex::The_Arena()->alloc(
+        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
+      Upsilonijk = (amrex::Real*)amrex::The_Arena()->alloc(
+        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES * NUM_SPECIES);
 
       // Initialize coefficients of model
       {
@@ -298,13 +310,6 @@ struct TransParm<eos::SRK, SimpleTransport>
       Bfac[26] = -60.84100;
       Bfac[27] = 466.7750;
 
-      for (int i = 0; i < NUM_SPECIES; ++i) {
-        for (int j = 0; j < NUM_SPECIES; ++j) {
-          Sigmaij[i * NUM_SPECIES + j] =
-            0.5 * (trans_sig[i] + trans_sig[j]) * 1e-8; // converted to cm
-        }
-      }
-
       // Initialize Kappa, which has nonzero values only for specific polar
       // species
       for (int i = 0; i < NUM_SPECIES; ++i) {
@@ -326,6 +331,38 @@ struct TransParm<eos::SRK, SimpleTransport>
           }
         }
       }
+      for (int i = 0; i < NUM_SPECIES; ++i) {
+        for (int j = 0; j < NUM_SPECIES; ++j) {
+	  const int idx = i * NUM_SPECIES + j;
+          sqrtT2ij[idx] = std::sqrt(trans_sig[i] * trans_sig[j]);
+	  sqrtEpsilonij[idx] = std::sqrt(trans_eps[i] * trans_eps[j]);
+	  sqrtMWij[idx] = std::sqrt(2.0 / (trans_iwt[i] + trans_iwt[j]));
+	  sqrtKappaij[idx] = std::sqrt(Kappai[i] * Kappai[j]);
+        }
+      }
+
+      for (int i = 0; i < NUM_SPECIES; ++i) {
+        for (int j = 0; j < NUM_SPECIES; ++j) {
+	  if (i != j) {
+	    const int idx_ij = i + NUM_SPECIES * j;
+	    const amrex::Real S_ij = 0.5 * (trans_sig[i] + trans_sig[j]) * 1e-8;  // converted to cm
+	    const amrex::Real S_ij_inv = 1.0 / S_ij;
+	    for (int k = 0; k < NUM_SPECIES; ++k) {
+	      const amrex::Real S_ik = 0.5 * (trans_sig[i] + trans_sig[k]) * 1e-8;  // converted to cm
+	      const amrex::Real S_jk = 0.5 * (trans_sig[j] + trans_sig[k]) * 1e-8;  // converted to cm
+	      Upsilonijk[idx_ij*NUM_SPECIES + k] = 
+	        trans_iwt[k] *
+		(8.0 * (S_ik * S_ik * S_ik + S_jk * S_jk * S_jk) -
+		 6.0 * (S_ik * S_ik + S_jk * S_jk) * S_ij -
+		 3.0 *
+                 ((S_ik * S_ik - S_jk * S_jk) * (S_ik * S_ik - S_jk * S_jk)) *
+                 S_ij_inv +
+		 S_ij * S_ij * S_ij);
+	    }
+	  }
+	}
+      }
+      
       m_allocated = true;
     }
   }
@@ -348,7 +385,11 @@ struct TransParm<eos::SRK, SimpleTransport>
       amrex::The_Arena()->free(Afac);
       amrex::The_Arena()->free(Bfac);
       amrex::The_Arena()->free(Kappai);
-      amrex::The_Arena()->free(Sigmaij);
+      amrex::The_Arena()->free(sqrtT2ij);
+      amrex::The_Arena()->free(sqrtEpsilonij);
+      amrex::The_Arena()->free(sqrtMWij);
+      amrex::The_Arena()->free(sqrtKappaij);
+      amrex::The_Arena()->free(Upsilonijk);
       amrex::The_Arena()->free(omega);
     }
   }
