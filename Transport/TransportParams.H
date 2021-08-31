@@ -333,36 +333,39 @@ struct TransParm<eos::SRK, SimpleTransport>
       }
       for (int i = 0; i < NUM_SPECIES; ++i) {
         for (int j = 0; j < NUM_SPECIES; ++j) {
-	  const int idx = i * NUM_SPECIES + j;
+          const int idx = i * NUM_SPECIES + j;
           sqrtT2ij[idx] = std::sqrt(trans_sig[i] * trans_sig[j]);
-	  sqrtEpsilonij[idx] = std::sqrt(trans_eps[i] * trans_eps[j]);
-	  sqrtMWij[idx] = std::sqrt(2.0 / (trans_iwt[i] + trans_iwt[j]));
-	  sqrtKappaij[idx] = std::sqrt(Kappai[i] * Kappai[j]);
+          sqrtEpsilonij[idx] = std::sqrt(trans_eps[i] * trans_eps[j]);
+          sqrtMWij[idx] = std::sqrt(2.0 / (trans_iwt[i] + trans_iwt[j]));
+          sqrtKappaij[idx] = std::sqrt(Kappai[i] * Kappai[j]);
         }
       }
 
       for (int i = 0; i < NUM_SPECIES; ++i) {
         for (int j = 0; j < NUM_SPECIES; ++j) {
-	  if (i != j) {
-	    const int idx_ij = i + NUM_SPECIES * j;
-	    const amrex::Real S_ij = 0.5 * (trans_sig[i] + trans_sig[j]) * 1e-8;  // converted to cm
-	    const amrex::Real S_ij_inv = 1.0 / S_ij;
-	    for (int k = 0; k < NUM_SPECIES; ++k) {
-	      const amrex::Real S_ik = 0.5 * (trans_sig[i] + trans_sig[k]) * 1e-8;  // converted to cm
-	      const amrex::Real S_jk = 0.5 * (trans_sig[j] + trans_sig[k]) * 1e-8;  // converted to cm
-	      Upsilonijk[idx_ij*NUM_SPECIES + k] = 
-	        trans_iwt[k] *
-		(8.0 * (S_ik * S_ik * S_ik + S_jk * S_jk * S_jk) -
-		 6.0 * (S_ik * S_ik + S_jk * S_jk) * S_ij -
-		 3.0 *
-                 ((S_ik * S_ik - S_jk * S_jk) * (S_ik * S_ik - S_jk * S_jk)) *
-                 S_ij_inv +
-		 S_ij * S_ij * S_ij);
-	    }
-	  }
-	}
+          if (i != j) {
+            const int idx_ij = i + NUM_SPECIES * j;
+            const amrex::Real S_ij =
+              0.5 * (trans_sig[i] + trans_sig[j]) * 1e-8; // converted to cm
+            const amrex::Real S_ij_inv = 1.0 / S_ij;
+            for (int k = 0; k < NUM_SPECIES; ++k) {
+              const amrex::Real S_ik =
+                0.5 * (trans_sig[i] + trans_sig[k]) * 1e-8; // converted to cm
+              const amrex::Real S_jk =
+                0.5 * (trans_sig[j] + trans_sig[k]) * 1e-8; // converted to cm
+              Upsilonijk[idx_ij * NUM_SPECIES + k] =
+                trans_iwt[k] *
+                (8.0 * (S_ik * S_ik * S_ik + S_jk * S_jk * S_jk) -
+                 6.0 * (S_ik * S_ik + S_jk * S_jk) * S_ij -
+                 3.0 *
+                   ((S_ik * S_ik - S_jk * S_jk) * (S_ik * S_ik - S_jk * S_jk)) *
+                   S_ij_inv +
+                 S_ij * S_ij * S_ij);
+            }
+          }
+        }
       }
-      
+
       m_allocated = true;
     }
   }
