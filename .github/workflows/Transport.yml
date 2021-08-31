@@ -91,7 +91,7 @@ jobs:
   # Constant Transport CUDA
   Constant_CUDA:
     name: CUDA [Constant]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
