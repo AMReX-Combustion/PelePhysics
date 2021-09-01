@@ -1,156 +1,156 @@
-name: CI_EOS
-on:
-   workflow_dispatch:
-   push:
-     branches: [ development ]
-   pull_request:
-     branches: [ development ]
-
-jobs:
-  # Fuego EOS
-  Fuego:
-    name: GCC [Fuego]
-    runs-on: ubuntu-latest
-    env:
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{github.token}}
-    - uses: actions/checkout@v2
-    - name: System Dependencies
-      run: .github/workflows/dependencies/dependencies.sh
-    - name: AMReX
-      run: |
-         mkdir build
-         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-    - name: Build
-      env:
-         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-      working-directory: ./Testing/Exec/EosEval
-      run: |
-        make TPL COMP=gnu Eos_Model=Fuego Chemistry_Model=LiDryer
-        make -j 2 COMP=gnu Eos_Model=Fuego Chemistry_Model=LiDryer
-    - name: Run
-      working-directory: ./Testing/Exec/EosEval
-      run: |
-        ./Pele2d.gnu.ex inputs.2d
-
-  # Gamma Law EOS
-  GammaLaw:
-    name: GCC [GammaLaw]
-    runs-on: ubuntu-latest
-    env:
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{github.token}}
-    - uses: actions/checkout@v2
-    - name: System Dependencies
-      run: .github/workflows/dependencies/dependencies.sh
-    - name: AMReX
-      run: |
-         mkdir build
-         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-    - name: Build
-      env:
-         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-      working-directory: ./Testing/Exec/EosEval
-      run: |
-        make TPL COMP=gnu Eos_Model=GammaLaw Chemistry_Model=Null
-        make -j 2 COMP=gnu Eos_Model=GammaLaw Chemistry_Model=Null
-    - name: Run
-      working-directory: ./Testing/Exec/EosEval
-      run: |
-        ./Pele2d.gnu.ex inputs.2d
-
-  # Fuego EOS CUDA support
-  Fuego_CUDA:
-    name: CUDA [Fuego]
-    runs-on: ubuntu-latest
-    env:
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{github.token}}
-    - uses: actions/checkout@v2
-    - name: System Dependencies
-      run: .github/workflows/dependencies/dependencies_nvcc.sh
-    - name: AMReX
-      run: |
-         mkdir build
-         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-    - name: Build
-      env:
-         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-      working-directory: ./Testing/Exec/EosEval
-      run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
-        make TPL COMP=gnu USE_CUDA=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer
-        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer
-
-  # Gamma Law EOS CUDA support
-  GammaLaw_CUDA:
-    name: CUDA [GammaLaw]
-    runs-on: ubuntu-latest
-    env:
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{github.token}}
-    - uses: actions/checkout@v2
-    - name: System Dependencies
-      run: .github/workflows/dependencies/dependencies_nvcc.sh
-    - name: AMReX
-      run: |
-         mkdir build
-         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-    - name: Build
-      env:
-         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-      working-directory: ./Testing/Exec/EosEval
-      run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
-        make TPL COMP=gnu USE_CUDA=TRUE Eos_Model=GammaLaw Chemistry_Model=Null
-        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_Model=GammaLaw Chemistry_Model=Null
-
-  # Fuego EOS HIP support
-  #Fuego_HIP:
-  #  name: HIPROCm@3.8 GFortran@9.3 [Fuego]
-  #  runs-on: ubuntu-20.04
-  #  env:
-  #    {CXXFLAGS: "-fno-operator-names"}
-  #  steps:
-    # - name: Cancel previous runs
-    #   uses: styfle/cancel-workflow-action@0.6.0
-    #   with:
-    #     access_token: ${{github.token}}
-  #  - uses: actions/checkout@v2
-  #  - name: System Dependencies
-  #    run: .github/workflows/dependencies/dependencies_hip.sh
-  #  - name: AMReX
-  #    run: |
-  #       mkdir build
-  #       git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-  #  - name: Build
-  #    env:
-  #       AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-  #       PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-  #    working-directory: ./Testing/Exec/EosEval
-  #    run: |
-  #      source /etc/profile.d/rocm.sh
-  #      hipcc --version
-  #      make -j 2 COMP=gnu USE_HIP=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer
+#name: CI_EOS
+#on:
+#   workflow_dispatch:
+#   push:
+#     branches: [ development ]
+#   pull_request:
+#     branches: [ development ]
+#
+#jobs:
+#  # Fuego EOS
+#  Fuego:
+#    name: GCC [Fuego]
+#    runs-on: ubuntu-latest
+#    env:
+#      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+#    steps:
+#    - name: Cancel previous runs
+#      uses: styfle/cancel-workflow-action@0.6.0
+#      with:
+#        access_token: ${{github.token}}
+#    - uses: actions/checkout@v2
+#    - name: System Dependencies
+#      run: .github/workflows/dependencies/dependencies.sh
+#    - name: AMReX
+#      run: |
+#         mkdir build
+#         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+#    - name: Build
+#      env:
+#         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+#         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+#      working-directory: ./Testing/Exec/EosEval
+#      run: |
+#        make TPL COMP=gnu Eos_Model=Fuego Chemistry_Model=LiDryer
+#        make -j 2 COMP=gnu Eos_Model=Fuego Chemistry_Model=LiDryer
+#    - name: Run
+#      working-directory: ./Testing/Exec/EosEval
+#      run: |
+#        ./Pele2d.gnu.ex inputs.2d
+#
+#  # Gamma Law EOS
+#  GammaLaw:
+#    name: GCC [GammaLaw]
+#    runs-on: ubuntu-latest
+#    env:
+#      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+#    steps:
+#    - name: Cancel previous runs
+#      uses: styfle/cancel-workflow-action@0.6.0
+#      with:
+#        access_token: ${{github.token}}
+#    - uses: actions/checkout@v2
+#    - name: System Dependencies
+#      run: .github/workflows/dependencies/dependencies.sh
+#    - name: AMReX
+#      run: |
+#         mkdir build
+#         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+#    - name: Build
+#      env:
+#         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+#         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+#      working-directory: ./Testing/Exec/EosEval
+#      run: |
+#        make TPL COMP=gnu Eos_Model=GammaLaw Chemistry_Model=Null
+#        make -j 2 COMP=gnu Eos_Model=GammaLaw Chemistry_Model=Null
+#    - name: Run
+#      working-directory: ./Testing/Exec/EosEval
+#      run: |
+#        ./Pele2d.gnu.ex inputs.2d
+#
+#  # Fuego EOS CUDA support
+#  Fuego_CUDA:
+#    name: CUDA [Fuego]
+#    runs-on: ubuntu-latest
+#    env:
+#      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+#    steps:
+#    - name: Cancel previous runs
+#      uses: styfle/cancel-workflow-action@0.6.0
+#      with:
+#        access_token: ${{github.token}}
+#    - uses: actions/checkout@v2
+#    - name: System Dependencies
+#      run: .github/workflows/dependencies/dependencies_nvcc.sh
+#    - name: AMReX
+#      run: |
+#         mkdir build
+#         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+#    - name: Build
+#      env:
+#         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+#         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+#      working-directory: ./Testing/Exec/EosEval
+#      run: |
+#        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+#        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
+#        make TPL COMP=gnu USE_CUDA=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer
+#        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer
+#
+#  # Gamma Law EOS CUDA support
+#  GammaLaw_CUDA:
+#    name: CUDA [GammaLaw]
+#    runs-on: ubuntu-latest
+#    env:
+#      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+#    steps:
+#    - name: Cancel previous runs
+#      uses: styfle/cancel-workflow-action@0.6.0
+#      with:
+#        access_token: ${{github.token}}
+#    - uses: actions/checkout@v2
+#    - name: System Dependencies
+#      run: .github/workflows/dependencies/dependencies_nvcc.sh
+#    - name: AMReX
+#      run: |
+#         mkdir build
+#         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+#    - name: Build
+#      env:
+#         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+#         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+#      working-directory: ./Testing/Exec/EosEval
+#      run: |
+#        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+#        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
+#        make TPL COMP=gnu USE_CUDA=TRUE Eos_Model=GammaLaw Chemistry_Model=Null
+#        make -j 2 COMP=gnu USE_CUDA=TRUE Eos_Model=GammaLaw Chemistry_Model=Null
+#
+#  # Fuego EOS HIP support
+#  #Fuego_HIP:
+#  #  name: HIPROCm@3.8 GFortran@9.3 [Fuego]
+#  #  runs-on: ubuntu-20.04
+#  #  env:
+#  #    {CXXFLAGS: "-fno-operator-names"}
+#  #  steps:
+#    # - name: Cancel previous runs
+#    #   uses: styfle/cancel-workflow-action@0.6.0
+#    #   with:
+#    #     access_token: ${{github.token}}
+#  #  - uses: actions/checkout@v2
+#  #  - name: System Dependencies
+#  #    run: .github/workflows/dependencies/dependencies_hip.sh
+#  #  - name: AMReX
+#  #    run: |
+#  #       mkdir build
+#  #       git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+#  #  - name: Build
+#  #    env:
+#  #       AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+#  #       PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+#  #    working-directory: ./Testing/Exec/EosEval
+#  #    run: |
+#  #      source /etc/profile.d/rocm.sh
+#  #      hipcc --version
+#  #      make -j 2 COMP=gnu USE_HIP=TRUE Eos_Model=Fuego Chemistry_Model=LiDryer

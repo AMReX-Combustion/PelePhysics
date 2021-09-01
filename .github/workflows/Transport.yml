@@ -1,16 +1,27 @@
-name: CI_Transport
+name: Transport
 on:
-   workflow_dispatch:
    push:
      branches: [ development ]
    pull_request:
      branches: [ development ]
 
 jobs:
-  # Constant Transport
-  Constant:
-    name: GCC [Constant]
+  Formatting:
     runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: DoozyX/clang-format-lint-action@v0.11
+      with:
+        source: './Eos ./Transport ./Reactions'
+        exclude: '.'
+        extensions: 'H,h,cpp'
+        clangFormatVersion: 11
+  Test:
+    needs: Formatting
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        type: [Constant, Sutherland, Simple]
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
@@ -19,254 +30,27 @@ jobs:
       with:
         access_token: ${{github.token}}
     - uses: actions/checkout@v2
-    - name: System Dependencies
+    - name: Dependencies
       run: .github/workflows/dependencies/dependencies.sh
     - name: AMReX
       run: |
          mkdir build
          git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-    - name: Build
+    - name: SUNDIALS
       env:
          AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
-        make TPL COMP=gnu Transport_Model=Constant
-        make -j 2 COMP=gnu Transport_Model=Constant
-    - name: Run
-      working-directory: ./Testing/Exec/TranEval
-      run: |
-        ./Pele2d.gnu.ex inputs.2d_Constant
-
-  # Sutherland Transport
-  Sutherland:
-    name: GCC [Sutherland]
-    runs-on: ubuntu-latest
-    env:
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{github.token}}
-    - uses: actions/checkout@v2
-    - name: System Dependencies
-      run: .github/workflows/dependencies/dependencies.sh
-    - name: AMReX
-      run: |
-         mkdir build
-         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-    - name: Build
+        make TPL COMP=gnu
+    - name: Build-${{matrix.type}}
       env:
          AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
          PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
       working-directory: ./Testing/Exec/TranEval
       run: |
-        make TPL COMP=gnu Transport_Model=Sutherland
-        make -j 2 COMP=gnu Transport_Model=Sutherland
-    - name: Run
+        make -j 2 COMP=gnu Transport_Model=${{matrix.os}}
+    - name: Run-${{matrix.os}}
       working-directory: ./Testing/Exec/TranEval
       run: |
-        ./Pele2d.gnu.ex inputs.2d_Sutherland
-
-  # Simple Transport
-  Simple:
-    name: GCC [Simple]
-    runs-on: ubuntu-latest
-    env:
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{github.token}}
-    - uses: actions/checkout@v2
-    - name: System Dependencies
-      run: .github/workflows/dependencies/dependencies.sh
-    - name: AMReX
-      run: |
-         mkdir build
-         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-    - name: Build
-      env:
-         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-      working-directory: ./Testing/Exec/TranEval
-      run: |
-        make TPL COMP=gnu Transport_Model=Simple
-        make -j 2 COMP=gnu Transport_Model=Simple
-    - name: Run
-      working-directory: ./Testing/Exec/TranEval
-      run: |
-        ./Pele2d.gnu.ex inputs.2d_Simple
-
-  # Constant Transport CUDA
-  Constant_CUDA:
-    name: CUDA [Constant]
-    runs-on: ubuntu-latest
-    env:
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{github.token}}
-    - uses: actions/checkout@v2
-    - name: System Dependencies
-      run: .github/workflows/dependencies/dependencies_nvcc.sh
-    - name: AMReX
-      run: |
-         mkdir build
-         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-    - name: Build
-      env:
-         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-      working-directory: ./Testing/Exec/TranEval
-      run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
-        make TPL COMP=gnu USE_CUDA=TRUE Transport_Model=Constant
-        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Constant
-
-  # Sutherland Transport CUDA
-  Sutherland_CUDA:
-    name: CUDA [Sutherland]
-    runs-on: ubuntu-latest
-    env:
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{github.token}}
-    - uses: actions/checkout@v2
-    - name: System Dependencies
-      run: .github/workflows/dependencies/dependencies_nvcc.sh
-    - name: AMReX
-      run: |
-         mkdir build
-         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-    - name: Build
-      env:
-         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-      working-directory: ./Testing/Exec/TranEval
-      run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
-        make TPL COMP=gnu USE_CUDA=TRUE Transport_Model=Sutherland
-        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Sutherland
-
-  # Simple Transport CUDA
-  Simple_CUDA:
-    name: CUDA [Simple]
-    runs-on: ubuntu-latest
-    env:
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{github.token}}
-    - uses: actions/checkout@v2
-    - name: System Dependencies
-      run: .github/workflows/dependencies/dependencies_nvcc.sh
-    - name: AMReX
-      run: |
-         mkdir build
-         git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-    - name: Build
-      env:
-         AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-         PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-      working-directory: ./Testing/Exec/TranEval
-      run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
-        make TPL COMP=gnu USE_CUDA=TRUE Transport_Model=Simple
-        make -j 2 COMP=gnu USE_CUDA=TRUE Transport_Model=Simple
-
-  # Constant Transport HIP support
-  #Constant_HIP:
-  #  name: HIPROCm@3.8 GFortran@9.3 [Constant]
-  #  runs-on: ubuntu-20.04
-  #  env:
-  #    {CXXFLAGS: "-fno-operator-names"}
-  #  steps:
-    # - name: Cancel previous runs
-    #   uses: styfle/cancel-workflow-action@0.6.0
-    #   with:
-    #     access_token: ${{github.token}}
-  #  - uses: actions/checkout@v2
-  #  - name: System Dependencies
-  #    run: .github/workflows/dependencies/dependencies_hip.sh
-  #  - name: AMReX
-  #    run: |
-  #       mkdir build
-  #       git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-  #  - name: Build
-  #    env:
-  #       AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-  #       PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-  #    working-directory: ./Testing/Exec/TranEval
-  #    run: |
-  #      source /etc/profile.d/rocm.sh
-  #      hipcc --version
-  #      make -j 2 COMP=gnu USE_HIP=TRUE Transport_Model=Constant
-
-  # Sutherland Transport HIP support
-  #Sutherland_HIP:
-  #  name: HIPROCm@3.8 GFortran@9.3 [Sutherland]
-  #  runs-on: ubuntu-20.04
-  #  env:
-  #    {CXXFLAGS: "-fno-operator-names"}
-  #  steps:
-    # - name: Cancel previous runs
-    #   uses: styfle/cancel-workflow-action@0.6.0
-    #   with:
-    #     access_token: ${{github.token}}
-  #  - uses: actions/checkout@v2
-  #  - name: System Dependencies
-  #    run: .github/workflows/dependencies/dependencies_hip.sh
-  #  - name: AMReX
-  #    run: |
-  #       mkdir build
-  #       git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-  #  - name: Build
-  #    env:
-  #       AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-  #       PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-  #    working-directory: ./Testing/Exec/TranEval
-  #    run: |
-  #      source /etc/profile.d/rocm.sh
-  #      hipcc --version
-  #      make -j 2 COMP=gnu USE_HIP=TRUE Transport_Model=Sutherland
-
-  # Simple Transport HIP support
-  #Simple_HIP:
-  #  name: HIPROCm@3.8 GFortran@9.3 [Simple]
-  #  runs-on: ubuntu-20.04
-  #  env:
-  #    {CXXFLAGS: "-fno-operator-names"}
-  #  steps:
-    # - name: Cancel previous runs
-    #   uses: styfle/cancel-workflow-action@0.6.0
-    #   with:
-    #     access_token: ${{github.token}}
-  #  - uses: actions/checkout@v2
-  #  - name: System Dependencies
-  #    run: .github/workflows/dependencies/dependencies_hip.sh
-  #  - name: AMReX
-  #    run: |
-  #       mkdir build
-  #       git clone https://github.com/AMReX-Codes/amrex.git build/amrex
-  #  - name: Build
-  #    env:
-  #       AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-  #       PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
-  #    working-directory: ./Testing/Exec/TranEval
-  #    run: |
-  #      source /etc/profile.d/rocm.sh
-  #      hipcc --version
-  #      make -j 2 COMP=gnu USE_HIP=TRUE Transport_Model=Simple
+        ./Pele2d.gnu.ex inputs.2d_${{matrix.os}}

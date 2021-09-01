@@ -1,37 +1,37 @@
-name: CI_Pythia
-on:
-   workflow_dispatch:
-   push:
-     branches: [ development ]
-   pull_request:
-     branches: [ development ]
-
-jobs:
-  Pythia:
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.8]
-        poetry-version: [1.1.7]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: ./Support/Fuego/Pythia
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Run image
-        uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: ${{ matrix.poetry-version }}
-      - name: Install Dependencies using Poetry
-        run: poetry install
-      - name: Formatting with black
-        run: poetry run black --check .
-      - name: Sort imports with isort
-        run: poetry run isort --check-only --diff .
-      - name: Run tests
-        run: poetry run bash -c "cd ../Mechanism/Models/air && ./make-mechanism.sh"
+#name: CI_Pythia
+#on:
+#   workflow_dispatch:
+#   push:
+#     branches: [ development ]
+#   pull_request:
+#     branches: [ development ]
+#
+#jobs:
+#  Pythia:
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        python-version: [3.8]
+#        poetry-version: [1.1.7]
+#        os: [ubuntu-latest]
+#    runs-on: ${{ matrix.os }}
+#    defaults:
+#      run:
+#        working-directory: ./Support/Fuego/Pythia
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: actions/setup-python@v2
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#      - name: Run image
+#        uses: abatilo/actions-poetry@v2.0.0
+#        with:
+#          poetry-version: ${{ matrix.poetry-version }}
+#      - name: Install Dependencies using Poetry
+#        run: poetry install
+#      - name: Formatting with black
+#        run: poetry run black --check .
+#      - name: Sort imports with isort
+#        run: poetry run isort --check-only --diff .
+#      - name: Run tests
+#        run: poetry run bash -c "cd ../Mechanism/Models/air && ./make-mechanism.sh"
