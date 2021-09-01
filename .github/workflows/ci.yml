@@ -26,24 +26,25 @@ jobs:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
       - uses: actions/checkout@v2
+        path: ${{runner.workspace}}-${{matrix.type}}
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.6.0
         with:
           access_token: ${{github.token}}
       - name: AMReX
-        run: cd ${{runner.workspace}} && git clone https://github.com/AMReX-Codes/amrex.git amrex
+        run: cd ${{runner.workspace}}-${{matrix.type}} && git clone https://github.com/AMReX-Codes/amrex.git amrex
       - name: SUNDIALS
         env:
-           AMREX_HOME: ${{runner.workspace}}/amrex
-           PELE_PHYSICS_HOME: ${{runner.workspace}}
-        working-directory: ${{runner.workspace}}/Testing/Exec/TranEval
+           AMREX_HOME: ${{runner.workspace}}-${{matrix.type}}/amrex
+           PELE_PHYSICS_HOME: ${{runner.workspace}}-${{matrix.type}}
+        working-directory: ${{runner.workspace}}-${{matrix.type}}/Testing/Exec/TranEval
         run: make TPL COMP=gnu
       - name: Build-${{matrix.type}}
         env:
-           AMREX_HOME: ${{runner.workspace}}/amrex
-           PELE_PHYSICS_HOME: ${{runner.workspace}}
-        working-directory: ${{runner.workspace}}/Testing/Exec/TranEval
+           AMREX_HOME: ${{runner.workspace}}-${{matrix.type}}/amrex
+           PELE_PHYSICS_HOME: ${{runner.workspace}}-${{matrix.type}}
+        working-directory: ${{runner.workspace}}-${{matrix.type}}/Testing/Exec/TranEval
         run: make -j $(nprocs) COMP=gnu Transport_Model=${{matrix.type}}
       - name: Run-${{matrix.type}}
-        working-directory: ${{runner.workspace}}/Testing/Exec/TranEval
+        working-directory: ${{runner.workspace}}-${{matrix.type}}/Testing/Exec/TranEval
         run: ./Pele2d.gnu.ex inputs.2d_${{matrix.type}}
