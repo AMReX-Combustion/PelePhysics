@@ -14,6 +14,10 @@ jobs:
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{github.token}}
     - uses: actions/checkout@v2
     - name: System Dependencies
       run: .github/workflows/dependencies/dependencies.sh
@@ -41,6 +45,10 @@ jobs:
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{github.token}}
     - uses: actions/checkout@v2
     - name: System Dependencies
       run: .github/workflows/dependencies/dependencies.sh
@@ -68,6 +76,10 @@ jobs:
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{github.token}}
     - uses: actions/checkout@v2
     - name: System Dependencies
       run: .github/workflows/dependencies/dependencies_nvcc.sh
@@ -93,6 +105,10 @@ jobs:
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{github.token}}
     - uses: actions/checkout@v2
     - name: System Dependencies
       run: .github/workflows/dependencies/dependencies_nvcc.sh
@@ -118,6 +134,10 @@ jobs:
   #  env:
   #    {CXXFLAGS: "-fno-operator-names"}
   #  steps:
+    # - name: Cancel previous runs
+    #   uses: styfle/cancel-workflow-action@0.6.0
+    #   with:
+    #     access_token: ${{github.token}}
   #  - uses: actions/checkout@v2
   #  - name: System Dependencies
   #    run: .github/workflows/dependencies/dependencies_hip.sh
