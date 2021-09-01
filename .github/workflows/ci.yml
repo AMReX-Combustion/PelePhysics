@@ -16,11 +16,19 @@ jobs:
           exclude: '.'
           extensions: 'H,h,cpp'
           clangFormatVersion: 11
-  Dependencies:
+  Transport:
     needs: Formatting
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        type: [Constant, Sutherland, Simple]
+    env:
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
-      - uses: actions/checkout@v2
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{github.token}}
       - name: Dependencies
         run: .github/workflows/dependencies/dependencies.sh
       - name: AMReX
@@ -33,19 +41,6 @@ jobs:
            PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
         working-directory: ./Testing/Exec/TranEval
         run: make TPL COMP=gnu
-  Transport:
-    needs: [Formatting, Dependencies]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        type: [Constant, Sutherland, Simple]
-    env:
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
-    steps:
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.6.0
-        with:
-          access_token: ${{github.token}}
       - name: Build-${{matrix.type}}
         env:
            AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
