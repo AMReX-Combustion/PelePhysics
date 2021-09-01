@@ -25,26 +25,23 @@ jobs:
     env:
       {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
     steps:
+      - uses: actions/checkout@v2
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.6.0
         with:
           access_token: ${{github.token}}
-      - name: Dependencies
-        run: .github/workflows/dependencies/dependencies.sh
       - name: AMReX
-        run: |
-           mkdir build
-           git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+        run: cd ${{runner.workspace}} && git clone https://github.com/AMReX-Codes/amrex.git amrex
       - name: SUNDIALS
         env:
-           AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-           PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+           AMREX_HOME: ${{runner.workspace}}/amrex
+           PELE_PHYSICS_HOME: ${{runner.workspace}}
         working-directory: ./Testing/Exec/TranEval
         run: make TPL COMP=gnu
       - name: Build-${{matrix.type}}
         env:
-           AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
-           PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+           AMREX_HOME: ${{runner.workspace}}/amrex
+           PELE_PHYSICS_HOME: ${{runner.workspace}}
         working-directory: ./Testing/Exec/TranEval
         run: |
           make -j $(nprocs) COMP=gnu Transport_Model=${{matrix.type}}
