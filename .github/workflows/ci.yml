@@ -9,14 +9,16 @@ jobs:
   Formatting:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: DoozyX/clang-format-lint-action@v0.11
-      with:
-        source: './Eos ./Transport ./Reactions'
-        exclude: '.'
-        extensions: 'H,h,cpp'
-        clangFormatVersion: 11
+      - uses: actions/checkout@v2
+      - uses: DoozyX/clang-format-lint-action@v0.11
+        with:
+          source: './Eos ./Transport ./Reactions'
+          exclude: '.'
+          extensions: 'H,h,cpp'
+          clangFormatVersion: 11
   Dependencies:
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@v2
       - name: Dependencies
         run: .github/workflows/dependencies/dependencies.sh
