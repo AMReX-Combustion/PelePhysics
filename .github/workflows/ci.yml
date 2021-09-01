@@ -1,0 +1,56 @@
+name: PelePhysics
+on:
+   push:
+     branches: [development]
+   pull_request:
+     branches: [development]
+
+jobs:
+  Formatting:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: DoozyX/clang-format-lint-action@v0.11
+      with:
+        source: './Eos ./Transport ./Reactions'
+        exclude: '.'
+        extensions: 'H,h,cpp'
+        clangFormatVersion: 11
+  Dependencies:
+      - uses: actions/checkout@v2
+      - name: Dependencies
+        run: .github/workflows/dependencies/dependencies.sh
+      - name: AMReX
+        run: |
+           mkdir build
+           git clone https://github.com/AMReX-Codes/amrex.git build/amrex
+      - name: SUNDIALS
+        env:
+           AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+           PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+        working-directory: ./Testing/Exec/TranEval
+        run: make TPL COMP=gnu
+  Transport:
+    needs: [Formatting, Dependencies]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        type: [Constant, Sutherland, Simple]
+    env:
+      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{github.token}}
+      - name: Build-${{matrix.type}}
+        env:
+           AMREX_HOME: ${GITHUB_WORKSPACE}/build/amrex
+           PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}
+        working-directory: ./Testing/Exec/TranEval
+        run: |
+          make -j $(nprocs) COMP=gnu Transport_Model=${{matrix.type}}
+      - name: Run-${{matrix.type}}
+        working-directory: ./Testing/Exec/TranEval
+        run: |
+          ./Pele2d.gnu.ex inputs.2d_${{matrix.type}}
