@@ -17,6 +17,7 @@ jobs:
           extensions: 'H,h,cpp'
           clangFormatVersion: 11
   Dependencies:
+    needs: Formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
