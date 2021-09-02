@@ -22,6 +22,10 @@ jobs:
     strategy:
       matrix:
         type: [Constant, Sutherland, Simple]
+    env:
+      CXXFLAGS: ${{ '-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code' }}
+      AMREX_HOME: ${{runner.workspace}}/PelePhysics/AMReX-${{matrix.type}}
+      PELE_PHYSICS_HOME: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.6.0
@@ -36,20 +40,20 @@ jobs:
         with:
           repository: AMReX-Codes/amrex
           path: AMReX-${{matrix.type}}
-      - name: SUNDIALS
-        env:
-          CXXFLAGS: ${{ '-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code' }}
-          AMREX_HOME: ${{runner.workspace}}/PelePhysics/AMReX-${{matrix.type}}
-          PELE_PHYSICS_HOME: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}
+      - name: Build SUNDIALS
+        #env:
+        #  CXXFLAGS: ${{ '-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code' }}
+        #  AMREX_HOME: ${{runner.workspace}}/PelePhysics/AMReX-${{matrix.type}}
+        #  PELE_PHYSICS_HOME: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}
         working-directory: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
         run: make TPL COMP=gnu
-      - name: Build-${{matrix.type}}
-        env:
-          CXXFLAGS: ${{ '-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code' }}
-          AMREX_HOME: ${{runner.workspace}}/PelePhysics/AMReX-${{matrix.type}}
-          PELE_PHYSICS_HOME: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}
+      - name: Build ${{matrix.type}} Transport
+        #env:
+        #  CXXFLAGS: ${{ '-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code' }}
+        #  AMREX_HOME: ${{runner.workspace}}/PelePhysics/AMReX-${{matrix.type}}
+        #  PELE_PHYSICS_HOME: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}
         working-directory: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
         run: make -j $(nprocs) COMP=gnu Transport_Model=${{matrix.type}}
-      - name: Run-${{matrix.type}}
+      - name: Run ${{matrix.type}} Transport
         working-directory: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
         run: ./Pele2d.gnu.ex inputs.2d_${{matrix.type}}
