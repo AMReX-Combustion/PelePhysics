@@ -36,20 +36,23 @@ jobs:
         with:
           repository: AMReX-Codes/amrex
           path: AMReX-${{matrix.type}}
-      - name: Build SUNDIALS
+      - name: Set Environment
         env:
           CXXFLAGS: ${{ '-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code' }}
           AMREX_HOME: ${{github.workspace}}/AMReX-${{matrix.type}}
           PELE_PHYSICS_HOME: ${{github.workspace}}/PelePhysics-${{matrix.type}}
-        working-directory: ${{github.workspace}}/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
+          WORKING_DIRECTORY: ${{github.workspace}}/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
+        run: |
+          echo "::set-env name=CXXFLAGS::$CXXFLAGS"
+          echo "::set-env name=AMREX_HOME::$AMREX_HOME"
+          echo "::set-env name=PELE_PHYSICS_HOME::$PELE_PHYSICS_HOME"
+          echo "::set-env name=WORKING_DIRECTORY::$WORKING_DIRECTORY"
+      - name: Build SUNDIALS
+        working-directory: ${{env.WORKING_DIRECTORY}}
         run: make TPL COMP=gnu
       - name: Build ${{matrix.type}} Transport
-        env:
-          CXXFLAGS: ${{ '-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code' }}
-          AMREX_HOME: ${{github.workspace}}/AMReX-${{matrix.type}}
-          PELE_PHYSICS_HOME: ${{github.workspace}}/PelePhysics-${{matrix.type}}
-        working-directory: ${{github.workspace}}/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
+        working-directory: ${{env.WORKING_DIRECTORY}}
         run: make -j $(nprocs) COMP=gnu Transport_Model=${{matrix.type}}
       - name: Run ${{matrix.type}} Transport
-        working-directory: ${{github.workspace}}/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
+        working-directory: ${{env.WORKING_DIRECTORY}}
         run: ./Pele2d.gnu.ex inputs.2d_${{matrix.type}}
