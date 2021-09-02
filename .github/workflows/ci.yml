@@ -39,17 +39,17 @@ jobs:
       - name: Build SUNDIALS
         env:
           CXXFLAGS: ${{ '-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code' }}
-          AMREX_HOME: ${{runner.workspace}}/PelePhysics/AMReX-${{matrix.type}}
-          PELE_PHYSICS_HOME: ${{github.workspace}}
-        working-directory: ${{github.workspace}}/Testing/Exec/TranEval
+          AMREX_HOME: ${{github.workspace}}/AMReX-${{matrix.type}}
+          PELE_PHYSICS_HOME: ${{github.workspace}}/PelePhysics-${{matrix.type}}
+        working-directory: ${{github.workspace}}/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
         run: make TPL COMP=gnu
       - name: Build ${{matrix.type}} Transport
         env:
           CXXFLAGS: ${{ '-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code' }}
-          AMREX_HOME: ${{runner.workspace}}/PelePhysics/AMReX-${{matrix.type}}
-          PELE_PHYSICS_HOME: ${{github.workspace}}
-        working-directory: ${{github.workspace}}/Testing/Exec/TranEval
+          AMREX_HOME: ${{github.workspace}}/AMReX-${{matrix.type}}
+          PELE_PHYSICS_HOME: ${{github.workspace}}/PelePhysics-${{matrix.type}}
+        working-directory: ${{github.workspace}}/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
         run: make -j $(nprocs) COMP=gnu Transport_Model=${{matrix.type}}
       - name: Run ${{matrix.type}} Transport
-        working-directory: ${{github.workspace}}/Testing/Exec/TranEval
+        working-directory: ${{github.workspace}}/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
         run: ./Pele2d.gnu.ex inputs.2d_${{matrix.type}}
