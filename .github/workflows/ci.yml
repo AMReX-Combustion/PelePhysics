@@ -46,7 +46,7 @@ jobs:
       - name: Run tests
         run: poetry run bash -c "cd ../Mechanism/Models/air && ./make-mechanism.sh"
 
-  Transport and EOS:
+  Transport-EOS:
     needs: Formatting
     runs-on: ubuntu-latest
     steps:
@@ -63,7 +63,7 @@ jobs:
         with:
           repository: AMReX-Codes/amrex
           path: AMReX
-      - name: Set Environment
+      - name: Set Environment Variables
         run: |
           echo "CXXFLAGS='-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code'" >> $GITHUB_ENV
           echo "AMREX_HOME=${{github.workspace}}/AMReX" >> $GITHUB_ENV
@@ -89,7 +89,7 @@ jobs:
         run: |
           (for TYPE in Fuego GammaLaw; do \
             printf "\n-------- Building ${TYPE} --------\n"; \
-            if [ "${TYPE}" != 'Fuego' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
+            if [ "${TYPE}" == 'Fuego' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             make -j ${{env.NPROCS}} COMP=gnu Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} \
             ./Pele2d.gnu.ex inputs.2d \
             make realclean \
