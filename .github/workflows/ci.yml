@@ -23,7 +23,9 @@ jobs:
       matrix:
         type: [Constant, Sutherland, Simple]
     env:
-      {CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"}
+      CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"
+      AMREX_HOME: ${{runner.workspace}}/PelePhysics/AMReX-${{matrix.type}}
+      PELE_PHYSICS_HOME: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.6.0
@@ -32,24 +34,18 @@ jobs:
       - name: Checkout PelePhysics
         uses: actions/checkout@v2
         with:
-          path: ${{matrix.type}}
+          path: PelePhysics-${{matrix.type}}
       - name: Checkout AMReX
         uses: actions/checkout@v2
         with:
           repository: AMReX-Codes/amrex
-          path: amrex-${{matrix.type}}
+          path: AMReX-${{matrix.type}}
       - name: SUNDIALS
-        env:
-           AMREX_HOME: ${{runner.workspace}}/amrex-${{matrix.type}}
-           PELE_PHYSICS_HOME: ${{runner.workspace}}/${{matrix.type}}
-        working-directory: ${{runner.workspace}}/${{matrix.type}}/Testing/Exec/TranEval
+        working-directory: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
         run: make TPL COMP=gnu
       - name: Build-${{matrix.type}}
-        env:
-           AMREX_HOME: ${{runner.workspace}}/amrex-${{matrix.type}}
-           PELE_PHYSICS_HOME: ${{runner.workspace}}/${{matrix.type}}
-        working-directory: ${{runner.workspace}}/${{matrix.type}}/Testing/Exec/TranEval
+        working-directory: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
         run: make -j $(nprocs) COMP=gnu Transport_Model=${{matrix.type}}
       - name: Run-${{matrix.type}}
-        working-directory: ${{runner.workspace}}/${{matrix.type}}/Testing/Exec/TranEval
+        working-directory: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval
         run: ./Pele2d.gnu.ex inputs.2d_${{matrix.type}}
