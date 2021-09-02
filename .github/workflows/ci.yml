@@ -90,7 +90,7 @@ jobs:
           - type: Fuego
             ctype: LiDryer
           - type: GammaLaw
-            ctype: Null
+            ctype: 'Null'
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.6.0
