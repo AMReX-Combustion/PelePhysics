@@ -32,4 +32,3 @@ sudo apt-get install -y \
     cuda-nvml-dev-11-2           \
     cuda-nvtx-11-2               \
     libcurand-dev-11-2
-#sudo ln -s cuda-11.2 /usr/local/cuda
