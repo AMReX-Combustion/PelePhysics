@@ -78,20 +78,20 @@ jobs:
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
           (for TYPE in Constant Simple Sutherland; do \
-            printf "\n-------- Running ${TYPE} --------\n"; \
-            make -j ${{env.NPROCS}} COMP=gnu Transport_Model=${TYPE} \
-            ./Pele2d.gnu.ex inputs.2d_${TYPE} \
-            make realclean \
+            printf "\n-------- ${TYPE} --------\n"; \
+            make -j ${{env.NPROCS}} COMP=gnu Transport_Model=${TYPE}; \
+            ./Pele2d.gnu.ex inputs.2d_${TYPE}; \
+            make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi \
           done)
       - name: Build and Run EOS
         working-directory: ${{env.EOS_WORKING_DIRECTORY}}
         run: |
           (for TYPE in Fuego GammaLaw; do \
-            printf "\n-------- Building ${TYPE} --------\n"; \
             if [ "${TYPE}" == 'Fuego' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
-            make -j ${{env.NPROCS}} COMP=gnu Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} \
-            ./Pele2d.gnu.ex inputs.2d \
-            make realclean \
+            printf "\n-------- ${TYPE} --------\n"; \
+            make -j ${{env.NPROCS}} COMP=gnu Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY}; \
+            ./Pele2d.gnu.ex inputs.2d; \
+            make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi \
           done)
