@@ -92,7 +92,7 @@ jobs:
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
           ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}} || true;
-          ${{matrix.env_cmds}};
+          ${{matrix.env_cmds}}
           make TPL COMP=${{matrix.comp}} ${{matrix.amrex_build_args}};
       - name: Test Transport
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
@@ -110,7 +110,7 @@ jobs:
         working-directory: ${{env.EOS_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
-          ${{matrix.env_cmds}};
+          ${{matrix.env_cmds}}
           (for TYPE in Fuego GammaLaw; do \
             if [ "${TYPE}" == 'Fuego' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
@@ -123,7 +123,7 @@ jobs:
         working-directory: ${{env.REACT_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
-          ${{matrix.env_cmds}};
+          ${{matrix.env_cmds}}
           (for TYPE in Cvode Arkode RK64; do \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} COMP=${{matrix.comp}} Eos_Model=Fuego Chemistry_Model=drm19 ${{matrix.amrex_build_args}}; \
