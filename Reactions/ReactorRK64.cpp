@@ -99,9 +99,7 @@ ReactorRK64::react(
 
       amrex::Real max_err = tinyval;
       for (int sp = 0; sp < neq; sp++) {
-        if (fabs(error_reg[sp]) > max_err) {
-          max_err = fabs(error_reg[sp]);
-        }
+        max_err = fabs(error_reg[sp]) > max_err ? fabs(error_reg[sp]) : max_err;
       }
 
       if (max_err < captured_abstol) {
@@ -240,9 +238,7 @@ ReactorRK64::react(
 
       amrex::Real max_err = tinyval;
       for (int sp = 0; sp < neq; sp++) {
-        if (fabs(error_reg[sp]) > max_err) {
-          max_err = fabs(error_reg[sp]);
-        }
+        max_err = fabs(error_reg[sp]) > max_err ? fabs(error_reg[sp]) : max_err;
       }
 
       if (max_err < captured_abstol) {
