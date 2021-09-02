@@ -39,11 +39,11 @@ ReactorRK64::react(
   const amrex::Real tinyval = 1e-50;
 
   // capture reactor type
-  int captured_reactor_type = m_reactor_type;
-  int captured_nsubsteps_guess = rk64_nsubsteps_guess;
-  int captured_nsubsteps_min = rk64_nsubsteps_min;
-  int captured_nsubsteps_max = rk64_nsubsteps_max;
-  amrex::Real captured_abstol = absTol;
+  const int captured_reactor_type = m_reactor_type;
+  const int captured_nsubsteps_guess = rk64_nsubsteps_guess;
+  const int captured_nsubsteps_min = rk64_nsubsteps_min;
+  const int captured_nsubsteps_max = rk64_nsubsteps_max;
+  const amrex::Real captured_abstol = absTol;
   RK64Params rkp;
 
   int* nstepsvec;
@@ -55,20 +55,18 @@ ReactorRK64::react(
     amrex::Real error_reg[NUM_SPECIES + 1] = {0.0};
     amrex::Real rhs[NUM_SPECIES + 1] = {0.0};
     amrex::Real rYsrc[NUM_SPECIES] = {0.0};
-    amrex::Real dt_rk, dt_rk_min, dt_rk_max, change_factor;
     amrex::Real current_time = time_init;
-    int neq = (NUM_SPECIES + 1);
+    const int neq = (NUM_SPECIES + 1);
 
     for (int sp = 0; sp < neq; sp++) {
       soln_reg[sp] = rY_in[icell * neq + sp];
       carryover_reg[sp] = soln_reg[sp];
     }
 
-    dt_rk = dt_react / amrex::Real(captured_nsubsteps_guess);
-    dt_rk_min = dt_react / amrex::Real(captured_nsubsteps_max);
-    dt_rk_max = dt_react / amrex::Real(captured_nsubsteps_min);
+    amrex::Real dt_rk = dt_react / amrex::Real(captured_nsubsteps_guess);
+    amrex::Real dt_rk_min = dt_react / amrex::Real(captured_nsubsteps_max);
+    amrex::Real dt_rk_max = dt_react / amrex::Real(captured_nsubsteps_min);
 
-    current_time = time_init;
     amrex::Real rhoe_init[] = {rX_in[icell]};
     amrex::Real rhoesrc_ext[] = {rX_src_in[icell]};
 
@@ -77,6 +75,7 @@ ReactorRK64::react(
     }
 
     int nsteps = 0;
+    amrex::Real change_factor;
     while (current_time < time_out) {
       for (int sp = 0; sp < neq; sp++) {
         error_reg[sp] = 0.0;
@@ -86,12 +85,12 @@ ReactorRK64::react(
           0, 1, current_time - time_init, captured_reactor_type, soln_reg, rhs,
           rhoe_init, rhoesrc_ext, rYsrc);
 
-        for (int i = 0; i < neq; i++) {
-          error_reg[i] += rkp.err_rk64[stage] * dt_rk * rhs[i];
-          soln_reg[i] =
-            carryover_reg[i] + rkp.alpha_rk64[stage] * dt_rk * rhs[i];
-          carryover_reg[i] =
-            soln_reg[i] + rkp.beta_rk64[stage] * dt_rk * rhs[i];
+        for (int sp = 0; sp < neq; sp++) {
+          error_reg[sp] += rkp.err_rk64[stage] * dt_rk * rhs[sp];
+          soln_reg[sp] =
+            carryover_reg[sp] + rkp.alpha_rk64[stage] * dt_rk * rhs[sp];
+          carryover_reg[sp] =
+            soln_reg[sp] + rkp.beta_rk64[stage] * dt_rk * rhs[sp];
         }
       }
 
@@ -99,9 +98,9 @@ ReactorRK64::react(
       nsteps++;
 
       amrex::Real max_err = tinyval;
-      for (int i = 0; i < neq; i++) {
-        if (fabs(error_reg[i]) > max_err) {
-          max_err = fabs(error_reg[i]);
+      for (int sp = 0; sp < neq; sp++) {
+        if (fabs(error_reg[sp]) > max_err) {
+          max_err = fabs(error_reg[sp]);
         }
       }
 
@@ -160,11 +159,11 @@ ReactorRK64::react(
   const amrex::Real tinyval = 1e-50;
 
   // capture reactor type
-  int captured_reactor_type = m_reactor_type;
-  int captured_nsubsteps_guess = rk64_nsubsteps_guess;
-  int captured_nsubsteps_min = rk64_nsubsteps_min;
-  int captured_nsubsteps_max = rk64_nsubsteps_max;
-  amrex::Real captured_abstol = absTol;
+  const int captured_reactor_type = m_reactor_type;
+  const int captured_nsubsteps_guess = rk64_nsubsteps_guess;
+  const int captured_nsubsteps_min = rk64_nsubsteps_min;
+  const int captured_nsubsteps_max = rk64_nsubsteps_max;
+  const amrex::Real captured_abstol = absTol;
   RK64Params rkp;
 
   int* nstepsvec;
@@ -179,18 +178,17 @@ ReactorRK64::react(
     amrex::Real error_reg[NUM_SPECIES + 1] = {0.0};
     amrex::Real rhs[NUM_SPECIES + 1] = {0.0};
     amrex::Real rYsrc[NUM_SPECIES] = {0.0};
-    amrex::Real mass_frac[NUM_SPECIES] = {0.0};
-    int neq = (NUM_SPECIES + 1);
+    amrex::Real current_time = time_init;
+    const int neq = (NUM_SPECIES + 1);
 
-    amrex::Real dt_rk, dt_rk_min, dt_rk_max, change_factor;
     amrex::Real rho = 0.0;
-
     for (int sp = 0; sp < NUM_SPECIES; sp++) {
       soln_reg[sp] = rY_in(i, j, k, sp);
       carryover_reg[sp] = soln_reg[sp];
       rho += rY_in(i, j, k, sp);
     }
     amrex::Real rho_inv = 1.0 / rho;
+    amrex::Real mass_frac[NUM_SPECIES] = {0.0};
     for (int sp = 0; sp < NUM_SPECIES; sp++) {
       mass_frac[sp] = rY_in(i, j, k, sp) * rho_inv;
     }
@@ -206,11 +204,10 @@ ReactorRK64::react(
     soln_reg[NUM_SPECIES] = temp;
     carryover_reg[NUM_SPECIES] = soln_reg[NUM_SPECIES];
 
-    dt_rk = dt_react / amrex::Real(captured_nsubsteps_guess);
-    dt_rk_min = dt_react / amrex::Real(captured_nsubsteps_max);
-    dt_rk_max = dt_react / amrex::Real(captured_nsubsteps_min);
+    amrex::Real dt_rk = dt_react / amrex::Real(captured_nsubsteps_guess);
+    amrex::Real dt_rk_min = dt_react / amrex::Real(captured_nsubsteps_max);
+    amrex::Real dt_rk_max = dt_react / amrex::Real(captured_nsubsteps_min);
 
-    amrex::Real current_time = time_init;
     amrex::Real rhoe_init[] = {rEner_in(i, j, k, 0)};
     amrex::Real rhoesrc_ext[] = {rEner_src_in(i, j, k, 0)};
 
@@ -219,6 +216,7 @@ ReactorRK64::react(
     }
 
     int nsteps = 0;
+    amrex::Real change_factor;
     while (current_time < time_out) {
       for (int sp = 0; sp < neq; sp++) {
         error_reg[sp] = 0.0;
@@ -228,12 +226,12 @@ ReactorRK64::react(
           0, 1, current_time - time_init, captured_reactor_type, soln_reg, rhs,
           rhoe_init, rhoesrc_ext, rYsrc);
 
-        for (int ii = 0; ii < neq; ii++) {
-          error_reg[ii] += rkp.err_rk64[stage] * dt_rk * rhs[ii];
-          soln_reg[ii] =
-            carryover_reg[ii] + rkp.alpha_rk64[stage] * dt_rk * rhs[ii];
-          carryover_reg[ii] =
-            soln_reg[ii] + rkp.beta_rk64[stage] * dt_rk * rhs[ii];
+        for (int sp = 0; sp < neq; sp++) {
+          error_reg[sp] += rkp.err_rk64[stage] * dt_rk * rhs[sp];
+          soln_reg[sp] =
+            carryover_reg[sp] + rkp.alpha_rk64[stage] * dt_rk * rhs[sp];
+          carryover_reg[sp] =
+            soln_reg[sp] + rkp.beta_rk64[stage] * dt_rk * rhs[sp];
         }
       }
 
@@ -241,9 +239,9 @@ ReactorRK64::react(
       nsteps++;
 
       amrex::Real max_err = tinyval;
-      for (int ii = 0; ii < neq; ii++) {
-        if (fabs(error_reg[i]) > max_err) {
-          max_err = fabs(error_reg[ii]);
+      for (int sp = 0; sp < neq; sp++) {
+        if (fabs(error_reg[sp]) > max_err) {
+          max_err = fabs(error_reg[sp]);
         }
       }
 
@@ -261,6 +259,7 @@ ReactorRK64::react(
     // copy data back
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
     nstepsvec[icell] = nsteps;
+    rho = 0.0;
     for (int sp = 0; sp < NUM_SPECIES; sp++) {
       rY_in(i, j, k, sp) = soln_reg[sp];
       rho += rY_in(i, j, k, sp);
@@ -290,7 +289,6 @@ ReactorRK64::react(
   for (int i = 0; i < Ncells; i++) {
     avgsteps += nstepsvec[i];
   }
-  avgsteps = int(avgsteps / amrex::Real(Ncells));
 
   return (int(avgsteps / amrex::Real(Ncells)));
 }
