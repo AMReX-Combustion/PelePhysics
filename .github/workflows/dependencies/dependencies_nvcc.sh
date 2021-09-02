@@ -32,4 +32,5 @@ sudo apt-get install -y \
     cuda-nvml-dev-11-2           \
     cuda-nvtx-11-2               \
     libcurand-dev-11-2           \
-    libcusolver-dev-11-2
+    libcusolver-dev-11-2         \
+    libcusparse-dev-11-2
