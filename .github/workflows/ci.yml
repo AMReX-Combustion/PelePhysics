@@ -56,16 +56,12 @@ jobs:
           - comp: gnu
             amrex_build_args: 'COMP=gnu'
             dependency_cmds:
-            env_cmds:
           - comp: llvm
             amrex_build_args: 'COMP=llvm'
             dependency_cmds:
-            env_cmds:
           - comp: nvcc
             amrex_build_args: 'COMP=gnu USE_CUDA=TRUE'
             dependency_cmds: '.github/workflows/dependencies/dependencies_nvcc.sh'
-            #env_cmds: 'export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}; export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}'
-            env_cmds: 
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.6.0
@@ -89,19 +85,22 @@ jobs:
           echo "EOS_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/EosEval" >> $GITHUB_ENV
           echo "REACT_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/ReactEval" >> $GITHUB_ENV
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
+          if [ "${{matrix.comp}}" == 'nvcc' ]; then \
+            echo "CUDA_HOME=/usr/local/cuda-11.2" >> $GITHUB_ENV; \
+            echo "${LD_LIBRARY_PATH}=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}" >> $GITHUB_ENV; \
+            echo "${CUDA_HOME}/bin" >> $GITHUB_PATH; \
+          fi;
       - name: Dependencies
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
           cmake --version
           which nvcc || echo "nvcc not in PATH!"
           ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}} || true;
-          ${{matrix.env_cmds}}
           make TPL ${{matrix.amrex_build_args}};
       - name: Test Transport
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
-          ${{matrix.env_cmds}}
           (for TYPE in Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Transport_Model=${TYPE} ${{matrix.amrex_build_args}}; \
@@ -113,7 +112,6 @@ jobs:
         working-directory: ${{env.EOS_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
-          ${{matrix.env_cmds}}
           (for TYPE in Fuego GammaLaw; do \
             if [ "${TYPE}" == 'Fuego' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
@@ -126,7 +124,6 @@ jobs:
         working-directory: ${{env.REACT_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
-          ${{matrix.env_cmds}}
           (for TYPE in Cvode Arkode RK64; do \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=drm19 ${{matrix.amrex_build_args}}; \
