@@ -64,7 +64,8 @@ jobs:
           - comp: nvcc
             amrex_build_args: 'COMP=gnu USE_CUDA=TRUE'
             dependency_cmds: '.github/workflows/dependencies/dependencies_nvcc.sh'
-            env_cmds: 'export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}; export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}'
+            #env_cmds: 'export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}; export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}'
+            env_cmds: 
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.6.0
@@ -88,14 +89,11 @@ jobs:
           echo "EOS_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/EosEval" >> $GITHUB_ENV
           echo "REACT_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/ReactEval" >> $GITHUB_ENV
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
-      - name: Setup CMake
-        uses: jwlawson/actions-setup-cmake@v1.9
-        with:
-          cmake-version: '3.17.x'
       - name: Dependencies
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
           cmake --version
+          which nvcc || echo "nvcc not in PATH!"
           ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}} || true;
           ${{matrix.env_cmds}}
           make TPL ${{matrix.amrex_build_args}};
