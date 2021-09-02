@@ -91,7 +91,7 @@ jobs:
       - name: Dependencies
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
-          ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}};
+          ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}} || true;
           ${{matrix.env_cmds}};
           make TPL COMP=${{matrix.comp}} ${{matrix.amrex_build_args}};
       - name: Test Transport
