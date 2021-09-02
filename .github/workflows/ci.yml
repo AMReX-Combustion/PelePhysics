@@ -54,15 +54,15 @@ jobs:
         comp: [gnu, llvm, nvcc]
         include:
           - comp: gnu
-            amrex_build_args:
+            amrex_build_args: 'COMP=gnu'
             dependency_cmds:
             env_cmds:
           - comp: llvm
-            amrex_build_args:
+            amrex_build_args: 'COMP=llvm'
             dependency_cmds:
             env_cmds:
           - comp: nvcc
-            amrex_build_args: 'USE_CUDA=TRUE'
+            amrex_build_args: 'COMP=gnu USE_CUDA=TRUE'
             dependency_cmds: '.github/workflows/dependencies/dependencies_nvcc.sh'
             env_cmds: 'export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}; export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}'
     steps:
@@ -93,7 +93,7 @@ jobs:
         run: |
           ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}} || true;
           ${{matrix.env_cmds}}
-          make TPL COMP=${{matrix.comp}} ${{matrix.amrex_build_args}};
+          make TPL ${{matrix.amrex_build_args}};
       - name: Test Transport
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
@@ -101,8 +101,8 @@ jobs:
           ${{matrix.env_cmds}}
           (for TYPE in Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
-            make -j ${{env.NPROCS}} COMP=${{matrix.comp}} Transport_Model=${TYPE} ${{matrix.amrex_build_args}}; \
-            ./Pele2d.${{matrix.comp}}.ex inputs.2d_${TYPE}; \
+            make -j ${{env.NPROCS}} Transport_Model=${TYPE} ${{matrix.amrex_build_args}}; \
+            if [ "${{matrix.comp}}" != 'nvcc' ]; ./Pele2d.${{matrix.comp}}.ex inputs.2d_${TYPE}; fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi \
           done)
@@ -114,8 +114,8 @@ jobs:
           (for TYPE in Fuego GammaLaw; do \
             if [ "${TYPE}" == 'Fuego' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
-            make -j ${{env.NPROCS}} COMP=${{matrix.comp}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} ${{matrix.amrex_build_args}}; \
-            ./Pele2d.${{matrix.comp}}.ex inputs.2d; \
+            make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} ${{matrix.amrex_build_args}}; \
+            if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele2d.${{matrix.comp}}.ex inputs.2d; fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi \
           done)
@@ -126,13 +126,13 @@ jobs:
           ${{matrix.env_cmds}}
           (for TYPE in Cvode Arkode RK64; do \
             printf "\n-------- ${TYPE} --------\n"; \
-            make -j ${{env.NPROCS}} COMP=${{matrix.comp}} Eos_Model=Fuego Chemistry_Model=drm19 ${{matrix.amrex_build_args}}; \
-            ./Pele3d.${{matrix.comp}}.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
-            ./Pele3d.${{matrix.comp}}.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+            make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=drm19 ${{matrix.amrex_build_args}}; \
+            if [ "${{matrix.comp}}" != 'nvcc' ]; ./Pele3d.${{matrix.comp}}.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; fi; \
+            if [ "${{matrix.comp}}" != 'nvcc' ]; ./Pele3d.${{matrix.comp}}.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; fi; \
             make realclean; \
-            make -j ${{env.NPROCS}} COMP=${{matrix.comp}} Eos_Model=Fuego Chemistry_Model=LiDryer ${{matrix.amrex_build_args}}; \
-            ./Pele3d.${{matrix.comp}}.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
-            ./Pele3d.${{matrix.comp}}.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+            make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=LiDryer ${{matrix.amrex_build_args}}; \
+            if [ "${{matrix.comp}}" != 'nvcc' ]; ./Pele3d.${{matrix.comp}}.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; fi; \
+            if [ "${{matrix.comp}}" != 'nvcc' ]; ./Pele3d.${{matrix.comp}}.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi \
           done)
