@@ -92,11 +92,11 @@ jobs:
       - name: Dependencies
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
+          ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}} || true;
           cmake --version
           echo "CUDA_HOME=${CUDA_HOME}"
-          ls ${CUDA_HOME} || true
+          ls ${CUDA_HOME} > /dev/null || true
           which nvcc || echo "nvcc not in PATH!"
-          ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}} || true;
           make TPL ${{matrix.amrex_build_args}};
       - name: Test Transport
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
