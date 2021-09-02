@@ -78,7 +78,6 @@ jobs:
           path: AMReX-${{matrix.comp}}
       - name: Set Environment Variables
         run: |
-          echo "CXXFLAGS='-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code'" >> $GITHUB_ENV
           echo "AMREX_HOME=${{github.workspace}}/AMReX-${{matrix.comp}}" >> $GITHUB_ENV
           echo "PELE_PHYSICS_HOME=${{github.workspace}}/PelePhysics-${{matrix.comp}}" >> $GITHUB_ENV
           echo "TRANSPORT_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/TranEval" >> $GITHUB_ENV
