@@ -42,12 +42,13 @@ jobs:
           echo "AMREX_HOME=${{github.workspace}}/AMReX-${{matrix.type}}" >> $GITHUB_ENV
           echo "PELE_PHYSICS_HOME=${{github.workspace}}/PelePhysics-${{matrix.type}}" >> $GITHUB_ENV
           echo "WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.type}}/Testing/Exec/TranEval" >> $GITHUB_ENV
+          echo "NPROCS=$(nproc)" >> $GITHUB_ENV
       - name: Build SUNDIALS
         working-directory: ${{env.WORKING_DIRECTORY}}
         run: make TPL COMP=gnu
       - name: Build ${{matrix.type}} Transport
         working-directory: ${{env.WORKING_DIRECTORY}}
-        run: make -j $(nprocs) COMP=gnu Transport_Model=${{matrix.type}}
+        run: make -j ${{env.NPROCS}} COMP=gnu Transport_Model=${{matrix.type}}
       - name: Run ${{matrix.type}} Transport
         working-directory: ${{env.WORKING_DIRECTORY}}
         run: ./Pele2d.gnu.ex inputs.2d_${{matrix.type}}
