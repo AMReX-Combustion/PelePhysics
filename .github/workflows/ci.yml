@@ -34,6 +34,7 @@ jobs:
         with:
           path: ${{matrix.type}}
       - name: Checkout AMReX
+        uses: actions/checkout@v2
         with:
           repository: AMReX-Codes/amrex
           path: amrex-${{matrix.type}}
