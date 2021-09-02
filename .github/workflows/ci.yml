@@ -23,7 +23,7 @@ jobs:
       matrix:
         type: [Constant, Sutherland, Simple]
     env:
-      CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code"
+      CXXFLAGS: ${{ '-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code' }}
       AMREX_HOME: ${{runner.workspace}}/PelePhysics/AMReX-${{matrix.type}}
       PELE_PHYSICS_HOME: ${{runner.workspace}}/PelePhysics/PelePhysics-${{matrix.type}}
     steps:
