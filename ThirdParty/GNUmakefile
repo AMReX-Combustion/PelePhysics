@@ -12,6 +12,7 @@ lowercase_hcomp = $(shell echo $(COMP) | tr A-Z a-z)
 ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),gcc gnu g++ mpicc mpicxx))
   ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),mpi))
     CCOMPILER = $(shell $(COMP) --show | awk '{print $$1}')
+    CXXCOMPILER = $(shell $(COMP) --show | awk '{print $$1}')
   else
     CCOMPILER = gcc
     CXXCOMPILER = g++
