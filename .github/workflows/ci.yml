@@ -97,7 +97,7 @@ jobs:
       - name: Test Transport
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
-          #echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
+          echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           ${{matrix.env_cmds}}
           (for TYPE in Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
@@ -109,7 +109,7 @@ jobs:
       - name: Test EOS
         working-directory: ${{env.EOS_WORKING_DIRECTORY}}
         run: |
-          #echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
+          echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           ${{matrix.env_cmds}};
           (for TYPE in Fuego GammaLaw; do \
             if [ "${TYPE}" == 'Fuego' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
@@ -122,7 +122,7 @@ jobs:
       - name: Test Reactions
         working-directory: ${{env.REACT_WORKING_DIRECTORY}}
         run: |
-          #echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
+          echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           ${{matrix.env_cmds}};
           (for TYPE in Cvode Arkode RK64; do \
             printf "\n-------- ${TYPE} --------\n"; \
