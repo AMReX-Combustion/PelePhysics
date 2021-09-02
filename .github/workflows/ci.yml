@@ -26,7 +26,7 @@ jobs:
         poetry-version: [1.1.7]
     defaults:
       run:
-        working-directory: ./Support/Fuego/Pythia
+        working-directory: ${{github.workspace}}/Support/Fuego/Pythia
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -80,3 +80,44 @@ jobs:
       - name: Run ${{matrix.type}} Transport
         working-directory: ${{env.WORKING_DIRECTORY}}
         run: ./Pele2d.gnu.ex inputs.2d_${{matrix.type}}
+
+  EOS:
+    needs: Formatting
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - type: Fuego
+            ctype: LiDryer
+          - type: GammaLaw
+            ctype: Null
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{github.token}}
+      - name: Checkout PelePhysics
+        uses: actions/checkout@v2
+        with:
+          path: PelePhysics-${{matrix.type}}
+      - name: Checkout AMReX
+        uses: actions/checkout@v2
+        with:
+          repository: AMReX-Codes/amrex
+          path: AMReX-${{matrix.type}}
+      - name: Set Environment
+        run: |
+          echo "CXXFLAGS='-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code'" >> $GITHUB_ENV
+          echo "AMREX_HOME=${{github.workspace}}/AMReX-${{matrix.type}}" >> $GITHUB_ENV
+          echo "PELE_PHYSICS_HOME=${{github.workspace}}/PelePhysics-${{matrix.type}}" >> $GITHUB_ENV
+          echo "WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.type}}/Testing/Exec/EosEval" >> $GITHUB_ENV
+          echo "NPROCS=$(nproc)" >> $GITHUB_ENV
+      - name: Build SUNDIALS
+        working-directory: ${{env.WORKING_DIRECTORY}}
+        run: make TPL COMP=gnu
+      - name: Build ${{matrix.type}} EOS
+        working-directory: ${{env.WORKING_DIRECTORY}}
+        run: make -j ${{env.NPROCS}} COMP=gnu Eos_Model=${{matrix.type}} Chemistry_Model=${{matrix.ctype}}
+      - name: Run ${{matrix.type}} EOS
+        working-directory: ${{env.WORKING_DIRECTORY}}
+        run: ./Pele2d.gnu.ex inputs.2d
