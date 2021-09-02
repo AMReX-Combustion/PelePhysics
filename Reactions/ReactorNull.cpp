@@ -4,6 +4,14 @@ namespace pele {
 namespace physics {
 namespace reactions {
 
+int
+ReactorNull::init(int reactor_type, int /*Ncells*/)
+{
+  BL_PROFILE("Pele::ReactorNull::init()");
+  m_reactor_type = reactor_type;
+  return (0);
+}
+
 // Array4 version
 int
 ReactorNull::react(
@@ -16,8 +24,7 @@ ReactorNull::react(
   amrex::Array4<amrex::Real> const& FC_in,
   amrex::Array4<int> const& /*mask*/,
   amrex::Real& dt_react,
-  amrex::Real& time,
-  const int& reactor_type
+  amrex::Real& time
 #ifdef AMREX_USE_GPU
   ,
   amrex::gpuStream_t stream
@@ -34,7 +41,7 @@ ReactorNull::react(
 
   amrex::Real time_init = time;
 
-  int captured_reactor_type = reactor_type;
+  int captured_reactor_type = m_reactor_type;
 
   ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     amrex::Real renergy_loc =
@@ -80,7 +87,6 @@ ReactorNull::react(
   amrex::Real* /*rX_src_in*/,
   amrex::Real& dt_react,
   amrex::Real& time,
-  int /*cvode_iE*/,
   int /*Ncells*/
 #ifdef AMREX_USE_GPU
   ,

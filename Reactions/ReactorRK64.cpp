@@ -5,9 +5,10 @@ namespace physics {
 namespace reactions {
 
 int
-ReactorRK64::init(int /*reactor_type*/, int /*Ncells*/)
+ReactorRK64::init(int reactor_type, int /*Ncells*/)
 {
   BL_PROFILE("Pele::ReactorRK64::init()");
+  m_reactor_type = reactor_type;
   amrex::ParmParse pp("ode");
   pp.query("atol", absTol);
   pp.query("rk64_nsubsteps_guess", rk64_nsubsteps_guess);
@@ -24,7 +25,6 @@ ReactorRK64::react(
   amrex::Real* rX_src_in,
   amrex::Real& dt_react,
   amrex::Real& time,
-  int reactor_type,
   int Ncells
 #ifdef AMREX_USE_GPU
   ,
@@ -39,7 +39,7 @@ ReactorRK64::react(
   const amrex::Real tinyval = 1e-50;
 
   // capture reactor type
-  int captured_reactor_type = reactor_type;
+  int captured_reactor_type = m_reactor_type;
   int captured_nsubsteps_guess = rk64_nsubsteps_guess;
   int captured_nsubsteps_min = rk64_nsubsteps_min;
   int captured_nsubsteps_max = rk64_nsubsteps_max;
@@ -146,8 +146,7 @@ ReactorRK64::react(
   amrex::Array4<amrex::Real> const& FC_in,
   amrex::Array4<int> const& /*mask*/,
   amrex::Real& dt_react,
-  amrex::Real& time,
-  const int& reactor_type
+  amrex::Real& time
 #ifdef AMREX_USE_GPU
   ,
   amrex::gpuStream_t stream
@@ -161,7 +160,7 @@ ReactorRK64::react(
   const amrex::Real tinyval = 1e-50;
 
   // capture reactor type
-  int captured_reactor_type = reactor_type;
+  int captured_reactor_type = m_reactor_type;
   int captured_nsubsteps_guess = rk64_nsubsteps_guess;
   int captured_nsubsteps_min = rk64_nsubsteps_min;
   int captured_nsubsteps_max = rk64_nsubsteps_max;

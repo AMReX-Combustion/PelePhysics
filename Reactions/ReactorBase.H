@@ -31,8 +31,7 @@ public:
     amrex::Array4<amrex::Real> const& FC_in,
     amrex::Array4<int> const& mask,
     amrex::Real& dt_react,
-    amrex::Real& time,
-    const int& reactor_type
+    amrex::Real& time
 #ifdef AMREX_USE_GPU
     ,
     amrex::gpuStream_t stream
@@ -46,7 +45,6 @@ public:
     amrex::Real* rX_src_in,
     amrex::Real& dt_react,
     amrex::Real& time,
-    int reactor_type,
     int Ncells
 #ifdef AMREX_USE_GPU
     ,
@@ -57,7 +55,6 @@ public:
   virtual void flatten(
     const amrex::Box box,
     const int ncells,
-    const int reactor_type,
     amrex::Array4<const amrex::Real> const& rhoY,
     amrex::Array4<const amrex::Real> const& frcExt,
     amrex::Array4<const amrex::Real> const& temperature,
@@ -71,7 +68,6 @@ public:
   virtual void unflatten(
     const amrex::Box box,
     const int ncells,
-    const int reactor_type,
     amrex::Array4<amrex::Real> const& rhoY,
     amrex::Array4<amrex::Real> const& temperature,
     amrex::Array4<amrex::Real> const& rhoE,

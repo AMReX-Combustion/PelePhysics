@@ -14,7 +14,7 @@ public:
 
   using Ordering = CYOrder;
 
-  int init(int /*reactor_type*/, int /*Ncells*/) override { return 0; }
+  int init(int reactor_type, int Ncells) override;
 
   void close() override {}
 
@@ -28,8 +28,7 @@ public:
     amrex::Array4<amrex::Real> const& FC_in,
     amrex::Array4<int> const& mask,
     amrex::Real& dt_react,
-    amrex::Real& time,
-    const int& reactor_type
+    amrex::Real& time
 #ifdef AMREX_USE_GPU
     ,
     amrex::gpuStream_t stream
@@ -43,7 +42,6 @@ public:
     amrex::Real* rX_src_in,
     amrex::Real& dt_react,
     amrex::Real& time,
-    int reactor_type,
     int Ncells
 #ifdef AMREX_USE_GPU
     ,
@@ -54,7 +52,6 @@ public:
   void flatten(
     const amrex::Box box,
     const int ncells,
-    const int reactor_type,
     amrex::Array4<const amrex::Real> const& rhoY,
     amrex::Array4<const amrex::Real> const& frcExt,
     amrex::Array4<const amrex::Real> const& temperature,
@@ -66,14 +63,13 @@ public:
     amrex::Real* src_vect_energy) override
   {
     flatten_ops.flatten(
-      box, ncells, reactor_type, rhoY, frcExt, temperature, rhoE, frcEExt,
+      box, ncells, m_reactor_type, rhoY, frcExt, temperature, rhoE, frcEExt,
       y_vect, src_vect, vect_energy, src_vect_energy);
   }
 
   void unflatten(
     const amrex::Box box,
     const int ncells,
-    const int reactor_type,
     amrex::Array4<amrex::Real> const& rhoY,
     amrex::Array4<amrex::Real> const& temperature,
     amrex::Array4<amrex::Real> const& rhoE,
@@ -85,7 +81,7 @@ public:
     amrex::Real dt) override
   {
     flatten_ops.unflatten(
-      box, ncells, reactor_type, rhoY, temperature, rhoE, frcEExt, FC_in,
+      box, ncells, m_reactor_type, rhoY, temperature, rhoE, frcEExt, FC_in,
       y_vect, vect_energy, FCunt, dt);
   }
 
@@ -93,6 +89,7 @@ public:
 
 private:
   FlattenOps<Ordering> flatten_ops;
+  int m_reactor_type{0};
 };
 } // namespace reactions
 } // namespace physics

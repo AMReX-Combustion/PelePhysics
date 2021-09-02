@@ -5,9 +5,10 @@ namespace physics {
 namespace reactions {
 
 int
-ReactorArkode::init(int /*reactor_type*/, int /*Ncells*/)
+ReactorArkode::init(int reactor_type, int /*Ncells*/)
 {
   BL_PROFILE("Pele::ReactorArkode::init()");
+  m_reactor_type = reactor_type;
   amrex::ParmParse pp("ode");
   pp.query("use_erkstep", use_erkstep);
   pp.query("rtol", relTol);
@@ -122,8 +123,7 @@ ReactorArkode::react(
   amrex::Array4<amrex::Real> const& FC_in,
   amrex::Array4<int> const& /*mask*/,
   amrex::Real& dt_react,
-  amrex::Real& time,
-  const int& reactor_type
+  amrex::Real& time
 #ifdef AMREX_USE_GPU
   ,
   amrex::gpuStream_t stream
@@ -131,15 +131,13 @@ ReactorArkode::react(
 )
 {
   BL_PROFILE("Pele::ReactorArkode::react()");
-  int NCELLS, NEQ, neq_tot;
-  realtype time_init, time_out;
 
   void* arkode_mem = NULL;
   N_Vector y = NULL;
 
-  NEQ = NUM_SPECIES + 1;
-  NCELLS = box.numPts();
-  neq_tot = NEQ * NCELLS;
+  int NEQ = NUM_SPECIES + 1;
+  int NCELLS = box.numPts();
+  int neq_tot = NEQ * NCELLS;
   AMREX_ASSERT(NCELLS < std::numeric_limits<int>::max());
 
   ARKODEUserData* user_data;
@@ -147,7 +145,7 @@ ReactorArkode::react(
     (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
   user_data->ncells_d = NCELLS;
   user_data->neqs_per_cell = NEQ;
-  user_data->ireactor_type = reactor_type;
+  user_data->ireactor_type = m_reactor_type;
   user_data->iverbose = 1;
   //#ifdef AMREX_USE_GPU
   //  user_data->stream = stream;
@@ -199,12 +197,11 @@ ReactorArkode::react(
 #endif
 
   flatten(
-    box, NCELLS, user_data->ireactor_type, rY_in, rY_src_in, T_in, rEner_in,
-    rEner_src_in, yvec_d, user_data->rYsrc_d, user_data->rhoe_init_d,
-    user_data->rhoesrc_ext_d);
+    box, NCELLS, rY_in, rY_src_in, T_in, rEner_in, rEner_src_in, yvec_d,
+    user_data->rYsrc_d, user_data->rhoe_init_d, user_data->rhoesrc_ext_d);
 
-  time_init = time;
-  time_out = time + dt_react;
+  realtype time_init = time;
+  realtype time_out = time + dt_react;
 
   if (use_erkstep == 0) {
     arkode_mem = ARKStepCreate(cF_RHS, NULL, time, y);
@@ -236,8 +233,8 @@ ReactorArkode::react(
   }
 
   unflatten(
-    box, NCELLS, user_data->ireactor_type, rY_in, T_in, rEner_in, rEner_src_in,
-    FC_in, yvec_d, user_data->rhoe_init_d, &nfe, dt_react);
+    box, NCELLS, rY_in, T_in, rEner_in, rEner_src_in, FC_in, yvec_d,
+    user_data->rhoe_init_d, &nfe, dt_react);
 
   N_VDestroy(y);
   if (use_erkstep == 0) {
@@ -264,7 +261,6 @@ ReactorArkode::react(
   realtype* rX_src_in,
   realtype& dt_react,
   realtype& time,
-  int reactor_type,
   int Ncells
 #ifdef AMREX_USE_GPU
   ,
@@ -273,19 +269,17 @@ ReactorArkode::react(
 )
 {
   BL_PROFILE("Pele::ReactorArkode::react()");
-  int NCELLS, NEQ, neq_tot;
-  realtype time_init, time_out;
   void* arkode_mem = NULL;
   N_Vector y = NULL;
-  NEQ = NUM_SPECIES + 1;
-  NCELLS = Ncells;
-  neq_tot = NEQ * NCELLS;
+  int NEQ = NUM_SPECIES + 1;
+  int NCELLS = Ncells;
+  int neq_tot = NEQ * NCELLS;
   ARKODEUserData* user_data;
   user_data =
     (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
   user_data->ncells_d = NCELLS;
   user_data->neqs_per_cell = NEQ;
-  user_data->ireactor_type = reactor_type;
+  user_data->ireactor_type = m_reactor_type;
   user_data->iverbose = 1;
 #ifdef AMREX_USE_GPU
   user_data->stream = stream;
@@ -353,8 +347,8 @@ ReactorArkode::react(
   std::memcpy(user_data->rhoesrc_ext_d, rX_src_in, sizeof(realtype) * NCELLS);
 #endif
 
-  time_init = time;
-  time_out = time + dt_react;
+  realtype time_init = time;
+  realtype time_out = time + dt_react;
 
   if (use_erkstep == 0) {
     arkode_mem = ARKStepCreate(cF_RHS, NULL, time, y);

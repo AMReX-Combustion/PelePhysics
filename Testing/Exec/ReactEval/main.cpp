@@ -528,8 +528,7 @@ main(int argc, char* argv[])
           BL_PROFILE_VAR_START(ReactInLoop);
           for (int ii = 0; ii < ndt; ++ii) {
             tmp_fc = reactor->react(
-              box, rhoY, frcExt, T, rhoE, frcEExt, fc, mask, dt_incr, time,
-              ode_iE
+              box, rhoY, frcExt, T, rhoE, frcEExt, fc, mask, dt_incr, time
 #ifdef AMREX_USE_GPU
               ,
               amrex::Gpu::gpuStream()
@@ -586,7 +585,7 @@ main(int argc, char* argv[])
           BL_PROFILE_VAR_START(mainflatten);
 #ifndef AMREX_USE_GPU
           reactor->flatten(
-            box, nCells, ode_iE, rhoY, frcExt, T, rhoE, frcEExt, tmp_vect,
+            box, nCells, rhoY, frcExt, T, rhoE, frcEExt, tmp_vect,
             tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
 
           for (int icell = nc; icell < nc + extra_cells; icell++) {
@@ -601,7 +600,7 @@ main(int argc, char* argv[])
           }
 #else
           reactor->flatten(
-            box, nCells, ode_iE, rhoY, frcExt, T, rhoE, frcEExt, tmp_vect_d,
+            box, nCells, rhoY, frcExt, T, rhoE, frcEExt, tmp_vect_d,
             tmp_src_vect_d, tmp_vect_energy_d, tmp_src_vect_energy_d);
 
           Gpu::copy(
@@ -630,7 +629,7 @@ main(int argc, char* argv[])
               tmp_fc[i] += reactor->react(
                 &tmp_vect[i * (NUM_SPECIES + 1)],
                 &tmp_src_vect[i * NUM_SPECIES], &tmp_vect_energy[i],
-                &tmp_src_vect_energy[i], dt_incr, time, ode_iE, ode_ncells
+                &tmp_src_vect_energy[i], dt_incr, time, ode_ncells
 #ifdef AMREX_USE_GPU
                 ,
                 amrex::Gpu::gpuStream()
@@ -649,7 +648,7 @@ main(int argc, char* argv[])
           BL_PROFILE_VAR_START(mainflatten);
 #ifndef AMREX_USE_GPU
           reactor->unflatten(
-            box, nCells, ode_iE, rhoY, T, rhoE, frcEExt, fc, tmp_vect,
+            box, nCells, rhoY, T, rhoE, frcEExt, fc, tmp_vect,
             tmp_vect_energy, tmp_fc, dt);
 #else
 
@@ -668,7 +667,7 @@ main(int argc, char* argv[])
           Gpu::copy(Gpu::hostToDevice, tmp_fc, tmp_fc + nCells, tmp_fc_d);
 
           reactor->unflatten(
-            box, nCells, ode_iE, rhoY, T, rhoE, frcEExt, fc, tmp_vect_d,
+            box, nCells, rhoY, T, rhoE, frcEExt, fc, tmp_vect_d,
             tmp_vect_energy_d, tmp_fc_d, dt);
 #endif
           BL_PROFILE_VAR_STOP(mainflatten);

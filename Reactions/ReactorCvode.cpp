@@ -7,6 +7,7 @@ int
 ReactorCvode::init(int reactor_type, int Ncells)
 {
   BL_PROFILE("Pele::ReactorCvode::init()");
+  m_reactor_type = reactor_type;
   amrex::ParmParse pp("ode");
   pp.query("rtol", relTol);
   pp.query("atol", absTol);
@@ -24,8 +25,7 @@ ReactorCvode::react(
   amrex::Array4<amrex::Real> const& FC_in,
   amrex::Array4<int> const& mask,
   amrex::Real& dt_react,
-  amrex::Real& time,
-  const int& reactor_type
+  amrex::Real& time
 #ifdef AMREX_USE_GPU
   ,
   amrex::gpuStream_t stream
@@ -44,7 +44,6 @@ ReactorCvode::react(
   realtype* rX_src_in,
   realtype& dt_react,
   realtype& time,
-  int reactor_type,
   int Ncells
 #ifdef AMREX_USE_GPU
   ,
