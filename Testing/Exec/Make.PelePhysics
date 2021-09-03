@@ -9,7 +9,7 @@ REACTIONS_HOME ?= $(PELE_PHYSICS_HOME)/Reactions
 TRAN_HOME    ?= $(PELE_PHYSICS_HOME)/Transport
 
 EBASE = Pele
-BL_NO_FORT = TRUE
+#BL_NO_FORT = TRUE
 
 # EXTERN_CORE is simply a list of the directories we use in Eos, Reactions, Transport and Util
 # this list will be searched for runtime parameters
