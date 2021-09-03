@@ -233,7 +233,7 @@ ReactorArkode::react(
     ERKStepGetNumRhsEvals(arkode_mem, &nfe);
   }
 
-  amrex::Gpu::DeviceVector<long int> v_nfe(Ncells, nfe);
+  amrex::Gpu::DeviceVector<long int> v_nfe(NCELLS, nfe);
   long int* d_nfe = v_nfe.data();
   unflatten(
     box, NCELLS, rY_in, T_in, rEner_in, rEner_src_in, FC_in, yvec_d,
