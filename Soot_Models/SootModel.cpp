@@ -44,7 +44,7 @@ SootModel::SootModel()
     m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
     m_maxDtRate(-1.),
     m_Tcutoff(-1.),
-    m_numSubcycles(2),
+    m_numSubcycles(3),
     m_reactDataFilled(false),
     m_gasSpecNames(NUM_SOOT_GS, "")
 {
@@ -170,10 +170,6 @@ SootModel::readSootParams()
   pp.query("max_dt_rate", m_maxDtRate);
   m_Tcutoff = 273.;
   pp.query("temp_cutoff", m_Tcutoff);
-  // Recommend using subcycles for PeleLM, since timestep is much bigger
-#ifdef SOOT_PELE_LM
-  m_numSubcycles = 10;
-#endif
   pp.query("num_subcycles", m_numSubcycles);
   // Determines if mass is conserved by adding lost mass to H2
   m_conserveMass = false;
@@ -307,6 +303,8 @@ SootModel::addSootSourceTerm(
             << vbox << std::endl;
   }
   const int nsub_init = m_numSubcycles;
+  const int nsubMAX = 20;
+  const Real maxmc = m_maxDtRate;
   // Primitive components
   const int qRhoIndx = m_sootIndx.qRhoIndx;
   const int qTempIndx = m_sootIndx.qTempIndx;
@@ -412,8 +410,6 @@ SootModel::addSootSourceTerm(
     int isub = 1;
     // Subcycling
     while (isub <= nsub && T > Tcutoff) {
-      // Clip moments
-      sd->clipMoments(momentsPtr);
       // Molar concentration of the PAH inception species
       Real xi_PAH = xi_n[SootGasSpecIndx::indxPAH];
       // Compute the vector of factors used for moment interpolation
@@ -449,6 +445,19 @@ SootModel::addSootSourceTerm(
           if (xi_n[sp] > Xcutoff) {
             nsub = amrex::max(nsub, int(-dt * omega_src[sp] / xi_n[sp]) + 1);
           }
+        }
+        for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
+          Real denom = amrex::min(dt * std::abs(mom_src[mom]) / (moments[mom] * maxmc),
+                                  Real(nsubMAX));
+          nsub = amrex::max(nsub, int(denom) + 1);
+        }
+        Real diffM = moments[0] - moments[NUM_SOOT_MOMENTS];
+        Real diffMdot = mom_src[0] - mom_src[NUM_SOOT_MOMENTS];
+        if (dt * diffMdot < diffM) {
+          nsub = amrex::max(nsub, int(dt * diffMdot / diffM) + 1);
+        }
+        if (nsub > nsubMAX) {
+          nsub = nsubMAX;
         }
         sootdt = dt / Real(nsub);
       }

@@ -148,10 +148,11 @@ calcVaporY(
   Real sum_mw_xv = 0.; // Sum mw_v*x_v
   Real nt = 0.;        // Total moles of liquid
   // This computes the mass fractions in the vapor
-  // The equation is a normalized version of y_v = x_vi*mw_i/((1 - sum_k x_vk) +
-  // sum_j x_vj mw_j)
-  // x_vi = x_li*p_sat/(p_gas*mw_gas)
-  // x_li = (y_li/mw_i)/(sum_j y_lj/mw_j)
+  // The vapor mass fraction is y_vi = x_vi * mw_i / mw_vg
+  // where mw_vg = mw_gas * (1 - sum_k x_vk) + sum_k x_vk * mw_k
+  // and x_vk = x_lk * psat_k / p_gas
+  // Note: this function seems more convuluted because we start with
+  // the liquid mass fractions, not molar fractions
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
     const Real boilT_ref = fdat.boilT[spf];
