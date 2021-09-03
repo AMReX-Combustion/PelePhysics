@@ -9,6 +9,7 @@ ReactorNull::init(int reactor_type, int /*Ncells*/)
 {
   BL_PROFILE("Pele::ReactorNull::init()");
   m_reactor_type = reactor_type;
+  ReactorTypes::check_reactor_type(m_reactor_type);
   return (0);
 }
 
@@ -27,17 +28,10 @@ ReactorNull::react(
   amrex::Real& time
 #ifdef AMREX_USE_GPU
   ,
-  amrex::gpuStream_t stream
+  amrex::gpuStream_t /*stream*/
 #endif
 )
 {
-
-  int omp_thread = 0;
-#ifdef _OPENMP
-  omp_thread = omp_get_thread_num();
-#endif
-
-  constexpr int eint_rho = 1;
 
   amrex::Real time_init = time;
 
@@ -63,10 +57,12 @@ ReactorNull::react(
     amrex::Real energy_loc = renergy_loc / rho_loc;
     amrex::Real T_loc = T_in(i, j, k, 0);
     auto eos = pele::physics::PhysicsType::eos();
-    if (captured_reactor_type == eint_rho) {
+    if (captured_reactor_type == ReactorTypes::e_reactor_type) {
       eos.REY2T(rho_loc, energy_loc, Y_loc, T_loc);
-    } else {
+    } else if (captured_reactor_type == ReactorTypes::h_reactor_type) {
       eos.RHY2T(rho_loc, energy_loc, Y_loc, T_loc);
+    } else {
+      amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
     }
     T_in(i, j, k, 0) = T_loc;
     FC_in(i, j, k, 0) = 0.0;

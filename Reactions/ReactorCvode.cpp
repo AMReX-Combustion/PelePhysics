@@ -8,6 +8,7 @@ ReactorCvode::init(int reactor_type, int Ncells)
 {
   BL_PROFILE("Pele::ReactorCvode::init()");
   m_reactor_type = reactor_type;
+  ReactorTypes::check_reactor_type(m_reactor_type);
   amrex::ParmParse pp("ode");
   pp.query("rtol", relTol);
   pp.query("atol", absTol);

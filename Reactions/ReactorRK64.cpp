@@ -1,3 +1,4 @@
+#include "AMReX_Reduce.H"
 #include "ReactorRK64.H"
 
 namespace pele {
@@ -9,6 +10,7 @@ ReactorRK64::init(int reactor_type, int /*Ncells*/)
 {
   BL_PROFILE("Pele::ReactorRK64::init()");
   m_reactor_type = reactor_type;
+  ReactorTypes::check_reactor_type(m_reactor_type);
   amrex::ParmParse pp("ode");
   pp.query("atol", absTol);
   pp.query("rk64_nsubsteps_guess", rk64_nsubsteps_guess);
@@ -28,7 +30,7 @@ ReactorRK64::react(
   int Ncells
 #ifdef AMREX_USE_GPU
   ,
-  amrex::gpuStream_t stream
+  amrex::gpuStream_t /*stream*/
 #endif
 )
 {
@@ -46,8 +48,8 @@ ReactorRK64::react(
   const amrex::Real captured_abstol = absTol;
   RK64Params rkp;
 
-  int* nstepsvec;
-  nstepsvec = new int[Ncells]();
+  amrex::Gpu::DeviceVector<int> nsteps(Ncells, 0);
+  int* d_nsteps = nsteps.data();
 
   amrex::ParallelFor(Ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
     amrex::Real soln_reg[NUM_SPECIES + 1] = {0.0};
@@ -112,7 +114,7 @@ ReactorRK64::react(
         dt_rk = amrex::max<amrex::Real>(dt_rk_min, dt_rk * change_factor);
       }
     }
-    nstepsvec[icell] = nsteps;
+    d_nsteps[icell] = nsteps;
     // copy data back
     for (int sp = 0; sp < neq; sp++) {
       rY_in[icell * neq + sp] = soln_reg[sp];
@@ -124,11 +126,9 @@ ReactorRK64::react(
   time = time_out;
 #endif
 
-  amrex::Real avgsteps = 0.0;
-  for (int i = 0; i < Ncells; i++) {
-    avgsteps += nstepsvec[i];
-  }
-
+  const int avgsteps = amrex::Reduce::Sum<int>(
+    Ncells, [=] AMREX_GPU_DEVICE(int i) noexcept -> int { return d_nsteps[i]; },
+    0);
   return (int(avgsteps / amrex::Real(Ncells)));
 }
 
@@ -146,7 +146,7 @@ ReactorRK64::react(
   amrex::Real& time
 #ifdef AMREX_USE_GPU
   ,
-  amrex::gpuStream_t stream
+  amrex::gpuStream_t /*stream*/
 #endif
 )
 {
@@ -164,11 +164,12 @@ ReactorRK64::react(
   const amrex::Real captured_abstol = absTol;
   RK64Params rkp;
 
-  int* nstepsvec;
   int Ncells = box.numPts();
   const auto len = amrex::length(box);
   const auto lo = amrex::lbound(box);
-  nstepsvec = new int[Ncells]();
+
+  amrex::Gpu::DeviceVector<int> nsteps(Ncells, 0);
+  int* d_nsteps = nsteps.data();
 
   amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     amrex::Real soln_reg[NUM_SPECIES + 1] = {0.0};
@@ -194,10 +195,12 @@ ReactorRK64::react(
 
     amrex::Real Enrg_loc = rEner_in(i, j, k, 0) * rho_inv;
     auto eos = pele::physics::PhysicsType::eos();
-    if (captured_reactor_type == 1) {
+    if (captured_reactor_type == ReactorTypes::e_reactor_type) {
       eos.REY2T(rho, Enrg_loc, mass_frac, temp);
-    } else {
+    } else if (captured_reactor_type == ReactorTypes::h_reactor_type) {
       eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
+    } else {
+      amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
     }
     soln_reg[NUM_SPECIES] = temp;
     carryover_reg[NUM_SPECIES] = soln_reg[NUM_SPECIES];
@@ -254,7 +257,7 @@ ReactorRK64::react(
 
     // copy data back
     int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
-    nstepsvec[icell] = nsteps;
+    d_nsteps[icell] = nsteps;
     rho = 0.0;
     for (int sp = 0; sp < NUM_SPECIES; sp++) {
       rY_in(i, j, k, sp) = soln_reg[sp];
@@ -268,10 +271,12 @@ ReactorRK64::react(
     rEner_in(i, j, k, 0) = rhoe_init[0] + dt_react * rhoesrc_ext[0];
     Enrg_loc = rEner_in(i, j, k, 0) * rho_inv;
 
-    if (captured_reactor_type == 1) {
+    if (captured_reactor_type == ReactorTypes::e_reactor_type) {
       eos.REY2T(rho, Enrg_loc, mass_frac, temp);
-    } else {
+    } else if (captured_reactor_type == ReactorTypes::h_reactor_type) {
       eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
+    } else {
+      amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
     }
     T_in(i, j, k, 0) = temp;
     FC_in(i, j, k, 0) = nsteps;
@@ -281,11 +286,9 @@ ReactorRK64::react(
   time = time_out;
 #endif
 
-  amrex::Real avgsteps = 0.0;
-  for (int i = 0; i < Ncells; i++) {
-    avgsteps += nstepsvec[i];
-  }
-
+  const int avgsteps = amrex::Reduce::Sum<int>(
+    Ncells, [=] AMREX_GPU_DEVICE(int i) noexcept -> int { return d_nsteps[i]; },
+    0);
   return (int(avgsteps / amrex::Real(Ncells)));
 }
 

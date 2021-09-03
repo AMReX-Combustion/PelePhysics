@@ -5,6 +5,7 @@
 #include <AMReX_Gpu.H>
 #include "mechanism.H"
 #include "PelePhysics.H"
+#include "ReactorTypes.H"
 
 namespace pele {
 namespace physics {
@@ -88,10 +89,12 @@ box_flatten(
 
   amrex::Real Enrg_loc = vect_energy[icell] * rho_inv;
   auto eos = pele::physics::PhysicsType::eos();
-  if (reactor_type == 1) {
+  if (reactor_type == ReactorTypes::e_reactor_type) {
     eos.REY2T(rho, Enrg_loc, mass_frac, temp);
-  } else {
+  } else if (reactor_type == ReactorTypes::h_reactor_type) {
     eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
+  } else {
+    amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
   }
   y_vect[vec_index<OrderType>(NUM_SPECIES, icell, ncells)] = temp;
 }
@@ -133,10 +136,12 @@ box_unflatten(
 
   amrex::Real Enrg_loc = rhoE(i, j, k, 0) * rho_inv;
   auto eos = pele::physics::PhysicsType::eos();
-  if (reactor_type == 1) {
+  if (reactor_type == ReactorTypes::e_reactor_type) {
     eos.REY2T(rho, Enrg_loc, mass_frac, temp);
-  } else {
+  } else if (reactor_type == ReactorTypes::h_reactor_type) {
     eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
+  } else {
+    amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
   }
   temperature(i, j, k, 0) = temp;
   FC_in(i, j, k, 0) = FCunt;
@@ -229,14 +234,16 @@ fKernelSpec(
   amrex::Real Cv_pt = 0.0;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
   auto eos = pele::physics::PhysicsType::eos();
-  if (reactor_type == 1) {
+  if (reactor_type == ReactorTypes::e_reactor_type) {
     eos.REY2T(rho_pt, nrg_pt, massfrac.arr, temp_pt);
     eos.RTY2Ei(rho_pt, temp_pt, massfrac.arr, ei_pt.arr);
     eos.RTY2Cv(rho_pt, temp_pt, massfrac.arr, Cv_pt);
-  } else {
+  } else if (reactor_type == ReactorTypes::h_reactor_type) {
     eos.RHY2T(rho_pt, nrg_pt, massfrac.arr, temp_pt);
     eos.RTY2Hi(rho_pt, temp_pt, massfrac.arr, ei_pt.arr);
     eos.RTY2Cp(rho_pt, temp_pt, massfrac.arr, Cv_pt);
+  } else {
+    amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
   }
 
   amrex::GpuArray<amrex::Real, NUM_SPECIES> cdots_pt = {0.0};

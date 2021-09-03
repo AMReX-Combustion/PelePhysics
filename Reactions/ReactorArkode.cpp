@@ -9,6 +9,7 @@ ReactorArkode::init(int reactor_type, int /*Ncells*/)
 {
   BL_PROFILE("Pele::ReactorArkode::init()");
   m_reactor_type = reactor_type;
+  ReactorTypes::check_reactor_type(m_reactor_type);
   amrex::ParmParse pp("ode");
   pp.query("use_erkstep", use_erkstep);
   pp.query("rtol", relTol);
