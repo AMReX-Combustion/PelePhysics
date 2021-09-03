@@ -168,7 +168,8 @@ public:
     const auto len = amrex::length(box);
     const auto lo = amrex::lbound(box);
     amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-      int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
+      const int icell =
+        (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
       box_flatten<OrderType>(
         icell, i, j, k, ncells, reactor_type, rhoY, frcExt, temperature, rhoE,
         frcEExt, y_vect, src_vect, vect_energy, src_vect_energy);
@@ -192,7 +193,8 @@ public:
     const auto len = amrex::length(box);
     const auto lo = amrex::lbound(box);
     amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-      int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
+      const int icell =
+        (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
       box_unflatten<OrderType>(
         icell, i, j, k, ncells, reactor_type, rhoY, temperature, rhoE, frcEExt,
         FC_in, y_vect, vect_energy, FCunt[icell], dt);
