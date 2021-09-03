@@ -88,54 +88,62 @@ jobs:
             echo "CUDA_HOME=/usr/local/cuda-11.2" >> $GITHUB_ENV; \
             echo "LD_LIBRARY_PATH=/usr/local/cuda-11.2/lib64:${LD_LIBRARY_PATH}" >> $GITHUB_ENV; \
             echo "/usr/local/cuda-11.2/bin" >> $GITHUB_PATH; \
-          fi;
+          fi
       - name: Dependencies
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
           if [ "${{matrix.comp}}" == 'nvcc' ]; then \
-            ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}};
+            ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}}; \
             echo "CUDA_HOME=${CUDA_HOME}"; \
             ls ${CUDA_HOME} > /dev/null; \
             which nvcc || echo "nvcc not in PATH!"; \
-          fi;
+          fi
           cmake --version
           make TPL ${{matrix.amrex_build_args}};
       - name: Test Transport
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
-          (for TYPE in Constant Simple Sutherland; do \
+          for TYPE in Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Transport_Model=${TYPE} ${{matrix.amrex_build_args}}; \
             if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele2d.${{matrix.comp}}.ex inputs.2d_${TYPE}; fi; \
             make realclean; \
-            if [ $? -ne 0 ]; then exit 1; fi \
-          done)
+            if [ $? -ne 0 ]; then exit 1; fi; \
+          done
       - name: Test EOS
         working-directory: ${{env.EOS_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
-          (for TYPE in Fuego GammaLaw; do \
+          for TYPE in Fuego GammaLaw; do \
             if [ "${TYPE}" == 'Fuego' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} ${{matrix.amrex_build_args}}; \
             if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele2d.${{matrix.comp}}.ex inputs.2d; fi; \
             make realclean; \
-            if [ $? -ne 0 ]; then exit 1; fi \
-          done)
+            if [ $? -ne 0 ]; then exit 1; fi; \
+          done
       - name: Test Reactions
         working-directory: ${{env.REACT_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
-          (for TYPE in Cvode Arkode RK64; do \
-            printf "\n-------- ${TYPE} --------\n"; \
-            make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=drm19 ${{matrix.amrex_build_args}}; \
-            if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele3d.${{matrix.comp}}.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; fi; \
-            if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele3d.${{matrix.comp}}.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; fi; \
-            make realclean; \
-            make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=LiDryer ${{matrix.amrex_build_args}}; \
-            if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele3d.${{matrix.comp}}.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; fi; \
-            if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele3d.${{matrix.comp}}.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; fi; \
-            make realclean; \
-            if [ $? -ne 0 ]; then exit 1; fi \
-          done)
+          make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=drm19 ${{matrix.amrex_build_args}}
+          if [ "${{matrix.comp}}" != 'nvcc' ]; then \
+            for TYPE in Cvode Arkode RK64; do \
+              printf "\n-------- ${TYPE} --------\n"; \
+              ./Pele3d.${{matrix.comp}}.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+              ./Pele3d.${{matrix.comp}}.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+              if [ $? -ne 0 ]; then exit 1; fi; \
+            done \
+          fi;
+          make realclean
+          make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=LiDryer ${{matrix.amrex_build_args}}
+          if [ "${{matrix.comp}}" != 'nvcc' ]; then \
+            for TYPE in Cvode Arkode RK64; do \
+              printf "\n-------- ${TYPE} --------\n"; \
+               ./Pele3d.${{matrix.comp}}.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+               ./Pele3d.${{matrix.comp}}.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+              if [ $? -ne 0 ]; then exit 1; fi; \
+            done \
+          fi
+          make realclean
