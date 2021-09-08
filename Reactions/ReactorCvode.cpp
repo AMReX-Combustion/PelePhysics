@@ -1330,14 +1330,11 @@ ReactorCvode::react(
   long int nfe;
   flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
 
-  BL_PROFILE_VAR_START(FlatStuff);
-  amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-    int icell = (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
-    box_unflatten(
-      icell, ncells, i, j, k, user_data->ireactor_type, rY_in, T_in, rEner_in,
-      rEner_src_in, FC_in, yvec_d, user_data->energy_init_d, nfe, dt_react);
-  });
-  BL_PROFILE_VAR_STOP(FlatStuff);
+  amrex::Gpu::DeviceVector<long int> v_nfe(NCELLS, nfe);
+  long int* d_nfe = v_nfe.data();
+  unflatten(
+    box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in, yvec_d,
+    user_data->energy_init_d, d_nfe, dt_react);
 
   if (user_data->iverbose > 1) {
     cvode::printFinalStats(cvode_mem);
