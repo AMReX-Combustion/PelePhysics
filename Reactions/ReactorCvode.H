@@ -2,8 +2,38 @@
 #define _REACTORCVODE_H_
 
 #include "ReactorBase.H"
+#include "ReactorCvodeUtils.H"
+#include "ReactorCvodePreconditioner.H"
+#include "ReactorCvodeJacobian.H"
+#include "ReactorCvodeCustomLinSolver.H"
+#include <cvode/cvode.h>
+#include <cvode/cvode_direct.h>
+#include <cvode/cvode_spils.h>
 #include <nvector/nvector_serial.h>
+#include <sunmatrix/sunmatrix_dense.h>
+#include <sunlinsol/sunlinsol_dense.h>
+#include <sunlinsol/sunlinsol_spgmr.h>
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_math.h>
+#include <sunmatrix/sunmatrix_sparse.h>
 
+#ifdef AMREX_USE_GPU
+#include "AMReX_SUNMemory.H"
+#endif
+
+#ifdef AMREX_USE_HIP
+#include <nvector/nvector_hip.h>
+#endif
+
+#ifdef USE_KLU_PP
+#include "klu.h"
+#include <sunlinsol/sunlinsol_klu.h>
+#endif
+
+#ifdef PP_USE_MAGMA
+#include <sunmatrix/sunmatrix_magmadense.h>
+#include <sunlinsol/sunlinsol_magmadense.h>
+#endif
 namespace pele {
 namespace physics {
 namespace reactions {
@@ -13,7 +43,7 @@ class ReactorCvode : public ReactorBase::Register<ReactorCvode>
 public:
   static std::string identifier() { return "ReactorCvode"; }
 
-  using Ordering = YCOrder;
+  using Ordering = utils::YCOrder;
 
   int init(int reactor_type, int Ncells) override;
 
@@ -92,11 +122,33 @@ public:
   void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) override;
 
 private:
+  void checkCvodeOptions();
+  void allocUserData(
+    CVODEUserData* udata,
+    int a_ncells
+#ifdef AMREX_USE_GPU
+    ,
+    SUNMatrix& a_A,
+    amrex::gpuStream_t stream
+#endif
+  );
+  void setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata);
+  void ReSetTolODE();
+  void freeUserData(CVODEUserData* data_wk);
+
   amrex::Real relTol{1e-6};
   amrex::Real absTol{1e-10};
   amrex::Array<double, NUM_SPECIES + 1> typVals;
-  FlattenOps<Ordering> flatten_ops;
+  utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
+
+#ifndef AMREX_USE_GPU
+  N_Vector y = NULL;
+  SUNLinearSolver LS = NULL;
+  SUNMatrix A = NULL;
+  void* cvode_mem = NULL;
+  CVODEUserData* udata_g = NULL;
+#endif
 };
 } // namespace reactions
 } // namespace physics

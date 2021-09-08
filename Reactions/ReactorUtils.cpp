@@ -3,6 +3,7 @@
 namespace pele {
 namespace physics {
 namespace reactions {
+namespace utils {
 
 // Check function return value...
 //     opt == 0 means SUNDIALS function allocates memory so check if
@@ -47,6 +48,7 @@ check_flag(void* flagvalue, const char* funcname, int opt)
 
   return (0);
 }
+} // namespace utils
 } // namespace reactions
 } // namespace physics
 } // namespace pele

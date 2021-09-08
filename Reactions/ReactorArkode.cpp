@@ -158,7 +158,7 @@ ReactorArkode::react(
   y = N_VNewWithMemHelp_Cuda(
     neq_tot, /*use_managed_mem=*/true,
     *amrex::sundials::The_SUNMemory_Helper());
-  if (check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
+  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
     new SUNCudaThreadDirectExecPolicy(256, stream);
@@ -169,7 +169,7 @@ ReactorArkode::react(
   y = N_VNewWithMemHelp_Hip(
     neq_tot, /*use_managed_mem=*/true,
     *amrex::sundials::The_SUNMemory_Helper());
-  if (check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
+  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
     new SUNHipThreadDirectExecPolicy(512, stream);
@@ -178,7 +178,7 @@ ReactorArkode::react(
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
 #else
   y = N_VNew_Serial(neq_tot);
-  if (check_flag((void*)y, "N_VNew_Serial", 0))
+  if (utils::check_flag((void*)y, "N_VNew_Serial", 0))
     return (1);
 #endif
 
@@ -294,7 +294,7 @@ ReactorArkode::react(
   y = N_VNewWithMemHelp_Cuda(
     neq_tot, /*use_managed_mem=*/true,
     *amrex::sundials::The_SUNMemory_Helper());
-  if (check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
+  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
     new SUNCudaThreadDirectExecPolicy(256, stream);
@@ -305,7 +305,7 @@ ReactorArkode::react(
   y = N_VNewWithMemHelp_Hip(
     neq_tot, /*use_managed_mem=*/true,
     *amrex::sundials::The_SUNMemory_Helper());
-  if (check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
+  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
     new SUNHipThreadDirectExecPolicy(256, stream);
@@ -314,7 +314,7 @@ ReactorArkode::react(
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
 #else
   y = N_VNew_Serial(neq_tot);
-  if (check_flag((void*)y, "N_VNew_Serial", 0))
+  if (utils::check_flag((void*)y, "N_VNew_Serial", 0))
     return (1);
 #endif
 
@@ -429,7 +429,7 @@ ReactorArkode::cF_RHS(
   auto rhoesrc_ext = udata->rhoesrc_ext_d;
   auto rYsrc = udata->rYsrc_d;
   amrex::ParallelFor(udata->ncells_d, [=] AMREX_GPU_DEVICE(int icell) noexcept {
-    fKernelSpec<Ordering>(
+    utils::fKernelSpec<Ordering>(
       icell, ncells, dt_save, reactor_type, yvec_d, ydot_d, rhoe_init,
       rhoesrc_ext, rYsrc);
   });

@@ -46,7 +46,7 @@ class ReactorRK64 : public ReactorBase::Register<ReactorRK64>
 public:
   static std::string identifier() { return "ReactorRK64"; }
 
-  using Ordering = YCOrder;
+  using Ordering = utils::YCOrder;
 
   int init(int reactor_type, int Ncells) override;
 
@@ -126,7 +126,7 @@ private:
   int rk64_nsubsteps_guess{10};
   int rk64_nsubsteps_min{5};
   int rk64_nsubsteps_max{500};
-  FlattenOps<Ordering> flatten_ops;
+  utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
 };
 } // namespace reactions

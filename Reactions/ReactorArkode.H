@@ -50,7 +50,7 @@ class ReactorArkode : public ReactorBase::Register<ReactorArkode>
 public:
   static std::string identifier() { return "ReactorArkode"; }
 
-  using Ordering = CYOrder;
+  using Ordering = utils::CYOrder;
 
   int init(int reactor_type, int Ncells) override;
 
@@ -134,7 +134,7 @@ private:
   int use_erkstep{0};
   int rk_method{40};
   int rk_controller{0};
-  FlattenOps<Ordering> flatten_ops;
+  utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
 };
 

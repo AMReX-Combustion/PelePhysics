@@ -1,6 +1,8 @@
 #ifndef _REACTORTYPES_H_
 #define _REACTORTYPES_H_
 
+#include <AMReX.H>
+
 namespace pele {
 namespace physics {
 namespace reactions {

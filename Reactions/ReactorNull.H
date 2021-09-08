@@ -12,7 +12,7 @@ class ReactorNull : public ReactorBase::Register<ReactorNull>
 public:
   static std::string identifier() { return "ReactorNull"; }
 
-  using Ordering = CYOrder;
+  using Ordering = utils::YCOrder;
 
   int init(int reactor_type, int Ncells) override;
 
@@ -88,7 +88,7 @@ public:
   void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) override;
 
 private:
-  FlattenOps<Ordering> flatten_ops;
+  utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
 };
 } // namespace reactions

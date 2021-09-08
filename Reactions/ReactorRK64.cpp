@@ -101,7 +101,7 @@ ReactorRK64::react(
         error_reg[sp] = 0.0;
       }
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
-        fKernelSpec<Ordering>(
+        utils::fKernelSpec<Ordering>(
           0, 1, current_time - time_init, captured_reactor_type, soln_reg, rhs,
           rhoe_init, rhoesrc_ext, rYsrc);
 
@@ -251,7 +251,7 @@ ReactorRK64::react(
         error_reg[sp] = 0.0;
       }
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
-        fKernelSpec<Ordering>(
+        utils::fKernelSpec<Ordering>(
           0, 1, current_time - time_init, captured_reactor_type, soln_reg, rhs,
           rhoe_init, rhoesrc_ext, rYsrc);
 

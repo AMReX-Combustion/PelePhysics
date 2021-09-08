@@ -10,7 +10,7 @@
 namespace pele {
 namespace physics {
 namespace reactions {
-
+namespace utils {
 int check_flag(void* flagvalue, const char* funcname, int opt);
 
 struct YCOrder
@@ -165,6 +165,7 @@ public:
     amrex::Real* vect_energy,
     amrex::Real* src_vect_energy)
   {
+    BL_PROFILE("Pele::flatten()");
     const auto len = amrex::length(box);
     const auto lo = amrex::lbound(box);
     amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
@@ -190,6 +191,7 @@ public:
     long int* FCunt,
     amrex::Real dt)
   {
+    BL_PROFILE("Pele::unflatten()");
     const auto len = amrex::length(box);
     const auto lo = amrex::lbound(box);
     amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
@@ -261,6 +263,7 @@ fKernelSpec(
   ydot_d[vec_index<OrderType>(NUM_SPECIES, icell, ncells)] =
     rhoesrc * (rho_pt_inv / Cv_pt);
 }
+} // namespace utils
 } // namespace reactions
 } // namespace physics
 } // namespace pele
