@@ -169,7 +169,7 @@ void WritePlotfile(const std::string         &pfversion,
 
 // --------------------------------------------------------------------
 std::string VisMFBaseName(const std::string& filename) {
-    BL_ASSERT(filename[filename.length() - 1] != '/');
+    AMREX_ASSERT(filename[filename.length() - 1] != '/');
     if(const char *slash = strrchr(filename.c_str(), '/')) {
         return std::string(slash + 1);
     } else {
@@ -264,7 +264,7 @@ static std::ostream &operator<<(std::ostream &os,
     long i = 0, N = ar.size(), M = (N == 0) ? 0 : ar[0].size();
     os << N << ',' << M << '\n';
     for( ; i < N; i++) {
-      BL_ASSERT(ar[i].size() == M);
+      AMREX_ASSERT(ar[i].size() == M);
       for(long j = 0; j < M; j++) {
         os << ar[i][j] << ',';
       }

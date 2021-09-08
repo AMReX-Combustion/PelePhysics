@@ -10,6 +10,10 @@
 #include <sunmatrix/sunmatrix_sparse.h>
 #include "ReactorUtils.H"
 
+#ifdef AMREX_USE_CUDA
+#include <cusolverSp.h>
+#endif
+
 namespace pele {
 namespace physics {
 namespace reactions {
@@ -114,7 +118,8 @@ void printFinalStats(void* cvodeMem);
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
-fKernelComputeallAJ(int ncell, void* user_data, Real* u_d, Real* csr_val_arg)
+fKernelComputeallAJ(
+  int ncell, void* user_data, amrex::Real* u_d, amrex::Real* csr_val_arg)
 {
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   int neqs = NUM_SPECIES + 1;
@@ -125,26 +130,27 @@ fKernelComputeallAJ(int ncell, void* user_data, Real* u_d, Real* csr_val_arg)
   auto csr_col_index_d = udata->csr_col_index_d;
   auto gamma = udata->gamma;
 
-  GpuArray<Real, NUM_SPECIES> activity{0.0};
-  GpuArray<Real, (NUM_SPECIES + 1) * (NUM_SPECIES + 1)> Jmat_pt{0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> activity{0.0};
+  amrex::GpuArray<amrex::Real, (NUM_SPECIES + 1) * (NUM_SPECIES + 1)> Jmat_pt{
+    0.0};
 
   int u_offset = ncell * neqs;
-  Real* u_curr = u_d + u_offset;
+  amrex::Real* u_curr = u_d + u_offset;
 
-  Real mw[NUM_SPECIES] = {0.0};
+  amrex::Real mw[NUM_SPECIES] = {0.0};
   get_mw(mw);
 
-  Real rho_pt = 0.0;
+  amrex::Real rho_pt = 0.0;
   for (int n = 0; n < NUM_SPECIES; n++) {
     rho_pt = rho_pt + u_curr[n];
   }
 
-  GpuArray<Real, NUM_SPECIES> massfrac{0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac{0.0};
   for (int i = 0; i < NUM_SPECIES; i++) {
     massfrac[i] = u_curr[i] / rho_pt;
   }
 
-  Real temp_pt = u_curr[NUM_SPECIES];
+  amrex::Real temp_pt = u_curr[NUM_SPECIES];
 
   auto eos = pele::physics::PhysicsType::eos();
   eos.RTY2C(rho_pt, temp_pt, massfrac.arr, activity.arr);
@@ -153,8 +159,8 @@ fKernelComputeallAJ(int ncell, void* user_data, Real* u_d, Real* csr_val_arg)
   DWDOT_SIMPLIFIED(Jmat_pt.arr, activity.arr, &temp_pt, &consP);
 
   int jac_offset = ncell * NNZ;
-  Real* csr_jac_cell = csr_jac_d + jac_offset;
-  Real* csr_val_cell = csr_val_arg + jac_offset;
+  amrex::Real* csr_jac_cell = csr_jac_d + jac_offset;
+  amrex::Real* csr_val_cell = csr_val_arg + jac_offset;
   for (int i = 0; i < NUM_SPECIES; i++) {
     for (int k = 0; k < NUM_SPECIES; k++) {
       Jmat_pt[k * neqs + i] *= mw[i] / mw[k];
@@ -184,7 +190,8 @@ fKernelComputeallAJ(int ncell, void* user_data, Real* u_d, Real* csr_val_arg)
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
-fKernelComputeAJsys(int ncell, void* user_data, Real* u_d, Real* csr_val_arg)
+fKernelComputeAJsys(
+  int ncell, void* user_data, amrex::Real* u_d, amrex::Real* csr_val_arg)
 {
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   auto NNZ = udata->NNZ;
@@ -194,8 +201,8 @@ fKernelComputeAJsys(int ncell, void* user_data, Real* u_d, Real* csr_val_arg)
   auto gamma = udata->gamma;
 
   int jac_offset = ncell * NNZ;
-  Real* csr_jac_cell = csr_jac_d + jac_offset;
-  Real* csr_val_cell = csr_val_arg + jac_offset;
+  amrex::Real* csr_jac_cell = csr_jac_d + jac_offset;
+  amrex::Real* csr_val_cell = csr_val_arg + jac_offset;
 
   for (int i = 1; i < NUM_SPECIES + 2; i++) {
     int nbVals = csr_row_count_d[i] - csr_row_count_d[i - 1];
@@ -215,7 +222,8 @@ fKernelComputeAJsys(int ncell, void* user_data, Real* u_d, Real* csr_val_arg)
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
-fKernelComputeAJchem(int ncell, void* user_data, Real* u_d, Real* Jdata)
+fKernelComputeAJchem(
+  int ncell, void* user_data, amrex::Real* u_d, amrex::Real* Jdata)
 {
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   const int neqs = NUM_SPECIES + 1;
@@ -225,30 +233,30 @@ fKernelComputeAJchem(int ncell, void* user_data, Real* u_d, Real* Jdata)
   auto csr_col_index_d = udata->csr_col_index_d;
 
   int u_offset = ncell * neqs;
-  Real* u_curr = u_d + u_offset;
+  amrex::Real* u_curr = u_d + u_offset;
 
-  Real rho_pt = 0.0;
+  amrex::Real rho_pt = 0.0;
   for (int n = 0; n < NUM_SPECIES; n++) {
     rho_pt = rho_pt + u_curr[n];
   }
 
-  GpuArray<Real, NUM_SPECIES> massfrac = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};
   for (int n = 0; n < NUM_SPECIES; n++) {
     massfrac[n] = u_curr[n] / rho_pt;
   }
-  Real temp_pt = u_curr[NUM_SPECIES];
+  amrex::Real temp_pt = u_curr[NUM_SPECIES];
 
   int consP = reactor_type == ReactorTypes::h_reactor_type;
-  GpuArray<Real, neqs* neqs> Jmat_pt = {0.0};
+  amrex::GpuArray<amrex::Real, neqs* neqs> Jmat_pt = {0.0};
   auto eos = pele::physics::PhysicsType::eos();
   eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP);
 
   // Scale Jacobian and pass into outgoing data ptr.
-  Real mw[NUM_SPECIES] = {0.0};
+  amrex::Real mw[NUM_SPECIES] = {0.0};
   get_mw(mw);
 
   int jac_offset = ncell * NNZ;
-  Real* csr_jac_cell = Jdata + jac_offset;
+  amrex::Real* csr_jac_cell = Jdata + jac_offset;
 
   for (int i = 0; i < NUM_SPECIES; i++) {
     for (int k = 0; k < NUM_SPECIES; k++) {
@@ -270,37 +278,38 @@ fKernelComputeAJchem(int ncell, void* user_data, Real* u_d, Real* Jdata)
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
-fKernelDenseAJchem(int icell, void* user_data, Real* u_d, Real* Jdata)
+fKernelDenseAJchem(
+  int icell, void* user_data, amrex::Real* u_d, amrex::Real* Jdata)
 {
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   const int neqs = NUM_SPECIES + 1;
   auto reactor_type = udata->ireactor_type;
 
   int u_offset = icell * neqs;
-  Real* u_curr = u_d + u_offset;
+  amrex::Real* u_curr = u_d + u_offset;
 
-  Real rho_pt = 0.0;
+  amrex::Real rho_pt = 0.0;
   for (int n = 0; n < NUM_SPECIES; n++) {
     rho_pt = rho_pt + u_curr[n];
   }
 
-  GpuArray<Real, NUM_SPECIES> massfrac = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};
   for (int n = 0; n < NUM_SPECIES; n++) {
     massfrac[n] = u_curr[n] / rho_pt;
   }
-  Real temp_pt = u_curr[NUM_SPECIES];
+  amrex::Real temp_pt = u_curr[NUM_SPECIES];
 
-  int consP = reactor_type == ReactorTypes::h_reactor_types;
-  GpuArray<Real, neqs* neqs> Jmat_pt = {0.0};
+  int consP = reactor_type == ReactorTypes::h_reactor_type;
+  amrex::GpuArray<amrex::Real, neqs* neqs> Jmat_pt = {0.0};
   auto eos = pele::physics::PhysicsType::eos();
   eos.RTY2JAC(rho_pt, temp_pt, massfrac.arr, Jmat_pt.arr, consP);
 
   // Scale Jacobian and pass into outgoing data ptr.
-  Real mw[NUM_SPECIES] = {0.0};
+  amrex::Real mw[NUM_SPECIES] = {0.0};
   get_mw(mw);
 
   int jac_offset = icell * (neqs * neqs);
-  Real* Jcurr = Jdata + jac_offset;
+  amrex::Real* Jcurr = Jdata + jac_offset;
 
   for (int i = 0; i < NUM_SPECIES; i++) {
     for (int k = 0; k < NUM_SPECIES; k++) {
@@ -315,11 +324,11 @@ fKernelDenseAJchem(int icell, void* user_data, Real* u_d, Real* Jdata)
 /*
 __global__ void
 fKernelDenseSolve( int ncell,
-                   Real* x_d,
-                   Real* b_d,
+                   amrex::Real* x_d,
+                   amrex::Real* b_d,
                    int subsys_size,
                    int subsys_nnz,
-                   Real* csr_val)
+                   amrex::Real* csr_val)
 {
   int stride = blockDim.x * gridDim.x;
 
@@ -328,9 +337,9 @@ fKernelDenseSolve( int ncell,
     int offset = icell * subsys_size;
     int offset_A = icell * subsys_nnz;
 
-    Real* csr_val_cell = csr_val + offset_A;
-    Real* x_cell = x_d + offset;
-    Real* b_cell = b_d + offset;
+    amrex::Real* csr_val_cell = csr_val + offset_A;
+    amrex::Real* x_cell = x_d + offset;
+    amrex::Real* b_cell = b_d + offset;
 
     sgjsolve(csr_val_cell, x_cell, b_cell);
   }

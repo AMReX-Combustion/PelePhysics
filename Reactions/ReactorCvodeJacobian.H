@@ -14,6 +14,12 @@
 #include <nvector/nvector_hip.h>
 #endif
 
+#ifdef AMREX_USE_CUDA
+#include <nvector/nvector_cuda.h>
+#include <sunmatrix/sunmatrix_cusparse.h>
+#include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
+#endif
+
 namespace pele {
 namespace physics {
 namespace reactions {

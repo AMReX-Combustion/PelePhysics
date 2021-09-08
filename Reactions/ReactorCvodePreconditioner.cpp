@@ -34,8 +34,8 @@ Precond(
 
   BL_PROFILE_VAR("fKernelComputeAJ()", fKernelComputeAJ);
   if (jok) {
-    const auto ec = Gpu::ExecutionConfig(ncells);
-    launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
+    const auto ec = amrex::Gpu::ExecutionConfig(ncells);
+    amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
       [=] AMREX_GPU_DEVICE() noexcept {
         for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                  stride = blockDim.x * gridDim.x;
@@ -45,8 +45,8 @@ Precond(
       });
     *jcurPtr = SUNFALSE;
   } else {
-    const auto ec = Gpu::ExecutionConfig(ncells);
-    launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
+    const auto ec = amrex::Gpu::ExecutionConfig(ncells);
+    amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
       [=] AMREX_GPU_DEVICE() noexcept {
         for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                  stride = blockDim.x * gridDim.x;
@@ -57,7 +57,7 @@ Precond(
     *jcurPtr = SUNTRUE;
   }
   cudaError_t cuda_status = cudaStreamSynchronize(stream);
-  assert(cuda_status == cudaSuccess);
+  AMREX_ASSERT(cuda_status == cudaSuccess);
   BL_PROFILE_VAR_STOP(fKernelComputeAJ);
 
   /*
@@ -75,11 +75,11 @@ Precond(
                                              &internalDataInBytes,
                                              &workspaceInBytes);
   Print() << " BufferInfo workspaceInBytes " << workspaceInBytes << "\n";
-  assert(cuS_st == CUSOLVER_STATUS_SUCCESS);
+  AMREX_ASSERT(cuS_st == CUSOLVER_STATUS_SUCCESS);
   */
 
   cuda_status = cudaDeviceSynchronize();
-  assert(cuda_status == cudaSuccess);
+  AMREX_ASSERT(cuda_status == cudaSuccess);
 
   BL_PROFILE_VAR_STOP(InfoBatched);
 
@@ -118,10 +118,10 @@ PSolve(
     udata->cusolverHandle, NUM_SPECIES + 1, NUM_SPECIES + 1, NNZ, udata->descrA,
     csr_val_d, csr_row_count_d, csr_col_index_d, r_d, z_d, ncells, udata->info,
     udata->buffer_qr);
-  assert(cuS_st == CUSOLVER_STATUS_SUCCESS);
+  AMREX_ASSERT(cuS_st == CUSOLVER_STATUS_SUCCESS);
 
   cudaError_t cuda_status = cudaDeviceSynchronize();
-  assert(cuda_status == cudaSuccess);
+  AMREX_ASSERT(cuda_status == cudaSuccess);
 
   N_VCopyFromDevice_Cuda(z);
   N_VCopyFromDevice_Cuda(r);

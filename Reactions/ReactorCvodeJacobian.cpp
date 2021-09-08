@@ -34,13 +34,13 @@ cJac(
       (SUNMatrix_cuSparse_Rows(J) != (NUM_SPECIES + 1) * ncells) ||
       (SUNMatrix_cuSparse_Columns(J) != (NUM_SPECIES + 1) * ncells) ||
       (SUNMatrix_cuSparse_NNZ(J) != ncells * NNZ)) {
-      Print() << "Jac error: matrix is wrong size!\n";
+      amrex::Print() << "Jac error: matrix is wrong size!\n";
       return 1;
     }
 
     BL_PROFILE_VAR("Jacobian()", fKernelJac);
-    const auto ec = Gpu::ExecutionConfig(ncells);
-    launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
+    const auto ec = amrex::Gpu::ExecutionConfig(ncells);
+    amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
       [=] AMREX_GPU_DEVICE() noexcept {
         for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                  stride = blockDim.x * gridDim.x;
@@ -49,10 +49,10 @@ cJac(
         }
       });
     cudaError_t cuda_status = cudaStreamSynchronize(stream);
-    assert(cuda_status == cudaSuccess);
+    AMREX_ASSERT(cuda_status == cudaSuccess);
     BL_PROFILE_VAR_STOP(fKernelJac);
 #else
-    Abort(
+    amrex::Abort(
       "Calling cJac with solve_type = sparse_direct only works with CUDA !");
 #endif
   } else if (solveType == magmaDirect) {
@@ -72,8 +72,9 @@ cJac(
     amrex::Gpu::Device::streamSynchronize();
     BL_PROFILE_VAR_STOP(fKernelJac);
 #else
-    Abort("Calling cJac with solve_type = magma_direct reauires PP_USE_MAGMA = "
-          "TRUE !");
+    amrex::Abort(
+      "Calling cJac with solve_type = magma_direct reauires PP_USE_MAGMA = "
+      "TRUE !");
 #endif
   }
 

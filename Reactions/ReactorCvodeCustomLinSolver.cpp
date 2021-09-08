@@ -93,7 +93,7 @@ SUNLinSolSolve_Dense_custom(
   amrex::Real* d_data = SUNMatrix_cuSparse_Data(A);
 
   BL_PROFILE_VAR("fKernelDenseSolve()", fKernelDenseSolve);
-  const auto ec = Gpu::ExecutionConfig(SUN_CUSP_NUM_SUBSYS(S));
+  const auto ec = amrex::Gpu::ExecutionConfig(SUN_CUSP_NUM_SUBSYS(S));
   // TODO: why is this AMREX version NOT working ?
   // launch_global<<<ec.numBlocks, ec.numThreads, ec.sharedMem,
   // SUN_CUSP_STREAM(S)>>>(
@@ -111,7 +111,7 @@ SUNLinSolSolve_Dense_custom(
   //  SUN_CUSP_SUBSYS_NNZ(S), d_data);
 
   cuda_status = cudaStreamSynchronize(SUN_CUSP_STREAM(S));
-  assert(cuda_status == cudaSuccess);
+  AMREX_ASSERT(cuda_status == cudaSuccess);
 
   BL_PROFILE_VAR_STOP(fKernelDenseSolve);
 
