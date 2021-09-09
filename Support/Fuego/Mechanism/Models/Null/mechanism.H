@@ -235,6 +235,14 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void sgjsolve_simplified(amrex::Real* /
     amrex::Abort("sgjsolve_simplified not implemented, choose a different solver ");
 }
 
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKINDX(int * mm, int * kk, int * ii, int * nfit)
+{
+    *mm = 1;
+    *kk = 1;
+    *ii = 0;
+    *nfit = -1; /*Why do you need this anyway ?  */
+}
+
 #endif
 
 /* End of file  */
