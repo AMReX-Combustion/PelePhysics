@@ -1,41 +1,37 @@
-ifeq ($(USE_SUNDIALS_PP),TRUE) 
-  DEFINES  += -DUSE_SUNDIALS_PP
-  ifeq ($(USE_CUDA),TRUE)
-    ifeq ($(lowercase_nvcc_host_comp),$(filter $(lowercase_nvcc_host_comp),gcc gnu g++))
-      HOSTCC = gcc
-    else
-      HOSTCC = pgi
-    endif
+ifeq ($(USE_CUDA),TRUE)
+  ifeq ($(lowercase_nvcc_host_comp),$(filter $(lowercase_nvcc_host_comp),gcc gnu g++))
+    HOSTCC = gcc
   else
-    HOSTCC = $(COMP)
+    HOSTCC = pgi
   endif
-  configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; make tp_suffix AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_HIP=$(USE_HIP) USE_KLU_PP=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) | tail -1)
-  SUNDIALS_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib
-  INCLUDE_LOCATIONS += $(SUNDIALS_LIB_DIR)/../include
-  LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_cvode -lsundials_arkode
-  LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvecserial
-  ifeq ($(USE_CUDA),TRUE)
-      LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
-      LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda
-      LIBRARIES += -lsundials_sunlinsolcusolversp -lsundials_sunmatrixcusparse -lcusolver -lcusparse
-  else
-    ifeq ($(USE_HIP),TRUE)
-       LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
-       LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvechip
-    endif
-  endif
-  ifneq ($(shell uname),Darwin)
-    LIBRARIES += -Wl,-rpath=${SUNDIALS_LIB_DIR}
-  endif
-  ifeq ($(USE_KLU_PP), TRUE)
-    SUITESPARSE_DIR   ?= $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)
-    DEFINES   += -DUSE_KLU_PP
-    LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_sunmatrixsparse  -lsundials_sunlinsolklu
-    LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lklu -lamd -lcolamd -lbtf -lsuitesparseconfig
-    INCLUDE_LOCATIONS+=${SUITESPARSE_DIR}/include
-    ifneq ($(shell uname),Darwin)
-      LIBRARIES += -Wl,-rpath=${SUITESPARSE_DIR}/lib
-    endif
+else
+  HOSTCC = $(COMP)
+endif
+configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; make tp_suffix AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_HIP=$(USE_HIP) USE_KLU_PP=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) | tail -1)
+SUNDIALS_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib
+INCLUDE_LOCATIONS += $(SUNDIALS_LIB_DIR)/../include
+LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_cvode -lsundials_arkode
+LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvecserial
+ifeq ($(USE_CUDA),TRUE)
+    LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
+    LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nveccuda
+    LIBRARIES += -lsundials_sunlinsolcusolversp -lsundials_sunmatrixcusparse -lcusolver -lcusparse
+else
+  ifeq ($(USE_HIP),TRUE)
+     LIBRARY_LOCATIONS += $(SUNDIALS_LIB_DIR)
+     LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvechip
   endif
 endif
-
+ifneq ($(shell uname),Darwin)
+  LIBRARIES += -Wl,-rpath=${SUNDIALS_LIB_DIR}
+endif
+ifeq ($(USE_KLU_PP), TRUE)
+  SUITESPARSE_DIR   ?= $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)
+  DEFINES   += -DUSE_KLU_PP
+  LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_sunmatrixsparse  -lsundials_sunlinsolklu
+  LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lklu -lamd -lcolamd -lbtf -lsuitesparseconfig
+  INCLUDE_LOCATIONS+=${SUITESPARSE_DIR}/include
+  ifneq ($(shell uname),Darwin)
+    LIBRARIES += -Wl,-rpath=${SUITESPARSE_DIR}/lib
+  endif
+endif

@@ -24,16 +24,13 @@ PELE_PHYSICS_HOME    ?= ../../..
 DEFINES  += -DMOD_REACTOR
 
 # Activates use of SUNDIALS
-USE_SUNDIALS_PP = TRUE
-ifeq ($(USE_SUNDIALS_PP), TRUE)
-  ifeq ($(USE_CUDA), TRUE)
-      USE_KLU_PP = FALSE
+ifeq ($(USE_CUDA), TRUE)
+  USE_KLU_PP = FALSE
+else
+  ifeq ($(USE_HIP), TRUE)
+    USE_KLU_PP = FALSE
   else
-      ifeq ($(USE_HIP), TRUE)
-	  USE_KLU_PP = FALSE
-      else
-	  USE_KLU_PP = FALSE
-      endif
+    USE_KLU_PP = FALSE
   endif
 endif
 

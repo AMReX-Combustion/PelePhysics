@@ -11,11 +11,7 @@
 #include <AMReX_GpuDevice.H>
 
 #include <PlotFileFromMF.H>
-#ifdef USE_SUNDIALS_PP
 #include <ReactorBase.H>
-#else
-#include <reactor_F.H>
-#endif
 
 using namespace amrex;
 

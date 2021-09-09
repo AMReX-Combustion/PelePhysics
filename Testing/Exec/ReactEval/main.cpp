@@ -8,10 +8,8 @@
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
 
-#ifdef USE_SUNDIALS_PP
 #ifdef AMREX_USE_GPU
 #include <AMReX_SUNMemory.H>
-#endif
 #endif
 
 #include "mechanism.H"
@@ -39,14 +37,10 @@ main(int argc, char* argv[])
 {
   Initialize(argc, argv);
 
-#ifdef USE_SUNDIALS_PP
-
 #ifdef AMREX_USE_GPU
   amrex::sundials::MemoryHelper::Initialize(); /* TODO: this ideally (I think)
                                                   will go in the
                                                   amrex::Initialize */
-#endif
-
 #endif
   {
 
