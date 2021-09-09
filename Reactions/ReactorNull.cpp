@@ -85,7 +85,11 @@ ReactorNull::react(
   amrex::Real* /*rY_src_in*/,
   amrex::Real* /*rX_in*/,
   amrex::Real* /*rX_src_in*/,
-  amrex::Real& /*dt_react*/,
+  amrex::Real&
+#ifdef MOD_REACTOR
+    dt_react
+#endif
+  ,
   amrex::Real&
 #ifdef MOD_REACTOR
     time

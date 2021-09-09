@@ -27,11 +27,13 @@ public:
     amrex::Array4<amrex::Real> const& rEner_src_in,
     amrex::Array4<amrex::Real> const& FC_in,
     amrex::Array4<int> const& mask,
-    amrex::Real& dt_react,
-    amrex::Real& time
+    amrex::Real&
+#ifdef MOD_REACTOR
+      time
+#endif
 #ifdef AMREX_USE_GPU
     ,
-    amrex::gpuStream_t stream
+    amrex::gpuStream_t /*stream*/
 #endif
     ) override;
 
@@ -40,12 +42,20 @@ public:
     amrex::Real* rY_src_in,
     amrex::Real* rX_in,
     amrex::Real* rX_src_in,
-    amrex::Real& dt_react,
-    amrex::Real& time,
-    int Ncells
+    amrex::Real&
+#ifdef MOD_REACTOR
+      dt_react
+#endif
+    ,
+    amrex::Real&
+#ifdef MOD_REACTOR
+      time
+#endif
+    ,
+    int /*Ncells*/
 #ifdef AMREX_USE_GPU
     ,
-    amrex::gpuStream_t stream
+    amrex::gpuStream_t /*stream*/
 #endif
     ) override;
 
