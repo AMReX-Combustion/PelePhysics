@@ -496,8 +496,12 @@ main(int argc, char* argv[])
 #endif
       for (MFIter mfi(mf[lev], tiling); mfi.isValid(); ++mfi) {
 
+        int omp_thread = 0;
+#ifdef AMREX_USE_OMP
+        omp_thread = omp_get_thread_num();
+#endif
         const Box& box = mfi.tilebox();
-        int nc = box.numPts();
+        const int nc = box.numPts();
         int extra_cells = 0;
 
         auto const& rhoY = mf[lev].array(mfi);
@@ -515,9 +519,10 @@ main(int argc, char* argv[])
           Real dt_lev = dt / std::pow(2, lev);
           Real dt_incr = dt_lev / ndt;
           int tmp_fc;
-
-          Print() << "  [" << lev << "]"
-                  << " integrating " << nc << " cells \n";
+          if (omp_thread == 0) {
+            Print() << "  [" << lev << "]"
+                    << " integrating " << nc << " cells \n";
+          }
           /* Solve */
           BL_PROFILE_VAR_START(ReactInLoop);
           for (int ii = 0; ii < ndt; ++ii) {
@@ -543,9 +548,11 @@ main(int argc, char* argv[])
           ode_ncells = nc;
 #endif
           extra_cells = nc - (nc / ode_ncells) * ode_ncells;
-          Print() << " Integrating " << nc << " cells with a " << ode_ncells
-                  << " ode cell buffer ";
-          Print() << "(" << extra_cells << " extra cells) \n";
+          if (omp_thread == 0) {
+            Print() << " Integrating " << nc << " cells with a " << ode_ncells
+                    << " ode cell buffer ";
+            Print() << "(" << extra_cells << " extra cells) \n";
+          }
 
           BL_PROFILE_VAR_START(Allocs);
           int nCells = nc + extra_cells;
