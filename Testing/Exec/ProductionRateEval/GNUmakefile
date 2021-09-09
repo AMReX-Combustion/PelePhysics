@@ -22,7 +22,6 @@ TINY_PROFILE = FALSE
 ifeq ($(USE_CUDA), TRUE)
   USE_KLU_PP = FALSE
 else
-  USE_F90_PP = FALSE
   USE_KLU_PP = FALSE
 endif
 USE_KLU = $(USE_KLU_PP) # sort out keywords later...
