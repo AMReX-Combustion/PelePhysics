@@ -15,10 +15,22 @@ int check_flag(void* flagvalue, const char* funcname, int opt);
 
 struct YCOrder
 {
-}; // default: [ [Y_0,...Y_n]_{cell 0}, ..., [Y_0,...Y_n]_{cell m}]
+  // default: [ [Y_0,...Y_n]_{cell 0}, ..., [Y_0,...Y_n]_{cell m}]
+  using ordering_type = YCOrder;
+};
+
 struct CYOrder
 {
-}; // [ [Y_{cell 0},...Y_m]_{species 0}, ..., [Y_{cell 0},...Y_m]_{species n}]
+  // [ [Y_{cell 0},...Y_m]_{species 0}, ..., [Y_{cell 0},...Y_m]_{species n}]
+  using ordering_type = CYOrder;
+};
+
+template <typename T>
+struct is_ordering_type
+{
+  static constexpr bool value =
+    std::is_base_of<typename T::ordering_type, T>::value;
+};
 
 template <typename OrderType>
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE int
@@ -151,6 +163,10 @@ template <typename OrderType>
 class FlattenOps
 {
 public:
+  static_assert(
+    is_ordering_type<OrderType>::value,
+    "FlattenOps must have ordering type as its template argument");
+
   void flatten(
     const amrex::Box box,
     const int ncells,
