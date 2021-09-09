@@ -145,13 +145,13 @@ include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
 
 ifeq ($(shell uname),Darwin)
   all: $(executable)
-        install_name_tool -add_rpath $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib $(executable)
-        $(SILENT) $(RM) AMReX_buildInfo.cpp
-        @echo SUCCESS
+	install_name_tool -add_rpath $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib $(executable)
+	$(SILENT) $(RM) AMReX_buildInfo.cpp
+	@echo SUCCESS
 else
   all: $(executable)
-        $(SILENT) $(RM) AMReX_buildInfo.cpp
-        @echo SUCCESS
+	$(SILENT) $(RM) AMReX_buildInfo.cpp
+	@echo SUCCESS
 endif
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
@@ -161,11 +161,11 @@ ifeq ($(USE_CUDA),TRUE)
 endif
 
 clean::
-        $(SILENT) $(RM) extern.f90 extern_parameters.cpp extern_parameters_F.H extern_parameters.H extern.f90
-        $(SILENT) $(RM) AMReX_buildInfo.cpp
+	$(SILENT) $(RM) extern.f90 extern_parameters.cpp extern_parameters_F.H extern_parameters.H extern.f90
+	$(SILENT) $(RM) AMReX_buildInfo.cpp
 
 AMReX_buildInfo.cpp:
-        $(AMREX_HOME)/Tools/C_scripts/makebuildinfo_C.py \
+	$(AMREX_HOME)/Tools/C_scripts/makebuildinfo_C.py \
           --amrex_home "$(AMREX_HOME)" \
           --COMP "$(COMP)" --COMP_VERSION "$(COMP_VERSION)" \
           --FCOMP "$(FCOMP)" --FCOMP_VERSION "$(FCOMP_VERSION)" \
@@ -173,18 +173,18 @@ AMReX_buildInfo.cpp:
           --GIT "$(TOP) $(AMREX_HOME) $(PELE_PHYSICS_HOME)"
 
 extern.f90: $(EXTERN_PARAMETERS) $(EXTERN_TEMPLATE)
-        $(AMREX_HOME)/Tools/F_scripts/write_probin.py \
+	$(AMREX_HOME)/Tools/F_scripts/write_probin.py \
            -t $(EXTERN_TEMPLATE) -o extern.f90 -n extern \
            --pa "$(EXTERN_PARAMETERS)"
 
 TPL:
-      cd $(PELE_PHYSICS_HOME)/ThirdParty; make AMREX_HOME=$(AMREX_HOME) USE_HIP=$(USE_HIP) USE_CUDA=$(USE_CUDA) USE_KLU_PP=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) CUDA_ARCH=$(CUDA_ARCH)
+	cd $(PELE_PHYSICS_HOME)/ThirdParty; make AMREX_HOME=$(AMREX_HOME) USE_HIP=$(USE_HIP) USE_CUDA=$(USE_CUDA) USE_KLU_PP=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) CUDA_ARCH=$(CUDA_ARCH)
 
 TPLclean:
-      cd $(PELE_PHYSICS_HOME)/ThirdParty; make AMREX_HOME=$(AMREX_HOME) USE_HIP=$(USE_HIP) USE_CUDA=$(USE_CUDA) USE_KLU_PP=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP)  CUDA_ARCH=$(CUDA_ARCH) clean
+	cd $(PELE_PHYSICS_HOME)/ThirdParty; make AMREX_HOME=$(AMREX_HOME) USE_HIP=$(USE_HIP) USE_CUDA=$(USE_CUDA) USE_KLU_PP=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP)  CUDA_ARCH=$(CUDA_ARCH) clean
 
 TPLrealclean:
-      cd $(PELE_PHYSICS_HOME)/ThirdParty; make AMREX_HOME=$(AMREX_HOME) USE_HIP=$(USE_HIP) USE_CUDA=$(USE_CUDA) USE_KLU_PP=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) CUDA_ARCH=$(CUDA_ARCH) realclean
+	cd $(PELE_PHYSICS_HOME)/ThirdParty; make AMREX_HOME=$(AMREX_HOME) USE_HIP=$(USE_HIP) USE_CUDA=$(USE_CUDA) USE_KLU_PP=$(USE_KLU_PP) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) CUDA_ARCH=$(CUDA_ARCH) realclean
 
 
 #-----------------------------------------------------------------------------
