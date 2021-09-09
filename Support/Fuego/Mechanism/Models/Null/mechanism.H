@@ -24,6 +24,15 @@ void CKAWT(amrex::Real *  awt);
 void CKNCF(int * ncf);
 void CKSYME_STR(amrex::Vector<std::string>& ename);
 void CKSYMS_STR(amrex::Vector<std::string>& kname);
+/* SPARSE INFORMATION  */
+void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);
+void SPARSITY_INFO_SYST(int * nJdata, int * consP, int NCELLS);
+void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, int * consP);
+void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, int * consP, int NCELLS);
+void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);
+void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);
+void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP);
+void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base);
 
 /* inverse molecular weights  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -98,6 +107,12 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKYTCR(amrex::Real *  /*rho*/, amr
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  /*J*/, amrex::Real *  /*sc*/, amrex::Real *  /*Tp*/, int * /*consP*/)
 {
    amrex::Abort("DWDOT not implemented for Null chemistry.");
+}
+
+/*compute an approx to the reaction Jacobian (for preconditioning) */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  /*J*/, amrex::Real *  /*sc*/, amrex::Real *  /*Tp*/, int * /*consP*/)
+{
+   amrex::Abort("DWDOT_SIMPLIFIED not implemented for Null chemistry.");
 }
 
 /*Returns internal energy in mass units (Eq 30.) */
