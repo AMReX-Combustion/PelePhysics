@@ -97,8 +97,8 @@ ReactorRK64::react(
     int nsteps = 0;
     amrex::Real change_factor;
     while (current_time < time_out) {
-      for (int sp = 0; sp < neq; sp++) {
-        error_reg[sp] = 0.0;
+      for (double& sp : error_reg) {
+        sp = 0.0;
       }
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
         utils::fKernelSpec<Ordering>(
@@ -118,8 +118,8 @@ ReactorRK64::react(
       nsteps++;
 
       amrex::Real max_err = tinyval;
-      for (int sp = 0; sp < neq; sp++) {
-        max_err = fabs(error_reg[sp]) > max_err ? fabs(error_reg[sp]) : max_err;
+      for (double sp : error_reg) {
+        max_err = fabs(sp) > max_err ? fabs(sp) : max_err;
       }
 
       if (max_err < captured_abstol) {
@@ -247,8 +247,8 @@ ReactorRK64::react(
     int nsteps = 0;
     amrex::Real change_factor;
     while (current_time < time_out) {
-      for (int sp = 0; sp < neq; sp++) {
-        error_reg[sp] = 0.0;
+      for (double& sp : error_reg) {
+        sp = 0.0;
       }
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
         utils::fKernelSpec<Ordering>(
@@ -268,8 +268,8 @@ ReactorRK64::react(
       nsteps++;
 
       amrex::Real max_err = tinyval;
-      for (int sp = 0; sp < neq; sp++) {
-        max_err = fabs(error_reg[sp]) > max_err ? fabs(error_reg[sp]) : max_err;
+      for (double sp : error_reg) {
+        max_err = fabs(sp) > max_err ? fabs(sp) : max_err;
       }
 
       if (max_err < captured_abstol) {

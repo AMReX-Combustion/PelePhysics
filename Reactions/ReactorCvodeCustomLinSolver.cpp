@@ -162,35 +162,43 @@ SUNLinSol_sparse_custom(
   SUNLinearSolverContent_Sparse_custom content;
 
   // Check that required arguments are not NULL
-  if (a_y == NULL || a_A == NULL)
-    return (0);
-  if (SUNMatGetID(a_A) != SUNMATRIX_SPARSE)
-    return (0);
+  if (a_y == nullptr || a_A == nullptr) {
+    return (nullptr);
+  }
+  if (SUNMatGetID(a_A) != SUNMATRIX_SPARSE) {
+    return (nullptr);
+  }
 
   // Matrix should be square
-  if (SUNSparseMatrix_Columns(a_A) != SUNSparseMatrix_Rows(a_A))
-    return (0);
+  if (SUNSparseMatrix_Columns(a_A) != SUNSparseMatrix_Rows(a_A)) {
+    return (nullptr);
+  }
 
   // Check that it is a CSR matrix
-  if (SUNSparseMatrix_SparseType(a_A) != CSR_MAT)
-    return (0);
+  if (SUNSparseMatrix_SparseType(a_A) != CSR_MAT) {
+    return (nullptr);
+  }
 
   // Matrix and vector dimensions must agree
-  if (N_VGetLength(a_y) != SUNSparseMatrix_Columns(a_A))
-    return (0);
+  if (N_VGetLength(a_y) != SUNSparseMatrix_Columns(a_A)) {
+    return (nullptr);
+  }
 
   // All subsystems must be the same size
-  if (SUNSparseMatrix_Columns(a_A) != (subsys_size * nsubsys))
-    return (0);
+  if (SUNSparseMatrix_Columns(a_A) != (subsys_size * nsubsys)) {
+    return (nullptr);
+  }
 
   // Number of nonzeros per subsys must be the same
-  if (SUNSparseMatrix_NNZ(a_A) != (subsys_nnz * nsubsys))
-    return (0);
+  if (SUNSparseMatrix_NNZ(a_A) != (subsys_nnz * nsubsys)) {
+    return (nullptr);
+  }
 
   // Create an empty linear solver
   S = SUNLinSolNewEmpty();
-  if (S == NULL)
-    return (0);
+  if (S == nullptr) {
+    return (nullptr);
+  }
 
   // Attach operations
   S->ops->gettype = SUNLinSolGetType_Sparse_custom;
@@ -198,9 +206,9 @@ SUNLinSol_sparse_custom(
 
   // Create content
   content = (SUNLinearSolverContent_Sparse_custom)malloc(sizeof *content);
-  if (content == NULL) {
+  if (content == nullptr) {
     SUNLinSolFree(S);
-    return (0);
+    return (nullptr);
   }
 
   // Attach content
@@ -229,7 +237,7 @@ SUNLinSolSolve_Sparse_custom(
   amrex::Real* x_d = N_VGetArrayPointer(x);
   amrex::Real* b_d = N_VGetArrayPointer(b);
 
-  amrex::Real* Data = (amrex::Real*)SUNSparseMatrix_Data(a_A);
+  auto* Data = (amrex::Real*)SUNSparseMatrix_Data(a_A);
 
   for (int tid = 0; tid < SUN_CUSP_NUM_SUBSYS(S); tid++) {
     int offset = tid * SUN_CUSP_SUBSYS_NNZ(S);

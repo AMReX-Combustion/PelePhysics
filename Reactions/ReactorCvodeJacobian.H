@@ -26,7 +26,7 @@ namespace reactions {
 namespace cvode {
 int cJac(
   amrex::Real tn,
-  N_Vector y,
+  N_Vector u,
   N_Vector fy,
   SUNMatrix J,
   void* user_data,
@@ -37,7 +37,7 @@ int cJac(
 #ifndef AMREX_USE_GPU
 int cJac_sps(
   amrex::Real tn,
-  N_Vector y,
+  N_Vector u,
   N_Vector fy,
   SUNMatrix J,
   void* user_data,

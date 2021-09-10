@@ -134,7 +134,7 @@ public:
   void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) override;
 
 private:
-  void checkCvodeOptions();
+  void checkCvodeOptions() const;
   void allocUserData(
     CVODEUserData* udata,
     int a_ncells
@@ -143,7 +143,7 @@ private:
     SUNMatrix& a_A,
     amrex::gpuStream_t stream
 #endif
-  );
+  ) const;
   void setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata);
   void ReSetTolODE();
   void freeUserData(CVODEUserData* data_wk);

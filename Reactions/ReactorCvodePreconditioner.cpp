@@ -180,11 +180,11 @@ Precond(
   amrex::Real* u_d = N_VGetArrayPointer(u);
 
   // Make local copies of pointers in user_data
-  CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
+  auto* udata = static_cast<CVODEUserData*>(user_data);
   auto reactor_type = udata->ireactor_type;
-  auto P = udata->P;
-  auto Jbd = udata->Jbd;
-  auto pivot = udata->pivot;
+  auto* P = udata->P;
+  auto* Jbd = udata->Jbd;
+  auto* pivot = udata->pivot;
 
   // MW CGS
   amrex::Real mw[NUM_SPECIES] = {0.0};
@@ -243,8 +243,9 @@ Precond(
   denseAddIdentity(P[0][0], NUM_SPECIES + 1);
   sunindextype ierr =
     denseGETRF(P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1, pivot[0][0]);
-  if (ierr != 0)
+  if (ierr != 0) {
     return (1);
+  }
 
   return (0);
 }
@@ -265,9 +266,9 @@ PSolve(
   amrex::Real* zdata = N_VGetArrayPointer(z);
 
   // Extract the P and pivot arrays from user_data.
-  CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
-  auto P = udata->P;
-  auto pivot = udata->pivot;
+  auto* udata = static_cast<CVODEUserData*>(user_data);
+  auto* P = udata->P;
+  auto* pivot = udata->pivot;
 
   N_VScale(1.0, r, z);
 
@@ -469,13 +470,13 @@ Precond_custom(
   amrex::Real* u_d = N_VGetArrayPointer(u);
 
   // Make local copies of pointers in user_data
-  CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
+  auto* udata = static_cast<CVODEUserData*>(user_data);
   auto ncells = udata->ncells_d;
   auto reactor_type = udata->ireactor_type;
-  auto JSPSmat = udata->JSPSmat;
-  auto rowPtrs = udata->rowPtrs;
-  auto colVals = udata->colVals;
-  auto Jdata = udata->Jdata;
+  auto* JSPSmat = udata->JSPSmat;
+  auto* rowPtrs = udata->rowPtrs;
+  auto* colVals = udata->colVals;
+  auto* Jdata = udata->Jdata;
 
   // MW CGS
   amrex::Real mw[NUM_SPECIES] = {0.0};
@@ -573,9 +574,9 @@ PSolve_custom(
   void* user_data)
 {
   // Make local copies of pointers in user_data
-  CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
+  auto* udata = static_cast<CVODEUserData*>(user_data);
   auto ncells = udata->ncells_d;
-  auto Jdata = udata->Jdata;
+  auto* Jdata = udata->Jdata;
 
   // Make local copies of pointers to input data
   amrex::Real* zdata = N_VGetArrayPointer(z);

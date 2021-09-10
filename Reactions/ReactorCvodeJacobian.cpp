@@ -99,7 +99,7 @@ cJac(
   amrex::Real* ydata = N_VGetArrayPointer(u);
 
   // Make local copies of pointers in user_data
-  CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
+  auto* udata = static_cast<CVODEUserData*>(user_data);
   auto ncells = udata->ncells_d;
   auto reactor_type = udata->ireactor_type;
 
@@ -168,12 +168,12 @@ cJac_sps(
   amrex::Real* ydata = N_VGetArrayPointer(u);
 
   // Make local copies of pointers in user_data (cell M)*/
-  CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
+  auto* udata = static_cast<CVODEUserData*>(user_data);
   auto NNZ = udata->NNZ;
   auto reactor_type = udata->ireactor_type;
   auto ncells = udata->ncells_d;
-  auto colVals_c = udata->colVals_c;
-  auto rowPtrs_c = udata->rowPtrs_c;
+  auto* colVals_c = udata->colVals_c;
+  auto* rowPtrs_c = udata->rowPtrs_c;
 
   // MW CGS
   amrex::Real mw[NUM_SPECIES] = {0.0};

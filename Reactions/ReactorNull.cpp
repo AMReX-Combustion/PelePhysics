@@ -47,8 +47,8 @@ ReactorNull::react(
       rY_in(i, j, k, n) = rY_loc[n];
     }
     amrex::Real rho_loc = 0.0;
-    for (int n = 0; n < NUM_SPECIES; n++) {
-      rho_loc += rY_loc[n];
+    for (double n : rY_loc) {
+      rho_loc += n;
     }
     amrex::Real Y_loc[NUM_SPECIES];
     for (int n = 0; n < NUM_SPECIES; n++) {

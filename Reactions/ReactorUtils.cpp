@@ -17,7 +17,7 @@ check_flag(void* flagvalue, const char* funcname, int opt)
 {
   int* errflag;
 
-  if (opt == 0 && flagvalue == NULL) {
+  if (opt == 0 && flagvalue == nullptr) {
     if (amrex::ParallelDescriptor::IOProcessor()) {
       fprintf(
         stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
@@ -25,7 +25,8 @@ check_flag(void* flagvalue, const char* funcname, int opt)
       amrex::Abort("abort");
     }
     return (1);
-  } else if (opt == 1) {
+  }
+  if (opt == 1) {
     errflag = (int*)flagvalue;
     if (*errflag < 0) {
       if (amrex::ParallelDescriptor::IOProcessor()) {

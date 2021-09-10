@@ -133,8 +133,8 @@ ReactorArkode::react(
 {
   BL_PROFILE("Pele::ReactorArkode::react()");
 
-  void* arkode_mem = NULL;
-  N_Vector y = NULL;
+  void* arkode_mem = nullptr;
+  N_Vector y = nullptr;
 
   int NEQ = NUM_SPECIES + 1;
   int NCELLS = box.numPts();
@@ -178,8 +178,9 @@ ReactorArkode::react(
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
 #else
   y = N_VNew_Serial(neq_tot);
-  if (utils::check_flag((void*)y, "N_VNew_Serial", 0))
+  if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
     return (1);
+  }
 #endif
 
   user_data->rhoe_init_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
@@ -205,19 +206,19 @@ ReactorArkode::react(
   realtype time_out = time + dt_react;
 
   if (use_erkstep == 0) {
-    arkode_mem = ARKStepCreate(cF_RHS, NULL, time, y);
+    arkode_mem = ARKStepCreate(cF_RHS, nullptr, time, y);
     ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
     ARKStepSStolerances(arkode_mem, relTol, absTol);
     ARKStepResStolerance(arkode_mem, absTol);
     ARKStepSetTableNum(arkode_mem, -1, rk_method);
-    ARKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, NULL);
+    ARKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   } else {
     arkode_mem = ERKStepCreate(cF_RHS, time, y);
     ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
     ERKStepSStolerances(arkode_mem, relTol, absTol);
     ERKStepSetTableNum(arkode_mem, rk_method);
-    ERKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, NULL);
+    ERKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   }
 
@@ -272,8 +273,8 @@ ReactorArkode::react(
 )
 {
   BL_PROFILE("Pele::ReactorArkode::react()");
-  void* arkode_mem = NULL;
-  N_Vector y = NULL;
+  void* arkode_mem = nullptr;
+  N_Vector y = nullptr;
   int NEQ = NUM_SPECIES + 1;
   int NCELLS = Ncells;
   int neq_tot = NEQ * NCELLS;
@@ -314,8 +315,9 @@ ReactorArkode::react(
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
 #else
   y = N_VNew_Serial(neq_tot);
-  if (utils::check_flag((void*)y, "N_VNew_Serial", 0))
+  if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
     return (1);
+  }
 #endif
 
   user_data->rhoe_init_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
@@ -354,7 +356,7 @@ ReactorArkode::react(
   realtype time_out = time + dt_react;
 
   if (use_erkstep == 0) {
-    arkode_mem = ARKStepCreate(cF_RHS, NULL, time, y);
+    arkode_mem = ARKStepCreate(cF_RHS, nullptr, time, y);
     ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
     ARKStepSStolerances(arkode_mem, relTol, absTol);
     ARKStepResStolerance(arkode_mem, absTol);
@@ -419,15 +421,15 @@ ReactorArkode::cF_RHS(
   realtype* ydot_d = N_VGetArrayPointer(ydot_in);
 #endif
 
-  ARKODEUserData* udata = static_cast<ARKODEUserData*>(user_data);
+  auto* udata = static_cast<ARKODEUserData*>(user_data);
   udata->dt_save = t;
 
   auto ncells = udata->ncells_d;
   auto dt_save = udata->dt_save;
   auto reactor_type = udata->ireactor_type;
-  auto rhoe_init = udata->rhoe_init_d;
-  auto rhoesrc_ext = udata->rhoesrc_ext_d;
-  auto rYsrc = udata->rYsrc_d;
+  auto* rhoe_init = udata->rhoe_init_d;
+  auto* rhoesrc_ext = udata->rhoesrc_ext_d;
+  auto* rYsrc = udata->rYsrc_d;
   amrex::ParallelFor(udata->ncells_d, [=] AMREX_GPU_DEVICE(int icell) noexcept {
     utils::fKernelSpec<Ordering>(
       icell, ncells, dt_save, reactor_type, yvec_d, ydot_d, rhoe_init,
