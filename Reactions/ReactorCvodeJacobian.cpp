@@ -128,7 +128,7 @@ cJac(
 
     // Jac
     amrex::Real Jmat_tmp[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
-    int consP = reactor_type == ReactorTypes::h_reactor_type;
+    const int consP = reactor_type == ReactorTypes::h_reactor_type;
     auto eos = pele::physics::PhysicsType::eos();
     eos.RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
 
@@ -218,7 +218,7 @@ cJac_sps(
     // Do we recompute Jac ?
     amrex::Real Jmat_tmp[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
     if (fabs(temp - temp_save_lcl) > 1.0) {
-      int consP = reactor_type == ReactorTypes::h_reactor_type;
+      const int consP = reactor_type == ReactorTypes::h_reactor_type;
       auto eos = pele::physics::PhysicsType::eos();
       eos.RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
       temp_save_lcl = temp;
@@ -312,7 +312,7 @@ cJac_KLU(
     // Do we recompute Jac ?
     amrex::Real Jmat_tmp[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
     if (fabs(temp - temp_save_lcl) > 1.0) {
-      int consP = reactor_type == ReactorTypes::h_reactor_type;
+      const int consP = reactor_type == ReactorTypes::h_reactor_type;
       auto eos = pele::physics::PhysicsType::eos();
       eos.RTY2JAC(rho, temp, massfrac, Jmat_tmp, consP);
       temp_save_lcl = temp;
