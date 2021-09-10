@@ -418,7 +418,7 @@ ReactorCvode::checkCvodeOptions() const
   // Print additionnal information
   if (iprecond_type == cvode::sparseSimpleAJac) {
     int nJdata;
-    int HP = m_reactor_type == ReactorTypes::h_reactor_type;
+    const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
     // Simplified AJ precond data
 #ifdef AMREX_USE_GPU
 #if defined(AMREX_USE_CUDA)
@@ -449,7 +449,7 @@ ReactorCvode::checkCvodeOptions() const
 #ifndef AMREX_USE_GPU
   } else if (iprecond_type == cvode::customSimpleAJac) {
     int nJdata;
-    int HP = m_reactor_type == ReactorTypes::h_reactor_type;
+    const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
     // Simplified AJ precond data
     SPARSITY_INFO_SYST_SIMPLIFIED(&nJdata, &HP);
     if (iverbose > 0) {
@@ -465,7 +465,7 @@ ReactorCvode::checkCvodeOptions() const
 
   if (ianalytical_jacobian == 1) {
     int nJdata;
-    int HP = m_reactor_type == ReactorTypes::h_reactor_type;
+    const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
     int Ncells = 1; // Print the pattern of the diagonal block. Ncells will
                     // actually vary on GPU.
 #ifdef AMREX_USE_GPU
@@ -518,7 +518,7 @@ ReactorCvode::checkCvodeOptions() const
   if (isolve_type == cvode::hackDumpSparsePattern) {
     // This is a diagnostic option -> dump sparsity pattern and abort.
     // Reactor type
-    int HP = m_reactor_type == ReactorTypes::h_reactor_type;
+    const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
 
     // CHEMISTRY JAC
     int nJdata = 0;
@@ -737,7 +737,7 @@ ReactorCvode::allocUserData(
 
   //----------------------------------------------------------
   // Pass options to udata
-  int HP = m_reactor_type == ReactorTypes::h_reactor_type;
+  const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
   int nspec_tot = (NUM_SPECIES)*a_ncells;
   udata->ireactor_type = m_reactor_type;
   udata->ncells_d = a_ncells;
