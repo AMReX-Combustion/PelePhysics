@@ -104,13 +104,13 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void CKYTCR(amrex::Real *  /*rho*/, amr
 }
 
 /*compute the reaction Jacobian */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  /*J*/, amrex::Real *  /*sc*/, amrex::Real *  /*Tp*/, int * /*consP*/)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  /*J*/, amrex::Real *  /*sc*/, amrex::Real *  /*Tp*/, const int * /*consP*/)
 {
    amrex::Abort("DWDOT not implemented for Null chemistry.");
 }
 
 /*compute an approx to the reaction Jacobian (for preconditioning) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  /*J*/, amrex::Real *  /*sc*/, amrex::Real *  /*Tp*/, int * /*consP*/)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  /*J*/, amrex::Real *  /*sc*/, amrex::Real *  /*Tp*/, const int * /*consP*/)
 {
    amrex::Abort("DWDOT_SIMPLIFIED not implemented for Null chemistry.");
 }

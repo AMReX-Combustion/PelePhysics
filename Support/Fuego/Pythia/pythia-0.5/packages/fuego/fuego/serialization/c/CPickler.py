@@ -6304,7 +6304,7 @@ class CPickler(CMill):
         )
         # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
-            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)"
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, const int * HP)"
         )
         self._write("{")
         self._indent()

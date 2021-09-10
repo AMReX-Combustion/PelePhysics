@@ -7170,8 +7170,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
         const amrex::Real qr = k_f * exp(-(2.000000*g_RT[1] + g_RT[2] - 2.000000*g_RT[2])) * (refC) * ((sc[2] * sc[2]));
         const amrex::Real qdot = qf - qr;
         wdot[1] -= 2.000000 * qdot;
-        wdot[2] += 2.000000 * qdot;
         wdot[2] -= qdot;
+        wdot[2] += 2.000000 * qdot;
     }
 
     {
@@ -18882,7 +18882,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
 }
 
 /*compute an approx to the reaction Jacobian (for preconditioning) */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, const int * HP)
 {
     amrex::Real c[29];
 
