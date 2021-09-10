@@ -176,7 +176,11 @@ struct Fuego
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void RTY2JAC(
-    amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real JAC[], int HP)
+    amrex::Real R,
+    amrex::Real T,
+    amrex::Real Y[],
+    amrex::Real JAC[],
+    const int HP)
   {
     amrex::Real C[NUM_SPECIES];
     CKYTCR(&R, &T, Y, C);

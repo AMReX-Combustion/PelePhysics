@@ -204,7 +204,7 @@ struct GammaLaw
     amrex::Real /*T*/,
     amrex::Real* /*Y[]*/,
     amrex::Real* /*JAC[]*/,
-    int /*HP*/)
+    const int /*HP*/)
   {
     amrex::Error("RTY2JAC not supported with GammaLaw EoS");
   }
