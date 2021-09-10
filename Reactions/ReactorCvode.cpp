@@ -1267,7 +1267,7 @@ ReactorCvode::react(
       return (1);
 
 #else
-    Abort(
+    amrex::Abort(
       "Shoudn't be there. solve_type sparse_direct only available with CUDA");
 #endif
   } else if (user_data->isolve_type == cvode::customDirect) {
@@ -1283,7 +1283,7 @@ ReactorCvode::react(
     if (utils::check_flag(&flag, "CVodeSetJacFn", 1))
       return (1);
 #else
-    Abort(
+    amrex::Abort(
       "Shoudn't be there. solve_type custom_direct only available with CUDA");
 #endif
   } else if (user_data->isolve_type == cvode::magmaDirect) {
@@ -1621,7 +1621,7 @@ ReactorCvode::react(
       return (1);
 
 #else
-    Abort(
+    amrex::Abort(
       "Shoudn't be there. solve_type sparse_direct only available with CUDA");
 #endif
   } else if (user_data->isolve_type == cvode::customDirect) {
@@ -1637,7 +1637,7 @@ ReactorCvode::react(
     if (utils::check_flag(&flag, "CVodeSetJacFn", 1))
       return (1);
 #else
-    Abort(
+    amrex::Abort(
       "Shoudn't be there. solve_type custom_direct only available with CUDA");
 #endif
   } else if (user_data->isolve_type == cvode::magmaDirect) {
