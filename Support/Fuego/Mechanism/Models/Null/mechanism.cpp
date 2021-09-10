@@ -22,7 +22,6 @@ CKSYMS_STR(amrex::Vector<std::string>& /*kname*/)
 {
 }
 
-#ifdef COMPILE_JACOBIAN
 // compute sparsity pattern of the chemistry Jacobian
 void
 SPARSITY_INFO(int* /*nJdata*/, const int* /*consP*/, int /*NCELLS*/)
@@ -95,5 +94,4 @@ SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
   int /*base*/)
 {
 }
-#endif
 #endif
