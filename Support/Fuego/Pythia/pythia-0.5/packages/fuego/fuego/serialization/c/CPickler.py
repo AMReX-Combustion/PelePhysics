@@ -5525,7 +5525,7 @@ class CPickler(CMill):
         self._write()
         self._write(self.line("compute an approx to the reaction Jacobian"))
 
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
             "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)"
         )
@@ -5713,7 +5713,7 @@ class CPickler(CMill):
 
         self._outdent()
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         return
 
     def _ajac_reaction_precond(self, mechanism, reaction, rcase):
@@ -6302,7 +6302,7 @@ class CPickler(CMill):
                 "compute an approx to the reaction Jacobian (for preconditioning)"
             )
         )
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
             "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)"
         )
@@ -6336,7 +6336,7 @@ class CPickler(CMill):
         self._write("return;")
         self._outdent()
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         return
 
     def _ajac_GPU(self, mechanism):
@@ -6344,7 +6344,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line("compute the reaction Jacobian on GPU"))
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write("AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
         self._write(
             "void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, const int consP)"
@@ -6550,7 +6550,7 @@ class CPickler(CMill):
         self._write()
         self._write("return;")
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         self._write()
         return
 
@@ -7045,7 +7045,7 @@ class CPickler(CMill):
 
         self._write()
         self._write(self.line("compute the reaction Jacobian"))
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
             "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, const int * consP)"
         )
@@ -7077,7 +7077,7 @@ class CPickler(CMill):
         self._write("return;")
         self._outdent()
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         self._write()
         return
 
@@ -12943,7 +12943,7 @@ class CPickler(CMill):
         self._write(
             self.line("compute the sparsity pattern of the chemistry Jacobian")
         )
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
             "void SPARSITY_INFO( int * nJdata, const int * consP, int NCELLS)"
         )
@@ -13006,7 +13006,7 @@ class CPickler(CMill):
         self._outdent()
 
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         self._write()
         self._write()
 
@@ -13015,7 +13015,7 @@ class CPickler(CMill):
         self._write(
             self.line("compute the sparsity pattern of the system Jacobian")
         )
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
             "void SPARSITY_INFO_SYST( int * nJdata, const int * consP, int NCELLS)"
         )
@@ -13086,7 +13086,7 @@ class CPickler(CMill):
         self._outdent()
 
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         self._write()
         self._write()
 
@@ -13097,7 +13097,7 @@ class CPickler(CMill):
                 "compute the sparsity pattern of the simplified (for preconditioning) system Jacobian"
             )
         )
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
             "void SPARSITY_INFO_SYST_SIMPLIFIED( int * nJdata, const int * consP)"
         )
@@ -13168,7 +13168,7 @@ class CPickler(CMill):
         self._outdent()
 
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         self._write()
         self._write()
 
@@ -13178,7 +13178,7 @@ class CPickler(CMill):
                 "compute the sparsity pattern of the chemistry Jacobian in CSC format -- base 0"
             )
         )
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
             "void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, const int * consP, int NCELLS)"
         )
@@ -13250,7 +13250,7 @@ class CPickler(CMill):
         self._outdent()
 
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         self._write()
 
         ####
@@ -13259,7 +13259,7 @@ class CPickler(CMill):
                 "compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0"
             )
         )
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
             "void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const int * consP, int NCELLS, int base)"
         )
@@ -13357,7 +13357,7 @@ class CPickler(CMill):
 
         self._outdent()
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         self._write()
 
         ####
@@ -13365,7 +13365,7 @@ class CPickler(CMill):
             self.line("compute the sparsity pattern of the system Jacobian")
         )
         self._write(self.line("CSR format BASE is user choice"))
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
             "void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, const int * consP, int NCELLS, int base)"
         )
@@ -13479,7 +13479,7 @@ class CPickler(CMill):
 
         self._outdent()
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         self._write()
 
         ####
@@ -13489,7 +13489,7 @@ class CPickler(CMill):
             )
         )
         self._write(self.line("BASE 0"))
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
             "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, const int * consP)"
         )
@@ -13562,7 +13562,7 @@ class CPickler(CMill):
 
         self._outdent()
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         self._write()
 
         ####
@@ -13572,7 +13572,7 @@ class CPickler(CMill):
             )
         )
         self._write(self.line("CSR format BASE is under choice"))
-        #self._write("#ifdef COMPILE_JACOBIAN")
+        # self._write("#ifdef COMPILE_JACOBIAN")
         self._write(
             "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, const int * consP, int base)"
         )
@@ -13676,7 +13676,7 @@ class CPickler(CMill):
 
         self._outdent()
         self._write("}")
-        #self._write("#endif")
+        # self._write("#endif")
         self._write()
         return
 
