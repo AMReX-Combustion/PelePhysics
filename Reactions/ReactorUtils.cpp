@@ -37,7 +37,7 @@ check_flag(void* flagvalue, const char* funcname, int opt)
       }
       return (1);
     }
-  } else if (opt == 2 && flagvalue == NULL) {
+  } else if (opt == 2 && flagvalue == nullptr) {
     if (amrex::ParallelDescriptor::IOProcessor()) {
       fprintf(
         stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
