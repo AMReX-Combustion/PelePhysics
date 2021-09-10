@@ -197,7 +197,6 @@ struct GammaLaw
     amrex::Error("RTY2WDOT not physically possible for GammaLaw EoS");
   }
 
-#ifdef COMPILE_JACOBIAN
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void RTY2JAC(
@@ -209,7 +208,6 @@ struct GammaLaw
   {
     amrex::Error("RTY2JAC not supported with GammaLaw EoS");
   }
-#endif
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE

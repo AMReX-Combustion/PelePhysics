@@ -563,7 +563,6 @@ struct SRK
       WDOT[n] *= mw[n];
   }
 
-#ifdef COMPILE_JACOBIAN
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void RTY2JAC(
@@ -575,7 +574,6 @@ struct SRK
   {
     amrex::Error("RTY2JAC not supported with SRK EoS");
   }
-#endif
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
