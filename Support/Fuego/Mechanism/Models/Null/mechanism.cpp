@@ -25,20 +25,20 @@ CKSYMS_STR(amrex::Vector<std::string>& /*kname*/)
 #ifdef COMPILE_JACOBIAN
 // compute sparsity pattern of the chemistry Jacobian
 void
-SPARSITY_INFO(int* /*nJdata*/, int* /*consP*/, int /*NCELLS*/)
+SPARSITY_INFO(int* /*nJdata*/, const int* /*consP*/, int /*NCELLS*/)
 {
 }
 
 // compute sparsity pattern of the system Jacobian
 void
-SPARSITY_INFO_SYST(int* /*nJdata*/, int* /*consP*/, int /*NCELLS*/)
+SPARSITY_INFO_SYST(int* /*nJdata*/, const int* /*consP*/, int /*NCELLS*/)
 {
 }
 
 // compute sparsity pattern of the simplified (for preconditioning) system
 // Jacobian
 void
-SPARSITY_INFO_SYST_SIMPLIFIED(int* /*nJdata*/, int* /*consP*/)
+SPARSITY_INFO_SYST_SIMPLIFIED(int* /*nJdata*/, const int* /*consP*/)
 {
 }
 
@@ -48,7 +48,7 @@ SPARSITY_PREPROC_CSC(
   int* /*rowVals*/
   ,
   int* /*colPtrs*/,
-  int* /*consP*/,
+  const int* /*consP*/,
   int /*NCELLS*/)
 {
 }
@@ -58,7 +58,7 @@ void
 SPARSITY_PREPROC_CSR(
   int* /*colVals*/,
   int* /*rowPtrs*/,
-  int* /*consP*/,
+  const int* /*consP*/,
   int /*NCELLS*/,
   int /*base*/)
 {
@@ -70,7 +70,7 @@ void
 SPARSITY_PREPROC_SYST_CSR(
   int* /*colVals*/,
   int* /*rowPtr*/,
-  int* /*consP*/,
+  const int* /*consP*/,
   int /*NCELLS*/,
   int /*base*/)
 {
@@ -80,7 +80,7 @@ SPARSITY_PREPROC_SYST_CSR(
 // CPU BASE 0
 void
 SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(
-  int* /*rowVals*/, int* /*colPtrs*/, int* /*indx*/, int* /*consP*/)
+  int* /*rowVals*/, int* /*colPtrs*/, int* /*indx*/, const int* /*consP*/)
 {
 }
 
@@ -91,7 +91,7 @@ SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
   int* /*colVals*/
   ,
   int* /*rowPtr*/,
-  int* /*consP*/,
+  const int* /*consP*/,
   int /*base*/)
 {
 }
