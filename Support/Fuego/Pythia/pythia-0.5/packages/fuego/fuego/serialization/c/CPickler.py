@@ -13006,7 +13006,7 @@ class CPickler(CMill):
         self._outdent()
 
         self._write("}")
-        self._write("#endif")
+        #self._write("#endif")
         self._write()
         self._write()
 

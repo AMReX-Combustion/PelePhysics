@@ -153,7 +153,6 @@ void SPARSITY_INFO( int * nJdata, const int * consP, int NCELLS)
 
     *nJdata = NCELLS * nJdata_tmp;
 }
-#endif
 
 
 
