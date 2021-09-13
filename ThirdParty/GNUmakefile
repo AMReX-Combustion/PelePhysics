@@ -92,7 +92,7 @@ SUNDIALS_BUILD_DIR=$(SUNDIALS_BUILD_PREFIX)/build/$(tp_suffix)
 ONE_SUNDIALS_SRC_FILE=$(SUNDIALS_SOURCE_DIR)/include/sundials/sundials_config.in
 ONE_SUNDIALS_LIB_FILE=$(INSTALL_PREFIX)/lib/libsundials_cvode.a
 
-all: $(ONE_SUNDIALS_LIB_FILE)
+sundials: $(ONE_SUNDIALS_LIB_FILE)
 
 tp_suffix:
 	@echo $(tp_suffix)
