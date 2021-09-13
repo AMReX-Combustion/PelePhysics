@@ -17,7 +17,7 @@ struct ReactorTypes
           (reactor_type == ReactorTypes::h_reactor_type))) {
       amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
     }
-  };
+  }
 };
 } // namespace reactions
 } // namespace physics
