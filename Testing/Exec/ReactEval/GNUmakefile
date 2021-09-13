@@ -23,12 +23,12 @@ PELE_PHYSICS_HOME    ?= ../../..
 DEFINES  += -DMOD_REACTOR
 
 ifeq ($(USE_CUDA), TRUE)
-  USE_KLU_PP = FALSE
+  PELE_USE_KLU = FALSE
 else
   ifeq ($(USE_HIP), TRUE)
-    USE_KLU_PP = FALSE
+    PELE_USE_KLU = FALSE
   else
-    USE_KLU_PP = FALSE
+    PELE_USE_KLU = FALSE
   endif
 endif
 
