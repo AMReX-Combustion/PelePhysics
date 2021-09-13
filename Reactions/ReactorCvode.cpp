@@ -868,6 +868,7 @@ ReactorCvode::allocUserData(
   }
 
 #else
+  if (udata->isolve_type == cvode::sparseDirect) {
 #ifdef PELE_USE_KLU
     // CSC matrices data -> one big matrix used for the direct solve
     udata->colPtrs = new int*[1];
