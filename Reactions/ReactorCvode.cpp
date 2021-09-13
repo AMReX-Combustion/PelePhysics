@@ -1140,16 +1140,6 @@ ReactorCvode::setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata)
   N_VDestroy(atol);
 }
 
-void
-ReactorCvode::ReSetTolODE()
-{
-#ifndef AMREX_USE_GPU
-  // ----------------------------------------------------------
-  // Setup tolerances of the global cvode object
-  setCvodeTols(cvode_mem, udata_g);
-#endif
-}
-
 int
 ReactorCvode::react(
   const amrex::Box& box,
@@ -1399,6 +1389,9 @@ ReactorCvode::react(
 #ifdef AMREX_USE_OMP
   omp_thread = omp_get_thread_num();
 #endif
+
+  // Update TypicalValues
+  setCvodeTols(cvode_mem, udata_g);
 
   // Perform integration one cell at a time
   ParallelFor(
@@ -1811,6 +1804,9 @@ ReactorCvode::react(
     return (1);
   }
   BL_PROFILE_VAR_STOP(AroundCVODE);
+
+  // Update TypicalValues
+  setCvodeTols(cvode_mem, udata_g);
 
 #ifdef MOD_REACTOR
   dt_react =

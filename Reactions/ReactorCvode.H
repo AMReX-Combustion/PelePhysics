@@ -145,7 +145,6 @@ private:
 #endif
   ) const;
   void setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata);
-  void ReSetTolODE();
   void freeUserData(CVODEUserData* data_wk);
 
   amrex::Real relTol{1e-6};
