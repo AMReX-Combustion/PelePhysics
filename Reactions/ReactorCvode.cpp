@@ -1337,7 +1337,7 @@ ReactorCvode::react(
 
   // ----------------------------------------------------------
   // Actual CVODE solve
-  BL_PROFILE_VAR("Pele::react():CVode", AroundCVODE);
+  BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
   flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
   if (utils::check_flag(&flag, "CVode", 1))
     return (1);
@@ -1392,7 +1392,7 @@ ReactorCvode::react(
   setCvodeTols(cvode_mem, udata_g);
 
   amrex::Real* yvec_d = N_VGetArrayPointer(y);
-  BL_PROFILE_VAR("Pele::react():Flat", FlatStuff);
+  BL_PROFILE_VAR("Pele::ReactorCvode::react():Flat", FlatStuff);
   flatten(
     box, ncells, rY_in, rY_src_in, T_in, rEner_in, rEner_src_in, yvec_d,
     udata_g->species_ext_d, udata_g->energy_init_d, udata_g->energy_ext_d);
@@ -1407,7 +1407,7 @@ ReactorCvode::react(
         // ReInit CVODE is faster
         CVodeReInit(cvode_mem, time_start, y);
 
-        BL_PROFILE_VAR("Pele::react():CVode", AroundCVODE);
+        BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
         CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
         BL_PROFILE_VAR_STOP(AroundCVODE);
 
@@ -1528,7 +1528,7 @@ ReactorCvode::react(
 #endif
 
   // Fill data
-  BL_PROFILE_VAR("Pele::react():ASyncCopy", AsyncCopy);
+  BL_PROFILE_VAR("Pele::ReactorCvode::react():ASyncCopy", AsyncCopy);
   amrex::Gpu::htod_memcpy_async(yvec_d, rY_in, sizeof(amrex::Real) * (neq_tot));
   amrex::Gpu::htod_memcpy_async(
     user_data->species_ext_d, rY_src_in,
@@ -1655,7 +1655,7 @@ ReactorCvode::react(
 
   // ----------------------------------------------------------
   // Actual CVODE solve
-  BL_PROFILE_VAR("Pele::react():CVode", AroundCVODE);
+  BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
   flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
   if (utils::check_flag(&flag, "CVode", 1))
     return (1);
@@ -1708,7 +1708,6 @@ ReactorCvode::react(
   omp_thread = omp_get_thread_num();
 #endif
 
-  BL_PROFILE_VAR("Pele::react():Flat", FlatStuff);
   // Pointer of solution vector
   amrex::Real* yvec_d = N_VGetArrayPointer(y);
   std::memcpy(
