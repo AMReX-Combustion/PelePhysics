@@ -1162,13 +1162,13 @@ ReactorCvode::react(
   amrex::Real time_start = time;
   amrex::Real time_final = time + dt_react;
   amrex::Real CvodeActual_time_final = 0.0;
+  int ncells = box.numPts();
 
   //----------------------------------------------------------
   // GPU Region
   //----------------------------------------------------------
 #ifdef AMREX_USE_GPU
   // Total number of eqs. in solve
-  int ncells = box.numPts();
   int neq_tot = (NUM_SPECIES + 1) * ncells;
   //----------------------------------------------------------
   // On CPU these lives as class variable and where initialized in
@@ -1390,41 +1390,18 @@ ReactorCvode::react(
   // Update TypicalValues
   setCvodeTols(cvode_mem, udata_g);
 
+  amrex::Real* yvec_d = N_VGetArrayPointer(y);
+  BL_PROFILE_VAR("Pele::react():Flat", FlatStuff);
+  flatten(
+    box, ncells, rY_in, rY_src_in, T_in, rEner_in, rEner_src_in, yvec_d,
+    udata_g->species_ext_d, udata_g->energy_init_d, udata_g->energy_ext_d);
+  BL_PROFILE_VAR_STOP(FlatStuff);
+
   // Perform integration one cell at a time
   ParallelFor(
     box, [=, &CvodeActual_time_final] AMREX_GPU_DEVICE(
            int i, int j, int k) noexcept {
       if (mask(i, j, k) != -1) {
-        amrex::Real* yvec_d = N_VGetArrayPointer(y);
-
-        BL_PROFILE_VAR("Pele::react():Flat", FlatStuff);
-        amrex::Real rho = 0.0;
-        for (int n = 0; n < NUM_SPECIES; n++) {
-          yvec_d[n] = rY_in(i, j, k, n);
-          udata_g->species_ext_d[n] = rY_src_in(i, j, k, n);
-          rho += yvec_d[n];
-        }
-        amrex::Real rho_inv = 1.0 / rho;
-        amrex::Real temp = T_in(i, j, k, 0);
-        udata_g->energy_init_d[0] = rEner_in(i, j, k, 0);
-        udata_g->energy_ext_d[0] = rEner_src_in(i, j, k, 0);
-
-        // T update with energy and Y
-        amrex::Real mass_frac[NUM_SPECIES] = {0.0};
-        for (int n = 0; n < NUM_SPECIES; n++) {
-          mass_frac[n] = yvec_d[n] * rho_inv;
-        }
-        amrex::Real Enrg_loc = udata_g->energy_init_d[0] * rho_inv;
-        auto eos = pele::physics::PhysicsType::eos();
-        if (udata_g->ireactor_type == ReactorTypes::e_reactor_type) {
-          eos.REY2T(rho, Enrg_loc, mass_frac, temp);
-        } else if (udata_g->ireactor_type == ReactorTypes::h_reactor_type) {
-          eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
-        } else {
-          amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
-        }
-        yvec_d[NUM_SPECIES] = temp;
-        BL_PROFILE_VAR_STOP(FlatStuff);
 
         // ReInit CVODE is faster
         CVodeReInit(cvode_mem, time_start, y);
@@ -1448,32 +1425,6 @@ ReactorCvode::react(
         CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
         FC_in(i, j, k, 0) = nfe + nfeLS;
 
-        BL_PROFILE_VAR_START(FlatStuff);
-        rho = 0.0;
-        for (int n = 0; n < NUM_SPECIES; n++) {
-          rY_in(i, j, k, n) = yvec_d[n];
-          rho += yvec_d[n];
-        }
-        rho_inv = 1.0 / rho;
-        temp = yvec_d[NUM_SPECIES];
-
-        // T update with energy and Y
-        for (int n = 0; n < NUM_SPECIES; n++) {
-          mass_frac[n] = yvec_d[n] * rho_inv;
-        }
-        rEner_in(i, j, k, 0) =
-          udata_g->energy_init_d[0] + actual_dt * udata_g->energy_ext_d[0];
-        Enrg_loc = rEner_in(i, j, k, 0) * rho_inv;
-        if (udata_g->ireactor_type == ReactorTypes::e_reactor_type) {
-          eos.REY2T(rho, Enrg_loc, mass_frac, temp);
-        } else if (udata_g->ireactor_type == ReactorTypes::h_reactor_type) {
-          eos.RHY2T(rho, Enrg_loc, mass_frac, temp);
-        } else {
-          amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
-        }
-        T_in(i, j, k, 0) = temp;
-        BL_PROFILE_VAR_STOP(FlatStuff);
-
         if ((udata_g->iverbose > 3) && (omp_thread == 0)) {
           amrex::Print() << "END : time curr is " << CvodeActual_time_final
                          << " and actual dt_react is " << actual_dt << "\n";
@@ -1492,6 +1443,14 @@ ReactorCvode::react(
 
   long int nfe =
     20; // Dummy, the return value is no longer used for this function.
+
+  BL_PROFILE_VAR_START(FlatStuff);
+  amrex::Gpu::DeviceVector<long int> v_nfe(ncells, nfe);
+  long int* d_nfe = v_nfe.data();
+  unflatten(
+    box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in, yvec_d,
+    udata_g->energy_init_d, d_nfe, dt_react);
+  BL_PROFILE_VAR_STOP(FlatStuff);
 #endif
 
   return nfe;
@@ -1759,37 +1718,6 @@ ReactorCvode::react(
   std::memcpy(udata_g->energy_init_d, rX_in, sizeof(amrex::Real) * Ncells);
   std::memcpy(udata_g->energy_ext_d, rX_src_in, sizeof(amrex::Real) * Ncells);
 
-  // T update with energy and Y
-  for (int i = 0; i < Ncells; i++) {
-    int offset = i * (NUM_SPECIES + 1);
-    amrex::Real* mass_frac = rY_in + offset;
-    // get rho
-    amrex::Real rho = 0.0;
-    for (int kk = 0; kk < NUM_SPECIES; kk++) {
-      rho += mass_frac[kk];
-    }
-    amrex::Real rho_inv = 1.0 / rho;
-    // get Yks
-    for (int kk = 0; kk < NUM_SPECIES; kk++) {
-      mass_frac[kk] = mass_frac[kk] * rho_inv;
-    }
-    // get energy
-    amrex::Real nrg_loc = rX_in[i] * rho_inv;
-    // recompute T
-    amrex::Real temp = rY_in[offset + NUM_SPECIES];
-    auto eos = pele::physics::PhysicsType::eos();
-    if (udata_g->ireactor_type == ReactorTypes::e_reactor_type) {
-      eos.REY2T(rho, nrg_loc, mass_frac, temp);
-    } else if (udata_g->ireactor_type == ReactorTypes::h_reactor_type) {
-      eos.RHY2T(rho, nrg_loc, mass_frac, temp);
-    } else {
-      amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
-    }
-    // store T in y
-    yvec_d[offset + NUM_SPECIES] = temp;
-  }
-  BL_PROFILE_VAR_STOP(FlatStuff);
-
   // ReInit CVODE is faster
   CVodeReInit(cvode_mem, time_start, y);
 
@@ -1813,44 +1741,12 @@ ReactorCvode::react(
   time += dt_react;                      // Increment time in reactor mode
 #endif
 
-  BL_PROFILE_VAR_START(FlatStuff);
   // Pack data to return in main routine external
   std::memcpy(
     rY_in, yvec_d, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * Ncells));
   for (int i = 0; i < Ncells; i++) {
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
   }
-
-  // T update with energy and Y
-  for (int i = 0; i < Ncells; i++) {
-    int offset = i * (NUM_SPECIES + 1);
-    amrex::Real* mass_frac = yvec_d + offset;
-    // get rho
-    amrex::Real rho = 0.0;
-    for (int kk = 0; kk < NUM_SPECIES; kk++) {
-      rho += mass_frac[kk];
-    }
-    amrex::Real rho_inv = 1.0 / rho;
-    // get Yks
-    for (int kk = 0; kk < NUM_SPECIES; kk++) {
-      mass_frac[kk] = mass_frac[kk] * rho_inv;
-    }
-    // get energy
-    amrex::Real nrg_loc = rX_in[i] * rho_inv;
-    // recompute T
-    amrex::Real temp = yvec_d[offset + NUM_SPECIES];
-    auto eos = pele::physics::PhysicsType::eos();
-    if (udata_g->ireactor_type == ReactorTypes::e_reactor_type) {
-      eos.REY2T(rho, nrg_loc, mass_frac, temp);
-    } else if (udata_g->ireactor_type == ReactorTypes::h_reactor_type) {
-      eos.RHY2T(rho, nrg_loc, mass_frac, temp);
-    } else {
-      amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
-    }
-    // store T in rY_in
-    rY_in[offset + NUM_SPECIES] = temp;
-  }
-  BL_PROFILE_VAR_STOP(FlatStuff);
 
   if ((udata_g->iverbose > 1) && (omp_thread == 0)) {
     amrex::Print() << "Additional verbose info --\n";
