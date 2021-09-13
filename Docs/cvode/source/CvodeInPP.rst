@@ -164,7 +164,7 @@ Note that this is a `PelePhysics` flag, so it will automatically be recognized i
 By default, if Sundials is used then the implicit ODE solver CVODE is selected. The user then has to choose between a number of
 different methods to integrate the linear system arising during the implicit solve. Add the following line if sparsity features are required: ::
 
-    USE_KLU_PP = TRUE
+    PELE_USE_KLU = TRUE
 
 Likewise, if `SuiteSparse` has not been installed as prescribed in :ref:`sec:GetCVODE`, then a line specifying its location should be added: ::
 
@@ -282,8 +282,8 @@ Additionally, the ``FUEGO_GAS`` flag should be set to true and the chemistry mod
       # provide location of sundials lib if needed
       SUNDIALS_LIB_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/sundials/instdir/lib/
       # use KLU sparse features -- only useful if CVODE is used
-      USE_KLU_PP = FALSE
-      ifeq ($(USE_KLU_PP), TRUE)
+      PELE_USE_KLU = FALSE
+      ifeq ($(PELE_USE_KLU), TRUE)
         # provide location of KLU lib if needed
         SUITESPARSE_DIR=$(PELE_PHYSICS_HOME)/ThirdParty/SuiteSparse/
       endif
@@ -380,7 +380,7 @@ Only the middle part of the ``GNUmakefile`` needs to be modified compared to the
     ifeq ($(USE_SUNDIALS_PP), TRUE)
       ...
       # use KLU sparse features -- only useful if CVODE is used
-      USE_KLU_PP = TRUE
+      PELE_USE_KLU = TRUE
       ...
     else
       ...
