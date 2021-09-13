@@ -870,36 +870,38 @@ ReactorCvode::allocUserData(
 #else
   if (udata->isolve_type == cvode::sparseDirect) {
 #ifdef PELE_USE_KLU
-    // CSC matrices data -> one big matrix used for the direct solve
-    udata->colPtrs = new int*[1];
-    udata->rowVals = new int*[1];
-    udata->Jdata = new amrex::Real*[1];
+  // CSC matrices data -> one big matrix used for the direct solve
+  udata->colPtrs = new int*[1];
+  udata->rowVals = new int*[1];
+  udata->Jdata = new amrex::Real*[1];
 
-    // Number of non zero elements in ODE system
-    SPARSITY_INFO(&(udata->NNZ), &HP, udata->ncells_d);
-    // Build Sparse Matrix for direct sparse KLU solver
-    (udata->PS) = new SUNMatrix[1];
-    (udata->PS)[0] = SUNSparseMatrix(
-      (NUM_SPECIES + 1) * udata->ncells_d, (NUM_SPECIES + 1) * udata->ncells_d,
-      udata->NNZ * udata->ncells_d, CSC_MAT);
-    udata->colPtrs[0] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[0]);
-    udata->rowVals[0] = (int*)SUNSparseMatrix_IndexValues((udata->PS)[0]);
-    udata->Jdata[0] = SUNSparseMatrix_Data((udata->PS)[0]);
-    SPARSITY_PREPROC_CSC(
-      udata->rowVals[0], udata->colPtrs[0], &HP, udata->ncells_d);
+  // Number of non zero elements in ODE system
+  SPARSITY_INFO(&(udata->NNZ), &HP, udata->ncells_d);
+  // Build Sparse Matrix for direct sparse KLU solver
+  (udata->PS) = new SUNMatrix[1];
+  (udata->PS)[0] = SUNSparseMatrix(
+    (NUM_SPECIES + 1) * udata->ncells_d, (NUM_SPECIES + 1) * udata->ncells_d,
+    udata->NNZ * udata->ncells_d, CSC_MAT);
+  udata->colPtrs[0] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[0]);
+  udata->rowVals[0] = (int*)SUNSparseMatrix_IndexValues((udata->PS)[0]);
+  udata->Jdata[0] = SUNSparseMatrix_Data((udata->PS)[0]);
+  SPARSITY_PREPROC_CSC(
+    udata->rowVals[0], udata->colPtrs[0], &HP, udata->ncells_d);
 #endif
-  } else if (udata->isolve_type == cvode::customDirect) {
-    // Number of non zero elements in ODE system
-    SPARSITY_INFO_SYST(&(udata->NNZ), &HP, udata->ncells_d);
-    // Build the SUNmatrix as CSR sparse and fill ptrs to row/Vals
-    udata->PSc = SUNSparseMatrix(
-      (NUM_SPECIES + 1) * udata->ncells_d, (NUM_SPECIES + 1) * udata->ncells_d,
-      udata->NNZ * udata->ncells_d, CSR_MAT);
-    udata->rowPtrs_c = (int*)SUNSparseMatrix_IndexPointers(udata->PSc);
-    udata->colVals_c = (int*)SUNSparseMatrix_IndexValues(udata->PSc);
-    SPARSITY_PREPROC_SYST_CSR(
-      udata->colVals_c, udata->rowPtrs_c, &HP, udata->ncells_d, 0);
-  }
+}
+else if (udata->isolve_type == cvode::customDirect)
+{
+  // Number of non zero elements in ODE system
+  SPARSITY_INFO_SYST(&(udata->NNZ), &HP, udata->ncells_d);
+  // Build the SUNmatrix as CSR sparse and fill ptrs to row/Vals
+  udata->PSc = SUNSparseMatrix(
+    (NUM_SPECIES + 1) * udata->ncells_d, (NUM_SPECIES + 1) * udata->ncells_d,
+    udata->NNZ * udata->ncells_d, CSR_MAT);
+  udata->rowPtrs_c = (int*)SUNSparseMatrix_IndexPointers(udata->PSc);
+  udata->colVals_c = (int*)SUNSparseMatrix_IndexValues(udata->PSc);
+  SPARSITY_PREPROC_SYST_CSR(
+    udata->colVals_c, udata->rowPtrs_c, &HP, udata->ncells_d, 0);
+}
 #endif
 
   //----------------------------------------------------------
@@ -992,81 +994,79 @@ ReactorCvode::allocUserData(
   }
 
 #else
-  if (udata->iprecond_type == cvode::denseSimpleAJac) {
-    // Matrix data : big bunch of dimensions, not sure why. Generally ncells ==
-    // 1 so not too bad Simply create the space.
-    (udata->P) = new amrex::Real***[udata->ncells_d];
-    (udata->Jbd) = new amrex::Real***[udata->ncells_d];
-    (udata->pivot) = new sunindextype**[udata->ncells_d];
-    for (int i = 0; i < udata->ncells_d; ++i) {
-      (udata->P)[i] = new amrex::Real**[udata->ncells_d];
-      (udata->Jbd)[i] = new amrex::Real**[udata->ncells_d];
-      (udata->pivot)[i] = new sunindextype*[udata->ncells_d];
-    }
-    for (int i = 0; i < udata->ncells_d; ++i) {
-      (udata->P)[i][i] = newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
-      (udata->Jbd)[i][i] = newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
-      (udata->pivot)[i][i] = newIndexArray(NUM_SPECIES + 1);
-    }
-  } else if (udata->iprecond_type == cvode::sparseSimpleAJac) {
-#ifdef PELE_USE_KLU
-    // CSC matrices data for each submatrix (cells)
-    udata->colPtrs = new int*[udata->ncells_d];
-    udata->rowVals = new int*[udata->ncells_d];
-    udata->Jdata = new amrex::Real*[udata->ncells_d];
-
-    // KLU internal storage
-    udata->Common = new klu_common[udata->ncells_d];
-    udata->Symbolic = new klu_symbolic*[udata->ncells_d];
-    udata->Numeric = new klu_numeric*[udata->ncells_d];
-    // Sparse Matrices for It Sparse KLU block-solve
-    udata->PS = new SUNMatrix[udata->ncells_d];
-    // Number of non zero elements
-    SPARSITY_INFO_SYST_SIMPLIFIED(&(udata->NNZ), &HP);
-    // Not used yet. TODO use to fetch sparse Mat
-    udata->indx = new int[udata->NNZ];
-    udata->JSPSmat = new amrex::Real*[udata->ncells_d];
-    for (int i = 0; i < udata->ncells_d; ++i) {
-      (udata->PS)[i] =
-        SUNSparseMatrix(NUM_SPECIES + 1, NUM_SPECIES + 1, udata->NNZ, CSC_MAT);
-      udata->colPtrs[i] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[i]);
-      udata->rowVals[i] = (int*)SUNSparseMatrix_IndexValues((udata->PS)[i]);
-      udata->Jdata[i] = SUNSparseMatrix_Data((udata->PS)[i]);
-      // indx not used YET
-      SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(
-        udata->rowVals[i], udata->colPtrs[i], udata->indx, &HP);
-      udata->JSPSmat[i] =
-        new amrex::Real[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)];
-      klu_defaults(&(udata->Common[i]));
-      // udata->Common.btf = 0;
-      //(udata->Common[i]).maxwork = 15;
-      // udata->Common.ordering = 1;
-      udata->Symbolic[i] = klu_analyze(
-        NUM_SPECIES + 1, udata->colPtrs[i], udata->rowVals[i],
-        &(udata->Common[i]));
-    }
-#endif
-  } else if (udata->iprecond_type == cvode::customSimpleAJac) {
-    // CSR matrices data for each submatrix (cells)
-    udata->colVals = new int*[udata->ncells_d];
-    udata->rowPtrs = new int*[udata->ncells_d];
-    // Matrices for each sparse custom block-solve
-    udata->PS = new SUNMatrix[udata->ncells_d];
-    udata->JSPSmat = new amrex::Real*[udata->ncells_d];
-    // Number of non zero elements
-    SPARSITY_INFO_SYST_SIMPLIFIED(&(udata->NNZ), &HP);
-    for (int i = 0; i < udata->ncells_d; ++i) {
-      (udata->PS)[i] =
-        SUNSparseMatrix(NUM_SPECIES + 1, NUM_SPECIES + 1, udata->NNZ, CSR_MAT);
-      udata->rowPtrs[i] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[i]);
-      udata->colVals[i] = (int*)SUNSparseMatrix_IndexValues((udata->PS)[i]);
-      udata->Jdata[i] = SUNSparseMatrix_Data((udata->PS)[i]);
-      SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
-        udata->colVals[i], udata->rowPtrs[i], &HP, 0);
-      udata->JSPSmat[i] =
-        new amrex::Real[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)];
-    }
+if (udata->iprecond_type == cvode::denseSimpleAJac) {
+  // Matrix data : big bunch of dimensions, not sure why. Generally ncells ==
+  // 1 so not too bad Simply create the space.
+  (udata->P) = new amrex::Real***[udata->ncells_d];
+  (udata->Jbd) = new amrex::Real***[udata->ncells_d];
+  (udata->pivot) = new sunindextype**[udata->ncells_d];
+  for (int i = 0; i < udata->ncells_d; ++i) {
+    (udata->P)[i] = new amrex::Real**[udata->ncells_d];
+    (udata->Jbd)[i] = new amrex::Real**[udata->ncells_d];
+    (udata->pivot)[i] = new sunindextype*[udata->ncells_d];
   }
+  for (int i = 0; i < udata->ncells_d; ++i) {
+    (udata->P)[i][i] = newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
+    (udata->Jbd)[i][i] = newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
+    (udata->pivot)[i][i] = newIndexArray(NUM_SPECIES + 1);
+  }
+} else if (udata->iprecond_type == cvode::sparseSimpleAJac) {
+#ifdef PELE_USE_KLU
+  // CSC matrices data for each submatrix (cells)
+  udata->colPtrs = new int*[udata->ncells_d];
+  udata->rowVals = new int*[udata->ncells_d];
+  udata->Jdata = new amrex::Real*[udata->ncells_d];
+
+  // KLU internal storage
+  udata->Common = new klu_common[udata->ncells_d];
+  udata->Symbolic = new klu_symbolic*[udata->ncells_d];
+  udata->Numeric = new klu_numeric*[udata->ncells_d];
+  // Sparse Matrices for It Sparse KLU block-solve
+  udata->PS = new SUNMatrix[udata->ncells_d];
+  // Number of non zero elements
+  SPARSITY_INFO_SYST_SIMPLIFIED(&(udata->NNZ), &HP);
+  // Not used yet. TODO use to fetch sparse Mat
+  udata->indx = new int[udata->NNZ];
+  udata->JSPSmat = new amrex::Real*[udata->ncells_d];
+  for (int i = 0; i < udata->ncells_d; ++i) {
+    (udata->PS)[i] =
+      SUNSparseMatrix(NUM_SPECIES + 1, NUM_SPECIES + 1, udata->NNZ, CSC_MAT);
+    udata->colPtrs[i] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[i]);
+    udata->rowVals[i] = (int*)SUNSparseMatrix_IndexValues((udata->PS)[i]);
+    udata->Jdata[i] = SUNSparseMatrix_Data((udata->PS)[i]);
+    // indx not used YET
+    SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(
+      udata->rowVals[i], udata->colPtrs[i], udata->indx, &HP);
+    udata->JSPSmat[i] = new amrex::Real[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)];
+    klu_defaults(&(udata->Common[i]));
+    // udata->Common.btf = 0;
+    //(udata->Common[i]).maxwork = 15;
+    // udata->Common.ordering = 1;
+    udata->Symbolic[i] = klu_analyze(
+      NUM_SPECIES + 1, udata->colPtrs[i], udata->rowVals[i],
+      &(udata->Common[i]));
+  }
+#endif
+} else if (udata->iprecond_type == cvode::customSimpleAJac) {
+  // CSR matrices data for each submatrix (cells)
+  udata->colVals = new int*[udata->ncells_d];
+  udata->rowPtrs = new int*[udata->ncells_d];
+  // Matrices for each sparse custom block-solve
+  udata->PS = new SUNMatrix[udata->ncells_d];
+  udata->JSPSmat = new amrex::Real*[udata->ncells_d];
+  // Number of non zero elements
+  SPARSITY_INFO_SYST_SIMPLIFIED(&(udata->NNZ), &HP);
+  for (int i = 0; i < udata->ncells_d; ++i) {
+    (udata->PS)[i] =
+      SUNSparseMatrix(NUM_SPECIES + 1, NUM_SPECIES + 1, udata->NNZ, CSR_MAT);
+    udata->rowPtrs[i] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[i]);
+    udata->colVals[i] = (int*)SUNSparseMatrix_IndexValues((udata->PS)[i]);
+    udata->Jdata[i] = SUNSparseMatrix_Data((udata->PS)[i]);
+    SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
+      udata->colVals[i], udata->rowPtrs[i], &HP, 0);
+    udata->JSPSmat[i] = new amrex::Real[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)];
+  }
+}
 #endif
 }
 
@@ -1528,7 +1528,7 @@ ReactorCvode::react(
 #endif
 
   // Fill data
-  BL_PROFILE_VAR("Pele::react():ASyncCopy",AsyncCopy);
+  BL_PROFILE_VAR("Pele::react():ASyncCopy", AsyncCopy);
   amrex::Gpu::htod_memcpy_async(yvec_d, rY_in, sizeof(amrex::Real) * (neq_tot));
   amrex::Gpu::htod_memcpy_async(
     user_data->species_ext_d, rY_src_in,

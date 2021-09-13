@@ -25,12 +25,12 @@ DEFINES  += -DMOD_REACTOR
 
 # Activates use of SUNDIALS
 ifeq ($(USE_CUDA), TRUE)
-  USE_KLU_PP = FALSE
+  PELE_USE_KLU = FALSE
 else
   ifeq ($(USE_HIP), TRUE)
-    USE_KLU_PP = FALSE
+    PELE_USE_KLU = FALSE
   else
-    USE_KLU_PP = FALSE
+    PELE_USE_KLU = FALSE
   endif
 endif
 

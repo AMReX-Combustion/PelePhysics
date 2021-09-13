@@ -20,11 +20,11 @@ USE_CUDA   = TRUE
 TINY_PROFILE = FALSE
 
 ifeq ($(USE_CUDA), TRUE)
-  USE_KLU_PP = FALSE
+  PELE_USE_KLU = FALSE
 else
-  USE_KLU_PP = FALSE
+  PELE_USE_KLU = FALSE
 endif
-USE_KLU = $(USE_KLU_PP) # sort out keywords later...
+USE_KLU = $(PELE_USE_KLU) # sort out keywords later...
 
 Eos_Model       = Fuego
 #Chemistry_Model = LiDryer
