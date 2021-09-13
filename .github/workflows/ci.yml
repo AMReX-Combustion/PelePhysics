@@ -99,7 +99,7 @@ jobs:
             which nvcc || echo "nvcc not in PATH!"; \
           fi
           cmake --version
-          make TPL ${{matrix.amrex_build_args}};
+          #make TPL ${{matrix.amrex_build_args}};
       - name: Test Transport
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
