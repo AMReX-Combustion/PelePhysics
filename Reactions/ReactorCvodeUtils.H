@@ -70,7 +70,7 @@ struct CVODEUserData
   int** colVals = NULL;
   int* indx = NULL;
   amrex::Real** JSPSmat = NULL;
-#ifdef USE_KLU_PP
+#ifdef PELE_USE_KLU
   klu_common* Common;
   klu_symbolic** Symbolic;
   klu_numeric** Numeric;

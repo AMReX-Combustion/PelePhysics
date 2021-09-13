@@ -25,12 +25,12 @@
 #include <nvector/nvector_hip.h>
 #endif
 
-#ifdef USE_KLU_PP
+#ifdef PELE_USE_KLU
 #include "klu.h"
 #include <sunlinsol/sunlinsol_klu.h>
 #endif
 
-#ifdef PP_USE_MAGMA
+#ifdef PELE_USE_MAGMA
 #include <sunmatrix/sunmatrix_magmadense.h>
 #include <sunlinsol/sunlinsol_magmadense.h>
 #endif

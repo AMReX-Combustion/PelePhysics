@@ -63,7 +63,7 @@ int Precond_custom(
   amrex::Real gamma,
   void* user_data);
 
-#ifdef USE_KLU_PP
+#ifdef PELE_USE_KLU
 // KLU preconditioner functions
 int PSolve_sparse(
   amrex::Real tn,

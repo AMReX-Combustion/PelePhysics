@@ -15,7 +15,7 @@ Precond(
   amrex::Real gamma,
   void* user_data)
 {
-  BL_PROFILE_VAR("Precond()", Precond);
+  BL_PROFILE("Pele::ReactorCvode::Precond()");
 
   amrex::Real* u_d = N_VGetDeviceArrayPointer_Cuda(u);
 
@@ -32,7 +32,7 @@ Precond(
   auto csr_col_index_d = udata->csr_col_index_d;
   auto NNZ = udata->NNZ;
 
-  BL_PROFILE_VAR("fKernelComputeAJ()", fKernelComputeAJ);
+  BL_PROFILE_VAR("Pele::ReactorCvode::fKernelComputeAJ()", fKernelComputeAJ);
   if (jok) {
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
     amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
@@ -80,11 +80,6 @@ Precond(
 
   cuda_status = cudaDeviceSynchronize();
   AMREX_ASSERT(cuda_status == cudaSuccess);
-
-  BL_PROFILE_VAR_STOP(InfoBatched);
-
-  BL_PROFILE_VAR_STOP(Precond);
-
   return (0);
 }
 
@@ -100,7 +95,7 @@ PSolve(
   int /*lr*/,
   void* user_data)
 {
-  BL_PROFILE_VAR("Psolve()", cusolverPsolve);
+  BL_PROFILE("Pele::ReactorCvode::PSolve()");
 
   // Get data out of udata to minimize global memory access
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
@@ -125,8 +120,6 @@ PSolve(
 
   N_VCopyFromDevice_Cuda(z);
   N_VCopyFromDevice_Cuda(r);
-
-  BL_PROFILE_VAR_STOP(cusolverPsolve);
 
   /*
     // Checks
@@ -176,6 +169,7 @@ Precond(
   amrex::Real gamma,
   void* user_data)
 {
+  BL_PROFILE("Pele::ReactorCvode::Precond()");
   // Make local copies of pointers to input data
   amrex::Real* u_d = N_VGetArrayPointer(u);
 
@@ -262,6 +256,7 @@ PSolve(
   int /* lr */,
   void* user_data)
 {
+  BL_PROFILE("Pele::ReactorCvode::PSolve()");
   // Make local copies of pointers to input data
   amrex::Real* zdata = N_VGetArrayPointer(z);
 
@@ -280,7 +275,7 @@ PSolve(
   return (0);
 }
 
-#ifdef USE_KLU_PP
+#ifdef PELE_USE_KLU
 // Preconditioner setup routine for GMRES solver when KLU sparse mode is
 // activated Generate and preprocess P
 int
@@ -293,6 +288,7 @@ Precond_sparse(
   amrex::Real gamma,
   void* user_data)
 {
+  BL_PROFILE("Pele::ReactorCvode::Precond_sparse()");
   // Make local copies of pointers to input data (big M)
   amrex::Real* u_d = N_VGetArrayPointer(u);
 
@@ -391,7 +387,7 @@ Precond_sparse(
     }
   }
 
-  BL_PROFILE_VAR("KLU_factorization", KLU_factor);
+  BL_PROFILE_VAR("Pele::ReactorCvode::KLU_factorization", KLU_factor);
   if (!(FirstTimePrecond)) {
     for (int tid = 0; tid < ncells; tid++) {
       klu_refactor(
@@ -422,6 +418,7 @@ PSolve_sparse(
   int /* lr */,
   void* user_data)
 {
+  BL_PROFILE("Pele::ReactorCvode::PSolve_sparse()");
   // Make local copies of pointers in user_data
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   auto ncells = udata->ncells_d;
@@ -432,7 +429,7 @@ PSolve_sparse(
   // Make local copies of pointers to input data (big M)
   amrex::Real* zdata = N_VGetArrayPointer(z);
 
-  BL_PROFILE_VAR("KLU_inversion", PSolve_sparse);
+  BL_PROFILE_VAR("Pele::ReactorCvode::KLU_inversion", PSolve_sparse);
   N_VScale(1.0, r, z);
 
   // Solve the block-diagonal system Pz = r using LU factors stored
@@ -466,6 +463,7 @@ Precond_custom(
   amrex::Real gamma,
   void* user_data)
 {
+  BL_PROFILE("Pele::ReactorCvode::Precond_custom()");
   // Make local copies of pointers to input data
   amrex::Real* u_d = N_VGetArrayPointer(u);
 
@@ -573,6 +571,7 @@ PSolve_custom(
   int /* lr */,
   void* user_data)
 {
+  BL_PROFILE("Pele::ReactorCvode::PSolve_custom()");
   // Make local copies of pointers in user_data
   auto* udata = static_cast<CVODEUserData*>(user_data);
   auto ncells = udata->ncells_d;
@@ -586,7 +585,7 @@ PSolve_custom(
 
   // Solve the block-diagonal system Pz = r using LU factors stored
   // in P and pivot data in pivot, and return the solution in z.
-  BL_PROFILE_VAR("GaussSolver", GaussSolver);
+  BL_PROFILE_VAR("Pele::ReactorCvode::GaussSolver", GaussSolver);
   for (int tid = 0; tid < ncells; tid++) {
     int offset = tid * (NUM_SPECIES + 1);
     double* z_d_offset = zdata + offset;

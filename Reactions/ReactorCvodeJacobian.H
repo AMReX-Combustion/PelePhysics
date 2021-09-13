@@ -45,7 +45,7 @@ int cJac_sps(
   N_Vector tmp2,
   N_Vector tmp3);
 
-#ifdef USE_KLU_PP
+#ifdef PELE_USE_KLU
 int cJac_KLU(
   amrex::Real tn,
   N_Vector y,

@@ -16,6 +16,7 @@ cJac(
   N_Vector /*tmp2*/,
   N_Vector /*tmp3*/)
 {
+  BL_PROFILE("Pele::ReactorCvode::cJac()");
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   auto solveType = udata->isolve_type;
   auto ncells = udata->ncells_d;
@@ -38,7 +39,6 @@ cJac(
       return 1;
     }
 
-    BL_PROFILE_VAR("Jacobian()", fKernelJac);
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
     amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
       [=] AMREX_GPU_DEVICE() noexcept {
@@ -50,16 +50,14 @@ cJac(
       });
     cudaError_t cuda_status = cudaStreamSynchronize(stream);
     AMREX_ASSERT(cuda_status == cudaSuccess);
-    BL_PROFILE_VAR_STOP(fKernelJac);
 #else
     amrex::Abort(
       "Calling cJac with solve_type = sparse_direct only works with CUDA !");
 #endif
   } else if (solveType == magmaDirect) {
-#ifdef PP_USE_MAGMA
+#ifdef PELE_USE_MAGMA
     amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y_in);
     amrex::Real* Jdata = SUNMatrix_MagmaDense_Data(J);
-    BL_PROFILE_VAR("Jacobian()", fKernelJac);
     const auto ec = Gpu::ExecutionConfig(ncells);
     launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
       [=] AMREX_GPU_DEVICE() noexcept {
@@ -70,10 +68,9 @@ cJac(
         }
       });
     amrex::Gpu::Device::streamSynchronize();
-    BL_PROFILE_VAR_STOP(fKernelJac);
 #else
     amrex::Abort(
-      "Calling cJac with solve_type = magma_direct reauires PP_USE_MAGMA = "
+      "Calling cJac with solve_type = magma_direct reauires PELE_USE_MAGMA = "
       "TRUE !");
 #endif
   }
@@ -94,6 +91,7 @@ cJac(
   N_Vector /* tmp2 */,
   N_Vector /* tmp3 */)
 {
+  BL_PROFILE("Pele::ReactorCvode::cJacDense()");
 
   // Make local copies of pointers to input data
   amrex::Real* ydata = N_VGetArrayPointer(u);
@@ -103,7 +101,6 @@ cJac(
   auto ncells = udata->ncells_d;
   auto reactor_type = udata->ireactor_type;
 
-  BL_PROFILE_VAR("DenseJac", DenseJac);
   for (int tid = 0; tid < ncells; tid++) {
     // Offset in case several cells
     int offset = tid * (NUM_SPECIES + 1);
@@ -147,7 +144,6 @@ cJac(
     }
     J_col = SM_COLUMN_D(J, offset);
   }
-  BL_PROFILE_VAR_STOP(DenseJac);
 
   return (0);
 }
@@ -164,6 +160,7 @@ cJac_sps(
   N_Vector /* tmp2 */,
   N_Vector /* tmp3 */)
 {
+  BL_PROFILE("Pele::ReactorCvode::cJacSparse()");
   // Make local copies of pointers to input data
   amrex::Real* ydata = N_VGetArrayPointer(u);
 
@@ -179,7 +176,6 @@ cJac_sps(
   amrex::Real mw[NUM_SPECIES] = {0.0};
   get_mw(mw);
 
-  BL_PROFILE_VAR("FillSparseData", FillSpsData);
   sunindextype* rowPtrs_tmp = SUNSparseMatrix_IndexPointers(J);
   sunindextype* colIndx_tmp = SUNSparseMatrix_IndexValues(J);
   amrex::Real* Jdata = SUNSparseMatrix_Data(J);
@@ -192,9 +188,7 @@ cJac_sps(
   for (int i = 0; i < ncells * (NUM_SPECIES + 1); i++) {
     rowPtrs_tmp[i + 1] = (sunindextype)rowPtrs_c[i + 1];
   }
-  BL_PROFILE_VAR_STOP(FillSpsData);
 
-  BL_PROFILE_VAR("SparseJac", SpsJac);
   // Temp vectors
   // Save Jac from cell to cell if more than one
   amrex::Real temp_save_lcl = 0.0;
@@ -243,12 +237,11 @@ cJac_sps(
       }
     }
   }
-  BL_PROFILE_VAR_STOP(SpsJac);
 
   return (0);
 }
 
-#ifdef USE_KLU_PP
+#ifdef PELE_USE_KLU
 // Analytical SPARSE KLU CSC Jacobian evaluation
 int
 cJac_KLU(
@@ -261,7 +254,7 @@ cJac_KLU(
   N_Vector /* tmp2 */,
   N_Vector /* tmp3 */)
 {
-  BL_PROFILE_VAR("SparseKLUJac", SpsKLUJac);
+  BL_PROFILE("Pele::ReactorCvode::cJacSparseKLU()");
 
   // Make local copies of pointers to input data
   amrex::Real* ydata = N_VGetArrayPointer(u);
@@ -339,8 +332,6 @@ cJac_KLU(
     }
     BL_PROFILE_VAR_STOP(DtoS);
   }
-
-  BL_PROFILE_VAR_STOP(SpsKLUJac);
 
   return (0);
 }
