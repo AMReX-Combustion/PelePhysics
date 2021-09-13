@@ -107,7 +107,7 @@ jobs:
           for TYPE in Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Transport_Model=${TYPE} TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}; \
-            if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele2d.${{matrix.comp}}.ex inputs.2d_${TYPE}; fi; \
+            if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d_${TYPE}; fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi; \
           done
@@ -119,7 +119,7 @@ jobs:
             if [ "${TYPE}" == 'Fuego' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}; \
-            if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele2d.${{matrix.comp}}.ex inputs.2d; fi; \
+            if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d; fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi; \
           done
@@ -131,8 +131,8 @@ jobs:
           if [ "${{matrix.comp}}" != 'nvcc' ]; then \
             for TYPE in Cvode Arkode RK64; do \
               printf "\n-------- ${TYPE} --------\n"; \
-              ./Pele3d.${{matrix.comp}}.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
-              ./Pele3d.${{matrix.comp}}.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+              ./Pele3d.${{matrix.comp}}.TPROF.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+              ./Pele3d.${{matrix.comp}}.TPROF.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
               if [ $? -ne 0 ]; then exit 1; fi; \
             done \
           fi;
@@ -141,8 +141,8 @@ jobs:
           if [ "${{matrix.comp}}" != 'nvcc' ]; then \
             for TYPE in Cvode Arkode RK64; do \
               printf "\n-------- ${TYPE} --------\n"; \
-               ./Pele3d.${{matrix.comp}}.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
-               ./Pele3d.${{matrix.comp}}.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+               ./Pele3d.${{matrix.comp}}.TPROF.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
+               ./Pele3d.${{matrix.comp}}.TPROF.ex inputs.3d_1dArray ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
               if [ $? -ne 0 ]; then exit 1; fi; \
             done \
           fi
