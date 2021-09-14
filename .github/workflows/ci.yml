@@ -90,7 +90,7 @@ jobs:
             echo "/usr/local/cuda-11.2/bin" >> $GITHUB_PATH; \
           fi
       - name: Dependencies
-        working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
+        working-directory: ${{env.REACT_WORKING_DIRECTORY}}
         run: |
           if [ "${{matrix.comp}}" == 'nvcc' ]; then \
             ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}}; \
@@ -106,7 +106,7 @@ jobs:
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           for TYPE in Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
-            make help ${{env.NPROCS}} Transport_Model=${TYPE} TINY_PROFILE=TRUE ${{matrix.amrex_build_args}};
+            make help Transport_Model=${TYPE} TINY_PROFILE=TRUE ${{matrix.amrex_build_args}};
             make -j ${{env.NPROCS}} Transport_Model=${TYPE} TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}; \
             if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d_${TYPE}; fi; \
             make realclean; \
