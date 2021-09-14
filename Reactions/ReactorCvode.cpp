@@ -267,7 +267,7 @@ ReactorCvode::checkCvodeOptions() const
 
   // Query options
   amrex::ParmParse pp("ode");
-  int iverbose = 1;
+  int iverbose = 0;
   pp.query("verbose", iverbose);
 
   if (iverbose > 0) {
@@ -649,7 +649,7 @@ ReactorCvode::allocUserData(
   //----------------------------------------------------------
   // Query options
   amrex::ParmParse pp("ode");
-  int iverbose = 1;
+  int iverbose = 0;
   pp.query("verbose", iverbose);
 
   std::string solve_type_str = "none";
