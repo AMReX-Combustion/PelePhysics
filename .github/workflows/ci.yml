@@ -90,7 +90,7 @@ jobs:
             echo "/usr/local/cuda-11.2/bin" >> $GITHUB_PATH; \
           fi
       - name: Dependencies
-        working-directory: ${{env.TRASNPORT_WORKING_DIRECTORY}}
+        working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
           if [ "${{matrix.comp}}" == 'nvcc' ]; then \
             ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}}; \
