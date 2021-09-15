@@ -8,7 +8,7 @@ else
   HOSTCC = $(COMP)
 endif
 configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; make tp_suffix AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_HIP=$(USE_HIP) PELE_USE_KLU=$(PELE_USE_KLU) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) | tail -1)
-SUNDIALS_LIB_DIR     ?= $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib
+SUNDIALS_LIB_DIR  := $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib
 INCLUDE_LOCATIONS += $(SUNDIALS_LIB_DIR)/../include
 LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_cvode -lsundials_arkode
 LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvecserial
@@ -26,7 +26,7 @@ ifneq ($(shell uname),Darwin)
   LIBRARIES += -Wl,-rpath=${SUNDIALS_LIB_DIR}
 endif
 ifeq ($(PELE_USE_KLU), TRUE)
-  SUITESPARSE_DIR   ?= $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)
+  SUITESPARSE_DIR := $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)
   DEFINES   += -DPELE_USE_KLU
   LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_sunmatrixsparse  -lsundials_sunlinsolklu
   LIBRARIES += -L$(SUITESPARSE_DIR)/lib -lklu -lamd -lcolamd -lbtf -lsuitesparseconfig
