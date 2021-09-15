@@ -129,12 +129,12 @@ MNAMES += TRANSPORT=$(TRAN_HOME)
 MNAMES += CHEMISTRY=$(Chemistry_Model)
 
 ifeq ($(shell uname),Darwin)
-  all: TPL
+  all: $(executable)
 	install_name_tool -add_rpath $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib $(executable)
 	$(SILENT) $(RM) AMReX_buildInfo.cpp
 	@echo SUCCESS
 else
-  all: TPL
+  all: $(executable)
 	$(SILENT) $(RM) AMReX_buildInfo.cpp
 	@echo SUCCESS
 endif
