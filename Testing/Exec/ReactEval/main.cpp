@@ -545,7 +545,7 @@ main(int argc, char* argv[])
               box, rhoY, frcExt, T, rhoE, frcEExt, fc, mask, dt_incr, time
 #ifdef AMREX_USE_GPU
               ,
-              amrex::amrex::Gpu::gpuStream()
+              amrex::Gpu::gpuStream()
 #endif
             );
             dt_incr = dt_lev / ndt;
@@ -648,7 +648,7 @@ main(int argc, char* argv[])
                 &tmp_src_vect_energy[i], dt_incr, time, ode_ncells
 #ifdef AMREX_USE_GPU
                 ,
-                amrex::amrex::Gpu::gpuStream()
+                amrex::Gpu::gpuStream()
 #endif
               );
 
