@@ -22,9 +22,6 @@ include $(PELE_PHYSICS_HOME)/ThirdParty/Make.ThirdParty
 # PeleC uses a coarse grained OMP approach
 DEFINES += -DCRSEGRNDOMP
 
-# Need this for DataServices to compile
-DEFINES += -DBL_NOLINEVALUES
-
 ifeq ($(USE_ACC), TRUE)
   DEFINES += -DACC
 endif
@@ -101,21 +98,15 @@ ifeq ($(Transport_Model), Sutherland)
   DEFINES += -DUSE_SUTHERLAND_TRANSPORT
 endif
 
-Pdirs   := Base Boundary AmrCore Extern/amrdata
-Bdirs   := Source
+Pdirs   := Base Boundary AmrCore
 
 Bpack	+= $(foreach dir, $(Pdirs), $(AMREX_HOME)/Src/$(dir)/Make.package)
 Blocs	+= $(foreach dir, $(Pdirs), $(AMREX_HOME)/Src/$(dir))
-
-Bpack	+= $(foreach dir, $(Bdirs), $(TOP)/Testing/$(dir)/Make.package)
-Blocs	+= $(foreach dir, $(Bdirs), $(TOP)/Testing/$(dir))
 
 include $(Bpack)
 
 INCLUDE_LOCATIONS += $(Blocs)
 VPATH_LOCATIONS   += $(Blocs)
-
-EXTERN_TEMPLATE := $(PELE_PHYSICS_HOME)/Testing/Source/extern_probin.template
 
 EXTERN_PARAMETERS := $(shell $(AMREX_HOME)/Tools/F_scripts/findparams.py $(EXTERN_CORE))
 
