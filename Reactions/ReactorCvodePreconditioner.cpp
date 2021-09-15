@@ -5,6 +5,7 @@ namespace physics {
 namespace reactions {
 namespace cvode {
 #ifdef AMREX_USE_GPU
+#ifdef AMREX_USE_CUDA
 int
 Precond(
   amrex::Real /*tn*/,
@@ -154,6 +155,40 @@ PSolve(
 
   return (0);
 }
+
+#else
+
+int
+Precond(
+  amrex::Real /* tn */,
+  N_Vector /* u */,
+  N_Vector /* fu */,
+  booleantype /* jok */,
+  booleantype* /* jcurPtr */,
+  amrex::Real /* gamma */,
+  void* /* user_data */)
+{
+  amrex::Abort("Only implemented for CUDA.");
+  return 1;
+}
+
+int
+PSolve(
+  amrex::Real /* tn */,
+  N_Vector /* u */,
+  N_Vector /* fu */,
+  N_Vector /* r */,
+  N_Vector /* z */,
+  amrex::Real /* gamma */,
+  amrex::Real /* delta */,
+  int /* lr */,
+  void* /* user_data */)
+{
+  amrex::Abort("Only implemented for CUDA.");
+  return 1;
+}
+
+#endif
 
 #else
 
