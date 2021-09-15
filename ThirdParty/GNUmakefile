@@ -41,7 +41,7 @@ else
   endif
 endif
 
-tp_suffix=$(COMP)$(DebugSuffix)$(CUDASuffix)$(KLUSuffix)
+tp_suffix=$(COMP)$(DebugSuffix)$(CUDASuffix)$(HIPSuffix)$(KLUSuffix)
 INSTALL_PREFIX=$(PWD)/INSTALL/$(tp_suffix)
 
 ifeq ($(PELE_USE_KLU),TRUE)
