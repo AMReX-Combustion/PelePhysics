@@ -436,12 +436,16 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RHY2T(amrex::Real /*R*/, amrex::Real /*H*/, amrex::Real* /*Y[]*/, amrex::Real& /*T*/)
+  void RHY2T(
+    amrex::Real /*R*/,
+    amrex::Real /*H*/,
+    amrex::Real* /*Y[]*/,
+    amrex::Real& /*T*/)
   {
     // RHY2T is possible but is not yet supported
     amrex::Error("RHY2T not yet supported for this EoS");
   }
-  
+
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
@@ -514,18 +518,6 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2JAC(
-    amrex::Real /*R*/,
-    amrex::Real /*T*/,
-    amrex::Real* /*Y[]*/,
-    amrex::Real* /*JAC[]*/,
-    int /*HP*/)
-  {
-    amrex::Error("RTY2JAC not supported with SRK EoS");
-  }
-
-  AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
   void RTY2C(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real acti[])
   {
     amrex::Real am, bm, dAmdY[NUM_SPECIES];
@@ -569,6 +561,18 @@ struct SRK
     get_mw(mw);
     for (int n = 0; n < NUM_SPECIES; n++)
       WDOT[n] *= mw[n];
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  void RTY2JAC(
+    amrex::Real /*R*/,
+    amrex::Real /*T*/,
+    amrex::Real* /*Y[]*/,
+    amrex::Real* /*JAC[]*/,
+    const int /*HP*/)
+  {
+    amrex::Error("RTY2JAC not supported with SRK EoS");
   }
 
   AMREX_GPU_HOST_DEVICE

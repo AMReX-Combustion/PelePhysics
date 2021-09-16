@@ -126,7 +126,7 @@ struct Fuego
   {
     HY2T(H, Y, T);
   }
-  
+
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void RYET2P(
@@ -173,17 +173,19 @@ struct Fuego
       WDOT[n] *= mw[n];
   }
 
-#ifdef COMPILE_JACOBIAN
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void RTY2JAC(
-    amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real JAC[], int HP)
+    amrex::Real R,
+    amrex::Real T,
+    amrex::Real Y[],
+    amrex::Real JAC[],
+    const int HP)
   {
     amrex::Real C[NUM_SPECIES];
     CKYTCR(&R, &T, Y, C);
     DWDOT(JAC, C, &T, &HP);
   }
-#endif
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
@@ -198,7 +200,9 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Ei(amrex::Real /*R*/, amrex::Real T, amrex::Real* /*Y[]*/, amrex::Real Ei[]) {
+  void RTY2Ei(
+    amrex::Real /*R*/, amrex::Real T, amrex::Real* /*Y[]*/, amrex::Real Ei[])
+  {
     T2Ei(T, Ei);
   }
 

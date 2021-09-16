@@ -52,14 +52,14 @@ void CKNCF(int * ncf);
 void CKSYME_STR(amrex::Vector<std::string>& ename);
 void CKSYMS_STR(amrex::Vector<std::string>& kname);
 /* SPARSE INFORMATION  */
-void SPARSITY_INFO(int * nJdata, int * consP, int NCELLS);
-void SPARSITY_INFO_SYST(int * nJdata, int * consP, int NCELLS);
-void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, int * consP);
-void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, int * consP, int NCELLS);
-void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);
-void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs, int * consP, int NCELLS, int base);
-void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, int * consP);
-void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, int * consP, int base);
+void SPARSITY_INFO(int * nJdata, const int * consP, int NCELLS);
+void SPARSITY_INFO_SYST(int * nJdata, const int * consP, int NCELLS);
+void SPARSITY_INFO_SYST_SIMPLIFIED(int * nJdata, const int * consP);
+void SPARSITY_PREPROC_CSC(int * rowVals, int * colPtrs, const int * consP, int NCELLS);
+void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const int * consP, int NCELLS, int base);
+void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtrs, const int * consP, int NCELLS, int base);
+void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, const int * consP);
+void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, const int * consP, int base);
 
 
 
@@ -7411,7 +7411,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void dcvpRdT(amrex::Real * species, con
 }
 
 /*compute an approx to the reaction Jacobian */
-#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)
 {
     for (int i=0; i<484; i++) {
@@ -14029,11 +14028,9 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J
     /* dTdot/dT */
     J[483] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;
 }
-#endif
 
 /*compute an approx to the reaction Jacobian (for preconditioning) */
-#ifdef COMPILE_JACOBIAN
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * HP)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, const int * HP)
 {
     amrex::Real c[21];
 
@@ -14052,12 +14049,10 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J,
 
     return;
 }
-#endif
 
 /*compute the reaction Jacobian on GPU */
-#ifdef COMPILE_JACOBIAN
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
+void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, const int consP)
 {
 
     for (int i=0; i<484; i++) {
@@ -21608,12 +21603,10 @@ void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, int consP)
 
 return;
 }
-#endif
 
 
 /*compute the reaction Jacobian */
-#ifdef COMPILE_JACOBIAN
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, int * consP)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, const int * consP)
 {
     amrex::Real c[21];
 
@@ -21632,7 +21625,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Rea
 
     return;
 }
-#endif
 
 
 /* Transport function declarations  */

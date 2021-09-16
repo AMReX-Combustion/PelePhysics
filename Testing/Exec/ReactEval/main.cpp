@@ -8,66 +8,54 @@
 #include <AMReX_VisMF.H>
 #include <AMReX_ParmParse.H>
 
-#ifdef USE_SUNDIALS_PP
 #ifdef AMREX_USE_GPU
 #include <AMReX_SUNMemory.H>
-#endif
 #endif
 
 #include "mechanism.H"
 #include <GPU_misc.H>
 
-#include <PlotFileFromMF.H>
 #include <PelePhysics.H>
-#include <reactor.H>
+#include <ReactorBase.H>
 
-#ifndef USE_RK64_PP
-#ifdef USE_ARKODE_PP 
-static std::string ODE_SOLVER = "ARKODE";
-#else
-static std::string ODE_SOLVER = "CVODE";
-#endif
-#else
-static std::string ODE_SOLVER = "RK64";
-#endif
+namespace {
+const std::string level_prefix{"Level_"};
+}
 
-using namespace amrex;
-
-namespace { const std::string level_prefix{"Level_"}; }
-
-void GotoNextLine(std::istream& is)
+void
+GotoNextLine(std::istream& is)
 {
-       constexpr std::streamsize bl_ignore_max{100000};
-           is.ignore(bl_ignore_max, '\n');
+  constexpr std::streamsize bl_ignore_max{100000};
+  is.ignore(bl_ignore_max, '\n');
 }
 
 int
-main (int   argc,
-      char* argv[])
+main(int argc, char* argv[])
 {
-  Initialize(argc,argv);
-
-#ifdef USE_SUNDIALS_PP
+  amrex::Initialize(argc, argv);
 
 #ifdef AMREX_USE_GPU
-  amrex::sundials::MemoryHelper::Initialize(); /* TODO: this ideally (I think) will go in the amrex::Initialize */
-#endif
-
+  amrex::sundials::MemoryHelper::Initialize(); /* TODO: this ideally (I think)
+                                                  will go in the
+                                                  amrex::Initialize */
 #endif
   {
 
-    Real strt_time = ParallelDescriptor::second();
+    amrex::Real strt_time = amrex::ParallelDescriptor::second();
 
     BL_PROFILE_VAR("main::main()", pmain);
 
-    ParmParse pp;
+    amrex::ParmParse pp;
     std::string fuel_name;
     pp.get("fuel_name", fuel_name);
 
+    std::string chem_integrator = "";
+    pp.get("chem_integrator", chem_integrator);
+
     std::string pltfile;
     bool do_plt = false;
-    if (pp.countval("plotfile")>0) {
-      pp.get("plotfile",pltfile);
+    if (pp.countval("plotfile") > 0) {
+      pp.get("plotfile", pltfile);
       do_plt = true;
     }
 
@@ -75,10 +63,10 @@ main (int   argc,
     // Can either generate single level data
     // or read in data from a checkpoint like file
     int initFromChk = 0;
-    pp.query("initFromFile",initFromChk);
+    pp.query("initFromFile", initFromChk);
     std::string chkfile = "";
     if (initFromChk) {
-       pp.query("initFile",chkfile);
+      pp.query("initFile", chkfile);
     }
 
     /* react() function version */
@@ -87,233 +75,242 @@ main (int   argc,
     std::string reactFormat = "Array4";
     int reactFunc;
     pp.query("reactFormat", reactFormat);
-    if ( reactFormat == "Array4") {
-       reactFunc = 1;
-    } else if ( reactFormat == "1dArray" ) {
-       reactFunc = 2;
+    if (reactFormat == "Array4") {
+      reactFunc = 1;
+    } else if (reactFormat == "1dArray") {
+      reactFunc = 2;
     } else {
-       Abort(" --> reactFormat can only be 'Array4' or '1dArray' !");
+      amrex::Abort(" --> reactFormat can only be 'Array4' or '1dArray' !");
     }
 
     /* ODE inputs */
-    ParmParse ppode("ode");
+    amrex::ParmParse ppode("ode");
     int ode_ncells = 1;
-    ppode.query("ode_ncells",ode_ncells); // number of cells to integrate per call, used only if reactFunc = 2
+    ppode.query("ode_ncells", ode_ncells); // number of cells to integrate per
+                                           // call, used only if reactFunc = 2
 
-    Real dt = 1.e-5;
-    ppode.query("dt",dt);
-    
+    amrex::Real dt = 1.e-5;
+    ppode.query("dt", dt);
+
     int ndt = 1;
-    ppode.query("ndt",ndt); // number of solver calls per dt 
-    
+    ppode.query("ndt", ndt); // number of solver calls per dt
+
     int ode_iE = -1;
-    ppode.query("reactor_type",ode_iE); // RHS type, 1: e (PeleC), !1: h (PeleLM)  <------ FIXME!
-    
-    Real rtol = 1e-10;
-    ppode.query("rtol",rtol);
-    
-    Real atol = 1e-10;
-    ppode.query("atol",atol);
+    ppode.query(
+      "reactor_type",
+      ode_iE); // RHS type, 1: e (PeleC), !1: h (PeleLM)  <------ FIXME!
+
+    amrex::Real rtol = 1e-10;
+    ppode.query("rtol", rtol);
+
+    amrex::Real atol = 1e-10;
+    ppode.query("atol", atol);
 
     int use_typ_vals = 0;
-    ppode.query("use_typ_vals",use_typ_vals);
+    ppode.query("use_typ_vals", use_typ_vals);
 
-    Print() << "ODE solver: " << ODE_SOLVER << std::endl;
-    Print() << "Type of reactor: " << (ode_iE == 1 ? "e (PeleC)" : "h (PeleLM)") << std::endl; // <---- FIXME
-    Print() << "Fuel: " << fuel_name << ", Oxy: O2"  << std::endl;
+    amrex::Print() << "ODE solver: " << chem_integrator << std::endl;
+    amrex::Print() << "Type of reactor: "
+                   << (ode_iE == 1 ? "e (PeleC)" : "h (PeleLM)")
+                   << std::endl; // <---- FIXME
+    amrex::Print() << "Fuel: " << fuel_name << ", Oxy: O2" << std::endl;
 
     /* Mixture info */
-    int fuel_idx   = -1;
+    int fuel_idx = -1;
     if (fuel_name == "H2") {
-      fuel_idx  = H2_ID;
+      fuel_idx = H2_ID;
 #ifdef CH4_ID
     } else if (fuel_name == "CH4") {
-      fuel_idx  = CH4_ID;
+      fuel_idx = CH4_ID;
 #endif
 #ifdef NC12H26_ID
     } else if (fuel_name == "NC12H26") {
-      fuel_idx  = NC12H26_ID;
+      fuel_idx = NC12H26_ID;
 #endif
 #ifdef IC8H18_ID
     } else if (fuel_name == "IC8H18") {
-      fuel_idx  = IC8H18_ID;
+      fuel_idx = IC8H18_ID;
 #endif
     }
 
-    pele::physics::transport::TransportParams<pele::physics::PhysicsType::transport_type> trans_parms;
+    pele::physics::transport::TransportParams<
+      pele::physics::PhysicsType::transport_type>
+      trans_parms;
     trans_parms.allocate();
 
     /* Initialize reactor object inside OMP region, including tolerances */
     BL_PROFILE_VAR("main::reactor_info()", reactInfo);
+    std::unique_ptr<pele::physics::reactions::ReactorBase> reactor =
+      pele::physics::reactions::ReactorBase::create(chem_integrator);
 #ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     {
-      // Set ODE tolerances
-#ifndef USE_ARKODE_PP
-      SetTolFactODE(rtol,atol);
-#endif
-      reactor_init(ode_iE, ode_ncells);
+      reactor->init(ode_iE, ode_ncells);
     }
     BL_PROFILE_VAR_STOP(reactInfo);
 
     // -----------------------------------------------------------------------------
     // Initialize geom/data
-    // When initFromChk = 0, default is single level data provided by initialize_data
-    // with a -1:1 unit length realbox in each dir and cell count provided by the user
-    // otherwise number of levels, geom and all are read in from the chkfile
+    // When initFromChk = 0, default is single level data provided by
+    // initialize_data with a -1:1 unit length realbox in each dir and cell
+    // count provided by the user otherwise number of levels, geom and all are
+    // read in from the chkfile
     // -----------------------------------------------------------------------------
     int finest_level = 0;
-    Vector<Geometry> geoms;
-    Vector<BoxArray> grids;
-    Vector<DistributionMapping> dmaps;
+    amrex::Vector<amrex::Geometry> geoms;
+    amrex::Vector<amrex::BoxArray> grids;
+    amrex::Vector<amrex::DistributionMapping> dmaps;
 
     BL_PROFILE_VAR("main::geometry_setup", GeomSetup);
-    if ( initFromChk == 0 ) {
-        // -----------------------------------------------------------------------------
-        // Resize vectors
-        // -----------------------------------------------------------------------------
-        geoms.resize(finest_level+1);
-        grids.resize(finest_level+1);
-        dmaps.resize(finest_level+1);
+    if (initFromChk == 0) {
+      // -----------------------------------------------------------------------------
+      // Resize vectors
+      // -----------------------------------------------------------------------------
+      geoms.resize(finest_level + 1);
+      grids.resize(finest_level + 1);
+      dmaps.resize(finest_level + 1);
 
-        // -----------------------------------------------------------------------------
-        // Define the geometry
-        // -----------------------------------------------------------------------------
-        std::array<int,3> ncells = {AMREX_D_DECL(1,1,1)};
-        if (pp.countval("ncells") == 1) {
-          pp.get("ncells",ncells[0]);
-          ncells = {AMREX_D_DECL(ncells[0],1,1)};
-        }
-        else if (pp.countval("ncells") >= AMREX_SPACEDIM) {
-          Vector<int> nc(AMREX_SPACEDIM);
-          pp.getarr("ncells",nc,0,AMREX_SPACEDIM);
-          ncells = {AMREX_D_DECL(nc[0],nc[1],nc[2])};
-        }
-        else {
-          Abort("ncells has to have length 1 or spacedim");
-        }
-        
-        Box domain(IntVect(AMREX_D_DECL(0,0,0)),
-                   IntVect(AMREX_D_DECL(ncells[0]-1,ncells[1]-1,ncells[2]-1)));
+      // -----------------------------------------------------------------------------
+      // Define the geometry
+      // -----------------------------------------------------------------------------
+      std::array<int, 3> ncells = {AMREX_D_DECL(1, 1, 1)};
+      if (pp.countval("ncells") == 1) {
+        pp.get("ncells", ncells[0]);
+        ncells = {AMREX_D_DECL(ncells[0], 1, 1)};
+      } else if (pp.countval("ncells") >= AMREX_SPACEDIM) {
+        amrex::Vector<int> nc(AMREX_SPACEDIM);
+        pp.getarr("ncells", nc, 0, AMREX_SPACEDIM);
+        ncells = {AMREX_D_DECL(nc[0], nc[1], nc[2])};
+      } else {
+        amrex::Abort("ncells has to have length 1 or spacedim");
+      }
 
+      amrex::Box domain(
+        amrex::IntVect(AMREX_D_DECL(0, 0, 0)),
+        amrex::IntVect(
+          AMREX_D_DECL(ncells[0] - 1, ncells[1] - 1, ncells[2] - 1)));
 
-        RealBox real_box({AMREX_D_DECL(-1.0,-1.0,-1.0)},
-                         {AMREX_D_DECL( 1.0, 1.0, 1.0)});
+      amrex::RealBox real_box(
+        {AMREX_D_DECL(-1.0, -1.0, -1.0)}, {AMREX_D_DECL(1.0, 1.0, 1.0)});
 
-        int coord = 0;   
+      int coord = 0;
 
-        Array<int,AMREX_SPACEDIM> is_periodic {AMREX_D_DECL(1,1,1)};
+      amrex::Array<int, AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1, 1, 1)};
 
-        geoms[0] = Geometry(domain, real_box, coord, is_periodic);
+      geoms[0] = amrex::Geometry(domain, real_box, coord, is_periodic);
 
-        Print() << "Integrating "<< domain.numPts() << " cells for: " << dt << " seconds with " << ndt << " substeps \n";
+      amrex::Print() << "Integrating " << domain.numPts()
+                     << " cells for: " << dt << " seconds with " << ndt
+                     << " substeps \n";
 
-        // -----------------------------------------------------------------------------
-        // Define BoxArray / Dmap
-        // -----------------------------------------------------------------------------
-        int max_grid_size = 16;
-        pp.query("max_grid_size",max_grid_size);
-        grids[0] = BoxArray(domain);
-        grids[0].maxSize(max_grid_size);
-        dmaps[0] = DistributionMapping(grids[0], ParallelDescriptor::NProcs());
+      // -----------------------------------------------------------------------------
+      // Define amrex::BoxArray / Dmap
+      // -----------------------------------------------------------------------------
+      int max_grid_size = 16;
+      pp.query("max_grid_size", max_grid_size);
+      grids[0] = amrex::BoxArray(domain);
+      grids[0].maxSize(max_grid_size);
+      dmaps[0] = amrex::DistributionMapping(
+        grids[0], amrex::ParallelDescriptor::NProcs());
     } else {
-        // Read chkfile header to get the geometry/BAs info
-        //
+      // Read chkfile header to get the geometry/BAs info
+      //
 
-        if (ode_iE==1) {
-            Abort("The option to read in chemical data is currently only available with PeleLM data and requires ode_iE=2");
+      if (ode_iE == 1) {
+        amrex::Abort(
+          "The option to read in chemical data is currently only available "
+          "with PeleLM data and requires ode_iE=2");
+      }
+
+      std::string File(chkfile + "/Header");
+      amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::GetIOBufferSize());
+      amrex::Vector<char> fileCharPtr;
+      amrex::ParallelDescriptor::ReadAndBcastFile(File, fileCharPtr);
+      std::string fileCharPtrString(fileCharPtr.dataPtr());
+      std::istringstream is(fileCharPtrString, std::istringstream::in);
+      std::string line, word;
+
+      //--------------------------------------------
+      // General info
+      //--------------------------------------------
+      amrex::Real crse_dt = 0.0;
+      std::getline(is, line); // Dummy title
+      is >> finest_level;     // Finest level
+      GotoNextLine(is);
+      is >> crse_dt; // Coarse level dt
+      GotoNextLine(is);
+
+      amrex::Print()
+        << "  Warning: dt and ndt are overwritten when using data from a "
+           "checkfile ! \n";
+      ndt = 1;
+      dt = crse_dt;
+
+      //--------------------------------------------
+      // Geometry
+      //--------------------------------------------
+      amrex::Real prob_lo[AMREX_SPACEDIM];
+      amrex::Real prob_hi[AMREX_SPACEDIM];
+      // Low coordinates of domain bounding box
+      std::getline(is, line);
+      {
+        std::istringstream lis(line);
+        int i = 0;
+        while (lis >> word) {
+          prob_lo[i++] = std::stod(word);
         }
+      }
 
-        std::string File(chkfile + "/Header");
-        VisMF::IO_Buffer io_buffer(VisMF::GetIOBufferSize());
-        Vector<char> fileCharPtr;
-        ParallelDescriptor::ReadAndBcastFile(File, fileCharPtr);
-        std::string fileCharPtrString(fileCharPtr.dataPtr());
-        std::istringstream is(fileCharPtrString, std::istringstream::in);
-        std::string line, word;
+      // High coordinates of domain bounding box
+      std::getline(is, line);
+      {
+        std::istringstream lis(line);
+        int i = 0;
+        while (lis >> word) {
+          prob_hi[i++] = std::stod(word);
+        }
+      }
+      int coord = 0;
+      amrex::Array<int, AMREX_SPACEDIM> is_periodic{AMREX_D_DECL(1, 1, 1)};
+      amrex::RealBox domainSize(prob_lo, prob_hi);
+      amrex::Box domain; // Read domain amrex::Box
+      is >> domain;
+      GotoNextLine(is);
 
-        //--------------------------------------------
-        // General info
-        //--------------------------------------------
-        Real crse_dt = 0.0;
-        std::getline(is, line);  // Dummy title
-        is >> finest_level;      // Finest level
+      // -----------------------------------------------------------------------------
+      // Resize vectors
+      // -----------------------------------------------------------------------------
+      geoms.resize(finest_level + 1);
+      grids.resize(finest_level + 1);
+      dmaps.resize(finest_level + 1);
+
+      // -----------------------------------------------------------------------------
+      // Define geoms, read amrex::BoxArray and define dmap
+      // -----------------------------------------------------------------------------
+      geoms[0] = amrex::Geometry(domain, domainSize, coord, is_periodic);
+      for (int lev = 1; lev <= finest_level; ++lev) {
+        geoms[lev] = amrex::refine(geoms[lev - 1], 2); // Assumes ref_ratio = 2
+      }
+
+      for (int lev = 0; lev <= finest_level; ++lev) {
+        // read in level 'lev' amrex::BoxArray from Header
+        amrex::BoxArray ba;
+        ba.readFrom(is);
         GotoNextLine(is);
-        is >> crse_dt;         // Coarse level dt
-        GotoNextLine(is);
 
-        Print() << "  Warning: dt and ndt are overwritten when using data from a checkfile ! \n";
-        ndt = 1;
-        dt = crse_dt;
+        // Set vector entries
+        grids[lev] = ba;
+        dmaps[lev] =
+          amrex::DistributionMapping(ba, amrex::ParallelDescriptor::NProcs());
+      }
 
-        //--------------------------------------------
-        // Geometry
-        //--------------------------------------------
-        Real prob_lo[AMREX_SPACEDIM];
-        Real prob_hi[AMREX_SPACEDIM];
-        // Low coordinates of domain bounding box
-        std::getline(is, line);
-        {
-            std::istringstream lis(line);
-            int i = 0;
-            while(lis >> word)
-            {
-                prob_lo[i++] = std::stod(word);
-            }
-        }
-
-        // High coordinates of domain bounding box
-        std::getline(is, line);
-        {
-            std::istringstream lis(line);
-            int i = 0;
-            while(lis >> word)
-            {
-                prob_hi[i++] = std::stod(word);
-            }
-        }
-        int coord = 0;   
-        Array<int,AMREX_SPACEDIM> is_periodic {AMREX_D_DECL(1,1,1)};
-        RealBox domainSize(prob_lo, prob_hi);
-        Box domain;            // Read domain Box
-        is >> domain;
-        GotoNextLine(is);
-
-        // -----------------------------------------------------------------------------
-        // Resize vectors
-        // -----------------------------------------------------------------------------
-        geoms.resize(finest_level+1);
-        grids.resize(finest_level+1);
-        dmaps.resize(finest_level+1);
-        
-        // -----------------------------------------------------------------------------
-        // Define geoms, read BoxArray and define dmap
-        // -----------------------------------------------------------------------------
-        geoms[0] = Geometry(domain, domainSize, coord, is_periodic);
-        for(int lev = 1; lev <= finest_level; ++lev) {
-           geoms[lev] = amrex::refine(geoms[lev-1], 2);     // Assumes ref_ratio = 2
-        }
-
-        for(int lev = 0; lev <= finest_level; ++lev)
-        {
-            // read in level 'lev' BoxArray from Header
-            BoxArray ba;
-            ba.readFrom(is);
-            GotoNextLine(is);
-
-            // Set vector entries
-            grids[lev] = ba;
-            dmaps[lev] = DistributionMapping(ba, ParallelDescriptor::NProcs());
-        }
-
-        for(int lev = 0; lev <= finest_level; ++lev)
-        {
-           Print() << "  Level " << lev 
-                   << " integrating " << grids[lev].numPts() 
-                   << " cells on " << grids[lev].size() 
-                   << " boxes for " << dt/std::pow(2,lev) << " seconds \n";
-        }
+      for (int lev = 0; lev <= finest_level; ++lev) {
+        amrex::Print() << "  Level " << lev << " integrating "
+                       << grids[lev].numPts() << " cells on "
+                       << grids[lev].size() << " boxes for "
+                       << dt / std::pow(2, lev) << " seconds \n";
+      }
     }
     BL_PROFILE_VAR_STOP(GeomSetup);
 
@@ -322,421 +319,439 @@ main (int   argc,
     // -----------------------------------------------------------------------------
     BL_PROFILE_VAR("main::initialize_data()", InitData);
     int num_grow = 0;
-    Vector<MultiFab> mf(finest_level+1);
-    Vector<MultiFab> rY_source_ext(finest_level+1);
-    Vector<MultiFab> mfE(finest_level+1);
-    Vector<MultiFab> rY_source_energy_ext(finest_level+1);
-    Vector<MultiFab> fctCount(finest_level+1);
-    Vector<iMultiFab> dummyMask(finest_level+1);
-    for(int lev = 0; lev <= finest_level; ++lev)
-    {
-       mf[lev].define(grids[lev],dmaps[lev],NUM_SPECIES+1,num_grow);
-       rY_source_ext[lev].define(grids[lev],dmaps[lev],NUM_SPECIES,num_grow);
-       mfE[lev].define(grids[lev],dmaps[lev],1,num_grow);
-       rY_source_energy_ext[lev].define(grids[lev],dmaps[lev],1,num_grow);
-       fctCount[lev].define(grids[lev],dmaps[lev],1,num_grow);
-       dummyMask[lev].define(grids[lev],dmaps[lev],1,num_grow);
-       dummyMask[lev].setVal(1);
+    amrex::Vector<amrex::MultiFab> mf(finest_level + 1);
+    amrex::Vector<amrex::MultiFab> rY_source_ext(finest_level + 1);
+    amrex::Vector<amrex::MultiFab> mfE(finest_level + 1);
+    amrex::Vector<amrex::MultiFab> rY_source_energy_ext(finest_level + 1);
+    amrex::Vector<amrex::MultiFab> fctCount(finest_level + 1);
+    amrex::Vector<amrex::iMultiFab> dummyMask(finest_level + 1);
+    for (int lev = 0; lev <= finest_level; ++lev) {
+      mf[lev].define(grids[lev], dmaps[lev], NUM_SPECIES + 1, num_grow);
+      rY_source_ext[lev].define(grids[lev], dmaps[lev], NUM_SPECIES, num_grow);
+      mfE[lev].define(grids[lev], dmaps[lev], 1, num_grow);
+      rY_source_energy_ext[lev].define(grids[lev], dmaps[lev], 1, num_grow);
+      fctCount[lev].define(grids[lev], dmaps[lev], 1, num_grow);
+      dummyMask[lev].define(grids[lev], dmaps[lev], 1, num_grow);
+      dummyMask[lev].setVal(1);
     }
 
-    FabArrayBase::mfiter_tile_size = IntVect(AMREX_D_DECL(1024,1024,1024));
+    amrex::FabArrayBase::mfiter_tile_size =
+      amrex::IntVect(AMREX_D_DECL(1024, 1024, 1024));
 
     // -----------------------------------------------------------------------------
     // Initialize data
     // -----------------------------------------------------------------------------
-    if ( initFromChk == 0 ) {
-       for(int lev = 0; lev <= finest_level; ++lev)
-       {
-          const auto geomdata = geoms[lev].data();
+    if (initFromChk == 0) {
+      for (int lev = 0; lev <= finest_level; ++lev) {
+        const auto geomdata = geoms[lev].data();
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-          for (MFIter mfi(mf[lev],TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        for (amrex::MFIter mfi(mf[lev], amrex::TilingIfNotGPU()); mfi.isValid();
+             ++mfi) {
 
-            const Box& box = mfi.tilebox();
+          const amrex::Box& box = mfi.tilebox();
 
-            Array4<Real> const& rY_a    = mf[lev].array(mfi);
-            Array4<Real> const& rYs_a   = rY_source_ext[lev].array(mfi);
-            Array4<Real> const& E_a     = mfE[lev].array(mfi);
-            Array4<Real> const& rE_a    = rY_source_energy_ext[lev].array(mfi);
+          amrex::Array4<amrex::Real> const& rY_a = mf[lev].array(mfi);
+          amrex::Array4<amrex::Real> const& rYs_a =
+            rY_source_ext[lev].array(mfi);
+          amrex::Array4<amrex::Real> const& E_a = mfE[lev].array(mfi);
+          amrex::Array4<amrex::Real> const& rE_a =
+            rY_source_energy_ext[lev].array(mfi);
 
-            ParallelFor(box,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-            {
-              initialize_data(i, j, k, fuel_idx, ode_iE,
-                              rY_a, rYs_a, E_a, rE_a,
-                              geomdata);
+          amrex::ParallelFor(
+            box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+              initialize_data(
+                i, j, k, fuel_idx, ode_iE, rY_a, rYs_a, E_a, rE_a, geomdata);
             });
-          }
-       }
+        }
+      }
     } else {
-       // Load the data from chkfile
-       for(int lev = 0; lev <= finest_level; ++lev)
-       {
-          // Assuming here a PeleLM state: vel + rho + species + rhoh + T + rhoRT
-          MultiFab stateIn(grids[lev],dmaps[lev],NUM_SPECIES+AMREX_SPACEDIM+4,0);
-          MultiFab forcingIn(grids[lev],dmaps[lev],NUM_SPECIES+1,0);
-          VisMF::Read(stateIn,
-                      amrex::MultiFabFileFullPrefix(lev, chkfile, level_prefix, "OldState"));
-          VisMF::Read(forcingIn,
-                      amrex::MultiFabFileFullPrefix(lev, chkfile, level_prefix, "ChemForcing"));
-          // Copy into our local data holders
-          // and convert from MKS -> CGS since we have PeleLM data
+      // Load the data from chkfile
+      for (int lev = 0; lev <= finest_level; ++lev) {
+        // Assuming here a PeleLM state: vel + rho + species + rhoh + T + rhoRT
+        amrex::MultiFab stateIn(
+          grids[lev], dmaps[lev], NUM_SPECIES + AMREX_SPACEDIM + 4, 0);
+        amrex::MultiFab forcingIn(grids[lev], dmaps[lev], NUM_SPECIES + 1, 0);
+        amrex::VisMF::Read(
+          stateIn, amrex::MultiFabFileFullPrefix(
+                     lev, chkfile, level_prefix, "OldState"));
+        amrex::VisMF::Read(
+          forcingIn, amrex::MultiFabFileFullPrefix(
+                       lev, chkfile, level_prefix, "ChemForcing"));
+        // Copy into our local data holders
+        // and convert from MKS -> CGS since we have PeleLM data
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-          for (MFIter mfi(mf[lev],TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-             const Box& box = mfi.tilebox();
+        for (amrex::MFIter mfi(mf[lev], amrex::TilingIfNotGPU()); mfi.isValid();
+             ++mfi) {
+          const amrex::Box& box = mfi.tilebox();
 
-             auto const& rhoYs   = mf[lev].array(mfi);
-             auto const& temp    = mf[lev].array(mfi,NUM_SPECIES);
-             auto const& rhoH    = mfE[lev].array(mfi);
-             auto const& force_Y = rY_source_ext[lev].array(mfi);
-             auto const& force_E = rY_source_energy_ext[lev].array(mfi);
-             auto const& rhoYs_in = stateIn.const_array(mfi,AMREX_SPACEDIM+1); 
-             auto const& temp_in  = stateIn.const_array(mfi,AMREX_SPACEDIM+NUM_SPECIES+2); 
-             auto const& rhoh_in  = stateIn.const_array(mfi,AMREX_SPACEDIM+NUM_SPECIES+1); 
-             auto const& force_a = forcingIn.const_array(mfi);
-             ParallelFor(box,
-             [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-             {
-                for (int n = 0; n < NUM_SPECIES; n++) {
-                  rhoYs(i,j,k,n) = rhoYs_in(i,j,k,n) * 1.0e-3;    // with MKS -> CGS conversion
-                  force_Y(i,j,k,n) = force_a(i,j,k,n) * 1.0e-3;
-                }
-                temp(i,j,k) = temp_in(i,j,k);
-                rhoH(i,j,k) = rhoh_in(i,j,k) * 10.0;              // with MKS -> CGS conversion
-                force_E(i,j,k) = force_a(i,j,k,NUM_SPECIES) * 10.0;   
-             });
-          }
-       }
+          auto const& rhoYs = mf[lev].array(mfi);
+          auto const& temp = mf[lev].array(mfi, NUM_SPECIES);
+          auto const& rhoH = mfE[lev].array(mfi);
+          auto const& force_Y = rY_source_ext[lev].array(mfi);
+          auto const& force_E = rY_source_energy_ext[lev].array(mfi);
+          auto const& rhoYs_in = stateIn.const_array(mfi, AMREX_SPACEDIM + 1);
+          auto const& temp_in =
+            stateIn.const_array(mfi, AMREX_SPACEDIM + NUM_SPECIES + 2);
+          auto const& rhoh_in =
+            stateIn.const_array(mfi, AMREX_SPACEDIM + NUM_SPECIES + 1);
+          auto const& force_a = forcingIn.const_array(mfi);
+          amrex::ParallelFor(
+            box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+              for (int n = 0; n < NUM_SPECIES; n++) {
+                rhoYs(i, j, k, n) =
+                  rhoYs_in(i, j, k, n) * 1.0e-3; // with MKS -> CGS conversion
+                force_Y(i, j, k, n) = force_a(i, j, k, n) * 1.0e-3;
+              }
+              temp(i, j, k) = temp_in(i, j, k);
+              rhoH(i, j, k) =
+                rhoh_in(i, j, k) * 10.0; // with MKS -> CGS conversion
+              force_E(i, j, k) = force_a(i, j, k, NUM_SPECIES) * 10.0;
+            });
+        }
+      }
     }
     BL_PROFILE_VAR_STOP(InitData);
 
     // Print initial data if needed
-    BL_PROFILE_VAR_NS("PlotFile",PlotFile);
+    BL_PROFILE_VAR_NS("PlotFile", PlotFile);
     if (do_plt) {
       BL_PROFILE_VAR_START(PlotFile);
-      std::string outfile = Concatenate(pltfile,0);
-      Vector<int> isteps(finest_level + 1, 0);
-      Vector<IntVect> refRatios(finest_level, {AMREX_D_DECL(2,2,2)});
-      Vector<std::string> plt_VarsName;
+      std::string outfile = amrex::Concatenate(pltfile, 0);
+      amrex::Vector<int> isteps(finest_level + 1, 0);
+      amrex::Vector<amrex::IntVect> refRatios(
+        finest_level, {AMREX_D_DECL(2, 2, 2)});
+      amrex::Vector<std::string> plt_VarsName;
       for (int k = 0; k < NUM_SPECIES; ++k) {
-         plt_VarsName.push_back("SPEC"+std::to_string(k));
+        plt_VarsName.push_back("SPEC" + std::to_string(k));
       }
       plt_VarsName.push_back("TEMP");
 
-      amrex::WriteMultiLevelPlotfile(outfile, finest_level + 1, GetVecOfConstPtrs(mf),
-                                     plt_VarsName, geoms, 0.0, isteps, refRatios);
+      amrex::WriteMultiLevelPlotfile(
+        outfile, finest_level + 1, GetVecOfConstPtrs(mf), plt_VarsName, geoms,
+        0.0, isteps, refRatios);
       BL_PROFILE_VAR_STOP(PlotFile);
     }
 
     // -----------------------------------------------------------------------------
     // Set typical values
     // -----------------------------------------------------------------------------
-#ifndef USE_ARKODE_PP
+    if (chem_integrator == "ReactorCvode") {
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    {
-      if (use_typ_vals) {
-        Vector<Real> typ_vals(NUM_SPECIES+1,1.0e-10);
-        if (ppode.contains("typ_vals")) {
-           Print() << "Using user-defined typical values for the absolute tolerances of the ode solver.\n";
-           ppode.getarr("typ_vals", typ_vals,0,NUM_SPECIES+1);
-           for (int i = 0; i < NUM_SPECIES; ++i) {
-             typ_vals[i] = std::max(typ_vals[i],1.e-10);
-           }
-        } else {
-           Print() << "Using typical values from the initial data for the absolute tolerances of the ode solver.\n";
-           for (int lev = 0; lev <= finest_level; ++lev) {           
-               /*
-               Pretty sure TypVal should be rhoYs in CGS, but keep that around just in case.
-               MultiFab massFrac(grids[lev],dmaps[lev],NUM_SPECIES,0);
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-               for (MFIter mfi(mf[lev],TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-                  const Box& box = mfi.tilebox();
-                  auto const& rhoYs = mf[lev].const_array(mfi);
-                  auto const& Ys    = massFrac.array(mfi);
-                  ParallelFor(box,
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                  {
-                     amrex::Real rho = 0.0;
-                     for (int n = 0; n < NUM_SPECIES; n++) {
-                        rho += rhoYs(i,j,k,n);
-                     }
-                     amrex::Real rhoinv = 1.0/rho;
-                     for (int n = 0; n < NUM_SPECIES; n++) {
-                        Ys(i,j,k,n) = rhoYs(i,j,k,n) * rhoinv;
-                     }
-                  });
-               }
-               */
-               for (int i = 0; i < NUM_SPECIES; ++i) {
-                   typ_vals[i] = std::max(typ_vals[i],mf[lev].max(i));
-               }
-               typ_vals[NUM_SPECIES] = std::max(typ_vals[NUM_SPECIES],mf[lev].max(NUM_SPECIES));
-           }
+      {
+        if (use_typ_vals) {
+          amrex::Vector<amrex::Real> typ_vals(NUM_SPECIES + 1, 1.0e-10);
+          if (ppode.contains("typ_vals")) {
+            amrex::Print()
+              << "Using user-defined typical values for the absolute "
+                 "tolerances of the ode solver.\n";
+            ppode.getarr("typ_vals", typ_vals, 0, NUM_SPECIES + 1);
+            for (int i = 0; i < NUM_SPECIES; ++i) {
+              typ_vals[i] = std::max(typ_vals[i], 1.e-10);
+            }
+          } else {
+            amrex::Print()
+              << "Using typical values from the initial data for the "
+                 "absolute tolerances of the ode solver.\n";
+            for (int lev = 0; lev <= finest_level; ++lev) {
+              /*
+                Pretty sure TypVal should be rhoYs in CGS, but keep that around
+                just in case. amrex::MultiFab
+                massFrac(grids[lev],dmaps[lev],NUM_SPECIES,0); #ifdef
+                AMREX_USE_OMP #pragma omp parallel if
+                (amrex::Gpu::notInLaunchRegion()) #endif for (amrex::MFIter
+                mfi(mf[lev],amrex::TilingIfNotGPU()); mfi.isValid();
+                ++mfi) { const amrex::Box& box = mfi.tilebox(); auto const&
+                rhoYs = mf[lev].const_array(mfi); auto const& Ys    =
+                massFrac.array(mfi); amrex::ParallelFor(box,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+                {
+                amrex::Real rho = 0.0;
+                for (int n = 0; n < NUM_SPECIES; n++) {
+                rho += rhoYs(i,j,k,n);
+                }
+                amrex::Real rhoinv = 1.0/rho;
+                for (int n = 0; n < NUM_SPECIES; n++) {
+                Ys(i,j,k,n) = rhoYs(i,j,k,n) * rhoinv;
+                }
+                });
+                }
+              */
+              for (int i = 0; i < NUM_SPECIES; ++i) {
+                typ_vals[i] = std::max(typ_vals[i], mf[lev].max(i));
+              }
+              typ_vals[NUM_SPECIES] =
+                std::max(typ_vals[NUM_SPECIES], mf[lev].max(NUM_SPECIES));
+            }
+          }
+          reactor->SetTypValsODE(typ_vals);
         }
-        SetTypValsODE(typ_vals);
       }
     }
-#endif
-
-    Print() << " \n STARTING THE ADVANCE \n";
+    amrex::Print() << " \n STARTING THE ADVANCE \n";
 
     /* REACT */
-    BL_PROFILE_VAR_NS("React",ReactInLoop);
-    BL_PROFILE_VAR_NS("Allocs",Allocs);
-    BL_PROFILE_VAR_NS("Flatten",mainflatten);
+    BL_PROFILE_VAR_NS("React", ReactInLoop);
+    BL_PROFILE_VAR_NS("Allocs", Allocs);
+    BL_PROFILE_VAR_NS("Flatten", mainflatten);
 
-    for(int lev = 0; lev <= finest_level; ++lev)
-    {
-       Real lvl_strt = ParallelDescriptor::second();
-       BL_PROFILE_VAR("Advance_Level"+std::to_string(lev),Advance);
+    for (int lev = 0; lev <= finest_level; ++lev) {
+      amrex::Real lvl_strt = amrex::ParallelDescriptor::second();
+      BL_PROFILE_VAR("Advance_Level" + std::to_string(lev), Advance);
 #ifdef AMREX_USE_OMP
-       const auto tiling = MFItInfo().SetDynamic(true);
+      const auto tiling = MFItInfo().SetDynamic(true);
 #pragma omp parallel
 #else
-       const bool tiling = TilingIfNotGPU();
+      const bool tiling = amrex::TilingIfNotGPU();
 #endif
-       for ( MFIter mfi(mf[lev],tiling); mfi.isValid(); ++mfi) {
+      for (amrex::MFIter mfi(mf[lev], tiling); mfi.isValid(); ++mfi) {
 
-          const Box& box  = mfi.tilebox();
-          int nc          = box.numPts();
-          int extra_cells = 0;
+        int omp_thread = 0;
+#ifdef AMREX_USE_OMP
+        omp_thread = omp_get_thread_num();
+#endif
+        const amrex::Box& box = mfi.tilebox();
+        const int nc = box.numPts();
+        int extra_cells = 0;
 
-          const auto len     = length(box);
-          const auto lo      = lbound(box);
+        auto const& rhoY = mf[lev].array(mfi);
+        auto const& T = mf[lev].array(mfi, NUM_SPECIES);
+        auto const& rhoE = mfE[lev].array(mfi);
+        auto const& frcExt = rY_source_ext[lev].array(mfi);
+        auto const& frcEExt = rY_source_energy_ext[lev].array(mfi);
+        auto const& fc = fctCount[lev].array(mfi);
+        auto const& mask = dummyMask[lev].array(mfi);
 
-          auto const& rhoY    = mf[lev].array(mfi);
-          auto const& T       = mf[lev].array(mfi, NUM_SPECIES);
-          auto const& rhoE    = mfE[lev].array(mfi);
-          auto const& frcExt  = rY_source_ext[lev].array(mfi);
-          auto const& frcEExt = rY_source_energy_ext[lev].array(mfi);
-          auto const& fc      = fctCount[lev].array(mfi);
-          auto const& mask    = dummyMask[lev].array(mfi);
-
-          // -------------------------------------------------------------
-          // Integration with Array4 react function
-          if (reactFunc == 1) {
-            Real time = 0.0;
-            Real dt_lev = dt/std::pow(2,lev);
-            Real dt_incr = dt_lev/ndt;
-            int tmp_fc;
-
-            Print() << "  [" << lev << "]" << " integrating " << nc << " cells \n";
-            /* Solve */
-            BL_PROFILE_VAR_START(ReactInLoop);
-            for (int ii = 0; ii < ndt; ++ii)
-            {
-              tmp_fc=react(box, rhoY, frcExt, T,
-                    rhoE, frcEExt, fc, mask,
-                    dt_incr, time, ode_iE
+        // -------------------------------------------------------------
+        // Integration with Array4 react function
+        if (reactFunc == 1) {
+          amrex::Real time = 0.0;
+          amrex::Real dt_lev = dt / std::pow(2, lev);
+          amrex::Real dt_incr = dt_lev / ndt;
+          int tmp_fc;
+          if (omp_thread == 0) {
+            amrex::Print() << "  [" << lev << "]"
+                           << " integrating " << nc << " cells \n";
+          }
+          /* Solve */
+          BL_PROFILE_VAR_START(ReactInLoop);
+          for (int ii = 0; ii < ndt; ++ii) {
+            tmp_fc = reactor->react(
+              box, rhoY, frcExt, T, rhoE, frcEExt, fc, mask, dt_incr, time
 #ifdef AMREX_USE_GPU
-                    , amrex::Gpu::gpuStream()
+              ,
+              amrex::Gpu::gpuStream()
 #endif
-                   );
-              dt_incr =  dt_lev/ndt;
-              Gpu::Device::streamSynchronize();
-            }
-            BL_PROFILE_VAR_STOP(ReactInLoop);
+            );
+            dt_incr = dt_lev / ndt;
+            amrex::Gpu::Device::streamSynchronize();
+          }
+          BL_PROFILE_VAR_STOP(ReactInLoop);
 
           // -------------------------------------------------------------
           // Integration with 1dArray raw pointer react function
+        } else if (reactFunc == 2) {
+
+          // On GPU, integrate the entirely box at once
+          // othewise use the user-input ode_ncells
+#ifdef AMREX_USE_GPU
+          ode_ncells = nc;
+#endif
+          extra_cells = nc - (nc / ode_ncells) * ode_ncells;
+          if (omp_thread == 0) {
+            amrex::Print() << " Integrating " << nc << " cells with a "
+                           << ode_ncells << " ode cell buffer ";
+            amrex::Print() << "(" << extra_cells << " extra cells) \n";
           }
-          else if (reactFunc == 2) {
 
-            // On GPU, integrate the entirely box at once
-            // othewise use the user-input ode_ncells
-#ifdef AMREX_USE_GPU
-            ode_ncells    = nc;
-#endif
-            extra_cells = nc - (nc / ode_ncells) * ode_ncells;
-            Print() << " Integrating " << nc << " cells with a "<< ode_ncells << " ode cell buffer ";
-            Print() << "("<< extra_cells<<" extra cells) \n";
-
-            BL_PROFILE_VAR_START(Allocs);
-            int nCells               =  nc+extra_cells;
+          BL_PROFILE_VAR_START(Allocs);
+          int nCells = nc + extra_cells;
 
 #ifdef AMREX_USE_GPU
-            auto tmp_vect_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-                        nCells * (NUM_SPECIES+1) * sizeof(amrex::Real));
-            auto tmp_src_vect_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-                        nCells * NUM_SPECIES * sizeof(amrex::Real));
-            auto tmp_vect_energy_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-                        nCells * sizeof(amrex::Real));
-            auto tmp_src_vect_energy_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-                        nCells * sizeof(amrex::Real));
-            auto tmp_fc_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-                        nCells * sizeof(amrex::Real));
-            auto tmp_mask_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-                        nCells * sizeof(amrex::Real));
+          auto tmp_vect_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+            nCells * (NUM_SPECIES + 1) * sizeof(amrex::Real));
+          auto tmp_src_vect_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+            nCells * NUM_SPECIES * sizeof(amrex::Real));
+          auto tmp_vect_energy_d =
+            (amrex::Real*)amrex::The_Device_Arena()->alloc(
+              nCells * sizeof(amrex::Real));
+          auto tmp_src_vect_energy_d =
+            (amrex::Real*)amrex::The_Device_Arena()->alloc(
+              nCells * sizeof(amrex::Real));
+          auto tmp_fc_d = (long int*)amrex::The_Device_Arena()->alloc(
+            nCells * sizeof(amrex::Real));
+          auto tmp_mask_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+            nCells * sizeof(amrex::Real));
 #endif
 
-            auto tmp_vect            =  new Real[nCells * (NUM_SPECIES+1)];
-            auto tmp_src_vect        =  new Real[nCells * NUM_SPECIES];
-            auto tmp_vect_energy     =  new Real[nCells];
-            auto tmp_src_vect_energy =  new Real[nCells];
-            auto tmp_fc              =  new int[nCells];
-            auto tmp_mask           =  new int[nCells];
-        
-            BL_PROFILE_VAR_STOP(Allocs);
+          auto tmp_vect = new amrex::Real[nCells * (NUM_SPECIES + 1)];
+          auto tmp_src_vect = new amrex::Real[nCells * NUM_SPECIES];
+          auto tmp_vect_energy = new amrex::Real[nCells];
+          auto tmp_src_vect_energy = new amrex::Real[nCells];
+          auto tmp_fc = new long int[nCells];
+          auto tmp_mask = new int[nCells];
 
-            BL_PROFILE_VAR_START(mainflatten);
+          BL_PROFILE_VAR_STOP(Allocs);
+
+          BL_PROFILE_VAR_START(mainflatten);
 #ifndef AMREX_USE_GPU
-            ParallelFor(box,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-            {
-              int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
+          reactor->flatten(
+            box, nCells, rhoY, frcExt, T, rhoE, frcEExt, tmp_vect, tmp_src_vect,
+            tmp_vect_energy, tmp_src_vect_energy);
 
-              box_flatten(icell, nCells, i, j, k, ode_iE, 
-                          rhoY, frcExt, T, rhoE, frcEExt,
-                          tmp_vect, tmp_src_vect, tmp_vect_energy, tmp_src_vect_energy);
-            });
+          for (int icell = nc; icell < nc + extra_cells; icell++) {
+            for (int sp = 0; sp < NUM_SPECIES; sp++) {
+              tmp_vect[icell * (NUM_SPECIES + 1) + sp] = rhoY(0, 0, 0, sp);
+              tmp_src_vect[icell * NUM_SPECIES + sp] = frcExt(0, 0, 0, sp);
+            }
+            tmp_vect[icell * (NUM_SPECIES + 1) + NUM_SPECIES] = T(0, 0, 0);
+            tmp_vect_energy[icell] = rhoE(0, 0, 0);
+            tmp_src_vect_energy[icell] = frcEExt(0, 0, 0);
+            tmp_mask[icell] = mask(0, 0, 0);
+          }
+#else
+          reactor->flatten(
+            box, nCells, rhoY, frcExt, T, rhoE, frcEExt, tmp_vect_d,
+            tmp_src_vect_d, tmp_vect_energy_d, tmp_src_vect_energy_d);
 
-            for (int icell=nc; icell<nc+extra_cells; icell++) {
-              for(int sp=0; sp<NUM_SPECIES; sp++) {
-                tmp_vect[icell*(NUM_SPECIES+1)+sp]     = rhoY(0,0,0,sp);
-                tmp_src_vect[icell*NUM_SPECIES+sp]     = frcExt(0,0,0,sp);
+          amrex::Gpu::copy(
+            amrex::Gpu::deviceToHost, tmp_vect_d,
+            tmp_vect_d + nCells * (NUM_SPECIES + 1), tmp_vect);
+          amrex::Gpu::copy(
+            amrex::Gpu::deviceToHost, tmp_src_vect_d,
+            tmp_src_vect_d + nCells * NUM_SPECIES, tmp_src_vect);
+          amrex::Gpu::copy(
+            amrex::Gpu::deviceToHost, tmp_vect_energy_d,
+            tmp_vect_energy_d + nCells, tmp_vect_energy);
+          amrex::Gpu::copy(
+            amrex::Gpu::deviceToHost, tmp_src_vect_energy_d,
+            tmp_src_vect_energy_d + nCells, tmp_src_vect_energy);
+#endif
+          BL_PROFILE_VAR_STOP(mainflatten);
+
+          /* Solve */
+          BL_PROFILE_VAR_START(ReactInLoop);
+          for (int i = 0; i < nCells; i += ode_ncells) {
+            tmp_fc[i] = 0;
+            amrex::Real time = 0.0;
+            amrex::Real dt_lev = dt / std::pow(2, lev);
+            amrex::Real dt_incr = dt_lev / ndt;
+            for (int ii = 0; ii < ndt; ++ii) {
+              tmp_fc[i] += reactor->react(
+                &tmp_vect[i * (NUM_SPECIES + 1)],
+                &tmp_src_vect[i * NUM_SPECIES], &tmp_vect_energy[i],
+                &tmp_src_vect_energy[i], dt_incr, time, ode_ncells
+#ifdef AMREX_USE_GPU
+                ,
+                amrex::Gpu::gpuStream()
+#endif
+              );
+
+              dt_incr = dt_lev / ndt;
+              for (int ic = i + 1; ic < i + ode_ncells; ++ic) {
+                tmp_fc[ic] = tmp_fc[i];
               }
-              tmp_vect[icell*(NUM_SPECIES+1)+NUM_SPECIES] = T(0,0,0);
-              tmp_vect_energy[icell]                      = rhoE(0,0,0); 
-              tmp_src_vect_energy[icell]                  = frcEExt(0,0,0);
-              tmp_mask[icell]                             = mask(0,0,0);
+              amrex::Gpu::Device::streamSynchronize();
             }
-#else
-            ParallelFor(box,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-            {
-              int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
-
-              box_flatten(icell, nCells, i, j, k, ode_iE, 
-                          rhoY, frcExt, T, rhoE, frcEExt,
-                          tmp_vect_d, tmp_src_vect_d, tmp_vect_energy_d, tmp_src_vect_energy_d);
-            });
-
-            Gpu::copy(Gpu::deviceToHost, tmp_vect_d, tmp_vect_d+nCells*(NUM_SPECIES+1), tmp_vect);
-            Gpu::copy(Gpu::deviceToHost, tmp_src_vect_d, tmp_src_vect_d+nCells*NUM_SPECIES, tmp_src_vect);
-            Gpu::copy(Gpu::deviceToHost, tmp_vect_energy_d, tmp_vect_energy_d+nCells, tmp_vect_energy);
-            Gpu::copy(Gpu::deviceToHost, tmp_src_vect_energy_d, tmp_src_vect_energy_d+nCells, tmp_src_vect_energy);
-#endif
-            BL_PROFILE_VAR_STOP(mainflatten);
-
-            /* Solve */
-            BL_PROFILE_VAR_START(ReactInLoop);
-            for(int i = 0; i < nCells; i+=ode_ncells) {
-               tmp_fc[i] = 0;
-               Real time = 0.0;
-               Real dt_lev = dt/std::pow(2,lev);
-               Real dt_incr = dt_lev/ndt;
-               for (int ii = 0; ii < ndt; ++ii) {
-                  tmp_fc[i] += react(&tmp_vect[i*(NUM_SPECIES+1)], &tmp_src_vect[i*NUM_SPECIES],
-                                     &tmp_vect_energy[i], &tmp_src_vect_energy[i],
-                                     dt_incr,time,ode_iE, ode_ncells
-#ifdef AMREX_USE_GPU
-                                     , amrex::Gpu::gpuStream()
-#endif
-                  );
-
-                  dt_incr =  dt_lev/ndt;
-                  for (int ic = i+1; ic < i+ode_ncells ; ++ic) {
-                     tmp_fc[ic] = tmp_fc[i];
-                  }
-                  Gpu::Device::streamSynchronize();
-               }
-            }
-            BL_PROFILE_VAR_STOP(ReactInLoop);
-
-            BL_PROFILE_VAR_START(mainflatten);
-#ifndef AMREX_USE_GPU
-            ParallelFor(box,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-            {
-              int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
-              box_unflatten(icell, nCells, i, j, k, ode_iE,
-                            rhoY, T, rhoE, frcEExt, fc,
-                            tmp_vect, tmp_vect_energy, tmp_fc[icell], dt);
-            });
-#else
-
-            Gpu::copy(Gpu::hostToDevice, tmp_vect, tmp_vect+nCells*(NUM_SPECIES+1), tmp_vect_d);
-            Gpu::copy(Gpu::hostToDevice, tmp_src_vect, tmp_src_vect+nCells*NUM_SPECIES, tmp_src_vect_d);
-            Gpu::copy(Gpu::hostToDevice, tmp_vect_energy, tmp_vect_energy+nCells, tmp_vect_energy_d);
-            Gpu::copy(Gpu::hostToDevice, tmp_src_vect_energy, tmp_src_vect_energy+nCells, tmp_src_vect_energy_d);
-            Gpu::copy(Gpu::hostToDevice, tmp_fc, tmp_fc+nCells, tmp_fc_d);
-            
-            ParallelFor(box,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-            {
-              int icell = (k-lo.z)*len.x*len.y + (j-lo.y)*len.x + (i-lo.x);
-              box_unflatten(icell, nCells, i, j, k, ode_iE,
-                            rhoY, T, rhoE, frcEExt, fc,
-                            tmp_vect_d, tmp_vect_energy_d, tmp_fc_d[icell], dt);
-            });
-#endif
-            BL_PROFILE_VAR_STOP(mainflatten);
-
-            delete[] tmp_vect;
-            delete[] tmp_src_vect;
-            delete[] tmp_vect_energy;
-            delete[] tmp_src_vect_energy;
-            delete[] tmp_fc;
-            delete[] tmp_mask;
-#ifdef AMREX_USE_GPU
-            amrex::The_Device_Arena()->free(tmp_vect_d);
-            amrex::The_Device_Arena()->free(tmp_src_vect_d);
-            amrex::The_Device_Arena()->free(tmp_vect_energy_d);
-            amrex::The_Device_Arena()->free(tmp_src_vect_energy_d);
-            amrex::The_Device_Arena()->free(tmp_fc_d);
-            amrex::The_Device_Arena()->free(tmp_mask_d);
-#endif
           }
-       }
-       BL_PROFILE_VAR_STOP(Advance);
-       Real lvl_run_time = ParallelDescriptor::second() - lvl_strt;
-       ParallelDescriptor::ReduceRealMax(lvl_run_time, ParallelDescriptor::IOProcessorNumber());
-       amrex::Print() << "   >> Level " << lev << " advance: " << lvl_run_time << "\n";
+          BL_PROFILE_VAR_STOP(ReactInLoop);
+
+          BL_PROFILE_VAR_START(mainflatten);
+#ifndef AMREX_USE_GPU
+          reactor->unflatten(
+            box, nCells, rhoY, T, rhoE, frcEExt, fc, tmp_vect, tmp_vect_energy,
+            tmp_fc, dt);
+#else
+
+          amrex::Gpu::copy(
+            amrex::Gpu::hostToDevice, tmp_vect,
+            tmp_vect + nCells * (NUM_SPECIES + 1), tmp_vect_d);
+          amrex::Gpu::copy(
+            amrex::Gpu::hostToDevice, tmp_src_vect,
+            tmp_src_vect + nCells * NUM_SPECIES, tmp_src_vect_d);
+          amrex::Gpu::copy(
+            amrex::Gpu::hostToDevice, tmp_vect_energy, tmp_vect_energy + nCells,
+            tmp_vect_energy_d);
+          amrex::Gpu::copy(
+            amrex::Gpu::hostToDevice, tmp_src_vect_energy,
+            tmp_src_vect_energy + nCells, tmp_src_vect_energy_d);
+          amrex::Gpu::copy(
+            amrex::Gpu::hostToDevice, tmp_fc, tmp_fc + nCells, tmp_fc_d);
+
+          reactor->unflatten(
+            box, nCells, rhoY, T, rhoE, frcEExt, fc, tmp_vect_d,
+            tmp_vect_energy_d, tmp_fc_d, dt);
+#endif
+          BL_PROFILE_VAR_STOP(mainflatten);
+
+          delete[] tmp_vect;
+          delete[] tmp_src_vect;
+          delete[] tmp_vect_energy;
+          delete[] tmp_src_vect_energy;
+          delete[] tmp_fc;
+          delete[] tmp_mask;
+#ifdef AMREX_USE_GPU
+          amrex::The_Device_Arena()->free(tmp_vect_d);
+          amrex::The_Device_Arena()->free(tmp_src_vect_d);
+          amrex::The_Device_Arena()->free(tmp_vect_energy_d);
+          amrex::The_Device_Arena()->free(tmp_src_vect_energy_d);
+          amrex::The_Device_Arena()->free(tmp_fc_d);
+          amrex::The_Device_Arena()->free(tmp_mask_d);
+#endif
+        }
+      }
+      BL_PROFILE_VAR_STOP(Advance);
+      amrex::Real lvl_run_time = amrex::ParallelDescriptor::second() - lvl_strt;
+      amrex::ParallelDescriptor::ReduceRealMax(
+        lvl_run_time, amrex::ParallelDescriptor::IOProcessorNumber());
+      amrex::Print() << "   >> Level " << lev << " advance: " << lvl_run_time
+                     << "\n";
     }
 
     // TODO multilevel max.
     {
-      Vector<double> typ_vals(NUM_SPECIES+1);
-      Print() << "ode.typ_vals= ";
-      for (int i = 0; i < NUM_SPECIES+1; ++i) {
-        Print() << std::max(1.e-10,mf[0].max(i)) << " ";
+      amrex::Vector<double> typ_vals(NUM_SPECIES + 1);
+      amrex::Print() << "ode.typ_vals= ";
+      for (int i = 0; i < NUM_SPECIES + 1; ++i) {
+        amrex::Print() << std::max(1.e-10, mf[0].max(i)) << " ";
       }
-      Print() << std::endl;
+      amrex::Print() << std::endl;
     }
 
     if (do_plt) {
-        BL_PROFILE_VAR_START(PlotFile);
-        std::string outfile = Concatenate(pltfile,1);
-        // TODO: add fct count to this output
-        Vector<int> isteps(finest_level + 1, 0);
-        Vector<IntVect> refRatios(finest_level, {AMREX_D_DECL(2,2,2)});
-        Vector<std::string> plt_VarsName;
-        for (int k = 0; k < NUM_SPECIES; ++k) {
-           plt_VarsName.push_back("SPEC"+std::to_string(k));
-        }
-        plt_VarsName.push_back("TEMP");
+      BL_PROFILE_VAR_START(PlotFile);
+      std::string outfile = amrex::Concatenate(pltfile, 1);
+      // TODO: add fct count to this output
+      amrex::Vector<int> isteps(finest_level + 1, 0);
+      amrex::Vector<amrex::IntVect> refRatios(
+        finest_level, {AMREX_D_DECL(2, 2, 2)});
+      amrex::Vector<std::string> plt_VarsName;
+      for (int k = 0; k < NUM_SPECIES; ++k) {
+        plt_VarsName.push_back("SPEC" + std::to_string(k));
+      }
+      plt_VarsName.push_back("TEMP");
 
-        amrex::WriteMultiLevelPlotfile(outfile, finest_level + 1, GetVecOfConstPtrs(mf),
-                                       plt_VarsName, geoms, 0.0, isteps, refRatios);
-        BL_PROFILE_VAR_STOP(PlotFile);
+      amrex::WriteMultiLevelPlotfile(
+        outfile, finest_level + 1, GetVecOfConstPtrs(mf), plt_VarsName, geoms,
+        0.0, isteps, refRatios);
+      BL_PROFILE_VAR_STOP(PlotFile);
     }
-    
+
     trans_parms.deallocate();
 
     BL_PROFILE_VAR_STOP(pmain);
 
-    Real run_time = ParallelDescriptor::second() - strt_time;
-    ParallelDescriptor::ReduceRealMax(run_time, ParallelDescriptor::IOProcessorNumber());
+    amrex::Real run_time = amrex::ParallelDescriptor::second() - strt_time;
+    amrex::ParallelDescriptor::ReduceRealMax(
+      run_time, amrex::ParallelDescriptor::IOProcessorNumber());
     amrex::Print() << " \n >> React::main() " << run_time << "\n\n";
   }
-  Finalize();
+  amrex::Finalize();
 
   return 0;
 }

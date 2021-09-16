@@ -3,6 +3,7 @@ max_grid_size  = 16
 plotfile = plt
 fuel_name = CH4
 reactFormat = Array4
+chem_integrator = "ReactorRK64"
 initFromFile = 1
 # At the current time, the following file must have been 
 # generated with PeleLM.

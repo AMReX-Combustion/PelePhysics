@@ -14,25 +14,22 @@ FCOMP	   = gfortran
 USE_MPI    = TRUE
 USE_OMP    = FALSE
 
-USE_CUDA   = FALSE
 USE_CUDA   = TRUE
+USE_CUDA   = FALSE
 
 TINY_PROFILE = FALSE
 
-USE_SUNDIALS_PP = TRUE
 ifeq ($(USE_CUDA), TRUE)
-  USE_KLU_PP = FALSE
+  PELE_USE_KLU = FALSE
 else
-  USE_F90_PP = FALSE
-  USE_KLU_PP = FALSE
+  PELE_USE_KLU = FALSE
 endif
-USE_KLU = $(USE_KLU_PP) # sort out keywords later...
+USE_KLU = $(PELE_USE_KLU) # sort out keywords later...
 
 Eos_Model       = Fuego
 #Chemistry_Model = LiDryer
 Chemistry_Model = drm19
 #Chemistry_Model = grimech12
-Reactions_dir   = Fuego
 Transport_Model = Simple
 
 CEXE_sources += main.cpp

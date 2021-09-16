@@ -44,11 +44,11 @@ struct NonIdealChungCorrections<eos::SRK>
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       for (int j = 0; j < NUM_SPECIES; ++j) {
-	const amrex::Real Xij = Xloc[i] * Xloc[j];
-	const int idx = i * NUM_SPECIES + j;
-	
-	const amrex::Real sqrtT2 = trans_parm->sqrtT2ij[idx];
-	const amrex::Real T2 = sqrtT2 * sqrtT2;
+        const amrex::Real Xij = Xloc[i] * Xloc[j];
+        const int idx = i * NUM_SPECIES + j;
+
+        const amrex::Real sqrtT2 = trans_parm->sqrtT2ij[idx];
+        const amrex::Real T2 = sqrtT2 * sqrtT2;
         const amrex::Real T3 = T2 * sqrtT2;
         sigma_M_3 += Xij * T3;
 
@@ -61,9 +61,9 @@ struct NonIdealChungCorrections<eos::SRK>
 
         MW_m += Xij * Epsilon_ij * T2 * trans_parm->sqrtMWij[idx];
 
-        DP_m_4 += Xij* trans_parm->trans_dip[i] *
-                  trans_parm->trans_dip[i] * trans_parm->trans_dip[j] *
-                  trans_parm->trans_dip[j] / (T3 * Epsilon_ij);
+        DP_m_4 += Xij * trans_parm->trans_dip[i] * trans_parm->trans_dip[i] *
+                  trans_parm->trans_dip[j] * trans_parm->trans_dip[j] /
+                  (T3 * Epsilon_ij);
 
         KappaM += Xij * trans_parm->sqrtKappaij[idx];
       }
@@ -191,10 +191,10 @@ struct BinaryDiff<eos::SRK>
 
           amrex::Real Upsilonij = 0.0;
           for (int k = 0; k < NUM_SPECIES; ++k) {
-            Upsilonij += tparm->Upsilonijk[idx_ij*NUM_SPECIES + k] * Yloc[k];
+            Upsilonij += tparm->Upsilonijk[idx_ij * NUM_SPECIES + k] * Yloc[k];
           }
           Upsilonij = Upsilonij * rholoc * Constants::Avna * M_PI / 12.0 + 1.0;
-          dbintemp *= (Constants::RU * Tloc * Upsilonij) / Constants::PATM  ;
+          dbintemp *= (Constants::RU * Tloc * Upsilonij) / Constants::PATM;
           term1 += Yloc[j];
           term2 += Xloc[j] * dbintemp;
         }

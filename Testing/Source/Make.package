@@ -1,5 +1,0 @@
-CEXE_sources += WritePlotFile.cpp
-CEXE_sources += PlotFileFromMF.cpp
-
-CEXE_headers += WritePlotFile.H
-CEXE_headers += PlotFileFromMF.H

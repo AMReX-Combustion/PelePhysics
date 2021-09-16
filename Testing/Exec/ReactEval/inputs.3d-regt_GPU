@@ -2,6 +2,7 @@ ncells = 2 256 2
 max_grid_size  = 16
 plotfile = plt
 fuel_name = CH4
+chem_integrator = "ReactorRK64"
 
 ode.dt  = 1.e-09
 ode.ndt = 1
