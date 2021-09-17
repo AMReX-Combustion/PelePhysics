@@ -82,16 +82,16 @@ struct TransParm<EOSType, SimpleTransport>
   void initialize()
   {
     if (!m_initialized) {
-      egtransetWT(wt);
-      egtransetEPS(eps);
-      egtransetSIG(sig);
-      egtransetDIP(dip);
-      egtransetPOL(pol);
-      egtransetZROT(zrot);
-      egtransetNLIN(nlin);
-      egtransetCOFETA(fitmu);
-      egtransetCOFLAM(fitlam);
-      egtransetCOFD(fitdbin);
+      egtransetWT(wt.data());
+      egtransetEPS(eps.data());
+      egtransetSIG(sig.data());
+      egtransetDIP(dip.data());
+      egtransetPOL(pol.data());
+      egtransetZROT(zrot.data());
+      egtransetNLIN(nlin.data());
+      egtransetCOFETA(fitmu.data());
+      egtransetCOFLAM(fitlam.data());
+      egtransetCOFD(fitdbin.data());
 
       for (int i = 0; i < NUM_SPECIES; ++i) {
         iwt[i] = 1. / wt[i];
@@ -134,16 +134,16 @@ struct TransParm<eos::SRK, SimpleTransport>
   void initialize()
   {
     if (!m_initialized) {
-      egtransetWT(wt);
-      egtransetEPS(eps);
-      egtransetSIG(sig);
-      egtransetDIP(dip);
-      egtransetPOL(pol);
-      egtransetZROT(zrot);
-      egtransetNLIN(nlin);
-      egtransetCOFETA(fitmu);
-      egtransetCOFLAM(fitlam);
-      egtransetCOFD(fitdbin);
+      egtransetWT(wt.data());
+      egtransetEPS(eps.data());
+      egtransetSIG(sig.data());
+      egtransetDIP(dip.data());
+      egtransetPOL(pol.data());
+      egtransetZROT(zrot.data());
+      egtransetNLIN(nlin.data());
+      egtransetCOFETA(fitmu.data());
+      egtransetCOFLAM(fitlam.data());
+      egtransetCOFD(fitdbin.data());
 
       for (int i = 0; i < NUM_SPECIES; ++i) {
         iwt[i] = 1. / wt[i];
@@ -158,7 +158,7 @@ struct TransParm<eos::SRK, SimpleTransport>
       // Initialize coefficients of model
       {
         amrex::Real tmp1[NUM_SPECIES], tmp2[NUM_SPECIES], tmp3[NUM_SPECIES];
-        GET_CRITPARAMS(tmp1, tmp2, tmp3, omega);
+        GET_CRITPARAMS(tmp1, tmp2, tmp3, omega.data());
       }
 
       Afac[0] = 6.32402;

@@ -967,7 +967,7 @@ struct SRK
     // Note maybe these should be placed in mechanism.H and computed
     // there instead of every time the EOS is initialized
     amrex::Real Asti[NUM_SPECIES];
-    amrex::GpuArray<amrex::Real, NUM_SPECIES> omega = {0.0};
+    amrex::Real omega[NUM_SPECIES];
     GET_CRITPARAMS(Tc, Asti, Bi, omega);
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
       oneOverTc[ii] = 1.0 / Tc[ii];

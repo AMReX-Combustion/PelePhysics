@@ -10083,10 +10083,7 @@ class CPickler(CMill):
             self._write("#endif")
 
         self._write("AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-        self._write(
-            "void %s(amrex::GpuArray<amrex::Real, NUM_SPECIES>& %s ) {"
-            % ("egtransetWT", "WT")
-        )
+        self._write("void %s(amrex::Real* %s ) {" % ("egtransetWT", "WT"))
         self._indent()
 
         for sp in range(self.nSpecies):
@@ -10215,9 +10212,7 @@ class CPickler(CMill):
             self._write("#endif")
 
         self._write("AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-        self._write(
-            "void egtransetNLIN(amrex::GpuArray<int, NUM_SPECIES>&  NLIN) {"
-        )
+        self._write("void egtransetNLIN(int* NLIN) {")
         self._indent()
 
         for species in self.nonqss_species:
@@ -10373,9 +10368,7 @@ class CPickler(CMill):
 
         # visco coefs
         self._write("AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-        self._write(
-            "void egtransetCOFETA(amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT>& COFETA) {"
-        )
+        self._write("void egtransetCOFETA(amrex::Real* COFETA) {")
         self._indent()
 
         for spec in self.nonqss_species:
@@ -10403,9 +10396,7 @@ class CPickler(CMill):
 
         # visco coefs
         self._write("AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-        self._write(
-            "void egtransetCOFLAM(amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT>& COFLAM) {"
-        )
+        self._write("void egtransetCOFLAM(amrex::Real* COFLAM) {")
 
         self._indent()
 
@@ -10538,9 +10529,7 @@ class CPickler(CMill):
 
         # coefs
         self._write("AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-        self._write(
-            "void egtransetCOFD(amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT>& COFD) {"
-        )
+        self._write("void egtransetCOFD(amrex::Real* COFD) {")
 
         self._indent()
 
@@ -10756,10 +10745,7 @@ class CPickler(CMill):
             self._write("#endif")
 
         self._write("AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
-        self._write(
-            "void %s(amrex::GpuArray<amrex::Real, NUM_SPECIES>& %s ) {"
-            % (nametab[0], nametab[4])
-        )
+        self._write("void %s(amrex::Real* %s ) {" % (nametab[0], nametab[4]))
         self._indent()
 
         for spec in self.nonqss_species:
@@ -17206,14 +17192,14 @@ class CPickler(CMill):
             self.line("compute the critical parameters for each species")
         )
         self._write(
-            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::GpuArray<amrex::Real, NUM_SPECIES>&  acentric_i)"
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::Real *  acentric_i)"
         )
         self._write("{")
         self._write()
         self._indent()
 
-        self._write("amrex::GpuArray<amrex::Real, %d> EPS = {0.0};" % nSpecies)
-        self._write("amrex::GpuArray<amrex::Real, %d> SIG = {0.0};" % nSpecies)
+        self._write("amrex::Real   EPS[%d];" % nSpecies)
+        self._write("amrex::Real   SIG[%d];" % nSpecies)
         self._write("amrex::Real    wt[%d];" % nSpecies)
         self._write("amrex::Real avogadro = 6.02214199e23;")
         self._write("amrex::Real boltzmann = 1.3806503e-16; //we work in CGS")

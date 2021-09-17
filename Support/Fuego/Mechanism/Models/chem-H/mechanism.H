@@ -2645,8 +2645,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
         const amrex::Real qr = k_f * exp(-(g_RT[1] + 2.000000*g_RT[3] - g_RT[3] - g_RT[6])) * (refC) * (sc[3]*sc[6]);
         const amrex::Real qdot = qf - qr;
         wdot[1] -= qdot;
-        wdot[3] -= 2.000000 * qdot;
         wdot[3] += qdot;
+        wdot[3] -= 2.000000 * qdot;
         wdot[6] += qdot;
     }
 
@@ -2698,8 +2698,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot
         const amrex::Real qf = k_f * (sc[0]*(sc[1] * sc[1]));
         const amrex::Real qr = k_f * exp(-(g_RT[0] - 2.000000*g_RT[0] + 2.000000*g_RT[1])) * (refC) * ((sc[0] * sc[0]));
         const amrex::Real qdot = qf - qr;
-        wdot[0] -= qdot;
         wdot[0] += 2.000000 * qdot;
+        wdot[0] -= qdot;
         wdot[1] -= 2.000000 * qdot;
     }
 
@@ -6055,7 +6055,7 @@ void egtransetPATM(amrex::Real* PATM) {
 
 /*the molecular weights in g/mol */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetWT(amrex::GpuArray<amrex::Real, NUM_SPECIES>& WT ) {
+void egtransetWT(amrex::Real* WT ) {
     WT[0] = 2.01594000E+00;
     WT[1] = 1.00797000E+00;
     WT[2] = 1.59994000E+01;
@@ -6070,7 +6070,7 @@ void egtransetWT(amrex::GpuArray<amrex::Real, NUM_SPECIES>& WT ) {
 
 /*the lennard-jones potential well depth eps/kb in K */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetEPS(amrex::GpuArray<amrex::Real, NUM_SPECIES>& EPS ) {
+void egtransetEPS(amrex::Real* EPS ) {
     EPS[0] = 3.80000000E+01;
     EPS[1] = 1.45000000E+02;
     EPS[2] = 8.00000000E+01;
@@ -6085,7 +6085,7 @@ void egtransetEPS(amrex::GpuArray<amrex::Real, NUM_SPECIES>& EPS ) {
 
 /*the lennard-jones collision diameter in Angstroms */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetSIG(amrex::GpuArray<amrex::Real, NUM_SPECIES>& SIG ) {
+void egtransetSIG(amrex::Real* SIG ) {
     SIG[0] = 2.92000000E+00;
     SIG[1] = 2.05000000E+00;
     SIG[2] = 2.75000000E+00;
@@ -6100,7 +6100,7 @@ void egtransetSIG(amrex::GpuArray<amrex::Real, NUM_SPECIES>& SIG ) {
 
 /*the dipole moment in Debye */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetDIP(amrex::GpuArray<amrex::Real, NUM_SPECIES>& DIP ) {
+void egtransetDIP(amrex::Real* DIP ) {
     DIP[0] = 0.00000000E+00;
     DIP[1] = 0.00000000E+00;
     DIP[2] = 0.00000000E+00;
@@ -6115,7 +6115,7 @@ void egtransetDIP(amrex::GpuArray<amrex::Real, NUM_SPECIES>& DIP ) {
 
 /*the polarizability in cubic Angstroms */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetPOL(amrex::GpuArray<amrex::Real, NUM_SPECIES>& POL ) {
+void egtransetPOL(amrex::Real* POL ) {
     POL[0] = 7.90000000E-01;
     POL[1] = 0.00000000E+00;
     POL[2] = 0.00000000E+00;
@@ -6130,7 +6130,7 @@ void egtransetPOL(amrex::GpuArray<amrex::Real, NUM_SPECIES>& POL ) {
 
 /*the rotational relaxation collision number at 298 K */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetZROT(amrex::GpuArray<amrex::Real, NUM_SPECIES>& ZROT ) {
+void egtransetZROT(amrex::Real* ZROT ) {
     ZROT[0] = 2.80000000E+02;
     ZROT[1] = 0.00000000E+00;
     ZROT[2] = 0.00000000E+00;
@@ -6145,7 +6145,7 @@ void egtransetZROT(amrex::GpuArray<amrex::Real, NUM_SPECIES>& ZROT ) {
 
 /*0: monoatomic, 1: linear, 2: nonlinear */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetNLIN(amrex::GpuArray<int, NUM_SPECIES>&  NLIN) {
+void egtransetNLIN(int* NLIN) {
     NLIN[0] = 1;
     NLIN[1] = 0;
     NLIN[2] = 0;
@@ -6160,7 +6160,7 @@ void egtransetNLIN(amrex::GpuArray<int, NUM_SPECIES>&  NLIN) {
 
 /*Poly fits for the viscosities, dim NO*KK */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetCOFETA(amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT>& COFETA) {
+void egtransetCOFETA(amrex::Real* COFETA) {
     COFETA[0] = -1.37549435E+01;
     COFETA[1] = 9.65530587E-01;
     COFETA[2] = -4.45720114E-02;
@@ -6202,7 +6202,7 @@ void egtransetCOFETA(amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT>& COFETA)
 
 /*Poly fits for the conductivities, dim NO*KK */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetCOFLAM(amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT>& COFLAM) {
+void egtransetCOFLAM(amrex::Real* COFLAM) {
     COFLAM[0] = 1.15899058E+01;
     COFLAM[1] = -1.52427727E+00;
     COFLAM[2] = 2.72840752E-01;
@@ -6244,7 +6244,7 @@ void egtransetCOFLAM(amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT>& COFLAM)
 
 /*Poly fits for the diffusion coefficients, dim NO*KK*KK */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetCOFD(amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT>& COFD) {
+void egtransetCOFD(amrex::Real* COFD) {
     COFD[0] = -1.02395222E+01;
     COFD[1] = 2.15403244E+00;
     COFD[2] = -6.97480266E-02;
@@ -6659,11 +6659,11 @@ void egtransetCOFTD(amrex::Real* COFTD) {
 
 
 /*compute the critical parameters for each species */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::GpuArray<amrex::Real, NUM_SPECIES>&  acentric_i)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::Real *  acentric_i)
 {
 
-    amrex::GpuArray<amrex::Real, 9> EPS = {0.0};
-    amrex::GpuArray<amrex::Real, 9> SIG = {0.0};
+    amrex::Real   EPS[9];
+    amrex::Real   SIG[9];
     amrex::Real    wt[9];
     amrex::Real avogadro = 6.02214199e23;
     amrex::Real boltzmann = 1.3806503e-16; //we work in CGS
