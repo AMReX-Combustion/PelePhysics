@@ -66,13 +66,13 @@ struct TransParm<EOSType, SutherlandTransport>
 template <typename EOSType>
 struct TransParm<EOSType, SimpleTransport>
 {
-  amrex::Real* trans_wt = nullptr;
-  amrex::Real* trans_iwt = nullptr;
-  amrex::Real* trans_eps = nullptr;
-  amrex::Real* trans_sig = nullptr;
-  amrex::Real* trans_dip = nullptr;
-  amrex::Real* trans_pol = nullptr;
-  amrex::Real* trans_zrot = nullptr;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_wt = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_iwt = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_eps = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_sig = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_dip = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_pol = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_zrot = {0.0};
   amrex::Real* trans_fitmu = nullptr;
   amrex::Real* trans_fitlam = nullptr;
   amrex::Real* trans_fitdbin = nullptr;
@@ -83,21 +83,6 @@ struct TransParm<EOSType, SimpleTransport>
   void allocate()
   {
     if (!m_allocated) {
-      trans_wt = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_iwt = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_eps = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_sig = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_dip = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_pol = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_zrot = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-
       trans_fitmu = (amrex::Real*)amrex::The_Arena()->alloc(
         sizeof(amrex::Real) * NUM_SPECIES * NUM_FIT);
       trans_fitlam = (amrex::Real*)amrex::The_Arena()->alloc(
@@ -127,13 +112,6 @@ struct TransParm<EOSType, SimpleTransport>
   void deallocate()
   {
     if (m_allocated) {
-      amrex::The_Arena()->free(trans_wt);
-      amrex::The_Arena()->free(trans_iwt);
-      amrex::The_Arena()->free(trans_eps);
-      amrex::The_Arena()->free(trans_sig);
-      amrex::The_Arena()->free(trans_dip);
-      amrex::The_Arena()->free(trans_pol);
-      amrex::The_Arena()->free(trans_zrot);
       amrex::The_Arena()->free(trans_fitmu);
       amrex::The_Arena()->free(trans_fitlam);
       amrex::The_Arena()->free(trans_fitdbin);
@@ -145,13 +123,14 @@ struct TransParm<EOSType, SimpleTransport>
 template <>
 struct TransParm<eos::SRK, SimpleTransport>
 {
-  amrex::Real* trans_wt = nullptr;
-  amrex::Real* trans_iwt = nullptr;
-  amrex::Real* trans_eps = nullptr;
-  amrex::Real* trans_sig = nullptr;
-  amrex::Real* trans_dip = nullptr;
-  amrex::Real* trans_pol = nullptr;
-  amrex::Real* trans_zrot = nullptr;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_wt = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_iwt = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_eps = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_sig = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_dip = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_pol = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> trans_zrot = {0.0};
+
   amrex::Real* trans_fitmu = nullptr;
   amrex::Real* trans_fitlam = nullptr;
   amrex::Real* trans_fitdbin = nullptr;
@@ -171,21 +150,6 @@ struct TransParm<eos::SRK, SimpleTransport>
   void allocate()
   {
     if (!m_allocated) {
-      trans_wt = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_iwt = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_eps = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_sig = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_dip = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_pol = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_zrot = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-
       trans_fitmu = (amrex::Real*)amrex::The_Arena()->alloc(
         sizeof(amrex::Real) * NUM_SPECIES * NUM_FIT);
       trans_fitlam = (amrex::Real*)amrex::The_Arena()->alloc(
@@ -373,13 +337,6 @@ struct TransParm<eos::SRK, SimpleTransport>
   void deallocate()
   {
     if (m_allocated) {
-      amrex::The_Arena()->free(trans_wt);
-      amrex::The_Arena()->free(trans_iwt);
-      amrex::The_Arena()->free(trans_eps);
-      amrex::The_Arena()->free(trans_sig);
-      amrex::The_Arena()->free(trans_dip);
-      amrex::The_Arena()->free(trans_pol);
-      amrex::The_Arena()->free(trans_zrot);
       amrex::The_Arena()->free(trans_fitmu);
       amrex::The_Arena()->free(trans_fitlam);
       amrex::The_Arena()->free(trans_fitdbin);
