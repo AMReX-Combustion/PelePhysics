@@ -1695,7 +1695,7 @@ void egtransetPATM(amrex::Real* PATM) {
 
 /*the molecular weights in g/mol */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetWT(amrex::Real* WT ) {
+void egtransetWT(amrex::GpuArray<amrex::Real, NUM_SPECIES>& WT ) {
     WT[0] = 2.80134000E+01;
     WT[1] = 2.80134000E+01;
 }
@@ -1703,7 +1703,7 @@ void egtransetWT(amrex::Real* WT ) {
 
 /*the lennard-jones potential well depth eps/kb in K */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetEPS(amrex::Real* EPS ) {
+void egtransetEPS(amrex::GpuArray<amrex::Real, NUM_SPECIES>& EPS ) {
     EPS[0] = 9.75300000E+01;
     EPS[1] = 9.75300000E+01;
 }
@@ -1711,7 +1711,7 @@ void egtransetEPS(amrex::Real* EPS ) {
 
 /*the lennard-jones collision diameter in Angstroms */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetSIG(amrex::Real* SIG ) {
+void egtransetSIG(amrex::GpuArray<amrex::Real, NUM_SPECIES>& SIG ) {
     SIG[0] = 3.62100000E+00;
     SIG[1] = 3.62100000E+00;
 }
@@ -1719,7 +1719,7 @@ void egtransetSIG(amrex::Real* SIG ) {
 
 /*the dipole moment in Debye */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetDIP(amrex::Real* DIP ) {
+void egtransetDIP(amrex::GpuArray<amrex::Real, NUM_SPECIES>& DIP ) {
     DIP[0] = 0.00000000E+00;
     DIP[1] = 0.00000000E+00;
 }
@@ -1727,7 +1727,7 @@ void egtransetDIP(amrex::Real* DIP ) {
 
 /*the polarizability in cubic Angstroms */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetPOL(amrex::Real* POL ) {
+void egtransetPOL(amrex::GpuArray<amrex::Real, NUM_SPECIES>& POL ) {
     POL[0] = 1.76000000E+00;
     POL[1] = 1.76000000E+00;
 }
@@ -1735,7 +1735,7 @@ void egtransetPOL(amrex::Real* POL ) {
 
 /*the rotational relaxation collision number at 298 K */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetZROT(amrex::Real* ZROT ) {
+void egtransetZROT(amrex::GpuArray<amrex::Real, NUM_SPECIES>& ZROT ) {
     ZROT[0] = 4.00000000E+00;
     ZROT[1] = 4.00000000E+00;
 }
@@ -1743,7 +1743,7 @@ void egtransetZROT(amrex::Real* ZROT ) {
 
 /*0: monoatomic, 1: linear, 2: nonlinear */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetNLIN(int* NLIN) {
+void egtransetNLIN(amrex::GpuArray<int, NUM_SPECIES>&  NLIN) {
     NLIN[0] = 1;
     NLIN[1] = 1;
 }
@@ -1751,7 +1751,7 @@ void egtransetNLIN(int* NLIN) {
 
 /*Poly fits for the viscosities, dim NO*KK */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetCOFETA(amrex::Real* COFETA) {
+void egtransetCOFETA(amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT>& COFETA) {
     COFETA[0] = -1.55270326E+01;
     COFETA[1] = 1.92766908E+00;
     COFETA[2] = -1.66518287E-01;
@@ -1765,7 +1765,7 @@ void egtransetCOFETA(amrex::Real* COFETA) {
 
 /*Poly fits for the conductivities, dim NO*KK */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetCOFLAM(amrex::Real* COFLAM) {
+void egtransetCOFLAM(amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT>& COFLAM) {
     COFLAM[0] = 7.60997504E+00;
     COFLAM[1] = -1.18418698E+00;
     COFLAM[2] = 3.03558703E-01;
@@ -1779,7 +1779,7 @@ void egtransetCOFLAM(amrex::Real* COFLAM) {
 
 /*Poly fits for the diffusion coefficients, dim NO*KK*KK */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void egtransetCOFD(amrex::Real* COFD) {
+void egtransetCOFD(amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT>& COFD) {
     COFD[0] = -1.42056656E+01;
     COFD[1] = 2.91297621E+00;
     COFD[2] = -1.61544771E-01;
@@ -1812,11 +1812,11 @@ void egtransetCOFTD(amrex::Real* COFTD) {
 
 
 /*compute the critical parameters for each species */
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::Real *  acentric_i)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::GpuArray<amrex::Real, NUM_SPECIES>&  acentric_i)
 {
 
-    amrex::Real   EPS[2];
-    amrex::Real   SIG[2];
+    amrex::GpuArray<amrex::Real, 2> EPS = {0.0};
+    amrex::GpuArray<amrex::Real, 2> SIG = {0.0};
     amrex::Real    wt[2];
     amrex::Real avogadro = 6.02214199e23;
     amrex::Real boltzmann = 1.3806503e-16; //we work in CGS

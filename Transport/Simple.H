@@ -61,9 +61,8 @@ struct NonIdealChungCorrections<eos::SRK>
 
         MW_m += Xij * Epsilon_ij * T2 * trans_parm->sqrtMWij[idx];
 
-        DP_m_4 += Xij * trans_parm->trans_dip[i] * trans_parm->trans_dip[i] *
-                  trans_parm->trans_dip[j] * trans_parm->trans_dip[j] /
-                  (T3 * Epsilon_ij);
+        DP_m_4 += Xij * trans_parm->dip[i] * trans_parm->dip[i] *
+                  trans_parm->dip[j] * trans_parm->dip[j] / (T3 * Epsilon_ij);
 
         KappaM += Xij * trans_parm->sqrtKappaij[idx];
       }
@@ -149,15 +148,15 @@ struct BinaryDiff
         if (i != j) {
           const int four_idx_ij = 4 * (i + NUM_SPECIES * j);
           const amrex::Real dbintemp =
-            tparm->trans_fitdbin[four_idx_ij] +
-            tparm->trans_fitdbin[1 + four_idx_ij] * logT[0] +
-            tparm->trans_fitdbin[2 + four_idx_ij] * logT[1] +
-            tparm->trans_fitdbin[3 + four_idx_ij] * logT[2];
+            tparm->fitdbin[four_idx_ij] +
+            tparm->fitdbin[1 + four_idx_ij] * logT[0] +
+            tparm->fitdbin[2 + four_idx_ij] * logT[1] +
+            tparm->fitdbin[3 + four_idx_ij] * logT[2];
           term1 += Yloc[j];
           term2 += Xloc[j] * std::exp(-dbintemp);
         }
       }
-      Ddiag[i] = tparm->trans_wt[i] * term1 / term2 * scale;
+      Ddiag[i] = tparm->wt[i] * term1 / term2 * scale;
     }
   }
 };
@@ -182,11 +181,10 @@ struct BinaryDiff<eos::SRK>
       for (int j = 0; j < NUM_SPECIES; ++j) {
         if (i != j) {
           const int idx_ij = i + NUM_SPECIES * j;
-          amrex::Real dbintemp =
-            tparm->trans_fitdbin[4 * idx_ij] +
-            tparm->trans_fitdbin[1 + 4 * idx_ij] * logT[0] +
-            tparm->trans_fitdbin[2 + 4 * idx_ij] * logT[1] +
-            tparm->trans_fitdbin[3 + 4 * idx_ij] * logT[2];
+          amrex::Real dbintemp = tparm->fitdbin[4 * idx_ij] +
+                                 tparm->fitdbin[1 + 4 * idx_ij] * logT[0] +
+                                 tparm->fitdbin[2 + 4 * idx_ij] * logT[1] +
+                                 tparm->fitdbin[3 + 4 * idx_ij] * logT[2];
           dbintemp = std::exp(-dbintemp);
 
           amrex::Real Upsilonij = 0.0;
@@ -199,7 +197,7 @@ struct BinaryDiff<eos::SRK>
           term2 += Xloc[j] * dbintemp;
         }
       }
-      Ddiag[i] = tparm->trans_wt[i] * term1 / term2;
+      Ddiag[i] = tparm->wt[i] * term1 / term2;
     }
   }
 };
@@ -229,21 +227,21 @@ struct SimpleTransport
     CKCVMS(&Tloc, cvk);
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      if (tparm->trans_nlin[i] == 0) {
+      if (tparm->nlin[i] == 0) {
         cvkint[i] = 0.0;
         cvkrot[i] = 0.0;
-      } else if (tparm->trans_nlin[i] == 1) {
-        cvkint[i] = cvk[i] * tparm->trans_wt[i] / Constants::RU - 1.50;
+      } else if (tparm->nlin[i] == 1) {
+        cvkint[i] = cvk[i] * tparm->wt[i] / Constants::RU - 1.50;
         cvkrot[i] = 1.0;
       } else {
-        cvkint[i] = cvk[i] * tparm->trans_wt[i] / Constants::RU - 1.50;
+        cvkint[i] = cvk[i] * tparm->wt[i] / Constants::RU - 1.50;
         cvkrot[i] = 1.5;
       }
     }
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      epskoverTstd = tparm->trans_eps[i] / 298.0;
-      epskoverT = tparm->trans_eps[i] / Tloc;
+      epskoverTstd = tparm->eps[i] / 298.0;
+      epskoverT = tparm->eps[i] / Tloc;
       Fnorm[i] = 1.0 + 0.50 * pi3_2 * std::sqrt(epskoverTstd) +
                  (2.0 + .50 * M_PI * M_PI) * epskoverTstd +
                  pi3_2 * std::sqrt(epskoverTstd) * epskoverTstd;
@@ -254,7 +252,7 @@ struct SimpleTransport
     }
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      if (tparm->trans_nlin[i] == 0) {
+      if (tparm->nlin[i] == 0) {
         xiloc[i] = 0.0;
       } else {
         //   zrot/crot approximately zint / cint by assuming vibrational
@@ -263,7 +261,7 @@ struct SimpleTransport
         xiloc[i] =
           0.250 * M_PI *
           (cvkint[i] / (cvkint[i] + 1.50) * cvkint[i] / (cvkint[i] + 1.50)) *
-          tparm->trans_zrot[i] / cvkrot[i] * Fnorm[i] / FofT[i] * muloc[i];
+          tparm->zrot[i] / cvkrot[i] * Fnorm[i] / FofT[i] * muloc[i];
       }
     }
   }
@@ -307,18 +305,17 @@ struct SimpleTransport
 
     amrex::Real wbar = 0.;
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      wbar += Yloc[i] * tparm->trans_iwt[i];
+      wbar += Yloc[i] * tparm->iwt[i];
     }
     wbar = 1.0 / wbar;
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      Xloc[i] = Yloc[i] * wbar * tparm->trans_iwt[i];
+      Xloc[i] = Yloc[i] * wbar * tparm->iwt[i];
     }
     if (wtr_get_mu) {
       for (int i = 0; i < NUM_SPECIES; ++i) {
-        muloc[i] = tparm->trans_fitmu[4 * i] +
-                   tparm->trans_fitmu[1 + 4 * i] * logT[0] +
-                   tparm->trans_fitmu[2 + 4 * i] * logT[1] +
-                   tparm->trans_fitmu[3 + 4 * i] * logT[2];
+        muloc[i] = tparm->fitmu[4 * i] + tparm->fitmu[1 + 4 * i] * logT[0] +
+                   tparm->fitmu[2 + 4 * i] * logT[1] +
+                   tparm->fitmu[3 + 4 * i] * logT[2];
         muloc[i] = std::exp(muloc[i]);
       }
 
@@ -348,10 +345,9 @@ struct SimpleTransport
 
     if (wtr_get_lam) {
       for (int i = 0; i < NUM_SPECIES; ++i) {
-        lamloc[i] = tparm->trans_fitlam[4 * i] +
-                    tparm->trans_fitlam[1 + 4 * i] * logT[0] +
-                    tparm->trans_fitlam[2 + 4 * i] * logT[1] +
-                    tparm->trans_fitlam[3 + 4 * i] * logT[2];
+        lamloc[i] = tparm->fitlam[4 * i] + tparm->fitlam[1 + 4 * i] * logT[0] +
+                    tparm->fitlam[2 + 4 * i] * logT[1] +
+                    tparm->fitlam[3 + 4 * i] * logT[2];
         lamloc[i] = std::exp(lamloc[i]);
       }
 
