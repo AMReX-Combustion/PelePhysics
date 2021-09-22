@@ -28,7 +28,7 @@ struct TransParm<EOSType, ConstTransport>
   amrex::Real const_conductivity{0.0};
   TransParm() {}
   ~TransParm() {}
-  void allocate()
+  void initialize()
   {
     amrex::ParmParse pp("transport");
     pp.query("const_viscosity", const_viscosity);
@@ -36,7 +36,6 @@ struct TransParm<EOSType, ConstTransport>
     pp.query("const_conductivity", const_conductivity);
     pp.query("const_diffusivity", const_diffusivity);
   }
-  void deallocate() {}
 };
 
 template <typename EOSType>
@@ -50,7 +49,7 @@ struct TransParm<EOSType, SutherlandTransport>
   amrex::Real const_diffusivity{1.0};
   TransParm() {}
   ~TransParm() {}
-  void allocate()
+  void initialize()
   {
     amrex::ParmParse pp("transport");
     pp.query("Prandtl_number", Prandtl_number);
@@ -60,84 +59,44 @@ struct TransParm<EOSType, SutherlandTransport>
     pp.query("const_bulk_viscosity", const_bulk_viscosity);
     pp.query("const_diffusivity", const_diffusivity);
   }
-  void deallocate() {}
 };
 
 template <typename EOSType>
 struct TransParm<EOSType, SimpleTransport>
 {
-  amrex::Real* trans_wt = nullptr;
-  amrex::Real* trans_iwt = nullptr;
-  amrex::Real* trans_eps = nullptr;
-  amrex::Real* trans_sig = nullptr;
-  amrex::Real* trans_dip = nullptr;
-  amrex::Real* trans_pol = nullptr;
-  amrex::Real* trans_zrot = nullptr;
-  amrex::Real* trans_fitmu = nullptr;
-  amrex::Real* trans_fitlam = nullptr;
-  amrex::Real* trans_fitdbin = nullptr;
-  int* trans_nlin = nullptr;
-  bool m_allocated{false};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> wt = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> iwt = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> eps = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> sig = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> dip = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> pol = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> zrot = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitmu = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitlam = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT> fitdbin = {
+    0.0};
+  amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
+  bool m_initialized{false};
   TransParm() {}
   ~TransParm() {}
-  void allocate()
+  void initialize()
   {
-    if (!m_allocated) {
-      trans_wt = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_iwt = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_eps = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_sig = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_dip = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_pol = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_zrot = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-
-      trans_fitmu = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_FIT);
-      trans_fitlam = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_FIT);
-      trans_fitdbin = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES * NUM_FIT);
-      trans_nlin = (int*)amrex::The_Arena()->alloc(sizeof(int) * NUM_SPECIES);
-
-      egtransetWT(trans_wt);
-      egtransetEPS(trans_eps);
-      egtransetSIG(trans_sig);
-      egtransetDIP(trans_dip);
-      egtransetPOL(trans_pol);
-      egtransetZROT(trans_zrot);
-      egtransetNLIN(trans_nlin);
-      egtransetCOFETA(trans_fitmu);
-      egtransetCOFLAM(trans_fitlam);
-      egtransetCOFD(trans_fitdbin);
+    if (!m_initialized) {
+      egtransetWT(wt.data());
+      egtransetEPS(eps.data());
+      egtransetSIG(sig.data());
+      egtransetDIP(dip.data());
+      egtransetPOL(pol.data());
+      egtransetZROT(zrot.data());
+      egtransetNLIN(nlin.data());
+      egtransetCOFETA(fitmu.data());
+      egtransetCOFLAM(fitlam.data());
+      egtransetCOFD(fitdbin.data());
 
       for (int i = 0; i < NUM_SPECIES; ++i) {
-        trans_iwt[i] = 1. / trans_wt[i];
+        iwt[i] = 1. / wt[i];
       }
-      m_allocated = true;
-    }
-  }
-
-  void deallocate()
-  {
-    if (m_allocated) {
-      amrex::The_Arena()->free(trans_wt);
-      amrex::The_Arena()->free(trans_iwt);
-      amrex::The_Arena()->free(trans_eps);
-      amrex::The_Arena()->free(trans_sig);
-      amrex::The_Arena()->free(trans_dip);
-      amrex::The_Arena()->free(trans_pol);
-      amrex::The_Arena()->free(trans_zrot);
-      amrex::The_Arena()->free(trans_fitmu);
-      amrex::The_Arena()->free(trans_fitlam);
-      amrex::The_Arena()->free(trans_fitdbin);
-      amrex::The_Arena()->free(trans_nlin);
+      m_initialized = true;
     }
   }
 };
@@ -145,68 +104,49 @@ struct TransParm<EOSType, SimpleTransport>
 template <>
 struct TransParm<eos::SRK, SimpleTransport>
 {
-  amrex::Real* trans_wt = nullptr;
-  amrex::Real* trans_iwt = nullptr;
-  amrex::Real* trans_eps = nullptr;
-  amrex::Real* trans_sig = nullptr;
-  amrex::Real* trans_dip = nullptr;
-  amrex::Real* trans_pol = nullptr;
-  amrex::Real* trans_zrot = nullptr;
-  amrex::Real* trans_fitmu = nullptr;
-  amrex::Real* trans_fitlam = nullptr;
-  amrex::Real* trans_fitdbin = nullptr;
-  int* trans_nlin = nullptr;
-  amrex::Real* Afac = nullptr;
-  amrex::Real* Bfac = nullptr;
-  amrex::Real* sqrtT2ij = nullptr;
-  amrex::Real* sqrtEpsilonij = nullptr;
-  amrex::Real* sqrtMWij = nullptr;
-  amrex::Real* sqrtKappaij = nullptr;
-  amrex::Real* Upsilonijk = nullptr;
-  amrex::Real* Kappai = nullptr;
-  amrex::Real* omega = nullptr;
-  bool m_allocated{false};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> wt = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> iwt = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> eps = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> sig = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> dip = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> pol = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> zrot = {0.0};
+
+  // FIXME
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitmu = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitlam = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT> fitdbin = {
+    0.0};
+  amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
+  amrex::GpuArray<amrex::Real, 10 * 4> Afac = {0.0};
+  amrex::GpuArray<amrex::Real, 7 * 4> Bfac = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES> sqrtT2ij = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES> sqrtEpsilonij = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES> sqrtMWij = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES> sqrtKappaij = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_SPECIES>
+    Upsilonijk = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> Kappai = {0.0};
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> omega = {0.0};
+  bool m_initialized{false};
   TransParm() {}
   ~TransParm() {}
-  void allocate()
+  void initialize()
   {
-    if (!m_allocated) {
-      trans_wt = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_iwt = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_eps = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_sig = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_dip = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_pol = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      trans_zrot = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-
-      trans_fitmu = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_FIT);
-      trans_fitlam = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_FIT);
-      trans_fitdbin = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES * NUM_FIT);
-      trans_nlin = (int*)amrex::The_Arena()->alloc(sizeof(int) * NUM_SPECIES);
-
-      egtransetWT(trans_wt);
-      egtransetEPS(trans_eps);
-      egtransetSIG(trans_sig);
-      egtransetDIP(trans_dip);
-      egtransetPOL(trans_pol);
-      egtransetZROT(trans_zrot);
-      egtransetNLIN(trans_nlin);
-      egtransetCOFETA(trans_fitmu);
-      egtransetCOFLAM(trans_fitlam);
-      egtransetCOFD(trans_fitdbin);
+    if (!m_initialized) {
+      egtransetWT(wt.data());
+      egtransetEPS(eps.data());
+      egtransetSIG(sig.data());
+      egtransetDIP(dip.data());
+      egtransetPOL(pol.data());
+      egtransetZROT(zrot.data());
+      egtransetNLIN(nlin.data());
+      egtransetCOFETA(fitmu.data());
+      egtransetCOFLAM(fitlam.data());
+      egtransetCOFD(fitdbin.data());
 
       for (int i = 0; i < NUM_SPECIES; ++i) {
-        trans_iwt[i] = 1. / trans_wt[i];
+        iwt[i] = 1. / wt[i];
       }
 
       // Nonideal transport coefficients computed using Chung's method:
@@ -215,29 +155,10 @@ struct TransParm<eos::SRK, SimpleTransport>
       // fluid transport properties. Industrial & engineering chemistry
       // research, 27(4), pp.671-679.
 
-      Afac =
-        (amrex::Real*)amrex::The_Arena()->alloc(sizeof(amrex::Real) * 10 * 4);
-      Bfac =
-        (amrex::Real*)amrex::The_Arena()->alloc(sizeof(amrex::Real) * 7 * 4);
-      omega = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      Kappai = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES);
-      sqrtT2ij = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
-      sqrtEpsilonij = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
-      sqrtMWij = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
-      sqrtKappaij = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES);
-      Upsilonijk = (amrex::Real*)amrex::The_Arena()->alloc(
-        sizeof(amrex::Real) * NUM_SPECIES * NUM_SPECIES * NUM_SPECIES);
-
       // Initialize coefficients of model
       {
         amrex::Real tmp1[NUM_SPECIES], tmp2[NUM_SPECIES], tmp3[NUM_SPECIES];
-        GET_CRITPARAMS(tmp1, tmp2, tmp3, omega);
+        GET_CRITPARAMS(tmp1, tmp2, tmp3, omega.data());
       }
 
       Afac[0] = 6.32402;
@@ -334,9 +255,9 @@ struct TransParm<eos::SRK, SimpleTransport>
       for (int i = 0; i < NUM_SPECIES; ++i) {
         for (int j = 0; j < NUM_SPECIES; ++j) {
           const int idx = i * NUM_SPECIES + j;
-          sqrtT2ij[idx] = std::sqrt(trans_sig[i] * trans_sig[j]);
-          sqrtEpsilonij[idx] = std::sqrt(trans_eps[i] * trans_eps[j]);
-          sqrtMWij[idx] = std::sqrt(2.0 / (trans_iwt[i] + trans_iwt[j]));
+          sqrtT2ij[idx] = std::sqrt(sig[i] * sig[j]);
+          sqrtEpsilonij[idx] = std::sqrt(eps[i] * eps[j]);
+          sqrtMWij[idx] = std::sqrt(2.0 / (iwt[i] + iwt[j]));
           sqrtKappaij[idx] = std::sqrt(Kappai[i] * Kappai[j]);
         }
       }
@@ -346,15 +267,15 @@ struct TransParm<eos::SRK, SimpleTransport>
           if (i != j) {
             const int idx_ij = i + NUM_SPECIES * j;
             const amrex::Real S_ij =
-              0.5 * (trans_sig[i] + trans_sig[j]) * 1e-8; // converted to cm
+              0.5 * (sig[i] + sig[j]) * 1e-8; // converted to cm
             const amrex::Real S_ij_inv = 1.0 / S_ij;
             for (int k = 0; k < NUM_SPECIES; ++k) {
               const amrex::Real S_ik =
-                0.5 * (trans_sig[i] + trans_sig[k]) * 1e-8; // converted to cm
+                0.5 * (sig[i] + sig[k]) * 1e-8; // converted to cm
               const amrex::Real S_jk =
-                0.5 * (trans_sig[j] + trans_sig[k]) * 1e-8; // converted to cm
+                0.5 * (sig[j] + sig[k]) * 1e-8; // converted to cm
               Upsilonijk[idx_ij * NUM_SPECIES + k] =
-                trans_iwt[k] *
+                iwt[k] *
                 (8.0 * (S_ik * S_ik * S_ik + S_jk * S_jk * S_jk) -
                  6.0 * (S_ik * S_ik + S_jk * S_jk) * S_ij -
                  3.0 *
@@ -366,34 +287,7 @@ struct TransParm<eos::SRK, SimpleTransport>
         }
       }
 
-      m_allocated = true;
-    }
-  }
-
-  void deallocate()
-  {
-    if (m_allocated) {
-      amrex::The_Arena()->free(trans_wt);
-      amrex::The_Arena()->free(trans_iwt);
-      amrex::The_Arena()->free(trans_eps);
-      amrex::The_Arena()->free(trans_sig);
-      amrex::The_Arena()->free(trans_dip);
-      amrex::The_Arena()->free(trans_pol);
-      amrex::The_Arena()->free(trans_zrot);
-      amrex::The_Arena()->free(trans_fitmu);
-      amrex::The_Arena()->free(trans_fitlam);
-      amrex::The_Arena()->free(trans_fitdbin);
-      amrex::The_Arena()->free(trans_nlin);
-
-      amrex::The_Arena()->free(Afac);
-      amrex::The_Arena()->free(Bfac);
-      amrex::The_Arena()->free(Kappai);
-      amrex::The_Arena()->free(sqrtT2ij);
-      amrex::The_Arena()->free(sqrtEpsilonij);
-      amrex::The_Arena()->free(sqrtMWij);
-      amrex::The_Arena()->free(sqrtKappaij);
-      amrex::The_Arena()->free(Upsilonijk);
-      amrex::The_Arena()->free(omega);
+      m_initialized = true;
     }
   }
 };
@@ -408,7 +302,7 @@ public:
 
   void allocate()
   {
-    m_h_trans_parm.allocate();
+    m_h_trans_parm.initialize();
     if (!m_device_allocated) {
       m_d_trans_parm =
         (TransParm<EosType, TransportType>*)amrex::The_Device_Arena()->alloc(
@@ -420,7 +314,6 @@ public:
 
   void deallocate()
   {
-    m_h_trans_parm.deallocate();
     if (m_device_allocated)
       amrex::The_Device_Arena()->free(m_d_trans_parm);
   }
