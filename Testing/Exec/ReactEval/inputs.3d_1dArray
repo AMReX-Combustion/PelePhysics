@@ -17,7 +17,7 @@ ode.atol = 1e-10
 # Select Linear solver for CVODE Newton direction
 # Options are [CPU] dense_direct / denseAJ_direct / sparse_direct / custom_direct / GMRES / precGMRES
 #             [GPU] sparse_direct / magma_direct / GMRES / precGMRES
-cvode.solve_type = sparse_direct
+cvode.solve_type = GMRES
 
 # If solve_type = precGMRES -> select preconditioner
 # Options are [CPU] dense_simplified_AJacobian / sparse_simplified_AJacobian / custom_simplified_AJacobian
