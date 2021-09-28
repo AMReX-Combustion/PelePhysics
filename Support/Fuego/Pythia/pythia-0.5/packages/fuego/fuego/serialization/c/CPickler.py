@@ -12950,11 +12950,12 @@ class CPickler(CMill):
         self._write("{")
         self._indent()
 
-        self._write("amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
-                    % (nSpecies + 1) ** 2
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
+            % (nSpecies + 1) ** 2
         )
-        self._write("amrex::GpuArray<amrex::Real,%d> conc = {0.0};"
-                    % (nSpecies)
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> conc = {0.0};" % (nSpecies)
         )
         self._write("for (int n=0; n<%d; n++) {" % (nSpecies))
         self._write("    conc[n] = 1.0/ %f ;" % (nSpecies))
@@ -12999,11 +13000,12 @@ class CPickler(CMill):
         self._write("{")
         self._indent()
 
-        self._write("amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
-                    % (nSpecies + 1) ** 2
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
+            % (nSpecies + 1) ** 2
         )
-        self._write("amrex::GpuArray<amrex::Real,%d> conc = {0.0};"
-                    % (nSpecies)
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> conc = {0.0};" % (nSpecies)
         )
         self._write("for (int n=0; n<%d; n++) {" % (nSpecies))
         self._write("    conc[n] = 1.0/ %f ;" % (nSpecies))
@@ -13058,11 +13060,12 @@ class CPickler(CMill):
         self._write("{")
         self._indent()
 
-        self._write("amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
-                    % (nSpecies + 1) ** 2
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
+            % (nSpecies + 1) ** 2
         )
-        self._write("amrex::GpuArray<amrex::Real,%d> conc = {0.0};"
-                    % (nSpecies)
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> conc = {0.0};" % (nSpecies)
         )
         self._write("for (int n=0; n<%d; n++) {" % (nSpecies))
         self._write("    conc[n] = 1.0/ %f ;" % (nSpecies))
@@ -13116,11 +13119,12 @@ class CPickler(CMill):
         self._write("{")
         self._indent()
 
-        self._write("amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
-                    % (nSpecies + 1) ** 2
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
+            % (nSpecies + 1) ** 2
         )
-        self._write("amrex::GpuArray<amrex::Real,%d> conc = {0.0};"
-                    % (nSpecies)
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> conc = {0.0};" % (nSpecies)
         )
         self._write("for (int n=0; n<%d; n++) {" % (nSpecies))
         self._write("    conc[n] = 1.0/ %f ;" % (nSpecies))
@@ -13171,11 +13175,12 @@ class CPickler(CMill):
         self._write("{")
         self._indent()
 
-        self._write("amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
-                    % (nSpecies + 1) ** 2
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
+            % (nSpecies + 1) ** 2
         )
-        self._write("amrex::GpuArray<amrex::Real,%d> conc = {0.0};"
-                    % (nSpecies)
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> conc = {0.0};" % (nSpecies)
         )
         self._write("for (int n=0; n<%d; n++) {" % (nSpecies))
         self._write("    conc[n] = 1.0/ %f ;" % (nSpecies))
@@ -13253,11 +13258,12 @@ class CPickler(CMill):
         self._write("{")
         self._indent()
 
-        self._write("amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
-                    % (nSpecies + 1) ** 2
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
+            % (nSpecies + 1) ** 2
         )
-        self._write("amrex::GpuArray<amrex::Real,%d> conc = {0.0};"
-                    % (nSpecies)
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> conc = {0.0};" % (nSpecies)
         )
         self._write("for (int n=0; n<%d; n++) {" % (nSpecies))
         self._write("    conc[n] = 1.0/ %f ;" % (nSpecies))
@@ -13354,11 +13360,12 @@ class CPickler(CMill):
         self._write("{")
         self._indent()
 
-        self._write("amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
-                    % (nSpecies + 1) ** 2
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
+            % (nSpecies + 1) ** 2
         )
-        self._write("amrex::GpuArray<amrex::Real,%d> conc = {0.0};"
-                    % (nSpecies)
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> conc = {0.0};" % (nSpecies)
         )
         self._write("for (int n=0; n<%d; n++) {" % (nSpecies))
         self._write("    conc[n] = 1.0/ %f ;" % (nSpecies))
@@ -13414,11 +13421,12 @@ class CPickler(CMill):
         self._write("{")
         self._indent()
 
-        self._write("amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
-                    % (nSpecies + 1) ** 2
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> Jac = {0.0};"
+            % (nSpecies + 1) ** 2
         )
-        self._write("amrex::GpuArray<amrex::Real,%d> conc = {0.0};"
-                    % (nSpecies)
+        self._write(
+            "amrex::GpuArray<amrex::Real,%d> conc = {0.0};" % (nSpecies)
         )
         self._write("for (int n=0; n<%d; n++) {" % (nSpecies))
         self._write("    conc[n] = 1.0/ %f ;" % (nSpecies))
