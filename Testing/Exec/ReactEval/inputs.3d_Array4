@@ -11,11 +11,20 @@ ode.ode_ncells = 1
 ode.reactor_type  = 1 # 1=full e, 2=full h
 ode.verbose = 1
 ode.use_typ_vals = 0
-ode.analytical_jacobian = 0 
 ode.rtol = 1e-10
 ode.atol = 1e-10
 
-cvode.solve_type = GMRES    # OPTIONS ARE - dense sparse GMRES sparse_custom GMRES_custom diag
+# Select Linear solver for CVODE Newton direction
+# Options are [CPU] dense_direct / denseAJ_direct / sparse_direct / custom_direct / GMRES / precGMRES
+#             [GPU] sparse_direct / magma_direct / GMRES / precGMRES
+cvode.solve_type = GMRES
+
+# If solve_type = precGMRES -> select preconditioner
+# Options are [CPU] dense_simplified_AJacobian / sparse_simplified_AJacobian / custom_simplified_AJacobian
+              [GPU] cuSparse_simplified_AJacobian
+cvode.precond_type = cuSparse_simplified_AJacobian
+cvode.max_order = 4
+
 #ode.implicit_solve = 1
 #ode.use_erkstep    = 0
 

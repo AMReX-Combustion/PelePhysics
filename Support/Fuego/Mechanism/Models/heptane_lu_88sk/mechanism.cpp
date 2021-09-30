@@ -543,32 +543,17 @@ void CKSYMS_STR(amrex::Vector<std::string>& kname)
 /*compute the sparsity pattern of the chemistry Jacobian */
 void SPARSITY_INFO( int * nJdata, const int * consP, int NCELLS)
 {
-    amrex::Gpu::DeviceVector<amrex::Real> J_v(7921);
-    amrex::Gpu::DeviceVector<amrex::Real> c_v(88);
-    amrex::Real * J_d = J_v.data();
-    amrex::Real * c_d = c_v.data();
-
-    amrex::Real J_h[7921];
-
-    amrex::IntVect iv(AMREX_D_DECL(0,0,0));
-    amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
-            for (int l=0; l<88; l++) {
-                c_d[l] = 1.0/ 88.000000 ;
-            }
-            aJacobian(J_d, c_d, 1500.0, *consP);
-    });
-
-#ifdef AMREX_USE_GPU
-    amrex::Gpu::dtoh_memcpy(J_h, J_d, sizeof(J_d));
-#else
-    std::memcpy(&J_h, J_d, sizeof(J_h));
-#endif
+    amrex::GpuArray<amrex::Real,7921> Jac = {0.0};
+    amrex::GpuArray<amrex::Real,88> conc = {0.0};
+    for (int n=0; n<88; n++) {
+        conc[n] = 1.0/ 88.000000 ;
+    }
+    aJacobian(&Jac[0], &conc[0], 1500.0, *consP);
 
     int nJdata_tmp = 0;
     for (int k=0; k<89; k++) {
         for (int l=0; l<89; l++) {
-            if(J_h[ 89 * k + l] != 0.0){
+            if(Jac[ 89 * k + l] != 0.0){
                 nJdata_tmp = nJdata_tmp + 1;
             }
         }
@@ -582,27 +567,12 @@ void SPARSITY_INFO( int * nJdata, const int * consP, int NCELLS)
 /*compute the sparsity pattern of the system Jacobian */
 void SPARSITY_INFO_SYST( int * nJdata, const int * consP, int NCELLS)
 {
-    amrex::Gpu::DeviceVector<amrex::Real> J_v(7921);
-    amrex::Gpu::DeviceVector<amrex::Real> c_v(88);
-    amrex::Real * J_d = J_v.data();
-    amrex::Real * c_d = c_v.data();
-
-    amrex::Real J_h[7921];
-
-    amrex::IntVect iv(AMREX_D_DECL(0,0,0));
-    amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
-            for (int k=0; k<88; k++) {
-                c_d[k] = 1.0/ 88.000000 ;
-            }
-            aJacobian(J_d, c_d, 1500.0, *consP);
-    });
-
-#ifdef AMREX_USE_GPU
-    amrex::Gpu::dtoh_memcpy(J_h, J_d, sizeof(J_d));
-#else
-    std::memcpy(&J_h, J_d, sizeof(J_h));
-#endif
+    amrex::GpuArray<amrex::Real,7921> Jac = {0.0};
+    amrex::GpuArray<amrex::Real,88> conc = {0.0};
+    for (int n=0; n<88; n++) {
+        conc[n] = 1.0/ 88.000000 ;
+    }
+    aJacobian(&Jac[0], &conc[0], 1500.0, *consP);
 
     int nJdata_tmp = 0;
     for (int k=0; k<89; k++) {
@@ -610,7 +580,7 @@ void SPARSITY_INFO_SYST( int * nJdata, const int * consP, int NCELLS)
             if(k == l){
                 nJdata_tmp = nJdata_tmp + 1;
             } else {
-                if(J_h[ 89 * k + l] != 0.0){
+                if(Jac[ 89 * k + l] != 0.0){
                     nJdata_tmp = nJdata_tmp + 1;
                 }
             }
@@ -625,27 +595,12 @@ void SPARSITY_INFO_SYST( int * nJdata, const int * consP, int NCELLS)
 /*compute the sparsity pattern of the simplified (for preconditioning) system Jacobian */
 void SPARSITY_INFO_SYST_SIMPLIFIED( int * nJdata, const int * consP)
 {
-    amrex::Gpu::DeviceVector<amrex::Real> J_v(7921);
-    amrex::Gpu::DeviceVector<amrex::Real> c_v(88);
-    amrex::Real * J_d = J_v.data();
-    amrex::Real * c_d = c_v.data();
-
-    amrex::Real J_h[7921];
-
-    amrex::IntVect iv(AMREX_D_DECL(0,0,0));
-    amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
-            for (int k=0; k<88; k++) {
-                c_d[k] = 1.0/ 88.000000 ;
-            }
-            aJacobian_precond(J_d, c_d, 1500.0, *consP);
-    });
-
-#ifdef AMREX_USE_GPU
-    amrex::Gpu::dtoh_memcpy(J_h, J_d, sizeof(J_d));
-#else
-    std::memcpy(&J_h, J_d, sizeof(J_h));
-#endif
+    amrex::GpuArray<amrex::Real,7921> Jac = {0.0};
+    amrex::GpuArray<amrex::Real,88> conc = {0.0};
+    for (int n=0; n<88; n++) {
+        conc[n] = 1.0/ 88.000000 ;
+    }
+    aJacobian_precond(&Jac[0], &conc[0], 1500.0, *consP);
 
     int nJdata_tmp = 0;
     for (int k=0; k<89; k++) {
@@ -653,7 +608,7 @@ void SPARSITY_INFO_SYST_SIMPLIFIED( int * nJdata, const int * consP)
             if(k == l){
                 nJdata_tmp = nJdata_tmp + 1;
             } else {
-                if(J_h[ 89 * k + l] != 0.0){
+                if(Jac[ 89 * k + l] != 0.0){
                     nJdata_tmp = nJdata_tmp + 1;
                 }
             }
@@ -667,39 +622,21 @@ void SPARSITY_INFO_SYST_SIMPLIFIED( int * nJdata, const int * consP)
 /*compute the sparsity pattern of the chemistry Jacobian in CSC format -- base 0 */
 void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, const int * consP, int NCELLS)
 {
-    int offset_row;
-    int offset_col;
-
-    amrex::Gpu::DeviceVector<amrex::Real> J_v(7921);
-    amrex::Gpu::DeviceVector<amrex::Real> c_v(88);
-    amrex::Real * J_d = J_v.data();
-    amrex::Real * c_d = c_v.data();
-
-    amrex::Real J_h[7921];
-
-    amrex::IntVect iv(AMREX_D_DECL(0,0,0));
-    amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
-            for (int k=0; k<88; k++) {
-                c_d[k] = 1.0/ 88.000000 ;
-            }
-            aJacobian(J_d, c_d, 1500.0, *consP);
-    });
-
-#ifdef AMREX_USE_GPU
-    amrex::Gpu::dtoh_memcpy(J_h, J_d, sizeof(J_d));
-#else
-    std::memcpy(&J_h, J_d, sizeof(J_h));
-#endif
+    amrex::GpuArray<amrex::Real,7921> Jac = {0.0};
+    amrex::GpuArray<amrex::Real,88> conc = {0.0};
+    for (int n=0; n<88; n++) {
+        conc[n] = 1.0/ 88.000000 ;
+    }
+    aJacobian(&Jac[0], &conc[0], 1500.0, *consP);
 
     colPtrs[0] = 0;
     int nJdata_tmp = 0;
     for (int nc=0; nc<NCELLS; nc++) {
-        offset_row = nc * 89;
-        offset_col = nc * 89;
+        int offset_row = nc * 89;
+        int offset_col = nc * 89;
         for (int k=0; k<89; k++) {
             for (int l=0; l<89; l++) {
-                if(J_h[89*k + l] != 0.0) {
+                if(Jac[89*k + l] != 0.0) {
                     rowVals[nJdata_tmp] = l + offset_row; 
                     nJdata_tmp = nJdata_tmp + 1; 
                 }
@@ -712,37 +649,21 @@ void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, const int * consP, int
 /*compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0 */
 void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const int * consP, int NCELLS, int base)
 {
-    int offset;
-    amrex::Gpu::DeviceVector<amrex::Real> J_v(7921);
-    amrex::Gpu::DeviceVector<amrex::Real> c_v(88);
-    amrex::Real * J_d = J_v.data();
-    amrex::Real * c_d = c_v.data();
-
-    amrex::Real J_h[7921];
-
-    amrex::IntVect iv(AMREX_D_DECL(0,0,0));
-    amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
-            for (int k=0; k<88; k++) {
-                c_d[k] = 1.0/ 88.000000 ;
-            }
-            aJacobian(J_d, c_d, 1500.0, *consP);
-    });
-
-#ifdef AMREX_USE_GPU
-    amrex::Gpu::dtoh_memcpy(J_h, J_d, sizeof(J_d));
-#else
-    std::memcpy(&J_h, J_d, sizeof(J_h));
-#endif
+    amrex::GpuArray<amrex::Real,7921> Jac = {0.0};
+    amrex::GpuArray<amrex::Real,88> conc = {0.0};
+    for (int n=0; n<88; n++) {
+        conc[n] = 1.0/ 88.000000 ;
+    }
+    aJacobian(&Jac[0], &conc[0], 1500.0, *consP);
 
     if (base == 1) {
         rowPtrs[0] = 1;
         int nJdata_tmp = 1;
         for (int nc=0; nc<NCELLS; nc++) {
-            offset = nc * 89;
+            int offset = nc * 89;
             for (int l=0; l<89; l++) {
                 for (int k=0; k<89; k++) {
-                    if(J_h[89*k + l] != 0.0) {
+                    if(Jac[89*k + l] != 0.0) {
                         colVals[nJdata_tmp-1] = k+1 + offset; 
                         nJdata_tmp = nJdata_tmp + 1; 
                     }
@@ -754,10 +675,10 @@ void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const int * consP, int N
         rowPtrs[0] = 0;
         int nJdata_tmp = 0;
         for (int nc=0; nc<NCELLS; nc++) {
-            offset = nc * 89;
+            int offset = nc * 89;
             for (int l=0; l<89; l++) {
                 for (int k=0; k<89; k++) {
-                    if(J_h[89*k + l] != 0.0) {
+                    if(Jac[89*k + l] != 0.0) {
                         colVals[nJdata_tmp] = k + offset; 
                         nJdata_tmp = nJdata_tmp + 1; 
                     }
@@ -772,40 +693,25 @@ void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const int * consP, int N
 /*CSR format BASE is user choice */
 void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, const int * consP, int NCELLS, int base)
 {
-    int offset;
-    amrex::Gpu::DeviceVector<amrex::Real> J_v(7921);
-    amrex::Gpu::DeviceVector<amrex::Real> c_v(88);
-    amrex::Real * J_d = J_v.data();
-    amrex::Real * c_d = c_v.data();
+    amrex::GpuArray<amrex::Real,7921> Jac = {0.0};
+    amrex::GpuArray<amrex::Real,88> conc = {0.0};
+    for (int n=0; n<88; n++) {
+        conc[n] = 1.0/ 88.000000 ;
+    }
+    aJacobian(&Jac[0], &conc[0], 1500.0, *consP);
 
-    amrex::Real J_h[7921];
-
-    amrex::IntVect iv(AMREX_D_DECL(0,0,0));
-    amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
-            for (int k=0; k<88; k++) {
-                c_d[k] = 1.0/ 88.000000 ;
-            }
-            aJacobian(J_d, c_d, 1500.0, *consP);
-    });
-
-#ifdef AMREX_USE_GPU
-    amrex::Gpu::dtoh_memcpy(J_h, J_d, sizeof(J_d));
-#else
-    std::memcpy(&J_h, J_d, sizeof(J_h));
-#endif
     if (base == 1) {
         rowPtr[0] = 1;
         int nJdata_tmp = 1;
         for (int nc=0; nc<NCELLS; nc++) {
-            offset = nc * 89;
+            int offset = nc * 89;
             for (int l=0; l<89; l++) {
                 for (int k=0; k<89; k++) {
                     if (k == l) {
                         colVals[nJdata_tmp-1] = l+1 + offset; 
                         nJdata_tmp = nJdata_tmp + 1; 
                     } else {
-                        if(J_h[89*k + l] != 0.0) {
+                        if(Jac[89*k + l] != 0.0) {
                             colVals[nJdata_tmp-1] = k+1 + offset; 
                             nJdata_tmp = nJdata_tmp + 1; 
                         }
@@ -818,14 +724,14 @@ void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, const int * consP, i
         rowPtr[0] = 0;
         int nJdata_tmp = 0;
         for (int nc=0; nc<NCELLS; nc++) {
-            offset = nc * 89;
+            int offset = nc * 89;
             for (int l=0; l<89; l++) {
                 for (int k=0; k<89; k++) {
                     if (k == l) {
                         colVals[nJdata_tmp] = l + offset; 
                         nJdata_tmp = nJdata_tmp + 1; 
                     } else {
-                        if(J_h[89*k + l] != 0.0) {
+                        if(Jac[89*k + l] != 0.0) {
                             colVals[nJdata_tmp] = k + offset; 
                             nJdata_tmp = nJdata_tmp + 1; 
                         }
@@ -841,27 +747,12 @@ void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, const int * consP, i
 /*BASE 0 */
 void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, const int * consP)
 {
-    amrex::Gpu::DeviceVector<amrex::Real> J_v(7921);
-    amrex::Gpu::DeviceVector<amrex::Real> c_v(88);
-    amrex::Real * J_d = J_v.data();
-    amrex::Real * c_d = c_v.data();
-
-    amrex::Real J_h[7921];
-
-    amrex::IntVect iv(AMREX_D_DECL(0,0,0));
-    amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
-            for (int k=0; k<88; k++) {
-                c_d[k] = 1.0/ 88.000000 ;
-            }
-            aJacobian_precond(J_d, c_d, 1500.0, *consP);
-    });
-
-#ifdef AMREX_USE_GPU
-    amrex::Gpu::dtoh_memcpy(J_h, J_d, sizeof(J_d));
-#else
-    std::memcpy(&J_h, J_d, sizeof(J_h));
-#endif
+    amrex::GpuArray<amrex::Real,7921> Jac = {0.0};
+    amrex::GpuArray<amrex::Real,88> conc = {0.0};
+    for (int n=0; n<88; n++) {
+        conc[n] = 1.0/ 88.000000 ;
+    }
+    aJacobian_precond(&Jac[0], &conc[0], 1500.0, *consP);
 
     colPtrs[0] = 0;
     int nJdata_tmp = 0;
@@ -872,7 +763,7 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * in
                 indx[nJdata_tmp] = 89*k + l;
                 nJdata_tmp = nJdata_tmp + 1; 
             } else {
-                if(J_h[89*k + l] != 0.0) {
+                if(Jac[89*k + l] != 0.0) {
                     rowVals[nJdata_tmp] = l; 
                     indx[nJdata_tmp] = 89*k + l;
                     nJdata_tmp = nJdata_tmp + 1; 
@@ -887,27 +778,12 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * in
 /*CSR format BASE is under choice */
 void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, const int * consP, int base)
 {
-    amrex::Gpu::DeviceVector<amrex::Real> J_v(7921);
-    amrex::Gpu::DeviceVector<amrex::Real> c_v(88);
-    amrex::Real * J_d = J_v.data();
-    amrex::Real * c_d = c_v.data();
-
-    amrex::Real J_h[7921];
-
-    amrex::IntVect iv(AMREX_D_DECL(0,0,0));
-    amrex::ParallelFor(amrex::Box(iv,iv),
-        [=] AMREX_GPU_HOST_DEVICE (int /*i*/, int /*j*/, int /*k*/) noexcept {
-            for (int k=0; k<88; k++) {
-                c_d[k] = 1.0/ 88.000000 ;
-            }
-            aJacobian_precond(J_d, c_d, 1500.0, *consP);
-    });
-
-#ifdef AMREX_USE_GPU
-    amrex::Gpu::dtoh_memcpy(J_h, J_d, sizeof(J_d));
-#else
-    std::memcpy(&J_h, J_d, sizeof(J_h));
-#endif
+    amrex::GpuArray<amrex::Real,7921> Jac = {0.0};
+    amrex::GpuArray<amrex::Real,88> conc = {0.0};
+    for (int n=0; n<88; n++) {
+        conc[n] = 1.0/ 88.000000 ;
+    }
+    aJacobian_precond(&Jac[0], &conc[0], 1500.0, *consP);
 
     if (base == 1) {
         rowPtr[0] = 1;
@@ -918,7 +794,7 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, const int
                     colVals[nJdata_tmp-1] = l+1; 
                     nJdata_tmp = nJdata_tmp + 1; 
                 } else {
-                    if(J_h[89*k + l] != 0.0) {
+                    if(Jac[89*k + l] != 0.0) {
                         colVals[nJdata_tmp-1] = k+1; 
                         nJdata_tmp = nJdata_tmp + 1; 
                     }
@@ -935,7 +811,7 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, const int
                     colVals[nJdata_tmp] = l; 
                     nJdata_tmp = nJdata_tmp + 1; 
                 } else {
-                    if(J_h[89*k + l] != 0.0) {
+                    if(Jac[89*k + l] != 0.0) {
                         colVals[nJdata_tmp] = k; 
                         nJdata_tmp = nJdata_tmp + 1; 
                     }
