@@ -139,6 +139,7 @@ calcVaporY(
   const Real* h_part,
   const Real* cBoilT,
   Real* Y_vapor,
+  Real* Psat,
   Real* L_fuel)
 {
   SprayUnits SPU;
@@ -157,7 +158,7 @@ calcVaporY(
     const int fspec = fdat.indx[spf];
     const Real boilT_ref = fdat.boilT[spf];
     const Real mw_fuel = gpv.mw_fluid[fspec];
-    Real T_part = amrex::min(T_in, cBoilT[spf]);
+    Real T_part = amrex::min(T_in,  0.999 * cBoilT[spf]);
     // Compute latent heat
     Real part_latent =
       h_part[fspec] + fdat.latent[spf] - fdat.cp[spf] * (T_part - fdat.ref_T);
@@ -177,6 +178,7 @@ calcVaporY(
     } else {
       pres_sat = d * std::pow(10., a - b / (T_part + c));
     }
+    Psat[spf] = pres_sat;
     Real x_l = Y_l[spf] / mw_fuel;
     Real x_vc = x_l * pres_sat;
     nt += x_l;
@@ -238,6 +240,7 @@ calculateSpraySource(
   GpuArray<Real, SPRAY_FUEL_NUM> mi_dot;
   GpuArray<Real, SPRAY_FUEL_NUM> Y_part;
   GpuArray<Real, SPRAY_FUEL_NUM> Y_vapor;
+  GpuArray<Real, SPRAY_FUEL_NUM> Psat;
   GpuArray<Real, SPRAY_FUEL_NUM>
     cBoilT; // Boiling temperature at current pressure
 #ifdef USE_SPRAY_SOA
@@ -302,13 +305,14 @@ calculateSpraySource(
     if (SPI.mass_tran) {
       calcVaporY(
         fdat, gpv, T_part, C_eps, Y_part.data(), h_part.data(), cBoilT.data(),
-        Y_vapor.data(), L_fuel.data());
+        Y_vapor.data(), Psat.data(), L_fuel.data());
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         const int fspec = fdat.indx[spf];
         Real Yfv = Y_vapor[spf];
         mi_dot[spf] = 0.;
         B_M_num[spf] =
           amrex::max(C_eps, (Yfv - gpv.Y_fluid[fspec]) / (1. - Yfv));
+        B_M_num[spf] = amrex::min(20., B_M_num[spf]);
         Y_skin[fspec] = Yfv + rule * (gpv.Y_fluid[fspec] - Yfv);
         sumYSkin += Y_skin[fspec];
         cp_part += Y_part[spf] * fdat.cp[spf];
@@ -353,8 +357,8 @@ calculateSpraySource(
       Real powR = amrex::max(std::pow(Reyn, 0.077), 1.);
       Nu_0 = 1. + powR * std::cbrt(1. + Reyn * Pr_skin);
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        if (Y_part[spf] > 0.) {
-          const int fspec = fdat.indx[spf];
+        const int fspec = fdat.indx[spf];
+        if (Y_part[spf] > 0. && Psat[spf] > gpv.X_fluid[fspec] * gpv.p_fluid) {
           // Convert mass diffusion coefficient from mixture average
           // to binary for fuel only, not concerned with other species
           Ddiag[fspec] *= mw_vap * gpv.invmw[fspec] * SPU.rhod_conv;
@@ -368,7 +372,7 @@ calculateSpraySource(
           Sh_num[spf] = 2. + (Sh_0 - 2.) * invFM;
           Real Tboil = cBoilT[spf];
           // Apply flash boiling model when necessary
-          if (T_part > Tboil) {
+          if (Psat[spf] > 0.999 * gpv.p_fluid && T_part > Tboil) {
             // Max operation necessary for LLVM compiler
             Real delTb = amrex::max(0., T_part - Tboil);
             Real alpha = calcAlpha(delTb);
@@ -421,8 +425,8 @@ calculateSpraySource(
       const Real inv_pm_cp = inv_pmass / cp_part;
       Real coeff_heat = 0.;
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        if (Y_part[spf] > 0.) {
-          const int fspec = fdat.indx[spf];
+        const int fspec = fdat.indx[spf];
+        if (Y_part[spf] > 0. && Psat[spf] > gpv.X_fluid[fspec] * gpv.p_fluid) {
           Real ratio = cp_n[fspec] * Sh_num[spf] * Ddiag[fspec] / lambda_skin;
           Real heatC = calcHeatCoeff(ratio, B_M_num[spf], B_eps, C_eps, Nu_0);
           // Convection term

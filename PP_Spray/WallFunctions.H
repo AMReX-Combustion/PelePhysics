@@ -72,6 +72,7 @@ calculateWallFilmSource(
   GpuArray<Real, SPRAY_FUEL_NUM> L_fuel;
   GpuArray<Real, SPRAY_FUEL_NUM> mi_dot;
   GpuArray<Real, SPRAY_FUEL_NUM> cBoilT;
+  GpuArray<Real, SPRAY_FUEL_NUM> Psat;
   GpuArray<Real, NUM_SPECIES> Y_skin;
   GpuArray<Real, NUM_SPECIES> h_skin;
   GpuArray<Real, NUM_SPECIES> Ddiag;
@@ -105,7 +106,7 @@ calculateWallFilmSource(
   }
   calcVaporY(
     fdat, gpv, T_film, C_eps, Y_film.data(), h_skin.data(), cBoilT.data(),
-    Y_vapor.data(), L_fuel.data());
+    Y_vapor.data(), Psat.data(), L_fuel.data());
   Real T_vapor = 0.5 * (T_film + T_i);
   Real sumYSkin = 0.;
   Real sumYFuel = 0.;

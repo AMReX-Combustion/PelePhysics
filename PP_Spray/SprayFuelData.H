@@ -89,6 +89,7 @@ struct GasPhaseVals
   Real rho_fluid;
   Real p_fluid;
   GpuArray<Real, NUM_SPECIES> Y_fluid;
+  GpuArray<Real, NUM_SPECIES> X_fluid;
   Real mw_mix;
   GpuArray<Real, NUM_SPECIES> mw_fluid;
   GpuArray<Real, NUM_SPECIES> invmw;
@@ -123,6 +124,9 @@ struct GasPhaseVals
     p_fluid =
       rho_fluid * pele::physics::Constants::RU * mw_mix * T_fluid * SPU.ru_conv;
     mw_mix = 1. / mw_mix;
+    for (int n = 0; n < NUM_SPECIES; ++n) {
+      X_fluid[n] = Y_fluid[n] * invmw[n] * mw_mix;
+    }
   }
 };
 
