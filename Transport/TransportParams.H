@@ -19,6 +19,12 @@ struct TransParm
 {
 };
 
+template <typename EOSType, typename TransportType>
+struct InitTransParm
+{
+  void operator()(TransParm<EOSType, TransportType> /*tparm*/) {}
+};
+
 template <typename EOSType>
 struct TransParm<EOSType, ConstTransport>
 {
@@ -26,15 +32,18 @@ struct TransParm<EOSType, ConstTransport>
   amrex::Real const_bulk_viscosity{0.0};
   amrex::Real const_diffusivity{0.0};
   amrex::Real const_conductivity{0.0};
-  TransParm() {}
-  ~TransParm() {}
-  void initialize()
+};
+
+template <typename EOSType>
+struct InitTransParm<EOSType, ConstTransport>
+{
+  void operator()(TransParm<EOSType, ConstTransport>* tparm)
   {
     amrex::ParmParse pp("transport");
-    pp.query("const_viscosity", const_viscosity);
-    pp.query("const_bulk_viscosity", const_bulk_viscosity);
-    pp.query("const_conductivity", const_conductivity);
-    pp.query("const_diffusivity", const_diffusivity);
+    pp.query("const_viscosity", tparm->const_viscosity);
+    pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
+    pp.query("const_conductivity", tparm->const_conductivity);
+    pp.query("const_diffusivity", tparm->const_diffusivity);
   }
 };
 
@@ -47,17 +56,20 @@ struct TransParm<EOSType, SutherlandTransport>
   amrex::Real viscosity_S{110.4};
   amrex::Real const_bulk_viscosity{0.0};
   amrex::Real const_diffusivity{1.0};
-  TransParm() {}
-  ~TransParm() {}
-  void initialize()
+};
+
+template <typename EOSType>
+struct InitTransParm<EOSType, SutherlandTransport>
+{
+  void operator()(TransParm<EOSType, SutherlandTransport>* tparm)
   {
     amrex::ParmParse pp("transport");
-    pp.query("Prandtl_number", Prandtl_number);
-    pp.query("viscosity_mu_ref", viscosity_mu_ref);
-    pp.query("viscosity_T_ref", viscosity_T_ref);
-    pp.query("viscosity_S", viscosity_S);
-    pp.query("const_bulk_viscosity", const_bulk_viscosity);
-    pp.query("const_diffusivity", const_diffusivity);
+    pp.query("Prandtl_number", tparm->Prandtl_number);
+    pp.query("viscosity_mu_ref", tparm->viscosity_mu_ref);
+    pp.query("viscosity_T_ref", tparm->viscosity_T_ref);
+    pp.query("viscosity_S", tparm->viscosity_S);
+    pp.query("const_bulk_viscosity", tparm->const_bulk_viscosity);
+    pp.query("const_diffusivity", tparm->const_diffusivity);
   }
 };
 
@@ -76,27 +88,26 @@ struct TransParm<EOSType, SimpleTransport>
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT> fitdbin = {
     0.0};
   amrex::GpuArray<int, NUM_SPECIES> nlin = {0};
-  bool m_initialized{false};
-  TransParm() {}
-  ~TransParm() {}
-  void initialize()
-  {
-    if (!m_initialized) {
-      egtransetWT(wt.data());
-      egtransetEPS(eps.data());
-      egtransetSIG(sig.data());
-      egtransetDIP(dip.data());
-      egtransetPOL(pol.data());
-      egtransetZROT(zrot.data());
-      egtransetNLIN(nlin.data());
-      egtransetCOFETA(fitmu.data());
-      egtransetCOFLAM(fitlam.data());
-      egtransetCOFD(fitdbin.data());
+};
 
-      for (int i = 0; i < NUM_SPECIES; ++i) {
-        iwt[i] = 1. / wt[i];
-      }
-      m_initialized = true;
+template <typename EOSType>
+struct InitTransParm<EOSType, SimpleTransport>
+{
+  void operator()(TransParm<EOSType, SimpleTransport>* tparm)
+  {
+    egtransetWT(tparm->wt.data());
+    egtransetEPS(tparm->eps.data());
+    egtransetSIG(tparm->sig.data());
+    egtransetDIP(tparm->dip.data());
+    egtransetPOL(tparm->pol.data());
+    egtransetZROT(tparm->zrot.data());
+    egtransetNLIN(tparm->nlin.data());
+    egtransetCOFETA(tparm->fitmu.data());
+    egtransetCOFLAM(tparm->fitlam.data());
+    egtransetCOFD(tparm->fitdbin.data());
+
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      tparm->iwt[i] = 1. / tparm->wt[i];
     }
   }
 };
@@ -112,7 +123,6 @@ struct TransParm<eos::SRK, SimpleTransport>
   amrex::GpuArray<amrex::Real, NUM_SPECIES> pol = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES> zrot = {0.0};
 
-  // FIXME
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitmu = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_FIT> fitlam = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES* NUM_SPECIES* NUM_FIT> fitdbin = {
@@ -128,166 +138,165 @@ struct TransParm<eos::SRK, SimpleTransport>
     Upsilonijk = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Kappai = {0.0};
   amrex::GpuArray<amrex::Real, NUM_SPECIES> omega = {0.0};
-  bool m_initialized{false};
-  TransParm() {}
-  ~TransParm() {}
-  void initialize()
+};
+
+template <>
+struct InitTransParm<eos::SRK, SimpleTransport>
+{
+  void operator()(TransParm<eos::SRK, SimpleTransport>* tparm)
   {
-    if (!m_initialized) {
-      egtransetWT(wt.data());
-      egtransetEPS(eps.data());
-      egtransetSIG(sig.data());
-      egtransetDIP(dip.data());
-      egtransetPOL(pol.data());
-      egtransetZROT(zrot.data());
-      egtransetNLIN(nlin.data());
-      egtransetCOFETA(fitmu.data());
-      egtransetCOFLAM(fitlam.data());
-      egtransetCOFD(fitdbin.data());
+    egtransetWT(tparm->wt.data());
+    egtransetEPS(tparm->eps.data());
+    egtransetSIG(tparm->sig.data());
+    egtransetDIP(tparm->dip.data());
+    egtransetPOL(tparm->pol.data());
+    egtransetZROT(tparm->zrot.data());
+    egtransetNLIN(tparm->nlin.data());
+    egtransetCOFETA(tparm->fitmu.data());
+    egtransetCOFLAM(tparm->fitlam.data());
+    egtransetCOFD(tparm->fitdbin.data());
 
-      for (int i = 0; i < NUM_SPECIES; ++i) {
-        iwt[i] = 1. / wt[i];
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      tparm->iwt[i] = 1. / tparm->wt[i];
+    }
+
+    // Nonideal transport coefficients computed using Chung's method:
+    // Chung, T.H., Ajlan, M., Lee, L.L. and Starling, K.E., 1988.
+    // Generalized multiparameter correlation for nonpolar and polar
+    // fluid transport properties. Industrial & engineering chemistry
+    // research, 27(4), pp.671-679.
+
+    // Initialize coefficients of model
+    {
+      amrex::Real tmp1[NUM_SPECIES], tmp2[NUM_SPECIES], tmp3[NUM_SPECIES];
+      GET_CRITPARAMS(tmp1, tmp2, tmp3, tparm->omega.data());
+    }
+
+    tparm->Afac[0] = 6.32402;
+    tparm->Afac[1] = 50.41190;
+    tparm->Afac[2] = -51.68010;
+    tparm->Afac[3] = 1189.020;
+    tparm->Afac[4] = 0.12102e-2;
+    tparm->Afac[5] = -0.11536e-2;
+    tparm->Afac[6] = -0.62571e-2;
+    tparm->Afac[7] = 0.37283e-1;
+    tparm->Afac[8] = 5.28346;
+    tparm->Afac[9] = 254.209;
+    tparm->Afac[10] = -168.481;
+    tparm->Afac[11] = 3898.27;
+    tparm->Afac[12] = 6.62263;
+    tparm->Afac[13] = 38.09570;
+    tparm->Afac[14] = -8.46414;
+    tparm->Afac[15] = 31.41780;
+    tparm->Afac[16] = 19.74540;
+    tparm->Afac[17] = 7.63034;
+    tparm->Afac[18] = -14.35440;
+    tparm->Afac[19] = 31.52670;
+    tparm->Afac[20] = -1.89992;
+    tparm->Afac[21] = -12.5367;
+    tparm->Afac[22] = 4.98529;
+    tparm->Afac[23] = -18.15070;
+    tparm->Afac[24] = 24.27450;
+    tparm->Afac[25] = 3.44945;
+    tparm->Afac[26] = -11.29130;
+    tparm->Afac[27] = 69.34660;
+    tparm->Afac[28] = 0.79716;
+    tparm->Afac[29] = 1.11764;
+    tparm->Afac[30] = 0.12348e-1;
+    tparm->Afac[31] = -4.11661;
+    tparm->Afac[32] = -0.23816;
+    tparm->Afac[33] = 0.67695e-1;
+    tparm->Afac[34] = -0.81630;
+    tparm->Afac[35] = 4.02528;
+    tparm->Afac[36] = 0.68629e-1;
+    tparm->Afac[37] = 0.34793;
+    tparm->Afac[38] = 0.59256;
+    tparm->Afac[39] = -0.72663;
+
+    tparm->Bfac[0] = 2.41657;
+    tparm->Bfac[1] = 0.74824;
+    tparm->Bfac[2] = -0.91858;
+    tparm->Bfac[3] = 121.721;
+    tparm->Bfac[4] = -0.50924;
+    tparm->Bfac[5] = -1.50936;
+    tparm->Bfac[6] = -49.99120;
+    tparm->Bfac[7] = 69.9834;
+    tparm->Bfac[8] = 6.61069;
+    tparm->Bfac[9] = 5.62073;
+    tparm->Bfac[10] = 64.75990;
+    tparm->Bfac[11] = 27.0389;
+    tparm->Bfac[12] = 14.54250;
+    tparm->Bfac[13] = -8.91387;
+    tparm->Bfac[14] = -5.63794;
+    tparm->Bfac[15] = 74.3435;
+    tparm->Bfac[16] = 0.79274;
+    tparm->Bfac[17] = 0.82019;
+    tparm->Bfac[18] = -0.69369;
+    tparm->Bfac[19] = 6.31734;
+    tparm->Bfac[20] = -5.86340;
+    tparm->Bfac[21] = 12.80050;
+    tparm->Bfac[22] = 9.58926;
+    tparm->Bfac[23] = -65.5292;
+    tparm->Bfac[24] = 81.17100;
+    tparm->Bfac[25] = 114.15800;
+    tparm->Bfac[26] = -60.84100;
+    tparm->Bfac[27] = 466.7750;
+
+    // Initialize Kappa, which has nonzero values only for specific polar
+    // species
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      tparm->Kappai[i] = 0.0;
+    }
+    {
+      amrex::Vector<std::string> spec_names_kappa;
+      spec_names_kappa.resize(1);
+      spec_names_kappa[0] = "Null";
+      CKSYMS_STR(spec_names_kappa);
+      for (int i = 0; i < NUM_SPECIES; i++) {
+        if (spec_names_kappa[i] == "H2O") {
+          tparm->Kappai[i] = 0.075908;
+          // tparm->Kappai[i] = 0.076;
+        } else if (spec_names_kappa[i] == "CH3OH") {
+          tparm->Kappai[i] = 0.215175;
+        } else if (spec_names_kappa[i] == "CH3CH2OH") {
+          tparm->Kappai[i] = 0.174823;
+        }
       }
-
-      // Nonideal transport coefficients computed using Chung's method:
-      // Chung, T.H., Ajlan, M., Lee, L.L. and Starling, K.E., 1988.
-      // Generalized multiparameter correlation for nonpolar and polar
-      // fluid transport properties. Industrial & engineering chemistry
-      // research, 27(4), pp.671-679.
-
-      // Initialize coefficients of model
-      {
-        amrex::Real tmp1[NUM_SPECIES], tmp2[NUM_SPECIES], tmp3[NUM_SPECIES];
-        GET_CRITPARAMS(tmp1, tmp2, tmp3, omega.data());
+    }
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      for (int j = 0; j < NUM_SPECIES; ++j) {
+        const int idx = i * NUM_SPECIES + j;
+        tparm->sqrtT2ij[idx] = std::sqrt(tparm->sig[i] * tparm->sig[j]);
+        tparm->sqrtEpsilonij[idx] = std::sqrt(tparm->eps[i] * tparm->eps[j]);
+        tparm->sqrtMWij[idx] = std::sqrt(2.0 / (tparm->iwt[i] + tparm->iwt[j]));
+        tparm->sqrtKappaij[idx] =
+          std::sqrt(tparm->Kappai[i] * tparm->Kappai[j]);
       }
+    }
 
-      Afac[0] = 6.32402;
-      Afac[1] = 50.41190;
-      Afac[2] = -51.68010;
-      Afac[3] = 1189.020;
-      Afac[4] = 0.12102e-2;
-      Afac[5] = -0.11536e-2;
-      Afac[6] = -0.62571e-2;
-      Afac[7] = 0.37283e-1;
-      Afac[8] = 5.28346;
-      Afac[9] = 254.209;
-      Afac[10] = -168.481;
-      Afac[11] = 3898.27;
-      Afac[12] = 6.62263;
-      Afac[13] = 38.09570;
-      Afac[14] = -8.46414;
-      Afac[15] = 31.41780;
-      Afac[16] = 19.74540;
-      Afac[17] = 7.63034;
-      Afac[18] = -14.35440;
-      Afac[19] = 31.52670;
-      Afac[20] = -1.89992;
-      Afac[21] = -12.5367;
-      Afac[22] = 4.98529;
-      Afac[23] = -18.15070;
-      Afac[24] = 24.27450;
-      Afac[25] = 3.44945;
-      Afac[26] = -11.29130;
-      Afac[27] = 69.34660;
-      Afac[28] = 0.79716;
-      Afac[29] = 1.11764;
-      Afac[30] = 0.12348e-1;
-      Afac[31] = -4.11661;
-      Afac[32] = -0.23816;
-      Afac[33] = 0.67695e-1;
-      Afac[34] = -0.81630;
-      Afac[35] = 4.02528;
-      Afac[36] = 0.68629e-1;
-      Afac[37] = 0.34793;
-      Afac[38] = 0.59256;
-      Afac[39] = -0.72663;
-
-      Bfac[0] = 2.41657;
-      Bfac[1] = 0.74824;
-      Bfac[2] = -0.91858;
-      Bfac[3] = 121.721;
-      Bfac[4] = -0.50924;
-      Bfac[5] = -1.50936;
-      Bfac[6] = -49.99120;
-      Bfac[7] = 69.9834;
-      Bfac[8] = 6.61069;
-      Bfac[9] = 5.62073;
-      Bfac[10] = 64.75990;
-      Bfac[11] = 27.0389;
-      Bfac[12] = 14.54250;
-      Bfac[13] = -8.91387;
-      Bfac[14] = -5.63794;
-      Bfac[15] = 74.3435;
-      Bfac[16] = 0.79274;
-      Bfac[17] = 0.82019;
-      Bfac[18] = -0.69369;
-      Bfac[19] = 6.31734;
-      Bfac[20] = -5.86340;
-      Bfac[21] = 12.80050;
-      Bfac[22] = 9.58926;
-      Bfac[23] = -65.5292;
-      Bfac[24] = 81.17100;
-      Bfac[25] = 114.15800;
-      Bfac[26] = -60.84100;
-      Bfac[27] = 466.7750;
-
-      // Initialize Kappa, which has nonzero values only for specific polar
-      // species
-      for (int i = 0; i < NUM_SPECIES; ++i) {
-        Kappai[i] = 0.0;
-      }
-      {
-        amrex::Vector<std::string> spec_names_kappa;
-        spec_names_kappa.resize(1);
-        spec_names_kappa[0] = "Null";
-        CKSYMS_STR(spec_names_kappa);
-        for (int i = 0; i < NUM_SPECIES; i++) {
-          if (spec_names_kappa[i] == "H2O") {
-            Kappai[i] = 0.075908;
-            // Kappai[i] = 0.076;
-          } else if (spec_names_kappa[i] == "CH3OH") {
-            Kappai[i] = 0.215175;
-          } else if (spec_names_kappa[i] == "CH3CH2OH") {
-            Kappai[i] = 0.174823;
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      for (int j = 0; j < NUM_SPECIES; ++j) {
+        if (i != j) {
+          const int idx_ij = i + NUM_SPECIES * j;
+          const amrex::Real S_ij =
+            0.5 * (tparm->sig[i] + tparm->sig[j]) * 1e-8; // converted to cm
+          const amrex::Real S_ij_inv = 1.0 / S_ij;
+          for (int k = 0; k < NUM_SPECIES; ++k) {
+            const amrex::Real S_ik =
+              0.5 * (tparm->sig[i] + tparm->sig[k]) * 1e-8; // converted to cm
+            const amrex::Real S_jk =
+              0.5 * (tparm->sig[j] + tparm->sig[k]) * 1e-8; // converted to cm
+            tparm->Upsilonijk[idx_ij * NUM_SPECIES + k] =
+              tparm->iwt[k] *
+              (8.0 * (S_ik * S_ik * S_ik + S_jk * S_jk * S_jk) -
+               6.0 * (S_ik * S_ik + S_jk * S_jk) * S_ij -
+               3.0 *
+                 ((S_ik * S_ik - S_jk * S_jk) * (S_ik * S_ik - S_jk * S_jk)) *
+                 S_ij_inv +
+               S_ij * S_ij * S_ij);
           }
         }
       }
-      for (int i = 0; i < NUM_SPECIES; ++i) {
-        for (int j = 0; j < NUM_SPECIES; ++j) {
-          const int idx = i * NUM_SPECIES + j;
-          sqrtT2ij[idx] = std::sqrt(sig[i] * sig[j]);
-          sqrtEpsilonij[idx] = std::sqrt(eps[i] * eps[j]);
-          sqrtMWij[idx] = std::sqrt(2.0 / (iwt[i] + iwt[j]));
-          sqrtKappaij[idx] = std::sqrt(Kappai[i] * Kappai[j]);
-        }
-      }
-
-      for (int i = 0; i < NUM_SPECIES; ++i) {
-        for (int j = 0; j < NUM_SPECIES; ++j) {
-          if (i != j) {
-            const int idx_ij = i + NUM_SPECIES * j;
-            const amrex::Real S_ij =
-              0.5 * (sig[i] + sig[j]) * 1e-8; // converted to cm
-            const amrex::Real S_ij_inv = 1.0 / S_ij;
-            for (int k = 0; k < NUM_SPECIES; ++k) {
-              const amrex::Real S_ik =
-                0.5 * (sig[i] + sig[k]) * 1e-8; // converted to cm
-              const amrex::Real S_jk =
-                0.5 * (sig[j] + sig[k]) * 1e-8; // converted to cm
-              Upsilonijk[idx_ij * NUM_SPECIES + k] =
-                iwt[k] *
-                (8.0 * (S_ik * S_ik * S_ik + S_jk * S_jk * S_jk) -
-                 6.0 * (S_ik * S_ik + S_jk * S_jk) * S_ij -
-                 3.0 *
-                   ((S_ik * S_ik - S_jk * S_jk) * (S_ik * S_ik - S_jk * S_jk)) *
-                   S_ij_inv +
-                 S_ij * S_ij * S_ij);
-            }
-          }
-        }
-      }
-
-      m_initialized = true;
     }
   }
 };
@@ -302,7 +311,7 @@ public:
 
   void allocate()
   {
-    m_h_trans_parm.initialize();
+    InitTransParm<EosType, TransportType>()(&m_h_trans_parm);
     if (!m_device_allocated) {
       m_d_trans_parm =
         (TransParm<EosType, TransportType>*)amrex::The_Device_Arena()->alloc(
@@ -323,18 +332,9 @@ public:
     if (!m_device_allocated) {
       amrex::Abort("Device params not allocated yet");
     } else {
-
-      // would have liked to use this but apparently only works for trivial
-      // types
-      // amrex::Gpu::copy(
-      //   amrex::Gpu::hostToDevice, &m_h_trans_parm, &m_h_trans_parm + 1,
-      //   m_d_trans_parm);
-#ifdef AMREX_USE_GPU
-      amrex::Gpu::htod_memcpy(
-        m_d_trans_parm, &m_h_trans_parm, sizeof(m_h_trans_parm));
-#else
-      std::memcpy(m_d_trans_parm, &m_h_trans_parm, sizeof(m_h_trans_parm));
-#endif
+      amrex::Gpu::copy(
+        amrex::Gpu::hostToDevice, &m_h_trans_parm, &m_h_trans_parm + 1,
+        m_d_trans_parm);
     }
   }
 
