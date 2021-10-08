@@ -8,11 +8,13 @@
 namespace amrex {
 namespace sundials {
 
-class MemoryHelper {
+class MemoryHelper
+{
 public:
   MemoryHelper();
   ~MemoryHelper();
   operator SUNMemoryHelper() const { return helper; }
+
 private:
   SUNMemoryHelper helper;
 };
@@ -21,9 +23,9 @@ void Initialize();
 void Finalize();
 
 MemoryHelper* The_SUNMemory_Helper();
-amrex::Arena* getArena (SUNMemoryType type);
+amrex::Arena* getArena(SUNMemoryType type);
 
-}
-}
+} // namespace sundials
+} // namespace amrex
 
 #endif
