@@ -1,6 +1,10 @@
 CEXE_headers += ReactorUtils.H ReactorTypes.H ReactorBase.H ReactorRK64.H ReactorArkode.H ReactorNull.H ReactorCvode.H ReactorCvodeUtils.H ReactorCvodePreconditioner.H ReactorCvodeJacobian.H ReactorCvodeCustomLinSolver.H
 CEXE_sources += ReactorUtils.cpp ReactorBase.cpp ReactorRK64.cpp ReactorArkode.cpp ReactorNull.cpp ReactorCvode.cpp ReactorCvodeUtils.cpp ReactorCvodePreconditioner.cpp ReactorCvodeJacobian.cpp ReactorCvodeCustomLinSolver.cpp
-ifneq (, $(filter TRUE, $(USE_CUDA) $(USE_HIP)))
-    CEXE_headers += AMReX_SUNMemory.H
-    CEXE_sources += AMReX_SUNMemory.cpp
+
+ifneq (, $(filter TRUE, $(USE_CUDA) $(USE_HIP) $(USE_DPCPP)))
+  Blocs += $(AMREX_HOME)/Src/Extern/SUNDIALS/
+  CEXE_sources += AMReX_SUNMemory.cpp
+  CEXE_headers += AMReX_SUNMemory.H
+  VPATH_LOCATIONS += $(AMREX_HOME)/Src/Extern/SUNDIALS
+  INCLUDE_LOCATIONS += $(AMREX_HOME)/Src/Extern/SUNDIALS
 endif
