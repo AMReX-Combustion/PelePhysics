@@ -31,7 +31,6 @@ the_same_box(const amrex::Box& b)
 // Default constructor
 SootModel::SootModel()
   : m_sootVerbosity(0),
-    m_sootIndx(),
     m_setIndx(false),
     m_sootData(nullptr),
     m_sootReact(nullptr),
@@ -74,8 +73,9 @@ SootModel::define()
   AMREX_ASSERT(m_readSootParams);
   // Double check indices are set
   m_setIndx = m_sootIndx.checkIndices();
-  if (!m_setIndx)
+  if (!m_setIndx) {
     Abort("SootModel::define(): Must set indices before defining");
+  }
   // Relevant species names for the surface chemistry model
   // TODO: Currently must correspond to GasSpecIndx enum in Constants_Soot.H
   m_gasSpecNames = {"H2", "H", "OH", "H2O", "CO", "C2H2", "O2", m_PAHname};
@@ -111,8 +111,9 @@ SootModel::define()
   // Loop over all species
   for (int i = 0; i < NUM_SPECIES; ++i) {
     // Check if species is the PAH inceptor
-    if (spec_names[i] == m_PAHname)
+    if (spec_names[i] == m_PAHname) {
       m_PAHindx = i;
+    }
     // Check if species matches others for surface reactions
     for (int sootSpec = 0; sootSpec < ngs; ++sootSpec) {
       if (spec_names[i] == m_gasSpecNames[sootSpec]) {
@@ -263,8 +264,9 @@ SootModel::addSootDerivePlotVars(
 {
   // Double check indices are set
   m_setIndx = m_sootIndx.checkIndices();
-  if (!m_setIndx)
+  if (!m_setIndx) {
     Abort("SootModel::addSootDerivePlotVars(): Must set indices first");
+  }
   // Add in soot variables
   Vector<std::string> sootNames = {"rho_soot", "sum_rho_soot"};
   derive_lst.add(
@@ -291,7 +293,7 @@ SootModel::addSootSourceTerm(
   Array4<const Real> const& Qstate,
   Array4<const Real> const& coeff_mu,
   Array4<Real> const& soot_state,
-  const Real time,
+  const Real /*time*/,
   const Real dt,
   const bool pres_term) const
 {
@@ -464,8 +466,6 @@ SootModel::addSootSourceTerm(
       }
       // Update species concentrations within subcycle
       for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
-        const int spcc = sd->refIndx[sp];
-        const int peleIndx = specIndx + spcc;
         xi_n[sp] += sootdt * omega_src[sp];
         rho += sootdt * omega_src[sp] * mw_fluid[sp];
         omega_src[sp] = 0.; // Reset omega source
@@ -504,8 +504,9 @@ SootModel::addSootSourceTerm(
       eng_src -= del_rho_dot * Hi[absorbIndxN];
       p_src += del_rho_dot * RT / mw_fluidF[absorbIndxN];
     }
-    if (pres_term)
+    if (pres_term) {
       eng_src += p_src;
+    }
     // Add density source term
     soot_state(i, j, k, rhoIndx) += rho_src * sc.mass_src_conv;
     soot_state(i, j, k, engIndx) += eng_src * sc.eng_src_conv;

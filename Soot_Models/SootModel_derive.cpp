@@ -10,15 +10,14 @@ soot_largeparticledata(
   const Box& bx,
   FArrayBox& slfab,
   const int dcomp,
-  const int ncomp,
+  const int /*ncomp*/,
   const FArrayBox& datafab,
-  const Geometry& geomdata,
-  const Real time,
-  const int* bcrec,
-  const int level)
+  const Geometry& /*geomdata*/,
+  const Real /*time*/,
+  const int* /*bcrec*/,
+  const int /*level*/)
 {
   SootConst sc;
-  const Real sootRho = sc.SootDensity / sc.rho_conv;
   const Real V0 = sc.V0 / std::pow(sc.len_conv, 3);
   const Real S0 = sc.S0 / std::pow(sc.len_conv, 2);
   auto const dat = datafab.array();
@@ -48,12 +47,12 @@ soot_genvars(
   const Box& bx,
   FArrayBox& slfab,
   const int dcomp,
-  const int ncomp,
+  const int /*ncomp*/,
   const FArrayBox& datafab,
-  const Geometry& geomdata,
-  const Real time,
-  const int* bcrec,
-  const int level)
+  const Geometry& /*geomdata*/,
+  const Real /*time*/,
+  const int* /*bcrec*/,
+  const int /*level*/)
 {
   SootConst sc;
   const Real sootRho = sc.SootDensity / sc.rho_conv;
@@ -61,7 +60,6 @@ soot_genvars(
   auto sl = slfab.array(dcomp);
   amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
     Real rho = dat(i, j, k, 0);
-    Real M00 = dat(i, j, k, 1);
     Real fv = dat(i, j, k, 2);
     // Soot mass is volume * density
     Real soot_mass = fv * sootRho;
