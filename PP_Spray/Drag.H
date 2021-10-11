@@ -158,7 +158,7 @@ calcVaporY(
     const int fspec = fdat.indx[spf];
     const Real boilT_ref = fdat.boilT[spf];
     const Real mw_fuel = gpv.mw_fluid[fspec];
-    Real T_part = amrex::min(T_in,  0.999 * cBoilT[spf]);
+    Real T_part = amrex::min(T_in, 0.999 * cBoilT[spf]);
     // Compute latent heat
     Real part_latent =
       h_part[fspec] + fdat.latent[spf] - fdat.cp[spf] * (T_part - fdat.ref_T);
@@ -199,7 +199,6 @@ AMREX_FORCE_INLINE
 void
 calculateSpraySource(
   const Real flow_dt,
-  const bool do_move,
   GasPhaseVals& gpv,
   SprayComps SPI,
   SprayData fdat,

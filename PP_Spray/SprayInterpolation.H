@@ -20,8 +20,9 @@ InterpolateFaceVelocity(
       len[2] + (dir == 2) * 0.5));
     // Compute distances for trilinear interpolation
     amrex::IntVect indx(AMREX_D_DECL(
-      amrex::Math::floor(face_len[0]), amrex::Math::floor(face_len[1]),
-      amrex::Math::floor(face_len[2])));
+      int(amrex::Math::floor(face_len[0])),
+      int(amrex::Math::floor(face_len[1])),
+      int(amrex::Math::floor(face_len[2]))));
     amrex::RealVect delL(AMREX_D_DECL(
       face_len[0] - indx[0], face_len[1] - indx[1], face_len[2] - indx[2]));
     int iin[2] = {

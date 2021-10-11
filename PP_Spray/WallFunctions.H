@@ -51,7 +51,7 @@ calculateWallFilmSource(
   const int pid,
 #endif
   const Real T_wall,
-  const Real face_area,
+  const Real /*face_area*/,
   const Real diff_cent,
   pele::physics::transport::TransParm<
     pele::physics::EosType,
@@ -60,7 +60,6 @@ calculateWallFilmSource(
   auto eos = pele::physics::PhysicsType::eos();
   SprayUnits SPU;
   const Real C_eps = 1.E-15;
-  const Real B_eps = 1.E-7;
   const Real ht_tol = 2.E-6;
   const Real part_dt = 0.5 * flow_dt;
   bool get_xi = false;
@@ -227,10 +226,15 @@ AMREX_GPU_HOST_DEVICE
 AMREX_INLINE
 void
 find_tangents(
+#if AMREX_SPACEDIM == 3
   const RealVect& testvec,
+  RealVect& tanPsi,
+#else
+  const RealVect& /*testvec*/,
+  RealVect& /*tanPsi*/,
+#endif
   const RealVect& norm,
-  RealVect& tanBeta,
-  RealVect& tanPsi)
+  RealVect& tanBeta)
 {
 #if AMREX_SPACEDIM == 3
   tanPsi = testvec.crossProduct(norm);
@@ -283,17 +287,16 @@ AMREX_GPU_HOST_DEVICE
 AMREX_INLINE
 bool
 check_wall(
-  SprayParticleContainer::ParticleType& p,
   const IntVect bflags,
+#ifdef AMREX_USE_EB
   const IntVect ijkc,
   const IntVect ijkc_prev,
-#ifdef AMREX_USE_EB
   const bool use_EB,
   Array4<EBCellFlag const> const& flags,
   Array4<Real const> const& bcent,
   Array4<Real const> const& bnorm,
-#endif
   IntVect& bloc,
+#endif
   RealVect& normal,
   RealVect& bcentv)
 {
@@ -343,7 +346,6 @@ impose_wall(
   SprayData fdat,
   const RealVect& dx,
   const RealVect& plo,
-  const RealVect& phi,
   const Real T_wall,
   const IntVect bloc,
   const RealVect normal,
@@ -479,7 +481,7 @@ impose_wall(
           RealVect testvec = -pvel;
           // Find two tangent vectors by taking the cross product with the
           // velocity vector
-          find_tangents(testvec, normal, SPRF.tanBeta, SPRF.tanPsi);
+          find_tangents(testvec, SPRF.tanPsi, normal, SPRF.tanBeta);
         }
       } // if (splash_flag != splash_type::rebound)
     }   // if (sigma > 0.)
@@ -503,10 +505,7 @@ impose_wall(
 
 void
 create_splash_droplet(
-  SprayParticleContainer::ParticleType& p,
-  SprayComps SPI,
-  SprayRefl SPRF,
-  SprayUnits SPU)
+  SprayParticleContainer::ParticleType& p, SprayComps SPI, SprayRefl SPRF)
 {
   Real rand1 = amrex::Random();
   Real mean = SPRF.beta_mean;

@@ -447,8 +447,9 @@ SootModel::addSootSourceTerm(
           }
         }
         for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
-          Real denom = amrex::min(dt * std::abs(mom_src[mom]) / (moments[mom] * maxmc),
-                                  Real(nsubMAX));
+          Real denom = amrex::min(
+            dt * std::abs(mom_src[mom]) / (moments[mom] * maxmc),
+            Real(nsubMAX));
           nsub = amrex::max(nsub, int(denom) + 1);
         }
         Real diffM = moments[0] - moments[NUM_SOOT_MOMENTS];
@@ -501,9 +502,10 @@ SootModel::addSootSourceTerm(
       soot_state(i, j, k, absorbIndxP) -= del_rho_dot * sc.mass_src_conv;
       rho_src -= del_rho_dot;
       eng_src -= del_rho_dot * Hi[absorbIndxN];
-      p_src += del_rho_dot *  RT / mw_fluidF[absorbIndxN];
+      p_src += del_rho_dot * RT / mw_fluidF[absorbIndxN];
     }
-    if (pres_term) eng_src += p_src;
+    if (pres_term)
+      eng_src += p_src;
     // Add density source term
     soot_state(i, j, k, rhoIndx) += rho_src * sc.mass_src_conv;
     soot_state(i, j, k, engIndx) += eng_src * sc.eng_src_conv;

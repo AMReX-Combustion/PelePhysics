@@ -168,7 +168,6 @@ public:
     const int level,
     const int finest_level,
     const int amr_ncycle,
-    const int amr_iteration,
     const int fine_ref_ratio,
     int& ghost_width,
     int& where_width,
@@ -269,8 +268,8 @@ public:
   {
     BL_PROFILE("ParticleContainer::transferSource()");
     const int nghost = amrex::min(source.nGrow(), source_ghosts);
-    const int ncomp = tmp_source.nComp();
 #ifdef SPRAY_PELE_LM
+    const int ncomp = tmp_source.nComp();
     if (level > 0) {
       amrex::MultiFab tmp_mf(
         this->m_gdb->ParticleBoxArray(level),
@@ -311,7 +310,6 @@ public:
     amrex::Array4<const amrex::Real> const& spraydot,
     amrex::Array4<amrex::Real> const& ext_src)
   {
-    const int ncomp = spraydot.nComp();
     SprayData* fdat = d_sprayData;
     SprayComps SPI = m_sprayIndx;
     amrex::ParallelFor(

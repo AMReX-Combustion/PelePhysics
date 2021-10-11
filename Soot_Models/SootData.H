@@ -423,7 +423,8 @@ struct SootData
     // Weight of the delta function
     Real dwVal = momFV[NUM_SOOT_MOMENTS];
     Real factor = std::pow(nuclVol, volOrd) * std::pow(nuclSurf, surfOrd);
-    if (momFV[NUM_SOOT_MOMENTS + 1] == 0.) return factor * 1.E-66;
+    if (momFV[NUM_SOOT_MOMENTS + 1] == 0.)
+      return factor * 1.E-66;
     // Remove the contribution from the first mode
     Real outMom = fracMom(volOrd, surfOrd, momFV) - dwVal * factor;
     // If the moment is negative, return a small (consistent) value
