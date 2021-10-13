@@ -271,6 +271,11 @@ calculateSpraySource(
   eos.T2Hi(gpv.T_fluid, h_fluid.data());
   calcBoilT(fdat, gpv, cBoilT.data());
   while (isub <= nsub) {
+    Real Tcrit = 0.;
+    for (int n = 0; n < SPRAY_FUEL_NUM; ++n) {
+      Tcrit += Y_part[spf] * fdat.critT[spf];
+    }
+    T_part = amrex::min(Tcrit, T_part);
     // Model the fuel vapor using the one-third rule
     Real delT = amrex::max(gpv.T_fluid - T_part, 0.);
     Real T_skin = T_part + rule * delT;

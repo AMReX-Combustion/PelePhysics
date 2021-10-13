@@ -148,7 +148,7 @@ struct SprayData
   GpuArray<Real, SPRAY_FUEL_NUM * 4> psat_coef;
   GpuArray<int, SPRAY_FUEL_NUM> indx;
 
-  void build(SprayData& fdat)
+  void build(const SprayData& fdat)
   {
     // Convert input values from CGS to MKS for PeleLM
     num_ppp = fdat.num_ppp;
