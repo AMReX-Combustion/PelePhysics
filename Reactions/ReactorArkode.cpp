@@ -133,11 +133,6 @@ ReactorArkode::react(
 {
   BL_PROFILE("Pele::ReactorArkode::react()");
 
-  const int neq = NUM_SPECIES + 1;
-  const int ncells = box.numPts();
-  const int neq_tot = neq * ncells;
-  AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
-
 #if defined(AMREX_USE_CUDA)
   N_Vector y = N_VNewWithMemHelp_Cuda(
     neq_tot, false, *amrex::sundials::The_SUNMemory_Helper());
@@ -168,6 +163,10 @@ ReactorArkode::react(
   realtype* yvec_d = N_VGetArrayPointer(y);
 #endif
 
+  const int neq = NUM_SPECIES + 1;
+  const int ncells = box.numPts();
+  const int neq_tot = neq * ncells;
+  AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
   ARKODEUserData* user_data =
     (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
   user_data->ncells_d = ncells;
