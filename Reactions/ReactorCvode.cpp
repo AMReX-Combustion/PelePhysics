@@ -4,7 +4,7 @@ namespace pele {
 namespace physics {
 namespace reactions {
 int
-ReactorCvode::init(int reactor_type, int Ncells)
+ReactorCvode::init(int reactor_type, int ncells)
 {
   BL_PROFILE("Pele::ReactorCvode::init()");
   m_reactor_type = reactor_type;
@@ -20,7 +20,7 @@ ReactorCvode::init(int reactor_type, int Ncells)
   // ----------------------------------------------------------
 
   // Solution vector
-  int neq_tot = (NUM_SPECIES + 1) * Ncells;
+  int neq_tot = (NUM_SPECIES + 1) * ncells;
   y = N_VNew_Serial(neq_tot);
   if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
     return (1);
@@ -35,7 +35,7 @@ ReactorCvode::init(int reactor_type, int Ncells)
 
   udata_g =
     (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
-  allocUserData(udata_g, Ncells);
+  allocUserData(udata_g, ncells);
   if (utils::check_flag((void*)udata_g, "allocUserData", 2)) {
     return (1);
   }
@@ -458,12 +458,12 @@ ReactorCvode::checkCvodeOptions() const
   if (ianalytical_jacobian == 1) {
     int nJdata;
     const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
-    int Ncells = 1; // Print the pattern of the diagonal block. Ncells will
+    int ncells = 1; // Print the pattern of the diagonal block. ncells will
                     // actually vary on GPU.
 #ifdef AMREX_USE_GPU
     if (isolve_type == cvode::sparseDirect) {
 #if defined(AMREX_USE_CUDA)
-      SPARSITY_INFO_SYST(&nJdata, &HP, Ncells);
+      SPARSITY_INFO_SYST(&nJdata, &HP, ncells);
       if (iverbose > 0) {
         amrex::Print()
           << "--> cuSparse based matrix Solver -- non zero entries: " << nJdata
@@ -479,7 +479,7 @@ ReactorCvode::checkCvodeOptions() const
 
 #else
     if (isolve_type == cvode::customDirect) {
-      SPARSITY_INFO_SYST(&nJdata, &HP, Ncells);
+      SPARSITY_INFO_SYST(&nJdata, &HP, ncells);
       if (iverbose > 0) {
         amrex::Print()
           << "--> sparse AJ-based matrix custom Solver -- non zero entries: "
@@ -489,7 +489,7 @@ ReactorCvode::checkCvodeOptions() const
       }
     } else if (isolve_type == cvode::sparseDirect) {
 #ifdef PELE_USE_KLU
-      SPARSITY_INFO(&nJdata, &HP, Ncells);
+      SPARSITY_INFO(&nJdata, &HP, ncells);
       if (iverbose > 0) {
         amrex::Print()
           << "--> KLU sparse AJ-based matrix Solver -- non zero entries: "
@@ -1429,7 +1429,7 @@ ReactorCvode::react(
   realtype* rX_src_in,
   realtype& dt_react,
   realtype& time,
-  int Ncells
+  int ncells
 #ifdef AMREX_USE_GPU
   ,
   amrex::gpuStream_t stream
@@ -1449,7 +1449,7 @@ ReactorCvode::react(
   // GPU Region
   //----------------------------------------------------------
 #ifdef AMREX_USE_GPU
-  int neq_tot = (NUM_SPECIES + 1) * Ncells;
+  int neq_tot = (NUM_SPECIES + 1) * ncells;
   N_Vector y = NULL;
   SUNLinearSolver LS = NULL;
   SUNMatrix A = NULL;
@@ -1460,7 +1460,7 @@ ReactorCvode::react(
   amrex::Gpu::streamSynchronize();
   user_data =
     (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
-  allocUserData(user_data, Ncells, A, stream);
+  allocUserData(user_data, ncells, A, stream);
 
   // Solution vector and execution policy
 #if defined(AMREX_USE_CUDA)
@@ -1495,11 +1495,11 @@ ReactorCvode::react(
   amrex::Gpu::htod_memcpy_async(yvec_d, rY_in, sizeof(amrex::Real) * (neq_tot));
   amrex::Gpu::htod_memcpy_async(
     user_data->species_ext_d, rY_src_in,
-    sizeof(amrex::Real) * NUM_SPECIES * Ncells);
+    sizeof(amrex::Real) * NUM_SPECIES * ncells);
   amrex::Gpu::htod_memcpy_async(
-    user_data->energy_init_d, rX_in, sizeof(amrex::Real) * Ncells);
+    user_data->energy_init_d, rX_in, sizeof(amrex::Real) * ncells);
   amrex::Gpu::htod_memcpy_async(
-    user_data->energy_ext_d, rX_src_in, sizeof(amrex::Real) * Ncells);
+    user_data->energy_ext_d, rX_src_in, sizeof(amrex::Real) * ncells);
   BL_PROFILE_VAR_STOP(AsyncCopy);
 
 #ifdef AMREX_USE_OMP
@@ -1630,7 +1630,7 @@ ReactorCvode::react(
   // Get the result back
   BL_PROFILE_VAR_START(AsyncCopy);
   amrex::Gpu::dtoh_memcpy_async(rY_in, yvec_d, sizeof(amrex::Real) * neq_tot);
-  for (int i = 0; i < Ncells; i++) {
+  for (int i = 0; i < ncells; i++) {
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
   }
   BL_PROFILE_VAR_STOP(AsyncCopy);
@@ -1664,12 +1664,12 @@ ReactorCvode::react(
   // Pointer of solution vector
   amrex::Real* yvec_d = N_VGetArrayPointer(y);
   std::memcpy(
-    yvec_d, rY_in, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * Ncells));
+    yvec_d, rY_in, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * ncells));
   std::memcpy(
     udata_g->species_ext_d, rY_src_in,
-    sizeof(amrex::Real) * (NUM_SPECIES * Ncells));
-  std::memcpy(udata_g->energy_init_d, rX_in, sizeof(amrex::Real) * Ncells);
-  std::memcpy(udata_g->energy_ext_d, rX_src_in, sizeof(amrex::Real) * Ncells);
+    sizeof(amrex::Real) * (NUM_SPECIES * ncells));
+  std::memcpy(udata_g->energy_init_d, rX_in, sizeof(amrex::Real) * ncells);
+  std::memcpy(udata_g->energy_ext_d, rX_src_in, sizeof(amrex::Real) * ncells);
 
   // ReInit CVODE is faster
   CVodeReInit(cvode_mem, time_start, y);
@@ -1696,8 +1696,8 @@ ReactorCvode::react(
 
   // Pack data to return in main routine external
   std::memcpy(
-    rY_in, yvec_d, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * Ncells));
-  for (int i = 0; i < Ncells; i++) {
+    rY_in, yvec_d, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * ncells));
+  for (int i = 0; i < ncells; i++) {
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
   }
 

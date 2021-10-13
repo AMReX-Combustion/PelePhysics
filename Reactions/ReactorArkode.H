@@ -47,7 +47,7 @@ public:
 
   using Ordering = utils::CYOrder;
 
-  int init(int reactor_type, int Ncells) override;
+  int init(int reactor_type, int ncells) override;
 
   void close() override {}
 
@@ -75,7 +75,7 @@ public:
     amrex::Real* rX_src_in,
     amrex::Real& dt_react,
     amrex::Real& time,
-    int Ncells
+    int ncells
 #ifdef AMREX_USE_GPU
     ,
     amrex::gpuStream_t stream
