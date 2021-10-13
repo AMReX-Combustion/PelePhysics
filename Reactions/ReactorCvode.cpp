@@ -19,7 +19,6 @@ ReactorCvode::init(int reactor_type, int Ncells)
   // On CPU, initialize cvode_mem/userData
   // ----------------------------------------------------------
 
-  // ----------------------------------------------------------
   // Solution vector
   int neq_tot = (NUM_SPECIES + 1) * Ncells;
   y = N_VNew_Serial(neq_tot);
@@ -27,7 +26,6 @@ ReactorCvode::init(int reactor_type, int Ncells)
     return (1);
   }
 
-  // ----------------------------------------------------------
   // Call CVodeCreate to create the solver memory and specify the Backward
   // Differentiation Formula and the use of a Newton iteration
   cvode_mem = CVodeCreate(CV_BDF);
@@ -57,11 +55,9 @@ ReactorCvode::init(int reactor_type, int Ncells)
     return (1);
   }
 
-  // ----------------------------------------------------------
   // Setup tolerances
   setCvodeTols(cvode_mem, udata_g);
 
-  // ----------------------------------------------------------
   // Linear solver data
   if (
     udata_g->isolve_type == cvode::denseFDDirect ||
@@ -156,7 +152,6 @@ ReactorCvode::init(int reactor_type, int Ncells)
     amrex::Abort("Wrong choice of linear solver...");
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for direct solver
   if (udata_g->ianalytical_jacobian == 1) {
     if (udata_g->isolve_type == cvode::denseDirect) {
@@ -185,7 +180,6 @@ ReactorCvode::init(int reactor_type, int Ncells)
     }
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for iterative solver preconditioner
   if (udata_g->iprecond_type == cvode::denseSimpleAJac) {
     // Set the JAcobian-times-vector function
@@ -227,7 +221,6 @@ ReactorCvode::init(int reactor_type, int Ncells)
     }
   }
 
-  // ----------------------------------------------------------
   // CVODE runtime options
   flag = CVodeSetMaxNonlinIters(cvode_mem, 50); // Max newton iter.
   if (utils::check_flag(&flag, "CVodeSetMaxNonlinIters", 1)) {
@@ -264,7 +257,6 @@ ReactorCvode::init(int reactor_type, int Ncells)
 void
 ReactorCvode::checkCvodeOptions() const
 {
-
   // Query options
   amrex::ParmParse pp("ode");
   int iverbose = 0;
@@ -646,7 +638,6 @@ ReactorCvode::allocUserData(
 #endif
 ) const
 {
-  //----------------------------------------------------------
   // Query options
   amrex::ParmParse pp("ode");
   int iverbose = 0;
@@ -735,7 +726,6 @@ ReactorCvode::allocUserData(
   }
 #endif
 
-  //----------------------------------------------------------
   // Pass options to udata
   const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
   int nspec_tot = (NUM_SPECIES)*a_ncells;
@@ -748,22 +738,20 @@ ReactorCvode::allocUserData(
   udata->stream = stream;
 #endif
 
-  //----------------------------------------------------------
   // Alloc internal udata solution/forcing containers
-  udata->species_ext_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-    nspec_tot * sizeof(amrex::Real));
-  udata->energy_init_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-    a_ncells * sizeof(amrex::Real));
-  udata->energy_ext_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-    a_ncells * sizeof(amrex::Real));
-  udata->mask = (int*)amrex::The_Device_Arena()->alloc(a_ncells * sizeof(int));
+  udata->species_ext_d =
+    (amrex::Real*)amrex::The_Arena()->alloc(nspec_tot * sizeof(amrex::Real));
+  udata->energy_init_d =
+    (amrex::Real*)amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real));
+  udata->energy_ext_d =
+    (amrex::Real*)amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real));
+  udata->mask = (int*)amrex::The_Arena()->alloc(a_ncells * sizeof(int));
 
 #ifndef AMREX_USE_GPU
-  udata->FCunt = (int*)amrex::The_Device_Arena()->alloc(a_ncells * sizeof(int));
+  udata->FCunt = (int*)amrex::The_Arena()->alloc(a_ncells * sizeof(int));
   udata->FirstTimePrecond = true;
 #endif
 
-  //----------------------------------------------------------
   // Alloc internal udata Analytical Jacobian containers
 #ifdef AMREX_USE_GPU
   if (udata->isolve_type == cvode::sparseDirect) {
@@ -774,9 +762,9 @@ ReactorCvode::allocUserData(
     udata->csr_col_index_h =
       (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
     udata->csr_row_count_d =
-      (int*)amrex::The_Device_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
+      (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_d =
-      (int*)amrex::The_Device_Arena()->alloc(udata->NNZ * sizeof(int));
+      (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
 
     cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
     cusolver_status = cusolverSpCreate(&(udata->cusolverHandle));
@@ -823,9 +811,9 @@ ReactorCvode::allocUserData(
     udata->csr_col_index_h =
       (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
     udata->csr_row_count_d =
-      (int*)amrex::The_Device_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
+      (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_d =
-      (int*)amrex::The_Device_Arena()->alloc(udata->NNZ * sizeof(int));
+      (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
 
     cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
     cusparse_status = cusparseCreate(&(udata->cuSPHandle));
@@ -902,7 +890,6 @@ ReactorCvode::allocUserData(
   }
 #endif
 
-  //----------------------------------------------------------
   // Alloc internal udata Preconditioner containers
 #ifdef AMREX_USE_GPU
   if (udata->iprecond_type == cvode::sparseSimpleAJac) {
@@ -914,12 +901,12 @@ ReactorCvode::allocUserData(
       (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
 
     udata->csr_row_count_d =
-      (int*)amrex::The_Device_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
+      (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_d =
-      (int*)amrex::The_Device_Arena()->alloc(udata->NNZ * sizeof(int));
-    udata->csr_jac_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+      (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
+    udata->csr_jac_d = (amrex::Real*)amrex::The_Arena()->alloc(
       udata->NNZ * a_ncells * sizeof(amrex::Real));
-    udata->csr_val_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+    udata->csr_val_d = (amrex::Real*)amrex::The_Arena()->alloc(
       udata->NNZ * a_ncells * sizeof(amrex::Real));
 
     SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
@@ -1157,7 +1144,7 @@ ReactorCvode::react(
 )
 {
   BL_PROFILE("Pele::ReactorCvode::react()");
-  // CPU and GPU version are very different such that the entire file
+  // CPU and GPU version are very different such that the entire function
   // is split between a GPU region and a CPU region
 
   amrex::Real time_start = time;
@@ -1168,30 +1155,11 @@ ReactorCvode::react(
   // GPU Region
   //----------------------------------------------------------
 #ifdef AMREX_USE_GPU
-  int ncells = box.numPts();
-  // Total number of eqs. in solve
-  int neq_tot = (NUM_SPECIES + 1) * ncells;
-  //----------------------------------------------------------
-  // On CPU these lives as class variable and where initialized in
-  // init()
-  N_Vector y = NULL;
-  SUNLinearSolver LS = NULL;
-  SUNMatrix A = NULL;
-  void* cvode_mem = NULL;
-  CVODEUserData* user_data;
 
-  // Fill user_data
-  amrex::Gpu::streamSynchronize();
-  user_data =
-    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
-  allocUserData(user_data, ncells, A, stream);
-
-  //----------------------------------------------------------
   // Solution vector and execution policy
 #if defined(AMREX_USE_CUDA)
-  y = N_VNewWithMemHelp_Cuda(
-    neq_tot, /*use_managed_mem=*/true,
-    *amrex::sundials::The_SUNMemory_Helper());
+  N_Vector y = N_VNewWithMemHelp_Cuda(
+    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
@@ -1200,11 +1168,9 @@ ReactorCvode::react(
     new SUNCudaBlockReduceExecPolicy(256, 0, stream);
   N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
-
 #elif defined(AMREX_USE_HIP)
-  y = N_VNewWithMemHelp_Hip(
-    neq_tot, /*use_managed_mem=*/true,
-    *amrex::sundials::The_SUNMemory_Helper());
+  N_Vector y = N_VNewWithMemHelp_Hip(
+    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
@@ -1214,6 +1180,14 @@ ReactorCvode::react(
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
 #endif
+
+  const int ncells = box.numPts();
+  const int neq_tot = (NUM_SPECIES + 1) * ncells;
+  amrex::Gpu::streamSynchronize();
+  SUNMatrix A = NULL;
+  CVODEUserData* user_data =
+    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
+  allocUserData(user_data, ncells, A, stream);
 
   // Fill data
   flatten(
@@ -1225,26 +1199,24 @@ ReactorCvode::react(
   Gpu::Device::streamSynchronize();
 #endif
 
-  //----------------------------------------------------------
   // Setup Cvode object
-  cvode_mem = CVodeCreate(CV_BDF);
+  void* cvode_mem = CVodeCreate(CV_BDF);
   if (utils::check_flag((void*)cvode_mem, "CVodeCreate", 0))
     return (1);
   int flag = CVodeSetUserData(cvode_mem, static_cast<void*>(user_data));
 
-  // Call CVodeInit to initialize the integrator memory and specify the
-  //  user's right hand side function, the inital time, and
-  //  initial dependent variable vector y.
+  // Call CVodeInit to initialize the integrator memory and specify the user's
+  // right hand side function, the inital time, and initial dependent variable
+  // vector y.
   flag = CVodeInit(cvode_mem, cF_RHS, time_start, y);
   if (utils::check_flag(&flag, "CVodeInit", 1))
     return (1);
 
-  //----------------------------------------------------------
   // Setup tolerances with typical values
   setCvodeTols(cvode_mem, user_data);
 
-  // ----------------------------------------------------------
   // Linear solver data
+  SUNLinearSolver LS = NULL;
   if (user_data->isolve_type == cvode::sparseDirect) {
 #if defined(AMREX_USE_CUDA)
     LS = SUNLinSol_cuSolverSp_batchQR(y, A, user_data->cusolverHandle);
@@ -1253,7 +1225,6 @@ ReactorCvode::react(
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
       return (1);
-
 #else
     amrex::Abort(
       "Shoudn't be there. solve_type sparse_direct only available with CUDA");
@@ -1266,7 +1237,6 @@ ReactorCvode::react(
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
       return (1);
-
     flag = CVodeSetJacFn(cvode_mem, cvode::cJac);
     if (utils::check_flag(&flag, "CVodeSetJacFn", 1))
       return (1);
@@ -1309,7 +1279,6 @@ ReactorCvode::react(
       return (1);
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for direct solver
   // Sparse/custom/magma direct uses the same Jacobian functions
   if (user_data->ianalytical_jacobian == 1) {
@@ -1318,7 +1287,6 @@ ReactorCvode::react(
       return (1);
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for iterative solver preconditioner
   if (user_data->iprecond_type == cvode::sparseSimpleAJac) {
     flag = CVodeSetPreconditioner(cvode_mem, cvode::Precond, cvode::PSolve);
@@ -1326,7 +1294,6 @@ ReactorCvode::react(
       return (1);
   }
 
-  // ----------------------------------------------------------
   // CVODE runtime options
   flag = CVodeSetMaxNumSteps(cvode_mem, 100000);
   if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1))
@@ -1335,7 +1302,6 @@ ReactorCvode::react(
   if (utils::check_flag(&flag, "CVodeSetMaxOrd", 1))
     return (1);
 
-  // ----------------------------------------------------------
   // Actual CVODE solve
   BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
   flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
@@ -1367,7 +1333,6 @@ ReactorCvode::react(
     cvode::printFinalStats(cvode_mem);
   }
 
-  //----------------------------------------------------------
   // Clean up
   N_VDestroy(y);
   CVodeFree(&cvode_mem);
@@ -1378,10 +1343,10 @@ ReactorCvode::react(
   }
   freeUserData(user_data);
 
+#else
   //----------------------------------------------------------
   // CPU Region
   //----------------------------------------------------------
-#else
 
   int omp_thread = 0;
 #ifdef AMREX_USE_OMP
@@ -1497,7 +1462,6 @@ ReactorCvode::react(
     (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
   allocUserData(user_data, Ncells, A, stream);
 
-  //----------------------------------------------------------
   // Solution vector and execution policy
 #if defined(AMREX_USE_CUDA)
   y = N_VNewWithMemHelp_Cuda(
@@ -1542,7 +1506,6 @@ ReactorCvode::react(
   Gpu::Device::streamSynchronize();
 #endif
 
-  // -------------------------------------------------------------
   // Initialize integrator
   cvode_mem = CVodeCreate(CV_BDF);
   if (utils::check_flag((void*)cvode_mem, "CVodeCreate", 0))
@@ -1556,11 +1519,9 @@ ReactorCvode::react(
   if (utils::check_flag(&flag, "CVodeInit", 1))
     return (1);
 
-  //----------------------------------------------------------
   // Setup tolerances with typical values
   setCvodeTols(cvode_mem, user_data);
 
-  // ----------------------------------------------------------
   // Linear solver data
   if (user_data->isolve_type == cvode::sparseDirect) {
 #if defined(AMREX_USE_CUDA)
@@ -1626,7 +1587,6 @@ ReactorCvode::react(
       return (1);
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for direct solver
   // Both sparse/custom direct uses the same Jacobian functions
   if (user_data->ianalytical_jacobian == 1) {
@@ -1635,7 +1595,6 @@ ReactorCvode::react(
       return (1);
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for iterative solver preconditioner
   if (user_data->iprecond_type == cvode::sparseSimpleAJac) {
     flag = CVodeSetPreconditioner(cvode_mem, cvode::Precond, cvode::PSolve);
@@ -1643,7 +1602,6 @@ ReactorCvode::react(
       return (1);
   }
 
-  // ----------------------------------------------------------
   // CVODE runtime options
   flag = CVodeSetMaxNumSteps(cvode_mem, 100000);
   if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1))
@@ -1652,7 +1610,6 @@ ReactorCvode::react(
   if (utils::check_flag(&flag, "CVodeSetMaxOrd", 1))
     return (1);
 
-  // ----------------------------------------------------------
   // Actual CVODE solve
   BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
   flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
@@ -1670,7 +1627,6 @@ ReactorCvode::react(
   Gpu::Device::streamSynchronize();
 #endif
 
-  // -------------------------------------------------------------
   // Get the result back
   BL_PROFILE_VAR_START(AsyncCopy);
   amrex::Gpu::dtoh_memcpy_async(rY_in, yvec_d, sizeof(amrex::Real) * neq_tot);
@@ -1679,7 +1635,6 @@ ReactorCvode::react(
   }
   BL_PROFILE_VAR_STOP(AsyncCopy);
 
-  // -------------------------------------------------------------
   // Get the number of RHS evaluations
   long int nfe;
   flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
@@ -1687,7 +1642,6 @@ ReactorCvode::react(
     cvode::printFinalStats(cvode_mem);
   }
 
-  //----------------------------------------------------------
   // Clean up
   N_VDestroy(y);
   CVodeFree(&cvode_mem);
@@ -1782,9 +1736,9 @@ ReactorCvode::cF_RHS(
   auto* udata = static_cast<CVODEUserData*>(user_data);
   udata->dt_save = t;
 
-  auto ncells = udata->ncells_d;
-  auto dt_save = udata->dt_save;
-  auto reactor_type = udata->ireactor_type;
+  const auto ncells = udata->ncells_d;
+  const auto dt_save = udata->dt_save;
+  const auto reactor_type = udata->ireactor_type;
   auto* energy_init = udata->energy_init_d;
   auto* energy_ext = udata->energy_ext_d;
   auto* species_ext = udata->species_ext_d;
@@ -1826,10 +1780,10 @@ ReactorCvode::SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
 void
 ReactorCvode::freeUserData(CVODEUserData* data_wk)
 {
-  amrex::The_Device_Arena()->free(data_wk->species_ext_d);
-  amrex::The_Device_Arena()->free(data_wk->energy_init_d);
-  amrex::The_Device_Arena()->free(data_wk->energy_ext_d);
-  amrex::The_Device_Arena()->free(data_wk->mask);
+  amrex::The_Arena()->free(data_wk->species_ext_d);
+  amrex::The_Arena()->free(data_wk->energy_init_d);
+  amrex::The_Arena()->free(data_wk->energy_ext_d);
+  amrex::The_Arena()->free(data_wk->mask);
 
 #ifdef AMREX_USE_GPU
 
@@ -1856,8 +1810,8 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
 #ifdef AMREX_USE_CUDA
     amrex::The_Arena()->free(data_wk->csr_row_count_h);
     amrex::The_Arena()->free(data_wk->csr_col_index_h);
-    amrex::The_Device_Arena()->free(data_wk->csr_val_d);
-    amrex::The_Device_Arena()->free(data_wk->csr_jac_d);
+    amrex::The_Arena()->free(data_wk->csr_val_d);
+    amrex::The_Arena()->free(data_wk->csr_jac_d);
     cusolverStatus_t cusolver_status =
       cusolverSpDestroy(data_wk->cusolverHandle);
     AMREX_ASSERT(cusolver_status == CUSOLVER_STATUS_SUCCESS);
@@ -1866,10 +1820,10 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     cudaFree(data_wk->buffer_qr);
 #endif
   }
-  amrex::The_Device_Arena()->free(data_wk);
+  amrex::The_Arena()->free(data_wk);
 
 #else
-  amrex::The_Device_Arena()->free(data_wk->FCunt);
+  amrex::The_Arena()->free(data_wk->FCunt);
 
   // Direct solver Jac. data
   if (data_wk->isolve_type == cvode::sparseDirect) {
