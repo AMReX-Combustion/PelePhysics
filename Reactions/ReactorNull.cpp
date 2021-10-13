@@ -5,7 +5,7 @@ namespace physics {
 namespace reactions {
 
 int
-ReactorNull::init(int reactor_type, int /*Ncells*/)
+ReactorNull::init(int reactor_type, int /*ncells*/)
 {
   BL_PROFILE("Pele::ReactorNull::init()");
   m_reactor_type = reactor_type;
@@ -83,7 +83,7 @@ ReactorNull::react(
   amrex::Real* /*rX_src_in*/,
   amrex::Real& dt_react,
   amrex::Real& time,
-  int /*Ncells*/
+  int /*ncells*/
 #ifdef AMREX_USE_GPU
   ,
   amrex::gpuStream_t /*stream*/

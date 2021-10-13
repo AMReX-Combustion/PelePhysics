@@ -30,19 +30,14 @@ namespace reactions {
 
 struct ARKODEUserData
 {
-  int ncells_d;
-  int neqs_per_cell;
-  int iverbose;
-  int ireactor_type;
+  int ncells;
+  int neq;
+  int verbose;
+  int reactor_type;
   amrex::Real dt_save;
-  amrex::Real* rhoe_init_d = NULL;
-  amrex::Real* rhoesrc_ext_d = NULL;
-  amrex::Real* rYsrc_d = NULL;
-#ifdef AMREX_USE_GPU
-  amrex::gpuStream_t stream;
-#endif
-  int nbBlocks;
-  int nbThreads;
+  amrex::Real* rhoe_init = nullptr;
+  amrex::Real* rhoesrc_ext = nullptr;
+  amrex::Real* rYsrc = nullptr;
 };
 
 class ReactorArkode : public ReactorBase::Register<ReactorArkode>

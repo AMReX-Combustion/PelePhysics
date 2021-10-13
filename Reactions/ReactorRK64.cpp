@@ -6,7 +6,7 @@ namespace physics {
 namespace reactions {
 
 int
-ReactorRK64::init(int reactor_type, int /*Ncells*/)
+ReactorRK64::init(int reactor_type, int /*ncells*/)
 {
   BL_PROFILE("Pele::ReactorRK64::init()");
   m_reactor_type = reactor_type;
@@ -27,7 +27,7 @@ ReactorRK64::react(
   amrex::Real* rX_src_in,
   amrex::Real& dt_react,
   amrex::Real& time,
-  int Ncells
+  int ncells
 #ifdef AMREX_USE_GPU
   ,
   amrex::gpuStream_t /*stream*/
@@ -41,22 +41,22 @@ ReactorRK64::react(
   const amrex::Real tinyval = 1e-50;
 
   // Copy to device
-  amrex::Gpu::DeviceVector<amrex::Real> rY(Ncells * (NUM_SPECIES + 1), 0);
-  amrex::Gpu::DeviceVector<amrex::Real> rY_src(Ncells * NUM_SPECIES, 0);
-  amrex::Gpu::DeviceVector<amrex::Real> rX(Ncells, 0);
-  amrex::Gpu::DeviceVector<amrex::Real> rX_src(Ncells, 0);
+  amrex::Gpu::DeviceVector<amrex::Real> rY(ncells * (NUM_SPECIES + 1), 0);
+  amrex::Gpu::DeviceVector<amrex::Real> rY_src(ncells * NUM_SPECIES, 0);
+  amrex::Gpu::DeviceVector<amrex::Real> rX(ncells, 0);
+  amrex::Gpu::DeviceVector<amrex::Real> rX_src(ncells, 0);
   amrex::Real* d_rY = rY.data();
   amrex::Real* d_rY_src = rY_src.data();
   amrex::Real* d_rX = rX.data();
   amrex::Real* d_rX_src = rX_src.data();
   amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, rY_in, rY_in + Ncells * (NUM_SPECIES + 1), d_rY);
+    amrex::Gpu::hostToDevice, rY_in, rY_in + ncells * (NUM_SPECIES + 1), d_rY);
   amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, rY_src_in, rY_src_in + Ncells * NUM_SPECIES,
+    amrex::Gpu::hostToDevice, rY_src_in, rY_src_in + ncells * NUM_SPECIES,
     d_rY_src);
-  amrex::Gpu::copy(amrex::Gpu::hostToDevice, rX_in, rX_in + Ncells, d_rX);
+  amrex::Gpu::copy(amrex::Gpu::hostToDevice, rX_in, rX_in + ncells, d_rX);
   amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, rX_src_in, rX_src_in + Ncells, d_rX_src);
+    amrex::Gpu::hostToDevice, rX_src_in, rX_src_in + ncells, d_rX_src);
 
   // capture reactor type
   const int captured_reactor_type = m_reactor_type;
@@ -66,10 +66,10 @@ ReactorRK64::react(
   const amrex::Real captured_abstol = absTol;
   RK64Params rkp;
 
-  amrex::Gpu::DeviceVector<int> v_nsteps(Ncells, 0);
+  amrex::Gpu::DeviceVector<int> v_nsteps(ncells, 0);
   int* d_nsteps = v_nsteps.data();
 
-  amrex::ParallelFor(Ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
+  amrex::ParallelFor(ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
     amrex::Real soln_reg[NUM_SPECIES + 1] = {0.0};
     amrex::Real carryover_reg[NUM_SPECIES + 1] = {0.0};
     amrex::Real error_reg[NUM_SPECIES + 1] = {0.0};
@@ -145,19 +145,19 @@ ReactorRK64::react(
 #endif
 
   const int avgsteps = amrex::Reduce::Sum<int>(
-    Ncells, [=] AMREX_GPU_DEVICE(int i) noexcept -> int { return d_nsteps[i]; },
+    ncells, [=] AMREX_GPU_DEVICE(int i) noexcept -> int { return d_nsteps[i]; },
     0);
 
   amrex::Gpu::copy(
-    amrex::Gpu::deviceToHost, d_rY, d_rY + Ncells * (NUM_SPECIES + 1), rY_in);
+    amrex::Gpu::deviceToHost, d_rY, d_rY + ncells * (NUM_SPECIES + 1), rY_in);
   amrex::Gpu::copy(
-    amrex::Gpu::deviceToHost, d_rY_src, d_rY_src + Ncells * NUM_SPECIES,
+    amrex::Gpu::deviceToHost, d_rY_src, d_rY_src + ncells * NUM_SPECIES,
     rY_src_in);
-  amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_rX, d_rX + Ncells, rX_in);
+  amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_rX, d_rX + ncells, rX_in);
   amrex::Gpu::copy(
-    amrex::Gpu::deviceToHost, d_rX_src, d_rX_src + Ncells, rX_src_in);
+    amrex::Gpu::deviceToHost, d_rX_src, d_rX_src + ncells, rX_src_in);
 
-  return (int(avgsteps / amrex::Real(Ncells)));
+  return (int(avgsteps / amrex::Real(ncells)));
 }
 
 int
@@ -192,11 +192,11 @@ ReactorRK64::react(
   const amrex::Real captured_abstol = absTol;
   RK64Params rkp;
 
-  int Ncells = box.numPts();
+  int ncells = box.numPts();
   const auto len = amrex::length(box);
   const auto lo = amrex::lbound(box);
 
-  amrex::Gpu::DeviceVector<int> v_nsteps(Ncells, 0);
+  amrex::Gpu::DeviceVector<int> v_nsteps(ncells, 0);
   int* d_nsteps = v_nsteps.data();
 
   amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
@@ -315,9 +315,9 @@ ReactorRK64::react(
 #endif
 
   const int avgsteps = amrex::Reduce::Sum<int>(
-    Ncells, [=] AMREX_GPU_DEVICE(int i) noexcept -> int { return d_nsteps[i]; },
+    ncells, [=] AMREX_GPU_DEVICE(int i) noexcept -> int { return d_nsteps[i]; },
     0);
-  return (int(avgsteps / amrex::Real(Ncells)));
+  return (int(avgsteps / amrex::Real(ncells)));
 }
 
 void
