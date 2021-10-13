@@ -172,25 +172,25 @@ ReactorArkode::react(
   ARKODEUserData* user_data =
     (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
   amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, &ncells, &ncells + 1, &user_data->ncells);
-  amrex::Gpu::copy(amrex::Gpu::hostToDevice, &neq, &neq + 1, &user_data->neq);
+    amrex::Gpu::hostToDevice, &ncells, &ncells + 1, &(user_data->ncells));
+  amrex::Gpu::copy(amrex::Gpu::hostToDevice, &neq, &neq + 1, &(user_data->neq));
   amrex::Gpu::copy(
     amrex::Gpu::hostToDevice, &captured_reactor_type,
-    &captured_reactor_type + 1, &user_data->reactor_type);
+    &captured_reactor_type + 1, &(user_data->reactor_type));
   amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, &verbose, &verbose + 1, &user_data->verbose);
+    amrex::Gpu::hostToDevice, &verbose, &verbose + 1, &(user_data->verbose));
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoe_init(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoesrc_ext(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc(ncells * NUM_SPECIES, 0);
   amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, v_rhoe_init.data(), v_rhoe_init.data() + 1,
-    user_data->rhoe_init);
+    amrex::Gpu::hostToDevice, v_rhoe_init.begin(), v_rhoe_init.begin() + 1,
+    &(user_data->rhoe_init));
   amrex::Gpu::copy(
     amrex::Gpu::hostToDevice, v_rhoesrc_ext.data(), v_rhoesrc_ext.data() + 1,
-    user_data->rhoesrc_ext);
+    &(user_data->rhoesrc_ext));
   amrex::Gpu::copy(
     amrex::Gpu::hostToDevice, v_rYsrc.data(), v_rYsrc.data() + 1,
-    user_data->rYsrc);
+    &(user_data->rYsrc));
 
   flatten(
     box, ncells, rY_in, rY_src_in, T_in, rEner_in, rEner_src_in, yvec_d,
@@ -269,7 +269,7 @@ ReactorArkode::react(
   int neq = NUM_SPECIES + 1;
   int neq_tot = neq * ncells;
 #if defined(AMREX_USE_CUDA)
-  N_Vectory = N_VNewWithMemHelp_Cuda(
+  N_Vector y = N_VNewWithMemHelp_Cuda(
     neq_tot, /*use_managed_mem=*/true,
     *amrex::sundials::The_SUNMemory_Helper());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
@@ -305,25 +305,25 @@ ReactorArkode::react(
   ARKODEUserData* user_data =
     (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
   amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, &ncells, &ncells + 1, &user_data->ncells);
-  amrex::Gpu::copy(amrex::Gpu::hostToDevice, &neq, &neq + 1, &user_data->neq);
+    amrex::Gpu::hostToDevice, &ncells, &ncells + 1, &(user_data->ncells));
+  amrex::Gpu::copy(amrex::Gpu::hostToDevice, &neq, &neq + 1, &(user_data->neq));
   amrex::Gpu::copy(
     amrex::Gpu::hostToDevice, &captured_reactor_type,
-    &captured_reactor_type + 1, &user_data->reactor_type);
+    &captured_reactor_type + 1, &(user_data->reactor_type));
   amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, &verbose, &verbose + 1, &user_data->verbose);
+    amrex::Gpu::hostToDevice, &verbose, &verbose + 1, &(user_data->verbose));
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoe_init(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoesrc_ext(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc(ncells * NUM_SPECIES, 0);
   amrex::Gpu::copy(
     amrex::Gpu::hostToDevice, v_rhoe_init.data(), v_rhoe_init.data() + 1,
-    user_data->rhoe_init);
+    &(user_data->rhoe_init));
   amrex::Gpu::copy(
     amrex::Gpu::hostToDevice, v_rhoesrc_ext.data(), v_rhoesrc_ext.data() + 1,
-    user_data->rhoesrc_ext);
+    &(user_data->rhoesrc_ext));
   amrex::Gpu::copy(
     amrex::Gpu::hostToDevice, v_rYsrc.data(), v_rYsrc.data() + 1,
-    user_data->rYsrc);
+    &(user_data->rYsrc));
 
 #ifdef AMREX_USE_GPU
   amrex::Gpu::htod_memcpy_async(
