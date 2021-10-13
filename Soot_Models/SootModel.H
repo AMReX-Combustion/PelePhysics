@@ -93,7 +93,7 @@ public:
   //
   // Set the indices for primitive and conservative variables
   //
-  inline void setIndices(SootComps sootIndx) { m_sootIndx = sootIndx; }
+  inline void setIndices(const SootComps& sootIndx) { m_sootIndx = sootIndx; }
 
   //
   // Return string of the names of each variable

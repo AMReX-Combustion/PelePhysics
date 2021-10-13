@@ -119,7 +119,7 @@ trilinear_interp(
   const amrex::IntVect& bflags)
 {
   // Note: if near a reflective boundary, ijk has been shifted in check_bounds
-  AMREX_D_TERM(int i = ijk[0];, int j = ijk[1];, int k = ijk[2];);
+  AMREX_D_TERM(int i = ijk[0];, int j = ijk[1];, int k = ijk[2];)
 
   const amrex::RealVect sx_hi = lx - ijk;
   const amrex::RealVect sx_lo = 1. - sx_hi;
@@ -140,14 +140,14 @@ trilinear_interp(
   }
   int cc = 0;
 #if AMREX_SPACEDIM == 3
-  for (int kk(-1); kk < 1; kk++) {
+  for (int kk = -1; kk < 1; kk++) {
 #endif
 #if AMREX_SPACEDIM > 1
-    for (int jj(-1); jj < 1; jj++) {
+    for (int jj = -1; jj < 1; jj++) {
 #endif
-      for (int ii(-1); ii < 1; ii++) {
+      for (int ii = -1; ii < 1; ii++) {
         AMREX_D_TERM(indx_array[cc][0] = i + ii;, indx_array[cc][1] = j + jj;
-                     , indx_array[cc][2] = k + kk;);
+                     , indx_array[cc][2] = k + kk;)
         weights[cc] =
           AMREX_D_TERM(ssv[ii + 1][0], *ssv[jj + 1][1], *ssv[kk + 1][2]);
         cc++;
@@ -169,7 +169,9 @@ trilinear_interp(
 AMREX_GPU_HOST_DEVICE AMREX_INLINE amrex::Real
 f(const int dir,
   const amrex::RealVect& pos,
-  const amrex::GpuArray<amrex::GpuArray<amrex::Real, 3>, 8>& nodes,
+  const amrex::GpuArray<
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>,
+    AMREX_D_PICK(2, 4, 8)>& nodes,
   const amrex::Real& xi,
   const amrex::Real& eta,
   const amrex::Real& zeta)
@@ -177,9 +179,10 @@ f(const int dir,
   amrex::Real a0 = (nodes[0][dir] - pos[dir]);
   amrex::Real a1 = (nodes[1][dir] - nodes[0][dir]);
   amrex::Real a2 = (nodes[2][dir] - nodes[0][dir]);
-  amrex::Real a3 = (nodes[4][dir] - nodes[0][dir]);
   amrex::Real a4 =
     (nodes[0][dir] - nodes[1][dir] + nodes[3][dir] - nodes[2][dir]);
+#if AMREX_SPACEDIM == 3
+  amrex::Real a3 = (nodes[4][dir] - nodes[0][dir]);
   amrex::Real a5 =
     (nodes[0][dir] - nodes[1][dir] - nodes[4][dir] + nodes[5][dir]);
   amrex::Real a6 =
@@ -190,19 +193,25 @@ f(const int dir,
 
   return a0 + a1 * xi + a2 * eta + a3 * zeta + a4 * xi * eta + a5 * xi * zeta +
          a6 * eta * zeta + a7 * xi * eta * zeta;
+#else
+  return a0 + a1 * xi + a2 * eta + a4 * xi * eta;
+#endif
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE amrex::Real
 dfdxi(
   const int dir,
-  const amrex::GpuArray<amrex::GpuArray<amrex::Real, 3>, 8>& nodes,
-  const amrex::Real& xi,
+  const amrex::GpuArray<
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>,
+    AMREX_D_PICK(2, 4, 8)>& nodes,
+  const amrex::Real& /*xi*/,
   const amrex::Real& eta,
   const amrex::Real& zeta)
 {
   amrex::Real a1 = (nodes[1][dir] - nodes[0][dir]);
   amrex::Real a4 =
     (nodes[0][dir] - nodes[1][dir] + nodes[3][dir] - nodes[2][dir]);
+#if AMREX_SPACEDIM == 3
   amrex::Real a5 =
     (nodes[0][dir] - nodes[1][dir] - nodes[4][dir] + nodes[5][dir]);
   amrex::Real a7 =
@@ -210,20 +219,26 @@ dfdxi(
      nodes[5][dir] + nodes[7][dir] - nodes[6][dir] - nodes[0][dir]);
 
   return a1 + a4 * eta + a5 * zeta + a7 * eta * zeta;
+#else
+  return a1 + a4 * eta;
+#endif
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE amrex::Real
 dfdeta(
   const int dir,
-  const amrex::GpuArray<amrex::GpuArray<amrex::Real, 3>, 8>& nodes,
+  const amrex::GpuArray<
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>,
+    AMREX_D_PICK(2, 4, 8)>& nodes,
   const amrex::Real& xi,
-  const amrex::Real& eta,
+  const amrex::Real& /*eta*/,
   const amrex::Real& zeta)
 {
 
   amrex::Real a2 = (nodes[2][dir] - nodes[0][dir]);
   amrex::Real a4 =
     (nodes[0][dir] - nodes[1][dir] + nodes[3][dir] - nodes[2][dir]);
+#if AMREX_SPACEDIM == 3
   amrex::Real a6 =
     (nodes[0][dir] - nodes[2][dir] - nodes[4][dir] + nodes[6][dir]);
   amrex::Real a7 =
@@ -231,15 +246,19 @@ dfdeta(
      nodes[5][dir] + nodes[7][dir] - nodes[6][dir] - nodes[0][dir]);
 
   return a2 + a4 * xi + a6 * zeta + a7 * xi * zeta;
+#else
+  return a2 + a4 * xi;
+#endif
 }
 
+#if AMREX_SPACEDIM == 3
 AMREX_GPU_HOST_DEVICE AMREX_INLINE amrex::Real
 dfdzeta(
   const int dir,
   const amrex::GpuArray<amrex::GpuArray<amrex::Real, 3>, 8>& nodes,
   const amrex::Real& xi,
   const amrex::Real& eta,
-  const amrex::Real& zeta)
+  const amrex::Real& /*zeta*/)
 {
 
   amrex::Real a3 = (nodes[4][dir] - nodes[0][dir]);
@@ -253,30 +272,37 @@ dfdzeta(
 
   return a3 + a5 * xi + a6 * eta + a7 * xi * eta;
 }
+#endif
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE void
 get_interp_mapping(
   const amrex::RealVect& pos,
-  const amrex::GpuArray<amrex::GpuArray<amrex::Real, 3>, 8>& nodes,
+  const amrex::GpuArray<
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>,
+    AMREX_D_PICK(2, 4, 8)>& nodes,
   amrex::Real& xi,
   amrex::Real& eta,
   amrex::Real& zeta)
 {
-  int lc(0);
-  amrex::Real err(1.0);
+  int lc = 0;
+  amrex::Real err = 1.0;
 
   while (err > 1.0e-3 && lc < 10) {
 
     amrex::Real f0 = f(0, pos, nodes, xi, eta, zeta);
     amrex::Real f1 = f(1, pos, nodes, xi, eta, zeta);
-    amrex::Real f2 = f(2, pos, nodes, xi, eta, zeta);
 
     amrex::Real df0dxi = dfdxi(0, nodes, xi, eta, zeta);
     amrex::Real df0deta = dfdeta(0, nodes, xi, eta, zeta);
-    amrex::Real df0dzeta = dfdzeta(0, nodes, xi, eta, zeta);
 
     amrex::Real df1dxi = dfdxi(1, nodes, xi, eta, zeta);
     amrex::Real df1deta = dfdeta(1, nodes, xi, eta, zeta);
+
+#if AMREX_SPACEDIM == 3
+    amrex::Real f2 = f(2, pos, nodes, xi, eta, zeta);
+
+    amrex::Real df0dzeta = dfdzeta(0, nodes, xi, eta, zeta);
+
     amrex::Real df1dzeta = dfdzeta(1, nodes, xi, eta, zeta);
 
     amrex::Real df2dxi = dfdxi(2, nodes, xi, eta, zeta);
@@ -301,6 +327,17 @@ get_interp_mapping(
     amrex::Real new_xi = xi - detJ_xi / detJ;
     amrex::Real new_eta = eta - detJ_eta / detJ;
     amrex::Real new_zeta = zeta - detJ_zeta / detJ;
+#else
+    amrex::Real detJ = df0dxi * df1deta - df0deta * df1dxi;
+
+    amrex::Real detJ_xi = f0 * df1deta - f1 * df0deta;
+
+    amrex::Real detJ_eta = df0dxi * f1 - f0 * df1dxi;
+
+    amrex::Real new_xi = xi - detJ_xi / detJ;
+    amrex::Real new_eta = eta - detJ_eta / detJ;
+    amrex::Real new_zeta = 0.;
+#endif
 
     lc += 1;
     err = amrex::max(
@@ -332,90 +369,92 @@ fe_interp(
 {
 
   const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
-
-  const amrex::Real cdist_x =
-    pos[0] - (ip + 0.5 + ccent(ip, jp, kp, 0)) * dx[0] - plo[0];
-  const amrex::Real cdist_y =
-    pos[1] - (jp + 0.5 + ccent(ip, jp, kp, 1)) * dx[1] - plo[1];
-  const amrex::Real cdist_z =
-    pos[2] - (kp + 0.5 + ccent(ip, jp, kp, 2)) * dx[2] - plo[2];
+  AMREX_D_TERM(const amrex::Real cdist_x =
+                 pos[0] - (ip + 0.5 + ccent(ip, jp, kp, 0)) * dx[0] - plo[0];
+               , const amrex::Real cdist_y =
+                   pos[1] - (jp + 0.5 + ccent(ip, jp, kp, 1)) * dx[1] - plo[1];
+               , const amrex::Real cdist_z =
+                   pos[2] - (kp + 0.5 + ccent(ip, jp, kp, 2)) * dx[2] - plo[2];)
   const amrex::Real vtol = 0.05;
 
   // Distance between particle and cell centoid.
-  const amrex::Real cdist =
-    std::sqrt(cdist_x * cdist_x + cdist_y * cdist_y + cdist_z * cdist_z);
+  const amrex::Real cdist = std::sqrt(
+    AMREX_D_TERM(cdist_x * cdist_x, +cdist_y * cdist_y, +cdist_z * cdist_z));
 
   // Before doing anything fancy, just check that the particle isn't overlapping
   // the cell center. If it is, use the cell value.
   if (cdist < tolerance) {
-    indx_array[0] = {ip, jp, kp};
+    indx_array[0] = {AMREX_D_DECL(ip, jp, kp)};
     weights[0] = 1.;
     for (int aindx = 1; aindx < 8; ++aindx) {
-      indx_array[aindx] = {ip, jp, kp};
+      indx_array[aindx] = {AMREX_D_DECL(ip, jp, kp)};
       weights[aindx] = 0.;
     }
     return;
   }
 
-  amrex::Real par_dot_EB(2.);
-  amrex::Real cent_dot_EB(1.);
+  amrex::Real par_dot_EB = 2.;
+  amrex::Real cent_dot_EB = 1.;
 
   // If the particle is inside a cut-cell, verify that it is on the correct
   // side of the EB before trying to interpolate.
   if (flags(ip, jp, kp).isSingleValued()) {
-    const amrex::RealVect normal = {
-      -bnorm(ip, jp, kp, 0), -bnorm(ip, jp, kp, 1), -bnorm(ip, jp, kp, 2)};
+    const amrex::RealVect normal = {AMREX_D_DECL(
+      -bnorm(ip, jp, kp, 0), -bnorm(ip, jp, kp, 1), -bnorm(ip, jp, kp, 2))};
 
     // Projection of vector pointing from EB centroid to particle onto EB normal
-    par_dot_EB =
-      (pos[0] - (ip + 0.5 + bcent(ip, jp, kp, 0)) * dx[0] - plo[0]) *
-        normal[0] +
-      (pos[1] - (jp + 0.5 + bcent(ip, jp, kp, 1)) * dx[1] - plo[1]) *
-        normal[1] +
-      (pos[2] - (kp + 0.5 + bcent(ip, jp, kp, 2)) * dx[2] - plo[2]) * normal[2];
+    par_dot_EB = AMREX_D_TERM(
+      (pos[0] - (ip + 0.5 + bcent(ip, jp, kp, 0)) * dx[0] - plo[0]) * normal[0],
+      +(pos[1] - (jp + 0.5 + bcent(ip, jp, kp, 1)) * dx[1] - plo[1]) *
+        normal[1],
+      +(pos[2] - (kp + 0.5 + bcent(ip, jp, kp, 2)) * dx[2] - plo[2]) *
+        normal[2]);
 
     // Projection of vector pointing from EB centroid to cell centroid onto EB
     // normal
-    cent_dot_EB =
-      (ccent(ip, jp, kp, 0) - bcent(ip, jp, kp, 0)) * dx[0] * normal[0] +
-      (ccent(ip, jp, kp, 1) - bcent(ip, jp, kp, 1)) * dx[1] * normal[1] +
-      (ccent(ip, jp, kp, 2) - bcent(ip, jp, kp, 2)) * dx[2] * normal[2];
+    cent_dot_EB = AMREX_D_TERM(
+      (ccent(ip, jp, kp, 0) - bcent(ip, jp, kp, 0)) * dx[0] * normal[0],
+      +(ccent(ip, jp, kp, 1) - bcent(ip, jp, kp, 1)) * dx[1] * normal[1],
+      +(ccent(ip, jp, kp, 2) - bcent(ip, jp, kp, 2)) * dx[2] * normal[2]);
     // Temporary sanity check
     AMREX_ASSERT_WITH_MESSAGE(
       cent_dot_EB > tolerance,
       "cent_dot_EB < tolerance ... this makes no sense!");
   }
   // Particle position relative to cell center [-0.5, 0.5]
-  amrex::Real gx = (pos[0] - plo[0]) * dxi[0] - (ip + 0.5);
-  amrex::Real gy = (pos[1] - plo[1]) * dxi[1] - (jp + 0.5);
-  amrex::Real gz = (pos[2] - plo[2]) * dxi[2] - (kp + 0.5);
+  AMREX_D_TERM(amrex::Real gx = (pos[0] - plo[0]) * dxi[0] - (ip + 0.5);
+               , amrex::Real gy = (pos[1] - plo[1]) * dxi[1] - (jp + 0.5);
+               , amrex::Real gz = (pos[2] - plo[2]) * dxi[2] - (kp + 0.5);)
 
   // Use the centroid location of the cell containing the particle
   // to guess the interpolation stencil.
-  const int i = (gx < ccent(ip, jp, kp, 0)) ? ip : ip + 1;
-  const int j = (gy < ccent(ip, jp, kp, 1)) ? jp : jp + 1;
-  const int k = (gz < ccent(ip, jp, kp, 2)) ? kp : kp + 1;
-
-  const int di = i - ip; // 0 or 1
-  const int dj = j - jp; // 0 or 1
-  const int dk = k - kp; // 0 or 1
+  int i = 0, di = 0, j = 0, dj = 0, k = 0, dk = 0;
+  AMREX_D_TERM(i = (gx < ccent(ip, jp, kp, 0)) ? ip : ip + 1; di = i - ip;
+               , j = (gy < ccent(ip, jp, kp, 1)) ? jp : jp + 1; dj = j - jp;
+               , k = (gz < ccent(ip, jp, kp, 2)) ? kp : kp + 1; dk = k - kp;)
 
   // Count the number of non-connected cells in the stencil
   int covered = 0;
-  for (int kk(-1); kk < 1; kk++) {
-    for (int jj(-1); jj < 1; jj++) {
-      for (int ii(-1); ii < 1; ii++) {
-        if (not flags(ip, jp, kp).isConnected(di + ii, dj + jj, dk + kk))
+  int kk = 0, jj = 0, ii = 0;
+#if AMREX_SPACEDIM == 3
+  for (kk = -1; kk < 1; kk++) {
+#endif
+    for (jj = -1; jj < 1; jj++) {
+      for (ii = -1; ii < 1; ii++) {
+        if (!flags(ip, jp, kp).isConnected(di + ii, dj + jj, dk + kk)) {
           covered += 1;
+        }
       }
     }
+#if AMREX_SPACEDIM == 3
   }
+#endif
   // A negative value implies that the particle is 'behind' the EB (and
   // therefore inside the wall). Although this shouldn't occur often, it could
   // for fast moving particles.  Set the fluid velocity to zero and use the
   // cell value for remaining items.
   if (
-    (flags(ip, jp, kp).isSingleValued() and (par_dot_EB <= tolerance)) ||
+    (flags(ip, jp, kp).isSingleValued() && (par_dot_EB <= tolerance)) ||
     flags(ip, jp, kp).isCovered()) {
     Abort("Particle has penetrated EB boundary");
     // The particle is near the EB. It is either
@@ -424,41 +463,50 @@ fe_interp(
     // Either way, interpolating to the particle is not straight forward so
     // (for now) we do a 1D interpolation to the EB.
 
-  } else if ((covered > 0) or (par_dot_EB < cent_dot_EB)) {
-    for (int aindx = 0; aindx < 8; ++aindx) {
-      indx_array[aindx] = {ip, jp, kp};
+  } else if ((covered > 0) || (par_dot_EB < cent_dot_EB)) {
+    for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+      indx_array[aindx] = {AMREX_D_DECL(ip, jp, kp)};
       weights[aindx] = 0.;
     }
     weights[0] = 1.;
   } else {
-    amrex::GpuArray<amrex::GpuArray<amrex::Real, 3>, 8> nodes;
+    amrex::GpuArray<
+      amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>, AMREX_D_PICK(2, 4, 8)>
+      nodes;
 
     // Here we pack the local 2x2x2 stencil into a local array. Note that
     // the node ordering is not consistent with the previous version.
     // Nodes 2 and 3 have been swapped as well as nodes 6 and 7. This was
     // to allow for a more compact for-loop filling.
 
-    int lc(0);
+    int lc = 0;
 
-    for (int kk(-1); kk < 1; kk++) {
-      for (int jj(-1); jj < 1; jj++) {
-        for (int ii(-1); ii < 1; ii++) {
-          nodes[lc][0] =
-            (i + ii + 0.5 + ccent(i + ii, j + jj, k + kk, 0)) * dx[0];
-          nodes[lc][1] =
-            (j + jj + 0.5 + ccent(i + ii, j + jj, k + kk, 1)) * dx[1];
-          nodes[lc][2] =
-            (k + kk + 0.5 + ccent(i + ii, j + jj, k + kk, 2)) * dx[2];
+#if AMREX_SPACEDIM == 3
+    for (kk = -1; kk < 1; kk++) {
+#endif
+      for (jj = -1; jj < 1; jj++) {
+        for (ii = -1; ii < 1; ii++) {
+          AMREX_D_TERM(
+            nodes[lc][0] =
+              (i + ii + 0.5 + ccent(i + ii, j + jj, k + kk, 0)) * dx[0];
+            , nodes[lc][1] =
+                (j + jj + 0.5 + ccent(i + ii, j + jj, k + kk, 1)) * dx[1];
+            , nodes[lc][2] =
+                (k + kk + 0.5 + ccent(i + ii, j + jj, k + kk, 2)) * dx[2];)
           lc += 1;
         }
       }
+#if AMREX_SPACEDIM == 3
     }
+#endif
 
-    amrex::Real xi = (pos[0] - nodes[0][0] - plo[0]) * dxi[0];
-    amrex::Real eta = (pos[1] - nodes[0][1] - plo[1]) * dxi[1];
-    amrex::Real zeta = (pos[2] - nodes[0][2] - plo[2]) * dxi[2];
+    amrex::Real xi = 0., eta = 0., zeta = 0.;
+    AMREX_D_TERM(xi = (pos[0] - nodes[0][0] - plo[0]) * dxi[0];
+                 , eta = (pos[1] - nodes[0][1] - plo[1]) * dxi[1];
+                 , zeta = (pos[2] - nodes[0][2] - plo[2]) * dxi[2];)
 
     get_interp_mapping(pos - plo, nodes, xi, eta, zeta);
+#if AMREX_SPACEDIM == 3
     indx_array[0] = {i - 1, j - 1, k - 1};
     indx_array[1] = {i, j - 1, k - 1};
     indx_array[2] = {i, j, k - 1};
@@ -476,18 +524,28 @@ fe_interp(
     weights[5] = xi * zeta - xi * eta * zeta;
     weights[6] = xi * eta * zeta;
     weights[7] = eta * zeta - xi * eta * zeta;
+#else
+    indx_array[0] = {i - 1, j - 1};
+    indx_array[1] = {i, j - 1};
+    indx_array[2] = {i, j};
+    indx_array[3] = {i - 1, j};
+    weights[0] = 1 - xi - eta + xi * eta;
+    weights[1] = xi * (1. - eta);
+    weights[2] = xi * eta;
+    weights[3] = eta * (1. - xi);
+#endif
     // Rudimentary attempt to prevent source terms from being added
     // to small volume cells to avoid having to redistribute later
     // Will probably have to add a redistribute function
     amrex::Real rw = 0.;
-    for (int aindx = 0; aindx < 8; ++aindx) {
+    for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
       if (vfrac(indx_array[aindx]) < vtol) {
         weights[aindx] = 0.;
       }
       rw += weights[aindx];
     }
     rw = 1. / rw;
-    for (int aindx = 0; aindx < 8; ++aindx) {
+    for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
       weights[aindx] *= rw;
     }
   }

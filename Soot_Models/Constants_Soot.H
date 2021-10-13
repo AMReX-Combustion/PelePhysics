@@ -27,8 +27,7 @@ struct SootComps
   {
     if (
       qRhoIndx < 0 || qTempIndx < 0 || qSpecIndx < 0 || qSootIndx < 0 ||
-      rhoIndx < 0 || engIndx < 0 || specIndx < 0 || specIndx < 0 ||
-      sootIndx < 0) {
+      rhoIndx < 0 || engIndx < 0 || specIndx < 0 || sootIndx < 0) {
       return false;
     }
     return true;

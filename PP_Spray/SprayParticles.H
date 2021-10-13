@@ -164,7 +164,7 @@ public:
   ///
   /// Set appropriate number of ghost cells
   ///
-  inline void setSprayGridInfo(
+  static inline void setSprayGridInfo(
     const int level,
     const int finest_level,
     const int amr_ncycle,
@@ -178,8 +178,9 @@ public:
     int stencil_interpolation_width = 1;
     // Set the number of cells on level+1 to hold ghost particles
     ghost_width = 0;
-    if (level < finest_level)
+    if (level < finest_level) {
       ghost_width = fine_ref_ratio;
+    }
     int ghost_num = 0;
     if (level > 0) {
       ghost_num += amr_ncycle + amr_ncycle / 2;
@@ -267,6 +268,7 @@ public:
     amrex::MultiFab& source)
   {
     BL_PROFILE("ParticleContainer::transferSource()");
+    AMREX_ALWAYS_ASSERT(level >= 0);
     const int nghost = amrex::min(source.nGrow(), source_ghosts);
 #ifdef SPRAY_PELE_LM
     const int ncomp = tmp_source.nComp();
@@ -327,7 +329,7 @@ public:
       });
   }
 
-  bool injectParticles(
+  static bool injectParticles(
     amrex::Real time,
     amrex::Real dt,
     int nstep,

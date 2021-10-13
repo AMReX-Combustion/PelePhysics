@@ -19,8 +19,9 @@ tile_at_bndry(
 {
   Box testBox(in_box);
   testBox.grow(1);
-  if (domain.contains(testBox))
+  if (domain.contains(testBox)) {
     return false;
+  }
   for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
     Box boxlo(in_box);
     boxlo.growLo(dir, 1);
@@ -75,24 +76,27 @@ calculateWallFilmSource(
   GpuArray<Real, NUM_SPECIES> Y_skin;
   GpuArray<Real, NUM_SPECIES> h_skin;
   GpuArray<Real, NUM_SPECIES> Ddiag;
-  for (int sp = 0; sp < NUM_SPECIES; ++sp)
+  for (int sp = 0; sp < NUM_SPECIES; ++sp) {
     Y_skin[sp] = 0.;
-    // Get particle variables
-    // Note: the diameter is set assuming a sphere
-    // of the same volume as the film
-    // and temperature is set to a negative value
+  }
+  // Get particle variables
+  // Note: the diameter is set assuming a sphere
+  // of the same volume as the film
+  // and temperature is set to a negative value
 #ifdef USE_SPRAY_SOA
   Real T_film = -attribs[SPI.pstateT].data()[pid];
   Real vol = attribs[SPI.pstateVol].data()[pid];
   Real ht_film = attribs[SPI.pstateHt].data()[pid];
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_film[spf] = attribs[SPI.pstateY + spf].data()[pid];
+  }
 #else
   Real T_film = -p.rdata(SPI.pstateT);
   Real vol = p.rdata(SPI.pstateVol);
   Real ht_film = p.rdata(SPI.pstateHt);
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_film[spf] = p.rdata(SPI.pstateY + spf);
+  }
 #endif
   calcBoilT(fdat, gpv, cBoilT.data());
   // TODO: Add model for when T > T_boil
@@ -180,8 +184,9 @@ calculateWallFilmSource(
   Real new_ht = 4. * new_vol / (M_PI * dia_film * dia_film);
   p.rdata(SPI.pstateHt) = new_ht;
   p.rdata(SPI.pstateT) = -0.5 * (T_s + T_wall);
-  if (new_ht < ht_tol)
+  if (new_ht < ht_tol) {
     p.id() = -1;
+  }
 }
 
 /****************************************************************
@@ -209,15 +214,18 @@ splash_criteria(const Real Kv, const Real Tstar, const Real alpha)
   Real Kcrit = 20. + 2. * alpha / M_PI * 20.;
   if (Tstar < 1.1) {
     Kcrit = 130.;
-    if (Tstar < 1.)
+    if (Tstar < 1.) {
       Kcrit = 54. + 76. * std::exp(13. * (Tstar - 1.));
-    if (Kv < Kcrit)
+    }
+    if (Kv < Kcrit) {
       return splash_type::deposit;
-    else
+    } else {
       return splash_type::splash;
+    }
   }
-  if (Kv < Kcrit)
+  if (Kv < Kcrit) {
     return splash_type::rebound;
+  }
   return splash_type::thermal_breakup;
 }
 
@@ -261,18 +269,20 @@ compute_angles(
   // Inclination angle in degrees
   const Real alphad = alpha * 180. / M_PI;
   Real omega = 0.;
-  if (alphad <= 80. && AMREX_SPACEDIM == 3)
+  if (alphad <= 80. && AMREX_SPACEDIM == 3) {
     omega = std::sqrt(
       (1. + 8.872 * std::cos(1.152 * alpha)) / (1. - std::cos(alpha)));
+  }
   SPRF.omega = omega;
   SPRF.expomega = 1. - std::exp(-omega);
   Real beta_mean;
-  if (dry)
+  if (dry) {
     beta_mean = 9.3 + 0.22 * alphad;
-  else if (Tstar > 1.1)
+  } else if (Tstar > 1.1) {
     beta_mean = 0.225 * alphad * std::exp(std::pow(0.017 * alphad - 0.937, 2));
-  else
+  } else {
     beta_mean = 0.96 * alphad * std::exp(-4.5E-3 * We);
+  }
   Real stdev = 4.; // 4 degrees
   // Now convert mean and stdev to log terms
   Real mean2 = beta_mean * beta_mean;
@@ -313,8 +323,9 @@ check_wall(
     // If particle has moved into a cut-cell
     if (flags(ijkc).isSingleValued()) {
       // Use the normal and boundary centroid from the new cell
-      normal = {-bnorm(ijkc, 0), -bnorm(ijkc, 1), -bnorm(ijkc, 2)};
-      bcentv = {bcent(ijkc, 0), bcent(ijkc, 1), bcent(ijkc, 2)};
+      normal = {
+        AMREX_D_DECL(-bnorm(ijkc, 0), -bnorm(ijkc, 1), -bnorm(ijkc, 2))};
+      bcentv = {AMREX_D_DECL(bcent(ijkc, 0), bcent(ijkc, 1), bcent(ijkc, 2))};
       wall_check = true;
       // If the particle has moved into a covered cell
     } else if (flags(ijkc).isCovered()) {
@@ -322,10 +333,10 @@ check_wall(
       if (flags(ijkc_prev).isSingleValued()) {
         // Use the normal and boundary centroid from the previous cell
         bloc = ijkc_prev;
-        normal = {
-          -bnorm(ijkc_prev, 0), -bnorm(ijkc_prev, 1), -bnorm(ijkc_prev, 2)};
-        bcentv = {
-          bcent(ijkc_prev, 0), bcent(ijkc_prev, 1), bcent(ijkc_prev, 2)};
+        normal = {AMREX_D_DECL(
+          -bnorm(ijkc_prev, 0), -bnorm(ijkc_prev, 1), -bnorm(ijkc_prev, 2))};
+        bcentv = {AMREX_D_DECL(
+          bcent(ijkc_prev, 0), bcent(ijkc_prev, 1), bcent(ijkc_prev, 2))};
         // otherwise an error has occurred
       } else {
         Abort("WallFunctions::check_wall: Particle is outside EB");
@@ -371,8 +382,9 @@ impose_wall(
     splash_flag = splash_type::rebound;
     // Plane ref point
     Real Nw_Vp = 0.;
-    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       Nw_Vp += normal[dir] * pvel[dir];
+    }
     // Parcel normal velocity
     RealVect Vpn = {
       AMREX_D_DECL(Nw_Vp * normal[0], Nw_Vp * normal[1], Nw_Vp * normal[2])};
@@ -420,19 +432,21 @@ impose_wall(
                    (6. * depot_vol / M_PI - std::pow(delta, 3)) / (3. * delta));
           // Now estimate the height to be a cylinder of diameter depot_dia
           Real depot_height = 4. * depot_vol / (M_PI * depot_dia * depot_dia);
-          for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+          for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             p.rdata(SPI.pstateVel + dir) = 0.;
+          }
           p.rdata(SPI.pstateVol) = depot_vol;
           p.rdata(SPI.pstateHt) = depot_height;
         } else {
           // Determine diameter of secondary droplets
           Real expon = 3.6 * (alpha / M_PI) * (alpha / M_PI);
-          if (dry_wall)
+          if (dry_wall) {
             SPRF.dia_refl =
               dia_part * 3.3 * std::exp(expon) * std::pow(We, -0.65);
-          else
+          } else {
             SPRF.dia_refl =
               dia_part * 2.2 * std::exp(expon) * std::pow(We, -0.36);
+          }
           // Compute angles of reflecting droplets
           compute_angles(alpha, Tstar, We, dry_wall, SPRF);
           // If thermal breakup, all mass is converted to secondary droplets
@@ -457,8 +471,9 @@ impose_wall(
                 (6. * depot_vol / M_PI - std::pow(delta, 3)) / (3. * delta));
             // Now estimate the height to be a cylinder of diameter depot_dia
             Real depot_height = 4. * depot_vol / (M_PI * depot_dia * depot_dia);
-            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir)
+            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
               p.rdata(SPI.pstateVel + dir) = 0.;
+            }
             p.rdata(SPI.pstateVol) = depot_vol;
             p.rdata(SPI.pstateHt) = depot_height;
           } else {
