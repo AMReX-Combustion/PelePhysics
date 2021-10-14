@@ -33,8 +33,7 @@ ReactorCvode::init(int reactor_type, int ncells)
     return (1);
   }
 
-  udata_g =
-    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
+  udata_g = new CVODEUserData{};
   allocUserData(udata_g, ncells);
   if (utils::check_flag((void*)udata_g, "allocUserData", 2)) {
     return (1);
@@ -1186,8 +1185,7 @@ ReactorCvode::react(
 
   amrex::Gpu::streamSynchronize();
   SUNMatrix A = NULL;
-  CVODEUserData* user_data =
-    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
+  CVODEUserData* user_data = new CVODEUserData{};
   allocUserData(user_data, ncells, A, stream);
 
   // Fill data
@@ -1455,12 +1453,10 @@ ReactorCvode::react(
   SUNLinearSolver LS = NULL;
   SUNMatrix A = NULL;
   void* cvode_mem = NULL;
-  CVODEUserData* user_data;
 
   // Fill user_data
   amrex::Gpu::streamSynchronize();
-  user_data =
-    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
+  CVODEUserData* user_data = new CVODEUserData{};
   allocUserData(user_data, ncells, A, stream);
 
   // Solution vector and execution policy
@@ -1821,7 +1817,7 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     cudaFree(data_wk->buffer_qr);
 #endif
   }
-  amrex::The_Arena()->free(data_wk);
+  delete data_wk;
 
 #else
   amrex::The_Arena()->free(data_wk->FCunt);
@@ -1884,7 +1880,7 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     delete[] data_wk->JSPSmat;
   }
 
-  free(data_wk);
+  delete data_wk;
 #endif
 }
 
