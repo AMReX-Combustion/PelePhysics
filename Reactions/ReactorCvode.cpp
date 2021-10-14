@@ -1191,8 +1191,7 @@ ReactorCvode::react(
   // Fill data
   flatten(
     box, ncells, rY_in, rYsrc_in, T_in, rEner_in, rEner_src_in, yvec_d,
-    user_data->rYsrc_ext, user_data->rhoe_init,
-    user_data->rhoesrc_ext);
+    user_data->rYsrc_ext, user_data->rhoe_init, user_data->rhoesrc_ext);
 
 #ifdef AMREX_USE_OMP
   Gpu::Device::streamSynchronize();
@@ -1394,8 +1393,7 @@ ReactorCvode::react(
 
         utils::box_unflatten<Ordering>(
           icell, i, j, k, ncells, captured_reactor_type, rY_in, T_in, rEner_in,
-          rEner_src_in, FC_in, yvec_d, udata_g->rhoe_init, nfe_tot,
-          dt_react);
+          rEner_src_in, FC_in, yvec_d, udata_g->rhoe_init, nfe_tot, dt_react);
 
         if ((udata_g->verbose > 3) && (omp_thread == 0)) {
           amrex::Print() << "END : time curr is " << CvodeActual_time_final
@@ -1491,8 +1489,7 @@ ReactorCvode::react(
   BL_PROFILE_VAR("Pele::ReactorCvode::react():ASyncCopy", AsyncCopy);
   amrex::Gpu::htod_memcpy_async(yvec_d, rY_in, sizeof(amrex::Real) * (neq_tot));
   amrex::Gpu::htod_memcpy_async(
-    user_data->rYsrc_ext, rYsrc_in,
-    sizeof(amrex::Real) * NUM_SPECIES * ncells);
+    user_data->rYsrc_ext, rYsrc_in, sizeof(amrex::Real) * NUM_SPECIES * ncells);
   amrex::Gpu::htod_memcpy_async(
     user_data->rhoe_init, rX_in, sizeof(amrex::Real) * ncells);
   amrex::Gpu::htod_memcpy_async(
@@ -1663,8 +1660,7 @@ ReactorCvode::react(
   std::memcpy(
     yvec_d, rY_in, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * ncells));
   std::memcpy(
-    udata_g->rYsrc_ext, rYsrc_in,
-    sizeof(amrex::Real) * (NUM_SPECIES * ncells));
+    udata_g->rYsrc_ext, rYsrc_in, sizeof(amrex::Real) * (NUM_SPECIES * ncells));
   std::memcpy(udata_g->rhoe_init, rX_in, sizeof(amrex::Real) * ncells);
   std::memcpy(udata_g->rhoesrc_ext, rX_src_in, sizeof(amrex::Real) * ncells);
 

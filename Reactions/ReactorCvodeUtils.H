@@ -36,7 +36,7 @@ struct CVODEUserData
   int NNZ; // Number of non-zero entry for sparse representations
   amrex::Real* rhoe_init = nullptr; // Initial energy (rhoE for C, rhoH for LM)
   amrex::Real* rhoesrc_ext = nullptr; // External energy forcing
-  amrex::Real* rYsrc_ext = nullptr; // External species forcing
+  amrex::Real* rYsrc_ext = nullptr;   // External species forcing
   int* mask =
     nullptr; // Masking tagging cells where integration should not be perfomed
   int* FCunt = nullptr; // Number of RHS evaluations (not used on GPU)
