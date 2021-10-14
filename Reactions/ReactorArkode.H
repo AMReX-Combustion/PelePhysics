@@ -37,7 +37,7 @@ struct ARKODEUserData
   amrex::Real dt_save;
   amrex::Real* rhoe_init = nullptr;
   amrex::Real* rhoesrc_ext = nullptr;
-  amrex::Real* rYsrc = nullptr;
+  amrex::Real* rYsrc_ext = nullptr;
 };
 
 class ReactorArkode : public ReactorBase::Register<ReactorArkode>
@@ -54,7 +54,7 @@ public:
   int react(
     const amrex::Box& box,
     amrex::Array4<amrex::Real> const& rY_in,
-    amrex::Array4<amrex::Real> const& rY_src_in,
+    amrex::Array4<amrex::Real> const& rYsrc_in,
     amrex::Array4<amrex::Real> const& T_in,
     amrex::Array4<amrex::Real> const& rEner_in,
     amrex::Array4<amrex::Real> const& rEner_src_in,
@@ -70,7 +70,7 @@ public:
 
   int react(
     amrex::Real* rY_in,
-    amrex::Real* rY_src_in,
+    amrex::Real* rYsrc_in,
     amrex::Real* rX_in,
     amrex::Real* rX_src_in,
     amrex::Real& dt_react,

@@ -25,24 +25,24 @@ namespace reactions {
 
 struct CVODEUserData
 {
-  amrex::Real dt_save;      // Internal cvode dt holder
-  int ncells_d;             // Number of cells in solve
-  int iverbose;             // Verbose
-  int maxOrder;             // CVODE max order
-  int ireactor_type;        // Either HP (LM) or UV (C)
-  int ianalytical_jacobian; // Analytical Jacobian 'On' flag
-  int isolve_type;          // Type of linear solve for Newton direction
-  int iprecond_type;        // Type of preconditioner (if iterative solve)
+  amrex::Real dt_save;     // Internal cvode dt holder
+  int ncells;              // Number of cells in solve
+  int verbose;             // Verbose
+  int maxOrder;            // CVODE max order
+  int reactor_type;        // Either HP (LM) or UV (C)
+  int analytical_jacobian; // Analytical Jacobian 'On' flag
+  int solve_type;          // Type of linear solve for Newton direction
+  int precond_type;        // Type of preconditioner (if iterative solve)
   int NNZ; // Number of non-zero entry for sparse representations
-  amrex::Real* energy_init_d = NULL; // Initial energy (rhoE for C, rhoH for LM)
-  amrex::Real* energy_ext_d = NULL;  // External energy forcing
-  amrex::Real* species_ext_d = NULL; // External species forcing
+  amrex::Real* rhoe_init = nullptr; // Initial energy (rhoE for C, rhoH for LM)
+  amrex::Real* rhoesrc_ext = nullptr; // External energy forcing
+  amrex::Real* rYsrc_ext = nullptr; // External species forcing
   int* mask =
-    NULL; // Masking tagging cells where integration should not be perfomed
-  int* FCunt = NULL; // Number of RHS evaluations (not used on GPU)
-  amrex::Real gamma; // System Chem. jacobian coefficient
-  int nbBlocks;      // GPU kernel launch parameter
-  int nbThreads;     // GPU kernel launch parameter
+    nullptr; // Masking tagging cells where integration should not be perfomed
+  int* FCunt = nullptr; // Number of RHS evaluations (not used on GPU)
+  amrex::Real gamma;    // System Chem. jacobian coefficient
+  int nbBlocks;         // GPU kernel launch parameter
+  int nbThreads;        // GPU kernel launch parameter
 
 #ifdef AMREX_USE_GPU
   // Matrix data
@@ -129,7 +129,7 @@ fKernelComputeallAJ(
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   int neqs = NUM_SPECIES + 1;
   auto NNZ = udata->NNZ;
-  auto reactor_type = udata->ireactor_type;
+  auto reactor_type = udata->reactor_type;
   auto csr_jac_d = udata->csr_jac_d;
   auto csr_row_count_d = udata->csr_row_count_d;
   auto csr_col_index_d = udata->csr_col_index_d;
@@ -233,7 +233,7 @@ fKernelComputeAJchem(
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   const int neqs = NUM_SPECIES + 1;
   auto NNZ = udata->NNZ;
-  auto reactor_type = udata->ireactor_type;
+  auto reactor_type = udata->reactor_type;
   auto csr_row_count_d = udata->csr_row_count_d;
   auto csr_col_index_d = udata->csr_col_index_d;
 
@@ -288,7 +288,7 @@ fKernelDenseAJchem(
 {
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   const int neqs = NUM_SPECIES + 1;
-  auto reactor_type = udata->ireactor_type;
+  auto reactor_type = udata->reactor_type;
 
   int u_offset = icell * neqs;
   amrex::Real* u_curr = u_d + u_offset;

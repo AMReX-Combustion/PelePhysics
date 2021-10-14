@@ -117,7 +117,7 @@ int
 ReactorArkode::react(
   const amrex::Box& box,
   amrex::Array4<amrex::Real> const& rY_in,
-  amrex::Array4<amrex::Real> const& rY_src_in,
+  amrex::Array4<amrex::Real> const& rYsrc_in,
   amrex::Array4<amrex::Real> const& T_in,
   amrex::Array4<amrex::Real> const& rEner_in,
   amrex::Array4<amrex::Real> const& rEner_src_in,
@@ -172,18 +172,18 @@ ReactorArkode::react(
   ARKODEUserData* user_data = new ARKODEUserData{};
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoe_init(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoesrc_ext(ncells, 0);
-  amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc(ncells * NUM_SPECIES, 0);
+  amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc_ext(ncells * NUM_SPECIES, 0);
   user_data->ncells = ncells;
   user_data->neq = neq;
   user_data->reactor_type = captured_reactor_type;
   user_data->verbose = verbose;
   user_data->rhoe_init = v_rhoe_init.begin();
   user_data->rhoesrc_ext = v_rhoesrc_ext.begin();
-  user_data->rYsrc = v_rYsrc.begin();
+  user_data->rYsrc_ext = v_rYsrc_ext.begin();
 
   flatten(
-    box, ncells, rY_in, rY_src_in, T_in, rEner_in, rEner_src_in, yvec_d,
-    user_data->rYsrc, user_data->rhoe_init, user_data->rhoesrc_ext);
+    box, ncells, rY_in, rYsrc_in, T_in, rEner_in, rEner_src_in, yvec_d,
+    user_data->rYsrc_ext, user_data->rhoe_init, user_data->rhoesrc_ext);
 
   realtype time_init = time;
   realtype time_out = time + dt_react;
@@ -240,7 +240,7 @@ ReactorArkode::react(
 int
 ReactorArkode::react(
   realtype* rY_in,
-  realtype* rY_src_in,
+  realtype* rYsrc_in,
   realtype* rX_in,
   realtype* rX_src_in,
   realtype& dt_react,
@@ -294,20 +294,20 @@ ReactorArkode::react(
   ARKODEUserData* user_data = new ARKODEUserData{};
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoe_init(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoesrc_ext(ncells, 0);
-  amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc(ncells * NUM_SPECIES, 0);
+  amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc_ext(ncells * NUM_SPECIES, 0);
   user_data->ncells = ncells;
   user_data->neq = neq;
   user_data->reactor_type = captured_reactor_type;
   user_data->verbose = verbose;
   user_data->rhoe_init = v_rhoe_init.begin();
   user_data->rhoesrc_ext = v_rhoesrc_ext.begin();
-  user_data->rYsrc = v_rYsrc.begin();
+  user_data->rYsrc_ext = v_rYsrc_ext.begin();
 
 #ifdef AMREX_USE_GPU
   amrex::Gpu::htod_memcpy_async(
     yvec_d, rY_in, sizeof(realtype) * (neq * ncells));
   amrex::Gpu::htod_memcpy_async(
-    user_data->rYsrc, rY_src_in, (NUM_SPECIES * ncells) * sizeof(realtype));
+    user_data->rYsrc_ext, rYsrc_in, (NUM_SPECIES * ncells) * sizeof(realtype));
   amrex::Gpu::htod_memcpy_async(
     user_data->rhoe_init, rX_in, sizeof(realtype) * ncells);
   amrex::Gpu::htod_memcpy_async(
@@ -315,7 +315,7 @@ ReactorArkode::react(
 #else
   std::memcpy(yvec_d, rY_in, sizeof(realtype) * (neq * ncells));
   std::memcpy(
-    user_data->rYsrc, rY_src_in, (NUM_SPECIES * ncells) * sizeof(realtype));
+    user_data->rYsrc_ext, rYsrc_in, (NUM_SPECIES * ncells) * sizeof(realtype));
   std::memcpy(user_data->rhoe_init, rX_in, sizeof(realtype) * ncells);
   std::memcpy(user_data->rhoesrc_ext, rX_src_in, sizeof(realtype) * ncells);
 #endif
@@ -394,11 +394,11 @@ ReactorArkode::cF_RHS(
   const auto reactor_type = udata->reactor_type;
   auto* rhoe_init = udata->rhoe_init;
   auto* rhoesrc_ext = udata->rhoesrc_ext;
-  auto* rYsrc = udata->rYsrc;
+  auto* rYsrc_ext = udata->rYsrc_ext;
   amrex::ParallelFor(udata->ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
     utils::fKernelSpec<Ordering>(
       icell, ncells, dt_save, reactor_type, yvec_d, ydot_d, rhoe_init,
-      rhoesrc_ext, rYsrc);
+      rhoesrc_ext, rYsrc_ext);
   });
 
   amrex::Gpu::Device::streamSynchronize();

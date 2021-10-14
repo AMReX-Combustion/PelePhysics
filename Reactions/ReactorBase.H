@@ -24,7 +24,7 @@ public:
   virtual int react(
     const amrex::Box& box,
     amrex::Array4<amrex::Real> const& rY_in,
-    amrex::Array4<amrex::Real> const& rY_src_in,
+    amrex::Array4<amrex::Real> const& rYsrc_in,
     amrex::Array4<amrex::Real> const& T_in,
     amrex::Array4<amrex::Real> const& rEner_in,
     amrex::Array4<amrex::Real> const& rEner_src_in,
@@ -40,7 +40,7 @@ public:
 
   virtual int react(
     amrex::Real* rY_in,
-    amrex::Real* rY_src_in,
+    amrex::Real* rYsrc_in,
     amrex::Real* rX_in,
     amrex::Real* rX_src_in,
     amrex::Real& dt_react,
