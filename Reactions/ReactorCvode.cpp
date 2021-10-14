@@ -1156,6 +1156,9 @@ ReactorCvode::react(
   //----------------------------------------------------------
 #ifdef AMREX_USE_GPU
 
+  const int ncells = box.numPts();
+  const int neq_tot = (NUM_SPECIES + 1) * ncells;
+
   // Solution vector and execution policy
 #if defined(AMREX_USE_CUDA)
   N_Vector y = N_VNewWithMemHelp_Cuda(
@@ -1181,8 +1184,6 @@ ReactorCvode::react(
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
 #endif
 
-  const int ncells = box.numPts();
-  const int neq_tot = (NUM_SPECIES + 1) * ncells;
   amrex::Gpu::streamSynchronize();
   SUNMatrix A = NULL;
   CVODEUserData* user_data =

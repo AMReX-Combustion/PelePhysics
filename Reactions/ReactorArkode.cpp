@@ -169,27 +169,17 @@ ReactorArkode::react(
 
   const int verbose = 1;
   const auto captured_reactor_type = m_reactor_type;
-  ARKODEUserData* user_data =
-    (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, &ncells, &ncells + 1, &(user_data->ncells));
-  amrex::Gpu::copy(amrex::Gpu::hostToDevice, &neq, &neq + 1, &(user_data->neq));
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, &captured_reactor_type,
-    &captured_reactor_type + 1, &(user_data->reactor_type));
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, &verbose, &verbose + 1, &(user_data->verbose));
+  ARKODEUserData* user_data = new ARKODEUserData{};
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoe_init(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoesrc_ext(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc(ncells * NUM_SPECIES, 0);
-  const auto p_rhoe_init = v_rhoe_init.begin();
-  const auto p_rhoesrc_ext = v_rhoesrc_ext.begin();
-  const auto p_rYsrc = v_rYsrc.begin();
-  amrex::ParallelFor(1, [=] AMREX_GPU_DEVICE(int) {
-    user_data->rhoe_init = p_rhoe_init;
-    user_data->rhoesrc_ext = p_rhoesrc_ext;
-    user_data->rYsrc = p_rYsrc;
-  });
+  user_data->ncells = ncells;
+  user_data->neq = neq;
+  user_data->reactor_type = captured_reactor_type; 
+  user_data->verbose = verbose; 
+  user_data->rhoe_init = v_rhoe_init.begin();
+  user_data->rhoesrc_ext = v_rhoesrc_ext.begin();
+  user_data->rYsrc = v_rYsrc.begin();
 
   flatten(
     box, ncells, rY_in, rY_src_in, T_in, rEner_in, rEner_src_in, yvec_d,
@@ -241,7 +231,7 @@ ReactorArkode::react(
     ERKStepFree(&arkode_mem);
   }
 
-  amrex::The_Arena()->free(user_data);
+  delete user_data;
 
   return nfe;
 }
