@@ -175,8 +175,8 @@ ReactorArkode::react(
   amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc(ncells * NUM_SPECIES, 0);
   user_data->ncells = ncells;
   user_data->neq = neq;
-  user_data->reactor_type = captured_reactor_type; 
-  user_data->verbose = verbose; 
+  user_data->reactor_type = captured_reactor_type;
+  user_data->verbose = verbose;
   user_data->rhoe_init = v_rhoe_init.begin();
   user_data->rhoesrc_ext = v_rhoesrc_ext.begin();
   user_data->rYsrc = v_rYsrc.begin();
@@ -291,28 +291,17 @@ ReactorArkode::react(
 
   const int verbose = 1;
   const auto captured_reactor_type = m_reactor_type;
-  ARKODEUserData* user_data =
-    (ARKODEUserData*)amrex::The_Arena()->alloc(sizeof(struct ARKODEUserData));
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, &ncells, &ncells + 1, &(user_data->ncells));
-  amrex::Gpu::copy(amrex::Gpu::hostToDevice, &neq, &neq + 1, &(user_data->neq));
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, &captured_reactor_type,
-    &captured_reactor_type + 1, &(user_data->reactor_type));
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, &verbose, &verbose + 1, &(user_data->verbose));
+  ARKODEUserData* user_data = new ARKODEUserData{};
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoe_init(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoesrc_ext(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc(ncells * NUM_SPECIES, 0);
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, v_rhoe_init.data(), v_rhoe_init.data() + 1,
-    &(user_data->rhoe_init));
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, v_rhoesrc_ext.data(), v_rhoesrc_ext.data() + 1,
-    &(user_data->rhoesrc_ext));
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, v_rYsrc.data(), v_rYsrc.data() + 1,
-    &(user_data->rYsrc));
+  user_data->ncells = ncells;
+  user_data->neq = neq;
+  user_data->reactor_type = captured_reactor_type;
+  user_data->verbose = verbose;
+  user_data->rhoe_init = v_rhoe_init.begin();
+  user_data->rhoesrc_ext = v_rhoesrc_ext.begin();
+  user_data->rYsrc = v_rYsrc.begin();
 
 #ifdef AMREX_USE_GPU
   amrex::Gpu::htod_memcpy_async(
