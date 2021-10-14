@@ -272,7 +272,7 @@ calculateSpraySource(
   calcBoilT(fdat, gpv, cBoilT.data());
   while (isub <= nsub) {
     Real Tcrit = 0.;
-    for (int n = 0; n < SPRAY_FUEL_NUM; ++n) {
+    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       Tcrit += Y_part[spf] * fdat.critT[spf];
     }
     T_part = amrex::min(Tcrit, T_part);
