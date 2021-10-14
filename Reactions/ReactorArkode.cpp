@@ -182,15 +182,14 @@ ReactorArkode::react(
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoe_init(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoesrc_ext(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc(ncells * NUM_SPECIES, 0);
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, v_rhoe_init.begin(), v_rhoe_init.begin() + 1,
-    &(user_data->rhoe_init));
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, v_rhoesrc_ext.data(), v_rhoesrc_ext.data() + 1,
-    &(user_data->rhoesrc_ext));
-  amrex::Gpu::copy(
-    amrex::Gpu::hostToDevice, v_rYsrc.data(), v_rYsrc.data() + 1,
-    &(user_data->rYsrc));
+  const auto p_rhoe_init = v_rhoe_init.begin();
+  const auto p_rhoesrc_ext = v_rhoesrc_ext.begin();
+  const auto p_rYsrc = v_rYsrc.begin();
+  amrex::ParallelFor(1, [=] AMREX_GPU_DEVICE(int) {
+    user_data->rhoe_init = p_rhoe_init;
+    user_data->rhoesrc_ext = p_rhoesrc_ext;
+    user_data->rYsrc = p_rYsrc;
+  });
 
   flatten(
     box, ncells, rY_in, rY_src_in, T_in, rEner_in, rEner_src_in, yvec_d,
