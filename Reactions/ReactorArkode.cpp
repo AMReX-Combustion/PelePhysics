@@ -259,7 +259,7 @@ ReactorArkode::react(
   int neq_tot = neq * ncells;
 #if defined(AMREX_USE_CUDA)
   N_Vector y = N_VNewWithMemHelp_Cuda(
-    neq_tot, /*use_managed_mem=*/true,
+    neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
     return (1);
@@ -271,7 +271,7 @@ ReactorArkode::react(
   realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
 #elif defined(AMREX_USE_HIP)
   N_Vector y = N_VNewWithMemHelp_Hip(
-    neq_tot, /*use_managed_mem=*/true,
+    neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
     return (1);

@@ -1073,12 +1073,12 @@ ReactorCvode::setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata)
 
 #if defined(AMREX_USE_CUDA)
   N_Vector atol = N_VNewWithMemHelp_Cuda(
-    neq_tot, /*use_managed_mem=*/true,
+    neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper());
   amrex::Real* ratol = N_VGetHostArrayPointer_Cuda(atol);
 #elif defined(AMREX_USE_HIP)
   N_Vector atol = N_VNewWithMemHelp_Hip(
-    neq_tot, /*use_managed_mem=*/true,
+    neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper());
   amrex::Real* ratol = N_VGetHostArrayPointer_Hip(atol);
 #else
@@ -1462,7 +1462,7 @@ ReactorCvode::react(
   // Solution vector and execution policy
 #if defined(AMREX_USE_CUDA)
   y = N_VNewWithMemHelp_Cuda(
-    neq_tot, /*use_managed_mem=*/true,
+    neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
     return (1);
@@ -1475,7 +1475,7 @@ ReactorCvode::react(
 
 #elif defined(AMREX_USE_HIP)
   y = N_VNewWithMemHelp_Hip(
-    neq_tot, /*use_managed_mem=*/true,
+    neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
     return (1);
