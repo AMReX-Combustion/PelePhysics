@@ -48,14 +48,14 @@ public:
 
   using Ordering = utils::YCOrder;
 
-  int init(int reactor_type, int Ncells) override;
+  int init(int reactor_type, int ncells) override;
 
   void close() override {}
 
   int react(
     const amrex::Box& box,
     amrex::Array4<amrex::Real> const& rY_in,
-    amrex::Array4<amrex::Real> const& rY_src_in,
+    amrex::Array4<amrex::Real> const& rYsrc_in,
     amrex::Array4<amrex::Real> const& T_in,
     amrex::Array4<amrex::Real> const& rEner_in,
     amrex::Array4<amrex::Real> const& rEner_src_in,
@@ -71,12 +71,12 @@ public:
 
   int react(
     amrex::Real* rY_in,
-    amrex::Real* rY_src_in,
+    amrex::Real* rYsrc_in,
     amrex::Real* rX_in,
     amrex::Real* rX_src_in,
     amrex::Real& dt_react,
     amrex::Real& time,
-    int Ncells
+    int ncells
 #ifdef AMREX_USE_GPU
     ,
     amrex::gpuStream_t stream

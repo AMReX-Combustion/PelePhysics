@@ -5,7 +5,7 @@ namespace physics {
 namespace reactions {
 
 int
-ReactorNull::init(int reactor_type, int /*Ncells*/)
+ReactorNull::init(int reactor_type, int /*ncells*/)
 {
   BL_PROFILE("Pele::ReactorNull::init()");
   m_reactor_type = reactor_type;
@@ -18,7 +18,7 @@ int
 ReactorNull::react(
   const amrex::Box& box,
   amrex::Array4<amrex::Real> const& rY_in,
-  amrex::Array4<amrex::Real> const& rY_src_in,
+  amrex::Array4<amrex::Real> const& rYsrc_in,
   amrex::Array4<amrex::Real> const& T_in,
   amrex::Array4<amrex::Real> const& rEner_in,
   amrex::Array4<amrex::Real> const& rEner_src_in,
@@ -43,7 +43,7 @@ ReactorNull::react(
     rEner_in(i, j, k, 0) = renergy_loc;
     amrex::Real rY_loc[NUM_SPECIES];
     for (int n = 0; n < NUM_SPECIES; n++) {
-      rY_loc[n] = rY_in(i, j, k, n) + rY_src_in(i, j, k, n) * dt_react;
+      rY_loc[n] = rY_in(i, j, k, n) + rYsrc_in(i, j, k, n) * dt_react;
       rY_in(i, j, k, n) = rY_loc[n];
     }
     amrex::Real rho_loc = 0.0;
@@ -78,12 +78,12 @@ ReactorNull::react(
 int
 ReactorNull::react(
   amrex::Real* /*rY_in*/,
-  amrex::Real* /*rY_src_in*/,
+  amrex::Real* /*rYsrc_in*/,
   amrex::Real* /*rX_in*/,
   amrex::Real* /*rX_src_in*/,
   amrex::Real& dt_react,
   amrex::Real& time,
-  int /*Ncells*/
+  int /*ncells*/
 #ifdef AMREX_USE_GPU
   ,
   amrex::gpuStream_t /*stream*/
