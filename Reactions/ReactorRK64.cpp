@@ -9,13 +9,18 @@ int
 ReactorRK64::init(int reactor_type, int /*Ncells*/)
 {
   BL_PROFILE("Pele::ReactorRK64::init()");
-  m_reactor_type = reactor_type;
-  ReactorTypes::check_reactor_type(m_reactor_type);
-  amrex::ParmParse pp("ode");
-  pp.query("atol", absTol);
-  pp.query("rk64_nsubsteps_guess", rk64_nsubsteps_guess);
-  pp.query("rk64_nsubsteps_min", rk64_nsubsteps_min);
-  pp.query("rk64_nsubsteps_max", rk64_nsubsteps_max);
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+  {
+    m_reactor_type = reactor_type;
+    ReactorTypes::check_reactor_type(m_reactor_type);
+    amrex::ParmParse pp("ode");
+    pp.query("atol", absTol);
+    pp.query("rk64_nsubsteps_guess", rk64_nsubsteps_guess);
+    pp.query("rk64_nsubsteps_min", rk64_nsubsteps_min);
+    pp.query("rk64_nsubsteps_max", rk64_nsubsteps_max);
+  }
   return (0);
 }
 

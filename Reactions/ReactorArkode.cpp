@@ -8,108 +8,124 @@ int
 ReactorArkode::init(int reactor_type, int /*Ncells*/)
 {
   BL_PROFILE("Pele::ReactorArkode::init()");
-  m_reactor_type = reactor_type;
-  ReactorTypes::check_reactor_type(m_reactor_type);
-  amrex::ParmParse pp("ode");
-  pp.query("use_erkstep", use_erkstep);
-  pp.query("rtol", relTol);
-  pp.query("atol", absTol);
-  if (use_erkstep == 1) {
-    amrex::Print() << "Using ERK Step\n";
-  } else {
-    amrex::Print() << "Using ARK Step\n";
-  }
-  amrex::Print() << "Setting ARK/ERKODE tolerances rtol = " << relTol
-                 << " atol = " << absTol << " in PelePhysics \n";
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+  {
+    m_reactor_type = reactor_type;
+    ReactorTypes::check_reactor_type(m_reactor_type);
+    amrex::ParmParse pp("ode");
+    pp.query("use_erkstep", use_erkstep);
+    pp.query("rtol", relTol);
+    pp.query("atol", absTol);
+    pp.query("rk_method", rk_method);
+    pp.query("rk_controller", rk_controller);
+    std::string method_string = "ZONNEVELD_5_3_4";
+    std::string controller_string = "PID";
 
-  pp.query("rk_method", rk_method);
-  pp.query("rk_controller", rk_controller);
-  switch (rk_method) {
-  case 20:
-    rk_method = HEUN_EULER_2_1_2;
-    amrex::Print() << "Using HEUN_EULER_2_1_2 method\n";
-    break;
-  case 30:
-    rk_method = BOGACKI_SHAMPINE_4_2_3;
-    amrex::Print() << "Using BOGACKI_SHAMPINE_4_2_3 method\n";
-    break;
-  case 31:
-    rk_method = ARK324L2SA_ERK_4_2_3;
-    amrex::Print() << "Using ARK324L2SA_ERK_4_2_3 method\n";
-    break;
-  case 40:
-    rk_method = ZONNEVELD_5_3_4;
-    amrex::Print() << "Using ZONNEVELD_5_3_4 method\n";
-    break;
-  case 41:
-    rk_method = ARK436L2SA_ERK_6_3_4;
-    amrex::Print() << "Using ARK436L2SA_ERK_6_3_4 method\n";
-    break;
-  case 42:
-    rk_method = SAYFY_ABURUB_6_3_4;
-    amrex::Print() << "Using SAYFY_ABURUB_6_3_4 method\n";
-    break;
-  case 43:
-    rk_method = ARK437L2SA_ERK_7_3_4;
-    amrex::Print() << "Using ARK437L2SA_ERK_7_3_4 method\n";
-    break;
-  case 50:
-    rk_method = CASH_KARP_6_4_5;
-    amrex::Print() << "Using CASH_KARP_6_4_5 method\n";
-    break;
-  case 51:
-    rk_method = FEHLBERG_6_4_5;
-    amrex::Print() << "Using FEHLBERG_6_4_5 method\n";
-    break;
-  case 52:
-    rk_method = DORMAND_PRINCE_7_4_5;
-    amrex::Print() << "Using DORMAND_PRINCE_7_4_5 method\n";
-    break;
-  case 53:
-    rk_method = ARK548L2SA_ERK_8_4_5;
-    amrex::Print() << "Using ARK548L2SA_ERK_8_4_5 method\n";
-    break;
-  case 54:
-    rk_method = ARK548L2SAb_ERK_8_4_5;
-    amrex::Print() << "Using ARK548L2SAb_ERK_8_4_5 method\n";
-    break;
-  case 60:
-    rk_method = VERNER_8_5_6;
-    amrex::Print() << "Using VERNER_8_5_6 method\n";
-    break;
-  case 80:
-    rk_method = FEHLBERG_13_7_8;
-    amrex::Print() << "Using FEHLBERG_13_7_8 method\n";
-    break;
-  default:
-    rk_method = ZONNEVELD_5_3_4;
-    amrex::Print() << "Using ZONNEVELD_5_3_4 method\n";
-    break;
-  }
+    switch (rk_method) {
+    case 20:
+      rk_method = HEUN_EULER_2_1_2;
+      method_string = "HEUN_EULER_2_1_2";
+      break;
+    case 30:
+      rk_method = BOGACKI_SHAMPINE_4_2_3;
+      method_string = "BOGACKI_SHAMPINE_4_2_3";
+      break;
+    case 31:
+      rk_method = ARK324L2SA_ERK_4_2_3;
+      method_string = "ARK324L2SA_ERK_4_2_3";
+      break;
+    case 40:
+      rk_method = ZONNEVELD_5_3_4;
+      method_string = "ZONNEVELD_5_3_4";
+      break;
+    case 41:
+      rk_method = ARK436L2SA_ERK_6_3_4;
+      method_string = "ARK436L2SA_ERK_6_3_4";
+      break;
+    case 42:
+      rk_method = SAYFY_ABURUB_6_3_4;
+      method_string = "SAYFY_ABURUB_6_3_4";
+      break;
+    case 43:
+      rk_method = ARK437L2SA_ERK_7_3_4;
+      method_string = "ARK437L2SA_ERK_7_3_4";
+      break;
+    case 50:
+      rk_method = CASH_KARP_6_4_5;
+      method_string = "CASH_KARP_6_4_5";
+      break;
+    case 51:
+      rk_method = FEHLBERG_6_4_5;
+      method_string = "FEHLBERG_6_4_5";
+      break;
+    case 52:
+      rk_method = DORMAND_PRINCE_7_4_5;
+      method_string = "DORMAND_PRINCE_7_4_5";
+      break;
+    case 53:
+      rk_method = ARK548L2SA_ERK_8_4_5;
+      method_string = "ARK548L2SA_ERK_8_4_5";
+      break;
+    case 54:
+      rk_method = ARK548L2SAb_ERK_8_4_5;
+      method_string = "ARK548L2SAb_ERK_8_4_5";
+      break;
+    case 60:
+      rk_method = VERNER_8_5_6;
+      method_string = "VERNER_8_5_6";
+      break;
+    case 80:
+      rk_method = FEHLBERG_13_7_8;
+      method_string = "FEHLBERG_13_7_8";
+      break;
+    default:
+      rk_method = ZONNEVELD_5_3_4;
+      method_string = "ZONNEVELD_5_3_4";
+      break;
+    }
 
-  switch (rk_controller) {
-  case 0:
-    rk_controller = ARK_ADAPT_PID;
-    amrex::Print() << "Using the PID controller\n";
-    break;
-  case 1:
-    rk_controller = ARK_ADAPT_PI;
-    amrex::Print() << "Using the PI controller\n";
-    break;
-  case 2:
-    rk_controller = ARK_ADAPT_I;
-    amrex::Print() << "Using the I controller\n";
-    break;
-  case 3:
-    rk_controller = ARK_ADAPT_EXP_GUS;
-    amrex::Print() << "Using the explicit Gustafsson controller\n";
-    break;
-  default:
-    rk_controller = ARK_ADAPT_PID;
-    amrex::Print() << "Using the PID controller\n";
-    break;
-  }
+    switch (rk_controller) {
+    case 0:
+      rk_controller = ARK_ADAPT_PID;
+      controller_string = "PID";
+      break;
+    case 1:
+      rk_controller = ARK_ADAPT_PI;
+      controller_string = "PI";
+      break;
+    case 2:
+      rk_controller = ARK_ADAPT_I;
+      controller_string = "I";
+      break;
+    case 3:
+      rk_controller = ARK_ADAPT_EXP_GUS;
+      controller_string = "explicit Gustafsson";
+      break;
+    default:
+      rk_controller = ARK_ADAPT_PID;
+      controller_string = "PID";
+      break;
+    }
 
+#ifdef _OPENMP
+    if (omp_get_thread_num() == 0) {
+#endif
+      if (use_erkstep == 1) {
+        amrex::Print() << "ERK Step:" << std::endl;
+      } else {
+        amrex::Print() << "ARK Step:" << std::endl;
+      }
+      amrex::Print() << "  Setting tolerances rtol = " << relTol
+                     << " atol = " << absTol << std::endl;
+      amrex::Print() << "  Using " << method_string << " method" << std::endl;
+      amrex::Print() << "  Using the " << controller_string << " controller"
+                     << std::endl;
+#ifdef _OPENMP
+    }
+#endif
+  }
   return (0);
 }
 
