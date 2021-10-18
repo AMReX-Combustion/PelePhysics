@@ -17,14 +17,14 @@ class ReactorBase : public Factory<ReactorBase>
 public:
   static const std::string base_identifier() { return "ReactorBase"; }
 
-  virtual int init(int reactor_type, int Ncells) = 0;
+  virtual int init(int reactor_type, int ncells) = 0;
 
   virtual void close() = 0;
 
   virtual int react(
     const amrex::Box& box,
     amrex::Array4<amrex::Real> const& rY_in,
-    amrex::Array4<amrex::Real> const& rY_src_in,
+    amrex::Array4<amrex::Real> const& rYsrc_in,
     amrex::Array4<amrex::Real> const& T_in,
     amrex::Array4<amrex::Real> const& rEner_in,
     amrex::Array4<amrex::Real> const& rEner_src_in,
@@ -40,12 +40,12 @@ public:
 
   virtual int react(
     amrex::Real* rY_in,
-    amrex::Real* rY_src_in,
+    amrex::Real* rYsrc_in,
     amrex::Real* rX_in,
     amrex::Real* rX_src_in,
     amrex::Real& dt_react,
     amrex::Real& time,
-    int Ncells
+    int ncells
 #ifdef AMREX_USE_GPU
     ,
     amrex::gpuStream_t stream

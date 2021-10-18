@@ -4,7 +4,7 @@ namespace pele {
 namespace physics {
 namespace reactions {
 int
-ReactorCvode::init(int reactor_type, int Ncells)
+ReactorCvode::init(int reactor_type, int ncells)
 {
   BL_PROFILE("Pele::ReactorCvode::init()");
   m_reactor_type = reactor_type;
@@ -19,15 +19,13 @@ ReactorCvode::init(int reactor_type, int Ncells)
   // On CPU, initialize cvode_mem/userData
   // ----------------------------------------------------------
 
-  // ----------------------------------------------------------
   // Solution vector
-  int neq_tot = (NUM_SPECIES + 1) * Ncells;
+  int neq_tot = (NUM_SPECIES + 1) * ncells;
   y = N_VNew_Serial(neq_tot);
   if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
     return (1);
   }
 
-  // ----------------------------------------------------------
   // Call CVodeCreate to create the solver memory and specify the Backward
   // Differentiation Formula and the use of a Newton iteration
   cvode_mem = CVodeCreate(CV_BDF);
@@ -35,9 +33,8 @@ ReactorCvode::init(int reactor_type, int Ncells)
     return (1);
   }
 
-  udata_g =
-    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
-  allocUserData(udata_g, Ncells);
+  udata_g = new CVODEUserData{};
+  allocUserData(udata_g, ncells);
   if (utils::check_flag((void*)udata_g, "allocUserData", 2)) {
     return (1);
   }
@@ -57,15 +54,13 @@ ReactorCvode::init(int reactor_type, int Ncells)
     return (1);
   }
 
-  // ----------------------------------------------------------
   // Setup tolerances
   setCvodeTols(cvode_mem, udata_g);
 
-  // ----------------------------------------------------------
   // Linear solver data
   if (
-    udata_g->isolve_type == cvode::denseFDDirect ||
-    udata_g->isolve_type == cvode::denseDirect) {
+    udata_g->solve_type == cvode::denseFDDirect ||
+    udata_g->solve_type == cvode::denseDirect) {
     // Create dense SUNMatrix for use in linear solves
     A = SUNDenseMatrix(neq_tot, neq_tot);
     if (utils::check_flag((void*)A, "SUNDenseMatrix", 0)) {
@@ -84,11 +79,11 @@ ReactorCvode::init(int reactor_type, int Ncells)
       return (1);
     }
 
-  } else if (udata_g->isolve_type == cvode::sparseDirect) {
+  } else if (udata_g->solve_type == cvode::sparseDirect) {
 #ifdef PELE_USE_KLU
     // Create sparse SUNMatrix for use in linear solves
     A = SUNSparseMatrix(
-      neq_tot, neq_tot, (udata_g->NNZ) * udata_g->ncells_d, CSC_MAT);
+      neq_tot, neq_tot, (udata_g->NNZ) * udata_g->ncells, CSC_MAT);
     if (utils::check_flag((void*)A, "SUNSparseMatrix", 0))
       return (1);
 
@@ -105,17 +100,17 @@ ReactorCvode::init(int reactor_type, int Ncells)
     amrex::Abort("sparseDirect solver_type not valid without KLU library.");
 #endif
 
-  } else if (udata_g->isolve_type == cvode::customDirect) {
+  } else if (udata_g->solve_type == cvode::customDirect) {
     // Create dense SUNMatrix for use in linear solves
     A = SUNSparseMatrix(
-      neq_tot, neq_tot, (udata_g->NNZ) * udata_g->ncells_d, CSR_MAT);
+      neq_tot, neq_tot, (udata_g->NNZ) * udata_g->ncells, CSR_MAT);
     if (utils::check_flag((void*)A, "SUNDenseMatrix", 0)) {
       return (1);
     }
 
     // Create dense SUNLinearSolver object for use by CVode
     LS = cvode::SUNLinSol_sparse_custom(
-      y, A, reactor_type, udata_g->ncells_d, (NUM_SPECIES + 1), udata_g->NNZ);
+      y, A, reactor_type, udata_g->ncells, (NUM_SPECIES + 1), udata_g->NNZ);
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0)) {
       return (1);
     }
@@ -126,7 +121,7 @@ ReactorCvode::init(int reactor_type, int Ncells)
       return (1);
     }
 
-  } else if (udata_g->isolve_type == cvode::GMRES) {
+  } else if (udata_g->solve_type == cvode::GMRES) {
     // Create the GMRES linear solver object
     LS = SUNLinSol_SPGMR(y, PREC_NONE, 0);
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0)) {
@@ -139,7 +134,7 @@ ReactorCvode::init(int reactor_type, int Ncells)
       return (1);
     }
 
-  } else if (udata_g->isolve_type == cvode::precGMRES) {
+  } else if (udata_g->solve_type == cvode::precGMRES) {
     // Create the GMRES linear solver object
     LS = SUNLinSol_SPGMR(y, PREC_LEFT, 0);
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0)) {
@@ -156,16 +151,15 @@ ReactorCvode::init(int reactor_type, int Ncells)
     amrex::Abort("Wrong choice of linear solver...");
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for direct solver
-  if (udata_g->ianalytical_jacobian == 1) {
-    if (udata_g->isolve_type == cvode::denseDirect) {
+  if (udata_g->analytical_jacobian == 1) {
+    if (udata_g->solve_type == cvode::denseDirect) {
       // Set the user-supplied Jacobian routine Jac
       flag = CVodeSetJacFn(cvode_mem, cvode::cJac);
       if (utils::check_flag(&flag, "CVodeSetJacFn", 1)) {
         return (1);
       }
-    } else if (udata_g->isolve_type == cvode::sparseDirect) {
+    } else if (udata_g->solve_type == cvode::sparseDirect) {
 #ifdef PELE_USE_KLU
       // Set the user-supplied KLU Jacobian routine Jac
       flag = CVodeSetJacFn(cvode_mem, cvode::cJac_KLU);
@@ -176,7 +170,7 @@ ReactorCvode::init(int reactor_type, int Ncells)
         "Shouldn't be there: sparseDirect solver_type not valid without "
         "KLU library.");
 #endif
-    } else if (udata_g->isolve_type == cvode::customDirect) {
+    } else if (udata_g->solve_type == cvode::customDirect) {
       // Set the user-supplied Jacobian routine Jac
       flag = CVodeSetJacFn(cvode_mem, cvode::cJac_sps);
       if (utils::check_flag(&flag, "CVodeSetJacFn", 1)) {
@@ -185,9 +179,8 @@ ReactorCvode::init(int reactor_type, int Ncells)
     }
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for iterative solver preconditioner
-  if (udata_g->iprecond_type == cvode::denseSimpleAJac) {
+  if (udata_g->precond_type == cvode::denseSimpleAJac) {
     // Set the JAcobian-times-vector function
     flag = CVSpilsSetJacTimes(cvode_mem, nullptr, nullptr);
     if (utils::check_flag(&flag, "CVSpilsSetJacTimes", 1)) {
@@ -198,7 +191,7 @@ ReactorCvode::init(int reactor_type, int Ncells)
     if (utils::check_flag(&flag, "CVSpilsSetPreconditioner", 1)) {
       return (1);
     }
-  } else if (udata_g->iprecond_type == cvode::sparseSimpleAJac) {
+  } else if (udata_g->precond_type == cvode::sparseSimpleAJac) {
 #ifdef PELE_USE_KLU
     // Set the JAcobian-times-vector function
     flag = CVSpilsSetJacTimes(cvode_mem, nullptr, nullptr);
@@ -213,7 +206,7 @@ ReactorCvode::init(int reactor_type, int Ncells)
     amrex::Abort(
       "sparseSimpleAJac precond_type not valid without KLU library.");
 #endif
-  } else if (udata_g->iprecond_type == cvode::customSimpleAJac) {
+  } else if (udata_g->precond_type == cvode::customSimpleAJac) {
     // Set the JAcobian-times-vector function
     flag = CVSpilsSetJacTimes(cvode_mem, nullptr, nullptr);
     if (utils::check_flag(&flag, "CVSpilsSetJacTimes", 1)) {
@@ -227,7 +220,6 @@ ReactorCvode::init(int reactor_type, int Ncells)
     }
   }
 
-  // ----------------------------------------------------------
   // CVODE runtime options
   flag = CVodeSetMaxNonlinIters(cvode_mem, 50); // Max newton iter.
   if (utils::check_flag(&flag, "CVodeSetMaxNonlinIters", 1)) {
@@ -264,66 +256,65 @@ ReactorCvode::init(int reactor_type, int Ncells)
 void
 ReactorCvode::checkCvodeOptions() const
 {
-
   // Query options
   amrex::ParmParse pp("ode");
-  int iverbose = 0;
-  pp.query("verbose", iverbose);
+  int verbose = 0;
+  pp.query("verbose", verbose);
 
-  if (iverbose > 0) {
+  if (verbose > 0) {
     amrex::Print() << "Number of species in mech is " << NUM_SPECIES << "\n";
   }
 
   std::string solve_type_str = "none";
   amrex::ParmParse ppcv("cvode");
   ppcv.query("solve_type", solve_type_str);
-  int isolve_type = -1;
-  int ianalytical_jacobian = 0;
-  int iprecond_type = -1;
+  int solve_type = -1;
+  int analytical_jacobian = 0;
+  int precond_type = -1;
 
 #ifdef AMREX_USE_GPU
   if (solve_type_str == "sparse_direct") {
-    isolve_type = cvode::sparseDirect;
-    ianalytical_jacobian = 1;
+    solve_type = cvode::sparseDirect;
+    analytical_jacobian = 1;
 #ifdef AMREX_USE_CUDA
-    if (iverbose > 0)
+    if (verbose > 0)
       amrex::Print()
         << " Using a cuSparse direct linear solve with analytical Jacobian\n";
 #else
     amrex::Abort("solve_type 'sparse_direct' only available with CUDA");
 #endif
   } else if (solve_type_str == "custom_direct") {
-    isolve_type = cvode::customDirect;
-    ianalytical_jacobian = 1;
+    solve_type = cvode::customDirect;
+    analytical_jacobian = 1;
 #ifdef AMREX_USE_CUDA
-    if (iverbose > 0)
+    if (verbose > 0)
       amrex::Print()
         << " Using a custom direct linear solve with analytical Jacobian\n";
 #else
     amrex::Abort("solve_type 'custom_direct' only available with CUDA");
 #endif
   } else if (solve_type_str == "magma_direct") {
-    isolve_type = cvode::magmaDirect;
-    ianalytical_jacobian = 1;
+    solve_type = cvode::magmaDirect;
+    analytical_jacobian = 1;
 #ifdef PELE_USE_MAGMA
-    if (iverbose > 0)
+    if (verbose > 0)
       amrex::Print() << " Using MAGMA direct linear solve\n";
 #else
     amrex::Abort(
       "solve_type 'magma_direct' only available with if PELE_USE_MAGMA true");
 #endif
   } else if (solve_type_str == "GMRES") {
-    isolve_type = cvode::GMRES;
-    if (iverbose > 0)
+    solve_type = cvode::GMRES;
+    if (verbose > 0)
       amrex::Print() << " Using a JFNK GMRES linear solve\n";
   } else if (solve_type_str == "precGMRES") {
-    isolve_type = cvode::precGMRES;
-    if (iverbose > 0)
+    solve_type = cvode::precGMRES;
+    if (verbose > 0)
       amrex::Print() << " Using a JFNK GMRES linear solve";
     std::string prec_type_str = "cuSparse_simplified_AJacobian";
     ppcv.query("precond_type", prec_type_str);
     if (prec_type_str == "cuSparse_simplified_AJacobian") {
-      iprecond_type = cvode::sparseSimpleAJac;
+      precond_type = cvode::sparseSimpleAJac;
 #ifdef AMREX_USE_CUDA
       amrex::Print() << " with a cuSparse simplified AJ-based preconditioner";
 #else
@@ -344,61 +335,61 @@ ReactorCvode::checkCvodeOptions() const
 
 #else
   if (solve_type_str == "dense_direct") {
-    isolve_type = cvode::denseFDDirect;
-    if (iverbose > 0) {
+    solve_type = cvode::denseFDDirect;
+    if (verbose > 0) {
       amrex::Print()
         << " Using a dense direct linear solve with Finite Difference "
            "Jacobian\n";
     }
   } else if (solve_type_str == "denseAJ_direct") {
-    isolve_type = cvode::denseDirect;
-    ianalytical_jacobian = 1;
-    if (iverbose > 0) {
+    solve_type = cvode::denseDirect;
+    analytical_jacobian = 1;
+    if (verbose > 0) {
       amrex::Print()
         << " Using a dense direct linear solve with Analytical Jacobian\n";
     }
   } else if (solve_type_str == "sparse_direct") {
-    isolve_type = cvode::sparseDirect;
-    ianalytical_jacobian = 1;
+    solve_type = cvode::sparseDirect;
+    analytical_jacobian = 1;
 #ifndef PELE_USE_KLU
     amrex::Abort("solver_type sparse_direct requires the KLU library");
 #endif
-    if (iverbose > 0) {
+    if (verbose > 0) {
       amrex::Print()
         << " Using a sparse direct linear solve with KLU Analytical Jacobian\n";
     }
   } else if (solve_type_str == "custom_direct") {
-    isolve_type = cvode::customDirect;
-    ianalytical_jacobian = 1;
-    if (iverbose > 0) {
+    solve_type = cvode::customDirect;
+    analytical_jacobian = 1;
+    if (verbose > 0) {
       amrex::Print()
         << " Using a sparse custom direct linear solve with Analytical "
            "Jacobian\n";
     }
   } else if (solve_type_str == "GMRES") {
-    isolve_type = cvode::GMRES;
-    if (iverbose > 0) {
+    solve_type = cvode::GMRES;
+    if (verbose > 0) {
       amrex::Print() << " Using a JFNK GMRES linear solve\n";
     }
   } else if (solve_type_str == "precGMRES") {
-    isolve_type = cvode::precGMRES;
-    if (iverbose > 0) {
+    solve_type = cvode::precGMRES;
+    if (verbose > 0) {
       amrex::Print() << " Using a JFNK GMRES linear solve";
     }
     std::string prec_type_str = "none";
     ppcv.query("precond_type", prec_type_str);
     if (prec_type_str == "dense_simplified_AJacobian") {
-      iprecond_type = cvode::denseSimpleAJac;
+      precond_type = cvode::denseSimpleAJac;
       amrex::Print() << " with a dense simplified AJ-based preconditioner";
     } else if (prec_type_str == "sparse_simplified_AJacobian") {
-      iprecond_type = cvode::sparseSimpleAJac;
+      precond_type = cvode::sparseSimpleAJac;
 #ifndef PELE_USE_KLU
       amrex::Abort(
         "precond_type sparse_simplified_AJacobian requires the KLU library");
 #endif
       amrex::Print() << " with a sparse simplified AJ-based preconditioner";
     } else if (prec_type_str == "custom_simplified_AJacobian") {
-      iprecond_type = cvode::customSimpleAJac;
+      precond_type = cvode::customSimpleAJac;
       amrex::Print() << " with a custom simplified AJ-based preconditioner";
     } else {
       amrex::Abort(
@@ -407,7 +398,7 @@ ReactorCvode::checkCvodeOptions() const
     }
     amrex::Print() << "\n";
   } else if (solve_type_str == "diagnostic") {
-    isolve_type = cvode::hackDumpSparsePattern;
+    solve_type = cvode::hackDumpSparsePattern;
   } else {
     amrex::Abort(
       "Wrong solve_type. Options are: 'dense_direct', denseAJ_direct', "
@@ -416,14 +407,14 @@ ReactorCvode::checkCvodeOptions() const
 #endif
 
   // Print additionnal information
-  if (iprecond_type == cvode::sparseSimpleAJac) {
+  if (precond_type == cvode::sparseSimpleAJac) {
     int nJdata;
     const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
     // Simplified AJ precond data
 #ifdef AMREX_USE_GPU
 #if defined(AMREX_USE_CUDA)
     SPARSITY_INFO_SYST_SIMPLIFIED(&nJdata, &HP);
-    if (iverbose > 0) {
+    if (verbose > 0) {
       amrex::Print()
         << "--> cuSparse AJ based matrix Preconditioner -- non zero entries: "
         << nJdata << ", which represents "
@@ -438,7 +429,7 @@ ReactorCvode::checkCvodeOptions() const
 
 #else
     SPARSITY_INFO_SYST_SIMPLIFIED(&nJdata, &HP);
-    if (iverbose > 0) {
+    if (verbose > 0) {
       amrex::Print()
         << "--> KLU sparse AJ based matrix Preconditioner -- non zero entries: "
         << nJdata << ", which represents "
@@ -447,12 +438,12 @@ ReactorCvode::checkCvodeOptions() const
     }
 #endif
 #ifndef AMREX_USE_GPU
-  } else if (iprecond_type == cvode::customSimpleAJac) {
+  } else if (precond_type == cvode::customSimpleAJac) {
     int nJdata;
     const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
     // Simplified AJ precond data
     SPARSITY_INFO_SYST_SIMPLIFIED(&nJdata, &HP);
-    if (iverbose > 0) {
+    if (verbose > 0) {
       amrex::Print()
         << "--> custom sparse AJ based matrix Preconditioner -- non zero "
            "entries: "
@@ -463,16 +454,16 @@ ReactorCvode::checkCvodeOptions() const
 #endif
   }
 
-  if (ianalytical_jacobian == 1) {
+  if (analytical_jacobian == 1) {
     int nJdata;
     const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
-    int Ncells = 1; // Print the pattern of the diagonal block. Ncells will
+    int ncells = 1; // Print the pattern of the diagonal block. ncells will
                     // actually vary on GPU.
 #ifdef AMREX_USE_GPU
-    if (isolve_type == cvode::sparseDirect) {
+    if (solve_type == cvode::sparseDirect) {
 #if defined(AMREX_USE_CUDA)
-      SPARSITY_INFO_SYST(&nJdata, &HP, Ncells);
-      if (iverbose > 0) {
+      SPARSITY_INFO_SYST(&nJdata, &HP, ncells);
+      if (verbose > 0) {
         amrex::Print()
           << "--> cuSparse based matrix Solver -- non zero entries: " << nJdata
           << ", which represents "
@@ -486,19 +477,19 @@ ReactorCvode::checkCvodeOptions() const
     }
 
 #else
-    if (isolve_type == cvode::customDirect) {
-      SPARSITY_INFO_SYST(&nJdata, &HP, Ncells);
-      if (iverbose > 0) {
+    if (solve_type == cvode::customDirect) {
+      SPARSITY_INFO_SYST(&nJdata, &HP, ncells);
+      if (verbose > 0) {
         amrex::Print()
           << "--> sparse AJ-based matrix custom Solver -- non zero entries: "
           << nJdata << ", which represents "
           << nJdata / float((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
           << " % fill-in pattern\n";
       }
-    } else if (isolve_type == cvode::sparseDirect) {
+    } else if (solve_type == cvode::sparseDirect) {
 #ifdef PELE_USE_KLU
-      SPARSITY_INFO(&nJdata, &HP, Ncells);
-      if (iverbose > 0) {
+      SPARSITY_INFO(&nJdata, &HP, ncells);
+      if (verbose > 0) {
         amrex::Print()
           << "--> KLU sparse AJ-based matrix Solver -- non zero entries: "
           << nJdata << ", which represents "
@@ -515,7 +506,7 @@ ReactorCvode::checkCvodeOptions() const
   }
 
 #ifndef AMREX_USE_GPU
-  if (isolve_type == cvode::hackDumpSparsePattern) {
+  if (solve_type == cvode::hackDumpSparsePattern) {
     // This is a diagnostic option -> dump sparsity pattern and abort.
     // Reactor type
     const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
@@ -646,11 +637,10 @@ ReactorCvode::allocUserData(
 #endif
 ) const
 {
-  //----------------------------------------------------------
   // Query options
   amrex::ParmParse pp("ode");
-  int iverbose = 0;
-  pp.query("verbose", iverbose);
+  int verbose = 0;
+  pp.query("verbose", verbose);
 
   std::string solve_type_str = "none";
   amrex::ParmParse ppcv("cvode");
@@ -658,28 +648,28 @@ ReactorCvode::allocUserData(
   ppcv.query("max_order", udata->maxOrder);
   ppcv.query("solve_type", solve_type_str);
   // Defaults
-  udata->isolve_type = -1;
-  udata->ianalytical_jacobian = 0;
-  udata->iprecond_type = -1;
+  udata->solve_type = -1;
+  udata->analytical_jacobian = 0;
+  udata->precond_type = -1;
 
 #ifdef AMREX_USE_GPU
   if (solve_type_str == "sparse_direct") {
-    udata->isolve_type = cvode::sparseDirect;
-    udata->ianalytical_jacobian = 1;
+    udata->solve_type = cvode::sparseDirect;
+    udata->analytical_jacobian = 1;
   } else if (solve_type_str == "custom_direct") {
-    udata->isolve_type = cvode::customDirect;
-    udata->ianalytical_jacobian = 1;
+    udata->solve_type = cvode::customDirect;
+    udata->analytical_jacobian = 1;
   } else if (solve_type_str == "magma_direct") {
-    udata->isolve_type = cvode::magmaDirect;
-    udata->ianalytical_jacobian = 1;
+    udata->solve_type = cvode::magmaDirect;
+    udata->analytical_jacobian = 1;
   } else if (solve_type_str == "GMRES") {
-    udata->isolve_type = cvode::GMRES;
+    udata->solve_type = cvode::GMRES;
   } else if (solve_type_str == "precGMRES") {
-    udata->isolve_type = cvode::precGMRES;
+    udata->solve_type = cvode::precGMRES;
     std::string prec_type_str = "cuSparse_simplified_AJacobian";
     ppcv.query("precond_type", prec_type_str);
     if (prec_type_str == "cuSparse_simplified_AJacobian") {
-      udata->iprecond_type = cvode::sparseSimpleAJac;
+      udata->precond_type = cvode::sparseSimpleAJac;
     } else {
       amrex::Abort(
         "Wrong precond_type. Only option is: 'cuSparse_simplified_AJacobian'");
@@ -693,35 +683,35 @@ ReactorCvode::allocUserData(
 
 #else
   if (solve_type_str == "dense_direct") {
-    udata->isolve_type = cvode::denseFDDirect;
+    udata->solve_type = cvode::denseFDDirect;
   } else if (solve_type_str == "denseAJ_direct") {
-    udata->isolve_type = cvode::denseDirect;
-    udata->ianalytical_jacobian = 1;
+    udata->solve_type = cvode::denseDirect;
+    udata->analytical_jacobian = 1;
   } else if (solve_type_str == "sparse_direct") {
-    udata->isolve_type = cvode::sparseDirect;
-    udata->ianalytical_jacobian = 1;
+    udata->solve_type = cvode::sparseDirect;
+    udata->analytical_jacobian = 1;
 #ifndef PELE_USE_KLU
     amrex::Abort("solver_type sparse_direct requires the KLU library");
 #endif
   } else if (solve_type_str == "custom_direct") {
-    udata->isolve_type = cvode::customDirect;
-    udata->ianalytical_jacobian = 1;
+    udata->solve_type = cvode::customDirect;
+    udata->analytical_jacobian = 1;
   } else if (solve_type_str == "GMRES") {
-    udata->isolve_type = cvode::GMRES;
+    udata->solve_type = cvode::GMRES;
   } else if (solve_type_str == "precGMRES") {
-    udata->isolve_type = cvode::precGMRES;
+    udata->solve_type = cvode::precGMRES;
     std::string prec_type_str = "sparse_simplified_AJacobian";
     ppcv.query("precond_type", prec_type_str);
     if (prec_type_str == "dense_simplified_AJacobian") {
-      udata->iprecond_type = cvode::denseSimpleAJac;
+      udata->precond_type = cvode::denseSimpleAJac;
     } else if (prec_type_str == "sparse_simplified_AJacobian") {
-      udata->iprecond_type = cvode::sparseSimpleAJac;
+      udata->precond_type = cvode::sparseSimpleAJac;
 #ifndef PELE_USE_KLU
       amrex::Abort(
         "precond_type sparse_simplified_AJacobian requires the KLU library");
 #endif
     } else if (prec_type_str == "custom_simplified_AJacobian") {
-      udata->iprecond_type = cvode::customSimpleAJac;
+      udata->precond_type = cvode::customSimpleAJac;
     } else {
       amrex::Abort(
         "Wrong precond_type. Options are: 'dense_simplified_AJacobian', "
@@ -735,38 +725,35 @@ ReactorCvode::allocUserData(
   }
 #endif
 
-  //----------------------------------------------------------
   // Pass options to udata
   const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
   int nspec_tot = (NUM_SPECIES)*a_ncells;
-  udata->ireactor_type = m_reactor_type;
-  udata->ncells_d = a_ncells;
-  udata->iverbose = iverbose;
+  udata->reactor_type = m_reactor_type;
+  udata->ncells = a_ncells;
+  udata->verbose = verbose;
 #ifdef AMREX_USE_GPU
   udata->nbThreads = 32;
   udata->nbBlocks = std::max(1, a_ncells / udata->nbThreads);
   udata->stream = stream;
 #endif
 
-  //----------------------------------------------------------
   // Alloc internal udata solution/forcing containers
-  udata->species_ext_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-    nspec_tot * sizeof(amrex::Real));
-  udata->energy_init_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-    a_ncells * sizeof(amrex::Real));
-  udata->energy_ext_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
-    a_ncells * sizeof(amrex::Real));
-  udata->mask = (int*)amrex::The_Device_Arena()->alloc(a_ncells * sizeof(int));
+  udata->rYsrc_ext =
+    (amrex::Real*)amrex::The_Arena()->alloc(nspec_tot * sizeof(amrex::Real));
+  udata->rhoe_init =
+    (amrex::Real*)amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real));
+  udata->rhoesrc_ext =
+    (amrex::Real*)amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real));
+  udata->mask = (int*)amrex::The_Arena()->alloc(a_ncells * sizeof(int));
 
 #ifndef AMREX_USE_GPU
-  udata->FCunt = (int*)amrex::The_Device_Arena()->alloc(a_ncells * sizeof(int));
+  udata->FCunt = (int*)amrex::The_Arena()->alloc(a_ncells * sizeof(int));
   udata->FirstTimePrecond = true;
 #endif
 
-  //----------------------------------------------------------
   // Alloc internal udata Analytical Jacobian containers
 #ifdef AMREX_USE_GPU
-  if (udata->isolve_type == cvode::sparseDirect) {
+  if (udata->solve_type == cvode::sparseDirect) {
 #ifdef AMREX_USE_CUDA
     SPARSITY_INFO_SYST(&(udata->NNZ), &HP, 1);
     udata->csr_row_count_h =
@@ -774,9 +761,9 @@ ReactorCvode::allocUserData(
     udata->csr_col_index_h =
       (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
     udata->csr_row_count_d =
-      (int*)amrex::The_Device_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
+      (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_d =
-      (int*)amrex::The_Device_Arena()->alloc(udata->NNZ * sizeof(int));
+      (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
 
     cusolverStatus_t cusolver_status = CUSOLVER_STATUS_SUCCESS;
     cusolver_status = cusolverSpCreate(&(udata->cusolverHandle));
@@ -815,7 +802,7 @@ ReactorCvode::allocUserData(
     amrex::Abort(
       "Solver_type sparse_direct is only available with CUDA on GPU");
 #endif
-  } else if (udata->isolve_type == cvode::customDirect) {
+  } else if (udata->solve_type == cvode::customDirect) {
 #ifdef AMREX_USE_CUDA
     SPARSITY_INFO_SYST(&(udata->NNZ), &HP, 1);
     udata->csr_row_count_h =
@@ -823,9 +810,9 @@ ReactorCvode::allocUserData(
     udata->csr_col_index_h =
       (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
     udata->csr_row_count_d =
-      (int*)amrex::The_Device_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
+      (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_d =
-      (int*)amrex::The_Device_Arena()->alloc(udata->NNZ * sizeof(int));
+      (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
 
     cusparseStatus_t cusparse_status = CUSPARSE_STATUS_SUCCESS;
     cusparse_status = cusparseCreate(&(udata->cuSPHandle));
@@ -857,7 +844,7 @@ ReactorCvode::allocUserData(
     amrex::Abort(
       "Solver_type custom_direct is only available with CUDA on GPU");
 #endif
-  } else if (udata->isolve_type == cvode::magmaDirect) {
+  } else if (udata->solve_type == cvode::magmaDirect) {
 #ifdef PELE_USE_MAGMA
     a_A = SUNMatrix_MagmaDenseBlock(
       a_ncells, (NUM_SPECIES + 1), (NUM_SPECIES + 1), SUNMEMTYPE_DEVICE,
@@ -868,7 +855,7 @@ ReactorCvode::allocUserData(
   }
 
 #else
-  if (udata->isolve_type == cvode::sparseDirect) {
+  if (udata->solve_type == cvode::sparseDirect) {
 #ifdef PELE_USE_KLU
     // CSC matrices data -> one big matrix used for the direct solve
     udata->colPtrs = new int*[1];
@@ -876,36 +863,35 @@ ReactorCvode::allocUserData(
     udata->Jdata = new amrex::Real*[1];
 
     // Number of non zero elements in ODE system
-    SPARSITY_INFO(&(udata->NNZ), &HP, udata->ncells_d);
+    SPARSITY_INFO(&(udata->NNZ), &HP, udata->ncells);
     // Build Sparse Matrix for direct sparse KLU solver
     (udata->PS) = new SUNMatrix[1];
     (udata->PS)[0] = SUNSparseMatrix(
-      (NUM_SPECIES + 1) * udata->ncells_d, (NUM_SPECIES + 1) * udata->ncells_d,
-      udata->NNZ * udata->ncells_d, CSC_MAT);
+      (NUM_SPECIES + 1) * udata->ncells, (NUM_SPECIES + 1) * udata->ncells,
+      udata->NNZ * udata->ncells, CSC_MAT);
     udata->colPtrs[0] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[0]);
     udata->rowVals[0] = (int*)SUNSparseMatrix_IndexValues((udata->PS)[0]);
     udata->Jdata[0] = SUNSparseMatrix_Data((udata->PS)[0]);
     SPARSITY_PREPROC_CSC(
-      udata->rowVals[0], udata->colPtrs[0], &HP, udata->ncells_d);
+      udata->rowVals[0], udata->colPtrs[0], &HP, udata->ncells);
 #endif
-  } else if (udata->isolve_type == cvode::customDirect) {
+  } else if (udata->solve_type == cvode::customDirect) {
     // Number of non zero elements in ODE system
-    SPARSITY_INFO_SYST(&(udata->NNZ), &HP, udata->ncells_d);
+    SPARSITY_INFO_SYST(&(udata->NNZ), &HP, udata->ncells);
     // Build the SUNmatrix as CSR sparse and fill ptrs to row/Vals
     udata->PSc = SUNSparseMatrix(
-      (NUM_SPECIES + 1) * udata->ncells_d, (NUM_SPECIES + 1) * udata->ncells_d,
-      udata->NNZ * udata->ncells_d, CSR_MAT);
+      (NUM_SPECIES + 1) * udata->ncells, (NUM_SPECIES + 1) * udata->ncells,
+      udata->NNZ * udata->ncells, CSR_MAT);
     udata->rowPtrs_c = (int*)SUNSparseMatrix_IndexPointers(udata->PSc);
     udata->colVals_c = (int*)SUNSparseMatrix_IndexValues(udata->PSc);
     SPARSITY_PREPROC_SYST_CSR(
-      udata->colVals_c, udata->rowPtrs_c, &HP, udata->ncells_d, 0);
+      udata->colVals_c, udata->rowPtrs_c, &HP, udata->ncells, 0);
   }
 #endif
 
-  //----------------------------------------------------------
   // Alloc internal udata Preconditioner containers
 #ifdef AMREX_USE_GPU
-  if (udata->iprecond_type == cvode::sparseSimpleAJac) {
+  if (udata->precond_type == cvode::sparseSimpleAJac) {
 #ifdef AMREX_USE_CUDA
     SPARSITY_INFO_SYST_SIMPLIFIED(&(udata->NNZ), &HP);
     udata->csr_row_count_h =
@@ -914,12 +900,12 @@ ReactorCvode::allocUserData(
       (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
 
     udata->csr_row_count_d =
-      (int*)amrex::The_Device_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
+      (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_d =
-      (int*)amrex::The_Device_Arena()->alloc(udata->NNZ * sizeof(int));
-    udata->csr_jac_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+      (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
+    udata->csr_jac_d = (amrex::Real*)amrex::The_Arena()->alloc(
       udata->NNZ * a_ncells * sizeof(amrex::Real));
-    udata->csr_val_d = (amrex::Real*)amrex::The_Device_Arena()->alloc(
+    udata->csr_val_d = (amrex::Real*)amrex::The_Arena()->alloc(
       udata->NNZ * a_ncells * sizeof(amrex::Real));
 
     SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
@@ -992,41 +978,41 @@ ReactorCvode::allocUserData(
   }
 
 #else
-  if (udata->iprecond_type == cvode::denseSimpleAJac) {
+  if (udata->precond_type == cvode::denseSimpleAJac) {
     // Matrix data : big bunch of dimensions, not sure why. Generally ncells ==
     // 1 so not too bad Simply create the space.
-    (udata->P) = new amrex::Real***[udata->ncells_d];
-    (udata->Jbd) = new amrex::Real***[udata->ncells_d];
-    (udata->pivot) = new sunindextype**[udata->ncells_d];
-    for (int i = 0; i < udata->ncells_d; ++i) {
-      (udata->P)[i] = new amrex::Real**[udata->ncells_d];
-      (udata->Jbd)[i] = new amrex::Real**[udata->ncells_d];
-      (udata->pivot)[i] = new sunindextype*[udata->ncells_d];
+    (udata->P) = new amrex::Real***[udata->ncells];
+    (udata->Jbd) = new amrex::Real***[udata->ncells];
+    (udata->pivot) = new sunindextype**[udata->ncells];
+    for (int i = 0; i < udata->ncells; ++i) {
+      (udata->P)[i] = new amrex::Real**[udata->ncells];
+      (udata->Jbd)[i] = new amrex::Real**[udata->ncells];
+      (udata->pivot)[i] = new sunindextype*[udata->ncells];
     }
-    for (int i = 0; i < udata->ncells_d; ++i) {
+    for (int i = 0; i < udata->ncells; ++i) {
       (udata->P)[i][i] = newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
       (udata->Jbd)[i][i] = newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
       (udata->pivot)[i][i] = newIndexArray(NUM_SPECIES + 1);
     }
-  } else if (udata->iprecond_type == cvode::sparseSimpleAJac) {
+  } else if (udata->precond_type == cvode::sparseSimpleAJac) {
 #ifdef PELE_USE_KLU
     // CSC matrices data for each submatrix (cells)
-    udata->colPtrs = new int*[udata->ncells_d];
-    udata->rowVals = new int*[udata->ncells_d];
-    udata->Jdata = new amrex::Real*[udata->ncells_d];
+    udata->colPtrs = new int*[udata->ncells];
+    udata->rowVals = new int*[udata->ncells];
+    udata->Jdata = new amrex::Real*[udata->ncells];
 
     // KLU internal storage
-    udata->Common = new klu_common[udata->ncells_d];
-    udata->Symbolic = new klu_symbolic*[udata->ncells_d];
-    udata->Numeric = new klu_numeric*[udata->ncells_d];
+    udata->Common = new klu_common[udata->ncells];
+    udata->Symbolic = new klu_symbolic*[udata->ncells];
+    udata->Numeric = new klu_numeric*[udata->ncells];
     // Sparse Matrices for It Sparse KLU block-solve
-    udata->PS = new SUNMatrix[udata->ncells_d];
+    udata->PS = new SUNMatrix[udata->ncells];
     // Number of non zero elements
     SPARSITY_INFO_SYST_SIMPLIFIED(&(udata->NNZ), &HP);
     // Not used yet. TODO use to fetch sparse Mat
     udata->indx = new int[udata->NNZ];
-    udata->JSPSmat = new amrex::Real*[udata->ncells_d];
-    for (int i = 0; i < udata->ncells_d; ++i) {
+    udata->JSPSmat = new amrex::Real*[udata->ncells];
+    for (int i = 0; i < udata->ncells; ++i) {
       (udata->PS)[i] =
         SUNSparseMatrix(NUM_SPECIES + 1, NUM_SPECIES + 1, udata->NNZ, CSC_MAT);
       udata->colPtrs[i] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[i]);
@@ -1046,16 +1032,16 @@ ReactorCvode::allocUserData(
         &(udata->Common[i]));
     }
 #endif
-  } else if (udata->iprecond_type == cvode::customSimpleAJac) {
+  } else if (udata->precond_type == cvode::customSimpleAJac) {
     // CSR matrices data for each submatrix (cells)
-    udata->colVals = new int*[udata->ncells_d];
-    udata->rowPtrs = new int*[udata->ncells_d];
+    udata->colVals = new int*[udata->ncells];
+    udata->rowPtrs = new int*[udata->ncells];
     // Matrices for each sparse custom block-solve
-    udata->PS = new SUNMatrix[udata->ncells_d];
-    udata->JSPSmat = new amrex::Real*[udata->ncells_d];
+    udata->PS = new SUNMatrix[udata->ncells];
+    udata->JSPSmat = new amrex::Real*[udata->ncells];
     // Number of non zero elements
     SPARSITY_INFO_SYST_SIMPLIFIED(&(udata->NNZ), &HP);
-    for (int i = 0; i < udata->ncells_d; ++i) {
+    for (int i = 0; i < udata->ncells; ++i) {
       (udata->PS)[i] =
         SUNSparseMatrix(NUM_SPECIES + 1, NUM_SPECIES + 1, udata->NNZ, CSR_MAT);
       udata->rowPtrs[i] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[i]);
@@ -1081,18 +1067,18 @@ ReactorCvode::setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata)
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
     a_udata != nullptr, "Reactor object is not initialized !!");
 
-  int ncells = a_udata->ncells_d;
-  int iverbose = a_udata->iverbose;
+  int ncells = a_udata->ncells;
+  int verbose = a_udata->verbose;
   int neq_tot = (NUM_SPECIES + 1) * ncells;
 
 #if defined(AMREX_USE_CUDA)
   N_Vector atol = N_VNewWithMemHelp_Cuda(
-    neq_tot, /*use_managed_mem=*/true,
+    neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper());
   amrex::Real* ratol = N_VGetHostArrayPointer_Cuda(atol);
 #elif defined(AMREX_USE_HIP)
   N_Vector atol = N_VNewWithMemHelp_Hip(
-    neq_tot, /*use_managed_mem=*/true,
+    neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper());
   amrex::Real* ratol = N_VGetHostArrayPointer_Hip(atol);
 #else
@@ -1101,7 +1087,7 @@ ReactorCvode::setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata)
 #endif
 
   if (typVals[0] > 0.0) {
-    if ((iverbose > 0) && (omp_thread == 0)) {
+    if ((verbose > 0) && (omp_thread == 0)) {
       amrex::Print() << " Setting CVODE tolerances with TypVals rtol = "
                      << relTol << " atolfact = " << absTol
                      << " in PelePhysics \n";
@@ -1113,7 +1099,7 @@ ReactorCvode::setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata)
       }
     }
   } else {
-    if ((iverbose > 0) && (omp_thread == 0)) {
+    if ((verbose > 0) && (omp_thread == 0)) {
       amrex::Print() << " Setting CVODE tolerances rtol = " << relTol
                      << " atol = " << absTol << " in PelePhysics \n";
     }
@@ -1142,7 +1128,7 @@ int
 ReactorCvode::react(
   const amrex::Box& box,
   amrex::Array4<amrex::Real> const& rY_in,
-  amrex::Array4<amrex::Real> const& rY_src_in,
+  amrex::Array4<amrex::Real> const& rYsrc_in,
   amrex::Array4<amrex::Real> const& T_in,
   amrex::Array4<amrex::Real> const& rEner_in,
   amrex::Array4<amrex::Real> const& rEner_src_in,
@@ -1157,7 +1143,7 @@ ReactorCvode::react(
 )
 {
   BL_PROFILE("Pele::ReactorCvode::react()");
-  // CPU and GPU version are very different such that the entire file
+  // CPU and GPU version are very different such that the entire function
   // is split between a GPU region and a CPU region
 
   amrex::Real time_start = time;
@@ -1168,30 +1154,14 @@ ReactorCvode::react(
   // GPU Region
   //----------------------------------------------------------
 #ifdef AMREX_USE_GPU
-  int ncells = box.numPts();
-  // Total number of eqs. in solve
-  int neq_tot = (NUM_SPECIES + 1) * ncells;
-  //----------------------------------------------------------
-  // On CPU these lives as class variable and where initialized in
-  // init()
-  N_Vector y = NULL;
-  SUNLinearSolver LS = NULL;
-  SUNMatrix A = NULL;
-  void* cvode_mem = NULL;
-  CVODEUserData* user_data;
 
-  // Fill user_data
-  amrex::Gpu::streamSynchronize();
-  user_data =
-    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
-  allocUserData(user_data, ncells, A, stream);
+  const int ncells = box.numPts();
+  const int neq_tot = (NUM_SPECIES + 1) * ncells;
 
-  //----------------------------------------------------------
   // Solution vector and execution policy
 #if defined(AMREX_USE_CUDA)
-  y = N_VNewWithMemHelp_Cuda(
-    neq_tot, /*use_managed_mem=*/true,
-    *amrex::sundials::The_SUNMemory_Helper());
+  N_Vector y = N_VNewWithMemHelp_Cuda(
+    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
@@ -1200,11 +1170,9 @@ ReactorCvode::react(
     new SUNCudaBlockReduceExecPolicy(256, 0, stream);
   N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
-
 #elif defined(AMREX_USE_HIP)
-  y = N_VNewWithMemHelp_Hip(
-    neq_tot, /*use_managed_mem=*/true,
-    *amrex::sundials::The_SUNMemory_Helper());
+  N_Vector y = N_VNewWithMemHelp_Hip(
+    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
@@ -1215,37 +1183,39 @@ ReactorCvode::react(
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
 #endif
 
+  amrex::Gpu::streamSynchronize();
+  SUNMatrix A = NULL;
+  CVODEUserData* user_data = new CVODEUserData{};
+  allocUserData(user_data, ncells, A, stream);
+
   // Fill data
   flatten(
-    box, ncells, rY_in, rY_src_in, T_in, rEner_in, rEner_src_in, yvec_d,
-    user_data->species_ext_d, user_data->energy_init_d,
-    user_data->energy_ext_d);
+    box, ncells, rY_in, rYsrc_in, T_in, rEner_in, rEner_src_in, yvec_d,
+    user_data->rYsrc_ext, user_data->rhoe_init, user_data->rhoesrc_ext);
 
 #ifdef AMREX_USE_OMP
   Gpu::Device::streamSynchronize();
 #endif
 
-  //----------------------------------------------------------
   // Setup Cvode object
-  cvode_mem = CVodeCreate(CV_BDF);
+  void* cvode_mem = CVodeCreate(CV_BDF);
   if (utils::check_flag((void*)cvode_mem, "CVodeCreate", 0))
     return (1);
   int flag = CVodeSetUserData(cvode_mem, static_cast<void*>(user_data));
 
-  // Call CVodeInit to initialize the integrator memory and specify the
-  //  user's right hand side function, the inital time, and
-  //  initial dependent variable vector y.
+  // Call CVodeInit to initialize the integrator memory and specify the user's
+  // right hand side function, the inital time, and initial dependent variable
+  // vector y.
   flag = CVodeInit(cvode_mem, cF_RHS, time_start, y);
   if (utils::check_flag(&flag, "CVodeInit", 1))
     return (1);
 
-  //----------------------------------------------------------
   // Setup tolerances with typical values
   setCvodeTols(cvode_mem, user_data);
 
-  // ----------------------------------------------------------
   // Linear solver data
-  if (user_data->isolve_type == cvode::sparseDirect) {
+  SUNLinearSolver LS = NULL;
+  if (user_data->solve_type == cvode::sparseDirect) {
 #if defined(AMREX_USE_CUDA)
     LS = SUNLinSol_cuSolverSp_batchQR(y, A, user_data->cusolverHandle);
     if (utils::check_flag((void*)LS, "SUNLinSol_cuSolverSp_batchQR", 0))
@@ -1253,12 +1223,11 @@ ReactorCvode::react(
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
       return (1);
-
 #else
     amrex::Abort(
       "Shoudn't be there. solve_type sparse_direct only available with CUDA");
 #endif
-  } else if (user_data->isolve_type == cvode::customDirect) {
+  } else if (user_data->solve_type == cvode::customDirect) {
 #if defined(AMREX_USE_CUDA)
     LS = cvode::SUNLinSol_dense_custom(y, A, stream);
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
@@ -1266,7 +1235,6 @@ ReactorCvode::react(
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
       return (1);
-
     flag = CVodeSetJacFn(cvode_mem, cvode::cJac);
     if (utils::check_flag(&flag, "CVodeSetJacFn", 1))
       return (1);
@@ -1274,7 +1242,7 @@ ReactorCvode::react(
     amrex::Abort(
       "Shoudn't be there. solve_type custom_direct only available with CUDA");
 #endif
-  } else if (user_data->isolve_type == cvode::magmaDirect) {
+  } else if (user_data->solve_type == cvode::magmaDirect) {
 #ifdef PELE_USE_MAGMA
     LS = SUNLinSol_MagmaDense(y, A);
     if (utils::check_flag((void*)LS, "SUNLinSol_MagmaDense", 0))
@@ -1287,7 +1255,7 @@ ReactorCvode::react(
       "Shoudn't be there. solve_type magma_direct only available with "
       "PELE_USE_MAGMA = TRUE");
 #endif
-  } else if (user_data->isolve_type == cvode::GMRES) {
+  } else if (user_data->solve_type == cvode::GMRES) {
     LS = SUNLinSol_SPGMR(y, PREC_NONE, 0);
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
       return (1);
@@ -1297,7 +1265,7 @@ ReactorCvode::react(
     flag = CVodeSetJacTimes(cvode_mem, NULL, NULL);
     if (utils::check_flag(&flag, "CVodeSetJacTimes", 1))
       return (1);
-  } else if (user_data->isolve_type == cvode::precGMRES) {
+  } else if (user_data->solve_type == cvode::precGMRES) {
     LS = SUNLinSol_SPGMR(y, PREC_LEFT, 0);
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
       return (1);
@@ -1309,24 +1277,21 @@ ReactorCvode::react(
       return (1);
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for direct solver
   // Sparse/custom/magma direct uses the same Jacobian functions
-  if (user_data->ianalytical_jacobian == 1) {
+  if (user_data->analytical_jacobian == 1) {
     flag = CVodeSetJacFn(cvode_mem, cvode::cJac);
     if (utils::check_flag(&flag, "CVodeSetJacFn", 1))
       return (1);
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for iterative solver preconditioner
-  if (user_data->iprecond_type == cvode::sparseSimpleAJac) {
+  if (user_data->precond_type == cvode::sparseSimpleAJac) {
     flag = CVodeSetPreconditioner(cvode_mem, cvode::Precond, cvode::PSolve);
     if (utils::check_flag(&flag, "CVodeSetPreconditioner", 1))
       return (1);
   }
 
-  // ----------------------------------------------------------
   // CVODE runtime options
   flag = CVodeSetMaxNumSteps(cvode_mem, 100000);
   if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1))
@@ -1335,7 +1300,6 @@ ReactorCvode::react(
   if (utils::check_flag(&flag, "CVodeSetMaxOrd", 1))
     return (1);
 
-  // ----------------------------------------------------------
   // Actual CVODE solve
   BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
   flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
@@ -1361,13 +1325,12 @@ ReactorCvode::react(
   long int* d_nfe = v_nfe.data();
   unflatten(
     box, ncells, rY_in, T_in, rEner_in, rEner_src_in, FC_in, yvec_d,
-    user_data->energy_init_d, d_nfe, dt_react);
+    user_data->rhoe_init, d_nfe, dt_react);
 
-  if (user_data->iverbose > 1) {
+  if (user_data->verbose > 1) {
     cvode::printFinalStats(cvode_mem);
   }
 
-  //----------------------------------------------------------
   // Clean up
   N_VDestroy(y);
   CVodeFree(&cvode_mem);
@@ -1378,10 +1341,10 @@ ReactorCvode::react(
   }
   freeUserData(user_data);
 
+#else
   //----------------------------------------------------------
   // CPU Region
   //----------------------------------------------------------
-#else
 
   int omp_thread = 0;
 #ifdef AMREX_USE_OMP
@@ -1402,9 +1365,9 @@ ReactorCvode::react(
 
         amrex::Real* yvec_d = N_VGetArrayPointer(y);
         utils::box_flatten<Ordering>(
-          icell, i, j, k, ncells, captured_reactor_type, rY_in, rY_src_in, T_in,
-          rEner_in, rEner_src_in, yvec_d, udata_g->species_ext_d,
-          udata_g->energy_init_d, udata_g->energy_ext_d);
+          icell, i, j, k, ncells, captured_reactor_type, rY_in, rYsrc_in, T_in,
+          rEner_in, rEner_src_in, yvec_d, udata_g->rYsrc_ext,
+          udata_g->rhoe_init, udata_g->rhoesrc_ext);
 
         // ReInit CVODE is faster
         CVodeReInit(cvode_mem, time_start, y);
@@ -1413,7 +1376,7 @@ ReactorCvode::react(
         CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
         BL_PROFILE_VAR_STOP(AroundCVODE);
 
-        if ((udata_g->iverbose > 1) && (omp_thread == 0)) {
+        if ((udata_g->verbose > 1) && (omp_thread == 0)) {
           amrex::Print() << "Additional verbose info --\n";
           cvode::printFinalStats(cvode_mem);
           amrex::Print() << "\n -------------------------------------\n";
@@ -1430,10 +1393,9 @@ ReactorCvode::react(
 
         utils::box_unflatten<Ordering>(
           icell, i, j, k, ncells, captured_reactor_type, rY_in, T_in, rEner_in,
-          rEner_src_in, FC_in, yvec_d, udata_g->energy_init_d, nfe_tot,
-          dt_react);
+          rEner_src_in, FC_in, yvec_d, udata_g->rhoe_init, nfe_tot, dt_react);
 
-        if ((udata_g->iverbose > 3) && (omp_thread == 0)) {
+        if ((udata_g->verbose > 3) && (omp_thread == 0)) {
           amrex::Print() << "END : time curr is " << CvodeActual_time_final
                          << " and actual dt_react is " << actual_dt << "\n";
         }
@@ -1459,12 +1421,12 @@ ReactorCvode::react(
 int
 ReactorCvode::react(
   realtype* rY_in,
-  realtype* rY_src_in,
+  realtype* rYsrc_in,
   realtype* rX_in,
   realtype* rX_src_in,
   realtype& dt_react,
   realtype& time,
-  int Ncells
+  int ncells
 #ifdef AMREX_USE_GPU
   ,
   amrex::gpuStream_t stream
@@ -1484,24 +1446,21 @@ ReactorCvode::react(
   // GPU Region
   //----------------------------------------------------------
 #ifdef AMREX_USE_GPU
-  int neq_tot = (NUM_SPECIES + 1) * Ncells;
+  int neq_tot = (NUM_SPECIES + 1) * ncells;
   N_Vector y = NULL;
   SUNLinearSolver LS = NULL;
   SUNMatrix A = NULL;
   void* cvode_mem = NULL;
-  CVODEUserData* user_data;
 
   // Fill user_data
   amrex::Gpu::streamSynchronize();
-  user_data =
-    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
-  allocUserData(user_data, Ncells, A, stream);
+  CVODEUserData* user_data = new CVODEUserData{};
+  allocUserData(user_data, ncells, A, stream);
 
-  //----------------------------------------------------------
   // Solution vector and execution policy
 #if defined(AMREX_USE_CUDA)
   y = N_VNewWithMemHelp_Cuda(
-    neq_tot, /*use_managed_mem=*/true,
+    neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
     return (1);
@@ -1514,7 +1473,7 @@ ReactorCvode::react(
 
 #elif defined(AMREX_USE_HIP)
   y = N_VNewWithMemHelp_Hip(
-    neq_tot, /*use_managed_mem=*/true,
+    neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
     return (1);
@@ -1530,19 +1489,17 @@ ReactorCvode::react(
   BL_PROFILE_VAR("Pele::ReactorCvode::react():ASyncCopy", AsyncCopy);
   amrex::Gpu::htod_memcpy_async(yvec_d, rY_in, sizeof(amrex::Real) * (neq_tot));
   amrex::Gpu::htod_memcpy_async(
-    user_data->species_ext_d, rY_src_in,
-    sizeof(amrex::Real) * NUM_SPECIES * Ncells);
+    user_data->rYsrc_ext, rYsrc_in, sizeof(amrex::Real) * NUM_SPECIES * ncells);
   amrex::Gpu::htod_memcpy_async(
-    user_data->energy_init_d, rX_in, sizeof(amrex::Real) * Ncells);
+    user_data->rhoe_init, rX_in, sizeof(amrex::Real) * ncells);
   amrex::Gpu::htod_memcpy_async(
-    user_data->energy_ext_d, rX_src_in, sizeof(amrex::Real) * Ncells);
+    user_data->rhoesrc_ext, rX_src_in, sizeof(amrex::Real) * ncells);
   BL_PROFILE_VAR_STOP(AsyncCopy);
 
 #ifdef AMREX_USE_OMP
   Gpu::Device::streamSynchronize();
 #endif
 
-  // -------------------------------------------------------------
   // Initialize integrator
   cvode_mem = CVodeCreate(CV_BDF);
   if (utils::check_flag((void*)cvode_mem, "CVodeCreate", 0))
@@ -1556,13 +1513,11 @@ ReactorCvode::react(
   if (utils::check_flag(&flag, "CVodeInit", 1))
     return (1);
 
-  //----------------------------------------------------------
   // Setup tolerances with typical values
   setCvodeTols(cvode_mem, user_data);
 
-  // ----------------------------------------------------------
   // Linear solver data
-  if (user_data->isolve_type == cvode::sparseDirect) {
+  if (user_data->solve_type == cvode::sparseDirect) {
 #if defined(AMREX_USE_CUDA)
     LS = SUNLinSol_cuSolverSp_batchQR(y, A, user_data->cusolverHandle);
     if (utils::check_flag((void*)LS, "SUNLinSol_cuSolverSp_batchQR", 0))
@@ -1575,7 +1530,7 @@ ReactorCvode::react(
     amrex::Abort(
       "Shoudn't be there. solve_type sparse_direct only available with CUDA");
 #endif
-  } else if (user_data->isolve_type == cvode::customDirect) {
+  } else if (user_data->solve_type == cvode::customDirect) {
 #if defined(AMREX_USE_CUDA)
     LS = cvode::SUNLinSol_dense_custom(y, A, stream);
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
@@ -1591,7 +1546,7 @@ ReactorCvode::react(
     amrex::Abort(
       "Shoudn't be there. solve_type custom_direct only available with CUDA");
 #endif
-  } else if (user_data->isolve_type == cvode::magmaDirect) {
+  } else if (user_data->solve_type == cvode::magmaDirect) {
 #ifdef PELE_USE_MAGMA
     LS = SUNLinSol_MagmaDense(y, A);
     if (utils::check_flag((void*)LS, "SUNLinSol_MagmaDense", 0))
@@ -1604,7 +1559,7 @@ ReactorCvode::react(
       "Shoudn't be there. solve_type magma_direct only available with "
       "PELE_USE_MAGMA = TRUE");
 #endif
-  } else if (user_data->isolve_type == cvode::GMRES) {
+  } else if (user_data->solve_type == cvode::GMRES) {
     LS = SUNLinSol_SPGMR(y, PREC_NONE, 0);
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
       return (1);
@@ -1614,7 +1569,7 @@ ReactorCvode::react(
     flag = CVodeSetJacTimes(cvode_mem, NULL, NULL);
     if (utils::check_flag(&flag, "CVodeSetJacTimes", 1))
       return (1);
-  } else if (user_data->isolve_type == cvode::precGMRES) {
+  } else if (user_data->solve_type == cvode::precGMRES) {
     LS = SUNLinSol_SPGMR(y, PREC_LEFT, 0);
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
       return (1);
@@ -1626,24 +1581,21 @@ ReactorCvode::react(
       return (1);
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for direct solver
   // Both sparse/custom direct uses the same Jacobian functions
-  if (user_data->ianalytical_jacobian == 1) {
+  if (user_data->analytical_jacobian == 1) {
     flag = CVodeSetJacFn(cvode_mem, cvode::cJac);
     if (utils::check_flag(&flag, "CVodeSetJacFn", 1))
       return (1);
   }
 
-  // ----------------------------------------------------------
   // Analytical Jac. data for iterative solver preconditioner
-  if (user_data->iprecond_type == cvode::sparseSimpleAJac) {
+  if (user_data->precond_type == cvode::sparseSimpleAJac) {
     flag = CVodeSetPreconditioner(cvode_mem, cvode::Precond, cvode::PSolve);
     if (utils::check_flag(&flag, "CVodeSetPreconditioner", 1))
       return (1);
   }
 
-  // ----------------------------------------------------------
   // CVODE runtime options
   flag = CVodeSetMaxNumSteps(cvode_mem, 100000);
   if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1))
@@ -1652,7 +1604,6 @@ ReactorCvode::react(
   if (utils::check_flag(&flag, "CVodeSetMaxOrd", 1))
     return (1);
 
-  // ----------------------------------------------------------
   // Actual CVODE solve
   BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
   flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
@@ -1670,24 +1621,21 @@ ReactorCvode::react(
   Gpu::Device::streamSynchronize();
 #endif
 
-  // -------------------------------------------------------------
   // Get the result back
   BL_PROFILE_VAR_START(AsyncCopy);
   amrex::Gpu::dtoh_memcpy_async(rY_in, yvec_d, sizeof(amrex::Real) * neq_tot);
-  for (int i = 0; i < Ncells; i++) {
+  for (int i = 0; i < ncells; i++) {
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
   }
   BL_PROFILE_VAR_STOP(AsyncCopy);
 
-  // -------------------------------------------------------------
   // Get the number of RHS evaluations
   long int nfe;
   flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
-  if (user_data->iverbose > 1) {
+  if (user_data->verbose > 1) {
     cvode::printFinalStats(cvode_mem);
   }
 
-  //----------------------------------------------------------
   // Clean up
   N_VDestroy(y);
   CVodeFree(&cvode_mem);
@@ -1710,12 +1658,11 @@ ReactorCvode::react(
   // Pointer of solution vector
   amrex::Real* yvec_d = N_VGetArrayPointer(y);
   std::memcpy(
-    yvec_d, rY_in, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * Ncells));
+    yvec_d, rY_in, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * ncells));
   std::memcpy(
-    udata_g->species_ext_d, rY_src_in,
-    sizeof(amrex::Real) * (NUM_SPECIES * Ncells));
-  std::memcpy(udata_g->energy_init_d, rX_in, sizeof(amrex::Real) * Ncells);
-  std::memcpy(udata_g->energy_ext_d, rX_src_in, sizeof(amrex::Real) * Ncells);
+    udata_g->rYsrc_ext, rYsrc_in, sizeof(amrex::Real) * (NUM_SPECIES * ncells));
+  std::memcpy(udata_g->rhoe_init, rX_in, sizeof(amrex::Real) * ncells);
+  std::memcpy(udata_g->rhoesrc_ext, rX_src_in, sizeof(amrex::Real) * ncells);
 
   // ReInit CVODE is faster
   CVodeReInit(cvode_mem, time_start, y);
@@ -1742,12 +1689,12 @@ ReactorCvode::react(
 
   // Pack data to return in main routine external
   std::memcpy(
-    rY_in, yvec_d, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * Ncells));
-  for (int i = 0; i < Ncells; i++) {
+    rY_in, yvec_d, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * ncells));
+  for (int i = 0; i < ncells; i++) {
     rX_in[i] = rX_in[i] + dt_react * rX_src_in[i];
   }
 
-  if ((udata_g->iverbose > 1) && (omp_thread == 0)) {
+  if ((udata_g->verbose > 1) && (omp_thread == 0)) {
     amrex::Print() << "Additional verbose info --\n";
     cvode::printFinalStats(cvode_mem);
     amrex::Print() << "\n -------------------------------------\n";
@@ -1782,16 +1729,16 @@ ReactorCvode::cF_RHS(
   auto* udata = static_cast<CVODEUserData*>(user_data);
   udata->dt_save = t;
 
-  auto ncells = udata->ncells_d;
-  auto dt_save = udata->dt_save;
-  auto reactor_type = udata->ireactor_type;
-  auto* energy_init = udata->energy_init_d;
-  auto* energy_ext = udata->energy_ext_d;
-  auto* species_ext = udata->species_ext_d;
+  const auto ncells = udata->ncells;
+  const auto dt_save = udata->dt_save;
+  const auto reactor_type = udata->reactor_type;
+  auto* rhoe_init = udata->rhoe_init;
+  auto* rhoesrc_ext = udata->rhoesrc_ext;
+  auto* rYsrc_ext = udata->rYsrc_ext;
   amrex::ParallelFor(ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
     utils::fKernelSpec<Ordering>(
-      icell, ncells, dt_save, reactor_type, yvec_d, ydot_d, energy_init,
-      energy_ext, species_ext);
+      icell, ncells, dt_save, reactor_type, yvec_d, ydot_d, rhoe_init,
+      rhoesrc_ext, rYsrc_ext);
   });
   amrex::Gpu::Device::streamSynchronize();
   return 0;
@@ -1826,14 +1773,14 @@ ReactorCvode::SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
 void
 ReactorCvode::freeUserData(CVODEUserData* data_wk)
 {
-  amrex::The_Device_Arena()->free(data_wk->species_ext_d);
-  amrex::The_Device_Arena()->free(data_wk->energy_init_d);
-  amrex::The_Device_Arena()->free(data_wk->energy_ext_d);
-  amrex::The_Device_Arena()->free(data_wk->mask);
+  amrex::The_Arena()->free(data_wk->rYsrc_ext);
+  amrex::The_Arena()->free(data_wk->rhoe_init);
+  amrex::The_Arena()->free(data_wk->rhoesrc_ext);
+  amrex::The_Arena()->free(data_wk->mask);
 
 #ifdef AMREX_USE_GPU
 
-  if (data_wk->isolve_type == cvode::sparseDirect) {
+  if (data_wk->solve_type == cvode::sparseDirect) {
 #ifdef AMREX_USE_CUDA
     amrex::The_Arena()->free(data_wk->csr_row_count_h);
     amrex::The_Arena()->free(data_wk->csr_col_index_h);
@@ -1843,7 +1790,7 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     cusparseStatus_t cusparse_status = cusparseDestroy(data_wk->cuSPHandle);
     AMREX_ASSERT(cusparse_status == CUSPARSE_STATUS_SUCCESS);
 #endif
-  } else if (data_wk->isolve_type == cvode::customDirect) {
+  } else if (data_wk->solve_type == cvode::customDirect) {
 #ifdef AMREX_USE_CUDA
     amrex::The_Arena()->free(data_wk->csr_row_count_h);
     amrex::The_Arena()->free(data_wk->csr_col_index_h);
@@ -1852,12 +1799,12 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
 #endif
   }
   // Preconditioner analytical Jacobian data
-  if (data_wk->iprecond_type == cvode::sparseSimpleAJac) {
+  if (data_wk->precond_type == cvode::sparseSimpleAJac) {
 #ifdef AMREX_USE_CUDA
     amrex::The_Arena()->free(data_wk->csr_row_count_h);
     amrex::The_Arena()->free(data_wk->csr_col_index_h);
-    amrex::The_Device_Arena()->free(data_wk->csr_val_d);
-    amrex::The_Device_Arena()->free(data_wk->csr_jac_d);
+    amrex::The_Arena()->free(data_wk->csr_val_d);
+    amrex::The_Arena()->free(data_wk->csr_jac_d);
     cusolverStatus_t cusolver_status =
       cusolverSpDestroy(data_wk->cusolverHandle);
     AMREX_ASSERT(cusolver_status == CUSOLVER_STATUS_SUCCESS);
@@ -1866,13 +1813,13 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     cudaFree(data_wk->buffer_qr);
 #endif
   }
-  amrex::The_Device_Arena()->free(data_wk);
+  delete data_wk;
 
 #else
-  amrex::The_Device_Arena()->free(data_wk->FCunt);
+  amrex::The_Arena()->free(data_wk->FCunt);
 
   // Direct solver Jac. data
-  if (data_wk->isolve_type == cvode::sparseDirect) {
+  if (data_wk->solve_type == cvode::sparseDirect) {
 #ifdef PELE_USE_KLU
     delete[] data_wk->colPtrs;
     delete[] data_wk->rowVals;
@@ -1881,19 +1828,19 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     SUNMatDestroy((data_wk->PS)[0]);
     delete[](data_wk->PS);
 #endif
-  } else if (data_wk->isolve_type == cvode::customDirect) {
+  } else if (data_wk->solve_type == cvode::customDirect) {
     SUNMatDestroy(A);
     SUNMatDestroy(data_wk->PSc);
   }
 
   // Preconditionner Jac. data
-  if (data_wk->iprecond_type == cvode::denseSimpleAJac) {
-    for (int i = 0; i < data_wk->ncells_d; ++i) {
+  if (data_wk->precond_type == cvode::denseSimpleAJac) {
+    for (int i = 0; i < data_wk->ncells; ++i) {
       destroyMat((data_wk->P)[i][i]);
       destroyMat((data_wk->Jbd)[i][i]);
       destroyArray((data_wk->pivot)[i][i]);
     }
-    for (int i = 0; i < data_wk->ncells_d; ++i) {
+    for (int i = 0; i < data_wk->ncells; ++i) {
       delete[](data_wk->P)[i];
       delete[](data_wk->Jbd)[i];
       delete[](data_wk->pivot)[i];
@@ -1901,12 +1848,12 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     delete[](data_wk->P);
     delete[](data_wk->Jbd);
     delete[](data_wk->pivot);
-  } else if (data_wk->iprecond_type == cvode::sparseSimpleAJac) {
+  } else if (data_wk->precond_type == cvode::sparseSimpleAJac) {
 #ifdef PELE_USE_KLU
     delete[] data_wk->colPtrs;
     delete[] data_wk->rowVals;
     delete[] data_wk->Jdata;
-    for (int i = 0; i < data_wk->ncells_d; ++i) {
+    for (int i = 0; i < data_wk->ncells; ++i) {
       klu_free_symbolic(&(data_wk->Symbolic[i]), &(data_wk->Common[i]));
       klu_free_numeric(&(data_wk->Numeric[i]), &(data_wk->Common[i]));
       delete[] data_wk->JSPSmat[i];
@@ -1918,8 +1865,8 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     delete[] data_wk->Numeric;
     delete[] data_wk->PS;
 #endif
-  } else if (data_wk->iprecond_type == cvode::customSimpleAJac) {
-    for (int i = 0; i < data_wk->ncells_d; ++i) {
+  } else if (data_wk->precond_type == cvode::customSimpleAJac) {
+    for (int i = 0; i < data_wk->ncells; ++i) {
       delete[] data_wk->JSPSmat[i];
       SUNMatDestroy((data_wk->PS)[i]);
     }
@@ -1929,7 +1876,7 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     delete[] data_wk->JSPSmat;
   }
 
-  free(data_wk);
+  delete data_wk;
 #endif
 }
 
@@ -1940,7 +1887,7 @@ ReactorCvode::close()
   CVodeFree(&cvode_mem);
   SUNLinSolFree(LS);
 
-  if (udata_g->isolve_type == cvode::denseDirect) {
+  if (udata_g->solve_type == cvode::denseDirect) {
     SUNMatDestroy(A);
   }
 

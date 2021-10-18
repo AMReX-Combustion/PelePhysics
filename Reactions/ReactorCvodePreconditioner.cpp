@@ -24,7 +24,7 @@ Precond(
   udata->gamma = gamma;
 
   // Get data out of udata to minimize global memory access
-  auto ncells = udata->ncells_d;
+  auto ncells = udata->ncells;
   auto stream = udata->stream;
   auto nbThreads = udata->nbThreads;
   auto nbBlocks = udata->nbBlocks;
@@ -100,7 +100,7 @@ PSolve(
 
   // Get data out of udata to minimize global memory access
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
-  auto ncells = udata->ncells_d;
+  auto ncells = udata->ncells;
   auto csr_val_d = udata->csr_val_d;
   auto csr_row_count_d = udata->csr_row_count_d;
   auto csr_col_index_d = udata->csr_col_index_d;
@@ -124,7 +124,7 @@ PSolve(
 
   /*
     // Checks
-    // if (udata->iverbose > 4) {
+    // if (udata->verbose > 4) {
         for(int batchId = 0 ; batchId < ncells; batchId++){
             // measure |bj - Aj*xj|
             realtype *csrValAj = (udata->csr_val_d) + batchId * (udata->NNZ);
@@ -210,7 +210,7 @@ Precond(
 
   // Make local copies of pointers in user_data
   auto* udata = static_cast<CVODEUserData*>(user_data);
-  auto reactor_type = udata->ireactor_type;
+  auto reactor_type = udata->reactor_type;
   auto* P = udata->P;
   auto* Jbd = udata->Jbd;
   auto* pivot = udata->pivot;
@@ -329,8 +329,8 @@ Precond_sparse(
 
   // Make local copies of pointers in user_data
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
-  auto ncells = udata->ncells_d;
-  auto reactor_type = udata->ireactor_type;
+  auto ncells = udata->ncells;
+  auto reactor_type = udata->reactor_type;
   auto JSPSmat = udata->JSPSmat;
   auto colPtrs = udata->colPtrs;
   auto rowVals = udata->rowVals;
@@ -456,7 +456,7 @@ PSolve_sparse(
   BL_PROFILE("Pele::ReactorCvode::PSolve_sparse()");
   // Make local copies of pointers in user_data
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
-  auto ncells = udata->ncells_d;
+  auto ncells = udata->ncells;
   auto Symbolic = udata->Symbolic;
   auto Numeric = udata->Numeric;
   auto Common = udata->Common;
@@ -504,8 +504,8 @@ Precond_custom(
 
   // Make local copies of pointers in user_data
   auto* udata = static_cast<CVODEUserData*>(user_data);
-  auto ncells = udata->ncells_d;
-  auto reactor_type = udata->ireactor_type;
+  auto ncells = udata->ncells;
+  auto reactor_type = udata->reactor_type;
   auto* JSPSmat = udata->JSPSmat;
   auto* rowPtrs = udata->rowPtrs;
   auto* colVals = udata->colVals;
@@ -609,7 +609,7 @@ PSolve_custom(
   BL_PROFILE("Pele::ReactorCvode::PSolve_custom()");
   // Make local copies of pointers in user_data
   auto* udata = static_cast<CVODEUserData*>(user_data);
-  auto ncells = udata->ncells_d;
+  auto ncells = udata->ncells;
   auto* Jdata = udata->Jdata;
 
   // Make local copies of pointers to input data

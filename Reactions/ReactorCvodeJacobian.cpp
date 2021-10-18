@@ -18,8 +18,8 @@ cJac(
 {
   BL_PROFILE("Pele::ReactorCvode::cJac()");
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
-  auto solveType = udata->isolve_type;
-  auto ncells = udata->ncells_d;
+  auto solveType = udata->solve_type;
+  auto ncells = udata->ncells;
   auto NNZ = udata->NNZ;
   auto stream = udata->stream;
   auto nbThreads = udata->nbThreads;
@@ -98,8 +98,8 @@ cJac(
 
   // Make local copies of pointers in user_data
   auto* udata = static_cast<CVODEUserData*>(user_data);
-  auto ncells = udata->ncells_d;
-  auto reactor_type = udata->ireactor_type;
+  auto ncells = udata->ncells;
+  auto reactor_type = udata->reactor_type;
 
   for (int tid = 0; tid < ncells; tid++) {
     // Offset in case several cells
@@ -167,8 +167,8 @@ cJac_sps(
   // Make local copies of pointers in user_data (cell M)*/
   auto* udata = static_cast<CVODEUserData*>(user_data);
   auto NNZ = udata->NNZ;
-  auto reactor_type = udata->ireactor_type;
-  auto ncells = udata->ncells_d;
+  auto reactor_type = udata->reactor_type;
+  auto ncells = udata->ncells;
   auto* colVals_c = udata->colVals_c;
   auto* rowPtrs_c = udata->rowPtrs_c;
 
@@ -262,8 +262,8 @@ cJac_KLU(
   // Make local copies of pointers in user_data (cell M)
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   auto NNZ = udata->NNZ;
-  auto reactor_type = udata->ireactor_type;
-  auto ncells = udata->ncells_d;
+  auto reactor_type = udata->reactor_type;
+  auto ncells = udata->ncells;
   auto colPtrs = udata->colPtrs;
   auto rowVals = udata->rowVals;
 
