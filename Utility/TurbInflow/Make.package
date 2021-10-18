@@ -1,0 +1,3 @@
+CEXE_headers += turbinflow.H
+CEXE_sources += turbinflow.cpp
+
