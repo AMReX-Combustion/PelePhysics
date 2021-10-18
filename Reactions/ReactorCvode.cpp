@@ -1351,58 +1351,68 @@ ReactorCvode::react(
   omp_thread = omp_get_thread_num();
 #endif
 
-  // Update TypicalValues
-  setCvodeTols(cvode_mem, udata_g);
+// FIXME: cvode_mem has serious problems being shared between threads
+// so we make this correct in OMP but forego all performance gains
+#ifdef AMREX_USE_OMP
+#pragma omp single
+  {
+#endif
+    // Update TypicalValues
+    setCvodeTols(cvode_mem, udata_g);
 
-  // Perform integration one cell at a time
-  const int icell = 0;
-  const int ncells = 1;
-  const auto captured_reactor_type = m_reactor_type;
-  ParallelFor(
-    box, [=, &CvodeActual_time_final] AMREX_GPU_DEVICE(
-           int i, int j, int k) noexcept {
-      if (mask(i, j, k) != -1) {
+    // Perform integration one cell at a time
+    const int icell = 0;
+    const int ncells = 1;
+    const auto captured_reactor_type = m_reactor_type;
+    ParallelFor(
+      box, [=, &CvodeActual_time_final] AMREX_GPU_DEVICE(
+             int i, int j, int k) noexcept {
+        if (mask(i, j, k) != -1) {
 
-        amrex::Real* yvec_d = N_VGetArrayPointer(y);
-        utils::box_flatten<Ordering>(
-          icell, i, j, k, ncells, captured_reactor_type, rY_in, rYsrc_in, T_in,
-          rEner_in, rEner_src_in, yvec_d, udata_g->rYsrc_ext,
-          udata_g->rhoe_init, udata_g->rhoesrc_ext);
+          amrex::Real* yvec_d = N_VGetArrayPointer(y);
+          utils::box_flatten<Ordering>(
+            icell, i, j, k, ncells, captured_reactor_type, rY_in, rYsrc_in,
+            T_in, rEner_in, rEner_src_in, yvec_d, udata_g->rYsrc_ext,
+            udata_g->rhoe_init, udata_g->rhoesrc_ext);
 
-        // ReInit CVODE is faster
-        CVodeReInit(cvode_mem, time_start, y);
+          // ReInit CVODE is faster
+          CVodeReInit(cvode_mem, time_start, y);
 
-        BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
-        CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
-        BL_PROFILE_VAR_STOP(AroundCVODE);
+          BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
+          CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
+          BL_PROFILE_VAR_STOP(AroundCVODE);
 
-        if ((udata_g->verbose > 1) && (omp_thread == 0)) {
-          amrex::Print() << "Additional verbose info --\n";
-          cvode::printFinalStats(cvode_mem);
-          amrex::Print() << "\n -------------------------------------\n";
+          if ((udata_g->verbose > 1) && (omp_thread == 0)) {
+            amrex::Print() << "Additional verbose info --\n";
+            cvode::printFinalStats(cvode_mem);
+            amrex::Print() << "\n -------------------------------------\n";
+          }
+
+          amrex::Real actual_dt = CvodeActual_time_final - time_start;
+
+          // Get estimate of how hard the integration process was
+          long int nfe = 0;
+          long int nfeLS = 0;
+          CVodeGetNumRhsEvals(cvode_mem, &nfe);
+          CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+          const long int nfe_tot = nfe + nfeLS;
+
+          utils::box_unflatten<Ordering>(
+            icell, i, j, k, ncells, captured_reactor_type, rY_in, T_in,
+            rEner_in, rEner_src_in, FC_in, yvec_d, udata_g->rhoe_init, nfe_tot,
+            dt_react);
+
+          if ((udata_g->verbose > 3) && (omp_thread == 0)) {
+            amrex::Print() << "END : time curr is " << CvodeActual_time_final
+                           << " and actual dt_react is " << actual_dt << "\n";
+          }
+        } else {
+          FC_in(i, j, k, 0) = 0.0;
         }
-
-        amrex::Real actual_dt = CvodeActual_time_final - time_start;
-
-        // Get estimate of how hard the integration process was
-        long int nfe = 0;
-        long int nfeLS = 0;
-        CVodeGetNumRhsEvals(cvode_mem, &nfe);
-        CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
-        const long int nfe_tot = nfe + nfeLS;
-
-        utils::box_unflatten<Ordering>(
-          icell, i, j, k, ncells, captured_reactor_type, rY_in, T_in, rEner_in,
-          rEner_src_in, FC_in, yvec_d, udata_g->rhoe_init, nfe_tot, dt_react);
-
-        if ((udata_g->verbose > 3) && (omp_thread == 0)) {
-          amrex::Print() << "END : time curr is " << CvodeActual_time_final
-                         << " and actual dt_react is " << actual_dt << "\n";
-        }
-      } else {
-        FC_in(i, j, k, 0) = 0.0;
-      }
-    });
+      });
+#ifdef AMREX_USE_OMP
+  }
+#endif
 
 #ifdef MOD_REACTOR
   dt_react =
