@@ -329,7 +329,7 @@ public:
       });
   }
 
-  static bool injectParticles(
+  bool injectParticles(
     amrex::Real time,
     amrex::Real dt,
     int nstep,

@@ -11,7 +11,6 @@ using namespace amrex;
 // Spray flags and indices
 struct SprayComps
 {
-  int heat_tran;
   int mass_tran;
   int mom_tran;
   int pstateVel = 0; // Particle indices
