@@ -140,12 +140,7 @@ main(int argc, char* argv[])
     BL_PROFILE_VAR("main::reactor_info()", reactInfo);
     std::unique_ptr<pele::physics::reactions::ReactorBase> reactor =
       pele::physics::reactions::ReactorBase::create(chem_integrator);
-#ifdef _OPENMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-    {
-      reactor->init(ode_iE, ode_ncells);
-    }
+    reactor->init(ode_iE, ode_ncells);
     BL_PROFILE_VAR_STOP(reactInfo);
 
     // -----------------------------------------------------------------------------
@@ -502,7 +497,7 @@ main(int argc, char* argv[])
       amrex::Real lvl_strt = amrex::ParallelDescriptor::second();
       BL_PROFILE_VAR("Advance_Level" + std::to_string(lev), Advance);
 #ifdef AMREX_USE_OMP
-      const auto tiling = MFItInfo().SetDynamic(true);
+      const auto tiling = amrex::MFItInfo().SetDynamic(true);
 #pragma omp parallel
 #else
       const bool tiling = amrex::TilingIfNotGPU();
