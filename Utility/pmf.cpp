@@ -39,7 +39,7 @@ PMF::read_pmf(const std::string& myfile, bool do_average)
 {
 
   PmfData pmf_data;
-   
+
   std::string firstline, secondline, remaininglines;
   int pos1, pos2;
   int variable_count, line_count;
@@ -87,8 +87,8 @@ PMF::read_pmf(const std::string& myfile, bool do_average)
 
   pmf_data.pmf_N = line_count;
   pmf_data.pmf_M = variable_count - 1;
-  pmf_data.pmf_X = (amrex::Real *) The_Arena()->alloc(pmf_data.pmf_N * sizeof(amrex::Real));
-  pmf_data.pmf_Y = (amrex::Real *) The_Arena()->alloc(pmf_data.pmf_N * pmf_data.pmf_M * sizeof(amrex::Real));
+  pmf_data.pmf_X = (amrex::Real *) The_Pinned_Arena()->alloc(pmf_data.pmf_N * sizeof(amrex::Real));
+  pmf_data.pmf_Y = (amrex::Real *) The_Pinned_Arena()->alloc(pmf_data.pmf_N * pmf_data.pmf_M * sizeof(amrex::Real));
 
   iss.clear();
   iss.seekg(0, std::ios::beg);
@@ -103,9 +103,9 @@ PMF::read_pmf(const std::string& myfile, bool do_average)
     }
   }
 
-  pmf_data_g = (PmfData *) The_Device_Arena()->alloc(sizeof(pmf_data)); 
+  pmf_data_g = (PmfData *) The_Arena()->alloc(sizeof(pmf_data));
 #ifdef AMREX_USE_GPU
-  amrex::Gpu::htod_memcpy(pmf_data_g,&pmf_data,sizeof(pmf_data)); 
+  amrex::Gpu::htod_memcpy(pmf_data_g,&pmf_data,sizeof(pmf_data));
 #else
   pmf_data_g->pmf_N = line_count;
   pmf_data_g->pmf_M = variable_count - 1;
