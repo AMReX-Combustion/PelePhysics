@@ -10,6 +10,14 @@ namespace PMF
    amrex::Vector<std::string> pmf_names;
 }
 
+void
+PMF::close()
+{
+    if ( pmf_data_g != nullptr) {
+        The_Arena()->free(pmf_data_g);
+    }
+}
+
 static
 std::string
 read_pmf_file(std::ifstream& in)
@@ -45,13 +53,17 @@ PMF::read_pmf(const std::string& myfile, bool do_average)
   int variable_count, line_count;
 
   std::ifstream infile(myfile);
+  if (!infile.is_open()) {
+    amrex::Abort("Unable to open pmf input file " + myfile);
+  }
   const std::string memfile = read_pmf_file(infile);
   infile.close();
   std::istringstream iss(memfile);
 
   std::getline(iss, firstline);
-  if (!checkQuotes(firstline))
+  if (!checkQuotes(firstline)) {
     amrex::Abort("PMF file variable quotes unbalanced");
+  }
   std::getline(iss, secondline);
   pos1 = 0;
   pos2 = 0;
@@ -73,8 +85,8 @@ PMF::read_pmf(const std::string& myfile, bool do_average)
     pos1 = pos2 + 1;
   }
 
-  amrex::Print() << variable_count << " variables found in PMF file"
-                 << std::endl;
+  amrex::Print() << variable_count << " variables found in PMF file \n";
+
   // for (int i = 0; i < variable_count; i++)
   //  amrex::Print() << "Variable found: " << PMF::pmf_names[i] <<
   //  std::endl;

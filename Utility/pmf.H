@@ -11,6 +11,8 @@ namespace PMF {
   extern amrex::Vector<std::string> pmf_names;
   void read_pmf(const std::string& myfile, bool do_verbose);
 
+  void close();
+
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void
