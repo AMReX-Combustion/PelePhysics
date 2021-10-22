@@ -9,6 +9,10 @@
 #include "AMReX_SUNMemory.H"
 #endif
 
+#ifdef AMREX_USE_DPCPP
+#include <nvector/nvector_sycl.h>
+#endif
+
 #ifdef AMREX_USE_HIP
 #include <nvector/nvector_hip.h>
 #endif

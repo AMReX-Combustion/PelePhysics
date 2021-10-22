@@ -160,11 +160,23 @@ ReactorArkode::react(
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
-    new SUNHipThreadDirectExecPolicy(512, stream);
+    new SUNHipThreadDirectExecPolicy(256, stream);
   SUNHipExecPolicy* reduce_exec_policy =
-    new SUNHipBlockReduceExecPolicy(512, 0, stream);
+    new SUNHipBlockReduceExecPolicy(256, 0, stream);
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
   realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
+#elif defined(AMREX_USE_DPCPP)
+  N_Vector y = N_VNewWithMemHelp_Sycl(
+    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),
+    &amrex::Gpu::Device::streamQueue());
+  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
+    return (1);
+  SUNSyclExecPolicy* stream_exec_policy =
+    new SUNSyclThreadDirectExecPolicy(256);
+  SUNSyclExecPolicy* reduce_exec_policy =
+    new SUNSyclBlockReduceExecPolicy(256, 0);
+  N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
+  realtype* yvec_d = N_VGetDeviceArrayPointer_Sycl(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot);
   if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
@@ -287,6 +299,19 @@ ReactorArkode::react(
     new SUNHipBlockReduceExecPolicy(256, 0, stream);
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
   realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
+#elif defined(AMREX_USE_DPCPP)
+  N_Vector y = N_VNewWithMemHelp_Sycl(
+    neq_tot, /*use_managed_mem=*/false,
+    *amrex::sundials::The_SUNMemory_Helper(),
+    &amrex::Gpu::Device::streamQueue());
+  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
+    return (1);
+  SUNSyclExecPolicy* stream_exec_policy =
+    new SUNSyclThreadDirectExecPolicy(256);
+  SUNSyclExecPolicy* reduce_exec_policy =
+    new SUNSyclBlockReduceExecPolicy(256, 0);
+  N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
+  realtype* yvec_d = N_VGetDeviceArrayPointer_Sycl(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot);
   if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
@@ -387,6 +412,9 @@ ReactorArkode::cF_RHS(
 #elif defined(AMREX_USE_HIP)
   realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y_in);
   realtype* ydot_d = N_VGetDeviceArrayPointer_Hip(ydot_in);
+#elif defined(AMREX_USE_DPCPP)
+  realtype* yvec_d = N_VGetDeviceArrayPointer_Sycl(y_in);
+  realtype* ydot_d = N_VGetDeviceArrayPointer_Sycl(ydot_in);
 #else
   realtype* yvec_d = N_VGetArrayPointer(y_in);
   realtype* ydot_d = N_VGetArrayPointer(ydot_in);

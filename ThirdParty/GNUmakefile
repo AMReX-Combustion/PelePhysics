@@ -34,14 +34,19 @@ else
            CCOMPILER = hipcc
            CXXCOMPILER = hipcc
         else
-           $(error Unknown COMP setting)
+          ifeq ($(lowercase_hcomp),$(filter $(lowercase_hcomp),dpcpp))
+             CCOMPILER = icx
+             CXXCOMPILER = dpcpp
+	  else
+             $(error Unknown COMP setting)
+	  endif
         endif
       endif
     endif
   endif
 endif
 
-tp_suffix=$(COMP)$(DebugSuffix)$(CUDASuffix)$(HIPSuffix)$(KLUSuffix)
+tp_suffix=$(COMP)$(DebugSuffix)$(CUDASuffix)$(HIPSuffix)$(DPCPPSuffix)$(KLUSuffix)
 INSTALL_PREFIX=$(PWD)/INSTALL/$(tp_suffix)
 
 ifeq ($(PELE_USE_KLU),TRUE)
@@ -85,6 +90,13 @@ else
   HIP_DEFINES=-DENABLE_HIP:BOOL=OFF
   HIPSuffix=
 endif
+ifeq ($(USE_DPCPP),TRUE)
+  DPCPP_DEFINES=-DENABLE_SYCL:BOOL=ON
+  DPCPPSuffix=.DPCPP
+else
+  DPCPP_DEFINES=-DENABLE_SYCL:BOOL=OFF
+  DPCPPSuffix=
+endif
 
 SUNDIALS_BUILD_PREFIX=$(PWD)/BUILD/SUNDIALS
 SUNDIALS_SOURCE_DIR=$(SUNDIALS_BUILD_PREFIX)/src
@@ -104,11 +116,11 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE)
 			   		-DCMAKE_INSTALL_LIBDIR:STRING=$(INSTALL_PREFIX)/lib -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
 					-DCMAKE_C_COMPILER:STRING=$(CCOMPILER) -DCMAKE_CXX_COMPILER:STRING=$(CXXCOMPILER) \
                                         -DEXAMPLES_INSTALL_PATH:STRING=$(INSTALL_PREFIX)/examples \
-                                        -DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) $(CUDA_DEFINES) $(HIP_DEFINES) \
+                                        -DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) $(CUDA_DEFINES) $(HIP_DEFINES) $(DPCPP_DEFINES)\
                                         -DENABLE_MPI:BOOL=OFF -DENABLE_OPENMP:BOOL=OFF $(KLU_DEFINES) \
 					-DEXAMPLES_ENABLE_C:BOOL=OFF -DEXAMPLES_ENABLE_CXX:BOOL=OFF -DEXAMPLES_ENABLE_CUDA:BOOL=OFF \
 					-DBUILD_CVODES:BOOL=OFF -DBUILD_IDA:BOOL=OFF -DBUILD_IDAS:BOOL=OFF -DBUILD_KINSOL:BOOL=OFF \
-					-DSUNDIALS_INDEX_SIZE:INT=32 -DSUNDIALS_RAJA_BACKENDS:STRING=CUDA $(SUNDIALS_SOURCE_DIR); \
+					-DSUNDIALS_INDEX_SIZE:INT=32 $(SUNDIALS_SOURCE_DIR); \
 					make; make install
 
 $(ONE_SUNDIALS_SRC_FILE):

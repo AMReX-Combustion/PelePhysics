@@ -25,6 +25,10 @@
 #include <nvector/nvector_hip.h>
 #endif
 
+#ifdef AMREX_USE_DPCPP
+#include <nvector/nvector_sycl.h>
+#endif
+
 #ifdef PELE_USE_KLU
 #include "klu.h"
 #include <sunlinsol/sunlinsol_klu.h>
