@@ -1091,7 +1091,8 @@ ReactorCvode::setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata)
 #elif defined(AMREX_USE_DPCPP)
   N_Vector atol = N_VNewWithMemHelp_Sycl(
     neq_tot, /*use_managed_mem=*/false,
-    *amrex::sundials::The_SUNMemory_Helper(), &amrex::Gpu::Device::streamQueue());
+    *amrex::sundials::The_SUNMemory_Helper(),
+    &amrex::Gpu::Device::streamQueue());
   amrex::Real* ratol = N_VGetHostArrayPointer_Sycl(atol);
 #else
   N_Vector atol = N_VNew_Serial(neq_tot);
@@ -1197,7 +1198,8 @@ ReactorCvode::react(
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
 #elif defined(AMREX_USE_DPCPP)
   N_Vector y = N_VNewWithMemHelp_Sycl(
-    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),&amrex::Gpu::Device::streamQueue());
+    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),
+    &amrex::Gpu::Device::streamQueue());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
     return (1);
   SUNSyclExecPolicy* stream_exec_policy =
@@ -1510,7 +1512,8 @@ ReactorCvode::react(
 #elif defined(AMREX_USE_DPCPP)
   y = N_VNewWithMemHelp_Sycl(
     neq_tot, /*use_managed_mem=*/false,
-    *amrex::sundials::The_SUNMemory_Helper(),&amrex::Gpu::Device::streamQueue());
+    *amrex::sundials::The_SUNMemory_Helper(),
+    &amrex::Gpu::Device::streamQueue());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
     return (1);
   SUNSyclExecPolicy* stream_exec_policy =
