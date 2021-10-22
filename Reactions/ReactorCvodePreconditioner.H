@@ -12,6 +12,10 @@
 #include <nvector/nvector_hip.h>
 #endif
 
+#ifdef AMREX_USE_DPCPP
+#include <nvector/nvector_sycl.h>
+#endif
+
 #ifdef AMREX_USE_CUDA
 #include <nvector/nvector_cuda.h>
 #endif

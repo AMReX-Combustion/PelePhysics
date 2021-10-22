@@ -425,6 +425,10 @@ ReactorCvode::checkCvodeOptions() const
     amrex::Abort(
       "\n--> precond_type sparse simplified_AJacobian not available with "
       "HIP \n");
+#elif defined(AMREX_USE_DPCPP)
+    amrex::Abort(
+      "\n--> precond_type sparse simplified_AJacobian not available with "
+      "DPCPP \n");
 #endif
 
 #else
@@ -472,6 +476,9 @@ ReactorCvode::checkCvodeOptions() const
       }
 #elif defined(AMREX_USE_HIP)
       amrex::Abort("\n--> Analytical Jacobian not available with HIP. Change "
+                   "solve_type.\n");
+#elif defined(AMREX_USE_DPCPP)
+      amrex::Abort("\n--> Analytical Jacobian not available with DPCPP. Change "
                    "solve_type.\n");
 #endif
     }
@@ -1081,6 +1088,11 @@ ReactorCvode::setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata)
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper());
   amrex::Real* ratol = N_VGetHostArrayPointer_Hip(atol);
+#elif defined(AMREX_USE_DPCPP)
+  N_Vector atol = N_VNewWithMemHelp_Sycl(
+    neq_tot, /*use_managed_mem=*/false,
+    *amrex::sundials::The_SUNMemory_Helper(), &amrex::Gpu::Device::streamQueue());
+  amrex::Real* ratol = N_VGetHostArrayPointer_Sycl(atol);
 #else
   N_Vector atol = N_VNew_Serial(neq_tot);
   amrex::Real* ratol = N_VGetArrayPointer(atol);
@@ -1112,6 +1124,8 @@ ReactorCvode::setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata)
   N_VCopyToDevice_Cuda(atol);
 #elif defined(AMREX_USE_HIP)
   N_VCopyToDevice_Hip(atol);
+#elif defined(AMREX_USE_DPCPP)
+  N_VCopyToDevice_Sycl(atol);
 #endif
 
   // Call CVodeSVtolerances to specify the scalar relative tolerance
@@ -1181,6 +1195,17 @@ ReactorCvode::react(
     new SUNHipBlockReduceExecPolicy(256, 0, stream);
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
+#elif defined(AMREX_USE_DPCPP)
+  N_Vector y = N_VNewWithMemHelp_Sycl(
+    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),&amrex::Gpu::Device::streamQueue());
+  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
+    return (1);
+  SUNSyclExecPolicy* stream_exec_policy =
+    new SUNSyclThreadDirectExecPolicy(256);
+  SUNSyclExecPolicy* reduce_exec_policy =
+    new SUNSyclBlockReduceExecPolicy(256, 0);
+  N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
+  amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Sycl(y);
 #endif
 
   amrex::Gpu::streamSynchronize();
@@ -1470,7 +1495,6 @@ ReactorCvode::react(
     new SUNCudaBlockReduceExecPolicy(256, 0, stream);
   N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
-
 #elif defined(AMREX_USE_HIP)
   y = N_VNewWithMemHelp_Hip(
     neq_tot, /*use_managed_mem=*/false,
@@ -1483,6 +1507,18 @@ ReactorCvode::react(
     new SUNHipBlockReduceExecPolicy(256, 0, stream);
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
+#elif defined(AMREX_USE_DPCPP)
+  y = N_VNewWithMemHelp_Sycl(
+    neq_tot, /*use_managed_mem=*/false,
+    *amrex::sundials::The_SUNMemory_Helper(),&amrex::Gpu::Device::streamQueue());
+  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
+    return (1);
+  SUNSyclExecPolicy* stream_exec_policy =
+    new SUNSyclThreadDirectExecPolicy(256);
+  SUNSyclExecPolicy* reduce_exec_policy =
+    new SUNSyclBlockReduceExecPolicy(256, 0);
+  N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
+  amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Sycl(y);
 #endif
 
   // Fill data
@@ -1721,6 +1757,9 @@ ReactorCvode::cF_RHS(
 #elif defined(AMREX_USE_HIP)
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Hip(y_in);
   amrex::Real* ydot_d = N_VGetDeviceArrayPointer_Hip(ydot_in);
+#elif defined(AMREX_USE_DPCPP)
+  amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Sycl(y_in);
+  amrex::Real* ydot_d = N_VGetDeviceArrayPointer_Sycl(ydot_in);
 #else
   amrex::Real* yvec_d = N_VGetArrayPointer(y_in);
   amrex::Real* ydot_d = N_VGetArrayPointer(ydot_in);
