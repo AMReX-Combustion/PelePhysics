@@ -276,7 +276,24 @@ add_turb(
     v.mult<amrex::RunOn::Device>(tp.turb_scale_vel);
   }
   amrex::Box ovlp = bvalsBox & data.box();
-  data.plus<amrex::RunOn::Device>(v, ovlp, 0, dcomp, AMREX_SPACEDIM);
+  set_turb(v,data);
+}
+
+void set_turb(amrex::FArrayBox& v,
+              amrex::FArrayBox& data)
+{
+  //copy velocity fluctuations from plane into data
+  const auto& box   = v.box();
+  const auto& v_in  = v.array();
+  const auto& v_out = data.array();
+
+amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+      v_out(i,j,k,1) =  v_in(i,j,k,0); //UMX
+      v_out(i,j,k,2) =  v_in(i,j,k,1); //UMY
+#if AMREX_SPACEDIM == 3
+      v_out(i,j,k,3) =  v_in(i,j,k,2); //UMZ
+#endif
+    });
 }
 
 void

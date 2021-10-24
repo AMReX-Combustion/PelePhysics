@@ -61,4 +61,6 @@ void fill_with_turb(
   amrex::Geometry const& geom,
   TurbParm& tp);
 
+void set_turb(amrex::FArrayBox& v,
+              amrex::FArrayBox& data);
 #endif
