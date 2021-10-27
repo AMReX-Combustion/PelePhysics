@@ -98,6 +98,10 @@ ifeq ($(Transport_Model), Sutherland)
   DEFINES += -DUSE_SUTHERLAND_TRANSPORT
 endif
 
+# Utility
+include $(PELE_PHYSICS_HOME)/Utility/Make.package
+
+
 Pdirs   := Base Boundary AmrCore
 
 Bpack	+= $(foreach dir, $(Pdirs), $(AMREX_HOME)/Src/$(dir)/Make.package)
