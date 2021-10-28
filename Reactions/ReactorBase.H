@@ -15,6 +15,8 @@ namespace reactions {
 class ReactorBase : public Factory<ReactorBase>
 {
 public:
+  amrex::Array<double, NUM_SPECIES + 1> typVals;
+
   static const std::string base_identifier() { return "ReactorBase"; }
 
   virtual int init(int reactor_type, int ncells) = 0;
@@ -78,7 +80,10 @@ public:
     long int* FCunt,
     amrex::Real dt) = 0;
 
-  virtual void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) = 0;
+  void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
+
+  void setSundialsSolverTols(void* sundials_mem, int ncells, int verbose, amrex::Real relTol,
+          amrex::Real absTol, std::string solvername);
 
   virtual ~ReactorBase() = default;
 };

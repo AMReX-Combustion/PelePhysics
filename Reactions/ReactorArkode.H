@@ -32,17 +32,6 @@ namespace pele {
 namespace physics {
 namespace reactions {
 
-struct ARKODEUserData
-{
-  int ncells;
-  int neq;
-  int verbose;
-  int reactor_type;
-  amrex::Real dt_save;
-  amrex::Real* rhoe_init = nullptr;
-  amrex::Real* rhoesrc_ext = nullptr;
-  amrex::Real* rYsrc_ext = nullptr;
-};
 
 class ReactorArkode : public ReactorBase::Register<ReactorArkode>
 {
@@ -124,8 +113,6 @@ public:
       box, ncells, m_reactor_type, rhoY, temperature, rhoE, frcEExt, FC_in,
       y_vect, vect_energy, FCunt, dt);
   }
-
-  void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) override;
 
 private:
   amrex::Real relTol{1e-6};
