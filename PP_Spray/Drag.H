@@ -23,8 +23,9 @@ calcHeatCoeff(
   const Real& C_eps,
   const Real& Nu_0)
 {
-  if (B_M <= C_eps)
+  if (B_M <= C_eps) {
     return 0.;
+  }
   const int maxIter = 100;
   const Real NU2 = Nu_0 - 2.;
   const Real BM1 = 1. + B_M;
@@ -82,8 +83,9 @@ AMREX_FORCE_INLINE
 Real
 calcFlashVaporRate(const Real& dh, const Real& coeff, const Real& Gf)
 {
-  if (dh <= 1.E-5)
+  if (dh <= 1.E-5) {
     return 0.;
+  }
   Real tol = 1.E-4;
   Real Grat = 1.E-5;
   Real G = 0.;
@@ -248,16 +250,18 @@ calculateSpraySource(
     attribs[SPI.pstateVel + 2].data()[pid]));
   Real T_part = attribs[SPI.pstateT].data()[pid];
   Real dia_part = attribs[SPI.pstateDia].data()[pid];
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = attribs[SPI.pstateY + spf].data()[pid];
+  }
 #else
   RealVect vel_part(AMREX_D_DECL(
     p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
     p.rdata(SPI.pstateVel + 2)));
   Real T_part = p.rdata(SPI.pstateT);
   Real dia_part = p.rdata(SPI.pstateDia);
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SPI.pstateY + spf);
+  }
 #endif
   Real dt = flow_dt;
   int isub = 1;
@@ -275,7 +279,7 @@ calculateSpraySource(
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       Tcrit += Y_part[spf] * fdat.critT[spf];
     }
-    T_part = amrex::min(Tcrit, T_part);
+    T_part = amrex::min(0.999 * Tcrit, T_part);
     // Model the fuel vapor using the one-third rule
     Real delT = amrex::max(gpv.T_fluid - T_part, 0.);
     Real T_skin = T_part + rule * delT;
@@ -404,10 +408,11 @@ calculateSpraySource(
     RealVect part_mom_src(RealVect::TheZeroVector());
     if (SPI.mom_tran) {
       Real drag_coef = 0.;
-      if (Reyn > 0.)
+      if (Reyn > 0.) {
         drag_coef = (Reyn > 1.)
                       ? 24. / Reyn * (1. + std::cbrt(Reyn * Reyn) / 6.)
                       : 24. / Reyn;
+      }
       Real drag_force = 0.125 * rho_skin * drag_coef * M_PI * dia_part *
                         dia_part * diff_vel_mag;
       part_mom_src = drag_force * diff_vel;
@@ -447,8 +452,9 @@ calculateSpraySource(
           amrex::min(amrex::max(nsub, int(flow_dt * inv_tau_T) + 1), nSubMax);
       }
     }
-    if (isub == 1)
+    if (isub == 1) {
       dt = flow_dt / Real(nsub);
+    }
     const Real part_dt = dtmod * dt;
     // Update particle components
     AMREX_D_TERM(vel_part[0] += part_dt * part_mom_src[0] * inv_pmass;
@@ -485,8 +491,9 @@ calculateSpraySource(
   gpv.fluid_mass_src = mdot_total;
   Real part_ke = 0.5 * vel_part.radSquared();
   gpv.fluid_eng_src += part_ke * mdot_total;
-  if (SPI.mom_tran)
+  if (SPI.mom_tran) {
     gpv.fluid_mom_src += vel_part * mdot_total;
+  }
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     const int fspec = fdat.indx[spf];
     Real oldY = p.rdata(SPI.pstateY + spf);
@@ -499,16 +506,18 @@ calculateSpraySource(
   AMREX_D_TERM(attribs[SPI.pstateVel].data()[pid] = vel_part[0];
                , attribs[SPI.pstateVel + 1].data()[pid] = vel_part[1];
                , attribs[SPI.pstateVel + 2].data()[pid] = vel_part[2];);
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     attribs[SPI.pstateY + spf].data()[pid] = Y_part[spf];
+  }
   attribs[SPI.pstateT].data()[pid] = T_part;
   attribs[SPI.pstateDia].data()[pid] = dia_part;
 #else
   AMREX_D_TERM(p.rdata(SPI.pstateVel) = vel_part[0];
                , p.rdata(SPI.pstateVel + 1) = vel_part[1];
                , p.rdata(SPI.pstateVel + 2) = vel_part[2];);
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     p.rdata(SPI.pstateY + spf) = Y_part[spf];
+  }
   p.rdata(SPI.pstateT) = T_part;
   p.rdata(SPI.pstateDia) = dia_part;
 #endif
