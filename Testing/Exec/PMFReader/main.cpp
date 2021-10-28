@@ -13,7 +13,7 @@
 #endif
 
 #include "mechanism.H"
-#include <pmf_data.H>
+#include <PMFData.H>
 #include <data_K.H>
 
 #include <PelePhysics.H>
@@ -32,14 +32,15 @@ main(int argc, char* argv[])
     BL_PROFILE_VAR("main::main()", pmain);
 
     // -----------------------------------------------------------------------------
-    // Init the PMF data
+    // Init PMF
+    // -----------------------------------------------------------------------------
+    pele::physics::PMF::PmfData pmf_data;
+    pmf_data.initialize();
+
+    // -----------------------------------------------------------------------------
+    // Get standoff
     // -----------------------------------------------------------------------------
     ParmParse ppp("pele");
-    std::string pmf_datafile;
-    ppp.query("pmf_datafile", pmf_datafile);
-    int pmf_do_average = 1;
-    ppp.query("pmf_average", pmf_do_average);
-    PMF::read_pmf(pmf_datafile, pmf_do_average);
     Real standoff = 0.0;
     ppp.query("standoff", standoff);
 
@@ -85,7 +86,7 @@ main(int argc, char* argv[])
     // Initialize data from PMF
     // -----------------------------------------------------------------------------
     const auto geomdata = geom.data();
-    PmfData const* lpmfdata = pmf_data_g;
+    pele::physics::PMF::PmfData::DataContainer const* lpmfdata = pmf_data.getDeviceData();
     auto const& sma = stateMF.arrays();
     amrex::ParallelFor(stateMF,
     [=] AMREX_GPU_DEVICE (int box_no, int i, int j, int k) noexcept

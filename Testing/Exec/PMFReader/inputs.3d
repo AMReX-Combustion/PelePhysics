@@ -9,6 +9,9 @@ amr.n_cell = 32 32 64
 amr.max_grid_size  = 32
 
 #--------------------------PMF READER---------------------------
-pele.pmf_datafile = drm19_pmf.dat
-pele.pmf_average  = 1
+pmf.datafile = drm19_pmf.dat
+pmf.do_cellAverage = 1
+pmf.v        = 1
+
 pele.standoff     = -0.022
+amrex.the_arena_is_managed=1

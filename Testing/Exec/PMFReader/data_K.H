@@ -3,8 +3,8 @@
 
 #include <AMReX_Geometry.H>
 #include <AMReX_SPACE.H>
-#include <pmf.H>
-#include <pmf_data.H>
+#include <PMF.H>
+#include <PMFData.H>
 #include <PelePhysics.H>
 
 AMREX_GPU_DEVICE
@@ -13,7 +13,7 @@ void initdata(int i, int j, int k,
               amrex::Array4<amrex::Real> const &state,
               const amrex::Real &standoff,
               amrex::GeometryData const &geomdata,
-              PmfData const *pmf_data)
+              pele::physics::PMF::PmfData::DataContainer const *pmf_data)
 {
     const amrex::Real* prob_lo = geomdata.ProbLo();
     const amrex::Real* prob_hi = geomdata.ProbHi();
@@ -47,29 +47,29 @@ void initdata(int i, int j, int k,
     amrex::GpuArray<amrex::Real, NUM_SPECIES + 4> pmf_vals = {0.0};
     auto eos = pele::physics::PhysicsType::eos();
 
-#if ( AMREX_SPACEDIM == 2 ) 
+#if ( AMREX_SPACEDIM == 2 )
     amrex::Real y1 = (y - 0.5 * dx[1] - standoff)*100;
     amrex::Real y2 = (y + 0.5 * dx[1] - standoff)*100;
-#elif ( AMREX_SPACEDIM == 3 ) 
+#elif ( AMREX_SPACEDIM == 3 )
     amrex::Real y1 = (z - 0.5 * dx[2] - standoff)*100;
     amrex::Real y2 = (z + 0.5 * dx[2] - standoff)*100;
 #endif
 
-    PMF::pmf(pmf_data,y1, y2, pmf_vals);    
+    pele::physics::PMF::pmf(pmf_data,y1, y2, pmf_vals);
 
     state(i,j,k,Xvel) = 0;
-#if ( AMREX_SPACEDIM == 2 ) 
+#if ( AMREX_SPACEDIM == 2 )
     state(i,j,k,Yvel) = pmf_vals[1]*1e-2;
-#elif ( AMREX_SPACEDIM == 3 ) 
+#elif ( AMREX_SPACEDIM == 3 )
     state(i,j,k,Yvel) = 0;
     state(i,j,k,Zvel) = pmf_vals[1]*1e-2;
 #endif
 
-    state(i,j,k,Temp) = pmf_vals[0];;
+    state(i,j,k,Temp) = pmf_vals[0];
 
     for (int n = 0; n < NUM_SPECIES; n++){
-      molefrac[n] = pmf_vals[3 + n]; 
-    }   
+      molefrac[n] = pmf_vals[3 + n];
+    }
     eos.X2Y(molefrac, massfrac);
 
     amrex::Real P_cgs = 101325.0 * 10.0;
