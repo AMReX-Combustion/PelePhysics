@@ -1,10 +1,32 @@
 #include "ReactorBase.H"
 
+#include <arkode/arkode_arkstep.h>
+#include <arkode/arkode_erkstep.h>
+#include <nvector/nvector_serial.h>
+
+#include <cvode/cvode.h>
+
+#ifdef AMREX_USE_GPU
+#include "AMReX_SUNMemory.H"
+#endif
+
+#ifdef AMREX_USE_DPCPP
+#include <nvector/nvector_sycl.h>
+#endif
+
+#ifdef AMREX_USE_HIP
+#include <nvector/nvector_hip.h>
+#endif
+
+#ifdef AMREX_USE_CUDA
+#include <nvector/nvector_cuda.h>
+#endif
+
 namespace pele {
 namespace physics {
 namespace reactions {
 void
-ReactorBase::SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
+ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
 {
   int size_ETV = ExtTypVals.size();
   amrex::Vector<std::string> kname;
@@ -15,34 +37,33 @@ ReactorBase::SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
   omp_thread = omp_get_thread_num();
 #endif
 
-  for (int i = 0; i < size_ETV - 1; i++) {
-    typVals[i] = ExtTypVals[i];
+  for (int i = 0; i < size_ETV; i++) {
+    m_typ_vals[i] = ExtTypVals[i];
   }
-  typVals[size_ETV - 1] = ExtTypVals[size_ETV - 1];
 
   if (omp_thread == 0) {
     amrex::Print() << "Set the typVals in PelePhysics: \n  ";
     for (int i = 0; i < size_ETV - 1; i++) {
-      amrex::Print() << kname[i] << ":" << typVals[i] << "  ";
+      amrex::Print() << kname[i] << ":" << m_typ_vals[i] << "  ";
     }
-    amrex::Print() << "Temp:" << typVals[size_ETV - 1] << " \n";
+    amrex::Print() << "Temp:" << m_typ_vals[size_ETV - 1] << std::endl;
   }
 }
 void
-ReactorBase::setSundialsSolverTols(
+ReactorBase::set_sundials_solver_tols(
   void* sundials_mem,
-  int ncells,
-  int verbose,
-  amrex::Real relTol,
-  amrex::Real absTol,
-  std::string solvername)
+  const int ncells,
+  const int verbose,
+  const amrex::Real relTol,
+  const amrex::Real absTol,
+  const std::string solvername)
 {
   int omp_thread = 0;
 #ifdef AMREX_USE_OMP
   omp_thread = omp_get_thread_num();
 #endif
 
-  int neq_tot = (NUM_SPECIES + 1) * ncells;
+  const int neq_tot = (NUM_SPECIES + 1) * ncells;
 
 #if defined(AMREX_USE_CUDA)
   N_Vector atol = N_VNewWithMemHelp_Cuda(
@@ -65,16 +86,16 @@ ReactorBase::setSundialsSolverTols(
   amrex::Real* ratol = N_VGetArrayPointer(atol);
 #endif
 
-  if (typVals[0] > 0.0) {
+  if (m_typ_vals[0] > 0.0) {
     if ((verbose > 0) && (omp_thread == 0)) {
       amrex::Print() << " Setting " << solvername
                      << " tolerances with TypVals rtol = " << relTol
                      << " atolfact = " << absTol << " in PelePhysics \n";
     }
     for (int i = 0; i < ncells; i++) {
-      int offset = i * (NUM_SPECIES + 1);
+      const int offset = i * (NUM_SPECIES + 1);
       for (int k = 0; k < NUM_SPECIES + 1; k++) {
-        ratol[offset + k] = typVals[k] * absTol;
+        ratol[offset + k] = m_typ_vals[k] * absTol;
       }
     }
   } else {

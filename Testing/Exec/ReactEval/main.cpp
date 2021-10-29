@@ -483,7 +483,7 @@ main(int argc, char* argv[])
                 std::max(typ_vals[NUM_SPECIES], mf[lev].max(NUM_SPECIES));
             }
           }
-          reactor->SetTypValsODE(typ_vals);
+          reactor->set_typ_vals_ode(typ_vals);
         }
       }
     }

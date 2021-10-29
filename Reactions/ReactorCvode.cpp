@@ -55,7 +55,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   }
 
   // Setup tolerances
-  setSundialsSolverTols(
+  set_sundials_solver_tols(
     cvode_mem, udata_g->ncells, udata_g->verbose, relTol, absTol, "cvode");
 
   // Linear solver data
@@ -1163,7 +1163,7 @@ ReactorCvode::react(
     return (1);
 
   // Setup tolerances with typical values
-  setSundialsSolverTols(
+  set_sundials_solver_tols(
     cvode_mem, user_data->ncells, user_data->verbose, relTol, absTol, "cvode");
 
   // Linear solver data
@@ -1305,7 +1305,7 @@ ReactorCvode::react(
 #endif
 
   // Update TypicalValues
-  setSundialsSolverTols(
+  set_sundials_solver_tols(
     cvode_mem, udata_g->ncells, udata_g->verbose, relTol, absTol, "cvode");
 
   // Perform integration one cell at a time
@@ -1480,7 +1480,7 @@ ReactorCvode::react(
     return (1);
 
   // Setup tolerances with typical values
-  setSundialsSolverTols(
+  set_sundials_solver_tols(
     cvode_mem, user_data->ncells, user_data->verbose, relTol, absTol, "cvode");
 
   // Linear solver data
@@ -1646,7 +1646,7 @@ ReactorCvode::react(
   BL_PROFILE_VAR_STOP(AroundCVODE);
 
   // Update TypicalValues
-  setSundialsSolverTols(
+  set_sundials_solver_tols(
     cvode_mem, udata_g->ncells, udata_g->verbose, relTol, absTol, "cvode");
 
 #ifdef MOD_REACTOR

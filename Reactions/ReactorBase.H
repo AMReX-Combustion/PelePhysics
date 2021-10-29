@@ -6,7 +6,6 @@
 #include "PelePhysics.H"
 #include "mechanism.H"
 #include "ReactorUtils.H"
-#include "SundialsHeaders.H"
 
 namespace pele {
 namespace physics {
@@ -15,7 +14,6 @@ namespace reactions {
 class ReactorBase : public Factory<ReactorBase>
 {
 public:
-  amrex::Array<double, NUM_SPECIES + 1> typVals;
 
   static const std::string base_identifier() { return "ReactorBase"; }
 
@@ -80,17 +78,20 @@ public:
     long int* FCunt,
     amrex::Real dt) = 0;
 
-  void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
+  void set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals);
 
-  void setSundialsSolverTols(
+  void set_sundials_solver_tols(
     void* sundials_mem,
-    int ncells,
-    int verbose,
-    amrex::Real relTol,
-    amrex::Real absTol,
-    std::string solvername);
+    const int ncells,
+    const int verbose,
+    const amrex::Real relTol,
+    const amrex::Real absTol,
+    const std::string solvername);
 
   virtual ~ReactorBase() = default;
+
+protected:
+  amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals={0.0};
 };
 } // namespace reactions
 } // namespace physics
