@@ -14,7 +14,6 @@ namespace reactions {
 class ReactorBase : public Factory<ReactorBase>
 {
 public:
-
   static const std::string base_identifier() { return "ReactorBase"; }
 
   virtual int init(int reactor_type, int ncells) = 0;
@@ -91,7 +90,7 @@ public:
   virtual ~ReactorBase() = default;
 
 protected:
-  amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals={0.0};
+  amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
 };
 } // namespace reactions
 } // namespace physics
