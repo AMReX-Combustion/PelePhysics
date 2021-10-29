@@ -212,19 +212,21 @@ ReactorArkode::react(
   if (use_erkstep == 0) {
     arkode_mem = ARKStepCreate(cF_RHS, nullptr, time, y);
     ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
-    setSundialsSolverTols(arkode_mem,user_data->ncells,user_data->verbose,
-            relTol,absTol,"arkstep");
-    //ARKStepSStolerances(arkode_mem, relTol, absTol);
-    //ARKStepResStolerance(arkode_mem, absTol);
+    setSundialsSolverTols(
+      arkode_mem, user_data->ncells, user_data->verbose, relTol, absTol,
+      "arkstep");
+    // ARKStepSStolerances(arkode_mem, relTol, absTol);
+    // ARKStepResStolerance(arkode_mem, absTol);
     ARKStepSetTableNum(arkode_mem, -1, rk_method);
     ARKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   } else {
     arkode_mem = ERKStepCreate(cF_RHS, time, y);
     ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
-    setSundialsSolverTols(arkode_mem,user_data->ncells,user_data->verbose,
-            relTol,absTol,"erkstep");
-    //ERKStepSStolerances(arkode_mem, relTol, absTol);
+    setSundialsSolverTols(
+      arkode_mem, user_data->ncells, user_data->verbose, relTol, absTol,
+      "erkstep");
+    // ERKStepSStolerances(arkode_mem, relTol, absTol);
     ERKStepSetTableNum(arkode_mem, rk_method);
     ERKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
@@ -366,17 +368,19 @@ ReactorArkode::react(
   if (use_erkstep == 0) {
     arkode_mem = ARKStepCreate(cF_RHS, nullptr, time, y);
     ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
-    setSundialsSolverTols(arkode_mem,user_data->ncells,user_data->verbose,
-            relTol,absTol,"arkstep");
-    //ARKStepSStolerances(arkode_mem, relTol, absTol);
-    //ARKStepResStolerance(arkode_mem, absTol);
+    setSundialsSolverTols(
+      arkode_mem, user_data->ncells, user_data->verbose, relTol, absTol,
+      "arkstep");
+    // ARKStepSStolerances(arkode_mem, relTol, absTol);
+    // ARKStepResStolerance(arkode_mem, absTol);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   } else {
     arkode_mem = ERKStepCreate(cF_RHS, time, y);
     ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
-    setSundialsSolverTols(arkode_mem,user_data->ncells,user_data->verbose,
-            relTol,absTol,"erkstep");
-    //ERKStepSStolerances(arkode_mem, relTol, absTol);
+    setSundialsSolverTols(
+      arkode_mem, user_data->ncells, user_data->verbose, relTol, absTol,
+      "erkstep");
+    // ERKStepSStolerances(arkode_mem, relTol, absTol);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   }
 #ifdef MOD_REACTOR

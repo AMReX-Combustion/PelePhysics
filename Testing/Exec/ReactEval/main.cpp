@@ -432,7 +432,8 @@ main(int argc, char* argv[])
     // -----------------------------------------------------------------------------
     // Set typical values
     // -----------------------------------------------------------------------------
-    if (chem_integrator == "ReactorCvode" || chem_integrator == "ReactorArkode") {
+    if (
+      chem_integrator == "ReactorCvode" || chem_integrator == "ReactorArkode") {
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif

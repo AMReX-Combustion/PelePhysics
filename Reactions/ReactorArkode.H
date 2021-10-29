@@ -32,7 +32,6 @@ namespace pele {
 namespace physics {
 namespace reactions {
 
-
 class ReactorArkode : public ReactorBase::Register<ReactorArkode>
 {
 public:

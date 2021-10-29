@@ -3,7 +3,8 @@
 namespace pele {
 namespace physics {
 namespace reactions {
-void ReactorBase::SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
+void
+ReactorBase::SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
 {
   int size_ETV = ExtTypVals.size();
   amrex::Vector<std::string> kname;
@@ -28,8 +29,13 @@ void ReactorBase::SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
   }
 }
 void
-ReactorBase::setSundialsSolverTols(void* sundials_mem, int ncells, int verbose, amrex::Real relTol,
-        amrex::Real absTol, std::string solvername)
+ReactorBase::setSundialsSolverTols(
+  void* sundials_mem,
+  int ncells,
+  int verbose,
+  amrex::Real relTol,
+  amrex::Real absTol,
+  std::string solvername)
 {
   int omp_thread = 0;
 #ifdef AMREX_USE_OMP
@@ -61,10 +67,9 @@ ReactorBase::setSundialsSolverTols(void* sundials_mem, int ncells, int verbose, 
 
   if (typVals[0] > 0.0) {
     if ((verbose > 0) && (omp_thread == 0)) {
-      amrex::Print() << " Setting "<<solvername<<
-                        " tolerances with TypVals rtol = "
-                     << relTol << " atolfact = " << absTol
-                     << " in PelePhysics \n";
+      amrex::Print() << " Setting " << solvername
+                     << " tolerances with TypVals rtol = " << relTol
+                     << " atolfact = " << absTol << " in PelePhysics \n";
     }
     for (int i = 0; i < ncells; i++) {
       int offset = i * (NUM_SPECIES + 1);
@@ -74,8 +79,9 @@ ReactorBase::setSundialsSolverTols(void* sundials_mem, int ncells, int verbose, 
     }
   } else {
     if ((verbose > 0) && (omp_thread == 0)) {
-      amrex::Print() << " Setting "<<solvername<<" tolerances rtol = " << relTol
-                     << " atol = " << absTol << " in PelePhysics \n";
+      amrex::Print() << " Setting " << solvername
+                     << " tolerances rtol = " << relTol << " atol = " << absTol
+                     << " in PelePhysics \n";
     }
     for (int i = 0; i < neq_tot; i++) {
       ratol[i] = absTol;
@@ -93,23 +99,16 @@ ReactorBase::setSundialsSolverTols(void* sundials_mem, int ncells, int verbose, 
   // Call CVodeSVtolerances to specify the scalar relative tolerance
   // and vector absolute tolerances
   int flag;
-  if(solvername=="cvode")
-  {
-     flag = CVodeSVtolerances(sundials_mem, relTol, atol);
-  }
-  else if(solvername=="arkstep")
-  {
-     flag = ARKStepSVtolerances(sundials_mem, relTol, atol);
-  }
-  else if(solvername=="erkstep")
-  {
-     flag = ERKStepSVtolerances(sundials_mem, relTol, atol);
-  }
-  else
-  {
+  if (solvername == "cvode") {
+    flag = CVodeSVtolerances(sundials_mem, relTol, atol);
+  } else if (solvername == "arkstep") {
+    flag = ARKStepSVtolerances(sundials_mem, relTol, atol);
+  } else if (solvername == "erkstep") {
+    flag = ERKStepSVtolerances(sundials_mem, relTol, atol);
+  } else {
     amrex::Abort("setSundialsSolverTols not implemented for this solver type");
   }
-  if (utils::check_flag(&flag, "CVodeSVtolerances", 1)) {
+  if (utils::check_flag(&flag, "SVtolerances", 1)) {
     amrex::Abort("Problem in setSundialsSolverTols");
   }
 

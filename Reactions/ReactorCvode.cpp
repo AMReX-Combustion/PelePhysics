@@ -55,8 +55,8 @@ ReactorCvode::init(int reactor_type, int ncells)
   }
 
   // Setup tolerances
-  setSundialsSolverTols(cvode_mem, udata_g->ncells,udata_g->verbose,
-          relTol,absTol,"cvode");
+  setSundialsSolverTols(
+    cvode_mem, udata_g->ncells, udata_g->verbose, relTol, absTol, "cvode");
 
   // Linear solver data
   if (
@@ -1064,7 +1064,6 @@ ReactorCvode::allocUserData(
 #endif
 }
 
-
 int
 ReactorCvode::react(
   const amrex::Box& box,
@@ -1164,8 +1163,8 @@ ReactorCvode::react(
     return (1);
 
   // Setup tolerances with typical values
-  setSundialsSolverTols(cvode_mem, user_data->ncells, user_data->verbose,
-          relTol,absTol,"cvode");
+  setSundialsSolverTols(
+    cvode_mem, user_data->ncells, user_data->verbose, relTol, absTol, "cvode");
 
   // Linear solver data
   SUNLinearSolver LS = NULL;
@@ -1306,8 +1305,8 @@ ReactorCvode::react(
 #endif
 
   // Update TypicalValues
-  setSundialsSolverTols(cvode_mem,udata_g->ncells,udata_g->verbose,
-          relTol,absTol,"cvode");
+  setSundialsSolverTols(
+    cvode_mem, udata_g->ncells, udata_g->verbose, relTol, absTol, "cvode");
 
   // Perform integration one cell at a time
   const int icell = 0;
@@ -1481,8 +1480,8 @@ ReactorCvode::react(
     return (1);
 
   // Setup tolerances with typical values
-  setSundialsSolverTols(cvode_mem,user_data->ncells,user_data->verbose,
-          relTol,absTol,"cvode");
+  setSundialsSolverTols(
+    cvode_mem, user_data->ncells, user_data->verbose, relTol, absTol, "cvode");
 
   // Linear solver data
   if (user_data->solve_type == cvode::sparseDirect) {
@@ -1647,8 +1646,8 @@ ReactorCvode::react(
   BL_PROFILE_VAR_STOP(AroundCVODE);
 
   // Update TypicalValues
-  setSundialsSolverTols(cvode_mem,udata_g->ncells,udata_g->verbose,
-          relTol,absTol,"cvode");
+  setSundialsSolverTols(
+    cvode_mem, udata_g->ncells, udata_g->verbose, relTol, absTol, "cvode");
 
 #ifdef MOD_REACTOR
   dt_react =
@@ -1715,7 +1714,6 @@ ReactorCvode::cF_RHS(
   amrex::Gpu::Device::streamSynchronize();
   return 0;
 }
-
 
 void
 ReactorCvode::freeUserData(CVODEUserData* data_wk)

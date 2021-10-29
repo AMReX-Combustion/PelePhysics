@@ -82,8 +82,13 @@ public:
 
   void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals);
 
-  void setSundialsSolverTols(void* sundials_mem, int ncells, int verbose, amrex::Real relTol,
-          amrex::Real absTol, std::string solvername);
+  void setSundialsSolverTols(
+    void* sundials_mem,
+    int ncells,
+    int verbose,
+    amrex::Real relTol,
+    amrex::Real absTol,
+    std::string solvername);
 
   virtual ~ReactorBase() = default;
 };
