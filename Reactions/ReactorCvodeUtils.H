@@ -10,15 +10,6 @@
 #include <sunmatrix/sunmatrix_sparse.h>
 #include "ReactorUtils.H"
 
-#ifdef AMREX_USE_CUDA
-#include <cusolverSp.h>
-#endif
-
-#ifdef PELE_USE_KLU
-#include "klu.h"
-#include <sunlinsol/sunlinsol_klu.h>
-#endif
-
 namespace pele {
 namespace physics {
 namespace reactions {

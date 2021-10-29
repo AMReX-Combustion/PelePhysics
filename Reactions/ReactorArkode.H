@@ -38,7 +38,11 @@ class ReactorArkode : public ReactorBase::Register<ReactorArkode>
 public:
   static std::string identifier() { return "ReactorArkode"; }
 
+#ifdef AMREX_USE_GPU
   using Ordering = utils::CYOrder;
+#else
+  using Ordering = utils::YCOrder;
+#endif
 
   int init(int reactor_type, int ncells) override;
 

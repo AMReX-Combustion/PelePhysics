@@ -185,7 +185,9 @@ ReactorArkode::react(
   realtype* yvec_d = N_VGetArrayPointer(y);
 #endif
 
-  const int verbose = 1;
+  amrex::ParmParse pp("ode");
+  int verbose = 0;
+  pp.query("verbose", verbose);
   const auto captured_reactor_type = m_reactor_type;
   ARKODEUserData* user_data = new ARKODEUserData{};
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoe_init(ncells, 0);
@@ -324,7 +326,9 @@ ReactorArkode::react(
   realtype* yvec_d = N_VGetArrayPointer(y);
 #endif
 
-  const int verbose = 1;
+  amrex::ParmParse pp("ode");
+  int verbose = 0;
+  pp.query("verbose", verbose);
   const auto captured_reactor_type = m_reactor_type;
   ARKODEUserData* user_data = new ARKODEUserData{};
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoe_init(ncells, 0);
