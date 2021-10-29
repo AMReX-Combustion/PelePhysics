@@ -1,4 +1,4 @@
-CEXE_headers += ReactorUtils.H ReactorTypes.H ReactorBase.H ReactorRK64.H ReactorArkode.H ReactorNull.H ReactorCvode.H ReactorCvodeUtils.H ReactorCvodePreconditioner.H ReactorCvodeJacobian.H ReactorCvodeCustomLinSolver.H SundialsHeaders.H
+CEXE_headers += ReactorUtils.H ReactorTypes.H ReactorBase.H ReactorRK64.H ReactorArkode.H ReactorNull.H ReactorCvode.H ReactorCvodeUtils.H ReactorCvodePreconditioner.H ReactorCvodeJacobian.H ReactorCvodeCustomLinSolver.H
 CEXE_sources += ReactorUtils.cpp ReactorBase.cpp ReactorRK64.cpp ReactorArkode.cpp ReactorNull.cpp ReactorCvode.cpp ReactorCvodeUtils.cpp ReactorCvodePreconditioner.cpp ReactorCvodeJacobian.cpp ReactorCvodeCustomLinSolver.cpp
 
 ifneq (, $(filter TRUE, $(USE_CUDA) $(USE_HIP) $(USE_DPCPP)))
