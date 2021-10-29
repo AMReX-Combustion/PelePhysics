@@ -2,11 +2,11 @@
 #define _REACTORBASE_H_
 
 #include <AMReX_ParmParse.H>
-
 #include "Factory.H"
 #include "PelePhysics.H"
 #include "mechanism.H"
 #include "ReactorUtils.H"
+#include "SundialsHeaders.H"
 
 namespace pele {
 namespace physics {

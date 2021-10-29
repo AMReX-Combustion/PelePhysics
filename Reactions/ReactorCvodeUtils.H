@@ -1,7 +1,7 @@
 #ifndef _REACTORUTILSCVODE_H_
 #define _REACTORUTILSCVODE_H_
 #include "ReactorTypes.H"
-
+#include "ReactorCvode.H"
 #include <AMReX.H>
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>

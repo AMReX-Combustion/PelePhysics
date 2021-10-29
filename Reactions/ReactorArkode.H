@@ -2,35 +2,22 @@
 #define _REACTORARKODE_H_
 
 #include "ReactorBase.H"
-#include <arkode/arkode_arkstep.h>
-#include <arkode/arkode_erkstep.h>
-#include <nvector/nvector_serial.h>
-#ifdef AMREX_USE_GPU
-#include "AMReX_SUNMemory.H"
-#endif
-
-#ifdef AMREX_USE_DPCPP
-#include <nvector/nvector_sycl.h>
-#endif
-
-#ifdef AMREX_USE_HIP
-#include <nvector/nvector_hip.h>
-#endif
-
-#ifdef AMREX_USE_CUDA
-#include <cuda_runtime.h>
-#include <cublas_v2.h>
-#include <cusolverSp.h>
-#include <cusparse.h>
-#include <cuda_runtime_api.h>
-#include <nvector/nvector_cuda.h>
-#include <sunmatrix/sunmatrix_cusparse.h>
-#include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
-#endif
 
 namespace pele {
 namespace physics {
 namespace reactions {
+
+struct ARKODEUserData
+{
+  int ncells;
+  int neq;
+  int verbose;
+  int reactor_type;
+  amrex::Real dt_save;
+  amrex::Real* rhoe_init = nullptr;
+  amrex::Real* rhoesrc_ext = nullptr;
+  amrex::Real* rYsrc_ext = nullptr;
+};
 
 class ReactorArkode : public ReactorBase::Register<ReactorArkode>
 {
