@@ -47,7 +47,7 @@ class PmfData
   void allocate ()
   {
     if (!m_device_allocated) {
-        m_data_d = (DataContainer*) amrex::The_Device_Arena()->alloc(sizeof(m_data_h));
+        m_data_d = (DataContainer*) amrex::The_Arena()->alloc(sizeof(m_data_h));
         m_device_allocated = true;
         sync_to_device();
     }
