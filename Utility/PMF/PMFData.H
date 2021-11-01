@@ -29,7 +29,7 @@ class PmfData
       int do_average = 1;
       pp.query("do_cellAverage", do_average);
       if (!pp.contains("datafile")) {
-          amrex::Abort("pmf.datafile is reauired when using pmf");
+          amrex::Abort("pmf.datafile is required when using pmf");
       }
       pp.get("datafile",datafile);
       read_pmf(datafile, do_average, m_verbose);
