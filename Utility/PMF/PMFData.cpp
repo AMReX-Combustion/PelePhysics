@@ -42,6 +42,9 @@ PmfData::read_pmf(const std::string& myfile,
   int variable_count, line_count;
 
   std::ifstream infile(myfile);
+  if (!infile.is_open()) {
+    amrex::Abort("Unable to open pmf input file " + myfile);
+  }
   const std::string memfile = read_pmf_file(infile);
   infile.close();
   std::istringstream iss(memfile);
