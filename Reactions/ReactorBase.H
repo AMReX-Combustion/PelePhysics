@@ -2,7 +2,6 @@
 #define _REACTORBASE_H_
 
 #include <AMReX_ParmParse.H>
-
 #include "Factory.H"
 #include "PelePhysics.H"
 #include "mechanism.H"
@@ -78,9 +77,20 @@ public:
     long int* FCunt,
     amrex::Real dt) = 0;
 
-  virtual void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) = 0;
+  void set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals);
+
+  void set_sundials_solver_tols(
+    void* sundials_mem,
+    const int ncells,
+    const int verbose,
+    const amrex::Real relTol,
+    const amrex::Real absTol,
+    const std::string solvername);
 
   virtual ~ReactorBase() = default;
+
+protected:
+  amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
 };
 } // namespace reactions
 } // namespace physics

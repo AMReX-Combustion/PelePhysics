@@ -55,7 +55,8 @@ ReactorCvode::init(int reactor_type, int ncells)
   }
 
   // Setup tolerances
-  setCvodeTols(cvode_mem, udata_g);
+  set_sundials_solver_tols(
+    cvode_mem, udata_g->ncells, udata_g->verbose, relTol, absTol, "cvode");
 
   // Linear solver data
   if (
@@ -1063,82 +1064,6 @@ ReactorCvode::allocUserData(
 #endif
 }
 
-void
-ReactorCvode::setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata)
-{
-  int omp_thread = 0;
-#ifdef AMREX_USE_OMP
-  omp_thread = omp_get_thread_num();
-#endif
-
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-    a_udata != nullptr, "Reactor object is not initialized !!");
-
-  int ncells = a_udata->ncells;
-  int verbose = a_udata->verbose;
-  int neq_tot = (NUM_SPECIES + 1) * ncells;
-
-#if defined(AMREX_USE_CUDA)
-  N_Vector atol = N_VNewWithMemHelp_Cuda(
-    neq_tot, /*use_managed_mem=*/false,
-    *amrex::sundials::The_SUNMemory_Helper());
-  amrex::Real* ratol = N_VGetHostArrayPointer_Cuda(atol);
-#elif defined(AMREX_USE_HIP)
-  N_Vector atol = N_VNewWithMemHelp_Hip(
-    neq_tot, /*use_managed_mem=*/false,
-    *amrex::sundials::The_SUNMemory_Helper());
-  amrex::Real* ratol = N_VGetHostArrayPointer_Hip(atol);
-#elif defined(AMREX_USE_DPCPP)
-  N_Vector atol = N_VNewWithMemHelp_Sycl(
-    neq_tot, /*use_managed_mem=*/false,
-    *amrex::sundials::The_SUNMemory_Helper(),
-    &amrex::Gpu::Device::streamQueue());
-  amrex::Real* ratol = N_VGetHostArrayPointer_Sycl(atol);
-#else
-  N_Vector atol = N_VNew_Serial(neq_tot);
-  amrex::Real* ratol = N_VGetArrayPointer(atol);
-#endif
-
-  if (typVals[0] > 0.0) {
-    if ((verbose > 0) && (omp_thread == 0)) {
-      amrex::Print() << " Setting CVODE tolerances with TypVals rtol = "
-                     << relTol << " atolfact = " << absTol
-                     << " in PelePhysics \n";
-    }
-    for (int i = 0; i < ncells; i++) {
-      int offset = i * (NUM_SPECIES + 1);
-      for (int k = 0; k < NUM_SPECIES + 1; k++) {
-        ratol[offset + k] = typVals[k] * absTol;
-      }
-    }
-  } else {
-    if ((verbose > 0) && (omp_thread == 0)) {
-      amrex::Print() << " Setting CVODE tolerances rtol = " << relTol
-                     << " atol = " << absTol << " in PelePhysics \n";
-    }
-    for (int i = 0; i < neq_tot; i++) {
-      ratol[i] = absTol;
-    }
-  }
-
-#if defined(AMREX_USE_CUDA)
-  N_VCopyToDevice_Cuda(atol);
-#elif defined(AMREX_USE_HIP)
-  N_VCopyToDevice_Hip(atol);
-#elif defined(AMREX_USE_DPCPP)
-  N_VCopyToDevice_Sycl(atol);
-#endif
-
-  // Call CVodeSVtolerances to specify the scalar relative tolerance
-  // and vector absolute tolerances
-  int flag = CVodeSVtolerances(a_cvode_mem, relTol, atol);
-  if (utils::check_flag(&flag, "CVodeSVtolerances", 1)) {
-    amrex::Abort("Problem in setCvodeTols");
-  }
-
-  N_VDestroy(atol);
-}
-
 int
 ReactorCvode::react(
   const amrex::Box& box,
@@ -1238,7 +1163,8 @@ ReactorCvode::react(
     return (1);
 
   // Setup tolerances with typical values
-  setCvodeTols(cvode_mem, user_data);
+  set_sundials_solver_tols(
+    cvode_mem, user_data->ncells, user_data->verbose, relTol, absTol, "cvode");
 
   // Linear solver data
   SUNLinearSolver LS = NULL;
@@ -1379,7 +1305,8 @@ ReactorCvode::react(
 #endif
 
   // Update TypicalValues
-  setCvodeTols(cvode_mem, udata_g);
+  set_sundials_solver_tols(
+    cvode_mem, udata_g->ncells, udata_g->verbose, relTol, absTol, "cvode");
 
   // Perform integration one cell at a time
   const int icell = 0;
@@ -1553,7 +1480,8 @@ ReactorCvode::react(
     return (1);
 
   // Setup tolerances with typical values
-  setCvodeTols(cvode_mem, user_data);
+  set_sundials_solver_tols(
+    cvode_mem, user_data->ncells, user_data->verbose, relTol, absTol, "cvode");
 
   // Linear solver data
   if (user_data->solve_type == cvode::sparseDirect) {
@@ -1718,7 +1646,8 @@ ReactorCvode::react(
   BL_PROFILE_VAR_STOP(AroundCVODE);
 
   // Update TypicalValues
-  setCvodeTols(cvode_mem, udata_g);
+  set_sundials_solver_tols(
+    cvode_mem, udata_g->ncells, udata_g->verbose, relTol, absTol, "cvode");
 
 #ifdef MOD_REACTOR
   dt_react =
@@ -1784,32 +1713,6 @@ ReactorCvode::cF_RHS(
   });
   amrex::Gpu::Device::streamSynchronize();
   return 0;
-}
-
-void
-ReactorCvode::SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals)
-{
-  int size_ETV = ExtTypVals.size();
-  amrex::Vector<std::string> kname;
-  pele::physics::eos::speciesNames<pele::physics::PhysicsType::eos_type>(kname);
-  int omp_thread = 0;
-
-#ifdef _OPENMP
-  omp_thread = omp_get_thread_num();
-#endif
-
-  for (int i = 0; i < size_ETV - 1; i++) {
-    typVals[i] = ExtTypVals[i];
-  }
-  typVals[size_ETV - 1] = ExtTypVals[size_ETV - 1];
-
-  if (omp_thread == 0) {
-    amrex::Print() << "Set the typVals in PelePhysics: \n  ";
-    for (int i = 0; i < size_ETV - 1; i++) {
-      amrex::Print() << kname[i] << ":" << typVals[i] << "  ";
-    }
-    amrex::Print() << "Temp:" << typVals[size_ETV - 1] << " \n";
-  }
 }
 
 void
