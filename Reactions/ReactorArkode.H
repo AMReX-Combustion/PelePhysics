@@ -49,7 +49,11 @@ class ReactorArkode : public ReactorBase::Register<ReactorArkode>
 public:
   static std::string identifier() { return "ReactorArkode"; }
 
+#ifdef AMREX_USE_GPU
   using Ordering = utils::CYOrder;
+#else
+  using Ordering = utils::YCOrder;
+#endif
 
   int init(int reactor_type, int ncells) override;
 
@@ -124,8 +128,6 @@ public:
       box, ncells, m_reactor_type, rhoY, temperature, rhoE, frcEExt, FC_in,
       y_vect, vect_energy, FCunt, dt);
   }
-
-  void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) override;
 
 private:
   amrex::Real relTol{1e-6};

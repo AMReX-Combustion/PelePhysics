@@ -85,8 +85,6 @@ public:
       y_vect, vect_energy, FCunt, dt);
   }
 
-  void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) override;
-
 private:
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
