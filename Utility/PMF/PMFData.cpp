@@ -89,6 +89,7 @@ PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
     line_count * sizeof(amrex::Real));
   m_data_h.pmf_Y = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(
     line_count * (variable_count - 1) * sizeof(amrex::Real));
+  m_host_allocated = true;
 
   iss.clear();
   iss.seekg(0, std::ios::beg);
