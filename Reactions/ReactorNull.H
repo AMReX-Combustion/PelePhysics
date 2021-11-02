@@ -17,6 +17,8 @@ public:
   int init(int reactor_type, int ncells) override;
 
   void close() override {}
+  
+  void printFinalStats(void* arkode_mem) override {}
 
   int react(
     const amrex::Box& box,
