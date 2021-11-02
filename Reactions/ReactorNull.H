@@ -18,7 +18,7 @@ public:
 
   void close() override {}
   
-  void printFinalStats(void* arkode_mem) override {}
+  void printFinalStats(void* mem) override {}
 
   int react(
     const amrex::Box& box,
