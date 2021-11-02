@@ -4,8 +4,7 @@
 
 using namespace amrex;
 
-static
-std::string
+static std::string
 read_pmf_file(std::ifstream& in)
 {
   return static_cast<std::stringstream const&>(
@@ -13,19 +12,16 @@ read_pmf_file(std::ifstream& in)
     .str();
 }
 
-static
-bool
+static bool
 checkQuotes(const std::string& str)
 {
   int count = 0;
   for (char c : str) {
-    if (c == '"')
+    if (c == '"') {
       count++;
+    }
   }
-  if ((count % 2) == 0)
-    return true;
-  else
-    return false;
+  return (count % 2) == 0;
 }
 
 namespace pele {
@@ -33,25 +29,24 @@ namespace physics {
 namespace PMF {
 
 void
-PmfData::read_pmf(const std::string& myfile,
-                  int a_doAverage,
-                  int a_verbose)
+PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
 {
   std::string firstline, secondline, remaininglines;
-  int pos1, pos2;
+  unsigned long pos1, pos2;
   int variable_count, line_count;
 
-  std::ifstream infile(myfile);
+  std::ifstream infile(fname);
   if (!infile.is_open()) {
-    amrex::Abort("Unable to open pmf input file " + myfile);
+    amrex::Abort("Unable to open pmf input file " + fname);
   }
   const std::string memfile = read_pmf_file(infile);
   infile.close();
   std::istringstream iss(memfile);
 
   std::getline(iss, firstline);
-  if (!checkQuotes(firstline))
+  if (!checkQuotes(firstline)) {
     amrex::Abort("PMF file variable quotes unbalanced");
+  }
   std::getline(iss, secondline);
   pos1 = 0;
   pos2 = 0;
@@ -87,22 +82,23 @@ PmfData::read_pmf(const std::string& myfile,
   }
   amrex::Print() << line_count << " data lines found in PMF file" << std::endl;
 
-  m_data_h.m_nPoint = line_count; 
-  m_data_h.m_nVar = variable_count - 1; 
-  m_data_h.m_doAverage = a_doAverage; 
-  m_data_h.pmf_X = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(line_count * sizeof(amrex::Real));
-  m_data_h.pmf_Y = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(line_count * (variable_count - 1)
-                                                                  * sizeof(amrex::Real));
+  m_data_h.m_nPoint = line_count;
+  m_data_h.m_nVar = variable_count - 1;
+  m_data_h.m_doAverage = a_doAverage;
+  m_data_h.pmf_X = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(
+    line_count * sizeof(amrex::Real));
+  m_data_h.pmf_Y = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(
+    line_count * (variable_count - 1) * sizeof(amrex::Real));
 
   iss.clear();
   iss.seekg(0, std::ios::beg);
   std::getline(iss, firstline);
   std::getline(iss, secondline);
-  for (int i = 0; i < m_data_h.m_nPoint; i++) {
+  for (unsigned int i = 0; i < m_data_h.m_nPoint; i++) {
     std::getline(iss, remaininglines);
     std::istringstream sinput(remaininglines);
     sinput >> m_data_h.pmf_X[i];
-    for (int j = 0; j < m_data_h.m_nVar; j++) {
+    for (unsigned int j = 0; j < m_data_h.m_nVar; j++) {
       sinput >> m_data_h.pmf_Y[j * m_data_h.m_nPoint + i];
     }
   }
