@@ -22,7 +22,7 @@ using EosType = eos::Fuego;
 #elif USE_SRK_EOS
 using EosType = eos::SRK;
 #else
-static_assert(true, "Invalid EOS specified");
+static_assert(false, "Invalid EOS specified");
 #endif
 namespace eos {
 
