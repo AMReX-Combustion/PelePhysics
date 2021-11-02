@@ -15,7 +15,7 @@ using TransportType = transport::SimpleTransport;
 #elif USE_SUTHERLAND_TRANSPORT
 using TransportType = transport::SutherlandTransport;
 #else
-static_assert(true, "Invalid Transport specified");
+static_assert(false, "Invalid Transport specified");
 #endif
 } // namespace physics
 } // namespace pele
