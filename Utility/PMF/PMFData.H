@@ -36,7 +36,7 @@ class PmfData
       allocate();
   }
 
-  void read_pmf(const std::string& a_datafile, int a_doAverage, int a_verbose);
+  void read_pmf(const std::string& fname, int a_doAverage, int a_verbose);
 
   struct DataContainer
   {
