@@ -59,6 +59,8 @@ public:
 
   void close() override {}
 
+  void printFinalStats(void* arkodeMem) override;
+
   int react(
     const amrex::Box& box,
     amrex::Array4<amrex::Real> const& rY_in,
