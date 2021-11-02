@@ -4,8 +4,7 @@
 
 using namespace amrex;
 
-static
-std::string
+static std::string
 read_pmf_file(std::ifstream& in)
 {
   return static_cast<std::stringstream const&>(
@@ -13,13 +12,12 @@ read_pmf_file(std::ifstream& in)
     .str();
 }
 
-static
-bool
+static bool
 checkQuotes(const std::string& str)
 {
   int count = 0;
   for (char c : str) {
-    if (c == '"'){
+    if (c == '"') {
       count++;
     }
   }
@@ -31,9 +29,7 @@ namespace physics {
 namespace PMF {
 
 void
-PmfData::read_pmf(const std::string& fname,
-                  int a_doAverage,
-                  int /*a_verbose*/)
+PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
 {
   std::string firstline, secondline, remaininglines;
   unsigned long pos1, pos2;
@@ -86,12 +82,13 @@ PmfData::read_pmf(const std::string& fname,
   }
   amrex::Print() << line_count << " data lines found in PMF file" << std::endl;
 
-  m_data_h.m_nPoint = line_count; 
-  m_data_h.m_nVar = variable_count - 1; 
-  m_data_h.m_doAverage = a_doAverage; 
-  m_data_h.pmf_X = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(line_count * sizeof(amrex::Real));
-  m_data_h.pmf_Y = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(line_count * (variable_count - 1)
-                                                                  * sizeof(amrex::Real));
+  m_data_h.m_nPoint = line_count;
+  m_data_h.m_nVar = variable_count - 1;
+  m_data_h.m_doAverage = a_doAverage;
+  m_data_h.pmf_X = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(
+    line_count * sizeof(amrex::Real));
+  m_data_h.pmf_Y = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(
+    line_count * (variable_count - 1) * sizeof(amrex::Real));
 
   iss.clear();
   iss.seekg(0, std::ios::beg);
