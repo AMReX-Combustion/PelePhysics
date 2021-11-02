@@ -17,7 +17,7 @@ public:
   int init(int reactor_type, int ncells) override;
 
   void close() override {}
-  
+
   void printFinalStats(void* mem) override {}
 
   int react(
