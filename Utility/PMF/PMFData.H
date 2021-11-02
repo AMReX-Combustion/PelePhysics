@@ -55,10 +55,13 @@ public:
 
   void deallocate()
   {
-    amrex::The_Pinned_Arena()->free(m_data_h.pmf_X);
-    amrex::The_Pinned_Arena()->free(m_data_h.pmf_Y);
-    if (m_device_allocated)
+    if (m_host_allocated) {
+      amrex::The_Pinned_Arena()->free(m_data_h.pmf_X);
+      amrex::The_Pinned_Arena()->free(m_data_h.pmf_Y);
+    }
+    if (m_device_allocated) {
       amrex::The_Device_Arena()->free(m_data_d);
+    }
   }
 
   void sync_to_device()
@@ -82,8 +85,9 @@ public:
 private:
   int m_verbose = 0;
   DataContainer m_data_h;
-  DataContainer* m_data_d;
+  DataContainer* m_data_d = nullptr;
   bool m_device_allocated{false};
+  bool m_host_allocated{false};
 };
 } // namespace PMF
 } // namespace physics
