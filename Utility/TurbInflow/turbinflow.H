@@ -62,5 +62,6 @@ void fill_with_turb(
   TurbParm& tp);
 
 void set_turb(amrex::FArrayBox& v,
-              amrex::FArrayBox& data);
+              amrex::FArrayBox& data,
+              const int dcomp);
 #endif

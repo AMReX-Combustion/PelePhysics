@@ -233,15 +233,14 @@ fill_turb_plane(
 }
 
 void
-add_turb(
-  amrex::Box const& bx,
-  amrex::FArrayBox& data,
-  const int dcomp,
-  amrex::Geometry const& geom,
-  const amrex::Real time,
-  const int dir,
-  const amrex::Orientation::Side& side,
-  TurbParm& tp)
+add_turb(amrex::Box const& bx,
+         amrex::FArrayBox& data,
+         const int dcomp,
+         amrex::Geometry const& geom,
+         const amrex::Real time,
+         const int dir,
+         const amrex::Orientation::Side& side,
+         TurbParm& tp)
 {
   AMREX_ASSERT_WITH_MESSAGE(
     dir == 2,
@@ -276,22 +275,23 @@ add_turb(
     v.mult<amrex::RunOn::Device>(tp.turb_scale_vel);
   }
   amrex::Box ovlp = bvalsBox & data.box();
-  set_turb(v,data);
+  set_turb(v,data,dcomp);
 }
 
 void set_turb(amrex::FArrayBox& v,
-              amrex::FArrayBox& data)
+              amrex::FArrayBox& data,
+              const int dcomp)
 {
   //copy velocity fluctuations from plane into data
   const auto& box   = v.box();
   const auto& v_in  = v.array();
-  const auto& v_out = data.array();
+  const auto& v_out = data.array(dcomp);
 
-amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-      v_out(i,j,k,1) =  v_in(i,j,k,0); //UMX
-      v_out(i,j,k,2) =  v_in(i,j,k,1); //UMY
+  amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+                     v_out(i,j,k,0) =  v_in(i,j,k,0); //UMX
+                     v_out(i,j,k,1) =  v_in(i,j,k,1); //UMY
 #if AMREX_SPACEDIM == 3
-      v_out(i,j,k,3) =  v_in(i,j,k,2); //UMZ
+                     v_out(i,j,k,2) =  v_in(i,j,k,2); //UMZ
 #endif
     });
 }
