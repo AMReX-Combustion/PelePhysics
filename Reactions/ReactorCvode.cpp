@@ -1281,7 +1281,7 @@ ReactorCvode::react(
     user_data->rhoe_init, d_nfe, dt_react);
 
   if (user_data->verbose > 1) {
-    cvode::printFinalStats(cvode_mem);
+    print_final_stats(cvode_mem);
   }
 
   // Clean up
@@ -1332,7 +1332,7 @@ ReactorCvode::react(
 
         if ((udata_g->verbose > 1) && (omp_thread == 0)) {
           amrex::Print() << "Additional verbose info --\n";
-          cvode::printFinalStats(cvode_mem);
+          print_final_stats(cvode_mem);
           amrex::Print() << "\n -------------------------------------\n";
         }
 
@@ -1600,7 +1600,7 @@ ReactorCvode::react(
   long int nfe;
   flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
   if (user_data->verbose > 1) {
-    cvode::printFinalStats(cvode_mem);
+    print_final_stats(cvode_mem);
   }
 
   // Clean up
@@ -1664,7 +1664,7 @@ ReactorCvode::react(
 
   if ((udata_g->verbose > 1) && (omp_thread == 0)) {
     amrex::Print() << "Additional verbose info --\n";
-    cvode::printFinalStats(cvode_mem);
+    print_final_stats(cvode_mem);
     amrex::Print() << "\n -------------------------------------\n";
   }
 
@@ -1839,6 +1839,71 @@ ReactorCvode::close()
   N_VDestroy(y);
   freeUserData(udata_g);
 #endif
+}
+
+void
+ReactorCvode::print_final_stats(void* cvode_mem)
+{
+  long lenrw, leniw;
+  long lenrwLS, leniwLS;
+  long int nst, nfe, nsetups, nni, ncfn, netf;
+  long int nli, npe, nps, ncfl, nfeLS;
+  int flag;
+
+  flag = CVodeGetWorkSpace(cvode_mem, &lenrw, &leniw);
+  utils::check_flag(&flag, "CVodeGetWorkSpace", 1);
+  flag = CVodeGetNumSteps(cvode_mem, &nst);
+  utils::check_flag(&flag, "CVodeGetNumSteps", 1);
+  flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
+  utils::check_flag(&flag, "CVodeGetNumRhsEvals", 1);
+  flag = CVodeGetNumLinSolvSetups(cvode_mem, &nsetups);
+  utils::check_flag(&flag, "CVodeGetNumLinSolvSetups", 1);
+  flag = CVodeGetNumErrTestFails(cvode_mem, &netf);
+  utils::check_flag(&flag, "CVodeGetNumErrTestFails", 1);
+  flag = CVodeGetNumNonlinSolvIters(cvode_mem, &nni);
+  utils::check_flag(&flag, "CVodeGetNumNonlinSolvIters", 1);
+  flag = CVodeGetNumNonlinSolvConvFails(cvode_mem, &ncfn);
+  utils::check_flag(&flag, "CVodeGetNumNonlinSolvConvFails", 1);
+
+  flag = CVodeGetLinWorkSpace(cvode_mem, &lenrwLS, &leniwLS);
+  utils::check_flag(&flag, "CVodeGetLinWorkSpace", 1);
+  flag = CVodeGetNumLinIters(cvode_mem, &nli);
+  utils::check_flag(&flag, "CVodeGetNumLinIters", 1);
+  // flag = CVodeGetNumJacEvals(cvode_mem, &nje);
+  // utils::check_flag(&flag, "CVodeGetNumJacEvals", 1);
+  flag = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+  utils::check_flag(&flag, "CVodeGetNumLinRhsEvals", 1);
+
+  flag = CVodeGetNumPrecEvals(cvode_mem, &npe);
+  utils::check_flag(&flag, "CVodeGetNumPrecEvals", 1);
+  flag = CVodeGetNumPrecSolves(cvode_mem, &nps);
+  utils::check_flag(&flag, "CVodeGetNumPrecSolves", 1);
+
+  flag = CVodeGetNumLinConvFails(cvode_mem, &ncfl);
+  utils::check_flag(&flag, "CVodeGetNumLinConvFails", 1);
+
+#ifdef AMREX_USE_OMP
+  amrex::Print() << "\nFinal Statistics: "
+                 << "(thread:" << omp_get_thread_num() << ", ";
+  amrex::Print() << "cvode_mem:" << cvode_mem << ")\n";
+#else
+  amrex::Print() << "\nFinal Statistics:\n";
+#endif
+  amrex::Print() << "lenrw      = " << lenrw << "    leniw         = " << leniw
+                 << "\n";
+  amrex::Print() << "lenrwLS    = " << lenrwLS
+                 << "    leniwLS       = " << leniwLS << "\n";
+  amrex::Print() << "nSteps     = " << nst << "\n";
+  amrex::Print() << "nRHSeval   = " << nfe << "    nLinRHSeval   = " << nfeLS
+                 << "\n";
+  amrex::Print() << "nnLinIt    = " << nni << "    nLinIt        = " << nli
+                 << "\n";
+  amrex::Print() << "nLinsetups = " << nsetups << "    nErrtf        = " << netf
+                 << "\n";
+  amrex::Print() << "nPreceval  = " << npe << "    nPrecsolve    = " << nps
+                 << "\n";
+  amrex::Print() << "nConvfail  = " << ncfn << "    nLinConvfail  = " << ncfl
+                 << "\n\n";
 }
 
 } // namespace reactions

@@ -20,6 +20,8 @@ public:
 
   virtual void close() = 0;
 
+  virtual void print_final_stats(void* sundials_mem) = 0;
+
   virtual int react(
     const amrex::Box& box,
     amrex::Array4<amrex::Real> const& rY_in,

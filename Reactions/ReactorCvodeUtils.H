@@ -117,8 +117,6 @@ void cvodeErrHandler(
   char* msg,
   void* /*eh_data*/);
 
-void printFinalStats(void* cvodeMem);
-
 #ifdef AMREX_USE_GPU
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
