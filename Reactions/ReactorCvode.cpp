@@ -1281,7 +1281,7 @@ ReactorCvode::react(
     user_data->rhoe_init, d_nfe, dt_react);
 
   if (user_data->verbose > 1) {
-    printFinalStats(cvode_mem);
+    print_final_stats(cvode_mem);
   }
 
   // Clean up
@@ -1332,7 +1332,7 @@ ReactorCvode::react(
 
         if ((udata_g->verbose > 1) && (omp_thread == 0)) {
           amrex::Print() << "Additional verbose info --\n";
-          printFinalStats(cvode_mem);
+          print_final_stats(cvode_mem);
           amrex::Print() << "\n -------------------------------------\n";
         }
 
@@ -1600,7 +1600,7 @@ ReactorCvode::react(
   long int nfe;
   flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
   if (user_data->verbose > 1) {
-    printFinalStats(cvode_mem);
+    print_final_stats(cvode_mem);
   }
 
   // Clean up
@@ -1664,7 +1664,7 @@ ReactorCvode::react(
 
   if ((udata_g->verbose > 1) && (omp_thread == 0)) {
     amrex::Print() << "Additional verbose info --\n";
-    printFinalStats(cvode_mem);
+    print_final_stats(cvode_mem);
     amrex::Print() << "\n -------------------------------------\n";
   }
 
@@ -1842,7 +1842,7 @@ ReactorCvode::close()
 }
 
 void
-ReactorCvode::printFinalStats(void* cvode_mem)
+ReactorCvode::print_final_stats(void* cvode_mem)
 {
   long lenrw, leniw;
   long lenrwLS, leniwLS;

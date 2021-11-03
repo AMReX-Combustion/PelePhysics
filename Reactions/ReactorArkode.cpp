@@ -240,7 +240,7 @@ ReactorArkode::react(
   }
 
   if (user_data->verbose > 1) {
-    printFinalStats(arkode_mem);
+    print_final_stats(arkode_mem);
   }
 
   amrex::Gpu::DeviceVector<long int> v_nfe(ncells, nfe);
@@ -402,7 +402,7 @@ ReactorArkode::react(
   }
 
   if (user_data->verbose > 1) {
-    printFinalStats(arkode_mem);
+    print_final_stats(arkode_mem);
   }
 
   N_VDestroy(y);
@@ -457,7 +457,7 @@ ReactorArkode::cF_RHS(
 }
 
 void
-ReactorArkode::printFinalStats(void* arkode_mem)
+ReactorArkode::print_final_stats(void* arkode_mem)
 {
   long int nst, nst_a, nfe, nfi;
   long lenrw, leniw;
