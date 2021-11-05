@@ -1,0 +1,17 @@
+#----------------------DOMAIN DEFINITION------------------------
+geometry.is_periodic = 0 0 0               # For each dir, 0: non-perio, 1: periodic
+geometry.coord_sys   = 0                   # 0 => cart, 1 => RZ
+geometry.prob_lo     = 0.0    0.00  0.0     # x_lo y_lo (z_lo)
+geometry.prob_hi     = 0.016  0.016 0.032   # x_hi y_hi (z_hi)
+
+#-----------------------GRID DEFINITION-------------------------
+amr.n_cell = 32 32 64
+amr.max_grid_size  = 32
+
+#--------------------------PMF READER---------------------------
+pmf.datafile = drm19_pmf.dat
+pmf.do_cellAverage = 1
+pmf.v        = 1
+
+pele.standoff     = -0.022
+amrex.the_arena_is_managed=1

@@ -1,5 +1,0 @@
-CEXE_sources += pmf.cpp pmf_data.cpp
-CEXE_headers += pmf.H pmf_data.H
-
-VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Utility
-INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Utility

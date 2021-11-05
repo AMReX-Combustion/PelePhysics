@@ -1,17 +1,10 @@
-#include <pmf_data.H>
-#include <pmf.H>
+#include <PMFData.H>
 #include <AMReX_Arena.H>
 #include <AMReX_Gpu.H>
 
 using namespace amrex;
 
-namespace PMF
-{
-   amrex::Vector<std::string> pmf_names;
-}
-
-static
-std::string
+static std::string
 read_pmf_file(std::ifstream& in)
 {
   return static_cast<std::stringstream const&>(
@@ -19,39 +12,41 @@ read_pmf_file(std::ifstream& in)
     .str();
 }
 
-static
-bool
+static bool
 checkQuotes(const std::string& str)
 {
   int count = 0;
   for (char c : str) {
-    if (c == '"')
+    if (c == '"') {
       count++;
+    }
   }
-  if ((count % 2) == 0)
-    return true;
-  else
-    return false;
+  return (count % 2) == 0;
 }
 
-void
-PMF::read_pmf(const std::string& myfile, bool do_average)
-{
+namespace pele {
+namespace physics {
+namespace PMF {
 
-  PmfData pmf_data;
-   
+void
+PmfData::read_pmf(const std::string& fname, int a_doAverage, int /*a_verbose*/)
+{
   std::string firstline, secondline, remaininglines;
-  int pos1, pos2;
+  unsigned long pos1, pos2;
   int variable_count, line_count;
 
-  std::ifstream infile(myfile);
+  std::ifstream infile(fname);
+  if (!infile.is_open()) {
+    amrex::Abort("Unable to open pmf input file " + fname);
+  }
   const std::string memfile = read_pmf_file(infile);
   infile.close();
   std::istringstream iss(memfile);
 
   std::getline(iss, firstline);
-  if (!checkQuotes(firstline))
+  if (!checkQuotes(firstline)) {
     amrex::Abort("PMF file variable quotes unbalanced");
+  }
   std::getline(iss, secondline);
   pos1 = 0;
   pos2 = 0;
@@ -63,15 +58,17 @@ PMF::read_pmf(const std::string& myfile, bool do_average)
     pos1 = pos2 + 1;
   }
 
-  PMF::pmf_names.resize(variable_count);
+  pmf_names.resize(variable_count);
   pos1 = 0;
   pos2 = 0;
   for (int i = 0; i < variable_count; i++) {
     pos1 = firstline.find('"', pos1);
     pos2 = firstline.find('"', pos1 + 1);
-    PMF::pmf_names[i] = firstline.substr(pos1 + 1, pos2 - (pos1 + 1));
+    pmf_names[i] = firstline.substr(pos1 + 1, pos2 - (pos1 + 1));
     pos1 = pos2 + 1;
   }
+
+  // Check variable names
 
   amrex::Print() << variable_count << " variables found in PMF file"
                  << std::endl;
@@ -85,32 +82,28 @@ PMF::read_pmf(const std::string& myfile, bool do_average)
   }
   amrex::Print() << line_count << " data lines found in PMF file" << std::endl;
 
-  pmf_data.pmf_N = line_count;
-  pmf_data.pmf_M = variable_count - 1;
-  pmf_data.pmf_X = (amrex::Real *) The_Arena()->alloc(pmf_data.pmf_N * sizeof(amrex::Real));
-  pmf_data.pmf_Y = (amrex::Real *) The_Arena()->alloc(pmf_data.pmf_N * pmf_data.pmf_M * sizeof(amrex::Real));
+  m_data_h.m_nPoint = line_count;
+  m_data_h.m_nVar = variable_count - 1;
+  m_data_h.m_doAverage = a_doAverage;
+  m_data_h.pmf_X = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(
+    line_count * sizeof(amrex::Real));
+  m_data_h.pmf_Y = (amrex::Real*)amrex::The_Pinned_Arena()->alloc(
+    line_count * (variable_count - 1) * sizeof(amrex::Real));
+  m_host_allocated = true;
 
   iss.clear();
   iss.seekg(0, std::ios::beg);
   std::getline(iss, firstline);
   std::getline(iss, secondline);
-  for (int i = 0; i < pmf_data.pmf_N; i++) {
+  for (unsigned int i = 0; i < m_data_h.m_nPoint; i++) {
     std::getline(iss, remaininglines);
     std::istringstream sinput(remaininglines);
-    sinput >> pmf_data.pmf_X[i];
-    for (int j = 0; j < pmf_data.pmf_M; j++) {
-      sinput >> pmf_data.pmf_Y[j * pmf_data.pmf_N + i];
+    sinput >> m_data_h.pmf_X[i];
+    for (unsigned int j = 0; j < m_data_h.m_nVar; j++) {
+      sinput >> m_data_h.pmf_Y[j * m_data_h.m_nPoint + i];
     }
   }
-
-  pmf_data_g = (PmfData *) The_Device_Arena()->alloc(sizeof(pmf_data)); 
-#ifdef AMREX_USE_GPU
-  amrex::Gpu::htod_memcpy(pmf_data_g,&pmf_data,sizeof(pmf_data)); 
-#else
-  pmf_data_g->pmf_N = line_count;
-  pmf_data_g->pmf_M = variable_count - 1;
-  pmf_data_g->pmf_do_average = do_average;
-  std::memcpy(&pmf_data_g->pmf_X,&pmf_data.pmf_X, sizeof(pmf_data.pmf_X));
-  std::memcpy(&pmf_data_g->pmf_Y,&pmf_data.pmf_Y, sizeof(pmf_data.pmf_Y));
-#endif
 }
+} // namespace PMF
+} // namespace physics
+} // namespace pele

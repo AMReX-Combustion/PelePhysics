@@ -25,6 +25,10 @@
 #include <nvector/nvector_hip.h>
 #endif
 
+#ifdef AMREX_USE_DPCPP
+#include <nvector/nvector_sycl.h>
+#endif
+
 #ifdef PELE_USE_KLU
 #include "klu.h"
 #include <sunlinsol/sunlinsol_klu.h>
@@ -131,8 +135,6 @@ public:
       y_vect, vect_energy, FCunt, dt);
   }
 
-  void SetTypValsODE(const std::vector<amrex::Real>& ExtTypVals) override;
-
 private:
   void checkCvodeOptions() const;
   void allocUserData(
@@ -144,12 +146,10 @@ private:
     amrex::gpuStream_t stream
 #endif
   ) const;
-  void setCvodeTols(void* a_cvode_mem, CVODEUserData* a_udata);
   void freeUserData(CVODEUserData* data_wk);
 
   amrex::Real relTol{1e-6};
   amrex::Real absTol{1e-10};
-  amrex::Array<double, NUM_SPECIES + 1> typVals;
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
 
