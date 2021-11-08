@@ -1137,7 +1137,8 @@ ReactorCvode::react(
 
   amrex::Gpu::streamSynchronize();
   SUNMatrix A = NULL;
-  CVODEUserData* user_data = (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
+  CVODEUserData* user_data =
+    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
   allocUserData(user_data, ncells, A, stream);
 
   // Fill data
@@ -1408,7 +1409,8 @@ ReactorCvode::react(
 
   // Fill user_data
   amrex::Gpu::streamSynchronize();
-  CVODEUserData* user_data = new CVODEUserData{};
+  CVODEUserData* user_data =
+    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
   allocUserData(user_data, ncells, A, stream);
 
   // Solution vector and execution policy
