@@ -1137,7 +1137,7 @@ ReactorCvode::react(
 
   amrex::Gpu::streamSynchronize();
   SUNMatrix A = NULL;
-  CVODEUserData* user_data = new CVODEUserData{};
+  CVODEUserData* user_data = (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
   allocUserData(user_data, ncells, A, stream);
 
   // Fill data
@@ -1758,7 +1758,7 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     cudaFree(data_wk->buffer_qr);
 #endif
   }
-  delete data_wk;
+  amrex::The_Arena()->free(data_wk);
 
 #else
   amrex::The_Arena()->free(data_wk->FCunt);
