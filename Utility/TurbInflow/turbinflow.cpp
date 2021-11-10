@@ -242,11 +242,9 @@ add_turb(amrex::Box const& bx,
          const amrex::Orientation::Side& side,
          TurbParm& tp)
 {
-  AMREX_ASSERT_WITH_MESSAGE(
-    dir == 2,
-    "Sadly, the fluctuation code currently only works in the third dimension");
   AMREX_ASSERT(tp.turbinflow_initialized);
 
+  // Box on which we will access data
   amrex::Box bvalsBox = bx;
   int planeLoc =
     (side == amrex::Orientation::low ? geom.Domain().smallEnd()[dir] - 1
@@ -254,18 +252,29 @@ add_turb(amrex::Box const& bx,
   bvalsBox.setSmall(dir, planeLoc);
   bvalsBox.setBig(dir, planeLoc);
 
-  amrex::FArrayBox v(bvalsBox, 3);
+  // Define box that we will fill with turb: need to be z-normal
+  // Get transverse directions
+  int tdir1 = ( dir != 0 ) ? 0 : 1 ;
+  int tdir2 = ( dir != 0 ) ? ( ( dir == 2 ) ? 1 : 2 ) : 2 ;
+  int tr1Lo = bvalsBox.smallEnd()[tdir1];
+  int tr1Hi = bvalsBox.bigEnd()[tdir1];
+  int tr2Lo = bvalsBox.smallEnd()[tdir2];
+  int tr2Hi = bvalsBox.bigEnd()[tdir2];
+  amrex::Box turbBox({tr1Lo, tr2Lo, planeLoc},
+                     {tr1Hi, tr2Hi, planeLoc});
+  amrex::FArrayBox v(turbBox, 3);
 
-  amrex::Vector<amrex::Real> x(bvalsBox.size()[0]), y(bvalsBox.size()[1]);
-  for (int i = bvalsBox.smallEnd()[0]; i <= bvalsBox.bigEnd()[0]; ++i) {
-    x[i - bvalsBox.smallEnd()[0]] =
-      (geom.ProbLo()[0] + (i + 0.5) * geom.CellSize(0)) * tp.turb_scale_loc;
+  amrex::Vector<amrex::Real> x(turbBox.size()[0]), y(turbBox.size()[1]);
+  for (int i = turbBox.smallEnd()[0]; i <= turbBox.bigEnd()[0]; ++i) {
+    x[i - turbBox.smallEnd()[0]] =
+      (geom.ProbLo()[tdir1] + (i + 0.5) * geom.CellSize(tdir1)) * tp.turb_scale_loc;
   }
-  for (int j = bvalsBox.smallEnd()[1]; j <= bvalsBox.bigEnd()[1]; ++j) {
-    y[j - bvalsBox.smallEnd()[1]] =
-      (geom.ProbLo()[1] + (j + 0.5) * geom.CellSize(1)) * tp.turb_scale_loc;
+  for (int j = turbBox.smallEnd()[1]; j <= turbBox.bigEnd()[1]; ++j) {
+    y[j - turbBox.smallEnd()[1]] =
+      (geom.ProbLo()[tdir2] + (j + 0.5) * geom.CellSize(tdir2)) * tp.turb_scale_loc;
   }
 
+  // Get the turbulence
   v.setVal<amrex::RunOn::Device>(0);
   amrex::Real z = time * tp.turb_conv_vel * tp.turb_scale_loc;
   fill_turb_plane(x, y, z, v, tp);
@@ -274,26 +283,31 @@ add_turb(amrex::Box const& bx,
   } else {
     v.mult<amrex::RunOn::Device>(tp.turb_scale_vel);
   }
-  amrex::Box ovlp = bvalsBox & data.box();
-  set_turb(v,data,dcomp);
+
+  // Moving it into data
+  set_turb(dir,tdir1,tdir2,v,data,dcomp);
 }
 
-void set_turb(amrex::FArrayBox& v,
+void set_turb(int normDir, int transDir1, int transDir2,
+              amrex::FArrayBox& v,
               amrex::FArrayBox& data,
               const int dcomp)
 {
-  //copy velocity fluctuations from plane into data
-  const auto& box   = v.box();
+  // copy velocity fluctuations from plane into data
+  const auto& box   = v.box();   // z-normal plane
   const auto& v_in  = v.array();
   const auto& v_out = data.array(dcomp);
 
   amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-                     v_out(i,j,k,0) =  v_in(i,j,k,0); //UMX
-                     v_out(i,j,k,1) =  v_in(i,j,k,1); //UMY
-#if AMREX_SPACEDIM == 3
-                     v_out(i,j,k,2) =  v_in(i,j,k,2); //UMZ
-#endif
-    });
+                     // From z-normal box index to data box index
+                     int idx[3] = {0};
+                     idx[transDir1] = i;
+                     idx[transDir2] = j;
+                     idx[normDir] = k;
+                     v_out(idx[0],idx[1],idx[2],transDir1) =  v_in(i,j,k,0);  // transverse velocity 1
+                     v_out(idx[0],idx[1],idx[2],transDir2) =  v_in(i,j,k,1);  // transverse velocity 2
+                     v_out(idx[0],idx[1],idx[2],normDir)   =  v_in(i,j,k,2);  // normal velocity
+  });
 }
 
 void
