@@ -267,8 +267,9 @@ calculateSpraySource(
   int isub = 1;
   int nsub = 1;
   Real rho_part = 0.;
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf)
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     rho_part += Y_part[spf] / fdat.rho[spf];
+  }
   rho_part = 1. / rho_part;
   Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   Real startmass = pmass;
