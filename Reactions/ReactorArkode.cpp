@@ -110,8 +110,6 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   } else {
     amrex::Print() << "ARK Step:" << std::endl;
   }
-  amrex::Print() << "  Setting tolerances rtol = " << relTol
-                 << " atol = " << absTol << std::endl;
   amrex::Print() << "  Using " << method_string << " method" << std::endl;
   amrex::Print() << "  Using the " << controller_string << " controller"
                  << std::endl;
@@ -239,6 +237,10 @@ ReactorArkode::react(
     ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
   } else {
     ERKStepGetNumRhsEvals(arkode_mem, &nfe);
+  }
+
+  if (user_data->verbose > 1) {
+    print_final_stats(arkode_mem);
   }
 
   amrex::Gpu::DeviceVector<long int> v_nfe(ncells, nfe);
@@ -399,6 +401,10 @@ ReactorArkode::react(
     ERKStepGetNumRhsEvals(arkode_mem, &nfe);
   }
 
+  if (user_data->verbose > 1) {
+    print_final_stats(arkode_mem);
+  }
+
   N_VDestroy(y);
   if (use_erkstep == 0) {
     ARKStepFree(&arkode_mem);
@@ -448,6 +454,49 @@ ReactorArkode::cF_RHS(
   amrex::Gpu::Device::streamSynchronize();
 
   return (0);
+}
+
+void
+ReactorArkode::print_final_stats(void* arkode_mem)
+{
+  long int nst, nst_a, nfe, nfi;
+  long lenrw, leniw;
+  int flag;
+
+  if (use_erkstep) {
+    flag = ERKStepGetWorkSpace(arkode_mem, &lenrw, &leniw);
+    utils::check_flag(&flag, "ERKStepGetWorkSpace", 1);
+    flag = ERKStepGetNumSteps(arkode_mem, &nst);
+    utils::check_flag(&flag, "ERKStepGetNumSteps", 1);
+    flag = ERKStepGetNumStepAttempts(arkode_mem, &nst_a);
+    utils::check_flag(&flag, "ERKStepGetNumStepAttempts", 1);
+    flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
+    utils::check_flag(&flag, "ERKStepGetNumRhsEvals", 1);
+
+  } else {
+    flag = ARKStepGetWorkSpace(arkode_mem, &lenrw, &leniw);
+    utils::check_flag(&flag, "ARKStepGetWorkSpace", 1);
+    flag = ARKStepGetNumSteps(arkode_mem, &nst);
+    utils::check_flag(&flag, "ARKStepGetNumSteps", 1);
+    flag = ARKStepGetNumStepAttempts(arkode_mem, &nst_a);
+    utils::check_flag(&flag, "ARKStepGetNumStepAttempts", 1);
+    flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
+    utils::check_flag(&flag, "ARKStepGetNumRhsEvals", 1);
+  }
+
+#ifdef AMREX_USE_OMP
+  amrex::Print() << "\nFinal Statistics: "
+                 << "(thread:" << omp_get_thread_num() << ", ";
+  amrex::Print() << "arkodeMem:" << arkode_mem << ")\n";
+#else
+  amrex::Print() << "\nFinal Statistics:\n";
+#endif
+
+  amrex::Print() << "   Internal solver steps = " << nst
+                 << " (attempted = " << nst_a << ")\n";
+  amrex::Print() << "   Total RHS evals:  Fe = " << nfe << "\n";
+  amrex::Print() << "lenrw      = " << lenrw << "    leniw         = " << leniw
+                 << "\n";
 }
 } // namespace reactions
 } // namespace physics
