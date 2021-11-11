@@ -22,6 +22,10 @@
 #include <nvector/nvector_cuda.h>
 #include <sunmatrix/sunmatrix_cusparse.h>
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
+#ifdef PELE_USE_MAGMA
+#include <sunmatrix/sunmatrix_magmadense.h>
+#include <sunlinsol/sunlinsol_magmadense.h>
+#endif
 #endif
 
 namespace pele {

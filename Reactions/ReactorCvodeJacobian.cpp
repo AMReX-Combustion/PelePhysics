@@ -58,8 +58,8 @@ cJac(
 #ifdef PELE_USE_MAGMA
     amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y_in);
     amrex::Real* Jdata = SUNMatrix_MagmaDense_Data(J);
-    const auto ec = Gpu::ExecutionConfig(ncells);
-    launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
+    const auto ec = amrex::Gpu::ExecutionConfig(ncells);
+    amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
       [=] AMREX_GPU_DEVICE() noexcept {
         for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                  stride = blockDim.x * gridDim.x;
