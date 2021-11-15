@@ -156,6 +156,7 @@ private:
   int m_reactor_type{0};
 
 #ifndef AMREX_USE_GPU
+  sundials::Context sunctx;
   N_Vector y = NULL;
   SUNLinearSolver LS = NULL;
   SUNMatrix A = NULL;
