@@ -17,9 +17,7 @@
 #include <sundials/sundials_math.h>
 #include <sunmatrix/sunmatrix_sparse.h>
 
-#ifdef AMREX_USE_GPU
-#include "AMReX_SUNMemory.H"
-#endif
+#include "AMReX_Sundials.H"
 
 #ifdef AMREX_USE_HIP
 #include <nvector/nvector_hip.h>
@@ -155,8 +153,9 @@ private:
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
 
+  //SUNProfiler sun_profiler = NULL;
 #ifndef AMREX_USE_GPU
-  sundials::Context sunctx;
+  //sundials::Context sunctx;
   N_Vector y = NULL;
   SUNLinearSolver LS = NULL;
   SUNMatrix A = NULL;

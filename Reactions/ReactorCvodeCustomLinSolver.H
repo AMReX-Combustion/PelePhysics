@@ -35,7 +35,7 @@ typedef struct _SUNLinearSolverContent_Dense_custom*
   SUNLinearSolverContent_Dense_custom;
 
 SUNLinearSolver
-SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, amrex::gpuStream_t stream);
+SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, amrex::gpuStream_t stream, SUNContext sunctx);
 
 SUNLinearSolver_Type SUNLinSolGetType_Dense_custom(SUNLinearSolver S);
 
@@ -65,7 +65,8 @@ SUNLinearSolver SUNLinSol_sparse_custom(
   int reactor_type,
   int nsubsys,
   int subsys_size,
-  int subsys_nnz);
+  int subsys_nnz,
+  SUNContext sunctx);
 
 SUNLinearSolver_Type SUNLinSolGetType_Sparse_custom(SUNLinearSolver S);
 

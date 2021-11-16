@@ -20,7 +20,7 @@ namespace cvode {
 // The following are only available with Cuda
 #ifdef AMREX_USE_CUDA
 SUNLinearSolver
-SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, cudaStream_t stream)
+SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, cudaStream_t stream, SUNContext sunctx)
 {
   if (y == NULL || A == NULL)
     return (NULL);
@@ -38,7 +38,7 @@ SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, cudaStream_t stream)
 
   SUNLinearSolver S;
   S = NULL;
-  S = SUNLinSolNewEmpty();
+  S = SUNLinSolNewEmpty(sunctx);
   if (S == NULL) {
     return (NULL);
   }
@@ -156,7 +156,8 @@ SUNLinSol_sparse_custom(
   int reactor_type,
   int nsubsys,
   int subsys_size,
-  int subsys_nnz)
+  int subsys_nnz,
+  SUNContext sunctx)
 {
   SUNLinearSolver S;
   SUNLinearSolverContent_Sparse_custom content;
@@ -195,7 +196,7 @@ SUNLinSol_sparse_custom(
   }
 
   // Create an empty linear solver
-  S = SUNLinSolNewEmpty();
+  S = SUNLinSolNewEmpty(sunctx);
   if (S == nullptr) {
     return (nullptr);
   }
