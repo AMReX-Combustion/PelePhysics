@@ -165,6 +165,12 @@ struct Fuego
     // CKWYR(&R, &T, Y, WDOT);
     amrex::Real C[NUM_SPECIES];
     CKYTCR(&R, &T, Y, C);
+
+    // Do not allow negative C for wdot calculation
+    for (int ii = 0; ii < NUM_SPECIES; ++ii) {
+      C[ii] = amrex::max(C[ii],0.0);
+    }
+
     CKWC(&T, C, WDOT);
 
     amrex::Real mw[NUM_SPECIES];
