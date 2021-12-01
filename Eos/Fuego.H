@@ -168,7 +168,7 @@ struct Fuego
 
     // Do not allow negative C for wdot calculation
     for (int ii = 0; ii < NUM_SPECIES; ++ii) {
-      C[ii] = amrex::max(C[ii],0.0);
+      C[ii] = amrex::max(C[ii], 0.0);
     }
 
     CKWC(&T, C, WDOT);
