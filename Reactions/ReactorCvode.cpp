@@ -1842,7 +1842,7 @@ ReactorCvode::close()
 }
 
 void
-ReactorCvode::print_final_stats(void* cvode_mem)
+ReactorCvode::print_final_stats(void* cvodemem)
 {
   long lenrw, leniw;
   long lenrwLS, leniwLS;
@@ -1850,42 +1850,42 @@ ReactorCvode::print_final_stats(void* cvode_mem)
   long int nli, npe, nps, ncfl, nfeLS;
   int flag;
 
-  flag = CVodeGetWorkSpace(cvode_mem, &lenrw, &leniw);
+  flag = CVodeGetWorkSpace(cvodemem, &lenrw, &leniw);
   utils::check_flag(&flag, "CVodeGetWorkSpace", 1);
-  flag = CVodeGetNumSteps(cvode_mem, &nst);
+  flag = CVodeGetNumSteps(cvodemem, &nst);
   utils::check_flag(&flag, "CVodeGetNumSteps", 1);
-  flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
+  flag = CVodeGetNumRhsEvals(cvodemem, &nfe);
   utils::check_flag(&flag, "CVodeGetNumRhsEvals", 1);
-  flag = CVodeGetNumLinSolvSetups(cvode_mem, &nsetups);
+  flag = CVodeGetNumLinSolvSetups(cvodemem, &nsetups);
   utils::check_flag(&flag, "CVodeGetNumLinSolvSetups", 1);
-  flag = CVodeGetNumErrTestFails(cvode_mem, &netf);
+  flag = CVodeGetNumErrTestFails(cvodemem, &netf);
   utils::check_flag(&flag, "CVodeGetNumErrTestFails", 1);
-  flag = CVodeGetNumNonlinSolvIters(cvode_mem, &nni);
+  flag = CVodeGetNumNonlinSolvIters(cvodemem, &nni);
   utils::check_flag(&flag, "CVodeGetNumNonlinSolvIters", 1);
-  flag = CVodeGetNumNonlinSolvConvFails(cvode_mem, &ncfn);
+  flag = CVodeGetNumNonlinSolvConvFails(cvodemem, &ncfn);
   utils::check_flag(&flag, "CVodeGetNumNonlinSolvConvFails", 1);
 
-  flag = CVodeGetLinWorkSpace(cvode_mem, &lenrwLS, &leniwLS);
+  flag = CVodeGetLinWorkSpace(cvodemem, &lenrwLS, &leniwLS);
   utils::check_flag(&flag, "CVodeGetLinWorkSpace", 1);
-  flag = CVodeGetNumLinIters(cvode_mem, &nli);
+  flag = CVodeGetNumLinIters(cvodemem, &nli);
   utils::check_flag(&flag, "CVodeGetNumLinIters", 1);
-  // flag = CVodeGetNumJacEvals(cvode_mem, &nje);
+  // flag = CVodeGetNumJacEvals(cvodemem, &nje);
   // utils::check_flag(&flag, "CVodeGetNumJacEvals", 1);
-  flag = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+  flag = CVodeGetNumLinRhsEvals(cvodemem, &nfeLS);
   utils::check_flag(&flag, "CVodeGetNumLinRhsEvals", 1);
 
-  flag = CVodeGetNumPrecEvals(cvode_mem, &npe);
+  flag = CVodeGetNumPrecEvals(cvodemem, &npe);
   utils::check_flag(&flag, "CVodeGetNumPrecEvals", 1);
-  flag = CVodeGetNumPrecSolves(cvode_mem, &nps);
+  flag = CVodeGetNumPrecSolves(cvodemem, &nps);
   utils::check_flag(&flag, "CVodeGetNumPrecSolves", 1);
 
-  flag = CVodeGetNumLinConvFails(cvode_mem, &ncfl);
+  flag = CVodeGetNumLinConvFails(cvodemem, &ncfl);
   utils::check_flag(&flag, "CVodeGetNumLinConvFails", 1);
 
 #ifdef AMREX_USE_OMP
   amrex::Print() << "\nFinal Statistics: "
                  << "(thread:" << omp_get_thread_num() << ", ";
-  amrex::Print() << "cvode_mem:" << cvode_mem << ")\n";
+  amrex::Print() << "cvode_mem:" << cvodemem << ")\n";
 #else
   amrex::Print() << "\nFinal Statistics:\n";
 #endif
