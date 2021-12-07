@@ -462,6 +462,7 @@ calculateSpraySource(
                  , vel_part[1] += part_dt * part_mom_src[1] * inv_pmass;
                  , vel_part[2] += part_dt * part_mom_src[2] * inv_pmass;);
     T_part += part_dt * part_temp_src;
+    T_part = amrex::min(Tcrit, T_part);
     Real new_mass = pmass + m_dot * part_dt;
     if (new_mass > mass_eps) {
       rho_part = 0.;
