@@ -142,7 +142,7 @@ cJac(
     for (int i = 0; i < NUM_SPECIES; i++) {
       J_col[offset + i] = Jmat_tmp[NUM_SPECIES * (NUM_SPECIES + 1) + i] * mw[i];
     }
-    J_col = SM_COLUMN_D(J, offset);
+    // J_col = SM_COLUMN_D(J, offset); // Never read
   }
 
   return (0);

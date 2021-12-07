@@ -65,7 +65,7 @@ public:
 
   void close() override;
 
-  void print_final_stats(void* cvode_mem) override;
+  void print_final_stats(void* cvodemem) override;
 
   int react(
     const amrex::Box& box,
