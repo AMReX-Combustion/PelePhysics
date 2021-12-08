@@ -187,7 +187,7 @@ ReactorArkode::react(
   int verbose = 0;
   pp.query("verbose", verbose);
   const auto captured_reactor_type = m_reactor_type;
-  ARKODEUserData* user_data = new ARKODEUserData{};
+  auto* user_data = new ARKODEUserData{};
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoe_init(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoesrc_ext(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc_ext(ncells * NUM_SPECIES, 0);
@@ -331,7 +331,7 @@ ReactorArkode::react(
   int verbose = 0;
   pp.query("verbose", verbose);
   const auto captured_reactor_type = m_reactor_type;
-  ARKODEUserData* user_data = new ARKODEUserData{};
+  auto* user_data = new ARKODEUserData{};
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoe_init(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rhoesrc_ext(ncells, 0);
   amrex::Gpu::DeviceVector<amrex::Real> v_rYsrc_ext(ncells * NUM_SPECIES, 0);
