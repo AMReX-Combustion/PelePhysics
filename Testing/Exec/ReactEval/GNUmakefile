@@ -34,7 +34,7 @@ endif
 
 ifeq ($(FUEGO_GAS), TRUE)
   Eos_Model       = Fuego
-  Chemistry_Model = drm19
+  Chemistry_Model = dodecane_lu
   Transport_Model = Simple
 else
   Eos_Model       = GammaLaw
