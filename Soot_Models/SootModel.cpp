@@ -43,6 +43,7 @@ SootModel::SootModel()
     m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
     m_maxDtRate(-1.),
     m_Tcutoff(-1.),
+    m_maxSubcycles(20),
     m_numSubcycles(3),
     m_reactDataFilled(false),
     m_gasSpecNames(NUM_SOOT_GS, "")
@@ -171,6 +172,7 @@ SootModel::readSootParams()
   pp.query("max_dt_rate", m_maxDtRate);
   m_Tcutoff = 273.;
   pp.query("temp_cutoff", m_Tcutoff);
+  pp.query("max_subcycles", m_maxSubcycles);
   pp.query("num_subcycles", m_numSubcycles);
   // Determines if mass is conserved by adding lost mass to H2
   m_conserveMass = false;
@@ -305,7 +307,7 @@ SootModel::addSootSourceTerm(
             << vbox << std::endl;
   }
   const int nsub_init = m_numSubcycles;
-  const int nsubMAX = 20;
+  const int nsubMAX = m_maxSubcycles;
   const Real maxmc = m_maxDtRate;
   // Primitive components
   const int qRhoIndx = m_sootIndx.qRhoIndx;

@@ -156,6 +156,8 @@ public:
   Real m_maxDtRate;
   // Temperature cutoff, any temparatures below this will only do one subcycle
   Real m_Tcutoff;
+  // Maximum possible subcycles
+  int m_maxSubcycles;
   // Number of subcycles to use during source calculations
   int m_numSubcycles;
 
