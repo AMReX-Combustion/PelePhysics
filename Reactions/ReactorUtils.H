@@ -97,7 +97,7 @@ box_flatten(
   for (int n = 0; n < NUM_SPECIES; n++) {
     const int idx = vec_index<OrderType>(n, icell, ncells);
     const int idx2 = spec_index<OrderType>(n, icell, ncells);
-    const amrex::Real rhoYn = rhoY(i, j, k, n);
+    const amrex::Real rhoYn = amrex::max(0.0,rhoY(i, j, k, n));
     y_vect[idx] = rhoYn;
     src_vect[idx2] = frcExt(i, j, k, n);
     rho += rhoYn;
@@ -143,10 +143,24 @@ box_unflatten(
   long int const& FCunt,
   amrex::Real dt)
 {
+  // Get the old Ys & rho as well as the clipped version
+  // that went into CVODE
+  amrex::Real rhoY_oldclipped[NUM_SPECIES];
+  amrex::Real rho_old = 0.0;
+  amrex::Real rho_oldclipped = 0.0;
+  for (int n = 0; n < NUM_SPECIES; n++) {
+     rhoY_oldclipped[n] = amrex::max(0.0,rhoY(i, j, k, n));
+     rho_old += rhoY(i, j, k, n);
+     rho_oldclipped += rhoY_oldclipped[n];
+  }
+
   amrex::Real mass_frac[NUM_SPECIES];
   amrex::Real rho = 0.0;
   for (int n = 0; n < NUM_SPECIES; n++) {
-    const amrex::Real rhoYn = y_vect[vec_index<OrderType>(n, icell, ncells)];
+    // New rhoY equal old one + CVODE increment
+    const amrex::Real rhoYn = rhoY(i, j, k, n)
+                              + (  y_vect[vec_index<OrderType>(n, icell, ncells)]
+                                 - rhoY_oldclipped[n]) * rho_old / rho_oldclipped;
     rhoY(i, j, k, n) = rhoYn;
     rho += rhoYn;
     mass_frac[n] = rhoYn;
