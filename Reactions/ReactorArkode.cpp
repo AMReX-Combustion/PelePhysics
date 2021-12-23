@@ -216,7 +216,7 @@ ReactorArkode::react(
     set_sundials_solver_tols(sunctx,
       arkode_mem, user_data->ncells, user_data->verbose, relTol, absTol,
       "arkstep");
-    ARKStepSetTableNum(arkode_mem, -1, rk_method);
+    ARKStepSetTableNum(arkode_mem, ARKODE_DIRK_NONE, static_cast<ARKODE_ERKTableID>(rk_method));
     ARKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   } else {
@@ -225,7 +225,7 @@ ReactorArkode::react(
     set_sundials_solver_tols(sunctx,
       arkode_mem, user_data->ncells, user_data->verbose, relTol, absTol,
       "erkstep");
-    ERKStepSetTableNum(arkode_mem, rk_method);
+    ERKStepSetTableNum(arkode_mem, static_cast<ARKODE_ERKTableID>(rk_method));
     ERKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   }
