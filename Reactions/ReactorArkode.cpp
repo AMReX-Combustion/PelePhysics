@@ -139,14 +139,11 @@ ReactorArkode::react(
   const int ncells = box.numPts();
   AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
 
-  // SUNDIALS context required by call sundials objects
-  sundials::Context sunctx;
-
   const int neq = NUM_SPECIES + 1;
   const int neq_tot = neq * ncells;
 #if defined(AMREX_USE_CUDA)
   N_Vector y = N_VNewWithMemHelp_Cuda(
-    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(), sunctx);
+    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(), *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
@@ -157,7 +154,7 @@ ReactorArkode::react(
   realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
 #elif defined(AMREX_USE_HIP)
   N_Vector y = N_VNewWithMemHelp_Hip(
-    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(), sunctx);
+    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(), *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
@@ -169,7 +166,7 @@ ReactorArkode::react(
 #elif defined(AMREX_USE_DPCPP)
   N_Vector y = N_VNewWithMemHelp_Sycl(
     neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),
-    &amrex::Gpu::Device::streamQueue(), sunctx);
+    &amrex::Gpu::Device::streamQueue(), *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
     return (1);
   SUNSyclExecPolicy* stream_exec_policy =
@@ -179,7 +176,7 @@ ReactorArkode::react(
   N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
   realtype* yvec_d = N_VGetDeviceArrayPointer_Sycl(y);
 #else
-  N_Vector y = N_VNew_Serial(neq_tot, sunctx);
+  N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
     return (1);
   }
@@ -211,18 +208,18 @@ ReactorArkode::react(
 
   void* arkode_mem = nullptr;
   if (use_erkstep == 0) {
-    arkode_mem = ARKStepCreate(cF_RHS, nullptr, time, y, sunctx);
+    arkode_mem = ARKStepCreate(cF_RHS, nullptr, time, y, *amrex::sundials::The_Sundials_Context());
     ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
-    set_sundials_solver_tols(sunctx,
+    set_sundials_solver_tols(*amrex::sundials::The_Sundials_Context(),
       arkode_mem, user_data->ncells, user_data->verbose, relTol, absTol,
       "arkstep");
     ARKStepSetTableNum(arkode_mem, ARKODE_DIRK_NONE, static_cast<ARKODE_ERKTableID>(rk_method));
     ARKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   } else {
-    arkode_mem = ERKStepCreate(cF_RHS, time, y, sunctx);
+    arkode_mem = ERKStepCreate(cF_RHS, time, y, *amrex::sundials::The_Sundials_Context());
     ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
-    set_sundials_solver_tols(sunctx,
+    set_sundials_solver_tols(*amrex::sundials::The_Sundials_Context(),
       arkode_mem, user_data->ncells, user_data->verbose, relTol, absTol,
       "erkstep");
     ERKStepSetTableNum(arkode_mem, static_cast<ARKODE_ERKTableID>(rk_method));
@@ -283,16 +280,13 @@ ReactorArkode::react(
   BL_PROFILE("Pele::ReactorArkode::react()");
   AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
 
-  // SUNDIALS context required by call sundials objects
-  sundials::Context sunctx;
-
   int neq = NUM_SPECIES + 1;
   int neq_tot = neq * ncells;
 #if defined(AMREX_USE_CUDA)
   N_Vector y = N_VNewWithMemHelp_Cuda(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(),
-    sunctx);
+    *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
@@ -305,7 +299,7 @@ ReactorArkode::react(
   N_Vector y = N_VNewWithMemHelp_Hip(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(),
-    sunctx);
+    *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
@@ -319,7 +313,7 @@ ReactorArkode::react(
     neq_tot, /*use_managed_mem=*/false,
     *amrex::sundials::The_SUNMemory_Helper(),
     &amrex::Gpu::Device::streamQueue(),
-    sunctx);
+    *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
     return (1);
   SUNSyclExecPolicy* stream_exec_policy =
@@ -329,7 +323,7 @@ ReactorArkode::react(
   N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
   realtype* yvec_d = N_VGetDeviceArrayPointer_Sycl(y);
 #else
-  N_Vector y = N_VNew_Serial(neq_tot, sunctx);
+  N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
     return (1);
   }
@@ -374,16 +368,16 @@ ReactorArkode::react(
 
   void* arkode_mem = nullptr;
   if (use_erkstep == 0) {
-    arkode_mem = ARKStepCreate(cF_RHS, nullptr, time, y, sunctx);
+    arkode_mem = ARKStepCreate(cF_RHS, nullptr, time, y, *amrex::sundials::The_Sundials_Context());
     ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
-    set_sundials_solver_tols(sunctx,
+    set_sundials_solver_tols(*amrex::sundials::The_Sundials_Context(),
       arkode_mem, user_data->ncells, user_data->verbose, relTol, absTol,
       "arkstep");
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
   } else {
-    arkode_mem = ERKStepCreate(cF_RHS, time, y, sunctx);
+    arkode_mem = ERKStepCreate(cF_RHS, time, y, *amrex::sundials::The_Sundials_Context());
     ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
-    set_sundials_solver_tols(sunctx,
+    set_sundials_solver_tols(*amrex::sundials::The_Sundials_Context(),
       arkode_mem, user_data->ncells, user_data->verbose, relTol, absTol,
       "erkstep");
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);

@@ -1,6 +1,7 @@
 #ifndef _REACTORCVODE_H_
 #define _REACTORCVODE_H_
 
+#include "AMReX_Sundials.H"
 #include "ReactorBase.H"
 #include "ReactorCvodeUtils.H"
 #include "ReactorCvodePreconditioner.H"
@@ -16,8 +17,6 @@
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_math.h>
 #include <sunmatrix/sunmatrix_sparse.h>
-
-#include "AMReX_Sundials.H"
 
 #ifdef AMREX_USE_HIP
 #include <nvector/nvector_hip.h>
