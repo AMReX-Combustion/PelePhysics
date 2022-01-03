@@ -750,7 +750,8 @@ class CPickler(CMill):
             self._gibbs_GPU(QSSspeciesInfo, 1)
         self._helmholtz_GPU(speciesInfo)
         self._speciesInternalEnergy_GPU(speciesInfo)
-        self._speciesEnthalpy_GPU(speciesInfo)
+        self._speciesEnthalpy_GPU(speciesInfo,0)
+        self._speciesEnthalpy_GPU(QSSspeciesInfo,1)
         self._speciesEntropy_GPU(speciesInfo)
         return
 
@@ -835,7 +836,12 @@ class CPickler(CMill):
         )
         return
 
-    def _speciesEnthalpy_GPU(self, speciesInfo):
+
+    def _speciesEnthalpy_GPU(self, speciesInfo, QSS_Flag):
+        if QSS_Flag:
+            name = "speciesEnthalpy_qss"
+        else:
+            name = "speciesEnthalpy"
         self._write()
         self._write()
         self._write(
@@ -844,14 +850,18 @@ class CPickler(CMill):
         self._write(
             self.line("tc contains precomputed powers of T, tc[0] = log(T)")
         )
+        #self._generateThermoRoutine_GPU(
+        #    "speciesEnthalpy", self._enthalpyNASA, speciesInfo, 0, 1
+        #)
         self._generateThermoRoutine_GPU(
-            "speciesEnthalpy", self._enthalpyNASA, speciesInfo, 0, 1
+            name, self._enthalpyNASA, speciesInfo, QSS_Flag, 1
         )
-        if FIXFORCOMPILE:
-            self._generateThermoRoutine_GPU(
-                "speciesEnthalpy_qss", self._enthalpyNASA, speciesInfo, 0, 1
-            )
         return
+        #if FIXFORCOMPILE:
+        #    self._generateThermoRoutine_GPU(
+        #        "speciesEnthalpy_qss", self._enthalpyNASA, speciesInfo, 0, 1
+        #    )
+        #return
 
     def _speciesEntropy_GPU(self, speciesInfo):
         self._write()
