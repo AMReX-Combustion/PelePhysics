@@ -751,7 +751,8 @@ class CPickler(CMill):
         self._helmholtz_GPU(speciesInfo)
         self._speciesInternalEnergy_GPU(speciesInfo)
         self._speciesEnthalpy_GPU(speciesInfo,0)
-        self._speciesEnthalpy_GPU(QSSspeciesInfo,1)
+        if self.nQSSspecies > 0:
+            self._speciesEnthalpy_GPU(QSSspeciesInfo,1)
         self._speciesEntropy_GPU(speciesInfo)
         return
 
