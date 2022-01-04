@@ -122,16 +122,13 @@ AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
 fKernelComputeallAJ(
-  int ncell, void* user_data, amrex::Real* u_d, amrex::Real* csr_val_arg)
+  int ncell, int NNZ, int reactor_type, amrex::Real gamma, void* user_data, amrex::Real* u_d, amrex::Real* csr_val_arg)
 {
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   int neqs = NUM_SPECIES + 1;
-  auto NNZ = udata->NNZ;
-  auto reactor_type = udata->reactor_type;
   auto csr_jac_d = udata->csr_jac_d;
   auto csr_row_count_d = udata->csr_row_count_d;
   auto csr_col_index_d = udata->csr_col_index_d;
-  auto gamma = udata->gamma;
 
   amrex::GpuArray<amrex::Real, NUM_SPECIES> activity{0.0};
   amrex::GpuArray<amrex::Real, (NUM_SPECIES + 1) * (NUM_SPECIES + 1)> Jmat_pt{
@@ -194,14 +191,12 @@ AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
 fKernelComputeAJsys(
-  int ncell, void* user_data, amrex::Real* u_d, amrex::Real* csr_val_arg)
+  int ncell, int NNZ, amrex::Real gamma, void* user_data, amrex::Real* u_d, amrex::Real* csr_val_arg)
 {
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
-  auto NNZ = udata->NNZ;
   auto csr_jac_d = udata->csr_jac_d;
   auto csr_row_count_d = udata->csr_row_count_d;
   auto csr_col_index_d = udata->csr_col_index_d;
-  auto gamma = udata->gamma;
 
   int jac_offset = ncell * NNZ;
   amrex::Real* csr_jac_cell = csr_jac_d + jac_offset;
@@ -226,12 +221,10 @@ AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
 fKernelComputeAJchem(
-  int ncell, void* user_data, amrex::Real* u_d, amrex::Real* Jdata)
+  int ncell, int NNZ, int reactor_type, void* user_data, amrex::Real* u_d, amrex::Real* Jdata)
 {
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   const int neqs = NUM_SPECIES + 1;
-  auto NNZ = udata->NNZ;
-  auto reactor_type = udata->reactor_type;
   auto csr_row_count_d = udata->csr_row_count_d;
   auto csr_col_index_d = udata->csr_col_index_d;
 
@@ -282,11 +275,9 @@ AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
 fKernelDenseAJchem(
-  int icell, void* user_data, amrex::Real* u_d, amrex::Real* Jdata)
+  int icell, int reactor_type, amrex::Real* u_d, amrex::Real* Jdata)
 {
-  CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   const int neqs = NUM_SPECIES + 1;
-  auto reactor_type = udata->reactor_type;
 
   int u_offset = icell * neqs;
   amrex::Real* u_curr = u_d + u_offset;

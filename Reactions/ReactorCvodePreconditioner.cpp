@@ -32,6 +32,7 @@ Precond(
   auto csr_row_count_d = udata->csr_row_count_d;
   auto csr_col_index_d = udata->csr_col_index_d;
   auto NNZ = udata->NNZ;
+  auto react_type = udata->reactor_type;
 
   BL_PROFILE_VAR("Pele::ReactorCvode::fKernelComputeAJ()", fKernelComputeAJ);
   if (jok) {
@@ -41,7 +42,7 @@ Precond(
         for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                  stride = blockDim.x * gridDim.x;
              icell < ncells; icell += stride) {
-          fKernelComputeAJsys(icell, user_data, u_d, csr_val_d);
+          fKernelComputeAJsys(icell, NNZ, gamma, user_data, u_d, csr_val_d);
         }
       });
     *jcurPtr = SUNFALSE;
@@ -52,7 +53,7 @@ Precond(
         for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                  stride = blockDim.x * gridDim.x;
              icell < ncells; icell += stride) {
-          fKernelComputeallAJ(icell, user_data, u_d, csr_val_d);
+          fKernelComputeallAJ(icell, NNZ, react_type, gamma, user_data, u_d, csr_val_d);
         }
       });
     *jcurPtr = SUNTRUE;
