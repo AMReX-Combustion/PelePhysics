@@ -765,9 +765,9 @@ ReactorCvode::allocUserData(
 #ifdef AMREX_USE_CUDA
     SPARSITY_INFO_SYST(&(udata->NNZ), &HP, 1);
     udata->csr_row_count_h =
-      (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
+      (int*)amrex::The_Pinned_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_h =
-      (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
+      (int*)amrex::The_Pinned_Arena()->alloc(udata->NNZ * sizeof(int));
     udata->csr_row_count_d =
       (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_d =
@@ -798,14 +798,24 @@ ReactorCvode::allocUserData(
 
     SPARSITY_PREPROC_SYST_CSR(
       udata->csr_col_index_h, udata->csr_row_count_h, &HP, 1, 0);
-    amrex::Gpu::htod_memcpy(
-      &udata->csr_col_index_d, &udata->csr_col_index_h,
-      sizeof(udata->csr_col_index_h));
-    amrex::Gpu::htod_memcpy(
-      &udata->csr_row_count_d, &udata->csr_row_count_h,
-      sizeof(udata->csr_row_count_h));
-    SUNMatrix_cuSparse_CopyToDevice(
-      a_A, NULL, udata->csr_row_count_h, udata->csr_col_index_h);
+    amrex::Gpu::copy(amrex::Gpu::hostToDevice,
+		     &udata->csr_col_index_h, &udata->csr_col_index_h + 1,
+		     udata->csr_col_index_d);
+    amrex::Gpu::copy(amrex::Gpu::hostToDevice,
+		     &udata->csr_row_count_h, &udata->csr_row_count_h + 1,
+		     udata->csr_row_count_d);
+
+//    amrex::Gpu::copy(amrex::Gpu::hostToDevice,
+//		     &udata->csr_col_index_h, &udata->csr_col_index_h + 1,
+//		     SUNMatrix_cuSparse_IndexValues(a_A));
+//    amrex::Gpu::copy(amrex::Gpu::hostToDevice,
+//		     &udata->csr_row_count_h, &udata->csr_row_count_h + 1,
+//		     SUNMatrix_cuSparse_IndexPointers(a_A));
+   int sunMatFlag = SUNMatrix_cuSparse_CopyToDevice(
+                        a_A, NULL, udata->csr_row_count_h, udata->csr_col_index_h);
+   if (sunMatFlag != SUNMAT_SUCCESS) {
+	   amrex::Print() << " Something went wrong in SUNMatrix_cuSparse_CopyToDevice \n";
+   }
 #else
     amrex::Abort(
       "Solver_type sparse_direct is only available with CUDA on GPU");
@@ -831,8 +841,8 @@ ReactorCvode::allocUserData(
     a_A = SUNMatrix_cuSparse_NewBlockCSR(
       a_ncells, (NUM_SPECIES + 1), (NUM_SPECIES + 1), udata->NNZ,
       udata->cuSPHandle);
-    // if (utils::check_flag((void *)a_A, "SUNMatrix_cuSparse_NewBlockCSR", 0))
-    // return(1);
+    //if (utils::check_flag((void *)a_A, "SUNMatrix_cuSparse_NewBlockCSR", 0))
+    //return(1);
 
     int retval = SUNMatrix_cuSparse_SetFixedPattern(a_A, 1);
     // if(utils::check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1))
@@ -903,9 +913,9 @@ ReactorCvode::allocUserData(
 #ifdef AMREX_USE_CUDA
     SPARSITY_INFO_SYST_SIMPLIFIED(&(udata->NNZ), &HP);
     udata->csr_row_count_h =
-      (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
+      (int*)amrex::The_Pinned_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_h =
-      (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
+      (int*)amrex::The_Pinned_Arena()->alloc(udata->NNZ * sizeof(int));
 
     udata->csr_row_count_d =
       (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
@@ -1137,8 +1147,7 @@ ReactorCvode::react(
 
   amrex::Gpu::streamSynchronize();
   SUNMatrix A = NULL;
-  CVODEUserData* user_data =
-    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
+  CVODEUserData* user_data = new CVODEUserData{};
   allocUserData(user_data, ncells, A, stream);
 
   // Fill data
@@ -1409,8 +1418,7 @@ ReactorCvode::react(
 
   // Fill user_data
   amrex::Gpu::streamSynchronize();
-  CVODEUserData* user_data =
-    (CVODEUserData*)amrex::The_Arena()->alloc(sizeof(struct CVODEUserData));
+  CVODEUserData* user_data = new CVODEUserData{};
   allocUserData(user_data, ncells, A, stream);
 
   // Solution vector and execution policy
@@ -1729,8 +1737,10 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
 
   if (data_wk->solve_type == cvode::sparseDirect) {
 #ifdef AMREX_USE_CUDA
-    amrex::The_Arena()->free(data_wk->csr_row_count_h);
-    amrex::The_Arena()->free(data_wk->csr_col_index_h);
+    amrex::The_Pinned_Arena()->free(data_wk->csr_row_count_h);
+    amrex::The_Pinned_Arena()->free(data_wk->csr_col_index_h);
+    amrex::The_Arena()->free(data_wk->csr_row_count_d);
+    amrex::The_Arena()->free(data_wk->csr_col_index_d);
     cusolverStatus_t cusolver_status =
       cusolverSpDestroy(data_wk->cusolverHandle);
     AMREX_ASSERT(cusolver_status == CUSOLVER_STATUS_SUCCESS);
@@ -1739,8 +1749,8 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
 #endif
   } else if (data_wk->solve_type == cvode::customDirect) {
 #ifdef AMREX_USE_CUDA
-    amrex::The_Arena()->free(data_wk->csr_row_count_h);
-    amrex::The_Arena()->free(data_wk->csr_col_index_h);
+    amrex::The_Pinned_Arena()->free(data_wk->csr_row_count_h);
+    amrex::The_Pinned_Arena()->free(data_wk->csr_col_index_h);
     cusparseStatus_t cusparse_status = cusparseDestroy(data_wk->cuSPHandle);
     AMREX_ASSERT(cusparse_status == CUSPARSE_STATUS_SUCCESS);
 #endif
@@ -1760,7 +1770,7 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     cudaFree(data_wk->buffer_qr);
 #endif
   }
-  amrex::The_Arena()->free(data_wk);
+  delete data_wk;
 
 #else
   amrex::The_Arena()->free(data_wk->FCunt);
