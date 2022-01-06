@@ -4,6 +4,7 @@ USE_CUDA        ?= FALSE
 PELE_USE_KLU    ?= FALSE
 PELE_USE_MAGMA  ?= FALSE
 CUDA_ARCH       ?= 70
+AMD_ARCH        ?= gfx908
 
 SS_VERSION=5.4.0
 MAGMA_VERSION=2.6.1
@@ -94,7 +95,7 @@ ifeq ($(USE_CUDA),TRUE)
 endif
 ifeq ($(USE_HIP),TRUE)
   ## For spock only at this point !
-  MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_HIP=ON -DGPU_TARGET=gfx908 -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_cray.so
+  MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_HIP=ON -DGPU_TARGET=$(AMD_ARCH) -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_amd.so
 endif
 else
   MAGMASuffix=
@@ -119,7 +120,7 @@ else
   CUDASuffix=
 endif
 ifeq ($(USE_HIP),TRUE)
-  HIP_DEFINES=-DENABLE_HIP:BOOL=ON
+  HIP_DEFINES=-DENABLE_HIP:BOOL=ON -DCMAKE_HIP_ARCHITECTURES:STRING=$(AMD_ARCH)
   HIPSuffix=.HIP
 else
   HIP_DEFINES=-DENABLE_HIP:BOOL=OFF
@@ -147,8 +148,8 @@ tp_suffix:
 
 $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGMA_LIB_FILE)
 	@mkdir -p $(SUNDIALS_BUILD_DIR)
-	cd $(SUNDIALS_BUILD_DIR); cmake -DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON -DCMAKE_INSTALL_PREFIX:STRING=$(INSTALL_PREFIX) \
-	                                -DCMAKE_INSTALL_LIBDIR:STRING=$(INSTALL_PREFIX)/lib -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+	cd $(SUNDIALS_BUILD_DIR); cmake -DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON -DCMAKE_INSTALL_PREFIX:PATH=$(INSTALL_PREFIX) \
+	                                -DCMAKE_INSTALL_LIBDIR:PATH=$(INSTALL_PREFIX)/lib -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
 	                                -DCMAKE_C_COMPILER:STRING=$(CCOMPILER) -DCMAKE_CXX_COMPILER:STRING=$(CXXCOMPILER) \
 	                                -DEXAMPLES_INSTALL_PATH:STRING=$(INSTALL_PREFIX)/examples \
 	                                -DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) $(CUDA_DEFINES) $(HIP_DEFINES) $(DPCPP_DEFINES) \
@@ -160,18 +161,18 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGM
 
 $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
 	@echo "Building MAGMA"
+	cd $(MAGMA_SOURCE_DIR); sed -i '389s/#//' CMakeLists.txt
 	@echo ${CCOMPILER}
 	@echo ${CXXCOMPILER}
 	@mkdir -p $(MAGMA_BUILD_DIR)
 	cmake --version
-	@echo $(MAGMA_BUILD_DIR)
 	cd $(MAGMA_BUILD_DIR); cmake $(MAGMA_SOURCE_DIR) -DCMAKE_BUILD_TYPE=Release \
 	                            -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
 	                            -DCMAKE_C_COMPILER:STRING=$(CCOMPILER) \
 	                            -DCMAKE_CXX_COMPILER:STRING=$(CXXCOMPILER) \
 	                            -DUSE_FORTRAN=off \
 	                            $(MAGMA_COMPILER_OPT) \
-	                            -DBUILD_SHARED_LIBS=ON; \
+	                            -DBUILD_SHARED_LIBS=ON \
 	                       cmake --build $(MAGMA_BUILD_DIR) --parallel; cmake --install $(MAGMA_BUILD_DIR)
 
 $(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
@@ -208,14 +209,14 @@ $(SS_DIST_DIR)/$(SS_DIST_FILE):
 
 ifeq ($(PELE_USE_KLU),TRUE)
   clean_SS:
-	@echo rm -rf $(SS_BUILD_PREFIX)
+	rm -rf $(SS_BUILD_PREFIX)
 else
   clean_SS:
 endif
 
 ifeq ($(PELE_USE_MAGMA),TRUE)
   clean_MAGMA:
-	@echo rm -rf $(MAGMA_BUILD_PREFIX)
+	rm -rf $(MAGMA_BUILD_PREFIX)
 else
   clean_MAGMA:
 endif
