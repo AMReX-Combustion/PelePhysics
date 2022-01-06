@@ -22,6 +22,9 @@
 #include <nvector/nvector_cuda.h>
 #include <sunmatrix/sunmatrix_cusparse.h>
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
+#endif
+
+#ifdef AMREX_USE_GPU
 #ifdef PELE_USE_MAGMA
 #include <sunmatrix/sunmatrix_magmadense.h>
 #include <sunlinsol/sunlinsol_magmadense.h>
