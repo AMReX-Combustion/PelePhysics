@@ -152,9 +152,7 @@ private:
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
 
-  //SUNProfiler sun_profiler = NULL;
 #ifndef AMREX_USE_GPU
-  //sundials::Context sunctx;
   N_Vector y = NULL;
   SUNLinearSolver LS = NULL;
   SUNMatrix A = NULL;

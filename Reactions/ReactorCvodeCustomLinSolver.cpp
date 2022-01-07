@@ -20,7 +20,8 @@ namespace cvode {
 // The following are only available with Cuda
 #ifdef AMREX_USE_CUDA
 SUNLinearSolver
-SUNLinSol_dense_custom(N_Vector y, SUNMatrix A, cudaStream_t stream, SUNContext sunctx)
+SUNLinSol_dense_custom(
+  N_Vector y, SUNMatrix A, cudaStream_t stream, SUNContext sunctx)
 {
   if (y == NULL || A == NULL)
     return (NULL);
