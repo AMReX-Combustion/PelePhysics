@@ -74,14 +74,14 @@ ReactorCvode::init(int reactor_type, int ncells)
     }
 
     // Create dense SUNLinearSolver object for use by CVode
-    LS = SUNDenseLinearSolver(y, A);
-    if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0)) {
+    LS = SUNLinSol_Dense(y, A, *amrex::sundials::The_Sundials_Context());
+    if (utils::check_flag((void*)LS, "SUNLinSol_Dense", 0)) {
       return (1);
     }
 
-    // Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode
-    flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
-    if (utils::check_flag(&flag, "CVDlsSetLinearSolver", 1)) {
+    // Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode
+    flag = CVodeSetLinearSolver(cvode_mem, LS, A);
+    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1)) {
       return (1);
     }
 
@@ -120,13 +120,13 @@ ReactorCvode::init(int reactor_type, int ncells)
     LS = cvode::SUNLinSol_sparse_custom(
       y, A, reactor_type, udata_g->ncells, (NUM_SPECIES + 1), udata_g->NNZ,
       *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0)) {
+    if (utils::check_flag((void*)LS, "SUNLinSol_sparse_custom", 0)) {
       return (1);
     }
 
-    // Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode
-    flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
-    if (utils::check_flag(&flag, "CVDlsSetLinearSolver", 1)) {
+    // Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode
+    flag = CVodeSetLinearSolver(cvode_mem, LS, A);
+    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1)) {
       return (1);
     }
 
@@ -134,13 +134,13 @@ ReactorCvode::init(int reactor_type, int ncells)
     // Create the GMRES linear solver object
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0)) {
+    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0)) {
       return (1);
     }
 
-    // Set CVSpils linear solver to LS
-    flag = CVSpilsSetLinearSolver(cvode_mem, LS);
-    if (utils::check_flag(&flag, "CVSpilsSetLinearSolver", 1)) {
+    // Set CVode linear solver to LS
+    flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
+    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1)) {
       return (1);
     }
 
@@ -148,13 +148,13 @@ ReactorCvode::init(int reactor_type, int ncells)
     // Create the GMRES linear solver object
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0)) {
+    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0)) {
       return (1);
     }
 
-    // Set CVSpils linear solver to LS
-    flag = CVSpilsSetLinearSolver(cvode_mem, LS);
-    if (utils::check_flag(&flag, "CVSpilsSetLinearSolver", 1)) {
+    // Set CVode linear solver to LS
+    flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
+    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1)) {
       return (1);
     }
 
@@ -193,25 +193,25 @@ ReactorCvode::init(int reactor_type, int ncells)
   // Analytical Jac. data for iterative solver preconditioner
   if (udata_g->precond_type == cvode::denseSimpleAJac) {
     // Set the JAcobian-times-vector function
-    flag = CVSpilsSetJacTimes(cvode_mem, nullptr, nullptr);
-    if (utils::check_flag(&flag, "CVSpilsSetJacTimes", 1)) {
+    flag = CVodeSetJacTimes(cvode_mem, nullptr, nullptr);
+    if (utils::check_flag(&flag, "CVodeSetJacTimes", 1)) {
       return (1);
     }
     // Set the preconditioner plain dense solve and setup functions
-    flag = CVSpilsSetPreconditioner(cvode_mem, cvode::Precond, cvode::PSolve);
-    if (utils::check_flag(&flag, "CVSpilsSetPreconditioner", 1)) {
+    flag = CVodeSetPreconditioner(cvode_mem, cvode::Precond, cvode::PSolve);
+    if (utils::check_flag(&flag, "CVodeSetPreconditioner", 1)) {
       return (1);
     }
   } else if (udata_g->precond_type == cvode::sparseSimpleAJac) {
 #ifdef PELE_USE_KLU
     // Set the JAcobian-times-vector function
-    flag = CVSpilsSetJacTimes(cvode_mem, nullptr, nullptr);
-    if (utils::check_flag(&flag, "CVSpilsSetJacTimes", 1))
+    flag = CVodeSetJacTimes(cvode_mem, nullptr, nullptr);
+    if (utils::check_flag(&flag, "CVodeSetJacTimes", 1))
       return (1);
     // Set the preconditioner KLU sparse solve and setup functions
-    flag = CVSpilsSetPreconditioner(
+    flag = CVodeSetPreconditioner(
       cvode_mem, cvode::Precond_sparse, cvode::PSolve_sparse);
-    if (utils::check_flag(&flag, "CVSpilsSetPreconditioner", 1))
+    if (utils::check_flag(&flag, "CVodeSetPreconditioner", 1))
       return (1);
 #else
     amrex::Abort(
@@ -219,14 +219,14 @@ ReactorCvode::init(int reactor_type, int ncells)
 #endif
   } else if (udata_g->precond_type == cvode::customSimpleAJac) {
     // Set the JAcobian-times-vector function
-    flag = CVSpilsSetJacTimes(cvode_mem, nullptr, nullptr);
-    if (utils::check_flag(&flag, "CVSpilsSetJacTimes", 1)) {
+    flag = CVodeSetJacTimes(cvode_mem, nullptr, nullptr);
+    if (utils::check_flag(&flag, "CVodeSetJacTimes", 1)) {
       return (1);
     }
     // Set the preconditioner to custom solve and setup functions
-    flag = CVSpilsSetPreconditioner(
+    flag = CVodeSetPreconditioner(
       cvode_mem, cvode::Precond_custom, cvode::PSolve_custom);
-    if (utils::check_flag(&flag, "CVSpilsSetPreconditioner", 1)) {
+    if (utils::check_flag(&flag, "CVodeSetPreconditioner", 1)) {
       return (1);
     }
   }
@@ -1217,7 +1217,7 @@ ReactorCvode::react(
 #if defined(AMREX_USE_CUDA)
     LS = cvode::SUNLinSol_dense_custom(
       y, A, stream, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
+    if (utils::check_flag((void*)LS, "SUNLinSol_dense_custom", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1245,7 +1245,7 @@ ReactorCvode::react(
   } else if (user_data->solve_type == cvode::GMRES) {
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
+    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1256,7 +1256,7 @@ ReactorCvode::react(
   } else if (user_data->solve_type == cvode::precGMRES) {
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
+    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1551,7 +1551,7 @@ ReactorCvode::react(
 #if defined(AMREX_USE_CUDA)
     LS = cvode::SUNLinSol_dense_custom(
       y, A, stream, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
+    if (utils::check_flag((void*)LS, "SUNLinSol_dense_custom", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1580,7 +1580,7 @@ ReactorCvode::react(
   } else if (user_data->solve_type == cvode::GMRES) {
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
+    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
@@ -1591,7 +1591,7 @@ ReactorCvode::react(
   } else if (user_data->solve_type == cvode::precGMRES) {
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
+    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
     if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1))
