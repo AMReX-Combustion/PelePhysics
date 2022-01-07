@@ -89,7 +89,8 @@ ReactorCvode::init(int reactor_type, int ncells)
 #ifdef PELE_USE_KLU
     // Create sparse SUNMatrix for use in linear solves
     A = SUNSparseMatrix(
-      neq_tot, neq_tot, (udata_g->NNZ) * udata_g->ncells, CSC_MAT);
+      neq_tot, neq_tot, (udata_g->NNZ) * udata_g->ncells, CSC_MAT,
+      *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)A, "SUNSparseMatrix", 0))
       return (1);
 
@@ -109,7 +110,8 @@ ReactorCvode::init(int reactor_type, int ncells)
   } else if (udata_g->solve_type == cvode::customDirect) {
     // Create dense SUNMatrix for use in linear solves
     A = SUNSparseMatrix(
-      neq_tot, neq_tot, (udata_g->NNZ) * udata_g->ncells, CSR_MAT);
+      neq_tot, neq_tot, (udata_g->NNZ) * udata_g->ncells, CSR_MAT,
+      *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)A, "SUNDenseMatrix", 0)) {
       return (1);
     }
@@ -537,8 +539,8 @@ ReactorCvode::checkCvodeOptions() const
                    << " % fill-in pattern\n";
     SUNMatrix PS;
     PS = SUNSparseMatrix(
-      (NUM_SPECIES + 1, *amrex::sundials::The_Sundials_Context()),
-      (NUM_SPECIES + 1), nJdata, CSR_MAT);
+      (NUM_SPECIES + 1), (NUM_SPECIES + 1), nJdata, CSR_MAT,
+      *amrex::sundials::The_Sundials_Context());
     int* rowCount = (int*)SUNSparseMatrix_IndexPointers(PS);
     int* colIdx = (int*)SUNSparseMatrix_IndexValues(PS);
     SPARSITY_PREPROC_CSR(colIdx, rowCount, &HP, 1, 0);
@@ -575,8 +577,8 @@ ReactorCvode::checkCvodeOptions() const
                         100.0
                    << " % fill-in pattern\n";
     PS = SUNSparseMatrix(
-      (NUM_SPECIES + 1, *amrex::sundials::The_Sundials_Context()),
-      (NUM_SPECIES + 1), nJdata, CSR_MAT);
+      (NUM_SPECIES + 1), (NUM_SPECIES + 1), nJdata, CSR_MAT,
+      *amrex::sundials::The_Sundials_Context());
     rowCount = (int*)SUNSparseMatrix_IndexPointers(PS);
     colIdx = (int*)SUNSparseMatrix_IndexValues(PS);
     SPARSITY_PREPROC_SYST_CSR(colIdx, rowCount, &HP, 1, 1);
@@ -613,8 +615,8 @@ ReactorCvode::checkCvodeOptions() const
       << nJdata / float((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
       << " % fill-in pattern\n";
     PS = SUNSparseMatrix(
-      (NUM_SPECIES + 1, *amrex::sundials::The_Sundials_Context()),
-      (NUM_SPECIES + 1), nJdata, CSR_MAT);
+      (NUM_SPECIES + 1), (NUM_SPECIES + 1), nJdata, CSR_MAT,
+      *amrex::sundials::The_Sundials_Context());
     rowCount = (int*)SUNSparseMatrix_IndexPointers(PS);
     colIdx = (int*)SUNSparseMatrix_IndexValues(PS);
     SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(colIdx, rowCount, &HP, 1);
@@ -890,7 +892,8 @@ ReactorCvode::allocUserData(
     (udata->PS) = new SUNMatrix[1];
     (udata->PS)[0] = SUNSparseMatrix(
       (NUM_SPECIES + 1) * udata->ncells, (NUM_SPECIES + 1) * udata->ncells,
-      udata->NNZ * udata->ncells, CSC_MAT);
+      udata->NNZ * udata->ncells, CSC_MAT,
+      *amrex::sundials::The_Sundials_Context());
     udata->colPtrs[0] = (int*)SUNSparseMatrix_IndexPointers((udata->PS)[0]);
     udata->rowVals[0] = (int*)SUNSparseMatrix_IndexValues((udata->PS)[0]);
     udata->Jdata[0] = SUNSparseMatrix_Data((udata->PS)[0]);
@@ -903,7 +906,8 @@ ReactorCvode::allocUserData(
     // Build the SUNmatrix as CSR sparse and fill ptrs to row/Vals
     udata->PSc = SUNSparseMatrix(
       (NUM_SPECIES + 1) * udata->ncells, (NUM_SPECIES + 1) * udata->ncells,
-      udata->NNZ * udata->ncells, CSR_MAT);
+      udata->NNZ * udata->ncells, CSR_MAT,
+      *amrex::sundials::The_Sundials_Context());
     udata->rowPtrs_c = (int*)SUNSparseMatrix_IndexPointers(udata->PSc);
     udata->colVals_c = (int*)SUNSparseMatrix_IndexValues(udata->PSc);
     SPARSITY_PREPROC_SYST_CSR(
@@ -1012,8 +1016,10 @@ ReactorCvode::allocUserData(
       (udata->pivot)[i] = new sunindextype*[udata->ncells];
     }
     for (int i = 0; i < udata->ncells; ++i) {
-      (udata->P)[i][i] = SUNDlsMat_newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
-      (udata->Jbd)[i][i] = SUNDlsMat_newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
+      (udata->P)[i][i] =
+        SUNDlsMat_newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
+      (udata->Jbd)[i][i] =
+        SUNDlsMat_newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
       (udata->pivot)[i][i] = SUNDlsMat_newIndexArray(NUM_SPECIES + 1);
     }
   } else if (udata->precond_type == cvode::sparseSimpleAJac) {
