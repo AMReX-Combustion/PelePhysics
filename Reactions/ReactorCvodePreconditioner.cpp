@@ -221,7 +221,7 @@ Precond(
 
   if (jok) {
     // jok = SUNTRUE: Copy Jbd to P
-    denseCopy(Jbd[0][0], P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
+    SUNDlsMat_denseCopy(Jbd[0][0], P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
     *jcurPtr = SUNFALSE;
   } else {
     // rho MKS
@@ -245,7 +245,7 @@ Precond(
     DWDOT_SIMPLIFIED(Jmat, activity, &temp, &consP);
 
     // Scale Jacobian.  Load into P.
-    denseScale(0.0, Jbd[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
+    SUNDlsMat_denseScale(0.0, Jbd[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
     for (int i = 0; i < NUM_SPECIES; i++) {
       for (int k = 0; k < NUM_SPECIES; k++) {
         (Jbd[0][0])[k][i] = Jmat[k * (NUM_SPECIES + 1) + i] * mw[i] / mw[k];
@@ -260,18 +260,18 @@ Precond(
     (Jbd[0][0])[NUM_SPECIES][NUM_SPECIES] =
       Jmat[(NUM_SPECIES + 1) * (NUM_SPECIES + 1) - 1];
 
-    denseCopy(Jbd[0][0], P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
+    SUNDlsMat_denseCopy(Jbd[0][0], P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
 
     *jcurPtr = SUNTRUE;
   }
 
   // Scale by -gamma
-  denseScale(-gamma, P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
+  SUNDlsMat_denseScale(-gamma, P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
 
   // Add identity matrix and do LU decompositions on blocks in place.
-  denseAddIdentity(P[0][0], NUM_SPECIES + 1);
+  SUNDlsMat_denseAddIdentity(P[0][0], NUM_SPECIES + 1);
   sunindextype ierr =
-    denseGETRF(P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1, pivot[0][0]);
+    SUNDlsMat_denseGETRF(P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1, pivot[0][0]);
   if (ierr != 0) {
     return (1);
   }
@@ -305,7 +305,7 @@ PSolve(
   // Solve the block-diagonal system Pz = r using LU factors stored
   //   in P and pivot data in pivot, and return the solution in z.
   amrex::Real* v = zdata;
-  denseGETRS(P[0][0], NUM_SPECIES + 1, pivot[0][0], v);
+  SUNDlsMat_denseGETRS(P[0][0], NUM_SPECIES + 1, pivot[0][0], v);
 
   return (0);
 }
