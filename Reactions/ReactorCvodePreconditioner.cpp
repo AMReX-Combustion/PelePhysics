@@ -270,8 +270,8 @@ Precond(
 
   // Add identity matrix and do LU decompositions on blocks in place.
   SUNDlsMat_denseAddIdentity(P[0][0], NUM_SPECIES + 1);
-  sunindextype ierr =
-    SUNDlsMat_denseGETRF(P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1, pivot[0][0]);
+  sunindextype ierr = SUNDlsMat_denseGETRF(
+    P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1, pivot[0][0]);
   if (ierr != 0) {
     return (1);
   }
