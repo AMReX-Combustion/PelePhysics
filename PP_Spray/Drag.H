@@ -388,7 +388,7 @@ calculateSpraySource(
             Real Gf = M_PI * dia_part * dia_part * alpha * delTb / L_fuel[spf];
             Real dh = (hg_g - hg_s) / L_fuel[spf];
             Real coeff =
-              M_PI * lambda_skin / cp_skin * dia_part * Sh_num[spf] * logB;
+              M_PI * lambda_skin / cp_skin * dia_part * Sh_num[spf];
             Real G = calcFlashVaporRate(dh, coeff, Gf);
             mi_dot[spf] = -amrex::max(G + Gf, 0.);
           } else {
