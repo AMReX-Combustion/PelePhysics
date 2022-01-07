@@ -98,6 +98,7 @@ else
   DPCPPSuffix=
 endif
 
+SUNDIALS_BRANCH ?= v6.0.0
 SUNDIALS_PROFILING ?= OFF
 SUNDIALS_BUILD_PREFIX=$(PWD)/BUILD/SUNDIALS
 SUNDIALS_SOURCE_DIR=$(SUNDIALS_BUILD_PREFIX)/src
@@ -127,7 +128,7 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE)
 
 $(ONE_SUNDIALS_SRC_FILE):
 	@mkdir -p $(SUNDIALS_SOURCE_DIR)
-	@[ "$(shell ls -A $(SUNDIALS_SOURCE_DIR))" ] || git clone --depth 1 --branch v6.0.0 https://github.com/LLNL/sundials $(SUNDIALS_SOURCE_DIR)
+	@[ "$(shell ls -A $(SUNDIALS_SOURCE_DIR))" ] || git clone --depth 1 --branch $(SUNDIALS_BRANCH) https://github.com/LLNL/sundials $(SUNDIALS_SOURCE_DIR)
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
 	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)

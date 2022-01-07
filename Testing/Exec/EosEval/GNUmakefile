@@ -4,7 +4,6 @@ PRECISION    = DOUBLE
 PROFILE      = FALSE
 VERBOSE      = FALSE
 DEBUG        = FALSE
-USE_SUNDIALS = TRUE
 
 # Compiler
 COMP       = gnu
