@@ -131,7 +131,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   } else if (udata_g->solve_type == cvode::GMRES) {
     // Create the GMRES linear solver object
     LS = SUNLinSol_SPGMR(
-      y, PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
+      y, SUN_PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0)) {
       return (1);
     }
@@ -145,7 +145,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   } else if (udata_g->solve_type == cvode::precGMRES) {
     // Create the GMRES linear solver object
     LS = SUNLinSol_SPGMR(
-      y, PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
+      y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0)) {
       return (1);
     }
@@ -1012,9 +1012,9 @@ ReactorCvode::allocUserData(
       (udata->pivot)[i] = new sunindextype*[udata->ncells];
     }
     for (int i = 0; i < udata->ncells; ++i) {
-      (udata->P)[i][i] = newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
-      (udata->Jbd)[i][i] = newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
-      (udata->pivot)[i][i] = newIndexArray(NUM_SPECIES + 1);
+      (udata->P)[i][i] = SUNDlsMat_newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
+      (udata->Jbd)[i][i] = SUNDlsMat_newDenseMat(NUM_SPECIES + 1, NUM_SPECIES + 1);
+      (udata->pivot)[i][i] = SUNDlsMat_newIndexArray(NUM_SPECIES + 1);
     }
   } else if (udata->precond_type == cvode::sparseSimpleAJac) {
 #ifdef PELE_USE_KLU
@@ -1238,7 +1238,7 @@ ReactorCvode::react(
 #endif
   } else if (user_data->solve_type == cvode::GMRES) {
     LS = SUNLinSol_SPGMR(
-      y, PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
+      y, SUN_PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
@@ -1249,7 +1249,7 @@ ReactorCvode::react(
       return (1);
   } else if (user_data->solve_type == cvode::precGMRES) {
     LS = SUNLinSol_SPGMR(
-      y, PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
+      y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
@@ -1573,7 +1573,7 @@ ReactorCvode::react(
 #endif
   } else if (user_data->solve_type == cvode::GMRES) {
     LS = SUNLinSol_SPGMR(
-      y, PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
+      y, SUN_PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
@@ -1584,7 +1584,7 @@ ReactorCvode::react(
       return (1);
   } else if (user_data->solve_type == cvode::precGMRES) {
     LS = SUNLinSol_SPGMR(
-      y, PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
+      y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)LS, "SUNDenseLinearSolver", 0))
       return (1);
     flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
@@ -1829,9 +1829,9 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
   // Preconditionner Jac. data
   if (data_wk->precond_type == cvode::denseSimpleAJac) {
     for (int i = 0; i < data_wk->ncells; ++i) {
-      destroyMat((data_wk->P)[i][i]);
-      destroyMat((data_wk->Jbd)[i][i]);
-      destroyArray((data_wk->pivot)[i][i]);
+      SUNDlsMat_destroyMat((data_wk->P)[i][i]);
+      SUNDlsMat_destroyMat((data_wk->Jbd)[i][i]);
+      SUNDlsMat_destroyArray((data_wk->pivot)[i][i]);
     }
     for (int i = 0; i < data_wk->ncells; ++i) {
       delete[](data_wk->P)[i];
