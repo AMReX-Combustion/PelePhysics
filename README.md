@@ -1,6 +1,15 @@
 # PelePhysics
 *A respository of physics databases and implementation code for use with the `Pele` suite of of codes*
 
+## QSS TODO LIST
+
+* Implementation of Trajan's method (Julia)
+* Automated zeroing out of reaction rate for reactions that induce quadratic algebraic relations between QSS species concentrations (Anne)
+* Sync up with the render QSS script (Malik)
+* Get the range of validity of the QSS assumption (Malik)
+* Ensure that homogeneous reactions test can be passed with reacEval (Malik)
+
+
 ## FUEGO
 
 This `PelePhysics` repository contains the FUEGO source code generation tool in order to support the inclusion of chemical models specified in the CHEMKIN-II format.  Fuego was originally created by Michael Aivazis at CalTech, and donated to CCSE in 2001.  Originally, FUEGO was part of a larger Python-based set of workflow tools Michael developed for managing and publishing simulation-based studies.  FUEGO itself was developed as a drop-in replacement for the CHEMKIN library, and provided "hand-coded" replacement routines for evaluation of EOS thermodynamic functions that are considerably more efficient than their CHEMKIN counterparts.  Since 2001, CCSE has continued to modify FUEGO independently for its own use so that the current version here bears little resemblance to Michael's original code, or its intentions.
