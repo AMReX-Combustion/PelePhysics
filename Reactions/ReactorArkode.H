@@ -2,12 +2,10 @@
 #define _REACTORARKODE_H_
 
 #include "ReactorBase.H"
+#include "AMReX_Sundials.H"
 #include <arkode/arkode_arkstep.h>
 #include <arkode/arkode_erkstep.h>
 #include <nvector/nvector_serial.h>
-#ifdef AMREX_USE_GPU
-#include "AMReX_SUNMemory.H"
-#endif
 
 #ifdef AMREX_USE_DPCPP
 #include <nvector/nvector_sycl.h>

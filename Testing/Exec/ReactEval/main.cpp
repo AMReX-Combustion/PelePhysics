@@ -33,10 +33,6 @@ int
 main(int argc, char* argv[])
 {
   amrex::Initialize(argc, argv);
-
-#ifdef AMREX_USE_GPU
-  amrex::sundials::Initialize();
-#endif
   {
 
     amrex::Real strt_time = amrex::ParallelDescriptor::second();
@@ -745,9 +741,7 @@ main(int argc, char* argv[])
       run_time, amrex::ParallelDescriptor::IOProcessorNumber());
     amrex::Print() << " \n >> React::main() " << run_time << "\n\n";
   }
-#ifdef AMREX_USE_GPU
-  amrex::sundials::Finalize();
-#endif
+  
   amrex::Finalize();
 
   return 0;

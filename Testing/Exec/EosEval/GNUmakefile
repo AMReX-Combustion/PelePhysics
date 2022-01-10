@@ -1,9 +1,9 @@
 # AMReX
-DIM        = 2
-PRECISION  = DOUBLE
-PROFILE    = FALSE
-VERBOSE    = FALSE
-DEBUG      = FALSE
+DIM          = 2
+PRECISION    = DOUBLE
+PROFILE      = FALSE
+VERBOSE      = FALSE
+DEBUG        = FALSE
 
 # Compiler
 COMP       = gnu
