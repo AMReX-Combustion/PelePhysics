@@ -882,7 +882,7 @@ ReactorCvode::allocUserData(
 #ifdef PELE_USE_MAGMA
     a_A = SUNMatrix_MagmaDenseBlock(
       a_ncells, (NUM_SPECIES + 1), (NUM_SPECIES + 1), SUNMEMTYPE_DEVICE,
-      *amrex::sundials::The_SUNMemory_Helper(), NULL);
+      *amrex::sundials::The_SUNMemory_Helper(), NULL, *amrex::sundials::The_Sundials_Context());
 #else
     amrex::Abort("Solver_type magma_direct reauires PELE_USE_MAGMA = TRUE");
 #endif
