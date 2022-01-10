@@ -14490,11 +14490,20 @@ class CPickler(CMill):
         parent = species
         for need in self.needs_running[species]:
             child = need
+
             print("       x Start level of needs loop")
             print("       x Child is: " + child)
+
             if child not in visited[match]:
-                # go a level further !
+
                 print("         xx Child is not already visited...")
+             
+                # check if parent is also needed by child, and if multiple children exist, move this child to the front to check first
+                if ((child in self.is_needed_running[parent]) and len(self.needs_running[child]) > 1):
+                    self.needs_running[child].remove(parent)
+                    self.needs_running[child].insert(0, parent)
+
+                # then go a level further !
                 self._findClosedCycle(
                     mechanism,
                     match,
