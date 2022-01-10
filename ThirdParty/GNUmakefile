@@ -164,18 +164,18 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGM
 
 $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
 	@echo "Building MAGMA"
-	cd $(MAGMA_SOURCE_DIR); sed -i '389s/#//' CMakeLists.txt
+	@cd $(MAGMA_SOURCE_DIR); sed -i '389s/#//' CMakeLists.txt
 	@echo ${CCOMPILER}
 	@echo ${CXXCOMPILER}
 	@mkdir -p $(MAGMA_BUILD_DIR)
-	cmake --version
+	@cmake --version
 	cd $(MAGMA_BUILD_DIR); cmake $(MAGMA_SOURCE_DIR) -DCMAKE_BUILD_TYPE=Release \
 	                            -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
 	                            -DCMAKE_C_COMPILER:STRING=$(CCOMPILER) \
 	                            -DCMAKE_CXX_COMPILER:STRING=$(CXXCOMPILER) \
 	                            -DUSE_FORTRAN=off \
 	                            $(MAGMA_COMPILER_OPT) \
-	                            -DBUILD_SHARED_LIBS=ON \
+	                            -DBUILD_SHARED_LIBS=ON; \
 	                       cmake --build $(MAGMA_BUILD_DIR) --parallel; cmake --install $(MAGMA_BUILD_DIR)
 
 $(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
