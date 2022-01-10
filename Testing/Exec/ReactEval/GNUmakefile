@@ -10,7 +10,7 @@ DEBUG        = FALSE
 TINY_PROFILE = FALSE
 
 # Compiler
-COMP	   = gnu
+COMP	     = gnu
 USE_MPI    = FALSE
 USE_OMP    = FALSE
 USE_CUDA   = FALSE

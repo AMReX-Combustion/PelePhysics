@@ -2,6 +2,7 @@
 #define _REACTORBASE_H_
 
 #include <AMReX_ParmParse.H>
+#include <sundials/sundials_context.h>
 #include "Factory.H"
 #include "PelePhysics.H"
 #include "mechanism.H"
@@ -82,6 +83,7 @@ public:
   void set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals);
 
   void set_sundials_solver_tols(
+    sundials::Context& sunctx,
     void* sundials_mem,
     const int ncells,
     const int verbose,

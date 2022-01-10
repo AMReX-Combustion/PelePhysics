@@ -1,6 +1,7 @@
 #ifndef _REACTORCVODE_H_
 #define _REACTORCVODE_H_
 
+#include "AMReX_Sundials.H"
 #include "ReactorBase.H"
 #include "ReactorCvodeUtils.H"
 #include "ReactorCvodePreconditioner.H"
@@ -16,10 +17,6 @@
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_math.h>
 #include <sunmatrix/sunmatrix_sparse.h>
-
-#ifdef AMREX_USE_GPU
-#include "AMReX_SUNMemory.H"
-#endif
 
 #ifdef AMREX_USE_HIP
 #include <nvector/nvector_hip.h>
@@ -65,7 +62,7 @@ public:
 
   void close() override;
 
-  void print_final_stats(void* cvode_mem) override;
+  void print_final_stats(void* cvodemem) override;
 
   int react(
     const amrex::Box& box,
