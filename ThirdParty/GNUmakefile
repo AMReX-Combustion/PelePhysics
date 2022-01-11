@@ -80,6 +80,10 @@ ifeq ($(USE_CUDA),TRUE)
 endif
 ifeq ($(USE_HIP),TRUE)
   MAGMA_DEFINES+=-DSUNDIALS_MAGMA_BACKENDS:STRING=HIP
+  ifeq ($(which_computer),crusher)
+    MAGMA_DEFINES+=-DCMAKE_C_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
+    MAGMA_DEFINES+=-DCMAKE_CXX_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
+  endif
 endif
 
   MAGMA_DIST_DIR=$(MAGMA_BUILD_PREFIX)/dist
@@ -94,8 +98,12 @@ ifeq ($(USE_CUDA),TRUE)
   MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_CUDA=ON -DGPU_TARGET=sm_$(CUDA_ARCH)
 endif
 ifeq ($(USE_HIP),TRUE)
-  ## For spock only at this point !
+  ## For spock/crusher only at this point !
   MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_HIP=ON -DGPU_TARGET=$(AMD_ARCH) -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_amd.so
+  ifeq ($(which_computer),crusher)
+    MAGMA_COMPILER_OPT+=-DCMAKE_C_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
+    MAGMA_COMPILER_OPT+=-DCMAKE_CXX_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
+  endif
 endif
 else
   MAGMASuffix=
@@ -134,7 +142,7 @@ else
   DPCPPSuffix=
 endif
 
-SUNDIALS_BRANCH ?= v6.0.0
+SUNDIALS_BRANCH ?= develop
 SUNDIALS_PROFILING ?= OFF
 SUNDIALS_BUILD_PREFIX=$(PWD)/BUILD/SUNDIALS
 SUNDIALS_SOURCE_DIR=$(SUNDIALS_BUILD_PREFIX)/src
@@ -165,6 +173,7 @@ $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGM
 $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
 	@echo "Building MAGMA"
 	@cd $(MAGMA_SOURCE_DIR); sed -i '389s/#//' CMakeLists.txt
+	@cd $(MAGMA_SOURCE_DIR); sed -i '374s/90c/90c;90a/' CMakeLists.txt
 	@echo ${CCOMPILER}
 	@echo ${CXXCOMPILER}
 	@mkdir -p $(MAGMA_BUILD_DIR)
