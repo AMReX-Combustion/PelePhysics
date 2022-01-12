@@ -1,4 +1,4 @@
-PelePhysics Copyright (c) 2021, Alliance for Sustainable Energy, LLC., 
+PelePhysics Copyright (c) 2022, Alliance for Sustainable Energy, LLC., 
 through National Renewable Energy Laboratory, the Regents 
 of the University of California, through Lawrence Berkeley 
 National Laboratory, National Technology and Engineering Solutions
