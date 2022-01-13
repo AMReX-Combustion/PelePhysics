@@ -14439,19 +14439,19 @@ class CPickler(CMill):
             # Only need to check things that have not already been searched; i.e. they have no id/don't exist in the lowest link value list yet
             if member not in self.lowest_link.keys():
                     
-                print "- dealing with group: "+ member
+                print("- dealing with group: ", member)
                 self._findClosedCycle(mechanism, member)
-                print "** potential group is: ", self.all_groups
-                print
 
-        print "** Groups of coupled species are: ", self.all_groups
-                    
+        print("** Groups of coupled species are: ", self.all_groups)
+
+        group_count=0
         # Rename and only store strongly connected components involving 2 or more species as groups
-        for count, group in enumerate(self.all_groups):
+        for group in self.all_groups:
             if len(self.all_groups[group]) > 1:
-                self.group['group_'+str(count)] = self.all_groups[group]
-        print
-        print "** Final clean self groups are: ", self.group
+                self.group['group_'+str(group_count)] = self.all_groups[group]
+                group_count += 1
+        print()
+        print("** Final clean self groups are: ", self.group)
 
         self._updateGroupNeeds(mechanism)
         self._updateGroupDependencies(mechanism)
@@ -14461,7 +14461,7 @@ class CPickler(CMill):
 
         # We start the recursion on node "species".
         # This species is considered the "parent" node.
-        print "      Searching for potential closed cycle involving parent: ", species
+        print("      Searching for potential closed cycle involving parent: ", species)
 
         # We only enter the recursion if the species has not already been discovered
         # so we add this species to the potential group list and give it a lowest link value
@@ -14471,30 +14471,30 @@ class CPickler(CMill):
         self.discovery_order += 1
         parent = species
 
-        print "      Upon initialization, discovery order is: ", self.lowest_link.keys().index(species), " and lowest link value is: ", self.discovery_order-1
-        print
+        print("      Upon initialization, discovery order is: ", list(self.lowest_link.keys()).index(species), " and lowest link value is: ", self.discovery_order-1)
+        print()
         
         # Loop through the needs of the parent
         # Each need is denoted as a "child" of the parent
         for need in self.needs_running[parent]:
             child = need
-            print "       x Start level of needs loop "
-            print "       x Child is: "+child
+            print("       x Start level of needs loop ")
+            print("       x Child is: ", child)
             
             # If the child has not yet been discovered, we recurse so that the child becomes the parent and the search continues as described above
             if child not in self.lowest_link.keys():
 
-                print "         xx Child has never been visited at all..."
-                print "         xx Initiate recursion to assign lowlink value "
+                print("         xx Child has never been visited at all...")
+                print("         xx Initiate recursion to assign lowlink value ")
                     
                 self._findClosedCycle(mechanism, child)
 
-                print "         xx We've finished a recursion! The child that was passed in was: "+child+" with parent "+parent
-                # print "         The discovery order of the parent is: ", self.lowest_link.keys().index(parent)
-                print "         xx The lowest link value of the parent is: ", self.lowest_link[parent]
-                # print "         The discovery order of this child is: ", self.lowest_link.keys().index(child)
-                print "         xx The lowest link value of this child is: ", self.lowest_link[child]
-                print
+                print("         xx We've finished a recursion! The child that was passed in was: ", child, " with parent ", parent)
+                # print("         The discovery order of the parent is: ", list(self.lowest_link.keys()).index(parent))
+                print("         xx The lowest link value of the parent is: ", self.lowest_link[parent])
+                # print("         The discovery order of this child is: ", list(self.lowest_link.keys()).index(child))
+                print("         xx The lowest link value of this child is: ", self.lowest_link[child])
+                print()
 
                 # If the lowest link connection of the child is lower than that of the parent's, then this lowest link value becomes the parent's new lowest link value
                 # This update comes into effect when the child at the end of the recursion
@@ -14502,34 +14502,34 @@ class CPickler(CMill):
                 if(child in self.potential_group):
                     self.lowest_link[parent] = min(self.lowest_link[parent], self.lowest_link[child])
                     
-                print "         ** Therefore, the lowest link value of the parent then becomes: ", self.lowest_link[parent]
-                print "         ** The lowest link connections are now: ", self.lowest_link
-                print
-                print
+                print("         ** Therefore, the lowest link value of the parent then becomes: ", self.lowest_link[parent])
+                print("         ** The lowest link connections are now: ", self.lowest_link)
+                print()
+                print()
 
             # If the child is already listed in the potential_group, then it has been discovered during this search and is already a part of the simply connected component
             # Note: If the child already has a lowest link value but is NOT in the potential_group, that means it is a part of a previously found group
             elif child in self.potential_group:
     
-                print "         xx Child has already been visited this recursion "
-                # print "         The discovery order of the parent is: ", self.lowest_link.keys().index(parent)
-                print "         xx The lowest link value of the parent is: ", self.lowest_link[parent]
-                print "         xx The discovery order of this child is: ", self.lowest_link.keys().index(child)
-                # print "         The lowest link value of this child is: ", self.lowest_link[child]
+                print("         xx Child has already been visited this recursion ")
+                # print("         The discovery order of the parent is: ", list(self.lowest_link.keys()).index(parent))
+                print("         xx The lowest link value of the parent is: ", self.lowest_link[parent])
+                print("         xx The discovery order of this child is: ", list(self.lowest_link.keys()).index(child))
+                # print("         The lowest link value of this child is: ", self.lowest_link[child])
 
                 # Since the child has been discovered already during this search, that means it is in the group but still in the recursion process,
                 # Update the parent's lowest link value with this childs discovery order
-                self.lowest_link[parent] = min(self.lowest_link[parent], self.lowest_link.keys().index(child))
+                self.lowest_link[parent] = min(self.lowest_link[parent], list(self.lowest_link.keys()).index(child))
 
-                print
-                print "         **** Therefore, the lowest link value of the parent then becomes: ", self.lowest_link[parent]
-                print "         **** The lowest link connections are now: ", self.lowest_link
-                print
-                print
+                print()
+                print("         **** Therefore, the lowest link value of the parent then becomes: ", self.lowest_link[parent])
+                print("         **** The lowest link connections are now: ", self.lowest_link)
+                print()
+                print()
 
         # If, after searching all children and updating lowest link connections, you reach a parent whose lowest link still matches its original value (or starting position)
         # Then you have reached the root of a simply connected component (aka you've found a group)
-        if (self.lowest_link.keys().index(parent) == self.lowest_link[parent]):
+        if (list(self.lowest_link.keys()).index(parent) == self.lowest_link[parent]):
             hold = []
             while True:
                 # remove group species from the running potential group list until you reach the parent species
@@ -14539,9 +14539,9 @@ class CPickler(CMill):
                 if node == parent:
                     break
             self.all_groups[parent] = hold
-            print "         Group is: ", self.all_groups[parent]
-            print
-            print
+            print("         Group is: ", self.all_groups[parent])
+            print()
+            print()
                 
             
     # Update group member needs with group names:
