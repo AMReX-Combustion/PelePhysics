@@ -461,25 +461,27 @@ calculateSpraySource(
     AMREX_D_TERM(vel_part[0] += part_dt * part_mom_src[0] * inv_pmass;
                  , vel_part[1] += part_dt * part_mom_src[1] * inv_pmass;
                  , vel_part[2] += part_dt * part_mom_src[2] * inv_pmass;);
-    T_part += part_dt * part_temp_src;
-    T_part = amrex::min(Tcrit, T_part);
-    Real new_mass = pmass + m_dot * part_dt;
-    if (new_mass > mass_eps) {
-      rho_part = 0.;
-      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        Y_part[spf] = amrex::min(
-          1., amrex::max(
-                0., (Y_part[spf] * pmass + mi_dot[spf] * part_dt) / new_mass));
-        rho_part += Y_part[spf] / fdat.rho[spf];
+    if (SPI.mass_tran) {
+      T_part += part_dt * part_temp_src;
+      T_part = amrex::min(Tcrit, T_part);
+      Real new_mass = pmass + m_dot * part_dt;
+      if (new_mass > mass_eps) {
+        rho_part = 0.;
+        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+          Y_part[spf] = amrex::min(
+            1., amrex::max(
+                  0., (Y_part[spf] * pmass + mi_dot[spf] * part_dt) / new_mass));
+          rho_part += Y_part[spf] / fdat.rho[spf];
+        }
+        rho_part = 1. / rho_part;
+        pmass = new_mass;
+        dia_part = std::cbrt(6. * pmass / (M_PI * rho_part));
+      } else {
+        pmass = 0.;
+        p.id() = -1;
+        nsub = isub;
+        isub = nsub + 1;
       }
-      rho_part = 1. / rho_part;
-      pmass = new_mass;
-      dia_part = std::cbrt(6. * pmass / (M_PI * rho_part));
-    } else {
-      pmass = 0.;
-      p.id() = -1;
-      nsub = isub;
-      isub = nsub + 1;
     }
     ++isub;
   }
