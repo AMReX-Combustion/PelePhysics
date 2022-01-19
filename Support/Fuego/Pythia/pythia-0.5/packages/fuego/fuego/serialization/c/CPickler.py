@@ -14408,137 +14408,142 @@ class CPickler(CMill):
         print("IS NEEDED report (one per QSS spec): ")
         print(self.is_needed)
 
-    # get two-way dependencies accounted for: (s1 needs s2) and (s2 needs s1) = group
-    def _getQSSgroups(self, mechanism):
-        self.group = OrderedDict()
-        already_accounted_for = []
-        group_count = 0
 
+    # get strongly connected components (groups) accounted for
+    # this includes two-way dependencies: (s1 needs s2) and (s2 needs s1) => group
+    # and cyclical dependencies: (s1 needs s2) and (s2 needs s3) and (s3 needs s1) => group
+    #
+    # This function along with _findClosedCycles is an implmentation of:
+    #
+    # Tarjan's Strongly Connected Components Algorithm (1972)
+    #
+    # where node "index" is stored implictly via the location of the node in the lowest_link OrderedDict
+    # and boolean "onStack" information is stored implicitly by checking for node existence in potential_group
+    #
+    def _getQSSgroups(self, mechanism):
+    
+        self.group = OrderedDict()
+        
+        self.discovery_order = 0
+        
+        self.potential_group = []
+        self.lowest_link = OrderedDict()
+        
+        
         print("\n\nDetermining groups of coupled species now...")
         print("---------------------------------")
-        all_groups = OrderedDict()
-        check_these = list(self.needs_running.keys())
+        self.all_groups = OrderedDict()
+        
         # Loop through species to tackle the needs group
-        for member in list(self.needs_running.keys()):
-            # Only need to check things that have not already been found
-            # to be in a group
-            if member in check_these:
-                print("- dealing with group: " + member)
-                potential_group = defaultdict(list)
-                already_accounted_for = defaultdict(list)
-                good_path = OrderedDict()
-                for other in list(self.needs_running.keys()):
-                    good_path[other] = False
-                self._findClosedCycle(
-                    mechanism,
-                    member,
-                    member,
-                    already_accounted_for,
-                    potential_group,
-                    all_groups,
-                    good_path,
-                )
-                print("** potential group is: ", all_groups)
-                print()
-                # Remove groupmates from list of species to check; checking these would just lead to us finding a duplicate group
-                for group in all_groups:
-                    checked = set(all_groups[group])
-                    unchecked = set(check_these)
-                    for species in list(checked.intersection(unchecked)):
-                        check_these.remove(species)
+        for member in self.needs_running.keys():
+            # Only need to check things that have not already been searched; i.e. they have no id/don't exist in the lowest link value list yet
+            if member not in self.lowest_link.keys():
+                    
+                print("- dealing with group: ", member)
+                self._findClosedCycle(mechanism, member)
 
-                print("   !! Now we just have to check: ", check_these)
+        print("** Groups of coupled species are: ", self.all_groups)
 
-        print("** Groups of coupled species are: ", all_groups)
-
-        # Don't need this now because duplicates are avoided with
-        # print("\n\nRemove duplicates...")
-        # print("---------------------------------")
-        # Check for duplicates
-        # for group1 in all_groups:
-        # print "- dealing with group 1: "+ group1
-        # for group2 in all_groups:
-        # print "... group 2 is: "+ group2
-        # if group2 != group1 and set(all_groups[group2]).issubset(set(all_groups[group1])):
-        # all_groups.pop(group2, None)
-        # print "    !! group 2 is subset of group 1 !! all groups in loop now: ", all_groups
-        # Rename
-        for count, group in enumerate(all_groups):
-            self.group["group_" + str(count)] = all_groups[group]
+        group_count=0
+        # Rename and only store strongly connected components involving 2 or more species as groups
+        for group in self.all_groups:
+            if len(self.all_groups[group]) > 1:
+                self.group['group_'+str(group_count)] = self.all_groups[group]
+                group_count += 1
         print()
         print("** Final clean self groups are: ", self.group)
 
         self._updateGroupNeeds(mechanism)
         self._updateGroupDependencies(mechanism)
 
-    def _findClosedCycle(
-        self,
-        mechanism,
-        match,
-        species,
-        visited,
-        potential_cycle,
-        all_groups,
-        good_path,
-    ):
-        # Loop through species
-        print(
-            "      Entering Closed Cycle with match, parent: ", match, species
-        )
-        visited[match].append(species)
-        potential_cycle[match].append(species)
+
+    def _findClosedCycle(self, mechanism, species):
+
+        # We start the recursion on node "species".
+        # This species is considered the "parent" node.
+        print("      Searching for potential closed cycle involving parent: ", species)
+
+        # We only enter the recursion if the species has not already been discovered
+        # so we add this species to the potential group list and give it a lowest link value
+        # The species location in the lowest link value dictionary denotes its discovery order, or id
+        self.potential_group.append(species)
+        self.lowest_link[species] = self.discovery_order
+        self.discovery_order += 1
         parent = species
-        for need in self.needs_running[species]:
+
+        print("      Upon initialization, discovery order is: ", list(self.lowest_link.keys()).index(species), " and lowest link value is: ", self.discovery_order-1)
+        print()
+        
+        # Loop through the needs of the parent
+        # Each need is denoted as a "child" of the parent
+        for need in self.needs_running[parent]:
             child = need
+            print("       x Start level of needs loop ")
+            print("       x Child is: ", child)
+            
+            # If the child has not yet been discovered, we recurse so that the child becomes the parent and the search continues as described above
+            if child not in self.lowest_link.keys():
 
-            print("       x Start level of needs loop")
-            print("       x Child is: " + child)
+                print("         xx Child has never been visited at all...")
+                print("         xx Initiate recursion to assign lowlink value ")
+                    
+                self._findClosedCycle(mechanism, child)
 
-            if child not in visited[match]:
-
-                print("         xx Child is not already visited...")
-             
-                # check if parent is also needed by child, and if multiple children exist, move this child to the front to check first
-                if ((child in self.is_needed_running[parent]) and len(self.needs_running[child]) > 1):
-                    self.needs_running[child].remove(parent)
-                    self.needs_running[child].insert(0, parent)
-
-                # then go a level further !
-                self._findClosedCycle(
-                    mechanism,
-                    match,
-                    child,
-                    visited,
-                    potential_cycle,
-                    all_groups,
-                    good_path,
-                )
-                print(
-                    "         We've finshed a recursion! The child that was passed in was: "
-                    + child
-                )
-                if good_path[child] == False:
-                    potential_cycle[match].remove(child)
+                print("         xx We've finished a recursion! The child that was passed in was: ", child, " with parent ", parent)
+                # print("         The discovery order of the parent is: ", list(self.lowest_link.keys()).index(parent))
+                print("         xx The lowest link value of the parent is: ", self.lowest_link[parent])
+                # print("         The discovery order of this child is: ", list(self.lowest_link.keys()).index(child))
+                print("         xx The lowest link value of this child is: ", self.lowest_link[child])
                 print()
-            else:
-                print("         xx Child has been visited already")
-                if child == match:
-                    print(
-                        "            Child equals match -> we've found a closed cycle!"
-                    )
-                    good_path[parent] = True
-                    all_groups[match] = potential_cycle[match]
-                elif good_path[child] == True:
-                    print("            ...we know this leads to a cycle")
-                    good_path[parent] = True
-                    if child not in all_groups[match]:
-                        all_groups[match].append(child)
-                else:
-                    print("            Bad Path!")
-                print("         -- > all_groups is now: ", all_groups)
-        if not self.needs_running[species]:
-            print("       x but this is a Dead End..")
 
+                # If the lowest link connection of the child is lower than that of the parent's, then this lowest link value becomes the parent's new lowest link value
+                # This update comes into effect when the child at the end of the recursion
+                # matches the original parent of the search or has a lower link connection from an earlier search than the parent currently does
+                if(child in self.potential_group):
+                    self.lowest_link[parent] = min(self.lowest_link[parent], self.lowest_link[child])
+                    
+                print("         ** Therefore, the lowest link value of the parent then becomes: ", self.lowest_link[parent])
+                print("         ** The lowest link connections are now: ", self.lowest_link)
+                print()
+                print()
+
+            # If the child is already listed in the potential_group, then it has been discovered during this search and is already a part of the simply connected component
+            # Note: If the child already has a lowest link value but is NOT in the potential_group, that means it is a part of a previously found group
+            elif child in self.potential_group:
+    
+                print("         xx Child has already been visited this recursion ")
+                # print("         The discovery order of the parent is: ", list(self.lowest_link.keys()).index(parent))
+                print("         xx The lowest link value of the parent is: ", self.lowest_link[parent])
+                print("         xx The discovery order of this child is: ", list(self.lowest_link.keys()).index(child))
+                # print("         The lowest link value of this child is: ", self.lowest_link[child])
+
+                # Since the child has been discovered already during this search, that means it is in the group but still in the recursion process,
+                # Update the parent's lowest link value with this childs discovery order
+                self.lowest_link[parent] = min(self.lowest_link[parent], list(self.lowest_link.keys()).index(child))
+
+                print()
+                print("         **** Therefore, the lowest link value of the parent then becomes: ", self.lowest_link[parent])
+                print("         **** The lowest link connections are now: ", self.lowest_link)
+                print()
+                print()
+
+        # If, after searching all children and updating lowest link connections, you reach a parent whose lowest link still matches its original value (or starting position)
+        # Then you have reached the root of a simply connected component (aka you've found a group)
+        if (list(self.lowest_link.keys()).index(parent) == self.lowest_link[parent]):
+            hold = []
+            while True:
+                # remove group species from the running potential group list until you reach the parent species
+                # add these to the official group, leaving other potential group components in the potential_group list for continued recursion completion
+                node = self.potential_group.pop()
+                hold.append(node)
+                if node == parent:
+                    break
+            self.all_groups[parent] = hold
+            print("         Group is: ", self.all_groups[parent])
+            print()
+            print()
+                
+            
     # Update group member needs with group names:
     # group member needs species -> group needs species
     # group member is needed by species -> group is needed by species
