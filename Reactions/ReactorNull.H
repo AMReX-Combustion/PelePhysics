@@ -65,7 +65,7 @@ public:
     amrex::Real* src_vect_energy) override
   {
     flatten_ops.flatten(
-      box, ncells, m_reactor_type, rhoY, frcExt, temperature, rhoE, frcEExt,
+      box, ncells, m_reactor_type, m_JBBhack, rhoY, frcExt, temperature, rhoE, frcEExt,
       y_vect, src_vect, vect_energy, src_vect_energy);
   }
 
@@ -83,13 +83,14 @@ public:
     amrex::Real dt) override
   {
     flatten_ops.unflatten(
-      box, ncells, m_reactor_type, rhoY, temperature, rhoE, frcEExt, FC_in,
+      box, ncells, m_reactor_type, m_JBBhack, rhoY, temperature, rhoE, frcEExt, FC_in,
       y_vect, vect_energy, FCunt, dt);
   }
 
 private:
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
+  int m_JBBhack{0};
 };
 } // namespace reactions
 } // namespace physics

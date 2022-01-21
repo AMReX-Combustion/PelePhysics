@@ -17,6 +17,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   pp.query("rtol", relTol);
   pp.query("atol", absTol);
   pp.query("atomic_reductions", atomic_reductions);
+  pp.query("JBBhack",m_JBBhack);
   checkCvodeOptions();
 
   amrex::Print() << "Initializing CVODE:\n";
@@ -1323,6 +1324,7 @@ ReactorCvode::react(
   const int icell = 0;
   const int ncells = 1;
   const auto captured_reactor_type = m_reactor_type;
+  const auto captured_JBBhack = m_JBBhack;
   ParallelFor(
     box, [=, &CvodeActual_time_final] AMREX_GPU_DEVICE(
            int i, int j, int k) noexcept {
@@ -1330,7 +1332,8 @@ ReactorCvode::react(
 
         amrex::Real* yvec_d = N_VGetArrayPointer(y);
         utils::box_flatten<Ordering>(
-          icell, i, j, k, ncells, captured_reactor_type, rY_in, rYsrc_in, T_in,
+          icell, i, j, k, ncells, captured_reactor_type, captured_JBBhack,
+          rY_in, rYsrc_in, T_in,
           rEner_in, rEner_src_in, yvec_d, udata_g->rYsrc_ext,
           udata_g->rhoe_init, udata_g->rhoesrc_ext);
 
@@ -1357,7 +1360,8 @@ ReactorCvode::react(
         const long int nfe_tot = nfe + nfeLS;
 
         utils::box_unflatten<Ordering>(
-          icell, i, j, k, ncells, captured_reactor_type, rY_in, T_in, rEner_in,
+          icell, i, j, k, ncells, captured_reactor_type, captured_JBBhack,
+          rY_in, T_in, rEner_in,
           rEner_src_in, FC_in, yvec_d, udata_g->rhoe_init, nfe_tot, dt_react);
 
         if ((udata_g->verbose > 3) && (omp_thread == 0)) {

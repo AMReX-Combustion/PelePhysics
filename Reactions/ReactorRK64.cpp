@@ -17,6 +17,7 @@ ReactorRK64::init(int reactor_type, int /*ncells*/)
   pp.query("rk64_nsubsteps_guess", rk64_nsubsteps_guess);
   pp.query("rk64_nsubsteps_min", rk64_nsubsteps_min);
   pp.query("rk64_nsubsteps_max", rk64_nsubsteps_max);
+  pp.query("JBBhack",m_JBBhack);
   return (0);
 }
 

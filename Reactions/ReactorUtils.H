@@ -82,6 +82,7 @@ box_flatten(
   const int k,
   const int ncells,
   const int reactor_type,
+  const int JBBhack,
   amrex::Array4<const amrex::Real> const& rhoY,
   amrex::Array4<const amrex::Real> const& frcExt,
   amrex::Array4<const amrex::Real> const& temperature,
@@ -97,11 +98,19 @@ box_flatten(
   for (int n = 0; n < NUM_SPECIES; n++) {
     const int idx = vec_index<OrderType>(n, icell, ncells);
     const int idx2 = spec_index<OrderType>(n, icell, ncells);
-    const amrex::Real rhoYn = amrex::max(0.0,rhoY(i, j, k, n));
-    y_vect[idx] = rhoYn;
-    src_vect[idx2] = frcExt(i, j, k, n);
-    rho += rhoYn;
-    mass_frac[n] = rhoYn;
+    if (JBBhack) {
+       const amrex::Real rhoYn = amrex::max(0.0,rhoY(i, j, k, n));
+       y_vect[idx] = rhoYn;
+       src_vect[idx2] = frcExt(i, j, k, n);
+       rho += rhoYn;
+       mass_frac[n] = rhoYn;
+    } else {
+       const amrex::Real rhoYn = rhoY(i, j, k, n);
+       y_vect[idx] = rhoYn;
+       src_vect[idx2] = frcExt(i, j, k, n);
+       rho += rhoYn;
+       mass_frac[n] = rhoYn;
+    }
   }
   const amrex::Real rho_inv = 1.0 / rho;
   for (amrex::Real& Yn : mass_frac) {
@@ -133,6 +142,7 @@ box_unflatten(
   const int k,
   const int ncells,
   const int reactor_type,
+  const int JBBhack,
   amrex::Array4<amrex::Real> const& rhoY,
   amrex::Array4<amrex::Real> const& temperature,
   amrex::Array4<amrex::Real> const& rhoE,
@@ -148,22 +158,31 @@ box_unflatten(
   amrex::Real rhoY_oldclipped[NUM_SPECIES];
   amrex::Real rho_old = 0.0;
   amrex::Real rho_oldclipped = 0.0;
-  for (int n = 0; n < NUM_SPECIES; n++) {
-     rhoY_oldclipped[n] = amrex::max(0.0,rhoY(i, j, k, n));
-     rho_old += rhoY(i, j, k, n);
-     rho_oldclipped += rhoY_oldclipped[n];
+  if (JBBhack) {
+    for (int n = 0; n < NUM_SPECIES; n++) {
+       rhoY_oldclipped[n] = amrex::max(0.0,rhoY(i, j, k, n));
+       rho_old += rhoY(i, j, k, n);
+       rho_oldclipped += rhoY_oldclipped[n];
+    }
   }
 
   amrex::Real mass_frac[NUM_SPECIES];
   amrex::Real rho = 0.0;
   for (int n = 0; n < NUM_SPECIES; n++) {
-    // New rhoY equal old one + CVODE increment
-    const amrex::Real rhoYn = rhoY(i, j, k, n)
-                              + (  y_vect[vec_index<OrderType>(n, icell, ncells)]
-                                 - rhoY_oldclipped[n]) * rho_old / rho_oldclipped;
-    rhoY(i, j, k, n) = rhoYn;
-    rho += rhoYn;
-    mass_frac[n] = rhoYn;
+    if (JBBhack) {
+      // New rhoY equal old one + CVODE increment
+      const amrex::Real rhoYn = rhoY(i, j, k, n)
+                                + (  y_vect[vec_index<OrderType>(n, icell, ncells)]
+                                   - rhoY_oldclipped[n]) * rho_old / rho_oldclipped;
+      rhoY(i, j, k, n) = rhoYn;
+      rho += rhoYn;
+      mass_frac[n] = rhoYn;
+    } else {
+      const amrex::Real rhoYn = y_vect[vec_index<OrderType>(n, icell, ncells)];
+      rhoY(i, j, k, n) = rhoYn;
+      rho += rhoYn;
+      mass_frac[n] = rhoYn;
+    }
   }
   const amrex::Real rho_inv = 1.0 / rho;
   for (amrex::Real& Yn : mass_frac) {
@@ -198,6 +217,7 @@ public:
     const amrex::Box box,
     const int ncells,
     const int reactor_type,
+    const int JBBhack,
     amrex::Array4<const amrex::Real> const& rhoY,
     amrex::Array4<const amrex::Real> const& frcExt,
     amrex::Array4<const amrex::Real> const& temperature,
@@ -215,7 +235,7 @@ public:
       const int icell =
         (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
       box_flatten<OrderType>(
-        icell, i, j, k, ncells, reactor_type, rhoY, frcExt, temperature, rhoE,
+        icell, i, j, k, ncells, reactor_type, JBBhack, rhoY, frcExt, temperature, rhoE,
         frcEExt, y_vect, src_vect, vect_energy, src_vect_energy);
     });
   }
@@ -224,6 +244,7 @@ public:
     const amrex::Box box,
     const int ncells,
     const int reactor_type,
+    const int JBBhack,
     amrex::Array4<amrex::Real> const& rhoY,
     amrex::Array4<amrex::Real> const& temperature,
     amrex::Array4<amrex::Real> const& rhoE,
@@ -241,7 +262,7 @@ public:
       const int icell =
         (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
       box_unflatten<OrderType>(
-        icell, i, j, k, ncells, reactor_type, rhoY, temperature, rhoE, frcEExt,
+        icell, i, j, k, ncells, reactor_type, JBBhack, rhoY, temperature, rhoE, frcEExt,
         FC_in, y_vect, vect_energy, FCunt[icell], dt);
     });
   }
