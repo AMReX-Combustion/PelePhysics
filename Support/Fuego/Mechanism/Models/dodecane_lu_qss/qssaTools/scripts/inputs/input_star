@@ -1,0 +1,18 @@
+! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
+! ~~~~ Input mechanism
+! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
+
+mech :	 		output/qssa.inp 
+therm : 		mechansimFiles/therm.dat
+tran : 			mechansimFiles/tran.dat
+
+! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
+! ~~~~ QSSA
+! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
+
+outputFolder :		output
+mech_nostar :		qssa_nostar.inp 		
+therm_nostar :		therm_nostar.dat
+tran_nostar :		tran_nostar.dat
+
+
