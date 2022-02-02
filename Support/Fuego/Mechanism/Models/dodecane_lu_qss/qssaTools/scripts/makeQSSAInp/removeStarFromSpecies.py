@@ -49,13 +49,17 @@ def write_nostar_inp(inputFile,starSpecies,outputFile):
 inpt = myparser.parseInputFile()
 
 # Set up filenames
+skeletal_mech_filename = inpt['skeletal_mech']
 mech_filename = inpt['mech']
 therm_filename = inpt['therm']
 tran_filename = inpt['tran']
+non_qssa_list_filename = inpt['non_qssa_list']
 outputFolder = inpt['outputFolder'] 
+skeletal_mech_nostar_filename = os.path.join(outputFolder,inpt['skeletal_mech_nostar'])
 mech_nostar_filename = os.path.join(outputFolder,inpt['mech_nostar'])
 therm_nostar_filename = os.path.join(outputFolder,inpt['therm_nostar'])
 tran_nostar_filename = os.path.join(outputFolder,inpt['tran_nostar'])
+non_qssa_list_nostar_filename = os.path.join(outputFolder,inpt['non_qssa_list_nostar'])
 
 # Get species
 species_all = getListSpecies(mech_filename)
@@ -68,6 +72,10 @@ for species in species_all:
 
 
 # Replace star in species name
+# Skeletal Mech
+write_nostar_inp(inputFile=skeletal_mech_filename,
+                 starSpecies=starSpecies,
+                 outputFile=skeletal_mech_nostar_filename)
 # Mech
 write_nostar_inp(inputFile=mech_filename,
                  starSpecies=starSpecies,
@@ -80,3 +88,8 @@ write_nostar_inp(inputFile=therm_filename,
 write_nostar_inp(inputFile=tran_filename,
                  starSpecies=starSpecies,
                  outputFile=tran_nostar_filename)
+
+# Non qssa
+write_nostar_inp(inputFile=non_qssa_list_filename,
+                 starSpecies=starSpecies,
+                 outputFile=non_qssa_list_nostar_filename)

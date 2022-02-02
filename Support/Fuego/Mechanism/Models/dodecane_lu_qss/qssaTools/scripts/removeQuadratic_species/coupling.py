@@ -24,7 +24,7 @@ def mergeSpeciesCoeff(speciesList,coeffList):
            indexDuplicates = list_duplicates_of(speciesList,species)
            newCoeffList.append(sum([coeffList[i] for i in indexDuplicates]))
        speciesList[:] = speciesListUnique
-       #coeffList[:] = newCoeffList
+       coeffList[:] = newCoeffList
 
 # Find possible problems
 def identifyQSSCoupling(mechanism,qssSpeciesList):

@@ -2,17 +2,21 @@
 ! ~~~~ Input mechanism
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
 
+skeletal_mech :	        mechanismFiles/skeletal.inp
 mech :	 		output/qssa.inp 
-therm : 		mechansimFiles/therm.dat
-tran : 			mechansimFiles/tran.dat
+therm : 		mechanismFiles/therm.dat
+tran : 			mechanismFiles/tran.dat
+non_qssa_list : 	mechanismFiles/non_qssa_list.txt
 
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
 ! ~~~~ QSSA
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
 
 outputFolder :		output
+skeletal_mech_nostar :	skeletal_nostar.inp 		
 mech_nostar :		qssa_nostar.inp 		
 therm_nostar :		therm_nostar.dat
 tran_nostar :		tran_nostar.dat
+non_qssa_list_nostar :	non_qssa_list_nostar.txt
 
 

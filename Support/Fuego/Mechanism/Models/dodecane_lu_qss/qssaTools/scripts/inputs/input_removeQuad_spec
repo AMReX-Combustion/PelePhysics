@@ -1,15 +1,17 @@
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
-! ~~~~ Skeletal mechanism
+! ~~~~ Input mechanism
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
 
-skeletal_inp : 		mechanismFiles/skeletal.inp 
+skeletal_mech :         output/skeletal_nostar.inp
+mech :                  output/qssa_nostar.inp
+therm :                 output/therm_nostar.dat
+tran :                  output/tran_nostar.dat
+non_qssa_list : 	output/non_qssa_list_nostar.txt	
 
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
 ! ~~~~ QSSA
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !
 
-species_non_qssa : 	mechanismFiles/non_qssa_list.txt
-outputFolder :		output
-qssa_inp :		qssa.inp 		
-
+outputFolder :          output
+mech_final :            qssa_final.inp
 
