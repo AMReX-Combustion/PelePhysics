@@ -64,20 +64,20 @@ class FMC(Application):
         )
         timer.reset()
         timer.start()
-        outputFile = self._openOutput(save)
+        outputFileHeader = self._openOutput(mech_header)
         count_lines = 0
         for line in lines:
-            if ("ifndef MECHANISM_H") in line:
+            if ("ifndef MECHANISM_CPP") in line:
                 line_start_core = count_lines
                 break
-            outputFile.write(line)
-            outputFile.write("\n")
-            count_lines += 1
-
-        outputFileHeader = self._openOutput(mech_header)
-        for line in lines[line_start_core:]:
             outputFileHeader.write(line)
             outputFileHeader.write("\n")
+            count_lines += 1
+
+        outputFile = self._openOutput(save)
+        for line in lines[line_start_core:]:
+            outputFile.write(line)
+            outputFile.write("\n")
 
         print("... done (%g sec)" % timer.stop())
 
