@@ -3,11 +3,15 @@
 
 ## QSS TODO LIST
 
-* Implementation of Trajan's method (Julia)
-* Automated zeroing out of reaction rate for reactions that induce quadratic algebraic relations between QSS species concentrations (Anne)
-* Sync up with the render QSS script (Malik)
-* Get the range of validity of the QSS assumption (Malik)
-* Ensure that homogeneous reactions test can be passed with reacEval (Malik)
+- ~~Implementation of Trajan's method (Julia)~~
+- Automated zeroing out of reaction rate for reactions that induce quadratic algebraic relations between QSS species concentrations (Anne)
+    - ~~Remove Backward reactions as needed~~
+    - Remove Forward reaction as needed (Malik)
+- ~~Sync up with the render QSS script (Malik)~~
+- ~~Get the range of validity of the QSS assumption (Malik)~~
+- ~~Ensure that homogeneous reactions test can be passed with reacEval (Malik)~~
+- Verify that Jacobian is correctly computed (Malik)
+- Ensure that skeletal and QSS mechanism are at most 10% apart in the range T=[800K-1600K],phi=[0.5-2.0],  P=[1atm,50atm]. The 50 atm boundary is actually very important  (Malik)
 
 
 ## FUEGO
