@@ -132,7 +132,7 @@ public:
 private:
   amrex::Real relTol{1e-6};
   amrex::Real absTol{1e-10};
-  int use_erkstep{0};
+  int use_erkstep{1};
   int rk_method{40};
   int rk_controller{0};
   utils::FlattenOps<Ordering> flatten_ops;
