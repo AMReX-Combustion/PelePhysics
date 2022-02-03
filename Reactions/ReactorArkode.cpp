@@ -155,9 +155,9 @@ ReactorArkode::react(
 
 #ifdef SUNDIALS_BUILD_WITH_PROFILING
   SUNProfiler sun_profiler = nullptr;
-  SUNContext_GetProfiler(*amrex::sundials::The_Sundials_Context(),
-                         &sun_profiler);
-  //SUNProfiler_Reset(sun_profiler);
+  SUNContext_GetProfiler(
+    *amrex::sundials::The_Sundials_Context(), &sun_profiler);
+  // SUNProfiler_Reset(sun_profiler);
 #endif
 
 #if defined(AMREX_USE_CUDA)
@@ -247,7 +247,8 @@ ReactorArkode::react(
     ARKStepSetTableNum(
       arkode_mem, ARKODE_DIRK_NONE, static_cast<ARKODE_ERKTableID>(rk_method));
     ARKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
-    BL_PROFILE_VAR("Pele::ReactorArkode::react():ARKStepEvolve", AroundARKEvolve);
+    BL_PROFILE_VAR(
+      "Pele::ReactorArkode::react():ARKStepEvolve", AroundARKEvolve);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
     BL_PROFILE_VAR_STOP(AroundARKEvolve);
   } else {
@@ -259,7 +260,8 @@ ReactorArkode::react(
       user_data->verbose, relTol, absTol, "erkstep");
     ERKStepSetTableNum(arkode_mem, static_cast<ARKODE_ERKTableID>(rk_method));
     ERKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
-    BL_PROFILE_VAR("Pele::ReactorArkode::react():ERKStepEvolve", AroundERKEvolve);
+    BL_PROFILE_VAR(
+      "Pele::ReactorArkode::react():ERKStepEvolve", AroundERKEvolve);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
     BL_PROFILE_VAR_STOP(AroundERKEvolve);
   }
@@ -427,7 +429,8 @@ ReactorArkode::react(
     set_sundials_solver_tols(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
       user_data->verbose, relTol, absTol, "arkstep");
-    BL_PROFILE_VAR("Pele::ReactorArkode::react():ARKStepEvolve", AroundARKEvolve);
+    BL_PROFILE_VAR(
+      "Pele::ReactorArkode::react():ARKStepEvolve", AroundARKEvolve);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
     BL_PROFILE_VAR_STOP(AroundARKEvolve);
   } else {
@@ -437,7 +440,8 @@ ReactorArkode::react(
     set_sundials_solver_tols(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
       user_data->verbose, relTol, absTol, "erkstep");
-    BL_PROFILE_VAR("Pele::ReactorArkode::react():ERKStepEvolve", AroundERKEvolve);
+    BL_PROFILE_VAR(
+      "Pele::ReactorArkode::react():ERKStepEvolve", AroundERKEvolve);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
     BL_PROFILE_VAR_STOP(AroundERKEvolve);
   }
@@ -557,11 +561,10 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   amrex::Print() << "\nFinal Statistics:\n";
 #endif
 
-  amrex::Print() << "   Internal steps   = " << nst   << "\n";
+  amrex::Print() << "   Internal steps   = " << nst << "\n";
   amrex::Print() << "   Attempted steps  = " << nst_a << "\n";
-  amrex::Print() << "   Error test fails = " << netf  << "\n";
-  amrex::Print() << "   Total RHS evals  = " << nfe   << "\n";
-
+  amrex::Print() << "   Error test fails = " << netf << "\n";
+  amrex::Print() << "   Total RHS evals  = " << nfe << "\n";
 }
 } // namespace reactions
 } // namespace physics

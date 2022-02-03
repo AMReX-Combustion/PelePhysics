@@ -1125,9 +1125,9 @@ ReactorCvode::react(
 
 #ifdef SUNDIALS_BUILD_WITH_PROFILING
   SUNProfiler sun_profiler = nullptr;
-  SUNContext_GetProfiler(*amrex::sundials::The_Sundials_Context(),
-                         &sun_profiler);
-  //SUNProfiler_Reset(sun_profiler);
+  SUNContext_GetProfiler(
+    *amrex::sundials::The_Sundials_Context(), &sun_profiler);
+  // SUNProfiler_Reset(sun_profiler);
 #endif
 
   //----------------------------------------------------------
@@ -1975,18 +1975,18 @@ ReactorCvode::print_final_stats(void* cvodemem)
   amrex::Print() << "\nFinal Statistics:\n";
 #endif
   // CVODE stats
-  amrex::Print() << "  nSteps       = " << nst  << "\n";
+  amrex::Print() << "  nSteps       = " << nst << "\n";
   amrex::Print() << "  nErrtf       = " << netf << "\n";
-  amrex::Print() << "  nRHSeval     = " << nfe  << "\n";
+  amrex::Print() << "  nRHSeval     = " << nfe << "\n";
   // NLS stats
-  amrex::Print() << "  nnLinIt      = " << nni  << "\n";
+  amrex::Print() << "  nnLinIt      = " << nni << "\n";
   amrex::Print() << "  nConvfail    = " << ncfn << "\n";
   // LS stats
   amrex::Print() << "  nLinsetups   = " << nsetups << "\n";
-  amrex::Print() << "  nJeval       = " << nje     << "\n";
-  amrex::Print() << "  nLinIt       = " << nli     << "\n";
-  amrex::Print() << "  nLinConvfail = " << ncfl    << "\n";
-  amrex::Print() << "  nLinRHSeval  = " << nfeLS   << "\n";
+  amrex::Print() << "  nJeval       = " << nje << "\n";
+  amrex::Print() << "  nLinIt       = " << nli << "\n";
+  amrex::Print() << "  nLinConvfail = " << ncfl << "\n";
+  amrex::Print() << "  nLinRHSeval  = " << nfeLS << "\n";
   // Prec
   amrex::Print() << "  nPreceval    = " << npe << "\n";
   amrex::Print() << "  nPrecsolve   = " << nps << "\n";
