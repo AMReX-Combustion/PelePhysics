@@ -494,27 +494,27 @@ ReactorArkode::cF_RHS(
 void
 ReactorArkode::print_final_stats(void* arkode_mem)
 {
-  long int nst, nst_a, nfe, nfi;
+  long int nst, nst_a, netf, nfe, nfi;
   long lenrw, leniw;
   int flag;
 
   if (use_erkstep) {
-    flag = ERKStepGetWorkSpace(arkode_mem, &lenrw, &leniw);
-    utils::check_flag(&flag, "ERKStepGetWorkSpace", 1);
     flag = ERKStepGetNumSteps(arkode_mem, &nst);
     utils::check_flag(&flag, "ERKStepGetNumSteps", 1);
     flag = ERKStepGetNumStepAttempts(arkode_mem, &nst_a);
     utils::check_flag(&flag, "ERKStepGetNumStepAttempts", 1);
+    flag = ERKStepGetNumErrTestFails(arkode_mem, &netf);
+    utils::check_flag(&flag, "ERKStepGetNumErrTestFails", 1);
     flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
     utils::check_flag(&flag, "ERKStepGetNumRhsEvals", 1);
 
   } else {
-    flag = ARKStepGetWorkSpace(arkode_mem, &lenrw, &leniw);
-    utils::check_flag(&flag, "ARKStepGetWorkSpace", 1);
     flag = ARKStepGetNumSteps(arkode_mem, &nst);
     utils::check_flag(&flag, "ARKStepGetNumSteps", 1);
     flag = ARKStepGetNumStepAttempts(arkode_mem, &nst_a);
     utils::check_flag(&flag, "ARKStepGetNumStepAttempts", 1);
+    flag = ARKStepGetNumErrTestFails(arkode_mem, &netf);
+    utils::check_flag(&flag, "ARKStepGetNumErrTestFails", 1);
     flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
     utils::check_flag(&flag, "ARKStepGetNumRhsEvals", 1);
   }
@@ -527,11 +527,11 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   amrex::Print() << "\nFinal Statistics:\n";
 #endif
 
-  amrex::Print() << "   Internal solver steps = " << nst
-                 << " (attempted = " << nst_a << ")\n";
-  amrex::Print() << "   Total RHS evals:  Fe = " << nfe << "\n";
-  amrex::Print() << "lenrw      = " << lenrw << "    leniw         = " << leniw
-                 << "\n";
+  amrex::Print() << "   Internal steps   = " << nst   << "\n";
+  amrex::Print() << "   Attempted steps  = " << nst_a << "\n";
+  amrex::Print() << "   Error test fails = " << netf  << "\n";
+  amrex::Print() << "   Total RHS evals  = " << nfe   << "\n";
+
 }
 } // namespace reactions
 } // namespace physics
