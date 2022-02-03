@@ -1146,8 +1146,12 @@ ReactorCvode::react(
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
     new SUNCudaThreadDirectExecPolicy(256, stream);
-  SUNCudaExecPolicy* reduce_exec_policy =
-    new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  SUNCudaExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
 #elif defined(AMREX_USE_HIP)
   N_Vector y = N_VNewWithMemHelp_Hip(
@@ -1484,8 +1488,12 @@ ReactorCvode::react(
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
     new SUNCudaThreadDirectExecPolicy(256, stream);
-  SUNCudaExecPolicy* reduce_exec_policy =
-    new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  SUNCudaExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
 #elif defined(AMREX_USE_HIP)
   y = N_VNewWithMemHelp_Hip(
