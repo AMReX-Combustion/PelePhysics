@@ -109,9 +109,9 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   }
 
   if (use_erkstep == 1) {
-    amrex::Print() << "ERK Step:" << std::endl;
+    amrex::Print() << "  Using ERKStep" << std::endl;
   } else {
-    amrex::Print() << "ARK Step:" << std::endl;
+    amrex::Print() << "  Using ARKStep" << std::endl;
   }
   amrex::Print() << "  Using " << method_string << " method" << std::endl;
   amrex::Print() << "  Using the " << controller_string << " controller"
@@ -144,6 +144,9 @@ ReactorArkode::react(
 )
 {
   BL_PROFILE("Pele::ReactorArkode::react()");
+
+  std::cout << "Reacting (Array4)\n";
+
   const int ncells = box.numPts();
   AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
 
@@ -301,6 +304,8 @@ ReactorArkode::react(
 {
   BL_PROFILE("Pele::ReactorArkode::react()");
   AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
+
+  std::cout << "Reacting (flattened)\n";
 
   int neq = NUM_SPECIES + 1;
   int neq_tot = neq * ncells;
