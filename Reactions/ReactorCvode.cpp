@@ -1123,6 +1123,13 @@ ReactorCvode::react(
   amrex::Real time_final = time + dt_react;
   amrex::Real CvodeActual_time_final = 0.0;
 
+#ifdef SUNDIALS_BUILD_WITH_PROFILING
+  SUNProfiler sun_profiler = nullptr;
+  SUNContext_GetProfiler(*amrex::sundials::The_Sundials_Context(),
+                         &sun_profiler);
+  //SUNProfiler_Reset(sun_profiler);
+#endif
+
   //----------------------------------------------------------
   // GPU Region
   //----------------------------------------------------------
@@ -1414,6 +1421,10 @@ ReactorCvode::react(
 
   long int nfe =
     20; // Dummy, the return value is no longer used for this function.
+#endif
+
+#ifdef SUNDIALS_BUILD_WITH_PROFILING
+  SUNProfiler_Print(sun_profiler, stdout);
 #endif
 
   return nfe;

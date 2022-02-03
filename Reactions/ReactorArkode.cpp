@@ -152,6 +152,14 @@ ReactorArkode::react(
 
   const int neq = NUM_SPECIES + 1;
   const int neq_tot = neq * ncells;
+
+#ifdef SUNDIALS_BUILD_WITH_PROFILING
+  SUNProfiler sun_profiler = nullptr;
+  SUNContext_GetProfiler(*amrex::sundials::The_Sundials_Context(),
+                         &sun_profiler);
+  //SUNProfiler_Reset(sun_profiler);
+#endif
+
 #if defined(AMREX_USE_CUDA)
   N_Vector y = N_VNewWithMemHelp_Cuda(
     neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),
@@ -282,6 +290,10 @@ ReactorArkode::react(
   }
 
   delete user_data;
+
+#ifdef SUNDIALS_BUILD_WITH_PROFILING
+  SUNProfiler_Print(sun_profiler, stdout);
+#endif
 
   return nfe;
 }
