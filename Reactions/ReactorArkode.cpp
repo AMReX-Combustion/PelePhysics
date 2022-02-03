@@ -295,8 +295,10 @@ ReactorArkode::react(
     ERKStepFree(&arkode_mem);
   }
 
+#ifdef AMREX_USE_GPU
   delete stream_exec_policy;
   delete reduce_exec_policy;
+#endif
   delete user_data;
 
 #ifdef SUNDIALS_BUILD_WITH_PROFILING
@@ -478,8 +480,10 @@ ReactorArkode::react(
     ERKStepFree(&arkode_mem);
   }
 
+#ifdef AMREX_USE_GPU
   delete stream_exec_policy;
   delete reduce_exec_policy;
+#endif
 
   amrex::The_Arena()->free(user_data);
 
