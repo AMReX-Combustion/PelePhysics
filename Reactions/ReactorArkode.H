@@ -137,6 +137,11 @@ private:
   int rk_controller{0};
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
+#if defined(AMREX_USE_HIP)
+  int atomic_reductions{0};
+#else
+  int atomic_reductions{1};
+#endif
 };
 
 } // namespace reactions

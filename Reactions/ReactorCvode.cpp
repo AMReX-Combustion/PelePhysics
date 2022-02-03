@@ -15,7 +15,15 @@ ReactorCvode::init(int reactor_type, int ncells)
   amrex::ParmParse pp("ode");
   pp.query("rtol", relTol);
   pp.query("atol", absTol);
+  pp.query("atomic_reductions", atomic_reductions);
   checkCvodeOptions();
+
+  amrex::Print() << "Initializing CVODE:\n";
+
+  if (atomic_reductions)
+    amrex::Print() << "  Using atomic reductions\n";
+  else
+    amrex::Print() << "  Using LDS reductions\n";
 
 #ifndef AMREX_USE_GPU
   // ----------------------------------------------------------
@@ -1139,10 +1147,12 @@ ReactorCvode::react(
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
     new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy =
-    new SUNHipBlockReduceExecPolicy(256, 0, stream);
-  // SUNHipExecPolicy* reduce_exec_policy =
-  // new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  SUNHipExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
 #elif defined(AMREX_USE_DPCPP)
   N_Vector y = N_VNewWithMemHelp_Sycl(
@@ -1157,9 +1167,6 @@ ReactorCvode::react(
     new SUNSyclBlockReduceExecPolicy(256, 0);
   N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
 #endif
-
-  // amrex::Print() << "using atomics? "  << reduce_exec_policy->atomic() <<
-  // "\n";
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
@@ -1472,10 +1479,12 @@ ReactorCvode::react(
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
     new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy =
-    new SUNHipBlockReduceExecPolicy(256, 0, stream);
-  // SUNHipExecPolicy* reduce_exec_policy =
-  // new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  SUNHipExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
 #elif defined(AMREX_USE_DPCPP)
   y = N_VNewWithMemHelp_Sycl(
@@ -1491,9 +1500,6 @@ ReactorCvode::react(
     new SUNSyclBlockReduceExecPolicy(256, 0);
   N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
 #endif
-
-  // amrex::Print() << "using atomics? "  << reduce_exec_policy->atomic() <<
-  // "\n";
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);

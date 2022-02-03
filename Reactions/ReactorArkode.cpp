@@ -14,10 +14,13 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   pp.query("use_erkstep", use_erkstep);
   pp.query("rtol", relTol);
   pp.query("atol", absTol);
+  pp.query("atomic_reductions", atomic_reductions);
   pp.query("rk_method", rk_method);
   pp.query("rk_controller", rk_controller);
   std::string method_string = "ARKODE_ZONNEVELD_5_3_4";
   std::string controller_string = "PID";
+
+  amrex::Print() << "Initializing ARKODE:\n";
 
   switch (rk_method) {
   case 20:
@@ -114,6 +117,11 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   amrex::Print() << "  Using the " << controller_string << " controller"
                  << std::endl;
 
+  if (atomic_reductions)
+    amrex::Print() << "  Using atomic reductions\n";
+  else
+    amrex::Print() << "  Using LDS reductions\n";
+
   return (0);
 }
 
@@ -161,8 +169,12 @@ ReactorArkode::react(
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
     new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy =
-    new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  SUNHipExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
   realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
 #elif defined(AMREX_USE_DPCPP)
@@ -310,8 +322,12 @@ ReactorArkode::react(
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
     new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy =
-    new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  SUNHipExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
   realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
 #elif defined(AMREX_USE_DPCPP)
