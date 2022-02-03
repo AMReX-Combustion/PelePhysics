@@ -1347,6 +1347,9 @@ ReactorCvode::react(
   }
   freeUserData(user_data);
 
+  delete stream_exec_policy;
+  delete reduce_exec_policy;
+
 #else
   //----------------------------------------------------------
   // CPU Region
@@ -1685,6 +1688,9 @@ ReactorCvode::react(
     SUNMatDestroy(A);
   }
   freeUserData(user_data);
+
+  delete stream_exec_policy;
+  delete reduce_exec_policy;
 
   //----------------------------------------------------------
   // CPU Region

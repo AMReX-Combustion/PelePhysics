@@ -289,6 +289,8 @@ ReactorArkode::react(
     ERKStepFree(&arkode_mem);
   }
 
+  delete stream_exec_policy;
+  delete reduce_exec_policy;
   delete user_data;
 
 #ifdef SUNDIALS_BUILD_WITH_PROFILING
@@ -463,6 +465,9 @@ ReactorArkode::react(
   } else {
     ERKStepFree(&arkode_mem);
   }
+
+  delete stream_exec_policy;
+  delete reduce_exec_policy;
 
   amrex::The_Arena()->free(user_data);
 
