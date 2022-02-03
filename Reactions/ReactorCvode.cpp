@@ -1906,41 +1906,38 @@ ReactorCvode::print_final_stats(void* cvodemem)
 {
   long lenrw, leniw;
   long lenrwLS, leniwLS;
-  long int nst, nfe, nsetups, nni, ncfn, netf;
+  long int nst, nfe, nsetups, nni, ncfn, netf, nje;
   long int nli, npe, nps, ncfl, nfeLS;
   int flag;
 
-  flag = CVodeGetWorkSpace(cvodemem, &lenrw, &leniw);
-  utils::check_flag(&flag, "CVodeGetWorkSpace", 1);
+  // CVODE stats
   flag = CVodeGetNumSteps(cvodemem, &nst);
   utils::check_flag(&flag, "CVodeGetNumSteps", 1);
-  flag = CVodeGetNumRhsEvals(cvodemem, &nfe);
-  utils::check_flag(&flag, "CVodeGetNumRhsEvals", 1);
-  flag = CVodeGetNumLinSolvSetups(cvodemem, &nsetups);
-  utils::check_flag(&flag, "CVodeGetNumLinSolvSetups", 1);
   flag = CVodeGetNumErrTestFails(cvodemem, &netf);
   utils::check_flag(&flag, "CVodeGetNumErrTestFails", 1);
+  flag = CVodeGetNumRhsEvals(cvodemem, &nfe);
+  utils::check_flag(&flag, "CVodeGetNumRhsEvals", 1);
+  // Nonlinear solver stats
   flag = CVodeGetNumNonlinSolvIters(cvodemem, &nni);
   utils::check_flag(&flag, "CVodeGetNumNonlinSolvIters", 1);
   flag = CVodeGetNumNonlinSolvConvFails(cvodemem, &ncfn);
   utils::check_flag(&flag, "CVodeGetNumNonlinSolvConvFails", 1);
-
-  flag = CVodeGetLinWorkSpace(cvodemem, &lenrwLS, &leniwLS);
-  utils::check_flag(&flag, "CVodeGetLinWorkSpace", 1);
+  // Linear solver stats
+  flag = CVodeGetNumLinSolvSetups(cvodemem, &nsetups);
+  utils::check_flag(&flag, "CVodeGetNumLinSolvSetups", 1);
+  flag = CVodeGetNumJacEvals(cvodemem, &nje);
+  utils::check_flag(&flag, "CVodeGetNumJacEvals", 1);
   flag = CVodeGetNumLinIters(cvodemem, &nli);
   utils::check_flag(&flag, "CVodeGetNumLinIters", 1);
-  // flag = CVodeGetNumJacEvals(cvodemem, &nje);
-  // utils::check_flag(&flag, "CVodeGetNumJacEvals", 1);
+  flag = CVodeGetNumLinConvFails(cvodemem, &ncfl);
+  utils::check_flag(&flag, "CVodeGetNumLinConvFails", 1);
   flag = CVodeGetNumLinRhsEvals(cvodemem, &nfeLS);
   utils::check_flag(&flag, "CVodeGetNumLinRhsEvals", 1);
-
+  // Preconditioner stats
   flag = CVodeGetNumPrecEvals(cvodemem, &npe);
   utils::check_flag(&flag, "CVodeGetNumPrecEvals", 1);
   flag = CVodeGetNumPrecSolves(cvodemem, &nps);
   utils::check_flag(&flag, "CVodeGetNumPrecSolves", 1);
-
-  flag = CVodeGetNumLinConvFails(cvodemem, &ncfl);
-  utils::check_flag(&flag, "CVodeGetNumLinConvFails", 1);
 
 #ifdef AMREX_USE_OMP
   amrex::Print() << "\nFinal Statistics: "
@@ -1949,21 +1946,22 @@ ReactorCvode::print_final_stats(void* cvodemem)
 #else
   amrex::Print() << "\nFinal Statistics:\n";
 #endif
-  amrex::Print() << "lenrw      = " << lenrw << "    leniw         = " << leniw
-                 << "\n";
-  amrex::Print() << "lenrwLS    = " << lenrwLS
-                 << "    leniwLS       = " << leniwLS << "\n";
-  amrex::Print() << "nSteps     = " << nst << "\n";
-  amrex::Print() << "nRHSeval   = " << nfe << "    nLinRHSeval   = " << nfeLS
-                 << "\n";
-  amrex::Print() << "nnLinIt    = " << nni << "    nLinIt        = " << nli
-                 << "\n";
-  amrex::Print() << "nLinsetups = " << nsetups << "    nErrtf        = " << netf
-                 << "\n";
-  amrex::Print() << "nPreceval  = " << npe << "    nPrecsolve    = " << nps
-                 << "\n";
-  amrex::Print() << "nConvfail  = " << ncfn << "    nLinConvfail  = " << ncfl
-                 << "\n\n";
+  // CVODE stats
+  amrex::Print() << "  nSteps       = " << nst  << "\n";
+  amrex::Print() << "  nErrtf       = " << netf << "\n";
+  amrex::Print() << "  nRHSeval     = " << nfe  << "\n";
+  // NLS stats
+  amrex::Print() << "  nnLinIt      = " << nni  << "\n";
+  amrex::Print() << "  nConvfail    = " << ncfn << "\n";
+  // LS stats
+  amrex::Print() << "  nLinsetups   = " << nsetups << "\n";
+  amrex::Print() << "  nJeval       = " << nje     << "\n";
+  amrex::Print() << "  nLinIt       = " << nli     << "\n";
+  amrex::Print() << "  nLinConvfail = " << ncfl    << "\n";
+  amrex::Print() << "  nLinRHSeval  = " << nfeLS   << "\n";
+  // Prec
+  amrex::Print() << "  nPreceval    = " << npe << "\n";
+  amrex::Print() << "  nPrecsolve   = " << nps << "\n";
 }
 
 } // namespace reactions
