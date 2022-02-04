@@ -1932,8 +1932,6 @@ ReactorCvode::close()
 void
 ReactorCvode::print_final_stats(void* cvodemem)
 {
-  long lenrw, leniw;
-  long lenrwLS, leniwLS;
   long int nst, nfe, nsetups, nni, ncfn, netf, nje;
   long int nli, npe, nps, ncfl, nfeLS;
   int flag;

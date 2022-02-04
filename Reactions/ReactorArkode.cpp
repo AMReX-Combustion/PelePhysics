@@ -533,7 +533,6 @@ void
 ReactorArkode::print_final_stats(void* arkode_mem)
 {
   long int nst, nst_a, netf, nfe, nfi;
-  long lenrw, leniw;
   int flag;
 
   if (use_erkstep) {
