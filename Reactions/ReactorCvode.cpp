@@ -15,7 +15,15 @@ ReactorCvode::init(int reactor_type, int ncells)
   amrex::ParmParse pp("ode");
   pp.query("rtol", relTol);
   pp.query("atol", absTol);
+  pp.query("atomic_reductions", atomic_reductions);
   checkCvodeOptions();
+
+  amrex::Print() << "Initializing CVODE:\n";
+
+  if (atomic_reductions)
+    amrex::Print() << "  Using atomic reductions\n";
+  else
+    amrex::Print() << "  Using LDS reductions\n";
 
 #ifndef AMREX_USE_GPU
   // ----------------------------------------------------------
@@ -1105,12 +1113,22 @@ ReactorCvode::react(
 )
 {
   BL_PROFILE("Pele::ReactorCvode::react()");
+
+  std::cout << "Reacting (Array4)\n";
+
   // CPU and GPU version are very different such that the entire function
   // is split between a GPU region and a CPU region
 
   amrex::Real time_start = time;
   amrex::Real time_final = time + dt_react;
   amrex::Real CvodeActual_time_final = 0.0;
+
+#ifdef SUNDIALS_BUILD_WITH_PROFILING
+  SUNProfiler sun_profiler = nullptr;
+  SUNContext_GetProfiler(
+    *amrex::sundials::The_Sundials_Context(), &sun_profiler);
+  // SUNProfiler_Reset(sun_profiler);
+#endif
 
   //----------------------------------------------------------
   // GPU Region
@@ -1128,8 +1146,12 @@ ReactorCvode::react(
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
     new SUNCudaThreadDirectExecPolicy(256, stream);
-  SUNCudaExecPolicy* reduce_exec_policy =
-    new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  SUNCudaExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
 #elif defined(AMREX_USE_HIP)
   N_Vector y = N_VNewWithMemHelp_Hip(
@@ -1139,10 +1161,12 @@ ReactorCvode::react(
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
     new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy =
-    new SUNHipBlockReduceExecPolicy(256, 0, stream);
-  // SUNHipExecPolicy* reduce_exec_policy =
-  // new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  SUNHipExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
 #elif defined(AMREX_USE_DPCPP)
   N_Vector y = N_VNewWithMemHelp_Sycl(
@@ -1157,9 +1181,6 @@ ReactorCvode::react(
     new SUNSyclBlockReduceExecPolicy(256, 0);
   N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
 #endif
-
-  // amrex::Print() << "using atomics? "  << reduce_exec_policy->atomic() <<
-  // "\n";
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
@@ -1330,6 +1351,9 @@ ReactorCvode::react(
   }
   freeUserData(user_data);
 
+  delete stream_exec_policy;
+  delete reduce_exec_policy;
+
 #else
   //----------------------------------------------------------
   // CPU Region
@@ -1406,6 +1430,10 @@ ReactorCvode::react(
     20; // Dummy, the return value is no longer used for this function.
 #endif
 
+#ifdef SUNDIALS_BUILD_WITH_PROFILING
+  SUNProfiler_Print(sun_profiler, stdout);
+#endif
+
   return nfe;
 }
 
@@ -1460,8 +1488,12 @@ ReactorCvode::react(
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
     new SUNCudaThreadDirectExecPolicy(256, stream);
-  SUNCudaExecPolicy* reduce_exec_policy =
-    new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  SUNCudaExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
 #elif defined(AMREX_USE_HIP)
   y = N_VNewWithMemHelp_Hip(
@@ -1472,10 +1504,12 @@ ReactorCvode::react(
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
     new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy =
-    new SUNHipBlockReduceExecPolicy(256, 0, stream);
-  // SUNHipExecPolicy* reduce_exec_policy =
-  // new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  SUNHipExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
 #elif defined(AMREX_USE_DPCPP)
   y = N_VNewWithMemHelp_Sycl(
@@ -1491,9 +1525,6 @@ ReactorCvode::react(
     new SUNSyclBlockReduceExecPolicy(256, 0);
   N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
 #endif
-
-  // amrex::Print() << "using atomics? "  << reduce_exec_policy->atomic() <<
-  // "\n";
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
@@ -1665,6 +1696,9 @@ ReactorCvode::react(
     SUNMatDestroy(A);
   }
   freeUserData(user_data);
+
+  delete stream_exec_policy;
+  delete reduce_exec_policy;
 
   //----------------------------------------------------------
   // CPU Region
@@ -1898,43 +1932,38 @@ ReactorCvode::close()
 void
 ReactorCvode::print_final_stats(void* cvodemem)
 {
-  long lenrw, leniw;
-  long lenrwLS, leniwLS;
-  long int nst, nfe, nsetups, nni, ncfn, netf;
+  long int nst, nfe, nsetups, nni, ncfn, netf, nje;
   long int nli, npe, nps, ncfl, nfeLS;
   int flag;
 
-  flag = CVodeGetWorkSpace(cvodemem, &lenrw, &leniw);
-  utils::check_flag(&flag, "CVodeGetWorkSpace", 1);
+  // CVODE stats
   flag = CVodeGetNumSteps(cvodemem, &nst);
   utils::check_flag(&flag, "CVodeGetNumSteps", 1);
-  flag = CVodeGetNumRhsEvals(cvodemem, &nfe);
-  utils::check_flag(&flag, "CVodeGetNumRhsEvals", 1);
-  flag = CVodeGetNumLinSolvSetups(cvodemem, &nsetups);
-  utils::check_flag(&flag, "CVodeGetNumLinSolvSetups", 1);
   flag = CVodeGetNumErrTestFails(cvodemem, &netf);
   utils::check_flag(&flag, "CVodeGetNumErrTestFails", 1);
+  flag = CVodeGetNumRhsEvals(cvodemem, &nfe);
+  utils::check_flag(&flag, "CVodeGetNumRhsEvals", 1);
+  // Nonlinear solver stats
   flag = CVodeGetNumNonlinSolvIters(cvodemem, &nni);
   utils::check_flag(&flag, "CVodeGetNumNonlinSolvIters", 1);
   flag = CVodeGetNumNonlinSolvConvFails(cvodemem, &ncfn);
   utils::check_flag(&flag, "CVodeGetNumNonlinSolvConvFails", 1);
-
-  flag = CVodeGetLinWorkSpace(cvodemem, &lenrwLS, &leniwLS);
-  utils::check_flag(&flag, "CVodeGetLinWorkSpace", 1);
+  // Linear solver stats
+  flag = CVodeGetNumLinSolvSetups(cvodemem, &nsetups);
+  utils::check_flag(&flag, "CVodeGetNumLinSolvSetups", 1);
+  flag = CVodeGetNumJacEvals(cvodemem, &nje);
+  utils::check_flag(&flag, "CVodeGetNumJacEvals", 1);
   flag = CVodeGetNumLinIters(cvodemem, &nli);
   utils::check_flag(&flag, "CVodeGetNumLinIters", 1);
-  // flag = CVodeGetNumJacEvals(cvodemem, &nje);
-  // utils::check_flag(&flag, "CVodeGetNumJacEvals", 1);
+  flag = CVodeGetNumLinConvFails(cvodemem, &ncfl);
+  utils::check_flag(&flag, "CVodeGetNumLinConvFails", 1);
   flag = CVodeGetNumLinRhsEvals(cvodemem, &nfeLS);
   utils::check_flag(&flag, "CVodeGetNumLinRhsEvals", 1);
-
+  // Preconditioner stats
   flag = CVodeGetNumPrecEvals(cvodemem, &npe);
   utils::check_flag(&flag, "CVodeGetNumPrecEvals", 1);
   flag = CVodeGetNumPrecSolves(cvodemem, &nps);
   utils::check_flag(&flag, "CVodeGetNumPrecSolves", 1);
-
-  flag = CVodeGetNumLinConvFails(cvodemem, &ncfl);
-  utils::check_flag(&flag, "CVodeGetNumLinConvFails", 1);
 
 #ifdef AMREX_USE_OMP
   amrex::Print() << "\nFinal Statistics: "
@@ -1943,21 +1972,22 @@ ReactorCvode::print_final_stats(void* cvodemem)
 #else
   amrex::Print() << "\nFinal Statistics:\n";
 #endif
-  amrex::Print() << "lenrw      = " << lenrw << "    leniw         = " << leniw
-                 << "\n";
-  amrex::Print() << "lenrwLS    = " << lenrwLS
-                 << "    leniwLS       = " << leniwLS << "\n";
-  amrex::Print() << "nSteps     = " << nst << "\n";
-  amrex::Print() << "nRHSeval   = " << nfe << "    nLinRHSeval   = " << nfeLS
-                 << "\n";
-  amrex::Print() << "nnLinIt    = " << nni << "    nLinIt        = " << nli
-                 << "\n";
-  amrex::Print() << "nLinsetups = " << nsetups << "    nErrtf        = " << netf
-                 << "\n";
-  amrex::Print() << "nPreceval  = " << npe << "    nPrecsolve    = " << nps
-                 << "\n";
-  amrex::Print() << "nConvfail  = " << ncfn << "    nLinConvfail  = " << ncfl
-                 << "\n\n";
+  // CVODE stats
+  amrex::Print() << "  nSteps       = " << nst << "\n";
+  amrex::Print() << "  nErrtf       = " << netf << "\n";
+  amrex::Print() << "  nRHSeval     = " << nfe << "\n";
+  // NLS stats
+  amrex::Print() << "  nnLinIt      = " << nni << "\n";
+  amrex::Print() << "  nConvfail    = " << ncfn << "\n";
+  // LS stats
+  amrex::Print() << "  nLinsetups   = " << nsetups << "\n";
+  amrex::Print() << "  nJeval       = " << nje << "\n";
+  amrex::Print() << "  nLinIt       = " << nli << "\n";
+  amrex::Print() << "  nLinConvfail = " << ncfl << "\n";
+  amrex::Print() << "  nLinRHSeval  = " << nfeLS << "\n";
+  // Prec
+  amrex::Print() << "  nPreceval    = " << npe << "\n";
+  amrex::Print() << "  nPrecsolve   = " << nps << "\n";
 }
 
 } // namespace reactions

@@ -14,10 +14,13 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   pp.query("use_erkstep", use_erkstep);
   pp.query("rtol", relTol);
   pp.query("atol", absTol);
+  pp.query("atomic_reductions", atomic_reductions);
   pp.query("rk_method", rk_method);
   pp.query("rk_controller", rk_controller);
   std::string method_string = "ARKODE_ZONNEVELD_5_3_4";
   std::string controller_string = "PID";
+
+  amrex::Print() << "Initializing ARKODE:\n";
 
   switch (rk_method) {
   case 20:
@@ -106,13 +109,18 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   }
 
   if (use_erkstep == 1) {
-    amrex::Print() << "ERK Step:" << std::endl;
+    amrex::Print() << "  Using ERKStep" << std::endl;
   } else {
-    amrex::Print() << "ARK Step:" << std::endl;
+    amrex::Print() << "  Using ARKStep" << std::endl;
   }
   amrex::Print() << "  Using " << method_string << " method" << std::endl;
   amrex::Print() << "  Using the " << controller_string << " controller"
                  << std::endl;
+
+  if (atomic_reductions)
+    amrex::Print() << "  Using atomic reductions\n";
+  else
+    amrex::Print() << "  Using LDS reductions\n";
 
   return (0);
 }
@@ -136,11 +144,22 @@ ReactorArkode::react(
 )
 {
   BL_PROFILE("Pele::ReactorArkode::react()");
+
+  std::cout << "Reacting (Array4)\n";
+
   const int ncells = box.numPts();
   AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
 
   const int neq = NUM_SPECIES + 1;
   const int neq_tot = neq * ncells;
+
+#ifdef SUNDIALS_BUILD_WITH_PROFILING
+  SUNProfiler sun_profiler = nullptr;
+  SUNContext_GetProfiler(
+    *amrex::sundials::The_Sundials_Context(), &sun_profiler);
+  // SUNProfiler_Reset(sun_profiler);
+#endif
+
 #if defined(AMREX_USE_CUDA)
   N_Vector y = N_VNewWithMemHelp_Cuda(
     neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),
@@ -149,8 +168,12 @@ ReactorArkode::react(
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
     new SUNCudaThreadDirectExecPolicy(256, stream);
-  SUNCudaExecPolicy* reduce_exec_policy =
-    new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  SUNCudaExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
   realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
 #elif defined(AMREX_USE_HIP)
@@ -161,8 +184,12 @@ ReactorArkode::react(
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
     new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy =
-    new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  SUNHipExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
   realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
 #elif defined(AMREX_USE_DPCPP)
@@ -220,7 +247,10 @@ ReactorArkode::react(
     ARKStepSetTableNum(
       arkode_mem, ARKODE_DIRK_NONE, static_cast<ARKODE_ERKTableID>(rk_method));
     ARKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
+    BL_PROFILE_VAR(
+      "Pele::ReactorArkode::react():ARKStepEvolve", AroundARKEvolve);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
+    BL_PROFILE_VAR_STOP(AroundARKEvolve);
   } else {
     arkode_mem =
       ERKStepCreate(cF_RHS, time, y, *amrex::sundials::The_Sundials_Context());
@@ -230,7 +260,10 @@ ReactorArkode::react(
       user_data->verbose, relTol, absTol, "erkstep");
     ERKStepSetTableNum(arkode_mem, static_cast<ARKODE_ERKTableID>(rk_method));
     ERKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
+    BL_PROFILE_VAR(
+      "Pele::ReactorArkode::react():ERKStepEvolve", AroundERKEvolve);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
+    BL_PROFILE_VAR_STOP(AroundERKEvolve);
   }
 
 #ifdef MOD_REACTOR
@@ -262,7 +295,15 @@ ReactorArkode::react(
     ERKStepFree(&arkode_mem);
   }
 
+#ifdef AMREX_USE_GPU
+  delete stream_exec_policy;
+  delete reduce_exec_policy;
+#endif
   delete user_data;
+
+#ifdef SUNDIALS_BUILD_WITH_PROFILING
+  SUNProfiler_Print(sun_profiler, stdout);
+#endif
 
   return nfe;
 }
@@ -286,6 +327,8 @@ ReactorArkode::react(
   BL_PROFILE("Pele::ReactorArkode::react()");
   AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
 
+  std::cout << "Reacting (flattened)\n";
+
   int neq = NUM_SPECIES + 1;
   int neq_tot = neq * ncells;
 #if defined(AMREX_USE_CUDA)
@@ -297,8 +340,12 @@ ReactorArkode::react(
     return (1);
   SUNCudaExecPolicy* stream_exec_policy =
     new SUNCudaThreadDirectExecPolicy(256, stream);
-  SUNCudaExecPolicy* reduce_exec_policy =
-    new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  SUNCudaExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
   realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
 #elif defined(AMREX_USE_HIP)
@@ -310,8 +357,12 @@ ReactorArkode::react(
     return (1);
   SUNHipExecPolicy* stream_exec_policy =
     new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy =
-    new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  SUNHipExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  }
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
   realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
 #elif defined(AMREX_USE_DPCPP)
@@ -380,7 +431,10 @@ ReactorArkode::react(
     set_sundials_solver_tols(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
       user_data->verbose, relTol, absTol, "arkstep");
+    BL_PROFILE_VAR(
+      "Pele::ReactorArkode::react():ARKStepEvolve", AroundARKEvolve);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
+    BL_PROFILE_VAR_STOP(AroundARKEvolve);
   } else {
     arkode_mem =
       ERKStepCreate(cF_RHS, time, y, *amrex::sundials::The_Sundials_Context());
@@ -388,7 +442,10 @@ ReactorArkode::react(
     set_sundials_solver_tols(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
       user_data->verbose, relTol, absTol, "erkstep");
+    BL_PROFILE_VAR(
+      "Pele::ReactorArkode::react():ERKStepEvolve", AroundERKEvolve);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
+    BL_PROFILE_VAR_STOP(AroundERKEvolve);
   }
 #ifdef MOD_REACTOR
   dt_react = time_init - time;
@@ -422,6 +479,11 @@ ReactorArkode::react(
   } else {
     ERKStepFree(&arkode_mem);
   }
+
+#ifdef AMREX_USE_GPU
+  delete stream_exec_policy;
+  delete reduce_exec_policy;
+#endif
 
   amrex::The_Arena()->free(user_data);
 
@@ -470,27 +532,26 @@ ReactorArkode::cF_RHS(
 void
 ReactorArkode::print_final_stats(void* arkode_mem)
 {
-  long int nst, nst_a, nfe, nfi;
-  long lenrw, leniw;
+  long int nst, nst_a, netf, nfe, nfi;
   int flag;
 
   if (use_erkstep) {
-    flag = ERKStepGetWorkSpace(arkode_mem, &lenrw, &leniw);
-    utils::check_flag(&flag, "ERKStepGetWorkSpace", 1);
     flag = ERKStepGetNumSteps(arkode_mem, &nst);
     utils::check_flag(&flag, "ERKStepGetNumSteps", 1);
     flag = ERKStepGetNumStepAttempts(arkode_mem, &nst_a);
     utils::check_flag(&flag, "ERKStepGetNumStepAttempts", 1);
+    flag = ERKStepGetNumErrTestFails(arkode_mem, &netf);
+    utils::check_flag(&flag, "ERKStepGetNumErrTestFails", 1);
     flag = ERKStepGetNumRhsEvals(arkode_mem, &nfe);
     utils::check_flag(&flag, "ERKStepGetNumRhsEvals", 1);
 
   } else {
-    flag = ARKStepGetWorkSpace(arkode_mem, &lenrw, &leniw);
-    utils::check_flag(&flag, "ARKStepGetWorkSpace", 1);
     flag = ARKStepGetNumSteps(arkode_mem, &nst);
     utils::check_flag(&flag, "ARKStepGetNumSteps", 1);
     flag = ARKStepGetNumStepAttempts(arkode_mem, &nst_a);
     utils::check_flag(&flag, "ARKStepGetNumStepAttempts", 1);
+    flag = ARKStepGetNumErrTestFails(arkode_mem, &netf);
+    utils::check_flag(&flag, "ARKStepGetNumErrTestFails", 1);
     flag = ARKStepGetNumRhsEvals(arkode_mem, &nfe, &nfi);
     utils::check_flag(&flag, "ARKStepGetNumRhsEvals", 1);
   }
@@ -503,11 +564,10 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   amrex::Print() << "\nFinal Statistics:\n";
 #endif
 
-  amrex::Print() << "   Internal solver steps = " << nst
-                 << " (attempted = " << nst_a << ")\n";
-  amrex::Print() << "   Total RHS evals:  Fe = " << nfe << "\n";
-  amrex::Print() << "lenrw      = " << lenrw << "    leniw         = " << leniw
-                 << "\n";
+  amrex::Print() << "   Internal steps   = " << nst << "\n";
+  amrex::Print() << "   Attempted steps  = " << nst_a << "\n";
+  amrex::Print() << "   Error test fails = " << netf << "\n";
+  amrex::Print() << "   Total RHS evals  = " << nfe << "\n";
 }
 } // namespace reactions
 } // namespace physics
