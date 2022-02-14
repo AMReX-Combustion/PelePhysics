@@ -1114,8 +1114,6 @@ ReactorCvode::react(
 {
   BL_PROFILE("Pele::ReactorCvode::react()");
 
-  std::cout << "Reacting (Array4)\n";
-
   // CPU and GPU version are very different such that the entire function
   // is split between a GPU region and a CPU region
 
