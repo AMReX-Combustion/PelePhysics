@@ -145,8 +145,6 @@ ReactorArkode::react(
 {
   BL_PROFILE("Pele::ReactorArkode::react()");
 
-  std::cout << "Reacting (Array4)\n";
-
   const int ncells = box.numPts();
   AMREX_ASSERT(ncells < std::numeric_limits<int>::max());
 
