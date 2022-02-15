@@ -41,10 +41,10 @@ SootModel::SootModel()
     m_conserveMass(true),
     m_PAHindx(-1),
     m_sootVarName(NUM_SOOT_MOMENTS + 1, ""),
-    m_maxDtRate(-1.),
+    m_Xcutoff(-1.),
     m_Tcutoff(-1.),
     m_maxSubcycles(20),
-    m_numSubcycles(3),
+    m_numSubcycles(1),
     m_reactDataFilled(false),
     m_gasSpecNames(NUM_SOOT_GS, "")
 {
@@ -168,11 +168,14 @@ SootModel::readSootParams()
             << std::endl;
   }
   // Set the maximum allowable change for variables during soot source terms
-  m_maxDtRate = 0.05;
-  pp.query("max_dt_rate", m_maxDtRate);
+  m_Xcutoff = 1.E-12;
+  pp.query("X_cutoff", m_Xcutoff);
   m_Tcutoff = 273.;
   pp.query("temp_cutoff", m_Tcutoff);
   pp.query("max_subcycles", m_maxSubcycles);
+#ifdef SOOT_PELE_LM
+  m_numSubcycles = 5;
+#endif
   pp.query("num_subcycles", m_numSubcycles);
   // Determines if mass is conserved by adding lost mass to H2
   m_conserveMass = false;
@@ -215,6 +218,7 @@ SootModel::defineMemberData(const Real dimerVol)
     // Used for computing nucleation source term
     m_sootData->momFact[i] =
       std::pow(nuclVol, sc.MomOrderV[i]) * std::pow(nuclSurf, sc.MomOrderS[i]);
+    m_sootData->smallMoms[i] = m_sootData->momFact[i] * sc.smallWeight;
   }
   // and to convert the weight of the delta function
   m_sootData->unitConv[NUM_SOOT_MOMENTS] =
@@ -290,25 +294,24 @@ SootModel::addSootDerivePlotVars(
 
 // Add soot source term
 void
-SootModel::addSootSourceTerm(
+SootModel::computeSootSourceTerm(
   const Box& vbox,
   Array4<const Real> const& Qstate,
   Array4<const Real> const& coeff_mu,
   Array4<Real> const& soot_state,
-  const Real /*time*/,
+  const Real time,
   const Real dt,
   const bool pres_term) const
 {
   AMREX_ASSERT(m_memberDataDefined);
   AMREX_ASSERT(m_setIndx);
-  BL_PROFILE("SootModel::addSootSourceTerm");
+  BL_PROFILE("SootModel::computeSootSourceTerm");
   if (m_sootVerbosity && ParallelDescriptor::IOProcessor()) {
-    Print() << "SootModel::addSootSourceTerm(): Adding soot source term to "
+    Print() << "SootModel::computeSootSourceTerm(): Adding soot source term to "
             << vbox << std::endl;
   }
   const int nsub_init = m_numSubcycles;
   const int nsubMAX = m_maxSubcycles;
-  const Real maxmc = m_maxDtRate;
   // Primitive components
   const int qRhoIndx = m_sootIndx.qRhoIndx;
   const int qTempIndx = m_sootIndx.qTempIndx;
@@ -322,7 +325,6 @@ SootModel::addSootSourceTerm(
 
   const bool conserveMass = m_conserveMass;
   const Real Tcutoff = m_Tcutoff;
-  const Real Xcutoff = 1.E-12;
 
   // H2 absorbs the error from surface reactions
   const int absorbIndx = SootGasSpecIndx::indxH2;
@@ -344,6 +346,7 @@ SootModel::addSootSourceTerm(
     GpuArray<Real, NUM_SOOT_GS> xi_n;
     // Array of moment values M_xy (cm^(3(x + 2/3y))cm^(-3))
     // M00, M10, M01,..., N0
+    GpuArray<Real, NUM_SOOT_MOMENTS + 1> mom0;
     GpuArray<Real, NUM_SOOT_MOMENTS + 1> moments;
     Real* momentsPtr = moments.data();
     /*
@@ -387,6 +390,7 @@ SootModel::addSootSourceTerm(
     for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
       const int peleIndx = qSootIndx + mom;
       moments[mom] = Qstate(i, j, k, peleIndx);
+      mom0[mom] = moments[mom];
       mom_src[mom] = 0.;
     }
     for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
@@ -407,64 +411,22 @@ SootModel::addSootSourceTerm(
     // Collision frequency between two dimer in the free
     // molecular regime with van der Waals enhancement
     // Units: cm^3/mol-s
+    sd->clipMoments(momentsPtr);
     Real RT = pele::physics::Constants::RU * T;
     const Real betaNucl = convT * betaNF;
     int nsub = nsub_init;
     Real sootdt = dt / Real(nsub);
     int isub = 1;
+    Real tstart = 0.;
     // Subcycling
-    while (isub <= nsub && T > Tcutoff) {
-      // Molar concentration of the PAH inception species
-      Real xi_PAH = xi_n[SootGasSpecIndx::indxPAH];
-      // Compute the vector of factors used for moment interpolation
-      sd->computeFracMomVect(momentsPtr, mom_fvPtr);
-      // Compute the dimerization rate
-      const Real dimerRate = sr->dimerRate(T, xi_PAH);
-      // Estimate [DIMER]
-      Real dimerConc = sd->dimerization(convT, betaNucl, dimerRate, mom_fvPtr);
-      // Add the nucleation source term to mom_src
-      sd->nucleationMomSrc(betaNucl, dimerConc, mom_srcPtr);
-      // Add the condensation source term to mom_src
-      sd->condensationMomSrc(colConst, dimerConc, mom_fvPtr, mom_srcPtr);
-      // Add the coagulation source term to mom_src
-      sd->coagulationMomSrc(
-        colConst, T, mu, rho, molarMass, mom_fvPtr, mom_srcPtr);
-      Real surf = sc.S0 * sd->fracMom(0., 1., mom_fvPtr);
-      // Reaction rates for surface growth (k_sg), oxidation (k_ox),
-      // and fragmentation (k_o2)
-      Real k_sg = 0.;
-      Real k_ox = 0.;
-      Real k_o2 = 0.;
-      // Compute the species reaction source terms into omega_src
-      sr->chemicalSrc(
-        T, surf, xi_n.data(), momentsPtr, k_sg, k_ox, k_o2, omega_src.data());
-      if (moments[1] * sc.V0 * pele::physics::Constants::Avna > 1.E-12) {
-        // Add the surface growth source to mom_src
-        sd->surfaceGrowthMomSrc(k_sg, mom_fvPtr, mom_srcPtr);
-        sd->oxidFragMomSrc(k_ox, k_o2, mom_fvPtr, mom_srcPtr);
-      }
-      if (isub == 1) {
-        // Increase subcycles to prevent negative concentrations
-        for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
-          if (xi_n[sp] > Xcutoff) {
-            nsub = amrex::max(nsub, int(-dt * omega_src[sp] / xi_n[sp]) + 1);
-          }
-        }
-        for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
-          Real denom = amrex::min(
-            dt * std::abs(mom_src[mom]) / (moments[mom] * maxmc),
-            Real(nsubMAX));
-          nsub = amrex::max(nsub, int(denom) + 1);
-        }
-        Real diffM = moments[0] - moments[NUM_SOOT_MOMENTS];
-        Real diffMdot = mom_src[0] - mom_src[NUM_SOOT_MOMENTS];
-        if (dt * diffMdot < diffM) {
-          nsub = amrex::max(nsub, int(dt * diffMdot / diffM) + 1);
-        }
-        if (nsub > nsubMAX) {
-          nsub = nsubMAX;
-        }
-        sootdt = dt / Real(nsub);
+    while (tstart < dt && isub < nsubMAX) {
+      sd->computeSrcTerms(T, mu, rho, molarMass, convT, betaNucl, colConst,
+                          xi_n.data(), omega_src.data(), momentsPtr, mom_srcPtr, mom_fvPtr, sr);
+      // Estimate subcycling time step size
+      sootdt = amrex::min(sootdt, dt - tstart);
+      Real rate = 1.;
+      for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
+        rate = amrex::max(rate, 1.05 * -sootdt * mom_src[mom] / moments[mom]);
       }
       // Update species concentrations within subcycle
       for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
@@ -472,15 +434,31 @@ SootModel::addSootSourceTerm(
         rho += sootdt * omega_src[sp] * mw_fluid[sp];
         omega_src[sp] = 0.; // Reset omega source
       }
+      if (rate > 1.) {
+        sootdt = sootdt / rate;
+      }
       // Update moments within subcycle
       for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
-        const int peleIndx = sootIndx + mom;
         moments[mom] += sootdt * mom_src[mom];
-        soot_state(i, j, k, peleIndx) +=
-          mom_src[mom] * sd->unitConv[mom] / Real(nsub);
         mom_src[mom] = 0.; // Reset moment source
       }
+      sd->clipMoments(momentsPtr);
+      tstart += sootdt;
       isub++;
+    }
+    // If not finished with the time step, add remaining source
+    if (tstart < dt) {
+      sd->computeSrcTerms(T, mu, rho, molarMass, convT, betaNucl, colConst,
+                          xi_n.data(), omega_src.data(), momentsPtr, mom_srcPtr, mom_fvPtr, sr);
+      for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
+        moments[mom] += (dt - tstart) * mom_src[mom];
+      }
+      sd->clipMoments(momentsPtr);
+    }
+    sd->convertFromMol(momentsPtr);
+    for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
+      const int peleIndx = sootIndx + mom;
+      soot_state(i, j, k, peleIndx) += (moments[mom] - mom0[mom]) / dt;
     }
     Real rho_src = 0.;
     Real eng_src = 0.;
@@ -524,7 +502,8 @@ SootModel::estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const
   const int qTempIndx = m_sootIndx.qTempIndx;
   const int qSpecIndx = m_sootIndx.qSpecIndx;
   const int qSootIndx = m_sootIndx.qSootIndx;
-  const Real maxDtRate = m_maxDtRate;
+  const Real Tcutoff = m_Tcutoff;
+  const Real Xcutoff = m_Xcutoff;
 
   const SootData* sd = d_sootData;
   const SootReaction* sr = d_sootReact;
@@ -550,6 +529,9 @@ SootModel::estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const
       Real* mom_fvPtr = mom_fv.data();
       const Real rho = Qstate(i, j, k, qRhoIndx) * sc.rho_conv;
       const Real T = Qstate(i, j, k, qTempIndx);
+      if (T < Tcutoff) {
+        return 1.E20;
+      }
       for (int mom = 0; mom < NUM_SOOT_MOMENTS + 1; ++mom) {
         const int peleIndx = qSootIndx + mom;
         moments[mom] = Qstate(i, j, k, peleIndx);
@@ -575,22 +557,18 @@ SootModel::estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const
       // Compute the species reaction source terms into omega_src
       sr->chemicalSrc(
         T, surf, xi_n.data(), momentsPtr, k_sg, k_ox, k_o2, omega_src.data());
-      Real rho_src = 0.;
+      Real mindt = 1.E100;
       for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
-        rho_src += omega_src[sp] * mw_fluid[sp];
+	if (xi_n[sp] > Xcutoff) {
+          Real omegai = omega_src[sp] * mw_fluid[sp] + 1.E-16;
+          Real rate = -rho_Y[sp] / omegai;
+          // Check if source terms cause mass to drop to 0 or less
+          if (rate > 0. && rate < mindt) {
+            mindt = rate;
+          }
+	}
       }
-      Real maxrate = 0.;
-      for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
-        Real Y_n = rho_Y[sp] / rho;
-        Real omegai = omega_src[sp] * mw_fluid[sp];
-        Real newrate =
-          (std::abs(omegai - Y_n * rho_src) - maxDtRate * rho_src) /
-          (maxDtRate * rho);
-        if (newrate > maxrate) {
-          maxrate = newrate;
-        }
-      }
-      return 1. / (maxrate + 1.E-12);
+      return mindt;
     });
   ReduceTuple hv = reduce_data.value();
   Real ldt_cpu = amrex::get<0>(hv);

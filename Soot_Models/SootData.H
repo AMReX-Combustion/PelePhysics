@@ -4,6 +4,7 @@
 
 #include "PelePhysics.H"
 #include "Constants_Soot.H"
+#include "SootReactions.H"
 
 struct SootData
 {
@@ -13,6 +14,7 @@ struct SootData
   Real condFact;
   Real lambdaCF;
   GpuArray<Real, NUM_SOOT_MOMENTS + 1> unitConv;
+  GpuArray<Real, NUM_SOOT_MOMENTS + 1> smallMoms;
   GpuArray<int, NUM_SOOT_GS> refIndx;
   GpuArray<Real, 9> dime6;
   GpuArray<Real, 11> nve3;
@@ -27,16 +29,18 @@ struct SootData
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   convertToMol(Real moments[]) const
   {
-    for (int i = 0; i < NUM_SOOT_MOMENTS + 1; ++i)
+    for (int i = 0; i < NUM_SOOT_MOMENTS + 1; ++i) {
       moments[i] /= unitConv[i];
+    }
   }
 
   // Convert moments from mol of C to CGS/SI
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   convertFromMol(Real mom_src[]) const
   {
-    for (int i = 0; i < NUM_SOOT_MOMENTS + 1; ++i)
+    for (int i = 0; i < NUM_SOOT_MOMENTS + 1; ++i) {
       mom_src[i] *= unitConv[i];
+    }
   }
 
   // Convert moments from mol of C to CGS/SI
@@ -53,12 +57,9 @@ struct SootData
   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
   initialSmallMomVals(Real moments[]) const
   {
-    for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
-      moments[i] =
-        sc.smallWeight *
-        std::pow(nuclVol, 3. * sc.MomOrderV[i] + 2. * sc.MomOrderS[i]);
+    for (int i = 0; i < NUM_SOOT_MOMENTS + 1; ++i) {
+      moments[i] = smallMoms[i];
     }
-    moments[NUM_SOOT_MOMENTS] = sc.smallWeight;
     convertFromMol(moments);
   }
 
@@ -87,14 +88,50 @@ struct SootData
   /********************************************************************
     Moment source terms
   ********************************************************************/
+  // Compute the soot moment and species source terms
+  AMREX_GPU_DEVICE AMREX_FORCE_INLINE void computeSrcTerms(
+    const Real& T, const Real& mu, const Real& rho, const Real& molarMass,
+    const Real& convT, const Real& betaNucl, const Real& colConst, Real xi_n[],
+    Real omega_src[], Real moments[], Real mom_src[], Real mom_fv[], const SootReaction* sr) const
+  {
+    // Molar concentration of the PAH inception species
+    Real xi_PAH = xi_n[SootGasSpecIndx::indxPAH];
+    // Compute the vector of factors used for moment interpolation
+    computeFracMomVect(moments, mom_fv);
+    // Compute the dimerization rate
+    const Real dimerRate = sr->dimerRate(T, xi_PAH);
+    // Estimate [DIMER]
+    Real dimerConc = dimerization(convT, betaNucl, dimerRate, mom_fv);
+    // Add the nucleation source term to mom_src
+    nucleationMomSrc(betaNucl, dimerConc, mom_src);
+    // Add the condensation source term to mom_src
+    condensationMomSrc(colConst, dimerConc, mom_fv, mom_src);
+    // Add the coagulation source term to mom_src
+    coagulationMomSrc(colConst, T, mu, rho, molarMass, mom_fv, mom_src);
+    Real surf = sc.S0 * fracMom(0., 1., mom_fv);
+    // Reaction rates for surface growth (k_sg), oxidation (k_ox),
+    // and fragmentation (k_o2)
+    Real k_sg = 0.;
+    Real k_ox = 0.;
+    Real k_o2 = 0.;
+    // Compute the species reaction source terms into omega_src
+    sr->chemicalSrc(
+       T, surf, xi_n, moments, k_sg, k_ox, k_o2, omega_src);
+    if (moments[1] * sc.V0 * pele::physics::Constants::Avna > 1.E-12) {
+      // Add the surface growth source to mom_src
+      surfaceGrowthMomSrc(k_sg, mom_fv, mom_src);
+      oxidFragMomSrc(k_ox, k_o2, mom_fv, mom_src);
+    }
+  }
 
   // Nucleation source term
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE void nucleationMomSrc(
     const Real& betaNucl, const Real& dimerConc, Real mom_src[]) const
   {
     const Real dimerConc2 = dimerConc * dimerConc;
-    for (int i = 0; i < NUM_SOOT_MOMENTS; ++i)
+    for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
       mom_src[i] += 0.5 * betaNucl * dimerConc2 * momFact[i];
+    }
     mom_src[NUM_SOOT_MOMENTS] += 0.5 * betaNucl * dimerConc2;
   }
 
@@ -245,14 +282,16 @@ struct SootData
     moments[5] = amrex::max(moments[5], moments[2] * moments[2] / moments[0]);
 #endif
     if (weightDelta < sc.smallWeight) {
-      for (int i = 0; i < NUM_SOOT_MOMENTS; ++i)
+      for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
         moments[i] += (sc.smallWeight - weightDelta) *
                       std::pow(nuclVol, sc.MomOrderV[i]) *
                       std::pow(nuclSurf, sc.MomOrderS[i]);
+      }
       weightDelta = sc.smallWeight;
     }
-    if (weightDelta > moments[0])
+    if (weightDelta > moments[0]) {
       weightDelta = moments[0];
+    }
     moments[NUM_SOOT_MOMENTS] = weightDelta;
   }
 
@@ -260,7 +299,7 @@ struct SootData
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE void momConvClipConv(Real mom[]) const
   {
     convertToMol(mom);
-    clipMoments(mom);
+    int test = clipMoments(mom);
     convertFromMol(mom);
   }
 
@@ -274,6 +313,7 @@ struct SootData
     const Real momFV[],
     Real mom_src[]) const
   {
+    const Real tol = 0.;
     // Index of the weight of the delta function
     const int dwIndx = NUM_SOOT_MOMENTS;
     // Free molecular collision coefficient with van der Waals enhancements
@@ -287,6 +327,8 @@ struct SootData
       lambdaCF;
     Real weightDelta2 = std::pow(momFV[dwIndx], 2);
     for (int i = 0; i < NUM_SOOT_MOMENTS; ++i) {
+      // Coagulation does not change total volume
+      if (i == 1) continue;
       // Collisions between two first mode particles
       // Collision model: pure coalescence
       // S_(0+0) = (144*pi)^(1/3)*V0^(2/3)
@@ -297,7 +339,7 @@ struct SootData
                    sscnCF[i] * weightDelta2;
       Real prodss = ss_fm * ss_cn;
       // Harmonic mean for transitional regime
-      Real ss = (std::abs(prodss) < 1.E-50) ? 0. : prodss / (ss_fm + ss_cn);
+      Real ss = (std::abs(prodss) == tol) ? 0. : prodss / (ss_fm + ss_cn);
 
       // Collision between a particle in each mode
       // Collision model: "Splashing"
@@ -310,7 +352,8 @@ struct SootData
       Real sl_cn = C_cn * CNCoagSL(i, lambda, momFV);
       Real prodsl = sl_fm * sl_cn;
       // Harmonic mean for transitional regime
-      Real sl = (std::abs(prodsl) < 1.E-50) ? 0. : prodsl / (sl_fm + sl_cn);
+      Real sl = (std::abs(prodsl) == tol) ? 0. : prodsl / (sl_fm + sl_cn);
+
       // Collision between two second mode particles
       // Collision model: Pure aggregation
       // S_(i+j) = S_i + S_j
@@ -320,7 +363,7 @@ struct SootData
       Real ll_cn = C_cn * CNCoagLL(i, lambda, momFV);
       Real prodll = ll_fm * ll_cn;
       // Harmonic mean for transitional regime
-      Real ll = (std::abs(prodll) < 1.E-50) ? 0. : prodll / (ll_fm + ll_cn);
+      Real ll = (std::abs(prodll) == tol) ? 0. : prodll / (ll_fm + ll_cn);
       mom_src[i] += (ss + sl + ll);
     }
     // Free molecular regime
@@ -330,14 +373,14 @@ struct SootData
       -4. * C_cn * (1. + 1.257 * lambda * getNuclExp3(-1)) * weightDelta2;
     // Harmonic mean for transitional regime
     Real prodss = ss_fm * ss_cn;
-    Real ss = (std::abs(prodss) < 1.E-50) ? 0. : prodss / (ss_fm + ss_cn);
+    Real ss = (std::abs(prodss) == tol) ? 0. : prodss / (ss_fm + ss_cn);
     // Free molecular regime
     Real sl_fm = C_fm * FMCoagSL(dwIndx, momFV);
     // Continuum regime
     Real sl_cn = C_cn * CNCoagSL(dwIndx, lambda, momFV);
     // Harmonic mean for transitional regime
     Real prodsl = sl_fm * sl_cn;
-    Real sl = (std::abs(prodsl) < 1.E-50) ? 0. : prodsl / (sl_fm + sl_cn);
+    Real sl = (std::abs(prodsl) == tol) ? 0. : prodsl / (sl_fm + sl_cn);
     mom_src[dwIndx] += (ss + sl);
   }
 
@@ -368,7 +411,7 @@ struct SootData
     const Real M10 = moments[1] - momFact[1] * moments[3];
     const Real M01 = moments[2] - momFact[2] * moments[3];
     // If moments are effectively zero, only use one mode
-    if (M00 < 1.E-36 || M10 < 1.E-36 || M01 < 1.E-36) {
+    if (M00 < 1.E-25 || M10 < 1.E-25 || M01 < 1.E-25) {
       // Contribution from only one mode
       momFV[0] = moments[0];
       momFV[1] = moments[1];
@@ -391,7 +434,7 @@ struct SootData
     Real minMom = amrex::min(M00, amrex::min(M10, M01));
     minMom = amrex::min(minMom, amrex::min(M20, amrex::min(M11, M02)));
     // If moments are effectively zero, only use one mode
-    if (minMom < 1.E-36) {
+    if (minMom < 1.E-25) {
       const Real c1 = std::pow(moments[0], -1.5);
       const Real c2 = std::pow(moments[0], 0.5);
       momFV[0] = moments[0];
@@ -423,13 +466,11 @@ struct SootData
     // Weight of the delta function
     Real dwVal = momFV[NUM_SOOT_MOMENTS];
     Real factor = std::pow(nuclVol, volOrd) * std::pow(nuclSurf, surfOrd);
-    if (momFV[NUM_SOOT_MOMENTS + 1] == 0.)
-      return factor * 1.E-66;
+    if (momFV[NUM_SOOT_MOMENTS + 1] == 0.) {
+      return factor * 1.E-60;
+    }
     // Remove the contribution from the first mode
     Real outMom = fracMom(volOrd, surfOrd, momFV) - dwVal * factor;
-    // If the moment is negative, return a small (consistent) value
-    if (outMom <= 0. || outMom != outMom)
-      return factor * 1.E-66;
     return outMom;
   }
 

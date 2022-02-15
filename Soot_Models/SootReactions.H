@@ -7,7 +7,7 @@ struct SootReaction
 {
   Real SootDensityC;
   Real SootChi;
-  // Vectors of the forward and backward per-exponential rates,
+  // Vectors of the forward and backward pre-exponential rates,
   // temperature exponents, and activation energies/R
   GpuArray<Real, NUM_SOOT_REACT> A_f = {{0.}};
   GpuArray<Real, NUM_SOOT_REACT> n_f = {{0.}};

@@ -65,7 +65,7 @@ public:
   //
   // Compute HMOM source term
   //
-  void addSootSourceTerm(
+  void computeSootSourceTerm(
     const Box& vbox,
     Array4<const Real> const& Qstate,
     Array4<const Real> const& coeff_mu,
@@ -78,6 +78,14 @@ public:
   // Estimate the soot time step
   //
   Real estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const;
+
+  //
+  // Access gas phase species name
+  //
+  std::string gasSpeciesName(const int sootGasIndx)
+  {
+    return m_gasSpecNames[sootGasIndx];
+  }
 
   /***********************************************************************
     Reaction functions (SootModel_react.cpp)
@@ -151,10 +159,9 @@ public:
   // Name of soot variables to output (moments and weight of delta function)
   Vector<std::string> m_sootVarName;
 
-  // Maximum allowable change for mass concentrations
-  // to adjust the time step
-  Real m_maxDtRate;
-  // Temperature cutoff, any temparatures below this will only do one subcycle
+  // Maximum allowable concentration for adjusting time step
+  Real m_Xcutoff;
+  // Temperature cutoff, any temparatures below this will not be solved
   Real m_Tcutoff;
   // Maximum possible subcycles
   int m_maxSubcycles;
