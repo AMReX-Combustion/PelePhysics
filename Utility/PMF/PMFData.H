@@ -16,7 +16,7 @@ class PmfData
 public:
   PmfData() {}
 
-  ~PmfData() { deallocate(); }
+  ~PmfData() {}
 
   void initialize()
   {

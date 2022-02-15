@@ -2,12 +2,10 @@
 #define _REACTORARKODE_H_
 
 #include "ReactorBase.H"
+#include "AMReX_Sundials.H"
 #include <arkode/arkode_arkstep.h>
 #include <arkode/arkode_erkstep.h>
 #include <nvector/nvector_serial.h>
-#ifdef AMREX_USE_GPU
-#include "AMReX_SUNMemory.H"
-#endif
 
 #ifdef AMREX_USE_DPCPP
 #include <nvector/nvector_sycl.h>
@@ -134,11 +132,16 @@ public:
 private:
   amrex::Real relTol{1e-6};
   amrex::Real absTol{1e-10};
-  int use_erkstep{0};
+  int use_erkstep{1};
   int rk_method{40};
   int rk_controller{0};
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
+#if defined(AMREX_USE_HIP)
+  int atomic_reductions{0};
+#else
+  int atomic_reductions{1};
+#endif
 };
 
 } // namespace reactions
