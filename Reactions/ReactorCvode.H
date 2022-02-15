@@ -151,6 +151,11 @@ private:
   amrex::Real absTol{1e-10};
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
+#if defined(AMREX_USE_HIP)
+  int atomic_reductions{0};
+#else
+  int atomic_reductions{1};
+#endif
 
 #ifndef AMREX_USE_GPU
   N_Vector y = NULL;
