@@ -1,6 +1,10 @@
 # PelePhysics
 *A respository of physics databases and implementation code for use with the `Pele` suite of of codes*
 
+## Version
+AMREX ([Repo](https://github.com/AMReX-Codes/amrex)) : 76d08651adb987e3fba6b232e806c5e7c365a8d9
+
+
 ## QSS TODO LIST
 
 - ~~Implementation of Trajan's method (Julia)~~
