@@ -299,7 +299,7 @@ struct SootData
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE void momConvClipConv(Real mom[]) const
   {
     convertToMol(mom);
-    int test = clipMoments(mom);
+    clipMoments(mom);
     convertFromMol(mom);
   }
 
