@@ -16,6 +16,18 @@
 using namespace amrex;
 
 void
+getPSatCoef(
+  Real* psat_coef, ParmParse& ppp, std::string fuel_name, const int spf)
+{
+  std::string psat_read = fuel_name + "_psat";
+  std::vector<Real> inp_coef(4, 0.);
+  ppp.queryarr(psat_read.c_str(), inp_coef);
+  for (int i = 0; i < 4; ++i) {
+    psat_coef[4 * spf + i] = inp_coef[i];
+  }
+}
+
+void
 SprayParticleContainer::init_bcs()
 {
   for (int dir = 0; dir < AMREX_SPACEDIM; dir++) {
@@ -34,6 +46,134 @@ SprayParticleContainer::init_bcs()
       reflect_hi[dir] = false;
     }
   }
+}
+
+void
+SprayParticleContainer::readParticleParams(
+  int& particle_verbose,
+  Real& particle_cfl,
+  Real& wall_temp,
+  int& mass_trans,
+  int& mom_trans,
+  int& write_spray_ascii_files,
+  int& plot_spray_src,
+  int& init_function,
+  std::string& init_file,
+  SprayData& sprayData,
+  Vector<std::string>& sprayFuelNames)
+{
+  amrex::ParmParse pp("particles");
+  //
+  // Control the verbosity of the Particle class
+  pp.query("v", particle_verbose);
+
+  pp.get("mass_transfer", mass_trans);
+  pp.get("mom_transfer", mom_trans);
+  pp.query("cfl", particle_cfl);
+  if (particle_cfl > 0.5) {
+    amrex::Abort("particles.cfl must be <= 0.5");
+  }
+  // Number of fuel species in spray droplets
+  // Must match the number specified at compile time
+  const int nfuel = pp.countval("fuel_species");
+  if (nfuel != SPRAY_FUEL_NUM) {
+    amrex::Abort(
+      "Number of fuel species in input file must match SPRAY_FUEL_NUM");
+  }
+
+  std::vector<std::string> fuel_names;
+  std::vector<Real> crit_T;
+  std::vector<Real> boil_T;
+  std::vector<Real> spraycp;
+  std::vector<Real> latent;
+  std::vector<Real> sprayrho;
+  std::vector<Real> mu(nfuel, 0.);
+  std::vector<Real> lambda(nfuel, 0.);
+  {
+    sprayFuelNames.assign(nfuel, "");
+    pp.getarr("fuel_species", fuel_names);
+    pp.getarr("fuel_crit_temp", crit_T);
+    pp.getarr("fuel_boil_temp", boil_T);
+    pp.getarr("fuel_cp", spraycp);
+    pp.getarr("fuel_latent", latent);
+    pp.getarr("fuel_rho", sprayrho);
+    pp.queryarr("fuel_mu", mu);
+    pp.queryarr("fuel_lambda", lambda);
+    for (int i = 0; i < nfuel; ++i) {
+      sprayFuelNames[i] = fuel_names[i];
+      sprayData.critT[i] = crit_T[i];
+      sprayData.boilT[i] = boil_T[i];
+      sprayData.cp[i] = spraycp[i];
+      sprayData.latent[i] = latent[i];
+      sprayData.ref_latent[i] = latent[i];
+      sprayData.rho[i] = sprayrho[i];
+      sprayData.mu[i] = mu[i];
+      sprayData.lambda[i] = lambda[i];
+      getPSatCoef(sprayData.psat_coef.data(), pp, fuel_names[i], i);
+    }
+  }
+
+  Real parcel_size = 1;
+  Real spray_ref_T = 300.;
+  Real spray_sigma = -1.;
+  bool splash_model = false;
+  //
+  // Set the number of particles per parcel
+  //
+  pp.query("parcel_size", parcel_size);
+  pp.query("use_splash_model", splash_model);
+  if (splash_model) {
+    if (!pp.contains("fuel_sigma") || !pp.contains("wall_temp")) {
+      Print() << "fuel_sigma and wall_temp must be set for splash model. "
+              << "Set use_splash_model = false to turn off splash model"
+              << std::endl;
+      Abort();
+    }
+    // Set the fuel surface tension and contact angle
+    pp.get("fuel_sigma", spray_sigma);
+    // TODO: Have this retrieved from proper boundary data
+    pp.get("wall_temp", wall_temp);
+  }
+
+  // Must use same reference temperature for all fuels
+  // TODO: This means the reference temperature must be the same for all fuel
+  // species
+  pp.get("fuel_ref_temp", spray_ref_T);
+  //
+  // Set if spray ascii files should be written
+  //
+  pp.query("write_spray_ascii_files", write_spray_ascii_files);
+  //
+  // Set if gas phase spray source term should be written
+  //
+  pp.query("plot_src", plot_spray_src);
+  //
+  // Used in initData() on startup to read in a file of particles.
+  //
+  pp.query("init_file", init_file);
+  //
+  // Used in initData() on startup to set the particle field using the
+  // SprayParticlesInitInsert.cpp problem specific function
+  //
+  pp.query("init_function", init_function);
+
+  sprayData.num_ppp = parcel_size;
+  sprayData.ref_T = spray_ref_T;
+  sprayData.sigma = spray_sigma;
+
+  if (particle_verbose && ParallelDescriptor::IOProcessor()) {
+    amrex::Print() << "Spray fuel species " << sprayFuelNames[0];
+    for (int i = 1; i < SPRAY_FUEL_NUM; ++i) {
+      amrex::Print() << ", " << sprayFuelNames[i];
+    }
+    amrex::Print() << std::endl;
+    amrex::Print() << "Number of particles per parcel " << parcel_size
+                   << std::endl;
+  }
+  //
+  // Force other processors to wait till directory is built.
+  //
+  ParallelDescriptor::Barrier();
 }
 
 void

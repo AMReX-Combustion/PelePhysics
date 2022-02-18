@@ -79,12 +79,10 @@ public:
     amrex::BCRec* _phys_bc,
     SprayData fdat,
     SprayComps SPI,
-    const amrex::Real parcelSize,
-    const amrex::Real wallT)
+    amrex::Real wall_temp)
     : amrex::AmrParticleContainer<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>(amr),
       m_injectVel(0.),
-      m_parcelSize(parcelSize),
-      m_wallT(wallT),
+      m_wallT(wall_temp),
       phys_bc(_phys_bc),
       m_sprayData(nullptr),
       d_sprayData(nullptr),
@@ -104,6 +102,19 @@ public:
     delete m_sprayData;
     amrex::The_Arena()->free(d_sprayData);
   }
+
+  static void readParticleParams(
+    int& particle_verbose,
+    amrex::Real& particle_cfl,
+    amrex::Real& wall_temp,
+    int& mass_trans,
+    int& mom_trans,
+    int& write_spray_ascii_files,
+    int& plot_spray_src,
+    int& init_function,
+    std::string& init_file,
+    SprayData& sprayData,
+    amrex::Vector<std::string>& sprayFuelNames);
 
   void SprayParticleIO(
     const int level,
@@ -353,8 +364,6 @@ public:
 
 private:
   amrex::Real m_injectVel;
-  // The number of spray droplets per computational particle
-  amrex::Real m_parcelSize;
   // Temperature of walls
   amrex::Real m_wallT;
   ///
