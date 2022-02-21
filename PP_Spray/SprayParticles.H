@@ -103,7 +103,7 @@ public:
     amrex::The_Arena()->free(d_sprayData);
   }
 
-  static void readParticleParams(
+  static void readSprayParams(
     int& particle_verbose,
     amrex::Real& particle_cfl,
     amrex::Real& wall_temp,

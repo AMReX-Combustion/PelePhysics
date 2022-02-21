@@ -49,7 +49,7 @@ SprayParticleContainer::init_bcs()
 }
 
 void
-SprayParticleContainer::readParticleParams(
+SprayParticleContainer::readSprayParams(
   int& particle_verbose,
   Real& particle_cfl,
   Real& wall_temp,
