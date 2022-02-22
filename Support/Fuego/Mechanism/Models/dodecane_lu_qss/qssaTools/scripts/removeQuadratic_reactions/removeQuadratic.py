@@ -76,10 +76,12 @@ for line in line_iter:
             elif 'f' in toCancel[ir]:
                 if mechanism.reaction()[ir].reversible:
                     if not mechanism.reaction()[ir].low and not mechanism.reaction()[ir].thirdBody:
+                        #Remove the entire reaction (this needs improvement)
                         line_write = ''
                         break
                     else:
                         line_write=''
+                        #Dont write the next three lines
                         next(line_iter)
                         next(line_iter)
                         next(line_iter)
@@ -117,7 +119,7 @@ reactionIndex = mechanism._sort_reactions()
 
 
 if QSSCoupling(mechanism,species_qssa) == 0:
-    print ('SUCCESS')
+    print ('\n\n\nSUCCESS')
 else:
-    print ('FAILURE')
+    print ('\n\n\nFAILURE')
 
