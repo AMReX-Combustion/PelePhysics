@@ -60,7 +60,8 @@ SprayParticleContainer::readSprayParams(
   int& init_function,
   std::string& init_file,
   SprayData& sprayData,
-  Vector<std::string>& sprayFuelNames)
+  std::string* sprayFuelNames)
+//  Vector<std::string>& sprayFuelNames)
 {
   amrex::ParmParse pp("particles");
   //
@@ -90,7 +91,7 @@ SprayParticleContainer::readSprayParams(
   std::vector<Real> mu(nfuel, 0.);
   std::vector<Real> lambda(nfuel, 0.);
   {
-    sprayFuelNames.assign(nfuel, "");
+    //sprayFuelNames.assign(nfuel, "");
     pp.getarr("fuel_species", fuel_names);
     pp.getarr("fuel_crit_temp", crit_T);
     pp.getarr("fuel_boil_temp", boil_T);

@@ -3,7 +3,6 @@
 
 #include "EOS.H"
 #include "SprayFuelData.H"
-#include <AMReX_Amr.H>
 #include <AMReX_AmrParticles.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_Gpu.H>
@@ -75,7 +74,7 @@ public:
   using HostVectInt = amrex::Gpu::HostVector<int>;
 
   SprayParticleContainer(
-    amrex::Amr* amr,
+    amrex::AmrCore* amr,
     amrex::BCRec* _phys_bc,
     SprayData fdat,
     SprayComps SPI,
@@ -114,14 +113,14 @@ public:
     int& init_function,
     std::string& init_file,
     SprayData& sprayData,
-    amrex::Vector<std::string>& sprayFuelNames);
+    std::string* sprayFuelNames);
 
   void SprayParticleIO(
     const int level,
     const bool is_checkpoint,
     const int write_ascii,
     const std::string& dir,
-    const amrex::Vector<std::string>& sprayFuelNames)
+    const std::string* sprayFuelNames)
   {
     const int pstateVel = m_sprayIndx.pstateVel;
     const int pstateT = m_sprayIndx.pstateT;
@@ -133,7 +132,7 @@ public:
                  , real_comp_names[pstateVel + 2] = "zvel";);
     real_comp_names[pstateT] = "temperature";
     real_comp_names[pstateDia] = "diam";
-    for (int sp = 0; sp != SPRAY_FUEL_NUM; ++sp) {
+    for (int sp = 0; sp < SPRAY_FUEL_NUM; ++sp) {
       real_comp_names[pstateY + sp] = "spray_mf_" + sprayFuelNames[sp];
     }
     amrex::Vector<std::string> int_comp_names;
@@ -143,15 +142,15 @@ public:
     if (level == 0 && write_ascii == 1) {
       // TODO: Would be nice to be able to use file_name_digits
       // instead of doing this
-      int strlen = dir.length();
-      // Remove the ".temp" from the directory
-      std::string dirout = dir.substr(0, strlen - 5);
+      size_t num_end_loc = dir.find_last_of("0123456789") + 1;
+      // Remove anything following numbers, like .temp
+      std::string dirout = dir.substr(0, num_end_loc);
       size_t num_start_loc = dirout.find_last_not_of("0123456789") + 1;
+      std::string numstring = dirout.substr(num_start_loc, dirout.length());
       std::string dir_path = dir;
       size_t num_end_path = dir_path.find_last_of("/") + 1;
       dir_path = dir_path.substr(0, num_end_path);
-      std::string fname =
-        dir_path + "spray" + dirout.substr(num_start_loc, strlen) + ".p3d";
+      std::string fname = dir_path + "spray" + numstring + ".p3d";
       WriteAsciiFile(fname);
     }
   }
