@@ -180,7 +180,6 @@ public:
     const int amr_ncycle,
     const int fine_ref_ratio,
     int& ghost_width,
-    int& where_width,
     int& state_width,
     int& source_width)
   {
@@ -199,9 +198,6 @@ public:
     state_width = stencil_interpolation_width + ghost_num;
     // Set the number of ghost cells needed for source deposition
     source_width = stencil_deposition_width + ghost_num;
-    // Set the number of cells used in the where call
-    // TODO: This is now unused. Only caused issues
-    where_width = state_width;
   }
 
   ///
@@ -233,7 +229,6 @@ public:
     const int state_ghosts,
     const int source_ghosts,
     const bool do_move,
-    const int where_width,
     amrex::MultiFab* u_mac = nullptr);
 
   ///

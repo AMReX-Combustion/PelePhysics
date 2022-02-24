@@ -191,10 +191,9 @@ SprayParticleContainer::moveKick(
   MultiFab* u_mac)
 {
   bool do_move = false;
-  int width = 0;
   moveKickDrift(
     state, source, level, dt, time, isVirtualPart, isGhostPart, state_ghosts,
-    source_ghosts, do_move, width, u_mac);
+    source_ghosts, do_move, u_mac);
 }
 
 void
@@ -209,7 +208,6 @@ SprayParticleContainer::moveKickDrift(
   const int state_ghosts,
   const int source_ghosts,
   const bool do_move,
-  const int /*where_width*/,
   MultiFab* u_mac)
 {
   BL_PROFILE("ParticleContainer::moveKickDrift()");
