@@ -4,7 +4,7 @@ namespace pele {
 namespace physics {
 namespace turbinflow {
 void
-TurbInflow::init(const amrex::Vector<amrex::Real>& turb_center_in)
+TurbInflow::init(amrex::Geometry const& geom)
 {
   amrex::ParmParse pp("turbinflow");
 
@@ -19,10 +19,10 @@ TurbInflow::init(const amrex::Vector<amrex::Real>& turb_center_in)
                    << tp.turb_scale_loc << " and velocity out to be scaled by "
                    << tp.turb_scale_vel << ")" << std::endl;
 
-    amrex::Vector<amrex::Real> turb_center(turb_center_in);
-    for (int n = 0; n < turb_center.size(); ++n) {
-      turb_center[n] = turb_center_in[n];
-    }
+    const auto prob_lo = geom.ProbLoArray();
+    const auto prob_hi = geom.ProbHiArray();
+    amrex::Vector<amrex::Real> turb_center = {
+      {0.5 * (prob_hi[0] + prob_lo[0]), 0.5 * (prob_hi[1] + prob_lo[1])}};
     pp.queryarr("turb_center", turb_center);
     AMREX_ASSERT_WITH_MESSAGE(
       turb_center.size() == 2, "turb_center must have two elements");

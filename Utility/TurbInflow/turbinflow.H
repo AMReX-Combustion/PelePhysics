@@ -37,7 +37,7 @@ public:
 
   ~TurbInflow() = default;
 
-  void init(const amrex::Vector<amrex::Real>& turb_center_in);
+  void init(amrex::Geometry const& geom);
 
   void add_turb(
     amrex::Box const& bx,
