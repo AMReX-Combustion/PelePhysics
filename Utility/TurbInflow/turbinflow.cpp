@@ -122,7 +122,9 @@ TurbInflow::add_turb(
   int tr1Hi = bvalsBox.bigEnd()[tdir1];
   int tr2Lo = bvalsBox.smallEnd()[tdir2];
   int tr2Hi = bvalsBox.bigEnd()[tdir2];
-  amrex::Box turbBox({tr1Lo, tr2Lo, planeLoc}, {tr1Hi, tr2Hi, planeLoc});
+  amrex::Box turbBox(
+    {AMREX_D_DECL(tr1Lo, tr2Lo, planeLoc)},
+    {AMREX_D_DECL(tr1Hi, tr2Hi, planeLoc)});
   amrex::FArrayBox v(turbBox, 3);
 
   amrex::Vector<amrex::Real> x(turbBox.size()[0]), y(turbBox.size()[1]);
