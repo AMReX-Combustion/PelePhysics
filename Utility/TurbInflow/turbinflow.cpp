@@ -33,7 +33,7 @@ TurbInflow::init(const amrex::Vector<amrex::Real>& turb_center_in)
     pp.query("turb_nplane", tp.nplane);
     AMREX_ASSERT(tp.nplane > 0);
     pp.query("turb_conv_vel", tp.turb_conv_vel);
-    AMREX_ASSERT(turb_conv_vel > 0);
+    AMREX_ASSERT(tp.turb_conv_vel > 0);
 
     // Set other stuff
     std::string turb_header = m_turb_file + "/HDR";
