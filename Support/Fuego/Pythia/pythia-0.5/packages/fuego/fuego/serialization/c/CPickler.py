@@ -104,11 +104,14 @@ class CPickler(CMill):
         self.QSS_SC_Sj = []
 
         self.reacRemoveIDList = []
-        f = open('reac_forward_to_remove')
-        lines = f.readlines()
-        f.close()
-        for line in lines:
-            self.reacRemoveIDList.append(int(line))
+        try:
+            f = open('reac_forward_to_remove','r')
+            lines = f.readlines()
+            f.close()
+            for line in lines:
+                self.reacRemoveIDList.append(int(line))
+        except FileNotFoundError:
+            print('No forward reaction to remove')
         #self.reacRemoveIDList = [124, 14, 147]
         #self.reacRemoveIDList = [67,120,121,124,14,147,228,230,231,232]
         #self.reacRemoveIDList = [124, 147]
