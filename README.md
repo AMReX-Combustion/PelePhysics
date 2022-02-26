@@ -8,9 +8,9 @@ AMREX ([Repo](https://github.com/AMReX-Codes/amrex)) : 76d08651adb987e3fba6b232e
 ## QSS TODO LIST
 
 - ~~Implementation of Trajan's method (Julia)~~
-- Automated zeroing out of reaction rate for reactions that induce quadratic algebraic relations between QSS species concentrations (Anne)
+- ~~Automated zeroing out of reaction rate for reactions that induce quadratic algebraic relations between QSS species concentrations (Anne)~~
     - ~~Remove Backward reactions as needed~~
-    - Remove Forward reaction as needed (Malik)
+    - ~~Remove Forward reaction as needed (Malik)~~
 - ~~Sync up with the render QSS script (Malik)~~
 - ~~Get the range of validity of the QSS assumption (Malik)~~
 - ~~Ensure that homogeneous reactions test can be passed with reacEval (Malik)~~
