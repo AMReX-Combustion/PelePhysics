@@ -13,4 +13,7 @@ non_qssa_list : 	output/non_qssa_list_nostar.txt
 
 outputFolder :          output
 mech_final :            qssa_final.inp
+reac_forward_remove_detailed :	reac_forward_to_remove_detailed
+reac_forward_remove :	reac_forward_to_remove
+
 

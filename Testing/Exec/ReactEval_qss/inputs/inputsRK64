@@ -5,8 +5,8 @@ reactFormat = Array4
 
 chem_integrator = "ReactorRK64"
 
-ode.dt  = 1e-12
-ode.ndt = 1
+ode.dt  = 1
+ode.ndt = 100000000
 ode.ode_ncells = 1
 ode.reactor_type  = 1 # 1=full e, 2=full h
 ode.verbose = 0

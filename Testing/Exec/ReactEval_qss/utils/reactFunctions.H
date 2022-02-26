@@ -76,6 +76,11 @@ void doReact_ode_iE1(int &lev,
           print<double>(y,NUM_SPECIES,"Y");
           print<double>(rho,"rho");
 
+          double sumY = 0;
+          for (int i=0; i<NUM_SPECIES; i++){
+               sumY += y[i];
+          }
+          print<double>(sumY,"sumY");
 }
 
 void doReact_ode_iE2(int &lev, 

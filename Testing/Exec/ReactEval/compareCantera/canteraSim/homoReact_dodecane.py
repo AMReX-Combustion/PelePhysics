@@ -13,7 +13,7 @@ r = ct.IdealGasReactor(gas1)
 sim = ct.ReactorNet([r])
 time = 0.0
 states = ct.SolutionArray(gas1, extra=['t'])
-dt =  1
+dt =  2
 ndt = int(10000)
 
 gas1()

@@ -4,7 +4,7 @@ fuel_name = NC12H26
 reactFormat = Array4
 chem_integrator = "ReactorCvode"
 
-ode.dt  = 1
+ode.dt  = 2
 ode.ndt = 1000
 ode.ode_ncells = 1
 ode.reactor_type  = 1 # 1=full e, 2=full h
