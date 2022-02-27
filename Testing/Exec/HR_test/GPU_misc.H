@@ -118,8 +118,11 @@ initialize_data_HR(int i, int j, int k,
    for (int n = 0; n < NUM_SPECIES; n++) {
        X[n] = 0.0;
    }
-   X[O2_ID]   = 0.7;
-   X[fuel_id] = 0.3;
+   //X[O2_ID]   = 0.7;
+   //X[fuel_id] = 0.3;
+   X[O2_ID]   = 1.0/(equiv_ratio/18.5 + 1 + 0.79/0.21);
+   X[N2_ID]   = 0.79*X[O2_ID]/0.21;
+   X[fuel_id] = 1.0 - X[O2_ID] -  X[N2_ID];
 
    auto eos = pele::physics::PhysicsType::eos();
 

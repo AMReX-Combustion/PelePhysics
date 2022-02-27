@@ -6,14 +6,17 @@ import fileio as io
 import os
 
 gas1 = ct.Solution('mechanism/dodecane_lu.cti')
-gas1.TPX = 600.0, 5*ct.one_atm, 'H2:0.0,O2:0.7,NC12H26:0.3'
+gas1.TP = 600.0, 5*ct.one_atm
 gas1.transport_model='Mix'
+fuel = 'NC12H26'
+oxidizer = "O2:0.21,N2:0.79"
+gas1.set_equivalence_ratio(7.928571428571429,fuel,oxidizer)
 #r = ct.IdealGasConstPressureReactor(gas1)
 r = ct.IdealGasReactor(gas1)
 sim = ct.ReactorNet([r])
 time = 0.0
 states = ct.SolutionArray(gas1, extra=['t'])
-dt =  1
+dt =  2
 ndt = int(10000)
 
 gas1()

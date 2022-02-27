@@ -34,6 +34,6 @@ amrex.fpe_trap_overflow = 1
 
 # 1013250.0 * patm
 hr.press = 5066250.0
-hr.t0 = 700
-hr.equiv_ratio = 1.0
+hr.t0 = 600
+hr.equiv_ratio = 7.928571428571429
 
