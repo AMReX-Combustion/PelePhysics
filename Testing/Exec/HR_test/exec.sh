@@ -15,15 +15,17 @@ make COMP=llvm
 ./Pele3d.llvm.ex inputs/inputs.0d_cvode
 
 # Compare to Cantera
-if test -f "compareCantera/canteraSim/output/CanteraReaction_dodecane.txt"; then
-    cd compareCantera
-    python compareResults.py
-    cd ..
-else
+#if test -f "compareCantera/canteraSim/output/CanteraReaction_dodecane.txt"; then
+#    cd compareCantera
+#    python compareResults.py
+#    cd ..
+#else
     source ~/miniconda/bin/activate cantera
     cd compareCantera/canteraSim
     python homoReact_dodecane.py  
     cd ../
     python compareResults.py
+    cd ../ignitionDelay
+    python computeIgnitionDelay.py
     cd ..
-fi
+#fi

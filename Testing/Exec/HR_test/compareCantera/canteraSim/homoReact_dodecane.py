@@ -17,7 +17,7 @@ sim = ct.ReactorNet([r])
 time = 0.0
 states = ct.SolutionArray(gas1, extra=['t'])
 dt =  2
-ndt = int(10000)
+ndt = int(20000)
 
 gas1()
 
