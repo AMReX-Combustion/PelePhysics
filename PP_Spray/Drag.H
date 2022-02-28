@@ -418,9 +418,9 @@ calculateSpraySource(
                         dia_part * diff_vel_mag;
       part_mom_src = drag_force * diff_vel;
       gpv.fluid_mom_src += part_mom_src;
+#ifndef SPRAY_PELE_LM
       // s_d,mu dot u_d
       Real S_dmu_dot_u = part_mom_src.dotProduct(vel_part);
-#ifndef SPRAY_PELE_LM
       gpv.fluid_eng_src += S_dmu_dot_u;
 #endif
       if (isub == 1) {

@@ -96,7 +96,7 @@ check_bounds(
           // Adjacent to non-periodic boundary, shift interpolation cells
         } else if (diff < 0.5 * dx[dir]) {
           dflags[dir] = -2 * int(fact);
-          ijk[dir] += fact;
+          ijk[dir] += int(fact);
         }
       }
     }
