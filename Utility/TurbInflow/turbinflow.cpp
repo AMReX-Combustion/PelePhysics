@@ -72,7 +72,7 @@ TurbInflow::init(amrex::Geometry const& geom)
       amrex::IntVect(AMREX_D_DECL(1, 1, 1)),
       amrex::IntVect(AMREX_D_DECL(npts[0], npts[1], tp.nplane)));
 
-    tp.sdata = new amrex::FArrayBox(sbx, 3);
+    tp.sdata = new amrex::FArrayBox(sbx, 3, amrex::The_Async_Arena());
 
     tp.kmax = npts[2];
 
@@ -125,7 +125,7 @@ TurbInflow::add_turb(
   const amrex::IntVect lo(AMREX_D_DECL(tr1Lo, tr2Lo, planeLoc));
   const amrex::IntVect hi(AMREX_D_DECL(tr1Hi, tr2Hi, planeLoc));
   amrex::Box turbBox(lo, hi);
-  amrex::FArrayBox v(turbBox, 3);
+  amrex::FArrayBox v(turbBox, 3, amrex::The_Async_Arena());
 
   amrex::Vector<amrex::Real> x(turbBox.size()[0]), y(turbBox.size()[1]);
   for (int i = turbBox.smallEnd()[0]; i <= turbBox.bigEnd()[0]; ++i) {
@@ -198,7 +198,7 @@ TurbInflow::fill_with_turb(
     bvalsBox.setSmall(dir, planeloc);
     bvalsBox.setBig(dir, planeloc);
 
-    amrex::FArrayBox v(bvalsBox, 3);
+    amrex::FArrayBox v(bvalsBox, 3, amrex::The_Async_Arena());
     v.setVal<amrex::RunOn::Device>(0);
 
     amrex::Vector<amrex::Real> x(bvalsBox.size()[0]), y(bvalsBox.size()[1]);

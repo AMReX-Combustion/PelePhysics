@@ -50,7 +50,6 @@ public:
 
   bool is_initialized() const { return turbinflow_initialized; }
 
-private:
   void read_turb_planes(amrex::Real z);
 
   void read_one_turb_plane(int iplane, int k);
@@ -75,6 +74,7 @@ private:
     amrex::FArrayBox& data,
     const int dcomp);
 
+private:
   std::string m_turb_file = "";
 
   TurbParm tp;
