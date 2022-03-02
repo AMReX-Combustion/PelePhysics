@@ -158,51 +158,10 @@ ReactorArkode::react(
   // SUNProfiler_Reset(sun_profiler);
 #endif
 
-#if defined(AMREX_USE_CUDA)
-  N_Vector y = N_VNewWithMemHelp_Cuda(
-    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
-    return (1);
-  SUNCudaExecPolicy* stream_exec_policy =
-    new SUNCudaThreadDirectExecPolicy(256, stream);
-  SUNCudaExecPolicy* reduce_exec_policy;
-  if (atomic_reductions) {
-    reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
-  } else {
-    reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
-  }
-  N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
-  realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
-#elif defined(AMREX_USE_HIP)
-  N_Vector y = N_VNewWithMemHelp_Hip(
-    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
-    return (1);
-  SUNHipExecPolicy* stream_exec_policy =
-    new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy;
-  if (atomic_reductions) {
-    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
-  } else {
-    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
-  }
-  N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
-  realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
-#elif defined(AMREX_USE_DPCPP)
-  N_Vector y = N_VNewWithMemHelp_Sycl(
-    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),
-    &amrex::Gpu::Device::streamQueue(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
-    return (1);
-  SUNSyclExecPolicy* stream_exec_policy =
-    new SUNSyclThreadDirectExecPolicy(256);
-  SUNSyclExecPolicy* reduce_exec_policy =
-    new SUNSyclBlockReduceExecPolicy(256, 0);
-  N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
-  realtype* yvec_d = N_VGetDeviceArrayPointer_Sycl(y);
+  // Solution vector and execution policy
+#ifdef AMREX_USE_GPU
+  auto y = utils::setNVectorGPU(neq_tot,atomic_reductions,stream);
+  realtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
@@ -293,10 +252,6 @@ ReactorArkode::react(
     ERKStepFree(&arkode_mem);
   }
 
-#ifdef AMREX_USE_GPU
-  delete stream_exec_policy;
-  delete reduce_exec_policy;
-#endif
   delete user_data;
 
 #ifdef SUNDIALS_BUILD_WITH_PROFILING
@@ -329,54 +284,10 @@ ReactorArkode::react(
 
   int neq = NUM_SPECIES + 1;
   int neq_tot = neq * ncells;
-#if defined(AMREX_USE_CUDA)
-  N_Vector y = N_VNewWithMemHelp_Cuda(
-    neq_tot, /*use_managed_mem=*/false,
-    *amrex::sundials::The_SUNMemory_Helper(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
-    return (1);
-  SUNCudaExecPolicy* stream_exec_policy =
-    new SUNCudaThreadDirectExecPolicy(256, stream);
-  SUNCudaExecPolicy* reduce_exec_policy;
-  if (atomic_reductions) {
-    reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
-  } else {
-    reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
-  }
-  N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
-  realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y);
-#elif defined(AMREX_USE_HIP)
-  N_Vector y = N_VNewWithMemHelp_Hip(
-    neq_tot, /*use_managed_mem=*/false,
-    *amrex::sundials::The_SUNMemory_Helper(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
-    return (1);
-  SUNHipExecPolicy* stream_exec_policy =
-    new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy;
-  if (atomic_reductions) {
-    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
-  } else {
-    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
-  }
-  N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
-  realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y);
-#elif defined(AMREX_USE_DPCPP)
-  N_Vector y = N_VNewWithMemHelp_Sycl(
-    neq_tot, /*use_managed_mem=*/false,
-    *amrex::sundials::The_SUNMemory_Helper(),
-    &amrex::Gpu::Device::streamQueue(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
-    return (1);
-  SUNSyclExecPolicy* stream_exec_policy =
-    new SUNSyclThreadDirectExecPolicy(256);
-  SUNSyclExecPolicy* reduce_exec_policy =
-    new SUNSyclBlockReduceExecPolicy(256, 0);
-  N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
-  realtype* yvec_d = N_VGetDeviceArrayPointer_Sycl(y);
+
+#ifdef AMREX_USE_GPU
+  auto y = utils::setNVectorGPU(neq_tot,atomic_reductions,stream);
+  realtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
   if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
@@ -477,11 +388,6 @@ ReactorArkode::react(
   } else {
     ERKStepFree(&arkode_mem);
   }
-
-#ifdef AMREX_USE_GPU
-  delete stream_exec_policy;
-  delete reduce_exec_policy;
-#endif
 
   amrex::The_Arena()->free(user_data);
 
