@@ -399,15 +399,9 @@ ReactorArkode::cF_RHS(
   realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 {
   BL_PROFILE("Pele::ReactorArkode::cF_RHS()");
-#if defined(AMREX_USE_CUDA)
-  realtype* yvec_d = N_VGetDeviceArrayPointer_Cuda(y_in);
-  realtype* ydot_d = N_VGetDeviceArrayPointer_Cuda(ydot_in);
-#elif defined(AMREX_USE_HIP)
-  realtype* yvec_d = N_VGetDeviceArrayPointer_Hip(y_in);
-  realtype* ydot_d = N_VGetDeviceArrayPointer_Hip(ydot_in);
-#elif defined(AMREX_USE_DPCPP)
-  realtype* yvec_d = N_VGetDeviceArrayPointer_Sycl(y_in);
-  realtype* ydot_d = N_VGetDeviceArrayPointer_Sycl(ydot_in);
+#ifdef AMREX_USE_GPU
+  realtype* yvec_d = N_VGetDeviceArrayPointer(y_in);
+  realtype* ydot_d = N_VGetDeviceArrayPointer(ydot_in);
 #else
   realtype* yvec_d = N_VGetArrayPointer(y_in);
   realtype* ydot_d = N_VGetArrayPointer(ydot_in);
