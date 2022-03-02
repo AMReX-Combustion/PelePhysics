@@ -160,7 +160,7 @@ ReactorArkode::react(
 
   // Solution vector and execution policy
 #ifdef AMREX_USE_GPU
-  auto y = utils::setNVectorGPU(neq_tot,atomic_reductions,stream);
+  auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
   realtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
@@ -286,7 +286,7 @@ ReactorArkode::react(
   int neq_tot = neq * ncells;
 
 #ifdef AMREX_USE_GPU
-  auto y = utils::setNVectorGPU(neq_tot,atomic_reductions,stream);
+  auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
   realtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());

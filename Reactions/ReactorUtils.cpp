@@ -51,7 +51,8 @@ check_flag(void* flagvalue, const char* funcname, int opt)
 }
 
 #ifdef AMREX_USE_GPU
-N_Vector setNVectorGPU(int nvsize, int atomic_reductions, amrex::gpuStream_t stream) 
+N_Vector
+setNVectorGPU(int nvsize, int atomic_reductions, amrex::gpuStream_t stream) 
 {
 #if defined(AMREX_USE_CUDA)
   N_Vector y = N_VNewWithMemHelp_Cuda(

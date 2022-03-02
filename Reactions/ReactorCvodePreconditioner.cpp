@@ -53,7 +53,8 @@ Precond(
         for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                  stride = blockDim.x * gridDim.x;
              icell < ncells; icell += stride) {
-          fKernelComputeallAJ(icell, NNZ, react_type, gamma, user_data, u_d, csr_val_d);
+          fKernelComputeallAJ(
+            icell, NNZ, react_type, gamma, user_data, u_d, csr_val_d);
         }
       });
     *jcurPtr = SUNTRUE;

@@ -122,7 +122,13 @@ AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
 fKernelComputeallAJ(
-  int ncell, int NNZ, int reactor_type, amrex::Real gamma, void* user_data, amrex::Real* u_d, amrex::Real* csr_val_arg)
+  int ncell,
+  int NNZ,
+  int reactor_type,
+  amrex::Real gamma,
+  void* user_data,
+  amrex::Real* u_d,
+  amrex::Real* csr_val_arg)
 {
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   int neqs = NUM_SPECIES + 1;
@@ -191,7 +197,12 @@ AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
 fKernelComputeAJsys(
-  int ncell, int NNZ, amrex::Real gamma, void* user_data, amrex::Real* u_d, amrex::Real* csr_val_arg)
+  int ncell,
+  int NNZ,
+  amrex::Real gamma,
+  void* user_data,
+  amrex::Real* u_d,
+  amrex::Real* csr_val_arg)
 {
   CVODEUserData* udata = static_cast<CVODEUserData*>(user_data);
   auto csr_jac_d = udata->csr_jac_d;
@@ -221,7 +232,13 @@ AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
 fKernelComputeAJchem(
-  int icell, int NNZ, int reactor_type, int* csr_row_count_d, int* csr_col_index_d, amrex::Real* u_d, amrex::Real* Jdata)
+  int icell,
+  int NNZ,
+  int reactor_type,
+  int* csr_row_count_d,
+  int* csr_col_index_d,
+  amrex::Real* u_d,
+  amrex::Real* Jdata)
 {
   const int neqs = NUM_SPECIES + 1;
   int u_offset = icell * neqs;
@@ -262,8 +279,7 @@ fKernelComputeAJchem(
     int nbVals = csr_row_count_d[i] - csr_row_count_d[i - 1];
     for (int j = 0; j < nbVals; j++) {
       int idx_cell = csr_col_index_d[csr_row_count_d[i - 1] + j];
-      Jcurr[csr_row_count_d[i - 1] + j] =
-        Jmat_pt[idx_cell * neqs + i - 1];
+      Jcurr[csr_row_count_d[i - 1] + j] = Jmat_pt[idx_cell * neqs + i - 1];
     }
   }
 }

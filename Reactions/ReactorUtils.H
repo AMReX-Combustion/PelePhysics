@@ -294,8 +294,8 @@ fKernelSpec(
 }
 
 #ifdef AMREX_USE_GPU
-  N_Vector setNVectorGPU(int nvsize, int atomic_reduction,
-                         amrex::gpuStream_t stream);
+N_Vector
+setNVectorGPU(int nvsize, int atomic_reduction, amrex::gpuStream_t stream);
 #endif
 } // namespace utils
 } // namespace reactions

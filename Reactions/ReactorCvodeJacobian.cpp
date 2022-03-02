@@ -48,7 +48,9 @@ cJac(
         for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                  stride = blockDim.x * gridDim.x;
              icell < ncells; icell += stride) {
-          fKernelComputeAJchem(icell, NNZ, react_type, csr_row_count_d, csr_col_index_d, yvec_d, Jdata);
+          fKernelComputeAJchem(
+            icell, NNZ, react_type, csr_row_count_d, csr_col_index_d, yvec_d,
+            Jdata);
         }
       });
     cudaError_t cuda_status = cudaStreamSynchronize(stream);

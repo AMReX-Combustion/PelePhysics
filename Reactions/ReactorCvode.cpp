@@ -820,18 +820,19 @@ ReactorCvode::allocUserData(
 
     SPARSITY_PREPROC_SYST_CSR(
       udata->csr_col_index_h, udata->csr_row_count_h, &HP, 1, 0);
-    amrex::Gpu::copy(amrex::Gpu::hostToDevice,
-		     &udata->csr_col_index_h, &udata->csr_col_index_h + 1,
-		     udata->csr_col_index_d);
-    amrex::Gpu::copy(amrex::Gpu::hostToDevice,
-		     &udata->csr_row_count_h, &udata->csr_row_count_h + 1,
-		     udata->csr_row_count_d);
+    amrex::Gpu::copy(
+      amrex::Gpu::hostToDevice, &udata->csr_col_index_h,
+      &udata->csr_col_index_h + 1, udata->csr_col_index_d);
+    amrex::Gpu::copy(
+      amrex::Gpu::hostToDevice, &udata->csr_row_count_h,
+      &udata->csr_row_count_h + 1, udata->csr_row_count_d);
 
-   int sunMatFlag = SUNMatrix_cuSparse_CopyToDevice(
-                        a_A, NULL, udata->csr_row_count_h, udata->csr_col_index_h);
-   if (sunMatFlag != SUNMAT_SUCCESS) {
-	   amrex::Print() << " Something went wrong in SUNMatrix_cuSparse_CopyToDevice \n";
-   }
+    int sunMatFlag = SUNMatrix_cuSparse_CopyToDevice(
+      a_A, NULL, udata->csr_row_count_h, udata->csr_col_index_h);
+    if (sunMatFlag != SUNMAT_SUCCESS) {
+ 	   amrex::Print()
+         << " Something went wrong in SUNMatrix_cuSparse_CopyToDevice \n";
+    }
 #else
     amrex::Abort(
       "Solver_type sparse_direct is only available with CUDA on GPU");
