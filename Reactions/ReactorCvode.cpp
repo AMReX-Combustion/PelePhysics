@@ -830,8 +830,8 @@ ReactorCvode::allocUserData(
     int sunMatFlag = SUNMatrix_cuSparse_CopyToDevice(
       a_A, NULL, udata->csr_row_count_h, udata->csr_col_index_h);
     if (sunMatFlag != SUNMAT_SUCCESS) {
- 	   amrex::Print()
-         << " Something went wrong in SUNMatrix_cuSparse_CopyToDevice \n";
+      amrex::Print()
+        << " Something went wrong in SUNMatrix_cuSparse_CopyToDevice \n";
     }
 #else
     amrex::Abort(
@@ -883,7 +883,8 @@ ReactorCvode::allocUserData(
 #ifdef PELE_USE_MAGMA
     a_A = SUNMatrix_MagmaDenseBlock(
       a_ncells, (NUM_SPECIES + 1), (NUM_SPECIES + 1), SUNMEMTYPE_DEVICE,
-      *amrex::sundials::The_SUNMemory_Helper(), NULL, *amrex::sundials::The_Sundials_Context());
+      *amrex::sundials::The_SUNMemory_Helper(), NULL,
+      *amrex::sundials::The_Sundials_Context());
 #else
     amrex::Abort("Solver_type magma_direct reauires PELE_USE_MAGMA = TRUE");
 #endif
@@ -1139,7 +1140,7 @@ ReactorCvode::react(
   const int neq_tot = (NUM_SPECIES + 1) * ncells;
 
   // Solution vector and execution policy
-  auto y = utils::setNVectorGPU(neq_tot,atomic_reductions,stream);
+  auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
@@ -1434,7 +1435,7 @@ ReactorCvode::react(
   allocUserData(user_data, ncells, A, stream);
 
   // Solution vector and execution policy
-  auto y = utils::setNVectorGPU(neq_tot,atomic_reductions,stream);
+  auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
