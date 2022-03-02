@@ -30,6 +30,8 @@ cJac(
 #ifdef AMREX_USE_CUDA
     amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y_in);
     amrex::Real* Jdata = SUNMatrix_cuSparse_Data(J);
+    auto csr_row_count_d = udata->csr_row_count_d;
+    auto csr_col_index_d = udata->csr_col_index_d;
 
     // Checks
     if (
@@ -46,7 +48,7 @@ cJac(
         for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                  stride = blockDim.x * gridDim.x;
              icell < ncells; icell += stride) {
-          fKernelComputeAJchem(icell, NNZ, react_type, user_data, yvec_d, Jdata);
+          fKernelComputeAJchem(icell, NNZ, react_type, csr_row_count_d, csr_col_index_d, yvec_d, Jdata);
         }
       });
     cudaError_t cuda_status = cudaStreamSynchronize(stream);
