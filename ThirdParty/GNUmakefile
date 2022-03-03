@@ -2,9 +2,12 @@ COMP            ?= gcc
 DEBUG           ?= FALSE
 USE_CUDA        ?= FALSE
 PELE_USE_KLU    ?= FALSE
+PELE_USE_MAGMA  ?= FALSE
 CUDA_ARCH       ?= 70
+AMD_ARCH        ?= gfx908
 
 SS_VERSION=5.4.0
+MAGMA_VERSION=2.6.1
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
@@ -46,7 +49,7 @@ else
   endif
 endif
 
-tp_suffix=$(COMP)$(DebugSuffix)$(CUDASuffix)$(HIPSuffix)$(DPCPPSuffix)$(KLUSuffix)
+tp_suffix=$(COMP)$(DebugSuffix)$(CUDASuffix)$(HIPSuffix)$(DPCPPSuffix)$(KLUSuffix)$(MAGMASuffix)
 INSTALL_PREFIX=$(PWD)/INSTALL/$(tp_suffix)
 
 ifeq ($(PELE_USE_KLU),TRUE)
@@ -68,6 +71,47 @@ else
   ONE_SS_LIB_FILE=
 endif
 
+ifeq ($(PELE_USE_MAGMA),TRUE)
+  MAGMASuffix   := .MAGMA
+  MAGMA_BUILD_PREFIX=$(PWD)/BUILD/MAGMA
+  MAGMA_DEFINES=-DENABLE_MAGMA:BOOL=ON -DMAGMA_DIR=${INSTALL_PREFIX}/
+ifeq ($(USE_CUDA),TRUE)
+  MAGMA_DEFINES+=-DSUNDIALS_MAGMA_BACKENDS:STRING=CUDA
+endif
+ifeq ($(USE_HIP),TRUE)
+  MAGMA_DEFINES+=-DSUNDIALS_MAGMA_BACKENDS:STRING=HIP
+  ifeq ($(which_computer),crusher)
+    MAGMA_DEFINES+=-DCMAKE_C_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
+    MAGMA_DEFINES+=-DCMAKE_CXX_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
+  endif
+endif
+
+  MAGMA_DIST_DIR=$(MAGMA_BUILD_PREFIX)/dist
+  MAGMA_SOURCE_DIR=$(MAGMA_BUILD_PREFIX)/magma-$(MAGMA_VERSION)
+  MAGMA_BUILD_DIR=$(MAGMA_BUILD_PREFIX)/build/$(tp_suffix)
+
+  ONE_MAGMA_SRC_FILE=$(MAGMA_SOURCE_DIR)/COPYRIGHT
+  ONE_MAGMA_LIB_FILE=$(INSTALL_PREFIX)/libmagma.so
+  MAGMA_DIST_FILE=magma-$(MAGMA_VERSION).tar.gz
+
+ifeq ($(USE_CUDA),TRUE)
+  MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_CUDA=ON -DGPU_TARGET=sm_$(CUDA_ARCH)
+endif
+ifeq ($(USE_HIP),TRUE)
+  ## For spock/crusher only at this point !
+  MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_HIP=ON -DGPU_TARGET=$(AMD_ARCH) -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_amd.so
+  ifeq ($(which_computer),crusher)
+    MAGMA_COMPILER_OPT+=-DCMAKE_C_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
+    MAGMA_COMPILER_OPT+=-DCMAKE_CXX_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
+  endif
+endif
+else
+  MAGMASuffix=
+  MAGMA_DEFINES=-DENABLE_MAGMA:BOOL=OFF
+  ONE_MAGMA_SRC_FILE=
+  ONE_MAGMA_LIB_FILE=
+endif
+
 ifeq ($(DEBUG),FALSE)
   BUILD_TYPE=Release
   DebugSuffix=
@@ -84,7 +128,7 @@ else
   CUDASuffix=
 endif
 ifeq ($(USE_HIP),TRUE)
-  HIP_DEFINES=-DENABLE_HIP:BOOL=ON
+  HIP_DEFINES=-DENABLE_HIP:BOOL=ON -DCMAKE_HIP_ARCHITECTURES:STRING=$(AMD_ARCH)
   HIPSuffix=.HIP
 else
   HIP_DEFINES=-DENABLE_HIP:BOOL=OFF
@@ -111,35 +155,58 @@ sundials: $(ONE_SUNDIALS_LIB_FILE)
 tp_suffix:
 	@echo $(tp_suffix)
 
-
-$(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE)
+$(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGMA_LIB_FILE)
 	@mkdir -p $(SUNDIALS_BUILD_DIR)
-	cd $(SUNDIALS_BUILD_DIR); cmake -DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON -DCMAKE_INSTALL_PREFIX:STRING=$(INSTALL_PREFIX) \
-			   	-DCMAKE_INSTALL_LIBDIR:STRING=$(INSTALL_PREFIX)/lib -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-					-DCMAKE_C_COMPILER:STRING=$(CCOMPILER) -DCMAKE_CXX_COMPILER:STRING=$(CXXCOMPILER) \
-					-DCMAKE_C_STANDARD=99 -DCMAKE_CXX_STANDARD=17 \
-          -DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) $(CUDA_DEFINES) $(HIP_DEFINES) $(DPCPP_DEFINES) \
-					-DENABLE_MPI:BOOL=OFF -DENABLE_OPENMP:BOOL=OFF $(KLU_DEFINES) \
-					-DEXAMPLES_INSTALL:BOOL=OFF -DEXAMPLES_ENABLE_C:BOOL=OFF -DEXAMPLES_ENABLE_CXX:BOOL=OFF -DEXAMPLES_ENABLE_CUDA:BOOL=OFF \
-					-DBUILD_CVODES:BOOL=OFF -DBUILD_IDA:BOOL=OFF -DBUILD_IDAS:BOOL=OFF -DBUILD_KINSOL:BOOL=OFF \
-					-DBUILD_SHARED_LIBS:BOOL=ON -DBUILD_STATIC_LIBS:BOOL=OFF \
-					-DSUNDIALS_BUILD_WITH_PROFILING:BOOL=$(SUNDIALS_PROFILING) \
-					-DSUNDIALS_INDEX_SIZE:INT=32 $(SUNDIALS_SOURCE_DIR); \
-					make; make install
+	cd $(SUNDIALS_BUILD_DIR); cmake -DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON -DCMAKE_INSTALL_PREFIX:PATH=$(INSTALL_PREFIX) \
+	                                -DCMAKE_INSTALL_LIBDIR:PATH=$(INSTALL_PREFIX)/lib -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+	                                -DCMAKE_C_COMPILER:STRING=$(CCOMPILER) -DCMAKE_CXX_COMPILER:STRING=$(CXXCOMPILER) \
+	                                -DCMAKE_C_STANDARD=99 -DCMAKE_CXX_STANDARD=17 \
+	                                -DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) $(CUDA_DEFINES) $(HIP_DEFINES) $(DPCPP_DEFINES) \
+	                                -DENABLE_MPI:BOOL=OFF -DENABLE_OPENMP:BOOL=OFF $(KLU_DEFINES) $(MAGMA_DEFINES) \
+	                                -DEXAMPLES_INSTALL:BOOL=OFF -DEXAMPLES_ENABLE_C:BOOL=OFF -DEXAMPLES_ENABLE_CXX:BOOL=OFF -DEXAMPLES_ENABLE_CUDA:BOOL=OFF \
+	                                -DBUILD_CVODES:BOOL=OFF -DBUILD_IDA:BOOL=OFF -DBUILD_IDAS:BOOL=OFF -DBUILD_KINSOL:BOOL=OFF \
+	                                -DBUILD_SHARED_LIBS:BOOL=ON -DBUILD_STATIC_LIBS:BOOL=OFF \
+	                                -DSUNDIALS_BUILD_WITH_PROFILING:BOOL=$(SUNDIALS_PROFILING) \
+	                                -DSUNDIALS_INDEX_SIZE:INT=32 $(SUNDIALS_SOURCE_DIR); \
+	                          cmake --build $(SUNDIALS_BUILD_DIR) --parallel; cmake --install $(SUNDIALS_BUILD_DIR)
+
+$(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
+	@echo "Building MAGMA"
+	@cd $(MAGMA_SOURCE_DIR); sed -i '389s/#//' CMakeLists.txt
+	@cd $(MAGMA_SOURCE_DIR); sed -i '374s/90c/90c;90a/' CMakeLists.txt
+	@echo ${CCOMPILER}
+	@echo ${CXXCOMPILER}
+	@mkdir -p $(MAGMA_BUILD_DIR)
+	@cmake --version
+	cd $(MAGMA_BUILD_DIR); cmake $(MAGMA_SOURCE_DIR) -DCMAKE_BUILD_TYPE=Release \
+	                            -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+	                            -DCMAKE_C_COMPILER:STRING=$(CCOMPILER) \
+	                            -DCMAKE_CXX_COMPILER:STRING=$(CXXCOMPILER) \
+	                            -DUSE_FORTRAN=off \
+	                            $(MAGMA_COMPILER_OPT) \
+	                            -DBUILD_SHARED_LIBS=ON; \
+	                       cmake --build $(MAGMA_BUILD_DIR) --parallel; cmake --install $(MAGMA_BUILD_DIR)
+
+$(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
+	@cd $(MAGMA_DIST_DIR)/..; tar zxf $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE); find $(MAGMA_SOURCE_DIR) -type f -exec touch {} +
+
+$(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE):
+	@mkdir -p $(MAGMA_DIST_DIR)
+	@cd $(MAGMA_DIST_DIR); wget icl.utk.edu/projectsfiles/magma/downloads/$(MAGMA_DIST_FILE)
 
 $(ONE_SUNDIALS_SRC_FILE):
 	@mkdir -p $(SUNDIALS_SOURCE_DIR)
 	@[ "$(shell ls -A $(SUNDIALS_SOURCE_DIR))" ] || git clone --depth 1 --branch $(SUNDIALS_BRANCH) https://github.com/LLNL/sundials $(SUNDIALS_SOURCE_DIR)
 
 $(ONE_SS_LIB_FILE): $(ONE_SS_SRC_FILE)
-	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
-	@cd $(SS_SOURCE_DIR)/AMD; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
-	@cd $(SS_SOURCE_DIR)/COLAMD; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
-	@cd $(SS_SOURCE_DIR)/BTF; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
-	@cd $(SS_SOURCE_DIR)/metis-5.1.0; make config BLAS=-lblas prefix=$(INSTALL_PREFIX) shared=1; make install
-	@cd $(SS_SOURCE_DIR)/CCOLAMD; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
-	@cd $(SS_SOURCE_DIR)/CAMD; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
-	@cd $(SS_SOURCE_DIR)/KLU; make install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
+	@cd $(SS_SOURCE_DIR)/SuiteSparse_config; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
+	@cd $(SS_SOURCE_DIR)/AMD; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
+	@cd $(SS_SOURCE_DIR)/COLAMD; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
+	@cd $(SS_SOURCE_DIR)/BTF; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
+	@cd $(SS_SOURCE_DIR)/metis-5.1.0; $(MAKE) config BLAS=-lblas prefix=$(INSTALL_PREFIX) shared=1; $(MAKE) install
+	@cd $(SS_SOURCE_DIR)/CCOLAMD; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
+	@cd $(SS_SOURCE_DIR)/CAMD; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
+	@cd $(SS_SOURCE_DIR)/KLU; $(MAKE) install BLAS=-lblas INSTALL=$(INSTALL_PREFIX)
 	# For some reason, the static libraries are built but not installed. Add
 	# a workaround here for now, but this should be fixed in SuiteSparse.
 	@install -m 644 $(SS_SOURCE_DIR)/SuiteSparse_config/libsuitesparseconfig.a $(INSTALL_PREFIX)/lib
@@ -154,12 +221,19 @@ $(SS_DIST_DIR)/$(SS_DIST_FILE):
 
 ifeq ($(PELE_USE_KLU),TRUE)
   clean_SS:
-	@echo rm -rf $(SS_BUILD_PREFIX)
+	rm -rf $(SS_BUILD_PREFIX)
 else
   clean_SS:
 endif
 
-clean: clean_SS
+ifeq ($(PELE_USE_MAGMA),TRUE)
+  clean_MAGMA:
+	rm -rf $(MAGMA_BUILD_PREFIX)
+else
+  clean_MAGMA:
+endif
+
+clean: clean_SS clean_MAGMA
 	rm -rf $(INSTALL_PREFIX) $(SUNDIALS_BUILD_PREFIX)
 
 realclean:

@@ -789,9 +789,9 @@ ReactorCvode::allocUserData(
 #ifdef AMREX_USE_CUDA
     SPARSITY_INFO_SYST(&(udata->NNZ), &HP, 1);
     udata->csr_row_count_h =
-      (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
+      (int*)amrex::The_Pinned_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_h =
-      (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
+      (int*)amrex::The_Pinned_Arena()->alloc(udata->NNZ * sizeof(int));
     udata->csr_row_count_d =
       (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_d =
@@ -817,19 +817,22 @@ ReactorCvode::allocUserData(
     }
 
     int retval = SUNMatrix_cuSparse_SetFixedPattern(a_A, 1);
-    // if (utils::check_flag(&retval, "SUNMatrix_cuSparse_SetFixedPattern", 1))
-    // return(1);
 
     SPARSITY_PREPROC_SYST_CSR(
       udata->csr_col_index_h, udata->csr_row_count_h, &HP, 1, 0);
-    amrex::Gpu::htod_memcpy(
-      &udata->csr_col_index_d, &udata->csr_col_index_h,
-      sizeof(udata->csr_col_index_h));
-    amrex::Gpu::htod_memcpy(
-      &udata->csr_row_count_d, &udata->csr_row_count_h,
-      sizeof(udata->csr_row_count_h));
-    SUNMatrix_cuSparse_CopyToDevice(
+    amrex::Gpu::copy(
+      amrex::Gpu::hostToDevice, &udata->csr_col_index_h,
+      &udata->csr_col_index_h + 1, udata->csr_col_index_d);
+    amrex::Gpu::copy(
+      amrex::Gpu::hostToDevice, &udata->csr_row_count_h,
+      &udata->csr_row_count_h + 1, udata->csr_row_count_d);
+
+    int sunMatFlag = SUNMatrix_cuSparse_CopyToDevice(
       a_A, NULL, udata->csr_row_count_h, udata->csr_col_index_h);
+    if (sunMatFlag != SUNMAT_SUCCESS) {
+      amrex::Print()
+        << " Something went wrong in SUNMatrix_cuSparse_CopyToDevice \n";
+    }
 #else
     amrex::Abort(
       "Solver_type sparse_direct is only available with CUDA on GPU");
@@ -880,7 +883,8 @@ ReactorCvode::allocUserData(
 #ifdef PELE_USE_MAGMA
     a_A = SUNMatrix_MagmaDenseBlock(
       a_ncells, (NUM_SPECIES + 1), (NUM_SPECIES + 1), SUNMEMTYPE_DEVICE,
-      *amrex::sundials::The_SUNMemory_Helper(), NULL);
+      *amrex::sundials::The_SUNMemory_Helper(), NULL,
+      *amrex::sundials::The_Sundials_Context());
 #else
     amrex::Abort("Solver_type magma_direct reauires PELE_USE_MAGMA = TRUE");
 #endif
@@ -929,9 +933,9 @@ ReactorCvode::allocUserData(
 #ifdef AMREX_USE_CUDA
     SPARSITY_INFO_SYST_SIMPLIFIED(&(udata->NNZ), &HP);
     udata->csr_row_count_h =
-      (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
+      (int*)amrex::The_Pinned_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
     udata->csr_col_index_h =
-      (int*)amrex::The_Arena()->alloc(udata->NNZ * sizeof(int));
+      (int*)amrex::The_Pinned_Arena()->alloc(udata->NNZ * sizeof(int));
 
     udata->csr_row_count_d =
       (int*)amrex::The_Arena()->alloc((NUM_SPECIES + 2) * sizeof(int));
@@ -1136,49 +1140,7 @@ ReactorCvode::react(
   const int neq_tot = (NUM_SPECIES + 1) * ncells;
 
   // Solution vector and execution policy
-#if defined(AMREX_USE_CUDA)
-  N_Vector y = N_VNewWithMemHelp_Cuda(
-    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
-    return (1);
-  SUNCudaExecPolicy* stream_exec_policy =
-    new SUNCudaThreadDirectExecPolicy(256, stream);
-  SUNCudaExecPolicy* reduce_exec_policy;
-  if (atomic_reductions) {
-    reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
-  } else {
-    reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
-  }
-  N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
-#elif defined(AMREX_USE_HIP)
-  N_Vector y = N_VNewWithMemHelp_Hip(
-    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
-    return (1);
-  SUNHipExecPolicy* stream_exec_policy =
-    new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy;
-  if (atomic_reductions) {
-    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
-  } else {
-    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
-  }
-  N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
-#elif defined(AMREX_USE_DPCPP)
-  N_Vector y = N_VNewWithMemHelp_Sycl(
-    neq_tot, false, *amrex::sundials::The_SUNMemory_Helper(),
-    &amrex::Gpu::Device::streamQueue(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
-    return (1);
-  SUNSyclExecPolicy* stream_exec_policy =
-    new SUNSyclThreadDirectExecPolicy(256);
-  SUNSyclExecPolicy* reduce_exec_policy =
-    new SUNSyclBlockReduceExecPolicy(256, 0);
-  N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
-#endif
+  auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
@@ -1349,9 +1311,6 @@ ReactorCvode::react(
   }
   freeUserData(user_data);
 
-  delete stream_exec_policy;
-  delete reduce_exec_policy;
-
 #else
   //----------------------------------------------------------
   // CPU Region
@@ -1466,7 +1425,6 @@ ReactorCvode::react(
   //----------------------------------------------------------
 #ifdef AMREX_USE_GPU
   int neq_tot = (NUM_SPECIES + 1) * ncells;
-  N_Vector y = NULL;
   SUNLinearSolver LS = NULL;
   SUNMatrix A = NULL;
   void* cvode_mem = NULL;
@@ -1477,52 +1435,7 @@ ReactorCvode::react(
   allocUserData(user_data, ncells, A, stream);
 
   // Solution vector and execution policy
-#if defined(AMREX_USE_CUDA)
-  y = N_VNewWithMemHelp_Cuda(
-    neq_tot, /*use_managed_mem=*/false,
-    *amrex::sundials::The_SUNMemory_Helper(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0))
-    return (1);
-  SUNCudaExecPolicy* stream_exec_policy =
-    new SUNCudaThreadDirectExecPolicy(256, stream);
-  SUNCudaExecPolicy* reduce_exec_policy;
-  if (atomic_reductions) {
-    reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
-  } else {
-    reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
-  }
-  N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
-#elif defined(AMREX_USE_HIP)
-  y = N_VNewWithMemHelp_Hip(
-    neq_tot, /*use_managed_mem=*/false,
-    *amrex::sundials::The_SUNMemory_Helper(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0))
-    return (1);
-  SUNHipExecPolicy* stream_exec_policy =
-    new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy;
-  if (atomic_reductions) {
-    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
-  } else {
-    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
-  }
-  N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
-#elif defined(AMREX_USE_DPCPP)
-  y = N_VNewWithMemHelp_Sycl(
-    neq_tot, /*use_managed_mem=*/false,
-    *amrex::sundials::The_SUNMemory_Helper(),
-    &amrex::Gpu::Device::streamQueue(),
-    *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0))
-    return (1);
-  SUNSyclExecPolicy* stream_exec_policy =
-    new SUNSyclThreadDirectExecPolicy(256);
-  SUNSyclExecPolicy* reduce_exec_policy =
-    new SUNSyclBlockReduceExecPolicy(256, 0);
-  N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
-#endif
+  auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
 
   // Solution data array
   amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y);
@@ -1695,9 +1608,6 @@ ReactorCvode::react(
   }
   freeUserData(user_data);
 
-  delete stream_exec_policy;
-  delete reduce_exec_policy;
-
   //----------------------------------------------------------
   // CPU Region
   //----------------------------------------------------------
@@ -1769,15 +1679,9 @@ ReactorCvode::cF_RHS(
   realtype t, N_Vector y_in, N_Vector ydot_in, void* user_data)
 {
   BL_PROFILE("Pele::ReactorCvode::cF_RHS()");
-#if defined(AMREX_USE_CUDA)
-  amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Cuda(y_in);
-  amrex::Real* ydot_d = N_VGetDeviceArrayPointer_Cuda(ydot_in);
-#elif defined(AMREX_USE_HIP)
-  amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Hip(y_in);
-  amrex::Real* ydot_d = N_VGetDeviceArrayPointer_Hip(ydot_in);
-#elif defined(AMREX_USE_DPCPP)
-  amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Sycl(y_in);
-  amrex::Real* ydot_d = N_VGetDeviceArrayPointer_Sycl(ydot_in);
+#ifdef AMREX_USE_GPU
+  amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y_in);
+  amrex::Real* ydot_d = N_VGetDeviceArrayPointer(ydot_in);
 #else
   amrex::Real* yvec_d = N_VGetArrayPointer(y_in);
   amrex::Real* ydot_d = N_VGetArrayPointer(ydot_in);
@@ -1813,8 +1717,10 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
 
   if (data_wk->solve_type == cvode::sparseDirect) {
 #ifdef AMREX_USE_CUDA
-    amrex::The_Arena()->free(data_wk->csr_row_count_h);
-    amrex::The_Arena()->free(data_wk->csr_col_index_h);
+    amrex::The_Pinned_Arena()->free(data_wk->csr_row_count_h);
+    amrex::The_Pinned_Arena()->free(data_wk->csr_col_index_h);
+    amrex::The_Arena()->free(data_wk->csr_row_count_d);
+    amrex::The_Arena()->free(data_wk->csr_col_index_d);
     cusolverStatus_t cusolver_status =
       cusolverSpDestroy(data_wk->cusolverHandle);
     AMREX_ASSERT(cusolver_status == CUSOLVER_STATUS_SUCCESS);
@@ -1823,8 +1729,8 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
 #endif
   } else if (data_wk->solve_type == cvode::customDirect) {
 #ifdef AMREX_USE_CUDA
-    amrex::The_Arena()->free(data_wk->csr_row_count_h);
-    amrex::The_Arena()->free(data_wk->csr_col_index_h);
+    amrex::The_Pinned_Arena()->free(data_wk->csr_row_count_h);
+    amrex::The_Pinned_Arena()->free(data_wk->csr_col_index_h);
     cusparseStatus_t cusparse_status = cusparseDestroy(data_wk->cuSPHandle);
     AMREX_ASSERT(cusparse_status == CUSPARSE_STATUS_SUCCESS);
 #endif

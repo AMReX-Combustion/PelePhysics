@@ -24,11 +24,14 @@ cJac(
   auto stream = udata->stream;
   auto nbThreads = udata->nbThreads;
   auto nbBlocks = udata->nbBlocks;
+  auto react_type = udata->reactor_type;
 
   if (solveType == sparseDirect) {
 #ifdef AMREX_USE_CUDA
-    amrex::Real* yvec_d = N_VGetDeviceArrayPointer_Cuda(y_in);
+    amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y_in);
     amrex::Real* Jdata = SUNMatrix_cuSparse_Data(J);
+    auto csr_row_count_d = udata->csr_row_count_d;
+    auto csr_col_index_d = udata->csr_col_index_d;
 
     // Checks
     if (
@@ -45,7 +48,9 @@ cJac(
         for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                  stride = blockDim.x * gridDim.x;
              icell < ncells; icell += stride) {
-          fKernelComputeAJchem(icell, user_data, yvec_d, Jdata);
+          fKernelComputeAJchem(
+            icell, NNZ, react_type, csr_row_count_d, csr_col_index_d, yvec_d,
+            Jdata);
         }
       });
     cudaError_t cuda_status = cudaStreamSynchronize(stream);
@@ -58,19 +63,19 @@ cJac(
 #ifdef PELE_USE_MAGMA
     amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y_in);
     amrex::Real* Jdata = SUNMatrix_MagmaDense_Data(J);
-    const auto ec = Gpu::ExecutionConfig(ncells);
-    launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
+    const auto ec = amrex::Gpu::ExecutionConfig(ncells);
+    amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
       [=] AMREX_GPU_DEVICE() noexcept {
         for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
                  stride = blockDim.x * gridDim.x;
              icell < ncells; icell += stride) {
-          fKernelDenseAJchem(icell, user_data, yvec_d, Jdata);
+          fKernelDenseAJchem(icell, react_type, yvec_d, Jdata);
         }
       });
     amrex::Gpu::Device::streamSynchronize();
 #else
     amrex::Abort(
-      "Calling cJac with solve_type = magma_direct reauires PELE_USE_MAGMA = "
+      "Calling cJac with solve_type = magma_direct requires PELE_USE_MAGMA = "
       "TRUE !");
 #endif
   }

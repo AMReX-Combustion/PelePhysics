@@ -6,6 +6,19 @@
 #include "mechanism.H"
 #include "PelePhysics.H"
 #include "ReactorTypes.H"
+#include "AMReX_Sundials.H"
+
+#ifdef AMREX_USE_HIP
+#include <nvector/nvector_hip.h>
+#endif
+
+#ifdef AMREX_USE_DPCPP
+#include <nvector/nvector_sycl.h>
+#endif
+
+#ifdef AMREX_USE_CUDA
+#include <nvector/nvector_cuda.h>
+#endif
 
 namespace pele {
 namespace physics {
@@ -279,6 +292,11 @@ fKernelSpec(
   ydot_d[vec_index<OrderType>(NUM_SPECIES, icell, ncells)] =
     rhoesrc * (rho_pt_inv / Cv_pt);
 }
+
+#ifdef AMREX_USE_GPU
+N_Vector
+setNVectorGPU(int nvsize, int atomic_reduction, amrex::gpuStream_t stream);
+#endif
 } // namespace utils
 } // namespace reactions
 } // namespace physics
