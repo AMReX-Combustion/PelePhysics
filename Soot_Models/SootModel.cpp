@@ -265,6 +265,7 @@ void
 SootModel::addSootDerivePlotVars(
   DeriveList& derive_lst,
   const DescriptorList& desc_lst,
+  const int a_State_Type,
   const int rhoIndx,
   const int sootIndx)
 {
@@ -278,9 +279,9 @@ SootModel::addSootDerivePlotVars(
   derive_lst.add(
     "soot_vars", IndexType::TheCellType(), sootNames.size(), sootNames,
     soot_genvars, the_same_box);
-  derive_lst.addComponent("soot_vars", desc_lst, State_Type, rhoIndx, 1);
+  derive_lst.addComponent("soot_vars", desc_lst, a_State_Type, rhoIndx, 1);
   derive_lst.addComponent(
-    "soot_vars", desc_lst, State_Type, sootIndx, NUM_SOOT_MOMENTS + 1);
+    "soot_vars", desc_lst, a_State_Type, sootIndx, NUM_SOOT_MOMENTS + 1);
 
   // Variables associated with the second mode (large particles)
   Vector<std::string> large_part_names = {"NL", "soot_V_L", "soot_S_L"};
@@ -288,7 +289,7 @@ SootModel::addSootDerivePlotVars(
     "soot_large_particles", IndexType::TheCellType(), large_part_names.size(),
     large_part_names, soot_largeparticledata, the_same_box);
   derive_lst.addComponent(
-    "soot_large_particles", desc_lst, State_Type, sootIndx,
+    "soot_large_particles", desc_lst, a_State_Type, sootIndx,
     NUM_SOOT_MOMENTS + 1);
 }
 

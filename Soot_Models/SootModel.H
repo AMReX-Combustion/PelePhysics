@@ -59,6 +59,7 @@ public:
   void addSootDerivePlotVars(
     DeriveList& derive_lst,
     const DescriptorList& desc_lst,
+    const int a_State_type,
     const int rhoIndx,
     const int sootIndx);
 
