@@ -9,7 +9,6 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Box.H>
 #include <AMReX_Vector.H>
-//#include <AMReX_Derive.H>
 
 // Pele include statements
 #include "PelePhysics.H"
@@ -51,16 +50,6 @@ public:
   // Define member data
   //
   void defineMemberData(const Real dimerVol);
-
-  //
-  // Define the derived variable list (SootModel_setup.cpp)
-  //
-  void addSootDerivePlotVars(
-    DeriveList& derive_lst,
-    const DescriptorList& desc_lst,
-    const int a_State_type,
-    const int rhoIndx,
-    const int sootIndx);
 
   //
   // Compute HMOM source term

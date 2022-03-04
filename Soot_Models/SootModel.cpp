@@ -18,9 +18,8 @@
 #include "PeleC.H"
 #endif
 
-// PeleC-MP include statements
+// PeleMP include statements
 #include "SootModel.H"
-#include "SootModel_derive.H"
 
 static amrex::Box
 the_same_box(const amrex::Box& b)
@@ -259,39 +258,6 @@ SootModel::defineMemberData(const Real dimerVol)
     std::sqrt((1. / nuclVol) + (1. / dimerVol)) *
     std::pow((std::pow(nuclVol, 1. / 3.) + std::pow(dimerVol, 1. / 3.)), 2.);
   m_memberDataDefined = true;
-}
-
-// Add derive plot variables
-void
-SootModel::addSootDerivePlotVars(
-  DeriveList& derive_lst,
-  const DescriptorList& desc_lst,
-  const int a_State_Type,
-  const int rhoIndx,
-  const int sootIndx)
-{
-  // Double check indices are set
-  m_setIndx = m_sootIndx.checkIndices();
-  if (!m_setIndx) {
-    Abort("SootModel::addSootDerivePlotVars(): Must set indices first");
-  }
-  // Add in soot variables
-  Vector<std::string> sootNames = {"rho_soot", "sum_rho_soot"};
-  derive_lst.add(
-    "soot_vars", IndexType::TheCellType(), sootNames.size(), sootNames,
-    soot_genvars, the_same_box);
-  derive_lst.addComponent("soot_vars", desc_lst, a_State_Type, rhoIndx, 1);
-  derive_lst.addComponent(
-    "soot_vars", desc_lst, a_State_Type, sootIndx, NUM_SOOT_MOMENTS + 1);
-
-  // Variables associated with the second mode (large particles)
-  Vector<std::string> large_part_names = {"NL", "soot_V_L", "soot_S_L"};
-  derive_lst.add(
-    "soot_large_particles", IndexType::TheCellType(), large_part_names.size(),
-    large_part_names, soot_largeparticledata, the_same_box);
-  derive_lst.addComponent(
-    "soot_large_particles", desc_lst, a_State_Type, sootIndx,
-    NUM_SOOT_MOMENTS + 1);
 }
 
 // Add soot source term
