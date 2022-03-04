@@ -223,6 +223,7 @@ SootModel::defineMemberData(const Real dimerVol)
   // and to convert the weight of the delta function
   m_sootData->unitConv[NUM_SOOT_MOMENTS] =
     pele::physics::Constants::Avna * std::pow(sc.len_conv, 3);
+  m_sootData->smallMoms[NUM_SOOT_MOMENTS] = m_sootData->smallMoms[0];
 
   // Coagulation, oxidation, and fragmentation factors
   m_sootData->lambdaCF =

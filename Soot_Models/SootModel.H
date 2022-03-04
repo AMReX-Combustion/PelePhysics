@@ -9,11 +9,10 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Box.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Derive.H>
+//#include <AMReX_Derive.H>
 
 // Pele include statements
 #include "PelePhysics.H"
-#include "IndexDefines.H"
 
 #include "Constants_Soot.H"
 #include "SootData.H"
