@@ -21,12 +21,6 @@
 // PeleMP include statements
 #include "SootModel.H"
 
-static amrex::Box
-the_same_box(const amrex::Box& b)
-{
-  return b;
-}
-
 // Default constructor
 SootModel::SootModel()
   : m_sootVerbosity(0),
