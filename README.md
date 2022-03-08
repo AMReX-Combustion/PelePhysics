@@ -15,11 +15,14 @@ AMREX ([Repo](https://github.com/AMReX-Codes/amrex)) : 76d08651adb987e3fba6b232e
 - ~~Get the range of validity of the QSS assumption (Malik)~~
 - ~~Ensure that homogeneous reactions test can be passed with reacEval (Malik)~~
 - Verify that Jacobian is correctly computed (Malik)
+    - Reproduce single QSS results with AJ
+    - Reproduce HR runs with AJ
 - Ensure that skeletal and QSS mechanism are at most 10% apart in the range T=[800K-1600K],phi=[0.5-2.0],  P=[1atm,50atm]. The 50 atm boundary is actually very important  (Malik)
     - ~~Pilot input concentration via input file~~
     - Run HR in constant pressure mode
     - ~~Add igntion delay calculation~~
-    - Make the machinery to run many HR calculations
+    - ~~Make the machinery to run many HR calculations~~
+    - Incorporate HR into unit test
 
 
 
