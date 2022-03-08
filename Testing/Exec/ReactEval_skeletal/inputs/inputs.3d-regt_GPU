@@ -1,0 +1,31 @@
+ncells = 2 256 2
+max_grid_size  = 16
+plotfile = plt
+fuel_name = CH4
+chem_integrator = "ReactorRK64"
+
+ode.dt  = 1.e-09
+ode.ndt = 1
+ode.reactor_type  = 1 # 1=full e, 2=full h
+ode.verbose = 1
+ode.use_typ_vals = 0
+ode.analytical_jacobian = 0 
+ode.rtol = 1e-8
+ode.atol = 1e-8
+
+cvode.solve_type = GMRES    # OPTIONS ARE - dense sparse GMRES sparse_custom GMRES_custom diag
+#ode.implicit_solve = 1
+#ode.use_erkstep    = 0
+
+# DRM19
+#ode.typ_vals = 1.e-7 3.e-9 1.e-8 3.e-5 7.e-8 1.e-6 1.e-7 5.e-9 1.e-9 9.e-7 6.e-6 1.e-6 1.7e-8 1.9e-8 7.4e-7 6.7e-9 3.5e-7 1.6e-8 1.3e-8 1.e-4 1.8e-33 2300
+
+# GRI30
+#ode.typ_vals= 2.51329708e-07 7.558638424e-09 3.536561076e-08 2.961142007e-05 1.477342634e-07 3.04368643e-06 1.277876633e-07 3.991004863e-09 1e-10 1.63770557e-10 1.017856774e-08 2.13931043e-09 1.145012231e-06 4.772231695e-06 2.39206209e-06 2.966733473e-07 3.117616856e-08 7.367787054e-07 3.172956498e-09 8.509716323e-09 1.639869322e-08 5.336892245e-10 1.189081364e-07 1.479224962e-08 4.071741437e-07 4.823292836e-08 1.159100834e-08 6.05362257e-09 7.420026077e-08 1.343840403e-09 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 0.0001062095459 1e-10 6.484071391e-10 1.178044783e-10 2.838163288e-09 2.226196887e-08 2385.173759
+
+amrex.max_gpu_streams=1
+amrex.abort_on_out_of_gpu_memory = 1
+
+amrex.fpe_trap_invalid = 1
+amrex.fpe_trap_zero = 1
+amrex.fpe_trap_overflow = 1

@@ -25,7 +25,7 @@ PELE_USE_MAGMA = FALSE
 DEFINES  += -DMOD_REACTOR
 
 Eos_Model       = Fuego
-Chemistry_Model = dodecane_lu_qss
+Chemistry_Model = dodecane_lu
 Transport_Model = Simple
 
 Bpack   := ./Make.package
