@@ -1,7 +1,6 @@
 #ifndef _SPRAYPARTICLES_H_
 #define _SPRAYPARTICLES_H_
 
-#include "EOS.H"
 #include "SprayFuelData.H"
 #include <AMReX_AmrParticles.H>
 #include <AMReX_Geometry.H>
@@ -213,6 +212,9 @@ public:
     const bool isGhostPart,
     const int state_ghosts,
     const int source_ghosts,
+    pele::physics::transport::TransParm<
+    pele::physics::EosType,
+    pele::physics::TransportType> const* ltransparm,
     amrex::MultiFab* u_mac = nullptr);
 
   ///
@@ -229,6 +231,9 @@ public:
     const int state_ghosts,
     const int source_ghosts,
     const bool do_move,
+    pele::physics::transport::TransParm<
+    pele::physics::EosType,
+    pele::physics::TransportType> const* ltransparm,
     amrex::MultiFab* u_mac = nullptr);
 
   ///
@@ -244,6 +249,9 @@ public:
     const int source_ghosts,
     const bool isActive,
     const bool do_move,
+    pele::physics::transport::TransParm<
+    pele::physics::EosType,
+    pele::physics::TransportType> const* ltransparm,
     amrex::MultiFab* u_mac);
 
   // Modify particles based on walls

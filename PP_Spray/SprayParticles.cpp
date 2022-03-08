@@ -2,9 +2,6 @@
 #include "SprayParticles.H"
 #include <AMReX_ParticleReduce.H>
 #include <AMReX_Particles.H>
-#ifdef SPRAY_PELE_LM
-#include "PeleLM.H"
-#endif
 #include "Drag.H"
 #include "SprayInterpolation.H"
 #include "Transport.H"
@@ -188,12 +185,15 @@ SprayParticleContainer::moveKick(
   const bool isGhostPart,
   const int state_ghosts,
   const int source_ghosts,
+  pele::physics::transport::TransParm<
+  pele::physics::EosType,
+  pele::physics::TransportType> const* ltransparm,
   MultiFab* u_mac)
 {
   bool do_move = false;
   moveKickDrift(
     state, source, level, dt, time, isVirtualPart, isGhostPart, state_ghosts,
-    source_ghosts, do_move, u_mac);
+    source_ghosts, do_move, ltransparm, u_mac);
 }
 
 void
@@ -208,6 +208,9 @@ SprayParticleContainer::moveKickDrift(
   const int state_ghosts,
   const int source_ghosts,
   const bool do_move,
+  pele::physics::transport::TransParm<
+  pele::physics::EosType,
+  pele::physics::TransportType> const* ltransparm,
   MultiFab* u_mac)
 {
   BL_PROFILE("ParticleContainer::moveKickDrift()");
@@ -224,7 +227,7 @@ SprayParticleContainer::moveKickDrift(
 
   updateParticles(
     level, state, source, dt, time, state_ghosts, source_ghosts, isActive,
-    do_move, u_mac);
+    do_move, ltransparm, u_mac);
 
   // Fill ghost cells after we've synced up ..
   // TODO: Check to see if this is needed at all
@@ -309,6 +312,9 @@ SprayParticleContainer::updateParticles(
   const int source_ghosts,
   const bool isActive,
   const bool do_move,
+  pele::physics::transport::TransParm<
+  pele::physics::EosType,
+  pele::physics::TransportType> const* ltransparm,
   MultiFab* /*u_mac*/)
 {
   BL_PROFILE("SprayParticleContainer::updateParticles()");
@@ -356,11 +362,6 @@ SprayParticleContainer::updateParticles(
   const Real inv_vol = 1. / vol;
   // Particle components indices
   SprayComps SPI = m_sprayIndx;
-#ifdef SPRAY_PELE_LM
-  auto const* ltransparm = PeleLM::trans_parms.device_trans_parm();
-#else
-  auto const* ltransparm = PeleC::trans_parms.device_trans_parm();
-#endif
   // Start the ParIter, which loops over separate sets of particles in different
   // boxes
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
