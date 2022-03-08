@@ -24,6 +24,13 @@
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
 #endif
 
+#ifdef AMREX_USE_GPU
+#ifdef PELE_USE_MAGMA
+#include <sunmatrix/sunmatrix_magmadense.h>
+#include <sunlinsol/sunlinsol_magmadense.h>
+#endif
+#endif
+
 namespace pele {
 namespace physics {
 namespace reactions {
