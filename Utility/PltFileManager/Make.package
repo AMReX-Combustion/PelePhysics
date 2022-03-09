@@ -1,0 +1,5 @@
+CEXE_sources += PltFileManager.cpp
+CEXE_headers += PltFileManager.H PltFileManagerBCfill.H
+
+VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Utility/PMF
+INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Utility/PMF
