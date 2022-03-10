@@ -203,10 +203,6 @@ calculateSpraySource(
   SprayComps SPI,
   SprayData fdat,
   SprayParticleContainer::ParticleType& p,
-#ifdef USE_SPRAY_SOA
-  const std::array<SprayParticleContainer::SoA::amrex::RealVector, NAR_SPR>& attribs,
-  const int pid,
-#endif
   pele::physics::transport::TransParm<
     pele::physics::EosType,
     pele::physics::TransportType> const* trans_parm)
@@ -242,16 +238,6 @@ calculateSpraySource(
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Psat;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>
     cBoilT; // Boiling temperature at current pressure
-#ifdef USE_SPRAY_SOA
-  amrex::RealVect vel_part(AMREX_D_DECL(
-    attribs[SPI.pstateVel].data()[pid], attribs[SPI.pstateVel + 1].data()[pid],
-    attribs[SPI.pstateVel + 2].data()[pid]));
-  amrex::Real T_part = attribs[SPI.pstateT].data()[pid];
-  amrex::Real dia_part = attribs[SPI.pstateDia].data()[pid];
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    Y_part[spf] = attribs[SPI.pstateY + spf].data()[pid];
-  }
-#else
   amrex::RealVect vel_part(AMREX_D_DECL(
     p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
     p.rdata(SPI.pstateVel + 2)));
@@ -260,7 +246,6 @@ calculateSpraySource(
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_part[spf] = p.rdata(SPI.pstateY + spf);
   }
-#endif
   amrex::Real dt = flow_dt;
   int isub = 1;
   int nsub = 1;
@@ -504,16 +489,6 @@ calculateSpraySource(
     gpv.fluid_Y_dot[spf] = midot;
     gpv.fluid_eng_src += midot * h_part[fspec];
   }
-#ifdef USE_SPRAY_SOA
-  AMREX_D_TERM(attribs[SPI.pstateVel].data()[pid] = vel_part[0];
-               , attribs[SPI.pstateVel + 1].data()[pid] = vel_part[1];
-               , attribs[SPI.pstateVel + 2].data()[pid] = vel_part[2];);
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    attribs[SPI.pstateY + spf].data()[pid] = Y_part[spf];
-  }
-  attribs[SPI.pstateT].data()[pid] = T_part;
-  attribs[SPI.pstateDia].data()[pid] = dia_part;
-#else
   AMREX_D_TERM(p.rdata(SPI.pstateVel) = vel_part[0];
                , p.rdata(SPI.pstateVel + 1) = vel_part[1];
                , p.rdata(SPI.pstateVel + 2) = vel_part[2];);
@@ -522,7 +497,6 @@ calculateSpraySource(
   }
   p.rdata(SPI.pstateT) = T_part;
   p.rdata(SPI.pstateDia) = dia_part;
-#endif
 }
 
 #endif

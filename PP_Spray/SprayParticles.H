@@ -17,33 +17,15 @@
 #include "prob_parm.H"
 #endif
 
-#ifdef USE_SPRAY_SOA
-#define NSR_SPR 0
-#define NSI_SPR 0
-#define NAR_SPR AMREX_SPACEDIM + 2 + SPRAY_FUEL_NUM
-#define NAI_SPR 0
-#else
 #define NSR_SPR AMREX_SPACEDIM + 2 + SPRAY_FUEL_NUM
 #define NSI_SPR 0
 #define NAR_SPR 0
 #define NAI_SPR 0
-#endif
 
 class MyParIter : public amrex::ParIter<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>
 {
 public:
   using amrex::ParIter<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>::ParIter;
-#ifdef USE_SPRAY_SOA
-  std::array<RealVector, NAR_SPR>& GetAttribs()
-  {
-    return GetStructOfArrays().GetRealData();
-  }
-
-  RealVector& GetAttribs(int comp)
-  {
-    return GetStructOfArrays().GetRealData(comp);
-  }
-#endif
 };
 
 class MyParConstIter
@@ -51,17 +33,6 @@ class MyParConstIter
 {
 public:
   using amrex::ParConstIter<NSR_SPR, NSI_SPR, NAR_SPR, NSI_SPR>::ParConstIter;
-#ifdef USE_SPRAY_SOA
-  const std::array<RealVector, NAR_SPR>& GetAttribs() const
-  {
-    return GetStructOfArrays().GetRealData();
-  }
-
-  const RealVector& GetAttribs(int comp) const
-  {
-    return GetStructOfArrays().GetRealData(comp);
-  }
-#endif
 };
 
 class SprayParticleContainer

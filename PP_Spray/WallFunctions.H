@@ -45,10 +45,6 @@ calculateWallFilmSource(
   const SprayComps& SPI,
   const SprayData& fdat,
   SprayParticleContainer::ParticleType& p,
-#ifdef USE_SPRAY_SOA
-  const std::array<SprayParticleContainer::SoA::amrex::RealVector, NAR_SPR>& attribs,
-  const int pid,
-#endif
   const amrex::Real T_wall,
   const amrex::Real /*face_area*/,
   const amrex::Real diff_cent,
@@ -81,21 +77,12 @@ calculateWallFilmSource(
   // Note: the diameter is set assuming a sphere
   // of the same volume as the film
   // and temperature is set to a negative value
-#ifdef USE_SPRAY_SOA
-  amrex::Real T_film = -attribs[SPI.pstateT].data()[pid];
-  amrex::Real vol = attribs[SPI.pstateVol].data()[pid];
-  amrex::Real ht_film = attribs[SPI.pstateHt].data()[pid];
-  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-    Y_film[spf] = attribs[SPI.pstateY + spf].data()[pid];
-  }
-#else
   amrex::Real T_film = -p.rdata(SPI.pstateT);
   amrex::Real vol = p.rdata(SPI.pstateVol);
   amrex::Real ht_film = p.rdata(SPI.pstateHt);
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
     Y_film[spf] = p.rdata(SPI.pstateY + spf);
   }
-#endif
   calcBoilT(fdat, gpv, cBoilT.data());
   // TODO: Add model for when T > T_boil
   amrex::Real T_i = gpv.T_fluid;

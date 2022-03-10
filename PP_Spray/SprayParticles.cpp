@@ -58,7 +58,6 @@ SprayParticleContainer::readSprayParams(
   std::string& init_file,
   SprayData& sprayData,
   std::string* sprayFuelNames)
-//  Vector<std::string>& sprayFuelNames)
 {
   amrex::ParmParse pp("particles");
   //
@@ -88,7 +87,6 @@ SprayParticleContainer::readSprayParams(
   std::vector<Real> mu(nfuel, 0.);
   std::vector<Real> lambda(nfuel, 0.);
   {
-    //sprayFuelNames.assign(nfuel, "");
     pp.getarr("fuel_species", fuel_names);
     pp.getarr("fuel_crit_temp", crit_T);
     pp.getarr("fuel_boil_temp", boil_T);
@@ -259,28 +257,15 @@ SprayParticleContainer::estTimestep(int level, Real cfl) const
       const AoS& pbox = pti.GetArrayOfStructs();
       const ParticleType* pstruct = pbox().data();
       const Long n = pbox.numParticles();
-#ifdef USE_SPRAY_SOA
-      auto& attribs = pti.GetAttribs();
-      AMREX_D_TERM(const Real* up = attribs[0].data();
-                   , const Real* vp = attribs[1].data();
-                   , const Real* wp = attribs[2].data(););
-#endif
       reduce_op.eval(
         n, reduce_data, [=] AMREX_GPU_DEVICE(const Long i) -> ReduceTuple {
           const ParticleType& p = pstruct[i];
           // TODO: This assumes that pstateVel = 0 and dxi[0] = dxi[1] =
           // dxi[2]
           if (p.id() > 0) {
-#ifdef USE_SPRAY_SOA
-            const Real max_mag_vdx =
-              amrex::max(AMREX_D_DECL(
-                std::abs(up[i]), std::abs(vp[i]), std::abs(wp[i]))) *
-              dxi[0];
-#else
           const Real max_mag_vdx = amrex::max(AMREX_D_DECL(std::abs(p.rdata(0)),
                                                            std::abs(p.rdata(1)),
                                                            std::abs(p.rdata(2))))*dxi[0];
-#endif
             Real dt_part = (max_mag_vdx > 0.) ? (cfl / max_mag_vdx) : 1.E50;
             return dt_part;
           }
@@ -372,10 +357,6 @@ SprayParticleContainer::updateParticles(
     bool at_bounds = tile_at_bndry(tile_box, bndry_lo, bndry_hi, domain);
     const Long Np = pti.numParticles();
     ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
-#ifdef USE_SPRAY_SOA
-    // Get particle attributes if StructOfArrays are used
-    auto& attribs = pti.GetAttribs();
-#endif
     const SprayData* fdat = d_sprayData;
     Array4<const Real> const& statearr = state.array(pti);
     Array4<Real> const& sourcearr = source.array(pti);
@@ -417,10 +398,6 @@ SprayParticleContainer::updateParticles(
 #ifdef AMREX_DEBUG
            ,
            src_box
-#endif
-#ifdef USE_SPRAY_SOA
-           ,
-           attribs
 #endif
 #ifdef AMREX_USE_EB
            ,
@@ -557,27 +534,17 @@ SprayParticleContainer::updateParticles(
           if (!is_wall_film) {
             calculateSpraySource(
               flow_dt, gpv, SPI, *fdat, p,
-#ifdef USE_SPRAY_SOA
-              attribs, pid,
-#endif
               ltransparm);
             // Modify particle position by whole time step
             if (do_move && SPI.mom_tran) {
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-#ifdef USE_SPRAY_SOA
-                const Real cvel = attribs[SPI.pstateVel + dir].data()[pid];
-#else
                 const Real cvel = p.rdata(SPI.pstateVel + dir);
-#endif
                 Gpu::Atomic::Add(&p.pos(dir), flow_dt * cvel);
               }
             }
           } else {
             calculateWallFilmSource(
               flow_dt, gpv, SPI, *fdat, p,
-#ifdef USE_SPRAY_SOA
-              attribs, pid,
-#endif
               wallT, face_area, diff_cent, ltransparm);
           }
           for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
