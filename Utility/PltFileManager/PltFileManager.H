@@ -7,12 +7,13 @@
 
 namespace pele {
 namespace physics {
+namespace pltfilemanager {
 
 class PltFileManager 
 {
 public:
 
-  void init(const std::string &a_pltFile);
+  PltFileManager(const std::string &a_pltFile);
 
   void readGenericPlotfileHeader(const std::string &a_pltFileHeader);
 
@@ -41,6 +42,7 @@ protected:
   amrex::Vector<amrex::MultiFab> m_data;
 };
 
+} // namespace pltfilemanager
 } // namespace physics
 } // namespace pele
 #endif

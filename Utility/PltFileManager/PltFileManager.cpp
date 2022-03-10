@@ -8,6 +8,7 @@ using namespace amrex;
 
 namespace pele {
 namespace physics {
+namespace pltfilemanager {
 
 namespace { const std::string level_prefix{"Level_"}; }
 
@@ -17,8 +18,7 @@ void GotoNextLine(std::istream& is)
            is.ignore(bl_ignore_max, '\n');
 }
 
-void
-PltFileManager::init(const std::string &a_pltFile)
+PltFileManager::PltFileManager(const std::string &a_pltFile)
 {
   m_pltFile = a_pltFile;
 
@@ -328,5 +328,6 @@ PltFileManager::fillPatchFromPlt(int a_lev, const Geometry &a_level_geom, int pl
     }
 }
 
+} // namespace pltfilemanager
 } // namespace physics
 } // namespace pele
