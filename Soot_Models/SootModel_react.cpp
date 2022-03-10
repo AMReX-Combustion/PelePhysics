@@ -4,8 +4,8 @@
 #include <AMReX_Print.H>
 #include <AMReX_Vector.H>
 
-// PeleC-Physics include statements
-#include <EOS.H>
+// PelePhysics include statements
+//#include <EOS.H>
 
 // PeleC-MP include statements
 #include <SootModel.H>

@@ -6,8 +6,6 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_GpuMemory.H>
 
-using namespace amrex;
-
 // Spray flags and indices
 struct SprayComps
 {
@@ -40,23 +38,23 @@ struct SprayUnits
 {
 #ifdef SPRAY_PELE_LM
   // For converting CGS to MKS
-  Real ru_conv = 1.E-7;
-  Real eng_conv = 1.E-4;
-  Real rho_conv = 1.E3;
-  Real mass_conv = 1.E-3;
-  Real rhod_conv = 0.1; // rho D conversion
-  Real mu_conv = 0.1;
-  Real lambda_conv = 1.E-5;
-  Real pres_conv = 0.1;
+  amrex::Real ru_conv = 1.E-7;
+  amrex::Real eng_conv = 1.E-4;
+  amrex::Real rho_conv = 1.E3;
+  amrex::Real mass_conv = 1.E-3;
+  amrex::Real rhod_conv = 0.1; // rho D conversion
+  amrex::Real mu_conv = 0.1;
+  amrex::Real lambda_conv = 1.E-5;
+  amrex::Real pres_conv = 0.1;
 #else
-  Real ru_conv = 1.;
-  Real eng_conv = 1.;
-  Real rho_conv = 1.;
-  Real mass_conv = 1.;
-  Real rhod_conv = 1.;
-  Real mu_conv = 1.;
-  Real lambda_conv = 1.;
-  Real pres_conv = 1.;
+  amrex::Real ru_conv = 1.;
+  amrex::Real eng_conv = 1.;
+  amrex::Real rho_conv = 1.;
+  amrex::Real mass_conv = 1.;
+  amrex::Real rhod_conv = 1.;
+  amrex::Real mu_conv = 1.;
+  amrex::Real lambda_conv = 1.;
+  amrex::Real pres_conv = 1.;
 #endif
 };
 
@@ -64,44 +62,44 @@ struct SprayUnits
 // droplets that form during impingement
 struct SprayRefl
 {
-  Real Unorm;
-  Real dt_pp; // Time remaining to convect reflected drops
-  Real dia_refl;
+  amrex::Real Unorm;
+  amrex::Real dt_pp; // Time remaining to convect reflected drops
+  amrex::Real dia_refl;
   int Ns_refl = 0;
-  GpuArray<Real, SPRAY_FUEL_NUM> Y_refl;
-  RealVect pos_refl;
-  RealVect norm;    // Normal to surface
-  RealVect tanBeta; // Tangent vector along particle path
-  RealVect tanPsi;  // Tangent normal to particle path
-  Real omega;       // Used to compute the deviation angle for particle
-  Real expomega;
-  Real beta_mean; // Mean ejection angle in degrees
-  Real beta_stdv; // Standard dev ejection angle in degrees
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_refl;
+  amrex::RealVect pos_refl;
+  amrex::RealVect norm;    // Normal to surface
+  amrex::RealVect tanBeta; // Tangent vector along particle path
+  amrex::RealVect tanPsi;  // Tangent normal to particle path
+  amrex::Real omega;       // Used to compute the deviation angle for particle
+  amrex::Real expomega;
+  amrex::Real beta_mean; // Mean ejection angle in degrees
+  amrex::Real beta_stdv; // Standard dev ejection angle in degrees
 };
 
 // Structure that contains the interpolated gas phase state
 // and gas phase source values
 struct GasPhaseVals
 {
-  RealVect vel_fluid;
-  Real T_fluid;
-  Real rho_fluid;
-  Real p_fluid;
-  GpuArray<Real, NUM_SPECIES> Y_fluid;
-  GpuArray<Real, NUM_SPECIES> X_fluid;
-  Real mw_mix;
-  GpuArray<Real, NUM_SPECIES> mw_fluid;
-  GpuArray<Real, NUM_SPECIES> invmw;
-  RealVect fluid_mom_src;
-  Real fluid_mass_src;
-  GpuArray<Real, SPRAY_FUEL_NUM> fluid_Y_dot;
-  Real fluid_eng_src;
+  amrex::RealVect vel_fluid;
+  amrex::Real T_fluid;
+  amrex::Real rho_fluid;
+  amrex::Real p_fluid;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> Y_fluid;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> X_fluid;
+  amrex::Real mw_mix;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> mw_fluid;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> invmw;
+  amrex::RealVect fluid_mom_src;
+  amrex::Real fluid_mass_src;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> fluid_Y_dot;
+  amrex::Real fluid_eng_src;
 
   AMREX_GPU_DEVICE AMREX_FORCE_INLINE GasPhaseVals()
-    : vel_fluid(RealVect::TheZeroVector()),
+    : vel_fluid(amrex::RealVect::TheZeroVector()),
       T_fluid(0.),
       rho_fluid(0.),
-      fluid_mom_src(RealVect::TheZeroVector()),
+      fluid_mom_src(amrex::RealVect::TheZeroVector()),
       fluid_mass_src(0.),
       fluid_eng_src(0.)
   {
@@ -132,20 +130,20 @@ struct GasPhaseVals
 // Structure containing values for the liquid sprays
 struct SprayData
 {
-  Real num_ppp; // Parcel size
-  Real ref_T;
-  Real sigma; // Surface tension
-  GpuArray<Real, SPRAY_FUEL_NUM> critT;
-  GpuArray<Real, SPRAY_FUEL_NUM> boilT;
-  GpuArray<Real, SPRAY_FUEL_NUM> cp;
-  GpuArray<Real, SPRAY_FUEL_NUM> latent;
-  GpuArray<Real, SPRAY_FUEL_NUM> ref_latent;
-  GpuArray<Real, SPRAY_FUEL_NUM> rho;
-  GpuArray<Real, SPRAY_FUEL_NUM> mu;
-  GpuArray<Real, SPRAY_FUEL_NUM> lambda;
+  amrex::Real num_ppp; // Parcel size
+  amrex::Real ref_T;
+  amrex::Real sigma; // Surface tension
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> critT;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> boilT;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> cp;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> latent;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> ref_latent;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> rho;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mu;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> lambda;
   // 3 coefficients for Antoine equation and conversion to appropriate units
-  GpuArray<Real, SPRAY_FUEL_NUM * 4> psat_coef;
-  GpuArray<int, SPRAY_FUEL_NUM> indx;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM * 4> psat_coef;
+  amrex::GpuArray<int, SPRAY_FUEL_NUM> indx;
 
   void build(const SprayData& fdat)
   {

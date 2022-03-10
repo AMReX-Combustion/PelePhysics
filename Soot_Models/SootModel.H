@@ -49,24 +49,24 @@ public:
   //
   // Define member data
   //
-  void defineMemberData(const Real dimerVol);
+  void defineMemberData(const amrex::Real dimerVol);
 
   //
   // Compute HMOM source term
   //
   void computeSootSourceTerm(
-    const Box& vbox,
-    Array4<const Real> const& Qstate,
-    Array4<const Real> const& coeff_mu,
-    Array4<Real> const& soot_state,
-    const Real time,
-    const Real dt,
+    const amrex::Box& vbox,
+    amrex::Array4<const amrex::Real> const& Qstate,
+    amrex::Array4<const amrex::Real> const& coeff_mu,
+    amrex::Array4<amrex::Real> const& soot_state,
+    const amrex::Real time,
+    const amrex::Real dt,
     const bool pres_term = true) const;
 
   //
   // Estimate the soot time step
   //
-  Real estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const;
+  amrex::Real estSootDt(const amrex::Box& vbox, amrex::Array4<const amrex::Real> const& Qstate) const;
 
   //
   // Access gas phase species name
@@ -143,15 +143,15 @@ public:
   std::string m_inceptPAH;
   /// Name of PAH used for inception
   std::string m_PAHname;
-  Real m_gammaStick;
+  amrex::Real m_gammaStick;
 
   // Name of soot variables to output (moments and weight of delta function)
-  Vector<std::string> m_sootVarName;
+  amrex::Vector<std::string> m_sootVarName;
 
   // Maximum allowable concentration for adjusting time step
-  Real m_Xcutoff;
+  amrex::Real m_Xcutoff;
   // Temperature cutoff, any temparatures below this will not be solved
-  Real m_Tcutoff;
+  amrex::Real m_Tcutoff;
   // Maximum possible subcycles
   int m_maxSubcycles;
   // Number of subcycles to use during source calculations
@@ -164,7 +164,7 @@ public:
   /// Bool to ensure reaction data has been read and filled
   bool m_reactDataFilled;
   /// Number and names of species for surface reactions
-  Vector<std::string> m_gasSpecNames;
+  amrex::Vector<std::string> m_gasSpecNames;
 
   /************************************************************************
     Factor member data (to reduce computational costs)
@@ -172,8 +172,8 @@ public:
 
   /// Frequently used constants
   /// Factors for beta
-  Real m_betaDimerFact;
-  Real m_betaNuclFact;
+  amrex::Real m_betaDimerFact;
+  amrex::Real m_betaNuclFact;
 };
 
 #endif

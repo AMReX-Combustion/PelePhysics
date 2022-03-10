@@ -21,6 +21,8 @@
 // PeleMP include statements
 #include "SootModel.H"
 
+using namespace amrex;
+
 // Default constructor
 SootModel::SootModel()
   : m_sootVerbosity(0),
