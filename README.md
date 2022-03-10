@@ -25,10 +25,10 @@ AMREX ([Repo](https://github.com/AMReX-Codes/amrex)) : 76d08651adb987e3fba6b232e
     - Incorporate HR into unit test
     - Test 1D PMF: phi=[0.6-1.5], p=25atm, T0=600K. Compare to "Direct numerical simulation of a temporally evolving air/n-dodecane jet at low-temperature diesel-relevant conditions" CNF, 2018
         - Compare cantera skeletal and PeleC skeletal
-	- Compare PeleC skeletal and PeleC QSS (all three methods) 
+        - Compare PeleC skeletal and PeleC QSS (all three methods) 
     - Test 1D PMF: phi=[0.6-1.5], p=50atm, T0=600K. Compare to "Direct numerical simulation of a temporally evolving air/n-dodecane jet at low-temperature diesel-relevant conditions" CNF, 2018
         - Compare cantera skeletal and PeleC skeletal
-	- Compare PeleC skeletal and PeleC QSS (all three methods) 
+        - Compare PeleC skeletal and PeleC QSS (all three methods) 
     - Incorporate 1D PMF test into unit test
 
 
