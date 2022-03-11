@@ -14,12 +14,16 @@ CKNCF(int* /*ncf*/)
 }
 
 void
-CKSYME_STR(amrex::Vector<std::string>& /*ename*/)
+CKSYME_STR(amrex::Vector<std::string>& ename)
 {
+    ename.resize(1);
+    ename[0] = "Null";
 }
 void
-CKSYMS_STR(amrex::Vector<std::string>& /*kname*/)
+CKSYMS_STR(amrex::Vector<std::string>& kname)
 {
+    kname.resize(1);
+    kname[0] = "Null";
 }
 
 // compute sparsity pattern of the chemistry Jacobian
