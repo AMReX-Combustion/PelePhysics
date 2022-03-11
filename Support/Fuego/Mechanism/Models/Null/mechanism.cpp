@@ -17,13 +17,13 @@ void
 CKSYME_STR(amrex::Vector<std::string>& ename)
 {
     ename.resize(1);
-    ename[0] = "Null";
+    ename[0] = "XO";
 }
 void
 CKSYMS_STR(amrex::Vector<std::string>& kname)
 {
     kname.resize(1);
-    kname[0] = "Null";
+    kname[0] = "XO";
 }
 
 // compute sparsity pattern of the chemistry Jacobian
