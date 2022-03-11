@@ -34,7 +34,6 @@ struct TurbInflow
 {
 public:
   TurbInflow() = default;
-  ;
 
   ~TurbInflow() = default;
 
