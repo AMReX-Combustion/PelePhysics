@@ -305,9 +305,9 @@ template <typename TransportType>
 class TransportParams
 {
 public:
-  TransportParams() {}
+  TransportParams() = default;
 
-  ~TransportParams() {}
+  ~TransportParams() = default;
 
   void allocate()
   {
