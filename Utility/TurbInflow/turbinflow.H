@@ -33,7 +33,7 @@ struct TurbParm
 struct TurbInflow
 {
 public:
-  TurbInflow(){};
+  TurbInflow() = default;
 
   ~TurbInflow() = default;
 
