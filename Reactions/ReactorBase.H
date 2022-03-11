@@ -91,7 +91,7 @@ public:
     const amrex::Real absTol,
     const std::string solvername);
 
-  virtual ~ReactorBase() = default;
+  ~ReactorBase() override = default;
 
 protected:
   amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
