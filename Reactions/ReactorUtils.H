@@ -104,7 +104,7 @@ box_flatten(
     mass_frac[n] = rhoYn;
   }
   const amrex::Real rho_inv = 1.0 / rho;
-  for (double& n : mass_frac) {
+  for (amrex::Real& n : mass_frac) {
     n *= rho_inv;
   }
 
@@ -152,7 +152,7 @@ box_unflatten(
     mass_frac[n] = rhoYn;
   }
   const amrex::Real rho_inv = 1.0 / rho;
-  for (double& n : mass_frac) {
+  for (amrex::Real& n : mass_frac) {
     n *= rho_inv;
   }
 
