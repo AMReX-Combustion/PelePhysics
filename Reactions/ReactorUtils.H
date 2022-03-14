@@ -104,8 +104,8 @@ box_flatten(
     mass_frac[n] = rhoYn;
   }
   const amrex::Real rho_inv = 1.0 / rho;
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    mass_frac[n] *= rho_inv;
+  for (double& n : mass_frac) {
+    n *= rho_inv;
   }
 
   amrex::Real temp = temperature(i, j, k, 0);
@@ -152,8 +152,8 @@ box_unflatten(
     mass_frac[n] = rhoYn;
   }
   const amrex::Real rho_inv = 1.0 / rho;
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    mass_frac[n] *= rho_inv;
+  for (double& n : mass_frac) {
+    n *= rho_inv;
   }
 
   amrex::Real temp = y_vect[vec_index<OrderType>(NUM_SPECIES, icell, ncells)];
