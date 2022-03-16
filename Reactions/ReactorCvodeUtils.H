@@ -94,7 +94,7 @@ struct CVODEUserData
 namespace cvode {
 
 #ifdef AMREX_USE_GPU
-enum linSolveType { sparseDirect, customDirect, magmaDirect, GMRES, precGMRES };
+enum linSolveType { fixedPoint, sparseDirect, customDirect, magmaDirect, GMRES, precGMRES };
 enum precondType { sparseSimpleAJac };
 #else
 enum linSolveType {

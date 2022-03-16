@@ -1,4 +1,5 @@
 #include "ReactorCvode.H"
+#include <sunnonlinsol/sunnonlinsol_fixedpoint.h>
 
 #include <iostream>
 
@@ -73,7 +74,18 @@ ReactorCvode::init(int reactor_type, int ncells)
     relTol, absTol, "cvode");
 
   // Linear solver data
-  if (
+  if (udata_g->solve_type == cvode::fixedPoint) {
+    NLS = SUNNonlinSol_FixedPoint(y, 0, *amrex::sundials::The_Sundials_Context());
+    if (utils::check_flag((void*)NLS, "SUNNonlinSol_FixedPoint", 0)) {
+      return (1);
+    }
+
+    flag = CVodeSetNonlinearSolver(cvode_mem, NLS);
+    if (utils::check_flag(&flag, "CVodeSetNonlinearSolver", 1)) {
+      return (1);
+    }
+
+  } else if (
     udata_g->solve_type == cvode::denseFDDirect ||
     udata_g->solve_type == cvode::denseDirect) {
     // Create dense SUNMatrix for use in linear solves
@@ -289,7 +301,13 @@ ReactorCvode::checkCvodeOptions() const
   int precond_type = -1;
 
 #ifdef AMREX_USE_GPU
-  if (solve_type_str == "sparse_direct") {
+  if (solve_type_str == "fixed_point") {
+    solve_type = cvode::fixedPoint;
+    analytical_jacobian = 0;
+    if (verbose > 0)
+      amrex::Print()
+        << " Using a fixed-point nonlinear solver\n";
+  } else if (solve_type_str == "sparse_direct") {
     solve_type = cvode::sparseDirect;
     analytical_jacobian = 1;
 #ifdef AMREX_USE_CUDA
@@ -346,7 +364,7 @@ ReactorCvode::checkCvodeOptions() const
   } else {
     amrex::Abort(
       "Wrong solve_type. Options are: 'sparse_direct', 'custom_direct', "
-      "'GMRES', 'precGMRES'");
+      "'GMRES', 'precGMRES', 'fixed_point'");
   }
 
 #else
@@ -700,7 +718,10 @@ ReactorCvode::allocUserData(
   udata->precond_type = -1;
 
 #ifdef AMREX_USE_GPU
-  if (solve_type_str == "sparse_direct") {
+  if (solve_type_str == "fixed_point") {
+    udata->solve_type = cvode::fixedPoint;
+    udata->analytical_jacobian = 0;
+  } else if (solve_type_str == "sparse_direct") {
     udata->solve_type = cvode::sparseDirect;
     udata->analytical_jacobian = 1;
   } else if (solve_type_str == "custom_direct") {
@@ -725,7 +746,7 @@ ReactorCvode::allocUserData(
   } else {
     amrex::Abort(
       "Wrong solve_type. Options are: 'sparse_direct', 'custom_direct', "
-      "'GMRES', 'precGMRES'");
+      "'GMRES', 'precGMRES', 'fixed_point'");
   }
 
 #else
@@ -1172,8 +1193,20 @@ ReactorCvode::react(
     relTol, absTol, "cvode");
 
   // Linear solver data
+  SUNNonlinearSolver NLS = NULL;
   SUNLinearSolver LS = NULL;
-  if (user_data->solve_type == cvode::sparseDirect) {
+  if (user_data->solve_type == cvode::fixedPoint) {
+    NLS = SUNNonlinSol_FixedPoint(y, 5, *amrex::sundials::The_Sundials_Context());
+    if (utils::check_flag((void*)NLS, "SUNNonlinSol_FixedPoint", 0)) {
+      return (1);
+    }
+
+    flag = CVodeSetNonlinearSolver(cvode_mem, NLS);
+    if (utils::check_flag(&flag, "CVodeSetNonlinearSolver", 1)) {
+      return (1);
+    }
+
+  } else if (user_data->solve_type == cvode::sparseDirect) {
 #if defined(AMREX_USE_CUDA)
     LS = SUNLinSol_cuSolverSp_batchQR(
       y, A, user_data->cusolverHandle,
@@ -1291,14 +1324,18 @@ ReactorCvode::react(
     user_data->rhoe_init, d_nfe, dt_react);
 
   if (user_data->verbose > 1) {
-    print_final_stats(cvode_mem);
+    print_final_stats(cvode_mem, LS != nullptr);
   }
 
   // Clean up
   N_VDestroy(y);
   CVodeFree(&cvode_mem);
-
-  SUNLinSolFree(LS);
+  if (LS != nullptr) {
+    SUNLinSolFree(LS);
+  }
+  if (NLS != nullptr) {
+    SUNNonlinSolFree(NLS);
+  }
   if (A != nullptr) {
     SUNMatDestroy(A);
   }
@@ -1343,7 +1380,7 @@ ReactorCvode::react(
 
         if ((udata_g->verbose > 1) && (omp_thread == 0)) {
           amrex::Print() << "Additional verbose info --\n";
-          print_final_stats(cvode_mem);
+          print_final_stats(cvode_mem, LS != nullptr);
           amrex::Print() << "\n -------------------------------------\n";
         }
 
@@ -1588,7 +1625,7 @@ ReactorCvode::react(
   long int nfe;
   flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
   if (user_data->verbose > 1) {
-    print_final_stats(cvode_mem);
+    print_final_stats(cvode_mem, LS != nullptr);
   }
 
   // Clean up
@@ -1653,7 +1690,7 @@ ReactorCvode::react(
 
   if ((udata_g->verbose > 1) && (omp_thread == 0)) {
     amrex::Print() << "Additional verbose info --\n";
-    print_final_stats(cvode_mem);
+    print_final_stats(cvode_mem, LS != nullptr);
     amrex::Print() << "\n -------------------------------------\n";
   }
 
@@ -1827,7 +1864,7 @@ ReactorCvode::close()
 }
 
 void
-ReactorCvode::print_final_stats(void* cvodemem)
+ReactorCvode::print_final_stats(void* cvodemem, bool print_ls_stats)
 {
   long int nst, nfe, nsetups, nni, ncfn, netf, nje;
   long int nli, npe, nps, ncfl, nfeLS;
@@ -1845,22 +1882,24 @@ ReactorCvode::print_final_stats(void* cvodemem)
   utils::check_flag(&flag, "CVodeGetNumNonlinSolvIters", 1);
   flag = CVodeGetNumNonlinSolvConvFails(cvodemem, &ncfn);
   utils::check_flag(&flag, "CVodeGetNumNonlinSolvConvFails", 1);
-  // Linear solver stats
-  flag = CVodeGetNumLinSolvSetups(cvodemem, &nsetups);
-  utils::check_flag(&flag, "CVodeGetNumLinSolvSetups", 1);
-  flag = CVodeGetNumJacEvals(cvodemem, &nje);
-  utils::check_flag(&flag, "CVodeGetNumJacEvals", 1);
-  flag = CVodeGetNumLinIters(cvodemem, &nli);
-  utils::check_flag(&flag, "CVodeGetNumLinIters", 1);
-  flag = CVodeGetNumLinConvFails(cvodemem, &ncfl);
-  utils::check_flag(&flag, "CVodeGetNumLinConvFails", 1);
-  flag = CVodeGetNumLinRhsEvals(cvodemem, &nfeLS);
-  utils::check_flag(&flag, "CVodeGetNumLinRhsEvals", 1);
-  // Preconditioner stats
-  flag = CVodeGetNumPrecEvals(cvodemem, &npe);
-  utils::check_flag(&flag, "CVodeGetNumPrecEvals", 1);
-  flag = CVodeGetNumPrecSolves(cvodemem, &nps);
-  utils::check_flag(&flag, "CVodeGetNumPrecSolves", 1);
+  if (print_ls_stats) {
+    // Linear solver stats
+    flag = CVodeGetNumLinSolvSetups(cvodemem, &nsetups);
+    utils::check_flag(&flag, "CVodeGetNumLinSolvSetups", 1);
+    flag = CVodeGetNumJacEvals(cvodemem, &nje);
+    utils::check_flag(&flag, "CVodeGetNumJacEvals", 1);
+    flag = CVodeGetNumLinIters(cvodemem, &nli);
+    utils::check_flag(&flag, "CVodeGetNumLinIters", 1);
+    flag = CVodeGetNumLinConvFails(cvodemem, &ncfl);
+    utils::check_flag(&flag, "CVodeGetNumLinConvFails", 1);
+    flag = CVodeGetNumLinRhsEvals(cvodemem, &nfeLS);
+    utils::check_flag(&flag, "CVodeGetNumLinRhsEvals", 1);
+    // Preconditioner stats
+    flag = CVodeGetNumPrecEvals(cvodemem, &npe);
+    utils::check_flag(&flag, "CVodeGetNumPrecEvals", 1);
+    flag = CVodeGetNumPrecSolves(cvodemem, &nps);
+    utils::check_flag(&flag, "CVodeGetNumPrecSolves", 1);
+  }
 
 #ifdef AMREX_USE_OMP
   amrex::Print() << "\nFinal Statistics: "

@@ -62,7 +62,8 @@ public:
 
   void close() override;
 
-  void print_final_stats(void* cvodemem) override;
+  void print_final_stats(void* cvodemem, bool print_ls_stats);
+  void print_final_stats(void* cvodemem) override { print_final_stats(cvodemem, true); }
 
   int react(
     const amrex::Box& box,
@@ -160,6 +161,7 @@ private:
 #ifndef AMREX_USE_GPU
   N_Vector y = nullptr;
   SUNLinearSolver LS = nullptr;
+  SUNLinearSolver NLS = nullptr;
   SUNMatrix A = nullptr;
   void* cvode_mem = nullptr;
   CVODEUserData* udata_g = nullptr;
