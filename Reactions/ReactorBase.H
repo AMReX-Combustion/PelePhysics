@@ -15,7 +15,7 @@ namespace reactions {
 class ReactorBase : public Factory<ReactorBase>
 {
 public:
-  static const std::string base_identifier() { return "ReactorBase"; }
+  static std::string base_identifier() { return "ReactorBase"; }
 
   virtual int init(int reactor_type, int ncells) = 0;
 
