@@ -49,6 +49,63 @@ check_flag(void* flagvalue, const char* funcname, int opt)
 
   return (0);
 }
+
+#ifdef AMREX_USE_GPU
+N_Vector
+setNVectorGPU(int nvsize, int atomic_reductions, amrex::gpuStream_t stream)
+{
+#if defined(AMREX_USE_CUDA)
+  N_Vector y = N_VNewWithMemHelp_Cuda(
+    nvsize, false, *amrex::sundials::The_SUNMemory_Helper(),
+    *amrex::sundials::The_Sundials_Context());
+  if (check_flag((void*)y, "N_VNewWithMemHelp_Cuda", 0)) {
+    amrex::Abort("Unable to create NVector Cuda");
+  }
+  SUNCudaExecPolicy* stream_exec_policy =
+    new SUNCudaThreadDirectExecPolicy(256, stream);
+  SUNCudaExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+  }
+  N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
+#elif defined(AMREX_USE_HIP)
+  N_Vector y = N_VNewWithMemHelp_Hip(
+    nvsize, false, *amrex::sundials::The_SUNMemory_Helper(),
+    *amrex::sundials::The_Sundials_Context());
+  if (check_flag((void*)y, "N_VNewWithMemHelp_Hip", 0)) {
+    amrex::Abort("Unable to create NVector Hip");
+  }
+  SUNHipExecPolicy* stream_exec_policy =
+    new SUNHipThreadDirectExecPolicy(256, stream);
+  SUNHipExecPolicy* reduce_exec_policy;
+  if (atomic_reductions) {
+    reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
+  } else {
+    reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
+  }
+  N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
+#elif defined(AMREX_USE_DPCPP)
+  N_Vector y = N_VNewWithMemHelp_Sycl(
+    nvsize, false, *amrex::sundials::The_SUNMemory_Helper(),
+    &amrex::Gpu::Device::streamQueue(),
+    *amrex::sundials::The_Sundials_Context());
+  if (check_flag((void*)y, "N_VNewWithMemHelp_Sycl", 0)) {
+    amrex::Abort("Unable to create NVector Sycl");
+  }
+  SUNSyclExecPolicy* stream_exec_policy =
+    new SUNSyclThreadDirectExecPolicy(256);
+  SUNSyclExecPolicy* reduce_exec_policy =
+    new SUNSyclBlockReduceExecPolicy(256, 0);
+  N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
+#endif
+  return y;
+
+  delete stream_exec_policy;
+  delete reduce_exec_policy;
+}
+#endif
 } // namespace utils
 } // namespace reactions
 } // namespace physics

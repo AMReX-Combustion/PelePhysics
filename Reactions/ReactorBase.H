@@ -15,7 +15,7 @@ namespace reactions {
 class ReactorBase : public Factory<ReactorBase>
 {
 public:
-  static const std::string base_identifier() { return "ReactorBase"; }
+  static std::string base_identifier() { return "ReactorBase"; }
 
   virtual int init(int reactor_type, int ncells) = 0;
 
@@ -91,7 +91,7 @@ public:
     const amrex::Real absTol,
     const std::string solvername);
 
-  virtual ~ReactorBase() = default;
+  ~ReactorBase() override = default;
 
 protected:
   amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};

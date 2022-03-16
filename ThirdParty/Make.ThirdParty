@@ -7,7 +7,7 @@ ifeq ($(USE_CUDA),TRUE)
 else
   HOSTCC = $(COMP)
 endif
-configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; make tp_suffix AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_HIP=$(USE_HIP) USE_DPCPP=$(USE_DPCPP) PELE_USE_KLU=$(PELE_USE_KLU) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) | tail -1)
+configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; $(MAKE) tp_suffix AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_HIP=$(USE_HIP) USE_DPCPP=$(USE_DPCPP) PELE_USE_KLU=$(PELE_USE_KLU) PELE_USE_MAGMA=$(PELE_USE_MAGMA) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) | tail -1)
 SUNDIALS_LIB_DIR  := $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib
 INCLUDE_LOCATIONS += $(SUNDIALS_LIB_DIR)/../include
 LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_cvode -lsundials_arkode
@@ -38,5 +38,20 @@ ifeq ($(PELE_USE_KLU), TRUE)
   INCLUDE_LOCATIONS+=${SUITESPARSE_DIR}/include
   ifneq ($(shell uname),Darwin)
     LIBRARIES += -Wl,-rpath=${SUITESPARSE_DIR}/lib
+  endif
+endif
+ifeq ($(PELE_USE_MAGMA), TRUE)
+  ifeq ($(USE_CUDA),FALSE)
+    ifeq ($(USE_HIP),FALSE)
+      $(error PELE_USE_MAGMA only available when using HIP or CUDA)
+    endif
+  endif
+  DEFINES   += -DPELE_USE_MAGMA
+  MAGMA_DIR := $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)
+  LIBRARIES += -L$(SUNDIALS_LIB_DIR)  -lsundials_sunmatrixmagmadense -lsundials_sunlinsolmagmadense
+  LIBRARIES += -L$(MAGMA_DIR)/lib -lmagma
+  INCLUDE_LOCATIONS += $(MAGMA_DIR)/include
+  ifneq ($(shell uname),Darwin)
+    LIBRARIES += -Wl,-rpath=${MAGMA_DIR}/lib
   endif
 endif
