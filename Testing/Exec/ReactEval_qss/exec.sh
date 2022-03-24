@@ -12,7 +12,8 @@ make COMP=llvm
 
 # Execute 0D
 #./Pele3d.llvm.ex inputs/inputsRK64
-./Pele3d.llvm.ex inputs/inputs.0d_cvode
+./Pele3d.llvm.ex inputs/inputs.0d_denseDirect
+#./Pele3d.llvm.ex inputs/inputs.0d_gmres
 
 # Compare to Cantera
 if test -f "compareCantera/canteraSim/output/CanteraReaction_dodecane.txt"; then

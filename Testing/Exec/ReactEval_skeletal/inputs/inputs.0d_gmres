@@ -1,0 +1,32 @@
+ncells = 1 1 1
+max_grid_size  = 1
+fuel_name = NC12H26
+reactFormat = Array4
+chem_integrator = "ReactorCvode"
+
+ode.dt  = 0.1
+ode.ndt = 100000
+ode.ode_ncells = 1
+ode.reactor_type  = 1 # 1=full e, 2=full h
+ode.verbose = 0
+ode.use_typ_vals = 0
+ode.rtol = 1e-10
+ode.atol = 1e-10
+
+# Select Linear solver for CVODE Newton direction
+# Options are [CPU] dense_direct / denseAJ_direct / sparse_direct / custom_direct / GMRES / precGMRES
+#             [GPU] sparse_direct / magma_direct / GMRES / precGMRES
+cvode.solve_type = GMRES
+
+# If solve_type = precGMRES -> select preconditioner
+# Options are [CPU] dense_simplified_AJacobian / sparse_simplified_AJacobian / custom_simplified_AJacobian
+              [GPU] cuSparse_simplified_AJacobian
+cvode.precond_type = dense_simplified_AJacobian
+cvode.max_order = 4
+
+ode.implicit_solve = 1
+ode.use_erkstep    = 0
+
+amrex.fpe_trap_invalid = 1
+amrex.fpe_trap_zero = 1
+amrex.fpe_trap_overflow = 1
