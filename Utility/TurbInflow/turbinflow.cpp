@@ -6,17 +6,23 @@ namespace turbinflow {
 void
 TurbInflow::init(amrex::Geometry const& geom)
 {
-  amrex::ParmParse ppr("turbinflow");
+  amrex::ParmParse ppr;
 
   int n_tp = 0;
-  ppr.query("num_inflows",n_tp);
+  n_tp = ppr.countval("turbinflows");
+  amrex::Vector<std::string> tp_list;
   if (n_tp > 0) {
     tp.resize(n_tp);
+    tp_list.resize(n_tp);
+    for (int n = 0; n < n_tp; n++) {
+      ppr.get("turbinflows",tp_list[n],n);
+      amrex::Print() << " Got " << tp_list[n] << "\n";
+    }
   }
   
   for (int n = 0; n < n_tp; n++) {
 
-    amrex::ParmParse pp("turbinflow"+std::to_string(n+1));
+    amrex::ParmParse pp("turbinflow."+tp_list[n]);
     if (pp.countval("turb_file") > 0) {
 
       // Query data
@@ -37,7 +43,7 @@ TurbInflow::init(amrex::Geometry const& geom)
       pp.query("time_offset",tp[n].time_shift);
       pp.query("turb_scale_loc", tp[n].turb_scale_loc);
       pp.query("turb_scale_vel", tp[n].turb_scale_vel);
-      amrex::Print() << "Initializing turbInflow " << n << " with file " <<  tp[n].m_turb_file
+      amrex::Print() << "Initializing turbInflow " << tp_list[n] << " with file " <<  tp[n].m_turb_file
                      << " (location coordinates in will be scaled by "
                      << tp[n].turb_scale_loc << " and velocity out to be scaled by "
                      << tp[n].turb_scale_vel << ") \n";
