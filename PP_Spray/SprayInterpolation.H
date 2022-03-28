@@ -104,6 +104,55 @@ check_bounds(
   return false;
 }
 
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
+InterpolateGasPhase(
+  GasPhaseVals& gpv,
+  const amrex::Box& state_box,
+  amrex::Array4<const amrex::Real> const& rhoarr,
+  amrex::Array4<const amrex::Real> const& rhoYarr,
+  amrex::Array4<const amrex::Real> const& Tarr,
+  amrex::Array4<const amrex::Real> const& momarr,
+  amrex::Array4<const amrex::Real> const& engarr,
+  const amrex::IntVect* indx_array,
+  const amrex::Real* weights)
+{
+#ifndef SPRAY_PELE_LM
+  auto eos = pele::physics::PhysicsType::eos();
+#endif
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> mass_frac;
+  for (int aindx = 0.; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+    amrex::IntVect cur_indx = indx_array[aindx];
+    if (!state_box.contains(cur_indx)) {
+      amrex::Abort(
+        "SprayParticleContainer::updateParticles() -- state box too small");
+    }
+    amrex::Real cw = weights[aindx];
+    amrex::Real cur_rho = rhoarr(cur_indx);
+    gpv.rho_fluid += cw * cur_rho;
+    amrex::Real inv_rho = 1. / cur_rho;
+    for (int n = 0; n < NUM_SPECIES; ++n) {
+      amrex::Real cur_mf = rhoYarr(cur_indx, n) * inv_rho;
+      gpv.Y_fluid[n] += cw * cur_mf;
+      mass_frac[n] = cur_mf;
+    }
+#ifdef SPRAY_PELE_LM
+    inv_rho = 1.;
+#endif
+    amrex::Real ke = 0.;
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      amrex::Real vel = momarr(cur_indx, dir) * inv_rho;
+      gpv.vel_fluid[dir] += cw * vel;
+      ke += vel * vel / 2.;
+    }
+    amrex::Real T_i = Tarr(cur_indx);
+#ifndef SPRAY_PELE_LM
+    amrex::Real intEng = engarr(cur_indx) * inv_rho - ke;
+    eos.EY2T(intEng, mass_frac.data(), T_i);
+#endif
+    gpv.T_fluid += cw * T_i;
+  }
+}
+
 // Slightly modified from MFIX code
 
 /****************************************************************
@@ -350,15 +399,16 @@ get_interp_mapping(
   }
 }
 
-AMREX_GPU_HOST_DEVICE AMREX_INLINE void
-fe_interp(
+AMREX_GPU_HOST_DEVICE AMREX_INLINE bool
+eb_interp(
   const amrex::RealVect& pos,
-  const int ip,
-  const int jp,
-  const int kp,
+  const amrex::IntVect& ijkc,
+  const amrex::IntVect& ijk,
   const amrex::RealVect& dx,
   const amrex::RealVect& dxi,
   const amrex::RealVect& plo,
+  const amrex::IntVect& bflags,
+  const bool eb_in_box,
   amrex::Array4<const amrex::EBCellFlag> const& flags,
   amrex::Array4<const amrex::Real> const& ccent,
   amrex::Array4<const amrex::Real> const& bcent,
@@ -367,189 +417,219 @@ fe_interp(
   amrex::IntVect* indx_array,
   amrex::Real* weights)
 {
-
-  const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
-  AMREX_D_TERM(const amrex::Real cdist_x =
-                 pos[0] - (ip + 0.5 + ccent(ip, jp, kp, 0)) * dx[0] - plo[0];
-               , const amrex::Real cdist_y =
-                   pos[1] - (jp + 0.5 + ccent(ip, jp, kp, 1)) * dx[1] - plo[1];
-               , const amrex::Real cdist_z =
-                   pos[2] - (kp + 0.5 + ccent(ip, jp, kp, 2)) * dx[2] - plo[2];)
-  const amrex::Real vtol = 0.05;
-
-  // Distance between particle and cell centoid.
-  const amrex::Real cdist = std::sqrt(
-    AMREX_D_TERM(cdist_x * cdist_x, +cdist_y * cdist_y, +cdist_z * cdist_z));
-
-  // Before doing anything fancy, just check that the particle isn't overlapping
-  // the cell center. If it is, use the cell value.
-  if (cdist < tolerance) {
-    indx_array[0] = {AMREX_D_DECL(ip, jp, kp)};
-    weights[0] = 1.;
-    for (int aindx = 1; aindx < 8; ++aindx) {
-      indx_array[aindx] = {AMREX_D_DECL(ip, jp, kp)};
-      weights[aindx] = 0.;
-    }
-    return;
-  }
-
-  amrex::Real par_dot_EB = 2.;
-  amrex::Real cent_dot_EB = 1.;
-
-  // If the particle is inside a cut-cell, verify that it is on the correct
-  // side of the EB before trying to interpolate.
-  if (flags(ip, jp, kp).isSingleValued()) {
-    const amrex::RealVect normal = {AMREX_D_DECL(
-      -bnorm(ip, jp, kp, 0), -bnorm(ip, jp, kp, 1), -bnorm(ip, jp, kp, 2))};
-
-    // Projection of vector pointing from EB centroid to particle onto EB normal
-    par_dot_EB = AMREX_D_TERM(
-      (pos[0] - (ip + 0.5 + bcent(ip, jp, kp, 0)) * dx[0] - plo[0]) * normal[0],
-      +(pos[1] - (jp + 0.5 + bcent(ip, jp, kp, 1)) * dx[1] - plo[1]) *
-        normal[1],
-      +(pos[2] - (kp + 0.5 + bcent(ip, jp, kp, 2)) * dx[2] - plo[2]) *
-        normal[2]);
-
-    // Projection of vector pointing from EB centroid to cell centroid onto EB
-    // normal
-    cent_dot_EB = AMREX_D_TERM(
-      (ccent(ip, jp, kp, 0) - bcent(ip, jp, kp, 0)) * dx[0] * normal[0],
-      +(ccent(ip, jp, kp, 1) - bcent(ip, jp, kp, 1)) * dx[1] * normal[1],
-      +(ccent(ip, jp, kp, 2) - bcent(ip, jp, kp, 2)) * dx[2] * normal[2]);
-    // Temporary sanity check
-    AMREX_ASSERT_WITH_MESSAGE(
-      cent_dot_EB > tolerance,
-      "cent_dot_EB < tolerance ... this makes no sense!");
-  }
-  // Particle position relative to cell center [-0.5, 0.5]
-  AMREX_D_TERM(amrex::Real gx = (pos[0] - plo[0]) * dxi[0] - (ip + 0.5);
-               , amrex::Real gy = (pos[1] - plo[1]) * dxi[1] - (jp + 0.5);
-               , amrex::Real gz = (pos[2] - plo[2]) * dxi[2] - (kp + 0.5);)
-
-  // Use the centroid location of the cell containing the particle
-  // to guess the interpolation stencil.
-  int i = 0, di = 0, j = 0, dj = 0, k = 0, dk = 0;
-  AMREX_D_TERM(i = (gx < ccent(ip, jp, kp, 0)) ? ip : ip + 1; di = i - ip;
-               , j = (gy < ccent(ip, jp, kp, 1)) ? jp : jp + 1; dj = j - jp;
-               , k = (gz < ccent(ip, jp, kp, 2)) ? kp : kp + 1; dk = k - kp;)
-
-  // Count the number of non-connected cells in the stencil
-  int covered = 0;
-  int kk = 0, jj = 0, ii = 0;
-#if AMREX_SPACEDIM == 3
-  for (kk = -1; kk < 1; kk++) {
-#endif
-    for (jj = -1; jj < 1; jj++) {
-      for (ii = -1; ii < 1; ii++) {
-        if (!flags(ip, jp, kp).isConnected(di + ii, dj + jj, dk + kk)) {
-          covered += 1;
-        }
-      }
-    }
-#if AMREX_SPACEDIM == 3
-  }
-#endif
-  // A negative value implies that the particle is 'behind' the EB (and
-  // therefore inside the wall). Although this shouldn't occur often, it could
-  // for fast moving particles.  Set the fluid velocity to zero and use the
-  // cell value for remaining items.
-  if (
-    (flags(ip, jp, kp).isSingleValued() && (par_dot_EB <= tolerance)) ||
-    flags(ip, jp, kp).isCovered()) {
-    Abort("Particle has penetrated EB boundary");
-    // The particle is near the EB. It is either
-    // 1) between the cell centroid and the EB, or
-    // 2) one or more cells in the 2^3 stencil is covered.
-    // Either way, interpolating to the particle is not straight forward so
-    // (for now) we do a 1D interpolation to the EB.
-
-  } else if ((covered > 0) || (par_dot_EB < cent_dot_EB)) {
-    for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-      indx_array[aindx] = {AMREX_D_DECL(ip, jp, kp)};
-      weights[aindx] = 0.;
-    }
-    weights[0] = 1.;
+  bool do_fe_interp = true;
+  int i = 0, j = 0, k = 0, ip = 0, jp = 0, kp = 0;
+  // Cell containing particle centroid
+  AMREX_D_TERM(ip = ijkc[0];, jp = ijkc[1];, kp = ijkc[2];);
+  AMREX_D_TERM(i = ijk[0];, j = ijk[1];, k = ijk[2];);
+  if (!eb_in_box) {
+    do_fe_interp = false;
   } else {
-    amrex::GpuArray<
-      amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>, AMREX_D_PICK(2, 4, 8)>
-      nodes;
+    // All cells in the stencil are regular. Use
+    // traditional trilinear interpolation
+    if (
+#if AMREX_SPACEDIM == 3
+      flags_array(i - 1, j - 1, k - 1).isRegular() &&
+      flags_array(i, j - 1, k - 1).isRegular() &&
+      flags_array(i - 1, j, k - 1).isRegular() &&
+      flags_array(i, j, k - 1).isRegular() &&
+      flags_array(i - 1, j - 1, k).isRegular() &&
+#endif
+      flags_array(i, j - 1, k).isRegular() &&
+      flags_array(i - 1, j, k).isRegular() &&
+      flags_array(i, j, k).isRegular()) {
+      do_fe_interp = false;
+    }
+  }
+  if (!do_fe_interp) {
+    trilinear_interp(ijk, lx, indx_array.data(), weights.data(), bflags);
+  } else {
+    const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
+    AMREX_D_TERM(
+      const amrex::Real cdist_x =
+        pos[0] - (ip + 0.5 + ccent(ip, jp, kp, 0)) * dx[0] - plo[0];
+      , const amrex::Real cdist_y =
+          pos[1] - (jp + 0.5 + ccent(ip, jp, kp, 1)) * dx[1] - plo[1];
+      , const amrex::Real cdist_z =
+          pos[2] - (kp + 0.5 + ccent(ip, jp, kp, 2)) * dx[2] - plo[2];)
+    const amrex::Real vtol = 0.05;
 
-    // Here we pack the local 2x2x2 stencil into a local array. Note that
-    // the node ordering is not consistent with the previous version.
-    // Nodes 2 and 3 have been swapped as well as nodes 6 and 7. This was
-    // to allow for a more compact for-loop filling.
+    // Distance between particle and cell centoid.
+    const amrex::Real cdist = std::sqrt(
+      AMREX_D_TERM(cdist_x * cdist_x, +cdist_y * cdist_y, +cdist_z * cdist_z));
 
-    int lc = 0;
+    // Before doing anything fancy, just check that the particle isn't
+    // overlapping the cell center. If it is, use the cell value.
+    if (cdist < tolerance) {
+      indx_array[0] = {AMREX_D_DECL(ip, jp, kp)};
+      weights[0] = 1.;
+      for (int aindx = 1; aindx < 8; ++aindx) {
+        indx_array[aindx] = {AMREX_D_DECL(ip, jp, kp)};
+        weights[aindx] = 0.;
+      }
+      return do_fe_interp;
+    }
 
+    amrex::Real par_dot_EB = 2.;
+    amrex::Real cent_dot_EB = 1.;
+
+    // If the particle is inside a cut-cell, verify that it is on the correct
+    // side of the EB before trying to interpolate.
+    if (flags(ip, jp, kp).isSingleValued()) {
+      const amrex::RealVect normal = {AMREX_D_DECL(
+        -bnorm(ip, jp, kp, 0), -bnorm(ip, jp, kp, 1), -bnorm(ip, jp, kp, 2))};
+
+      // Projection of vector pointing from EB centroid to particle onto EB
+      // normal
+      par_dot_EB = AMREX_D_TERM(
+        (pos[0] - (ip + 0.5 + bcent(ip, jp, kp, 0)) * dx[0] - plo[0]) *
+          normal[0],
+        +(pos[1] - (jp + 0.5 + bcent(ip, jp, kp, 1)) * dx[1] - plo[1]) *
+          normal[1],
+        +(pos[2] - (kp + 0.5 + bcent(ip, jp, kp, 2)) * dx[2] - plo[2]) *
+          normal[2]);
+
+      // Projection of vector pointing from EB centroid to cell centroid onto EB
+      // normal
+      cent_dot_EB = AMREX_D_TERM(
+        (ccent(ip, jp, kp, 0) - bcent(ip, jp, kp, 0)) * dx[0] * normal[0],
+        +(ccent(ip, jp, kp, 1) - bcent(ip, jp, kp, 1)) * dx[1] * normal[1],
+        +(ccent(ip, jp, kp, 2) - bcent(ip, jp, kp, 2)) * dx[2] * normal[2]);
+      // Temporary sanity check
+      AMREX_ASSERT_WITH_MESSAGE(
+        cent_dot_EB > tolerance,
+        "cent_dot_EB < tolerance ... this makes no sense!");
+    }
+    // Particle position relative to cell center [-0.5, 0.5]
+    AMREX_D_TERM(amrex::Real gx = (pos[0] - plo[0]) * dxi[0] - (ip + 0.5);
+                 , amrex::Real gy = (pos[1] - plo[1]) * dxi[1] - (jp + 0.5);
+                 , amrex::Real gz = (pos[2] - plo[2]) * dxi[2] - (kp + 0.5);)
+
+    // Use the centroid location of the cell containing the particle
+    // to guess the interpolation stencil.
+    int i = 0, di = 0, j = 0, dj = 0, k = 0, dk = 0;
+    AMREX_D_TERM(i = (gx < ccent(ip, jp, kp, 0)) ? ip : ip + 1; di = i - ip;
+                 , j = (gy < ccent(ip, jp, kp, 1)) ? jp : jp + 1; dj = j - jp;
+                 , k = (gz < ccent(ip, jp, kp, 2)) ? kp : kp + 1; dk = k - kp;)
+
+    // Count the number of non-connected cells in the stencil
+    int covered = 0;
+    int kk = 0, jj = 0, ii = 0;
 #if AMREX_SPACEDIM == 3
     for (kk = -1; kk < 1; kk++) {
 #endif
       for (jj = -1; jj < 1; jj++) {
         for (ii = -1; ii < 1; ii++) {
-          AMREX_D_TERM(
-            nodes[lc][0] =
-              (i + ii + 0.5 + ccent(i + ii, j + jj, k + kk, 0)) * dx[0];
-            , nodes[lc][1] =
-                (j + jj + 0.5 + ccent(i + ii, j + jj, k + kk, 1)) * dx[1];
-            , nodes[lc][2] =
-                (k + kk + 0.5 + ccent(i + ii, j + jj, k + kk, 2)) * dx[2];)
-          lc += 1;
+          if (!flags(ip, jp, kp).isConnected(di + ii, dj + jj, dk + kk)) {
+            covered += 1;
+          }
         }
       }
 #if AMREX_SPACEDIM == 3
     }
 #endif
+    // A negative value implies that the particle is 'behind' the EB (and
+    // therefore inside the wall). Although this shouldn't occur often, it could
+    // for fast moving particles.  Set the fluid velocity to zero and use the
+    // cell value for remaining items.
+    if (
+      (flags(ip, jp, kp).isSingleValued() && (par_dot_EB <= tolerance)) ||
+      flags(ip, jp, kp).isCovered()) {
+      Abort("Particle has penetrated EB boundary");
+      // The particle is near the EB. It is either
+      // 1) between the cell centroid and the EB, or
+      // 2) one or more cells in the 2^3 stencil is covered.
+      // Either way, interpolating to the particle is not straight forward so
+      // (for now) we do a 1D interpolation to the EB.
 
-    amrex::Real xi = 0., eta = 0., zeta = 0.;
-    AMREX_D_TERM(xi = (pos[0] - nodes[0][0] - plo[0]) * dxi[0];
-                 , eta = (pos[1] - nodes[0][1] - plo[1]) * dxi[1];
-                 , zeta = (pos[2] - nodes[0][2] - plo[2]) * dxi[2];)
-
-    get_interp_mapping(pos - plo, nodes, xi, eta, zeta);
-#if AMREX_SPACEDIM == 3
-    indx_array[0] = {i - 1, j - 1, k - 1};
-    indx_array[1] = {i, j - 1, k - 1};
-    indx_array[2] = {i, j, k - 1};
-    indx_array[3] = {i - 1, j, k - 1};
-    indx_array[4] = {i - 1, j - 1, k};
-    indx_array[5] = {i, j - 1, k};
-    indx_array[6] = {i, j, k};
-    indx_array[7] = {i - 1, j, k};
-    weights[0] =
-      1 - xi - eta - zeta + xi * eta + xi * zeta + eta * zeta - xi * eta * zeta;
-    weights[1] = xi * (1 - eta - zeta + eta * zeta);
-    weights[2] = xi * eta - xi * eta * zeta;
-    weights[3] = eta * (1 - xi - zeta + xi * zeta);
-    weights[4] = zeta * (1 - xi - eta + xi * eta);
-    weights[5] = xi * zeta - xi * eta * zeta;
-    weights[6] = xi * eta * zeta;
-    weights[7] = eta * zeta - xi * eta * zeta;
-#else
-    indx_array[0] = {i - 1, j - 1};
-    indx_array[1] = {i, j - 1};
-    indx_array[2] = {i, j};
-    indx_array[3] = {i - 1, j};
-    weights[0] = 1 - xi - eta + xi * eta;
-    weights[1] = xi * (1. - eta);
-    weights[2] = xi * eta;
-    weights[3] = eta * (1. - xi);
-#endif
-    // Rudimentary attempt to prevent source terms from being added
-    // to small volume cells to avoid having to redistribute later
-    // Will probably have to add a redistribute function
-    amrex::Real rw = 0.;
-    for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-      if (vfrac(indx_array[aindx]) < vtol) {
+    } else if ((covered > 0) || (par_dot_EB < cent_dot_EB)) {
+      for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+        indx_array[aindx] = {AMREX_D_DECL(ip, jp, kp)};
         weights[aindx] = 0.;
       }
-      rw += weights[aindx];
-    }
-    rw = 1. / rw;
-    for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
-      weights[aindx] *= rw;
+      weights[0] = 1.;
+    } else {
+      amrex::GpuArray<
+        amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>, AMREX_D_PICK(2, 4, 8)>
+        nodes;
+
+      // Here we pack the local 2x2x2 stencil into a local array. Note that
+      // the node ordering is not consistent with the previous version.
+      // Nodes 2 and 3 have been swapped as well as nodes 6 and 7. This was
+      // to allow for a more compact for-loop filling.
+
+      int lc = 0;
+
+#if AMREX_SPACEDIM == 3
+      for (kk = -1; kk < 1; kk++) {
+#endif
+        for (jj = -1; jj < 1; jj++) {
+          for (ii = -1; ii < 1; ii++) {
+            AMREX_D_TERM(
+              nodes[lc][0] =
+                (i + ii + 0.5 + ccent(i + ii, j + jj, k + kk, 0)) * dx[0];
+              , nodes[lc][1] =
+                  (j + jj + 0.5 + ccent(i + ii, j + jj, k + kk, 1)) * dx[1];
+              , nodes[lc][2] =
+                  (k + kk + 0.5 + ccent(i + ii, j + jj, k + kk, 2)) * dx[2];)
+            lc += 1;
+          }
+        }
+#if AMREX_SPACEDIM == 3
+      }
+#endif
+
+      amrex::Real xi = 0., eta = 0., zeta = 0.;
+      AMREX_D_TERM(xi = (pos[0] - nodes[0][0] - plo[0]) * dxi[0];
+                   , eta = (pos[1] - nodes[0][1] - plo[1]) * dxi[1];
+                   , zeta = (pos[2] - nodes[0][2] - plo[2]) * dxi[2];)
+
+      get_interp_mapping(pos - plo, nodes, xi, eta, zeta);
+#if AMREX_SPACEDIM == 3
+      indx_array[0] = {i - 1, j - 1, k - 1};
+      indx_array[1] = {i, j - 1, k - 1};
+      indx_array[2] = {i, j, k - 1};
+      indx_array[3] = {i - 1, j, k - 1};
+      indx_array[4] = {i - 1, j - 1, k};
+      indx_array[5] = {i, j - 1, k};
+      indx_array[6] = {i, j, k};
+      indx_array[7] = {i - 1, j, k};
+      weights[0] = 1 - xi - eta - zeta + xi * eta + xi * zeta + eta * zeta -
+                   xi * eta * zeta;
+      weights[1] = xi * (1 - eta - zeta + eta * zeta);
+      weights[2] = xi * eta - xi * eta * zeta;
+      weights[3] = eta * (1 - xi - zeta + xi * zeta);
+      weights[4] = zeta * (1 - xi - eta + xi * eta);
+      weights[5] = xi * zeta - xi * eta * zeta;
+      weights[6] = xi * eta * zeta;
+      weights[7] = eta * zeta - xi * eta * zeta;
+#else
+      indx_array[0] = {i - 1, j - 1};
+      indx_array[1] = {i, j - 1};
+      indx_array[2] = {i, j};
+      indx_array[3] = {i - 1, j};
+      weights[0] = 1 - xi - eta + xi * eta;
+      weights[1] = xi * (1. - eta);
+      weights[2] = xi * eta;
+      weights[3] = eta * (1. - xi);
+#endif
+      // Rudimentary attempt to prevent source terms from being added
+      // to small volume cells to avoid having to redistribute later
+      // Will probably have to add a redistribute function
+      amrex::Real rw = 0.;
+      for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+        if (vfrac(indx_array[aindx]) < vtol) {
+          weights[aindx] = 0.;
+        }
+        rw += weights[aindx];
+      }
+      rw = 1. / rw;
+      for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+        weights[aindx] *= rw;
+      }
     }
   }
-  return;
+  return do_fe_interp;
 }
 
 #endif // AMREX_USE_EB

@@ -37,7 +37,7 @@ tile_at_bndry(
 /****************************************************************
  Functions computing wall film source terms
  ***************************************************************/
-
+#if 0
 AMREX_GPU_DEVICE AMREX_INLINE void
 calculateWallFilmSource(
   const amrex::Real flow_dt,
@@ -173,7 +173,7 @@ calculateWallFilmSource(
     p.id() = -1;
   }
 }
-
+#endif
 /****************************************************************
  Functions for imposing wall boundaries including adding
  splashed droplets, modifying particles to be wall film,
@@ -194,7 +194,8 @@ enum splash_type {
 AMREX_GPU_HOST_DEVICE
 AMREX_INLINE
 splash_type
-splash_criteria(const amrex::Real Kv, const amrex::Real Tstar, const amrex::Real alpha)
+splash_criteria(
+  const amrex::Real Kv, const amrex::Real Tstar, const amrex::Real alpha)
 {
   amrex::Real Kcrit = 20. + 2. * alpha / M_PI * 20.;
   if (Tstar < 1.1) {
@@ -333,7 +334,131 @@ check_wall(
   return wall_check;
 }
 
-AMREX_GPU_HOST_DEVICE
+AMREX_GPU_DEVICE
+AMREX_INLINE
+void
+droplet_splashing(
+  splash_type& splash_flag,
+  SprayParticleContainer::ParticleType& p,
+  SprayComps SPI,
+  SprayData fdat,
+  const amrex::RealVect pvel,
+  const amrex::Real par_dot_EB,
+  const amrex::Real Nw_Vp,
+  const amrex::Real T_wall,
+  const amrex::RealVect normal,
+  SprayRefl& SPRF,
+  const bool dry_wall)
+{
+  amrex::Real mu_part = 0.;
+  amrex::Real rho_part = 0.;
+  // TODO: Determine correct method for handling multi-component liquids
+  amrex::Real Tstar = 0.; // Average sum Y_i T_wall/T_boil,i
+  for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+    const int ysp = SPI.pstateY + spf;
+    mu_part += p.rdata(ysp) * fdat.mu[spf];
+    rho_part += p.rdata(ysp) / fdat.rho[spf];
+    Tstar += T_wall * p.rdata(ysp) / fdat.boilT[spf];
+  }
+  rho_part = 1. / rho_part;
+  const amrex::Real dia_part = p.rdata(SPI.pstateDia);
+  const amrex::Real d3 = std::pow(dia_part, 3);
+  const amrex::Real pmass = M_PI / 6. * rho_part * d3;
+  // Weber number
+  const amrex::Real We = rho_part * dia_part * Nw_Vp * Nw_Vp / fdat.sigma;
+  const amrex::Real Re_L = std::abs(Nw_Vp) * dia_part * rho_part / mu_part;
+  const amrex::Real sqReyn = std::sqrt(Re_L);
+  const amrex::Real Kv = std::sqrt(We) * std::pow(Re_L, 0.25);
+  amrex::Real umag = pvel.vectorLength();
+  // Inclination of on-coming particle to surface in radians
+  const amrex::Real alpha = std::asin(std::abs(Nw_Vp) / umag);
+  splash_flag = splash_criteria(Kv, Tstar, alpha);
+  // Boundary layer thickness of particle estimate provided by
+  // Pasandideh-Fard et al. 1996
+  const amrex::Real delta = 2. * dia_part / sqReyn;
+  // splash_flag == 0, then particle rebounds, no breakup, no deposit
+  if (splash_flag != splash_type::rebound) {
+    // If splash_flag == 1, particle is completely deposited onto the wall
+    if (splash_flag == splash_type::deposit) {
+      // TODO: Determine better way to estimate wall film temperature,
+      // diameter, etc
+      amrex::Real depot_vol = pmass / rho_part;
+      // Assume deposited film is a dome shape of height delta, determine
+      // the diameter
+      amrex::Real depot_dia =
+        2. *
+        std::sqrt((6. * depot_vol / M_PI - std::pow(delta, 3)) / (3. * delta));
+      // Now estimate the height to be a cylinder of diameter depot_dia
+      amrex::Real depot_height =
+        4. * depot_vol / (M_PI * depot_dia * depot_dia);
+      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        p.rdata(SPI.pstateVel + dir) = 0.;
+      }
+      p.rdata(SPI.pstateVol) = depot_vol;
+      p.rdata(SPI.pstateHt) = depot_height;
+    } else {
+      // Determine diameter of secondary droplets
+      amrex::Real expon = 3.6 * (alpha / M_PI) * (alpha / M_PI);
+      if (dry_wall) {
+        SPRF.dia_refl = dia_part * 3.3 * std::exp(expon) * std::pow(We, -0.65);
+      } else {
+        SPRF.dia_refl = dia_part * 2.2 * std::exp(expon) * std::pow(We, -0.36);
+      }
+      // Compute angles of reflecting droplets
+      compute_angles(alpha, Tstar, We, dry_wall, SPRF);
+      // If thermal breakup, all mass is converted to secondary droplets
+      amrex::Real splash_mass = pmass;
+      // If splash, some mass rebounds and some deposits
+      if (splash_flag == splash_type::splash) {
+        // Determine the fraction of the droplet mass
+        // that forms secondary drops from Kuhnke 2004
+        // TODO: This is incomplete by always assuming a dry wall
+        // TODO: Random(engine) degrades performance too much, must add
+        // random values here somehow
+        const amrex::Real B = 0.2 + 0.6; //* amrex::Random(engine);
+        splash_mass *= amrex::min(1., (Tstar - 0.8) / 0.3 * (1. - B) + B);
+        // Mass deposited into wall film
+        amrex::Real depot_mass = pmass - splash_mass;
+        amrex::Real depot_vol = depot_mass / rho_part;
+        // Assume deposited film is a dome shape of height delta,
+        // determine the diameter
+        amrex::Real depot_dia =
+          2. * std::sqrt(
+                 (6. * depot_vol / M_PI - std::pow(delta, 3)) / (3. * delta));
+        // Now estimate the height to be a cylinder of diameter depot_dia
+        amrex::Real depot_height =
+          4. * depot_vol / (M_PI * depot_dia * depot_dia);
+        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+          p.rdata(SPI.pstateVel + dir) = 0.;
+        }
+        p.rdata(SPI.pstateVol) = depot_vol;
+        p.rdata(SPI.pstateHt) = depot_height;
+      } else {
+        p.id() = -1;
+      }
+      amrex::Real mass_refl = M_PI / 6. * rho_part * std::pow(SPRF.dia_refl, 3);
+      amrex::Real Ns = splash_mass / mass_refl;
+      SPRF.Ns_refl = int(Ns);
+      // TODO: Not sure what this variable is but it ranges from 1.45-2
+      amrex::Real nu32 = 1.45;
+      amrex::Real We_out =
+        SPRF.dia_refl / dia_part *
+          (We * (1. - 0.85 * std::pow(std::sin(alpha * M_PI / 180.), 2)) +
+           12.) -
+        12. / nu32;
+      SPRF.Unorm = std::sqrt(fdat.sigma * We_out / (rho_part * SPRF.dia_refl));
+      // This is the dt to move the secondary droplets
+      SPRF.dt_pp = par_dot_EB / Nw_Vp;
+      // Test vector for finding tangents
+      amrex::RealVect testvec = -pvel;
+      // Find two tangent vectors by taking the cross product with the
+      // velocity vector
+      find_tangents(testvec, SPRF.tanPsi, normal, SPRF.tanBeta);
+    }
+  } // if (splash_flag != splash_type::rebound)
+}
+
+AMREX_GPU_DEVICE
 AMREX_INLINE
 splash_type
 impose_wall(
@@ -352,7 +477,6 @@ impose_wall(
 //  amrex::RandomEngine const& engine) // Degrades performance significantly
 {
   const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
-  amrex::Real sigma = fdat.sigma;
   splash_type splash_flag = splash_type::no_impact;
   amrex::RealVect pvel = {AMREX_D_DECL(
     p.rdata(SPI.pstateVel), p.rdata(SPI.pstateVel + 1),
@@ -376,117 +500,14 @@ impose_wall(
     // Parcel tangential velocity
     amrex::RealVect Vpt = pvel - Vpn;
     // If using a splash model
-    if (sigma > 0. && isActive) {
-      amrex::Real mu_part = 0.;
-      amrex::Real rho_part = 0.;
-      // TODO: Determine correct method for handling multi-component liquids
-      amrex::Real Tstar = 0.; // Average sum Y_i T_wall/T_boil,i
-      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        const int ysp = SPI.pstateY + spf;
-        mu_part += p.rdata(ysp) * fdat.mu[spf];
-        rho_part += p.rdata(ysp) / fdat.rho[spf];
-        Tstar += T_wall * p.rdata(ysp) / fdat.boilT[spf];
-      }
-      rho_part = 1. / rho_part;
-      const amrex::Real dia_part = p.rdata(SPI.pstateDia);
-      const amrex::Real d3 = std::pow(dia_part, 3);
-      const amrex::Real pmass = M_PI / 6. * rho_part * d3;
-      // Weber number
-      const amrex::Real We = rho_part * dia_part * Nw_Vp * Nw_Vp / sigma;
-      const amrex::Real Re_L = std::abs(Nw_Vp) * dia_part * rho_part / mu_part;
-      const amrex::Real sqReyn = std::sqrt(Re_L);
-      const amrex::Real Kv = std::sqrt(We) * std::pow(Re_L, 0.25);
-      amrex::Real umag = pvel.vectorLength();
-      // Inclination of on-coming particle to surface in radians
-      const amrex::Real alpha = std::asin(std::abs(Nw_Vp) / umag);
-      splash_flag = splash_criteria(Kv, Tstar, alpha);
-      // Boundary layer thickness of particle estimate provided by
-      // Pasandideh-Fard et al. 1996
-      const amrex::Real delta = 2. * dia_part / sqReyn;
-      // splash_flag == 0, then particle rebounds, no breakup, no deposit
-      if (splash_flag != splash_type::rebound) {
-        // If splash_flag == 1, particle is completely deposited onto the wall
-        if (splash_flag == splash_type::deposit) {
-          // TODO: Determine better way to estimate wall film temperature,
-          // diameter, etc
-          amrex::Real depot_vol = pmass / rho_part;
-          // Assume deposited film is a dome shape of height delta, determine
-          // the diameter
-          amrex::Real depot_dia =
-            2. * std::sqrt(
-                   (6. * depot_vol / M_PI - std::pow(delta, 3)) / (3. * delta));
-          // Now estimate the height to be a cylinder of diameter depot_dia
-          amrex::Real depot_height = 4. * depot_vol / (M_PI * depot_dia * depot_dia);
-          for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-            p.rdata(SPI.pstateVel + dir) = 0.;
-          }
-          p.rdata(SPI.pstateVol) = depot_vol;
-          p.rdata(SPI.pstateHt) = depot_height;
-        } else {
-          // Determine diameter of secondary droplets
-          amrex::Real expon = 3.6 * (alpha / M_PI) * (alpha / M_PI);
-          if (dry_wall) {
-            SPRF.dia_refl =
-              dia_part * 3.3 * std::exp(expon) * std::pow(We, -0.65);
-          } else {
-            SPRF.dia_refl =
-              dia_part * 2.2 * std::exp(expon) * std::pow(We, -0.36);
-          }
-          // Compute angles of reflecting droplets
-          compute_angles(alpha, Tstar, We, dry_wall, SPRF);
-          // If thermal breakup, all mass is converted to secondary droplets
-          amrex::Real splash_mass = pmass;
-          // If splash, some mass rebounds and some deposits
-          if (splash_flag == splash_type::splash) {
-            // Determine the fraction of the droplet mass
-            // that forms secondary drops from Kuhnke 2004
-            // TODO: This is incomplete by always assuming a dry wall
-            // TODO: Random(engine) degrades performance too much, must add
-            // random values here somehow
-            const amrex::Real B = 0.2 + 0.6; //* amrex::Random(engine);
-            splash_mass *= amrex::min(1., (Tstar - 0.8) / 0.3 * (1. - B) + B);
-            // Mass deposited into wall film
-            amrex::Real depot_mass = pmass - splash_mass;
-            amrex::Real depot_vol = depot_mass / rho_part;
-            // Assume deposited film is a dome shape of height delta,
-            // determine the diameter
-            amrex::Real depot_dia =
-              2. *
-              std::sqrt(
-                (6. * depot_vol / M_PI - std::pow(delta, 3)) / (3. * delta));
-            // Now estimate the height to be a cylinder of diameter depot_dia
-            amrex::Real depot_height = 4. * depot_vol / (M_PI * depot_dia * depot_dia);
-            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
-              p.rdata(SPI.pstateVel + dir) = 0.;
-            }
-            p.rdata(SPI.pstateVol) = depot_vol;
-            p.rdata(SPI.pstateHt) = depot_height;
-          } else {
-            p.id() = -1;
-          }
-          amrex::Real mass_refl = M_PI / 6. * rho_part * std::pow(SPRF.dia_refl, 3);
-          amrex::Real Ns = splash_mass / mass_refl;
-          SPRF.Ns_refl = int(Ns);
-          // TODO: Not sure what this variable is but it ranges from 1.45-2
-          amrex::Real nu32 = 1.45;
-          amrex::Real We_out =
-            SPRF.dia_refl / dia_part *
-              (We * (1. - 0.85 * std::pow(std::sin(alpha * M_PI / 180.), 2)) +
-               12.) -
-            12. / nu32;
-          SPRF.Unorm = std::sqrt(sigma * We_out / (rho_part * SPRF.dia_refl));
-          // This is the dt to move the secondary droplets
-          SPRF.dt_pp = par_dot_EB / Nw_Vp;
-          // Test vector for finding tangents
-          amrex::RealVect testvec = -pvel;
-          // Find two tangent vectors by taking the cross product with the
-          // velocity vector
-          find_tangents(testvec, SPRF.tanPsi, normal, SPRF.tanBeta);
-        }
-      } // if (splash_flag != splash_type::rebound)
-    }   // if (sigma > 0.)
+    // TODO: Implement splash model
+    if (fdat.sigma > 0. && isActive) {
+      droplet_splashing(
+        splash_flag, p, SPI, fdat, pvel, par_dot_EB, Nw_Vp, T_wall, normal,
+        SPRF, dry_wall);
+    } // if (sigma > 0.)
     // Reflect particle
-    if (sigma < 0. || splash_flag == splash_type::rebound) {
+    if (fdat.sigma < 0. || splash_flag == splash_type::rebound) {
       for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
         p.pos(dir) -= 2. * par_dot_EB * normal[dir];
         p.rdata(SPI.pstateVel + dir) = -Vpn[dir] + Vpt[dir];

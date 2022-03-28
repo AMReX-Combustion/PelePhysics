@@ -83,7 +83,9 @@ public:
     int& init_function,
     std::string& init_file,
     SprayData& sprayData,
-    std::string* sprayFuelNames);
+    std::string* sprayFuelNames,
+    const amrex::Real& max_cfl =
+      0.5); // Only overwrite this if particles are subcycled
 
   void SprayParticleIO(
     const int level,
@@ -162,12 +164,12 @@ public:
     }
     int ghost_num = 0;
     if (level > 0) {
-      ghost_num += amr_ncycle + amr_ncycle / 2;
+      ghost_num += amr_ncycle;
     }
     // Set the number of ghost cells needed for interpolation
-    state_width = stencil_interpolation_width + ghost_num;
+    state_width = amrex::max(stencil_interpolation_width, ghost_num * 2);
     // Set the number of ghost cells needed for source deposition
-    source_width = stencil_deposition_width + ghost_num;
+    source_width = state_width;
   }
 
   ///
@@ -184,8 +186,9 @@ public:
     const int state_ghosts,
     const int source_ghosts,
     pele::physics::transport::TransParm<
-    pele::physics::EosType,
-    pele::physics::TransportType> const* ltransparm,
+      pele::physics::EosType,
+      pele::physics::TransportType> const* ltransparm,
+    const amrex::Real spray_cfl_lev = -1.,
     amrex::MultiFab* u_mac = nullptr);
 
   ///
@@ -203,8 +206,9 @@ public:
     const int source_ghosts,
     const bool do_move,
     pele::physics::transport::TransParm<
-    pele::physics::EosType,
-    pele::physics::TransportType> const* ltransparm,
+      pele::physics::EosType,
+      pele::physics::TransportType> const* ltransparm,
+    const amrex::Real spray_cfl_lev = -1.,
     amrex::MultiFab* u_mac = nullptr);
 
   ///
@@ -218,11 +222,13 @@ public:
     const amrex::Real& time,
     const int state_ghosts,
     const int source_ghosts,
-    const bool isActive,
+    const bool isVirt,
+    const bool isGhost,
     const bool do_move,
     pele::physics::transport::TransParm<
-    pele::physics::EosType,
-    pele::physics::TransportType> const* ltransparm,
+      pele::physics::EosType,
+      pele::physics::TransportType> const* ltransparm,
+    const amrex::Real spray_cfl_lev,
     amrex::MultiFab* u_mac);
 
   // Modify particles based on walls

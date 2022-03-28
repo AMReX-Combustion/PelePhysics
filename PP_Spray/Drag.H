@@ -79,7 +79,8 @@ calcAlpha(const amrex::Real& delTb)
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 amrex::Real
-calcFlashVaporRate(const amrex::Real& dh, const amrex::Real& coeff, const amrex::Real& Gf)
+calcFlashVaporRate(
+  const amrex::Real& dh, const amrex::Real& coeff, const amrex::Real& Gf)
 {
   if (dh <= 1.E-5) {
     return 0.;
@@ -167,7 +168,8 @@ calcVaporY(
     amrex::Real a = fdat.psat_coef[4 * spf];
     amrex::Real b = fdat.psat_coef[4 * spf + 1];
     amrex::Real c = fdat.psat_coef[4 * spf + 2];
-    amrex::Real d = fdat.psat_coef[4 * spf + 3]; // For converting to Pa or dyne/cm^2
+    amrex::Real d =
+      fdat.psat_coef[4 * spf + 3]; // For converting to Pa or dyne/cm^2
     amrex::Real pres_sat = 0.;
     // Using the Clasius-Clapeyron relation
     if (d == 0.) {
@@ -327,7 +329,8 @@ calculateSpraySource(
     amrex::Real lambda_skin = 0.;
     amrex::Real mu_skin = 0.;
     amrex::Real xi_skin = 0.;
-    amrex::Real rho_skin = gpv.rho_fluid; // TODO: Check if this should be modeled
+    amrex::Real rho_skin =
+      gpv.rho_fluid; // TODO: Check if this should be modeled
     amrex::Real rho_cgs = rho_skin / SPU.rho_conv;
     auto trans = pele::physics::PhysicsType::transport();
     trans.transport(
@@ -368,7 +371,8 @@ calculateSpraySource(
             // Max operation necessary for LLVM compiler
             amrex::Real delTb = amrex::max(0., T_part - Tboil);
             amrex::Real alpha = calcAlpha(delTb);
-            amrex::Real Gf = M_PI * dia_part * dia_part * alpha * delTb / L_fuel[spf];
+            amrex::Real Gf =
+              M_PI * dia_part * dia_part * alpha * delTb / L_fuel[spf];
             amrex::Real dh = (hg_g - hg_s) / L_fuel[spf];
             amrex::Real coeff =
               M_PI * lambda_skin / cp_skin * dia_part * Sh_num[spf];
@@ -398,7 +402,7 @@ calculateSpraySource(
                       : 24. / Reyn;
       }
       amrex::Real drag_force = 0.125 * rho_skin * drag_coef * M_PI * dia_part *
-                        dia_part * diff_vel_mag;
+                               dia_part * diff_vel_mag;
       part_mom_src = drag_force * diff_vel;
       gpv.fluid_mom_src += part_mom_src;
 #ifndef SPRAY_PELE_LM
@@ -420,8 +424,10 @@ calculateSpraySource(
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         const int fspec = fdat.indx[spf];
         if (Y_part[spf] > 0. && Psat[spf] > gpv.X_fluid[fspec] * gpv.p_fluid) {
-          amrex::Real ratio = cp_n[fspec] * Sh_num[spf] * Ddiag[fspec] / lambda_skin;
-          amrex::Real heatC = calcHeatCoeff(ratio, B_M_num[spf], B_eps, C_eps, Nu_0);
+          amrex::Real ratio =
+            cp_n[fspec] * Sh_num[spf] * Ddiag[fspec] / lambda_skin;
+          amrex::Real heatC =
+            calcHeatCoeff(ratio, B_M_num[spf], B_eps, C_eps, Nu_0);
           // Convection term
           coeff_heat += heatC;
           part_temp_src += mi_dot[spf] * L_fuel[spf];
@@ -452,8 +458,9 @@ calculateSpraySource(
         rho_part = 0.;
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           Y_part[spf] = amrex::min(
-            1., amrex::max(
-                  0., (Y_part[spf] * pmass + mi_dot[spf] * part_dt) / new_mass));
+            1.,
+            amrex::max(
+              0., (Y_part[spf] * pmass + mi_dot[spf] * part_dt) / new_mass));
           rho_part += Y_part[spf] / fdat.rho[spf];
         }
         rho_part = 1. / rho_part;
@@ -476,8 +483,10 @@ calculateSpraySource(
   // some species disappear completely
   amrex::Real mdot_total = (pmass - startmass) / (dtmod * flow_dt);
   gpv.fluid_mass_src = mdot_total;
+#ifndef SPRAY_PELE_LM
   amrex::Real part_ke = 0.5 * vel_part.radSquared();
   gpv.fluid_eng_src += part_ke * mdot_total;
+#endif
   if (SPI.mom_tran) {
     gpv.fluid_mom_src += vel_part * mdot_total;
   }

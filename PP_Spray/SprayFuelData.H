@@ -26,11 +26,6 @@ struct SprayComps
   int momSrcIndx;
   int engSrcIndx;
   int specSrcIndx;
-  int wf_vol = 0; // Wall film indices
-  int wf_temp = 1;
-  int wf_ht = 2; // Film height
-  int wf_Y = 3;
-  int wf_num = wf_Y + SPRAY_FUEL_NUM;
 };
 
 // Units for sprays
@@ -95,14 +90,13 @@ struct GasPhaseVals
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> fluid_Y_dot;
   amrex::Real fluid_eng_src;
 
-  AMREX_GPU_DEVICE AMREX_FORCE_INLINE GasPhaseVals()
-    : vel_fluid(amrex::RealVect::TheZeroVector()),
-      T_fluid(0.),
-      rho_fluid(0.),
-      fluid_mom_src(amrex::RealVect::TheZeroVector()),
-      fluid_mass_src(0.),
-      fluid_eng_src(0.)
+  AMREX_GPU_DEVICE AMREX_FORCE_INLINE void reset()
   {
+    fluid_mom_src = amrex::RealVect::TheZeroVector();
+    vel_fluid = amrex::RealVect::TheZeroVector();
+    T_fluid = 0.;
+    rho_fluid = 0.;
+    fluid_eng_src = 0.;
     for (int n = 0; n < NUM_SPECIES; ++n) {
       Y_fluid[n] = 0.;
     }
