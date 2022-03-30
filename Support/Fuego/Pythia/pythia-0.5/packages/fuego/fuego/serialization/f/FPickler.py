@@ -7067,20 +7067,20 @@ class FPickler(CMill):
     def _prefactorUnits(self, code, exponent):
 
         if code == "mole/cm**3":
-            units = mole / cm ** 3
+            units = mole / cm**3
         elif code == "moles":
-            units = mole / cm ** 3
+            units = mole / cm**3
         elif code == "molecules":
             import pyre
 
-            units = 1.0 / avogadro / cm ** 3
+            units = 1.0 / avogadro / cm**3
         else:
             import pyre
 
             pyre.debug.Firewall.hit("unknown prefactor units '%s'" % code)
             return 1
 
-        return units ** exponent / second
+        return units**exponent / second
 
     def _activationEnergyUnits(self, code):
         if code == "cal/mole":
@@ -7449,7 +7449,7 @@ class FPickler(CMill):
         )
 
         self._write()
-        LENRMC = (19 + 2 * NO + NO * NLITE) * KK + (15 + NO) * KK ** 2
+        LENRMC = (19 + 2 * NO + NO * NLITE) * KK + (15 + NO) * KK**2
         self._generateTransRoutineInteger(
             [
                 "egtransetLENRMC",
@@ -7759,7 +7759,7 @@ class FPickler(CMill):
                 m_red = self.species[spec.id].weight / (2.0 * Na)
                 diffcoef = (
                     (3.0 / 16.0)
-                    * np.sqrt(2.0 * np.pi * kb ** 3 * t ** 3 / m_red)
+                    * np.sqrt(2.0 * np.pi * kb**3 * t**3 / m_red)
                     / (
                         10.0
                         * np.pi
@@ -7934,7 +7934,7 @@ class FPickler(CMill):
                     float(speciesTransport[spec1][4]) * AtoCM * AtoCM * AtoCM
                 )
                 # eq. (12)
-                poliRed = poli / sigi ** 3
+                poliRed = poli / sigi**3
                 for j, spec2 in enumerate(specOrdered):
                     if j != spec2.id:
                         print("Problem in _thermaldiffratios computation")
@@ -7951,12 +7951,12 @@ class FPickler(CMill):
                     sigj = float(speciesTransport[spec2][2]) * AtoCM
                     dipj = float(speciesTransport[spec2][3]) * DEBYEtoCGS
                     # eq. (13)
-                    dipjRed = dipj / np.sqrt(epsj * sigj ** 3)
+                    dipjRed = dipj / np.sqrt(epsj * sigj**3)
                     epsRatio = epsj / epsi
-                    tse = 1.0 + 0.25 * poliRed * dipjRed ** 2 * np.sqrt(
+                    tse = 1.0 + 0.25 * poliRed * dipjRed**2 * np.sqrt(
                         epsRatio
                     )
-                    eok = tse ** 2 * np.sqrt(
+                    eok = tse**2 * np.sqrt(
                         float(speciesTransport[spec1][1])
                         * float(speciesTransport[spec2][1])
                     )
@@ -8103,7 +8103,7 @@ class FPickler(CMill):
                     * conversion
                     * float(speciesTransport[spec1][3])
                     * float(speciesTransport[spec2][3])
-                    / (epsm_k * sigm ** 3)
+                    / (epsm_k * sigm**3)
                 )
                 if self.Xi_bool(spec1, spec2, speciesTransport) == False:
                     dst = 0.0
@@ -8121,7 +8121,7 @@ class FPickler(CMill):
                         * 1
                         / PATM
                         * (
-                            np.sqrt(2.0 * np.pi * t ** 3 * kb ** 3 / m_red)
+                            np.sqrt(2.0 * np.pi * t**3 * kb**3 / m_red)
                             / (
                                 np.pi
                                 * sigm
@@ -8353,7 +8353,7 @@ class FPickler(CMill):
         # conversion coefs
         AtoCM = 1.0e-8
         DEBYEtoCGS = 1.0e-18
-        convert = DEBYEtoCGS / np.sqrt(kb * AtoCM ** 3.0)
+        convert = DEBYEtoCGS / np.sqrt(kb * AtoCM**3.0)
         return (
             convert
             * float(speciesTransport[spec][3])
@@ -8369,7 +8369,7 @@ class FPickler(CMill):
         return (
             1
             + np.pi ** (thtwo) / 2.0 * np.sqrt((eps_k / t))
-            + (np.pi ** 2 / 4.0 + 2.0) * ((eps_k / t))
+            + (np.pi**2 / 4.0 + 2.0) * ((eps_k / t))
             + ((np.pi * eps_k / t)) ** (thtwo)
         )
 

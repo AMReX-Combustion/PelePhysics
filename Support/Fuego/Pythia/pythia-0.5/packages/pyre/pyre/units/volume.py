@@ -20,10 +20,10 @@ from .length import centimeter, foot, inch, meter
 # Data taken from Appendix F of Halliday, Resnick, Walker, "Fundamentals of Physics",
 #     fourth edition, John Willey and Sons, 1993
 
-cubic_meter = meter ** 3
-cubic_centimeter = centimeter ** 3
-cubic_foot = foot ** 3
-cubic_inch = inch ** 3
+cubic_meter = meter**3
+cubic_centimeter = centimeter**3
+cubic_foot = foot**3
+cubic_inch = inch**3
 
 liter = 1000 * cubic_centimeter
 

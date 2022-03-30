@@ -32,8 +32,8 @@ steradian = dimensionless  # solid angle
 
 hertz = 1 / second  # frequency
 
-newton = meter * kilogram / second ** 2  # force
-pascal = newton / meter ** 2  # pressure
+newton = meter * kilogram / second**2  # force
+pascal = newton / meter**2  # pressure
 joule = newton * meter  # work, heat
 watt = joule / second  # power, radiant flux
 
@@ -43,13 +43,13 @@ farad = coulomb / volt  # capacitance
 ohm = volt / ampere  # electric resistance
 siemens = ampere / volt  # electric conductance
 weber = volt * second  # magnetic flux
-tesla = weber / meter ** 2  # magnetic flux density
+tesla = weber / meter**2  # magnetic flux density
 henry = weber / ampere  # inductance
 
 celcius = kelvin  # Celcius temperature
 
 lumen = candela * steradian  # luminus flux
-lux = lumen / meter ** 2  # illuminance
+lux = lumen / meter**2  # illuminance
 
 becquerel = 1 / second  # radioactivity
 gray = joule / kilogram  # absorbed dose

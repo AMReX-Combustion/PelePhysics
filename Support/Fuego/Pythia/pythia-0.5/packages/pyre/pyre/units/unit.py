@@ -100,7 +100,7 @@ class unit(object):
         if type(other) != type(0) and type(other) != type(0.0):
             raise InvalidOperation("**", self, other)
 
-        value = self.value ** other
+        value = self.value**other
         derivation = tuple(map(operator.mul, [other] * 7, self.derivation))
 
         return unit(value, derivation)
