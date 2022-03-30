@@ -15,45 +15,49 @@ TurbInflow::init(amrex::Geometry const& geom)
     tp.resize(n_tp);
     tp_list.resize(n_tp);
     for (int n = 0; n < n_tp; n++) {
-      ppr.get("turbinflows",tp_list[n],n);
+      ppr.get("turbinflows", tp_list[n], n);
     }
   }
-  
+
   for (int n = 0; n < n_tp; n++) {
 
-    amrex::ParmParse pp("turbinflow."+tp_list[n]);
+    amrex::ParmParse pp("turbinflow." + tp_list[n]);
     if (pp.countval("turb_file") > 0) {
 
       // Query data
       pp.query("turb_file", tp[n].m_turb_file);
       tp[n].dir = -1;
-      pp.query("dir",tp[n].dir);
-      AMREX_ASSERT_WITH_MESSAGE(tp[n].dir>=0 && tp[n].dir<AMREX_SPACEDIM
-                                ,"Injection direction is needed: 0, 1 or 2");
+      pp.query("dir", tp[n].dir);
+      AMREX_ASSERT_WITH_MESSAGE(
+        tp[n].dir >= 0 && tp[n].dir < AMREX_SPACEDIM,
+        "Injection direction is needed: 0, 1 or 2");
       std::string side;
-      pp.query("side",side);
+      pp.query("side", side);
       if (side == "low") {
-        tp[n].side=amrex::Orientation::low;
+        tp[n].side = amrex::Orientation::low;
       } else if (side == "high") {
-        tp[n].side=amrex::Orientation::high;
+        tp[n].side = amrex::Orientation::high;
       } else {
         amrex::Abort("turbinflow.side can only be low or high");
       }
-      pp.query("time_offset",tp[n].time_shift);
+      pp.query("time_offset", tp[n].time_shift);
       pp.query("turb_scale_loc", tp[n].turb_scale_loc);
       pp.query("turb_scale_vel", tp[n].turb_scale_vel);
-      amrex::Print() << "Initializing turbInflow " << tp_list[n] << " with file " <<  tp[n].m_turb_file
+      amrex::Print() << "Initializing turbInflow " << tp_list[n]
+                     << " with file " << tp[n].m_turb_file
                      << " (location coordinates in will be scaled by "
-                     << tp[n].turb_scale_loc << " and velocity out to be scaled by "
+                     << tp[n].turb_scale_loc
+                     << " and velocity out to be scaled by "
                      << tp[n].turb_scale_vel << ") \n";
 
       // Get the turbcenter on the injection face
       const auto prob_lo = geom.ProbLoArray();
       const auto prob_hi = geom.ProbHiArray();
-      amrex::Vector<amrex::Real> turb_center(AMREX_SPACEDIM-1,0);
+      amrex::Vector<amrex::Real> turb_center(AMREX_SPACEDIM - 1, 0);
       pp.getarr("turb_center", turb_center);
       AMREX_ASSERT_WITH_MESSAGE(
-        turb_center.size() == AMREX_SPACEDIM-1, "turb_center must have AMREX_SPACEDIM-1 elements");
+        turb_center.size() == AMREX_SPACEDIM - 1,
+        "turb_center must have AMREX_SPACEDIM-1 elements");
       for (int idim = 0; idim < turb_center.size(); ++idim) {
         turb_center[idim] *= tp[n].turb_scale_loc;
       }
@@ -163,9 +167,8 @@ TurbInflow::add_turb(
   // Add turbulence from all the tp acting on this face
   for (int n = 0; n < tp.size(); n++) {
 
-    if (tp[n].dir == dir &&
-        tp[n].side == side) {
-        
+    if (tp[n].dir == dir && tp[n].side == side) {
+
       // 0 and 1 are the two transverse directions
       amrex::Vector<amrex::Real> x(turbBox.size()[0]), y(turbBox.size()[1]);
       for (int i = turbBox.smallEnd()[0]; i <= turbBox.bigEnd()[0]; ++i) {
@@ -180,13 +183,14 @@ TurbInflow::add_turb(
       }
 
       // Get the turbulence
-      amrex::Real z = (time+tp[n].time_shift) * tp[n].turb_conv_vel * tp[n].turb_scale_loc;
+      amrex::Real z =
+        (time + tp[n].time_shift) * tp[n].turb_conv_vel * tp[n].turb_scale_loc;
       fill_turb_plane(tp[n], x, y, z, v);
     }
   }
 
   // Moving it into data
-  set_turb(dir, tdir1, tdir2, v, data, dcomp); 
+  set_turb(dir, tdir1, tdir2, v, data, dcomp);
 
 #if 0
   std::string junk = "TurbV_AftTP"+std::to_string(n)+"_D";
@@ -196,7 +200,7 @@ TurbInflow::add_turb(
   data.writeOn(os);
   os.close();
   amrex::Abort();
-#endif  
+#endif
 }
 
 void
@@ -229,9 +233,7 @@ TurbInflow::set_turb(
 }
 
 void
-TurbInflow::read_one_turb_plane(
-    TurbParm& a_tp,
-    int iplane, int k)
+TurbInflow::read_one_turb_plane(TurbParm& a_tp, int iplane, int k)
 {
   // There are AMREX_SPACEDIM * kmax planes of FABs.
   // The first component are in the first kmax planes,
@@ -272,9 +274,7 @@ TurbInflow::read_one_turb_plane(
 }
 
 void
-TurbInflow::read_turb_planes(
-    TurbParm& a_tp,
-    amrex::Real z)
+TurbInflow::read_turb_planes(TurbParm& a_tp, amrex::Real z)
 {
   int izlo = (int)(round(z * a_tp.dxinv[2])) - 1;
   int izhi = izlo + a_tp.nplane - 1;
@@ -300,7 +300,7 @@ TurbInflow::read_turb_planes(
   a_tp.sdata->writeOn(os);
   os.close();
   //amrex::Abort();
-#endif  
+#endif
 }
 
 void
@@ -311,8 +311,8 @@ TurbInflow::fill_turb_plane(
   amrex::Real z,
   amrex::FArrayBox& v)
 {
-  if ( (z < a_tp.szlo + 0.5 * a_tp.dx[2]) ||
-       (z > a_tp.szhi - 0.5 * a_tp.dx[2]) ) {
+  if (
+    (z < a_tp.szlo + 0.5 * a_tp.dx[2]) || (z > a_tp.szhi - 0.5 * a_tp.dx[2])) {
 #if 0
     {
       amrex::AllPrint() << "Reading new data because z " << z << " is outside " << a_tp.szlo + 0.5 * a_tp.dx[2] << " and "
@@ -334,8 +334,9 @@ TurbInflow::fill_turb_plane(
   amrex::Real* xd = x_dev.data();
   amrex::Real* yd = y_dev.data();
 
-  amrex::Real velScale = (a_tp.side == amrex::Orientation::high) ? -a_tp.turb_scale_vel
-                                                                 : a_tp.turb_scale_vel;
+  amrex::Real velScale = (a_tp.side == amrex::Orientation::high)
+                           ? -a_tp.turb_scale_vel
+                           : a_tp.turb_scale_vel;
   const auto& nplane = a_tp.nplane;
   const auto& npboxcells = a_tp.npboxcells;
   const auto& pboxlo = a_tp.pboxlo;
@@ -347,13 +348,14 @@ TurbInflow::fill_turb_plane(
     amrex::Real cx[3], cy[3], cz[3], ydata[3];
     amrex::Real zdata[3][3];
 
-    amrex::Real zz = (z - szlo) * dxinv[2]; // How many dz away from the left side ?
-    int k0 = (int)(std::round(zz));         // What's the closest point ?
+    amrex::Real zz =
+      (z - szlo) * dxinv[2];        // How many dz away from the left side ?
+    int k0 = (int)(std::round(zz)); // What's the closest point ?
     zz -= amrex::Real(k0);
-    cz[0] = 0.5 * (zz - 1.0) * (zz - 2.0);  // Weight of k0 - 1
-    cz[1] = zz * (2.0 - zz);                // Weight of k0
-    cz[2] = 0.5 * zz * (zz - 1.0);          // Weight of k0 + 1
-    k0 += 1;                                // Index starting at 1
+    cz[0] = 0.5 * (zz - 1.0) * (zz - 2.0); // Weight of k0 - 1
+    cz[1] = zz * (2.0 - zz);               // Weight of k0
+    cz[2] = 0.5 * zz * (zz - 1.0);         // Weight of k0 + 1
+    k0 += 1;                               // Index starting at 1
 
     for (int n = 0; n < AMREX_SPACEDIM; ++n) {
       amrex::Real xx = (xd[i - bx.smallEnd(0)] - pboxlo[0]) * dxinv[0];
@@ -375,7 +377,7 @@ TurbInflow::fill_turb_plane(
         for (int ii = 0; ii <= 2; ++ii) {
           for (int jj = 0; jj <= 2; ++jj) {
             zdata[ii][jj] = cz[0] * sd(i0 + ii, j0 + jj, k0 - 1, n) +
-                            cz[1] * sd(i0 + ii, j0 + jj, k0    , n) +
+                            cz[1] * sd(i0 + ii, j0 + jj, k0, n) +
                             cz[2] * sd(i0 + ii, j0 + jj, k0 + 1, n);
           }
         }
