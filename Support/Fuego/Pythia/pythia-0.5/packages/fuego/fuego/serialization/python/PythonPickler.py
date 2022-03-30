@@ -1615,20 +1615,20 @@ class PythonPickler(PythonMill):
     def _prefactorUnits(self, code, exponent):
 
         if code == "mole/cm**3":
-            units = mole / cm ** 3
+            units = mole / cm**3
         elif code == "moles":
-            units = mole / cm ** 3
+            units = mole / cm**3
         elif code == "molecules":
             import pyre
 
-            units = 1.0 / avogadro / cm ** 3
+            units = 1.0 / avogadro / cm**3
         else:
             import pyre
 
             pyre.debug.Firewall.hit("unknown prefactor units '%s'" % code)
             return 1
 
-        return units ** exponent / second
+        return units**exponent / second
 
     def _activationEnergyUnits(self, code):
         if code == "cal/mole":

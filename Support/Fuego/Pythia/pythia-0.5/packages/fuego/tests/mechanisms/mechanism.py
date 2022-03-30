@@ -110,8 +110,8 @@ def reactionDetails(reaction):
 
     n = reaction.id()
     cq, cK_c = chemkin_rates[n - 1]
-    cK_c *= cm ** 3 / mole
-    cq *= (mole / cm ** 3) / second
+    cK_c *= cm**3 / mole
+    cq *= (mole / cm**3) / second
 
     print("chemkin:")
     print("    K_c = %s" % cK_c)
@@ -161,12 +161,12 @@ def validateRates(calc):
         i += 1
         q_f, q_r = reaction.progressRate()
 
-        if q_f.derivation != (mole / (meter ** 3 / second)).derivation:
+        if q_f.derivation != (mole / (meter**3 / second)).derivation:
             pyre.debug.Firewall.hit(
                 "bad units in forward progress rate for reaction %d" % i
             )
 
-        if q_r.derivation != (mole / (meter ** 3 / second)).derivation:
+        if q_r.derivation != (mole / (meter**3 / second)).derivation:
             pyre.debug.Firewall.hit(
                 "bad units in reverse progress rate for reaction %d" % i
             )
@@ -189,12 +189,12 @@ def mismatches(calc):
         i = reaction.id()
         q_f, q_r = reaction.progressRate()
 
-        if q_f.derivation != (mole / (meter ** 3 / second)).derivation:
+        if q_f.derivation != (mole / (meter**3 / second)).derivation:
             pyre.debug.Firewall.hit(
                 "bad units in forward progress rate for reaction %d" % i
             )
 
-        if q_r.derivation != (mole / (meter ** 3 / second)).derivation:
+        if q_r.derivation != (mole / (meter**3 / second)).derivation:
             pyre.debug.Firewall.hit(
                 "bad units in reverse progress rate for reaction %d" % i
             )

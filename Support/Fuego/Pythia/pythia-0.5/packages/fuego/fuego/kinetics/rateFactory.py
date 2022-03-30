@@ -61,7 +61,7 @@ def forwardRate(mixture, reaction):
     # perform the unit conversion
     A, beta, E = arrhenius
     E *= energyUC
-    A *= prefactorUC / kelvin ** beta
+    A *= prefactorUC / kelvin**beta
     arrhenius = (A, beta, E)
 
     if not low:
@@ -89,7 +89,7 @@ def forwardRate(mixture, reaction):
     )
     A, beta, E = low
     E *= energyUC
-    A *= prefactorUC / kelvin ** beta
+    A *= prefactorUC / kelvin**beta
     low = (A, beta, E)
     phaseEnhancement = enhancement(mixture, reaction)
 
@@ -150,7 +150,7 @@ def reverseRate(mixture, reaction, equilibriumCalculator, forwardRate):
 
     A, beta, E = rev
     E *= energyUC
-    A *= prefactorUC / kelvin ** beta
+    A *= prefactorUC / kelvin**beta
     rev = (A, beta, E)
 
     rlt = reaction.rlt
@@ -191,17 +191,17 @@ def activationEnergyUnits(code):
 def prefactorUnitConversion(code, exponent):
 
     if code == "mole/cm**3":
-        units = mole / cm ** 3
+        units = mole / cm**3
     elif code == "moles":
-        units = mole / cm ** 3
+        units = mole / cm**3
     elif code == "molecules":
         avogadro = pyre.handbook.constants.fundamental.avogadro
-        units = 1.0 / avogadro / cm ** 3
+        units = 1.0 / avogadro / cm**3
     else:
         pyre.debug.Firewall.hit("unknown prefactor units '%s'" % code)
         return 1
 
-    return units ** exponent / second
+    return units**exponent / second
 
 
 def dimPhaseSpace(reagents):
