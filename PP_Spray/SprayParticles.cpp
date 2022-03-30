@@ -470,8 +470,6 @@ SprayParticleContainer::updateParticles(
               cur_dt = flow_dt - ctime;
               cur_cfl = 0.;
             }
-            // Length from cell center to boundary face center
-            Real diff_cent = 0.5 * dx[0];
             // Flag for whether we are near EB boundaries
             bool do_fe_interp = false;
 #ifdef AMREX_USE_EB
