@@ -16,7 +16,6 @@ TurbInflow::init(amrex::Geometry const& geom)
     tp_list.resize(n_tp);
     for (int n = 0; n < n_tp; n++) {
       ppr.get("turbinflows",tp_list[n],n);
-      amrex::Print() << " Got " << tp_list[n] << "\n";
     }
   }
   
