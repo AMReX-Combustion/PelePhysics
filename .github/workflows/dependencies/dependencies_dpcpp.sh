@@ -16,9 +16,3 @@ sudo apt-get update
 sudo apt-get install -y \
     intel-oneapi-dpcpp-cpp-compiler \
     intel-oneapi-mkl-devel
-
-set +e
-source /opt/intel/oneapi/setvars.sh
-set -e
-which dpcpp
-dpcpp --version
