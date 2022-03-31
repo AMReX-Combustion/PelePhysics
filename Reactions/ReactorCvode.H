@@ -164,7 +164,7 @@ private:
 #ifndef AMREX_USE_GPU
   N_Vector y = nullptr;
   SUNLinearSolver LS = nullptr;
-  SUNLinearSolver NLS = nullptr;
+  SUNNonlinearSolver NLS = nullptr;
   SUNMatrix A = nullptr;
   void* cvode_mem = nullptr;
   CVODEUserData* udata_g = nullptr;

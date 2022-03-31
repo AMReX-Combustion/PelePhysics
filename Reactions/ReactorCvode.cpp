@@ -755,7 +755,10 @@ ReactorCvode::allocUserData(
   }
 
 #else
-  if (solve_type_str == "dense_direct") {
+  if (solve_type_str == "fixed_point") {
+    udata->solve_type = cvode::fixedPoint;
+    udata->analytical_jacobian = 0;
+  } else if (solve_type_str == "dense_direct") {
     udata->solve_type = cvode::denseFDDirect;
   } else if (solve_type_str == "denseAJ_direct") {
     udata->solve_type = cvode::denseDirect;
@@ -1197,7 +1200,7 @@ ReactorCvode::react(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, user_data->ncells,
     relTol, absTol, "cvode");
 
-  // Linear solver data
+  // Solver data
   SUNNonlinearSolver NLS = NULL;
   SUNLinearSolver LS = NULL;
   if (user_data->solve_type == cvode::fixedPoint) {
@@ -1211,7 +1214,6 @@ ReactorCvode::react(
     if (utils::check_flag(&flag, "CVodeSetNonlinearSolver", 1)) {
       return (1);
     }
-
   } else if (user_data->solve_type == cvode::sparseDirect) {
 #if defined(AMREX_USE_CUDA)
     LS = SUNLinSol_cuSolverSp_batchQR(
@@ -1461,6 +1463,7 @@ ReactorCvode::react(
   //----------------------------------------------------------
 #ifdef AMREX_USE_GPU
   int neq_tot = (NUM_SPECIES + 1) * ncells;
+  SUNNonlinaerSolver NLS = NULL;
   SUNLinearSolver LS = NULL;
   SUNMatrix A = NULL;
   void* cvode_mem = NULL;
@@ -1509,8 +1512,19 @@ ReactorCvode::react(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, user_data->ncells,
     relTol, absTol, "cvode");
 
-  // Linear solver data
-  if (user_data->solve_type == cvode::sparseDirect) {
+  // Solver data
+  if (user_data->solve_type == cvode::fixedPoint) {
+    NLS =
+      SUNNonlinSol_FixedPoint(y, 5, *amrex::sundials::The_Sundials_Context());
+    if (utils::check_flag((void*)NLS, "SUNNonlinSol_FixedPoint", 0)) {
+      return (1);
+    }
+
+    flag = CVodeSetNonlinearSolver(cvode_mem, NLS);
+    if (utils::check_flag(&flag, "CVodeSetNonlinearSolver", 1)) {
+      return (1);
+    }
+  } else if (user_data->solve_type == cvode::sparseDirect) {
 #if defined(AMREX_USE_CUDA)
     LS = SUNLinSol_cuSolverSp_batchQR(
       y, A, user_data->cusolverHandle,
@@ -1859,6 +1873,7 @@ ReactorCvode::close()
 #ifndef AMREX_USE_GPU
   CVodeFree(&cvode_mem);
   SUNLinSolFree(LS);
+  SUNNonlinearSolFree(NLS);
 
   if (udata_g->solve_type == cvode::denseDirect) {
     SUNMatDestroy(A);
