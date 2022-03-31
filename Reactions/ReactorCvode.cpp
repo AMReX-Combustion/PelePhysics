@@ -1463,7 +1463,7 @@ ReactorCvode::react(
   //----------------------------------------------------------
 #ifdef AMREX_USE_GPU
   int neq_tot = (NUM_SPECIES + 1) * ncells;
-  SUNNonlinaerSolver NLS = NULL;
+  SUNNonlinearSolver NLS = NULL;
   SUNLinearSolver LS = NULL;
   SUNMatrix A = NULL;
   void* cvode_mem = NULL;
