@@ -7,18 +7,18 @@
 
 set -eu -o pipefail
 
-# Ref.: https://github.com/rscohn2/oneapi-ci
-# intel-basekit intel-hpckit are too large in size
-wget -q -O - https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB \
-  | sudo apt-key add -
+sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
 echo "deb https://apt.repos.intel.com/oneapi all main" \
   | sudo tee /etc/apt/sources.list.d/oneAPI.list
 
 sudo apt-get update
+sudo apt-get install -y \
+    intel-oneapi-dpcpp-cpp-compiler \
+    intel-oneapi-mkl-devel
 
-sudo apt-get install -y --no-install-recommends \
-    build-essential \
-    intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel \
-    g++ gfortran    \
-    libopenmpi-dev  \
-    openmpi-bin
+set +e
+source /opt/intel/oneapi/setvars.sh
+set -e
+which dpcpp
+dpcpp --version
