@@ -105,6 +105,7 @@ enum linSolveType {
 enum precondType { sparseSimpleAJac };
 #else
 enum linSolveType {
+  fixedPoint,
   denseFDDirect,
   denseDirect,
   sparseDirect,

@@ -441,7 +441,7 @@ ReactorCvode::checkCvodeOptions() const
   } else {
     amrex::Abort(
       "Wrong solve_type. Options are: 'dense_direct', denseAJ_direct', "
-      "'sparse_direct', 'custom_direct', 'GMRES', 'precGMRES'");
+      "'sparse_direct', 'custom_direct', 'GMRES', 'precGMRES', 'fixed_point'");
   }
 #endif
 
