@@ -75,7 +75,8 @@ ReactorCvode::init(int reactor_type, int ncells)
 
   // Linear solver data
   if (udata_g->solve_type == cvode::fixedPoint) {
-    NLS = SUNNonlinSol_FixedPoint(y, 0, *amrex::sundials::The_Sundials_Context());
+    NLS =
+      SUNNonlinSol_FixedPoint(y, 0, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)NLS, "SUNNonlinSol_FixedPoint", 0)) {
       return (1);
     }
@@ -305,8 +306,7 @@ ReactorCvode::checkCvodeOptions() const
     solve_type = cvode::fixedPoint;
     analytical_jacobian = 0;
     if (verbose > 0)
-      amrex::Print()
-        << " Using a fixed-point nonlinear solver\n";
+      amrex::Print() << " Using a fixed-point nonlinear solver\n";
   } else if (solve_type_str == "sparse_direct") {
     solve_type = cvode::sparseDirect;
     analytical_jacobian = 1;
@@ -1196,7 +1196,8 @@ ReactorCvode::react(
   SUNNonlinearSolver NLS = NULL;
   SUNLinearSolver LS = NULL;
   if (user_data->solve_type == cvode::fixedPoint) {
-    NLS = SUNNonlinSol_FixedPoint(y, 5, *amrex::sundials::The_Sundials_Context());
+    NLS =
+      SUNNonlinSol_FixedPoint(y, 5, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)NLS, "SUNNonlinSol_FixedPoint", 0)) {
       return (1);
     }
