@@ -8,15 +8,12 @@
 #include "ReactorCvodeJacobian.H"
 #include "ReactorCvodeCustomLinSolver.H"
 #include <cvode/cvode.h>
-#include <cvode/cvode_direct.h>
-#include <cvode/cvode_spils.h>
 #include <nvector/nvector_serial.h>
 #include <sunmatrix/sunmatrix_dense.h>
+#include <sunmatrix/sunmatrix_sparse.h>
 #include <sunlinsol/sunlinsol_dense.h>
 #include <sunlinsol/sunlinsol_spgmr.h>
-#include <sundials/sundials_types.h>
-#include <sundials/sundials_math.h>
-#include <sunmatrix/sunmatrix_sparse.h>
+#include <sunnonlinsol/sunnonlinsol_fixedpoint.h>
 
 #ifdef AMREX_USE_HIP
 #include <nvector/nvector_hip.h>

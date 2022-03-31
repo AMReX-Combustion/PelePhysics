@@ -1,5 +1,4 @@
 #include "ReactorCvode.H"
-#include <sunnonlinsol/sunnonlinsol_fixedpoint.h>
 
 #include <iostream>
 
