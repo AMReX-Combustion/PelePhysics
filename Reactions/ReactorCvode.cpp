@@ -368,7 +368,12 @@ ReactorCvode::checkCvodeOptions() const
   }
 
 #else
-  if (solve_type_str == "dense_direct") {
+  if (solve_type_str == "fixed_point") {
+    solve_type = cvode::fixedPoint;
+    analytical_jacobian = 0;
+    if (verbose > 0)
+      amrex::Print() << " Using a fixed-point nonlinear solver\n";
+  } else if (solve_type_str == "dense_direct") {
     solve_type = cvode::denseFDDirect;
     if (verbose > 0) {
       amrex::Print()
