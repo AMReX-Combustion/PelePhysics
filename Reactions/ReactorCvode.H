@@ -160,6 +160,8 @@ private:
 #else
   int atomic_reductions{1};
 #endif
+  int max_nls_iters{3};
+  int max_fp_accel{2};
 
 #ifndef AMREX_USE_GPU
   N_Vector y = nullptr;

@@ -18,6 +18,8 @@ ReactorCvode::init(int reactor_type, int ncells)
   pp.query("rtol", relTol);
   pp.query("atol", absTol);
   pp.query("atomic_reductions", atomic_reductions);
+  pp.query("max_nls_iters", max_nls_iters);
+  pp.query("max_fp_accel", max_fp_accel);
   checkCvodeOptions();
 
   amrex::Print() << "Initializing CVODE:\n";
@@ -75,8 +77,8 @@ ReactorCvode::init(int reactor_type, int ncells)
 
   // Linear solver data
   if (udata_g->solve_type == cvode::fixedPoint) {
-    NLS =
-      SUNNonlinSol_FixedPoint(y, 0, *amrex::sundials::The_Sundials_Context());
+    NLS = SUNNonlinSol_FixedPoint(
+      y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)NLS, "SUNNonlinSol_FixedPoint", 0)) {
       return (1);
     }
@@ -255,7 +257,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   }
 
   // CVODE runtime options
-  flag = CVodeSetMaxNonlinIters(cvode_mem, 50); // Max newton iter.
+  flag = CVodeSetMaxNonlinIters(cvode_mem, max_nls_iters); // Max newton iter.
   if (utils::check_flag(&flag, "CVodeSetMaxNonlinIters", 1) != 0) {
     return (1);
   }
@@ -1204,8 +1206,8 @@ ReactorCvode::react(
   SUNNonlinearSolver NLS = NULL;
   SUNLinearSolver LS = NULL;
   if (user_data->solve_type == cvode::fixedPoint) {
-    NLS =
-      SUNNonlinSol_FixedPoint(y, 5, *amrex::sundials::The_Sundials_Context());
+    NLS = SUNNonlinSol_FixedPoint(
+      y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)NLS, "SUNNonlinSol_FixedPoint", 0)) {
       return (1);
     }
@@ -1297,6 +1299,9 @@ ReactorCvode::react(
   }
 
   // CVODE runtime options
+  flag = CVodeSetMaxNonlinIters(cvode_mem, max_nls_iters);
+  if (utils::check_flag(&flag, "CVodeSetMaxNonlinIters", 1))
+    return (1);
   flag = CVodeSetMaxNumSteps(cvode_mem, 100000);
   if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1))
     return (1);
@@ -1514,8 +1519,8 @@ ReactorCvode::react(
 
   // Solver data
   if (user_data->solve_type == cvode::fixedPoint) {
-    NLS =
-      SUNNonlinSol_FixedPoint(y, 5, *amrex::sundials::The_Sundials_Context());
+    NLS = SUNNonlinSol_FixedPoint(
+      y, max_fp_accel, *amrex::sundials::The_Sundials_Context());
     if (utils::check_flag((void*)NLS, "SUNNonlinSol_FixedPoint", 0)) {
       return (1);
     }
@@ -1609,6 +1614,9 @@ ReactorCvode::react(
   }
 
   // CVODE runtime options
+  flag = CVodeSetMaxNonlinIters(cvode_mem, max_nls_iters);
+  if (utils::check_flag(&flag, "CVodeSetMaxNonlinIters", 1))
+    return (1);
   flag = CVodeSetMaxNumSteps(cvode_mem, 100000);
   if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1))
     return (1);
