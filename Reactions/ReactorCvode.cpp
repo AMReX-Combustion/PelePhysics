@@ -1873,7 +1873,7 @@ ReactorCvode::close()
 #ifndef AMREX_USE_GPU
   CVodeFree(&cvode_mem);
   SUNLinSolFree(LS);
-  SUNNonlinearSolFree(NLS);
+  SUNNonlinSolFree(NLS);
 
   if (udata_g->solve_type == cvode::denseDirect) {
     SUNMatDestroy(A);
