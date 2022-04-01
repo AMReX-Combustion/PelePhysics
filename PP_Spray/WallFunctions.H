@@ -288,9 +288,9 @@ check_wall(
   const amrex::IntVect ijkc,
   const amrex::IntVect ijkc_prev,
   const bool use_EB,
-  Array4<EBCellFlag const> const& flags,
-  Array4<amrex::Real const> const& bcent,
-  Array4<amrex::Real const> const& bnorm,
+  amrex::Array4<amrex::EBCellFlag const> const& flags,
+  amrex::Array4<amrex::Real const> const& bcent,
+  amrex::Array4<amrex::Real const> const& bnorm,
   amrex::IntVect& bloc,
 #endif
   amrex::RealVect& normal,
@@ -325,7 +325,7 @@ check_wall(
           bcent(ijkc_prev, 0), bcent(ijkc_prev, 1), bcent(ijkc_prev, 2))};
         // otherwise an error has occurred
       } else {
-        Abort("WallFunctions::check_wall: Particle is outside EB");
+        amrex::Abort("WallFunctions::check_wall: Particle is outside EB");
       }
       wall_check = true;
     }

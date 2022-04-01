@@ -406,6 +406,7 @@ eb_interp(
   const amrex::IntVect& ijk,
   const amrex::RealVect& dx,
   const amrex::RealVect& dxi,
+  const amrex::RealVect& lx,
   const amrex::RealVect& plo,
   const amrex::IntVect& bflags,
   const bool eb_in_box,
@@ -429,20 +430,20 @@ eb_interp(
     // traditional trilinear interpolation
     if (
 #if AMREX_SPACEDIM == 3
-      flags_array(i - 1, j - 1, k - 1).isRegular() &&
-      flags_array(i, j - 1, k - 1).isRegular() &&
-      flags_array(i - 1, j, k - 1).isRegular() &&
-      flags_array(i, j, k - 1).isRegular() &&
-      flags_array(i - 1, j - 1, k).isRegular() &&
+      flags(i - 1, j - 1, k - 1).isRegular() &&
+      flags(i, j - 1, k - 1).isRegular() &&
+      flags(i - 1, j, k - 1).isRegular() &&
+      flags(i, j, k - 1).isRegular() &&
+      flags(i - 1, j - 1, k).isRegular() &&
 #endif
-      flags_array(i, j - 1, k).isRegular() &&
-      flags_array(i - 1, j, k).isRegular() &&
-      flags_array(i, j, k).isRegular()) {
+      flags(i, j - 1, k).isRegular() &&
+      flags(i - 1, j, k).isRegular() &&
+      flags(i, j, k).isRegular()) {
       do_fe_interp = false;
     }
   }
   if (!do_fe_interp) {
-    trilinear_interp(ijk, lx, indx_array.data(), weights.data(), bflags);
+    trilinear_interp(ijk, lx, indx_array, weights, bflags);
   } else {
     const amrex::Real tolerance = std::numeric_limits<amrex::Real>::epsilon();
     AMREX_D_TERM(
@@ -535,7 +536,7 @@ eb_interp(
     if (
       (flags(ip, jp, kp).isSingleValued() && (par_dot_EB <= tolerance)) ||
       flags(ip, jp, kp).isCovered()) {
-      Abort("Particle has penetrated EB boundary");
+      amrex::Abort("Particle has penetrated EB boundary");
       // The particle is near the EB. It is either
       // 1) between the cell centroid and the EB, or
       // 2) one or more cells in the 2^3 stencil is covered.
