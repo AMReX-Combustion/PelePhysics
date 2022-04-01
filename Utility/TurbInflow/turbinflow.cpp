@@ -51,8 +51,6 @@ TurbInflow::init(amrex::Geometry const& geom)
                      << tp[n].turb_scale_vel << ") \n";
 
       // Get the turbcenter on the injection face
-      const auto prob_lo = geom.ProbLoArray();
-      const auto prob_hi = geom.ProbHiArray();
       amrex::Vector<amrex::Real> turb_center(AMREX_SPACEDIM - 1, 0);
       pp.getarr("turb_center", turb_center);
       AMREX_ASSERT_WITH_MESSAGE(
@@ -337,7 +335,6 @@ TurbInflow::fill_turb_plane(
   amrex::Real velScale = (a_tp.side == amrex::Orientation::high)
                            ? -a_tp.turb_scale_vel
                            : a_tp.turb_scale_vel;
-  const auto& nplane = a_tp.nplane;
   const auto& npboxcells = a_tp.npboxcells;
   const auto& pboxlo = a_tp.pboxlo;
   const auto& szlo = a_tp.szlo;
