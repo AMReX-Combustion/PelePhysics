@@ -4,7 +4,7 @@ namespace pele {
 namespace physics {
 namespace turbinflow {
 void
-TurbInflow::init(amrex::Geometry const& geom)
+TurbInflow::init(amrex::Geometry const& /*geom*/)
 {
   amrex::ParmParse ppr;
 
