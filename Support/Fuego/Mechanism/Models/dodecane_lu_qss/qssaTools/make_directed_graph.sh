@@ -12,11 +12,11 @@ export LD_LIBRARY_PATH=${EXPORT_ROOT}/lib:${LD_LIBRARY_PATH}
 python -c "import networkx"
 notAvail=$?
 
-if [[$notAvail -eq 1 ]]
+if [ $notAvail -eq 1 ]
 then
     echo "networkx module unavailable, cannot plot directed graphs"
-elif [[$notAvail -eq 0 ]]
-
+elif [ $notAvail -eq 0 ]
+then
     # Write QSSA inp
     python scripts/makeQSSAInp/make_inp_file_qssa.py scripts/inputs/input
     # Write remove star names
@@ -24,5 +24,4 @@ elif [[$notAvail -eq 0 ]]
     # Make the directed graph
     python scripts/vizTool/makeDiGraph.py scripts/inputs/input_diGraph
     python scripts/vizTool/makeQSSQuadGraph.py scripts/inputs/input_diGraph
-
 fi
