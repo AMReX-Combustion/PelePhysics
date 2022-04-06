@@ -1,10 +1,17 @@
 # Analytically Reduced Mechanism
 This mechanism is the QSS version.
 
+
+
+
 ## Create mechanism
 
 `bash make_mechanism.sh`
 
+
+## Integration method
+
+Verified with GMRES, denseDirect. Does not work yet with analytical Jacobian
 
 ## Remove quadratic coupling
 
@@ -48,4 +55,12 @@ All reactions that create a quadratic coupling are removed by eliminating the fo
 
 `bash make-viztool.sh`
 
-This creates a dependency graph of the QSS species as well as a graph of the reactions that induce quadratic coupling. The graphs are outputed in  `qssaTools/output/`
+This creates a dependency graph of the QSS species (left) as well as a graph of the reactions that induce quadratic coupling (right). The graphs are outputed in  `qssaTools/output/`
+
+
+<p float="left">
+  <img src="Figures/directedGraphQSS.png" width="350"/>
+  <img src="Figures/quadGraphQSS.png" width="350"/>
+</p>
+
+
