@@ -46,7 +46,7 @@ class Species(object):
         from pyre.handbook.units.SI import meter, mole
 
         self._symbol = symbol
-        self._concentration = 0.0 * mole / meter ** 3
+        self._concentration = 0.0 * mole / meter**3
         self._molecularWeight = molecularWeight
         self._thermalProperties = thermalProperties
 

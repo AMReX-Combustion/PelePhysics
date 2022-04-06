@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        comp: [gnu, llvm, nvcc]
+        comp: [gnu, llvm, cuda, hip, dpcpp]
         include:
           - comp: gnu
             amrex_build_args: 'COMP=gnu'
@@ -59,9 +59,15 @@ jobs:
           - comp: llvm
             amrex_build_args: 'COMP=llvm'
             dependency_cmds:
-          - comp: nvcc
+          - comp: cuda
             amrex_build_args: 'COMP=gnu USE_CUDA=TRUE'
-            dependency_cmds: '.github/workflows/dependencies/dependencies_nvcc.sh'
+            dependency_cmds: '.github/workflows/dependencies/dependencies_cuda.sh'
+          - comp: hip
+            amrex_build_args: 'USE_HIP=TRUE AMD_ARCH=gfx908 LIBRARY_LOCATIONS=/opt/rocm/lib'
+            dependency_cmds: '.github/workflows/dependencies/dependencies_hip.sh'
+          - comp: dpcpp
+            amrex_build_args: 'USE_DPCPP=TRUE'
+            dependency_cmds: '.github/workflows/dependencies/dependencies_dpcpp.sh'
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.6.0
@@ -84,7 +90,7 @@ jobs:
           echo "EOS_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/EosEval" >> $GITHUB_ENV
           echo "REACT_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/ReactEval" >> $GITHUB_ENV
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
-          if [ "${{matrix.comp}}" == 'nvcc' ]; then \
+          if [ "${{matrix.comp}}" == 'cuda' ]; then \
             echo "CUDA_HOME=/usr/local/cuda-11.2" >> $GITHUB_ENV; \
             echo "LD_LIBRARY_PATH=/usr/local/cuda-11.2/lib64:${LD_LIBRARY_PATH}" >> $GITHUB_ENV; \
             echo "/usr/local/cuda-11.2/bin" >> $GITHUB_PATH; \
@@ -92,11 +98,21 @@ jobs:
       - name: Dependencies
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
-          if [ "${{matrix.comp}}" == 'nvcc' ]; then \
+          if [ "${{matrix.comp}}" == 'cuda' ]; then \
             ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}}; \
             echo "CUDA_HOME=${CUDA_HOME}"; \
             ls ${CUDA_HOME} > /dev/null; \
             which nvcc || echo "nvcc not in PATH!"; \
+          fi
+          if [ "${{matrix.comp}}" == 'hip' ]; then \
+            ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}}; \
+            source /etc/profile.d/rocm.sh
+            which hipcc || echo "hipcc not in PATH!"; \
+          fi
+          if [ "${{matrix.comp}}" == 'dpcpp' ]; then \
+            ${{github.workspace}}/PelePhysics-${{matrix.comp}}/${{matrix.dependency_cmds}}; \
+            source /opt/intel/oneapi/setvars.sh || true
+            which dpcpp || echo "dpcpp not in PATH!"; \
           fi
           cmake --version
           make TPL ${{matrix.amrex_build_args}};
@@ -104,10 +120,14 @@ jobs:
         working-directory: ${{env.TRANSPORT_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
+          if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
+          if [ "${{matrix.comp}}" == 'dpcpp' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           for TYPE in Constant Simple Sutherland; do \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Transport_Model=${TYPE} TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}; \
-            if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d_${TYPE}; fi; \
+            if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
+              ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d_${TYPE}; \
+            fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi; \
           done
@@ -115,11 +135,15 @@ jobs:
         working-directory: ${{env.EOS_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
+          if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
+          if [ "${{matrix.comp}}" == 'dpcpp' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           for TYPE in Fuego GammaLaw; do \
             if [ "${TYPE}" == 'Fuego' ]; then CHEMISTRY=LiDryer; else CHEMISTRY=Null; fi; \
             printf "\n-------- ${TYPE} --------\n"; \
             make -j ${{env.NPROCS}} Eos_Model=${TYPE} Chemistry_Model=${CHEMISTRY} TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}; \
-            if [ "${{matrix.comp}}" != 'nvcc' ]; then ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d; fi; \
+            if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
+              ./Pele2d.${{matrix.comp}}.TPROF.ex inputs.2d; \
+            fi; \
             make realclean; \
             if [ $? -ne 0 ]; then exit 1; fi; \
           done
@@ -127,8 +151,10 @@ jobs:
         working-directory: ${{env.REACT_WORKING_DIRECTORY}}
         run: |
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
+          if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
+          if [ "${{matrix.comp}}" == 'dpcpp' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
           make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=drm19 TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
-          if [ "${{matrix.comp}}" != 'nvcc' ]; then \
+          if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
             for TYPE in Cvode Arkode RK64; do \
               printf "\n-------- ${TYPE} --------\n"; \
               ./Pele3d.${{matrix.comp}}.TPROF.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
@@ -138,7 +164,7 @@ jobs:
           fi;
           make realclean
           make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=LiDryer TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
-          if [ "${{matrix.comp}}" != 'nvcc' ]; then \
+          if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
             for TYPE in Cvode Arkode RK64; do \
               printf "\n-------- ${TYPE} --------\n"; \
                ./Pele3d.${{matrix.comp}}.TPROF.ex inputs.3d_Array4 ode.dt=1.e-05 ode.ndt=100 chem_integrator="Reactor${TYPE}"; \
