@@ -27,7 +27,7 @@ public:
     int ncomp,
     amrex::MultiFab& a_mf);
 
-  amrex::Vector<std::string> getVariableList() { return m_vars; };
+  amrex::Vector<std::string> getVariableList() { return m_vars; }
 
 protected:
   // MetaData
