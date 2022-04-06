@@ -16,7 +16,7 @@ Verified with GMRES, denseDirect. Does not work yet with analytical Jacobian
 ## Remove quadratic coupling
 
 3 methods are available for treatment of the quadratic coupling between QSS species
-Result of 0D validation are displayed over the range of applicability of the QSS assumption (![equation](http://www.sciweavers.org/tex2img.php?eq=%5Cphi%20%5Cin%20%5B0.5%2C%202%5D%2C%20T_0%20%5Cin%20%5B800K%2C%201600K%5D%2C%20P%20%5Cin%20%5B1atm%2C%2050atm%5D%20%20&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0))
+Result of 0D validation are displayed over the range of applicability of the QSS assumption (![equation](https://bit.ly/3DNg94q))
 Left plot shows the correlation with ignition time obtained from 343 calculations spanning the QSS assumption applicability interval.
 Right plot shows the ignition time at conditions similar to the KPP problem.
 
