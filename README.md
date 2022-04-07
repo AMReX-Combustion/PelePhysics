@@ -1,37 +1,6 @@
 # PelePhysics
 *A respository of physics databases and implementation code for use with the `Pele` suite of of codes*
 
-## Version
-AMREX ([Repo](https://github.com/AMReX-Codes/amrex)) : 76d08651adb987e3fba6b232e806c5e7c365a8d9
-
-
-## QSS TODO LIST
-
-- ~~Implementation of Trajan's method (Julia)~~
-- ~~Automated zeroing out of reaction rate for reactions that induce quadratic algebraic relations between QSS species concentrations (Anne)~~
-    - ~~Remove Backward reactions as needed~~
-    - ~~Remove Forward reaction as needed (Malik)~~
-- ~~Sync up with the render QSS script (Malik)~~
-- ~~Get the range of validity of the QSS assumption (Malik)~~
-- ~~Ensure that homogeneous reactions test can be passed with reacEval (Malik)~~
-- Verify that Jacobian is correctly computed (Malik)
-    - Reproduce single QSS results with AJ
-    - Reproduce HR runs with AJ
-- Ensure that skeletal and QSS mechanism are at most 10% apart in the range T=[800K-1600K],phi=[0.5-2.0],  P=[1atm,50atm]. The 50 atm boundary is actually very important  (Malik)
-    - ~~Pilot input concentration via input file~~
-    - Run HR in constant pressure mode
-    - ~~Add igntion delay calculation~~
-    - ~~Make the machinery to run many HR calculations~~
-    - Incorporate HR into unit test
-    - Test 1D PMF: phi=[0.6-1.5], p=25atm, T0=600K. Compare to "Direct numerical simulation of a temporally evolving air/n-dodecane jet at low-temperature diesel-relevant conditions" CNF, 2018
-        - Compare cantera skeletal and PeleC skeletal
-        - Compare PeleC skeletal and PeleC QSS (all three methods) 
-    - Test 1D PMF: phi=[0.6-1.5], p=50atm, T0=600K. Compare to "Direct numerical simulation of a temporally evolving air/n-dodecane jet at low-temperature diesel-relevant conditions" CNF, 2018
-        - Compare cantera skeletal and PeleC skeletal
-        - Compare PeleC skeletal and PeleC QSS (all three methods) 
-    - Incorporate 1D PMF test into unit test
-
-
 ## FUEGO
 
 This `PelePhysics` repository contains the FUEGO source code generation tool in order to support the inclusion of chemical models specified in the CHEMKIN-II format.  Fuego was originally created by Michael Aivazis at CalTech, and donated to CCSE in 2001.  Originally, FUEGO was part of a larger Python-based set of workflow tools Michael developed for managing and publishing simulation-based studies.  FUEGO itself was developed as a drop-in replacement for the CHEMKIN library, and provided "hand-coded" replacement routines for evaluation of EOS thermodynamic functions that are considerably more efficient than their CHEMKIN counterparts.  Since 2001, CCSE has continued to modify FUEGO independently for its own use so that the current version here bears little resemblance to Michael's original code, or its intentions.
