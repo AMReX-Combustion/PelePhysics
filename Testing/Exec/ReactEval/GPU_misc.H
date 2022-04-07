@@ -25,7 +25,7 @@ initialize_data(int i, int j, int k,
    amrex::Real Temp_lo = 2000.0;
    amrex::Real Temp_hi = 2500.0;
    amrex::Real dTemp = 100.0;
-   amrex::Real pressure = 5.0*1013250.0;
+   amrex::Real pressure = 1013250.0;
    amrex::Real density = 0.0;
    amrex::Real energy = 0.0;
    amrex::Real temp = 0.0;
@@ -46,16 +46,16 @@ initialize_data(int i, int j, int k,
    for (int n = 0; n < NUM_SPECIES; n++) {
        X[n] = 0.0;
    }
-   X[O2_ID]   = 0.7;
-   X[fuel_id] = 0.3;
+   X[O2_ID]   = 0.2;
+   X[fuel_id] = 0.1;
+   X[N2_ID]   = 0.7;
 
    auto eos = pele::physics::PhysicsType::eos();
 
    eos.X2Y(&X[0],&Y[0]);
 
    // T
-   temp = 600;
-   //temp =  Temp_lo + (Temp_hi-Temp_lo)*y/L[1] + dTemp * std::sin(2.0*pi*y/P[1]);
+   temp =  Temp_lo + (Temp_hi-Temp_lo)*y/L[1] + dTemp * std::sin(2.0*pi*y/P[1]);
    if ( energy_type == 1) {
       // get rho and E
       eos.PYT2RE(pressure, &Y[0], temp, density, energy);
