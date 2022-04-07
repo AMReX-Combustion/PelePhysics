@@ -5532,6 +5532,9 @@ class CPickler(CMill):
         self._write("{")
         self._indent()
 
+        self._write()
+
+
         self._write("for (int i=0; i<%d; i++) {" % (nSpecies + 1) ** 2)
         self._indent()
         self._write("J[i] = 0.0;")
@@ -6434,7 +6437,17 @@ class CPickler(CMill):
         )
         self._write("{")
         self._indent()
+        
 
+        self._write()
+        # Analytical jacobian not ready with QSS
+        if self.nQSSspecies>0:
+            self._write(
+                "// Do not use Analytical Jacobian with QSSA"
+            )
+            self._write(
+                "abort();"
+            )
         self._write()
 
         self._write("for (int i=0; i<%d; i++) {" % (self.nSpecies + 1) ** 2)

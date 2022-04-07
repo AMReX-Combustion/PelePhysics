@@ -13165,6 +13165,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void dcvpRdT(amrex::Real * species, con
 /*compute an approx to the reaction Jacobian */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)
 {
+
     for (int i=0; i<1296; i++) {
         J[i] = 0.0;
     }
@@ -25353,6 +25354,9 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J,
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, const int consP)
 {
+
+    // Do not use Analytical Jacobian with QSSA
+    abort();
 
     for (int i=0; i<1296; i++) {
         J[i] = 0.0;
