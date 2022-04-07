@@ -360,7 +360,7 @@ SprayParticleContainer::updateParticles(
   if (do_move && spray_cfl_lev > sub_cfl) {
     do_sub = true;
     sub_dt = sub_cfl / spray_cfl_lev * flow_dt;
-    num_iter = std::ceil(spray_cfl_lev / sub_cfl);
+    num_iter = int(std::ceil(spray_cfl_lev / sub_cfl));
   }
   // Particle components indices
   SprayComps SPI = m_sprayIndx;
@@ -474,9 +474,9 @@ SprayParticleContainer::updateParticles(
             bool do_fe_interp = false;
 #ifdef AMREX_USE_EB
             do_fe_interp = eb_interp(
-              p.pos(), ijkc, ijk, dx, dxi, lx, plo, bflags, eb_in_box, flags_array,
-              ccent_fab, bcent_fab, bnorm_fab, volfrac_fab, indx_array.data(),
-              weights.data());
+              p.pos(), ijkc, ijk, dx, dxi, lx, plo, bflags, eb_in_box,
+              flags_array, ccent_fab, bcent_fab, bnorm_fab, volfrac_fab,
+              indx_array.data(), weights.data());
 #else
             trilinear_interp(
               ijk, lx, indx_array.data(), weights.data(), bflags);
@@ -493,7 +493,7 @@ SprayParticleContainer::updateParticles(
             if (do_move && SPI.mom_tran) {
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                 const Real cvel = p.rdata(SPI.pstateVel + dir);
-                Gpu::Atomic::Add(&p.pos(dir), cur_dt * cvel);
+                p.pos(dir) += cur_dt * cvel;
               }
             }
             for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
@@ -560,13 +560,12 @@ SprayParticleContainer::updateParticles(
                   normal, bcentv);
                 // If particle has reflected off wall
                 if (wall_check) {
-                  splash_type splash_flag = splash_type::no_impact;
                   SprayRefl SPRF;
                   SPRF.pos_refl = p.pos();
                   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
                     SPRF.Y_refl[spf] = p.rdata(SPI.pstateY + spf);
                   }
-                  splash_flag = impose_wall(
+                  impose_wall(
                     p, SPI, *fdat, dx, plo, wallT, bloc, normal, bcentv, SPRF,
                     isActive, dry_wall);
                   lx = (p.pos() - plo) * dxi + 0.5;

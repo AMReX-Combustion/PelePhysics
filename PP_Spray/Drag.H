@@ -231,13 +231,13 @@ calculateSpraySource(
   amrex::GpuArray<amrex::Real, NUM_SPECIES> h_fluid;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> cp_n;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> Ddiag;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> B_M_num;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Sh_num;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> L_fuel;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mi_dot;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> B_M_num = {{0.0}};
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Sh_num = {{0.0}};
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> L_fuel = {{0.0}};
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> mi_dot = {{0.0}};
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_part;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Y_vapor;
-  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Psat;
+  amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Psat = {{0.0}};
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM>
     cBoilT; // Boiling temperature at current pressure
   amrex::RealVect vel_part(AMREX_D_DECL(

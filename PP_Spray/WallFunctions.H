@@ -460,7 +460,7 @@ droplet_splashing(
 
 AMREX_GPU_DEVICE
 AMREX_INLINE
-splash_type
+void
 impose_wall(
   SprayParticleContainer::ParticleType& p,
   SprayComps SPI,
@@ -521,7 +521,6 @@ impose_wall(
       }
     }
   } // if (par_dot_EB < tolerance)
-  return splash_flag;
 }
 
 void

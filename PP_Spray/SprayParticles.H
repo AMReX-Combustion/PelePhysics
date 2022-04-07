@@ -49,17 +49,16 @@ public:
     SprayData fdat,
     SprayComps SPI,
     amrex::Real wall_temp,
-    amrex::Real part_cfl = 0.5)
+    amrex::Real part_cfl = -1.)
     : amrex::AmrParticleContainer<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>(amr),
-      m_injectVel(0.),
       phys_bc(_phys_bc),
-      m_sprayData(nullptr),
+      m_sprayData(new SprayData{}),
       d_sprayData(nullptr),
       m_sprayIndx(SPI),
       m_wallT(wall_temp),
-      m_partCFL(part_cfl)
+      m_partCFL(part_cfl),
+      m_injectVel(0.)
   {
-    m_sprayData = new SprayData{};
     d_sprayData =
       static_cast<SprayData*>(amrex::The_Arena()->alloc(sizeof(SprayData)));
     m_sprayData->build(fdat);
@@ -157,7 +156,6 @@ public:
     int& state_width,
     int& source_width)
   {
-    int stencil_deposition_width = 1;
     int stencil_interpolation_width = 1;
     // Set the number of cells on level+1 to hold ghost particles
     ghost_width = 0;
@@ -344,11 +342,6 @@ public:
   );
 
 private:
-  amrex::Real m_injectVel;
-  // Particle CFL, used for injection cases with LMeX
-  amrex::Real m_partCFL;
-  // Temperature of walls
-  amrex::Real m_wallT;
   ///
   /// This defines reflect_lo and reflect_hi from phys_bc
   ///
@@ -360,6 +353,11 @@ private:
   SprayData* m_sprayData;
   SprayData* d_sprayData;
   SprayComps m_sprayIndx;
+  // Temperature of walls
+  amrex::Real m_wallT;
+  // Particle CFL, used for injection cases with LMeX
+  amrex::Real m_partCFL;
+  amrex::Real m_injectVel;
 };
 
 #endif

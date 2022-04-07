@@ -432,12 +432,10 @@ eb_interp(
 #if AMREX_SPACEDIM == 3
       flags(i - 1, j - 1, k - 1).isRegular() &&
       flags(i, j - 1, k - 1).isRegular() &&
-      flags(i - 1, j, k - 1).isRegular() &&
-      flags(i, j, k - 1).isRegular() &&
+      flags(i - 1, j, k - 1).isRegular() && flags(i, j, k - 1).isRegular() &&
       flags(i - 1, j - 1, k).isRegular() &&
 #endif
-      flags(i, j - 1, k).isRegular() &&
-      flags(i - 1, j, k).isRegular() &&
+      flags(i, j - 1, k).isRegular() && flags(i - 1, j, k).isRegular() &&
       flags(i, j, k).isRegular()) {
       do_fe_interp = false;
     }
@@ -508,10 +506,11 @@ eb_interp(
 
     // Use the centroid location of the cell containing the particle
     // to guess the interpolation stencil.
-    int i = 0, di = 0, j = 0, dj = 0, k = 0, dk = 0;
-    AMREX_D_TERM(i = (gx < ccent(ip, jp, kp, 0)) ? ip : ip + 1; di = i - ip;
-                 , j = (gy < ccent(ip, jp, kp, 1)) ? jp : jp + 1; dj = j - jp;
-                 , k = (gz < ccent(ip, jp, kp, 2)) ? kp : kp + 1; dk = k - kp;)
+    int ic = 0, di = 0, jc = 0, dj = 0, kc = 0, dk = 0;
+    AMREX_D_TERM(ic = (gx < ccent(ip, jp, kp, 0)) ? ip : ip + 1; di = ic - ip;
+                 , jc = (gy < ccent(ip, jp, kp, 1)) ? jp : jp + 1; dj = jc - jp;
+                 , kc = (gz < ccent(ip, jp, kp, 2)) ? kp : kp + 1;
+                 dk = kc - kp;)
 
     // Count the number of non-connected cells in the stencil
     int covered = 0;
@@ -568,11 +567,12 @@ eb_interp(
           for (ii = -1; ii < 1; ii++) {
             AMREX_D_TERM(
               nodes[lc][0] =
-                (i + ii + 0.5 + ccent(i + ii, j + jj, k + kk, 0)) * dx[0];
+                (ic + ii + 0.5 + ccent(ic + ii, jc + jj, kc + kk, 0)) * dx[0];
               , nodes[lc][1] =
-                  (j + jj + 0.5 + ccent(i + ii, j + jj, k + kk, 1)) * dx[1];
-              , nodes[lc][2] =
-                  (k + kk + 0.5 + ccent(i + ii, j + jj, k + kk, 2)) * dx[2];)
+                  (jc + jj + 0.5 + ccent(ic + ii, jc + jj, kc + kk, 1)) * dx[1];
+              ,
+              nodes[lc][2] =
+                (kc + kk + 0.5 + ccent(ic + ii, jc + jj, kc + kk, 2)) * dx[2];)
             lc += 1;
           }
         }
@@ -587,14 +587,14 @@ eb_interp(
 
       get_interp_mapping(pos - plo, nodes, xi, eta, zeta);
 #if AMREX_SPACEDIM == 3
-      indx_array[0] = {i - 1, j - 1, k - 1};
-      indx_array[1] = {i, j - 1, k - 1};
-      indx_array[2] = {i, j, k - 1};
-      indx_array[3] = {i - 1, j, k - 1};
-      indx_array[4] = {i - 1, j - 1, k};
-      indx_array[5] = {i, j - 1, k};
-      indx_array[6] = {i, j, k};
-      indx_array[7] = {i - 1, j, k};
+      indx_array[0] = {ic - 1, jc - 1, kc - 1};
+      indx_array[1] = {ic, jc - 1, kc - 1};
+      indx_array[2] = {ic, jc, kc - 1};
+      indx_array[3] = {ic - 1, jc, kc - 1};
+      indx_array[4] = {ic - 1, jc - 1, kc};
+      indx_array[5] = {ic, jc - 1, kc};
+      indx_array[6] = {ic, jc, kc};
+      indx_array[7] = {ic - 1, jc, kc};
       weights[0] = 1 - xi - eta - zeta + xi * eta + xi * zeta + eta * zeta -
                    xi * eta * zeta;
       weights[1] = xi * (1 - eta - zeta + eta * zeta);
@@ -605,10 +605,10 @@ eb_interp(
       weights[6] = xi * eta * zeta;
       weights[7] = eta * zeta - xi * eta * zeta;
 #else
-      indx_array[0] = {i - 1, j - 1};
-      indx_array[1] = {i, j - 1};
-      indx_array[2] = {i, j};
-      indx_array[3] = {i - 1, j};
+      indx_array[0] = {ic - 1, jc - 1};
+      indx_array[1] = {ic, jc - 1};
+      indx_array[2] = {ic, j};
+      indx_array[3] = {ic - 1, j};
       weights[0] = 1 - xi - eta + xi * eta;
       weights[1] = xi * (1. - eta);
       weights[2] = xi * eta;
