@@ -47,30 +47,27 @@ G = nx.DiGraph()
 G.add_edges_from(links)
 
 # Specify the edges you want here
-nodeSize = []
 labels = {}  
+labels_normalSpecies = {}  
+labels_problemSpecies = {}  
 # define color map. user_node = red, book_nodes = green
 nodeColor = []        
+nodeSize = []        
+node_list_normalSpecies=[]
+node_list_problemSpecies=[]
+node_list_normalReac=[]
+node_list_problemReac=[]
 for node in G.nodes():
     if node in quadraticReac:
-        nodeSize.append(200)
-        labels[node] = ''
-        nodeColor.append('red')
+        node_list_problemReac.append(node)
     elif node in problematicSpecies:
-        nodeSize.append(200) 
-        labels[node] = ''
-        nodeColor.append('blue')
+        node_list_problemSpecies.append(node)
+        labels_problemSpecies[node] = node
     elif node.startswith('F') or node.startswith('R'):
-        nodeSize.append(10) 
-        labels[node] = ''
-        #nodeColor.append('black')
-        nodeColor.append('red')
+        node_list_normalReac.append(node)
     else:
-        nodeSize.append(10)
-        labels[node] = ''
-        #nodeColor.append('black')
-        nodeColor.append('blue')
-
+        node_list_normalSpecies.append(node)
+        labels_normalSpecies[node] = node
 
 
 black_edges = [edge for edge in G.edges()]
@@ -80,13 +77,30 @@ black_edges = [edge for edge in G.edges()]
 pos = nx.kamada_kawai_layout(G)
 ##pos = nx.spring_layout(G)
 ##pos = nx.spiral_layout(G)
-nx.draw_networkx_nodes(G, pos, node_size =nodeSize, node_color=nodeColor)
-nx.draw_networkx_labels(G, pos,labels, font_size=14,font_color='k')
+
+# Draw normal species
+nx.draw_networkx_nodes(G, pos, nodelist=node_list_normalSpecies, node_size=0, node_color='b')
+label_options = {"ec": "k", "fc": 'white', "alpha": 1}
+nx.draw_networkx_labels(G, pos, labels=labels_normalSpecies, nodeList=node_list_normalSpecies, font_size=14,font_color='k',bbox=label_options)
+
+# Draw problem species
+nx.draw_networkx_nodes(G, pos, nodelist=node_list_problemSpecies, node_size=0, node_color='b')
+label_options = {"ec": "k", "fc": 'red', "alpha": 1}
+nx.draw_networkx_labels(G, pos, labels=labels_problemSpecies, nodeList=node_list_problemSpecies, font_size=14,font_color='k',bbox=label_options)
+
+# Draw normal reactions
+nx.draw_networkx_nodes(G, pos, nodelist=node_list_normalReac, node_size=200, node_color='w', edgecolors='k')
+
+# Draw problem reactions
+nx.draw_networkx_nodes(G, pos, nodelist=node_list_problemReac, node_size=200, node_color='r')
+
+
+
 nx.draw_networkx_edges(G, pos, edgelist=black_edges, arrows=False)
 plt.tight_layout()
 outputFolder = inpt['outputFolder']
 plt.savefig(os.path.join(outputFolder,'quadGraphQSS.png'))
-plt.savefig(os.path.join(outputFolder,'quadGraphQSS.eps'))
+#plt.savefig(os.path.join(outputFolder,'quadGraphQSS.eps'))
 #plt.show()
 
 

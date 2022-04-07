@@ -69,7 +69,7 @@ nx.draw_networkx_edges(G, pos, edgelist=black_edges, arrows=True)
 plt.tight_layout()
 outputFolder = inpt['outputFolder'] 
 plt.savefig(os.path.join(outputFolder,'directedGraphQSS.png'))
-plt.savefig(os.path.join(outputFolder,'directedGraphQSS.eps'))
+#plt.savefig(os.path.join(outputFolder,'directedGraphQSS.eps'))
 #plt.show()
 
 
