@@ -17,7 +17,7 @@
 #include "prob_parm.H"
 #endif
 
-#define NSR_SPR AMREX_SPACEDIM + 2 + SPRAY_FUEL_NUM
+#define NSR_SPR (AMREX_SPACEDIM + 2 + SPRAY_FUEL_NUM)
 #define NSI_SPR 0
 #define NAR_SPR 0
 #define NAI_SPR 0
@@ -67,7 +67,7 @@ public:
     init_bcs();
   }
 
-  ~SprayParticleContainer()
+  ~SprayParticleContainer() override
   {
     delete m_sprayData;
     amrex::The_Arena()->free(d_sprayData);
@@ -142,7 +142,7 @@ public:
   ///
   /// Reset the particle ID in case we need to reinitialize the particles
   ///
-  inline void resetID(const int id) { ParticleType::NextID(id); }
+  static inline void resetID(const int id) { ParticleType::NextID(id); }
 
   ///
   /// Set appropriate number of ghost cells

@@ -420,7 +420,7 @@ SprayParticleContainer::updateParticles(
       Np, [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr,
            rhoSrcarr, momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI,
            fdat, bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds,
-           wallT, isGhost, isVirt, src_box, state_box, tile_box, do_sub,
+           wallT, isGhost, isVirt, src_box, state_box, do_sub,
            sub_cfl, num_iter, sub_dt, spray_cfl_lev, testbox
 #ifdef AMREX_USE_EB
            ,
