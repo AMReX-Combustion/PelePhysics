@@ -55,7 +55,7 @@ enum SootIndx {
 
 struct SootConst
 {
-#ifdef SOOT_PELE_LM
+#ifdef PELELM_USE_SOOT
   amrex::Real len_conv = 100.;  // Turn m to cm
   amrex::Real rho_conv = 0.001; // Turn kg/m^3 to g/cm^3
   amrex::Real mu_conv = 10.;

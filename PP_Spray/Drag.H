@@ -405,7 +405,7 @@ calculateSpraySource(
                                dia_part * diff_vel_mag;
       part_mom_src = drag_force * diff_vel;
       gpv.fluid_mom_src += part_mom_src;
-#ifndef SPRAY_PELE_LM
+#ifndef PELELM_USE_SPRAY
       // s_d,mu dot u_d
       amrex::Real S_dmu_dot_u = part_mom_src.dotProduct(vel_part);
       gpv.fluid_eng_src += S_dmu_dot_u;
@@ -483,7 +483,7 @@ calculateSpraySource(
   // some species disappear completely
   amrex::Real mdot_total = (pmass - startmass) / (dtmod * flow_dt);
   gpv.fluid_mass_src = mdot_total;
-#ifndef SPRAY_PELE_LM
+#ifndef PELELM_USE_SPRAY
   amrex::Real part_ke = 0.5 * vel_part.radSquared();
   gpv.fluid_eng_src += part_ke * mdot_total;
 #endif

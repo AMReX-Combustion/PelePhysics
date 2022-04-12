@@ -31,7 +31,7 @@ struct SprayComps
 // Units for sprays
 struct SprayUnits
 {
-#ifdef SPRAY_PELE_LM
+#ifdef PELELM_USE_SPRAY
   // For converting CGS to MKS
   amrex::Real ru_conv = 1.E-7;
   amrex::Real eng_conv = 1.E-4;

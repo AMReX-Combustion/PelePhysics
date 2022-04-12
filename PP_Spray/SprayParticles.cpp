@@ -364,14 +364,12 @@ SprayParticleContainer::updateParticles(
   }
   // Particle components indices
   SprayComps SPI = m_sprayIndx;
-  int testgrow = 2 + int(std::round(spray_cfl_lev * 2.));
   // Start the ParIter, which loops over separate sets of particles in different
   // boxes
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
     const Box tile_box = pti.tilebox();
     const Box src_box = pti.growntilebox(source_ghosts);
     const Box state_box = pti.growntilebox(state_ghosts);
-    const Box testbox = pti.growntilebox(testgrow);
     bool at_bounds = tile_at_bndry(tile_box, bndry_lo, bndry_hi, domain);
     const Long Np = pti.numParticles();
     ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
@@ -410,7 +408,7 @@ SprayParticleContainer::updateParticles(
       volfrac_fab = volfrac->array(pti);
     }
 #endif
-    // #ifdef SPRAY_PELE_LM
+    // #ifdef PELELM_USE_SPRAY
     //     GpuArray<
     //       Array4<const Real>, AMREX_SPACEDIM> const
     //       umac{AMREX_D_DECL(u_mac[0].array(pti), u_mac[1].array(pti),
@@ -421,7 +419,7 @@ SprayParticleContainer::updateParticles(
            rhoSrcarr, momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI,
            fdat, bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds,
            wallT, isGhost, isVirt, src_box, state_box, do_sub,
-           sub_cfl, num_iter, sub_dt, spray_cfl_lev, testbox
+           sub_cfl, num_iter, sub_dt, spray_cfl_lev
 #ifdef AMREX_USE_EB
            ,
            flags_array, ccent_fab, bcent_fab, bnorm_fab, barea_fab, volfrac_fab,
@@ -506,12 +504,13 @@ SprayParticleContainer::updateParticles(
 #endif
               Real cur_coef =
                 -weights[aindx] * fdat->num_ppp * cvol * cur_dt / flow_dt;
-              if (!testbox.contains(cur_indx) && do_sub && isGhost) {
-                continue;
-              }
               if (!src_box.contains(cur_indx)) {
-                Abort("SprayParticleContainer::updateParticles() -- source "
-                      "box too small");
+                if (isGhost) {
+                  continue;
+                } else {
+                  Abort("SprayParticleContainer::updateParticles() -- source "
+                        "box too small");
+                }
               }
               if (SPI.mom_tran) {
                 for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
@@ -577,11 +576,8 @@ SprayParticleContainer::updateParticles(
             }                         // if (at_bounds...
             cur_iter++;
             ctime += cur_dt;
-            if (isGhost && do_sub) {
-              Box shrinking_box(testbox);
-              if (!shrinking_box.contains(ijkc)) {
-                p.id() = -1;
-              }
+            if (isGhost && !src_box.contains(ijkc)) {
+              p.id() = -1;
             }
           } // End of subcycle loop
         }   // End of p.id() > 0 check

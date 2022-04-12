@@ -9,7 +9,7 @@
 #include <AMReX_Particles.H>
 #include <memory>
 
-#ifdef SPRAY_PELE_LM
+#ifdef PELELM_USE_SPRAY
 #include "pelelm_prob.H"
 #include "pelelm_prob_parm.H"
 #else
@@ -129,11 +129,6 @@ public:
   }
 
   ///
-  /// Set the value of particle state for all partilces on a level
-  ///
-  // void SetAll (amrex::Real val, int pstate_idx, int lev);
-
-  ///
   /// Compute a maximum time step based on the particle velocities and a
   /// particle CFL number
   ///
@@ -152,24 +147,26 @@ public:
     const int finest_level,
     const int amr_ncycle,
     const int fine_ref_ratio,
-    int& ghost_width,
+    int& ghost_part_width,
     int& state_width,
     int& source_width)
   {
+    // If higher order interpolation or deposition gets implemented
     int stencil_interpolation_width = 1;
+    int stencil_deposition_width = 1;
     // Set the number of cells on level+1 to hold ghost particles
-    ghost_width = 0;
+    ghost_part_width = 0;
     if (level < finest_level) {
-      ghost_width = fine_ref_ratio;
+      ghost_part_width = fine_ref_ratio;
     }
-    int ghost_num = 0;
+    int ghost_cell_num = 0;
     if (level > 0) {
-      ghost_num += amr_ncycle;
+      ghost_cell_num += amr_ncycle;
     }
     // Set the number of ghost cells needed for interpolation
-    state_width = amrex::max(stencil_interpolation_width, ghost_num * 2);
+    state_width = stencil_interpolation_width + ghost_cell_num;
     // Set the number of ghost cells needed for source deposition
-    source_width = state_width;
+    source_width = amrex::max(stencil_deposition_width, ghost_cell_num);
   }
 
   ///
@@ -260,7 +257,7 @@ public:
     BL_PROFILE("ParticleContainer::transferSource()");
     AMREX_ALWAYS_ASSERT(level >= 0);
     const int nghost = amrex::min(source.nGrow(), source_ghosts);
-#ifdef SPRAY_PELE_LM
+#ifdef PELELM_USE_SPRAY
     const int ncomp = tmp_source.nComp();
     if (level > 0) {
       amrex::MultiFab tmp_mf(
@@ -325,7 +322,7 @@ public:
     int nstep,
     int level,
     int finest_level,
-#ifdef SPRAY_PELE_LM
+#ifdef PELELM_USE_SPRAY
     ProbParm const& prob_parm
 #else
     ProbParmHost const& prob_parm,
@@ -334,7 +331,7 @@ public:
   );
 
   void InitSprayParticles(
-#ifdef SPRAY_PELE_LM
+#ifdef PELELM_USE_SPRAY
     ProbParm const& prob_parm
 #else
     ProbParmHost const& prob_parm, ProbParmDevice const& prob_parm_d

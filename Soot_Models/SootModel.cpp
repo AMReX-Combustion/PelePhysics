@@ -12,7 +12,7 @@
 #include <AMReX_FArrayBox.H>
 
 // Pele include statements
-#ifdef SOOT_PELE_LM
+#ifdef PELELM_USE_SOOT
 #include "PeleLM.H"
 #else
 #include "PeleC.H"
@@ -168,7 +168,7 @@ SootModel::readSootParams()
   m_Tcutoff = 273.;
   pp.query("temp_cutoff", m_Tcutoff);
   pp.query("max_subcycles", m_maxSubcycles);
-#ifdef SOOT_PELE_LM
+#ifdef PELELM_USE_SOOT
   m_numSubcycles = 5;
 #endif
   pp.query("num_subcycles", m_numSubcycles);
@@ -338,7 +338,7 @@ SootModel::computeSootSourceTerm(
     for (int sp = 0; sp < NUM_SPECIES; ++sp) {
       const int peleIndx = qSpecIndx + sp;
       // State provided by PeleLM is the concentration, rhoY
-#ifdef SOOT_PELE_LM
+#ifdef PELELM_USE_SOOT
       rho_YF[sp] = amrex::max(0., Qstate(i, j, k, peleIndx) * sc.rho_conv);
 #else
       rho_YF[sp] = amrex::max(0., rho * Qstate(i, j, k, peleIndx));
@@ -503,7 +503,7 @@ SootModel::estSootDt(const Box& vbox, Array4<const Real> const& Qstate) const
       for (int sp = 0; sp < NUM_SOOT_GS; ++sp) {
         const int spcc = sd->refIndx[sp];
         const int peleIndx = qSpecIndx + spcc;
-#ifdef SOOT_PELE_LM
+#ifdef PELELM_USE_SOOT
         rho_Y[sp] = Qstate(i, j, k, peleIndx) * sc.rho_conv;
 #else
         rho_Y[sp] = rho * Qstate(i, j, k, peleIndx);

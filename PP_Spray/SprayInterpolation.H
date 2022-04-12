@@ -116,7 +116,7 @@ InterpolateGasPhase(
   const amrex::IntVect* indx_array,
   const amrex::Real* weights)
 {
-#ifndef SPRAY_PELE_LM
+#ifndef PELELM_USE_SPRAY
   auto eos = pele::physics::PhysicsType::eos();
 #endif
   amrex::GpuArray<amrex::Real, NUM_SPECIES> mass_frac;
@@ -135,7 +135,7 @@ InterpolateGasPhase(
       gpv.Y_fluid[n] += cw * cur_mf;
       mass_frac[n] = cur_mf;
     }
-#ifdef SPRAY_PELE_LM
+#ifdef PELELM_USE_SPRAY
     inv_rho = 1.;
 #endif
     amrex::Real ke = 0.;
@@ -145,7 +145,7 @@ InterpolateGasPhase(
       ke += vel * vel / 2.;
     }
     amrex::Real T_i = Tarr(cur_indx);
-#ifndef SPRAY_PELE_LM
+#ifndef PELELM_USE_SPRAY
     amrex::Real intEng = engarr(cur_indx) * inv_rho - ke;
     eos.EY2T(intEng, mass_frac.data(), T_i);
 #endif
