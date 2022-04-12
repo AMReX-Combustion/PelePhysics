@@ -6446,7 +6446,7 @@ class CPickler(CMill):
                 "// Do not use Analytical Jacobian with QSSA"
             )
             self._write(
-                "abort();"
+                "amrex::Abort();"
             )
         self._write()
 
