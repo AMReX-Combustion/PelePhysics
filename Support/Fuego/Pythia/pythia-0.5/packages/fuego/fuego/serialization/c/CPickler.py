@@ -112,11 +112,6 @@ class CPickler(CMill):
                 self.reacRemoveIDList.append(int(line))
         except FileNotFoundError:
             print('No forward reaction to remove')
-        #self.reacRemoveIDList = [124, 14, 147]
-        #self.reacRemoveIDList = [67,120,121,124,14,147,228,230,231,232]
-        #self.reacRemoveIDList = [124, 147]
-        #self.reacRemoveIDList = [124]
-        #self.reacRemoveIDList = []
 
         # List of intermediate helpers -- not optimal but can't be more clever rn
         self.list_of_intermediate_helpers = []
@@ -474,42 +469,6 @@ class CPickler(CMill):
             )
         )
         self._write("#ifndef AMREX_USE_GPU")
-        #self._write("namespace thermo")
-        #self._write("{")
-        #self._indent()
-        #nReactions = len(mechanism.reaction())
-        #self._write()
-        #self._write(
-        #    "extern amrex::Real fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];"
-        #    % (nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "extern amrex::Real low_A[%d], low_beta[%d], low_Ea[%d];"
-        #    % (nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "extern amrex::Real rev_A[%d], rev_beta[%d], rev_Ea[%d];"
-        #    % (nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "extern amrex::Real troe_a[%d],troe_Ts[%d], troe_Tss[%d], troe_Tsss[%d];"
-        #    % (nReactions, nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "extern amrex::Real sri_a[%d], sri_b[%d], sri_c[%d], sri_d[%d], sri_e[%d];"
-        #    % (nReactions, nReactions, nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "extern amrex::Real activation_units[%d], prefactor_units[%d], phase_units[%d];"
-        #    % (nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "extern int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];"
-        #    % (nReactions, nReactions, nReactions, nReactions, nReactions)
-        #)
-        #self._write("extern amrex::Real *TB[%d];" % (nReactions))
-        #self._outdent()
-        #self._write("}")
 
         # Deactivate vectorized CPU stuff for now
         # self._write(
@@ -538,20 +497,6 @@ class CPickler(CMill):
         #    self.line(' MISC '))
         # self._write('void CKINU(int * i, int * nspec, int * ki, int * nu);')
 
-        #self._write(self.line(" PROD RATE STUFF "))
-        #self._write(
-        #    "void productionRate_cpu(amrex::Real *  wdot, amrex::Real *  sc, amrex::Real T);"
-        #)
-        #self._write(
-        #    "void comp_qfqr_cpu(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real * sc_qss, amrex::Real *  tc, amrex::Real invT);"
-        #)
-        #self._write(
-        #    "void comp_k_f(amrex::Real *  tc, amrex::Real invT, amrex::Real *  k_f);"
-        #)
-        #self._write(
-        #    "void comp_Kc(amrex::Real *  tc, amrex::Real invT, amrex::Real *  Kc);"
-        #)
-
         self._write(
             "void progressRate(amrex::Real *  qdot, amrex::Real *  speciesConc, amrex::Real T);"
         )
@@ -572,12 +517,6 @@ class CPickler(CMill):
         self._write(
             "void CKQXR(amrex::Real *  rho, amrex::Real *  T, amrex::Real *  x, amrex::Real *  qdot);"
         )
-        #self._write(
-        #    "void aJacobian_cpu(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int consP);"
-        #)
-        #self._write(self.line(" INIT and FINALIZE "))
-        #self._write("void CKINIT();")
-        #self._write("void CKFINALIZE();")
         self._write("#endif")
         return
 
@@ -2059,339 +1998,7 @@ class CPickler(CMill):
 
         self._write()
         # qdot
-        #self._write()
-        #self._write(
-        #    self.line(
-        #        " GPU version of productionRate: no more use of thermo namespace vectors "
-        #    )
-        #)
-        #self._write(
-        #    "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * sc_qss, amrex::Real * tc, amrex::Real invT)"
-        #)
-        #self._write("{")
-        #self._indent()
-
-        #if nReactions > 0:
-        #    nclassd = nReactions - nspecial
-        #    # nCorr   = n3body + ntroe + nsri + nlindemann
-
-        #    # reacs are sorted here
-        #    for i in range(nReactions):
-        #        self._write()
-        #        reaction = mechanism.reaction(id=i)
-        #        self._write(
-        #            self.line(
-        #                "reaction %d: %s"
-        #                % (reaction.orig_id, reaction.equation())
-        #            )
-        #        )
-        #        if len(reaction.ford) > 0:
-        #            self._write(
-        #                "qf[%d] = %s;"
-        #                % (
-        #                    i,
-        #                    self._QSSsortedPhaseSpace(
-        #                        mechanism, reaction.ford
-        #                    ),
-        #                )
-        #            )
-        #        else:
-        #            self._write(
-        #                "qf[%d] = %s;"
-        #                % (
-        #                    i,
-        #                    self._QSSsortedPhaseSpace(
-        #                        mechanism, reaction.reactants
-        #                    ),
-        #                )
-        #            )
-        #        if reaction.reversible:
-        #            self._write(
-        #                "qr[%d] = %s;"
-        #                % (
-        #                    i,
-        #                    self._QSSsortedPhaseSpace(
-        #                        mechanism, reaction.products
-        #                    ),
-        #                )
-        #            )
-        #        else:
-        #            self._write("qr[%d] = 0.0;" % (i))
-
-        #    self._write()
-
-        #    # Mixt concentration for PD & TB
-        #    self._write(self.line("compute the mixture concentration"))
-        #    self._write("amrex::Real mixture = 0.0;")
-        #    self._write("for (int i = 0; i < %d; ++i) {" % nSpecies)
-        #    self._indent()
-        #    self._write("mixture += sc[i];")
-        #    self._outdent()
-        #    self._write("}")
-        #    self._write()
-        #    if self.nQSSspecies > 0:
-        #        self._write(
-        #            "for (int i = 0; i < %d; ++i) {" % self.nQSSspecies
-        #        )
-        #        self._indent()
-        #        self._write("mixture += sc_qss[i];")
-        #        self._outdent()
-        #        self._write("}")
-        #        self._write()
-
-        #    # Kc stuff
-        #    self._write(self.line("compute the Gibbs free energy"))
-        #    self._write("amrex::Real g_RT[%d];" % self.nSpecies)
-        #    self._write("gibbs(g_RT, tc);")
-        #    if self.nQSSspecies > 0:
-        #        self._write("amrex::Real g_RT_qss[%d];" % (self.nQSSspecies))
-        #        self._write("gibbs_qss(g_RT_qss, tc);")
-
-        #    self._write()
-
-        #    self._write(
-        #        self.line(
-        #            "reference concentration: P_atm / (RT) in inverse mol/m^3"
-        #        )
-        #    )
-        #    self._write(
-        #        "amrex::Real refC = %g / %g * invT;" % (atm.value, R.value)
-        #    )
-        #    self._write("amrex::Real refCinv = 1.0 / refC;")
-
-        #    self._write()
-
-        #    # kfs
-        #    self._write("/* Evaluate the kfs */")
-        #    # self._write("amrex::Real k_f[%d];"% nclassd)
-        #    # self._write("amrex::Real Corr[%d];" % nclassd)
-        #    self._write("amrex::Real k_f, k_r, Corr;")
-        #    if ntroe > 0:
-        #        self._write(
-        #            "amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;"
-        #        )
-        #    if nsri > 0:
-        #        self._write("amrex::Real redP, F, X, F_sri;")
-        #    self._write()
-
-        #    # build reverse reaction map
-        #    rmap = {}
-        #    for i, reaction in zip(
-        #        list(range(nReactions)), mechanism.reaction()
-        #    ):
-        #        rmap[reaction.orig_id - 1] = i
-
-        #    # reacs are sorted here
-        #    # for i in range(nReactions):
-        #    #    self._write()
-        #    #    self._write(self.line('reaction %d: %s' % (reaction.orig_id, reaction.equation())))
-        #    # self._write()
-
-        #    # Loop like you're going through them in the mech.Linp order
-        #    for i in range(nReactions):
-        #        reaction = mechanism.reaction()[rmap[i]]
-        #        idx = reaction.id - 1
-
-        #        KcExpArg = self._sortedKcExpArg(mechanism, reaction)
-        #        KcConvInv = self._KcConvInv(mechanism, reaction)
-
-        #        A, beta, E = reaction.arrhenius
-        #        dim = self._phaseSpaceUnits(reaction.reactants)
-        #        thirdBody = reaction.thirdBody
-        #        low = reaction.low
-        #        if not thirdBody:
-        #            uc = self._prefactorUnits(
-        #                reaction.units["prefactor"], 1 - dim
-        #            )  # Case 3 !PD, !TB
-        #        elif not low:
-        #            uc = self._prefactorUnits(
-        #                reaction.units["prefactor"], -dim
-        #            )  # Case 2 !PD, TB
-        #        else:
-        #            uc = self._prefactorUnits(
-        #                reaction.units["prefactor"], 1 - dim
-        #            )  # Case 1 PD, TB
-        #            low_A, low_beta, low_E = low
-        #            if reaction.troe:
-        #                troe = reaction.troe
-        #                ntroe = len(troe)
-        #                is_troe = True
-        #            if reaction.sri:
-        #                sri = reaction.sri
-        #                nsri = len(sri)
-        #                is_sri = True
-        #        aeuc = self._activationEnergyUnits(
-        #            reaction.units["activation"]
-        #        )
-
-        #        self._write(
-        #            "// (%d):  %s"
-        #            % (reaction.orig_id - 1, reaction.equation())
-        #        )
-        #        self._write("k_f = %.15g" % (uc.value * A))
-        #        if (beta == 0) and (E == 0):
-        #            self._write("           ;")
-        #        else:
-        #            if E == 0:
-        #                self._write(
-        #                    "           * exp((%.15g) * tc[0]);" % (beta)
-        #                )
-        #            elif beta == 0:
-        #                self._write(
-        #                    "           * exp(-(%.15g) * invT);"
-        #                    % (((aeuc / Rc / kelvin)) * E)
-        #                )
-        #            else:
-        #                self._write(
-        #                    "           * exp((%.15g) * tc[0] - (%.15g) * invT);"
-        #                    % (beta, ((aeuc / Rc / kelvin)) * E)
-        #                )
-
-        #        alpha = 1.0
-        #        if not thirdBody:
-        #            # self._write("Corr  = 1.0;")
-        #            self._write("qf[%d] *= k_f;" % idx)
-        #        elif not low:
-        #            alpha = self._enhancement_d_with_QSS(mechanism, reaction)
-        #            self._write("Corr  = %s;" % (alpha))
-        #            self._write("qf[%d] *= Corr * k_f;" % idx)
-        #        else:
-        #            alpha = self._enhancement_d_with_QSS(mechanism, reaction)
-        #            self._write("Corr  = %s;" % (alpha))
-        #            self._write(
-        #                "redP = Corr / k_f * 1e-%d * %.15g " % (dim * 6, low_A)
-        #            )
-        #            self._write(
-        #                "           * exp(%.15g  * tc[0] - %.15g  * (%.15g) *invT);"
-        #                % (low_beta, (aeuc / Rc / kelvin), low_E)
-        #            )
-        #            if reaction.troe:
-        #                self._write("F = redP / (1.0 + redP);")
-        #                self._write("logPred = log10(redP);")
-        #                self._write("logFcent = log10(")
-        #                if abs(troe[1]) > 1.0e-100:
-        #                    self._write(
-        #                        "    (%.15g)*exp(-tc[1] * %.15g)"
-        #                        % (1.0 - troe[0], (1 / troe[1]))
-        #                    )
-        #                else:
-        #                    self._write("     0.0 ")
-        #                if abs(troe[2]) > 1.0e-100:
-        #                    self._write(
-        #                        "    + %.15g * exp(-tc[1] * %.15g)"
-        #                        % (troe[0], (1 / troe[2]))
-        #                    )
-        #                else:
-        #                    self._write("    + 0.0 ")
-        #                if ntroe == 4:
-        #                    if troe[3] < 0:
-        #                        self._write(
-        #                            "    + exp(%.15g * invT));" % -troe[3]
-        #                        )
-        #                    else:
-        #                        self._write(
-        #                            "    + exp(-(%.15g) * invT));" % troe[3]
-        #                        )
-        #                else:
-        #                    self._write("    + 0.0);")
-        #                self._write("troe_c = -0.4 - 0.67 * logFcent;")
-        #                self._write("troe_n = 0.75 - 1.27 * logFcent;")
-        #                self._write(
-        #                    "troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));"
-        #                )
-        #                self._write(
-        #                    "F_troe = pow(10, logFcent / (1.0 + troe*troe));"
-        #                )
-        #                self._write("Corr = F * F_troe;")
-        #                self._write("qf[%d] *= Corr * k_f;" % idx)
-        #            elif reaction.sri:
-        #                self._write("F = redP / (1.0 + redP);")
-        #                self._write("logPred = log10(redP);")
-        #                self._write("X = 1.0 / (1.0 + logPred*logPred);")
-        #                if sri[1] < 0:
-        #                    self._write(
-        #                        "F_sri = exp(X * log(%.15g * exp(%.15g*invT)"
-        #                        % (sri[0], -sri[1])
-        #                    )
-        #                else:
-        #                    self._write(
-        #                        "F_sri = exp(X * log(%.15g * exp(-(%.15g)*invT)"
-        #                        % (sri[0], sri[1])
-        #                    )
-        #                if sri[2] > 1.0e-100:
-        #                    self._write("   +  exp(tc[0]/%.15g) " % sri[2])
-        #                else:
-        #                    self._write("   +  0. ")
-        #                self._write(
-        #                    "   *  (%d > 3 ? %.15g*exp(%.15g*tc[0]) : 1.0);"
-        #                    % (nsri, sri[3], sri[4])
-        #                )
-        #                self._write("Corr = F * F_sri;")
-        #                self._write("qf[%d] *= Corr * k_f;" % idx)
-        #            elif nlindemann > 0:
-        #                self._write("Corr = redP / (1. + redP);")
-        #                self._write("qf[%d] *= Corr * k_f;" % idx)
-
-        #        if reaction.rev:
-        #            Ar, betar, Er = reaction.rev
-        #            dim_rev = self._phaseSpaceUnits(reaction.products)
-        #            if not thirdBody:
-        #                uc_rev = self._prefactorUnits(
-        #                    reaction.units["prefactor"], 1 - dim_rev
-        #                )
-        #            elif not low:
-        #                uc_rev = self._prefactorUnits(
-        #                    reaction.units["prefactor"], -dim_rev
-        #                )
-        #            else:
-        #                print("REV reaction cannot be PD")
-        #                sys.exit(1)
-        #            self._write("k_r = %.15g" % (uc_rev.value * Ar))
-        #            if betar == 0:
-        #                self._write(
-        #                    "           * exp(- (%.15g) * invT);"
-        #                    % ((aeuc / Rc / kelvin) * Er)
-        #                )
-        #            else:
-        #                self._write(
-        #                    "           * exp(%.15g * tc[0] - (%.15g) * invT);"
-        #                    % (betar, (aeuc / Rc / kelvin) * Er)
-        #                )
-        #            if alpha == 1.0:
-        #                self._write("qr[%d] *= k_r;" % idx)
-        #            else:
-        #                self._write("qr[%d] *= Corr * k_r;" % idx)
-        #        else:
-        #            if KcConvInv:
-        #                if alpha == 1.0:
-        #                    self._write(
-        #                        "qr[%d] *= k_f * exp(-(%s)) * (%s);"
-        #                        % (idx, KcExpArg, KcConvInv)
-        #                    )
-        #                else:
-        #                    self._write(
-        #                        "qr[%d] *= Corr * k_f * exp(-(%s)) * (%s);"
-        #                        % (idx, KcExpArg, KcConvInv)
-        #                    )
-        #            else:
-        #                if alpha == 1.0:
-        #                    self._write(
-        #                        "qr[%d] *= k_f * exp(-(%s));" % (idx, KcExpArg)
-        #                    )
-        #                else:
-        #                    self._write(
-        #                        "qr[%d] *= Corr * k_f * exp(-(%s));"
-        #                        % (idx, KcExpArg)
-        #                    )
-
-        #    self._write()
-
-        #self._write()
-        #self._write("return;")
-        #self._outdent()
-        #self._write("}")
-
-        #self._write()
+        self._write()
 
         # main function
         self._write(
@@ -7293,49 +6900,6 @@ class CPickler(CMill):
         return
 
     def _mechanism_statics(self, mechanism):
-        #nReactions = len(mechanism.reaction())
-
-        #ispecial = self.reactionIndex[5:7]
-        #nspecial = ispecial[1] - ispecial[0]
-
-        #self._write("namespace thermo")
-        #self._write("{")
-        #self._indent()
-        #self._write(
-        #    "amrex::Real fwd_A[%d], fwd_beta[%d], fwd_Ea[%d];"
-        #    % (nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "amrex::Real low_A[%d], low_beta[%d], low_Ea[%d];"
-        #    % (nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "amrex::Real rev_A[%d], rev_beta[%d], rev_Ea[%d];"
-        #    % (nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "amrex::Real troe_a[%d],troe_Ts[%d], troe_Tss[%d], troe_Tsss[%d];"
-        #    % (nReactions, nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "amrex::Real sri_a[%d], sri_b[%d], sri_c[%d], sri_d[%d], sri_e[%d];"
-        #    % (nReactions, nReactions, nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "amrex::Real activation_units[%d], prefactor_units[%d], phase_units[%d];"
-        #    % (nReactions, nReactions, nReactions)
-        #)
-        #self._write(
-        #    "int is_PD[%d], troe_len[%d], sri_len[%d], nTB[%d], *TBid[%d];"
-        #    % (nReactions, nReactions, nReactions, nReactions, nReactions)
-        #)
-        #self._write("amrex::Real *TB[%d];" % (nReactions))
-
-        #if nspecial > 0:
-        #    self._write(
-        #        "amrex::Real prefactor_units_rev[%d], activation_units_rev[%d];"
-        #        % (nReactions, nReactions)
-        #    )
 
         # needed in ckinu not used at the moment
         # self._write('std::vector<std::vector<amrex::Real>> kiv(%d); ' % (nReactions))
@@ -7363,11 +6927,6 @@ class CPickler(CMill):
         #            % (nReactions))
         # self._write('std::vector<int> rxn_map;')
 
-        #self._outdent()
-        #self._write("};")
-        #self._write()
-        #self._write("using namespace thermo;")
-        #self._write()
         return
 
     def _vproductionRate(self, mechanism):
@@ -7477,17 +7036,6 @@ class CPickler(CMill):
         self._write("for (int i=0; i<npt; i++) {")
         self._indent()
         for reaction in mechanism.reaction():
-            #self._write(
-            #    "k_f_s[%d*npt+i] = prefactor_units[%d] * fwd_A[%d] * exp(fwd_beta[%d] * tc[i] - activation_units[%d] * fwd_Ea[%d] * invT[i]);"
-            #    % (
-            #        reaction.id - 1,
-            #        reaction.id - 1,
-            #        reaction.id - 1,
-            #        reaction.id - 1,
-            #        reaction.id - 1,
-            #        reaction.id - 1,
-            #    )
-            #)
             self._write(
                 "#k_f_s = prefactor_units * fwd_A * exp(fwd_beta * tc - activation_units * fwd_Ea * invT"
                 )
@@ -8702,8 +8250,6 @@ class CPickler(CMill):
         for i, eff in enumerate(efficiencies):
             symbol, efficiency = eff
             if symbol not in self.qss_species_list:
-                #OLD
-                #factor = "(TB[%d][%d] - 1)" % (reaction.id - 1, i)
                 factor = "(%.15g - 1)" % (efficiency)
                 conc = "sc[%d]" % self.ordered_idx_map[symbol]
                 alpha.append("%s*%s" % (factor, conc))
@@ -8738,14 +8284,10 @@ class CPickler(CMill):
         for i, eff in enumerate(efficiencies):
             symbol, efficiency = eff
             if symbol not in self.qss_species_list:
-                #OLD
-                #factor = "(TB[%d][%d] - 1)" % (reaction.id - 1, i)
                 factor = "(%.15g - 1)" % (efficiency)
                 conc = "sc[%d]" % self.ordered_idx_map[symbol]
                 alpha.append("%s*%s" % (factor, conc))
             else:
-                #OLD
-                #factor = "(TB[%d][%d] - 1)" % (reaction.id - 1, i)
                 factor = "(%.15g - 1)" % (efficiency)
                 conc = "sc_qss[%d]" % (
                     self.ordered_idx_map[symbol] - self.nSpecies
@@ -8800,17 +8342,6 @@ class CPickler(CMill):
             return
 
         self._write("k_f = k_f_save[%d];" % (reaction.id - 1))
-        #OLD
-        #self._write(
-        #    "redP = alpha / k_f * phase_units[%d] * low_A[%d] * exp(low_beta[%d] * tc[0] - activation_units[%d] * low_Ea[%d] *invT);"
-        #    % (
-        #        reaction.id - 1,
-        #        reaction.id - 1,
-        #        reaction.id - 1,
-        #        reaction.id - 1,
-        #        reaction.id - 1,
-        #    )
-        #)
         properties = self.getAllReactionProperties(reaction)
         self._write(
             "redP = alpha / k_f * %.15g * %.15g * exp(%.15g * tc[0] - %.15g * %.15g *invT);"
@@ -8828,19 +8359,6 @@ class CPickler(CMill):
         if sri:
             self._write("logPred = log10(redP);")
             self._write("X = 1.0 / (1.0 + logPred*logPred);")
-            #OLD
-            #self._write(
-            #    "F_sri = exp(X * log(sri_a[%d] * exp(-sri_b[%d]/T)"
-            #    % (reaction.id - 1, reaction.id - 1)
-            #)
-            #self._write(
-            #    "   +  (sri_c[%d] > 1.e-100 ? exp(T/sri_c[%d]) : 0.) )"
-            #    % (reaction.id - 1, reaction.id - 1)
-            #)
-            #self._write(
-            #    "   *  (sri_len[%d] > 3 ? sri_d[%d]*exp(sri_e[%d]*tc[0]) : 1);"
-            #    % (reaction.id - 1, reaction.id - 1, reaction.id - 1)
-            #)
             self._write(
                 "F_sri = exp(X * log(%.15g * exp(-(%.15g)/T)"
                 % (properties['sri_a'], properties['sri_b'])
@@ -8859,19 +8377,6 @@ class CPickler(CMill):
             self._write("logPred = log10(redP);")
 
             self._write("logFcent = log10(")
-            #OLD
-            #self._write(
-            #    "    (fabs(troe_Tsss[%d]) > 1.e-100 ? (1-troe_a[%d])*exp(-T/troe_Tsss[%d]) : 0) "
-            #    % (reaction.id - 1, reaction.id - 1, reaction.id - 1)
-            #)
-            #self._write(
-            #    "    + (fabs(troe_Ts[%d]) > 1.e-100 ? troe_a[%d] * exp(-T/troe_Ts[%d]) : 0) "
-            #    % (reaction.id - 1, reaction.id - 1, reaction.id - 1)
-            #)
-            #self._write(
-            #    "    + (troe_len[%d] == 4 ? exp(-troe_Tss[%d] * invT) : 0) );"
-            #    % (reaction.id - 1, reaction.id - 1)
-            #)
             self._write(
                 "    (fabs(%.15g) > 1.e-100 ? (1-(%.15g))*exp(-T/%.15g) : 0) "
                 % (properties['troe_Tsss'], properties['troe_a'], properties['troe_Tsss'])
@@ -8947,17 +8452,6 @@ class CPickler(CMill):
             return
 
         self._write("k_f = k_f_save[%d];" % (reaction.id - 1))
-        #OLD
-        #self._write(
-        #    "redP = alpha / k_f * phase_units[%d] * low_A[%d] * exp(low_beta[%d] * tc[0] - activation_units[%d] * low_Ea[%d] *invT);"
-        #    % (
-        #        reaction.id - 1,
-        #        reaction.id - 1,
-        #        reaction.id - 1,
-        #        reaction.id - 1,
-        #        reaction.id - 1,
-        #    )
-        #)
         properties = self.getAllReactionProperties(reaction)
         self._write(
             "redP = alpha / k_f * %.15g * %.15g * exp(%.15g * tc[0] - %.15g * %.15g *invT);"
@@ -8974,19 +8468,6 @@ class CPickler(CMill):
         if sri:
             self._write("logPred = log10(redP);")
             self._write("X = 1.0 / (1.0 + logPred*logPred);")
-            #OLD
-            #self._write(
-            #    "F_sri = exp(X * log(sri_a[%d] * exp(-sri_b[%d]/T)"
-            #    % (reaction.id - 1, reaction.id - 1)
-            #)
-            #self._write(
-            #    "   +  (sri_c[%d] > 1.e-100 ? exp(T/sri_c[%d]) : 0.) )"
-            #    % (reaction.id - 1, reaction.id - 1)
-            #)
-            #self._write(
-            #    "   *  (sri_len[%d] > 3 ? sri_d[%d]*exp(sri_e[%d]*tc[0]) : 1);"
-            #    % (reaction.id - 1, reaction.id - 1, reaction.id - 1)
-            #)
             self._write(
                 "F_sri = exp(X * log(%.15g * exp(-(%.15g)/T)"
                 % (properties['sri_a'],properties['sri_b'])
@@ -9005,19 +8486,6 @@ class CPickler(CMill):
             self._write("logPred = log10(redP);")
 
             self._write("logFcent = log10(")
-            #OLD
-            #self._write(
-            #    "    (fabs(troe_Tsss[%d]) > 1.e-100 ? (1-troe_a[%d])*exp(-T/troe_Tsss[%d]) : 0) "
-            #    % (reaction.id - 1, reaction.id - 1, reaction.id - 1)
-            #)
-            #self._write(
-            #    "    + (fabs(troe_Ts[%d]) > 1.e-100 ? troe_a[%d] * exp(-T/troe_Ts[%d]) : 0) "
-            #    % (reaction.id - 1, reaction.id - 1, reaction.id - 1)
-            #)
-            #self._write(
-            #    "    + (troe_len[%d] == 4 ? exp(-troe_Tss[%d] * invT) : 0) );"
-            #    % (reaction.id - 1, reaction.id - 1)
-            #)
             self._write(
                 "    (fabs(%.15g) > 1.e-100 ? (1-(%.15g))*exp(-T/%.15g) : 0) "
                 % (properties['troe_Tsss'],properties['troe_a'], properties['troe_Tsss'])
@@ -9073,15 +8541,6 @@ class CPickler(CMill):
                     )
                 )
             else:
-                #OLD
-                #self._write(
-                #    "k_r = %.15g * exp(rev_beta[%d] * tc[0] - (%.15g) * invT);"
-                #    % (
-                #        prefactor_units_rev[idx] * rev_A[idx],
-                #        idx,
-                #        activation_units_rev[idx] * rev_Ea[idx],
-                #    )
-                #) 
                 reaction = mechanism.reaction()[idx]
                 properties = self.getAllReactionProperties(reaction)
                 self._write(
@@ -9161,44 +8620,6 @@ class CPickler(CMill):
         self._write("{")
         self._indent()
 
-        #self._write(
-        #    "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */"
-        #)
-        #self._write("amrex::Real invT = 1.0 / tc[1];")
-
-        #self._write()
-        #self._write("if (T != T_save)")
-        #self._write("{")
-        #self._indent()
-        #self._write("T_save = T;")
-        #self._write("comp_k_f(tc,invT,k_f_save);")
-        #self._write("comp_Kc(tc,invT,Kc_save);")
-        #if self.nQSSspecies > 0:
-        #    self._write()
-        #    self._write("comp_k_f_qss(tc,invT,k_f_save_qss);")
-        #self._outdent()
-        #self._write("}")
-
-        #if nReactions == 0:
-        #    self._write()
-        #else:
-        #    self._write()
-        #    self._write(
-        #        "amrex::Real q_f[%d], q_r[%d];" % (nReactions, nReactions)
-        #    )
-        #    self._write("amrex::Real sc_qss[%d];" % (max(1, self.nQSSspecies)))
-        #    if self.nQSSspecies > 0:
-        #        self._write("/* Fill sc_qss here*/")
-        #        self._write("comp_sc_qss(sc, sc_qss, tc, invT);")
-        #    self._write("comp_qfqr_cpu(q_f, q_r, sc, sc_qss, tc, invT);")
-        #    self._write()
-        #    self._write("for (int i = 0; i < %d; ++i) {" % nReactions)
-        #    self._indent()
-        #    self._write("qdot[i] = q_f[i] - q_r[i];")
-        #    self._outdent()
-        #    self._write("}")
-
-        #self._write()
         self._write("return;")
         self._outdent()
         self._write("}")
@@ -10012,29 +9433,14 @@ class CPickler(CMill):
                 self._write("/* Troe form */")
                 troe = reaction.troe
                 self._write("logPr = log10(Pr);")
-                #OLD
-                #self._write(
-                #    "Fcent1 = (fabs(troe_Tsss[%d]) > 1.e-100 ? (1.-troe_a[%d])*exp(-T/troe_Tsss[%d]) : 0.);"
-                #    % (reaction.id - 1, reaction.id - 1, reaction.id - 1)
-                #)
                 self._write(
                     "Fcent1 = (fabs(%.15g) > 1.e-100 ? (1.-(%.15g))*exp(-T/%.15g) : 0.);"
                     % (properties['troe_Tsss'], properties['troe_a'], properties['troe_Tsss'])
                 )
-                #OLD
-                #self._write(
-                #    "Fcent2 = (fabs(troe_Ts[%d]) > 1.e-100 ? troe_a[%d] * exp(-T/troe_Ts[%d]) : 0.);"
-                #    % (reaction.id - 1, reaction.id - 1, reaction.id - 1)
-                #)
                 self._write(
                     "Fcent2 = (fabs(%.15g) > 1.e-100 ? %.15g * exp(-T/%.15g) : 0.);"
                     % (properties['troe_Ts'], properties['troe_a'], properties['troe_Ts'])
                 )
-                #OLD
-                #self._write(
-                #    "Fcent3 = (troe_len[%d] == 4 ? exp(-troe_Tss[%d] * invT) : 0.);"
-                #    % (reaction.id - 1, reaction.id - 1)
-                #) 
                 self._write(
                     "Fcent3 = (%d == 4 ? exp(-(%.15g) * invT) : 0.);"
                     % (properties['troe_len'], properties['troe_Tss'])
@@ -10051,29 +9457,14 @@ class CPickler(CMill):
                 self._write("F = pow(10.0, logFcent * troe);")
 
                 self._write("dlogFcentdT = log10e/Fcent*( ")
-                #OLD
-                #self._write(
-                #    "    (fabs(troe_Tsss[%d]) > 1.e-100 ? -Fcent1/troe_Tsss[%d] : 0.)"
-                #    % (reaction.id - 1, reaction.id - 1)
-                #)
                 self._write(
                     "    (fabs(%.15g) > 1.e-100 ? -Fcent1/%.15g : 0.)"
                     % (properties['troe_Tsss'], properties['troe_Tsss'])
                 )
-                #OLD
-                #self._write(
-                #    "  + (fabs(troe_Ts[%d]) > 1.e-100 ? -Fcent2/troe_Ts[%d] : 0.)"
-                #    % (reaction.id - 1, reaction.id - 1)
-                #)
                 self._write(
                     "  + (fabs(%.15g) > 1.e-100 ? -Fcent2/%.15g : 0.)"
                     % (properties['troe_Ts'], properties['troe_Ts'])
                 )
-                #OLD
-                #self._write(
-                #    "  + (troe_len[%d] == 4 ? Fcent3*troe_Tss[%d]*invT2 : 0.) );"
-                #    % (reaction.id - 1, reaction.id - 1)
-                #)
                 self._write(
                     "  + (%d == 4 ? Fcent3*%.15g*invT2 : 0.) );"
                     % (properties['troe_len'], properties['troe_Tss'])
@@ -10401,16 +9792,12 @@ class CPickler(CMill):
                 for i, eff in enumerate(efficiencies):
                     symbol, efficiency = eff
                     if self.ordered_idx_map[symbol] == kid:
-                        #OLD
-                        #return "(TB[%d][%d] - 1)" % (reaction.id - 1, i)
                         return "(%.15g - 1)" % (efficiency)
                 return "0"
             else:
                 for i, eff in enumerate(efficiencies):
                     symbol, efficiency = eff
                     if self.ordered_idx_map[symbol] == kid:
-                        #OLD
-                        #return "TB[%d][%d]" % (reaction.id - 1, i)
                         return "(%.15g - 1)" % (efficiency)
                 return "1"
 
@@ -15430,63 +14817,6 @@ class CPickler(CMill):
         self._write("return;")
         self._outdent()
         self._write("}")
-
-        # Kc_qss
-        #self._write()
-        #self._write(
-        #    "void comp_Kc_qss(amrex::Real invT, amrex::Real g_RT, amrex::Real g_RT_qss, amrex::Real * Kc)"
-        #)
-        #self._write("{")
-        #self._indent()
-
-        #self._write()
-
-        #for reaction in mechanism.reaction():
-        #    r = reaction.id - 1
-        #    if r in self.qssReactions:
-        #        # print "r is qss reac", reaction.equation(), r, self.qssReactions.index(r), index
-        #        self._write(self.line("Reaction %s" % reaction.id))
-        #        KcExpArg = self._sortedKcExpArg(mechanism, reaction)
-        #        self._write(
-        #            "Kc[%d] = %s;" % (self.qssReactions.index(r), KcExpArg)
-        #        )
-        #self._write()
-
-        #self._write("for (int i=0; i<%d; ++i) {" % (self.nqssReactions))
-        #self._indent()
-        #self._write("Kc[i] = exp(Kc[i]);")
-        #self._outdent()
-        #self._write("};")
-
-        #self._write()
-
-        #self._write(
-        #    self.line(
-        #        "reference concentration: P_atm / (RT) in inverse mol/m^3"
-        #    )
-        #)
-        #self._write(
-        #    "amrex::Real refC = %g / %g * invT;" % (atm.value, R.value)
-        #)
-        #self._write("amrex::Real refCinv = 1.0 / refC;")
-
-
-        #self._write()
-
-        #for reaction in mechanism.reaction():
-        #    r = reaction.id - 1
-        #    if r in self.qssReactions:
-        #        KcConv = self._KcConv(mechanism, reaction)
-        #        if KcConv:
-        #            self._write(
-        #                "Kc[%d] *= %s;" % (self.qssReactions.index(r), KcConv)
-        #            )
-
-        #self._write()
-
-        #self._write("return;")
-        #self._outdent()
-        #self._write("}")
 
         # qss coefficients
         self._write()
