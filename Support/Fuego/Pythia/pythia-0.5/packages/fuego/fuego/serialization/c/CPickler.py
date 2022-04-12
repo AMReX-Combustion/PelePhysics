@@ -282,7 +282,29 @@ class CPickler(CMill):
                 mechanism
             )  # Fill "is_needed" dict (which species needs that particular species)
 
-        # MECH HEADER -- first file starts here
+
+        # MECH CORE
+        # This is for file mechanism.cpp
+        self._write("#ifndef MECHANISM_CPP")
+        self._write("#define MECHANISM_CPP")
+        self._write()
+        self._mechanism_includes()
+
+        # Basic info
+        self._atomicWeight(mechanism)
+        self._ckawt(mechanism)
+        # self._ckxnum(mechanism)
+        self._ckncf(mechanism)
+        self._cksyme_str(mechanism)
+        # self._cksyme(mechanism)
+        self._cksyms_str(mechanism)
+        # All sparsity preproc functions -- CPU
+        self._sparsity(mechanism)
+        self._write("#endif")
+        # END file mechanism.cpp
+
+
+        # MECH HEADER
         self._write("#ifndef MECHANISM_H")
         self._write("#define MECHANISM_H")
         self._print_mech_header(mechanism)
@@ -433,27 +455,6 @@ class CPickler(CMill):
         self._emptygjs(mechanism)
         self._write()
         self._write("#endif")
-
-        # MECH HEADER
-
-        # This is for file mechanism.cpp
-        self._write("#ifndef MECHANISM_CPP")
-        self._write("#define MECHANISM_CPP")
-        self._write()
-        self._mechanism_includes()
-
-        # Basic info
-        self._atomicWeight(mechanism)
-        self._ckawt(mechanism)
-        # self._ckxnum(mechanism)
-        self._ckncf(mechanism)
-        self._cksyme_str(mechanism)
-        # self._cksyme(mechanism)
-        self._cksyms_str(mechanism)
-        # All sparsity preproc functions -- CPU
-        self._sparsity(mechanism)
-        self._write("#endif")
-        # END file mechanism.cpp
 
         return
 
