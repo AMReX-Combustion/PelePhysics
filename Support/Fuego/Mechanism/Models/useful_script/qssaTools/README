@@ -1,3 +1,0 @@
-transform_reac.sh : Modifies the inp file to zero out only the reactions that create quadratic coupling between the QSS species
-
-transform_spec.sh : Chooses a subset of the QSS species as the final QSS species

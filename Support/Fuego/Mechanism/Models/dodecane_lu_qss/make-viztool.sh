@@ -12,12 +12,12 @@ tranFile=tran.dat
 
 # Make graph
 # Write QSSA inp
-python $qssaToolsDir/scripts/makeQSSAInp/make_inp_file_qssa.py -sk $skeletalMechanism -nqss $non_qssa_list
+python $qssaToolsDir/makeQSSAInp/make_inp_file_qssa.py -sk $skeletalMechanism -nqss $non_qssa_list
 # Write remove star names
-python $qssaToolsDir/scripts/makeQSSAInp/removeStarFromSpecies.py -sk $skeletalMechanism -th $thermoFile -tr $tranFile -nqss $non_qssa_list
+python $qssaToolsDir/makeQSSAInp/removeStarFromSpecies.py -sk $skeletalMechanism -th $thermoFile -tr $tranFile -nqss $non_qssa_list
 # Make the directed graph
-python $qssaToolsDir/scripts/vizTool/makeDiGraph.py -v 
-python $qssaToolsDir/scripts/vizTool/makeQSSQuadGraph.py -v
+python $qssaToolsDir/vizTool/makeDiGraph.py -v 
+python $qssaToolsDir/vizTool/makeQSSQuadGraph.py -v
 echo "Made QSS Directed Graph"
 
 

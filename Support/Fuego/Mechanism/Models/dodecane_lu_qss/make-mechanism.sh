@@ -11,16 +11,16 @@ thermoFile=therm.dat
 tranFile=tran.dat
 
 # Write QSSA inp
-python $qssaToolsDir/scripts/makeQSSAInp/make_inp_file_qssa.py -sk $skeletalMechanism -nqss $non_qssa_list
+python $qssaToolsDir/makeQSSAInp/make_inp_file_qssa.py -sk $skeletalMechanism -nqss $non_qssa_list
 # Write remove star names
-python $qssaToolsDir/scripts/makeQSSAInp/removeStarFromSpecies.py -sk $skeletalMechanism -th $thermoFile -tr $tranFile -nqss $non_qssa_list
+python $qssaToolsDir/makeQSSAInp/removeStarFromSpecies.py -sk $skeletalMechanism -th $thermoFile -tr $tranFile -nqss $non_qssa_list
 
 ## ~~~~ Method 1 : Remove enough species to remove quadratic coupling
-#python $qssaToolsDir/scripts/removeQuadratic_species/removeQuadratic_method1.py
+#python $qssaToolsDir/removeQuadratic_species/removeQuadratic_method1.py
 # ~~~~ Method 2 : Remove all reactions (forward and backward) that generate quadratic coupling
-#python $qssaToolsDir/scripts/removeQuadratic_reactions/removeQuadratic_method2.py
+#python $qssaToolsDir/removeQuadratic_reactions/removeQuadratic_method2.py
 # ~~~~ Method 3 : Remove all reactions (forward, backward or both) that generate quadratic coupling
-python $qssaToolsDir/scripts/removeQuadratic_reactions/removeQuadratic_method3.py
+python $qssaToolsDir/removeQuadratic_reactions/removeQuadratic_method3.py
 cp output/reac_forward_to_remove .
 
 cp output/qssa_final.inp .
