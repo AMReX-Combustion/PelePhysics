@@ -1,25 +1,37 @@
 from FMC import FMC
+import argparse
 import fuego
 from QSSspecies import getListSpecies 
 from coupling import *
 import sys
-sys.path.append('scripts/utils')
-import myparser
 import os
+try:
+    import networkx as nx
+except ImportError:
+    sys.exit('Need networkx python module')
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    sys.exit('Need matplotlib python module')
 
-
-import networkx as nx
-import matplotlib.pyplot as plt
-
-
-
-# Parse input
-inpt = myparser.parseInputFile()
+# CLI
+parser = argparse.ArgumentParser(description='Plot QSS species dependency graph')
+parser.add_argument('-m', '--mechanism', type=str, metavar='', required=False, help='QSS mechanism without coupling treatment', default='output/qssa_nostar.inp')
+parser.add_argument('-th', '--thermoFile', type=str, metavar='', required=False, help='Thermodynamic file', default='output/therm_nostar.dat')
+parser.add_argument('-tr', '--tranFile', type=str, metavar='', required=False, help='Transport file', default='output/tran_nostar.dat')
+parser.add_argument('-nqss', '--nonQSSSpecies', type=str, metavar='', required=False, help='Filename with non QSS species names', default='output/non_qssa_list_nostar.txt')
+parser.add_argument('-o', '--outputFolder', type=str, metavar='', required=False, help='Where to store by product of the preprocessing',default='output')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('-q','--quiet', action='store_true', help='Execute without plotting on screen')
+group.add_argument('-v','--verbose', action='store_true', help='Plot on screen')
+args = parser.parse_args()
 
 # Set up filenames
-mech_filename = inpt['mech']
-therm_filename = inpt['therm']
-tran_filename = inpt['tran']
+mech_filename = args.mechanism
+therm_filename = args.thermoFile
+tran_filename = args.tranFile
+non_qssa_species = args.nonQSSSpecies
+outputFolder = args.outputFolder
 
 # Load skeletal mechanism
 app = FMC()
@@ -33,7 +45,7 @@ mechanism = fuego.serialization.load(filename=app.inventory.mechanism, format='c
 reactionIndex = mechanism._sort_reactions()
 
 # Get list of intended QSS species
-species_non_qssa = getListSpecies(inpt['non_qssa_list'])
+species_non_qssa = getListSpecies(non_qssa_species)
 species_all = getListSpecies(app.inventory.mechanism)
 species_qssa = list(set(species_all) - set(species_non_qssa))
 
@@ -67,10 +79,11 @@ nx.draw_networkx_nodes(G, pos, node_size =nodeSize, node_color=nodeColor)
 nx.draw_networkx_labels(G, pos,labels, font_size=14,font_color='k')
 nx.draw_networkx_edges(G, pos, edgelist=black_edges, arrows=True)
 plt.tight_layout()
-outputFolder = inpt['outputFolder'] 
 plt.savefig(os.path.join(outputFolder,'directedGraphQSS.png'))
-#plt.savefig(os.path.join(outputFolder,'directedGraphQSS.eps'))
-#plt.show()
+
+
+if args.verbose:
+    plt.show()
 
 
 

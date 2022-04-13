@@ -1,23 +1,33 @@
 from FMC import FMC
 import fuego
+import argparse
 from QSSspecies import getListSpecies 
 from coupling import *
-import sys
-sys.path.append('scripts/utils')
-import myparser
 import os
 
-
-
-# Parse input
-inpt = myparser.parseInputFile()
+# CLI
+parser = argparse.ArgumentParser(description='Remove quadratic coupling according to method 3')
+parser.add_argument('-mi', '--inputMechanism', type=str, metavar='', required=False, help='Mechanism to process', default='output/qssa_nostar.inp')
+parser.add_argument('-th', '--thermoFile', type=str, metavar='', required=False, help='Thermodynamic file', default='output/therm_nostar.dat')
+parser.add_argument('-tr', '--tranFile', type=str, metavar='', required=False, help='Transport file', default='output/tran_nostar.dat')
+parser.add_argument('-nqss', '--nonQSSSpecies', type=str, metavar='', required=False, help='Filename with non QSS species names', default='output/non_qssa_list_nostar.txt')
+parser.add_argument('-o', '--outputFolder', type=str, metavar='', required=False, help='Where to store by product of the preprocessing',default='output')
+parser.add_argument('-mo', '--outputMechanism', type=str, metavar='', required=False, help='Mechanism to write', default='qssa_final.inp')
+parser.add_argument('-rv', '--forwardReactionsToRemove', type=str, metavar='', required=False, help='Detailed descriptions of forward reactions to remove', default='reac_forward_to_remove_detailed')
+parser.add_argument('-r', '--forwardReactionsIDToRemove', type=str, metavar='', required=False, help='ID of forward reactions to remove', default='reac_forward_to_remove')
+args = parser.parse_args()
 
 # Set up filenames
-mech_filename = inpt['mech']
-therm_filename = inpt['therm']
-tran_filename = inpt['tran']
-forward_reac_remove_detailed_filename = inpt['reac_forward_remove_detailed']
-forward_reac_remove_filename = inpt['reac_forward_remove']
+mech_filename = args.inputMechanism
+therm_filename = args.thermoFile
+tran_filename = args.tranFile
+forward_reac_remove_detailed_filename = args.forwardReactionsToRemove
+forward_reac_remove_filename = args.forwardReactionsIDToRemove
+non_qssa_species = args.nonQSSSpecies
+outputFolder = args.outputFolder
+output_mech_filename = args.outputMechanism
+
+
 
 # Load skeletal mechanism
 app = FMC()
@@ -31,7 +41,7 @@ mechanism = fuego.serialization.load(filename=app.inventory.mechanism, format='c
 reactionIndex = mechanism._sort_reactions()
 
 # Get list of intended QSS species
-species_non_qssa = getListSpecies(inpt['non_qssa_list'])
+species_non_qssa = getListSpecies(non_qssa_species)
 species_all = getListSpecies(app.inventory.mechanism)
 species_qssa = list(set(species_all) - set(species_non_qssa))
 
@@ -46,8 +56,8 @@ f.close()
 toCancel = identifyReactionsToCancel(mechanism,species_qssa)
 print(toCancel)
 
-outputFolder = inpt['outputFolder'] 
-mech_final_filename = inpt['mech_final']
+outputFolder = outputFolder
+mech_final_filename = output_mech_filename
 f_mech = open(os.path.join(outputFolder,mech_final_filename),'w+')
 line_iter = iter(lines)
 for line in line_iter:
@@ -128,7 +138,6 @@ for line in line_iter:
                 break
 f_forward_detailed_flag.close()
 f_forward_flag.close()
-
 
 
 if QSSCoupling(mechanism,species_qssa) == 0:

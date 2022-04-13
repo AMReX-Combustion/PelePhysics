@@ -1,25 +1,37 @@
 from FMC import FMC
+import argparse
 import fuego
 from QSSspecies import getListSpecies 
 from coupling import *
 import sys
-sys.path.append('scripts/utils')
-import myparser
 import os
+try:
+    import networkx as nx
+except ImportError:
+    sys.exit('Need networkx python module')
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    sys.exit('Need matplotlib python module')
 
-
-import networkx as nx
-import matplotlib.pyplot as plt
-
-
-
-# Parse input
-inpt = myparser.parseInputFile()
+# CLI
+parser = argparse.ArgumentParser(description='Highlight possible quadratic coupling')
+parser.add_argument('-m', '--mechanism', type=str, metavar='', required=False, help='QSS mechanism without coupling treatment', default='output/qssa_nostar.inp')
+parser.add_argument('-th', '--thermoFile', type=str, metavar='', required=False, help='Thermodynamic file', default='output/therm_nostar.dat')
+parser.add_argument('-tr', '--tranFile', type=str, metavar='', required=False, help='Transport file', default='output/tran_nostar.dat')
+parser.add_argument('-nqss', '--nonQSSSpecies', type=str, metavar='', required=False, help='Filename with non QSS species names', default='output/non_qssa_list_nostar.txt')
+parser.add_argument('-o', '--outputFolder', type=str, metavar='', required=False, help='Where to store by product of the preprocessing',default='output')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('-q','--quiet', action='store_true', help='Execute without plotting on screen')
+group.add_argument('-v','--verbose', action='store_true', help='Plot on screen')
+args = parser.parse_args()
 
 # Set up filenames
-mech_filename = inpt['mech']
-therm_filename = inpt['therm']
-tran_filename = inpt['tran']
+mech_filename = args.mechanism
+therm_filename = args.thermoFile
+tran_filename = args.tranFile
+non_qssa_species = args.nonQSSSpecies
+outputFolder = args.outputFolder
 
 # Load skeletal mechanism
 app = FMC()
@@ -33,7 +45,7 @@ mechanism = fuego.serialization.load(filename=app.inventory.mechanism, format='c
 reactionIndex = mechanism._sort_reactions()
 
 # Get list of intended QSS species
-species_non_qssa = getListSpecies(inpt['non_qssa_list'])
+species_non_qssa = getListSpecies(non_qssa_species)
 species_all = getListSpecies(app.inventory.mechanism)
 species_qssa = list(set(species_all) - set(species_non_qssa))
 
@@ -72,11 +84,8 @@ for node in G.nodes():
 
 black_edges = [edge for edge in G.edges()]
 
-# Need to create a layout when doing
-# separate calls to draw nodes and edges
+# Create a layout
 pos = nx.kamada_kawai_layout(G)
-##pos = nx.spring_layout(G)
-##pos = nx.spiral_layout(G)
 
 # Draw normal species
 nx.draw_networkx_nodes(G, pos, nodelist=node_list_normalSpecies, node_size=0, node_color='b')
@@ -98,10 +107,8 @@ nx.draw_networkx_nodes(G, pos, nodelist=node_list_problemReac, node_size=200, no
 
 nx.draw_networkx_edges(G, pos, edgelist=black_edges, arrows=False)
 plt.tight_layout()
-outputFolder = inpt['outputFolder']
 plt.savefig(os.path.join(outputFolder,'quadGraphQSS.png'))
-#plt.savefig(os.path.join(outputFolder,'quadGraphQSS.eps'))
-#plt.show()
 
-
+if args.verbose:
+    plt.show()
 

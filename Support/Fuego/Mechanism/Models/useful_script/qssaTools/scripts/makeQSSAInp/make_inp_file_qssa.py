@@ -1,7 +1,5 @@
 import numpy as np
-import sys
-sys.path.append('scripts/utils')
-import myparser
+import argparse
 import os
 
 def getListSpecies(filename):
@@ -73,15 +71,19 @@ def writeQSSA_inp(skeletal_inp_filename,species_qssa,outputFolder,qssa_inp_filen
     f.close()  
 
 
-# Parse input
-
-inpt = myparser.parseInputFile()
+# CLI
+parser = argparse.ArgumentParser(description='Write the new mechanism with QSS species')
+parser.add_argument('-sk', '--skeletalMechanism', type=str, metavar='', required=True, help='Skeletal mechanism')
+parser.add_argument('-nqss', '--nonQSSSpecies', type=str, metavar='', required=True, help='Filename with non QSS species names')
+parser.add_argument('-o', '--outputFolder', type=str, metavar='', required=False, help='Where to store by product of the preprocessing', default='output')
+parser.add_argument('-qss', '--qssMechanism', type=str, metavar='', required=False, help='QSS mechanism filename to write', default='qssa.inp')
+args = parser.parse_args()
 
 # Set up filenames
-skeletal_inp_filename = inpt['skeletal_inp']
-species_non_qssa_filename = inpt['species_non_qssa']
-outputFolder = inpt['outputFolder'] 
-qssa_inp_filename = inpt['qssa_inp']
+skeletal_inp_filename = args.skeletalMechanism
+species_non_qssa_filename = args.nonQSSSpecies
+outputFolder = args.outputFolder
+qssa_inp_filename = args.qssMechanism
 
 # Get species
 species_non_qssa = getListSpecies(species_non_qssa_filename)

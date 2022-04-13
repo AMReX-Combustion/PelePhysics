@@ -5,5 +5,4 @@ rm tran_nostar.dat
 rm qssa_final.inp
 rm reac_forward_to_remove
 
-rm -r qssaTools/output
-rm -r qssaTools/mechanismFiles
+rm -r output

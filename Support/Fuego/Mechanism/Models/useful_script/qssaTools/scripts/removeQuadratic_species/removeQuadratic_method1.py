@@ -1,10 +1,8 @@
 from FMC import FMC
 import fuego
+import argparse
 from QSSspecies import getListSpecies 
 from coupling import *
-import sys
-sys.path.append('scripts/utils')
-import myparser
 import os
 import numpy as np
 
@@ -60,15 +58,27 @@ def writeQSSA_inp(skeletal_inp_filename,species_qssa,outputFolder,qssa_inp_filen
         f.write(line)
     f.close()
 
-# Parse input
-inpt = myparser.parseInputFile()
+
+# CLI
+parser = argparse.ArgumentParser(description='Remove quadratic coupling according to method 3')
+parser.add_argument('-mi', '--inputMechanism', type=str, metavar='', required=False, help='Mechanism to process', default='output/qssa_nostar.inp')
+parser.add_argument('-sk', '--skeletalMechanism', type=str, metavar='', required=False, help='Skeletal mechanism', default='output/skeletal_nostar.inp')
+parser.add_argument('-th', '--thermoFile', type=str, metavar='', required=False, help='Thermodynamic file', default='output/therm_nostar.dat')
+parser.add_argument('-tr', '--tranFile', type=str, metavar='', required=False, help='Transport file', default='output/tran_nostar.dat')
+parser.add_argument('-nqss', '--nonQSSSpecies', type=str, metavar='', required=False, help='Filename with non QSS species names', default='output/non_qssa_list_nostar.txt')
+parser.add_argument('-o', '--outputFolder', type=str, metavar='', required=False, help='Where to store by product of the preprocessing',default='output')
+parser.add_argument('-mo', '--outputMechanism', type=str, metavar='', required=False, help='Mechanism to write', default='qssa_final.inp')
+args = parser.parse_args()
+
 
 # Set up filenames
-skeletal_mech_filename = inpt['skeletal_mech']
-mech_filename = inpt['mech']
-therm_filename = inpt['therm']
-tran_filename = inpt['tran']
-
+skeletal_mech_filename = args.skeletalMechanism
+mech_filename = args.inputMechanism
+therm_filename = args.thermoFile
+tran_filename = args.tranFile
+non_qssa_species = args.nonQSSSpecies
+outputFolder = args.outputFolder
+output_mech_filename = args.outputMechanism
 
 # Load skeletal mechanism
 app = FMC()
@@ -82,7 +92,7 @@ mechanism = fuego.serialization.load(filename=app.inventory.mechanism, format='c
 reactionIndex = mechanism._sort_reactions()
 
 # Get list of intended QSS species
-species_non_qssa = getListSpecies(inpt['non_qssa_list'])
+species_non_qssa = getListSpecies(non_qssa_species)
 species_all = getListSpecies(app.inventory.mechanism)
 species_qssa = list(set(species_all) - set(species_non_qssa))
 
@@ -127,7 +137,6 @@ for species in qssa_species_remove:
 
 
 # Write new mechanism
-outputFolder = inpt['outputFolder']
-mech_final_filename = inpt['mech_final']
+mech_final_filename = output_mech_filename
 writeQSSA_inp(skeletal_mech_filename,newSpecies_qssa,outputFolder,mech_final_filename)
 
