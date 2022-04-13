@@ -4,6 +4,7 @@
 #include "mechanism.H"
 
 
+
 /*save atomic weights into array */
 void atomicWeight(amrex::Real *  awt)
 {
@@ -512,5 +513,3 @@ void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, const int
 }
 
 #endif
-
-/* End of file  */
