@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 export DV_DIR=${PELE_PHYSICS_HOME}/Support/Fuego/Pythia
 export EXPORT_ROOT=${DV_DIR}/pythia-0.5
-export PYTHONPATH=${EXPORT_ROOT}/packages/fuego:${EXPORT_ROOT}/packages/journal:${EXPORT_ROOT}/packages/pyre:${EXPORT_ROOT}/packages/weaver
+export PYTHONPATH=${EXPORT_ROOT}/packages/fuego:${EXPORT_ROOT}/packages/journal:${EXPORT_ROOT}/packages/pyre:${EXPORT_ROOT}/packages/weaver:${EXPORT_ROOT}/packages/fuego/fuego/fmc
 
 # Prepare the QSS mechanism
 qssaToolsDir=../useful_script/qssaTools
