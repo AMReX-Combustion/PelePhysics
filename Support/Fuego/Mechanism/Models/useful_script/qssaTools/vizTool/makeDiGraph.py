@@ -1,10 +1,11 @@
-from FMC import FMC
 import argparse
-import fuego
+import os
+import sys
+sys.path.append(os.path.join(sys.path[0],'../utils'))
 from QSSspecies import getListSpecies 
 from coupling import *
-import sys
-import os
+from FMC import FMC
+import fuego
 try:
     import networkx as nx
 except ImportError:

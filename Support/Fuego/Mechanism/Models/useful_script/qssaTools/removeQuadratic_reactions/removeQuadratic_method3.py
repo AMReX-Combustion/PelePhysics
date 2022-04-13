@@ -1,9 +1,11 @@
-from FMC import FMC
-import fuego
 import argparse
+import sys
+import os
+sys.path.append(os.path.join(sys.path[0],'../utils'))
 from QSSspecies import getListSpecies 
 from coupling import *
-import os
+from FMC import FMC
+import fuego
 
 # CLI
 parser = argparse.ArgumentParser(description='Remove quadratic coupling according to method 3')

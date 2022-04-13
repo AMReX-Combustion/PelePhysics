@@ -1,9 +1,11 @@
-from FMC import FMC
-import fuego
 import argparse
+import os
+import sys
+sys.path.append(os.path.join(sys.path[0],'../utils'))
 from QSSspecies import getListSpecies 
 from coupling import *
-import os
+from FMC import FMC
+import fuego
 import numpy as np
 
 def writeQSSA_inp(skeletal_inp_filename,species_qssa,outputFolder,qssa_inp_filename):
