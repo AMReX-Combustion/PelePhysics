@@ -323,8 +323,9 @@ public:
 
   void deallocate()
   {
-    if (m_device_allocated)
+    if (m_device_allocated) {
       amrex::The_Device_Arena()->free(m_d_trans_parm);
+    }
   }
 
   void sync_to_device()

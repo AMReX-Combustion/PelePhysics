@@ -20,10 +20,11 @@ ReactorCvode::init(int reactor_type, int ncells)
 
   amrex::Print() << "Initializing CVODE:\n";
 
-  if (atomic_reductions)
+  if (atomic_reductions) {
     amrex::Print() << "  Using atomic reductions\n";
-  else
+  } else {
     amrex::Print() << "  Using LDS reductions\n";
+  }
 
 #ifndef AMREX_USE_GPU
   // ----------------------------------------------------------
