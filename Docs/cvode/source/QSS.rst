@@ -36,7 +36,7 @@ The set of algebraic equations that result from the QSS assumption does not alwa
 .. _fig:DepGraph:
 
 .. figure:: ./Visualization/directedGraphQSS.png
-     :width: 50%
+     :width: 90%
      :align: center
      :name: fig-DRG
      :target: ./Visualization/directedGraphQSS.png
@@ -54,7 +54,7 @@ In general, the QSS assumption results in a set of equations that are non-linear
 .. _fig:QuadGraph:
 
 .. figure:: ./Visualization/quadGraphQSS.png
-     :width: 50%
+     :width: 90%
      :align: center
      :name: fig-Quad
      :target: ./Visualization/quadGraphQSS.png
@@ -73,72 +73,18 @@ Validation
 The three linearization methods are validated against the skeletal :math:`N-C_{12}H_{26}` [SKEL2017]_. Using 343 0D calculation that span the range of applicability of the QSS assumption (:math:`\phi = [0.5, 2.0], p=[1atm, 50atm], T=[800K, 1600K]`), ignition delay is computed using the skeletal mechanism (SK53) and each one of the three linerization methods for the QSS mechanism (RedXX).The left plot shows the correlation between the ignition delay from the skeletal mechanism and the reduced version. The statistics of the relative error between the reduced and the skeletal mechanism are shown in the title of that plot. The right plot shows the ignition delay values at high pressure conditions only.
 
 
-.. _fig:Corr1:
+.. _fig:val:
 
-.. figure:: ./Visualization/correlationMethod1.png
-     :width: 40%
-     :align: left
-     :name: fig-Corr1
-     :target: ./Visualization/correlationMethod1.png
-     :alt: Comparison of ignition delay between skeletal mechanism and method 1
+.. figure:: ./Visualization/validationQSS.png
+     :width: 90%
+     :align: center
+     :name: fig-val
+     :target: ./Visualization/validationQSS.png.png
+     :alt: Validation of linearization method
 
-     Scatter plot of the ignition delay measured with the QSS mechanism linearized with method 1 and the skeletal mechanism.
-
-.. _fig:HP1:
-
-.. figure:: ./Visualization/KPPMethod1.png
-     :width: 40%
-     :align: right
-     :name: fig-HP1
-     :target: ./Visualization/KPPMethod1.png
-     :alt: Comparison of ignition delay between skeletal mechanism and method 1 at high pressure conditions
-
-     Ignition delays measured for the skeletal mechanism and QSS mechanism linearized with method 1 at high pressure conditions 
-
-.. _fig:Corr2:
-
-.. figure:: ./Visualization/correlationMethod2.png
-     :width: 40%
-     :align: left
-     :name: fig-Corr2
-     :target: ./Visualization/correlationMethod2.png
-     :alt: Comparison of ignition delay between skeletal mechanism and method 2
-
-     Scatter plot of the ignition delay measured with the QSS mechanism linearized with method 2 and the skeletal mechanism.
-
-.. _fig:HP2:
-
-.. figure:: ./Visualization/KPPMethod2.png
-     :width: 40%
-     :align: right
-     :name: fig-HP2
-     :target: ./Visualization/KPPMethod2.png
-     :alt: Comparison of ignition delay between skeletal mechanism and method 2 at high pressure conditions
-
-     Ignition delays measured for the skeletal mechanism and QSS mechanism linearized with method 2 at high pressure conditions 
-
-.. _fig:Corr3:
-
-.. figure:: ./Visualization/correlationMethod3.png
-     :width: 40%
-     :align: left
-     :name: fig-Corr3
-     :target: ./Visualization/correlationMethod3.png
-     :alt: Comparison of ignition delay between skeletal mechanism and method 3
-
-     Scatter plot of the ignition delay measured with the QSS mechanism linearized with method 3 and the skeletal mechanism.
-
-.. _fig:HP3:
-
-.. figure:: ./Visualization/KPPMethod3.png
-     :width: 40%
-     :align: right
-     :name: fig-HP3
-     :target: ./Visualization/KPPMethod3.png
-     :alt: Comparison of ignition delay between skeletal mechanism and method 3 at high pressure conditions
-
-     Ignition delays measured for the skeletal mechanism and QSS mechanism linearized with method 1 at high pressure conditions 
-
+     Left: Scatter plot of the ignition delay measured with the QSS mechanism linearized and the skeletal mechanism.
+     Right: Ignition delays measured for the skeletal mechanism and QSS mechanism linearized at high pressure conditions.
+     Top: Method 1. Middle: Method 2. Bottom: Method 3.
 
 
 .. [DRG2005] T. Lu, C. K. Law, A directed relation graph method for mechanism reduction, Proceedings of the combustion institute, 30(1):1333-1341, 2005.
