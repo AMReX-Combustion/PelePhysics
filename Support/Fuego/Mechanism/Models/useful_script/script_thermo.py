@@ -7,8 +7,8 @@ import csv
 
 ####################################################################
 #
-#  USAGE: "script_trans.py chem.inp tran.dat"
-#         It will return a file labelled TRANFILE_APPEND.txt. 
+#  USAGE: "script_thermo.py chem.inp therm.dat"
+#         It will return a file labelled THERMOFILE_APPEND.txt.
 #         The user should copy all the lines in the chem.inp file,
 #         right above the reactions definitions for example.
 #
@@ -63,7 +63,7 @@ for i, spec in enumerate(spec_list):
     therm_list.append(therm_tmp[-2])
     therm_list.append(therm_tmp[-1])
 
-# generate txt file with transport data, to append in the chem.inp
+# generate txt file with thermo data, to append in the chem.inp
 csv_file = 'THERMOFILE_APPEND.txt'
 with open(csv_file, 'w') as outfile:
     writer = csv.writer(outfile)#,delimiter=' ',quotechar=' ', quoting=csv.QUOTE_MINIMAL)
