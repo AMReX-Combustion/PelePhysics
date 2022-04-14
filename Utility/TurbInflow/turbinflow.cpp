@@ -259,8 +259,9 @@ TurbInflow::read_one_turb_plane(TurbParm& a_tp, int iplane, int k)
 
     ifs.seekg(start, std::ios::beg);
 
-    if (!ifs.good())
+    if (!ifs.good()) {
       amrex::Abort("getplane(): seekg() failed");
+    }
 
     amrex::FArrayBox tmp;
     tmp.readFrom(ifs);

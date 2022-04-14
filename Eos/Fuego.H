@@ -70,8 +70,9 @@ struct Fuego
     amrex::Real T = P * wbar / (R * Constants::RU);
     CKCVMS(&T, tmp);
     amrex::Real Cv = 0.0;
-    for (int i = 0; i < NUM_SPECIES; i++)
+    for (int i = 0; i < NUM_SPECIES; i++) {
       Cv += Y[i] * tmp[i];
+    }
     amrex::Real G = (wbar * Cv + Constants::RU) / (wbar * Cv);
     Cs = std::sqrt(G * P / R);
   }
@@ -85,8 +86,9 @@ struct Fuego
     CKPY(&R, &T, Y, &P);
     CKCVMS(&T, tmp);
     amrex::Real Cv = 0.0;
-    for (int i = 0; i < NUM_SPECIES; ++i)
+    for (int i = 0; i < NUM_SPECIES; ++i) {
       Cv += Y[i] * tmp[i];
+    }
     amrex::Real wbar;
     CKMMWY(&Y[0], &wbar);
     amrex::Real G = (wbar * Cv + Constants::RU) / (wbar * Cv);
@@ -169,8 +171,9 @@ struct Fuego
 
     amrex::Real mw[NUM_SPECIES];
     get_mw(mw);
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       WDOT[n] *= mw[n];
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -227,8 +230,9 @@ struct Fuego
     amrex::Real ei[NUM_SPECIES];
     CKUMS(&T, ei);
     E = 0.0;
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       E += Y[n] * ei[n];
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -248,8 +252,9 @@ struct Fuego
     amrex::Real ei[NUM_SPECIES];
     CKUMS(&T, ei);
     E = 0.0;
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       E += Y[n] * ei[n];
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -259,8 +264,9 @@ struct Fuego
     amrex::Real ei[NUM_SPECIES];
     T2Ei(T, ei);
     E = 0.0;
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       E += Y[n] * ei[n];
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -315,8 +321,9 @@ struct Fuego
     amrex::Real hi[NUM_SPECIES];
     CKHMS(&T, hi);
     H = 0.0;
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       H += Y[n] * hi[n];
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -326,8 +333,9 @@ struct Fuego
     amrex::Real tmp[NUM_SPECIES];
     get_imw(tmp);
     amrex::Real summ = 0.0;
-    for (int i = 0; i < NUM_SPECIES; i++)
+    for (int i = 0; i < NUM_SPECIES; i++) {
       summ += Y[i] * tmp[i];
+    }
     WBAR = 1.0 / summ;
   }
 

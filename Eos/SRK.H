@@ -559,8 +559,9 @@ struct SRK
 
     amrex::Real mw[NUM_SPECIES];
     get_mw(mw);
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       WDOT[n] *= mw[n];
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -827,8 +828,9 @@ struct SRK
     amrex::Real hi[NUM_SPECIES];
     CKHMS(&T, hi);
     H = 0.0;
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       H += Y[n] * hi[n];
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -838,8 +840,9 @@ struct SRK
     amrex::Real tmp[NUM_SPECIES];
     get_imw(tmp);
     amrex::Real summ = 0.0;
-    for (int i = 0; i < NUM_SPECIES; i++)
+    for (int i = 0; i < NUM_SPECIES; i++) {
       summ += Y[i] * tmp[i];
+    }
     WBAR = 1.0 / summ;
   }
 
