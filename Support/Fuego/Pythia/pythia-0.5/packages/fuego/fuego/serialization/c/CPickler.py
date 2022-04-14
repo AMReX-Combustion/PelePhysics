@@ -312,8 +312,6 @@ class CPickler(CMill):
         self._ckindx(mechanism)
         self._molecular_weights()
         self._ckrp(mechanism)
-        # self._cknu(mechanism)
-        # self._ckabe(mechanism)
         self._thermo(mechanism)
         # mean qties -- do not take QSS into account, sumX and Y = 1 without them
         self._ckcpbl(mechanism)
@@ -326,13 +324,8 @@ class CPickler(CMill):
         self._ckubms(mechanism)
         self._cksbml(mechanism)
         self._cksbms(mechanism)
-        # self._ckgbml(mechanism)  # gibbs
-        # self._ckgbms(mechanism)
-        # self._ckabml(mechanism)  # helmoltz
-        # self._ckabms(mechanism)
         self._T_given_ey(mechanism)
         self._T_given_hy(mechanism)
-        # self._cksyms(mechanism)
         self._ckpx(mechanism)
         self._ckpy(mechanism)
         self._ckpc(mechanism)
@@ -377,9 +370,6 @@ class CPickler(CMill):
         # routines. We need to conserve the thermo namespace and all the A/beta/Eq/TB etc machinery for when
         # there are some QSS involved. Please do not delete :)
         if self.nQSSspecies > 0:
-            # self._write(self.line(" PURE CPU stuff "))
-            # self._write("#ifndef AMREX_USE_GPU")
-            # self._mechanism_statics(mechanism)
             print("\n\n\n\n---------------------------------")
             print("+++++++++GROUPS++++++++++++++++++")
             print("---------------------------------")
@@ -399,25 +389,7 @@ class CPickler(CMill):
             print("---------------------------------")
             self._QSScomponentFunctions(
                 mechanism
-            )  # Print those expr in the mechanism.cpp
-            # NOTE: this productionRate routine is similar to the GPU one. This one uses the thermo namespace
-            # self._productionRate(mechanism)
-            # Info dep on ProgressRate function
-            # NOTE: ProgressRate may be useful for GPU appli, but will need rewritting
-            # self._progressRate(mechanism)
-            # self._progressRateFR(mechanism)
-            # self._ckkfkr(mechanism)
-            # self._ckqc(mechanism)
-            # self._ckqyp(mechanism)
-            # self._ckqxp(mechanism)
-            # self._ckqyr(mechanism)
-            # self._ckqxr(mechanism)
-            # self._ajac(mechanism)
-            # Basic info
-            # self._ckinu(mechanism)
-            # self._initialization(mechanism)
-            # self._write("#endif")
-            # self._write()
+            )  
 
         # prod rate related
         self._productionRate_GPU(mechanism)  # GPU version
@@ -426,13 +398,6 @@ class CPickler(CMill):
         self._ckwxp(mechanism)
         self._ckwyr(mechanism)
         self._ckwxr(mechanism)
-        # equil constant -- not used as far as I know ?
-        # self._equilibriumConstants(mechanism)
-        # self._ckeqc(mechanism)
-        # self._ckeqyp(mechanism)
-        # self._ckeqxp(mechanism)
-        # self._ckeqyr(mechanism)
-        # self._ckeqxr(mechanism)
         self._dthermodT(mechanism)
         # Approx analytical jacobian
         self._ajacPrecond(mechanism)
@@ -455,8 +420,6 @@ class CPickler(CMill):
     # This is the main simplified routine for QSS
     # called in weaver/weaver/mills/Mill.py
     ##########################
-    # def _renderDocument_QSS(self, mechanism, options=None):
-
     # Pieces for the file mechanism.H#
     def _chem_file_CPUonly_decl(self, mechanism):
         self._write()
@@ -468,38 +431,9 @@ class CPickler(CMill):
         )
         self._write("#ifndef AMREX_USE_GPU")
 
-        # Deactivate vectorized CPU stuff for now
-        # self._write(
-        #    self.line(' Vectorized stuff '))
-        # self._write('void VCKYTX(int *  np, amrex::Real *  y, amrex::Real *  x);')
-        # self._write('void VCKHMS(int *  np, amrex::Real *  T, amrex::Real *  ums);')
-        # self._write('void VCKWYR(int *  np, amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  wdot);')
-        # self._write('void VCKPY(int *  np, amrex::Real *  rho, amrex::Real *  T, amrex::Real *  y, amrex::Real *  P);')
-        # self._write('void vproductionRate(int npt, amrex::Real *  wdot, amrex::Real *  c, amrex::Real *  T);')
-        # self._write('void vcomp_k_f(int npt, amrex::Real *  k_f_s, amrex::Real *  tc, amrex::Real *  invT);')
-        # self._write('void vcomp_gibbs(int npt, amrex::Real *  g_RT, amrex::Real *  tc);')
-        # self._write('void vcomp_Kc(int npt, amrex::Real *  Kc_s, amrex::Real *  g_RT, amrex::Real *  invT);')
-        # nReactions = len(mechanism.reaction())
-        # if nReactions <= 50:
-        #    self._write('void vcomp_wdot(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,')
-        #    self._write('                amrex::Real *  k_f_s, amrex::Real *  Kc_s,')
-        #    self._write('                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);')
-        # else:
-        #    for i in range(0,nReactions,50):
-        #        self._write('void vcomp_wdot_%d_%d(int npt, amrex::Real *  wdot, amrex::Real *  mixture, amrex::Real *  sc,'
-        #                     % (i+1,min(i+50,nReactions)))
-        #        self._write('                amrex::Real *  k_f_s, amrex::Real *  Kc_s,')
-        #        self._write('                amrex::Real *  tc, amrex::Real *  invT, amrex::Real *  T);')
-
-        # self._write(
-        #    self.line(' MISC '))
-        # self._write('void CKINU(int * i, int * nspec, int * ki, int * nu);')
-
         self._write(
             "void progressRate(amrex::Real *  qdot, amrex::Real *  speciesConc, amrex::Real T);"
         )
-        # self._write('void progressRateFR(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  speciesConc, amrex::Real T);')
-        # self._write('void CKKFKR(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x, amrex::Real *  q_f, amrex::Real *  q_r);')
         self._write(
             "void CKQC(amrex::Real *  T, amrex::Real *  C, amrex::Real *  qdot);"
         )
@@ -528,10 +462,8 @@ class CPickler(CMill):
         self._write("void atomicWeight(amrex::Real *  awt);")
         self._write(self.line(" MISC "))
         self._write("void CKAWT(amrex::Real *  awt);")
-        # self._write('void CKXNUM(char * line, int * nexp, int * lout, int * nval, amrex::Real *  rval, int * kerr, int lenline);')
         self._write("void CKNCF(int * ncf);")
         self._write("void CKSYME_STR(amrex::Vector<std::string>& ename);")
-        # self._write('void CKSYME(int * kname, int * lenkname);')
         self._write("void CKSYMS_STR(amrex::Vector<std::string>& kname);")
         self._write(self.line(" SPARSE INFORMATION "))
         self._write(
@@ -14821,7 +14753,6 @@ class CPickler(CMill):
                 )
 
                 direction = self.QSS_SRnet[i][r]
-                # group_flag = False
 
                 # Check if reaction contains other QSS species
                 coupled = [
@@ -14835,16 +14766,10 @@ class CPickler(CMill):
                 for species in coupled_qss:
                     if species != symbol:
                         other_qss = species
-                # other_qss_list = []
-                # for species in coupled_qss:
-                #    other_qss_list.append(species)
-                # other_qss_list.remove(symbol)
 
                 if len(coupled) >= 2:
-                    # print("plop = ",other_qss)
                     # Check if all QSS are only reactants
                     allQSSreactants = True
-                    # for other_qss in other_qss_list:
                     if any(
                         product == other_qss
                         for product, _ in list(set(reaction.products))
@@ -14987,17 +14912,6 @@ class CPickler(CMill):
                             print(
                                 "        this reaction does not contribute to any QSS coefficients and is thus ignored"
                             )
-                            # if reaction.reversible:
-                            #    groupCoeff_hold[other_qss].append(
-                            #        "+qr_co["
-                            #        + str(self.qfqr_co_idx_map.index(r))
-                            #        + "]"
-                            #    )
-                            #    groupCoeff_hold[symbol].append(
-                            #        "+qr_co["
-                            #        + str(self.qfqr_co_idx_map.index(r))
-                            #        + "]"
-                            #    )
 
                         else:
 
@@ -15521,35 +15435,6 @@ class CPickler(CMill):
                             "qf[%d]  = Corr * k_f[%d] * (%s);"
                             % (idx, idx, forward_sc)
                         )
-                # elif reaction.sri:
-                #    self._write(
-                #        "const amrex::Real F = redP / (1.0 + redP);"
-                #    )
-                #    self._write("const amrex::Real logPred = log10(redP);")
-                #    self._write("X = 1.0 / (1.0 + logPred*logPred);")
-                #    if sri[1] < 0:
-                #        self._write(
-                #            "F_sri = exp(X * log(%.15g * exp(%.15g * invT)"
-                #            % (sri[0], -sri[1])
-                #        )
-                #    else:
-                #        self._write(
-                #            "F_sri = exp(X * log(%.15g * exp(-%.15g * invT)"
-                #            % (sri[0], sri[1])
-                #        )
-                #    if sri[2] > 1.0e-100:
-                #        self._write("   +  exp(tc[0] / %.15g) " % sri[2])
-                #    else:
-                #        self._write("   +  0. ")
-                #    self._write(
-                #        "   *  (%d > 3 ? %.15g * exp(%.15g * tc[0]) : 1.0);"
-                #        % (nsri, sri[3], sri[4])
-                #    )
-                #    self._write("Corr = F * F_sri;")
-                #    self._write(
-                #        "const amrex::Real qf = Corr * k_f * (%s);"
-                #        % (forward_sc)
-                #    )
                 elif nlindemann > 0:
                     self._write("Corr = redP / (1.0 + redP);")
                     if removeForward:
@@ -15904,11 +15789,6 @@ class CPickler(CMill):
                     self._write()
                     RHS_subMatrix[index] = str(species) + "_rhs"
 
-                # print "A IS "
-                # print Coeff_subMatrix
-                # print "B IS "
-                # print RHS_subMatrix
-                # print
                 A, X, B, intermediate_helpers = self._Gauss_pivoting(
                     Coeff_subMatrix, RHS_subMatrix
                 )
