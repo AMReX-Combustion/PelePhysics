@@ -24,16 +24,18 @@ struct GammaLaw
   AMREX_FORCE_INLINE
   void molecular_weight(amrex::Real mw[])
   {
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       mw[n] = Constants::AIRMW;
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void inv_molecular_weight(amrex::Real imw[])
   {
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       imw[n] = 1. / Constants::AIRMW;
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -49,8 +51,9 @@ struct GammaLaw
   {
     amrex::Real wbar = Constants::AIRMW;
     const amrex::Real Cv = Constants::RU / (wbar * (gamma - 1.0));
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       Ei[n] = Cv * T;
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -99,8 +102,9 @@ struct GammaLaw
   AMREX_FORCE_INLINE
   void T2Cpi(amrex::Real /*T*/, amrex::Real Cpi[])
   {
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       Cpi[n] = gamma * Constants::RU / (Constants::AIRMW * (gamma - 1.0));
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -224,16 +228,18 @@ struct GammaLaw
   AMREX_FORCE_INLINE
   void Y2X(amrex::Real Y[], amrex::Real X[])
   {
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       X[n] = Y[n];
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void X2Y(amrex::Real X[], amrex::Real Y[])
   {
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       Y[n] = X[n];
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -276,8 +282,9 @@ struct GammaLaw
     amrex::Real ei[NUM_SPECIES];
     T2Ei(T, ei);
     E = 0.0;
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       E += Y[n] * ei[n];
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -293,8 +300,9 @@ struct GammaLaw
   {
     amrex::Real wbar = Constants::AIRMW;
     const amrex::Real Cv = Constants::RU / (wbar * (gamma - 1.0));
-    for (int n = 0; n < NUM_SPECIES; n++)
+    for (int n = 0; n < NUM_SPECIES; n++) {
       Hi[n] = Cv * T * gamma;
+    }
   }
 
   AMREX_GPU_HOST_DEVICE
