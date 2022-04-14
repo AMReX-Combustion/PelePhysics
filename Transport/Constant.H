@@ -76,8 +76,8 @@ struct ConstTransport
           amrex::Real muloc, xiloc, lamloc;
           amrex::Real Ddiag[NUM_SPECIES] = {0.0};
           transport(
-            wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, 0.0, 0.0, NULL,
-            Ddiag, muloc, xiloc, lamloc, tparm);
+            wtr_get_xi, wtr_get_mu, wtr_get_lam, wtr_get_Ddiag, 0.0, 0.0,
+            nullptr, Ddiag, muloc, xiloc, lamloc, tparm);
 
           // mu, xi and lambda are stored after D in the diffusion multifab
           for (int n = 0; n < NUM_SPECIES; ++n) {

@@ -20,7 +20,7 @@ ReactorCvode::init(int reactor_type, int ncells)
 
   amrex::Print() << "Initializing CVODE:\n";
 
-  if (atomic_reductions) {
+  if (atomic_reductions != 0) {
     amrex::Print() << "  Using atomic reductions\n";
   } else {
     amrex::Print() << "  Using LDS reductions\n";
@@ -34,26 +34,26 @@ ReactorCvode::init(int reactor_type, int ncells)
   // Solution vector
   int neq_tot = (NUM_SPECIES + 1) * ncells;
   y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
+  if (utils::check_flag((void*)y, "N_VNew_Serial", 0) != 0) {
     return (1);
   }
 
   // Call CVodeCreate to create the solver memory and specify the Backward
   // Differentiation Formula and the use of a Newton iteration
   cvode_mem = CVodeCreate(CV_BDF, *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)cvode_mem, "CVodeCreate", 0)) {
+  if (utils::check_flag((void*)cvode_mem, "CVodeCreate", 0) != 0) {
     return (1);
   }
 
   udata_g = new CVODEUserData{};
   allocUserData(udata_g, ncells);
-  if (utils::check_flag((void*)udata_g, "allocUserData", 2)) {
+  if (utils::check_flag((void*)udata_g, "allocUserData", 2) != 0) {
     return (1);
   }
 
   // Set the pointer to user-defined data
   int flag = CVodeSetUserData(cvode_mem, udata_g);
-  if (utils::check_flag(&flag, "CVodeSetUserData", 1)) {
+  if (utils::check_flag(&flag, "CVodeSetUserData", 1) != 0) {
     return (1);
   }
 
@@ -62,7 +62,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   // vector y.
   amrex::Real time = 0.0;
   flag = CVodeInit(cvode_mem, cF_RHS, time, y);
-  if (utils::check_flag(&flag, "CVodeInit", 1)) {
+  if (utils::check_flag(&flag, "CVodeInit", 1) != 0) {
     return (1);
   }
 
@@ -78,19 +78,19 @@ ReactorCvode::init(int reactor_type, int ncells)
     // Create dense SUNMatrix for use in linear solves
     A = SUNDenseMatrix(
       neq_tot, neq_tot, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)A, "SUNDenseMatrix", 0)) {
+    if (utils::check_flag((void*)A, "SUNDenseMatrix", 0) != 0) {
       return (1);
     }
 
     // Create dense SUNLinearSolver object for use by CVode
     LS = SUNLinSol_Dense(y, A, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_Dense", 0)) {
+    if (utils::check_flag((void*)LS, "SUNLinSol_Dense", 0) != 0) {
       return (1);
     }
 
     // Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
-    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1)) {
+    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1) != 0) {
       return (1);
     }
 
@@ -121,7 +121,7 @@ ReactorCvode::init(int reactor_type, int ncells)
     A = SUNSparseMatrix(
       neq_tot, neq_tot, (udata_g->NNZ) * udata_g->ncells, CSR_MAT,
       *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)A, "SUNDenseMatrix", 0)) {
+    if (utils::check_flag((void*)A, "SUNDenseMatrix", 0) != 0) {
       return (1);
     }
 
@@ -129,13 +129,13 @@ ReactorCvode::init(int reactor_type, int ncells)
     LS = cvode::SUNLinSol_sparse_custom(
       y, A, reactor_type, udata_g->ncells, (NUM_SPECIES + 1), udata_g->NNZ,
       *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_sparse_custom", 0)) {
+    if (utils::check_flag((void*)LS, "SUNLinSol_sparse_custom", 0) != 0) {
       return (1);
     }
 
     // Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
-    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1)) {
+    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1) != 0) {
       return (1);
     }
 
@@ -143,13 +143,13 @@ ReactorCvode::init(int reactor_type, int ncells)
     // Create the GMRES linear solver object
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_NONE, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0)) {
+    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0) != 0) {
       return (1);
     }
 
     // Set CVode linear solver to LS
-    flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
-    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1)) {
+    flag = CVodeSetLinearSolver(cvode_mem, LS, nullptr);
+    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1) != 0) {
       return (1);
     }
 
@@ -157,13 +157,13 @@ ReactorCvode::init(int reactor_type, int ncells)
     // Create the GMRES linear solver object
     LS = SUNLinSol_SPGMR(
       y, SUN_PREC_LEFT, 0, *amrex::sundials::The_Sundials_Context());
-    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0)) {
+    if (utils::check_flag((void*)LS, "SUNLinSol_SPGMR", 0) != 0) {
       return (1);
     }
 
     // Set CVode linear solver to LS
-    flag = CVodeSetLinearSolver(cvode_mem, LS, NULL);
-    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1)) {
+    flag = CVodeSetLinearSolver(cvode_mem, LS, nullptr);
+    if (utils::check_flag(&flag, "CVodeSetLinearSolver", 1) != 0) {
       return (1);
     }
 
@@ -176,7 +176,7 @@ ReactorCvode::init(int reactor_type, int ncells)
     if (udata_g->solve_type == cvode::denseDirect) {
       // Set the user-supplied Jacobian routine Jac
       flag = CVodeSetJacFn(cvode_mem, cvode::cJac);
-      if (utils::check_flag(&flag, "CVodeSetJacFn", 1)) {
+      if (utils::check_flag(&flag, "CVodeSetJacFn", 1) != 0) {
         return (1);
       }
     } else if (udata_g->solve_type == cvode::sparseDirect) {
@@ -193,7 +193,7 @@ ReactorCvode::init(int reactor_type, int ncells)
     } else if (udata_g->solve_type == cvode::customDirect) {
       // Set the user-supplied Jacobian routine Jac
       flag = CVodeSetJacFn(cvode_mem, cvode::cJac_sps);
-      if (utils::check_flag(&flag, "CVodeSetJacFn", 1)) {
+      if (utils::check_flag(&flag, "CVodeSetJacFn", 1) != 0) {
         return (1);
       }
     }
@@ -203,12 +203,12 @@ ReactorCvode::init(int reactor_type, int ncells)
   if (udata_g->precond_type == cvode::denseSimpleAJac) {
     // Set the JAcobian-times-vector function
     flag = CVodeSetJacTimes(cvode_mem, nullptr, nullptr);
-    if (utils::check_flag(&flag, "CVodeSetJacTimes", 1)) {
+    if (utils::check_flag(&flag, "CVodeSetJacTimes", 1) != 0) {
       return (1);
     }
     // Set the preconditioner plain dense solve and setup functions
     flag = CVodeSetPreconditioner(cvode_mem, cvode::Precond, cvode::PSolve);
-    if (utils::check_flag(&flag, "CVodeSetPreconditioner", 1)) {
+    if (utils::check_flag(&flag, "CVodeSetPreconditioner", 1) != 0) {
       return (1);
     }
   } else if (udata_g->precond_type == cvode::sparseSimpleAJac) {
@@ -229,41 +229,41 @@ ReactorCvode::init(int reactor_type, int ncells)
   } else if (udata_g->precond_type == cvode::customSimpleAJac) {
     // Set the JAcobian-times-vector function
     flag = CVodeSetJacTimes(cvode_mem, nullptr, nullptr);
-    if (utils::check_flag(&flag, "CVodeSetJacTimes", 1)) {
+    if (utils::check_flag(&flag, "CVodeSetJacTimes", 1) != 0) {
       return (1);
     }
     // Set the preconditioner to custom solve and setup functions
     flag = CVodeSetPreconditioner(
       cvode_mem, cvode::Precond_custom, cvode::PSolve_custom);
-    if (utils::check_flag(&flag, "CVodeSetPreconditioner", 1)) {
+    if (utils::check_flag(&flag, "CVodeSetPreconditioner", 1) != 0) {
       return (1);
     }
   }
 
   // CVODE runtime options
   flag = CVodeSetMaxNonlinIters(cvode_mem, 50); // Max newton iter.
-  if (utils::check_flag(&flag, "CVodeSetMaxNonlinIters", 1)) {
+  if (utils::check_flag(&flag, "CVodeSetMaxNonlinIters", 1) != 0) {
     return (1);
   }
   flag = CVodeSetMaxErrTestFails(cvode_mem, 100); // Max Err.test failure
-  if (utils::check_flag(&flag, "CVodeSetMaxErrTestFails", 1)) {
+  if (utils::check_flag(&flag, "CVodeSetMaxErrTestFails", 1) != 0) {
     return (1);
   }
   flag = CVodeSetErrHandlerFn(
     cvode_mem, cvode::cvodeErrHandler, nullptr); // Err. handler funct.
-  if (utils::check_flag(&flag, "CVodeSetErrHandlerFn", 1)) {
+  if (utils::check_flag(&flag, "CVodeSetErrHandlerFn", 1) != 0) {
     return (1);
   }
   flag = CVodeSetMaxNumSteps(cvode_mem, 10000); // Max substeps
-  if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1)) {
+  if (utils::check_flag(&flag, "CVodeSetMaxNumSteps", 1) != 0) {
     return (1);
   }
   flag = CVodeSetMaxOrd(cvode_mem, udata_g->maxOrder); // Max order
-  if (utils::check_flag(&flag, "CVodeSetMaxOrd", 1)) {
+  if (utils::check_flag(&flag, "CVodeSetMaxOrd", 1) != 0) {
     return (1);
   }
   flag = CVodeSetJacEvalFrequency(cvode_mem, 100); // Max Jac age
-  if (utils::check_flag(&flag, "CVodeSetJacEvalFrequency", 1)) {
+  if (utils::check_flag(&flag, "CVodeSetJacEvalFrequency", 1) != 0) {
     return (1);
   }
 
@@ -429,7 +429,8 @@ ReactorCvode::checkCvodeOptions() const
   // Print additionnal information
   if (precond_type == cvode::sparseSimpleAJac) {
     int nJdata;
-    const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
+    const int HP =
+      static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     // Simplified AJ precond data
 #ifdef AMREX_USE_GPU
 #if defined(AMREX_USE_CUDA)
@@ -464,7 +465,8 @@ ReactorCvode::checkCvodeOptions() const
 #ifndef AMREX_USE_GPU
   } else if (precond_type == cvode::customSimpleAJac) {
     int nJdata;
-    const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
+    const int HP =
+      static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     // Simplified AJ precond data
     SPARSITY_INFO_SYST_SIMPLIFIED(&nJdata, &HP);
     if (verbose > 0) {
@@ -480,7 +482,8 @@ ReactorCvode::checkCvodeOptions() const
 
   if (analytical_jacobian == 1) {
     int nJdata;
-    const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
+    const int HP =
+      static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
     int ncells = 1; // Print the pattern of the diagonal block. ncells will
                     // actually vary on GPU.
 #ifdef AMREX_USE_GPU
@@ -536,7 +539,8 @@ ReactorCvode::checkCvodeOptions() const
   if (solve_type == cvode::hackDumpSparsePattern) {
     // This is a diagnostic option -> dump sparsity pattern and abort.
     // Reactor type
-    const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
+    const int HP =
+      static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
 
     // CHEMISTRY JAC
     int nJdata = 0;
@@ -759,7 +763,8 @@ ReactorCvode::allocUserData(
 #endif
 
   // Pass options to udata
-  const int HP = m_reactor_type == ReactorTypes::h_reactor_type;
+  const int HP =
+    static_cast<int>(m_reactor_type == ReactorTypes::h_reactor_type);
   int nspec_tot = (NUM_SPECIES)*a_ncells;
   udata->reactor_type = m_reactor_type;
   udata->ncells = a_ncells;
@@ -1636,7 +1641,7 @@ ReactorCvode::react(
   // ONE STEP MODE FOR DEBUGGING
   // flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final,
   // CV_ONE_STEP);
-  if (utils::check_flag(&flag, "CVode", 1)) {
+  if (utils::check_flag(&flag, "CVode", 1) != 0) {
     return (1);
   }
   BL_PROFILE_VAR_STOP(AroundCVODE);

@@ -138,8 +138,8 @@ box_unflatten(
   amrex::Array4<amrex::Real> const& rhoE,
   amrex::Array4<amrex::Real> const& frcEExt,
   amrex::Array4<amrex::Real> const& FC_in,
-  amrex::Real* y_vect,
-  amrex::Real* vect_energy,
+  const amrex::Real* y_vect,
+  const amrex::Real* vect_energy,
   long int const& FCunt,
   amrex::Real dt)
 {
@@ -240,11 +240,11 @@ fKernelSpec(
   const int ncells,
   const double dt_save,
   const int reactor_type,
-  amrex::Real* yvec_d,
+  const amrex::Real* yvec_d,
   amrex::Real* ydot_d,
-  amrex::Real* rhoe_init,
-  amrex::Real* rhoesrc_ext,
-  amrex::Real* rYs)
+  const amrex::Real* rhoe_init,
+  const amrex::Real* rhoesrc_ext,
+  const amrex::Real* rYs)
 {
   amrex::Real rho_pt = 0.0;
   amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};

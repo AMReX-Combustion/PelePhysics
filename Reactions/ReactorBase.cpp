@@ -130,7 +130,7 @@ ReactorBase::set_sundials_solver_tols(
   } else {
     amrex::Abort("setSundialsSolverTols not implemented for this solver type");
   }
-  if (utils::check_flag(&flag, "SVtolerances", 1)) {
+  if (utils::check_flag(&flag, "SVtolerances", 1) != 0) {
     amrex::Abort("Problem in setSundialsSolverTols");
   }
 

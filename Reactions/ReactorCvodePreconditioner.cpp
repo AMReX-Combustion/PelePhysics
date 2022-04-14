@@ -221,7 +221,7 @@ Precond(
   amrex::Real mw[NUM_SPECIES] = {0.0};
   get_mw(mw);
 
-  if (jok) {
+  if (jok != 0) {
     // jok = SUNTRUE: Copy Jbd to P
     SUNDlsMat_denseCopy(Jbd[0][0], P[0][0], NUM_SPECIES + 1, NUM_SPECIES + 1);
     *jcurPtr = SUNFALSE;
@@ -242,7 +242,7 @@ Precond(
     amrex::Real activity[NUM_SPECIES] = {0.0};
     auto eos = pele::physics::PhysicsType::eos();
     eos.RTY2C(rho, temp, massfrac, activity);
-    int consP = reactor_type == ReactorTypes::h_reactor_type;
+    int consP = static_cast<int>(reactor_type == ReactorTypes::h_reactor_type);
     amrex::Real Jmat[(NUM_SPECIES + 1) * (NUM_SPECIES + 1)] = {0.0};
     DWDOT_SIMPLIFIED(Jmat, activity, &temp, &consP);
 
@@ -518,7 +518,7 @@ Precond_custom(
   get_mw(mw);
 
   // Check if Jac is stale
-  if (jok) {
+  if (jok != 0) {
     // jok = SUNTRUE: Copy Jbd to P
     *jcurPtr = SUNFALSE;
   } else {
@@ -547,7 +547,8 @@ Precond_custom(
       // Do we recompute Jac ?
       if (fabs(temp - temp_save_lcl) > 1.0) {
         // Formalism
-        int consP = reactor_type == ReactorTypes::h_reactor_type;
+        int consP =
+          static_cast<int>(reactor_type == ReactorTypes::h_reactor_type);
         DWDOT_SIMPLIFIED(JSPSmat[tid], activity, &temp, &consP);
 
         for (int i = 0; i < NUM_SPECIES; i++) {

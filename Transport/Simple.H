@@ -26,7 +26,7 @@ struct NonIdealChungCorrections<eos::SRK>
     const bool wtr_get_mu,
     const bool wtr_get_lam,
     const amrex::Real Temp,
-    amrex::Real* Xloc,
+    const amrex::Real* Xloc,
     const amrex::Real rholoc,
     amrex::Real& wbar,
     amrex::Real& mu,
@@ -132,9 +132,9 @@ struct BinaryDiff
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void operator()(
-    amrex::Real* Xloc,
-    amrex::Real* Yloc,
-    amrex::Real* logT,
+    const amrex::Real* Xloc,
+    const amrex::Real* Yloc,
+    const amrex::Real* logT,
     const amrex::Real /*rholoc*/,
     const amrex::Real Tloc,
     amrex::Real* Ddiag,
@@ -167,9 +167,9 @@ struct BinaryDiff<eos::SRK>
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   void operator()(
-    amrex::Real* Xloc,
-    amrex::Real* Yloc,
-    amrex::Real* logT,
+    const amrex::Real* Xloc,
+    const amrex::Real* Yloc,
+    const amrex::Real* logT,
     const amrex::Real rholoc,
     const amrex::Real Tloc,
     amrex::Real* Ddiag,
@@ -212,7 +212,7 @@ struct SimpleTransport
   AMREX_FORCE_INLINE
   void comp_pure_bulk(
     amrex::Real Tloc,
-    amrex::Real* muloc,
+    const amrex::Real* muloc,
     amrex::Real* xiloc,
     TransParm<EosType, transport_type> const* tparm)
   {
