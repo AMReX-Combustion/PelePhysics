@@ -32,6 +32,7 @@ Patm = 1013250.0
 sym = ""
 fsym = "_"
 
+
 class speciesDb(object):
     def __init__(self, mech_id, ordered_id, name, mwt):
         self.mech_id = mech_id
@@ -105,19 +106,17 @@ class CPickler(CMill):
 
         self.reacRemoveIDList = []
         try:
-            f = open('reac_forward_to_remove','r')
+            f = open("reac_forward_to_remove", "r")
             lines = f.readlines()
             f.close()
             for line in lines:
                 self.reacRemoveIDList.append(int(line))
         except FileNotFoundError:
-            print('No forward reaction to remove')
+            print("No forward reaction to remove")
 
         # List of intermediate helpers -- not optimal but can't be more clever rn
         self.list_of_intermediate_helpers = []
         return
-
-        
 
     def _setSpecies(self, mechanism):
         """For internal use"""
@@ -277,7 +276,6 @@ class CPickler(CMill):
                 mechanism
             )  # Fill "is_needed" dict (which species needs that particular species)
 
-
         # MECH CORE
         # This is for file mechanism.cpp
         self._write("#ifndef MECHANISM_CPP")
@@ -299,7 +297,6 @@ class CPickler(CMill):
         self._write("#endif")
         # END file mechanism.cpp
 
-
         # MECH HEADER
         self._write("#ifndef MECHANISM_H")
         self._write("#define MECHANISM_H")
@@ -308,7 +305,7 @@ class CPickler(CMill):
         # routines. We need to conserve the thermo namespace and all the A/beta/Eq/TB etc machinery for when
         # there are some QSS involved. Please do not delete :)
         #        -- 01/11/22 seems like we do not need CPU decl anymore
-        #if self.nQSSspecies > 0:
+        # if self.nQSSspecies > 0:
         #    self._chem_file_CPUonly_decl(mechanism)
         self._chem_file_decl(mechanism)
         # Basic info
@@ -380,9 +377,9 @@ class CPickler(CMill):
         # routines. We need to conserve the thermo namespace and all the A/beta/Eq/TB etc machinery for when
         # there are some QSS involved. Please do not delete :)
         if self.nQSSspecies > 0:
-            #self._write(self.line(" PURE CPU stuff "))
-            #self._write("#ifndef AMREX_USE_GPU")
-            #self._mechanism_statics(mechanism)
+            # self._write(self.line(" PURE CPU stuff "))
+            # self._write("#ifndef AMREX_USE_GPU")
+            # self._mechanism_statics(mechanism)
             print("\n\n\n\n---------------------------------")
             print("+++++++++GROUPS++++++++++++++++++")
             print("---------------------------------")
@@ -404,23 +401,23 @@ class CPickler(CMill):
                 mechanism
             )  # Print those expr in the mechanism.cpp
             # NOTE: this productionRate routine is similar to the GPU one. This one uses the thermo namespace
-            #self._productionRate(mechanism)
+            # self._productionRate(mechanism)
             # Info dep on ProgressRate function
             # NOTE: ProgressRate may be useful for GPU appli, but will need rewritting
-            #self._progressRate(mechanism)
+            # self._progressRate(mechanism)
             # self._progressRateFR(mechanism)
             # self._ckkfkr(mechanism)
-            #self._ckqc(mechanism)
-            #self._ckqyp(mechanism)
-            #self._ckqxp(mechanism)
-            #self._ckqyr(mechanism)
-            #self._ckqxr(mechanism)
-            #self._ajac(mechanism)
+            # self._ckqc(mechanism)
+            # self._ckqyp(mechanism)
+            # self._ckqxp(mechanism)
+            # self._ckqyr(mechanism)
+            # self._ckqxr(mechanism)
+            # self._ajac(mechanism)
             # Basic info
             # self._ckinu(mechanism)
-            #self._initialization(mechanism)
-            #self._write("#endif")
-            #self._write()
+            # self._initialization(mechanism)
+            # self._write("#endif")
+            # self._write()
 
         # prod rate related
         self._productionRate_GPU(mechanism)  # GPU version
@@ -2333,7 +2330,6 @@ class CPickler(CMill):
 
         self._write()
 
-
         # main function
         self._write(
             "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)"
@@ -2399,14 +2395,22 @@ class CPickler(CMill):
                 self._write(
                     "amrex::Real sc_qss[%d];" % (max(1, self.nQSSspecies))
                 )
-                self._write("amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];" % (self.nqssReactions, self.nqssReactions, self.nqssReactions ) )
+                self._write(
+                    "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+                    % (
+                        self.nqssReactions,
+                        self.nqssReactions,
+                        self.nqssReactions,
+                    )
+                )
                 self._write("// Fill sc_qss here")
                 self._write("comp_k_f_qss(tc, invT, kf_qss);")
-                #self._write("comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
-                self._write("comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);")
+                # self._write("comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
+                self._write(
+                    "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);"
+                )
                 self._write("comp_sc_qss(sc_qss, qf_qss, qr_qss);")
                 self._write()
-
 
             # Loop like you're going through them in the mech.Linp order
             for i in range(nReactions):
@@ -5488,7 +5492,7 @@ class CPickler(CMill):
         self._write("wdot[k] = 0.0;")
         self._outdent()
         self._write("}")
- 
+
         self._write()
 
         self._write(
@@ -5538,9 +5542,14 @@ class CPickler(CMill):
         if self.nQSSspecies > 0:
             self._write("/* Fill sc_qss here*/")
             self._write("amrex::Real sc_qss[%d];" % self.nQSSspecies)
-            self._write("amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];" % (self.nqssReactions, self.nqssReactions, self.nqssReactions ) )
+            self._write(
+                "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+                % (self.nqssReactions, self.nqssReactions, self.nqssReactions)
+            )
             self._write("comp_k_f_qss(tc, invT, kf_qss);")
-            self._write("comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);")
+            self._write(
+                "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);"
+            )
             self._write("comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             self._write()
 
@@ -5668,7 +5677,7 @@ class CPickler(CMill):
         return
 
     def _ajac_reaction_precond(self, mechanism, reaction, rcase):
- 
+
         removeForward = self.removeForward(reaction)
 
         if rcase == 1:  # pressure-dependent reaction
@@ -5792,9 +5801,7 @@ class CPickler(CMill):
                 "dlnkfdT = %.15g * invT + %.15g *  (%.15g)  * invT2;"
                 % (beta, (aeuc / Rc / kelvin), E)
             )
-            self._write(
-                "//dlnkfdT = 0.0;"
-            )
+            self._write("//dlnkfdT = 0.0;")
         else:
             self._write(
                 "dlnkfdT = %.15g * invT + %.15g *  (%.15g)  * invT2;"
@@ -5888,7 +5895,6 @@ class CPickler(CMill):
                 self._write("dlogFdlogPr = 0.0;")
                 self._write("dlogFdT = 0.0;")
 
-        
         # reverse
         if not reaction.reversible:
             self._write("/* rate of progress */")
@@ -5897,14 +5903,14 @@ class CPickler(CMill):
                     self._write("// Remove forward reaction")
                     self._write("//q = k_f*phi_f;")
                     self._write("q = 0.0;")
-                else: 
+                else:
                     self._write("q = k_f*phi_f;")
             else:
                 if removeForward:
                     self._write("// Remove forward reaction")
                     self._write("//q_nocor = k_f*phi_f;")
                     self._write("q_nocor = 0.0;")
-                else: 
+                else:
                     self._write("q_nocor = k_f*phi_f;")
                 if isPD:
                     self._write("Corr = fPr * F;")
@@ -5919,9 +5925,7 @@ class CPickler(CMill):
                     self._write(
                         "//dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % Corr_s
                     )
-                    self._write(
-                        "dqdT = dlnCorrdT*q;"
-                    )
+                    self._write("dqdT = dlnCorrdT*q;")
                 else:
                     self._write(
                         "dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % Corr_s
@@ -6020,8 +6024,7 @@ class CPickler(CMill):
                         % Corr_s
                     )
                     self._write(
-                        "dqdT = %s( - dkrdT*phi_r) + dlnCorrdT*q;"
-                        % Corr_s
+                        "dqdT = %s( - dkrdT*phi_r) + dlnCorrdT*q;" % Corr_s
                     )
                 else:
                     self._write(
@@ -6032,11 +6035,10 @@ class CPickler(CMill):
                 if removeForward:
                     self._write("// Remove forward reaction")
                     self._write(
-                        "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % Corr_s
+                        "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);"
+                        % Corr_s
                     )
-                    self._write(
-                        "dqdT = %s( - dkrdT*phi_r);" % Corr_s
-                    )
+                    self._write("dqdT = %s( - dkrdT*phi_r);" % Corr_s)
                 else:
                     self._write(
                         "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % Corr_s
@@ -6340,7 +6342,7 @@ class CPickler(CMill):
         self._write("c[k] = 1.e6 * sc[k];")
         self._outdent()
         self._write("}")
-         
+
         self._write()
         self._write("aJacobian_precond(J, c, *Tp, *HP);")
 
@@ -6374,17 +6376,12 @@ class CPickler(CMill):
         )
         self._write("{")
         self._indent()
-        
 
         self._write()
         # Analytical jacobian not ready with QSS
-        if self.nQSSspecies>0:
-            self._write(
-                "// Do not use Analytical Jacobian with QSSA"
-            )
-            self._write(
-                "amrex::Abort();"
-            )
+        if self.nQSSspecies > 0:
+            self._write("// Do not use Analytical Jacobian with QSSA")
+            self._write("amrex::Abort();")
             self._write()
 
         self._write("for (int i=0; i<%d; i++) {" % (self.nSpecies + 1) ** 2)
@@ -6412,11 +6409,13 @@ class CPickler(CMill):
 
         self._write()
 
-
         if self.nQSSspecies > 0:
             self._write("/* Fill sc_qss here*/")
             self._write("amrex::Real sc_qss[%d];" % self.nQSSspecies)
-            self._write("amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];" % (self.nqssReactions, self.nqssReactions, self.nqssReactions ) )
+            self._write(
+                "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+                % (self.nqssReactions, self.nqssReactions, self.nqssReactions)
+            )
             self._write("comp_k_f_qss(tc, invT, kf_qss);")
             self._write("comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             self._write()
@@ -6462,7 +6461,9 @@ class CPickler(CMill):
         if self.nQSSspecies > 0:
             self._write()
             self._write("/* Fill qss coeff*/")
-            self._write("comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);")
+            self._write(
+                "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);"
+            )
 
         self._write()
 
@@ -6716,9 +6717,7 @@ class CPickler(CMill):
                 "dlnkfdT = %.15g * invT + %.15g *  %.15g  * invT2;"
                 % (beta, (aeuc / Rc / kelvin), E)
             )
-            self._write(
-                "//dlnkfdT = 0.0;"
-            )
+            self._write("//dlnkfdT = 0.0;")
         else:
             self._write(
                 "dlnkfdT = %.15g * invT + %.15g *  %.15g  * invT2;"
@@ -6829,7 +6828,7 @@ class CPickler(CMill):
                     self._write("q_nocor = 0;")
                 else:
                     self._write("q_nocor = k_f*phi_f;")
-                    
+
                 if isPD:
                     self._write("Corr = fPr * F;")
                     self._write("q = Corr * q_nocor;")
@@ -6843,9 +6842,7 @@ class CPickler(CMill):
                     self._write(
                         "//dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % Corr_s
                     )
-                    self._write(
-                        "dqdT =  dlnCorrdT*q;"
-                    )
+                    self._write("dqdT =  dlnCorrdT*q;")
                 else:
                     self._write(
                         "dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % Corr_s
@@ -6853,10 +6850,10 @@ class CPickler(CMill):
             else:
                 if removeForward:
                     self._write("// Remove forward reaction")
-                    self._write("//dqdT = %sdlnkfdT*k_f*phi_f;" % Corr_s) 
-                    self._write("dqdT = 0;") 
+                    self._write("//dqdT = %sdlnkfdT*k_f*phi_f;" % Corr_s)
+                    self._write("dqdT = 0;")
                 else:
-                    self._write("dqdT = %sdlnkfdT*k_f*phi_f;" % Corr_s) 
+                    self._write("dqdT = %sdlnkfdT*k_f*phi_f;" % Corr_s)
         else:
             self._write("/* reverse */")
             self._write(
@@ -6940,8 +6937,7 @@ class CPickler(CMill):
                         % Corr_s
                     )
                     self._write(
-                        "dqdT = %s(- dkrdT*phi_r) + dlnCorrdT*q;"
-                        % Corr_s
+                        "dqdT = %s(- dkrdT*phi_r) + dlnCorrdT*q;" % Corr_s
                     )
                 else:
                     self._write(
@@ -6952,11 +6948,10 @@ class CPickler(CMill):
                 if removeForward:
                     self._write("// Remove forward reaction")
                     self._write(
-                        "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % Corr_s
+                        "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);"
+                        % Corr_s
                     )
-                    self._write(
-                        "dqdT = %s( - dkrdT*phi_r);" % Corr_s
-                    )
+                    self._write("dqdT = %s( - dkrdT*phi_r);" % Corr_s)
                 else:
                     self._write(
                         "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % Corr_s
@@ -7371,7 +7366,7 @@ class CPickler(CMill):
         for reaction in mechanism.reaction():
             self._write(
                 "#k_f_s = prefactor_units * fwd_A * exp(fwd_beta * tc - activation_units * fwd_Ea * invT"
-                )
+            )
             A, beta, E = reaction.arrhenius
             aeuc = self._activationEnergyUnits(reaction.units["activation"])
             if len(reaction.ford) > 0:
@@ -7586,8 +7581,8 @@ class CPickler(CMill):
         return
 
     def _vforwardRate(self, mechanism, reaction):
-        
-        removeForward = self.removeForward(reaction)       
+
+        removeForward = self.removeForward(reaction)
 
         lt = reaction.lt
         if lt:
@@ -7636,11 +7631,11 @@ class CPickler(CMill):
         self._write(
             "redP = alpha / k_f * %.15g * %.15g * exp(%.15g * tc[i] - %.15g * %.15g * invT[i]);"
             % (
-                properties['phase_units'],
-                properties['low_A'],
-                properties['low_beta'],
-                properties['activation_units'],
-                properties['low_Ea'],
+                properties["phase_units"],
+                properties["low_A"],
+                properties["low_beta"],
+                properties["activation_units"],
+                properties["low_Ea"],
             )
         )
         self._write("F = redP / (1 + redP);")
@@ -7650,15 +7645,19 @@ class CPickler(CMill):
             self._write("X = 1.0 / (1.0 + logPred*logPred);")
             self._write(
                 "F_sri = exp(X * log(%.15g * exp(-%.15g/T[i])"
-                % (properties['sri_a'], properties['sri_b'])
+                % (properties["sri_a"], properties["sri_b"])
             )
             self._write(
                 "   +  (%.15g > 1.e-100 ? exp(T[i]/%.15g) : 0.) )"
-                % (properties['sri_c'], properties['sri_c'])
+                % (properties["sri_c"], properties["sri_c"])
             )
             self._write(
                 "   *  (%d > 3 ? %.15g*exp(%.15g*tc[i]) : 1.);"
-                % (properties['sri_len'], properties['sri_d'], properties['sri_e'])
+                % (
+                    properties["sri_len"],
+                    properties["sri_d"],
+                    properties["sri_e"],
+                )
             )
             self._write("F *= F_sri;")
 
@@ -7668,15 +7667,23 @@ class CPickler(CMill):
             self._write("logFcent = log10(")
             self._write(
                 "    (fabs(%.15g) > 1.e-100 ? (1.-%.15g)*exp(-T[i]/%.15g) : 0.) "
-                % (properties['troe_Tsss'], properties['troe_a'], properties['troe_Tsss'])
+                % (
+                    properties["troe_Tsss"],
+                    properties["troe_a"],
+                    properties["troe_Tsss"],
+                )
             )
             self._write(
                 "    + (fabs(%.15g) > 1.e-100 ? %.15g * exp(-T[i]/%.15g) : 0.) "
-                % (properties['troe_Ts'], properties['troe_a'], properties['troe_Ts'])
+                % (
+                    properties["troe_Ts"],
+                    properties["troe_a"],
+                    properties["troe_Ts"],
+                )
             )
             self._write(
                 "    + (%d == 4 ? exp(-%.15g * invT[i]) : 0.) );"
-                % (properties['troe_len'], properties['troe_Tss'])
+                % (properties["troe_len"], properties["troe_Tss"])
             )
 
             d = 0.14
@@ -8038,15 +8045,20 @@ class CPickler(CMill):
             idx = reaction.orig_id - 1
             properties = self.getAllReactionProperties(reaction)
             self._write(
-                self.line(
-                    "reaction %d: %s" % (idx, reaction.equation())
-                )
+                self.line("reaction %d: %s" % (idx, reaction.equation()))
             )
 
-            self._write("k_f[%d] = %.15g * %.15g" % (i, properties['prefactor_units'], properties['fwd_A']))
             self._write(
-                "            * exp(%.15g * tc[0] - %.15g * %.15g * invT);" %
-                (properties['fwd_beta'], properties['activation_units'], properties['fwd_Ea'])
+                "k_f[%d] = %.15g * %.15g"
+                % (i, properties["prefactor_units"], properties["fwd_A"])
+            )
+            self._write(
+                "            * exp(%.15g * tc[0] - %.15g * %.15g * invT);"
+                % (
+                    properties["fwd_beta"],
+                    properties["activation_units"],
+                    properties["fwd_Ea"],
+                )
             )
         self._write("return;")
         self._outdent()
@@ -8133,20 +8145,27 @@ class CPickler(CMill):
                 )
             )
             if len(reaction.ford) > 0:
-                if removeForward: 
+                if removeForward:
                     self._write("// Remove forward reaction")
                     self._write(
                         "//qf[%d] = %s;"
-                        % (i, self._QSSsortedPhaseSpace(mechanism, reaction.ford))
+                        % (
+                            i,
+                            self._QSSsortedPhaseSpace(
+                                mechanism, reaction.ford
+                            ),
+                        )
                     )
-                    self._write(
-                        "qf[%d] = 0.0;"
-                        % (i)
-                    )
+                    self._write("qf[%d] = 0.0;" % (i))
                 else:
                     self._write(
                         "qf[%d] = %s;"
-                        % (i, self._QSSsortedPhaseSpace(mechanism, reaction.ford))
+                        % (
+                            i,
+                            self._QSSsortedPhaseSpace(
+                                mechanism, reaction.ford
+                            ),
+                        )
                     )
             else:
                 if removeForward:
@@ -8160,12 +8179,7 @@ class CPickler(CMill):
                             ),
                         )
                     )
-                    self._write(
-                        "qf[%d] = 0.0;"
-                        % (
-                            i
-                        )
-                    )
+                    self._write("qf[%d] = 0.0;" % (i))
                 else:
                     self._write(
                         "qf[%d] = %s;"
@@ -8246,7 +8260,7 @@ class CPickler(CMill):
                 self._indent()
 
             self._write(
-            "amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;"
+                "amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;"
             )
             self._write("{")
             self._indent()
@@ -8255,39 +8269,40 @@ class CPickler(CMill):
                 properties = self.getAllReactionProperties(reaction)
                 self._write(
                     "redP = alpha[%d] / k_f_save[%d] * %.15g * %.15g * exp(%.15g * tc[0] - %.15g * %.15g *invT);"
-                    % ((i-itroe[0]), 
-                       i,
-                       properties['phase_units'], 
-                       properties['low_A'], 
-                       properties['low_beta'], 
-                       properties['activation_units'],    
-                       properties['low_Ea'],    
-                      )
+                    % (
+                        (i - itroe[0]),
+                        i,
+                        properties["phase_units"],
+                        properties["low_A"],
+                        properties["low_beta"],
+                        properties["activation_units"],
+                        properties["low_Ea"],
+                    )
                 )
                 self._write("F = redP / (1.0 + redP);")
                 self._write("logPred = log10(redP);")
                 self._write("logFcent = log10(")
                 self._write(
-                    "    (fabs(%.15g) > 1.e-100 ? (1.-%.15g)*exp(-T/%.15g) : 0.) " %
-                    (
-                    properties['troe_Tsss'],
-                    properties['troe_a'],
-                    properties['troe_Tsss'],
+                    "    (fabs(%.15g) > 1.e-100 ? (1.-%.15g)*exp(-T/%.15g) : 0.) "
+                    % (
+                        properties["troe_Tsss"],
+                        properties["troe_a"],
+                        properties["troe_Tsss"],
                     )
                 )
                 self._write(
-                    "    + (fabs(%.15g) > 1.e-100 ? %.15g * exp(-T/%.15g) : 0.) " %
-                    (
-                    properties['troe_Ts'],
-                    properties['troe_a'],
-                    properties['troe_Ts'],
+                    "    + (fabs(%.15g) > 1.e-100 ? %.15g * exp(-T/%.15g) : 0.) "
+                    % (
+                        properties["troe_Ts"],
+                        properties["troe_a"],
+                        properties["troe_Ts"],
                     )
                 )
                 self._write(
-                    "    + (%.d == 4 ? exp(-%.15g * invT) : 0.) );" %
-                    (
-                    properties['troe_len'],
-                    properties['troe_Tss'],
+                    "    + (%.d == 4 ? exp(-%.15g * invT) : 0.) );"
+                    % (
+                        properties["troe_len"],
+                        properties["troe_Tss"],
                     )
                 )
                 self._write("troe_c = -.4 - .67 * logFcent;")
@@ -8333,8 +8348,7 @@ class CPickler(CMill):
                 # self._write('#endif')
                 self._indent()
                 self._indent()
-           
-       
+
             self._write("{")
             self._indent()
             for i in range(isri[0], isri[1]):
@@ -8343,43 +8357,41 @@ class CPickler(CMill):
                 self._write(
                     "redP = alpha[%d] / k_f_save[%d] * %.15g * %.15g * exp(%.15g * tc[0] - %.15g * %.15g *invT);"
                     % (
-                       (i - isri[0]), 
-                       i, 
-                       properties['phase_units'], 
-                       properties['low_A'],
-                       properties['low_beta'],
-                       properties['activation_units'],
-                       properties['low_Ea'],
-                      )   
+                        (i - isri[0]),
+                        i,
+                        properties["phase_units"],
+                        properties["low_A"],
+                        properties["low_beta"],
+                        properties["activation_units"],
+                        properties["low_Ea"],
+                    )
                 )
                 self._write("F = redP / (1.0 + redP);")
                 self._write("logPred = log10(redP);")
                 self._write("X = 1.0 / (1.0 + logPred*logPred);")
-                self._write("F_sri = exp(X * log(%.15g * exp(-%.15g*invT)" 
-                            % (
-                                 properties['sri_a'],
-                                 properties['sri_b'],
-                              )
-                           )
-                self._write("   +  (%.15g > 1.e-100 ? exp(T/%.15g) : 0.0) )"
-                            % (
-                                 properties['sri_c'],
-                                 properties['sri_c'],
-                              )
-                           )
+                self._write(
+                    "F_sri = exp(X * log(%.15g * exp(-%.15g*invT)"
+                    % (
+                        properties["sri_a"],
+                        properties["sri_b"],
+                    )
+                )
+                self._write(
+                    "   +  (%.15g > 1.e-100 ? exp(T/%.15g) : 0.0) )"
+                    % (
+                        properties["sri_c"],
+                        properties["sri_c"],
+                    )
+                )
                 self._write(
                     "   *  (%d > 3 ? %.15g*exp(%.15g*tc[0]) : 1.0);"
-                            % (
-                                 properties['sri_len'],
-                                 properties['sri_d'],
-                                 properties['sri_e'],
-                              )
-                           )
-                self._write("Corr[%d] = F * F_sri;"
-                            % (
-                                 i
-                              )
-                           )
+                    % (
+                        properties["sri_len"],
+                        properties["sri_d"],
+                        properties["sri_e"],
+                    )
+                )
+                self._write("Corr[%d] = F * F_sri;" % (i))
             self._outdent()
             self._write("}")
             self._outdent()
@@ -8412,11 +8424,11 @@ class CPickler(CMill):
                     "amrex::Real redP = alpha / k_f_save[%d] * %.15g * %.15g * exp(%.15g * tc[0] - %.15g * %.15g * invT);"
                     % (
                         ilindemann[0],
-                        properties['phase_units'],
-                        properties['low_A'],
-                        properties['low_beta'],
-                        properties['activation_units'],
-                        properties['low_Ea'],
+                        properties["phase_units"],
+                        properties["low_A"],
+                        properties["low_beta"],
+                        properties["activation_units"],
+                        properties["low_Ea"],
                     )
                 )
                 self._write("Corr[%d] = redP / (1. + redP);" % ilindemann[0])
@@ -8427,25 +8439,23 @@ class CPickler(CMill):
 
                 self._write("{")
                 self._indent()
-                self._write(
-                    "amrex::Real redP;"
-                )
+                self._write("amrex::Real redP;")
                 for i in range(ilindemann[0], ilindemann[1]):
                     reaction = mechanism.reaction(id=i)
                     properties = self.getAllReactionProperties(reaction)
                     self._write(
                         "redP = alpha[%d] / k_f_save[%d] * %.15g * %.15g * exp(%.15g * tc[0] - %.15g * %.15g * invT);"
                         % (
-                            (i-ilindemann[0]),
+                            (i - ilindemann[0]),
                             i,
-                            properties['phase_units'],
-                            properties['low_A'],
-                            properties['low_beta'],
-                            properties['activation_units'],
-                            properties['low_Ea'],
-                          )
+                            properties["phase_units"],
+                            properties["low_A"],
+                            properties["low_beta"],
+                            properties["activation_units"],
+                            properties["low_Ea"],
+                        )
                     )
-                    self._write("Corr[%d] = redP / (1. + redP);" % (i) )
+                    self._write("Corr[%d] = redP / (1. + redP);" % (i))
             self._outdent()
             self._write("}")
 
@@ -8471,7 +8481,7 @@ class CPickler(CMill):
         self._write("for (int i=0; i<%d; i++)" % nclassd)
         self._write("{")
         self._indent()
-        
+
         self._write("qf[i] *= Corr[i] * k_f_save[i];")
         self._write("qr[i] *= Corr[i] * k_f_save[i] / Kc_save[i];")
         self._outdent()
@@ -8535,7 +8545,6 @@ class CPickler(CMill):
                 # compute the rates
                 self._forwardRate_with_QSS(mechanism, reaction)
                 self._reverseRate(mechanism, reaction)
-
 
                 # store the progress rate
                 if removeForward:
@@ -8630,7 +8639,7 @@ class CPickler(CMill):
         return " + ".join(alpha).replace("+ -", "- ")
 
     def _forwardRate(self, mechanism, reaction):
- 
+
         removeForward = self.removeForward(reaction)
 
         lt = reaction.lt
@@ -8679,14 +8688,14 @@ class CPickler(CMill):
         self._write(
             "redP = alpha / k_f * %.15g * %.15g * exp(%.15g * tc[0] - %.15g * %.15g *invT);"
             % (
-                properties['phase_units'],
-                properties['low_A'],
-                properties['low_beta'],
-                properties['activation_units'],
-                properties['low_Ea'],
+                properties["phase_units"],
+                properties["low_A"],
+                properties["low_beta"],
+                properties["activation_units"],
+                properties["low_Ea"],
             )
         )
-        
+
         self._write("F = redP / (1 + redP);")
 
         if sri:
@@ -8694,15 +8703,19 @@ class CPickler(CMill):
             self._write("X = 1.0 / (1.0 + logPred*logPred);")
             self._write(
                 "F_sri = exp(X * log(%.15g * exp(-%.15g/T)"
-                % (properties['sri_a'], properties['sri_b'])
+                % (properties["sri_a"], properties["sri_b"])
             )
             self._write(
                 "   +  (%.15g > 1.e-100 ? exp(T/%.15g) : 0.) )"
-                % (properties['sri_c'], properties['sri_c'])
+                % (properties["sri_c"], properties["sri_c"])
             )
             self._write(
                 "   *  (%.d > 3 ? %.15g*exp(%.15g*tc[0]) : 1);"
-                % (properties['sri_len'], properties['sri_d'], properties['sri_e'])
+                % (
+                    properties["sri_len"],
+                    properties["sri_d"],
+                    properties["sri_e"],
+                )
             )
             self._write("F *= F_sri;")
 
@@ -8712,15 +8725,23 @@ class CPickler(CMill):
             self._write("logFcent = log10(")
             self._write(
                 "    (fabs(%.15g) > 1.e-100 ? (1-%.15g)*exp(-T/%.15g) : 0) "
-                % (properties['troe_Tsss'], properties['troe_a'], properties['troe_Tsss'])
+                % (
+                    properties["troe_Tsss"],
+                    properties["troe_a"],
+                    properties["troe_Tsss"],
+                )
             )
             self._write(
                 "    + (fabs(%.15g) > 1.e-100 ? %.15g * exp(-T/%.15g) : 0) "
-                % (properties['troe_Ts'], properties['troe_a'], properties['troe_Ts'])
+                % (
+                    properties["troe_Ts"],
+                    properties["troe_a"],
+                    properties["troe_Ts"],
+                )
             )
             self._write(
                 "    + (%d == 4 ? exp(-%.15g * invT) : 0) );"
-                % (properties['troe_len'], properties['troe_Tss'])
+                % (properties["troe_len"], properties["troe_Tss"])
             )
             self._write("troe_c = -.4 - .67 * logFcent;")
             self._write("troe_n = .75 - 1.27 * logFcent;")
@@ -8739,7 +8760,7 @@ class CPickler(CMill):
             self._write("q_f = phi_f * k_f;")
 
     def _forwardRate_with_QSS(self, mechanism, reaction):
-       
+
         removeForward = self.removeForward(reaction)
 
         lt = reaction.lt
@@ -8789,11 +8810,11 @@ class CPickler(CMill):
         self._write(
             "redP = alpha / k_f * %.15g * %.15g * exp(%.15g * tc[0] - %.15g * %.15g *invT);"
             % (
-                properties['phase_units'],
-                properties['low_A'],
-                properties['low_beta'],
-                properties['activation_units'],
-                properties['low_Ea'],
+                properties["phase_units"],
+                properties["low_A"],
+                properties["low_beta"],
+                properties["activation_units"],
+                properties["low_Ea"],
             )
         )
         self._write("F = redP / (1 + redP);")
@@ -8803,15 +8824,19 @@ class CPickler(CMill):
             self._write("X = 1.0 / (1.0 + logPred*logPred);")
             self._write(
                 "F_sri = exp(X * log(%.15g * exp(-%.15g/T)"
-                % (properties['sri_a'],properties['sri_b'])
+                % (properties["sri_a"], properties["sri_b"])
             )
             self._write(
                 "   +  (%.15g > 1.e-100 ? exp(T/%.15g) : 0.) )"
-                % (properties['sri_c'],properties['sri_c'])
+                % (properties["sri_c"], properties["sri_c"])
             )
             self._write(
                 "   *  (%d > 3 ? %.15g*exp(%.15g*tc[0]) : 1);"
-                % (properties['sri_len'], properties['sri_d'], properties['sri_e'])
+                % (
+                    properties["sri_len"],
+                    properties["sri_d"],
+                    properties["sri_e"],
+                )
             )
             self._write("F *= F_sri;")
 
@@ -8821,15 +8846,23 @@ class CPickler(CMill):
             self._write("logFcent = log10(")
             self._write(
                 "    (fabs(%.15g) > 1.e-100 ? (1-%.15g)*exp(-T/%.15g) : 0) "
-                % (properties['troe_Tsss'],properties['troe_a'], properties['troe_Tsss'])
+                % (
+                    properties["troe_Tsss"],
+                    properties["troe_a"],
+                    properties["troe_Tsss"],
+                )
             )
             self._write(
                 "    + (fabs(%.15g) > 1.e-100 ? %.15g * exp(-T/%.15g) : 0) "
-                % (properties['troe_Ts'],properties['troe_a'],properties['troe_Ts'])
+                % (
+                    properties["troe_Ts"],
+                    properties["troe_a"],
+                    properties["troe_Ts"],
+                )
             )
             self._write(
                 "    + (%d == 4 ? exp(-%.15g * invT) : 0) );"
-                % (properties['troe_len'],properties['troe_Tss'])
+                % (properties["troe_len"], properties["troe_Tss"])
             )
             self._write("troe_c = -.4 - .67 * logFcent;")
             self._write("troe_n = .75 - 1.27 * logFcent;")
@@ -8880,7 +8913,7 @@ class CPickler(CMill):
                     "k_r = %.15g * exp(%.15g * tc[0] - (%.15g) * invT);"
                     % (
                         prefactor_units_rev[idx] * rev_A[idx],
-                        properties['rev_beta'],
+                        properties["rev_beta"],
                         activation_units_rev[idx] * rev_Ea[idx],
                     )
                 )
@@ -9007,7 +9040,7 @@ class CPickler(CMill):
             if self.nQSSspecies > 0:
                 self._write()
                 self._write("comp_k_f_qss(tc,invT,k_f_save_qss);")
-                #self._write("comp_Kc_qss(tc,invT,Kc_save_qss);")
+                # self._write("comp_Kc_qss(tc,invT,Kc_save_qss);")
             self._outdent()
             self._write("}")
 
@@ -9016,7 +9049,7 @@ class CPickler(CMill):
             if self.nQSSspecies > 0:
                 self._write("/* Fill sc_qss here*/")
                 self._write("comp_sc_qss(sc, sc_qss, tc, invT);")
-                    
+
             self._write("comp_qfqr_cpu(q_f, q_r, sc, sc_qss, tc, invT);")
             self._write()
 
@@ -9691,37 +9724,45 @@ class CPickler(CMill):
         properties = self.getAllReactionProperties(reaction)
 
         # OLD
-        #self._write(
+        # self._write(
         #    "k_f = prefactor_units[%d] * fwd_A[%d]"
         #    % (reaction.id - 1, reaction.id - 1)
-        #)
+        # )
         self._write(
             "k_f = %.15g * %.15g"
-            % (properties['prefactor_units'], properties['fwd_A'])
+            % (properties["prefactor_units"], properties["fwd_A"])
         )
         # OLD
-        #self._write(
+        # self._write(
         #    "            * exp(fwd_beta[%d] * tc[0] - activation_units[%d] * fwd_Ea[%d] * invT);"
         #    % (reaction.id - 1, reaction.id - 1, reaction.id - 1)
-        #)
+        # )
         self._write(
             "            * exp(%.15g * tc[0] - %.15g * %.15g * invT);"
-            % (properties['fwd_beta'], properties['activation_units'], properties['fwd_Ea'])
+            % (
+                properties["fwd_beta"],
+                properties["activation_units"],
+                properties["fwd_Ea"],
+            )
         )
         # OLD
-        #self._write(
+        # self._write(
         #    "dlnkfdT = fwd_beta[%d] * invT + activation_units[%d] * fwd_Ea[%d] * invT2;"
         #    % (reaction.id - 1, reaction.id - 1, reaction.id - 1)
-        #)
+        # )
         self._write(
             "dlnkfdT = %.15g * invT + %.15g * %.15g * invT2;"
-            % (properties['fwd_beta'], properties['activation_units'], properties['fwd_Ea'])
+            % (
+                properties["fwd_beta"],
+                properties["activation_units"],
+                properties["fwd_Ea"],
+            )
         )
 
         if isPD:
             self._write("/* pressure-fall-off */")
             # OLD
-            #self._write(
+            # self._write(
             #    "k_0 = low_A[%d] * exp(low_beta[%d] * tc[0] - activation_units[%d] * low_Ea[%d] * invT);"
             #    % (
             #        reaction.id - 1,
@@ -9729,32 +9770,36 @@ class CPickler(CMill):
             #        reaction.id - 1,
             #        reaction.id - 1,
             #    )
-            #)
+            # )
             self._write(
                 "k_0 = %.15g * exp(%.15g * tc[0] - %.15g * %.15g * invT);"
                 % (
-                    properties['low_A'],
-                    properties['low_beta'],
-                    properties['activation_units'],
-                    properties['low_Ea']
+                    properties["low_A"],
+                    properties["low_beta"],
+                    properties["activation_units"],
+                    properties["low_Ea"],
                 )
             )
             # OLD
-            #self._write(
+            # self._write(
             #    "Pr = phase_units[%d] * alpha / k_f * k_0;" % (reaction.id - 1)
-            #)
+            # )
             self._write(
-                "Pr = %.15g * alpha / k_f * k_0;" % (properties['phase_units'])
+                "Pr = %.15g * alpha / k_f * k_0;" % (properties["phase_units"])
             )
             self._write("fPr = Pr / (1.0+Pr);")
             # OLD
-            #self._write(
+            # self._write(
             #    "dlnk0dT = low_beta[%d] * invT + activation_units[%d] * low_Ea[%d] * invT2;"
             #    % (reaction.id - 1, reaction.id - 1, reaction.id - 1)
-            #)
+            # )
             self._write(
                 "dlnk0dT = %.15g * invT + %.15g * %.15g * invT2;"
-                % (properties['low_beta'],properties['activation_units'],properties['low_Ea'])
+                % (
+                    properties["low_beta"],
+                    properties["activation_units"],
+                    properties["low_Ea"],
+                )
             )
             self._write("dlogPrdT = log10e*(dlnk0dT - dlnkfdT);")
             self._write("dlogfPrdT = dlogPrdT / (1.0+Pr);")
@@ -9768,15 +9813,23 @@ class CPickler(CMill):
                 self._write("logPr = log10(Pr);")
                 self._write(
                     "Fcent1 = (fabs(%.15g) > 1.e-100 ? (1.-%.15g)*exp(-T/%.15g) : 0.);"
-                    % (properties['troe_Tsss'], properties['troe_a'], properties['troe_Tsss'])
+                    % (
+                        properties["troe_Tsss"],
+                        properties["troe_a"],
+                        properties["troe_Tsss"],
+                    )
                 )
                 self._write(
                     "Fcent2 = (fabs(%.15g) > 1.e-100 ? %.15g * exp(-T/%.15g) : 0.);"
-                    % (properties['troe_Ts'], properties['troe_a'], properties['troe_Ts'])
+                    % (
+                        properties["troe_Ts"],
+                        properties["troe_a"],
+                        properties["troe_Ts"],
+                    )
                 )
                 self._write(
                     "Fcent3 = (%d == 4 ? exp(-%.15g * invT) : 0.);"
-                    % (properties['troe_len'], properties['troe_Tss'])
+                    % (properties["troe_len"], properties["troe_Tss"])
                 )
                 self._write("Fcent = Fcent1 + Fcent2 + Fcent3;")
                 self._write("logFcent = log10(Fcent);")
@@ -9792,15 +9845,15 @@ class CPickler(CMill):
                 self._write("dlogFcentdT = log10e/Fcent*( ")
                 self._write(
                     "    (fabs(%.15g) > 1.e-100 ? -Fcent1/%.15g : 0.)"
-                    % (properties['troe_Tsss'], properties['troe_Tsss'])
+                    % (properties["troe_Tsss"], properties["troe_Tsss"])
                 )
                 self._write(
                     "  + (fabs(%.15g) > 1.e-100 ? -Fcent2/%.15g : 0.)"
-                    % (properties['troe_Ts'], properties['troe_Ts'])
+                    % (properties["troe_Ts"], properties["troe_Ts"])
                 )
                 self._write(
                     "  + (%d == 4 ? Fcent3*%.15g*invT2 : 0.) );"
-                    % (properties['troe_len'], properties['troe_Tss'])
+                    % (properties["troe_len"], properties["troe_Tss"])
                 )
 
                 self._write(
@@ -13810,9 +13863,9 @@ class CPickler(CMill):
     # create the species-species network
     def _createSSnet(self, mechanism):
         # for each reaction in the mechanism
-        
+
         for r in mechanism.reaction():
- 
+
             removeForward = self.removeForward(r)
 
             slist = []
@@ -13841,11 +13894,11 @@ class CPickler(CMill):
             reactant_list = []
             product_list = []
             reaction_number = r.id - 1
-          
+
             removeForward = self.removeForward(r)
 
             # get a list of species involved in the reactants and products
-            
+
             for symbol, coefficient in r.reactants:
                 if symbol in self.qss_species_list:
                     reactant_list.append(symbol)
@@ -13914,8 +13967,8 @@ class CPickler(CMill):
     # Determine from QSS_SSnet which QSS species depend on each other specifically
     def _QSSCoupling(self, mechanism):
 
-        isCoupling     =  False
-        Coupling_reacs = "" 
+        isCoupling = False
+        Coupling_reacs = ""
         List_Coupling_reacs = []
 
         self.QSS_SCnet = self.QSS_SSnet
@@ -13925,8 +13978,8 @@ class CPickler(CMill):
                     count = 0
                     for r in self.QSS_SR_Rj[self.QSS_SR_Si == j]:
                         reaction = mechanism.reaction(id=r)
-                         
-                        removeForward = self.removeForward(reaction)                        
+
+                        removeForward = self.removeForward(reaction)
 
                         # put forth any pathological case
                         if any(
@@ -13969,8 +14022,14 @@ class CPickler(CMill):
                                     )
                                 ):
                                     isCoupling = True
-                                    if (reaction.id not in List_Coupling_reacs):
-                                        Coupling_reacs+= "R"+str(reaction.orig_id)+" "+ reaction.equation() + "\n"
+                                    if reaction.id not in List_Coupling_reacs:
+                                        Coupling_reacs += (
+                                            "R"
+                                            + str(reaction.orig_id)
+                                            + " "
+                                            + reaction.equation()
+                                            + "\n"
+                                        )
                                         List_Coupling_reacs.append(reaction.id)
                                     print(
                                         "Quadratic coupling between "
@@ -14000,8 +14059,14 @@ class CPickler(CMill):
                                     )
                                 ):
                                     isCoupling = True
-                                    if (reaction.id not in List_Coupling_reacs):
-                                        Coupling_reacs+= "R"+str(reaction.orig_id)+" "+ reaction.equation() + "\n"
+                                    if reaction.id not in List_Coupling_reacs:
+                                        Coupling_reacs += (
+                                            "R"
+                                            + str(reaction.orig_id)
+                                            + " "
+                                            + reaction.equation()
+                                            + "\n"
+                                        )
                                         List_Coupling_reacs.append(reaction.id)
                                     print(
                                         "Quadratic coupling between "
@@ -14037,8 +14102,14 @@ class CPickler(CMill):
                                     )
                                 ):
                                     isCoupling = True
-                                    if (reaction.id not in List_Coupling_reacs):
-                                        Coupling_reacs+= "R"+str(reaction.orig_id)+" "+ reaction.equation() + "\n"
+                                    if reaction.id not in List_Coupling_reacs:
+                                        Coupling_reacs += (
+                                            "R"
+                                            + str(reaction.orig_id)
+                                            + " "
+                                            + reaction.equation()
+                                            + "\n"
+                                        )
                                         List_Coupling_reacs.append(reaction.id)
                                     print(
                                         "Quadratic coupling between "
@@ -14100,9 +14171,20 @@ class CPickler(CMill):
                                             species_appearances > 1
                                         ):
                                             isCoupling = True
-                                            if (reaction.id not in List_Coupling_reacs):
-                                                Coupling_reacs+= "R"+str(reaction.orig_id)+" "+ reaction.equation() + "\n"
-                                                List_Coupling_reacs.append(reaction.id)
+                                            if (
+                                                reaction.id
+                                                not in List_Coupling_reacs
+                                            ):
+                                                Coupling_reacs += (
+                                                    "R"
+                                                    + str(reaction.orig_id)
+                                                    + " "
+                                                    + reaction.equation()
+                                                    + "\n"
+                                                )
+                                                List_Coupling_reacs.append(
+                                                    reaction.id
+                                                )
                                             print(
                                                 "Quadratic coupling of "
                                                 + self.qss_species_list[j]
@@ -14120,9 +14202,20 @@ class CPickler(CMill):
                                             species_appearances > 1
                                         ):
                                             isCoupling = True
-                                            if (reaction.id not in List_Coupling_reacs):
-                                                Coupling_reacs+= "R"+str(reaction.orig_id)+" "+ reaction.equation() + "\n"
-                                                List_Coupling_reacs.append(reaction.id)
+                                            if (
+                                                reaction.id
+                                                not in List_Coupling_reacs
+                                            ):
+                                                Coupling_reacs += (
+                                                    "R"
+                                                    + str(reaction.orig_id)
+                                                    + " "
+                                                    + reaction.equation()
+                                                    + "\n"
+                                                )
+                                                List_Coupling_reacs.append(
+                                                    reaction.id
+                                                )
                                             print(
                                                 "Quadratic coupling of "
                                                 + self.qss_species_list[j]
@@ -14146,9 +14239,20 @@ class CPickler(CMill):
                                             species_appearances > 1
                                         ):
                                             isCoupling = True
-                                            if (reaction.id not in List_Coupling_reacs):
-                                                Coupling_reacs+= "R"+str(reaction.orig_id)+" "+ reaction.equation() + "\n"
-                                                List_Coupling_reacs.append(reaction.id)
+                                            if (
+                                                reaction.id
+                                                not in List_Coupling_reacs
+                                            ):
+                                                Coupling_reacs += (
+                                                    "R"
+                                                    + str(reaction.orig_id)
+                                                    + " "
+                                                    + reaction.equation()
+                                                    + "\n"
+                                                )
+                                                List_Coupling_reacs.append(
+                                                    reaction.id
+                                                )
                                             print(
                                                 "Quadratic coupling of "
                                                 + self.qss_species_list[j]
@@ -14160,8 +14264,11 @@ class CPickler(CMill):
         self.QSS_SC_Si, self.QSS_SC_Sj = np.nonzero(self.QSS_SCnet)
         print("\n\n SC network for QSS: ")
         print(self.QSS_SCnet)
-        if (isCoupling):
-            sys.exit("There is some quadratic coupling in mechanism. Here is the list of reactions to check: \n" +  Coupling_reacs)
+        if isCoupling:
+            sys.exit(
+                "There is some quadratic coupling in mechanism. Here is the list of reactions to check: \n"
+                + Coupling_reacs
+            )
 
     def _setQSSneeds(self, mechanism):
         self.needs = OrderedDict()
@@ -14209,7 +14316,6 @@ class CPickler(CMill):
         print("IS NEEDED report (one per QSS spec): ")
         print(self.is_needed)
 
-   
     # get strongly connected components (groups) accounted for
     # this includes two-way dependencies: (s1 needs s2) and (s2 needs s1) => group
     # and cyclical dependencies: (s1 needs s2) and (s2 needs s3) and (s3 needs s1) => group
@@ -14220,16 +14326,14 @@ class CPickler(CMill):
     #
     # where node "index" is stored implictly via the location of the node in the lowest_link OrderedDict
     # and boolean "onStack" information is stored implicitly by checking for node existence in potential_group
-    # 
+    #
     def _getQSSgroups(self, mechanism):
         self.group = OrderedDict()
 
-        
         self.discovery_order = 0
 
         self.potential_group = []
         self.lowest_link = OrderedDict()
-
 
         print("\n\nDetermining groups of coupled species now...")
         print("---------------------------------")
@@ -14245,11 +14349,13 @@ class CPickler(CMill):
 
         print("** Groups of coupled species are: ", self.all_groups)
 
-        group_count=0
+        group_count = 0
         # Rename and only store strongly connected components involving 2 or more species as groups
         for group in self.all_groups:
             if len(self.all_groups[group]) > 1:
-                self.group['group_'+str(group_count)] = self.all_groups[group]
+                self.group["group_" + str(group_count)] = self.all_groups[
+                    group
+                ]
                 group_count += 1
         print()
         print("** Final clean self groups are: ", self.group)
@@ -14261,7 +14367,10 @@ class CPickler(CMill):
 
         # We start the recursion on node "species".
         # This species is considered the "parent" node.
-        print("      Searching for potential closed cycle involving parent: ", species)
+        print(
+            "      Searching for potential closed cycle involving parent: ",
+            species,
+        )
 
         # We only enter the recursion if the species has not already been discovered
         # so we add this species to the potential group list and give it a lowest link value
@@ -14271,7 +14380,12 @@ class CPickler(CMill):
         self.discovery_order += 1
         parent = species
 
-        print("      Upon initialization, discovery order is: ", list(self.lowest_link.keys()).index(species), " and lowest link value is: ", self.discovery_order-1)
+        print(
+            "      Upon initialization, discovery order is: ",
+            list(self.lowest_link.keys()).index(species),
+            " and lowest link value is: ",
+            self.discovery_order - 1,
+        )
         print()
 
         # Loop through the needs of the parent
@@ -14285,25 +14399,46 @@ class CPickler(CMill):
             if child not in self.lowest_link.keys():
 
                 print("         xx Child has never been visited at all...")
-                print("         xx Initiate recursion to assign lowlink value ")
+                print(
+                    "         xx Initiate recursion to assign lowlink value "
+                )
 
                 self._findClosedCycle(mechanism, child)
-               
-                print("         xx We've finished a recursion! The child that was passed in was: ", child, " with parent ", parent)
+
+                print(
+                    "         xx We've finished a recursion! The child that was passed in was: ",
+                    child,
+                    " with parent ",
+                    parent,
+                )
                 # print("         The discovery order of the parent is: ", list(self.lowest_link.keys()).index(parent))
-                print("         xx The lowest link value of the parent is: ", self.lowest_link[parent])
+                print(
+                    "         xx The lowest link value of the parent is: ",
+                    self.lowest_link[parent],
+                )
                 # print("         The discovery order of this child is: ", list(self.lowest_link.keys()).index(child))
-                print("         xx The lowest link value of this child is: ", self.lowest_link[child])
+                print(
+                    "         xx The lowest link value of this child is: ",
+                    self.lowest_link[child],
+                )
                 print()
 
                 # If the lowest link connection of the child is lower than that of the parent's, then this lowest link value becomes the parent's new lowest link value
                 # This update comes into effect when the child at the end of the recursion
                 # matches the original parent of the search or has a lower link connection from an earlier search than the parent currently does
-                if(child in self.potential_group):
-                    self.lowest_link[parent] = min(self.lowest_link[parent], self.lowest_link[child])
+                if child in self.potential_group:
+                    self.lowest_link[parent] = min(
+                        self.lowest_link[parent], self.lowest_link[child]
+                    )
 
-                print("         ** Therefore, the lowest link value of the parent then becomes: ", self.lowest_link[parent])
-                print("         ** The lowest link connections are now: ", self.lowest_link)
+                print(
+                    "         ** Therefore, the lowest link value of the parent then becomes: ",
+                    self.lowest_link[parent],
+                )
+                print(
+                    "         ** The lowest link connections are now: ",
+                    self.lowest_link,
+                )
                 print()
                 print()
 
@@ -14311,25 +14446,45 @@ class CPickler(CMill):
             # Note: If the child already has a lowest link value but is NOT in the potential_group, that means it is a part of a previously found group
             elif child in self.potential_group:
 
-                print("         xx Child has already been visited this recursion ")
+                print(
+                    "         xx Child has already been visited this recursion "
+                )
                 # print("         The discovery order of the parent is: ", list(self.lowest_link.keys()).index(parent))
-                print("         xx The lowest link value of the parent is: ", self.lowest_link[parent])
-                print("         xx The discovery order of this child is: ", list(self.lowest_link.keys()).index(child))
+                print(
+                    "         xx The lowest link value of the parent is: ",
+                    self.lowest_link[parent],
+                )
+                print(
+                    "         xx The discovery order of this child is: ",
+                    list(self.lowest_link.keys()).index(child),
+                )
                 # print("         The lowest link value of this child is: ", self.lowest_link[child])
 
                 # Since the child has been discovered already during this search, that means it is in the group but still in the recursion process,
                 # Update the parent's lowest link value with this childs discovery order
-                self.lowest_link[parent] = min(self.lowest_link[parent], list(self.lowest_link.keys()).index(child))
+                self.lowest_link[parent] = min(
+                    self.lowest_link[parent],
+                    list(self.lowest_link.keys()).index(child),
+                )
 
                 print()
-                print("         **** Therefore, the lowest link value of the parent then becomes: ", self.lowest_link[parent])
-                print("         **** The lowest link connections are now: ", self.lowest_link)
+                print(
+                    "         **** Therefore, the lowest link value of the parent then becomes: ",
+                    self.lowest_link[parent],
+                )
+                print(
+                    "         **** The lowest link connections are now: ",
+                    self.lowest_link,
+                )
                 print()
                 print()
 
         # If, after searching all children and updating lowest link connections, you reach a parent whose lowest link still matches its original value (or starting position)
         # Then you have reached the root of a simply connected component (aka you've found a group)
-        if (list(self.lowest_link.keys()).index(parent) == self.lowest_link[parent]):
+        if (
+            list(self.lowest_link.keys()).index(parent)
+            == self.lowest_link[parent]
+        ):
             hold = []
             while True:
                 # remove group species from the running potential group list until you reach the parent species
@@ -14342,9 +14497,6 @@ class CPickler(CMill):
             print("         Group is: ", self.all_groups[parent])
             print()
             print()
-
-
-
 
     # Update group member needs with group names:
     # group member needs species -> group needs species
@@ -14679,26 +14831,30 @@ class CPickler(CMill):
                     )
                 ]
                 coupled_qss = [self.qss_species_list[j] for j in coupled]
-               
+
                 for species in coupled_qss:
                     if species != symbol:
                         other_qss = species
-                #other_qss_list = [] 
-                #for species in coupled_qss:
+                # other_qss_list = []
+                # for species in coupled_qss:
                 #    other_qss_list.append(species)
-                #other_qss_list.remove(symbol)
-                   
- 
-                if len(coupled) >= 2: 
-                    #print("plop = ",other_qss) 
+                # other_qss_list.remove(symbol)
+
+                if len(coupled) >= 2:
+                    # print("plop = ",other_qss)
                     # Check if all QSS are only reactants
                     allQSSreactants = True
-                    #for other_qss in other_qss_list:
-                    if any(product == other_qss for product, _ in list(set(reaction.products))):
+                    # for other_qss in other_qss_list:
+                    if any(
+                        product == other_qss
+                        for product, _ in list(set(reaction.products))
+                    ):
                         allQSSreactants = False
-                    if any(product == symbol for product, _ in list(set(reaction.products))):
+                    if any(
+                        product == symbol
+                        for product, _ in list(set(reaction.products))
+                    ):
                         allQSSreactants = False
-
 
                 if len(coupled) < 2:
                     print("        this reaction only involves that QSS ")
@@ -14716,7 +14872,7 @@ class CPickler(CMill):
                             spec, coeff = reactant
                             if spec == symbol:
                                 species_appearances += 1
-                                
+
                         coeff_hold.append(
                             "-qf_co["
                             + str(self.qfqr_co_idx_map.index(r))
@@ -14724,7 +14880,9 @@ class CPickler(CMill):
                         )
                         if reaction.reversible:
                             rhs_hold.append(
-                                "+" + str(float(species_appearances)) + "*qr_co["
+                                "+"
+                                + str(float(species_appearances))
+                                + "*qr_co["
                                 + str(self.qfqr_co_idx_map.index(r))
                                 + "]"
                             )
@@ -14744,7 +14902,9 @@ class CPickler(CMill):
                                 species_appearances += 1
 
                         rhs_hold.append(
-                            "+" + str(float(species_appearances)) + "*qf_co["
+                            "+"
+                            + str(float(species_appearances))
+                            + "*qf_co["
                             + str(self.qfqr_co_idx_map.index(r))
                             + "]"
                         )
@@ -14755,8 +14915,7 @@ class CPickler(CMill):
                                 + "]"
                             )
 
-                    
-                elif len(coupled)>=2 and allQSSreactants and removeForward:
+                elif len(coupled) >= 2 and allQSSreactants and removeForward:
                     # coupling is actually not a coupling because forward reaction is removed
                     if reaction.reversible:
                         # Should always be true
@@ -14768,11 +14927,12 @@ class CPickler(CMill):
                                 species_appearances += 1
 
                         rhs_hold.append(
-                            "+" + str(float(species_appearances)) + "*qr_co["
+                            "+"
+                            + str(float(species_appearances))
+                            + "*qr_co["
                             + str(self.qfqr_co_idx_map.index(r))
                             + "]"
                         )
-       
 
                 else:
                     # note in this case there can only be 2 QSS in one reac
@@ -14783,10 +14943,10 @@ class CPickler(CMill):
                     )
 
                     # assumes only 2 QSS can appear in a reac now
-                    #other_qss_list = []
-                    #for species in coupled_qss:
+                    # other_qss_list = []
+                    # for species in coupled_qss:
                     #    other_qss_list.append(species)
-                    #other_qss_list.remove(symbol)
+                    # other_qss_list.remove(symbol)
                     for species in coupled_qss:
                         if species != symbol:
                             other_qss = species
@@ -14802,26 +14962,32 @@ class CPickler(CMill):
                     if direction == -1:
 
                         allQSSreactants = True
-                        if any(product == other_qss for product, _ in list(set(reaction.products))):
+                        if any(
+                            product == other_qss
+                            for product, _ in list(set(reaction.products))
+                        ):
                             allQSSreactants = False
-                        if any(product == symbol for product, _ in list(set(reaction.products))):
+                        if any(
+                            product == symbol
+                            for product, _ in list(set(reaction.products))
+                        ):
                             allQSSreactants = False
-                         
+
                         removeForward = self.removeForward(reaction)
                         if allQSSreactants and removeForward:
                             print(
-                            "        species ",
-                            symbol,
-                            " and species ",
-                            other_qss,
-                            " in purely irreversible reaction ",
-                            r,
-                            " are both reactants",
+                                "        species ",
+                                symbol,
+                                " and species ",
+                                other_qss,
+                                " in purely irreversible reaction ",
+                                r,
+                                " are both reactants",
                             )
                             print(
                                 "        this reaction does not contribute to any QSS coefficients and is thus ignored"
                             )
-                            #if reaction.reversible:
+                            # if reaction.reversible:
                             #    groupCoeff_hold[other_qss].append(
                             #        "+qr_co["
                             #        + str(self.qfqr_co_idx_map.index(r))
@@ -14832,7 +14998,7 @@ class CPickler(CMill):
                             #        + str(self.qfqr_co_idx_map.index(r))
                             #        + "]"
                             #    )
- 
+
                         else:
 
                             print(
@@ -14842,7 +15008,7 @@ class CPickler(CMill):
                                 r,
                                 " is a reactant",
                             )
-                     
+
                             species_appearances = 0
                             for reactant in reaction.reactants:
                                 spec, coeff = reactant
@@ -14856,7 +15022,9 @@ class CPickler(CMill):
                             )
                             if reaction.reversible:
                                 groupCoeff_hold[other_qss].append(
-                                    "+" +  str(float(species_appearances)) + "*qr_co["
+                                    "+"
+                                    + str(float(species_appearances))
+                                    + "*qr_co["
                                     + str(self.qfqr_co_idx_map.index(r))
                                     + "]"
                                 )
@@ -14881,7 +15049,9 @@ class CPickler(CMill):
                                 species_appearances += 1
 
                         groupCoeff_hold[other_qss].append(
-                            "+" + str(float(species_appearances)) + "*qf_co["
+                            "+"
+                            + str(float(species_appearances))
+                            + "*qf_co["
                             + str(self.qfqr_co_idx_map.index(r))
                             + "]"
                         )
@@ -14962,8 +15132,8 @@ class CPickler(CMill):
             print("COUPLING: ", self.QSS_QSS_coeff[symbol])
             # print "GROUP COEFFICIENTS: ", self.QSS_groupSp
             print()
-            #stop
-            
+            # stop
+
         # for species in self.QSS_groupSp.keys():
         #    for coeff in self.QSS_groupSp[species].keys():
         #        self.QSS_groupSp[species][coeff] =" ".join(self.QSS_groupSp[species][coeff])
@@ -15109,42 +15279,67 @@ class CPickler(CMill):
                 )
             )
             properties = self.getAllReactionProperties(reaction)
-            if (properties['fwd_beta'] == 0.0):
-                if (properties['fwd_Ea'] == 0.0):
+            if properties["fwd_beta"] == 0.0:
+                if properties["fwd_Ea"] == 0.0:
                     self._write(
                         "k_f[%d] = %.15g * %.15g;"
-                        % (index, properties['prefactor_units'], properties['fwd_A'])
+                        % (
+                            index,
+                            properties["prefactor_units"],
+                            properties["fwd_A"],
+                        )
                     )
                 else:
                     self._write(
                         "k_f[%d] = %.15g * %.15g"
-                        % (index, properties['prefactor_units'], properties['fwd_A'])
+                        % (
+                            index,
+                            properties["prefactor_units"],
+                            properties["fwd_A"],
+                        )
                     )
-                    if (properties['activation_units'] > 0):
+                    if properties["activation_units"] > 0:
                         self._write(
                             "           * exp(- %.15g * (%.15g) * invT);"
-                            % (properties['activation_units'], properties['fwd_Ea'])
+                            % (
+                                properties["activation_units"],
+                                properties["fwd_Ea"],
+                            )
                         )
                     else:
-                        sys.exit("activation_units neg for reac" + reaction.equation())
+                        sys.exit(
+                            "activation_units neg for reac"
+                            + reaction.equation()
+                        )
             else:
                 self._write(
                     "k_f[%d] = %.15g * %.15g"
-                    % (index, properties['prefactor_units'], properties['fwd_A'])
+                    % (
+                        index,
+                        properties["prefactor_units"],
+                        properties["fwd_A"],
+                    )
                 )
-                if (properties['fwd_Ea'] == 0.0):
+                if properties["fwd_Ea"] == 0.0:
                     self._write(
                         "           * exp(%.15g * tc[0]);"
-                        % (properties['fwd_beta'])
+                        % (properties["fwd_beta"])
                     )
                 else:
-                    if (properties['activation_units'] > 0):
+                    if properties["activation_units"] > 0:
                         self._write(
                             "           * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
-                            % (properties['fwd_beta'], properties['activation_units'], properties['fwd_Ea'])
+                            % (
+                                properties["fwd_beta"],
+                                properties["activation_units"],
+                                properties["fwd_Ea"],
+                            )
                         )
                     else:
-                        sys.exit("activation_units neg for reac" + reaction.equation())
+                        sys.exit(
+                            "activation_units neg for reac"
+                            + reaction.equation()
+                        )
 
         self._write()
         self._write("return;")
@@ -15205,7 +15400,9 @@ class CPickler(CMill):
             if len(reaction.ford) > 0:
                 forward_sc = self._QSSreturnCoeff(mechanism, reaction.ford)
             else:
-                forward_sc = self._QSSreturnCoeff(mechanism, reaction.reactants)
+                forward_sc = self._QSSreturnCoeff(
+                    mechanism, reaction.reactants
+                )
             if reaction.reversible:
                 reverse_sc = self._QSSreturnCoeff(mechanism, reaction.products)
             else:
@@ -15214,18 +15411,16 @@ class CPickler(CMill):
             KcExpArg = self._sortedKcExpArg(mechanism, reaction)
             KcConvInv = self._KcConvInv(mechanism, reaction)
 
-            properties = self.getAllReactionProperties(reaction) 
+            properties = self.getAllReactionProperties(reaction)
 
             alpha = 1.0
             if not thirdBody:
-                if removeForward: 
+                if removeForward:
                     self._write("// Remove forward reaction")
                     self._write(
                         "//qf[%d] = k_f[%d] * (%s);" % (idx, idx, forward_sc)
                     )
-                    self._write(
-                        "qf[%d] = 0.0;" % (idx)
-                    )
+                    self._write("qf[%d] = 0.0;" % (idx))
                 else:
                     self._write(
                         "qf[%d] = k_f[%d] * (%s);" % (idx, idx, forward_sc)
@@ -15233,16 +15428,13 @@ class CPickler(CMill):
             elif not low:
                 alpha = self._enhancement_d(mechanism, reaction)
                 self._write("const amrex::Real Corr = %s;" % (alpha))
-                if removeForward: 
+                if removeForward:
                     self._write("// Remove forward reaction")
                     self._write(
                         "//qf[%d] = Corr * k_f[%d] * (%s);"
                         % (idx, idx, forward_sc)
                     )
-                    self._write(
-                        "qf[%d] = 0.0;"
-                        % (idx)
-                    )
+                    self._write("qf[%d] = 0.0;" % (idx))
                 else:
                     self._write(
                         "qf[%d] = Corr * k_f[%d] * (%s);"
@@ -15253,42 +15445,54 @@ class CPickler(CMill):
                 self._write("amrex::Real Corr = %s;" % (alpha))
                 self._write(
                     "const amrex::Real redP = Corr / k_f[%d] * %.15g "
-                    % (idx, properties['phase_units'] * properties['low_A'] )
+                    % (idx, properties["phase_units"] * properties["low_A"])
                 )
                 self._write(
                     "           * exp(%.15g * tc[0] - %.15g * invT);"
-                    % (properties['low_beta'], (properties['activation_units'] * properties['low_Ea']))
+                    % (
+                        properties["low_beta"],
+                        (
+                            properties["activation_units"]
+                            * properties["low_Ea"]
+                        ),
+                    )
                 )
                 if reaction.troe:
-                    self._write(
-                        "const amrex::Real F = redP / (1.0 + redP);"
-                    )
+                    self._write("const amrex::Real F = redP / (1.0 + redP);")
                     self._write("const amrex::Real logPred = log10(redP);")
                     self._write("const amrex::Real logFcent = log10(")
-                    if abs(properties['troe_Tsss']) > 1.0e-100:
-                        if 1.0 - properties['troe_a'] != 0:
+                    if abs(properties["troe_Tsss"]) > 1.0e-100:
+                        if 1.0 - properties["troe_a"] != 0:
                             self._write(
                                 "    %.15g * exp(-tc[1] * %.15g)"
-                                % (1.0 - properties['troe_a'], (1 / properties['troe_Tsss']))
+                                % (
+                                    1.0 - properties["troe_a"],
+                                    (1 / properties["troe_Tsss"]),
+                                )
                             )
                     else:
-                         self._write("     0.0 ")
-                    if abs(properties['troe_Ts']) > 1.0e-100:
-                        if properties['troe_a']!= 0:
+                        self._write("     0.0 ")
+                    if abs(properties["troe_Ts"]) > 1.0e-100:
+                        if properties["troe_a"] != 0:
                             self._write(
                                 "    + %.15g * exp(-tc[1] * %.15g)"
-                                % (properties['troe_a'], (1 / properties['troe_Ts']))
+                                % (
+                                    properties["troe_a"],
+                                    (1 / properties["troe_Ts"]),
+                                )
                             )
                     else:
-                         self._write("     0.0 ")
-                    if properties['troe_len'] == 4:
-                        if properties['troe_Tss'] < 0:
+                        self._write("     0.0 ")
+                    if properties["troe_len"] == 4:
+                        if properties["troe_Tss"] < 0:
                             self._write(
-                                "    + exp(%.15g * invT));" % -properties['troe_Tss']
+                                "    + exp(%.15g * invT));"
+                                % -properties["troe_Tss"]
                             )
                         else:
                             self._write(
-                                "    + exp(-%.15g * invT));" % properties['troe_Tss']
+                                "    + exp(-%.15g * invT));"
+                                % properties["troe_Tss"]
                             )
                     else:
                         self._write("    + 0.0);")
@@ -15311,16 +15515,13 @@ class CPickler(CMill):
                             "//qf[%d]  = Corr * k_f[%d] * (%s);"
                             % (idx, idx, forward_sc)
                         )
-                        self._write(
-                            "qf[%d]  = 0.0;"
-                            % (idx)
-                        )
+                        self._write("qf[%d]  = 0.0;" % (idx))
                     else:
                         self._write(
                             "qf[%d]  = Corr * k_f[%d] * (%s);"
                             % (idx, idx, forward_sc)
                         )
-                #elif reaction.sri:
+                # elif reaction.sri:
                 #    self._write(
                 #        "const amrex::Real F = redP / (1.0 + redP);"
                 #    )
@@ -15357,10 +15558,7 @@ class CPickler(CMill):
                             "//qf[%d] = Corr * k_f[%d] * (%s);"
                             % (idx, idx, forward_sc)
                         )
-                        self._write(
-                            "qf[%d] = 0.0;"
-                            % (idx)
-                        )
+                        self._write("qf[%d] = 0.0;" % (idx))
                     else:
                         self._write(
                             "qf[%d] = Corr * k_f[%d] * (%s);"
@@ -15368,23 +15566,31 @@ class CPickler(CMill):
                         )
 
             if reaction.rev:
-                if properties['rev_beta'] == 0:
-                    if properties['rev_Ea'] == 0:
+                if properties["rev_beta"] == 0:
+                    if properties["rev_Ea"] == 0:
                         self._write(";")
                     else:
                         self._write(
                             "           * exp( - (%.15g) * invT);"
-                            % (properties['activation_units_rev'] * properties['rev_Ea'])
+                            % (
+                                properties["activation_units_rev"]
+                                * properties["rev_Ea"]
+                            )
                         )
                 else:
-                    if properties['rev_Ea'] == 0:
+                    if properties["rev_Ea"] == 0:
                         self._write(
-                            "           * exp(%.15g * tc[0]);" % (properties['rev_beta'])
+                            "           * exp(%.15g * tc[0]);"
+                            % (properties["rev_beta"])
                         )
                     else:
                         self._write(
                             "           * exp(%.15g * tc[0] - (%.15g) * invT);"
-                            % (properties['rev_beta'], properties['activation_units_rev'] * properties['rev_Ea'])
+                            % (
+                                properties["rev_beta"],
+                                properties["activation_units_rev"]
+                                * properties["rev_Ea"],
+                            )
                         )
 
                 if alpha == 1.0:
@@ -15438,7 +15644,7 @@ class CPickler(CMill):
         self._write("amrex::Real epsilon = 1e-12;")
         self._write()
 
-        #print()
+        # print()
         print("** self.decouple_index:")
         print(self.decouple_index)
         print(list(self.needs.keys()))
@@ -15452,7 +15658,7 @@ class CPickler(CMill):
 
                 denominator = symbol + "_denom"
                 numerator = symbol + "_num"
-  
+
                 self._write(
                     self.line(
                         "QSS species "
@@ -15552,7 +15758,7 @@ class CPickler(CMill):
                         )
                     )
                     self._write()
-                   
+
                     denominator = species + "_denom"
                     numerator = species + "_num"
 
@@ -15709,13 +15915,12 @@ class CPickler(CMill):
 
                 print("X IS ")
                 print(X)
-                
+
                 self._write("/* Putting it all together */")
                 for helper in intermediate_helpers:
-                    if (helper in self.list_of_intermediate_helpers):
+                    if helper in self.list_of_intermediate_helpers:
                         self._write(
-                            "%s = %s;"
-                            % (helper, intermediate_helpers[helper])
+                            "%s = %s;" % (helper, intermediate_helpers[helper])
                         )
                     else:
                         self._write(
@@ -16247,11 +16452,11 @@ class CPickler(CMill):
         self._write(
             "redP = alpha / k_f * %.15g * %.15g * exp(%.15g * tc[0] - %.15g * %.15g *invT);"
             % (
-                properties['phase_units'],
-                properties['low_A'],
-                properties['low_beta'],
-                properties['activation_units'],
-                properties['low_Ea'],
+                properties["phase_units"],
+                properties["low_A"],
+                properties["low_beta"],
+                properties["activation_units"],
+                properties["low_Ea"],
             )
         )
         self._write("F = redP / (1 + redP);")
@@ -16261,15 +16466,19 @@ class CPickler(CMill):
             self._write("X = 1.0 / (1.0 + logPred*logPred);")
             self._write(
                 "F_sri = exp(X * log(%.15g * exp(-%.15g/T)"
-                % (properties['sri_a'],properties['sri_b'])
+                % (properties["sri_a"], properties["sri_b"])
             )
             self._write(
                 "   +  (%.15g > 1.e-100 ? exp(T/%.15g) : 0.) )"
-                % (properties['sri_c'],properties['sri_c'])
+                % (properties["sri_c"], properties["sri_c"])
             )
             self._write(
                 "   *  (%d > 3 ? %.15g*exp(%.15g*tc[0]) : 1.);"
-                % (properties['sri_len'],properties['sri_d'],properties['sri_e'])
+                % (
+                    properties["sri_len"],
+                    properties["sri_d"],
+                    properties["sri_e"],
+                )
             )
             self._write("F *= F_sri;")
 
@@ -16279,15 +16488,23 @@ class CPickler(CMill):
             self._write("logFcent = log10(")
             self._write(
                 "    (fabs(%.15g) > 1.e-100 ? (1.-%.15g)*exp(-T/%.15g) : 0.) "
-                % (properties['troe_Tsss'],properties['troe_a'],properties['troe_Tsss'])
+                % (
+                    properties["troe_Tsss"],
+                    properties["troe_a"],
+                    properties["troe_Tsss"],
+                )
             )
             self._write(
                 "    + (fabs(%.15g) > 1.e-100 ? %.15g * exp(-T/%.15g) : 0.) "
-                % (properties['troe_Ts'],properties['troe_a'],properties['troe_Ts'])
+                % (
+                    properties["troe_Ts"],
+                    properties["troe_a"],
+                    properties["troe_Ts"],
+                )
             )
             self._write(
                 "    + (%d == 4 ? exp(-%.15g * invT) : 0) );"
-                % (properties['troe_len'],properties['troe_Tss'])
+                % (properties["troe_len"], properties["troe_Tss"])
             )
 
             d = 0.14
@@ -16335,7 +16552,7 @@ class CPickler(CMill):
                     "k_r = %.15g * exp(%.15g * tc[0] - (%.15g) * invT);"
                     % (
                         prefactor_units_rev[idx] * rev_A[idx],
-                        properties['rev_beta'],
+                        properties["rev_beta"],
                         activation_units_rev[idx] * rev_Ea[idx],
                     )
                 )
@@ -17319,34 +17536,44 @@ class CPickler(CMill):
         self._write("}")
         return
 
-    def getAllReactionProperties(self,reaction):
+    def getAllReactionProperties(self, reaction):
         # Dictionary of properties
-        properties={}
+        properties = {}
 
         id = reaction.id - 1
-        properties['fwd_A'], properties['fwd_beta'], properties['fwd_Ea'] = reaction.arrhenius
+        (
+            properties["fwd_A"],
+            properties["fwd_beta"],
+            properties["fwd_Ea"],
+        ) = reaction.arrhenius
         thirdBody = reaction.thirdBody
         low = reaction.low
 
         if reaction.rev:
-            properties['rev_A'], properties['rev_beta'], properties['rev_Ea'] = reaction.rev
+            (
+                properties["rev_A"],
+                properties["rev_beta"],
+                properties["rev_Ea"],
+            ) = reaction.rev
             dim_rev = self._phaseSpaceUnits(reaction.products)
             if not thirdBody:
-                properties['prefactor_units_rev'] = self._prefactorUnits(
+                properties["prefactor_units_rev"] = self._prefactorUnits(
                     reaction.units["prefactor"], 1 - dim_rev
                 ).value
             elif not low:
-                properties['prefactor_units_rev'] = self._prefactorUnits(
+                properties["prefactor_units_rev"] = self._prefactorUnits(
                     reaction.units["prefactor"], -dim_rev
                 ).balue
             else:
-                properties['prefactor_units_rev'] = self._prefactorUnits(
+                properties["prefactor_units_rev"] = self._prefactorUnits(
                     reaction.units["prefactor"], 1 - dim_rev
                 ).value
 
-            properties['activation_units_rev'] = self._activationEnergyUnits(
-                reaction.units["activation"]
-            ) / Rc / kelvin
+            properties["activation_units_rev"] = (
+                self._activationEnergyUnits(reaction.units["activation"])
+                / Rc
+                / kelvin
+            )
 
         if len(reaction.ford) > 0:
             if reaction.rev:
@@ -17358,80 +17585,84 @@ class CPickler(CMill):
             dim = self._phaseSpaceUnits(reaction.reactants)
 
         if not thirdBody:
-            properties['prefactor_units'] = self._prefactorUnits(
+            properties["prefactor_units"] = self._prefactorUnits(
                 reaction.units["prefactor"], 1 - dim
             ).value  # Case 3 !PD, !TB
         elif not low:
-            properties['prefactor_units'] = self._prefactorUnits(
+            properties["prefactor_units"] = self._prefactorUnits(
                 reaction.units["prefactor"], -dim
             ).value  # Case 2 !PD, TB
 
         else:
-            properties['prefactor_units'] = self._prefactorUnits(
+            properties["prefactor_units"] = self._prefactorUnits(
                 reaction.units["prefactor"], 1 - dim
             ).value  # Case 1 PD, TB
-            properties['low_A'], properties['low_beta'], properties['low_Ea'] = low
+            (
+                properties["low_A"],
+                properties["low_beta"],
+                properties["low_Ea"],
+            ) = low
             if reaction.troe:
                 troe = reaction.troe
                 ntroe = len(troe)
                 is_troe = True
-                properties['troe_a'] = troe[0]
+                properties["troe_a"] = troe[0]
                 if ntroe > 1:
-                    properties['troe_Tsss'] = troe[1]
-                else: 
+                    properties["troe_Tsss"] = troe[1]
+                else:
                     # Necessary to initialize, even though it won't be used
-                    properties['troe_Tsss'] = 0
+                    properties["troe_Tsss"] = 0
                 if ntroe > 2:
-                    properties['troe_Ts'] = troe[2]
+                    properties["troe_Ts"] = troe[2]
                 else:
                     # Necessary to initialize, even though it won't be used
-                    properties['troe_Ts'] = 0
+                    properties["troe_Ts"] = 0
                 if ntroe > 3:
-                    properties['troe_Tss']  = troe[3]
+                    properties["troe_Tss"] = troe[3]
                 else:
                     # Necessary to initialize, even though it won't be used
-                    properties['troe_Tss'] = 0
-                properties['troe_len']  = ntroe
+                    properties["troe_Tss"] = 0
+                properties["troe_len"] = ntroe
             if reaction.sri:
                 sri = reaction.sri
                 nsri = len(sri)
                 is_sri = True
-                properties['sri_a']    = sri[0]
+                properties["sri_a"] = sri[0]
                 if nsri > 1:
-                    properties['sri_b'] = sri[1]
+                    properties["sri_b"] = sri[1]
                 if nsri > 2:
-                    properties['sri_c']  = sri[2]
+                    properties["sri_c"] = sri[2]
                 if nsri > 3:
-                    properties['sri_d']  = sri[3]
+                    properties["sri_d"] = sri[3]
                 if nsri > 4:
-                    properties['sri_e']  = sri[4]
-                properties['sri_len']   = nsri
+                    properties["sri_e"] = sri[4]
+                properties["sri_len"] = nsri
 
         aeuc = self._activationEnergyUnits(reaction.units["activation"])
-        properties['activation_units'] = (aeuc / Rc / kelvin)
-        properties['phase_units'] = pow(10,-dim * 6)
+        properties["activation_units"] = aeuc / Rc / kelvin
+        properties["phase_units"] = pow(10, -dim * 6)
 
         if low:
-            properties['is_PD'] = 1
+            properties["is_PD"] = 1
         else:
-            properties['is_PD'] = 0
+            properties["is_PD"] = 0
 
         return properties
 
-
-    def getReactionTBConstants(self,reaction,Ind):
+    def getReactionTBConstants(self, reaction, Ind):
         thirdBody = reaction.thirdBody
         if thirdBody:
             efficiencies = reaction.efficiencies
             if len(efficiencies) > 0:
                 return efficiencies[Ind][1]
 
-    def removeForward(self,reaction): 
+    def removeForward(self, reaction):
         idReac = reaction.id
         if idReac in self.reacRemoveIDList:
             return True
         else:
             return False
+
 
 # version
 __id__ = "$Id$"
