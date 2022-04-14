@@ -229,6 +229,13 @@ class Reactions(BaseParser):
         record.troe = self._parameterParser.extractOpt("TROE", 3, 4)
         return 0
 
+    def aReactionPLOG(self, token):
+        record = self._currentReaction
+        msg = "ignoring PLOG parameters for this reaction"
+        self.onWarning(msg, self.locator())
+        record.plog = self._parameterParser.extractOpt("PLOG", 3, 4)
+        return 0
+
     # transitions
 
     def aReactionSection(self, token):

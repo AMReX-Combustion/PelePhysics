@@ -203,6 +203,7 @@ def reactionTokenClasses():
     from .ReactionSection import ReactionSection
     from .ReactionSRI import ReactionSRI
     from .ReactionTROE import ReactionTROE
+    from .ReactionPLOG import ReactionPLOG
     from .ReactionUnitsA import ReactionUnitsA
     from .ReactionUnitsE import ReactionUnitsE
     from .SpeciesSection import SpeciesSection
@@ -224,6 +225,7 @@ def reactionTokenClasses():
         ReactionLOW,
         ReactionSRI,
         ReactionTROE,
+        ReactionPLOG,
         ReactionUnitsA,
         ReactionUnitsE,
         ReactionHV,
