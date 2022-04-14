@@ -387,9 +387,7 @@ class CPickler(CMill):
             print("\n\n\n\n---------------------------------")
             print("+++++++++QSS PRINTING++++++++++++")
             print("---------------------------------")
-            self._QSScomponentFunctions(
-                mechanism
-            )  
+            self._QSScomponentFunctions(mechanism)
 
         # prod rate related
         self._productionRate_GPU(mechanism)  # GPU version
