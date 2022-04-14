@@ -1,42 +1,37 @@
 # Analytically Reduced NC12H26 Mechanism with QSS
 
+## Limitations
+
+Does not support yet analytical Jacobian for the integration method and will abort if analytical Jacobian is used.
+
 ## Create mechanism
 
-4 files are needed
+1. Add the 4 necessary files
+  - Skeletal mechanism (here `skeletal.inp`)
+  - List of non QSS species (here `non_qssa_list.txt`)
+  - Thermodynamic file (here `therm.dat`)
+  - Transport file (here `tran.dat`)
 
-- Skeletal mechanism (here `skeletal.inp`)
-- List of non QSS species (here `non_qssa_list.txt`)
-- Thermodynamic file (here `therm.dat`)
-- Transport file (here `tran.dat`)
+2. Link the 4 files in `make-mechanism.sh`
 
-Link the file in `make_mechanism.sh`
+3. Choose a linearization technique (See [QSS Documentation](https://pelephysics.readthedocs.io/en/latest/QSS.html)) by commenting and uncommenting the code under `#~~~~ Method 1`, `#~~~~ Method 2` or `# ~~~~ Method 3` in `make-mechanism.sh`
 
-Execute `bash make_mechanism.sh`
+4. Execute `bash make-mechanism.sh`
 
-## Integration method
-
-Verified with GMRES, denseDirect. Does not work yet with analytical Jacobian
-
-## Remove quadratic coupling
-
-3 methods are available for treatment of the quadratic coupling between QSS species
-
-### 1) Species method
-
-The smallest possible set of species that needs to be removed to eliminate quadratic coupling is identified and removed from the QSS species list. To activate it, uncomment the lines under Method 1 in `make_mechanism.sh`
-
-### 2) Reaction method
-
-All reactions that create a quadratic coupling are removed by eliminating both the forward and backward reaction, even if only the forward or the backward reaction create a quadratic coupling. To activate it, uncomment the lines under Method 2 in `make_mechanism.sh`
-
-### 3) Some reaction method
-
-All reactions that create a quadratic coupling are removed by eliminating the forward and/or the backward reaction that generate quadratic coupling. To activate it, uncomment the lines under Method 3 in `make_mechanism.sh`
 
 ## Make the dependency graph
 
-`bash make-viztool.sh`
-
 This creates a dependency graph of the QSS species as well as a graph of the reactions that induce quadratic coupling. The graphs are outputed in  `qssaTools/output/`
+
+1. Add the 4 necessary files
+  - Skeletal mechanism (here `skeletal.inp`)
+  - List of non QSS species (here `non_qssa_list.txt`)
+  - Thermodynamic file (here `therm.dat`)
+  - Transport file (here `tran.dat`)
+
+2. Link the 4 files in `make-viztool.sh`
+
+3. Execute `bash make-viztool.sh`
+
 
 
