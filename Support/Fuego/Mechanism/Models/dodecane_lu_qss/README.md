@@ -1,9 +1,17 @@
-# Analytically Reduced Mechanism
-This mechanism is the QSS version.
+# Analytically Reduced NC12H26 Mechanism with QSS
 
 ## Create mechanism
 
-`bash make_mechanism.sh`
+4 files are needed
+
+- Skeletal mechanism (here `skeletal.inp`)
+- List of non QSS species (here `non_qssa_list.txt`)
+- Thermodynamic file (here `therm.dat`)
+- Transport file (here `tran.dat`)
+
+Link the file in `make_mechanism.sh`
+
+Execute `bash make_mechanism.sh`
 
 ## Integration method
 
