@@ -117,7 +117,7 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   amrex::Print() << "  Using the " << controller_string << " controller"
                  << std::endl;
 
-  if (atomic_reductions) {
+  if (atomic_reductions != 0) {
     amrex::Print() << "  Using atomic reductions\n";
   } else {
     amrex::Print() << "  Using LDS reductions\n";
@@ -165,7 +165,7 @@ ReactorArkode::react(
   realtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
+  if (utils::check_flag((void*)y, "N_VNew_Serial", 0) != 0) {
     return (1);
   }
   realtype* yvec_d = N_VGetArrayPointer(y);
@@ -291,7 +291,7 @@ ReactorArkode::react(
   realtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
-  if (utils::check_flag((void*)y, "N_VNew_Serial", 0)) {
+  if (utils::check_flag((void*)y, "N_VNew_Serial", 0) != 0) {
     return (1);
   }
   realtype* yvec_d = N_VGetArrayPointer(y);
@@ -434,7 +434,7 @@ ReactorArkode::print_final_stats(void* arkode_mem)
   long int nst, nst_a, netf, nfe, nfi;
   int flag;
 
-  if (use_erkstep) {
+  if (use_erkstep != 0) {
     flag = ERKStepGetNumSteps(arkode_mem, &nst);
     utils::check_flag(&flag, "ERKStepGetNumSteps", 1);
     flag = ERKStepGetNumStepAttempts(arkode_mem, &nst_a);

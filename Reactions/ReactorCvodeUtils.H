@@ -65,16 +65,16 @@ struct CVODEUserData
 
 #else
   bool FirstTimePrecond;
-  amrex::Real** Jdata = NULL;
+  amrex::Real** Jdata = nullptr;
   // Sparse direct solve data
   // Ptrs to CSR/CSC matrix for each submatrices (cells)
   SUNMatrix* PS;
-  int** rowVals = NULL;
-  int** rowPtrs = NULL;
-  int** colPtrs = NULL;
-  int** colVals = NULL;
-  int* indx = NULL;
-  amrex::Real** JSPSmat = NULL;
+  int** rowVals = nullptr;
+  int** rowPtrs = nullptr;
+  int** colPtrs = nullptr;
+  int** colVals = nullptr;
+  int* indx = nullptr;
+  amrex::Real** JSPSmat = nullptr;
 #ifdef PELE_USE_KLU
   klu_common* Common;
   klu_symbolic** Symbolic;

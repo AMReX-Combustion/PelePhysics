@@ -158,11 +158,11 @@ private:
 #endif
 
 #ifndef AMREX_USE_GPU
-  N_Vector y = NULL;
-  SUNLinearSolver LS = NULL;
-  SUNMatrix A = NULL;
-  void* cvode_mem = NULL;
-  CVODEUserData* udata_g = NULL;
+  N_Vector y = nullptr;
+  SUNLinearSolver LS = nullptr;
+  SUNMatrix A = nullptr;
+  void* cvode_mem = nullptr;
+  CVODEUserData* udata_g = nullptr;
 #endif
 };
 } // namespace reactions
