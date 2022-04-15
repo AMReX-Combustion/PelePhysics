@@ -965,7 +965,7 @@ struct SRK
   }
 
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE SRK(Args...)
+  AMREX_GPU_HOST_DEVICE SRK(Args... /*unused*/)
   {
     // Note maybe these should be placed in mechanism.H and computed
     // there instead of every time the EOS is initialized

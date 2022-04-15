@@ -12,7 +12,7 @@ template <typename EOSType>
 struct NonIdealChungCorrections
 {
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void operator()(Args...)
+  AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void operator()(Args... /*unused*/)
   {
   }
 };
@@ -418,7 +418,7 @@ struct SimpleTransport
     }
   }
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE SimpleTransport(Args...)
+  AMREX_GPU_HOST_DEVICE SimpleTransport(Args... /*unused*/)
   {
   }
 };

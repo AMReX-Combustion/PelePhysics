@@ -22,8 +22,8 @@ public:
   void fillPatchFromPlt(
     int a_lev,
     const amrex::Geometry& a_level_geom,
-    int plt_comp,
-    int data_comp,
+    int pltComp,
+    int dataComp,
     int ncomp,
     amrex::MultiFab& a_mf);
 
