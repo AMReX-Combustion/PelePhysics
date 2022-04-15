@@ -553,7 +553,7 @@ ReactorCvode::checkCvodeOptions() const
     SPARSITY_INFO(&nJdata, &HP, 1);
     amrex::Print() << "--> Chem. Jac -- non zero entries: " << nJdata
                    << ", which represents "
-                   << static_cast<float> nJdata /
+                   << static_cast<float>(nJdata) /
                         static_cast<float>(
                           (NUM_SPECIES + 1) * (NUM_SPECIES + 1)) *
                         100.0
