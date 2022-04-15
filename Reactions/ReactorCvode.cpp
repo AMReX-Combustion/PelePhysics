@@ -635,8 +635,8 @@ ReactorCvode::checkCvodeOptions() const
     amrex::Print()
       << "--> Simplified Syst Jac (for Precond) -- non zero entries: " << nJdata
       << ", which represents "
-      << nJdata / static_cast<float>((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) *
-           100.0
+      << static_cast<float>(nJdata) /
+           static_cast<float>((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
       << " % fill-in pattern\n";
     PS = SUNSparseMatrix(
       (NUM_SPECIES + 1), (NUM_SPECIES + 1), nJdata, CSR_MAT,
