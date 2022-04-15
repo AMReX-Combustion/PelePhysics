@@ -259,7 +259,7 @@ ReactorArkode::react(
   SUNProfiler_Print(sun_profiler, stdout);
 #endif
 
-  return nfe;
+  return static_cast<int>(nfe);
 }
 
 // React for 1d array
@@ -392,7 +392,7 @@ ReactorArkode::react(
 
   amrex::The_Arena()->free(user_data);
 
-  return nfe;
+  return static_cast<int>(nfe);
 }
 
 int

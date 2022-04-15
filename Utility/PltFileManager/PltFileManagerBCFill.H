@@ -9,7 +9,7 @@ struct FillExtDirDummy
 {
 
   AMREX_GPU_HOST
-  constexpr FillExtDirDummy() {}
+  constexpr FillExtDirDummy() = default;
 
   AMREX_GPU_DEVICE
   void operator()(
