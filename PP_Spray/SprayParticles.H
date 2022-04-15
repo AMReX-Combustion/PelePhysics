@@ -139,34 +139,64 @@ public:
   ///
   static inline void resetID(const int id) { ParticleType::NextID(id); }
 
-  ///
-  /// Set appropriate number of ghost cells
-  ///
-  static inline void setSprayGridInfo(
-    const int level,
-    const int finest_level,
-    const int amr_ncycle,
-    const int fine_ref_ratio,
-    int& ghost_part_width,
-    int& state_width,
-    int& source_width)
+  // This returns the number of ghost cells for making ghost particles
+  // level - Level N
+  // finest_level - Maximum level
+  // amr_ncycle - Number of AMR subcycles taken on the Eulerian mesh
+  // cfl - Particle CFL number on level N
+  // depos_width - Number of source term cells influenced by a particle
+  // NOTE: This is called on level N-1 to make ghost particles on level N
+  // from valid particles on level N-1
+  static inline int getGhostPartCells(const int level,
+                                      const int finest_level,
+                                      const int amr_ncycle,
+                                      const amrex::Real& cfl = 0.5,
+                                      const int depos_width = 1)
   {
-    // If higher order interpolation or deposition gets implemented
-    int stencil_interpolation_width = 1;
-    int stencil_deposition_width = 1;
-    // Set the number of cells on level+1 to hold ghost particles
-    ghost_part_width = 0;
-    if (level < finest_level) {
-      ghost_part_width = fine_ref_ratio;
+    if (level - 1 < finest_level) {
+      return depos_width + int(std::round(cfl * amrex::Real(amr_ncycle)));
     }
-    int ghost_cell_num = 0;
-    if (level > 0) {
-      ghost_cell_num += amr_ncycle;
+    return 0;
+  }
+
+  // This returns the number of ghost cells needed for a MultiFab
+  // used to interpolate a state to a particle location
+  static inline int getStateGhostCells(const int level,
+                                       const int finest_level,
+                                       const int amr_ncycle,
+                                       const amrex::Real& cfl = 0.5,
+                                       const int interp_width = 1,
+                                       const int depos_width = 1)
+  {
+    int ghost_state = interp_width + int(std::round(cfl));
+    if (level == 0) {
+      return ghost_state;
+    } else {
+      // If ghost particles are present, we need to accommodate those
+      const int ghost_part_cells =
+        getGhostPartCells(level, finest_level, amr_ncycle, cfl, depos_width);
+      int ghost_part_state = interp_width + ghost_part_cells;
+      return amrex::max(ghost_part_state, ghost_state);
     }
-    // Set the number of ghost cells needed for interpolation
-    state_width = stencil_interpolation_width + ghost_cell_num;
-    // Set the number of ghost cells needed for source deposition
-    source_width = amrex::max(stencil_deposition_width, ghost_cell_num);
+  }
+
+  // This returns the number of ghost cells needed for a MultiFab
+  // used to interpolate a state to a particle location
+  static inline int getSourceGhostCells(const int level,
+                                        const int finest_level,
+                                        const int amr_ncycle,
+                                        const amrex::Real& cfl = 0.5,
+                                        const int depos_width = 1)
+  {
+    int ghost_source = depos_width + int(std::round(cfl));
+    if (level == 0) {
+      return ghost_source;
+    } else {
+      // If ghost particles are present, we need to accommodate those
+      const int ghost_part_cells =
+        getGhostPartCells(level, finest_level, amr_ncycle, cfl, depos_width);
+      return amrex::max(ghost_part_cells, ghost_source);
+    }
   }
 
   ///
