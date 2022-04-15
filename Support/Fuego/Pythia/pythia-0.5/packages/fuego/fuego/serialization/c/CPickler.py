@@ -129,6 +129,8 @@ class CPickler(CMill):
             if species.symbol not in qss_list_tmp:
                 weight = 0.0
                 for elem, coef in species.composition:
+                    if elem == "AO":
+                        elem = "O"
                     aw = mechanism.element(elem).weight
                     if not aw:
                         aw = periodic.symbol(elem.capitalize()).atomicWeight
@@ -12830,6 +12832,8 @@ class CPickler(CMill):
             species = self.nonqss_species[spec_idx]
             self._write(self.line("%s" % species.symbol))
             for elem, coef in mechanism.species(sp).composition:
+                if elem == "AO":
+                    elem = "O"
                 self._write(
                     "ncf[ %d * kd + %d ] = %d; "
                     % (

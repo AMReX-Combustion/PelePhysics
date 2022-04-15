@@ -41,6 +41,7 @@ EXPORT_PYTHON_MODULES = \
     ReactionSRI.py \
     ReactionSection.py \
     ReactionTROE.py \
+    ReactionPLOG.py \
     ReactionUnitsA.py \
     ReactionUnitsE.py \
     RegularExpressions.py \
