@@ -258,24 +258,23 @@ PltFileManager::fillPatchFromPlt(
           a_mf.ParallelCopy(temp, 0, dataComp, nComp);
 
           break;
-
-          // otherwise let just do another InterpFromCoarseLevel
-        } else {
-          MultiFab temp(refine(m_grids[pltlev], rr), m_dmaps[pltlev], nComp, 0);
-          PhysBCFunct<GpuBndryFuncFab<FillExtDirDummy>> crse_bndry_func(
-            m_geoms[pltlev], {dummyBCRec}, FillExtDirDummy{});
-          PhysBCFunct<GpuBndryFuncFab<FillExtDirDummy>> fine_bndry_func(
-            a_level_geom, {dummyBCRec}, FillExtDirDummy{});
-          InterpFromCoarseLevel(
-            temp, IntVect(0), 0.0, m_data[pltlev], pltComp, 0, nComp,
-            m_geoms[pltlev], a_level_geom, crse_bndry_func, 0, fine_bndry_func,
-            0, rr, mapper, {dummyBCRec}, 0);
-          a_mf.ParallelCopy(temp, 0, dataComp, nComp);
         }
+
+        // Otherwise do another InterpFromCoarseLevel
+        MultiFab temp(refine(m_grids[pltlev], rr), m_dmaps[pltlev], nComp, 0);
+        PhysBCFunct<GpuBndryFuncFab<FillExtDirDummy>> crse_bndry_func(
+          m_geoms[pltlev], {dummyBCRec}, FillExtDirDummy{});
+        PhysBCFunct<GpuBndryFuncFab<FillExtDirDummy>> fine_bndry_func(
+          a_level_geom, {dummyBCRec}, FillExtDirDummy{});
+        InterpFromCoarseLevel(
+          temp, IntVect(0), 0.0, m_data[pltlev], pltComp, 0, nComp,
+          m_geoms[pltlev], a_level_geom, crse_bndry_func, 0, fine_bndry_func, 0,
+          rr, mapper, {dummyBCRec}, 0);
+        a_mf.ParallelCopy(temp, 0, dataComp, nComp);
       }
 
-      // Otherwise bail out because we don't handle averaging_down (TODO ?)
     } else {
+      // Otherwise bail out because we don't handle averaging_down (TODO ?)
       Abort("When initializing dataFromPlt, our level 0 can't be coarser than "
             "the PltFile one");
     }
@@ -317,20 +316,19 @@ PltFileManager::fillPatchFromPlt(
         a_mf.ParallelCopy(temp, 0, dataComp, nComp);
 
         break;
-
-        // otherwise let just do another InterpFromCoarseLevel
-      } else {
-        MultiFab temp(refine(m_grids[pltlev], rr), m_dmaps[pltlev], nComp, 0);
-        PhysBCFunct<GpuBndryFuncFab<FillExtDirDummy>> crse_bndry_func(
-          m_geoms[pltlev], {dummyBCRec}, FillExtDirDummy{});
-        PhysBCFunct<GpuBndryFuncFab<FillExtDirDummy>> fine_bndry_func(
-          a_level_geom, {dummyBCRec}, FillExtDirDummy{});
-        InterpFromCoarseLevel(
-          temp, IntVect(0), 0.0, m_data[pltlev], pltComp, 0, nComp,
-          m_geoms[pltlev], a_level_geom, crse_bndry_func, 0, fine_bndry_func, 0,
-          rr, mapper, {dummyBCRec}, 0);
-        a_mf.ParallelCopy(temp, 0, dataComp, nComp);
       }
+
+      // Otherwise do another InterpFromCoarseLevel
+      MultiFab temp(refine(m_grids[pltlev], rr), m_dmaps[pltlev], nComp, 0);
+      PhysBCFunct<GpuBndryFuncFab<FillExtDirDummy>> crse_bndry_func(
+        m_geoms[pltlev], {dummyBCRec}, FillExtDirDummy{});
+      PhysBCFunct<GpuBndryFuncFab<FillExtDirDummy>> fine_bndry_func(
+        a_level_geom, {dummyBCRec}, FillExtDirDummy{});
+      InterpFromCoarseLevel(
+        temp, IntVect(0), 0.0, m_data[pltlev], pltComp, 0, nComp,
+        m_geoms[pltlev], a_level_geom, crse_bndry_func, 0, fine_bndry_func, 0,
+        rr, mapper, {dummyBCRec}, 0);
+      a_mf.ParallelCopy(temp, 0, dataComp, nComp);
     }
   }
 }

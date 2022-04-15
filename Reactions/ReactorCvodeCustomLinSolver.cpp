@@ -144,7 +144,8 @@ SUNLinSolFree_Dense_custom(SUNLinearSolver S)
 
 #else
 
-#define SUN_CUSP_CONTENT(S) ((SUNLinearSolverContent_Sparse_custom)(S->content))
+#define SUN_CUSP_CONTENT(S) \
+  ((SUNLinearSolverContent_Sparse_custom)((S)->content))
 #define SUN_CUSP_REACTYPE(S) (SUN_CUSP_CONTENT(S)->reactor_type)
 #define SUN_CUSP_NUM_SUBSYS(S) (SUN_CUSP_CONTENT(S)->nsubsys)
 #define SUN_CUSP_SUBSYS_NNZ(S) (SUN_CUSP_CONTENT(S)->subsys_nnz)

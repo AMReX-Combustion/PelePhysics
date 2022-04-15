@@ -44,9 +44,8 @@ struct PelePhysics
   {
     if (std::is_same<EosModel, TransportModel>::value) {
       return EosModel::identifier();
-    } else {
-      return EosModel::identifier() + "-" + TransportModel::identifier();
     }
+    return EosModel::identifier() + "-" + TransportModel::identifier();
   }
 
   template <class... Args>

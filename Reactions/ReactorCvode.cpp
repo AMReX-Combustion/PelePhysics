@@ -439,7 +439,8 @@ ReactorCvode::checkCvodeOptions() const
       amrex::Print()
         << "--> cuSparse AJ based matrix Preconditioner -- non zero entries: "
         << nJdata << ", which represents "
-        << nJdata / float((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
+        << static_cast<float>(nJdata) /
+             static_cast<float>((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
         << " % fill-in pattern\n";
     }
 #elif defined(AMREX_USE_HIP)
@@ -458,7 +459,8 @@ ReactorCvode::checkCvodeOptions() const
       amrex::Print()
         << "--> KLU sparse AJ based matrix Preconditioner -- non zero entries: "
         << nJdata << ", which represents "
-        << nJdata / float((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
+        << static_cast<float>(nJdata) /
+             static_cast<float>((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
         << " % fill-in pattern\n";
     }
 #endif
@@ -474,7 +476,8 @@ ReactorCvode::checkCvodeOptions() const
         << "--> custom sparse AJ based matrix Preconditioner -- non zero "
            "entries: "
         << nJdata << ", which represents "
-        << nJdata / float((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
+        << static_cast<float>(nJdata) /
+             static_cast<float>((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
         << " % fill-in pattern\n";
     }
 #endif
@@ -494,7 +497,8 @@ ReactorCvode::checkCvodeOptions() const
         amrex::Print()
           << "--> cuSparse based matrix Solver -- non zero entries: " << nJdata
           << ", which represents "
-          << nJdata / float((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
+          << static_cast<float>(nJdata) /
+               static_cast<float>((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
           << " % fill-in pattern\n";
       }
 #elif defined(AMREX_USE_HIP)
@@ -513,7 +517,8 @@ ReactorCvode::checkCvodeOptions() const
         amrex::Print()
           << "--> sparse AJ-based matrix custom Solver -- non zero entries: "
           << nJdata << ", which represents "
-          << nJdata / float((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
+          << static_cast<float>(nJdata) /
+               static_cast<float>((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
           << " % fill-in pattern\n";
       }
     } else if (solve_type == cvode::sparseDirect) {
@@ -523,7 +528,8 @@ ReactorCvode::checkCvodeOptions() const
         amrex::Print()
           << "--> KLU sparse AJ-based matrix Solver -- non zero entries: "
           << nJdata << ", which represents "
-          << nJdata / float((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
+          << static_cast<float>(nJdata) /
+               static_cast<float>((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
           << " % fill-in pattern\n";
       }
 #else
@@ -547,7 +553,9 @@ ReactorCvode::checkCvodeOptions() const
     SPARSITY_INFO(&nJdata, &HP, 1);
     amrex::Print() << "--> Chem. Jac -- non zero entries: " << nJdata
                    << ", which represents "
-                   << nJdata / float((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) *
+                   << static_cast<float>(nJdata) /
+                        static_cast<float>(
+                          (NUM_SPECIES + 1) * (NUM_SPECIES + 1)) *
                         100.0
                    << " % fill-in pattern\n";
     SUNMatrix PS;
@@ -586,7 +594,9 @@ ReactorCvode::checkCvodeOptions() const
     SPARSITY_INFO_SYST(&nJdata, &HP, 1);
     amrex::Print() << "--> Syst. Jac -- non zero entries: " << nJdata
                    << ", which represents "
-                   << nJdata / float((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) *
+                   << static_cast<float>(nJdata) /
+                        static_cast<float>(
+                          (NUM_SPECIES + 1) * (NUM_SPECIES + 1)) *
                         100.0
                    << " % fill-in pattern\n";
     PS = SUNSparseMatrix(
@@ -625,7 +635,8 @@ ReactorCvode::checkCvodeOptions() const
     amrex::Print()
       << "--> Simplified Syst Jac (for Precond) -- non zero entries: " << nJdata
       << ", which represents "
-      << nJdata / float((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
+      << static_cast<float>(nJdata) /
+           static_cast<float>((NUM_SPECIES + 1) * (NUM_SPECIES + 1)) * 100.0
       << " % fill-in pattern\n";
     PS = SUNSparseMatrix(
       (NUM_SPECIES + 1), (NUM_SPECIES + 1), nJdata, CSR_MAT,
@@ -1397,7 +1408,7 @@ ReactorCvode::react(
   SUNProfiler_Print(sun_profiler, stdout);
 #endif
 
-  return nfe;
+  return static_cast<int>(nfe);
 }
 
 int
@@ -1677,7 +1688,7 @@ ReactorCvode::react(
   nfe += nfeLS;
 #endif
 
-  return nfe;
+  return static_cast<int>(nfe);
 }
 
 int
