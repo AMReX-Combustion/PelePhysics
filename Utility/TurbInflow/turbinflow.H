@@ -64,18 +64,18 @@ public:
 
   bool is_initialized() const { return turbinflow_initialized; }
 
-  void read_turb_planes(TurbParm& a_tp, amrex::Real z);
+  static void read_turb_planes(TurbParm& a_tp, amrex::Real z);
 
-  void read_one_turb_plane(TurbParm& a_tp, int iplane, int k);
+  static void read_one_turb_plane(TurbParm& a_tp, int iplane, int k);
 
-  void fill_turb_plane(
+  static void fill_turb_plane(
     TurbParm& a_tp,
     const amrex::Vector<amrex::Real>& x,
     const amrex::Vector<amrex::Real>& y,
     amrex::Real z,
     amrex::FArrayBox& v);
 
-  void set_turb(
+  static void set_turb(
     int normDir,
     int transDir1,
     int transDir2,

@@ -172,8 +172,7 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void Calc_CompressFactor_Z(
+  static AMREX_FORCE_INLINE void Calc_CompressFactor_Z(
     amrex::Real& Z,
     amrex::Real am,
     amrex::Real bm,
@@ -302,16 +301,20 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void molecular_weight(amrex::Real mw[]) { get_mw(mw); }
+  static AMREX_FORCE_INLINE void molecular_weight(amrex::Real mw[])
+  {
+    get_mw(mw);
+  }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void inv_molecular_weight(amrex::Real imw[]) { get_imw(imw); }
+  static AMREX_FORCE_INLINE void inv_molecular_weight(amrex::Real imw[])
+  {
+    get_imw(imw);
+  }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void TY2Cp(amrex::Real /*T*/, amrex::Real* /*Y[]*/, amrex::Real& /*Cp*/)
+  static AMREX_FORCE_INLINE void
+  TY2Cp(amrex::Real /*T*/, amrex::Real* /*Y[]*/, amrex::Real& /*Cp*/)
   {
     amrex::Error("TY2Cp not physically possible for SRK EoS");
   }
@@ -349,8 +352,8 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void TY2Cv(amrex::Real /*T*/, amrex::Real* /*Y[]*/, amrex::Real& /*Cp*/)
+  static AMREX_FORCE_INLINE void
+  TY2Cv(amrex::Real /*T*/, amrex::Real* /*Y[]*/, amrex::Real& /*Cp*/)
   {
     amrex::Error("TY2Cv not physically possible for SRK EoS");
   }
@@ -368,15 +371,15 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void T2Cpi(amrex::Real /*T*/, amrex::Real* /*Cpi[]*/)
+  static AMREX_FORCE_INLINE void
+  T2Cpi(amrex::Real /*T*/, amrex::Real* /*Cpi[]*/)
   {
     amrex::Error("T2Cpi not physically possible for SRK EoS");
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void EY2T(amrex::Real /*E*/, amrex::Real* /*Y[]*/, amrex::Real& /*T*/)
+  static AMREX_FORCE_INLINE void
+  EY2T(amrex::Real /*E*/, amrex::Real* /*Y[]*/, amrex::Real& /*T*/)
   {
     // For Fuego this function is really just a wrapper for GET_T_GIVEN_EY
     // In SRK this will be different probably
@@ -427,16 +430,15 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void HY2T(amrex::Real /*H*/, amrex::Real* /*Y[]*/, amrex::Real& /*T*/)
+  static AMREX_FORCE_INLINE void
+  HY2T(amrex::Real /*H*/, amrex::Real* /*Y[]*/, amrex::Real& /*T*/)
   {
     // In SRK this  function is not possible
     amrex::Error("HY2T not physically possible for this EoS");
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void RHY2T(
+  static AMREX_FORCE_INLINE void RHY2T(
     amrex::Real /*R*/,
     amrex::Real /*H*/,
     amrex::Real* /*Y[]*/,
@@ -565,8 +567,7 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void RTY2JAC(
+  static AMREX_FORCE_INLINE void RTY2JAC(
     amrex::Real /*R*/,
     amrex::Real /*T*/,
     amrex::Real* /*Y[]*/,
@@ -577,8 +578,7 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void T2Ei(amrex::Real /*T*/, amrex::Real* /*Ei[]*/)
+  static AMREX_FORCE_INLINE void T2Ei(amrex::Real /*T*/, amrex::Real* /*Ei[]*/)
   {
     amrex::Error("T2Ei not physically possible for SRK EoS");
   }
@@ -633,12 +633,16 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void Y2X(amrex::Real Y[], amrex::Real X[]) { CKYTX(Y, X); }
+  static AMREX_FORCE_INLINE void Y2X(amrex::Real Y[], amrex::Real X[])
+  {
+    CKYTX(Y, X);
+  }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void X2Y(amrex::Real X[], amrex::Real Y[]) { CKXTY(X, Y); }
+  static AMREX_FORCE_INLINE void X2Y(amrex::Real X[], amrex::Real Y[])
+  {
+    CKXTY(X, Y);
+  }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
@@ -692,8 +696,7 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void T2Hi(amrex::Real /*T*/, amrex::Real* /*Hi[]*/)
+  static AMREX_FORCE_INLINE void T2Hi(amrex::Real /*T*/, amrex::Real* /*Hi[]*/)
   {
     amrex::Error("T2Hi not physically possible for SRK EoS");
   }
@@ -748,12 +751,11 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void S(amrex::Real& s) { s = 1.0; }
+  static AMREX_FORCE_INLINE void S(amrex::Real& s) { s = 1.0; }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void TY2G(amrex::Real /*T*/, amrex::Real* /*Y[]*/, amrex::Real& /*G*/)
+  static AMREX_FORCE_INLINE void
+  TY2G(amrex::Real /*T*/, amrex::Real* /*Y[]*/, amrex::Real& /*G*/)
   {
     amrex::Error("TY2G not physically possible for SRK EoS");
   }
@@ -822,8 +824,8 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void TY2H(amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& H)
+  static AMREX_FORCE_INLINE void
+  TY2H(amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& H)
   {
     amrex::Real hi[NUM_SPECIES];
     CKHMS(&T, hi);
@@ -834,8 +836,8 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void Y2WBAR(const amrex::Real Y[], amrex::Real& WBAR)
+  static AMREX_FORCE_INLINE void
+  Y2WBAR(const amrex::Real Y[], amrex::Real& WBAR)
   {
     amrex::Real tmp[NUM_SPECIES];
     get_imw(tmp);
@@ -847,8 +849,7 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void RPE2dpdr_e(
+  static AMREX_FORCE_INLINE void RPE2dpdr_e(
     amrex::Real /*R*/,
     amrex::Real /*P*/,
     amrex::Real /* E */,
@@ -858,8 +859,8 @@ struct SRK
   }
 
   AMREX_GPU_HOST_DEVICE
-  AMREX_FORCE_INLINE
-  void RG2dpde(amrex::Real /*R*/, amrex::Real /*G*/, amrex::Real& /*dpde*/)
+  static AMREX_FORCE_INLINE void
+  RG2dpde(amrex::Real /*R*/, amrex::Real /*G*/, amrex::Real& /*dpde*/)
   {
     amrex::Error("RG2dpde not physically possible for SRK EoS");
   }
