@@ -93,7 +93,7 @@ struct ConstTransport
   }
 
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE ConstTransport(Args...)
+  AMREX_GPU_HOST_DEVICE ConstTransport(Args... /*unused*/)
   {
   }
 };

@@ -76,9 +76,9 @@ public:
     amrex::FArrayBox& v);
 
   void set_turb(
-    int nDir,
-    int trDir1,
-    int trDir2,
+    int normDir,
+    int transDir1,
+    int transDir2,
     amrex::FArrayBox& v,
     amrex::FArrayBox& data,
     const int dcomp);

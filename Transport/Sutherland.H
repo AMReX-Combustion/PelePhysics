@@ -108,7 +108,7 @@ struct SutherlandTransport
     }
   }
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE SutherlandTransport(Args...)
+  AMREX_GPU_HOST_DEVICE SutherlandTransport(Args... /*unused*/)
   {
   }
 };

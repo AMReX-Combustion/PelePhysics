@@ -89,12 +89,12 @@ ReactorNull::react(
 #ifdef MOD_REACTOR
     dt_react
 #endif
-  ,
+  /*dt_react*/,
   amrex::Real&
 #ifdef MOD_REACTOR
     time
 #endif
-  ,
+  /*time*/,
   int /*ncells*/
 #ifdef AMREX_USE_GPU
   ,
