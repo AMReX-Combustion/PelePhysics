@@ -241,7 +241,7 @@ fKernelSpec(
   const double dt_save,
   const int reactor_type,
   const amrex::Real* yvec_d,
-  amrex::Real* ydot_d,
+  amrex::Real* ydot_d, // NOLINT(readability-non-const-parameter)
   const amrex::Real* rhoe_init,
   const amrex::Real* rhoesrc_ext,
   const amrex::Real* rYs)
