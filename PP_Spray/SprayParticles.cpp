@@ -359,8 +359,8 @@ SprayParticleContainer::updateParticles(
   bool do_sub = false;
   if (do_move && spray_cfl_lev > sub_cfl) {
     do_sub = true;
-    sub_dt = sub_cfl / spray_cfl_lev * flow_dt;
     num_iter = int(std::ceil(spray_cfl_lev / sub_cfl));
+    sub_dt = flow_dt / Real(num_iter);
   }
   // Particle components indices
   SprayComps SPI = m_sprayIndx;
@@ -464,10 +464,6 @@ SprayParticleContainer::updateParticles(
           int cur_iter = 0;
           while (p.id() > 0 && cur_iter < num_iter) {
             cur_cfl -= sub_cfl;
-            if (cur_cfl < 0. && do_sub) {
-              cur_dt = flow_dt - ctime;
-              cur_cfl = 0.;
-            }
             // Flag for whether we are near EB boundaries
             bool do_fe_interp = false;
 #ifdef AMREX_USE_EB
