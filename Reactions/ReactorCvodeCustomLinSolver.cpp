@@ -227,7 +227,8 @@ SUNLinSol_sparse_custom(
   return (S);
 }
 
-SUNLinearSolver_Type SUNLinSolGetType_Sparse_custom(SUNLinearSolver /* S */)
+SUNLinearSolver_Type
+SUNLinSolGetType_Sparse_custom(SUNLinearSolver /* S */)
 {
   return (SUNLINEARSOLVER_DIRECT);
 }
