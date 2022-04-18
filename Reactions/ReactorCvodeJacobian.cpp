@@ -30,17 +30,14 @@ cJac(
 #ifdef AMREX_USE_CUDA
     amrex::Real* yvec_d = N_VGetDeviceArrayPointer(y_in);
     amrex::Real* Jdata = SUNMatrix_cuSparse_Data(J);
-    auto csr_row_count_d = udata->csr_row_count_d;
-    auto csr_col_index_d = udata->csr_col_index_d;
+    int* csr_row_count_d = SUNMatrix_cuSparse_IndexPointers(J);
+    int* csr_col_index_d = SUNMatrix_cuSparse_IndexValues(J);
 
     // Checks
-    if (
-      (SUNMatrix_cuSparse_Rows(J) != (NUM_SPECIES + 1) * ncells) ||
-      (SUNMatrix_cuSparse_Columns(J) != (NUM_SPECIES + 1) * ncells) ||
-      (SUNMatrix_cuSparse_NNZ(J) != ncells * NNZ)) {
-      amrex::Print() << "Jac error: matrix is wrong size!\n";
-      return 1;
-    }
+    AMREX_ASSERT(
+      (SUNMatrix_cuSparse_Rows(J) == (NUM_SPECIES + 1) * ncells) &&
+      (SUNMatrix_cuSparse_Columns(J) == (NUM_SPECIES + 1) * ncells) &&
+      (SUNMatrix_cuSparse_NNZ(J) == ncells * NNZ));
 
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
     amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
@@ -53,8 +50,7 @@ cJac(
             Jdata);
         }
       });
-    cudaError_t cuda_status = cudaStreamSynchronize(stream);
-    AMREX_ASSERT(cuda_status == cudaSuccess);
+    amrex::Gpu::Device::streamSynchronize();
 #else
     amrex::Abort(
       "Calling cJac with solve_type = sparse_direct only works with CUDA !");
