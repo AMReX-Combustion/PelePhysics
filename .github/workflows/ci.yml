@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: DoozyX/clang-format-lint-action@v0.11
+      - uses: DoozyX/clang-format-lint-action@v0.13
         with:
-          source: './Eos ./Transport ./Reactions ./Utility/PMF ./Utility/TurbInflow ./Utility/PltFileManager'
+          source: './Eos ./Transport ./Reactions ./Utility/PMF ./Utility/TurbInflow ./Utility/PltFileManager ./Support/Fuego/Mechanism'
           exclude: '.'
           extensions: 'H,h,cpp'
-          clangFormatVersion: 11
+          clangFormatVersion: 13
 
   Pythia:
     needs: Formatting
