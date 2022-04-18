@@ -7344,8 +7344,8 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
       (sc[3] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
-    wdot[3] += qdot;
     wdot[3] -= 2.000000 * qdot;
+    wdot[3] += qdot;
     wdot[6] += qdot;
   }
 
@@ -7401,8 +7401,8 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
       k_f * exp(-(g_RT[0] - 2.000000 * g_RT[0] + 2.000000 * g_RT[1])) * (refC) *
       ((sc[0] * sc[0]));
     const amrex::Real qdot = qf - qr;
-    wdot[0] += 2.000000 * qdot;
     wdot[0] -= qdot;
+    wdot[0] += 2.000000 * qdot;
     wdot[1] -= 2.000000 * qdot;
   }
 
