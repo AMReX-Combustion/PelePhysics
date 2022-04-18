@@ -2031,7 +2031,7 @@ class CPickler(CMill):
             self._write()
 
             # kfs
-            self._write("/* Evaluate the kfs */")
+            self._write("// Evaluate the kfs")
             # self._write("amrex::Real k_f[%d];"% nclassd)
             # self._write("amrex::Real Corr[%d];" % nclassd)
             self._write("amrex::Real k_f, k_r, Corr;")
@@ -5428,7 +5428,7 @@ class CPickler(CMill):
         self._write()
 
         self._write(
-            "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */"
+            "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache"
         )
         self._write("amrex::Real invT = 1.0 / tc[1];")
         self._write("amrex::Real invT2 = invT * invT;")
@@ -5472,7 +5472,7 @@ class CPickler(CMill):
             self._write("speciesEnthalpy_qss(h_RT_qss, tc);")
 
         if self.nQSSspecies > 0:
-            self._write("/* Fill sc_qss here*/")
+            self._write("// Fill sc_qss here")
             self._write("amrex::Real sc_qss[%d];" % self.nQSSspecies)
             self._write(
                 "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
@@ -5581,7 +5581,7 @@ class CPickler(CMill):
         self._write("amrex::Real tmp2 = tmp1*tmp3;")
         self._write("amrex::Real dehmixdc;")
 
-        self._write("/* dTdot/d[X] */")
+        self._write("// dTdot/d[X]")
         self._write("for (int k = 0; k < %d; ++k) {" % nSpecies)
         self._indent()
         self._write("dehmixdc = 0.0;")
@@ -5597,7 +5597,7 @@ class CPickler(CMill):
         self._outdent()
         self._write("}")
 
-        self._write("/* dTdot/dT */")
+        self._write("// dTdot/dT")
         self._write(
             "J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;"
             % (nSpecies * (nSpecies + 1) + nSpecies)
@@ -5616,10 +5616,10 @@ class CPickler(CMill):
             isPD = True
             if reaction.thirdBody:
                 has_alpha = True
-                self._write("/* also 3-body */")
+                self._write("// also 3-body")
             else:
                 has_alpha = False
-                self._write("/* non 3-body */")
+                self._write("// non 3-body")
                 print(
                     "FIXME: pressure dependent non-3-body reaction in _ajac_reaction"
                 )
@@ -5677,7 +5677,7 @@ class CPickler(CMill):
                     "FIXME: irreversible reaction in _ajac_reaction may not work"
                 )
                 self._write(
-                    "/* FIXME: irreversible reaction in _ajac_reaction may not work*/"
+                    "// FIXME: irreversible reaction in _ajac_reaction may not work"
                 )
             for k in range(self.nSpecies):
                 if k in sorted_reactants and k in sorted_products:
@@ -5685,7 +5685,7 @@ class CPickler(CMill):
                         "FIXME: irreversible reaction in _ajac_reaction may not work"
                     )
                     self._write(
-                        "/* FIXME: irreversible reaction in _ajac_reaction may not work*/"
+                        "// FIXME: irreversible reaction in _ajac_reaction may not work"
                     )
 
         dim = self._phaseSpaceUnits(reaction.reactants)
@@ -5707,14 +5707,14 @@ class CPickler(CMill):
         aeuc = self._activationEnergyUnits(reaction.units["activation"])
 
         if has_alpha:
-            self._write("/* 3-body correction factor */")
+            self._write("// 3-body correction factor")
             self._write(
                 "alpha = %s;" % self._enhancement_d(mechanism, reaction)
             )
 
         # forward
         A, beta, E = reaction.arrhenius
-        self._write("/* forward */")
+        self._write("// forward")
         self._write(
             "phi_f = %s;"
             % self._QSSsortedPhaseSpace(mechanism, sorted_reactants)
@@ -5742,7 +5742,7 @@ class CPickler(CMill):
 
         if isPD:
             low_A, low_beta, low_E = reaction.low
-            self._write("/* pressure-fall-off */")
+            self._write("// pressure-fall-off")
             self._write(
                 "k_0 = %.15g * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
                 % (low_A, low_beta, (aeuc / Rc / kelvin), low_E)
@@ -5757,11 +5757,11 @@ class CPickler(CMill):
             self._write("dlogfPrdT = dlogPrdT / (1.0+Pr);")
             #
             if reaction.sri:
-                self._write("/* SRI form */")
+                self._write("// SRI form")
                 print("FIXME: sri not supported in _ajac_reaction yet")
                 sys.exit(1)
             elif reaction.troe:
-                self._write("/* Troe form */")
+                self._write("// Troe form")
                 troe = reaction.troe
                 ntroe = len(troe)
                 self._write("logPr = log10(Pr);")
@@ -5822,14 +5822,14 @@ class CPickler(CMill):
                     "dlogFdT = dlogFcentdT*(troe - 0.67*dlogFdc - 1.27*dlogFdn) + dlogFdlogPr * dlogPrdT;"
                 )
             else:
-                self._write("/* Lindemann form */")
+                self._write("// Lindemann form")
                 self._write("F = 1.0;")
                 self._write("dlogFdlogPr = 0.0;")
                 self._write("dlogFdT = 0.0;")
 
         # reverse
         if not reaction.reversible:
-            self._write("/* rate of progress */")
+            self._write("// rate of progress")
             if (not has_alpha) and (not isPD):
                 if removeForward:
                     self._write("// Remove forward reaction")
@@ -5870,7 +5870,7 @@ class CPickler(CMill):
                 else:
                     self._write("dqdT = %sdlnkfdT*k_f*phi_f;" % Corr_s)
         else:
-            self._write("/* reverse */")
+            self._write("// reverse")
             self._write(
                 "phi_r = %s;"
                 % self._QSSsortedPhaseSpace(mechanism, sorted_products)
@@ -5926,7 +5926,7 @@ class CPickler(CMill):
 
             self._write("dkrdT = (dlnkfdT - dlnKcdT)*k_r;")
 
-            self._write("/* rate of progress */")
+            self._write("// rate of progress")
             if (not has_alpha) and (not isPD):
                 if removeForward:
                     self._write("// Remove forward reaction")
@@ -5976,25 +5976,25 @@ class CPickler(CMill):
                         "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % Corr_s
                     )
 
-        self._write("/* update wdot */")
+        self._write("// update wdot")
         for k in sorted(all_dict.keys()):
             s, nu = all_dict[k]
             if nu == 1:
-                self._write("wdot[%d] += q; /* %s */" % (k, s))
+                self._write("wdot[%d] += q; // %s" % (k, s))
             elif nu == -1:
-                self._write("wdot[%d] -= q; /* %s */" % (k, s))
+                self._write("wdot[%d] -= q; // %s" % (k, s))
             elif nu > 0:
-                self._write("wdot[%d] += %.15g * q; /* %s */" % (k, nu, s))
+                self._write("wdot[%d] += %.15g * q; // %s" % (k, nu, s))
             elif nu < 0:
-                self._write("wdot[%d] -= %.15g * q; /* %s */" % (k, -nu, s))
+                self._write("wdot[%d] -= %.15g * q; // %s" % (k, -nu, s))
 
         if isPD:
-            self._write("/* for convenience */")
+            self._write("// for convenience")
             self._write("k_f *= Corr;")
             if reaction.reversible:
                 self._write("k_r *= Corr;")
         elif has_alpha:
-            self._write("/* for convenience */")
+            self._write("// for convenience")
             self._write("k_f *= alpha;")
             if reaction.reversible:
                 self._write("k_r *= alpha;")
@@ -6056,14 +6056,14 @@ class CPickler(CMill):
             #    dqdc_s = dqdc_simple_precond(dqdc_s,k)
             #    if dqdc_s:
             #        symb_k = self.nonqss_species[k].symbol
-            #        self._write('/* d()/d[%s] */' % symb_k)
+            #        self._write('// d()/d[%s]' % symb_k)
             #        self._write('dqdci = %s;' % (dqdc_s))
             #        #
             #        for m in sorted(all_dict.keys()):
             #            if all_dict[m][1] != 0:
             #                s1 = 'J[%d] += %.15g * dqdci;' % (k*(nSpecies+1)+m, all_dict[m][1])
             #                s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
-            #                s2 = '/* dwdot[%s]/d[%s] */' % (all_dict[m][0], symb_k)
+            #                s2 = '// dwdot[%s]/d[%s]' % (all_dict[m][0], symb_k)
             #                self._write(s1.ljust(30) + s2)
 
             # self._outdent()
@@ -6110,7 +6110,7 @@ class CPickler(CMill):
 
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = "J[%d] += %.15g * dqdT; /* dwdot[%s]/dT */" % (
+                    s1 = "J[%d] += %.15g * dqdT; // dwdot[%s]/dT" % (
                         self.nSpecies * (self.nSpecies + 1) + m,
                         all_dict[m][1],
                         all_dict[m][0],
@@ -6123,7 +6123,7 @@ class CPickler(CMill):
             for k in range(self.nSpecies):
                 dqdc_s = dqdc_simple_precond("", k)
                 if dqdc_s:
-                    self._write("/* d()/d[%s] */" % all_dict[k][0])
+                    self._write("// d()/d[%s]" % all_dict[k][0])
                     self._write("dqdci = %s;" % (dqdc_s))
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
@@ -6135,12 +6135,12 @@ class CPickler(CMill):
                                 s1 = s1.replace("+= 1 *", "+=").replace(
                                     "+= -1 *", "-="
                                 )
-                                s2 = "/* dwdot[%s]/d[%s] */" % (
+                                s2 = "// dwdot[%s]/d[%s]" % (
                                     all_dict[m][0],
                                     all_dict[k][0],
                                 )
                                 self._write(s1.ljust(30) + s2)
-            self._write("/* d()/dT */")
+            self._write("// d()/dT")
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
                     s1 = "J[%d] += %.15g * dqdT;" % (
@@ -6152,7 +6152,7 @@ class CPickler(CMill):
                         .replace("+= -1 *", "-=")
                         .replace("+= -1 *", "-=")
                     )
-                    s2 = "/* dwdot[%s]/dT */" % (all_dict[m][0])
+                    s2 = "// dwdot[%s]/dT" % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
         return
 
@@ -6279,8 +6279,8 @@ class CPickler(CMill):
         self._write("aJacobian_precond(J, c, *Tp, *HP);")
 
         self._write()
-        self._write("/* dwdot[k]/dT */")
-        self._write("/* dTdot/d[X] */")
+        self._write("// dwdot[k]/dT")
+        self._write("// dTdot/d[X]")
         self._write("for (int k=0; k<%d; k++) {" % self.nSpecies)
         self._indent()
         self._write(
@@ -6334,7 +6334,7 @@ class CPickler(CMill):
         self._write()
 
         self._write(
-            "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */"
+            "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache"
         )
         self._write("amrex::Real invT = 1.0 / tc[1];")
         self._write("amrex::Real invT2 = invT * invT;")
@@ -6342,7 +6342,7 @@ class CPickler(CMill):
         self._write()
 
         if self.nQSSspecies > 0:
-            self._write("/* Fill sc_qss here*/")
+            self._write("// Fill sc_qss here")
             self._write("amrex::Real sc_qss[%d];" % self.nQSSspecies)
             self._write(
                 "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
@@ -6392,7 +6392,7 @@ class CPickler(CMill):
 
         if self.nQSSspecies > 0:
             self._write()
-            self._write("/* Fill qss coeff*/")
+            self._write("// Fill qss coeff")
             self._write(
                 "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);"
             )
@@ -6493,7 +6493,7 @@ class CPickler(CMill):
         self._write("amrex::Real tmp2 = tmp1*tmp3;")
         self._write("amrex::Real dehmixdc;")
 
-        self._write("/* dTdot/d[X] */")
+        self._write("// dTdot/d[X]")
         self._write("for (int k = 0; k < %d; ++k) {" % self.nSpecies)
         self._indent()
         self._write("dehmixdc = 0.0;")
@@ -6509,7 +6509,7 @@ class CPickler(CMill):
         self._outdent()
         self._write("}")
 
-        self._write("/* dTdot/dT */")
+        self._write("// dTdot/dT")
         self._write(
             "J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;"
             % (self.nSpecies * (self.nSpecies + 1) + self.nSpecies)
@@ -6531,10 +6531,10 @@ class CPickler(CMill):
             isPD = True
             if reaction.thirdBody:
                 has_alpha = True
-                self._write("/* also 3-body */")
+                self._write("// also 3-body")
             else:
                 has_alpha = False
-                self._write("/* non 3-body */")
+                self._write("// non 3-body")
                 print(
                     "FIXME: pressure dependent non-3-body reaction in _ajac_reaction"
                 )
@@ -6593,7 +6593,7 @@ class CPickler(CMill):
                     "FIXME: irreversible reaction in _ajac_reaction may not work"
                 )
                 self._write(
-                    "/* FIXME: irreversible reaction in _ajac_reaction may not work*/"
+                    "// FIXME: irreversible reaction in _ajac_reaction may not work"
                 )
             for k in range(self.nSpecies):
                 if k in sorted_reactants and k in sorted_products:
@@ -6601,7 +6601,7 @@ class CPickler(CMill):
                         "FIXME: irreversible reaction in _ajac_reaction may not work"
                     )
                     self._write(
-                        "/* FIXME: irreversible reaction in _ajac_reaction may not work*/"
+                        "// FIXME: irreversible reaction in _ajac_reaction may not work"
                     )
 
         dim = self._phaseSpaceUnits(reaction.reactants)
@@ -6623,14 +6623,14 @@ class CPickler(CMill):
         aeuc = self._activationEnergyUnits(reaction.units["activation"])
 
         if has_alpha:
-            self._write("/* 3-body correction factor */")
+            self._write("// 3-body correction factor")
             self._write(
                 "alpha = %s;" % self._enhancement_d(mechanism, reaction)
             )
 
         # forward
         A, beta, E = reaction.arrhenius
-        self._write("/* forward */")
+        self._write("// forward")
         self._write(
             "phi_f = %s;"
             % self._QSSsortedPhaseSpace(mechanism, sorted_reactants)
@@ -6658,7 +6658,7 @@ class CPickler(CMill):
 
         if isPD:
             low_A, low_beta, low_E = reaction.low
-            self._write("/* pressure-fall-off */")
+            self._write("// pressure-fall-off")
             self._write(
                 "k_0 = %.15g * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
                 % (low_A, low_beta, (aeuc / Rc / kelvin), low_E)
@@ -6673,11 +6673,11 @@ class CPickler(CMill):
             self._write("dlogfPrdT = dlogPrdT / (1.0+Pr);")
             #
             if reaction.sri:
-                self._write("/* SRI form */")
+                self._write("// SRI form")
                 print("FIXME: sri not supported in _ajac_reaction yet")
                 sys.exit(1)
             elif reaction.troe:
-                self._write("/* Troe form */")
+                self._write("// Troe form")
                 troe = reaction.troe
                 ntroe = len(troe)
                 self._write("logPr = log10(Pr);")
@@ -6738,14 +6738,14 @@ class CPickler(CMill):
                     "dlogFdT = dlogFcentdT*(troe - 0.67*dlogFdc - 1.27*dlogFdn) + dlogFdlogPr * dlogPrdT;"
                 )
             else:
-                self._write("/* Lindemann form */")
+                self._write("// Lindemann form")
                 self._write("F = 1.0;")
                 self._write("dlogFdlogPr = 0.0;")
                 self._write("dlogFdT = 0.0;")
 
         # reverse
         if not reaction.reversible:
-            self._write("/* rate of progress */")
+            self._write("// rate of progress")
             if (not has_alpha) and (not isPD):
                 if removeForward:
                     self._write("// Remove forward reaction")
@@ -6787,7 +6787,7 @@ class CPickler(CMill):
                 else:
                     self._write("dqdT = %sdlnkfdT*k_f*phi_f;" % Corr_s)
         else:
-            self._write("/* reverse */")
+            self._write("// reverse")
             self._write(
                 "phi_r = %s;"
                 % self._QSSsortedPhaseSpace(mechanism, sorted_products)
@@ -6839,7 +6839,7 @@ class CPickler(CMill):
 
             self._write("dkrdT = (dlnkfdT - dlnKcdT)*k_r;")
 
-            self._write("/* rate of progress */")
+            self._write("// rate of progress")
             if (not has_alpha) and (not isPD):
                 if removeForward:
                     self._write("// Remove forward reaction")
@@ -6889,26 +6889,26 @@ class CPickler(CMill):
                         "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % Corr_s
                     )
 
-        self._write("/* update wdot */")
+        self._write("// update wdot")
         # only the nSpecies transported in all_dict
         for k in sorted(all_dict.keys()):
             s, nu = all_dict[k]
             if nu == 1:
-                self._write("wdot[%d] += q; /* %s */" % (k, s))
+                self._write("wdot[%d] += q; // %s" % (k, s))
             elif nu == -1:
-                self._write("wdot[%d] -= q; /* %s */" % (k, s))
+                self._write("wdot[%d] -= q; // %s" % (k, s))
             elif nu > 0:
-                self._write("wdot[%d] += %.15g * q; /* %s */" % (k, nu, s))
+                self._write("wdot[%d] += %.15g * q; // %s" % (k, nu, s))
             elif nu < 0:
-                self._write("wdot[%d] -= %.15g * q; /* %s */" % (k, -nu, s))
+                self._write("wdot[%d] -= %.15g * q; // %s" % (k, -nu, s))
 
         if isPD:
-            self._write("/* for convenience */")
+            self._write("// for convenience")
             self._write("k_f *= Corr;")
             if reaction.reversible:
                 self._write("k_r *= Corr;")
         elif has_alpha:
-            self._write("/* for convenience */")
+            self._write("// for convenience")
             self._write("k_f *= alpha;")
             if reaction.reversible:
                 self._write("k_r *= alpha;")
@@ -6970,7 +6970,7 @@ class CPickler(CMill):
                 dqdc_s = dqdc_simple_d(dqdc_s, k)
                 if dqdc_s:
                     symb_k = self.nonqss_species[k].symbol
-                    self._write("/* d()/d[%s] */" % symb_k)
+                    self._write("// d()/d[%s]" % symb_k)
                     self._write("dqdci = %s;" % (dqdc_s))
                     #
                     for m in sorted(all_dict.keys()):
@@ -6982,7 +6982,7 @@ class CPickler(CMill):
                             s1 = s1.replace("+= 1 *", "+=").replace(
                                 "+= -1 *", "-="
                             )
-                            s2 = "/* dwdot[%s]/d[%s] */" % (
+                            s2 = "// dwdot[%s]/d[%s]" % (
                                 all_dict[m][0],
                                 symb_k,
                             )
@@ -7030,7 +7030,7 @@ class CPickler(CMill):
 
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = "J[%d] += %.15g * dqdT; /* dwdot[%s]/dT */" % (
+                    s1 = "J[%d] += %.15g * dqdT; // dwdot[%s]/dT" % (
                         self.nSpecies * (self.nSpecies + 1) + m,
                         all_dict[m][1],
                         all_dict[m][0],
@@ -7043,7 +7043,7 @@ class CPickler(CMill):
             for k in range(self.nSpecies):
                 dqdc_s = dqdc_simple_d("", k)
                 if dqdc_s:
-                    self._write("/* d()/d[%s] */" % all_dict[k][0])
+                    self._write("// d()/d[%s]" % all_dict[k][0])
                     self._write("dqdci = %s;" % (dqdc_s))
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
@@ -7055,12 +7055,12 @@ class CPickler(CMill):
                                 s1 = s1.replace("+= 1 *", "+=").replace(
                                     "+= -1 *", "-="
                                 )
-                                s2 = "/* dwdot[%s]/d[%s] */" % (
+                                s2 = "// dwdot[%s]/d[%s]" % (
                                     all_dict[m][0],
                                     all_dict[k][0],
                                 )
                                 self._write(s1.ljust(30) + s2)
-            self._write("/* d()/dT */")
+            self._write("// d()/dT")
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
                     s1 = "J[%d] += %.15g * dqdT;" % (
@@ -7072,7 +7072,7 @@ class CPickler(CMill):
                         .replace("+= -1 *", "-=")
                         .replace("+= -1 *", "-=")
                     )
-                    s2 = "/* dwdot[%s]/dT */" % (all_dict[m][0])
+                    s2 = "// dwdot[%s]/dT" % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
         return
 
@@ -7100,8 +7100,8 @@ class CPickler(CMill):
         self._write("aJacobian(J, c, *Tp, *consP);")
 
         self._write()
-        self._write("/* dwdot[k]/dT */")
-        self._write("/* dTdot/d[X] */")
+        self._write("// dwdot[k]/dT")
+        self._write("// dTdot/d[X]")
         self._write("for (int k=0; k<%d; k++) {" % nSpecies)
         self._indent()
         self._write("J[%d+k] *= 1.e-6;" % (nSpecies * (nSpecies + 1)))
@@ -7878,7 +7878,7 @@ class CPickler(CMill):
         self._indent()
 
         self._write(
-            "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */"
+            "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache"
         )
         self._write("amrex::Real invT = 1.0 / tc[1];")
 
@@ -7902,7 +7902,7 @@ class CPickler(CMill):
         )
         self._write("amrex::Real sc_qss[%d];" % (max(1, self.nQSSspecies)))
         if self.nQSSspecies > 0:
-            self._write("/* Fill sc_qss here*/")
+            self._write("// Fill sc_qss here")
             self._write("comp_sc_qss_cpu(sc, sc_qss, tc, invT);")
         self._write("comp_qfqr_cpu(q_f, q_r, sc, sc_qss, tc, invT);")
 
@@ -8958,7 +8958,7 @@ class CPickler(CMill):
         if nReactions > 0:
 
             self._write(
-                "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */"
+                "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache"
             )
             self._write("amrex::Real invT = 1.0 / tc[1];")
 
@@ -8979,7 +8979,7 @@ class CPickler(CMill):
             self._write()
             self._write("amrex::Real sc_qss[%d];" % (max(1, self.nQSSspecies)))
             if self.nQSSspecies > 0:
-                self._write("/* Fill sc_qss here*/")
+                self._write("// Fill sc_qss here")
                 self._write("comp_sc_qss(sc, sc_qss, tc, invT);")
 
             self._write("comp_qfqr_cpu(q_f, q_r, sc, sc_qss, tc, invT);")
@@ -9375,7 +9375,7 @@ class CPickler(CMill):
         self._write()
 
         self._write(
-            "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; /*temperature cache */"
+            "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache"
         )
         self._write("amrex::Real invT = 1.0 / tc[1];")
         self._write("amrex::Real invT2 = invT * invT;")
@@ -9480,7 +9480,7 @@ class CPickler(CMill):
             self._write()
 
         if self.nQSSspecies > 0:
-            self._write("/* Ignoring QSS for this one */")
+            self._write("// Ignoring QSS for this one")
         self._write(
             "amrex::Real c_R[%d], dcRdT[%d], e_RT[%d];"
             % (nSpecies, nSpecies, nSpecies)
@@ -9529,7 +9529,7 @@ class CPickler(CMill):
         self._write("amrex::Real tmp2 = tmp1*tmp3;")
         self._write("amrex::Real dehmixdc;")
 
-        self._write("/* dTdot/d[X] */")
+        self._write("// dTdot/d[X]")
         self._write("for (int k = 0; k < %d; ++k) {" % nSpecies)
         self._indent()
         self._write("dehmixdc = 0.0;")
@@ -9545,7 +9545,7 @@ class CPickler(CMill):
         self._outdent()
         self._write("}")
 
-        self._write("/* dTdot/dT */")
+        self._write("// dTdot/dT")
         self._write(
             "J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;"
             % (nSpecies * (nSpecies + 1) + nSpecies)
@@ -9561,10 +9561,10 @@ class CPickler(CMill):
             isPD = True
             if reaction.thirdBody:
                 has_alpha = True
-                self._write("/* also 3-body */")
+                self._write("// also 3-body")
             else:
                 has_alpha = False
-                self._write("/* non 3-body */")
+                self._write("// non 3-body")
                 print(
                     "FIXME: pressure dependent non-3-body reaction in _ajac_reaction"
                 )
@@ -9622,7 +9622,7 @@ class CPickler(CMill):
                     "FIXME: irreversible reaction in _ajac_reaction may not work"
                 )
                 self._write(
-                    "/* FIXME: irreversible reaction in _ajac_reaction may not work*/"
+                    "// FIXME: irreversible reaction in _ajac_reaction may not work"
                 )
             for k in range(self.nSpecies):
                 if k in sorted_reactants and k in sorted_products:
@@ -9630,7 +9630,7 @@ class CPickler(CMill):
                         "FIXME: irreversible reaction in _ajac_reaction may not work"
                     )
                     self._write(
-                        "/* FIXME: irreversible reaction in _ajac_reaction may not work*/"
+                        "// FIXME: irreversible reaction in _ajac_reaction may not work"
                     )
 
         if isPD:
@@ -9641,13 +9641,13 @@ class CPickler(CMill):
             Corr_s = ""
 
         if has_alpha:
-            self._write("/* 3-body correction factor */")
+            self._write("// 3-body correction factor")
             self._write(
                 "alpha = %s;" % self._enhancement_with_QSS(mechanism, reaction)
             )
 
         # forward
-        self._write("/* forward */")
+        self._write("// forward")
         self._write(
             "phi_f = %s;"
             % self._QSSsortedPhaseSpace(mechanism, sorted_reactants)
@@ -9692,7 +9692,7 @@ class CPickler(CMill):
         )
 
         if isPD:
-            self._write("/* pressure-fall-off */")
+            self._write("// pressure-fall-off")
             # OLD
             # self._write(
             #    "k_0 = low_A[%d] * exp(low_beta[%d] * tc[0] - activation_units[%d] * low_Ea[%d] * invT);"
@@ -9736,11 +9736,11 @@ class CPickler(CMill):
             self._write("dlogPrdT = log10e*(dlnk0dT - dlnkfdT);")
             self._write("dlogfPrdT = dlogPrdT / (1.0+Pr);")
             if reaction.sri:
-                self._write("/* SRI form */")
+                self._write("// SRI form")
                 print("FIXME: sri not supported in _ajac_reaction yet")
                 sys.exit(1)
             elif reaction.troe:
-                self._write("/* Troe form */")
+                self._write("// Troe form")
                 troe = reaction.troe
                 self._write("logPr = log10(Pr);")
                 self._write(
@@ -9798,14 +9798,14 @@ class CPickler(CMill):
                     "dlogFdT = dlogFcentdT*(troe - 0.67*dlogFdc - 1.27*dlogFdn) + dlogFdlogPr * dlogPrdT;"
                 )
             else:
-                self._write("/* Lindemann form */")
+                self._write("// Lindemann form")
                 self._write("F = 1.0;")
                 self._write("dlogFdlogPr = 0.0;")
                 self._write("dlogFdT = 0.0;")
 
         # reverse
         if not reaction.reversible:
-            self._write("/* rate of progress */")
+            self._write("// rate of progress")
             if (not has_alpha) and (not isPD):
                 self._write("q = k_f*phi_f;")
             else:
@@ -9824,7 +9824,7 @@ class CPickler(CMill):
             else:
                 self._write("dqdT = %sdlnkfdT*k_f*phi_f;" % Corr_s)
         else:
-            self._write("/* reverse */")
+            self._write("// reverse")
             self._write(
                 "phi_r = %s;"
                 % self._QSSsortedPhaseSpace(mechanism, sorted_products)
@@ -9880,7 +9880,7 @@ class CPickler(CMill):
 
             self._write("dkrdT = (dlnkfdT - dlnKcdT)*k_r;")
 
-            self._write("/* rate of progress */")
+            self._write("// rate of progress")
             if (not has_alpha) and (not isPD):
                 self._write("q = k_f*phi_f - k_r*phi_r;")
             else:
@@ -9902,25 +9902,25 @@ class CPickler(CMill):
                     "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % Corr_s
                 )
 
-        self._write("/* update wdot */")
+        self._write("// update wdot")
         for k in sorted(all_dict.keys()):
             s, nu = all_dict[k]
             if nu == 1:
-                self._write("wdot[%d] += q; /* %s */" % (k, s))
+                self._write("wdot[%d] += q; // %s" % (k, s))
             elif nu == -1:
-                self._write("wdot[%d] -= q; /* %s */" % (k, s))
+                self._write("wdot[%d] -= q; // %s" % (k, s))
             elif nu > 0:
-                self._write("wdot[%d] += %.15g * q; /* %s */" % (k, nu, s))
+                self._write("wdot[%d] += %.15g * q; // %s" % (k, nu, s))
             elif nu < 0:
-                self._write("wdot[%d] -= %.15g * q; /* %s */" % (k, -nu, s))
+                self._write("wdot[%d] -= %.15g * q; // %s" % (k, -nu, s))
 
         if isPD:
-            self._write("/* for convenience */")
+            self._write("// for convenience")
             self._write("k_f *= Corr;")
             if reaction.reversible:
                 self._write("k_r *= Corr;")
         elif has_alpha:
-            self._write("/* for convenience */")
+            self._write("// for convenience")
             self._write("k_f *= alpha;")
             if reaction.reversible:
                 self._write("k_r *= alpha;")
@@ -9978,7 +9978,7 @@ class CPickler(CMill):
                 dqdc_s = dqdc_simple(dqdc_s, k)
                 if dqdc_s:
                     symb_k = self.nonqss_species[k].symbol
-                    self._write("/* d()/d[%s] */" % symb_k)
+                    self._write("// d()/d[%s]" % symb_k)
                     self._write("dqdci = %s;" % (dqdc_s))
                     #
                     for m in sorted(all_dict.keys()):
@@ -9990,7 +9990,7 @@ class CPickler(CMill):
                             s1 = s1.replace("+= 1 *", "+=").replace(
                                 "+= -1 *", "-="
                             )
-                            s2 = "/* dwdot[%s]/d[%s] */" % (
+                            s2 = "// dwdot[%s]/d[%s]" % (
                                 all_dict[m][0],
                                 symb_k,
                             )
@@ -10038,7 +10038,7 @@ class CPickler(CMill):
 
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
-                    s1 = "J[%d] += %.15g * dqdT; /* dwdot[%s]/dT */" % (
+                    s1 = "J[%d] += %.15g * dqdT; // dwdot[%s]/dT" % (
                         self.nSpecies * (self.nSpecies + 1) + m,
                         all_dict[m][1],
                         all_dict[m][0],
@@ -10049,7 +10049,7 @@ class CPickler(CMill):
             for k in range(self.nSpecies):
                 dqdc_s = dqdc_simple("", k)
                 if dqdc_s:
-                    self._write("/* d()/d[%s] */" % all_dict[k][0])
+                    self._write("// d()/d[%s]" % all_dict[k][0])
                     self._write("dqdci = %s;" % (dqdc_s))
                     if reaction.reversible or k in rea_dict:
                         for m in sorted(all_dict.keys()):
@@ -10061,12 +10061,12 @@ class CPickler(CMill):
                                 s1 = s1.replace("+= 1 *", "+=").replace(
                                     "+= -1 *", "-="
                                 )
-                                s2 = "/* dwdot[%s]/d[%s] */" % (
+                                s2 = "// dwdot[%s]/d[%s]" % (
                                     all_dict[m][0],
                                     all_dict[k][0],
                                 )
                                 self._write(s1.ljust(30) + s2)
-            self._write("/* d()/dT */")
+            self._write("// d()/dT")
             for m in sorted(all_dict.keys()):
                 if all_dict[m][1] != 0:
                     s1 = "J[%d] += %.15g * dqdT;" % (
@@ -10078,7 +10078,7 @@ class CPickler(CMill):
                         .replace("+= -1 *", "-=")
                         .replace("+= -1 *", "-=")
                     )
-                    s2 = "/* dwdot[%s]/dT */" % (all_dict[m][0])
+                    s2 = "// dwdot[%s]/dT" % (all_dict[m][0])
                     self._write(s1.ljust(30) + s2)
         return
 
@@ -12971,10 +12971,10 @@ class CPickler(CMill):
         )
         self._write("{")
         self._indent()
-        self._write("int n,i; /*Loop Counters */")
+        self._write("int n,i;")
         self._write("char cstr[1000];")
         self._write("char *saveptr;")
-        self._write("char *p; /*String Tokens */")
+        self._write("char *p; // String Tokens")
         self._write(self.line(" Strip Comments "))
         self._write("for (i=0; i<lenline; ++i) {")
         self._indent()
@@ -13717,16 +13717,14 @@ class CPickler(CMill):
         self._write()
         self._rep += ["#include <AMReX_Gpu.H>", "#include <AMReX_REAL.H>"]
         self._write()
-        self._write("#if 0")
         self._write("/* Elements")
         nb_elem = 0
         for element in mechanism.element():
             self._write("%d  %s" % (element.id, element.symbol))
             nb_elem += 1
         self._write("*/")
-        self._write("#endif")
         self._write()
-        self._write("/* Species */")
+        self._write("// Species")
         for species in self.nonqss_species_list:
             s = species.strip()
             # Ionic species
@@ -15798,7 +15796,7 @@ class CPickler(CMill):
                 print("X IS ")
                 print(X)
 
-                self._write("/* Putting it all together */")
+                self._write("// Putting it all together")
                 for helper in intermediate_helpers:
                     if helper in self.list_of_intermediate_helpers:
                         self._write(
@@ -16646,7 +16644,7 @@ class CPickler(CMill):
         self._write("eval_jacob(0, Press_MKS, y_pyjac, J);")
 
         self._write()
-        self._write("/* Reorganization */")
+        self._write("// Reorganization")
         self._write("for (int k=0; k<%d; k++) {" % (nSpecies + 1))
         self._indent()
         self._write(
@@ -17161,9 +17159,9 @@ class CPickler(CMill):
         self._write("aJacobian_precond(J, c, *Tp, *HP);")
 
         self._write()
-        self._write("/* Change of coord */")
-        self._write("/* dwdot[k]/dT */")
-        self._write("/* dTdot/d[X] */")
+        self._write("// Change of coord")
+        self._write("// dwdot[k]/dT")
+        self._write("// dTdot/d[X]")
         self._write("for (int k=0; k<%d; k++) {" % nSpecies)
         self._indent()
         self._write(
@@ -17177,13 +17175,13 @@ class CPickler(CMill):
         self._outdent()
         self._write("}")
 
-        self._write("/* dTdot/dT */")
-        self._write("/* dwdot[l]/[k] */")
+        self._write("// dTdot/dT")
+        self._write("// dwdot[l]/[k]")
         self._write("for (int k=0; k<%d; k++) {" % nSpecies)
         self._indent()
         self._write("for (int l=0; l<%d; l++) {" % nSpecies)
         self._indent()
-        self._write("/* DIAG elem */")
+        self._write("// DIAG elem")
         self._write("if (k == l){")
         self._indent()
         self._write(
@@ -17191,7 +17189,7 @@ class CPickler(CMill):
             % (nSpecies + 1, nSpecies + 1)
         )
         self._outdent()
-        self._write("/* NOT DIAG and not last column nor last row */")
+        self._write("// NOT DIAG and not last column nor last row")
         self._write("} else {")
         self._indent()
         self._write(
