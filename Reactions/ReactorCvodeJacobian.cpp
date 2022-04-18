@@ -37,8 +37,7 @@ cJac(
     AMREX_ASSERT(
       (SUNMatrix_cuSparse_Rows(J) == (NUM_SPECIES + 1) * ncells) &&
       (SUNMatrix_cuSparse_Columns(J) == (NUM_SPECIES + 1) * ncells) &&
-      (SUNMatrix_cuSparse_NNZ(J) == ncells * NNZ)
-    );
+      (SUNMatrix_cuSparse_NNZ(J) == ncells * NNZ));
 
     const auto ec = amrex::Gpu::ExecutionConfig(ncells);
     amrex::launch_global<<<nbBlocks, nbThreads, ec.sharedMem, stream>>>(
