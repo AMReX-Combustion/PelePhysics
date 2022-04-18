@@ -34,6 +34,7 @@ point your web browser at the file ``${PELE_PHYSICS_DIR}/Docs/cvode/build/html/i
    Introduction.rst
    IntroductionToCvode.rst
    CvodeInPP.rst
+   QSS.rst
    Tutorials.rst
 
 Indices and tables
