@@ -1,7 +1,21 @@
-# Rough estimate of ignition time
-./Pele3d.llvm.ex inputs/inputs.0d_firstpass
-python computeIgnitionDelay.py -v -est -f inputs/inputs.0d_firstpass
+# Find first executable name available
+execname=`find . -name "Pele*.ex" | head -1`
 
-# Refied estimate of ignition time
-./Pele3d.llvm.ex inputs/inputs.0d_refine
-python computeIgnitionDelay.py -ref -f inputs/inputs.0d_refine
+if [ -z "$execname" ]
+then
+    echo ERROR: No executable found, cannot compute ignition delay
+    echo Compile PelePhysics first
+    exit
+else
+    echo INFO: Using $execname to compute ignition delay
+    # Rough estimate of ignition time
+    $execname inputs/inputs.0d_firstpass
+    python computeIgnitionDelay.py -v -est -f inputs/inputs.0d_firstpass
+    
+    # Refied estimate of ignition time
+    $execname inputs/inputs.0d_refine
+    python computeIgnitionDelay.py -ref -f inputs/inputs.0d_refine
+fi
+
+
+
