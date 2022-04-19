@@ -4,16 +4,14 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_REAL.H>
 
-#if 0
 /* Elements
 0  N
 1  C
 2  H
 3  O
 */
-#endif
 
-/* Species */
+// Species
 #define N2_ID 0
 #define SCH2_ID 1
 #define TCH2_ID 2
@@ -5908,7 +5906,7 @@ comp_qfqr(
   amrex::Real refC = 101325 / 8.31446 * invT;
   amrex::Real refCinv = 1 / refC;
 
-  /* Evaluate the kfs */
+  // Evaluate the kfs
   amrex::Real k_f, k_r, Corr;
   amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;
 
@@ -10942,7 +10940,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   }
 
   const amrex::Real tc[5] = {
-    log(T), T, T * T, T * T * T, T * T * T * T}; /*temperature cache */
+    log(T), T, T * T, T * T * T, T * T * T * T}; // temperature cache
   amrex::Real invT = 1.0 / tc[1];
   amrex::Real invT2 = invT * invT;
 
@@ -10976,24 +10974,24 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   const amrex::Real log10e = 1.0 / log(10.0);
   /*reaction 1: H + O2 (+M) => HO2 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (0.75 - 1) * sc[4] + (11.89 - 1) * sc[7] +
           (0.85 - 1) * sc[8] + (1.09 - 1) * sc[11] + (2.18 - 1) * sc[15];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[8];
   k_f =
     1e-06 * 5120000000000 * exp(0.44 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0.44 * invT + 0.50321666580472 * (0) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 6.33e+19 * exp(-1.4 * tc[0] - 0.50321666580472 * (0) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -1.4 * invT + 0.50321666580472 * (0) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = 0.;
   Fcent2 = 0.5 * exp(-T / 10000000000);
@@ -11014,17 +11012,17 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q; /* H */
-  wdot[8] -= q; /* O2 */
-  wdot[9] += q; /* HO2 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q; // H
+  wdot[8] -= q; // O2
+  wdot[9] += q; // HO2
+  // for convenience
   k_f *= Corr;
   dcdc_fac = 0.0;
   dqdc[0] = dcdc_fac;
@@ -11079,30 +11077,30 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 8] -= dqdc[k];
     J[48 * k + 9] += dqdc[k];
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2265] += dqdT; /* dwdot[HO2]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2265] += dqdT; // dwdot[HO2]/dT
 
   /*reaction 2: S-CH2 + H2O (+M) => CH2O + H2 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[7];
   k_f =
     1e-06 * 4.82e+17 * exp(-1.16 * tc[0] - 0.50321666580472 * (1144.84) * invT);
   dlnkfdT = -1.16 * invT + 0.50321666580472 * (1144.84) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 1.88e+38 * exp(-6.36 * tc[0] - 0.50321666580472 * (5040.63) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -6.36 * invT + 0.50321666580472 * (5040.63) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.6027) * exp(-T / 208);
   Fcent2 = 0.6027 * exp(-T / 3922);
@@ -11123,18 +11121,18 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[4] += q;  /* H2 */
-  wdot[7] -= q;  /* H2O */
-  wdot[13] += q; /* CH2O */
-  /* for convenience */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[4] += q;  // H2
+  wdot[7] -= q;  // H2O
+  wdot[13] += q; // CH2O
+  // for convenience
   k_f *= Corr;
   dcdc_fac = 0.0;
   dqdc[0] = dcdc_fac;
@@ -11190,31 +11188,31 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 7] -= dqdc[k];
     J[48 * k + 13] += dqdc[k];
   }
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2263] -= dqdT; /* dwdot[H2O]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2263] -= dqdT; // dwdot[H2O]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
 
   /*reaction 3: CH3 + OH (+M) => CH2O + H2 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[14];
   k_f =
     1e-06 * 2.79e+18 * exp(-1.43 * tc[0] - 0.50321666580472 * (1331.26) * invT);
   dlnkfdT = -1.43 * invT + 0.50321666580472 * (1331.26) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 4e+36 * exp(-5.92 * tc[0] - 0.50321666580472 * (3140.54) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -5.92 * invT + 0.50321666580472 * (3140.54) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.412) * exp(-T / 195);
   Fcent2 = 0.412 * exp(-T / 5900);
@@ -11235,18 +11233,18 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[6] -= q;  /* OH */
-  wdot[13] += q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  /* for convenience */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[6] -= q;  // OH
+  wdot[13] += q; // CH2O
+  wdot[14] -= q; // CH3
+  // for convenience
   k_f *= Corr;
   dcdc_fac = 0.0;
   dqdc[0] = dcdc_fac;
@@ -11302,31 +11300,31 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 13] += dqdc[k];
     J[48 * k + 14] -= dqdc[k];
   }
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 4: CO + O (+M) => CO2 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[11];
   k_f =
     1e-06 * 13600000000 * exp(0 * tc[0] - 0.50321666580472 * (2385.28) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (2385.28) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 1.17e+24 * exp(-2.79 * tc[0] - 0.50321666580472 * (4192.16) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -2.79 * invT + 0.50321666580472 * (4192.16) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 1) * exp(-T / 1);
   Fcent2 = 1 * exp(-T / 10000000);
@@ -11347,17 +11345,17 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[11] -= q; /* CO */
-  wdot[15] += q; /* CO2 */
-  /* for convenience */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[11] -= q; // CO
+  wdot[15] += q; // CO2
+  // for convenience
   k_f *= Corr;
   dcdc_fac = 0.0;
   dqdc[0] = dcdc_fac;
@@ -11412,29 +11410,29 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 11] -= dqdc[k];
     J[48 * k + 15] += dqdc[k];
   }
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] -= dqdT; /* dwdot[CO]/dT */
-  J[2271] += dqdT; /* dwdot[CO2]/dT */
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] -= dqdT; // dwdot[CO]/dT
+  J[2271] += dqdT; // dwdot[CO2]/dT
 
   /*reaction 5: C2H2 + H (+M) <=> C2H3 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[22];
   k_f = 1e-06 * 17100000000 *
         exp(1.27 * tc[0] - 0.50321666580472 * (2707.93) * invT);
   dlnkfdT = 1.27 * invT + 0.50321666580472 * (2707.93) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 6.34e+31 * exp(-4.66 * tc[0] - 0.50321666580472 * (3781.07) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -4.66 * invT + 0.50321666580472 * (3781.07) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.2122) * exp(-T / 1);
   Fcent2 = 0.2122 * exp(-T / -10210);
@@ -11454,23 +11452,23 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = sc[17];
   Kc = refCinv * exp(g_RT[5] - g_RT[17] + g_RT[22]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[22]) + (h_RT[17]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[17] += q; /* C2H3 */
-  wdot[22] -= q; /* C2H2 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[17] += q; // C2H3
+  wdot[22] -= q; // C2H2
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = 0.0;
@@ -11526,30 +11524,30 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 17] += dqdc[k];
     J[48 * k + 22] -= dqdc[k];
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 6: C2H3 + H (+M) => C2H4 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[17];
   k_f = 1e-06 * 6080000000000 *
         exp(0.27 * tc[0] - 0.50321666580472 * (279.64) * invT);
   dlnkfdT = 0.27 * invT + 0.50321666580472 * (279.64) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 1.4e+30 * exp(-3.86 * tc[0] - 0.50321666580472 * (3319.79) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -3.86 * invT + 0.50321666580472 * (3319.79) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.782) * exp(-T / 207.5);
   Fcent2 = 0.782 * exp(-T / 2663);
@@ -11570,17 +11568,17 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[17] -= q; /* C2H3 */
-  wdot[18] += q; /* C2H4 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[17] -= q; // C2H3
+  wdot[18] += q; // C2H4
+  // for convenience
   k_f *= Corr;
   dcdc_fac = 0.0;
   dqdc[0] = dcdc_fac;
@@ -11635,29 +11633,29 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 17] -= dqdc[k];
     J[48 * k + 18] += dqdc[k];
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
 
   /*reaction 7: C2H4 + H (+M) <=> C2H5 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[18];
   k_f = 1e-06 * 1370000000 *
         exp(1.46 * tc[0] - 0.50321666580472 * (1355.16) * invT);
   dlnkfdT = 1.46 * invT + 0.50321666580472 * (1355.16) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 2.03e+39 * exp(-6.64 * tc[0] - 0.50321666580472 * (5769.6) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -6.64 * invT + 0.50321666580472 * (5769.6) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. + 0.569) * exp(-T / 299);
   Fcent2 = -0.569 * exp(-T / -9147);
@@ -11678,23 +11676,23 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = sc[19];
   Kc = refCinv * exp(g_RT[5] + g_RT[18] - g_RT[19]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[18]) + (h_RT[19]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[18] -= q; /* C2H4 */
-  wdot[19] += q; /* C2H5 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[18] -= q; // C2H4
+  wdot[19] += q; // C2H5
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = 0.0;
@@ -11750,29 +11748,29 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 18] -= dqdc[k];
     J[48 * k + 19] += dqdc[k];
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
 
   /*reaction 8: C2H4 + CH3 (+M) <=> N-C3H7 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[18];
   k_f =
     1e-06 * 2550000 * exp(1.6 * tc[0] - 0.50321666580472 * (5700.29) * invT);
   dlnkfdT = 1.6 * invT + 0.50321666580472 * (5700.29) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 3e+63 * exp(-14.6 * tc[0] - 0.50321666580472 * (18169.22) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -14.6 * invT + 0.50321666580472 * (18169.22) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.1894) * exp(-T / 277);
   Fcent2 = 0.1894 * exp(-T / 8748);
@@ -11793,23 +11791,23 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = sc[25];
   Kc = refCinv * exp(g_RT[14] + g_RT[18] - g_RT[25]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[14] + h_RT[18]) + (h_RT[25]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[18] -= q; /* C2H4 */
-  wdot[25] += q; /* N-C3H7 */
-  /* for convenience */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[18] -= q; // C2H4
+  wdot[25] += q; // N-C3H7
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = 0.0;
@@ -11865,29 +11863,29 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 18] -= dqdc[k];
     J[48 * k + 25] += dqdc[k];
   }
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
-  J[2281] += dqdT; /* dwdot[N-C3H7]/dT */
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
+  J[2281] += dqdT; // dwdot[N-C3H7]/dT
 
   /*reaction 9: C2H5 + H (+M) <=> C2H6 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[19];
   k_f =
     1e-06 * 5.21e+17 * exp(-0.99 * tc[0] - 0.50321666580472 * (1579.83) * invT);
   dlnkfdT = -0.99 * invT + 0.50321666580472 * (1579.83) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 1.99e+41 * exp(-7.08 * tc[0] - 0.50321666580472 * (6684.99) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -7.08 * invT + 0.50321666580472 * (6684.99) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.8422) * exp(-T / 125);
   Fcent2 = 0.8422 * exp(-T / 2219);
@@ -11908,23 +11906,23 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = sc[26];
   Kc = refCinv * exp(g_RT[5] + g_RT[19] - g_RT[26]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[19]) + (h_RT[26]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[19] -= q; /* C2H5 */
-  wdot[26] += q; /* C2H6 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[19] -= q; // C2H5
+  wdot[26] += q; // C2H6
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = 0.0;
@@ -11980,29 +11978,29 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 19] -= dqdc[k];
     J[48 * k + 26] += dqdc[k];
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
-  J[2282] += dqdT; /* dwdot[C2H6]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
+  J[2282] += dqdT; // dwdot[C2H6]/dT
 
   /*reaction 10: C2H6 (+M) <=> 2.000000 CH3 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[26];
   k_f =
     1 * 1.88e+50 * exp(-9.72 * tc[0] - 0.50321666580472 * (107342.26) * invT);
   dlnkfdT = -9.72 * invT + 0.50321666580472 * (107342.26) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 3.72e+65 * exp(-13.14 * tc[0] - 0.50321666580472 * (101579.83) * invT);
   Pr = 1e-6 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -13.14 * invT + 0.50321666580472 * (101579.83) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.39) * exp(-T / 100);
   Fcent2 = 0.39 * exp(-T / 1900);
@@ -12023,22 +12021,22 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = (sc[14] * sc[14]);
   Kc = refC * exp(-2.000000 * g_RT[14] + g_RT[26]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[26]) + (2.000000 * h_RT[14]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[14] += 2 * q; /* CH3 */
-  wdot[26] -= q;     /* C2H6 */
-  /* for convenience */
+  // update wdot
+  wdot[14] += 2 * q; // CH3
+  wdot[26] -= q;     // C2H6
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = 0.0;
@@ -12093,29 +12091,29 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 14] += 2 * dqdc[k];
     J[48 * k + 26] -= dqdc[k];
   }
-  J[2270] += 2 * dqdT; /* dwdot[CH3]/dT */
-  J[2282] -= dqdT;     /* dwdot[C2H6]/dT */
+  J[2270] += 2 * dqdT; // dwdot[CH3]/dT
+  J[2282] -= dqdT;     // dwdot[C2H6]/dT
 
   /*reaction 11: HCCO (+M) => CO + CH (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[21];
   k_f =
     1 * 2.255e+20 * exp(-1.44 * tc[0] - 0.50321666580472 * (74732.31) * invT);
   dlnkfdT = -1.44 * invT + 0.50321666580472 * (74732.31) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 1.213e+35 * exp(-5.18 * tc[0] - 0.50321666580472 * (76668.26) * invT);
   Pr = 1e-6 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -5.18 * invT + 0.50321666580472 * (76668.26) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.5757) * exp(-T / 237);
   Fcent2 = 0.5757 * exp(-T / 1652);
@@ -12136,17 +12134,17 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[10] += q; /* CH */
-  wdot[11] += q; /* CO */
-  wdot[21] -= q; /* HCCO */
-  /* for convenience */
+  // update wdot
+  wdot[10] += q; // CH
+  wdot[11] += q; // CO
+  wdot[21] -= q; // HCCO
+  // for convenience
   k_f *= Corr;
   dcdc_fac = 0.0;
   dqdc[0] = dcdc_fac;
@@ -12201,29 +12199,29 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 11] += dqdc[k];
     J[48 * k + 21] -= dqdc[k];
   }
-  J[2266] += dqdT; /* dwdot[CH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2277] -= dqdT; /* dwdot[HCCO]/dT */
+  J[2266] += dqdT; // dwdot[CH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2277] -= dqdT; // dwdot[HCCO]/dT
 
   /*reaction 12: C3H6 + H (+M) <=> N-C3H7 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[32];
   k_f = 1e-06 * 306000000000000 *
         exp(-0.37 * tc[0] - 0.50321666580472 * (4032.03) * invT);
   dlnkfdT = -0.37 * invT + 0.50321666580472 * (4032.03) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 6.26e+38 * exp(-6.66 * tc[0] - 0.50321666580472 * (7000.48) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -6.66 * invT + 0.50321666580472 * (7000.48) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 1) * exp(-T / 1000);
   Fcent2 = 1 * exp(-T / 1310);
@@ -12244,23 +12242,23 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = sc[25];
   Kc = refCinv * exp(g_RT[5] - g_RT[25] + g_RT[32]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[32]) + (h_RT[25]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[25] += q; /* N-C3H7 */
-  wdot[32] -= q; /* C3H6 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[25] += q; // N-C3H7
+  wdot[32] -= q; // C3H6
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = 0.0;
@@ -12316,49 +12314,49 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 25] += dqdc[k];
     J[48 * k + 32] -= dqdc[k];
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2281] += dqdT; /* dwdot[N-C3H7]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2281] += dqdT; // dwdot[N-C3H7]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 13: CH3 + H (+M) <=> CH4 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (6 - 1) * sc[7] + (1.5 - 1) * sc[11] +
           (2 - 1) * sc[15] + (3 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[14];
   k_f =
     1e-06 * 69200000000000 * exp(0.18 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0.18 * invT + 0.50321666580472 * (0) * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 3.47e+38 * exp(-6.3 * tc[0] - 0.50321666580472 * (5074.09) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -6.3 * invT + 0.50321666580472 * (5074.09) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Lindemann form */
+  // Lindemann form
   F = 1.0;
   dlogFdlogPr = 0.0;
   dlogFdT = 0.0;
-  /* reverse */
+  // reverse
   phi_r = sc[16];
   Kc = refCinv * exp(g_RT[5] + g_RT[14] - g_RT[16]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[14]) + (h_RT[16]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = 0.0;
@@ -12414,29 +12412,29 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 14] -= dqdc[k];
     J[48 * k + 16] += dqdc[k];
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
 
   /*reaction 14: H + O + M => OH + M */
   /*a third-body and non-pressure-fall-off reaction */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[5];
   k_f = 1e-12 * 9.43e+18 * exp(-1 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = -1 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   q = alpha * q_nocor;
   dqdT = alpha * dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q; /* O */
-  wdot[5] -= q; /* H */
-  wdot[6] += q; /* OH */
-  /* for convenience */
+  // update wdot
+  wdot[3] -= q; // O
+  wdot[5] -= q; // H
+  wdot[6] += q; // OH
+  // for convenience
   k_f *= alpha;
   k_r = 0.0;
   dqdc[0] = q_nocor;
@@ -12491,29 +12489,29 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 5] -= dqdc[k];
     J[48 * k + 6] += dqdc[k];
   }
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
 
   /*reaction 15: H + OH + M => H2O + M */
   /*a third-body and non-pressure-fall-off reaction */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (6.3 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[6];
   k_f = 1e-12 * 4.4e+22 * exp(-2 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = -2 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   q = alpha * q_nocor;
   dqdT = alpha * dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] -= q; /* H */
-  wdot[6] -= q; /* OH */
-  wdot[7] += q; /* H2O */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q; // H
+  wdot[6] -= q; // OH
+  wdot[7] += q; // H2O
+  // for convenience
   k_f *= alpha;
   k_r = 0.0;
   dqdc[0] = q_nocor;
@@ -12568,35 +12566,35 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 6] -= dqdc[k];
     J[48 * k + 7] += dqdc[k];
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
 
   /*reaction 16: HCO + M <=> CO + H + M */
   /*a third-body and non-pressure-fall-off reaction */
-  /* 3-body correction factor */
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (0 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[12];
   k_f =
     1e-06 * 1.87e+17 * exp(-1 * tc[0] - 0.50321666580472 * (17000.48) * invT);
   dlnkfdT = -1 * invT + 0.50321666580472 * (17000.48) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[11];
   Kc = refC * exp(-g_RT[5] - g_RT[11] + g_RT[12]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12]) + (h_RT[5] + h_RT[11]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   q = alpha * q_nocor;
   dqdT = alpha * (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* for convenience */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // for convenience
   k_f *= alpha;
   k_r *= alpha;
   dqdc[0] = q_nocor;
@@ -12651,7449 +12649,7449 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     J[48 * k + 11] += dqdc[k];
     J[48 * k + 12] -= dqdc[k];
   }
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 17: S-CH2 + N2 <=> T-CH2 + N2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[0] * sc[1];
   k_f =
     1e-06 * 15000000000000 * exp(0 * tc[0] - 0.50321666580472 * (599.9) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (599.9) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[0] * sc[2];
   Kc = exp(g_RT[0] - g_RT[0] + g_RT[1] - g_RT[2]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[1]) + (h_RT[0] + h_RT[2]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q; /* S-CH2 */
-  wdot[2] += q; /* T-CH2 */
-  /* d()/d[N2] */
+  // update wdot
+  wdot[1] -= q; // S-CH2
+  wdot[2] += q; // T-CH2
+  // d()/d[N2]
   dqdci = +k_f * sc[1] - k_r * sc[2];
-  J[1] -= dqdci; /* dwdot[S-CH2]/d[N2] */
-  J[2] += dqdci; /* dwdot[T-CH2]/d[N2] */
-  /* d()/d[S-CH2] */
+  J[1] -= dqdci; // dwdot[S-CH2]/d[N2]
+  J[2] += dqdci; // dwdot[T-CH2]/d[N2]
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[0];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[50] += dqdci; /* dwdot[T-CH2]/d[S-CH2] */
-  /* d()/d[T-CH2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[50] += dqdci; // dwdot[T-CH2]/d[S-CH2]
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[0];
-  J[97] -= dqdci; /* dwdot[S-CH2]/d[T-CH2] */
-  J[98] += dqdci; /* dwdot[T-CH2]/d[T-CH2] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
+  J[97] -= dqdci; // dwdot[S-CH2]/d[T-CH2]
+  J[98] += dqdci; // dwdot[T-CH2]/d[T-CH2]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
 
   /*reaction 18: O + H2 <=> H + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[4];
   k_f = 1e-06 * 45900 * exp(2.7 * tc[0] - 0.50321666580472 * (6259.56) * invT);
   dlnkfdT = 2.7 * invT + 0.50321666580472 * (6259.56) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[6];
   Kc = exp(g_RT[3] + g_RT[4] - g_RT[5] - g_RT[6]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[4]) + (h_RT[5] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[3] -= q; /* O */
-  wdot[4] -= q; /* H2 */
-  wdot[5] += q; /* H */
-  wdot[6] += q; /* OH */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q; // O
+  wdot[4] -= q; // H2
+  wdot[5] += q; // H
+  wdot[6] += q; // OH
+  // d()/d[O]
   dqdci = +k_f * sc[4];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[148] -= dqdci; /* dwdot[H2]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  /* d()/d[H2] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[148] -= dqdci; // dwdot[H2]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  // d()/d[H2]
   dqdci = +k_f * sc[3];
-  J[195] -= dqdci; /* dwdot[O]/d[H2] */
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[198] += dqdci; /* dwdot[OH]/d[H2] */
-  /* d()/d[H] */
+  J[195] -= dqdci; // dwdot[O]/d[H2]
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[198] += dqdci; // dwdot[OH]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[6];
-  J[243] -= dqdci; /* dwdot[O]/d[H] */
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[246] += dqdci; /* dwdot[OH]/d[H] */
-  /* d()/d[OH] */
+  J[243] -= dqdci; // dwdot[O]/d[H]
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[246] += dqdci; // dwdot[OH]/d[H]
+  // d()/d[OH]
   dqdci = -k_r * sc[5];
-  J[291] -= dqdci; /* dwdot[O]/d[OH] */
-  J[292] -= dqdci; /* dwdot[H2]/d[OH] */
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] += dqdci; /* dwdot[OH]/d[OH] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
+  J[291] -= dqdci; // dwdot[O]/d[OH]
+  J[292] -= dqdci; // dwdot[H2]/d[OH]
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] += dqdci; // dwdot[OH]/d[OH]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
 
   /*reaction 19: OH + H2 <=> H + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[4] * sc[6];
   k_f =
     1e-06 * 173000000 * exp(1.51 * tc[0] - 0.50321666580472 * (3429.73) * invT);
   dlnkfdT = 1.51 * invT + 0.50321666580472 * (3429.73) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[7];
   Kc = exp(g_RT[4] - g_RT[5] + g_RT[6] - g_RT[7]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[6]) + (h_RT[5] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] -= q; /* H2 */
-  wdot[5] += q; /* H */
-  wdot[6] -= q; /* OH */
-  wdot[7] += q; /* H2O */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] -= q; // H2
+  wdot[5] += q; // H
+  wdot[6] -= q; // OH
+  wdot[7] += q; // H2O
+  // d()/d[H2]
   dqdci = +k_f * sc[6];
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[198] -= dqdci; /* dwdot[OH]/d[H2] */
-  J[199] += dqdci; /* dwdot[H2O]/d[H2] */
-  /* d()/d[H] */
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[198] -= dqdci; // dwdot[OH]/d[H2]
+  J[199] += dqdci; // dwdot[H2O]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[7];
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[246] -= dqdci; /* dwdot[OH]/d[H] */
-  J[247] += dqdci; /* dwdot[H2O]/d[H] */
-  /* d()/d[OH] */
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[246] -= dqdci; // dwdot[OH]/d[H]
+  J[247] += dqdci; // dwdot[H2O]/d[H]
+  // d()/d[OH]
   dqdci = +k_f * sc[4];
-  J[292] -= dqdci; /* dwdot[H2]/d[OH] */
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  /* d()/d[H2O] */
+  J[292] -= dqdci; // dwdot[H2]/d[OH]
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[5];
-  J[340] -= dqdci; /* dwdot[H2]/d[H2O] */
-  J[341] += dqdci; /* dwdot[H]/d[H2O] */
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  /* d()/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
+  J[340] -= dqdci; // dwdot[H2]/d[H2O]
+  J[341] += dqdci; // dwdot[H]/d[H2O]
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  // d()/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
 
   /*reaction 20: 2.000000 OH <=> O + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[6] * sc[6]);
   k_f = 1e-06 * 39700 * exp(2.4 * tc[0] - 0.50321666580472 * (-2110.42) * invT);
   dlnkfdT = 2.4 * invT + 0.50321666580472 * (-2110.42) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[3] * sc[7];
   Kc = exp(-g_RT[3] + 2.000000 * g_RT[6] - g_RT[7]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[6]) + (h_RT[3] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[3] += q;     /* O */
-  wdot[6] -= 2 * q; /* OH */
-  wdot[7] += q;     /* H2O */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] += q;     // O
+  wdot[6] -= 2 * q; // OH
+  wdot[7] += q;     // H2O
+  // d()/d[O]
   dqdci = -k_r * sc[7];
-  J[147] += dqdci;      /* dwdot[O]/d[O] */
-  J[150] += -2 * dqdci; /* dwdot[OH]/d[O] */
-  J[151] += dqdci;      /* dwdot[H2O]/d[O] */
-  /* d()/d[OH] */
+  J[147] += dqdci;      // dwdot[O]/d[O]
+  J[150] += -2 * dqdci; // dwdot[OH]/d[O]
+  J[151] += dqdci;      // dwdot[H2O]/d[O]
+  // d()/d[OH]
   dqdci = +k_f * 2.000000 * sc[6];
-  J[291] += dqdci;      /* dwdot[O]/d[OH] */
-  J[294] += -2 * dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci;      /* dwdot[H2O]/d[OH] */
-  /* d()/d[H2O] */
+  J[291] += dqdci;      // dwdot[O]/d[OH]
+  J[294] += -2 * dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci;      // dwdot[H2O]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[3];
-  J[339] += dqdci;      /* dwdot[O]/d[H2O] */
-  J[342] += -2 * dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci;      /* dwdot[H2O]/d[H2O] */
-  /* d()/dT */
-  J[2259] += dqdT;      /* dwdot[O]/dT */
-  J[2262] += -2 * dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT;      /* dwdot[H2O]/dT */
+  J[339] += dqdci;      // dwdot[O]/d[H2O]
+  J[342] += -2 * dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci;      // dwdot[H2O]/d[H2O]
+  // d()/dT
+  J[2259] += dqdT;      // dwdot[O]/dT
+  J[2262] += -2 * dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT;      // dwdot[H2O]/dT
 
   /*reaction 21: H + O2 <=> O + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[8];
   k_f = 1e-06 * 2.64e+16 *
         exp(-0.67 * tc[0] - 0.50321666580472 * (17041.11) * invT);
   dlnkfdT = -0.67 * invT + 0.50321666580472 * (17041.11) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[3] * sc[6];
   Kc = exp(-g_RT[3] + g_RT[5] - g_RT[6] + g_RT[8]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[8]) + (h_RT[3] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[3] += q; /* O */
-  wdot[5] -= q; /* H */
-  wdot[6] += q; /* OH */
-  wdot[8] -= q; /* O2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] += q; // O
+  wdot[5] -= q; // H
+  wdot[6] += q; // OH
+  wdot[8] -= q; // O2
+  // d()/d[O]
   dqdci = -k_r * sc[6];
-  J[147] += dqdci; /* dwdot[O]/d[O] */
-  J[149] -= dqdci; /* dwdot[H]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[152] -= dqdci; /* dwdot[O2]/d[O] */
-  /* d()/d[H] */
+  J[147] += dqdci; // dwdot[O]/d[O]
+  J[149] -= dqdci; // dwdot[H]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[152] -= dqdci; // dwdot[O2]/d[O]
+  // d()/d[H]
   dqdci = +k_f * sc[8];
-  J[243] += dqdci; /* dwdot[O]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[246] += dqdci; /* dwdot[OH]/d[H] */
-  J[248] -= dqdci; /* dwdot[O2]/d[H] */
-  /* d()/d[OH] */
+  J[243] += dqdci; // dwdot[O]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[246] += dqdci; // dwdot[OH]/d[H]
+  J[248] -= dqdci; // dwdot[O2]/d[H]
+  // d()/d[OH]
   dqdci = -k_r * sc[3];
-  J[291] += dqdci; /* dwdot[O]/d[OH] */
-  J[293] -= dqdci; /* dwdot[H]/d[OH] */
-  J[294] += dqdci; /* dwdot[OH]/d[OH] */
-  J[296] -= dqdci; /* dwdot[O2]/d[OH] */
-  /* d()/d[O2] */
+  J[291] += dqdci; // dwdot[O]/d[OH]
+  J[293] -= dqdci; // dwdot[H]/d[OH]
+  J[294] += dqdci; // dwdot[OH]/d[OH]
+  J[296] -= dqdci; // dwdot[O2]/d[OH]
+  // d()/d[O2]
   dqdci = +k_f * sc[5];
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[389] -= dqdci; /* dwdot[H]/d[O2] */
-  J[390] += dqdci; /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[389] -= dqdci; // dwdot[H]/d[O2]
+  J[390] += dqdci; // dwdot[OH]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
 
   /*reaction 22: HO2 + H => O2 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[9];
   k_f =
     1e-06 * 3649000 * exp(2.07 * tc[0] - 0.50321666580472 * (-1092.26) * invT);
   dlnkfdT = 2.07 * invT + 0.50321666580472 * (-1092.26) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q; /* H2 */
-  wdot[5] -= q; /* H */
-  wdot[8] += q; /* O2 */
-  wdot[9] -= q; /* HO2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q; // H2
+  wdot[5] -= q; // H
+  wdot[8] += q; // O2
+  wdot[9] -= q; // HO2
+  // d()/d[H]
   dqdci = +k_f * sc[9];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[248] += dqdci; /* dwdot[O2]/d[H] */
-  J[249] -= dqdci; /* dwdot[HO2]/d[H] */
-  /* d()/d[HO2] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[248] += dqdci; // dwdot[O2]/d[H]
+  J[249] -= dqdci; // dwdot[HO2]/d[H]
+  // d()/d[HO2]
   dqdci = +k_f * sc[5];
-  J[436] += dqdci; /* dwdot[H2]/d[HO2] */
-  J[437] -= dqdci; /* dwdot[H]/d[HO2] */
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
+  J[436] += dqdci; // dwdot[H2]/d[HO2]
+  J[437] -= dqdci; // dwdot[H]/d[HO2]
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
 
   /*reaction 23: HO2 + H => O + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[9];
   k_f =
     1e-06 * 3970000000000 * exp(0 * tc[0] - 0.50321666580472 * (671.61) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (671.61) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] += q; /* O */
-  wdot[5] -= q; /* H */
-  wdot[7] += q; /* H2O */
-  wdot[9] -= q; /* HO2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[3] += q; // O
+  wdot[5] -= q; // H
+  wdot[7] += q; // H2O
+  wdot[9] -= q; // HO2
+  // d()/d[H]
   dqdci = +k_f * sc[9];
-  J[243] += dqdci; /* dwdot[O]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[247] += dqdci; /* dwdot[H2O]/d[H] */
-  J[249] -= dqdci; /* dwdot[HO2]/d[H] */
-  /* d()/d[HO2] */
+  J[243] += dqdci; // dwdot[O]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[247] += dqdci; // dwdot[H2O]/d[H]
+  J[249] -= dqdci; // dwdot[HO2]/d[H]
+  // d()/d[HO2]
   dqdci = +k_f * sc[5];
-  J[435] += dqdci; /* dwdot[O]/d[HO2] */
-  J[437] -= dqdci; /* dwdot[H]/d[HO2] */
-  J[439] += dqdci; /* dwdot[H2O]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
+  J[435] += dqdci; // dwdot[O]/d[HO2]
+  J[437] -= dqdci; // dwdot[H]/d[HO2]
+  J[439] += dqdci; // dwdot[H2O]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
 
   /*reaction 24: HO2 + H => 2.000000 OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[9];
   k_f = 1e-06 * 74900000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (635.76) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (635.76) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] -= q;     /* H */
-  wdot[6] += 2 * q; /* OH */
-  wdot[9] -= q;     /* HO2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;     // H
+  wdot[6] += 2 * q; // OH
+  wdot[9] -= q;     // HO2
+  // d()/d[H]
   dqdci = +k_f * sc[9];
-  J[245] -= dqdci;     /* dwdot[H]/d[H] */
-  J[246] += 2 * dqdci; /* dwdot[OH]/d[H] */
-  J[249] -= dqdci;     /* dwdot[HO2]/d[H] */
-  /* d()/d[HO2] */
+  J[245] -= dqdci;     // dwdot[H]/d[H]
+  J[246] += 2 * dqdci; // dwdot[OH]/d[H]
+  J[249] -= dqdci;     // dwdot[HO2]/d[H]
+  // d()/d[HO2]
   dqdci = +k_f * sc[5];
-  J[437] -= dqdci;     /* dwdot[H]/d[HO2] */
-  J[438] += 2 * dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci;     /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2261] -= dqdT;     /* dwdot[H]/dT */
-  J[2262] += 2 * dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT;     /* dwdot[HO2]/dT */
+  J[437] -= dqdci;     // dwdot[H]/d[HO2]
+  J[438] += 2 * dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci;     // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2261] -= dqdT;     // dwdot[H]/dT
+  J[2262] += 2 * dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT;     // dwdot[HO2]/dT
 
   /*reaction 25: HO2 + O => OH + O2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[9];
   k_f = 1e-06 * 40000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q; /* O */
-  wdot[6] += q; /* OH */
-  wdot[8] += q; /* O2 */
-  wdot[9] -= q; /* HO2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q; // O
+  wdot[6] += q; // OH
+  wdot[8] += q; // O2
+  wdot[9] -= q; // HO2
+  // d()/d[O]
   dqdci = +k_f * sc[9];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[152] += dqdci; /* dwdot[O2]/d[O] */
-  J[153] -= dqdci; /* dwdot[HO2]/d[O] */
-  /* d()/d[HO2] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[152] += dqdci; // dwdot[O2]/d[O]
+  J[153] -= dqdci; // dwdot[HO2]/d[O]
+  // d()/d[HO2]
   dqdci = +k_f * sc[3];
-  J[435] -= dqdci; /* dwdot[O]/d[HO2] */
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
+  J[435] -= dqdci; // dwdot[O]/d[HO2]
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
 
   /*reaction 26: HO2 + OH => H2O + O2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[9];
   k_f = 1e-06 * 23800000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (-499.52) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (-499.52) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q; /* OH */
-  wdot[7] += q; /* H2O */
-  wdot[8] += q; /* O2 */
-  wdot[9] -= q; /* HO2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q; // OH
+  wdot[7] += q; // H2O
+  wdot[8] += q; // O2
+  wdot[9] -= q; // HO2
+  // d()/d[OH]
   dqdci = +k_f * sc[9];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[296] += dqdci; /* dwdot[O2]/d[OH] */
-  J[297] -= dqdci; /* dwdot[HO2]/d[OH] */
-  /* d()/d[HO2] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[296] += dqdci; // dwdot[O2]/d[OH]
+  J[297] -= dqdci; // dwdot[HO2]/d[OH]
+  // d()/d[HO2]
   dqdci = +k_f * sc[6];
-  J[438] -= dqdci; /* dwdot[OH]/d[HO2] */
-  J[439] += dqdci; /* dwdot[H2O]/d[HO2] */
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
+  J[438] -= dqdci; // dwdot[OH]/d[HO2]
+  J[439] += dqdci; // dwdot[H2O]/d[HO2]
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
 
   /*reaction 27: HO2 + OH => H2O + O2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[9];
   k_f = 1e-06 * 1e+16 * exp(0 * tc[0] - 0.50321666580472 * (17330.31) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (17330.31) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q; /* OH */
-  wdot[7] += q; /* H2O */
-  wdot[8] += q; /* O2 */
-  wdot[9] -= q; /* HO2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q; // OH
+  wdot[7] += q; // H2O
+  wdot[8] += q; // O2
+  wdot[9] -= q; // HO2
+  // d()/d[OH]
   dqdci = +k_f * sc[9];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[296] += dqdci; /* dwdot[O2]/d[OH] */
-  J[297] -= dqdci; /* dwdot[HO2]/d[OH] */
-  /* d()/d[HO2] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[296] += dqdci; // dwdot[O2]/d[OH]
+  J[297] -= dqdci; // dwdot[HO2]/d[OH]
+  // d()/d[HO2]
   dqdci = +k_f * sc[6];
-  J[438] -= dqdci; /* dwdot[OH]/d[HO2] */
-  J[439] += dqdci; /* dwdot[H2O]/d[HO2] */
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
+  J[438] -= dqdci; // dwdot[OH]/d[HO2]
+  J[439] += dqdci; // dwdot[H2O]/d[HO2]
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
 
   /*reaction 28: CH + O => CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[10];
   k_f = 1e-06 * 57000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[10] -= q; /* CH */
-  wdot[11] += q; /* CO */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[10] -= q; // CH
+  wdot[11] += q; // CO
+  // d()/d[O]
   dqdci = +k_f * sc[10];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[154] -= dqdci; /* dwdot[CH]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  /* d()/d[CH] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[154] -= dqdci; // dwdot[CH]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  // d()/d[CH]
   dqdci = +k_f * sc[3];
-  J[483] -= dqdci; /* dwdot[O]/d[CH] */
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[491] += dqdci; /* dwdot[CO]/d[CH] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
+  J[483] -= dqdci; // dwdot[O]/d[CH]
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[491] += dqdci; // dwdot[CO]/d[CH]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
 
   /*reaction 29: CH + OH => HCO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[10];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[10] -= q; /* CH */
-  wdot[12] += q; /* HCO */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[10] -= q; // CH
+  wdot[12] += q; // HCO
+  // d()/d[OH]
   dqdci = +k_f * sc[10];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[298] -= dqdci; /* dwdot[CH]/d[OH] */
-  J[300] += dqdci; /* dwdot[HCO]/d[OH] */
-  /* d()/d[CH] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[298] -= dqdci; // dwdot[CH]/d[OH]
+  J[300] += dqdci; // dwdot[HCO]/d[OH]
+  // d()/d[CH]
   dqdci = +k_f * sc[6];
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[486] -= dqdci; /* dwdot[OH]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[492] += dqdci; /* dwdot[HCO]/d[CH] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[486] -= dqdci; // dwdot[OH]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[492] += dqdci; // dwdot[HCO]/d[CH]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
 
   /*reaction 30: CH + H2 <=> T-CH2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[4] * sc[10];
   k_f = 1e-06 * 108000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (3109.46) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (3109.46) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[2] * sc[5];
   Kc = exp(-g_RT[2] + g_RT[4] - g_RT[5] + g_RT[10]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[10]) + (h_RT[2] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[2] += q;  /* T-CH2 */
-  wdot[4] -= q;  /* H2 */
-  wdot[5] += q;  /* H */
-  wdot[10] -= q; /* CH */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] += q;  // T-CH2
+  wdot[4] -= q;  // H2
+  wdot[5] += q;  // H
+  wdot[10] -= q; // CH
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[5];
-  J[98] += dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[100] -= dqdci; /* dwdot[H2]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[106] -= dqdci; /* dwdot[CH]/d[T-CH2] */
-  /* d()/d[H2] */
+  J[98] += dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[100] -= dqdci; // dwdot[H2]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[106] -= dqdci; // dwdot[CH]/d[T-CH2]
+  // d()/d[H2]
   dqdci = +k_f * sc[10];
-  J[194] += dqdci; /* dwdot[T-CH2]/d[H2] */
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[202] -= dqdci; /* dwdot[CH]/d[H2] */
-  /* d()/d[H] */
+  J[194] += dqdci; // dwdot[T-CH2]/d[H2]
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[202] -= dqdci; // dwdot[CH]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[2];
-  J[242] += dqdci; /* dwdot[T-CH2]/d[H] */
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[250] -= dqdci; /* dwdot[CH]/d[H] */
-  /* d()/d[CH] */
+  J[242] += dqdci; // dwdot[T-CH2]/d[H]
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[250] -= dqdci; // dwdot[CH]/d[H]
+  // d()/d[CH]
   dqdci = +k_f * sc[4];
-  J[482] += dqdci; /* dwdot[T-CH2]/d[CH] */
-  J[484] -= dqdci; /* dwdot[H2]/d[CH] */
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  /* d()/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
+  J[482] += dqdci; // dwdot[T-CH2]/d[CH]
+  J[484] -= dqdci; // dwdot[H2]/d[CH]
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  // d()/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
 
   /*reaction 31: CH + H2O => CH2O + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[7] * sc[10];
   k_f = 1e-06 * 5710000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (-755.26) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (-755.26) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[7] -= q;  /* H2O */
-  wdot[10] -= q; /* CH */
-  wdot[13] += q; /* CH2O */
-  /* d()/d[H2O] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[7] -= q;  // H2O
+  wdot[10] -= q; // CH
+  wdot[13] += q; // CH2O
+  // d()/d[H2O]
   dqdci = +k_f * sc[10];
-  J[341] += dqdci; /* dwdot[H]/d[H2O] */
-  J[343] -= dqdci; /* dwdot[H2O]/d[H2O] */
-  J[346] -= dqdci; /* dwdot[CH]/d[H2O] */
-  J[349] += dqdci; /* dwdot[CH2O]/d[H2O] */
-  /* d()/d[CH] */
+  J[341] += dqdci; // dwdot[H]/d[H2O]
+  J[343] -= dqdci; // dwdot[H2O]/d[H2O]
+  J[346] -= dqdci; // dwdot[CH]/d[H2O]
+  J[349] += dqdci; // dwdot[CH2O]/d[H2O]
+  // d()/d[CH]
   dqdci = +k_f * sc[7];
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[487] -= dqdci; /* dwdot[H2O]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[493] += dqdci; /* dwdot[CH2O]/d[CH] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2263] -= dqdT; /* dwdot[H2O]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[487] -= dqdci; // dwdot[H2O]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[493] += dqdci; // dwdot[CH2O]/d[CH]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2263] -= dqdT; // dwdot[H2O]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
 
   /*reaction 32: CH + O2 => HCO + O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[10];
   k_f = 1e-06 * 67100000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] += q;  /* O */
-  wdot[8] -= q;  /* O2 */
-  wdot[10] -= q; /* CH */
-  wdot[12] += q; /* HCO */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[3] += q;  // O
+  wdot[8] -= q;  // O2
+  wdot[10] -= q; // CH
+  wdot[12] += q; // HCO
+  // d()/d[O2]
   dqdci = +k_f * sc[10];
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[394] -= dqdci; /* dwdot[CH]/d[O2] */
-  J[396] += dqdci; /* dwdot[HCO]/d[O2] */
-  /* d()/d[CH] */
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[394] -= dqdci; // dwdot[CH]/d[O2]
+  J[396] += dqdci; // dwdot[HCO]/d[O2]
+  // d()/d[CH]
   dqdci = +k_f * sc[8];
-  J[483] += dqdci; /* dwdot[O]/d[CH] */
-  J[488] -= dqdci; /* dwdot[O2]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[492] += dqdci; /* dwdot[HCO]/d[CH] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
+  J[483] += dqdci; // dwdot[O]/d[CH]
+  J[488] -= dqdci; // dwdot[O2]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[492] += dqdci; // dwdot[HCO]/d[CH]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
 
   /*reaction 33: T-CH2 + O => HCO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[3];
   k_f = 1e-06 * 80000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[12] += q; /* HCO */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[12] += q; // HCO
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[3];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[99] -= dqdci;  /* dwdot[O]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[108] += dqdci; /* dwdot[HCO]/d[T-CH2] */
-  /* d()/d[O] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[99] -= dqdci;  // dwdot[O]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[108] += dqdci; // dwdot[HCO]/d[T-CH2]
+  // d()/d[O]
   dqdci = +k_f * sc[2];
-  J[146] -= dqdci; /* dwdot[T-CH2]/d[O] */
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[156] += dqdci; /* dwdot[HCO]/d[O] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
+  J[146] -= dqdci; // dwdot[T-CH2]/d[O]
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[156] += dqdci; // dwdot[HCO]/d[O]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
 
   /*reaction 34: T-CH2 + OH => CH2O + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[6];
   k_f = 1e-06 * 20000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[13] += q; /* CH2O */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[13] += q; // CH2O
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[6];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[102] -= dqdci; /* dwdot[OH]/d[T-CH2] */
-  J[109] += dqdci; /* dwdot[CH2O]/d[T-CH2] */
-  /* d()/d[OH] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[102] -= dqdci; // dwdot[OH]/d[T-CH2]
+  J[109] += dqdci; // dwdot[CH2O]/d[T-CH2]
+  // d()/d[OH]
   dqdci = +k_f * sc[2];
-  J[290] -= dqdci; /* dwdot[T-CH2]/d[OH] */
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[301] += dqdci; /* dwdot[CH2O]/d[OH] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
+  J[290] -= dqdci; // dwdot[T-CH2]/d[OH]
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[301] += dqdci; // dwdot[CH2O]/d[OH]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
 
   /*reaction 35: T-CH2 + OH <=> CH + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[6];
   k_f = 1e-06 * 11300000 * exp(2 * tc[0] - 0.50321666580472 * (2999.52) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * (2999.52) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[7] * sc[10];
   Kc = exp(g_RT[2] + g_RT[6] - g_RT[7] - g_RT[10]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[6]) + (h_RT[7] + h_RT[10]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[10] += q; /* CH */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[10] += q; // CH
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[6];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[102] -= dqdci; /* dwdot[OH]/d[T-CH2] */
-  J[103] += dqdci; /* dwdot[H2O]/d[T-CH2] */
-  J[106] += dqdci; /* dwdot[CH]/d[T-CH2] */
-  /* d()/d[OH] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[102] -= dqdci; // dwdot[OH]/d[T-CH2]
+  J[103] += dqdci; // dwdot[H2O]/d[T-CH2]
+  J[106] += dqdci; // dwdot[CH]/d[T-CH2]
+  // d()/d[OH]
   dqdci = +k_f * sc[2];
-  J[290] -= dqdci; /* dwdot[T-CH2]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[298] += dqdci; /* dwdot[CH]/d[OH] */
-  /* d()/d[H2O] */
+  J[290] -= dqdci; // dwdot[T-CH2]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[298] += dqdci; // dwdot[CH]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[10];
-  J[338] -= dqdci; /* dwdot[T-CH2]/d[H2O] */
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[346] += dqdci; /* dwdot[CH]/d[H2O] */
-  /* d()/d[CH] */
+  J[338] -= dqdci; // dwdot[T-CH2]/d[H2O]
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[346] += dqdci; // dwdot[CH]/d[H2O]
+  // d()/d[CH]
   dqdci = -k_r * sc[7];
-  J[482] -= dqdci; /* dwdot[T-CH2]/d[CH] */
-  J[486] -= dqdci; /* dwdot[OH]/d[CH] */
-  J[487] += dqdci; /* dwdot[H2O]/d[CH] */
-  J[490] += dqdci; /* dwdot[CH]/d[CH] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2266] += dqdT; /* dwdot[CH]/dT */
+  J[482] -= dqdci; // dwdot[T-CH2]/d[CH]
+  J[486] -= dqdci; // dwdot[OH]/d[CH]
+  J[487] += dqdci; // dwdot[H2O]/d[CH]
+  J[490] += dqdci; // dwdot[CH]/d[CH]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2266] += dqdT; // dwdot[CH]/dT
 
   /*reaction 36: T-CH2 + H2 <=> H + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[4];
   k_f = 1e-06 * 500000 * exp(2 * tc[0] - 0.50321666580472 * (7229.92) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * (7229.92) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[14];
   Kc = exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[14]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[4]) + (h_RT[5] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[4] -= q;  /* H2 */
-  wdot[5] += q;  /* H */
-  wdot[14] += q; /* CH3 */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[4] -= q;  // H2
+  wdot[5] += q;  // H
+  wdot[14] += q; // CH3
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[4];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[100] -= dqdci; /* dwdot[H2]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[110] += dqdci; /* dwdot[CH3]/d[T-CH2] */
-  /* d()/d[H2] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[100] -= dqdci; // dwdot[H2]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[110] += dqdci; // dwdot[CH3]/d[T-CH2]
+  // d()/d[H2]
   dqdci = +k_f * sc[2];
-  J[194] -= dqdci; /* dwdot[T-CH2]/d[H2] */
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[206] += dqdci; /* dwdot[CH3]/d[H2] */
-  /* d()/d[H] */
+  J[194] -= dqdci; // dwdot[T-CH2]/d[H2]
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[206] += dqdci; // dwdot[CH3]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[14];
-  J[242] -= dqdci; /* dwdot[T-CH2]/d[H] */
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  /* d()/d[CH3] */
+  J[242] -= dqdci; // dwdot[T-CH2]/d[H]
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[5];
-  J[674] -= dqdci; /* dwdot[T-CH2]/d[CH3] */
-  J[676] -= dqdci; /* dwdot[H2]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
+  J[674] -= dqdci; // dwdot[T-CH2]/d[CH3]
+  J[676] -= dqdci; // dwdot[H2]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
 
   /*reaction 37: T-CH2 + O2 => CO2 + 2.000000 H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[8];
   k_f = 1e-06 * 5800000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (1500.96) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (1500.96) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;     /* T-CH2 */
-  wdot[5] += 2 * q; /* H */
-  wdot[8] -= q;     /* O2 */
-  wdot[15] += q;    /* CO2 */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;     // T-CH2
+  wdot[5] += 2 * q; // H
+  wdot[8] -= q;     // O2
+  wdot[15] += q;    // CO2
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[8];
-  J[98] -= dqdci;      /* dwdot[T-CH2]/d[T-CH2] */
-  J[101] += 2 * dqdci; /* dwdot[H]/d[T-CH2] */
-  J[104] -= dqdci;     /* dwdot[O2]/d[T-CH2] */
-  J[111] += dqdci;     /* dwdot[CO2]/d[T-CH2] */
-  /* d()/d[O2] */
+  J[98] -= dqdci;      // dwdot[T-CH2]/d[T-CH2]
+  J[101] += 2 * dqdci; // dwdot[H]/d[T-CH2]
+  J[104] -= dqdci;     // dwdot[O2]/d[T-CH2]
+  J[111] += dqdci;     // dwdot[CO2]/d[T-CH2]
+  // d()/d[O2]
   dqdci = +k_f * sc[2];
-  J[386] -= dqdci;     /* dwdot[T-CH2]/d[O2] */
-  J[389] += 2 * dqdci; /* dwdot[H]/d[O2] */
-  J[392] -= dqdci;     /* dwdot[O2]/d[O2] */
-  J[399] += dqdci;     /* dwdot[CO2]/d[O2] */
-  /* d()/dT */
-  J[2258] -= dqdT;     /* dwdot[T-CH2]/dT */
-  J[2261] += 2 * dqdT; /* dwdot[H]/dT */
-  J[2264] -= dqdT;     /* dwdot[O2]/dT */
-  J[2271] += dqdT;     /* dwdot[CO2]/dT */
+  J[386] -= dqdci;     // dwdot[T-CH2]/d[O2]
+  J[389] += 2 * dqdci; // dwdot[H]/d[O2]
+  J[392] -= dqdci;     // dwdot[O2]/d[O2]
+  J[399] += dqdci;     // dwdot[CO2]/d[O2]
+  // d()/dT
+  J[2258] -= dqdT;     // dwdot[T-CH2]/dT
+  J[2261] += 2 * dqdT; // dwdot[H]/dT
+  J[2264] -= dqdT;     // dwdot[O2]/dT
+  J[2271] += dqdT;     // dwdot[CO2]/dT
 
   /*reaction 38: T-CH2 + O2 => CH2O + O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[8];
   k_f = 1e-06 * 2400000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (1500.96) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (1500.96) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[3] += q;  /* O */
-  wdot[8] -= q;  /* O2 */
-  wdot[13] += q; /* CH2O */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[3] += q;  // O
+  wdot[8] -= q;  // O2
+  wdot[13] += q; // CH2O
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[8];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[99] += dqdci;  /* dwdot[O]/d[T-CH2] */
-  J[104] -= dqdci; /* dwdot[O2]/d[T-CH2] */
-  J[109] += dqdci; /* dwdot[CH2O]/d[T-CH2] */
-  /* d()/d[O2] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[99] += dqdci;  // dwdot[O]/d[T-CH2]
+  J[104] -= dqdci; // dwdot[O2]/d[T-CH2]
+  J[109] += dqdci; // dwdot[CH2O]/d[T-CH2]
+  // d()/d[O2]
   dqdci = +k_f * sc[2];
-  J[386] -= dqdci; /* dwdot[T-CH2]/d[O2] */
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[397] += dqdci; /* dwdot[CH2O]/d[O2] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
+  J[386] -= dqdci; // dwdot[T-CH2]/d[O2]
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[397] += dqdci; // dwdot[CH2O]/d[O2]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
 
   /*reaction 39: T-CH2 + O2 => OH + H + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[8];
   k_f = 1e-06 * 5000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (1500.96) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (1500.96) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[5] += q;  /* H */
-  wdot[6] += q;  /* OH */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[5] += q;  // H
+  wdot[6] += q;  // OH
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[8];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[102] += dqdci; /* dwdot[OH]/d[T-CH2] */
-  J[104] -= dqdci; /* dwdot[O2]/d[T-CH2] */
-  J[107] += dqdci; /* dwdot[CO]/d[T-CH2] */
-  /* d()/d[O2] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[102] += dqdci; // dwdot[OH]/d[T-CH2]
+  J[104] -= dqdci; // dwdot[O2]/d[T-CH2]
+  J[107] += dqdci; // dwdot[CO]/d[T-CH2]
+  // d()/d[O2]
   dqdci = +k_f * sc[2];
-  J[386] -= dqdci; /* dwdot[T-CH2]/d[O2] */
-  J[389] += dqdci; /* dwdot[H]/d[O2] */
-  J[390] += dqdci; /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
+  J[386] -= dqdci; // dwdot[T-CH2]/d[O2]
+  J[389] += dqdci; // dwdot[H]/d[O2]
+  J[390] += dqdci; // dwdot[OH]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
 
   /*reaction 40: S-CH2 + H2 <=> CH3 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[4];
   k_f = 1e-06 * 70000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[14];
   Kc = exp(g_RT[1] + g_RT[4] - g_RT[5] - g_RT[14]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[4]) + (h_RT[5] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[4] -= q;  /* H2 */
-  wdot[5] += q;  /* H */
-  wdot[14] += q; /* CH3 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[4] -= q;  // H2
+  wdot[5] += q;  // H
+  wdot[14] += q; // CH3
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[4];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[52] -= dqdci; /* dwdot[H2]/d[S-CH2] */
-  J[53] += dqdci; /* dwdot[H]/d[S-CH2] */
-  J[62] += dqdci; /* dwdot[CH3]/d[S-CH2] */
-  /* d()/d[H2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[52] -= dqdci; // dwdot[H2]/d[S-CH2]
+  J[53] += dqdci; // dwdot[H]/d[S-CH2]
+  J[62] += dqdci; // dwdot[CH3]/d[S-CH2]
+  // d()/d[H2]
   dqdci = +k_f * sc[1];
-  J[193] -= dqdci; /* dwdot[S-CH2]/d[H2] */
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[206] += dqdci; /* dwdot[CH3]/d[H2] */
-  /* d()/d[H] */
+  J[193] -= dqdci; // dwdot[S-CH2]/d[H2]
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[206] += dqdci; // dwdot[CH3]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[14];
-  J[241] -= dqdci; /* dwdot[S-CH2]/d[H] */
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  /* d()/d[CH3] */
+  J[241] -= dqdci; // dwdot[S-CH2]/d[H]
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[5];
-  J[673] -= dqdci; /* dwdot[S-CH2]/d[CH3] */
-  J[676] -= dqdci; /* dwdot[H2]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
+  J[673] -= dqdci; // dwdot[S-CH2]/d[CH3]
+  J[676] -= dqdci; // dwdot[H2]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
 
   /*reaction 41: S-CH2 + O2 => H + OH + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[8];
   k_f = 1e-06 * 28000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[5] += q;  /* H */
-  wdot[6] += q;  /* OH */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[5] += q;  // H
+  wdot[6] += q;  // OH
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[8];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[53] += dqdci; /* dwdot[H]/d[S-CH2] */
-  J[54] += dqdci; /* dwdot[OH]/d[S-CH2] */
-  J[56] -= dqdci; /* dwdot[O2]/d[S-CH2] */
-  J[59] += dqdci; /* dwdot[CO]/d[S-CH2] */
-  /* d()/d[O2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[53] += dqdci; // dwdot[H]/d[S-CH2]
+  J[54] += dqdci; // dwdot[OH]/d[S-CH2]
+  J[56] -= dqdci; // dwdot[O2]/d[S-CH2]
+  J[59] += dqdci; // dwdot[CO]/d[S-CH2]
+  // d()/d[O2]
   dqdci = +k_f * sc[1];
-  J[385] -= dqdci; /* dwdot[S-CH2]/d[O2] */
-  J[389] += dqdci; /* dwdot[H]/d[O2] */
-  J[390] += dqdci; /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
+  J[385] -= dqdci; // dwdot[S-CH2]/d[O2]
+  J[389] += dqdci; // dwdot[H]/d[O2]
+  J[390] += dqdci; // dwdot[OH]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
 
   /*reaction 42: S-CH2 + O2 => CO + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[8];
   k_f = 1e-06 * 12000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[7] += q;  /* H2O */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[7] += q;  // H2O
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[8];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[55] += dqdci; /* dwdot[H2O]/d[S-CH2] */
-  J[56] -= dqdci; /* dwdot[O2]/d[S-CH2] */
-  J[59] += dqdci; /* dwdot[CO]/d[S-CH2] */
-  /* d()/d[O2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[55] += dqdci; // dwdot[H2O]/d[S-CH2]
+  J[56] -= dqdci; // dwdot[O2]/d[S-CH2]
+  J[59] += dqdci; // dwdot[CO]/d[S-CH2]
+  // d()/d[O2]
   dqdci = +k_f * sc[1];
-  J[385] -= dqdci; /* dwdot[S-CH2]/d[O2] */
-  J[391] += dqdci; /* dwdot[H2O]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
+  J[385] -= dqdci; // dwdot[S-CH2]/d[O2]
+  J[391] += dqdci; // dwdot[H2O]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
 
   /*reaction 43: S-CH2 + H2O <=> T-CH2 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[7];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[2] * sc[7];
   Kc = exp(g_RT[1] - g_RT[2] + g_RT[7] - g_RT[7]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[7]) + (h_RT[2] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q; /* S-CH2 */
-  wdot[2] += q; /* T-CH2 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q; // S-CH2
+  wdot[2] += q; // T-CH2
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[7];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[50] += dqdci; /* dwdot[T-CH2]/d[S-CH2] */
-  /* d()/d[T-CH2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[50] += dqdci; // dwdot[T-CH2]/d[S-CH2]
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[7];
-  J[97] -= dqdci; /* dwdot[S-CH2]/d[T-CH2] */
-  J[98] += dqdci; /* dwdot[T-CH2]/d[T-CH2] */
-  /* d()/d[H2O] */
+  J[97] -= dqdci; // dwdot[S-CH2]/d[T-CH2]
+  J[98] += dqdci; // dwdot[T-CH2]/d[T-CH2]
+  // d()/d[H2O]
   dqdci = +k_f * sc[1] - k_r * sc[2];
-  J[337] -= dqdci; /* dwdot[S-CH2]/d[H2O] */
-  J[338] += dqdci; /* dwdot[T-CH2]/d[H2O] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
+  J[337] -= dqdci; // dwdot[S-CH2]/d[H2O]
+  J[338] += dqdci; // dwdot[T-CH2]/d[H2O]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
 
   /*reaction 44: S-CH2 + H2O => H2 + CH2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[7];
   k_f = 1e-06 * 68200000000 *
         exp(0.25 * tc[0] - 0.50321666580472 * (-934.51) * invT);
   dlnkfdT = 0.25 * invT + 0.50321666580472 * (-934.51) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[4] += q;  /* H2 */
-  wdot[7] -= q;  /* H2O */
-  wdot[13] += q; /* CH2O */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[4] += q;  // H2
+  wdot[7] -= q;  // H2O
+  wdot[13] += q; // CH2O
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[7];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[52] += dqdci; /* dwdot[H2]/d[S-CH2] */
-  J[55] -= dqdci; /* dwdot[H2O]/d[S-CH2] */
-  J[61] += dqdci; /* dwdot[CH2O]/d[S-CH2] */
-  /* d()/d[H2O] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[52] += dqdci; // dwdot[H2]/d[S-CH2]
+  J[55] -= dqdci; // dwdot[H2O]/d[S-CH2]
+  J[61] += dqdci; // dwdot[CH2O]/d[S-CH2]
+  // d()/d[H2O]
   dqdci = +k_f * sc[1];
-  J[337] -= dqdci; /* dwdot[S-CH2]/d[H2O] */
-  J[340] += dqdci; /* dwdot[H2]/d[H2O] */
-  J[343] -= dqdci; /* dwdot[H2O]/d[H2O] */
-  J[349] += dqdci; /* dwdot[CH2O]/d[H2O] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2263] -= dqdT; /* dwdot[H2O]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
+  J[337] -= dqdci; // dwdot[S-CH2]/d[H2O]
+  J[340] += dqdci; // dwdot[H2]/d[H2O]
+  J[343] -= dqdci; // dwdot[H2O]/d[H2O]
+  J[349] += dqdci; // dwdot[CH2O]/d[H2O]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2263] -= dqdT; // dwdot[H2O]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
 
   /*reaction 45: CH3 + O => CH2O + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[14];
   k_f = 1e-06 * 50600000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[13] += q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[13] += q; // CH2O
+  wdot[14] -= q; // CH3
+  // d()/d[O]
   dqdci = +k_f * sc[14];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[157] += dqdci; /* dwdot[CH2O]/d[O] */
-  J[158] -= dqdci; /* dwdot[CH3]/d[O] */
-  /* d()/d[CH3] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[157] += dqdci; // dwdot[CH2O]/d[O]
+  J[158] -= dqdci; // dwdot[CH3]/d[O]
+  // d()/d[CH3]
   dqdci = +k_f * sc[3];
-  J[675] -= dqdci; /* dwdot[O]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[685] += dqdci; /* dwdot[CH2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[675] -= dqdci; // dwdot[O]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[685] += dqdci; // dwdot[CH2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 46: CH3 + O => H + H2 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[14];
   k_f = 1e-06 * 33700000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[4] += q;  /* H2 */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[4] += q;  // H2
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[14] -= q; // CH3
+  // d()/d[O]
   dqdci = +k_f * sc[14];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[148] += dqdci; /* dwdot[H2]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[158] -= dqdci; /* dwdot[CH3]/d[O] */
-  /* d()/d[CH3] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[148] += dqdci; // dwdot[H2]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[158] -= dqdci; // dwdot[CH3]/d[O]
+  // d()/d[CH3]
   dqdci = +k_f * sc[3];
-  J[675] -= dqdci; /* dwdot[O]/d[CH3] */
-  J[676] += dqdci; /* dwdot[H2]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[683] += dqdci; /* dwdot[CO]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[675] -= dqdci; // dwdot[O]/d[CH3]
+  J[676] += dqdci; // dwdot[H2]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[683] += dqdci; // dwdot[CO]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 47: CH3 + OH <=> T-CH2 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[14];
   k_f =
     1e-06 * 56000000 * exp(1.6 * tc[0] - 0.50321666580472 * (5420.65) * invT);
   dlnkfdT = 1.6 * invT + 0.50321666580472 * (5420.65) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[2] * sc[7];
   Kc = exp(-g_RT[2] + g_RT[6] - g_RT[7] + g_RT[14]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[14]) + (h_RT[2] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[2] += q;  /* T-CH2 */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] += q;  // T-CH2
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[14] -= q; // CH3
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[7];
-  J[98] += dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[102] -= dqdci; /* dwdot[OH]/d[T-CH2] */
-  J[103] += dqdci; /* dwdot[H2O]/d[T-CH2] */
-  J[110] -= dqdci; /* dwdot[CH3]/d[T-CH2] */
-  /* d()/d[OH] */
+  J[98] += dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[102] -= dqdci; // dwdot[OH]/d[T-CH2]
+  J[103] += dqdci; // dwdot[H2O]/d[T-CH2]
+  J[110] -= dqdci; // dwdot[CH3]/d[T-CH2]
+  // d()/d[OH]
   dqdci = +k_f * sc[14];
-  J[290] += dqdci; /* dwdot[T-CH2]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[302] -= dqdci; /* dwdot[CH3]/d[OH] */
-  /* d()/d[H2O] */
+  J[290] += dqdci; // dwdot[T-CH2]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[302] -= dqdci; // dwdot[CH3]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[2];
-  J[338] += dqdci; /* dwdot[T-CH2]/d[H2O] */
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[350] -= dqdci; /* dwdot[CH3]/d[H2O] */
-  /* d()/d[CH3] */
+  J[338] += dqdci; // dwdot[T-CH2]/d[H2O]
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[350] -= dqdci; // dwdot[CH3]/d[H2O]
+  // d()/d[CH3]
   dqdci = +k_f * sc[6];
-  J[674] += dqdci; /* dwdot[T-CH2]/d[CH3] */
-  J[678] -= dqdci; /* dwdot[OH]/d[CH3] */
-  J[679] += dqdci; /* dwdot[H2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[674] += dqdci; // dwdot[T-CH2]/d[CH3]
+  J[678] -= dqdci; // dwdot[OH]/d[CH3]
+  J[679] += dqdci; // dwdot[H2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 48: CH3 + OH <=> S-CH2 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[14];
   k_f =
     1e-06 * 6.44e+17 * exp(-1.34 * tc[0] - 0.50321666580472 * (1417.3) * invT);
   dlnkfdT = -1.34 * invT + 0.50321666580472 * (1417.3) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[1] * sc[7];
   Kc = exp(-g_RT[1] + g_RT[6] - g_RT[7] + g_RT[14]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[14]) + (h_RT[1] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] += q;  /* S-CH2 */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] += q;  // S-CH2
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[14] -= q; // CH3
+  // d()/d[S-CH2]
   dqdci = -k_r * sc[7];
-  J[49] += dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[54] -= dqdci; /* dwdot[OH]/d[S-CH2] */
-  J[55] += dqdci; /* dwdot[H2O]/d[S-CH2] */
-  J[62] -= dqdci; /* dwdot[CH3]/d[S-CH2] */
-  /* d()/d[OH] */
+  J[49] += dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[54] -= dqdci; // dwdot[OH]/d[S-CH2]
+  J[55] += dqdci; // dwdot[H2O]/d[S-CH2]
+  J[62] -= dqdci; // dwdot[CH3]/d[S-CH2]
+  // d()/d[OH]
   dqdci = +k_f * sc[14];
-  J[289] += dqdci; /* dwdot[S-CH2]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[302] -= dqdci; /* dwdot[CH3]/d[OH] */
-  /* d()/d[H2O] */
+  J[289] += dqdci; // dwdot[S-CH2]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[302] -= dqdci; // dwdot[CH3]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[1];
-  J[337] += dqdci; /* dwdot[S-CH2]/d[H2O] */
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[350] -= dqdci; /* dwdot[CH3]/d[H2O] */
-  /* d()/d[CH3] */
+  J[337] += dqdci; // dwdot[S-CH2]/d[H2O]
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[350] -= dqdci; // dwdot[CH3]/d[H2O]
+  // d()/d[CH3]
   dqdci = +k_f * sc[6];
-  J[673] += dqdci; /* dwdot[S-CH2]/d[CH3] */
-  J[678] -= dqdci; /* dwdot[OH]/d[CH3] */
-  J[679] += dqdci; /* dwdot[H2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2257] += dqdT; /* dwdot[S-CH2]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[673] += dqdci; // dwdot[S-CH2]/d[CH3]
+  J[678] -= dqdci; // dwdot[OH]/d[CH3]
+  J[679] += dqdci; // dwdot[H2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2257] += dqdT; // dwdot[S-CH2]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 49: CH3 + O2 => CH2O + O + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[14];
   k_f = 1e-06 * 13800000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (30480.4) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (30480.4) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] += q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[8] -= q;  /* O2 */
-  wdot[13] += q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[3] += q;  // O
+  wdot[5] += q;  // H
+  wdot[8] -= q;  // O2
+  wdot[13] += q; // CH2O
+  wdot[14] -= q; // CH3
+  // d()/d[O2]
   dqdci = +k_f * sc[14];
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[389] += dqdci; /* dwdot[H]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[397] += dqdci; /* dwdot[CH2O]/d[O2] */
-  J[398] -= dqdci; /* dwdot[CH3]/d[O2] */
-  /* d()/d[CH3] */
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[389] += dqdci; // dwdot[H]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[397] += dqdci; // dwdot[CH2O]/d[O2]
+  J[398] -= dqdci; // dwdot[CH3]/d[O2]
+  // d()/d[CH3]
   dqdci = +k_f * sc[8];
-  J[675] += dqdci; /* dwdot[O]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[680] -= dqdci; /* dwdot[O2]/d[CH3] */
-  J[685] += dqdci; /* dwdot[CH2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[675] += dqdci; // dwdot[O]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[680] -= dqdci; // dwdot[O2]/d[CH3]
+  J[685] += dqdci; // dwdot[CH2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 50: CH3 + O2 => CH2O + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[14];
   k_f = 1e-06 * 587000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (13840.82) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (13840.82) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[8] -= q;  /* O2 */
-  wdot[13] += q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[8] -= q;  // O2
+  wdot[13] += q; // CH2O
+  wdot[14] -= q; // CH3
+  // d()/d[O2]
   dqdci = +k_f * sc[14];
-  J[390] += dqdci; /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[397] += dqdci; /* dwdot[CH2O]/d[O2] */
-  J[398] -= dqdci; /* dwdot[CH3]/d[O2] */
-  /* d()/d[CH3] */
+  J[390] += dqdci; // dwdot[OH]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[397] += dqdci; // dwdot[CH2O]/d[O2]
+  J[398] -= dqdci; // dwdot[CH3]/d[O2]
+  // d()/d[CH3]
   dqdci = +k_f * sc[8];
-  J[678] += dqdci; /* dwdot[OH]/d[CH3] */
-  J[680] -= dqdci; /* dwdot[O2]/d[CH3] */
-  J[685] += dqdci; /* dwdot[CH2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[678] += dqdci; // dwdot[OH]/d[CH3]
+  J[680] -= dqdci; // dwdot[O2]/d[CH3]
+  J[685] += dqdci; // dwdot[CH2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 51: CH3 + HO2 => CH2O + OH + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[14];
   k_f = 1e-06 * 10000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[13] += q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[13] += q; // CH2O
+  wdot[14] -= q; // CH3
+  // d()/d[HO2]
   dqdci = +k_f * sc[14];
-  J[437] += dqdci; /* dwdot[H]/d[HO2] */
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[445] += dqdci; /* dwdot[CH2O]/d[HO2] */
-  J[446] -= dqdci; /* dwdot[CH3]/d[HO2] */
-  /* d()/d[CH3] */
+  J[437] += dqdci; // dwdot[H]/d[HO2]
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[445] += dqdci; // dwdot[CH2O]/d[HO2]
+  J[446] -= dqdci; // dwdot[CH3]/d[HO2]
+  // d()/d[CH3]
   dqdci = +k_f * sc[9];
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[678] += dqdci; /* dwdot[OH]/d[CH3] */
-  J[681] -= dqdci; /* dwdot[HO2]/d[CH3] */
-  J[685] += dqdci; /* dwdot[CH2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[678] += dqdci; // dwdot[OH]/d[CH3]
+  J[681] -= dqdci; // dwdot[HO2]/d[CH3]
+  J[685] += dqdci; // dwdot[CH2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 52: CH3 + HO2 => CH4 + O2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[14];
   k_f = 1e-06 * 3610000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] += q;  /* O2 */
-  wdot[9] -= q;  /* HO2 */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[8] += q;  // O2
+  wdot[9] -= q;  // HO2
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  // d()/d[HO2]
   dqdci = +k_f * sc[14];
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[446] -= dqdci; /* dwdot[CH3]/d[HO2] */
-  J[448] += dqdci; /* dwdot[CH4]/d[HO2] */
-  /* d()/d[CH3] */
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[446] -= dqdci; // dwdot[CH3]/d[HO2]
+  J[448] += dqdci; // dwdot[CH4]/d[HO2]
+  // d()/d[CH3]
   dqdci = +k_f * sc[9];
-  J[680] += dqdci; /* dwdot[O2]/d[CH3] */
-  J[681] -= dqdci; /* dwdot[HO2]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
+  J[680] += dqdci; // dwdot[O2]/d[CH3]
+  J[681] -= dqdci; // dwdot[HO2]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  // d()/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
 
   /*reaction 53: CH3 + CH => C2H3 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[10] * sc[14];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[10] -= q; /* CH */
-  wdot[14] -= q; /* CH3 */
-  wdot[17] += q; /* C2H3 */
-  /* d()/d[CH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[10] -= q; // CH
+  wdot[14] -= q; // CH3
+  wdot[17] += q; // C2H3
+  // d()/d[CH]
   dqdci = +k_f * sc[14];
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[494] -= dqdci; /* dwdot[CH3]/d[CH] */
-  J[497] += dqdci; /* dwdot[C2H3]/d[CH] */
-  /* d()/d[CH3] */
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[494] -= dqdci; // dwdot[CH3]/d[CH]
+  J[497] += dqdci; // dwdot[C2H3]/d[CH]
+  // d()/d[CH3]
   dqdci = +k_f * sc[10];
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[682] -= dqdci; /* dwdot[CH]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[689] += dqdci; /* dwdot[C2H3]/d[CH3] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[682] -= dqdci; // dwdot[CH]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[689] += dqdci; // dwdot[C2H3]/d[CH3]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
 
   /*reaction 54: CH3 + T-CH2 => C2H4 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[14];
   k_f =
     1e-06 * 100000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[5] += q;  /* H */
-  wdot[14] -= q; /* CH3 */
-  wdot[18] += q; /* C2H4 */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[5] += q;  // H
+  wdot[14] -= q; // CH3
+  wdot[18] += q; // C2H4
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[14];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[110] -= dqdci; /* dwdot[CH3]/d[T-CH2] */
-  J[114] += dqdci; /* dwdot[C2H4]/d[T-CH2] */
-  /* d()/d[CH3] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[110] -= dqdci; // dwdot[CH3]/d[T-CH2]
+  J[114] += dqdci; // dwdot[C2H4]/d[T-CH2]
+  // d()/d[CH3]
   dqdci = +k_f * sc[2];
-  J[674] -= dqdci; /* dwdot[T-CH2]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[690] += dqdci; /* dwdot[C2H4]/d[CH3] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
+  J[674] -= dqdci; // dwdot[T-CH2]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[690] += dqdci; // dwdot[C2H4]/d[CH3]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
 
   /*reaction 55: 2.000000 CH3 <=> C2H5 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[14] * sc[14]);
   k_f = 1e-06 * 6840000000000 *
         exp(0.1 * tc[0] - 0.50321666580472 * (10599.9) * invT);
   dlnkfdT = 0.1 * invT + 0.50321666580472 * (10599.9) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[19];
   Kc = exp(-g_RT[5] + 2.000000 * g_RT[14] - g_RT[19]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[14]) + (h_RT[5] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;      /* H */
-  wdot[14] -= 2 * q; /* CH3 */
-  wdot[19] += q;     /* C2H5 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;      // H
+  wdot[14] -= 2 * q; // CH3
+  wdot[19] += q;     // C2H5
+  // d()/d[H]
   dqdci = -k_r * sc[19];
-  J[245] += dqdci;      /* dwdot[H]/d[H] */
-  J[254] += -2 * dqdci; /* dwdot[CH3]/d[H] */
-  J[259] += dqdci;      /* dwdot[C2H5]/d[H] */
-  /* d()/d[CH3] */
+  J[245] += dqdci;      // dwdot[H]/d[H]
+  J[254] += -2 * dqdci; // dwdot[CH3]/d[H]
+  J[259] += dqdci;      // dwdot[C2H5]/d[H]
+  // d()/d[CH3]
   dqdci = +k_f * 2.000000 * sc[14];
-  J[677] += dqdci;      /* dwdot[H]/d[CH3] */
-  J[686] += -2 * dqdci; /* dwdot[CH3]/d[CH3] */
-  J[691] += dqdci;      /* dwdot[C2H5]/d[CH3] */
-  /* d()/d[C2H5] */
+  J[677] += dqdci;      // dwdot[H]/d[CH3]
+  J[686] += -2 * dqdci; // dwdot[CH3]/d[CH3]
+  J[691] += dqdci;      // dwdot[C2H5]/d[CH3]
+  // d()/d[C2H5]
   dqdci = -k_r * sc[5];
-  J[917] += dqdci;      /* dwdot[H]/d[C2H5] */
-  J[926] += -2 * dqdci; /* dwdot[CH3]/d[C2H5] */
-  J[931] += dqdci;      /* dwdot[C2H5]/d[C2H5] */
-  /* d()/dT */
-  J[2261] += dqdT;      /* dwdot[H]/dT */
-  J[2270] += -2 * dqdT; /* dwdot[CH3]/dT */
-  J[2275] += dqdT;      /* dwdot[C2H5]/dT */
+  J[917] += dqdci;      // dwdot[H]/d[C2H5]
+  J[926] += -2 * dqdci; // dwdot[CH3]/d[C2H5]
+  J[931] += dqdci;      // dwdot[C2H5]/d[C2H5]
+  // d()/dT
+  J[2261] += dqdT;      // dwdot[H]/dT
+  J[2270] += -2 * dqdT; // dwdot[CH3]/dT
+  J[2275] += dqdT;      // dwdot[C2H5]/dT
 
   /*reaction 56: 2.000000 CH3 => S-CH2 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[14] * sc[14]);
   k_f = 1e-06 * 2632000000000 *
         exp(-0.06 * tc[0] - 0.50321666580472 * (13661.57) * invT);
   dlnkfdT = -0.06 * invT + 0.50321666580472 * (13661.57) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] += q;      /* S-CH2 */
-  wdot[14] -= 2 * q; /* CH3 */
-  wdot[16] += q;     /* CH4 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[1] += q;      // S-CH2
+  wdot[14] -= 2 * q; // CH3
+  wdot[16] += q;     // CH4
+  // d()/d[CH3]
   dqdci = +k_f * 2.000000 * sc[14];
-  J[673] += dqdci;      /* dwdot[S-CH2]/d[CH3] */
-  J[686] += -2 * dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci;      /* dwdot[CH4]/d[CH3] */
-  /* d()/dT */
-  J[2257] += dqdT;      /* dwdot[S-CH2]/dT */
-  J[2270] += -2 * dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT;      /* dwdot[CH4]/dT */
+  J[673] += dqdci;      // dwdot[S-CH2]/d[CH3]
+  J[686] += -2 * dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci;      // dwdot[CH4]/d[CH3]
+  // d()/dT
+  J[2257] += dqdT;      // dwdot[S-CH2]/dT
+  J[2270] += -2 * dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT;      // dwdot[CH4]/dT
 
   /*reaction 57: CH4 + H <=> CH3 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[16];
   k_f =
     1e-06 * 660000000 * exp(1.62 * tc[0] - 0.50321666580472 * (10841.3) * invT);
   dlnkfdT = 1.62 * invT + 0.50321666580472 * (10841.3) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[4] * sc[14];
   Kc = exp(-g_RT[4] + g_RT[5] - g_RT[14] + g_RT[16]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[16]) + (h_RT[4] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[16] -= q; /* CH4 */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[16] -= q; // CH4
+  // d()/d[H2]
   dqdci = -k_r * sc[14];
-  J[196] += dqdci; /* dwdot[H2]/d[H2] */
-  J[197] -= dqdci; /* dwdot[H]/d[H2] */
-  J[206] += dqdci; /* dwdot[CH3]/d[H2] */
-  J[208] -= dqdci; /* dwdot[CH4]/d[H2] */
-  /* d()/d[H] */
+  J[196] += dqdci; // dwdot[H2]/d[H2]
+  J[197] -= dqdci; // dwdot[H]/d[H2]
+  J[206] += dqdci; // dwdot[CH3]/d[H2]
+  J[208] -= dqdci; // dwdot[CH4]/d[H2]
+  // d()/d[H]
   dqdci = +k_f * sc[16];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[256] -= dqdci; /* dwdot[CH4]/d[H] */
-  /* d()/d[CH3] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[256] -= dqdci; // dwdot[CH4]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[4];
-  J[676] += dqdci; /* dwdot[H2]/d[CH3] */
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] -= dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/d[CH4] */
+  J[676] += dqdci; // dwdot[H2]/d[CH3]
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[688] -= dqdci; // dwdot[CH4]/d[CH3]
+  // d()/d[CH4]
   dqdci = +k_f * sc[5];
-  J[772] += dqdci; /* dwdot[H2]/d[CH4] */
-  J[773] -= dqdci; /* dwdot[H]/d[CH4] */
-  J[782] += dqdci; /* dwdot[CH3]/d[CH4] */
-  J[784] -= dqdci; /* dwdot[CH4]/d[CH4] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2272] -= dqdT; /* dwdot[CH4]/dT */
+  J[772] += dqdci; // dwdot[H2]/d[CH4]
+  J[773] -= dqdci; // dwdot[H]/d[CH4]
+  J[782] += dqdci; // dwdot[CH3]/d[CH4]
+  J[784] -= dqdci; // dwdot[CH4]/d[CH4]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2272] -= dqdT; // dwdot[CH4]/dT
 
   /*reaction 58: CH4 + O <=> CH3 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[16];
   k_f =
     1e-06 * 1020000000 * exp(1.5 * tc[0] - 0.50321666580472 * (8599.43) * invT);
   dlnkfdT = 1.5 * invT + 0.50321666580472 * (8599.43) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[6] * sc[14];
   Kc = exp(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[16]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[16]) + (h_RT[6] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[14] += q; /* CH3 */
-  wdot[16] -= q; /* CH4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[14] += q; // CH3
+  wdot[16] -= q; // CH4
+  // d()/d[O]
   dqdci = +k_f * sc[16];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[160] -= dqdci; /* dwdot[CH4]/d[O] */
-  /* d()/d[OH] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[160] -= dqdci; // dwdot[CH4]/d[O]
+  // d()/d[OH]
   dqdci = -k_r * sc[14];
-  J[291] -= dqdci; /* dwdot[O]/d[OH] */
-  J[294] += dqdci; /* dwdot[OH]/d[OH] */
-  J[302] += dqdci; /* dwdot[CH3]/d[OH] */
-  J[304] -= dqdci; /* dwdot[CH4]/d[OH] */
-  /* d()/d[CH3] */
+  J[291] -= dqdci; // dwdot[O]/d[OH]
+  J[294] += dqdci; // dwdot[OH]/d[OH]
+  J[302] += dqdci; // dwdot[CH3]/d[OH]
+  J[304] -= dqdci; // dwdot[CH4]/d[OH]
+  // d()/d[CH3]
   dqdci = -k_r * sc[6];
-  J[675] -= dqdci; /* dwdot[O]/d[CH3] */
-  J[678] += dqdci; /* dwdot[OH]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] -= dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/d[CH4] */
+  J[675] -= dqdci; // dwdot[O]/d[CH3]
+  J[678] += dqdci; // dwdot[OH]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[688] -= dqdci; // dwdot[CH4]/d[CH3]
+  // d()/d[CH4]
   dqdci = +k_f * sc[3];
-  J[771] -= dqdci; /* dwdot[O]/d[CH4] */
-  J[774] += dqdci; /* dwdot[OH]/d[CH4] */
-  J[782] += dqdci; /* dwdot[CH3]/d[CH4] */
-  J[784] -= dqdci; /* dwdot[CH4]/d[CH4] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2272] -= dqdT; /* dwdot[CH4]/dT */
+  J[771] -= dqdci; // dwdot[O]/d[CH4]
+  J[774] += dqdci; // dwdot[OH]/d[CH4]
+  J[782] += dqdci; // dwdot[CH3]/d[CH4]
+  J[784] -= dqdci; // dwdot[CH4]/d[CH4]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2272] -= dqdT; // dwdot[CH4]/dT
 
   /*reaction 59: CH4 + OH <=> CH3 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[16];
   k_f =
     1e-06 * 100000000 * exp(1.6 * tc[0] - 0.50321666580472 * (3119.02) * invT);
   dlnkfdT = 1.6 * invT + 0.50321666580472 * (3119.02) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[7] * sc[14];
   Kc = exp(g_RT[6] - g_RT[7] - g_RT[14] + g_RT[16]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[16]) + (h_RT[7] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[14] += q; /* CH3 */
-  wdot[16] -= q; /* CH4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[14] += q; // CH3
+  wdot[16] -= q; // CH4
+  // d()/d[OH]
   dqdci = +k_f * sc[16];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[302] += dqdci; /* dwdot[CH3]/d[OH] */
-  J[304] -= dqdci; /* dwdot[CH4]/d[OH] */
-  /* d()/d[H2O] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[302] += dqdci; // dwdot[CH3]/d[OH]
+  J[304] -= dqdci; // dwdot[CH4]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[14];
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[350] += dqdci; /* dwdot[CH3]/d[H2O] */
-  J[352] -= dqdci; /* dwdot[CH4]/d[H2O] */
-  /* d()/d[CH3] */
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[350] += dqdci; // dwdot[CH3]/d[H2O]
+  J[352] -= dqdci; // dwdot[CH4]/d[H2O]
+  // d()/d[CH3]
   dqdci = -k_r * sc[7];
-  J[678] -= dqdci; /* dwdot[OH]/d[CH3] */
-  J[679] += dqdci; /* dwdot[H2O]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] -= dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/d[CH4] */
+  J[678] -= dqdci; // dwdot[OH]/d[CH3]
+  J[679] += dqdci; // dwdot[H2O]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[688] -= dqdci; // dwdot[CH4]/d[CH3]
+  // d()/d[CH4]
   dqdci = +k_f * sc[6];
-  J[774] -= dqdci; /* dwdot[OH]/d[CH4] */
-  J[775] += dqdci; /* dwdot[H2O]/d[CH4] */
-  J[782] += dqdci; /* dwdot[CH3]/d[CH4] */
-  J[784] -= dqdci; /* dwdot[CH4]/d[CH4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2272] -= dqdT; /* dwdot[CH4]/dT */
+  J[774] -= dqdci; // dwdot[OH]/d[CH4]
+  J[775] += dqdci; // dwdot[H2O]/d[CH4]
+  J[782] += dqdci; // dwdot[CH3]/d[CH4]
+  J[784] -= dqdci; // dwdot[CH4]/d[CH4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2272] -= dqdT; // dwdot[CH4]/dT
 
   /*reaction 60: CH4 + CH => C2H4 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[10] * sc[16];
   k_f = 1e-06 * 60000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[10] -= q; /* CH */
-  wdot[16] -= q; /* CH4 */
-  wdot[18] += q; /* C2H4 */
-  /* d()/d[CH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[10] -= q; // CH
+  wdot[16] -= q; // CH4
+  wdot[18] += q; // C2H4
+  // d()/d[CH]
   dqdci = +k_f * sc[16];
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[496] -= dqdci; /* dwdot[CH4]/d[CH] */
-  J[498] += dqdci; /* dwdot[C2H4]/d[CH] */
-  /* d()/d[CH4] */
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[496] -= dqdci; // dwdot[CH4]/d[CH]
+  J[498] += dqdci; // dwdot[C2H4]/d[CH]
+  // d()/d[CH4]
   dqdci = +k_f * sc[10];
-  J[773] += dqdci; /* dwdot[H]/d[CH4] */
-  J[778] -= dqdci; /* dwdot[CH]/d[CH4] */
-  J[784] -= dqdci; /* dwdot[CH4]/d[CH4] */
-  J[786] += dqdci; /* dwdot[C2H4]/d[CH4] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2272] -= dqdT; /* dwdot[CH4]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
+  J[773] += dqdci; // dwdot[H]/d[CH4]
+  J[778] -= dqdci; // dwdot[CH]/d[CH4]
+  J[784] -= dqdci; // dwdot[CH4]/d[CH4]
+  J[786] += dqdci; // dwdot[C2H4]/d[CH4]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2272] -= dqdT; // dwdot[CH4]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
 
   /*reaction 61: CH4 + T-CH2 <=> 2.000000 CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[16];
   k_f = 1e-06 * 2460000 * exp(2 * tc[0] - 0.50321666580472 * (8269.6) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * (8269.6) * invT2;
-  /* reverse */
+  // reverse
   phi_r = (sc[14] * sc[14]);
   Kc = exp(g_RT[2] - 2.000000 * g_RT[14] + g_RT[16]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[16]) + (2.000000 * h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[2] -= q;      /* T-CH2 */
-  wdot[14] += 2 * q; /* CH3 */
-  wdot[16] -= q;     /* CH4 */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;      // T-CH2
+  wdot[14] += 2 * q; // CH3
+  wdot[16] -= q;     // CH4
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[16];
-  J[98] -= dqdci;      /* dwdot[T-CH2]/d[T-CH2] */
-  J[110] += 2 * dqdci; /* dwdot[CH3]/d[T-CH2] */
-  J[112] -= dqdci;     /* dwdot[CH4]/d[T-CH2] */
-  /* d()/d[CH3] */
+  J[98] -= dqdci;      // dwdot[T-CH2]/d[T-CH2]
+  J[110] += 2 * dqdci; // dwdot[CH3]/d[T-CH2]
+  J[112] -= dqdci;     // dwdot[CH4]/d[T-CH2]
+  // d()/d[CH3]
   dqdci = -k_r * 2.000000 * sc[14];
-  J[674] -= dqdci;     /* dwdot[T-CH2]/d[CH3] */
-  J[686] += 2 * dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] -= dqdci;     /* dwdot[CH4]/d[CH3] */
-  /* d()/d[CH4] */
+  J[674] -= dqdci;     // dwdot[T-CH2]/d[CH3]
+  J[686] += 2 * dqdci; // dwdot[CH3]/d[CH3]
+  J[688] -= dqdci;     // dwdot[CH4]/d[CH3]
+  // d()/d[CH4]
   dqdci = +k_f * sc[2];
-  J[770] -= dqdci;     /* dwdot[T-CH2]/d[CH4] */
-  J[782] += 2 * dqdci; /* dwdot[CH3]/d[CH4] */
-  J[784] -= dqdci;     /* dwdot[CH4]/d[CH4] */
-  /* d()/dT */
-  J[2258] -= dqdT;     /* dwdot[T-CH2]/dT */
-  J[2270] += 2 * dqdT; /* dwdot[CH3]/dT */
-  J[2272] -= dqdT;     /* dwdot[CH4]/dT */
+  J[770] -= dqdci;     // dwdot[T-CH2]/d[CH4]
+  J[782] += 2 * dqdci; // dwdot[CH3]/d[CH4]
+  J[784] -= dqdci;     // dwdot[CH4]/d[CH4]
+  // d()/dT
+  J[2258] -= dqdT;     // dwdot[T-CH2]/dT
+  J[2270] += 2 * dqdT; // dwdot[CH3]/dT
+  J[2272] -= dqdT;     // dwdot[CH4]/dT
 
   /*reaction 62: CO + OH <=> CO2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[11];
   k_f = 1e-06 * 800000000000 *
         exp(0.14 * tc[0] - 0.50321666580472 * (7351.82) * invT);
   dlnkfdT = 0.14 * invT + 0.50321666580472 * (7351.82) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[15];
   Kc = exp(-g_RT[5] + g_RT[6] + g_RT[11] - g_RT[15]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[11]) + (h_RT[5] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[11] -= q; /* CO */
-  wdot[15] += q; /* CO2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[11] -= q; // CO
+  wdot[15] += q; // CO2
+  // d()/d[H]
   dqdci = -k_r * sc[15];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[246] -= dqdci; /* dwdot[OH]/d[H] */
-  J[251] -= dqdci; /* dwdot[CO]/d[H] */
-  J[255] += dqdci; /* dwdot[CO2]/d[H] */
-  /* d()/d[OH] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[246] -= dqdci; // dwdot[OH]/d[H]
+  J[251] -= dqdci; // dwdot[CO]/d[H]
+  J[255] += dqdci; // dwdot[CO2]/d[H]
+  // d()/d[OH]
   dqdci = +k_f * sc[11];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] -= dqdci; /* dwdot[CO]/d[OH] */
-  J[303] += dqdci; /* dwdot[CO2]/d[OH] */
-  /* d()/d[CO] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] -= dqdci; // dwdot[CO]/d[OH]
+  J[303] += dqdci; // dwdot[CO2]/d[OH]
+  // d()/d[CO]
   dqdci = +k_f * sc[6];
-  J[533] += dqdci; /* dwdot[H]/d[CO] */
-  J[534] -= dqdci; /* dwdot[OH]/d[CO] */
-  J[539] -= dqdci; /* dwdot[CO]/d[CO] */
-  J[543] += dqdci; /* dwdot[CO2]/d[CO] */
-  /* d()/d[CO2] */
+  J[533] += dqdci; // dwdot[H]/d[CO]
+  J[534] -= dqdci; // dwdot[OH]/d[CO]
+  J[539] -= dqdci; // dwdot[CO]/d[CO]
+  J[543] += dqdci; // dwdot[CO2]/d[CO]
+  // d()/d[CO2]
   dqdci = -k_r * sc[5];
-  J[725] += dqdci; /* dwdot[H]/d[CO2] */
-  J[726] -= dqdci; /* dwdot[OH]/d[CO2] */
-  J[731] -= dqdci; /* dwdot[CO]/d[CO2] */
-  J[735] += dqdci; /* dwdot[CO2]/d[CO2] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] -= dqdT; /* dwdot[CO]/dT */
-  J[2271] += dqdT; /* dwdot[CO2]/dT */
+  J[725] += dqdci; // dwdot[H]/d[CO2]
+  J[726] -= dqdci; // dwdot[OH]/d[CO2]
+  J[731] -= dqdci; // dwdot[CO]/d[CO2]
+  J[735] += dqdci; // dwdot[CO2]/d[CO2]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] -= dqdT; // dwdot[CO]/dT
+  J[2271] += dqdT; // dwdot[CO2]/dT
 
   /*reaction 63: CO + OH <=> CO2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[11];
   k_f = 1e-06 * 87800000000 *
         exp(0.03 * tc[0] - 0.50321666580472 * (-16.73) * invT);
   dlnkfdT = 0.03 * invT + 0.50321666580472 * (-16.73) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[15];
   Kc = exp(-g_RT[5] + g_RT[6] + g_RT[11] - g_RT[15]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[11]) + (h_RT[5] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[11] -= q; /* CO */
-  wdot[15] += q; /* CO2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[11] -= q; // CO
+  wdot[15] += q; // CO2
+  // d()/d[H]
   dqdci = -k_r * sc[15];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[246] -= dqdci; /* dwdot[OH]/d[H] */
-  J[251] -= dqdci; /* dwdot[CO]/d[H] */
-  J[255] += dqdci; /* dwdot[CO2]/d[H] */
-  /* d()/d[OH] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[246] -= dqdci; // dwdot[OH]/d[H]
+  J[251] -= dqdci; // dwdot[CO]/d[H]
+  J[255] += dqdci; // dwdot[CO2]/d[H]
+  // d()/d[OH]
   dqdci = +k_f * sc[11];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] -= dqdci; /* dwdot[CO]/d[OH] */
-  J[303] += dqdci; /* dwdot[CO2]/d[OH] */
-  /* d()/d[CO] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] -= dqdci; // dwdot[CO]/d[OH]
+  J[303] += dqdci; // dwdot[CO2]/d[OH]
+  // d()/d[CO]
   dqdci = +k_f * sc[6];
-  J[533] += dqdci; /* dwdot[H]/d[CO] */
-  J[534] -= dqdci; /* dwdot[OH]/d[CO] */
-  J[539] -= dqdci; /* dwdot[CO]/d[CO] */
-  J[543] += dqdci; /* dwdot[CO2]/d[CO] */
-  /* d()/d[CO2] */
+  J[533] += dqdci; // dwdot[H]/d[CO]
+  J[534] -= dqdci; // dwdot[OH]/d[CO]
+  J[539] -= dqdci; // dwdot[CO]/d[CO]
+  J[543] += dqdci; // dwdot[CO2]/d[CO]
+  // d()/d[CO2]
   dqdci = -k_r * sc[5];
-  J[725] += dqdci; /* dwdot[H]/d[CO2] */
-  J[726] -= dqdci; /* dwdot[OH]/d[CO2] */
-  J[731] -= dqdci; /* dwdot[CO]/d[CO2] */
-  J[735] += dqdci; /* dwdot[CO2]/d[CO2] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] -= dqdT; /* dwdot[CO]/dT */
-  J[2271] += dqdT; /* dwdot[CO2]/dT */
+  J[725] += dqdci; // dwdot[H]/d[CO2]
+  J[726] -= dqdci; // dwdot[OH]/d[CO2]
+  J[731] -= dqdci; // dwdot[CO]/d[CO2]
+  J[735] += dqdci; // dwdot[CO2]/d[CO2]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] -= dqdT; // dwdot[CO]/dT
+  J[2271] += dqdT; // dwdot[CO2]/dT
 
   /*reaction 64: CO + HO2 => CO2 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[11];
   k_f = 1e-06 * 30100000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (22999.52) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (22999.52) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[11] -= q; /* CO */
-  wdot[15] += q; /* CO2 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[11] -= q; // CO
+  wdot[15] += q; // CO2
+  // d()/d[HO2]
   dqdci = +k_f * sc[11];
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[443] -= dqdci; /* dwdot[CO]/d[HO2] */
-  J[447] += dqdci; /* dwdot[CO2]/d[HO2] */
-  /* d()/d[CO] */
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[443] -= dqdci; // dwdot[CO]/d[HO2]
+  J[447] += dqdci; // dwdot[CO2]/d[HO2]
+  // d()/d[CO]
   dqdci = +k_f * sc[9];
-  J[534] += dqdci; /* dwdot[OH]/d[CO] */
-  J[537] -= dqdci; /* dwdot[HO2]/d[CO] */
-  J[539] -= dqdci; /* dwdot[CO]/d[CO] */
-  J[543] += dqdci; /* dwdot[CO2]/d[CO] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2267] -= dqdT; /* dwdot[CO]/dT */
-  J[2271] += dqdT; /* dwdot[CO2]/dT */
+  J[534] += dqdci; // dwdot[OH]/d[CO]
+  J[537] -= dqdci; // dwdot[HO2]/d[CO]
+  J[539] -= dqdci; // dwdot[CO]/d[CO]
+  J[543] += dqdci; // dwdot[CO2]/d[CO]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2267] -= dqdT; // dwdot[CO]/dT
+  J[2271] += dqdT; // dwdot[CO2]/dT
 
   /*reaction 65: CO + S-CH2 <=> CO + T-CH2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[11];
   k_f = 1e-06 * 9000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[2] * sc[11];
   Kc = exp(g_RT[1] - g_RT[2] + g_RT[11] - g_RT[11]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[11]) + (h_RT[2] + h_RT[11]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q; /* S-CH2 */
-  wdot[2] += q; /* T-CH2 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q; // S-CH2
+  wdot[2] += q; // T-CH2
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[11];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[50] += dqdci; /* dwdot[T-CH2]/d[S-CH2] */
-  /* d()/d[T-CH2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[50] += dqdci; // dwdot[T-CH2]/d[S-CH2]
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[11];
-  J[97] -= dqdci; /* dwdot[S-CH2]/d[T-CH2] */
-  J[98] += dqdci; /* dwdot[T-CH2]/d[T-CH2] */
-  /* d()/d[CO] */
+  J[97] -= dqdci; // dwdot[S-CH2]/d[T-CH2]
+  J[98] += dqdci; // dwdot[T-CH2]/d[T-CH2]
+  // d()/d[CO]
   dqdci = +k_f * sc[1] - k_r * sc[2];
-  J[529] -= dqdci; /* dwdot[S-CH2]/d[CO] */
-  J[530] += dqdci; /* dwdot[T-CH2]/d[CO] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
+  J[529] -= dqdci; // dwdot[S-CH2]/d[CO]
+  J[530] += dqdci; // dwdot[T-CH2]/d[CO]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
 
   /*reaction 66: HCO + H => CO + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[12];
   k_f =
     1e-06 * 120000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // d()/d[H]
   dqdci = +k_f * sc[12];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[251] += dqdci; /* dwdot[CO]/d[H] */
-  J[252] -= dqdci; /* dwdot[HCO]/d[H] */
-  /* d()/d[HCO] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[251] += dqdci; // dwdot[CO]/d[H]
+  J[252] -= dqdci; // dwdot[HCO]/d[H]
+  // d()/d[HCO]
   dqdci = +k_f * sc[5];
-  J[580] += dqdci; /* dwdot[H2]/d[HCO] */
-  J[581] -= dqdci; /* dwdot[H]/d[HCO] */
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[580] += dqdci; // dwdot[H2]/d[HCO]
+  J[581] -= dqdci; // dwdot[H]/d[HCO]
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 67: HCO + O => CO + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[12];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // d()/d[O]
   dqdci = +k_f * sc[12];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[156] -= dqdci; /* dwdot[HCO]/d[O] */
-  /* d()/d[HCO] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[156] -= dqdci; // dwdot[HCO]/d[O]
+  // d()/d[HCO]
   dqdci = +k_f * sc[3];
-  J[579] -= dqdci; /* dwdot[O]/d[HCO] */
-  J[582] += dqdci; /* dwdot[OH]/d[HCO] */
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[579] -= dqdci; // dwdot[O]/d[HCO]
+  J[582] += dqdci; // dwdot[OH]/d[HCO]
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 68: HCO + O => CO2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[12];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[12] -= q; /* HCO */
-  wdot[15] += q; /* CO2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[12] -= q; // HCO
+  wdot[15] += q; // CO2
+  // d()/d[O]
   dqdci = +k_f * sc[12];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[156] -= dqdci; /* dwdot[HCO]/d[O] */
-  J[159] += dqdci; /* dwdot[CO2]/d[O] */
-  /* d()/d[HCO] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[156] -= dqdci; // dwdot[HCO]/d[O]
+  J[159] += dqdci; // dwdot[CO2]/d[O]
+  // d()/d[HCO]
   dqdci = +k_f * sc[3];
-  J[579] -= dqdci; /* dwdot[O]/d[HCO] */
-  J[581] += dqdci; /* dwdot[H]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  J[591] += dqdci; /* dwdot[CO2]/d[HCO] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
-  J[2271] += dqdT; /* dwdot[CO2]/dT */
+  J[579] -= dqdci; // dwdot[O]/d[HCO]
+  J[581] += dqdci; // dwdot[H]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  J[591] += dqdci; // dwdot[CO2]/d[HCO]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
+  J[2271] += dqdT; // dwdot[CO2]/dT
 
   /*reaction 69: HCO + OH => CO + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[12];
   k_f = 1e-06 * 30200000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // d()/d[OH]
   dqdci = +k_f * sc[12];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[300] -= dqdci; /* dwdot[HCO]/d[OH] */
-  /* d()/d[HCO] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[300] -= dqdci; // dwdot[HCO]/d[OH]
+  // d()/d[HCO]
   dqdci = +k_f * sc[6];
-  J[582] -= dqdci; /* dwdot[OH]/d[HCO] */
-  J[583] += dqdci; /* dwdot[H2O]/d[HCO] */
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[582] -= dqdci; // dwdot[OH]/d[HCO]
+  J[583] += dqdci; // dwdot[H2O]/d[HCO]
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 70: HCO + H2O <=> CO + H + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[7] * sc[12];
   k_f =
     1e-06 * 2.24e+18 * exp(-1 * tc[0] - 0.50321666580472 * (17000.48) * invT);
   dlnkfdT = -1 * invT + 0.50321666580472 * (17000.48) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[7] * sc[11];
   Kc = refC * exp(-g_RT[5] + g_RT[7] - g_RT[7] - g_RT[11] + g_RT[12]);
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[7] + h_RT[12]) + (h_RT[5] + h_RT[7] + h_RT[11]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // d()/d[H]
   dqdci = -k_r * sc[7] * sc[11];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[251] += dqdci; /* dwdot[CO]/d[H] */
-  J[252] -= dqdci; /* dwdot[HCO]/d[H] */
-  /* d()/d[H2O] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[251] += dqdci; // dwdot[CO]/d[H]
+  J[252] -= dqdci; // dwdot[HCO]/d[H]
+  // d()/d[H2O]
   dqdci = +k_f * sc[12] - k_r * sc[5] * sc[11];
-  J[341] += dqdci; /* dwdot[H]/d[H2O] */
-  J[347] += dqdci; /* dwdot[CO]/d[H2O] */
-  J[348] -= dqdci; /* dwdot[HCO]/d[H2O] */
-  /* d()/d[CO] */
+  J[341] += dqdci; // dwdot[H]/d[H2O]
+  J[347] += dqdci; // dwdot[CO]/d[H2O]
+  J[348] -= dqdci; // dwdot[HCO]/d[H2O]
+  // d()/d[CO]
   dqdci = -k_r * sc[5] * sc[7];
-  J[533] += dqdci; /* dwdot[H]/d[CO] */
-  J[539] += dqdci; /* dwdot[CO]/d[CO] */
-  J[540] -= dqdci; /* dwdot[HCO]/d[CO] */
-  /* d()/d[HCO] */
+  J[533] += dqdci; // dwdot[H]/d[CO]
+  J[539] += dqdci; // dwdot[CO]/d[CO]
+  J[540] -= dqdci; // dwdot[HCO]/d[CO]
+  // d()/d[HCO]
   dqdci = +k_f * sc[7];
-  J[581] += dqdci; /* dwdot[H]/d[HCO] */
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[581] += dqdci; // dwdot[H]/d[HCO]
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 71: HCO + O2 => CO + HO2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[12];
   k_f = 1e-06 * 12000000000 *
         exp(0.81 * tc[0] - 0.50321666580472 * (-726.58) * invT);
   dlnkfdT = 0.81 * invT + 0.50321666580472 * (-726.58) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;  /* O2 */
-  wdot[9] += q;  /* HO2 */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;  // O2
+  wdot[9] += q;  // HO2
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // d()/d[O2]
   dqdci = +k_f * sc[12];
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[393] += dqdci; /* dwdot[HO2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  J[396] -= dqdci; /* dwdot[HCO]/d[O2] */
-  /* d()/d[HCO] */
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[393] += dqdci; // dwdot[HO2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  J[396] -= dqdci; // dwdot[HCO]/d[O2]
+  // d()/d[HCO]
   dqdci = +k_f * sc[8];
-  J[584] -= dqdci; /* dwdot[O2]/d[HCO] */
-  J[585] += dqdci; /* dwdot[HO2]/d[HCO] */
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  /* d()/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2265] += dqdT; /* dwdot[HO2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[584] -= dqdci; // dwdot[O2]/d[HCO]
+  J[585] += dqdci; // dwdot[HO2]/d[HCO]
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  // d()/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2265] += dqdT; // dwdot[HO2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 72: CH3 + HCO => CH4 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[12] * sc[14];
   k_f = 1e-06 * 26500000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  /* d()/d[HCO] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  // d()/d[HCO]
   dqdci = +k_f * sc[14];
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  J[590] -= dqdci; /* dwdot[CH3]/d[HCO] */
-  J[592] += dqdci; /* dwdot[CH4]/d[HCO] */
-  /* d()/d[CH3] */
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  J[590] -= dqdci; // dwdot[CH3]/d[HCO]
+  J[592] += dqdci; // dwdot[CH4]/d[HCO]
+  // d()/d[CH3]
   dqdci = +k_f * sc[12];
-  J[683] += dqdci; /* dwdot[CO]/d[CH3] */
-  J[684] -= dqdci; /* dwdot[HCO]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
+  J[683] += dqdci; // dwdot[CO]/d[CH3]
+  J[684] -= dqdci; // dwdot[HCO]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
 
   /*reaction 73: CH2O + H <=> HCO + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[13];
   k_f =
     1e-06 * 57400000 * exp(1.9 * tc[0] - 0.50321666580472 * (2741.4) * invT);
   dlnkfdT = 1.9 * invT + 0.50321666580472 * (2741.4) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[4] * sc[12];
   Kc = exp(-g_RT[4] + g_RT[5] - g_RT[12] + g_RT[13]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[13]) + (h_RT[4] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[12] += q; /* HCO */
-  wdot[13] -= q; /* CH2O */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[12] += q; // HCO
+  wdot[13] -= q; // CH2O
+  // d()/d[H2]
   dqdci = -k_r * sc[12];
-  J[196] += dqdci; /* dwdot[H2]/d[H2] */
-  J[197] -= dqdci; /* dwdot[H]/d[H2] */
-  J[204] += dqdci; /* dwdot[HCO]/d[H2] */
-  J[205] -= dqdci; /* dwdot[CH2O]/d[H2] */
-  /* d()/d[H] */
+  J[196] += dqdci; // dwdot[H2]/d[H2]
+  J[197] -= dqdci; // dwdot[H]/d[H2]
+  J[204] += dqdci; // dwdot[HCO]/d[H2]
+  J[205] -= dqdci; // dwdot[CH2O]/d[H2]
+  // d()/d[H]
   dqdci = +k_f * sc[13];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[252] += dqdci; /* dwdot[HCO]/d[H] */
-  J[253] -= dqdci; /* dwdot[CH2O]/d[H] */
-  /* d()/d[HCO] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[252] += dqdci; // dwdot[HCO]/d[H]
+  J[253] -= dqdci; // dwdot[CH2O]/d[H]
+  // d()/d[HCO]
   dqdci = -k_r * sc[4];
-  J[580] += dqdci; /* dwdot[H2]/d[HCO] */
-  J[581] -= dqdci; /* dwdot[H]/d[HCO] */
-  J[588] += dqdci; /* dwdot[HCO]/d[HCO] */
-  J[589] -= dqdci; /* dwdot[CH2O]/d[HCO] */
-  /* d()/d[CH2O] */
+  J[580] += dqdci; // dwdot[H2]/d[HCO]
+  J[581] -= dqdci; // dwdot[H]/d[HCO]
+  J[588] += dqdci; // dwdot[HCO]/d[HCO]
+  J[589] -= dqdci; // dwdot[CH2O]/d[HCO]
+  // d()/d[CH2O]
   dqdci = +k_f * sc[5];
-  J[628] += dqdci; /* dwdot[H2]/d[CH2O] */
-  J[629] -= dqdci; /* dwdot[H]/d[CH2O] */
-  J[636] += dqdci; /* dwdot[HCO]/d[CH2O] */
-  J[637] -= dqdci; /* dwdot[CH2O]/d[CH2O] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2269] -= dqdT; /* dwdot[CH2O]/dT */
+  J[628] += dqdci; // dwdot[H2]/d[CH2O]
+  J[629] -= dqdci; // dwdot[H]/d[CH2O]
+  J[636] += dqdci; // dwdot[HCO]/d[CH2O]
+  J[637] -= dqdci; // dwdot[CH2O]/d[CH2O]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2269] -= dqdT; // dwdot[CH2O]/dT
 
   /*reaction 74: CH2O + O => HCO + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[13];
   k_f = 1e-06 * 39000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (3539.67) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (3539.67) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[12] += q; /* HCO */
-  wdot[13] -= q; /* CH2O */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[12] += q; // HCO
+  wdot[13] -= q; // CH2O
+  // d()/d[O]
   dqdci = +k_f * sc[13];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[156] += dqdci; /* dwdot[HCO]/d[O] */
-  J[157] -= dqdci; /* dwdot[CH2O]/d[O] */
-  /* d()/d[CH2O] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[156] += dqdci; // dwdot[HCO]/d[O]
+  J[157] -= dqdci; // dwdot[CH2O]/d[O]
+  // d()/d[CH2O]
   dqdci = +k_f * sc[3];
-  J[627] -= dqdci; /* dwdot[O]/d[CH2O] */
-  J[630] += dqdci; /* dwdot[OH]/d[CH2O] */
-  J[636] += dqdci; /* dwdot[HCO]/d[CH2O] */
-  J[637] -= dqdci; /* dwdot[CH2O]/d[CH2O] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2269] -= dqdT; /* dwdot[CH2O]/dT */
+  J[627] -= dqdci; // dwdot[O]/d[CH2O]
+  J[630] += dqdci; // dwdot[OH]/d[CH2O]
+  J[636] += dqdci; // dwdot[HCO]/d[CH2O]
+  J[637] -= dqdci; // dwdot[CH2O]/d[CH2O]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2269] -= dqdT; // dwdot[CH2O]/dT
 
   /*reaction 75: CH2O + OH => HCO + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[13];
   k_f = 1e-06 * 3430000000 *
         exp(1.18 * tc[0] - 0.50321666580472 * (-446.94) * invT);
   dlnkfdT = 1.18 * invT + 0.50321666580472 * (-446.94) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[12] += q; /* HCO */
-  wdot[13] -= q; /* CH2O */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[12] += q; // HCO
+  wdot[13] -= q; // CH2O
+  // d()/d[OH]
   dqdci = +k_f * sc[13];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[300] += dqdci; /* dwdot[HCO]/d[OH] */
-  J[301] -= dqdci; /* dwdot[CH2O]/d[OH] */
-  /* d()/d[CH2O] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[300] += dqdci; // dwdot[HCO]/d[OH]
+  J[301] -= dqdci; // dwdot[CH2O]/d[OH]
+  // d()/d[CH2O]
   dqdci = +k_f * sc[6];
-  J[630] -= dqdci; /* dwdot[OH]/d[CH2O] */
-  J[631] += dqdci; /* dwdot[H2O]/d[CH2O] */
-  J[636] += dqdci; /* dwdot[HCO]/d[CH2O] */
-  J[637] -= dqdci; /* dwdot[CH2O]/d[CH2O] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2269] -= dqdT; /* dwdot[CH2O]/dT */
+  J[630] -= dqdci; // dwdot[OH]/d[CH2O]
+  J[631] += dqdci; // dwdot[H2O]/d[CH2O]
+  J[636] += dqdci; // dwdot[HCO]/d[CH2O]
+  J[637] -= dqdci; // dwdot[CH2O]/d[CH2O]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2269] -= dqdT; // dwdot[CH2O]/dT
 
   /*reaction 76: CH3 + CH2O => CH4 + HCO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[13] * sc[14];
   k_f = 1e-06 * 3320 * exp(2.81 * tc[0] - 0.50321666580472 * (5860.42) * invT);
   dlnkfdT = 2.81 * invT + 0.50321666580472 * (5860.42) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[12] += q; /* HCO */
-  wdot[13] -= q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  /* d()/d[CH2O] */
+  // update wdot
+  wdot[12] += q; // HCO
+  wdot[13] -= q; // CH2O
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  // d()/d[CH2O]
   dqdci = +k_f * sc[14];
-  J[636] += dqdci; /* dwdot[HCO]/d[CH2O] */
-  J[637] -= dqdci; /* dwdot[CH2O]/d[CH2O] */
-  J[638] -= dqdci; /* dwdot[CH3]/d[CH2O] */
-  J[640] += dqdci; /* dwdot[CH4]/d[CH2O] */
-  /* d()/d[CH3] */
+  J[636] += dqdci; // dwdot[HCO]/d[CH2O]
+  J[637] -= dqdci; // dwdot[CH2O]/d[CH2O]
+  J[638] -= dqdci; // dwdot[CH3]/d[CH2O]
+  J[640] += dqdci; // dwdot[CH4]/d[CH2O]
+  // d()/d[CH3]
   dqdci = +k_f * sc[13];
-  J[684] += dqdci; /* dwdot[HCO]/d[CH3] */
-  J[685] -= dqdci; /* dwdot[CH2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2269] -= dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
+  J[684] += dqdci; // dwdot[HCO]/d[CH3]
+  J[685] -= dqdci; // dwdot[CH2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  // d()/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2269] -= dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
 
   /*reaction 77: CO2 + CH => HCO + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[10] * sc[15];
   k_f = 1e-06 * 190000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (15791.11) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (15791.11) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[10] -= q; /* CH */
-  wdot[11] += q; /* CO */
-  wdot[12] += q; /* HCO */
-  wdot[15] -= q; /* CO2 */
-  /* d()/d[CH] */
+  // update wdot
+  wdot[10] -= q; // CH
+  wdot[11] += q; // CO
+  wdot[12] += q; // HCO
+  wdot[15] -= q; // CO2
+  // d()/d[CH]
   dqdci = +k_f * sc[15];
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[491] += dqdci; /* dwdot[CO]/d[CH] */
-  J[492] += dqdci; /* dwdot[HCO]/d[CH] */
-  J[495] -= dqdci; /* dwdot[CO2]/d[CH] */
-  /* d()/d[CO2] */
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[491] += dqdci; // dwdot[CO]/d[CH]
+  J[492] += dqdci; // dwdot[HCO]/d[CH]
+  J[495] -= dqdci; // dwdot[CO2]/d[CH]
+  // d()/d[CO2]
   dqdci = +k_f * sc[10];
-  J[730] -= dqdci; /* dwdot[CH]/d[CO2] */
-  J[731] += dqdci; /* dwdot[CO]/d[CO2] */
-  J[732] += dqdci; /* dwdot[HCO]/d[CO2] */
-  J[735] -= dqdci; /* dwdot[CO2]/d[CO2] */
-  /* d()/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2271] -= dqdT; /* dwdot[CO2]/dT */
+  J[730] -= dqdci; // dwdot[CH]/d[CO2]
+  J[731] += dqdci; // dwdot[CO]/d[CO2]
+  J[732] += dqdci; // dwdot[HCO]/d[CO2]
+  J[735] -= dqdci; // dwdot[CO2]/d[CO2]
+  // d()/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2271] -= dqdT; // dwdot[CO2]/dT
 
   /*reaction 78: CO2 + S-CH2 <=> CO2 + T-CH2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[15];
   k_f = 1e-06 * 7000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[2] * sc[15];
   Kc = exp(g_RT[1] - g_RT[2] + g_RT[15] - g_RT[15]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[15]) + (h_RT[2] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q; /* S-CH2 */
-  wdot[2] += q; /* T-CH2 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q; // S-CH2
+  wdot[2] += q; // T-CH2
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[15];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[50] += dqdci; /* dwdot[T-CH2]/d[S-CH2] */
-  /* d()/d[T-CH2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[50] += dqdci; // dwdot[T-CH2]/d[S-CH2]
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[15];
-  J[97] -= dqdci; /* dwdot[S-CH2]/d[T-CH2] */
-  J[98] += dqdci; /* dwdot[T-CH2]/d[T-CH2] */
-  /* d()/d[CO2] */
+  J[97] -= dqdci; // dwdot[S-CH2]/d[T-CH2]
+  J[98] += dqdci; // dwdot[T-CH2]/d[T-CH2]
+  // d()/d[CO2]
   dqdci = +k_f * sc[1] - k_r * sc[2];
-  J[721] -= dqdci; /* dwdot[S-CH2]/d[CO2] */
-  J[722] += dqdci; /* dwdot[T-CH2]/d[CO2] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
+  J[721] -= dqdci; // dwdot[S-CH2]/d[CO2]
+  J[722] += dqdci; // dwdot[T-CH2]/d[CO2]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
 
   /*reaction 79: CO2 + S-CH2 => CH2O + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[15];
   k_f = 1e-06 * 14000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[11] += q; /* CO */
-  wdot[13] += q; /* CH2O */
-  wdot[15] -= q; /* CO2 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[11] += q; // CO
+  wdot[13] += q; // CH2O
+  wdot[15] -= q; // CO2
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[15];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[59] += dqdci; /* dwdot[CO]/d[S-CH2] */
-  J[61] += dqdci; /* dwdot[CH2O]/d[S-CH2] */
-  J[63] -= dqdci; /* dwdot[CO2]/d[S-CH2] */
-  /* d()/d[CO2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[59] += dqdci; // dwdot[CO]/d[S-CH2]
+  J[61] += dqdci; // dwdot[CH2O]/d[S-CH2]
+  J[63] -= dqdci; // dwdot[CO2]/d[S-CH2]
+  // d()/d[CO2]
   dqdci = +k_f * sc[1];
-  J[721] -= dqdci; /* dwdot[S-CH2]/d[CO2] */
-  J[731] += dqdci; /* dwdot[CO]/d[CO2] */
-  J[733] += dqdci; /* dwdot[CH2O]/d[CO2] */
-  J[735] -= dqdci; /* dwdot[CO2]/d[CO2] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2271] -= dqdT; /* dwdot[CO2]/dT */
+  J[721] -= dqdci; // dwdot[S-CH2]/d[CO2]
+  J[731] += dqdci; // dwdot[CO]/d[CO2]
+  J[733] += dqdci; // dwdot[CH2O]/d[CO2]
+  J[735] -= dqdci; // dwdot[CO2]/d[CO2]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2271] -= dqdT; // dwdot[CO2]/dT
 
   /*reaction 80: C2H + O => CH + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[20];
   k_f = 1e-06 * 50000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[10] += q; /* CH */
-  wdot[11] += q; /* CO */
-  wdot[20] -= q; /* C2H */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[10] += q; // CH
+  wdot[11] += q; // CO
+  wdot[20] -= q; // C2H
+  // d()/d[O]
   dqdci = +k_f * sc[20];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[154] += dqdci; /* dwdot[CH]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[164] -= dqdci; /* dwdot[C2H]/d[O] */
-  /* d()/d[C2H] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[154] += dqdci; // dwdot[CH]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[164] -= dqdci; // dwdot[C2H]/d[O]
+  // d()/d[C2H]
   dqdci = +k_f * sc[3];
-  J[963] -= dqdci; /* dwdot[O]/d[C2H] */
-  J[970] += dqdci; /* dwdot[CH]/d[C2H] */
-  J[971] += dqdci; /* dwdot[CO]/d[C2H] */
-  J[980] -= dqdci; /* dwdot[C2H]/d[C2H] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2266] += dqdT; /* dwdot[CH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2276] -= dqdT; /* dwdot[C2H]/dT */
+  J[963] -= dqdci; // dwdot[O]/d[C2H]
+  J[970] += dqdci; // dwdot[CH]/d[C2H]
+  J[971] += dqdci; // dwdot[CO]/d[C2H]
+  J[980] -= dqdci; // dwdot[C2H]/d[C2H]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2266] += dqdT; // dwdot[CH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2276] -= dqdT; // dwdot[C2H]/dT
 
   /*reaction 81: C2H + OH => HCCO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[20];
   k_f = 1e-06 * 20000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[20] -= q; /* C2H */
-  wdot[21] += q; /* HCCO */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[20] -= q; // C2H
+  wdot[21] += q; // HCCO
+  // d()/d[OH]
   dqdci = +k_f * sc[20];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[308] -= dqdci; /* dwdot[C2H]/d[OH] */
-  J[309] += dqdci; /* dwdot[HCCO]/d[OH] */
-  /* d()/d[C2H] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[308] -= dqdci; // dwdot[C2H]/d[OH]
+  J[309] += dqdci; // dwdot[HCCO]/d[OH]
+  // d()/d[C2H]
   dqdci = +k_f * sc[6];
-  J[965] += dqdci; /* dwdot[H]/d[C2H] */
-  J[966] -= dqdci; /* dwdot[OH]/d[C2H] */
-  J[980] -= dqdci; /* dwdot[C2H]/d[C2H] */
-  J[981] += dqdci; /* dwdot[HCCO]/d[C2H] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2276] -= dqdT; /* dwdot[C2H]/dT */
-  J[2277] += dqdT; /* dwdot[HCCO]/dT */
+  J[965] += dqdci; // dwdot[H]/d[C2H]
+  J[966] -= dqdci; // dwdot[OH]/d[C2H]
+  J[980] -= dqdci; // dwdot[C2H]/d[C2H]
+  J[981] += dqdci; // dwdot[HCCO]/d[C2H]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2276] -= dqdT; // dwdot[C2H]/dT
+  J[2277] += dqdT; // dwdot[HCCO]/dT
 
   /*reaction 82: C2H + O2 => HCO + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[20];
   k_f = 1e-06 * 10000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (-755.26) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (-755.26) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  wdot[12] += q; /* HCO */
-  wdot[20] -= q; /* C2H */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  wdot[12] += q; // HCO
+  wdot[20] -= q; // C2H
+  // d()/d[O2]
   dqdci = +k_f * sc[20];
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  J[396] += dqdci; /* dwdot[HCO]/d[O2] */
-  J[404] -= dqdci; /* dwdot[C2H]/d[O2] */
-  /* d()/d[C2H] */
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  J[396] += dqdci; // dwdot[HCO]/d[O2]
+  J[404] -= dqdci; // dwdot[C2H]/d[O2]
+  // d()/d[C2H]
   dqdci = +k_f * sc[8];
-  J[968] -= dqdci; /* dwdot[O2]/d[C2H] */
-  J[971] += dqdci; /* dwdot[CO]/d[C2H] */
-  J[972] += dqdci; /* dwdot[HCO]/d[C2H] */
-  J[980] -= dqdci; /* dwdot[C2H]/d[C2H] */
-  /* d()/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2276] -= dqdT; /* dwdot[C2H]/dT */
+  J[968] -= dqdci; // dwdot[O2]/d[C2H]
+  J[971] += dqdci; // dwdot[CO]/d[C2H]
+  J[972] += dqdci; // dwdot[HCO]/d[C2H]
+  J[980] -= dqdci; // dwdot[C2H]/d[C2H]
+  // d()/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2276] -= dqdT; // dwdot[C2H]/dT
 
   /*reaction 83: C2H + H2 <=> C2H2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[4] * sc[20];
   k_f =
     1e-06 * 3310000 * exp(2.26 * tc[0] - 0.50321666580472 * (901.05) * invT);
   dlnkfdT = 2.26 * invT + 0.50321666580472 * (901.05) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[22];
   Kc = exp(g_RT[4] - g_RT[5] + g_RT[20] - g_RT[22]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[20]) + (h_RT[5] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] -= q;  /* H2 */
-  wdot[5] += q;  /* H */
-  wdot[20] -= q; /* C2H */
-  wdot[22] += q; /* C2H2 */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] -= q;  // H2
+  wdot[5] += q;  // H
+  wdot[20] -= q; // C2H
+  wdot[22] += q; // C2H2
+  // d()/d[H2]
   dqdci = +k_f * sc[20];
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[212] -= dqdci; /* dwdot[C2H]/d[H2] */
-  J[214] += dqdci; /* dwdot[C2H2]/d[H2] */
-  /* d()/d[H] */
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[212] -= dqdci; // dwdot[C2H]/d[H2]
+  J[214] += dqdci; // dwdot[C2H2]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[22];
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[260] -= dqdci; /* dwdot[C2H]/d[H] */
-  J[262] += dqdci; /* dwdot[C2H2]/d[H] */
-  /* d()/d[C2H] */
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[260] -= dqdci; // dwdot[C2H]/d[H]
+  J[262] += dqdci; // dwdot[C2H2]/d[H]
+  // d()/d[C2H]
   dqdci = +k_f * sc[4];
-  J[964] -= dqdci; /* dwdot[H2]/d[C2H] */
-  J[965] += dqdci; /* dwdot[H]/d[C2H] */
-  J[980] -= dqdci; /* dwdot[C2H]/d[C2H] */
-  J[982] += dqdci; /* dwdot[C2H2]/d[C2H] */
-  /* d()/d[C2H2] */
+  J[964] -= dqdci; // dwdot[H2]/d[C2H]
+  J[965] += dqdci; // dwdot[H]/d[C2H]
+  J[980] -= dqdci; // dwdot[C2H]/d[C2H]
+  J[982] += dqdci; // dwdot[C2H2]/d[C2H]
+  // d()/d[C2H2]
   dqdci = -k_r * sc[5];
-  J[1060] -= dqdci; /* dwdot[H2]/d[C2H2] */
-  J[1061] += dqdci; /* dwdot[H]/d[C2H2] */
-  J[1076] -= dqdci; /* dwdot[C2H]/d[C2H2] */
-  J[1078] += dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2276] -= dqdT; /* dwdot[C2H]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
+  J[1060] -= dqdci; // dwdot[H2]/d[C2H2]
+  J[1061] += dqdci; // dwdot[H]/d[C2H2]
+  J[1076] -= dqdci; // dwdot[C2H]/d[C2H2]
+  J[1078] += dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2276] -= dqdT; // dwdot[C2H]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
 
   /*reaction 84: C2H2 + O => HCCO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[22];
   k_f = 1e-06 * 8100000 * exp(2 * tc[0] - 0.50321666580472 * (1900.1) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * (1900.1) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[21] += q; /* HCCO */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[21] += q; // HCCO
+  wdot[22] -= q; // C2H2
+  // d()/d[O]
   dqdci = +k_f * sc[22];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[165] += dqdci; /* dwdot[HCCO]/d[O] */
-  J[166] -= dqdci; /* dwdot[C2H2]/d[O] */
-  /* d()/d[C2H2] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[165] += dqdci; // dwdot[HCCO]/d[O]
+  J[166] -= dqdci; // dwdot[C2H2]/d[O]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[3];
-  J[1059] -= dqdci; /* dwdot[O]/d[C2H2] */
-  J[1061] += dqdci; /* dwdot[H]/d[C2H2] */
-  J[1077] += dqdci; /* dwdot[HCCO]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2277] += dqdT; /* dwdot[HCCO]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1059] -= dqdci; // dwdot[O]/d[C2H2]
+  J[1061] += dqdci; // dwdot[H]/d[C2H2]
+  J[1077] += dqdci; // dwdot[HCCO]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2277] += dqdT; // dwdot[HCCO]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 85: C2H2 + O => T-CH2 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[22];
   k_f = 1e-06 * 12500000 * exp(2 * tc[0] - 0.50321666580472 * (1900.1) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * (1900.1) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] += q;  /* T-CH2 */
-  wdot[3] -= q;  /* O */
-  wdot[11] += q; /* CO */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[2] += q;  // T-CH2
+  wdot[3] -= q;  // O
+  wdot[11] += q; // CO
+  wdot[22] -= q; // C2H2
+  // d()/d[O]
   dqdci = +k_f * sc[22];
-  J[146] += dqdci; /* dwdot[T-CH2]/d[O] */
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[166] -= dqdci; /* dwdot[C2H2]/d[O] */
-  /* d()/d[C2H2] */
+  J[146] += dqdci; // dwdot[T-CH2]/d[O]
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[166] -= dqdci; // dwdot[C2H2]/d[O]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[3];
-  J[1058] += dqdci; /* dwdot[T-CH2]/d[C2H2] */
-  J[1059] -= dqdci; /* dwdot[O]/d[C2H2] */
-  J[1067] += dqdci; /* dwdot[CO]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1058] += dqdci; // dwdot[T-CH2]/d[C2H2]
+  J[1059] -= dqdci; // dwdot[O]/d[C2H2]
+  J[1067] += dqdci; // dwdot[CO]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 86: C2H2 + O => C2H + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[22];
   k_f = 1e-06 * 3.324e+16 *
         exp(-0.44 * tc[0] - 0.50321666580472 * (30697.9) * invT);
   dlnkfdT = -0.44 * invT + 0.50321666580472 * (30697.9) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[20] += q; /* C2H */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[20] += q; // C2H
+  wdot[22] -= q; // C2H2
+  // d()/d[O]
   dqdci = +k_f * sc[22];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[164] += dqdci; /* dwdot[C2H]/d[O] */
-  J[166] -= dqdci; /* dwdot[C2H2]/d[O] */
-  /* d()/d[C2H2] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[164] += dqdci; // dwdot[C2H]/d[O]
+  J[166] -= dqdci; // dwdot[C2H2]/d[O]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[3];
-  J[1059] -= dqdci; /* dwdot[O]/d[C2H2] */
-  J[1062] += dqdci; /* dwdot[OH]/d[C2H2] */
-  J[1076] += dqdci; /* dwdot[C2H]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2276] += dqdT; /* dwdot[C2H]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1059] -= dqdci; // dwdot[O]/d[C2H2]
+  J[1062] += dqdci; // dwdot[OH]/d[C2H2]
+  J[1076] += dqdci; // dwdot[C2H]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2276] += dqdT; // dwdot[C2H]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 87: C2H2 + OH => C2H + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[22];
   k_f =
     1e-06 * 2630000 * exp(2.14 * tc[0] - 0.50321666580472 * (17060.23) * invT);
   dlnkfdT = 2.14 * invT + 0.50321666580472 * (17060.23) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[20] += q; /* C2H */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[20] += q; // C2H
+  wdot[22] -= q; // C2H2
+  // d()/d[OH]
   dqdci = +k_f * sc[22];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[308] += dqdci; /* dwdot[C2H]/d[OH] */
-  J[310] -= dqdci; /* dwdot[C2H2]/d[OH] */
-  /* d()/d[C2H2] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[308] += dqdci; // dwdot[C2H]/d[OH]
+  J[310] -= dqdci; // dwdot[C2H2]/d[OH]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[6];
-  J[1062] -= dqdci; /* dwdot[OH]/d[C2H2] */
-  J[1063] += dqdci; /* dwdot[H2O]/d[C2H2] */
-  J[1076] += dqdci; /* dwdot[C2H]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2276] += dqdT; /* dwdot[C2H]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1062] -= dqdci; // dwdot[OH]/d[C2H2]
+  J[1063] += dqdci; // dwdot[H2O]/d[C2H2]
+  J[1076] += dqdci; // dwdot[C2H]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2276] += dqdT; // dwdot[C2H]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 88: C2H2 + OH => CH3 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[22];
   k_f =
     1e-06 * 7530000 * exp(1.55 * tc[0] - 0.50321666580472 * (2105.64) * invT);
   dlnkfdT = 1.55 * invT + 0.50321666580472 * (2105.64) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[14] += q; /* CH3 */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[14] += q; // CH3
+  wdot[22] -= q; // C2H2
+  // d()/d[OH]
   dqdci = +k_f * sc[22];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[302] += dqdci; /* dwdot[CH3]/d[OH] */
-  J[310] -= dqdci; /* dwdot[C2H2]/d[OH] */
-  /* d()/d[C2H2] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[302] += dqdci; // dwdot[CH3]/d[OH]
+  J[310] -= dqdci; // dwdot[C2H2]/d[OH]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[6];
-  J[1062] -= dqdci; /* dwdot[OH]/d[C2H2] */
-  J[1067] += dqdci; /* dwdot[CO]/d[C2H2] */
-  J[1070] += dqdci; /* dwdot[CH3]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1062] -= dqdci; // dwdot[OH]/d[C2H2]
+  J[1067] += dqdci; // dwdot[CO]/d[C2H2]
+  J[1070] += dqdci; // dwdot[CH3]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 89: C2H2 + OH => CH3 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[22];
   k_f = 1e-06 * 1280000000 *
         exp(0.73 * tc[0] - 0.50321666580472 * (2578.87) * invT);
   dlnkfdT = 0.73 * invT + 0.50321666580472 * (2578.87) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[14] += q; /* CH3 */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[14] += q; // CH3
+  wdot[22] -= q; // C2H2
+  // d()/d[OH]
   dqdci = +k_f * sc[22];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[302] += dqdci; /* dwdot[CH3]/d[OH] */
-  J[310] -= dqdci; /* dwdot[C2H2]/d[OH] */
-  /* d()/d[C2H2] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[302] += dqdci; // dwdot[CH3]/d[OH]
+  J[310] -= dqdci; // dwdot[C2H2]/d[OH]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[6];
-  J[1062] -= dqdci; /* dwdot[OH]/d[C2H2] */
-  J[1067] += dqdci; /* dwdot[CO]/d[C2H2] */
-  J[1070] += dqdci; /* dwdot[CH3]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1062] -= dqdci; // dwdot[OH]/d[C2H2]
+  J[1067] += dqdci; // dwdot[CO]/d[C2H2]
+  J[1070] += dqdci; // dwdot[CH3]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 90: C2H2 + S-CH2 <=> C3H3 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[22];
   k_f =
     1e-06 * 190000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[23];
   Kc = exp(g_RT[1] - g_RT[5] + g_RT[22] - g_RT[23]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[22]) + (h_RT[5] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[5] += q;  /* H */
-  wdot[22] -= q; /* C2H2 */
-  wdot[23] += q; /* C3H3 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[5] += q;  // H
+  wdot[22] -= q; // C2H2
+  wdot[23] += q; // C3H3
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[22];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[53] += dqdci; /* dwdot[H]/d[S-CH2] */
-  J[70] -= dqdci; /* dwdot[C2H2]/d[S-CH2] */
-  J[71] += dqdci; /* dwdot[C3H3]/d[S-CH2] */
-  /* d()/d[H] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[53] += dqdci; // dwdot[H]/d[S-CH2]
+  J[70] -= dqdci; // dwdot[C2H2]/d[S-CH2]
+  J[71] += dqdci; // dwdot[C3H3]/d[S-CH2]
+  // d()/d[H]
   dqdci = -k_r * sc[23];
-  J[241] -= dqdci; /* dwdot[S-CH2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[262] -= dqdci; /* dwdot[C2H2]/d[H] */
-  J[263] += dqdci; /* dwdot[C3H3]/d[H] */
-  /* d()/d[C2H2] */
+  J[241] -= dqdci; // dwdot[S-CH2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[262] -= dqdci; // dwdot[C2H2]/d[H]
+  J[263] += dqdci; // dwdot[C3H3]/d[H]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[1];
-  J[1057] -= dqdci; /* dwdot[S-CH2]/d[C2H2] */
-  J[1061] += dqdci; /* dwdot[H]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1079] += dqdci; /* dwdot[C3H3]/d[C2H2] */
-  /* d()/d[C3H3] */
+  J[1057] -= dqdci; // dwdot[S-CH2]/d[C2H2]
+  J[1061] += dqdci; // dwdot[H]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1079] += dqdci; // dwdot[C3H3]/d[C2H2]
+  // d()/d[C3H3]
   dqdci = -k_r * sc[5];
-  J[1105] -= dqdci; /* dwdot[S-CH2]/d[C3H3] */
-  J[1109] += dqdci; /* dwdot[H]/d[C3H3] */
-  J[1126] -= dqdci; /* dwdot[C2H2]/d[C3H3] */
-  J[1127] += dqdci; /* dwdot[C3H3]/d[C3H3] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
+  J[1105] -= dqdci; // dwdot[S-CH2]/d[C3H3]
+  J[1109] += dqdci; // dwdot[H]/d[C3H3]
+  J[1126] -= dqdci; // dwdot[C2H2]/d[C3H3]
+  J[1127] += dqdci; // dwdot[C3H3]/d[C3H3]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
 
   /*reaction 91: C2H3 + H => C2H2 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[17];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[17] -= q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[17] -= q; // C2H3
+  wdot[22] += q; // C2H2
+  // d()/d[H]
   dqdci = +k_f * sc[17];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[257] -= dqdci; /* dwdot[C2H3]/d[H] */
-  J[262] += dqdci; /* dwdot[C2H2]/d[H] */
-  /* d()/d[C2H3] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[257] -= dqdci; // dwdot[C2H3]/d[H]
+  J[262] += dqdci; // dwdot[C2H2]/d[H]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[5];
-  J[820] += dqdci; /* dwdot[H2]/d[C2H3] */
-  J[821] -= dqdci; /* dwdot[H]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[838] += dqdci; /* dwdot[C2H2]/d[C2H3] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
+  J[820] += dqdci; // dwdot[H2]/d[C2H3]
+  J[821] -= dqdci; // dwdot[H]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[838] += dqdci; // dwdot[C2H2]/d[C2H3]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
 
   /*reaction 92: C2H3 + O => CH3 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[17];
   k_f = 1e-06 * 10300000000000 *
         exp(0.21 * tc[0] - 0.50321666580472 * (-427.82) * invT);
   dlnkfdT = 0.21 * invT + 0.50321666580472 * (-427.82) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[11] += q; /* CO */
-  wdot[14] += q; /* CH3 */
-  wdot[17] -= q; /* C2H3 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[11] += q; // CO
+  wdot[14] += q; // CH3
+  wdot[17] -= q; // C2H3
+  // d()/d[O]
   dqdci = +k_f * sc[17];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[161] -= dqdci; /* dwdot[C2H3]/d[O] */
-  /* d()/d[C2H3] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[161] -= dqdci; // dwdot[C2H3]/d[O]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[3];
-  J[819] -= dqdci; /* dwdot[O]/d[C2H3] */
-  J[827] += dqdci; /* dwdot[CO]/d[C2H3] */
-  J[830] += dqdci; /* dwdot[CH3]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
+  J[819] -= dqdci; // dwdot[O]/d[C2H3]
+  J[827] += dqdci; // dwdot[CO]/d[C2H3]
+  J[830] += dqdci; // dwdot[CH3]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
 
   /*reaction 93: C2H3 + OH => C2H2 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[17];
   k_f = 1e-06 * 5000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[17] -= q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[17] -= q; // C2H3
+  wdot[22] += q; // C2H2
+  // d()/d[OH]
   dqdci = +k_f * sc[17];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[305] -= dqdci; /* dwdot[C2H3]/d[OH] */
-  J[310] += dqdci; /* dwdot[C2H2]/d[OH] */
-  /* d()/d[C2H3] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[305] -= dqdci; // dwdot[C2H3]/d[OH]
+  J[310] += dqdci; // dwdot[C2H2]/d[OH]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[6];
-  J[822] -= dqdci; /* dwdot[OH]/d[C2H3] */
-  J[823] += dqdci; /* dwdot[H2O]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[838] += dqdci; /* dwdot[C2H2]/d[C2H3] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
+  J[822] -= dqdci; // dwdot[OH]/d[C2H3]
+  J[823] += dqdci; // dwdot[H2O]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[838] += dqdci; // dwdot[C2H2]/d[C2H3]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
 
   /*reaction 94: C2H3 + O2 => C2H2 + HO2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[17];
   k_f =
     1e-06 * 1340000 * exp(1.61 * tc[0] - 0.50321666580472 * (-384.8) * invT);
   dlnkfdT = 1.61 * invT + 0.50321666580472 * (-384.8) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;  /* O2 */
-  wdot[9] += q;  /* HO2 */
-  wdot[17] -= q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;  // O2
+  wdot[9] += q;  // HO2
+  wdot[17] -= q; // C2H3
+  wdot[22] += q; // C2H2
+  // d()/d[O2]
   dqdci = +k_f * sc[17];
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[393] += dqdci; /* dwdot[HO2]/d[O2] */
-  J[401] -= dqdci; /* dwdot[C2H3]/d[O2] */
-  J[406] += dqdci; /* dwdot[C2H2]/d[O2] */
-  /* d()/d[C2H3] */
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[393] += dqdci; // dwdot[HO2]/d[O2]
+  J[401] -= dqdci; // dwdot[C2H3]/d[O2]
+  J[406] += dqdci; // dwdot[C2H2]/d[O2]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[8];
-  J[824] -= dqdci; /* dwdot[O2]/d[C2H3] */
-  J[825] += dqdci; /* dwdot[HO2]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[838] += dqdci; /* dwdot[C2H2]/d[C2H3] */
-  /* d()/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2265] += dqdT; /* dwdot[HO2]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
+  J[824] -= dqdci; // dwdot[O2]/d[C2H3]
+  J[825] += dqdci; // dwdot[HO2]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[838] += dqdci; // dwdot[C2H2]/d[C2H3]
+  // d()/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2265] += dqdT; // dwdot[HO2]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
 
   /*reaction 95: C2H3 + O2 => CH3 + CO + O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[17];
   k_f = 1e-06 * 303000000000 *
         exp(0.29 * tc[0] - 0.50321666580472 * (11.95) * invT);
   dlnkfdT = 0.29 * invT + 0.50321666580472 * (11.95) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] += q;  /* O */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  wdot[14] += q; /* CH3 */
-  wdot[17] -= q; /* C2H3 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[3] += q;  // O
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  wdot[14] += q; // CH3
+  wdot[17] -= q; // C2H3
+  // d()/d[O2]
   dqdci = +k_f * sc[17];
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  J[398] += dqdci; /* dwdot[CH3]/d[O2] */
-  J[401] -= dqdci; /* dwdot[C2H3]/d[O2] */
-  /* d()/d[C2H3] */
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  J[398] += dqdci; // dwdot[CH3]/d[O2]
+  J[401] -= dqdci; // dwdot[C2H3]/d[O2]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[8];
-  J[819] += dqdci; /* dwdot[O]/d[C2H3] */
-  J[824] -= dqdci; /* dwdot[O2]/d[C2H3] */
-  J[827] += dqdci; /* dwdot[CO]/d[C2H3] */
-  J[830] += dqdci; /* dwdot[CH3]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
+  J[819] += dqdci; // dwdot[O]/d[C2H3]
+  J[824] -= dqdci; // dwdot[O2]/d[C2H3]
+  J[827] += dqdci; // dwdot[CO]/d[C2H3]
+  J[830] += dqdci; // dwdot[CH3]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
 
   /*reaction 96: C2H3 + O2 => HCO + CH2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[17];
   k_f =
     1e-06 * 4.58e+16 * exp(-1.39 * tc[0] - 0.50321666580472 * (1015.77) * invT);
   dlnkfdT = -1.39 * invT + 0.50321666580472 * (1015.77) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;  /* O2 */
-  wdot[12] += q; /* HCO */
-  wdot[13] += q; /* CH2O */
-  wdot[17] -= q; /* C2H3 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;  // O2
+  wdot[12] += q; // HCO
+  wdot[13] += q; // CH2O
+  wdot[17] -= q; // C2H3
+  // d()/d[O2]
   dqdci = +k_f * sc[17];
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[396] += dqdci; /* dwdot[HCO]/d[O2] */
-  J[397] += dqdci; /* dwdot[CH2O]/d[O2] */
-  J[401] -= dqdci; /* dwdot[C2H3]/d[O2] */
-  /* d()/d[C2H3] */
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[396] += dqdci; // dwdot[HCO]/d[O2]
+  J[397] += dqdci; // dwdot[CH2O]/d[O2]
+  J[401] -= dqdci; // dwdot[C2H3]/d[O2]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[8];
-  J[824] -= dqdci; /* dwdot[O2]/d[C2H3] */
-  J[828] += dqdci; /* dwdot[HCO]/d[C2H3] */
-  J[829] += dqdci; /* dwdot[CH2O]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  /* d()/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
+  J[824] -= dqdci; // dwdot[O2]/d[C2H3]
+  J[828] += dqdci; // dwdot[HCO]/d[C2H3]
+  J[829] += dqdci; // dwdot[CH2O]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  // d()/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
 
   /*reaction 97: C2H3 + HCO => C2H4 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[12] * sc[17];
   k_f = 1e-06 * 90000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  wdot[17] -= q; /* C2H3 */
-  wdot[18] += q; /* C2H4 */
-  /* d()/d[HCO] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  wdot[17] -= q; // C2H3
+  wdot[18] += q; // C2H4
+  // d()/d[HCO]
   dqdci = +k_f * sc[17];
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  J[593] -= dqdci; /* dwdot[C2H3]/d[HCO] */
-  J[594] += dqdci; /* dwdot[C2H4]/d[HCO] */
-  /* d()/d[C2H3] */
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  J[593] -= dqdci; // dwdot[C2H3]/d[HCO]
+  J[594] += dqdci; // dwdot[C2H4]/d[HCO]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[12];
-  J[827] += dqdci; /* dwdot[CO]/d[C2H3] */
-  J[828] -= dqdci; /* dwdot[HCO]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[834] += dqdci; /* dwdot[C2H4]/d[C2H3] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
+  J[827] += dqdci; // dwdot[CO]/d[C2H3]
+  J[828] -= dqdci; // dwdot[HCO]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[834] += dqdci; // dwdot[C2H4]/d[C2H3]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
 
   /*reaction 98: C2H3 + CH3 => C2H2 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[17];
   k_f = 1e-06 * 9030000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (-764.82) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (-764.82) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[17] -= q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[17] -= q; // C2H3
+  wdot[22] += q; // C2H2
+  // d()/d[CH3]
   dqdci = +k_f * sc[17];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[689] -= dqdci; /* dwdot[C2H3]/d[CH3] */
-  J[694] += dqdci; /* dwdot[C2H2]/d[CH3] */
-  /* d()/d[C2H3] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[689] -= dqdci; // dwdot[C2H3]/d[CH3]
+  J[694] += dqdci; // dwdot[C2H2]/d[CH3]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[14];
-  J[830] -= dqdci; /* dwdot[CH3]/d[C2H3] */
-  J[832] += dqdci; /* dwdot[CH4]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[838] += dqdci; /* dwdot[C2H2]/d[C2H3] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
+  J[830] -= dqdci; // dwdot[CH3]/d[C2H3]
+  J[832] += dqdci; // dwdot[CH4]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[838] += dqdci; // dwdot[C2H2]/d[C2H3]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
 
   /*reaction 99: C2H3 + CH3 <=> A-C3H5 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[17];
   k_f =
     1e-06 * 1.93e+18 * exp(-1.25 * tc[0] - 0.50321666580472 * (7669.69) * invT);
   dlnkfdT = -1.25 * invT + 0.50321666580472 * (7669.69) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[24];
   Kc = exp(-g_RT[5] + g_RT[14] + g_RT[17] - g_RT[24]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[14] + h_RT[17]) + (h_RT[5] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[14] -= q; /* CH3 */
-  wdot[17] -= q; /* C2H3 */
-  wdot[24] += q; /* A-C3H5 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[14] -= q; // CH3
+  wdot[17] -= q; // C2H3
+  wdot[24] += q; // A-C3H5
+  // d()/d[H]
   dqdci = -k_r * sc[24];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[254] -= dqdci; /* dwdot[CH3]/d[H] */
-  J[257] -= dqdci; /* dwdot[C2H3]/d[H] */
-  J[264] += dqdci; /* dwdot[A-C3H5]/d[H] */
-  /* d()/d[CH3] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[254] -= dqdci; // dwdot[CH3]/d[H]
+  J[257] -= dqdci; // dwdot[C2H3]/d[H]
+  J[264] += dqdci; // dwdot[A-C3H5]/d[H]
+  // d()/d[CH3]
   dqdci = +k_f * sc[17];
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[689] -= dqdci; /* dwdot[C2H3]/d[CH3] */
-  J[696] += dqdci; /* dwdot[A-C3H5]/d[CH3] */
-  /* d()/d[C2H3] */
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[689] -= dqdci; // dwdot[C2H3]/d[CH3]
+  J[696] += dqdci; // dwdot[A-C3H5]/d[CH3]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[14];
-  J[821] += dqdci; /* dwdot[H]/d[C2H3] */
-  J[830] -= dqdci; /* dwdot[CH3]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[840] += dqdci; /* dwdot[A-C3H5]/d[C2H3] */
-  /* d()/d[A-C3H5] */
+  J[821] += dqdci; // dwdot[H]/d[C2H3]
+  J[830] -= dqdci; // dwdot[CH3]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[840] += dqdci; // dwdot[A-C3H5]/d[C2H3]
+  // d()/d[A-C3H5]
   dqdci = -k_r * sc[5];
-  J[1157] += dqdci; /* dwdot[H]/d[A-C3H5] */
-  J[1166] -= dqdci; /* dwdot[CH3]/d[A-C3H5] */
-  J[1169] -= dqdci; /* dwdot[C2H3]/d[A-C3H5] */
-  J[1176] += dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
+  J[1157] += dqdci; // dwdot[H]/d[A-C3H5]
+  J[1166] -= dqdci; // dwdot[CH3]/d[A-C3H5]
+  J[1169] -= dqdci; // dwdot[C2H3]/d[A-C3H5]
+  J[1176] += dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
 
   /*reaction 100: C2H4 + H => C2H3 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[18];
   k_f =
     1e-06 * 1330000 * exp(2.53 * tc[0] - 0.50321666580472 * (12239.48) * invT);
   dlnkfdT = 2.53 * invT + 0.50321666580472 * (12239.48) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[17] += q; /* C2H3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[17] += q; // C2H3
+  wdot[18] -= q; // C2H4
+  // d()/d[H]
   dqdci = +k_f * sc[18];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[257] += dqdci; /* dwdot[C2H3]/d[H] */
-  J[258] -= dqdci; /* dwdot[C2H4]/d[H] */
-  /* d()/d[C2H4] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[257] += dqdci; // dwdot[C2H3]/d[H]
+  J[258] -= dqdci; // dwdot[C2H4]/d[H]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[5];
-  J[868] += dqdci; /* dwdot[H2]/d[C2H4] */
-  J[869] -= dqdci; /* dwdot[H]/d[C2H4] */
-  J[881] += dqdci; /* dwdot[C2H3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[868] += dqdci; // dwdot[H2]/d[C2H4]
+  J[869] -= dqdci; // dwdot[H]/d[C2H4]
+  J[881] += dqdci; // dwdot[C2H3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 101: C2H4 + O => CH3 + CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[18];
   k_f = 1e-06 * 7660000000 *
         exp(0.88 * tc[0] - 0.50321666580472 * (1140.06) * invT);
   dlnkfdT = 0.88 * invT + 0.50321666580472 * (1140.06) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[14] += q; /* CH3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[14] += q; // CH3
+  wdot[18] -= q; // C2H4
+  // d()/d[O]
   dqdci = +k_f * sc[18];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[162] -= dqdci; /* dwdot[C2H4]/d[O] */
-  /* d()/d[C2H4] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[162] -= dqdci; // dwdot[C2H4]/d[O]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[3];
-  J[867] -= dqdci; /* dwdot[O]/d[C2H4] */
-  J[869] += dqdci; /* dwdot[H]/d[C2H4] */
-  J[875] += dqdci; /* dwdot[CO]/d[C2H4] */
-  J[878] += dqdci; /* dwdot[CH3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[867] -= dqdci; // dwdot[O]/d[C2H4]
+  J[869] += dqdci; // dwdot[H]/d[C2H4]
+  J[875] += dqdci; // dwdot[CO]/d[C2H4]
+  J[878] += dqdci; // dwdot[CH3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 102: C2H4 + O => T-CH2 + CH2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[18];
   k_f = 1e-06 * 71500 * exp(2.47 * tc[0] - 0.50321666580472 * (929.73) * invT);
   dlnkfdT = 2.47 * invT + 0.50321666580472 * (929.73) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] += q;  /* T-CH2 */
-  wdot[3] -= q;  /* O */
-  wdot[13] += q; /* CH2O */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[2] += q;  // T-CH2
+  wdot[3] -= q;  // O
+  wdot[13] += q; // CH2O
+  wdot[18] -= q; // C2H4
+  // d()/d[O]
   dqdci = +k_f * sc[18];
-  J[146] += dqdci; /* dwdot[T-CH2]/d[O] */
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[157] += dqdci; /* dwdot[CH2O]/d[O] */
-  J[162] -= dqdci; /* dwdot[C2H4]/d[O] */
-  /* d()/d[C2H4] */
+  J[146] += dqdci; // dwdot[T-CH2]/d[O]
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[157] += dqdci; // dwdot[CH2O]/d[O]
+  J[162] -= dqdci; // dwdot[C2H4]/d[O]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[3];
-  J[866] += dqdci; /* dwdot[T-CH2]/d[C2H4] */
-  J[867] -= dqdci; /* dwdot[O]/d[C2H4] */
-  J[877] += dqdci; /* dwdot[CH2O]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[866] += dqdci; // dwdot[T-CH2]/d[C2H4]
+  J[867] -= dqdci; // dwdot[O]/d[C2H4]
+  J[877] += dqdci; // dwdot[CH2O]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 103: C2H4 + O => CH3 + HCO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[18];
   k_f =
     1e-06 * 389000000 * exp(1.36 * tc[0] - 0.50321666580472 * (886.71) * invT);
   dlnkfdT = 1.36 * invT + 0.50321666580472 * (886.71) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[12] += q; /* HCO */
-  wdot[14] += q; /* CH3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[12] += q; // HCO
+  wdot[14] += q; // CH3
+  wdot[18] -= q; // C2H4
+  // d()/d[O]
   dqdci = +k_f * sc[18];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[156] += dqdci; /* dwdot[HCO]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[162] -= dqdci; /* dwdot[C2H4]/d[O] */
-  /* d()/d[C2H4] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[156] += dqdci; // dwdot[HCO]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[162] -= dqdci; // dwdot[C2H4]/d[O]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[3];
-  J[867] -= dqdci; /* dwdot[O]/d[C2H4] */
-  J[876] += dqdci; /* dwdot[HCO]/d[C2H4] */
-  J[878] += dqdci; /* dwdot[CH3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[867] -= dqdci; // dwdot[O]/d[C2H4]
+  J[876] += dqdci; // dwdot[HCO]/d[C2H4]
+  J[878] += dqdci; // dwdot[CH3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 104: C2H4 + OH => C2H3 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[18];
   k_f = 1e-06 * 0.131 * exp(4.2 * tc[0] - 0.50321666580472 * (-860.42) * invT);
   dlnkfdT = 4.2 * invT + 0.50321666580472 * (-860.42) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[17] += q; /* C2H3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[17] += q; // C2H3
+  wdot[18] -= q; // C2H4
+  // d()/d[OH]
   dqdci = +k_f * sc[18];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[305] += dqdci; /* dwdot[C2H3]/d[OH] */
-  J[306] -= dqdci; /* dwdot[C2H4]/d[OH] */
-  /* d()/d[C2H4] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[305] += dqdci; // dwdot[C2H3]/d[OH]
+  J[306] -= dqdci; // dwdot[C2H4]/d[OH]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[6];
-  J[870] -= dqdci; /* dwdot[OH]/d[C2H4] */
-  J[871] += dqdci; /* dwdot[H2O]/d[C2H4] */
-  J[881] += dqdci; /* dwdot[C2H3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[870] -= dqdci; // dwdot[OH]/d[C2H4]
+  J[871] += dqdci; // dwdot[H2O]/d[C2H4]
+  J[881] += dqdci; // dwdot[C2H3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 105: C2H4 + OH => CH3 + CH2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[18];
   k_f =
     1e-06 * 3.75e+36 * exp(-7.8 * tc[0] - 0.50321666580472 * (7060.23) * invT);
   dlnkfdT = -7.8 * invT + 0.50321666580472 * (7060.23) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[13] += q; /* CH2O */
-  wdot[14] += q; /* CH3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[13] += q; // CH2O
+  wdot[14] += q; // CH3
+  wdot[18] -= q; // C2H4
+  // d()/d[OH]
   dqdci = +k_f * sc[18];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[301] += dqdci; /* dwdot[CH2O]/d[OH] */
-  J[302] += dqdci; /* dwdot[CH3]/d[OH] */
-  J[306] -= dqdci; /* dwdot[C2H4]/d[OH] */
-  /* d()/d[C2H4] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[301] += dqdci; // dwdot[CH2O]/d[OH]
+  J[302] += dqdci; // dwdot[CH3]/d[OH]
+  J[306] -= dqdci; // dwdot[C2H4]/d[OH]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[6];
-  J[870] -= dqdci; /* dwdot[OH]/d[C2H4] */
-  J[877] += dqdci; /* dwdot[CH2O]/d[C2H4] */
-  J[878] += dqdci; /* dwdot[CH3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[870] -= dqdci; // dwdot[OH]/d[C2H4]
+  J[877] += dqdci; // dwdot[CH2O]/d[C2H4]
+  J[878] += dqdci; // dwdot[CH3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 106: C2H4 + CH3 => C2H3 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[18];
   k_f = 1e-06 * 227000 * exp(2 * tc[0] - 0.50321666580472 * (9199.33) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * (9199.33) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[17] += q; /* C2H3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[17] += q; // C2H3
+  wdot[18] -= q; // C2H4
+  // d()/d[CH3]
   dqdci = +k_f * sc[18];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[689] += dqdci; /* dwdot[C2H3]/d[CH3] */
-  J[690] -= dqdci; /* dwdot[C2H4]/d[CH3] */
-  /* d()/d[C2H4] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[689] += dqdci; // dwdot[C2H3]/d[CH3]
+  J[690] -= dqdci; // dwdot[C2H4]/d[CH3]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[14];
-  J[878] -= dqdci; /* dwdot[CH3]/d[C2H4] */
-  J[880] += dqdci; /* dwdot[CH4]/d[C2H4] */
-  J[881] += dqdci; /* dwdot[C2H3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[878] -= dqdci; // dwdot[CH3]/d[C2H4]
+  J[880] += dqdci; // dwdot[CH4]/d[C2H4]
+  J[881] += dqdci; // dwdot[C2H3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 107: C2H5 + O => CH3 + CH2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[19];
   k_f = 1e-06 * 31700000000000 *
         exp(0.03 * tc[0] - 0.50321666580472 * (-394.36) * invT);
   dlnkfdT = 0.03 * invT + 0.50321666580472 * (-394.36) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[13] += q; /* CH2O */
-  wdot[14] += q; /* CH3 */
-  wdot[19] -= q; /* C2H5 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[13] += q; // CH2O
+  wdot[14] += q; // CH3
+  wdot[19] -= q; // C2H5
+  // d()/d[O]
   dqdci = +k_f * sc[19];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[157] += dqdci; /* dwdot[CH2O]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[163] -= dqdci; /* dwdot[C2H5]/d[O] */
-  /* d()/d[C2H5] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[157] += dqdci; // dwdot[CH2O]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[163] -= dqdci; // dwdot[C2H5]/d[O]
+  // d()/d[C2H5]
   dqdci = +k_f * sc[3];
-  J[915] -= dqdci; /* dwdot[O]/d[C2H5] */
-  J[925] += dqdci; /* dwdot[CH2O]/d[C2H5] */
-  J[926] += dqdci; /* dwdot[CH3]/d[C2H5] */
-  J[931] -= dqdci; /* dwdot[C2H5]/d[C2H5] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
+  J[915] -= dqdci; // dwdot[O]/d[C2H5]
+  J[925] += dqdci; // dwdot[CH2O]/d[C2H5]
+  J[926] += dqdci; // dwdot[CH3]/d[C2H5]
+  J[931] -= dqdci; // dwdot[C2H5]/d[C2H5]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
 
   /*reaction 108: C2H5 + O2 => C2H4 + HO2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[19];
   k_f =
     1e-06 * 19200000 * exp(1.02 * tc[0] - 0.50321666580472 * (-2033.94) * invT);
   dlnkfdT = 1.02 * invT + 0.50321666580472 * (-2033.94) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;  /* O2 */
-  wdot[9] += q;  /* HO2 */
-  wdot[18] += q; /* C2H4 */
-  wdot[19] -= q; /* C2H5 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;  // O2
+  wdot[9] += q;  // HO2
+  wdot[18] += q; // C2H4
+  wdot[19] -= q; // C2H5
+  // d()/d[O2]
   dqdci = +k_f * sc[19];
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[393] += dqdci; /* dwdot[HO2]/d[O2] */
-  J[402] += dqdci; /* dwdot[C2H4]/d[O2] */
-  J[403] -= dqdci; /* dwdot[C2H5]/d[O2] */
-  /* d()/d[C2H5] */
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[393] += dqdci; // dwdot[HO2]/d[O2]
+  J[402] += dqdci; // dwdot[C2H4]/d[O2]
+  J[403] -= dqdci; // dwdot[C2H5]/d[O2]
+  // d()/d[C2H5]
   dqdci = +k_f * sc[8];
-  J[920] -= dqdci; /* dwdot[O2]/d[C2H5] */
-  J[921] += dqdci; /* dwdot[HO2]/d[C2H5] */
-  J[930] += dqdci; /* dwdot[C2H4]/d[C2H5] */
-  J[931] -= dqdci; /* dwdot[C2H5]/d[C2H5] */
-  /* d()/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2265] += dqdT; /* dwdot[HO2]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
+  J[920] -= dqdci; // dwdot[O2]/d[C2H5]
+  J[921] += dqdci; // dwdot[HO2]/d[C2H5]
+  J[930] += dqdci; // dwdot[C2H4]/d[C2H5]
+  J[931] -= dqdci; // dwdot[C2H5]/d[C2H5]
+  // d()/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2265] += dqdT; // dwdot[HO2]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
 
   /*reaction 109: C2H5 + HCO => C2H6 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[12] * sc[19];
   k_f =
     1e-06 * 120000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  wdot[19] -= q; /* C2H5 */
-  wdot[26] += q; /* C2H6 */
-  /* d()/d[HCO] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  wdot[19] -= q; // C2H5
+  wdot[26] += q; // C2H6
+  // d()/d[HCO]
   dqdci = +k_f * sc[19];
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  J[595] -= dqdci; /* dwdot[C2H5]/d[HCO] */
-  J[602] += dqdci; /* dwdot[C2H6]/d[HCO] */
-  /* d()/d[C2H5] */
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  J[595] -= dqdci; // dwdot[C2H5]/d[HCO]
+  J[602] += dqdci; // dwdot[C2H6]/d[HCO]
+  // d()/d[C2H5]
   dqdci = +k_f * sc[12];
-  J[923] += dqdci; /* dwdot[CO]/d[C2H5] */
-  J[924] -= dqdci; /* dwdot[HCO]/d[C2H5] */
-  J[931] -= dqdci; /* dwdot[C2H5]/d[C2H5] */
-  J[938] += dqdci; /* dwdot[C2H6]/d[C2H5] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
-  J[2282] += dqdT; /* dwdot[C2H6]/dT */
+  J[923] += dqdci; // dwdot[CO]/d[C2H5]
+  J[924] -= dqdci; // dwdot[HCO]/d[C2H5]
+  J[931] -= dqdci; // dwdot[C2H5]/d[C2H5]
+  J[938] += dqdci; // dwdot[C2H6]/d[C2H5]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
+  J[2282] += dqdT; // dwdot[C2H6]/dT
 
   /*reaction 110: C2H5 + HO2 => C2H6 + O2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[19];
   k_f = 1e-06 * 300000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] += q;  /* O2 */
-  wdot[9] -= q;  /* HO2 */
-  wdot[19] -= q; /* C2H5 */
-  wdot[26] += q; /* C2H6 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[8] += q;  // O2
+  wdot[9] -= q;  // HO2
+  wdot[19] -= q; // C2H5
+  wdot[26] += q; // C2H6
+  // d()/d[HO2]
   dqdci = +k_f * sc[19];
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[451] -= dqdci; /* dwdot[C2H5]/d[HO2] */
-  J[458] += dqdci; /* dwdot[C2H6]/d[HO2] */
-  /* d()/d[C2H5] */
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[451] -= dqdci; // dwdot[C2H5]/d[HO2]
+  J[458] += dqdci; // dwdot[C2H6]/d[HO2]
+  // d()/d[C2H5]
   dqdci = +k_f * sc[9];
-  J[920] += dqdci; /* dwdot[O2]/d[C2H5] */
-  J[921] -= dqdci; /* dwdot[HO2]/d[C2H5] */
-  J[931] -= dqdci; /* dwdot[C2H5]/d[C2H5] */
-  J[938] += dqdci; /* dwdot[C2H6]/d[C2H5] */
-  /* d()/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
-  J[2282] += dqdT; /* dwdot[C2H6]/dT */
+  J[920] += dqdci; // dwdot[O2]/d[C2H5]
+  J[921] -= dqdci; // dwdot[HO2]/d[C2H5]
+  J[931] -= dqdci; // dwdot[C2H5]/d[C2H5]
+  J[938] += dqdci; // dwdot[C2H6]/d[C2H5]
+  // d()/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
+  J[2282] += dqdT; // dwdot[C2H6]/dT
 
   /*reaction 111: C2H5 + HO2 => CH3 + CH2O + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[19];
   k_f = 1e-06 * 31000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[13] += q; /* CH2O */
-  wdot[14] += q; /* CH3 */
-  wdot[19] -= q; /* C2H5 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[13] += q; // CH2O
+  wdot[14] += q; // CH3
+  wdot[19] -= q; // C2H5
+  // d()/d[HO2]
   dqdci = +k_f * sc[19];
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[445] += dqdci; /* dwdot[CH2O]/d[HO2] */
-  J[446] += dqdci; /* dwdot[CH3]/d[HO2] */
-  J[451] -= dqdci; /* dwdot[C2H5]/d[HO2] */
-  /* d()/d[C2H5] */
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[445] += dqdci; // dwdot[CH2O]/d[HO2]
+  J[446] += dqdci; // dwdot[CH3]/d[HO2]
+  J[451] -= dqdci; // dwdot[C2H5]/d[HO2]
+  // d()/d[C2H5]
   dqdci = +k_f * sc[9];
-  J[918] += dqdci; /* dwdot[OH]/d[C2H5] */
-  J[921] -= dqdci; /* dwdot[HO2]/d[C2H5] */
-  J[925] += dqdci; /* dwdot[CH2O]/d[C2H5] */
-  J[926] += dqdci; /* dwdot[CH3]/d[C2H5] */
-  J[931] -= dqdci; /* dwdot[C2H5]/d[C2H5] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
+  J[918] += dqdci; // dwdot[OH]/d[C2H5]
+  J[921] -= dqdci; // dwdot[HO2]/d[C2H5]
+  J[925] += dqdci; // dwdot[CH2O]/d[C2H5]
+  J[926] += dqdci; // dwdot[CH3]/d[C2H5]
+  J[931] -= dqdci; // dwdot[C2H5]/d[C2H5]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
 
   /*reaction 112: C2H6 + H => C2H5 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[26];
   k_f = 1e-06 * 170000 * exp(2.7 * tc[0] - 0.50321666580472 * (5740.92) * invT);
   dlnkfdT = 2.7 * invT + 0.50321666580472 * (5740.92) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[19] += q; /* C2H5 */
-  wdot[26] -= q; /* C2H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[19] += q; // C2H5
+  wdot[26] -= q; // C2H6
+  // d()/d[H]
   dqdci = +k_f * sc[26];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[259] += dqdci; /* dwdot[C2H5]/d[H] */
-  J[266] -= dqdci; /* dwdot[C2H6]/d[H] */
-  /* d()/d[C2H6] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[259] += dqdci; // dwdot[C2H5]/d[H]
+  J[266] -= dqdci; // dwdot[C2H6]/d[H]
+  // d()/d[C2H6]
   dqdci = +k_f * sc[5];
-  J[1252] += dqdci; /* dwdot[H2]/d[C2H6] */
-  J[1253] -= dqdci; /* dwdot[H]/d[C2H6] */
-  J[1267] += dqdci; /* dwdot[C2H5]/d[C2H6] */
-  J[1274] -= dqdci; /* dwdot[C2H6]/d[C2H6] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2282] -= dqdT; /* dwdot[C2H6]/dT */
+  J[1252] += dqdci; // dwdot[H2]/d[C2H6]
+  J[1253] -= dqdci; // dwdot[H]/d[C2H6]
+  J[1267] += dqdci; // dwdot[C2H5]/d[C2H6]
+  J[1274] -= dqdci; // dwdot[C2H6]/d[C2H6]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2282] -= dqdT; // dwdot[C2H6]/dT
 
   /*reaction 113: C2H6 + O => C2H5 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[26];
   k_f =
     1e-06 * 89800000 * exp(1.92 * tc[0] - 0.50321666580472 * (5690.73) * invT);
   dlnkfdT = 1.92 * invT + 0.50321666580472 * (5690.73) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[19] += q; /* C2H5 */
-  wdot[26] -= q; /* C2H6 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[19] += q; // C2H5
+  wdot[26] -= q; // C2H6
+  // d()/d[O]
   dqdci = +k_f * sc[26];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[163] += dqdci; /* dwdot[C2H5]/d[O] */
-  J[170] -= dqdci; /* dwdot[C2H6]/d[O] */
-  /* d()/d[C2H6] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[163] += dqdci; // dwdot[C2H5]/d[O]
+  J[170] -= dqdci; // dwdot[C2H6]/d[O]
+  // d()/d[C2H6]
   dqdci = +k_f * sc[3];
-  J[1251] -= dqdci; /* dwdot[O]/d[C2H6] */
-  J[1254] += dqdci; /* dwdot[OH]/d[C2H6] */
-  J[1267] += dqdci; /* dwdot[C2H5]/d[C2H6] */
-  J[1274] -= dqdci; /* dwdot[C2H6]/d[C2H6] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2282] -= dqdT; /* dwdot[C2H6]/dT */
+  J[1251] -= dqdci; // dwdot[O]/d[C2H6]
+  J[1254] += dqdci; // dwdot[OH]/d[C2H6]
+  J[1267] += dqdci; // dwdot[C2H5]/d[C2H6]
+  J[1274] -= dqdci; // dwdot[C2H6]/d[C2H6]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2282] -= dqdT; // dwdot[C2H6]/dT
 
   /*reaction 114: C2H6 + OH => C2H5 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[26];
   k_f =
     1e-06 * 1610000 * exp(2.22 * tc[0] - 0.50321666580472 * (740.92) * invT);
   dlnkfdT = 2.22 * invT + 0.50321666580472 * (740.92) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[19] += q; /* C2H5 */
-  wdot[26] -= q; /* C2H6 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[19] += q; // C2H5
+  wdot[26] -= q; // C2H6
+  // d()/d[OH]
   dqdci = +k_f * sc[26];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[307] += dqdci; /* dwdot[C2H5]/d[OH] */
-  J[314] -= dqdci; /* dwdot[C2H6]/d[OH] */
-  /* d()/d[C2H6] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[307] += dqdci; // dwdot[C2H5]/d[OH]
+  J[314] -= dqdci; // dwdot[C2H6]/d[OH]
+  // d()/d[C2H6]
   dqdci = +k_f * sc[6];
-  J[1254] -= dqdci; /* dwdot[OH]/d[C2H6] */
-  J[1255] += dqdci; /* dwdot[H2O]/d[C2H6] */
-  J[1267] += dqdci; /* dwdot[C2H5]/d[C2H6] */
-  J[1274] -= dqdci; /* dwdot[C2H6]/d[C2H6] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2282] -= dqdT; /* dwdot[C2H6]/dT */
+  J[1254] -= dqdci; // dwdot[OH]/d[C2H6]
+  J[1255] += dqdci; // dwdot[H2O]/d[C2H6]
+  J[1267] += dqdci; // dwdot[C2H5]/d[C2H6]
+  J[1274] -= dqdci; // dwdot[C2H6]/d[C2H6]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2282] -= dqdT; // dwdot[C2H6]/dT
 
   /*reaction 115: C2H6 + CH3 => C2H5 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[26];
   k_f = 1e-06 * 843000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (22256.21) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (22256.21) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[19] += q; /* C2H5 */
-  wdot[26] -= q; /* C2H6 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[19] += q; // C2H5
+  wdot[26] -= q; // C2H6
+  // d()/d[CH3]
   dqdci = +k_f * sc[26];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[691] += dqdci; /* dwdot[C2H5]/d[CH3] */
-  J[698] -= dqdci; /* dwdot[C2H6]/d[CH3] */
-  /* d()/d[C2H6] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[691] += dqdci; // dwdot[C2H5]/d[CH3]
+  J[698] -= dqdci; // dwdot[C2H6]/d[CH3]
+  // d()/d[C2H6]
   dqdci = +k_f * sc[14];
-  J[1262] -= dqdci; /* dwdot[CH3]/d[C2H6] */
-  J[1264] += dqdci; /* dwdot[CH4]/d[C2H6] */
-  J[1267] += dqdci; /* dwdot[C2H5]/d[C2H6] */
-  J[1274] -= dqdci; /* dwdot[C2H6]/d[C2H6] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2282] -= dqdT; /* dwdot[C2H6]/dT */
+  J[1262] -= dqdci; // dwdot[CH3]/d[C2H6]
+  J[1264] += dqdci; // dwdot[CH4]/d[C2H6]
+  J[1267] += dqdci; // dwdot[C2H5]/d[C2H6]
+  J[1274] -= dqdci; // dwdot[C2H6]/d[C2H6]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2282] -= dqdT; // dwdot[C2H6]/dT
 
   /*reaction 116: HCCO + H => S-CH2 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[21];
   k_f =
     1e-06 * 100000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] += q;  /* S-CH2 */
-  wdot[5] -= q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[21] -= q; /* HCCO */
-  /* d()/d[H] */
+  // update wdot
+  wdot[1] += q;  // S-CH2
+  wdot[5] -= q;  // H
+  wdot[11] += q; // CO
+  wdot[21] -= q; // HCCO
+  // d()/d[H]
   dqdci = +k_f * sc[21];
-  J[241] += dqdci; /* dwdot[S-CH2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[251] += dqdci; /* dwdot[CO]/d[H] */
-  J[261] -= dqdci; /* dwdot[HCCO]/d[H] */
-  /* d()/d[HCCO] */
+  J[241] += dqdci; // dwdot[S-CH2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[251] += dqdci; // dwdot[CO]/d[H]
+  J[261] -= dqdci; // dwdot[HCCO]/d[H]
+  // d()/d[HCCO]
   dqdci = +k_f * sc[5];
-  J[1009] += dqdci; /* dwdot[S-CH2]/d[HCCO] */
-  J[1013] -= dqdci; /* dwdot[H]/d[HCCO] */
-  J[1019] += dqdci; /* dwdot[CO]/d[HCCO] */
-  J[1029] -= dqdci; /* dwdot[HCCO]/d[HCCO] */
-  /* d()/dT */
-  J[2257] += dqdT; /* dwdot[S-CH2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2277] -= dqdT; /* dwdot[HCCO]/dT */
+  J[1009] += dqdci; // dwdot[S-CH2]/d[HCCO]
+  J[1013] -= dqdci; // dwdot[H]/d[HCCO]
+  J[1019] += dqdci; // dwdot[CO]/d[HCCO]
+  J[1029] -= dqdci; // dwdot[HCCO]/d[HCCO]
+  // d()/dT
+  J[2257] += dqdT; // dwdot[S-CH2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2277] -= dqdT; // dwdot[HCCO]/dT
 
   /*reaction 117: HCCO + O => H + 2.000000 CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[21];
   k_f =
     1e-06 * 100000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;      /* O */
-  wdot[5] += q;      /* H */
-  wdot[11] += 2 * q; /* CO */
-  wdot[21] -= q;     /* HCCO */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;      // O
+  wdot[5] += q;      // H
+  wdot[11] += 2 * q; // CO
+  wdot[21] -= q;     // HCCO
+  // d()/d[O]
   dqdci = +k_f * sc[21];
-  J[147] -= dqdci;     /* dwdot[O]/d[O] */
-  J[149] += dqdci;     /* dwdot[H]/d[O] */
-  J[155] += 2 * dqdci; /* dwdot[CO]/d[O] */
-  J[165] -= dqdci;     /* dwdot[HCCO]/d[O] */
-  /* d()/d[HCCO] */
+  J[147] -= dqdci;     // dwdot[O]/d[O]
+  J[149] += dqdci;     // dwdot[H]/d[O]
+  J[155] += 2 * dqdci; // dwdot[CO]/d[O]
+  J[165] -= dqdci;     // dwdot[HCCO]/d[O]
+  // d()/d[HCCO]
   dqdci = +k_f * sc[3];
-  J[1011] -= dqdci;     /* dwdot[O]/d[HCCO] */
-  J[1013] += dqdci;     /* dwdot[H]/d[HCCO] */
-  J[1019] += 2 * dqdci; /* dwdot[CO]/d[HCCO] */
-  J[1029] -= dqdci;     /* dwdot[HCCO]/d[HCCO] */
-  /* d()/dT */
-  J[2259] -= dqdT;     /* dwdot[O]/dT */
-  J[2261] += dqdT;     /* dwdot[H]/dT */
-  J[2267] += 2 * dqdT; /* dwdot[CO]/dT */
-  J[2277] -= dqdT;     /* dwdot[HCCO]/dT */
+  J[1011] -= dqdci;     // dwdot[O]/d[HCCO]
+  J[1013] += dqdci;     // dwdot[H]/d[HCCO]
+  J[1019] += 2 * dqdci; // dwdot[CO]/d[HCCO]
+  J[1029] -= dqdci;     // dwdot[HCCO]/d[HCCO]
+  // d()/dT
+  J[2259] -= dqdT;     // dwdot[O]/dT
+  J[2261] += dqdT;     // dwdot[H]/dT
+  J[2267] += 2 * dqdT; // dwdot[CO]/dT
+  J[2277] -= dqdT;     // dwdot[HCCO]/dT
 
   /*reaction 118: HCCO + O2 => OH + 2.000000 CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[21];
   k_f =
     1e-06 * 42000000000 * exp(0 * tc[0] - 0.50321666580472 * (853.25) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (853.25) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;      /* OH */
-  wdot[8] -= q;      /* O2 */
-  wdot[11] += 2 * q; /* CO */
-  wdot[21] -= q;     /* HCCO */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[6] += q;      // OH
+  wdot[8] -= q;      // O2
+  wdot[11] += 2 * q; // CO
+  wdot[21] -= q;     // HCCO
+  // d()/d[O2]
   dqdci = +k_f * sc[21];
-  J[390] += dqdci;     /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci;     /* dwdot[O2]/d[O2] */
-  J[395] += 2 * dqdci; /* dwdot[CO]/d[O2] */
-  J[405] -= dqdci;     /* dwdot[HCCO]/d[O2] */
-  /* d()/d[HCCO] */
+  J[390] += dqdci;     // dwdot[OH]/d[O2]
+  J[392] -= dqdci;     // dwdot[O2]/d[O2]
+  J[395] += 2 * dqdci; // dwdot[CO]/d[O2]
+  J[405] -= dqdci;     // dwdot[HCCO]/d[O2]
+  // d()/d[HCCO]
   dqdci = +k_f * sc[8];
-  J[1014] += dqdci;     /* dwdot[OH]/d[HCCO] */
-  J[1016] -= dqdci;     /* dwdot[O2]/d[HCCO] */
-  J[1019] += 2 * dqdci; /* dwdot[CO]/d[HCCO] */
-  J[1029] -= dqdci;     /* dwdot[HCCO]/d[HCCO] */
-  /* d()/dT */
-  J[2262] += dqdT;     /* dwdot[OH]/dT */
-  J[2264] -= dqdT;     /* dwdot[O2]/dT */
-  J[2267] += 2 * dqdT; /* dwdot[CO]/dT */
-  J[2277] -= dqdT;     /* dwdot[HCCO]/dT */
+  J[1014] += dqdci;     // dwdot[OH]/d[HCCO]
+  J[1016] -= dqdci;     // dwdot[O2]/d[HCCO]
+  J[1019] += 2 * dqdci; // dwdot[CO]/d[HCCO]
+  J[1029] -= dqdci;     // dwdot[HCCO]/d[HCCO]
+  // d()/dT
+  J[2262] += dqdT;     // dwdot[OH]/dT
+  J[2264] -= dqdT;     // dwdot[O2]/dT
+  J[2267] += 2 * dqdT; // dwdot[CO]/dT
+  J[2277] -= dqdT;     // dwdot[HCCO]/dT
 
   /*reaction 119: 2.000000 HCCO => C2H2 + 2.000000 CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[21] * sc[21]);
   k_f = 1e-06 * 10000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += 2 * q; /* CO */
-  wdot[21] -= 2 * q; /* HCCO */
-  wdot[22] += q;     /* C2H2 */
-  /* d()/d[HCCO] */
+  // update wdot
+  wdot[11] += 2 * q; // CO
+  wdot[21] -= 2 * q; // HCCO
+  wdot[22] += q;     // C2H2
+  // d()/d[HCCO]
   dqdci = +k_f * 2.000000 * sc[21];
-  J[1019] += 2 * dqdci;  /* dwdot[CO]/d[HCCO] */
-  J[1029] += -2 * dqdci; /* dwdot[HCCO]/d[HCCO] */
-  J[1030] += dqdci;      /* dwdot[C2H2]/d[HCCO] */
-  /* d()/dT */
-  J[2267] += 2 * dqdT;  /* dwdot[CO]/dT */
-  J[2277] += -2 * dqdT; /* dwdot[HCCO]/dT */
-  J[2278] += dqdT;      /* dwdot[C2H2]/dT */
+  J[1019] += 2 * dqdci;  // dwdot[CO]/d[HCCO]
+  J[1029] += -2 * dqdci; // dwdot[HCCO]/d[HCCO]
+  J[1030] += dqdci;      // dwdot[C2H2]/d[HCCO]
+  // d()/dT
+  J[2267] += 2 * dqdT;  // dwdot[CO]/dT
+  J[2277] += -2 * dqdT; // dwdot[HCCO]/dT
+  J[2278] += dqdT;      // dwdot[C2H2]/dT
 
   /*reaction 120: HCCO + C2H2 => C3H3 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[21] * sc[22];
   k_f =
     1e-06 * 100000000000 * exp(0 * tc[0] - 0.50321666580472 * (2999.52) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (2999.52) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[21] -= q; /* HCCO */
-  wdot[22] -= q; /* C2H2 */
-  wdot[23] += q; /* C3H3 */
-  /* d()/d[HCCO] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[21] -= q; // HCCO
+  wdot[22] -= q; // C2H2
+  wdot[23] += q; // C3H3
+  // d()/d[HCCO]
   dqdci = +k_f * sc[22];
-  J[1019] += dqdci; /* dwdot[CO]/d[HCCO] */
-  J[1029] -= dqdci; /* dwdot[HCCO]/d[HCCO] */
-  J[1030] -= dqdci; /* dwdot[C2H2]/d[HCCO] */
-  J[1031] += dqdci; /* dwdot[C3H3]/d[HCCO] */
-  /* d()/d[C2H2] */
+  J[1019] += dqdci; // dwdot[CO]/d[HCCO]
+  J[1029] -= dqdci; // dwdot[HCCO]/d[HCCO]
+  J[1030] -= dqdci; // dwdot[C2H2]/d[HCCO]
+  J[1031] += dqdci; // dwdot[C3H3]/d[HCCO]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[21];
-  J[1067] += dqdci; /* dwdot[CO]/d[C2H2] */
-  J[1077] -= dqdci; /* dwdot[HCCO]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1079] += dqdci; /* dwdot[C3H3]/d[C2H2] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2277] -= dqdT; /* dwdot[HCCO]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
+  J[1067] += dqdci; // dwdot[CO]/d[C2H2]
+  J[1077] -= dqdci; // dwdot[HCCO]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1079] += dqdci; // dwdot[C3H3]/d[C2H2]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2277] -= dqdT; // dwdot[HCCO]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
 
   /*reaction 121: HCCO + CH3 => C2H4 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[21];
   k_f = 1e-06 * 50000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[14] -= q; /* CH3 */
-  wdot[18] += q; /* C2H4 */
-  wdot[21] -= q; /* HCCO */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[14] -= q; // CH3
+  wdot[18] += q; // C2H4
+  wdot[21] -= q; // HCCO
+  // d()/d[CH3]
   dqdci = +k_f * sc[21];
-  J[683] += dqdci; /* dwdot[CO]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[690] += dqdci; /* dwdot[C2H4]/d[CH3] */
-  J[693] -= dqdci; /* dwdot[HCCO]/d[CH3] */
-  /* d()/d[HCCO] */
+  J[683] += dqdci; // dwdot[CO]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[690] += dqdci; // dwdot[C2H4]/d[CH3]
+  J[693] -= dqdci; // dwdot[HCCO]/d[CH3]
+  // d()/d[HCCO]
   dqdci = +k_f * sc[14];
-  J[1019] += dqdci; /* dwdot[CO]/d[HCCO] */
-  J[1022] -= dqdci; /* dwdot[CH3]/d[HCCO] */
-  J[1026] += dqdci; /* dwdot[C2H4]/d[HCCO] */
-  J[1029] -= dqdci; /* dwdot[HCCO]/d[HCCO] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2277] -= dqdT; /* dwdot[HCCO]/dT */
+  J[1019] += dqdci; // dwdot[CO]/d[HCCO]
+  J[1022] -= dqdci; // dwdot[CH3]/d[HCCO]
+  J[1026] += dqdci; // dwdot[C2H4]/d[HCCO]
+  J[1029] -= dqdci; // dwdot[HCCO]/d[HCCO]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2277] -= dqdT; // dwdot[HCCO]/dT
 
   /*reaction 122: HCCO + OH => 2.000000 HCO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[21];
   k_f = 1e-06 * 10000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;      /* OH */
-  wdot[12] += 2 * q; /* HCO */
-  wdot[21] -= q;     /* HCCO */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;      // OH
+  wdot[12] += 2 * q; // HCO
+  wdot[21] -= q;     // HCCO
+  // d()/d[OH]
   dqdci = +k_f * sc[21];
-  J[294] -= dqdci;     /* dwdot[OH]/d[OH] */
-  J[300] += 2 * dqdci; /* dwdot[HCO]/d[OH] */
-  J[309] -= dqdci;     /* dwdot[HCCO]/d[OH] */
-  /* d()/d[HCCO] */
+  J[294] -= dqdci;     // dwdot[OH]/d[OH]
+  J[300] += 2 * dqdci; // dwdot[HCO]/d[OH]
+  J[309] -= dqdci;     // dwdot[HCCO]/d[OH]
+  // d()/d[HCCO]
   dqdci = +k_f * sc[6];
-  J[1014] -= dqdci;     /* dwdot[OH]/d[HCCO] */
-  J[1020] += 2 * dqdci; /* dwdot[HCO]/d[HCCO] */
-  J[1029] -= dqdci;     /* dwdot[HCCO]/d[HCCO] */
-  /* d()/dT */
-  J[2262] -= dqdT;     /* dwdot[OH]/dT */
-  J[2268] += 2 * dqdT; /* dwdot[HCO]/dT */
-  J[2277] -= dqdT;     /* dwdot[HCCO]/dT */
+  J[1014] -= dqdci;     // dwdot[OH]/d[HCCO]
+  J[1020] += 2 * dqdci; // dwdot[HCO]/d[HCCO]
+  J[1029] -= dqdci;     // dwdot[HCCO]/d[HCCO]
+  // d()/dT
+  J[2262] -= dqdT;     // dwdot[OH]/dT
+  J[2268] += 2 * dqdT; // dwdot[HCO]/dT
+  J[2277] -= dqdT;     // dwdot[HCCO]/dT
 
   /*reaction 123: C3H3 + H <=> P-C3H4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[23];
   k_f =
     1e-06 * 7.94e+29 * exp(-5.06 * tc[0] - 0.50321666580472 * (4861.38) * invT);
   dlnkfdT = -5.06 * invT + 0.50321666580472 * (4861.38) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[27];
   Kc = refCinv * exp(g_RT[5] + g_RT[23] - g_RT[27]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[23]) + (h_RT[27]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[23] -= q; /* C3H3 */
-  wdot[27] += q; /* P-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[23] -= q; // C3H3
+  wdot[27] += q; // P-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[23];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[263] -= dqdci; /* dwdot[C3H3]/d[H] */
-  J[267] += dqdci; /* dwdot[P-C3H4]/d[H] */
-  /* d()/d[C3H3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[263] -= dqdci; // dwdot[C3H3]/d[H]
+  J[267] += dqdci; // dwdot[P-C3H4]/d[H]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[5];
-  J[1109] -= dqdci; /* dwdot[H]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1131] += dqdci; /* dwdot[P-C3H4]/d[C3H3] */
-  /* d()/d[P-C3H4] */
+  J[1109] -= dqdci; // dwdot[H]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1131] += dqdci; // dwdot[P-C3H4]/d[C3H3]
+  // d()/d[P-C3H4]
   dqdci = -k_r;
-  J[1301] -= dqdci; /* dwdot[H]/d[P-C3H4] */
-  J[1319] -= dqdci; /* dwdot[C3H3]/d[P-C3H4] */
-  J[1323] += dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
-  J[2283] += dqdT; /* dwdot[P-C3H4]/dT */
+  J[1301] -= dqdci; // dwdot[H]/d[P-C3H4]
+  J[1319] -= dqdci; // dwdot[C3H3]/d[P-C3H4]
+  J[1323] += dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
+  J[2283] += dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 124: C3H3 + H <=> A-C3H4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[23];
   k_f = 1e-06 * 3.16e+29 * exp(-5 * tc[0] - 0.50321666580472 * (4710.8) * invT);
   dlnkfdT = -5 * invT + 0.50321666580472 * (4710.8) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[28];
   Kc = refCinv * exp(g_RT[5] + g_RT[23] - g_RT[28]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[23]) + (h_RT[28]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[23] -= q; /* C3H3 */
-  wdot[28] += q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[23] -= q; // C3H3
+  wdot[28] += q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[23];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[263] -= dqdci; /* dwdot[C3H3]/d[H] */
-  J[268] += dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[C3H3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[263] -= dqdci; // dwdot[C3H3]/d[H]
+  J[268] += dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[5];
-  J[1109] -= dqdci; /* dwdot[H]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1132] += dqdci; /* dwdot[A-C3H4]/d[C3H3] */
-  /* d()/d[A-C3H4] */
+  J[1109] -= dqdci; // dwdot[H]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1132] += dqdci; // dwdot[A-C3H4]/d[C3H3]
+  // d()/d[A-C3H4]
   dqdci = -k_r;
-  J[1349] -= dqdci; /* dwdot[H]/d[A-C3H4] */
-  J[1367] -= dqdci; /* dwdot[C3H3]/d[A-C3H4] */
-  J[1372] += dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
-  J[2284] += dqdT; /* dwdot[A-C3H4]/dT */
+  J[1349] -= dqdci; // dwdot[H]/d[A-C3H4]
+  J[1367] -= dqdci; // dwdot[C3H3]/d[A-C3H4]
+  J[1372] += dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
+  J[2284] += dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 125: C3H3 + OH => C2H4 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[23];
   k_f = 1e-06 * 1280000000 *
         exp(0.73 * tc[0] - 0.50321666580472 * (2578.87) * invT);
   dlnkfdT = 0.73 * invT + 0.50321666580472 * (2578.87) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[18] += q; /* C2H4 */
-  wdot[23] -= q; /* C3H3 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[18] += q; // C2H4
+  wdot[23] -= q; // C3H3
+  // d()/d[OH]
   dqdci = +k_f * sc[23];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[306] += dqdci; /* dwdot[C2H4]/d[OH] */
-  J[311] -= dqdci; /* dwdot[C3H3]/d[OH] */
-  /* d()/d[C3H3] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[306] += dqdci; // dwdot[C2H4]/d[OH]
+  J[311] -= dqdci; // dwdot[C3H3]/d[OH]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[6];
-  J[1110] -= dqdci; /* dwdot[OH]/d[C3H3] */
-  J[1115] += dqdci; /* dwdot[CO]/d[C3H3] */
-  J[1122] += dqdci; /* dwdot[C2H4]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
+  J[1110] -= dqdci; // dwdot[OH]/d[C3H3]
+  J[1115] += dqdci; // dwdot[CO]/d[C3H3]
+  J[1122] += dqdci; // dwdot[C2H4]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
 
   /*reaction 126: C3H3 + O => C2H2 + CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[23];
   k_f = 1e-06 * 69500000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[22] += q; /* C2H2 */
-  wdot[23] -= q; /* C3H3 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[22] += q; // C2H2
+  wdot[23] -= q; // C3H3
+  // d()/d[O]
   dqdci = +k_f * sc[23];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[166] += dqdci; /* dwdot[C2H2]/d[O] */
-  J[167] -= dqdci; /* dwdot[C3H3]/d[O] */
-  /* d()/d[C3H3] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[166] += dqdci; // dwdot[C2H2]/d[O]
+  J[167] -= dqdci; // dwdot[C3H3]/d[O]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[3];
-  J[1107] -= dqdci; /* dwdot[O]/d[C3H3] */
-  J[1109] += dqdci; /* dwdot[H]/d[C3H3] */
-  J[1115] += dqdci; /* dwdot[CO]/d[C3H3] */
-  J[1126] += dqdci; /* dwdot[C2H2]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
+  J[1107] -= dqdci; // dwdot[O]/d[C3H3]
+  J[1109] += dqdci; // dwdot[H]/d[C3H3]
+  J[1115] += dqdci; // dwdot[CO]/d[C3H3]
+  J[1126] += dqdci; // dwdot[C2H2]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
 
   /*reaction 127: C3H3 + O2 => CH3 + 2.000000 CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[23];
   k_f = 1e-06 * 170000 * exp(1.7 * tc[0] - 0.50321666580472 * (1500.96) * invT);
   dlnkfdT = 1.7 * invT + 0.50321666580472 * (1500.96) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;      /* O2 */
-  wdot[11] += 2 * q; /* CO */
-  wdot[14] += q;     /* CH3 */
-  wdot[23] -= q;     /* C3H3 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;      // O2
+  wdot[11] += 2 * q; // CO
+  wdot[14] += q;     // CH3
+  wdot[23] -= q;     // C3H3
+  // d()/d[O2]
   dqdci = +k_f * sc[23];
-  J[392] -= dqdci;     /* dwdot[O2]/d[O2] */
-  J[395] += 2 * dqdci; /* dwdot[CO]/d[O2] */
-  J[398] += dqdci;     /* dwdot[CH3]/d[O2] */
-  J[407] -= dqdci;     /* dwdot[C3H3]/d[O2] */
-  /* d()/d[C3H3] */
+  J[392] -= dqdci;     // dwdot[O2]/d[O2]
+  J[395] += 2 * dqdci; // dwdot[CO]/d[O2]
+  J[398] += dqdci;     // dwdot[CH3]/d[O2]
+  J[407] -= dqdci;     // dwdot[C3H3]/d[O2]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[8];
-  J[1112] -= dqdci;     /* dwdot[O2]/d[C3H3] */
-  J[1115] += 2 * dqdci; /* dwdot[CO]/d[C3H3] */
-  J[1118] += dqdci;     /* dwdot[CH3]/d[C3H3] */
-  J[1127] -= dqdci;     /* dwdot[C3H3]/d[C3H3] */
-  /* d()/dT */
-  J[2264] -= dqdT;     /* dwdot[O2]/dT */
-  J[2267] += 2 * dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT;     /* dwdot[CH3]/dT */
-  J[2279] -= dqdT;     /* dwdot[C3H3]/dT */
+  J[1112] -= dqdci;     // dwdot[O2]/d[C3H3]
+  J[1115] += 2 * dqdci; // dwdot[CO]/d[C3H3]
+  J[1118] += dqdci;     // dwdot[CH3]/d[C3H3]
+  J[1127] -= dqdci;     // dwdot[C3H3]/d[C3H3]
+  // d()/dT
+  J[2264] -= dqdT;     // dwdot[O2]/dT
+  J[2267] += 2 * dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT;     // dwdot[CH3]/dT
+  J[2279] -= dqdT;     // dwdot[C3H3]/dT
 
   /*reaction 128: C3H3 + HO2 => OH + CO + C2H3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[23];
   k_f = 1e-06 * 800000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[11] += q; /* CO */
-  wdot[17] += q; /* C2H3 */
-  wdot[23] -= q; /* C3H3 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[11] += q; // CO
+  wdot[17] += q; // C2H3
+  wdot[23] -= q; // C3H3
+  // d()/d[HO2]
   dqdci = +k_f * sc[23];
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[443] += dqdci; /* dwdot[CO]/d[HO2] */
-  J[449] += dqdci; /* dwdot[C2H3]/d[HO2] */
-  J[455] -= dqdci; /* dwdot[C3H3]/d[HO2] */
-  /* d()/d[C3H3] */
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[443] += dqdci; // dwdot[CO]/d[HO2]
+  J[449] += dqdci; // dwdot[C2H3]/d[HO2]
+  J[455] -= dqdci; // dwdot[C3H3]/d[HO2]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[9];
-  J[1110] += dqdci; /* dwdot[OH]/d[C3H3] */
-  J[1113] -= dqdci; /* dwdot[HO2]/d[C3H3] */
-  J[1115] += dqdci; /* dwdot[CO]/d[C3H3] */
-  J[1121] += dqdci; /* dwdot[C2H3]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
+  J[1110] += dqdci; // dwdot[OH]/d[C3H3]
+  J[1113] -= dqdci; // dwdot[HO2]/d[C3H3]
+  J[1115] += dqdci; // dwdot[CO]/d[C3H3]
+  J[1121] += dqdci; // dwdot[C2H3]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
 
   /*reaction 129: 2.000000 C3H3 <=> A1 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[23] * sc[23]);
   k_f = 1e-06 * 1.87e+46 *
         exp(-9.84 * tc[0] - 0.50321666580472 * (16804.49) * invT);
   dlnkfdT = -9.84 * invT + 0.50321666580472 * (16804.49) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[29];
   Kc = refCinv * exp(2.000000 * g_RT[23] - g_RT[29]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[23]) + (h_RT[29]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[23] -= 2 * q; /* C3H3 */
-  wdot[29] += q;     /* A1 */
-  /* d()/d[C3H3] */
+  // update wdot
+  wdot[23] -= 2 * q; // C3H3
+  wdot[29] += q;     // A1
+  // d()/d[C3H3]
   dqdci = +k_f * 2.000000 * sc[23];
-  J[1127] += -2 * dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1133] += dqdci;      /* dwdot[A1]/d[C3H3] */
-  /* d()/d[A1] */
+  J[1127] += -2 * dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1133] += dqdci;      // dwdot[A1]/d[C3H3]
+  // d()/d[A1]
   dqdci = -k_r;
-  J[1415] += -2 * dqdci; /* dwdot[C3H3]/d[A1] */
-  J[1421] += dqdci;      /* dwdot[A1]/d[A1] */
-  /* d()/dT */
-  J[2279] += -2 * dqdT; /* dwdot[C3H3]/dT */
-  J[2285] += dqdT;      /* dwdot[A1]/dT */
+  J[1415] += -2 * dqdci; // dwdot[C3H3]/d[A1]
+  J[1421] += dqdci;      // dwdot[A1]/d[A1]
+  // d()/dT
+  J[2279] += -2 * dqdT; // dwdot[C3H3]/dT
+  J[2285] += dqdT;      // dwdot[A1]/dT
 
   /*reaction 130: 2.000000 C3H3 <=> A1- + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[23] * sc[23]);
   k_f =
     1e-06 * 5.77e+37 * exp(-7 * tc[0] - 0.50321666580472 * (31505.74) * invT);
   dlnkfdT = -7 * invT + 0.50321666580472 * (31505.74) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[30];
   Kc = exp(-g_RT[5] + 2.000000 * g_RT[23] - g_RT[30]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[23]) + (h_RT[5] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;      /* H */
-  wdot[23] -= 2 * q; /* C3H3 */
-  wdot[30] += q;     /* A1- */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;      // H
+  wdot[23] -= 2 * q; // C3H3
+  wdot[30] += q;     // A1-
+  // d()/d[H]
   dqdci = -k_r * sc[30];
-  J[245] += dqdci;      /* dwdot[H]/d[H] */
-  J[263] += -2 * dqdci; /* dwdot[C3H3]/d[H] */
-  J[270] += dqdci;      /* dwdot[A1-]/d[H] */
-  /* d()/d[C3H3] */
+  J[245] += dqdci;      // dwdot[H]/d[H]
+  J[263] += -2 * dqdci; // dwdot[C3H3]/d[H]
+  J[270] += dqdci;      // dwdot[A1-]/d[H]
+  // d()/d[C3H3]
   dqdci = +k_f * 2.000000 * sc[23];
-  J[1109] += dqdci;      /* dwdot[H]/d[C3H3] */
-  J[1127] += -2 * dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1134] += dqdci;      /* dwdot[A1-]/d[C3H3] */
-  /* d()/d[A1-] */
+  J[1109] += dqdci;      // dwdot[H]/d[C3H3]
+  J[1127] += -2 * dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1134] += dqdci;      // dwdot[A1-]/d[C3H3]
+  // d()/d[A1-]
   dqdci = -k_r * sc[5];
-  J[1445] += dqdci;      /* dwdot[H]/d[A1-] */
-  J[1463] += -2 * dqdci; /* dwdot[C3H3]/d[A1-] */
-  J[1470] += dqdci;      /* dwdot[A1-]/d[A1-] */
-  /* d()/dT */
-  J[2261] += dqdT;      /* dwdot[H]/dT */
-  J[2279] += -2 * dqdT; /* dwdot[C3H3]/dT */
-  J[2286] += dqdT;      /* dwdot[A1-]/dT */
+  J[1445] += dqdci;      // dwdot[H]/d[A1-]
+  J[1463] += -2 * dqdci; // dwdot[C3H3]/d[A1-]
+  J[1470] += dqdci;      // dwdot[A1-]/d[A1-]
+  // d()/dT
+  J[2261] += dqdT;      // dwdot[H]/dT
+  J[2279] += -2 * dqdT; // dwdot[C3H3]/dT
+  J[2286] += dqdT;      // dwdot[A1-]/dT
 
   /*reaction 131: C3H3 + C2H2 <=> C5H5 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[22] * sc[23];
   k_f =
     1e-06 * 235000000000 * exp(0 * tc[0] - 0.50321666580472 * (9995.22) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (9995.22) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[31];
   Kc = refCinv * exp(g_RT[22] + g_RT[23] - g_RT[31]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[22] + h_RT[23]) + (h_RT[31]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[22] -= q; /* C2H2 */
-  wdot[23] -= q; /* C3H3 */
-  wdot[31] += q; /* C5H5 */
-  /* d()/d[C2H2] */
+  // update wdot
+  wdot[22] -= q; // C2H2
+  wdot[23] -= q; // C3H3
+  wdot[31] += q; // C5H5
+  // d()/d[C2H2]
   dqdci = +k_f * sc[23];
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1079] -= dqdci; /* dwdot[C3H3]/d[C2H2] */
-  J[1087] += dqdci; /* dwdot[C5H5]/d[C2H2] */
-  /* d()/d[C3H3] */
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1079] -= dqdci; // dwdot[C3H3]/d[C2H2]
+  J[1087] += dqdci; // dwdot[C5H5]/d[C2H2]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[22];
-  J[1126] -= dqdci; /* dwdot[C2H2]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1135] += dqdci; /* dwdot[C5H5]/d[C3H3] */
-  /* d()/d[C5H5] */
+  J[1126] -= dqdci; // dwdot[C2H2]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1135] += dqdci; // dwdot[C5H5]/d[C3H3]
+  // d()/d[C5H5]
   dqdci = -k_r;
-  J[1510] -= dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1511] -= dqdci; /* dwdot[C3H3]/d[C5H5] */
-  J[1519] += dqdci; /* dwdot[C5H5]/d[C5H5] */
-  /* d()/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
+  J[1510] -= dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1511] -= dqdci; // dwdot[C3H3]/d[C5H5]
+  J[1519] += dqdci; // dwdot[C5H5]/d[C5H5]
+  // d()/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
 
   /*reaction 132: P-C3H4 + H <=> C2H2 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[27];
   k_f = 1e-06 * 3460000000000 *
         exp(0.44 * tc[0] - 0.50321666580472 * (5463.67) * invT);
   dlnkfdT = 0.44 * invT + 0.50321666580472 * (5463.67) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[22];
   Kc = exp(g_RT[5] - g_RT[14] - g_RT[22] + g_RT[27]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[27]) + (h_RT[14] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[22] += q; /* C2H2 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[22] += q; // C2H2
+  wdot[27] -= q; // P-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[27];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[262] += dqdci; /* dwdot[C2H2]/d[H] */
-  J[267] -= dqdci; /* dwdot[P-C3H4]/d[H] */
-  /* d()/d[CH3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[262] += dqdci; // dwdot[C2H2]/d[H]
+  J[267] -= dqdci; // dwdot[P-C3H4]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[22];
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[694] += dqdci; /* dwdot[C2H2]/d[CH3] */
-  J[699] -= dqdci; /* dwdot[P-C3H4]/d[CH3] */
-  /* d()/d[C2H2] */
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[694] += dqdci; // dwdot[C2H2]/d[CH3]
+  J[699] -= dqdci; // dwdot[P-C3H4]/d[CH3]
+  // d()/d[C2H2]
   dqdci = -k_r * sc[14];
-  J[1061] -= dqdci; /* dwdot[H]/d[C2H2] */
-  J[1070] += dqdci; /* dwdot[CH3]/d[C2H2] */
-  J[1078] += dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1083] -= dqdci; /* dwdot[P-C3H4]/d[C2H2] */
-  /* d()/d[P-C3H4] */
+  J[1061] -= dqdci; // dwdot[H]/d[C2H2]
+  J[1070] += dqdci; // dwdot[CH3]/d[C2H2]
+  J[1078] += dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1083] -= dqdci; // dwdot[P-C3H4]/d[C2H2]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[5];
-  J[1301] -= dqdci; /* dwdot[H]/d[P-C3H4] */
-  J[1310] += dqdci; /* dwdot[CH3]/d[P-C3H4] */
-  J[1318] += dqdci; /* dwdot[C2H2]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1301] -= dqdci; // dwdot[H]/d[P-C3H4]
+  J[1310] += dqdci; // dwdot[CH3]/d[P-C3H4]
+  J[1318] += dqdci; // dwdot[C2H2]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 133: P-C3H4 + H <=> C3H3 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[27];
   k_f = 1e-06 * 85000 * exp(2.7 * tc[0] - 0.50321666580472 * (5740.92) * invT);
   dlnkfdT = 2.7 * invT + 0.50321666580472 * (5740.92) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[4] * sc[23];
   Kc = exp(-g_RT[4] + g_RT[5] - g_RT[23] + g_RT[27]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[27]) + (h_RT[4] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[23] += q; /* C3H3 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[23] += q; // C3H3
+  wdot[27] -= q; // P-C3H4
+  // d()/d[H2]
   dqdci = -k_r * sc[23];
-  J[196] += dqdci; /* dwdot[H2]/d[H2] */
-  J[197] -= dqdci; /* dwdot[H]/d[H2] */
-  J[215] += dqdci; /* dwdot[C3H3]/d[H2] */
-  J[219] -= dqdci; /* dwdot[P-C3H4]/d[H2] */
-  /* d()/d[H] */
+  J[196] += dqdci; // dwdot[H2]/d[H2]
+  J[197] -= dqdci; // dwdot[H]/d[H2]
+  J[215] += dqdci; // dwdot[C3H3]/d[H2]
+  J[219] -= dqdci; // dwdot[P-C3H4]/d[H2]
+  // d()/d[H]
   dqdci = +k_f * sc[27];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[263] += dqdci; /* dwdot[C3H3]/d[H] */
-  J[267] -= dqdci; /* dwdot[P-C3H4]/d[H] */
-  /* d()/d[C3H3] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[263] += dqdci; // dwdot[C3H3]/d[H]
+  J[267] -= dqdci; // dwdot[P-C3H4]/d[H]
+  // d()/d[C3H3]
   dqdci = -k_r * sc[4];
-  J[1108] += dqdci; /* dwdot[H2]/d[C3H3] */
-  J[1109] -= dqdci; /* dwdot[H]/d[C3H3] */
-  J[1127] += dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1131] -= dqdci; /* dwdot[P-C3H4]/d[C3H3] */
-  /* d()/d[P-C3H4] */
+  J[1108] += dqdci; // dwdot[H2]/d[C3H3]
+  J[1109] -= dqdci; // dwdot[H]/d[C3H3]
+  J[1127] += dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1131] -= dqdci; // dwdot[P-C3H4]/d[C3H3]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[5];
-  J[1300] += dqdci; /* dwdot[H2]/d[P-C3H4] */
-  J[1301] -= dqdci; /* dwdot[H]/d[P-C3H4] */
-  J[1319] += dqdci; /* dwdot[C3H3]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1300] += dqdci; // dwdot[H2]/d[P-C3H4]
+  J[1301] -= dqdci; // dwdot[H]/d[P-C3H4]
+  J[1319] += dqdci; // dwdot[C3H3]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 134: P-C3H4 + OH => C3H3 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[27];
   k_f = 1e-06 * 805000 * exp(2.22 * tc[0] - 0.50321666580472 * (740.92) * invT);
   dlnkfdT = 2.22 * invT + 0.50321666580472 * (740.92) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[23] += q; /* C3H3 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[23] += q; // C3H3
+  wdot[27] -= q; // P-C3H4
+  // d()/d[OH]
   dqdci = +k_f * sc[27];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[311] += dqdci; /* dwdot[C3H3]/d[OH] */
-  J[315] -= dqdci; /* dwdot[P-C3H4]/d[OH] */
-  /* d()/d[P-C3H4] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[311] += dqdci; // dwdot[C3H3]/d[OH]
+  J[315] -= dqdci; // dwdot[P-C3H4]/d[OH]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[6];
-  J[1302] -= dqdci; /* dwdot[OH]/d[P-C3H4] */
-  J[1303] += dqdci; /* dwdot[H2O]/d[P-C3H4] */
-  J[1319] += dqdci; /* dwdot[C3H3]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1302] -= dqdci; // dwdot[OH]/d[P-C3H4]
+  J[1303] += dqdci; // dwdot[H2O]/d[P-C3H4]
+  J[1319] += dqdci; // dwdot[C3H3]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 135: P-C3H4 + CH3 => C3H3 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[27];
   k_f = 1e-06 * 422000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (22256.21) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (22256.21) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[23] += q; /* C3H3 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[23] += q; // C3H3
+  wdot[27] -= q; // P-C3H4
+  // d()/d[CH3]
   dqdci = +k_f * sc[27];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[695] += dqdci; /* dwdot[C3H3]/d[CH3] */
-  J[699] -= dqdci; /* dwdot[P-C3H4]/d[CH3] */
-  /* d()/d[P-C3H4] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[695] += dqdci; // dwdot[C3H3]/d[CH3]
+  J[699] -= dqdci; // dwdot[P-C3H4]/d[CH3]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[14];
-  J[1310] -= dqdci; /* dwdot[CH3]/d[P-C3H4] */
-  J[1312] += dqdci; /* dwdot[CH4]/d[P-C3H4] */
-  J[1319] += dqdci; /* dwdot[C3H3]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1310] -= dqdci; // dwdot[CH3]/d[P-C3H4]
+  J[1312] += dqdci; // dwdot[CH4]/d[P-C3H4]
+  J[1319] += dqdci; // dwdot[C3H3]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 136: P-C3H4 + O => HCCO + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[27];
   k_f = 1e-06 * 4050000 * exp(2 * tc[0] - 0.50321666580472 * (1900.1) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * (1900.1) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[14] += q; /* CH3 */
-  wdot[21] += q; /* HCCO */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[14] += q; // CH3
+  wdot[21] += q; // HCCO
+  wdot[27] -= q; // P-C3H4
+  // d()/d[O]
   dqdci = +k_f * sc[27];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[165] += dqdci; /* dwdot[HCCO]/d[O] */
-  J[171] -= dqdci; /* dwdot[P-C3H4]/d[O] */
-  /* d()/d[P-C3H4] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[165] += dqdci; // dwdot[HCCO]/d[O]
+  J[171] -= dqdci; // dwdot[P-C3H4]/d[O]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[3];
-  J[1299] -= dqdci; /* dwdot[O]/d[P-C3H4] */
-  J[1310] += dqdci; /* dwdot[CH3]/d[P-C3H4] */
-  J[1317] += dqdci; /* dwdot[HCCO]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2277] += dqdT; /* dwdot[HCCO]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1299] -= dqdci; // dwdot[O]/d[P-C3H4]
+  J[1310] += dqdci; // dwdot[CH3]/d[P-C3H4]
+  J[1317] += dqdci; // dwdot[HCCO]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2277] += dqdT; // dwdot[HCCO]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 137: P-C3H4 + O => C2H4 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[27];
   k_f = 1e-06 * 6250000 * exp(2 * tc[0] - 0.50321666580472 * (1900.1) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * (1900.1) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[11] += q; /* CO */
-  wdot[18] += q; /* C2H4 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[11] += q; // CO
+  wdot[18] += q; // C2H4
+  wdot[27] -= q; // P-C3H4
+  // d()/d[O]
   dqdci = +k_f * sc[27];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[162] += dqdci; /* dwdot[C2H4]/d[O] */
-  J[171] -= dqdci; /* dwdot[P-C3H4]/d[O] */
-  /* d()/d[P-C3H4] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[162] += dqdci; // dwdot[C2H4]/d[O]
+  J[171] -= dqdci; // dwdot[P-C3H4]/d[O]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[3];
-  J[1299] -= dqdci; /* dwdot[O]/d[P-C3H4] */
-  J[1307] += dqdci; /* dwdot[CO]/d[P-C3H4] */
-  J[1314] += dqdci; /* dwdot[C2H4]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1299] -= dqdci; // dwdot[O]/d[P-C3H4]
+  J[1307] += dqdci; // dwdot[CO]/d[P-C3H4]
+  J[1314] += dqdci; // dwdot[C2H4]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 138: P-C3H4 + OH => C2H5 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[27];
   k_f = 1e-06 * 1280000000 *
         exp(0.73 * tc[0] - 0.50321666580472 * (2578.87) * invT);
   dlnkfdT = 0.73 * invT + 0.50321666580472 * (2578.87) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[19] += q; /* C2H5 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[19] += q; // C2H5
+  wdot[27] -= q; // P-C3H4
+  // d()/d[OH]
   dqdci = +k_f * sc[27];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[307] += dqdci; /* dwdot[C2H5]/d[OH] */
-  J[315] -= dqdci; /* dwdot[P-C3H4]/d[OH] */
-  /* d()/d[P-C3H4] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[307] += dqdci; // dwdot[C2H5]/d[OH]
+  J[315] -= dqdci; // dwdot[P-C3H4]/d[OH]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[6];
-  J[1302] -= dqdci; /* dwdot[OH]/d[P-C3H4] */
-  J[1307] += dqdci; /* dwdot[CO]/d[P-C3H4] */
-  J[1315] += dqdci; /* dwdot[C2H5]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1302] -= dqdci; // dwdot[OH]/d[P-C3H4]
+  J[1307] += dqdci; // dwdot[CO]/d[P-C3H4]
+  J[1315] += dqdci; // dwdot[C2H5]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 139: A-C3H4 + H <=> C2H2 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[28];
   k_f = 1e-06 * 89500000000000 *
         exp(-0.02 * tc[0] - 0.50321666580472 * (11250) * invT);
   dlnkfdT = -0.02 * invT + 0.50321666580472 * (11250) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[22];
   Kc = exp(g_RT[5] - g_RT[14] - g_RT[22] + g_RT[28]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[28]) + (h_RT[14] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[22] += q; /* C2H2 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[22] += q; // C2H2
+  wdot[28] -= q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[28];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[262] += dqdci; /* dwdot[C2H2]/d[H] */
-  J[268] -= dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[CH3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[262] += dqdci; // dwdot[C2H2]/d[H]
+  J[268] -= dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[22];
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[694] += dqdci; /* dwdot[C2H2]/d[CH3] */
-  J[700] -= dqdci; /* dwdot[A-C3H4]/d[CH3] */
-  /* d()/d[C2H2] */
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[694] += dqdci; // dwdot[C2H2]/d[CH3]
+  J[700] -= dqdci; // dwdot[A-C3H4]/d[CH3]
+  // d()/d[C2H2]
   dqdci = -k_r * sc[14];
-  J[1061] -= dqdci; /* dwdot[H]/d[C2H2] */
-  J[1070] += dqdci; /* dwdot[CH3]/d[C2H2] */
-  J[1078] += dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1084] -= dqdci; /* dwdot[A-C3H4]/d[C2H2] */
-  /* d()/d[A-C3H4] */
+  J[1061] -= dqdci; // dwdot[H]/d[C2H2]
+  J[1070] += dqdci; // dwdot[CH3]/d[C2H2]
+  J[1078] += dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1084] -= dqdci; // dwdot[A-C3H4]/d[C2H2]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[5];
-  J[1349] -= dqdci; /* dwdot[H]/d[A-C3H4] */
-  J[1358] += dqdci; /* dwdot[CH3]/d[A-C3H4] */
-  J[1366] += dqdci; /* dwdot[C2H2]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1349] -= dqdci; // dwdot[H]/d[A-C3H4]
+  J[1358] += dqdci; // dwdot[CH3]/d[A-C3H4]
+  J[1366] += dqdci; // dwdot[C2H2]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 140: A-C3H4 <=> P-C3H4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[28];
   k_f = 1 * 7.76e+39 * exp(-7.8 * tc[0] - 0.50321666580472 * (78446.46) * invT);
   dlnkfdT = -7.8 * invT + 0.50321666580472 * (78446.46) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[27];
   Kc = exp(-g_RT[27] + g_RT[28]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[28]) + (h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[27] += q; /* P-C3H4 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[P-C3H4] */
+  // update wdot
+  wdot[27] += q; // P-C3H4
+  wdot[28] -= q; // A-C3H4
+  // d()/d[P-C3H4]
   dqdci = -k_r;
-  J[1323] += dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  J[1324] -= dqdci; /* dwdot[A-C3H4]/d[P-C3H4] */
-  /* d()/d[A-C3H4] */
+  J[1323] += dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  J[1324] -= dqdci; // dwdot[A-C3H4]/d[P-C3H4]
+  // d()/d[A-C3H4]
   dqdci = +k_f;
-  J[1371] += dqdci; /* dwdot[P-C3H4]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2283] += dqdT; /* dwdot[P-C3H4]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1371] += dqdci; // dwdot[P-C3H4]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2283] += dqdT; // dwdot[P-C3H4]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 141: A-C3H4 + H <=> P-C3H4 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[28];
   k_f =
     1e-06 * 2.47e+15 * exp(-0.33 * tc[0] - 0.50321666580472 * (6436.42) * invT);
   dlnkfdT = -0.33 * invT + 0.50321666580472 * (6436.42) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[27];
   Kc = exp(g_RT[5] - g_RT[5] - g_RT[27] + g_RT[28]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[28]) + (h_RT[5] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[27] += q; /* P-C3H4 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[27] += q; // P-C3H4
+  wdot[28] -= q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[28] - k_r * sc[27];
-  J[267] += dqdci; /* dwdot[P-C3H4]/d[H] */
-  J[268] -= dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[P-C3H4] */
+  J[267] += dqdci; // dwdot[P-C3H4]/d[H]
+  J[268] -= dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[P-C3H4]
   dqdci = -k_r * sc[5];
-  J[1323] += dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  J[1324] -= dqdci; /* dwdot[A-C3H4]/d[P-C3H4] */
-  /* d()/d[A-C3H4] */
+  J[1323] += dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  J[1324] -= dqdci; // dwdot[A-C3H4]/d[P-C3H4]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[5];
-  J[1371] += dqdci; /* dwdot[P-C3H4]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2283] += dqdT; /* dwdot[P-C3H4]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1371] += dqdci; // dwdot[P-C3H4]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2283] += dqdT; // dwdot[P-C3H4]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 142: A-C3H4 + H => C3H3 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[28];
   k_f =
     1e-06 * 1330000 * exp(2.53 * tc[0] - 0.50321666580472 * (12239.48) * invT);
   dlnkfdT = 2.53 * invT + 0.50321666580472 * (12239.48) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[23] += q; /* C3H3 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[23] += q; // C3H3
+  wdot[28] -= q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[28];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[263] += dqdci; /* dwdot[C3H3]/d[H] */
-  J[268] -= dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[A-C3H4] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[263] += dqdci; // dwdot[C3H3]/d[H]
+  J[268] -= dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[5];
-  J[1348] += dqdci; /* dwdot[H2]/d[A-C3H4] */
-  J[1349] -= dqdci; /* dwdot[H]/d[A-C3H4] */
-  J[1367] += dqdci; /* dwdot[C3H3]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1348] += dqdci; // dwdot[H2]/d[A-C3H4]
+  J[1349] -= dqdci; // dwdot[H]/d[A-C3H4]
+  J[1367] += dqdci; // dwdot[C3H3]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 143: A-C3H4 + OH => C3H3 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[28];
   k_f = 1e-06 * 0.131 * exp(4.2 * tc[0] - 0.50321666580472 * (-860.42) * invT);
   dlnkfdT = 4.2 * invT + 0.50321666580472 * (-860.42) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[23] += q; /* C3H3 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[23] += q; // C3H3
+  wdot[28] -= q; // A-C3H4
+  // d()/d[OH]
   dqdci = +k_f * sc[28];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[311] += dqdci; /* dwdot[C3H3]/d[OH] */
-  J[316] -= dqdci; /* dwdot[A-C3H4]/d[OH] */
-  /* d()/d[A-C3H4] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[311] += dqdci; // dwdot[C3H3]/d[OH]
+  J[316] -= dqdci; // dwdot[A-C3H4]/d[OH]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[6];
-  J[1350] -= dqdci; /* dwdot[OH]/d[A-C3H4] */
-  J[1351] += dqdci; /* dwdot[H2O]/d[A-C3H4] */
-  J[1367] += dqdci; /* dwdot[C3H3]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1350] -= dqdci; // dwdot[OH]/d[A-C3H4]
+  J[1351] += dqdci; // dwdot[H2O]/d[A-C3H4]
+  J[1367] += dqdci; // dwdot[C3H3]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 144: A-C3H4 + CH3 => C3H3 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[28];
   k_f = 1e-06 * 227000 * exp(2 * tc[0] - 0.50321666580472 * (9199.33) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * (9199.33) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[23] += q; /* C3H3 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[23] += q; // C3H3
+  wdot[28] -= q; // A-C3H4
+  // d()/d[CH3]
   dqdci = +k_f * sc[28];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[695] += dqdci; /* dwdot[C3H3]/d[CH3] */
-  J[700] -= dqdci; /* dwdot[A-C3H4]/d[CH3] */
-  /* d()/d[A-C3H4] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[695] += dqdci; // dwdot[C3H3]/d[CH3]
+  J[700] -= dqdci; // dwdot[A-C3H4]/d[CH3]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[14];
-  J[1358] -= dqdci; /* dwdot[CH3]/d[A-C3H4] */
-  J[1360] += dqdci; /* dwdot[CH4]/d[A-C3H4] */
-  J[1367] += dqdci; /* dwdot[C3H3]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1358] -= dqdci; // dwdot[CH3]/d[A-C3H4]
+  J[1360] += dqdci; // dwdot[CH4]/d[A-C3H4]
+  J[1367] += dqdci; // dwdot[C3H3]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 145: A-C3H4 + H <=> A-C3H5 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[28];
   k_f = 1e-06 * 2.01e+49 *
         exp(-10.77 * tc[0] - 0.50321666580472 * (19622.37) * invT);
   dlnkfdT = -10.77 * invT + 0.50321666580472 * (19622.37) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[24];
   Kc = refCinv * exp(g_RT[5] - g_RT[24] + g_RT[28]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[28]) + (h_RT[24]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[24] += q; // A-C3H5
+  wdot[28] -= q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[28];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[264] += dqdci; /* dwdot[A-C3H5]/d[H] */
-  J[268] -= dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[A-C3H5] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[264] += dqdci; // dwdot[A-C3H5]/d[H]
+  J[268] -= dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[A-C3H5]
   dqdci = -k_r;
-  J[1157] -= dqdci; /* dwdot[H]/d[A-C3H5] */
-  J[1176] += dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1180] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H5] */
-  /* d()/d[A-C3H4] */
+  J[1157] -= dqdci; // dwdot[H]/d[A-C3H5]
+  J[1176] += dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  J[1180] -= dqdci; // dwdot[A-C3H4]/d[A-C3H5]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[5];
-  J[1349] -= dqdci; /* dwdot[H]/d[A-C3H4] */
-  J[1368] += dqdci; /* dwdot[A-C3H5]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1349] -= dqdci; // dwdot[H]/d[A-C3H4]
+  J[1368] += dqdci; // dwdot[A-C3H5]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 146: A-C3H5 + H => A-C3H4 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[24];
   k_f = 1e-06 * 9560 * exp(2.8 * tc[0] - 0.50321666580472 * (3291.11) * invT);
   dlnkfdT = 2.8 * invT + 0.50321666580472 * (3291.11) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[24] -= q; /* A-C3H5 */
-  wdot[28] += q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[24] -= q; // A-C3H5
+  wdot[28] += q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[24];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[264] -= dqdci; /* dwdot[A-C3H5]/d[H] */
-  J[268] += dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[A-C3H5] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[264] -= dqdci; // dwdot[A-C3H5]/d[H]
+  J[268] += dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[5];
-  J[1156] += dqdci; /* dwdot[H2]/d[A-C3H5] */
-  J[1157] -= dqdci; /* dwdot[H]/d[A-C3H5] */
-  J[1176] -= dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1180] += dqdci; /* dwdot[A-C3H4]/d[A-C3H5] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2280] -= dqdT; /* dwdot[A-C3H5]/dT */
-  J[2284] += dqdT; /* dwdot[A-C3H4]/dT */
+  J[1156] += dqdci; // dwdot[H2]/d[A-C3H5]
+  J[1157] -= dqdci; // dwdot[H]/d[A-C3H5]
+  J[1176] -= dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  J[1180] += dqdci; // dwdot[A-C3H4]/d[A-C3H5]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2280] -= dqdT; // dwdot[A-C3H5]/dT
+  J[2284] += dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 147: A-C3H5 + OH => A-C3H4 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[24];
   k_f = 1e-06 * 6030000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[24] -= q; /* A-C3H5 */
-  wdot[28] += q; /* A-C3H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[24] -= q; // A-C3H5
+  wdot[28] += q; // A-C3H4
+  // d()/d[OH]
   dqdci = +k_f * sc[24];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[312] -= dqdci; /* dwdot[A-C3H5]/d[OH] */
-  J[316] += dqdci; /* dwdot[A-C3H4]/d[OH] */
-  /* d()/d[A-C3H5] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[312] -= dqdci; // dwdot[A-C3H5]/d[OH]
+  J[316] += dqdci; // dwdot[A-C3H4]/d[OH]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[6];
-  J[1158] -= dqdci; /* dwdot[OH]/d[A-C3H5] */
-  J[1159] += dqdci; /* dwdot[H2O]/d[A-C3H5] */
-  J[1176] -= dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1180] += dqdci; /* dwdot[A-C3H4]/d[A-C3H5] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2280] -= dqdT; /* dwdot[A-C3H5]/dT */
-  J[2284] += dqdT; /* dwdot[A-C3H4]/dT */
+  J[1158] -= dqdci; // dwdot[OH]/d[A-C3H5]
+  J[1159] += dqdci; // dwdot[H2O]/d[A-C3H5]
+  J[1176] -= dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  J[1180] += dqdci; // dwdot[A-C3H4]/d[A-C3H5]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2280] -= dqdT; // dwdot[A-C3H5]/dT
+  J[2284] += dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 148: A-C3H5 + CH3 => A-C3H4 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[24];
   k_f = 1e-06 * 486000000000 *
         exp(-0.32 * tc[0] - 0.50321666580472 * (-131.45) * invT);
   dlnkfdT = -0.32 * invT + 0.50321666580472 * (-131.45) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[24] -= q; /* A-C3H5 */
-  wdot[28] += q; /* A-C3H4 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[24] -= q; // A-C3H5
+  wdot[28] += q; // A-C3H4
+  // d()/d[CH3]
   dqdci = +k_f * sc[24];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[696] -= dqdci; /* dwdot[A-C3H5]/d[CH3] */
-  J[700] += dqdci; /* dwdot[A-C3H4]/d[CH3] */
-  /* d()/d[A-C3H5] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[696] -= dqdci; // dwdot[A-C3H5]/d[CH3]
+  J[700] += dqdci; // dwdot[A-C3H4]/d[CH3]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[14];
-  J[1166] -= dqdci; /* dwdot[CH3]/d[A-C3H5] */
-  J[1168] += dqdci; /* dwdot[CH4]/d[A-C3H5] */
-  J[1176] -= dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1180] += dqdci; /* dwdot[A-C3H4]/d[A-C3H5] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2280] -= dqdT; /* dwdot[A-C3H5]/dT */
-  J[2284] += dqdT; /* dwdot[A-C3H4]/dT */
+  J[1166] -= dqdci; // dwdot[CH3]/d[A-C3H5]
+  J[1168] += dqdci; // dwdot[CH4]/d[A-C3H5]
+  J[1176] -= dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  J[1180] += dqdci; // dwdot[A-C3H4]/d[A-C3H5]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2280] -= dqdT; // dwdot[A-C3H5]/dT
+  J[2284] += dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 149: A-C3H5 + O2 => C2H2 + CH2O + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[24];
   k_f =
     1e-06 * 9.71e+20 * exp(-2.7 * tc[0] - 0.50321666580472 * (24980.88) * invT);
   dlnkfdT = -2.7 * invT + 0.50321666580472 * (24980.88) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[8] -= q;  /* O2 */
-  wdot[13] += q; /* CH2O */
-  wdot[22] += q; /* C2H2 */
-  wdot[24] -= q; /* A-C3H5 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[8] -= q;  // O2
+  wdot[13] += q; // CH2O
+  wdot[22] += q; // C2H2
+  wdot[24] -= q; // A-C3H5
+  // d()/d[O2]
   dqdci = +k_f * sc[24];
-  J[390] += dqdci; /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[397] += dqdci; /* dwdot[CH2O]/d[O2] */
-  J[406] += dqdci; /* dwdot[C2H2]/d[O2] */
-  J[408] -= dqdci; /* dwdot[A-C3H5]/d[O2] */
-  /* d()/d[A-C3H5] */
+  J[390] += dqdci; // dwdot[OH]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[397] += dqdci; // dwdot[CH2O]/d[O2]
+  J[406] += dqdci; // dwdot[C2H2]/d[O2]
+  J[408] -= dqdci; // dwdot[A-C3H5]/d[O2]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[8];
-  J[1158] += dqdci; /* dwdot[OH]/d[A-C3H5] */
-  J[1160] -= dqdci; /* dwdot[O2]/d[A-C3H5] */
-  J[1165] += dqdci; /* dwdot[CH2O]/d[A-C3H5] */
-  J[1174] += dqdci; /* dwdot[C2H2]/d[A-C3H5] */
-  J[1176] -= dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2280] -= dqdT; /* dwdot[A-C3H5]/dT */
+  J[1158] += dqdci; // dwdot[OH]/d[A-C3H5]
+  J[1160] -= dqdci; // dwdot[O2]/d[A-C3H5]
+  J[1165] += dqdci; // dwdot[CH2O]/d[A-C3H5]
+  J[1174] += dqdci; // dwdot[C2H2]/d[A-C3H5]
+  J[1176] -= dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2280] -= dqdT; // dwdot[A-C3H5]/dT
 
   /*reaction 150: A-C3H5 + C3H3 => A1 + 2.000000 H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[23] * sc[24];
   k_f = 1e-06 * 2.16e+39 *
         exp(-7.74 * tc[0] - 0.50321666580472 * (23852.77) * invT);
   dlnkfdT = -7.74 * invT + 0.50321666580472 * (23852.77) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += 2 * q; /* H */
-  wdot[23] -= q;    /* C3H3 */
-  wdot[24] -= q;    /* A-C3H5 */
-  wdot[29] += q;    /* A1 */
-  /* d()/d[C3H3] */
+  // update wdot
+  wdot[5] += 2 * q; // H
+  wdot[23] -= q;    // C3H3
+  wdot[24] -= q;    // A-C3H5
+  wdot[29] += q;    // A1
+  // d()/d[C3H3]
   dqdci = +k_f * sc[24];
-  J[1109] += 2 * dqdci; /* dwdot[H]/d[C3H3] */
-  J[1127] -= dqdci;     /* dwdot[C3H3]/d[C3H3] */
-  J[1128] -= dqdci;     /* dwdot[A-C3H5]/d[C3H3] */
-  J[1133] += dqdci;     /* dwdot[A1]/d[C3H3] */
-  /* d()/d[A-C3H5] */
+  J[1109] += 2 * dqdci; // dwdot[H]/d[C3H3]
+  J[1127] -= dqdci;     // dwdot[C3H3]/d[C3H3]
+  J[1128] -= dqdci;     // dwdot[A-C3H5]/d[C3H3]
+  J[1133] += dqdci;     // dwdot[A1]/d[C3H3]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[23];
-  J[1157] += 2 * dqdci; /* dwdot[H]/d[A-C3H5] */
-  J[1175] -= dqdci;     /* dwdot[C3H3]/d[A-C3H5] */
-  J[1176] -= dqdci;     /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1181] += dqdci;     /* dwdot[A1]/d[A-C3H5] */
-  /* d()/dT */
-  J[2261] += 2 * dqdT; /* dwdot[H]/dT */
-  J[2279] -= dqdT;     /* dwdot[C3H3]/dT */
-  J[2280] -= dqdT;     /* dwdot[A-C3H5]/dT */
-  J[2285] += dqdT;     /* dwdot[A1]/dT */
+  J[1157] += 2 * dqdci; // dwdot[H]/d[A-C3H5]
+  J[1175] -= dqdci;     // dwdot[C3H3]/d[A-C3H5]
+  J[1176] -= dqdci;     // dwdot[A-C3H5]/d[A-C3H5]
+  J[1181] += dqdci;     // dwdot[A1]/d[A-C3H5]
+  // d()/dT
+  J[2261] += 2 * dqdT; // dwdot[H]/dT
+  J[2279] -= dqdT;     // dwdot[C3H3]/dT
+  J[2280] -= dqdT;     // dwdot[A-C3H5]/dT
+  J[2285] += dqdT;     // dwdot[A1]/dT
 
   /*reaction 151: C3H6 <=> C2H3 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[32];
   k_f =
     1 * 4.04e+42 * exp(-7.67 * tc[0] - 0.50321666580472 * (111830.78) * invT);
   dlnkfdT = -7.67 * invT + 0.50321666580472 * (111830.78) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[17];
   Kc = refC * exp(-g_RT[14] - g_RT[17] + g_RT[32]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[32]) + (h_RT[14] + h_RT[17]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[14] += q; /* CH3 */
-  wdot[17] += q; /* C2H3 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] += q; // CH3
+  wdot[17] += q; // C2H3
+  wdot[32] -= q; // C3H6
+  // d()/d[CH3]
   dqdci = -k_r * sc[17];
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[689] += dqdci; /* dwdot[C2H3]/d[CH3] */
-  J[704] -= dqdci; /* dwdot[C3H6]/d[CH3] */
-  /* d()/d[C2H3] */
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[689] += dqdci; // dwdot[C2H3]/d[CH3]
+  J[704] -= dqdci; // dwdot[C3H6]/d[CH3]
+  // d()/d[C2H3]
   dqdci = -k_r * sc[14];
-  J[830] += dqdci; /* dwdot[CH3]/d[C2H3] */
-  J[833] += dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[848] -= dqdci; /* dwdot[C3H6]/d[C2H3] */
-  /* d()/d[C3H6] */
+  J[830] += dqdci; // dwdot[CH3]/d[C2H3]
+  J[833] += dqdci; // dwdot[C2H3]/d[C2H3]
+  J[848] -= dqdci; // dwdot[C3H6]/d[C2H3]
+  // d()/d[C3H6]
   dqdci = +k_f;
-  J[1550] += dqdci; /* dwdot[CH3]/d[C3H6] */
-  J[1553] += dqdci; /* dwdot[C2H3]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1550] += dqdci; // dwdot[CH3]/d[C3H6]
+  J[1553] += dqdci; // dwdot[C2H3]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 152: A-C3H5 + H <=> C3H6 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[24];
   k_f = 1e-06 * 5.93e+54 *
         exp(-11.76 * tc[0] - 0.50321666580472 * (23549.24) * invT);
   dlnkfdT = -11.76 * invT + 0.50321666580472 * (23549.24) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[32];
   Kc = refCinv * exp(g_RT[5] + g_RT[24] - g_RT[32]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[24]) + (h_RT[32]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[24] -= q; /* A-C3H5 */
-  wdot[32] += q; /* C3H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[24] -= q; // A-C3H5
+  wdot[32] += q; // C3H6
+  // d()/d[H]
   dqdci = +k_f * sc[24];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[264] -= dqdci; /* dwdot[A-C3H5]/d[H] */
-  J[272] += dqdci; /* dwdot[C3H6]/d[H] */
-  /* d()/d[A-C3H5] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[264] -= dqdci; // dwdot[A-C3H5]/d[H]
+  J[272] += dqdci; // dwdot[C3H6]/d[H]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[5];
-  J[1157] -= dqdci; /* dwdot[H]/d[A-C3H5] */
-  J[1176] -= dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1184] += dqdci; /* dwdot[C3H6]/d[A-C3H5] */
-  /* d()/d[C3H6] */
+  J[1157] -= dqdci; // dwdot[H]/d[A-C3H5]
+  J[1176] -= dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  J[1184] += dqdci; // dwdot[C3H6]/d[A-C3H5]
+  // d()/d[C3H6]
   dqdci = -k_r;
-  J[1541] -= dqdci; /* dwdot[H]/d[C3H6] */
-  J[1560] -= dqdci; /* dwdot[A-C3H5]/d[C3H6] */
-  J[1568] += dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2280] -= dqdT; /* dwdot[A-C3H5]/dT */
-  J[2288] += dqdT; /* dwdot[C3H6]/dT */
+  J[1541] -= dqdci; // dwdot[H]/d[C3H6]
+  J[1560] -= dqdci; // dwdot[A-C3H5]/d[C3H6]
+  J[1568] += dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2280] -= dqdT; // dwdot[A-C3H5]/dT
+  J[2288] += dqdT; // dwdot[C3H6]/dT
 
   /*reaction 153: C3H6 + H <=> C2H4 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[32];
   k_f =
     1e-06 * 8e+21 * exp(-2.39 * tc[0] - 0.50321666580472 * (11180.69) * invT);
   dlnkfdT = -2.39 * invT + 0.50321666580472 * (11180.69) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[18];
   Kc = exp(g_RT[5] - g_RT[14] - g_RT[18] + g_RT[32]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[32]) + (h_RT[14] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[18] += q; /* C2H4 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[18] += q; // C2H4
+  wdot[32] -= q; // C3H6
+  // d()/d[H]
   dqdci = +k_f * sc[32];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[258] += dqdci; /* dwdot[C2H4]/d[H] */
-  J[272] -= dqdci; /* dwdot[C3H6]/d[H] */
-  /* d()/d[CH3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[258] += dqdci; // dwdot[C2H4]/d[H]
+  J[272] -= dqdci; // dwdot[C3H6]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[18];
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[690] += dqdci; /* dwdot[C2H4]/d[CH3] */
-  J[704] -= dqdci; /* dwdot[C3H6]/d[CH3] */
-  /* d()/d[C2H4] */
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[690] += dqdci; // dwdot[C2H4]/d[CH3]
+  J[704] -= dqdci; // dwdot[C3H6]/d[CH3]
+  // d()/d[C2H4]
   dqdci = -k_r * sc[14];
-  J[869] -= dqdci; /* dwdot[H]/d[C2H4] */
-  J[878] += dqdci; /* dwdot[CH3]/d[C2H4] */
-  J[882] += dqdci; /* dwdot[C2H4]/d[C2H4] */
-  J[896] -= dqdci; /* dwdot[C3H6]/d[C2H4] */
-  /* d()/d[C3H6] */
+  J[869] -= dqdci; // dwdot[H]/d[C2H4]
+  J[878] += dqdci; // dwdot[CH3]/d[C2H4]
+  J[882] += dqdci; // dwdot[C2H4]/d[C2H4]
+  J[896] -= dqdci; // dwdot[C3H6]/d[C2H4]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[5];
-  J[1541] -= dqdci; /* dwdot[H]/d[C3H6] */
-  J[1550] += dqdci; /* dwdot[CH3]/d[C3H6] */
-  J[1554] += dqdci; /* dwdot[C2H4]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1541] -= dqdci; // dwdot[H]/d[C3H6]
+  J[1550] += dqdci; // dwdot[CH3]/d[C3H6]
+  J[1554] += dqdci; // dwdot[C2H4]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 154: C3H6 + O => 2.000000 CH3 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[32];
   k_f =
     1e-06 * 120000000 * exp(1.6 * tc[0] - 0.50321666580472 * (327.44) * invT);
   dlnkfdT = 1.6 * invT + 0.50321666580472 * (327.44) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;      /* O */
-  wdot[11] += q;     /* CO */
-  wdot[14] += 2 * q; /* CH3 */
-  wdot[32] -= q;     /* C3H6 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;      // O
+  wdot[11] += q;     // CO
+  wdot[14] += 2 * q; // CH3
+  wdot[32] -= q;     // C3H6
+  // d()/d[O]
   dqdci = +k_f * sc[32];
-  J[147] -= dqdci;     /* dwdot[O]/d[O] */
-  J[155] += dqdci;     /* dwdot[CO]/d[O] */
-  J[158] += 2 * dqdci; /* dwdot[CH3]/d[O] */
-  J[176] -= dqdci;     /* dwdot[C3H6]/d[O] */
-  /* d()/d[C3H6] */
+  J[147] -= dqdci;     // dwdot[O]/d[O]
+  J[155] += dqdci;     // dwdot[CO]/d[O]
+  J[158] += 2 * dqdci; // dwdot[CH3]/d[O]
+  J[176] -= dqdci;     // dwdot[C3H6]/d[O]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[3];
-  J[1539] -= dqdci;     /* dwdot[O]/d[C3H6] */
-  J[1547] += dqdci;     /* dwdot[CO]/d[C3H6] */
-  J[1550] += 2 * dqdci; /* dwdot[CH3]/d[C3H6] */
-  J[1568] -= dqdci;     /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2259] -= dqdT;     /* dwdot[O]/dT */
-  J[2267] += dqdT;     /* dwdot[CO]/dT */
-  J[2270] += 2 * dqdT; /* dwdot[CH3]/dT */
-  J[2288] -= dqdT;     /* dwdot[C3H6]/dT */
+  J[1539] -= dqdci;     // dwdot[O]/d[C3H6]
+  J[1547] += dqdci;     // dwdot[CO]/d[C3H6]
+  J[1550] += 2 * dqdci; // dwdot[CH3]/d[C3H6]
+  J[1568] -= dqdci;     // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2259] -= dqdT;     // dwdot[O]/dT
+  J[2267] += dqdT;     // dwdot[CO]/dT
+  J[2270] += 2 * dqdT; // dwdot[CH3]/dT
+  J[2288] -= dqdT;     // dwdot[C3H6]/dT
 
   /*reaction 155: C3H6 + O => C2H5 + HCO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[32];
   k_f =
     1e-06 * 35000000 * exp(1.6 * tc[0] - 0.50321666580472 * (-972.75) * invT);
   dlnkfdT = 1.6 * invT + 0.50321666580472 * (-972.75) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[12] += q; /* HCO */
-  wdot[19] += q; /* C2H5 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[12] += q; // HCO
+  wdot[19] += q; // C2H5
+  wdot[32] -= q; // C3H6
+  // d()/d[O]
   dqdci = +k_f * sc[32];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[156] += dqdci; /* dwdot[HCO]/d[O] */
-  J[163] += dqdci; /* dwdot[C2H5]/d[O] */
-  J[176] -= dqdci; /* dwdot[C3H6]/d[O] */
-  /* d()/d[C3H6] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[156] += dqdci; // dwdot[HCO]/d[O]
+  J[163] += dqdci; // dwdot[C2H5]/d[O]
+  J[176] -= dqdci; // dwdot[C3H6]/d[O]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[3];
-  J[1539] -= dqdci; /* dwdot[O]/d[C3H6] */
-  J[1548] += dqdci; /* dwdot[HCO]/d[C3H6] */
-  J[1555] += dqdci; /* dwdot[C2H5]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1539] -= dqdci; // dwdot[O]/d[C3H6]
+  J[1548] += dqdci; // dwdot[HCO]/d[C3H6]
+  J[1555] += dqdci; // dwdot[C2H5]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 156: C3H6 + H => A-C3H5 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[32];
   k_f =
     1e-06 * 660000 * exp(2.54 * tc[0] - 0.50321666580472 * (6756.69) * invT);
   dlnkfdT = 2.54 * invT + 0.50321666580472 * (6756.69) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[24] += q; // A-C3H5
+  wdot[32] -= q; // C3H6
+  // d()/d[H]
   dqdci = +k_f * sc[32];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[264] += dqdci; /* dwdot[A-C3H5]/d[H] */
-  J[272] -= dqdci; /* dwdot[C3H6]/d[H] */
-  /* d()/d[C3H6] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[264] += dqdci; // dwdot[A-C3H5]/d[H]
+  J[272] -= dqdci; // dwdot[C3H6]/d[H]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[5];
-  J[1540] += dqdci; /* dwdot[H2]/d[C3H6] */
-  J[1541] -= dqdci; /* dwdot[H]/d[C3H6] */
-  J[1560] += dqdci; /* dwdot[A-C3H5]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1540] += dqdci; // dwdot[H2]/d[C3H6]
+  J[1541] -= dqdci; // dwdot[H]/d[C3H6]
+  J[1560] += dqdci; // dwdot[A-C3H5]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 157: C3H6 + O => A-C3H5 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[32];
   k_f = 1e-06 * 96500 * exp(2.68 * tc[0] - 0.50321666580472 * (3716.54) * invT);
   dlnkfdT = 2.68 * invT + 0.50321666580472 * (3716.54) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[24] += q; // A-C3H5
+  wdot[32] -= q; // C3H6
+  // d()/d[O]
   dqdci = +k_f * sc[32];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[168] += dqdci; /* dwdot[A-C3H5]/d[O] */
-  J[176] -= dqdci; /* dwdot[C3H6]/d[O] */
-  /* d()/d[C3H6] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[168] += dqdci; // dwdot[A-C3H5]/d[O]
+  J[176] -= dqdci; // dwdot[C3H6]/d[O]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[3];
-  J[1539] -= dqdci; /* dwdot[O]/d[C3H6] */
-  J[1542] += dqdci; /* dwdot[OH]/d[C3H6] */
-  J[1560] += dqdci; /* dwdot[A-C3H5]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1539] -= dqdci; // dwdot[O]/d[C3H6]
+  J[1542] += dqdci; // dwdot[OH]/d[C3H6]
+  J[1560] += dqdci; // dwdot[A-C3H5]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 158: C3H6 + OH => A-C3H5 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[32];
   k_f =
     1e-06 * 200000000 * exp(1.46 * tc[0] - 0.50321666580472 * (537.76) * invT);
   dlnkfdT = 1.46 * invT + 0.50321666580472 * (537.76) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[24] += q; // A-C3H5
+  wdot[32] -= q; // C3H6
+  // d()/d[OH]
   dqdci = +k_f * sc[32];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[312] += dqdci; /* dwdot[A-C3H5]/d[OH] */
-  J[320] -= dqdci; /* dwdot[C3H6]/d[OH] */
-  /* d()/d[C3H6] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[312] += dqdci; // dwdot[A-C3H5]/d[OH]
+  J[320] -= dqdci; // dwdot[C3H6]/d[OH]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[6];
-  J[1542] -= dqdci; /* dwdot[OH]/d[C3H6] */
-  J[1543] += dqdci; /* dwdot[H2O]/d[C3H6] */
-  J[1560] += dqdci; /* dwdot[A-C3H5]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1542] -= dqdci; // dwdot[OH]/d[C3H6]
+  J[1543] += dqdci; // dwdot[H2O]/d[C3H6]
+  J[1560] += dqdci; // dwdot[A-C3H5]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 159: C3H6 + CH3 => A-C3H5 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[32];
   k_f = 1e-06 * 0.452 * exp(3.65 * tc[0] - 0.50321666580472 * (7153.44) * invT);
   dlnkfdT = 3.65 * invT + 0.50321666580472 * (7153.44) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[24] += q; // A-C3H5
+  wdot[32] -= q; // C3H6
+  // d()/d[CH3]
   dqdci = +k_f * sc[32];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[696] += dqdci; /* dwdot[A-C3H5]/d[CH3] */
-  J[704] -= dqdci; /* dwdot[C3H6]/d[CH3] */
-  /* d()/d[C3H6] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[696] += dqdci; // dwdot[A-C3H5]/d[CH3]
+  J[704] -= dqdci; // dwdot[C3H6]/d[CH3]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[14];
-  J[1550] -= dqdci; /* dwdot[CH3]/d[C3H6] */
-  J[1552] += dqdci; /* dwdot[CH4]/d[C3H6] */
-  J[1560] += dqdci; /* dwdot[A-C3H5]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1550] -= dqdci; // dwdot[CH3]/d[C3H6]
+  J[1552] += dqdci; // dwdot[CH4]/d[C3H6]
+  J[1560] += dqdci; // dwdot[A-C3H5]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 160: C4H8 + H => C2H5 + C2H4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[33];
   k_f = 1e-06 * 7680000000000 *
         exp(0.11 * tc[0] - 0.50321666580472 * (1479.45) * invT);
   dlnkfdT = 0.11 * invT + 0.50321666580472 * (1479.45) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[18] += q; /* C2H4 */
-  wdot[19] += q; /* C2H5 */
-  wdot[33] -= q; /* C4H8 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[18] += q; // C2H4
+  wdot[19] += q; // C2H5
+  wdot[33] -= q; // C4H8
+  // d()/d[H]
   dqdci = +k_f * sc[33];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[258] += dqdci; /* dwdot[C2H4]/d[H] */
-  J[259] += dqdci; /* dwdot[C2H5]/d[H] */
-  J[273] -= dqdci; /* dwdot[C4H8]/d[H] */
-  /* d()/d[C4H8] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[258] += dqdci; // dwdot[C2H4]/d[H]
+  J[259] += dqdci; // dwdot[C2H5]/d[H]
+  J[273] -= dqdci; // dwdot[C4H8]/d[H]
+  // d()/d[C4H8]
   dqdci = +k_f * sc[5];
-  J[1589] -= dqdci; /* dwdot[H]/d[C4H8] */
-  J[1602] += dqdci; /* dwdot[C2H4]/d[C4H8] */
-  J[1603] += dqdci; /* dwdot[C2H5]/d[C4H8] */
-  J[1617] -= dqdci; /* dwdot[C4H8]/d[C4H8] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2289] -= dqdT; /* dwdot[C4H8]/dT */
+  J[1589] -= dqdci; // dwdot[H]/d[C4H8]
+  J[1602] += dqdci; // dwdot[C2H4]/d[C4H8]
+  J[1603] += dqdci; // dwdot[C2H5]/d[C4H8]
+  J[1617] -= dqdci; // dwdot[C4H8]/d[C4H8]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2289] -= dqdT; // dwdot[C4H8]/dT
 
   /*reaction 161: C4H8 => A-C3H5 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[33];
   k_f = 1 * 5e+15 * exp(0 * tc[0] - 0.50321666580472 * (70999.04) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (70999.04) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] += q; /* CH3 */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[33] -= q; /* C4H8 */
-  /* d()/d[C4H8] */
+  // update wdot
+  wdot[14] += q; // CH3
+  wdot[24] += q; // A-C3H5
+  wdot[33] -= q; // C4H8
+  // d()/d[C4H8]
   dqdci = +k_f;
-  J[1598] += dqdci; /* dwdot[CH3]/d[C4H8] */
-  J[1608] += dqdci; /* dwdot[A-C3H5]/d[C4H8] */
-  J[1617] -= dqdci; /* dwdot[C4H8]/d[C4H8] */
-  /* d()/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2289] -= dqdT; /* dwdot[C4H8]/dT */
+  J[1598] += dqdci; // dwdot[CH3]/d[C4H8]
+  J[1608] += dqdci; // dwdot[A-C3H5]/d[C4H8]
+  J[1617] -= dqdci; // dwdot[C4H8]/d[C4H8]
+  // d()/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2289] -= dqdT; // dwdot[C4H8]/dT
 
   /*reaction 162: C5H5 + HO2 => O2 + C5H6 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[31];
   k_f = 1e-06 * 2561000000000 *
         exp(0.06 * tc[0] - 0.50321666580472 * (3116.63) * invT);
   dlnkfdT = 0.06 * invT + 0.50321666580472 * (3116.63) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] += q;  /* O2 */
-  wdot[9] -= q;  /* HO2 */
-  wdot[31] -= q; /* C5H5 */
-  wdot[34] += q; /* C5H6 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[8] += q;  // O2
+  wdot[9] -= q;  // HO2
+  wdot[31] -= q; // C5H5
+  wdot[34] += q; // C5H6
+  // d()/d[HO2]
   dqdci = +k_f * sc[31];
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[463] -= dqdci; /* dwdot[C5H5]/d[HO2] */
-  J[466] += dqdci; /* dwdot[C5H6]/d[HO2] */
-  /* d()/d[C5H5] */
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[463] -= dqdci; // dwdot[C5H5]/d[HO2]
+  J[466] += dqdci; // dwdot[C5H6]/d[HO2]
+  // d()/d[C5H5]
   dqdci = +k_f * sc[9];
-  J[1496] += dqdci; /* dwdot[O2]/d[C5H5] */
-  J[1497] -= dqdci; /* dwdot[HO2]/d[C5H5] */
-  J[1519] -= dqdci; /* dwdot[C5H5]/d[C5H5] */
-  J[1522] += dqdci; /* dwdot[C5H6]/d[C5H5] */
-  /* d()/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2287] -= dqdT; /* dwdot[C5H5]/dT */
-  J[2290] += dqdT; /* dwdot[C5H6]/dT */
+  J[1496] += dqdci; // dwdot[O2]/d[C5H5]
+  J[1497] -= dqdci; // dwdot[HO2]/d[C5H5]
+  J[1519] -= dqdci; // dwdot[C5H5]/d[C5H5]
+  J[1522] += dqdci; // dwdot[C5H6]/d[C5H5]
+  // d()/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2287] -= dqdT; // dwdot[C5H5]/dT
+  J[2290] += dqdT; // dwdot[C5H6]/dT
 
   /*reaction 163: 2.000000 C5H5 => A2 + 2.000000 H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[31] * sc[31]);
   k_f = 1e-06 * 6.39e+29 *
         exp(-4.03 * tc[0] - 0.50321666580472 * (35205.54) * invT);
   dlnkfdT = -4.03 * invT + 0.50321666580472 * (35205.54) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += 2 * q;  /* H */
-  wdot[31] -= 2 * q; /* C5H5 */
-  wdot[35] += q;     /* A2 */
-  /* d()/d[C5H5] */
+  // update wdot
+  wdot[5] += 2 * q;  // H
+  wdot[31] -= 2 * q; // C5H5
+  wdot[35] += q;     // A2
+  // d()/d[C5H5]
   dqdci = +k_f * 2.000000 * sc[31];
-  J[1493] += 2 * dqdci;  /* dwdot[H]/d[C5H5] */
-  J[1519] += -2 * dqdci; /* dwdot[C5H5]/d[C5H5] */
-  J[1523] += dqdci;      /* dwdot[A2]/d[C5H5] */
-  /* d()/dT */
-  J[2261] += 2 * dqdT;  /* dwdot[H]/dT */
-  J[2287] += -2 * dqdT; /* dwdot[C5H5]/dT */
-  J[2291] += dqdT;      /* dwdot[A2]/dT */
+  J[1493] += 2 * dqdci;  // dwdot[H]/d[C5H5]
+  J[1519] += -2 * dqdci; // dwdot[C5H5]/d[C5H5]
+  J[1523] += dqdci;      // dwdot[A2]/d[C5H5]
+  // d()/dT
+  J[2261] += 2 * dqdT;  // dwdot[H]/dT
+  J[2287] += -2 * dqdT; // dwdot[C5H5]/dT
+  J[2291] += dqdT;      // dwdot[A2]/dT
 
   /*reaction 164: C5H5 + O => C2H3 + C2H2 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[31];
   k_f = 1e-06 * 70000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[11] += q; /* CO */
-  wdot[17] += q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  wdot[31] -= q; /* C5H5 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[11] += q; // CO
+  wdot[17] += q; // C2H3
+  wdot[22] += q; // C2H2
+  wdot[31] -= q; // C5H5
+  // d()/d[O]
   dqdci = +k_f * sc[31];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[161] += dqdci; /* dwdot[C2H3]/d[O] */
-  J[166] += dqdci; /* dwdot[C2H2]/d[O] */
-  J[175] -= dqdci; /* dwdot[C5H5]/d[O] */
-  /* d()/d[C5H5] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[161] += dqdci; // dwdot[C2H3]/d[O]
+  J[166] += dqdci; // dwdot[C2H2]/d[O]
+  J[175] -= dqdci; // dwdot[C5H5]/d[O]
+  // d()/d[C5H5]
   dqdci = +k_f * sc[3];
-  J[1491] -= dqdci; /* dwdot[O]/d[C5H5] */
-  J[1499] += dqdci; /* dwdot[CO]/d[C5H5] */
-  J[1505] += dqdci; /* dwdot[C2H3]/d[C5H5] */
-  J[1510] += dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1519] -= dqdci; /* dwdot[C5H5]/d[C5H5] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2287] -= dqdT; /* dwdot[C5H5]/dT */
+  J[1491] -= dqdci; // dwdot[O]/d[C5H5]
+  J[1499] += dqdci; // dwdot[CO]/d[C5H5]
+  J[1505] += dqdci; // dwdot[C2H3]/d[C5H5]
+  J[1510] += dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1519] -= dqdci; // dwdot[C5H5]/d[C5H5]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2287] -= dqdT; // dwdot[C5H5]/dT
 
   /*reaction 165: C5H5 + HO2 => C2H3 + C2H2 + CO + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[31];
   k_f =
     1e-06 * 6.776e+29 * exp(-4.7 * tc[0] - 0.50321666580472 * (11658.7) * invT);
   dlnkfdT = -4.7 * invT + 0.50321666580472 * (11658.7) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[11] += q; /* CO */
-  wdot[17] += q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  wdot[31] -= q; /* C5H5 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[11] += q; // CO
+  wdot[17] += q; // C2H3
+  wdot[22] += q; // C2H2
+  wdot[31] -= q; // C5H5
+  // d()/d[HO2]
   dqdci = +k_f * sc[31];
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[443] += dqdci; /* dwdot[CO]/d[HO2] */
-  J[449] += dqdci; /* dwdot[C2H3]/d[HO2] */
-  J[454] += dqdci; /* dwdot[C2H2]/d[HO2] */
-  J[463] -= dqdci; /* dwdot[C5H5]/d[HO2] */
-  /* d()/d[C5H5] */
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[443] += dqdci; // dwdot[CO]/d[HO2]
+  J[449] += dqdci; // dwdot[C2H3]/d[HO2]
+  J[454] += dqdci; // dwdot[C2H2]/d[HO2]
+  J[463] -= dqdci; // dwdot[C5H5]/d[HO2]
+  // d()/d[C5H5]
   dqdci = +k_f * sc[9];
-  J[1494] += dqdci; /* dwdot[OH]/d[C5H5] */
-  J[1497] -= dqdci; /* dwdot[HO2]/d[C5H5] */
-  J[1499] += dqdci; /* dwdot[CO]/d[C5H5] */
-  J[1505] += dqdci; /* dwdot[C2H3]/d[C5H5] */
-  J[1510] += dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1519] -= dqdci; /* dwdot[C5H5]/d[C5H5] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2287] -= dqdT; /* dwdot[C5H5]/dT */
+  J[1494] += dqdci; // dwdot[OH]/d[C5H5]
+  J[1497] -= dqdci; // dwdot[HO2]/d[C5H5]
+  J[1499] += dqdci; // dwdot[CO]/d[C5H5]
+  J[1505] += dqdci; // dwdot[C2H3]/d[C5H5]
+  J[1510] += dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1519] -= dqdci; // dwdot[C5H5]/d[C5H5]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2287] -= dqdT; // dwdot[C5H5]/dT
 
   /*reaction 166: C5H5 + HO2 => 2.000000 C2H2 + CO + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[31];
   k_f = 1e-06 * 1.19e+33 *
         exp(-6.52 * tc[0] - 0.50321666580472 * (13401.05) * invT);
   dlnkfdT = -6.52 * invT + 0.50321666580472 * (13401.05) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[7] += q;      /* H2O */
-  wdot[9] -= q;      /* HO2 */
-  wdot[11] += q;     /* CO */
-  wdot[22] += 2 * q; /* C2H2 */
-  wdot[31] -= q;     /* C5H5 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[7] += q;      // H2O
+  wdot[9] -= q;      // HO2
+  wdot[11] += q;     // CO
+  wdot[22] += 2 * q; // C2H2
+  wdot[31] -= q;     // C5H5
+  // d()/d[HO2]
   dqdci = +k_f * sc[31];
-  J[439] += dqdci;     /* dwdot[H2O]/d[HO2] */
-  J[441] -= dqdci;     /* dwdot[HO2]/d[HO2] */
-  J[443] += dqdci;     /* dwdot[CO]/d[HO2] */
-  J[454] += 2 * dqdci; /* dwdot[C2H2]/d[HO2] */
-  J[463] -= dqdci;     /* dwdot[C5H5]/d[HO2] */
-  /* d()/d[C5H5] */
+  J[439] += dqdci;     // dwdot[H2O]/d[HO2]
+  J[441] -= dqdci;     // dwdot[HO2]/d[HO2]
+  J[443] += dqdci;     // dwdot[CO]/d[HO2]
+  J[454] += 2 * dqdci; // dwdot[C2H2]/d[HO2]
+  J[463] -= dqdci;     // dwdot[C5H5]/d[HO2]
+  // d()/d[C5H5]
   dqdci = +k_f * sc[9];
-  J[1495] += dqdci;     /* dwdot[H2O]/d[C5H5] */
-  J[1497] -= dqdci;     /* dwdot[HO2]/d[C5H5] */
-  J[1499] += dqdci;     /* dwdot[CO]/d[C5H5] */
-  J[1510] += 2 * dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1519] -= dqdci;     /* dwdot[C5H5]/d[C5H5] */
-  /* d()/dT */
-  J[2263] += dqdT;     /* dwdot[H2O]/dT */
-  J[2265] -= dqdT;     /* dwdot[HO2]/dT */
-  J[2267] += dqdT;     /* dwdot[CO]/dT */
-  J[2278] += 2 * dqdT; /* dwdot[C2H2]/dT */
-  J[2287] -= dqdT;     /* dwdot[C5H5]/dT */
+  J[1495] += dqdci;     // dwdot[H2O]/d[C5H5]
+  J[1497] -= dqdci;     // dwdot[HO2]/d[C5H5]
+  J[1499] += dqdci;     // dwdot[CO]/d[C5H5]
+  J[1510] += 2 * dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1519] -= dqdci;     // dwdot[C5H5]/d[C5H5]
+  // d()/dT
+  J[2263] += dqdT;     // dwdot[H2O]/dT
+  J[2265] -= dqdT;     // dwdot[HO2]/dT
+  J[2267] += dqdT;     // dwdot[CO]/dT
+  J[2278] += 2 * dqdT; // dwdot[C2H2]/dT
+  J[2287] -= dqdT;     // dwdot[C5H5]/dT
 
   /*reaction 167: C5H5 + OH => C2H3 + C2H2 + CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[31];
   k_f = 1e-06 * 30200000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[17] += q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  wdot[31] -= q; /* C5H5 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[17] += q; // C2H3
+  wdot[22] += q; // C2H2
+  wdot[31] -= q; // C5H5
+  // d()/d[OH]
   dqdci = +k_f * sc[31];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[305] += dqdci; /* dwdot[C2H3]/d[OH] */
-  J[310] += dqdci; /* dwdot[C2H2]/d[OH] */
-  J[319] -= dqdci; /* dwdot[C5H5]/d[OH] */
-  /* d()/d[C5H5] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[305] += dqdci; // dwdot[C2H3]/d[OH]
+  J[310] += dqdci; // dwdot[C2H2]/d[OH]
+  J[319] -= dqdci; // dwdot[C5H5]/d[OH]
+  // d()/d[C5H5]
   dqdci = +k_f * sc[6];
-  J[1493] += dqdci; /* dwdot[H]/d[C5H5] */
-  J[1494] -= dqdci; /* dwdot[OH]/d[C5H5] */
-  J[1499] += dqdci; /* dwdot[CO]/d[C5H5] */
-  J[1505] += dqdci; /* dwdot[C2H3]/d[C5H5] */
-  J[1510] += dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1519] -= dqdci; /* dwdot[C5H5]/d[C5H5] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2287] -= dqdT; /* dwdot[C5H5]/dT */
+  J[1493] += dqdci; // dwdot[H]/d[C5H5]
+  J[1494] -= dqdci; // dwdot[OH]/d[C5H5]
+  J[1499] += dqdci; // dwdot[CO]/d[C5H5]
+  J[1505] += dqdci; // dwdot[C2H3]/d[C5H5]
+  J[1510] += dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1519] -= dqdci; // dwdot[C5H5]/d[C5H5]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2287] -= dqdT; // dwdot[C5H5]/dT
 
   /*reaction 168: C5H6 <=> C5H5 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[34];
   k_f =
     1 * 1.73e+68 * exp(-15.16 * tc[0] - 0.50321666580472 * (116371.89) * invT);
   dlnkfdT = -15.16 * invT + 0.50321666580472 * (116371.89) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[31];
   Kc = refC * exp(-g_RT[5] - g_RT[31] + g_RT[34]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[34]) + (h_RT[5] + h_RT[31]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[31] += q; /* C5H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[31] += q; // C5H5
+  wdot[34] -= q; // C5H6
+  // d()/d[H]
   dqdci = -k_r * sc[31];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[271] += dqdci; /* dwdot[C5H5]/d[H] */
-  J[274] -= dqdci; /* dwdot[C5H6]/d[H] */
-  /* d()/d[C5H5] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[271] += dqdci; // dwdot[C5H5]/d[H]
+  J[274] -= dqdci; // dwdot[C5H6]/d[H]
+  // d()/d[C5H5]
   dqdci = -k_r * sc[5];
-  J[1493] += dqdci; /* dwdot[H]/d[C5H5] */
-  J[1519] += dqdci; /* dwdot[C5H5]/d[C5H5] */
-  J[1522] -= dqdci; /* dwdot[C5H6]/d[C5H5] */
-  /* d()/d[C5H6] */
+  J[1493] += dqdci; // dwdot[H]/d[C5H5]
+  J[1519] += dqdci; // dwdot[C5H5]/d[C5H5]
+  J[1522] -= dqdci; // dwdot[C5H6]/d[C5H5]
+  // d()/d[C5H6]
   dqdci = +k_f;
-  J[1637] += dqdci; /* dwdot[H]/d[C5H6] */
-  J[1663] += dqdci; /* dwdot[C5H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1637] += dqdci; // dwdot[H]/d[C5H6]
+  J[1663] += dqdci; // dwdot[C5H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 169: C5H6 + H => C5H5 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[34];
   k_f = 1e-06 * 28000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (2258.6) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (2258.6) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[31] += q; /* C5H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[31] += q; // C5H5
+  wdot[34] -= q; // C5H6
+  // d()/d[H]
   dqdci = +k_f * sc[34];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[271] += dqdci; /* dwdot[C5H5]/d[H] */
-  J[274] -= dqdci; /* dwdot[C5H6]/d[H] */
-  /* d()/d[C5H6] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[271] += dqdci; // dwdot[C5H5]/d[H]
+  J[274] -= dqdci; // dwdot[C5H6]/d[H]
+  // d()/d[C5H6]
   dqdci = +k_f * sc[5];
-  J[1636] += dqdci; /* dwdot[H2]/d[C5H6] */
-  J[1637] -= dqdci; /* dwdot[H]/d[C5H6] */
-  J[1663] += dqdci; /* dwdot[C5H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1636] += dqdci; // dwdot[H2]/d[C5H6]
+  J[1637] -= dqdci; // dwdot[H]/d[C5H6]
+  J[1663] += dqdci; // dwdot[C5H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 170: C5H6 + H => A-C3H5 + C2H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[34];
   k_f = 1e-06 * 660000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (12344.65) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (12344.65) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[22] += q; /* C2H2 */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[22] += q; // C2H2
+  wdot[24] += q; // A-C3H5
+  wdot[34] -= q; // C5H6
+  // d()/d[H]
   dqdci = +k_f * sc[34];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[262] += dqdci; /* dwdot[C2H2]/d[H] */
-  J[264] += dqdci; /* dwdot[A-C3H5]/d[H] */
-  J[274] -= dqdci; /* dwdot[C5H6]/d[H] */
-  /* d()/d[C5H6] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[262] += dqdci; // dwdot[C2H2]/d[H]
+  J[264] += dqdci; // dwdot[A-C3H5]/d[H]
+  J[274] -= dqdci; // dwdot[C5H6]/d[H]
+  // d()/d[C5H6]
   dqdci = +k_f * sc[5];
-  J[1637] -= dqdci; /* dwdot[H]/d[C5H6] */
-  J[1654] += dqdci; /* dwdot[C2H2]/d[C5H6] */
-  J[1656] += dqdci; /* dwdot[A-C3H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1637] -= dqdci; // dwdot[H]/d[C5H6]
+  J[1654] += dqdci; // dwdot[C2H2]/d[C5H6]
+  J[1656] += dqdci; // dwdot[A-C3H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 171: C5H6 + O => C5H5 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[34];
   k_f = 1e-06 * 47700 * exp(2.71 * tc[0] - 0.50321666580472 * (1106.6) * invT);
   dlnkfdT = 2.71 * invT + 0.50321666580472 * (1106.6) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[31] += q; /* C5H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[31] += q; // C5H5
+  wdot[34] -= q; // C5H6
+  // d()/d[O]
   dqdci = +k_f * sc[34];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[175] += dqdci; /* dwdot[C5H5]/d[O] */
-  J[178] -= dqdci; /* dwdot[C5H6]/d[O] */
-  /* d()/d[C5H6] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[175] += dqdci; // dwdot[C5H5]/d[O]
+  J[178] -= dqdci; // dwdot[C5H6]/d[O]
+  // d()/d[C5H6]
   dqdci = +k_f * sc[3];
-  J[1635] -= dqdci; /* dwdot[O]/d[C5H6] */
-  J[1638] += dqdci; /* dwdot[OH]/d[C5H6] */
-  J[1663] += dqdci; /* dwdot[C5H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1635] -= dqdci; // dwdot[O]/d[C5H6]
+  J[1638] += dqdci; // dwdot[OH]/d[C5H6]
+  J[1663] += dqdci; // dwdot[C5H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 172: C5H6 + OH => C5H5 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[34];
   k_f = 1e-06 * 3080000 * exp(2 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[31] += q; /* C5H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[31] += q; // C5H5
+  wdot[34] -= q; // C5H6
+  // d()/d[OH]
   dqdci = +k_f * sc[34];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[319] += dqdci; /* dwdot[C5H5]/d[OH] */
-  J[322] -= dqdci; /* dwdot[C5H6]/d[OH] */
-  /* d()/d[C5H6] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[319] += dqdci; // dwdot[C5H5]/d[OH]
+  J[322] -= dqdci; // dwdot[C5H6]/d[OH]
+  // d()/d[C5H6]
   dqdci = +k_f * sc[6];
-  J[1638] -= dqdci; /* dwdot[OH]/d[C5H6] */
-  J[1639] += dqdci; /* dwdot[H2O]/d[C5H6] */
-  J[1663] += dqdci; /* dwdot[C5H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1638] -= dqdci; // dwdot[OH]/d[C5H6]
+  J[1639] += dqdci; // dwdot[H2O]/d[C5H6]
+  J[1663] += dqdci; // dwdot[C5H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 173: C5H6 + CH3 => C5H5 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[34];
   k_f = 1e-06 * 0.18 * exp(4 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 4 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[31] += q; /* C5H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[31] += q; // C5H5
+  wdot[34] -= q; // C5H6
+  // d()/d[CH3]
   dqdci = +k_f * sc[34];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[703] += dqdci; /* dwdot[C5H5]/d[CH3] */
-  J[706] -= dqdci; /* dwdot[C5H6]/d[CH3] */
-  /* d()/d[C5H6] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[703] += dqdci; // dwdot[C5H5]/d[CH3]
+  J[706] -= dqdci; // dwdot[C5H6]/d[CH3]
+  // d()/d[C5H6]
   dqdci = +k_f * sc[14];
-  J[1646] -= dqdci; /* dwdot[CH3]/d[C5H6] */
-  J[1648] += dqdci; /* dwdot[CH4]/d[C5H6] */
-  J[1663] += dqdci; /* dwdot[C5H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1646] -= dqdci; // dwdot[CH3]/d[C5H6]
+  J[1648] += dqdci; // dwdot[CH4]/d[C5H6]
+  J[1663] += dqdci; // dwdot[C5H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 174: C5H10 + H => C5H11 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[36];
   k_f = 1e-06 * 7100000000000 *
         exp(0.12 * tc[0] - 0.50321666580472 * (1460.33) * invT);
   dlnkfdT = 0.12 * invT + 0.50321666580472 * (1460.33) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[36] -= q; /* C5H10 */
-  wdot[37] += q; /* C5H11 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[36] -= q; // C5H10
+  wdot[37] += q; // C5H11
+  // d()/d[H]
   dqdci = +k_f * sc[36];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[276] -= dqdci; /* dwdot[C5H10]/d[H] */
-  J[277] += dqdci; /* dwdot[C5H11]/d[H] */
-  /* d()/d[C5H10] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[276] -= dqdci; // dwdot[C5H10]/d[H]
+  J[277] += dqdci; // dwdot[C5H11]/d[H]
+  // d()/d[C5H10]
   dqdci = +k_f * sc[5];
-  J[1733] -= dqdci; /* dwdot[H]/d[C5H10] */
-  J[1764] -= dqdci; /* dwdot[C5H10]/d[C5H10] */
-  J[1765] += dqdci; /* dwdot[C5H11]/d[C5H10] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2292] -= dqdT; /* dwdot[C5H10]/dT */
-  J[2293] += dqdT; /* dwdot[C5H11]/dT */
+  J[1733] -= dqdci; // dwdot[H]/d[C5H10]
+  J[1764] -= dqdci; // dwdot[C5H10]/d[C5H10]
+  J[1765] += dqdci; // dwdot[C5H11]/d[C5H10]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2292] -= dqdT; // dwdot[C5H10]/dT
+  J[2293] += dqdT; // dwdot[C5H11]/dT
 
   /*reaction 175: C5H10 => C2H5 + A-C3H5 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[36];
   k_f =
     1 * 9.17e+20 * exp(-1.63 * tc[0] - 0.50321666580472 * (73989.01) * invT);
   dlnkfdT = -1.63 * invT + 0.50321666580472 * (73989.01) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[19] += q; /* C2H5 */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[36] -= q; /* C5H10 */
-  /* d()/d[C5H10] */
+  // update wdot
+  wdot[19] += q; // C2H5
+  wdot[24] += q; // A-C3H5
+  wdot[36] -= q; // C5H10
+  // d()/d[C5H10]
   dqdci = +k_f;
-  J[1747] += dqdci; /* dwdot[C2H5]/d[C5H10] */
-  J[1752] += dqdci; /* dwdot[A-C3H5]/d[C5H10] */
-  J[1764] -= dqdci; /* dwdot[C5H10]/d[C5H10] */
-  /* d()/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2292] -= dqdT; /* dwdot[C5H10]/dT */
+  J[1747] += dqdci; // dwdot[C2H5]/d[C5H10]
+  J[1752] += dqdci; // dwdot[A-C3H5]/d[C5H10]
+  J[1764] -= dqdci; // dwdot[C5H10]/d[C5H10]
+  // d()/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2292] -= dqdT; // dwdot[C5H10]/dT
 
   /*reaction 176: C5H11 => C2H4 + N-C3H7 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[37];
   k_f =
     1 * 7.46e+21 * exp(-2.61 * tc[0] - 0.50321666580472 * (32026.77) * invT);
   dlnkfdT = -2.61 * invT + 0.50321666580472 * (32026.77) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[18] += q; /* C2H4 */
-  wdot[25] += q; /* N-C3H7 */
-  wdot[37] -= q; /* C5H11 */
-  /* d()/d[C5H11] */
+  // update wdot
+  wdot[18] += q; // C2H4
+  wdot[25] += q; // N-C3H7
+  wdot[37] -= q; // C5H11
+  // d()/d[C5H11]
   dqdci = +k_f;
-  J[1794] += dqdci; /* dwdot[C2H4]/d[C5H11] */
-  J[1801] += dqdci; /* dwdot[N-C3H7]/d[C5H11] */
-  J[1813] -= dqdci; /* dwdot[C5H11]/d[C5H11] */
-  /* d()/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2281] += dqdT; /* dwdot[N-C3H7]/dT */
-  J[2293] -= dqdT; /* dwdot[C5H11]/dT */
+  J[1794] += dqdci; // dwdot[C2H4]/d[C5H11]
+  J[1801] += dqdci; // dwdot[N-C3H7]/d[C5H11]
+  J[1813] -= dqdci; // dwdot[C5H11]/d[C5H11]
+  // d()/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2281] += dqdT; // dwdot[N-C3H7]/dT
+  J[2293] -= dqdT; // dwdot[C5H11]/dT
 
   /*reaction 177: C5H11 => H + C5H10 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[37];
   k_f = 1 * 846000000000000 *
         exp(-0.47 * tc[0] - 0.50321666580472 * (37617.11) * invT);
   dlnkfdT = -0.47 * invT + 0.50321666580472 * (37617.11) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[36] += q; /* C5H10 */
-  wdot[37] -= q; /* C5H11 */
-  /* d()/d[C5H11] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[36] += q; // C5H10
+  wdot[37] -= q; // C5H11
+  // d()/d[C5H11]
   dqdci = +k_f;
-  J[1781] += dqdci; /* dwdot[H]/d[C5H11] */
-  J[1812] += dqdci; /* dwdot[C5H10]/d[C5H11] */
-  J[1813] -= dqdci; /* dwdot[C5H11]/d[C5H11] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2292] += dqdT; /* dwdot[C5H10]/dT */
-  J[2293] -= dqdT; /* dwdot[C5H11]/dT */
+  J[1781] += dqdci; // dwdot[H]/d[C5H11]
+  J[1812] += dqdci; // dwdot[C5H10]/d[C5H11]
+  J[1813] -= dqdci; // dwdot[C5H11]/d[C5H11]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2292] += dqdT; // dwdot[C5H10]/dT
+  J[2293] -= dqdT; // dwdot[C5H11]/dT
 
   /*reaction 178: C5H11 => C3H6 + C2H5 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[37];
   k_f = 1 * 3.15e-19 * exp(8.84 * tc[0] - 0.50321666580472 * (7105.64) * invT);
   dlnkfdT = 8.84 * invT + 0.50321666580472 * (7105.64) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[19] += q; /* C2H5 */
-  wdot[32] += q; /* C3H6 */
-  wdot[37] -= q; /* C5H11 */
-  /* d()/d[C5H11] */
+  // update wdot
+  wdot[19] += q; // C2H5
+  wdot[32] += q; // C3H6
+  wdot[37] -= q; // C5H11
+  // d()/d[C5H11]
   dqdci = +k_f;
-  J[1795] += dqdci; /* dwdot[C2H5]/d[C5H11] */
-  J[1808] += dqdci; /* dwdot[C3H6]/d[C5H11] */
-  J[1813] -= dqdci; /* dwdot[C5H11]/d[C5H11] */
-  /* d()/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2288] += dqdT; /* dwdot[C3H6]/dT */
-  J[2293] -= dqdT; /* dwdot[C5H11]/dT */
+  J[1795] += dqdci; // dwdot[C2H5]/d[C5H11]
+  J[1808] += dqdci; // dwdot[C3H6]/d[C5H11]
+  J[1813] -= dqdci; // dwdot[C5H11]/d[C5H11]
+  // d()/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2288] += dqdT; // dwdot[C3H6]/dT
+  J[2293] -= dqdT; // dwdot[C5H11]/dT
 
   /*reaction 179: A1- + O2 => C5H5 + CO + O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[30];
   k_f = 1e-06 * 26000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (6120.94) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (6120.94) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] += q;  /* O */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  wdot[30] -= q; /* A1- */
-  wdot[31] += q; /* C5H5 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[3] += q;  // O
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  wdot[30] -= q; // A1-
+  wdot[31] += q; // C5H5
+  // d()/d[O2]
   dqdci = +k_f * sc[30];
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  J[414] -= dqdci; /* dwdot[A1-]/d[O2] */
-  J[415] += dqdci; /* dwdot[C5H5]/d[O2] */
-  /* d()/d[A1-] */
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  J[414] -= dqdci; // dwdot[A1-]/d[O2]
+  J[415] += dqdci; // dwdot[C5H5]/d[O2]
+  // d()/d[A1-]
   dqdci = +k_f * sc[8];
-  J[1443] += dqdci; /* dwdot[O]/d[A1-] */
-  J[1448] -= dqdci; /* dwdot[O2]/d[A1-] */
-  J[1451] += dqdci; /* dwdot[CO]/d[A1-] */
-  J[1470] -= dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1471] += dqdci; /* dwdot[C5H5]/d[A1-] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2286] -= dqdT; /* dwdot[A1-]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
+  J[1443] += dqdci; // dwdot[O]/d[A1-]
+  J[1448] -= dqdci; // dwdot[O2]/d[A1-]
+  J[1451] += dqdci; // dwdot[CO]/d[A1-]
+  J[1470] -= dqdci; // dwdot[A1-]/d[A1-]
+  J[1471] += dqdci; // dwdot[C5H5]/d[A1-]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2286] -= dqdT; // dwdot[A1-]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
 
   /*reaction 180: A1- + O2 => 2.000000 CO + 2.000000 C2H2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[30];
   k_f = 1e-06 * 30000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (8979.45) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (8979.45) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;      /* H */
-  wdot[8] -= q;      /* O2 */
-  wdot[11] += 2 * q; /* CO */
-  wdot[22] += 2 * q; /* C2H2 */
-  wdot[30] -= q;     /* A1- */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[5] += q;      // H
+  wdot[8] -= q;      // O2
+  wdot[11] += 2 * q; // CO
+  wdot[22] += 2 * q; // C2H2
+  wdot[30] -= q;     // A1-
+  // d()/d[O2]
   dqdci = +k_f * sc[30];
-  J[389] += dqdci;     /* dwdot[H]/d[O2] */
-  J[392] -= dqdci;     /* dwdot[O2]/d[O2] */
-  J[395] += 2 * dqdci; /* dwdot[CO]/d[O2] */
-  J[406] += 2 * dqdci; /* dwdot[C2H2]/d[O2] */
-  J[414] -= dqdci;     /* dwdot[A1-]/d[O2] */
-  /* d()/d[A1-] */
+  J[389] += dqdci;     // dwdot[H]/d[O2]
+  J[392] -= dqdci;     // dwdot[O2]/d[O2]
+  J[395] += 2 * dqdci; // dwdot[CO]/d[O2]
+  J[406] += 2 * dqdci; // dwdot[C2H2]/d[O2]
+  J[414] -= dqdci;     // dwdot[A1-]/d[O2]
+  // d()/d[A1-]
   dqdci = +k_f * sc[8];
-  J[1445] += dqdci;     /* dwdot[H]/d[A1-] */
-  J[1448] -= dqdci;     /* dwdot[O2]/d[A1-] */
-  J[1451] += 2 * dqdci; /* dwdot[CO]/d[A1-] */
-  J[1462] += 2 * dqdci; /* dwdot[C2H2]/d[A1-] */
-  J[1470] -= dqdci;     /* dwdot[A1-]/d[A1-] */
-  /* d()/dT */
-  J[2261] += dqdT;     /* dwdot[H]/dT */
-  J[2264] -= dqdT;     /* dwdot[O2]/dT */
-  J[2267] += 2 * dqdT; /* dwdot[CO]/dT */
-  J[2278] += 2 * dqdT; /* dwdot[C2H2]/dT */
-  J[2286] -= dqdT;     /* dwdot[A1-]/dT */
+  J[1445] += dqdci;     // dwdot[H]/d[A1-]
+  J[1448] -= dqdci;     // dwdot[O2]/d[A1-]
+  J[1451] += 2 * dqdci; // dwdot[CO]/d[A1-]
+  J[1462] += 2 * dqdci; // dwdot[C2H2]/d[A1-]
+  J[1470] -= dqdci;     // dwdot[A1-]/d[A1-]
+  // d()/dT
+  J[2261] += dqdT;     // dwdot[H]/dT
+  J[2264] -= dqdT;     // dwdot[O2]/dT
+  J[2267] += 2 * dqdT; // dwdot[CO]/dT
+  J[2278] += 2 * dqdT; // dwdot[C2H2]/dT
+  J[2286] -= dqdT;     // dwdot[A1-]/dT
 
   /*reaction 181: A1- + O => C5H5 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[30];
   k_f =
     1e-06 * 100000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[11] += q; /* CO */
-  wdot[30] -= q; /* A1- */
-  wdot[31] += q; /* C5H5 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[11] += q; // CO
+  wdot[30] -= q; // A1-
+  wdot[31] += q; // C5H5
+  // d()/d[O]
   dqdci = +k_f * sc[30];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[174] -= dqdci; /* dwdot[A1-]/d[O] */
-  J[175] += dqdci; /* dwdot[C5H5]/d[O] */
-  /* d()/d[A1-] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[174] -= dqdci; // dwdot[A1-]/d[O]
+  J[175] += dqdci; // dwdot[C5H5]/d[O]
+  // d()/d[A1-]
   dqdci = +k_f * sc[3];
-  J[1443] -= dqdci; /* dwdot[O]/d[A1-] */
-  J[1451] += dqdci; /* dwdot[CO]/d[A1-] */
-  J[1470] -= dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1471] += dqdci; /* dwdot[C5H5]/d[A1-] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2286] -= dqdT; /* dwdot[A1-]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
+  J[1443] -= dqdci; // dwdot[O]/d[A1-]
+  J[1451] += dqdci; // dwdot[CO]/d[A1-]
+  J[1470] -= dqdci; // dwdot[A1-]/d[A1-]
+  J[1471] += dqdci; // dwdot[C5H5]/d[A1-]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2286] -= dqdT; // dwdot[A1-]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
 
   /*reaction 182: A1- + OH => C5H6 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[30];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[30] -= q; /* A1- */
-  wdot[34] += q; /* C5H6 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[30] -= q; // A1-
+  wdot[34] += q; // C5H6
+  // d()/d[OH]
   dqdci = +k_f * sc[30];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[318] -= dqdci; /* dwdot[A1-]/d[OH] */
-  J[322] += dqdci; /* dwdot[C5H6]/d[OH] */
-  /* d()/d[A1-] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[318] -= dqdci; // dwdot[A1-]/d[OH]
+  J[322] += dqdci; // dwdot[C5H6]/d[OH]
+  // d()/d[A1-]
   dqdci = +k_f * sc[6];
-  J[1446] -= dqdci; /* dwdot[OH]/d[A1-] */
-  J[1451] += dqdci; /* dwdot[CO]/d[A1-] */
-  J[1470] -= dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1474] += dqdci; /* dwdot[C5H6]/d[A1-] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2286] -= dqdT; /* dwdot[A1-]/dT */
-  J[2290] += dqdT; /* dwdot[C5H6]/dT */
+  J[1446] -= dqdci; // dwdot[OH]/d[A1-]
+  J[1451] += dqdci; // dwdot[CO]/d[A1-]
+  J[1470] -= dqdci; // dwdot[A1-]/d[A1-]
+  J[1474] += dqdci; // dwdot[C5H6]/d[A1-]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2286] -= dqdT; // dwdot[A1-]/dT
+  J[2290] += dqdT; // dwdot[C5H6]/dT
 
   /*reaction 183: A1- + HO2 => C5H5 + CO + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[30];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[11] += q; /* CO */
-  wdot[30] -= q; /* A1- */
-  wdot[31] += q; /* C5H5 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[11] += q; // CO
+  wdot[30] -= q; // A1-
+  wdot[31] += q; // C5H5
+  // d()/d[HO2]
   dqdci = +k_f * sc[30];
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[443] += dqdci; /* dwdot[CO]/d[HO2] */
-  J[462] -= dqdci; /* dwdot[A1-]/d[HO2] */
-  J[463] += dqdci; /* dwdot[C5H5]/d[HO2] */
-  /* d()/d[A1-] */
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[443] += dqdci; // dwdot[CO]/d[HO2]
+  J[462] -= dqdci; // dwdot[A1-]/d[HO2]
+  J[463] += dqdci; // dwdot[C5H5]/d[HO2]
+  // d()/d[A1-]
   dqdci = +k_f * sc[9];
-  J[1446] += dqdci; /* dwdot[OH]/d[A1-] */
-  J[1449] -= dqdci; /* dwdot[HO2]/d[A1-] */
-  J[1451] += dqdci; /* dwdot[CO]/d[A1-] */
-  J[1470] -= dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1471] += dqdci; /* dwdot[C5H5]/d[A1-] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2286] -= dqdT; /* dwdot[A1-]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
+  J[1446] += dqdci; // dwdot[OH]/d[A1-]
+  J[1449] -= dqdci; // dwdot[HO2]/d[A1-]
+  J[1451] += dqdci; // dwdot[CO]/d[A1-]
+  J[1470] -= dqdci; // dwdot[A1-]/d[A1-]
+  J[1471] += dqdci; // dwdot[C5H5]/d[A1-]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2286] -= dqdT; // dwdot[A1-]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
 
   /*reaction 184: A1- + C2H2 <=> A1C2H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[22] * sc[30];
   k_f =
     1e-06 * 3290000 * exp(2.05 * tc[0] - 0.50321666580472 * (3162.05) * invT);
   dlnkfdT = 2.05 * invT + 0.50321666580472 * (3162.05) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[38];
   Kc = refCinv * exp(g_RT[22] + g_RT[30] - g_RT[38]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[22] + h_RT[30]) + (h_RT[38]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[22] -= q; /* C2H2 */
-  wdot[30] -= q; /* A1- */
-  wdot[38] += q; /* A1C2H2 */
-  /* d()/d[C2H2] */
+  // update wdot
+  wdot[22] -= q; // C2H2
+  wdot[30] -= q; // A1-
+  wdot[38] += q; // A1C2H2
+  // d()/d[C2H2]
   dqdci = +k_f * sc[30];
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1086] -= dqdci; /* dwdot[A1-]/d[C2H2] */
-  J[1094] += dqdci; /* dwdot[A1C2H2]/d[C2H2] */
-  /* d()/d[A1-] */
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1086] -= dqdci; // dwdot[A1-]/d[C2H2]
+  J[1094] += dqdci; // dwdot[A1C2H2]/d[C2H2]
+  // d()/d[A1-]
   dqdci = +k_f * sc[22];
-  J[1462] -= dqdci; /* dwdot[C2H2]/d[A1-] */
-  J[1470] -= dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1478] += dqdci; /* dwdot[A1C2H2]/d[A1-] */
-  /* d()/d[A1C2H2] */
+  J[1462] -= dqdci; // dwdot[C2H2]/d[A1-]
+  J[1470] -= dqdci; // dwdot[A1-]/d[A1-]
+  J[1478] += dqdci; // dwdot[A1C2H2]/d[A1-]
+  // d()/d[A1C2H2]
   dqdci = -k_r;
-  J[1846] -= dqdci; /* dwdot[C2H2]/d[A1C2H2] */
-  J[1854] -= dqdci; /* dwdot[A1-]/d[A1C2H2] */
-  J[1862] += dqdci; /* dwdot[A1C2H2]/d[A1C2H2] */
-  /* d()/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2286] -= dqdT; /* dwdot[A1-]/dT */
-  J[2294] += dqdT; /* dwdot[A1C2H2]/dT */
+  J[1846] -= dqdci; // dwdot[C2H2]/d[A1C2H2]
+  J[1854] -= dqdci; // dwdot[A1-]/d[A1C2H2]
+  J[1862] += dqdci; // dwdot[A1C2H2]/d[A1C2H2]
+  // d()/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2286] -= dqdT; // dwdot[A1-]/dT
+  J[2294] += dqdT; // dwdot[A1C2H2]/dT
 
   /*reaction 185: A1 <=> A1- + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[29];
   k_f =
     1 * 1.29e+61 * exp(-12.48 * tc[0] - 0.50321666580472 * (148085.56) * invT);
   dlnkfdT = -12.48 * invT + 0.50321666580472 * (148085.56) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[30];
   Kc = refC * exp(-g_RT[5] + g_RT[29] - g_RT[30]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[29]) + (h_RT[5] + h_RT[30]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[29] -= q; /* A1 */
-  wdot[30] += q; /* A1- */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[29] -= q; // A1
+  wdot[30] += q; // A1-
+  // d()/d[H]
   dqdci = -k_r * sc[30];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[269] -= dqdci; /* dwdot[A1]/d[H] */
-  J[270] += dqdci; /* dwdot[A1-]/d[H] */
-  /* d()/d[A1] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[269] -= dqdci; // dwdot[A1]/d[H]
+  J[270] += dqdci; // dwdot[A1-]/d[H]
+  // d()/d[A1]
   dqdci = +k_f;
-  J[1397] += dqdci; /* dwdot[H]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1422] += dqdci; /* dwdot[A1-]/d[A1] */
-  /* d()/d[A1-] */
+  J[1397] += dqdci; // dwdot[H]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1422] += dqdci; // dwdot[A1-]/d[A1]
+  // d()/d[A1-]
   dqdci = -k_r * sc[5];
-  J[1445] += dqdci; /* dwdot[H]/d[A1-] */
-  J[1469] -= dqdci; /* dwdot[A1]/d[A1-] */
-  J[1470] += dqdci; /* dwdot[A1-]/d[A1-] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
+  J[1445] += dqdci; // dwdot[H]/d[A1-]
+  J[1469] -= dqdci; // dwdot[A1]/d[A1-]
+  J[1470] += dqdci; // dwdot[A1-]/d[A1-]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
 
   /*reaction 186: A1 + H => A1- + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[29];
   k_f =
     1e-06 * 602000000 * exp(1.8 * tc[0] - 0.50321666580472 * (16352.77) * invT);
   dlnkfdT = 1.8 * invT + 0.50321666580472 * (16352.77) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[29] -= q; /* A1 */
-  wdot[30] += q; /* A1- */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[29] -= q; // A1
+  wdot[30] += q; // A1-
+  // d()/d[H]
   dqdci = +k_f * sc[29];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[269] -= dqdci; /* dwdot[A1]/d[H] */
-  J[270] += dqdci; /* dwdot[A1-]/d[H] */
-  /* d()/d[A1] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[269] -= dqdci; // dwdot[A1]/d[H]
+  J[270] += dqdci; // dwdot[A1-]/d[H]
+  // d()/d[A1]
   dqdci = +k_f * sc[5];
-  J[1396] += dqdci; /* dwdot[H2]/d[A1] */
-  J[1397] -= dqdci; /* dwdot[H]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1422] += dqdci; /* dwdot[A1-]/d[A1] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
+  J[1396] += dqdci; // dwdot[H2]/d[A1]
+  J[1397] -= dqdci; // dwdot[H]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1422] += dqdci; // dwdot[A1-]/d[A1]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
 
   /*reaction 187: A1 + OH => A1- + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[29];
   k_f = 1e-06 * 403 * exp(3.33 * tc[0] - 0.50321666580472 * (1455.54) * invT);
   dlnkfdT = 3.33 * invT + 0.50321666580472 * (1455.54) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[29] -= q; /* A1 */
-  wdot[30] += q; /* A1- */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[29] -= q; // A1
+  wdot[30] += q; // A1-
+  // d()/d[OH]
   dqdci = +k_f * sc[29];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[317] -= dqdci; /* dwdot[A1]/d[OH] */
-  J[318] += dqdci; /* dwdot[A1-]/d[OH] */
-  /* d()/d[A1] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[317] -= dqdci; // dwdot[A1]/d[OH]
+  J[318] += dqdci; // dwdot[A1-]/d[OH]
+  // d()/d[A1]
   dqdci = +k_f * sc[6];
-  J[1398] -= dqdci; /* dwdot[OH]/d[A1] */
-  J[1399] += dqdci; /* dwdot[H2O]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1422] += dqdci; /* dwdot[A1-]/d[A1] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
+  J[1398] -= dqdci; // dwdot[OH]/d[A1]
+  J[1399] += dqdci; // dwdot[H2O]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1422] += dqdci; // dwdot[A1-]/d[A1]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
 
   /*reaction 188: A1 + CH3 => A1- + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[29];
   k_f =
     1e-06 * 0.02752 * exp(4.46 * tc[0] - 0.50321666580472 * (13637.67) * invT);
   dlnkfdT = 4.46 * invT + 0.50321666580472 * (13637.67) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[29] -= q; /* A1 */
-  wdot[30] += q; /* A1- */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[29] -= q; // A1
+  wdot[30] += q; // A1-
+  // d()/d[CH3]
   dqdci = +k_f * sc[29];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[701] -= dqdci; /* dwdot[A1]/d[CH3] */
-  J[702] += dqdci; /* dwdot[A1-]/d[CH3] */
-  /* d()/d[A1] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[701] -= dqdci; // dwdot[A1]/d[CH3]
+  J[702] += dqdci; // dwdot[A1-]/d[CH3]
+  // d()/d[A1]
   dqdci = +k_f * sc[14];
-  J[1406] -= dqdci; /* dwdot[CH3]/d[A1] */
-  J[1408] += dqdci; /* dwdot[CH4]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1422] += dqdci; /* dwdot[A1-]/d[A1] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
+  J[1406] -= dqdci; // dwdot[CH3]/d[A1]
+  J[1408] += dqdci; // dwdot[CH4]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1422] += dqdci; // dwdot[A1-]/d[A1]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
 
   /*reaction 189: A1 + O => C5H5 + CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[29];
   k_f = 1e-06 * 22200000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (4531.55) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (4531.55) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[29] -= q; /* A1 */
-  wdot[31] += q; /* C5H5 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[29] -= q; // A1
+  wdot[31] += q; // C5H5
+  // d()/d[O]
   dqdci = +k_f * sc[29];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[173] -= dqdci; /* dwdot[A1]/d[O] */
-  J[175] += dqdci; /* dwdot[C5H5]/d[O] */
-  /* d()/d[A1] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[173] -= dqdci; // dwdot[A1]/d[O]
+  J[175] += dqdci; // dwdot[C5H5]/d[O]
+  // d()/d[A1]
   dqdci = +k_f * sc[3];
-  J[1395] -= dqdci; /* dwdot[O]/d[A1] */
-  J[1397] += dqdci; /* dwdot[H]/d[A1] */
-  J[1403] += dqdci; /* dwdot[CO]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1423] += dqdci; /* dwdot[C5H5]/d[A1] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
+  J[1395] -= dqdci; // dwdot[O]/d[A1]
+  J[1397] += dqdci; // dwdot[H]/d[A1]
+  J[1403] += dqdci; // dwdot[CO]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1423] += dqdci; // dwdot[C5H5]/d[A1]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
 
   /*reaction 190: A1 + OH => C5H6 + CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[29];
   k_f = 1e-06 * 132 * exp(3.25 * tc[0] - 0.50321666580472 * (5590.34) * invT);
   dlnkfdT = 3.25 * invT + 0.50321666580472 * (5590.34) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[29] -= q; /* A1 */
-  wdot[34] += q; /* C5H6 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[29] -= q; // A1
+  wdot[34] += q; // C5H6
+  // d()/d[OH]
   dqdci = +k_f * sc[29];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[317] -= dqdci; /* dwdot[A1]/d[OH] */
-  J[322] += dqdci; /* dwdot[C5H6]/d[OH] */
-  /* d()/d[A1] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[317] -= dqdci; // dwdot[A1]/d[OH]
+  J[322] += dqdci; // dwdot[C5H6]/d[OH]
+  // d()/d[A1]
   dqdci = +k_f * sc[6];
-  J[1397] += dqdci; /* dwdot[H]/d[A1] */
-  J[1398] -= dqdci; /* dwdot[OH]/d[A1] */
-  J[1403] += dqdci; /* dwdot[CO]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1426] += dqdci; /* dwdot[C5H6]/d[A1] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2290] += dqdT; /* dwdot[C5H6]/dT */
+  J[1397] += dqdci; // dwdot[H]/d[A1]
+  J[1398] -= dqdci; // dwdot[OH]/d[A1]
+  J[1403] += dqdci; // dwdot[CO]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1426] += dqdci; // dwdot[C5H6]/d[A1]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2290] += dqdT; // dwdot[C5H6]/dT
 
   /*reaction 191: A1CH2 <=> C5H5 + C2H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[39];
   k_f =
     1 * 820000000000000 * exp(0 * tc[0] - 0.50321666580472 * (80676.39) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (80676.39) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[22] * sc[31];
   Kc = refC * exp(-g_RT[22] - g_RT[31] + g_RT[39]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[39]) + (h_RT[22] + h_RT[31]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[22] += q; /* C2H2 */
-  wdot[31] += q; /* C5H5 */
-  wdot[39] -= q; /* A1CH2 */
-  /* d()/d[C2H2] */
+  // update wdot
+  wdot[22] += q; // C2H2
+  wdot[31] += q; // C5H5
+  wdot[39] -= q; // A1CH2
+  // d()/d[C2H2]
   dqdci = -k_r * sc[31];
-  J[1078] += dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1087] += dqdci; /* dwdot[C5H5]/d[C2H2] */
-  J[1095] -= dqdci; /* dwdot[A1CH2]/d[C2H2] */
-  /* d()/d[C5H5] */
+  J[1078] += dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1087] += dqdci; // dwdot[C5H5]/d[C2H2]
+  J[1095] -= dqdci; // dwdot[A1CH2]/d[C2H2]
+  // d()/d[C5H5]
   dqdci = -k_r * sc[22];
-  J[1510] += dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1519] += dqdci; /* dwdot[C5H5]/d[C5H5] */
-  J[1527] -= dqdci; /* dwdot[A1CH2]/d[C5H5] */
-  /* d()/d[A1CH2] */
+  J[1510] += dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1519] += dqdci; // dwdot[C5H5]/d[C5H5]
+  J[1527] -= dqdci; // dwdot[A1CH2]/d[C5H5]
+  // d()/d[A1CH2]
   dqdci = +k_f;
-  J[1894] += dqdci; /* dwdot[C2H2]/d[A1CH2] */
-  J[1903] += dqdci; /* dwdot[C5H5]/d[A1CH2] */
-  J[1911] -= dqdci; /* dwdot[A1CH2]/d[A1CH2] */
-  /* d()/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2295] -= dqdT; /* dwdot[A1CH2]/dT */
+  J[1894] += dqdci; // dwdot[C2H2]/d[A1CH2]
+  J[1903] += dqdci; // dwdot[C5H5]/d[A1CH2]
+  J[1911] -= dqdci; // dwdot[A1CH2]/d[A1CH2]
+  // d()/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2295] -= dqdT; // dwdot[A1CH2]/dT
 
   /*reaction 192: A1CH2 + H <=> A1- + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[39];
   k_f = 1e-06 * 5.83e+67 *
         exp(-14.15 * tc[0] - 0.50321666580472 * (68329.35) * invT);
   dlnkfdT = -14.15 * invT + 0.50321666580472 * (68329.35) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[30];
   Kc = exp(g_RT[5] - g_RT[14] - g_RT[30] + g_RT[39]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[39]) + (h_RT[14] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[30] += q; /* A1- */
-  wdot[39] -= q; /* A1CH2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[30] += q; // A1-
+  wdot[39] -= q; // A1CH2
+  // d()/d[H]
   dqdci = +k_f * sc[39];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[270] += dqdci; /* dwdot[A1-]/d[H] */
-  J[279] -= dqdci; /* dwdot[A1CH2]/d[H] */
-  /* d()/d[CH3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[270] += dqdci; // dwdot[A1-]/d[H]
+  J[279] -= dqdci; // dwdot[A1CH2]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[30];
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[702] += dqdci; /* dwdot[A1-]/d[CH3] */
-  J[711] -= dqdci; /* dwdot[A1CH2]/d[CH3] */
-  /* d()/d[A1-] */
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[702] += dqdci; // dwdot[A1-]/d[CH3]
+  J[711] -= dqdci; // dwdot[A1CH2]/d[CH3]
+  // d()/d[A1-]
   dqdci = -k_r * sc[14];
-  J[1445] -= dqdci; /* dwdot[H]/d[A1-] */
-  J[1454] += dqdci; /* dwdot[CH3]/d[A1-] */
-  J[1470] += dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1479] -= dqdci; /* dwdot[A1CH2]/d[A1-] */
-  /* d()/d[A1CH2] */
+  J[1445] -= dqdci; // dwdot[H]/d[A1-]
+  J[1454] += dqdci; // dwdot[CH3]/d[A1-]
+  J[1470] += dqdci; // dwdot[A1-]/d[A1-]
+  J[1479] -= dqdci; // dwdot[A1CH2]/d[A1-]
+  // d()/d[A1CH2]
   dqdci = +k_f * sc[5];
-  J[1877] -= dqdci; /* dwdot[H]/d[A1CH2] */
-  J[1886] += dqdci; /* dwdot[CH3]/d[A1CH2] */
-  J[1902] += dqdci; /* dwdot[A1-]/d[A1CH2] */
-  J[1911] -= dqdci; /* dwdot[A1CH2]/d[A1CH2] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
-  J[2295] -= dqdT; /* dwdot[A1CH2]/dT */
+  J[1877] -= dqdci; // dwdot[H]/d[A1CH2]
+  J[1886] += dqdci; // dwdot[CH3]/d[A1CH2]
+  J[1902] += dqdci; // dwdot[A1-]/d[A1CH2]
+  J[1911] -= dqdci; // dwdot[A1CH2]/d[A1CH2]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
+  J[2295] -= dqdT; // dwdot[A1CH2]/dT
 
   /*reaction 193: A1CH2 + O => A1CHO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[39];
   k_f =
     1e-06 * 331000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (0) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[39] -= q; /* A1CH2 */
-  wdot[40] += q; /* A1CHO */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[39] -= q; // A1CH2
+  wdot[40] += q; // A1CHO
+  // d()/d[O]
   dqdci = +k_f * sc[39];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[183] -= dqdci; /* dwdot[A1CH2]/d[O] */
-  J[184] += dqdci; /* dwdot[A1CHO]/d[O] */
-  /* d()/d[A1CH2] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[183] -= dqdci; // dwdot[A1CH2]/d[O]
+  J[184] += dqdci; // dwdot[A1CHO]/d[O]
+  // d()/d[A1CH2]
   dqdci = +k_f * sc[3];
-  J[1875] -= dqdci; /* dwdot[O]/d[A1CH2] */
-  J[1877] += dqdci; /* dwdot[H]/d[A1CH2] */
-  J[1911] -= dqdci; /* dwdot[A1CH2]/d[A1CH2] */
-  J[1912] += dqdci; /* dwdot[A1CHO]/d[A1CH2] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2295] -= dqdT; /* dwdot[A1CH2]/dT */
-  J[2296] += dqdT; /* dwdot[A1CHO]/dT */
+  J[1875] -= dqdci; // dwdot[O]/d[A1CH2]
+  J[1877] += dqdci; // dwdot[H]/d[A1CH2]
+  J[1911] -= dqdci; // dwdot[A1CH2]/d[A1CH2]
+  J[1912] += dqdci; // dwdot[A1CHO]/d[A1CH2]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2295] -= dqdT; // dwdot[A1CH2]/dT
+  J[2296] += dqdT; // dwdot[A1CHO]/dT
 
   /*reaction 194: A1CH2 + HO2 => A1CHO + OH + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[39];
   k_f =
     1e-06 * 1.06e+16 * exp(-0.94 * tc[0] - 0.50321666580472 * (2523.9) * invT);
   dlnkfdT = -0.94 * invT + 0.50321666580472 * (2523.9) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[39] -= q; /* A1CH2 */
-  wdot[40] += q; /* A1CHO */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[39] -= q; // A1CH2
+  wdot[40] += q; // A1CHO
+  // d()/d[HO2]
   dqdci = +k_f * sc[39];
-  J[437] += dqdci; /* dwdot[H]/d[HO2] */
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[471] -= dqdci; /* dwdot[A1CH2]/d[HO2] */
-  J[472] += dqdci; /* dwdot[A1CHO]/d[HO2] */
-  /* d()/d[A1CH2] */
+  J[437] += dqdci; // dwdot[H]/d[HO2]
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[471] -= dqdci; // dwdot[A1CH2]/d[HO2]
+  J[472] += dqdci; // dwdot[A1CHO]/d[HO2]
+  // d()/d[A1CH2]
   dqdci = +k_f * sc[9];
-  J[1877] += dqdci; /* dwdot[H]/d[A1CH2] */
-  J[1878] += dqdci; /* dwdot[OH]/d[A1CH2] */
-  J[1881] -= dqdci; /* dwdot[HO2]/d[A1CH2] */
-  J[1911] -= dqdci; /* dwdot[A1CH2]/d[A1CH2] */
-  J[1912] += dqdci; /* dwdot[A1CHO]/d[A1CH2] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2295] -= dqdT; /* dwdot[A1CH2]/dT */
-  J[2296] += dqdT; /* dwdot[A1CHO]/dT */
+  J[1877] += dqdci; // dwdot[H]/d[A1CH2]
+  J[1878] += dqdci; // dwdot[OH]/d[A1CH2]
+  J[1881] -= dqdci; // dwdot[HO2]/d[A1CH2]
+  J[1911] -= dqdci; // dwdot[A1CH2]/d[A1CH2]
+  J[1912] += dqdci; // dwdot[A1CHO]/d[A1CH2]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2295] -= dqdT; // dwdot[A1CH2]/dT
+  J[2296] += dqdT; // dwdot[A1CHO]/dT
 
   /*reaction 195: A1CH2 + C3H3 => A2 + 2.000000 H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[23] * sc[39];
   k_f = 1e-06 * 4.32e+39 *
         exp(-7.74 * tc[0] - 0.50321666580472 * (23852.77) * invT);
   dlnkfdT = -7.74 * invT + 0.50321666580472 * (23852.77) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += 2 * q; /* H */
-  wdot[23] -= q;    /* C3H3 */
-  wdot[35] += q;    /* A2 */
-  wdot[39] -= q;    /* A1CH2 */
-  /* d()/d[C3H3] */
+  // update wdot
+  wdot[5] += 2 * q; // H
+  wdot[23] -= q;    // C3H3
+  wdot[35] += q;    // A2
+  wdot[39] -= q;    // A1CH2
+  // d()/d[C3H3]
   dqdci = +k_f * sc[39];
-  J[1109] += 2 * dqdci; /* dwdot[H]/d[C3H3] */
-  J[1127] -= dqdci;     /* dwdot[C3H3]/d[C3H3] */
-  J[1139] += dqdci;     /* dwdot[A2]/d[C3H3] */
-  J[1143] -= dqdci;     /* dwdot[A1CH2]/d[C3H3] */
-  /* d()/d[A1CH2] */
+  J[1109] += 2 * dqdci; // dwdot[H]/d[C3H3]
+  J[1127] -= dqdci;     // dwdot[C3H3]/d[C3H3]
+  J[1139] += dqdci;     // dwdot[A2]/d[C3H3]
+  J[1143] -= dqdci;     // dwdot[A1CH2]/d[C3H3]
+  // d()/d[A1CH2]
   dqdci = +k_f * sc[23];
-  J[1877] += 2 * dqdci; /* dwdot[H]/d[A1CH2] */
-  J[1895] -= dqdci;     /* dwdot[C3H3]/d[A1CH2] */
-  J[1907] += dqdci;     /* dwdot[A2]/d[A1CH2] */
-  J[1911] -= dqdci;     /* dwdot[A1CH2]/d[A1CH2] */
-  /* d()/dT */
-  J[2261] += 2 * dqdT; /* dwdot[H]/dT */
-  J[2279] -= dqdT;     /* dwdot[C3H3]/dT */
-  J[2291] += dqdT;     /* dwdot[A2]/dT */
-  J[2295] -= dqdT;     /* dwdot[A1CH2]/dT */
+  J[1877] += 2 * dqdci; // dwdot[H]/d[A1CH2]
+  J[1895] -= dqdci;     // dwdot[C3H3]/d[A1CH2]
+  J[1907] += dqdci;     // dwdot[A2]/d[A1CH2]
+  J[1911] -= dqdci;     // dwdot[A1CH2]/d[A1CH2]
+  // d()/dT
+  J[2261] += 2 * dqdT; // dwdot[H]/dT
+  J[2279] -= dqdT;     // dwdot[C3H3]/dT
+  J[2291] += dqdT;     // dwdot[A2]/dT
+  J[2295] -= dqdT;     // dwdot[A1CH2]/dT
 
   /*reaction 196: A1CH3 + H <=> A1 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[41];
   k_f =
     1e-06 * 2310000 * exp(2.17 * tc[0] - 0.50321666580472 * (4163.48) * invT);
   dlnkfdT = 2.17 * invT + 0.50321666580472 * (4163.48) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[29];
   Kc = exp(g_RT[5] - g_RT[14] - g_RT[29] + g_RT[41]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[41]) + (h_RT[14] + h_RT[29]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[29] += q; /* A1 */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[29] += q; // A1
+  wdot[41] -= q; // A1CH3
+  // d()/d[H]
   dqdci = +k_f * sc[41];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[269] += dqdci; /* dwdot[A1]/d[H] */
-  J[281] -= dqdci; /* dwdot[A1CH3]/d[H] */
-  /* d()/d[CH3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[269] += dqdci; // dwdot[A1]/d[H]
+  J[281] -= dqdci; // dwdot[A1CH3]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[29];
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[701] += dqdci; /* dwdot[A1]/d[CH3] */
-  J[713] -= dqdci; /* dwdot[A1CH3]/d[CH3] */
-  /* d()/d[A1] */
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[701] += dqdci; // dwdot[A1]/d[CH3]
+  J[713] -= dqdci; // dwdot[A1CH3]/d[CH3]
+  // d()/d[A1]
   dqdci = -k_r * sc[14];
-  J[1397] -= dqdci; /* dwdot[H]/d[A1] */
-  J[1406] += dqdci; /* dwdot[CH3]/d[A1] */
-  J[1421] += dqdci; /* dwdot[A1]/d[A1] */
-  J[1433] -= dqdci; /* dwdot[A1CH3]/d[A1] */
-  /* d()/d[A1CH3] */
+  J[1397] -= dqdci; // dwdot[H]/d[A1]
+  J[1406] += dqdci; // dwdot[CH3]/d[A1]
+  J[1421] += dqdci; // dwdot[A1]/d[A1]
+  J[1433] -= dqdci; // dwdot[A1CH3]/d[A1]
+  // d()/d[A1CH3]
   dqdci = +k_f * sc[5];
-  J[1973] -= dqdci; /* dwdot[H]/d[A1CH3] */
-  J[1982] += dqdci; /* dwdot[CH3]/d[A1CH3] */
-  J[1997] += dqdci; /* dwdot[A1]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2285] += dqdT; /* dwdot[A1]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1973] -= dqdci; // dwdot[H]/d[A1CH3]
+  J[1982] += dqdci; // dwdot[CH3]/d[A1CH3]
+  J[1997] += dqdci; // dwdot[A1]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2285] += dqdT; // dwdot[A1]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 197: A1CH3 <=> A1CH2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[41];
   k_f = 1 * 1.25e+18 * exp(-0.6 * tc[0] - 0.50321666580472 * (94787.28) * invT);
   dlnkfdT = -0.6 * invT + 0.50321666580472 * (94787.28) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[39];
   Kc = refC * exp(-g_RT[5] - g_RT[39] + g_RT[41]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[41]) + (h_RT[5] + h_RT[39]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[39] += q; /* A1CH2 */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[39] += q; // A1CH2
+  wdot[41] -= q; // A1CH3
+  // d()/d[H]
   dqdci = -k_r * sc[39];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[279] += dqdci; /* dwdot[A1CH2]/d[H] */
-  J[281] -= dqdci; /* dwdot[A1CH3]/d[H] */
-  /* d()/d[A1CH2] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[279] += dqdci; // dwdot[A1CH2]/d[H]
+  J[281] -= dqdci; // dwdot[A1CH3]/d[H]
+  // d()/d[A1CH2]
   dqdci = -k_r * sc[5];
-  J[1877] += dqdci; /* dwdot[H]/d[A1CH2] */
-  J[1911] += dqdci; /* dwdot[A1CH2]/d[A1CH2] */
-  J[1913] -= dqdci; /* dwdot[A1CH3]/d[A1CH2] */
-  /* d()/d[A1CH3] */
+  J[1877] += dqdci; // dwdot[H]/d[A1CH2]
+  J[1911] += dqdci; // dwdot[A1CH2]/d[A1CH2]
+  J[1913] -= dqdci; // dwdot[A1CH3]/d[A1CH2]
+  // d()/d[A1CH3]
   dqdci = +k_f;
-  J[1973] += dqdci; /* dwdot[H]/d[A1CH3] */
-  J[2007] += dqdci; /* dwdot[A1CH2]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2295] += dqdT; /* dwdot[A1CH2]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1973] += dqdci; // dwdot[H]/d[A1CH3]
+  J[2007] += dqdci; // dwdot[A1CH2]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2295] += dqdT; // dwdot[A1CH2]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 198: A1CH3 <=> A1- + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[41];
   k_f =
     1 * 2.16e+29 * exp(-3.58 * tc[0] - 0.50321666580472 * (110164.91) * invT);
   dlnkfdT = -3.58 * invT + 0.50321666580472 * (110164.91) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[30];
   Kc = refC * exp(-g_RT[14] - g_RT[30] + g_RT[41]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[41]) + (h_RT[14] + h_RT[30]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[14] += q; /* CH3 */
-  wdot[30] += q; /* A1- */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] += q; // CH3
+  wdot[30] += q; // A1-
+  wdot[41] -= q; // A1CH3
+  // d()/d[CH3]
   dqdci = -k_r * sc[30];
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[702] += dqdci; /* dwdot[A1-]/d[CH3] */
-  J[713] -= dqdci; /* dwdot[A1CH3]/d[CH3] */
-  /* d()/d[A1-] */
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[702] += dqdci; // dwdot[A1-]/d[CH3]
+  J[713] -= dqdci; // dwdot[A1CH3]/d[CH3]
+  // d()/d[A1-]
   dqdci = -k_r * sc[14];
-  J[1454] += dqdci; /* dwdot[CH3]/d[A1-] */
-  J[1470] += dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1481] -= dqdci; /* dwdot[A1CH3]/d[A1-] */
-  /* d()/d[A1CH3] */
+  J[1454] += dqdci; // dwdot[CH3]/d[A1-]
+  J[1470] += dqdci; // dwdot[A1-]/d[A1-]
+  J[1481] -= dqdci; // dwdot[A1CH3]/d[A1-]
+  // d()/d[A1CH3]
   dqdci = +k_f;
-  J[1982] += dqdci; /* dwdot[CH3]/d[A1CH3] */
-  J[1998] += dqdci; /* dwdot[A1-]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1982] += dqdci; // dwdot[CH3]/d[A1CH3]
+  J[1998] += dqdci; // dwdot[A1-]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 199: A1CH3 + H => A1CH2 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[41];
   k_f = 1e-06 * 6.47 * exp(3.98 * tc[0] - 0.50321666580472 * (3384.32) * invT);
   dlnkfdT = 3.98 * invT + 0.50321666580472 * (3384.32) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[39] += q; /* A1CH2 */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[39] += q; // A1CH2
+  wdot[41] -= q; // A1CH3
+  // d()/d[H]
   dqdci = +k_f * sc[41];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[279] += dqdci; /* dwdot[A1CH2]/d[H] */
-  J[281] -= dqdci; /* dwdot[A1CH3]/d[H] */
-  /* d()/d[A1CH3] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[279] += dqdci; // dwdot[A1CH2]/d[H]
+  J[281] -= dqdci; // dwdot[A1CH3]/d[H]
+  // d()/d[A1CH3]
   dqdci = +k_f * sc[5];
-  J[1972] += dqdci; /* dwdot[H2]/d[A1CH3] */
-  J[1973] -= dqdci; /* dwdot[H]/d[A1CH3] */
-  J[2007] += dqdci; /* dwdot[A1CH2]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2295] += dqdT; /* dwdot[A1CH2]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1972] += dqdci; // dwdot[H2]/d[A1CH3]
+  J[1973] -= dqdci; // dwdot[H]/d[A1CH3]
+  J[2007] += dqdci; // dwdot[A1CH2]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2295] += dqdT; // dwdot[A1CH2]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 200: A1CH3 + OH => A1CH2 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[41];
   k_f = 1e-06 * 16200000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (2770.08) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (2770.08) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[39] += q; /* A1CH2 */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[39] += q; // A1CH2
+  wdot[41] -= q; // A1CH3
+  // d()/d[OH]
   dqdci = +k_f * sc[41];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[327] += dqdci; /* dwdot[A1CH2]/d[OH] */
-  J[329] -= dqdci; /* dwdot[A1CH3]/d[OH] */
-  /* d()/d[A1CH3] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[327] += dqdci; // dwdot[A1CH2]/d[OH]
+  J[329] -= dqdci; // dwdot[A1CH3]/d[OH]
+  // d()/d[A1CH3]
   dqdci = +k_f * sc[6];
-  J[1974] -= dqdci; /* dwdot[OH]/d[A1CH3] */
-  J[1975] += dqdci; /* dwdot[H2O]/d[A1CH3] */
-  J[2007] += dqdci; /* dwdot[A1CH2]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2295] += dqdT; /* dwdot[A1CH2]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1974] -= dqdci; // dwdot[OH]/d[A1CH3]
+  J[1975] += dqdci; // dwdot[H2O]/d[A1CH3]
+  J[2007] += dqdci; // dwdot[A1CH2]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2295] += dqdT; // dwdot[A1CH2]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 201: A1CH3 + CH3 => A1CH2 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[41];
   k_f = 1e-06 * 422000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (22256.21) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * (22256.21) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[39] += q; /* A1CH2 */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[39] += q; // A1CH2
+  wdot[41] -= q; // A1CH3
+  // d()/d[CH3]
   dqdci = +k_f * sc[41];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[711] += dqdci; /* dwdot[A1CH2]/d[CH3] */
-  J[713] -= dqdci; /* dwdot[A1CH3]/d[CH3] */
-  /* d()/d[A1CH3] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[711] += dqdci; // dwdot[A1CH2]/d[CH3]
+  J[713] -= dqdci; // dwdot[A1CH3]/d[CH3]
+  // d()/d[A1CH3]
   dqdci = +k_f * sc[14];
-  J[1982] -= dqdci; /* dwdot[CH3]/d[A1CH3] */
-  J[1984] += dqdci; /* dwdot[CH4]/d[A1CH3] */
-  J[2007] += dqdci; /* dwdot[A1CH2]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2295] += dqdT; /* dwdot[A1CH2]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1982] -= dqdci; // dwdot[CH3]/d[A1CH3]
+  J[1984] += dqdci; // dwdot[CH4]/d[A1CH3]
+  J[2007] += dqdci; // dwdot[A1CH2]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2295] += dqdT; // dwdot[A1CH2]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 202: C7H15 => C5H11 + C2H4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[42];
   k_f = 1 * 1890000000000 *
         exp(0.02 * tc[0] - 0.50321666580472 * (27784.42) * invT);
   dlnkfdT = 0.02 * invT + 0.50321666580472 * (27784.42) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[18] += q; /* C2H4 */
-  wdot[37] += q; /* C5H11 */
-  wdot[42] -= q; /* C7H15 */
-  /* d()/d[C7H15] */
+  // update wdot
+  wdot[18] += q; // C2H4
+  wdot[37] += q; // C5H11
+  wdot[42] -= q; // C7H15
+  // d()/d[C7H15]
   dqdci = +k_f;
-  J[2034] += dqdci; /* dwdot[C2H4]/d[C7H15] */
-  J[2053] += dqdci; /* dwdot[C5H11]/d[C7H15] */
-  J[2058] -= dqdci; /* dwdot[C7H15]/d[C7H15] */
-  /* d()/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2293] += dqdT; /* dwdot[C5H11]/dT */
-  J[2298] -= dqdT; /* dwdot[C7H15]/dT */
+  J[2034] += dqdci; // dwdot[C2H4]/d[C7H15]
+  J[2053] += dqdci; // dwdot[C5H11]/d[C7H15]
+  J[2058] -= dqdci; // dwdot[C7H15]/d[C7H15]
+  // d()/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2293] += dqdT; // dwdot[C5H11]/dT
+  J[2298] -= dqdT; // dwdot[C7H15]/dT
 
   /*reaction 203: C7H15 => C2H5 + C2H4 + C3H6 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[42];
   k_f =
     1 * 7.73e+18 * exp(-1.75 * tc[0] - 0.50321666580472 * (31974.19) * invT);
   dlnkfdT = -1.75 * invT + 0.50321666580472 * (31974.19) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[18] += q; /* C2H4 */
-  wdot[19] += q; /* C2H5 */
-  wdot[32] += q; /* C3H6 */
-  wdot[42] -= q; /* C7H15 */
-  /* d()/d[C7H15] */
+  // update wdot
+  wdot[18] += q; // C2H4
+  wdot[19] += q; // C2H5
+  wdot[32] += q; // C3H6
+  wdot[42] -= q; // C7H15
+  // d()/d[C7H15]
   dqdci = +k_f;
-  J[2034] += dqdci; /* dwdot[C2H4]/d[C7H15] */
-  J[2035] += dqdci; /* dwdot[C2H5]/d[C7H15] */
-  J[2048] += dqdci; /* dwdot[C3H6]/d[C7H15] */
-  J[2058] -= dqdci; /* dwdot[C7H15]/d[C7H15] */
-  /* d()/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2288] += dqdT; /* dwdot[C3H6]/dT */
-  J[2298] -= dqdT; /* dwdot[C7H15]/dT */
+  J[2034] += dqdci; // dwdot[C2H4]/d[C7H15]
+  J[2035] += dqdci; // dwdot[C2H5]/d[C7H15]
+  J[2048] += dqdci; // dwdot[C3H6]/d[C7H15]
+  J[2058] -= dqdci; // dwdot[C7H15]/d[C7H15]
+  // d()/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2288] += dqdT; // dwdot[C3H6]/dT
+  J[2298] -= dqdT; // dwdot[C7H15]/dT
 
   /*reaction 204: C7H15 => C4H8 + N-C3H7 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[42];
   k_f = 1 * 2.53e+18 * exp(-1.65 * tc[0] - 0.50321666580472 * (31682.6) * invT);
   dlnkfdT = -1.65 * invT + 0.50321666580472 * (31682.6) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[25] += q; /* N-C3H7 */
-  wdot[33] += q; /* C4H8 */
-  wdot[42] -= q; /* C7H15 */
-  /* d()/d[C7H15] */
+  // update wdot
+  wdot[25] += q; // N-C3H7
+  wdot[33] += q; // C4H8
+  wdot[42] -= q; // C7H15
+  // d()/d[C7H15]
   dqdci = +k_f;
-  J[2041] += dqdci; /* dwdot[N-C3H7]/d[C7H15] */
-  J[2049] += dqdci; /* dwdot[C4H8]/d[C7H15] */
-  J[2058] -= dqdci; /* dwdot[C7H15]/d[C7H15] */
-  /* d()/dT */
-  J[2281] += dqdT; /* dwdot[N-C3H7]/dT */
-  J[2289] += dqdT; /* dwdot[C4H8]/dT */
-  J[2298] -= dqdT; /* dwdot[C7H15]/dT */
+  J[2041] += dqdci; // dwdot[N-C3H7]/d[C7H15]
+  J[2049] += dqdci; // dwdot[C4H8]/d[C7H15]
+  J[2058] -= dqdci; // dwdot[C7H15]/d[C7H15]
+  // d()/dT
+  J[2281] += dqdT; // dwdot[N-C3H7]/dT
+  J[2289] += dqdT; // dwdot[C4H8]/dT
+  J[2298] -= dqdT; // dwdot[C7H15]/dT
 
   /*reaction 205: C7H15 => C2H5 + C5H10 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[42];
   k_f =
     1 * 2.49e+16 * exp(-1.18 * tc[0] - 0.50321666580472 * (29517.21) * invT);
   dlnkfdT = -1.18 * invT + 0.50321666580472 * (29517.21) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[19] += q; /* C2H5 */
-  wdot[36] += q; /* C5H10 */
-  wdot[42] -= q; /* C7H15 */
-  /* d()/d[C7H15] */
+  // update wdot
+  wdot[19] += q; // C2H5
+  wdot[36] += q; // C5H10
+  wdot[42] -= q; // C7H15
+  // d()/d[C7H15]
   dqdci = +k_f;
-  J[2035] += dqdci; /* dwdot[C2H5]/d[C7H15] */
-  J[2052] += dqdci; /* dwdot[C5H10]/d[C7H15] */
-  J[2058] -= dqdci; /* dwdot[C7H15]/d[C7H15] */
-  /* d()/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2292] += dqdT; /* dwdot[C5H10]/dT */
-  J[2298] -= dqdT; /* dwdot[C7H15]/dT */
+  J[2035] += dqdci; // dwdot[C2H5]/d[C7H15]
+  J[2052] += dqdci; // dwdot[C5H10]/d[C7H15]
+  J[2058] -= dqdci; // dwdot[C7H15]/d[C7H15]
+  // d()/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2292] += dqdT; // dwdot[C5H10]/dT
+  J[2298] -= dqdT; // dwdot[C7H15]/dT
 
   /*reaction 206: N-C7H16 => C5H11 + C2H5 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[43];
   k_f =
     1 * 8.1e+77 * exp(-17.62 * tc[0] - 0.50321666580472 * (120399.14) * invT);
   dlnkfdT = -17.62 * invT + 0.50321666580472 * (120399.14) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[19] += q; /* C2H5 */
-  wdot[37] += q; /* C5H11 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[N-C7H16] */
+  // update wdot
+  wdot[19] += q; // C2H5
+  wdot[37] += q; // C5H11
+  wdot[43] -= q; // N-C7H16
+  // d()/d[N-C7H16]
   dqdci = +k_f;
-  J[2083] += dqdci; /* dwdot[C2H5]/d[N-C7H16] */
-  J[2101] += dqdci; /* dwdot[C5H11]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2293] += dqdT; /* dwdot[C5H11]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2083] += dqdci; // dwdot[C2H5]/d[N-C7H16]
+  J[2101] += dqdci; // dwdot[C5H11]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2293] += dqdT; // dwdot[C5H11]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 207: N-C7H16 => C2H5 + C2H4 + N-C3H7 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[43];
   k_f =
     1 * 1.42e+78 * exp(-17.71 * tc[0] - 0.50321666580472 * (120700.29) * invT);
   dlnkfdT = -17.71 * invT + 0.50321666580472 * (120700.29) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[18] += q; /* C2H4 */
-  wdot[19] += q; /* C2H5 */
-  wdot[25] += q; /* N-C3H7 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[N-C7H16] */
+  // update wdot
+  wdot[18] += q; // C2H4
+  wdot[19] += q; // C2H5
+  wdot[25] += q; // N-C3H7
+  wdot[43] -= q; // N-C7H16
+  // d()/d[N-C7H16]
   dqdci = +k_f;
-  J[2082] += dqdci; /* dwdot[C2H4]/d[N-C7H16] */
-  J[2083] += dqdci; /* dwdot[C2H5]/d[N-C7H16] */
-  J[2089] += dqdci; /* dwdot[N-C3H7]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2281] += dqdT; /* dwdot[N-C3H7]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2082] += dqdci; // dwdot[C2H4]/d[N-C7H16]
+  J[2083] += dqdci; // dwdot[C2H5]/d[N-C7H16]
+  J[2089] += dqdci; // dwdot[N-C3H7]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2281] += dqdT; // dwdot[N-C3H7]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 208: N-C7H16 + H => C7H15 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[43];
   k_f =
     1e-06 * 1750000 * exp(2.6 * tc[0] - 0.50321666580472 * (4361.85) * invT);
   dlnkfdT = 2.6 * invT + 0.50321666580472 * (4361.85) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[42] += q; /* C7H15 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[42] += q; // C7H15
+  wdot[43] -= q; // N-C7H16
+  // d()/d[H]
   dqdci = +k_f * sc[43];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[282] += dqdci; /* dwdot[C7H15]/d[H] */
-  J[283] -= dqdci; /* dwdot[N-C7H16]/d[H] */
-  /* d()/d[N-C7H16] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[282] += dqdci; // dwdot[C7H15]/d[H]
+  J[283] -= dqdci; // dwdot[N-C7H16]/d[H]
+  // d()/d[N-C7H16]
   dqdci = +k_f * sc[5];
-  J[2068] += dqdci; /* dwdot[H2]/d[N-C7H16] */
-  J[2069] -= dqdci; /* dwdot[H]/d[N-C7H16] */
-  J[2106] += dqdci; /* dwdot[C7H15]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2298] += dqdT; /* dwdot[C7H15]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2068] += dqdci; // dwdot[H2]/d[N-C7H16]
+  J[2069] -= dqdci; // dwdot[H]/d[N-C7H16]
+  J[2106] += dqdci; // dwdot[C7H15]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2298] += dqdT; // dwdot[C7H15]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 209: N-C7H16 + O => C7H15 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[43];
   k_f =
     1e-06 * 172000 * exp(2.81 * tc[0] - 0.50321666580472 * (2260.99) * invT);
   dlnkfdT = 2.81 * invT + 0.50321666580472 * (2260.99) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[42] += q; /* C7H15 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[42] += q; // C7H15
+  wdot[43] -= q; // N-C7H16
+  // d()/d[O]
   dqdci = +k_f * sc[43];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[186] += dqdci; /* dwdot[C7H15]/d[O] */
-  J[187] -= dqdci; /* dwdot[N-C7H16]/d[O] */
-  /* d()/d[N-C7H16] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[186] += dqdci; // dwdot[C7H15]/d[O]
+  J[187] -= dqdci; // dwdot[N-C7H16]/d[O]
+  // d()/d[N-C7H16]
   dqdci = +k_f * sc[3];
-  J[2067] -= dqdci; /* dwdot[O]/d[N-C7H16] */
-  J[2070] += dqdci; /* dwdot[OH]/d[N-C7H16] */
-  J[2106] += dqdci; /* dwdot[C7H15]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2298] += dqdT; /* dwdot[C7H15]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2067] -= dqdci; // dwdot[O]/d[N-C7H16]
+  J[2070] += dqdci; // dwdot[OH]/d[N-C7H16]
+  J[2106] += dqdci; // dwdot[C7H15]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2298] += dqdT; // dwdot[C7H15]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 210: N-C7H16 + OH => C7H15 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[43];
   k_f =
     1e-06 * 740000000 * exp(1.5 * tc[0] - 0.50321666580472 * (258.13) * invT);
   dlnkfdT = 1.5 * invT + 0.50321666580472 * (258.13) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[42] += q; /* C7H15 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[42] += q; // C7H15
+  wdot[43] -= q; // N-C7H16
+  // d()/d[OH]
   dqdci = +k_f * sc[43];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[330] += dqdci; /* dwdot[C7H15]/d[OH] */
-  J[331] -= dqdci; /* dwdot[N-C7H16]/d[OH] */
-  /* d()/d[N-C7H16] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[330] += dqdci; // dwdot[C7H15]/d[OH]
+  J[331] -= dqdci; // dwdot[N-C7H16]/d[OH]
+  // d()/d[N-C7H16]
   dqdci = +k_f * sc[6];
-  J[2070] -= dqdci; /* dwdot[OH]/d[N-C7H16] */
-  J[2071] += dqdci; /* dwdot[H2O]/d[N-C7H16] */
-  J[2106] += dqdci; /* dwdot[C7H15]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2298] += dqdT; /* dwdot[C7H15]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2070] -= dqdci; // dwdot[OH]/d[N-C7H16]
+  J[2071] += dqdci; // dwdot[H2O]/d[N-C7H16]
+  J[2106] += dqdci; // dwdot[C7H15]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2298] += dqdT; // dwdot[C7H15]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 211: N-C7H16 + CH3 => C7H15 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[43];
   k_f = 1e-06 * 14600 * exp(2.57 * tc[0] - 0.50321666580472 * (6933.56) * invT);
   dlnkfdT = 2.57 * invT + 0.50321666580472 * (6933.56) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[42] += q; /* C7H15 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[42] += q; // C7H15
+  wdot[43] -= q; // N-C7H16
+  // d()/d[CH3]
   dqdci = +k_f * sc[43];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[714] += dqdci; /* dwdot[C7H15]/d[CH3] */
-  J[715] -= dqdci; /* dwdot[N-C7H16]/d[CH3] */
-  /* d()/d[N-C7H16] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[714] += dqdci; // dwdot[C7H15]/d[CH3]
+  J[715] -= dqdci; // dwdot[N-C7H16]/d[CH3]
+  // d()/d[N-C7H16]
   dqdci = +k_f * sc[14];
-  J[2078] -= dqdci; /* dwdot[CH3]/d[N-C7H16] */
-  J[2080] += dqdci; /* dwdot[CH4]/d[N-C7H16] */
-  J[2106] += dqdci; /* dwdot[C7H15]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2298] += dqdT; /* dwdot[C7H15]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2078] -= dqdci; // dwdot[CH3]/d[N-C7H16]
+  J[2080] += dqdci; // dwdot[CH4]/d[N-C7H16]
+  J[2106] += dqdci; // dwdot[C7H15]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2298] += dqdT; // dwdot[C7H15]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 212: A1CHO => A1- + HCO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[40];
   k_f = 1 * 2.61e+15 * exp(0.15 * tc[0] - 0.50321666580472 * (80549.71) * invT);
   dlnkfdT = 0.15 * invT + 0.50321666580472 * (80549.71) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[12] += q; /* HCO */
-  wdot[30] += q; /* A1- */
-  wdot[40] -= q; /* A1CHO */
-  /* d()/d[A1CHO] */
+  // update wdot
+  wdot[12] += q; // HCO
+  wdot[30] += q; // A1-
+  wdot[40] -= q; // A1CHO
+  // d()/d[A1CHO]
   dqdci = +k_f;
-  J[1932] += dqdci; /* dwdot[HCO]/d[A1CHO] */
-  J[1950] += dqdci; /* dwdot[A1-]/d[A1CHO] */
-  J[1960] -= dqdci; /* dwdot[A1CHO]/d[A1CHO] */
-  /* d()/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
-  J[2296] -= dqdT; /* dwdot[A1CHO]/dT */
+  J[1932] += dqdci; // dwdot[HCO]/d[A1CHO]
+  J[1950] += dqdci; // dwdot[A1-]/d[A1CHO]
+  J[1960] -= dqdci; // dwdot[A1CHO]/d[A1CHO]
+  // d()/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
+  J[2296] -= dqdT; // dwdot[A1CHO]/dT
 
   /*reaction 213: A1CHO + H => A1- + CO + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[40];
   k_f =
     1e-06 * 2050000000 * exp(1.16 * tc[0] - 0.50321666580472 * (2404.4) * invT);
   dlnkfdT = 1.16 * invT + 0.50321666580472 * (2404.4) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[30] += q; /* A1- */
-  wdot[40] -= q; /* A1CHO */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[11] += q; // CO
+  wdot[30] += q; // A1-
+  wdot[40] -= q; // A1CHO
+  // d()/d[H]
   dqdci = +k_f * sc[40];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[251] += dqdci; /* dwdot[CO]/d[H] */
-  J[270] += dqdci; /* dwdot[A1-]/d[H] */
-  J[280] -= dqdci; /* dwdot[A1CHO]/d[H] */
-  /* d()/d[A1CHO] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[251] += dqdci; // dwdot[CO]/d[H]
+  J[270] += dqdci; // dwdot[A1-]/d[H]
+  J[280] -= dqdci; // dwdot[A1CHO]/d[H]
+  // d()/d[A1CHO]
   dqdci = +k_f * sc[5];
-  J[1924] += dqdci; /* dwdot[H2]/d[A1CHO] */
-  J[1925] -= dqdci; /* dwdot[H]/d[A1CHO] */
-  J[1931] += dqdci; /* dwdot[CO]/d[A1CHO] */
-  J[1950] += dqdci; /* dwdot[A1-]/d[A1CHO] */
-  J[1960] -= dqdci; /* dwdot[A1CHO]/d[A1CHO] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
-  J[2296] -= dqdT; /* dwdot[A1CHO]/dT */
+  J[1924] += dqdci; // dwdot[H2]/d[A1CHO]
+  J[1925] -= dqdci; // dwdot[H]/d[A1CHO]
+  J[1931] += dqdci; // dwdot[CO]/d[A1CHO]
+  J[1950] += dqdci; // dwdot[A1-]/d[A1CHO]
+  J[1960] -= dqdci; // dwdot[A1CHO]/d[A1CHO]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
+  J[2296] -= dqdT; // dwdot[A1CHO]/dT
 
   /*reaction 214: A1CHO + CH3 => A1- + CO + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[40];
   k_f =
     1e-06 * 2720000 * exp(1.77 * tc[0] - 0.50321666580472 * (5920.17) * invT);
   dlnkfdT = 1.77 * invT + 0.50321666580472 * (5920.17) * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[30] += q; /* A1- */
-  wdot[40] -= q; /* A1CHO */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[30] += q; // A1-
+  wdot[40] -= q; // A1CHO
+  // d()/d[CH3]
   dqdci = +k_f * sc[40];
-  J[683] += dqdci; /* dwdot[CO]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[702] += dqdci; /* dwdot[A1-]/d[CH3] */
-  J[712] -= dqdci; /* dwdot[A1CHO]/d[CH3] */
-  /* d()/d[A1CHO] */
+  J[683] += dqdci; // dwdot[CO]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[702] += dqdci; // dwdot[A1-]/d[CH3]
+  J[712] -= dqdci; // dwdot[A1CHO]/d[CH3]
+  // d()/d[A1CHO]
   dqdci = +k_f * sc[14];
-  J[1931] += dqdci; /* dwdot[CO]/d[A1CHO] */
-  J[1934] -= dqdci; /* dwdot[CH3]/d[A1CHO] */
-  J[1936] += dqdci; /* dwdot[CH4]/d[A1CHO] */
-  J[1950] += dqdci; /* dwdot[A1-]/d[A1CHO] */
-  J[1960] -= dqdci; /* dwdot[A1CHO]/d[A1CHO] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
-  J[2296] -= dqdT; /* dwdot[A1CHO]/dT */
+  J[1931] += dqdci; // dwdot[CO]/d[A1CHO]
+  J[1934] -= dqdci; // dwdot[CH3]/d[A1CHO]
+  J[1936] += dqdci; // dwdot[CH4]/d[A1CHO]
+  J[1950] += dqdci; // dwdot[A1-]/d[A1CHO]
+  J[1960] -= dqdci; // dwdot[A1CHO]/d[A1CHO]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
+  J[2296] -= dqdT; // dwdot[A1CHO]/dT
 
   /*reaction 215: A1C2H* + C2H2 <=> A2- */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[22] * sc[44];
   k_f = 1e-06 * 13400 * exp(2.5 * tc[0] - 0.50321666580472 * (1283.46) * invT);
   dlnkfdT = 2.5 * invT + 0.50321666580472 * (1283.46) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[45];
   Kc = refCinv * exp(g_RT[22] + g_RT[44] - g_RT[45]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[22] + h_RT[44]) + (h_RT[45]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[22] -= q; /* C2H2 */
-  wdot[44] -= q; /* A1C2H* */
-  wdot[45] += q; /* A2- */
-  /* d()/d[C2H2] */
+  // update wdot
+  wdot[22] -= q; // C2H2
+  wdot[44] -= q; // A1C2H*
+  wdot[45] += q; // A2-
+  // d()/d[C2H2]
   dqdci = +k_f * sc[44];
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1100] -= dqdci; /* dwdot[A1C2H*]/d[C2H2] */
-  J[1101] += dqdci; /* dwdot[A2-]/d[C2H2] */
-  /* d()/d[A1C2H*] */
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1100] -= dqdci; // dwdot[A1C2H*]/d[C2H2]
+  J[1101] += dqdci; // dwdot[A2-]/d[C2H2]
+  // d()/d[A1C2H*]
   dqdci = +k_f * sc[22];
-  J[2134] -= dqdci; /* dwdot[C2H2]/d[A1C2H*] */
-  J[2156] -= dqdci; /* dwdot[A1C2H*]/d[A1C2H*] */
-  J[2157] += dqdci; /* dwdot[A2-]/d[A1C2H*] */
-  /* d()/d[A2-] */
+  J[2134] -= dqdci; // dwdot[C2H2]/d[A1C2H*]
+  J[2156] -= dqdci; // dwdot[A1C2H*]/d[A1C2H*]
+  J[2157] += dqdci; // dwdot[A2-]/d[A1C2H*]
+  // d()/d[A2-]
   dqdci = -k_r;
-  J[2182] -= dqdci; /* dwdot[C2H2]/d[A2-] */
-  J[2204] -= dqdci; /* dwdot[A1C2H*]/d[A2-] */
-  J[2205] += dqdci; /* dwdot[A2-]/d[A2-] */
-  /* d()/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2300] -= dqdT; /* dwdot[A1C2H*]/dT */
-  J[2301] += dqdT; /* dwdot[A2-]/dT */
+  J[2182] -= dqdci; // dwdot[C2H2]/d[A2-]
+  J[2204] -= dqdci; // dwdot[A1C2H*]/d[A2-]
+  J[2205] += dqdci; // dwdot[A2-]/d[A2-]
+  // d()/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2300] -= dqdT; // dwdot[A1C2H*]/dT
+  J[2301] += dqdT; // dwdot[A2-]/dT
 
   /*reaction 216: A1C2H* + C2H4 <=> A2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[18] * sc[44];
   k_f = 1e-06 * 3.62e+28 *
         exp(-4.24 * tc[0] - 0.50321666580472 * (23864.72) * invT);
   dlnkfdT = -4.24 * invT + 0.50321666580472 * (23864.72) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[35];
   Kc = exp(-g_RT[5] + g_RT[18] - g_RT[35] + g_RT[44]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[18] + h_RT[44]) + (h_RT[5] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[18] -= q; /* C2H4 */
-  wdot[35] += q; /* A2 */
-  wdot[44] -= q; /* A1C2H* */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[18] -= q; // C2H4
+  wdot[35] += q; // A2
+  wdot[44] -= q; // A1C2H*
+  // d()/d[H]
   dqdci = -k_r * sc[35];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[258] -= dqdci; /* dwdot[C2H4]/d[H] */
-  J[275] += dqdci; /* dwdot[A2]/d[H] */
-  J[284] -= dqdci; /* dwdot[A1C2H*]/d[H] */
-  /* d()/d[C2H4] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[258] -= dqdci; // dwdot[C2H4]/d[H]
+  J[275] += dqdci; // dwdot[A2]/d[H]
+  J[284] -= dqdci; // dwdot[A1C2H*]/d[H]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[44];
-  J[869] += dqdci; /* dwdot[H]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  J[899] += dqdci; /* dwdot[A2]/d[C2H4] */
-  J[908] -= dqdci; /* dwdot[A1C2H*]/d[C2H4] */
-  /* d()/d[A2] */
+  J[869] += dqdci; // dwdot[H]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  J[899] += dqdci; // dwdot[A2]/d[C2H4]
+  J[908] -= dqdci; // dwdot[A1C2H*]/d[C2H4]
+  // d()/d[A2]
   dqdci = -k_r * sc[5];
-  J[1685] += dqdci; /* dwdot[H]/d[A2] */
-  J[1698] -= dqdci; /* dwdot[C2H4]/d[A2] */
-  J[1715] += dqdci; /* dwdot[A2]/d[A2] */
-  J[1724] -= dqdci; /* dwdot[A1C2H*]/d[A2] */
-  /* d()/d[A1C2H*] */
+  J[1685] += dqdci; // dwdot[H]/d[A2]
+  J[1698] -= dqdci; // dwdot[C2H4]/d[A2]
+  J[1715] += dqdci; // dwdot[A2]/d[A2]
+  J[1724] -= dqdci; // dwdot[A1C2H*]/d[A2]
+  // d()/d[A1C2H*]
   dqdci = +k_f * sc[18];
-  J[2117] += dqdci; /* dwdot[H]/d[A1C2H*] */
-  J[2130] -= dqdci; /* dwdot[C2H4]/d[A1C2H*] */
-  J[2147] += dqdci; /* dwdot[A2]/d[A1C2H*] */
-  J[2156] -= dqdci; /* dwdot[A1C2H*]/d[A1C2H*] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
-  J[2291] += dqdT; /* dwdot[A2]/dT */
-  J[2300] -= dqdT; /* dwdot[A1C2H*]/dT */
+  J[2117] += dqdci; // dwdot[H]/d[A1C2H*]
+  J[2130] -= dqdci; // dwdot[C2H4]/d[A1C2H*]
+  J[2147] += dqdci; // dwdot[A2]/d[A1C2H*]
+  J[2156] -= dqdci; // dwdot[A1C2H*]/d[A1C2H*]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
+  J[2291] += dqdT; // dwdot[A2]/dT
+  J[2300] -= dqdT; // dwdot[A1C2H*]/dT
 
   /*reaction 217: A1C2H <=> A1C2H* + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[46];
   k_f = 1 * 2.1e+60 * exp(-12.4 * tc[0] - 0.50321666580472 * (148076) * invT);
   dlnkfdT = -12.4 * invT + 0.50321666580472 * (148076) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[44];
   Kc = refC * exp(-g_RT[5] - g_RT[44] + g_RT[46]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[46]) + (h_RT[5] + h_RT[44]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[44] += q; /* A1C2H* */
-  wdot[46] -= q; /* A1C2H */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[44] += q; // A1C2H*
+  wdot[46] -= q; // A1C2H
+  // d()/d[H]
   dqdci = -k_r * sc[44];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[284] += dqdci; /* dwdot[A1C2H*]/d[H] */
-  J[286] -= dqdci; /* dwdot[A1C2H]/d[H] */
-  /* d()/d[A1C2H*] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[284] += dqdci; // dwdot[A1C2H*]/d[H]
+  J[286] -= dqdci; // dwdot[A1C2H]/d[H]
+  // d()/d[A1C2H*]
   dqdci = -k_r * sc[5];
-  J[2117] += dqdci; /* dwdot[H]/d[A1C2H*] */
-  J[2156] += dqdci; /* dwdot[A1C2H*]/d[A1C2H*] */
-  J[2158] -= dqdci; /* dwdot[A1C2H]/d[A1C2H*] */
-  /* d()/d[A1C2H] */
+  J[2117] += dqdci; // dwdot[H]/d[A1C2H*]
+  J[2156] += dqdci; // dwdot[A1C2H*]/d[A1C2H*]
+  J[2158] -= dqdci; // dwdot[A1C2H]/d[A1C2H*]
+  // d()/d[A1C2H]
   dqdci = +k_f;
-  J[2213] += dqdci; /* dwdot[H]/d[A1C2H] */
-  J[2252] += dqdci; /* dwdot[A1C2H*]/d[A1C2H] */
-  J[2254] -= dqdci; /* dwdot[A1C2H]/d[A1C2H] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2300] += dqdT; /* dwdot[A1C2H*]/dT */
-  J[2302] -= dqdT; /* dwdot[A1C2H]/dT */
+  J[2213] += dqdci; // dwdot[H]/d[A1C2H]
+  J[2252] += dqdci; // dwdot[A1C2H*]/d[A1C2H]
+  J[2254] -= dqdci; // dwdot[A1C2H]/d[A1C2H]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2300] += dqdT; // dwdot[A1C2H*]/dT
+  J[2302] -= dqdT; // dwdot[A1C2H]/dT
 
   /*reaction 218: A1C2H + H <=> A1C2H* + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[46];
   k_f = 1e-06 * 132000000 *
         exp(1.88 * tc[0] - 0.50321666580472 * (16821.22) * invT);
   dlnkfdT = 1.88 * invT + 0.50321666580472 * (16821.22) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[4] * sc[44];
   Kc = exp(-g_RT[4] + g_RT[5] - g_RT[44] + g_RT[46]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[46]) + (h_RT[4] + h_RT[44]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[44] += q; /* A1C2H* */
-  wdot[46] -= q; /* A1C2H */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[44] += q; // A1C2H*
+  wdot[46] -= q; // A1C2H
+  // d()/d[H2]
   dqdci = -k_r * sc[44];
-  J[196] += dqdci; /* dwdot[H2]/d[H2] */
-  J[197] -= dqdci; /* dwdot[H]/d[H2] */
-  J[236] += dqdci; /* dwdot[A1C2H*]/d[H2] */
-  J[238] -= dqdci; /* dwdot[A1C2H]/d[H2] */
-  /* d()/d[H] */
+  J[196] += dqdci; // dwdot[H2]/d[H2]
+  J[197] -= dqdci; // dwdot[H]/d[H2]
+  J[236] += dqdci; // dwdot[A1C2H*]/d[H2]
+  J[238] -= dqdci; // dwdot[A1C2H]/d[H2]
+  // d()/d[H]
   dqdci = +k_f * sc[46];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[284] += dqdci; /* dwdot[A1C2H*]/d[H] */
-  J[286] -= dqdci; /* dwdot[A1C2H]/d[H] */
-  /* d()/d[A1C2H*] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[284] += dqdci; // dwdot[A1C2H*]/d[H]
+  J[286] -= dqdci; // dwdot[A1C2H]/d[H]
+  // d()/d[A1C2H*]
   dqdci = -k_r * sc[4];
-  J[2116] += dqdci; /* dwdot[H2]/d[A1C2H*] */
-  J[2117] -= dqdci; /* dwdot[H]/d[A1C2H*] */
-  J[2156] += dqdci; /* dwdot[A1C2H*]/d[A1C2H*] */
-  J[2158] -= dqdci; /* dwdot[A1C2H]/d[A1C2H*] */
-  /* d()/d[A1C2H] */
+  J[2116] += dqdci; // dwdot[H2]/d[A1C2H*]
+  J[2117] -= dqdci; // dwdot[H]/d[A1C2H*]
+  J[2156] += dqdci; // dwdot[A1C2H*]/d[A1C2H*]
+  J[2158] -= dqdci; // dwdot[A1C2H]/d[A1C2H*]
+  // d()/d[A1C2H]
   dqdci = +k_f * sc[5];
-  J[2212] += dqdci; /* dwdot[H2]/d[A1C2H] */
-  J[2213] -= dqdci; /* dwdot[H]/d[A1C2H] */
-  J[2252] += dqdci; /* dwdot[A1C2H*]/d[A1C2H] */
-  J[2254] -= dqdci; /* dwdot[A1C2H]/d[A1C2H] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2300] += dqdT; /* dwdot[A1C2H*]/dT */
-  J[2302] -= dqdT; /* dwdot[A1C2H]/dT */
+  J[2212] += dqdci; // dwdot[H2]/d[A1C2H]
+  J[2213] -= dqdci; // dwdot[H]/d[A1C2H]
+  J[2252] += dqdci; // dwdot[A1C2H*]/d[A1C2H]
+  J[2254] -= dqdci; // dwdot[A1C2H]/d[A1C2H]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2300] += dqdT; // dwdot[A1C2H*]/dT
+  J[2302] -= dqdT; // dwdot[A1C2H]/dT
 
   /*reaction 219: A1C2H + OH <=> A1C2H* + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[46];
   k_f = 1e-06 * 134 * exp(3.33 * tc[0] - 0.50321666580472 * (1455.54) * invT);
   dlnkfdT = 3.33 * invT + 0.50321666580472 * (1455.54) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[7] * sc[44];
   Kc = exp(g_RT[6] - g_RT[7] - g_RT[44] + g_RT[46]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[46]) + (h_RT[7] + h_RT[44]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[44] += q; /* A1C2H* */
-  wdot[46] -= q; /* A1C2H */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[44] += q; // A1C2H*
+  wdot[46] -= q; // A1C2H
+  // d()/d[OH]
   dqdci = +k_f * sc[46];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[332] += dqdci; /* dwdot[A1C2H*]/d[OH] */
-  J[334] -= dqdci; /* dwdot[A1C2H]/d[OH] */
-  /* d()/d[H2O] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[332] += dqdci; // dwdot[A1C2H*]/d[OH]
+  J[334] -= dqdci; // dwdot[A1C2H]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[44];
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[380] += dqdci; /* dwdot[A1C2H*]/d[H2O] */
-  J[382] -= dqdci; /* dwdot[A1C2H]/d[H2O] */
-  /* d()/d[A1C2H*] */
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[380] += dqdci; // dwdot[A1C2H*]/d[H2O]
+  J[382] -= dqdci; // dwdot[A1C2H]/d[H2O]
+  // d()/d[A1C2H*]
   dqdci = -k_r * sc[7];
-  J[2118] -= dqdci; /* dwdot[OH]/d[A1C2H*] */
-  J[2119] += dqdci; /* dwdot[H2O]/d[A1C2H*] */
-  J[2156] += dqdci; /* dwdot[A1C2H*]/d[A1C2H*] */
-  J[2158] -= dqdci; /* dwdot[A1C2H]/d[A1C2H*] */
-  /* d()/d[A1C2H] */
+  J[2118] -= dqdci; // dwdot[OH]/d[A1C2H*]
+  J[2119] += dqdci; // dwdot[H2O]/d[A1C2H*]
+  J[2156] += dqdci; // dwdot[A1C2H*]/d[A1C2H*]
+  J[2158] -= dqdci; // dwdot[A1C2H]/d[A1C2H*]
+  // d()/d[A1C2H]
   dqdci = +k_f * sc[6];
-  J[2214] -= dqdci; /* dwdot[OH]/d[A1C2H] */
-  J[2215] += dqdci; /* dwdot[H2O]/d[A1C2H] */
-  J[2252] += dqdci; /* dwdot[A1C2H*]/d[A1C2H] */
-  J[2254] -= dqdci; /* dwdot[A1C2H]/d[A1C2H] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2300] += dqdT; /* dwdot[A1C2H*]/dT */
-  J[2302] -= dqdT; /* dwdot[A1C2H]/dT */
+  J[2214] -= dqdci; // dwdot[OH]/d[A1C2H]
+  J[2215] += dqdci; // dwdot[H2O]/d[A1C2H]
+  J[2252] += dqdci; // dwdot[A1C2H*]/d[A1C2H]
+  J[2254] -= dqdci; // dwdot[A1C2H]/d[A1C2H]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2300] += dqdT; // dwdot[A1C2H*]/dT
+  J[2302] -= dqdT; // dwdot[A1C2H]/dT
 
   /*reaction 220: A1C2H2 <=> A1C2H + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[38];
   k_f =
     1 * 1.34e+17 * exp(-0.86 * tc[0] - 0.50321666580472 * (41238.05) * invT);
   dlnkfdT = -0.86 * invT + 0.50321666580472 * (41238.05) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[46];
   Kc = refC * exp(-g_RT[5] + g_RT[38] - g_RT[46]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[38]) + (h_RT[5] + h_RT[46]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[38] -= q; /* A1C2H2 */
-  wdot[46] += q; /* A1C2H */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[38] -= q; // A1C2H2
+  wdot[46] += q; // A1C2H
+  // d()/d[H]
   dqdci = -k_r * sc[46];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[278] -= dqdci; /* dwdot[A1C2H2]/d[H] */
-  J[286] += dqdci; /* dwdot[A1C2H]/d[H] */
-  /* d()/d[A1C2H2] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[278] -= dqdci; // dwdot[A1C2H2]/d[H]
+  J[286] += dqdci; // dwdot[A1C2H]/d[H]
+  // d()/d[A1C2H2]
   dqdci = +k_f;
-  J[1829] += dqdci; /* dwdot[H]/d[A1C2H2] */
-  J[1862] -= dqdci; /* dwdot[A1C2H2]/d[A1C2H2] */
-  J[1870] += dqdci; /* dwdot[A1C2H]/d[A1C2H2] */
-  /* d()/d[A1C2H] */
+  J[1829] += dqdci; // dwdot[H]/d[A1C2H2]
+  J[1862] -= dqdci; // dwdot[A1C2H2]/d[A1C2H2]
+  J[1870] += dqdci; // dwdot[A1C2H]/d[A1C2H2]
+  // d()/d[A1C2H]
   dqdci = -k_r * sc[5];
-  J[2213] += dqdci; /* dwdot[H]/d[A1C2H] */
-  J[2246] -= dqdci; /* dwdot[A1C2H2]/d[A1C2H] */
-  J[2254] += dqdci; /* dwdot[A1C2H]/d[A1C2H] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2294] -= dqdT; /* dwdot[A1C2H2]/dT */
-  J[2302] += dqdT; /* dwdot[A1C2H]/dT */
+  J[2213] += dqdci; // dwdot[H]/d[A1C2H]
+  J[2246] -= dqdci; // dwdot[A1C2H2]/d[A1C2H]
+  J[2254] += dqdci; // dwdot[A1C2H]/d[A1C2H]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2294] -= dqdT; // dwdot[A1C2H2]/dT
+  J[2302] += dqdT; // dwdot[A1C2H]/dT
 
   /*reaction 221: A1C2H2 + C2H2 <=> A2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[22] * sc[38];
   k_f = 1e-06 * 70910000000000 *
         exp(-0.26 * tc[0] - 0.50321666580472 * (7002.87) * invT);
   dlnkfdT = -0.26 * invT + 0.50321666580472 * (7002.87) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[35];
   Kc = exp(-g_RT[5] + g_RT[22] - g_RT[35] + g_RT[38]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[22] + h_RT[38]) + (h_RT[5] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[22] -= q; /* C2H2 */
-  wdot[35] += q; /* A2 */
-  wdot[38] -= q; /* A1C2H2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[22] -= q; // C2H2
+  wdot[35] += q; // A2
+  wdot[38] -= q; // A1C2H2
+  // d()/d[H]
   dqdci = -k_r * sc[35];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[262] -= dqdci; /* dwdot[C2H2]/d[H] */
-  J[275] += dqdci; /* dwdot[A2]/d[H] */
-  J[278] -= dqdci; /* dwdot[A1C2H2]/d[H] */
-  /* d()/d[C2H2] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[262] -= dqdci; // dwdot[C2H2]/d[H]
+  J[275] += dqdci; // dwdot[A2]/d[H]
+  J[278] -= dqdci; // dwdot[A1C2H2]/d[H]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[38];
-  J[1061] += dqdci; /* dwdot[H]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1091] += dqdci; /* dwdot[A2]/d[C2H2] */
-  J[1094] -= dqdci; /* dwdot[A1C2H2]/d[C2H2] */
-  /* d()/d[A2] */
+  J[1061] += dqdci; // dwdot[H]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1091] += dqdci; // dwdot[A2]/d[C2H2]
+  J[1094] -= dqdci; // dwdot[A1C2H2]/d[C2H2]
+  // d()/d[A2]
   dqdci = -k_r * sc[5];
-  J[1685] += dqdci; /* dwdot[H]/d[A2] */
-  J[1702] -= dqdci; /* dwdot[C2H2]/d[A2] */
-  J[1715] += dqdci; /* dwdot[A2]/d[A2] */
-  J[1718] -= dqdci; /* dwdot[A1C2H2]/d[A2] */
-  /* d()/d[A1C2H2] */
+  J[1685] += dqdci; // dwdot[H]/d[A2]
+  J[1702] -= dqdci; // dwdot[C2H2]/d[A2]
+  J[1715] += dqdci; // dwdot[A2]/d[A2]
+  J[1718] -= dqdci; // dwdot[A1C2H2]/d[A2]
+  // d()/d[A1C2H2]
   dqdci = +k_f * sc[22];
-  J[1829] += dqdci; /* dwdot[H]/d[A1C2H2] */
-  J[1846] -= dqdci; /* dwdot[C2H2]/d[A1C2H2] */
-  J[1859] += dqdci; /* dwdot[A2]/d[A1C2H2] */
-  J[1862] -= dqdci; /* dwdot[A1C2H2]/d[A1C2H2] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2291] += dqdT; /* dwdot[A2]/dT */
-  J[2294] -= dqdT; /* dwdot[A1C2H2]/dT */
+  J[1829] += dqdci; // dwdot[H]/d[A1C2H2]
+  J[1846] -= dqdci; // dwdot[C2H2]/d[A1C2H2]
+  J[1859] += dqdci; // dwdot[A2]/d[A1C2H2]
+  J[1862] -= dqdci; // dwdot[A1C2H2]/d[A1C2H2]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2291] += dqdT; // dwdot[A2]/dT
+  J[2294] -= dqdT; // dwdot[A1C2H2]/dT
 
   /*reaction 222: A2 <=> A2- + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[35];
   k_f = 1 * 8.6e+60 * exp(-12.48 * tc[0] - 0.50321666580472 * (148076) * invT);
   dlnkfdT = -12.48 * invT + 0.50321666580472 * (148076) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[45];
   Kc = refC * exp(-g_RT[5] + g_RT[35] - g_RT[45]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[35]) + (h_RT[5] + h_RT[45]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[35] -= q; /* A2 */
-  wdot[45] += q; /* A2- */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[35] -= q; // A2
+  wdot[45] += q; // A2-
+  // d()/d[H]
   dqdci = -k_r * sc[45];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[275] -= dqdci; /* dwdot[A2]/d[H] */
-  J[285] += dqdci; /* dwdot[A2-]/d[H] */
-  /* d()/d[A2] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[275] -= dqdci; // dwdot[A2]/d[H]
+  J[285] += dqdci; // dwdot[A2-]/d[H]
+  // d()/d[A2]
   dqdci = +k_f;
-  J[1685] += dqdci; /* dwdot[H]/d[A2] */
-  J[1715] -= dqdci; /* dwdot[A2]/d[A2] */
-  J[1725] += dqdci; /* dwdot[A2-]/d[A2] */
-  /* d()/d[A2-] */
+  J[1685] += dqdci; // dwdot[H]/d[A2]
+  J[1715] -= dqdci; // dwdot[A2]/d[A2]
+  J[1725] += dqdci; // dwdot[A2-]/d[A2]
+  // d()/d[A2-]
   dqdci = -k_r * sc[5];
-  J[2165] += dqdci; /* dwdot[H]/d[A2-] */
-  J[2195] -= dqdci; /* dwdot[A2]/d[A2-] */
-  J[2205] += dqdci; /* dwdot[A2-]/d[A2-] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2291] -= dqdT; /* dwdot[A2]/dT */
-  J[2301] += dqdT; /* dwdot[A2-]/dT */
+  J[2165] += dqdci; // dwdot[H]/d[A2-]
+  J[2195] -= dqdci; // dwdot[A2]/d[A2-]
+  J[2205] += dqdci; // dwdot[A2-]/d[A2-]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2291] -= dqdT; // dwdot[A2]/dT
+  J[2301] += dqdT; // dwdot[A2-]/dT
 
   /*reaction 223: A2 + H <=> A2- + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[35];
   k_f = 1e-06 * 265000000 *
         exp(1.87 * tc[0] - 0.50321666580472 * (17096.08) * invT);
   dlnkfdT = 1.87 * invT + 0.50321666580472 * (17096.08) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[4] * sc[45];
   Kc = exp(-g_RT[4] + g_RT[5] + g_RT[35] - g_RT[45]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[35]) + (h_RT[4] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[35] -= q; /* A2 */
-  wdot[45] += q; /* A2- */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[35] -= q; // A2
+  wdot[45] += q; // A2-
+  // d()/d[H2]
   dqdci = -k_r * sc[45];
-  J[196] += dqdci; /* dwdot[H2]/d[H2] */
-  J[197] -= dqdci; /* dwdot[H]/d[H2] */
-  J[227] -= dqdci; /* dwdot[A2]/d[H2] */
-  J[237] += dqdci; /* dwdot[A2-]/d[H2] */
-  /* d()/d[H] */
+  J[196] += dqdci; // dwdot[H2]/d[H2]
+  J[197] -= dqdci; // dwdot[H]/d[H2]
+  J[227] -= dqdci; // dwdot[A2]/d[H2]
+  J[237] += dqdci; // dwdot[A2-]/d[H2]
+  // d()/d[H]
   dqdci = +k_f * sc[35];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[275] -= dqdci; /* dwdot[A2]/d[H] */
-  J[285] += dqdci; /* dwdot[A2-]/d[H] */
-  /* d()/d[A2] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[275] -= dqdci; // dwdot[A2]/d[H]
+  J[285] += dqdci; // dwdot[A2-]/d[H]
+  // d()/d[A2]
   dqdci = +k_f * sc[5];
-  J[1684] += dqdci; /* dwdot[H2]/d[A2] */
-  J[1685] -= dqdci; /* dwdot[H]/d[A2] */
-  J[1715] -= dqdci; /* dwdot[A2]/d[A2] */
-  J[1725] += dqdci; /* dwdot[A2-]/d[A2] */
-  /* d()/d[A2-] */
+  J[1684] += dqdci; // dwdot[H2]/d[A2]
+  J[1685] -= dqdci; // dwdot[H]/d[A2]
+  J[1715] -= dqdci; // dwdot[A2]/d[A2]
+  J[1725] += dqdci; // dwdot[A2-]/d[A2]
+  // d()/d[A2-]
   dqdci = -k_r * sc[4];
-  J[2164] += dqdci; /* dwdot[H2]/d[A2-] */
-  J[2165] -= dqdci; /* dwdot[H]/d[A2-] */
-  J[2195] -= dqdci; /* dwdot[A2]/d[A2-] */
-  J[2205] += dqdci; /* dwdot[A2-]/d[A2-] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2291] -= dqdT; /* dwdot[A2]/dT */
-  J[2301] += dqdT; /* dwdot[A2-]/dT */
+  J[2164] += dqdci; // dwdot[H2]/d[A2-]
+  J[2165] -= dqdci; // dwdot[H]/d[A2-]
+  J[2195] -= dqdci; // dwdot[A2]/d[A2-]
+  J[2205] += dqdci; // dwdot[A2-]/d[A2-]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2291] -= dqdT; // dwdot[A2]/dT
+  J[2301] += dqdT; // dwdot[A2-]/dT
 
   /*reaction 224: A2 + OH <=> A2- + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[35];
   k_f = 1e-06 * 963 * exp(3.02 * tc[0] - 0.50321666580472 * (4373.8) * invT);
   dlnkfdT = 3.02 * invT + 0.50321666580472 * (4373.8) * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[7] * sc[45];
   Kc = exp(g_RT[6] - g_RT[7] + g_RT[35] - g_RT[45]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[35]) + (h_RT[7] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[35] -= q; /* A2 */
-  wdot[45] += q; /* A2- */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[35] -= q; // A2
+  wdot[45] += q; // A2-
+  // d()/d[OH]
   dqdci = +k_f * sc[35];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[323] -= dqdci; /* dwdot[A2]/d[OH] */
-  J[333] += dqdci; /* dwdot[A2-]/d[OH] */
-  /* d()/d[H2O] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[323] -= dqdci; // dwdot[A2]/d[OH]
+  J[333] += dqdci; // dwdot[A2-]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[45];
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[371] -= dqdci; /* dwdot[A2]/d[H2O] */
-  J[381] += dqdci; /* dwdot[A2-]/d[H2O] */
-  /* d()/d[A2] */
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[371] -= dqdci; // dwdot[A2]/d[H2O]
+  J[381] += dqdci; // dwdot[A2-]/d[H2O]
+  // d()/d[A2]
   dqdci = +k_f * sc[6];
-  J[1686] -= dqdci; /* dwdot[OH]/d[A2] */
-  J[1687] += dqdci; /* dwdot[H2O]/d[A2] */
-  J[1715] -= dqdci; /* dwdot[A2]/d[A2] */
-  J[1725] += dqdci; /* dwdot[A2-]/d[A2] */
-  /* d()/d[A2-] */
+  J[1686] -= dqdci; // dwdot[OH]/d[A2]
+  J[1687] += dqdci; // dwdot[H2O]/d[A2]
+  J[1715] -= dqdci; // dwdot[A2]/d[A2]
+  J[1725] += dqdci; // dwdot[A2-]/d[A2]
+  // d()/d[A2-]
   dqdci = -k_r * sc[7];
-  J[2166] -= dqdci; /* dwdot[OH]/d[A2-] */
-  J[2167] += dqdci; /* dwdot[H2O]/d[A2-] */
-  J[2195] -= dqdci; /* dwdot[A2]/d[A2-] */
-  J[2205] += dqdci; /* dwdot[A2-]/d[A2-] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2291] -= dqdT; /* dwdot[A2]/dT */
-  J[2301] += dqdT; /* dwdot[A2-]/dT */
+  J[2166] -= dqdci; // dwdot[OH]/d[A2-]
+  J[2167] += dqdci; // dwdot[H2O]/d[A2-]
+  J[2195] -= dqdci; // dwdot[A2]/d[A2-]
+  J[2205] += dqdci; // dwdot[A2-]/d[A2-]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2291] -= dqdT; // dwdot[A2]/dT
+  J[2301] += dqdT; // dwdot[A2-]/dT
 
   amrex::Real c_R[47], dcRdT[47], e_RT[47];
   amrex::Real* eh_RT;
@@ -20121,7 +20119,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   amrex::Real tmp3 = cmixinv * T;
   amrex::Real tmp2 = tmp1 * tmp3;
   amrex::Real dehmixdc;
-  /* dTdot/d[X] */
+  // dTdot/d[X]
   for (int k = 0; k < 47; ++k) {
     dehmixdc = 0.0;
     for (int m = 0; m < 47; ++m) {
@@ -20129,7 +20127,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     }
     J[k * 48 + 47] = tmp2 * c_R[k] - tmp3 * dehmixdc;
   }
-  /* dTdot/dT */
+  // dTdot/dT
   J[2303] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
 }
 
@@ -20146,8 +20144,8 @@ DWDOT_SIMPLIFIED(
 
   aJacobian_precond(J, c, *Tp, *HP);
 
-  /* dwdot[k]/dT */
-  /* dTdot/d[X] */
+  // dwdot[k]/dT
+  // dTdot/d[X]
   for (int k = 0; k < 47; k++) {
     J[2256 + k] *= 1.e-6;
     J[k * 48 + 47] *= 1.e6;
@@ -20171,7 +20169,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   }
 
   const amrex::Real tc[5] = {
-    log(T), T, T * T, T * T * T, T * T * T * T}; /*temperature cache */
+    log(T), T, T * T, T * T * T, T * T * T * T}; // temperature cache
   amrex::Real invT = 1.0 / tc[1];
   amrex::Real invT2 = invT * invT;
 
@@ -20205,24 +20203,24 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   const amrex::Real log10e = 1.0 / log(10.0);
   /*reaction 1: H + O2 (+M) => HO2 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (0.75 - 1) * sc[4] + (11.89 - 1) * sc[7] +
           (0.85 - 1) * sc[8] + (1.09 - 1) * sc[11] + (2.18 - 1) * sc[15];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[8];
   k_f =
     1e-06 * 5120000000000 * exp(0.44 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0.44 * invT + 0.50321666580472 * 0 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 6.33e+19 * exp(-1.4 * tc[0] - 0.50321666580472 * (0) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -1.4 * invT + 0.50321666580472 * (0) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = 0.;
   Fcent2 = 0.5 * exp(-T / 10000000000);
@@ -20243,50 +20241,50 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q; /* H */
-  wdot[8] -= q; /* O2 */
-  wdot[9] += q; /* HO2 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q; // H
+  wdot[8] -= q; // O2
+  wdot[9] += q; // HO2
+  // for convenience
   k_f *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (0.75 - 1) * dcdc_fac;
-    J[197] -= dqdci; /* dwdot[H]/d[H2] */
-    J[200] -= dqdci; /* dwdot[O2]/d[H2] */
-    J[201] += dqdci; /* dwdot[HO2]/d[H2] */
-    /* d()/d[H] */
+    J[197] -= dqdci; // dwdot[H]/d[H2]
+    J[200] -= dqdci; // dwdot[O2]/d[H2]
+    J[201] += dqdci; // dwdot[HO2]/d[H2]
+    // d()/d[H]
     dqdci = +k_f * sc[8];
-    J[245] -= dqdci; /* dwdot[H]/d[H] */
-    J[248] -= dqdci; /* dwdot[O2]/d[H] */
-    J[249] += dqdci; /* dwdot[HO2]/d[H] */
-    /* d()/d[H2O] */
+    J[245] -= dqdci; // dwdot[H]/d[H]
+    J[248] -= dqdci; // dwdot[O2]/d[H]
+    J[249] += dqdci; // dwdot[HO2]/d[H]
+    // d()/d[H2O]
     dqdci = (11.89 - 1) * dcdc_fac;
-    J[341] -= dqdci; /* dwdot[H]/d[H2O] */
-    J[344] -= dqdci; /* dwdot[O2]/d[H2O] */
-    J[345] += dqdci; /* dwdot[HO2]/d[H2O] */
-    /* d()/d[O2] */
+    J[341] -= dqdci; // dwdot[H]/d[H2O]
+    J[344] -= dqdci; // dwdot[O2]/d[H2O]
+    J[345] += dqdci; // dwdot[HO2]/d[H2O]
+    // d()/d[O2]
     dqdci = (0.85 - 1) * dcdc_fac + k_f * sc[5];
-    J[389] -= dqdci; /* dwdot[H]/d[O2] */
-    J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-    J[393] += dqdci; /* dwdot[HO2]/d[O2] */
-    /* d()/d[CO] */
+    J[389] -= dqdci; // dwdot[H]/d[O2]
+    J[392] -= dqdci; // dwdot[O2]/d[O2]
+    J[393] += dqdci; // dwdot[HO2]/d[O2]
+    // d()/d[CO]
     dqdci = (1.09 - 1) * dcdc_fac;
-    J[533] -= dqdci; /* dwdot[H]/d[CO] */
-    J[536] -= dqdci; /* dwdot[O2]/d[CO] */
-    J[537] += dqdci; /* dwdot[HO2]/d[CO] */
-    /* d()/d[CO2] */
+    J[533] -= dqdci; // dwdot[H]/d[CO]
+    J[536] -= dqdci; // dwdot[O2]/d[CO]
+    J[537] += dqdci; // dwdot[HO2]/d[CO]
+    // d()/d[CO2]
     dqdci = (2.18 - 1) * dcdc_fac;
-    J[725] -= dqdci; /* dwdot[H]/d[CO2] */
-    J[728] -= dqdci; /* dwdot[O2]/d[CO2] */
-    J[729] += dqdci; /* dwdot[HO2]/d[CO2] */
+    J[725] -= dqdci; // dwdot[H]/d[CO2]
+    J[728] -= dqdci; // dwdot[O2]/d[CO2]
+    J[729] += dqdci; // dwdot[HO2]/d[CO2]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -20341,30 +20339,30 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 9] += dqdc[k];
     }
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2265] += dqdT; /* dwdot[HO2]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2265] += dqdT; // dwdot[HO2]/dT
 
   /*reaction 2: S-CH2 + H2O (+M) => CH2O + H2 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[7];
   k_f =
     1e-06 * 4.82e+17 * exp(-1.16 * tc[0] - 0.50321666580472 * (1144.84) * invT);
   dlnkfdT = -1.16 * invT + 0.50321666580472 * 1144.84 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 1.88e+38 * exp(-6.36 * tc[0] - 0.50321666580472 * (5040.63) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -6.36 * invT + 0.50321666580472 * (5040.63) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.6027) * exp(-T / 208);
   Fcent2 = 0.6027 * exp(-T / 3922);
@@ -20385,63 +20383,63 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[4] += q;  /* H2 */
-  wdot[7] -= q;  /* H2O */
-  wdot[13] += q; /* CH2O */
-  /* for convenience */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[4] += q;  // H2
+  wdot[7] -= q;  // H2O
+  wdot[13] += q; // CH2O
+  // for convenience
   k_f *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[S-CH2] */
+    // d()/d[S-CH2]
     dqdci = +k_f * sc[7];
-    J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-    J[52] += dqdci; /* dwdot[H2]/d[S-CH2] */
-    J[55] -= dqdci; /* dwdot[H2O]/d[S-CH2] */
-    J[61] += dqdci; /* dwdot[CH2O]/d[S-CH2] */
-    /* d()/d[H2] */
+    J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+    J[52] += dqdci; // dwdot[H2]/d[S-CH2]
+    J[55] -= dqdci; // dwdot[H2O]/d[S-CH2]
+    J[61] += dqdci; // dwdot[CH2O]/d[S-CH2]
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[193] -= dqdci; /* dwdot[S-CH2]/d[H2] */
-    J[196] += dqdci; /* dwdot[H2]/d[H2] */
-    J[199] -= dqdci; /* dwdot[H2O]/d[H2] */
-    J[205] += dqdci; /* dwdot[CH2O]/d[H2] */
-    /* d()/d[H2O] */
+    J[193] -= dqdci; // dwdot[S-CH2]/d[H2]
+    J[196] += dqdci; // dwdot[H2]/d[H2]
+    J[199] -= dqdci; // dwdot[H2O]/d[H2]
+    J[205] += dqdci; // dwdot[CH2O]/d[H2]
+    // d()/d[H2O]
     dqdci = (12 - 1) * dcdc_fac + k_f * sc[1];
-    J[337] -= dqdci; /* dwdot[S-CH2]/d[H2O] */
-    J[340] += dqdci; /* dwdot[H2]/d[H2O] */
-    J[343] -= dqdci; /* dwdot[H2O]/d[H2O] */
-    J[349] += dqdci; /* dwdot[CH2O]/d[H2O] */
-    /* d()/d[CO] */
+    J[337] -= dqdci; // dwdot[S-CH2]/d[H2O]
+    J[340] += dqdci; // dwdot[H2]/d[H2O]
+    J[343] -= dqdci; // dwdot[H2O]/d[H2O]
+    J[349] += dqdci; // dwdot[CH2O]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * dcdc_fac;
-    J[529] -= dqdci; /* dwdot[S-CH2]/d[CO] */
-    J[532] += dqdci; /* dwdot[H2]/d[CO] */
-    J[535] -= dqdci; /* dwdot[H2O]/d[CO] */
-    J[541] += dqdci; /* dwdot[CH2O]/d[CO] */
-    /* d()/d[CO2] */
+    J[529] -= dqdci; // dwdot[S-CH2]/d[CO]
+    J[532] += dqdci; // dwdot[H2]/d[CO]
+    J[535] -= dqdci; // dwdot[H2O]/d[CO]
+    J[541] += dqdci; // dwdot[CH2O]/d[CO]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * dcdc_fac;
-    J[721] -= dqdci; /* dwdot[S-CH2]/d[CO2] */
-    J[724] += dqdci; /* dwdot[H2]/d[CO2] */
-    J[727] -= dqdci; /* dwdot[H2O]/d[CO2] */
-    J[733] += dqdci; /* dwdot[CH2O]/d[CO2] */
-    /* d()/d[CH4] */
+    J[721] -= dqdci; // dwdot[S-CH2]/d[CO2]
+    J[724] += dqdci; // dwdot[H2]/d[CO2]
+    J[727] -= dqdci; // dwdot[H2O]/d[CO2]
+    J[733] += dqdci; // dwdot[CH2O]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * dcdc_fac;
-    J[769] -= dqdci; /* dwdot[S-CH2]/d[CH4] */
-    J[772] += dqdci; /* dwdot[H2]/d[CH4] */
-    J[775] -= dqdci; /* dwdot[H2O]/d[CH4] */
-    J[781] += dqdci; /* dwdot[CH2O]/d[CH4] */
-    /* d()/d[C2H6] */
+    J[769] -= dqdci; // dwdot[S-CH2]/d[CH4]
+    J[772] += dqdci; // dwdot[H2]/d[CH4]
+    J[775] -= dqdci; // dwdot[H2O]/d[CH4]
+    J[781] += dqdci; // dwdot[CH2O]/d[CH4]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac;
-    J[1249] -= dqdci; /* dwdot[S-CH2]/d[C2H6] */
-    J[1252] += dqdci; /* dwdot[H2]/d[C2H6] */
-    J[1255] -= dqdci; /* dwdot[H2O]/d[C2H6] */
-    J[1261] += dqdci; /* dwdot[CH2O]/d[C2H6] */
+    J[1249] -= dqdci; // dwdot[S-CH2]/d[C2H6]
+    J[1252] += dqdci; // dwdot[H2]/d[C2H6]
+    J[1255] -= dqdci; // dwdot[H2O]/d[C2H6]
+    J[1261] += dqdci; // dwdot[CH2O]/d[C2H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac + k_f * sc[7];
@@ -20497,31 +20495,31 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 13] += dqdc[k];
     }
   }
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2263] -= dqdT; /* dwdot[H2O]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2263] -= dqdT; // dwdot[H2O]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
 
   /*reaction 3: CH3 + OH (+M) => CH2O + H2 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[14];
   k_f =
     1e-06 * 2.79e+18 * exp(-1.43 * tc[0] - 0.50321666580472 * (1331.26) * invT);
   dlnkfdT = -1.43 * invT + 0.50321666580472 * 1331.26 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 4e+36 * exp(-5.92 * tc[0] - 0.50321666580472 * (3140.54) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -5.92 * invT + 0.50321666580472 * (3140.54) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.412) * exp(-T / 195);
   Fcent2 = 0.412 * exp(-T / 5900);
@@ -20542,69 +20540,69 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[6] -= q;  /* OH */
-  wdot[13] += q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  /* for convenience */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[6] -= q;  // OH
+  wdot[13] += q; // CH2O
+  wdot[14] -= q; // CH3
+  // for convenience
   k_f *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[196] += dqdci; /* dwdot[H2]/d[H2] */
-    J[198] -= dqdci; /* dwdot[OH]/d[H2] */
-    J[205] += dqdci; /* dwdot[CH2O]/d[H2] */
-    J[206] -= dqdci; /* dwdot[CH3]/d[H2] */
-    /* d()/d[OH] */
+    J[196] += dqdci; // dwdot[H2]/d[H2]
+    J[198] -= dqdci; // dwdot[OH]/d[H2]
+    J[205] += dqdci; // dwdot[CH2O]/d[H2]
+    J[206] -= dqdci; // dwdot[CH3]/d[H2]
+    // d()/d[OH]
     dqdci = +k_f * sc[14];
-    J[292] += dqdci; /* dwdot[H2]/d[OH] */
-    J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-    J[301] += dqdci; /* dwdot[CH2O]/d[OH] */
-    J[302] -= dqdci; /* dwdot[CH3]/d[OH] */
-    /* d()/d[H2O] */
+    J[292] += dqdci; // dwdot[H2]/d[OH]
+    J[294] -= dqdci; // dwdot[OH]/d[OH]
+    J[301] += dqdci; // dwdot[CH2O]/d[OH]
+    J[302] -= dqdci; // dwdot[CH3]/d[OH]
+    // d()/d[H2O]
     dqdci = (12 - 1) * dcdc_fac;
-    J[340] += dqdci; /* dwdot[H2]/d[H2O] */
-    J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-    J[349] += dqdci; /* dwdot[CH2O]/d[H2O] */
-    J[350] -= dqdci; /* dwdot[CH3]/d[H2O] */
-    /* d()/d[CO] */
+    J[340] += dqdci; // dwdot[H2]/d[H2O]
+    J[342] -= dqdci; // dwdot[OH]/d[H2O]
+    J[349] += dqdci; // dwdot[CH2O]/d[H2O]
+    J[350] -= dqdci; // dwdot[CH3]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * dcdc_fac;
-    J[532] += dqdci; /* dwdot[H2]/d[CO] */
-    J[534] -= dqdci; /* dwdot[OH]/d[CO] */
-    J[541] += dqdci; /* dwdot[CH2O]/d[CO] */
-    J[542] -= dqdci; /* dwdot[CH3]/d[CO] */
-    /* d()/d[CH3] */
+    J[532] += dqdci; // dwdot[H2]/d[CO]
+    J[534] -= dqdci; // dwdot[OH]/d[CO]
+    J[541] += dqdci; // dwdot[CH2O]/d[CO]
+    J[542] -= dqdci; // dwdot[CH3]/d[CO]
+    // d()/d[CH3]
     dqdci = +k_f * sc[6];
-    J[676] += dqdci; /* dwdot[H2]/d[CH3] */
-    J[678] -= dqdci; /* dwdot[OH]/d[CH3] */
-    J[685] += dqdci; /* dwdot[CH2O]/d[CH3] */
-    J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-    /* d()/d[CO2] */
+    J[676] += dqdci; // dwdot[H2]/d[CH3]
+    J[678] -= dqdci; // dwdot[OH]/d[CH3]
+    J[685] += dqdci; // dwdot[CH2O]/d[CH3]
+    J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * dcdc_fac;
-    J[724] += dqdci; /* dwdot[H2]/d[CO2] */
-    J[726] -= dqdci; /* dwdot[OH]/d[CO2] */
-    J[733] += dqdci; /* dwdot[CH2O]/d[CO2] */
-    J[734] -= dqdci; /* dwdot[CH3]/d[CO2] */
-    /* d()/d[CH4] */
+    J[724] += dqdci; // dwdot[H2]/d[CO2]
+    J[726] -= dqdci; // dwdot[OH]/d[CO2]
+    J[733] += dqdci; // dwdot[CH2O]/d[CO2]
+    J[734] -= dqdci; // dwdot[CH3]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * dcdc_fac;
-    J[772] += dqdci; /* dwdot[H2]/d[CH4] */
-    J[774] -= dqdci; /* dwdot[OH]/d[CH4] */
-    J[781] += dqdci; /* dwdot[CH2O]/d[CH4] */
-    J[782] -= dqdci; /* dwdot[CH3]/d[CH4] */
-    /* d()/d[C2H6] */
+    J[772] += dqdci; // dwdot[H2]/d[CH4]
+    J[774] -= dqdci; // dwdot[OH]/d[CH4]
+    J[781] += dqdci; // dwdot[CH2O]/d[CH4]
+    J[782] -= dqdci; // dwdot[CH3]/d[CH4]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac;
-    J[1252] += dqdci; /* dwdot[H2]/d[C2H6] */
-    J[1254] -= dqdci; /* dwdot[OH]/d[C2H6] */
-    J[1261] += dqdci; /* dwdot[CH2O]/d[C2H6] */
-    J[1262] -= dqdci; /* dwdot[CH3]/d[C2H6] */
+    J[1252] += dqdci; // dwdot[H2]/d[C2H6]
+    J[1254] -= dqdci; // dwdot[OH]/d[C2H6]
+    J[1261] += dqdci; // dwdot[CH2O]/d[C2H6]
+    J[1262] -= dqdci; // dwdot[CH3]/d[C2H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -20660,31 +20658,31 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 14] -= dqdc[k];
     }
   }
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 4: CO + O (+M) => CO2 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[11];
   k_f =
     1e-06 * 13600000000 * exp(0 * tc[0] - 0.50321666580472 * (2385.28) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 2385.28 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 1.17e+24 * exp(-2.79 * tc[0] - 0.50321666580472 * (4192.16) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -2.79 * invT + 0.50321666580472 * (4192.16) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 1) * exp(-T / 1);
   Fcent2 = 1 * exp(-T / 10000000);
@@ -20705,55 +20703,55 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[11] -= q; /* CO */
-  wdot[15] += q; /* CO2 */
-  /* for convenience */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[11] -= q; // CO
+  wdot[15] += q; // CO2
+  // for convenience
   k_f *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[O] */
+    // d()/d[O]
     dqdci = +k_f * sc[11];
-    J[147] -= dqdci; /* dwdot[O]/d[O] */
-    J[155] -= dqdci; /* dwdot[CO]/d[O] */
-    J[159] += dqdci; /* dwdot[CO2]/d[O] */
-    /* d()/d[H2] */
+    J[147] -= dqdci; // dwdot[O]/d[O]
+    J[155] -= dqdci; // dwdot[CO]/d[O]
+    J[159] += dqdci; // dwdot[CO2]/d[O]
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[195] -= dqdci; /* dwdot[O]/d[H2] */
-    J[203] -= dqdci; /* dwdot[CO]/d[H2] */
-    J[207] += dqdci; /* dwdot[CO2]/d[H2] */
-    /* d()/d[H2O] */
+    J[195] -= dqdci; // dwdot[O]/d[H2]
+    J[203] -= dqdci; // dwdot[CO]/d[H2]
+    J[207] += dqdci; // dwdot[CO2]/d[H2]
+    // d()/d[H2O]
     dqdci = (12 - 1) * dcdc_fac;
-    J[339] -= dqdci; /* dwdot[O]/d[H2O] */
-    J[347] -= dqdci; /* dwdot[CO]/d[H2O] */
-    J[351] += dqdci; /* dwdot[CO2]/d[H2O] */
-    /* d()/d[CO] */
+    J[339] -= dqdci; // dwdot[O]/d[H2O]
+    J[347] -= dqdci; // dwdot[CO]/d[H2O]
+    J[351] += dqdci; // dwdot[CO2]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * dcdc_fac + k_f * sc[3];
-    J[531] -= dqdci; /* dwdot[O]/d[CO] */
-    J[539] -= dqdci; /* dwdot[CO]/d[CO] */
-    J[543] += dqdci; /* dwdot[CO2]/d[CO] */
-    /* d()/d[CO2] */
+    J[531] -= dqdci; // dwdot[O]/d[CO]
+    J[539] -= dqdci; // dwdot[CO]/d[CO]
+    J[543] += dqdci; // dwdot[CO2]/d[CO]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * dcdc_fac;
-    J[723] -= dqdci; /* dwdot[O]/d[CO2] */
-    J[731] -= dqdci; /* dwdot[CO]/d[CO2] */
-    J[735] += dqdci; /* dwdot[CO2]/d[CO2] */
-    /* d()/d[CH4] */
+    J[723] -= dqdci; // dwdot[O]/d[CO2]
+    J[731] -= dqdci; // dwdot[CO]/d[CO2]
+    J[735] += dqdci; // dwdot[CO2]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * dcdc_fac;
-    J[771] -= dqdci; /* dwdot[O]/d[CH4] */
-    J[779] -= dqdci; /* dwdot[CO]/d[CH4] */
-    J[783] += dqdci; /* dwdot[CO2]/d[CH4] */
-    /* d()/d[C2H6] */
+    J[771] -= dqdci; // dwdot[O]/d[CH4]
+    J[779] -= dqdci; // dwdot[CO]/d[CH4]
+    J[783] += dqdci; // dwdot[CO2]/d[CH4]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac;
-    J[1251] -= dqdci; /* dwdot[O]/d[C2H6] */
-    J[1259] -= dqdci; /* dwdot[CO]/d[C2H6] */
-    J[1263] += dqdci; /* dwdot[CO2]/d[C2H6] */
+    J[1251] -= dqdci; // dwdot[O]/d[C2H6]
+    J[1259] -= dqdci; // dwdot[CO]/d[C2H6]
+    J[1263] += dqdci; // dwdot[CO2]/d[C2H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -20808,29 +20806,29 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 15] += dqdc[k];
     }
   }
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] -= dqdT; /* dwdot[CO]/dT */
-  J[2271] += dqdT; /* dwdot[CO2]/dT */
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] -= dqdT; // dwdot[CO]/dT
+  J[2271] += dqdT; // dwdot[CO2]/dT
 
   /*reaction 5: C2H2 + H (+M) <=> C2H3 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[22];
   k_f = 1e-06 * 17100000000 *
         exp(1.27 * tc[0] - 0.50321666580472 * (2707.93) * invT);
   dlnkfdT = 1.27 * invT + 0.50321666580472 * 2707.93 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 6.34e+31 * exp(-4.66 * tc[0] - 0.50321666580472 * (3781.07) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -4.66 * invT + 0.50321666580472 * (3781.07) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.2122) * exp(-T / 1);
   Fcent2 = 0.2122 * exp(-T / -10210);
@@ -20850,72 +20848,72 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = sc[17];
   Kc = refCinv * exp(g_RT[5] - g_RT[17] + g_RT[22]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[22]) + (h_RT[17]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[17] += q; /* C2H3 */
-  wdot[22] -= q; /* C2H2 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[17] += q; // C2H3
+  wdot[22] -= q; // C2H2
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[197] -= dqdci; /* dwdot[H]/d[H2] */
-    J[209] += dqdci; /* dwdot[C2H3]/d[H2] */
-    J[214] -= dqdci; /* dwdot[C2H2]/d[H2] */
-    /* d()/d[H] */
+    J[197] -= dqdci; // dwdot[H]/d[H2]
+    J[209] += dqdci; // dwdot[C2H3]/d[H2]
+    J[214] -= dqdci; // dwdot[C2H2]/d[H2]
+    // d()/d[H]
     dqdci = +k_f * sc[22];
-    J[245] -= dqdci; /* dwdot[H]/d[H] */
-    J[257] += dqdci; /* dwdot[C2H3]/d[H] */
-    J[262] -= dqdci; /* dwdot[C2H2]/d[H] */
-    /* d()/d[H2O] */
+    J[245] -= dqdci; // dwdot[H]/d[H]
+    J[257] += dqdci; // dwdot[C2H3]/d[H]
+    J[262] -= dqdci; // dwdot[C2H2]/d[H]
+    // d()/d[H2O]
     dqdci = (12 - 1) * dcdc_fac;
-    J[341] -= dqdci; /* dwdot[H]/d[H2O] */
-    J[353] += dqdci; /* dwdot[C2H3]/d[H2O] */
-    J[358] -= dqdci; /* dwdot[C2H2]/d[H2O] */
-    /* d()/d[CO] */
+    J[341] -= dqdci; // dwdot[H]/d[H2O]
+    J[353] += dqdci; // dwdot[C2H3]/d[H2O]
+    J[358] -= dqdci; // dwdot[C2H2]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * dcdc_fac;
-    J[533] -= dqdci; /* dwdot[H]/d[CO] */
-    J[545] += dqdci; /* dwdot[C2H3]/d[CO] */
-    J[550] -= dqdci; /* dwdot[C2H2]/d[CO] */
-    /* d()/d[CO2] */
+    J[533] -= dqdci; // dwdot[H]/d[CO]
+    J[545] += dqdci; // dwdot[C2H3]/d[CO]
+    J[550] -= dqdci; // dwdot[C2H2]/d[CO]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * dcdc_fac;
-    J[725] -= dqdci; /* dwdot[H]/d[CO2] */
-    J[737] += dqdci; /* dwdot[C2H3]/d[CO2] */
-    J[742] -= dqdci; /* dwdot[C2H2]/d[CO2] */
-    /* d()/d[CH4] */
+    J[725] -= dqdci; // dwdot[H]/d[CO2]
+    J[737] += dqdci; // dwdot[C2H3]/d[CO2]
+    J[742] -= dqdci; // dwdot[C2H2]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * dcdc_fac;
-    J[773] -= dqdci; /* dwdot[H]/d[CH4] */
-    J[785] += dqdci; /* dwdot[C2H3]/d[CH4] */
-    J[790] -= dqdci; /* dwdot[C2H2]/d[CH4] */
-    /* d()/d[C2H3] */
+    J[773] -= dqdci; // dwdot[H]/d[CH4]
+    J[785] += dqdci; // dwdot[C2H3]/d[CH4]
+    J[790] -= dqdci; // dwdot[C2H2]/d[CH4]
+    // d()/d[C2H3]
     dqdci = -k_r;
-    J[821] -= dqdci; /* dwdot[H]/d[C2H3] */
-    J[833] += dqdci; /* dwdot[C2H3]/d[C2H3] */
-    J[838] -= dqdci; /* dwdot[C2H2]/d[C2H3] */
-    /* d()/d[C2H2] */
+    J[821] -= dqdci; // dwdot[H]/d[C2H3]
+    J[833] += dqdci; // dwdot[C2H3]/d[C2H3]
+    J[838] -= dqdci; // dwdot[C2H2]/d[C2H3]
+    // d()/d[C2H2]
     dqdci = +k_f * sc[5];
-    J[1061] -= dqdci; /* dwdot[H]/d[C2H2] */
-    J[1073] += dqdci; /* dwdot[C2H3]/d[C2H2] */
-    J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-    /* d()/d[C2H6] */
+    J[1061] -= dqdci; // dwdot[H]/d[C2H2]
+    J[1073] += dqdci; // dwdot[C2H3]/d[C2H2]
+    J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac;
-    J[1253] -= dqdci; /* dwdot[H]/d[C2H6] */
-    J[1265] += dqdci; /* dwdot[C2H3]/d[C2H6] */
-    J[1270] -= dqdci; /* dwdot[C2H2]/d[C2H6] */
+    J[1253] -= dqdci; // dwdot[H]/d[C2H6]
+    J[1265] += dqdci; // dwdot[C2H3]/d[C2H6]
+    J[1270] -= dqdci; // dwdot[C2H2]/d[C2H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -20970,30 +20968,30 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 22] -= dqdc[k];
     }
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 6: C2H3 + H (+M) => C2H4 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[17];
   k_f = 1e-06 * 6080000000000 *
         exp(0.27 * tc[0] - 0.50321666580472 * (279.64) * invT);
   dlnkfdT = 0.27 * invT + 0.50321666580472 * 279.64 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 1.4e+30 * exp(-3.86 * tc[0] - 0.50321666580472 * (3319.79) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -3.86 * invT + 0.50321666580472 * (3319.79) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.782) * exp(-T / 207.5);
   Fcent2 = 0.782 * exp(-T / 2663);
@@ -21014,60 +21012,60 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[17] -= q; /* C2H3 */
-  wdot[18] += q; /* C2H4 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[17] -= q; // C2H3
+  wdot[18] += q; // C2H4
+  // for convenience
   k_f *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[197] -= dqdci; /* dwdot[H]/d[H2] */
-    J[209] -= dqdci; /* dwdot[C2H3]/d[H2] */
-    J[210] += dqdci; /* dwdot[C2H4]/d[H2] */
-    /* d()/d[H] */
+    J[197] -= dqdci; // dwdot[H]/d[H2]
+    J[209] -= dqdci; // dwdot[C2H3]/d[H2]
+    J[210] += dqdci; // dwdot[C2H4]/d[H2]
+    // d()/d[H]
     dqdci = +k_f * sc[17];
-    J[245] -= dqdci; /* dwdot[H]/d[H] */
-    J[257] -= dqdci; /* dwdot[C2H3]/d[H] */
-    J[258] += dqdci; /* dwdot[C2H4]/d[H] */
-    /* d()/d[H2O] */
+    J[245] -= dqdci; // dwdot[H]/d[H]
+    J[257] -= dqdci; // dwdot[C2H3]/d[H]
+    J[258] += dqdci; // dwdot[C2H4]/d[H]
+    // d()/d[H2O]
     dqdci = (12 - 1) * dcdc_fac;
-    J[341] -= dqdci; /* dwdot[H]/d[H2O] */
-    J[353] -= dqdci; /* dwdot[C2H3]/d[H2O] */
-    J[354] += dqdci; /* dwdot[C2H4]/d[H2O] */
-    /* d()/d[CO] */
+    J[341] -= dqdci; // dwdot[H]/d[H2O]
+    J[353] -= dqdci; // dwdot[C2H3]/d[H2O]
+    J[354] += dqdci; // dwdot[C2H4]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * dcdc_fac;
-    J[533] -= dqdci; /* dwdot[H]/d[CO] */
-    J[545] -= dqdci; /* dwdot[C2H3]/d[CO] */
-    J[546] += dqdci; /* dwdot[C2H4]/d[CO] */
-    /* d()/d[CO2] */
+    J[533] -= dqdci; // dwdot[H]/d[CO]
+    J[545] -= dqdci; // dwdot[C2H3]/d[CO]
+    J[546] += dqdci; // dwdot[C2H4]/d[CO]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * dcdc_fac;
-    J[725] -= dqdci; /* dwdot[H]/d[CO2] */
-    J[737] -= dqdci; /* dwdot[C2H3]/d[CO2] */
-    J[738] += dqdci; /* dwdot[C2H4]/d[CO2] */
-    /* d()/d[CH4] */
+    J[725] -= dqdci; // dwdot[H]/d[CO2]
+    J[737] -= dqdci; // dwdot[C2H3]/d[CO2]
+    J[738] += dqdci; // dwdot[C2H4]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * dcdc_fac;
-    J[773] -= dqdci; /* dwdot[H]/d[CH4] */
-    J[785] -= dqdci; /* dwdot[C2H3]/d[CH4] */
-    J[786] += dqdci; /* dwdot[C2H4]/d[CH4] */
-    /* d()/d[C2H3] */
+    J[773] -= dqdci; // dwdot[H]/d[CH4]
+    J[785] -= dqdci; // dwdot[C2H3]/d[CH4]
+    J[786] += dqdci; // dwdot[C2H4]/d[CH4]
+    // d()/d[C2H3]
     dqdci = +k_f * sc[5];
-    J[821] -= dqdci; /* dwdot[H]/d[C2H3] */
-    J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-    J[834] += dqdci; /* dwdot[C2H4]/d[C2H3] */
-    /* d()/d[C2H6] */
+    J[821] -= dqdci; // dwdot[H]/d[C2H3]
+    J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+    J[834] += dqdci; // dwdot[C2H4]/d[C2H3]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac;
-    J[1253] -= dqdci; /* dwdot[H]/d[C2H6] */
-    J[1265] -= dqdci; /* dwdot[C2H3]/d[C2H6] */
-    J[1266] += dqdci; /* dwdot[C2H4]/d[C2H6] */
+    J[1253] -= dqdci; // dwdot[H]/d[C2H6]
+    J[1265] -= dqdci; // dwdot[C2H3]/d[C2H6]
+    J[1266] += dqdci; // dwdot[C2H4]/d[C2H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -21122,29 +21120,29 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 18] += dqdc[k];
     }
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
 
   /*reaction 7: C2H4 + H (+M) <=> C2H5 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[18];
   k_f = 1e-06 * 1370000000 *
         exp(1.46 * tc[0] - 0.50321666580472 * (1355.16) * invT);
   dlnkfdT = 1.46 * invT + 0.50321666580472 * 1355.16 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 2.03e+39 * exp(-6.64 * tc[0] - 0.50321666580472 * (5769.6) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -6.64 * invT + 0.50321666580472 * (5769.6) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. + 0.569) * exp(-T / 299);
   Fcent2 = -0.569 * exp(-T / -9147);
@@ -21165,72 +21163,72 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = sc[19];
   Kc = refCinv * exp(g_RT[5] + g_RT[18] - g_RT[19]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[18]) + (h_RT[19]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[18] -= q; /* C2H4 */
-  wdot[19] += q; /* C2H5 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[18] -= q; // C2H4
+  wdot[19] += q; // C2H5
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[197] -= dqdci; /* dwdot[H]/d[H2] */
-    J[210] -= dqdci; /* dwdot[C2H4]/d[H2] */
-    J[211] += dqdci; /* dwdot[C2H5]/d[H2] */
-    /* d()/d[H] */
+    J[197] -= dqdci; // dwdot[H]/d[H2]
+    J[210] -= dqdci; // dwdot[C2H4]/d[H2]
+    J[211] += dqdci; // dwdot[C2H5]/d[H2]
+    // d()/d[H]
     dqdci = +k_f * sc[18];
-    J[245] -= dqdci; /* dwdot[H]/d[H] */
-    J[258] -= dqdci; /* dwdot[C2H4]/d[H] */
-    J[259] += dqdci; /* dwdot[C2H5]/d[H] */
-    /* d()/d[H2O] */
+    J[245] -= dqdci; // dwdot[H]/d[H]
+    J[258] -= dqdci; // dwdot[C2H4]/d[H]
+    J[259] += dqdci; // dwdot[C2H5]/d[H]
+    // d()/d[H2O]
     dqdci = (12 - 1) * dcdc_fac;
-    J[341] -= dqdci; /* dwdot[H]/d[H2O] */
-    J[354] -= dqdci; /* dwdot[C2H4]/d[H2O] */
-    J[355] += dqdci; /* dwdot[C2H5]/d[H2O] */
-    /* d()/d[CO] */
+    J[341] -= dqdci; // dwdot[H]/d[H2O]
+    J[354] -= dqdci; // dwdot[C2H4]/d[H2O]
+    J[355] += dqdci; // dwdot[C2H5]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * dcdc_fac;
-    J[533] -= dqdci; /* dwdot[H]/d[CO] */
-    J[546] -= dqdci; /* dwdot[C2H4]/d[CO] */
-    J[547] += dqdci; /* dwdot[C2H5]/d[CO] */
-    /* d()/d[CO2] */
+    J[533] -= dqdci; // dwdot[H]/d[CO]
+    J[546] -= dqdci; // dwdot[C2H4]/d[CO]
+    J[547] += dqdci; // dwdot[C2H5]/d[CO]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * dcdc_fac;
-    J[725] -= dqdci; /* dwdot[H]/d[CO2] */
-    J[738] -= dqdci; /* dwdot[C2H4]/d[CO2] */
-    J[739] += dqdci; /* dwdot[C2H5]/d[CO2] */
-    /* d()/d[CH4] */
+    J[725] -= dqdci; // dwdot[H]/d[CO2]
+    J[738] -= dqdci; // dwdot[C2H4]/d[CO2]
+    J[739] += dqdci; // dwdot[C2H5]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * dcdc_fac;
-    J[773] -= dqdci; /* dwdot[H]/d[CH4] */
-    J[786] -= dqdci; /* dwdot[C2H4]/d[CH4] */
-    J[787] += dqdci; /* dwdot[C2H5]/d[CH4] */
-    /* d()/d[C2H4] */
+    J[773] -= dqdci; // dwdot[H]/d[CH4]
+    J[786] -= dqdci; // dwdot[C2H4]/d[CH4]
+    J[787] += dqdci; // dwdot[C2H5]/d[CH4]
+    // d()/d[C2H4]
     dqdci = +k_f * sc[5];
-    J[869] -= dqdci; /* dwdot[H]/d[C2H4] */
-    J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-    J[883] += dqdci; /* dwdot[C2H5]/d[C2H4] */
-    /* d()/d[C2H5] */
+    J[869] -= dqdci; // dwdot[H]/d[C2H4]
+    J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+    J[883] += dqdci; // dwdot[C2H5]/d[C2H4]
+    // d()/d[C2H5]
     dqdci = -k_r;
-    J[917] -= dqdci; /* dwdot[H]/d[C2H5] */
-    J[930] -= dqdci; /* dwdot[C2H4]/d[C2H5] */
-    J[931] += dqdci; /* dwdot[C2H5]/d[C2H5] */
-    /* d()/d[C2H6] */
+    J[917] -= dqdci; // dwdot[H]/d[C2H5]
+    J[930] -= dqdci; // dwdot[C2H4]/d[C2H5]
+    J[931] += dqdci; // dwdot[C2H5]/d[C2H5]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac;
-    J[1253] -= dqdci; /* dwdot[H]/d[C2H6] */
-    J[1266] -= dqdci; /* dwdot[C2H4]/d[C2H6] */
-    J[1267] += dqdci; /* dwdot[C2H5]/d[C2H6] */
+    J[1253] -= dqdci; // dwdot[H]/d[C2H6]
+    J[1266] -= dqdci; // dwdot[C2H4]/d[C2H6]
+    J[1267] += dqdci; // dwdot[C2H5]/d[C2H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -21285,29 +21283,29 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 19] += dqdc[k];
     }
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
 
   /*reaction 8: C2H4 + CH3 (+M) <=> N-C3H7 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[18];
   k_f =
     1e-06 * 2550000 * exp(1.6 * tc[0] - 0.50321666580472 * (5700.29) * invT);
   dlnkfdT = 1.6 * invT + 0.50321666580472 * 5700.29 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 3e+63 * exp(-14.6 * tc[0] - 0.50321666580472 * (18169.22) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -14.6 * invT + 0.50321666580472 * (18169.22) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.1894) * exp(-T / 277);
   Fcent2 = 0.1894 * exp(-T / 8748);
@@ -21328,72 +21326,72 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = sc[25];
   Kc = refCinv * exp(g_RT[14] + g_RT[18] - g_RT[25]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[14] + h_RT[18]) + (h_RT[25]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[18] -= q; /* C2H4 */
-  wdot[25] += q; /* N-C3H7 */
-  /* for convenience */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[18] -= q; // C2H4
+  wdot[25] += q; // N-C3H7
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[206] -= dqdci; /* dwdot[CH3]/d[H2] */
-    J[210] -= dqdci; /* dwdot[C2H4]/d[H2] */
-    J[217] += dqdci; /* dwdot[N-C3H7]/d[H2] */
-    /* d()/d[H2O] */
+    J[206] -= dqdci; // dwdot[CH3]/d[H2]
+    J[210] -= dqdci; // dwdot[C2H4]/d[H2]
+    J[217] += dqdci; // dwdot[N-C3H7]/d[H2]
+    // d()/d[H2O]
     dqdci = (12 - 1) * dcdc_fac;
-    J[350] -= dqdci; /* dwdot[CH3]/d[H2O] */
-    J[354] -= dqdci; /* dwdot[C2H4]/d[H2O] */
-    J[361] += dqdci; /* dwdot[N-C3H7]/d[H2O] */
-    /* d()/d[CO] */
+    J[350] -= dqdci; // dwdot[CH3]/d[H2O]
+    J[354] -= dqdci; // dwdot[C2H4]/d[H2O]
+    J[361] += dqdci; // dwdot[N-C3H7]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * dcdc_fac;
-    J[542] -= dqdci; /* dwdot[CH3]/d[CO] */
-    J[546] -= dqdci; /* dwdot[C2H4]/d[CO] */
-    J[553] += dqdci; /* dwdot[N-C3H7]/d[CO] */
-    /* d()/d[CH3] */
+    J[542] -= dqdci; // dwdot[CH3]/d[CO]
+    J[546] -= dqdci; // dwdot[C2H4]/d[CO]
+    J[553] += dqdci; // dwdot[N-C3H7]/d[CO]
+    // d()/d[CH3]
     dqdci = +k_f * sc[18];
-    J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-    J[690] -= dqdci; /* dwdot[C2H4]/d[CH3] */
-    J[697] += dqdci; /* dwdot[N-C3H7]/d[CH3] */
-    /* d()/d[CO2] */
+    J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+    J[690] -= dqdci; // dwdot[C2H4]/d[CH3]
+    J[697] += dqdci; // dwdot[N-C3H7]/d[CH3]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * dcdc_fac;
-    J[734] -= dqdci; /* dwdot[CH3]/d[CO2] */
-    J[738] -= dqdci; /* dwdot[C2H4]/d[CO2] */
-    J[745] += dqdci; /* dwdot[N-C3H7]/d[CO2] */
-    /* d()/d[CH4] */
+    J[734] -= dqdci; // dwdot[CH3]/d[CO2]
+    J[738] -= dqdci; // dwdot[C2H4]/d[CO2]
+    J[745] += dqdci; // dwdot[N-C3H7]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * dcdc_fac;
-    J[782] -= dqdci; /* dwdot[CH3]/d[CH4] */
-    J[786] -= dqdci; /* dwdot[C2H4]/d[CH4] */
-    J[793] += dqdci; /* dwdot[N-C3H7]/d[CH4] */
-    /* d()/d[C2H4] */
+    J[782] -= dqdci; // dwdot[CH3]/d[CH4]
+    J[786] -= dqdci; // dwdot[C2H4]/d[CH4]
+    J[793] += dqdci; // dwdot[N-C3H7]/d[CH4]
+    // d()/d[C2H4]
     dqdci = +k_f * sc[14];
-    J[878] -= dqdci; /* dwdot[CH3]/d[C2H4] */
-    J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-    J[889] += dqdci; /* dwdot[N-C3H7]/d[C2H4] */
-    /* d()/d[N-C3H7] */
+    J[878] -= dqdci; // dwdot[CH3]/d[C2H4]
+    J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+    J[889] += dqdci; // dwdot[N-C3H7]/d[C2H4]
+    // d()/d[N-C3H7]
     dqdci = -k_r;
-    J[1214] -= dqdci; /* dwdot[CH3]/d[N-C3H7] */
-    J[1218] -= dqdci; /* dwdot[C2H4]/d[N-C3H7] */
-    J[1225] += dqdci; /* dwdot[N-C3H7]/d[N-C3H7] */
-    /* d()/d[C2H6] */
+    J[1214] -= dqdci; // dwdot[CH3]/d[N-C3H7]
+    J[1218] -= dqdci; // dwdot[C2H4]/d[N-C3H7]
+    J[1225] += dqdci; // dwdot[N-C3H7]/d[N-C3H7]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac;
-    J[1262] -= dqdci; /* dwdot[CH3]/d[C2H6] */
-    J[1266] -= dqdci; /* dwdot[C2H4]/d[C2H6] */
-    J[1273] += dqdci; /* dwdot[N-C3H7]/d[C2H6] */
+    J[1262] -= dqdci; // dwdot[CH3]/d[C2H6]
+    J[1266] -= dqdci; // dwdot[C2H4]/d[C2H6]
+    J[1273] += dqdci; // dwdot[N-C3H7]/d[C2H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -21448,29 +21446,29 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 25] += dqdc[k];
     }
   }
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
-  J[2281] += dqdT; /* dwdot[N-C3H7]/dT */
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
+  J[2281] += dqdT; // dwdot[N-C3H7]/dT
 
   /*reaction 9: C2H5 + H (+M) <=> C2H6 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[19];
   k_f =
     1e-06 * 5.21e+17 * exp(-0.99 * tc[0] - 0.50321666580472 * (1579.83) * invT);
   dlnkfdT = -0.99 * invT + 0.50321666580472 * 1579.83 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 1.99e+41 * exp(-7.08 * tc[0] - 0.50321666580472 * (6684.99) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -7.08 * invT + 0.50321666580472 * (6684.99) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.8422) * exp(-T / 125);
   Fcent2 = 0.8422 * exp(-T / 2219);
@@ -21491,67 +21489,67 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = sc[26];
   Kc = refCinv * exp(g_RT[5] + g_RT[19] - g_RT[26]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[19]) + (h_RT[26]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[19] -= q; /* C2H5 */
-  wdot[26] += q; /* C2H6 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[19] -= q; // C2H5
+  wdot[26] += q; // C2H6
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[197] -= dqdci; /* dwdot[H]/d[H2] */
-    J[211] -= dqdci; /* dwdot[C2H5]/d[H2] */
-    J[218] += dqdci; /* dwdot[C2H6]/d[H2] */
-    /* d()/d[H] */
+    J[197] -= dqdci; // dwdot[H]/d[H2]
+    J[211] -= dqdci; // dwdot[C2H5]/d[H2]
+    J[218] += dqdci; // dwdot[C2H6]/d[H2]
+    // d()/d[H]
     dqdci = +k_f * sc[19];
-    J[245] -= dqdci; /* dwdot[H]/d[H] */
-    J[259] -= dqdci; /* dwdot[C2H5]/d[H] */
-    J[266] += dqdci; /* dwdot[C2H6]/d[H] */
-    /* d()/d[H2O] */
+    J[245] -= dqdci; // dwdot[H]/d[H]
+    J[259] -= dqdci; // dwdot[C2H5]/d[H]
+    J[266] += dqdci; // dwdot[C2H6]/d[H]
+    // d()/d[H2O]
     dqdci = (12 - 1) * dcdc_fac;
-    J[341] -= dqdci; /* dwdot[H]/d[H2O] */
-    J[355] -= dqdci; /* dwdot[C2H5]/d[H2O] */
-    J[362] += dqdci; /* dwdot[C2H6]/d[H2O] */
-    /* d()/d[CO] */
+    J[341] -= dqdci; // dwdot[H]/d[H2O]
+    J[355] -= dqdci; // dwdot[C2H5]/d[H2O]
+    J[362] += dqdci; // dwdot[C2H6]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * dcdc_fac;
-    J[533] -= dqdci; /* dwdot[H]/d[CO] */
-    J[547] -= dqdci; /* dwdot[C2H5]/d[CO] */
-    J[554] += dqdci; /* dwdot[C2H6]/d[CO] */
-    /* d()/d[CO2] */
+    J[533] -= dqdci; // dwdot[H]/d[CO]
+    J[547] -= dqdci; // dwdot[C2H5]/d[CO]
+    J[554] += dqdci; // dwdot[C2H6]/d[CO]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * dcdc_fac;
-    J[725] -= dqdci; /* dwdot[H]/d[CO2] */
-    J[739] -= dqdci; /* dwdot[C2H5]/d[CO2] */
-    J[746] += dqdci; /* dwdot[C2H6]/d[CO2] */
-    /* d()/d[CH4] */
+    J[725] -= dqdci; // dwdot[H]/d[CO2]
+    J[739] -= dqdci; // dwdot[C2H5]/d[CO2]
+    J[746] += dqdci; // dwdot[C2H6]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * dcdc_fac;
-    J[773] -= dqdci; /* dwdot[H]/d[CH4] */
-    J[787] -= dqdci; /* dwdot[C2H5]/d[CH4] */
-    J[794] += dqdci; /* dwdot[C2H6]/d[CH4] */
-    /* d()/d[C2H5] */
+    J[773] -= dqdci; // dwdot[H]/d[CH4]
+    J[787] -= dqdci; // dwdot[C2H5]/d[CH4]
+    J[794] += dqdci; // dwdot[C2H6]/d[CH4]
+    // d()/d[C2H5]
     dqdci = +k_f * sc[5];
-    J[917] -= dqdci; /* dwdot[H]/d[C2H5] */
-    J[931] -= dqdci; /* dwdot[C2H5]/d[C2H5] */
-    J[938] += dqdci; /* dwdot[C2H6]/d[C2H5] */
-    /* d()/d[C2H6] */
+    J[917] -= dqdci; // dwdot[H]/d[C2H5]
+    J[931] -= dqdci; // dwdot[C2H5]/d[C2H5]
+    J[938] += dqdci; // dwdot[C2H6]/d[C2H5]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac - k_r;
-    J[1253] -= dqdci; /* dwdot[H]/d[C2H6] */
-    J[1267] -= dqdci; /* dwdot[C2H5]/d[C2H6] */
-    J[1274] += dqdci; /* dwdot[C2H6]/d[C2H6] */
+    J[1253] -= dqdci; // dwdot[H]/d[C2H6]
+    J[1267] -= dqdci; // dwdot[C2H5]/d[C2H6]
+    J[1274] += dqdci; // dwdot[C2H6]/d[C2H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -21606,29 +21604,29 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 26] += dqdc[k];
     }
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
-  J[2282] += dqdT; /* dwdot[C2H6]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
+  J[2282] += dqdT; // dwdot[C2H6]/dT
 
   /*reaction 10: C2H6 (+M) <=> 2.000000 CH3 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[26];
   k_f =
     1 * 1.88e+50 * exp(-9.72 * tc[0] - 0.50321666580472 * (107342.26) * invT);
   dlnkfdT = -9.72 * invT + 0.50321666580472 * 107342.26 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 3.72e+65 * exp(-13.14 * tc[0] - 0.50321666580472 * (101579.83) * invT);
   Pr = 1e-6 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -13.14 * invT + 0.50321666580472 * (101579.83) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.39) * exp(-T / 100);
   Fcent2 = 0.39 * exp(-T / 1900);
@@ -21649,54 +21647,54 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = (sc[14] * sc[14]);
   Kc = refC * exp(-2.000000 * g_RT[14] + g_RT[26]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[26]) + (2.000000 * h_RT[14]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[14] += 2 * q; /* CH3 */
-  wdot[26] -= q;     /* C2H6 */
-  /* for convenience */
+  // update wdot
+  wdot[14] += 2 * q; // CH3
+  wdot[26] -= q;     // C2H6
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[206] += 2 * dqdci; /* dwdot[CH3]/d[H2] */
-    J[218] -= dqdci;     /* dwdot[C2H6]/d[H2] */
-    /* d()/d[H2O] */
+    J[206] += 2 * dqdci; // dwdot[CH3]/d[H2]
+    J[218] -= dqdci;     // dwdot[C2H6]/d[H2]
+    // d()/d[H2O]
     dqdci = (12 - 1) * dcdc_fac;
-    J[350] += 2 * dqdci; /* dwdot[CH3]/d[H2O] */
-    J[362] -= dqdci;     /* dwdot[C2H6]/d[H2O] */
-    /* d()/d[CO] */
+    J[350] += 2 * dqdci; // dwdot[CH3]/d[H2O]
+    J[362] -= dqdci;     // dwdot[C2H6]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * dcdc_fac;
-    J[542] += 2 * dqdci; /* dwdot[CH3]/d[CO] */
-    J[554] -= dqdci;     /* dwdot[C2H6]/d[CO] */
-    /* d()/d[CH3] */
+    J[542] += 2 * dqdci; // dwdot[CH3]/d[CO]
+    J[554] -= dqdci;     // dwdot[C2H6]/d[CO]
+    // d()/d[CH3]
     dqdci = -k_r * 2.000000 * sc[14];
-    J[686] += 2 * dqdci; /* dwdot[CH3]/d[CH3] */
-    J[698] -= dqdci;     /* dwdot[C2H6]/d[CH3] */
-    /* d()/d[CO2] */
+    J[686] += 2 * dqdci; // dwdot[CH3]/d[CH3]
+    J[698] -= dqdci;     // dwdot[C2H6]/d[CH3]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * dcdc_fac;
-    J[734] += 2 * dqdci; /* dwdot[CH3]/d[CO2] */
-    J[746] -= dqdci;     /* dwdot[C2H6]/d[CO2] */
-    /* d()/d[CH4] */
+    J[734] += 2 * dqdci; // dwdot[CH3]/d[CO2]
+    J[746] -= dqdci;     // dwdot[C2H6]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * dcdc_fac;
-    J[782] += 2 * dqdci; /* dwdot[CH3]/d[CH4] */
-    J[794] -= dqdci;     /* dwdot[C2H6]/d[CH4] */
-    /* d()/d[C2H6] */
+    J[782] += 2 * dqdci; // dwdot[CH3]/d[CH4]
+    J[794] -= dqdci;     // dwdot[C2H6]/d[CH4]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac + k_f;
-    J[1262] += 2 * dqdci; /* dwdot[CH3]/d[C2H6] */
-    J[1274] -= dqdci;     /* dwdot[C2H6]/d[C2H6] */
+    J[1262] += 2 * dqdci; // dwdot[CH3]/d[C2H6]
+    J[1274] -= dqdci;     // dwdot[C2H6]/d[C2H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -21750,29 +21748,29 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 26] -= dqdc[k];
     }
   }
-  J[2270] += 2 * dqdT; /* dwdot[CH3]/dT */
-  J[2282] -= dqdT;     /* dwdot[C2H6]/dT */
+  J[2270] += 2 * dqdT; // dwdot[CH3]/dT
+  J[2282] -= dqdT;     // dwdot[C2H6]/dT
 
   /*reaction 11: HCCO (+M) => CO + CH (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // also 3-body
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[21];
   k_f =
     1 * 2.255e+20 * exp(-1.44 * tc[0] - 0.50321666580472 * (74732.31) * invT);
   dlnkfdT = -1.44 * invT + 0.50321666580472 * 74732.31 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 1.213e+35 * exp(-5.18 * tc[0] - 0.50321666580472 * (76668.26) * invT);
   Pr = 1e-6 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -5.18 * invT + 0.50321666580472 * (76668.26) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 0.5757) * exp(-T / 237);
   Fcent2 = 0.5757 * exp(-T / 1652);
@@ -21793,55 +21791,55 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * dlnkfdT * k_f * phi_f + dlnCorrdT * q;
-  /* update wdot */
-  wdot[10] += q; /* CH */
-  wdot[11] += q; /* CO */
-  wdot[21] -= q; /* HCCO */
-  /* for convenience */
+  // update wdot
+  wdot[10] += q; // CH
+  wdot[11] += q; // CO
+  wdot[21] -= q; // HCCO
+  // for convenience
   k_f *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[202] += dqdci; /* dwdot[CH]/d[H2] */
-    J[203] += dqdci; /* dwdot[CO]/d[H2] */
-    J[213] -= dqdci; /* dwdot[HCCO]/d[H2] */
-    /* d()/d[H2O] */
+    J[202] += dqdci; // dwdot[CH]/d[H2]
+    J[203] += dqdci; // dwdot[CO]/d[H2]
+    J[213] -= dqdci; // dwdot[HCCO]/d[H2]
+    // d()/d[H2O]
     dqdci = (12 - 1) * dcdc_fac;
-    J[346] += dqdci; /* dwdot[CH]/d[H2O] */
-    J[347] += dqdci; /* dwdot[CO]/d[H2O] */
-    J[357] -= dqdci; /* dwdot[HCCO]/d[H2O] */
-    /* d()/d[CO] */
+    J[346] += dqdci; // dwdot[CH]/d[H2O]
+    J[347] += dqdci; // dwdot[CO]/d[H2O]
+    J[357] -= dqdci; // dwdot[HCCO]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * dcdc_fac;
-    J[538] += dqdci; /* dwdot[CH]/d[CO] */
-    J[539] += dqdci; /* dwdot[CO]/d[CO] */
-    J[549] -= dqdci; /* dwdot[HCCO]/d[CO] */
-    /* d()/d[CO2] */
+    J[538] += dqdci; // dwdot[CH]/d[CO]
+    J[539] += dqdci; // dwdot[CO]/d[CO]
+    J[549] -= dqdci; // dwdot[HCCO]/d[CO]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * dcdc_fac;
-    J[730] += dqdci; /* dwdot[CH]/d[CO2] */
-    J[731] += dqdci; /* dwdot[CO]/d[CO2] */
-    J[741] -= dqdci; /* dwdot[HCCO]/d[CO2] */
-    /* d()/d[CH4] */
+    J[730] += dqdci; // dwdot[CH]/d[CO2]
+    J[731] += dqdci; // dwdot[CO]/d[CO2]
+    J[741] -= dqdci; // dwdot[HCCO]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * dcdc_fac;
-    J[778] += dqdci; /* dwdot[CH]/d[CH4] */
-    J[779] += dqdci; /* dwdot[CO]/d[CH4] */
-    J[789] -= dqdci; /* dwdot[HCCO]/d[CH4] */
-    /* d()/d[HCCO] */
+    J[778] += dqdci; // dwdot[CH]/d[CH4]
+    J[779] += dqdci; // dwdot[CO]/d[CH4]
+    J[789] -= dqdci; // dwdot[HCCO]/d[CH4]
+    // d()/d[HCCO]
     dqdci = +k_f;
-    J[1018] += dqdci; /* dwdot[CH]/d[HCCO] */
-    J[1019] += dqdci; /* dwdot[CO]/d[HCCO] */
-    J[1029] -= dqdci; /* dwdot[HCCO]/d[HCCO] */
-    /* d()/d[C2H6] */
+    J[1018] += dqdci; // dwdot[CH]/d[HCCO]
+    J[1019] += dqdci; // dwdot[CO]/d[HCCO]
+    J[1029] -= dqdci; // dwdot[HCCO]/d[HCCO]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac;
-    J[1258] += dqdci; /* dwdot[CH]/d[C2H6] */
-    J[1259] += dqdci; /* dwdot[CO]/d[C2H6] */
-    J[1269] -= dqdci; /* dwdot[HCCO]/d[C2H6] */
+    J[1258] += dqdci; // dwdot[CH]/d[C2H6]
+    J[1259] += dqdci; // dwdot[CO]/d[C2H6]
+    J[1269] -= dqdci; // dwdot[HCCO]/d[C2H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -21896,29 +21894,29 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 21] -= dqdc[k];
     }
   }
-  J[2266] += dqdT; /* dwdot[CH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2277] -= dqdT; /* dwdot[HCCO]/dT */
+  J[2266] += dqdT; // dwdot[CH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2277] -= dqdT; // dwdot[HCCO]/dT
 
   /*reaction 12: C3H6 + H (+M) <=> N-C3H7 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[32];
   k_f = 1e-06 * 306000000000000 *
         exp(-0.37 * tc[0] - 0.50321666580472 * (4032.03) * invT);
   dlnkfdT = -0.37 * invT + 0.50321666580472 * 4032.03 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 6.26e+38 * exp(-6.66 * tc[0] - 0.50321666580472 * (7000.48) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -6.66 * invT + 0.50321666580472 * (7000.48) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Troe form */
+  // Troe form
   logPr = log10(Pr);
   Fcent1 = (1. - 1) * exp(-T / 1000);
   Fcent2 = 1 * exp(-T / 1310);
@@ -21939,72 +21937,72 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   dlogFdlogPr = dlogFdc;
   dlogFdT = dlogFcentdT * (troe - 0.67 * dlogFdc - 1.27 * dlogFdn) +
             dlogFdlogPr * dlogPrdT;
-  /* reverse */
+  // reverse
   phi_r = sc[25];
   Kc = refCinv * exp(g_RT[5] - g_RT[25] + g_RT[32]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[32]) + (h_RT[25]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[25] += q; /* N-C3H7 */
-  wdot[32] -= q; /* C3H6 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[25] += q; // N-C3H7
+  wdot[32] -= q; // C3H6
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[197] -= dqdci; /* dwdot[H]/d[H2] */
-    J[217] += dqdci; /* dwdot[N-C3H7]/d[H2] */
-    J[224] -= dqdci; /* dwdot[C3H6]/d[H2] */
-    /* d()/d[H] */
+    J[197] -= dqdci; // dwdot[H]/d[H2]
+    J[217] += dqdci; // dwdot[N-C3H7]/d[H2]
+    J[224] -= dqdci; // dwdot[C3H6]/d[H2]
+    // d()/d[H]
     dqdci = +k_f * sc[32];
-    J[245] -= dqdci; /* dwdot[H]/d[H] */
-    J[265] += dqdci; /* dwdot[N-C3H7]/d[H] */
-    J[272] -= dqdci; /* dwdot[C3H6]/d[H] */
-    /* d()/d[H2O] */
+    J[245] -= dqdci; // dwdot[H]/d[H]
+    J[265] += dqdci; // dwdot[N-C3H7]/d[H]
+    J[272] -= dqdci; // dwdot[C3H6]/d[H]
+    // d()/d[H2O]
     dqdci = (12 - 1) * dcdc_fac;
-    J[341] -= dqdci; /* dwdot[H]/d[H2O] */
-    J[361] += dqdci; /* dwdot[N-C3H7]/d[H2O] */
-    J[368] -= dqdci; /* dwdot[C3H6]/d[H2O] */
-    /* d()/d[CO] */
+    J[341] -= dqdci; // dwdot[H]/d[H2O]
+    J[361] += dqdci; // dwdot[N-C3H7]/d[H2O]
+    J[368] -= dqdci; // dwdot[C3H6]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * dcdc_fac;
-    J[533] -= dqdci; /* dwdot[H]/d[CO] */
-    J[553] += dqdci; /* dwdot[N-C3H7]/d[CO] */
-    J[560] -= dqdci; /* dwdot[C3H6]/d[CO] */
-    /* d()/d[CO2] */
+    J[533] -= dqdci; // dwdot[H]/d[CO]
+    J[553] += dqdci; // dwdot[N-C3H7]/d[CO]
+    J[560] -= dqdci; // dwdot[C3H6]/d[CO]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * dcdc_fac;
-    J[725] -= dqdci; /* dwdot[H]/d[CO2] */
-    J[745] += dqdci; /* dwdot[N-C3H7]/d[CO2] */
-    J[752] -= dqdci; /* dwdot[C3H6]/d[CO2] */
-    /* d()/d[CH4] */
+    J[725] -= dqdci; // dwdot[H]/d[CO2]
+    J[745] += dqdci; // dwdot[N-C3H7]/d[CO2]
+    J[752] -= dqdci; // dwdot[C3H6]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * dcdc_fac;
-    J[773] -= dqdci; /* dwdot[H]/d[CH4] */
-    J[793] += dqdci; /* dwdot[N-C3H7]/d[CH4] */
-    J[800] -= dqdci; /* dwdot[C3H6]/d[CH4] */
-    /* d()/d[N-C3H7] */
+    J[773] -= dqdci; // dwdot[H]/d[CH4]
+    J[793] += dqdci; // dwdot[N-C3H7]/d[CH4]
+    J[800] -= dqdci; // dwdot[C3H6]/d[CH4]
+    // d()/d[N-C3H7]
     dqdci = -k_r;
-    J[1205] -= dqdci; /* dwdot[H]/d[N-C3H7] */
-    J[1225] += dqdci; /* dwdot[N-C3H7]/d[N-C3H7] */
-    J[1232] -= dqdci; /* dwdot[C3H6]/d[N-C3H7] */
-    /* d()/d[C2H6] */
+    J[1205] -= dqdci; // dwdot[H]/d[N-C3H7]
+    J[1225] += dqdci; // dwdot[N-C3H7]/d[N-C3H7]
+    J[1232] -= dqdci; // dwdot[C3H6]/d[N-C3H7]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac;
-    J[1253] -= dqdci; /* dwdot[H]/d[C2H6] */
-    J[1273] += dqdci; /* dwdot[N-C3H7]/d[C2H6] */
-    J[1280] -= dqdci; /* dwdot[C3H6]/d[C2H6] */
-    /* d()/d[C3H6] */
+    J[1253] -= dqdci; // dwdot[H]/d[C2H6]
+    J[1273] += dqdci; // dwdot[N-C3H7]/d[C2H6]
+    J[1280] -= dqdci; // dwdot[C3H6]/d[C2H6]
+    // d()/d[C3H6]
     dqdci = +k_f * sc[5];
-    J[1541] -= dqdci; /* dwdot[H]/d[C3H6] */
-    J[1561] += dqdci; /* dwdot[N-C3H7]/d[C3H6] */
-    J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
+    J[1541] -= dqdci; // dwdot[H]/d[C3H6]
+    J[1561] += dqdci; // dwdot[N-C3H7]/d[C3H6]
+    J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -22059,93 +22057,93 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 32] -= dqdc[k];
     }
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2281] += dqdT; /* dwdot[N-C3H7]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2281] += dqdT; // dwdot[N-C3H7]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 13: CH3 + H (+M) <=> CH4 (+M) */
   /*a pressure-fall-off reaction */
-  /* also 3-body */
-  /* 3-body correction factor */
+  // also 3-body
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (6 - 1) * sc[7] + (1.5 - 1) * sc[11] +
           (2 - 1) * sc[15] + (3 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[14];
   k_f =
     1e-06 * 69200000000000 * exp(0.18 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0.18 * invT + 0.50321666580472 * 0 * invT2;
-  /* pressure-fall-off */
+  // pressure-fall-off
   k_0 = 3.47e+38 * exp(-6.3 * tc[0] - 0.50321666580472 * (5074.09) * invT);
   Pr = 1e-12 * alpha / k_f * k_0;
   fPr = Pr / (1.0 + Pr);
   dlnk0dT = -6.3 * invT + 0.50321666580472 * (5074.09) * invT2;
   dlogPrdT = log10e * (dlnk0dT - dlnkfdT);
   dlogfPrdT = dlogPrdT / (1.0 + Pr);
-  /* Lindemann form */
+  // Lindemann form
   F = 1.0;
   dlogFdlogPr = 0.0;
   dlogFdT = 0.0;
-  /* reverse */
+  // reverse
   phi_r = sc[16];
   Kc = refCinv * exp(g_RT[5] + g_RT[14] - g_RT[16]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[14]) + (h_RT[16]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   dqdT = Corr * (dlnkfdT * k_f * phi_f - dkrdT * phi_r) + dlnCorrdT * q;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  // for convenience
   k_f *= Corr;
   k_r *= Corr;
   dcdc_fac = q / alpha * (1.0 / (Pr + 1.0) + dlogFdlogPr);
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[197] -= dqdci; /* dwdot[H]/d[H2] */
-    J[206] -= dqdci; /* dwdot[CH3]/d[H2] */
-    J[208] += dqdci; /* dwdot[CH4]/d[H2] */
-    /* d()/d[H] */
+    J[197] -= dqdci; // dwdot[H]/d[H2]
+    J[206] -= dqdci; // dwdot[CH3]/d[H2]
+    J[208] += dqdci; // dwdot[CH4]/d[H2]
+    // d()/d[H]
     dqdci = +k_f * sc[14];
-    J[245] -= dqdci; /* dwdot[H]/d[H] */
-    J[254] -= dqdci; /* dwdot[CH3]/d[H] */
-    J[256] += dqdci; /* dwdot[CH4]/d[H] */
-    /* d()/d[H2O] */
+    J[245] -= dqdci; // dwdot[H]/d[H]
+    J[254] -= dqdci; // dwdot[CH3]/d[H]
+    J[256] += dqdci; // dwdot[CH4]/d[H]
+    // d()/d[H2O]
     dqdci = (6 - 1) * dcdc_fac;
-    J[341] -= dqdci; /* dwdot[H]/d[H2O] */
-    J[350] -= dqdci; /* dwdot[CH3]/d[H2O] */
-    J[352] += dqdci; /* dwdot[CH4]/d[H2O] */
-    /* d()/d[CO] */
+    J[341] -= dqdci; // dwdot[H]/d[H2O]
+    J[350] -= dqdci; // dwdot[CH3]/d[H2O]
+    J[352] += dqdci; // dwdot[CH4]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.5 - 1) * dcdc_fac;
-    J[533] -= dqdci; /* dwdot[H]/d[CO] */
-    J[542] -= dqdci; /* dwdot[CH3]/d[CO] */
-    J[544] += dqdci; /* dwdot[CH4]/d[CO] */
-    /* d()/d[CH3] */
+    J[533] -= dqdci; // dwdot[H]/d[CO]
+    J[542] -= dqdci; // dwdot[CH3]/d[CO]
+    J[544] += dqdci; // dwdot[CH4]/d[CO]
+    // d()/d[CH3]
     dqdci = +k_f * sc[5];
-    J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-    J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-    J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-    /* d()/d[CO2] */
+    J[677] -= dqdci; // dwdot[H]/d[CH3]
+    J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+    J[688] += dqdci; // dwdot[CH4]/d[CH3]
+    // d()/d[CO2]
     dqdci = (2 - 1) * dcdc_fac;
-    J[725] -= dqdci; /* dwdot[H]/d[CO2] */
-    J[734] -= dqdci; /* dwdot[CH3]/d[CO2] */
-    J[736] += dqdci; /* dwdot[CH4]/d[CO2] */
-    /* d()/d[CH4] */
+    J[725] -= dqdci; // dwdot[H]/d[CO2]
+    J[734] -= dqdci; // dwdot[CH3]/d[CO2]
+    J[736] += dqdci; // dwdot[CH4]/d[CO2]
+    // d()/d[CH4]
     dqdci = (3 - 1) * dcdc_fac - k_r;
-    J[773] -= dqdci; /* dwdot[H]/d[CH4] */
-    J[782] -= dqdci; /* dwdot[CH3]/d[CH4] */
-    J[784] += dqdci; /* dwdot[CH4]/d[CH4] */
-    /* d()/d[C2H6] */
+    J[773] -= dqdci; // dwdot[H]/d[CH4]
+    J[782] -= dqdci; // dwdot[CH3]/d[CH4]
+    J[784] += dqdci; // dwdot[CH4]/d[CH4]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * dcdc_fac;
-    J[1253] -= dqdci; /* dwdot[H]/d[C2H6] */
-    J[1262] -= dqdci; /* dwdot[CH3]/d[C2H6] */
-    J[1264] += dqdci; /* dwdot[CH4]/d[C2H6] */
+    J[1253] -= dqdci; // dwdot[H]/d[C2H6]
+    J[1262] -= dqdci; // dwdot[CH3]/d[C2H6]
+    J[1264] += dqdci; // dwdot[CH4]/d[C2H6]
   } else {
     dqdc[0] = dcdc_fac;
     dqdc[1] = dcdc_fac;
@@ -22200,72 +22198,72 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 16] += dqdc[k];
     }
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
 
   /*reaction 14: H + O + M => OH + M */
   /*a third-body and non-pressure-fall-off reaction */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (12 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[5];
   k_f = 1e-12 * 9.43e+18 * exp(-1 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = -1 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   q = alpha * q_nocor;
   dqdT = alpha * dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q; /* O */
-  wdot[5] -= q; /* H */
-  wdot[6] += q; /* OH */
-  /* for convenience */
+  // update wdot
+  wdot[3] -= q; // O
+  wdot[5] -= q; // H
+  wdot[6] += q; // OH
+  // for convenience
   k_f *= alpha;
   k_r = 0.0;
   if (consP) {
-    /* d()/d[O] */
+    // d()/d[O]
     dqdci = +k_f * sc[5];
-    J[147] -= dqdci; /* dwdot[O]/d[O] */
-    J[149] -= dqdci; /* dwdot[H]/d[O] */
-    J[150] += dqdci; /* dwdot[OH]/d[O] */
-    /* d()/d[H2] */
+    J[147] -= dqdci; // dwdot[O]/d[O]
+    J[149] -= dqdci; // dwdot[H]/d[O]
+    J[150] += dqdci; // dwdot[OH]/d[O]
+    // d()/d[H2]
     dqdci = (2 - 1) * q_nocor;
-    J[195] -= dqdci; /* dwdot[O]/d[H2] */
-    J[197] -= dqdci; /* dwdot[H]/d[H2] */
-    J[198] += dqdci; /* dwdot[OH]/d[H2] */
-    /* d()/d[H] */
+    J[195] -= dqdci; // dwdot[O]/d[H2]
+    J[197] -= dqdci; // dwdot[H]/d[H2]
+    J[198] += dqdci; // dwdot[OH]/d[H2]
+    // d()/d[H]
     dqdci = +k_f * sc[3];
-    J[243] -= dqdci; /* dwdot[O]/d[H] */
-    J[245] -= dqdci; /* dwdot[H]/d[H] */
-    J[246] += dqdci; /* dwdot[OH]/d[H] */
-    /* d()/d[H2O] */
+    J[243] -= dqdci; // dwdot[O]/d[H]
+    J[245] -= dqdci; // dwdot[H]/d[H]
+    J[246] += dqdci; // dwdot[OH]/d[H]
+    // d()/d[H2O]
     dqdci = (12 - 1) * q_nocor;
-    J[339] -= dqdci; /* dwdot[O]/d[H2O] */
-    J[341] -= dqdci; /* dwdot[H]/d[H2O] */
-    J[342] += dqdci; /* dwdot[OH]/d[H2O] */
-    /* d()/d[CO] */
+    J[339] -= dqdci; // dwdot[O]/d[H2O]
+    J[341] -= dqdci; // dwdot[H]/d[H2O]
+    J[342] += dqdci; // dwdot[OH]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * q_nocor;
-    J[531] -= dqdci; /* dwdot[O]/d[CO] */
-    J[533] -= dqdci; /* dwdot[H]/d[CO] */
-    J[534] += dqdci; /* dwdot[OH]/d[CO] */
-    /* d()/d[CO2] */
+    J[531] -= dqdci; // dwdot[O]/d[CO]
+    J[533] -= dqdci; // dwdot[H]/d[CO]
+    J[534] += dqdci; // dwdot[OH]/d[CO]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * q_nocor;
-    J[723] -= dqdci; /* dwdot[O]/d[CO2] */
-    J[725] -= dqdci; /* dwdot[H]/d[CO2] */
-    J[726] += dqdci; /* dwdot[OH]/d[CO2] */
-    /* d()/d[CH4] */
+    J[723] -= dqdci; // dwdot[O]/d[CO2]
+    J[725] -= dqdci; // dwdot[H]/d[CO2]
+    J[726] += dqdci; // dwdot[OH]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * q_nocor;
-    J[771] -= dqdci; /* dwdot[O]/d[CH4] */
-    J[773] -= dqdci; /* dwdot[H]/d[CH4] */
-    J[774] += dqdci; /* dwdot[OH]/d[CH4] */
-    /* d()/d[C2H6] */
+    J[771] -= dqdci; // dwdot[O]/d[CH4]
+    J[773] -= dqdci; // dwdot[H]/d[CH4]
+    J[774] += dqdci; // dwdot[OH]/d[CH4]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * q_nocor;
-    J[1251] -= dqdci; /* dwdot[O]/d[C2H6] */
-    J[1253] -= dqdci; /* dwdot[H]/d[C2H6] */
-    J[1254] += dqdci; /* dwdot[OH]/d[C2H6] */
+    J[1251] -= dqdci; // dwdot[O]/d[C2H6]
+    J[1253] -= dqdci; // dwdot[H]/d[C2H6]
+    J[1254] += dqdci; // dwdot[OH]/d[C2H6]
   } else {
     dqdc[0] = q_nocor;
     dqdc[1] = q_nocor;
@@ -22320,72 +22318,72 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 6] += dqdc[k];
     }
   }
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
 
   /*reaction 15: H + OH + M => H2O + M */
   /*a third-body and non-pressure-fall-off reaction */
-  /* FIXME: irreversible reaction in _ajac_reaction may not work*/
-  /* 3-body correction factor */
+  // FIXME: irreversible reaction in _ajac_reaction may not work
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (6.3 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[6];
   k_f = 1e-12 * 4.4e+22 * exp(-2 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = -2 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f;
   q = alpha * q_nocor;
   dqdT = alpha * dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] -= q; /* H */
-  wdot[6] -= q; /* OH */
-  wdot[7] += q; /* H2O */
-  /* for convenience */
+  // update wdot
+  wdot[5] -= q; // H
+  wdot[6] -= q; // OH
+  wdot[7] += q; // H2O
+  // for convenience
   k_f *= alpha;
   k_r = 0.0;
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * q_nocor;
-    J[197] -= dqdci; /* dwdot[H]/d[H2] */
-    J[198] -= dqdci; /* dwdot[OH]/d[H2] */
-    J[199] += dqdci; /* dwdot[H2O]/d[H2] */
-    /* d()/d[H] */
+    J[197] -= dqdci; // dwdot[H]/d[H2]
+    J[198] -= dqdci; // dwdot[OH]/d[H2]
+    J[199] += dqdci; // dwdot[H2O]/d[H2]
+    // d()/d[H]
     dqdci = +k_f * sc[6];
-    J[245] -= dqdci; /* dwdot[H]/d[H] */
-    J[246] -= dqdci; /* dwdot[OH]/d[H] */
-    J[247] += dqdci; /* dwdot[H2O]/d[H] */
-    /* d()/d[OH] */
+    J[245] -= dqdci; // dwdot[H]/d[H]
+    J[246] -= dqdci; // dwdot[OH]/d[H]
+    J[247] += dqdci; // dwdot[H2O]/d[H]
+    // d()/d[OH]
     dqdci = +k_f * sc[5];
-    J[293] -= dqdci; /* dwdot[H]/d[OH] */
-    J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-    J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-    /* d()/d[H2O] */
+    J[293] -= dqdci; // dwdot[H]/d[OH]
+    J[294] -= dqdci; // dwdot[OH]/d[OH]
+    J[295] += dqdci; // dwdot[H2O]/d[OH]
+    // d()/d[H2O]
     dqdci = (6.3 - 1) * q_nocor;
-    J[341] -= dqdci; /* dwdot[H]/d[H2O] */
-    J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-    J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-    /* d()/d[CO] */
+    J[341] -= dqdci; // dwdot[H]/d[H2O]
+    J[342] -= dqdci; // dwdot[OH]/d[H2O]
+    J[343] += dqdci; // dwdot[H2O]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * q_nocor;
-    J[533] -= dqdci; /* dwdot[H]/d[CO] */
-    J[534] -= dqdci; /* dwdot[OH]/d[CO] */
-    J[535] += dqdci; /* dwdot[H2O]/d[CO] */
-    /* d()/d[CO2] */
+    J[533] -= dqdci; // dwdot[H]/d[CO]
+    J[534] -= dqdci; // dwdot[OH]/d[CO]
+    J[535] += dqdci; // dwdot[H2O]/d[CO]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * q_nocor;
-    J[725] -= dqdci; /* dwdot[H]/d[CO2] */
-    J[726] -= dqdci; /* dwdot[OH]/d[CO2] */
-    J[727] += dqdci; /* dwdot[H2O]/d[CO2] */
-    /* d()/d[CH4] */
+    J[725] -= dqdci; // dwdot[H]/d[CO2]
+    J[726] -= dqdci; // dwdot[OH]/d[CO2]
+    J[727] += dqdci; // dwdot[H2O]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * q_nocor;
-    J[773] -= dqdci; /* dwdot[H]/d[CH4] */
-    J[774] -= dqdci; /* dwdot[OH]/d[CH4] */
-    J[775] += dqdci; /* dwdot[H2O]/d[CH4] */
-    /* d()/d[C2H6] */
+    J[773] -= dqdci; // dwdot[H]/d[CH4]
+    J[774] -= dqdci; // dwdot[OH]/d[CH4]
+    J[775] += dqdci; // dwdot[H2O]/d[CH4]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * q_nocor;
-    J[1253] -= dqdci; /* dwdot[H]/d[C2H6] */
-    J[1254] -= dqdci; /* dwdot[OH]/d[C2H6] */
-    J[1255] += dqdci; /* dwdot[H2O]/d[C2H6] */
+    J[1253] -= dqdci; // dwdot[H]/d[C2H6]
+    J[1254] -= dqdci; // dwdot[OH]/d[C2H6]
+    J[1255] += dqdci; // dwdot[H2O]/d[C2H6]
   } else {
     dqdc[0] = q_nocor;
     dqdc[1] = q_nocor;
@@ -22440,78 +22438,78 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 7] += dqdc[k];
     }
   }
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
 
   /*reaction 16: HCO + M <=> CO + H + M */
   /*a third-body and non-pressure-fall-off reaction */
-  /* 3-body correction factor */
+  // 3-body correction factor
   alpha = mixture + (2 - 1) * sc[4] + (0 - 1) * sc[7] + (1.75 - 1) * sc[11] +
           (3.6 - 1) * sc[15] + (2 - 1) * sc[16] + (3 - 1) * sc[26];
-  /* forward */
+  // forward
   phi_f = sc[12];
   k_f =
     1e-06 * 1.87e+17 * exp(-1 * tc[0] - 0.50321666580472 * (17000.48) * invT);
   dlnkfdT = -1 * invT + 0.50321666580472 * 17000.48 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[11];
   Kc = refC * exp(-g_RT[5] - g_RT[11] + g_RT[12]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[12]) + (h_RT[5] + h_RT[11]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q_nocor = k_f * phi_f - k_r * phi_r;
   q = alpha * q_nocor;
   dqdT = alpha * (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* for convenience */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // for convenience
   k_f *= alpha;
   k_r *= alpha;
   if (consP) {
-    /* d()/d[H2] */
+    // d()/d[H2]
     dqdci = (2 - 1) * q_nocor;
-    J[197] += dqdci; /* dwdot[H]/d[H2] */
-    J[203] += dqdci; /* dwdot[CO]/d[H2] */
-    J[204] -= dqdci; /* dwdot[HCO]/d[H2] */
-    /* d()/d[H] */
+    J[197] += dqdci; // dwdot[H]/d[H2]
+    J[203] += dqdci; // dwdot[CO]/d[H2]
+    J[204] -= dqdci; // dwdot[HCO]/d[H2]
+    // d()/d[H]
     dqdci = -k_r * sc[11];
-    J[245] += dqdci; /* dwdot[H]/d[H] */
-    J[251] += dqdci; /* dwdot[CO]/d[H] */
-    J[252] -= dqdci; /* dwdot[HCO]/d[H] */
-    /* d()/d[H2O] */
+    J[245] += dqdci; // dwdot[H]/d[H]
+    J[251] += dqdci; // dwdot[CO]/d[H]
+    J[252] -= dqdci; // dwdot[HCO]/d[H]
+    // d()/d[H2O]
     dqdci = (0 - 1) * q_nocor;
-    J[341] += dqdci; /* dwdot[H]/d[H2O] */
-    J[347] += dqdci; /* dwdot[CO]/d[H2O] */
-    J[348] -= dqdci; /* dwdot[HCO]/d[H2O] */
-    /* d()/d[CO] */
+    J[341] += dqdci; // dwdot[H]/d[H2O]
+    J[347] += dqdci; // dwdot[CO]/d[H2O]
+    J[348] -= dqdci; // dwdot[HCO]/d[H2O]
+    // d()/d[CO]
     dqdci = (1.75 - 1) * q_nocor - k_r * sc[5];
-    J[533] += dqdci; /* dwdot[H]/d[CO] */
-    J[539] += dqdci; /* dwdot[CO]/d[CO] */
-    J[540] -= dqdci; /* dwdot[HCO]/d[CO] */
-    /* d()/d[HCO] */
+    J[533] += dqdci; // dwdot[H]/d[CO]
+    J[539] += dqdci; // dwdot[CO]/d[CO]
+    J[540] -= dqdci; // dwdot[HCO]/d[CO]
+    // d()/d[HCO]
     dqdci = +k_f;
-    J[581] += dqdci; /* dwdot[H]/d[HCO] */
-    J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-    J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-    /* d()/d[CO2] */
+    J[581] += dqdci; // dwdot[H]/d[HCO]
+    J[587] += dqdci; // dwdot[CO]/d[HCO]
+    J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+    // d()/d[CO2]
     dqdci = (3.6 - 1) * q_nocor;
-    J[725] += dqdci; /* dwdot[H]/d[CO2] */
-    J[731] += dqdci; /* dwdot[CO]/d[CO2] */
-    J[732] -= dqdci; /* dwdot[HCO]/d[CO2] */
-    /* d()/d[CH4] */
+    J[725] += dqdci; // dwdot[H]/d[CO2]
+    J[731] += dqdci; // dwdot[CO]/d[CO2]
+    J[732] -= dqdci; // dwdot[HCO]/d[CO2]
+    // d()/d[CH4]
     dqdci = (2 - 1) * q_nocor;
-    J[773] += dqdci; /* dwdot[H]/d[CH4] */
-    J[779] += dqdci; /* dwdot[CO]/d[CH4] */
-    J[780] -= dqdci; /* dwdot[HCO]/d[CH4] */
-    /* d()/d[C2H6] */
+    J[773] += dqdci; // dwdot[H]/d[CH4]
+    J[779] += dqdci; // dwdot[CO]/d[CH4]
+    J[780] -= dqdci; // dwdot[HCO]/d[CH4]
+    // d()/d[C2H6]
     dqdci = (3 - 1) * q_nocor;
-    J[1253] += dqdci; /* dwdot[H]/d[C2H6] */
-    J[1259] += dqdci; /* dwdot[CO]/d[C2H6] */
-    J[1260] -= dqdci; /* dwdot[HCO]/d[C2H6] */
+    J[1253] += dqdci; // dwdot[H]/d[C2H6]
+    J[1259] += dqdci; // dwdot[CO]/d[C2H6]
+    J[1260] -= dqdci; // dwdot[HCO]/d[C2H6]
   } else {
     dqdc[0] = q_nocor;
     dqdc[1] = q_nocor;
@@ -22565,7449 +22563,7449 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
       J[48 * k + 12] -= dqdc[k];
     }
   }
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 17: S-CH2 + N2 <=> T-CH2 + N2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[0] * sc[1];
   k_f =
     1e-06 * 15000000000000 * exp(0 * tc[0] - 0.50321666580472 * (599.9) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 599.9 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[0] * sc[2];
   Kc = exp(g_RT[0] - g_RT[0] + g_RT[1] - g_RT[2]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[0] + h_RT[1]) + (h_RT[0] + h_RT[2]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q; /* S-CH2 */
-  wdot[2] += q; /* T-CH2 */
-  /* d()/d[N2] */
+  // update wdot
+  wdot[1] -= q; // S-CH2
+  wdot[2] += q; // T-CH2
+  // d()/d[N2]
   dqdci = +k_f * sc[1] - k_r * sc[2];
-  J[1] -= dqdci; /* dwdot[S-CH2]/d[N2] */
-  J[2] += dqdci; /* dwdot[T-CH2]/d[N2] */
-  /* d()/d[S-CH2] */
+  J[1] -= dqdci; // dwdot[S-CH2]/d[N2]
+  J[2] += dqdci; // dwdot[T-CH2]/d[N2]
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[0];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[50] += dqdci; /* dwdot[T-CH2]/d[S-CH2] */
-  /* d()/d[T-CH2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[50] += dqdci; // dwdot[T-CH2]/d[S-CH2]
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[0];
-  J[97] -= dqdci; /* dwdot[S-CH2]/d[T-CH2] */
-  J[98] += dqdci; /* dwdot[T-CH2]/d[T-CH2] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
+  J[97] -= dqdci; // dwdot[S-CH2]/d[T-CH2]
+  J[98] += dqdci; // dwdot[T-CH2]/d[T-CH2]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
 
   /*reaction 18: O + H2 <=> H + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[4];
   k_f = 1e-06 * 45900 * exp(2.7 * tc[0] - 0.50321666580472 * (6259.56) * invT);
   dlnkfdT = 2.7 * invT + 0.50321666580472 * 6259.56 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[6];
   Kc = exp(g_RT[3] + g_RT[4] - g_RT[5] - g_RT[6]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[4]) + (h_RT[5] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[3] -= q; /* O */
-  wdot[4] -= q; /* H2 */
-  wdot[5] += q; /* H */
-  wdot[6] += q; /* OH */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q; // O
+  wdot[4] -= q; // H2
+  wdot[5] += q; // H
+  wdot[6] += q; // OH
+  // d()/d[O]
   dqdci = +k_f * sc[4];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[148] -= dqdci; /* dwdot[H2]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  /* d()/d[H2] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[148] -= dqdci; // dwdot[H2]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  // d()/d[H2]
   dqdci = +k_f * sc[3];
-  J[195] -= dqdci; /* dwdot[O]/d[H2] */
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[198] += dqdci; /* dwdot[OH]/d[H2] */
-  /* d()/d[H] */
+  J[195] -= dqdci; // dwdot[O]/d[H2]
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[198] += dqdci; // dwdot[OH]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[6];
-  J[243] -= dqdci; /* dwdot[O]/d[H] */
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[246] += dqdci; /* dwdot[OH]/d[H] */
-  /* d()/d[OH] */
+  J[243] -= dqdci; // dwdot[O]/d[H]
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[246] += dqdci; // dwdot[OH]/d[H]
+  // d()/d[OH]
   dqdci = -k_r * sc[5];
-  J[291] -= dqdci; /* dwdot[O]/d[OH] */
-  J[292] -= dqdci; /* dwdot[H2]/d[OH] */
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] += dqdci; /* dwdot[OH]/d[OH] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
+  J[291] -= dqdci; // dwdot[O]/d[OH]
+  J[292] -= dqdci; // dwdot[H2]/d[OH]
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] += dqdci; // dwdot[OH]/d[OH]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
 
   /*reaction 19: OH + H2 <=> H + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[4] * sc[6];
   k_f =
     1e-06 * 173000000 * exp(1.51 * tc[0] - 0.50321666580472 * (3429.73) * invT);
   dlnkfdT = 1.51 * invT + 0.50321666580472 * 3429.73 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[7];
   Kc = exp(g_RT[4] - g_RT[5] + g_RT[6] - g_RT[7]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[6]) + (h_RT[5] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] -= q; /* H2 */
-  wdot[5] += q; /* H */
-  wdot[6] -= q; /* OH */
-  wdot[7] += q; /* H2O */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] -= q; // H2
+  wdot[5] += q; // H
+  wdot[6] -= q; // OH
+  wdot[7] += q; // H2O
+  // d()/d[H2]
   dqdci = +k_f * sc[6];
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[198] -= dqdci; /* dwdot[OH]/d[H2] */
-  J[199] += dqdci; /* dwdot[H2O]/d[H2] */
-  /* d()/d[H] */
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[198] -= dqdci; // dwdot[OH]/d[H2]
+  J[199] += dqdci; // dwdot[H2O]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[7];
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[246] -= dqdci; /* dwdot[OH]/d[H] */
-  J[247] += dqdci; /* dwdot[H2O]/d[H] */
-  /* d()/d[OH] */
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[246] -= dqdci; // dwdot[OH]/d[H]
+  J[247] += dqdci; // dwdot[H2O]/d[H]
+  // d()/d[OH]
   dqdci = +k_f * sc[4];
-  J[292] -= dqdci; /* dwdot[H2]/d[OH] */
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  /* d()/d[H2O] */
+  J[292] -= dqdci; // dwdot[H2]/d[OH]
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[5];
-  J[340] -= dqdci; /* dwdot[H2]/d[H2O] */
-  J[341] += dqdci; /* dwdot[H]/d[H2O] */
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  /* d()/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
+  J[340] -= dqdci; // dwdot[H2]/d[H2O]
+  J[341] += dqdci; // dwdot[H]/d[H2O]
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  // d()/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
 
   /*reaction 20: 2.000000 OH <=> O + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[6] * sc[6]);
   k_f = 1e-06 * 39700 * exp(2.4 * tc[0] - 0.50321666580472 * (-2110.42) * invT);
   dlnkfdT = 2.4 * invT + 0.50321666580472 * -2110.42 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[3] * sc[7];
   Kc = exp(-g_RT[3] + 2.000000 * g_RT[6] - g_RT[7]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[6]) + (h_RT[3] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[3] += q;     /* O */
-  wdot[6] -= 2 * q; /* OH */
-  wdot[7] += q;     /* H2O */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] += q;     // O
+  wdot[6] -= 2 * q; // OH
+  wdot[7] += q;     // H2O
+  // d()/d[O]
   dqdci = -k_r * sc[7];
-  J[147] += dqdci;      /* dwdot[O]/d[O] */
-  J[150] += -2 * dqdci; /* dwdot[OH]/d[O] */
-  J[151] += dqdci;      /* dwdot[H2O]/d[O] */
-  /* d()/d[OH] */
+  J[147] += dqdci;      // dwdot[O]/d[O]
+  J[150] += -2 * dqdci; // dwdot[OH]/d[O]
+  J[151] += dqdci;      // dwdot[H2O]/d[O]
+  // d()/d[OH]
   dqdci = +k_f * 2.000000 * sc[6];
-  J[291] += dqdci;      /* dwdot[O]/d[OH] */
-  J[294] += -2 * dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci;      /* dwdot[H2O]/d[OH] */
-  /* d()/d[H2O] */
+  J[291] += dqdci;      // dwdot[O]/d[OH]
+  J[294] += -2 * dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci;      // dwdot[H2O]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[3];
-  J[339] += dqdci;      /* dwdot[O]/d[H2O] */
-  J[342] += -2 * dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci;      /* dwdot[H2O]/d[H2O] */
-  /* d()/dT */
-  J[2259] += dqdT;      /* dwdot[O]/dT */
-  J[2262] += -2 * dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT;      /* dwdot[H2O]/dT */
+  J[339] += dqdci;      // dwdot[O]/d[H2O]
+  J[342] += -2 * dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci;      // dwdot[H2O]/d[H2O]
+  // d()/dT
+  J[2259] += dqdT;      // dwdot[O]/dT
+  J[2262] += -2 * dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT;      // dwdot[H2O]/dT
 
   /*reaction 21: H + O2 <=> O + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[8];
   k_f = 1e-06 * 2.64e+16 *
         exp(-0.67 * tc[0] - 0.50321666580472 * (17041.11) * invT);
   dlnkfdT = -0.67 * invT + 0.50321666580472 * 17041.11 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[3] * sc[6];
   Kc = exp(-g_RT[3] + g_RT[5] - g_RT[6] + g_RT[8]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[8]) + (h_RT[3] + h_RT[6]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[3] += q; /* O */
-  wdot[5] -= q; /* H */
-  wdot[6] += q; /* OH */
-  wdot[8] -= q; /* O2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] += q; // O
+  wdot[5] -= q; // H
+  wdot[6] += q; // OH
+  wdot[8] -= q; // O2
+  // d()/d[O]
   dqdci = -k_r * sc[6];
-  J[147] += dqdci; /* dwdot[O]/d[O] */
-  J[149] -= dqdci; /* dwdot[H]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[152] -= dqdci; /* dwdot[O2]/d[O] */
-  /* d()/d[H] */
+  J[147] += dqdci; // dwdot[O]/d[O]
+  J[149] -= dqdci; // dwdot[H]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[152] -= dqdci; // dwdot[O2]/d[O]
+  // d()/d[H]
   dqdci = +k_f * sc[8];
-  J[243] += dqdci; /* dwdot[O]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[246] += dqdci; /* dwdot[OH]/d[H] */
-  J[248] -= dqdci; /* dwdot[O2]/d[H] */
-  /* d()/d[OH] */
+  J[243] += dqdci; // dwdot[O]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[246] += dqdci; // dwdot[OH]/d[H]
+  J[248] -= dqdci; // dwdot[O2]/d[H]
+  // d()/d[OH]
   dqdci = -k_r * sc[3];
-  J[291] += dqdci; /* dwdot[O]/d[OH] */
-  J[293] -= dqdci; /* dwdot[H]/d[OH] */
-  J[294] += dqdci; /* dwdot[OH]/d[OH] */
-  J[296] -= dqdci; /* dwdot[O2]/d[OH] */
-  /* d()/d[O2] */
+  J[291] += dqdci; // dwdot[O]/d[OH]
+  J[293] -= dqdci; // dwdot[H]/d[OH]
+  J[294] += dqdci; // dwdot[OH]/d[OH]
+  J[296] -= dqdci; // dwdot[O2]/d[OH]
+  // d()/d[O2]
   dqdci = +k_f * sc[5];
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[389] -= dqdci; /* dwdot[H]/d[O2] */
-  J[390] += dqdci; /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[389] -= dqdci; // dwdot[H]/d[O2]
+  J[390] += dqdci; // dwdot[OH]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
 
   /*reaction 22: HO2 + H => O2 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[9];
   k_f =
     1e-06 * 3649000 * exp(2.07 * tc[0] - 0.50321666580472 * (-1092.26) * invT);
   dlnkfdT = 2.07 * invT + 0.50321666580472 * -1092.26 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q; /* H2 */
-  wdot[5] -= q; /* H */
-  wdot[8] += q; /* O2 */
-  wdot[9] -= q; /* HO2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q; // H2
+  wdot[5] -= q; // H
+  wdot[8] += q; // O2
+  wdot[9] -= q; // HO2
+  // d()/d[H]
   dqdci = +k_f * sc[9];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[248] += dqdci; /* dwdot[O2]/d[H] */
-  J[249] -= dqdci; /* dwdot[HO2]/d[H] */
-  /* d()/d[HO2] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[248] += dqdci; // dwdot[O2]/d[H]
+  J[249] -= dqdci; // dwdot[HO2]/d[H]
+  // d()/d[HO2]
   dqdci = +k_f * sc[5];
-  J[436] += dqdci; /* dwdot[H2]/d[HO2] */
-  J[437] -= dqdci; /* dwdot[H]/d[HO2] */
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
+  J[436] += dqdci; // dwdot[H2]/d[HO2]
+  J[437] -= dqdci; // dwdot[H]/d[HO2]
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
 
   /*reaction 23: HO2 + H => O + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[9];
   k_f =
     1e-06 * 3970000000000 * exp(0 * tc[0] - 0.50321666580472 * (671.61) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 671.61 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] += q; /* O */
-  wdot[5] -= q; /* H */
-  wdot[7] += q; /* H2O */
-  wdot[9] -= q; /* HO2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[3] += q; // O
+  wdot[5] -= q; // H
+  wdot[7] += q; // H2O
+  wdot[9] -= q; // HO2
+  // d()/d[H]
   dqdci = +k_f * sc[9];
-  J[243] += dqdci; /* dwdot[O]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[247] += dqdci; /* dwdot[H2O]/d[H] */
-  J[249] -= dqdci; /* dwdot[HO2]/d[H] */
-  /* d()/d[HO2] */
+  J[243] += dqdci; // dwdot[O]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[247] += dqdci; // dwdot[H2O]/d[H]
+  J[249] -= dqdci; // dwdot[HO2]/d[H]
+  // d()/d[HO2]
   dqdci = +k_f * sc[5];
-  J[435] += dqdci; /* dwdot[O]/d[HO2] */
-  J[437] -= dqdci; /* dwdot[H]/d[HO2] */
-  J[439] += dqdci; /* dwdot[H2O]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
+  J[435] += dqdci; // dwdot[O]/d[HO2]
+  J[437] -= dqdci; // dwdot[H]/d[HO2]
+  J[439] += dqdci; // dwdot[H2O]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
 
   /*reaction 24: HO2 + H => 2.000000 OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[9];
   k_f = 1e-06 * 74900000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (635.76) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 635.76 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] -= q;     /* H */
-  wdot[6] += 2 * q; /* OH */
-  wdot[9] -= q;     /* HO2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;     // H
+  wdot[6] += 2 * q; // OH
+  wdot[9] -= q;     // HO2
+  // d()/d[H]
   dqdci = +k_f * sc[9];
-  J[245] -= dqdci;     /* dwdot[H]/d[H] */
-  J[246] += 2 * dqdci; /* dwdot[OH]/d[H] */
-  J[249] -= dqdci;     /* dwdot[HO2]/d[H] */
-  /* d()/d[HO2] */
+  J[245] -= dqdci;     // dwdot[H]/d[H]
+  J[246] += 2 * dqdci; // dwdot[OH]/d[H]
+  J[249] -= dqdci;     // dwdot[HO2]/d[H]
+  // d()/d[HO2]
   dqdci = +k_f * sc[5];
-  J[437] -= dqdci;     /* dwdot[H]/d[HO2] */
-  J[438] += 2 * dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci;     /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2261] -= dqdT;     /* dwdot[H]/dT */
-  J[2262] += 2 * dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT;     /* dwdot[HO2]/dT */
+  J[437] -= dqdci;     // dwdot[H]/d[HO2]
+  J[438] += 2 * dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci;     // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2261] -= dqdT;     // dwdot[H]/dT
+  J[2262] += 2 * dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT;     // dwdot[HO2]/dT
 
   /*reaction 25: HO2 + O => OH + O2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[9];
   k_f = 1e-06 * 40000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q; /* O */
-  wdot[6] += q; /* OH */
-  wdot[8] += q; /* O2 */
-  wdot[9] -= q; /* HO2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q; // O
+  wdot[6] += q; // OH
+  wdot[8] += q; // O2
+  wdot[9] -= q; // HO2
+  // d()/d[O]
   dqdci = +k_f * sc[9];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[152] += dqdci; /* dwdot[O2]/d[O] */
-  J[153] -= dqdci; /* dwdot[HO2]/d[O] */
-  /* d()/d[HO2] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[152] += dqdci; // dwdot[O2]/d[O]
+  J[153] -= dqdci; // dwdot[HO2]/d[O]
+  // d()/d[HO2]
   dqdci = +k_f * sc[3];
-  J[435] -= dqdci; /* dwdot[O]/d[HO2] */
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
+  J[435] -= dqdci; // dwdot[O]/d[HO2]
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
 
   /*reaction 26: HO2 + OH => H2O + O2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[9];
   k_f = 1e-06 * 23800000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (-499.52) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * -499.52 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q; /* OH */
-  wdot[7] += q; /* H2O */
-  wdot[8] += q; /* O2 */
-  wdot[9] -= q; /* HO2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q; // OH
+  wdot[7] += q; // H2O
+  wdot[8] += q; // O2
+  wdot[9] -= q; // HO2
+  // d()/d[OH]
   dqdci = +k_f * sc[9];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[296] += dqdci; /* dwdot[O2]/d[OH] */
-  J[297] -= dqdci; /* dwdot[HO2]/d[OH] */
-  /* d()/d[HO2] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[296] += dqdci; // dwdot[O2]/d[OH]
+  J[297] -= dqdci; // dwdot[HO2]/d[OH]
+  // d()/d[HO2]
   dqdci = +k_f * sc[6];
-  J[438] -= dqdci; /* dwdot[OH]/d[HO2] */
-  J[439] += dqdci; /* dwdot[H2O]/d[HO2] */
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
+  J[438] -= dqdci; // dwdot[OH]/d[HO2]
+  J[439] += dqdci; // dwdot[H2O]/d[HO2]
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
 
   /*reaction 27: HO2 + OH => H2O + O2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[9];
   k_f = 1e-06 * 1e+16 * exp(0 * tc[0] - 0.50321666580472 * (17330.31) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 17330.31 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q; /* OH */
-  wdot[7] += q; /* H2O */
-  wdot[8] += q; /* O2 */
-  wdot[9] -= q; /* HO2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q; // OH
+  wdot[7] += q; // H2O
+  wdot[8] += q; // O2
+  wdot[9] -= q; // HO2
+  // d()/d[OH]
   dqdci = +k_f * sc[9];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[296] += dqdci; /* dwdot[O2]/d[OH] */
-  J[297] -= dqdci; /* dwdot[HO2]/d[OH] */
-  /* d()/d[HO2] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[296] += dqdci; // dwdot[O2]/d[OH]
+  J[297] -= dqdci; // dwdot[HO2]/d[OH]
+  // d()/d[HO2]
   dqdci = +k_f * sc[6];
-  J[438] -= dqdci; /* dwdot[OH]/d[HO2] */
-  J[439] += dqdci; /* dwdot[H2O]/d[HO2] */
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
+  J[438] -= dqdci; // dwdot[OH]/d[HO2]
+  J[439] += dqdci; // dwdot[H2O]/d[HO2]
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
 
   /*reaction 28: CH + O => CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[10];
   k_f = 1e-06 * 57000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[10] -= q; /* CH */
-  wdot[11] += q; /* CO */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[10] -= q; // CH
+  wdot[11] += q; // CO
+  // d()/d[O]
   dqdci = +k_f * sc[10];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[154] -= dqdci; /* dwdot[CH]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  /* d()/d[CH] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[154] -= dqdci; // dwdot[CH]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  // d()/d[CH]
   dqdci = +k_f * sc[3];
-  J[483] -= dqdci; /* dwdot[O]/d[CH] */
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[491] += dqdci; /* dwdot[CO]/d[CH] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
+  J[483] -= dqdci; // dwdot[O]/d[CH]
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[491] += dqdci; // dwdot[CO]/d[CH]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
 
   /*reaction 29: CH + OH => HCO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[10];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[10] -= q; /* CH */
-  wdot[12] += q; /* HCO */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[10] -= q; // CH
+  wdot[12] += q; // HCO
+  // d()/d[OH]
   dqdci = +k_f * sc[10];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[298] -= dqdci; /* dwdot[CH]/d[OH] */
-  J[300] += dqdci; /* dwdot[HCO]/d[OH] */
-  /* d()/d[CH] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[298] -= dqdci; // dwdot[CH]/d[OH]
+  J[300] += dqdci; // dwdot[HCO]/d[OH]
+  // d()/d[CH]
   dqdci = +k_f * sc[6];
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[486] -= dqdci; /* dwdot[OH]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[492] += dqdci; /* dwdot[HCO]/d[CH] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[486] -= dqdci; // dwdot[OH]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[492] += dqdci; // dwdot[HCO]/d[CH]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
 
   /*reaction 30: CH + H2 <=> T-CH2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[4] * sc[10];
   k_f = 1e-06 * 108000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (3109.46) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 3109.46 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[2] * sc[5];
   Kc = exp(-g_RT[2] + g_RT[4] - g_RT[5] + g_RT[10]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[10]) + (h_RT[2] + h_RT[5]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[2] += q;  /* T-CH2 */
-  wdot[4] -= q;  /* H2 */
-  wdot[5] += q;  /* H */
-  wdot[10] -= q; /* CH */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] += q;  // T-CH2
+  wdot[4] -= q;  // H2
+  wdot[5] += q;  // H
+  wdot[10] -= q; // CH
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[5];
-  J[98] += dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[100] -= dqdci; /* dwdot[H2]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[106] -= dqdci; /* dwdot[CH]/d[T-CH2] */
-  /* d()/d[H2] */
+  J[98] += dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[100] -= dqdci; // dwdot[H2]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[106] -= dqdci; // dwdot[CH]/d[T-CH2]
+  // d()/d[H2]
   dqdci = +k_f * sc[10];
-  J[194] += dqdci; /* dwdot[T-CH2]/d[H2] */
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[202] -= dqdci; /* dwdot[CH]/d[H2] */
-  /* d()/d[H] */
+  J[194] += dqdci; // dwdot[T-CH2]/d[H2]
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[202] -= dqdci; // dwdot[CH]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[2];
-  J[242] += dqdci; /* dwdot[T-CH2]/d[H] */
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[250] -= dqdci; /* dwdot[CH]/d[H] */
-  /* d()/d[CH] */
+  J[242] += dqdci; // dwdot[T-CH2]/d[H]
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[250] -= dqdci; // dwdot[CH]/d[H]
+  // d()/d[CH]
   dqdci = +k_f * sc[4];
-  J[482] += dqdci; /* dwdot[T-CH2]/d[CH] */
-  J[484] -= dqdci; /* dwdot[H2]/d[CH] */
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  /* d()/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
+  J[482] += dqdci; // dwdot[T-CH2]/d[CH]
+  J[484] -= dqdci; // dwdot[H2]/d[CH]
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  // d()/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
 
   /*reaction 31: CH + H2O => CH2O + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[7] * sc[10];
   k_f = 1e-06 * 5710000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (-755.26) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * -755.26 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[7] -= q;  /* H2O */
-  wdot[10] -= q; /* CH */
-  wdot[13] += q; /* CH2O */
-  /* d()/d[H2O] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[7] -= q;  // H2O
+  wdot[10] -= q; // CH
+  wdot[13] += q; // CH2O
+  // d()/d[H2O]
   dqdci = +k_f * sc[10];
-  J[341] += dqdci; /* dwdot[H]/d[H2O] */
-  J[343] -= dqdci; /* dwdot[H2O]/d[H2O] */
-  J[346] -= dqdci; /* dwdot[CH]/d[H2O] */
-  J[349] += dqdci; /* dwdot[CH2O]/d[H2O] */
-  /* d()/d[CH] */
+  J[341] += dqdci; // dwdot[H]/d[H2O]
+  J[343] -= dqdci; // dwdot[H2O]/d[H2O]
+  J[346] -= dqdci; // dwdot[CH]/d[H2O]
+  J[349] += dqdci; // dwdot[CH2O]/d[H2O]
+  // d()/d[CH]
   dqdci = +k_f * sc[7];
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[487] -= dqdci; /* dwdot[H2O]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[493] += dqdci; /* dwdot[CH2O]/d[CH] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2263] -= dqdT; /* dwdot[H2O]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[487] -= dqdci; // dwdot[H2O]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[493] += dqdci; // dwdot[CH2O]/d[CH]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2263] -= dqdT; // dwdot[H2O]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
 
   /*reaction 32: CH + O2 => HCO + O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[10];
   k_f = 1e-06 * 67100000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] += q;  /* O */
-  wdot[8] -= q;  /* O2 */
-  wdot[10] -= q; /* CH */
-  wdot[12] += q; /* HCO */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[3] += q;  // O
+  wdot[8] -= q;  // O2
+  wdot[10] -= q; // CH
+  wdot[12] += q; // HCO
+  // d()/d[O2]
   dqdci = +k_f * sc[10];
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[394] -= dqdci; /* dwdot[CH]/d[O2] */
-  J[396] += dqdci; /* dwdot[HCO]/d[O2] */
-  /* d()/d[CH] */
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[394] -= dqdci; // dwdot[CH]/d[O2]
+  J[396] += dqdci; // dwdot[HCO]/d[O2]
+  // d()/d[CH]
   dqdci = +k_f * sc[8];
-  J[483] += dqdci; /* dwdot[O]/d[CH] */
-  J[488] -= dqdci; /* dwdot[O2]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[492] += dqdci; /* dwdot[HCO]/d[CH] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
+  J[483] += dqdci; // dwdot[O]/d[CH]
+  J[488] -= dqdci; // dwdot[O2]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[492] += dqdci; // dwdot[HCO]/d[CH]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
 
   /*reaction 33: T-CH2 + O => HCO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[3];
   k_f = 1e-06 * 80000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[12] += q; /* HCO */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[12] += q; // HCO
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[3];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[99] -= dqdci;  /* dwdot[O]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[108] += dqdci; /* dwdot[HCO]/d[T-CH2] */
-  /* d()/d[O] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[99] -= dqdci;  // dwdot[O]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[108] += dqdci; // dwdot[HCO]/d[T-CH2]
+  // d()/d[O]
   dqdci = +k_f * sc[2];
-  J[146] -= dqdci; /* dwdot[T-CH2]/d[O] */
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[156] += dqdci; /* dwdot[HCO]/d[O] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
+  J[146] -= dqdci; // dwdot[T-CH2]/d[O]
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[156] += dqdci; // dwdot[HCO]/d[O]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
 
   /*reaction 34: T-CH2 + OH => CH2O + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[6];
   k_f = 1e-06 * 20000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[13] += q; /* CH2O */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[13] += q; // CH2O
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[6];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[102] -= dqdci; /* dwdot[OH]/d[T-CH2] */
-  J[109] += dqdci; /* dwdot[CH2O]/d[T-CH2] */
-  /* d()/d[OH] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[102] -= dqdci; // dwdot[OH]/d[T-CH2]
+  J[109] += dqdci; // dwdot[CH2O]/d[T-CH2]
+  // d()/d[OH]
   dqdci = +k_f * sc[2];
-  J[290] -= dqdci; /* dwdot[T-CH2]/d[OH] */
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[301] += dqdci; /* dwdot[CH2O]/d[OH] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
+  J[290] -= dqdci; // dwdot[T-CH2]/d[OH]
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[301] += dqdci; // dwdot[CH2O]/d[OH]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
 
   /*reaction 35: T-CH2 + OH <=> CH + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[6];
   k_f = 1e-06 * 11300000 * exp(2 * tc[0] - 0.50321666580472 * (2999.52) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * 2999.52 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[7] * sc[10];
   Kc = exp(g_RT[2] + g_RT[6] - g_RT[7] - g_RT[10]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[6]) + (h_RT[7] + h_RT[10]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[10] += q; /* CH */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[10] += q; // CH
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[6];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[102] -= dqdci; /* dwdot[OH]/d[T-CH2] */
-  J[103] += dqdci; /* dwdot[H2O]/d[T-CH2] */
-  J[106] += dqdci; /* dwdot[CH]/d[T-CH2] */
-  /* d()/d[OH] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[102] -= dqdci; // dwdot[OH]/d[T-CH2]
+  J[103] += dqdci; // dwdot[H2O]/d[T-CH2]
+  J[106] += dqdci; // dwdot[CH]/d[T-CH2]
+  // d()/d[OH]
   dqdci = +k_f * sc[2];
-  J[290] -= dqdci; /* dwdot[T-CH2]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[298] += dqdci; /* dwdot[CH]/d[OH] */
-  /* d()/d[H2O] */
+  J[290] -= dqdci; // dwdot[T-CH2]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[298] += dqdci; // dwdot[CH]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[10];
-  J[338] -= dqdci; /* dwdot[T-CH2]/d[H2O] */
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[346] += dqdci; /* dwdot[CH]/d[H2O] */
-  /* d()/d[CH] */
+  J[338] -= dqdci; // dwdot[T-CH2]/d[H2O]
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[346] += dqdci; // dwdot[CH]/d[H2O]
+  // d()/d[CH]
   dqdci = -k_r * sc[7];
-  J[482] -= dqdci; /* dwdot[T-CH2]/d[CH] */
-  J[486] -= dqdci; /* dwdot[OH]/d[CH] */
-  J[487] += dqdci; /* dwdot[H2O]/d[CH] */
-  J[490] += dqdci; /* dwdot[CH]/d[CH] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2266] += dqdT; /* dwdot[CH]/dT */
+  J[482] -= dqdci; // dwdot[T-CH2]/d[CH]
+  J[486] -= dqdci; // dwdot[OH]/d[CH]
+  J[487] += dqdci; // dwdot[H2O]/d[CH]
+  J[490] += dqdci; // dwdot[CH]/d[CH]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2266] += dqdT; // dwdot[CH]/dT
 
   /*reaction 36: T-CH2 + H2 <=> H + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[4];
   k_f = 1e-06 * 500000 * exp(2 * tc[0] - 0.50321666580472 * (7229.92) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * 7229.92 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[14];
   Kc = exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[14]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[4]) + (h_RT[5] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[4] -= q;  /* H2 */
-  wdot[5] += q;  /* H */
-  wdot[14] += q; /* CH3 */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[4] -= q;  // H2
+  wdot[5] += q;  // H
+  wdot[14] += q; // CH3
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[4];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[100] -= dqdci; /* dwdot[H2]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[110] += dqdci; /* dwdot[CH3]/d[T-CH2] */
-  /* d()/d[H2] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[100] -= dqdci; // dwdot[H2]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[110] += dqdci; // dwdot[CH3]/d[T-CH2]
+  // d()/d[H2]
   dqdci = +k_f * sc[2];
-  J[194] -= dqdci; /* dwdot[T-CH2]/d[H2] */
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[206] += dqdci; /* dwdot[CH3]/d[H2] */
-  /* d()/d[H] */
+  J[194] -= dqdci; // dwdot[T-CH2]/d[H2]
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[206] += dqdci; // dwdot[CH3]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[14];
-  J[242] -= dqdci; /* dwdot[T-CH2]/d[H] */
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  /* d()/d[CH3] */
+  J[242] -= dqdci; // dwdot[T-CH2]/d[H]
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[5];
-  J[674] -= dqdci; /* dwdot[T-CH2]/d[CH3] */
-  J[676] -= dqdci; /* dwdot[H2]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
+  J[674] -= dqdci; // dwdot[T-CH2]/d[CH3]
+  J[676] -= dqdci; // dwdot[H2]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
 
   /*reaction 37: T-CH2 + O2 => CO2 + 2.000000 H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[8];
   k_f = 1e-06 * 5800000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (1500.96) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 1500.96 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;     /* T-CH2 */
-  wdot[5] += 2 * q; /* H */
-  wdot[8] -= q;     /* O2 */
-  wdot[15] += q;    /* CO2 */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;     // T-CH2
+  wdot[5] += 2 * q; // H
+  wdot[8] -= q;     // O2
+  wdot[15] += q;    // CO2
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[8];
-  J[98] -= dqdci;      /* dwdot[T-CH2]/d[T-CH2] */
-  J[101] += 2 * dqdci; /* dwdot[H]/d[T-CH2] */
-  J[104] -= dqdci;     /* dwdot[O2]/d[T-CH2] */
-  J[111] += dqdci;     /* dwdot[CO2]/d[T-CH2] */
-  /* d()/d[O2] */
+  J[98] -= dqdci;      // dwdot[T-CH2]/d[T-CH2]
+  J[101] += 2 * dqdci; // dwdot[H]/d[T-CH2]
+  J[104] -= dqdci;     // dwdot[O2]/d[T-CH2]
+  J[111] += dqdci;     // dwdot[CO2]/d[T-CH2]
+  // d()/d[O2]
   dqdci = +k_f * sc[2];
-  J[386] -= dqdci;     /* dwdot[T-CH2]/d[O2] */
-  J[389] += 2 * dqdci; /* dwdot[H]/d[O2] */
-  J[392] -= dqdci;     /* dwdot[O2]/d[O2] */
-  J[399] += dqdci;     /* dwdot[CO2]/d[O2] */
-  /* d()/dT */
-  J[2258] -= dqdT;     /* dwdot[T-CH2]/dT */
-  J[2261] += 2 * dqdT; /* dwdot[H]/dT */
-  J[2264] -= dqdT;     /* dwdot[O2]/dT */
-  J[2271] += dqdT;     /* dwdot[CO2]/dT */
+  J[386] -= dqdci;     // dwdot[T-CH2]/d[O2]
+  J[389] += 2 * dqdci; // dwdot[H]/d[O2]
+  J[392] -= dqdci;     // dwdot[O2]/d[O2]
+  J[399] += dqdci;     // dwdot[CO2]/d[O2]
+  // d()/dT
+  J[2258] -= dqdT;     // dwdot[T-CH2]/dT
+  J[2261] += 2 * dqdT; // dwdot[H]/dT
+  J[2264] -= dqdT;     // dwdot[O2]/dT
+  J[2271] += dqdT;     // dwdot[CO2]/dT
 
   /*reaction 38: T-CH2 + O2 => CH2O + O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[8];
   k_f = 1e-06 * 2400000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (1500.96) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 1500.96 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[3] += q;  /* O */
-  wdot[8] -= q;  /* O2 */
-  wdot[13] += q; /* CH2O */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[3] += q;  // O
+  wdot[8] -= q;  // O2
+  wdot[13] += q; // CH2O
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[8];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[99] += dqdci;  /* dwdot[O]/d[T-CH2] */
-  J[104] -= dqdci; /* dwdot[O2]/d[T-CH2] */
-  J[109] += dqdci; /* dwdot[CH2O]/d[T-CH2] */
-  /* d()/d[O2] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[99] += dqdci;  // dwdot[O]/d[T-CH2]
+  J[104] -= dqdci; // dwdot[O2]/d[T-CH2]
+  J[109] += dqdci; // dwdot[CH2O]/d[T-CH2]
+  // d()/d[O2]
   dqdci = +k_f * sc[2];
-  J[386] -= dqdci; /* dwdot[T-CH2]/d[O2] */
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[397] += dqdci; /* dwdot[CH2O]/d[O2] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
+  J[386] -= dqdci; // dwdot[T-CH2]/d[O2]
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[397] += dqdci; // dwdot[CH2O]/d[O2]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
 
   /*reaction 39: T-CH2 + O2 => OH + H + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[8];
   k_f = 1e-06 * 5000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (1500.96) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 1500.96 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[5] += q;  /* H */
-  wdot[6] += q;  /* OH */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[5] += q;  // H
+  wdot[6] += q;  // OH
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[8];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[102] += dqdci; /* dwdot[OH]/d[T-CH2] */
-  J[104] -= dqdci; /* dwdot[O2]/d[T-CH2] */
-  J[107] += dqdci; /* dwdot[CO]/d[T-CH2] */
-  /* d()/d[O2] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[102] += dqdci; // dwdot[OH]/d[T-CH2]
+  J[104] -= dqdci; // dwdot[O2]/d[T-CH2]
+  J[107] += dqdci; // dwdot[CO]/d[T-CH2]
+  // d()/d[O2]
   dqdci = +k_f * sc[2];
-  J[386] -= dqdci; /* dwdot[T-CH2]/d[O2] */
-  J[389] += dqdci; /* dwdot[H]/d[O2] */
-  J[390] += dqdci; /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
+  J[386] -= dqdci; // dwdot[T-CH2]/d[O2]
+  J[389] += dqdci; // dwdot[H]/d[O2]
+  J[390] += dqdci; // dwdot[OH]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
 
   /*reaction 40: S-CH2 + H2 <=> CH3 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[4];
   k_f = 1e-06 * 70000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[14];
   Kc = exp(g_RT[1] + g_RT[4] - g_RT[5] - g_RT[14]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[4]) + (h_RT[5] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[4] -= q;  /* H2 */
-  wdot[5] += q;  /* H */
-  wdot[14] += q; /* CH3 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[4] -= q;  // H2
+  wdot[5] += q;  // H
+  wdot[14] += q; // CH3
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[4];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[52] -= dqdci; /* dwdot[H2]/d[S-CH2] */
-  J[53] += dqdci; /* dwdot[H]/d[S-CH2] */
-  J[62] += dqdci; /* dwdot[CH3]/d[S-CH2] */
-  /* d()/d[H2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[52] -= dqdci; // dwdot[H2]/d[S-CH2]
+  J[53] += dqdci; // dwdot[H]/d[S-CH2]
+  J[62] += dqdci; // dwdot[CH3]/d[S-CH2]
+  // d()/d[H2]
   dqdci = +k_f * sc[1];
-  J[193] -= dqdci; /* dwdot[S-CH2]/d[H2] */
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[206] += dqdci; /* dwdot[CH3]/d[H2] */
-  /* d()/d[H] */
+  J[193] -= dqdci; // dwdot[S-CH2]/d[H2]
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[206] += dqdci; // dwdot[CH3]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[14];
-  J[241] -= dqdci; /* dwdot[S-CH2]/d[H] */
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  /* d()/d[CH3] */
+  J[241] -= dqdci; // dwdot[S-CH2]/d[H]
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[5];
-  J[673] -= dqdci; /* dwdot[S-CH2]/d[CH3] */
-  J[676] -= dqdci; /* dwdot[H2]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
+  J[673] -= dqdci; // dwdot[S-CH2]/d[CH3]
+  J[676] -= dqdci; // dwdot[H2]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
 
   /*reaction 41: S-CH2 + O2 => H + OH + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[8];
   k_f = 1e-06 * 28000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[5] += q;  /* H */
-  wdot[6] += q;  /* OH */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[5] += q;  // H
+  wdot[6] += q;  // OH
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[8];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[53] += dqdci; /* dwdot[H]/d[S-CH2] */
-  J[54] += dqdci; /* dwdot[OH]/d[S-CH2] */
-  J[56] -= dqdci; /* dwdot[O2]/d[S-CH2] */
-  J[59] += dqdci; /* dwdot[CO]/d[S-CH2] */
-  /* d()/d[O2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[53] += dqdci; // dwdot[H]/d[S-CH2]
+  J[54] += dqdci; // dwdot[OH]/d[S-CH2]
+  J[56] -= dqdci; // dwdot[O2]/d[S-CH2]
+  J[59] += dqdci; // dwdot[CO]/d[S-CH2]
+  // d()/d[O2]
   dqdci = +k_f * sc[1];
-  J[385] -= dqdci; /* dwdot[S-CH2]/d[O2] */
-  J[389] += dqdci; /* dwdot[H]/d[O2] */
-  J[390] += dqdci; /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
+  J[385] -= dqdci; // dwdot[S-CH2]/d[O2]
+  J[389] += dqdci; // dwdot[H]/d[O2]
+  J[390] += dqdci; // dwdot[OH]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
 
   /*reaction 42: S-CH2 + O2 => CO + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[8];
   k_f = 1e-06 * 12000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[7] += q;  /* H2O */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[7] += q;  // H2O
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[8];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[55] += dqdci; /* dwdot[H2O]/d[S-CH2] */
-  J[56] -= dqdci; /* dwdot[O2]/d[S-CH2] */
-  J[59] += dqdci; /* dwdot[CO]/d[S-CH2] */
-  /* d()/d[O2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[55] += dqdci; // dwdot[H2O]/d[S-CH2]
+  J[56] -= dqdci; // dwdot[O2]/d[S-CH2]
+  J[59] += dqdci; // dwdot[CO]/d[S-CH2]
+  // d()/d[O2]
   dqdci = +k_f * sc[1];
-  J[385] -= dqdci; /* dwdot[S-CH2]/d[O2] */
-  J[391] += dqdci; /* dwdot[H2O]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
+  J[385] -= dqdci; // dwdot[S-CH2]/d[O2]
+  J[391] += dqdci; // dwdot[H2O]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
 
   /*reaction 43: S-CH2 + H2O <=> T-CH2 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[7];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[2] * sc[7];
   Kc = exp(g_RT[1] - g_RT[2] + g_RT[7] - g_RT[7]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[7]) + (h_RT[2] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q; /* S-CH2 */
-  wdot[2] += q; /* T-CH2 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q; // S-CH2
+  wdot[2] += q; // T-CH2
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[7];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[50] += dqdci; /* dwdot[T-CH2]/d[S-CH2] */
-  /* d()/d[T-CH2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[50] += dqdci; // dwdot[T-CH2]/d[S-CH2]
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[7];
-  J[97] -= dqdci; /* dwdot[S-CH2]/d[T-CH2] */
-  J[98] += dqdci; /* dwdot[T-CH2]/d[T-CH2] */
-  /* d()/d[H2O] */
+  J[97] -= dqdci; // dwdot[S-CH2]/d[T-CH2]
+  J[98] += dqdci; // dwdot[T-CH2]/d[T-CH2]
+  // d()/d[H2O]
   dqdci = +k_f * sc[1] - k_r * sc[2];
-  J[337] -= dqdci; /* dwdot[S-CH2]/d[H2O] */
-  J[338] += dqdci; /* dwdot[T-CH2]/d[H2O] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
+  J[337] -= dqdci; // dwdot[S-CH2]/d[H2O]
+  J[338] += dqdci; // dwdot[T-CH2]/d[H2O]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
 
   /*reaction 44: S-CH2 + H2O => H2 + CH2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[7];
   k_f = 1e-06 * 68200000000 *
         exp(0.25 * tc[0] - 0.50321666580472 * (-934.51) * invT);
   dlnkfdT = 0.25 * invT + 0.50321666580472 * -934.51 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[4] += q;  /* H2 */
-  wdot[7] -= q;  /* H2O */
-  wdot[13] += q; /* CH2O */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[4] += q;  // H2
+  wdot[7] -= q;  // H2O
+  wdot[13] += q; // CH2O
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[7];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[52] += dqdci; /* dwdot[H2]/d[S-CH2] */
-  J[55] -= dqdci; /* dwdot[H2O]/d[S-CH2] */
-  J[61] += dqdci; /* dwdot[CH2O]/d[S-CH2] */
-  /* d()/d[H2O] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[52] += dqdci; // dwdot[H2]/d[S-CH2]
+  J[55] -= dqdci; // dwdot[H2O]/d[S-CH2]
+  J[61] += dqdci; // dwdot[CH2O]/d[S-CH2]
+  // d()/d[H2O]
   dqdci = +k_f * sc[1];
-  J[337] -= dqdci; /* dwdot[S-CH2]/d[H2O] */
-  J[340] += dqdci; /* dwdot[H2]/d[H2O] */
-  J[343] -= dqdci; /* dwdot[H2O]/d[H2O] */
-  J[349] += dqdci; /* dwdot[CH2O]/d[H2O] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2263] -= dqdT; /* dwdot[H2O]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
+  J[337] -= dqdci; // dwdot[S-CH2]/d[H2O]
+  J[340] += dqdci; // dwdot[H2]/d[H2O]
+  J[343] -= dqdci; // dwdot[H2O]/d[H2O]
+  J[349] += dqdci; // dwdot[CH2O]/d[H2O]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2263] -= dqdT; // dwdot[H2O]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
 
   /*reaction 45: CH3 + O => CH2O + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[14];
   k_f = 1e-06 * 50600000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[13] += q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[13] += q; // CH2O
+  wdot[14] -= q; // CH3
+  // d()/d[O]
   dqdci = +k_f * sc[14];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[157] += dqdci; /* dwdot[CH2O]/d[O] */
-  J[158] -= dqdci; /* dwdot[CH3]/d[O] */
-  /* d()/d[CH3] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[157] += dqdci; // dwdot[CH2O]/d[O]
+  J[158] -= dqdci; // dwdot[CH3]/d[O]
+  // d()/d[CH3]
   dqdci = +k_f * sc[3];
-  J[675] -= dqdci; /* dwdot[O]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[685] += dqdci; /* dwdot[CH2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[675] -= dqdci; // dwdot[O]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[685] += dqdci; // dwdot[CH2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 46: CH3 + O => H + H2 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[14];
   k_f = 1e-06 * 33700000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[4] += q;  /* H2 */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[4] += q;  // H2
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[14] -= q; // CH3
+  // d()/d[O]
   dqdci = +k_f * sc[14];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[148] += dqdci; /* dwdot[H2]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[158] -= dqdci; /* dwdot[CH3]/d[O] */
-  /* d()/d[CH3] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[148] += dqdci; // dwdot[H2]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[158] -= dqdci; // dwdot[CH3]/d[O]
+  // d()/d[CH3]
   dqdci = +k_f * sc[3];
-  J[675] -= dqdci; /* dwdot[O]/d[CH3] */
-  J[676] += dqdci; /* dwdot[H2]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[683] += dqdci; /* dwdot[CO]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[675] -= dqdci; // dwdot[O]/d[CH3]
+  J[676] += dqdci; // dwdot[H2]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[683] += dqdci; // dwdot[CO]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 47: CH3 + OH <=> T-CH2 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[14];
   k_f =
     1e-06 * 56000000 * exp(1.6 * tc[0] - 0.50321666580472 * (5420.65) * invT);
   dlnkfdT = 1.6 * invT + 0.50321666580472 * 5420.65 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[2] * sc[7];
   Kc = exp(-g_RT[2] + g_RT[6] - g_RT[7] + g_RT[14]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[14]) + (h_RT[2] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[2] += q;  /* T-CH2 */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] += q;  // T-CH2
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[14] -= q; // CH3
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[7];
-  J[98] += dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[102] -= dqdci; /* dwdot[OH]/d[T-CH2] */
-  J[103] += dqdci; /* dwdot[H2O]/d[T-CH2] */
-  J[110] -= dqdci; /* dwdot[CH3]/d[T-CH2] */
-  /* d()/d[OH] */
+  J[98] += dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[102] -= dqdci; // dwdot[OH]/d[T-CH2]
+  J[103] += dqdci; // dwdot[H2O]/d[T-CH2]
+  J[110] -= dqdci; // dwdot[CH3]/d[T-CH2]
+  // d()/d[OH]
   dqdci = +k_f * sc[14];
-  J[290] += dqdci; /* dwdot[T-CH2]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[302] -= dqdci; /* dwdot[CH3]/d[OH] */
-  /* d()/d[H2O] */
+  J[290] += dqdci; // dwdot[T-CH2]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[302] -= dqdci; // dwdot[CH3]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[2];
-  J[338] += dqdci; /* dwdot[T-CH2]/d[H2O] */
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[350] -= dqdci; /* dwdot[CH3]/d[H2O] */
-  /* d()/d[CH3] */
+  J[338] += dqdci; // dwdot[T-CH2]/d[H2O]
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[350] -= dqdci; // dwdot[CH3]/d[H2O]
+  // d()/d[CH3]
   dqdci = +k_f * sc[6];
-  J[674] += dqdci; /* dwdot[T-CH2]/d[CH3] */
-  J[678] -= dqdci; /* dwdot[OH]/d[CH3] */
-  J[679] += dqdci; /* dwdot[H2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[674] += dqdci; // dwdot[T-CH2]/d[CH3]
+  J[678] -= dqdci; // dwdot[OH]/d[CH3]
+  J[679] += dqdci; // dwdot[H2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 48: CH3 + OH <=> S-CH2 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[14];
   k_f =
     1e-06 * 6.44e+17 * exp(-1.34 * tc[0] - 0.50321666580472 * (1417.3) * invT);
   dlnkfdT = -1.34 * invT + 0.50321666580472 * 1417.3 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[1] * sc[7];
   Kc = exp(-g_RT[1] + g_RT[6] - g_RT[7] + g_RT[14]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[14]) + (h_RT[1] + h_RT[7]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] += q;  /* S-CH2 */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] += q;  // S-CH2
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[14] -= q; // CH3
+  // d()/d[S-CH2]
   dqdci = -k_r * sc[7];
-  J[49] += dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[54] -= dqdci; /* dwdot[OH]/d[S-CH2] */
-  J[55] += dqdci; /* dwdot[H2O]/d[S-CH2] */
-  J[62] -= dqdci; /* dwdot[CH3]/d[S-CH2] */
-  /* d()/d[OH] */
+  J[49] += dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[54] -= dqdci; // dwdot[OH]/d[S-CH2]
+  J[55] += dqdci; // dwdot[H2O]/d[S-CH2]
+  J[62] -= dqdci; // dwdot[CH3]/d[S-CH2]
+  // d()/d[OH]
   dqdci = +k_f * sc[14];
-  J[289] += dqdci; /* dwdot[S-CH2]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[302] -= dqdci; /* dwdot[CH3]/d[OH] */
-  /* d()/d[H2O] */
+  J[289] += dqdci; // dwdot[S-CH2]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[302] -= dqdci; // dwdot[CH3]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[1];
-  J[337] += dqdci; /* dwdot[S-CH2]/d[H2O] */
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[350] -= dqdci; /* dwdot[CH3]/d[H2O] */
-  /* d()/d[CH3] */
+  J[337] += dqdci; // dwdot[S-CH2]/d[H2O]
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[350] -= dqdci; // dwdot[CH3]/d[H2O]
+  // d()/d[CH3]
   dqdci = +k_f * sc[6];
-  J[673] += dqdci; /* dwdot[S-CH2]/d[CH3] */
-  J[678] -= dqdci; /* dwdot[OH]/d[CH3] */
-  J[679] += dqdci; /* dwdot[H2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2257] += dqdT; /* dwdot[S-CH2]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[673] += dqdci; // dwdot[S-CH2]/d[CH3]
+  J[678] -= dqdci; // dwdot[OH]/d[CH3]
+  J[679] += dqdci; // dwdot[H2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2257] += dqdT; // dwdot[S-CH2]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 49: CH3 + O2 => CH2O + O + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[14];
   k_f = 1e-06 * 13800000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (30480.4) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 30480.4 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] += q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[8] -= q;  /* O2 */
-  wdot[13] += q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[3] += q;  // O
+  wdot[5] += q;  // H
+  wdot[8] -= q;  // O2
+  wdot[13] += q; // CH2O
+  wdot[14] -= q; // CH3
+  // d()/d[O2]
   dqdci = +k_f * sc[14];
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[389] += dqdci; /* dwdot[H]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[397] += dqdci; /* dwdot[CH2O]/d[O2] */
-  J[398] -= dqdci; /* dwdot[CH3]/d[O2] */
-  /* d()/d[CH3] */
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[389] += dqdci; // dwdot[H]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[397] += dqdci; // dwdot[CH2O]/d[O2]
+  J[398] -= dqdci; // dwdot[CH3]/d[O2]
+  // d()/d[CH3]
   dqdci = +k_f * sc[8];
-  J[675] += dqdci; /* dwdot[O]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[680] -= dqdci; /* dwdot[O2]/d[CH3] */
-  J[685] += dqdci; /* dwdot[CH2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[675] += dqdci; // dwdot[O]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[680] -= dqdci; // dwdot[O2]/d[CH3]
+  J[685] += dqdci; // dwdot[CH2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 50: CH3 + O2 => CH2O + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[14];
   k_f = 1e-06 * 587000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (13840.82) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 13840.82 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[8] -= q;  /* O2 */
-  wdot[13] += q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[8] -= q;  // O2
+  wdot[13] += q; // CH2O
+  wdot[14] -= q; // CH3
+  // d()/d[O2]
   dqdci = +k_f * sc[14];
-  J[390] += dqdci; /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[397] += dqdci; /* dwdot[CH2O]/d[O2] */
-  J[398] -= dqdci; /* dwdot[CH3]/d[O2] */
-  /* d()/d[CH3] */
+  J[390] += dqdci; // dwdot[OH]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[397] += dqdci; // dwdot[CH2O]/d[O2]
+  J[398] -= dqdci; // dwdot[CH3]/d[O2]
+  // d()/d[CH3]
   dqdci = +k_f * sc[8];
-  J[678] += dqdci; /* dwdot[OH]/d[CH3] */
-  J[680] -= dqdci; /* dwdot[O2]/d[CH3] */
-  J[685] += dqdci; /* dwdot[CH2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[678] += dqdci; // dwdot[OH]/d[CH3]
+  J[680] -= dqdci; // dwdot[O2]/d[CH3]
+  J[685] += dqdci; // dwdot[CH2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 51: CH3 + HO2 => CH2O + OH + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[14];
   k_f = 1e-06 * 10000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[13] += q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[13] += q; // CH2O
+  wdot[14] -= q; // CH3
+  // d()/d[HO2]
   dqdci = +k_f * sc[14];
-  J[437] += dqdci; /* dwdot[H]/d[HO2] */
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[445] += dqdci; /* dwdot[CH2O]/d[HO2] */
-  J[446] -= dqdci; /* dwdot[CH3]/d[HO2] */
-  /* d()/d[CH3] */
+  J[437] += dqdci; // dwdot[H]/d[HO2]
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[445] += dqdci; // dwdot[CH2O]/d[HO2]
+  J[446] -= dqdci; // dwdot[CH3]/d[HO2]
+  // d()/d[CH3]
   dqdci = +k_f * sc[9];
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[678] += dqdci; /* dwdot[OH]/d[CH3] */
-  J[681] -= dqdci; /* dwdot[HO2]/d[CH3] */
-  J[685] += dqdci; /* dwdot[CH2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[678] += dqdci; // dwdot[OH]/d[CH3]
+  J[681] -= dqdci; // dwdot[HO2]/d[CH3]
+  J[685] += dqdci; // dwdot[CH2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
 
   /*reaction 52: CH3 + HO2 => CH4 + O2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[14];
   k_f = 1e-06 * 3610000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] += q;  /* O2 */
-  wdot[9] -= q;  /* HO2 */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[8] += q;  // O2
+  wdot[9] -= q;  // HO2
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  // d()/d[HO2]
   dqdci = +k_f * sc[14];
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[446] -= dqdci; /* dwdot[CH3]/d[HO2] */
-  J[448] += dqdci; /* dwdot[CH4]/d[HO2] */
-  /* d()/d[CH3] */
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[446] -= dqdci; // dwdot[CH3]/d[HO2]
+  J[448] += dqdci; // dwdot[CH4]/d[HO2]
+  // d()/d[CH3]
   dqdci = +k_f * sc[9];
-  J[680] += dqdci; /* dwdot[O2]/d[CH3] */
-  J[681] -= dqdci; /* dwdot[HO2]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
+  J[680] += dqdci; // dwdot[O2]/d[CH3]
+  J[681] -= dqdci; // dwdot[HO2]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  // d()/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
 
   /*reaction 53: CH3 + CH => C2H3 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[10] * sc[14];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[10] -= q; /* CH */
-  wdot[14] -= q; /* CH3 */
-  wdot[17] += q; /* C2H3 */
-  /* d()/d[CH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[10] -= q; // CH
+  wdot[14] -= q; // CH3
+  wdot[17] += q; // C2H3
+  // d()/d[CH]
   dqdci = +k_f * sc[14];
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[494] -= dqdci; /* dwdot[CH3]/d[CH] */
-  J[497] += dqdci; /* dwdot[C2H3]/d[CH] */
-  /* d()/d[CH3] */
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[494] -= dqdci; // dwdot[CH3]/d[CH]
+  J[497] += dqdci; // dwdot[C2H3]/d[CH]
+  // d()/d[CH3]
   dqdci = +k_f * sc[10];
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[682] -= dqdci; /* dwdot[CH]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[689] += dqdci; /* dwdot[C2H3]/d[CH3] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[682] -= dqdci; // dwdot[CH]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[689] += dqdci; // dwdot[C2H3]/d[CH3]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
 
   /*reaction 54: CH3 + T-CH2 => C2H4 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[14];
   k_f =
     1e-06 * 100000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] -= q;  /* T-CH2 */
-  wdot[5] += q;  /* H */
-  wdot[14] -= q; /* CH3 */
-  wdot[18] += q; /* C2H4 */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;  // T-CH2
+  wdot[5] += q;  // H
+  wdot[14] -= q; // CH3
+  wdot[18] += q; // C2H4
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[14];
-  J[98] -= dqdci;  /* dwdot[T-CH2]/d[T-CH2] */
-  J[101] += dqdci; /* dwdot[H]/d[T-CH2] */
-  J[110] -= dqdci; /* dwdot[CH3]/d[T-CH2] */
-  J[114] += dqdci; /* dwdot[C2H4]/d[T-CH2] */
-  /* d()/d[CH3] */
+  J[98] -= dqdci;  // dwdot[T-CH2]/d[T-CH2]
+  J[101] += dqdci; // dwdot[H]/d[T-CH2]
+  J[110] -= dqdci; // dwdot[CH3]/d[T-CH2]
+  J[114] += dqdci; // dwdot[C2H4]/d[T-CH2]
+  // d()/d[CH3]
   dqdci = +k_f * sc[2];
-  J[674] -= dqdci; /* dwdot[T-CH2]/d[CH3] */
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[690] += dqdci; /* dwdot[C2H4]/d[CH3] */
-  /* d()/dT */
-  J[2258] -= dqdT; /* dwdot[T-CH2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
+  J[674] -= dqdci; // dwdot[T-CH2]/d[CH3]
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[690] += dqdci; // dwdot[C2H4]/d[CH3]
+  // d()/dT
+  J[2258] -= dqdT; // dwdot[T-CH2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
 
   /*reaction 55: 2.000000 CH3 <=> C2H5 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[14] * sc[14]);
   k_f = 1e-06 * 6840000000000 *
         exp(0.1 * tc[0] - 0.50321666580472 * (10599.9) * invT);
   dlnkfdT = 0.1 * invT + 0.50321666580472 * 10599.9 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[19];
   Kc = exp(-g_RT[5] + 2.000000 * g_RT[14] - g_RT[19]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[14]) + (h_RT[5] + h_RT[19]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;      /* H */
-  wdot[14] -= 2 * q; /* CH3 */
-  wdot[19] += q;     /* C2H5 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;      // H
+  wdot[14] -= 2 * q; // CH3
+  wdot[19] += q;     // C2H5
+  // d()/d[H]
   dqdci = -k_r * sc[19];
-  J[245] += dqdci;      /* dwdot[H]/d[H] */
-  J[254] += -2 * dqdci; /* dwdot[CH3]/d[H] */
-  J[259] += dqdci;      /* dwdot[C2H5]/d[H] */
-  /* d()/d[CH3] */
+  J[245] += dqdci;      // dwdot[H]/d[H]
+  J[254] += -2 * dqdci; // dwdot[CH3]/d[H]
+  J[259] += dqdci;      // dwdot[C2H5]/d[H]
+  // d()/d[CH3]
   dqdci = +k_f * 2.000000 * sc[14];
-  J[677] += dqdci;      /* dwdot[H]/d[CH3] */
-  J[686] += -2 * dqdci; /* dwdot[CH3]/d[CH3] */
-  J[691] += dqdci;      /* dwdot[C2H5]/d[CH3] */
-  /* d()/d[C2H5] */
+  J[677] += dqdci;      // dwdot[H]/d[CH3]
+  J[686] += -2 * dqdci; // dwdot[CH3]/d[CH3]
+  J[691] += dqdci;      // dwdot[C2H5]/d[CH3]
+  // d()/d[C2H5]
   dqdci = -k_r * sc[5];
-  J[917] += dqdci;      /* dwdot[H]/d[C2H5] */
-  J[926] += -2 * dqdci; /* dwdot[CH3]/d[C2H5] */
-  J[931] += dqdci;      /* dwdot[C2H5]/d[C2H5] */
-  /* d()/dT */
-  J[2261] += dqdT;      /* dwdot[H]/dT */
-  J[2270] += -2 * dqdT; /* dwdot[CH3]/dT */
-  J[2275] += dqdT;      /* dwdot[C2H5]/dT */
+  J[917] += dqdci;      // dwdot[H]/d[C2H5]
+  J[926] += -2 * dqdci; // dwdot[CH3]/d[C2H5]
+  J[931] += dqdci;      // dwdot[C2H5]/d[C2H5]
+  // d()/dT
+  J[2261] += dqdT;      // dwdot[H]/dT
+  J[2270] += -2 * dqdT; // dwdot[CH3]/dT
+  J[2275] += dqdT;      // dwdot[C2H5]/dT
 
   /*reaction 56: 2.000000 CH3 => S-CH2 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[14] * sc[14]);
   k_f = 1e-06 * 2632000000000 *
         exp(-0.06 * tc[0] - 0.50321666580472 * (13661.57) * invT);
   dlnkfdT = -0.06 * invT + 0.50321666580472 * 13661.57 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] += q;      /* S-CH2 */
-  wdot[14] -= 2 * q; /* CH3 */
-  wdot[16] += q;     /* CH4 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[1] += q;      // S-CH2
+  wdot[14] -= 2 * q; // CH3
+  wdot[16] += q;     // CH4
+  // d()/d[CH3]
   dqdci = +k_f * 2.000000 * sc[14];
-  J[673] += dqdci;      /* dwdot[S-CH2]/d[CH3] */
-  J[686] += -2 * dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci;      /* dwdot[CH4]/d[CH3] */
-  /* d()/dT */
-  J[2257] += dqdT;      /* dwdot[S-CH2]/dT */
-  J[2270] += -2 * dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT;      /* dwdot[CH4]/dT */
+  J[673] += dqdci;      // dwdot[S-CH2]/d[CH3]
+  J[686] += -2 * dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci;      // dwdot[CH4]/d[CH3]
+  // d()/dT
+  J[2257] += dqdT;      // dwdot[S-CH2]/dT
+  J[2270] += -2 * dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT;      // dwdot[CH4]/dT
 
   /*reaction 57: CH4 + H <=> CH3 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[16];
   k_f =
     1e-06 * 660000000 * exp(1.62 * tc[0] - 0.50321666580472 * (10841.3) * invT);
   dlnkfdT = 1.62 * invT + 0.50321666580472 * 10841.3 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[4] * sc[14];
   Kc = exp(-g_RT[4] + g_RT[5] - g_RT[14] + g_RT[16]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[16]) + (h_RT[4] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[16] -= q; /* CH4 */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[16] -= q; // CH4
+  // d()/d[H2]
   dqdci = -k_r * sc[14];
-  J[196] += dqdci; /* dwdot[H2]/d[H2] */
-  J[197] -= dqdci; /* dwdot[H]/d[H2] */
-  J[206] += dqdci; /* dwdot[CH3]/d[H2] */
-  J[208] -= dqdci; /* dwdot[CH4]/d[H2] */
-  /* d()/d[H] */
+  J[196] += dqdci; // dwdot[H2]/d[H2]
+  J[197] -= dqdci; // dwdot[H]/d[H2]
+  J[206] += dqdci; // dwdot[CH3]/d[H2]
+  J[208] -= dqdci; // dwdot[CH4]/d[H2]
+  // d()/d[H]
   dqdci = +k_f * sc[16];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[256] -= dqdci; /* dwdot[CH4]/d[H] */
-  /* d()/d[CH3] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[256] -= dqdci; // dwdot[CH4]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[4];
-  J[676] += dqdci; /* dwdot[H2]/d[CH3] */
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] -= dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/d[CH4] */
+  J[676] += dqdci; // dwdot[H2]/d[CH3]
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[688] -= dqdci; // dwdot[CH4]/d[CH3]
+  // d()/d[CH4]
   dqdci = +k_f * sc[5];
-  J[772] += dqdci; /* dwdot[H2]/d[CH4] */
-  J[773] -= dqdci; /* dwdot[H]/d[CH4] */
-  J[782] += dqdci; /* dwdot[CH3]/d[CH4] */
-  J[784] -= dqdci; /* dwdot[CH4]/d[CH4] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2272] -= dqdT; /* dwdot[CH4]/dT */
+  J[772] += dqdci; // dwdot[H2]/d[CH4]
+  J[773] -= dqdci; // dwdot[H]/d[CH4]
+  J[782] += dqdci; // dwdot[CH3]/d[CH4]
+  J[784] -= dqdci; // dwdot[CH4]/d[CH4]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2272] -= dqdT; // dwdot[CH4]/dT
 
   /*reaction 58: CH4 + O <=> CH3 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[16];
   k_f =
     1e-06 * 1020000000 * exp(1.5 * tc[0] - 0.50321666580472 * (8599.43) * invT);
   dlnkfdT = 1.5 * invT + 0.50321666580472 * 8599.43 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[6] * sc[14];
   Kc = exp(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[16]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[3] + h_RT[16]) + (h_RT[6] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[14] += q; /* CH3 */
-  wdot[16] -= q; /* CH4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[14] += q; // CH3
+  wdot[16] -= q; // CH4
+  // d()/d[O]
   dqdci = +k_f * sc[16];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[160] -= dqdci; /* dwdot[CH4]/d[O] */
-  /* d()/d[OH] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[160] -= dqdci; // dwdot[CH4]/d[O]
+  // d()/d[OH]
   dqdci = -k_r * sc[14];
-  J[291] -= dqdci; /* dwdot[O]/d[OH] */
-  J[294] += dqdci; /* dwdot[OH]/d[OH] */
-  J[302] += dqdci; /* dwdot[CH3]/d[OH] */
-  J[304] -= dqdci; /* dwdot[CH4]/d[OH] */
-  /* d()/d[CH3] */
+  J[291] -= dqdci; // dwdot[O]/d[OH]
+  J[294] += dqdci; // dwdot[OH]/d[OH]
+  J[302] += dqdci; // dwdot[CH3]/d[OH]
+  J[304] -= dqdci; // dwdot[CH4]/d[OH]
+  // d()/d[CH3]
   dqdci = -k_r * sc[6];
-  J[675] -= dqdci; /* dwdot[O]/d[CH3] */
-  J[678] += dqdci; /* dwdot[OH]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] -= dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/d[CH4] */
+  J[675] -= dqdci; // dwdot[O]/d[CH3]
+  J[678] += dqdci; // dwdot[OH]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[688] -= dqdci; // dwdot[CH4]/d[CH3]
+  // d()/d[CH4]
   dqdci = +k_f * sc[3];
-  J[771] -= dqdci; /* dwdot[O]/d[CH4] */
-  J[774] += dqdci; /* dwdot[OH]/d[CH4] */
-  J[782] += dqdci; /* dwdot[CH3]/d[CH4] */
-  J[784] -= dqdci; /* dwdot[CH4]/d[CH4] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2272] -= dqdT; /* dwdot[CH4]/dT */
+  J[771] -= dqdci; // dwdot[O]/d[CH4]
+  J[774] += dqdci; // dwdot[OH]/d[CH4]
+  J[782] += dqdci; // dwdot[CH3]/d[CH4]
+  J[784] -= dqdci; // dwdot[CH4]/d[CH4]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2272] -= dqdT; // dwdot[CH4]/dT
 
   /*reaction 59: CH4 + OH <=> CH3 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[16];
   k_f =
     1e-06 * 100000000 * exp(1.6 * tc[0] - 0.50321666580472 * (3119.02) * invT);
   dlnkfdT = 1.6 * invT + 0.50321666580472 * 3119.02 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[7] * sc[14];
   Kc = exp(g_RT[6] - g_RT[7] - g_RT[14] + g_RT[16]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[16]) + (h_RT[7] + h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[14] += q; /* CH3 */
-  wdot[16] -= q; /* CH4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[14] += q; // CH3
+  wdot[16] -= q; // CH4
+  // d()/d[OH]
   dqdci = +k_f * sc[16];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[302] += dqdci; /* dwdot[CH3]/d[OH] */
-  J[304] -= dqdci; /* dwdot[CH4]/d[OH] */
-  /* d()/d[H2O] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[302] += dqdci; // dwdot[CH3]/d[OH]
+  J[304] -= dqdci; // dwdot[CH4]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[14];
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[350] += dqdci; /* dwdot[CH3]/d[H2O] */
-  J[352] -= dqdci; /* dwdot[CH4]/d[H2O] */
-  /* d()/d[CH3] */
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[350] += dqdci; // dwdot[CH3]/d[H2O]
+  J[352] -= dqdci; // dwdot[CH4]/d[H2O]
+  // d()/d[CH3]
   dqdci = -k_r * sc[7];
-  J[678] -= dqdci; /* dwdot[OH]/d[CH3] */
-  J[679] += dqdci; /* dwdot[H2O]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] -= dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/d[CH4] */
+  J[678] -= dqdci; // dwdot[OH]/d[CH3]
+  J[679] += dqdci; // dwdot[H2O]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[688] -= dqdci; // dwdot[CH4]/d[CH3]
+  // d()/d[CH4]
   dqdci = +k_f * sc[6];
-  J[774] -= dqdci; /* dwdot[OH]/d[CH4] */
-  J[775] += dqdci; /* dwdot[H2O]/d[CH4] */
-  J[782] += dqdci; /* dwdot[CH3]/d[CH4] */
-  J[784] -= dqdci; /* dwdot[CH4]/d[CH4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2272] -= dqdT; /* dwdot[CH4]/dT */
+  J[774] -= dqdci; // dwdot[OH]/d[CH4]
+  J[775] += dqdci; // dwdot[H2O]/d[CH4]
+  J[782] += dqdci; // dwdot[CH3]/d[CH4]
+  J[784] -= dqdci; // dwdot[CH4]/d[CH4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2272] -= dqdT; // dwdot[CH4]/dT
 
   /*reaction 60: CH4 + CH => C2H4 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[10] * sc[16];
   k_f = 1e-06 * 60000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[10] -= q; /* CH */
-  wdot[16] -= q; /* CH4 */
-  wdot[18] += q; /* C2H4 */
-  /* d()/d[CH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[10] -= q; // CH
+  wdot[16] -= q; // CH4
+  wdot[18] += q; // C2H4
+  // d()/d[CH]
   dqdci = +k_f * sc[16];
-  J[485] += dqdci; /* dwdot[H]/d[CH] */
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[496] -= dqdci; /* dwdot[CH4]/d[CH] */
-  J[498] += dqdci; /* dwdot[C2H4]/d[CH] */
-  /* d()/d[CH4] */
+  J[485] += dqdci; // dwdot[H]/d[CH]
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[496] -= dqdci; // dwdot[CH4]/d[CH]
+  J[498] += dqdci; // dwdot[C2H4]/d[CH]
+  // d()/d[CH4]
   dqdci = +k_f * sc[10];
-  J[773] += dqdci; /* dwdot[H]/d[CH4] */
-  J[778] -= dqdci; /* dwdot[CH]/d[CH4] */
-  J[784] -= dqdci; /* dwdot[CH4]/d[CH4] */
-  J[786] += dqdci; /* dwdot[C2H4]/d[CH4] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2272] -= dqdT; /* dwdot[CH4]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
+  J[773] += dqdci; // dwdot[H]/d[CH4]
+  J[778] -= dqdci; // dwdot[CH]/d[CH4]
+  J[784] -= dqdci; // dwdot[CH4]/d[CH4]
+  J[786] += dqdci; // dwdot[C2H4]/d[CH4]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2272] -= dqdT; // dwdot[CH4]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
 
   /*reaction 61: CH4 + T-CH2 <=> 2.000000 CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[2] * sc[16];
   k_f = 1e-06 * 2460000 * exp(2 * tc[0] - 0.50321666580472 * (8269.6) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * 8269.6 * invT2;
-  /* reverse */
+  // reverse
   phi_r = (sc[14] * sc[14]);
   Kc = exp(g_RT[2] - 2.000000 * g_RT[14] + g_RT[16]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[2] + h_RT[16]) + (2.000000 * h_RT[14]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[2] -= q;      /* T-CH2 */
-  wdot[14] += 2 * q; /* CH3 */
-  wdot[16] -= q;     /* CH4 */
-  /* d()/d[T-CH2] */
+  // update wdot
+  wdot[2] -= q;      // T-CH2
+  wdot[14] += 2 * q; // CH3
+  wdot[16] -= q;     // CH4
+  // d()/d[T-CH2]
   dqdci = +k_f * sc[16];
-  J[98] -= dqdci;      /* dwdot[T-CH2]/d[T-CH2] */
-  J[110] += 2 * dqdci; /* dwdot[CH3]/d[T-CH2] */
-  J[112] -= dqdci;     /* dwdot[CH4]/d[T-CH2] */
-  /* d()/d[CH3] */
+  J[98] -= dqdci;      // dwdot[T-CH2]/d[T-CH2]
+  J[110] += 2 * dqdci; // dwdot[CH3]/d[T-CH2]
+  J[112] -= dqdci;     // dwdot[CH4]/d[T-CH2]
+  // d()/d[CH3]
   dqdci = -k_r * 2.000000 * sc[14];
-  J[674] -= dqdci;     /* dwdot[T-CH2]/d[CH3] */
-  J[686] += 2 * dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] -= dqdci;     /* dwdot[CH4]/d[CH3] */
-  /* d()/d[CH4] */
+  J[674] -= dqdci;     // dwdot[T-CH2]/d[CH3]
+  J[686] += 2 * dqdci; // dwdot[CH3]/d[CH3]
+  J[688] -= dqdci;     // dwdot[CH4]/d[CH3]
+  // d()/d[CH4]
   dqdci = +k_f * sc[2];
-  J[770] -= dqdci;     /* dwdot[T-CH2]/d[CH4] */
-  J[782] += 2 * dqdci; /* dwdot[CH3]/d[CH4] */
-  J[784] -= dqdci;     /* dwdot[CH4]/d[CH4] */
-  /* d()/dT */
-  J[2258] -= dqdT;     /* dwdot[T-CH2]/dT */
-  J[2270] += 2 * dqdT; /* dwdot[CH3]/dT */
-  J[2272] -= dqdT;     /* dwdot[CH4]/dT */
+  J[770] -= dqdci;     // dwdot[T-CH2]/d[CH4]
+  J[782] += 2 * dqdci; // dwdot[CH3]/d[CH4]
+  J[784] -= dqdci;     // dwdot[CH4]/d[CH4]
+  // d()/dT
+  J[2258] -= dqdT;     // dwdot[T-CH2]/dT
+  J[2270] += 2 * dqdT; // dwdot[CH3]/dT
+  J[2272] -= dqdT;     // dwdot[CH4]/dT
 
   /*reaction 62: CO + OH <=> CO2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[11];
   k_f = 1e-06 * 800000000000 *
         exp(0.14 * tc[0] - 0.50321666580472 * (7351.82) * invT);
   dlnkfdT = 0.14 * invT + 0.50321666580472 * 7351.82 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[15];
   Kc = exp(-g_RT[5] + g_RT[6] + g_RT[11] - g_RT[15]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[11]) + (h_RT[5] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[11] -= q; /* CO */
-  wdot[15] += q; /* CO2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[11] -= q; // CO
+  wdot[15] += q; // CO2
+  // d()/d[H]
   dqdci = -k_r * sc[15];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[246] -= dqdci; /* dwdot[OH]/d[H] */
-  J[251] -= dqdci; /* dwdot[CO]/d[H] */
-  J[255] += dqdci; /* dwdot[CO2]/d[H] */
-  /* d()/d[OH] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[246] -= dqdci; // dwdot[OH]/d[H]
+  J[251] -= dqdci; // dwdot[CO]/d[H]
+  J[255] += dqdci; // dwdot[CO2]/d[H]
+  // d()/d[OH]
   dqdci = +k_f * sc[11];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] -= dqdci; /* dwdot[CO]/d[OH] */
-  J[303] += dqdci; /* dwdot[CO2]/d[OH] */
-  /* d()/d[CO] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] -= dqdci; // dwdot[CO]/d[OH]
+  J[303] += dqdci; // dwdot[CO2]/d[OH]
+  // d()/d[CO]
   dqdci = +k_f * sc[6];
-  J[533] += dqdci; /* dwdot[H]/d[CO] */
-  J[534] -= dqdci; /* dwdot[OH]/d[CO] */
-  J[539] -= dqdci; /* dwdot[CO]/d[CO] */
-  J[543] += dqdci; /* dwdot[CO2]/d[CO] */
-  /* d()/d[CO2] */
+  J[533] += dqdci; // dwdot[H]/d[CO]
+  J[534] -= dqdci; // dwdot[OH]/d[CO]
+  J[539] -= dqdci; // dwdot[CO]/d[CO]
+  J[543] += dqdci; // dwdot[CO2]/d[CO]
+  // d()/d[CO2]
   dqdci = -k_r * sc[5];
-  J[725] += dqdci; /* dwdot[H]/d[CO2] */
-  J[726] -= dqdci; /* dwdot[OH]/d[CO2] */
-  J[731] -= dqdci; /* dwdot[CO]/d[CO2] */
-  J[735] += dqdci; /* dwdot[CO2]/d[CO2] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] -= dqdT; /* dwdot[CO]/dT */
-  J[2271] += dqdT; /* dwdot[CO2]/dT */
+  J[725] += dqdci; // dwdot[H]/d[CO2]
+  J[726] -= dqdci; // dwdot[OH]/d[CO2]
+  J[731] -= dqdci; // dwdot[CO]/d[CO2]
+  J[735] += dqdci; // dwdot[CO2]/d[CO2]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] -= dqdT; // dwdot[CO]/dT
+  J[2271] += dqdT; // dwdot[CO2]/dT
 
   /*reaction 63: CO + OH <=> CO2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[11];
   k_f = 1e-06 * 87800000000 *
         exp(0.03 * tc[0] - 0.50321666580472 * (-16.73) * invT);
   dlnkfdT = 0.03 * invT + 0.50321666580472 * -16.73 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[15];
   Kc = exp(-g_RT[5] + g_RT[6] + g_RT[11] - g_RT[15]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[11]) + (h_RT[5] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[11] -= q; /* CO */
-  wdot[15] += q; /* CO2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[11] -= q; // CO
+  wdot[15] += q; // CO2
+  // d()/d[H]
   dqdci = -k_r * sc[15];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[246] -= dqdci; /* dwdot[OH]/d[H] */
-  J[251] -= dqdci; /* dwdot[CO]/d[H] */
-  J[255] += dqdci; /* dwdot[CO2]/d[H] */
-  /* d()/d[OH] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[246] -= dqdci; // dwdot[OH]/d[H]
+  J[251] -= dqdci; // dwdot[CO]/d[H]
+  J[255] += dqdci; // dwdot[CO2]/d[H]
+  // d()/d[OH]
   dqdci = +k_f * sc[11];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] -= dqdci; /* dwdot[CO]/d[OH] */
-  J[303] += dqdci; /* dwdot[CO2]/d[OH] */
-  /* d()/d[CO] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] -= dqdci; // dwdot[CO]/d[OH]
+  J[303] += dqdci; // dwdot[CO2]/d[OH]
+  // d()/d[CO]
   dqdci = +k_f * sc[6];
-  J[533] += dqdci; /* dwdot[H]/d[CO] */
-  J[534] -= dqdci; /* dwdot[OH]/d[CO] */
-  J[539] -= dqdci; /* dwdot[CO]/d[CO] */
-  J[543] += dqdci; /* dwdot[CO2]/d[CO] */
-  /* d()/d[CO2] */
+  J[533] += dqdci; // dwdot[H]/d[CO]
+  J[534] -= dqdci; // dwdot[OH]/d[CO]
+  J[539] -= dqdci; // dwdot[CO]/d[CO]
+  J[543] += dqdci; // dwdot[CO2]/d[CO]
+  // d()/d[CO2]
   dqdci = -k_r * sc[5];
-  J[725] += dqdci; /* dwdot[H]/d[CO2] */
-  J[726] -= dqdci; /* dwdot[OH]/d[CO2] */
-  J[731] -= dqdci; /* dwdot[CO]/d[CO2] */
-  J[735] += dqdci; /* dwdot[CO2]/d[CO2] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] -= dqdT; /* dwdot[CO]/dT */
-  J[2271] += dqdT; /* dwdot[CO2]/dT */
+  J[725] += dqdci; // dwdot[H]/d[CO2]
+  J[726] -= dqdci; // dwdot[OH]/d[CO2]
+  J[731] -= dqdci; // dwdot[CO]/d[CO2]
+  J[735] += dqdci; // dwdot[CO2]/d[CO2]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] -= dqdT; // dwdot[CO]/dT
+  J[2271] += dqdT; // dwdot[CO2]/dT
 
   /*reaction 64: CO + HO2 => CO2 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[11];
   k_f = 1e-06 * 30100000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (22999.52) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 22999.52 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[11] -= q; /* CO */
-  wdot[15] += q; /* CO2 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[11] -= q; // CO
+  wdot[15] += q; // CO2
+  // d()/d[HO2]
   dqdci = +k_f * sc[11];
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[443] -= dqdci; /* dwdot[CO]/d[HO2] */
-  J[447] += dqdci; /* dwdot[CO2]/d[HO2] */
-  /* d()/d[CO] */
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[443] -= dqdci; // dwdot[CO]/d[HO2]
+  J[447] += dqdci; // dwdot[CO2]/d[HO2]
+  // d()/d[CO]
   dqdci = +k_f * sc[9];
-  J[534] += dqdci; /* dwdot[OH]/d[CO] */
-  J[537] -= dqdci; /* dwdot[HO2]/d[CO] */
-  J[539] -= dqdci; /* dwdot[CO]/d[CO] */
-  J[543] += dqdci; /* dwdot[CO2]/d[CO] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2267] -= dqdT; /* dwdot[CO]/dT */
-  J[2271] += dqdT; /* dwdot[CO2]/dT */
+  J[534] += dqdci; // dwdot[OH]/d[CO]
+  J[537] -= dqdci; // dwdot[HO2]/d[CO]
+  J[539] -= dqdci; // dwdot[CO]/d[CO]
+  J[543] += dqdci; // dwdot[CO2]/d[CO]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2267] -= dqdT; // dwdot[CO]/dT
+  J[2271] += dqdT; // dwdot[CO2]/dT
 
   /*reaction 65: CO + S-CH2 <=> CO + T-CH2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[11];
   k_f = 1e-06 * 9000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[2] * sc[11];
   Kc = exp(g_RT[1] - g_RT[2] + g_RT[11] - g_RT[11]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[11]) + (h_RT[2] + h_RT[11]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q; /* S-CH2 */
-  wdot[2] += q; /* T-CH2 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q; // S-CH2
+  wdot[2] += q; // T-CH2
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[11];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[50] += dqdci; /* dwdot[T-CH2]/d[S-CH2] */
-  /* d()/d[T-CH2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[50] += dqdci; // dwdot[T-CH2]/d[S-CH2]
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[11];
-  J[97] -= dqdci; /* dwdot[S-CH2]/d[T-CH2] */
-  J[98] += dqdci; /* dwdot[T-CH2]/d[T-CH2] */
-  /* d()/d[CO] */
+  J[97] -= dqdci; // dwdot[S-CH2]/d[T-CH2]
+  J[98] += dqdci; // dwdot[T-CH2]/d[T-CH2]
+  // d()/d[CO]
   dqdci = +k_f * sc[1] - k_r * sc[2];
-  J[529] -= dqdci; /* dwdot[S-CH2]/d[CO] */
-  J[530] += dqdci; /* dwdot[T-CH2]/d[CO] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
+  J[529] -= dqdci; // dwdot[S-CH2]/d[CO]
+  J[530] += dqdci; // dwdot[T-CH2]/d[CO]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
 
   /*reaction 66: HCO + H => CO + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[12];
   k_f =
     1e-06 * 120000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // d()/d[H]
   dqdci = +k_f * sc[12];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[251] += dqdci; /* dwdot[CO]/d[H] */
-  J[252] -= dqdci; /* dwdot[HCO]/d[H] */
-  /* d()/d[HCO] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[251] += dqdci; // dwdot[CO]/d[H]
+  J[252] -= dqdci; // dwdot[HCO]/d[H]
+  // d()/d[HCO]
   dqdci = +k_f * sc[5];
-  J[580] += dqdci; /* dwdot[H2]/d[HCO] */
-  J[581] -= dqdci; /* dwdot[H]/d[HCO] */
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[580] += dqdci; // dwdot[H2]/d[HCO]
+  J[581] -= dqdci; // dwdot[H]/d[HCO]
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 67: HCO + O => CO + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[12];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // d()/d[O]
   dqdci = +k_f * sc[12];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[156] -= dqdci; /* dwdot[HCO]/d[O] */
-  /* d()/d[HCO] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[156] -= dqdci; // dwdot[HCO]/d[O]
+  // d()/d[HCO]
   dqdci = +k_f * sc[3];
-  J[579] -= dqdci; /* dwdot[O]/d[HCO] */
-  J[582] += dqdci; /* dwdot[OH]/d[HCO] */
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[579] -= dqdci; // dwdot[O]/d[HCO]
+  J[582] += dqdci; // dwdot[OH]/d[HCO]
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 68: HCO + O => CO2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[12];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[12] -= q; /* HCO */
-  wdot[15] += q; /* CO2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[12] -= q; // HCO
+  wdot[15] += q; // CO2
+  // d()/d[O]
   dqdci = +k_f * sc[12];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[156] -= dqdci; /* dwdot[HCO]/d[O] */
-  J[159] += dqdci; /* dwdot[CO2]/d[O] */
-  /* d()/d[HCO] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[156] -= dqdci; // dwdot[HCO]/d[O]
+  J[159] += dqdci; // dwdot[CO2]/d[O]
+  // d()/d[HCO]
   dqdci = +k_f * sc[3];
-  J[579] -= dqdci; /* dwdot[O]/d[HCO] */
-  J[581] += dqdci; /* dwdot[H]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  J[591] += dqdci; /* dwdot[CO2]/d[HCO] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
-  J[2271] += dqdT; /* dwdot[CO2]/dT */
+  J[579] -= dqdci; // dwdot[O]/d[HCO]
+  J[581] += dqdci; // dwdot[H]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  J[591] += dqdci; // dwdot[CO2]/d[HCO]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
+  J[2271] += dqdT; // dwdot[CO2]/dT
 
   /*reaction 69: HCO + OH => CO + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[12];
   k_f = 1e-06 * 30200000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // d()/d[OH]
   dqdci = +k_f * sc[12];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[300] -= dqdci; /* dwdot[HCO]/d[OH] */
-  /* d()/d[HCO] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[300] -= dqdci; // dwdot[HCO]/d[OH]
+  // d()/d[HCO]
   dqdci = +k_f * sc[6];
-  J[582] -= dqdci; /* dwdot[OH]/d[HCO] */
-  J[583] += dqdci; /* dwdot[H2O]/d[HCO] */
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[582] -= dqdci; // dwdot[OH]/d[HCO]
+  J[583] += dqdci; // dwdot[H2O]/d[HCO]
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 70: HCO + H2O <=> CO + H + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[7] * sc[12];
   k_f =
     1e-06 * 2.24e+18 * exp(-1 * tc[0] - 0.50321666580472 * (17000.48) * invT);
   dlnkfdT = -1 * invT + 0.50321666580472 * 17000.48 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[7] * sc[11];
   Kc = refC * exp(-g_RT[5] + g_RT[7] - g_RT[7] - g_RT[11] + g_RT[12]);
   k_r = k_f / Kc;
   dlnKcdT =
     invT * (-(h_RT[7] + h_RT[12]) + (h_RT[5] + h_RT[7] + h_RT[11]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // d()/d[H]
   dqdci = -k_r * sc[7] * sc[11];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[251] += dqdci; /* dwdot[CO]/d[H] */
-  J[252] -= dqdci; /* dwdot[HCO]/d[H] */
-  /* d()/d[H2O] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[251] += dqdci; // dwdot[CO]/d[H]
+  J[252] -= dqdci; // dwdot[HCO]/d[H]
+  // d()/d[H2O]
   dqdci = +k_f * sc[12] - k_r * sc[5] * sc[11];
-  J[341] += dqdci; /* dwdot[H]/d[H2O] */
-  J[347] += dqdci; /* dwdot[CO]/d[H2O] */
-  J[348] -= dqdci; /* dwdot[HCO]/d[H2O] */
-  /* d()/d[CO] */
+  J[341] += dqdci; // dwdot[H]/d[H2O]
+  J[347] += dqdci; // dwdot[CO]/d[H2O]
+  J[348] -= dqdci; // dwdot[HCO]/d[H2O]
+  // d()/d[CO]
   dqdci = -k_r * sc[5] * sc[7];
-  J[533] += dqdci; /* dwdot[H]/d[CO] */
-  J[539] += dqdci; /* dwdot[CO]/d[CO] */
-  J[540] -= dqdci; /* dwdot[HCO]/d[CO] */
-  /* d()/d[HCO] */
+  J[533] += dqdci; // dwdot[H]/d[CO]
+  J[539] += dqdci; // dwdot[CO]/d[CO]
+  J[540] -= dqdci; // dwdot[HCO]/d[CO]
+  // d()/d[HCO]
   dqdci = +k_f * sc[7];
-  J[581] += dqdci; /* dwdot[H]/d[HCO] */
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[581] += dqdci; // dwdot[H]/d[HCO]
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 71: HCO + O2 => CO + HO2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[12];
   k_f = 1e-06 * 12000000000 *
         exp(0.81 * tc[0] - 0.50321666580472 * (-726.58) * invT);
   dlnkfdT = 0.81 * invT + 0.50321666580472 * -726.58 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;  /* O2 */
-  wdot[9] += q;  /* HO2 */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;  // O2
+  wdot[9] += q;  // HO2
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  // d()/d[O2]
   dqdci = +k_f * sc[12];
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[393] += dqdci; /* dwdot[HO2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  J[396] -= dqdci; /* dwdot[HCO]/d[O2] */
-  /* d()/d[HCO] */
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[393] += dqdci; // dwdot[HO2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  J[396] -= dqdci; // dwdot[HCO]/d[O2]
+  // d()/d[HCO]
   dqdci = +k_f * sc[8];
-  J[584] -= dqdci; /* dwdot[O2]/d[HCO] */
-  J[585] += dqdci; /* dwdot[HO2]/d[HCO] */
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  /* d()/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2265] += dqdT; /* dwdot[HO2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
+  J[584] -= dqdci; // dwdot[O2]/d[HCO]
+  J[585] += dqdci; // dwdot[HO2]/d[HCO]
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  // d()/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2265] += dqdT; // dwdot[HO2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
 
   /*reaction 72: CH3 + HCO => CH4 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[12] * sc[14];
   k_f = 1e-06 * 26500000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  /* d()/d[HCO] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  // d()/d[HCO]
   dqdci = +k_f * sc[14];
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  J[590] -= dqdci; /* dwdot[CH3]/d[HCO] */
-  J[592] += dqdci; /* dwdot[CH4]/d[HCO] */
-  /* d()/d[CH3] */
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  J[590] -= dqdci; // dwdot[CH3]/d[HCO]
+  J[592] += dqdci; // dwdot[CH4]/d[HCO]
+  // d()/d[CH3]
   dqdci = +k_f * sc[12];
-  J[683] += dqdci; /* dwdot[CO]/d[CH3] */
-  J[684] -= dqdci; /* dwdot[HCO]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
+  J[683] += dqdci; // dwdot[CO]/d[CH3]
+  J[684] -= dqdci; // dwdot[HCO]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
 
   /*reaction 73: CH2O + H <=> HCO + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[13];
   k_f =
     1e-06 * 57400000 * exp(1.9 * tc[0] - 0.50321666580472 * (2741.4) * invT);
   dlnkfdT = 1.9 * invT + 0.50321666580472 * 2741.4 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[4] * sc[12];
   Kc = exp(-g_RT[4] + g_RT[5] - g_RT[12] + g_RT[13]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[13]) + (h_RT[4] + h_RT[12]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[12] += q; /* HCO */
-  wdot[13] -= q; /* CH2O */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[12] += q; // HCO
+  wdot[13] -= q; // CH2O
+  // d()/d[H2]
   dqdci = -k_r * sc[12];
-  J[196] += dqdci; /* dwdot[H2]/d[H2] */
-  J[197] -= dqdci; /* dwdot[H]/d[H2] */
-  J[204] += dqdci; /* dwdot[HCO]/d[H2] */
-  J[205] -= dqdci; /* dwdot[CH2O]/d[H2] */
-  /* d()/d[H] */
+  J[196] += dqdci; // dwdot[H2]/d[H2]
+  J[197] -= dqdci; // dwdot[H]/d[H2]
+  J[204] += dqdci; // dwdot[HCO]/d[H2]
+  J[205] -= dqdci; // dwdot[CH2O]/d[H2]
+  // d()/d[H]
   dqdci = +k_f * sc[13];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[252] += dqdci; /* dwdot[HCO]/d[H] */
-  J[253] -= dqdci; /* dwdot[CH2O]/d[H] */
-  /* d()/d[HCO] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[252] += dqdci; // dwdot[HCO]/d[H]
+  J[253] -= dqdci; // dwdot[CH2O]/d[H]
+  // d()/d[HCO]
   dqdci = -k_r * sc[4];
-  J[580] += dqdci; /* dwdot[H2]/d[HCO] */
-  J[581] -= dqdci; /* dwdot[H]/d[HCO] */
-  J[588] += dqdci; /* dwdot[HCO]/d[HCO] */
-  J[589] -= dqdci; /* dwdot[CH2O]/d[HCO] */
-  /* d()/d[CH2O] */
+  J[580] += dqdci; // dwdot[H2]/d[HCO]
+  J[581] -= dqdci; // dwdot[H]/d[HCO]
+  J[588] += dqdci; // dwdot[HCO]/d[HCO]
+  J[589] -= dqdci; // dwdot[CH2O]/d[HCO]
+  // d()/d[CH2O]
   dqdci = +k_f * sc[5];
-  J[628] += dqdci; /* dwdot[H2]/d[CH2O] */
-  J[629] -= dqdci; /* dwdot[H]/d[CH2O] */
-  J[636] += dqdci; /* dwdot[HCO]/d[CH2O] */
-  J[637] -= dqdci; /* dwdot[CH2O]/d[CH2O] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2269] -= dqdT; /* dwdot[CH2O]/dT */
+  J[628] += dqdci; // dwdot[H2]/d[CH2O]
+  J[629] -= dqdci; // dwdot[H]/d[CH2O]
+  J[636] += dqdci; // dwdot[HCO]/d[CH2O]
+  J[637] -= dqdci; // dwdot[CH2O]/d[CH2O]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2269] -= dqdT; // dwdot[CH2O]/dT
 
   /*reaction 74: CH2O + O => HCO + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[13];
   k_f = 1e-06 * 39000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (3539.67) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 3539.67 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[12] += q; /* HCO */
-  wdot[13] -= q; /* CH2O */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[12] += q; // HCO
+  wdot[13] -= q; // CH2O
+  // d()/d[O]
   dqdci = +k_f * sc[13];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[156] += dqdci; /* dwdot[HCO]/d[O] */
-  J[157] -= dqdci; /* dwdot[CH2O]/d[O] */
-  /* d()/d[CH2O] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[156] += dqdci; // dwdot[HCO]/d[O]
+  J[157] -= dqdci; // dwdot[CH2O]/d[O]
+  // d()/d[CH2O]
   dqdci = +k_f * sc[3];
-  J[627] -= dqdci; /* dwdot[O]/d[CH2O] */
-  J[630] += dqdci; /* dwdot[OH]/d[CH2O] */
-  J[636] += dqdci; /* dwdot[HCO]/d[CH2O] */
-  J[637] -= dqdci; /* dwdot[CH2O]/d[CH2O] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2269] -= dqdT; /* dwdot[CH2O]/dT */
+  J[627] -= dqdci; // dwdot[O]/d[CH2O]
+  J[630] += dqdci; // dwdot[OH]/d[CH2O]
+  J[636] += dqdci; // dwdot[HCO]/d[CH2O]
+  J[637] -= dqdci; // dwdot[CH2O]/d[CH2O]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2269] -= dqdT; // dwdot[CH2O]/dT
 
   /*reaction 75: CH2O + OH => HCO + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[13];
   k_f = 1e-06 * 3430000000 *
         exp(1.18 * tc[0] - 0.50321666580472 * (-446.94) * invT);
   dlnkfdT = 1.18 * invT + 0.50321666580472 * -446.94 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[12] += q; /* HCO */
-  wdot[13] -= q; /* CH2O */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[12] += q; // HCO
+  wdot[13] -= q; // CH2O
+  // d()/d[OH]
   dqdci = +k_f * sc[13];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[300] += dqdci; /* dwdot[HCO]/d[OH] */
-  J[301] -= dqdci; /* dwdot[CH2O]/d[OH] */
-  /* d()/d[CH2O] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[300] += dqdci; // dwdot[HCO]/d[OH]
+  J[301] -= dqdci; // dwdot[CH2O]/d[OH]
+  // d()/d[CH2O]
   dqdci = +k_f * sc[6];
-  J[630] -= dqdci; /* dwdot[OH]/d[CH2O] */
-  J[631] += dqdci; /* dwdot[H2O]/d[CH2O] */
-  J[636] += dqdci; /* dwdot[HCO]/d[CH2O] */
-  J[637] -= dqdci; /* dwdot[CH2O]/d[CH2O] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2269] -= dqdT; /* dwdot[CH2O]/dT */
+  J[630] -= dqdci; // dwdot[OH]/d[CH2O]
+  J[631] += dqdci; // dwdot[H2O]/d[CH2O]
+  J[636] += dqdci; // dwdot[HCO]/d[CH2O]
+  J[637] -= dqdci; // dwdot[CH2O]/d[CH2O]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2269] -= dqdT; // dwdot[CH2O]/dT
 
   /*reaction 76: CH3 + CH2O => CH4 + HCO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[13] * sc[14];
   k_f = 1e-06 * 3320 * exp(2.81 * tc[0] - 0.50321666580472 * (5860.42) * invT);
   dlnkfdT = 2.81 * invT + 0.50321666580472 * 5860.42 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[12] += q; /* HCO */
-  wdot[13] -= q; /* CH2O */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  /* d()/d[CH2O] */
+  // update wdot
+  wdot[12] += q; // HCO
+  wdot[13] -= q; // CH2O
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  // d()/d[CH2O]
   dqdci = +k_f * sc[14];
-  J[636] += dqdci; /* dwdot[HCO]/d[CH2O] */
-  J[637] -= dqdci; /* dwdot[CH2O]/d[CH2O] */
-  J[638] -= dqdci; /* dwdot[CH3]/d[CH2O] */
-  J[640] += dqdci; /* dwdot[CH4]/d[CH2O] */
-  /* d()/d[CH3] */
+  J[636] += dqdci; // dwdot[HCO]/d[CH2O]
+  J[637] -= dqdci; // dwdot[CH2O]/d[CH2O]
+  J[638] -= dqdci; // dwdot[CH3]/d[CH2O]
+  J[640] += dqdci; // dwdot[CH4]/d[CH2O]
+  // d()/d[CH3]
   dqdci = +k_f * sc[13];
-  J[684] += dqdci; /* dwdot[HCO]/d[CH3] */
-  J[685] -= dqdci; /* dwdot[CH2O]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  /* d()/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2269] -= dqdT; /* dwdot[CH2O]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
+  J[684] += dqdci; // dwdot[HCO]/d[CH3]
+  J[685] -= dqdci; // dwdot[CH2O]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  // d()/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2269] -= dqdT; // dwdot[CH2O]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
 
   /*reaction 77: CO2 + CH => HCO + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[10] * sc[15];
   k_f = 1e-06 * 190000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (15791.11) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 15791.11 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[10] -= q; /* CH */
-  wdot[11] += q; /* CO */
-  wdot[12] += q; /* HCO */
-  wdot[15] -= q; /* CO2 */
-  /* d()/d[CH] */
+  // update wdot
+  wdot[10] -= q; // CH
+  wdot[11] += q; // CO
+  wdot[12] += q; // HCO
+  wdot[15] -= q; // CO2
+  // d()/d[CH]
   dqdci = +k_f * sc[15];
-  J[490] -= dqdci; /* dwdot[CH]/d[CH] */
-  J[491] += dqdci; /* dwdot[CO]/d[CH] */
-  J[492] += dqdci; /* dwdot[HCO]/d[CH] */
-  J[495] -= dqdci; /* dwdot[CO2]/d[CH] */
-  /* d()/d[CO2] */
+  J[490] -= dqdci; // dwdot[CH]/d[CH]
+  J[491] += dqdci; // dwdot[CO]/d[CH]
+  J[492] += dqdci; // dwdot[HCO]/d[CH]
+  J[495] -= dqdci; // dwdot[CO2]/d[CH]
+  // d()/d[CO2]
   dqdci = +k_f * sc[10];
-  J[730] -= dqdci; /* dwdot[CH]/d[CO2] */
-  J[731] += dqdci; /* dwdot[CO]/d[CO2] */
-  J[732] += dqdci; /* dwdot[HCO]/d[CO2] */
-  J[735] -= dqdci; /* dwdot[CO2]/d[CO2] */
-  /* d()/dT */
-  J[2266] -= dqdT; /* dwdot[CH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2271] -= dqdT; /* dwdot[CO2]/dT */
+  J[730] -= dqdci; // dwdot[CH]/d[CO2]
+  J[731] += dqdci; // dwdot[CO]/d[CO2]
+  J[732] += dqdci; // dwdot[HCO]/d[CO2]
+  J[735] -= dqdci; // dwdot[CO2]/d[CO2]
+  // d()/dT
+  J[2266] -= dqdT; // dwdot[CH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2271] -= dqdT; // dwdot[CO2]/dT
 
   /*reaction 78: CO2 + S-CH2 <=> CO2 + T-CH2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[15];
   k_f = 1e-06 * 7000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[2] * sc[15];
   Kc = exp(g_RT[1] - g_RT[2] + g_RT[15] - g_RT[15]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[15]) + (h_RT[2] + h_RT[15]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q; /* S-CH2 */
-  wdot[2] += q; /* T-CH2 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q; // S-CH2
+  wdot[2] += q; // T-CH2
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[15];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[50] += dqdci; /* dwdot[T-CH2]/d[S-CH2] */
-  /* d()/d[T-CH2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[50] += dqdci; // dwdot[T-CH2]/d[S-CH2]
+  // d()/d[T-CH2]
   dqdci = -k_r * sc[15];
-  J[97] -= dqdci; /* dwdot[S-CH2]/d[T-CH2] */
-  J[98] += dqdci; /* dwdot[T-CH2]/d[T-CH2] */
-  /* d()/d[CO2] */
+  J[97] -= dqdci; // dwdot[S-CH2]/d[T-CH2]
+  J[98] += dqdci; // dwdot[T-CH2]/d[T-CH2]
+  // d()/d[CO2]
   dqdci = +k_f * sc[1] - k_r * sc[2];
-  J[721] -= dqdci; /* dwdot[S-CH2]/d[CO2] */
-  J[722] += dqdci; /* dwdot[T-CH2]/d[CO2] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
+  J[721] -= dqdci; // dwdot[S-CH2]/d[CO2]
+  J[722] += dqdci; // dwdot[T-CH2]/d[CO2]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
 
   /*reaction 79: CO2 + S-CH2 => CH2O + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[15];
   k_f = 1e-06 * 14000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[11] += q; /* CO */
-  wdot[13] += q; /* CH2O */
-  wdot[15] -= q; /* CO2 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[11] += q; // CO
+  wdot[13] += q; // CH2O
+  wdot[15] -= q; // CO2
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[15];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[59] += dqdci; /* dwdot[CO]/d[S-CH2] */
-  J[61] += dqdci; /* dwdot[CH2O]/d[S-CH2] */
-  J[63] -= dqdci; /* dwdot[CO2]/d[S-CH2] */
-  /* d()/d[CO2] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[59] += dqdci; // dwdot[CO]/d[S-CH2]
+  J[61] += dqdci; // dwdot[CH2O]/d[S-CH2]
+  J[63] -= dqdci; // dwdot[CO2]/d[S-CH2]
+  // d()/d[CO2]
   dqdci = +k_f * sc[1];
-  J[721] -= dqdci; /* dwdot[S-CH2]/d[CO2] */
-  J[731] += dqdci; /* dwdot[CO]/d[CO2] */
-  J[733] += dqdci; /* dwdot[CH2O]/d[CO2] */
-  J[735] -= dqdci; /* dwdot[CO2]/d[CO2] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2271] -= dqdT; /* dwdot[CO2]/dT */
+  J[721] -= dqdci; // dwdot[S-CH2]/d[CO2]
+  J[731] += dqdci; // dwdot[CO]/d[CO2]
+  J[733] += dqdci; // dwdot[CH2O]/d[CO2]
+  J[735] -= dqdci; // dwdot[CO2]/d[CO2]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2271] -= dqdT; // dwdot[CO2]/dT
 
   /*reaction 80: C2H + O => CH + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[20];
   k_f = 1e-06 * 50000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[10] += q; /* CH */
-  wdot[11] += q; /* CO */
-  wdot[20] -= q; /* C2H */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[10] += q; // CH
+  wdot[11] += q; // CO
+  wdot[20] -= q; // C2H
+  // d()/d[O]
   dqdci = +k_f * sc[20];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[154] += dqdci; /* dwdot[CH]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[164] -= dqdci; /* dwdot[C2H]/d[O] */
-  /* d()/d[C2H] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[154] += dqdci; // dwdot[CH]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[164] -= dqdci; // dwdot[C2H]/d[O]
+  // d()/d[C2H]
   dqdci = +k_f * sc[3];
-  J[963] -= dqdci; /* dwdot[O]/d[C2H] */
-  J[970] += dqdci; /* dwdot[CH]/d[C2H] */
-  J[971] += dqdci; /* dwdot[CO]/d[C2H] */
-  J[980] -= dqdci; /* dwdot[C2H]/d[C2H] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2266] += dqdT; /* dwdot[CH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2276] -= dqdT; /* dwdot[C2H]/dT */
+  J[963] -= dqdci; // dwdot[O]/d[C2H]
+  J[970] += dqdci; // dwdot[CH]/d[C2H]
+  J[971] += dqdci; // dwdot[CO]/d[C2H]
+  J[980] -= dqdci; // dwdot[C2H]/d[C2H]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2266] += dqdT; // dwdot[CH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2276] -= dqdT; // dwdot[C2H]/dT
 
   /*reaction 81: C2H + OH => HCCO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[20];
   k_f = 1e-06 * 20000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[20] -= q; /* C2H */
-  wdot[21] += q; /* HCCO */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[20] -= q; // C2H
+  wdot[21] += q; // HCCO
+  // d()/d[OH]
   dqdci = +k_f * sc[20];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[308] -= dqdci; /* dwdot[C2H]/d[OH] */
-  J[309] += dqdci; /* dwdot[HCCO]/d[OH] */
-  /* d()/d[C2H] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[308] -= dqdci; // dwdot[C2H]/d[OH]
+  J[309] += dqdci; // dwdot[HCCO]/d[OH]
+  // d()/d[C2H]
   dqdci = +k_f * sc[6];
-  J[965] += dqdci; /* dwdot[H]/d[C2H] */
-  J[966] -= dqdci; /* dwdot[OH]/d[C2H] */
-  J[980] -= dqdci; /* dwdot[C2H]/d[C2H] */
-  J[981] += dqdci; /* dwdot[HCCO]/d[C2H] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2276] -= dqdT; /* dwdot[C2H]/dT */
-  J[2277] += dqdT; /* dwdot[HCCO]/dT */
+  J[965] += dqdci; // dwdot[H]/d[C2H]
+  J[966] -= dqdci; // dwdot[OH]/d[C2H]
+  J[980] -= dqdci; // dwdot[C2H]/d[C2H]
+  J[981] += dqdci; // dwdot[HCCO]/d[C2H]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2276] -= dqdT; // dwdot[C2H]/dT
+  J[2277] += dqdT; // dwdot[HCCO]/dT
 
   /*reaction 82: C2H + O2 => HCO + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[20];
   k_f = 1e-06 * 10000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (-755.26) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * -755.26 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  wdot[12] += q; /* HCO */
-  wdot[20] -= q; /* C2H */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  wdot[12] += q; // HCO
+  wdot[20] -= q; // C2H
+  // d()/d[O2]
   dqdci = +k_f * sc[20];
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  J[396] += dqdci; /* dwdot[HCO]/d[O2] */
-  J[404] -= dqdci; /* dwdot[C2H]/d[O2] */
-  /* d()/d[C2H] */
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  J[396] += dqdci; // dwdot[HCO]/d[O2]
+  J[404] -= dqdci; // dwdot[C2H]/d[O2]
+  // d()/d[C2H]
   dqdci = +k_f * sc[8];
-  J[968] -= dqdci; /* dwdot[O2]/d[C2H] */
-  J[971] += dqdci; /* dwdot[CO]/d[C2H] */
-  J[972] += dqdci; /* dwdot[HCO]/d[C2H] */
-  J[980] -= dqdci; /* dwdot[C2H]/d[C2H] */
-  /* d()/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2276] -= dqdT; /* dwdot[C2H]/dT */
+  J[968] -= dqdci; // dwdot[O2]/d[C2H]
+  J[971] += dqdci; // dwdot[CO]/d[C2H]
+  J[972] += dqdci; // dwdot[HCO]/d[C2H]
+  J[980] -= dqdci; // dwdot[C2H]/d[C2H]
+  // d()/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2276] -= dqdT; // dwdot[C2H]/dT
 
   /*reaction 83: C2H + H2 <=> C2H2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[4] * sc[20];
   k_f =
     1e-06 * 3310000 * exp(2.26 * tc[0] - 0.50321666580472 * (901.05) * invT);
   dlnkfdT = 2.26 * invT + 0.50321666580472 * 901.05 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[22];
   Kc = exp(g_RT[4] - g_RT[5] + g_RT[20] - g_RT[22]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[4] + h_RT[20]) + (h_RT[5] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] -= q;  /* H2 */
-  wdot[5] += q;  /* H */
-  wdot[20] -= q; /* C2H */
-  wdot[22] += q; /* C2H2 */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] -= q;  // H2
+  wdot[5] += q;  // H
+  wdot[20] -= q; // C2H
+  wdot[22] += q; // C2H2
+  // d()/d[H2]
   dqdci = +k_f * sc[20];
-  J[196] -= dqdci; /* dwdot[H2]/d[H2] */
-  J[197] += dqdci; /* dwdot[H]/d[H2] */
-  J[212] -= dqdci; /* dwdot[C2H]/d[H2] */
-  J[214] += dqdci; /* dwdot[C2H2]/d[H2] */
-  /* d()/d[H] */
+  J[196] -= dqdci; // dwdot[H2]/d[H2]
+  J[197] += dqdci; // dwdot[H]/d[H2]
+  J[212] -= dqdci; // dwdot[C2H]/d[H2]
+  J[214] += dqdci; // dwdot[C2H2]/d[H2]
+  // d()/d[H]
   dqdci = -k_r * sc[22];
-  J[244] -= dqdci; /* dwdot[H2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[260] -= dqdci; /* dwdot[C2H]/d[H] */
-  J[262] += dqdci; /* dwdot[C2H2]/d[H] */
-  /* d()/d[C2H] */
+  J[244] -= dqdci; // dwdot[H2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[260] -= dqdci; // dwdot[C2H]/d[H]
+  J[262] += dqdci; // dwdot[C2H2]/d[H]
+  // d()/d[C2H]
   dqdci = +k_f * sc[4];
-  J[964] -= dqdci; /* dwdot[H2]/d[C2H] */
-  J[965] += dqdci; /* dwdot[H]/d[C2H] */
-  J[980] -= dqdci; /* dwdot[C2H]/d[C2H] */
-  J[982] += dqdci; /* dwdot[C2H2]/d[C2H] */
-  /* d()/d[C2H2] */
+  J[964] -= dqdci; // dwdot[H2]/d[C2H]
+  J[965] += dqdci; // dwdot[H]/d[C2H]
+  J[980] -= dqdci; // dwdot[C2H]/d[C2H]
+  J[982] += dqdci; // dwdot[C2H2]/d[C2H]
+  // d()/d[C2H2]
   dqdci = -k_r * sc[5];
-  J[1060] -= dqdci; /* dwdot[H2]/d[C2H2] */
-  J[1061] += dqdci; /* dwdot[H]/d[C2H2] */
-  J[1076] -= dqdci; /* dwdot[C2H]/d[C2H2] */
-  J[1078] += dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2260] -= dqdT; /* dwdot[H2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2276] -= dqdT; /* dwdot[C2H]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
+  J[1060] -= dqdci; // dwdot[H2]/d[C2H2]
+  J[1061] += dqdci; // dwdot[H]/d[C2H2]
+  J[1076] -= dqdci; // dwdot[C2H]/d[C2H2]
+  J[1078] += dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2260] -= dqdT; // dwdot[H2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2276] -= dqdT; // dwdot[C2H]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
 
   /*reaction 84: C2H2 + O => HCCO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[22];
   k_f = 1e-06 * 8100000 * exp(2 * tc[0] - 0.50321666580472 * (1900.1) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * 1900.1 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[21] += q; /* HCCO */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[21] += q; // HCCO
+  wdot[22] -= q; // C2H2
+  // d()/d[O]
   dqdci = +k_f * sc[22];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[165] += dqdci; /* dwdot[HCCO]/d[O] */
-  J[166] -= dqdci; /* dwdot[C2H2]/d[O] */
-  /* d()/d[C2H2] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[165] += dqdci; // dwdot[HCCO]/d[O]
+  J[166] -= dqdci; // dwdot[C2H2]/d[O]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[3];
-  J[1059] -= dqdci; /* dwdot[O]/d[C2H2] */
-  J[1061] += dqdci; /* dwdot[H]/d[C2H2] */
-  J[1077] += dqdci; /* dwdot[HCCO]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2277] += dqdT; /* dwdot[HCCO]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1059] -= dqdci; // dwdot[O]/d[C2H2]
+  J[1061] += dqdci; // dwdot[H]/d[C2H2]
+  J[1077] += dqdci; // dwdot[HCCO]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2277] += dqdT; // dwdot[HCCO]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 85: C2H2 + O => T-CH2 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[22];
   k_f = 1e-06 * 12500000 * exp(2 * tc[0] - 0.50321666580472 * (1900.1) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * 1900.1 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] += q;  /* T-CH2 */
-  wdot[3] -= q;  /* O */
-  wdot[11] += q; /* CO */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[2] += q;  // T-CH2
+  wdot[3] -= q;  // O
+  wdot[11] += q; // CO
+  wdot[22] -= q; // C2H2
+  // d()/d[O]
   dqdci = +k_f * sc[22];
-  J[146] += dqdci; /* dwdot[T-CH2]/d[O] */
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[166] -= dqdci; /* dwdot[C2H2]/d[O] */
-  /* d()/d[C2H2] */
+  J[146] += dqdci; // dwdot[T-CH2]/d[O]
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[166] -= dqdci; // dwdot[C2H2]/d[O]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[3];
-  J[1058] += dqdci; /* dwdot[T-CH2]/d[C2H2] */
-  J[1059] -= dqdci; /* dwdot[O]/d[C2H2] */
-  J[1067] += dqdci; /* dwdot[CO]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1058] += dqdci; // dwdot[T-CH2]/d[C2H2]
+  J[1059] -= dqdci; // dwdot[O]/d[C2H2]
+  J[1067] += dqdci; // dwdot[CO]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 86: C2H2 + O => C2H + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[22];
   k_f = 1e-06 * 3.324e+16 *
         exp(-0.44 * tc[0] - 0.50321666580472 * (30697.9) * invT);
   dlnkfdT = -0.44 * invT + 0.50321666580472 * 30697.9 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[20] += q; /* C2H */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[20] += q; // C2H
+  wdot[22] -= q; // C2H2
+  // d()/d[O]
   dqdci = +k_f * sc[22];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[164] += dqdci; /* dwdot[C2H]/d[O] */
-  J[166] -= dqdci; /* dwdot[C2H2]/d[O] */
-  /* d()/d[C2H2] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[164] += dqdci; // dwdot[C2H]/d[O]
+  J[166] -= dqdci; // dwdot[C2H2]/d[O]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[3];
-  J[1059] -= dqdci; /* dwdot[O]/d[C2H2] */
-  J[1062] += dqdci; /* dwdot[OH]/d[C2H2] */
-  J[1076] += dqdci; /* dwdot[C2H]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2276] += dqdT; /* dwdot[C2H]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1059] -= dqdci; // dwdot[O]/d[C2H2]
+  J[1062] += dqdci; // dwdot[OH]/d[C2H2]
+  J[1076] += dqdci; // dwdot[C2H]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2276] += dqdT; // dwdot[C2H]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 87: C2H2 + OH => C2H + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[22];
   k_f =
     1e-06 * 2630000 * exp(2.14 * tc[0] - 0.50321666580472 * (17060.23) * invT);
   dlnkfdT = 2.14 * invT + 0.50321666580472 * 17060.23 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[20] += q; /* C2H */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[20] += q; // C2H
+  wdot[22] -= q; // C2H2
+  // d()/d[OH]
   dqdci = +k_f * sc[22];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[308] += dqdci; /* dwdot[C2H]/d[OH] */
-  J[310] -= dqdci; /* dwdot[C2H2]/d[OH] */
-  /* d()/d[C2H2] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[308] += dqdci; // dwdot[C2H]/d[OH]
+  J[310] -= dqdci; // dwdot[C2H2]/d[OH]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[6];
-  J[1062] -= dqdci; /* dwdot[OH]/d[C2H2] */
-  J[1063] += dqdci; /* dwdot[H2O]/d[C2H2] */
-  J[1076] += dqdci; /* dwdot[C2H]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2276] += dqdT; /* dwdot[C2H]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1062] -= dqdci; // dwdot[OH]/d[C2H2]
+  J[1063] += dqdci; // dwdot[H2O]/d[C2H2]
+  J[1076] += dqdci; // dwdot[C2H]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2276] += dqdT; // dwdot[C2H]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 88: C2H2 + OH => CH3 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[22];
   k_f =
     1e-06 * 7530000 * exp(1.55 * tc[0] - 0.50321666580472 * (2105.64) * invT);
   dlnkfdT = 1.55 * invT + 0.50321666580472 * 2105.64 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[14] += q; /* CH3 */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[14] += q; // CH3
+  wdot[22] -= q; // C2H2
+  // d()/d[OH]
   dqdci = +k_f * sc[22];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[302] += dqdci; /* dwdot[CH3]/d[OH] */
-  J[310] -= dqdci; /* dwdot[C2H2]/d[OH] */
-  /* d()/d[C2H2] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[302] += dqdci; // dwdot[CH3]/d[OH]
+  J[310] -= dqdci; // dwdot[C2H2]/d[OH]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[6];
-  J[1062] -= dqdci; /* dwdot[OH]/d[C2H2] */
-  J[1067] += dqdci; /* dwdot[CO]/d[C2H2] */
-  J[1070] += dqdci; /* dwdot[CH3]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1062] -= dqdci; // dwdot[OH]/d[C2H2]
+  J[1067] += dqdci; // dwdot[CO]/d[C2H2]
+  J[1070] += dqdci; // dwdot[CH3]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 89: C2H2 + OH => CH3 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[22];
   k_f = 1e-06 * 1280000000 *
         exp(0.73 * tc[0] - 0.50321666580472 * (2578.87) * invT);
   dlnkfdT = 0.73 * invT + 0.50321666580472 * 2578.87 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[14] += q; /* CH3 */
-  wdot[22] -= q; /* C2H2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[14] += q; // CH3
+  wdot[22] -= q; // C2H2
+  // d()/d[OH]
   dqdci = +k_f * sc[22];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[302] += dqdci; /* dwdot[CH3]/d[OH] */
-  J[310] -= dqdci; /* dwdot[C2H2]/d[OH] */
-  /* d()/d[C2H2] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[302] += dqdci; // dwdot[CH3]/d[OH]
+  J[310] -= dqdci; // dwdot[C2H2]/d[OH]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[6];
-  J[1062] -= dqdci; /* dwdot[OH]/d[C2H2] */
-  J[1067] += dqdci; /* dwdot[CO]/d[C2H2] */
-  J[1070] += dqdci; /* dwdot[CH3]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
+  J[1062] -= dqdci; // dwdot[OH]/d[C2H2]
+  J[1067] += dqdci; // dwdot[CO]/d[C2H2]
+  J[1070] += dqdci; // dwdot[CH3]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
 
   /*reaction 90: C2H2 + S-CH2 <=> C3H3 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[1] * sc[22];
   k_f =
     1e-06 * 190000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[23];
   Kc = exp(g_RT[1] - g_RT[5] + g_RT[22] - g_RT[23]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[1] + h_RT[22]) + (h_RT[5] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[1] -= q;  /* S-CH2 */
-  wdot[5] += q;  /* H */
-  wdot[22] -= q; /* C2H2 */
-  wdot[23] += q; /* C3H3 */
-  /* d()/d[S-CH2] */
+  // update wdot
+  wdot[1] -= q;  // S-CH2
+  wdot[5] += q;  // H
+  wdot[22] -= q; // C2H2
+  wdot[23] += q; // C3H3
+  // d()/d[S-CH2]
   dqdci = +k_f * sc[22];
-  J[49] -= dqdci; /* dwdot[S-CH2]/d[S-CH2] */
-  J[53] += dqdci; /* dwdot[H]/d[S-CH2] */
-  J[70] -= dqdci; /* dwdot[C2H2]/d[S-CH2] */
-  J[71] += dqdci; /* dwdot[C3H3]/d[S-CH2] */
-  /* d()/d[H] */
+  J[49] -= dqdci; // dwdot[S-CH2]/d[S-CH2]
+  J[53] += dqdci; // dwdot[H]/d[S-CH2]
+  J[70] -= dqdci; // dwdot[C2H2]/d[S-CH2]
+  J[71] += dqdci; // dwdot[C3H3]/d[S-CH2]
+  // d()/d[H]
   dqdci = -k_r * sc[23];
-  J[241] -= dqdci; /* dwdot[S-CH2]/d[H] */
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[262] -= dqdci; /* dwdot[C2H2]/d[H] */
-  J[263] += dqdci; /* dwdot[C3H3]/d[H] */
-  /* d()/d[C2H2] */
+  J[241] -= dqdci; // dwdot[S-CH2]/d[H]
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[262] -= dqdci; // dwdot[C2H2]/d[H]
+  J[263] += dqdci; // dwdot[C3H3]/d[H]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[1];
-  J[1057] -= dqdci; /* dwdot[S-CH2]/d[C2H2] */
-  J[1061] += dqdci; /* dwdot[H]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1079] += dqdci; /* dwdot[C3H3]/d[C2H2] */
-  /* d()/d[C3H3] */
+  J[1057] -= dqdci; // dwdot[S-CH2]/d[C2H2]
+  J[1061] += dqdci; // dwdot[H]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1079] += dqdci; // dwdot[C3H3]/d[C2H2]
+  // d()/d[C3H3]
   dqdci = -k_r * sc[5];
-  J[1105] -= dqdci; /* dwdot[S-CH2]/d[C3H3] */
-  J[1109] += dqdci; /* dwdot[H]/d[C3H3] */
-  J[1126] -= dqdci; /* dwdot[C2H2]/d[C3H3] */
-  J[1127] += dqdci; /* dwdot[C3H3]/d[C3H3] */
-  /* d()/dT */
-  J[2257] -= dqdT; /* dwdot[S-CH2]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
+  J[1105] -= dqdci; // dwdot[S-CH2]/d[C3H3]
+  J[1109] += dqdci; // dwdot[H]/d[C3H3]
+  J[1126] -= dqdci; // dwdot[C2H2]/d[C3H3]
+  J[1127] += dqdci; // dwdot[C3H3]/d[C3H3]
+  // d()/dT
+  J[2257] -= dqdT; // dwdot[S-CH2]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
 
   /*reaction 91: C2H3 + H => C2H2 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[17];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[17] -= q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[17] -= q; // C2H3
+  wdot[22] += q; // C2H2
+  // d()/d[H]
   dqdci = +k_f * sc[17];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[257] -= dqdci; /* dwdot[C2H3]/d[H] */
-  J[262] += dqdci; /* dwdot[C2H2]/d[H] */
-  /* d()/d[C2H3] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[257] -= dqdci; // dwdot[C2H3]/d[H]
+  J[262] += dqdci; // dwdot[C2H2]/d[H]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[5];
-  J[820] += dqdci; /* dwdot[H2]/d[C2H3] */
-  J[821] -= dqdci; /* dwdot[H]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[838] += dqdci; /* dwdot[C2H2]/d[C2H3] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
+  J[820] += dqdci; // dwdot[H2]/d[C2H3]
+  J[821] -= dqdci; // dwdot[H]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[838] += dqdci; // dwdot[C2H2]/d[C2H3]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
 
   /*reaction 92: C2H3 + O => CH3 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[17];
   k_f = 1e-06 * 10300000000000 *
         exp(0.21 * tc[0] - 0.50321666580472 * (-427.82) * invT);
   dlnkfdT = 0.21 * invT + 0.50321666580472 * -427.82 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[11] += q; /* CO */
-  wdot[14] += q; /* CH3 */
-  wdot[17] -= q; /* C2H3 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[11] += q; // CO
+  wdot[14] += q; // CH3
+  wdot[17] -= q; // C2H3
+  // d()/d[O]
   dqdci = +k_f * sc[17];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[161] -= dqdci; /* dwdot[C2H3]/d[O] */
-  /* d()/d[C2H3] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[161] -= dqdci; // dwdot[C2H3]/d[O]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[3];
-  J[819] -= dqdci; /* dwdot[O]/d[C2H3] */
-  J[827] += dqdci; /* dwdot[CO]/d[C2H3] */
-  J[830] += dqdci; /* dwdot[CH3]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
+  J[819] -= dqdci; // dwdot[O]/d[C2H3]
+  J[827] += dqdci; // dwdot[CO]/d[C2H3]
+  J[830] += dqdci; // dwdot[CH3]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
 
   /*reaction 93: C2H3 + OH => C2H2 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[17];
   k_f = 1e-06 * 5000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[17] -= q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[17] -= q; // C2H3
+  wdot[22] += q; // C2H2
+  // d()/d[OH]
   dqdci = +k_f * sc[17];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[305] -= dqdci; /* dwdot[C2H3]/d[OH] */
-  J[310] += dqdci; /* dwdot[C2H2]/d[OH] */
-  /* d()/d[C2H3] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[305] -= dqdci; // dwdot[C2H3]/d[OH]
+  J[310] += dqdci; // dwdot[C2H2]/d[OH]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[6];
-  J[822] -= dqdci; /* dwdot[OH]/d[C2H3] */
-  J[823] += dqdci; /* dwdot[H2O]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[838] += dqdci; /* dwdot[C2H2]/d[C2H3] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
+  J[822] -= dqdci; // dwdot[OH]/d[C2H3]
+  J[823] += dqdci; // dwdot[H2O]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[838] += dqdci; // dwdot[C2H2]/d[C2H3]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
 
   /*reaction 94: C2H3 + O2 => C2H2 + HO2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[17];
   k_f =
     1e-06 * 1340000 * exp(1.61 * tc[0] - 0.50321666580472 * (-384.8) * invT);
   dlnkfdT = 1.61 * invT + 0.50321666580472 * -384.8 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;  /* O2 */
-  wdot[9] += q;  /* HO2 */
-  wdot[17] -= q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;  // O2
+  wdot[9] += q;  // HO2
+  wdot[17] -= q; // C2H3
+  wdot[22] += q; // C2H2
+  // d()/d[O2]
   dqdci = +k_f * sc[17];
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[393] += dqdci; /* dwdot[HO2]/d[O2] */
-  J[401] -= dqdci; /* dwdot[C2H3]/d[O2] */
-  J[406] += dqdci; /* dwdot[C2H2]/d[O2] */
-  /* d()/d[C2H3] */
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[393] += dqdci; // dwdot[HO2]/d[O2]
+  J[401] -= dqdci; // dwdot[C2H3]/d[O2]
+  J[406] += dqdci; // dwdot[C2H2]/d[O2]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[8];
-  J[824] -= dqdci; /* dwdot[O2]/d[C2H3] */
-  J[825] += dqdci; /* dwdot[HO2]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[838] += dqdci; /* dwdot[C2H2]/d[C2H3] */
-  /* d()/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2265] += dqdT; /* dwdot[HO2]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
+  J[824] -= dqdci; // dwdot[O2]/d[C2H3]
+  J[825] += dqdci; // dwdot[HO2]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[838] += dqdci; // dwdot[C2H2]/d[C2H3]
+  // d()/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2265] += dqdT; // dwdot[HO2]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
 
   /*reaction 95: C2H3 + O2 => CH3 + CO + O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[17];
   k_f = 1e-06 * 303000000000 *
         exp(0.29 * tc[0] - 0.50321666580472 * (11.95) * invT);
   dlnkfdT = 0.29 * invT + 0.50321666580472 * 11.95 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] += q;  /* O */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  wdot[14] += q; /* CH3 */
-  wdot[17] -= q; /* C2H3 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[3] += q;  // O
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  wdot[14] += q; // CH3
+  wdot[17] -= q; // C2H3
+  // d()/d[O2]
   dqdci = +k_f * sc[17];
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  J[398] += dqdci; /* dwdot[CH3]/d[O2] */
-  J[401] -= dqdci; /* dwdot[C2H3]/d[O2] */
-  /* d()/d[C2H3] */
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  J[398] += dqdci; // dwdot[CH3]/d[O2]
+  J[401] -= dqdci; // dwdot[C2H3]/d[O2]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[8];
-  J[819] += dqdci; /* dwdot[O]/d[C2H3] */
-  J[824] -= dqdci; /* dwdot[O2]/d[C2H3] */
-  J[827] += dqdci; /* dwdot[CO]/d[C2H3] */
-  J[830] += dqdci; /* dwdot[CH3]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
+  J[819] += dqdci; // dwdot[O]/d[C2H3]
+  J[824] -= dqdci; // dwdot[O2]/d[C2H3]
+  J[827] += dqdci; // dwdot[CO]/d[C2H3]
+  J[830] += dqdci; // dwdot[CH3]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
 
   /*reaction 96: C2H3 + O2 => HCO + CH2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[17];
   k_f =
     1e-06 * 4.58e+16 * exp(-1.39 * tc[0] - 0.50321666580472 * (1015.77) * invT);
   dlnkfdT = -1.39 * invT + 0.50321666580472 * 1015.77 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;  /* O2 */
-  wdot[12] += q; /* HCO */
-  wdot[13] += q; /* CH2O */
-  wdot[17] -= q; /* C2H3 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;  // O2
+  wdot[12] += q; // HCO
+  wdot[13] += q; // CH2O
+  wdot[17] -= q; // C2H3
+  // d()/d[O2]
   dqdci = +k_f * sc[17];
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[396] += dqdci; /* dwdot[HCO]/d[O2] */
-  J[397] += dqdci; /* dwdot[CH2O]/d[O2] */
-  J[401] -= dqdci; /* dwdot[C2H3]/d[O2] */
-  /* d()/d[C2H3] */
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[396] += dqdci; // dwdot[HCO]/d[O2]
+  J[397] += dqdci; // dwdot[CH2O]/d[O2]
+  J[401] -= dqdci; // dwdot[C2H3]/d[O2]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[8];
-  J[824] -= dqdci; /* dwdot[O2]/d[C2H3] */
-  J[828] += dqdci; /* dwdot[HCO]/d[C2H3] */
-  J[829] += dqdci; /* dwdot[CH2O]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  /* d()/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
+  J[824] -= dqdci; // dwdot[O2]/d[C2H3]
+  J[828] += dqdci; // dwdot[HCO]/d[C2H3]
+  J[829] += dqdci; // dwdot[CH2O]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  // d()/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
 
   /*reaction 97: C2H3 + HCO => C2H4 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[12] * sc[17];
   k_f = 1e-06 * 90000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  wdot[17] -= q; /* C2H3 */
-  wdot[18] += q; /* C2H4 */
-  /* d()/d[HCO] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  wdot[17] -= q; // C2H3
+  wdot[18] += q; // C2H4
+  // d()/d[HCO]
   dqdci = +k_f * sc[17];
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  J[593] -= dqdci; /* dwdot[C2H3]/d[HCO] */
-  J[594] += dqdci; /* dwdot[C2H4]/d[HCO] */
-  /* d()/d[C2H3] */
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  J[593] -= dqdci; // dwdot[C2H3]/d[HCO]
+  J[594] += dqdci; // dwdot[C2H4]/d[HCO]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[12];
-  J[827] += dqdci; /* dwdot[CO]/d[C2H3] */
-  J[828] -= dqdci; /* dwdot[HCO]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[834] += dqdci; /* dwdot[C2H4]/d[C2H3] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
+  J[827] += dqdci; // dwdot[CO]/d[C2H3]
+  J[828] -= dqdci; // dwdot[HCO]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[834] += dqdci; // dwdot[C2H4]/d[C2H3]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
 
   /*reaction 98: C2H3 + CH3 => C2H2 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[17];
   k_f = 1e-06 * 9030000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (-764.82) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * -764.82 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[17] -= q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[17] -= q; // C2H3
+  wdot[22] += q; // C2H2
+  // d()/d[CH3]
   dqdci = +k_f * sc[17];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[689] -= dqdci; /* dwdot[C2H3]/d[CH3] */
-  J[694] += dqdci; /* dwdot[C2H2]/d[CH3] */
-  /* d()/d[C2H3] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[689] -= dqdci; // dwdot[C2H3]/d[CH3]
+  J[694] += dqdci; // dwdot[C2H2]/d[CH3]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[14];
-  J[830] -= dqdci; /* dwdot[CH3]/d[C2H3] */
-  J[832] += dqdci; /* dwdot[CH4]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[838] += dqdci; /* dwdot[C2H2]/d[C2H3] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
+  J[830] -= dqdci; // dwdot[CH3]/d[C2H3]
+  J[832] += dqdci; // dwdot[CH4]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[838] += dqdci; // dwdot[C2H2]/d[C2H3]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
 
   /*reaction 99: C2H3 + CH3 <=> A-C3H5 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[17];
   k_f =
     1e-06 * 1.93e+18 * exp(-1.25 * tc[0] - 0.50321666580472 * (7669.69) * invT);
   dlnkfdT = -1.25 * invT + 0.50321666580472 * 7669.69 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[24];
   Kc = exp(-g_RT[5] + g_RT[14] + g_RT[17] - g_RT[24]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[14] + h_RT[17]) + (h_RT[5] + h_RT[24]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[14] -= q; /* CH3 */
-  wdot[17] -= q; /* C2H3 */
-  wdot[24] += q; /* A-C3H5 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[14] -= q; // CH3
+  wdot[17] -= q; // C2H3
+  wdot[24] += q; // A-C3H5
+  // d()/d[H]
   dqdci = -k_r * sc[24];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[254] -= dqdci; /* dwdot[CH3]/d[H] */
-  J[257] -= dqdci; /* dwdot[C2H3]/d[H] */
-  J[264] += dqdci; /* dwdot[A-C3H5]/d[H] */
-  /* d()/d[CH3] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[254] -= dqdci; // dwdot[CH3]/d[H]
+  J[257] -= dqdci; // dwdot[C2H3]/d[H]
+  J[264] += dqdci; // dwdot[A-C3H5]/d[H]
+  // d()/d[CH3]
   dqdci = +k_f * sc[17];
-  J[677] += dqdci; /* dwdot[H]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[689] -= dqdci; /* dwdot[C2H3]/d[CH3] */
-  J[696] += dqdci; /* dwdot[A-C3H5]/d[CH3] */
-  /* d()/d[C2H3] */
+  J[677] += dqdci; // dwdot[H]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[689] -= dqdci; // dwdot[C2H3]/d[CH3]
+  J[696] += dqdci; // dwdot[A-C3H5]/d[CH3]
+  // d()/d[C2H3]
   dqdci = +k_f * sc[14];
-  J[821] += dqdci; /* dwdot[H]/d[C2H3] */
-  J[830] -= dqdci; /* dwdot[CH3]/d[C2H3] */
-  J[833] -= dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[840] += dqdci; /* dwdot[A-C3H5]/d[C2H3] */
-  /* d()/d[A-C3H5] */
+  J[821] += dqdci; // dwdot[H]/d[C2H3]
+  J[830] -= dqdci; // dwdot[CH3]/d[C2H3]
+  J[833] -= dqdci; // dwdot[C2H3]/d[C2H3]
+  J[840] += dqdci; // dwdot[A-C3H5]/d[C2H3]
+  // d()/d[A-C3H5]
   dqdci = -k_r * sc[5];
-  J[1157] += dqdci; /* dwdot[H]/d[A-C3H5] */
-  J[1166] -= dqdci; /* dwdot[CH3]/d[A-C3H5] */
-  J[1169] -= dqdci; /* dwdot[C2H3]/d[A-C3H5] */
-  J[1176] += dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2273] -= dqdT; /* dwdot[C2H3]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
+  J[1157] += dqdci; // dwdot[H]/d[A-C3H5]
+  J[1166] -= dqdci; // dwdot[CH3]/d[A-C3H5]
+  J[1169] -= dqdci; // dwdot[C2H3]/d[A-C3H5]
+  J[1176] += dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2273] -= dqdT; // dwdot[C2H3]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
 
   /*reaction 100: C2H4 + H => C2H3 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[18];
   k_f =
     1e-06 * 1330000 * exp(2.53 * tc[0] - 0.50321666580472 * (12239.48) * invT);
   dlnkfdT = 2.53 * invT + 0.50321666580472 * 12239.48 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[17] += q; /* C2H3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[17] += q; // C2H3
+  wdot[18] -= q; // C2H4
+  // d()/d[H]
   dqdci = +k_f * sc[18];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[257] += dqdci; /* dwdot[C2H3]/d[H] */
-  J[258] -= dqdci; /* dwdot[C2H4]/d[H] */
-  /* d()/d[C2H4] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[257] += dqdci; // dwdot[C2H3]/d[H]
+  J[258] -= dqdci; // dwdot[C2H4]/d[H]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[5];
-  J[868] += dqdci; /* dwdot[H2]/d[C2H4] */
-  J[869] -= dqdci; /* dwdot[H]/d[C2H4] */
-  J[881] += dqdci; /* dwdot[C2H3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[868] += dqdci; // dwdot[H2]/d[C2H4]
+  J[869] -= dqdci; // dwdot[H]/d[C2H4]
+  J[881] += dqdci; // dwdot[C2H3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 101: C2H4 + O => CH3 + CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[18];
   k_f = 1e-06 * 7660000000 *
         exp(0.88 * tc[0] - 0.50321666580472 * (1140.06) * invT);
   dlnkfdT = 0.88 * invT + 0.50321666580472 * 1140.06 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[14] += q; /* CH3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[14] += q; // CH3
+  wdot[18] -= q; // C2H4
+  // d()/d[O]
   dqdci = +k_f * sc[18];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[162] -= dqdci; /* dwdot[C2H4]/d[O] */
-  /* d()/d[C2H4] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[162] -= dqdci; // dwdot[C2H4]/d[O]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[3];
-  J[867] -= dqdci; /* dwdot[O]/d[C2H4] */
-  J[869] += dqdci; /* dwdot[H]/d[C2H4] */
-  J[875] += dqdci; /* dwdot[CO]/d[C2H4] */
-  J[878] += dqdci; /* dwdot[CH3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[867] -= dqdci; // dwdot[O]/d[C2H4]
+  J[869] += dqdci; // dwdot[H]/d[C2H4]
+  J[875] += dqdci; // dwdot[CO]/d[C2H4]
+  J[878] += dqdci; // dwdot[CH3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 102: C2H4 + O => T-CH2 + CH2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[18];
   k_f = 1e-06 * 71500 * exp(2.47 * tc[0] - 0.50321666580472 * (929.73) * invT);
   dlnkfdT = 2.47 * invT + 0.50321666580472 * 929.73 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[2] += q;  /* T-CH2 */
-  wdot[3] -= q;  /* O */
-  wdot[13] += q; /* CH2O */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[2] += q;  // T-CH2
+  wdot[3] -= q;  // O
+  wdot[13] += q; // CH2O
+  wdot[18] -= q; // C2H4
+  // d()/d[O]
   dqdci = +k_f * sc[18];
-  J[146] += dqdci; /* dwdot[T-CH2]/d[O] */
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[157] += dqdci; /* dwdot[CH2O]/d[O] */
-  J[162] -= dqdci; /* dwdot[C2H4]/d[O] */
-  /* d()/d[C2H4] */
+  J[146] += dqdci; // dwdot[T-CH2]/d[O]
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[157] += dqdci; // dwdot[CH2O]/d[O]
+  J[162] -= dqdci; // dwdot[C2H4]/d[O]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[3];
-  J[866] += dqdci; /* dwdot[T-CH2]/d[C2H4] */
-  J[867] -= dqdci; /* dwdot[O]/d[C2H4] */
-  J[877] += dqdci; /* dwdot[CH2O]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2258] += dqdT; /* dwdot[T-CH2]/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[866] += dqdci; // dwdot[T-CH2]/d[C2H4]
+  J[867] -= dqdci; // dwdot[O]/d[C2H4]
+  J[877] += dqdci; // dwdot[CH2O]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2258] += dqdT; // dwdot[T-CH2]/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 103: C2H4 + O => CH3 + HCO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[18];
   k_f =
     1e-06 * 389000000 * exp(1.36 * tc[0] - 0.50321666580472 * (886.71) * invT);
   dlnkfdT = 1.36 * invT + 0.50321666580472 * 886.71 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[12] += q; /* HCO */
-  wdot[14] += q; /* CH3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[12] += q; // HCO
+  wdot[14] += q; // CH3
+  wdot[18] -= q; // C2H4
+  // d()/d[O]
   dqdci = +k_f * sc[18];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[156] += dqdci; /* dwdot[HCO]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[162] -= dqdci; /* dwdot[C2H4]/d[O] */
-  /* d()/d[C2H4] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[156] += dqdci; // dwdot[HCO]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[162] -= dqdci; // dwdot[C2H4]/d[O]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[3];
-  J[867] -= dqdci; /* dwdot[O]/d[C2H4] */
-  J[876] += dqdci; /* dwdot[HCO]/d[C2H4] */
-  J[878] += dqdci; /* dwdot[CH3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[867] -= dqdci; // dwdot[O]/d[C2H4]
+  J[876] += dqdci; // dwdot[HCO]/d[C2H4]
+  J[878] += dqdci; // dwdot[CH3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 104: C2H4 + OH => C2H3 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[18];
   k_f = 1e-06 * 0.131 * exp(4.2 * tc[0] - 0.50321666580472 * (-860.42) * invT);
   dlnkfdT = 4.2 * invT + 0.50321666580472 * -860.42 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[17] += q; /* C2H3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[17] += q; // C2H3
+  wdot[18] -= q; // C2H4
+  // d()/d[OH]
   dqdci = +k_f * sc[18];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[305] += dqdci; /* dwdot[C2H3]/d[OH] */
-  J[306] -= dqdci; /* dwdot[C2H4]/d[OH] */
-  /* d()/d[C2H4] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[305] += dqdci; // dwdot[C2H3]/d[OH]
+  J[306] -= dqdci; // dwdot[C2H4]/d[OH]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[6];
-  J[870] -= dqdci; /* dwdot[OH]/d[C2H4] */
-  J[871] += dqdci; /* dwdot[H2O]/d[C2H4] */
-  J[881] += dqdci; /* dwdot[C2H3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[870] -= dqdci; // dwdot[OH]/d[C2H4]
+  J[871] += dqdci; // dwdot[H2O]/d[C2H4]
+  J[881] += dqdci; // dwdot[C2H3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 105: C2H4 + OH => CH3 + CH2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[18];
   k_f =
     1e-06 * 3.75e+36 * exp(-7.8 * tc[0] - 0.50321666580472 * (7060.23) * invT);
   dlnkfdT = -7.8 * invT + 0.50321666580472 * 7060.23 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[13] += q; /* CH2O */
-  wdot[14] += q; /* CH3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[13] += q; // CH2O
+  wdot[14] += q; // CH3
+  wdot[18] -= q; // C2H4
+  // d()/d[OH]
   dqdci = +k_f * sc[18];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[301] += dqdci; /* dwdot[CH2O]/d[OH] */
-  J[302] += dqdci; /* dwdot[CH3]/d[OH] */
-  J[306] -= dqdci; /* dwdot[C2H4]/d[OH] */
-  /* d()/d[C2H4] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[301] += dqdci; // dwdot[CH2O]/d[OH]
+  J[302] += dqdci; // dwdot[CH3]/d[OH]
+  J[306] -= dqdci; // dwdot[C2H4]/d[OH]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[6];
-  J[870] -= dqdci; /* dwdot[OH]/d[C2H4] */
-  J[877] += dqdci; /* dwdot[CH2O]/d[C2H4] */
-  J[878] += dqdci; /* dwdot[CH3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[870] -= dqdci; // dwdot[OH]/d[C2H4]
+  J[877] += dqdci; // dwdot[CH2O]/d[C2H4]
+  J[878] += dqdci; // dwdot[CH3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 106: C2H4 + CH3 => C2H3 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[18];
   k_f = 1e-06 * 227000 * exp(2 * tc[0] - 0.50321666580472 * (9199.33) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * 9199.33 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[17] += q; /* C2H3 */
-  wdot[18] -= q; /* C2H4 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[17] += q; // C2H3
+  wdot[18] -= q; // C2H4
+  // d()/d[CH3]
   dqdci = +k_f * sc[18];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[689] += dqdci; /* dwdot[C2H3]/d[CH3] */
-  J[690] -= dqdci; /* dwdot[C2H4]/d[CH3] */
-  /* d()/d[C2H4] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[689] += dqdci; // dwdot[C2H3]/d[CH3]
+  J[690] -= dqdci; // dwdot[C2H4]/d[CH3]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[14];
-  J[878] -= dqdci; /* dwdot[CH3]/d[C2H4] */
-  J[880] += dqdci; /* dwdot[CH4]/d[C2H4] */
-  J[881] += dqdci; /* dwdot[C2H3]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
+  J[878] -= dqdci; // dwdot[CH3]/d[C2H4]
+  J[880] += dqdci; // dwdot[CH4]/d[C2H4]
+  J[881] += dqdci; // dwdot[C2H3]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
 
   /*reaction 107: C2H5 + O => CH3 + CH2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[19];
   k_f = 1e-06 * 31700000000000 *
         exp(0.03 * tc[0] - 0.50321666580472 * (-394.36) * invT);
   dlnkfdT = 0.03 * invT + 0.50321666580472 * -394.36 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[13] += q; /* CH2O */
-  wdot[14] += q; /* CH3 */
-  wdot[19] -= q; /* C2H5 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[13] += q; // CH2O
+  wdot[14] += q; // CH3
+  wdot[19] -= q; // C2H5
+  // d()/d[O]
   dqdci = +k_f * sc[19];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[157] += dqdci; /* dwdot[CH2O]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[163] -= dqdci; /* dwdot[C2H5]/d[O] */
-  /* d()/d[C2H5] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[157] += dqdci; // dwdot[CH2O]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[163] -= dqdci; // dwdot[C2H5]/d[O]
+  // d()/d[C2H5]
   dqdci = +k_f * sc[3];
-  J[915] -= dqdci; /* dwdot[O]/d[C2H5] */
-  J[925] += dqdci; /* dwdot[CH2O]/d[C2H5] */
-  J[926] += dqdci; /* dwdot[CH3]/d[C2H5] */
-  J[931] -= dqdci; /* dwdot[C2H5]/d[C2H5] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
+  J[915] -= dqdci; // dwdot[O]/d[C2H5]
+  J[925] += dqdci; // dwdot[CH2O]/d[C2H5]
+  J[926] += dqdci; // dwdot[CH3]/d[C2H5]
+  J[931] -= dqdci; // dwdot[C2H5]/d[C2H5]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
 
   /*reaction 108: C2H5 + O2 => C2H4 + HO2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[19];
   k_f =
     1e-06 * 19200000 * exp(1.02 * tc[0] - 0.50321666580472 * (-2033.94) * invT);
   dlnkfdT = 1.02 * invT + 0.50321666580472 * -2033.94 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;  /* O2 */
-  wdot[9] += q;  /* HO2 */
-  wdot[18] += q; /* C2H4 */
-  wdot[19] -= q; /* C2H5 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;  // O2
+  wdot[9] += q;  // HO2
+  wdot[18] += q; // C2H4
+  wdot[19] -= q; // C2H5
+  // d()/d[O2]
   dqdci = +k_f * sc[19];
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[393] += dqdci; /* dwdot[HO2]/d[O2] */
-  J[402] += dqdci; /* dwdot[C2H4]/d[O2] */
-  J[403] -= dqdci; /* dwdot[C2H5]/d[O2] */
-  /* d()/d[C2H5] */
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[393] += dqdci; // dwdot[HO2]/d[O2]
+  J[402] += dqdci; // dwdot[C2H4]/d[O2]
+  J[403] -= dqdci; // dwdot[C2H5]/d[O2]
+  // d()/d[C2H5]
   dqdci = +k_f * sc[8];
-  J[920] -= dqdci; /* dwdot[O2]/d[C2H5] */
-  J[921] += dqdci; /* dwdot[HO2]/d[C2H5] */
-  J[930] += dqdci; /* dwdot[C2H4]/d[C2H5] */
-  J[931] -= dqdci; /* dwdot[C2H5]/d[C2H5] */
-  /* d()/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2265] += dqdT; /* dwdot[HO2]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
+  J[920] -= dqdci; // dwdot[O2]/d[C2H5]
+  J[921] += dqdci; // dwdot[HO2]/d[C2H5]
+  J[930] += dqdci; // dwdot[C2H4]/d[C2H5]
+  J[931] -= dqdci; // dwdot[C2H5]/d[C2H5]
+  // d()/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2265] += dqdT; // dwdot[HO2]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
 
   /*reaction 109: C2H5 + HCO => C2H6 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[12] * sc[19];
   k_f =
     1e-06 * 120000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[12] -= q; /* HCO */
-  wdot[19] -= q; /* C2H5 */
-  wdot[26] += q; /* C2H6 */
-  /* d()/d[HCO] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[12] -= q; // HCO
+  wdot[19] -= q; // C2H5
+  wdot[26] += q; // C2H6
+  // d()/d[HCO]
   dqdci = +k_f * sc[19];
-  J[587] += dqdci; /* dwdot[CO]/d[HCO] */
-  J[588] -= dqdci; /* dwdot[HCO]/d[HCO] */
-  J[595] -= dqdci; /* dwdot[C2H5]/d[HCO] */
-  J[602] += dqdci; /* dwdot[C2H6]/d[HCO] */
-  /* d()/d[C2H5] */
+  J[587] += dqdci; // dwdot[CO]/d[HCO]
+  J[588] -= dqdci; // dwdot[HCO]/d[HCO]
+  J[595] -= dqdci; // dwdot[C2H5]/d[HCO]
+  J[602] += dqdci; // dwdot[C2H6]/d[HCO]
+  // d()/d[C2H5]
   dqdci = +k_f * sc[12];
-  J[923] += dqdci; /* dwdot[CO]/d[C2H5] */
-  J[924] -= dqdci; /* dwdot[HCO]/d[C2H5] */
-  J[931] -= dqdci; /* dwdot[C2H5]/d[C2H5] */
-  J[938] += dqdci; /* dwdot[C2H6]/d[C2H5] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2268] -= dqdT; /* dwdot[HCO]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
-  J[2282] += dqdT; /* dwdot[C2H6]/dT */
+  J[923] += dqdci; // dwdot[CO]/d[C2H5]
+  J[924] -= dqdci; // dwdot[HCO]/d[C2H5]
+  J[931] -= dqdci; // dwdot[C2H5]/d[C2H5]
+  J[938] += dqdci; // dwdot[C2H6]/d[C2H5]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2268] -= dqdT; // dwdot[HCO]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
+  J[2282] += dqdT; // dwdot[C2H6]/dT
 
   /*reaction 110: C2H5 + HO2 => C2H6 + O2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[19];
   k_f = 1e-06 * 300000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] += q;  /* O2 */
-  wdot[9] -= q;  /* HO2 */
-  wdot[19] -= q; /* C2H5 */
-  wdot[26] += q; /* C2H6 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[8] += q;  // O2
+  wdot[9] -= q;  // HO2
+  wdot[19] -= q; // C2H5
+  wdot[26] += q; // C2H6
+  // d()/d[HO2]
   dqdci = +k_f * sc[19];
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[451] -= dqdci; /* dwdot[C2H5]/d[HO2] */
-  J[458] += dqdci; /* dwdot[C2H6]/d[HO2] */
-  /* d()/d[C2H5] */
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[451] -= dqdci; // dwdot[C2H5]/d[HO2]
+  J[458] += dqdci; // dwdot[C2H6]/d[HO2]
+  // d()/d[C2H5]
   dqdci = +k_f * sc[9];
-  J[920] += dqdci; /* dwdot[O2]/d[C2H5] */
-  J[921] -= dqdci; /* dwdot[HO2]/d[C2H5] */
-  J[931] -= dqdci; /* dwdot[C2H5]/d[C2H5] */
-  J[938] += dqdci; /* dwdot[C2H6]/d[C2H5] */
-  /* d()/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
-  J[2282] += dqdT; /* dwdot[C2H6]/dT */
+  J[920] += dqdci; // dwdot[O2]/d[C2H5]
+  J[921] -= dqdci; // dwdot[HO2]/d[C2H5]
+  J[931] -= dqdci; // dwdot[C2H5]/d[C2H5]
+  J[938] += dqdci; // dwdot[C2H6]/d[C2H5]
+  // d()/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
+  J[2282] += dqdT; // dwdot[C2H6]/dT
 
   /*reaction 111: C2H5 + HO2 => CH3 + CH2O + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[19];
   k_f = 1e-06 * 31000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[13] += q; /* CH2O */
-  wdot[14] += q; /* CH3 */
-  wdot[19] -= q; /* C2H5 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[13] += q; // CH2O
+  wdot[14] += q; // CH3
+  wdot[19] -= q; // C2H5
+  // d()/d[HO2]
   dqdci = +k_f * sc[19];
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[445] += dqdci; /* dwdot[CH2O]/d[HO2] */
-  J[446] += dqdci; /* dwdot[CH3]/d[HO2] */
-  J[451] -= dqdci; /* dwdot[C2H5]/d[HO2] */
-  /* d()/d[C2H5] */
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[445] += dqdci; // dwdot[CH2O]/d[HO2]
+  J[446] += dqdci; // dwdot[CH3]/d[HO2]
+  J[451] -= dqdci; // dwdot[C2H5]/d[HO2]
+  // d()/d[C2H5]
   dqdci = +k_f * sc[9];
-  J[918] += dqdci; /* dwdot[OH]/d[C2H5] */
-  J[921] -= dqdci; /* dwdot[HO2]/d[C2H5] */
-  J[925] += dqdci; /* dwdot[CH2O]/d[C2H5] */
-  J[926] += dqdci; /* dwdot[CH3]/d[C2H5] */
-  J[931] -= dqdci; /* dwdot[C2H5]/d[C2H5] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2275] -= dqdT; /* dwdot[C2H5]/dT */
+  J[918] += dqdci; // dwdot[OH]/d[C2H5]
+  J[921] -= dqdci; // dwdot[HO2]/d[C2H5]
+  J[925] += dqdci; // dwdot[CH2O]/d[C2H5]
+  J[926] += dqdci; // dwdot[CH3]/d[C2H5]
+  J[931] -= dqdci; // dwdot[C2H5]/d[C2H5]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2275] -= dqdT; // dwdot[C2H5]/dT
 
   /*reaction 112: C2H6 + H => C2H5 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[26];
   k_f = 1e-06 * 170000 * exp(2.7 * tc[0] - 0.50321666580472 * (5740.92) * invT);
   dlnkfdT = 2.7 * invT + 0.50321666580472 * 5740.92 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[19] += q; /* C2H5 */
-  wdot[26] -= q; /* C2H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[19] += q; // C2H5
+  wdot[26] -= q; // C2H6
+  // d()/d[H]
   dqdci = +k_f * sc[26];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[259] += dqdci; /* dwdot[C2H5]/d[H] */
-  J[266] -= dqdci; /* dwdot[C2H6]/d[H] */
-  /* d()/d[C2H6] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[259] += dqdci; // dwdot[C2H5]/d[H]
+  J[266] -= dqdci; // dwdot[C2H6]/d[H]
+  // d()/d[C2H6]
   dqdci = +k_f * sc[5];
-  J[1252] += dqdci; /* dwdot[H2]/d[C2H6] */
-  J[1253] -= dqdci; /* dwdot[H]/d[C2H6] */
-  J[1267] += dqdci; /* dwdot[C2H5]/d[C2H6] */
-  J[1274] -= dqdci; /* dwdot[C2H6]/d[C2H6] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2282] -= dqdT; /* dwdot[C2H6]/dT */
+  J[1252] += dqdci; // dwdot[H2]/d[C2H6]
+  J[1253] -= dqdci; // dwdot[H]/d[C2H6]
+  J[1267] += dqdci; // dwdot[C2H5]/d[C2H6]
+  J[1274] -= dqdci; // dwdot[C2H6]/d[C2H6]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2282] -= dqdT; // dwdot[C2H6]/dT
 
   /*reaction 113: C2H6 + O => C2H5 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[26];
   k_f =
     1e-06 * 89800000 * exp(1.92 * tc[0] - 0.50321666580472 * (5690.73) * invT);
   dlnkfdT = 1.92 * invT + 0.50321666580472 * 5690.73 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[19] += q; /* C2H5 */
-  wdot[26] -= q; /* C2H6 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[19] += q; // C2H5
+  wdot[26] -= q; // C2H6
+  // d()/d[O]
   dqdci = +k_f * sc[26];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[163] += dqdci; /* dwdot[C2H5]/d[O] */
-  J[170] -= dqdci; /* dwdot[C2H6]/d[O] */
-  /* d()/d[C2H6] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[163] += dqdci; // dwdot[C2H5]/d[O]
+  J[170] -= dqdci; // dwdot[C2H6]/d[O]
+  // d()/d[C2H6]
   dqdci = +k_f * sc[3];
-  J[1251] -= dqdci; /* dwdot[O]/d[C2H6] */
-  J[1254] += dqdci; /* dwdot[OH]/d[C2H6] */
-  J[1267] += dqdci; /* dwdot[C2H5]/d[C2H6] */
-  J[1274] -= dqdci; /* dwdot[C2H6]/d[C2H6] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2282] -= dqdT; /* dwdot[C2H6]/dT */
+  J[1251] -= dqdci; // dwdot[O]/d[C2H6]
+  J[1254] += dqdci; // dwdot[OH]/d[C2H6]
+  J[1267] += dqdci; // dwdot[C2H5]/d[C2H6]
+  J[1274] -= dqdci; // dwdot[C2H6]/d[C2H6]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2282] -= dqdT; // dwdot[C2H6]/dT
 
   /*reaction 114: C2H6 + OH => C2H5 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[26];
   k_f =
     1e-06 * 1610000 * exp(2.22 * tc[0] - 0.50321666580472 * (740.92) * invT);
   dlnkfdT = 2.22 * invT + 0.50321666580472 * 740.92 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[19] += q; /* C2H5 */
-  wdot[26] -= q; /* C2H6 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[19] += q; // C2H5
+  wdot[26] -= q; // C2H6
+  // d()/d[OH]
   dqdci = +k_f * sc[26];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[307] += dqdci; /* dwdot[C2H5]/d[OH] */
-  J[314] -= dqdci; /* dwdot[C2H6]/d[OH] */
-  /* d()/d[C2H6] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[307] += dqdci; // dwdot[C2H5]/d[OH]
+  J[314] -= dqdci; // dwdot[C2H6]/d[OH]
+  // d()/d[C2H6]
   dqdci = +k_f * sc[6];
-  J[1254] -= dqdci; /* dwdot[OH]/d[C2H6] */
-  J[1255] += dqdci; /* dwdot[H2O]/d[C2H6] */
-  J[1267] += dqdci; /* dwdot[C2H5]/d[C2H6] */
-  J[1274] -= dqdci; /* dwdot[C2H6]/d[C2H6] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2282] -= dqdT; /* dwdot[C2H6]/dT */
+  J[1254] -= dqdci; // dwdot[OH]/d[C2H6]
+  J[1255] += dqdci; // dwdot[H2O]/d[C2H6]
+  J[1267] += dqdci; // dwdot[C2H5]/d[C2H6]
+  J[1274] -= dqdci; // dwdot[C2H6]/d[C2H6]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2282] -= dqdT; // dwdot[C2H6]/dT
 
   /*reaction 115: C2H6 + CH3 => C2H5 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[26];
   k_f = 1e-06 * 843000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (22256.21) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 22256.21 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[19] += q; /* C2H5 */
-  wdot[26] -= q; /* C2H6 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[19] += q; // C2H5
+  wdot[26] -= q; // C2H6
+  // d()/d[CH3]
   dqdci = +k_f * sc[26];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[691] += dqdci; /* dwdot[C2H5]/d[CH3] */
-  J[698] -= dqdci; /* dwdot[C2H6]/d[CH3] */
-  /* d()/d[C2H6] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[691] += dqdci; // dwdot[C2H5]/d[CH3]
+  J[698] -= dqdci; // dwdot[C2H6]/d[CH3]
+  // d()/d[C2H6]
   dqdci = +k_f * sc[14];
-  J[1262] -= dqdci; /* dwdot[CH3]/d[C2H6] */
-  J[1264] += dqdci; /* dwdot[CH4]/d[C2H6] */
-  J[1267] += dqdci; /* dwdot[C2H5]/d[C2H6] */
-  J[1274] -= dqdci; /* dwdot[C2H6]/d[C2H6] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2282] -= dqdT; /* dwdot[C2H6]/dT */
+  J[1262] -= dqdci; // dwdot[CH3]/d[C2H6]
+  J[1264] += dqdci; // dwdot[CH4]/d[C2H6]
+  J[1267] += dqdci; // dwdot[C2H5]/d[C2H6]
+  J[1274] -= dqdci; // dwdot[C2H6]/d[C2H6]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2282] -= dqdT; // dwdot[C2H6]/dT
 
   /*reaction 116: HCCO + H => S-CH2 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[21];
   k_f =
     1e-06 * 100000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[1] += q;  /* S-CH2 */
-  wdot[5] -= q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[21] -= q; /* HCCO */
-  /* d()/d[H] */
+  // update wdot
+  wdot[1] += q;  // S-CH2
+  wdot[5] -= q;  // H
+  wdot[11] += q; // CO
+  wdot[21] -= q; // HCCO
+  // d()/d[H]
   dqdci = +k_f * sc[21];
-  J[241] += dqdci; /* dwdot[S-CH2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[251] += dqdci; /* dwdot[CO]/d[H] */
-  J[261] -= dqdci; /* dwdot[HCCO]/d[H] */
-  /* d()/d[HCCO] */
+  J[241] += dqdci; // dwdot[S-CH2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[251] += dqdci; // dwdot[CO]/d[H]
+  J[261] -= dqdci; // dwdot[HCCO]/d[H]
+  // d()/d[HCCO]
   dqdci = +k_f * sc[5];
-  J[1009] += dqdci; /* dwdot[S-CH2]/d[HCCO] */
-  J[1013] -= dqdci; /* dwdot[H]/d[HCCO] */
-  J[1019] += dqdci; /* dwdot[CO]/d[HCCO] */
-  J[1029] -= dqdci; /* dwdot[HCCO]/d[HCCO] */
-  /* d()/dT */
-  J[2257] += dqdT; /* dwdot[S-CH2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2277] -= dqdT; /* dwdot[HCCO]/dT */
+  J[1009] += dqdci; // dwdot[S-CH2]/d[HCCO]
+  J[1013] -= dqdci; // dwdot[H]/d[HCCO]
+  J[1019] += dqdci; // dwdot[CO]/d[HCCO]
+  J[1029] -= dqdci; // dwdot[HCCO]/d[HCCO]
+  // d()/dT
+  J[2257] += dqdT; // dwdot[S-CH2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2277] -= dqdT; // dwdot[HCCO]/dT
 
   /*reaction 117: HCCO + O => H + 2.000000 CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[21];
   k_f =
     1e-06 * 100000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;      /* O */
-  wdot[5] += q;      /* H */
-  wdot[11] += 2 * q; /* CO */
-  wdot[21] -= q;     /* HCCO */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;      // O
+  wdot[5] += q;      // H
+  wdot[11] += 2 * q; // CO
+  wdot[21] -= q;     // HCCO
+  // d()/d[O]
   dqdci = +k_f * sc[21];
-  J[147] -= dqdci;     /* dwdot[O]/d[O] */
-  J[149] += dqdci;     /* dwdot[H]/d[O] */
-  J[155] += 2 * dqdci; /* dwdot[CO]/d[O] */
-  J[165] -= dqdci;     /* dwdot[HCCO]/d[O] */
-  /* d()/d[HCCO] */
+  J[147] -= dqdci;     // dwdot[O]/d[O]
+  J[149] += dqdci;     // dwdot[H]/d[O]
+  J[155] += 2 * dqdci; // dwdot[CO]/d[O]
+  J[165] -= dqdci;     // dwdot[HCCO]/d[O]
+  // d()/d[HCCO]
   dqdci = +k_f * sc[3];
-  J[1011] -= dqdci;     /* dwdot[O]/d[HCCO] */
-  J[1013] += dqdci;     /* dwdot[H]/d[HCCO] */
-  J[1019] += 2 * dqdci; /* dwdot[CO]/d[HCCO] */
-  J[1029] -= dqdci;     /* dwdot[HCCO]/d[HCCO] */
-  /* d()/dT */
-  J[2259] -= dqdT;     /* dwdot[O]/dT */
-  J[2261] += dqdT;     /* dwdot[H]/dT */
-  J[2267] += 2 * dqdT; /* dwdot[CO]/dT */
-  J[2277] -= dqdT;     /* dwdot[HCCO]/dT */
+  J[1011] -= dqdci;     // dwdot[O]/d[HCCO]
+  J[1013] += dqdci;     // dwdot[H]/d[HCCO]
+  J[1019] += 2 * dqdci; // dwdot[CO]/d[HCCO]
+  J[1029] -= dqdci;     // dwdot[HCCO]/d[HCCO]
+  // d()/dT
+  J[2259] -= dqdT;     // dwdot[O]/dT
+  J[2261] += dqdT;     // dwdot[H]/dT
+  J[2267] += 2 * dqdT; // dwdot[CO]/dT
+  J[2277] -= dqdT;     // dwdot[HCCO]/dT
 
   /*reaction 118: HCCO + O2 => OH + 2.000000 CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[21];
   k_f =
     1e-06 * 42000000000 * exp(0 * tc[0] - 0.50321666580472 * (853.25) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 853.25 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;      /* OH */
-  wdot[8] -= q;      /* O2 */
-  wdot[11] += 2 * q; /* CO */
-  wdot[21] -= q;     /* HCCO */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[6] += q;      // OH
+  wdot[8] -= q;      // O2
+  wdot[11] += 2 * q; // CO
+  wdot[21] -= q;     // HCCO
+  // d()/d[O2]
   dqdci = +k_f * sc[21];
-  J[390] += dqdci;     /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci;     /* dwdot[O2]/d[O2] */
-  J[395] += 2 * dqdci; /* dwdot[CO]/d[O2] */
-  J[405] -= dqdci;     /* dwdot[HCCO]/d[O2] */
-  /* d()/d[HCCO] */
+  J[390] += dqdci;     // dwdot[OH]/d[O2]
+  J[392] -= dqdci;     // dwdot[O2]/d[O2]
+  J[395] += 2 * dqdci; // dwdot[CO]/d[O2]
+  J[405] -= dqdci;     // dwdot[HCCO]/d[O2]
+  // d()/d[HCCO]
   dqdci = +k_f * sc[8];
-  J[1014] += dqdci;     /* dwdot[OH]/d[HCCO] */
-  J[1016] -= dqdci;     /* dwdot[O2]/d[HCCO] */
-  J[1019] += 2 * dqdci; /* dwdot[CO]/d[HCCO] */
-  J[1029] -= dqdci;     /* dwdot[HCCO]/d[HCCO] */
-  /* d()/dT */
-  J[2262] += dqdT;     /* dwdot[OH]/dT */
-  J[2264] -= dqdT;     /* dwdot[O2]/dT */
-  J[2267] += 2 * dqdT; /* dwdot[CO]/dT */
-  J[2277] -= dqdT;     /* dwdot[HCCO]/dT */
+  J[1014] += dqdci;     // dwdot[OH]/d[HCCO]
+  J[1016] -= dqdci;     // dwdot[O2]/d[HCCO]
+  J[1019] += 2 * dqdci; // dwdot[CO]/d[HCCO]
+  J[1029] -= dqdci;     // dwdot[HCCO]/d[HCCO]
+  // d()/dT
+  J[2262] += dqdT;     // dwdot[OH]/dT
+  J[2264] -= dqdT;     // dwdot[O2]/dT
+  J[2267] += 2 * dqdT; // dwdot[CO]/dT
+  J[2277] -= dqdT;     // dwdot[HCCO]/dT
 
   /*reaction 119: 2.000000 HCCO => C2H2 + 2.000000 CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[21] * sc[21]);
   k_f = 1e-06 * 10000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += 2 * q; /* CO */
-  wdot[21] -= 2 * q; /* HCCO */
-  wdot[22] += q;     /* C2H2 */
-  /* d()/d[HCCO] */
+  // update wdot
+  wdot[11] += 2 * q; // CO
+  wdot[21] -= 2 * q; // HCCO
+  wdot[22] += q;     // C2H2
+  // d()/d[HCCO]
   dqdci = +k_f * 2.000000 * sc[21];
-  J[1019] += 2 * dqdci;  /* dwdot[CO]/d[HCCO] */
-  J[1029] += -2 * dqdci; /* dwdot[HCCO]/d[HCCO] */
-  J[1030] += dqdci;      /* dwdot[C2H2]/d[HCCO] */
-  /* d()/dT */
-  J[2267] += 2 * dqdT;  /* dwdot[CO]/dT */
-  J[2277] += -2 * dqdT; /* dwdot[HCCO]/dT */
-  J[2278] += dqdT;      /* dwdot[C2H2]/dT */
+  J[1019] += 2 * dqdci;  // dwdot[CO]/d[HCCO]
+  J[1029] += -2 * dqdci; // dwdot[HCCO]/d[HCCO]
+  J[1030] += dqdci;      // dwdot[C2H2]/d[HCCO]
+  // d()/dT
+  J[2267] += 2 * dqdT;  // dwdot[CO]/dT
+  J[2277] += -2 * dqdT; // dwdot[HCCO]/dT
+  J[2278] += dqdT;      // dwdot[C2H2]/dT
 
   /*reaction 120: HCCO + C2H2 => C3H3 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[21] * sc[22];
   k_f =
     1e-06 * 100000000000 * exp(0 * tc[0] - 0.50321666580472 * (2999.52) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 2999.52 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[21] -= q; /* HCCO */
-  wdot[22] -= q; /* C2H2 */
-  wdot[23] += q; /* C3H3 */
-  /* d()/d[HCCO] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[21] -= q; // HCCO
+  wdot[22] -= q; // C2H2
+  wdot[23] += q; // C3H3
+  // d()/d[HCCO]
   dqdci = +k_f * sc[22];
-  J[1019] += dqdci; /* dwdot[CO]/d[HCCO] */
-  J[1029] -= dqdci; /* dwdot[HCCO]/d[HCCO] */
-  J[1030] -= dqdci; /* dwdot[C2H2]/d[HCCO] */
-  J[1031] += dqdci; /* dwdot[C3H3]/d[HCCO] */
-  /* d()/d[C2H2] */
+  J[1019] += dqdci; // dwdot[CO]/d[HCCO]
+  J[1029] -= dqdci; // dwdot[HCCO]/d[HCCO]
+  J[1030] -= dqdci; // dwdot[C2H2]/d[HCCO]
+  J[1031] += dqdci; // dwdot[C3H3]/d[HCCO]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[21];
-  J[1067] += dqdci; /* dwdot[CO]/d[C2H2] */
-  J[1077] -= dqdci; /* dwdot[HCCO]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1079] += dqdci; /* dwdot[C3H3]/d[C2H2] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2277] -= dqdT; /* dwdot[HCCO]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
+  J[1067] += dqdci; // dwdot[CO]/d[C2H2]
+  J[1077] -= dqdci; // dwdot[HCCO]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1079] += dqdci; // dwdot[C3H3]/d[C2H2]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2277] -= dqdT; // dwdot[HCCO]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
 
   /*reaction 121: HCCO + CH3 => C2H4 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[21];
   k_f = 1e-06 * 50000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[14] -= q; /* CH3 */
-  wdot[18] += q; /* C2H4 */
-  wdot[21] -= q; /* HCCO */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[14] -= q; // CH3
+  wdot[18] += q; // C2H4
+  wdot[21] -= q; // HCCO
+  // d()/d[CH3]
   dqdci = +k_f * sc[21];
-  J[683] += dqdci; /* dwdot[CO]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[690] += dqdci; /* dwdot[C2H4]/d[CH3] */
-  J[693] -= dqdci; /* dwdot[HCCO]/d[CH3] */
-  /* d()/d[HCCO] */
+  J[683] += dqdci; // dwdot[CO]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[690] += dqdci; // dwdot[C2H4]/d[CH3]
+  J[693] -= dqdci; // dwdot[HCCO]/d[CH3]
+  // d()/d[HCCO]
   dqdci = +k_f * sc[14];
-  J[1019] += dqdci; /* dwdot[CO]/d[HCCO] */
-  J[1022] -= dqdci; /* dwdot[CH3]/d[HCCO] */
-  J[1026] += dqdci; /* dwdot[C2H4]/d[HCCO] */
-  J[1029] -= dqdci; /* dwdot[HCCO]/d[HCCO] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2277] -= dqdT; /* dwdot[HCCO]/dT */
+  J[1019] += dqdci; // dwdot[CO]/d[HCCO]
+  J[1022] -= dqdci; // dwdot[CH3]/d[HCCO]
+  J[1026] += dqdci; // dwdot[C2H4]/d[HCCO]
+  J[1029] -= dqdci; // dwdot[HCCO]/d[HCCO]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2277] -= dqdT; // dwdot[HCCO]/dT
 
   /*reaction 122: HCCO + OH => 2.000000 HCO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[21];
   k_f = 1e-06 * 10000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;      /* OH */
-  wdot[12] += 2 * q; /* HCO */
-  wdot[21] -= q;     /* HCCO */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;      // OH
+  wdot[12] += 2 * q; // HCO
+  wdot[21] -= q;     // HCCO
+  // d()/d[OH]
   dqdci = +k_f * sc[21];
-  J[294] -= dqdci;     /* dwdot[OH]/d[OH] */
-  J[300] += 2 * dqdci; /* dwdot[HCO]/d[OH] */
-  J[309] -= dqdci;     /* dwdot[HCCO]/d[OH] */
-  /* d()/d[HCCO] */
+  J[294] -= dqdci;     // dwdot[OH]/d[OH]
+  J[300] += 2 * dqdci; // dwdot[HCO]/d[OH]
+  J[309] -= dqdci;     // dwdot[HCCO]/d[OH]
+  // d()/d[HCCO]
   dqdci = +k_f * sc[6];
-  J[1014] -= dqdci;     /* dwdot[OH]/d[HCCO] */
-  J[1020] += 2 * dqdci; /* dwdot[HCO]/d[HCCO] */
-  J[1029] -= dqdci;     /* dwdot[HCCO]/d[HCCO] */
-  /* d()/dT */
-  J[2262] -= dqdT;     /* dwdot[OH]/dT */
-  J[2268] += 2 * dqdT; /* dwdot[HCO]/dT */
-  J[2277] -= dqdT;     /* dwdot[HCCO]/dT */
+  J[1014] -= dqdci;     // dwdot[OH]/d[HCCO]
+  J[1020] += 2 * dqdci; // dwdot[HCO]/d[HCCO]
+  J[1029] -= dqdci;     // dwdot[HCCO]/d[HCCO]
+  // d()/dT
+  J[2262] -= dqdT;     // dwdot[OH]/dT
+  J[2268] += 2 * dqdT; // dwdot[HCO]/dT
+  J[2277] -= dqdT;     // dwdot[HCCO]/dT
 
   /*reaction 123: C3H3 + H <=> P-C3H4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[23];
   k_f =
     1e-06 * 7.94e+29 * exp(-5.06 * tc[0] - 0.50321666580472 * (4861.38) * invT);
   dlnkfdT = -5.06 * invT + 0.50321666580472 * 4861.38 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[27];
   Kc = refCinv * exp(g_RT[5] + g_RT[23] - g_RT[27]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[23]) + (h_RT[27]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[23] -= q; /* C3H3 */
-  wdot[27] += q; /* P-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[23] -= q; // C3H3
+  wdot[27] += q; // P-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[23];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[263] -= dqdci; /* dwdot[C3H3]/d[H] */
-  J[267] += dqdci; /* dwdot[P-C3H4]/d[H] */
-  /* d()/d[C3H3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[263] -= dqdci; // dwdot[C3H3]/d[H]
+  J[267] += dqdci; // dwdot[P-C3H4]/d[H]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[5];
-  J[1109] -= dqdci; /* dwdot[H]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1131] += dqdci; /* dwdot[P-C3H4]/d[C3H3] */
-  /* d()/d[P-C3H4] */
+  J[1109] -= dqdci; // dwdot[H]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1131] += dqdci; // dwdot[P-C3H4]/d[C3H3]
+  // d()/d[P-C3H4]
   dqdci = -k_r;
-  J[1301] -= dqdci; /* dwdot[H]/d[P-C3H4] */
-  J[1319] -= dqdci; /* dwdot[C3H3]/d[P-C3H4] */
-  J[1323] += dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
-  J[2283] += dqdT; /* dwdot[P-C3H4]/dT */
+  J[1301] -= dqdci; // dwdot[H]/d[P-C3H4]
+  J[1319] -= dqdci; // dwdot[C3H3]/d[P-C3H4]
+  J[1323] += dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
+  J[2283] += dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 124: C3H3 + H <=> A-C3H4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[23];
   k_f = 1e-06 * 3.16e+29 * exp(-5 * tc[0] - 0.50321666580472 * (4710.8) * invT);
   dlnkfdT = -5 * invT + 0.50321666580472 * 4710.8 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[28];
   Kc = refCinv * exp(g_RT[5] + g_RT[23] - g_RT[28]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[23]) + (h_RT[28]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[23] -= q; /* C3H3 */
-  wdot[28] += q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[23] -= q; // C3H3
+  wdot[28] += q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[23];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[263] -= dqdci; /* dwdot[C3H3]/d[H] */
-  J[268] += dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[C3H3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[263] -= dqdci; // dwdot[C3H3]/d[H]
+  J[268] += dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[5];
-  J[1109] -= dqdci; /* dwdot[H]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1132] += dqdci; /* dwdot[A-C3H4]/d[C3H3] */
-  /* d()/d[A-C3H4] */
+  J[1109] -= dqdci; // dwdot[H]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1132] += dqdci; // dwdot[A-C3H4]/d[C3H3]
+  // d()/d[A-C3H4]
   dqdci = -k_r;
-  J[1349] -= dqdci; /* dwdot[H]/d[A-C3H4] */
-  J[1367] -= dqdci; /* dwdot[C3H3]/d[A-C3H4] */
-  J[1372] += dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
-  J[2284] += dqdT; /* dwdot[A-C3H4]/dT */
+  J[1349] -= dqdci; // dwdot[H]/d[A-C3H4]
+  J[1367] -= dqdci; // dwdot[C3H3]/d[A-C3H4]
+  J[1372] += dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
+  J[2284] += dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 125: C3H3 + OH => C2H4 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[23];
   k_f = 1e-06 * 1280000000 *
         exp(0.73 * tc[0] - 0.50321666580472 * (2578.87) * invT);
   dlnkfdT = 0.73 * invT + 0.50321666580472 * 2578.87 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[18] += q; /* C2H4 */
-  wdot[23] -= q; /* C3H3 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[18] += q; // C2H4
+  wdot[23] -= q; // C3H3
+  // d()/d[OH]
   dqdci = +k_f * sc[23];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[306] += dqdci; /* dwdot[C2H4]/d[OH] */
-  J[311] -= dqdci; /* dwdot[C3H3]/d[OH] */
-  /* d()/d[C3H3] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[306] += dqdci; // dwdot[C2H4]/d[OH]
+  J[311] -= dqdci; // dwdot[C3H3]/d[OH]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[6];
-  J[1110] -= dqdci; /* dwdot[OH]/d[C3H3] */
-  J[1115] += dqdci; /* dwdot[CO]/d[C3H3] */
-  J[1122] += dqdci; /* dwdot[C2H4]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
+  J[1110] -= dqdci; // dwdot[OH]/d[C3H3]
+  J[1115] += dqdci; // dwdot[CO]/d[C3H3]
+  J[1122] += dqdci; // dwdot[C2H4]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
 
   /*reaction 126: C3H3 + O => C2H2 + CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[23];
   k_f = 1e-06 * 69500000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[22] += q; /* C2H2 */
-  wdot[23] -= q; /* C3H3 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[22] += q; // C2H2
+  wdot[23] -= q; // C3H3
+  // d()/d[O]
   dqdci = +k_f * sc[23];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[166] += dqdci; /* dwdot[C2H2]/d[O] */
-  J[167] -= dqdci; /* dwdot[C3H3]/d[O] */
-  /* d()/d[C3H3] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[166] += dqdci; // dwdot[C2H2]/d[O]
+  J[167] -= dqdci; // dwdot[C3H3]/d[O]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[3];
-  J[1107] -= dqdci; /* dwdot[O]/d[C3H3] */
-  J[1109] += dqdci; /* dwdot[H]/d[C3H3] */
-  J[1115] += dqdci; /* dwdot[CO]/d[C3H3] */
-  J[1126] += dqdci; /* dwdot[C2H2]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
+  J[1107] -= dqdci; // dwdot[O]/d[C3H3]
+  J[1109] += dqdci; // dwdot[H]/d[C3H3]
+  J[1115] += dqdci; // dwdot[CO]/d[C3H3]
+  J[1126] += dqdci; // dwdot[C2H2]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
 
   /*reaction 127: C3H3 + O2 => CH3 + 2.000000 CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[23];
   k_f = 1e-06 * 170000 * exp(1.7 * tc[0] - 0.50321666580472 * (1500.96) * invT);
   dlnkfdT = 1.7 * invT + 0.50321666580472 * 1500.96 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] -= q;      /* O2 */
-  wdot[11] += 2 * q; /* CO */
-  wdot[14] += q;     /* CH3 */
-  wdot[23] -= q;     /* C3H3 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[8] -= q;      // O2
+  wdot[11] += 2 * q; // CO
+  wdot[14] += q;     // CH3
+  wdot[23] -= q;     // C3H3
+  // d()/d[O2]
   dqdci = +k_f * sc[23];
-  J[392] -= dqdci;     /* dwdot[O2]/d[O2] */
-  J[395] += 2 * dqdci; /* dwdot[CO]/d[O2] */
-  J[398] += dqdci;     /* dwdot[CH3]/d[O2] */
-  J[407] -= dqdci;     /* dwdot[C3H3]/d[O2] */
-  /* d()/d[C3H3] */
+  J[392] -= dqdci;     // dwdot[O2]/d[O2]
+  J[395] += 2 * dqdci; // dwdot[CO]/d[O2]
+  J[398] += dqdci;     // dwdot[CH3]/d[O2]
+  J[407] -= dqdci;     // dwdot[C3H3]/d[O2]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[8];
-  J[1112] -= dqdci;     /* dwdot[O2]/d[C3H3] */
-  J[1115] += 2 * dqdci; /* dwdot[CO]/d[C3H3] */
-  J[1118] += dqdci;     /* dwdot[CH3]/d[C3H3] */
-  J[1127] -= dqdci;     /* dwdot[C3H3]/d[C3H3] */
-  /* d()/dT */
-  J[2264] -= dqdT;     /* dwdot[O2]/dT */
-  J[2267] += 2 * dqdT; /* dwdot[CO]/dT */
-  J[2270] += dqdT;     /* dwdot[CH3]/dT */
-  J[2279] -= dqdT;     /* dwdot[C3H3]/dT */
+  J[1112] -= dqdci;     // dwdot[O2]/d[C3H3]
+  J[1115] += 2 * dqdci; // dwdot[CO]/d[C3H3]
+  J[1118] += dqdci;     // dwdot[CH3]/d[C3H3]
+  J[1127] -= dqdci;     // dwdot[C3H3]/d[C3H3]
+  // d()/dT
+  J[2264] -= dqdT;     // dwdot[O2]/dT
+  J[2267] += 2 * dqdT; // dwdot[CO]/dT
+  J[2270] += dqdT;     // dwdot[CH3]/dT
+  J[2279] -= dqdT;     // dwdot[C3H3]/dT
 
   /*reaction 128: C3H3 + HO2 => OH + CO + C2H3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[23];
   k_f = 1e-06 * 800000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[11] += q; /* CO */
-  wdot[17] += q; /* C2H3 */
-  wdot[23] -= q; /* C3H3 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[11] += q; // CO
+  wdot[17] += q; // C2H3
+  wdot[23] -= q; // C3H3
+  // d()/d[HO2]
   dqdci = +k_f * sc[23];
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[443] += dqdci; /* dwdot[CO]/d[HO2] */
-  J[449] += dqdci; /* dwdot[C2H3]/d[HO2] */
-  J[455] -= dqdci; /* dwdot[C3H3]/d[HO2] */
-  /* d()/d[C3H3] */
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[443] += dqdci; // dwdot[CO]/d[HO2]
+  J[449] += dqdci; // dwdot[C2H3]/d[HO2]
+  J[455] -= dqdci; // dwdot[C3H3]/d[HO2]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[9];
-  J[1110] += dqdci; /* dwdot[OH]/d[C3H3] */
-  J[1113] -= dqdci; /* dwdot[HO2]/d[C3H3] */
-  J[1115] += dqdci; /* dwdot[CO]/d[C3H3] */
-  J[1121] += dqdci; /* dwdot[C2H3]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
+  J[1110] += dqdci; // dwdot[OH]/d[C3H3]
+  J[1113] -= dqdci; // dwdot[HO2]/d[C3H3]
+  J[1115] += dqdci; // dwdot[CO]/d[C3H3]
+  J[1121] += dqdci; // dwdot[C2H3]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
 
   /*reaction 129: 2.000000 C3H3 <=> A1 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[23] * sc[23]);
   k_f = 1e-06 * 1.87e+46 *
         exp(-9.84 * tc[0] - 0.50321666580472 * (16804.49) * invT);
   dlnkfdT = -9.84 * invT + 0.50321666580472 * 16804.49 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[29];
   Kc = refCinv * exp(2.000000 * g_RT[23] - g_RT[29]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[23]) + (h_RT[29]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[23] -= 2 * q; /* C3H3 */
-  wdot[29] += q;     /* A1 */
-  /* d()/d[C3H3] */
+  // update wdot
+  wdot[23] -= 2 * q; // C3H3
+  wdot[29] += q;     // A1
+  // d()/d[C3H3]
   dqdci = +k_f * 2.000000 * sc[23];
-  J[1127] += -2 * dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1133] += dqdci;      /* dwdot[A1]/d[C3H3] */
-  /* d()/d[A1] */
+  J[1127] += -2 * dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1133] += dqdci;      // dwdot[A1]/d[C3H3]
+  // d()/d[A1]
   dqdci = -k_r;
-  J[1415] += -2 * dqdci; /* dwdot[C3H3]/d[A1] */
-  J[1421] += dqdci;      /* dwdot[A1]/d[A1] */
-  /* d()/dT */
-  J[2279] += -2 * dqdT; /* dwdot[C3H3]/dT */
-  J[2285] += dqdT;      /* dwdot[A1]/dT */
+  J[1415] += -2 * dqdci; // dwdot[C3H3]/d[A1]
+  J[1421] += dqdci;      // dwdot[A1]/d[A1]
+  // d()/dT
+  J[2279] += -2 * dqdT; // dwdot[C3H3]/dT
+  J[2285] += dqdT;      // dwdot[A1]/dT
 
   /*reaction 130: 2.000000 C3H3 <=> A1- + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[23] * sc[23]);
   k_f =
     1e-06 * 5.77e+37 * exp(-7 * tc[0] - 0.50321666580472 * (31505.74) * invT);
   dlnkfdT = -7 * invT + 0.50321666580472 * 31505.74 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[30];
   Kc = exp(-g_RT[5] + 2.000000 * g_RT[23] - g_RT[30]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(2.000000 * h_RT[23]) + (h_RT[5] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;      /* H */
-  wdot[23] -= 2 * q; /* C3H3 */
-  wdot[30] += q;     /* A1- */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;      // H
+  wdot[23] -= 2 * q; // C3H3
+  wdot[30] += q;     // A1-
+  // d()/d[H]
   dqdci = -k_r * sc[30];
-  J[245] += dqdci;      /* dwdot[H]/d[H] */
-  J[263] += -2 * dqdci; /* dwdot[C3H3]/d[H] */
-  J[270] += dqdci;      /* dwdot[A1-]/d[H] */
-  /* d()/d[C3H3] */
+  J[245] += dqdci;      // dwdot[H]/d[H]
+  J[263] += -2 * dqdci; // dwdot[C3H3]/d[H]
+  J[270] += dqdci;      // dwdot[A1-]/d[H]
+  // d()/d[C3H3]
   dqdci = +k_f * 2.000000 * sc[23];
-  J[1109] += dqdci;      /* dwdot[H]/d[C3H3] */
-  J[1127] += -2 * dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1134] += dqdci;      /* dwdot[A1-]/d[C3H3] */
-  /* d()/d[A1-] */
+  J[1109] += dqdci;      // dwdot[H]/d[C3H3]
+  J[1127] += -2 * dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1134] += dqdci;      // dwdot[A1-]/d[C3H3]
+  // d()/d[A1-]
   dqdci = -k_r * sc[5];
-  J[1445] += dqdci;      /* dwdot[H]/d[A1-] */
-  J[1463] += -2 * dqdci; /* dwdot[C3H3]/d[A1-] */
-  J[1470] += dqdci;      /* dwdot[A1-]/d[A1-] */
-  /* d()/dT */
-  J[2261] += dqdT;      /* dwdot[H]/dT */
-  J[2279] += -2 * dqdT; /* dwdot[C3H3]/dT */
-  J[2286] += dqdT;      /* dwdot[A1-]/dT */
+  J[1445] += dqdci;      // dwdot[H]/d[A1-]
+  J[1463] += -2 * dqdci; // dwdot[C3H3]/d[A1-]
+  J[1470] += dqdci;      // dwdot[A1-]/d[A1-]
+  // d()/dT
+  J[2261] += dqdT;      // dwdot[H]/dT
+  J[2279] += -2 * dqdT; // dwdot[C3H3]/dT
+  J[2286] += dqdT;      // dwdot[A1-]/dT
 
   /*reaction 131: C3H3 + C2H2 <=> C5H5 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[22] * sc[23];
   k_f =
     1e-06 * 235000000000 * exp(0 * tc[0] - 0.50321666580472 * (9995.22) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 9995.22 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[31];
   Kc = refCinv * exp(g_RT[22] + g_RT[23] - g_RT[31]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[22] + h_RT[23]) + (h_RT[31]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[22] -= q; /* C2H2 */
-  wdot[23] -= q; /* C3H3 */
-  wdot[31] += q; /* C5H5 */
-  /* d()/d[C2H2] */
+  // update wdot
+  wdot[22] -= q; // C2H2
+  wdot[23] -= q; // C3H3
+  wdot[31] += q; // C5H5
+  // d()/d[C2H2]
   dqdci = +k_f * sc[23];
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1079] -= dqdci; /* dwdot[C3H3]/d[C2H2] */
-  J[1087] += dqdci; /* dwdot[C5H5]/d[C2H2] */
-  /* d()/d[C3H3] */
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1079] -= dqdci; // dwdot[C3H3]/d[C2H2]
+  J[1087] += dqdci; // dwdot[C5H5]/d[C2H2]
+  // d()/d[C3H3]
   dqdci = +k_f * sc[22];
-  J[1126] -= dqdci; /* dwdot[C2H2]/d[C3H3] */
-  J[1127] -= dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1135] += dqdci; /* dwdot[C5H5]/d[C3H3] */
-  /* d()/d[C5H5] */
+  J[1126] -= dqdci; // dwdot[C2H2]/d[C3H3]
+  J[1127] -= dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1135] += dqdci; // dwdot[C5H5]/d[C3H3]
+  // d()/d[C5H5]
   dqdci = -k_r;
-  J[1510] -= dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1511] -= dqdci; /* dwdot[C3H3]/d[C5H5] */
-  J[1519] += dqdci; /* dwdot[C5H5]/d[C5H5] */
-  /* d()/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2279] -= dqdT; /* dwdot[C3H3]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
+  J[1510] -= dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1511] -= dqdci; // dwdot[C3H3]/d[C5H5]
+  J[1519] += dqdci; // dwdot[C5H5]/d[C5H5]
+  // d()/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2279] -= dqdT; // dwdot[C3H3]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
 
   /*reaction 132: P-C3H4 + H <=> C2H2 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[27];
   k_f = 1e-06 * 3460000000000 *
         exp(0.44 * tc[0] - 0.50321666580472 * (5463.67) * invT);
   dlnkfdT = 0.44 * invT + 0.50321666580472 * 5463.67 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[22];
   Kc = exp(g_RT[5] - g_RT[14] - g_RT[22] + g_RT[27]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[27]) + (h_RT[14] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[22] += q; /* C2H2 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[22] += q; // C2H2
+  wdot[27] -= q; // P-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[27];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[262] += dqdci; /* dwdot[C2H2]/d[H] */
-  J[267] -= dqdci; /* dwdot[P-C3H4]/d[H] */
-  /* d()/d[CH3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[262] += dqdci; // dwdot[C2H2]/d[H]
+  J[267] -= dqdci; // dwdot[P-C3H4]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[22];
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[694] += dqdci; /* dwdot[C2H2]/d[CH3] */
-  J[699] -= dqdci; /* dwdot[P-C3H4]/d[CH3] */
-  /* d()/d[C2H2] */
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[694] += dqdci; // dwdot[C2H2]/d[CH3]
+  J[699] -= dqdci; // dwdot[P-C3H4]/d[CH3]
+  // d()/d[C2H2]
   dqdci = -k_r * sc[14];
-  J[1061] -= dqdci; /* dwdot[H]/d[C2H2] */
-  J[1070] += dqdci; /* dwdot[CH3]/d[C2H2] */
-  J[1078] += dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1083] -= dqdci; /* dwdot[P-C3H4]/d[C2H2] */
-  /* d()/d[P-C3H4] */
+  J[1061] -= dqdci; // dwdot[H]/d[C2H2]
+  J[1070] += dqdci; // dwdot[CH3]/d[C2H2]
+  J[1078] += dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1083] -= dqdci; // dwdot[P-C3H4]/d[C2H2]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[5];
-  J[1301] -= dqdci; /* dwdot[H]/d[P-C3H4] */
-  J[1310] += dqdci; /* dwdot[CH3]/d[P-C3H4] */
-  J[1318] += dqdci; /* dwdot[C2H2]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1301] -= dqdci; // dwdot[H]/d[P-C3H4]
+  J[1310] += dqdci; // dwdot[CH3]/d[P-C3H4]
+  J[1318] += dqdci; // dwdot[C2H2]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 133: P-C3H4 + H <=> C3H3 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[27];
   k_f = 1e-06 * 85000 * exp(2.7 * tc[0] - 0.50321666580472 * (5740.92) * invT);
   dlnkfdT = 2.7 * invT + 0.50321666580472 * 5740.92 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[4] * sc[23];
   Kc = exp(-g_RT[4] + g_RT[5] - g_RT[23] + g_RT[27]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[27]) + (h_RT[4] + h_RT[23]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[23] += q; /* C3H3 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[23] += q; // C3H3
+  wdot[27] -= q; // P-C3H4
+  // d()/d[H2]
   dqdci = -k_r * sc[23];
-  J[196] += dqdci; /* dwdot[H2]/d[H2] */
-  J[197] -= dqdci; /* dwdot[H]/d[H2] */
-  J[215] += dqdci; /* dwdot[C3H3]/d[H2] */
-  J[219] -= dqdci; /* dwdot[P-C3H4]/d[H2] */
-  /* d()/d[H] */
+  J[196] += dqdci; // dwdot[H2]/d[H2]
+  J[197] -= dqdci; // dwdot[H]/d[H2]
+  J[215] += dqdci; // dwdot[C3H3]/d[H2]
+  J[219] -= dqdci; // dwdot[P-C3H4]/d[H2]
+  // d()/d[H]
   dqdci = +k_f * sc[27];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[263] += dqdci; /* dwdot[C3H3]/d[H] */
-  J[267] -= dqdci; /* dwdot[P-C3H4]/d[H] */
-  /* d()/d[C3H3] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[263] += dqdci; // dwdot[C3H3]/d[H]
+  J[267] -= dqdci; // dwdot[P-C3H4]/d[H]
+  // d()/d[C3H3]
   dqdci = -k_r * sc[4];
-  J[1108] += dqdci; /* dwdot[H2]/d[C3H3] */
-  J[1109] -= dqdci; /* dwdot[H]/d[C3H3] */
-  J[1127] += dqdci; /* dwdot[C3H3]/d[C3H3] */
-  J[1131] -= dqdci; /* dwdot[P-C3H4]/d[C3H3] */
-  /* d()/d[P-C3H4] */
+  J[1108] += dqdci; // dwdot[H2]/d[C3H3]
+  J[1109] -= dqdci; // dwdot[H]/d[C3H3]
+  J[1127] += dqdci; // dwdot[C3H3]/d[C3H3]
+  J[1131] -= dqdci; // dwdot[P-C3H4]/d[C3H3]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[5];
-  J[1300] += dqdci; /* dwdot[H2]/d[P-C3H4] */
-  J[1301] -= dqdci; /* dwdot[H]/d[P-C3H4] */
-  J[1319] += dqdci; /* dwdot[C3H3]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1300] += dqdci; // dwdot[H2]/d[P-C3H4]
+  J[1301] -= dqdci; // dwdot[H]/d[P-C3H4]
+  J[1319] += dqdci; // dwdot[C3H3]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 134: P-C3H4 + OH => C3H3 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[27];
   k_f = 1e-06 * 805000 * exp(2.22 * tc[0] - 0.50321666580472 * (740.92) * invT);
   dlnkfdT = 2.22 * invT + 0.50321666580472 * 740.92 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[23] += q; /* C3H3 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[23] += q; // C3H3
+  wdot[27] -= q; // P-C3H4
+  // d()/d[OH]
   dqdci = +k_f * sc[27];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[311] += dqdci; /* dwdot[C3H3]/d[OH] */
-  J[315] -= dqdci; /* dwdot[P-C3H4]/d[OH] */
-  /* d()/d[P-C3H4] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[311] += dqdci; // dwdot[C3H3]/d[OH]
+  J[315] -= dqdci; // dwdot[P-C3H4]/d[OH]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[6];
-  J[1302] -= dqdci; /* dwdot[OH]/d[P-C3H4] */
-  J[1303] += dqdci; /* dwdot[H2O]/d[P-C3H4] */
-  J[1319] += dqdci; /* dwdot[C3H3]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1302] -= dqdci; // dwdot[OH]/d[P-C3H4]
+  J[1303] += dqdci; // dwdot[H2O]/d[P-C3H4]
+  J[1319] += dqdci; // dwdot[C3H3]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 135: P-C3H4 + CH3 => C3H3 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[27];
   k_f = 1e-06 * 422000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (22256.21) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 22256.21 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[23] += q; /* C3H3 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[23] += q; // C3H3
+  wdot[27] -= q; // P-C3H4
+  // d()/d[CH3]
   dqdci = +k_f * sc[27];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[695] += dqdci; /* dwdot[C3H3]/d[CH3] */
-  J[699] -= dqdci; /* dwdot[P-C3H4]/d[CH3] */
-  /* d()/d[P-C3H4] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[695] += dqdci; // dwdot[C3H3]/d[CH3]
+  J[699] -= dqdci; // dwdot[P-C3H4]/d[CH3]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[14];
-  J[1310] -= dqdci; /* dwdot[CH3]/d[P-C3H4] */
-  J[1312] += dqdci; /* dwdot[CH4]/d[P-C3H4] */
-  J[1319] += dqdci; /* dwdot[C3H3]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1310] -= dqdci; // dwdot[CH3]/d[P-C3H4]
+  J[1312] += dqdci; // dwdot[CH4]/d[P-C3H4]
+  J[1319] += dqdci; // dwdot[C3H3]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 136: P-C3H4 + O => HCCO + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[27];
   k_f = 1e-06 * 4050000 * exp(2 * tc[0] - 0.50321666580472 * (1900.1) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * 1900.1 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[14] += q; /* CH3 */
-  wdot[21] += q; /* HCCO */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[14] += q; // CH3
+  wdot[21] += q; // HCCO
+  wdot[27] -= q; // P-C3H4
+  // d()/d[O]
   dqdci = +k_f * sc[27];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[158] += dqdci; /* dwdot[CH3]/d[O] */
-  J[165] += dqdci; /* dwdot[HCCO]/d[O] */
-  J[171] -= dqdci; /* dwdot[P-C3H4]/d[O] */
-  /* d()/d[P-C3H4] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[158] += dqdci; // dwdot[CH3]/d[O]
+  J[165] += dqdci; // dwdot[HCCO]/d[O]
+  J[171] -= dqdci; // dwdot[P-C3H4]/d[O]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[3];
-  J[1299] -= dqdci; /* dwdot[O]/d[P-C3H4] */
-  J[1310] += dqdci; /* dwdot[CH3]/d[P-C3H4] */
-  J[1317] += dqdci; /* dwdot[HCCO]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2277] += dqdT; /* dwdot[HCCO]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1299] -= dqdci; // dwdot[O]/d[P-C3H4]
+  J[1310] += dqdci; // dwdot[CH3]/d[P-C3H4]
+  J[1317] += dqdci; // dwdot[HCCO]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2277] += dqdT; // dwdot[HCCO]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 137: P-C3H4 + O => C2H4 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[27];
   k_f = 1e-06 * 6250000 * exp(2 * tc[0] - 0.50321666580472 * (1900.1) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * 1900.1 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[11] += q; /* CO */
-  wdot[18] += q; /* C2H4 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[11] += q; // CO
+  wdot[18] += q; // C2H4
+  wdot[27] -= q; // P-C3H4
+  // d()/d[O]
   dqdci = +k_f * sc[27];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[162] += dqdci; /* dwdot[C2H4]/d[O] */
-  J[171] -= dqdci; /* dwdot[P-C3H4]/d[O] */
-  /* d()/d[P-C3H4] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[162] += dqdci; // dwdot[C2H4]/d[O]
+  J[171] -= dqdci; // dwdot[P-C3H4]/d[O]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[3];
-  J[1299] -= dqdci; /* dwdot[O]/d[P-C3H4] */
-  J[1307] += dqdci; /* dwdot[CO]/d[P-C3H4] */
-  J[1314] += dqdci; /* dwdot[C2H4]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1299] -= dqdci; // dwdot[O]/d[P-C3H4]
+  J[1307] += dqdci; // dwdot[CO]/d[P-C3H4]
+  J[1314] += dqdci; // dwdot[C2H4]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 138: P-C3H4 + OH => C2H5 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[27];
   k_f = 1e-06 * 1280000000 *
         exp(0.73 * tc[0] - 0.50321666580472 * (2578.87) * invT);
   dlnkfdT = 0.73 * invT + 0.50321666580472 * 2578.87 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[19] += q; /* C2H5 */
-  wdot[27] -= q; /* P-C3H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[19] += q; // C2H5
+  wdot[27] -= q; // P-C3H4
+  // d()/d[OH]
   dqdci = +k_f * sc[27];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[307] += dqdci; /* dwdot[C2H5]/d[OH] */
-  J[315] -= dqdci; /* dwdot[P-C3H4]/d[OH] */
-  /* d()/d[P-C3H4] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[307] += dqdci; // dwdot[C2H5]/d[OH]
+  J[315] -= dqdci; // dwdot[P-C3H4]/d[OH]
+  // d()/d[P-C3H4]
   dqdci = +k_f * sc[6];
-  J[1302] -= dqdci; /* dwdot[OH]/d[P-C3H4] */
-  J[1307] += dqdci; /* dwdot[CO]/d[P-C3H4] */
-  J[1315] += dqdci; /* dwdot[C2H5]/d[P-C3H4] */
-  J[1323] -= dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2283] -= dqdT; /* dwdot[P-C3H4]/dT */
+  J[1302] -= dqdci; // dwdot[OH]/d[P-C3H4]
+  J[1307] += dqdci; // dwdot[CO]/d[P-C3H4]
+  J[1315] += dqdci; // dwdot[C2H5]/d[P-C3H4]
+  J[1323] -= dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2283] -= dqdT; // dwdot[P-C3H4]/dT
 
   /*reaction 139: A-C3H4 + H <=> C2H2 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[28];
   k_f = 1e-06 * 89500000000000 *
         exp(-0.02 * tc[0] - 0.50321666580472 * (11250) * invT);
   dlnkfdT = -0.02 * invT + 0.50321666580472 * 11250 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[22];
   Kc = exp(g_RT[5] - g_RT[14] - g_RT[22] + g_RT[28]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[28]) + (h_RT[14] + h_RT[22]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[22] += q; /* C2H2 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[22] += q; // C2H2
+  wdot[28] -= q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[28];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[262] += dqdci; /* dwdot[C2H2]/d[H] */
-  J[268] -= dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[CH3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[262] += dqdci; // dwdot[C2H2]/d[H]
+  J[268] -= dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[22];
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[694] += dqdci; /* dwdot[C2H2]/d[CH3] */
-  J[700] -= dqdci; /* dwdot[A-C3H4]/d[CH3] */
-  /* d()/d[C2H2] */
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[694] += dqdci; // dwdot[C2H2]/d[CH3]
+  J[700] -= dqdci; // dwdot[A-C3H4]/d[CH3]
+  // d()/d[C2H2]
   dqdci = -k_r * sc[14];
-  J[1061] -= dqdci; /* dwdot[H]/d[C2H2] */
-  J[1070] += dqdci; /* dwdot[CH3]/d[C2H2] */
-  J[1078] += dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1084] -= dqdci; /* dwdot[A-C3H4]/d[C2H2] */
-  /* d()/d[A-C3H4] */
+  J[1061] -= dqdci; // dwdot[H]/d[C2H2]
+  J[1070] += dqdci; // dwdot[CH3]/d[C2H2]
+  J[1078] += dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1084] -= dqdci; // dwdot[A-C3H4]/d[C2H2]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[5];
-  J[1349] -= dqdci; /* dwdot[H]/d[A-C3H4] */
-  J[1358] += dqdci; /* dwdot[CH3]/d[A-C3H4] */
-  J[1366] += dqdci; /* dwdot[C2H2]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1349] -= dqdci; // dwdot[H]/d[A-C3H4]
+  J[1358] += dqdci; // dwdot[CH3]/d[A-C3H4]
+  J[1366] += dqdci; // dwdot[C2H2]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 140: A-C3H4 <=> P-C3H4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[28];
   k_f = 1 * 7.76e+39 * exp(-7.8 * tc[0] - 0.50321666580472 * (78446.46) * invT);
   dlnkfdT = -7.8 * invT + 0.50321666580472 * 78446.46 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[27];
   Kc = exp(-g_RT[27] + g_RT[28]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[28]) + (h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[27] += q; /* P-C3H4 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[P-C3H4] */
+  // update wdot
+  wdot[27] += q; // P-C3H4
+  wdot[28] -= q; // A-C3H4
+  // d()/d[P-C3H4]
   dqdci = -k_r;
-  J[1323] += dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  J[1324] -= dqdci; /* dwdot[A-C3H4]/d[P-C3H4] */
-  /* d()/d[A-C3H4] */
+  J[1323] += dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  J[1324] -= dqdci; // dwdot[A-C3H4]/d[P-C3H4]
+  // d()/d[A-C3H4]
   dqdci = +k_f;
-  J[1371] += dqdci; /* dwdot[P-C3H4]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2283] += dqdT; /* dwdot[P-C3H4]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1371] += dqdci; // dwdot[P-C3H4]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2283] += dqdT; // dwdot[P-C3H4]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 141: A-C3H4 + H <=> P-C3H4 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[28];
   k_f =
     1e-06 * 2.47e+15 * exp(-0.33 * tc[0] - 0.50321666580472 * (6436.42) * invT);
   dlnkfdT = -0.33 * invT + 0.50321666580472 * 6436.42 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[27];
   Kc = exp(g_RT[5] - g_RT[5] - g_RT[27] + g_RT[28]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[28]) + (h_RT[5] + h_RT[27]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[27] += q; /* P-C3H4 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[27] += q; // P-C3H4
+  wdot[28] -= q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[28] - k_r * sc[27];
-  J[267] += dqdci; /* dwdot[P-C3H4]/d[H] */
-  J[268] -= dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[P-C3H4] */
+  J[267] += dqdci; // dwdot[P-C3H4]/d[H]
+  J[268] -= dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[P-C3H4]
   dqdci = -k_r * sc[5];
-  J[1323] += dqdci; /* dwdot[P-C3H4]/d[P-C3H4] */
-  J[1324] -= dqdci; /* dwdot[A-C3H4]/d[P-C3H4] */
-  /* d()/d[A-C3H4] */
+  J[1323] += dqdci; // dwdot[P-C3H4]/d[P-C3H4]
+  J[1324] -= dqdci; // dwdot[A-C3H4]/d[P-C3H4]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[5];
-  J[1371] += dqdci; /* dwdot[P-C3H4]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2283] += dqdT; /* dwdot[P-C3H4]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1371] += dqdci; // dwdot[P-C3H4]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2283] += dqdT; // dwdot[P-C3H4]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 142: A-C3H4 + H => C3H3 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[28];
   k_f =
     1e-06 * 1330000 * exp(2.53 * tc[0] - 0.50321666580472 * (12239.48) * invT);
   dlnkfdT = 2.53 * invT + 0.50321666580472 * 12239.48 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[23] += q; /* C3H3 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[23] += q; // C3H3
+  wdot[28] -= q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[28];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[263] += dqdci; /* dwdot[C3H3]/d[H] */
-  J[268] -= dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[A-C3H4] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[263] += dqdci; // dwdot[C3H3]/d[H]
+  J[268] -= dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[5];
-  J[1348] += dqdci; /* dwdot[H2]/d[A-C3H4] */
-  J[1349] -= dqdci; /* dwdot[H]/d[A-C3H4] */
-  J[1367] += dqdci; /* dwdot[C3H3]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1348] += dqdci; // dwdot[H2]/d[A-C3H4]
+  J[1349] -= dqdci; // dwdot[H]/d[A-C3H4]
+  J[1367] += dqdci; // dwdot[C3H3]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 143: A-C3H4 + OH => C3H3 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[28];
   k_f = 1e-06 * 0.131 * exp(4.2 * tc[0] - 0.50321666580472 * (-860.42) * invT);
   dlnkfdT = 4.2 * invT + 0.50321666580472 * -860.42 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[23] += q; /* C3H3 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[23] += q; // C3H3
+  wdot[28] -= q; // A-C3H4
+  // d()/d[OH]
   dqdci = +k_f * sc[28];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[311] += dqdci; /* dwdot[C3H3]/d[OH] */
-  J[316] -= dqdci; /* dwdot[A-C3H4]/d[OH] */
-  /* d()/d[A-C3H4] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[311] += dqdci; // dwdot[C3H3]/d[OH]
+  J[316] -= dqdci; // dwdot[A-C3H4]/d[OH]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[6];
-  J[1350] -= dqdci; /* dwdot[OH]/d[A-C3H4] */
-  J[1351] += dqdci; /* dwdot[H2O]/d[A-C3H4] */
-  J[1367] += dqdci; /* dwdot[C3H3]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1350] -= dqdci; // dwdot[OH]/d[A-C3H4]
+  J[1351] += dqdci; // dwdot[H2O]/d[A-C3H4]
+  J[1367] += dqdci; // dwdot[C3H3]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 144: A-C3H4 + CH3 => C3H3 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[28];
   k_f = 1e-06 * 227000 * exp(2 * tc[0] - 0.50321666580472 * (9199.33) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * 9199.33 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[23] += q; /* C3H3 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[23] += q; // C3H3
+  wdot[28] -= q; // A-C3H4
+  // d()/d[CH3]
   dqdci = +k_f * sc[28];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[695] += dqdci; /* dwdot[C3H3]/d[CH3] */
-  J[700] -= dqdci; /* dwdot[A-C3H4]/d[CH3] */
-  /* d()/d[A-C3H4] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[695] += dqdci; // dwdot[C3H3]/d[CH3]
+  J[700] -= dqdci; // dwdot[A-C3H4]/d[CH3]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[14];
-  J[1358] -= dqdci; /* dwdot[CH3]/d[A-C3H4] */
-  J[1360] += dqdci; /* dwdot[CH4]/d[A-C3H4] */
-  J[1367] += dqdci; /* dwdot[C3H3]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2279] += dqdT; /* dwdot[C3H3]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1358] -= dqdci; // dwdot[CH3]/d[A-C3H4]
+  J[1360] += dqdci; // dwdot[CH4]/d[A-C3H4]
+  J[1367] += dqdci; // dwdot[C3H3]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2279] += dqdT; // dwdot[C3H3]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 145: A-C3H4 + H <=> A-C3H5 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[28];
   k_f = 1e-06 * 2.01e+49 *
         exp(-10.77 * tc[0] - 0.50321666580472 * (19622.37) * invT);
   dlnkfdT = -10.77 * invT + 0.50321666580472 * 19622.37 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[24];
   Kc = refCinv * exp(g_RT[5] - g_RT[24] + g_RT[28]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[28]) + (h_RT[24]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[28] -= q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[24] += q; // A-C3H5
+  wdot[28] -= q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[28];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[264] += dqdci; /* dwdot[A-C3H5]/d[H] */
-  J[268] -= dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[A-C3H5] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[264] += dqdci; // dwdot[A-C3H5]/d[H]
+  J[268] -= dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[A-C3H5]
   dqdci = -k_r;
-  J[1157] -= dqdci; /* dwdot[H]/d[A-C3H5] */
-  J[1176] += dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1180] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H5] */
-  /* d()/d[A-C3H4] */
+  J[1157] -= dqdci; // dwdot[H]/d[A-C3H5]
+  J[1176] += dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  J[1180] -= dqdci; // dwdot[A-C3H4]/d[A-C3H5]
+  // d()/d[A-C3H4]
   dqdci = +k_f * sc[5];
-  J[1349] -= dqdci; /* dwdot[H]/d[A-C3H4] */
-  J[1368] += dqdci; /* dwdot[A-C3H5]/d[A-C3H4] */
-  J[1372] -= dqdci; /* dwdot[A-C3H4]/d[A-C3H4] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2284] -= dqdT; /* dwdot[A-C3H4]/dT */
+  J[1349] -= dqdci; // dwdot[H]/d[A-C3H4]
+  J[1368] += dqdci; // dwdot[A-C3H5]/d[A-C3H4]
+  J[1372] -= dqdci; // dwdot[A-C3H4]/d[A-C3H4]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2284] -= dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 146: A-C3H5 + H => A-C3H4 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[24];
   k_f = 1e-06 * 9560 * exp(2.8 * tc[0] - 0.50321666580472 * (3291.11) * invT);
   dlnkfdT = 2.8 * invT + 0.50321666580472 * 3291.11 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[24] -= q; /* A-C3H5 */
-  wdot[28] += q; /* A-C3H4 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[24] -= q; // A-C3H5
+  wdot[28] += q; // A-C3H4
+  // d()/d[H]
   dqdci = +k_f * sc[24];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[264] -= dqdci; /* dwdot[A-C3H5]/d[H] */
-  J[268] += dqdci; /* dwdot[A-C3H4]/d[H] */
-  /* d()/d[A-C3H5] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[264] -= dqdci; // dwdot[A-C3H5]/d[H]
+  J[268] += dqdci; // dwdot[A-C3H4]/d[H]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[5];
-  J[1156] += dqdci; /* dwdot[H2]/d[A-C3H5] */
-  J[1157] -= dqdci; /* dwdot[H]/d[A-C3H5] */
-  J[1176] -= dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1180] += dqdci; /* dwdot[A-C3H4]/d[A-C3H5] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2280] -= dqdT; /* dwdot[A-C3H5]/dT */
-  J[2284] += dqdT; /* dwdot[A-C3H4]/dT */
+  J[1156] += dqdci; // dwdot[H2]/d[A-C3H5]
+  J[1157] -= dqdci; // dwdot[H]/d[A-C3H5]
+  J[1176] -= dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  J[1180] += dqdci; // dwdot[A-C3H4]/d[A-C3H5]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2280] -= dqdT; // dwdot[A-C3H5]/dT
+  J[2284] += dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 147: A-C3H5 + OH => A-C3H4 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[24];
   k_f = 1e-06 * 6030000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[24] -= q; /* A-C3H5 */
-  wdot[28] += q; /* A-C3H4 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[24] -= q; // A-C3H5
+  wdot[28] += q; // A-C3H4
+  // d()/d[OH]
   dqdci = +k_f * sc[24];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[312] -= dqdci; /* dwdot[A-C3H5]/d[OH] */
-  J[316] += dqdci; /* dwdot[A-C3H4]/d[OH] */
-  /* d()/d[A-C3H5] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[312] -= dqdci; // dwdot[A-C3H5]/d[OH]
+  J[316] += dqdci; // dwdot[A-C3H4]/d[OH]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[6];
-  J[1158] -= dqdci; /* dwdot[OH]/d[A-C3H5] */
-  J[1159] += dqdci; /* dwdot[H2O]/d[A-C3H5] */
-  J[1176] -= dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1180] += dqdci; /* dwdot[A-C3H4]/d[A-C3H5] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2280] -= dqdT; /* dwdot[A-C3H5]/dT */
-  J[2284] += dqdT; /* dwdot[A-C3H4]/dT */
+  J[1158] -= dqdci; // dwdot[OH]/d[A-C3H5]
+  J[1159] += dqdci; // dwdot[H2O]/d[A-C3H5]
+  J[1176] -= dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  J[1180] += dqdci; // dwdot[A-C3H4]/d[A-C3H5]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2280] -= dqdT; // dwdot[A-C3H5]/dT
+  J[2284] += dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 148: A-C3H5 + CH3 => A-C3H4 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[24];
   k_f = 1e-06 * 486000000000 *
         exp(-0.32 * tc[0] - 0.50321666580472 * (-131.45) * invT);
   dlnkfdT = -0.32 * invT + 0.50321666580472 * -131.45 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[24] -= q; /* A-C3H5 */
-  wdot[28] += q; /* A-C3H4 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[24] -= q; // A-C3H5
+  wdot[28] += q; // A-C3H4
+  // d()/d[CH3]
   dqdci = +k_f * sc[24];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[696] -= dqdci; /* dwdot[A-C3H5]/d[CH3] */
-  J[700] += dqdci; /* dwdot[A-C3H4]/d[CH3] */
-  /* d()/d[A-C3H5] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[696] -= dqdci; // dwdot[A-C3H5]/d[CH3]
+  J[700] += dqdci; // dwdot[A-C3H4]/d[CH3]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[14];
-  J[1166] -= dqdci; /* dwdot[CH3]/d[A-C3H5] */
-  J[1168] += dqdci; /* dwdot[CH4]/d[A-C3H5] */
-  J[1176] -= dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1180] += dqdci; /* dwdot[A-C3H4]/d[A-C3H5] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2280] -= dqdT; /* dwdot[A-C3H5]/dT */
-  J[2284] += dqdT; /* dwdot[A-C3H4]/dT */
+  J[1166] -= dqdci; // dwdot[CH3]/d[A-C3H5]
+  J[1168] += dqdci; // dwdot[CH4]/d[A-C3H5]
+  J[1176] -= dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  J[1180] += dqdci; // dwdot[A-C3H4]/d[A-C3H5]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2280] -= dqdT; // dwdot[A-C3H5]/dT
+  J[2284] += dqdT; // dwdot[A-C3H4]/dT
 
   /*reaction 149: A-C3H5 + O2 => C2H2 + CH2O + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[24];
   k_f =
     1e-06 * 9.71e+20 * exp(-2.7 * tc[0] - 0.50321666580472 * (24980.88) * invT);
   dlnkfdT = -2.7 * invT + 0.50321666580472 * 24980.88 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[8] -= q;  /* O2 */
-  wdot[13] += q; /* CH2O */
-  wdot[22] += q; /* C2H2 */
-  wdot[24] -= q; /* A-C3H5 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[8] -= q;  // O2
+  wdot[13] += q; // CH2O
+  wdot[22] += q; // C2H2
+  wdot[24] -= q; // A-C3H5
+  // d()/d[O2]
   dqdci = +k_f * sc[24];
-  J[390] += dqdci; /* dwdot[OH]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[397] += dqdci; /* dwdot[CH2O]/d[O2] */
-  J[406] += dqdci; /* dwdot[C2H2]/d[O2] */
-  J[408] -= dqdci; /* dwdot[A-C3H5]/d[O2] */
-  /* d()/d[A-C3H5] */
+  J[390] += dqdci; // dwdot[OH]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[397] += dqdci; // dwdot[CH2O]/d[O2]
+  J[406] += dqdci; // dwdot[C2H2]/d[O2]
+  J[408] -= dqdci; // dwdot[A-C3H5]/d[O2]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[8];
-  J[1158] += dqdci; /* dwdot[OH]/d[A-C3H5] */
-  J[1160] -= dqdci; /* dwdot[O2]/d[A-C3H5] */
-  J[1165] += dqdci; /* dwdot[CH2O]/d[A-C3H5] */
-  J[1174] += dqdci; /* dwdot[C2H2]/d[A-C3H5] */
-  J[1176] -= dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2269] += dqdT; /* dwdot[CH2O]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2280] -= dqdT; /* dwdot[A-C3H5]/dT */
+  J[1158] += dqdci; // dwdot[OH]/d[A-C3H5]
+  J[1160] -= dqdci; // dwdot[O2]/d[A-C3H5]
+  J[1165] += dqdci; // dwdot[CH2O]/d[A-C3H5]
+  J[1174] += dqdci; // dwdot[C2H2]/d[A-C3H5]
+  J[1176] -= dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2269] += dqdT; // dwdot[CH2O]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2280] -= dqdT; // dwdot[A-C3H5]/dT
 
   /*reaction 150: A-C3H5 + C3H3 => A1 + 2.000000 H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[23] * sc[24];
   k_f = 1e-06 * 2.16e+39 *
         exp(-7.74 * tc[0] - 0.50321666580472 * (23852.77) * invT);
   dlnkfdT = -7.74 * invT + 0.50321666580472 * 23852.77 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += 2 * q; /* H */
-  wdot[23] -= q;    /* C3H3 */
-  wdot[24] -= q;    /* A-C3H5 */
-  wdot[29] += q;    /* A1 */
-  /* d()/d[C3H3] */
+  // update wdot
+  wdot[5] += 2 * q; // H
+  wdot[23] -= q;    // C3H3
+  wdot[24] -= q;    // A-C3H5
+  wdot[29] += q;    // A1
+  // d()/d[C3H3]
   dqdci = +k_f * sc[24];
-  J[1109] += 2 * dqdci; /* dwdot[H]/d[C3H3] */
-  J[1127] -= dqdci;     /* dwdot[C3H3]/d[C3H3] */
-  J[1128] -= dqdci;     /* dwdot[A-C3H5]/d[C3H3] */
-  J[1133] += dqdci;     /* dwdot[A1]/d[C3H3] */
-  /* d()/d[A-C3H5] */
+  J[1109] += 2 * dqdci; // dwdot[H]/d[C3H3]
+  J[1127] -= dqdci;     // dwdot[C3H3]/d[C3H3]
+  J[1128] -= dqdci;     // dwdot[A-C3H5]/d[C3H3]
+  J[1133] += dqdci;     // dwdot[A1]/d[C3H3]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[23];
-  J[1157] += 2 * dqdci; /* dwdot[H]/d[A-C3H5] */
-  J[1175] -= dqdci;     /* dwdot[C3H3]/d[A-C3H5] */
-  J[1176] -= dqdci;     /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1181] += dqdci;     /* dwdot[A1]/d[A-C3H5] */
-  /* d()/dT */
-  J[2261] += 2 * dqdT; /* dwdot[H]/dT */
-  J[2279] -= dqdT;     /* dwdot[C3H3]/dT */
-  J[2280] -= dqdT;     /* dwdot[A-C3H5]/dT */
-  J[2285] += dqdT;     /* dwdot[A1]/dT */
+  J[1157] += 2 * dqdci; // dwdot[H]/d[A-C3H5]
+  J[1175] -= dqdci;     // dwdot[C3H3]/d[A-C3H5]
+  J[1176] -= dqdci;     // dwdot[A-C3H5]/d[A-C3H5]
+  J[1181] += dqdci;     // dwdot[A1]/d[A-C3H5]
+  // d()/dT
+  J[2261] += 2 * dqdT; // dwdot[H]/dT
+  J[2279] -= dqdT;     // dwdot[C3H3]/dT
+  J[2280] -= dqdT;     // dwdot[A-C3H5]/dT
+  J[2285] += dqdT;     // dwdot[A1]/dT
 
   /*reaction 151: C3H6 <=> C2H3 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[32];
   k_f =
     1 * 4.04e+42 * exp(-7.67 * tc[0] - 0.50321666580472 * (111830.78) * invT);
   dlnkfdT = -7.67 * invT + 0.50321666580472 * 111830.78 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[17];
   Kc = refC * exp(-g_RT[14] - g_RT[17] + g_RT[32]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[32]) + (h_RT[14] + h_RT[17]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[14] += q; /* CH3 */
-  wdot[17] += q; /* C2H3 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] += q; // CH3
+  wdot[17] += q; // C2H3
+  wdot[32] -= q; // C3H6
+  // d()/d[CH3]
   dqdci = -k_r * sc[17];
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[689] += dqdci; /* dwdot[C2H3]/d[CH3] */
-  J[704] -= dqdci; /* dwdot[C3H6]/d[CH3] */
-  /* d()/d[C2H3] */
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[689] += dqdci; // dwdot[C2H3]/d[CH3]
+  J[704] -= dqdci; // dwdot[C3H6]/d[CH3]
+  // d()/d[C2H3]
   dqdci = -k_r * sc[14];
-  J[830] += dqdci; /* dwdot[CH3]/d[C2H3] */
-  J[833] += dqdci; /* dwdot[C2H3]/d[C2H3] */
-  J[848] -= dqdci; /* dwdot[C3H6]/d[C2H3] */
-  /* d()/d[C3H6] */
+  J[830] += dqdci; // dwdot[CH3]/d[C2H3]
+  J[833] += dqdci; // dwdot[C2H3]/d[C2H3]
+  J[848] -= dqdci; // dwdot[C3H6]/d[C2H3]
+  // d()/d[C3H6]
   dqdci = +k_f;
-  J[1550] += dqdci; /* dwdot[CH3]/d[C3H6] */
-  J[1553] += dqdci; /* dwdot[C2H3]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1550] += dqdci; // dwdot[CH3]/d[C3H6]
+  J[1553] += dqdci; // dwdot[C2H3]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 152: A-C3H5 + H <=> C3H6 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[24];
   k_f = 1e-06 * 5.93e+54 *
         exp(-11.76 * tc[0] - 0.50321666580472 * (23549.24) * invT);
   dlnkfdT = -11.76 * invT + 0.50321666580472 * 23549.24 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[32];
   Kc = refCinv * exp(g_RT[5] + g_RT[24] - g_RT[32]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[24]) + (h_RT[32]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[24] -= q; /* A-C3H5 */
-  wdot[32] += q; /* C3H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[24] -= q; // A-C3H5
+  wdot[32] += q; // C3H6
+  // d()/d[H]
   dqdci = +k_f * sc[24];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[264] -= dqdci; /* dwdot[A-C3H5]/d[H] */
-  J[272] += dqdci; /* dwdot[C3H6]/d[H] */
-  /* d()/d[A-C3H5] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[264] -= dqdci; // dwdot[A-C3H5]/d[H]
+  J[272] += dqdci; // dwdot[C3H6]/d[H]
+  // d()/d[A-C3H5]
   dqdci = +k_f * sc[5];
-  J[1157] -= dqdci; /* dwdot[H]/d[A-C3H5] */
-  J[1176] -= dqdci; /* dwdot[A-C3H5]/d[A-C3H5] */
-  J[1184] += dqdci; /* dwdot[C3H6]/d[A-C3H5] */
-  /* d()/d[C3H6] */
+  J[1157] -= dqdci; // dwdot[H]/d[A-C3H5]
+  J[1176] -= dqdci; // dwdot[A-C3H5]/d[A-C3H5]
+  J[1184] += dqdci; // dwdot[C3H6]/d[A-C3H5]
+  // d()/d[C3H6]
   dqdci = -k_r;
-  J[1541] -= dqdci; /* dwdot[H]/d[C3H6] */
-  J[1560] -= dqdci; /* dwdot[A-C3H5]/d[C3H6] */
-  J[1568] += dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2280] -= dqdT; /* dwdot[A-C3H5]/dT */
-  J[2288] += dqdT; /* dwdot[C3H6]/dT */
+  J[1541] -= dqdci; // dwdot[H]/d[C3H6]
+  J[1560] -= dqdci; // dwdot[A-C3H5]/d[C3H6]
+  J[1568] += dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2280] -= dqdT; // dwdot[A-C3H5]/dT
+  J[2288] += dqdT; // dwdot[C3H6]/dT
 
   /*reaction 153: C3H6 + H <=> C2H4 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[32];
   k_f =
     1e-06 * 8e+21 * exp(-2.39 * tc[0] - 0.50321666580472 * (11180.69) * invT);
   dlnkfdT = -2.39 * invT + 0.50321666580472 * 11180.69 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[18];
   Kc = exp(g_RT[5] - g_RT[14] - g_RT[18] + g_RT[32]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[32]) + (h_RT[14] + h_RT[18]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[18] += q; /* C2H4 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[18] += q; // C2H4
+  wdot[32] -= q; // C3H6
+  // d()/d[H]
   dqdci = +k_f * sc[32];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[258] += dqdci; /* dwdot[C2H4]/d[H] */
-  J[272] -= dqdci; /* dwdot[C3H6]/d[H] */
-  /* d()/d[CH3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[258] += dqdci; // dwdot[C2H4]/d[H]
+  J[272] -= dqdci; // dwdot[C3H6]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[18];
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[690] += dqdci; /* dwdot[C2H4]/d[CH3] */
-  J[704] -= dqdci; /* dwdot[C3H6]/d[CH3] */
-  /* d()/d[C2H4] */
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[690] += dqdci; // dwdot[C2H4]/d[CH3]
+  J[704] -= dqdci; // dwdot[C3H6]/d[CH3]
+  // d()/d[C2H4]
   dqdci = -k_r * sc[14];
-  J[869] -= dqdci; /* dwdot[H]/d[C2H4] */
-  J[878] += dqdci; /* dwdot[CH3]/d[C2H4] */
-  J[882] += dqdci; /* dwdot[C2H4]/d[C2H4] */
-  J[896] -= dqdci; /* dwdot[C3H6]/d[C2H4] */
-  /* d()/d[C3H6] */
+  J[869] -= dqdci; // dwdot[H]/d[C2H4]
+  J[878] += dqdci; // dwdot[CH3]/d[C2H4]
+  J[882] += dqdci; // dwdot[C2H4]/d[C2H4]
+  J[896] -= dqdci; // dwdot[C3H6]/d[C2H4]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[5];
-  J[1541] -= dqdci; /* dwdot[H]/d[C3H6] */
-  J[1550] += dqdci; /* dwdot[CH3]/d[C3H6] */
-  J[1554] += dqdci; /* dwdot[C2H4]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1541] -= dqdci; // dwdot[H]/d[C3H6]
+  J[1550] += dqdci; // dwdot[CH3]/d[C3H6]
+  J[1554] += dqdci; // dwdot[C2H4]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 154: C3H6 + O => 2.000000 CH3 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[32];
   k_f =
     1e-06 * 120000000 * exp(1.6 * tc[0] - 0.50321666580472 * (327.44) * invT);
   dlnkfdT = 1.6 * invT + 0.50321666580472 * 327.44 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;      /* O */
-  wdot[11] += q;     /* CO */
-  wdot[14] += 2 * q; /* CH3 */
-  wdot[32] -= q;     /* C3H6 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;      // O
+  wdot[11] += q;     // CO
+  wdot[14] += 2 * q; // CH3
+  wdot[32] -= q;     // C3H6
+  // d()/d[O]
   dqdci = +k_f * sc[32];
-  J[147] -= dqdci;     /* dwdot[O]/d[O] */
-  J[155] += dqdci;     /* dwdot[CO]/d[O] */
-  J[158] += 2 * dqdci; /* dwdot[CH3]/d[O] */
-  J[176] -= dqdci;     /* dwdot[C3H6]/d[O] */
-  /* d()/d[C3H6] */
+  J[147] -= dqdci;     // dwdot[O]/d[O]
+  J[155] += dqdci;     // dwdot[CO]/d[O]
+  J[158] += 2 * dqdci; // dwdot[CH3]/d[O]
+  J[176] -= dqdci;     // dwdot[C3H6]/d[O]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[3];
-  J[1539] -= dqdci;     /* dwdot[O]/d[C3H6] */
-  J[1547] += dqdci;     /* dwdot[CO]/d[C3H6] */
-  J[1550] += 2 * dqdci; /* dwdot[CH3]/d[C3H6] */
-  J[1568] -= dqdci;     /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2259] -= dqdT;     /* dwdot[O]/dT */
-  J[2267] += dqdT;     /* dwdot[CO]/dT */
-  J[2270] += 2 * dqdT; /* dwdot[CH3]/dT */
-  J[2288] -= dqdT;     /* dwdot[C3H6]/dT */
+  J[1539] -= dqdci;     // dwdot[O]/d[C3H6]
+  J[1547] += dqdci;     // dwdot[CO]/d[C3H6]
+  J[1550] += 2 * dqdci; // dwdot[CH3]/d[C3H6]
+  J[1568] -= dqdci;     // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2259] -= dqdT;     // dwdot[O]/dT
+  J[2267] += dqdT;     // dwdot[CO]/dT
+  J[2270] += 2 * dqdT; // dwdot[CH3]/dT
+  J[2288] -= dqdT;     // dwdot[C3H6]/dT
 
   /*reaction 155: C3H6 + O => C2H5 + HCO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[32];
   k_f =
     1e-06 * 35000000 * exp(1.6 * tc[0] - 0.50321666580472 * (-972.75) * invT);
   dlnkfdT = 1.6 * invT + 0.50321666580472 * -972.75 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[12] += q; /* HCO */
-  wdot[19] += q; /* C2H5 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[12] += q; // HCO
+  wdot[19] += q; // C2H5
+  wdot[32] -= q; // C3H6
+  // d()/d[O]
   dqdci = +k_f * sc[32];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[156] += dqdci; /* dwdot[HCO]/d[O] */
-  J[163] += dqdci; /* dwdot[C2H5]/d[O] */
-  J[176] -= dqdci; /* dwdot[C3H6]/d[O] */
-  /* d()/d[C3H6] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[156] += dqdci; // dwdot[HCO]/d[O]
+  J[163] += dqdci; // dwdot[C2H5]/d[O]
+  J[176] -= dqdci; // dwdot[C3H6]/d[O]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[3];
-  J[1539] -= dqdci; /* dwdot[O]/d[C3H6] */
-  J[1548] += dqdci; /* dwdot[HCO]/d[C3H6] */
-  J[1555] += dqdci; /* dwdot[C2H5]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1539] -= dqdci; // dwdot[O]/d[C3H6]
+  J[1548] += dqdci; // dwdot[HCO]/d[C3H6]
+  J[1555] += dqdci; // dwdot[C2H5]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 156: C3H6 + H => A-C3H5 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[32];
   k_f =
     1e-06 * 660000 * exp(2.54 * tc[0] - 0.50321666580472 * (6756.69) * invT);
   dlnkfdT = 2.54 * invT + 0.50321666580472 * 6756.69 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[24] += q; // A-C3H5
+  wdot[32] -= q; // C3H6
+  // d()/d[H]
   dqdci = +k_f * sc[32];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[264] += dqdci; /* dwdot[A-C3H5]/d[H] */
-  J[272] -= dqdci; /* dwdot[C3H6]/d[H] */
-  /* d()/d[C3H6] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[264] += dqdci; // dwdot[A-C3H5]/d[H]
+  J[272] -= dqdci; // dwdot[C3H6]/d[H]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[5];
-  J[1540] += dqdci; /* dwdot[H2]/d[C3H6] */
-  J[1541] -= dqdci; /* dwdot[H]/d[C3H6] */
-  J[1560] += dqdci; /* dwdot[A-C3H5]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1540] += dqdci; // dwdot[H2]/d[C3H6]
+  J[1541] -= dqdci; // dwdot[H]/d[C3H6]
+  J[1560] += dqdci; // dwdot[A-C3H5]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 157: C3H6 + O => A-C3H5 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[32];
   k_f = 1e-06 * 96500 * exp(2.68 * tc[0] - 0.50321666580472 * (3716.54) * invT);
   dlnkfdT = 2.68 * invT + 0.50321666580472 * 3716.54 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[24] += q; // A-C3H5
+  wdot[32] -= q; // C3H6
+  // d()/d[O]
   dqdci = +k_f * sc[32];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[168] += dqdci; /* dwdot[A-C3H5]/d[O] */
-  J[176] -= dqdci; /* dwdot[C3H6]/d[O] */
-  /* d()/d[C3H6] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[168] += dqdci; // dwdot[A-C3H5]/d[O]
+  J[176] -= dqdci; // dwdot[C3H6]/d[O]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[3];
-  J[1539] -= dqdci; /* dwdot[O]/d[C3H6] */
-  J[1542] += dqdci; /* dwdot[OH]/d[C3H6] */
-  J[1560] += dqdci; /* dwdot[A-C3H5]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1539] -= dqdci; // dwdot[O]/d[C3H6]
+  J[1542] += dqdci; // dwdot[OH]/d[C3H6]
+  J[1560] += dqdci; // dwdot[A-C3H5]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 158: C3H6 + OH => A-C3H5 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[32];
   k_f =
     1e-06 * 200000000 * exp(1.46 * tc[0] - 0.50321666580472 * (537.76) * invT);
   dlnkfdT = 1.46 * invT + 0.50321666580472 * 537.76 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[24] += q; // A-C3H5
+  wdot[32] -= q; // C3H6
+  // d()/d[OH]
   dqdci = +k_f * sc[32];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[312] += dqdci; /* dwdot[A-C3H5]/d[OH] */
-  J[320] -= dqdci; /* dwdot[C3H6]/d[OH] */
-  /* d()/d[C3H6] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[312] += dqdci; // dwdot[A-C3H5]/d[OH]
+  J[320] -= dqdci; // dwdot[C3H6]/d[OH]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[6];
-  J[1542] -= dqdci; /* dwdot[OH]/d[C3H6] */
-  J[1543] += dqdci; /* dwdot[H2O]/d[C3H6] */
-  J[1560] += dqdci; /* dwdot[A-C3H5]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1542] -= dqdci; // dwdot[OH]/d[C3H6]
+  J[1543] += dqdci; // dwdot[H2O]/d[C3H6]
+  J[1560] += dqdci; // dwdot[A-C3H5]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 159: C3H6 + CH3 => A-C3H5 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[32];
   k_f = 1e-06 * 0.452 * exp(3.65 * tc[0] - 0.50321666580472 * (7153.44) * invT);
   dlnkfdT = 3.65 * invT + 0.50321666580472 * 7153.44 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[32] -= q; /* C3H6 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[24] += q; // A-C3H5
+  wdot[32] -= q; // C3H6
+  // d()/d[CH3]
   dqdci = +k_f * sc[32];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[696] += dqdci; /* dwdot[A-C3H5]/d[CH3] */
-  J[704] -= dqdci; /* dwdot[C3H6]/d[CH3] */
-  /* d()/d[C3H6] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[696] += dqdci; // dwdot[A-C3H5]/d[CH3]
+  J[704] -= dqdci; // dwdot[C3H6]/d[CH3]
+  // d()/d[C3H6]
   dqdci = +k_f * sc[14];
-  J[1550] -= dqdci; /* dwdot[CH3]/d[C3H6] */
-  J[1552] += dqdci; /* dwdot[CH4]/d[C3H6] */
-  J[1560] += dqdci; /* dwdot[A-C3H5]/d[C3H6] */
-  J[1568] -= dqdci; /* dwdot[C3H6]/d[C3H6] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2288] -= dqdT; /* dwdot[C3H6]/dT */
+  J[1550] -= dqdci; // dwdot[CH3]/d[C3H6]
+  J[1552] += dqdci; // dwdot[CH4]/d[C3H6]
+  J[1560] += dqdci; // dwdot[A-C3H5]/d[C3H6]
+  J[1568] -= dqdci; // dwdot[C3H6]/d[C3H6]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2288] -= dqdT; // dwdot[C3H6]/dT
 
   /*reaction 160: C4H8 + H => C2H5 + C2H4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[33];
   k_f = 1e-06 * 7680000000000 *
         exp(0.11 * tc[0] - 0.50321666580472 * (1479.45) * invT);
   dlnkfdT = 0.11 * invT + 0.50321666580472 * 1479.45 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[18] += q; /* C2H4 */
-  wdot[19] += q; /* C2H5 */
-  wdot[33] -= q; /* C4H8 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[18] += q; // C2H4
+  wdot[19] += q; // C2H5
+  wdot[33] -= q; // C4H8
+  // d()/d[H]
   dqdci = +k_f * sc[33];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[258] += dqdci; /* dwdot[C2H4]/d[H] */
-  J[259] += dqdci; /* dwdot[C2H5]/d[H] */
-  J[273] -= dqdci; /* dwdot[C4H8]/d[H] */
-  /* d()/d[C4H8] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[258] += dqdci; // dwdot[C2H4]/d[H]
+  J[259] += dqdci; // dwdot[C2H5]/d[H]
+  J[273] -= dqdci; // dwdot[C4H8]/d[H]
+  // d()/d[C4H8]
   dqdci = +k_f * sc[5];
-  J[1589] -= dqdci; /* dwdot[H]/d[C4H8] */
-  J[1602] += dqdci; /* dwdot[C2H4]/d[C4H8] */
-  J[1603] += dqdci; /* dwdot[C2H5]/d[C4H8] */
-  J[1617] -= dqdci; /* dwdot[C4H8]/d[C4H8] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2289] -= dqdT; /* dwdot[C4H8]/dT */
+  J[1589] -= dqdci; // dwdot[H]/d[C4H8]
+  J[1602] += dqdci; // dwdot[C2H4]/d[C4H8]
+  J[1603] += dqdci; // dwdot[C2H5]/d[C4H8]
+  J[1617] -= dqdci; // dwdot[C4H8]/d[C4H8]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2289] -= dqdT; // dwdot[C4H8]/dT
 
   /*reaction 161: C4H8 => A-C3H5 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[33];
   k_f = 1 * 5e+15 * exp(0 * tc[0] - 0.50321666580472 * (70999.04) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 70999.04 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] += q; /* CH3 */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[33] -= q; /* C4H8 */
-  /* d()/d[C4H8] */
+  // update wdot
+  wdot[14] += q; // CH3
+  wdot[24] += q; // A-C3H5
+  wdot[33] -= q; // C4H8
+  // d()/d[C4H8]
   dqdci = +k_f;
-  J[1598] += dqdci; /* dwdot[CH3]/d[C4H8] */
-  J[1608] += dqdci; /* dwdot[A-C3H5]/d[C4H8] */
-  J[1617] -= dqdci; /* dwdot[C4H8]/d[C4H8] */
-  /* d()/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2289] -= dqdT; /* dwdot[C4H8]/dT */
+  J[1598] += dqdci; // dwdot[CH3]/d[C4H8]
+  J[1608] += dqdci; // dwdot[A-C3H5]/d[C4H8]
+  J[1617] -= dqdci; // dwdot[C4H8]/d[C4H8]
+  // d()/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2289] -= dqdT; // dwdot[C4H8]/dT
 
   /*reaction 162: C5H5 + HO2 => O2 + C5H6 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[31];
   k_f = 1e-06 * 2561000000000 *
         exp(0.06 * tc[0] - 0.50321666580472 * (3116.63) * invT);
   dlnkfdT = 0.06 * invT + 0.50321666580472 * 3116.63 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[8] += q;  /* O2 */
-  wdot[9] -= q;  /* HO2 */
-  wdot[31] -= q; /* C5H5 */
-  wdot[34] += q; /* C5H6 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[8] += q;  // O2
+  wdot[9] -= q;  // HO2
+  wdot[31] -= q; // C5H5
+  wdot[34] += q; // C5H6
+  // d()/d[HO2]
   dqdci = +k_f * sc[31];
-  J[440] += dqdci; /* dwdot[O2]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[463] -= dqdci; /* dwdot[C5H5]/d[HO2] */
-  J[466] += dqdci; /* dwdot[C5H6]/d[HO2] */
-  /* d()/d[C5H5] */
+  J[440] += dqdci; // dwdot[O2]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[463] -= dqdci; // dwdot[C5H5]/d[HO2]
+  J[466] += dqdci; // dwdot[C5H6]/d[HO2]
+  // d()/d[C5H5]
   dqdci = +k_f * sc[9];
-  J[1496] += dqdci; /* dwdot[O2]/d[C5H5] */
-  J[1497] -= dqdci; /* dwdot[HO2]/d[C5H5] */
-  J[1519] -= dqdci; /* dwdot[C5H5]/d[C5H5] */
-  J[1522] += dqdci; /* dwdot[C5H6]/d[C5H5] */
-  /* d()/dT */
-  J[2264] += dqdT; /* dwdot[O2]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2287] -= dqdT; /* dwdot[C5H5]/dT */
-  J[2290] += dqdT; /* dwdot[C5H6]/dT */
+  J[1496] += dqdci; // dwdot[O2]/d[C5H5]
+  J[1497] -= dqdci; // dwdot[HO2]/d[C5H5]
+  J[1519] -= dqdci; // dwdot[C5H5]/d[C5H5]
+  J[1522] += dqdci; // dwdot[C5H6]/d[C5H5]
+  // d()/dT
+  J[2264] += dqdT; // dwdot[O2]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2287] -= dqdT; // dwdot[C5H5]/dT
+  J[2290] += dqdT; // dwdot[C5H6]/dT
 
   /*reaction 163: 2.000000 C5H5 => A2 + 2.000000 H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = (sc[31] * sc[31]);
   k_f = 1e-06 * 6.39e+29 *
         exp(-4.03 * tc[0] - 0.50321666580472 * (35205.54) * invT);
   dlnkfdT = -4.03 * invT + 0.50321666580472 * 35205.54 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += 2 * q;  /* H */
-  wdot[31] -= 2 * q; /* C5H5 */
-  wdot[35] += q;     /* A2 */
-  /* d()/d[C5H5] */
+  // update wdot
+  wdot[5] += 2 * q;  // H
+  wdot[31] -= 2 * q; // C5H5
+  wdot[35] += q;     // A2
+  // d()/d[C5H5]
   dqdci = +k_f * 2.000000 * sc[31];
-  J[1493] += 2 * dqdci;  /* dwdot[H]/d[C5H5] */
-  J[1519] += -2 * dqdci; /* dwdot[C5H5]/d[C5H5] */
-  J[1523] += dqdci;      /* dwdot[A2]/d[C5H5] */
-  /* d()/dT */
-  J[2261] += 2 * dqdT;  /* dwdot[H]/dT */
-  J[2287] += -2 * dqdT; /* dwdot[C5H5]/dT */
-  J[2291] += dqdT;      /* dwdot[A2]/dT */
+  J[1493] += 2 * dqdci;  // dwdot[H]/d[C5H5]
+  J[1519] += -2 * dqdci; // dwdot[C5H5]/d[C5H5]
+  J[1523] += dqdci;      // dwdot[A2]/d[C5H5]
+  // d()/dT
+  J[2261] += 2 * dqdT;  // dwdot[H]/dT
+  J[2287] += -2 * dqdT; // dwdot[C5H5]/dT
+  J[2291] += dqdT;      // dwdot[A2]/dT
 
   /*reaction 164: C5H5 + O => C2H3 + C2H2 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[31];
   k_f = 1e-06 * 70000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[11] += q; /* CO */
-  wdot[17] += q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  wdot[31] -= q; /* C5H5 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[11] += q; // CO
+  wdot[17] += q; // C2H3
+  wdot[22] += q; // C2H2
+  wdot[31] -= q; // C5H5
+  // d()/d[O]
   dqdci = +k_f * sc[31];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[161] += dqdci; /* dwdot[C2H3]/d[O] */
-  J[166] += dqdci; /* dwdot[C2H2]/d[O] */
-  J[175] -= dqdci; /* dwdot[C5H5]/d[O] */
-  /* d()/d[C5H5] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[161] += dqdci; // dwdot[C2H3]/d[O]
+  J[166] += dqdci; // dwdot[C2H2]/d[O]
+  J[175] -= dqdci; // dwdot[C5H5]/d[O]
+  // d()/d[C5H5]
   dqdci = +k_f * sc[3];
-  J[1491] -= dqdci; /* dwdot[O]/d[C5H5] */
-  J[1499] += dqdci; /* dwdot[CO]/d[C5H5] */
-  J[1505] += dqdci; /* dwdot[C2H3]/d[C5H5] */
-  J[1510] += dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1519] -= dqdci; /* dwdot[C5H5]/d[C5H5] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2287] -= dqdT; /* dwdot[C5H5]/dT */
+  J[1491] -= dqdci; // dwdot[O]/d[C5H5]
+  J[1499] += dqdci; // dwdot[CO]/d[C5H5]
+  J[1505] += dqdci; // dwdot[C2H3]/d[C5H5]
+  J[1510] += dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1519] -= dqdci; // dwdot[C5H5]/d[C5H5]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2287] -= dqdT; // dwdot[C5H5]/dT
 
   /*reaction 165: C5H5 + HO2 => C2H3 + C2H2 + CO + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[31];
   k_f =
     1e-06 * 6.776e+29 * exp(-4.7 * tc[0] - 0.50321666580472 * (11658.7) * invT);
   dlnkfdT = -4.7 * invT + 0.50321666580472 * 11658.7 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[11] += q; /* CO */
-  wdot[17] += q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  wdot[31] -= q; /* C5H5 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[11] += q; // CO
+  wdot[17] += q; // C2H3
+  wdot[22] += q; // C2H2
+  wdot[31] -= q; // C5H5
+  // d()/d[HO2]
   dqdci = +k_f * sc[31];
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[443] += dqdci; /* dwdot[CO]/d[HO2] */
-  J[449] += dqdci; /* dwdot[C2H3]/d[HO2] */
-  J[454] += dqdci; /* dwdot[C2H2]/d[HO2] */
-  J[463] -= dqdci; /* dwdot[C5H5]/d[HO2] */
-  /* d()/d[C5H5] */
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[443] += dqdci; // dwdot[CO]/d[HO2]
+  J[449] += dqdci; // dwdot[C2H3]/d[HO2]
+  J[454] += dqdci; // dwdot[C2H2]/d[HO2]
+  J[463] -= dqdci; // dwdot[C5H5]/d[HO2]
+  // d()/d[C5H5]
   dqdci = +k_f * sc[9];
-  J[1494] += dqdci; /* dwdot[OH]/d[C5H5] */
-  J[1497] -= dqdci; /* dwdot[HO2]/d[C5H5] */
-  J[1499] += dqdci; /* dwdot[CO]/d[C5H5] */
-  J[1505] += dqdci; /* dwdot[C2H3]/d[C5H5] */
-  J[1510] += dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1519] -= dqdci; /* dwdot[C5H5]/d[C5H5] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2287] -= dqdT; /* dwdot[C5H5]/dT */
+  J[1494] += dqdci; // dwdot[OH]/d[C5H5]
+  J[1497] -= dqdci; // dwdot[HO2]/d[C5H5]
+  J[1499] += dqdci; // dwdot[CO]/d[C5H5]
+  J[1505] += dqdci; // dwdot[C2H3]/d[C5H5]
+  J[1510] += dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1519] -= dqdci; // dwdot[C5H5]/d[C5H5]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2287] -= dqdT; // dwdot[C5H5]/dT
 
   /*reaction 166: C5H5 + HO2 => 2.000000 C2H2 + CO + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[31];
   k_f = 1e-06 * 1.19e+33 *
         exp(-6.52 * tc[0] - 0.50321666580472 * (13401.05) * invT);
   dlnkfdT = -6.52 * invT + 0.50321666580472 * 13401.05 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[7] += q;      /* H2O */
-  wdot[9] -= q;      /* HO2 */
-  wdot[11] += q;     /* CO */
-  wdot[22] += 2 * q; /* C2H2 */
-  wdot[31] -= q;     /* C5H5 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[7] += q;      // H2O
+  wdot[9] -= q;      // HO2
+  wdot[11] += q;     // CO
+  wdot[22] += 2 * q; // C2H2
+  wdot[31] -= q;     // C5H5
+  // d()/d[HO2]
   dqdci = +k_f * sc[31];
-  J[439] += dqdci;     /* dwdot[H2O]/d[HO2] */
-  J[441] -= dqdci;     /* dwdot[HO2]/d[HO2] */
-  J[443] += dqdci;     /* dwdot[CO]/d[HO2] */
-  J[454] += 2 * dqdci; /* dwdot[C2H2]/d[HO2] */
-  J[463] -= dqdci;     /* dwdot[C5H5]/d[HO2] */
-  /* d()/d[C5H5] */
+  J[439] += dqdci;     // dwdot[H2O]/d[HO2]
+  J[441] -= dqdci;     // dwdot[HO2]/d[HO2]
+  J[443] += dqdci;     // dwdot[CO]/d[HO2]
+  J[454] += 2 * dqdci; // dwdot[C2H2]/d[HO2]
+  J[463] -= dqdci;     // dwdot[C5H5]/d[HO2]
+  // d()/d[C5H5]
   dqdci = +k_f * sc[9];
-  J[1495] += dqdci;     /* dwdot[H2O]/d[C5H5] */
-  J[1497] -= dqdci;     /* dwdot[HO2]/d[C5H5] */
-  J[1499] += dqdci;     /* dwdot[CO]/d[C5H5] */
-  J[1510] += 2 * dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1519] -= dqdci;     /* dwdot[C5H5]/d[C5H5] */
-  /* d()/dT */
-  J[2263] += dqdT;     /* dwdot[H2O]/dT */
-  J[2265] -= dqdT;     /* dwdot[HO2]/dT */
-  J[2267] += dqdT;     /* dwdot[CO]/dT */
-  J[2278] += 2 * dqdT; /* dwdot[C2H2]/dT */
-  J[2287] -= dqdT;     /* dwdot[C5H5]/dT */
+  J[1495] += dqdci;     // dwdot[H2O]/d[C5H5]
+  J[1497] -= dqdci;     // dwdot[HO2]/d[C5H5]
+  J[1499] += dqdci;     // dwdot[CO]/d[C5H5]
+  J[1510] += 2 * dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1519] -= dqdci;     // dwdot[C5H5]/d[C5H5]
+  // d()/dT
+  J[2263] += dqdT;     // dwdot[H2O]/dT
+  J[2265] -= dqdT;     // dwdot[HO2]/dT
+  J[2267] += dqdT;     // dwdot[CO]/dT
+  J[2278] += 2 * dqdT; // dwdot[C2H2]/dT
+  J[2287] -= dqdT;     // dwdot[C5H5]/dT
 
   /*reaction 167: C5H5 + OH => C2H3 + C2H2 + CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[31];
   k_f = 1e-06 * 30200000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[17] += q; /* C2H3 */
-  wdot[22] += q; /* C2H2 */
-  wdot[31] -= q; /* C5H5 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[17] += q; // C2H3
+  wdot[22] += q; // C2H2
+  wdot[31] -= q; // C5H5
+  // d()/d[OH]
   dqdci = +k_f * sc[31];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[305] += dqdci; /* dwdot[C2H3]/d[OH] */
-  J[310] += dqdci; /* dwdot[C2H2]/d[OH] */
-  J[319] -= dqdci; /* dwdot[C5H5]/d[OH] */
-  /* d()/d[C5H5] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[305] += dqdci; // dwdot[C2H3]/d[OH]
+  J[310] += dqdci; // dwdot[C2H2]/d[OH]
+  J[319] -= dqdci; // dwdot[C5H5]/d[OH]
+  // d()/d[C5H5]
   dqdci = +k_f * sc[6];
-  J[1493] += dqdci; /* dwdot[H]/d[C5H5] */
-  J[1494] -= dqdci; /* dwdot[OH]/d[C5H5] */
-  J[1499] += dqdci; /* dwdot[CO]/d[C5H5] */
-  J[1505] += dqdci; /* dwdot[C2H3]/d[C5H5] */
-  J[1510] += dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1519] -= dqdci; /* dwdot[C5H5]/d[C5H5] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2273] += dqdT; /* dwdot[C2H3]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2287] -= dqdT; /* dwdot[C5H5]/dT */
+  J[1493] += dqdci; // dwdot[H]/d[C5H5]
+  J[1494] -= dqdci; // dwdot[OH]/d[C5H5]
+  J[1499] += dqdci; // dwdot[CO]/d[C5H5]
+  J[1505] += dqdci; // dwdot[C2H3]/d[C5H5]
+  J[1510] += dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1519] -= dqdci; // dwdot[C5H5]/d[C5H5]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2273] += dqdT; // dwdot[C2H3]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2287] -= dqdT; // dwdot[C5H5]/dT
 
   /*reaction 168: C5H6 <=> C5H5 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[34];
   k_f =
     1 * 1.73e+68 * exp(-15.16 * tc[0] - 0.50321666580472 * (116371.89) * invT);
   dlnkfdT = -15.16 * invT + 0.50321666580472 * 116371.89 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[31];
   Kc = refC * exp(-g_RT[5] - g_RT[31] + g_RT[34]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[34]) + (h_RT[5] + h_RT[31]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[31] += q; /* C5H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[31] += q; // C5H5
+  wdot[34] -= q; // C5H6
+  // d()/d[H]
   dqdci = -k_r * sc[31];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[271] += dqdci; /* dwdot[C5H5]/d[H] */
-  J[274] -= dqdci; /* dwdot[C5H6]/d[H] */
-  /* d()/d[C5H5] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[271] += dqdci; // dwdot[C5H5]/d[H]
+  J[274] -= dqdci; // dwdot[C5H6]/d[H]
+  // d()/d[C5H5]
   dqdci = -k_r * sc[5];
-  J[1493] += dqdci; /* dwdot[H]/d[C5H5] */
-  J[1519] += dqdci; /* dwdot[C5H5]/d[C5H5] */
-  J[1522] -= dqdci; /* dwdot[C5H6]/d[C5H5] */
-  /* d()/d[C5H6] */
+  J[1493] += dqdci; // dwdot[H]/d[C5H5]
+  J[1519] += dqdci; // dwdot[C5H5]/d[C5H5]
+  J[1522] -= dqdci; // dwdot[C5H6]/d[C5H5]
+  // d()/d[C5H6]
   dqdci = +k_f;
-  J[1637] += dqdci; /* dwdot[H]/d[C5H6] */
-  J[1663] += dqdci; /* dwdot[C5H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1637] += dqdci; // dwdot[H]/d[C5H6]
+  J[1663] += dqdci; // dwdot[C5H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 169: C5H6 + H => C5H5 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[34];
   k_f = 1e-06 * 28000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (2258.6) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 2258.6 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[31] += q; /* C5H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[31] += q; // C5H5
+  wdot[34] -= q; // C5H6
+  // d()/d[H]
   dqdci = +k_f * sc[34];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[271] += dqdci; /* dwdot[C5H5]/d[H] */
-  J[274] -= dqdci; /* dwdot[C5H6]/d[H] */
-  /* d()/d[C5H6] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[271] += dqdci; // dwdot[C5H5]/d[H]
+  J[274] -= dqdci; // dwdot[C5H6]/d[H]
+  // d()/d[C5H6]
   dqdci = +k_f * sc[5];
-  J[1636] += dqdci; /* dwdot[H2]/d[C5H6] */
-  J[1637] -= dqdci; /* dwdot[H]/d[C5H6] */
-  J[1663] += dqdci; /* dwdot[C5H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1636] += dqdci; // dwdot[H2]/d[C5H6]
+  J[1637] -= dqdci; // dwdot[H]/d[C5H6]
+  J[1663] += dqdci; // dwdot[C5H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 170: C5H6 + H => A-C3H5 + C2H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[34];
   k_f = 1e-06 * 660000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (12344.65) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 12344.65 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[22] += q; /* C2H2 */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[22] += q; // C2H2
+  wdot[24] += q; // A-C3H5
+  wdot[34] -= q; // C5H6
+  // d()/d[H]
   dqdci = +k_f * sc[34];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[262] += dqdci; /* dwdot[C2H2]/d[H] */
-  J[264] += dqdci; /* dwdot[A-C3H5]/d[H] */
-  J[274] -= dqdci; /* dwdot[C5H6]/d[H] */
-  /* d()/d[C5H6] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[262] += dqdci; // dwdot[C2H2]/d[H]
+  J[264] += dqdci; // dwdot[A-C3H5]/d[H]
+  J[274] -= dqdci; // dwdot[C5H6]/d[H]
+  // d()/d[C5H6]
   dqdci = +k_f * sc[5];
-  J[1637] -= dqdci; /* dwdot[H]/d[C5H6] */
-  J[1654] += dqdci; /* dwdot[C2H2]/d[C5H6] */
-  J[1656] += dqdci; /* dwdot[A-C3H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1637] -= dqdci; // dwdot[H]/d[C5H6]
+  J[1654] += dqdci; // dwdot[C2H2]/d[C5H6]
+  J[1656] += dqdci; // dwdot[A-C3H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 171: C5H6 + O => C5H5 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[34];
   k_f = 1e-06 * 47700 * exp(2.71 * tc[0] - 0.50321666580472 * (1106.6) * invT);
   dlnkfdT = 2.71 * invT + 0.50321666580472 * 1106.6 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[31] += q; /* C5H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[31] += q; // C5H5
+  wdot[34] -= q; // C5H6
+  // d()/d[O]
   dqdci = +k_f * sc[34];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[175] += dqdci; /* dwdot[C5H5]/d[O] */
-  J[178] -= dqdci; /* dwdot[C5H6]/d[O] */
-  /* d()/d[C5H6] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[175] += dqdci; // dwdot[C5H5]/d[O]
+  J[178] -= dqdci; // dwdot[C5H6]/d[O]
+  // d()/d[C5H6]
   dqdci = +k_f * sc[3];
-  J[1635] -= dqdci; /* dwdot[O]/d[C5H6] */
-  J[1638] += dqdci; /* dwdot[OH]/d[C5H6] */
-  J[1663] += dqdci; /* dwdot[C5H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1635] -= dqdci; // dwdot[O]/d[C5H6]
+  J[1638] += dqdci; // dwdot[OH]/d[C5H6]
+  J[1663] += dqdci; // dwdot[C5H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 172: C5H6 + OH => C5H5 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[34];
   k_f = 1e-06 * 3080000 * exp(2 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 2 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[31] += q; /* C5H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[31] += q; // C5H5
+  wdot[34] -= q; // C5H6
+  // d()/d[OH]
   dqdci = +k_f * sc[34];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[319] += dqdci; /* dwdot[C5H5]/d[OH] */
-  J[322] -= dqdci; /* dwdot[C5H6]/d[OH] */
-  /* d()/d[C5H6] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[319] += dqdci; // dwdot[C5H5]/d[OH]
+  J[322] -= dqdci; // dwdot[C5H6]/d[OH]
+  // d()/d[C5H6]
   dqdci = +k_f * sc[6];
-  J[1638] -= dqdci; /* dwdot[OH]/d[C5H6] */
-  J[1639] += dqdci; /* dwdot[H2O]/d[C5H6] */
-  J[1663] += dqdci; /* dwdot[C5H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1638] -= dqdci; // dwdot[OH]/d[C5H6]
+  J[1639] += dqdci; // dwdot[H2O]/d[C5H6]
+  J[1663] += dqdci; // dwdot[C5H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 173: C5H6 + CH3 => C5H5 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[34];
   k_f = 1e-06 * 0.18 * exp(4 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 4 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[31] += q; /* C5H5 */
-  wdot[34] -= q; /* C5H6 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[31] += q; // C5H5
+  wdot[34] -= q; // C5H6
+  // d()/d[CH3]
   dqdci = +k_f * sc[34];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[703] += dqdci; /* dwdot[C5H5]/d[CH3] */
-  J[706] -= dqdci; /* dwdot[C5H6]/d[CH3] */
-  /* d()/d[C5H6] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[703] += dqdci; // dwdot[C5H5]/d[CH3]
+  J[706] -= dqdci; // dwdot[C5H6]/d[CH3]
+  // d()/d[C5H6]
   dqdci = +k_f * sc[14];
-  J[1646] -= dqdci; /* dwdot[CH3]/d[C5H6] */
-  J[1648] += dqdci; /* dwdot[CH4]/d[C5H6] */
-  J[1663] += dqdci; /* dwdot[C5H5]/d[C5H6] */
-  J[1666] -= dqdci; /* dwdot[C5H6]/d[C5H6] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2290] -= dqdT; /* dwdot[C5H6]/dT */
+  J[1646] -= dqdci; // dwdot[CH3]/d[C5H6]
+  J[1648] += dqdci; // dwdot[CH4]/d[C5H6]
+  J[1663] += dqdci; // dwdot[C5H5]/d[C5H6]
+  J[1666] -= dqdci; // dwdot[C5H6]/d[C5H6]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2290] -= dqdT; // dwdot[C5H6]/dT
 
   /*reaction 174: C5H10 + H => C5H11 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[36];
   k_f = 1e-06 * 7100000000000 *
         exp(0.12 * tc[0] - 0.50321666580472 * (1460.33) * invT);
   dlnkfdT = 0.12 * invT + 0.50321666580472 * 1460.33 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[36] -= q; /* C5H10 */
-  wdot[37] += q; /* C5H11 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[36] -= q; // C5H10
+  wdot[37] += q; // C5H11
+  // d()/d[H]
   dqdci = +k_f * sc[36];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[276] -= dqdci; /* dwdot[C5H10]/d[H] */
-  J[277] += dqdci; /* dwdot[C5H11]/d[H] */
-  /* d()/d[C5H10] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[276] -= dqdci; // dwdot[C5H10]/d[H]
+  J[277] += dqdci; // dwdot[C5H11]/d[H]
+  // d()/d[C5H10]
   dqdci = +k_f * sc[5];
-  J[1733] -= dqdci; /* dwdot[H]/d[C5H10] */
-  J[1764] -= dqdci; /* dwdot[C5H10]/d[C5H10] */
-  J[1765] += dqdci; /* dwdot[C5H11]/d[C5H10] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2292] -= dqdT; /* dwdot[C5H10]/dT */
-  J[2293] += dqdT; /* dwdot[C5H11]/dT */
+  J[1733] -= dqdci; // dwdot[H]/d[C5H10]
+  J[1764] -= dqdci; // dwdot[C5H10]/d[C5H10]
+  J[1765] += dqdci; // dwdot[C5H11]/d[C5H10]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2292] -= dqdT; // dwdot[C5H10]/dT
+  J[2293] += dqdT; // dwdot[C5H11]/dT
 
   /*reaction 175: C5H10 => C2H5 + A-C3H5 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[36];
   k_f =
     1 * 9.17e+20 * exp(-1.63 * tc[0] - 0.50321666580472 * (73989.01) * invT);
   dlnkfdT = -1.63 * invT + 0.50321666580472 * 73989.01 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[19] += q; /* C2H5 */
-  wdot[24] += q; /* A-C3H5 */
-  wdot[36] -= q; /* C5H10 */
-  /* d()/d[C5H10] */
+  // update wdot
+  wdot[19] += q; // C2H5
+  wdot[24] += q; // A-C3H5
+  wdot[36] -= q; // C5H10
+  // d()/d[C5H10]
   dqdci = +k_f;
-  J[1747] += dqdci; /* dwdot[C2H5]/d[C5H10] */
-  J[1752] += dqdci; /* dwdot[A-C3H5]/d[C5H10] */
-  J[1764] -= dqdci; /* dwdot[C5H10]/d[C5H10] */
-  /* d()/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2280] += dqdT; /* dwdot[A-C3H5]/dT */
-  J[2292] -= dqdT; /* dwdot[C5H10]/dT */
+  J[1747] += dqdci; // dwdot[C2H5]/d[C5H10]
+  J[1752] += dqdci; // dwdot[A-C3H5]/d[C5H10]
+  J[1764] -= dqdci; // dwdot[C5H10]/d[C5H10]
+  // d()/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2280] += dqdT; // dwdot[A-C3H5]/dT
+  J[2292] -= dqdT; // dwdot[C5H10]/dT
 
   /*reaction 176: C5H11 => C2H4 + N-C3H7 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[37];
   k_f =
     1 * 7.46e+21 * exp(-2.61 * tc[0] - 0.50321666580472 * (32026.77) * invT);
   dlnkfdT = -2.61 * invT + 0.50321666580472 * 32026.77 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[18] += q; /* C2H4 */
-  wdot[25] += q; /* N-C3H7 */
-  wdot[37] -= q; /* C5H11 */
-  /* d()/d[C5H11] */
+  // update wdot
+  wdot[18] += q; // C2H4
+  wdot[25] += q; // N-C3H7
+  wdot[37] -= q; // C5H11
+  // d()/d[C5H11]
   dqdci = +k_f;
-  J[1794] += dqdci; /* dwdot[C2H4]/d[C5H11] */
-  J[1801] += dqdci; /* dwdot[N-C3H7]/d[C5H11] */
-  J[1813] -= dqdci; /* dwdot[C5H11]/d[C5H11] */
-  /* d()/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2281] += dqdT; /* dwdot[N-C3H7]/dT */
-  J[2293] -= dqdT; /* dwdot[C5H11]/dT */
+  J[1794] += dqdci; // dwdot[C2H4]/d[C5H11]
+  J[1801] += dqdci; // dwdot[N-C3H7]/d[C5H11]
+  J[1813] -= dqdci; // dwdot[C5H11]/d[C5H11]
+  // d()/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2281] += dqdT; // dwdot[N-C3H7]/dT
+  J[2293] -= dqdT; // dwdot[C5H11]/dT
 
   /*reaction 177: C5H11 => H + C5H10 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[37];
   k_f = 1 * 846000000000000 *
         exp(-0.47 * tc[0] - 0.50321666580472 * (37617.11) * invT);
   dlnkfdT = -0.47 * invT + 0.50321666580472 * 37617.11 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[36] += q; /* C5H10 */
-  wdot[37] -= q; /* C5H11 */
-  /* d()/d[C5H11] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[36] += q; // C5H10
+  wdot[37] -= q; // C5H11
+  // d()/d[C5H11]
   dqdci = +k_f;
-  J[1781] += dqdci; /* dwdot[H]/d[C5H11] */
-  J[1812] += dqdci; /* dwdot[C5H10]/d[C5H11] */
-  J[1813] -= dqdci; /* dwdot[C5H11]/d[C5H11] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2292] += dqdT; /* dwdot[C5H10]/dT */
-  J[2293] -= dqdT; /* dwdot[C5H11]/dT */
+  J[1781] += dqdci; // dwdot[H]/d[C5H11]
+  J[1812] += dqdci; // dwdot[C5H10]/d[C5H11]
+  J[1813] -= dqdci; // dwdot[C5H11]/d[C5H11]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2292] += dqdT; // dwdot[C5H10]/dT
+  J[2293] -= dqdT; // dwdot[C5H11]/dT
 
   /*reaction 178: C5H11 => C3H6 + C2H5 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[37];
   k_f = 1 * 3.15e-19 * exp(8.84 * tc[0] - 0.50321666580472 * (7105.64) * invT);
   dlnkfdT = 8.84 * invT + 0.50321666580472 * 7105.64 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[19] += q; /* C2H5 */
-  wdot[32] += q; /* C3H6 */
-  wdot[37] -= q; /* C5H11 */
-  /* d()/d[C5H11] */
+  // update wdot
+  wdot[19] += q; // C2H5
+  wdot[32] += q; // C3H6
+  wdot[37] -= q; // C5H11
+  // d()/d[C5H11]
   dqdci = +k_f;
-  J[1795] += dqdci; /* dwdot[C2H5]/d[C5H11] */
-  J[1808] += dqdci; /* dwdot[C3H6]/d[C5H11] */
-  J[1813] -= dqdci; /* dwdot[C5H11]/d[C5H11] */
-  /* d()/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2288] += dqdT; /* dwdot[C3H6]/dT */
-  J[2293] -= dqdT; /* dwdot[C5H11]/dT */
+  J[1795] += dqdci; // dwdot[C2H5]/d[C5H11]
+  J[1808] += dqdci; // dwdot[C3H6]/d[C5H11]
+  J[1813] -= dqdci; // dwdot[C5H11]/d[C5H11]
+  // d()/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2288] += dqdT; // dwdot[C3H6]/dT
+  J[2293] -= dqdT; // dwdot[C5H11]/dT
 
   /*reaction 179: A1- + O2 => C5H5 + CO + O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[30];
   k_f = 1e-06 * 26000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (6120.94) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 6120.94 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] += q;  /* O */
-  wdot[8] -= q;  /* O2 */
-  wdot[11] += q; /* CO */
-  wdot[30] -= q; /* A1- */
-  wdot[31] += q; /* C5H5 */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[3] += q;  // O
+  wdot[8] -= q;  // O2
+  wdot[11] += q; // CO
+  wdot[30] -= q; // A1-
+  wdot[31] += q; // C5H5
+  // d()/d[O2]
   dqdci = +k_f * sc[30];
-  J[387] += dqdci; /* dwdot[O]/d[O2] */
-  J[392] -= dqdci; /* dwdot[O2]/d[O2] */
-  J[395] += dqdci; /* dwdot[CO]/d[O2] */
-  J[414] -= dqdci; /* dwdot[A1-]/d[O2] */
-  J[415] += dqdci; /* dwdot[C5H5]/d[O2] */
-  /* d()/d[A1-] */
+  J[387] += dqdci; // dwdot[O]/d[O2]
+  J[392] -= dqdci; // dwdot[O2]/d[O2]
+  J[395] += dqdci; // dwdot[CO]/d[O2]
+  J[414] -= dqdci; // dwdot[A1-]/d[O2]
+  J[415] += dqdci; // dwdot[C5H5]/d[O2]
+  // d()/d[A1-]
   dqdci = +k_f * sc[8];
-  J[1443] += dqdci; /* dwdot[O]/d[A1-] */
-  J[1448] -= dqdci; /* dwdot[O2]/d[A1-] */
-  J[1451] += dqdci; /* dwdot[CO]/d[A1-] */
-  J[1470] -= dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1471] += dqdci; /* dwdot[C5H5]/d[A1-] */
-  /* d()/dT */
-  J[2259] += dqdT; /* dwdot[O]/dT */
-  J[2264] -= dqdT; /* dwdot[O2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2286] -= dqdT; /* dwdot[A1-]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
+  J[1443] += dqdci; // dwdot[O]/d[A1-]
+  J[1448] -= dqdci; // dwdot[O2]/d[A1-]
+  J[1451] += dqdci; // dwdot[CO]/d[A1-]
+  J[1470] -= dqdci; // dwdot[A1-]/d[A1-]
+  J[1471] += dqdci; // dwdot[C5H5]/d[A1-]
+  // d()/dT
+  J[2259] += dqdT; // dwdot[O]/dT
+  J[2264] -= dqdT; // dwdot[O2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2286] -= dqdT; // dwdot[A1-]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
 
   /*reaction 180: A1- + O2 => 2.000000 CO + 2.000000 C2H2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[8] * sc[30];
   k_f = 1e-06 * 30000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (8979.45) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 8979.45 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;      /* H */
-  wdot[8] -= q;      /* O2 */
-  wdot[11] += 2 * q; /* CO */
-  wdot[22] += 2 * q; /* C2H2 */
-  wdot[30] -= q;     /* A1- */
-  /* d()/d[O2] */
+  // update wdot
+  wdot[5] += q;      // H
+  wdot[8] -= q;      // O2
+  wdot[11] += 2 * q; // CO
+  wdot[22] += 2 * q; // C2H2
+  wdot[30] -= q;     // A1-
+  // d()/d[O2]
   dqdci = +k_f * sc[30];
-  J[389] += dqdci;     /* dwdot[H]/d[O2] */
-  J[392] -= dqdci;     /* dwdot[O2]/d[O2] */
-  J[395] += 2 * dqdci; /* dwdot[CO]/d[O2] */
-  J[406] += 2 * dqdci; /* dwdot[C2H2]/d[O2] */
-  J[414] -= dqdci;     /* dwdot[A1-]/d[O2] */
-  /* d()/d[A1-] */
+  J[389] += dqdci;     // dwdot[H]/d[O2]
+  J[392] -= dqdci;     // dwdot[O2]/d[O2]
+  J[395] += 2 * dqdci; // dwdot[CO]/d[O2]
+  J[406] += 2 * dqdci; // dwdot[C2H2]/d[O2]
+  J[414] -= dqdci;     // dwdot[A1-]/d[O2]
+  // d()/d[A1-]
   dqdci = +k_f * sc[8];
-  J[1445] += dqdci;     /* dwdot[H]/d[A1-] */
-  J[1448] -= dqdci;     /* dwdot[O2]/d[A1-] */
-  J[1451] += 2 * dqdci; /* dwdot[CO]/d[A1-] */
-  J[1462] += 2 * dqdci; /* dwdot[C2H2]/d[A1-] */
-  J[1470] -= dqdci;     /* dwdot[A1-]/d[A1-] */
-  /* d()/dT */
-  J[2261] += dqdT;     /* dwdot[H]/dT */
-  J[2264] -= dqdT;     /* dwdot[O2]/dT */
-  J[2267] += 2 * dqdT; /* dwdot[CO]/dT */
-  J[2278] += 2 * dqdT; /* dwdot[C2H2]/dT */
-  J[2286] -= dqdT;     /* dwdot[A1-]/dT */
+  J[1445] += dqdci;     // dwdot[H]/d[A1-]
+  J[1448] -= dqdci;     // dwdot[O2]/d[A1-]
+  J[1451] += 2 * dqdci; // dwdot[CO]/d[A1-]
+  J[1462] += 2 * dqdci; // dwdot[C2H2]/d[A1-]
+  J[1470] -= dqdci;     // dwdot[A1-]/d[A1-]
+  // d()/dT
+  J[2261] += dqdT;     // dwdot[H]/dT
+  J[2264] -= dqdT;     // dwdot[O2]/dT
+  J[2267] += 2 * dqdT; // dwdot[CO]/dT
+  J[2278] += 2 * dqdT; // dwdot[C2H2]/dT
+  J[2286] -= dqdT;     // dwdot[A1-]/dT
 
   /*reaction 181: A1- + O => C5H5 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[30];
   k_f =
     1e-06 * 100000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[11] += q; /* CO */
-  wdot[30] -= q; /* A1- */
-  wdot[31] += q; /* C5H5 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[11] += q; // CO
+  wdot[30] -= q; // A1-
+  wdot[31] += q; // C5H5
+  // d()/d[O]
   dqdci = +k_f * sc[30];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[174] -= dqdci; /* dwdot[A1-]/d[O] */
-  J[175] += dqdci; /* dwdot[C5H5]/d[O] */
-  /* d()/d[A1-] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[174] -= dqdci; // dwdot[A1-]/d[O]
+  J[175] += dqdci; // dwdot[C5H5]/d[O]
+  // d()/d[A1-]
   dqdci = +k_f * sc[3];
-  J[1443] -= dqdci; /* dwdot[O]/d[A1-] */
-  J[1451] += dqdci; /* dwdot[CO]/d[A1-] */
-  J[1470] -= dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1471] += dqdci; /* dwdot[C5H5]/d[A1-] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2286] -= dqdT; /* dwdot[A1-]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
+  J[1443] -= dqdci; // dwdot[O]/d[A1-]
+  J[1451] += dqdci; // dwdot[CO]/d[A1-]
+  J[1470] -= dqdci; // dwdot[A1-]/d[A1-]
+  J[1471] += dqdci; // dwdot[C5H5]/d[A1-]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2286] -= dqdT; // dwdot[A1-]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
 
   /*reaction 182: A1- + OH => C5H6 + CO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[30];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[30] -= q; /* A1- */
-  wdot[34] += q; /* C5H6 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[30] -= q; // A1-
+  wdot[34] += q; // C5H6
+  // d()/d[OH]
   dqdci = +k_f * sc[30];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[318] -= dqdci; /* dwdot[A1-]/d[OH] */
-  J[322] += dqdci; /* dwdot[C5H6]/d[OH] */
-  /* d()/d[A1-] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[318] -= dqdci; // dwdot[A1-]/d[OH]
+  J[322] += dqdci; // dwdot[C5H6]/d[OH]
+  // d()/d[A1-]
   dqdci = +k_f * sc[6];
-  J[1446] -= dqdci; /* dwdot[OH]/d[A1-] */
-  J[1451] += dqdci; /* dwdot[CO]/d[A1-] */
-  J[1470] -= dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1474] += dqdci; /* dwdot[C5H6]/d[A1-] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2286] -= dqdT; /* dwdot[A1-]/dT */
-  J[2290] += dqdT; /* dwdot[C5H6]/dT */
+  J[1446] -= dqdci; // dwdot[OH]/d[A1-]
+  J[1451] += dqdci; // dwdot[CO]/d[A1-]
+  J[1470] -= dqdci; // dwdot[A1-]/d[A1-]
+  J[1474] += dqdci; // dwdot[C5H6]/d[A1-]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2286] -= dqdT; // dwdot[A1-]/dT
+  J[2290] += dqdT; // dwdot[C5H6]/dT
 
   /*reaction 183: A1- + HO2 => C5H5 + CO + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[30];
   k_f = 1e-06 * 30000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[11] += q; /* CO */
-  wdot[30] -= q; /* A1- */
-  wdot[31] += q; /* C5H5 */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[11] += q; // CO
+  wdot[30] -= q; // A1-
+  wdot[31] += q; // C5H5
+  // d()/d[HO2]
   dqdci = +k_f * sc[30];
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[443] += dqdci; /* dwdot[CO]/d[HO2] */
-  J[462] -= dqdci; /* dwdot[A1-]/d[HO2] */
-  J[463] += dqdci; /* dwdot[C5H5]/d[HO2] */
-  /* d()/d[A1-] */
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[443] += dqdci; // dwdot[CO]/d[HO2]
+  J[462] -= dqdci; // dwdot[A1-]/d[HO2]
+  J[463] += dqdci; // dwdot[C5H5]/d[HO2]
+  // d()/d[A1-]
   dqdci = +k_f * sc[9];
-  J[1446] += dqdci; /* dwdot[OH]/d[A1-] */
-  J[1449] -= dqdci; /* dwdot[HO2]/d[A1-] */
-  J[1451] += dqdci; /* dwdot[CO]/d[A1-] */
-  J[1470] -= dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1471] += dqdci; /* dwdot[C5H5]/d[A1-] */
-  /* d()/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2286] -= dqdT; /* dwdot[A1-]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
+  J[1446] += dqdci; // dwdot[OH]/d[A1-]
+  J[1449] -= dqdci; // dwdot[HO2]/d[A1-]
+  J[1451] += dqdci; // dwdot[CO]/d[A1-]
+  J[1470] -= dqdci; // dwdot[A1-]/d[A1-]
+  J[1471] += dqdci; // dwdot[C5H5]/d[A1-]
+  // d()/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2286] -= dqdT; // dwdot[A1-]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
 
   /*reaction 184: A1- + C2H2 <=> A1C2H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[22] * sc[30];
   k_f =
     1e-06 * 3290000 * exp(2.05 * tc[0] - 0.50321666580472 * (3162.05) * invT);
   dlnkfdT = 2.05 * invT + 0.50321666580472 * 3162.05 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[38];
   Kc = refCinv * exp(g_RT[22] + g_RT[30] - g_RT[38]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[22] + h_RT[30]) + (h_RT[38]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[22] -= q; /* C2H2 */
-  wdot[30] -= q; /* A1- */
-  wdot[38] += q; /* A1C2H2 */
-  /* d()/d[C2H2] */
+  // update wdot
+  wdot[22] -= q; // C2H2
+  wdot[30] -= q; // A1-
+  wdot[38] += q; // A1C2H2
+  // d()/d[C2H2]
   dqdci = +k_f * sc[30];
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1086] -= dqdci; /* dwdot[A1-]/d[C2H2] */
-  J[1094] += dqdci; /* dwdot[A1C2H2]/d[C2H2] */
-  /* d()/d[A1-] */
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1086] -= dqdci; // dwdot[A1-]/d[C2H2]
+  J[1094] += dqdci; // dwdot[A1C2H2]/d[C2H2]
+  // d()/d[A1-]
   dqdci = +k_f * sc[22];
-  J[1462] -= dqdci; /* dwdot[C2H2]/d[A1-] */
-  J[1470] -= dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1478] += dqdci; /* dwdot[A1C2H2]/d[A1-] */
-  /* d()/d[A1C2H2] */
+  J[1462] -= dqdci; // dwdot[C2H2]/d[A1-]
+  J[1470] -= dqdci; // dwdot[A1-]/d[A1-]
+  J[1478] += dqdci; // dwdot[A1C2H2]/d[A1-]
+  // d()/d[A1C2H2]
   dqdci = -k_r;
-  J[1846] -= dqdci; /* dwdot[C2H2]/d[A1C2H2] */
-  J[1854] -= dqdci; /* dwdot[A1-]/d[A1C2H2] */
-  J[1862] += dqdci; /* dwdot[A1C2H2]/d[A1C2H2] */
-  /* d()/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2286] -= dqdT; /* dwdot[A1-]/dT */
-  J[2294] += dqdT; /* dwdot[A1C2H2]/dT */
+  J[1846] -= dqdci; // dwdot[C2H2]/d[A1C2H2]
+  J[1854] -= dqdci; // dwdot[A1-]/d[A1C2H2]
+  J[1862] += dqdci; // dwdot[A1C2H2]/d[A1C2H2]
+  // d()/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2286] -= dqdT; // dwdot[A1-]/dT
+  J[2294] += dqdT; // dwdot[A1C2H2]/dT
 
   /*reaction 185: A1 <=> A1- + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[29];
   k_f =
     1 * 1.29e+61 * exp(-12.48 * tc[0] - 0.50321666580472 * (148085.56) * invT);
   dlnkfdT = -12.48 * invT + 0.50321666580472 * 148085.56 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[30];
   Kc = refC * exp(-g_RT[5] + g_RT[29] - g_RT[30]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[29]) + (h_RT[5] + h_RT[30]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[29] -= q; /* A1 */
-  wdot[30] += q; /* A1- */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[29] -= q; // A1
+  wdot[30] += q; // A1-
+  // d()/d[H]
   dqdci = -k_r * sc[30];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[269] -= dqdci; /* dwdot[A1]/d[H] */
-  J[270] += dqdci; /* dwdot[A1-]/d[H] */
-  /* d()/d[A1] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[269] -= dqdci; // dwdot[A1]/d[H]
+  J[270] += dqdci; // dwdot[A1-]/d[H]
+  // d()/d[A1]
   dqdci = +k_f;
-  J[1397] += dqdci; /* dwdot[H]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1422] += dqdci; /* dwdot[A1-]/d[A1] */
-  /* d()/d[A1-] */
+  J[1397] += dqdci; // dwdot[H]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1422] += dqdci; // dwdot[A1-]/d[A1]
+  // d()/d[A1-]
   dqdci = -k_r * sc[5];
-  J[1445] += dqdci; /* dwdot[H]/d[A1-] */
-  J[1469] -= dqdci; /* dwdot[A1]/d[A1-] */
-  J[1470] += dqdci; /* dwdot[A1-]/d[A1-] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
+  J[1445] += dqdci; // dwdot[H]/d[A1-]
+  J[1469] -= dqdci; // dwdot[A1]/d[A1-]
+  J[1470] += dqdci; // dwdot[A1-]/d[A1-]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
 
   /*reaction 186: A1 + H => A1- + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[29];
   k_f =
     1e-06 * 602000000 * exp(1.8 * tc[0] - 0.50321666580472 * (16352.77) * invT);
   dlnkfdT = 1.8 * invT + 0.50321666580472 * 16352.77 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[29] -= q; /* A1 */
-  wdot[30] += q; /* A1- */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[29] -= q; // A1
+  wdot[30] += q; // A1-
+  // d()/d[H]
   dqdci = +k_f * sc[29];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[269] -= dqdci; /* dwdot[A1]/d[H] */
-  J[270] += dqdci; /* dwdot[A1-]/d[H] */
-  /* d()/d[A1] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[269] -= dqdci; // dwdot[A1]/d[H]
+  J[270] += dqdci; // dwdot[A1-]/d[H]
+  // d()/d[A1]
   dqdci = +k_f * sc[5];
-  J[1396] += dqdci; /* dwdot[H2]/d[A1] */
-  J[1397] -= dqdci; /* dwdot[H]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1422] += dqdci; /* dwdot[A1-]/d[A1] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
+  J[1396] += dqdci; // dwdot[H2]/d[A1]
+  J[1397] -= dqdci; // dwdot[H]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1422] += dqdci; // dwdot[A1-]/d[A1]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
 
   /*reaction 187: A1 + OH => A1- + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[29];
   k_f = 1e-06 * 403 * exp(3.33 * tc[0] - 0.50321666580472 * (1455.54) * invT);
   dlnkfdT = 3.33 * invT + 0.50321666580472 * 1455.54 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[29] -= q; /* A1 */
-  wdot[30] += q; /* A1- */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[29] -= q; // A1
+  wdot[30] += q; // A1-
+  // d()/d[OH]
   dqdci = +k_f * sc[29];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[317] -= dqdci; /* dwdot[A1]/d[OH] */
-  J[318] += dqdci; /* dwdot[A1-]/d[OH] */
-  /* d()/d[A1] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[317] -= dqdci; // dwdot[A1]/d[OH]
+  J[318] += dqdci; // dwdot[A1-]/d[OH]
+  // d()/d[A1]
   dqdci = +k_f * sc[6];
-  J[1398] -= dqdci; /* dwdot[OH]/d[A1] */
-  J[1399] += dqdci; /* dwdot[H2O]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1422] += dqdci; /* dwdot[A1-]/d[A1] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
+  J[1398] -= dqdci; // dwdot[OH]/d[A1]
+  J[1399] += dqdci; // dwdot[H2O]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1422] += dqdci; // dwdot[A1-]/d[A1]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
 
   /*reaction 188: A1 + CH3 => A1- + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[29];
   k_f =
     1e-06 * 0.02752 * exp(4.46 * tc[0] - 0.50321666580472 * (13637.67) * invT);
   dlnkfdT = 4.46 * invT + 0.50321666580472 * 13637.67 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[29] -= q; /* A1 */
-  wdot[30] += q; /* A1- */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[29] -= q; // A1
+  wdot[30] += q; // A1-
+  // d()/d[CH3]
   dqdci = +k_f * sc[29];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[701] -= dqdci; /* dwdot[A1]/d[CH3] */
-  J[702] += dqdci; /* dwdot[A1-]/d[CH3] */
-  /* d()/d[A1] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[701] -= dqdci; // dwdot[A1]/d[CH3]
+  J[702] += dqdci; // dwdot[A1-]/d[CH3]
+  // d()/d[A1]
   dqdci = +k_f * sc[14];
-  J[1406] -= dqdci; /* dwdot[CH3]/d[A1] */
-  J[1408] += dqdci; /* dwdot[CH4]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1422] += dqdci; /* dwdot[A1-]/d[A1] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
+  J[1406] -= dqdci; // dwdot[CH3]/d[A1]
+  J[1408] += dqdci; // dwdot[CH4]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1422] += dqdci; // dwdot[A1-]/d[A1]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
 
   /*reaction 189: A1 + O => C5H5 + CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[29];
   k_f = 1e-06 * 22200000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (4531.55) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 4531.55 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[29] -= q; /* A1 */
-  wdot[31] += q; /* C5H5 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[11] += q; // CO
+  wdot[29] -= q; // A1
+  wdot[31] += q; // C5H5
+  // d()/d[O]
   dqdci = +k_f * sc[29];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[155] += dqdci; /* dwdot[CO]/d[O] */
-  J[173] -= dqdci; /* dwdot[A1]/d[O] */
-  J[175] += dqdci; /* dwdot[C5H5]/d[O] */
-  /* d()/d[A1] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[155] += dqdci; // dwdot[CO]/d[O]
+  J[173] -= dqdci; // dwdot[A1]/d[O]
+  J[175] += dqdci; // dwdot[C5H5]/d[O]
+  // d()/d[A1]
   dqdci = +k_f * sc[3];
-  J[1395] -= dqdci; /* dwdot[O]/d[A1] */
-  J[1397] += dqdci; /* dwdot[H]/d[A1] */
-  J[1403] += dqdci; /* dwdot[CO]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1423] += dqdci; /* dwdot[C5H5]/d[A1] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
+  J[1395] -= dqdci; // dwdot[O]/d[A1]
+  J[1397] += dqdci; // dwdot[H]/d[A1]
+  J[1403] += dqdci; // dwdot[CO]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1423] += dqdci; // dwdot[C5H5]/d[A1]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
 
   /*reaction 190: A1 + OH => C5H6 + CO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[29];
   k_f = 1e-06 * 132 * exp(3.25 * tc[0] - 0.50321666580472 * (5590.34) * invT);
   dlnkfdT = 3.25 * invT + 0.50321666580472 * 5590.34 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] -= q;  /* OH */
-  wdot[11] += q; /* CO */
-  wdot[29] -= q; /* A1 */
-  wdot[34] += q; /* C5H6 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] -= q;  // OH
+  wdot[11] += q; // CO
+  wdot[29] -= q; // A1
+  wdot[34] += q; // C5H6
+  // d()/d[OH]
   dqdci = +k_f * sc[29];
-  J[293] += dqdci; /* dwdot[H]/d[OH] */
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[299] += dqdci; /* dwdot[CO]/d[OH] */
-  J[317] -= dqdci; /* dwdot[A1]/d[OH] */
-  J[322] += dqdci; /* dwdot[C5H6]/d[OH] */
-  /* d()/d[A1] */
+  J[293] += dqdci; // dwdot[H]/d[OH]
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[299] += dqdci; // dwdot[CO]/d[OH]
+  J[317] -= dqdci; // dwdot[A1]/d[OH]
+  J[322] += dqdci; // dwdot[C5H6]/d[OH]
+  // d()/d[A1]
   dqdci = +k_f * sc[6];
-  J[1397] += dqdci; /* dwdot[H]/d[A1] */
-  J[1398] -= dqdci; /* dwdot[OH]/d[A1] */
-  J[1403] += dqdci; /* dwdot[CO]/d[A1] */
-  J[1421] -= dqdci; /* dwdot[A1]/d[A1] */
-  J[1426] += dqdci; /* dwdot[C5H6]/d[A1] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2285] -= dqdT; /* dwdot[A1]/dT */
-  J[2290] += dqdT; /* dwdot[C5H6]/dT */
+  J[1397] += dqdci; // dwdot[H]/d[A1]
+  J[1398] -= dqdci; // dwdot[OH]/d[A1]
+  J[1403] += dqdci; // dwdot[CO]/d[A1]
+  J[1421] -= dqdci; // dwdot[A1]/d[A1]
+  J[1426] += dqdci; // dwdot[C5H6]/d[A1]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2285] -= dqdT; // dwdot[A1]/dT
+  J[2290] += dqdT; // dwdot[C5H6]/dT
 
   /*reaction 191: A1CH2 <=> C5H5 + C2H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[39];
   k_f =
     1 * 820000000000000 * exp(0 * tc[0] - 0.50321666580472 * (80676.39) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 80676.39 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[22] * sc[31];
   Kc = refC * exp(-g_RT[22] - g_RT[31] + g_RT[39]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[39]) + (h_RT[22] + h_RT[31]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[22] += q; /* C2H2 */
-  wdot[31] += q; /* C5H5 */
-  wdot[39] -= q; /* A1CH2 */
-  /* d()/d[C2H2] */
+  // update wdot
+  wdot[22] += q; // C2H2
+  wdot[31] += q; // C5H5
+  wdot[39] -= q; // A1CH2
+  // d()/d[C2H2]
   dqdci = -k_r * sc[31];
-  J[1078] += dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1087] += dqdci; /* dwdot[C5H5]/d[C2H2] */
-  J[1095] -= dqdci; /* dwdot[A1CH2]/d[C2H2] */
-  /* d()/d[C5H5] */
+  J[1078] += dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1087] += dqdci; // dwdot[C5H5]/d[C2H2]
+  J[1095] -= dqdci; // dwdot[A1CH2]/d[C2H2]
+  // d()/d[C5H5]
   dqdci = -k_r * sc[22];
-  J[1510] += dqdci; /* dwdot[C2H2]/d[C5H5] */
-  J[1519] += dqdci; /* dwdot[C5H5]/d[C5H5] */
-  J[1527] -= dqdci; /* dwdot[A1CH2]/d[C5H5] */
-  /* d()/d[A1CH2] */
+  J[1510] += dqdci; // dwdot[C2H2]/d[C5H5]
+  J[1519] += dqdci; // dwdot[C5H5]/d[C5H5]
+  J[1527] -= dqdci; // dwdot[A1CH2]/d[C5H5]
+  // d()/d[A1CH2]
   dqdci = +k_f;
-  J[1894] += dqdci; /* dwdot[C2H2]/d[A1CH2] */
-  J[1903] += dqdci; /* dwdot[C5H5]/d[A1CH2] */
-  J[1911] -= dqdci; /* dwdot[A1CH2]/d[A1CH2] */
-  /* d()/dT */
-  J[2278] += dqdT; /* dwdot[C2H2]/dT */
-  J[2287] += dqdT; /* dwdot[C5H5]/dT */
-  J[2295] -= dqdT; /* dwdot[A1CH2]/dT */
+  J[1894] += dqdci; // dwdot[C2H2]/d[A1CH2]
+  J[1903] += dqdci; // dwdot[C5H5]/d[A1CH2]
+  J[1911] -= dqdci; // dwdot[A1CH2]/d[A1CH2]
+  // d()/dT
+  J[2278] += dqdT; // dwdot[C2H2]/dT
+  J[2287] += dqdT; // dwdot[C5H5]/dT
+  J[2295] -= dqdT; // dwdot[A1CH2]/dT
 
   /*reaction 192: A1CH2 + H <=> A1- + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[39];
   k_f = 1e-06 * 5.83e+67 *
         exp(-14.15 * tc[0] - 0.50321666580472 * (68329.35) * invT);
   dlnkfdT = -14.15 * invT + 0.50321666580472 * 68329.35 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[30];
   Kc = exp(g_RT[5] - g_RT[14] - g_RT[30] + g_RT[39]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[39]) + (h_RT[14] + h_RT[30]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[30] += q; /* A1- */
-  wdot[39] -= q; /* A1CH2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[30] += q; // A1-
+  wdot[39] -= q; // A1CH2
+  // d()/d[H]
   dqdci = +k_f * sc[39];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[270] += dqdci; /* dwdot[A1-]/d[H] */
-  J[279] -= dqdci; /* dwdot[A1CH2]/d[H] */
-  /* d()/d[CH3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[270] += dqdci; // dwdot[A1-]/d[H]
+  J[279] -= dqdci; // dwdot[A1CH2]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[30];
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[702] += dqdci; /* dwdot[A1-]/d[CH3] */
-  J[711] -= dqdci; /* dwdot[A1CH2]/d[CH3] */
-  /* d()/d[A1-] */
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[702] += dqdci; // dwdot[A1-]/d[CH3]
+  J[711] -= dqdci; // dwdot[A1CH2]/d[CH3]
+  // d()/d[A1-]
   dqdci = -k_r * sc[14];
-  J[1445] -= dqdci; /* dwdot[H]/d[A1-] */
-  J[1454] += dqdci; /* dwdot[CH3]/d[A1-] */
-  J[1470] += dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1479] -= dqdci; /* dwdot[A1CH2]/d[A1-] */
-  /* d()/d[A1CH2] */
+  J[1445] -= dqdci; // dwdot[H]/d[A1-]
+  J[1454] += dqdci; // dwdot[CH3]/d[A1-]
+  J[1470] += dqdci; // dwdot[A1-]/d[A1-]
+  J[1479] -= dqdci; // dwdot[A1CH2]/d[A1-]
+  // d()/d[A1CH2]
   dqdci = +k_f * sc[5];
-  J[1877] -= dqdci; /* dwdot[H]/d[A1CH2] */
-  J[1886] += dqdci; /* dwdot[CH3]/d[A1CH2] */
-  J[1902] += dqdci; /* dwdot[A1-]/d[A1CH2] */
-  J[1911] -= dqdci; /* dwdot[A1CH2]/d[A1CH2] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
-  J[2295] -= dqdT; /* dwdot[A1CH2]/dT */
+  J[1877] -= dqdci; // dwdot[H]/d[A1CH2]
+  J[1886] += dqdci; // dwdot[CH3]/d[A1CH2]
+  J[1902] += dqdci; // dwdot[A1-]/d[A1CH2]
+  J[1911] -= dqdci; // dwdot[A1CH2]/d[A1CH2]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
+  J[2295] -= dqdT; // dwdot[A1CH2]/dT
 
   /*reaction 193: A1CH2 + O => A1CHO + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[39];
   k_f =
     1e-06 * 331000000000000 * exp(0 * tc[0] - 0.50321666580472 * (0) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 0 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[5] += q;  /* H */
-  wdot[39] -= q; /* A1CH2 */
-  wdot[40] += q; /* A1CHO */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[5] += q;  // H
+  wdot[39] -= q; // A1CH2
+  wdot[40] += q; // A1CHO
+  // d()/d[O]
   dqdci = +k_f * sc[39];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[149] += dqdci; /* dwdot[H]/d[O] */
-  J[183] -= dqdci; /* dwdot[A1CH2]/d[O] */
-  J[184] += dqdci; /* dwdot[A1CHO]/d[O] */
-  /* d()/d[A1CH2] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[149] += dqdci; // dwdot[H]/d[O]
+  J[183] -= dqdci; // dwdot[A1CH2]/d[O]
+  J[184] += dqdci; // dwdot[A1CHO]/d[O]
+  // d()/d[A1CH2]
   dqdci = +k_f * sc[3];
-  J[1875] -= dqdci; /* dwdot[O]/d[A1CH2] */
-  J[1877] += dqdci; /* dwdot[H]/d[A1CH2] */
-  J[1911] -= dqdci; /* dwdot[A1CH2]/d[A1CH2] */
-  J[1912] += dqdci; /* dwdot[A1CHO]/d[A1CH2] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2295] -= dqdT; /* dwdot[A1CH2]/dT */
-  J[2296] += dqdT; /* dwdot[A1CHO]/dT */
+  J[1875] -= dqdci; // dwdot[O]/d[A1CH2]
+  J[1877] += dqdci; // dwdot[H]/d[A1CH2]
+  J[1911] -= dqdci; // dwdot[A1CH2]/d[A1CH2]
+  J[1912] += dqdci; // dwdot[A1CHO]/d[A1CH2]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2295] -= dqdT; // dwdot[A1CH2]/dT
+  J[2296] += dqdT; // dwdot[A1CHO]/dT
 
   /*reaction 194: A1CH2 + HO2 => A1CHO + OH + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[9] * sc[39];
   k_f =
     1e-06 * 1.06e+16 * exp(-0.94 * tc[0] - 0.50321666580472 * (2523.9) * invT);
   dlnkfdT = -0.94 * invT + 0.50321666580472 * 2523.9 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[6] += q;  /* OH */
-  wdot[9] -= q;  /* HO2 */
-  wdot[39] -= q; /* A1CH2 */
-  wdot[40] += q; /* A1CHO */
-  /* d()/d[HO2] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[6] += q;  // OH
+  wdot[9] -= q;  // HO2
+  wdot[39] -= q; // A1CH2
+  wdot[40] += q; // A1CHO
+  // d()/d[HO2]
   dqdci = +k_f * sc[39];
-  J[437] += dqdci; /* dwdot[H]/d[HO2] */
-  J[438] += dqdci; /* dwdot[OH]/d[HO2] */
-  J[441] -= dqdci; /* dwdot[HO2]/d[HO2] */
-  J[471] -= dqdci; /* dwdot[A1CH2]/d[HO2] */
-  J[472] += dqdci; /* dwdot[A1CHO]/d[HO2] */
-  /* d()/d[A1CH2] */
+  J[437] += dqdci; // dwdot[H]/d[HO2]
+  J[438] += dqdci; // dwdot[OH]/d[HO2]
+  J[441] -= dqdci; // dwdot[HO2]/d[HO2]
+  J[471] -= dqdci; // dwdot[A1CH2]/d[HO2]
+  J[472] += dqdci; // dwdot[A1CHO]/d[HO2]
+  // d()/d[A1CH2]
   dqdci = +k_f * sc[9];
-  J[1877] += dqdci; /* dwdot[H]/d[A1CH2] */
-  J[1878] += dqdci; /* dwdot[OH]/d[A1CH2] */
-  J[1881] -= dqdci; /* dwdot[HO2]/d[A1CH2] */
-  J[1911] -= dqdci; /* dwdot[A1CH2]/d[A1CH2] */
-  J[1912] += dqdci; /* dwdot[A1CHO]/d[A1CH2] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2265] -= dqdT; /* dwdot[HO2]/dT */
-  J[2295] -= dqdT; /* dwdot[A1CH2]/dT */
-  J[2296] += dqdT; /* dwdot[A1CHO]/dT */
+  J[1877] += dqdci; // dwdot[H]/d[A1CH2]
+  J[1878] += dqdci; // dwdot[OH]/d[A1CH2]
+  J[1881] -= dqdci; // dwdot[HO2]/d[A1CH2]
+  J[1911] -= dqdci; // dwdot[A1CH2]/d[A1CH2]
+  J[1912] += dqdci; // dwdot[A1CHO]/d[A1CH2]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2265] -= dqdT; // dwdot[HO2]/dT
+  J[2295] -= dqdT; // dwdot[A1CH2]/dT
+  J[2296] += dqdT; // dwdot[A1CHO]/dT
 
   /*reaction 195: A1CH2 + C3H3 => A2 + 2.000000 H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[23] * sc[39];
   k_f = 1e-06 * 4.32e+39 *
         exp(-7.74 * tc[0] - 0.50321666580472 * (23852.77) * invT);
   dlnkfdT = -7.74 * invT + 0.50321666580472 * 23852.77 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[5] += 2 * q; /* H */
-  wdot[23] -= q;    /* C3H3 */
-  wdot[35] += q;    /* A2 */
-  wdot[39] -= q;    /* A1CH2 */
-  /* d()/d[C3H3] */
+  // update wdot
+  wdot[5] += 2 * q; // H
+  wdot[23] -= q;    // C3H3
+  wdot[35] += q;    // A2
+  wdot[39] -= q;    // A1CH2
+  // d()/d[C3H3]
   dqdci = +k_f * sc[39];
-  J[1109] += 2 * dqdci; /* dwdot[H]/d[C3H3] */
-  J[1127] -= dqdci;     /* dwdot[C3H3]/d[C3H3] */
-  J[1139] += dqdci;     /* dwdot[A2]/d[C3H3] */
-  J[1143] -= dqdci;     /* dwdot[A1CH2]/d[C3H3] */
-  /* d()/d[A1CH2] */
+  J[1109] += 2 * dqdci; // dwdot[H]/d[C3H3]
+  J[1127] -= dqdci;     // dwdot[C3H3]/d[C3H3]
+  J[1139] += dqdci;     // dwdot[A2]/d[C3H3]
+  J[1143] -= dqdci;     // dwdot[A1CH2]/d[C3H3]
+  // d()/d[A1CH2]
   dqdci = +k_f * sc[23];
-  J[1877] += 2 * dqdci; /* dwdot[H]/d[A1CH2] */
-  J[1895] -= dqdci;     /* dwdot[C3H3]/d[A1CH2] */
-  J[1907] += dqdci;     /* dwdot[A2]/d[A1CH2] */
-  J[1911] -= dqdci;     /* dwdot[A1CH2]/d[A1CH2] */
-  /* d()/dT */
-  J[2261] += 2 * dqdT; /* dwdot[H]/dT */
-  J[2279] -= dqdT;     /* dwdot[C3H3]/dT */
-  J[2291] += dqdT;     /* dwdot[A2]/dT */
-  J[2295] -= dqdT;     /* dwdot[A1CH2]/dT */
+  J[1877] += 2 * dqdci; // dwdot[H]/d[A1CH2]
+  J[1895] -= dqdci;     // dwdot[C3H3]/d[A1CH2]
+  J[1907] += dqdci;     // dwdot[A2]/d[A1CH2]
+  J[1911] -= dqdci;     // dwdot[A1CH2]/d[A1CH2]
+  // d()/dT
+  J[2261] += 2 * dqdT; // dwdot[H]/dT
+  J[2279] -= dqdT;     // dwdot[C3H3]/dT
+  J[2291] += dqdT;     // dwdot[A2]/dT
+  J[2295] -= dqdT;     // dwdot[A1CH2]/dT
 
   /*reaction 196: A1CH3 + H <=> A1 + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[41];
   k_f =
     1e-06 * 2310000 * exp(2.17 * tc[0] - 0.50321666580472 * (4163.48) * invT);
   dlnkfdT = 2.17 * invT + 0.50321666580472 * 4163.48 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[29];
   Kc = exp(g_RT[5] - g_RT[14] - g_RT[29] + g_RT[41]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[41]) + (h_RT[14] + h_RT[29]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] -= q;  /* H */
-  wdot[14] += q; /* CH3 */
-  wdot[29] += q; /* A1 */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] -= q;  // H
+  wdot[14] += q; // CH3
+  wdot[29] += q; // A1
+  wdot[41] -= q; // A1CH3
+  // d()/d[H]
   dqdci = +k_f * sc[41];
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[254] += dqdci; /* dwdot[CH3]/d[H] */
-  J[269] += dqdci; /* dwdot[A1]/d[H] */
-  J[281] -= dqdci; /* dwdot[A1CH3]/d[H] */
-  /* d()/d[CH3] */
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[254] += dqdci; // dwdot[CH3]/d[H]
+  J[269] += dqdci; // dwdot[A1]/d[H]
+  J[281] -= dqdci; // dwdot[A1CH3]/d[H]
+  // d()/d[CH3]
   dqdci = -k_r * sc[29];
-  J[677] -= dqdci; /* dwdot[H]/d[CH3] */
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[701] += dqdci; /* dwdot[A1]/d[CH3] */
-  J[713] -= dqdci; /* dwdot[A1CH3]/d[CH3] */
-  /* d()/d[A1] */
+  J[677] -= dqdci; // dwdot[H]/d[CH3]
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[701] += dqdci; // dwdot[A1]/d[CH3]
+  J[713] -= dqdci; // dwdot[A1CH3]/d[CH3]
+  // d()/d[A1]
   dqdci = -k_r * sc[14];
-  J[1397] -= dqdci; /* dwdot[H]/d[A1] */
-  J[1406] += dqdci; /* dwdot[CH3]/d[A1] */
-  J[1421] += dqdci; /* dwdot[A1]/d[A1] */
-  J[1433] -= dqdci; /* dwdot[A1CH3]/d[A1] */
-  /* d()/d[A1CH3] */
+  J[1397] -= dqdci; // dwdot[H]/d[A1]
+  J[1406] += dqdci; // dwdot[CH3]/d[A1]
+  J[1421] += dqdci; // dwdot[A1]/d[A1]
+  J[1433] -= dqdci; // dwdot[A1CH3]/d[A1]
+  // d()/d[A1CH3]
   dqdci = +k_f * sc[5];
-  J[1973] -= dqdci; /* dwdot[H]/d[A1CH3] */
-  J[1982] += dqdci; /* dwdot[CH3]/d[A1CH3] */
-  J[1997] += dqdci; /* dwdot[A1]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2285] += dqdT; /* dwdot[A1]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1973] -= dqdci; // dwdot[H]/d[A1CH3]
+  J[1982] += dqdci; // dwdot[CH3]/d[A1CH3]
+  J[1997] += dqdci; // dwdot[A1]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2285] += dqdT; // dwdot[A1]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 197: A1CH3 <=> A1CH2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[41];
   k_f = 1 * 1.25e+18 * exp(-0.6 * tc[0] - 0.50321666580472 * (94787.28) * invT);
   dlnkfdT = -0.6 * invT + 0.50321666580472 * 94787.28 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[39];
   Kc = refC * exp(-g_RT[5] - g_RT[39] + g_RT[41]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[41]) + (h_RT[5] + h_RT[39]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[39] += q; /* A1CH2 */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[39] += q; // A1CH2
+  wdot[41] -= q; // A1CH3
+  // d()/d[H]
   dqdci = -k_r * sc[39];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[279] += dqdci; /* dwdot[A1CH2]/d[H] */
-  J[281] -= dqdci; /* dwdot[A1CH3]/d[H] */
-  /* d()/d[A1CH2] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[279] += dqdci; // dwdot[A1CH2]/d[H]
+  J[281] -= dqdci; // dwdot[A1CH3]/d[H]
+  // d()/d[A1CH2]
   dqdci = -k_r * sc[5];
-  J[1877] += dqdci; /* dwdot[H]/d[A1CH2] */
-  J[1911] += dqdci; /* dwdot[A1CH2]/d[A1CH2] */
-  J[1913] -= dqdci; /* dwdot[A1CH3]/d[A1CH2] */
-  /* d()/d[A1CH3] */
+  J[1877] += dqdci; // dwdot[H]/d[A1CH2]
+  J[1911] += dqdci; // dwdot[A1CH2]/d[A1CH2]
+  J[1913] -= dqdci; // dwdot[A1CH3]/d[A1CH2]
+  // d()/d[A1CH3]
   dqdci = +k_f;
-  J[1973] += dqdci; /* dwdot[H]/d[A1CH3] */
-  J[2007] += dqdci; /* dwdot[A1CH2]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2295] += dqdT; /* dwdot[A1CH2]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1973] += dqdci; // dwdot[H]/d[A1CH3]
+  J[2007] += dqdci; // dwdot[A1CH2]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2295] += dqdT; // dwdot[A1CH2]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 198: A1CH3 <=> A1- + CH3 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[41];
   k_f =
     1 * 2.16e+29 * exp(-3.58 * tc[0] - 0.50321666580472 * (110164.91) * invT);
   dlnkfdT = -3.58 * invT + 0.50321666580472 * 110164.91 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[14] * sc[30];
   Kc = refC * exp(-g_RT[14] - g_RT[30] + g_RT[41]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[41]) + (h_RT[14] + h_RT[30]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[14] += q; /* CH3 */
-  wdot[30] += q; /* A1- */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] += q; // CH3
+  wdot[30] += q; // A1-
+  wdot[41] -= q; // A1CH3
+  // d()/d[CH3]
   dqdci = -k_r * sc[30];
-  J[686] += dqdci; /* dwdot[CH3]/d[CH3] */
-  J[702] += dqdci; /* dwdot[A1-]/d[CH3] */
-  J[713] -= dqdci; /* dwdot[A1CH3]/d[CH3] */
-  /* d()/d[A1-] */
+  J[686] += dqdci; // dwdot[CH3]/d[CH3]
+  J[702] += dqdci; // dwdot[A1-]/d[CH3]
+  J[713] -= dqdci; // dwdot[A1CH3]/d[CH3]
+  // d()/d[A1-]
   dqdci = -k_r * sc[14];
-  J[1454] += dqdci; /* dwdot[CH3]/d[A1-] */
-  J[1470] += dqdci; /* dwdot[A1-]/d[A1-] */
-  J[1481] -= dqdci; /* dwdot[A1CH3]/d[A1-] */
-  /* d()/d[A1CH3] */
+  J[1454] += dqdci; // dwdot[CH3]/d[A1-]
+  J[1470] += dqdci; // dwdot[A1-]/d[A1-]
+  J[1481] -= dqdci; // dwdot[A1CH3]/d[A1-]
+  // d()/d[A1CH3]
   dqdci = +k_f;
-  J[1982] += dqdci; /* dwdot[CH3]/d[A1CH3] */
-  J[1998] += dqdci; /* dwdot[A1-]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2270] += dqdT; /* dwdot[CH3]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1982] += dqdci; // dwdot[CH3]/d[A1CH3]
+  J[1998] += dqdci; // dwdot[A1-]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2270] += dqdT; // dwdot[CH3]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 199: A1CH3 + H => A1CH2 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[41];
   k_f = 1e-06 * 6.47 * exp(3.98 * tc[0] - 0.50321666580472 * (3384.32) * invT);
   dlnkfdT = 3.98 * invT + 0.50321666580472 * 3384.32 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[39] += q; /* A1CH2 */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[39] += q; // A1CH2
+  wdot[41] -= q; // A1CH3
+  // d()/d[H]
   dqdci = +k_f * sc[41];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[279] += dqdci; /* dwdot[A1CH2]/d[H] */
-  J[281] -= dqdci; /* dwdot[A1CH3]/d[H] */
-  /* d()/d[A1CH3] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[279] += dqdci; // dwdot[A1CH2]/d[H]
+  J[281] -= dqdci; // dwdot[A1CH3]/d[H]
+  // d()/d[A1CH3]
   dqdci = +k_f * sc[5];
-  J[1972] += dqdci; /* dwdot[H2]/d[A1CH3] */
-  J[1973] -= dqdci; /* dwdot[H]/d[A1CH3] */
-  J[2007] += dqdci; /* dwdot[A1CH2]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2295] += dqdT; /* dwdot[A1CH2]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1972] += dqdci; // dwdot[H2]/d[A1CH3]
+  J[1973] -= dqdci; // dwdot[H]/d[A1CH3]
+  J[2007] += dqdci; // dwdot[A1CH2]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2295] += dqdT; // dwdot[A1CH2]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 200: A1CH3 + OH => A1CH2 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[41];
   k_f = 1e-06 * 16200000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (2770.08) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 2770.08 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[39] += q; /* A1CH2 */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[39] += q; // A1CH2
+  wdot[41] -= q; // A1CH3
+  // d()/d[OH]
   dqdci = +k_f * sc[41];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[327] += dqdci; /* dwdot[A1CH2]/d[OH] */
-  J[329] -= dqdci; /* dwdot[A1CH3]/d[OH] */
-  /* d()/d[A1CH3] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[327] += dqdci; // dwdot[A1CH2]/d[OH]
+  J[329] -= dqdci; // dwdot[A1CH3]/d[OH]
+  // d()/d[A1CH3]
   dqdci = +k_f * sc[6];
-  J[1974] -= dqdci; /* dwdot[OH]/d[A1CH3] */
-  J[1975] += dqdci; /* dwdot[H2O]/d[A1CH3] */
-  J[2007] += dqdci; /* dwdot[A1CH2]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2295] += dqdT; /* dwdot[A1CH2]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1974] -= dqdci; // dwdot[OH]/d[A1CH3]
+  J[1975] += dqdci; // dwdot[H2O]/d[A1CH3]
+  J[2007] += dqdci; // dwdot[A1CH2]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2295] += dqdT; // dwdot[A1CH2]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 201: A1CH3 + CH3 => A1CH2 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[41];
   k_f = 1e-06 * 422000000000000 *
         exp(0 * tc[0] - 0.50321666580472 * (22256.21) * invT);
   dlnkfdT = 0 * invT + 0.50321666580472 * 22256.21 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[39] += q; /* A1CH2 */
-  wdot[41] -= q; /* A1CH3 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[39] += q; // A1CH2
+  wdot[41] -= q; // A1CH3
+  // d()/d[CH3]
   dqdci = +k_f * sc[41];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[711] += dqdci; /* dwdot[A1CH2]/d[CH3] */
-  J[713] -= dqdci; /* dwdot[A1CH3]/d[CH3] */
-  /* d()/d[A1CH3] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[711] += dqdci; // dwdot[A1CH2]/d[CH3]
+  J[713] -= dqdci; // dwdot[A1CH3]/d[CH3]
+  // d()/d[A1CH3]
   dqdci = +k_f * sc[14];
-  J[1982] -= dqdci; /* dwdot[CH3]/d[A1CH3] */
-  J[1984] += dqdci; /* dwdot[CH4]/d[A1CH3] */
-  J[2007] += dqdci; /* dwdot[A1CH2]/d[A1CH3] */
-  J[2009] -= dqdci; /* dwdot[A1CH3]/d[A1CH3] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2295] += dqdT; /* dwdot[A1CH2]/dT */
-  J[2297] -= dqdT; /* dwdot[A1CH3]/dT */
+  J[1982] -= dqdci; // dwdot[CH3]/d[A1CH3]
+  J[1984] += dqdci; // dwdot[CH4]/d[A1CH3]
+  J[2007] += dqdci; // dwdot[A1CH2]/d[A1CH3]
+  J[2009] -= dqdci; // dwdot[A1CH3]/d[A1CH3]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2295] += dqdT; // dwdot[A1CH2]/dT
+  J[2297] -= dqdT; // dwdot[A1CH3]/dT
 
   /*reaction 202: C7H15 => C5H11 + C2H4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[42];
   k_f = 1 * 1890000000000 *
         exp(0.02 * tc[0] - 0.50321666580472 * (27784.42) * invT);
   dlnkfdT = 0.02 * invT + 0.50321666580472 * 27784.42 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[18] += q; /* C2H4 */
-  wdot[37] += q; /* C5H11 */
-  wdot[42] -= q; /* C7H15 */
-  /* d()/d[C7H15] */
+  // update wdot
+  wdot[18] += q; // C2H4
+  wdot[37] += q; // C5H11
+  wdot[42] -= q; // C7H15
+  // d()/d[C7H15]
   dqdci = +k_f;
-  J[2034] += dqdci; /* dwdot[C2H4]/d[C7H15] */
-  J[2053] += dqdci; /* dwdot[C5H11]/d[C7H15] */
-  J[2058] -= dqdci; /* dwdot[C7H15]/d[C7H15] */
-  /* d()/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2293] += dqdT; /* dwdot[C5H11]/dT */
-  J[2298] -= dqdT; /* dwdot[C7H15]/dT */
+  J[2034] += dqdci; // dwdot[C2H4]/d[C7H15]
+  J[2053] += dqdci; // dwdot[C5H11]/d[C7H15]
+  J[2058] -= dqdci; // dwdot[C7H15]/d[C7H15]
+  // d()/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2293] += dqdT; // dwdot[C5H11]/dT
+  J[2298] -= dqdT; // dwdot[C7H15]/dT
 
   /*reaction 203: C7H15 => C2H5 + C2H4 + C3H6 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[42];
   k_f =
     1 * 7.73e+18 * exp(-1.75 * tc[0] - 0.50321666580472 * (31974.19) * invT);
   dlnkfdT = -1.75 * invT + 0.50321666580472 * 31974.19 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[18] += q; /* C2H4 */
-  wdot[19] += q; /* C2H5 */
-  wdot[32] += q; /* C3H6 */
-  wdot[42] -= q; /* C7H15 */
-  /* d()/d[C7H15] */
+  // update wdot
+  wdot[18] += q; // C2H4
+  wdot[19] += q; // C2H5
+  wdot[32] += q; // C3H6
+  wdot[42] -= q; // C7H15
+  // d()/d[C7H15]
   dqdci = +k_f;
-  J[2034] += dqdci; /* dwdot[C2H4]/d[C7H15] */
-  J[2035] += dqdci; /* dwdot[C2H5]/d[C7H15] */
-  J[2048] += dqdci; /* dwdot[C3H6]/d[C7H15] */
-  J[2058] -= dqdci; /* dwdot[C7H15]/d[C7H15] */
-  /* d()/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2288] += dqdT; /* dwdot[C3H6]/dT */
-  J[2298] -= dqdT; /* dwdot[C7H15]/dT */
+  J[2034] += dqdci; // dwdot[C2H4]/d[C7H15]
+  J[2035] += dqdci; // dwdot[C2H5]/d[C7H15]
+  J[2048] += dqdci; // dwdot[C3H6]/d[C7H15]
+  J[2058] -= dqdci; // dwdot[C7H15]/d[C7H15]
+  // d()/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2288] += dqdT; // dwdot[C3H6]/dT
+  J[2298] -= dqdT; // dwdot[C7H15]/dT
 
   /*reaction 204: C7H15 => C4H8 + N-C3H7 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[42];
   k_f = 1 * 2.53e+18 * exp(-1.65 * tc[0] - 0.50321666580472 * (31682.6) * invT);
   dlnkfdT = -1.65 * invT + 0.50321666580472 * 31682.6 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[25] += q; /* N-C3H7 */
-  wdot[33] += q; /* C4H8 */
-  wdot[42] -= q; /* C7H15 */
-  /* d()/d[C7H15] */
+  // update wdot
+  wdot[25] += q; // N-C3H7
+  wdot[33] += q; // C4H8
+  wdot[42] -= q; // C7H15
+  // d()/d[C7H15]
   dqdci = +k_f;
-  J[2041] += dqdci; /* dwdot[N-C3H7]/d[C7H15] */
-  J[2049] += dqdci; /* dwdot[C4H8]/d[C7H15] */
-  J[2058] -= dqdci; /* dwdot[C7H15]/d[C7H15] */
-  /* d()/dT */
-  J[2281] += dqdT; /* dwdot[N-C3H7]/dT */
-  J[2289] += dqdT; /* dwdot[C4H8]/dT */
-  J[2298] -= dqdT; /* dwdot[C7H15]/dT */
+  J[2041] += dqdci; // dwdot[N-C3H7]/d[C7H15]
+  J[2049] += dqdci; // dwdot[C4H8]/d[C7H15]
+  J[2058] -= dqdci; // dwdot[C7H15]/d[C7H15]
+  // d()/dT
+  J[2281] += dqdT; // dwdot[N-C3H7]/dT
+  J[2289] += dqdT; // dwdot[C4H8]/dT
+  J[2298] -= dqdT; // dwdot[C7H15]/dT
 
   /*reaction 205: C7H15 => C2H5 + C5H10 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[42];
   k_f =
     1 * 2.49e+16 * exp(-1.18 * tc[0] - 0.50321666580472 * (29517.21) * invT);
   dlnkfdT = -1.18 * invT + 0.50321666580472 * 29517.21 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[19] += q; /* C2H5 */
-  wdot[36] += q; /* C5H10 */
-  wdot[42] -= q; /* C7H15 */
-  /* d()/d[C7H15] */
+  // update wdot
+  wdot[19] += q; // C2H5
+  wdot[36] += q; // C5H10
+  wdot[42] -= q; // C7H15
+  // d()/d[C7H15]
   dqdci = +k_f;
-  J[2035] += dqdci; /* dwdot[C2H5]/d[C7H15] */
-  J[2052] += dqdci; /* dwdot[C5H10]/d[C7H15] */
-  J[2058] -= dqdci; /* dwdot[C7H15]/d[C7H15] */
-  /* d()/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2292] += dqdT; /* dwdot[C5H10]/dT */
-  J[2298] -= dqdT; /* dwdot[C7H15]/dT */
+  J[2035] += dqdci; // dwdot[C2H5]/d[C7H15]
+  J[2052] += dqdci; // dwdot[C5H10]/d[C7H15]
+  J[2058] -= dqdci; // dwdot[C7H15]/d[C7H15]
+  // d()/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2292] += dqdT; // dwdot[C5H10]/dT
+  J[2298] -= dqdT; // dwdot[C7H15]/dT
 
   /*reaction 206: N-C7H16 => C5H11 + C2H5 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[43];
   k_f =
     1 * 8.1e+77 * exp(-17.62 * tc[0] - 0.50321666580472 * (120399.14) * invT);
   dlnkfdT = -17.62 * invT + 0.50321666580472 * 120399.14 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[19] += q; /* C2H5 */
-  wdot[37] += q; /* C5H11 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[N-C7H16] */
+  // update wdot
+  wdot[19] += q; // C2H5
+  wdot[37] += q; // C5H11
+  wdot[43] -= q; // N-C7H16
+  // d()/d[N-C7H16]
   dqdci = +k_f;
-  J[2083] += dqdci; /* dwdot[C2H5]/d[N-C7H16] */
-  J[2101] += dqdci; /* dwdot[C5H11]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2293] += dqdT; /* dwdot[C5H11]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2083] += dqdci; // dwdot[C2H5]/d[N-C7H16]
+  J[2101] += dqdci; // dwdot[C5H11]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2293] += dqdT; // dwdot[C5H11]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 207: N-C7H16 => C2H5 + C2H4 + N-C3H7 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[43];
   k_f =
     1 * 1.42e+78 * exp(-17.71 * tc[0] - 0.50321666580472 * (120700.29) * invT);
   dlnkfdT = -17.71 * invT + 0.50321666580472 * 120700.29 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[18] += q; /* C2H4 */
-  wdot[19] += q; /* C2H5 */
-  wdot[25] += q; /* N-C3H7 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[N-C7H16] */
+  // update wdot
+  wdot[18] += q; // C2H4
+  wdot[19] += q; // C2H5
+  wdot[25] += q; // N-C3H7
+  wdot[43] -= q; // N-C7H16
+  // d()/d[N-C7H16]
   dqdci = +k_f;
-  J[2082] += dqdci; /* dwdot[C2H4]/d[N-C7H16] */
-  J[2083] += dqdci; /* dwdot[C2H5]/d[N-C7H16] */
-  J[2089] += dqdci; /* dwdot[N-C3H7]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2274] += dqdT; /* dwdot[C2H4]/dT */
-  J[2275] += dqdT; /* dwdot[C2H5]/dT */
-  J[2281] += dqdT; /* dwdot[N-C3H7]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2082] += dqdci; // dwdot[C2H4]/d[N-C7H16]
+  J[2083] += dqdci; // dwdot[C2H5]/d[N-C7H16]
+  J[2089] += dqdci; // dwdot[N-C3H7]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2274] += dqdT; // dwdot[C2H4]/dT
+  J[2275] += dqdT; // dwdot[C2H5]/dT
+  J[2281] += dqdT; // dwdot[N-C3H7]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 208: N-C7H16 + H => C7H15 + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[43];
   k_f =
     1e-06 * 1750000 * exp(2.6 * tc[0] - 0.50321666580472 * (4361.85) * invT);
   dlnkfdT = 2.6 * invT + 0.50321666580472 * 4361.85 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[42] += q; /* C7H15 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[42] += q; // C7H15
+  wdot[43] -= q; // N-C7H16
+  // d()/d[H]
   dqdci = +k_f * sc[43];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[282] += dqdci; /* dwdot[C7H15]/d[H] */
-  J[283] -= dqdci; /* dwdot[N-C7H16]/d[H] */
-  /* d()/d[N-C7H16] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[282] += dqdci; // dwdot[C7H15]/d[H]
+  J[283] -= dqdci; // dwdot[N-C7H16]/d[H]
+  // d()/d[N-C7H16]
   dqdci = +k_f * sc[5];
-  J[2068] += dqdci; /* dwdot[H2]/d[N-C7H16] */
-  J[2069] -= dqdci; /* dwdot[H]/d[N-C7H16] */
-  J[2106] += dqdci; /* dwdot[C7H15]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2298] += dqdT; /* dwdot[C7H15]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2068] += dqdci; // dwdot[H2]/d[N-C7H16]
+  J[2069] -= dqdci; // dwdot[H]/d[N-C7H16]
+  J[2106] += dqdci; // dwdot[C7H15]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2298] += dqdT; // dwdot[C7H15]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 209: N-C7H16 + O => C7H15 + OH */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[3] * sc[43];
   k_f =
     1e-06 * 172000 * exp(2.81 * tc[0] - 0.50321666580472 * (2260.99) * invT);
   dlnkfdT = 2.81 * invT + 0.50321666580472 * 2260.99 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[3] -= q;  /* O */
-  wdot[6] += q;  /* OH */
-  wdot[42] += q; /* C7H15 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[O] */
+  // update wdot
+  wdot[3] -= q;  // O
+  wdot[6] += q;  // OH
+  wdot[42] += q; // C7H15
+  wdot[43] -= q; // N-C7H16
+  // d()/d[O]
   dqdci = +k_f * sc[43];
-  J[147] -= dqdci; /* dwdot[O]/d[O] */
-  J[150] += dqdci; /* dwdot[OH]/d[O] */
-  J[186] += dqdci; /* dwdot[C7H15]/d[O] */
-  J[187] -= dqdci; /* dwdot[N-C7H16]/d[O] */
-  /* d()/d[N-C7H16] */
+  J[147] -= dqdci; // dwdot[O]/d[O]
+  J[150] += dqdci; // dwdot[OH]/d[O]
+  J[186] += dqdci; // dwdot[C7H15]/d[O]
+  J[187] -= dqdci; // dwdot[N-C7H16]/d[O]
+  // d()/d[N-C7H16]
   dqdci = +k_f * sc[3];
-  J[2067] -= dqdci; /* dwdot[O]/d[N-C7H16] */
-  J[2070] += dqdci; /* dwdot[OH]/d[N-C7H16] */
-  J[2106] += dqdci; /* dwdot[C7H15]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2259] -= dqdT; /* dwdot[O]/dT */
-  J[2262] += dqdT; /* dwdot[OH]/dT */
-  J[2298] += dqdT; /* dwdot[C7H15]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2067] -= dqdci; // dwdot[O]/d[N-C7H16]
+  J[2070] += dqdci; // dwdot[OH]/d[N-C7H16]
+  J[2106] += dqdci; // dwdot[C7H15]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2259] -= dqdT; // dwdot[O]/dT
+  J[2262] += dqdT; // dwdot[OH]/dT
+  J[2298] += dqdT; // dwdot[C7H15]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 210: N-C7H16 + OH => C7H15 + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[43];
   k_f =
     1e-06 * 740000000 * exp(1.5 * tc[0] - 0.50321666580472 * (258.13) * invT);
   dlnkfdT = 1.5 * invT + 0.50321666580472 * 258.13 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[42] += q; /* C7H15 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[42] += q; // C7H15
+  wdot[43] -= q; // N-C7H16
+  // d()/d[OH]
   dqdci = +k_f * sc[43];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[330] += dqdci; /* dwdot[C7H15]/d[OH] */
-  J[331] -= dqdci; /* dwdot[N-C7H16]/d[OH] */
-  /* d()/d[N-C7H16] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[330] += dqdci; // dwdot[C7H15]/d[OH]
+  J[331] -= dqdci; // dwdot[N-C7H16]/d[OH]
+  // d()/d[N-C7H16]
   dqdci = +k_f * sc[6];
-  J[2070] -= dqdci; /* dwdot[OH]/d[N-C7H16] */
-  J[2071] += dqdci; /* dwdot[H2O]/d[N-C7H16] */
-  J[2106] += dqdci; /* dwdot[C7H15]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2298] += dqdT; /* dwdot[C7H15]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2070] -= dqdci; // dwdot[OH]/d[N-C7H16]
+  J[2071] += dqdci; // dwdot[H2O]/d[N-C7H16]
+  J[2106] += dqdci; // dwdot[C7H15]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2298] += dqdT; // dwdot[C7H15]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 211: N-C7H16 + CH3 => C7H15 + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[43];
   k_f = 1e-06 * 14600 * exp(2.57 * tc[0] - 0.50321666580472 * (6933.56) * invT);
   dlnkfdT = 2.57 * invT + 0.50321666580472 * 6933.56 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[42] += q; /* C7H15 */
-  wdot[43] -= q; /* N-C7H16 */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[42] += q; // C7H15
+  wdot[43] -= q; // N-C7H16
+  // d()/d[CH3]
   dqdci = +k_f * sc[43];
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[714] += dqdci; /* dwdot[C7H15]/d[CH3] */
-  J[715] -= dqdci; /* dwdot[N-C7H16]/d[CH3] */
-  /* d()/d[N-C7H16] */
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[714] += dqdci; // dwdot[C7H15]/d[CH3]
+  J[715] -= dqdci; // dwdot[N-C7H16]/d[CH3]
+  // d()/d[N-C7H16]
   dqdci = +k_f * sc[14];
-  J[2078] -= dqdci; /* dwdot[CH3]/d[N-C7H16] */
-  J[2080] += dqdci; /* dwdot[CH4]/d[N-C7H16] */
-  J[2106] += dqdci; /* dwdot[C7H15]/d[N-C7H16] */
-  J[2107] -= dqdci; /* dwdot[N-C7H16]/d[N-C7H16] */
-  /* d()/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2298] += dqdT; /* dwdot[C7H15]/dT */
-  J[2299] -= dqdT; /* dwdot[N-C7H16]/dT */
+  J[2078] -= dqdci; // dwdot[CH3]/d[N-C7H16]
+  J[2080] += dqdci; // dwdot[CH4]/d[N-C7H16]
+  J[2106] += dqdci; // dwdot[C7H15]/d[N-C7H16]
+  J[2107] -= dqdci; // dwdot[N-C7H16]/d[N-C7H16]
+  // d()/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2298] += dqdT; // dwdot[C7H15]/dT
+  J[2299] -= dqdT; // dwdot[N-C7H16]/dT
 
   /*reaction 212: A1CHO => A1- + HCO */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[40];
   k_f = 1 * 2.61e+15 * exp(0.15 * tc[0] - 0.50321666580472 * (80549.71) * invT);
   dlnkfdT = 0.15 * invT + 0.50321666580472 * 80549.71 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[12] += q; /* HCO */
-  wdot[30] += q; /* A1- */
-  wdot[40] -= q; /* A1CHO */
-  /* d()/d[A1CHO] */
+  // update wdot
+  wdot[12] += q; // HCO
+  wdot[30] += q; // A1-
+  wdot[40] -= q; // A1CHO
+  // d()/d[A1CHO]
   dqdci = +k_f;
-  J[1932] += dqdci; /* dwdot[HCO]/d[A1CHO] */
-  J[1950] += dqdci; /* dwdot[A1-]/d[A1CHO] */
-  J[1960] -= dqdci; /* dwdot[A1CHO]/d[A1CHO] */
-  /* d()/dT */
-  J[2268] += dqdT; /* dwdot[HCO]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
-  J[2296] -= dqdT; /* dwdot[A1CHO]/dT */
+  J[1932] += dqdci; // dwdot[HCO]/d[A1CHO]
+  J[1950] += dqdci; // dwdot[A1-]/d[A1CHO]
+  J[1960] -= dqdci; // dwdot[A1CHO]/d[A1CHO]
+  // d()/dT
+  J[2268] += dqdT; // dwdot[HCO]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
+  J[2296] -= dqdT; // dwdot[A1CHO]/dT
 
   /*reaction 213: A1CHO + H => A1- + CO + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[40];
   k_f =
     1e-06 * 2050000000 * exp(1.16 * tc[0] - 0.50321666580472 * (2404.4) * invT);
   dlnkfdT = 1.16 * invT + 0.50321666580472 * 2404.4 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[11] += q; /* CO */
-  wdot[30] += q; /* A1- */
-  wdot[40] -= q; /* A1CHO */
-  /* d()/d[H] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[11] += q; // CO
+  wdot[30] += q; // A1-
+  wdot[40] -= q; // A1CHO
+  // d()/d[H]
   dqdci = +k_f * sc[40];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[251] += dqdci; /* dwdot[CO]/d[H] */
-  J[270] += dqdci; /* dwdot[A1-]/d[H] */
-  J[280] -= dqdci; /* dwdot[A1CHO]/d[H] */
-  /* d()/d[A1CHO] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[251] += dqdci; // dwdot[CO]/d[H]
+  J[270] += dqdci; // dwdot[A1-]/d[H]
+  J[280] -= dqdci; // dwdot[A1CHO]/d[H]
+  // d()/d[A1CHO]
   dqdci = +k_f * sc[5];
-  J[1924] += dqdci; /* dwdot[H2]/d[A1CHO] */
-  J[1925] -= dqdci; /* dwdot[H]/d[A1CHO] */
-  J[1931] += dqdci; /* dwdot[CO]/d[A1CHO] */
-  J[1950] += dqdci; /* dwdot[A1-]/d[A1CHO] */
-  J[1960] -= dqdci; /* dwdot[A1CHO]/d[A1CHO] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
-  J[2296] -= dqdT; /* dwdot[A1CHO]/dT */
+  J[1924] += dqdci; // dwdot[H2]/d[A1CHO]
+  J[1925] -= dqdci; // dwdot[H]/d[A1CHO]
+  J[1931] += dqdci; // dwdot[CO]/d[A1CHO]
+  J[1950] += dqdci; // dwdot[A1-]/d[A1CHO]
+  J[1960] -= dqdci; // dwdot[A1CHO]/d[A1CHO]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
+  J[2296] -= dqdT; // dwdot[A1CHO]/dT
 
   /*reaction 214: A1CHO + CH3 => A1- + CO + CH4 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[14] * sc[40];
   k_f =
     1e-06 * 2720000 * exp(1.77 * tc[0] - 0.50321666580472 * (5920.17) * invT);
   dlnkfdT = 1.77 * invT + 0.50321666580472 * 5920.17 * invT2;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
-  /* update wdot */
-  wdot[11] += q; /* CO */
-  wdot[14] -= q; /* CH3 */
-  wdot[16] += q; /* CH4 */
-  wdot[30] += q; /* A1- */
-  wdot[40] -= q; /* A1CHO */
-  /* d()/d[CH3] */
+  // update wdot
+  wdot[11] += q; // CO
+  wdot[14] -= q; // CH3
+  wdot[16] += q; // CH4
+  wdot[30] += q; // A1-
+  wdot[40] -= q; // A1CHO
+  // d()/d[CH3]
   dqdci = +k_f * sc[40];
-  J[683] += dqdci; /* dwdot[CO]/d[CH3] */
-  J[686] -= dqdci; /* dwdot[CH3]/d[CH3] */
-  J[688] += dqdci; /* dwdot[CH4]/d[CH3] */
-  J[702] += dqdci; /* dwdot[A1-]/d[CH3] */
-  J[712] -= dqdci; /* dwdot[A1CHO]/d[CH3] */
-  /* d()/d[A1CHO] */
+  J[683] += dqdci; // dwdot[CO]/d[CH3]
+  J[686] -= dqdci; // dwdot[CH3]/d[CH3]
+  J[688] += dqdci; // dwdot[CH4]/d[CH3]
+  J[702] += dqdci; // dwdot[A1-]/d[CH3]
+  J[712] -= dqdci; // dwdot[A1CHO]/d[CH3]
+  // d()/d[A1CHO]
   dqdci = +k_f * sc[14];
-  J[1931] += dqdci; /* dwdot[CO]/d[A1CHO] */
-  J[1934] -= dqdci; /* dwdot[CH3]/d[A1CHO] */
-  J[1936] += dqdci; /* dwdot[CH4]/d[A1CHO] */
-  J[1950] += dqdci; /* dwdot[A1-]/d[A1CHO] */
-  J[1960] -= dqdci; /* dwdot[A1CHO]/d[A1CHO] */
-  /* d()/dT */
-  J[2267] += dqdT; /* dwdot[CO]/dT */
-  J[2270] -= dqdT; /* dwdot[CH3]/dT */
-  J[2272] += dqdT; /* dwdot[CH4]/dT */
-  J[2286] += dqdT; /* dwdot[A1-]/dT */
-  J[2296] -= dqdT; /* dwdot[A1CHO]/dT */
+  J[1931] += dqdci; // dwdot[CO]/d[A1CHO]
+  J[1934] -= dqdci; // dwdot[CH3]/d[A1CHO]
+  J[1936] += dqdci; // dwdot[CH4]/d[A1CHO]
+  J[1950] += dqdci; // dwdot[A1-]/d[A1CHO]
+  J[1960] -= dqdci; // dwdot[A1CHO]/d[A1CHO]
+  // d()/dT
+  J[2267] += dqdT; // dwdot[CO]/dT
+  J[2270] -= dqdT; // dwdot[CH3]/dT
+  J[2272] += dqdT; // dwdot[CH4]/dT
+  J[2286] += dqdT; // dwdot[A1-]/dT
+  J[2296] -= dqdT; // dwdot[A1CHO]/dT
 
   /*reaction 215: A1C2H* + C2H2 <=> A2- */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[22] * sc[44];
   k_f = 1e-06 * 13400 * exp(2.5 * tc[0] - 0.50321666580472 * (1283.46) * invT);
   dlnkfdT = 2.5 * invT + 0.50321666580472 * 1283.46 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[45];
   Kc = refCinv * exp(g_RT[22] + g_RT[44] - g_RT[45]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[22] + h_RT[44]) + (h_RT[45]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[22] -= q; /* C2H2 */
-  wdot[44] -= q; /* A1C2H* */
-  wdot[45] += q; /* A2- */
-  /* d()/d[C2H2] */
+  // update wdot
+  wdot[22] -= q; // C2H2
+  wdot[44] -= q; // A1C2H*
+  wdot[45] += q; // A2-
+  // d()/d[C2H2]
   dqdci = +k_f * sc[44];
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1100] -= dqdci; /* dwdot[A1C2H*]/d[C2H2] */
-  J[1101] += dqdci; /* dwdot[A2-]/d[C2H2] */
-  /* d()/d[A1C2H*] */
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1100] -= dqdci; // dwdot[A1C2H*]/d[C2H2]
+  J[1101] += dqdci; // dwdot[A2-]/d[C2H2]
+  // d()/d[A1C2H*]
   dqdci = +k_f * sc[22];
-  J[2134] -= dqdci; /* dwdot[C2H2]/d[A1C2H*] */
-  J[2156] -= dqdci; /* dwdot[A1C2H*]/d[A1C2H*] */
-  J[2157] += dqdci; /* dwdot[A2-]/d[A1C2H*] */
-  /* d()/d[A2-] */
+  J[2134] -= dqdci; // dwdot[C2H2]/d[A1C2H*]
+  J[2156] -= dqdci; // dwdot[A1C2H*]/d[A1C2H*]
+  J[2157] += dqdci; // dwdot[A2-]/d[A1C2H*]
+  // d()/d[A2-]
   dqdci = -k_r;
-  J[2182] -= dqdci; /* dwdot[C2H2]/d[A2-] */
-  J[2204] -= dqdci; /* dwdot[A1C2H*]/d[A2-] */
-  J[2205] += dqdci; /* dwdot[A2-]/d[A2-] */
-  /* d()/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2300] -= dqdT; /* dwdot[A1C2H*]/dT */
-  J[2301] += dqdT; /* dwdot[A2-]/dT */
+  J[2182] -= dqdci; // dwdot[C2H2]/d[A2-]
+  J[2204] -= dqdci; // dwdot[A1C2H*]/d[A2-]
+  J[2205] += dqdci; // dwdot[A2-]/d[A2-]
+  // d()/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2300] -= dqdT; // dwdot[A1C2H*]/dT
+  J[2301] += dqdT; // dwdot[A2-]/dT
 
   /*reaction 216: A1C2H* + C2H4 <=> A2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[18] * sc[44];
   k_f = 1e-06 * 3.62e+28 *
         exp(-4.24 * tc[0] - 0.50321666580472 * (23864.72) * invT);
   dlnkfdT = -4.24 * invT + 0.50321666580472 * 23864.72 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[35];
   Kc = exp(-g_RT[5] + g_RT[18] - g_RT[35] + g_RT[44]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[18] + h_RT[44]) + (h_RT[5] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[18] -= q; /* C2H4 */
-  wdot[35] += q; /* A2 */
-  wdot[44] -= q; /* A1C2H* */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[18] -= q; // C2H4
+  wdot[35] += q; // A2
+  wdot[44] -= q; // A1C2H*
+  // d()/d[H]
   dqdci = -k_r * sc[35];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[258] -= dqdci; /* dwdot[C2H4]/d[H] */
-  J[275] += dqdci; /* dwdot[A2]/d[H] */
-  J[284] -= dqdci; /* dwdot[A1C2H*]/d[H] */
-  /* d()/d[C2H4] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[258] -= dqdci; // dwdot[C2H4]/d[H]
+  J[275] += dqdci; // dwdot[A2]/d[H]
+  J[284] -= dqdci; // dwdot[A1C2H*]/d[H]
+  // d()/d[C2H4]
   dqdci = +k_f * sc[44];
-  J[869] += dqdci; /* dwdot[H]/d[C2H4] */
-  J[882] -= dqdci; /* dwdot[C2H4]/d[C2H4] */
-  J[899] += dqdci; /* dwdot[A2]/d[C2H4] */
-  J[908] -= dqdci; /* dwdot[A1C2H*]/d[C2H4] */
-  /* d()/d[A2] */
+  J[869] += dqdci; // dwdot[H]/d[C2H4]
+  J[882] -= dqdci; // dwdot[C2H4]/d[C2H4]
+  J[899] += dqdci; // dwdot[A2]/d[C2H4]
+  J[908] -= dqdci; // dwdot[A1C2H*]/d[C2H4]
+  // d()/d[A2]
   dqdci = -k_r * sc[5];
-  J[1685] += dqdci; /* dwdot[H]/d[A2] */
-  J[1698] -= dqdci; /* dwdot[C2H4]/d[A2] */
-  J[1715] += dqdci; /* dwdot[A2]/d[A2] */
-  J[1724] -= dqdci; /* dwdot[A1C2H*]/d[A2] */
-  /* d()/d[A1C2H*] */
+  J[1685] += dqdci; // dwdot[H]/d[A2]
+  J[1698] -= dqdci; // dwdot[C2H4]/d[A2]
+  J[1715] += dqdci; // dwdot[A2]/d[A2]
+  J[1724] -= dqdci; // dwdot[A1C2H*]/d[A2]
+  // d()/d[A1C2H*]
   dqdci = +k_f * sc[18];
-  J[2117] += dqdci; /* dwdot[H]/d[A1C2H*] */
-  J[2130] -= dqdci; /* dwdot[C2H4]/d[A1C2H*] */
-  J[2147] += dqdci; /* dwdot[A2]/d[A1C2H*] */
-  J[2156] -= dqdci; /* dwdot[A1C2H*]/d[A1C2H*] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2274] -= dqdT; /* dwdot[C2H4]/dT */
-  J[2291] += dqdT; /* dwdot[A2]/dT */
-  J[2300] -= dqdT; /* dwdot[A1C2H*]/dT */
+  J[2117] += dqdci; // dwdot[H]/d[A1C2H*]
+  J[2130] -= dqdci; // dwdot[C2H4]/d[A1C2H*]
+  J[2147] += dqdci; // dwdot[A2]/d[A1C2H*]
+  J[2156] -= dqdci; // dwdot[A1C2H*]/d[A1C2H*]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2274] -= dqdT; // dwdot[C2H4]/dT
+  J[2291] += dqdT; // dwdot[A2]/dT
+  J[2300] -= dqdT; // dwdot[A1C2H*]/dT
 
   /*reaction 217: A1C2H <=> A1C2H* + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[46];
   k_f = 1 * 2.1e+60 * exp(-12.4 * tc[0] - 0.50321666580472 * (148076) * invT);
   dlnkfdT = -12.4 * invT + 0.50321666580472 * 148076 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[44];
   Kc = refC * exp(-g_RT[5] - g_RT[44] + g_RT[46]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[46]) + (h_RT[5] + h_RT[44]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[44] += q; /* A1C2H* */
-  wdot[46] -= q; /* A1C2H */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[44] += q; // A1C2H*
+  wdot[46] -= q; // A1C2H
+  // d()/d[H]
   dqdci = -k_r * sc[44];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[284] += dqdci; /* dwdot[A1C2H*]/d[H] */
-  J[286] -= dqdci; /* dwdot[A1C2H]/d[H] */
-  /* d()/d[A1C2H*] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[284] += dqdci; // dwdot[A1C2H*]/d[H]
+  J[286] -= dqdci; // dwdot[A1C2H]/d[H]
+  // d()/d[A1C2H*]
   dqdci = -k_r * sc[5];
-  J[2117] += dqdci; /* dwdot[H]/d[A1C2H*] */
-  J[2156] += dqdci; /* dwdot[A1C2H*]/d[A1C2H*] */
-  J[2158] -= dqdci; /* dwdot[A1C2H]/d[A1C2H*] */
-  /* d()/d[A1C2H] */
+  J[2117] += dqdci; // dwdot[H]/d[A1C2H*]
+  J[2156] += dqdci; // dwdot[A1C2H*]/d[A1C2H*]
+  J[2158] -= dqdci; // dwdot[A1C2H]/d[A1C2H*]
+  // d()/d[A1C2H]
   dqdci = +k_f;
-  J[2213] += dqdci; /* dwdot[H]/d[A1C2H] */
-  J[2252] += dqdci; /* dwdot[A1C2H*]/d[A1C2H] */
-  J[2254] -= dqdci; /* dwdot[A1C2H]/d[A1C2H] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2300] += dqdT; /* dwdot[A1C2H*]/dT */
-  J[2302] -= dqdT; /* dwdot[A1C2H]/dT */
+  J[2213] += dqdci; // dwdot[H]/d[A1C2H]
+  J[2252] += dqdci; // dwdot[A1C2H*]/d[A1C2H]
+  J[2254] -= dqdci; // dwdot[A1C2H]/d[A1C2H]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2300] += dqdT; // dwdot[A1C2H*]/dT
+  J[2302] -= dqdT; // dwdot[A1C2H]/dT
 
   /*reaction 218: A1C2H + H <=> A1C2H* + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[46];
   k_f = 1e-06 * 132000000 *
         exp(1.88 * tc[0] - 0.50321666580472 * (16821.22) * invT);
   dlnkfdT = 1.88 * invT + 0.50321666580472 * 16821.22 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[4] * sc[44];
   Kc = exp(-g_RT[4] + g_RT[5] - g_RT[44] + g_RT[46]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[46]) + (h_RT[4] + h_RT[44]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[44] += q; /* A1C2H* */
-  wdot[46] -= q; /* A1C2H */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[44] += q; // A1C2H*
+  wdot[46] -= q; // A1C2H
+  // d()/d[H2]
   dqdci = -k_r * sc[44];
-  J[196] += dqdci; /* dwdot[H2]/d[H2] */
-  J[197] -= dqdci; /* dwdot[H]/d[H2] */
-  J[236] += dqdci; /* dwdot[A1C2H*]/d[H2] */
-  J[238] -= dqdci; /* dwdot[A1C2H]/d[H2] */
-  /* d()/d[H] */
+  J[196] += dqdci; // dwdot[H2]/d[H2]
+  J[197] -= dqdci; // dwdot[H]/d[H2]
+  J[236] += dqdci; // dwdot[A1C2H*]/d[H2]
+  J[238] -= dqdci; // dwdot[A1C2H]/d[H2]
+  // d()/d[H]
   dqdci = +k_f * sc[46];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[284] += dqdci; /* dwdot[A1C2H*]/d[H] */
-  J[286] -= dqdci; /* dwdot[A1C2H]/d[H] */
-  /* d()/d[A1C2H*] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[284] += dqdci; // dwdot[A1C2H*]/d[H]
+  J[286] -= dqdci; // dwdot[A1C2H]/d[H]
+  // d()/d[A1C2H*]
   dqdci = -k_r * sc[4];
-  J[2116] += dqdci; /* dwdot[H2]/d[A1C2H*] */
-  J[2117] -= dqdci; /* dwdot[H]/d[A1C2H*] */
-  J[2156] += dqdci; /* dwdot[A1C2H*]/d[A1C2H*] */
-  J[2158] -= dqdci; /* dwdot[A1C2H]/d[A1C2H*] */
-  /* d()/d[A1C2H] */
+  J[2116] += dqdci; // dwdot[H2]/d[A1C2H*]
+  J[2117] -= dqdci; // dwdot[H]/d[A1C2H*]
+  J[2156] += dqdci; // dwdot[A1C2H*]/d[A1C2H*]
+  J[2158] -= dqdci; // dwdot[A1C2H]/d[A1C2H*]
+  // d()/d[A1C2H]
   dqdci = +k_f * sc[5];
-  J[2212] += dqdci; /* dwdot[H2]/d[A1C2H] */
-  J[2213] -= dqdci; /* dwdot[H]/d[A1C2H] */
-  J[2252] += dqdci; /* dwdot[A1C2H*]/d[A1C2H] */
-  J[2254] -= dqdci; /* dwdot[A1C2H]/d[A1C2H] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2300] += dqdT; /* dwdot[A1C2H*]/dT */
-  J[2302] -= dqdT; /* dwdot[A1C2H]/dT */
+  J[2212] += dqdci; // dwdot[H2]/d[A1C2H]
+  J[2213] -= dqdci; // dwdot[H]/d[A1C2H]
+  J[2252] += dqdci; // dwdot[A1C2H*]/d[A1C2H]
+  J[2254] -= dqdci; // dwdot[A1C2H]/d[A1C2H]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2300] += dqdT; // dwdot[A1C2H*]/dT
+  J[2302] -= dqdT; // dwdot[A1C2H]/dT
 
   /*reaction 219: A1C2H + OH <=> A1C2H* + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[46];
   k_f = 1e-06 * 134 * exp(3.33 * tc[0] - 0.50321666580472 * (1455.54) * invT);
   dlnkfdT = 3.33 * invT + 0.50321666580472 * 1455.54 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[7] * sc[44];
   Kc = exp(g_RT[6] - g_RT[7] - g_RT[44] + g_RT[46]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[46]) + (h_RT[7] + h_RT[44]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[44] += q; /* A1C2H* */
-  wdot[46] -= q; /* A1C2H */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[44] += q; // A1C2H*
+  wdot[46] -= q; // A1C2H
+  // d()/d[OH]
   dqdci = +k_f * sc[46];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[332] += dqdci; /* dwdot[A1C2H*]/d[OH] */
-  J[334] -= dqdci; /* dwdot[A1C2H]/d[OH] */
-  /* d()/d[H2O] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[332] += dqdci; // dwdot[A1C2H*]/d[OH]
+  J[334] -= dqdci; // dwdot[A1C2H]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[44];
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[380] += dqdci; /* dwdot[A1C2H*]/d[H2O] */
-  J[382] -= dqdci; /* dwdot[A1C2H]/d[H2O] */
-  /* d()/d[A1C2H*] */
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[380] += dqdci; // dwdot[A1C2H*]/d[H2O]
+  J[382] -= dqdci; // dwdot[A1C2H]/d[H2O]
+  // d()/d[A1C2H*]
   dqdci = -k_r * sc[7];
-  J[2118] -= dqdci; /* dwdot[OH]/d[A1C2H*] */
-  J[2119] += dqdci; /* dwdot[H2O]/d[A1C2H*] */
-  J[2156] += dqdci; /* dwdot[A1C2H*]/d[A1C2H*] */
-  J[2158] -= dqdci; /* dwdot[A1C2H]/d[A1C2H*] */
-  /* d()/d[A1C2H] */
+  J[2118] -= dqdci; // dwdot[OH]/d[A1C2H*]
+  J[2119] += dqdci; // dwdot[H2O]/d[A1C2H*]
+  J[2156] += dqdci; // dwdot[A1C2H*]/d[A1C2H*]
+  J[2158] -= dqdci; // dwdot[A1C2H]/d[A1C2H*]
+  // d()/d[A1C2H]
   dqdci = +k_f * sc[6];
-  J[2214] -= dqdci; /* dwdot[OH]/d[A1C2H] */
-  J[2215] += dqdci; /* dwdot[H2O]/d[A1C2H] */
-  J[2252] += dqdci; /* dwdot[A1C2H*]/d[A1C2H] */
-  J[2254] -= dqdci; /* dwdot[A1C2H]/d[A1C2H] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2300] += dqdT; /* dwdot[A1C2H*]/dT */
-  J[2302] -= dqdT; /* dwdot[A1C2H]/dT */
+  J[2214] -= dqdci; // dwdot[OH]/d[A1C2H]
+  J[2215] += dqdci; // dwdot[H2O]/d[A1C2H]
+  J[2252] += dqdci; // dwdot[A1C2H*]/d[A1C2H]
+  J[2254] -= dqdci; // dwdot[A1C2H]/d[A1C2H]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2300] += dqdT; // dwdot[A1C2H*]/dT
+  J[2302] -= dqdT; // dwdot[A1C2H]/dT
 
   /*reaction 220: A1C2H2 <=> A1C2H + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[38];
   k_f =
     1 * 1.34e+17 * exp(-0.86 * tc[0] - 0.50321666580472 * (41238.05) * invT);
   dlnkfdT = -0.86 * invT + 0.50321666580472 * 41238.05 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[46];
   Kc = refC * exp(-g_RT[5] + g_RT[38] - g_RT[46]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[38]) + (h_RT[5] + h_RT[46]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[38] -= q; /* A1C2H2 */
-  wdot[46] += q; /* A1C2H */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[38] -= q; // A1C2H2
+  wdot[46] += q; // A1C2H
+  // d()/d[H]
   dqdci = -k_r * sc[46];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[278] -= dqdci; /* dwdot[A1C2H2]/d[H] */
-  J[286] += dqdci; /* dwdot[A1C2H]/d[H] */
-  /* d()/d[A1C2H2] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[278] -= dqdci; // dwdot[A1C2H2]/d[H]
+  J[286] += dqdci; // dwdot[A1C2H]/d[H]
+  // d()/d[A1C2H2]
   dqdci = +k_f;
-  J[1829] += dqdci; /* dwdot[H]/d[A1C2H2] */
-  J[1862] -= dqdci; /* dwdot[A1C2H2]/d[A1C2H2] */
-  J[1870] += dqdci; /* dwdot[A1C2H]/d[A1C2H2] */
-  /* d()/d[A1C2H] */
+  J[1829] += dqdci; // dwdot[H]/d[A1C2H2]
+  J[1862] -= dqdci; // dwdot[A1C2H2]/d[A1C2H2]
+  J[1870] += dqdci; // dwdot[A1C2H]/d[A1C2H2]
+  // d()/d[A1C2H]
   dqdci = -k_r * sc[5];
-  J[2213] += dqdci; /* dwdot[H]/d[A1C2H] */
-  J[2246] -= dqdci; /* dwdot[A1C2H2]/d[A1C2H] */
-  J[2254] += dqdci; /* dwdot[A1C2H]/d[A1C2H] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2294] -= dqdT; /* dwdot[A1C2H2]/dT */
-  J[2302] += dqdT; /* dwdot[A1C2H]/dT */
+  J[2213] += dqdci; // dwdot[H]/d[A1C2H]
+  J[2246] -= dqdci; // dwdot[A1C2H2]/d[A1C2H]
+  J[2254] += dqdci; // dwdot[A1C2H]/d[A1C2H]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2294] -= dqdT; // dwdot[A1C2H2]/dT
+  J[2302] += dqdT; // dwdot[A1C2H]/dT
 
   /*reaction 221: A1C2H2 + C2H2 <=> A2 + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[22] * sc[38];
   k_f = 1e-06 * 70910000000000 *
         exp(-0.26 * tc[0] - 0.50321666580472 * (7002.87) * invT);
   dlnkfdT = -0.26 * invT + 0.50321666580472 * 7002.87 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[35];
   Kc = exp(-g_RT[5] + g_RT[22] - g_RT[35] + g_RT[38]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[22] + h_RT[38]) + (h_RT[5] + h_RT[35]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[22] -= q; /* C2H2 */
-  wdot[35] += q; /* A2 */
-  wdot[38] -= q; /* A1C2H2 */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[22] -= q; // C2H2
+  wdot[35] += q; // A2
+  wdot[38] -= q; // A1C2H2
+  // d()/d[H]
   dqdci = -k_r * sc[35];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[262] -= dqdci; /* dwdot[C2H2]/d[H] */
-  J[275] += dqdci; /* dwdot[A2]/d[H] */
-  J[278] -= dqdci; /* dwdot[A1C2H2]/d[H] */
-  /* d()/d[C2H2] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[262] -= dqdci; // dwdot[C2H2]/d[H]
+  J[275] += dqdci; // dwdot[A2]/d[H]
+  J[278] -= dqdci; // dwdot[A1C2H2]/d[H]
+  // d()/d[C2H2]
   dqdci = +k_f * sc[38];
-  J[1061] += dqdci; /* dwdot[H]/d[C2H2] */
-  J[1078] -= dqdci; /* dwdot[C2H2]/d[C2H2] */
-  J[1091] += dqdci; /* dwdot[A2]/d[C2H2] */
-  J[1094] -= dqdci; /* dwdot[A1C2H2]/d[C2H2] */
-  /* d()/d[A2] */
+  J[1061] += dqdci; // dwdot[H]/d[C2H2]
+  J[1078] -= dqdci; // dwdot[C2H2]/d[C2H2]
+  J[1091] += dqdci; // dwdot[A2]/d[C2H2]
+  J[1094] -= dqdci; // dwdot[A1C2H2]/d[C2H2]
+  // d()/d[A2]
   dqdci = -k_r * sc[5];
-  J[1685] += dqdci; /* dwdot[H]/d[A2] */
-  J[1702] -= dqdci; /* dwdot[C2H2]/d[A2] */
-  J[1715] += dqdci; /* dwdot[A2]/d[A2] */
-  J[1718] -= dqdci; /* dwdot[A1C2H2]/d[A2] */
-  /* d()/d[A1C2H2] */
+  J[1685] += dqdci; // dwdot[H]/d[A2]
+  J[1702] -= dqdci; // dwdot[C2H2]/d[A2]
+  J[1715] += dqdci; // dwdot[A2]/d[A2]
+  J[1718] -= dqdci; // dwdot[A1C2H2]/d[A2]
+  // d()/d[A1C2H2]
   dqdci = +k_f * sc[22];
-  J[1829] += dqdci; /* dwdot[H]/d[A1C2H2] */
-  J[1846] -= dqdci; /* dwdot[C2H2]/d[A1C2H2] */
-  J[1859] += dqdci; /* dwdot[A2]/d[A1C2H2] */
-  J[1862] -= dqdci; /* dwdot[A1C2H2]/d[A1C2H2] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2278] -= dqdT; /* dwdot[C2H2]/dT */
-  J[2291] += dqdT; /* dwdot[A2]/dT */
-  J[2294] -= dqdT; /* dwdot[A1C2H2]/dT */
+  J[1829] += dqdci; // dwdot[H]/d[A1C2H2]
+  J[1846] -= dqdci; // dwdot[C2H2]/d[A1C2H2]
+  J[1859] += dqdci; // dwdot[A2]/d[A1C2H2]
+  J[1862] -= dqdci; // dwdot[A1C2H2]/d[A1C2H2]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2278] -= dqdT; // dwdot[C2H2]/dT
+  J[2291] += dqdT; // dwdot[A2]/dT
+  J[2294] -= dqdT; // dwdot[A1C2H2]/dT
 
   /*reaction 222: A2 <=> A2- + H */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[35];
   k_f = 1 * 8.6e+60 * exp(-12.48 * tc[0] - 0.50321666580472 * (148076) * invT);
   dlnkfdT = -12.48 * invT + 0.50321666580472 * 148076 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[5] * sc[45];
   Kc = refC * exp(-g_RT[5] + g_RT[35] - g_RT[45]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[35]) + (h_RT[5] + h_RT[45]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[5] += q;  /* H */
-  wdot[35] -= q; /* A2 */
-  wdot[45] += q; /* A2- */
-  /* d()/d[H] */
+  // update wdot
+  wdot[5] += q;  // H
+  wdot[35] -= q; // A2
+  wdot[45] += q; // A2-
+  // d()/d[H]
   dqdci = -k_r * sc[45];
-  J[245] += dqdci; /* dwdot[H]/d[H] */
-  J[275] -= dqdci; /* dwdot[A2]/d[H] */
-  J[285] += dqdci; /* dwdot[A2-]/d[H] */
-  /* d()/d[A2] */
+  J[245] += dqdci; // dwdot[H]/d[H]
+  J[275] -= dqdci; // dwdot[A2]/d[H]
+  J[285] += dqdci; // dwdot[A2-]/d[H]
+  // d()/d[A2]
   dqdci = +k_f;
-  J[1685] += dqdci; /* dwdot[H]/d[A2] */
-  J[1715] -= dqdci; /* dwdot[A2]/d[A2] */
-  J[1725] += dqdci; /* dwdot[A2-]/d[A2] */
-  /* d()/d[A2-] */
+  J[1685] += dqdci; // dwdot[H]/d[A2]
+  J[1715] -= dqdci; // dwdot[A2]/d[A2]
+  J[1725] += dqdci; // dwdot[A2-]/d[A2]
+  // d()/d[A2-]
   dqdci = -k_r * sc[5];
-  J[2165] += dqdci; /* dwdot[H]/d[A2-] */
-  J[2195] -= dqdci; /* dwdot[A2]/d[A2-] */
-  J[2205] += dqdci; /* dwdot[A2-]/d[A2-] */
-  /* d()/dT */
-  J[2261] += dqdT; /* dwdot[H]/dT */
-  J[2291] -= dqdT; /* dwdot[A2]/dT */
-  J[2301] += dqdT; /* dwdot[A2-]/dT */
+  J[2165] += dqdci; // dwdot[H]/d[A2-]
+  J[2195] -= dqdci; // dwdot[A2]/d[A2-]
+  J[2205] += dqdci; // dwdot[A2-]/d[A2-]
+  // d()/dT
+  J[2261] += dqdT; // dwdot[H]/dT
+  J[2291] -= dqdT; // dwdot[A2]/dT
+  J[2301] += dqdT; // dwdot[A2-]/dT
 
   /*reaction 223: A2 + H <=> A2- + H2 */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[5] * sc[35];
   k_f = 1e-06 * 265000000 *
         exp(1.87 * tc[0] - 0.50321666580472 * (17096.08) * invT);
   dlnkfdT = 1.87 * invT + 0.50321666580472 * 17096.08 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[4] * sc[45];
   Kc = exp(-g_RT[4] + g_RT[5] + g_RT[35] - g_RT[45]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[5] + h_RT[35]) + (h_RT[4] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[4] += q;  /* H2 */
-  wdot[5] -= q;  /* H */
-  wdot[35] -= q; /* A2 */
-  wdot[45] += q; /* A2- */
-  /* d()/d[H2] */
+  // update wdot
+  wdot[4] += q;  // H2
+  wdot[5] -= q;  // H
+  wdot[35] -= q; // A2
+  wdot[45] += q; // A2-
+  // d()/d[H2]
   dqdci = -k_r * sc[45];
-  J[196] += dqdci; /* dwdot[H2]/d[H2] */
-  J[197] -= dqdci; /* dwdot[H]/d[H2] */
-  J[227] -= dqdci; /* dwdot[A2]/d[H2] */
-  J[237] += dqdci; /* dwdot[A2-]/d[H2] */
-  /* d()/d[H] */
+  J[196] += dqdci; // dwdot[H2]/d[H2]
+  J[197] -= dqdci; // dwdot[H]/d[H2]
+  J[227] -= dqdci; // dwdot[A2]/d[H2]
+  J[237] += dqdci; // dwdot[A2-]/d[H2]
+  // d()/d[H]
   dqdci = +k_f * sc[35];
-  J[244] += dqdci; /* dwdot[H2]/d[H] */
-  J[245] -= dqdci; /* dwdot[H]/d[H] */
-  J[275] -= dqdci; /* dwdot[A2]/d[H] */
-  J[285] += dqdci; /* dwdot[A2-]/d[H] */
-  /* d()/d[A2] */
+  J[244] += dqdci; // dwdot[H2]/d[H]
+  J[245] -= dqdci; // dwdot[H]/d[H]
+  J[275] -= dqdci; // dwdot[A2]/d[H]
+  J[285] += dqdci; // dwdot[A2-]/d[H]
+  // d()/d[A2]
   dqdci = +k_f * sc[5];
-  J[1684] += dqdci; /* dwdot[H2]/d[A2] */
-  J[1685] -= dqdci; /* dwdot[H]/d[A2] */
-  J[1715] -= dqdci; /* dwdot[A2]/d[A2] */
-  J[1725] += dqdci; /* dwdot[A2-]/d[A2] */
-  /* d()/d[A2-] */
+  J[1684] += dqdci; // dwdot[H2]/d[A2]
+  J[1685] -= dqdci; // dwdot[H]/d[A2]
+  J[1715] -= dqdci; // dwdot[A2]/d[A2]
+  J[1725] += dqdci; // dwdot[A2-]/d[A2]
+  // d()/d[A2-]
   dqdci = -k_r * sc[4];
-  J[2164] += dqdci; /* dwdot[H2]/d[A2-] */
-  J[2165] -= dqdci; /* dwdot[H]/d[A2-] */
-  J[2195] -= dqdci; /* dwdot[A2]/d[A2-] */
-  J[2205] += dqdci; /* dwdot[A2-]/d[A2-] */
-  /* d()/dT */
-  J[2260] += dqdT; /* dwdot[H2]/dT */
-  J[2261] -= dqdT; /* dwdot[H]/dT */
-  J[2291] -= dqdT; /* dwdot[A2]/dT */
-  J[2301] += dqdT; /* dwdot[A2-]/dT */
+  J[2164] += dqdci; // dwdot[H2]/d[A2-]
+  J[2165] -= dqdci; // dwdot[H]/d[A2-]
+  J[2195] -= dqdci; // dwdot[A2]/d[A2-]
+  J[2205] += dqdci; // dwdot[A2-]/d[A2-]
+  // d()/dT
+  J[2260] += dqdT; // dwdot[H2]/dT
+  J[2261] -= dqdT; // dwdot[H]/dT
+  J[2291] -= dqdT; // dwdot[A2]/dT
+  J[2301] += dqdT; // dwdot[A2-]/dT
 
   /*reaction 224: A2 + OH <=> A2- + H2O */
   /*a non-third-body and non-pressure-fall-off reaction */
-  /* forward */
+  // forward
   phi_f = sc[6] * sc[35];
   k_f = 1e-06 * 963 * exp(3.02 * tc[0] - 0.50321666580472 * (4373.8) * invT);
   dlnkfdT = 3.02 * invT + 0.50321666580472 * 4373.8 * invT2;
-  /* reverse */
+  // reverse
   phi_r = sc[7] * sc[45];
   Kc = exp(g_RT[6] - g_RT[7] + g_RT[35] - g_RT[45]);
   k_r = k_f / Kc;
   dlnKcdT = invT * (-(h_RT[6] + h_RT[35]) + (h_RT[7] + h_RT[45]));
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
-  /* rate of progress */
+  // rate of progress
   q = k_f * phi_f - k_r * phi_r;
   dqdT = (dlnkfdT * k_f * phi_f - dkrdT * phi_r);
-  /* update wdot */
-  wdot[6] -= q;  /* OH */
-  wdot[7] += q;  /* H2O */
-  wdot[35] -= q; /* A2 */
-  wdot[45] += q; /* A2- */
-  /* d()/d[OH] */
+  // update wdot
+  wdot[6] -= q;  // OH
+  wdot[7] += q;  // H2O
+  wdot[35] -= q; // A2
+  wdot[45] += q; // A2-
+  // d()/d[OH]
   dqdci = +k_f * sc[35];
-  J[294] -= dqdci; /* dwdot[OH]/d[OH] */
-  J[295] += dqdci; /* dwdot[H2O]/d[OH] */
-  J[323] -= dqdci; /* dwdot[A2]/d[OH] */
-  J[333] += dqdci; /* dwdot[A2-]/d[OH] */
-  /* d()/d[H2O] */
+  J[294] -= dqdci; // dwdot[OH]/d[OH]
+  J[295] += dqdci; // dwdot[H2O]/d[OH]
+  J[323] -= dqdci; // dwdot[A2]/d[OH]
+  J[333] += dqdci; // dwdot[A2-]/d[OH]
+  // d()/d[H2O]
   dqdci = -k_r * sc[45];
-  J[342] -= dqdci; /* dwdot[OH]/d[H2O] */
-  J[343] += dqdci; /* dwdot[H2O]/d[H2O] */
-  J[371] -= dqdci; /* dwdot[A2]/d[H2O] */
-  J[381] += dqdci; /* dwdot[A2-]/d[H2O] */
-  /* d()/d[A2] */
+  J[342] -= dqdci; // dwdot[OH]/d[H2O]
+  J[343] += dqdci; // dwdot[H2O]/d[H2O]
+  J[371] -= dqdci; // dwdot[A2]/d[H2O]
+  J[381] += dqdci; // dwdot[A2-]/d[H2O]
+  // d()/d[A2]
   dqdci = +k_f * sc[6];
-  J[1686] -= dqdci; /* dwdot[OH]/d[A2] */
-  J[1687] += dqdci; /* dwdot[H2O]/d[A2] */
-  J[1715] -= dqdci; /* dwdot[A2]/d[A2] */
-  J[1725] += dqdci; /* dwdot[A2-]/d[A2] */
-  /* d()/d[A2-] */
+  J[1686] -= dqdci; // dwdot[OH]/d[A2]
+  J[1687] += dqdci; // dwdot[H2O]/d[A2]
+  J[1715] -= dqdci; // dwdot[A2]/d[A2]
+  J[1725] += dqdci; // dwdot[A2-]/d[A2]
+  // d()/d[A2-]
   dqdci = -k_r * sc[7];
-  J[2166] -= dqdci; /* dwdot[OH]/d[A2-] */
-  J[2167] += dqdci; /* dwdot[H2O]/d[A2-] */
-  J[2195] -= dqdci; /* dwdot[A2]/d[A2-] */
-  J[2205] += dqdci; /* dwdot[A2-]/d[A2-] */
-  /* d()/dT */
-  J[2262] -= dqdT; /* dwdot[OH]/dT */
-  J[2263] += dqdT; /* dwdot[H2O]/dT */
-  J[2291] -= dqdT; /* dwdot[A2]/dT */
-  J[2301] += dqdT; /* dwdot[A2-]/dT */
+  J[2166] -= dqdci; // dwdot[OH]/d[A2-]
+  J[2167] += dqdci; // dwdot[H2O]/d[A2-]
+  J[2195] -= dqdci; // dwdot[A2]/d[A2-]
+  J[2205] += dqdci; // dwdot[A2-]/d[A2-]
+  // d()/dT
+  J[2262] -= dqdT; // dwdot[OH]/dT
+  J[2263] += dqdT; // dwdot[H2O]/dT
+  J[2291] -= dqdT; // dwdot[A2]/dT
+  J[2301] += dqdT; // dwdot[A2-]/dT
 
   amrex::Real c_R[47], dcRdT[47], e_RT[47];
   amrex::Real* eh_RT;
@@ -30035,7 +30033,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   amrex::Real tmp3 = cmixinv * T;
   amrex::Real tmp2 = tmp1 * tmp3;
   amrex::Real dehmixdc;
-  /* dTdot/d[X] */
+  // dTdot/d[X]
   for (int k = 0; k < 47; ++k) {
     dehmixdc = 0.0;
     for (int m = 0; m < 47; ++m) {
@@ -30043,7 +30041,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
     }
     J[k * 48 + 47] = tmp2 * c_R[k] - tmp3 * dehmixdc;
   }
-  /* dTdot/dT */
+  // dTdot/dT
   J[2303] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
 
   return;
@@ -30061,8 +30059,8 @@ DWDOT(amrex::Real* J, amrex::Real* sc, amrex::Real* Tp, const int* consP)
 
   aJacobian(J, c, *Tp, *consP);
 
-  /* dwdot[k]/dT */
-  /* dTdot/d[X] */
+  // dwdot[k]/dT
+  // dTdot/d[X]
   for (int k = 0; k < 47; k++) {
     J[2256 + k] *= 1.e-6;
     J[k * 48 + 47] *= 1.e6;
