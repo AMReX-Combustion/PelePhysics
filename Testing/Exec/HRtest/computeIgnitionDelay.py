@@ -70,9 +70,11 @@ ignitionDelayPP = (dt/ndt)*np.amin(np.argwhere(A1[:,1]>(A1[0,1]+400)))
 
 if args.estimate:
     if args.verbose: 
-        print("Rough estimate: T = %.3g K , P = %.3g atm, Phi = %.3g,  tIgn = %.3g s " % (temp,press/101325.0,phi,ignitionDelayPP))
+        print("Rough estimate: T = %.3g K , P = %.3g atm, Phi = %.3g,  tIgn = %.3g +/- %.3g s " % (temp,press/101325.0,phi,ignitionDelayPP,dt/ndt))
     # Write new input file
     writeNewInput(args.inputFile,'inputs/inputs.0d_refine',ignitionDelayPP*1.1,ndt*2)
 
 if args.refine:
-    print("T = %.3g K , P = %.3g atm, Phi = %.3g,  tIgn = %.3g s " % (temp,press/101325.0,phi,ignitionDelayPP))
+    print("T = %.3g K , P = %.3g atm, Phi = %.3g,  tIgn = %.3g +/- %.3g s " % (temp,press/101325.0,phi,ignitionDelayPP,dt/ndt))
+    print("Equivalence ratio calculation assumed you are using Ndodecane")
+    print("Change GPU_misc.H if you are not")
