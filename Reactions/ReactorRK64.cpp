@@ -97,7 +97,7 @@ ReactorRK64::react(
     int nsteps = 0;
     amrex::Real change_factor;
     while (current_time < time_out) {
-      for (double& sp : error_reg) {
+      for (amrex::Real& sp : error_reg) {
         sp = 0.0;
       }
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
@@ -118,7 +118,7 @@ ReactorRK64::react(
       nsteps++;
 
       amrex::Real max_err = tinyval;
-      for (double sp : error_reg) {
+      for (amrex::Real sp : error_reg) {
         max_err = fabs(sp) > max_err ? fabs(sp) : max_err;
       }
 
@@ -247,7 +247,7 @@ ReactorRK64::react(
     int nsteps = 0;
     amrex::Real change_factor;
     while (current_time < time_out) {
-      for (double& sp : error_reg) {
+      for (amrex::Real& sp : error_reg) {
         sp = 0.0;
       }
       for (int stage = 0; stage < rkp.nstages_rk64; stage++) {
@@ -268,7 +268,7 @@ ReactorRK64::react(
       nsteps++;
 
       amrex::Real max_err = tinyval;
-      for (double sp : error_reg) {
+      for (amrex::Real sp : error_reg) {
         max_err = fabs(sp) > max_err ? fabs(sp) : max_err;
       }
 
