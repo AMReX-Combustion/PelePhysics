@@ -46,6 +46,38 @@ jobs:
       - name: Run tests
         run: poetry run bash -c "cd ../Mechanism/Models/air && ./make-mechanism.sh"
 
+  CEPTR:
+    needs: Formatting
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.8]
+        poetry-version: [1.1.7]
+    defaults:
+      run:
+        working-directory: ${{github.workspace}}/Support/ceptr
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{matrix.python-version}}
+      - name: Run image
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: ${{matrix.poetry-version}}
+      - name: Install Dependencies using Poetry
+        run: poetry install
+      - name: Formatting with black
+        run: poetry run black --check .
+      - name: Sort imports with isort
+        run: poetry run isort --check-only --diff .
+      - name: Run tests
+        run: |
+          echo "PELE_PHYSICS_HOME=${{github.workspace}}/PelePhysics-${{matrix.comp}}" >> $GITHUB_ENV
+          poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/air/mechanism.yaml
+          poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/LiDryer/mechanism.yaml
+
   Transport-EOS-Reactions:
     needs: Formatting
     runs-on: ubuntu-latest
