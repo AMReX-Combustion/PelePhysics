@@ -1,4 +1,4 @@
-void doReact_ode_iE1(int &lev, 
+void doReact_Array4(int &lev, 
                      amrex::Real &dt,
                      int& ndt,
                      int& omp_thread,
@@ -53,23 +53,10 @@ void doReact_ode_iE1(int &lev,
             myfile << timeElapsed << " " <<  T.dataPtr()[0] << "\n";
           }
           BL_PROFILE_VAR_STOP(ReactInLoop);
-          std::cout << "FINAL VALUES\n";
 
-          double rho = rhoY2rho(rhoY);
-          double * y = new double [NUM_SPECIES];
-          memset( y, 0, (NUM_SPECIES)*sizeof(double) );
-          rhoY2Y(rhoY,y);
-          //print<double>(y,NUM_SPECIES,"Y");
-          //print<double>(rho,"rho");
-
-          double sumY = 0;
-          for (int i=0; i<NUM_SPECIES; i++){
-               sumY += y[i];
-          }
-          //print<double>(sumY,"sumY");
 }
 
-void doReact_ode_iE2(int &lev, 
+void doReact_1dArray(int &lev, 
                      amrex::Real &dt,
                      int& ndt,
                      int& omp_thread,
@@ -81,7 +68,8 @@ void doReact_ode_iE2(int &lev,
                      amrex::Vector<amrex::MultiFab>& rY_source_energy_ext,
                      amrex::Vector<amrex::MultiFab>& fctCount,
                      amrex::Vector<amrex::iMultiFab>& dummyMask,
-                     std::unique_ptr<pele::physics::reactions::ReactorBase>& reactor)
+                     std::unique_ptr<pele::physics::reactions::ReactorBase>& reactor,
+                     std::string outputFolderHR)
 {
 
           BL_PROFILE_VAR_NS("Allocs", Allocs);
@@ -179,7 +167,11 @@ void doReact_ode_iE2(int &lev,
             tmp_fc[i] = 0;
             amrex::Real time = 0.0;
             amrex::Real dt_lev = dt / std::pow(2, lev);
-            amrex::Real dt_incr = dt_lev / ndt;
+            amrex::Real dt_incr = dt_lev / ndt; 
+            std::ofstream myfile;
+            myfile.open (outputFolderHR + "/PPreaction.txt");
+            myfile << 0 << " " <<  T.dataPtr()[0] << "\n";
+            double timeElapsed = 0;
             for (int ii = 0; ii < ndt; ++ii) {
               tmp_fc[i] += reactor->react(
                 &tmp_vect[i * (NUM_SPECIES + 1)],
@@ -190,12 +182,39 @@ void doReact_ode_iE2(int &lev,
                 amrex::Gpu::gpuStream()
 #endif
               );
-
               dt_incr = dt_lev / ndt;
+              timeElapsed += dt_incr;
               for (int ic = i + 1; ic < i + ode_ncells; ++ic) {
                 tmp_fc[ic] = tmp_fc[i];
               }
               amrex::Gpu::Device::streamSynchronize();
+              // Compute temperature: This is necessary for ignition delay calculation
+#ifndef AMREX_USE_GPU
+              reactor->unflatten(
+            box, nCells, rhoY, T, rhoE, frcEExt, fc, tmp_vect, tmp_vect_energy,
+            tmp_fc, dt);
+#else
+
+          amrex::Gpu::copy(
+            amrex::Gpu::hostToDevice, tmp_vect,
+            tmp_vect + nCells * (NUM_SPECIES + 1), tmp_vect_d);
+          amrex::Gpu::copy(
+            amrex::Gpu::hostToDevice, tmp_src_vect,
+            tmp_src_vect + nCells * NUM_SPECIES, tmp_src_vect_d);
+          amrex::Gpu::copy(
+            amrex::Gpu::hostToDevice, tmp_vect_energy, tmp_vect_energy + nCells,
+            tmp_vect_energy_d);
+          amrex::Gpu::copy(
+            amrex::Gpu::hostToDevice, tmp_src_vect_energy,
+            tmp_src_vect_energy + nCells, tmp_src_vect_energy_d);
+          amrex::Gpu::copy(
+            amrex::Gpu::hostToDevice, tmp_fc, tmp_fc + nCells, tmp_fc_d);
+
+          reactor->unflatten(
+            box, nCells, rhoY, T, rhoE, frcEExt, fc, tmp_vect_d,
+            tmp_vect_energy_d, tmp_fc_d, dt);
+#endif
+              myfile << timeElapsed << " " << T.dataPtr()[0] << "\n";
             }
           }
           BL_PROFILE_VAR_STOP(ReactInLoop);

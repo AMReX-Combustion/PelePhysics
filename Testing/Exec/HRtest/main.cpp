@@ -19,9 +19,6 @@
 #include <ReactorBase.H>
 
 // Leanify main script
-#include "utils/printFunctions.H"
-#include "utils/typeFunction.H"
-#include "utils/helperFunctions.H"
 #include "utils/initFunctions.H"
 #include "utils/plotFunctions.H"
 #include "utils/reactFunctions.H"
@@ -149,13 +146,14 @@ main(int argc, char* argv[])
 #ifdef AMREX_USE_OMP
         omp_thread = omp_get_thread_num();
 #endif
-        // Reaction at constant volume
+        // Reaction with Array4 
         if (reactFunc == 1) {
-          doReact_ode_iE1(lev ,dt, ndt, omp_thread, mfi, mf, rY_source_ext, mfE, rY_source_energy_ext, fctCount, dummyMask, reactor, outputFolderHR);
-
-        // Reaction at constant pressure
+          doReact_Array4(lev ,dt, ndt, omp_thread, mfi, mf, rY_source_ext, mfE, rY_source_energy_ext, fctCount, dummyMask, reactor, outputFolderHR);
+          std::cout << "called reactFunc " << reactFunc<<"\n"; 
+        // Reaction with 1dArray 
         } else if (reactFunc == 2) {
-          doReact_ode_iE2(lev ,dt, ndt, omp_thread, ode_ncells, mfi, mf, rY_source_ext, mfE, rY_source_energy_ext, fctCount, dummyMask, reactor);
+          doReact_1dArray(lev ,dt, ndt, omp_thread, ode_ncells, mfi, mf, rY_source_ext, mfE, rY_source_energy_ext, fctCount, dummyMask, reactor, outputFolderHR);
+          std::cout << "called reactFunc " << reactFunc<<"\n"; 
 
         }
       }

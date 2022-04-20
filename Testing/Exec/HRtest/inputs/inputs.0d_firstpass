@@ -2,12 +2,13 @@ ncells = 1 1 1
 max_grid_size  = 1
 fuel_name = NC12H26
 reactFormat = Array4
+#reactFormat = 1dArray
 chem_integrator = "ReactorCvode"
 
 ode.dt  = 2
 ode.ndt = 2000
 ode.ode_ncells = 1
-ode.reactor_type  = 1 # 1=full e, 2=full h
+ode.reactor_type  = 2 # 1=full e, 2=full h
 ode.verbose = 0
 ode.use_typ_vals = 0
 ode.rtol = 1e-10

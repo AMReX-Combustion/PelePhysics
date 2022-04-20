@@ -257,15 +257,6 @@ void initializeData(int &num_grow,
               i, j, k, fuel_idx, ode_iE, rY_a, rYs_a, E_a, rE_a, t0, equiv_ratio, p, geomdata);
           });
 
-        std::cout << "INITIAL VALUES\n";
-
-        double rho = rhoY2rho(rY_a);
-        double * y = new double [NUM_SPECIES];
-        memset( y, 0, (NUM_SPECIES)*sizeof(double) );
-        rhoY2Y(rY_a,y);
-        //print<double>(y,NUM_SPECIES,"Y init");
-        //print<double>(rho,"rho init");
-        //print<double>(E_a.dataPtr()[0],"H init");
       }
     }
 
