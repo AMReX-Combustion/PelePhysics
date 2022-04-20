@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Find first executable name available
 execname=`find . -name "Pele*.ex" | head -1`
 
@@ -16,7 +18,7 @@ else
     $execname inputs/inputs.0d_firstpass
     python computeIgnitionDelay.py -v -est -f inputs/inputs.0d_firstpass
     
-    # Refied estimate of ignition time
+    # Refined estimate of ignition time
     $execname inputs/inputs.0d_refine
     python computeIgnitionDelay.py -ref -f inputs/inputs.0d_refine
 fi
