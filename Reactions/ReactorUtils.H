@@ -238,7 +238,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
 fKernelSpec(
   const int icell,
   const int ncells,
-  const double dt_save,
+  const amrex::Real dt_save,
   const int reactor_type,
   const amrex::Real* yvec_d,
   amrex::Real* ydot_d, // NOLINT(readability-non-const-parameter)

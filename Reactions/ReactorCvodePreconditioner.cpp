@@ -130,24 +130,24 @@ PSolve(
         for(int batchId = 0 ; batchId < ncells; batchId++){
             // measure |bj - Aj*xj|
             realtype *csrValAj = (udata->csr_val_d) + batchId * (udata->NNZ);
-            double *xj       = N_VGetHostArrayPointer_Cuda(z) + batchId *
-            (NUM_SPECIES+1); double *bj       =
+            amrex::Real *xj       = N_VGetHostArrayPointer_Cuda(z) + batchId *
+            (NUM_SPECIES+1); amrex::Real *bj       =
             N_VGetHostArrayPointer_Cuda(r) + batchId * (NUM_SPECIES+1);
             // sup| bj - Aj*xj|
-            double sup_res = 0;
+            amrex::Real sup_res = 0;
             for(int row = 0 ; row < (NUM_SPECIES+1) ; row++){
                 printf("\n     row %d: ", row);
                 const int start = udata->csr_row_count_d[row] - 1;
                 const int end = udata->csr_row_count_d[row +1] - 1;
-                double Ax = 0.0; // Aj(row,:)*xj
+                amrex::Real Ax = 0.0; // Aj(row,:)*xj
                 for(int colidx = start ; colidx < end ; colidx++){
                     const int col = udata->csr_col_index_d[colidx] - 1;
-                    const double Areg = csrValAj[colidx];
-                    const double xreg = xj[col];
+                    const amrex::Real Areg = csrValAj[colidx];
+                    const amrex::Real xreg = xj[col];
                     printf("  (%d, %14.8e, %14.8e, %14.8e) ",
                     col,Areg,xreg,bj[row] ); Ax = Ax + Areg * xreg;
                 }
-                double rresidi = bj[row] - Ax;
+                amrex::Real rresidi = bj[row] - Ax;
                 sup_res = (sup_res > fabs(rresidi))? sup_res : fabs(rresidi);
             }
             printf("batchId %d: sup|bj - Aj*xj| = %E \n", batchId, sup_res);
@@ -626,8 +626,8 @@ PSolve_custom(
   BL_PROFILE_VAR("Pele::ReactorCvode::GaussSolver", GaussSolver);
   for (int tid = 0; tid < ncells; tid++) {
     int offset = tid * (NUM_SPECIES + 1);
-    double* z_d_offset = zdata + offset;
-    double* r_d_offset = rdata + offset;
+    amrex::Real* z_d_offset = zdata + offset;
+    amrex::Real* r_d_offset = rdata + offset;
     sgjsolve_simplified(Jdata[tid], z_d_offset, r_d_offset);
   }
   BL_PROFILE_VAR_STOP(GaussSolver);
