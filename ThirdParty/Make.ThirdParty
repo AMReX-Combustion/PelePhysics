@@ -1,6 +1,6 @@
 ifeq ($(USE_CUDA),TRUE)
   ifeq ($(lowercase_nvcc_host_comp),$(filter $(lowercase_nvcc_host_comp),gcc gnu g++))
-    HOSTCC = gcc
+    HOSTCC = $(COMP)
   else
     HOSTCC = pgi
   endif
