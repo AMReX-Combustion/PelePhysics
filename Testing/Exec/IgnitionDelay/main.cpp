@@ -133,13 +133,11 @@ main(int argc, char* argv[])
           doReact_Array4(
             lev, dt, ndt, omp_thread, mfi, mf, rY_source_ext, mfE,
             rY_source_energy_ext, fctCount, dummyMask, reactor, outputFolderHR);
-          std::cout << "called reactFunc " << reactFunc << "\n";
           // Reaction with 1dArray
         } else if (reactFunc == 2) {
           doReact_1dArray(
             lev, dt, ndt, omp_thread, ode_ncells, mfi, mf, rY_source_ext, mfE,
             rY_source_energy_ext, fctCount, dummyMask, reactor, outputFolderHR);
-          std::cout << "called reactFunc " << reactFunc << "\n";
         }
       }
       BL_PROFILE_VAR_STOP(Advance);
