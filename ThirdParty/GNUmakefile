@@ -49,7 +49,7 @@ else
   endif
 endif
 
-tp_suffix=$(COMP)$(DebugSuffix)$(CUDASuffix)$(HIPSuffix)$(DPCPPSuffix)$(KLUSuffix)$(MAGMASuffix)
+tp_suffix=$(COMP)$(PrecisionSuffix)$(DebugSuffix)$(CUDASuffix)$(HIPSuffix)$(DPCPPSuffix)$(KLUSuffix)$(MAGMASuffix)
 INSTALL_PREFIX=$(PWD)/INSTALL/$(tp_suffix)
 
 ifeq ($(PELE_USE_KLU),TRUE)
@@ -112,6 +112,14 @@ else
   ONE_MAGMA_LIB_FILE=
 endif
 
+ifeq ($(PRECISION),FLOAT)
+  SUNDIALS_PRECISION=SINGLE
+  PrecisionSuffix=.SINGLE
+else
+  SUNDIALS_PRECISION=DOUBLE
+  PrecisionSuffix=
+endif
+
 ifeq ($(DEBUG),FALSE)
   BUILD_TYPE=Release
   DebugSuffix=
@@ -140,11 +148,6 @@ ifeq ($(USE_DPCPP),TRUE)
 else
   DPCPP_DEFINES=-DENABLE_SYCL:BOOL=OFF
   DPCPPSuffix=
-endif
-ifeq ($(PRECISION),FLOAT)
-  SUNDIALS_PRECISION=SINGLE
-else
-  SUNDIALS_PRECISION=DOUBLE
 endif
 
 SUNDIALS_BRANCH ?= v6.1.1
