@@ -1,5 +1,3 @@
-import sys
-sys.path.append('utils')
 import argparse
 import numpy as np
 
