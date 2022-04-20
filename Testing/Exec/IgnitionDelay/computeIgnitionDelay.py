@@ -92,11 +92,13 @@ if __name__=="__main__":
     
     if args.estimate:
         if args.verbose: 
-            print("Rough estimate: T = %.3g K , P = %.3g atm, Phi = %.3g,  tIgn = %.3g +/- %.3g s " % (temp,press/101325.0,phi,ignitionDelayPP,dt/ndt))
+            logMessage = f"Rough estimate: T = {temp:.3g} K , P = {press/101325.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
+            print(logMessage)
         # Write new input file
         writeNewInput(args.inputFile,'inputs/inputs.0d_refine',ignitionDelayPP*1.1,ndt*2)
     
-    if args.refine:
-        print("T = %.3g K , P = %.3g atm, Phi = %.3g,  tIgn = %.3g +/- %.3g s " % (temp,press/101325.0,phi,ignitionDelayPP,dt/ndt))
+    if args.refine: 
+        logMessage = f"T = {temp:.3g} K , P = {press/101325.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
+        print(logMessage)
         print("Equivalence ratio calculation assumed you are using Ndodecane")
         print("Change GPU_misc.H if you are not")
