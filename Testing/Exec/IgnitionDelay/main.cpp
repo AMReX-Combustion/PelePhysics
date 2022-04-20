@@ -54,7 +54,8 @@ main(int argc, char* argv[])
     bool do_plt;
     std::string pltfile;
     std::string outputFolderHR;
-    int initFromChk, reactFunc, ode_ncells, ndt, ode_iE, use_typ_vals,max_grid_size;
+    int initFromChk, reactFunc, ode_ncells, ndt, ode_iE, use_typ_vals,
+      max_grid_size;
     std::string chkfile, reactFormat;
     amrex::Real dt, rtol, atol;
     amrex::Real t0, equiv_ratio, press;
@@ -63,35 +64,14 @@ main(int argc, char* argv[])
     amrex::ParmParse ppode("ode");
     amrex::ParmParse pphr("hr");
     parseInput(
-                pp,
-                ppode,
-                pphr,
-                fuel_name,
-                chem_integrator,
-                do_plt,
-                pltfile,
-                initFromChk,
-                chkfile,
-                reactFormat,
-                reactFunc,
-                ode_ncells,
-                dt,
-                ndt,
-                ode_iE,
-                rtol,
-                atol,
-                use_typ_vals,
-                ncells,
-                max_grid_size,
-                t0,
-                equiv_ratio,
-                press,
-                outputFolderHR
-              );
+      pp, ppode, pphr, fuel_name, chem_integrator, do_plt, pltfile, initFromChk,
+      chkfile, reactFormat, reactFunc, ode_ncells, dt, ndt, ode_iE, rtol, atol,
+      use_typ_vals, ncells, max_grid_size, t0, equiv_ratio, press,
+      outputFolderHR);
 
     // Assign Fuel ID
     int fuel_idx;
-    getFuelID(fuel_name,fuel_idx);
+    getFuelID(fuel_name, fuel_idx);
 
     // Initialize transport
     pele::physics::transport::TransportParams<
@@ -99,7 +79,7 @@ main(int argc, char* argv[])
       trans_parms;
     trans_parms.allocate();
 
-    // Initialize reactor object inside OMP region, including tolerances 
+    // Initialize reactor object inside OMP region, including tolerances
     BL_PROFILE_VAR("main::reactor_info()", reactInfo);
     std::unique_ptr<pele::physics::reactions::ReactorBase> reactor =
       pele::physics::reactions::ReactorBase::create(chem_integrator);
@@ -112,7 +92,8 @@ main(int argc, char* argv[])
     amrex::Vector<amrex::BoxArray> grids;
     amrex::Vector<amrex::DistributionMapping> dmaps;
     BL_PROFILE_VAR("main::geometry_setup", GeomSetup);
-    initializeGeom(geoms,grids,dmaps,finest_level,ncells,ndt,dt,max_grid_size);
+    initializeGeom(
+      geoms, grids, dmaps, finest_level, ncells, ndt, dt, max_grid_size);
     BL_PROFILE_VAR_STOP(GeomSetup);
 
     // Initialize Data
@@ -124,13 +105,14 @@ main(int argc, char* argv[])
     amrex::Vector<amrex::MultiFab> rY_source_energy_ext(finest_level + 1);
     amrex::Vector<amrex::MultiFab> fctCount(finest_level + 1);
     amrex::Vector<amrex::iMultiFab> dummyMask(finest_level + 1);
-    initializeData(num_grow, mf, rY_source_ext, mfE, rY_source_energy_ext, t0, equiv_ratio, press, fctCount, dummyMask, finest_level, geoms, grids, dmaps, fuel_idx, ode_iE)
-    BL_PROFILE_VAR_STOP(InitData);
-
+    initializeData(
+      num_grow, mf, rY_source_ext, mfE, rY_source_energy_ext, t0, equiv_ratio,
+      press, fctCount, dummyMask, finest_level, geoms, grids, dmaps, fuel_idx,
+      ode_iE) BL_PROFILE_VAR_STOP(InitData);
 
     // ~~~~ Reac
     amrex::Print() << " \n STARTING THE ADVANCE \n";
-   
+
     for (int lev = 0; lev <= finest_level; ++lev) {
       amrex::Real lvl_strt = amrex::ParallelDescriptor::second();
       BL_PROFILE_VAR("Advance_Level" + std::to_string(lev), Advance);
@@ -146,15 +128,18 @@ main(int argc, char* argv[])
 #ifdef AMREX_USE_OMP
         omp_thread = omp_get_thread_num();
 #endif
-        // Reaction with Array4 
+        // Reaction with Array4
         if (reactFunc == 1) {
-          doReact_Array4(lev ,dt, ndt, omp_thread, mfi, mf, rY_source_ext, mfE, rY_source_energy_ext, fctCount, dummyMask, reactor, outputFolderHR);
-          std::cout << "called reactFunc " << reactFunc<<"\n"; 
-        // Reaction with 1dArray 
+          doReact_Array4(
+            lev, dt, ndt, omp_thread, mfi, mf, rY_source_ext, mfE,
+            rY_source_energy_ext, fctCount, dummyMask, reactor, outputFolderHR);
+          std::cout << "called reactFunc " << reactFunc << "\n";
+          // Reaction with 1dArray
         } else if (reactFunc == 2) {
-          doReact_1dArray(lev ,dt, ndt, omp_thread, ode_ncells, mfi, mf, rY_source_ext, mfE, rY_source_energy_ext, fctCount, dummyMask, reactor, outputFolderHR);
-          std::cout << "called reactFunc " << reactFunc<<"\n"; 
-
+          doReact_1dArray(
+            lev, dt, ndt, omp_thread, ode_ncells, mfi, mf, rY_source_ext, mfE,
+            rY_source_energy_ext, fctCount, dummyMask, reactor, outputFolderHR);
+          std::cout << "called reactFunc " << reactFunc << "\n";
         }
       }
       BL_PROFILE_VAR_STOP(Advance);
@@ -193,5 +178,3 @@ main(int argc, char* argv[])
 
   return 0;
 }
-
- 
