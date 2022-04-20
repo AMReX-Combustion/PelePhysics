@@ -6,11 +6,15 @@ import numpy as np
 
 
 def parseInputFile(input_filename):
-    # ~~~~ Parse input
     inpt = {}
     f = open( input_filename )
     data = f.readlines()
     for line in data:
+        # Remove comments from the line
+        commentStart = line.find('#')
+        if commentStart>-1:
+            line = line[:commentStart]
+        # Store parameters in dict
         if '=' in line:
             splitLine = line.split("=")
             if len(splitLine)==2:
