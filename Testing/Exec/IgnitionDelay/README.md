@@ -9,7 +9,9 @@ Computation of ignition delay occurs in 2 pass
 
 2. The estimate is refined
 
-## Compute ignition delay 
+## Compute ignition delay
+
+Ignition delay will call the Pele executable find in this directory. If you have many executables, please edit `execname` in `hrTest.sh`
 
 1. Link your mechanism in `GNUmakefile` (here using `dodecane_lu`)
 
