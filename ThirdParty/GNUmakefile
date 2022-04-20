@@ -49,7 +49,7 @@ else
   endif
 endif
 
-tp_suffix=$(COMP)$(DebugSuffix)$(CUDASuffix)$(HIPSuffix)$(DPCPPSuffix)$(KLUSuffix)$(MAGMASuffix)
+tp_suffix=$(COMP)$(PrecisionSuffix)$(DebugSuffix)$(CUDASuffix)$(HIPSuffix)$(DPCPPSuffix)$(KLUSuffix)$(MAGMASuffix)
 INSTALL_PREFIX=$(PWD)/INSTALL/$(tp_suffix)
 
 ifeq ($(PELE_USE_KLU),TRUE)
@@ -112,6 +112,14 @@ else
   ONE_MAGMA_LIB_FILE=
 endif
 
+ifeq ($(PRECISION),FLOAT)
+  SUNDIALS_PRECISION=SINGLE
+  PrecisionSuffix=.SINGLE
+else
+  SUNDIALS_PRECISION=DOUBLE
+  PrecisionSuffix=
+endif
+
 ifeq ($(DEBUG),FALSE)
   BUILD_TYPE=Release
   DebugSuffix=
@@ -141,11 +149,6 @@ else
   DPCPP_DEFINES=-DENABLE_SYCL:BOOL=OFF
   DPCPPSuffix=
 endif
-ifeq ($(PRECISION),FLOAT)
-  SUNDIALS_PRECISION=SINGLE
-else
-  SUNDIALS_PRECISION=DOUBLE
-endif
 
 SUNDIALS_BRANCH ?= v6.1.1
 SUNDIALS_PROFILING ?= OFF
@@ -162,19 +165,35 @@ tp_suffix:
 
 $(ONE_SUNDIALS_LIB_FILE): $(ONE_SUNDIALS_SRC_FILE) $(ONE_SS_LIB_FILE) $(ONE_MAGMA_LIB_FILE)
 	@mkdir -p $(SUNDIALS_BUILD_DIR)
-	cd $(SUNDIALS_BUILD_DIR); cmake -DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON -DCMAKE_INSTALL_PREFIX:PATH=$(INSTALL_PREFIX) \
-	                                -DCMAKE_INSTALL_LIBDIR:PATH=$(INSTALL_PREFIX)/lib -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-	                                -DCMAKE_C_COMPILER:STRING=$(CCOMPILER) -DCMAKE_CXX_COMPILER:STRING=$(CXXCOMPILER) \
-                                        -DCMAKE_C_STANDARD=99 -DCMAKE_CXX_STANDARD=17 \
-	                                -DSUNDIALS_PRECISION:STRING=$(SUNDIALS_PRECISION) \
-	                                -DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) $(CUDA_DEFINES) $(HIP_DEFINES) $(DPCPP_DEFINES) \
-	                                -DENABLE_MPI:BOOL=OFF -DENABLE_OPENMP:BOOL=OFF $(KLU_DEFINES) $(MAGMA_DEFINES) \
-	                                -DEXAMPLES_INSTALL:BOOL=OFF -DEXAMPLES_ENABLE_C:BOOL=OFF -DEXAMPLES_ENABLE_CXX:BOOL=OFF -DEXAMPLES_ENABLE_CUDA:BOOL=OFF \
-	                                -DBUILD_CVODES:BOOL=OFF -DBUILD_IDA:BOOL=OFF -DBUILD_IDAS:BOOL=OFF -DBUILD_KINSOL:BOOL=OFF \
-	                                -DBUILD_SHARED_LIBS:BOOL=ON -DBUILD_STATIC_LIBS:BOOL=OFF \
-	                                -DSUNDIALS_BUILD_WITH_PROFILING:BOOL=$(SUNDIALS_PROFILING) \
-	                                -DSUNDIALS_INDEX_SIZE:INT=32 $(SUNDIALS_SOURCE_DIR); \
-	                          cmake --build $(SUNDIALS_BUILD_DIR) --parallel; cmake --install $(SUNDIALS_BUILD_DIR)
+	cd $(SUNDIALS_BUILD_DIR) && \
+        cmake -DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON \
+          -DCMAKE_INSTALL_PREFIX:PATH=$(INSTALL_PREFIX) \
+          -DCMAKE_INSTALL_LIBDIR:PATH=$(INSTALL_PREFIX)/lib \
+          -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+          -DCMAKE_C_COMPILER:STRING=$(CCOMPILER) \
+          -DCMAKE_CXX_COMPILER:STRING=$(CXXCOMPILER) \
+          -DCMAKE_C_STANDARD:STRING=99 \
+          -DCMAKE_CXX_STANDARD:STRING=17 \
+          -DSUNDIALS_PRECISION:STRING=$(SUNDIALS_PRECISION) \
+          -DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) \
+          -DENABLE_MPI:BOOL=OFF \
+          -DENABLE_OPENMP:BOOL=OFF \
+          -DEXAMPLES_INSTALL:BOOL=OFF \
+          -DEXAMPLES_ENABLE_C:BOOL=OFF \
+          -DEXAMPLES_ENABLE_CXX:BOOL=OFF \
+          -DEXAMPLES_ENABLE_CUDA:BOOL=OFF \
+          -DBUILD_CVODES:BOOL=OFF \
+          -DBUILD_IDA:BOOL=OFF \
+          -DBUILD_IDAS:BOOL=OFF \
+          -DBUILD_KINSOL:BOOL=OFF \
+          -DBUILD_SHARED_LIBS:BOOL=ON \
+          -DSUNDIALS_BUILD_WITH_PROFILING:BOOL=$(SUNDIALS_PROFILING) \
+          -DSUNDIALS_INDEX_SIZE:INT=32 \
+          $(CUDA_DEFINES) $(HIP_DEFINES) $(DPCPP_DEFINES) \
+          $(KLU_DEFINES) $(MAGMA_DEFINES) \
+          $(SUNDIALS_SOURCE_DIR) && \
+        cmake --build $(SUNDIALS_BUILD_DIR) --parallel && \
+        cmake --install $(SUNDIALS_BUILD_DIR)
 
 $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
 	@echo "Building MAGMA"
@@ -184,14 +203,18 @@ $(ONE_MAGMA_LIB_FILE): $(ONE_MAGMA_SRC_FILE)
 	@echo ${CXXCOMPILER}
 	@mkdir -p $(MAGMA_BUILD_DIR)
 	@cmake --version
-	cd $(MAGMA_BUILD_DIR); cmake $(MAGMA_SOURCE_DIR) -DCMAKE_BUILD_TYPE=Release \
-	                            -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
-	                            -DCMAKE_C_COMPILER:STRING=$(CCOMPILER) \
-	                            -DCMAKE_CXX_COMPILER:STRING=$(CXXCOMPILER) \
-	                            -DUSE_FORTRAN=off \
-	                            $(MAGMA_COMPILER_OPT) \
-	                            -DBUILD_SHARED_LIBS=ON; \
-	                       cmake --build $(MAGMA_BUILD_DIR) --parallel; cmake --install $(MAGMA_BUILD_DIR)
+	cd $(MAGMA_BUILD_DIR) && \
+        cmake \
+          -DCMAKE_BUILD_TYPE:STRING=Release \
+          -DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_PREFIX} \
+          -DCMAKE_C_COMPILER:STRING=$(CCOMPILER) \
+          -DCMAKE_CXX_COMPILER:STRING=$(CXXCOMPILER) \
+          -DUSE_FORTRAN:BOOL=OFF \
+          -DBUILD_SHARED_LIBS:BOOL=ON \
+          $(MAGMA_COMPILER_OPT) \
+          $(MAGMA_SOURCE_DIR) && \
+        cmake --build $(MAGMA_BUILD_DIR) --parallel && \
+        cmake --install $(MAGMA_BUILD_DIR)
 
 $(ONE_MAGMA_SRC_FILE): $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE)
 	@cd $(MAGMA_DIST_DIR)/..; tar zxf $(MAGMA_DIST_DIR)/$(MAGMA_DIST_FILE); find $(MAGMA_SOURCE_DIR) -type f -exec touch {} +

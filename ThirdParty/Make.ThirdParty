@@ -1,14 +1,15 @@
 ifeq ($(USE_CUDA),TRUE)
   ifeq ($(lowercase_nvcc_host_comp),$(filter $(lowercase_nvcc_host_comp),gcc gnu g++))
-    HOSTCC = gcc
+    HOSTCC = $(COMP)
   else
     HOSTCC = pgi
   endif
 else
   HOSTCC = $(COMP)
 endif
-configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; $(MAKE) tp_suffix AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_HIP=$(USE_HIP) USE_DPCPP=$(USE_DPCPP) PELE_USE_KLU=$(PELE_USE_KLU) PELE_USE_MAGMA=$(PELE_USE_MAGMA) DEBUG=$(DEBUG) COMP=$(HOSTCC) NVCC=$(COMP) | tail -1)
-SUNDIALS_LIB_DIR  := $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib
+configSpecificTPSuffix=$(shell cd $(PELE_PHYSICS_HOME)/ThirdParty; $(MAKE) tp_suffix AMREX_HOME=$(AMREX_HOME) USE_CUDA=$(USE_CUDA) USE_HIP=$(USE_HIP) USE_DPCPP=$(USE_DPCPP) PELE_USE_KLU=$(PELE_USE_KLU) PELE_USE_MAGMA=$(PELE_USE_MAGMA) PRECISION=$(PRECISION) DEBUG=$(DEBUG) COMP=$(COMP) NVCC=$(COMP) | tail -1)
+REL_SUNDIALS_LIB_DIR := $(PELE_PHYSICS_HOME)/ThirdParty/INSTALL/$(configSpecificTPSuffix)/lib
+SUNDIALS_LIB_DIR := $(abspath $(lastword $(REL_SUNDIALS_LIB_DIR)))
 INCLUDE_LOCATIONS += $(SUNDIALS_LIB_DIR)/../include
 LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_cvode -lsundials_arkode
 LIBRARIES += -L$(SUNDIALS_LIB_DIR) -lsundials_nvecserial
