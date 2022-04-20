@@ -20,7 +20,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void MixingRuleAmBm(
+  void MixingRuleAmBm(
     amrex::Real T, const amrex::Real Y[], amrex::Real& am, amrex::Real& bm)
   {
     am = 0.0;
@@ -46,8 +46,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  MixingRuleAm(amrex::Real T, const amrex::Real Y[], amrex::Real& am)
+  void MixingRuleAm(amrex::Real T, const amrex::Real Y[], amrex::Real& am)
   {
     am = 0.0;
     AMREX_ASSERT(T > 0.0);
@@ -70,7 +69,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void MixingRuleBm(const amrex::Real Y[], amrex::Real& bm)
+  void MixingRuleBm(const amrex::Real Y[], amrex::Real& bm)
   {
     bm = 0.0;
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -80,8 +79,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  Calc_dAmdT(amrex::Real T, const amrex::Real Y[], amrex::Real& dAmdT)
+  void Calc_dAmdT(amrex::Real T, const amrex::Real Y[], amrex::Real& dAmdT)
   {
     dAmdT = 0.0;
     AMREX_ASSERT(T > 0.0);
@@ -107,8 +105,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  Calc_dAmdY(amrex::Real T, const amrex::Real Y[], amrex::Real dAmdY[])
+  void Calc_dAmdY(amrex::Real T, const amrex::Real Y[], amrex::Real dAmdY[])
   {
     AMREX_ASSERT(T > 0.0);
     const amrex::Real sqrtT = std::sqrt(T);
@@ -129,7 +126,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void Calc_d2AmdY2(
+  void Calc_d2AmdY2(
     amrex::Real T, amrex::Real* /*Y[]*/, amrex::Real d2AmdY2[][NUM_SPECIES])
   {
     AMREX_ASSERT(T > 0.0);
@@ -150,8 +147,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  Calc_d2AmdTY(amrex::Real T, const amrex::Real Y[], amrex::Real d2AmdTY[])
+  void Calc_d2AmdTY(amrex::Real T, const amrex::Real Y[], amrex::Real d2AmdTY[])
   {
     AMREX_ASSERT(T > 0.0);
     const amrex::Real oneOverT = 1.0 / T;
@@ -220,8 +216,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  Calc_d2AmdT2(amrex::Real T, const amrex::Real Y[], amrex::Real& d2AmdT2)
+  void Calc_d2AmdT2(amrex::Real T, const amrex::Real Y[], amrex::Real& d2AmdT2)
   {
     AMREX_ASSERT(T > 0.0);
     const amrex::Real oneOverT = 1.0 / T;
@@ -250,7 +245,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void Calc_Am_and_derivs(
+  void Calc_Am_and_derivs(
     amrex::Real T,
     const amrex::Real Y[],
     amrex::Real& am,
@@ -324,8 +319,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2Cp(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
+  void RTY2Cp(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
   {
     amrex::Real bm, am, dAmdT, d2AmdT2;
     amrex::Real K1, Cpig, wbar, tau, Rm;
@@ -365,8 +359,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2Cv(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cv)
+  void RTY2Cv(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cv)
   {
     amrex::Real am, bm, d2AmdT2;
     // Alternative: MixingRuleBm then Calc_Am_and_derivs
@@ -394,8 +387,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  REY2T(amrex::Real R, amrex::Real E, amrex::Real Y[], amrex::Real& T)
+  void REY2T(amrex::Real R, amrex::Real E, amrex::Real Y[], amrex::Real& T)
   {
     // NOTE: for this function T is the output, but the input T serves as the
     // initial guess for Newton iteration, so it must be initialized to
@@ -458,8 +450,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
+  void RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
   {
     amrex::Real wbar, tau, am, bm;
     tau = 1.0 / R;
@@ -470,7 +461,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void RYET2P(
+  void RYET2P(
     amrex::Real R,
     amrex::Real Y[],
     amrex::Real& E,
@@ -490,8 +481,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T)
+  void RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T)
   {
     amrex::Real am, bm, dAmdT;
     amrex::Real tau, wbar, Rm, Pnp1, dpdT;
@@ -530,8 +520,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2C(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real acti[])
+  void RTY2C(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real acti[])
   {
     amrex::Real am, bm, dAmdY[NUM_SPECIES];
     amrex::Real inv_mwt[NUM_SPECIES], mwt[NUM_SPECIES];
@@ -563,7 +552,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
+  void
   RTY2WDOT(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
   {
     amrex::Real C[NUM_SPECIES];
@@ -598,8 +587,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2Ei(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real Ei[])
+  void RTY2Ei(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real Ei[])
   {
     amrex::Real am, bm, dAmdT, dAmdY[NUM_SPECIES], d2AmdTY[NUM_SPECIES];
     amrex::Real K1, inv_bm, InvEosT3Denom;
@@ -626,8 +614,7 @@ struct SRK
   // Function added for SRK
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2E(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& E)
+  void RTY2E(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& E)
   {
     amrex::Real Ei[NUM_SPECIES];
     amrex::Real am, bm, dAmdT, K1;
@@ -657,7 +644,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void PYT2RE(
+  void PYT2RE(
     amrex::Real P,
     amrex::Real Y[],
     amrex::Real T,
@@ -685,8 +672,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  PYT2R(amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real& R)
+  void PYT2R(amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real& R)
   {
     amrex::Real am, bm, Z, wbar;
     MixingRuleAmBm(T, Y, am, bm);
@@ -697,8 +683,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
+  void RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
   {
     amrex::Real T;
     // Note: could get away with one fewer MixingRuleAm by writing this
@@ -717,8 +702,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2Hi(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real Hi[])
+  void RTY2Hi(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real Hi[])
   {
     amrex::Real am, bm, dAmdT, d2AmdT2;
     amrex::Real dAmdY[NUM_SPECIES], d2AmdTY[NUM_SPECIES], inv_mwt[NUM_SPECIES];
@@ -778,7 +762,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void RTY2G(
+  void RTY2G(
     amrex::Real R, amrex::Real T, amrex::Real Y[NUM_SPECIES], amrex::Real& G)
   {
     amrex::Real bm, am, dAmdT, d2AmdT2;
@@ -818,8 +802,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
+  void RPY2Cs(amrex::Real R, amrex::Real P, amrex::Real Y[], amrex::Real& Cs)
   {
     amrex::Real T, G;
     // RTY2Cs involves some redundant Am calcs but add cost is small relative
@@ -831,8 +814,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void
-  RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
+  void RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
   {
     amrex::Real P, G;
     // RTY2P involves one redundant MixingRuleAm
@@ -888,7 +870,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void RTY2dpde_dpdre(
+  void RTY2dpde_dpdre(
     amrex::Real R,
     amrex::Real T,
     amrex::Real Y[],
@@ -918,7 +900,7 @@ struct SRK
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  static void RTY2transport(
+  void RTY2transport(
     amrex::Real R,
     amrex::Real T,
     amrex::Real Y[],
