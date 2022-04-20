@@ -13,7 +13,7 @@ struct ConstTransport
   static std::string identifier() { return "ConstTransport"; }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void transport(
+  AMREX_FORCE_INLINE static void transport(
     const bool wtr_get_xi,
     const bool wtr_get_mu,
     const bool wtr_get_lam,
@@ -48,7 +48,7 @@ struct ConstTransport
   }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void get_transport_coeffs(
+  AMREX_FORCE_INLINE static void get_transport_coeffs(
     amrex::Box const& bx,
     amrex::Array4<const amrex::Real> const& /*Y_in*/,
     amrex::Array4<const amrex::Real> const& /*T_in*/,
