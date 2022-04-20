@@ -7,6 +7,10 @@ then
     echo Compile PelePhysics first
     exit
 else
+    if [[ -f "PPreaction.txt" ]]; then
+        rm PPreaction.txt
+    fi
+
     echo INFO: Using $execname to compute ignition delay
     # Rough estimate of ignition time
     $execname inputs/inputs.0d_firstpass
