@@ -21,7 +21,8 @@ struct GammaLaw
   static std::string identifier() { return "GammaLaw"; }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void molecular_weight(amrex::Real mw[])
+  AMREX_FORCE_INLINE
+  static void molecular_weight(amrex::Real mw[])
   {
     for (int n = 0; n < NUM_SPECIES; n++) {
       mw[n] = Constants::AIRMW;
@@ -29,7 +30,8 @@ struct GammaLaw
   }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void inv_molecular_weight(amrex::Real imw[])
+  AMREX_FORCE_INLINE
+  static void inv_molecular_weight(amrex::Real imw[])
   {
     for (int n = 0; n < NUM_SPECIES; n++) {
       imw[n] = 1. / Constants::AIRMW;
@@ -37,14 +39,15 @@ struct GammaLaw
   }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void Y2WBAR(amrex::Real* /*Y*/, amrex::Real& WBAR)
+  AMREX_FORCE_INLINE
+  static void Y2WBAR(amrex::Real* /*Y*/, amrex::Real& WBAR)
   {
     WBAR = Constants::AIRMW;
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void T2Ei(amrex::Real T, amrex::Real Ei[]) const
+  static void T2Ei(amrex::Real T, amrex::Real Ei[]) const
   {
     amrex::Real wbar = Constants::AIRMW;
     const amrex::Real Cv = Constants::RU / (wbar * (gamma - 1.0));
@@ -55,7 +58,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Ei(
+  static void RTY2Ei(
     amrex::Real /*R*/,
     amrex::Real T,
     amrex::Real* /*Y[]*/,
@@ -66,7 +69,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void TY2Cv(amrex::Real /*T*/, amrex::Real Y[], amrex::Real& Cv)
+  static void TY2Cv(amrex::Real /*T*/, amrex::Real Y[], amrex::Real& Cv)
   {
     amrex::Real wbar;
     Y2WBAR(Y, wbar);
@@ -75,7 +78,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void
+  static void
   RTY2Cv(amrex::Real /*R*/, amrex::Real T, amrex::Real Y[], amrex::Real& Cv)
   {
     TY2Cv(T, Y, Cv);
@@ -83,7 +86,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
+  static void TY2Cp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
   {
     amrex::Real cv;
     TY2Cv(T, Y, cv);
@@ -92,7 +95,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void
+  static void
   RTY2Cp(amrex::Real /*R*/, amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
   {
     TY2Cp(T, Y, Cp);
@@ -100,7 +103,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void T2Cpi(amrex::Real /*T*/, amrex::Real Cpi[]) const
+  static void T2Cpi(amrex::Real /*T*/, amrex::Real Cpi[]) const
   {
     for (int n = 0; n < NUM_SPECIES; n++) {
       Cpi[n] = gamma * Constants::RU / (Constants::AIRMW * (gamma - 1.0));
@@ -109,7 +112,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RYET2P(
+  static void RYET2P(
     amrex::Real R,
     amrex::Real* /*Y*/,
     amrex::Real& E,
@@ -121,7 +124,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RPY2Cs(
+  static void RPY2Cs(
     amrex::Real R, amrex::Real P, amrex::Real* /*Y*/, amrex::Real& Cs) const
   {
     Cs = std::sqrt(gamma * P / R);
@@ -129,7 +132,8 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
+  static void
+  RTY2Cs(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& Cs)
   {
     amrex::Real wbar, P;
     Y2WBAR(Y, wbar);
@@ -141,7 +145,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void EY2T(amrex::Real E, amrex::Real Y[], amrex::Real& T)
+  static void EY2T(amrex::Real E, amrex::Real Y[], amrex::Real& T)
   {
     amrex::Real poverrho, wbar;
     poverrho = (gamma - 1.0) * E;
@@ -151,14 +155,15 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void REY2T(amrex::Real /*R*/, amrex::Real E, amrex::Real Y[], amrex::Real& T)
+  static void
+  REY2T(amrex::Real /*R*/, amrex::Real E, amrex::Real Y[], amrex::Real& T)
   {
     EY2T(E, Y, T);
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void HY2T(amrex::Real H, amrex::Real* /*Y*/, amrex::Real& T) const
+  static void HY2T(amrex::Real H, amrex::Real* /*Y*/, amrex::Real& T) const
   {
     amrex::Real wbar = Constants::AIRMW;
     const amrex::Real Cv = Constants::RU / (wbar * (gamma - 1.0));
@@ -167,7 +172,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void
+  static void
   RHY2T(amrex::Real /*R*/, amrex::Real H, amrex::Real Y[], amrex::Real& T) const
   {
     HY2T(H, Y, T);
@@ -175,7 +180,8 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
+  static void
+  RTY2P(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real& P)
   {
     amrex::Real Cv, E;
     TY2Cv(T, Y, Cv);
@@ -184,7 +190,8 @@ struct GammaLaw
   }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void
+  AMREX_FORCE_INLINE
+  static void
   RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T)
   {
     amrex::Real wbar;
@@ -193,7 +200,8 @@ struct GammaLaw
   }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void RTY2WDOT(
+  AMREX_FORCE_INLINE
+  static void RTY2WDOT(
     amrex::Real /*R*/,
     amrex::Real /*T*/,
     amrex::Real* /*Y[]*/,
@@ -203,7 +211,8 @@ struct GammaLaw
   }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void RTY2JAC(
+  AMREX_FORCE_INLINE
+  static void RTY2JAC(
     amrex::Real /*R*/,
     amrex::Real /*T*/,
     amrex::Real* /*Y[]*/,
@@ -214,7 +223,8 @@ struct GammaLaw
   }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void RTY2C(
+  AMREX_FORCE_INLINE
+  static void RTY2C(
     amrex::Real /*R*/,
     amrex::Real /*T*/,
     amrex::Real* /*Y[]*/,
@@ -224,7 +234,8 @@ struct GammaLaw
   }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void Y2X(const amrex::Real Y[], amrex::Real X[])
+  AMREX_FORCE_INLINE
+  static void Y2X(const amrex::Real Y[], amrex::Real X[])
   {
     for (int n = 0; n < NUM_SPECIES; n++) {
       X[n] = Y[n];
@@ -232,7 +243,8 @@ struct GammaLaw
   }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void X2Y(const amrex::Real X[], amrex::Real Y[])
+  AMREX_FORCE_INLINE
+  static void X2Y(const amrex::Real X[], amrex::Real Y[])
   {
     for (int n = 0; n < NUM_SPECIES; n++) {
       Y[n] = X[n];
@@ -241,7 +253,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void PYT2RE(
+  static void PYT2RE(
     amrex::Real P,
     amrex::Real Y[],
     amrex::Real T,
@@ -255,7 +267,8 @@ struct GammaLaw
   }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void
+  AMREX_FORCE_INLINE
+  static void
   PYT2R(amrex::Real P, amrex::Real Y[], amrex::Real T, amrex::Real& R)
   {
     amrex::Real wbar;
@@ -265,7 +278,8 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
+  static void
+  RYP2E(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& E)
   {
     amrex::Real wbar;
     Y2WBAR(Y, wbar);
@@ -274,7 +288,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void TY2E(amrex::Real T, const amrex::Real Y[], amrex::Real& E) const
+  static void TY2E(amrex::Real T, const amrex::Real Y[], amrex::Real& E) const
   {
     amrex::Real ei[NUM_SPECIES];
     T2Ei(T, ei);
@@ -286,7 +300,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void
+  static void
   RTY2E(amrex::Real /*R*/, amrex::Real T, amrex::Real Y[], amrex::Real& E) const
   {
     TY2E(T, Y, E);
@@ -294,7 +308,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void T2Hi(amrex::Real T, amrex::Real Hi[]) const
+  static void T2Hi(amrex::Real T, amrex::Real Hi[]) const
   {
     amrex::Real wbar = Constants::AIRMW;
     const amrex::Real Cv = Constants::RU / (wbar * (gamma - 1.0));
@@ -305,7 +319,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2Hi(
+  static void RTY2Hi(
     amrex::Real /*R*/,
     amrex::Real T,
     amrex::Real* /*Y[]*/,
@@ -315,18 +329,19 @@ struct GammaLaw
   }
 
   AMREX_GPU_HOST_DEVICE
-  static AMREX_FORCE_INLINE void S(amrex::Real& s) { s = 1.0; }
+  AMREX_FORCE_INLINE
+  static void S(amrex::Real& s) { s = 1.0; }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void TY2G(amrex::Real /*T*/, amrex::Real* /*Y*/, amrex::Real& G) const
+  static void TY2G(amrex::Real /*T*/, amrex::Real* /*Y*/, amrex::Real& G) const
   {
     G = gamma;
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void
+  static void
   RTY2G(amrex::Real /*R*/, amrex::Real T, amrex::Real* Y, amrex::Real& G) const
   {
     TY2G(T, Y, G);
@@ -334,7 +349,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void
+  static void
   TY2H(amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& H) const
   {
     amrex::Real Hi[NUM_SPECIES];
@@ -349,7 +364,7 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RPE2dpdr_e(
+  static void RPE2dpdr_e(
     amrex::Real /*R*/,
     amrex::Real /*P*/,
     amrex::Real E,
@@ -360,14 +375,14 @@ struct GammaLaw
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RG2dpde(amrex::Real R, amrex::Real /*G*/, amrex::Real& dpde) const
+  static void RG2dpde(amrex::Real R, amrex::Real /*G*/, amrex::Real& dpde) const
   {
     dpde = (gamma - 1.0) * R;
   }
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  void RTY2dpde_dpdre(
+  static void RTY2dpde_dpdre(
     amrex::Real R,
     amrex::Real T,
     amrex::Real Y[],
