@@ -1,49 +1,62 @@
 import sys
 sys.path.append('utils')
 import argparse
-import fileio as io
 import numpy as np
 
 
 def parseInputFile(input_filename):
+
     inpt = {}
-    f = open( input_filename )
-    data = f.readlines()
-    for line in data:
-        # Remove comments from the line
-        commentStart = line.find('#')
-        if commentStart>-1:
-            line = line[:commentStart]
-        # Store parameters in dict
-        if '=' in line:
-            splitLine = line.split("=")
-            if len(splitLine)==2:
-                key, value = splitLine
-            else:
-                key, value = splitLine[:2]
-            inpt[key.strip()] = value.strip()
-    f.close()
+    with open(input_filename,'r+') as f:
+        data = f.readlines()
+        for line in data:
+            # Remove comments from the line
+            commentStart = line.find('#')
+            if commentStart>-1:
+                line = line[:commentStart]
+            # Store parameters in dict
+            if '=' in line:
+                splitLine = line.split("=")
+                if len(splitLine)==2:
+                    key, value = splitLine
+                else:
+                    key, value = splitLine[:2]
+                inpt[key.strip()] = value.strip()
 
     return inpt
 
 def writeNewInput(oldInput,newInput,dt,ndt):
-    f = open(oldInput,'r+')
-    lines = f.readlines()
-    f.close()
+    
+    with open(oldInput,'r+') as f: 
+        lines = f.readlines()
 
-    f = open(newInput,'w+')
-    for line in lines:
-        if line.startswith('ode.dt'):
-            f.write('ode.dt = %.10f' % (dt))
-            f.write('\n')
-        elif line.startswith('ode.ndt'):
-            f.write('ode.ndt = %d ' % (ndt))
-            f.write('\n')
-        else:
-            f.write(line)
-    f.close()
+    with open(newInput,'w+') as f: 
+        for line in lines:
+            if line.startswith('ode.dt'):
+                f.write('ode.dt = %.10f' % (dt))
+                f.write('\n')
+            elif line.startswith('ode.ndt'):
+                f.write('ode.ndt = %d ' % (ndt))
+                f.write('\n')
+            else:
+                f.write(line)
 
     return
+
+def readMultiColFile(filename,headerSize=0):
+    with open(filename,'r') as f:
+        lines=f.readlines()
+    # Figure out number of column
+    A=lines[headerSize].split()
+    # Allocate array
+    Array = np.zeros((len(lines)-headerSize,len(A)))
+    counter = 0
+    for line in lines[headerSize:]:
+        A=line.split()
+        for i in range(len(A)):
+            Array[counter,i] = float(A[i])
+        counter=counter+1
+    return Array
 
 # CLI
 parser = argparse.ArgumentParser(description='Compute ignition delay')
@@ -68,7 +81,7 @@ phi = float(inpt['hr.equiv_ratio'])
 
 # Process result
 filePP = 'PPreaction.txt'
-A1 = io.readMultiColFile(filePP)
+A1 = readMultiColFile(filePP)
 ignitionDelayPP = (dt/ndt)*np.amin(np.argwhere(A1[:,1]>(A1[0,1]+400)))
 
 
