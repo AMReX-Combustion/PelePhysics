@@ -183,5 +183,6 @@ jobs:
           make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
               bash .githubTest.sh
+              if [ $? -ne 0 ]; then exit 1; fi; \
           fi;
           make realclean
