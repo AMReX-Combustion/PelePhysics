@@ -7,8 +7,8 @@ plotResult(
   amrex::Vector<amrex::Geometry>& geoms)
 {
 
+  BL_PROFILE_VAR_NS("PlotFile", PlotFile);
   if (do_plt) {
-
     BL_PROFILE_VAR_START(PlotFile);
     std::string outfile = amrex::Concatenate(pltfile, 1);
     // TODO: add fct count to this output

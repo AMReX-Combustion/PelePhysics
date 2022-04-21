@@ -91,13 +91,10 @@ main(int argc, char* argv[])
     amrex::Vector<amrex::Geometry> geoms;
     amrex::Vector<amrex::BoxArray> grids;
     amrex::Vector<amrex::DistributionMapping> dmaps;
-    BL_PROFILE_VAR("main::geometry_setup", GeomSetup);
     initializeGeom(
       geoms, grids, dmaps, finest_level, ncells, ndt, dt, max_grid_size);
-    BL_PROFILE_VAR_STOP(GeomSetup);
 
     // Initialize Data
-    BL_PROFILE_VAR("main::initialize_data()", InitData);
     int num_grow = 0;
     amrex::Vector<amrex::MultiFab> mf(finest_level + 1);
     amrex::Vector<amrex::MultiFab> rY_source_ext(finest_level + 1);
@@ -108,7 +105,7 @@ main(int argc, char* argv[])
     initializeData(
       num_grow, mf, rY_source_ext, mfE, rY_source_energy_ext, t0, equiv_ratio,
       press, fctCount, dummyMask, finest_level, geoms, grids, dmaps, fuel_idx,
-      ode_iE) BL_PROFILE_VAR_STOP(InitData);
+      ode_iE);
 
     // ~~~~ Reac
     amrex::Print() << " \n STARTING THE ADVANCE \n";
@@ -159,7 +156,6 @@ main(int argc, char* argv[])
     }
 
     // ~~~~ Plot
-    BL_PROFILE_VAR_NS("PlotFile", PlotFile);
     plotResult(do_plt, pltfile, finest_level, mf, geoms);
 
     // ~~~~ Finalize

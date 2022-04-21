@@ -152,6 +152,8 @@ initializeGeom(
   amrex::Real& dt,
   int& max_grid_size)
 {
+
+  BL_PROFILE_VAR("main::geometry_setup", GeomSetup);
   // -----------------------------------------------------------------------------
   // Initialize geom/data
   // When initFromChk = 0, default is single level data provided by
@@ -190,6 +192,8 @@ initializeGeom(
   grids[0].maxSize(max_grid_size);
   dmaps[0] =
     amrex::DistributionMapping(grids[0], amrex::ParallelDescriptor::NProcs());
+
+  BL_PROFILE_VAR_STOP(GeomSetup);
 }
 
 void
@@ -211,7 +215,7 @@ initializeData(
   int& fuel_idx,
   int& ode_iE)
 {
-
+  BL_PROFILE_VAR("main::initialize_data()", InitData);
   // -----------------------------------------------------------------------------
   // Create MFs and generate initial data
   // -----------------------------------------------------------------------------
@@ -254,4 +258,6 @@ initializeData(
         });
     }
   }
+
+  BL_PROFILE_VAR_STOP(InitData);
 }
