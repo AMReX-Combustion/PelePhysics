@@ -392,6 +392,8 @@ struct GammaLaw
   AMREX_GPU_HOST_DEVICE GammaLaw(Args... /*unused*/)
   {
   }
+
+  amrex::Real gamma{Constants::gamma};
 };
 
 } // namespace eos
