@@ -159,6 +159,7 @@ main(int argc, char* argv[])
     }
 
     // ~~~~ Plot
+    BL_PROFILE_VAR_NS("PlotFile", PlotFile);
     plotResult(do_plt, pltfile, finest_level, mf, geoms);
 
     // ~~~~ Finalize
