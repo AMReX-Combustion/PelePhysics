@@ -394,7 +394,6 @@ struct GammaLaw
   }
 
   amrex::Real gamma{Constants::gamma};
-
 };
 
 } // namespace eos
