@@ -11,7 +11,7 @@ Computation of ignition delay occurs in 2 pass
 
 ## Compute ignition delay
 
-Ignition delay will call the Pele executable find in this directory. If you have many executables, please edit `execname` in `hrTest.sh`
+Ignition delay will call the Pele executable find in this directory. If you have many executables, please edit `execname` in `exec_ignDelay.sh`
 
 1. Link your mechanism in `GNUmakefile` (here using `dodecane_lu`)
 
@@ -19,4 +19,4 @@ Ignition delay will call the Pele executable find in this directory. If you have
 
 3. Adjust your parameters in `inputs/inputs.0d_firstpass`
 
-4. Execute `bash hrTest.sh` 
+4. Execute `bash exec_ignDelay.sh` 

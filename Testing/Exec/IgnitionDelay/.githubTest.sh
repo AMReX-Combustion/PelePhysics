@@ -7,7 +7,7 @@ if [ -z "$execname" ]
 then
     echo ERROR: No executable found, cannot compute ignition delay
     echo Compile PelePhysics first
-    exit
+    exit 1
 else
     if [[ -f "PPreaction.txt" ]]; then
         rm PPreaction.txt
@@ -20,8 +20,7 @@ else
     
     # Refined estimate of ignition time
     $execname inputs/inputs.0d_refine
-    python computeIgnitionDelay.py -ref -f inputs/inputs.0d_refine
+    python computeIgnitionDelay.py -t -ref -f inputs/inputs.0d_refine
 fi
-
 
 

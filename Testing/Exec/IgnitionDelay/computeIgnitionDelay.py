@@ -1,6 +1,6 @@
 import argparse
 import numpy as np
-
+import sys
 
 def parseInputFile(input_filename):
 
@@ -65,6 +65,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Compute ignition delay')
     group = parser.add_mutually_exclusive_group()
     parser.add_argument('-f', '--inputFile', type=str, metavar='', required=False, help='Pele input file', default='')
+    parser.add_argument('-t','--test', action='store_true', help='testing mode, only for Github test')
     group.add_argument('-est','--estimate', action='store_true', help='first estimate')
     group.add_argument('-ref','--refine', action='store_true', help='Second estimate')
     group2 = parser.add_mutually_exclusive_group()
@@ -100,3 +101,8 @@ if __name__=="__main__":
         print(logMessage)
         print("Equivalence ratio calculation assumed you are using Ndodecane")
         print("Change GPU_misc.H if you are not")
+        if args.test:
+            if abs(ignitionDelayPP-0.0763)>10*dt/ndt:
+                 sys.exit(1)
+            else:
+                 sys.exit(0)
