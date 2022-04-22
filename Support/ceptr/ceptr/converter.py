@@ -3,8 +3,8 @@ import pathlib
 import shutil
 import subprocess as spr
 
-import numpy as np
 import matplotlib.pyplot as mplt
+import numpy as np
 
 import ceptr.ck as cck
 import ceptr.constants as cc
