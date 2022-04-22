@@ -218,6 +218,7 @@ class Converter:
         with open(self.hdrname, "w") as hdr, open(self.cppname, "w") as cpp:
             # This is for the cpp file
             cw.writer(cpp, self._mechanism_includes())
+            cck.ckinu(cpp, self.mechanism, self.species_info)
             self._atomicWeight(cpp)
             cck.ckawt(cpp, self.mechanism)
             cck.ckncf(cpp, self.mechanism, self.species_info)
@@ -288,8 +289,6 @@ class Converter:
             # cck.ckgms(hdr, self.mechanism, self.species_info)
             # cck.ckams(hdr, self.mechanism, self.species_info)
             cck.cksms(hdr, self.mechanism, self.species_info)
-
-            cck.ckinu(hdr, self.mechanism, self.species_info)
 
             # QSS
             if self.species_info.nQSSspecies > 0:
@@ -411,6 +410,10 @@ class Converter:
         )
         cw.writer(
             fstream, "void CKSYMS_STR(amrex::Vector<std::string>& kname);"
+        )
+        cw.writer(fstream, "void GET_RMAP(int * _rmap);")
+        cw.writer(
+            fstream, "void CKINU(int * i, int * nspec, int * ki, int * nu);"
         )
         cw.writer(fstream, cw.comment(" SPARSE INFORMATION "))
         cw.writer(
