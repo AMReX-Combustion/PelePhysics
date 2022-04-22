@@ -289,6 +289,8 @@ class Converter:
             # cck.ckams(hdr, self.mechanism, self.species_info)
             cck.cksms(hdr, self.mechanism, self.species_info)
 
+            cck.ckinu(hdr, self.mechanism, self.species_info)
+
             # QSS
             if self.species_info.nQSSspecies > 0:
                 print("\n\n\n\n---------------------------------")

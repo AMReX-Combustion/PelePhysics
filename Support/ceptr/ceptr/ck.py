@@ -2892,3 +2892,44 @@ def T_given_hy(fstream):
     cw.writer(fstream, "*ierr = 0;")
     cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
+
+
+# NEED TO DEAL WITH THIS WHEN QSS
+def ckinu(fstream, mechanism, species_info):
+    nSpecies = species_info.nSpecies
+    nReaction = mechanism.n_reactions
+
+    cw.writer(fstream)
+    cw.writer(
+        fstream,
+        cw.comment(
+            "Returns a count of species in a reaction, and their indices"
+        ),
+    )
+    cw.writer(fstream, cw.comment("and stoichiometric coefficients. (Eq 50)"))
+    cw.writer(
+        fstream,
+        "void CKINU" + cc.sym + "(int * i, int * nspec, int * ki, int * nu)",
+    )
+    cw.writer(fstream, "{")
+
+    cw.writer(fstream, "if (*i < 1) {")
+
+    maxsp = 0
+    for reaction in mechanism.reactions():
+        maxsp = max(maxsp, len(reaction.reactants) + len(reaction.products))
+
+    cw.writer(fstream, cw.comment("Return max num species per reaction"))
+    cw.writer(fstream, "*nspec = %d;" % (maxsp))
+    cw.writer(fstream, "} else {")
+    cw.writer(fstream, "if (*i > %d) {" % (nReaction))
+    cw.writer(fstream, "*nspec = -1;")
+    cw.writer(fstream, "} else {")
+    cw.writer(fstream, "*nspec = kiv[*i-1].size();")
+    cw.writer(fstream, "for (int j=0; j<*nspec; ++j) {")
+    cw.writer(fstream, "ki[j] = kiv[*i-1][j] + 1;")
+    cw.writer(fstream, "nu[j] = nuv[*i-1][j];")
+    cw.writer(fstream, "}")
+    cw.writer(fstream, "}")
+    cw.writer(fstream, "}")
+    cw.writer(fstream, "}")
