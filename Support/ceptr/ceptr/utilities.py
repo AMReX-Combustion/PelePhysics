@@ -45,7 +45,7 @@ def QSSsortedPhaseSpace(mechanism, species_info, reagents):
 
 def phaseSpaceUnits(reagents):
     dim = 0.0
-    for symbol, coefficient in reagents.items():
+    for _, coefficient in reagents.items():
         dim += float(coefficient)
     return dim
 
@@ -64,10 +64,10 @@ def isRemoveForward(reaction_info, idx):
 
 def fKcConvInv(self, mechanism, reaction):
     dim = 0
-    for symbol, coefficient in reaction.reactants.items():
+    for _, coefficient in reaction.reactants.items():
         dim -= coefficient
     # flip the signs
-    for symbol, coefficient in reaction.products.items():
+    for _, coefficient in reaction.products.items():
         dim += coefficient
 
     if dim == 0:
@@ -91,10 +91,10 @@ def fKcConvInv(self, mechanism, reaction):
 
 def KcConv(mechanism, reaction):
     dim = 0
-    for symbol, coefficient in reaction.reactants.items():
+    for _, coefficient in reaction.reactants.items():
         dim -= coefficient
     # flip the signs
-    for symbol, coefficient in reaction.products.items():
+    for _, coefficient in reaction.products.items():
         dim += coefficient
 
     if dim == 0:
@@ -127,10 +127,10 @@ def sortedKc(mechanism, species_info, reaction):
 
 def sortedKcExpArg(mechanism, species_info, reaction):
     terms = []
-    for i in range(species_info.nSpecies):
+    for _ in range(species_info.nSpecies):
         terms.append("")
     terms_qss = []
-    for i in range(species_info.nQSSspecies):
+    for _ in range(species_info.nQSSspecies):
         terms_qss.append("")
 
     for symbol, coefficient in reaction.reactants.items():
