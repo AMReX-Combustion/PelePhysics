@@ -682,11 +682,9 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(fstream, "void egtransetCOFD(amrex::Real* COFD) {")
 
-    for i, spec1 in enumerate(specOrdered):
-        # for j,spec2 in enumerate(specOrdered):
-        for j, spec2 in enumerate(specOrdered[0 : i + 1]):
+    for i, _ in enumerate(specOrdered):
+        for j, _ in enumerate(specOrdered[0 : i + 1]):
             for k in range(4):
-                # cw.writer(fstream,'%s[%d] = %.8E;' % ('COFD', i*nSpecies*4+j*4+k, cofd[j][i][3-k]))
                 cw.writer(
                     fstream,
                     "%s[%d] = %.8E;"
@@ -696,7 +694,7 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
                         cofd[i][j][3 - k],
                     ),
                 )
-        for j, spec2 in enumerate(specOrdered[i + 1 :]):
+        for j, _ in enumerate(specOrdered[i + 1 :]):
             for k in range(4):
                 cw.writer(
                     fstream,
