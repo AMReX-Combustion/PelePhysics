@@ -1,7 +1,4 @@
-import sys
 from collections import OrderedDict
-
-import cantera as ct
 
 import ceptr.constants as cc
 import ceptr.writer as cw
