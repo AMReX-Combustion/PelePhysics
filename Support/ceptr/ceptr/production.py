@@ -6,7 +6,6 @@ import ceptr.writer as cw
 
 
 def productionRate(fstream, mechanism, species_info, reaction_info):
-    nElement = mechanism.n_elements
     nSpecies = species_info.nSpecies
     nReactions = mechanism.n_reactions
 
@@ -17,16 +16,16 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
     itroe = reaction_info.index[0:2]
     isri = reaction_info.index[1:3]
     ilindemann = reaction_info.index[2:4]
-    i3body = reaction_info.index[3:5]
-    isimple = reaction_info.index[4:6]
-    ispecial = reaction_info.index[5:7]
+    # i3body = reaction_info.index[3:5]
+    # isimple = reaction_info.index[4:6]
+    # ispecial = reaction_info.index[5:7]
 
     ntroe = itroe[1] - itroe[0]
     nsri = isri[1] - isri[0]
     nlindemann = ilindemann[1] - ilindemann[0]
-    n3body = i3body[1] - i3body[0]
-    nsimple = isimple[1] - isimple[0]
-    nspecial = ispecial[1] - ispecial[0]
+    # n3body = i3body[1] - i3body[0]
+    # nsimple = isimple[1] - isimple[0]
+    # nspecial = ispecial[1] - ispecial[0]
 
     # qdot
     cw.writer(fstream)
@@ -46,7 +45,7 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "{")
 
     if nReactions > 0:
-        nclassd = nReactions - nspecial
+        # nclassd = nReactions - nspecial
         # nCorr   = n3body + ntroe + nsri + nlindemann
 
         # reacs are sorted here
@@ -229,7 +228,7 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                 elif reaction.rate.type == "Sri":
                     sri = reaction.rate.falloff_coeffs
                     nsri = len(sri)
-                    is_sri = True
+                    # is_sri = True
                 else:
                     print("Unrecognized reaction rate type")
                     sys.exit(1)
@@ -364,18 +363,22 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
             if False:
                 Ar, betar, Er = reaction.rev
                 dim_rev = cu.phaseSpaceUnits(reaction.products)
-                if not thirdBody:
-                    uc_rev = self._prefactorUnits(
-                        reaction.units["prefactor"], 1 - dim_rev
-                    )
-                elif not low:
-                    uc_rev = self._prefactorUnits(
-                        reaction.units["prefactor"], -dim_rev
-                    )
+                if not thirdBody and not falloff:
+                    uc = cu.prefactorUnits(
+                        cc.ureg("mole/cm**3"), 1 - dim_rev
+                    )  # Case 3 !PD, !TB
+                    ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), 1 - dim_rev)
+                    print("Fixme grab rev params")
+                elif not falloff:
+                    uc = cu.prefactorUnits(
+                        cc.ureg("mole/cm**3"), -dim_rev
+                    )  # Case 2 !PD, TB
+                    ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), -dim_rev)
+                    print("Fixme grab rev params")
                 else:
                     print("REV reaction cannot be PD")
                     sys.exit(1)
-                cw.writer(fstream, "k_r = %.15g" % (uc_rev.value * Ar))
+                cw.writer(fstream, "k_r = %.15g" % (Ar.m))
                 if betar == 0:
                     cw.writer(
                         fstream,
@@ -472,7 +475,7 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream)
 
     if nReactions > 0:
-        nclassd = nReactions - nspecial
+        # nclassd = nReactions - nspecial
         # nCorr   = n3body + ntroe + nsri + nlindemann
 
         # Mixt concentration for PD & TB
@@ -504,9 +507,9 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                 fstream,
                 "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
                 % (
-                    self.nqssReactions,
-                    self.nqssReactions,
-                    self.nqssReactions,
+                    species_info.nqssReactions,
+                    species_info.nqssReactions,
+                    species_info.nqssReactions,
                 ),
             )
             cw.writer(fstream, "// Fill sc_qss here")
@@ -521,7 +524,7 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
             cw.writer(fstream)
 
         # Loop like you're going through them in the mech.Linp order
-        for orig_idx, idx in reaction_info.idxmap.items():
+        for orig_idx, _ in reaction_info.idxmap.items():
             reaction = mechanism.reaction(orig_idx)
             cw.writer(fstream, "{")
             # FIXME
@@ -607,7 +610,7 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                 elif reaction.rate.type == "Sri":
                     sri = reaction.rate.falloff_coeffs
                     nsri = len(sri)
-                    is_sri = True
+                    # is_sri = True
                 else:
                     print("Unrecognized reaction rate type")
                     sys.exit(1)
@@ -777,20 +780,24 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
             if False:
                 Ar, betar, Er = reaction.rev
                 dim_rev = cu.phaseSpaceUnits(reaction.products)
-                if not thirdBody:
-                    uc_rev = self._prefactorUnits(
-                        reaction.units["prefactor"], 1 - dim_rev
-                    )
-                elif not low:
-                    uc_rev = self._prefactorUnits(
-                        reaction.units["prefactor"], -dim_rev
-                    )
+                if not thirdBody and not falloff:
+                    uc = cu.prefactorUnits(
+                        cc.ureg("mole/cm**3"), 1 - dim_rev
+                    )  # Case 3 !PD, !TB
+                    ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), 1 - dim_rev)
+                    print("Fixme grab rev params")
+                elif not falloff:
+                    uc = cu.prefactorUnits(
+                        cc.ureg("mole/cm**3"), -dim_rev
+                    )  # Case 2 !PD, TB
+                    ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), -dim_rev)
+                    print("Fixme grab rev params")
                 else:
                     print("REV reaction cannot be PD")
                     sys.exit(1)
                 cw.writer(
                     fstream,
-                    "const amrex::Real k_r = %.15g" % (uc_rev.value * Ar),
+                    "const amrex::Real k_r = %.15g" % (Ar.m),
                 )
                 if betar == 0:
                     if Er == 0:
@@ -946,7 +953,7 @@ def enhancement_d_with_QSS(mechanism, species_info, reaction):
 
     efficiencies = reaction.efficiencies
     alpha = ["mixture"]
-    for i, (symbol, efficiency) in enumerate(efficiencies.items()):
+    for _, (symbol, efficiency) in enumerate(efficiencies.items()):
         if symbol not in species_info.qss_species_list:
             factor = "(%.15g)" % (efficiency - 1)
             conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
