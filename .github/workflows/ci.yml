@@ -74,9 +74,8 @@ jobs:
         run: poetry run isort --check-only --diff .
       - name: Run tests
         run: |
-          echo "PELE_PHYSICS_HOME=${{github.workspace}}/PelePhysics-${{matrix.comp}}" >> $GITHUB_ENV
-          poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/air/mechanism.yaml
-          poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/LiDryer/mechanism.yaml
+          poetry run convert -f ${{github.workspace}}/Support/Fuego/Mechanism/Models/air/mechanism.yaml
+          poetry run convert -f ${{github.workspace}}/Support/Fuego/Mechanism/Models/LiDryer/mechanism.yaml
 
   Transport-EOS-Reactions:
     needs: Formatting
