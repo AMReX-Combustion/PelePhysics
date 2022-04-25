@@ -8,7 +8,6 @@ import ceptr.writer as cw
 
 def ajacPrecond(fstream, mechanism, species_info, reaction_info):
     nSpecies = species_info.nSpecies
-    nReactions = reaction_info.nReactions
 
     cw.writer(fstream)
     cw.writer(
@@ -136,7 +135,7 @@ def ajacPrecond(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "const amrex::Real ln10 = log(10.0);")
     cw.writer(fstream, "const amrex::Real log10e = 1.0/log(10.0);")
 
-    for orig_idx, idx in reaction_info.idxmap.items():
+    for orig_idx, _ in reaction_info.idxmap.items():
         reaction = mechanism.reaction(orig_idx)
         # lt = reaction.lt
         # if lt:
@@ -266,7 +265,6 @@ def ajac_reaction_precond(
 
     nSpecies = species_info.nSpecies
     removeForward = cu.isRemoveForward(reaction_info, orig_idx)
-    thirdBody = reaction.reaction_type == "three-body"
     if rcase == 1:  # pressure-dependent reaction
         isPD = True
         # FIXME is this right?
@@ -379,8 +377,8 @@ def ajac_reaction_precond(
             ntroe = len(troe)
             is_troe = True
         elif reaction.rate.type == "Sri":
-            sri = reaction.rate.falloff_coeffs
-            nsri = len(sri)
+            # sri = reaction.rate.falloff_coeffs
+            # nsri = len(sri)
             is_sri = True
         else:
             print("Unrecognized reaction rate type")
@@ -769,7 +767,10 @@ def ajac_reaction_precond(
         #            else:
         #                dqdc_s +='*q_nocor'
 
-        #    dqdc_s = dqdc_simple_precond(mechanism, species_info,reaction,sorted_reactants, sorted_products,  rea_dict, pro_dict, dqdc_s,k, removeForward)
+        #    dqdc_s = dqdc_simple_precond(fstream,
+        #              mechanism, species_info,reaction,
+        #              sorted_reactants, sorted_products,
+        #              rea_dict, pro_dict, dqdc_s,k, removeForward)
         #    if dqdc_s:
         #        symb_k = species_info.nonqss_species[k].symbol
         #        cw.writer(fstream,'// d()/d[%s]' % symb_k)
@@ -802,6 +803,7 @@ def ajac_reaction_precond(
                         dqdc_s += "*q_nocor"
 
             dqdc_s = dqdc_simple_precond(
+                fstream,
                 mechanism,
                 species_info,
                 reaction,
@@ -846,6 +848,7 @@ def ajac_reaction_precond(
 
         for k in range(nSpecies):
             dqdc_s = dqdc_simple_precond(
+                fstream,
                 mechanism,
                 species_info,
                 reaction,
@@ -893,7 +896,6 @@ def ajac_reaction_precond(
 
 def ajac(fstream, mechanism, species_info, reaction_info):
     nSpecies = species_info.nSpecies
-    nReactions = reaction_info.nReactions
 
     cw.writer(
         fstream,
@@ -1056,7 +1058,7 @@ def ajac(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "const amrex::Real ln10 = log(10.0);")
     cw.writer(fstream, "const amrex::Real log10e = 1.0/log(10.0);")
 
-    for orig_idx, idx in reaction_info.idxmap.items():
+    for orig_idx, _ in reaction_info.idxmap.items():
         reaction = mechanism.reaction(orig_idx)
         # lt = reaction.lt
         # if lt:
@@ -1196,7 +1198,6 @@ def ajac_reaction_d(
 
     nSpecies = species_info.nSpecies
     removeForward = cu.isRemoveForward(reaction_info, orig_idx)
-    thirdBody = reaction.reaction_type == "three-body"
     if rcase == 1:  # pressure-dependent reaction
         isPD = True
         # FIXME is this right?
@@ -1310,8 +1311,8 @@ def ajac_reaction_d(
             ntroe = len(troe)
             is_troe = True
         elif reaction.rate.type == "Sri":
-            sri = reaction.rate.falloff_coeffs
-            nsri = len(sri)
+            # sri = reaction.rate.falloff_coeffs
+            # nsri = len(sri)
             is_sri = True
         else:
             print("Unrecognized reaction rate type")
@@ -1700,6 +1701,7 @@ def ajac_reaction_d(
                         dqdc_s += "*q_nocor"
 
             dqdc_s = dqdc_simple_d(
+                fstream,
                 mechanism,
                 species_info,
                 reaction,
@@ -1751,6 +1753,7 @@ def ajac_reaction_d(
                         dqdc_s += "*q_nocor"
 
             dqdc_s = dqdc_simple_d(
+                fstream,
                 mechanism,
                 species_info,
                 reaction,
@@ -1793,6 +1796,7 @@ def ajac_reaction_d(
 
         for k in range(nSpecies):
             dqdc_s = dqdc_simple_d(
+                fstream,
                 mechanism,
                 species_info,
                 reaction,
@@ -1839,6 +1843,7 @@ def ajac_reaction_d(
 
 
 def dqdc_simple_precond(
+    fstream,
     mechanism,
     species_info,
     reaction,
@@ -1879,6 +1884,7 @@ def dqdc_simple_precond(
 
 
 def dqdc_simple_d(
+    fstream,
     mechanism,
     species_info,
     reaction,
@@ -1935,7 +1941,7 @@ def enhancement_d(mechanism, species_info, reaction):
 
     efficiencies = reaction.efficiencies
     alpha = ["mixture"]
-    for i, (symbol, efficiency) in enumerate(efficiencies.items()):
+    for _, (symbol, efficiency) in enumerate(efficiencies.items()):
         if symbol not in species_info.qss_species_list:
             factor = "( %.15g - 1)" % (efficiency)
             conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
@@ -1967,12 +1973,12 @@ def Denhancement_d(mechanism, species_info, reaction, kid, consP):
     else:
         efficiencies = reaction.efficiencies
         if consP:
-            for i, (symbol, efficiency) in enumerate(efficiencies.items()):
+            for _, (symbol, efficiency) in enumerate(efficiencies.items()):
                 if species_info.ordered_idx_map[symbol] == kid:
                     return "(%.15g - 1)" % (efficiency)
             return "0"
         else:
-            for i, (symbol, efficiency) in enumerate(efficiencies.items()):
+            for _, (symbol, efficiency) in enumerate(efficiencies.items()):
                 if species_info.ordered_idx_map[symbol] == kid:
                     return "%.15g" % (efficiency)
             return "1"
