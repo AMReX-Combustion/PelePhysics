@@ -1959,7 +1959,9 @@ def getCriticalParameters(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real *  bi, amrex::Real *  acentric_i)",
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
+        " GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai, amrex::Real * "
+        " bi, amrex::Real *  acentric_i)",
     )
     cw.writer(fstream, "{")
     cw.writer(fstream)
@@ -1997,7 +1999,8 @@ def getCriticalParameters(fstream, mechanism, species_info):
             )
             cw.writer(
                 fstream,
-                "ai[%d] = 1e6 * 0.42748 * Rcst * Rcst * Tci[%d] * Tci[%d] / (%f * %f * %f); "
+                "ai[%d] = 1e6 * 0.42748 * Rcst * Rcst * Tci[%d] * Tci[%d] /"
+                " (%f * %f * %f); "
                 % (
                     species.idx,
                     species.idx,
@@ -2038,7 +2041,8 @@ def getCriticalParameters(fstream, mechanism, species_info):
             )
             cw.writer(
                 fstream,
-                "ai[%d] = (5.55 * avogadro * avogadro * EPS[%d]*boltzmann * pow(1e-8*SIG[%d],3.0) ) / (wt[%d] * wt[%d]); "
+                "ai[%d] = (5.55 * avogadro * avogadro * EPS[%d]*boltzmann *"
+                " pow(1e-8*SIG[%d],3.0) ) / (wt[%d] * wt[%d]); "
                 % (
                     species.idx,
                     species.idx,
@@ -2049,8 +2053,8 @@ def getCriticalParameters(fstream, mechanism, species_info):
             )
             cw.writer(
                 fstream,
-                "bi[%d] = 0.855 * avogadro * pow(1e-8*SIG[%d],3.0) / (wt[%d]); "
-                % (species.idx, species.idx, species.idx),
+                "bi[%d] = 0.855 * avogadro * pow(1e-8*SIG[%d],3.0) /"
+                " (wt[%d]); " % (species.idx, species.idx, species.idx),
             )
             cw.writer(fstream, "acentric_i[%d] = 0.0 ;" % (species.idx))
 

@@ -33,12 +33,15 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
     cw.writer(
         fstream,
         cw.comment(
-            "GPU version of productionRate: no more use of thermo namespace vectors "
+            "GPU version of productionRate: no more use of thermo namespace"
+            " vectors "
         ),
     )
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * sc_qss, amrex::Real * tc, amrex::Real invT)",
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *"
+        "  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * sc_qss,"
+        " amrex::Real * tc, amrex::Real invT)",
     )
     cw.writer(fstream, "{")
 
@@ -149,7 +152,8 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
         if ntroe > 0:
             cw.writer(
                 fstream,
-                "amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe, F_troe;",
+                "amrex::Real redP, F, logPred, logFcent, troe_c, troe_n, troe,"
+                " F_troe;",
             )
         if nsri > 0:
             cw.writer(fstream, "amrex::Real redP, F, X, F_sri;")
@@ -277,7 +281,8 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                 )
                 cw.writer(
                     fstream,
-                    "           * exp(%.15g  * tc[0] - %.15g  * (%.15g) *invT);"
+                    "           * exp(%.15g  * tc[0] - %.15g  * (%.15g)"
+                    " *invT);"
                     % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, low_E.m),
                 )
                 if is_troe:
@@ -315,7 +320,8 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                     cw.writer(fstream, "troe_n = 0.75 - 1.27 * logFcent;")
                     cw.writer(
                         fstream,
-                        "troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c + logPred));",
+                        "troe = (troe_c + logPred) / (troe_n - 0.14*(troe_c +"
+                        " logPred));",
                     )
                     cw.writer(
                         fstream,
@@ -424,13 +430,15 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
     # main function
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void  productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)",
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
+        " productionRate(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)",
     )
     cw.writer(fstream, "{")
 
     cw.writer(
         fstream,
-        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache",
+        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; //"
+        " temperature cache",
     )
     cw.writer(fstream, "const amrex::Real invT = 1.0 / tc[1];")
     cw.writer(fstream)
@@ -506,7 +514,8 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
             # cw.writer(fstream,"comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
             cw.writer(
                 fstream,
-                "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
+                "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT,"
+                " g_RT_qss);",
             )
             cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             cw.writer(fstream)
@@ -705,11 +714,13 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                     )
                     cw.writer(
                         fstream,
-                        "const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));",
+                        "const amrex::Real troe = (troe_c + logPred) / (troe_n"
+                        " - 0.14 * (troe_c + logPred));",
                     )
                     cw.writer(
                         fstream,
-                        "const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));",
+                        "const amrex::Real F_troe = pow(10, logFcent / (1.0 +"
+                        " troe * troe));",
                     )
                     cw.writer(fstream, "Corr = F * F_troe;")
                     cw.writer(
@@ -819,13 +830,14 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                     if alpha == 1.0:
                         cw.writer(
                             fstream,
-                            "const amrex::Real qr = k_f * exp(-(%s)) * (%s) * (%s);"
-                            % (KcExpArg, KcConvInv, reverse_sc),
+                            "const amrex::Real qr = k_f * exp(-(%s)) * (%s) *"
+                            " (%s);" % (KcExpArg, KcConvInv, reverse_sc),
                         )
                     else:
                         cw.writer(
                             fstream,
-                            "const amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s) * (%s);"
+                            "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
+                            " (%s) * (%s);"
                             % (KcExpArg, KcConvInv, reverse_sc),
                         )
                 else:
@@ -838,8 +850,8 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                     else:
                         cw.writer(
                             fstream,
-                            "const amrex::Real qr = Corr * k_f * exp(-(%s)) * (%s);"
-                            % (KcExpArg, reverse_sc),
+                            "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
+                            " (%s);" % (KcExpArg, reverse_sc),
                         )
 
             removeForward = cu.isRemoveForward(reaction_info, orig_idx)

@@ -27,6 +27,7 @@ convert = "ceptr.ceptr:main"
 [tool.black]
 line-length = 79
 target-version = ['py38']
+preview-string-processing = true
 include = '\.pyi?$'
 exclude = '''
 

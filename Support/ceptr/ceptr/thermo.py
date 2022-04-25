@@ -111,8 +111,8 @@ def generateThermoRoutine(
 
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void %s(amrex::Real * species, const amrex::Real *  tc)"
-        % name,
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void %s(amrex::Real *"
+        " species, const amrex::Real *  tc)" % name,
     )
     cw.writer(fstream, "{")
     # declarations

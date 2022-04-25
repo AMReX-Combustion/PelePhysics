@@ -57,7 +57,8 @@ def sparsity(fstream, species_info):
     )
     cw.writer(
         fstream,
-        "void SPARSITY_INFO_SYST( int * nJdata, const int * consP, int NCELLS)",
+        "void SPARSITY_INFO_SYST( int * nJdata, const int * consP, int"
+        " NCELLS)",
     )
     cw.writer(fstream, "{")
 
@@ -108,7 +109,8 @@ def sparsity(fstream, species_info):
     cw.writer(
         fstream,
         cw.comment(
-            "compute the sparsity pattern of the simplified (for preconditioning) system Jacobian"
+            "compute the sparsity pattern of the simplified (for"
+            " preconditioning) system Jacobian"
         ),
     )
     cw.writer(
@@ -163,12 +165,14 @@ def sparsity(fstream, species_info):
     cw.writer(
         fstream,
         cw.comment(
-            "compute the sparsity pattern of the chemistry Jacobian in CSC format -- base 0"
+            "compute the sparsity pattern of the chemistry Jacobian in CSC"
+            " format -- base 0"
         ),
     )
     cw.writer(
         fstream,
-        "void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, const int * consP, int NCELLS)",
+        "void SPARSITY_PREPROC_CSC(int *  rowVals, int *  colPtrs, const int *"
+        " consP, int NCELLS)",
     )
     cw.writer(fstream, "{")
 
@@ -215,12 +219,14 @@ def sparsity(fstream, species_info):
     cw.writer(
         fstream,
         cw.comment(
-            "compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0"
+            "compute the sparsity pattern of the chemistry Jacobian in CSR"
+            " format -- base 0"
         ),
     )
     cw.writer(
         fstream,
-        "void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const int * consP, int NCELLS, int base)",
+        "void SPARSITY_PREPROC_CSR(int * colVals, int * rowPtrs, const int *"
+        " consP, int NCELLS, int base)",
     )
     cw.writer(fstream, "{")
 
@@ -299,7 +305,8 @@ def sparsity(fstream, species_info):
     cw.writer(fstream, cw.comment("CSR format BASE is user choice"))
     cw.writer(
         fstream,
-        "void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, const int * consP, int NCELLS, int base)",
+        "void SPARSITY_PREPROC_SYST_CSR(int * colVals, int * rowPtr, const int"
+        " * consP, int NCELLS, int base)",
     )
     cw.writer(fstream, "{")
 
@@ -392,13 +399,15 @@ def sparsity(fstream, species_info):
     cw.writer(
         fstream,
         cw.comment(
-            "compute the sparsity pattern of the simplified (for precond) system Jacobian on CPU"
+            "compute the sparsity pattern of the simplified (for precond)"
+            " system Jacobian on CPU"
         ),
     )
     cw.writer(fstream, cw.comment("BASE 0"))
     cw.writer(
         fstream,
-        "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int * colPtrs, int * indx, const int * consP)",
+        "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(int * rowVals, int *"
+        " colPtrs, int * indx, const int * consP)",
     )
     cw.writer(fstream, "{")
 
@@ -450,13 +459,15 @@ def sparsity(fstream, species_info):
     cw.writer(
         fstream,
         cw.comment(
-            "compute the sparsity pattern of the simplified (for precond) system Jacobian"
+            "compute the sparsity pattern of the simplified (for precond)"
+            " system Jacobian"
         ),
     )
     cw.writer(fstream, cw.comment("CSR format BASE is under choice"))
     cw.writer(
         fstream,
-        "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int * rowPtr, const int * consP, int base)",
+        "void SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(int * colVals, int *"
+        " rowPtr, const int * consP, int base)",
     )
     cw.writer(fstream, "{")
 

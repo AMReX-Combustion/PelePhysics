@@ -18,7 +18,9 @@ def ajacPrecond(fstream, mechanism, species_info, reaction_info):
     # cw.writer(fstream,"#ifdef COMPILE_JACOBIAN")
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real T, int HP)",
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
+        " aJacobian_precond(amrex::Real *  J, amrex::Real *  sc, amrex::Real"
+        " T, int HP)",
     )
     cw.writer(fstream, "{")
 
@@ -37,7 +39,8 @@ def ajacPrecond(fstream, mechanism, species_info, reaction_info):
 
     cw.writer(
         fstream,
-        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache",
+        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; //"
+        " temperature cache",
     )
     cw.writer(fstream, "amrex::Real invT = 1.0 / tc[1];")
     cw.writer(fstream, "amrex::Real invT2 = invT * invT;")
@@ -127,7 +130,8 @@ def ajacPrecond(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "amrex::Real dlogFdc, dlogFdn, dlogFdcn_fac;")
     cw.writer(
         fstream,
-        "amrex::Real dlogPrdT, dlogfPrdT, dlogFdT, dlogFcentdT, dlogFdlogPr, dlnCorrdT;",
+        "amrex::Real dlogPrdT, dlogfPrdT, dlogFdT, dlogFcentdT, dlogFdlogPr,"
+        " dlnCorrdT;",
     )
     cw.writer(fstream, "const amrex::Real ln10 = log(10.0);")
     cw.writer(fstream, "const amrex::Real log10e = 1.0/log(10.0);")
@@ -330,16 +334,19 @@ def ajac_reaction_precond(
             )
             cw.writer(
                 fstream,
-                "// FIXME: irreversible reaction in _ajac_reaction may not work",
+                "// FIXME: irreversible reaction in _ajac_reaction may not"
+                " work",
             )
         for k in range(nSpecies):
             if k in sorted_reactants and k in sorted_products:
                 print(
-                    "FIXME: irreversible reaction in _ajac_reaction may not work"
+                    "FIXME: irreversible reaction in _ajac_reaction may not"
+                    " work"
                 )
                 cw.writer(
                     fstream,
-                    "// FIXME: irreversible reaction in _ajac_reaction may not work",
+                    "// FIXME: irreversible reaction in _ajac_reaction may not"
+                    " work",
                 )
 
     dim = cu.phaseSpaceUnits(reaction.reactants)
@@ -528,7 +535,8 @@ def ajac_reaction_precond(
 
             cw.writer(
                 fstream,
-                "dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;",
+                "dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr *"
+                " troePr_den;",
             )
             cw.writer(
                 fstream, "dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;"
@@ -537,7 +545,8 @@ def ajac_reaction_precond(
             cw.writer(fstream, "dlogFdlogPr = dlogFdc;")
             cw.writer(
                 fstream,
-                "dlogFdT = dlogFcentdT*(troe - 0.67*dlogFdc - 1.27*dlogFdn) + dlogFdlogPr * dlogPrdT;",
+                "dlogFdT = dlogFcentdT*(troe - 0.67*dlogFdc - 1.27*dlogFdn) +"
+                " dlogFdlogPr * dlogPrdT;",
             )
         else:
             cw.writer(fstream, "// Lindemann form")
@@ -685,8 +694,8 @@ def ajac_reaction_precond(
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(
                     fstream,
-                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) + dlnCorrdT*q;"
-                    % Corr_s,
+                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) +"
+                    " dlnCorrdT*q;" % Corr_s,
                 )
                 cw.writer(
                     fstream,
@@ -893,7 +902,8 @@ def ajac(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(
         fstream,
-        "void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T, const int consP)",
+        "void aJacobian(amrex::Real * J, amrex::Real * sc, amrex::Real T,"
+        " const int consP)",
     )
     cw.writer(fstream, "{")
 
@@ -927,7 +937,8 @@ def ajac(fstream, mechanism, species_info, reaction_info):
 
     cw.writer(
         fstream,
-        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; // temperature cache",
+        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; //"
+        " temperature cache",
     )
     cw.writer(fstream, "amrex::Real invT = 1.0 / tc[1];")
     cw.writer(fstream, "amrex::Real invT2 = invT * invT;")
@@ -1039,7 +1050,8 @@ def ajac(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "amrex::Real dlogFdc, dlogFdn, dlogFdcn_fac;")
     cw.writer(
         fstream,
-        "amrex::Real dlogPrdT, dlogfPrdT, dlogFdT, dlogFcentdT, dlogFdlogPr, dlnCorrdT;",
+        "amrex::Real dlogPrdT, dlogfPrdT, dlogFdT, dlogFcentdT, dlogFdlogPr,"
+        " dlnCorrdT;",
     )
     cw.writer(fstream, "const amrex::Real ln10 = log(10.0);")
     cw.writer(fstream, "const amrex::Real log10e = 1.0/log(10.0);")
@@ -1253,16 +1265,19 @@ def ajac_reaction_d(
             )
             cw.writer(
                 fstream,
-                "// FIXME: irreversible reaction in _ajac_reaction may not work",
+                "// FIXME: irreversible reaction in _ajac_reaction may not"
+                " work",
             )
         for k in range(nSpecies):
             if k in sorted_reactants and k in sorted_products:
                 print(
-                    "FIXME: irreversible reaction in _ajac_reaction may not work"
+                    "FIXME: irreversible reaction in _ajac_reaction may not"
+                    " work"
                 )
                 cw.writer(
                     fstream,
-                    "// FIXME: irreversible reaction in _ajac_reaction may not work",
+                    "// FIXME: irreversible reaction in _ajac_reaction may not"
+                    " work",
                 )
 
     dim = cu.phaseSpaceUnits(reaction.reactants)
@@ -1451,7 +1466,8 @@ def ajac_reaction_d(
 
             cw.writer(
                 fstream,
-                "dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr * troePr_den;",
+                "dlogFdcn_fac = 2.0 * logFcent * troe*troe * troePr *"
+                " troePr_den;",
             )
             cw.writer(
                 fstream, "dlogFdc = -troe_n * dlogFdcn_fac * troePr_den;"
@@ -1460,7 +1476,8 @@ def ajac_reaction_d(
             cw.writer(fstream, "dlogFdlogPr = dlogFdc;")
             cw.writer(
                 fstream,
-                "dlogFdT = dlogFcentdT*(troe - 0.67*dlogFdc - 1.27*dlogFdn) + dlogFdlogPr * dlogPrdT;",
+                "dlogFdT = dlogFcentdT*(troe - 0.67*dlogFdc - 1.27*dlogFdn) +"
+                " dlogFdlogPr * dlogPrdT;",
             )
         else:
             cw.writer(fstream, "// Lindemann form")
@@ -1607,8 +1624,8 @@ def ajac_reaction_d(
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(
                     fstream,
-                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) + dlnCorrdT*q;"
-                    % Corr_s,
+                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) +"
+                    " dlnCorrdT*q;" % Corr_s,
                 )
                 cw.writer(
                     fstream, "dqdT = %s(- dkrdT*phi_r) + dlnCorrdT*q;" % Corr_s
@@ -2041,7 +2058,9 @@ def DproductionRatePrecond(fstream, mechanism, species_info, reaction_info):
     )
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, const int * HP)",
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
+        " DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real * "
+        " Tp, const int * HP)",
     )
     cw.writer(fstream, "{")
 
@@ -2074,7 +2093,8 @@ def DproductionRate(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, cw.comment("compute the reaction Jacobian"))
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J, amrex::Real *  sc, amrex::Real *  Tp, const int * consP)",
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J,"
+        " amrex::Real *  sc, amrex::Real *  Tp, const int * consP)",
     )
     cw.writer(fstream, "{")
 
