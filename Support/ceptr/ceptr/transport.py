@@ -8,6 +8,7 @@ import ceptr.writer as cw
 
 
 def transport(fstream, mechanism, species_info):
+    """Write the transport functions."""
     cw.writer(fstream, cw.comment("Transport function declarations "))
     nSpecies = species_info.nSpecies
     speciesTransport = analyzeTransport(mechanism, species_info)
@@ -38,6 +39,7 @@ def transport(fstream, mechanism, species_info):
 
 
 def analyzeTransport(mechanism, species_info):
+    """Extract transport model coefficients."""
     transdata = OrderedDict()
 
     for spec in species_info.nonqss_species:
@@ -69,6 +71,7 @@ def analyzeTransport(mechanism, species_info):
 
 
 def miscTransInfo(fstream, KK, NLITE, do_declarations, NO=4):
+    """Write transport information."""
     cw.writer(fstream)
     LENIMC = 4 * KK + NLITE
     generateTransRoutineInteger(
@@ -164,6 +167,7 @@ def miscTransInfo(fstream, KK, NLITE, do_declarations, NO=4):
 
 
 def generateTransRoutineInteger(fstream, nametab, expression, do_declarations):
+    """Write generic integer transport routine."""
     if do_declarations:
         cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
         cw.writer(fstream, "#define %s %s" % (nametab[0], nametab[1]))
@@ -188,6 +192,7 @@ def generateTransRoutineSimple(
     speciesTransport,
     do_declarations,
 ):
+    """Write generic transport routine."""
     if do_declarations:
         cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
         cw.writer(fstream, "#define %s %s" % (nametab[0], nametab[1]))
@@ -212,6 +217,7 @@ def generateTransRoutineSimple(
 
 
 def wt(fstream, species_info, do_declarations):
+    """Write molecular weights function."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("the molecular weights in g/mol"))
 
@@ -239,6 +245,7 @@ def wt(fstream, species_info, do_declarations):
 
 
 def eps(fstream, mechanism, species_info, speciesTransport, do_declarations):
+    """Write the lennard-jones potential well depth function."""
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -262,6 +269,7 @@ def eps(fstream, mechanism, species_info, speciesTransport, do_declarations):
 
 
 def sig(fstream, mechanism, species_info, speciesTransport, do_declarations):
+    """Write the the lennard-jones collision diameter function."""
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -285,6 +293,7 @@ def sig(fstream, mechanism, species_info, speciesTransport, do_declarations):
 
 
 def dip(fstream, mechanism, species_info, speciesTransport, do_declarations):
+    """Write the dipole moment function."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("the dipole moment in Debye"))
     generateTransRoutineSimple(
@@ -305,6 +314,7 @@ def dip(fstream, mechanism, species_info, speciesTransport, do_declarations):
 
 
 def pol(fstream, mechanism, species_info, speciesTransport, do_declarations):
+    """Write the polarizability function."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("the polarizability in cubic Angstroms"))
     generateTransRoutineSimple(
@@ -325,6 +335,7 @@ def pol(fstream, mechanism, species_info, speciesTransport, do_declarations):
 
 
 def zrot(fstream, mechanism, species_info, speciesTransport, do_declarations):
+    """Write the rotational relaxation collision number."""
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -348,6 +359,7 @@ def zrot(fstream, mechanism, species_info, speciesTransport, do_declarations):
 
 
 def nlin(fstream, mechanism, species_info, speciesTransport, do_declarations):
+    """Write the (monoatomic, linear, nonlinear) information."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("0: monoatomic, 1: linear, 2: nonlinear"))
 
@@ -376,6 +388,7 @@ def nlin(fstream, mechanism, species_info, speciesTransport, do_declarations):
 def viscosity(
     fstream, mechanism, species_info, speciesTransport, do_declarations, NTFit
 ):
+    """Write the viscosity function."""
     nSpecies = species_info.nSpecies
     # compute single constants in g/cm/s
     Na = 6.02214199e23
@@ -553,6 +566,7 @@ def viscosity(
 
 
 def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
+    """Write the diffusion coefficients."""
     # REORDERING OF SPECS
     specOrdered = []
     nSpecies = species_info.nSpecies
@@ -576,11 +590,11 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
         cofd.append([])
         if i != spec1.idx:
             print("Problem in _diffcoefs computation")
-            stop
+            sys.exit(1)
         for j, spec2 in enumerate(specOrdered[0 : i + 1]):
             if j != spec2.idx:
                 print("Problem in _diffcoefs computation")
-                stop
+                sys.exit(1)
             # eq. (9)
             sigm = (
                 0.5
@@ -615,7 +629,7 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
                 * float(speciesTransport[spec2][3])
                 / (epsm_k * sigm**3)
             )
-            if Xi_bool(spec1, spec2, speciesTransport) == False:
+            if not Xi_bool(spec1, spec2, speciesTransport):
                 dst = 0.0
             # enter the loop on temperature
             spdiffcoef = []
@@ -698,6 +712,7 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
 
 
 def lightSpecs(fstream, speclist, do_declarations):
+    """Write list of specs with small weight, dim NLITE."""
     # header
     cw.writer(fstream)
     cw.writer(fstream)
@@ -731,6 +746,7 @@ def thermaldiffratios(
     do_declarations,
     NTFit,
 ):
+    """Write thermal diffusion ratios."""
     nSpecies = species_info.nSpecies
     # This is an overhaul of CHEMKIN version III
     # REORDERING OF SPECS
@@ -753,12 +769,12 @@ def thermaldiffratios(
     for i, spec1 in enumerate(specOrdered):
         if i != spec1.idx:
             print("Problem in _thermaldiffratios computation")
-            stop
+            sys.exit(1)
         if spec1.idx in lightSpecList:
             k = k + 1
             if lightSpecList[k] != spec1.idx:
                 print("Problem in  _thermaldiffratios computation")
-                stop
+                sys.exit(1)
             coftd.append([])
             epsi = float(speciesTransport[spec1][1]) * cc.kb
             sigi = float(speciesTransport[spec1][2]) * AtoCM
@@ -768,7 +784,7 @@ def thermaldiffratios(
             for j, spec2 in enumerate(specOrdered):
                 if j != spec2.idx:
                     print("Problem in _thermaldiffratios computation")
-                    stop
+                    sys.exit(1)
                 # eq. (53)
                 Wji = (spec2.weight - spec1.weight) / (
                     spec1.weight + spec2.weight
@@ -850,6 +866,7 @@ def thermaldiffratios(
 
 
 def astar(tslog):
+    """Compute astar."""
     aTab = [
         0.1106910525e01,
         -0.7065517161e-02,
@@ -868,6 +885,7 @@ def astar(tslog):
 
 
 def bstar(tslog):
+    """Compute bstar."""
     bTab = [
         0.1199673577e01,
         -0.1140928763e00,
@@ -886,6 +904,7 @@ def bstar(tslog):
 
 
 def cstar(tslog):
+    """Compute cstar."""
     cTab = [
         0.8386993788e00,
         0.4748325276e-01,
@@ -904,6 +923,7 @@ def cstar(tslog):
 
 
 def om22_CHEMKIN(tr, dst):
+    """Compute OM22."""
     # This is an overhaul of CANTERA version 2.3
     # range of dst
     dstTab = [0.0, 0.25, 0.50, 0.75, 1.0, 1.5, 2.0, 2.5]
@@ -1304,6 +1324,7 @@ def om22_CHEMKIN(tr, dst):
 
 
 def om11_CHEMKIN(tr, dst):
+    """Compute OM11."""
     # This is an overhaul of CANTERA version 2.3
     # range of dst
     dstTab = [0.0, 0.25, 0.50, 0.75, 1.0, 1.5, 2.0, 2.5]
@@ -1704,6 +1725,7 @@ def om11_CHEMKIN(tr, dst):
 
 
 def qinterp(x0, x, y):
+    """Compute interpolated value."""
     val1 = y[0] + (x0 - x[0]) * (y[1] - y[0]) / (x[1] - x[0])
     val2 = y[1] + (x0 - x[1]) * (y[2] - y[1]) / (x[2] - x[1])
     fac1 = (x0 - x[0]) / (x[1] - x[0]) / 2.0
@@ -1716,14 +1738,13 @@ def qinterp(x0, x, y):
 
 
 def getCVdRspecies(mechanism, t, species):
+    """Get the parameters of a thermo model."""
     model = mechanism.species(species.name).thermo
     if not model.n_coeffs == 15:
         print("Unsupported thermo model.")
         sys.exit(1)
 
     mid = model.coeffs[0]
-    loT = model.min_temp
-    hiT = model.max_temp
     highRange = model.coeffs[1:8]
     lowRange = model.coeffs[8:15]
 
@@ -1742,6 +1763,7 @@ def getCVdRspecies(mechanism, t, species):
 
 
 def Fcorr(t, eps_k):
+    """Compute Fcorr value."""
     thtwo = 3.0 / 2.0
     return (
         1
@@ -1752,6 +1774,7 @@ def Fcorr(t, eps_k):
 
 
 def Xi(spec1, spec2, speciesTransport):
+    """Compute Xi."""
     dipmin = 1e-20
     # 1 is polar, 2 is nonpolar
     # err in eq. (11) ?
@@ -1782,6 +1805,7 @@ def Xi(spec1, spec2, speciesTransport):
 
 
 def Xi_bool(spec1, spec2, speciesTransport):
+    """Compute the boolean of Xi."""
     dipmin = 1e-20
     # 1 is polar, 2 is nonpolar
     # err in eq. (11) ?
@@ -1802,6 +1826,7 @@ def Xi_bool(spec1, spec2, speciesTransport):
 
 
 def redPol(spec, speciesTransport):
+    """Compute polarization value."""
     return (
         float(speciesTransport[spec][4])
         / float(speciesTransport[spec][2]) ** 3.0
@@ -1809,6 +1834,7 @@ def redPol(spec, speciesTransport):
 
 
 def redDip(spec, speciesTransport):
+    """Compute dipole value."""
     # compute single constants in g/cm/s
     # conversion coefs
     AtoCM = 1.0e-8
@@ -1825,6 +1851,7 @@ def redDip(spec, speciesTransport):
 
 
 def getCriticalParameters(fstream, mechanism, species_info):
+    """Write the critical parameters."""
     TabulatedCriticalParams = {
         "H2": {
             "Tci": 33.145,

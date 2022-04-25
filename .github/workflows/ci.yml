@@ -43,6 +43,8 @@ jobs:
         run: poetry run black --check .
       - name: Sort imports with isort
         run: poetry run isort --check-only --diff .
+      - name: Lint with flake8
+        run: poetry run flake8 .
       - name: Run tests
         run: poetry run bash -c "cd ../Mechanism/Models/air && ./make-mechanism.sh"
 
