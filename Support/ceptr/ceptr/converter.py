@@ -2,12 +2,9 @@
 import pathlib
 import shutil
 import subprocess as spr
-
-import matplotlib.pyplot as mplt
-import numpy as np
+import sys
 
 import ceptr.ck as cck
-import ceptr.constants as cc
 import ceptr.gjs as cgjs
 import ceptr.jacobian as cj
 import ceptr.production as cp
@@ -71,8 +68,9 @@ class Converter:
         reorder_reactions = False
 
         if reorder_reactions:
-            plot_react_matrix = True
+            pass
             # FIXME
+            # plot_react_matrix = True
             # use_tsp = True  # traveling salesman reordering
 
             # if plot_react_matrix:
@@ -296,26 +294,28 @@ class Converter:
 
             # QSS
             if self.species_info.nQSSspecies > 0:
-                print("\n\n\n\n---------------------------------")
-                print("+++++++++GROUPS++++++++++++++++++")
-                print("---------------------------------")
-                self._getQSSgroups(mechanism)  # Figure out dependencies
-                print("\n\n\n\n---------------------------------")
-                print("+++++++++QSS SORTING+++++++++++++")
-                print("---------------------------------")
-                self._sortQSScomputation(
-                    mechanism
-                )  # Sort out order of group eval
-                print("\n\n\n\n---------------------------------")
-                print("+++++++++QSS EVAL++++++++++++++++")
-                print("---------------------------------")
-                self._sortQSSsolution_elements(
-                    mechanism
-                )  # Actually gauss-pivot the matrix to get algebraic expr
-                print("\n\n\n\n---------------------------------")
-                print("+++++++++QSS PRINTING++++++++++++")
-                print("---------------------------------")
-                self._QSScomponentFunctions(mechanism)
+                print("FIXME")
+                sys.exit(1)
+                # print("\n\n\n\n---------------------------------")
+                # print("+++++++++GROUPS++++++++++++++++++")
+                # print("---------------------------------")
+                # self._getQSSgroups(mechanism)  # Figure out dependencies
+                # print("\n\n\n\n---------------------------------")
+                # print("+++++++++QSS SORTING+++++++++++++")
+                # print("---------------------------------")
+                # self._sortQSScomputation(
+                #     mechanism
+                # )  # Sort out order of group eval
+                # print("\n\n\n\n---------------------------------")
+                # print("+++++++++QSS EVAL++++++++++++++++")
+                # print("---------------------------------")
+                # self._sortQSSsolution_elements(
+                #     mechanism
+                # )  # Actually gauss-pivot the matrix to get algebraic expr
+                # print("\n\n\n\n---------------------------------")
+                # print("+++++++++QSS PRINTING++++++++++++")
+                # print("---------------------------------")
+                # self._QSScomponentFunctions(mechanism)
 
             # prod rate related
             cp.productionRate(
