@@ -3,14 +3,14 @@ import ceptr.constants as cc
 
 def QSSsortedPhaseSpace(mechanism, species_info, reagents):
     phi = []
-    sorted_reactants = sorted(
+    sorted_reagents = sorted(
         reagents,
         key=lambda x: next(
             (y for y in species_info.all_species if y.name == x[0]), None
         ).idx,
     )
     nSpecies = species_info.nSpecies
-    for symbol in sorted_reactants:
+    for symbol in sorted_reagents:
         coefficient = reagents[symbol]
         if symbol in species_info.qss_species_list:
             if float(coefficient) == 1.0:

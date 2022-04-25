@@ -10,6 +10,12 @@ class SpeciesDb:
         self.name = name
         self.weight = mwt
 
+    def __str__(self):
+        return f"""name = {self.name}, mech_idx = {self.mech_idx}, idx = {self.idx}, weight = {self.weight}"""
+
+    def __repr__(self):
+        return f"""SpeciesDb({self.mech_idx}, {self.idx}, {self.name}, {self.weight})"""
+
 
 class SpeciesInfo:
     """Information on species"""

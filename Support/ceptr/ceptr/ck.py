@@ -2895,9 +2895,38 @@ def T_given_hy(fstream):
 
 
 # NEED TO DEAL WITH THIS WHEN QSS
-def ckinu(fstream, mechanism, species_info):
+def ckinu(fstream, mechanism, species_info, reaction_info):
     nSpecies = species_info.nSpecies
     nReaction = mechanism.n_reactions
+
+    # build reverse reaction map
+    rmap = reaction_info.idxmap.keys()
+
+    maxsp = 0
+
+    ns = [0 for _ in range(nReaction)]
+    ki = [[] for _ in range(nReaction)]
+    nu = [[] for _ in range(nReaction)]
+
+    for orig_idx, idx in reaction_info.idxmap.items():
+        reaction = mechanism.reaction(orig_idx)
+
+        for symbol, coefficient in reaction.reactants.items():
+            ki[orig_idx].append(species_info.ordered_idx_map[symbol])
+            nu[orig_idx].append(-int(coefficient))
+        for symbol, coefficient in reaction.products.items():
+            ki[orig_idx].append(species_info.ordered_idx_map[symbol])
+            nu[orig_idx].append(int(coefficient))
+
+        maxsp = max(maxsp, len(ki[orig_idx]))
+
+    for orig_idx, idx in reaction_info.idxmap.items():
+        reaction = mechanism.reaction(orig_idx)
+
+        ns[orig_idx] = len(ki[orig_idx])
+        for i in range(ns[orig_idx], maxsp):
+            ki[orig_idx].append(0)
+            nu[orig_idx].append(0)
 
     cw.writer(fstream)
     cw.writer(
@@ -2913,11 +2942,26 @@ def ckinu(fstream, mechanism, species_info):
     )
     cw.writer(fstream, "{")
 
-    cw.writer(fstream, "if (*i < 1) {")
+    str_ns = ",".join(str(x) for x in ns)
+    cw.writer(fstream, "const int ns[%d] =\n     {%s};" % (nReaction, str_ns))
 
-    maxsp = 0
-    for reaction in mechanism.reactions():
-        maxsp = max(maxsp, len(reaction.reactants) + len(reaction.products))
+    str_ki = ",".join(
+        ",".join(str(x) for x in ki[j]) for j in range(nReaction)
+    )
+    cw.writer(
+        fstream,
+        "const int kiv[%d] =\n     {%s};" % (nReaction * maxsp, str_ki),
+    )
+
+    str_nu = ",".join(
+        ",".join(str(x) for x in nu[j]) for j in range(nReaction)
+    )
+    cw.writer(
+        fstream,
+        "const int nuv[%d] =\n     {%s};" % (nReaction * maxsp, str_nu),
+    )
+
+    cw.writer(fstream, "if (*i < 1) {")
 
     cw.writer(fstream, cw.comment("Return max num species per reaction"))
     cw.writer(fstream, "*nspec = %d;" % (maxsp))
@@ -2925,11 +2969,13 @@ def ckinu(fstream, mechanism, species_info):
     cw.writer(fstream, "if (*i > %d) {" % (nReaction))
     cw.writer(fstream, "*nspec = -1;")
     cw.writer(fstream, "} else {")
-    cw.writer(fstream, "*nspec = kiv[*i-1].size();")
+
+    cw.writer(fstream, "*nspec = ns[*i-1];")
     cw.writer(fstream, "for (int j=0; j<*nspec; ++j) {")
-    cw.writer(fstream, "ki[j] = kiv[*i-1][j] + 1;")
-    cw.writer(fstream, "nu[j] = nuv[*i-1][j];")
+    cw.writer(fstream, "ki[j] = kiv[(*i-1)*%d + j] + 1;" % maxsp)
+    cw.writer(fstream, "nu[j] = nuv[(*i-1)*%d + j];" % maxsp)
     cw.writer(fstream, "}")
+
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")

@@ -218,7 +218,11 @@ class Converter:
         with open(self.hdrname, "w") as hdr, open(self.cppname, "w") as cpp:
             # This is for the cpp file
             cw.writer(cpp, self._mechanism_includes())
-            cck.ckinu(cpp, self.mechanism, self.species_info)
+            cri.rmap(cpp, self.mechanism, self.reaction_info)
+            cri.get_rmap(cpp, self.mechanism)
+            cck.ckinu(
+                cpp, self.mechanism, self.species_info, self.reaction_info
+            )
             self._atomicWeight(cpp)
             cck.ckawt(cpp, self.mechanism)
             cck.ckncf(cpp, self.mechanism, self.species_info)
