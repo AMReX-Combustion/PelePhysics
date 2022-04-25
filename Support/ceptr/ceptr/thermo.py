@@ -28,43 +28,24 @@ def analyzeThermodynamics(mechanism, species_info, QSS_Flag):
 
     midpoints = OrderedDict()
 
-    lowT_qss = 0.0
-    highT_qss = 1000000.0
-
-    midpoints_qss = {}
-
-    # FIXME
     if QSS_Flag:
-        for symbol in self.qss_species_list:
-            species = self.mechanism.species(symbol)
-            models = species.thermo
-            if len(models) > 2:
-                print("species: ", species)
-                import pyre
+        for symbol in species_info.qss_species_list:
+            species = mechanism.species(symbol)
+            model = species.thermo
 
-                pyre.debug.Firewall.hit(
-                    "unsupported configuration in species.thermo"
-                )
-                return
+            if not model.n_coeffs == 15:
+                print("Unsupported thermo model.")
+                sys.exit(1)
 
-            m1 = models[0]
-            m2 = models[1]
-
-            if m1.lowT < m2.lowT:
-                lowRange = m1
-                highRange = m2
-            else:
-                lowRange = m2
-                highRange = m1
-
-            low = lowRange.lowT
-            mid = lowRange.highT
-            high = highRange.highT
-
-            if low > lowT:
-                lowT = low
-            if high < highT:
-                highT = high
+            loT = model.min_temp
+            hiT = model.max_temp
+            if lowT < loT:
+                lowT = loT
+            if hiT < highT:
+                highT = hiT
+            mid = model.coeffs[0]
+            highRange = model.coeffs[1:8]
+            lowRange = model.coeffs[8:15]
 
             midpoints.setdefault(mid, []).append(
                 (species, lowRange, highRange)
@@ -131,7 +112,7 @@ def generateThermoRoutine(
         )
         cw.writer(fstream, "if (T < %g) {" % midT)
 
-        for species, lowRange, highRange in speciesList:
+        for species, lowRange, _ in speciesList:
             if QSS_flag:
                 cw.writer(
                     fstream,
@@ -172,7 +153,7 @@ def generateThermoRoutine(
 
         cw.writer(fstream, "} else {")
 
-        for species, lowRange, highRange in speciesList:
+        for species, _, highRange in speciesList:
             if QSS_flag:
                 cw.writer(
                     fstream,
