@@ -49,7 +49,6 @@ def ckncf(fstream, mechanism, species_info):
 
 def cksyme_str(fstream, mechanism, species_info):
     nElement = mechanism.n_elements
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("Returns the vector of strings of element names")
@@ -90,7 +89,6 @@ def cksyms_str(fstream, mechanism, species_info):
 
 
 def ckindx(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("A few mechanism parameters"))
@@ -111,7 +109,6 @@ def ckindx(fstream, mechanism, species_info):
 
 
 def ckrp(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(fstream, cw.comment(" Returns R, Rc, Patm"))
     cw.writer(
@@ -1078,7 +1075,6 @@ def ckabms(fstream, mechanism, species_info):
 
 
 def ckpx(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute P = rhoRT/W(x)"))
     cw.writer(
@@ -1210,7 +1206,6 @@ def ckpc(fstream, mechanism, species_info):
 
 
 def ckrhox(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute rho = PW(x)/RT"))
     cw.writer(
@@ -1334,7 +1329,6 @@ def ckrhoc(fstream, mechanism, species_info):
 
 
 def ckwt(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get molecular weight for all species"))
     cw.writer(
@@ -1382,7 +1376,6 @@ def ckmmwy(fstream, mechanism, species_info):
 
 
 def ckmmwx(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("given x[species]: mole fractions"))
     cw.writer(fstream, cw.comment("returns mean molecular weight (gm/mole)"))
@@ -1450,7 +1443,6 @@ def ckmmwc(fstream, mechanism, species_info):
 
 
 def ckcpor(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get Cp/R as a function of T "))
     cw.writer(fstream, cw.comment("for all species (Eq 19)"))
@@ -1478,7 +1470,6 @@ def ckcpor(fstream, mechanism, species_info):
 
 
 def ckhort(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get H/RT as a function of T "))
     cw.writer(fstream, cw.comment("for all species (Eq 20)"))
@@ -1506,7 +1497,6 @@ def ckhort(fstream, mechanism, species_info):
 
 
 def cksor(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get S/R as a function of T "))
     cw.writer(fstream, cw.comment("for all species (Eq 21)"))
@@ -1658,7 +1648,6 @@ def ckytcr(fstream, mechanism, species_info):
 
 
 def ckxty(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -2190,7 +2179,6 @@ def cksml(fstream, mechanism, species_info):
 
 
 def ckcvms(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("Returns the specific heats at constant volume")
@@ -2235,7 +2223,6 @@ def ckcvms(fstream, mechanism, species_info):
 
 
 def ckcpms(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("Returns the specific heats at constant pressure")
@@ -2453,7 +2440,6 @@ def ckams(fstream, mechanism, species_info):
 
 
 def cksms(fstream, mechanism, species_info):
-    nSpecies = species_info.nSpecies
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("Returns the entropies in mass units (Eq 28.)")
@@ -2921,11 +2907,7 @@ def T_given_hy(fstream):
 
 # NEED TO DEAL WITH THIS WHEN QSS
 def ckinu(fstream, mechanism, species_info, reaction_info):
-    nSpecies = species_info.nSpecies
     nReaction = mechanism.n_reactions
-
-    # build reverse reaction map
-    rmap = reaction_info.idxmap.keys()
 
     maxsp = 0
 
@@ -2933,7 +2915,7 @@ def ckinu(fstream, mechanism, species_info, reaction_info):
     ki = [[] for _ in range(nReaction)]
     nu = [[] for _ in range(nReaction)]
 
-    for orig_idx, idx in reaction_info.idxmap.items():
+    for orig_idx, _ in reaction_info.idxmap.items():
         reaction = mechanism.reaction(orig_idx)
 
         for symbol, coefficient in reaction.reactants.items():
@@ -2945,11 +2927,11 @@ def ckinu(fstream, mechanism, species_info, reaction_info):
 
         maxsp = max(maxsp, len(ki[orig_idx]))
 
-    for orig_idx, idx in reaction_info.idxmap.items():
+    for orig_idx, _ in reaction_info.idxmap.items():
         reaction = mechanism.reaction(orig_idx)
 
         ns[orig_idx] = len(ki[orig_idx])
-        for i in range(ns[orig_idx], maxsp):
+        for _ in range(ns[orig_idx], maxsp):
             ki[orig_idx].append(0)
             nu[orig_idx].append(0)
 
