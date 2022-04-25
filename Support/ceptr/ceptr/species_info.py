@@ -11,7 +11,12 @@ class SpeciesDb:
         self.weight = mwt
 
     def __str__(self):
-        return f"""name = {self.name}, mech_idx = {self.mech_idx}, idx = {self.idx}, weight = {self.weight}"""
+        return (
+            f"""name = {self.name}, """
+            + f"""mech_idx = {self.mech_idx}, """
+            + f"""idx = {self.idx}, """
+            + f"""weight = {self.weight}"""
+        )
 
     def __repr__(self):
         return f"""SpeciesDb({self.mech_idx}, {self.idx}, {self.name}, {self.weight})"""
