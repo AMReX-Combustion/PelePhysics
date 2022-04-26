@@ -65,7 +65,7 @@ class Converter:
         # List of intermediate helpers -- not optimal but can't be more clever rn
         self.list_of_intermediate_helpers = []
 
-        self._setSpecies()
+        self.setSpecies()
         # 0/ntroe/nsri/nlindem/nTB/nSimple/nWeird
         # 0/1    /2   /3      /4  /5      /6
         self.reaction_info = cri.sort_reactions(self.mechanism)
@@ -95,7 +95,7 @@ class Converter:
         #         mechanism
         #     )  # Fill "is_needed" dict (which species needs that particular species)
 
-    def _setSpecies(self):
+    def setSpecies(self):
         """Set the species."""
 
         # Fill species counters
@@ -170,13 +170,13 @@ class Converter:
 
         with open(self.hdrname, "w") as hdr, open(self.cppname, "w") as cpp:
             # This is for the cpp file
-            cw.writer(cpp, self._mechanism_includes())
+            cw.writer(cpp, self.mechanism_includes())
             cri.rmap(cpp, self.mechanism, self.reaction_info)
             cri.get_rmap(cpp, self.mechanism)
             cck.ckinu(
                 cpp, self.mechanism, self.species_info, self.reaction_info
             )
-            self._atomicWeight(cpp)
+            self.atomicWeight(cpp)
             cck.ckawt(cpp, self.mechanism)
             cck.ckncf(cpp, self.mechanism, self.species_info)
             cck.cksyme_str(cpp, self.mechanism, self.species_info)
@@ -187,11 +187,11 @@ class Converter:
             # This is for the header file
             cw.writer(hdr, "#ifndef MECHANISM_H")
             cw.writer(hdr, "#define MECHANISM_H")
-            self._print_mech_header(hdr)
-            self._chem_file_decl(hdr)
+            self.print_mech_header(hdr)
+            self.chem_file_decl(hdr)
             # Basic info
             cck.ckindx(hdr, self.mechanism, self.species_info)
-            self._molecular_weights(hdr)
+            self.molecular_weights(hdr)
             cck.ckrp(hdr, self.mechanism, self.species_info)
             cth.thermo(hdr, self.mechanism, self.species_info)
             # mean quantities -- do not take QSS into account, sumX and Y = 1 without them
@@ -303,7 +303,7 @@ class Converter:
             cw.writer(hdr)
             cw.writer(hdr, "#endif")
 
-    def _mechanism_includes(self):
+    def mechanism_includes(self):
         return '#include "mechanism.H"'
 
     def formatter(self):
@@ -317,7 +317,7 @@ class Converter:
         spr.run([clexec, "-i", self.hdrname])
         spr.run([clexec, "-i", self.cppname])
 
-    def _atomicWeight(self, fstream):
+    def atomicWeight(self, fstream):
         """Write the atomic weight."""
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("save atomic weights into array"))
@@ -331,7 +331,7 @@ class Converter:
             )
         cw.writer(fstream, "}")
 
-    def _molecular_weights(self, fstream):
+    def molecular_weights(self, fstream):
         cw.writer(fstream)
         cw.writer(fstream, cw.comment(" inverse molecular weights "))
         cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
@@ -352,7 +352,7 @@ class Converter:
             cw.writer(fstream, text + cw.comment("%s" % species.name))
         cw.writer(fstream, "}")
 
-    def _chem_file_decl(self, fstream):
+    def chem_file_decl(self, fstream):
         cw.writer(fstream)
         cw.writer(
             fstream,
@@ -416,7 +416,7 @@ class Converter:
             " rowPtr, const int * consP, int base);",
         )
 
-    def _print_mech_header(self, fstream):
+    def print_mech_header(self, fstream):
         cw.writer(fstream)
         cw.writer(fstream, "#include <AMReX_Gpu.H>")
         cw.writer(fstream, "#include <AMReX_REAL.H>")
