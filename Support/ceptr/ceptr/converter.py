@@ -65,55 +65,10 @@ class Converter:
         # List of intermediate helpers -- not optimal but can't be more clever rn
         self.list_of_intermediate_helpers = []
 
-        reorder_reactions = False
-
-        if reorder_reactions:
-            pass
-            # FIXME
-            # plot_react_matrix = True
-            # use_tsp = True  # traveling salesman reordering
-
-            # if plot_react_matrix:
-
-            #     (fig, ax) = mplt.subplots(1, 4, figsize=(20, 5))
-            #     rmat = mechanism._get_reaction_matrix()
-            #     ax[0].matshow(rmat)
-
-            # # sort reactions by type
-            # self.reactionIndex = mechanism._sort_reactions()
-            # if plot_react_matrix:
-            #     rmat = mechanism._get_reaction_matrix()
-            #     ax[1].matshow(rmat)
-
-            # # reorder reactions
-            # if use_tsp:
-            #     mechanism._sort_reactions_within_type_tsp(self.reactionIndex)
-            # else:
-            #     mechanism._sort_reactions_within_type_random(
-            #         self.reactionIndex
-            #     )
-            # if plot_react_matrix:
-            #     rmat = mechanism._get_reaction_matrix()
-            #     ax[2].matshow(rmat)
-
-            # # reorder species
-            # if use_tsp:
-            #     mechanism._sort_species_ids_tsp()
-            # else:
-            #     mechanism._sort_species_ids_random()
-            # if plot_react_matrix:
-            #     rmat = mechanism._get_reaction_matrix()
-            #     ax[3].matshow(rmat)
-            #     mplt.savefig("rmat_all.pdf")
-
-            # # set species after reordering
-            # self._setSpecies(mechanism)
-
-        else:
-            self._setSpecies()
-            # 0/ntroe/nsri/nlindem/nTB/nSimple/nWeird
-            # 0/1    /2   /3      /4  /5      /6
-            self.reaction_info = cri.sort_reactions(self.mechanism)
+        self._setSpecies()
+        # 0/ntroe/nsri/nlindem/nTB/nSimple/nWeird
+        # 0/1    /2   /3      /4  /5      /6
+        self.reaction_info = cri.sort_reactions(self.mechanism)
 
         # FIXME
         # # QSS  -- sort reactions/networks/check validity of QSSs
