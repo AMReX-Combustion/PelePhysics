@@ -613,12 +613,11 @@ def ajac_reaction_precond(
 
         dlnKcdT_s = "invT * ("
         terms = []
+        dict_species = {
+            v: i for i, v in enumerate(species_info.all_species_list)
+        }
         for symbol, coefficient in sorted(
-            sorted_reactants,
-            key=lambda x: next(
-                (y for y in species_info.all_species if y.name == x[0]),
-                None,
-            ).idx,
+            sorted_reactants, key=lambda v: dict_species[v[0]]
         ):
             k = species_info.ordered_idx_map[symbol]
             if symbol not in species_info.qss_species_list:
@@ -636,11 +635,7 @@ def ajac_reaction_precond(
         dlnKcdT_s += "-(" + " + ".join(terms) + ")"
         terms = []
         for symbol, coefficient in sorted(
-            sorted_products,
-            key=lambda x: next(
-                (y for y in species_info.all_species if y.name == x[0]),
-                None,
-            ).idx,
+            sorted_products, key=lambda v: dict_species[v[0]]
         ):
             k = species_info.ordered_idx_map[symbol]
             if symbol not in species_info.qss_species_list:
@@ -1548,12 +1543,11 @@ def ajac_reaction_d(
 
         dlnKcdT_s = "invT * ("
         terms = []
+        dict_species = {
+            v: i for i, v in enumerate(species_info.all_species_list)
+        }
         for symbol, coefficient in sorted(
-            sorted_reactants,
-            key=lambda x: next(
-                (y for y in species_info.all_species if y.name == x[0]),
-                None,
-            ).idx,
+            sorted_reactants, key=lambda v: dict_species[v[0]]
         ):
             if symbol not in species_info.qss_species_list:
                 k = species_info.ordered_idx_map[symbol]
@@ -1570,11 +1564,7 @@ def ajac_reaction_d(
         dlnKcdT_s += "-(" + " + ".join(terms) + ")"
         terms = []
         for symbol, coefficient in sorted(
-            sorted_products,
-            key=lambda x: next(
-                (y for y in species_info.all_species if y.name == x[0]),
-                None,
-            ).idx,
+            sorted_products, key=lambda v: dict_species[v[0]]
         ):
             if symbol not in species_info.qss_species_list:
                 k = species_info.ordered_idx_map[symbol]
@@ -1987,12 +1977,9 @@ def Denhancement_d(mechanism, species_info, reaction, kid, consP):
 def DphaseSpace(mechanism, species_info, reagents, r):
     phi = []
 
+    dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
     for symbol, coefficient in sorted(
-        reagents,
-        key=lambda x: next(
-            (y for y in species_info.all_species if y.name == x[0]),
-            None,
-        ).idx,
+        reagents, key=lambda v: dict_species[v[0]]
     ):
         if symbol not in species_info.qss_species_list:
             if symbol == r:

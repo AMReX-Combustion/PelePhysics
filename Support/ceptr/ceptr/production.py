@@ -879,13 +879,10 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
             for symbol, coefficient in all_agents:
                 if symbol not in species_info.qss_species_list:
                     agents.append((symbol, coefficient))
-            agents = sorted(
-                agents,
-                key=lambda x: next(
-                    (y for y in species_info.all_species if y.name == x[0]),
-                    None,
-                ).idx,
-            )
+            dict_species = {
+                v: i for i, v in enumerate(species_info.all_species_list)
+            }
+            agents = sorted(agents, key=lambda v: dict_species[v[0]])
             # note that a species might appear as both reactant and product
             # a species might alos appear twice or more on on each side
             # agents is a set that contains unique (symbol, coefficient)

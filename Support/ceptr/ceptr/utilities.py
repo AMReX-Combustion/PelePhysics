@@ -5,12 +5,8 @@ import ceptr.constants as cc
 
 def QSSsortedPhaseSpace(mechanism, species_info, reagents):
     phi = []
-    sorted_reagents = sorted(
-        reagents,
-        key=lambda x: next(
-            (y for y in species_info.all_species if y.name == x[0]), None
-        ).idx,
-    )
+    dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
+    sorted_reagents = sorted(reagents.keys(), key=lambda v: dict_species[v])
     nSpecies = species_info.nSpecies
     for symbol in sorted_reagents:
         coefficient = reagents[symbol]
