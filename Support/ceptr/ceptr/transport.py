@@ -10,16 +10,16 @@ import ceptr.writer as cw
 def transport(fstream, mechanism, species_info):
     """Write the transport functions."""
     cw.writer(fstream, cw.comment("Transport function declarations "))
-    nSpecies = species_info.nSpecies
+    n_species = species_info.n_species
     speciesTransport = analyzeTransport(mechanism, species_info)
     NLITE = 0
     idxLightSpecs = []
-    for sp in range(nSpecies):
+    for sp in range(n_species):
         spec = species_info.nonqss_species[sp]
         if spec.weight < 5.0:
             NLITE += 1
             idxLightSpecs.append(spec.idx)
-    miscTransInfo(fstream, KK=nSpecies, NLITE=NLITE, do_declarations=False)
+    miscTransInfo(fstream, KK=n_species, NLITE=NLITE, do_declarations=False)
     wt(fstream, species_info, False)
     eps(fstream, mechanism, species_info, speciesTransport, False)
     sig(fstream, mechanism, species_info, speciesTransport, False)
@@ -233,8 +233,8 @@ def wt(fstream, species_info, do_declarations):
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(fstream, "void %s(amrex::Real* %s ) {" % ("egtransetWT", "WT"))
 
-    nSpecies = species_info.nSpecies
-    for sp in range(nSpecies):
+    n_species = species_info.n_species
+    for sp in range(n_species):
         species = species_info.nonqss_species[sp]
         cw.writer(
             fstream,
@@ -389,7 +389,7 @@ def viscosity(
     fstream, mechanism, species_info, speciesTransport, do_declarations, NTFit
 ):
     """Write the viscosity function."""
-    nSpecies = species_info.nSpecies
+    n_species = species_info.n_species
     # compute single constants in g/cm/s
     Na = 6.02214199e23
     RU = 8.31447e7
@@ -399,9 +399,9 @@ def viscosity(
     # temperature increment
     dt = (species_info.highT - species_info.lowT) / (NTFit - 1)
     # factor dependent upon the molecule
-    m_crot = np.zeros(nSpecies)
-    m_cvib = np.zeros(nSpecies)
-    isatm = np.zeros(nSpecies)
+    m_crot = np.zeros(n_species)
+    m_cvib = np.zeros(n_species)
+    isatm = np.zeros(n_species)
     for spec in speciesTransport:
         if int(speciesTransport[spec][0]) == 0:
             m_crot[spec.idx] = 0.0
@@ -569,8 +569,8 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
     """Write the diffusion coefficients."""
     # REORDERING OF SPECS
     specOrdered = []
-    nSpecies = species_info.nSpecies
-    for i in range(nSpecies):
+    n_species = species_info.n_species
+    for i in range(n_species):
         for spec in speciesTransport:
             if spec.idx == i:
                 specOrdered.append(spec)
@@ -690,7 +690,7 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
                     "%s[%d] = %.8E;"
                     % (
                         "COFD",
-                        i * nSpecies * 4 + j * 4 + k,
+                        i * n_species * 4 + j * 4 + k,
                         cofd[i][j][3 - k],
                     ),
                 )
@@ -701,7 +701,7 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
                     "%s[%d] = %.8E;"
                     % (
                         "COFD",
-                        i * nSpecies * 4 + (j + i + 1) * 4 + k,
+                        i * n_species * 4 + (j + i + 1) * 4 + k,
                         cofd[j + i + 1][i][3 - k],
                     ),
                 )
@@ -745,11 +745,11 @@ def thermaldiffratios(
     NTFit,
 ):
     """Write thermal diffusion ratios."""
-    nSpecies = species_info.nSpecies
+    n_species = species_info.n_species
     # This is an overhaul of CHEMKIN version III
     # REORDERING OF SPECS
     specOrdered = []
-    for i in range(nSpecies):
+    for i in range(n_species):
         for spec in speciesTransport:
             if spec.idx == i:
                 specOrdered.append(spec)
@@ -848,14 +848,14 @@ def thermaldiffratios(
     cw.writer(fstream, "void egtransetCOFTD(amrex::Real* COFTD) {")
 
     for i in range(len(coftd)):
-        for j in range(nSpecies):
+        for j in range(n_species):
             for k in range(4):
                 cw.writer(
                     fstream,
                     "%s[%d] = %.8E;"
                     % (
                         "COFTD",
-                        i * 4 * nSpecies + j * 4 + k,
+                        i * 4 * n_species + j * 4 + k,
                         coftd[i][j][3 - k],
                     ),
                 )
@@ -1949,7 +1949,7 @@ def getCriticalParameters(fstream, mechanism, species_info):
         },
     }
 
-    nSpecies = species_info.nSpecies
+    n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream)
     cw.writer(
@@ -1964,9 +1964,9 @@ def getCriticalParameters(fstream, mechanism, species_info):
     cw.writer(fstream, "{")
     cw.writer(fstream)
 
-    cw.writer(fstream, "amrex::Real   EPS[%d];" % nSpecies)
-    cw.writer(fstream, "amrex::Real   SIG[%d];" % nSpecies)
-    cw.writer(fstream, "amrex::Real    wt[%d];" % nSpecies)
+    cw.writer(fstream, "amrex::Real   EPS[%d];" % n_species)
+    cw.writer(fstream, "amrex::Real   SIG[%d];" % n_species)
+    cw.writer(fstream, "amrex::Real    wt[%d];" % n_species)
     cw.writer(fstream, "amrex::Real avogadro = 6.02214199e23;")
     cw.writer(
         fstream, "amrex::Real boltzmann = 1.3806503e-16; //we work in CGS"

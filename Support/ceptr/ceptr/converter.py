@@ -101,7 +101,7 @@ class Converter:
         # Fill species counters
         self.species_info.nAllspecies = self.mechanism.n_species
         self.species_info.nQSSspecies = 0  # FIXME len(mechanism.qss_species())
-        self.species_info.nSpecies = (
+        self.species_info.n_species = (
             self.species_info.nAllspecies - self.species_info.nQSSspecies
         )
 
@@ -205,8 +205,8 @@ class Converter:
             cck.ckubms(hdr, self.mechanism, self.species_info)
             cck.cksbml(hdr, self.mechanism, self.species_info)
             cck.cksbms(hdr, self.mechanism, self.species_info)
-            cck.T_given_ey(hdr)
-            cck.T_given_hy(hdr)
+            cck.temp_given_ey(hdr)
+            cck.temp_given_hy(hdr)
             cck.ckpx(hdr, self.mechanism, self.species_info)
             cck.ckpy(hdr, self.mechanism, self.species_info)
             cck.ckpc(hdr, self.mechanism, self.species_info)
@@ -273,7 +273,7 @@ class Converter:
                 # self._QSScomponentFunctions(mechanism)
 
             # prod rate related
-            cp.productionRate(
+            cp.production_rate(
                 hdr, self.mechanism, self.species_info, self.reaction_info
             )
             cck.ckwc(hdr, self.mechanism, self.species_info)
@@ -286,12 +286,12 @@ class Converter:
             cj.ajacPrecond(
                 hdr, self.mechanism, self.species_info, self.reaction_info
             )
-            cj.DproductionRatePrecond(
+            cj.Dproduction_ratePrecond(
                 hdr, self.mechanism, self.species_info, self.reaction_info
             )
             # # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
             cj.ajac(hdr, self.mechanism, self.species_info, self.reaction_info)
-            cj.DproductionRate(
+            cj.Dproduction_rate(
                 hdr, self.mechanism, self.species_info, self.reaction_info
             )
             # Transport
@@ -338,7 +338,7 @@ class Converter:
         cw.writer(fstream, cw.comment(" inverse molecular weights "))
         cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
         cw.writer(fstream, "void get_imw(amrex::Real *imw_new){")
-        for i in range(0, self.species_info.nSpecies):
+        for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqss_species[i]
             text = "imw_new[%d] = 1.0/%f;" % (i, species.weight)
             cw.writer(fstream, text + cw.comment("%s" % species.name))
@@ -348,7 +348,7 @@ class Converter:
         cw.writer(fstream, cw.comment(" molecular weights "))
         cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
         cw.writer(fstream, "void get_mw(amrex::Real *mw_new){")
-        for i in range(0, self.species_info.nSpecies):
+        for i in range(0, self.species_info.n_species):
             species = self.species_info.nonqss_species[i]
             text = "mw_new[%d] = %f;" % (i, species.weight)
             cw.writer(fstream, text + cw.comment("%s" % species.name))
@@ -454,7 +454,7 @@ class Converter:
         cw.writer(fstream)
         cw.writer(fstream, "#define NUM_ELEMENTS %d" % (nb_elem))
         cw.writer(
-            fstream, "#define NUM_SPECIES %d" % (self.species_info.nSpecies)
+            fstream, "#define NUM_SPECIES %d" % (self.species_info.n_species)
         )
         cw.writer(
             fstream,

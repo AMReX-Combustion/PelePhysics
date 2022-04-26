@@ -7,17 +7,17 @@ def QSSsortedPhaseSpace(mechanism, species_info, reagents):
     phi = []
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
     sorted_reagents = sorted(reagents.keys(), key=lambda v: dict_species[v])
-    nSpecies = species_info.nSpecies
+    n_species = species_info.n_species
     for symbol in sorted_reagents:
         coefficient = reagents[symbol]
         if symbol in species_info.qss_species_list:
             if float(coefficient) == 1.0:
                 conc = "sc_qss[%d]" % (
-                    species_info.ordered_idx_map[symbol] - nSpecies
+                    species_info.ordered_idx_map[symbol] - n_species
                 )
             else:
                 conc = "pow(sc_qss[%d], %f)" % (
-                    species_info.ordered_idx_map[symbol] - nSpecies,
+                    species_info.ordered_idx_map[symbol] - n_species,
                     float(coefficient),
                 )
             phi += [conc]
@@ -39,22 +39,22 @@ def QSSsortedPhaseSpace(mechanism, species_info, reagents):
     return "*".join(phi)
 
 
-def phaseSpaceUnits(reagents):
+def phase_space_units(reagents):
     dim = 0.0
     for _, coefficient in reagents.items():
         dim += float(coefficient)
     return dim
 
 
-def prefactorUnits(units, exponent):
+def prefactor_units(units, exponent):
     return units**exponent / cc.ureg.second
 
 
-def activationEnergyUnits():
+def activation_energy_units():
     return cc.ureg.cal / cc.ureg.mole
 
 
-def isRemoveForward(reaction_info, idx):
+def is_remove_forward(reaction_info, idx):
     return idx in reaction_info.reacRemoveIDList
 
 
@@ -112,18 +112,18 @@ def KcConv(mechanism, reaction):
     return conversion
 
 
-def sortedKc(mechanism, species_info, reaction):
+def sorted_kc(mechanism, species_info, reaction):
     conv = KcConv(mechanism, reaction)
-    exparg = sortedKcExpArg(mechanism, species_info, reaction)
+    exparg = sorted_kcExpArg(mechanism, species_info, reaction)
     if conv:
         return conv + " * exp(" + exparg + ")"
     else:
         return "exp(" + exparg + ")"
 
 
-def sortedKcExpArg(mechanism, species_info, reaction):
+def sorted_kcExpArg(mechanism, species_info, reaction):
     terms = []
-    for _ in range(species_info.nSpecies):
+    for _ in range(species_info.n_species):
         terms.append("")
     terms_qss = []
     for _ in range(species_info.nQSSspecies):
@@ -136,7 +136,7 @@ def sortedKcExpArg(mechanism, species_info, reaction):
             factor = " + %f*" % coefficient
 
         if symbol in species_info.qss_species_list:
-            i = species_info.ordered_idx_map[symbol] - species_info.nSpecies
+            i = species_info.ordered_idx_map[symbol] - species_info.n_species
             terms_qss[i] += "%sg_RT_qss[%d]" % (factor, i)
         else:
             i = species_info.ordered_idx_map[symbol]
@@ -149,14 +149,14 @@ def sortedKcExpArg(mechanism, species_info, reaction):
             factor = " - %f*" % coefficient
 
         if symbol in species_info.qss_species_list:
-            i = species_info.ordered_idx_map[symbol] - species_info.nSpecies
+            i = species_info.ordered_idx_map[symbol] - species_info.n_species
             terms_qss[i] += "%sg_RT_qss[%d]" % (factor, i)
         else:
             i = species_info.ordered_idx_map[symbol]
             terms[i] += "%sg_RT[%d]" % (factor, i)
 
     dG = ""
-    for i in range(species_info.nSpecies):
+    for i in range(species_info.n_species):
         if terms[i]:
             dG += terms[i]
     for i in range(species_info.nQSSspecies):

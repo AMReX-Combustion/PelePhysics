@@ -8,7 +8,7 @@ class ReactionInfo:
     """Information on reactions."""
 
     def __init__(self, mechanism):
-        self.nReactions = mechanism.n_reactions
+        self.n_reactions = mechanism.n_reactions
         self.rs = []
         self.rs_unsorted = mechanism.reactions()
         self.sorted = False
@@ -85,19 +85,19 @@ def sort_reactions(mechanism):
 
 def rmap(fstream, mechanism, reaction_info):
     rmap = reaction_info.idxmap.keys()
-    nReaction = mechanism.n_reactions
+    n_reactions = mechanism.n_reactions
     str_rmap = ",".join(str(x) for x in rmap)
-    cw.writer(fstream, "const int rmap[%d] = {%s};" % (nReaction, str_rmap))
+    cw.writer(fstream, "const int rmap[%d] = {%s};" % (n_reactions, str_rmap))
 
 
 def get_rmap(fstream, mechanism):
-    nReactions = mechanism.n_reactions
+    n_reactions = mechanism.n_reactions
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Returns 0-based map of reaction order"))
     cw.writer(fstream, "void GET_RMAP" + cc.sym + "(int * _rmap)")
     cw.writer(fstream, "{")
 
-    cw.writer(fstream, "for (int j=0; j<%d; ++j) {" % (nReactions))
+    cw.writer(fstream, "for (int j=0; j<%d; ++j) {" % (n_reactions))
     cw.writer(fstream, "_rmap[j] = rmap[j];")
     cw.writer(fstream, "}")
 

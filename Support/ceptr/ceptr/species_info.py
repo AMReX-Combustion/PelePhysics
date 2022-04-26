@@ -33,7 +33,7 @@ class SpeciesInfo:
         # list of non QSS species names
         self.nonqss_species_list = []
         # number of non QSS species
-        self.nSpecies = 0
+        self.n_species = 0
         # QSS
         # list of speciesDb for each QSS spec
         self.qss_species = []

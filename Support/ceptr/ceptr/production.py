@@ -5,9 +5,9 @@ import ceptr.utilities as cu
 import ceptr.writer as cw
 
 
-def productionRate(fstream, mechanism, species_info, reaction_info):
-    nSpecies = species_info.nSpecies
-    nReactions = mechanism.n_reactions
+def production_rate(fstream, mechanism, species_info, reaction_info):
+    n_species = species_info.n_species
+    n_reactions = mechanism.n_reactions
 
     if len(reaction_info.index) != 7:
         print("\n\nCheck this!!!\n")
@@ -44,8 +44,8 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
     )
     cw.writer(fstream, "{")
 
-    if nReactions > 0:
-        # nclassd = nReactions - nspecial
+    if n_reactions > 0:
+        # nclassd = n_reactions - nspecial
         # nCorr   = n3body + ntroe + nsri + nlindemann
 
         # reacs are sorted here
@@ -99,7 +99,7 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
         # Mixt concentration for PD & TB
         cw.writer(fstream, cw.comment("compute the mixture concentration"))
         cw.writer(fstream, "amrex::Real mixture = 0.0;")
-        cw.writer(fstream, "for (int i = 0; i < %d; ++i) {" % nSpecies)
+        cw.writer(fstream, "for (int i = 0; i < %d; ++i) {" % n_species)
         cw.writer(fstream, "mixture += sc[i];")
         cw.writer(fstream, "}")
         cw.writer(fstream)
@@ -114,7 +114,7 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
 
         # Kc stuff
         cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
-        cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.nSpecies)
+        cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.n_species)
         cw.writer(fstream, "gibbs(g_RT, tc);")
         if species_info.nQSSspecies > 0:
             cw.writer(
@@ -162,18 +162,18 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
         for orig_idx, idx in sorted(reaction_info.idxmap.items()):
             reaction = mechanism.reaction(orig_idx)
 
-            KcExpArg = cu.sortedKcExpArg(mechanism, species_info, reaction)
+            KcExpArg = cu.sorted_kcExpArg(mechanism, species_info, reaction)
             KcConvInv = cu.fKcConvInv(mechanism, species_info, reaction)
 
-            dim = cu.phaseSpaceUnits(reaction.reactants)
-            thirdBody = reaction.reaction_type == "three-body"
+            dim = cu.phase_space_units(reaction.reactants)
+            third_body = reaction.reaction_type == "three-body"
             falloff = reaction.reaction_type == "falloff"
-            aeuc = cu.activationEnergyUnits()
-            if not thirdBody and not falloff:
-                uc = cu.prefactorUnits(
+            aeuc = cu.activation_energy_units()
+            if not third_body and not falloff:
+                uc = cu.prefactor_units(
                     cc.ureg("mole/cm**3"), 1 - dim
                 )  # Case 3 !PD, !TB
-                ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), 1 - dim)
+                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 A = (reaction.rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
@@ -184,10 +184,10 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
             elif not falloff:
-                uc = cu.prefactorUnits(
+                uc = cu.prefactor_units(
                     cc.ureg("mole/cm**3"), -dim
                 )  # Case 2 !PD, TB
-                ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), -dim)
+                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
                 A = (reaction.rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
@@ -198,10 +198,10 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
             else:
-                uc = cu.prefactorUnits(
+                uc = cu.prefactor_units(
                     cc.ureg("mole/cm**3"), 1 - dim
                 )  # Case 2 !PD, TB
-                ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), 1 - dim)
+                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 A = (reaction.high_rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
@@ -259,7 +259,7 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                     )
 
             alpha = 1.0
-            if not thirdBody and not falloff:
+            if not third_body and not falloff:
                 # cw.writer(fstream,"Corr  = 1.0;")
                 cw.writer(fstream, "qf[%d] *= k_f;" % idx)
             elif not falloff:
@@ -362,18 +362,18 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
             # FIXME
             if False:
                 Ar, betar, Er = reaction.rev
-                dim_rev = cu.phaseSpaceUnits(reaction.products)
-                if not thirdBody and not falloff:
-                    uc = cu.prefactorUnits(
+                dim_rev = cu.phase_space_units(reaction.products)
+                if not third_body and not falloff:
+                    uc = cu.prefactor_units(
                         cc.ureg("mole/cm**3"), 1 - dim_rev
                     )  # Case 3 !PD, !TB
-                    ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), 1 - dim_rev)
+                    ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim_rev)
                     print("Fixme grab rev params")
                 elif not falloff:
-                    uc = cu.prefactorUnits(
+                    uc = cu.prefactor_units(
                         cc.ureg("mole/cm**3"), -dim_rev
                     )  # Case 2 !PD, TB
-                    ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), -dim_rev)
+                    ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim_rev)
                     print("Fixme grab rev params")
                 else:
                     print("REV reaction cannot be PD")
@@ -446,7 +446,7 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "const amrex::Real invT = 1.0 / tc[1];")
     cw.writer(fstream)
 
-    if nReactions == 0:
+    if n_reactions == 0:
         cw.writer(fstream)
     else:
         cw.writer(
@@ -469,26 +469,26 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
             cw.writer(fstream, "amrex::Real X, F_sri;")
 
     cw.writer(fstream)
-    cw.writer(fstream, "for (int i = 0; i < %d; ++i) {" % nSpecies)
+    cw.writer(fstream, "for (int i = 0; i < %d; ++i) {" % n_species)
     cw.writer(fstream, "wdot[i] = 0.0;")
     cw.writer(fstream, "}")
     cw.writer(fstream)
 
-    if nReactions > 0:
-        # nclassd = nReactions - nspecial
+    if n_reactions > 0:
+        # nclassd = n_reactions - nspecial
         # nCorr   = n3body + ntroe + nsri + nlindemann
 
         # Mixt concentration for PD & TB
         cw.writer(fstream, cw.comment("compute the mixture concentration"))
         cw.writer(fstream, "amrex::Real mixture = 0.0;")
-        cw.writer(fstream, "for (int i = 0; i < %d; ++i) {" % nSpecies)
+        cw.writer(fstream, "for (int i = 0; i < %d; ++i) {" % n_species)
         cw.writer(fstream, "mixture += sc[i];")
         cw.writer(fstream, "}")
         cw.writer(fstream)
 
         # Kc stuff
         cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
-        cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.nSpecies)
+        cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.n_species)
         cw.writer(fstream, "gibbs(g_RT, tc);")
         if species_info.nQSSspecies > 0:
             cw.writer(
@@ -544,18 +544,18 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
             else:
                 reverse_sc = "0.0"
 
-            KcExpArg = cu.sortedKcExpArg(mechanism, species_info, reaction)
+            KcExpArg = cu.sorted_kcExpArg(mechanism, species_info, reaction)
             KcConvInv = cu.fKcConvInv(mechanism, species_info, reaction)
 
-            dim = cu.phaseSpaceUnits(reaction.reactants)
-            thirdBody = reaction.reaction_type == "three-body"
+            dim = cu.phase_space_units(reaction.reactants)
+            third_body = reaction.reaction_type == "three-body"
             falloff = reaction.reaction_type == "falloff"
-            aeuc = cu.activationEnergyUnits()
-            if not thirdBody and not falloff:
-                uc = cu.prefactorUnits(
+            aeuc = cu.activation_energy_units()
+            if not third_body and not falloff:
+                uc = cu.prefactor_units(
                     cc.ureg("mole/cm**3"), 1 - dim
                 )  # Case 3 !PD, !TB
-                ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), 1 - dim)
+                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 A = (reaction.rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
@@ -566,10 +566,10 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
             elif not falloff:
-                uc = cu.prefactorUnits(
+                uc = cu.prefactor_units(
                     cc.ureg("mole/cm**3"), -dim
                 )  # Case 2 !PD, TB
-                ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), -dim)
+                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
                 A = (reaction.rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
@@ -580,10 +580,10 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
             else:
-                uc = cu.prefactorUnits(
+                uc = cu.prefactor_units(
                     cc.ureg("mole/cm**3"), 1 - dim
                 )  # Case 2 !PD, TB
-                ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), 1 - dim)
+                ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 A = (reaction.high_rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
@@ -641,7 +641,7 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                     )
 
             alpha = 1.0
-            if not thirdBody and not falloff:
+            if not third_body and not falloff:
                 cw.writer(
                     fstream,
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
@@ -779,18 +779,18 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
             # FIXME
             if False:
                 Ar, betar, Er = reaction.rev
-                dim_rev = cu.phaseSpaceUnits(reaction.products)
-                if not thirdBody and not falloff:
-                    uc = cu.prefactorUnits(
+                dim_rev = cu.phase_space_units(reaction.products)
+                if not third_body and not falloff:
+                    uc = cu.prefactor_units(
                         cc.ureg("mole/cm**3"), 1 - dim_rev
                     )  # Case 3 !PD, !TB
-                    ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), 1 - dim_rev)
+                    ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim_rev)
                     print("Fixme grab rev params")
                 elif not falloff:
-                    uc = cu.prefactorUnits(
+                    uc = cu.prefactor_units(
                         cc.ureg("mole/cm**3"), -dim_rev
                     )  # Case 2 !PD, TB
-                    ctuc = cu.prefactorUnits(cc.ureg("kmol/m**3"), -dim_rev)
+                    ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim_rev)
                     print("Fixme grab rev params")
                 else:
                     print("REV reaction cannot be PD")
@@ -861,7 +861,7 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
                             " (%s);" % (KcExpArg, reverse_sc),
                         )
 
-            removeForward = cu.isRemoveForward(reaction_info, orig_idx)
+            removeForward = cu.is_remove_forward(reaction_info, orig_idx)
 
             if removeForward:
                 cw.writer(fstream, "// Remove forward reaction")
@@ -934,16 +934,16 @@ def productionRate(fstream, mechanism, species_info, reaction_info):
 
 
 def enhancement_d_with_QSS(mechanism, species_info, reaction):
-    thirdBody = reaction.reaction_type == "three-body"
+    third_body = reaction.reaction_type == "three-body"
     falloff = reaction.reaction_type == "falloff"
-    if not thirdBody and not falloff:
+    if not third_body and not falloff:
         print("_enhancement_d called for a reaction without a third body")
         sys.exit(1)
 
     if not hasattr(reaction, "efficiencies"):
         print("FIXME")
         sys.exit(1)
-        species, coefficient = thirdBody
+        species, coefficient = third_body
         if species == "<mixture>":
             return "mixture"
         return "sc[%d]" % species_info.nonqss_species[species].idx
@@ -961,7 +961,7 @@ def enhancement_d_with_QSS(mechanism, species_info, reaction):
         else:
             factor = "(%.15g)" % (efficiency - 1)
             conc = "sc_qss[%d]" % (
-                species_info.ordered_idx_map[symbol] - species_info.nSpecies
+                species_info.ordered_idx_map[symbol] - species_info.n_species
             )
             if (efficiency - 1) == 1:
                 alpha.append("%s" % (conc))

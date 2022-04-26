@@ -120,7 +120,7 @@ def generateThermoRoutine(
                         "species %d: %s"
                         % (
                             species_info.ordered_idx_map[species.name]
-                            - species_info.nSpecies,
+                            - species_info.n_species,
                             species.name,
                         )
                     ),
@@ -130,7 +130,7 @@ def generateThermoRoutine(
                     "species[%d] ="
                     % (
                         species_info.ordered_idx_map[species.name]
-                        - species_info.nSpecies
+                        - species_info.n_species
                     ),
                 )
             else:
@@ -161,7 +161,7 @@ def generateThermoRoutine(
                         "species %d: %s"
                         % (
                             species_info.ordered_idx_map[species.name]
-                            - species_info.nSpecies,
+                            - species_info.n_species,
                             species.name,
                         )
                     ),
@@ -171,7 +171,7 @@ def generateThermoRoutine(
                     "species[%d] ="
                     % (
                         species_info.ordered_idx_map[species.name]
-                        - species_info.nSpecies
+                        - species_info.n_species
                     ),
                 )
             else:
