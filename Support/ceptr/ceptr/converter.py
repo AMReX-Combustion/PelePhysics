@@ -65,7 +65,7 @@ class Converter:
         # List of intermediate helpers -- not optimal but can't be more clever rn
         self.list_of_intermediate_helpers = []
 
-        self.setSpecies()
+        self.set_species()
         # 0/ntroe/nsri/nlindem/nTB/nSimple/nWeird
         # 0/1    /2   /3      /4  /5      /6
         self.reaction_info = cri.sort_reactions(self.mechanism)
@@ -95,7 +95,7 @@ class Converter:
         #         mechanism
         #     )  # Fill "is_needed" dict (which species needs that particular species)
 
-    def setSpecies(self):
+    def set_species(self):
         """Set the species."""
 
         # Fill species counters
@@ -176,7 +176,7 @@ class Converter:
             cck.ckinu(
                 cpp, self.mechanism, self.species_info, self.reaction_info
             )
-            self.atomicWeight(cpp)
+            self.atomic_weight(cpp)
             cck.ckawt(cpp, self.mechanism)
             cck.ckncf(cpp, self.mechanism, self.species_info)
             cck.cksyme_str(cpp, self.mechanism, self.species_info)
@@ -318,7 +318,7 @@ class Converter:
         spr.run([clexec, "-i", self.hdrname])
         spr.run([clexec, "-i", self.cppname])
 
-    def atomicWeight(self, fstream):
+    def atomic_weight(self, fstream):
         """Write the atomic weight."""
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("save atomic weights into array"))

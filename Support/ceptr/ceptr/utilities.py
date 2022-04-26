@@ -3,7 +3,7 @@
 import ceptr.constants as cc
 
 
-def QSSsortedPhaseSpace(mechanism, species_info, reagents):
+def qss_sorted_phase_space(mechanism, species_info, reagents):
     phi = []
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
     sorted_reagents = sorted(reagents.keys(), key=lambda v: dict_species[v])
@@ -58,7 +58,7 @@ def is_remove_forward(reaction_info, idx):
     return idx in reaction_info.reacRemoveIDList
 
 
-def fKcConvInv(self, mechanism, reaction):
+def fkc_conv_inv(self, mechanism, reaction):
     dim = 0
     for _, coefficient in reaction.reactants.items():
         dim -= coefficient
@@ -85,7 +85,7 @@ def fKcConvInv(self, mechanism, reaction):
     return conversion
 
 
-def KcConv(mechanism, reaction):
+def kc_conv(mechanism, reaction):
     dim = 0
     for _, coefficient in reaction.reactants.items():
         dim -= coefficient
@@ -113,15 +113,15 @@ def KcConv(mechanism, reaction):
 
 
 def sorted_kc(mechanism, species_info, reaction):
-    conv = KcConv(mechanism, reaction)
-    exparg = sorted_kcExpArg(mechanism, species_info, reaction)
+    conv = kc_conv(mechanism, reaction)
+    exparg = sorted_kc_exp_arg(mechanism, species_info, reaction)
     if conv:
         return conv + " * exp(" + exparg + ")"
     else:
         return "exp(" + exparg + ")"
 
 
-def sorted_kcExpArg(mechanism, species_info, reaction):
+def sorted_kc_exp_arg(mechanism, species_info, reaction):
     terms = []
     for _ in range(species_info.n_species):
         terms.append("")

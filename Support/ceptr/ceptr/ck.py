@@ -160,7 +160,8 @@ def ckcpbl(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real cpor[%d]; " % n_species + cw.comment(" temporary storage"),
+        "amrex::Real cpor[%d]; " % n_species
+        + cw.comment(" temporary storage"),
     )
 
     # call routine
@@ -274,7 +275,8 @@ def ckcvbl(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real cvor[%d]; " % n_species + cw.comment(" temporary storage"),
+        "amrex::Real cvor[%d]; " % n_species
+        + cw.comment(" temporary storage"),
     )
 
     # call routine
@@ -325,7 +327,8 @@ def ckcvbs(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real cvor[%d]; " % n_species + cw.comment(" temporary storage"),
+        "amrex::Real cvor[%d]; " % n_species
+        + cw.comment(" temporary storage"),
     )
     cw.writer(fstream, "amrex::Real imw[%d];" % (n_species))
     cw.writer(fstream)
@@ -787,7 +790,8 @@ def ckgbml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real gort[%d]; " % n_species + cw.comment(" temporary storage"),
+        "amrex::Real gort[%d]; " % n_species
+        + cw.comment(" temporary storage"),
     )
 
     # call routine
@@ -849,7 +853,8 @@ def ckgbms(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real gort[%d]; " % n_species + cw.comment(" temporary storage"),
+        "amrex::Real gort[%d]; " % n_species
+        + cw.comment(" temporary storage"),
     )
     cw.writer(
         fstream,
@@ -950,7 +955,8 @@ def ckabml(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real aort[%d]; " % n_species + cw.comment(" temporary storage"),
+        "amrex::Real aort[%d]; " % n_species
+        + cw.comment(" temporary storage"),
     )
 
     # call routine
@@ -1015,7 +1021,8 @@ def ckabms(fstream, mechanism, species_info):
     )
     cw.writer(
         fstream,
-        "amrex::Real aort[%d]; " % n_species + cw.comment(" temporary storage"),
+        "amrex::Real aort[%d]; " % n_species
+        + cw.comment(" temporary storage"),
     )
     cw.writer(
         fstream,
@@ -2950,7 +2957,9 @@ def ckinu(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "{")
 
     str_ns = ",".join(str(x) for x in ns)
-    cw.writer(fstream, "const int ns[%d] =\n     {%s};" % (n_reactions, str_ns))
+    cw.writer(
+        fstream, "const int ns[%d] =\n     {%s};" % (n_reactions, str_ns)
+    )
 
     str_ki = ",".join(
         ",".join(str(x) for x in ki[j]) for j in range(n_reactions)

@@ -64,7 +64,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     "qf[%d] = %s;"
                     % (
                         idx,
-                        cu.QSSsortedPhaseSpace(
+                        cu.qss_sorted_phase_space(
                             mechanism, species_info, reaction.ford
                         ),
                     ),
@@ -75,7 +75,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     "qf[%d] = %s;"
                     % (
                         idx,
-                        cu.QSSsortedPhaseSpace(
+                        cu.qss_sorted_phase_space(
                             mechanism, species_info, reaction.reactants
                         ),
                     ),
@@ -86,7 +86,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     "qr[%d] = %s;"
                     % (
                         idx,
-                        cu.QSSsortedPhaseSpace(
+                        cu.qss_sorted_phase_space(
                             mechanism, species_info, reaction.products
                         ),
                     ),
@@ -162,8 +162,10 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
         for orig_idx, idx in sorted(reaction_info.idxmap.items()):
             reaction = mechanism.reaction(orig_idx)
 
-            KcExpArg = cu.sorted_kcExpArg(mechanism, species_info, reaction)
-            KcConvInv = cu.fKcConvInv(mechanism, species_info, reaction)
+            kc_exp_arg = cu.sorted_kc_exp_arg(
+                mechanism, species_info, reaction
+            )
+            kc_conv_inv = cu.fkc_conv_inv(mechanism, species_info, reaction)
 
             dim = cu.phase_space_units(reaction.reactants)
             third_body = reaction.reaction_type == "three-body"
@@ -263,13 +265,13 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 # cw.writer(fstream,"Corr  = 1.0;")
                 cw.writer(fstream, "qf[%d] *= k_f;" % idx)
             elif not falloff:
-                alpha = enhancement_d_with_QSS(
+                alpha = enhancement_d_with_qss(
                     mechanism, species_info, reaction
                 )
                 cw.writer(fstream, "Corr  = %s;" % (alpha))
                 cw.writer(fstream, "qf[%d] *= Corr * k_f;" % idx)
             else:
-                alpha = enhancement_d_with_QSS(
+                alpha = enhancement_d_with_qss(
                     mechanism, species_info, reaction
                 )
                 cw.writer(fstream, "Corr  = %s;" % (alpha))
@@ -367,7 +369,9 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     uc = cu.prefactor_units(
                         cc.ureg("mole/cm**3"), 1 - dim_rev
                     )  # Case 3 !PD, !TB
-                    ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim_rev)
+                    ctuc = cu.prefactor_units(
+                        cc.ureg("kmol/m**3"), 1 - dim_rev
+                    )
                     print("Fixme grab rev params")
                 elif not falloff:
                     uc = cu.prefactor_units(
@@ -396,30 +400,30 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 else:
                     cw.writer(fstream, "qr[%d] *= Corr * k_r;" % idx)
             else:
-                if KcConvInv:
+                if kc_conv_inv:
                     if alpha == 1.0:
                         cw.writer(
                             fstream,
                             "qr[%d] *= k_f * exp(-(%s)) * (%s);"
-                            % (idx, KcExpArg, KcConvInv),
+                            % (idx, kc_exp_arg, kc_conv_inv),
                         )
                     else:
                         cw.writer(
                             fstream,
                             "qr[%d] *= Corr * k_f * exp(-(%s)) * (%s);"
-                            % (idx, KcExpArg, KcConvInv),
+                            % (idx, kc_exp_arg, kc_conv_inv),
                         )
                 else:
                     if alpha == 1.0:
                         cw.writer(
                             fstream,
-                            "qr[%d] *= k_f * exp(-(%s));" % (idx, KcExpArg),
+                            "qr[%d] *= k_f * exp(-(%s));" % (idx, kc_exp_arg),
                         )
                     else:
                         cw.writer(
                             fstream,
                             "qr[%d] *= Corr * k_f * exp(-(%s));"
-                            % (idx, KcExpArg),
+                            % (idx, kc_exp_arg),
                         )
 
         cw.writer(fstream)
@@ -530,22 +534,24 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
             # FIXME
             if hasattr(reaction, "ford"):
                 # if len(reaction.ford) > 0:
-                forward_sc = cu.QSSsortedPhaseSpace(
+                forward_sc = cu.qss_sorted_phase_space(
                     mechanism, species_info, reaction.ford
                 )
             else:
-                forward_sc = cu.QSSsortedPhaseSpace(
+                forward_sc = cu.qss_sorted_phase_space(
                     mechanism, species_info, reaction.reactants
                 )
             if reaction.reversible:
-                reverse_sc = cu.QSSsortedPhaseSpace(
+                reverse_sc = cu.qss_sorted_phase_space(
                     mechanism, species_info, reaction.products
                 )
             else:
                 reverse_sc = "0.0"
 
-            KcExpArg = cu.sorted_kcExpArg(mechanism, species_info, reaction)
-            KcConvInv = cu.fKcConvInv(mechanism, species_info, reaction)
+            kc_exp_arg = cu.sorted_kc_exp_arg(
+                mechanism, species_info, reaction
+            )
+            kc_conv_inv = cu.fkc_conv_inv(mechanism, species_info, reaction)
 
             dim = cu.phase_space_units(reaction.reactants)
             third_body = reaction.reaction_type == "three-body"
@@ -647,7 +653,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
                 )
             elif not falloff:
-                alpha = enhancement_d_with_QSS(
+                alpha = enhancement_d_with_qss(
                     mechanism, species_info, reaction
                 )
                 cw.writer(fstream, "const amrex::Real Corr = %s;" % (alpha))
@@ -656,7 +662,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     "const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc),
                 )
             else:
-                alpha = enhancement_d_with_QSS(
+                alpha = enhancement_d_with_qss(
                     mechanism, species_info, reaction
                 )
                 cw.writer(fstream, "amrex::Real Corr = %s;" % (alpha))
@@ -784,7 +790,9 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     uc = cu.prefactor_units(
                         cc.ureg("mole/cm**3"), 1 - dim_rev
                     )  # Case 3 !PD, !TB
-                    ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim_rev)
+                    ctuc = cu.prefactor_units(
+                        cc.ureg("kmol/m**3"), 1 - dim_rev
+                    )
                     print("Fixme grab rev params")
                 elif not falloff:
                     uc = cu.prefactor_units(
@@ -833,37 +841,37 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                         % (reverse_sc),
                     )
             else:
-                if KcConvInv:
+                if kc_conv_inv:
                     if alpha == 1.0:
                         cw.writer(
                             fstream,
                             "const amrex::Real qr = k_f * exp(-(%s)) * (%s) *"
-                            " (%s);" % (KcExpArg, KcConvInv, reverse_sc),
+                            " (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
                         )
                     else:
                         cw.writer(
                             fstream,
                             "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
                             " (%s) * (%s);"
-                            % (KcExpArg, KcConvInv, reverse_sc),
+                            % (kc_exp_arg, kc_conv_inv, reverse_sc),
                         )
                 else:
                     if alpha == 1.0:
                         cw.writer(
                             fstream,
                             "const amrex::Real qr = k_f * exp(-(%s)) * (%s);"
-                            % (KcExpArg, reverse_sc),
+                            % (kc_exp_arg, reverse_sc),
                         )
                     else:
                         cw.writer(
                             fstream,
                             "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
-                            " (%s);" % (KcExpArg, reverse_sc),
+                            " (%s);" % (kc_exp_arg, reverse_sc),
                         )
 
-            removeForward = cu.is_remove_forward(reaction_info, orig_idx)
+            remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
 
-            if removeForward:
+            if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(fstream, "//const amrex::Real qdot = qf - qr;")
                 cw.writer(fstream, "const amrex::Real qdot = - qr;")
@@ -933,7 +941,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream)
 
 
-def enhancement_d_with_QSS(mechanism, species_info, reaction):
+def enhancement_d_with_qss(mechanism, species_info, reaction):
     third_body = reaction.reaction_type == "three-body"
     falloff = reaction.reaction_type == "falloff"
     if not third_body and not falloff:

@@ -49,5 +49,5 @@ class SpeciesInfo:
         self.ordered_idx_map = OrderedDict()
         self.mech_idx_map = OrderedDict()
 
-        self.lowT = 0.0
-        self.highT = 1000000.0
+        self.low_temp = 0.0
+        self.high_temp = 1000000.0

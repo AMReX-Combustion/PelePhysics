@@ -397,7 +397,7 @@ def viscosity(
     AtoCM = 1.0e-8
     DEBYEtoCGS = 1.0e-18
     # temperature increment
-    dt = (species_info.highT - species_info.lowT) / (NTFit - 1)
+    dt = (species_info.high_temp - species_info.low_temp) / (NTFit - 1)
     # factor dependent upon the molecule
     m_crot = np.zeros(n_species)
     m_cvib = np.zeros(n_species)
@@ -424,7 +424,7 @@ def viscosity(
         spcond = []
         tlog = []
         for n in range(NTFit):
-            t = species_info.lowT + dt * n
+            t = species_info.low_temp + dt * n
             # variables
             # eq. (2)
             tr = t / float(speciesTransport[spec][1])
@@ -583,7 +583,7 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
     DEBYEtoCGS = 1.0e-18
     PATM = 0.1013250000000000e07
     # temperature increment
-    dt = (species_info.highT - species_info.lowT) / (NTFit - 1)
+    dt = (species_info.high_temp - species_info.low_temp) / (NTFit - 1)
     # diff coefs (4 per spec pair)
     cofd = []
     for i, spec1 in enumerate(specOrdered):
@@ -635,7 +635,7 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
             spdiffcoef = []
             tlog = []
             for n in range(NTFit):
-                t = species_info.lowT + dt * n
+                t = species_info.low_temp + dt * n
                 tr = t / epsm_k
                 # eq. (3)
                 # note: these are "corrected" in CHEMKIN not in CANTERA... we chose not to
@@ -760,7 +760,7 @@ def thermaldiffratios(
     DEBYEtoCGS = 1.0e-18
     AtoCM = 1.0e-8
     # temperature increment
-    dt = (species_info.highT - species_info.lowT) / (NTFit - 1)
+    dt = (species_info.high_temp - species_info.low_temp) / (NTFit - 1)
     # diff ratios (4 per spec pair involving light species)
     coftd = []
     k = -1
@@ -802,7 +802,7 @@ def thermaldiffratios(
                 spthdiffcoef = []
                 tTab = []
                 for n in range(NTFit):
-                    t = species_info.lowT + dt * n
+                    t = species_info.low_temp + dt * n
                     tslog = np.log(t) - np.log(eok)
                     # eq. (53)
                     thdifcoeff = (
@@ -1743,13 +1743,13 @@ def getCVdRspecies(mechanism, t, species):
         sys.exit(1)
 
     mid = model.coeffs[0]
-    highRange = model.coeffs[1:8]
-    lowRange = model.coeffs[8:15]
+    high_range = model.coeffs[1:8]
+    low_range = model.coeffs[8:15]
 
     if t < mid:
-        parameters = lowRange
+        parameters = low_range
     else:
-        parameters = highRange
+        parameters = high_range
 
     return (
         (parameters[0] - 1.0)

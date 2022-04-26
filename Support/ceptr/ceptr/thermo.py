@@ -5,30 +5,30 @@ import ceptr.writer as cw
 
 
 def thermo(fstream, mechanism, species_info):
-    speciesCoeffs = analyzeThermodynamics(mechanism, species_info, 0)
+    species_coeffs = analyzeThermodynamics(mechanism, species_info, 0)
     if species_info.nQSSspecies > 0:
-        QSSspeciesCoeffs = analyzeThermodynamics(mechanism, species_info, 1)
+        QSSspecies_coeffs = analyzeThermodynamics(mechanism, species_info, 1)
 
-    cv(fstream, species_info, speciesCoeffs)
-    cp(fstream, species_info, speciesCoeffs)
-    gibbs(fstream, species_info, speciesCoeffs, 0)
+    cv(fstream, species_info, species_coeffs)
+    cp(fstream, species_info, species_coeffs)
+    gibbs(fstream, species_info, species_coeffs, 0)
     if species_info.nQSSspecies > 0:
-        gibbs(fstream, species_info, QSSspeciesCoeffs, 1)
-    helmholtz(fstream, species_info, speciesCoeffs)
-    speciesInternalEnergy(fstream, species_info, speciesCoeffs)
-    speciesEnthalpy(fstream, species_info, speciesCoeffs, 0)
+        gibbs(fstream, species_info, QSSspecies_coeffs, 1)
+    helmholtz(fstream, species_info, species_coeffs)
+    species_internal_energy(fstream, species_info, species_coeffs)
+    speciesEnthalpy(fstream, species_info, species_coeffs, 0)
     if species_info.nQSSspecies > 0:
-        speciesEnthalpy(fstream, species_info, QSSspeciesCoeffs, 1)
-    speciesEntropy(fstream, species_info, speciesCoeffs)
+        speciesEnthalpy(fstream, species_info, QSSspecies_coeffs, 1)
+    species_entropy(fstream, species_info, species_coeffs)
 
 
-def analyzeThermodynamics(mechanism, species_info, QSS_Flag):
-    lowT = 0.0
-    highT = 1000000.0
+def analyzeThermodynamics(mechanism, species_info, qss_flag):
+    low_temp = 0.0
+    high_temp = 1000000.0
 
     midpoints = OrderedDict()
 
-    if QSS_Flag:
+    if qss_flag:
         for symbol in species_info.qss_species_list:
             species = mechanism.species(symbol)
             model = species.thermo
@@ -37,18 +37,18 @@ def analyzeThermodynamics(mechanism, species_info, QSS_Flag):
                 print("Unsupported thermo model.")
                 sys.exit(1)
 
-            loT = model.min_temp
-            hiT = model.max_temp
-            if lowT < loT:
-                lowT = loT
-            if hiT < highT:
-                highT = hiT
+            lo_temp = model.min_temp
+            hi_temp = model.max_temp
+            if low_temp < lo_temp:
+                low_temp = lo_temp
+            if hi_temp < high_temp:
+                high_temp = hi_temp
             mid = model.coeffs[0]
-            highRange = model.coeffs[1:8]
-            lowRange = model.coeffs[8:15]
+            high_range = model.coeffs[1:8]
+            low_range = model.coeffs[8:15]
 
             midpoints.setdefault(mid, []).append(
-                (species, lowRange, highRange)
+                (species, low_range, high_range)
             )
 
     else:
@@ -60,23 +60,23 @@ def analyzeThermodynamics(mechanism, species_info, QSS_Flag):
                 print("Unsupported thermo model.")
                 sys.exit(1)
 
-            loT = model.min_temp
-            hiT = model.max_temp
-            if lowT < loT:
-                lowT = loT
-            if hiT < highT:
-                highT = hiT
+            lo_temp = model.min_temp
+            hi_temp = model.max_temp
+            if low_temp < lo_temp:
+                low_temp = lo_temp
+            if hi_temp < high_temp:
+                high_temp = hi_temp
             mid = model.coeffs[0]
-            highRange = model.coeffs[1:8]
-            lowRange = model.coeffs[8:15]
+            high_range = model.coeffs[1:8]
+            low_range = model.coeffs[8:15]
 
             midpoints.setdefault(mid, []).append(
-                (species, lowRange, highRange)
+                (species, low_range, high_range)
             )
 
-    species_info.lowT = lowT
-    species_info.highT = highT
-    return lowT, highT, midpoints
+    species_info.low_temp = low_temp
+    species_info.high_temp = high_temp
+    return low_temp, high_temp, midpoints
 
 
 def generateThermoRoutine(
@@ -84,11 +84,11 @@ def generateThermoRoutine(
     species_info,
     name,
     expressionGenerator,
-    speciesCoeffs,
+    species_coeffs,
     QSS_flag,
     needsInvT=0,
 ):
-    lowT, highT, midpoints = speciesCoeffs
+    low_temp, high_temp, midpoints = species_coeffs
 
     cw.writer(
         fstream,
@@ -105,14 +105,15 @@ def generateThermoRoutine(
     if needsInvT == 2:
         cw.writer(fstream, "const amrex::Real invT2 = invT*invT;")
 
-    for midT, speciesList in list(midpoints.items()):
+    for mid_temp, speciesList in list(midpoints.items()):
         cw.writer(fstream, "")
         cw.writer(
-            fstream, cw.comment("species with midpoint at T=%g kelvin" % midT)
+            fstream,
+            cw.comment("species with midpoint at T=%g kelvin" % mid_temp),
         )
-        cw.writer(fstream, "if (T < %g) {" % midT)
+        cw.writer(fstream, "if (T < %g) {" % mid_temp)
 
-        for species, lowRange, _ in speciesList:
+        for species, low_range, _ in speciesList:
             if QSS_flag:
                 cw.writer(
                     fstream,
@@ -149,11 +150,11 @@ def generateThermoRoutine(
                     "species[%d] ="
                     % (species_info.ordered_idx_map[species.name]),
                 )
-            expressionGenerator(fstream, lowRange)
+            expressionGenerator(fstream, low_range)
 
         cw.writer(fstream, "} else {")
 
-        for species, _, highRange in speciesList:
+        for species, _, high_range in speciesList:
             if QSS_flag:
                 cw.writer(
                     fstream,
@@ -190,7 +191,7 @@ def generateThermoRoutine(
                     "species[%d] ="
                     % (species_info.ordered_idx_map[species.name]),
                 )
-            expressionGenerator(fstream, highRange)
+            expressionGenerator(fstream, high_range)
 
         cw.writer(fstream, "}")
 
@@ -198,7 +199,7 @@ def generateThermoRoutine(
     cw.writer(fstream, "}")
 
 
-def cv(fstream, species_info, speciesCoeffs):
+def cv(fstream, species_info, species_coeffs):
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute Cv/R at the given temperature"))
     cw.writer(
@@ -206,11 +207,11 @@ def cv(fstream, species_info, speciesCoeffs):
         cw.comment("tc contains precomputed powers of T, tc[0] = log(T)"),
     )
     generateThermoRoutine(
-        fstream, species_info, "cv_R", cvNASA, speciesCoeffs, 0
+        fstream, species_info, "cv_R", cvNASA, species_coeffs, 0
     )
 
 
-def cp(fstream, species_info, speciesCoeffs):
+def cp(fstream, species_info, species_coeffs):
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute Cp/R at the given temperature"))
     cw.writer(
@@ -218,12 +219,12 @@ def cp(fstream, species_info, speciesCoeffs):
         cw.comment("tc contains precomputed powers of T, tc[0] = log(T)"),
     )
     generateThermoRoutine(
-        fstream, species_info, "cp_R", cpNASA, speciesCoeffs, 0
+        fstream, species_info, "cp_R", cpNASA, species_coeffs, 0
     )
 
 
-def gibbs(fstream, species_info, speciesCoeffs, QSS_Flag):
-    if QSS_Flag:
+def gibbs(fstream, species_info, species_coeffs, qss_flag):
+    if qss_flag:
         name = "gibbs_qss"
     else:
         name = "gibbs"
@@ -236,11 +237,11 @@ def gibbs(fstream, species_info, speciesCoeffs, QSS_Flag):
         cw.comment("tc contains precomputed powers of T, tc[0] = log(T)"),
     )
     generateThermoRoutine(
-        fstream, species_info, name, gibbsNASA, speciesCoeffs, QSS_Flag, 1
+        fstream, species_info, name, gibbsNASA, species_coeffs, qss_flag, 1
     )
 
 
-def helmholtz(fstream, species_info, speciesCoeffs):
+def helmholtz(fstream, species_info, species_coeffs):
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("compute the a/(RT) at the given temperature")
@@ -250,11 +251,11 @@ def helmholtz(fstream, species_info, speciesCoeffs):
         cw.comment("tc contains precomputed powers of T, tc[0] = log(T)"),
     )
     generateThermoRoutine(
-        fstream, species_info, "helmholtz", helmholtzNASA, speciesCoeffs, 0, 1
+        fstream, species_info, "helmholtz", helmholtzNASA, species_coeffs, 0, 1
     )
 
 
-def speciesInternalEnergy(fstream, species_info, speciesCoeffs):
+def species_internal_energy(fstream, species_info, species_coeffs):
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("compute the e/(RT) at the given temperature")
@@ -268,14 +269,14 @@ def speciesInternalEnergy(fstream, species_info, speciesCoeffs):
         species_info,
         "speciesInternalEnergy",
         internalEnergy,
-        speciesCoeffs,
+        species_coeffs,
         0,
         1,
     )
 
 
-def speciesEnthalpy(fstream, species_info, speciesCoeffs, QSS_Flag):
-    if QSS_Flag:
+def speciesEnthalpy(fstream, species_info, species_coeffs, qss_flag):
+    if qss_flag:
         name = "speciesEnthalpy_qss"
     else:
         name = "speciesEnthalpy"
@@ -289,11 +290,11 @@ def speciesEnthalpy(fstream, species_info, speciesCoeffs, QSS_Flag):
         cw.comment("tc contains precomputed powers of T, tc[0] = log(T)"),
     )
     generateThermoRoutine(
-        fstream, species_info, name, enthalpyNASA, speciesCoeffs, QSS_Flag, 1
+        fstream, species_info, name, enthalpyNASA, species_coeffs, qss_flag, 1
     )
 
 
-def speciesEntropy(fstream, species_info, speciesCoeffs):
+def species_entropy(fstream, species_info, species_coeffs):
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("compute the S/R at the given temperature (Eq 21)")
@@ -303,16 +304,16 @@ def speciesEntropy(fstream, species_info, speciesCoeffs):
         cw.comment("tc contains precomputed powers of T, tc[0] = log(T)"),
     )
     generateThermoRoutine(
-        fstream, species_info, "speciesEntropy", entropyNASA, speciesCoeffs, 0
+        fstream, species_info, "speciesEntropy", entropyNASA, species_coeffs, 0
     )
 
 
 def dthermodT(fstream, mechanism, species_info):
-    speciesCoeffs = analyzeThermodynamics(mechanism, species_info, 0)
-    dcvpdT(fstream, species_info, speciesCoeffs)
+    species_coeffs = analyzeThermodynamics(mechanism, species_info, 0)
+    dcvpdT(fstream, species_info, species_coeffs)
 
 
-def dcvpdT(fstream, species_info, speciesCoeffs):
+def dcvpdT(fstream, species_info, species_coeffs):
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -325,7 +326,7 @@ def dcvpdT(fstream, species_info, speciesCoeffs):
         cw.comment("tc contains precomputed powers of T, tc[0] = log(T)"),
     )
     generateThermoRoutine(
-        fstream, species_info, "dcvpRdT", dcpdTNASA, speciesCoeffs, 0
+        fstream, species_info, "dcvpRdT", dcpdTNASA, species_coeffs, 0
     )
 
 
