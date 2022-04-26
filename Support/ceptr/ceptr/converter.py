@@ -170,7 +170,7 @@ class Converter:
 
         with open(self.hdrname, "w") as hdr, open(self.cppname, "w") as cpp:
             # This is for the cpp file
-            cw.writer(cpp, self.mechanism_includes())
+            cw.writer(cpp, self.mechanism_cpp_includes())
             cri.rmap(cpp, self.mechanism, self.reaction_info)
             cri.get_rmap(cpp, self.mechanism)
             cck.ckinu(
@@ -187,8 +187,8 @@ class Converter:
             # This is for the header file
             cw.writer(hdr, "#ifndef MECHANISM_H")
             cw.writer(hdr, "#define MECHANISM_H")
-            self.print_mech_header(hdr)
-            self.chem_file_decl(hdr)
+            self.mechanism_header_includes(hdr)
+            self.mechanism_cpp_declarations(hdr)
             # Basic info
             cck.ckindx(hdr, self.mechanism, self.species_info)
             self.molecular_weights(hdr)
@@ -303,7 +303,8 @@ class Converter:
             cw.writer(hdr)
             cw.writer(hdr, "#endif")
 
-    def mechanism_includes(self):
+    def mechanism_cpp_includes(self):
+        """Write the mechanism cpp includes."""
         return '#include "mechanism.H"'
 
     def formatter(self):
@@ -332,6 +333,7 @@ class Converter:
         cw.writer(fstream, "}")
 
     def molecular_weights(self, fstream):
+        """Write the molecular weights."""
         cw.writer(fstream)
         cw.writer(fstream, cw.comment(" inverse molecular weights "))
         cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
@@ -352,7 +354,8 @@ class Converter:
             cw.writer(fstream, text + cw.comment("%s" % species.name))
         cw.writer(fstream, "}")
 
-    def chem_file_decl(self, fstream):
+    def mechanism_cpp_declarations(self, fstream):
+        """Write the chemistry function declarations."""
         cw.writer(fstream)
         cw.writer(
             fstream,
@@ -416,7 +419,8 @@ class Converter:
             " rowPtr, const int * consP, int base);",
         )
 
-    def print_mech_header(self, fstream):
+    def mechanism_header_includes(self, fstream):
+        """Write the mechanism header includes"""
         cw.writer(fstream)
         cw.writer(fstream, "#include <AMReX_Gpu.H>")
         cw.writer(fstream, "#include <AMReX_REAL.H>")
