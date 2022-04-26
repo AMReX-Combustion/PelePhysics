@@ -155,15 +155,15 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction):
             i = species_info.ordered_idx_map[symbol]
             terms[i] += "%sg_RT[%d]" % (factor, i)
 
-    dG = ""
+    dg = ""
     for i in range(species_info.n_species):
         if terms[i]:
-            dG += terms[i]
+            dg += terms[i]
     for i in range(species_info.nQSSspecies):
         if terms_qss[i]:
-            dG += terms_qss[i]
+            dg += terms_qss[i]
 
-    if dG[0:3] == " + ":
-        return dG[3:]
+    if dg[0:3] == " + ":
+        return dg[3:]
     else:
-        return "-" + dG[3:]
+        return "-" + dg[3:]

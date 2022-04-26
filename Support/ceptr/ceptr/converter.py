@@ -281,7 +281,7 @@ class Converter:
             cck.ckwxp(hdr, self.mechanism, self.species_info)
             cck.ckwyr(hdr, self.mechanism, self.species_info)
             cck.ckwxr(hdr, self.mechanism, self.species_info)
-            cth.dthermodT(hdr, self.mechanism, self.species_info)
+            cth.dthermodtemp(hdr, self.mechanism, self.species_info)
             # Approx analytical jacobian
             cj.ajacPrecond(
                 hdr, self.mechanism, self.species_info, self.reaction_info
