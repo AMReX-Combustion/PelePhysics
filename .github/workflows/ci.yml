@@ -76,6 +76,7 @@ jobs:
         run: poetry run flake8 .
       - name: Run tests
         run: |
+          poetry run pytest
           poetry run convert -f ${{github.workspace}}/Support/Fuego/Mechanism/Models/air/mechanism.yaml
           poetry run convert -f ${{github.workspace}}/Support/Fuego/Mechanism/Models/LiDryer/mechanism.yaml
 
