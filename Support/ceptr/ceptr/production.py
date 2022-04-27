@@ -176,11 +176,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     cc.ureg("mole/cm**3"), 1 - dim
                 )  # Case 3 !PD, !TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-                A = (reaction.rate.pre_exponential_factor * ctuc).to(
+                pef = (reaction.rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
                 beta = reaction.rate.temperature_exponent
-                E = (
+                ae = (
                     reaction.rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
@@ -190,11 +190,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     cc.ureg("mole/cm**3"), -dim
                 )  # Case 2 !PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
-                A = (reaction.rate.pre_exponential_factor * ctuc).to(
+                pef = (reaction.rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
                 beta = reaction.rate.temperature_exponent
-                E = (
+                ae = (
                     reaction.rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
@@ -204,21 +204,21 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     cc.ureg("mole/cm**3"), 1 - dim
                 )  # Case 2 !PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-                A = (reaction.high_rate.pre_exponential_factor * ctuc).to(
+                pef = (reaction.high_rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
                 beta = reaction.high_rate.temperature_exponent
-                E = (
+                ae = (
                     reaction.high_rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
                 ).to(aeuc)
 
-                low_A = (reaction.low_rate.pre_exponential_factor * ctuc).to(
+                low_pef = (reaction.low_rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
                 low_beta = reaction.low_rate.temperature_exponent
-                low_E = (
+                low_ae = (
                     reaction.low_rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
@@ -239,11 +239,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 fstream,
                 "// (%d):  %s" % (orig_idx, reaction.equation),
             )
-            cw.writer(fstream, "k_f = %.15g" % (A.m))
-            if (beta == 0) and (E == 0):
+            cw.writer(fstream, "k_f = %.15g" % (pef.m))
+            if (beta == 0) and (ae == 0):
                 cw.writer(fstream, "           ;")
             else:
-                if E == 0:
+                if ae == 0:
                     cw.writer(
                         fstream, "           * exp((%.15g) * tc[0]);" % (beta)
                     )
@@ -251,13 +251,13 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     cw.writer(
                         fstream,
                         "           * exp(-(%.15g) * invT);"
-                        % (((1.0 / cc.Rc / cc.ureg.kelvin)) * E),
+                        % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                     )
                 else:
                     cw.writer(
                         fstream,
                         "           * exp((%.15g) * tc[0] - (%.15g) * invT);"
-                        % (beta, ((1.0 / cc.Rc / cc.ureg.kelvin)) * E),
+                        % (beta, ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                     )
 
             alpha = 1.0
@@ -278,13 +278,13 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 cw.writer(
                     fstream,
                     "redP = Corr / k_f * 1e-%d * %.15g "
-                    % (dim * 6, low_A.m * 10 ** (3**dim)),
+                    % (dim * 6, low_pef.m * 10 ** (3**dim)),
                 )
                 cw.writer(
                     fstream,
                     "           * exp(%.15g  * tc[0] - %.15g  * (%.15g)"
                     " *invT);"
-                    % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, low_E.m),
+                    % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, low_ae.m),
                 )
                 if is_troe:
                     cw.writer(fstream, "F = redP / (1.0 + redP);")
@@ -363,7 +363,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
 
             # FIXME
             if False:
-                Ar, betar, Er = reaction.rev
+                pefr, betar, aer = reaction.rev
                 dim_rev = cu.phase_space_units(reaction.products)
                 if not third_body and not falloff:
                     uc = cu.prefactor_units(
@@ -382,18 +382,18 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 else:
                     print("REV reaction cannot be PD")
                     sys.exit(1)
-                cw.writer(fstream, "k_r = %.15g" % (Ar.m))
+                cw.writer(fstream, "k_r = %.15g" % (pefr.m))
                 if betar == 0:
                     cw.writer(
                         fstream,
                         "           * exp(- (%.15g) * invT);"
-                        % ((1.0 / cc.Rc / cc.ureg.kelvin) * Er),
+                        % ((1.0 / cc.Rc / cc.ureg.kelvin) * aer),
                     )
                 else:
                     cw.writer(
                         fstream,
                         "           * exp(%.15g * tc[0] - (%.15g) * invT);"
-                        % (betar, (1.0 / cc.Rc / cc.ureg.kelvin) * Er),
+                        % (betar, (1.0 / cc.Rc / cc.ureg.kelvin) * aer),
                     )
                 if alpha == 1.0:
                     cw.writer(fstream, "qr[%d] *= k_r;" % idx)
@@ -562,11 +562,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     cc.ureg("mole/cm**3"), 1 - dim
                 )  # Case 3 !PD, !TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-                A = (reaction.rate.pre_exponential_factor * ctuc).to(
+                pef = (reaction.rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
                 beta = reaction.rate.temperature_exponent
-                E = (
+                ae = (
                     reaction.rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
@@ -576,11 +576,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     cc.ureg("mole/cm**3"), -dim
                 )  # Case 2 !PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
-                A = (reaction.rate.pre_exponential_factor * ctuc).to(
+                pef = (reaction.rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
                 beta = reaction.rate.temperature_exponent
-                E = (
+                ae = (
                     reaction.rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
@@ -590,21 +590,21 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     cc.ureg("mole/cm**3"), 1 - dim
                 )  # Case 2 !PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-                A = (reaction.high_rate.pre_exponential_factor * ctuc).to(
+                pef = (reaction.high_rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
                 beta = reaction.high_rate.temperature_exponent
-                E = (
+                ae = (
                     reaction.high_rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
                 ).to(aeuc)
 
-                low_A = (reaction.low_rate.pre_exponential_factor * ctuc).to(
+                low_pef = (reaction.low_rate.pre_exponential_factor * ctuc).to(
                     uc.to_root_units()
                 )
                 low_beta = reaction.low_rate.temperature_exponent
-                low_E = (
+                low_ae = (
                     reaction.low_rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
@@ -625,11 +625,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 fstream,
                 "// (%d):  %s" % (orig_idx, reaction.equation),
             )
-            cw.writer(fstream, "const amrex::Real k_f = %.15g" % (A.m))
-            if (beta == 0) and (E == 0):
+            cw.writer(fstream, "const amrex::Real k_f = %.15g" % (pef.m))
+            if (beta == 0) and (ae == 0):
                 cw.writer(fstream, "           ;")
             else:
-                if E == 0:
+                if ae == 0:
                     cw.writer(
                         fstream, "           * exp((%.15g) * tc[0]);" % (beta)
                     )
@@ -637,13 +637,13 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     cw.writer(
                         fstream,
                         "           * exp(-(%.15g) * invT);"
-                        % (((1.0 / cc.Rc / cc.ureg.kelvin)) * E),
+                        % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                     )
                 else:
                     cw.writer(
                         fstream,
                         "           * exp((%.15g) * tc[0] - (%.15g) * invT);"
-                        % (beta, (((1.0 / cc.Rc / cc.ureg.kelvin)) * E)),
+                        % (beta, (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae)),
                     )
 
             alpha = 1.0
@@ -669,12 +669,12 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 cw.writer(
                     fstream,
                     "const amrex::Real redP = Corr / k_f * %.15g "
-                    % (10 ** (-dim * 6) * low_A.m * 10 ** (3**dim)),
+                    % (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)),
                 )
                 cw.writer(
                     fstream,
                     "           * exp(%.15g * tc[0] - %.15g * invT);"
-                    % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin * low_E)),
+                    % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin * low_ae)),
                 )
                 if is_troe:
                     cw.writer(
@@ -784,7 +784,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
 
             # FIXME
             if False:
-                Ar, betar, Er = reaction.rev
+                pefr, betar, aer = reaction.rev
                 dim_rev = cu.phase_space_units(reaction.products)
                 if not third_body and not falloff:
                     uc = cu.prefactor_units(
@@ -805,19 +805,19 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     sys.exit(1)
                 cw.writer(
                     fstream,
-                    "const amrex::Real k_r = %.15g" % (Ar.m),
+                    "const amrex::Real k_r = %.15g" % (pefr.m),
                 )
                 if betar == 0:
-                    if Er == 0:
+                    if aer == 0:
                         cw.writer(fstream, ";")
                     else:
                         cw.writer(
                             fstream,
                             "           * exp( - (%.15g) * invT);"
-                            % ((1.0 / cc.Rc / cc.ureg.kelvin) * Er),
+                            % ((1.0 / cc.Rc / cc.ureg.kelvin) * aer),
                         )
                 else:
-                    if Er == 0:
+                    if aer == 0:
                         cw.writer(
                             fstream,
                             "           * exp(%.15g * tc[0]);" % (betar),
@@ -826,7 +826,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                         cw.writer(
                             fstream,
                             "           * exp(%.15g * tc[0] - (%.15g) * invT);"
-                            % (betar, (1.0 / cc.Rc / cc.ureg.kelvin) * Er),
+                            % (betar, (1.0 / cc.Rc / cc.ureg.kelvin) * aer),
                         )
 
                 if alpha == 1.0:
