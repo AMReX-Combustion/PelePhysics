@@ -6,7 +6,7 @@ import ceptr.utilities as cu
 import ceptr.writer as cw
 
 
-def ajacPrecond(fstream, mechanism, species_info, reaction_info):
+def ajac_precond(fstream, mechanism, species_info, reaction_info):
     n_species = species_info.n_species
 
     cw.writer(fstream)
@@ -267,7 +267,7 @@ def ajac_reaction_precond(
     n_species = species_info.n_species
     remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
     if rcase == 1:  # pressure-dependent reaction
-        isPD = True
+        is_pd = True
         # FIXME is this right?
         has_alpha = True
         cw.writer(fstream, "// also 3-body")
@@ -282,10 +282,10 @@ def ajac_reaction_precond(
         #     # )
         #     # sys.exit(1)
     elif rcase == 2:  # third-body and non-pressure-dependent reaction
-        isPD = False
+        is_pd = False
         has_alpha = True
     elif rcase == 3:  # simple non-third and non-pressure-dependent reaction
-        isPD = False
+        is_pd = False
         has_alpha = False
     else:
         print("_ajac_reaction: wrong case ", rcase)
@@ -294,10 +294,10 @@ def ajac_reaction_precond(
     rea_dict = {}
     pro_dict = {}
     all_dict = {}
-    sumNuk = 0
+    sum_nuk = 0
     for symbol, coefficient in reaction.reactants.items():
         k = species_info.ordered_idx_map[symbol]
-        sumNuk -= coefficient
+        sum_nuk -= coefficient
         if k in rea_dict:
             coe_old = rea_dict[k][1]
             rea_dict[k] = (symbol, coefficient + coe_old)
@@ -305,7 +305,7 @@ def ajac_reaction_precond(
             rea_dict[k] = (symbol, coefficient)
     for symbol, coefficient in reaction.products.items():
         k = species_info.ordered_idx_map[symbol]
-        sumNuk += coefficient
+        sum_nuk += coefficient
         if k in pro_dict:
             coe_old = pro_dict[k][1]
             pro_dict[k] = (symbol, coefficient + coe_old)
@@ -327,7 +327,7 @@ def ajac_reaction_precond(
     sorted_products = sorted(pro_dict.values())
 
     if not reaction.reversible:
-        if isPD or has_alpha:
+        if is_pd or has_alpha:
             print(
                 "FIXME: irreversible reaction in _ajac_reaction may not work"
             )
@@ -352,25 +352,25 @@ def ajac_reaction_precond(
     aeuc = cu.activation_energy_units()
     is_sri = False
     is_troe = False
-    if isPD:
-        Corr_s = "Corr *"
+    if is_pd:
+        corr_s = "Corr *"
         uc = cu.prefactor_units(
             cc.ureg("mole/cm**3"), 1 - dim
         )  # Case 2 !PD, TB
         ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-        A = (reaction.high_rate.pre_exponential_factor * ctuc).to(
+        pef = (reaction.high_rate.pre_exponential_factor * ctuc).to(
             uc.to_root_units()
         )
         beta = reaction.high_rate.temperature_exponent
-        E = (
+        ae = (
             reaction.high_rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
         ).to(aeuc)
 
-        low_A = (reaction.low_rate.pre_exponential_factor * ctuc).to(
+        low_pef = (reaction.low_rate.pre_exponential_factor * ctuc).to(
             uc.to_root_units()
         )
         low_beta = reaction.low_rate.temperature_exponent
-        low_E = (
+        low_ae = (
             reaction.low_rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
         ).to(aeuc)
         if reaction.rate.type == "Troe":
@@ -385,14 +385,14 @@ def ajac_reaction_precond(
             print("Unrecognized reaction rate type")
             sys.exit(1)
     elif has_alpha:
-        Corr_s = "alpha * "
+        corr_s = "alpha * "
         uc = cu.prefactor_units(cc.ureg("mole/cm**3"), -dim)  # Case 2 !PD, TB
         ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
-        A = (reaction.rate.pre_exponential_factor * ctuc).to(
+        pef = (reaction.rate.pre_exponential_factor * ctuc).to(
             uc.to_root_units()
         )
         beta = reaction.rate.temperature_exponent
-        E = (
+        ae = (
             reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
         ).to(aeuc)
     else:
@@ -400,14 +400,14 @@ def ajac_reaction_precond(
             cc.ureg("mole/cm**3"), 1 - dim
         )  # Case 3 !PD, !TB
         ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-        A = (reaction.rate.pre_exponential_factor * ctuc).to(
+        pef = (reaction.rate.pre_exponential_factor * ctuc).to(
             uc.to_root_units()
         )
         beta = reaction.rate.temperature_exponent
-        E = (
+        ae = (
             reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
         ).to(aeuc)
-        Corr_s = ""
+        corr_s = ""
 
     if has_alpha:
         cw.writer(fstream, "// 3-body correction factor")
@@ -426,11 +426,11 @@ def ajac_reaction_precond(
         ),
     )
     #
-    cw.writer(fstream, "k_f = %.15g" % (A.m))
+    cw.writer(fstream, "k_f = %.15g" % (pef.m))
     cw.writer(
         fstream,
         "            * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
-        % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, E.m),
+        % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
     )
     #
     if remove_forward:
@@ -439,26 +439,26 @@ def ajac_reaction_precond(
         cw.writer(
             fstream,
             "dlnkfdT = %.15g * invT + %.15g *  (%.15g)  * invT2;"
-            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, E.m),
+            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
         )
         cw.writer(fstream, "//dlnkfdT = 0.0;")
     else:
         cw.writer(
             fstream,
             "dlnkfdT = %.15g * invT + %.15g *  (%.15g)  * invT2;"
-            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, E.m),
+            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
         )
 
-    if isPD:
+    if is_pd:
         cw.writer(fstream, "// pressure-fall-off")
         cw.writer(
             fstream,
             "k_0 = %.15g * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
             % (
-                low_A.m * 10 ** (3**dim),
+                low_pef.m * 10 ** (3**dim),
                 low_beta,
                 (1.0 / cc.Rc / cc.ureg.kelvin).m,
-                low_E.m,
+                low_ae.m,
             ),
         )
         cw.writer(fstream, "Pr = 1e-%d * alpha / k_f * k_0;" % (dim * 6))
@@ -466,7 +466,7 @@ def ajac_reaction_precond(
         cw.writer(
             fstream,
             "dlnk0dT = %.15g * invT + %.15g * (%.15g) * invT2;"
-            % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, low_E.m),
+            % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, low_ae.m),
         )
         cw.writer(fstream, "dlogPrdT = log10e*(dlnk0dT - dlnkfdT);")
         cw.writer(fstream, "dlogfPrdT = dlogPrdT / (1.0+Pr);")
@@ -558,7 +558,7 @@ def ajac_reaction_precond(
     # reverse
     if not reaction.reversible:
         cw.writer(fstream, "// rate of progress")
-        if (not has_alpha) and (not isPD):
+        if (not has_alpha) and (not is_pd):
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(fstream, "//q = k_f*phi_f;")
@@ -572,33 +572,33 @@ def ajac_reaction_precond(
                 cw.writer(fstream, "q_nocor = 0.0;")
             else:
                 cw.writer(fstream, "q_nocor = k_f*phi_f;")
-            if isPD:
+            if is_pd:
                 cw.writer(fstream, "Corr = fPr * F;")
                 cw.writer(fstream, "q = Corr * q_nocor;")
             else:
                 cw.writer(fstream, "q = alpha * q_nocor;")
 
-        if isPD:
+        if is_pd:
             cw.writer(fstream, "dlnCorrdT = ln10*(dlogfPrdT + dlogFdT);")
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(
                     fstream,
-                    "//dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % Corr_s,
+                    "//dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % corr_s,
                 )
                 cw.writer(fstream, "dqdT = dlnCorrdT*q;")
             else:
                 cw.writer(
                     fstream,
-                    "dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % Corr_s,
+                    "dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % corr_s,
                 )
         else:
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//dqdT = %sdlnkfdT*k_f*phi_f;" % Corr_s)
+                cw.writer(fstream, "//dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
                 cw.writer(fstream, "dqdT = 0;")
             else:
-                cw.writer(fstream, "dqdT = %sdlnkfdT*k_f*phi_f;" % Corr_s)
+                cw.writer(fstream, "dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
     else:
         cw.writer(fstream, "// reverse")
         cw.writer(
@@ -614,7 +614,7 @@ def ajac_reaction_precond(
         )
         cw.writer(fstream, "k_r = k_f / Kc;")
 
-        dlnKcdT_s = "invT * ("
+        dlnkcdt_s = "invT * ("
         terms = []
         dict_species = {
             v: i for i, v in enumerate(species_info.all_species_list)
@@ -635,7 +635,7 @@ def ajac_reaction_precond(
                     terms.append(
                         "%f*h_RT_qss[%d]" % (coefficient, k - n_species)
                     )
-        dlnKcdT_s += "-(" + " + ".join(terms) + ")"
+        dlnkcdt_s += "-(" + " + ".join(terms) + ")"
         terms = []
         for symbol, coefficient in sorted(
             sorted_products, key=lambda v: dict_species[v[0]]
@@ -653,18 +653,18 @@ def ajac_reaction_precond(
                     terms.append(
                         "%f*h_RT_qss[%d]" % (coefficient, k - n_species)
                     )
-        dlnKcdT_s += " + (" + " + ".join(terms) + ")"
-        if sumNuk > 0:
-            dlnKcdT_s += " - %f" % sumNuk
-        elif sumNuk < 0:
-            dlnKcdT_s += " + %f" % (-sumNuk)
-        dlnKcdT_s += ")"
-        cw.writer(fstream, "dlnKcdT = %s;" % dlnKcdT_s)
+        dlnkcdt_s += " + (" + " + ".join(terms) + ")"
+        if sum_nuk > 0:
+            dlnkcdt_s += " - %f" % sum_nuk
+        elif sum_nuk < 0:
+            dlnkcdt_s += " + %f" % (-sum_nuk)
+        dlnkcdt_s += ")"
+        cw.writer(fstream, "dlnKcdT = %s;" % dlnkcdt_s)
 
         cw.writer(fstream, "dkrdT = (dlnkfdT - dlnKcdT)*k_r;")
 
         cw.writer(fstream, "// rate of progress")
-        if (not has_alpha) and (not isPD):
+        if (not has_alpha) and (not is_pd):
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(fstream, "//q = k_f*phi_f - k_r*phi_r;")
@@ -678,43 +678,43 @@ def ajac_reaction_precond(
                 cw.writer(fstream, "q_nocor = - k_r*phi_r;")
             else:
                 cw.writer(fstream, "q_nocor = k_f*phi_f - k_r*phi_r;")
-            if isPD:
+            if is_pd:
                 cw.writer(fstream, "Corr = fPr * F;")
                 cw.writer(fstream, "q = Corr * q_nocor;")
             else:
                 cw.writer(fstream, "q = alpha * q_nocor;")
 
-        if isPD:
+        if is_pd:
             cw.writer(fstream, "dlnCorrdT = ln10*(dlogfPrdT + dlogFdT);")
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(
                     fstream,
                     "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) +"
-                    " dlnCorrdT*q;" % Corr_s,
+                    " dlnCorrdT*q;" % corr_s,
                 )
                 cw.writer(
                     fstream,
-                    "dqdT = %s( - dkrdT*phi_r) + dlnCorrdT*q;" % Corr_s,
+                    "dqdT = %s( - dkrdT*phi_r) + dlnCorrdT*q;" % corr_s,
                 )
             else:
                 cw.writer(
                     fstream,
                     "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) + dlnCorrdT*q;"
-                    % Corr_s,
+                    % corr_s,
                 )
         else:
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(
                     fstream,
-                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % Corr_s,
+                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
                 )
-                cw.writer(fstream, "dqdT = %s( - dkrdT*phi_r);" % Corr_s)
+                cw.writer(fstream, "dqdT = %s( - dkrdT*phi_r);" % corr_s)
             else:
                 cw.writer(
                     fstream,
-                    "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % Corr_s,
+                    "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
                 )
 
     cw.writer(fstream, "// update wdot")
@@ -729,7 +729,7 @@ def ajac_reaction_precond(
         elif nu < 0:
             cw.writer(fstream, "wdot[%d] -= %.15g * q; // %s" % (k, -nu, s))
 
-    if isPD:
+    if is_pd:
         cw.writer(fstream, "// for convenience")
         cw.writer(fstream, "k_f *= Corr;")
         if reaction.reversible:
@@ -742,19 +742,19 @@ def ajac_reaction_precond(
         else:
             cw.writer(fstream, "k_r = 0.0;")
 
-    if isPD:
+    if is_pd:
         cw.writer(fstream, "dcdc_fac = 0.0;")
     # elif has_alpha:
     #    cw.writer(fstream,'dcdc_fac = q_nocor;')
 
-    if has_alpha or isPD:
+    if has_alpha or is_pd:
 
         # cw.writer(fstream,'if (consP) {')
 
         # for k in range(n_species):
-        #    dqdc_s = self._Denhancement(mechanism,reaction,k,True)
+        #    dqdc_s = self.Denhancement(mechanism,reaction,k,True)
         #    if dqdc_s != "0":
-        #        if isPD:
+        #        if is_pd:
         #            if dqdc_s == "1":
         #                dqdc_s ='dcdc_fac'
         #            else:
@@ -785,11 +785,11 @@ def ajac_reaction_precond(
         # cw.writer(fstream,'else {')
 
         for k in range(n_species):
-            dqdc_s = Denhancement_d(
+            dqdc_s = denhancement_d(
                 mechanism, species_info, reaction, k, False
             )
             if dqdc_s != "0":
-                if isPD:
+                if is_pd:
                     if dqdc_s == "1":
                         dqdc_s = "dcdc_fac"
                     else:
@@ -1198,7 +1198,7 @@ def ajac_reaction_d(
     n_species = species_info.n_species
     remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
     if rcase == 1:  # pressure-dependent reaction
-        isPD = True
+        is_pd = True
         # FIXME is this right?
         has_alpha = True
         cw.writer(fstream, "// also 3-body")
@@ -1213,10 +1213,10 @@ def ajac_reaction_d(
         #     )
         #     sys.exit(1)
     elif rcase == 2:  # third-body and non-pressure-dependent reaction
-        isPD = False
+        is_pd = False
         has_alpha = True
     elif rcase == 3:  # simple non-third and non-pressure-dependent reaction
-        isPD = False
+        is_pd = False
         has_alpha = False
     else:
         print("_ajac_reaction: wrong case ", rcase)
@@ -1225,10 +1225,10 @@ def ajac_reaction_d(
     rea_dict = OrderedDict()
     pro_dict = OrderedDict()
     all_dict = OrderedDict()
-    sumNuk = 0
+    sum_nuk = 0
     for symbol, coefficient in reaction.reactants.items():
         k = species_info.ordered_idx_map[symbol]
-        sumNuk -= coefficient
+        sum_nuk -= coefficient
         if k in rea_dict:
             coe_old = rea_dict[k][1]
             rea_dict[k] = (symbol, coefficient + coe_old)
@@ -1236,7 +1236,7 @@ def ajac_reaction_d(
             rea_dict[k] = (symbol, coefficient)
     for symbol, coefficient in reaction.products.items():
         k = species_info.ordered_idx_map[symbol]
-        sumNuk += coefficient
+        sum_nuk += coefficient
         if k in pro_dict:
             coe_old = pro_dict[k][1]
             pro_dict[k] = (symbol, coefficient + coe_old)
@@ -1259,7 +1259,7 @@ def ajac_reaction_d(
     sorted_products = sorted(pro_dict.values())
 
     if not reaction.reversible:
-        if isPD or has_alpha:
+        if is_pd or has_alpha:
             print(
                 "FIXME: irreversible reaction in _ajac_reaction may not work"
             )
@@ -1284,25 +1284,25 @@ def ajac_reaction_d(
     aeuc = cu.activation_energy_units()
     is_sri = False
     is_troe = False
-    if isPD:
-        Corr_s = "Corr *"
+    if is_pd:
+        corr_s = "Corr *"
         uc = cu.prefactor_units(
             cc.ureg("mole/cm**3"), 1 - dim
         )  # Case 2 !PD, TB
         ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-        A = (reaction.high_rate.pre_exponential_factor * ctuc).to(
+        pef = (reaction.high_rate.pre_exponential_factor * ctuc).to(
             uc.to_root_units()
         )
         beta = reaction.high_rate.temperature_exponent
-        E = (
+        ae = (
             reaction.high_rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
         ).to(aeuc)
 
-        low_A = (reaction.low_rate.pre_exponential_factor * ctuc).to(
+        low_pef = (reaction.low_rate.pre_exponential_factor * ctuc).to(
             uc.to_root_units()
         )
         low_beta = reaction.low_rate.temperature_exponent
-        low_E = (
+        low_ae = (
             reaction.low_rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
         ).to(aeuc)
         if reaction.rate.type == "Troe":
@@ -1317,14 +1317,14 @@ def ajac_reaction_d(
             print("Unrecognized reaction rate type")
             sys.exit(1)
     elif has_alpha:
-        Corr_s = "alpha * "
+        corr_s = "alpha * "
         uc = cu.prefactor_units(cc.ureg("mole/cm**3"), -dim)  # Case 2 !PD, TB
         ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
-        A = (reaction.rate.pre_exponential_factor * ctuc).to(
+        pef = (reaction.rate.pre_exponential_factor * ctuc).to(
             uc.to_root_units()
         )
         beta = reaction.rate.temperature_exponent
-        E = (
+        ae = (
             reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
         ).to(aeuc)
     else:
@@ -1332,14 +1332,14 @@ def ajac_reaction_d(
             cc.ureg("mole/cm**3"), 1 - dim
         )  # Case 3 !PD, !TB
         ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-        A = (reaction.rate.pre_exponential_factor * ctuc).to(
+        pef = (reaction.rate.pre_exponential_factor * ctuc).to(
             uc.to_root_units()
         )
         beta = reaction.rate.temperature_exponent
-        E = (
+        ae = (
             reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
         ).to(aeuc)
-        Corr_s = ""
+        corr_s = ""
 
     if has_alpha:
         cw.writer(fstream, "// 3-body correction factor")
@@ -1358,11 +1358,11 @@ def ajac_reaction_d(
         ),
     )
     #
-    cw.writer(fstream, "k_f = %.15g" % (A.m))
+    cw.writer(fstream, "k_f = %.15g" % (pef.m))
     cw.writer(
         fstream,
         "            * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
-        % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, E.m),
+        % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
     )
     #
     if remove_forward:
@@ -1371,26 +1371,26 @@ def ajac_reaction_d(
         cw.writer(
             fstream,
             "dlnkfdT = %.15g * invT + %.15g *  %.15g  * invT2;"
-            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, E.m),
+            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
         )
         cw.writer(fstream, "//dlnkfdT = 0.0;")
     else:
         cw.writer(
             fstream,
             "dlnkfdT = %.15g * invT + %.15g *  %.15g  * invT2;"
-            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, E.m),
+            % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
         )
 
-    if isPD:
+    if is_pd:
         cw.writer(fstream, "// pressure-fall-off")
         cw.writer(
             fstream,
             "k_0 = %.15g * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
             % (
-                low_A.m * 10 ** (3**dim),
+                low_pef.m * 10 ** (3**dim),
                 low_beta,
                 (1.0 / cc.Rc / cc.ureg.kelvin).m,
-                low_E.m,
+                low_ae.m,
             ),
         )
         cw.writer(fstream, "Pr = 1e-%d * alpha / k_f * k_0;" % (dim * 6))
@@ -1398,7 +1398,7 @@ def ajac_reaction_d(
         cw.writer(
             fstream,
             "dlnk0dT = %.15g * invT + %.15g * (%.15g) * invT2;"
-            % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, low_E.m),
+            % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, low_ae.m),
         )
         cw.writer(fstream, "dlogPrdT = log10e*(dlnk0dT - dlnkfdT);")
         cw.writer(fstream, "dlogfPrdT = dlogPrdT / (1.0+Pr);")
@@ -1490,7 +1490,7 @@ def ajac_reaction_d(
     # reverse
     if not reaction.reversible:
         cw.writer(fstream, "// rate of progress")
-        if (not has_alpha) and (not isPD):
+        if (not has_alpha) and (not is_pd):
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(fstream, "//q = k_f*phi_f;")
@@ -1505,33 +1505,33 @@ def ajac_reaction_d(
             else:
                 cw.writer(fstream, "q_nocor = k_f*phi_f;")
 
-            if isPD:
+            if is_pd:
                 cw.writer(fstream, "Corr = fPr * F;")
                 cw.writer(fstream, "q = Corr * q_nocor;")
             else:
                 cw.writer(fstream, "q = alpha * q_nocor;")
 
-        if isPD:
+        if is_pd:
             cw.writer(fstream, "dlnCorrdT = ln10*(dlogfPrdT + dlogFdT);")
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(
                     fstream,
-                    "//dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % Corr_s,
+                    "//dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % corr_s,
                 )
                 cw.writer(fstream, "dqdT =  dlnCorrdT*q;")
             else:
                 cw.writer(
                     fstream,
-                    "dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % Corr_s,
+                    "dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % corr_s,
                 )
         else:
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//dqdT = %sdlnkfdT*k_f*phi_f;" % Corr_s)
+                cw.writer(fstream, "//dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
                 cw.writer(fstream, "dqdT = 0;")
             else:
-                cw.writer(fstream, "dqdT = %sdlnkfdT*k_f*phi_f;" % Corr_s)
+                cw.writer(fstream, "dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
     else:
         cw.writer(fstream, "// reverse")
         cw.writer(
@@ -1547,7 +1547,7 @@ def ajac_reaction_d(
         )
         cw.writer(fstream, "k_r = k_f / Kc;")
 
-        dlnKcdT_s = "invT * ("
+        dlnkcdt_s = "invT * ("
         terms = []
         dict_species = {
             v: i for i, v in enumerate(species_info.all_species_list)
@@ -1567,7 +1567,7 @@ def ajac_reaction_d(
                     terms.append("h_RT_qss[%d]" % (k))
                 else:
                     terms.append("%f*h_RT_qss[%d]" % (coefficient, k))
-        dlnKcdT_s += "-(" + " + ".join(terms) + ")"
+        dlnkcdt_s += "-(" + " + ".join(terms) + ")"
         terms = []
         for symbol, coefficient in sorted(
             sorted_products, key=lambda v: dict_species[v[0]]
@@ -1584,18 +1584,18 @@ def ajac_reaction_d(
                     terms.append("h_RT_qss[%d]" % (k))
                 else:
                     terms.append("%f*h_RT_qss[%d]" % (coefficient, k))
-        dlnKcdT_s += " + (" + " + ".join(terms) + ")"
-        if sumNuk > 0:
-            dlnKcdT_s += " - %f" % sumNuk
-        elif sumNuk < 0:
-            dlnKcdT_s += " + %f" % (-sumNuk)
-        dlnKcdT_s += ")"
-        cw.writer(fstream, "dlnKcdT = %s;" % dlnKcdT_s)
+        dlnkcdt_s += " + (" + " + ".join(terms) + ")"
+        if sum_nuk > 0:
+            dlnkcdt_s += " - %f" % sum_nuk
+        elif sum_nuk < 0:
+            dlnkcdt_s += " + %f" % (-sum_nuk)
+        dlnkcdt_s += ")"
+        cw.writer(fstream, "dlnKcdT = %s;" % dlnkcdt_s)
 
         cw.writer(fstream, "dkrdT = (dlnkfdT - dlnKcdT)*k_r;")
 
         cw.writer(fstream, "// rate of progress")
-        if (not has_alpha) and (not isPD):
+        if (not has_alpha) and (not is_pd):
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(fstream, "//q = k_f*phi_f - k_r*phi_r;")
@@ -1609,42 +1609,42 @@ def ajac_reaction_d(
                 cw.writer(fstream, "q_nocor = - k_r*phi_r;")
             else:
                 cw.writer(fstream, "q_nocor = k_f*phi_f - k_r*phi_r;")
-            if isPD:
+            if is_pd:
                 cw.writer(fstream, "Corr = fPr * F;")
                 cw.writer(fstream, "q = Corr * q_nocor;")
             else:
                 cw.writer(fstream, "q = alpha * q_nocor;")
 
-        if isPD:
+        if is_pd:
             cw.writer(fstream, "dlnCorrdT = ln10*(dlogfPrdT + dlogFdT);")
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(
                     fstream,
                     "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) +"
-                    " dlnCorrdT*q;" % Corr_s,
+                    " dlnCorrdT*q;" % corr_s,
                 )
                 cw.writer(
-                    fstream, "dqdT = %s(- dkrdT*phi_r) + dlnCorrdT*q;" % Corr_s
+                    fstream, "dqdT = %s(- dkrdT*phi_r) + dlnCorrdT*q;" % corr_s
                 )
             else:
                 cw.writer(
                     fstream,
                     "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) + dlnCorrdT*q;"
-                    % Corr_s,
+                    % corr_s,
                 )
         else:
             if remove_forward:
                 cw.writer(fstream, "// Remove forward reaction")
                 cw.writer(
                     fstream,
-                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % Corr_s,
+                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
                 )
-                cw.writer(fstream, "dqdT = %s( - dkrdT*phi_r);" % Corr_s)
+                cw.writer(fstream, "dqdT = %s( - dkrdT*phi_r);" % corr_s)
             else:
                 cw.writer(
                     fstream,
-                    "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % Corr_s,
+                    "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
                 )
 
     cw.writer(fstream, "// update wdot")
@@ -1660,7 +1660,7 @@ def ajac_reaction_d(
         elif nu < 0:
             cw.writer(fstream, "wdot[%d] -= %.15g * q; // %s" % (k, -nu, s))
 
-    if isPD:
+    if is_pd:
         cw.writer(fstream, "// for convenience")
         cw.writer(fstream, "k_f *= Corr;")
         if reaction.reversible:
@@ -1673,19 +1673,19 @@ def ajac_reaction_d(
         else:
             cw.writer(fstream, "k_r = 0.0;")
 
-    if isPD:
+    if is_pd:
         cw.writer(fstream, "dcdc_fac = q/alpha*(1.0/(Pr+1.0) + dlogFdlogPr);")
     # elif has_alpha:
     #    cw.writer(fstream,'dcdc_fac = q_nocor;')
 
-    if has_alpha or isPD:
+    if has_alpha or is_pd:
 
         cw.writer(fstream, "if (consP) {")
 
         for k in range(n_species):
-            dqdc_s = Denhancement_d(mechanism, species_info, reaction, k, True)
+            dqdc_s = denhancement_d(mechanism, species_info, reaction, k, True)
             if dqdc_s != "0":
-                if isPD:
+                if is_pd:
                     if dqdc_s == "1":
                         dqdc_s = "dcdc_fac"
                     else:
@@ -1733,11 +1733,11 @@ def ajac_reaction_d(
         cw.writer(fstream, "else {")
 
         for k in range(n_species):
-            dqdc_s = Denhancement_d(
+            dqdc_s = denhancement_d(
                 mechanism, species_info, reaction, k, False
             )
             if dqdc_s != "0":
-                if isPD:
+                if is_pd:
                     if dqdc_s == "1":
                         dqdc_s = "dcdc_fac"
                     else:
@@ -1854,7 +1854,7 @@ def dqdc_simple_precond(
     if dqdc_s == "0":
         dqdc_s = ""
     if k in sorted(rea_dict.keys()):
-        dps = DphaseSpace(
+        dps = dphase_space(
             mechanism, species_info, sorted_reactants, rea_dict[k][0]
         )
         if dps == "1.0":
@@ -1868,7 +1868,7 @@ def dqdc_simple_precond(
             dqdc_s += " + k_f%s" % dps_s
     if reaction.reversible:
         if k in sorted(pro_dict.keys()):
-            dps = DphaseSpace(
+            dps = dphase_space(
                 mechanism, species_info, sorted_products, pro_dict[k][0]
             )
             if dps == "1.0":
@@ -1895,7 +1895,7 @@ def dqdc_simple_d(
     if dqdc_s == "0":
         dqdc_s = ""
     if k in sorted(rea_dict.keys()):
-        dps = DphaseSpace(
+        dps = dphase_space(
             mechanism, species_info, sorted_reactants, rea_dict[k][0]
         )
         if dps == "1.0":
@@ -1909,7 +1909,7 @@ def dqdc_simple_d(
             dqdc_s += " + k_f%s" % dps_s
     if reaction.reversible:
         if k in sorted(pro_dict.keys()):
-            dps = DphaseSpace(
+            dps = dphase_space(
                 mechanism, species_info, sorted_products, pro_dict[k][0]
             )
             if dps == "1.0":
@@ -1946,11 +1946,11 @@ def enhancement_d(mechanism, species_info, reaction):
     return " + ".join(alpha).replace("+ -", "- ")
 
 
-def Denhancement_d(mechanism, species_info, reaction, kid, consP):
+def denhancement_d(mechanism, species_info, reaction, kid, cons_p):
     third_body = reaction.reaction_type == "three-body"
     falloff = reaction.reaction_type == "falloff"
     if not third_body and not falloff:
-        print("Denhancement_d called for a reaction without a third body")
+        print("denhancement_d called for a reaction without a third body")
         sys.exit(1)
 
     if not hasattr(reaction, "efficiencies"):
@@ -1958,7 +1958,7 @@ def Denhancement_d(mechanism, species_info, reaction, kid, consP):
         sys.exit(1)
         species, coefficient = third_body
         if species == "<mixture>":
-            if consP:
+            if cons_p:
                 return "0"
             else:
                 return "1"
@@ -1968,7 +1968,7 @@ def Denhancement_d(mechanism, species_info, reaction, kid, consP):
             return "0"
     else:
         efficiencies = reaction.efficiencies
-        if consP:
+        if cons_p:
             for _, (symbol, efficiency) in enumerate(efficiencies.items()):
                 if species_info.ordered_idx_map[symbol] == kid:
                     return "(%.15g - 1)" % (efficiency)
@@ -1980,7 +1980,7 @@ def Denhancement_d(mechanism, species_info, reaction, kid, consP):
             return "1"
 
 
-def DphaseSpace(mechanism, species_info, reagents, r):
+def dphase_space(mechanism, species_info, reagents, r):
     phi = []
 
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
@@ -2046,7 +2046,7 @@ def DphaseSpace(mechanism, species_info, reagents, r):
         return "1.0"
 
 
-def Dproduction_ratePrecond(fstream, mechanism, species_info, reaction_info):
+def dproduction_rate_precond(fstream, mechanism, species_info, reaction_info):
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2085,7 +2085,7 @@ def Dproduction_ratePrecond(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "}")
 
 
-def Dproduction_rate(fstream, mechanism, species_info, reaction_info):
+def dproduction_rate(fstream, mechanism, species_info, reaction_info):
     n_species = species_info.n_species
 
     cw.writer(fstream)
