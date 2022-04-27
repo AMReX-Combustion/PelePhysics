@@ -1,3 +1,4 @@
+"""Species information."""
 from collections import OrderedDict
 
 
@@ -11,6 +12,7 @@ class SpeciesDb:
         self.weight = mwt
 
     def __str__(self):
+        """Print members of SpeciesDb."""
         return (
             f"""name = {self.name}, """
             + f"""mech_idx = {self.mech_idx}, """
@@ -19,11 +21,12 @@ class SpeciesDb:
         )
 
     def __repr__(self):
+        """Representation of SpeciesDb."""
         return f"""SpeciesDb({self.mech_idx}, {self.idx}, {self.name}, {self.weight})"""
 
 
 class SpeciesInfo:
-    """Information on species"""
+    """Information on species."""
 
     def __init__(self):
         # Species

@@ -1,7 +1,9 @@
+"""Sparsity patterns."""
 import ceptr.writer as cw
 
 
 def sparsity(fstream, species_info):
+    """Write sparsity pattern of Jacobian."""
     n_species = species_info.n_species
 
     cw.writer(fstream)

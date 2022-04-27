@@ -1,3 +1,4 @@
+"""Write jacobian functions."""
 import sys
 from collections import OrderedDict
 
@@ -7,6 +8,7 @@ import ceptr.writer as cw
 
 
 def ajac_precond(fstream, mechanism, species_info, reaction_info):
+    """Write precond ajac."""
     n_species = species_info.n_species
 
     cw.writer(fstream)
@@ -263,7 +265,7 @@ def ajac_precond(fstream, mechanism, species_info, reaction_info):
 def ajac_reaction_precond(
     fstream, mechanism, species_info, reaction_info, reaction, orig_idx, rcase
 ):
-
+    """Write precond ajac for a reaction."""
     n_species = species_info.n_species
     remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
     if rcase == 1:  # pressure-dependent reaction
@@ -893,6 +895,7 @@ def ajac_reaction_precond(
 
 
 def ajac(fstream, mechanism, species_info, reaction_info):
+    """Write jacobian for a reaction."""
     n_species = species_info.n_species
 
     cw.writer(
@@ -1194,7 +1197,7 @@ def ajac(fstream, mechanism, species_info, reaction_info):
 def ajac_reaction_d(
     fstream, mechanism, species_info, reaction_info, reaction, orig_idx, rcase
 ):
-
+    """Write jacobian of reaction."""
     n_species = species_info.n_species
     remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
     if rcase == 1:  # pressure-dependent reaction
@@ -1851,6 +1854,7 @@ def dqdc_simple_precond(
     k,
     remove_forward,
 ):
+    """Write dqdc for preconditioning."""
     if dqdc_s == "0":
         dqdc_s = ""
     if k in sorted(rea_dict.keys()):
@@ -1892,6 +1896,7 @@ def dqdc_simple_d(
     k,
     remove_forward,
 ):
+    """Write dqdc."""
     if dqdc_s == "0":
         dqdc_s = ""
     if k in sorted(rea_dict.keys()):
@@ -1921,6 +1926,7 @@ def dqdc_simple_d(
 
 
 def enhancement_d(mechanism, species_info, reaction):
+    """Write get enhancement."""
     third_body = reaction.reaction_type == "three-body"
     falloff = reaction.reaction_type == "falloff"
     if not third_body and not falloff:
@@ -1947,6 +1953,7 @@ def enhancement_d(mechanism, species_info, reaction):
 
 
 def denhancement_d(mechanism, species_info, reaction, kid, cons_p):
+    """Get enhancement gradient."""
     third_body = reaction.reaction_type == "three-body"
     falloff = reaction.reaction_type == "falloff"
     if not third_body and not falloff:
@@ -1981,6 +1988,7 @@ def denhancement_d(mechanism, species_info, reaction, kid, cons_p):
 
 
 def dphase_space(mechanism, species_info, reagents, r):
+    """Get string for phase space gradient."""
     phi = []
 
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
@@ -2047,6 +2055,7 @@ def dphase_space(mechanism, species_info, reagents, r):
 
 
 def dproduction_rate_precond(fstream, mechanism, species_info, reaction_info):
+    """Write the reaction jacobian for preconditioning."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2086,6 +2095,7 @@ def dproduction_rate_precond(fstream, mechanism, species_info, reaction_info):
 
 
 def dproduction_rate(fstream, mechanism, species_info, reaction_info):
+    """Write the reaction jacobian."""
     n_species = species_info.n_species
 
     cw.writer(fstream)

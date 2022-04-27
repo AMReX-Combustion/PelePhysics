@@ -1,3 +1,6 @@
+"""Helper functions for printing."""
+
+
 def comment(string):
     """Comment a string."""
     return f"""// {string}"""

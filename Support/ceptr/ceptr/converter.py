@@ -97,7 +97,6 @@ class Converter:
 
     def set_species(self):
         """Set the species."""
-
         # Fill species counters
         self.species_info.nAllspecies = self.mechanism.n_species
         self.species_info.nQSSspecies = 0  # FIXME len(mechanism.qss_species())
@@ -167,7 +166,6 @@ class Converter:
 
     def writer(self):
         """Write out the C++ files."""
-
         with open(self.hdrname, "w") as hdr, open(self.cppname, "w") as cpp:
             # This is for the cpp file
             cw.writer(cpp, self.mechanism_cpp_includes())
@@ -420,7 +418,7 @@ class Converter:
         )
 
     def mechanism_header_includes(self, fstream):
-        """Write the mechanism header includes"""
+        """Write the mechanism header includes."""
         cw.writer(fstream)
         cw.writer(fstream, "#include <AMReX_Gpu.H>")
         cw.writer(fstream, "#include <AMReX_REAL.H>")

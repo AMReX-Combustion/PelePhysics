@@ -1,7 +1,9 @@
+"""Gauss-Jordan functions."""
 import ceptr.writer as cw
 
 
 def emptygjs(fstream):
+    """Write an empty gauss-jordan solver."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("gauss-jordan solver external routine"))
     cw.writer(

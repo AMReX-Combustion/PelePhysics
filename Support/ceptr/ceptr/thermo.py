@@ -1,3 +1,4 @@
+"""Thermodynamics functions."""
 import sys
 from collections import OrderedDict
 
@@ -5,6 +6,7 @@ import ceptr.writer as cw
 
 
 def thermo(fstream, mechanism, species_info):
+    """Write thermodynamics routines."""
     species_coeffs = analyze_thermodynamics(mechanism, species_info, 0)
     if species_info.nQSSspecies > 0:
         qss_species_coeffs = analyze_thermodynamics(mechanism, species_info, 1)
@@ -23,6 +25,7 @@ def thermo(fstream, mechanism, species_info):
 
 
 def analyze_thermodynamics(mechanism, species_info, qss_flag):
+    """Extract information from the thermodynamics model."""
     low_temp = 0.0
     high_temp = 1000000.0
 
@@ -88,6 +91,7 @@ def generate_thermo_routine(
     qss_flag,
     needs_inv_temp=0,
 ):
+    """Write a thermodynamics routine."""
     low_temp, high_temp, midpoints = species_coeffs
 
     cw.writer(
@@ -200,6 +204,7 @@ def generate_thermo_routine(
 
 
 def cv(fstream, species_info, species_coeffs):
+    """Write cv."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute Cv/R at the given temperature"))
     cw.writer(
@@ -212,6 +217,7 @@ def cv(fstream, species_info, species_coeffs):
 
 
 def cp(fstream, species_info, species_coeffs):
+    """Write cp."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("compute Cp/R at the given temperature"))
     cw.writer(
@@ -224,6 +230,7 @@ def cp(fstream, species_info, species_coeffs):
 
 
 def gibbs(fstream, species_info, species_coeffs, qss_flag):
+    """Write Gibbs."""
     if qss_flag:
         name = "gibbs_qss"
     else:
@@ -242,6 +249,7 @@ def gibbs(fstream, species_info, species_coeffs, qss_flag):
 
 
 def helmholtz(fstream, species_info, species_coeffs):
+    """Write Helmholtz."""
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("compute the a/(RT) at the given temperature")
@@ -262,6 +270,7 @@ def helmholtz(fstream, species_info, species_coeffs):
 
 
 def species_internal_energy(fstream, species_info, species_coeffs):
+    """Write species internal energy."""
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("compute the e/(RT) at the given temperature")
@@ -282,6 +291,7 @@ def species_internal_energy(fstream, species_info, species_coeffs):
 
 
 def species_enthalpy(fstream, species_info, species_coeffs, qss_flag):
+    """Write species enthalpy."""
     if qss_flag:
         name = "speciesEnthalpy_qss"
     else:
@@ -301,6 +311,7 @@ def species_enthalpy(fstream, species_info, species_coeffs, qss_flag):
 
 
 def species_entropy(fstream, species_info, species_coeffs):
+    """Write species entropy."""
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("compute the S/R at the given temperature (Eq 21)")
@@ -320,11 +331,13 @@ def species_entropy(fstream, species_info, species_coeffs):
 
 
 def dthermodtemp(fstream, mechanism, species_info):
+    """Write gradient of thermodynamics quantity wrt temperature."""
     species_coeffs = analyze_thermodynamics(mechanism, species_info, 0)
     dcvpdtemp(fstream, species_info, species_coeffs)
 
 
 def dcvpdtemp(fstream, species_info, species_coeffs):
+    """Write gradient of cp/cv wrt temperature."""
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -342,6 +355,7 @@ def dcvpdtemp(fstream, species_info, species_coeffs):
 
 
 def dcpdtemp_nasa(fstream, parameters):
+    """Write NASA polynomial for dcpdtemp."""
     cw.writer(fstream, "%+15.8e" % parameters[1])
     cw.writer(fstream, "%+15.8e * tc[1]" % (parameters[2] * 2.0))
     cw.writer(fstream, "%+15.8e * tc[2]" % (parameters[3] * 3.0))
@@ -349,6 +363,7 @@ def dcpdtemp_nasa(fstream, parameters):
 
 
 def cv_nasa(fstream, parameters):
+    """Write NASA polynomial for cv."""
     cw.writer(fstream, "%+15.8e" % (parameters[0] - 1.0))
     cw.writer(fstream, "%+15.8e * tc[1]" % parameters[1])
     cw.writer(fstream, "%+15.8e * tc[2]" % parameters[2])
@@ -357,6 +372,7 @@ def cv_nasa(fstream, parameters):
 
 
 def cp_nasa(fstream, parameters):
+    """Write NASA polynomial for cp."""
     cw.writer(fstream, "%+15.8e" % parameters[0])
     cw.writer(fstream, "%+15.8e * tc[1]" % parameters[1])
     cw.writer(fstream, "%+15.8e * tc[2]" % parameters[2])
@@ -365,6 +381,7 @@ def cp_nasa(fstream, parameters):
 
 
 def gibbs_nasa(fstream, parameters):
+    """Write NASA polynomial for Gibbs."""
     cw.writer(fstream, "%+20.15e * invT" % parameters[5])
     cw.writer(fstream, "%+20.15e" % (parameters[0] - parameters[6]))
     cw.writer(fstream, "%+20.15e * tc[0]" % (-parameters[0]))
@@ -375,6 +392,7 @@ def gibbs_nasa(fstream, parameters):
 
 
 def helmholtz_nasa(fstream, parameters):
+    """Write NASA polynomial for Helmholtz."""
     cw.writer(fstream, "%+15.8e * invT" % parameters[5])
     cw.writer(fstream, "%+15.8e" % (parameters[0] - parameters[6] - 1.0))
     cw.writer(fstream, "%+15.8e * tc[0]" % (-parameters[0]))
@@ -385,6 +403,7 @@ def helmholtz_nasa(fstream, parameters):
 
 
 def internal_energy(fstream, parameters):
+    """Write NASA polynomial for internal energy."""
     cw.writer(fstream, "%+15.8e" % (parameters[0] - 1.0))
     cw.writer(fstream, "%+15.8e * tc[1]" % ((parameters[1] / 2)))
     cw.writer(fstream, "%+15.8e * tc[2]" % ((parameters[2] / 3)))
@@ -394,6 +413,7 @@ def internal_energy(fstream, parameters):
 
 
 def enthalpy_nasa(fstream, parameters):
+    """Write NASA polynomial for enthalpy."""
     cw.writer(fstream, "%+15.8e" % parameters[0])
     cw.writer(fstream, "%+15.8e * tc[1]" % ((parameters[1] / 2)))
     cw.writer(fstream, "%+15.8e * tc[2]" % ((parameters[2] / 3)))
@@ -403,6 +423,7 @@ def enthalpy_nasa(fstream, parameters):
 
 
 def entropy_nasa(fstream, parameters):
+    """Write NASA polynomial for entropy."""
     cw.writer(fstream, "%+15.8e * tc[0]" % parameters[0])
     cw.writer(fstream, "%+15.8e * tc[1]" % (parameters[1]))
     cw.writer(fstream, "%+15.8e * tc[2]" % ((parameters[2] / 2)))

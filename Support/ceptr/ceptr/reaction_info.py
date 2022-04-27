@@ -1,3 +1,4 @@
+"""Reaction information."""
 from collections import OrderedDict
 
 import ceptr.constants as cc
@@ -8,6 +9,7 @@ class ReactionInfo:
     """Information on reactions."""
 
     def __init__(self, mechanism):
+        """Initialize the reaction information."""
         self.n_reactions = mechanism.n_reactions
         self.rs = []
         self.rs_unsorted = mechanism.reactions()
@@ -84,6 +86,7 @@ def sort_reactions(mechanism):
 
 
 def rmap(fstream, mechanism, reaction_info):
+    """Write reverse reaction map."""
     rmap = reaction_info.idxmap.keys()
     n_reactions = mechanism.n_reactions
     str_rmap = ",".join(str(x) for x in rmap)
@@ -91,6 +94,7 @@ def rmap(fstream, mechanism, reaction_info):
 
 
 def get_rmap(fstream, mechanism):
+    """Write function for reverse reaction map."""
     n_reactions = mechanism.n_reactions
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Returns 0-based map of reaction order"))

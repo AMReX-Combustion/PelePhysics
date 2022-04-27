@@ -4,6 +4,7 @@ import ceptr.constants as cc
 
 
 def qss_sorted_phase_space(mechanism, species_info, reagents):
+    """Get string of phase space."""
     phi = []
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
     sorted_reagents = sorted(reagents.keys(), key=lambda v: dict_species[v])
@@ -40,6 +41,7 @@ def qss_sorted_phase_space(mechanism, species_info, reagents):
 
 
 def phase_space_units(reagents):
+    """Return dimension for phase space."""
     dim = 0.0
     for _, coefficient in reagents.items():
         dim += float(coefficient)
@@ -47,18 +49,22 @@ def phase_space_units(reagents):
 
 
 def prefactor_units(units, exponent):
+    """Return prefactor units."""
     return units**exponent / cc.ureg.second
 
 
 def activation_energy_units():
+    """Return activation energy units."""
     return cc.ureg.cal / cc.ureg.mole
 
 
 def is_remove_forward(reaction_info, idx):
+    """Return if the reaction is in the removed list."""
     return idx in reaction_info.reacRemoveIDList
 
 
 def fkc_conv_inv(self, mechanism, reaction):
+    """Return fkc_conv_inv."""
     dim = 0
     for _, coefficient in reaction.reactants.items():
         dim -= coefficient
@@ -86,6 +92,7 @@ def fkc_conv_inv(self, mechanism, reaction):
 
 
 def kc_conv(mechanism, reaction):
+    """Return kc_conv."""
     dim = 0
     for _, coefficient in reaction.reactants.items():
         dim -= coefficient
@@ -113,6 +120,7 @@ def kc_conv(mechanism, reaction):
 
 
 def sorted_kc(mechanism, species_info, reaction):
+    """Return sorted kc."""
     conv = kc_conv(mechanism, reaction)
     exparg = sorted_kc_exp_arg(mechanism, species_info, reaction)
     if conv:
@@ -122,6 +130,7 @@ def sorted_kc(mechanism, species_info, reaction):
 
 
 def sorted_kc_exp_arg(mechanism, species_info, reaction):
+    """Return sorted kc exponent argument."""
     terms = []
     for _ in range(species_info.n_species):
         terms.append("")

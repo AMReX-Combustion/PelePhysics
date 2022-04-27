@@ -1,3 +1,4 @@
+"""Production functions."""
 import sys
 
 import ceptr.constants as cc
@@ -6,6 +7,7 @@ import ceptr.writer as cw
 
 
 def production_rate(fstream, mechanism, species_info, reaction_info):
+    """Write production rate."""
     n_species = species_info.n_species
     n_reactions = mechanism.n_reactions
 
@@ -942,6 +944,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
 
 
 def enhancement_d_with_qss(mechanism, species_info, reaction):
+    """Write enhancement with QSS."""
     third_body = reaction.reaction_type == "three-body"
     falloff = reaction.reaction_type == "falloff"
     if not third_body and not falloff:

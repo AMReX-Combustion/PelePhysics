@@ -1,8 +1,10 @@
+"""CK routines."""
 import ceptr.constants as cc
 import ceptr.writer as cw
 
 
 def ckawt(fstream, mechanism):
+    """Write ckawt."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get atomic weight for all elements"))
     cw.writer(fstream, "void CKAWT" + cc.sym + "( amrex::Real *  awt)")
@@ -12,6 +14,7 @@ def ckawt(fstream, mechanism):
 
 
 def ckncf(fstream, mechanism, species_info):
+    """Write ckncf."""
     n_elements = mechanism.n_elements
     n_species = species_info.n_species
 
@@ -48,6 +51,7 @@ def ckncf(fstream, mechanism, species_info):
 
 
 def cksyme_str(fstream, mechanism, species_info):
+    """Write cksyme."""
     n_elements = mechanism.n_elements
     cw.writer(fstream)
     cw.writer(
@@ -68,6 +72,7 @@ def cksyme_str(fstream, mechanism, species_info):
 
 
 def cksyms_str(fstream, mechanism, species_info):
+    """Write cksyms."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -89,6 +94,7 @@ def cksyms_str(fstream, mechanism, species_info):
 
 
 def ckindx(fstream, mechanism, species_info):
+    """Write ckindx."""
     cw.writer(fstream)
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("A few mechanism parameters"))
@@ -109,6 +115,7 @@ def ckindx(fstream, mechanism, species_info):
 
 
 def ckrp(fstream, mechanism, species_info):
+    """Write ckrp."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment(" Returns R, Rc, Patm"))
     cw.writer(
@@ -133,6 +140,7 @@ def ckrp(fstream, mechanism, species_info):
 
 
 def ckcpbl(fstream, mechanism, species_info):
+    """Write ckpbl."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -186,6 +194,7 @@ def ckcpbl(fstream, mechanism, species_info):
 
 
 def ckcpbs(fstream, mechanism, species_info):
+    """Write ckpbs."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -248,6 +257,7 @@ def ckcpbs(fstream, mechanism, species_info):
 
 
 def ckcvbl(fstream, mechanism, species_info):
+    """Write ckcvbl."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -301,6 +311,7 @@ def ckcvbl(fstream, mechanism, species_info):
 
 
 def ckcvbs(fstream, mechanism, species_info):
+    """Write ckcvbs."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -361,6 +372,7 @@ def ckcvbs(fstream, mechanism, species_info):
 
 
 def ckhbml(fstream, mechanism, species_info):
+    """Write ckhbml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -416,6 +428,7 @@ def ckhbml(fstream, mechanism, species_info):
 
 
 def ckhbms(fstream, mechanism, species_info):
+    """Write ckhbms."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -480,6 +493,7 @@ def ckhbms(fstream, mechanism, species_info):
 
 
 def ckubml(fstream, mechanism, species_info):
+    """Write ckubml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get mean internal energy in molar units"))
@@ -530,6 +544,7 @@ def ckubml(fstream, mechanism, species_info):
 
 
 def ckubms(fstream, mechanism, species_info):
+    """Write ckubms."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get mean internal energy in mass units"))
@@ -592,6 +607,7 @@ def ckubms(fstream, mechanism, species_info):
 
 
 def cksbml(fstream, mechanism, species_info):
+    """Write cksbml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get mixture entropy in molar units"))
@@ -654,6 +670,7 @@ def cksbml(fstream, mechanism, species_info):
 
 
 def cksbms(fstream, mechanism, species_info):
+    """Write cksbms."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get mixture entropy in mass units"))
@@ -749,6 +766,7 @@ def cksbms(fstream, mechanism, species_info):
 
 
 def ckgbml(fstream, mechanism, species_info):
+    """Write ckgbml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -813,6 +831,7 @@ def ckgbml(fstream, mechanism, species_info):
 
 
 def ckgbms(fstream, mechanism, species_info):
+    """Write ckgbms."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -913,6 +932,7 @@ def ckgbms(fstream, mechanism, species_info):
 
 
 def ckabml(fstream, mechanism, species_info):
+    """Write ckabml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -980,6 +1000,7 @@ def ckabml(fstream, mechanism, species_info):
 
 
 def ckabms(fstream, mechanism, species_info):
+    """Write ckabms."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -1082,6 +1103,7 @@ def ckabms(fstream, mechanism, species_info):
 
 
 def ckpx(fstream, mechanism, species_info):
+    """Write ckpx."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute P = rhoRT/W(x)"))
     cw.writer(
@@ -1122,6 +1144,7 @@ def ckpx(fstream, mechanism, species_info):
 
 
 def ckpy(fstream, mechanism, species_info):
+    """Write ckpy."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute P = rhoRT/W(y)"))
@@ -1166,6 +1189,7 @@ def ckpy(fstream, mechanism, species_info):
 
 
 def ckpc(fstream, mechanism, species_info):
+    """Write ckpc."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute P = rhoRT/W(c)"))
@@ -1213,6 +1237,7 @@ def ckpc(fstream, mechanism, species_info):
 
 
 def ckrhox(fstream, mechanism, species_info):
+    """Write ckrhox."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute rho = PW(x)/RT"))
     cw.writer(
@@ -1252,6 +1277,7 @@ def ckrhox(fstream, mechanism, species_info):
 
 
 def ckrhoy(fstream, mechanism, species_info):
+    """Write ckrhoy."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute rho = P*W(y)/RT"))
@@ -1289,6 +1315,7 @@ def ckrhoy(fstream, mechanism, species_info):
 
 
 def ckrhoc(fstream, mechanism, species_info):
+    """Write ckrhoc."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Compute rho = P*W(c)/(R*T)"))
@@ -1336,6 +1363,7 @@ def ckrhoc(fstream, mechanism, species_info):
 
 
 def ckwt(fstream, mechanism, species_info):
+    """Write ckwt."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get molecular weight for all species"))
     cw.writer(
@@ -1351,6 +1379,7 @@ def ckwt(fstream, mechanism, species_info):
 
 
 def ckmmwy(fstream, mechanism, species_info):
+    """Write ckmmwy."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("given y[species]: mass fractions"))
@@ -1383,6 +1412,7 @@ def ckmmwy(fstream, mechanism, species_info):
 
 
 def ckmmwx(fstream, mechanism, species_info):
+    """Write ckmmwx."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("given x[species]: mole fractions"))
     cw.writer(fstream, cw.comment("returns mean molecular weight (gm/mole)"))
@@ -1412,6 +1442,7 @@ def ckmmwx(fstream, mechanism, species_info):
 
 
 def ckmmwc(fstream, mechanism, species_info):
+    """Write ckmmwc."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("given c[species]: molar concentration"))
@@ -1450,6 +1481,7 @@ def ckmmwc(fstream, mechanism, species_info):
 
 
 def ckcpor(fstream, mechanism, species_info):
+    """Write ckcpor."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get Cp/R as a function of T "))
     cw.writer(fstream, cw.comment("for all species (Eq 19)"))
@@ -1477,6 +1509,7 @@ def ckcpor(fstream, mechanism, species_info):
 
 
 def ckhort(fstream, mechanism, species_info):
+    """Write ckhort."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get H/RT as a function of T "))
     cw.writer(fstream, cw.comment("for all species (Eq 20)"))
@@ -1504,6 +1537,7 @@ def ckhort(fstream, mechanism, species_info):
 
 
 def cksor(fstream, mechanism, species_info):
+    """Write cksor."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get S/R as a function of T "))
     cw.writer(fstream, cw.comment("for all species (Eq 21)"))
@@ -1531,6 +1565,7 @@ def cksor(fstream, mechanism, species_info):
 
 
 def ckytx(fstream, mechanism, species_info):
+    """Write ckytx."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -1573,6 +1608,7 @@ def ckytx(fstream, mechanism, species_info):
 
 
 def ckytcp(fstream, mechanism, species_info):
+    """Write ckytcp."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -1627,6 +1663,7 @@ def ckytcp(fstream, mechanism, species_info):
 
 
 def ckytcr(fstream, mechanism, species_info):
+    """Write ckytcr."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -1655,6 +1692,7 @@ def ckytcr(fstream, mechanism, species_info):
 
 
 def ckxty(fstream, mechanism, species_info):
+    """Write ckxty."""
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -1703,6 +1741,7 @@ def ckxty(fstream, mechanism, species_info):
 
 
 def ckxtcp(fstream, mechanism, species_info):
+    """Write ckxtcp."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -1740,6 +1779,7 @@ def ckxtcp(fstream, mechanism, species_info):
 
 
 def ckxtcr(fstream, mechanism, species_info):
+    """Write ckxtcr."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -1788,6 +1828,7 @@ def ckxtcr(fstream, mechanism, species_info):
 
 
 def ckctx(fstream, mechanism, species_info):
+    """Write ckctx."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -1827,6 +1868,7 @@ def ckctx(fstream, mechanism, species_info):
 
 
 def ckcty(fstream, mechanism, species_info):
+    """Write ckcty."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -1874,6 +1916,7 @@ def ckcty(fstream, mechanism, species_info):
 
 
 def ckcvml(fstream, mechanism, species_info):
+    """Write ckcvml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -1919,6 +1962,7 @@ def ckcvml(fstream, mechanism, species_info):
 
 
 def ckcpml(fstream, mechanism, species_info):
+    """Write ckcpml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -1965,6 +2009,7 @@ def ckcpml(fstream, mechanism, species_info):
 
 
 def ckuml(fstream, mechanism, species_info):
+    """Write ckuml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get internal energy as a function "))
@@ -2008,6 +2053,7 @@ def ckuml(fstream, mechanism, species_info):
 
 
 def ckhml(fstream, mechanism, species_info):
+    """Write ckhml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("get enthalpy as a function "))
@@ -2051,6 +2097,7 @@ def ckhml(fstream, mechanism, species_info):
 
 
 def ckgml(fstream, mechanism, species_info):
+    """Write ckgml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2096,6 +2143,7 @@ def ckgml(fstream, mechanism, species_info):
 
 
 def ckaml(fstream, mechanism, species_info):
+    """Write ckaml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2143,6 +2191,7 @@ def ckaml(fstream, mechanism, species_info):
 
 
 def cksml(fstream, mechanism, species_info):
+    """Write cksml."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2186,6 +2235,7 @@ def cksml(fstream, mechanism, species_info):
 
 
 def ckcvms(fstream, mechanism, species_info):
+    """Write ckcvms."""
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("Returns the specific heats at constant volume")
@@ -2230,6 +2280,7 @@ def ckcvms(fstream, mechanism, species_info):
 
 
 def ckcpms(fstream, mechanism, species_info):
+    """Write ckcpms."""
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("Returns the specific heats at constant pressure")
@@ -2274,6 +2325,7 @@ def ckcpms(fstream, mechanism, species_info):
 
 
 def ckums(fstream, mechanism, species_info):
+    """Write ckums."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2319,6 +2371,7 @@ def ckums(fstream, mechanism, species_info):
 
 
 def ckhms(fstream, mechanism, species_info):
+    """Write ckhms."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Returns enthalpy in mass units (Eq 27.)"))
@@ -2362,6 +2415,7 @@ def ckhms(fstream, mechanism, species_info):
 
 
 def ckgms(fstream, mechanism, species_info):
+    """Write ckgms."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Returns gibbs in mass units (Eq 31.)"))
@@ -2405,6 +2459,7 @@ def ckgms(fstream, mechanism, species_info):
 
 
 def ckams(fstream, mechanism, species_info):
+    """Write ckams."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("Returns helmholtz in mass units (Eq 32.)"))
@@ -2447,6 +2502,7 @@ def ckams(fstream, mechanism, species_info):
 
 
 def cksms(fstream, mechanism, species_info):
+    """Write cksms."""
     cw.writer(fstream)
     cw.writer(
         fstream, cw.comment("Returns the entropies in mass units (Eq 28.)")
@@ -2490,6 +2546,7 @@ def cksms(fstream, mechanism, species_info):
 
 
 def ckwc(fstream, mechanism, species_info):
+    """Write ckwc."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2529,6 +2586,7 @@ def ckwc(fstream, mechanism, species_info):
 
 
 def ckwyp(fstream, mechanism, species_info):
+    """Write ckwyp."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2604,6 +2662,7 @@ def ckwyp(fstream, mechanism, species_info):
 
 
 def ckwxp(fstream, mechanism, species_info):
+    """Write ckwxp."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2655,6 +2714,7 @@ def ckwxp(fstream, mechanism, species_info):
 
 
 def ckwyr(fstream, mechanism, species_info):
+    """Write ckwyr."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2708,6 +2768,7 @@ def ckwyr(fstream, mechanism, species_info):
 
 
 def ckwxr(fstream, mechanism, species_info):
+    """Write ckwxr."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2770,6 +2831,7 @@ def ckwxr(fstream, mechanism, species_info):
 
 
 def temp_given_ey(fstream):
+    """Write temperature given internal energy."""
     cw.writer(fstream)
     cw.writer(
         fstream,
@@ -2843,6 +2905,7 @@ def temp_given_ey(fstream):
 
 
 def temp_given_hy(fstream):
+    """Write temperature given enthalpy."""
     cw.writer(
         fstream,
         cw.comment(
@@ -2914,6 +2977,7 @@ def temp_given_hy(fstream):
 
 # NEED TO DEAL WITH THIS WHEN QSS
 def ckinu(fstream, mechanism, species_info, reaction_info):
+    """Write ckinu."""
     n_reactions = mechanism.n_reactions
 
     maxsp = 0
