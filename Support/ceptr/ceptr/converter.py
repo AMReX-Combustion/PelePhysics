@@ -297,7 +297,7 @@ class Converter:
             # Transport
             cw.writer(hdr)
             ctr.transport(hdr, self.mechanism, self.species_info)
-            ctr.getCriticalParameters(hdr, self.mechanism, self.species_info)
+            ctr.critical_parameters(hdr, self.mechanism, self.species_info)
             # GS routines
             cgjs.emptygjs(hdr)
             cw.writer(hdr)

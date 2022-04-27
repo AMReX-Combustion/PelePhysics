@@ -11,34 +11,41 @@ def transport(fstream, mechanism, species_info):
     """Write the transport functions."""
     cw.writer(fstream, cw.comment("Transport function declarations "))
     n_species = species_info.n_species
-    speciesTransport = analyzeTransport(mechanism, species_info)
-    NLITE = 0
-    idxLightSpecs = []
+    species_transport = analyze_transport(mechanism, species_info)
+    n_lite = 0
+    idx_light_specs = []
     for sp in range(n_species):
         spec = species_info.nonqss_species[sp]
         if spec.weight < 5.0:
-            NLITE += 1
-            idxLightSpecs.append(spec.idx)
-    miscTransInfo(fstream, KK=n_species, NLITE=NLITE, do_declarations=False)
+            n_lite += 1
+            idx_light_specs.append(spec.idx)
+    misc_trans_info(
+        fstream, kk=n_species, n_lite=n_lite, do_declarations=False
+    )
     wt(fstream, species_info, False)
-    eps(fstream, mechanism, species_info, speciesTransport, False)
-    sig(fstream, mechanism, species_info, speciesTransport, False)
-    dip(fstream, mechanism, species_info, speciesTransport, False)
-    pol(fstream, mechanism, species_info, speciesTransport, False)
-    zrot(fstream, mechanism, species_info, speciesTransport, False)
-    nlin(fstream, mechanism, species_info, speciesTransport, False)
+    eps(fstream, mechanism, species_info, species_transport, False)
+    sig(fstream, mechanism, species_info, species_transport, False)
+    dip(fstream, mechanism, species_info, species_transport, False)
+    pol(fstream, mechanism, species_info, species_transport, False)
+    zrot(fstream, mechanism, species_info, species_transport, False)
+    nlin(fstream, mechanism, species_info, species_transport, False)
 
     viscosity(
-        fstream, mechanism, species_info, speciesTransport, False, NTFit=50
+        fstream, mechanism, species_info, species_transport, False, ntfit=50
     )
-    diffcoefs(fstream, species_info, speciesTransport, False, NTFit=50)
-    lightSpecs(fstream, idxLightSpecs, False)
+    diffcoefs(fstream, species_info, species_transport, False, ntfit=50)
+    light_specs(fstream, idx_light_specs, False)
     thermaldiffratios(
-        fstream, species_info, speciesTransport, idxLightSpecs, False, NTFit=50
+        fstream,
+        species_info,
+        species_transport,
+        idx_light_specs,
+        False,
+        ntfit=50,
     )
 
 
-def analyzeTransport(mechanism, species_info):
+def analyze_transport(mechanism, species_info):
     """Extract transport model coefficients."""
     transdata = OrderedDict()
 
@@ -70,11 +77,11 @@ def analyzeTransport(mechanism, species_info):
     return transdata
 
 
-def miscTransInfo(fstream, KK, NLITE, do_declarations, NO=4):
+def misc_trans_info(fstream, kk, n_lite, do_declarations, no=4):
     """Write transport information."""
     cw.writer(fstream)
-    LENIMC = 4 * KK + NLITE
-    generateTransRoutineInteger(
+    lenimc = 4 * kk + n_lite
+    generate_trans_routine_integer(
         fstream,
         [
             "egtransetLENIMC",
@@ -83,14 +90,14 @@ def miscTransInfo(fstream, KK, NLITE, do_declarations, NO=4):
             "egtransetlenimc_",
             "LENIMC",
         ],
-        LENIMC,
+        lenimc,
         do_declarations,
     )
 
     cw.writer(fstream)
     cw.writer(fstream)
-    LENRMC = (19 + 2 * NO + NO * NLITE) * KK + (15 + NO) * KK**2
-    generateTransRoutineInteger(
+    lenrmc = (19 + 2 * no + no * n_lite) * kk + (15 + no) * kk**2
+    generate_trans_routine_integer(
         fstream,
         [
             "egtransetLENRMC",
@@ -99,13 +106,13 @@ def miscTransInfo(fstream, KK, NLITE, do_declarations, NO=4):
             "egtransetlenrmc_",
             "LENRMC",
         ],
-        LENRMC,
+        lenrmc,
         do_declarations,
     )
 
     cw.writer(fstream)
     cw.writer(fstream)
-    generateTransRoutineInteger(
+    generate_trans_routine_integer(
         fstream,
         [
             "egtransetNO",
@@ -114,13 +121,13 @@ def miscTransInfo(fstream, KK, NLITE, do_declarations, NO=4):
             "egtransetno_",
             "NO",
         ],
-        NO,
+        no,
         do_declarations,
     )
 
     cw.writer(fstream)
     cw.writer(fstream)
-    generateTransRoutineInteger(
+    generate_trans_routine_integer(
         fstream,
         [
             "egtransetKK",
@@ -129,13 +136,13 @@ def miscTransInfo(fstream, KK, NLITE, do_declarations, NO=4):
             "egtransetkk_",
             "KK",
         ],
-        KK,
+        kk,
         do_declarations,
     )
 
     cw.writer(fstream)
     cw.writer(fstream)
-    generateTransRoutineInteger(
+    generate_trans_routine_integer(
         fstream,
         [
             "egtransetNLITE",
@@ -144,7 +151,7 @@ def miscTransInfo(fstream, KK, NLITE, do_declarations, NO=4):
             "egtransetnlite_",
             "NLITE",
         ],
-        NLITE,
+        n_lite,
         do_declarations,
     )
 
@@ -166,7 +173,9 @@ def miscTransInfo(fstream, KK, NLITE, do_declarations, NO=4):
     cw.writer(fstream, "*PATM =   0.1013250000000000E+07;}")
 
 
-def generateTransRoutineInteger(fstream, nametab, expression, do_declarations):
+def generate_trans_routine_integer(
+    fstream, nametab, expression, do_declarations
+):
     """Write generic integer transport routine."""
     if do_declarations:
         cw.writer(fstream, "#if defined(BL_FORT_USE_UPPERCASE)")
@@ -183,13 +192,13 @@ def generateTransRoutineInteger(fstream, nametab, expression, do_declarations):
     cw.writer(fstream, "*%s = %d;}" % (nametab[4], expression))
 
 
-def generateTransRoutineSimple(
+def generate_trans_routine_simple(
     fstream,
     mechanism,
     species_info,
     nametab,
     idx,
-    speciesTransport,
+    species_transport,
     do_declarations,
 ):
     """Write generic transport routine."""
@@ -211,7 +220,7 @@ def generateTransRoutineSimple(
         cw.writer(
             fstream,
             "%s[%d] = %.8E;"
-            % (nametab[4], spec.idx, float(speciesTransport[spec][idx])),
+            % (nametab[4], spec.idx, float(species_transport[spec][idx])),
         )
     cw.writer(fstream, "}")
 
@@ -244,14 +253,14 @@ def wt(fstream, species_info, do_declarations):
     cw.writer(fstream, "}")
 
 
-def eps(fstream, mechanism, species_info, speciesTransport, do_declarations):
+def eps(fstream, mechanism, species_info, species_transport, do_declarations):
     """Write the lennard-jones potential well depth function."""
     cw.writer(fstream)
     cw.writer(
         fstream,
         cw.comment("the lennard-jones potential well depth eps/kb in K"),
     )
-    generateTransRoutineSimple(
+    generate_trans_routine_simple(
         fstream,
         mechanism,
         species_info,
@@ -263,19 +272,19 @@ def eps(fstream, mechanism, species_info, speciesTransport, do_declarations):
             "EPS",
         ],
         1,
-        speciesTransport,
+        species_transport,
         do_declarations,
     )
 
 
-def sig(fstream, mechanism, species_info, speciesTransport, do_declarations):
+def sig(fstream, mechanism, species_info, species_transport, do_declarations):
     """Write the the lennard-jones collision diameter function."""
     cw.writer(fstream)
     cw.writer(
         fstream,
         cw.comment("the lennard-jones collision diameter in Angstroms"),
     )
-    generateTransRoutineSimple(
+    generate_trans_routine_simple(
         fstream,
         mechanism,
         species_info,
@@ -287,16 +296,16 @@ def sig(fstream, mechanism, species_info, speciesTransport, do_declarations):
             "SIG",
         ],
         2,
-        speciesTransport,
+        species_transport,
         do_declarations,
     )
 
 
-def dip(fstream, mechanism, species_info, speciesTransport, do_declarations):
+def dip(fstream, mechanism, species_info, species_transport, do_declarations):
     """Write the dipole moment function."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("the dipole moment in Debye"))
-    generateTransRoutineSimple(
+    generate_trans_routine_simple(
         fstream,
         mechanism,
         species_info,
@@ -308,16 +317,16 @@ def dip(fstream, mechanism, species_info, speciesTransport, do_declarations):
             "DIP",
         ],
         3,
-        speciesTransport,
+        species_transport,
         do_declarations,
     )
 
 
-def pol(fstream, mechanism, species_info, speciesTransport, do_declarations):
+def pol(fstream, mechanism, species_info, species_transport, do_declarations):
     """Write the polarizability function."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("the polarizability in cubic Angstroms"))
-    generateTransRoutineSimple(
+    generate_trans_routine_simple(
         fstream,
         mechanism,
         species_info,
@@ -329,19 +338,19 @@ def pol(fstream, mechanism, species_info, speciesTransport, do_declarations):
             "POL",
         ],
         4,
-        speciesTransport,
+        species_transport,
         do_declarations,
     )
 
 
-def zrot(fstream, mechanism, species_info, speciesTransport, do_declarations):
+def zrot(fstream, mechanism, species_info, species_transport, do_declarations):
     """Write the rotational relaxation collision number."""
     cw.writer(fstream)
     cw.writer(
         fstream,
         cw.comment("the rotational relaxation collision number at 298 K"),
     )
-    generateTransRoutineSimple(
+    generate_trans_routine_simple(
         fstream,
         mechanism,
         species_info,
@@ -353,12 +362,12 @@ def zrot(fstream, mechanism, species_info, speciesTransport, do_declarations):
             "ZROT",
         ],
         5,
-        speciesTransport,
+        species_transport,
         do_declarations,
     )
 
 
-def nlin(fstream, mechanism, species_info, speciesTransport, do_declarations):
+def nlin(fstream, mechanism, species_info, species_transport, do_declarations):
     """Write the (monoatomic, linear, nonlinear) information."""
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("0: monoatomic, 1: linear, 2: nonlinear"))
@@ -379,35 +388,35 @@ def nlin(fstream, mechanism, species_info, speciesTransport, do_declarations):
         cw.writer(
             fstream,
             "%s[%d] = %d;"
-            % ("NLIN", species.idx, int(speciesTransport[species][0])),
+            % ("NLIN", species.idx, int(species_transport[species][0])),
         )
 
     cw.writer(fstream, "}")
 
 
 def viscosity(
-    fstream, mechanism, species_info, speciesTransport, do_declarations, NTFit
+    fstream, mechanism, species_info, species_transport, do_declarations, ntfit
 ):
     """Write the viscosity function."""
     n_species = species_info.n_species
     # compute single constants in g/cm/s
-    Na = 6.02214199e23
-    RU = 8.31447e7
+    na = 6.02214199e23
+    ru = 8.31447e7
     # conversion coefs
-    AtoCM = 1.0e-8
-    DEBYEtoCGS = 1.0e-18
+    a2cm = 1.0e-8
+    debye2cgs = 1.0e-18
     # temperature increment
-    dt = (species_info.high_temp - species_info.low_temp) / (NTFit - 1)
+    dt = (species_info.high_temp - species_info.low_temp) / (ntfit - 1)
     # factor dependent upon the molecule
     m_crot = np.zeros(n_species)
     m_cvib = np.zeros(n_species)
     isatm = np.zeros(n_species)
-    for spec in speciesTransport:
-        if int(speciesTransport[spec][0]) == 0:
+    for spec in species_transport:
+        if int(species_transport[spec][0]) == 0:
             m_crot[spec.idx] = 0.0
             m_cvib[spec.idx] = 0.0
             isatm[spec.idx] = 0.0
-        elif int(speciesTransport[spec][0]) == 1:
+        elif int(species_transport[spec][0]) == 1:
             m_crot[spec.idx] = 1.0
             m_cvib[spec.idx] = 5.0 / 2.0
             isatm[spec.idx] = 1.0
@@ -419,85 +428,85 @@ def viscosity(
     cofeta = OrderedDict()
     # conductivities coefs (4 per spec)
     coflam = OrderedDict()
-    for spec in speciesTransport:
+    for spec in species_transport:
         spvisc = []
         spcond = []
         tlog = []
-        for n in range(NTFit):
+        for n in range(ntfit):
             t = species_info.low_temp + dt * n
             # variables
             # eq. (2)
-            tr = t / float(speciesTransport[spec][1])
-            conversion = (
-                DEBYEtoCGS * DEBYEtoCGS / AtoCM / AtoCM / AtoCM / cc.kb
-            )
+            tr = t / float(species_transport[spec][1])
+            conversion = debye2cgs * debye2cgs / a2cm / a2cm / a2cm / cc.kb
             dst = (
                 0.5
                 * conversion
-                * float(speciesTransport[spec][3]) ** 2
+                * float(species_transport[spec][3]) ** 2
                 / (
-                    float(speciesTransport[spec][1])
-                    * float(speciesTransport[spec][2]) ** 3
+                    float(species_transport[spec][1])
+                    * float(species_transport[spec][2]) ** 3
                 )
             )
             # viscosity of spec at t
             # eq. (1)
-            conversion = AtoCM * AtoCM
+            conversion = a2cm * a2cm
             visc = (
                 (5.0 / 16.0)
-                * np.sqrt(np.pi * spec.weight * cc.kb * t / Na)
+                * np.sqrt(np.pi * spec.weight * cc.kb * t / na)
                 / (
-                    om22_CHEMKIN(tr, dst)
+                    om22_chemkin(tr, dst)
                     * np.pi
-                    * float(speciesTransport[spec][2])
-                    * float(speciesTransport[spec][2])
+                    * float(species_transport[spec][2])
+                    * float(species_transport[spec][2])
                     * conversion
                 )
             )
             # conductivity of spec at t
             # eq. (30)
-            conversion = AtoCM * AtoCM
-            m_red = spec.weight / (2.0 * Na)
+            conversion = a2cm * a2cm
+            m_red = spec.weight / (2.0 * na)
             diffcoef = (
                 (3.0 / 16.0)
                 * np.sqrt(2.0 * np.pi * cc.kb**3 * t**3 / m_red)
                 / (
                     10.0
                     * np.pi
-                    * om11_CHEMKIN(tr, dst)
-                    * float(speciesTransport[spec][2])
-                    * float(speciesTransport[spec][2])
+                    * om11_chemkin(tr, dst)
+                    * float(species_transport[spec][2])
+                    * float(species_transport[spec][2])
                     * conversion
                 )
             )
             # eq. (19)
-            cv_vib_R = (
-                getCVdRspecies(mechanism, t, spec) - m_cvib[spec.idx]
+            cv_vib_r = (
+                get_cv_dr_species(mechanism, t, spec) - m_cvib[spec.idx]
             ) * isatm[spec.idx]
-            rho_atm = 10.0 * spec.weight / (RU * t)
+            rho_atm = 10.0 * spec.weight / (ru * t)
             f_vib = rho_atm * diffcoef / visc
             # eq. (20)
-            A = 2.5 - f_vib
+            a = 2.5 - f_vib
             # eqs. (21) + (32-33)
-            cv_rot_R = m_crot[spec.idx]
+            cv_rot_r = m_crot[spec.idx]
             # note: the T corr is not applied in CANTERA
-            B = float(speciesTransport[spec][5]) * Fcorr(
-                298.0, float(speciesTransport[spec][1])
-            ) / Fcorr(t, float(speciesTransport[spec][1])) + (2.0 / np.pi) * (
-                (5.0 / 3.0) * cv_rot_R + f_vib
+            b = float(species_transport[spec][5]) * f_corr(
+                298.0, float(species_transport[spec][1])
+            ) / f_corr(t, float(species_transport[spec][1])) + (
+                2.0 / np.pi
+            ) * (
+                (5.0 / 3.0) * cv_rot_r + f_vib
             )
             # eq. (18)
-            f_rot = f_vib * (1.0 + 2.0 / np.pi * A / B)
+            f_rot = f_vib * (1.0 + 2.0 / np.pi * a / b)
             # eq. (17)
-            cv_trans_R = 3.0 / 2.0
+            cv_trans_r = 3.0 / 2.0
             f_trans = (
-                5.0 / 2.0 * (1.0 - 2.0 / np.pi * A / B * cv_rot_R / cv_trans_R)
+                5.0 / 2.0 * (1.0 - 2.0 / np.pi * a / b * cv_rot_r / cv_trans_r)
             )
-            if int(speciesTransport[spec][0]) == 0:
-                cond = ((visc * RU / spec.weight)) * (5.0 / 2.0) * cv_trans_R
+            if int(species_transport[spec][0]) == 0:
+                cond = ((visc * ru / spec.weight)) * (5.0 / 2.0) * cv_trans_r
             else:
-                cond = ((visc * RU / spec.weight)) * (
-                    f_trans * cv_trans_R + f_rot * cv_rot_R + f_vib * cv_vib_R
+                cond = ((visc * ru / spec.weight)) * (
+                    f_trans * cv_trans_r + f_rot * cv_rot_r + f_vib * cv_vib_r
                 )
 
             # log transformation for polyfit
@@ -565,33 +574,35 @@ def viscosity(
     cw.writer(fstream, "}")
 
 
-def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
+def diffcoefs(
+    fstream, species_info, species_transport, do_declarations, ntfit
+):
     """Write the diffusion coefficients."""
     # REORDERING OF SPECS
-    specOrdered = []
+    spec_ordered = []
     n_species = species_info.n_species
     for i in range(n_species):
-        for spec in speciesTransport:
+        for spec in species_transport:
             if spec.idx == i:
-                specOrdered.append(spec)
+                spec_ordered.append(spec)
                 break
 
     # compute single constants in g/cm/s
-    Na = 6.02214199e23
+    na = 6.02214199e23
     # conversion coefs
-    AtoCM = 1.0e-8
-    DEBYEtoCGS = 1.0e-18
-    PATM = 0.1013250000000000e07
+    a2cm = 1.0e-8
+    debye2cgs = 1.0e-18
+    patm = 0.1013250000000000e07
     # temperature increment
-    dt = (species_info.high_temp - species_info.low_temp) / (NTFit - 1)
+    dt = (species_info.high_temp - species_info.low_temp) / (ntfit - 1)
     # diff coefs (4 per spec pair)
     cofd = []
-    for i, spec1 in enumerate(specOrdered):
+    for i, spec1 in enumerate(spec_ordered):
         cofd.append([])
         if i != spec1.idx:
             print("Problem in _diffcoefs computation")
             sys.exit(1)
-        for j, spec2 in enumerate(specOrdered[0 : i + 1]):
+        for j, spec2 in enumerate(spec_ordered[0 : i + 1]):
             if j != spec2.idx:
                 print("Problem in _diffcoefs computation")
                 sys.exit(1)
@@ -599,54 +610,54 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
             sigm = (
                 0.5
                 * (
-                    float(speciesTransport[spec1][2])
-                    + float(speciesTransport[spec2][2])
+                    float(species_transport[spec1][2])
+                    + float(species_transport[spec2][2])
                 )
-                * AtoCM
-            ) * Xi(spec1, spec2, speciesTransport) ** (1.0 / 6.0)
+                * a2cm
+            ) * xi(spec1, spec2, species_transport) ** (1.0 / 6.0)
             # eq. (4)
             m_red = (
                 spec1.weight
                 * spec2.weight
                 / (spec1.weight + spec2.weight)
-                / Na
+                / na
             )
             # eq. (8) & (14)
             epsm_k = (
                 np.sqrt(
-                    float(speciesTransport[spec1][1])
-                    * float(speciesTransport[spec2][1])
+                    float(species_transport[spec1][1])
+                    * float(species_transport[spec2][1])
                 )
-                * Xi(spec1, spec2, speciesTransport) ** 2.0
+                * xi(spec1, spec2, species_transport) ** 2.0
             )
 
             # eq. (15)
-            conversion = DEBYEtoCGS * DEBYEtoCGS / cc.kb
+            conversion = debye2cgs * debye2cgs / cc.kb
             dst = (
                 0.5
                 * conversion
-                * float(speciesTransport[spec1][3])
-                * float(speciesTransport[spec2][3])
+                * float(species_transport[spec1][3])
+                * float(species_transport[spec2][3])
                 / (epsm_k * sigm**3)
             )
-            if not Xi_bool(spec1, spec2, speciesTransport):
+            if not xi_bool(spec1, spec2, species_transport):
                 dst = 0.0
             # enter the loop on temperature
             spdiffcoef = []
             tlog = []
-            for n in range(NTFit):
+            for n in range(ntfit):
                 t = species_info.low_temp + dt * n
                 tr = t / epsm_k
                 # eq. (3)
-                # note: these are "corrected" in CHEMKIN not in CANTERA... we chose not to
+                # note: these are "corrected" in chemkin not in CANTERA... we chose not to
                 difcoeff = (
                     3.0
                     / 16.0
                     * 1
-                    / PATM
+                    / patm
                     * (
                         np.sqrt(2.0 * np.pi * t**3 * cc.kb**3 / m_red)
-                        / (np.pi * sigm * sigm * om11_CHEMKIN(tr, dst))
+                        / (np.pi * sigm * sigm * om11_chemkin(tr, dst))
                     )
                 )
                 # log transformation for polyfit
@@ -658,8 +669,8 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
     # use the symmetry for upper triangular terms
     # note: starting with this would be preferable (only one bigger loop)
     # note2: or write stuff differently !
-    # for i,spec1 in enumerate(specOrdered):
-    #    for j,spec2 in enumerate(specOrdered[i+1:]):
+    # for i,spec1 in enumerate(spec_ordered):
+    #    for j,spec2 in enumerate(spec_ordered[i+1:]):
     #        cofd[i].append(cofd[spec2.id][spec1.id])
 
     # header for diffusion coefs
@@ -682,8 +693,8 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(fstream, "void egtransetCOFD(amrex::Real* COFD) {")
 
-    for i, _ in enumerate(specOrdered):
-        for j, _ in enumerate(specOrdered[0 : i + 1]):
+    for i, _ in enumerate(spec_ordered):
+        for j, _ in enumerate(spec_ordered[0 : i + 1]):
             for k in range(4):
                 cw.writer(
                     fstream,
@@ -694,7 +705,7 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
                         cofd[i][j][3 - k],
                     ),
                 )
-        for j, _ in enumerate(specOrdered[i + 1 :]):
+        for j, _ in enumerate(spec_ordered[i + 1 :]):
             for k in range(4):
                 cw.writer(
                     fstream,
@@ -709,8 +720,8 @@ def diffcoefs(fstream, species_info, speciesTransport, do_declarations, NTFit):
     cw.writer(fstream, "}")
 
 
-def lightSpecs(fstream, speclist, do_declarations):
-    """Write list of specs with small weight, dim NLITE."""
+def light_specs(fstream, speclist, do_declarations):
+    """Write list of specs with small weight, dim n_lite."""
     # header
     cw.writer(fstream)
     cw.writer(fstream)
@@ -739,76 +750,78 @@ def lightSpecs(fstream, speclist, do_declarations):
 def thermaldiffratios(
     fstream,
     species_info,
-    speciesTransport,
-    lightSpecList,
+    species_transport,
+    light_spec_list,
     do_declarations,
-    NTFit,
+    ntfit,
 ):
     """Write thermal diffusion ratios."""
     n_species = species_info.n_species
-    # This is an overhaul of CHEMKIN version III
+    # This is an overhaul of chemkin version III
     # REORDERING OF SPECS
-    specOrdered = []
+    spec_ordered = []
     for i in range(n_species):
-        for spec in speciesTransport:
+        for spec in species_transport:
             if spec.idx == i:
-                specOrdered.append(spec)
+                spec_ordered.append(spec)
                 break
 
     # compute single constants in g/cm/s
     # conversion coefs
-    DEBYEtoCGS = 1.0e-18
-    AtoCM = 1.0e-8
+    debye2cgs = 1.0e-18
+    a2cm = 1.0e-8
     # temperature increment
-    dt = (species_info.high_temp - species_info.low_temp) / (NTFit - 1)
+    dt = (species_info.high_temp - species_info.low_temp) / (ntfit - 1)
     # diff ratios (4 per spec pair involving light species)
     coftd = []
     k = -1
-    for i, spec1 in enumerate(specOrdered):
+    for i, spec1 in enumerate(spec_ordered):
         if i != spec1.idx:
             print("Problem in _thermaldiffratios computation")
             sys.exit(1)
-        if spec1.idx in lightSpecList:
+        if spec1.idx in light_spec_list:
             k = k + 1
-            if lightSpecList[k] != spec1.idx:
+            if light_spec_list[k] != spec1.idx:
                 print("Problem in  _thermaldiffratios computation")
                 sys.exit(1)
             coftd.append([])
-            epsi = float(speciesTransport[spec1][1]) * cc.kb
-            sigi = float(speciesTransport[spec1][2]) * AtoCM
-            poli = float(speciesTransport[spec1][4]) * AtoCM * AtoCM * AtoCM
+            epsi = float(species_transport[spec1][1]) * cc.kb
+            sigi = float(species_transport[spec1][2]) * a2cm
+            poli = float(species_transport[spec1][4]) * a2cm * a2cm * a2cm
             # eq. (12)
-            poliRed = poli / sigi**3
-            for j, spec2 in enumerate(specOrdered):
+            poli_red = poli / sigi**3
+            for j, spec2 in enumerate(spec_ordered):
                 if j != spec2.idx:
                     print("Problem in _thermaldiffratios computation")
                     sys.exit(1)
                 # eq. (53)
-                Wji = (spec2.weight - spec1.weight) / (
+                wji = (spec2.weight - spec1.weight) / (
                     spec1.weight + spec2.weight
                 )
-                epsj = float(speciesTransport[spec2][1]) * cc.kb
-                sigj = float(speciesTransport[spec2][2]) * AtoCM
-                dipj = float(speciesTransport[spec2][3]) * DEBYEtoCGS
+                epsj = float(species_transport[spec2][1]) * cc.kb
+                sigj = float(species_transport[spec2][2]) * a2cm
+                dipj = float(species_transport[spec2][3]) * debye2cgs
                 # eq. (13)
-                dipjRed = dipj / np.sqrt(epsj * sigj**3)
-                epsRatio = epsj / epsi
-                tse = 1.0 + 0.25 * poliRed * dipjRed**2 * np.sqrt(epsRatio)
+                dipj_red = dipj / np.sqrt(epsj * sigj**3)
+                eps_ratio = epsj / epsi
+                tse = 1.0 + 0.25 * poli_red * dipj_red**2 * np.sqrt(
+                    eps_ratio
+                )
                 eok = tse**2 * np.sqrt(
-                    float(speciesTransport[spec1][1])
-                    * float(speciesTransport[spec2][1])
+                    float(species_transport[spec1][1])
+                    * float(species_transport[spec2][1])
                 )
                 # enter the loop on temperature
                 spthdiffcoef = []
-                tTab = []
-                for n in range(NTFit):
+                t_tab = []
+                for n in range(ntfit):
                     t = species_info.low_temp + dt * n
                     tslog = np.log(t) - np.log(eok)
                     # eq. (53)
                     thdifcoeff = (
                         15.0
                         / 2.0
-                        * Wji
+                        * wji
                         * (2.0 * astar(tslog) + 5.0)
                         * (6.0 * cstar(tslog) - 5.0)
                         / (
@@ -822,10 +835,10 @@ def thermaldiffratios(
                     )
 
                     # log transformation for polyfit
-                    tTab.append(t)
+                    t_tab.append(t)
                     spthdiffcoef.append(thdifcoeff)
 
-                coftd[k].append(np.polyfit(tTab, spthdiffcoef, 3))
+                coftd[k].append(np.polyfit(t_tab, spthdiffcoef, 3))
 
     # header for thermal diff ratios
     cw.writer(fstream)
@@ -865,7 +878,7 @@ def thermaldiffratios(
 
 def astar(tslog):
     """Compute astar."""
-    aTab = [
+    a_tab = [
         0.1106910525e01,
         -0.7065517161e-02,
         -0.1671975393e-01,
@@ -875,16 +888,16 @@ def astar(tslog):
         0.1720853282e-03,
     ]
 
-    B = aTab[6]
+    a = a_tab[6]
     for i in range(6):
-        B = aTab[5 - i] + B * tslog
+        a = a_tab[5 - i] + a * tslog
 
-    return B
+    return a
 
 
 def bstar(tslog):
     """Compute bstar."""
-    bTab = [
+    b_tab = [
         0.1199673577e01,
         -0.1140928763e00,
         -0.2147636665e-02,
@@ -894,16 +907,16 @@ def bstar(tslog):
         0.2492954809e-03,
     ]
 
-    B = bTab[6]
+    b = b_tab[6]
     for i in range(6):
-        B = bTab[5 - i] + B * tslog
+        b = b_tab[5 - i] + b * tslog
 
-    return B
+    return b
 
 
 def cstar(tslog):
     """Compute cstar."""
-    cTab = [
+    c_tab = [
         0.8386993788e00,
         0.4748325276e-01,
         0.3250097527e-01,
@@ -913,21 +926,21 @@ def cstar(tslog):
         -0.2115417788e-03,
     ]
 
-    B = cTab[6]
+    c = c_tab[6]
     for i in range(6):
-        B = cTab[5 - i] + B * tslog
+        c = c_tab[5 - i] + c * tslog
 
-    return B
+    return c
 
 
-def om22_CHEMKIN(tr, dst):
+def om22_chemkin(tr, dst):
     """Compute OM22."""
     # This is an overhaul of CANTERA version 2.3
     # range of dst
-    dstTab = [0.0, 0.25, 0.50, 0.75, 1.0, 1.5, 2.0, 2.5]
+    dst_tab = [0.0, 0.25, 0.50, 0.75, 1.0, 1.5, 2.0, 2.5]
 
     # range of tr
-    trTab = [
+    tr_tab = [
         0.1,
         0.2,
         0.3,
@@ -969,7 +982,7 @@ def om22_CHEMKIN(tr, dst):
 
     # tab of omega22 corresp. to (tr, dst)
     # CANTERA
-    omegaTab = [
+    omega_tab = [
         4.1005,
         4.266,
         4.833,
@@ -1277,23 +1290,23 @@ def om22_CHEMKIN(tr, dst):
             - 0.343e-8 * tr * tr * tr
         )
     else:
-        # Find tr idx in trTab
+        # Find tr idx in tr_tab
         if tr <= 0.2:
             ii = 1
         else:
             ii = 36
         for i in range(1, 37):
-            if (tr > trTab[i - 1]) and (tr <= trTab[i]):
+            if (tr > tr_tab[i - 1]) and (tr <= tr_tab[i]):
                 ii = i
                 break
-        # Find dst idx in dstTab
+        # Find dst idx in dst_tab
         if abs(dst) >= 1.0e-5:
             if dst <= 0.25:
                 kk = 1
             else:
                 kk = 6
             for i in range(1, 7):
-                if (dstTab[i - 1] < dst) and (dstTab[i] >= dst):
+                if (dst_tab[i - 1] < dst) and (dst_tab[i] >= dst):
                     kk = i
                     break
             # Find surrounding values and interpolate
@@ -1303,32 +1316,32 @@ def om22_CHEMKIN(tr, dst):
                 arg = np.zeros(3)
                 val = np.zeros(3)
                 for k in range(3):
-                    arg[k] = dstTab[kk - 1 + k]
-                    val[k] = omegaTab[8 * (ii - 1 + i) + (kk - 1 + k)]
+                    arg[k] = dst_tab[kk - 1 + k]
+                    val[k] = omega_tab[8 * (ii - 1 + i) + (kk - 1 + k)]
                 vert[i] = qinterp(dst, arg, val)
             # Second on tr
             arg = np.zeros(3)
             for i in range(3):
-                arg[i] = trTab[ii - 1 + i]
+                arg[i] = tr_tab[ii - 1 + i]
             omeg12 = qinterp(tr, arg, vert)
         else:
             arg = np.zeros(3)
             val = np.zeros(3)
             for i in range(3):
-                arg[i] = trTab[ii - 1 + i]
-                val[i] = omegaTab[8 * (ii - 1 + i)]
+                arg[i] = tr_tab[ii - 1 + i]
+                val[i] = omega_tab[8 * (ii - 1 + i)]
             omeg12 = qinterp(tr, arg, val)
     return omeg12
 
 
-def om11_CHEMKIN(tr, dst):
+def om11_chemkin(tr, dst):
     """Compute OM11."""
     # This is an overhaul of CANTERA version 2.3
     # range of dst
-    dstTab = [0.0, 0.25, 0.50, 0.75, 1.0, 1.5, 2.0, 2.5]
+    dst_tab = [0.0, 0.25, 0.50, 0.75, 1.0, 1.5, 2.0, 2.5]
 
     # range of tr
-    trTab = [
+    tr_tab = [
         0.1,
         0.2,
         0.3,
@@ -1370,7 +1383,7 @@ def om11_CHEMKIN(tr, dst):
 
     # tab of omega11 corresp. to (tr, dst)
     # CANTERA
-    omegaTab = [
+    omega_tab = [
         4.008,
         4.002,
         4.655,
@@ -1678,23 +1691,23 @@ def om11_CHEMKIN(tr, dst):
             - 0.343e-8 * tr * tr * tr
         )
     else:
-        # Find tr idx in trTab
+        # Find tr idx in tr_tab
         if tr <= 0.2:
             ii = 1
         else:
             ii = 36
         for i in range(1, 37):
-            if (tr > trTab[i - 1]) and (tr <= trTab[i]):
+            if (tr > tr_tab[i - 1]) and (tr <= tr_tab[i]):
                 ii = i
                 break
-        # Find dst idx in dstTab
+        # Find dst idx in dst_tab
         if abs(dst) >= 1.0e-5:
             if dst <= 0.25:
                 kk = 1
             else:
                 kk = 6
             for i in range(1, 7):
-                if (dstTab[i - 1] < dst) and (dstTab[i] >= dst):
+                if (dst_tab[i - 1] < dst) and (dst_tab[i] >= dst):
                     kk = i
                     break
             # Find surrounding values and interpolate
@@ -1704,20 +1717,20 @@ def om11_CHEMKIN(tr, dst):
                 arg = np.zeros(3)
                 val = np.zeros(3)
                 for k in range(3):
-                    arg[k] = dstTab[kk - 1 + k]
-                    val[k] = omegaTab[8 * (ii - 1 + i) + (kk - 1 + k)]
+                    arg[k] = dst_tab[kk - 1 + k]
+                    val[k] = omega_tab[8 * (ii - 1 + i) + (kk - 1 + k)]
                 vert[i] = qinterp(dst, arg, val)
             # Second on tr
             arg = np.zeros(3)
             for i in range(3):
-                arg[i] = trTab[ii - 1 + i]
+                arg[i] = tr_tab[ii - 1 + i]
             omeg12 = qinterp(tr, arg, vert)
         else:
             arg = np.zeros(3)
             val = np.zeros(3)
             for i in range(3):
-                arg[i] = trTab[ii - 1 + i]
-                val[i] = omegaTab[8 * (ii - 1 + i)]
+                arg[i] = tr_tab[ii - 1 + i]
+                val[i] = omega_tab[8 * (ii - 1 + i)]
             omeg12 = qinterp(tr, arg, val)
     return omeg12
 
@@ -1735,7 +1748,7 @@ def qinterp(x0, x, y):
     return val
 
 
-def getCVdRspecies(mechanism, t, species):
+def get_cv_dr_species(mechanism, t, species):
     """Get the parameters of a thermo model."""
     model = mechanism.species(species.name).thermo
     if not model.n_coeffs == 15:
@@ -1760,8 +1773,8 @@ def getCVdRspecies(mechanism, t, species):
     )
 
 
-def Fcorr(t, eps_k):
-    """Compute Fcorr value."""
+def f_corr(t, eps_k):
+    """Compute f_corr value."""
     thtwo = 3.0 / 2.0
     return (
         1
@@ -1771,29 +1784,29 @@ def Fcorr(t, eps_k):
     )
 
 
-def Xi(spec1, spec2, speciesTransport):
-    """Compute Xi."""
+def xi(spec1, spec2, species_transport):
+    """Compute xi."""
     dipmin = 1e-20
     # 1 is polar, 2 is nonpolar
     # err in eq. (11) ?
-    if (float(speciesTransport[spec2][3]) < dipmin) and (
-        float(speciesTransport[spec1][3]) > dipmin
+    if (float(species_transport[spec2][3]) < dipmin) and (
+        float(species_transport[spec1][3]) > dipmin
     ):
-        xi = 1.0 + 1.0 / 4.0 * redPol(spec2, speciesTransport) * redDip(
-            spec1, speciesTransport
-        ) * redDip(spec1, speciesTransport) * np.sqrt(
-            float(speciesTransport[spec1][1])
-            / float(speciesTransport[spec2][1])
+        xi = 1.0 + 1.0 / 4.0 * red_pol(spec2, species_transport) * red_dip(
+            spec1, species_transport
+        ) * red_dip(spec1, species_transport) * np.sqrt(
+            float(species_transport[spec1][1])
+            / float(species_transport[spec2][1])
         )
     # 1 is nonpolar, 2 is polar
-    elif (float(speciesTransport[spec2][3]) > dipmin) and (
-        float(speciesTransport[spec1][3]) < dipmin
+    elif (float(species_transport[spec2][3]) > dipmin) and (
+        float(species_transport[spec1][3]) < dipmin
     ):
-        xi = 1.0 + 1.0 / 4.0 * redPol(spec1, speciesTransport) * redDip(
-            spec2, speciesTransport
-        ) * redDip(spec2, speciesTransport) * np.sqrt(
-            float(speciesTransport[spec2][1])
-            / float(speciesTransport[spec1][1])
+        xi = 1.0 + 1.0 / 4.0 * red_pol(spec1, species_transport) * red_dip(
+            spec2, species_transport
+        ) * red_dip(spec2, species_transport) * np.sqrt(
+            float(species_transport[spec2][1])
+            / float(species_transport[spec1][1])
         )
     # normal case, either both polar or both nonpolar
     else:
@@ -1802,18 +1815,18 @@ def Xi(spec1, spec2, speciesTransport):
     return xi
 
 
-def Xi_bool(spec1, spec2, speciesTransport):
-    """Compute the boolean of Xi."""
+def xi_bool(spec1, spec2, species_transport):
+    """Compute the boolean of xi."""
     dipmin = 1e-20
     # 1 is polar, 2 is nonpolar
     # err in eq. (11) ?
-    if (float(speciesTransport[spec2][3]) < dipmin) and (
-        float(speciesTransport[spec1][3]) > dipmin
+    if (float(species_transport[spec2][3]) < dipmin) and (
+        float(species_transport[spec1][3]) > dipmin
     ):
         xi_b = False
     # 1 is nonpolar, 2 is polar
-    elif (float(speciesTransport[spec2][3]) > dipmin) and (
-        float(speciesTransport[spec1][3]) < dipmin
+    elif (float(species_transport[spec2][3]) > dipmin) and (
+        float(species_transport[spec1][3]) < dipmin
     ):
         xi_b = False
     # normal case, either both polar or both nonpolar
@@ -1823,34 +1836,34 @@ def Xi_bool(spec1, spec2, speciesTransport):
     return xi_b
 
 
-def redPol(spec, speciesTransport):
+def red_pol(spec, species_transport):
     """Compute polarization value."""
     return (
-        float(speciesTransport[spec][4])
-        / float(speciesTransport[spec][2]) ** 3.0
+        float(species_transport[spec][4])
+        / float(species_transport[spec][2]) ** 3.0
     )
 
 
-def redDip(spec, speciesTransport):
+def red_dip(spec, species_transport):
     """Compute dipole value."""
     # compute single constants in g/cm/s
     # conversion coefs
-    AtoCM = 1.0e-8
-    DEBYEtoCGS = 1.0e-18
-    convert = DEBYEtoCGS / np.sqrt(cc.kb * AtoCM**3.0)
+    a2cm = 1.0e-8
+    debye2cgs = 1.0e-18
+    convert = debye2cgs / np.sqrt(cc.kb * a2cm**3.0)
     return (
         convert
-        * float(speciesTransport[spec][3])
+        * float(species_transport[spec][3])
         / np.sqrt(
-            float(speciesTransport[spec][1])
-            * float(speciesTransport[spec][2]) ** 3.0
+            float(species_transport[spec][1])
+            * float(species_transport[spec][2]) ** 3.0
         )
     )
 
 
-def getCriticalParameters(fstream, mechanism, species_info):
+def critical_parameters(fstream, mechanism, species_info):
     """Write the critical parameters."""
-    TabulatedCriticalParams = {
+    tabulated_critical_params = {
         "H2": {
             "Tci": 33.145,
             "Pci": 12.964,
@@ -1980,7 +1993,7 @@ def getCriticalParameters(fstream, mechanism, species_info):
     cw.writer(fstream, "get_mw(wt);")
 
     for species in species_info.nonqss_species:
-        if species.name in TabulatedCriticalParams:
+        if species.name in tabulated_critical_params:
             cw.writer(fstream)
             cw.writer(
                 fstream,
@@ -1992,7 +2005,7 @@ def getCriticalParameters(fstream, mechanism, species_info):
                 "Tci[%d] = %f ; "
                 % (
                     species.idx,
-                    TabulatedCriticalParams[species.name]["Tci"],
+                    tabulated_critical_params[species.name]["Tci"],
                 ),
             )
             cw.writer(
@@ -2003,9 +2016,9 @@ def getCriticalParameters(fstream, mechanism, species_info):
                     species.idx,
                     species.idx,
                     species.idx,
-                    TabulatedCriticalParams[species.name]["wt"],
-                    TabulatedCriticalParams[species.name]["wt"],
-                    TabulatedCriticalParams[species.name]["Pci"],
+                    tabulated_critical_params[species.name]["wt"],
+                    tabulated_critical_params[species.name]["wt"],
+                    tabulated_critical_params[species.name]["Pci"],
                 ),
             )
             cw.writer(
@@ -2014,8 +2027,8 @@ def getCriticalParameters(fstream, mechanism, species_info):
                 % (
                     species.idx,
                     species.idx,
-                    TabulatedCriticalParams[species.name]["wt"],
-                    TabulatedCriticalParams[species.name]["Pci"],
+                    tabulated_critical_params[species.name]["wt"],
+                    tabulated_critical_params[species.name]["Pci"],
                 ),
             )
             cw.writer(
@@ -2023,7 +2036,7 @@ def getCriticalParameters(fstream, mechanism, species_info):
                 "acentric_i[%d] = %f ;"
                 % (
                     species.idx,
-                    TabulatedCriticalParams[species.name]["acentric_factor"],
+                    tabulated_critical_params[species.name]["acentric_factor"],
                 ),
             )
         else:
