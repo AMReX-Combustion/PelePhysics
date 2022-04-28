@@ -383,8 +383,10 @@ def ajac_reaction_precond(
             # sri = reaction.rate.falloff_coeffs
             # nsri = len(sri)
             is_sri = True
+        elif reaction.rate.type == "Lindemann":
+            pass
         else:
-            print("Unrecognized reaction rate type")
+            print(f"Unrecognized reaction rate type: {reaction.equation}")
             sys.exit(1)
     elif has_alpha:
         corr_s = "alpha * "
@@ -1316,8 +1318,10 @@ def ajac_reaction_d(
             # sri = reaction.rate.falloff_coeffs
             # nsri = len(sri)
             is_sri = True
+        elif reaction.rate.type == "Lindemann":
+            pass
         else:
-            print("Unrecognized reaction rate type")
+            print(f"Unrecognized reaction rate type: {reaction.equation}")
             sys.exit(1)
     elif has_alpha:
         corr_s = "alpha * "

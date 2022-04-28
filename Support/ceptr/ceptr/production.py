@@ -172,6 +172,8 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
             dim = cu.phase_space_units(reaction.reactants)
             third_body = reaction.reaction_type == "three-body"
             falloff = reaction.reaction_type == "falloff"
+            is_troe = False
+            is_sri = False
             aeuc = cu.activation_energy_units()
             if not third_body and not falloff:
                 uc = cu.prefactor_units(
@@ -233,8 +235,12 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     sri = reaction.rate.falloff_coeffs
                     nsri = len(sri)
                     # is_sri = True
+                elif reaction.rate.type == "Lindemann":
+                    pass
                 else:
-                    print("Unrecognized reaction rate type")
+                    print(
+                        f"Unrecognized reaction rate type: {reaction.equation}"
+                    )
                     sys.exit(1)
 
             cw.writer(
@@ -332,7 +338,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     )
                     cw.writer(fstream, "Corr = F * F_troe;")
                     cw.writer(fstream, "qf[%d] *= Corr * k_f;" % idx)
-                elif reaction.sri:
+                elif is_sri:
                     cw.writer(fstream, "F = redP / (1.0 + redP);")
                     cw.writer(fstream, "logPred = log10(redP);")
                     cw.writer(fstream, "X = 1.0 / (1.0 + logPred*logPred);")
@@ -558,6 +564,8 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
             dim = cu.phase_space_units(reaction.reactants)
             third_body = reaction.reaction_type == "three-body"
             falloff = reaction.reaction_type == "falloff"
+            is_troe = False
+            is_sri = False
             aeuc = cu.activation_energy_units()
             if not third_body and not falloff:
                 uc = cu.prefactor_units(
@@ -619,8 +627,12 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     sri = reaction.rate.falloff_coeffs
                     nsri = len(sri)
                     # is_sri = True
+                elif reaction.rate.type == "Lindemann":
+                    pass
                 else:
-                    print("Unrecognized reaction rate type")
+                    print(
+                        f"Unrecognized reaction rate type: {reaction.equation}"
+                    )
                     sys.exit(1)
 
             cw.writer(
@@ -739,7 +751,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                         "const amrex::Real qf = Corr * k_f * (%s);"
                         % (forward_sc),
                     )
-                elif reaction.sri:
+                elif is_sri:
                     cw.writer(
                         fstream, "const amrex::Real F = redP / (1.0 + redP);"
                     )
