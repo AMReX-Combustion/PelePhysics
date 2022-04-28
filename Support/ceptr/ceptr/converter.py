@@ -22,8 +22,9 @@ class Converter:
     def __init__(self, mechanism):
         self.mechanism = mechanism
         self.mechpath = pathlib.Path(self.mechanism.source)
-        self.hdrname = self.mechpath.parents[0] / "newmechanism.H"
-        self.cppname = self.mechpath.parents[0] / "newmechanism.cpp"
+        self.rootname = "mechanism"
+        self.hdrname = self.mechpath.parents[0] / f"{self.rootname}.H"
+        self.cppname = self.mechpath.parents[0] / f"{self.rootname}.cpp"
         self.species_info = csi.SpeciesInfo()
 
         # Reactions

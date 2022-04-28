@@ -75,10 +75,11 @@ jobs:
       - name: Lint with flake8
         run: poetry run flake8 .
       - name: Run tests
-        run: |
-          poetry run pytest
-          poetry run convert -f ${{github.workspace}}/Support/Fuego/Mechanism/Models/air/mechanism.yaml
-          poetry run convert -f ${{github.workspace}}/Support/Fuego/Mechanism/Models/LiDryer/mechanism.yaml
+        run: poetry run pytest
+      - name: Convert air mechanism
+        run: poetry run convert -f ${{github.workspace}}/Support/Fuego/Mechanism/Models/air/mechanism.yaml
+      - name: Convert LiDryer mechanism
+        run: poetry run convert -f ${{github.workspace}}/Support/Fuego/Mechanism/Models/LiDryer/mechanism.yaml
 
   Transport-EOS-Reactions:
     needs: Formatting
