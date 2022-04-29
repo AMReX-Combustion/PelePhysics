@@ -1964,7 +1964,7 @@ def enhancement_d(mechanism, species_info, reaction):
         sys.exit(1)
 
     if not hasattr(reaction, "efficiencies"):
-        print("FIXME")
+        print("FIXME EFFICIENCIES")
         sys.exit(1)
         species, coefficient = third_body
         if species == "<mixture>":
