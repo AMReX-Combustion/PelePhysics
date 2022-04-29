@@ -58,16 +58,14 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 fstream,
                 cw.comment("reaction %d: %s" % (orig_idx, reaction.equation)),
             )
-            # FIXME FORD
-            if hasattr(reaction, "ford"):
-                # if len(reaction.ford) > 0:
+            if bool(reaction.orders):
                 cw.writer(
                     fstream,
                     "qf[%d] = %s;"
                     % (
                         idx,
                         cu.qss_sorted_phase_space(
-                            mechanism, species_info, reaction.ford
+                            mechanism, species_info, reaction.orders
                         ),
                     ),
                 )
@@ -176,13 +174,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
             is_sri = False
             aeuc = cu.activation_energy_units()
             if not third_body and not falloff:
-                uc = cu.prefactor_units(
-                    cc.ureg("mole/cm**3"), 1 - dim
-                )  # Case 3 !PD, !TB
+                # Case 3 !PD, !TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-                pef = (reaction.rate.pre_exponential_factor * ctuc).to(
-                    uc.to_root_units()
-                )
+                pef = (
+                    reaction.rate.pre_exponential_factor * ctuc
+                ).to_base_units()
                 beta = reaction.rate.temperature_exponent
                 ae = (
                     reaction.rate.activation_energy
@@ -190,13 +186,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
             elif not falloff:
-                uc = cu.prefactor_units(
-                    cc.ureg("mole/cm**3"), -dim
-                )  # Case 2 !PD, TB
+                # Case 2 !PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
-                pef = (reaction.rate.pre_exponential_factor * ctuc).to(
-                    uc.to_root_units()
-                )
+                pef = (
+                    reaction.rate.pre_exponential_factor * ctuc
+                ).to_base_units()
                 beta = reaction.rate.temperature_exponent
                 ae = (
                     reaction.rate.activation_energy
@@ -204,13 +198,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
             else:
-                uc = cu.prefactor_units(
-                    cc.ureg("mole/cm**3"), 1 - dim
-                )  # Case 2 !PD, TB
+                # Case 2 !PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-                pef = (reaction.high_rate.pre_exponential_factor * ctuc).to(
-                    uc.to_root_units()
-                )
+                pef = (
+                    reaction.high_rate.pre_exponential_factor * ctuc
+                ).to_base_units()
                 beta = reaction.high_rate.temperature_exponent
                 ae = (
                     reaction.high_rate.activation_energy
@@ -218,9 +210,9 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
 
-                low_pef = (reaction.low_rate.pre_exponential_factor * ctuc).to(
-                    uc.to_root_units()
-                )
+                low_pef = (
+                    reaction.low_rate.pre_exponential_factor * ctuc
+                ).to_base_units()
                 low_beta = reaction.low_rate.temperature_exponent
                 low_ae = (
                     reaction.low_rate.activation_energy
@@ -374,17 +366,13 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 pefr, betar, aer = reaction.rev
                 dim_rev = cu.phase_space_units(reaction.products)
                 if not third_body and not falloff:
-                    uc = cu.prefactor_units(
-                        cc.ureg("mole/cm**3"), 1 - dim_rev
-                    )  # Case 3 !PD, !TB
+                    # Case 3 !PD, !TB
                     ctuc = cu.prefactor_units(
                         cc.ureg("kmol/m**3"), 1 - dim_rev
                     )
                     print("FIXME REVERSE grab rev params")
                 elif not falloff:
-                    uc = cu.prefactor_units(
-                        cc.ureg("mole/cm**3"), -dim_rev
-                    )  # Case 2 !PD, TB
+                    # Case 2 !PD, TB
                     ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim_rev)
                     print("FIXME REVERSE grab rev params")
                 else:
@@ -540,10 +528,9 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
             reaction = mechanism.reaction(orig_idx)
             cw.writer(fstream, "{")
             # FIXME FORD
-            if hasattr(reaction, "ford"):
-                # if len(reaction.ford) > 0:
+            if bool(reaction.orders):
                 forward_sc = cu.qss_sorted_phase_space(
-                    mechanism, species_info, reaction.ford
+                    mechanism, species_info, reaction.orders
                 )
             else:
                 forward_sc = cu.qss_sorted_phase_space(
@@ -568,13 +555,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
             is_sri = False
             aeuc = cu.activation_energy_units()
             if not third_body and not falloff:
-                uc = cu.prefactor_units(
-                    cc.ureg("mole/cm**3"), 1 - dim
-                )  # Case 3 !PD, !TB
+                # Case 3 !PD, !TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-                pef = (reaction.rate.pre_exponential_factor * ctuc).to(
-                    uc.to_root_units()
-                )
+                pef = (
+                    reaction.rate.pre_exponential_factor * ctuc
+                ).to_base_units()
                 beta = reaction.rate.temperature_exponent
                 ae = (
                     reaction.rate.activation_energy
@@ -582,13 +567,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
             elif not falloff:
-                uc = cu.prefactor_units(
-                    cc.ureg("mole/cm**3"), -dim
-                )  # Case 2 !PD, TB
+                # Case 2 !PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
-                pef = (reaction.rate.pre_exponential_factor * ctuc).to(
-                    uc.to_root_units()
-                )
+                pef = (
+                    reaction.rate.pre_exponential_factor * ctuc
+                ).to_base_units()
                 beta = reaction.rate.temperature_exponent
                 ae = (
                     reaction.rate.activation_energy
@@ -596,13 +579,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
             else:
-                uc = cu.prefactor_units(
-                    cc.ureg("mole/cm**3"), 1 - dim
-                )  # Case 2 !PD, TB
+                # Case 2 !PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-                pef = (reaction.high_rate.pre_exponential_factor * ctuc).to(
-                    uc.to_root_units()
-                )
+                pef = (
+                    reaction.high_rate.pre_exponential_factor * ctuc
+                ).to_base_units()
                 beta = reaction.high_rate.temperature_exponent
                 ae = (
                     reaction.high_rate.activation_energy
@@ -610,9 +591,9 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
 
-                low_pef = (reaction.low_rate.pre_exponential_factor * ctuc).to(
-                    uc.to_root_units()
-                )
+                low_pef = (
+                    reaction.low_rate.pre_exponential_factor * ctuc
+                ).to_base_units()
                 low_beta = reaction.low_rate.temperature_exponent
                 low_ae = (
                     reaction.low_rate.activation_energy
@@ -801,17 +782,13 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 pefr, betar, aer = reaction.rev
                 dim_rev = cu.phase_space_units(reaction.products)
                 if not third_body and not falloff:
-                    uc = cu.prefactor_units(
-                        cc.ureg("mole/cm**3"), 1 - dim_rev
-                    )  # Case 3 !PD, !TB
+                    # Case 3 !PD, !TB
                     ctuc = cu.prefactor_units(
                         cc.ureg("kmol/m**3"), 1 - dim_rev
                     )
                     print("FIXME REVERSE grab rev params")
                 elif not falloff:
-                    uc = cu.prefactor_units(
-                        cc.ureg("mole/cm**3"), -dim_rev
-                    )  # Case 2 !PD, TB
+                    # Case 2 !PD, TB
                     ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim_rev)
                     print("FIXME REVERSE grab rev params")
                 else:
