@@ -38,7 +38,7 @@ struct TurbParm
   amrex::Real turb_conv_vel =
     1.; // Mean inlet velocity, used to move through data planes
 
-  amrex::Gpu::DeviceVector<long> m_offset_dv;
+  amrex::Vector<long> m_offset;
   int kmax;     // Number of plane in Turbfile
   long* offset; // Binary offset of each data plane in Turbfile
   long offset_size;
