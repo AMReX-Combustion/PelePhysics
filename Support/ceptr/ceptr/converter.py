@@ -53,16 +53,6 @@ class Converter:
         # sp coupling network indices j of non zero elem
         self.QSS_SC_Sj = []
 
-        self.reacRemoveIDList = []
-        try:
-            f = open("reac_forward_to_remove", "r")
-            lines = f.readlines()
-            f.close()
-            for line in lines:
-                self.reacRemoveIDList.append(int(line))
-        except FileNotFoundError:
-            print("No forward reaction to remove")
-
         # List of intermediate helpers -- not optimal but can't be more clever rn
         self.list_of_intermediate_helpers = []
 
@@ -71,7 +61,7 @@ class Converter:
         # 0/1    /2   /3      /4  /5      /6
         self.reaction_info = cri.sort_reactions(self.mechanism)
 
-        # FIXME
+        # FIXME QSS
         # # QSS  -- sort reactions/networks/check validity of QSSs
         # if self.nQSSspecies > 0:
         #     print("\n\n\n\n---------------------------------")
@@ -100,7 +90,9 @@ class Converter:
         """Set the species."""
         # Fill species counters
         self.species_info.nAllspecies = self.mechanism.n_species
-        self.species_info.nQSSspecies = 0  # FIXME len(mechanism.qss_species())
+        self.species_info.nQSSspecies = (
+            0  # FIXME QSS len(mechanism.qss_species())
+        )
         self.species_info.n_species = (
             self.species_info.nAllspecies - self.species_info.nQSSspecies
         )
@@ -145,7 +137,7 @@ class Converter:
                 self.species_info.mech_idx_map[species.name] = id
                 sorted_idx += 1
 
-        # FIXME
+        # FIXME QSS
         # # Initialize QSS species-species, species-reaction, and species coupling networks
         # self.QSS_SSnet = np.zeros([self.nQSSspecies, self.nQSSspecies], "d")
         # self.QSS_SRnet = np.zeros(
@@ -246,9 +238,9 @@ class Converter:
             # cck.ckams(hdr, self.mechanism, self.species_info)
             cck.cksms(hdr, self.mechanism, self.species_info)
 
-            # QSS
+            # FIXME QSS
             if self.species_info.nQSSspecies > 0:
-                print("FIXME")
+                print("FIXME QSS")
                 sys.exit(1)
                 # print("\n\n\n\n---------------------------------")
                 # print("+++++++++GROUPS++++++++++++++++++")

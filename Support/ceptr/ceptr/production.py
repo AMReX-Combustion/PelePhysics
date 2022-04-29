@@ -58,7 +58,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 fstream,
                 cw.comment("reaction %d: %s" % (orig_idx, reaction.equation)),
             )
-            # FIXME
+            # FIXME FORD
             if hasattr(reaction, "ford"):
                 # if len(reaction.ford) > 0:
                 cw.writer(
@@ -369,7 +369,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     cw.writer(fstream, "Corr = redP / (1. + redP);")
                     cw.writer(fstream, "qf[%d] *= Corr * k_f;" % idx)
 
-            # FIXME
+            # FIXME REVERSE
             if False:
                 pefr, betar, aer = reaction.rev
                 dim_rev = cu.phase_space_units(reaction.products)
@@ -380,13 +380,13 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     ctuc = cu.prefactor_units(
                         cc.ureg("kmol/m**3"), 1 - dim_rev
                     )
-                    print("Fixme grab rev params")
+                    print("FIXME REVERSE grab rev params")
                 elif not falloff:
                     uc = cu.prefactor_units(
                         cc.ureg("mole/cm**3"), -dim_rev
                     )  # Case 2 !PD, TB
                     ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim_rev)
-                    print("Fixme grab rev params")
+                    print("FIXME REVERSE grab rev params")
                 else:
                     print("REV reaction cannot be PD")
                     sys.exit(1)
@@ -539,7 +539,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
         for orig_idx, _ in reaction_info.idxmap.items():
             reaction = mechanism.reaction(orig_idx)
             cw.writer(fstream, "{")
-            # FIXME
+            # FIXME FORD
             if hasattr(reaction, "ford"):
                 # if len(reaction.ford) > 0:
                 forward_sc = cu.qss_sorted_phase_space(
@@ -796,7 +796,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                         % (forward_sc),
                     )
 
-            # FIXME
+            # FIXME REVERSE
             if False:
                 pefr, betar, aer = reaction.rev
                 dim_rev = cu.phase_space_units(reaction.products)
@@ -807,13 +807,13 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     ctuc = cu.prefactor_units(
                         cc.ureg("kmol/m**3"), 1 - dim_rev
                     )
-                    print("Fixme grab rev params")
+                    print("FIXME REVERSE grab rev params")
                 elif not falloff:
                     uc = cu.prefactor_units(
                         cc.ureg("mole/cm**3"), -dim_rev
                     )  # Case 2 !PD, TB
                     ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim_rev)
-                    print("Fixme grab rev params")
+                    print("FIXME REVERSE grab rev params")
                 else:
                     print("REV reaction cannot be PD")
                     sys.exit(1)
@@ -966,7 +966,7 @@ def enhancement_d_with_qss(mechanism, species_info, reaction):
         sys.exit(1)
 
     if not hasattr(reaction, "efficiencies"):
-        print("FIXME")
+        print("FIXME EFFICIENCIES")
         sys.exit(1)
         species, coefficient = third_body
         if species == "<mixture>":

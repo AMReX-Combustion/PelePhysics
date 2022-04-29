@@ -13,10 +13,16 @@ class ReactionInfo:
         self.n_reactions = mechanism.n_reactions
         self.rs = []
         self.rs_unsorted = mechanism.reactions()
-        self.sorted = False
+        self.is_sorted = False
         self.index = [0]
         self.idxmap = OrderedDict()
-        self.reacRemoveIDList = []  # FIXME
+        self.remove_id_list = []
+        try:
+            with open("reac_forward_to_remove", "r") as f:
+                for line in f:
+                    self.remove_id_list.append(int(line))
+        except FileNotFoundError:
+            print("No forward reaction to remove")
 
 
 def sort_reactions(mechanism):
@@ -80,7 +86,7 @@ def sort_reactions(mechanism):
             i += 1
     reaction_info.index.append(i)
 
-    reaction_info.sorted = True
+    reaction_info.is_sorted = True
 
     return reaction_info
 

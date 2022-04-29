@@ -60,7 +60,7 @@ def activation_energy_units():
 
 def is_remove_forward(reaction_info, idx):
     """Return if the reaction is in the removed list."""
-    return idx in reaction_info.reacRemoveIDList
+    return idx in reaction_info.remove_id_list
 
 
 def fkc_conv_inv(self, mechanism, reaction):
