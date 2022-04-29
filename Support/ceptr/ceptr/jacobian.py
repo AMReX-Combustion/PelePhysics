@@ -40,8 +40,8 @@ def ajac_precond(fstream, mechanism, species_info, reaction_info):
 
     cw.writer(
         fstream,
-        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; //"
-        " temperature cache",
+        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
+        + cw.comment("temperature cache"),
     )
     cw.writer(fstream, "amrex::Real invT = 1.0 / tc[1];")
     cw.writer(fstream, "amrex::Real invT2 = invT * invT;")
@@ -93,7 +93,7 @@ def ajac_precond(fstream, mechanism, species_info, reaction_info):
         cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
 
     if species_info.nQSSspecies > 0:
-        cw.writer(fstream, "// Fill sc_qss here")
+        cw.writer(fstream, cw.comment("Fill sc_qss here"))
         cw.writer(
             fstream, "amrex::Real sc_qss[%d];" % species_info.nQSSspecies
         )
@@ -239,7 +239,7 @@ def ajac_precond(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "amrex::Real tmp2 = tmp1*tmp3;")
     cw.writer(fstream, "amrex::Real dehmixdc;")
 
-    cw.writer(fstream, "// dTdot/d[X]")
+    cw.writer(fstream, cw.comment("dTdot/d[X]"))
     cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
     cw.writer(fstream, "dehmixdc = 0.0;")
     cw.writer(fstream, "for (int m = 0; m < %d; ++m) {" % n_species)
@@ -252,7 +252,7 @@ def ajac_precond(fstream, mechanism, species_info, reaction_info):
     )
     cw.writer(fstream, "}")
 
-    cw.writer(fstream, "// dTdot/dT")
+    cw.writer(fstream, cw.comment("dTdot/dT"))
     cw.writer(
         fstream,
         "J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;"
@@ -272,13 +272,13 @@ def ajac_reaction_precond(
         is_pd = True
         # FIXME is this right?
         has_alpha = True
-        cw.writer(fstream, "// also 3-body")
+        cw.writer(fstream, cw.comment("also 3-body"))
         # if third_body:
         #     has_alpha = True
-        #     cw.writer(fstream,"// also 3-body")
+        #     cw.writer(fstream,cw.comment("also 3-body"))
         # else:
         #     has_alpha = False
-        #     cw.writer(fstream,"// non 3-body")
+        #     cw.writer(fstream,cw.comment("non 3-body"))
         #     # print(
         #     #     "FIXME: pressure dependent non-3-body reaction in _ajac_reaction"
         #     # )
@@ -335,19 +335,20 @@ def ajac_reaction_precond(
             )
             cw.writer(
                 fstream,
-                "// FIXME: irreversible reaction in _ajac_reaction may not"
-                " work",
+                cw.comment(
+                    "FIXME: irreversible reaction in _ajac_reaction may not work",
+                ),
             )
         for k in range(n_species):
             if k in sorted_reactants and k in sorted_products:
                 print(
-                    "FIXME: irreversible reaction in _ajac_reaction may not"
-                    " work"
+                    "FIXME: irreversible reaction in _ajac_reaction may not work"
                 )
                 cw.writer(
                     fstream,
-                    "// FIXME: irreversible reaction in _ajac_reaction may not"
-                    " work",
+                    cw.comment(
+                        "FIXME: irreversible reaction in _ajac_reaction may not work",
+                    ),
                 )
 
     dim = cu.phase_space_units(reaction.reactants)
@@ -414,14 +415,14 @@ def ajac_reaction_precond(
         corr_s = ""
 
     if has_alpha:
-        cw.writer(fstream, "// 3-body correction factor")
+        cw.writer(fstream, cw.comment("3-body correction factor"))
         cw.writer(
             fstream,
             "alpha = %s;" % enhancement_d(mechanism, species_info, reaction),
         )
 
     # forward
-    cw.writer(fstream, "// forward")
+    cw.writer(fstream, cw.comment("forward"))
     cw.writer(
         fstream,
         "phi_f = %s;"
@@ -438,14 +439,14 @@ def ajac_reaction_precond(
     )
     #
     if remove_forward:
-        cw.writer(fstream, "// Remove forward reaction")
+        cw.writer(fstream, cw.comment("Remove forward reaction"))
         # DLNKFDT CHECK
         cw.writer(
             fstream,
             "dlnkfdT = %.15g * invT + %.15g *  (%.15g)  * invT2;"
             % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
         )
-        cw.writer(fstream, "//dlnkfdT = 0.0;")
+        cw.writer(fstream, cw.comment("dlnkfdT = 0.0;"))
     else:
         cw.writer(
             fstream,
@@ -454,7 +455,7 @@ def ajac_reaction_precond(
         )
 
     if is_pd:
-        cw.writer(fstream, "// pressure-fall-off")
+        cw.writer(fstream, cw.comment("pressure-fall-off"))
         cw.writer(
             fstream,
             "k_0 = %.15g * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
@@ -476,11 +477,11 @@ def ajac_reaction_precond(
         cw.writer(fstream, "dlogfPrdT = dlogPrdT / (1.0+Pr);")
         #
         if is_sri:
-            cw.writer(fstream, "// SRI form")
+            cw.writer(fstream, cw.comment("SRI form"))
             print("FIXME: sri not supported in _ajac_reaction yet")
             sys.exit(1)
         elif is_troe:
-            cw.writer(fstream, "// Troe form")
+            cw.writer(fstream, cw.comment("Troe form"))
             troe = reaction.rate.falloff_coeffs
             ntroe = len(troe)
             cw.writer(fstream, "logPr = log10(Pr);")
@@ -554,25 +555,25 @@ def ajac_reaction_precond(
                 " dlogFdlogPr * dlogPrdT;",
             )
         else:
-            cw.writer(fstream, "// Lindemann form")
+            cw.writer(fstream, cw.comment("Lindemann form"))
             cw.writer(fstream, "F = 1.0;")
             cw.writer(fstream, "dlogFdlogPr = 0.0;")
             cw.writer(fstream, "dlogFdT = 0.0;")
 
     # reverse
     if not reaction.reversible:
-        cw.writer(fstream, "// rate of progress")
+        cw.writer(fstream, cw.comment("rate of progress"))
         if (not has_alpha) and (not is_pd):
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//q = k_f*phi_f;")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(fstream, cw.comment("q = k_f*phi_f;"))
                 cw.writer(fstream, "q = 0.0;")
             else:
                 cw.writer(fstream, "q = k_f*phi_f;")
         else:
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//q_nocor = k_f*phi_f;")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(fstream, cw.comment("q_nocor = k_f*phi_f;"))
                 cw.writer(fstream, "q_nocor = 0.0;")
             else:
                 cw.writer(fstream, "q_nocor = k_f*phi_f;")
@@ -585,10 +586,12 @@ def ajac_reaction_precond(
         if is_pd:
             cw.writer(fstream, "dlnCorrdT = ln10*(dlogfPrdT + dlogFdT);")
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    "//dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % corr_s,
+                    cw.comment(
+                        "dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % corr_s,
+                    ),
                 )
                 cw.writer(fstream, "dqdT = dlnCorrdT*q;")
             else:
@@ -598,13 +601,15 @@ def ajac_reaction_precond(
                 )
         else:
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(
+                    fstream, cw.comment("dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
+                )
                 cw.writer(fstream, "dqdT = 0;")
             else:
                 cw.writer(fstream, "dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
     else:
-        cw.writer(fstream, "// reverse")
+        cw.writer(fstream, cw.comment("reverse"))
         cw.writer(
             fstream,
             "phi_r = %s;"
@@ -667,18 +672,18 @@ def ajac_reaction_precond(
 
         cw.writer(fstream, "dkrdT = (dlnkfdT - dlnKcdT)*k_r;")
 
-        cw.writer(fstream, "// rate of progress")
+        cw.writer(fstream, cw.comment("rate of progress"))
         if (not has_alpha) and (not is_pd):
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//q = k_f*phi_f - k_r*phi_r;")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(fstream, cw.comment("q = k_f*phi_f - k_r*phi_r;"))
                 cw.writer(fstream, "q = - k_r*phi_r;")
             else:
                 cw.writer(fstream, "q = k_f*phi_f - k_r*phi_r;")
         else:
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//q = k_f*phi_f - k_r*phi_r;")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(fstream, cw.comment("q = k_f*phi_f - k_r*phi_r;"))
                 cw.writer(fstream, "q_nocor = - k_r*phi_r;")
             else:
                 cw.writer(fstream, "q_nocor = k_f*phi_f - k_r*phi_r;")
@@ -691,11 +696,13 @@ def ajac_reaction_precond(
         if is_pd:
             cw.writer(fstream, "dlnCorrdT = ln10*(dlogfPrdT + dlogFdT);")
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) +"
-                    " dlnCorrdT*q;" % corr_s,
+                    cw.comment(
+                        "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r)) +"
+                        " dlnCorrdT*q;" % corr_s,
+                    ),
                 )
                 cw.writer(
                     fstream,
@@ -709,10 +716,13 @@ def ajac_reaction_precond(
                 )
         else:
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
+                    cw.comment(
+                        "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r));"
+                        % corr_s,
+                    ),
                 )
                 cw.writer(fstream, "dqdT = %s( - dkrdT*phi_r);" % corr_s)
             else:
@@ -721,25 +731,31 @@ def ajac_reaction_precond(
                     "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
                 )
 
-    cw.writer(fstream, "// update wdot")
+    cw.writer(fstream, cw.comment("update wdot"))
     for k in sorted(all_dict.keys()):
         s, nu = all_dict[k]
         if nu == 1:
-            cw.writer(fstream, "wdot[%d] += q; // %s" % (k, s))
+            cw.writer(fstream, "wdot[%d] += q;" % (k) + cw.comment("%s" % (s)))
         elif nu == -1:
-            cw.writer(fstream, "wdot[%d] -= q; // %s" % (k, s))
+            cw.writer(fstream, "wdot[%d] -= q;" % (k) + cw.comment("%s" % (s)))
         elif nu > 0:
-            cw.writer(fstream, "wdot[%d] += %.15g * q; // %s" % (k, nu, s))
+            cw.writer(
+                fstream,
+                "wdot[%d] += %.15g * q;" % (k, nu) + cw.comment("%s" % (s)),
+            )
         elif nu < 0:
-            cw.writer(fstream, "wdot[%d] -= %.15g * q; // %s" % (k, -nu, s))
+            cw.writer(
+                fstream,
+                "wdot[%d] -= %.15g * q;" % (k, -nu) + cw.comment("%s" % (s)),
+            )
 
     if is_pd:
-        cw.writer(fstream, "// for convenience")
+        cw.writer(fstream, cw.comment("for convenience"))
         cw.writer(fstream, "k_f *= Corr;")
         if reaction.reversible:
             cw.writer(fstream, "k_r *= Corr;")
     elif has_alpha:
-        cw.writer(fstream, "// for convenience")
+        cw.writer(fstream, cw.comment("for convenience"))
         cw.writer(fstream, "k_f *= alpha;")
         if reaction.reversible:
             cw.writer(fstream, "k_r *= alpha;")
@@ -775,14 +791,14 @@ def ajac_reaction_precond(
         #              rea_dict, pro_dict, dqdc_s,k, remove_forward)
         #    if dqdc_s:
         #        symb_k = species_info.nonqss_species[k].symbol
-        #        cw.writer(fstream,'// d()/d[%s]' % symb_k)
+        #        cw.writer(fstream, cw.comment(d()/d[%s]' % symb_k))
         #        cw.writer(fstream,'dqdci = %s;' % (dqdc_s))
         #        #
         #        for m in sorted(all_dict.keys()):
         #            if all_dict[m][1] != 0:
         #                s1 = 'J[%d] += %.15g * dqdci;' % (k*(n_species+1)+m, all_dict[m][1])
         #                s1 = s1.replace('+= 1 *', '+=').replace('+= -1 *', '-=')
-        #                s2 = '// dwdot[%s]/d[%s]' % (all_dict[m][0], symb_k)
+        #                s2 = cw.comment("dwdot[%s]/d[%s]' % (all_dict[m][0], symb_k)")
         #                cw.writer(fstream,s1.ljust(30) + s2)
 
         # cw.writer(fstream,'}')
@@ -838,11 +854,10 @@ def ajac_reaction_precond(
 
         for m in sorted(all_dict.keys()):
             if all_dict[m][1] != 0:
-                s1 = "J[%d] += %.15g * dqdT; // dwdot[%s]/dT" % (
+                s1 = "J[%d] += %.15g * dqdT;" % (
                     n_species * (n_species + 1) + m,
                     all_dict[m][1],
-                    all_dict[m][0],
-                )
+                ) + cw.comment("dwdot[%s]/dT" % (all_dict[m][0]))
                 s1 = s1.replace("+= 1 *", "+=").replace("+= -1 *", "-=")
                 cw.writer(fstream, s1)
 
@@ -863,7 +878,7 @@ def ajac_reaction_precond(
                 remove_forward,
             )
             if dqdc_s:
-                cw.writer(fstream, "// d()/d[%s]" % all_dict[k][0])
+                cw.writer(fstream, cw.comment("d()/d[%s]" % all_dict[k][0]))
                 cw.writer(fstream, "dqdci = %s;" % (dqdc_s))
                 if reaction.reversible or k in rea_dict:
                     for m in sorted(all_dict.keys()):
@@ -875,12 +890,15 @@ def ajac_reaction_precond(
                             s1 = s1.replace("+= 1 *", "+=").replace(
                                 "+= -1 *", "-="
                             )
-                            s2 = "// dwdot[%s]/d[%s]" % (
-                                all_dict[m][0],
-                                all_dict[k][0],
+                            s2 = cw.comment(
+                                "dwdot[%s]/d[%s]"
+                                % (
+                                    all_dict[m][0],
+                                    all_dict[k][0],
+                                )
                             )
                             cw.writer(fstream, s1.ljust(30) + s2)
-        cw.writer(fstream, "// d()/dT")
+        cw.writer(fstream, cw.comment("d()/dT"))
         for m in sorted(all_dict.keys()):
             if all_dict[m][1] != 0:
                 s1 = "J[%d] += %.15g * dqdT;" % (
@@ -892,7 +910,7 @@ def ajac_reaction_precond(
                     .replace("+= -1 *", "-=")
                     .replace("+= -1 *", "-=")
                 )
-                s2 = "// dwdot[%s]/dT" % (all_dict[m][0])
+                s2 = cw.comment("dwdot[%s]/dT" % (all_dict[m][0]))
                 cw.writer(fstream, s1.ljust(30) + s2)
 
 
@@ -917,7 +935,9 @@ def ajac(fstream, mechanism, species_info, reaction_info):
     )
     # Analytical jacobian not ready with QSS
     if species_info.nQSSspecies > 0:
-        cw.writer(fstream, "// Do not use Analytical Jacobian with QSSA")
+        cw.writer(
+            fstream, cw.comment("Do not use Analytical Jacobian with QSSA")
+        )
         cw.writer(fstream, "amrex::Abort();")
         cw.writer(
             fstream,
@@ -942,8 +962,8 @@ def ajac(fstream, mechanism, species_info, reaction_info):
 
     cw.writer(
         fstream,
-        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; //"
-        " temperature cache",
+        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
+        + cw.comment("temperature cache"),
     )
     cw.writer(fstream, "amrex::Real invT = 1.0 / tc[1];")
     cw.writer(fstream, "amrex::Real invT2 = invT * invT;")
@@ -953,7 +973,7 @@ def ajac(fstream, mechanism, species_info, reaction_info):
     )
 
     if species_info.nQSSspecies > 0:
-        cw.writer(fstream, "// Fill sc_qss here")
+        cw.writer(fstream, cw.comment("Fill sc_qss here"))
         cw.writer(
             fstream, "amrex::Real sc_qss[%d];" % species_info.nQSSspecies
         )
@@ -1030,7 +1050,7 @@ def ajac(fstream, mechanism, species_info, reaction_info):
         cw.writer(
             fstream,
         )
-        cw.writer(fstream, "// Fill qss coeff")
+        cw.writer(fstream, cw.comment("Fill qss coeff"))
         cw.writer(
             fstream,
             "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
@@ -1169,7 +1189,7 @@ def ajac(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "amrex::Real tmp2 = tmp1*tmp3;")
     cw.writer(fstream, "amrex::Real dehmixdc;")
 
-    cw.writer(fstream, "// dTdot/d[X]")
+    cw.writer(fstream, cw.comment("dTdot/d[X]"))
     cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
     cw.writer(fstream, "dehmixdc = 0.0;")
     cw.writer(fstream, "for (int m = 0; m < %d; ++m) {" % n_species)
@@ -1182,7 +1202,7 @@ def ajac(fstream, mechanism, species_info, reaction_info):
     )
     cw.writer(fstream, "}")
 
-    cw.writer(fstream, "// dTdot/dT")
+    cw.writer(fstream, cw.comment("dTdot/dT"))
     cw.writer(
         fstream,
         "J[%d] = -tmp1 + tmp2*dcmixdT - tmp3*dehmixdT;"
@@ -1206,13 +1226,13 @@ def ajac_reaction_d(
         is_pd = True
         # FIXME is this right?
         has_alpha = True
-        cw.writer(fstream, "// also 3-body")
+        cw.writer(fstream, cw.comment("also 3-body"))
         # if reaction.third_body:
         #     has_alpha = True
-        #     cw.writer(fstream,"// also 3-body")
+        #     cw.writer(fstream,cw.comment("also 3-body"))
         # else:
         #     has_alpha = False
-        #     cw.writer(fstream,"// non 3-body")
+        #     cw.writer(fstream,cw.comment("non 3-body"))
         #     print(
         #         "FIXME: pressure dependent non-3-body reaction in _ajac_reaction"
         #     )
@@ -1270,19 +1290,20 @@ def ajac_reaction_d(
             )
             cw.writer(
                 fstream,
-                "// FIXME: irreversible reaction in _ajac_reaction may not"
-                " work",
+                cw.comment(
+                    "FIXME: irreversible reaction in _ajac_reaction may not work",
+                ),
             )
         for k in range(n_species):
             if k in sorted_reactants and k in sorted_products:
                 print(
-                    "FIXME: irreversible reaction in _ajac_reaction may not"
-                    " work"
+                    "FIXME: irreversible reaction in _ajac_reaction may not work"
                 )
                 cw.writer(
                     fstream,
-                    "// FIXME: irreversible reaction in _ajac_reaction may not"
-                    " work",
+                    cw.comment(
+                        "FIXME: irreversible reaction in _ajac_reaction may not work",
+                    ),
                 )
 
     dim = cu.phase_space_units(reaction.reactants)
@@ -1349,14 +1370,14 @@ def ajac_reaction_d(
         corr_s = ""
 
     if has_alpha:
-        cw.writer(fstream, "// 3-body correction factor")
+        cw.writer(fstream, cw.comment("3-body correction factor"))
         cw.writer(
             fstream,
             "alpha = %s;" % enhancement_d(mechanism, species_info, reaction),
         )
 
     # forward
-    cw.writer(fstream, "// forward")
+    cw.writer(fstream, cw.comment("forward"))
     cw.writer(
         fstream,
         "phi_f = %s;"
@@ -1373,14 +1394,14 @@ def ajac_reaction_d(
     )
     #
     if remove_forward:
-        cw.writer(fstream, "// Remove forward reaction")
+        cw.writer(fstream, cw.comment("Remove forward reaction"))
         # DLNKFDT CHECK
         cw.writer(
             fstream,
             "dlnkfdT = %.15g * invT + %.15g *  %.15g  * invT2;"
             % (beta, (1.0 / cc.Rc / cc.ureg.kelvin).m, ae.m),
         )
-        cw.writer(fstream, "//dlnkfdT = 0.0;")
+        cw.writer(fstream, cw.comment("dlnkfdT = 0.0;"))
     else:
         cw.writer(
             fstream,
@@ -1389,7 +1410,7 @@ def ajac_reaction_d(
         )
 
     if is_pd:
-        cw.writer(fstream, "// pressure-fall-off")
+        cw.writer(fstream, cw.comment("pressure-fall-off"))
         cw.writer(
             fstream,
             "k_0 = %.15g * exp(%.15g * tc[0] - %.15g * (%.15g) * invT);"
@@ -1411,11 +1432,11 @@ def ajac_reaction_d(
         cw.writer(fstream, "dlogfPrdT = dlogPrdT / (1.0+Pr);")
         #
         if is_sri:
-            cw.writer(fstream, "// SRI form")
+            cw.writer(fstream, cw.comment("SRI form"))
             print("FIXME: sri not supported in _ajac_reaction yet")
             sys.exit(1)
         elif is_troe:
-            cw.writer(fstream, "// Troe form")
+            cw.writer(fstream, cw.comment("Troe form"))
             troe = reaction.rate.falloff_coeffs
             ntroe = len(troe)
             cw.writer(fstream, "logPr = log10(Pr);")
@@ -1489,25 +1510,25 @@ def ajac_reaction_d(
                 " dlogFdlogPr * dlogPrdT;",
             )
         else:
-            cw.writer(fstream, "// Lindemann form")
+            cw.writer(fstream, cw.comment("Lindemann form"))
             cw.writer(fstream, "F = 1.0;")
             cw.writer(fstream, "dlogFdlogPr = 0.0;")
             cw.writer(fstream, "dlogFdT = 0.0;")
 
     # reverse
     if not reaction.reversible:
-        cw.writer(fstream, "// rate of progress")
+        cw.writer(fstream, cw.comment("rate of progress"))
         if (not has_alpha) and (not is_pd):
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//q = k_f*phi_f;")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(fstream, cw.comment("q = k_f*phi_f;"))
                 cw.writer(fstream, "q = 0;")
             else:
                 cw.writer(fstream, "q = k_f*phi_f;")
         else:
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//q_nocor = k_f*phi_f;")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(fstream, cw.comment("q_nocor = k_f*phi_f;"))
                 cw.writer(fstream, "q_nocor = 0;")
             else:
                 cw.writer(fstream, "q_nocor = k_f*phi_f;")
@@ -1521,10 +1542,12 @@ def ajac_reaction_d(
         if is_pd:
             cw.writer(fstream, "dlnCorrdT = ln10*(dlogfPrdT + dlogFdT);")
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    "//dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % corr_s,
+                    cw.comment(
+                        "dqdT = %sdlnkfdT*k_f*phi_f + dlnCorrdT*q;" % corr_s,
+                    ),
                 )
                 cw.writer(fstream, "dqdT =  dlnCorrdT*q;")
             else:
@@ -1534,13 +1557,15 @@ def ajac_reaction_d(
                 )
         else:
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(
+                    fstream, cw.comment("dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
+                )
                 cw.writer(fstream, "dqdT = 0;")
             else:
                 cw.writer(fstream, "dqdT = %sdlnkfdT*k_f*phi_f;" % corr_s)
     else:
-        cw.writer(fstream, "// reverse")
+        cw.writer(fstream, cw.comment("reverse"))
         cw.writer(
             fstream,
             "phi_r = %s;"
@@ -1601,18 +1626,20 @@ def ajac_reaction_d(
 
         cw.writer(fstream, "dkrdT = (dlnkfdT - dlnKcdT)*k_r;")
 
-        cw.writer(fstream, "// rate of progress")
+        cw.writer(fstream, cw.comment("rate of progress"))
         if (not has_alpha) and (not is_pd):
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//q = k_f*phi_f - k_r*phi_r;")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(fstream, cw.comment("q = k_f*phi_f - k_r*phi_r;"))
                 cw.writer(fstream, "q = - k_r*phi_r;")
             else:
                 cw.writer(fstream, "q = k_f*phi_f - k_r*phi_r;")
         else:
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//q_nocor = k_f*phi_f - k_r*phi_r;")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(
+                    fstream, cw.comment("q_nocor = k_f*phi_f - k_r*phi_r;")
+                )
                 cw.writer(fstream, "q_nocor = - k_r*phi_r;")
             else:
                 cw.writer(fstream, "q_nocor = k_f*phi_f - k_r*phi_r;")
@@ -1625,11 +1652,13 @@ def ajac_reaction_d(
         if is_pd:
             cw.writer(fstream, "dlnCorrdT = ln10*(dlogfPrdT + dlogFdT);")
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) +"
-                    " dlnCorrdT*q;" % corr_s,
+                    cw.comment(
+                        "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) +"
+                        " dlnCorrdT*q;" % corr_s,
+                    ),
                 )
                 cw.writer(
                     fstream, "dqdT = %s(- dkrdT*phi_r) + dlnCorrdT*q;" % corr_s
@@ -1642,10 +1671,12 @@ def ajac_reaction_d(
                 )
         else:
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
                     fstream,
-                    "//dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
+                    cw.comment(
+                        "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
+                    ),
                 )
                 cw.writer(fstream, "dqdT = %s( - dkrdT*phi_r);" % corr_s)
             else:
@@ -1654,26 +1685,32 @@ def ajac_reaction_d(
                     "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
                 )
 
-    cw.writer(fstream, "// update wdot")
+    cw.writer(fstream, cw.comment("update wdot"))
     # only the n_species transported in all_dict
     for k in sorted(all_dict.keys()):
         s, nu = all_dict[k]
         if nu == 1:
-            cw.writer(fstream, "wdot[%d] += q; // %s" % (k, s))
+            cw.writer(fstream, "wdot[%d] += q;" % (k) + cw.comment("%s" % (s)))
         elif nu == -1:
-            cw.writer(fstream, "wdot[%d] -= q; // %s" % (k, s))
+            cw.writer(fstream, "wdot[%d] -= q;" % (k) + cw.comment("%s" % (s)))
         elif nu > 0:
-            cw.writer(fstream, "wdot[%d] += %.15g * q; // %s" % (k, nu, s))
+            cw.writer(
+                fstream,
+                "wdot[%d] += %.15g * q;" % (k, nu) + cw.comment("%s" % (s)),
+            )
         elif nu < 0:
-            cw.writer(fstream, "wdot[%d] -= %.15g * q; // %s" % (k, -nu, s))
+            cw.writer(
+                fstream,
+                "wdot[%d] -= %.15g * q;" % (k, -nu) + cw.comment("%s" % (s)),
+            )
 
     if is_pd:
-        cw.writer(fstream, "// for convenience")
+        cw.writer(fstream, cw.comment("for convenience"))
         cw.writer(fstream, "k_f *= Corr;")
         if reaction.reversible:
             cw.writer(fstream, "k_r *= Corr;")
     elif has_alpha:
-        cw.writer(fstream, "// for convenience")
+        cw.writer(fstream, cw.comment("for convenience"))
         cw.writer(fstream, "k_f *= alpha;")
         if reaction.reversible:
             cw.writer(fstream, "k_r *= alpha;")
@@ -1718,7 +1755,7 @@ def ajac_reaction_d(
             )
             if dqdc_s:
                 symb_k = species_info.nonqss_species[k].name
-                cw.writer(fstream, "// d()/d[%s]" % symb_k)
+                cw.writer(fstream, cw.comment("d()/d[%s]" % symb_k))
                 cw.writer(fstream, "dqdci = %s;" % (dqdc_s))
                 #
                 for m in sorted(all_dict.keys()):
@@ -1730,9 +1767,12 @@ def ajac_reaction_d(
                         s1 = s1.replace("+= 1 *", "+=").replace(
                             "+= -1 *", "-="
                         )
-                        s2 = "// dwdot[%s]/d[%s]" % (
-                            all_dict[m][0],
-                            symb_k,
+                        s2 = cw.comment(
+                            "dwdot[%s]/d[%s]"
+                            % (
+                                all_dict[m][0],
+                                symb_k,
+                            )
                         )
                         cw.writer(fstream, s1.ljust(30) + s2)
 
@@ -1787,11 +1827,11 @@ def ajac_reaction_d(
 
         for m in sorted(all_dict.keys()):
             if all_dict[m][1] != 0:
-                s1 = "J[%d] += %.15g * dqdT; // dwdot[%s]/dT" % (
+                s1 = "J[%d] += %.15g * dqdT;" % (
                     n_species * (n_species + 1) + m,
                     all_dict[m][1],
-                    all_dict[m][0],
-                )
+                ) + cw.comment("dwdot[%s]/dT" % (all_dict[m][0]))
+
                 s1 = s1.replace("+= 1 *", "+=").replace("+= -1 *", "-=")
                 cw.writer(fstream, s1)
 
@@ -1812,7 +1852,7 @@ def ajac_reaction_d(
                 remove_forward,
             )
             if dqdc_s:
-                cw.writer(fstream, "// d()/d[%s]" % all_dict[k][0])
+                cw.writer(fstream, cw.comment("d()/d[%s]" % all_dict[k][0]))
                 cw.writer(fstream, "dqdci = %s;" % (dqdc_s))
                 if reaction.reversible or k in rea_dict:
                     for m in sorted(all_dict.keys()):
@@ -1824,12 +1864,15 @@ def ajac_reaction_d(
                             s1 = s1.replace("+= 1 *", "+=").replace(
                                 "+= -1 *", "-="
                             )
-                            s2 = "// dwdot[%s]/d[%s]" % (
-                                all_dict[m][0],
-                                all_dict[k][0],
+                            s2 = cw.comment(
+                                "dwdot[%s]/d[%s]"
+                                % (
+                                    all_dict[m][0],
+                                    all_dict[k][0],
+                                )
                             )
                             cw.writer(fstream, s1.ljust(30) + s2)
-        cw.writer(fstream, "// d()/dT")
+        cw.writer(fstream, cw.comment("d()/dT"))
         for m in sorted(all_dict.keys()):
             if all_dict[m][1] != 0:
                 s1 = "J[%d] += %.15g * dqdT;" % (
@@ -1841,7 +1884,7 @@ def ajac_reaction_d(
                     .replace("+= -1 *", "-=")
                     .replace("+= -1 *", "-=")
                 )
-                s2 = "// dwdot[%s]/dT" % (all_dict[m][0])
+                s2 = cw.comment("dwdot[%s]/dT" % (all_dict[m][0]))
                 cw.writer(fstream, s1.ljust(30) + s2)
 
 
@@ -1870,7 +1913,7 @@ def dqdc_simple_precond(
         else:
             dps_s = "*" + dps
         if remove_forward:
-            cw.writer(fstream, "// Remove forward reaction")
+            cw.writer(fstream, cw.comment("Remove forward reaction"))
             dqdc_s += ""
         else:
             dqdc_s += " + k_f%s" % dps_s
@@ -1912,7 +1955,7 @@ def dqdc_simple_d(
         else:
             dps_s = "*" + dps
         if remove_forward:
-            cw.writer(fstream, "// Remove forward reaction")
+            cw.writer(fstream, cw.comment("Remove forward reaction"))
             dqdc_s += ""
         else:
             dqdc_s += " + k_f%s" % dps_s
@@ -2086,8 +2129,8 @@ def dproduction_rate_precond(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "aJacobian_precond(J, c, *Tp, *HP);")
 
     cw.writer(fstream)
-    cw.writer(fstream, "// dwdot[k]/dT")
-    cw.writer(fstream, "// dTdot/d[X]")
+    cw.writer(fstream, cw.comment("dwdot[k]/dT"))
+    cw.writer(fstream, cw.comment("dTdot/d[X]"))
     cw.writer(fstream, "for (int k=0; k<%d; k++) {" % n_species)
     cw.writer(fstream, "J[%d+k] *= 1.e-6;" % (n_species * (n_species + 1)))
     cw.writer(fstream, "J[k*%d+%d] *= 1.e6;" % (n_species + 1, n_species))
@@ -2121,8 +2164,8 @@ def dproduction_rate(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "aJacobian(J, c, *Tp, *consP);")
 
     cw.writer(fstream)
-    cw.writer(fstream, "// dwdot[k]/dT")
-    cw.writer(fstream, "// dTdot/d[X]")
+    cw.writer(fstream, cw.comment("dwdot[k]/dT"))
+    cw.writer(fstream, cw.comment("dTdot/d[X]"))
     cw.writer(fstream, "for (int k=0; k<%d; k++) {" % n_species)
     cw.writer(fstream, "J[%d+k] *= 1.e-6;" % (n_species * (n_species + 1)))
     cw.writer(fstream, "J[k*%d+%d] *= 1.e6;" % (n_species + 1, n_species))

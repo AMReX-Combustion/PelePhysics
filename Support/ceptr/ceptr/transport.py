@@ -1983,9 +1983,13 @@ def critical_parameters(fstream, mechanism, species_info):
     cw.writer(fstream, "amrex::Real    wt[%d];" % n_species)
     cw.writer(fstream, "amrex::Real avogadro = 6.02214199e23;")
     cw.writer(
-        fstream, "amrex::Real boltzmann = 1.3806503e-16; //we work in CGS"
+        fstream,
+        "amrex::Real boltzmann = 1.3806503e-16;"
+        + cw.comment("we work in CGS"),
     )
-    cw.writer(fstream, "amrex::Real Rcst = 83.144598; //in bar [CGS] !")
+    cw.writer(
+        fstream, "amrex::Real Rcst = 83.144598;" + cw.comment("in bar [CGS] !")
+    )
 
     cw.writer(fstream)
 

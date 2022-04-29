@@ -146,7 +146,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
         cw.writer(fstream)
 
         # kfs
-        cw.writer(fstream, "// Evaluate the kfs")
+        cw.writer(fstream, cw.comment("Evaluate the kfs"))
         # cw.writer(fstream,"amrex::Real k_f[%d];"% nclassd)
         # cw.writer(fstream,"amrex::Real Corr[%d];" % nclassd)
         cw.writer(fstream, "amrex::Real k_f, k_r, Corr;")
@@ -245,7 +245,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
 
             cw.writer(
                 fstream,
-                "// (%d):  %s" % (orig_idx, reaction.equation),
+                cw.comment("(%d):  %s" % (orig_idx, reaction.equation)),
             )
             cw.writer(fstream, "k_f = %.15g" % (pef.m))
             if (beta == 0) and (ae == 0):
@@ -452,8 +452,8 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
 
     cw.writer(
         fstream,
-        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T }; //"
-        " temperature cache",
+        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
+        + cw.comment("temperature cache"),
     )
     cw.writer(fstream, "const amrex::Real invT = 1.0 / tc[1];")
     cw.writer(fstream)
@@ -524,7 +524,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     species_info.nqssReactions,
                 ),
             )
-            cw.writer(fstream, "// Fill sc_qss here")
+            cw.writer(fstream, cw.comment("Fill sc_qss here"))
             cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
             # cw.writer(fstream,"comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
             cw.writer(
@@ -637,7 +637,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
 
             cw.writer(
                 fstream,
-                "// (%d):  %s" % (orig_idx, reaction.equation),
+                cw.comment("(%d):  %s" % (orig_idx, reaction.equation)),
             )
             cw.writer(fstream, "const amrex::Real k_f = %.15g" % (pef.m))
             if (beta == 0) and (ae == 0):
@@ -886,8 +886,10 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
             remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
 
             if remove_forward:
-                cw.writer(fstream, "// Remove forward reaction")
-                cw.writer(fstream, "//const amrex::Real qdot = qf - qr;")
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(
+                    fstream, cw.comment("const amrex::Real qdot = qf - qr;")
+                )
                 cw.writer(fstream, "const amrex::Real qdot = - qr;")
             else:
                 cw.writer(fstream, "const amrex::Real qdot = qf - qr;")
