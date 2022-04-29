@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+help()
+{
+   # Display Help
+   echo "Convert mechanism yaml file."
+   echo
+   echo "Syntax: converter.sh [-h|f]"
+   echo "options:"
+   echo "h     Print this Help."
+   echo "f     Convert mechanism yaml file."
+   echo
+}
 
 function abspath() {
     if which realpath > /dev/null; then
@@ -25,15 +36,37 @@ function abspath() {
     fi;
 }
 
+while getopts ":hf:" option; do
+   case $option in
+      h) # display Help
+         help
+         exit;;
+      f) # filename to convert
+         filename=${OPTARG};;
+      \?) # Invalid option
+         echo "Error: Invalid option"
+         exit;;
+   esac
+done
+
 if [ -z "${PELE_PHYSICS_HOME+xxx}" ]; then
-    PELE_PHYSICS_HOME="$(abspath ../../../../..)"
+    remove="Support/Fuego/Mechanism/Models"
+    script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    PELE_PHYSICS_HOME=${script_dir%%"${remove}"}
     echo "Using PELE_PHYSICS_HOME: ${PELE_PHYSICS_HOME}. Set PELE_PHYSICS_HOME you want a different one."
 else
     echo "Using PELE_PHYSICS_HOME: ${PELE_PHYSICS_HOME}"
 fi
 
 CEPTR_HOME="${PELE_PHYSICS_HOME}/Support/ceptr"
+
+case $filename in
+  /*) ;; # filename is an absolute path
+  *) filename="$(abspath $filename)/${filename}" ;;
+esac
+
 cd "${CEPTR_HOME}" || exit
 poetry update
-poetry run convert -f "${MECH_FILE}"
+echo "Converting ${filename}"
+poetry run convert -f "${filename}"
 
