@@ -361,66 +361,31 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     cw.writer(fstream, "Corr = redP / (1. + redP);")
                     cw.writer(fstream, "qf[%d] *= Corr * k_f;" % idx)
 
-            # FIXME REVERSE
-            if False:
-                pefr, betar, aer = reaction.rev
-                dim_rev = cu.phase_space_units(reaction.products)
-                if not third_body and not falloff:
-                    # Case 3 !PD, !TB
-                    ctuc = cu.prefactor_units(
-                        cc.ureg("kmol/m**3"), 1 - dim_rev
-                    )
-                    print("FIXME REVERSE grab rev params")
-                elif not falloff:
-                    # Case 2 !PD, TB
-                    ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim_rev)
-                    print("FIXME REVERSE grab rev params")
-                else:
-                    print("REV reaction cannot be PD")
-                    sys.exit(1)
-                cw.writer(fstream, "k_r = %.15g" % (pefr.m))
-                if betar == 0:
-                    cw.writer(
-                        fstream,
-                        "           * exp(- (%.15g) * invT);"
-                        % ((1.0 / cc.Rc / cc.ureg.kelvin) * aer),
-                    )
-                else:
-                    cw.writer(
-                        fstream,
-                        "           * exp(%.15g * tc[0] - (%.15g) * invT);"
-                        % (betar, (1.0 / cc.Rc / cc.ureg.kelvin) * aer),
-                    )
+            if kc_conv_inv:
                 if alpha == 1.0:
-                    cw.writer(fstream, "qr[%d] *= k_r;" % idx)
+                    cw.writer(
+                        fstream,
+                        "qr[%d] *= k_f * exp(-(%s)) * (%s);"
+                        % (idx, kc_exp_arg, kc_conv_inv),
+                    )
                 else:
-                    cw.writer(fstream, "qr[%d] *= Corr * k_r;" % idx)
+                    cw.writer(
+                        fstream,
+                        "qr[%d] *= Corr * k_f * exp(-(%s)) * (%s);"
+                        % (idx, kc_exp_arg, kc_conv_inv),
+                    )
             else:
-                if kc_conv_inv:
-                    if alpha == 1.0:
-                        cw.writer(
-                            fstream,
-                            "qr[%d] *= k_f * exp(-(%s)) * (%s);"
-                            % (idx, kc_exp_arg, kc_conv_inv),
-                        )
-                    else:
-                        cw.writer(
-                            fstream,
-                            "qr[%d] *= Corr * k_f * exp(-(%s)) * (%s);"
-                            % (idx, kc_exp_arg, kc_conv_inv),
-                        )
+                if alpha == 1.0:
+                    cw.writer(
+                        fstream,
+                        "qr[%d] *= k_f * exp(-(%s));" % (idx, kc_exp_arg),
+                    )
                 else:
-                    if alpha == 1.0:
-                        cw.writer(
-                            fstream,
-                            "qr[%d] *= k_f * exp(-(%s));" % (idx, kc_exp_arg),
-                        )
-                    else:
-                        cw.writer(
-                            fstream,
-                            "qr[%d] *= Corr * k_f * exp(-(%s));"
-                            % (idx, kc_exp_arg),
-                        )
+                    cw.writer(
+                        fstream,
+                        "qr[%d] *= Corr * k_f * exp(-(%s));"
+                        % (idx, kc_exp_arg),
+                    )
 
         cw.writer(fstream)
 
@@ -527,7 +492,6 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
         for orig_idx, _ in reaction_info.idxmap.items():
             reaction = mechanism.reaction(orig_idx)
             cw.writer(fstream, "{")
-            # FIXME FORD
             if bool(reaction.orders):
                 forward_sc = cu.qss_sorted_phase_space(
                     mechanism, species_info, reaction.orders
@@ -777,88 +741,33 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                         % (forward_sc),
                     )
 
-            # FIXME REVERSE
-            if False:
-                pefr, betar, aer = reaction.rev
-                dim_rev = cu.phase_space_units(reaction.products)
-                if not third_body and not falloff:
-                    # Case 3 !PD, !TB
-                    ctuc = cu.prefactor_units(
-                        cc.ureg("kmol/m**3"), 1 - dim_rev
-                    )
-                    print("FIXME REVERSE grab rev params")
-                elif not falloff:
-                    # Case 2 !PD, TB
-                    ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim_rev)
-                    print("FIXME REVERSE grab rev params")
-                else:
-                    print("REV reaction cannot be PD")
-                    sys.exit(1)
-                cw.writer(
-                    fstream,
-                    "const amrex::Real k_r = %.15g" % (pefr.m),
-                )
-                if betar == 0:
-                    if aer == 0:
-                        cw.writer(fstream, ";")
-                    else:
-                        cw.writer(
-                            fstream,
-                            "           * exp( - (%.15g) * invT);"
-                            % ((1.0 / cc.Rc / cc.ureg.kelvin) * aer),
-                        )
-                else:
-                    if aer == 0:
-                        cw.writer(
-                            fstream,
-                            "           * exp(%.15g * tc[0]);" % (betar),
-                        )
-                    else:
-                        cw.writer(
-                            fstream,
-                            "           * exp(%.15g * tc[0] - (%.15g) * invT);"
-                            % (betar, (1.0 / cc.Rc / cc.ureg.kelvin) * aer),
-                        )
-
+            if kc_conv_inv:
                 if alpha == 1.0:
                     cw.writer(
                         fstream,
-                        "const amrex::Real qr = k_r * (%s);" % (reverse_sc),
+                        "const amrex::Real qr = k_f * exp(-(%s)) * (%s) *"
+                        " (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
                     )
                 else:
                     cw.writer(
                         fstream,
-                        "const amrex::Real qr = Corr * k_r * (%s);"
-                        % (reverse_sc),
+                        "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
+                        " (%s) * (%s);"
+                        % (kc_exp_arg, kc_conv_inv, reverse_sc),
                     )
             else:
-                if kc_conv_inv:
-                    if alpha == 1.0:
-                        cw.writer(
-                            fstream,
-                            "const amrex::Real qr = k_f * exp(-(%s)) * (%s) *"
-                            " (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
-                        )
-                    else:
-                        cw.writer(
-                            fstream,
-                            "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
-                            " (%s) * (%s);"
-                            % (kc_exp_arg, kc_conv_inv, reverse_sc),
-                        )
+                if alpha == 1.0:
+                    cw.writer(
+                        fstream,
+                        "const amrex::Real qr = k_f * exp(-(%s)) * (%s);"
+                        % (kc_exp_arg, reverse_sc),
+                    )
                 else:
-                    if alpha == 1.0:
-                        cw.writer(
-                            fstream,
-                            "const amrex::Real qr = k_f * exp(-(%s)) * (%s);"
-                            % (kc_exp_arg, reverse_sc),
-                        )
-                    else:
-                        cw.writer(
-                            fstream,
-                            "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
-                            " (%s);" % (kc_exp_arg, reverse_sc),
-                        )
+                    cw.writer(
+                        fstream,
+                        "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
+                        " (%s);" % (kc_exp_arg, reverse_sc),
+                    )
 
             remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
 
