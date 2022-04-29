@@ -116,9 +116,9 @@ TurbInflow::init(amrex::Geometry const& /*geom*/)
       }
 
       // Offset for each plane in Binary TurbFile
-      tp[n].m_offset_dv.resize(tp[n].kmax * AMREX_SPACEDIM);
-      tp[n].offset = tp[n].m_offset_dv.data();
-      tp[n].offset_size = tp[n].m_offset_dv.size();
+      tp[n].m_offset.resize(tp[n].kmax * AMREX_SPACEDIM);
+      tp[n].offset = tp[n].m_offset.data();
+      tp[n].offset_size = tp[n].m_offset.size();
       for (int i = 0; i < tp[n].offset_size; i++) {
         is >> tp[n].offset[i];
       }
