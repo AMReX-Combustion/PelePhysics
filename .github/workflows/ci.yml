@@ -29,11 +29,6 @@ jobs:
       run:
         working-directory: ${{github.workspace}}/Support/Fuego/Pythia
     steps:
-      - name: Install dependencies
-        uses: py-actions/py-dependency-install@v3
-        run: |
-           python -m pip install --upgrade pip
-           pip install -r requirements.txt
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
@@ -182,6 +177,8 @@ jobs:
       - name: Test Ignition delay
         working-directory: ${{env.IGNDELAY_WORKING_DIRECTORY}}
         run: |
+          python -m pip install --upgrade pip
+          pip install numpy
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           if [ "${{matrix.comp}}" == 'hip' ]; then source /etc/profile.d/rocm.sh; fi;
           if [ "${{matrix.comp}}" == 'dpcpp' ]; then source /opt/intel/oneapi/setvars.sh || true; fi;
