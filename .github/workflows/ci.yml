@@ -89,6 +89,7 @@ jobs:
           echo "TRANSPORT_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/TranEval" >> $GITHUB_ENV
           echo "EOS_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/EosEval" >> $GITHUB_ENV
           echo "REACT_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/ReactEval" >> $GITHUB_ENV
+          echo "IGNDELAY_WORKING_DIRECTORY=${{github.workspace}}/PelePhysics-${{matrix.comp}}/Testing/Exec/IgnitionDelay" >> $GITHUB_ENV
           echo "NPROCS=$(nproc)" >> $GITHUB_ENV
           if [ "${{matrix.comp}}" == 'cuda' ]; then \
             echo "CUDA_HOME=/usr/local/cuda-11.2" >> $GITHUB_ENV; \
@@ -172,4 +173,17 @@ jobs:
               if [ $? -ne 0 ]; then exit 1; fi; \
             done \
           fi
+          make realclean
+      - name: Test Ignition delay
+        working-directory: ${{env.IGNDELAY_WORKING_DIRECTORY}}
+        run: |
+          echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
+          if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
+              python -m pip install --upgrade pip
+              pip install numpy
+              make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
+              bash exec_ignDelay.sh
+              python check_ignDelay.py
+              if [ $? -ne 0 ]; then exit 1; fi; \
+          fi;
           make realclean
