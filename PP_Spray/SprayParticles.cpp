@@ -13,14 +13,18 @@
 using namespace amrex;
 
 void
-getPSatCoef(
-  Real* psat_coef, ParmParse& ppp, std::string fuel_name, const int spf)
+getInpCoef(
+  Real* coef,
+  ParmParse& ppp,
+  std::string fuel_name,
+  std::string varname,
+  const int spf)
 {
-  std::string psat_read = fuel_name + "_psat";
+  std::string psat_read = fuel_name + "_" + varname;
   std::vector<Real> inp_coef(4, 0.);
   ppp.queryarr(psat_read.c_str(), inp_coef);
   for (int i = 0; i < 4; ++i) {
-    psat_coef[4 * spf + i] = inp_coef[i];
+    coef[4 * spf + i] = inp_coef[i];
   }
 }
 
@@ -108,7 +112,8 @@ SprayParticleContainer::readSprayParams(
       sprayData.rho[i] = sprayrho[i];
       sprayData.mu[i] = mu[i];
       sprayData.lambda[i] = lambda[i];
-      getPSatCoef(sprayData.psat_coef.data(), pp, fuel_names[i], i);
+      getInpCoef(sprayData.psat_coef.data(), pp, fuel_names[i], "psat", i);
+      getInpCoef(sprayData.rho_coef.data(), pp, fuel_names[i], "rho", i);
     }
   }
 
@@ -418,8 +423,8 @@ SprayParticleContainer::updateParticles(
       Np, [pstruct, Tarr, rhoYarr, rhoarr, momarr, engarr, rhoYSrcarr,
            rhoSrcarr, momSrcarr, engSrcarr, plo, phi, dx, dxi, do_move, SPI,
            fdat, bndry_hi, bndry_lo, flow_dt, inv_vol, ltransparm, at_bounds,
-           wallT, isGhost, isVirt, src_box, state_box, do_sub,
-           sub_cfl, num_iter, sub_dt, spray_cfl_lev
+           wallT, isGhost, isVirt, src_box, state_box, do_sub, sub_cfl,
+           num_iter, sub_dt, spray_cfl_lev
 #ifdef AMREX_USE_EB
            ,
            flags_array, ccent_fab, bcent_fab, bnorm_fab, barea_fab, volfrac_fab,
