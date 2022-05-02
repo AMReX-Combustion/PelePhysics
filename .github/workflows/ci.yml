@@ -177,10 +177,10 @@ jobs:
       - name: Test Ignition delay
         working-directory: ${{env.IGNDELAY_WORKING_DIRECTORY}}
         run: |
-          python -m pip install --upgrade pip
-          pip install numpy
           echo "::add-matcher::${{github.workspace}}/PelePhysics-${{matrix.comp}}/.github/problem-matchers/gcc.json"
           if [ "${{matrix.comp}}" == 'gnu' ] || [ "${{matrix.comp}}" == 'llvm' ]; then \
+              python -m pip install --upgrade pip
+              pip install numpy
               make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
               bash .githubTest.sh
               if [ $? -ne 0 ]; then exit 1; fi; \
