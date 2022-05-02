@@ -182,7 +182,8 @@ jobs:
               python -m pip install --upgrade pip
               pip install numpy
               make -j ${{env.NPROCS}} Eos_Model=Fuego Chemistry_Model=dodecane_lu TINY_PROFILE=TRUE ${{matrix.amrex_build_args}}
-              bash githubTest.sh
+              bash exec_ignDelay.sh
+              python check_ignDelay.py
               if [ $? -ne 0 ]; then exit 1; fi; \
           fi;
           make realclean

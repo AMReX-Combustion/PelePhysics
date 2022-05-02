@@ -19,4 +19,4 @@ Ignition delay will call the Pele executable find in this directory. If you have
 
 3. Adjust your parameters in `inputs/inputs.0d_firstpass`
 
-4. Execute `bash exec_ignDelay.sh` 
+4. Execute `bash exec_ignDelay.sh`. The result is outputted in `log`. 

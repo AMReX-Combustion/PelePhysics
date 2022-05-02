@@ -7,9 +7,13 @@ if [ -z "$execname" ]
 then
     echo ERROR: No executable found, cannot compute ignition delay
     echo Compile PelePhysics first
+    exit 1
 else
     if [[ -f "PPreaction.txt" ]]; then
         rm PPreaction.txt
+    fi
+    if [[ -f "log" ]]; then
+        rm log
     fi
 
     echo INFO: Using $execname to compute ignition delay

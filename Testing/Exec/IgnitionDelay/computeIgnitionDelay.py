@@ -39,6 +39,10 @@ def writeNewInput(oldInput,newInput,dt,ndt):
             else:
                 f.write(line)
 
+def writeResult(filename,temp,press,phi,tign,uncertainty):
+    with open(filename,'w+') as f: 
+        logMessage = f"T = {temp:.3g} K , P = {press/101325.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
+        f.write(logMessage)
 
 def readMultiColFile(filename,headerSize=0):
     with open(filename,'r') as f:
@@ -56,15 +60,12 @@ def readMultiColFile(filename,headerSize=0):
     return Array
 
 
-
-
 if __name__=="__main__":
 
     # CLI
     parser = argparse.ArgumentParser(description='Compute ignition delay')
     group = parser.add_mutually_exclusive_group()
     parser.add_argument('-f', '--inputFile', type=str, metavar='', required=False, help='Pele input file', default='')
-    parser.add_argument('-t','--test', action='store_true', help='testing mode, only for Github test')
     group.add_argument('-est','--estimate', action='store_true', help='first estimate')
     group.add_argument('-ref','--refine', action='store_true', help='Second estimate')
     group2 = parser.add_mutually_exclusive_group()
@@ -98,10 +99,6 @@ if __name__=="__main__":
     if args.refine: 
         logMessage = f"T = {temp:.3g} K , P = {press/101325.0:.3g} atm, Phi = {phi:.3g},  tIgn = {ignitionDelayPP:.3g} +/- {dt/ndt:.3g} s"
         print(logMessage)
+        writeResult('log',temp,press,phi,ignitionDelayPP,dt/ndt) 
         print("Equivalence ratio calculation assumed you are using Ndodecane")
         print("Change GPU_misc.H if you are not")
-        if args.test:
-            if abs(ignitionDelayPP-0.0763)>10*dt/ndt:
-                 sys.exit(1)
-            else:
-                 sys.exit(0)
