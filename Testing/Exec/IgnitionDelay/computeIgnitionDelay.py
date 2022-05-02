@@ -39,7 +39,6 @@ def writeNewInput(oldInput,newInput,dt,ndt):
             else:
                 f.write(line)
 
-    return
 
 def readMultiColFile(filename,headerSize=0):
     with open(filename,'r') as f:
