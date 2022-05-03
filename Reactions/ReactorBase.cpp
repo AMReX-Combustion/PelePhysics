@@ -25,6 +25,7 @@
 namespace pele {
 namespace physics {
 namespace reactions {
+
 void
 ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
 {
@@ -37,18 +38,23 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
   omp_thread = omp_get_thread_num();
 #endif
 
+  if (omp_thread == 0) {
+    amrex::Print()
+      << "Setting the typical values for PelePhysics ODE integration:"
+      << std::endl;
+    ;
+    for (int i = 0; i < size_ETV - 1; i++) {
+      amrex::Print() << kname[i] << " : " << m_typ_vals[i] << std::endl;
+      ;
+    }
+    amrex::Print() << "Temp : " << m_typ_vals[size_ETV - 1] << std::endl;
+  }
+
   for (int i = 0; i < size_ETV; i++) {
     m_typ_vals[i] = ExtTypVals[i];
   }
-
-  if (omp_thread == 0) {
-    amrex::Print() << "Set the typVals in PelePhysics: \n  ";
-    for (int i = 0; i < size_ETV - 1; i++) {
-      amrex::Print() << kname[i] << ":" << m_typ_vals[i] << "  ";
-    }
-    amrex::Print() << "Temp:" << m_typ_vals[size_ETV - 1] << std::endl;
-  }
 }
+
 void
 ReactorBase::set_sundials_solver_tols(
   sundials::Context& sunctx,
