@@ -199,7 +199,7 @@ ReactorArkode::react(
     ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
     set_sundials_solver_tols(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
-      user_data->verbose, relTol, absTol, "arkstep");
+      relTol, absTol, "arkstep");
     ARKStepSetTableNum(
       arkode_mem, ARKODE_DIRK_NONE, static_cast<ARKODE_ERKTableID>(rk_method));
     ARKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
@@ -213,7 +213,7 @@ ReactorArkode::react(
     ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
     set_sundials_solver_tols(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
-      user_data->verbose, relTol, absTol, "erkstep");
+      relTol, absTol, "erkstep");
     ERKStepSetTableNum(arkode_mem, static_cast<ARKODE_ERKTableID>(rk_method));
     ERKStepSetAdaptivityMethod(arkode_mem, rk_controller, 1, 0, nullptr);
     BL_PROFILE_VAR(
@@ -335,7 +335,7 @@ ReactorArkode::react(
     ARKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
     set_sundials_solver_tols(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
-      user_data->verbose, relTol, absTol, "arkstep");
+      relTol, absTol, "arkstep");
     BL_PROFILE_VAR(
       "Pele::ReactorArkode::react():ARKStepEvolve", AroundARKEvolve);
     ARKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
@@ -346,7 +346,7 @@ ReactorArkode::react(
     ERKStepSetUserData(arkode_mem, static_cast<void*>(user_data));
     set_sundials_solver_tols(
       *amrex::sundials::The_Sundials_Context(), arkode_mem, user_data->ncells,
-      user_data->verbose, relTol, absTol, "erkstep");
+      relTol, absTol, "erkstep");
     BL_PROFILE_VAR(
       "Pele::ReactorArkode::react():ERKStepEvolve", AroundERKEvolve);
     ERKStepEvolve(arkode_mem, time_out, y, &time_init, ARK_NORMAL);
