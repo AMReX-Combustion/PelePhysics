@@ -13,6 +13,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   m_reactor_type = reactor_type;
   ReactorTypes::check_reactor_type(m_reactor_type);
   amrex::ParmParse pp("ode");
+  pp.query("verbose", verbose);
   pp.query("rtol", relTol);
   pp.query("atol", absTol);
   pp.query("atomic_reductions", atomic_reductions);
@@ -276,11 +277,6 @@ ReactorCvode::init(int reactor_type, int ncells)
 void
 ReactorCvode::checkCvodeOptions() const
 {
-  // Query options
-  amrex::ParmParse pp("ode");
-  int verbose = 0;
-  pp.query("verbose", verbose);
-
   if (verbose > 0) {
     amrex::Print() << "Number of species in mech is " << NUM_SPECIES << "\n";
   }
@@ -693,10 +689,6 @@ ReactorCvode::allocUserData(
 ) const
 {
   // Query options
-  amrex::ParmParse pp("ode");
-  int verbose = 0;
-  pp.query("verbose", verbose);
-
   std::string solve_type_str = "none";
   amrex::ParmParse ppcv("cvode");
   udata->maxOrder = 2;

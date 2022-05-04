@@ -94,6 +94,7 @@ public:
   ~ReactorBase() override = default;
 
 protected:
+  int verbose{0};
   amrex::Array<amrex::Real, NUM_SPECIES + 1> m_typ_vals = {0.0};
 };
 } // namespace reactions

@@ -10,6 +10,8 @@ ReactorNull::init(int reactor_type, int /*ncells*/)
   BL_PROFILE("Pele::ReactorNull::init()");
   m_reactor_type = reactor_type;
   ReactorTypes::check_reactor_type(m_reactor_type);
+  amrex::ParmParse pp("ode");
+  pp.query("verbose", verbose);
   return (0);
 }
 
