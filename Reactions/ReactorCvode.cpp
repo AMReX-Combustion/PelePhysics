@@ -70,7 +70,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   // Setup tolerances
   set_sundials_solver_tols(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, udata_g->ncells,
-    udata_g->verbose, relTol, absTol, "cvode");
+    relTol, absTol, "cvode");
 
   // Linear solver data
   if (
@@ -1169,7 +1169,7 @@ ReactorCvode::react(
   // Setup tolerances with typical values
   set_sundials_solver_tols(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, user_data->ncells,
-    user_data->verbose, relTol, absTol, "cvode");
+    relTol, absTol, "cvode");
 
   // Linear solver data
   SUNLinearSolver LS = NULL;
@@ -1317,7 +1317,7 @@ ReactorCvode::react(
   // Update TypicalValues
   set_sundials_solver_tols(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, udata_g->ncells,
-    udata_g->verbose, relTol, absTol, "cvode");
+    relTol, absTol, "cvode");
 
   // Perform integration one cell at a time
   const int icell = 0;
@@ -1464,7 +1464,7 @@ ReactorCvode::react(
   // Setup tolerances with typical values
   set_sundials_solver_tols(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, user_data->ncells,
-    user_data->verbose, relTol, absTol, "cvode");
+    relTol, absTol, "cvode");
 
   // Linear solver data
   if (user_data->solve_type == cvode::sparseDirect) {
@@ -1636,7 +1636,7 @@ ReactorCvode::react(
   // Update TypicalValues
   set_sundials_solver_tols(
     *amrex::sundials::The_Sundials_Context(), cvode_mem, udata_g->ncells,
-    udata_g->verbose, relTol, absTol, "cvode");
+    relTol, absTol, "cvode");
 
 #ifdef MOD_REACTOR
   dt_react =

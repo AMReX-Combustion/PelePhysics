@@ -86,7 +86,6 @@ public:
     sundials::Context& sunctx,
     void* sundials_mem,
     const int ncells,
-    const int verbose,
     const amrex::Real relTol,
     const amrex::Real absTol,
     const std::string solvername);

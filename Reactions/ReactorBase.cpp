@@ -57,7 +57,6 @@ ReactorBase::set_sundials_solver_tols(
   sundials::Context& sunctx,
   void* sundials_mem,
   const int ncells,
-  const int verbose,
   const amrex::Real relTol,
   const amrex::Real absTol,
   const std::string solvername)
