@@ -401,11 +401,11 @@ calculateSpraySource(
           mi_dot[spf] = -amrex::max(Ddiag[fspec] * mdotcoeff, 0.);
           m_dot += mi_dot[spf];
         }
-        if (isub == 1) {
-          amrex::Real inv_tau_d = -m_dot / (3. * pmass);
-          nsub =
-            amrex::max(nsub, amrex::min(int(flow_dt * inv_tau_d) + 1, nSubMax));
-        }
+      }
+      if (isub == 1) {
+        amrex::Real inv_tau_d = -m_dot / (3. * pmass);
+        nsub =
+          amrex::max(nsub, amrex::min(int(flow_dt * inv_tau_d) + 1, nSubMax));
       }
     }
     // Solve momentum source terms
