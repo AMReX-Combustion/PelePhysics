@@ -6,7 +6,7 @@ authors = ["Marc Henry de Frahan <marc.henrydefrahan@nrel.gov>", "Lucas Esclapez
 
 [tool.poetry.dependencies]
 python = "^3.8"
-Cantera = ">=2.6.0b2"
+Cantera = ">=2.6.0"
 Pint = "^0.19.1"
 
 [tool.poetry.dev-dependencies]

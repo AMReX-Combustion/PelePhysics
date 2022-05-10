@@ -290,7 +290,7 @@ def ajac_reaction_precond(
         is_pd = False
         has_alpha = False
     else:
-        print("_ajac_reaction: wrong case ", rcase)
+        print("ajac_reaction: wrong case ", rcase)
         exit(1)
 
     rea_dict = {}
@@ -1235,7 +1235,7 @@ def ajac_reaction_d(
         is_pd = False
         has_alpha = False
     else:
-        print("_ajac_reaction: wrong case ", rcase)
+        print("ajac_reaction: wrong case ", rcase)
         exit(1)
 
     rea_dict = OrderedDict()
@@ -1960,7 +1960,7 @@ def enhancement_d(mechanism, species_info, reaction):
     third_body = reaction.reaction_type == "three-body"
     falloff = reaction.reaction_type == "falloff"
     if not third_body and not falloff:
-        print("_enhancement_d called for a reaction without a third body")
+        print("enhancement_d called for a reaction without a third body")
         sys.exit(1)
 
     if not hasattr(reaction, "efficiencies"):
@@ -1969,7 +1969,7 @@ def enhancement_d(mechanism, species_info, reaction):
         species, coefficient = third_body
         if species == "<mixture>":
             return "mixture"
-        return "sc[%d]" % species_info.nonqss_species[species].idx
+        return "sc[%d]" % species_info.ordered_idx_map[species]
 
     efficiencies = reaction.efficiencies
     alpha = ["mixture"]
