@@ -2824,7 +2824,7 @@ class CPickler(CMill):
         if not efficiencies:
             if species == "<mixture>":
                 return "mixture"
-            return "sc[%d]" % self.nonqss_species[species].id
+            return "sc[%d]" % self.ordered_idx_map[species]
 
         alpha = ["mixture"]
         for i, eff in enumerate(efficiencies):
@@ -2852,7 +2852,7 @@ class CPickler(CMill):
         if not efficiencies:
             if species == "<mixture>":
                 return "mixture"
-            return "sc[%d]" % self.nonqss_species[species].id
+            return "sc[%d]" % self.ordered_idx_map[species]
 
         alpha = ["mixture"]
         for i, eff in enumerate(efficiencies):
