@@ -8,6 +8,7 @@ authors = ["Marc Henry de Frahan <marc.henrydefrahan@nrel.gov>", "Lucas Esclapez
 python = "^3.8"
 Cantera = ">=2.6.0"
 Pint = "^0.19.1"
+PyYAML = "^6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -24,6 +25,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 convert = "ceptr.ceptr:main"
+qssa = "ceptr.qssa:main"
 
 [tool.black]
 line-length = 79
