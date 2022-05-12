@@ -17,7 +17,7 @@ ReactorCvode::init(int reactor_type, int ncells)
   pp.query("rtol", relTol);
   pp.query("atol", absTol);
   pp.query("atomic_reductions", atomic_reductions);
-  pp.query("JBBhack",m_JBBhack);
+  pp.query("JBBhack", m_JBBhack);
   checkCvodeOptions();
 
   amrex::Print() << "Initializing CVODE:\n";
@@ -1333,9 +1333,8 @@ ReactorCvode::react(
         amrex::Real* yvec_d = N_VGetArrayPointer(y);
         utils::box_flatten<Ordering>(
           icell, i, j, k, ncells, captured_reactor_type, captured_JBBhack,
-          rY_in, rYsrc_in, T_in,
-          rEner_in, rEner_src_in, yvec_d, udata_g->rYsrc_ext,
-          udata_g->rhoe_init, udata_g->rhoesrc_ext);
+          rY_in, rYsrc_in, T_in, rEner_in, rEner_src_in, yvec_d,
+          udata_g->rYsrc_ext, udata_g->rhoe_init, udata_g->rhoesrc_ext);
 
         // ReInit CVODE is faster
         CVodeReInit(cvode_mem, time_start, y);
@@ -1361,8 +1360,8 @@ ReactorCvode::react(
 
         utils::box_unflatten<Ordering>(
           icell, i, j, k, ncells, captured_reactor_type, captured_JBBhack,
-          rY_in, T_in, rEner_in,
-          rEner_src_in, FC_in, yvec_d, udata_g->rhoe_init, nfe_tot, dt_react);
+          rY_in, T_in, rEner_in, rEner_src_in, FC_in, yvec_d,
+          udata_g->rhoe_init, nfe_tot, dt_react);
 
         if ((udata_g->verbose > 3) && (omp_thread == 0)) {
           amrex::Print() << "END : time curr is " << CvodeActual_time_final

@@ -98,7 +98,8 @@ box_flatten(
   for (int n = 0; n < NUM_SPECIES; n++) {
     const int idx = vec_index<OrderType>(n, icell, ncells);
     const int idx2 = spec_index<OrderType>(n, icell, ncells);
-    const amrex::Real rhoYn = (JBBhack) ? amrex::max(0.0,rhoY(i, j, k, n)) : rhoY(i, j, k, n);
+    const amrex::Real rhoYn =
+      (JBBhack) ? amrex::max(0.0, rhoY(i, j, k, n)) : rhoY(i, j, k, n);
     y_vect[idx] = rhoYn;
     src_vect[idx2] = frcExt(i, j, k, n);
     rho += rhoYn;
@@ -152,9 +153,9 @@ box_unflatten(
   amrex::Real rho_oldclipped = 0.0;
   if (JBBhack) {
     for (int n = 0; n < NUM_SPECIES; n++) {
-       rhoY_oldclipped[n] = amrex::max(0.0,rhoY(i, j, k, n));
-       rho_old += rhoY(i, j, k, n);
-       rho_oldclipped += rhoY_oldclipped[n];
+      rhoY_oldclipped[n] = amrex::max(0.0, rhoY(i, j, k, n));
+      rho_old += rhoY(i, j, k, n);
+      rho_oldclipped += rhoY_oldclipped[n];
     }
   }
 
@@ -162,9 +163,12 @@ box_unflatten(
   amrex::Real rho = 0.0;
   for (int n = 0; n < NUM_SPECIES; n++) {
     // With JBBhack, new rhoY equal old one + CVODE increment
-    const amrex::Real rhoYn = (JBBhack)? rhoY(i, j, k, n)
-                                + (  y_vect[vec_index<OrderType>(n, icell, ncells)]
-                                     - rhoY_oldclipped[n]) * rho_old / rho_oldclipped : y_vect[vec_index<OrderType>(n, icell, ncells)];
+    const amrex::Real rhoYn =
+      (JBBhack)
+        ? rhoY(i, j, k, n) + (y_vect[vec_index<OrderType>(n, icell, ncells)] -
+                              rhoY_oldclipped[n]) *
+                               rho_old / rho_oldclipped
+        : y_vect[vec_index<OrderType>(n, icell, ncells)];
     rhoY(i, j, k, n) = rhoYn;
     rho += rhoYn;
     mass_frac[n] = rhoYn;
@@ -220,8 +224,9 @@ public:
       const int icell =
         (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
       box_flatten<OrderType>(
-        icell, i, j, k, ncells, reactor_type, JBBhack, rhoY, frcExt, temperature, rhoE,
-        frcEExt, y_vect, src_vect, vect_energy, src_vect_energy);
+        icell, i, j, k, ncells, reactor_type, JBBhack, rhoY, frcExt,
+        temperature, rhoE, frcEExt, y_vect, src_vect, vect_energy,
+        src_vect_energy);
     });
   }
 
@@ -247,8 +252,8 @@ public:
       const int icell =
         (k - lo.z) * len.x * len.y + (j - lo.y) * len.x + (i - lo.x);
       box_unflatten<OrderType>(
-        icell, i, j, k, ncells, reactor_type, JBBhack, rhoY, temperature, rhoE, frcEExt,
-        FC_in, y_vect, vect_energy, FCunt[icell], dt);
+        icell, i, j, k, ncells, reactor_type, JBBhack, rhoY, temperature, rhoE,
+        frcEExt, FC_in, y_vect, vect_energy, FCunt[icell], dt);
     });
   }
 };
