@@ -128,7 +128,7 @@ private:
   int rk64_nsubsteps_max{500};
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
-  int m_JBBhack{0};
+  bool m_JBBhack{false};
 };
 } // namespace reactions
 } // namespace physics

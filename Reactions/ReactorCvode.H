@@ -156,7 +156,7 @@ private:
 #else
   int atomic_reductions{1};
 #endif
-  int m_JBBhack{0};
+  bool m_JBBhack{false};
 
 #ifndef AMREX_USE_GPU
   N_Vector y = nullptr;
