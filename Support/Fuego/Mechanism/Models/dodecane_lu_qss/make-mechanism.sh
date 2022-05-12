@@ -10,35 +10,31 @@ non_qssa_list=non_qssa_list.txt
 thermoFile=therm.dat
 tranFile=tran.dat
 
-## TAKES INP and does QSS INP, could make this YAML
-
 # Write QSSA inp
-python3 $qssaToolsDir/makeQSSAInp/make_inp_file_qssa.py -sk $skeletalMechanism -nqss $non_qssa_list
+python $qssaToolsDir/makeQSSAInp/make_inp_file_qssa.py -sk $skeletalMechanism -nqss $non_qssa_list
 # Write remove star names
-python3 $qssaToolsDir/makeQSSAInp/removeStarFromSpecies.py -sk $skeletalMechanism -th $thermoFile -tr $tranFile -nqss $non_qssa_list
+python $qssaToolsDir/makeQSSAInp/removeStarFromSpecies.py -sk $skeletalMechanism -th $thermoFile -tr $tranFile -nqss $non_qssa_list
 
-### Convert theses INP to YAML, or change the scripts so they take YAML
+## ~~~~ Method 1 : Remove enough species to remove quadratic coupling
+#python $qssaToolsDir/removeQuadratic_species/removeQuadratic_method1.py
+# ~~~~ Method 2 : Remove all reactions (forward and backward) that generate quadratic coupling
+#python $qssaToolsDir/removeQuadratic_reactions/removeQuadratic_method2.py
+# ~~~~ Method 3 : Remove all reactions (forward, backward or both) that generate quadratic coupling
+python $qssaToolsDir/removeQuadratic_reactions/removeQuadratic_method3.py
+cp output/reac_forward_to_remove .
 
-# ## ~~~~ Method 1 : Remove enough species to remove quadratic coupling
-# #python $qssaToolsDir/removeQuadratic_species/removeQuadratic_method1.py
-# # ~~~~ Method 2 : Remove all reactions (forward and backward) that generate quadratic coupling
-# #python $qssaToolsDir/removeQuadratic_reactions/removeQuadratic_method2.py
-# # ~~~~ Method 3 : Remove all reactions (forward, backward or both) that generate quadratic coupling
-# python $qssaToolsDir/removeQuadratic_reactions/removeQuadratic_method3.py
-# cp output/reac_forward_to_remove .
+cp output/qssa_final.inp .
+cp output/therm_nostar.dat .
+cp output/tran_nostar.dat .
 
-# cp output/qssa_final.inp .
-# cp output/therm_nostar.dat .
-# cp output/tran_nostar.dat .
+# Compile mechanism
 
-# # Compile mechanism
+CHEMINP=qssa_final.inp
+THERMINP=therm_nostar.dat
+FINALFILE=mechanism.cpp
 
-# CHEMINP=qssa_final.inp
-# THERMINP=therm_nostar.dat
-# FINALFILE=mechanism.cpp
+source ../mechanism_builder.sh
 
-# source ../mechanism_builder.sh
+${FUEGO_PYTHON} "${FMC}" -mechanism=${CHEMINP} -thermo=${THERMINP} -name=${FINALFILE}
 
-# ${FUEGO_PYTHON} "${FMC}" -mechanism=${CHEMINP} -thermo=${THERMINP} -name=${FINALFILE}
-
-# echo "Compiling ${FINALFILE}..."
+echo "Compiling ${FINALFILE}..."
