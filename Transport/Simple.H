@@ -82,14 +82,17 @@ struct NonIdealChungCorrections<eos::SRK>
     const amrex::Real DP_red_4 =
       297.2069113e6 * DP_m_4 / (Vcm * Vcm * Tcm * Tcm);
     const amrex::Real y = Vcm * rholoc / (6.0 * wbar);
+    const amrex::Real G1 =
+      (1.0 - 0.5 * y) / ((1.0 - y) * (1.0 - y) * (1.0 - y));
+
+    // Set nonideal viscosity
+    if (wtr_get_mu) {
     amrex::Real A[10];
     for (int i = 0; i < 10; ++i) {
       A[i] = trans_parm->Afac[4 * i] + trans_parm->Afac[4 * i + 1] * Omega_M +
              trans_parm->Afac[4 * i + 2] * DP_red_4 +
              trans_parm->Afac[4 * i + 3] * KappaM;
     }
-    const amrex::Real G1 =
-      (1.0 - 0.5 * y) / ((1.0 - y) * (1.0 - y) * (1.0 - y));
     const amrex::Real G2 = (A[0] * (1.0 - std::exp(-A[3] * y)) / y +
                             A[1] * G1 * std::exp(A[4] * y) + A[2] * G1) /
                            (A[0] * A[3] + A[1] + A[2]);
@@ -97,31 +100,34 @@ struct NonIdealChungCorrections<eos::SRK>
       (36.344e-6 * std::sqrt(MW_m * Tcm) / std::pow(Vcm, 2.0 / 3.0)) * A[6] *
       y * y * G2 * exp(A[7] + A[8] / Tstar + A[9] / (Tstar * Tstar));
 
-    // Set nonideal viscosity
-    if (wtr_get_mu) {
-      mu = mu * (1.0 / G2 + A[5] * y) + eta_P;
+      const amrex::Real updated_mu = mu * (1.0 / G2 + A[5] * y) + eta_P;
+      if (updated_mu > 0){
+        mu = updated_mu;
+      }
     }
-
-    amrex::Real B[7];
-    for (int i = 0; i < 7; ++i) {
-      B[i] = trans_parm->Bfac[i * 4] + trans_parm->Bfac[i * 4 + 1] * Omega_M +
-             trans_parm->Bfac[i * 4 + 2] * DP_red_4 +
-             trans_parm->Bfac[i * 4 + 3] * KappaM;
-    }
-    amrex::Real H2 = (B[0] * (1.0 - std::exp(-B[3] * y)) / y +
-                      B[1] * G1 * std::exp(B[4] * y) + B[2] * G1) /
-                     (B[0] * B[3] + B[1] + B[2]);
-
-    amrex::Real lambda_p = 3.039e-4 * std::sqrt(Tcm / MW_m) /
-                           std::pow(Vcm, 2.0 / 3.0) * B[6] * y * y * H2 *
-                           std::sqrt(Tstar);
-
-    lambda_p *= 4.184e+7; // erg/(cm s K)
-    const amrex::Real beta = 1.0 / H2 + B[5] * y;
 
     // Set nonideal conductivity
     if (wtr_get_lam) {
-      lam = lam * beta + lambda_p;
+      amrex::Real B[7];
+      for (int i = 0; i < 7; ++i) {
+        B[i] = trans_parm->Bfac[i * 4] + trans_parm->Bfac[i * 4 + 1] * Omega_M +
+          trans_parm->Bfac[i * 4 + 2] * DP_red_4 +
+          trans_parm->Bfac[i * 4 + 3] * KappaM;
+      }
+      amrex::Real H2 = (B[0] * (1.0 - std::exp(-B[3] * y)) / y +
+                        B[1] * G1 * std::exp(B[4] * y) + B[2] * G1) /
+        (B[0] * B[3] + B[1] + B[2]);
+      amrex::Real lambda_p = 3.039e-4 * std::sqrt(Tcm / MW_m) /
+        std::pow(Vcm, 2.0 / 3.0) * B[6] * y * y * H2 *
+        std::sqrt(Tstar);
+      
+      lambda_p *= 4.184e+7; // erg/(cm s K)
+      const amrex::Real beta = 1.0 / H2 + B[5] * y;
+      
+      const amrex::Real updated_lam = lam * beta + lambda_p;
+      if (updated_lam > 0){
+        lam = updated_lam;
+      }
     }
   }
 };
