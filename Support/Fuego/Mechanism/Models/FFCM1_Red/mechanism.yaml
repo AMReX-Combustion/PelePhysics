@@ -1,7 +1,7 @@
 generator: ck2yaml
 input-files: [mechanism.inp, therm.dat, tran.dat]
-cantera-version: 2.6.0b2
-date: Thu, 28 Apr 2022 10:45:21 -0600
+cantera-version: 2.6.0
+date: Wed, 11 May 2022 17:40:57 -0700
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
@@ -26,7 +26,7 @@ species:
       -1046.97628, 2.96747038]
     - [2.95257637, 1.3969004e-03, -4.92631603e-07, 7.86010195e-11, -4.60755204e-15,
       -923.948688, 5.87188762]
-    note: G8/02
+    note: G 8/02
   transport:
     model: gas
     geometry: linear
@@ -56,11 +56,10 @@ species:
   composition: {H: 1}
   thermo:
     model: NASA7
-    temperature-ranges: [200.0, 1000.0, 6000.0]
+    temperature-ranges: [200.0, 6000.0]
     data:
     - [2.5, 0.0, 0.0, 0.0, 0.0, 2.547366e+04, -0.44668285]
-    - [2.5, 0.0, 0.0, 0.0, 0.0, 2.547366e+04, -0.44668285]
-    note: L6/94
+    note: L 6/94
   transport:
     model: gas
     geometry: atom
@@ -76,7 +75,7 @@ species:
       2.91222592e+04, 2.05193346]
     - [2.54363697, -2.73162486e-05, -4.1902952e-09, 4.95481845e-12, -4.79553694e-16,
       2.9226012e+04, 4.92229457]
-    note: L1/90
+    note: L 1/90
   transport:
     model: gas
     geometry: atom
@@ -92,7 +91,7 @@ species:
       -1063.94356, 3.65767573]
     - [3.66096065, 6.56365811e-04, -1.41149627e-07, 2.05797935e-11, -1.29913436e-15,
       -1215.97718, 3.41536279]
-    note: RUS89
+    note: RUS 89
   transport:
     model: gas
     geometry: linear
@@ -126,7 +125,7 @@ species:
       -3.0293726e+04, -0.84900901]
     - [2.6770389, 2.9731816e-03, -7.7376889e-07, 9.4433514e-11, -4.2689991e-15,
       -2.9885894e+04, 6.88255]
-    note: L5/89
+    note: L 5/89
   transport:
     model: gas
     geometry: nonlinear
@@ -144,7 +143,7 @@ species:
       264.018485, 3.7166622]
     - [4.17228741, 1.88117627e-03, -3.46277286e-07, 1.94657549e-11, 1.76256905e-16,
       31.0206839, 2.95767672]
-    note: T1/09
+    note: T 1/09
   transport:
     model: gas
     geometry: nonlinear
@@ -161,7 +160,7 @@ species:
       -1.4344086e+04, 3.5084093]
     - [3.0484859, 1.3517281e-03, -4.8579405e-07, 7.8853644e-11, -4.6980746e-15,
       -1.4266117e+04, 6.0170977]
-    note: RUS79
+    note: RUS 79
   transport:
     model: gas
     geometry: linear
@@ -179,7 +178,7 @@ species:
       -4.8371971e+04, 9.9009035]
     - [4.6365111, 2.7414569e-03, -9.9589759e-07, 1.6038666e-10, -9.1619857e-15,
       -4.9024904e+04, -1.9348955]
-    note: L7/88
+    note: L 7/88
   transport:
     model: gas
     geometry: linear
@@ -261,7 +260,7 @@ species:
       -1.02465983e+04, -4.63848842]
     - [1.65326226, 0.0100263099, -3.31661238e-06, 5.36483138e-10, -3.14696758e-14,
       -1.00095936e+04, 9.90506283]
-    note: g8/99
+    note: g 8/99
   transport:
     model: gas
     geometry: nonlinear
@@ -279,7 +278,7 @@ species:
       3872.41185, 3.30834869]
     - [3.92001542, 2.52279324e-03, -6.71004164e-07, 1.05615948e-10, -7.43798261e-15,
       3653.42928, 3.58077056]
-    note: T5/03
+    note: T 5/03
   transport:
     model: gas
     geometry: nonlinear
@@ -295,7 +294,7 @@ species:
       -1.43791953e+04, 0.602798058]
     - [3.16952665, 6.1932056e-03, -2.25056366e-06, 3.6597566e-10, -2.20149458e-14,
       -1.45486831e+04, 6.04207898]
-    note: g8/88
+    note: g 8/88
   transport:
     model: gas
     geometry: nonlinear
@@ -359,11 +358,10 @@ species:
   composition: {He: 1}
   thermo:
     model: NASA7
-    temperature-ranges: [200.0, 1000.0, 6000.0]
+    temperature-ranges: [200.0, 6000.0]
     data:
     - [2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 0.928723974]
-    - [2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 0.928723974]
-    note: g5/97
+    note: g 5/97
   transport:
     model: gas
     geometry: atom

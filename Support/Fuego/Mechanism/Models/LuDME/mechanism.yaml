@@ -14,8 +14,8 @@ description: |-
 
 generator: ck2yaml
 input-files: [mechanism.inp, therm.dat, tran.dat]
-cantera-version: 2.6.0b2
-date: Thu, 28 Apr 2022 10:51:46 -0600
+cantera-version: 2.6.0
+date: Wed, 11 May 2022 17:40:44 -0700
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
@@ -36,9 +36,8 @@ species:
   composition: {H: 1}
   thermo:
     model: NASA7
-    temperature-ranges: [300.0, 1000.0, 5000.0]
+    temperature-ranges: [300.0, 5000.0]
     data:
-    - [2.5, 0.0, 0.0, 0.0, 0.0, 2.547163e+04, -0.4601176]
     - [2.5, 0.0, 0.0, 0.0, 0.0, 2.547163e+04, -0.4601176]
     note: '120186'
   transport:
@@ -74,7 +73,7 @@ species:
       4.60040401e+04, 1.56253185]
     - [2.87410113, 3.65639292e-03, -1.40894597e-06, 2.60179549e-10, -1.87727567e-14,
       4.6263604e+04, 6.17119324]
-    note: LS/93
+    note: L S/93
   transport:
     model: gas
     geometry: linear
@@ -90,7 +89,7 @@ species:
       5.04968163e+04, -0.769118967]
     - [2.29203842, 4.65588637e-03, -2.01191947e-06, 4.17906e-10, -3.39716365e-14,
       5.09259997e+04, 8.62650169]
-    note: LS/93
+    note: L S/93
   transport:
     model: gas
     geometry: linear
@@ -172,7 +171,7 @@ species:
     - [2.86472886, 1.05650448e-03, -2.59082758e-07, 3.05218674e-11, -1.33195876e-15,
       3683.62875, 5.70164073]
     note: |-
-      S9/01
+      S 9/01
        Previous value prior to Ruscic update
       OH         8/12/99 THERMH   1O   1    0    0G   300.000  5000.000 1357.000    01
        2.62599754E+00 1.31992406E-03-3.59724670E-07 4.25630800E-11-1.82048016E-15    2
@@ -211,7 +210,7 @@ species:
       2.64289807e+04, 13.9397051]
     - [4.14756964, 5.96166664e-03, -2.37294852e-06, 4.67412171e-10, -3.61235213e-14,
       2.59359992e+04, -1.23028121]
-    note: L1/91
+    note: L 1/91
   transport:
     model: gas
     geometry: linear
@@ -228,7 +227,7 @@ species:
       3.48598468e+04, 8.51054025]
     - [3.016724, 0.0103302292, -4.68082349e-06, 1.01763288e-09, -8.62607041e-14,
       3.46128739e+04, 7.78732378]
-    note: L2/92
+    note: L 2/92
   transport:
     model: gas
     geometry: nonlinear
@@ -263,7 +262,7 @@ species:
       5089.77593, 4.09733096]
     - [2.03611116, 0.0146454151, -6.71077915e-06, 1.47222923e-09, -1.25706061e-13,
       4939.88614, 10.3053693]
-    note: L1/91
+    note: L 1/91
   transport:
     model: gas
     geometry: nonlinear
@@ -402,7 +401,7 @@ species:
     - [4.0172109, 2.23982013e-03, -6.3365815e-07, 1.1424637e-10, -1.07908535e-14,
       111.856713, 3.78510215]
     note: |-
-      L5/89
+      L 5/89
        From GRI mechanism
   transport:
     model: gas
@@ -455,7 +454,7 @@ species:
       -2.1572878e+04, 4.1030159]
     - [5.4041108, 0.011723059, -4.2263137e-06, 6.8372451e-10, -4.0984863e-14,
       -2.2593122e+04, -3.4807917]
-    note: L8/88
+    note: L 8/88
   transport:
     model: gas
     geometry: nonlinear
@@ -472,7 +471,7 @@ species:
       -1188.4424, 11.6066817]
     - [8.17137842, 0.0110086181, -3.82352277e-06, 5.99637202e-10, -3.50317513e-14,
       -3419.41605, -17.8650856]
-    note: 7/20/98THERM
+    note: 7/20/98 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -489,7 +488,7 @@ species:
       -4.64616504e+04, 17.2885798]
     - [6.68733013, 5.14289368e-03, -1.82238513e-06, 2.89719163e-10, -1.70892199e-14,
       -4.839954e+04, -11.3104798]
-    note: 7/1/99THERM
+    note: 7/ 1/99 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -524,7 +523,7 @@ species:
     - [6.39521515, 7.43673043e-03, -2.50422354e-06, 3.84879712e-10, -2.21778689e-14,
       -2.47500385e+04, -7.29290847]
     note: |-
-      8/4/99THERM
+      8/ 4/99 THERM
        Henry Curran
   transport:
     model: gas
@@ -542,7 +541,7 @@ species:
       -2.14404829e+04, 16.6954362]
     - [13.08776, 4.5354495e-03, -1.65096364e-06, 2.67197277e-10, -1.59576863e-14,
       -2.466164e+04, -32.7914051]
-    note: 4/20/99THERM
+    note: 4/20/99 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -559,7 +558,7 @@ species:
       -4.41855167e+04, 12.5364719]
     - [8.69123518, 0.0115503122, -4.27782486e-06, 7.02533059e-10, -4.24333552e-14,
       -4.64364769e+04, -18.9301478]
-    note: 4/20/99THERM
+    note: 4/20/99 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -576,7 +575,7 @@ species:
       -1.92377212e+04, 12.3680069]
     - [8.60261845, 0.0135772195, -4.84661602e-06, 7.77766193e-10, -4.62633624e-14,
       -2.13762444e+04, -17.5775023]
-    note: 2/9/96THERM
+    note: 2/ 9/96 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -593,7 +592,7 @@ species:
       -4.54488899e+04, 13.0511235]
     - [8.7098157, 0.0153602372, -5.41003788e-06, 8.60573446e-10, -5.08819752e-14,
       -4.76607115e+04, -18.0226702]
-    note: 2/9/96THERM
+    note: 2/ 9/96 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -610,7 +609,7 @@ species:
       -4.02242792e+04, 6.11645828]
     - [12.0233916, 8.11262659e-03, -2.91356462e-06, 4.67340384e-10, -2.77375525e-14,
       -4.33647231e+04, -33.3691809]
-    note: 4/9/98THERM
+    note: 4/ 9/98 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -627,7 +626,7 @@ species:
       -4.39526183e+04, 2.54054449]
     - [11.3737391, 8.17663898e-03, -2.92034021e-06, 4.66695616e-10, -2.76276823e-14,
       -4.65575743e+04, -28.6035265]
-    note: 8/31/99THERM
+    note: 8/31/99 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -645,7 +644,7 @@ species:
     - [12.4249729, 0.0118705986, -4.07906532e-06, 6.35310809e-10, -3.69427867e-14,
       -2.29679238e+04, -35.3740145]
     note: |-
-      7/20/98THERM
+      7/20/98 THERM
        Species involved in low temperature DME oxidation (from LLNL database)
   transport:
     model: gas
@@ -663,7 +662,7 @@ species:
       -1.44293306e+04, 17.6899251]
     - [15.1191783, 9.23718883e-03, -3.19127505e-06, 4.99114678e-10, -2.91162488e-14,
       -1.84114867e+04, -48.5706618]
-    note: 7/20/98THERM
+    note: 7/20/98 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -680,7 +679,7 @@ species:
       -5.80629934e+04, 15.2521392]
     - [16.4584298, 8.52683511e-03, -3.041135e-06, 4.85596908e-10, -2.87316334e-14,
       -6.23959608e+04, -53.8924139]
-    note: 8/31/99THERM
+    note: 8/31/99 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -697,7 +696,7 @@ species:
       -3.27628742e+04, 24.4215005]
     - [19.2038046, 0.0104394841, -3.60582939e-06, 5.63792843e-10, -3.28807214e-14,
       -3.79207055e+04, -65.1847273]
-    note: 7/20/98TRM
+    note: 7/20/98 TRM
   transport:
     model: gas
     geometry: nonlinear
@@ -1295,12 +1294,10 @@ reactions:
 - equation: HCOOH + M <=> CO + H2O + M  # Reaction 166
   type: three-body
   rate-constant: {A: 2.3e+13, b: 0.0, Ea: 5.0e+04}
-  duplicate: true    
   note: '166'
 - equation: HCOOH + M <=> CO2 + H2 + M  # Reaction 167
   type: three-body
   rate-constant: {A: 1.5e+16, b: 0.0, Ea: 5.7e+04}
-  duplicate: true
   note: '167'
 - equation: HCOOH <=> HCO + OH  # Reaction 168
   rate-constant: {A: 4.593e+18, b: -0.46, Ea: 1.083e+05}
@@ -1310,11 +1307,9 @@ reactions:
   note: '169'
 - equation: HCOOH + OH <=> H2O + CO + OH  # Reaction 170
   rate-constant: {A: 1.85e+07, b: 1.51, Ea: -962.0}
-  duplicate: true
   note: '170'
 - equation: HCOOH + H <=> H2 + CO2 + H  # Reaction 171
   rate-constant: {A: 4.24e+06, b: 2.1, Ea: 4868.0}
-  duplicate: true
   note: '171'
 - equation: HCOOH + H <=> H2 + CO + OH  # Reaction 172
   rate-constant: {A: 6.03e+13, b: -0.35, Ea: 2988.0}

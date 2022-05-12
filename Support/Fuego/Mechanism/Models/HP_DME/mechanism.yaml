@@ -22,9 +22,9 @@ description: |-
   ------------------------------------------------------------------------------------
 
 generator: ck2yaml
-input-files: [chem-HPMech-v3.3.inp, therm-HPMech-v3.3.dat, tran-HPMech-v3.3.dat]
-cantera-version: 2.6.0b2
-date: Thu, 28 Apr 2022 11:36:45 -0600
+input-files: [mechanism.inp, therm.dat, tran.dat]
+cantera-version: 2.6.0
+date: Wed, 11 May 2022 17:40:22 -0700
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
@@ -42,7 +42,7 @@ phases:
     tC3H5, nC4H3, iC4H3, C4H4, nC4H5, iC4H5, C4H6-13, C4H6-12, C4H6-2, H2CC,
     CH2CHOH, C5H2, HCCCHCCH, H2CCCCCH, C4H5C2H, FC6H6, C6H6, C6H5, C2H3CHO,
     C5H6, C2H3CO, C4H, H2C4O, C6H2, C6H3, l-C6H4, o-C6H4, CH3CHCHCO, CH2CHCHCHO,
-    C5H5, C6H5O, C6H4O2, C6H5OH, C5H4O, C5H5O, O(SING), O2(SING), O3, C2H4O2#4,
+    C5H5, C6H5O, C6H4O2, C6H5OH, C5H4O, C5H5O, OSING, O2SING, O3, C2H4O2,
     CH2OCHO, HOCO, C2H5O, C2H5O2, C2H5O2H, C2H4O2H, C2H5CO, C2H5CHO, CH3CO2,
     CH3CO3, CH3CO3H, OCH2O2H, HOCH2O2, HOCH2O2H, O2CHO, HO2CHO, nC3H7, iC3H7,
     C3H8]
@@ -55,11 +55,10 @@ species:
   composition: {H: 1}
   thermo:
     model: NASA7
-    temperature-ranges: [200.0, 1000.0, 6000.0]
+    temperature-ranges: [200.0, 6000.0]
     data:
     - [2.5, 0.0, 0.0, 0.0, 0.0, 2.547366e+04, -0.44668285]
-    - [2.5, 0.0, 0.0, 0.0, 0.0, 2.547366e+04, -0.44668285]
-    note: L6/94
+    note: L 6/94
   transport:
     model: gas
     geometry: atom
@@ -75,7 +74,7 @@ species:
       -917.935173, 0.683010238]
     - [2.93286575, 8.26608026e-04, -1.46402364e-07, 1.54100414e-11, -6.888048e-16,
       -813.065581, -1.02432865]
-    note: REFELEMENTtpis78
+    note: REF ELEMENT    tpis78
   transport:
     model: gas
     geometry: linear
@@ -141,7 +140,7 @@ species:
       2.91222592e+04, 2.05193346]
     - [2.54363697, -2.73162486e-05, -4.1902952e-09, 4.95481845e-12, -4.79553694e-16,
       2.9226012e+04, 4.92229457]
-    note: L1/90
+    note: L 1/90
   transport:
     model: gas
     geometry: atom
@@ -157,7 +156,7 @@ species:
       -1.02465983e+04, -4.63848842]
     - [1.65326226, 0.0100263099, -3.31661238e-06, 5.36483138e-10, -3.14696758e-14,
       -1.00095936e+04, 9.90506283]
-    note: ANHARMONICg8/99
+    note: ANHARMONIC  g 8/99
   transport:
     model: gas
     geometry: nonlinear
@@ -175,7 +174,7 @@ species:
       3368.89836, -0.103998477]
     - [2.83853033, 1.10741289e-03, -2.94000209e-07, 4.20698729e-11, -2.4228989e-15,
       3697.80808, 5.84494652]
-    note: HYDROXYLRADIIU3/03
+    note: HYDROXYL RADI  IU3/03
   transport:
     model: gas
     geometry: linear
@@ -192,7 +191,7 @@ species:
       -3.0293726e+04, -0.84900901]
     - [2.6770389, 2.9731816e-03, -7.7376889e-07, 9.4433514e-11, -4.2689991e-15,
       -2.9885894e+04, 6.88255]
-    note: L5/89
+    note: L 5/89
   transport:
     model: gas
     geometry: nonlinear
@@ -210,7 +209,7 @@ species:
       6.63125955e+04, 0.316341916]
     - [4.66893822, 2.0128472e-03, -7.01828634e-07, 1.10347228e-10, -6.45790465e-15,
       6.60310696e+04, -2.25424693]
-    note: 10/4/5THERM
+    note: 10/ 4/ 5 THERM
   transport:
     model: gas
     geometry: linear
@@ -227,7 +226,7 @@ species:
       2.59578589e+04, 8.62758672]
     - [4.98265164, 4.2599293e-03, -1.37483523e-06, 2.04717964e-10, -1.1519174e-14,
       2.52697118e+04, -5.81321385]
-    note: 10/4/5THERM
+    note: 10/ 4/ 5 THERM
   transport:
     model: gas
     geometry: linear
@@ -244,7 +243,7 @@ species:
       3.50734773e+04, 17.1341661]
     - [5.07331248, 6.58316278e-03, -2.23762924e-06, 3.45803379e-10, -1.9994049e-14,
       3.37234748e+04, -3.39792712]
-    note: 10/4/5THERM
+    note: 10/ 4/ 5 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -261,7 +260,7 @@ species:
       -1.4344086e+04, 3.5084093]
     - [3.0484859, 1.3517281e-03, -4.8579405e-07, 7.8853644e-11, -4.6980746e-15,
       -1.4266117e+04, 6.0170977]
-    note: RUS79
+    note: RUS 79
   transport:
     model: gas
     geometry: linear
@@ -280,7 +279,7 @@ species:
       -1046.97628, 2.96747038]
     - [2.95257637, 1.3969004e-03, -4.92631603e-07, 7.86010195e-11, -4.60755204e-15,
       -923.948688, 5.87188762]
-    note: REFELEMENTG8/02
+    note: REF ELEMENT    G 8/02
   transport:
     model: gas
     geometry: linear
@@ -298,7 +297,7 @@ species:
       5464.89338, 19.7084228]
     - [5.22176372, 8.96137303e-03, -3.04868886e-06, 4.71465524e-10, -2.72739592e-14,
       3603.89679, -7.47789234]
-    note: 10/4/5THERM
+    note: 10/ 4/ 5 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -315,7 +314,7 @@ species:
       3872.41185, 3.30834869]
     - [3.92001542, 2.52279324e-03, -6.71004164e-07, 1.05615948e-10, -7.43798261e-15,
       3653.42928, 3.58077056]
-    note: T5/03
+    note: T 5/03
   transport:
     model: gas
     geometry: nonlinear
@@ -332,7 +331,7 @@ species:
       1.34284028e+04, 17.1789216]
     - [5.8878439, 0.0103076793, -3.46844396e-06, 5.32499257e-10, -3.06512651e-14,
       1.15065499e+04, -8.49651771]
-    note: 8/4/4THERM
+    note: 8/ 4/ 4 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -349,7 +348,7 @@ species:
       -1.43791953e+04, 0.602798058]
     - [3.16952665, 6.1932056e-03, -2.25056366e-06, 3.6597566e-10, -2.20149458e-14,
       -1.45486831e+04, 6.04207898]
-    note: FormaldehyT5/11
+    note: Formaldehy   T 5/11
   transport:
     model: gas
     geometry: nonlinear
@@ -366,7 +365,7 @@ species:
       -1.10923014e+04, 20.6544071]
     - [6.0597263, 0.0130382837, -4.48103942e-06, 6.97762095e-10, -4.05606353e-14,
       -1.35751226e+04, -12.8608001]
-    note: 8/4/4THERM
+    note: 8/ 4/ 4 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -419,7 +418,7 @@ species:
       -1063.94356, 3.65767573]
     - [3.66096065, 6.56365811e-04, -1.41149627e-07, 2.05797935e-11, -1.29913436e-15,
       -1215.97718, 3.41536279]
-    note: REFELEMENTRUS89
+    note: REF ELEMENT    RUS 89
   transport:
     model: gas
     geometry: linear
@@ -454,7 +453,7 @@ species:
       264.018485, 3.7166622]
     - [4.17228741, 1.88117627e-03, -3.46277286e-07, 1.94657549e-11, 1.76256905e-16,
       31.0206839, 2.95767672]
-    note: T1/09
+    note: T 1/09
   transport:
     model: gas
     geometry: nonlinear
@@ -471,7 +470,7 @@ species:
       -1.77067437e+04, 3.27373319]
     - [4.57977305, 4.05326003e-03, -1.2984473e-06, 1.982114e-10, -1.13968792e-14,
       -1.80071775e+04, 0.664970694]
-    note: T8/03
+    note: T 8/03
   transport:
     model: gas
     geometry: nonlinear
@@ -556,7 +555,7 @@ species:
       -3025.46532, 14.0340315]
     - [6.56682466, 7.55308669e-03, -2.59966784e-06, 4.05334994e-10, -2.35876164e-14,
       -4766.90401, -8.83301965]
-    note: 8/10/4THERM
+    note: 8/10/ 4 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -573,7 +572,7 @@ species:
       -4.8371971e+04, 9.9009035]
     - [4.6365111, 2.7414569e-03, -9.9589759e-07, 1.6038666e-10, -9.1619857e-15,
       -4.9024904e+04, -1.9348955]
-    note: L7/88
+    note: L 7/88
   transport:
     model: gas
     geometry: linear
@@ -591,7 +590,7 @@ species:
       -2.1572878e+04, 4.1030159]
     - [5.4041108, 0.011723059, -4.2263137e-06, 6.8372451e-10, -4.0984863e-14,
       -2.2593122e+04, -3.4807917]
-    note: L8/88
+    note: L 8/88
   transport:
     model: gas
     geometry: nonlinear
@@ -608,7 +607,7 @@ species:
       -1.67014616e+04, 7.14416613]
     - [4.97589467, 6.53225658e-03, -3.62793365e-06, 9.50833132e-10, -9.6118972e-14,
       -1.70589151e+04, 0.0314702949]
-    note: Goldsmith2012
+    note: Goldsmith 2012
   transport:
     model: gas
     geometry: nonlinear
@@ -625,7 +624,7 @@ species:
       -4012.0054, 14.581622]
     - [6.7665424, 0.011634436, -3.7790651e-06, 5.3828875e-10, -2.7315345e-14,
       -5609.2969, -9.3980442]
-    note: T4/83
+    note: T 4/83
   transport:
     model: gas
     geometry: nonlinear
@@ -642,7 +641,7 @@ species:
       -3846.4519, 19.148981]
     - [7.5944014, 9.3229339e-03, -3.0303854e-06, 4.3216319e-10, -2.1970039e-14,
       -5772.7852, -13.955572]
-    note: T4/83
+    note: T 4/83
   transport:
     model: gas
     geometry: nonlinear
@@ -676,7 +675,7 @@ species:
       -1188.4424, 11.6066817]
     - [8.17137842, 0.0110086181, -3.82352277e-06, 5.99637202e-10, -3.50317513e-14,
       -3419.41605, -17.8650856]
-    note: 7/20/98THERM
+    note: 7/20/98 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -694,7 +693,7 @@ species:
       -4.6770609e+04, 7.3495397]
     - [4.6138316, 6.4496364e-03, -2.2908251e-06, 3.6716047e-10, -2.1873675e-14,
       -4.751485e+04, 0.84788383]
-    note: FORMICACIDL8/88
+    note: FORMIC ACID L 8/88
   transport:
     model: gas
     geometry: nonlinear
@@ -729,7 +728,7 @@ species:
       -2.95670605e+04, 24.4715919]
     - [8.31742137, 0.0129603294, -4.39286497e-06, 6.77734995e-10, -3.91448231e-14,
       -3.25219715e+04, -19.6502783]
-    note: 8/9/4THERM
+    note: 8/ 9/ 4 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -746,7 +745,7 @@ species:
       -2.09518057e+04, 29.0578754]
     - [8.48089986, 5.06316158e-03, -1.75525642e-07, -4.30680645e-10, 5.94330789e-14,
       -2.27469965e+04, -19.8148133]
-    note: 10/1/12THERM
+    note: 10/ 1/12 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -763,7 +762,7 @@ species:
       -2.12131253e+04, 18.3571826]
     - [8.10853949, 9.04376074e-03, -3.20373313e-06, 5.1174814e-10, -3.03505965e-14,
       -2.32888578e+04, -14.2376225]
-    note: 7/11/12CEFRC
+    note: 7/11/12 CEFRC
   transport:
     model: gas
     geometry: nonlinear
@@ -781,7 +780,7 @@ species:
       -4.41186702e+04, 23.3224916]
     - [10.167692, 9.87660465e-03, -3.46934288e-06, 5.48580455e-10, -3.22441064e-14,
       -4.78700003e+04, -29.2203493]
-    note: 7/11/12CEFRC
+    note: 7/11/12 CEFRC
   transport:
     model: gas
     geometry: nonlinear
@@ -799,7 +798,7 @@ species:
       -1.92377212e+04, 12.3680069]
     - [8.60261845, 0.0135772195, -4.84661602e-06, 7.77766193e-10, -4.62633624e-14,
       -2.13762444e+04, -17.5775023]
-    note: 2/9/96THERM
+    note: 2/ 9/96 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -817,7 +816,7 @@ species:
       -4.54488899e+04, 13.0511235]
     - [8.7098157, 0.0153602372, -5.41003788e-06, 8.60573446e-10, -5.08819752e-14,
       -4.76607115e+04, -18.0226702]
-    note: 2/9/96THERM
+    note: 2/ 9/96 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -835,7 +834,7 @@ species:
       -3.98218297e+04, 37.3061801]
     - [16.2282241, 5.37205641e-03, -1.96533778e-06, 3.19132941e-10, -1.91033103e-14,
       -4.54735234e+04, -62.4116504]
-    note: 7/11/12THERM
+    note: 7/11/12 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -853,7 +852,7 @@ species:
       -4.33687713e+04, 32.8415415]
     - [15.6578563, 5.09504394e-03, -1.79540452e-06, 2.84861141e-10, -1.67940808e-14,
       -4.82707476e+04, -56.3239757]
-    note: 7/11/12THERM
+    note: 7/11/12 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -887,7 +886,7 @@ species:
       -1.9494094e+04, 19.1463601]
     - [12.4249729, 0.0118705986, -4.07906532e-06, 6.35310809e-10, -3.69427867e-14,
       -2.29679238e+04, -35.3740145]
-    note: 7/20/98THERM
+    note: 7/20/98 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -905,7 +904,7 @@ species:
       -1.44293306e+04, 17.6899251]
     - [15.1191783, 9.23718883e-03, -3.19127505e-06, 4.99114678e-10, -2.91162488e-14,
       -1.84114867e+04, -48.5706618]
-    note: 7/20/98THERM
+    note: 7/20/98 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -923,7 +922,7 @@ species:
       -3.65363161e+04, 23.1339904]
     - [14.9370964, 0.0119465829, -4.12746359e-06, 6.4542259e-10, -3.76427939e-14,
       -4.11001068e+04, -49.9552737]
-    note: 7/20/98THERM
+    note: 7/20/98 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -941,7 +940,7 @@ species:
       -5.80629934e+04, 15.2521392]
     - [16.4584298, 8.52683511e-03, -3.041135e-06, 4.85596908e-10, -2.87316334e-14,
       -6.23959608e+04, -53.8924139]
-    note: 8/31/99THERM
+    note: 8/31/99 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -959,7 +958,7 @@ species:
       -3.27628742e+04, 24.4215005]
     - [19.2038046, 0.0104394841, -3.60582939e-06, 5.63792843e-10, -3.28807214e-14,
       -3.79207055e+04, -65.1847273]
-    note: 7/20/98TRM
+    note: 7/20/98 TRM
   transport:
     model: gas
     geometry: nonlinear
@@ -971,11 +970,10 @@ species:
   composition: {Ar: 1}
   thermo:
     model: NASA7
-    temperature-ranges: [200.0, 1000.0, 6000.0]
+    temperature-ranges: [200.0, 6000.0]
     data:
     - [2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 4.37967491]
-    - [2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 4.37967491]
-    note: REFELEMENTg5/97
+    note: REF ELEMENT    g 5/97
   transport:
     model: gas
     geometry: atom
@@ -985,11 +983,10 @@ species:
   composition: {He: 1}
   thermo:
     model: NASA7
-    temperature-ranges: [200.0, 1000.0, 6000.0]
+    temperature-ranges: [200.0, 6000.0]
     data:
     - [2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 0.928723974]
-    - [2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 0.928723974]
-    note: REFELEMENTg5/97
+    note: REF ELEMENT    g 5/97
   transport:
     model: gas
     geometry: atom
@@ -1005,7 +1002,7 @@ species:
       8.5442681e+04, 4.5313085]
     - [2.605583, -1.9593434e-04, 1.0673722e-07, -1.642394e-11, 8.187058e-16,
       8.5411742e+04, 4.1923868]
-    note: L7/88
+    note: L 7/88
   transport:
     model: gas
     geometry: atom
@@ -1037,7 +1034,7 @@ species:
       1.38615127e+04, 1.97860732]
     - [3.65237205, 5.5580706e-03, -1.97617181e-06, 3.16823378e-10, -1.88747598e-14,
       1.35536156e+04, 4.2214084]
-    note: CH**-OHBiT9/09
+    note: CH**-OH Bi  T 9/09
   transport:
     model: gas
     geometry: nonlinear
@@ -1072,7 +1069,7 @@ species:
       -129.022161, 2.81501182]
     - [5.55530486, 9.12236137e-03, -3.23851661e-06, 5.18713798e-10, -3.08834151e-14,
       -1035.69402, -3.99158547]
-    note: MT04/10
+    note: M           T04/10
   transport:
     model: gas
     geometry: nonlinear
@@ -1089,7 +1086,7 @@ species:
       -1.68894632e+04, 11.3741987]
     - [7.76538058, 8.61499712e-03, -2.98006935e-06, 4.68638071e-10, -2.75339255e-14,
       -1.82979984e+04, -14.3992663]
-    note: A7/05
+    note: A 7/05
   transport:
     model: gas
     geometry: nonlinear
@@ -1174,7 +1171,7 @@ species:
       1177.60132, 21.9003736]
     - [8.01595958, 0.0137023634, -4.66249733e-06, 7.21254402e-10, -4.17370126e-14,
       -1767.49303, -20.0160668]
-    note: 10/23/5THERM
+    note: 10/23/ 5 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -1259,7 +1256,7 @@ species:
       1.94941423e+04, 24.6172315]
     - [8.45883958, 0.0112695483, -3.83792864e-06, 5.94059119e-10, -3.4391803e-14,
       1.64683289e+04, -23.2704266]
-    note: 10/23/5THERM
+    note: 10/23/ 5 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -1276,7 +1273,7 @@ species:
       3.079811e+04, 18.3328787]
     - [7.88765879, 0.0113012591, -3.8421313e-06, 5.93982677e-10, -3.43567175e-14,
       2.83484913e+04, -17.4291589]
-    note: 10/23/5THERM
+    note: 10/23/ 5 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -1293,7 +1290,7 @@ species:
       2.96002535e+04, 14.8785684]
     - [7.37492443, 0.0117510061, -4.00021283e-06, 6.18947395e-10, -3.58215018e-14,
       2.73982108e+04, -14.3478655]
-    note: 10/23/5THERM
+    note: 10/23/ 5 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -1411,7 +1408,7 @@ species:
       1.811799e+04, 19.75066]
     - [17.81557, -4.257502e-03, 1.051185e-05, -4.473844e-09, 5.848138e-13,
       1.267342e+04, -69.82662]
-    note: a8/83
+    note: a 8/83
   transport:
     model: gas
     geometry: nonlinear
@@ -1429,7 +1426,7 @@ species:
       1.59213397e+04, 13.960399]
     - [11.7580664, 0.0136774582, -4.88993888e-06, 7.81986154e-10, -4.63144942e-14,
       1.13714894e+04, -41.1767591]
-    note: 12/6/13therm
+    note: 12/ 6/13 therm
   transport:
     model: gas
     geometry: nonlinear
@@ -1463,7 +1460,7 @@ species:
       -1.59914544e+04, 23.0438601]
     - [8.32598158, 8.03387281e-03, -2.63928405e-06, 3.98410726e-10, -2.26551155e-14,
       -1.83221436e+04, -20.2080305]
-    note: 2/3/9THERM
+    note: 2/ 3/ 9 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -1565,7 +1562,7 @@ species:
       8552.47913, 21.6412893]
     - [11.0809576, 0.0207176746, -7.52145991e-06, 1.22320984e-09, -7.36091279e-14,
       4306.41035, -40.041331]
-    note: g6/01
+    note: g 6/01
   transport:
     model: gas
     geometry: nonlinear
@@ -1600,7 +1597,7 @@ species:
       -9114.31804, 24.7409944]
     - [9.32472453, 0.0102402374, -4.03657637e-06, 7.32456745e-10, -4.77177413e-14,
       -1.2094987e+04, -24.7542133]
-    note: February2012
+    note: February 2012
   transport:
     model: gas
     geometry: nonlinear
@@ -1618,7 +1615,7 @@ species:
       1.4801755e+04, 21.353453]
     - [9.9757848, 0.018905543, -6.8411461e-06, 1.109934e-09, -6.6680236e-14,
       1.1081693e+04, -32.209454]
-    note: t1/90
+    note: t 1/90
   transport:
     model: gas
     geometry: linear
@@ -1635,7 +1632,7 @@ species:
       9382.58616, 12.7646316]
     - [7.09933414, 0.0115130367, -5.51167622e-06, 1.18130982e-09, -8.58095778e-14,
       7900.16083, -11.9392944]
-    note: February2012
+    note: February 2012
   transport:
     model: gas
     geometry: nonlinear
@@ -1686,7 +1683,7 @@ species:
       8.3273227e+04, 27.980873]
     - [13.226281, 7.3904302e-03, -2.2715381e-06, 2.5875217e-10, -5.5356741e-15,
       8.0565258e+04, -41.201176]
-    note: p1/93
+    note: p 1/93
   transport:
     model: gas
     geometry: linear
@@ -1754,7 +1751,7 @@ species:
       1478.87943, 16.7433588]
     - [12.1043198, 0.0128210886, -4.36704943e-06, 6.75949572e-10, -3.91295106e-14,
       -1865.44623, -37.7298604]
-    note: 12/6/13tHerm
+    note: 12/ 6/13 tHerm
   transport:
     model: gas
     geometry: linear
@@ -1839,7 +1836,7 @@ species:
       -1.3284121e+04, 32.54216]
     - [14.912073, 0.018378135, -6.1983128e-06, 9.1983221e-10, -4.9209565e-14,
       -1.8375199e+04, -55.924103]
-    note: l4/84
+    note: l 4/84
   transport:
     model: gas
     geometry: nonlinear
@@ -1856,7 +1853,7 @@ species:
       5111.59287, 23.5409513]
     - [10.0806824, 0.0161143465, -5.83314509e-06, 9.4675932e-10, -5.68972206e-14,
       1943.64771, -29.4521623]
-    note: t8/99
+    note: t 8/99
   transport:
     model: gas
     geometry: nonlinear
@@ -1873,15 +1870,15 @@ species:
       2.04992154e+04, 36.9634411]
     - [14.8322894, 0.0140483376, -4.92302051e-06, 7.77041219e-10, -4.56103939e-14,
       1.45523665e+04, -57.3228191]
-    note: 5/16/90tHerm
+    note: 5/16/90 tHerm
   transport:
     model: gas
     geometry: nonlinear
     well-depth: 450.0
     diameter: 5.5
     rotational-relaxation: 1.0
-- name: O(SING)
-  composition: {O: 1}
+- name: OSING
+  composition: {Ao: 1}
   thermo:
     model: NASA7
     temperature-ranges: [200.0, 1000.0, 6000.0]
@@ -1890,14 +1887,14 @@ species:
       5.19965317e+04, 4.61684555]
     - [2.49368475, 1.37617903e-05, -1.00401058e-08, 2.76012182e-12, -2.01597513e-16,
       5.19986304e+04, 4.6505095]
-    note: ATcT/A
+    note: ATcT/
   transport:
     model: gas
     geometry: atom
     well-depth: 80.0
     diameter: 2.75
-- name: O2(SING)
-  composition: {O: 2}
+- name: O2SING
+  composition: {Ao: 2}
   thermo:
     model: NASA7
     temperature-ranges: [200.0, 1000.0, 6000.0]
@@ -1906,7 +1903,7 @@ species:
       1.02922572e+04, 3.27320239]
     - [3.45852381, 1.04045351e-03, -2.79664041e-07, 3.11439672e-11, -8.55656058e-16,
       1.02229063e+04, 4.15264119]
-    note: ATcT/A
+    note: ATcT/
   transport:
     model: gas
     geometry: linear
@@ -1924,14 +1921,14 @@ species:
       1.58644979e+04, 8.2824758]
     - [12.3302914, -0.0119324783, 7.98741278e-06, -1.77194552e-09, 1.26075824e-13,
       1.26755831e+04, -40.8823374]
-    note: L5/90
+    note: L 5/90
   transport:
     model: gas
     geometry: linear
     well-depth: 180.0
     diameter: 4.1
     rotational-relaxation: 2.0
-- name: C2H4O2#4
+- name: C2H4O2
   composition: {C: 2, H: 4, O: 2}
   thermo:
     model: NASA7
@@ -1958,7 +1955,7 @@ species:
       -2.06046756e+04, 10.8657285]
     - [11.5163641, 6.63048603e-03, -2.35573922e-06, 3.75477369e-10, -2.21965619e-14,
       -2.38376015e+04, -34.9873701]
-    note: 7/11/12CEFRC
+    note: 7/11/12 CEFRC
   transport:
     model: gas
     geometry: nonlinear
@@ -1993,7 +1990,7 @@ species:
       -3357.17377, 23.7513898]
     - [8.23717244, 0.0110885879, -3.78808372e-06, 5.87613473e-10, -3.40712889e-14,
       -6229.48597, -19.3190543]
-    note: 8/9/4THERM
+    note: 8/ 9/ 4 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -2010,7 +2007,7 @@ species:
       -4585.88992, 15.0486289]
     - [8.77641329, 0.0118767163, -3.8768305e-06, 5.83210754e-10, -3.31006724e-14,
       -6787.48703, -18.3119972]
-    note: 1/14/5THERM
+    note: 1/14/ 5 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -2027,7 +2024,7 @@ species:
       -2.15278368e+04, 19.0472032]
     - [11.2305737, 0.012048212, -3.96730201e-06, 6.00754632e-10, -3.42657803e-14,
       -2.47977531e+04, -32.5607232]
-    note: 1/14/5THERM
+    note: 1/14/ 5 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -2044,7 +2041,7 @@ species:
       3896.8827, 14.3400726]
     - [10.5228954, 9.48091381e-03, -3.55727763e-06, 6.41445994e-10, -4.21232247e-14,
       1557.18322, -23.1413632]
-    note: 1/14/5THERM
+    note: 1/14/ 5 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -2061,7 +2058,7 @@ species:
       -6193.15561, 1.96738699]
     - [8.9965972, 0.0127668466, -4.23517417e-06, 6.44563192e-10, -3.6894713e-14,
       -8247.15327, -19.876636]
-    note: February2012
+    note: February 2012
   transport:
     model: gas
     geometry: nonlinear
@@ -2078,7 +2075,7 @@ species:
       -2.45525648e+04, 5.33623378]
     - [9.53350737, 0.0147106768, -4.87559126e-06, 7.41596787e-10, -4.24323285e-14,
       -2.71466417e+04, -24.5199356]
-    note: Sumathi2003
+    note: Sumathi 2003
   transport:
     model: gas
     geometry: nonlinear
@@ -2096,7 +2093,7 @@ species:
       -2.47922272e+04, 13.0310283]
     - [7.622746, 9.66664529e-03, -3.47122481e-06, 5.60301057e-10, -3.35405698e-14,
       -2.63946612e+04, -13.1344143]
-    note: BurcatT05/09
+    note: Burcat    T05/09
   transport:
     model: gas
     geometry: nonlinear
@@ -2113,7 +2110,7 @@ species:
       -2.34205171e+04, 11.2014914]
     - [11.2522498, 8.33652672e-03, -2.8901453e-06, 4.52781734e-10, -2.64354456e-14,
       -2.60238584e+04, -29.6370457]
-    note: 4/3/0THERM
+    note: 4/ 3/ 0 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -2130,7 +2127,7 @@ species:
       -4.24677831e+04, 17.0668133]
     - [12.5060485, 9.47789695e-03, -3.30402246e-06, 5.19630793e-10, -3.04233568e-14,
       -4.59856703e+04, -37.9195947]
-    note: 6/26/95THERM
+    note: 6/26/95 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -2147,7 +2144,7 @@ species:
       -1.26833133e+04, 18.2296764]
     - [8.16020712, 0.0104965195, -4.9765337e-06, 1.14903191e-09, -1.04839976e-13,
       -1.38997181e+04, -13.277113]
-    note: Goldsmith2012
+    note: Goldsmith 2012
   transport:
     model: gas
     geometry: nonlinear
@@ -2165,7 +2162,7 @@ species:
       -2.17343666e+04, 12.8574586]
     - [7.17818574, 0.011919933, -5.93183992e-06, 1.44682066e-09, -1.39516527e-13,
       -2.27363122e+04, -8.25083014]
-    note: Goldsmith2012
+    note: Goldsmith 2012
   transport:
     model: gas
     geometry: nonlinear
@@ -2183,7 +2180,7 @@ species:
       -3.99383149e+04, 12.311296]
     - [8.65721338, 0.0130768169, -6.50568247e-06, 1.5907996e-09, -1.54211888e-13,
       -4.13827948e+04, -17.1113305]
-    note: Goldsmith2012
+    note: Goldsmith 2012
   transport:
     model: gas
     geometry: nonlinear
@@ -2201,7 +2198,7 @@ species:
       -1.40352338e+04, 19.6624013]
     - [6.51772857, 8.76369884e-03, -5.2315057e-06, 1.43761318e-09, -1.50202235e-13,
       -1.52497529e+04, -6.83620038]
-    note: Goldsmith2012
+    note: Goldsmith 2012
   transport:
     model: gas
     geometry: nonlinear
@@ -2218,7 +2215,7 @@ species:
       -3.6331274e+04, 22.1605939]
     - [8.154987, 7.12464341e-03, -3.07276462e-06, 6.45248157e-10, -5.35496767e-14,
       -3.7692429e+04, -15.0180043]
-    note: Goldsmith2012
+    note: Goldsmith 2012
   transport:
     model: gas
     geometry: nonlinear
@@ -2235,7 +2232,7 @@ species:
       1.04074558e+04, 8.39534919]
     - [6.49636579, 0.0177337992, -6.24898046e-06, 9.95389495e-10, -5.9019977e-14,
       8859.73885, -8.5638971]
-    note: a5/05
+    note: a 5/05
   transport:
     model: gas
     geometry: nonlinear
@@ -2252,7 +2249,7 @@ species:
       9049.39013, 3.40542323]
     - [5.30597255, 0.0189854588, -6.74315384e-06, 1.0799373e-09, -6.42785036e-14,
       7787.4891, -2.23233935]
-    note: a5/05
+    note: a 5/05
   transport:
     model: gas
     geometry: nonlinear
@@ -2269,7 +2266,7 @@ species:
       -1.39792198e+04, 24.0478733]
     - [9.31450083, 0.0173577154, -5.94222386e-06, 9.22939762e-10, -5.35576604e-14,
       -1.77234234e+04, -28.9241517]
-    note: 8/4/4THERM
+    note: 8/ 4/ 4 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -4314,81 +4311,81 @@ reactions:
   rate-constant: {A: 1.0e+13, b: 0.0, Ea: 880.0}
 - equation: C6H5OH + O <=> C6H5O + OH  # Reaction 693
   rate-constant: {A: 1.69e+13, b: 0.0, Ea: 3060.0}
-- equation: O(SING) + O3 <=> O2 + O2  # Reaction 694
+- equation: OSING + O3 <=> O2 + O2  # Reaction 694
   rate-constant: {A: 7.2e+13, b: 0.0, Ea: 0.0}
-- equation: O(SING) + O3 <=> O + O + O2  # Reaction 695
+- equation: OSING + O3 <=> O + O + O2  # Reaction 695
   rate-constant: {A: 7.2e+13, b: 0.0, Ea: 0.0}
-- equation: O(SING) + CO2 <=> O + CO2  # Reaction 696
+- equation: OSING + CO2 <=> O + CO2  # Reaction 696
   rate-constant: {A: 4.46e+13, b: 0.0, Ea: 239.0}
-- equation: O(SING) + AR <=> O + AR  # Reaction 697
+- equation: OSING + AR <=> O + AR  # Reaction 697
   rate-constant: {A: 1.26e+13, b: 0.0, Ea: 616.0}
-- equation: O(SING) + HE <=> O + HE  # Reaction 698
+- equation: OSING + HE <=> O + HE  # Reaction 698
   rate-constant: {A: 1.5e+13, b: 0.0, Ea: 616.0}
-- equation: O(SING) + N2 <=> N2 + O  # Reaction 699
+- equation: OSING + N2 <=> N2 + O  # Reaction 699
   rate-constant: {A: 1.32e+13, b: 0.0, Ea: -234.0}
-- equation: O(SING) + H2 <=> OH + H  # Reaction 700
+- equation: OSING + H2 <=> OH + H  # Reaction 700
   rate-constant: {A: 8.31e+13, b: 0.0, Ea: -41.7}
-- equation: O(SING) + O2 <=> O + O2  # Reaction 701
+- equation: OSING + O2 <=> O + O2  # Reaction 701
   rate-constant: {A: 1.87e+13, b: 0.0, Ea: -173.0}
-- equation: O(SING) + CO <=> O + CO  # Reaction 702
+- equation: OSING + CO <=> O + CO  # Reaction 702
   rate-constant: {A: 2.83e+13, b: 0.0, Ea: 124.0}
-- equation: O(SING) + H2O2 <=> HO2 + OH  # Reaction 703
+- equation: OSING + H2O2 <=> HO2 + OH  # Reaction 703
   rate-constant: {A: 1.0e+14, b: 0.0, Ea: 0.0}
-- equation: O(SING) + H2O <=> OH + OH  # Reaction 704
+- equation: OSING + H2O <=> OH + OH  # Reaction 704
   rate-constant: {A: 1.02e+14, b: 0.0, Ea: -71.5}
-- equation: O(SING) + CH4 <=> CH3 + OH  # Reaction 705
+- equation: OSING + CH4 <=> CH3 + OH  # Reaction 705
   rate-constant: {A: 8.73e+13, b: 0.0, Ea: 0.0}
-- equation: O(SING) + CH4 <=> CH2OH + H  # Reaction 706
+- equation: OSING + CH4 <=> CH2OH + H  # Reaction 706
   rate-constant: {A: 2.06e+13, b: 0.0, Ea: 0.0}
-- equation: O(SING) + CH4 <=> CH2O + H2  # Reaction 707
+- equation: OSING + CH4 <=> CH2O + H2  # Reaction 707
   rate-constant: {A: 5.7e+12, b: 0.0, Ea: 0.0}
-- equation: O(SING) + CH3OH <=> CH2OH + OH  # Reaction 708
+- equation: OSING + CH3OH <=> CH2OH + OH  # Reaction 708
   rate-constant: {A: 1.8e+14, b: 0.0, Ea: 0.0}
-- equation: O(SING) + CH3OH <=> HOCHO + 2 H  # Reaction 709
+- equation: OSING + CH3OH <=> HOCHO + 2 H  # Reaction 709
   rate-constant: {A: 5.4e+13, b: 0.0, Ea: 0.0}
-- equation: O(SING) + CH2O <=> CO + H2O  # Reaction 710
+- equation: OSING + CH2O <=> CO + H2O  # Reaction 710
   rate-constant: {A: 1.0e+14, b: 0.0, Ea: 0.0}
-- equation: O + O + M <=> O2(SING) + M  # Reaction 711
+- equation: O + O + M <=> O2SING + M  # Reaction 711
   type: three-body
   rate-constant: {A: 1.0e+16, b: -1.0, Ea: 0.0}
   efficiencies: {AR: 1.0, O: 28.8, O2: 8.0, N2: 2.0, HE: 1.2}
-- equation: O2(SING) + M <=> O2 + M  # Reaction 712
+- equation: O2SING + M <=> O2 + M  # Reaction 712
   type: three-body
   rate-constant: {A: 1.8e+06, b: 0.0, Ea: 397.0}
   efficiencies: {AR: 0.06, O: 0.0, O2: 1.0, N2: 0.1, HE: 0.07}
-- equation: O2(SING) + O <=> O2 + O  # Reaction 713
+- equation: O2SING + O <=> O2 + O  # Reaction 713
   rate-constant: {A: 4.2e+08, b: 0.0, Ea: 0.0}
-- equation: O2(SING) + O + O2 <=> O2 + O + O2  # Reaction 714
+- equation: O2SING + O + O2 <=> O2 + O + O2  # Reaction 714
   rate-constant: {A: 9.066e+15, b: 0.0, Ea: 0.0}
-- equation: O2(SING) + O + AR <=> O2 + O + AR  # Reaction 715
+- equation: O2SING + O + AR <=> O2 + O + AR  # Reaction 715
   rate-constant: {A: 5.712e+15, b: 0.0, Ea: 0.0}
-- equation: O2(SING) + O3 <=> O2 + O + O2  # Reaction 716
+- equation: O2SING + O3 <=> O2 + O + O2  # Reaction 716
   rate-constant: {A: 3.13e+13, b: 0.0, Ea: 5644.0}
-- equation: O2(SING) + H <=> OH + O  # Reaction 717
+- equation: O2SING + H <=> OH + O  # Reaction 717
   duplicate: true
   rate-constant: {A: 3.85e+10, b: 1.0, Ea: 4928.0}
-- equation: O2(SING) + H <=> OH + O  # Reaction 718
+- equation: O2SING + H <=> OH + O  # Reaction 718
   duplicate: true
   rate-constant: {A: 1.17e+07, b: 1.56, Ea: 1252.0}
-- equation: O2(SING) + H <=> H + O2  # Reaction 719
+- equation: O2SING + H <=> H + O2  # Reaction 719
   duplicate: true
   rate-constant: {A: 5.29e+10, b: 0.68, Ea: 5613.0}
-- equation: O2(SING) + H <=> H + O2  # Reaction 720
+- equation: O2SING + H <=> H + O2  # Reaction 720
   duplicate: true
   rate-constant: {A: 5.36e+06, b: 1.4, Ea: 1609.0}
-- equation: H + HO2 <=> H2 + O2(SING)  # Reaction 721
+- equation: H + HO2 <=> H2 + O2SING  # Reaction 721
   rate-constant: {A: 1.64e+08, b: 1.63, Ea: 1.528e+04}
-- equation: O2(SING) + H2O <=> OH + HO2  # Reaction 722
+- equation: O2SING + H2O <=> OH + HO2  # Reaction 722
   rate-constant: {A: 2.05e+14, b: 0.0, Ea: 5.6037e+04}
-- equation: O2(SING) + CH3 <=> CH3O2  # Reaction 723
+- equation: O2SING + CH3 <=> CH3O2  # Reaction 723
   rate-constant: {A: 2.76e-07, b: -2.71, Ea: 8610.0}
-- equation: O2(SING) + CH3 <=> CH2O + OH  # Reaction 724
+- equation: O2SING + CH3 <=> CH2O + OH  # Reaction 724
   rate-constant: {A: 5.76e-17, b: 1.63, Ea: 6900.0}
-- equation: O2(SING) + CH3 <=> CH3O + O  # Reaction 725
+- equation: O2SING + CH3 <=> CH3O + O  # Reaction 725
   rate-constant: {A: 1.7e-20, b: 2.68, Ea: 6600.0}
-- equation: O2(SING) + CH4 <=> CH3 + HO2  # Reaction 726
+- equation: O2SING + CH4 <=> CH3 + HO2  # Reaction 726
   rate-constant: {A: 7.06e+07, b: 1.97, Ea: 3.352e+04}
-- equation: O2(SING) + CH2O <=> HO2 + HCO  # Reaction 727
+- equation: O2SING + CH2O <=> HO2 + HCO  # Reaction 727
   rate-constant: {A: 1.0e+14, b: 0.0, Ea: 2.3e+04}
 - equation: O3 (+M) <=> O2 + O (+M)  # Reaction 728
   type: falloff
@@ -4399,7 +4396,7 @@ reactions:
     O: 6.0}
 - equation: O3 + O <=> O2 + O2  # Reaction 729
   rate-constant: {A: 4.82e+12, b: 0.0, Ea: 4094.0}
-- equation: O3 + O <=> O2(SING) + O2  # Reaction 730
+- equation: O3 + O <=> O2SING + O2  # Reaction 730
   rate-constant: {A: 1.44e+11, b: 0.0, Ea: 4094.0}
 - equation: O3 + H <=> O2 + OH  # Reaction 731
   rate-constant: {A: 8.43e+13, b: 0.0, Ea: 934.0}
@@ -4663,11 +4660,9 @@ reactions:
 - equation: CH2O + OH <=> HOCH2O  # Reaction 829
   rate-constant: {A: 4.5e+15, b: -1.11, Ea: 0.0}
 - equation: HOCHO + M <=> CO + H2O + M  # Reaction 830
-  duplicate: true
   type: three-body
   rate-constant: {A: 2.3e+13, b: 0.0, Ea: 5.0e+04}
 - equation: HOCHO + M <=> CO2 + H2 + M  # Reaction 831
-  duplicate: true
   type: three-body
   rate-constant: {A: 1.5e+16, b: 0.0, Ea: 5.7e+04}
 - equation: HOCHO <=> HCO + OH  # Reaction 832
@@ -4675,10 +4670,8 @@ reactions:
 - equation: HOCHO + OH <=> H2O + CO2 + H  # Reaction 833
   rate-constant: {A: 2.62e+06, b: 2.06, Ea: 916.0}
 - equation: HOCHO + OH <=> H2O + CO + OH  # Reaction 834
-  duplicate: true
   rate-constant: {A: 1.85e+07, b: 1.51, Ea: -962.0}
 - equation: HOCHO + H <=> H2 + CO2 + H  # Reaction 835
-  duplicate: true
   rate-constant: {A: 4.24e+06, b: 2.1, Ea: 4868.0}
 - equation: HOCHO + H <=> H2 + CO + OH  # Reaction 836
   rate-constant: {A: 6.03e+13, b: -0.35, Ea: 2988.0}
@@ -4694,17 +4687,17 @@ reactions:
   - {P: 1.0 atm, A: 5.17e+20, b: -3.78, Ea: 1.1396e+04}
   - {P: 10.0 atm, A: 3.18e+25, b: -4.88, Ea: 1.4509e+04}
   - {P: 1000000.0 atm, A: 1.1e+10, b: 0.72, Ea: 1.32e+04}
-- equation: CH2OCH2O2H <=> C2H4O2#4 + OH  # Reaction 841
+- equation: CH2OCH2O2H <=> C2H4O2 + OH  # Reaction 841
   rate-constant: {A: 4.88e+12, b: -0.084, Ea: 2.2133e+04}
-- equation: C2H4O2#4 + H => H2 + CH2O + HCO  # Reaction 842
+- equation: C2H4O2 + H => H2 + CH2O + HCO  # Reaction 842
   rate-constant: {A: 7.31, b: 4.0, Ea: 1840.0}
-- equation: C2H4O2#4 + O => OH + CH2O + HCO  # Reaction 843
+- equation: C2H4O2 + O => OH + CH2O + HCO  # Reaction 843
   rate-constant: {A: 1.79e+07, b: 2.0, Ea: 2629.0}
-- equation: C2H4O2#4 + OH => H2O + CH2O + HCO  # Reaction 844
+- equation: C2H4O2 + OH => H2O + CH2O + HCO  # Reaction 844
   rate-constant: {A: 3.39e+06, b: 2.07, Ea: -521.0}
-- equation: C2H4O2#4 + HO2 => H2O2 + CH2O + HCO  # Reaction 845
+- equation: C2H4O2 + HO2 => H2O2 + CH2O + HCO  # Reaction 845
   rate-constant: {A: 1.33e+13, b: 0.0, Ea: 1.65e+04}
-- equation: C2H4O2#4 <=> CH2O + CH2O  # Reaction 846
+- equation: C2H4O2 <=> CH2O + CH2O  # Reaction 846
   rate-constant: {A: 3.92e+12, b: 0.676, Ea: 3.9834e+04}
 - equation: CH2OCHO + H <=> CH3OCHO  # Reaction 847
   rate-constant: {A: 1.0e+14, b: 0.0, Ea: 0.0}

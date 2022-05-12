@@ -1,7 +1,7 @@
 generator: ck2yaml
 input-files: [mechanism.inp, therm.dat]
-cantera-version: 2.6.0b2
-date: Thu, 28 Apr 2022 11:14:39 -0600
+cantera-version: 2.6.0
+date: Wed, 11 May 2022 17:43:37 -0700
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
@@ -55,11 +55,10 @@ species:
   composition: {H: 1}
   thermo:
     model: NASA7
-    temperature-ranges: [300.0, 1000.0, 5000.0]
+    temperature-ranges: [300.0, 5000.0]
     data:
     - [2.50104422, 0.0, 0.0, 0.0, 0.0, 2.54747466e+04, -0.465341317]
-    - [2.50104422, 0.0, 0.0, 0.0, 0.0, 2.54747466e+04, -0.465341317]
-    note: 8/12/99THERM
+    note: 8/12/99 THERM
   transport:
     model: gas
     geometry: atom
@@ -75,7 +74,7 @@ species:
       3743.21252, 2.45014127]
     - [2.62599754, 1.31992406e-03, -3.5972467e-07, 4.256308e-11, -1.82048016e-15,
       4120.85374, 7.10667307]
-    note: 8/12/99THERM
+    note: 8/12/99 THERM
   transport:
     model: gas
     geometry: linear
@@ -162,7 +161,7 @@ species:
       809.181013, 8.39371099]
     - [4.10547423, 2.38452835e-03, -8.06347989e-07, 1.24191723e-10, -7.16400108e-15,
       398.127689, 3.12515836]
-    note: 8/12/99THERM
+    note: 8/12/99 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -316,7 +315,7 @@ species:
       -1.12345534e+04, 21.164875]
     - [6.10683385, 0.0129236361, -4.42527196e-06, 6.87391726e-10, -3.98901732e-14,
       -1.37500014e+04, -13.008125]
-    note: 1/14/95THERM
+    note: 1/14/95 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -367,7 +366,7 @@ species:
       -684.394259, 5.1633032]
     - [5.95787891, 7.90728626e-03, -2.68246234e-06, 4.13891337e-10, -2.3900733e-14,
       -1535.74838, -4.71963886]
-    note: 7/13/98THERM
+    note: 7/13/98 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -384,7 +383,7 @@ species:
       -1.77197926e+04, 9.25623949]
     - [8.43117091, 8.06817909e-03, -2.77094921e-06, 4.31332243e-10, -2.50692146e-14,
       -1.96678771e+04, -19.1170629]
-    note: 7/13/98THERM
+    note: 7/13/98 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -469,7 +468,7 @@ species:
       1.93834226e+04, 25.3067131]
     - [8.45883958, 0.0112695483, -3.83792864e-06, 5.94059119e-10, -3.4391803e-14,
       1.63576092e+04, -22.580945]
-    note: 5/27/97THERM
+    note: 5/27/97 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -486,7 +485,7 @@ species:
       1066.88164, 21.9003736]
     - [8.01595958, 0.0137023634, -4.66249733e-06, 7.21254402e-10, -4.17370126e-14,
       -1878.21271, -20.0160668]
-    note: 5/27/97THERM
+    note: 5/27/97 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -503,7 +502,7 @@ species:
       9582.17784, 21.5566221]
     - [10.2551752, 0.011498372, -3.84645659e-06, 5.88910346e-10, -3.38557923e-14,
       6265.6081, -27.7655042]
-    note: 7/20/95THERM
+    note: 7/20/95 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -571,7 +570,7 @@ species:
       -1.0258798e+04, 20.233649]
     - [13.2493493, 0.016408219, -5.67432062e-06, 8.8733634e-10, -5.17361535e-14,
       -1.44109855e+04, -42.9066213]
-    note: 7/19/0THERM
+    note: 7/19/ 0 THERM
   transport:
     model: gas
     geometry: nonlinear
@@ -589,7 +588,7 @@ species:
       -7937.45567, 18.9082748]
     - [12.6327059, 0.0169910726, -5.88866873e-06, 9.22195396e-10, -5.38230675e-14,
       -1.19194652e+04, -38.5349297]
-    note: 7/19/0THERM
+    note: 7/19/ 0 THERM
   transport:
     model: gas
     geometry: nonlinear

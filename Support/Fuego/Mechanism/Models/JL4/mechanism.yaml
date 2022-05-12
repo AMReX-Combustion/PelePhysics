@@ -1,7 +1,7 @@
 generator: ck2yaml
 input-files: [mechanism.inp, therm.dat, tran.dat]
-cantera-version: 2.6.0b2
-date: Thu, 28 Apr 2022 10:46:14 -0600
+cantera-version: 2.6.0
+date: Wed, 11 May 2022 17:40:51 -0700
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
@@ -25,7 +25,7 @@ species:
       -1.02466476e+04, -4.64130376]
     - [0.074851495, 0.0133909467, -5.73285809e-06, 1.22292535e-09, -1.0181523e-13,
       -9468.34459, 18.437318]
-    note: L8/88
+    note: L 8/88
   transport:
     model: gas
     geometry: nonlinear
@@ -61,7 +61,7 @@ species:
       -3.02937267e+04, -0.849032208]
     - [3.03399249, 2.17691804e-03, -1.64072518e-07, -9.7041987e-11, 1.68200992e-14,
       -3.00042971e+04, 4.9667701]
-    note: L8/89
+    note: L 8/89
   transport:
     model: gas
     geometry: nonlinear
@@ -115,7 +115,7 @@ species:
       -4.83719697e+04, 9.90105222]
     - [3.85746029, 4.41437026e-03, -2.21481404e-06, 5.23490188e-10, -4.72084164e-14,
       -4.8759166e+04, 2.27163806]
-    note: L7/88
+    note: L 7/88
   transport:
     model: gas
     geometry: linear

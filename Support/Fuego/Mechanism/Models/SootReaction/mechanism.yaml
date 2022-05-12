@@ -1,7 +1,7 @@
 generator: ck2yaml
 input-files: [mechanism.inp, therm.dat]
-cantera-version: 2.6.0b2
-date: Thu, 28 Apr 2022 11:11:34 -0600
+cantera-version: 2.6.0
+date: Wed, 11 May 2022 17:43:34 -0700
 
 units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
 
@@ -51,7 +51,7 @@ species:
     - [2.29203842, 4.65588637e-03, -2.01191947e-06, 4.17906e-10, -3.39716365e-14,
       5.09259997e+04, 8.62650169]
     note: |-
-      LS/93
+      L S/93
        CAS# : 2465-56-7
   transport:
     model: gas
@@ -69,7 +69,7 @@ species:
     - [2.87410113, 3.65639292e-03, -1.40894597e-06, 2.60179549e-10, -1.87727567e-14,
       4.6263604e+04, 6.17119324]
     note: |-
-      LS/93
+      L S/93
        CAS# : 2465-56-7
   transport:
     model: gas
@@ -87,7 +87,7 @@ species:
     - [2.56942078, -8.59741137e-05, 4.19484589e-08, -1.00177799e-11, 1.22833691e-15,
       2.92175791e+04, 4.78433864]
     note: |-
-      L1/90
+      L 1/90
        CAS# : 17778-80-2
   transport:
     model: gas
@@ -125,7 +125,7 @@ species:
     - [2.50000001, -2.30842973e-11, 1.61561948e-14, -4.73515235e-18, 4.98197357e-22,
       2.54736599e+04, -0.446682914]
     note: |-
-      L7/88
+      L 7/88
        CAS# : 12385-13-6
   transport:
     model: gas
@@ -143,7 +143,7 @@ species:
     - [2.86472886, 1.05650448e-03, -2.59082758e-07, 3.05218674e-11, -1.33195876e-15,
       3718.85774, 5.70164073]
     note: |-
-      S9/01
+      S 9/01
        ** Thermodynamic properties taken from **
        " An optimized kinetic model of H2/CO combustion"
        Davis, Joshi, Wang, and Egolfopoulos
@@ -165,7 +165,7 @@ species:
     - [3.03399249, 2.17691804e-03, -1.64072518e-07, -9.7041987e-11, 1.68200992e-14,
       -3.00042971e+04, 4.9667701]
     note: |-
-      L8/89
+      L 8/89
        CAS# : 7732-18-5
   transport:
     model: gas
@@ -205,7 +205,7 @@ species:
     - [4.0172109, 2.23982013e-03, -6.3365815e-07, 1.1424637e-10, -1.07908535e-14,
       111.856713, 3.78510215]
     note: |-
-      L5/89
+      L 5/89
        CAS# : 3170-83-0
   transport:
     model: gas
@@ -280,7 +280,7 @@ species:
     - [1.76069008, 9.20000082e-03, -4.42258813e-06, 1.00641212e-09, -8.8385564e-14,
       -1.39958323e+04, 13.656323]
     note: |-
-      L8/88
+      L 8/88
        CAS# : 50-00-0
   transport:
     model: gas
@@ -299,7 +299,7 @@ species:
     - [2.9781206, 5.797852e-03, -1.97558e-06, 3.072979e-10, -1.7917416e-14,
       1.6509513e+04, 4.7224799]
     note: |-
-      METHYLIU0702
+      METHYL        IU0702
        ** Thermodynamic properties taken from **
        Alexander Burcat and Branko Ruscic
        Ideal Gas Thermochemical Database with updates from Active Thermochemical Tables
@@ -324,7 +324,7 @@ species:
     - [3.85746029, 4.41437026e-03, -2.21481404e-06, 5.23490188e-10, -4.72084164e-14,
       -4.8759166e+04, 2.27163806]
     note: |-
-      L7/88
+      L 7/88
        CAS# : 124-38-9
   transport:
     model: gas
@@ -344,7 +344,7 @@ species:
     - [1.65326226, 0.0100263099, -3.31661238e-06, 5.36483138e-10, -3.14696758e-14,
       -1.00095936e+04, 9.90506283]
     note: |-
-      g8/99
+      g 8/99
        CAS# : 74-82-8
   transport:
     model: gas
@@ -364,7 +364,7 @@ species:
     - [3.016724, 0.0103302292, -4.68082349e-06, 1.01763288e-09, -8.62607041e-14,
       3.46128739e+04, 7.78732378]
     note: |-
-      L2/92
+      L 2/92
        CAS# : 2669-89-8
   transport:
     model: gas
@@ -383,7 +383,7 @@ species:
     - [2.03611116, 0.0146454151, -6.71077915e-06, 1.47222923e-09, -1.25706061e-13,
       4939.88614, 10.3053693]
     note: |-
-      L1/91
+      L 1/91
        CAS# : 74-85-1
   transport:
     model: gas
@@ -421,7 +421,7 @@ species:
     - [3.16780652, 4.75221902e-03, -1.83787077e-06, 3.04190252e-10, -1.7723277e-14,
       6.7121065e+04, 6.63589475]
     note: |-
-      L1/91
+      L 1/91
        CAS# : 2122-48-7
   transport:
     model: gas
@@ -459,7 +459,7 @@ species:
     - [4.14756964, 5.96166664e-03, -2.37294852e-06, 4.67412171e-10, -3.61235213e-14,
       2.59359992e+04, -1.23028121]
     note: |-
-      L1/91
+      L 1/91
        CAS# : 74-86-2
   transport:
     model: gas
@@ -478,7 +478,7 @@ species:
     - [6.14915291, 9.34063166e-03, -3.75055354e-06, 6.90156316e-10, -4.60824994e-14,
       3.83854848e+04, -7.45345215]
     note: |-
-      G3B3
+      G3B3  
        ** Thermodynamic properties taken from **
        Optimized geometries with B3LYP/6-311++G**
        Internal decgrees of rotation treated as in JPCA 2007
@@ -507,7 +507,7 @@ species:
     - [2.28794927, 0.0236401575, -1.2789145e-05, 3.3683854e-09, -3.47449449e-13,
       1.83033514e+04, 11.4063418]
     note: |-
-      G3B3
+      G3B3  
        CAS# : 1981-80-2
        DfH = 166.1 kJ/mol, Cp = 63.37 J/mol/K, S = 258.61 J/mol/K
   transport:
@@ -527,7 +527,7 @@ species:
     - [7.7040405, 0.01604154, -5.2815967e-06, 7.6254403e-10, -3.9353462e-14,
       8297.9531, -15.487514]
     note: |-
-      N-L9/85
+      N-L 9/85
        CAS# : 2143-61-5
   transport:
     model: gas
@@ -546,7 +546,7 @@ species:
     - [1.0718815, 0.0216852677, -1.00256067e-05, 2.21412001e-09, -1.9000289e-13,
       -1.14263932e+04, 15.1156107]
     note: |-
-      L8/88
+      L 8/88
        CAS# : 74-84-0
   transport:
     model: gas
@@ -565,7 +565,7 @@ species:
     - [2.81460543, 0.0185524496, -9.55026768e-06, 2.3995137e-09, -2.37485257e-13,
       2.07010771e+04, 8.60604972]
     note: |-
-      G3B3
+      G3B3  
        CAS# : 74-99-7
        DfH = 185.40 kJ/mol, Cp = 60.88 J/mol/K, S = 247.91 J/mol/K
   transport:
@@ -585,7 +585,7 @@ species:
     - [2.56128757, 0.0195080128, -1.04061366e-05, 2.70165173e-09, -2.75074329e-13,
       2.13894289e+04, 9.20550397]
     note: |-
-      G3B3
+      G3B3  
        CAS# : 463-49-0
        DfH = 190.90 kJ/mol, Cp = 59.10 J/mol/K, S = 243.32 J/mol/K
   transport:
@@ -605,7 +605,7 @@ species:
     - [-0.206240612, 0.046412244, -2.77653536e-05, 7.88910537e-09, -8.60365259e-13,
       8098.83905, 20.6566629]
     note: |-
-      G3B3
+      G3B3  
        ** Thermodynamic properties taken from **
        "Thermochemical Properties of Polycyclic Aromatic Hydrocarbons (PAH)
        from G3MP2B3 Calculations"
@@ -647,7 +647,7 @@ species:
     - [4.21464919, 0.0271834728, -1.33173209e-05, 3.08980119e-09, -2.77879873e-13,
       2.88952416e+04, -0.0305999781]
     note: |-
-      Refitted
+      Refitted 
        Entropy and Heat capacity from Kiefer et al. 2001
        Energy from Tokmakov et al. 2003
        Refitted from 300 to 3000
@@ -670,7 +670,7 @@ species:
     - [0.471697982, 0.028951307, -1.56601819e-05, 4.11443199e-09, -4.23075141e-13,
       1126.03387, 21.5237289]
     note: |-
-      G3B3
+      G3B3  
        CAS# : 115-07-1
        DfH = 19.70 kJ/mol, Cp = 65.09 J/mol/K, S = 266.77 J/mol/K
   transport:
@@ -717,7 +717,7 @@ species:
     - [0.230537462, 0.0409571826, -2.41588958e-05, 6.7976348e-09, -7.36374421e-13,
       1.43779465e+04, 20.2551234]
     note: |-
-      G3B3
+      G3B3  
        Enthalpy of formation from published articles
        =============================================
        Roy et al. 2001
@@ -814,7 +814,7 @@ species:
     - [3.30049696, 0.048005534, -2.78443022e-05, 7.72371356e-09, -8.27154136e-13,
       2.17498572e+04, 5.42371919]
     note: |-
-      G3B3
+      G3B3  
        CAS# : 2154-56-5
        DfH = 207.00 kJ/mol, Cp = 108.44 J/mol/K, S = 316.61 J/mol/K
   transport:
@@ -836,7 +836,7 @@ species:
     - [1.87355756, 0.0526231551, -3.17644962e-05, 9.06403069e-09, -9.90306123e-13,
       -7236.03865, 14.9787009]
     note: |-
-      G3B3
+      G3B3  
        CAS# : 100-52-7
        DfH = -37.20 kJ/mol, Cp = 112.08 J/mol/K, S = 335.94 J/mol/K
   transport:
@@ -858,7 +858,7 @@ species:
     - [-1.0111722, 0.0585301912, -3.47595069e-05, 9.82180993e-09, -1.0668087e-12,
       3993.63395, 28.3610783]
     note: |-
-      G3B3
+      G3B3  
        CAS# : 108-88-3
        DfH = 50.00 kJ/mol, Cp = 105.42 J/mol/K, S = 321.87 J/mol/K
   transport:
