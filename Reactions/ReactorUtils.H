@@ -99,7 +99,8 @@ box_flatten(
     const int idx = vec_index<OrderType>(n, icell, ncells);
     const int idx2 = spec_index<OrderType>(n, icell, ncells);
     const amrex::Real rhoYn =
-      (JBBhack) ? amrex::max(0.0, rhoY(i, j, k, n)) : rhoY(i, j, k, n);
+      (JBBhack) ? amrex::min(amrex::max(0.0, rhoY(i, j, k, n)), 1.0)
+                : rhoY(i, j, k, n);
     y_vect[idx] = rhoYn;
     src_vect[idx2] = frcExt(i, j, k, n);
     rho += rhoYn;
@@ -153,7 +154,7 @@ box_unflatten(
   amrex::Real rho_oldclipped = 0.0;
   if (JBBhack) {
     for (int n = 0; n < NUM_SPECIES; n++) {
-      rhoY_oldclipped[n] = amrex::max(0.0, rhoY(i, j, k, n));
+      rhoY_oldclipped[n] = amrex::min(amrex::max(0.0, rhoY(i, j, k, n)), 1.0);
       rho_old += rhoY(i, j, k, n);
       rho_oldclipped += rhoY_oldclipped[n];
     }
