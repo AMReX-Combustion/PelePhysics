@@ -98,7 +98,7 @@ struct NonIdealChungCorrections<eos::SRK>
                              (A[0] * A[3] + A[1] + A[2]);
       const amrex::Real eta_P =
         (36.344e-6 * std::sqrt(MW_m * Tcm) / std::pow(Vcm, 2.0 / 3.0)) * A[6] *
-        y * y * G2 * exp(A[7] + A[8] / Tstar + A[9] / (Tstar * Tstar));
+        y * y * G2 * std::exp(A[7] + A[8] / Tstar + A[9] / (Tstar * Tstar));
 
       const amrex::Real updated_mu = mu * (1.0 / G2 + A[5] * y) + eta_P;
       if (updated_mu > 0) {
