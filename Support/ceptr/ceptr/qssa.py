@@ -1,52 +1,13 @@
-"""Convert cantera mechanism to C++ files."""
+"""Generate QSSA chemistry file."""
 import argparse
 import pathlib
+import sys
 
 import cantera as ct
 import yaml
 
+import ceptr.qssa_reduction as cqr
 import ceptr.reaction_info as cri
-
-
-def intersection(lst1, lst2):
-    """Return intersection of two lists."""
-    return list(set(lst1).intersection(lst2))
-
-
-def identify_removals(mechanism, reaction_info, qssa_species):
-    """Identify the reactions that should be removed."""
-    reactions_to_remove = {}
-    for orig_idx, _ in reaction_info.idxmap.items():
-        reaction = mechanism.reaction(orig_idx)
-
-        # Check for quadratic relations
-        qssa_species_involved = intersection(
-            list(reaction.reactants.keys()), qssa_species
-        )
-        sum_coeff = sum(
-            v
-            for k, v in reaction.reactants.items()
-            if k in qssa_species_involved
-        )
-        if sum_coeff > 1:
-            if orig_idx not in reactions_to_remove:
-                reactions_to_remove[orig_idx] = []
-            reactions_to_remove[orig_idx].append("f")
-        if reaction.reversible:
-            qssa_species_involved = intersection(
-                list(reaction.products.keys()), qssa_species
-            )
-            sum_coeff = sum(
-                v
-                for k, v in reaction.products.items()
-                if k in qssa_species_involved
-            )
-            if sum_coeff > 1:
-                if orig_idx not in reactions_to_remove:
-                    reactions_to_remove[orig_idx] = []
-                reactions_to_remove[orig_idx].append("r")
-
-    return reactions_to_remove
 
 
 def main():
@@ -76,44 +37,32 @@ def main():
 
     # Species
     with open(args.nqssa) as f:
-        f_species_non_qssa = yaml.safe_load(f)
-        species_non_qssa = f_species_non_qssa["species"]
-    species_all = mechanism.species_names
-    species_qssa = list(set(species_all) - set(species_non_qssa))
+        f_non_qssa_species = yaml.safe_load(f)
+        non_qssa_species = f_non_qssa_species["species"]
+    all_species = mechanism.species_names
+    qssa_species = list(set(all_species) - set(non_qssa_species))
 
-    reactions_to_remove = identify_removals(
-        mechanism, reaction_info, species_qssa
-    )
+    forward_to_remove = []
+    if args.method == 0:
+        qssa_species = cqr.remove_quadratic_method_0(mechanism, qssa_species)
+        reactions_to_keep = mechanism.reactions()
+    elif args.method == 1 or args.method == 2:
 
-    print("Removing the following reactions:")
-    for k in reactions_to_remove.keys():
-        print(mechanism.reaction(k))
+        candidates_for_removal = cqr.identify_removals(
+            mechanism, reaction_info, qssa_species
+        )
 
-    reactions_to_keep = []
-    for orig_idx, _ in reaction_info.idxmap.items():
-        reaction = mechanism.reaction(orig_idx)
-        if orig_idx in reactions_to_remove:
-            if (
-                "f" in reactions_to_remove[orig_idx]
-                and "r" in reactions_to_remove[orig_idx]
-            ):
-                continue
-            elif "f" in reactions_to_remove[orig_idx]:
-                if reaction.reversible:
-                    if (
-                        not hasattr(reaction, "low_rate")
-                        and not reaction.reaction_type == "three-body"
-                    ):
-                        continue
-                    else:
-                        continue
-                else:
-                    continue
-            elif "r" in reactions_to_remove[orig_idx]:
-                reaction.reversible = False
-                reactions_to_keep.append(reaction)
-        else:
-            reactions_to_keep.append(reaction)
+        if args.method == 1:
+            reactions_to_keep = cqr.remove_quadratic_method_1(
+                mechanism, reaction_info, candidates_for_removal
+            )
+        elif args.method == 2:
+            (
+                reactions_to_keep,
+                forward_to_remove,
+            ) = cqr.remove_quadratic_method_2(
+                mechanism, reaction_info, candidates_for_removal
+            )
 
     qssa = ct.Solution(
         name=f"{mechanism.name}-qssa",
@@ -123,8 +72,38 @@ def main():
         species=mechanism.species(),
         reactions=reactions_to_keep,
     )
+
+    if cqr.qssa_coupling(qssa, qssa_species, forward_to_remove):
+        print("Failure to generate QSSA mechanism.")
+        sys.exit(1)
+
     qssa.update_user_header({"description": f"QSSA of {mechanism.name}"})
+    qssa.update_user_data({"qssa": qssa_species})
+    forward_to_remove_idx = []
+    if forward_to_remove:
+        for fr in forward_to_remove:
+            for idx, reaction in enumerate(qssa.reactions()):
+                if fr.equation == reaction.equation:
+                    forward_to_remove_idx.append(idx)
+                    break
+        qssa.update_user_data({"forward_to_remove_idx": forward_to_remove_idx})
     qssa.write_yaml(qssaname, header=True)
+
+    # Summarize
+    for idx in forward_to_remove_idx:
+        print(f"Forward reaction to be removed: {qssa.reaction(idx)}")
+
+    mechanism = ct.Solution(args.fname)  # reread
+    for reaction in mechanism.reactions():
+        if reaction.equation not in [x.equation for x in qssa.reactions()]:
+            # check if the unreversed reaction
+            reaction.reversible = False
+            if reaction.equation in [x.equation for x in qssa.reactions()]:
+                reaction.reversible = True
+                print("Removed reverse reaction:", reaction)
+            else:
+                reaction.reversible = True
+                print("Removed reaction:", reaction)
 
 
 if __name__ == "__main__":

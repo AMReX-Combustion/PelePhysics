@@ -3,6 +3,11 @@
 import ceptr.constants as cc
 
 
+def intersection(lst1, lst2):
+    """Return intersection of two lists."""
+    return list(set(lst1).intersection(lst2))
+
+
 def qss_sorted_phase_space(mechanism, species_info, reagents):
     """Get string of phase space."""
     phi = []
