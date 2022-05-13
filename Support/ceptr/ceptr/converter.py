@@ -3,19 +3,20 @@ import pathlib
 import shutil
 import subprocess as spr
 import sys
+
 import numpy as np
 
 import ceptr.ck as cck
 import ceptr.gjs as cgjs
 import ceptr.jacobian as cj
 import ceptr.production as cp
+import ceptr.qssa_converter as cqc
 import ceptr.reaction_info as cri
 import ceptr.sparsity as csp
 import ceptr.species_info as csi
 import ceptr.thermo as cth
 import ceptr.transport as ctr
 import ceptr.writer as cw
-import ceptr.qssa_converter as cqc
 
 
 class Converter:
@@ -46,24 +47,29 @@ class Converter:
             cqc.set_qssa_reactions(
                 self.mechanism, self.species_info, self.reaction_info
             )
-            cqc.get_qssa_networks(self.mechanism)
-            self._getQSSnetworks(mechanism)  # sets up QSS subnetwork
-            self._QSSvalidation(
-                mechanism
-            )  # Perform tests to ensure QSS species are good candidates
-            self._QSSCoupling(
-                mechanism
-            )  # No quad coupling and fill SC network
-            print("\n\n\n\n---------------------------------")
-            print("+++++++++INIT NEEDS DICT+++++++++")
-            print("---------------------------------")
-            self._setQSSneeds(
-                mechanism
-            )  # Fill "need" dict (which species a species depends upon)
+            cqc.get_qssa_networks(
+                self.mechanism, self.species_info, self.reaction_info
+            )
+            # sets up QSS subnetwork
+            cqc.get_qssa_networks(
+                self.mechanism, self.species_info, self.reaction_info
+            )
+            # Perform tests to ensure QSSA species are good candidates
+            cqc.qssa_validation(
+                self.mechanism, self.species_info, self.reaction_info
+            )
+            # No quad coupling and fill SC network
+            cqc.qssa_coupling(
+                self.mechanism, self.species_info, self.reaction_info
+            )
+            # Fill "need" dict (which species a species depends upon)
+            print("QSSA initialization needs dictionary")
+            cqc.set_qssa_needs(
+                self.mechanism, self.species_info, self.reaction_info
+            )
             self._setQSSisneeded(
                 mechanism
             )  # Fill "is_needed" dict (which species needs that particular species)
-        sys.exit()
 
     def set_species(self):
         """Set the species."""
@@ -119,17 +125,17 @@ class Converter:
                 sorted_idx += 1
 
         # Initialize QSS species-species, species-reaction, and species coupling networks
-        self.species_info.QSS_SSnet = np.zeros(
+        self.species_info.qssa_ssnet = np.zeros(
             [
                 self.species_info.n_qssa_species,
                 self.species_info.n_qssa_species,
             ],
             "d",
         )
-        self.species_info.QSS_SRnet = np.zeros(
+        self.species_info.qssa_srnet = np.zeros(
             [self.species_info.n_qssa_species, self.mechanism.n_reactions], "d"
         )
-        self.species_info.QSS_SCnet = np.zeros(
+        self.species_info.qssa_scnet = np.zeros(
             [
                 self.species_info.n_qssa_species,
                 self.species_info.n_qssa_species,
@@ -137,7 +143,7 @@ class Converter:
             "d",
         )
 
-        print("FULL SPECIES LIST WITH TRANSPORTED FIRST AND QSS LAST: ")
+        print("Full species list with transported first and QSSA last:")
         for all_species in self.species_info.all_species:
             print(
                 all_species.name,
@@ -230,30 +236,19 @@ class Converter:
             # cck.ckams(hdr, self.mechanism, self.species_info)
             cck.cksms(hdr, self.mechanism, self.species_info)
 
-            # FIXME QSS
             if self.species_info.n_qssa_species > 0:
-                print("FIXME QSS")
-                sys.exit(1)
-                # print("\n\n\n\n---------------------------------")
-                # print("+++++++++GROUPS++++++++++++++++++")
-                # print("---------------------------------")
-                # self._getQSSgroups(mechanism)  # Figure out dependencies
-                # print("\n\n\n\n---------------------------------")
-                # print("+++++++++QSS SORTING+++++++++++++")
-                # print("---------------------------------")
-                # self._sortQSScomputation(
-                #     mechanism
-                # )  # Sort out order of group eval
-                # print("\n\n\n\n---------------------------------")
-                # print("+++++++++QSS EVAL++++++++++++++++")
-                # print("---------------------------------")
-                # self._sortQSSsolution_elements(
-                #     mechanism
-                # )  # Actually gauss-pivot the matrix to get algebraic expr
-                # print("\n\n\n\n---------------------------------")
-                # print("+++++++++QSS PRINTING++++++++++++")
-                # print("---------------------------------")
-                # self._QSScomponentFunctions(mechanism)
+                print("QSSA groups")
+                self._getQSSgroups(mechanism)  # Figure out dependencies
+                print("QSSA sorting")
+                self._sortQSScomputation(
+                    mechanism
+                )  # Sort out order of group eval
+                print("QSSA evaluation")
+                self._sortQSSsolution_elements(
+                    mechanism
+                )  # Actually gauss-pivot the matrix to get algebraic expr
+                print("QSSA printing")
+                self._QSScomponentFunctions(mechanism)
 
             # prod rate related
             cp.production_rate(

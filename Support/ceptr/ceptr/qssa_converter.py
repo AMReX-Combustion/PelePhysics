@@ -1,4 +1,9 @@
 """QSSA functions needed for conversion."""
+from collections import OrderedDict
+
+import numpy as np
+
+import ceptr.utilities as cu
 import ceptr.writer as cw
 
 
@@ -51,17 +56,17 @@ def get_qssa_networks(mechanism, species_info, reaction_info):
 
 def create_ss_net(mechanism, species_info, reaction_info):
     """Create the species-species network."""
-    # for each reaction in the mechanism
-    for r in mechanism.reaction():
+    for orig_idx, idx in reaction_info.idxmap.items():
+        reaction = mechanism.reaction(orig_idx)
 
         remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
 
         slist = []
         # get a list of species involved in the reactants and products
-        for symbol, coefficient in r.reactants:
+        for symbol, coefficient in reaction.reactants.items():
             if symbol in species_info.qssa_species_list:
                 slist.append(symbol)
-        for symbol, coeffecient in r.products:
+        for symbol, coeffecient in reaction.products.items():
             if symbol in species_info.qssa_species_list:
                 slist.append(symbol)
 
@@ -81,19 +86,19 @@ def create_ss_net(mechanism, species_info, reaction_info):
 def create_sr_net(mechanism, species_info, reaction_info):
     """Create the species-reac network."""
     # for each reaction in the mechanism
-    for i, r in enumerate(mechanism.reaction()):
+    for orig_idx, idx in reaction_info.idxmap.items():
+        reaction = mechanism.reaction(orig_idx)
         reactant_list = []
         product_list = []
-        reaction_number = r.id - 1
 
         remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
 
         # get a list of species involved in the reactants and products
 
-        for symbol, coefficient in r.reactants:
+        for symbol, coefficient in reaction.reactants.items():
             if symbol in species_info.qssa_species_list:
                 reactant_list.append(symbol)
-        for symbol, coeffecient in r.products:
+        for symbol, coeffecient in reaction.products.items():
             if symbol in species_info.qssa_species_list:
                 product_list.append(symbol)
 
@@ -103,11 +108,11 @@ def create_sr_net(mechanism, species_info, reaction_info):
         for s in reactant_list:
             species_info.qssa_srnet[
                 species_info.ordered_idx_map[s] - species_info.n_species
-            ][reaction_number] = -1
+            ][orig_idx] = -1
         for s in product_list:
             species_info.qssa_srnet[
                 species_info.ordered_idx_map[s] - species_info.n_species
-            ][reaction_number] = 1
+            ][orig_idx] = 1
 
 
 def qssa_validation(mechanism, species_info, reaction_info):
@@ -126,12 +131,12 @@ def qssa_validation(mechanism, species_info, reaction_info):
     for i, symbol in enumerate(species_info.qssa_species_list):
         consumed = 0
         produced = 0
-        for j in species_info.qssa_sr_rj[species_info.sr_si == i]:
-            reaction = mechanism.reaction(id=j)
+        for orig_idx in species_info.qssa_sr_rj[species_info.sr_si == i]:
+            reaction = mechanism.reaction(orig_idx)
             remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
             if any(
                 reactant == symbol
-                for reactant, _ in list(set(reaction.reactants))
+                for reactant, _ in reaction.reactants.items()
             ):
                 if remove_forward:
                     consumed += 0
@@ -140,8 +145,7 @@ def qssa_validation(mechanism, species_info, reaction_info):
                 if reaction.reversible:
                     produced += 1
             if any(
-                product == symbol
-                for product, _ in list(set(reaction.products))
+                product == symbol for product, _ in reaction.products.items()
             ):
                 if remove_forward:
                     produced += 0
@@ -171,20 +175,18 @@ def qssa_coupling(mechanism, species_info, reaction_info):
             if j != i:
                 count = 0
                 for r in species_info.qssa_sr_rj[species_info.sr_si == j]:
-                    reaction = mechanism.reaction(id=r)
+                    reaction = mechanism.reaction(r)
 
-                    remove_forward = cu.is_remove_forward(
-                        reaction_info, orig_idx
-                    )
+                    remove_forward = cu.is_remove_forward(reaction_info, r)
 
                     # put forth any pathological case
                     if any(
                         reactant == species_info.qssa_species_list[j]
-                        for reactant, _ in list(set(reaction.reactants))
+                        for reactant, _ in reaction.reactants.items()
                     ):
                         if any(
                             product == species_info.qssa_species_list[j]
-                            for product, _ in list(set(reaction.products))
+                            for product, _ in reaction.products.items()
                         ):
                             sys.exit(
                                 "Species "
@@ -206,14 +208,12 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                         # QSSA spec j is a reactant
                         if any(
                             reactant == species_info.qssa_species_list[j]
-                            for reactant, _ in list(set(reaction.reactants))
+                            for reactant, _ in reaction.reactants.items()
                         ):
                             # Check if QSSA species i is a reactant too
                             if (not remove_forward) and any(
                                 reactant == species_info.qssa_species_list[i]
-                                for reactant, _ in list(
-                                    set(reaction.reactants)
-                                )
+                                for reactant, _ in reaction.reactants.items()
                             ):
                                 isCoupling = True
                                 if reaction.id not in List_Coupling_reacs:
@@ -238,7 +238,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                             # because react is two way then j depend on i and vice-versa
                             elif any(
                                 product == species_info.qssa_species_list[i]
-                                for product, _ in list(set(reaction.products))
+                                for product, _ in reaction.products.items()
                             ):
                                 count += 1
                         # if QSSA species j is not a reactant, then it must be a product.
@@ -246,7 +246,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                             # Check if QSSA species i is also a product
                             if any(
                                 product == species_info.qssa_species_list[i]
-                                for product, _ in list(set(reaction.products))
+                                for product, _ in reaction.products.items()
                             ):
                                 isCoupling = True
                                 if reaction.id not in List_Coupling_reacs:
@@ -271,23 +271,19 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                             # because react is two way then j depend on i and vice-versa
                             elif any(
                                 reactant == species_info.qssa_species_list[i]
-                                for reactant, _ in list(
-                                    set(reaction.reactants)
-                                )
+                                for reactant, _ in reaction.reactants.items()
                             ):
                                 count += 1
                     else:
                         # QSSA spec j is a reactant
                         if any(
                             reactant == species_info.qssa_species_list[j]
-                            for reactant, _ in list(set(reaction.reactants))
+                            for reactant, _ in reaction.reactants.items()
                         ):
                             # Check if QSSA species i is a reactant too
                             if any(
                                 reactant == species_info.qssa_species_list[i]
-                                for reactant, _ in list(
-                                    set(reaction.reactants)
-                                )
+                                for reactant, _ in reaction.reactants.items()
                             ):
                                 isCoupling = True
                                 if reaction.id not in List_Coupling_reacs:
@@ -311,7 +307,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                             # if QSSA specices j is a reactant and QSSA species i is a product
                             elif any(
                                 product == species_info.qssa_species_list[i]
-                                for product, _ in list(set(reaction.products))
+                                for product, _ in reaction.products.items()
                             ):
                                 count += 1
 
@@ -321,20 +317,18 @@ def qssa_coupling(mechanism, species_info, reaction_info):
             else:
                 species_info.qssa_scnet[i, j] = 0
                 for r in species_info.qssa_sr_rj[species_info.sr_si == j]:
-                    reaction = mechanism.reaction(id=r)
-                    remove_forward = cu.is_remove_forward(
-                        reaction_info, orig_idx
-                    )
+                    reaction = mechanism.reaction(r)
+                    remove_forward = cu.is_remove_forward(reaction_info, r)
                     species_appearances = 0
 
                     # put forth any pathological case
                     if any(
                         reactant == species_info.qssa_species_list[j]
-                        for reactant, _ in list(set(reaction.reactants))
+                        for reactant, _ in reaction.reactants.items()
                     ):
                         if any(
                             product == species_info.qssa_species_list[j]
-                            for product, _ in list(set(reaction.products))
+                            for product, _ in reaction.products.items()
                         ):
                             sys.exit(
                                 "Species "
@@ -347,10 +341,9 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                         # QSSA j is a reactant
                         if (not remove_forward) and any(
                             reactant == species_info.qssa_species_list[j]
-                            for reactant, _ in list(set(reaction.reactants))
+                            for reactant, _ in reaction.reactants.items()
                         ):
-                            for reactant in reaction.reactants:
-                                spec, coeff = reactant
+                            for spec, coeff in reaction.reactants.items():
                                 if spec == species_info.qssa_species_list[j]:
                                     species_appearances += 1
                                     if (coeff > 1.0) or (
@@ -380,8 +373,7 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                         )
                         # if QSSA species j is not a reactant, then it must be a product.
                         else:
-                            for product in reaction.products:
-                                spec, coeff = product
+                            for spec, coeff in reaction.products.items():
                                 if spec == species_info.qssa_species_list[j]:
                                     species_appearances += 1
                                     if (coeff > 1.0) or (
@@ -413,10 +405,9 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                         # QSSA spec j is a reactant
                         if any(
                             reactant == species_info.qssa_species_list[j]
-                            for reactant, _ in list(set(reaction.reactants))
+                            for reactant, _ in reaction.reactants.items()
                         ):
-                            for reactant in reaction.reactants:
-                                spec, coeff = reactant
+                            for spec, coeff in reaction.reactants.items():
                                 if spec == species_info.qssa_species_list[j]:
                                     species_appearances += 1
                                     if (coeff > 1.0) or (
@@ -1028,12 +1019,12 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                 allQSSreactants = True
                 if any(
                     product == other_qss
-                    for product, _ in list(set(reaction.products))
+                    for product, _ in reaction.products.items()
                 ):
                     allQSSreactants = False
                 if any(
                     product == symbol
-                    for product, _ in list(set(reaction.products))
+                    for product, _ in reaction.products.items()
                 ):
                     allQSSreactants = False
 
@@ -1145,12 +1136,12 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                     allQSSreactants = True
                     if any(
                         product == other_qss
-                        for product, _ in list(set(reaction.products))
+                        for product, _ in reaction.products.items()
                     ):
                         allQSSreactants = False
                     if any(
                         product == symbol
-                        for product, _ in list(set(reaction.products))
+                        for product, _ in reaction.products.items()
                     ):
                         allQSSreactants = False
 
@@ -1203,7 +1194,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                 # if QSSA species is a product AND other QSSA species is a reactant (not guaranteed; must check that QSSA are on opposite sides of equation)
                 elif direction == 1 and any(
                     reactant == other_qss
-                    for reactant, _ in list(set(reaction.reactants))
+                    for reactant, _ in reaction.reactants.items()
                 ):
                     print(
                         "        species ",
