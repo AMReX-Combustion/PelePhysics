@@ -31,8 +31,8 @@ def get_qssa_networks(mechanism, species_info, reaction_info):
 
     """
     # Create QSSA networks for mechanism
-    createSSnet(mechanism, species_info, reaction_info)
-    createSRnet(mechanism, species_info, reaction_info)
+    create_ss_net(mechanism, species_info, reaction_info)
+    create_sr_net(mechanism, species_info, reaction_info)
 
     # Get non-zero indices of networks to be used for coupling
     # "i" is for row "j" is for column
@@ -49,7 +49,7 @@ def get_qssa_networks(mechanism, species_info, reaction_info):
     print(species_info.qssa_srnet)
 
 
-def createSSnet(mechanism, species_info, reaction_info):
+def create_ss_net(mechanism, species_info, reaction_info):
     """Create the species-species network."""
     # for each reaction in the mechanism
     for r in mechanism.reaction():
@@ -78,7 +78,7 @@ def createSSnet(mechanism, species_info, reaction_info):
                 ] = 1
 
 
-def createSRnet(mechanism, species_info, reaction_info):
+def create_sr_net(mechanism, species_info, reaction_info):
     """Create the species-reac network."""
     # for each reaction in the mechanism
     for i, r in enumerate(mechanism.reaction()):
