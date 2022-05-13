@@ -1,4 +1,5 @@
 """QSSA functions needed for conversion."""
+import sys
 from collections import OrderedDict
 
 import numpy as np
@@ -165,9 +166,9 @@ def qssa_validation(mechanism, species_info, reaction_info):
 
 def qssa_coupling(mechanism, species_info, reaction_info):
     """Determine from qssa_SSnet which QSSA species depend on each other specifically."""
-    isCoupling = False
-    Coupling_reacs = ""
-    List_Coupling_reacs = []
+    is_coupling = False
+    coupling_reactions = ""
+    list_coupling_reactions = []
 
     species_info.qssa_scnet = species_info.qssa_ssnet
     for i in range(species_info.n_qssa_species):
@@ -215,16 +216,16 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                 reactant == species_info.qssa_species_list[i]
                                 for reactant, _ in reaction.reactants.items()
                             ):
-                                isCoupling = True
-                                if reaction.id not in List_Coupling_reacs:
-                                    Coupling_reacs += (
+                                is_coupling = True
+                                if reaction.id not in list_coupling_reactions:
+                                    coupling_reactions += (
                                         "R"
                                         + str(reaction.orig_id)
                                         + " "
                                         + reaction.equation()
                                         + "\n"
                                     )
-                                    List_Coupling_reacs.append(reaction.id)
+                                    list_coupling_reactions.append(reaction.id)
                                 print(
                                     "Quadratic coupling between "
                                     + species_info.qssa_species_list[j]
@@ -248,16 +249,16 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                 product == species_info.qssa_species_list[i]
                                 for product, _ in reaction.products.items()
                             ):
-                                isCoupling = True
-                                if reaction.id not in List_Coupling_reacs:
-                                    Coupling_reacs += (
+                                is_coupling = True
+                                if reaction.id not in list_coupling_reactions:
+                                    coupling_reactions += (
                                         "R"
                                         + str(reaction.orig_id)
                                         + " "
                                         + reaction.equation()
                                         + "\n"
                                     )
-                                    List_Coupling_reacs.append(reaction.id)
+                                    list_coupling_reactions.append(reaction.id)
                                 print(
                                     "Quadratic coupling between "
                                     + species_info.qssa_species_list[j]
@@ -285,16 +286,16 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                 reactant == species_info.qssa_species_list[i]
                                 for reactant, _ in reaction.reactants.items()
                             ):
-                                isCoupling = True
-                                if reaction.id not in List_Coupling_reacs:
-                                    Coupling_reacs += (
+                                is_coupling = True
+                                if reaction.id not in list_coupling_reactions:
+                                    coupling_reactions += (
                                         "R"
                                         + str(reaction.orig_id)
                                         + " "
                                         + reaction.equation()
                                         + "\n"
                                     )
-                                    List_Coupling_reacs.append(reaction.id)
+                                    list_coupling_reactions.append(reaction.id)
                                 print(
                                     "Quadratic coupling between "
                                     + species_info.qssa_species_list[j]
@@ -349,19 +350,19 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                     if (coeff > 1.0) or (
                                         species_appearances > 1
                                     ):
-                                        isCoupling = True
+                                        is_coupling = True
                                         if (
                                             reaction.id
-                                            not in List_Coupling_reacs
+                                            not in list_coupling_reactions
                                         ):
-                                            Coupling_reacs += (
+                                            coupling_reactions += (
                                                 "R"
                                                 + str(reaction.orig_id)
                                                 + " "
                                                 + reaction.equation()
                                                 + "\n"
                                             )
-                                            List_Coupling_reacs.append(
+                                            list_coupling_reactions.append(
                                                 reaction.id
                                             )
                                         print(
@@ -379,19 +380,19 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                     if (coeff > 1.0) or (
                                         species_appearances > 1
                                     ):
-                                        isCoupling = True
+                                        is_coupling = True
                                         if (
                                             reaction.id
-                                            not in List_Coupling_reacs
+                                            not in list_coupling_reactions
                                         ):
-                                            Coupling_reacs += (
+                                            coupling_reactions += (
                                                 "R"
                                                 + str(reaction.orig_id)
                                                 + " "
                                                 + reaction.equation()
                                                 + "\n"
                                             )
-                                            List_Coupling_reacs.append(
+                                            list_coupling_reactions.append(
                                                 reaction.id
                                             )
                                         print(
@@ -413,19 +414,19 @@ def qssa_coupling(mechanism, species_info, reaction_info):
                                     if (coeff > 1.0) or (
                                         species_appearances > 1
                                     ):
-                                        isCoupling = True
+                                        is_coupling = True
                                         if (
                                             reaction.id
-                                            not in List_Coupling_reacs
+                                            not in list_coupling_reactions
                                         ):
-                                            Coupling_reacs += (
+                                            coupling_reactions += (
                                                 "R"
                                                 + str(reaction.orig_id)
                                                 + " "
                                                 + reaction.equation()
                                                 + "\n"
                                             )
-                                            List_Coupling_reacs.append(
+                                            list_coupling_reactions.append(
                                                 reaction.id
                                             )
                                         print(
@@ -441,10 +442,10 @@ def qssa_coupling(mechanism, species_info, reaction_info):
     )
     print("\n\n SC network for QSSA: ")
     print(species_info.qssa_scnet)
-    if isCoupling:
+    if is_coupling:
         sys.exit(
             "There is some quadratic coupling in mechanism. Here is the list of reactions to check: \n"
-            + Coupling_reacs
+            + coupling_reactions
         )
 
 
@@ -504,7 +505,7 @@ def get_qssa_groups(mechanism, species_info, reaction_info):
     this includes two-way dependencies: (s1 needs s2) and (s2 needs s1) => group
     and cyclical dependencies: (s1 needs s2) and (s2 needs s3) and (s3 needs s1) => group
 
-    This function along with _findClosedCycles is an implmentation of:
+    This function along with find_closed_cycle is an implmentation of:
 
     Tarjan's Strongly Connected Components Algorithm (1972)
 
@@ -531,7 +532,7 @@ def get_qssa_groups(mechanism, species_info, reaction_info):
         if member not in self.lowest_link.keys():
 
             print("- dealing with group: ", member)
-            findClosedCycle(mechanism, member)
+            find_closed_cycle(mechanism, member)
 
     print("** Groups of coupled species are: ", self.all_groups)
 
@@ -544,8 +545,8 @@ def get_qssa_groups(mechanism, species_info, reaction_info):
     print()
     print("** Final clean self groups are: ", self.group)
 
-    updateGroupNeeds(mechanism, species_info, reaction_info)
-    updateGroupDependencies(mechanism, species_info, reaction_info)
+    update_group_needs(mechanism, species_info, reaction_info)
+    update_group_dependencies(mechanism, species_info, reaction_info)
 
 
 def find_closed_cycle(mechanism, species):
@@ -587,7 +588,7 @@ def find_closed_cycle(mechanism, species):
             print("         xx Child has never been visited at all...")
             print("         xx Initiate recursion to assign lowlink value ")
 
-            findClosedCycle(mechanism, child)
+            find_closed_cycle(mechanism, child)
 
             print(
                 "         xx We've finished a recursion! The child that was passed in was: ",
@@ -1016,17 +1017,17 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
 
             if len(coupled) >= 2:
                 # Check if all QSSA are only reactants
-                allQSSreactants = True
+                all_qssa_reactants = True
                 if any(
                     product == other_qss
                     for product, _ in reaction.products.items()
                 ):
-                    allQSSreactants = False
+                    all_qssa_reactants = False
                 if any(
                     product == symbol
                     for product, _ in reaction.products.items()
                 ):
-                    allQSSreactants = False
+                    all_qssa_reactants = False
 
             if len(coupled) < 2:
                 print("        this reaction only involves that QSSA ")
@@ -1085,7 +1086,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                             + "]"
                         )
 
-            elif len(coupled) >= 2 and allQSSreactants and remove_forward:
+            elif len(coupled) >= 2 and all_qssa_reactants and remove_forward:
                 # coupling is actually not a coupling because forward reaction is removed
                 if reaction.reversible:
                     # Should always be true
@@ -1133,22 +1134,22 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                 # if QSSA species is a reactant (other QSSA must be a product to be coupled to be coupled here, or quadratic coupling would have been triggered earlier)
                 if direction == -1:
 
-                    allQSSreactants = True
+                    all_qssa_reactants = True
                     if any(
                         product == other_qss
                         for product, _ in reaction.products.items()
                     ):
-                        allQSSreactants = False
+                        all_qssa_reactants = False
                     if any(
                         product == symbol
                         for product, _ in reaction.products.items()
                     ):
-                        allQSSreactants = False
+                        all_qssa_reactants = False
 
                     remove_forward = cu.is_remove_forward(
                         reaction_info, orig_idx
                     )
-                    if allQSSreactants and remove_forward:
+                    if all_qssa_reactants and remove_forward:
                         print(
                             "        species ",
                             symbol,
@@ -1298,7 +1299,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
     print()
 
 
-def qssa_componentFunctions(fstream, mechanism, species_info, reaction_info):
+def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
     """QSSA component functions."""
     itroe = reaction_info.index[0:2]
     isri = reaction_info.index[1:3]
@@ -1880,11 +1881,11 @@ def qssa_componentFunctions(fstream, mechanism, species_info, reaction_info):
                 "x",
                 len(self.group[symbol]),
             )
-            Coeff_subMatrix = [
+            coeff_submatrix = [
                 ["0"] * len(self.group[symbol])
                 for i in range(len(self.group[symbol]))
             ]
-            RHS_subMatrix = ["0"] * len(self.group[symbol])
+            rhs_submatrix = ["0"] * len(self.group[symbol])
             gr_species = self.group[symbol]
             print("    Species involved :", gr_species)
             cw.writer(
@@ -2026,13 +2027,13 @@ def qssa_componentFunctions(fstream, mechanism, species_info, reaction_info):
 
                 for j in range(len(gr_species)):
                     if j == index:
-                        Coeff_subMatrix[index][j] = "1"
+                        coeff_submatrix[index][j] = "1"
                     else:
                         if (
                             self.qssa_qssa_coeff[species][gr_species[j]]
                             != "0.0"
                         ):
-                            Coeff_subMatrix[index][j] = (
+                            coeff_submatrix[index][j] = (
                                 str(species) + "_" + str(gr_species[j])
                             )
                             # let us assume for now these lines are not too big
@@ -2049,10 +2050,10 @@ def qssa_componentFunctions(fstream, mechanism, species_info, reaction_info):
                                 + ";",
                             )
                 cw.writer(fstream)
-                RHS_subMatrix[index] = str(species) + "_rhs"
+                rhs_submatrix[index] = str(species) + "_rhs"
 
             A, X, B, intermediate_helpers = gauss_pivoting(
-                Coeff_subMatrix, RHS_subMatrix
+                species_info, coeff_submatrix, rhs_submatrix
             )
 
             print("X is ", X)
@@ -2141,7 +2142,7 @@ def qssa_componentFunctions(fstream, mechanism, species_info, reaction_info):
     return
 
 
-def gauss_pivoting(A, B=None):
+def gauss_pivoting(species_info, A, B=None):
     """Gauss pivoting."""
     print()
     print("In Gauss pivot")
@@ -2154,7 +2155,7 @@ def gauss_pivoting(A, B=None):
     for i in range(len(A[0])):
         X[i] = "X" + str(i)
 
-    if B == None:
+    if B is None:
         for i in range(len(A[0])):
             B[i] = "B" + str(i)
 

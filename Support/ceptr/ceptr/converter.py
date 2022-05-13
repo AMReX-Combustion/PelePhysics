@@ -2,7 +2,6 @@
 import pathlib
 import shutil
 import subprocess as spr
-import sys
 
 import numpy as np
 
