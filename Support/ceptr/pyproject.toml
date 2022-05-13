@@ -5,10 +5,13 @@ description = ""
 authors = ["Marc Henry de Frahan <marc.henrydefrahan@nrel.gov>", "Lucas Esclapez", "Jon Rood", "Hari Sitaraman", "Marc Day", "Anne Felden", "Julia Ream", "Malik Hassanaly"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8,<3.11"
 Cantera = ">=2.6.0"
 Pint = "^0.19.1"
 PyYAML = "^6.0"
+networkx = "^2.8"
+matplotlib = "^3.5.2"
+scipy = "^1.8.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

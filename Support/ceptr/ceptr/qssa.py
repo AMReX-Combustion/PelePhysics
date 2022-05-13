@@ -27,6 +27,12 @@ def main():
         choices=[0, 1, 2],
         default=2,
     )
+    parser.add_argument(
+        "-v",
+        "--visualize",
+        help="Visualize quadratic coupling and QSSA dependencies",
+        action="store_true",
+    )
     args = parser.parse_args()
 
     # Load mechanism
@@ -41,6 +47,10 @@ def main():
         non_qssa_species = f_non_qssa_species["species"]
     all_species = mechanism.species_names
     qssa_species = list(set(all_species) - set(non_qssa_species))
+
+    # Visualize
+    if args.visualize:
+        cqr.visualize_qssa(mechanism, reaction_info, qssa_species)
 
     forward_to_remove = []
     if args.method == 0:
