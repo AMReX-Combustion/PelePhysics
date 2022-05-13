@@ -16,7 +16,7 @@ def transport(fstream, mechanism, species_info):
     n_lite = 0
     idx_light_specs = []
     for sp in range(n_species):
-        spec = species_info.nonqss_species[sp]
+        spec = species_info.nonqssa_species[sp]
         if spec.weight < 5.0:
             n_lite += 1
             idx_light_specs.append(spec.idx)
@@ -50,7 +50,7 @@ def analyze_transport(mechanism, species_info):
     """Extract transport model coefficients."""
     transdata = OrderedDict()
 
-    for spec in species_info.nonqss_species:
+    for spec in species_info.nonqssa_species:
         species = mechanism.species(spec.name)
 
         m1 = species.transport
@@ -217,7 +217,7 @@ def generate_trans_routine_simple(
         fstream, "void %s(amrex::Real* %s ) {" % (nametab[0], nametab[4])
     )
 
-    for spec in species_info.nonqss_species:
+    for spec in species_info.nonqssa_species:
         cw.writer(
             fstream,
             "%s[%d] = %.8E;"
@@ -245,7 +245,7 @@ def wt(fstream, species_info, do_declarations):
 
     n_species = species_info.n_species
     for sp in range(n_species):
-        species = species_info.nonqss_species[sp]
+        species = species_info.nonqssa_species[sp]
         cw.writer(
             fstream,
             "%s[%d] = %.8E;" % ("WT", species.idx, float(species.weight)),
@@ -385,7 +385,7 @@ def nlin(fstream, mechanism, species_info, species_transport, do_declarations):
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(fstream, "void egtransetNLIN(int* NLIN) {")
 
-    for species in species_info.nonqss_species:
+    for species in species_info.nonqssa_species:
         cw.writer(
             fstream,
             "%s[%d] = %d;"
@@ -535,7 +535,7 @@ def viscosity(
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(fstream, "void egtransetCOFETA(amrex::Real* COFETA) {")
 
-    for spec in species_info.nonqss_species:
+    for spec in species_info.nonqssa_species:
         for i in range(4):
             cw.writer(
                 fstream,
@@ -564,7 +564,7 @@ def viscosity(
     cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
     cw.writer(fstream, "void egtransetCOFLAM(amrex::Real* COFLAM) {")
 
-    for spec in species_info.nonqss_species:
+    for spec in species_info.nonqssa_species:
         for i in range(4):
             cw.writer(
                 fstream,
@@ -1997,7 +1997,7 @@ def critical_parameters(fstream, mechanism, species_info):
     cw.writer(fstream, "egtransetSIG(SIG);")
     cw.writer(fstream, "get_mw(wt);")
 
-    for species in species_info.nonqss_species:
+    for species in species_info.nonqssa_species:
         if species.name in tabulated_critical_params:
             cw.writer(fstream)
             cw.writer(

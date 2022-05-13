@@ -18,11 +18,12 @@ class ReactionInfo:
         self.idxmap = OrderedDict()
         self.remove_id_list = []
         try:
-            with open("reac_forward_to_remove", "r") as f:
-                for line in f:
-                    self.remove_id_list.append(int(line))
-        except FileNotFoundError:
+            self.remove_id_list = mechanism.input_data["forward_to_remove_idx"]
+        except KeyError:
             print("No forward reaction to remove")
+
+        self.qssa_reactions = []
+        self.n_qssa_reactions = 0
 
 
 def sort_reactions(mechanism):

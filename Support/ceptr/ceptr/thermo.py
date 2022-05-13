@@ -8,18 +8,18 @@ import ceptr.writer as cw
 def thermo(fstream, mechanism, species_info):
     """Write thermodynamics routines."""
     species_coeffs = analyze_thermodynamics(mechanism, species_info, 0)
-    if species_info.nQSSspecies > 0:
+    if species_info.n_qssa_species > 0:
         qss_species_coeffs = analyze_thermodynamics(mechanism, species_info, 1)
 
     cv(fstream, species_info, species_coeffs)
     cp(fstream, species_info, species_coeffs)
     gibbs(fstream, species_info, species_coeffs, 0)
-    if species_info.nQSSspecies > 0:
+    if species_info.n_qssa_species > 0:
         gibbs(fstream, species_info, qss_species_coeffs, 1)
     helmholtz(fstream, species_info, species_coeffs)
     species_internal_energy(fstream, species_info, species_coeffs)
     species_enthalpy(fstream, species_info, species_coeffs, 0)
-    if species_info.nQSSspecies > 0:
+    if species_info.n_qssa_species > 0:
         species_enthalpy(fstream, species_info, qss_species_coeffs, 1)
     species_entropy(fstream, species_info, species_coeffs)
 
@@ -32,7 +32,7 @@ def analyze_thermodynamics(mechanism, species_info, qss_flag):
     midpoints = OrderedDict()
 
     if qss_flag:
-        for symbol in species_info.qss_species_list:
+        for symbol in species_info.qssa_species_list:
             species = mechanism.species(symbol)
             model = species.thermo
 
@@ -55,7 +55,7 @@ def analyze_thermodynamics(mechanism, species_info, qss_flag):
             )
 
     else:
-        for symbol in species_info.nonqss_species_list:
+        for symbol in species_info.nonqssa_species_list:
             species = mechanism.species(symbol)
             model = species.thermo
 

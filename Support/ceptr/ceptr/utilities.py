@@ -16,7 +16,7 @@ def qss_sorted_phase_space(mechanism, species_info, reagents):
     n_species = species_info.n_species
     for symbol in sorted_reagents:
         coefficient = reagents[symbol]
-        if symbol in species_info.qss_species_list:
+        if symbol in species_info.qssa_species_list:
             if float(coefficient) == 1.0:
                 conc = "sc_qss[%d]" % (
                     species_info.ordered_idx_map[symbol] - n_species
@@ -140,7 +140,7 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction):
     for _ in range(species_info.n_species):
         terms.append("")
     terms_qss = []
-    for _ in range(species_info.nQSSspecies):
+    for _ in range(species_info.n_qssa_species):
         terms_qss.append("")
 
     for symbol, coefficient in reaction.reactants.items():
@@ -149,7 +149,7 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction):
         else:
             factor = " + %f*" % coefficient
 
-        if symbol in species_info.qss_species_list:
+        if symbol in species_info.qssa_species_list:
             i = species_info.ordered_idx_map[symbol] - species_info.n_species
             terms_qss[i] += "%sg_RT_qss[%d]" % (factor, i)
         else:
@@ -162,7 +162,7 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction):
         else:
             factor = " - %f*" % coefficient
 
-        if symbol in species_info.qss_species_list:
+        if symbol in species_info.qssa_species_list:
             i = species_info.ordered_idx_map[symbol] - species_info.n_species
             terms_qss[i] += "%sg_RT_qss[%d]" % (factor, i)
         else:
@@ -173,7 +173,7 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction):
     for i in range(species_info.n_species):
         if terms[i]:
             dg += terms[i]
-    for i in range(species_info.nQSSspecies):
+    for i in range(species_info.n_qssa_species):
         if terms_qss[i]:
             dg += terms_qss[i]
 

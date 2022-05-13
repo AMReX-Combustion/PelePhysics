@@ -103,10 +103,10 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
         cw.writer(fstream, "mixture += sc[i];")
         cw.writer(fstream, "}")
         cw.writer(fstream)
-        if species_info.nQSSspecies > 0:
+        if species_info.n_qssa_species > 0:
             cw.writer(
                 fstream,
-                "for (int i = 0; i < %d; ++i) {" % species_info.nQSSspecies,
+                "for (int i = 0; i < %d; ++i) {" % species_info.n_qssa_species,
             )
             cw.writer(fstream, "mixture += sc_qss[i];")
             cw.writer(fstream, "}")
@@ -116,10 +116,10 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
         cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
         cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.n_species)
         cw.writer(fstream, "gibbs(g_RT, tc);")
-        if species_info.nQSSspecies > 0:
+        if species_info.n_qssa_species > 0:
             cw.writer(
                 fstream,
-                "amrex::Real g_RT_qss[%d];" % (species_info.nQSSspecies),
+                "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
             )
             cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
 
@@ -455,18 +455,19 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
         cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
         cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.n_species)
         cw.writer(fstream, "gibbs(g_RT, tc);")
-        if species_info.nQSSspecies > 0:
+        if species_info.n_qssa_species > 0:
             cw.writer(
                 fstream,
-                "amrex::Real g_RT_qss[%d];" % (species_info.nQSSspecies),
+                "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
             )
             cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
         cw.writer(fstream)
 
-        if species_info.nQSSspecies > 0:
+        if species_info.n_qssa_species > 0:
             cw.writer(
                 fstream,
-                "amrex::Real sc_qss[%d];" % (max(1, species_info.nQSSspecies)),
+                "amrex::Real sc_qss[%d];"
+                % (max(1, species_info.n_qssa_species)),
             )
             cw.writer(
                 fstream,
@@ -787,7 +788,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
             agents = []
             # remove QSS species from agents
             for symbol, coefficient in all_agents:
-                if symbol not in species_info.qss_species_list:
+                if symbol not in species_info.qssa_species_list:
                     agents.append((symbol, coefficient))
             dict_species = {
                 v: i for i, v in enumerate(species_info.all_species_list)
@@ -862,7 +863,7 @@ def enhancement_d_with_qss(mechanism, species_info, reaction):
     efficiencies = reaction.efficiencies
     alpha = ["mixture"]
     for _, (symbol, efficiency) in enumerate(efficiencies.items()):
-        if symbol not in species_info.qss_species_list:
+        if symbol not in species_info.qssa_species_list:
             factor = "(%.15g)" % (efficiency - 1)
             conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
             if (efficiency - 1) == 1:

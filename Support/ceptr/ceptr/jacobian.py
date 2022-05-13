@@ -75,9 +75,10 @@ def ajac_precond(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
     cw.writer(fstream, "amrex::Real g_RT[%d];" % (n_species))
     cw.writer(fstream, "gibbs(g_RT, tc);")
-    if species_info.nQSSspecies > 0:
+    if species_info.n_qssa_species > 0:
         cw.writer(
-            fstream, "amrex::Real g_RT_qss[%d];" % (species_info.nQSSspecies)
+            fstream,
+            "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
         )
         cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
 
@@ -86,16 +87,17 @@ def ajac_precond(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, cw.comment("compute the species enthalpy"))
     cw.writer(fstream, "amrex::Real h_RT[%d];" % (n_species))
     cw.writer(fstream, "speciesEnthalpy(h_RT, tc);")
-    if species_info.nQSSspecies > 0:
+    if species_info.n_qssa_species > 0:
         cw.writer(
-            fstream, "amrex::Real h_RT_qss[%d];" % (species_info.nQSSspecies)
+            fstream,
+            "amrex::Real h_RT_qss[%d];" % (species_info.n_qssa_species),
         )
         cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
 
-    if species_info.nQSSspecies > 0:
+    if species_info.n_qssa_species > 0:
         cw.writer(fstream, cw.comment("Fill sc_qss here"))
         cw.writer(
-            fstream, "amrex::Real sc_qss[%d];" % species_info.nQSSspecies
+            fstream, "amrex::Real sc_qss[%d];" % species_info.n_qssa_species
         )
         cw.writer(
             fstream,
@@ -623,7 +625,7 @@ def ajac_reaction_precond(
             sorted_reactants, key=lambda v: dict_species[v[0]]
         ):
             k = species_info.ordered_idx_map[symbol]
-            if symbol not in species_info.qss_species_list:
+            if symbol not in species_info.qssa_species_list:
                 if coefficient == 1.0:
                     terms.append("h_RT[%d]" % (k))
                 else:
@@ -641,7 +643,7 @@ def ajac_reaction_precond(
             sorted_products, key=lambda v: dict_species[v[0]]
         ):
             k = species_info.ordered_idx_map[symbol]
-            if symbol not in species_info.qss_species_list:
+            if symbol not in species_info.qssa_species_list:
                 if coefficient == 1.0:
                     terms.append("h_RT[%d]" % (k))
                 else:
@@ -781,7 +783,7 @@ def ajac_reaction_precond(
         #              sorted_reactants, sorted_products,
         #              rea_dict, pro_dict, dqdc_s,k, remove_forward)
         #    if dqdc_s:
-        #        symb_k = species_info.nonqss_species[k].symbol
+        #        symb_k = species_info.nonqssa_species[k].symbol
         #        cw.writer(fstream, cw.comment(d()/d[%s]' % symb_k))
         #        cw.writer(fstream,'dqdci = %s;' % (dqdc_s))
         #        #
@@ -925,7 +927,7 @@ def ajac(fstream, mechanism, species_info, reaction_info):
         fstream,
     )
     # Analytical jacobian not ready with QSS
-    if species_info.nQSSspecies > 0:
+    if species_info.n_qssa_species > 0:
         cw.writer(
             fstream, cw.comment("Do not use Analytical Jacobian with QSSA")
         )
@@ -963,10 +965,10 @@ def ajac(fstream, mechanism, species_info, reaction_info):
         fstream,
     )
 
-    if species_info.nQSSspecies > 0:
+    if species_info.n_qssa_species > 0:
         cw.writer(fstream, cw.comment("Fill sc_qss here"))
         cw.writer(
-            fstream, "amrex::Real sc_qss[%d];" % species_info.nQSSspecies
+            fstream, "amrex::Real sc_qss[%d];" % species_info.n_qssa_species
         )
         cw.writer(
             fstream,
@@ -1018,9 +1020,10 @@ def ajac(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
     cw.writer(fstream, "amrex::Real g_RT[%d];" % (n_species))
     cw.writer(fstream, "gibbs(g_RT, tc);")
-    if species_info.nQSSspecies > 0:
+    if species_info.n_qssa_species > 0:
         cw.writer(
-            fstream, "amrex::Real g_RT_qss[%d];" % (species_info.nQSSspecies)
+            fstream,
+            "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
         )
         cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
 
@@ -1031,13 +1034,14 @@ def ajac(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, cw.comment("compute the species enthalpy"))
     cw.writer(fstream, "amrex::Real h_RT[%d];" % (n_species))
     cw.writer(fstream, "speciesEnthalpy(h_RT, tc);")
-    if species_info.nQSSspecies > 0:
+    if species_info.n_qssa_species > 0:
         cw.writer(
-            fstream, "amrex::Real h_RT_qss[%d];" % (species_info.nQSSspecies)
+            fstream,
+            "amrex::Real h_RT_qss[%d];" % (species_info.n_qssa_species),
         )
         cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
 
-    if species_info.nQSSspecies > 0:
+    if species_info.n_qssa_species > 0:
         cw.writer(
             fstream,
         )
@@ -1570,7 +1574,7 @@ def ajac_reaction_d(
         for symbol, coefficient in sorted(
             sorted_reactants, key=lambda v: dict_species[v[0]]
         ):
-            if symbol not in species_info.qss_species_list:
+            if symbol not in species_info.qssa_species_list:
                 k = species_info.ordered_idx_map[symbol]
                 if coefficient == 1.0:
                     terms.append("h_RT[%d]" % (k))
@@ -1587,7 +1591,7 @@ def ajac_reaction_d(
         for symbol, coefficient in sorted(
             sorted_products, key=lambda v: dict_species[v[0]]
         ):
-            if symbol not in species_info.qss_species_list:
+            if symbol not in species_info.qssa_species_list:
                 k = species_info.ordered_idx_map[symbol]
                 if coefficient == 1.0:
                     terms.append("h_RT[%d]" % (k))
@@ -1737,7 +1741,7 @@ def ajac_reaction_d(
                 remove_forward,
             )
             if dqdc_s:
-                symb_k = species_info.nonqss_species[k].name
+                symb_k = species_info.nonqssa_species[k].name
                 cw.writer(fstream, cw.comment("d()/d[%s]" % symb_k))
                 cw.writer(fstream, "dqdci = %s;" % (dqdc_s))
                 #
@@ -1974,7 +1978,7 @@ def enhancement_d(mechanism, species_info, reaction):
     efficiencies = reaction.efficiencies
     alpha = ["mixture"]
     for _, (symbol, efficiency) in enumerate(efficiencies.items()):
-        if symbol not in species_info.qss_species_list:
+        if symbol not in species_info.qssa_species_list:
             factor = "( %.15g - 1)" % (efficiency)
             conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
             alpha.append("%s*%s" % (factor, conc))
@@ -2025,7 +2029,7 @@ def dphase_space(mechanism, species_info, reagents, r):
     for symbol, coefficient in sorted(
         reagents, key=lambda v: dict_species[v[0]]
     ):
-        if symbol not in species_info.qss_species_list:
+        if symbol not in species_info.qssa_species_list:
             if symbol == r:
                 if coefficient > 1:
                     phi += ["%f" % coefficient]

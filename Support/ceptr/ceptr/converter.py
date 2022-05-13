@@ -3,6 +3,7 @@ import pathlib
 import shutil
 import subprocess as spr
 import sys
+import numpy as np
 
 import ceptr.ck as cck
 import ceptr.gjs as cgjs
@@ -14,6 +15,7 @@ import ceptr.species_info as csi
 import ceptr.thermo as cth
 import ceptr.transport as ctr
 import ceptr.writer as cw
+import ceptr.qssa_converter as cqc
 
 
 class Converter:
@@ -27,31 +29,7 @@ class Converter:
         self.cppname = self.mechpath.parents[0] / f"{self.rootname}.cpp"
         self.species_info = csi.SpeciesInfo()
 
-        # Reactions
-        # QSS
-        self.qssReactions = []
         self.qfqr_co_idx_map = []
-        self.nqssReactions = 0
-
-        # QSS specific
-        # sp-sp network
-        self.QSS_SSnet = []
-        # sp-reac network
-        self.QSS_SRnet = []
-        # sp coupling network
-        self.QSS_SCnet = []
-        # sp-sp network indices i of non zero elem
-        self.QSS_SS_Si = []
-        # sp-sp network indices j of non zero elem
-        self.QSS_SS_Sj = []
-        # sp-reac network indices i of non zero elem
-        self.QSS_SR_Si = []
-        # sp-reac network indices j of non zero elem
-        self.QSS_SR_Rj = []
-        # sp coupling network indices i of non zero elem
-        self.QSS_SC_Si = []
-        # sp coupling network indices j of non zero elem
-        self.QSS_SC_Sj = []
 
         # List of intermediate helpers -- not optimal but can't be more clever rn
         self.list_of_intermediate_helpers = []
@@ -61,89 +39,103 @@ class Converter:
         # 0/1    /2   /3      /4  /5      /6
         self.reaction_info = cri.sort_reactions(self.mechanism)
 
-        # FIXME QSS
-        # # QSS  -- sort reactions/networks/check validity of QSSs
-        # if self.nQSSspecies > 0:
-        #     print("\n\n\n\n---------------------------------")
-        #     print("+++++++++QSS INFO++++++++++++++++")
-        #     print("---------------------------------")
-        #     print("QSS species list =", self.qss_species_list)
-        #     self._setQSSreactions(mechanism)
-        #     self._getQSSnetworks(mechanism)  # sets up QSS subnetwork
-        #     self._QSSvalidation(
-        #         mechanism
-        #     )  # Perform tests to ensure QSS species are good candidates
-        #     self._QSSCoupling(
-        #         mechanism
-        #     )  # No quad coupling and fill SC network
-        #     print("\n\n\n\n---------------------------------")
-        #     print("+++++++++INIT NEEDS DICT+++++++++")
-        #     print("---------------------------------")
-        #     self._setQSSneeds(
-        #         mechanism
-        #     )  # Fill "need" dict (which species a species depends upon)
-        #     self._setQSSisneeded(
-        #         mechanism
-        #     )  # Fill "is_needed" dict (which species needs that particular species)
+        # QSS  -- sort reactions/networks/check validity of QSSs
+        if self.species_info.n_qssa_species > 0:
+            print("QSSA information")
+            print("QSS species list =", self.species_info.qssa_species_list)
+            cqc.set_qssa_reactions(
+                self.mechanism, self.species_info, self.reaction_info
+            )
+            cqc.get_qssa_networks(self.mechanism)
+            self._getQSSnetworks(mechanism)  # sets up QSS subnetwork
+            self._QSSvalidation(
+                mechanism
+            )  # Perform tests to ensure QSS species are good candidates
+            self._QSSCoupling(
+                mechanism
+            )  # No quad coupling and fill SC network
+            print("\n\n\n\n---------------------------------")
+            print("+++++++++INIT NEEDS DICT+++++++++")
+            print("---------------------------------")
+            self._setQSSneeds(
+                mechanism
+            )  # Fill "need" dict (which species a species depends upon)
+            self._setQSSisneeded(
+                mechanism
+            )  # Fill "is_needed" dict (which species needs that particular species)
+        sys.exit()
 
     def set_species(self):
         """Set the species."""
         # Fill species counters
-        self.species_info.nAllspecies = self.mechanism.n_species
-        self.species_info.nQSSspecies = (
-            0  # FIXME QSS len(mechanism.qss_species())
-        )
+        self.species_info.n_all_species = self.mechanism.n_species
+        self.species_info.n_qssa_species = self.mechanism.input_data[
+            "n_qssa_species"
+        ]
         self.species_info.n_species = (
-            self.species_info.nAllspecies - self.species_info.nQSSspecies
+            self.species_info.n_all_species - self.species_info.n_qssa_species
         )
 
-        # FIXME QSS
-        qss_list_tmp = []
-        # # get the unsorted self.qss_species_list
-        # for qss_sp in mechanism.qss_species():
-        #     qss_list_tmp.append(qss_sp.symbol)
+        # get the unsorted self.qssa_species_list
+        qssa_list_tmp = []
+        try:
+            for qssa_sp in self.mechanism.input_data["qssa_species"]:
+                qssa_list_tmp.append(qssa_sp)
+        except KeyError:
+            pass
 
         # sort all species. First pass is for non QSS species
         # so we can put them at the beginning of the all species list
         sorted_idx = 0
         for id, species in enumerate(self.mechanism.species()):
-            if species.name not in qss_list_tmp:
+            if species.name not in qssa_list_tmp:
                 weight = 0.0
                 for elem, coef in species.composition.items():
                     aw = self.mechanism.atomic_weight(elem)
                     weight += coef * aw
                 tempsp = csi.SpeciesDb(id, sorted_idx, species.name, weight)
                 self.species_info.all_species.append(tempsp)
-                self.species_info.nonqss_species.append(tempsp)
+                self.species_info.nonqssa_species.append(tempsp)
                 self.species_info.all_species_list.append(species.name)
-                self.species_info.nonqss_species_list.append(species.name)
+                self.species_info.nonqssa_species_list.append(species.name)
                 self.species_info.ordered_idx_map[species.name] = sorted_idx
                 self.species_info.mech_idx_map[species.name] = id
                 sorted_idx += 1
 
         # second pass through QSS species - put them at the end of the all spec list
         for id, species in enumerate(self.mechanism.species()):
-            if species.name in qss_list_tmp:
+            if species.name in qssa_list_tmp:
                 weight = 0.0
                 for elem, coef in species.composition.items():
                     aw = self.mechanism.atomic_weight(elem)
                     weight += coef * aw
                 tempsp = csi.SpeciesDb(id, sorted_idx, species.name, weight)
                 self.species_info.all_species.append(tempsp)
-                self.species_info.qss_species.append(tempsp)
+                self.species_info.qssa_species.append(tempsp)
                 self.species_info.all_species_list.append(species.name)
-                self.species_info.qss_species_list.append(species.name)
+                self.species_info.qssa_species_list.append(species.name)
                 self.species_info.ordered_idx_map[species.name] = sorted_idx
                 self.species_info.mech_idx_map[species.name] = id
                 sorted_idx += 1
 
-        # FIXME QSS
-        # # Initialize QSS species-species, species-reaction, and species coupling networks
-        # self.QSS_SSnet = np.zeros([self.nQSSspecies, self.nQSSspecies], "d")
-        # self.QSS_SRnet = np.zeros(
-        #     [self.nQSSspecies, self.mechanism.n_reactions)], "d"
-        # )
-        # self.QSS_SCnet = np.zeros([self.nQSSspecies, self.nQSSspecies], "d")
+        # Initialize QSS species-species, species-reaction, and species coupling networks
+        self.species_info.QSS_SSnet = np.zeros(
+            [
+                self.species_info.n_qssa_species,
+                self.species_info.n_qssa_species,
+            ],
+            "d",
+        )
+        self.species_info.QSS_SRnet = np.zeros(
+            [self.species_info.n_qssa_species, self.mechanism.n_reactions], "d"
+        )
+        self.species_info.QSS_SCnet = np.zeros(
+            [
+                self.species_info.n_qssa_species,
+                self.species_info.n_qssa_species,
+            ],
+            "d",
+        )
 
         print("FULL SPECIES LIST WITH TRANSPORTED FIRST AND QSS LAST: ")
         for all_species in self.species_info.all_species:
@@ -239,7 +231,7 @@ class Converter:
             cck.cksms(hdr, self.mechanism, self.species_info)
 
             # FIXME QSS
-            if self.species_info.nQSSspecies > 0:
+            if self.species_info.n_qssa_species > 0:
                 print("FIXME QSS")
                 sys.exit(1)
                 # print("\n\n\n\n---------------------------------")
@@ -330,7 +322,7 @@ class Converter:
         cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
         cw.writer(fstream, "void get_imw(amrex::Real *imw_new){")
         for i in range(0, self.species_info.n_species):
-            species = self.species_info.nonqss_species[i]
+            species = self.species_info.nonqssa_species[i]
             text = "imw_new[%d] = 1.0/%f;" % (i, species.weight)
             cw.writer(fstream, text + cw.comment("%s" % species.name))
         cw.writer(fstream, "}")
@@ -340,7 +332,7 @@ class Converter:
         cw.writer(fstream, "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE")
         cw.writer(fstream, "void get_mw(amrex::Real *mw_new){")
         for i in range(0, self.species_info.n_species):
-            species = self.species_info.nonqss_species[i]
+            species = self.species_info.nonqssa_species[i]
             text = "mw_new[%d] = %f;" % (i, species.weight)
             cw.writer(fstream, text + cw.comment("%s" % species.name))
         cw.writer(fstream, "}")
@@ -426,7 +418,7 @@ class Converter:
         cw.writer(fstream, "*/")
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("Species"))
-        for species in self.species_info.nonqss_species_list:
+        for species in self.species_info.nonqssa_species_list:
             s = species.strip()
             # Ionic species
             if s[-1] == "-":

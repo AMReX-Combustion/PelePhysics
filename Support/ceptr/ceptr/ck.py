@@ -31,9 +31,9 @@ def ckncf(fstream, mechanism, species_info):
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(fstream, cw.comment("%s" % species.name))
         for elem, coef in mechanism.species(sp).composition.items():
             cw.writer(
@@ -84,7 +84,7 @@ def cksyms_str(fstream, mechanism, species_info):
     )
     cw.writer(fstream, "{")
     cw.writer(fstream, "kname.resize(%d);" % n_species)
-    for species in species_info.nonqss_species_list:
+    for species in species_info.nonqssa_species_list:
         cw.writer(
             fstream,
             'kname[%d] = "%s";'
@@ -352,9 +352,9 @@ def ckcvbs(fstream, mechanism, species_info):
 
     # do dot product
     cw.writer(fstream, cw.comment("multiply by y/molecularweight"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "result += cvor[%d]*y[%d]*imw[%d]; "
@@ -590,9 +590,9 @@ def ckubms(fstream, mechanism, species_info):
 
     # convert e/RT to e with mass units
     cw.writer(fstream, cw.comment("perform dot product + scaling by wt"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "result += y[%d]*ums[%d]*imw[%d]; "
@@ -724,9 +724,9 @@ def cksbms(fstream, mechanism, species_info):
     cw.writer(
         fstream, cw.comment("Compute inverse of mean molecular wt first")
     )
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "YOW += y[%d]*imw[%d]; " % (spec_idx, spec_idx)
@@ -735,9 +735,9 @@ def cksbms(fstream, mechanism, species_info):
 
     # now to ytx
     cw.writer(fstream, cw.comment("Now compute y to x conversion"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "x[%d] = y[%d]/(%f*YOW); " % (spec_idx, spec_idx, species.weight),
@@ -748,7 +748,7 @@ def cksbms(fstream, mechanism, species_info):
 
     # Equation 42 and 43
     cw.writer(fstream, cw.comment("Perform computation in Eq 42 and 43"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
         cw.writer(
             fstream,
@@ -894,9 +894,9 @@ def ckgbms(fstream, mechanism, species_info):
     cw.writer(
         fstream, cw.comment("Compute inverse of mean molecular wt first")
     )
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "YOW += y[%d]*imw[%d]; " % (spec_idx, spec_idx)
@@ -905,9 +905,9 @@ def ckgbms(fstream, mechanism, species_info):
 
     # now to ytx
     cw.writer(fstream, cw.comment("Now compute y to x conversion"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "x[%d] = y[%d]/(%f*YOW); " % (spec_idx, spec_idx, species.weight),
@@ -918,7 +918,7 @@ def ckgbms(fstream, mechanism, species_info):
 
     # Equation 42 and 43
     cw.writer(fstream, cw.comment("Perform computation in Eq 44"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
         cw.writer(
             fstream,
@@ -1064,9 +1064,9 @@ def ckabms(fstream, mechanism, species_info):
     cw.writer(
         fstream, cw.comment("Compute inverse of mean molecular wt first")
     )
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "YOW += y[%d]*imw[%d]; " % (spec_idx, spec_idx)
@@ -1075,9 +1075,9 @@ def ckabms(fstream, mechanism, species_info):
 
     # now to ytx
     cw.writer(fstream, cw.comment("Now compute y to x conversion"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "x[%d] = y[%d]/(%f*YOW); " % (spec_idx, spec_idx, species.weight),
@@ -1088,7 +1088,7 @@ def ckabms(fstream, mechanism, species_info):
 
     # Equation 42 and 43
     cw.writer(fstream, cw.comment("Perform computation in Eq 44"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
         cw.writer(
             fstream,
@@ -1121,9 +1121,9 @@ def ckpx(fstream, mechanism, species_info):
     )
 
     # molecular weights of all species
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (spec_idx, species.weight)
@@ -1166,9 +1166,9 @@ def ckpy(fstream, mechanism, species_info):
     cw.writer(fstream)
 
     # molecular weights of all species
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "YOW += y[%d]*imw[%d]; " % (spec_idx, spec_idx)
@@ -1209,9 +1209,9 @@ def ckpc(fstream, mechanism, species_info):
     cw.writer(fstream, "amrex::Real sumC = 0;")
 
     # molecular weights of all species
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "W += c[%d]*%f; " % (spec_idx, species.weight)
@@ -1255,9 +1255,9 @@ def ckrhox(fstream, mechanism, species_info):
     )
 
     # molecular weights of all species
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (spec_idx, species.weight)
@@ -1335,9 +1335,9 @@ def ckrhoc(fstream, mechanism, species_info):
     cw.writer(fstream, "amrex::Real sumC = 0;")
 
     # molecular weights of all species
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "W += c[%d]*%f; " % (spec_idx, species.weight)
@@ -1427,9 +1427,9 @@ def ckmmwx(fstream, mechanism, species_info):
         fstream, "amrex::Real XW = 0;" + cw.comment(" see Eq 4 in CK Manual")
     )
     # molecular weights of all species
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (spec_idx, species.weight)
@@ -1459,9 +1459,9 @@ def ckmmwc(fstream, mechanism, species_info):
     cw.writer(fstream, "amrex::Real W = 0;")
     cw.writer(fstream, "amrex::Real sumC = 0;")
     # molecular weights of all species
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "W += c[%d]*%f; " % (spec_idx, species.weight)
@@ -1715,9 +1715,9 @@ def ckxty(fstream, mechanism, species_info):
 
     # compute mean molecular weight first (eq 3)
     cw.writer(fstream, cw.comment("Compute mean molecular wt first"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (spec_idx, species.weight)
@@ -1727,9 +1727,9 @@ def ckxty(fstream, mechanism, species_info):
     # now compute conversion
     cw.writer(fstream, cw.comment("Now compute conversion"))
     cw.writer(fstream, "amrex::Real XWinv = 1.0/XW;")
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "y[%d] = x[%d]*%f*XWinv; " % (spec_idx, spec_idx, species.weight),
@@ -1807,7 +1807,7 @@ def ckxtcr(fstream, mechanism, species_info):
     # compute mean molecular weight first (eq 3)
     cw.writer(fstream, cw.comment("Compute mean molecular wt first"))
     for sp in range(n_species):
-        species = species_info.nonqss_species[sp]
+        species = species_info.nonqssa_species[sp]
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (species.idx, species.weight)
@@ -1892,7 +1892,7 @@ def ckcty(fstream, mechanism, species_info):
     # compute denominator in eq 12
     cw.writer(fstream, cw.comment("compute denominator in eq 12 first"))
     for sp in range(n_species):
-        species = species_info.nonqss_species[sp]
+        species = species_info.nonqssa_species[sp]
         cw.writer(
             fstream,
             "CW += c[%d]*%f; " % (species.idx, species.weight)
@@ -1903,7 +1903,7 @@ def ckcty(fstream, mechanism, species_info):
     cw.writer(fstream, cw.comment("Now compute conversion"))
     cw.writer(fstream, "amrex::Real CWinv = 1.0/CW;")
     for sp in range(n_species):
-        species = species_info.nonqss_species[sp]
+        species = species_info.nonqssa_species[sp]
         cw.writer(
             fstream,
             "y[%d] = c[%d]*%f*CWinv; "
@@ -2264,9 +2264,9 @@ def ckcvms(fstream, mechanism, species_info):
 
     # convert cv/R to cv with mass units
     cw.writer(fstream, cw.comment("multiply by R/molecularweight"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         row = (
             cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg
         ).m / species.weight
@@ -2309,9 +2309,9 @@ def ckcpms(fstream, mechanism, species_info):
 
     # convert cp/R to cp with mass units
     cw.writer(fstream, cw.comment("multiply by R/molecularweight"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         row = (
             cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg
         ).m / species.weight
@@ -2530,9 +2530,9 @@ def cksms(fstream, mechanism, species_info):
 
     # convert s/R to s with mass units
     cw.writer(fstream, cw.comment("multiply by R/molecularweight"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         row = (
             cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg
         ).m / species.weight
@@ -2619,9 +2619,9 @@ def ckwyp(fstream, mechanism, species_info):
     cw.writer(
         fstream, cw.comment("Compute inverse of mean molecular wt first")
     )
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
-        species = species_info.nonqss_species[spec_idx]
+        species = species_info.nonqssa_species[spec_idx]
         cw.writer(
             fstream,
             "YOW += y[%d]*imw[%d]; " % (spec_idx, spec_idx)
@@ -2640,7 +2640,7 @@ def ckwyp(fstream, mechanism, species_info):
 
     # now compute conversion
     cw.writer(fstream, cw.comment("Now compute conversion (and go to SI)"))
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
         cw.writer(
             fstream,
@@ -2745,7 +2745,7 @@ def ckwyr(fstream, mechanism, species_info):
     cw.writer(
         fstream, cw.comment("See Eq 8 with an extra 1e6 so c goes to SI")
     )
-    for sp in species_info.nonqss_species_list:
+    for sp in species_info.nonqssa_species_list:
         spec_idx = species_info.ordered_idx_map[sp]
         cw.writer(
             fstream,
@@ -2800,7 +2800,7 @@ def ckwxr(fstream, mechanism, species_info):
     # compute mean molecular weight first (eq 3)
     cw.writer(fstream, cw.comment("Compute mean molecular wt first"))
     for sp in range(n_species):
-        species = species_info.nonqss_species[sp]
+        species = species_info.nonqssa_species[sp]
         cw.writer(
             fstream,
             "XW += x[%d]*%f; " % (species.idx, species.weight)
