@@ -166,7 +166,6 @@ class Converter:
             cck.cksyme_str(cpp, self.mechanism, self.species_info)
             cck.cksyms_str(cpp, self.mechanism, self.species_info)
             csp.sparsity(cpp, self.species_info)
-            cw.writer(cpp, "#endif")
 
             # This is for the header file
             cw.writer(hdr, "#ifndef MECHANISM_H")
