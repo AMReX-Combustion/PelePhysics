@@ -70,9 +70,13 @@ class Converter:
         """Set the species."""
         # Fill species counters
         self.species_info.n_all_species = self.mechanism.n_species
-        self.species_info.n_qssa_species = self.mechanism.input_data[
-            "n_qssa_species"
-        ]
+        try:
+            self.species_info.n_qssa_species = self.mechanism.input_data[
+                "n_qssa_species"
+            ]
+        except KeyError:
+            self.species_info.n_qssa_species = 0
+
         self.species_info.n_species = (
             self.species_info.n_all_species - self.species_info.n_qssa_species
         )
