@@ -42,7 +42,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qfqr(amrex::Real *"
         "  qf, amrex::Real * qr, amrex::Real * sc, amrex::Real * sc_qss,"
-        " amrex::Real * tc, amrex::Real invT)",
+        " const amrex::Real * tc, amrex::Real invT)",
     )
     cw.writer(fstream, "{")
 
@@ -842,6 +842,63 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
+
+
+def progress_rate_fr(fstream, mechanism, species_info, reaction_info):
+    """Write progress rates."""
+    n_reactions = mechanism.n_reactions
+
+    if len(reaction_info.index) != 7:
+        print("\n\nCheck this!!!\n")
+        sys.exit(1)
+
+    cw.writer(fstream)
+    cw.writer(
+        fstream, cw.comment("compute the progress rate for each reaction")
+    )
+    cw.writer(fstream, cw.comment("USES progressRate : todo switch to GPU"))
+    cw.writer(
+        fstream,
+        "void progressRateFR"
+        + "(amrex::Real *  q_f, amrex::Real *  q_r, amrex::Real *  sc, amrex::Real T)",
+    )
+    cw.writer(fstream, "{")
+
+    if n_reactions > 0:
+
+        cw.writer(
+            fstream,
+            "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
+            + cw.comment("temperature cache"),
+        )
+        cw.writer(fstream, "amrex::Real invT = 1.0 / tc[1];")
+
+        # cw.writer(fstream)
+        # cw.writer(fstream, "if (T != T_save)")
+        # cw.writer(fstream, "{")
+        # cw.writer(fstream, "T_save = T;")
+        # cw.writer(fstream, "comp_k_f(tc,invT,k_f_save);")
+        # cw.writer(fstream, "comp_Kc(tc,invT,Kc_save);")
+        # if species_info.n_qssa_species > 0:
+        #     cw.writer(fstream)
+        #     cw.writer(fstream, "comp_k_f_qss(tc,invT,k_f_save_qss);")
+        #     # cw.writer(fstream, "comp_Kc_qss(tc,invT,Kc_save_qss);")
+        # cw.writer(fstream, "}")
+
+        cw.writer(fstream)
+        cw.writer(
+            fstream,
+            "amrex::Real sc_qss[%d];" % (max(1, species_info.n_qssa_species)),
+        )
+        if species_info.n_qssa_species > 0:
+            cw.writer(fstream, cw.comment("Fill sc_qss here"))
+            cw.writer(fstream, "comp_sc_qss(sc, sc_qss, tc, invT);")
+
+        cw.writer(fstream, "comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);")
+        cw.writer(fstream)
+
+    cw.writer(fstream, "return;")
+    cw.writer(fstream, "}")
 
 
 def enhancement_d_with_qss(mechanism, species_info, reaction):

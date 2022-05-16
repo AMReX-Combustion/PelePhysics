@@ -3059,3 +3059,56 @@ def ckinu(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
     cw.writer(fstream, "}")
+
+
+def ckkfkr(fstream, mechanism, species_info):
+    """Write ckkfkr."""
+    n_species = species_info.n_species
+    n_reactions = mechanism.n_reactions
+
+    cw.writer(fstream)
+    cw.writer(
+        fstream, cw.comment("Returns the progress rates of each reactions")
+    )
+    cw.writer(fstream, cw.comment("Given P, T, and mole fractions"))
+    cw.writer(
+        fstream,
+        "void CKKFKR"
+        + cc.sym
+        + "(amrex::Real *  P, amrex::Real *  T, amrex::Real *  x"
+        + ", amrex::Real *  q_f, amrex::Real *  q_r)",
+    )
+    cw.writer(fstream, "{")
+
+    cw.writer(fstream, "int id; " + cw.comment("loop counter"))
+    cw.writer(
+        fstream,
+        "amrex::Real c[%d]; " % n_species + cw.comment("temporary storage"),
+    )
+    cw.writer(
+        fstream,
+        "amrex::Real PORT = 1e6 * (*P)/(%1.14e * (*T)); "
+        % ((cc.R * cc.ureg.kelvin * cc.ureg.mole / cc.ureg.erg)).m
+        + cw.comment("1e6 * P/RT so c goes to SI units"),
+    )
+
+    # now compute conversion
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("Compute conversion, see Eq 10"))
+    cw.writer(fstream, "for (id = 0; id < %d; ++id) {" % n_species)
+    cw.writer(fstream, "c[id] = x[id]*PORT;")
+    cw.writer(fstream, "}")
+
+    # call progressRateFR
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("convert to chemkin units"))
+    cw.writer(fstream, "progressRateFR(q_f, q_r, c, *T);")
+
+    # convert qdot to chemkin units
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("convert to chemkin units"))
+    cw.writer(fstream, "for (id = 0; id < %d; ++id) {" % n_reactions)
+    cw.writer(fstream, "q_f[id] *= 1.0e-6;")
+    cw.writer(fstream, "q_r[id] *= 1.0e-6;")
+    cw.writer(fstream, "}")
+    cw.writer(fstream, "}")
