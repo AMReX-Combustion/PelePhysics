@@ -1,6 +1,8 @@
 """Species information."""
 from collections import OrderedDict
 
+import ceptr.qssa_info as cqi
+
 
 class SpeciesDb:
     """Species database."""
@@ -30,20 +32,14 @@ class SpeciesInfo:
 
     def __init__(self):
         # Species
-        # non QSS
-        # list of speciesDb for each non QSS spec
+        # non QSSA
+        # list of speciesDb for each non QSSA spec
         self.nonqssa_species = []
-        # list of non QSS species names
+        # list of non QSSA species names
         self.nonqssa_species_list = []
-        # number of non QSS species
+        # number of non QSSA species
         self.n_species = 0
-        # QSS
-        # list of speciesDb for each QSS spec
-        self.qssa_species = []
-        # list of QSS species names
-        self.qssa_species_list = []
-        # number of QSS species
-        self.n_qssa_species = 0
+
         # all Species
         self.all_species = []
         self.all_species_list = []
@@ -55,22 +51,10 @@ class SpeciesInfo:
         self.low_temp = 0.0
         self.high_temp = 1000000.0
 
-        # QSSA specific
-        # sp-sp network
-        self.qssa_ssnet = []
-        # sp-reac network
-        self.qssa_srnet = []
-        # sp coupling network
-        self.qssa_scnet = []
-        # sp-sp network indices i of non zero elem
-        self.qssa_ss_si = []
-        # sp-sp network indices j of non zero elem
-        self.qssa_ss_sj = []
-        # sp-reac network indices i of non zero elem
-        self.qssa_sr_si = []
-        # sp-reac network indices j of non zero elem
-        self.qssa_sr_sj = []
-        # sp coupling network indices i of non zero elem
-        self.qssa_sc_si = []
-        # sp coupling network indices j of non zero elem
-        self.qssa_sc_sj = []
+        # list of speciesDb for each QSSA spec
+        self.qssa_species = []
+        # list of QSSA species names
+        self.qssa_species_list = []
+        # number of QSSA species
+        self.n_qssa_species = 0
+        self.qssa_info = cqi.QSSAInfo()

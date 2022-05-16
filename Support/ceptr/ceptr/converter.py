@@ -29,11 +29,6 @@ class Converter:
         self.cppname = self.mechpath.parents[0] / f"{self.rootname}.cpp"
         self.species_info = csi.SpeciesInfo()
 
-        self.qfqr_co_idx_map = []
-
-        # List of intermediate helpers -- not optimal but can't be more clever rn
-        self.list_of_intermediate_helpers = []
-
         self.set_species()
         # 0/ntroe/nsri/nlindem/nTB/nSimple/nWeird
         # 0/1    /2   /3      /4  /5      /6
@@ -66,9 +61,10 @@ class Converter:
             cqc.set_qssa_needs(
                 self.mechanism, self.species_info, self.reaction_info
             )
-            self._setQSSisneeded(
-                mechanism
-            )  # Fill "is_needed" dict (which species needs that particular species)
+            # Fill "is_needed" dict (which species needs that particular species)
+            cqc.set_qssa_isneeded(
+                self.mechanism, self.species_info, self.reaction_info
+            )
 
     def set_species(self):
         """Set the species."""
@@ -124,17 +120,17 @@ class Converter:
                 sorted_idx += 1
 
         # Initialize QSS species-species, species-reaction, and species coupling networks
-        self.species_info.qssa_ssnet = np.zeros(
+        self.species_info.qssa_info.ssnet = np.zeros(
             [
                 self.species_info.n_qssa_species,
                 self.species_info.n_qssa_species,
             ],
             "d",
         )
-        self.species_info.qssa_srnet = np.zeros(
+        self.species_info.qssa_info.srnet = np.zeros(
             [self.species_info.n_qssa_species, self.mechanism.n_reactions], "d"
         )
-        self.species_info.qssa_scnet = np.zeros(
+        self.species_info.qssa_info.scnet = np.zeros(
             [
                 self.species_info.n_qssa_species,
                 self.species_info.n_qssa_species,
@@ -237,17 +233,24 @@ class Converter:
 
             if self.species_info.n_qssa_species > 0:
                 print("QSSA groups")
-                self._getQSSgroups(mechanism)  # Figure out dependencies
+                # Figure out dependencies
+                cqc.get_qssa_groups(
+                    self.mechanism, self.species_info, self.reaction_info
+                )
                 print("QSSA sorting")
-                self._sortQSScomputation(
-                    mechanism
-                )  # Sort out order of group eval
+                # Sort out order of group evaluation
+                cqc.sort_qssa_computation(
+                    self.mechanism, self.species_info, self.reaction_info
+                )
                 print("QSSA evaluation")
-                self._sortQSSsolution_elements(
-                    mechanism
-                )  # Actually gauss-pivot the matrix to get algebraic expr
+                # Actually gauss-pivot the matrix to get algebraic expr
+                cqc.sort_qssa_solution_elements(
+                    self.mechanism, self.species_info, self.reaction_info
+                )
                 print("QSSA printing")
-                self._QSScomponentFunctions(mechanism)
+                cqc.qssa_component_functions(
+                    hdr, self.mechanism, self.species_info, self.reaction_info
+                )
 
             # prod rate related
             cp.production_rate(

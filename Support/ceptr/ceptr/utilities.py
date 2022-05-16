@@ -1,5 +1,5 @@
 """Utility functions used across ceptr."""
-
+import sys
 import ceptr.constants as cc
 
 
@@ -181,3 +181,35 @@ def sorted_kc_exp_arg(mechanism, species_info, reaction):
         return dg[3:]
     else:
         return "-" + dg[3:]
+
+
+def enhancement_d(mechanism, species_info, reaction):
+    """Write get enhancement."""
+    third_body = reaction.reaction_type == "three-body"
+    falloff = reaction.reaction_type == "falloff"
+    if not third_body and not falloff:
+        print("enhancement_d called for a reaction without a third body")
+        sys.exit(1)
+
+    if not hasattr(reaction, "efficiencies"):
+        print("FIXME EFFICIENCIES")
+        sys.exit(1)
+        species, coefficient = third_body
+        if species == "<mixture>":
+            return "mixture"
+        return "sc[%d]" % species_info.ordered_idx_map[species]
+
+    efficiencies = reaction.efficiencies
+    alpha = ["mixture"]
+    dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
+    sorted_efficiencies = sorted(
+        efficiencies.keys(), key=lambda v: dict_species[v]
+    )
+    for symbol in sorted_efficiencies:
+        efficiency = efficiencies[symbol]
+        if symbol not in species_info.qssa_species_list:
+            factor = "( %.15g - 1)" % (efficiency)
+            conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
+            alpha.append("%s*%s" % (factor, conc))
+
+    return " + ".join(alpha).replace("+ -", "- ")

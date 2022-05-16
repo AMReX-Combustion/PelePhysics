@@ -411,7 +411,8 @@ def ajac_reaction_precond(
         cw.writer(fstream, cw.comment("3-body correction factor"))
         cw.writer(
             fstream,
-            "alpha = %s;" % enhancement_d(mechanism, species_info, reaction),
+            "alpha = %s;"
+            % cu.enhancement_d(mechanism, species_info, reaction),
         )
 
     # forward
@@ -1360,7 +1361,8 @@ def ajac_reaction_d(
         cw.writer(fstream, cw.comment("3-body correction factor"))
         cw.writer(
             fstream,
-            "alpha = %s;" % enhancement_d(mechanism, species_info, reaction),
+            "alpha = %s;"
+            % cu.enhancement_d(mechanism, species_info, reaction),
         )
 
     # forward
@@ -1957,33 +1959,6 @@ def dqdc_simple_d(
                 dps_s = "*" + dps
             dqdc_s += " - k_r%s" % dps_s
     return dqdc_s
-
-
-def enhancement_d(mechanism, species_info, reaction):
-    """Write get enhancement."""
-    third_body = reaction.reaction_type == "three-body"
-    falloff = reaction.reaction_type == "falloff"
-    if not third_body and not falloff:
-        print("enhancement_d called for a reaction without a third body")
-        sys.exit(1)
-
-    if not hasattr(reaction, "efficiencies"):
-        print("FIXME EFFICIENCIES")
-        sys.exit(1)
-        species, coefficient = third_body
-        if species == "<mixture>":
-            return "mixture"
-        return "sc[%d]" % species_info.ordered_idx_map[species]
-
-    efficiencies = reaction.efficiencies
-    alpha = ["mixture"]
-    for _, (symbol, efficiency) in enumerate(efficiencies.items()):
-        if symbol not in species_info.qssa_species_list:
-            factor = "( %.15g - 1)" % (efficiency)
-            conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
-            alpha.append("%s*%s" % (factor, conc))
-
-    return " + ".join(alpha).replace("+ -", "- ")
 
 
 def denhancement_d(mechanism, species_info, reaction, kid, cons_p):

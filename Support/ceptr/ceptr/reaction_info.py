@@ -24,6 +24,7 @@ class ReactionInfo:
 
         self.qssa_reactions = []
         self.n_qssa_reactions = 0
+        self.qfqr_co_idx_map = []
 
 
 def sort_reactions(mechanism):

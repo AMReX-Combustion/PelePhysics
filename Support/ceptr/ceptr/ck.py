@@ -106,7 +106,7 @@ def ckindx(fstream, mechanism, species_info):
     )
     cw.writer(fstream, "{")
     cw.writer(fstream, "*mm = %d;" % mechanism.n_elements)
-    cw.writer(fstream, "*kk = %d;" % mechanism.n_species)
+    cw.writer(fstream, "*kk = %d;" % species_info.n_species)
     cw.writer(fstream, "*ii = %d;" % mechanism.n_reactions)
     cw.writer(
         fstream, "*nfit = -1; " + cw.comment("Why do you need this anyway ? ")
