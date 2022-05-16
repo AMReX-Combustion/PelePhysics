@@ -1088,9 +1088,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         " is a reactant",
                     )
                     species_appearances = 0
-                    for spec, _ in reaction.reactants.items():
+                    for spec, coeff in reaction.reactants.items():
                         if spec == symbol:
-                            species_appearances += 1
+                            species_appearances += coeff
 
                     coeff_hold.append(
                         "-qf_co["
@@ -1115,9 +1115,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         " is a product",
                     )
                     species_appearances = 0
-                    for spec, _ in reaction.products.items():
+                    for spec, coeff in reaction.products.items():
                         if spec == symbol:
-                            species_appearances += 1
+                            species_appearances += coeff
 
                     rhs_hold.append(
                         "+"
@@ -1139,9 +1139,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                     # Should always be true
                     # Check how many times species appear in reactants
                     species_appearances = 0
-                    for spec, _ in reaction.reactants.items():
+                    for spec, coeff in reaction.reactants.items():
                         if spec == symbol:
-                            species_appearances += 1
+                            species_appearances += coeff
 
                     rhs_hold.append(
                         "+"
@@ -1222,9 +1222,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         )
 
                         species_appearances = 0
-                        for spec, _ in reaction.reactants.items():
+                        for spec, coeff in reaction.reactants.items():
                             if spec == symbol:
-                                species_appearances += 1
+                                species_appearances += coeff
 
                         coeff_hold.append(
                             "-qf_co["
@@ -1256,9 +1256,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                     print("        other qssa species is ", other_qssa)
 
                     species_appearances = 0
-                    for spec, _ in reaction.products.items():
+                    for spec, coeff in reaction.products.items():
                         if spec == symbol:
-                            species_appearances += 1
+                            species_appearances += coeff
 
                     group_coeff_hold[other_qssa].append(
                         "+"
@@ -2123,7 +2123,9 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
                             != "0.0"
                         ):
                             coeff_submatrix[index][j] = (
-                                str(species) + "_" + str(gr_species[j])
+                                str(species).replace("*", "D")
+                                + "_"
+                                + str(gr_species[j]).replace("*", "D")
                             )
                             # let us assume for now these lines are not too big
                             cw.writer(
@@ -2141,7 +2143,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
                                 + ";",
                             )
                 cw.writer(fstream)
-                rhs_submatrix[index] = str(species) + "_rhs"
+                rhs_submatrix[index] = str(species.replace("*", "D")) + "_rhs"
 
             a, x, b, intermediate_helpers = gauss_pivoting(
                 species_info, coeff_submatrix, rhs_submatrix
@@ -2260,7 +2262,7 @@ def gauss_pivoting(species_info, a, b=None):
     for member in range(len(b)):
         hold = str(b[member])
         hold = hold[:-4]
-        species[member] = hold
+        species[member] = hold.replace("D", "*")
 
     print("Species involved are: ", species)
     print()
