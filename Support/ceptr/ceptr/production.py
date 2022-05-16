@@ -473,9 +473,9 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 fstream,
                 "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
                 % (
-                    species_info.nqssReactions,
-                    species_info.nqssReactions,
-                    species_info.nqssReactions,
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
                 ),
             )
             cw.writer(fstream, cw.comment("Fill sc_qss here"))

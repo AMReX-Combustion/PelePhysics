@@ -1,5 +1,6 @@
 """Utility functions used across ceptr."""
 import sys
+
 import ceptr.constants as cc
 
 

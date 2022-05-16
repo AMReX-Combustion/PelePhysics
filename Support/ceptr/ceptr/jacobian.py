@@ -103,9 +103,9 @@ def ajac_precond(fstream, mechanism, species_info, reaction_info):
             fstream,
             "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
             % (
-                species_info.nqssReactions,
-                species_info.nqssReactions,
-                species_info.nqssReactions,
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
             ),
         )
         cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
@@ -975,9 +975,9 @@ def ajac(fstream, mechanism, species_info, reaction_info):
             fstream,
             "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
             % (
-                species_info.nqssReactions,
-                species_info.nqssReactions,
-                species_info.nqssReactions,
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
             ),
         )
         cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")

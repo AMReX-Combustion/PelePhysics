@@ -11,13 +11,13 @@ import ceptr.writer as cw
 
 def set_qssa_reactions(mechanism, species_info, reaction_info):
     """Get list of reaction indices that involve QSSA species."""
-    for orig_idx, idx in reaction_info.idxmap.items():
+    for orig_idx, _ in reaction_info.idxmap.items():
         reaction = mechanism.reaction(orig_idx)
         qssa_reaction = False
         lst_reactants = [(k, v) for k, v in reaction.reactants.items()]
         lst_products = [(k, v) for k, v in reaction.products.items()]
         agents = list(set(lst_reactants + lst_products))
-        for symbol, coefficient in agents:
+        for symbol, _ in agents:
             if symbol in species_info.qssa_species_list:
                 qssa_reaction = True
         if qssa_reaction:
@@ -58,17 +58,15 @@ def get_qssa_networks(mechanism, species_info, reaction_info):
 
 def create_ss_net(mechanism, species_info, reaction_info):
     """Create the species-species network."""
-    for orig_idx, idx in reaction_info.idxmap.items():
+    for orig_idx, _ in reaction_info.idxmap.items():
         reaction = mechanism.reaction(orig_idx)
-
-        remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
 
         slist = []
         # get a list of species involved in the reactants and products
-        for symbol, coefficient in reaction.reactants.items():
+        for symbol, _ in reaction.reactants.items():
             if symbol in species_info.qssa_species_list:
                 slist.append(symbol)
-        for symbol, coeffecient in reaction.products.items():
+        for symbol, _ in reaction.products.items():
             if symbol in species_info.qssa_species_list:
                 slist.append(symbol)
 
@@ -77,7 +75,6 @@ def create_ss_net(mechanism, species_info, reaction_info):
         for s1 in slist:
             for s2 in slist:
                 # we should not use the original indices, but the reordered one
-                # species_info.qssa_info.ssnet[mechanism.qssa_species(s1).id][mechanism.qssa_species(s2).id] = 1
                 species_info.qssa_info.ssnet[
                     species_info.ordered_idx_map[s1] - species_info.n_species
                 ][
@@ -88,19 +85,17 @@ def create_ss_net(mechanism, species_info, reaction_info):
 def create_sr_net(mechanism, species_info, reaction_info):
     """Create the species-reac network."""
     # for each reaction in the mechanism
-    for orig_idx, idx in reaction_info.idxmap.items():
+    for orig_idx, _ in reaction_info.idxmap.items():
         reaction = mechanism.reaction(orig_idx)
         reactant_list = []
         product_list = []
 
-        remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
-
         # get a list of species involved in the reactants and products
 
-        for symbol, coefficient in reaction.reactants.items():
+        for symbol, _ in reaction.reactants.items():
             if symbol in species_info.qssa_species_list:
                 reactant_list.append(symbol)
-        for symbol, coeffecient in reaction.products.items():
+        for symbol, _ in reaction.products.items():
             if symbol in species_info.qssa_species_list:
                 product_list.append(symbol)
 
@@ -128,8 +123,9 @@ def qssa_validation(mechanism, species_info, reaction_info):
             text = "species " + s + " is not in the mechanism"
             sys.exit(text)
 
-    # Check that QSSA species are consumed/produced at least once to ensure theoretically valid QSSA option
-    # (There is more to it than that, but this is a quick catch based on that aspect)
+    # Check that QSSA species are consumed/produced at least once to
+    # ensure theoretically valid QSSA option (There is more to it than
+    # that, but this is a quick catch based on that aspect)
     for i, symbol in enumerate(species_info.qssa_species_list):
         consumed = 0
         produced = 0
@@ -160,7 +156,8 @@ def qssa_validation(mechanism, species_info, reaction_info):
             text = (
                 "Uh Oh! QSSA species "
                 + symbol
-                + " does not have a balanced consumption/production relationship in mechanism => bad QSSA choice"
+                + " does not have a balanced consumption/production"
+                + "relationship in mechanism => bad QSSA choice"
             )
             sys.exit(text)
 
@@ -447,14 +444,14 @@ def qssa_coupling(mechanism, species_info, reaction_info):
     print(species_info.qssa_info.scnet)
     if is_coupling:
         sys.exit(
-            "There is some quadratic coupling in mechanism. Here is the list of reactions to check: \n"
+            "There is some quadratic coupling in mechanism."
+            + "Here is the list of reactions to check: \n"
             + coupling_reactions
         )
 
 
 def set_qssa_needs(mechanism, species_info, reaction_info):
     """QSSA needs."""
-
     for i in range(species_info.n_qssa_species):
         needs_species = []
         count = 0
@@ -482,7 +479,6 @@ def set_qssa_needs(mechanism, species_info, reaction_info):
 
 def set_qssa_isneeded(mechanism, species_info, reaction_info):
     """QSSA is needed."""
-
     for i in range(species_info.n_qssa_species):
         is_needed_species = []
         count = 0
@@ -526,13 +522,14 @@ def get_qssa_groups(mechanism, species_info, reaction_info):
     potential_group
 
     """
-
     print("\n\nDetermining groups of coupled species now...")
     print("---------------------------------")
 
     # Loop through species to tackle the needs group
     for member in species_info.qssa_info.needs_running.keys():
-        # Only need to check things that have not already been searched; i.e. they have no id/don't exist in the lowest link value list yet
+        # Only need to check things that have not already been
+        # searched; i.e. they have no id/don't exist in the lowest
+        # link value list yet
         if member not in species_info.qssa_info.lowest_link.keys():
 
             print("- dealing with group: ", member)
@@ -559,7 +556,6 @@ def get_qssa_groups(mechanism, species_info, reaction_info):
 
 def find_closed_cycle(mechanism, species_info, species):
     """Find closed cycle."""
-
     # We start the recursion on node "species".
     # This species is considered the "parent" node.
     print(
@@ -567,9 +563,10 @@ def find_closed_cycle(mechanism, species_info, species):
         species,
     )
 
-    # We only enter the recursion if the species has not already been discovered
-    # so we add this species to the potential group list and give it a lowest link value
-    # The species location in the lowest link value dictionary denotes its discovery order, or id
+    # We only enter the recursion if the species has not already been
+    # discovered so we add this species to the potential group list
+    # and give it a lowest link value The species location in the
+    # lowest link value dictionary denotes its discovery order, or id
     species_info.qssa_info.potential_group.append(species)
     species_info.qssa_info.lowest_link[
         species
@@ -592,7 +589,9 @@ def find_closed_cycle(mechanism, species_info, species):
         print("       x Start level of needs loop ")
         print("       x Child is: ", child)
 
-        # If the child has not yet been discovered, we recurse so that the child becomes the parent and the search continues as described above
+        # If the child has not yet been discovered, we recurse so that
+        # the child becomes the parent and the search continues as
+        # described above
         if child not in species_info.qssa_info.lowest_link.keys():
 
             print("         xx Child has never been visited at all...")
@@ -606,21 +605,23 @@ def find_closed_cycle(mechanism, species_info, species):
                 " with parent ",
                 parent,
             )
-            # print("         The discovery order of the parent is: ", list(species_info.qssa_info.lowest_link.keys()).index(parent))
             print(
                 "         xx The lowest link value of the parent is: ",
                 species_info.qssa_info.lowest_link[parent],
             )
-            # print("         The discovery order of this child is: ", list(species_info.qssa_info.lowest_link.keys()).index(child))
             print(
                 "         xx The lowest link value of this child is: ",
                 species_info.qssa_info.lowest_link[child],
             )
             print()
 
-            # If the lowest link connection of the child is lower than that of the parent's, then this lowest link value becomes the parent's new lowest link value
-            # This update comes into effect when the child at the end of the recursion
-            # matches the original parent of the search or has a lower link connection from an earlier search than the parent currently does
+            # If the lowest link connection of the child is lower than
+            # that of the parent's, then this lowest link value
+            # becomes the parent's new lowest link value.  This update
+            # comes into effect when the child at the end of the
+            # recursion matches the original parent of the search or
+            # has a lower link connection from an earlier search than
+            # the parent currently does
             if child in species_info.qssa_info.potential_group:
                 species_info.qssa_info.lowest_link[parent] = min(
                     species_info.qssa_info.lowest_link[parent],
@@ -638,12 +639,15 @@ def find_closed_cycle(mechanism, species_info, species):
             print()
             print()
 
-        # If the child is already listed in the potential_group, then it has been discovered during this search and is already a part of the simply connected component
-        # Note: If the child already has a lowest link value but is NOT in the potential_group, that means it is a part of a previously found group
+        # If the child is already listed in the potential_group, then
+        # it has been discovered during this search and is already a
+        # part of the simply connected component Note: If the child
+        # already has a lowest link value but is NOT in the
+        # potential_group, that means it is a part of a previously
+        # found group
         elif child in species_info.qssa_info.potential_group:
 
             print("         xx Child has already been visited this recursion ")
-            # print("         The discovery order of the parent is: ", list(species_info.qssa_info.lowest_link.keys()).index(parent))
             print(
                 "         xx The lowest link value of the parent is: ",
                 species_info.qssa_info.lowest_link[parent],
@@ -652,10 +656,11 @@ def find_closed_cycle(mechanism, species_info, species):
                 "         xx The discovery order of this child is: ",
                 list(species_info.qssa_info.lowest_link.keys()).index(child),
             )
-            # print("         The lowest link value of this child is: ", species_info.qssa_info.lowest_link[child])
 
-            # Since the child has been discovered already during this search, that means it is in the group but still in the recursion process,
-            # Update the parent's lowest link value with this childs discovery order
+            # Since the child has been discovered already during this
+            # search, that means it is in the group but still in the
+            # recursion process, Update the parent's lowest link value
+            # with this childs discovery order
             species_info.qssa_info.lowest_link[parent] = min(
                 species_info.qssa_info.lowest_link[parent],
                 list(species_info.qssa_info.lowest_link.keys()).index(child),
@@ -673,16 +678,22 @@ def find_closed_cycle(mechanism, species_info, species):
             print()
             print()
 
-    # If, after searching all children and updating lowest link connections, you reach a parent whose lowest link still matches its original value (or starting position)
-    # Then you have reached the root of a simply connected component (aka you've found a group)
+    # If, after searching all children and updating lowest link
+    # connections, you reach a parent whose lowest link still matches
+    # its original value (or starting position) Then you have reached
+    # the root of a simply connected component (aka you've found a
+    # group)
     if (
         list(species_info.qssa_info.lowest_link.keys()).index(parent)
         == species_info.qssa_info.lowest_link[parent]
     ):
         hold = []
         while True:
-            # remove group species from the running potential group list until you reach the parent species
-            # add these to the official group, leaving other potential group components in the potential_group list for continued recursion completion
+            # remove group species from the running potential group
+            # list until you reach the parent species add these to the
+            # official group, leaving other potential group components
+            # in the potential_group list for continued recursion
+            # completion
             node = species_info.qssa_info.potential_group.pop()
             hold.append(node)
             if node == parent:
@@ -722,7 +733,8 @@ def update_group_needs(mechanism, species_info, reaction_info):
         # for each species in the current group
         for spec in species_info.qssa_info.group[group_key]:
             print("... for group member: " + spec)
-            # look at any additional needs that are not already accounted for with the group
+            # look at any additional needs that are not already
+            # accounted for with the group
             for need in list(
                 set(species_info.qssa_info.needs_running[spec])
                 - set(species_info.qssa_info.group[group_key])
@@ -733,7 +745,8 @@ def update_group_needs(mechanism, species_info, reaction_info):
                 for other_group in other_groups:
                     # if the other group is not already accounted for
                     # and it contains the spec need we're looking for,
-                    # update the group needs with that group that contains the spec need
+                    # update the group needs with that group that
+                    # contains the spec need
                     if other_group not in update_needs and any(
                         member == need
                         for member in species_info.qssa_info.group[other_group]
@@ -749,18 +762,23 @@ def update_group_needs(mechanism, species_info, reaction_info):
                         for member in species_info.qssa_info.group[other_group]
                     ):
                         print(
-                            "        it is found in a group that was already put in the list due to the fact that another species in the group is needed by the current species."
+                            "        it is found in a group that was"
+                            + "already put in the list due to the fact"
+                            + "that another species in the group is"
+                            + "needed by the current species."
                         )
                         not_in_group = False
-                # alternatively, if this is just a solo need that's not in another group,
-                # update the group needs with just that need.
+                # alternatively, if this is just a solo need that's
+                # not in another group, update the group needs with
+                # just that need.
                 if not_in_group and need not in update_needs:
                     print(
                         "        this need was not found in a group ! Adding the spec directly"
                     )
                     update_needs.append(need)
                     update_needs_count += 1
-            # look at any additional species (outside of the group) that depend on the current group member
+            # look at any additional species (outside of the group)
+            # that depend on the current group member
             for needed in list(
                 set(species_info.qssa_info.is_needed_running[spec])
                 - set(species_info.qssa_info.group[group_key])
@@ -771,7 +789,10 @@ def update_group_needs(mechanism, species_info, reaction_info):
                 not_in_group = True
                 # for the other groups
                 for other_group in other_groups:
-                    # if the other group hasn't alredy been accounted for and the species is in that group, then that other group depends on a species in the current group
+                    # if the other group hasn't alredy been accounted
+                    # for and the species is in that group, then that
+                    # other group depends on a species in the current
+                    # group
                     if other_group not in update_is_needed and any(
                         member == needed
                         for member in species_info.qssa_info.group[other_group]
@@ -787,13 +808,18 @@ def update_group_needs(mechanism, species_info, reaction_info):
                         for member in species_info.qssa_info.group[other_group]
                     ):
                         print(
-                            "        it is foud in a group that was already put in the list due to the fact that another species in the group is needed by the current species."
+                            "        it is found in a group that was"
+                            + "already put in the list due to the fact"
+                            + "that another species in the group is"
+                            + "needed by the current species."
                         )
                         not_in_group = False
-                # if the species is not in another group, then that lone species just depends on the current group.
+                # if the species is not in another group, then that
+                # lone species just depends on the current group.
                 if not_in_group and needed not in update_is_needed:
                     print(
-                        "        this is-needed was not found in a group ! Adding the spec directly"
+                        "        this is-needed was not found in a group !"
+                        + "Adding the spec directly"
                     )
                     update_is_needed.append(needed)
                     update_needed_count += 1
@@ -872,7 +898,9 @@ def update_group_dependencies(mechanism, species_info, reaction_info):
                     for member in species_info.qssa_info.group[group]
                 ):
                     print(
-                        "        this group was already put in the list due to the fact that another species in the group is needed by the current species."
+                        "        this group was already put in the list"
+                        + "due to the fact that another species in the"
+                        + "group is needed by the current species."
                     )
                     not_in_group = False
             if not_in_group and need not in update_needs:
@@ -899,12 +927,15 @@ def update_group_dependencies(mechanism, species_info, reaction_info):
                     for member in species_info.qssa_info.group[group]
                 ):
                     print(
-                        "        this group was already put in the list due to the fact that another species in the group is needed by the current species."
+                        "        this group was already put in the list"
+                        + "due to the fact that another species in the"
+                        + "group is needed by the current species."
                     )
                     not_in_group = False
             if not_in_group and needed not in update_is_needed:
                 print(
-                    "        this is-needed need was not found in a group ! Adding the spec directly"
+                    "        this is-needed need was not found in a group !"
+                    + "Adding the spec directly"
                 )
                 update_is_needed.append(needed)
                 update_needed_count += 1
@@ -927,7 +958,6 @@ def update_group_dependencies(mechanism, species_info, reaction_info):
 
 def sort_qssa_computation(mechanism, species_info, reaction_info):
     """Sort order that QSSA species need to be computed based on dependencies."""
-
     # look at how many dependencies each component has
     needs_count_regress = species_info.qssa_info.needs_count_running.copy()
 
@@ -968,12 +998,13 @@ def sort_qssa_computation(mechanism, species_info, reaction_info):
 def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
     """Components needed to set up QSSA algebraic expressions from AX = B.
 
-    where A contains coefficients from qf's and qr's, X contains QSSA species concentrations,
-    and B contains qf's and qr's
-    Info stored as: RHS vector (non-QSSA and QSSA qf's and qr's),
-    coefficient of species (diagonal elements of A), coefficient of group mates (coupled off-diagonal elements of A)
-    """
+    where A contains coefficients from qf's and qr's, X contains QSSA
+    species concentrations, and B contains qf's and qr's Info stored
+    as: RHS vector (non-QSSA and QSSA qf's and qr's), coefficient of
+    species (diagonal elements of A), coefficient of group mates
+    (coupled off-diagonal elements of A)
 
+    """
     # Need to get qfqr_coeff reaction map
     ispecial = reaction_info.index[5:7]
     nspecial_qssa = 0
@@ -1001,11 +1032,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
         print("-<>-Dealing with QSSA species ", i, symbol)
         print("__________________________________________")
         coupled = []
-        reactants = []
-        products = []
         rhs_hold = []
         coeff_hold = []
-        groupCoeff_hold = defaultdict(list)
+        group_coeff_hold = defaultdict(list)
 
         for r in species_info.qssa_info.sr_rj[species_info.sr_si == i]:
             reaction = mechanism.reaction(r)
@@ -1059,7 +1088,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         " is a reactant",
                     )
                     species_appearances = 0
-                    for spec, coeff in reaction.reactants.items():
+                    for spec, _ in reaction.reactants.items():
                         if spec == symbol:
                             species_appearances += 1
 
@@ -1086,7 +1115,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         " is a product",
                     )
                     species_appearances = 0
-                    for spec, coeff in reaction.products.items():
+                    for spec, _ in reaction.products.items():
                         if spec == symbol:
                             species_appearances += 1
 
@@ -1110,7 +1139,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                     # Should always be true
                     # Check how many times species appear in reactants
                     species_appearances = 0
-                    for spec, coeff in reaction.reactants.items():
+                    for spec, _ in reaction.reactants.items():
                         if spec == symbol:
                             species_appearances += 1
 
@@ -1148,7 +1177,10 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                 # THIS is the right groupCoeff list
                 # if group_flag:
 
-                # if QSSA species is a reactant (other QSSA must be a product to be coupled to be coupled here, or quadratic coupling would have been triggered earlier)
+                # if QSSA species is a reactant (other QSSA must be a
+                # product to be coupled to be coupled here, or
+                # quadratic coupling would have been triggered
+                # earlier)
                 if direction == -1:
 
                     all_qssa_reactants = True
@@ -1175,7 +1207,8 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                             " are both reactants",
                         )
                         print(
-                            "        this reaction does not contribute to any QSSA coefficients and is thus ignored"
+                            "        this reaction does not contribute to any QSSA"
+                            + "coefficients and is thus ignored"
                         )
 
                     else:
@@ -1189,7 +1222,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         )
 
                         species_appearances = 0
-                        for spec, coeff in reaction.reactants.items():
+                        for spec, _ in reaction.reactants.items():
                             if spec == symbol:
                                 species_appearances += 1
 
@@ -1199,14 +1232,16 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                             + "]"
                         )
                         if reaction.reversible:
-                            groupCoeff_hold[other_qssa].append(
+                            group_coeff_hold[other_qssa].append(
                                 "+"
                                 + str(float(species_appearances))
                                 + "*qr_co["
                                 + str(reaction_info.qfqr_co_idx_map.index(r))
                                 + "]"
                             )
-                # if QSSA species is a product AND other QSSA species is a reactant (not guaranteed; must check that QSSA are on opposite sides of equation)
+                # if QSSA species is a product AND other QSSA species
+                # is a reactant (not guaranteed; must check that QSSA
+                # are on opposite sides of equation)
                 elif direction == 1 and any(
                     reactant == other_qssa
                     for reactant, _ in reaction.reactants.items()
@@ -1221,11 +1256,11 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                     print("        other qssa species is ", other_qssa)
 
                     species_appearances = 0
-                    for spec, coeff in reaction.products.items():
+                    for spec, _ in reaction.products.items():
                         if spec == symbol:
                             species_appearances += 1
 
-                    groupCoeff_hold[other_qssa].append(
+                    group_coeff_hold[other_qssa].append(
                         "+"
                         + str(float(species_appearances))
                         + "*qf_co["
@@ -1238,8 +1273,11 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                             + str(reaction_info.qfqr_co_idx_map.index(r))
                             + "]"
                         )
-                # last option is that BOTH QSSA are products, but the reaction is only one way, so it doesn't matter. This is ignored in the quadratic coupling check as
-                # the reverse rate would be zero and thus would not affect anything anyway.
+                # last option is that BOTH QSSA are products, but the
+                # reaction is only one way, so it doesn't matter. This
+                # is ignored in the quadratic coupling check as the
+                # reverse rate would be zero and thus would not affect
+                # anything anyway.
                 else:
                     print(
                         "        species ",
@@ -1251,7 +1289,8 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         " are both products",
                     )
                     print(
-                        "        this reaction does not contribute to any QSSA coefficients and is thus ignored"
+                        "        this reaction does not contribute to any QSSA"
+                        + "coefficients and is thus ignored"
                     )
 
             print()
@@ -1264,7 +1303,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
             )
             print("rhs_hold is ", rhs_hold)
             print("coeff_hold is ", coeff_hold)
-            print("groupCoeff_hold is ", groupCoeff_hold)
+            print("group_coeff_hold is ", group_coeff_hold)
             print()
 
         species_info.qssa_info.rhs[symbol] = " ".join(rhs_hold)
@@ -1273,18 +1312,14 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
         for j in range(species_info.n_qssa_species):
             if j != i:
                 other_qssa = species_info.qssa_species_list[j]
-                if other_qssa in groupCoeff_hold:
+                if other_qssa in group_coeff_hold:
                     species_info.qssa_info.qssa_coeff[symbol][
                         other_qssa
-                    ] = " ".join(groupCoeff_hold[other_qssa])
+                    ] = " ".join(group_coeff_hold[other_qssa])
                 else:
                     species_info.qssa_info.qssa_coeff[symbol][
                         other_qssa
                     ] = "0.0"
-
-        # for group in species_info.qssa_info.group.keys():
-        #    if any(component == symbol for component in species_info.qssa_info.group[group]):
-        #        self.qssa_info.groupSp[symbol] = groupCoeff_hold
 
         print("Here is everything: ")
         print()
@@ -1292,16 +1327,6 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
         print("self: ", species_info.qssa_info.coeff[symbol])
         print("coupling: ", species_info.qssa_info.qssa_coeff[symbol])
         print()
-
-    # for species in self.qssa_info.groupSp.keys():
-    #    for coeff in self.qssa_info.groupSp[species].keys():
-    #        self.qssa_info.groupSp[species][coeff] =" ".join(self.qssa_info.groupSp[species][coeff])
-
-    # for symbol in species_info.qssa_info.group.keys():
-    #    for s1 in species_info.qssa_info.group[symbol]:
-    #        for s2 in species_info.qssa_info.group[symbol]:
-    #            if s2 != s1 and not self.qssa_info.groupSp[s1][s2]:
-    #                self.qssa_info.groupSp[s1][s2] = str(0.0)
 
     print()
     print()
@@ -1431,7 +1456,8 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream)
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_k_f_qss(const amrex::Real * tc, amrex::Real invT, amrex::Real * k_f)",
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_k_f_qss"
+        + "(const amrex::Real * tc, amrex::Real invT, amrex::Real * k_f)",
     )
     cw.writer(fstream, "{")
     for index, qssa_reac in enumerate(reaction_info.qssa_reactions):
@@ -1445,7 +1471,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
         third_body = reaction.reaction_type == "three-body"
         falloff = reaction.reaction_type == "falloff"
         is_troe = False
-        is_sri = False
+        # is_sri = False
         aeuc = cu.activation_energy_units()
         if not third_body and not falloff:
             # Case 3 !PD, !TB
@@ -1490,9 +1516,10 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
                 ntroe = len(troe)
                 is_troe = True
             elif reaction.rate.type == "Sri":
-                sri = reaction.rate.falloff_coeffs
-                nsri = len(sri)
-                is_sri = True
+                pass
+                # sri = reaction.rate.falloff_coeffs
+                # nsri = len(sri)
+                # is_sri = True
             elif reaction.rate.type == "Lindemann":
                 pass
             else:
@@ -1528,7 +1555,9 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream)
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qss_coeff(amrex::Real * k_f, amrex::Real * qf, amrex::Real * qr, amrex::Real * sc, const amrex::Real * tc, amrex::Real * g_RT, amrex::Real * g_RT_qss)",
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qss_coeff"
+        + "(amrex::Real * k_f, amrex::Real * qf, amrex::Real * qr, amrex::Real * sc,"
+        + "const amrex::Real * tc, amrex::Real * g_RT, amrex::Real * g_RT_qss)",
     )
     cw.writer(fstream, "{")
 
@@ -1563,7 +1592,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "}")
 
     nclassd_qssa = reaction_info.n_qssa_reactions - nspecial_qssa
-    nCorr_qssa = n3body_qssa + ntroe_qssa + nsri_qssa + nlindemann_qssa
+    # nCorr_qssa = n3body_qssa + ntroe_qssa + nsri_qssa + nlindemann_qssa
 
     for i in range(nclassd_qssa):
         cw.writer(fstream)
@@ -1575,7 +1604,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
         third_body = reaction.reaction_type == "three-body"
         falloff = reaction.reaction_type == "falloff"
         is_troe = False
-        is_sri = False
+        # is_sri = False
         aeuc = cu.activation_energy_units()
         if not third_body and not falloff:
             # Case 3 !PD, !TB
@@ -1620,9 +1649,10 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
                 ntroe = len(troe)
                 is_troe = True
             elif reaction.rate.type == "Sri":
-                sri = reaction.rate.falloff_coeffs
-                nsri = len(sri)
-                is_sri = True
+                pass
+                # sri = reaction.rate.falloff_coeffs
+                # nsri = len(sri)
+                # is_sri = True
             elif reaction.rate.type == "Lindemann":
                 pass
             else:
@@ -1752,7 +1782,8 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
                 )
                 cw.writer(
                     fstream,
-                    "const amrex::Real troe = (troe_c + logPred) / (troe_n - 0.14 * (troe_c + logPred));",
+                    "const amrex::Real troe = (troe_c + logPred)"
+                    + " / (troe_n - 0.14 * (troe_c + logPred));",
                 )
                 cw.writer(
                     fstream,
@@ -1830,7 +1861,8 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream)
     cw.writer(
         fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_sc_qss(amrex::Real * sc_qss, amrex::Real * qf_co, amrex::Real * qr_co)",
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_sc_qss"
+        + "(amrex::Real * sc_qss, amrex::Real * qf_co, amrex::Real * qr_co)",
     )
     cw.writer(fstream, "{")
 
@@ -2111,15 +2143,18 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
                 cw.writer(fstream)
                 rhs_submatrix[index] = str(species) + "_rhs"
 
-            A, X, B, intermediate_helpers = gauss_pivoting(
+            a, x, b, intermediate_helpers = gauss_pivoting(
                 species_info, coeff_submatrix, rhs_submatrix
             )
 
-            print("X is ", X)
+            print("X is ", x)
 
             cw.writer(fstream, cw.comment("Putting it all together"))
             for helper in intermediate_helpers:
-                if helper in species_info.qssa_info.list_of_intermediate_helpers:
+                if (
+                    helper
+                    in species_info.qssa_info.list_of_intermediate_helpers
+                ):
                     cw.writer(
                         fstream,
                         "%s = %s;" % (helper, intermediate_helpers[helper]),
@@ -2130,14 +2165,16 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
                         "amrex::Real %s = %s;"
                         % (helper, intermediate_helpers[helper]),
                     )
-                    species_info.qssa_info.list_of_intermediate_helpers.append(helper)
+                    species_info.qssa_info.list_of_intermediate_helpers.append(
+                        helper
+                    )
 
             for count in range(len(gr_species)):
                 max_index = len(gr_species) - 1
                 species = gr_species[max_index - count]
 
                 # cut line if too big !
-                long_line_elements = X[max_index - count].split()
+                long_line_elements = x[max_index - count].split()
                 len_long_line = len(long_line_elements)
                 # if we have more than 4 elements
                 if len_long_line > 4:
@@ -2189,7 +2226,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
                         "sc_qss["
                         + str(species_info.qssa_species_list.index(species))
                         + "] = "
-                        + X[max_index - count]
+                        + x[max_index - count]
                         + ";",
                     )
                 cw.writer(fstream)
@@ -2201,7 +2238,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
     return
 
 
-def gauss_pivoting(species_info, A, B=None):
+def gauss_pivoting(species_info, a, b=None):
     """Gauss pivoting."""
     print()
     print("In Gauss pivot")
@@ -2210,58 +2247,58 @@ def gauss_pivoting(species_info, A, B=None):
     intermediate_helpers = OrderedDict()
     helper_counters = 0
 
-    X = [""] * len(A[0])
-    for i in range(len(A[0])):
-        X[i] = "X" + str(i)
+    x = [""] * len(a[0])
+    for i in range(len(a[0])):
+        x[i] = "X" + str(i)
 
-    if B is None:
-        for i in range(len(A[0])):
-            B[i] = "B" + str(i)
+    if b is None:
+        for i in range(len(a[0])):
+            b[i] = "B" + str(i)
 
     # Get species names:
-    species = ["0" for i in range(len(B))]
-    for member in range(len(B)):
-        hold = str(B[member])
+    species = ["0" for i in range(len(b))]
+    for member in range(len(b)):
+        hold = str(b[member])
         hold = hold[:-4]
         species[member] = hold
 
     print("Species involved are: ", species)
     print()
 
-    Anum = np.zeros([len(A[0]), len(A[0])])
-    for i in range(len(A[0])):
-        for j in range(len(A[0])):
-            if A[i][j] != "0":
-                Anum[i, j] = 1
+    a_num = np.zeros([len(a[0]), len(a[0])])
+    for i in range(len(a[0])):
+        for j in range(len(a[0])):
+            if a[i][j] != "0":
+                a_num[i, j] = 1
 
-    print("--A", A)
-    print("--B", B)
+    print("--A", a)
+    print("--B", b)
 
-    indi, indj = np.nonzero(Anum)
+    indi, indj = np.nonzero(a_num)
 
-    n = len(B)
+    n = len(b)
     for k in range(n - 1):
 
-        pivot = A[k][k]
+        pivot = a[k][k]
 
         # swap lines if needed
         if pivot == 0:
-            temp = np.array(A[k + 1][:])
-            A[k + 1][:] = A[k][:]
-            A[k][:] = temp
+            temp = np.array(a[k + 1][:])
+            a[k + 1][:] = a[k][:]
+            a[k][:] = temp
 
-            temp = str(B[k + 1])
-            B[k + 1] = B[k]
-            B[k] = temp
+            temp = str(b[k + 1])
+            b[k + 1] = b[k]
+            b[k] = temp
 
-            pivot = A[k][k]
+            pivot = a[k][k]
 
         print()
         print("   **ROW of pivot ", k, " and pivot is ", pivot)
         pivots.append(pivot)
 
-        for i in range(k, len(B) - 1):
-            num = A[i + 1][k]
+        for i in range(k, len(b) - 1):
+            num = a[i + 1][k]
             print(
                 "       xx Treating ROW ",
                 i + 1,
@@ -2277,160 +2314,160 @@ def gauss_pivoting(species_info, A, B=None):
                     "        !! No need to do anything, already zeroed ... skip"
                 )
                 continue
-            B = list(B)
+            b = list(b)
             print("          - B starts with: ")
-            print("           ", B)
+            print("           ", b)
             if num != "0":
                 if pivot != "1":
                     if num != "1":
                         helper = num + "/" + pivot
                         helper_name = "H_" + str(helper_counters)
                         intermediate_helpers[helper_name] = helper
-                        B[i + 1] = (
-                            B[i + 1] + " -" + B[int(k)] + "*" + helper_name
+                        b[i + 1] = (
+                            b[i + 1] + " -" + b[int(k)] + "*" + helper_name
                         )
-                        B[i + 1] = "(" + B[i + 1] + ")"
+                        b[i + 1] = "(" + b[i + 1] + ")"
                         helper_counters += 1
                     else:
                         helper = 1 + "/" + pivot
                         helper_name = "H_" + str(helper_counters)
                         intermediate_helpers[helper_name] = helper
                         print(" IN THIS CASE !! CHECK THAT ITS OK !! ")
-                        B[i + 1] = (
-                            B[i + 1] + " -" + B[int(k)] + "*" + helper_name
+                        b[i + 1] = (
+                            b[i + 1] + " -" + b[int(k)] + "*" + helper_name
                         )
-                        B[i + 1] = "(" + B[i + 1] + ")"
+                        b[i + 1] = "(" + b[i + 1] + ")"
                         helper_counters += 1
                 else:
                     if num != "1":
                         helper = num
                         helper_name = "H_" + str(helper_counters)
                         intermediate_helpers[helper_name] = helper
-                        B[i + 1] = (
-                            B[i + 1] + " -" + B[int(k)] + "*" + helper_name
+                        b[i + 1] = (
+                            b[i + 1] + " -" + b[int(k)] + "*" + helper_name
                         )
-                        B[i + 1] = "(" + B[i + 1] + ")"
+                        b[i + 1] = "(" + b[i + 1] + ")"
                         helper_counters += 1
                     else:
-                        B[i + 1] = B[i + 1] + " -" + B[int(k)]
-                        B[i + 1] = "(" + B[i + 1] + ")"
+                        b[i + 1] = b[i + 1] + " -" + b[int(k)]
+                        b[i + 1] = "(" + b[i + 1] + ")"
 
             print("          ... and B ends with: ")
-            print("            ", B)
+            print("            ", b)
 
-            indi, indj = np.nonzero(Anum)
+            indi, indj = np.nonzero(a_num)
 
             for j in indj[indi == (i + 1)]:
                 print(
                     "          - Dealing with row elem on column ",
                     j,
                     " : ",
-                    A[i + 1][j],
+                    a[i + 1][j],
                 )
                 if j == k:
                     print("            !! 0 ELEM !")
-                    A[i + 1][j] = "0"
+                    a[i + 1][j] = "0"
                 else:
-                    if A[i + 1][j] != "0":
+                    if a[i + 1][j] != "0":
                         if num != "0":
                             if pivot != "1":
                                 if num != "1":
-                                    if A[k][j] != "0":
-                                        A[i + 1][j] = (
-                                            A[i + 1][j]
+                                    if a[k][j] != "0":
+                                        a[i + 1][j] = (
+                                            a[i + 1][j]
                                             + " -"
-                                            + A[k][j]
+                                            + a[k][j]
                                             + "*"
                                             + helper_name
                                         )
-                                        A[i + 1][j] = "(" + A[i + 1][j] + ")"
+                                        a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
-                                    if A[k][j] != "0":
+                                    if a[k][j] != "0":
                                         print(
                                             " IN THIS CASE !! CHECK THAT ITS OK !! "
                                         )
-                                        A[i + 1][j] = (
-                                            A[i + 1][j]
+                                        a[i + 1][j] = (
+                                            a[i + 1][j]
                                             + " -"
-                                            + A[k][j]
+                                            + a[k][j]
                                             + "*"
                                             + helper_name
                                         )
-                                        A[i + 1][j] = "(" + A[i + 1][j] + ")"
+                                        a[i + 1][j] = "(" + a[i + 1][j] + ")"
                             else:
                                 if num != "1":
-                                    if A[k][j] != "0":
-                                        A[i + 1][j] = (
-                                            A[i + 1][j]
+                                    if a[k][j] != "0":
+                                        a[i + 1][j] = (
+                                            a[i + 1][j]
                                             + " -"
-                                            + A[k][j]
+                                            + a[k][j]
                                             + "*"
                                             + helper_name
                                         )
-                                        A[i + 1][j] = "(" + A[i + 1][j] + ")"
+                                        a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
-                                    if A[k][j] != "0":
-                                        A[i + 1][j] = (
-                                            A[i + 1][j] + " -" + A[k][j]
+                                    if a[k][j] != "0":
+                                        a[i + 1][j] = (
+                                            a[i + 1][j] + " -" + a[k][j]
                                         )
-                                        A[i + 1][j] = "(" + A[i + 1][j] + ")"
+                                        a[i + 1][j] = "(" + a[i + 1][j] + ")"
                     else:
                         if num != "0":
                             if pivot != "1":
                                 if num != "1":
-                                    if A[k][j] != "0":
-                                        A[i + 1][j] = (
-                                            " -" + A[k][j] + "*" + helper_name
+                                    if a[k][j] != "0":
+                                        a[i + 1][j] = (
+                                            " -" + a[k][j] + "*" + helper_name
                                         )
-                                        A[i + 1][j] = "(" + A[i + 1][j] + ")"
+                                        a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
-                                    if A[k][j] != "0":
+                                    if a[k][j] != "0":
                                         print(
                                             " IN THIS CASE !! CHECK THAT ITS OK !! "
                                         )
-                                        A[i + 1][j] = (
-                                            " -" + A[k][j] + "*" + helper_name
+                                        a[i + 1][j] = (
+                                            " -" + a[k][j] + "*" + helper_name
                                         )
-                                        A[i + 1][j] = "(" + A[i + 1][j] + ")"
+                                        a[i + 1][j] = "(" + a[i + 1][j] + ")"
                             else:
                                 if num != "1":
-                                    if A[k][j] != "0":
-                                        A[i + 1][j] = (
-                                            " -" + A[k][j] + "*" + helper_name
+                                    if a[k][j] != "0":
+                                        a[i + 1][j] = (
+                                            " -" + a[k][j] + "*" + helper_name
                                         )
-                                        A[i + 1][j] = "(" + A[i + 1][j] + ")"
+                                        a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
-                                    if A[k][j] != "0":
-                                        A[i + 1][j] = " -" + A[k][j]
-                                        A[i + 1][j] = "(" + A[i + 1][j] + ")"
+                                    if a[k][j] != "0":
+                                        a[i + 1][j] = " -" + a[k][j]
+                                        a[i + 1][j] = "(" + a[i + 1][j] + ")"
             print("          ... and updated A is: ")
-            print("             ", A)
+            print("             ", a)
 
-    for i in range(len(B)):
-        X = list(X)
-        B[i] = str(B[i])
+    for i in range(len(b)):
+        x = list(x)
+        b[i] = str(b[i])
 
     # start with last elem
     n = n - 1
-    if A[n][n] != "1":
-        X[n] = B[n] + "/" + A[n][n]
+    if a[n][n] != "1":
+        x[n] = b[n] + "/" + a[n][n]
     else:
-        X[n] = B[n]
+        x[n] = b[n]
 
     for i in range(1, n + 1):
         sumprod = ""
         for j in range(i):
             flag = False
-            if A[n - i][n - j] != "0":
+            if a[n - i][n - j] != "0":
                 if flag:
                     sumprod += " + "
                 flag = True
-                if A[n - i][n - j] == "1":
-                    sumprod += " (" + str(X[n - j]) + ")"
+                if a[n - i][n - j] == "1":
+                    sumprod += " (" + str(x[n - j]) + ")"
                 elif j != 0:
                     sumprod += (
                         " +"
-                        + A[n - i][n - j]
+                        + a[n - i][n - j]
                         + "*"
                         + "sc_qss["
                         + str(
@@ -2442,7 +2479,7 @@ def gauss_pivoting(species_info, A, B=None):
                     )
                 else:
                     sumprod += (
-                        A[n - i][n - j]
+                        a[n - i][n - j]
                         + "*"
                         + "sc_qss["
                         + str(
@@ -2454,21 +2491,21 @@ def gauss_pivoting(species_info, A, B=None):
                     )
 
         if sumprod == "":
-            if A[n - i][n - i] != "1":
-                X[n - i] = "(" + B[n - i] + ")/" + A[n - i][n - i]
+            if a[n - i][n - i] != "1":
+                x[n - i] = "(" + b[n - i] + ")/" + a[n - i][n - i]
             else:
-                X[n - i] = B[n - i]
+                x[n - i] = b[n - i]
         else:
-            if A[n - i][n - i] == "1":
-                X[n - i] = B[n - i] + " -(" + sumprod + ")"
+            if a[n - i][n - i] == "1":
+                x[n - i] = b[n - i] + " -(" + sumprod + ")"
             else:
-                X[n - i] = (
-                    "(" + B[n - i] + " -(" + sumprod + "))/" + A[n - i][n - i]
+                x[n - i] = (
+                    "(" + b[n - i] + " -(" + sumprod + "))/" + a[n - i][n - i]
                 )
     print()
     print()
 
-    return A, X, B, intermediate_helpers
+    return a, x, b, intermediate_helpers
 
 
 def qssa_return_coeff(mechanism, species_info, reagents):
