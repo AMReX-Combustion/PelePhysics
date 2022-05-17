@@ -207,21 +207,21 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 # Case 2 !PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 pef = (
-                    reaction.high_rate.pre_exponential_factor * ctuc
+                    reaction.rate.high_rate.pre_exponential_factor * ctuc
                 ).to_base_units()
-                beta = reaction.high_rate.temperature_exponent
+                beta = reaction.rate.high_rate.temperature_exponent
                 ae = (
-                    reaction.high_rate.activation_energy
+                    reaction.rate.high_rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
                 ).to(aeuc)
 
                 low_pef = (
-                    reaction.low_rate.pre_exponential_factor * ctuc
+                    reaction.rate.low_rate.pre_exponential_factor * ctuc
                 ).to_base_units()
-                low_beta = reaction.low_rate.temperature_exponent
+                low_beta = reaction.rate.low_rate.temperature_exponent
                 low_ae = (
-                    reaction.low_rate.activation_energy
+                    reaction.rate.low_rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
                 ).to(aeuc)
@@ -554,21 +554,21 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 # Case 2 !PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 pef = (
-                    reaction.high_rate.pre_exponential_factor * ctuc
+                    reaction.rate.high_rate.pre_exponential_factor * ctuc
                 ).to_base_units()
-                beta = reaction.high_rate.temperature_exponent
+                beta = reaction.rate.high_rate.temperature_exponent
                 ae = (
-                    reaction.high_rate.activation_energy
+                    reaction.rate.high_rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
                 ).to(aeuc)
 
                 low_pef = (
-                    reaction.low_rate.pre_exponential_factor * ctuc
+                    reaction.rate.low_rate.pre_exponential_factor * ctuc
                 ).to_base_units()
-                low_beta = reaction.low_rate.temperature_exponent
+                low_beta = reaction.rate.low_rate.temperature_exponent
                 low_ae = (
-                    reaction.low_rate.activation_energy
+                    reaction.rate.low_rate.activation_energy
                     * cc.ureg.joule
                     / cc.ureg.kmol
                 ).to(aeuc)
@@ -897,14 +897,39 @@ def progress_rate_fr(fstream, mechanism, species_info, reaction_info):
         #     # cw.writer(fstream, "comp_Kc_qss(tc,invT,Kc_save_qss);")
         # cw.writer(fstream, "}")
 
+        cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
+        cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.n_species)
+        cw.writer(fstream, "gibbs(g_RT, tc);")
+        if species_info.n_qssa_species > 0:
+            cw.writer(
+                fstream,
+                "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
+            )
+            cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
+
         cw.writer(fstream)
         cw.writer(
             fstream,
             "amrex::Real sc_qss[%d];" % (max(1, species_info.n_qssa_species)),
         )
+        cw.writer(
+            fstream,
+            "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+            % (
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
+            ),
+        )
         if species_info.n_qssa_species > 0:
             cw.writer(fstream, cw.comment("Fill sc_qss here"))
-            cw.writer(fstream, "comp_sc_qss(sc, sc_qss, tc, invT);")
+            cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
+            cw.writer(
+                fstream,
+                "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT,"
+                " g_RT_qss);",
+            )
+            cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
 
         cw.writer(fstream, "comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);")
         cw.writer(fstream)

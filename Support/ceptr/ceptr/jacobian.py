@@ -373,19 +373,23 @@ def ajac_reaction_precond(
         # Case 2 !PD, TB
         ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
         pef = (
-            reaction.high_rate.pre_exponential_factor * ctuc
+            reaction.rate.high_rate.pre_exponential_factor * ctuc
         ).to_base_units()
-        beta = reaction.high_rate.temperature_exponent
+        beta = reaction.rate.high_rate.temperature_exponent
         ae = (
-            reaction.high_rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
+            reaction.rate.high_rate.activation_energy
+            * cc.ureg.joule
+            / cc.ureg.kmol
         ).to(aeuc)
 
         low_pef = (
-            reaction.low_rate.pre_exponential_factor * ctuc
+            reaction.rate.low_rate.pre_exponential_factor * ctuc
         ).to_base_units()
-        low_beta = reaction.low_rate.temperature_exponent
+        low_beta = reaction.rate.low_rate.temperature_exponent
         low_ae = (
-            reaction.low_rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
+            reaction.rate.low_rate.activation_energy
+            * cc.ureg.joule
+            / cc.ureg.kmol
         ).to(aeuc)
         if reaction.rate.type == "Troe":
             troe = reaction.rate.falloff_coeffs
@@ -1334,19 +1338,23 @@ def ajac_reaction_d(
         # Case 2 !PD, TB
         ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
         pef = (
-            reaction.high_rate.pre_exponential_factor * ctuc
+            reaction.rate.high_rate.pre_exponential_factor * ctuc
         ).to_base_units()
-        beta = reaction.high_rate.temperature_exponent
+        beta = reaction.rate.high_rate.temperature_exponent
         ae = (
-            reaction.high_rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
+            reaction.rate.high_rate.activation_energy
+            * cc.ureg.joule
+            / cc.ureg.kmol
         ).to(aeuc)
 
         low_pef = (
-            reaction.low_rate.pre_exponential_factor * ctuc
+            reaction.rate.low_rate.pre_exponential_factor * ctuc
         ).to_base_units()
-        low_beta = reaction.low_rate.temperature_exponent
+        low_beta = reaction.rate.low_rate.temperature_exponent
         low_ae = (
-            reaction.low_rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
+            reaction.rate.low_rate.activation_energy
+            * cc.ureg.joule
+            / cc.ureg.kmol
         ).to(aeuc)
         if reaction.rate.type == "Troe":
             troe = reaction.rate.falloff_coeffs
