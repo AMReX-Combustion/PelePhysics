@@ -52,3 +52,27 @@ We rely on Cantera's ``ck2yaml`` utility to convert CHEMKIN files to the Cantera
   $ poetry run ck2yaml --input=${PATH_TO_CHEMKIN_DIR}/mechanism.inp --thermo=${PATH_TO_CHEMKIN_DIR}/therm.dat --transport=${PATH_TO_CHEMKIN_DIR}/tran.dat --permissive
 
 The files ``tran.dat`` and ``therm.dat`` are optional if already included in the ``.inp`` file.
+
+Generating a QSS chemistry file
+-------------------------------
+
+To generate a QSS chemistry yaml file from another yaml file, one executes::
+
+  $ poetry run qssa -f ${PATH_TO_YAML}/skeletal.yaml -n ${PATH_TO_YAML}/non_qssa_list.yaml
+
+The full list of options is::
+
+  $ poetry run qssa -h
+  usage: qssa [-h] -f FNAME -n NQSSA [-m {0,1,2}] [-v]
+
+  Mechanism converter
+
+  optional arguments:
+    -h, --help            show this help message and exit
+    -f FNAME, --fname FNAME
+                          Mechanism file
+    -n NQSSA, --nqssa NQSSA
+                          Non-QSSA species list
+    -m {0,1,2}, --method {0,1,2}
+                          QSSA method (default: 2)
+    -v, --visualize       Visualize quadratic coupling and QSSA dependencies
