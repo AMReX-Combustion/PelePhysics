@@ -65,7 +65,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     % (
                         idx,
                         cu.qss_sorted_phase_space(
-                            mechanism, species_info, reaction.orders
+                            mechanism, species_info, reaction, reaction.orders
                         ),
                     ),
                 )
@@ -76,7 +76,10 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     % (
                         idx,
                         cu.qss_sorted_phase_space(
-                            mechanism, species_info, reaction.reactants
+                            mechanism,
+                            species_info,
+                            reaction,
+                            reaction.reactants,
                         ),
                     ),
                 )
@@ -87,7 +90,10 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     % (
                         idx,
                         cu.qss_sorted_phase_space(
-                            mechanism, species_info, reaction.products
+                            mechanism,
+                            species_info,
+                            reaction,
+                            reaction.products,
                         ),
                     ),
                 )
@@ -262,7 +268,8 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
 
             alpha = 1.0
             if not third_body and not falloff:
-                # cw.writer(fstream,"Corr  = 1.0;")
+                cw.writer(fstream, "qf[%d] *= k_f;" % idx)
+            elif not falloff and len(reaction.efficiencies) == 1:
                 cw.writer(fstream, "qf[%d] *= k_f;" % idx)
             elif not falloff:
                 alpha = enhancement_d_with_qss(
@@ -495,15 +502,15 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
             cw.writer(fstream, "{")
             if bool(reaction.orders):
                 forward_sc = cu.qss_sorted_phase_space(
-                    mechanism, species_info, reaction.orders
+                    mechanism, species_info, reaction, reaction.orders
                 )
             else:
                 forward_sc = cu.qss_sorted_phase_space(
-                    mechanism, species_info, reaction.reactants
+                    mechanism, species_info, reaction, reaction.reactants
                 )
             if reaction.reversible:
                 reverse_sc = cu.qss_sorted_phase_space(
-                    mechanism, species_info, reaction.products
+                    mechanism, species_info, reaction, reaction.products
                 )
             else:
                 reverse_sc = "0.0"
@@ -608,6 +615,11 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
 
             alpha = 1.0
             if not third_body and not falloff:
+                cw.writer(
+                    fstream,
+                    "const amrex::Real qf = k_f * (%s);" % (forward_sc),
+                )
+            elif not falloff and len(reaction.efficiencies) == 1:
                 cw.writer(
                     fstream,
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
@@ -919,22 +931,30 @@ def enhancement_d_with_qss(mechanism, species_info, reaction):
 
     efficiencies = reaction.efficiencies
     alpha = ["mixture"]
-    for _, (symbol, efficiency) in enumerate(efficiencies.items()):
+    dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
+    sorted_efficiencies = sorted(
+        efficiencies.keys(), key=lambda v: dict_species[v]
+    )
+    for symbol in sorted_efficiencies:
+        efficiency = efficiencies[symbol]
         if symbol not in species_info.qssa_species_list:
             factor = "(%.15g)" % (efficiency - 1)
-            conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
-            if (efficiency - 1) == 1:
-                alpha.append("%s" % (conc))
-            else:
-                alpha.append("%s*%s" % (factor, conc))
+            if (efficiency - 1) != 0:
+                conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
+                if (efficiency - 1) == 1:
+                    alpha.append("%s" % (conc))
+                else:
+                    alpha.append("%s*%s" % (factor, conc))
         else:
             factor = "(%.15g)" % (efficiency - 1)
-            conc = "sc_qss[%d]" % (
-                species_info.ordered_idx_map[symbol] - species_info.n_species
-            )
-            if (efficiency - 1) == 1:
-                alpha.append("%s" % (conc))
-            else:
-                alpha.append("%s*%s" % (factor, conc))
+            if (efficiency - 1) != 0:
+                conc = "sc_qss[%d]" % (
+                    species_info.ordered_idx_map[symbol]
+                    - species_info.n_species
+                )
+                if (efficiency - 1) == 1:
+                    alpha.append("%s" % (conc))
+                else:
+                    alpha.append("%s*%s" % (factor, conc))
 
     return " + ".join(alpha).replace("+ -", "- ")

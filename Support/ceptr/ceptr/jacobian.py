@@ -168,15 +168,26 @@ def ajac_precond(fstream, mechanism, species_info, reaction_info):
                 fstream,
                 cw.comment("a third-body and non-pressure-fall-off reaction"),
             )
-            ajac_reaction_precond(
-                fstream,
-                mechanism,
-                species_info,
-                reaction_info,
-                reaction,
-                orig_idx,
-                2,
-            )
+            if len(reaction.efficiencies) == 1:
+                ajac_reaction_precond(
+                    fstream,
+                    mechanism,
+                    species_info,
+                    reaction_info,
+                    reaction,
+                    orig_idx,
+                    3,
+                )
+            else:
+                ajac_reaction_precond(
+                    fstream,
+                    mechanism,
+                    species_info,
+                    reaction_info,
+                    reaction,
+                    orig_idx,
+                    2,
+                )
         else:  # case 3
             cw.writer(
                 fstream,
@@ -421,7 +432,7 @@ def ajac_reaction_precond(
         fstream,
         "phi_f = %s;"
         % cu.qss_sorted_phase_space(
-            mechanism, species_info, reaction.reactants
+            mechanism, species_info, reaction, reaction.reactants
         ),
     )
     #
@@ -608,7 +619,7 @@ def ajac_reaction_precond(
             fstream,
             "phi_r = %s;"
             % cu.qss_sorted_phase_space(
-                mechanism, species_info, reaction.products
+                mechanism, species_info, reaction, reaction.products
             ),
         )
         cw.writer(
@@ -1106,15 +1117,27 @@ def ajac(fstream, mechanism, species_info, reaction_info):
                 fstream,
                 cw.comment("a third-body and non-pressure-fall-off reaction"),
             )
-            ajac_reaction_d(
-                fstream,
-                mechanism,
-                species_info,
-                reaction_info,
-                reaction,
-                orig_idx,
-                2,
-            )
+            if len(reaction.efficiencies) == 1:
+                ajac_reaction_d(
+                    fstream,
+                    mechanism,
+                    species_info,
+                    reaction_info,
+                    reaction,
+                    orig_idx,
+                    3,
+                )
+            else:
+                ajac_reaction_d(
+                    fstream,
+                    mechanism,
+                    species_info,
+                    reaction_info,
+                    reaction,
+                    orig_idx,
+                    2,
+                )
+
         else:  # case 3
             cw.writer(
                 fstream,
@@ -1371,7 +1394,7 @@ def ajac_reaction_d(
         fstream,
         "phi_f = %s;"
         % cu.qss_sorted_phase_space(
-            mechanism, species_info, reaction.reactants
+            mechanism, species_info, reaction, reaction.reactants
         ),
     )
     #
@@ -1559,7 +1582,7 @@ def ajac_reaction_d(
             fstream,
             "phi_r = %s;"
             % cu.qss_sorted_phase_space(
-                mechanism, species_info, reaction.products
+                mechanism, species_info, reaction, reaction.products
             ),
         )
         cw.writer(

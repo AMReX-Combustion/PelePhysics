@@ -1,5 +1,7 @@
 """Utility functions used across ceptr."""
+import copy
 import sys
+from collections import Counter
 
 import ceptr.constants as cc
 
@@ -9,8 +11,22 @@ def intersection(lst1, lst2):
     return list(set(lst1).intersection(lst2))
 
 
-def qss_sorted_phase_space(mechanism, species_info, reagents):
+def qss_sorted_phase_space(mechanism, species_info, reaction, reagents):
     """Get string of phase space."""
+    if hasattr(reaction, "efficiencies"):
+        if len(reaction.efficiencies) == 1:
+            reagents = copy.deepcopy(
+                dict(
+                    sum(
+                        (
+                            Counter(x)
+                            for x in [reagents, reaction.efficiencies]
+                        ),
+                        Counter(),
+                    )
+                )
+            )
+
     phi = []
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
     sorted_reagents = sorted(reagents.keys(), key=lambda v: dict_species[v])
@@ -210,7 +226,11 @@ def enhancement_d(mechanism, species_info, reaction):
         efficiency = efficiencies[symbol]
         if symbol not in species_info.qssa_species_list:
             factor = "( %.15g - 1)" % (efficiency)
-            conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
-            alpha.append("%s*%s" % (factor, conc))
+            if (efficiency - 1) != 0:
+                conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
+                if (efficiency - 1) == 1:
+                    alpha.append("%s" % (conc))
+                else:
+                    alpha.append("%s*%s" % (factor, conc))
 
     return " + ".join(alpha).replace("+ -", "- ")
