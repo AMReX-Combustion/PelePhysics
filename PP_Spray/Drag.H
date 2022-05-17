@@ -263,7 +263,7 @@ calculateSpraySource(
   const amrex::Real dtmod = 0.5;
   const amrex::Real C_eps = 1.E-15;
   const amrex::Real B_eps = 1.E-7;
-  const amrex::Real mass_eps = 8.E-18 * SPU.mass_conv;
+  const amrex::Real mass_eps = 8.E-15 * SPU.mass_conv;
   const int nSubMax = 100;
   bool get_xi = false;
   bool get_Ddiag = true;
@@ -352,7 +352,7 @@ calculateSpraySource(
     amrex::Real diff_vel_mag = diff_vel.vectorLength();
     // Local Reynolds number
     amrex::Real Reyn = rho_skin * diff_vel_mag * dia_part / mu_skin;
-    Reyn = amrex::min(Reyn, 400.);
+    Reyn = amrex::min(Reyn, 1000.);
 
     // Solve momentum source terms
     const amrex::Real inv_pmass = 1. / pmass;
@@ -413,15 +413,16 @@ calculateSpraySource(
       }
 
       const amrex::Real inv_pm_cp = inv_pmass / cp_part;
+      amrex::Real sumL = 0.;
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+        sumL += mi_dot[spf] * L_fuel[spf];
+      }
       amrex::Real Nu_0 = 1. + powR * std::cbrt(1. + Reyn * Pr_skin);
       amrex::Real ratio = cp_skin * Sh_num * rhoDtotal / lambda_skin;
-      amrex::Real coeff_heat = calcHeatCoeff(ratio, B_M, B_eps, C_eps, Nu_0);
-      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        part_temp_src += mi_dot[spf] * L_fuel[spf];
-      }
-      amrex::Real conv_src = M_PI * lambda_skin * dia_part * delT * coeff_heat;
+      amrex::Real Nu_num = calcHeatCoeff(ratio, B_M, B_eps, C_eps, Nu_0);
+      amrex::Real conv_src = M_PI * lambda_skin * dia_part * delT * Nu_num;
       gpv.fluid_eng_src += conv_src;
-      part_temp_src = (part_temp_src + conv_src) * inv_pm_cp;
+      part_temp_src = (sumL + conv_src) * inv_pm_cp;
       if (isub == 1 && delT > C_eps) {
         amrex::Real inv_tau_d = -m_dot / (3. * pmass);
         amrex::Real inv_tau_T = conv_src * inv_pm_cp / delT;

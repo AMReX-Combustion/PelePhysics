@@ -85,6 +85,7 @@ public:
     std::string& init_file,
     SprayData& sprayData,
     std::string* sprayFuelNames,
+    amrex::Vector<std::string>& derivePlotVars,
     const amrex::Real& max_cfl =
       0.5); // Only overwrite this if particles are subcycled
 
@@ -129,6 +130,16 @@ public:
   }
 
   ///
+  /// Derive grid variables related to sprays
+  ///
+  void computeDerivedVars(
+    amrex::MultiFab& mf_var,
+    const int level,
+    const int start_comp,
+    const amrex::Vector<std::string> derivePlotVars,
+    std::string* sprayFuelNames);
+
+  ///
   /// Compute a maximum time step based on the particle velocities and a
   /// particle CFL number
   ///
@@ -147,11 +158,12 @@ public:
   // depos_width - Number of source term cells influenced by a particle
   // NOTE: This is called on level N-1 to make ghost particles on level N
   // from valid particles on level N-1
-  static inline int getGhostPartCells(const int level,
-                                      const int finest_level,
-                                      const int amr_ncycle,
-                                      const amrex::Real& cfl = 0.5,
-                                      const int depos_width = 1)
+  static inline int getGhostPartCells(
+    const int level,
+    const int finest_level,
+    const int amr_ncycle,
+    const amrex::Real& cfl = 0.5,
+    const int depos_width = 1)
   {
     if (level - 1 < finest_level) {
       return depos_width + int(std::round(cfl * amrex::Real(amr_ncycle)));
@@ -161,12 +173,13 @@ public:
 
   // This returns the number of ghost cells needed for a MultiFab
   // used to interpolate a state to a particle location
-  static inline int getStateGhostCells(const int level,
-                                       const int finest_level,
-                                       const int amr_ncycle,
-                                       const amrex::Real& cfl = 0.5,
-                                       const int interp_width = 1,
-                                       const int depos_width = 1)
+  static inline int getStateGhostCells(
+    const int level,
+    const int finest_level,
+    const int amr_ncycle,
+    const amrex::Real& cfl = 0.5,
+    const int interp_width = 1,
+    const int depos_width = 1)
   {
     int ghost_state = interp_width + int(std::round(cfl));
     if (level == 0) {
@@ -182,11 +195,12 @@ public:
 
   // This returns the number of ghost cells needed for a MultiFab
   // used to interpolate a state to a particle location
-  static inline int getSourceGhostCells(const int level,
-                                        const int finest_level,
-                                        const int amr_ncycle,
-                                        const amrex::Real& cfl = 0.5,
-                                        const int depos_width = 1)
+  static inline int getSourceGhostCells(
+    const int level,
+    const int finest_level,
+    const int amr_ncycle,
+    const amrex::Real& cfl = 0.5,
+    const int depos_width = 1)
   {
     int ghost_source = depos_width + int(std::round(cfl));
     if (level == 0) {
