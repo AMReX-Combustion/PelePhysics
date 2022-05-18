@@ -2,6 +2,7 @@
 import argparse
 
 import matplotlib.pyplot as plt
+import numpy.testing as npt
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -63,7 +64,7 @@ def main():
         p[0].set_dashes(dashseq[1])
 
     fname = "plots.pdf"
-    with PdfPages(fname) as pdf:
+    with PdfPages(fname) as fpdf:
         for field in fields:
             plt.figure(field)
             ax = plt.gca()
@@ -73,7 +74,10 @@ def main():
             plt.setp(ax.get_ymajorticklabels(), fontsize=18, fontweight="bold")
             ax.legend(loc="best")
             plt.tight_layout()
-            pdf.savefig(dpi=300)
+            fpdf.savefig(dpi=300)
+
+    for field in fields:
+        npt.assert_allclose(cdf[field], pdf[field], rtol=1e-2, atol=0)
 
 
 if __name__ == "__main__":

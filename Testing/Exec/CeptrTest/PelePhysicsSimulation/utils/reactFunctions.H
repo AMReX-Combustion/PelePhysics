@@ -36,7 +36,7 @@ doReact_ode_iE1(
   /* Solve */
   BL_PROFILE_VAR_START(ReactInLoop);
   std::ofstream myfile;
-  myfile.open("pelephysics_results.txt");
+  myfile.open("results.txt");
   myfile << "time,temperature" << std::endl;
   ;
   myfile << 0 << "," << T.dataPtr()[0] << std::endl;
