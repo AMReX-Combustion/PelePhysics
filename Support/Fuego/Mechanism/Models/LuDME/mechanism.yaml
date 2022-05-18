@@ -1292,10 +1292,12 @@ reactions:
   rate-constant: {A: 4.5e+15, b: -1.11, Ea: 0.0}
   note: '165'
 - equation: HCOOH + M <=> CO + H2O + M  # Reaction 166
+  duplicate: true
   type: three-body
   rate-constant: {A: 2.3e+13, b: 0.0, Ea: 5.0e+04}
   note: '166'
 - equation: HCOOH + M <=> CO2 + H2 + M  # Reaction 167
+  duplicate: true
   type: three-body
   rate-constant: {A: 1.5e+16, b: 0.0, Ea: 5.7e+04}
   note: '167'
@@ -1306,9 +1308,11 @@ reactions:
   rate-constant: {A: 2.62e+06, b: 2.06, Ea: 916.0}
   note: '169'
 - equation: HCOOH + OH <=> H2O + CO + OH  # Reaction 170
+  duplicate: true
   rate-constant: {A: 1.85e+07, b: 1.51, Ea: -962.0}
   note: '170'
 - equation: HCOOH + H <=> H2 + CO2 + H  # Reaction 171
+  duplicate: true
   rate-constant: {A: 4.24e+06, b: 2.1, Ea: 4868.0}
   note: '171'
 - equation: HCOOH + H <=> H2 + CO + OH  # Reaction 172
