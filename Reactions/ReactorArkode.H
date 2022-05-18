@@ -107,8 +107,9 @@ public:
     amrex::Real* src_vect_energy) override
   {
     flatten_ops.flatten(
-      box, ncells, m_reactor_type, rhoY, frcExt, temperature, rhoE, frcEExt,
-      y_vect, src_vect, vect_energy, src_vect_energy);
+      box, ncells, m_reactor_type, m_clean_init_massfrac, rhoY, frcExt,
+      temperature, rhoE, frcEExt, y_vect, src_vect, vect_energy,
+      src_vect_energy);
   }
 
   void unflatten(
@@ -125,8 +126,8 @@ public:
     amrex::Real dt) override
   {
     flatten_ops.unflatten(
-      box, ncells, m_reactor_type, rhoY, temperature, rhoE, frcEExt, FC_in,
-      y_vect, vect_energy, FCunt, dt);
+      box, ncells, m_reactor_type, m_clean_init_massfrac, rhoY, temperature,
+      rhoE, frcEExt, FC_in, y_vect, vect_energy, FCunt, dt);
   }
 
 private:
@@ -142,6 +143,7 @@ private:
 #else
   int atomic_reductions{1};
 #endif
+  bool m_clean_init_massfrac{false};
 };
 
 } // namespace reactions
