@@ -18,7 +18,8 @@ jobs:
   Docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Clone
+        uses: actions/checkout@v3
       - name: Python
         uses: actions/setup-python@v2
         with:
