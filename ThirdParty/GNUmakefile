@@ -81,8 +81,8 @@ endif
 ifeq ($(USE_HIP),TRUE)
   MAGMA_DEFINES+=-DSUNDIALS_MAGMA_BACKENDS:STRING=HIP
   ifeq ($(which_computer),crusher)
-    MAGMA_DEFINES+=-DCMAKE_C_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
-    MAGMA_DEFINES+=-DCMAKE_CXX_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
+    MAGMA_DEFINES+=-DCMAKE_C_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
+    MAGMA_DEFINES+=-DCMAKE_CXX_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
   endif
 endif
 
@@ -101,8 +101,8 @@ ifeq ($(USE_HIP),TRUE)
   ## For spock/crusher only at this point !
   MAGMA_COMPILER_OPT=-DMAGMA_ENABLE_HIP=ON -DGPU_TARGET=$(AMD_ARCH) -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_amd.so
   ifeq ($(which_computer),crusher)
-    MAGMA_COMPILER_OPT+=-DCMAKE_C_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
-    MAGMA_COMPILER_OPT+=-DCMAKE_CXX_FLAGS="-I/opt/rocm-4.5.2/include -L/opt/rocm-4.5.2/lib -lamdhip64"
+    MAGMA_COMPILER_OPT+=-DCMAKE_C_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
+    MAGMA_COMPILER_OPT+=-DCMAKE_CXX_FLAGS="-I${ROCM_PATH}/include -L${ROCM_PATH}/lib -lamdhip64"
   endif
 endif
 else
