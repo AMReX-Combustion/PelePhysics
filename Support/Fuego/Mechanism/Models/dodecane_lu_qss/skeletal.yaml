@@ -19,6 +19,18 @@ phases:
   transport: mixture-averaged
   state: {T: 300.0, P: 1 atm}
 
+elements:
+- symbol: C
+  atomic-weight: 12.01115
+- symbol: O
+  atomic-weight: 15.9994
+- symbol: H
+  atomic-weight: 1.00797
+- symbol: N
+  atomic-weight: 14.0067
+- symbol: Ar
+  atomic-weight: 39.948
+
 species:
 - name: NC12H26
   composition: {C: 12, H: 26}

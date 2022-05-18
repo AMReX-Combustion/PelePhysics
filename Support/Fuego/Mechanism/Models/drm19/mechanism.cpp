@@ -144,7 +144,7 @@ atomicWeight(amrex::Real* awt)
   awt[1] = 1.007970;  // H
   awt[2] = 12.011150; // C
   awt[3] = 14.006700; // N
-  awt[4] = 39.950000; // Ar
+  awt[4] = 39.948000; // Ar
 }
 
 // get atomic weight for all elements
