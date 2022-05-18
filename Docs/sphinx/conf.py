@@ -14,7 +14,7 @@ todo_include_todos = False
 numfig = True
 numfig_format = {'figure': '%s', 'table': '%s', 'code-block': '%s'}
 html_theme = 'sphinx_rtd_theme'
-htmlhelp_basename = 'PelePhysicsdoc'
+htmlhelp_basename = 'PelePhysicsDoc'
 latex_elements = {
 }
 latex_documents = [
@@ -30,4 +30,3 @@ texinfo_documents = [
      author, 'PelePhysics', 'One line description of project.',
      'Miscellaneous'),
 ]
-sphinx.fail_on_warning = True
