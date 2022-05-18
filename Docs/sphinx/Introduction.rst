@@ -3,10 +3,10 @@
 .. _sec:subsWD:
 
 Introduction
-===================
+============
 
 Objectives and State-Of-The-Art
---------------------------------
+-------------------------------
 
 What we will call the `PeleSuite` is currently composed of 3 separate codes:
 
@@ -50,7 +50,7 @@ The objective of this user-guide is to document the CVODE-based chemistry integr
 
 
 How to naviguate this documentation
-------------------------------------
+-----------------------------------
 
 `This section provides a short overview of the chemistry-related features of PelePhysics. For an in-depth discussion, relevant references to specific sections of this manuscript are given.`
 
@@ -79,10 +79,6 @@ How to naviguate this documentation
 
 - `PelePhysics` uses an automatic chemistry-related routine generator: **Fuego**. Fuego is part of 
   the sources of `PelePhysics`. With Fuego, a unique chemistry file is generated for a specific 
-  kinetic scheme. The structure of the chemistry file is discussed in section :ref:`sec:`, along with instructions to
+  kinetic scheme. The structure of the chemistry file is discussed in section (needs reference), along with instructions to
   generate your own (all you need are chemistry files in the famous CHEMKIN format).
   Note that `PelePhysics` already offers a large choice of more than 20 different kinetic schemes.
-
-.. [VODE1989] P. N. Brown, G. D. Byrne, and A. C. Hindmarsh. VODE, a variable-coefficient ODE solver. SIAM journal on scientific and statistical computing, 10(5):1038-1051, 1989. 
-
-.. [LLNL2005] A. C. Hindmarsh, P. N. Brown, K. E. Grant, S. L. Lee, R. Serban, D. E. Shumaker, and C. S. Woodward. SUNDIALS: Suite of nonlinear and differential/algebraic-equation solvers. ACM Transactions on Mathematical Software (TOMS), 31(3):363-396, 2005.

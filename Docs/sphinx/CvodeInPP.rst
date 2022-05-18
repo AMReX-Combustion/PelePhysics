@@ -4,12 +4,12 @@
    :language: c++
 
 CVODE implementation in `PelePhysics`
-======================================
+=====================================
 
 .. _sec:subsDiffReacts:
 
 The different reactors
------------------------
+----------------------
 
 Throughout this document, what we call a `reactor` is in fact a zero-dimensional model, 
 the simplest representation of a chemically reacting system. Depending upon the choice of state variables 
@@ -52,7 +52,7 @@ where the :math:`h_k` are the species internal energy.
 .. _sec:subsubValidCVreact:
 
 Validation of the CV reactor implementation in CVODE (with CANTERA)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 `CANTERA <https://cantera.org/>`_ is an open-source suite of tools for problems involving chemical kinetics, thermodynamics, and transport processes. 
 It is a very robust and fast tool written in C++ that is also based on CVODE to perform the chemistry integration. 
@@ -64,15 +64,15 @@ the CVH reactor model is an abstraction needed for our Low-Mach PeleLM chemistry
 the external source terms for the energy and species equations in `PelePhysics` have been set to 0 (see :ref:`sec:subsDiffReacts`).
 
 The parameters chosen to initialize the simulation in both CANTERA and `PelePhysics` are described in 
-Table :numref:`tab:ReactEvalCVODE`. The kinetic mechanism used for hydrogen combustion is available in `PelePhysics`. 
+Table :numref:`fig:ReactEvalCVODETable`. The kinetic mechanism used for hydrogen combustion is available in `PelePhysics`. 
 Note that small sub-steps are explicitly taken until the final time is reached, 
 but CVODE's internal machinery can subdivides the :math:`dt` even further. 
 For the purpose of validation, the direct dense solver of CVODE is selected 
 in `PelePhysics` (see section :ref:`sec:subsPPOptions`).
 
-.. _tab:ReactEvalCVODE:
+.. _fig:ReactEvalCVODETable:
 
-.. table::
+.. table:: Parameters for initializing simulation
     :align: center
 
     +------------+-----------------+-------------+----------------+-------------+----------------+-----------------+
@@ -137,7 +137,7 @@ concludes the validation of the reactors implemented in `PelePhysics`.
 .. _sec:subsPPOptions:
 
 Activating the different CVODE solver options via the input files
--------------------------------------------------------------------
+-----------------------------------------------------------------
 **Note that at this point, it is believed that the user has properly installed CVODE as well as the SuiteSparse package. If not, refer to** :ref:`sec:GetCVODE`.
 
 Choosing between DVODE/CVODE (as well as other ODE integrators that will not be discussed in this section) is done at compile time, 
@@ -150,7 +150,7 @@ of the problem. This is discussed in more depth in what follows.
 .. _subsubs:GNUtype:
 
 The GNUmakefile
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 The default setting is to use DVODE in `PelePhysics`; i.e, if no modifications are done to the original ``GNUmakefile`` (see the test case ReactEval_FORTRAN of `PelePhysics`), 
 then this option should automatically be selected. To activate CVODE, the user must first activates the use of Sundials via the following line: ::
@@ -174,7 +174,7 @@ All of the flags discussed in this subection are used in ``$PELE_PHYSICS_HOME/Th
 
 
 The input file
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 The input file is made up of specific blocks containing keywords that apply to specific areas of the integrationof the problem at hand. 
 The suffix associated with each block of keywords should help the user in determining which keywords 
@@ -187,14 +187,11 @@ The general ``ode.*`` keywords are shared by all ODE integrators and thus are al
   ``5`` for the sparse direct linear solver (if the KLU library has been linked) and ``99`` for the Krylov iterative solver
 - ``ode.analytical_jacobian`` is a bit less obvious: 
 
-  - If ``cvode.solve_type = 1``, then ``ode.analytical_jacobian = 1`` will activate 
-  the use of an Analytical Jacobian. 
+  - If ``cvode.solve_type = 1``, then ``ode.analytical_jacobian = 1`` will activate the use of an Analytical Jacobian. 
   
-  - If ``cvode.solve_type = 99``, then ``ode.analytical_jacobian = 1`` will activate 
-  the preconditioned GMRES solver while ``ode.analytical_jacobian = 0`` will activate the non-preconditioned GMRES solver. 
+  - If ``cvode.solve_type = 99``, then ``ode.analytical_jacobian = 1`` will activate the preconditioned GMRES solver while ``ode.analytical_jacobian = 0`` will activate the non-preconditioned GMRES solver. 
   
-  - If ``cvode.solve_type = 99``, ``ode.analytical_jacobian = 1`` **and** the KLU library is linked, 
-  then the preconditioned solve is done in a sparse format. 
+  - If ``cvode.solve_type = 99``, ``ode.analytical_jacobian = 1`` **and** the KLU library is linked, then the preconditioned solve is done in a sparse format. 
   
   - With ``cvode.solve_type = 5``, the only allowed option is ``ode.analytical_jacobian = 1``.
 
@@ -202,7 +199,7 @@ The general ``ode.*`` keywords are shared by all ODE integrators and thus are al
 .. _sec:subsReactEvalCvode:
 
 The ReactEval_C test case with CVODE in details
------------------------------------------------------
+-----------------------------------------------
 
 This tutorial has been adapted from the `ReactEval_FORTRAN` tutorial employed in the series of regression tests to monitor the DVODE chemistry integration. 
 The domain considered is a :math:`2x1024x2` box, where the initial temperature is different in each :math:`(i,j,k)-` cell, according to a :math:`y-` evolving sinusoidal profile, see Fig. :numref:`fig:ErrH2`:
@@ -242,7 +239,7 @@ The following focuses on the :math:`CH_4`/:math:`O_2` example, but performances 
      The ReactEval_C test case
 
 The GNUmakefile
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 For this example, the ``USE_SUNDIALS_PP`` flag should be set to true, as the ODE integration 
 is called from the C++ routine directly using CVODE.
@@ -309,7 +306,7 @@ Additionally, the ``FUEGO_GAS`` flag should be set to true and the chemistry mod
 Note that the ``TINY_PROFILE`` flag has been activated to obtain statistics on the run. This is an `AMREX` option.
 
 The input file
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 The run parameters that can be controlled via ``inputs.3d`` input file for this example are as follows: ::
 
@@ -344,7 +341,7 @@ By default, the number of cells integrated simultaneously by one CVODE instance 
 
 
 Results
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^
 
 It took 52.61s to integrate the 4096 cells of this box, with 4 MPI processes and no OMP process. 
 The resulting temperature evolution for all cells in the y-direction is displayed in Fig. :numref:`fig:ReacEvalCv`.
@@ -365,7 +362,7 @@ To go further: ReactEval_C with CVODE and the KLU library
 ----------------------------------------------------------
 
 The GNUmakefile
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 Only the middle part of the ``GNUmakefile`` needs to be modified compared to the previous example.
 
@@ -391,7 +388,7 @@ Only the middle part of the ``GNUmakefile`` needs to be modified compared to the
 
 
 The input file
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 For the KLU library to be of use, a solver utilizing sparsity features should 
 be selected. We modify the input file as follows:
@@ -414,7 +411,7 @@ be selected. We modify the input file as follows:
 So that now, a preconditioned iterative Krylov solver is selected, where the preconditioner is specified in a sparse format.
 
 Results
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^
 
 This run now takes 1m34s to run. As expected from the dense Jacobian of the system obtained when using the small DRM mechanism 
 (the fill in pattern is :math:`>90 \%`), using an iterative solver does not enable to reach speed-ups over the simple dense direct 
@@ -473,14 +470,14 @@ The same series of tests are performed for a mixture of n-dodecane and air (see 
 
 
 Current Limitations
---------------------
+-------------------
 
 Note that currently, all sparse operations rely on an Analytical Jacobian. This AJ is provided via the chemistry routines dumped by the Fuego code. Those routines are generated in a pre-processing step, when the sparsity pattern of the AJ is still unknown. As such, all entries of the AJ are computed at all times, and when a sparsity solver is chosen, the AJ is in fact "sparsified" to take advantage of the sparse linear algebra. The "sparsification" process involves a series of loop in the cpp that takes a significant amount of the CPU time most of the time. However, it is always good to verify that this is the case. `AMREX`'s ``TINY_PROFILER`` features is a handy tool to do so.
 
 .. _sec:subssubsTricks:
 
 Tricks and hacks, stuff to know
----------------------------------
+-------------------------------
 
 When using DVODE, there is a `hack` enabling the user to reuse the Jacobian instead of reevaluating it from scratch. 
 This option is triggered when setting the ``extern_probin_module`` flag ``new_Jacobian_each_cell`` to ``0``. 
@@ -548,17 +545,17 @@ In this case, the hack does not seem to provide significant time savings. Note a
 
 
 CVODE implementation in `PelePhysics` on GPU
-======================================
+============================================
 
 Requirements and input files
---------------------
+----------------------------
 
 **To use CVODE on a GPU, Sundials should be build with the flag** ``CUDA_ENABLE`` **. A CUDA compiler also needs to be specified. Relevant information is provided in the Sundials install guide, and an automatic script is distributed with PelePhysics to ease the process. Refer to** :ref:`sec:GetCVODE`.
 
 Note that the SuiteSparse package does not support GPU architecture and is thus no longer required. Sparse linear algebra operations, when needed, are performed with the help of CUDA's `cuSolver <https://docs.nvidia.com/cuda/cusolver/index.html>`_.
 
 The GNUmakefile
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 To run on GPUs, `AMREX` should be build with CUDA enabled. To do so, add this line to the ``GNUmakefile``: ::
 
@@ -568,7 +565,7 @@ This should activate the CUDA features of CVODE in `PelePhysics` too.
 
 
 The input file
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 In the ``inputs.3d``, the same three main keywords control the algorithm (``ode.reactor_type``, ``cvode.solve_type``, ``ode.analytical_jacobian``). However, note that there are less linear solver options available. 
 
@@ -580,7 +577,7 @@ In the ``inputs.3d``, the same three main keywords control the algorithm (``ode.
   
 
 Grouping cells together
---------------------
+-----------------------
 
 To take full advantage of the GPU power, many intensive operations of similar nature should be performed in parallel. In `PelePhysics`, this is achieved by grouping many cells together, and integrating each one in separate threads within one CVODE instance. Indeed, the flow of operations to solve one set of ODEs is very similar from one cell to the next, and one could expect limited thread divergence from this approach. Fig. :numref:`fig:GroupingCells` summarizes the idea. Note that the Jacobian of the group of cells is block-sparse, and any chosen integration method should take advantage of this.
 
@@ -598,13 +595,13 @@ To take full advantage of the GPU power, many intensive operations of similar na
 In the current implementation, the number of cells that are grouped together is equal to the number of cells contained in the box under investigation within a MultiFab iteration.
 
 The ReactEval_C_GPU test case in details
---------------------
+----------------------------------------
 
 A series of tests are performed on the GPU for a mixture of methane and air, with the intent of evaluationg the performance of the chemistry solvers. 
 The test case, configuration and initial conditions are similar to that described in :ref:`sec:subsReactEvalCvode`. The mechanism employed is the **drm**. 
 
 The GNUmakefile
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 The full file reads as follows:
 
@@ -661,10 +658,10 @@ The full file reads as follows:
 
 
 The input file
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 The Results
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^
 
 Results are sumarized in Table :numref:`tab:RunsReactEvalCvodeDRMGPU`. 
 
@@ -690,7 +687,7 @@ Results are sumarized in Table :numref:`tab:RunsReactEvalCvodeDRMGPU`.
 
 
 Current Limitations
---------------------
+-------------------
 
 The current GPU implementation of CVODE relies on the launch of many kernels from the host. As such, a CVODE instance does not live *directly* on the GPU; rather, the user is in charge of identifying and delegating computation-intensive part of the RHS, Jacobian evaluation, etc.
 The current implementation thus suffers from the cost of data movement, and parallelization is limited due to required device synchronizations within CVODE.
