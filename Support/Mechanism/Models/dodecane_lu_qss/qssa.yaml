@@ -24,18 +24,6 @@ phases:
       density: 1.0e-03
       Y: {NC12H26: 1.0}
 
-elements:
-- symbol: C
-  atomic-weight: 12.01115
-- symbol: O
-  atomic-weight: 15.9994
-- symbol: H
-  atomic-weight: 1.00797
-- symbol: N
-  atomic-weight: 14.0067
-- symbol: AR
-  atomic-weight: 39.948
-
 species:
   - name: NC12H26
     composition: {C: 12.0, H: 26.0}
