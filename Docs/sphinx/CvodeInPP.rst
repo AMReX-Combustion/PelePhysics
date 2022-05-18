@@ -64,15 +64,15 @@ the CVH reactor model is an abstraction needed for our Low-Mach PeleLM chemistry
 the external source terms for the energy and species equations in `PelePhysics` have been set to 0 (see :ref:`sec:subsDiffReacts`).
 
 The parameters chosen to initialize the simulation in both CANTERA and `PelePhysics` are described in 
-Table :numref:`tab:ReactEvalCVODE`. The kinetic mechanism used for hydrogen combustion is available in `PelePhysics`. 
+Table :numref:`fig:ReactEvalCVODETable`. The kinetic mechanism used for hydrogen combustion is available in `PelePhysics`. 
 Note that small sub-steps are explicitly taken until the final time is reached, 
 but CVODE's internal machinery can subdivides the :math:`dt` even further. 
 For the purpose of validation, the direct dense solver of CVODE is selected 
 in `PelePhysics` (see section :ref:`sec:subsPPOptions`).
 
-.. _tab:ReactEvalCVODE:
+.. _fig:ReactEvalCVODETable:
 
-.. table::
+.. table:: Parameters for initializing simulation
     :align: center
 
     +------------+-----------------+-------------+----------------+-------------+----------------+-----------------+

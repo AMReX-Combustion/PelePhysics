@@ -79,6 +79,6 @@ How to naviguate this documentation
 
 - `PelePhysics` uses an automatic chemistry-related routine generator: **Fuego**. Fuego is part of 
   the sources of `PelePhysics`. With Fuego, a unique chemistry file is generated for a specific 
-  kinetic scheme. The structure of the chemistry file is discussed in section :ref:`sec:`, along with instructions to
+  kinetic scheme. The structure of the chemistry file is discussed in section (needs reference), along with instructions to
   generate your own (all you need are chemistry files in the famous CHEMKIN format).
   Note that `PelePhysics` already offers a large choice of more than 20 different kinetic schemes.
