@@ -66,7 +66,16 @@ case $filename in
 esac
 
 cd "${CEPTR_HOME}" || exit
-poetry update
 echo "Converting ${filename}"
-poetry run convert -f "${filename}"
+
+if command -v poetry &> /dev/null
+then
+    poetry update
+    poetry run convert -f "${filename}"
+else
+    echo "poetry could not be found. We recommend the use of poetry to ensure all necessary packages are available."
+    echo "However, this script will proceed with the current python environment (and hope all the packages are available)."
+    python3 -m ceptr -f "${filename}"
+fi
+
 
