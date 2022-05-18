@@ -20,7 +20,7 @@ class ReactionInfo:
         try:
             self.remove_id_list = mechanism.input_data["forward_to_remove_idx"]
         except KeyError:
-            print("No forward reaction to remove")
+            pass
 
         self.qssa_reactions = []
         self.n_qssa_reactions = 0
