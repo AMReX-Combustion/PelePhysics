@@ -18,7 +18,7 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   pp.query("atomic_reductions", atomic_reductions);
   pp.query("rk_method", rk_method);
   pp.query("rk_controller", rk_controller);
-  pp.query("JBBhack", m_JBBhack);
+  pp.query("clean_init_massfrac", m_clean_init_massfrac);
   std::string method_string = "ARKODE_ZONNEVELD_5_3_4";
   std::string controller_string = "PID";
 
