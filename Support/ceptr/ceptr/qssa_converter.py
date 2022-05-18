@@ -1,6 +1,7 @@
 """QSSA functions needed for conversion."""
+import copy
 import sys
-from collections import OrderedDict, defaultdict
+from collections import Counter, OrderedDict, defaultdict
 
 import numpy as np
 
@@ -1666,15 +1667,15 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
         )
         if bool(reaction.orders):
             forward_sc = qssa_return_coeff(
-                mechanism, species_info, reaction.ford
+                mechanism, species_info, reaction, reaction.orders
             )
         else:
             forward_sc = qssa_return_coeff(
-                mechanism, species_info, reaction.reactants
+                mechanism, species_info, reaction, reaction.reactants
             )
         if reaction.reversible:
             reverse_sc = qssa_return_coeff(
-                mechanism, species_info, reaction.products
+                mechanism, species_info, reaction, reaction.products
             )
         else:
             reverse_sc = "0.0"
@@ -1684,6 +1685,21 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
 
         alpha = 1.0
         if not third_body and not falloff:
+            if remove_forward:
+                cw.writer(fstream, cw.comment("Remove forward reaction"))
+                cw.writer(
+                    fstream,
+                    cw.comment(
+                        "qf[%d] = k_f[%d] * (%s);" % (idx, idx, forward_sc)
+                    ),
+                )
+                cw.writer(fstream, "qf[%d] = 0.0;" % (idx))
+            else:
+                cw.writer(
+                    fstream,
+                    "qf[%d] = k_f[%d] * (%s);" % (idx, idx, forward_sc),
+                )
+        elif not falloff and len(reaction.efficiencies) == 1:
             if remove_forward:
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
@@ -1972,7 +1988,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
             print("    Species involved :", gr_species)
             cw.writer(
                 fstream,
-                "/* QSSA coupling between " + ("  ").join(gr_species) + "*/",
+                cw.comment("QSSA coupling between " + ("  ").join(gr_species)),
             )
             for index, species in enumerate(gr_species):
                 print("      x Dealing with spec", species, index)
@@ -2510,8 +2526,22 @@ def gauss_pivoting(species_info, a, b=None):
     return a, x, b, intermediate_helpers
 
 
-def qssa_return_coeff(mechanism, species_info, reagents):
+def qssa_return_coeff(mechanism, species_info, reaction, reagents):
     """QSSA coefficient."""
+    if hasattr(reaction, "efficiencies"):
+        if len(reaction.efficiencies) == 1:
+            reagents = copy.deepcopy(
+                dict(
+                    sum(
+                        (
+                            Counter(x)
+                            for x in [reagents, reaction.efficiencies]
+                        ),
+                        Counter(),
+                    )
+                )
+            )
+
     phi = []
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
     sorted_reagents = sorted(reagents.keys(), key=lambda v: dict_species[v])
