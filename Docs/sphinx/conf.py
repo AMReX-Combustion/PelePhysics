@@ -30,3 +30,4 @@ texinfo_documents = [
      author, 'PelePhysics', 'One line description of project.',
      'Miscellaneous'),
 ]
+sphinx.fail_on_warning = True
