@@ -14,8 +14,6 @@ todo_include_todos = False
 numfig = True
 numfig_format = {'figure': '%s', 'table': '%s', 'code-block': '%s'}
 html_theme = 'sphinx_rtd_theme'
-html_logo = "_static/swirlH2Fast_OH_vort_256.png"
-html_static_path = ['_static']
 htmlhelp_basename = 'PelePhysicsdoc'
 latex_elements = {
 }
