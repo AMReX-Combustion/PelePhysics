@@ -227,21 +227,6 @@ initializeData(
           initialize_data(
             i, j, k, fuel_idx, ode_iE, rY_a, rYs_a, E_a, rE_a, geomdata);
         });
-
-      std::cout << "INITIAL VALUES\n";
-
-      double rho = rhoY2rho(rY_a);
-      double* y = new double[NUM_SPECIES];
-      memset(y, 0, (NUM_SPECIES) * sizeof(double));
-      rhoY2Y(rY_a, y);
-      print<double>(y, NUM_SPECIES, "Y init");
-      print<double>(rho, "rho init");
-      print<double>(E_a.dataPtr()[0], "H init");
-      // print<double>(y,NUM_SPECIES,"y init");
-      // print<double>(rhoE.dataPtr()[0],"rhoH init");
-      // print<double>(rhoE.dataPtr()[0]/rho,"H init");
-      // print<double>(frcExt.dataPtr(),NUM_SPECIES,"rhoY source");
-      // print<double>(frcEExt.dataPtr()[0],"rhoE source");
     }
   }
 }
