@@ -1,4 +1,4 @@
-"""Run a homegenous reactor in Cantera."""
+"""Run a homogeneous reactor in Cantera."""
 import argparse
 
 import cantera as ct
@@ -7,7 +7,7 @@ import pandas as pd
 
 def main():
     """Run the reactor."""
-    parser = argparse.ArgumentParser(description="Cantera homogenous reactor")
+    parser = argparse.ArgumentParser(description="Cantera homogeneous reactor")
     parser.add_argument("-f", "--fname", help="Mechanism file", type=str, required=True)
     args = parser.parse_args()
 
