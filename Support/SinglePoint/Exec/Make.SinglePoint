@@ -56,16 +56,16 @@ INCLUDE_LOCATIONS += $(EOS_HOME)
 VPATH_LOCATIONS   += $(EOS_HOME)
 
 ifdef Chemistry_Model
-  include $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Make.package
-  include $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
+  include $(PELE_PHYSICS_HOME)/Support/Mechanism/Make.package
+  include $(PELE_PHYSICS_HOME)/Support/Evaluation/Make.package
 
-  INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism
-  INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
+  INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Support/Mechanism
+  INCLUDE_LOCATIONS += $(PELE_PHYSICS_HOME)/Support/Evaluation
 
-  VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism
-  VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
+  VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Support/Mechanism
+  VPATH_LOCATIONS += $(PELE_PHYSICS_HOME)/Support/Evaluation
 
-  CHEM_HOME = $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Models/$(Chemistry_Model)
+  CHEM_HOME = $(PELE_PHYSICS_HOME)/Support/Mechanism/Models/$(Chemistry_Model)
   VPATH_LOCATIONS += $(CHEM_HOME)
   Bpack += $(CHEM_HOME)/Make.package
   Blocs += $(CHEM_HOME)
@@ -94,19 +94,19 @@ ifeq ($(Transport_Model), Sutherland)
 endif
 ifeq ($(Transport_Model), Simple)
   DEFINES += -DUSE_SIMPLE_TRANSPORT
-  Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Make.package \
-             $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
+  Bpack   += $(PELE_PHYSICS_HOME)/Support/Mechanism/Make.package \
+             $(PELE_PHYSICS_HOME)/Support/Evaluation/Make.package
 
-  Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism \
-             $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
+  Blocs   += $(PELE_PHYSICS_HOME)/Support/Mechanism \
+             $(PELE_PHYSICS_HOME)/Support/Evaluation
 endif
 ifeq ($(Transport_Model), EGLib)
   USE_FUEGO = TRUE
-  Bpack   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism/Make.package \
-             $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation/Make.package
+  Bpack   += $(PELE_PHYSICS_HOME)/Support/Mechanism/Make.package \
+             $(PELE_PHYSICS_HOME)/Support/Evaluation/Make.package
 
-  Blocs   += $(PELE_PHYSICS_HOME)/Support/Fuego/Mechanism \
-             $(PELE_PHYSICS_HOME)/Support/Fuego/Evaluation
+  Blocs   += $(PELE_PHYSICS_HOME)/Support/Mechanism \
+             $(PELE_PHYSICS_HOME)/Support/Evaluation
 endif
 
 Bdirs   := Source
