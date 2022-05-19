@@ -1,169 +1,361 @@
-#ifndef MECHANISM_CPP
-#define MECHANISM_CPP
-
 #include "mechanism.H"
+const int rmap[177] = {
+  49,  51,  53,  55,  56,  58,  62,  69,  70,  71,  73,  75,  82,  84,  94,
+  130, 139, 146, 157, 173, 0,   1,   11,  32,  33,  34,  35,  36,  38,  39,
+  40,  41,  42,  165, 166, 2,   3,   4,   5,   6,   7,   8,   9,   10,  12,
+  13,  14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,
+  28,  29,  30,  31,  37,  43,  44,  45,  46,  47,  48,  50,  52,  54,  57,
+  59,  60,  61,  63,  64,  65,  66,  67,  68,  72,  74,  76,  77,  78,  79,
+  80,  81,  83,  85,  86,  87,  88,  89,  90,  91,  92,  93,  95,  96,  97,
+  98,  99,  100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
+  113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+  128, 129, 131, 132, 133, 134, 135, 136, 137, 138, 140, 141, 142, 143, 144,
+  145, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 158, 159, 160, 161,
+  162, 163, 164, 167, 168, 169, 170, 171, 172, 174, 175, 176};
 
-/*save atomic weights into array */
+// Returns 0-based map of reaction order
+void
+GET_RMAP(int* _rmap)
+{
+  for (int j = 0; j < 177; ++j) {
+    _rmap[j] = rmap[j];
+  }
+}
+
+// Returns a count of species in a reaction, and their indices
+// and stoichiometric coefficients. (Eq 50)
+void
+CKINU(int* i, int* nspec, int* ki, int* nu)
+{
+  const int ns[177] = {
+    2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 4, 2, 2, 2, 2, 3, 4, 4, 3,
+    4, 4, 4, 3, 4, 3, 4, 3, 4, 3, 3, 4, 3, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4,
+    3, 3, 3, 4, 3, 4, 3, 4, 4, 4, 4, 4, 4, 3, 4, 2, 3, 4, 4, 4, 4, 4, 4,
+    4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3,
+    3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 3, 4,
+    3, 3, 4, 4, 4, 5, 4, 4, 3, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 2, 3, 4, 4,
+    4, 4, 4, 4, 3, 3, 4, 4, 4, 4, 4, 4, 3, 4, 4, 3};
+  const int kiv[885] = {
+    2,  3,  0,  0,  0, 1,  2,  4,  0,  0, 0,  2,  1,  4,  0, 6,  2,  3,  4,  0,
+    7,  2,  6,  4,  0, 9,  2,  14, 1,  0, 10, 2,  1,  16, 0, 11, 2,  14, 0,  0,
+    11, 2,  1,  16, 0, 12, 2,  17, 1,  0, 13, 2,  12, 4,  0, 14, 2,  15, 0,  0,
+    16, 2,  14, 4,  0, 16, 2,  15, 1,  0, 17, 2,  16, 4,  0, 18, 2,  17, 4,  0,
+    19, 2,  17, 4,  0, 20, 2,  18, 4,  0, 20, 2,  19, 4,  0, 21, 2,  9,  14, 0,
+    22, 2,  1,  27, 0, 22, 2,  21, 4,  0, 22, 2,  10, 14, 0, 23, 2,  28, 1,  0,
+    24, 2,  12, 16, 0, 25, 2,  17, 12, 0, 26, 2,  25, 4,  0, 27, 2,  14, 1,  0,
+    28, 2,  27, 4,  0, 28, 2,  10, 15, 0, 14, 3,  15, 2,  0, 17, 3,  16, 6,  0,
+    1,  3,  6,  0,  0, 1,  3,  6,  0,  0, 1,  3,  6,  0,  0, 1,  3,  6,  0,  0,
+    1,  3,  6,  0,  0, 1,  3,  2,  4,  0, 1,  0,  0,  0,  0, 1,  0,  0,  0,  0,
+    1,  0,  0,  0,  0, 1,  0,  0,  0,  0, 1,  4,  5,  0,  0, 1,  6,  5,  2,  0,
+    1,  6,  0,  3,  0, 1,  6,  4,  0,  0, 1,  7,  0,  6,  0, 1,  7,  5,  4,  0,
+    9,  1,  8,  0,  0, 10, 1,  12, 0,  0, 11, 1,  9,  0,  0, 12, 1,  13, 0,  0,
+    13, 1,  12, 0,  0, 1,  16, 17, 0,  0, 1,  16, 14, 0,  0, 17, 1,  18, 0,  0,
+    17, 1,  19, 0,  0, 17, 1,  0,  16, 0, 18, 1,  20, 0,  0, 18, 1,  17, 0,  0,
+    18, 1,  12, 4,  0, 18, 1,  11, 5,  0, 19, 1,  20, 0,  0, 19, 1,  18, 1,  0,
+    19, 1,  17, 0,  0, 19, 1,  12, 4,  0, 19, 1,  11, 5,  0, 20, 1,  18, 0,  0,
+    20, 1,  19, 0,  0, 21, 1,  22, 0,  0, 22, 1,  23, 0,  0, 23, 1,  24, 0,  0,
+    23, 1,  22, 0,  0, 24, 1,  25, 0,  0, 24, 1,  23, 0,  0, 25, 1,  26, 0,  0,
+    25, 1,  24, 0,  0, 26, 1,  25, 0,  0, 1,  27, 11, 14, 0, 28, 1,  0,  27, 0,
+    28, 1,  12, 14, 0, 1,  29, 28, 1,  0, 14, 0,  17, 0,  0, 0,  4,  1,  5,  0,
+    4,  7,  0,  0,  0, 4,  5,  2,  0,  0, 6,  4,  5,  3,  0, 7,  4,  5,  6,  0,
+    7,  4,  5,  6,  0, 8,  4,  14, 1,  0, 9,  4,  1,  16, 0, 10, 4,  17, 1,  0,
+    10, 4,  9,  5,  0, 11, 4,  17, 1,  0, 12, 4,  20, 0,  0, 12, 4,  10, 5,  0,
+    12, 4,  11, 5,  0, 13, 4,  12, 5,  0, 14, 4,  15, 1,  0, 16, 4,  14, 5,  0,
+    17, 4,  5,  16, 0, 18, 4,  17, 5,  0, 19, 4,  17, 5,  0, 20, 4,  18, 5,  0,
+    20, 4,  19, 5,  0, 21, 4,  1,  27, 0, 22, 4,  28, 1,  0, 22, 4,  1,  29, 0,
+    22, 4,  21, 5,  0, 22, 4,  12, 14, 0, 23, 4,  22, 5,  0, 24, 4,  23, 5,  0,
+    26, 4,  25, 5,  0, 28, 4,  5,  27, 0, 6,  7,  3,  0,  0, 6,  7,  3,  0,  0,
+    10, 6,  17, 4,  0, 12, 6,  13, 3,  0, 12, 6,  19, 4,  0, 14, 6,  15, 4,  0,
+    17, 6,  7,  16, 0, 8,  3,  14, 2,  0, 8,  10, 21, 1,  0, 8,  12, 22, 1,  0,
+    9,  3,  16, 2,  0, 9,  0,  10, 1,  0, 9,  5,  17, 1,  0, 9,  10, 22, 1,  0,
+    9,  12, 23, 1,  0, 9,  13, 24, 1,  0, 9,  14, 27, 0,  0, 9,  15, 14, 16, 0,
+    9,  17, 28, 1,  0, 9,  27, 22, 14, 0, 10, 3,  16, 4,  0, 10, 0,  12, 1,  0,
+    10, 22, 0,  0,  0, 10, 12, 24, 1,  0, 10, 13, 12, 0,  0, 10, 14, 28, 0,  0,
+    10, 27, 23, 14, 0, 11, 30, 10, 30, 0, 31, 11, 31, 10, 0, 11, 3,  14, 1,  4,
+    11, 3,  14, 5,  0, 11, 0,  12, 1,  0, 11, 5,  20, 0,  0, 11, 5,  10, 5,  0,
+    11, 12, 24, 1,  0, 11, 13, 12, 0,  0, 11, 14, 10, 14, 0, 11, 15, 10, 15, 0,
+    11, 15, 17, 14, 0, 26, 11, 25, 12, 0, 12, 3,  19, 2,  0, 12, 3,  17, 4,  0,
+    12, 7,  13, 6,  0, 12, 26, 0,  0,  0, 12, 25, 1,  0,  0, 12, 16, 13, 14, 0,
+    17, 12, 13, 16, 0, 12, 20, 18, 13, 0, 12, 20, 19, 13, 0, 24, 12, 23, 13, 0,
+    26, 12, 25, 13, 0, 16, 14, 1,  0,  0, 16, 14, 1,  0,  0, 16, 3,  14, 6,  0,
+    18, 3,  17, 6,  0, 19, 3,  17, 6,  0, 21, 3,  14, 16, 0, 21, 0,  22, 1,  0,
+    23, 3,  17, 16, 0, 24, 22, 0,  0,  0, 25, 3,  24, 6,  0, 27, 3,  14, 4,  0,
+    27, 22, 14, 0,  0};
+  const int nuv[885] = {
+    -2, 1,  0, 0, 0, -1, -1, 1, 0, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 0, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 2, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 0, 0, -1, -1, 1, 0, 0, -1, -1, 1, 0, 0, -1, -1, 1, 0, 0,
+    -1, -1, 1, 0, 0, -1, -1, 1, 1, 0, -2, 1,  0, 0, 0, -2, 1,  0, 0, 0,
+    -2, 1,  0, 0, 0, -2, 1,  0, 0, 0, -1, -1, 1, 0, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 2, 0, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 0, 0, -1, -1, 1, 1, 0, -1, -1, 1, 0, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 0, 0, -1, -1, 1, 1, 0, -1, -1, 1, 0, 0,
+    -1, -1, 1, 0, 0, -1, -1, 1, 1, 0, -1, -1, 1, 0, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 0, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 0, 0, -1, -1, 1, 0, 0, -1, -1, 1, 0, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 0, 0, -1, -1, 1, 1, 0, -1, -1, 1, 0, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 0, 0, -1, -1, 1, 1, 0,
+    -2, 1,  0, 0, 0, -2, 1,  1, 0, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 0, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -2, 1,  1, 0, 0, -2, 1,  1, 0, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 0, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -2, 1,  1, 0, 0, -1, -1, 1, 1, 0, -1, -1, 2, 0, 0, -1, -1, 1, 0, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 1,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 0, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 2, 0, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -2, 1,  0, 0, 0, -2, 1,  1, 0, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, 1,  1, 0, 0, -1, 1,  1, 0, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0, -1, -1, 1, 1, 0,
+    -1, -1, 1, 1, 0, -1, 1,  1, 0, 0, -1, -1, 1, 1, 0, -1, -1, 2, 1, 0,
+    -2, 1,  2, 0, 0};
+  if (*i < 1) {
+    // Return max num species per reaction
+    *nspec = 5;
+  } else {
+    if (*i > 177) {
+      *nspec = -1;
+    } else {
+      *nspec = ns[*i - 1];
+      for (int j = 0; j < *nspec; ++j) {
+        ki[j] = kiv[(*i - 1) * 5 + j] + 1;
+        nu[j] = nuv[(*i - 1) * 5 + j];
+      }
+    }
+  }
+}
+
+// Returns the progress rates of each reactions
+// Given P, T, and mole fractions
+void
+CKKFKR(
+  amrex::Real* P,
+  amrex::Real* T,
+  amrex::Real* x,
+  amrex::Real* q_f,
+  amrex::Real* q_r)
+{
+  int id;            // loop counter
+  amrex::Real c[32]; // temporary storage
+  amrex::Real PORT =
+    1e6 * (*P) /
+    (8.31446261815324e+07 * (*T)); // 1e6 * P/RT so c goes to SI units
+
+  // Compute conversion, see Eq 10
+  for (id = 0; id < 32; ++id) {
+    c[id] = x[id] * PORT;
+  }
+
+  // convert to chemkin units
+  progressRateFR(q_f, q_r, c, *T);
+
+  // convert to chemkin units
+  for (id = 0; id < 177; ++id) {
+    q_f[id] *= 1.0e-6;
+    q_r[id] *= 1.0e-6;
+  }
+}
+
+// compute the progress rate for each reaction
+// USES progressRate : todo switch to GPU
+void
+progressRateFR(
+  amrex::Real* q_f, amrex::Real* q_r, amrex::Real* sc, amrex::Real T)
+{
+  const amrex::Real tc[5] = {
+    log(T), T, T * T, T * T * T, T * T * T * T}; // temperature cache
+  amrex::Real invT = 1.0 / tc[1];
+  // compute the Gibbs free energy
+  amrex::Real g_RT[32];
+  gibbs(g_RT, tc);
+
+  amrex::Real sc_qss[1];
+  amrex::Real kf_qss[0], qf_qss[0], qr_qss[0];
+  comp_qfqr(q_f, q_r, sc, sc_qss, tc, invT);
+
+  return;
+}
+
+// save atomic weights into array
 void
 atomicWeight(amrex::Real* awt)
 {
-  awt[0] = 15.999400; /*O */
-  awt[1] = 1.007970;  /*H */
-  awt[2] = 12.011150; /*C */
-  awt[3] = 14.006700; /*N */
-  awt[4] = 39.948000; /*AR */
+  awt[0] = 15.999000; // O
+  awt[1] = 1.008000;  // H
+  awt[2] = 12.011000; // C
+  awt[3] = 14.007000; // N
+  awt[4] = 39.950000; // Ar
 }
 
-/*get atomic weight for all elements */
+// get atomic weight for all elements
 void
 CKAWT(amrex::Real* awt)
 {
   atomicWeight(awt);
 }
 
-/*Returns the elemental composition  */
-/*of the speciesi (mdim is num of elements) */
+// Returns the elemental composition
+// of the speciesi (mdim is num of elements)
 void
 CKNCF(int* ncf)
 {
-  int id; /*loop counter */
+  int id; // loop counter
   int kd = 5;
-  /*Zero ncf */
+  // Zero ncf
   for (id = 0; id < kd * 32; ++id) {
     ncf[id] = 0;
   }
 
-  /*H2 */
-  ncf[0 * kd + 1] = 2; /*H */
+  // H2
+  ncf[0 * kd + 1] = 2; // H
 
-  /*H */
-  ncf[1 * kd + 1] = 1; /*H */
+  // H
+  ncf[1 * kd + 1] = 1; // H
 
-  /*O */
-  ncf[2 * kd + 0] = 1; /*O */
+  // O
+  ncf[2 * kd + 0] = 1; // O
 
-  /*O2 */
-  ncf[3 * kd + 0] = 2; /*O */
+  // O2
+  ncf[3 * kd + 0] = 2; // O
 
-  /*OH */
-  ncf[4 * kd + 0] = 1; /*O */
-  ncf[4 * kd + 1] = 1; /*H */
+  // OH
+  ncf[4 * kd + 1] = 1; // H
+  ncf[4 * kd + 0] = 1; // O
 
-  /*H2O */
-  ncf[5 * kd + 1] = 2; /*H */
-  ncf[5 * kd + 0] = 1; /*O */
+  // H2O
+  ncf[5 * kd + 1] = 2; // H
+  ncf[5 * kd + 0] = 1; // O
 
-  /*HO2 */
-  ncf[6 * kd + 1] = 1; /*H */
-  ncf[6 * kd + 0] = 2; /*O */
+  // HO2
+  ncf[6 * kd + 1] = 1; // H
+  ncf[6 * kd + 0] = 2; // O
 
-  /*H2O2 */
-  ncf[7 * kd + 1] = 2; /*H */
-  ncf[7 * kd + 0] = 2; /*O */
+  // H2O2
+  ncf[7 * kd + 1] = 2; // H
+  ncf[7 * kd + 0] = 2; // O
 
-  /*C */
-  ncf[8 * kd + 2] = 1; /*C */
+  // C
+  ncf[8 * kd + 2] = 1; // C
 
-  /*CH */
-  ncf[9 * kd + 2] = 1; /*C */
-  ncf[9 * kd + 1] = 1; /*H */
+  // CH
+  ncf[9 * kd + 2] = 1; // C
+  ncf[9 * kd + 1] = 1; // H
 
-  /*CH2 */
-  ncf[10 * kd + 2] = 1; /*C */
-  ncf[10 * kd + 1] = 2; /*H */
+  // CH2
+  ncf[10 * kd + 2] = 1; // C
+  ncf[10 * kd + 1] = 2; // H
 
-  /*CH2(S) */
-  ncf[11 * kd + 2] = 1; /*C */
-  ncf[11 * kd + 1] = 2; /*H */
+  // CH2(S)
+  ncf[11 * kd + 2] = 1; // C
+  ncf[11 * kd + 1] = 2; // H
 
-  /*CH3 */
-  ncf[12 * kd + 2] = 1; /*C */
-  ncf[12 * kd + 1] = 3; /*H */
+  // CH3
+  ncf[12 * kd + 2] = 1; // C
+  ncf[12 * kd + 1] = 3; // H
 
-  /*CH4 */
-  ncf[13 * kd + 2] = 1; /*C */
-  ncf[13 * kd + 1] = 4; /*H */
+  // CH4
+  ncf[13 * kd + 2] = 1; // C
+  ncf[13 * kd + 1] = 4; // H
 
-  /*CO */
-  ncf[14 * kd + 2] = 1; /*C */
-  ncf[14 * kd + 0] = 1; /*O */
+  // CO
+  ncf[14 * kd + 2] = 1; // C
+  ncf[14 * kd + 0] = 1; // O
 
-  /*CO2 */
-  ncf[15 * kd + 2] = 1; /*C */
-  ncf[15 * kd + 0] = 2; /*O */
+  // CO2
+  ncf[15 * kd + 2] = 1; // C
+  ncf[15 * kd + 0] = 2; // O
 
-  /*HCO */
-  ncf[16 * kd + 1] = 1; /*H */
-  ncf[16 * kd + 2] = 1; /*C */
-  ncf[16 * kd + 0] = 1; /*O */
+  // HCO
+  ncf[16 * kd + 2] = 1; // C
+  ncf[16 * kd + 1] = 1; // H
+  ncf[16 * kd + 0] = 1; // O
 
-  /*CH2O */
-  ncf[17 * kd + 1] = 2; /*H */
-  ncf[17 * kd + 2] = 1; /*C */
-  ncf[17 * kd + 0] = 1; /*O */
+  // CH2O
+  ncf[17 * kd + 2] = 1; // C
+  ncf[17 * kd + 1] = 2; // H
+  ncf[17 * kd + 0] = 1; // O
 
-  /*CH2OH */
-  ncf[18 * kd + 2] = 1; /*C */
-  ncf[18 * kd + 1] = 3; /*H */
-  ncf[18 * kd + 0] = 1; /*O */
+  // CH2OH
+  ncf[18 * kd + 2] = 1; // C
+  ncf[18 * kd + 1] = 3; // H
+  ncf[18 * kd + 0] = 1; // O
 
-  /*CH3O */
-  ncf[19 * kd + 2] = 1; /*C */
-  ncf[19 * kd + 1] = 3; /*H */
-  ncf[19 * kd + 0] = 1; /*O */
+  // CH3O
+  ncf[19 * kd + 2] = 1; // C
+  ncf[19 * kd + 1] = 3; // H
+  ncf[19 * kd + 0] = 1; // O
 
-  /*CH3OH */
-  ncf[20 * kd + 2] = 1; /*C */
-  ncf[20 * kd + 1] = 4; /*H */
-  ncf[20 * kd + 0] = 1; /*O */
+  // CH3OH
+  ncf[20 * kd + 2] = 1; // C
+  ncf[20 * kd + 1] = 4; // H
+  ncf[20 * kd + 0] = 1; // O
 
-  /*C2H */
-  ncf[21 * kd + 2] = 2; /*C */
-  ncf[21 * kd + 1] = 1; /*H */
+  // C2H
+  ncf[21 * kd + 2] = 2; // C
+  ncf[21 * kd + 1] = 1; // H
 
-  /*C2H2 */
-  ncf[22 * kd + 2] = 2; /*C */
-  ncf[22 * kd + 1] = 2; /*H */
+  // C2H2
+  ncf[22 * kd + 2] = 2; // C
+  ncf[22 * kd + 1] = 2; // H
 
-  /*C2H3 */
-  ncf[23 * kd + 2] = 2; /*C */
-  ncf[23 * kd + 1] = 3; /*H */
+  // C2H3
+  ncf[23 * kd + 2] = 2; // C
+  ncf[23 * kd + 1] = 3; // H
 
-  /*C2H4 */
-  ncf[24 * kd + 2] = 2; /*C */
-  ncf[24 * kd + 1] = 4; /*H */
+  // C2H4
+  ncf[24 * kd + 2] = 2; // C
+  ncf[24 * kd + 1] = 4; // H
 
-  /*C2H5 */
-  ncf[25 * kd + 2] = 2; /*C */
-  ncf[25 * kd + 1] = 5; /*H */
+  // C2H5
+  ncf[25 * kd + 2] = 2; // C
+  ncf[25 * kd + 1] = 5; // H
 
-  /*C2H6 */
-  ncf[26 * kd + 2] = 2; /*C */
-  ncf[26 * kd + 1] = 6; /*H */
+  // C2H6
+  ncf[26 * kd + 2] = 2; // C
+  ncf[26 * kd + 1] = 6; // H
 
-  /*HCCO */
-  ncf[27 * kd + 1] = 1; /*H */
-  ncf[27 * kd + 2] = 2; /*C */
-  ncf[27 * kd + 0] = 1; /*O */
+  // HCCO
+  ncf[27 * kd + 2] = 2; // C
+  ncf[27 * kd + 1] = 1; // H
+  ncf[27 * kd + 0] = 1; // O
 
-  /*CH2CO */
-  ncf[28 * kd + 2] = 2; /*C */
-  ncf[28 * kd + 1] = 2; /*H */
-  ncf[28 * kd + 0] = 1; /*O */
+  // CH2CO
+  ncf[28 * kd + 2] = 2; // C
+  ncf[28 * kd + 1] = 2; // H
+  ncf[28 * kd + 0] = 1; // O
 
-  /*HCCOH */
-  ncf[29 * kd + 2] = 2; /*C */
-  ncf[29 * kd + 0] = 1; /*O */
-  ncf[29 * kd + 1] = 2; /*H */
+  // HCCOH
+  ncf[29 * kd + 2] = 2; // C
+  ncf[29 * kd + 1] = 2; // H
+  ncf[29 * kd + 0] = 1; // O
 
-  /*N2 */
-  ncf[30 * kd + 3] = 2; /*N */
+  // N2
+  ncf[30 * kd + 3] = 2; // N
 
-  /*AR */
-  ncf[31 * kd + 4] = 1; /*AR */
+  // AR
+  ncf[31 * kd + 4] = 1; // Ar
 }
 
-/* Returns the vector of strings of element names */
+// Returns the vector of strings of element names
 void
 CKSYME_STR(amrex::Vector<std::string>& ename)
 {
@@ -172,10 +364,10 @@ CKSYME_STR(amrex::Vector<std::string>& ename)
   ename[1] = "H";
   ename[2] = "C";
   ename[3] = "N";
-  ename[4] = "AR";
+  ename[4] = "Ar";
 }
 
-/* Returns the vector of strings of species names */
+// Returns the vector of strings of species names
 void
 CKSYMS_STR(amrex::Vector<std::string>& kname)
 {
@@ -214,7 +406,7 @@ CKSYMS_STR(amrex::Vector<std::string>& kname)
   kname[31] = "AR";
 }
 
-/*compute the sparsity pattern of the chemistry Jacobian */
+// compute the sparsity pattern of the chemistry Jacobian
 void
 SPARSITY_INFO(int* nJdata, const int* consP, int NCELLS)
 {
@@ -237,7 +429,7 @@ SPARSITY_INFO(int* nJdata, const int* consP, int NCELLS)
   *nJdata = NCELLS * nJdata_tmp;
 }
 
-/*compute the sparsity pattern of the system Jacobian */
+// compute the sparsity pattern of the system Jacobian
 void
 SPARSITY_INFO_SYST(int* nJdata, const int* consP, int NCELLS)
 {
@@ -264,8 +456,8 @@ SPARSITY_INFO_SYST(int* nJdata, const int* consP, int NCELLS)
   *nJdata = NCELLS * nJdata_tmp;
 }
 
-/*compute the sparsity pattern of the simplified (for preconditioning) system
- * Jacobian */
+// compute the sparsity pattern of the simplified (for preconditioning) system
+// Jacobian
 void
 SPARSITY_INFO_SYST_SIMPLIFIED(int* nJdata, const int* consP)
 {
@@ -292,8 +484,8 @@ SPARSITY_INFO_SYST_SIMPLIFIED(int* nJdata, const int* consP)
   nJdata[0] = nJdata_tmp;
 }
 
-/*compute the sparsity pattern of the chemistry Jacobian in CSC format -- base 0
- */
+// compute the sparsity pattern of the chemistry Jacobian in CSC format -- base
+// 0
 void
 SPARSITY_PREPROC_CSC(int* rowVals, int* colPtrs, const int* consP, int NCELLS)
 {
@@ -321,8 +513,8 @@ SPARSITY_PREPROC_CSC(int* rowVals, int* colPtrs, const int* consP, int NCELLS)
   }
 }
 
-/*compute the sparsity pattern of the chemistry Jacobian in CSR format -- base 0
- */
+// compute the sparsity pattern of the chemistry Jacobian in CSR format -- base
+// 0
 void
 SPARSITY_PREPROC_CSR(
   int* colVals, int* rowPtrs, const int* consP, int NCELLS, int base)
@@ -367,8 +559,8 @@ SPARSITY_PREPROC_CSR(
   }
 }
 
-/*compute the sparsity pattern of the system Jacobian */
-/*CSR format BASE is user choice */
+// compute the sparsity pattern of the system Jacobian
+// CSR format BASE is user choice
 void
 SPARSITY_PREPROC_SYST_CSR(
   int* colVals, int* rowPtr, const int* consP, int NCELLS, int base)
@@ -423,9 +615,8 @@ SPARSITY_PREPROC_SYST_CSR(
   }
 }
 
-/*compute the sparsity pattern of the simplified (for precond) system Jacobian
- * on CPU */
-/*BASE 0 */
+// compute the sparsity pattern of the simplified (for precond) system Jacobian
+// on CPU BASE 0
 void
 SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(
   int* rowVals, int* colPtrs, int* indx, const int* consP)
@@ -457,9 +648,8 @@ SPARSITY_PREPROC_SYST_SIMPLIFIED_CSC(
   }
 }
 
-/*compute the sparsity pattern of the simplified (for precond) system Jacobian
- */
-/*CSR format BASE is under choice */
+// compute the sparsity pattern of the simplified (for precond) system Jacobian
+// CSR format BASE is under choice
 void
 SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
   int* colVals, int* rowPtr, const int* consP, int base)
@@ -507,5 +697,3 @@ SPARSITY_PREPROC_SYST_SIMPLIFIED_CSR(
     }
   }
 }
-
-#endif

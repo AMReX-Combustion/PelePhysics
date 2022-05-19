@@ -359,7 +359,7 @@ The resulting temperature evolution for all cells in the y-direction is displaye
 
 
 To go further: ReactEval_C with CVODE and the KLU library
-----------------------------------------------------------
+---------------------------------------------------------
 
 The GNUmakefile
 ^^^^^^^^^^^^^^^
@@ -472,7 +472,7 @@ The same series of tests are performed for a mixture of n-dodecane and air (see 
 Current Limitations
 -------------------
 
-Note that currently, all sparse operations rely on an Analytical Jacobian. This AJ is provided via the chemistry routines dumped by the Fuego code. Those routines are generated in a pre-processing step, when the sparsity pattern of the AJ is still unknown. As such, all entries of the AJ are computed at all times, and when a sparsity solver is chosen, the AJ is in fact "sparsified" to take advantage of the sparse linear algebra. The "sparsification" process involves a series of loop in the cpp that takes a significant amount of the CPU time most of the time. However, it is always good to verify that this is the case. `AMREX`'s ``TINY_PROFILER`` features is a handy tool to do so.
+Note that currently, all sparse operations rely on an Analytical Jacobian. This AJ is provided via the chemistry routines dumped by the CEPTR code. Those routines are generated in a pre-processing step, when the sparsity pattern of the AJ is still unknown. As such, all entries of the AJ are computed at all times, and when a sparsity solver is chosen, the AJ is in fact "sparsified" to take advantage of the sparse linear algebra. The "sparsification" process involves a series of loop in the cpp that takes a significant amount of the CPU time most of the time. However, it is always good to verify that this is the case. `AMREX`'s ``TINY_PROFILER`` features is a handy tool to do so.
 
 .. _sec:subssubsTricks:
 

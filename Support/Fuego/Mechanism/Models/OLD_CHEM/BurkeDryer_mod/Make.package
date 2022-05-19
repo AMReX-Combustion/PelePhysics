@@ -1,4 +1,0 @@
-CEXE_sources+=BurkeDryer_mod.cpp
-
-VPATH_LOCATIONS +=  $(CHEM_DIR)/PMFs
-

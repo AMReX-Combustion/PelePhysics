@@ -14,7 +14,7 @@ What we will call the `PeleSuite` is currently composed of 3 separate codes:
 - `PeleLM <https://github.com/AMReX-Combustion/PeleLM>`_ is an adaptive-mesh Low-Mach number hydrodynamics code for reacting flows. Note that by the time this documentation is written, `PeleLM` does **not** rely on `PelePhysics` yet, and uses in place a `ChemDriver` object. Follow the link to learn more.
 - `PeleC <https://github.com/AMReX-Combustion/PeleC>`_ is an adaptive-mesh compressible hydrodynamics code for reacting flows.
 
-All three codes rely on `AMREX <https://amrex-codes.github.io/amrex>`_, which is a software frameworks that provides the data structure and enable massive parallelization.
+All three codes rely on `AMReX <https://amrex-codes.github.io/amrex>`_, which is a software frameworks that provides the data structure and enable massive parallelization.
 
 .. |a| image:: ./Visualization/PeleSuite.png
 
@@ -77,8 +77,11 @@ How to naviguate this documentation
 - A CVODE version running on **GPU** is also technically available but the documentation is a WIP. The interested user can   
   contact code developers for additional information
 
-- `PelePhysics` uses an automatic chemistry-related routine generator: **Fuego**. Fuego is part of 
-  the sources of `PelePhysics`. With Fuego, a unique chemistry file is generated for a specific 
-  kinetic scheme. The structure of the chemistry file is discussed in section (needs reference), along with instructions to
-  generate your own (all you need are chemistry files in the famous CHEMKIN format).
-  Note that `PelePhysics` already offers a large choice of more than 20 different kinetic schemes.
+- `PelePhysics` uses an automatic chemistry-related routine generator:
+  **CEPTR**. CEPTR is part of the sources of `PelePhysics`. With
+  CEPTR, a unique chemistry file is generated for a specific kinetic
+  scheme. Instructions to generate your own chemistry files (all you
+  need are chemistry files in the famous `Cantera
+  <https://cantera.org>`_ yaml format) are discussed in section
+  :ref:`sec:ceptr`.  Note that `PelePhysics` already offers a large
+  choice of more than 20 different kinetic schemes.

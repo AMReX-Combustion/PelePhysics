@@ -1,0 +1,64 @@
+[tool.poetry]
+name = "ceptr"
+version = "0.1.0"
+description = ""
+authors = ["Marc Henry de Frahan <marc.henrydefrahan@nrel.gov>", "Lucas Esclapez", "Jon Rood", "Hari Sitaraman", "Marc Day", "Anne Felden", "Julia Ream", "Malik Hassanaly"]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.11"
+Cantera = ">=2.6.0"
+Pint = "^0.19.1"
+PyYAML = "^6.0"
+networkx = "^2.8"
+matplotlib = "^3.5.2"
+scipy = "^1.8.0"
+numpy = "^1.22.3"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+black = {version = "^22.3"}
+isort = "^5.9.3"
+ipython = "^8.2.0"
+flake8 = "^4.0.1"
+flake8-bugbear = "^22.4.25"
+pep8-naming = "^0.12.1"
+flake8-docstrings = "^1.6.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+convert = "ceptr.ceptr:main"
+qssa = "ceptr.qssa:main"
+
+[tool.black]
+line-length = 79
+target-version = ['py38']
+preview-string-processing = true
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+)
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 79
