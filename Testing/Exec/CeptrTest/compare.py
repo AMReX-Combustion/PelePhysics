@@ -38,7 +38,15 @@ dashseq = [
 ]
 markertype = ["s", "d", "o", "p", "h"]
 
-attrs = {"temperature": {"label": r"$T~[\mathrm{K}]$"}}
+attrs = {
+    "temperature": {"label": r"$T~[\mathrm{K}]$", "cgs2mks": 1.0, "rtol": 1e-2},
+    "density": {
+        "label": r"$\rho~[\mathrm{kg}/\mathrm{m^3}]$",
+        "cgs2mks": 1e3,
+        "rtol": 1e-6,
+    },
+    "viscosity": {"label": r"$\mu~[\mathrm{Pa~s}]$", "cgs2mks": 1e-1, "rtol": 1e-2},
+}
 
 
 def main():
@@ -55,7 +63,11 @@ def main():
     cdf = pd.read_csv(args.cname)
     pdf = pd.read_csv(args.pname)
 
-    fields = ["temperature"]
+    fields = ["temperature", "density"]
+
+    for field in fields:
+        pdf[field] *= attrs[field]["cgs2mks"]
+
     for field in fields:
         plt.figure(field)
         p = plt.plot(cdf.time, cdf[field], lw=2, color=cmap[0], label="Cantera")
@@ -77,7 +89,7 @@ def main():
             fpdf.savefig(dpi=300)
 
     for field in fields:
-        npt.assert_allclose(cdf[field], pdf[field], rtol=1e-2, atol=0)
+        npt.assert_allclose(cdf[field], pdf[field], rtol=attrs[field]["rtol"], atol=0)
 
 
 if __name__ == "__main__":

@@ -131,7 +131,7 @@ main(int argc, char* argv[])
         if (reactFunc == 1) {
           doReact_ode_iE1(
             lev, dt, ndt, omp_thread, mfi, mf, rY_source_ext, mfE,
-            rY_source_energy_ext, fctCount, dummyMask, reactor);
+            rY_source_energy_ext, fctCount, dummyMask, reactor, trans_parms);
 
           // Reaction at constant pressure
         } else if (reactFunc == 2) {
