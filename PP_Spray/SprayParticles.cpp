@@ -168,29 +168,28 @@ SprayParticleContainer::readSprayParams(
 
   // List of known derived spray quantities
   std::vector<std::string> derive_name = {
-    "spray_total_mass", "spray_num_particles", "spray_avg_mass",
-    "spray_avg_dia", "spray_avg_temp"};
-  int plot_derive_vars = 1;
-  pp.query("plot_derive_vars", plot_derive_vars);
-  int plot_total_species = 0;
-  pp.query("plot_total_species", plot_total_species);
-  int plot_avg_species = 0;
-  pp.query("plot_avg_species", plot_avg_species);
+    "spray_mass",
+    "spray_num",
+    "spray_vol",
+    "spray_surf_area",
+    "spray_vol_frac",
+    "d10",
+    "d32",
+    AMREX_D_DECL("spray_x_vel", "spray_y_vel", "spray_z_vel")};
+  int derive_plot_vars = 1;
+  pp.query("derive_plot_vars", derive_plot_vars);
+  int derive_plot_species = 0;
+  pp.query("derive_plot_species", derive_plot_species);
   // If derive_spray_vars if present, add above spray quantities in the same
   // order
-  if (plot_derive_vars) {
+  if (derive_plot_vars) {
     for (int ivar = 0; ivar < derive_name.size(); ++ivar) {
       derivePlotVars.push_back(derive_name[ivar]);
     }
   }
-  if (plot_total_species) {
+  if (derive_plot_species && SPRAY_FUEL_NUM > 1) {
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      derivePlotVars.push_back("spray_total_mass_" + sprayFuelNames[spf]);
-    }
-  }
-  if (plot_avg_species) {
-    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-      derivePlotVars.push_back("spray_avg_mass_" + sprayFuelNames[spf]);
+      derivePlotVars.push_back("spray_mass_" + sprayFuelNames[spf]);
     }
   }
 

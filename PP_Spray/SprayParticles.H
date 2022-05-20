@@ -135,7 +135,7 @@ public:
   void computeDerivedVars(
     amrex::MultiFab& mf_var,
     const int level,
-    const int start_comp,
+    const int start_indx,
     const amrex::Vector<std::string> derivePlotVars,
     std::string* sprayFuelNames);
 
