@@ -168,13 +168,14 @@ SprayParticleContainer::readSprayParams(
 
   // List of known derived spray quantities
   std::vector<std::string> derive_name = {
-    "spray_mass",
-    "spray_num",
-    "spray_vol",
-    "spray_surf_area",
-    "spray_vol_frac",
-    "d10",
-    "d32",
+    "spray_mass",      // Total liquid mass in a cell
+    "spray_num",       // Number of spray droplets in a cell
+    "spray_vol",       // Total liquid volume in a cell
+    "spray_surf_area", // Total liquid surface area in a cell
+    "spray_vol_frac",  // Volume fraction of liquid in cell
+    "d10",             // Average diameter
+    "d32",             // SMD
+    "spray_temp",      // Mass-weighted average temperature
     AMREX_D_DECL("spray_x_vel", "spray_y_vel", "spray_z_vel")};
   int derive_plot_vars = 1;
   pp.query("derive_plot_vars", derive_plot_vars);

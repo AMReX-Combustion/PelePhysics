@@ -214,7 +214,7 @@ calcVaporState(
     sum3 += Y_l[spf] / mw_fuel;
   }
   amrex::Real totalmwx = gpv.mw_mix * (sum3 * gpv.p_fluid - sum1) + sum2;
-  amrex::Real sumYSkin = 0.;   // Mass fraction of fuel in the modeled skin phase
+  amrex::Real sumYSkin = 0.; // Mass fraction of fuel in the modeled skin phase
   amrex::Real sumYfFluid = 0.; // Mass fraction of fuel in the gas phase
   amrex::Real sumYVap = 0.;    // Mass fraction of fuel in the vapor phase
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -300,11 +300,16 @@ calculateSpraySource(
   int nsub = 1;
   amrex::Real pmass = M_PI / 6. * rho_part * std::pow(dia_part, 3);
   amrex::Real startmass = pmass;
+  amrex::Real hg_g = 0.;
+  eos.TY2H(gpv.T_fluid, gpv.Y_fluid.data(), hg_g);
+  hg_g *= SPU.eng_conv;
   while (isub <= nsub) {
     amrex::Real cp_part = 0.; // Cp of the liquid state
     amrex::Real Tcrit = 0.;   // Liquid mixture critical temperature
+    amrex::Real Tboil = 0.;
     for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
       Tcrit += Y_part[spf] * fdat.critT[spf];
+      Tboil += Y_part[spf] * fdat.boilT[spf];
       cp_part += Y_part[spf] * fdat.cp[spf];
     }
     T_part = amrex::min(0.999 * Tcrit, T_part);
@@ -314,10 +319,12 @@ calculateSpraySource(
     // Calculate the C_p at the skin temperature for each species
     eos.T2Cpi(T_skin, cp_n.data());
     eos.T2Hi(T_part, h_part.data());
+    amrex::Real hg_s = 0.;
     for (int n = 0; n < NUM_SPECIES; ++n) {
       Y_skin[n] = 0.;
       h_part[n] *= SPU.eng_conv;
       cp_n[n] *= SPU.eng_conv;
+      hg_s += gpv.Y_fluid[n] * h_part[n];
     }
     amrex::Real cp_skin = 0.; // Average C_p in modeled skin phase
     amrex::Real mw_skin = 0.; // Average molar mass of skin phase
@@ -387,6 +394,9 @@ calculateSpraySource(
       amrex::Real Pr_skin = mu_skin * cp_skin / lambda_skin;
       amrex::Real powR = amrex::max(std::pow(Reyn, 0.077), 1.);
       amrex::Real rhoDtotal = 0.;
+      amrex::Real Psat_total = 0.;
+      amrex::Real maxPsat = 0.;
+      int maxY = -1;
       for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
         const int fspec = fdat.indx[spf];
         // Convert mass diffusion coefficient from mixture average
@@ -397,6 +407,11 @@ calculateSpraySource(
           Y_part[spf] * gpv.invmw[fspec] * Psat[spf] / sumXVap;
         Ddiag[fspec] *= X_norm;
         rhoDtotal += Ddiag[fspec];
+        Psat_total += Psat[spf];
+        if (Psat[spf] > maxPsat) {
+          maxY = spf;
+          maxPsat = Psat[spf];
+        }
       }
       amrex::Real Sc_skin = mu_skin / rhoDtotal;
       amrex::Real logB = std::log(1. + B_M);
@@ -404,11 +419,28 @@ calculateSpraySource(
       amrex::Real Sh_0 = 1. + powR * std::cbrt(1. + Reyn * Sc_skin);
       amrex::Real Sh_num = 2. + (Sh_0 - 2.) * invFM;
       amrex::Real mdotcoeff = M_PI * dia_part * Sh_num * logB;
-      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-        const int fspec = fdat.indx[spf];
-        if (Y_part[spf] > 0. && Psat[spf] > gpv.X_fluid[fspec] * gpv.p_fluid) {
-          mi_dot[spf] = -amrex::max(Ddiag[fspec] * mdotcoeff, 0.);
-          m_dot += mi_dot[spf];
+      // Check if flash boiling is occuring, if so, only the species
+      // with the higher saturation pressure is assumed to evaporate
+      // TODO: determine best way for multi-component flash boiling
+      if (Psat_total > 0.999 * gpv.p_fluid && T_part > Tboil && false) {
+        // Max operation necessary for LLVM compiler
+        amrex::Real delTb = amrex::max(0., T_part - Tboil);
+        amrex::Real alpha = calcAlpha(delTb);
+        amrex::Real Gf =
+          M_PI * dia_part * dia_part * alpha * delTb / L_fuel[maxY];
+        amrex::Real dh = (hg_g - hg_s) / L_fuel[maxY];
+        amrex::Real coeff = M_PI * lambda_skin / cp_skin * dia_part * Sh_num;
+        amrex::Real G = calcFlashVaporRate(dh, coeff, Gf);
+        mi_dot[maxY] = -amrex::max(G + Gf, 0.);
+        m_dot += mi_dot[maxY];
+      } else {
+        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+          const int fspec = fdat.indx[spf];
+          if (
+            Y_part[spf] > 0. && Psat[spf] > gpv.X_fluid[fspec] * gpv.p_fluid) {
+            mi_dot[spf] = -amrex::max(Ddiag[fspec] * mdotcoeff, 0.);
+            m_dot += mi_dot[spf];
+          }
         }
       }
 

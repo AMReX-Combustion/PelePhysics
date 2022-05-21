@@ -37,7 +37,8 @@ SprayParticleContainer::computeDerivedVars(
   const int volf_indx = surf_indx + 1;
   const int d10_indx = volf_indx + 1;
   const int d32_indx = d10_indx + 1;
-  const int vel_indx = d32_indx + 1;
+  const int temp_indx = d32_indx + 1;
+  const int vel_indx = temp_indx + 1;
   const auto domain = this->Geom(level).Domain();
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
     const Box tile_box = pti.tilebox();
@@ -48,8 +49,8 @@ SprayParticleContainer::computeDerivedVars(
     Array4<Real> const& vararr = mf_var.array(pti, start_indx);
     amrex::ParallelFor(
       Np, [pstruct, SPI, fdat, vararr, plo, dxi, cell_vol, mass_indx, num_indx,
-           vol_indx, surf_indx, volf_indx, d10_indx, d32_indx, vel_indx,
-           total_spec_indx] AMREX_GPU_DEVICE(int pid) noexcept {
+           vol_indx, surf_indx, volf_indx, d10_indx, d32_indx, temp_indx,
+           vel_indx, total_spec_indx] AMREX_GPU_DEVICE(int pid) noexcept {
         ParticleType& p = pstruct[pid];
         if (p.id() > 0) {
           RealVect lxc = (p.pos() - plo) * dxi;
@@ -76,6 +77,7 @@ SprayParticleContainer::computeDerivedVars(
           Gpu::Atomic::Add(
             &vararr(ijkc, d32_indx),
             num_ppp * vol / 6.); // To be divided by surf later
+          Gpu::Atomic::Add(&vararr(ijkc, temp_indx), num_ppp * pmass * T_part);
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
             Gpu::Atomic::Add(
               &vararr(ijkc, vel_indx + dir),
@@ -96,6 +98,9 @@ SprayParticleContainer::computeDerivedVars(
     varfab.protected_divide(
       varfab, tile_box, tile_box, start_indx + surf_indx, start_indx + d32_indx,
       1); // Get d32
+    varfab.protected_divide(
+      varfab, tile_box, tile_box, start_indx + mass_indx,
+      start_indx + temp_indx, 1);
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       varfab.protected_divide(
         varfab, tile_box, tile_box, start_indx + mass_indx,
