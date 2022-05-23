@@ -24,12 +24,26 @@ def main():
 
     mechanism()
 
-    lst = [{"time": time, "temperature": mechanism.T}]
+    lst = [
+        {
+            "time": time,
+            "temperature": mechanism.T,
+            "density": mechanism.density,
+            "viscosity": mechanism.viscosity,
+        }
+    ]
     for _n in range(ndt):
         time += dt / ndt
         sim.advance(time)
         states.append(r.thermo.state, t=time * 1e3)
-        lst.append({"time": time, "temperature": r.T})
+        lst.append(
+            {
+                "time": time,
+                "temperature": r.T,
+                "density": states[-1].density,
+                "viscosity": states[-1].viscosity,
+            }
+        )
 
     df = pd.DataFrame(lst)
 

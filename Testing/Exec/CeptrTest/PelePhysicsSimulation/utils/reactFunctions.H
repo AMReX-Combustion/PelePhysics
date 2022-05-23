@@ -11,7 +11,9 @@ doReact_ode_iE1(
   amrex::Vector<amrex::MultiFab>& rY_source_energy_ext,
   amrex::Vector<amrex::MultiFab>& fctCount,
   amrex::Vector<amrex::iMultiFab>& dummyMask,
-  std::unique_ptr<pele::physics::reactions::ReactorBase>& reactor)
+  std::unique_ptr<pele::physics::reactions::ReactorBase>& reactor,
+  pele::physics::transport::TransportParams<
+    pele::physics::PhysicsType::transport_type>& trans_parms)
 {
 
   BL_PROFILE_VAR_NS("React", ReactInLoop);
@@ -33,13 +35,51 @@ doReact_ode_iE1(
                    << " integrating " << nc << " cells" << std::endl;
     ;
   }
+
+  // transport needs
+  auto const* ltransparm = trans_parms.device_trans_parm();
+  amrex::FArrayBox rho_fab(box, 1);
+  amrex::Elixir rho_fab_eli = rho_fab.elixir();
+  auto const& rho_a = rho_fab.array();
+  amrex::FArrayBox Y_fab(box, NUM_SPECIES);
+  amrex::Elixir Y_fab_eli = Y_fab.elixir();
+  auto const& Y_a = Y_fab.array();
+  amrex::FArrayBox D_fab(box, NUM_SPECIES);
+  amrex::Elixir D_fab_eli = D_fab.elixir();
+  auto const& D_a = D_fab.array();
+  amrex::FArrayBox mu_fab(box, 1);
+  amrex::Elixir mu_fab_eli = mu_fab.elixir();
+  auto const& mu_a = mu_fab.array();
+  amrex::FArrayBox xi_fab(box, 1);
+  amrex::Elixir xi_fab_eli = xi_fab.elixir();
+  auto const& xi_a = xi_fab.array();
+  amrex::FArrayBox lam_fab(box, 1);
+  amrex::Elixir lam_fab_eli = lam_fab.elixir();
+  auto const& lam_a = lam_fab.array();
+  // Transport
+  amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+    rho_a(i, j, k) = 0.0;
+    for (int n = 0; n < NUM_SPECIES; n++) {
+      rho_a(i, j, k) += rhoY(i, j, k, n);
+    }
+    for (int n = 0; n < NUM_SPECIES; n++) {
+      Y_a(i, j, k, n) = rhoY(i, j, k, n) / rho_a(i, j, k);
+    }
+  });
+  amrex::launch(box, [=] AMREX_GPU_DEVICE(amrex::Box const& tbx) {
+    auto trans = pele::physics::PhysicsType::transport();
+    trans.get_transport_coeffs(
+      tbx, Y_a, T, rho_a, D_a, mu_a, xi_a, lam_a, ltransparm);
+  });
+
   /* Solve */
   BL_PROFILE_VAR_START(ReactInLoop);
   std::ofstream myfile;
   myfile.open("results.txt");
-  myfile << "time,temperature" << std::endl;
+  myfile << "time,temperature,density,viscosity" << std::endl;
   ;
-  myfile << 0 << "," << T.dataPtr()[0] << std::endl;
+  myfile << 0 << "," << T.dataPtr()[0] << "," << rho_a.dataPtr()[0] << ","
+         << mu_a.dataPtr()[0] << std::endl;
   ;
   double timeElapsed = 0;
   for (int ii = 0; ii < ndt; ++ii) {
@@ -51,10 +91,27 @@ doReact_ode_iE1(
 #endif
     );
 
+    // Transport
+    amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+      rho_a(i, j, k) = 0.0;
+      for (int n = 0; n < NUM_SPECIES; n++) {
+        rho_a(i, j, k) += rhoY(i, j, k, n);
+      }
+      for (int n = 0; n < NUM_SPECIES; n++) {
+        Y_a(i, j, k, n) = rhoY(i, j, k, n) / rho_a(i, j, k);
+      }
+    });
+    amrex::launch(box, [=] AMREX_GPU_DEVICE(amrex::Box const& tbx) {
+      auto trans = pele::physics::PhysicsType::transport();
+      trans.get_transport_coeffs(
+        tbx, Y_a, T, rho_a, D_a, mu_a, xi_a, lam_a, ltransparm);
+    });
+
     dt_incr = dt_lev / ndt;
     timeElapsed += dt_incr;
     amrex::Gpu::Device::streamSynchronize();
-    myfile << timeElapsed << "," << T.dataPtr()[0] << std::endl;
+    myfile << timeElapsed << "," << T.dataPtr()[0] << "," << rho_a.dataPtr()[0]
+           << "," << mu_a.dataPtr()[0] << std::endl;
     ;
   }
   BL_PROFILE_VAR_STOP(ReactInLoop);
