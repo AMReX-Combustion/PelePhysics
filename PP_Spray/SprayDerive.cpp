@@ -92,20 +92,30 @@ SprayParticleContainer::computeDerivedVars(
           }
         }
       });
+#ifdef AMREX_USE_GPU
+    varfab.protected_divide<RunOn::Device>(
+      varfab, start_indx + num_indx, start_indx + d10_indx); // Get d10
+    varfab.protected_divide<RunOn::Device>(
+      varfab, start_indx + surf_indx, start_indx + d32_indx); // Get d32
+    varfab.protected_divide<RunOn::Device>(
+      varfab, start_indx + mass_indx, start_indx + temp_indx);
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+      varfab.protected_divide<RunOn::Device>(
+        varfab, start_indx + mass_indx,
+        start_indx + vel_indx + dir); // Divide momentum by total mass
+    }
+#else
     varfab.protected_divide(
-      varfab, tile_box, tile_box, start_indx + num_indx, start_indx + d10_indx,
-      1); // Get d10
+      varfab, start_indx + num_indx, start_indx + d10_indx); // Get d10
     varfab.protected_divide(
-      varfab, tile_box, tile_box, start_indx + surf_indx, start_indx + d32_indx,
-      1); // Get d32
+      varfab, start_indx + surf_indx, start_indx + d32_indx); // Get d32
     varfab.protected_divide(
-      varfab, tile_box, tile_box, start_indx + mass_indx,
-      start_indx + temp_indx, 1);
+      varfab, start_indx + mass_indx, start_indx + temp_indx);
     for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
       varfab.protected_divide(
-        varfab, tile_box, tile_box, start_indx + mass_indx,
-        start_indx + vel_indx + dir,
-        1); // Divide momentum by total mass
+        varfab, start_indx + mass_indx,
+        start_indx + vel_indx + dir); // Divide momentum by total mass
     }
+#endif
   }
 }
