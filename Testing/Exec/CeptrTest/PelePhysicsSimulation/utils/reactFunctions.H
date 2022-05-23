@@ -33,7 +33,6 @@ doReact_ode_iE1(
   if (omp_thread == 0) {
     amrex::Print() << "  [" << lev << "]"
                    << " integrating " << nc << " cells" << std::endl;
-    ;
   }
 
   // transport needs
@@ -77,10 +76,8 @@ doReact_ode_iE1(
   std::ofstream myfile;
   myfile.open("results.txt");
   myfile << "time,temperature,density,viscosity" << std::endl;
-  ;
   myfile << 0 << "," << T.dataPtr()[0] << "," << rho_a.dataPtr()[0] << ","
          << mu_a.dataPtr()[0] << std::endl;
-  ;
   double timeElapsed = 0;
   for (int ii = 0; ii < ndt; ++ii) {
     tmp_fc = reactor->react(
@@ -112,24 +109,8 @@ doReact_ode_iE1(
     amrex::Gpu::Device::streamSynchronize();
     myfile << timeElapsed << "," << T.dataPtr()[0] << "," << rho_a.dataPtr()[0]
            << "," << mu_a.dataPtr()[0] << std::endl;
-    ;
   }
   BL_PROFILE_VAR_STOP(ReactInLoop);
-  amrex::Print() << "FINAL VALUES" << std::endl;
-  ;
-
-  double rho = rhoY2rho(rhoY);
-  double* y = new double[NUM_SPECIES];
-  memset(y, 0, (NUM_SPECIES) * sizeof(double));
-  rhoY2Y(rhoY, y);
-  print<double>(y, NUM_SPECIES, "Y");
-  print<double>(rho, "rho");
-
-  double sumY = 0;
-  for (int i = 0; i < NUM_SPECIES; i++) {
-    sumY += y[i];
-  }
-  print<double>(sumY, "sumY");
 }
 
 void

@@ -78,8 +78,8 @@ progressRateFR(
 void
 atomicWeight(amrex::Real* awt)
 {
-  awt[0] = 15.999400; // O
-  awt[1] = 14.006700; // N
+  awt[0] = 15.999000; // O
+  awt[1] = 14.007000; // N
 }
 
 // get atomic weight for all elements

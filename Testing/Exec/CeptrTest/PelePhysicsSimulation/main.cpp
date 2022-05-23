@@ -19,23 +19,8 @@
 #include <ReactorBase.H>
 
 // Leanify main script
-#include "utils/printFunctions.H"
-#include "utils/typeFunction.H"
-#include "utils/helperFunctions.H"
 #include "utils/initFunctions.H"
-#include "utils/plotFunctions.H"
 #include "utils/reactFunctions.H"
-
-namespace {
-const std::string level_prefix{"Level_"};
-}
-
-void
-GotoNextLine(std::istream& is)
-{
-  constexpr std::streamsize bl_ignore_max{100000};
-  is.ignore(bl_ignore_max, '\n');
-}
 
 int
 main(int argc, char* argv[])
@@ -157,9 +142,6 @@ main(int argc, char* argv[])
       }
       amrex::Print() << std::endl;
     }
-
-    // ~~~~ Plot
-    plotResult(do_plt, pltfile, finest_level, mf, geoms);
 
     // ~~~~ Finalize
     trans_parms.deallocate();
