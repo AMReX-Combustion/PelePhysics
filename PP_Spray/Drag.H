@@ -422,7 +422,7 @@ calculateSpraySource(
       // Check if flash boiling is occuring, if so, only the species
       // with the higher saturation pressure is assumed to evaporate
       // TODO: determine best way for multi-component flash boiling
-      if (Psat_total > 0.999 * gpv.p_fluid && T_part > Tboil && false) {
+      if (Psat_total > 0.999 * gpv.p_fluid && T_part > Tboil) {
         // Max operation necessary for LLVM compiler
         amrex::Real delTb = amrex::max(0., T_part - Tboil);
         amrex::Real alpha = calcAlpha(delTb);
