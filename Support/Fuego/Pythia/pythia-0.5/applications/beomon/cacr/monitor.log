@@ -1,2 +1,0 @@
-/usr/local/nodemon/monitor: line 10:  7074 Segmentation fault      ./nodeprobe `cat /var/local/nodes` >nodestat.tmp
-/usr/local/nodemon/monitor: line 10: 18736 Segmentation fault      ./nodeprobe `cat /var/local/nodes` >nodestat.tmp

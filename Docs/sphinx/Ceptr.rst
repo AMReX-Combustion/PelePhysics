@@ -26,7 +26,7 @@ There are three ways to use CEPTR to generate C++ mechanism files for a given ch
 1. Using CEPTR directly::
 
      $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
-     $ poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/LiDryer/mechanism.yaml
+     $ poetry run convert -f ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/LiDryer/mechanism.yaml
 
 2. Using a helper script in the directory containing the ``mechanism.yaml`` file::
 
@@ -34,13 +34,13 @@ There are three ways to use CEPTR to generate C++ mechanism files for a given ch
 
 3. Using a helper script in the ``Models`` directory::
 
-     $ bash ${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/converter.sh -f ./LiDryer/mechanism.yaml
+     $ bash ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/converter.sh -f ./LiDryer/mechanism.yaml
 
 
 CEPTR can take a file with a list of ``mechanism.yaml`` files to convert::
 
   $ cd ${PELE_PHYSICS_HOME}/Support/ceptr
-  $ poetry run convert -l ${PELE_PHYSICS_HOME}/Support/Fuego/Mechanism/Models/list_mech
+  $ poetry run convert -l ${PELE_PHYSICS_HOME}/Support/Mechanism/Models/list_mech
 
 
 Converting CHEMKIN files
