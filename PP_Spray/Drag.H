@@ -478,16 +478,18 @@ calculateSpraySource(
       T_part = amrex::min(Tcrit, T_part);
       amrex::Real new_mass = pmass + m_dot * part_dt;
       if (new_mass > mass_eps) {
-        rho_part = 0.;
-        for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
-          Y_part[spf] = amrex::min(
-            1.,
-            amrex::max(
-              0., (Y_part[spf] * pmass + mi_dot[spf] * part_dt) / new_mass));
-          rho_part +=
-            Y_part[spf] / rhoL(fdat, amrex::min(T_part, cBoilT[spf]), spf);
+        if (m_dot > 0.) {
+          rho_part = 0.;
+          for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+            Y_part[spf] = amrex::min(
+              1.,
+              amrex::max(
+                0., (Y_part[spf] * pmass + mi_dot[spf] * part_dt) / new_mass));
+            rho_part +=
+              Y_part[spf] / rhoL(fdat, amrex::min(T_part, cBoilT[spf]), spf);
+          }
+          rho_part = 1. / rho_part;
         }
-        rho_part = 1. / rho_part;
         pmass = new_mass;
         dia_part = std::cbrt(6. * pmass / (M_PI * rho_part));
       } else {
