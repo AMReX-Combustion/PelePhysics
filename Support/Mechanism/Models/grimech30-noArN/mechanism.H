@@ -12826,7 +12826,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   phi_r = sc[3] * sc[6];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1.000000);
+  dlnKcdT =
+    invT * (-(h_RT[1] + 2.000000 * h_RT[3]) + (h_RT[3] + h_RT[6]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -12836,17 +12837,17 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   wdot[3] -= q; // O2
   wdot[6] += q; // HO2
   // d()/d[H]
-  dqdci = +k_f * sc[3];
+  dqdci = +k_f * pow(sc[3], 2.000000);
   J[37] -= dqdci; // dwdot[H]/d[H]
   J[39] -= dqdci; // dwdot[O2]/d[H]
   J[42] += dqdci; // dwdot[HO2]/d[H]
   // d()/d[O2]
-  dqdci = +k_f * sc[1];
+  dqdci = +k_f * sc[1] * 2.000000 * sc[3] - k_r * sc[6];
   J[109] -= dqdci; // dwdot[H]/d[O2]
   J[111] -= dqdci; // dwdot[O2]/d[O2]
   J[114] += dqdci; // dwdot[HO2]/d[O2]
   // d()/d[HO2]
-  dqdci = -k_r;
+  dqdci = -k_r * sc[3];
   J[217] -= dqdci; // dwdot[H]/d[HO2]
   J[219] -= dqdci; // dwdot[O2]/d[HO2]
   J[222] += dqdci; // dwdot[HO2]/d[HO2]
@@ -12865,7 +12866,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   phi_r = sc[5] * sc[6];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1.000000);
+  dlnKcdT =
+    invT * (-(h_RT[1] + h_RT[3] + h_RT[5]) + (h_RT[5] + h_RT[6]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -12875,17 +12877,22 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   wdot[3] -= q; // O2
   wdot[6] += q; // HO2
   // d()/d[H]
-  dqdci = +k_f * sc[3];
+  dqdci = +k_f * sc[3] * sc[5];
   J[37] -= dqdci; // dwdot[H]/d[H]
   J[39] -= dqdci; // dwdot[O2]/d[H]
   J[42] += dqdci; // dwdot[HO2]/d[H]
   // d()/d[O2]
-  dqdci = +k_f * sc[1];
+  dqdci = +k_f * sc[1] * sc[5];
   J[109] -= dqdci; // dwdot[H]/d[O2]
   J[111] -= dqdci; // dwdot[O2]/d[O2]
   J[114] += dqdci; // dwdot[HO2]/d[O2]
+  // d()/d[H2O]
+  dqdci = +k_f * sc[1] * sc[3] - k_r * sc[6];
+  J[181] -= dqdci; // dwdot[H]/d[H2O]
+  J[183] -= dqdci; // dwdot[O2]/d[H2O]
+  J[186] += dqdci; // dwdot[HO2]/d[H2O]
   // d()/d[HO2]
-  dqdci = -k_r;
+  dqdci = -k_r * sc[5];
   J[217] -= dqdci; // dwdot[H]/d[HO2]
   J[219] -= dqdci; // dwdot[O2]/d[HO2]
   J[222] += dqdci; // dwdot[HO2]/d[HO2]
@@ -12904,7 +12911,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   phi_r = sc[6] * sc[30];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1.000000);
+  dlnKcdT =
+    invT * (-(h_RT[1] + h_RT[3] + h_RT[30]) + (h_RT[6] + h_RT[30]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -12914,20 +12922,25 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   wdot[3] -= q; // O2
   wdot[6] += q; // HO2
   // d()/d[H]
-  dqdci = +k_f * sc[3];
+  dqdci = +k_f * sc[3] * sc[30];
   J[37] -= dqdci; // dwdot[H]/d[H]
   J[39] -= dqdci; // dwdot[O2]/d[H]
   J[42] += dqdci; // dwdot[HO2]/d[H]
   // d()/d[O2]
-  dqdci = +k_f * sc[1];
+  dqdci = +k_f * sc[1] * sc[30];
   J[109] -= dqdci; // dwdot[H]/d[O2]
   J[111] -= dqdci; // dwdot[O2]/d[O2]
   J[114] += dqdci; // dwdot[HO2]/d[O2]
   // d()/d[HO2]
-  dqdci = -k_r;
+  dqdci = -k_r * sc[30];
   J[217] -= dqdci; // dwdot[H]/d[HO2]
   J[219] -= dqdci; // dwdot[O2]/d[HO2]
   J[222] += dqdci; // dwdot[HO2]/d[HO2]
+  // d()/d[N2]
+  dqdci = +k_f * sc[1] * sc[3] - k_r * sc[6];
+  J[1081] -= dqdci; // dwdot[H]/d[N2]
+  J[1083] -= dqdci; // dwdot[O2]/d[N2]
+  J[1086] += dqdci; // dwdot[HO2]/d[N2]
   // d()/dT
   J[1261] -= dqdT; // dwdot[H]/dT
   J[1263] -= dqdT; // dwdot[O2]/dT
@@ -13010,7 +13023,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   phi_r = (sc[0] * sc[0]);
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(2.000000 * h_RT[1]) + (h_RT[0]) + 1.000000);
+  dlnKcdT =
+    invT * (-(h_RT[0] + 2.000000 * h_RT[1]) + (2.000000 * h_RT[0]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -13019,11 +13033,11 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   wdot[0] += q;     // H2
   wdot[1] -= 2 * q; // H
   // d()/d[H2]
-  dqdci = -k_r;
+  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * 2.000000 * sc[0];
   J[0] += dqdci;      // dwdot[H2]/d[H2]
   J[1] += -2 * dqdci; // dwdot[H]/d[H2]
   // d()/d[H]
-  dqdci = +k_f * 2.000000 * sc[1];
+  dqdci = +k_f * sc[0] * 2.000000 * sc[1];
   J[36] += dqdci;      // dwdot[H2]/d[H]
   J[37] += -2 * dqdci; // dwdot[H]/d[H]
   // d()/dT
@@ -13040,7 +13054,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   phi_r = sc[0] * sc[5];
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(2.000000 * h_RT[1]) + (h_RT[0]) + 1.000000);
+  dlnKcdT =
+    invT * (-(2.000000 * h_RT[1] + h_RT[5]) + (h_RT[0] + h_RT[5]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -13049,13 +13064,17 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   wdot[0] += q;     // H2
   wdot[1] -= 2 * q; // H
   // d()/d[H2]
-  dqdci = -k_r;
+  dqdci = -k_r * sc[5];
   J[0] += dqdci;      // dwdot[H2]/d[H2]
   J[1] += -2 * dqdci; // dwdot[H]/d[H2]
   // d()/d[H]
-  dqdci = +k_f * 2.000000 * sc[1];
+  dqdci = +k_f * 2.000000 * sc[1] * sc[5];
   J[36] += dqdci;      // dwdot[H2]/d[H]
   J[37] += -2 * dqdci; // dwdot[H]/d[H]
+  // d()/d[H2O]
+  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[0];
+  J[180] += dqdci;      // dwdot[H2]/d[H2O]
+  J[181] += -2 * dqdci; // dwdot[H]/d[H2O]
   // d()/dT
   J[1260] += dqdT;      // dwdot[H2]/dT
   J[1261] += -2 * dqdT; // dwdot[H]/dT
@@ -13070,7 +13089,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   phi_r = sc[0] * sc[15];
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(2.000000 * h_RT[1]) + (h_RT[0]) + 1.000000);
+  dlnKcdT =
+    invT * (-(2.000000 * h_RT[1] + h_RT[15]) + (h_RT[0] + h_RT[15]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -13079,13 +13099,17 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   wdot[0] += q;     // H2
   wdot[1] -= 2 * q; // H
   // d()/d[H2]
-  dqdci = -k_r;
+  dqdci = -k_r * sc[15];
   J[0] += dqdci;      // dwdot[H2]/d[H2]
   J[1] += -2 * dqdci; // dwdot[H]/d[H2]
   // d()/d[H]
-  dqdci = +k_f * 2.000000 * sc[1];
+  dqdci = +k_f * 2.000000 * sc[1] * sc[15];
   J[36] += dqdci;      // dwdot[H2]/d[H]
   J[37] += -2 * dqdci; // dwdot[H]/d[H]
+  // d()/d[CO2]
+  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[0];
+  J[540] += dqdci;      // dwdot[H2]/d[CO2]
+  J[541] += -2 * dqdci; // dwdot[H]/d[CO2]
   // d()/dT
   J[1260] += dqdT;      // dwdot[H2]/dT
   J[1261] += -2 * dqdT; // dwdot[H]/dT
@@ -13170,7 +13194,8 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   phi_r = sc[1] * sc[5] * sc[14];
   Kc = refC * exp(-g_RT[1] - g_RT[14] + g_RT[16]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(h_RT[16]) + (h_RT[1] + h_RT[14]) - 1.000000);
+  dlnKcdT =
+    invT * (-(h_RT[5] + h_RT[16]) + (h_RT[1] + h_RT[5] + h_RT[14]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -13180,17 +13205,22 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   wdot[14] += q; // CO
   wdot[16] -= q; // HCO
   // d()/d[H]
-  dqdci = -k_r * sc[14];
+  dqdci = -k_r * sc[5] * sc[14];
   J[37] += dqdci; // dwdot[H]/d[H]
   J[50] += dqdci; // dwdot[CO]/d[H]
   J[52] -= dqdci; // dwdot[HCO]/d[H]
+  // d()/d[H2O]
+  dqdci = +k_f * sc[16] - k_r * sc[1] * sc[14];
+  J[181] += dqdci; // dwdot[H]/d[H2O]
+  J[194] += dqdci; // dwdot[CO]/d[H2O]
+  J[196] -= dqdci; // dwdot[HCO]/d[H2O]
   // d()/d[CO]
-  dqdci = -k_r * sc[1];
+  dqdci = -k_r * sc[1] * sc[5];
   J[505] += dqdci; // dwdot[H]/d[CO]
   J[518] += dqdci; // dwdot[CO]/d[CO]
   J[520] -= dqdci; // dwdot[HCO]/d[CO]
   // d()/d[HCO]
-  dqdci = +k_f;
+  dqdci = +k_f * sc[5];
   J[577] += dqdci; // dwdot[H]/d[HCO]
   J[590] += dqdci; // dwdot[CO]/d[HCO]
   J[592] -= dqdci; // dwdot[HCO]/d[HCO]
@@ -13282,8 +13312,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   wdot[13] += q; // CH4
   wdot[14] += q; // CO
   wdot[34] -= q; // CH3CHO
+  // d()/d[CH3]
+  dqdci = +k_f * sc[34];
+  J[445] += dqdci; // dwdot[CH4]/d[CH3]
+  J[446] += dqdci; // dwdot[CO]/d[CH3]
+  J[466] -= dqdci; // dwdot[CH3CHO]/d[CH3]
   // d()/d[CH3CHO]
-  dqdci = +k_f;
+  dqdci = +k_f * sc[12];
   J[1237] += dqdci; // dwdot[CH4]/d[CH3CHO]
   J[1238] += dqdci; // dwdot[CO]/d[CH3CHO]
   J[1258] -= dqdci; // dwdot[CH3CHO]/d[CH3CHO]
@@ -25960,7 +25995,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   phi_r = sc[3] * sc[6];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1.000000);
+  dlnKcdT =
+    invT * (-(h_RT[1] + 2.000000 * h_RT[3]) + (h_RT[3] + h_RT[6]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -25970,17 +26006,17 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[3] -= q; // O2
   wdot[6] += q; // HO2
   // d()/d[H]
-  dqdci = +k_f * sc[3];
+  dqdci = +k_f * pow(sc[3], 2.000000);
   J[37] -= dqdci; // dwdot[H]/d[H]
   J[39] -= dqdci; // dwdot[O2]/d[H]
   J[42] += dqdci; // dwdot[HO2]/d[H]
   // d()/d[O2]
-  dqdci = +k_f * sc[1];
+  dqdci = +k_f * sc[1] * 2.000000 * sc[3] - k_r * sc[6];
   J[109] -= dqdci; // dwdot[H]/d[O2]
   J[111] -= dqdci; // dwdot[O2]/d[O2]
   J[114] += dqdci; // dwdot[HO2]/d[O2]
   // d()/d[HO2]
-  dqdci = -k_r;
+  dqdci = -k_r * sc[3];
   J[217] -= dqdci; // dwdot[H]/d[HO2]
   J[219] -= dqdci; // dwdot[O2]/d[HO2]
   J[222] += dqdci; // dwdot[HO2]/d[HO2]
@@ -25999,7 +26035,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   phi_r = sc[5] * sc[6];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1.000000);
+  dlnKcdT =
+    invT * (-(h_RT[1] + h_RT[3] + h_RT[5]) + (h_RT[5] + h_RT[6]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -26009,17 +26046,22 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[3] -= q; // O2
   wdot[6] += q; // HO2
   // d()/d[H]
-  dqdci = +k_f * sc[3];
+  dqdci = +k_f * sc[3] * sc[5];
   J[37] -= dqdci; // dwdot[H]/d[H]
   J[39] -= dqdci; // dwdot[O2]/d[H]
   J[42] += dqdci; // dwdot[HO2]/d[H]
   // d()/d[O2]
-  dqdci = +k_f * sc[1];
+  dqdci = +k_f * sc[1] * sc[5];
   J[109] -= dqdci; // dwdot[H]/d[O2]
   J[111] -= dqdci; // dwdot[O2]/d[O2]
   J[114] += dqdci; // dwdot[HO2]/d[O2]
+  // d()/d[H2O]
+  dqdci = +k_f * sc[1] * sc[3] - k_r * sc[6];
+  J[181] -= dqdci; // dwdot[H]/d[H2O]
+  J[183] -= dqdci; // dwdot[O2]/d[H2O]
+  J[186] += dqdci; // dwdot[HO2]/d[H2O]
   // d()/d[HO2]
-  dqdci = -k_r;
+  dqdci = -k_r * sc[5];
   J[217] -= dqdci; // dwdot[H]/d[HO2]
   J[219] -= dqdci; // dwdot[O2]/d[HO2]
   J[222] += dqdci; // dwdot[HO2]/d[HO2]
@@ -26038,7 +26080,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   phi_r = sc[6] * sc[30];
   Kc = refCinv * exp(g_RT[1] + g_RT[3] - g_RT[6]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(h_RT[1] + h_RT[3]) + (h_RT[6]) + 1.000000);
+  dlnKcdT =
+    invT * (-(h_RT[1] + h_RT[3] + h_RT[30]) + (h_RT[6] + h_RT[30]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -26048,20 +26091,25 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[3] -= q; // O2
   wdot[6] += q; // HO2
   // d()/d[H]
-  dqdci = +k_f * sc[3];
+  dqdci = +k_f * sc[3] * sc[30];
   J[37] -= dqdci; // dwdot[H]/d[H]
   J[39] -= dqdci; // dwdot[O2]/d[H]
   J[42] += dqdci; // dwdot[HO2]/d[H]
   // d()/d[O2]
-  dqdci = +k_f * sc[1];
+  dqdci = +k_f * sc[1] * sc[30];
   J[109] -= dqdci; // dwdot[H]/d[O2]
   J[111] -= dqdci; // dwdot[O2]/d[O2]
   J[114] += dqdci; // dwdot[HO2]/d[O2]
   // d()/d[HO2]
-  dqdci = -k_r;
+  dqdci = -k_r * sc[30];
   J[217] -= dqdci; // dwdot[H]/d[HO2]
   J[219] -= dqdci; // dwdot[O2]/d[HO2]
   J[222] += dqdci; // dwdot[HO2]/d[HO2]
+  // d()/d[N2]
+  dqdci = +k_f * sc[1] * sc[3] - k_r * sc[6];
+  J[1081] -= dqdci; // dwdot[H]/d[N2]
+  J[1083] -= dqdci; // dwdot[O2]/d[N2]
+  J[1086] += dqdci; // dwdot[HO2]/d[N2]
   // d()/dT
   J[1261] -= dqdT; // dwdot[H]/dT
   J[1263] -= dqdT; // dwdot[O2]/dT
@@ -26169,7 +26217,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   phi_r = (sc[0] * sc[0]);
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(2.000000 * h_RT[1]) + (h_RT[0]) + 1.000000);
+  dlnKcdT =
+    invT * (-(h_RT[0] + 2.000000 * h_RT[1]) + (2.000000 * h_RT[0]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -26178,11 +26227,11 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[0] += q;     // H2
   wdot[1] -= 2 * q; // H
   // d()/d[H2]
-  dqdci = -k_r;
+  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * 2.000000 * sc[0];
   J[0] += dqdci;      // dwdot[H2]/d[H2]
   J[1] += -2 * dqdci; // dwdot[H]/d[H2]
   // d()/d[H]
-  dqdci = +k_f * 2.000000 * sc[1];
+  dqdci = +k_f * sc[0] * 2.000000 * sc[1];
   J[36] += dqdci;      // dwdot[H2]/d[H]
   J[37] += -2 * dqdci; // dwdot[H]/d[H]
   // d()/dT
@@ -26199,7 +26248,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   phi_r = sc[0] * sc[5];
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(2.000000 * h_RT[1]) + (h_RT[0]) + 1.000000);
+  dlnKcdT =
+    invT * (-(2.000000 * h_RT[1] + h_RT[5]) + (h_RT[0] + h_RT[5]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -26208,13 +26258,17 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[0] += q;     // H2
   wdot[1] -= 2 * q; // H
   // d()/d[H2]
-  dqdci = -k_r;
+  dqdci = -k_r * sc[5];
   J[0] += dqdci;      // dwdot[H2]/d[H2]
   J[1] += -2 * dqdci; // dwdot[H]/d[H2]
   // d()/d[H]
-  dqdci = +k_f * 2.000000 * sc[1];
+  dqdci = +k_f * 2.000000 * sc[1] * sc[5];
   J[36] += dqdci;      // dwdot[H2]/d[H]
   J[37] += -2 * dqdci; // dwdot[H]/d[H]
+  // d()/d[H2O]
+  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[0];
+  J[180] += dqdci;      // dwdot[H2]/d[H2O]
+  J[181] += -2 * dqdci; // dwdot[H]/d[H2O]
   // d()/dT
   J[1260] += dqdT;      // dwdot[H2]/dT
   J[1261] += -2 * dqdT; // dwdot[H]/dT
@@ -26229,7 +26283,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   phi_r = sc[0] * sc[15];
   Kc = refCinv * exp(-g_RT[0] + 2.000000 * g_RT[1]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(2.000000 * h_RT[1]) + (h_RT[0]) + 1.000000);
+  dlnKcdT =
+    invT * (-(2.000000 * h_RT[1] + h_RT[15]) + (h_RT[0] + h_RT[15]) + 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -26238,13 +26293,17 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[0] += q;     // H2
   wdot[1] -= 2 * q; // H
   // d()/d[H2]
-  dqdci = -k_r;
+  dqdci = -k_r * sc[15];
   J[0] += dqdci;      // dwdot[H2]/d[H2]
   J[1] += -2 * dqdci; // dwdot[H]/d[H2]
   // d()/d[H]
-  dqdci = +k_f * 2.000000 * sc[1];
+  dqdci = +k_f * 2.000000 * sc[1] * sc[15];
   J[36] += dqdci;      // dwdot[H2]/d[H]
   J[37] += -2 * dqdci; // dwdot[H]/d[H]
+  // d()/d[CO2]
+  dqdci = +k_f * pow(sc[1], 2.000000) - k_r * sc[0];
+  J[540] += dqdci;      // dwdot[H2]/d[CO2]
+  J[541] += -2 * dqdci; // dwdot[H]/d[CO2]
   // d()/dT
   J[1260] += dqdT;      // dwdot[H2]/dT
   J[1261] += -2 * dqdT; // dwdot[H]/dT
@@ -26362,7 +26421,8 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   phi_r = sc[1] * sc[5] * sc[14];
   Kc = refC * exp(-g_RT[1] - g_RT[14] + g_RT[16]);
   k_r = k_f / Kc;
-  dlnKcdT = invT * (-(h_RT[16]) + (h_RT[1] + h_RT[14]) - 1.000000);
+  dlnKcdT =
+    invT * (-(h_RT[5] + h_RT[16]) + (h_RT[1] + h_RT[5] + h_RT[14]) - 1.000000);
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   q = k_f * phi_f - k_r * phi_r;
@@ -26372,17 +26432,22 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[14] += q; // CO
   wdot[16] -= q; // HCO
   // d()/d[H]
-  dqdci = -k_r * sc[14];
+  dqdci = -k_r * sc[5] * sc[14];
   J[37] += dqdci; // dwdot[H]/d[H]
   J[50] += dqdci; // dwdot[CO]/d[H]
   J[52] -= dqdci; // dwdot[HCO]/d[H]
+  // d()/d[H2O]
+  dqdci = +k_f * sc[16] - k_r * sc[1] * sc[14];
+  J[181] += dqdci; // dwdot[H]/d[H2O]
+  J[194] += dqdci; // dwdot[CO]/d[H2O]
+  J[196] -= dqdci; // dwdot[HCO]/d[H2O]
   // d()/d[CO]
-  dqdci = -k_r * sc[1];
+  dqdci = -k_r * sc[1] * sc[5];
   J[505] += dqdci; // dwdot[H]/d[CO]
   J[518] += dqdci; // dwdot[CO]/d[CO]
   J[520] -= dqdci; // dwdot[HCO]/d[CO]
   // d()/d[HCO]
-  dqdci = +k_f;
+  dqdci = +k_f * sc[5];
   J[577] += dqdci; // dwdot[H]/d[HCO]
   J[590] += dqdci; // dwdot[CO]/d[HCO]
   J[592] -= dqdci; // dwdot[HCO]/d[HCO]
@@ -26516,8 +26581,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[13] += q; // CH4
   wdot[14] += q; // CO
   wdot[34] -= q; // CH3CHO
+  // d()/d[CH3]
+  dqdci = +k_f * sc[34];
+  J[445] += dqdci; // dwdot[CH4]/d[CH3]
+  J[446] += dqdci; // dwdot[CO]/d[CH3]
+  J[466] -= dqdci; // dwdot[CH3CHO]/d[CH3]
   // d()/d[CH3CHO]
-  dqdci = +k_f;
+  dqdci = +k_f * sc[12];
   J[1237] += dqdci; // dwdot[CH4]/d[CH3CHO]
   J[1238] += dqdci; // dwdot[CO]/d[CH3CHO]
   J[1258] -= dqdci; // dwdot[CH3CHO]/d[CH3CHO]

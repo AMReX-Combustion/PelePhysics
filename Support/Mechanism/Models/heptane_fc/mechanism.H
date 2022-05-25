@@ -13423,8 +13423,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   wdot[5] += q;  // H2O
   wdot[13] += q; // CO
   wdot[23] -= q; // HOCHO
+  // d()/d[OH]
+  dqdci = +k_f * sc[23];
+  J[217] += dqdci; // dwdot[H2O]/d[OH]
+  J[225] += dqdci; // dwdot[CO]/d[OH]
+  J[235] -= dqdci; // dwdot[HOCHO]/d[OH]
   // d()/d[HOCHO]
-  dqdci = +k_f;
+  dqdci = +k_f * sc[4];
   J[1224] += dqdci; // dwdot[H2O]/d[HOCHO]
   J[1232] += dqdci; // dwdot[CO]/d[HOCHO]
   J[1242] -= dqdci; // dwdot[HOCHO]/d[HOCHO]
@@ -13446,8 +13451,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   wdot[2] += q;  // H2
   wdot[12] += q; // CO2
   wdot[23] -= q; // HOCHO
+  // d()/d[H]
+  dqdci = +k_f * sc[23];
+  J[161] += dqdci; // dwdot[H2]/d[H]
+  J[171] += dqdci; // dwdot[CO2]/d[H]
+  J[182] -= dqdci; // dwdot[HOCHO]/d[H]
   // d()/d[HOCHO]
-  dqdci = +k_f;
+  dqdci = +k_f * sc[3];
   J[1221] += dqdci; // dwdot[H2]/d[HOCHO]
   J[1231] += dqdci; // dwdot[CO2]/d[HOCHO]
   J[1242] -= dqdci; // dwdot[HOCHO]/d[HOCHO]
@@ -22324,8 +22334,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[5] += q;  // H2O
   wdot[13] += q; // CO
   wdot[23] -= q; // HOCHO
+  // d()/d[OH]
+  dqdci = +k_f * sc[23];
+  J[217] += dqdci; // dwdot[H2O]/d[OH]
+  J[225] += dqdci; // dwdot[CO]/d[OH]
+  J[235] -= dqdci; // dwdot[HOCHO]/d[OH]
   // d()/d[HOCHO]
-  dqdci = +k_f;
+  dqdci = +k_f * sc[4];
   J[1224] += dqdci; // dwdot[H2O]/d[HOCHO]
   J[1232] += dqdci; // dwdot[CO]/d[HOCHO]
   J[1242] -= dqdci; // dwdot[HOCHO]/d[HOCHO]
@@ -22347,8 +22362,13 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   wdot[2] += q;  // H2
   wdot[12] += q; // CO2
   wdot[23] -= q; // HOCHO
+  // d()/d[H]
+  dqdci = +k_f * sc[23];
+  J[161] += dqdci; // dwdot[H2]/d[H]
+  J[171] += dqdci; // dwdot[CO2]/d[H]
+  J[182] -= dqdci; // dwdot[HOCHO]/d[H]
   // d()/d[HOCHO]
-  dqdci = +k_f;
+  dqdci = +k_f * sc[3];
   J[1221] += dqdci; // dwdot[H2]/d[HOCHO]
   J[1231] += dqdci; // dwdot[CO2]/d[HOCHO]
   J[1242] -= dqdci; // dwdot[HOCHO]/d[HOCHO]

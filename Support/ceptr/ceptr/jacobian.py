@@ -1,6 +1,7 @@
 """Write jacobian functions."""
+import copy
 import sys
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 
 import ceptr.constants as cc
 import ceptr.utilities as cu
@@ -306,11 +307,34 @@ def ajac_reaction_precond(
         print("ajac_reaction: wrong case ", rcase)
         exit(1)
 
-    rea_dict = {}
-    pro_dict = {}
-    all_dict = {}
+    rea_dict = OrderedDict()
+    pro_dict = OrderedDict()
+    all_dict = OrderedDict()
     sum_nuk = 0
-    for symbol, coefficient in reaction.reactants.items():
+    all_reactants = copy.deepcopy(reaction.reactants)
+    all_products = copy.deepcopy(reaction.products)
+    if hasattr(reaction, "efficiencies"):
+        if len(reaction.efficiencies) == 1:
+            all_reactants = dict(
+                sum(
+                    (
+                        Counter(x)
+                        for x in [all_reactants, reaction.efficiencies]
+                    ),
+                    Counter(),
+                )
+            )
+            all_products = dict(
+                sum(
+                    (
+                        Counter(x)
+                        for x in [all_products, reaction.efficiencies]
+                    ),
+                    Counter(),
+                )
+            )
+
+    for symbol, coefficient in all_reactants.items():
         k = species_info.ordered_idx_map[symbol]
         sum_nuk -= coefficient
         if k in rea_dict:
@@ -318,7 +342,7 @@ def ajac_reaction_precond(
             rea_dict[k] = (symbol, coefficient + coe_old)
         else:
             rea_dict[k] = (symbol, coefficient)
-    for symbol, coefficient in reaction.products.items():
+    for symbol, coefficient in all_products.items():
         k = species_info.ordered_idx_map[symbol]
         sum_nuk += coefficient
         if k in pro_dict:
@@ -1274,7 +1298,30 @@ def ajac_reaction_d(
     pro_dict = OrderedDict()
     all_dict = OrderedDict()
     sum_nuk = 0
-    for symbol, coefficient in reaction.reactants.items():
+    all_reactants = copy.deepcopy(reaction.reactants)
+    all_products = copy.deepcopy(reaction.products)
+    if hasattr(reaction, "efficiencies"):
+        if len(reaction.efficiencies) == 1:
+            all_reactants = dict(
+                sum(
+                    (
+                        Counter(x)
+                        for x in [all_reactants, reaction.efficiencies]
+                    ),
+                    Counter(),
+                )
+            )
+            all_products = dict(
+                sum(
+                    (
+                        Counter(x)
+                        for x in [all_products, reaction.efficiencies]
+                    ),
+                    Counter(),
+                )
+            )
+
+    for symbol, coefficient in all_reactants.items():
         k = species_info.ordered_idx_map[symbol]
         sum_nuk -= coefficient
         if k in rea_dict:
@@ -1282,7 +1329,7 @@ def ajac_reaction_d(
             rea_dict[k] = (symbol, coefficient + coe_old)
         else:
             rea_dict[k] = (symbol, coefficient)
-    for symbol, coefficient in reaction.products.items():
+    for symbol, coefficient in all_products.items():
         k = species_info.ordered_idx_map[symbol]
         sum_nuk += coefficient
         if k in pro_dict:
@@ -2029,12 +2076,12 @@ def denhancement_d(mechanism, species_info, reaction, kid, cons_p):
 
 def dphase_space(mechanism, species_info, reagents, r):
     """Get string for phase space gradient."""
+    reagents = {x[0]: x[1] for x in reagents}
     phi = []
-
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
-    for symbol, coefficient in sorted(
-        reagents, key=lambda v: dict_species[v[0]]
-    ):
+    sorted_reagents = sorted(reagents.keys(), key=lambda v: dict_species[v])
+    for symbol in sorted_reagents:
+        coefficient = reagents[symbol]
         if symbol not in species_info.qssa_species_list:
             if symbol == r:
                 if coefficient > 1:
