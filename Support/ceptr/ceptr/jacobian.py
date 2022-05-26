@@ -389,8 +389,8 @@ def ajac_reaction_precond(
     is_sri = False
     is_troe = False
     if is_pd:
+        # Case 1 PD, TB
         corr_s = "Corr *"
-        # Case 2 !PD, TB
         ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
         pef = (
             reaction.rate.high_rate.pre_exponential_factor * ctuc
@@ -425,6 +425,7 @@ def ajac_reaction_precond(
             print(f"Unrecognized reaction rate type: {reaction.equation}")
             sys.exit(1)
     elif has_alpha:
+        # Case 2 !PD, TB
         corr_s = "alpha * "
         ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
         pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
@@ -1373,8 +1374,8 @@ def ajac_reaction_d(
     is_sri = False
     is_troe = False
     if is_pd:
+        # Case 1 PD, TB
         corr_s = "Corr *"
-        # Case 2 !PD, TB
         ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
         pef = (
             reaction.rate.high_rate.pre_exponential_factor * ctuc
