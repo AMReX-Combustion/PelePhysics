@@ -142,10 +142,6 @@ def ajac_precond(fstream, mechanism, species_info, reaction_info):
 
     for orig_idx, _ in reaction_info.idxmap.items():
         reaction = mechanism.reaction(orig_idx)
-        # lt = reaction.lt
-        # if lt:
-        #     print("Landau-Teller reactions are not supported")
-        #     sys.exit(1)
 
         cw.writer(
             fstream,
@@ -1118,10 +1114,6 @@ def ajac(fstream, mechanism, species_info, reaction_info):
 
     for orig_idx, _ in reaction_info.idxmap.items():
         reaction = mechanism.reaction(orig_idx)
-        # lt = reaction.lt
-        # if lt:
-        #     print("Landau-Teller reactions are not supported")
-        #     sys.exit(1)
 
         cw.writer(
             fstream,

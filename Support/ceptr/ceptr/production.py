@@ -204,7 +204,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
             else:
-                # Case 2 !PD, TB
+                # Case 1 PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 pef = (
                     reaction.rate.high_rate.pre_exponential_factor * ctuc
@@ -243,7 +243,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
 
             cw.writer(
                 fstream,
-                cw.comment("(%d):  %s" % (orig_idx, reaction.equation)),
+                cw.comment("reaction %d:  %s" % (orig_idx, reaction.equation)),
             )
             cw.writer(fstream, "k_f = %.15g" % (pef.m))
             if (beta == 0) and (ae == 0):
@@ -266,7 +266,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                         % (beta, ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                     )
 
-            alpha = 1.0
+            alpha = None
             if not third_body and not falloff:
                 cw.writer(fstream, "qf[%d] *= k_f;" % idx)
             elif not falloff and len(reaction.efficiencies) == 1:
@@ -369,7 +369,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     cw.writer(fstream, "qf[%d] *= Corr * k_f;" % idx)
 
             if kc_conv_inv:
-                if alpha == 1.0:
+                if alpha is None:
                     cw.writer(
                         fstream,
                         "qr[%d] *= k_f * exp(-(%s)) * (%s);"
@@ -382,7 +382,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                         % (idx, kc_exp_arg, kc_conv_inv),
                     )
             else:
-                if alpha == 1.0:
+                if alpha is None:
                     cw.writer(
                         fstream,
                         "qr[%d] *= k_f * exp(-(%s));" % (idx, kc_exp_arg),
@@ -551,7 +551,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     / cc.ureg.kmol
                 ).to(aeuc)
             else:
-                # Case 2 !PD, TB
+                # Case 1 PD, TB
                 ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
                 pef = (
                     reaction.rate.high_rate.pre_exponential_factor * ctuc
@@ -590,7 +590,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
 
             cw.writer(
                 fstream,
-                cw.comment("(%d):  %s" % (orig_idx, reaction.equation)),
+                cw.comment("reaction %d:  %s" % (orig_idx, reaction.equation)),
             )
             cw.writer(fstream, "const amrex::Real k_f = %.15g" % (pef.m))
             if (beta == 0) and (ae == 0):
@@ -613,7 +613,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                         % (beta, (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae)),
                     )
 
-            alpha = 1.0
+            alpha = None
             if not third_body and not falloff:
                 cw.writer(
                     fstream,
@@ -755,7 +755,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                     )
 
             if kc_conv_inv:
-                if alpha == 1.0:
+                if alpha is None:
                     cw.writer(
                         fstream,
                         "const amrex::Real qr = k_f * exp(-(%s)) * (%s) *"
@@ -769,7 +769,7 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                         % (kc_exp_arg, kc_conv_inv, reverse_sc),
                     )
             else:
-                if alpha == 1.0:
+                if alpha is None:
                     cw.writer(
                         fstream,
                         "const amrex::Real qr = k_f * exp(-(%s)) * (%s);"
