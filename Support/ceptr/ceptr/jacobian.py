@@ -669,7 +669,9 @@ def ajac_reaction_precond(
         else:
             if remove_forward:
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
-                cw.writer(fstream, cw.comment("q = k_f*phi_f - k_r*phi_r;"))
+                cw.writer(
+                    fstream, cw.comment("q_nocor = k_f*phi_f - k_r*phi_r;")
+                )
                 cw.writer(fstream, "q_nocor = - k_r*phi_r;")
             else:
                 cw.writer(fstream, "q_nocor = k_f*phi_f - k_r*phi_r;")
@@ -686,13 +688,12 @@ def ajac_reaction_precond(
                 cw.writer(
                     fstream,
                     cw.comment(
-                        "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r)) +"
+                        "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r) +"
                         " dlnCorrdT*q;" % corr_s,
                     ),
                 )
                 cw.writer(
-                    fstream,
-                    "dqdT = %s( - dkrdT*phi_r) + dlnCorrdT*q;" % corr_s,
+                    fstream, "dqdT = %s(- dkrdT*phi_r) + dlnCorrdT*q;" % corr_s
                 )
             else:
                 cw.writer(
@@ -706,8 +707,7 @@ def ajac_reaction_precond(
                 cw.writer(
                     fstream,
                     cw.comment(
-                        "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r));"
-                        % corr_s,
+                        "dqdT = %s(dlnkfdT*k_f*phi_f - dkrdT*phi_r);" % corr_s,
                     ),
                 )
                 cw.writer(fstream, "dqdT = %s( - dkrdT*phi_r);" % corr_s)
@@ -834,7 +834,6 @@ def ajac_reaction_precond(
                 )
                 s1 = s1.replace("+= 1 *", "+=").replace("+= -1 *", "-=")
                 cw.writer(fstream, s1)
-
         cw.writer(fstream, "}")
 
         for m in sorted(all_dict.keys()):
@@ -1548,35 +1547,37 @@ def ajac_reaction_d(
         for symbol, coefficient in sorted(
             sorted_reactants, key=lambda v: dict_species[v[0]]
         ):
+            k = species_info.ordered_idx_map[symbol]
             if symbol not in species_info.qssa_species_list:
-                k = species_info.ordered_idx_map[symbol]
                 if coefficient == 1.0:
                     terms.append("h_RT[%d]" % (k))
                 else:
                     terms.append("%f*h_RT[%d]" % (coefficient, k))
             else:
-                k = species_info.ordered_idx_map[symbol] - n_species
                 if coefficient == 1.0:
-                    terms.append("h_RT_qss[%d]" % (k))
+                    terms.append("h_RT_qss[%d]" % (k - n_species))
                 else:
-                    terms.append("%f*h_RT_qss[%d]" % (coefficient, k))
+                    terms.append(
+                        "%f*h_RT_qss[%d]" % (coefficient, k - n_species)
+                    )
         dlnkcdt_s += "-(" + " + ".join(terms) + ")"
         terms = []
         for symbol, coefficient in sorted(
             sorted_products, key=lambda v: dict_species[v[0]]
         ):
+            k = species_info.ordered_idx_map[symbol]
             if symbol not in species_info.qssa_species_list:
-                k = species_info.ordered_idx_map[symbol]
                 if coefficient == 1.0:
                     terms.append("h_RT[%d]" % (k))
                 else:
                     terms.append("%f*h_RT[%d]" % (coefficient, k))
             else:
-                k = species_info.ordered_idx_map[symbol] - n_species
                 if coefficient == 1.0:
-                    terms.append("h_RT_qss[%d]" % (k))
+                    terms.append("h_RT_qss[%d]" % (k - n_species))
                 else:
-                    terms.append("%f*h_RT_qss[%d]" % (coefficient, k))
+                    terms.append(
+                        "%f*h_RT_qss[%d]" % (coefficient, k - n_species)
+                    )
         dlnkcdt_s += " + (" + " + ".join(terms) + ")"
         if sum_nuk > 0:
             dlnkcdt_s += " - %f" % sum_nuk
@@ -1647,7 +1648,6 @@ def ajac_reaction_d(
                 )
 
     cw.writer(fstream, cw.comment("update wdot"))
-    # only the n_species transported in all_dict
     for k in sorted(all_dict.keys()):
         s, nu = all_dict[k]
         if nu == 1:
@@ -1792,7 +1792,6 @@ def ajac_reaction_d(
                     n_species * (n_species + 1) + m,
                     all_dict[m][1],
                 ) + cw.comment("dwdot[%s]/dT" % (all_dict[m][0]))
-
                 s1 = s1.replace("+= 1 *", "+=").replace("+= -1 *", "-=")
                 cw.writer(fstream, s1)
 
