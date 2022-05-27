@@ -14246,8 +14246,12 @@ dcvpRdT(amrex::Real* species, const amrex::Real* tc)
 
 // compute an approx to the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
+aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
 {
+
+  // Do not use Analytical Jacobian with QSSA
+  amrex::Abort();
+
   for (int i = 0; i < 1296; i++) {
     J[i] = 0.0;
   }
@@ -14261,6 +14265,12 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
     log(T), T, T * T, T * T * T, T * T * T * T}; // temperature cache
   amrex::Real invT = 1.0 / tc[1];
   amrex::Real invT2 = invT * invT;
+
+  // Fill sc_qss here
+  amrex::Real sc_qss[18];
+  amrex::Real kf_qss[198], qf_qss[198], qr_qss[198];
+  comp_k_f_qss(tc, invT, kf_qss);
+  comp_sc_qss(sc_qss, qf_qss, qr_qss);
 
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   amrex::Real refC = 101325 / 8.31446 / T;
@@ -14283,12 +14293,9 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   speciesEnthalpy(h_RT, tc);
   amrex::Real h_RT_qss[18];
   speciesEnthalpy_qss(h_RT_qss, tc);
-  // Fill sc_qss here
-  amrex::Real sc_qss[18];
-  amrex::Real kf_qss[198], qf_qss[198], qr_qss[198];
-  comp_k_f_qss(tc, invT, kf_qss);
+
+  // Fill qss coeff
   comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);
-  comp_sc_qss(sc_qss, qf_qss, qr_qss);
 
   amrex::Real phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;
   amrex::Real dlnkfdT, dlnk0dT, dlnKcdT, dkrdT, dqdT;
@@ -15628,13 +15635,13 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   dkrdT = (dlnkfdT - dlnKcdT) * k_r;
   // rate of progress
   // Remove forward reaction
-  // q = k_f*phi_f - k_r*phi_r;
+  // q_nocor = k_f*phi_f - k_r*phi_r;
   q_nocor = -k_r * phi_r;
   Corr = fPr * F;
   q = Corr * q_nocor;
   dlnCorrdT = ln10 * (dlogfPrdT + dlogFdT);
   // Remove forward reaction
-  // dqdT = Corr *(dlnkfdT*k_f*phi_f - dkrdT*phi_r)) + dlnCorrdT*q;
+  // dqdT = Corr *(dlnkfdT*k_f*phi_f - dkrdT*phi_r) + dlnCorrdT*q;
   dqdT = Corr * (-dkrdT * phi_r) + dlnCorrdT * q;
   // update wdot
   wdot[22] += q; // C4H81
@@ -18719,7 +18726,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   // q = k_f*phi_f - k_r*phi_r;
   q = -k_r * phi_r;
   // Remove forward reaction
-  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r));
+  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r);
   dqdT = (-dkrdT * phi_r);
   // update wdot
   wdot[5] += q;  // H2
@@ -20744,7 +20751,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   // q = k_f*phi_f - k_r*phi_r;
   q = -k_r * phi_r;
   // Remove forward reaction
-  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r));
+  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r);
   dqdT = (-dkrdT * phi_r);
   // update wdot
   wdot[12] += q; // CO
@@ -20780,7 +20787,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   // q = k_f*phi_f - k_r*phi_r;
   q = -k_r * phi_r;
   // Remove forward reaction
-  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r));
+  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r);
   dqdT = (-dkrdT * phi_r);
   // update wdot
   wdot[20] += q; // C2H3CHO
@@ -20887,7 +20894,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   // q = k_f*phi_f - k_r*phi_r;
   q = -k_r * phi_r;
   // Remove forward reaction
-  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r));
+  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r);
   dqdT = (-dkrdT * phi_r);
   // update wdot
   wdot[14] += q; // C2H2
@@ -21791,7 +21798,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   // q = k_f*phi_f - k_r*phi_r;
   q = -k_r * phi_r;
   // Remove forward reaction
-  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r));
+  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r);
   dqdT = (-dkrdT * phi_r);
   // update wdot
   wdot[9] += q;  // CH3
@@ -24853,7 +24860,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   // q = k_f*phi_f - k_r*phi_r;
   q = -k_r * phi_r;
   // Remove forward reaction
-  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r));
+  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r);
   dqdT = (-dkrdT * phi_r);
   // update wdot
   wdot[0] += q; // NC12H26
@@ -24912,7 +24919,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   // q = k_f*phi_f - k_r*phi_r;
   q = -k_r * phi_r;
   // Remove forward reaction
-  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r));
+  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r);
   dqdT = (-dkrdT * phi_r);
   // update wdot
   wdot[0] += q; // NC12H26
@@ -24941,7 +24948,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   // q = k_f*phi_f - k_r*phi_r;
   q = -k_r * phi_r;
   // Remove forward reaction
-  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r));
+  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r);
   dqdT = (-dkrdT * phi_r);
   // update wdot
   wdot[0] += q; // NC12H26
@@ -24970,7 +24977,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
   // q = k_f*phi_f - k_r*phi_r;
   q = -k_r * phi_r;
   // Remove forward reaction
-  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r));
+  // dqdT = (dlnkfdT*k_f*phi_f - dkrdT*phi_r);
   dqdT = (-dkrdT * phi_r);
   // update wdot
   wdot[0] += q; // NC12H26
@@ -26134,7 +26141,7 @@ DWDOT_SIMPLIFIED(
   return;
 }
 
-// compute the reaction Jacobian on GPU
+// compute the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
 {
@@ -39096,8 +39103,6 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   }
   // dTdot/dT
   J[1295] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
-
-  return;
 }
 
 // compute the reaction Jacobian

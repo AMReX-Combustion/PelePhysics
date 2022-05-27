@@ -270,8 +270,12 @@ class Converter:
             cck.ckwxr(hdr, self.mechanism, self.species_info)
             cth.dthermodtemp(hdr, self.mechanism, self.species_info)
             # Approx analytical jacobian
-            cj.ajac_precond(
-                hdr, self.mechanism, self.species_info, self.reaction_info
+            cj.ajac(
+                hdr,
+                self.mechanism,
+                self.species_info,
+                self.reaction_info,
+                precond=True,
             )
             cj.dproduction_rate(
                 hdr,
