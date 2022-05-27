@@ -1338,59 +1338,35 @@ def dphase_space(mechanism, species_info, reagents, r):
         return "1.0"
 
 
-def dproduction_rate_precond(fstream, mechanism, species_info, reaction_info):
-    """Write the reaction jacobian for preconditioning."""
-    n_species = species_info.n_species
-    cw.writer(fstream)
-    cw.writer(
-        fstream,
-        cw.comment(
-            "compute an approx to the reaction Jacobian (for preconditioning)"
-        ),
-    )
-    cw.writer(
-        fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
-        " DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real * "
-        " Tp, const int * HP)",
-    )
-    cw.writer(fstream, "{")
-
-    cw.writer(fstream, "amrex::Real c[%d];" % (n_species))
-    cw.writer(fstream)
-    cw.writer(fstream, "for (int k=0; k<%d; k++) {" % n_species)
-    cw.writer(fstream, "c[k] = 1.e6 * sc[k];")
-    cw.writer(fstream, "}")
-
-    cw.writer(fstream)
-    cw.writer(fstream, "aJacobian_precond(J, c, *Tp, *HP);")
-
-    cw.writer(fstream)
-    cw.writer(fstream, cw.comment("dwdot[k]/dT"))
-    cw.writer(fstream, cw.comment("dTdot/d[X]"))
-    cw.writer(fstream, "for (int k=0; k<%d; k++) {" % n_species)
-    cw.writer(fstream, "J[%d+k] *= 1.e-6;" % (n_species * (n_species + 1)))
-    cw.writer(fstream, "J[k*%d+%d] *= 1.e6;" % (n_species + 1, n_species))
-    cw.writer(fstream, "}")
-
-    cw.writer(fstream)
-    cw.writer(fstream, "return;")
-    cw.writer(fstream, "}")
-
-
-def dproduction_rate(fstream, mechanism, species_info, reaction_info):
+def dproduction_rate(
+    fstream, mechanism, species_info, reaction_info, precond=False
+):
     """Write the reaction jacobian."""
     n_species = species_info.n_species
 
     cw.writer(fstream)
-    cw.writer(fstream, cw.comment("compute the reaction Jacobian"))
-    cw.writer(
-        fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J,"
-        " amrex::Real *  sc, amrex::Real *  Tp, const int * consP)",
-    )
-    cw.writer(fstream, "{")
+    if precond:
+        cw.writer(
+            fstream,
+            cw.comment(
+                "compute an approx to the reaction Jacobian (for preconditioning)"
+            ),
+        )
+        cw.writer(
+            fstream,
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
+            " DWDOT_SIMPLIFIED(amrex::Real *  J, amrex::Real *  sc, amrex::Real * "
+            " Tp, const int * HP)",
+        )
+    else:
+        cw.writer(fstream, cw.comment("compute the reaction Jacobian"))
+        cw.writer(
+            fstream,
+            "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void DWDOT(amrex::Real *  J,"
+            " amrex::Real *  sc, amrex::Real *  Tp, const int * consP)",
+        )
 
+    cw.writer(fstream, "{")
     cw.writer(fstream, "amrex::Real c[%d];" % (n_species))
     cw.writer(fstream)
     cw.writer(fstream, "for (int k=0; k<%d; k++) {" % n_species)
@@ -1398,7 +1374,10 @@ def dproduction_rate(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "}")
 
     cw.writer(fstream)
-    cw.writer(fstream, "aJacobian(J, c, *Tp, *consP);")
+    if precond:
+        cw.writer(fstream, "aJacobian_precond(J, c, *Tp, *HP);")
+    else:
+        cw.writer(fstream, "aJacobian(J, c, *Tp, *consP);")
 
     cw.writer(fstream)
     cw.writer(fstream, cw.comment("dwdot[k]/dT"))

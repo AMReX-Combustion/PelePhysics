@@ -273,8 +273,12 @@ class Converter:
             cj.ajac_precond(
                 hdr, self.mechanism, self.species_info, self.reaction_info
             )
-            cj.dproduction_rate_precond(
-                hdr, self.mechanism, self.species_info, self.reaction_info
+            cj.dproduction_rate(
+                hdr,
+                self.mechanism,
+                self.species_info,
+                self.reaction_info,
+                precond=True,
             )
             # # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
             cj.ajac(hdr, self.mechanism, self.species_info, self.reaction_info)
