@@ -95,13 +95,17 @@ box_flatten(
 {
   amrex::Real mass_frac[NUM_SPECIES];
   amrex::Real rho = 0.0;
+  amrex::Real rho_old = 0.0;
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    rho_old += rhoY(i, j, k, n);
+  }
   for (int n = 0; n < NUM_SPECIES; n++) {
     const int idx = vec_index<OrderType>(n, icell, ncells);
     const int idx2 = spec_index<OrderType>(n, icell, ncells);
     const amrex::Real rhoYn =
       (clean_init_massfrac)
         ? amrex::min<amrex::Real>(
-            amrex::max<amrex::Real>(0.0, rhoY(i, j, k, n)), 1.0)
+            amrex::max<amrex::Real>(0.0, rhoY(i, j, k, n)), rho_old)
         : rhoY(i, j, k, n);
     y_vect[idx] = rhoYn;
     src_vect[idx2] = frcExt(i, j, k, n);
@@ -156,9 +160,11 @@ box_unflatten(
   amrex::Real rho_oldclipped = 0.0;
   if (clean_init_massfrac) {
     for (int n = 0; n < NUM_SPECIES; n++) {
-      rhoY_oldclipped[n] = amrex::min<amrex::Real>(
-        amrex::max<amrex::Real>(0.0, rhoY(i, j, k, n)), 1.0);
       rho_old += rhoY(i, j, k, n);
+    }
+    for (int n = 0; n < NUM_SPECIES; n++) {
+      rhoY_oldclipped[n] = amrex::min<amrex::Real>(
+        amrex::max<amrex::Real>(0.0, rhoY(i, j, k, n)), rho_old);
       rho_oldclipped += rhoY_oldclipped[n];
     }
   }
