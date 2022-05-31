@@ -96,8 +96,10 @@ box_flatten(
   amrex::Real mass_frac[NUM_SPECIES];
   amrex::Real rho = 0.0;
   amrex::Real rho_old = 0.0;
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    rho_old += rhoY(i, j, k, n);
+  if (clean_init_massfrac) {
+    for (int n = 0; n < NUM_SPECIES; n++) {
+      rho_old += rhoY(i, j, k, n);
+    }
   }
   for (int n = 0; n < NUM_SPECIES; n++) {
     const int idx = vec_index<OrderType>(n, icell, ncells);
