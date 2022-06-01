@@ -1640,7 +1640,7 @@ comp_qfqr(
   // Evaluate the kfs
   amrex::Real k_f, k_r, Corr;
 
-  // (0):  2 CH4 + O2 => 2 CO + 4 H2
+  // reaction 0:  2 CH4 + O2 => 2 CO + 4 H2
   k_f = 219875.458149426 * exp(-(15096.4999741416) * invT);
   qf[0] *= k_f;
   qr[0] *=
@@ -1648,17 +1648,17 @@ comp_qfqr(
     exp(-(
       2.000000 * g_RT[0] + g_RT[1] - 2.000000 * g_RT[4] - 4.000000 * g_RT[6])) *
     (pow(refCinv, 3.000000));
-  // (1):  CH4 + H2O <=> CO + 3 H2
+  // reaction 1:  CH4 + H2O <=> CO + 3 H2
   k_f = 300000 * exp(-(15096.4999741416) * invT);
   qf[1] *= k_f;
   qr[1] *= k_f * exp(-(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6])) *
            ((refCinv * refCinv));
-  // (2):  2 H2 + O2 => 2 H2O
+  // reaction 2:  2 H2 + O2 => 2 H2O
   k_f = 33993533107.7566 * exp((-1) * tc[0] - (20128.6666321888) * invT);
   qf[2] *= k_f;
   qr[2] *=
     k_f * exp(-(g_RT[1] - 2.000000 * g_RT[2] + 2.000000 * g_RT[6])) * (refC);
-  // (3):  CO + H2O <=> CO2 + H2
+  // reaction 3:  CO + H2O <=> CO2 + H2
   k_f = 2750000 * exp(-(10064.3333160944) * invT);
   qf[3] *= k_f;
   qr[3] *= k_f * exp(-(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]));
@@ -1692,7 +1692,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
   gibbs(g_RT, tc);
 
   {
-    // (0):  2 CH4 + O2 => 2 CO + 4 H2
+    // reaction 0:  2 CH4 + O2 => 2 CO + 4 H2
     const amrex::Real k_f = 219875.458149426 * exp(-(15096.4999741416) * invT);
     const amrex::Real qf = k_f * (pow(sc[0], 0.500000) * pow(sc[1], 1.250000));
     const amrex::Real qr = k_f *
@@ -1708,7 +1708,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
   }
 
   {
-    // (1):  CH4 + H2O <=> CO + 3 H2
+    // reaction 1:  CH4 + H2O <=> CO + 3 H2
     const amrex::Real k_f = 300000 * exp(-(15096.4999741416) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[2]);
     const amrex::Real qr =
@@ -1722,7 +1722,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
   }
 
   {
-    // (2):  2 H2 + O2 => 2 H2O
+    // reaction 2:  2 H2 + O2 => 2 H2O
     const amrex::Real k_f =
       33993533107.7566 * exp((-1) * tc[0] - (20128.6666321888) * invT);
     const amrex::Real qf = k_f * (pow(sc[1], 1.500000) * pow(sc[6], 0.250000));
@@ -1736,7 +1736,7 @@ productionRate(amrex::Real* wdot, amrex::Real* sc, amrex::Real T)
   }
 
   {
-    // (3):  CO + H2O <=> CO2 + H2
+    // reaction 3:  CO + H2O <=> CO2 + H2
     const amrex::Real k_f = 2750000 * exp(-(10064.3333160944) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[4]);
     const amrex::Real qr =
@@ -1963,8 +1963,9 @@ dcvpRdT(amrex::Real* species, const amrex::Real* tc)
 
 // compute an approx to the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
-aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, int HP)
+aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
 {
+
   for (int i = 0; i < 64; i++) {
     J[i] = 0.0;
   }
@@ -2229,7 +2230,7 @@ DWDOT_SIMPLIFIED(
   return;
 }
 
-// compute the reaction Jacobian on GPU
+// compute the reaction Jacobian
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
 {
@@ -2281,7 +2282,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // forward
   phi_f = (sc[0] * sc[0]) * sc[1];
   k_f = 219875.458149426 * exp(0 * tc[0] - 0.50321666580472 * (30000) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * 30000 * invT2;
+  dlnkfdT = 0 * invT + 0.50321666580472 * (30000) * invT2;
   // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
@@ -2313,7 +2314,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // forward
   phi_f = sc[0] * sc[2];
   k_f = 300000 * exp(0 * tc[0] - 0.50321666580472 * (30000) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * 30000 * invT2;
+  dlnkfdT = 0 * invT + 0.50321666580472 * (30000) * invT2;
   // reverse
   phi_r = sc[4] * pow(sc[6], 3.000000);
   Kc = (refC * refC) * exp(g_RT[0] + g_RT[2] - g_RT[4] - 3.000000 * g_RT[6]);
@@ -2364,7 +2365,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // forward
   phi_f = sc[1] * (sc[6] * sc[6]);
   k_f = 33993533107.7566 * exp(-1 * tc[0] - 0.50321666580472 * (40000) * invT);
-  dlnkfdT = -1 * invT + 0.50321666580472 * 40000 * invT2;
+  dlnkfdT = -1 * invT + 0.50321666580472 * (40000) * invT2;
   // rate of progress
   q = k_f * phi_f;
   dqdT = dlnkfdT * k_f * phi_f;
@@ -2392,7 +2393,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   // forward
   phi_f = sc[2] * sc[4];
   k_f = 2750000 * exp(0 * tc[0] - 0.50321666580472 * (20000) * invT);
-  dlnkfdT = 0 * invT + 0.50321666580472 * 20000 * invT2;
+  dlnkfdT = 0 * invT + 0.50321666580472 * (20000) * invT2;
   // reverse
   phi_r = sc[5] * sc[6];
   Kc = exp(g_RT[2] + g_RT[4] - g_RT[5] - g_RT[6]);
@@ -2473,8 +2474,6 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   }
   // dTdot/dT
   J[63] = -tmp1 + tmp2 * dcmixdT - tmp3 * dehmixdT;
-
-  return;
 }
 
 // compute the reaction Jacobian
