@@ -48,11 +48,11 @@ initialize_data(
   temp(i, j, k) = 500.0;
   rho(i, j, k) = 0.01;
 #else
-  temp(i, j, k) = 500.0 + dTemp * std::sin(2.0 * pi * y / P[1]);
-  rho(i, j, k) = 0.01 + dRho * std::sin(2.0 * pi * y / P[1]);
+  temp(i, j, k) = 500.0 + dTemp * std::sin(2.0 * pi * (y - plo[1]) / P[1]);
+  rho(i, j, k) = 0.01 + dRho * std::sin(2.0 * pi * (y - plo[1]) / P[1]);
 #endif
   for (int n = 0; n < NUM_SPECIES; n++) {
-    spec(i, j, k, n) = Y_lo[n] + (Y_hi[n] - Y_lo[n]) * x / L[0];
+    spec(i, j, k, n) = Y_lo[n] + (Y_hi[n] - Y_lo[n]) * (x - plo[0]) / L[0];
   }
   // corr Yk
   amrex::Real dummy = 0.0;
