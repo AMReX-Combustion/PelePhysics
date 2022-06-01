@@ -73,7 +73,8 @@ initialize_data(
 #if (AMREX_SPACEDIM == 1)
   energy(i, j, k) = energy(i, j, k);
 #else
-  energy(i, j, k) = energy(i, j, k) + denergy * std::sin(2.0 * pi * (y - plo[1]) / P[1]);
+  energy(i, j, k) =
+    energy(i, j, k) + denergy * std::sin(2.0 * pi * (y - plo[1]) / P[1]);
 #endif
 }
 
