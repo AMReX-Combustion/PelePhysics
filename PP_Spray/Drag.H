@@ -263,7 +263,7 @@ calculateSpraySource(
   const amrex::Real dtmod = 0.5;
   const amrex::Real C_eps = 1.E-15;
   const amrex::Real B_eps = 1.E-7;
-  const amrex::Real mass_eps = 1.E-13;
+  const amrex::Real min_mass = 1.E-12 * SPU.mass_conv;
   const int nSubMax = 100;
   bool get_xi = false;
   bool get_Ddiag = true;
@@ -388,7 +388,7 @@ calculateSpraySource(
     if (SPI.mass_tran) {
       amrex::Real Pr_skin = mu_skin * cp_skin / lambda_skin;
       amrex::Real powR =
-      amrex::max(std::pow(amrex::min(400., Reyn), 0.077), 1.);
+        amrex::max(std::pow(amrex::min(400., Reyn), 0.077), 1.);
       amrex::Real rhoDtotal = 0.;
       amrex::Real Psat_total = 0.;
       amrex::Real maxPsat = 0.;
@@ -409,14 +409,7 @@ calculateSpraySource(
           maxPsat = Psat[spf];
         }
       }
-      amrex::Real Sc_skin = mu_skin / rhoDtotal;
-      amrex::Real logB = std::log(1. + B_M);
-      amrex::Real invFM = B_M / (logB * std::pow(1. + B_M, 0.7));
-      amrex::Real Sh_0 = 1. + powR * std::cbrt(1. + Reyn * Sc_skin);
-      amrex::Real Sh_num = 2. + (Sh_0 - 2.) * invFM;
-      amrex::Real mdotcoeff = M_PI * dia_part * Sh_num * logB;
       amrex::Real sumL = 0.;
-
       amrex::Real Nu_0 = 1. + powR * std::cbrt(1. + Reyn * Pr_skin);
       amrex::Real Nu_num = Nu_0;
       // Check if flash boiling is occuring, if so, only the species
@@ -428,9 +421,8 @@ calculateSpraySource(
         amrex::Real invFT = B_T / (logBT * std::pow(1. + B_T, 0.7));
         amrex::Real Nu_star = 2. + (Nu_0 - 2.) * invFT;
         Nu_num = Nu_star * logBT / B_T;
-        amrex::Real coeff =
-          M_PI * lambda_skin / cp_skin * dia_part * Nu_star;
-        // If flash boiling
+        amrex::Real coeff = M_PI * lambda_skin / cp_skin * dia_part * Nu_star;
+        // Flash boiling
         if (Psat_total > 0.999 * gpv.p_fluid) {
           // Max operation necessary for LLVM compiler
           amrex::Real delTb = amrex::max(0., T_part - Tboil);
@@ -439,13 +431,20 @@ calculateSpraySource(
             M_PI * dia_part * dia_part * alpha * delTb / L_fuel[maxY];
           amrex::Real G = calcFlashVaporRate(B_T, coeff, Gf);
           mi_dot[maxY] = -amrex::max(G + Gf, 0.);
-          // If normal boiling
         } else {
+          // Normal boiling
           mi_dot[maxY] = -amrex::max(coeff * logBT, 0.);
         }
         m_dot += mi_dot[maxY];
         sumL += mi_dot[maxY] * L_fuel[maxY];
       } else {
+        // Normal evaporation
+        amrex::Real Sc_skin = mu_skin / rhoDtotal;
+        amrex::Real logB = std::log(1. + B_M);
+        amrex::Real invFM = B_M / (logB * std::pow(1. + B_M, 0.7));
+        amrex::Real Sh_0 = 1. + powR * std::cbrt(1. + Reyn * Sc_skin);
+        amrex::Real Sh_num = 2. + (Sh_0 - 2.) * invFM;
+        amrex::Real mdotcoeff = M_PI * dia_part * Sh_num * logB;
         amrex::Real ratio = cp_skin * Sh_num * rhoDtotal / lambda_skin;
         Nu_num = calcHeatCoeff(ratio, B_M, B_eps, C_eps, Nu_0);
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
@@ -462,7 +461,8 @@ calculateSpraySource(
       gpv.fluid_eng_src += conv_src;
       part_temp_src = (sumL + conv_src) * inv_pmass / cp_part;
       if (isub == 1 && delT > C_eps) {
-        amrex::Real inv_tau_d = -m_dot / (3. * pmass);
+        // Limit dt so change in mass does not exceed 10%
+        amrex::Real inv_tau_d = -m_dot / (0.2 * pmass);
         amrex::Real inv_tau_T = conv_src * inv_pmass / (cp_part * delT);
         nsub = amrex::min(
           amrex::max(
@@ -483,7 +483,7 @@ calculateSpraySource(
       T_part += part_dt * part_temp_src;
       T_part = amrex::min(0.999 * Tcrit, T_part);
       amrex::Real new_mass = pmass + m_dot * part_dt;
-      if (new_mass > mass_eps) {
+      if (new_mass > min_mass) {
         rho_part = 0.;
         for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
           Y_part[spf] = amrex::min(
