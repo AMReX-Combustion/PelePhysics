@@ -14266,12 +14266,6 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   amrex::Real invT = 1.0 / tc[1];
   amrex::Real invT2 = invT * invT;
 
-  // Fill sc_qss here
-  amrex::Real sc_qss[18];
-  amrex::Real kf_qss[198], qf_qss[198], qr_qss[198];
-  comp_k_f_qss(tc, invT, kf_qss);
-  comp_sc_qss(sc_qss, qf_qss, qr_qss);
-
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   amrex::Real refC = 101325 / 8.31446 / T;
   amrex::Real refCinv = 1.0 / refC;
@@ -14294,8 +14288,12 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
   amrex::Real h_RT_qss[18];
   speciesEnthalpy_qss(h_RT_qss, tc);
 
-  // Fill qss coeff
+  // Fill sc_qss here
+  amrex::Real sc_qss[18];
+  amrex::Real kf_qss[198], qf_qss[198], qr_qss[198];
+  comp_k_f_qss(tc, invT, kf_qss);
   comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);
+  comp_sc_qss(sc_qss, qf_qss, qr_qss);
 
   amrex::Real phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;
   amrex::Real dlnkfdT, dlnk0dT, dlnKcdT, dkrdT, dqdT;
@@ -26163,12 +26161,6 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   amrex::Real invT = 1.0 / tc[1];
   amrex::Real invT2 = invT * invT;
 
-  // Fill sc_qss here
-  amrex::Real sc_qss[18];
-  amrex::Real kf_qss[198], qf_qss[198], qr_qss[198];
-  comp_k_f_qss(tc, invT, kf_qss);
-  comp_sc_qss(sc_qss, qf_qss, qr_qss);
-
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   amrex::Real refC = 101325 / 8.31446 / T;
   amrex::Real refCinv = 1.0 / refC;
@@ -26191,8 +26183,12 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
   amrex::Real h_RT_qss[18];
   speciesEnthalpy_qss(h_RT_qss, tc);
 
-  // Fill qss coeff
+  // Fill sc_qss here
+  amrex::Real sc_qss[18];
+  amrex::Real kf_qss[198], qf_qss[198], qr_qss[198];
+  comp_k_f_qss(tc, invT, kf_qss);
   comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);
+  comp_sc_qss(sc_qss, qf_qss, qr_qss);
 
   amrex::Real phi_f, k_f, k_r, phi_r, Kc, q, q_nocor, Corr, alpha;
   amrex::Real dlnkfdT, dlnk0dT, dlnKcdT, dkrdT, dqdT;

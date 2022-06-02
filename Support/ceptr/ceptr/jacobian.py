@@ -66,26 +66,6 @@ def ajac(fstream, mechanism, species_info, reaction_info, precond=False):
 
     cw.writer(fstream)
 
-    if species_info.n_qssa_species > 0:
-        cw.writer(fstream, cw.comment("Fill sc_qss here"))
-        cw.writer(
-            fstream, "amrex::Real sc_qss[%d];" % species_info.n_qssa_species
-        )
-        cw.writer(
-            fstream,
-            "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
-            % (
-                reaction_info.n_qssa_reactions,
-                reaction_info.n_qssa_reactions,
-                reaction_info.n_qssa_reactions,
-            ),
-        )
-        cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
-        cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
-        cw.writer(fstream)
-
-    cw.writer(fstream)
-
     cw.writer(
         fstream,
         cw.comment("reference concentration: P_atm / (RT) in inverse mol/m^3"),
@@ -132,15 +112,29 @@ def ajac(fstream, mechanism, species_info, reaction_info, precond=False):
         )
         cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
 
+ 
     if species_info.n_qssa_species > 0:
+        cw.writer(fstream)
+        cw.writer(fstream, cw.comment("Fill sc_qss here"))
+        cw.writer(
+            fstream, "amrex::Real sc_qss[%d];" % species_info.n_qssa_species
+        )
         cw.writer(
             fstream,
+            "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+            % (
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
+            ),
         )
-        cw.writer(fstream, cw.comment("Fill qss coeff"))
+        cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
         cw.writer(
             fstream,
             "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
         )
+        cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
+        cw.writer(fstream)
 
     cw.writer(fstream)
 
