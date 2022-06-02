@@ -1,5 +1,5 @@
-#ifndef _SIMPLETRANSPORT_H_
-#define _SIMPLETRANSPORT_H_
+#ifndef SIMPLETRANSPORT_H
+#define SIMPLETRANSPORT_H
 
 #include "TransportParams.H"
 #include "PhysicsConstants.H"

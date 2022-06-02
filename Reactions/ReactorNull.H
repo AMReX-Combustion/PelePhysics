@@ -1,5 +1,5 @@
-#ifndef _REACTORNULL_H_
-#define _REACTORNULL_H_
+#ifndef REACTORNULL_H
+#define REACTORNULL_H
 
 #include "ReactorBase.H"
 

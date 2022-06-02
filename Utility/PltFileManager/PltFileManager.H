@@ -1,5 +1,5 @@
-#ifndef _PLTFILEMANAGER_H_
-#define _PLTFILEMANAGER_H_
+#ifndef PLTFILEMANAGER_H
+#define PLTFILEMANAGER_H
 
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>

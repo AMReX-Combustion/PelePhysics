@@ -1,5 +1,5 @@
-#ifndef _GAMMALAW_H_
-#define _GAMMALAW_H_
+#ifndef GAMMALAW_H
+#define GAMMALAW_H
 
 #include <AMReX.H>
 #include <AMReX_REAL.H>

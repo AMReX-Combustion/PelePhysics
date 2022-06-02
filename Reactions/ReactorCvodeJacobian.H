@@ -1,5 +1,5 @@
-#ifndef _REACTORCVODEJACOBIAN_H_
-#define _REACTORCVODEJACOBIAN_H_
+#ifndef REACTORCVODEJACOBIAN_H
+#define REACTORCVODEJACOBIAN_H
 
 #include <AMReX_REAL.H>
 #include <nvector/nvector_serial.h>

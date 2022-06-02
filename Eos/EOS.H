@@ -1,5 +1,5 @@
-#ifndef _EOS_H_
-#define _EOS_H_
+#ifndef EOS_H
+#define EOS_H
 
 #include <AMReX.H>
 #include <AMReX_REAL.H>

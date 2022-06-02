@@ -1,5 +1,5 @@
-#ifndef GPU_MISC_H_
-#define GPU_MISC_H_
+#ifndef GPU_MISC_H
+#define GPU_MISC_H
 
 #include <AMReX_FArrayBox.H>
 #include <AMReX_Gpu.H>

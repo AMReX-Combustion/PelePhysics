@@ -1,5 +1,5 @@
-#ifndef _turbinflow_H_
-#define _turbinflow_H_
+#ifndef turbinflow_H
+#define turbinflow_H
 
 #include <AMReX_FArrayBox.H>
 #include <AMReX_GpuMemory.H>
