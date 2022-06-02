@@ -112,7 +112,6 @@ def ajac(fstream, mechanism, species_info, reaction_info, precond=False):
         )
         cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
 
- 
     if species_info.n_qssa_species > 0:
         cw.writer(fstream)
         cw.writer(fstream, cw.comment("Fill sc_qss here"))
