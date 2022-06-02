@@ -1,5 +1,5 @@
-#ifndef _REACTORUTILSCVODE_H_
-#define _REACTORUTILSCVODE_H_
+#ifndef REACTORUTILSCVODE_H
+#define REACTORUTILSCVODE_H
 #include "ReactorTypes.H"
 
 #include <AMReX.H>

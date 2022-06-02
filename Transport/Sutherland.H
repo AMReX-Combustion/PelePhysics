@@ -1,5 +1,5 @@
-#ifndef _SUTHERLANDTRANSPORT_H_
-#define _SUTHERLANDTRANSPORT_H_
+#ifndef SUTHERLANDTRANSPORT_H
+#define SUTHERLANDTRANSPORT_H
 
 #include "TransportParams.H"
 

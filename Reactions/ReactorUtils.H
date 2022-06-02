@@ -1,5 +1,5 @@
-#ifndef _REACTORUTILS_H_
-#define _REACTORUTILS_H_
+#ifndef REACTORUTILS_H
+#define REACTORUTILS_H
 
 #include <utility>
 #include <AMReX_Gpu.H>

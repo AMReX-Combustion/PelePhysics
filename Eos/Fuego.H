@@ -1,5 +1,5 @@
-#ifndef _FUEGO_H_
-#define _FUEGO_H_
+#ifndef FUEGO_H
+#define FUEGO_H
 
 #include <AMReX.H>
 #include <AMReX_REAL.H>

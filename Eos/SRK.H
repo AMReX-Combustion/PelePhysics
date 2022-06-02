@@ -1,5 +1,5 @@
-#ifndef _SRK_H_
-#define _SRK_H_
+#ifndef SRK_H
+#define SRK_H
 
 #include <AMReX.H>
 #include <AMReX_REAL.H>

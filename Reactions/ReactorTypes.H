@@ -1,5 +1,5 @@
-#ifndef _REACTORTYPES_H_
-#define _REACTORTYPES_H_
+#ifndef REACTORTYPES_H
+#define REACTORTYPES_H
 
 #include <AMReX.H>
 

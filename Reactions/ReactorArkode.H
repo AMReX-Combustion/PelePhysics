@@ -1,5 +1,5 @@
-#ifndef _REACTORARKODE_H_
-#define _REACTORARKODE_H_
+#ifndef REACTORARKODE_H
+#define REACTORARKODE_H
 
 #include "ReactorBase.H"
 #include "AMReX_Sundials.H"

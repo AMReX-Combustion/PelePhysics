@@ -1,5 +1,5 @@
-#ifndef _REACTORBASE_H_
-#define _REACTORBASE_H_
+#ifndef REACTORBASE_H
+#define REACTORBASE_H
 
 #include <AMReX_ParmParse.H>
 #include <sundials/sundials_context.h>

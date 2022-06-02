@@ -1,5 +1,5 @@
-#ifndef _REACTORRK64_H_
-#define _REACTORRK64_H_
+#ifndef REACTORRK64_H
+#define REACTORRK64_H
 
 #include "ReactorBase.H"
 
