@@ -60,7 +60,7 @@ ReactorBase::set_sundials_solver_tols(
   const int ncells,
   const amrex::Real relTol,
   const amrex::Real absTol,
-  const& std::string solvername)
+  const std::string& solvername)
 {
   int omp_thread = 0;
 #ifdef AMREX_USE_OMP

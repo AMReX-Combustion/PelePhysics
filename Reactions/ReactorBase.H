@@ -55,7 +55,7 @@ public:
     ) = 0;
 
   virtual void flatten(
-    const& amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     amrex::Array4<const amrex::Real> const& rhoY,
     amrex::Array4<const amrex::Real> const& frcExt,
@@ -68,7 +68,7 @@ public:
     amrex::Real* src_vect_energy) = 0;
 
   virtual void unflatten(
-    const& amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     amrex::Array4<amrex::Real> const& rhoY,
     amrex::Array4<amrex::Real> const& temperature,
