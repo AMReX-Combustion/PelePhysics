@@ -221,12 +221,11 @@ struct SimpleTransport
     amrex::Real* xiloc,
     TransParm<EosType, transport_type> const* tparm)
   {
-    amrex::Real cvk[NUM_SPECIES];
-    amrex::Real cvkint[NUM_SPECIES];
-    amrex::Real cvkrot[NUM_SPECIES];
-    amrex::Real FofT[NUM_SPECIES];
-    amrex::Real Fnorm[NUM_SPECIES];
-    amrex::Real epskoverT, epskoverTstd;
+    amrex::Real cvk[NUM_SPECIES] = {0.0};
+    amrex::Real cvkint[NUM_SPECIES] = {0.0};
+    amrex::Real cvkrot[NUM_SPECIES] = {0.0};
+    amrex::Real FofT[NUM_SPECIES] = {0.0};
+    amrex::Real Fnorm[NUM_SPECIES] = {0.0};
     amrex::Real pi3_2 = std::pow(M_PI, 1.5);
 
     CKCVMS(&Tloc, cvk);
@@ -245,8 +244,8 @@ struct SimpleTransport
     }
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
-      epskoverTstd = tparm->eps[i] / 298.0;
-      epskoverT = tparm->eps[i] / Tloc;
+      amrex::Real epskoverTstd = tparm->eps[i] / 298.0;
+      amrex::Real epskoverT = tparm->eps[i] / Tloc;
       Fnorm[i] = 1.0 + 0.50 * pi3_2 * std::sqrt(epskoverTstd) +
                  (2.0 + .50 * M_PI * M_PI) * epskoverTstd +
                  pi3_2 * std::sqrt(epskoverTstd) * epskoverTstd;
@@ -287,11 +286,10 @@ struct SimpleTransport
     TransParm<EosType, transport_type> const* tparm)
   {
     amrex::Real trace = 1.e-15;
-    amrex::Real Xloc[NUM_SPECIES];
-    amrex::Real muloc[NUM_SPECIES];
-    amrex::Real xiloc[NUM_SPECIES];
-    amrex::Real lamloc[NUM_SPECIES];
-    amrex::Real logT[NUM_FIT - 1];
+    amrex::Real Xloc[NUM_SPECIES] = {0.0};
+    amrex::Real muloc[NUM_SPECIES] = {0.0};
+    amrex::Real xiloc[NUM_SPECIES] = {0.0};
+    amrex::Real logT[NUM_FIT - 1] = {0.0};
 
     logT[0] = std::log(Tloc);
     logT[1] = logT[0] * logT[0];
@@ -348,6 +346,7 @@ struct SimpleTransport
     }
 
     if (wtr_get_lam) {
+      amrex::Real lamloc[NUM_SPECIES] = {0.0};
       for (int i = 0; i < NUM_SPECIES; ++i) {
         lamloc[i] = tparm->fitlam[4 * i] + tparm->fitlam[1 + 4 * i] * logT[0] +
                     tparm->fitlam[2 + 4 * i] * logT[1] +

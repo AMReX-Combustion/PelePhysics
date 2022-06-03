@@ -12,7 +12,7 @@ namespace pltfilemanager {
 class PltFileManager
 {
 public:
-  PltFileManager(const std::string& a_pltFile);
+  explicit PltFileManager(const std::string& a_pltFile);
 
   void readGenericPlotfileHeader(const std::string& a_pltFileHeader);
 
