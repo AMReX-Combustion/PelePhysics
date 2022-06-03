@@ -789,7 +789,7 @@ ReactorCvode::allocUserData(
 #endif
 
   // Alloc internal udata solution/forcing containers
-  udata->rYsrc_ext = static_case<amrex::Real*>(
+  udata->rYsrc_ext = static_cast<amrex::Real*>(
     amrex::The_Arena()->alloc(nspec_tot * sizeof(amrex::Real)));
   udata->rhoe_init = static_cast<amrex::Real*>(
     amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real)));
