@@ -88,7 +88,7 @@ public:
     const int ncells,
     const amrex::Real relTol,
     const amrex::Real absTol,
-    const std::string solvername);
+    const std::string& solvername);
 
   ~ReactorBase() override = default;
 
