@@ -21,6 +21,7 @@ lenArr = 198
 
 A = smp.symbols('A:'+str(lenArr))
 Ea = smp.symbols('Ea:'+str(lenArr))
+kffromarr = 1.0
 
 kffromarr = smp.symbols('kffromarr')
 kffromarr = A[87] * smp.exp(-Ea[90]/(R*T))

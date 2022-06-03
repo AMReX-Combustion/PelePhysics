@@ -14250,7 +14250,7 @@ aJacobian_precond(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int HP)
 {
 
   // Do not use Analytical Jacobian with QSSA
-  amrex::Abort();
+  // amrex::Abort();
 
   for (int i = 0; i < 1296; i++) {
     J[i] = 0.0;
@@ -26145,7 +26145,7 @@ aJacobian(amrex::Real* J, amrex::Real* sc, amrex::Real T, const int consP)
 {
 
   // Do not use Analytical Jacobian with QSSA
-  amrex::Abort();
+  // amrex::Abort();
 
   for (int i = 0; i < 1296; i++) {
     J[i] = 0.0;

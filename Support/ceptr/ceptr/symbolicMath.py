@@ -23,7 +23,7 @@ class SymbolicMath:
 
             n_qssa_reactions = reaction_info.n_qssa_reactions
             self.sc_qss_smp = smp.symbols('sc_qss_smp:'+str(n_qssa_species))
-            self.kf_qss_smp = smp.symbols('kf_qss_smp:'+str(n_qssa_reactions))
+            self.kf_qss_smp = [ 1.0 for _ in range(n_qssa_reactions)]
             self.qf_qss_smp = smp.symbols('qf_qss_smp:'+str(n_qssa_reactions))
             self.qr_qss_smp = smp.symbols('qr_qss_smp:'+str(n_qssa_reactions))
             self.g_RT_qss_smp = smp.symbols('g_RT_qss_smp:'+str(n_qssa_species)) 

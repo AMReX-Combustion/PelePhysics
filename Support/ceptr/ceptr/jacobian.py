@@ -40,7 +40,7 @@ def ajac(fstream, mechanism, species_info, reaction_info, precond=False):
         cw.writer(
             fstream, cw.comment("Do not use Analytical Jacobian with QSSA")
         )
-        cw.writer(fstream, "amrex::Abort();")
+        cw.writer(fstream, "//amrex::Abort();")
         cw.writer(fstream)
 
     cw.writer(fstream, "for (int i=0; i<%d; i++) {" % (n_species + 1) ** 2)

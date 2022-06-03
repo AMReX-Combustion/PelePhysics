@@ -258,7 +258,7 @@ class Converter:
                 )
                 print("QSSA printing")
                 cqc.qssa_component_functions(
-                    hdr, self.mechanism, self.species_info, self.reaction_info
+                    hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
                 )
 
             # prod rate related

@@ -4,6 +4,7 @@ import sys
 from collections import Counter, OrderedDict, defaultdict
 
 import numpy as np
+import sympy as smp
 
 import ceptr.constants as cc
 import ceptr.utilities as cu
@@ -1340,7 +1341,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
     print()
 
 
-def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
+def qssa_component_functions(fstream, mechanism, species_info, reaction_info, syms):
     """QSSA component functions."""
     itroe = reaction_info.index[0:2]
     isri = reaction_info.index[1:3]
@@ -1528,6 +1529,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
                 sys.exit(1)
 
         cw.writer(fstream, "k_f[%d] = %.15g" % (index, pef.m))
+        syms.kf_qss_smp[index] *= pef.m
         if (beta == 0) and (ae == 0):
             cw.writer(fstream, "           ;")
         else:
@@ -1535,18 +1537,25 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info):
                 cw.writer(
                     fstream, "           * exp((%.15g) * tc[0]);" % (beta)
                 )
+                syms.kf_qss_smp[index] *= smp.exp(beta * syms.tc_smp[0])
             elif beta == 0:
                 cw.writer(
                     fstream,
                     "           * exp(-(%.15g) * invT);"
                     % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                 )
+                coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
+                syms.kf_qss_smp[index] *= smp.exp(-coeff * syms.invT_smp)
+                
             else:
                 cw.writer(
                     fstream,
                     "           * exp((%.15g) * tc[0] - (%.15g) * invT);"
                     % (beta, ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                 )
+                coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
+                syms.kf_qss_smp[index] *= smp.exp(beta * syms.tc_smp[0] - coeff * syms.invT_smp)
+
 
     cw.writer(fstream)
     cw.writer(fstream, "return;")
