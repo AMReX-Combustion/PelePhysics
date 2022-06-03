@@ -330,7 +330,7 @@ struct SRK
     Calc_Am_and_derivs(T, Y, am, dAmdT, d2AmdT2);
 
     tau = 1.0 / R;
-    K1 = (1.0 / bm) * log1p(1.0 + bm * R);
+    K1 = (1.0 / bm) * log1p(bm * R);
     amrex::Real InvEosT1Denom = 1.0 / (tau - bm);
     amrex::Real InvEosT2Denom = 1.0 / (tau * (tau + bm));
     amrex::Real InvEosT3Denom = 1.0 / (tau + bm);
