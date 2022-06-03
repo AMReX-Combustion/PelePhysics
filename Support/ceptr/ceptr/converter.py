@@ -16,6 +16,7 @@ import ceptr.species_info as csi
 import ceptr.thermo as cth
 import ceptr.transport as ctr
 import ceptr.writer as cw
+import ceptr.symbolicMath as csm
 
 
 class Converter:
@@ -33,7 +34,6 @@ class Converter:
         # 0/ntroe/nsri/nlindem/nTB/nSimple/nWeird
         # 0/1    /2   /3      /4  /5      /6
         self.reaction_info = cri.sort_reactions(self.mechanism)
-
         # QSS  -- sort reactions/networks/check validity of QSSs
         if self.species_info.n_qssa_species > 0:
             print("QSSA information")
@@ -65,6 +65,8 @@ class Converter:
             cqc.set_qssa_isneeded(
                 self.mechanism, self.species_info, self.reaction_info
             )
+        # Initialize symbolic variables
+        self.syms = csm.SymbolicMath(self.species_info, self.reaction_info)   
 
     def set_species(self):
         """Set the species."""
