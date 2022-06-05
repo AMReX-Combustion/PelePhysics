@@ -48,4 +48,8 @@ class QSSAInfo:
         self.coeff = OrderedDict()
         self.qssa_coeff = OrderedDict()
 
+        self.rhs_smp = OrderedDict()
+        self.coeff_smp = OrderedDict()
+        self.qssa_coeff_smp = OrderedDict()
+
         self.list_of_intermediate_helpers = []

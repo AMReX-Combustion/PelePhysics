@@ -254,7 +254,7 @@ class Converter:
                 print("QSSA evaluation")
                 # Actually gauss-pivot the matrix to get algebraic expr
                 cqc.sort_qssa_solution_elements(
-                    self.mechanism, self.species_info, self.reaction_info
+                    self.mechanism, self.species_info, self.reaction_info, self.syms
                 )
                 print("QSSA printing")
                 cqc.qssa_component_functions(

@@ -997,7 +997,7 @@ def sort_qssa_computation(mechanism, species_info, reaction_info):
     )
 
 
-def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
+def sort_qssa_solution_elements(mechanism, species_info, reaction_info,syms):
     """Components needed to set up QSSA algebraic expressions from AX = B.
 
     where A contains coefficients from qf's and qr's, X contains QSSA
@@ -1037,6 +1037,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
         rhs_hold = []
         coeff_hold = []
         group_coeff_hold = defaultdict(list)
+        rhs_hold_smp = []
+        coeff_hold_smp = []
+        group_coeff_hold_smp = defaultdict(list)
 
         for r in species_info.qssa_info.sr_rj[species_info.sr_si == i]:
             reaction = mechanism.reaction(r)
@@ -1099,6 +1102,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         + str(reaction_info.qfqr_co_idx_map.index(r))
                         + "]"
                     )
+                    coeff_hold_smp.append(-syms.qf_qss_smp[reaction_info.qfqr_co_idx_map.index(r)]) 
                     if reaction.reversible:
                         rhs_hold.append(
                             "+"
@@ -1107,6 +1111,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                             + str(reaction_info.qfqr_co_idx_map.index(r))
                             + "]"
                         )
+                        rhs_hold_smp.append(float(species_appearances)*syms.qr_qss_smp[reaction_info.qfqr_co_idx_map.index(r)])
                 # if QSSA species is a product
                 elif direction == 1:
                     print(
@@ -1128,12 +1133,14 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         + str(reaction_info.qfqr_co_idx_map.index(r))
                         + "]"
                     )
+                    rhs_hold_smp.append(float(species_appearances)*syms.qf_qss_smp[reaction_info.qfqr_co_idx_map.index(r)])
                     if reaction.reversible:
                         coeff_hold.append(
                             "-qr_co["
                             + str(reaction_info.qfqr_co_idx_map.index(r))
                             + "]"
                         )
+                        coeff_hold_smp.append(-syms.qr_qss_smp[reaction_info.qfqr_co_idx_map.index(r)])
 
             elif len(coupled) >= 2 and all_qssa_reactants and remove_forward:
                 # coupling is actually not a coupling because forward reaction is removed
@@ -1152,6 +1159,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         + str(reaction_info.qfqr_co_idx_map.index(r))
                         + "]"
                     )
+                    rhs_hold_smp.append(float(species_appearances)*syms.qr_qss_smp[reaction_info.qfqr_co_idx_map.index(r)])
 
             else:
                 # note in this case there can only be 2 QSSA in one reac
@@ -1233,6 +1241,7 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                             + str(reaction_info.qfqr_co_idx_map.index(r))
                             + "]"
                         )
+                        coeff_hold_smp.append(-syms.qf_qss_smp[reaction_info.qfqr_co_idx_map.index(r)])
                         if reaction.reversible:
                             group_coeff_hold[other_qssa].append(
                                 "+"
@@ -1241,6 +1250,9 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                                 + str(reaction_info.qfqr_co_idx_map.index(r))
                                 + "]"
                             )
+                            if len(group_coeff_hold_smp[other_qssa]) == 0:
+                                group_coeff_hold_smp[other_qssa] = [0]
+                            group_coeff_hold_smp[other_qssa][0] += float(species_appearances) * syms.qr_qss_smp[reaction_info.qfqr_co_idx_map.index(r)]
                 # if QSSA species is a product AND other QSSA species
                 # is a reactant (not guaranteed; must check that QSSA
                 # are on opposite sides of equation)
@@ -1262,6 +1274,8 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         if spec == symbol:
                             species_appearances += coeff
 
+                    if len(group_coeff_hold_smp[other_qssa]) == 0:
+                        group_coeff_hold_smp[other_qssa] = [0]
                     group_coeff_hold[other_qssa].append(
                         "+"
                         + str(float(species_appearances))
@@ -1269,12 +1283,14 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                         + str(reaction_info.qfqr_co_idx_map.index(r))
                         + "]"
                     )
+                    group_coeff_hold_smp[other_qssa][0] += float(species_appearances) * syms.qf_qss_smp[reaction_info.qfqr_co_idx_map.index(r)]
                     if reaction.reversible:
                         coeff_hold.append(
                             "-qr_co["
                             + str(reaction_info.qfqr_co_idx_map.index(r))
                             + "]"
                         )
+                        coeff_hold_smp.append(-syms.qr_qss_smp[reaction_info.qfqr_co_idx_map.index(r)])
                 # last option is that BOTH QSSA are products, but the
                 # reaction is only one way, so it doesn't matter. This
                 # is ignored in the quadratic coupling check as the
@@ -1310,7 +1326,16 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
 
         species_info.qssa_info.rhs[symbol] = " ".join(rhs_hold)
         species_info.qssa_info.coeff[symbol] = " ".join(coeff_hold)
+
+        species_info.qssa_info.rhs_smp[symbol] = 0
+        for rhs_smp in rhs_hold_smp: 
+            species_info.qssa_info.rhs_smp[symbol] += rhs_smp
+        species_info.qssa_info.coeff_smp[symbol] = 0
+        for coeff_smp in coeff_hold_smp: 
+            species_info.qssa_info.coeff_smp[symbol] += coeff_smp
+
         species_info.qssa_info.qssa_coeff[symbol] = OrderedDict()
+        species_info.qssa_info.qssa_coeff_smp[symbol] = OrderedDict()
         for j in range(species_info.n_qssa_species):
             if j != i:
                 other_qssa = species_info.qssa_species_list[j]
@@ -1318,11 +1343,19 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info):
                     species_info.qssa_info.qssa_coeff[symbol][
                         other_qssa
                     ] = " ".join(group_coeff_hold[other_qssa])
+                    species_info.qssa_info.qssa_coeff_smp[symbol][
+                        other_qssa
+                    ] = group_coeff_hold_smp[other_qssa]
+                    print(species_info.qssa_info.qssa_coeff[symbol])
+                    print(species_info.qssa_info.qssa_coeff_smp[symbol])
                 else:
                     species_info.qssa_info.qssa_coeff[symbol][
                         other_qssa
                     ] = "0.0"
-
+                    species_info.qssa_info.qssa_coeff_smp[symbol][
+                        other_qssa
+                    ] = 0.0
+   
         print("Here is everything: ")
         print()
         print("rhs: ", species_info.qssa_info.rhs[symbol])
@@ -1952,13 +1985,14 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
     for i in species_info.qssa_info.decouple_index:
         symbol = species_info.qssa_info.decouple_index[i]
         print("... Dealing with Spec/Group ", symbol)
-        if symbol in list(species_info.qssa_info.needs.keys()):
-            print("    Simple case, single group")
 
+        # This case does not happen for dodecane_lu_qss, do later
+        if symbol in list(species_info.qssa_info.needs.keys()):
+            sys.exit('NOT DIFFERENTIATED YET')
+            print("    Simple case, single group")
             cpp_var_str_symbol = symbol.replace("*", "D")
             denominator = cpp_var_str_symbol + "_denom"
             numerator = cpp_var_str_symbol + "_num"
-
             cw.writer(
                 fstream,
                 cw.comment(
@@ -1969,6 +2003,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 ),
             )
             cw.writer(fstream)
+            
             # RHS
             # cut line if too big !
             long_line_elements = (species_info.qssa_info.rhs[symbol]).split()
@@ -2064,7 +2099,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 cpp_var_str_species = species.replace("*", "D")
                 denominator = cpp_var_str_species + "_denom"
                 numerator = cpp_var_str_species + "_num"
-
+                
                 # RHS
                 # cut line if too big !
                 long_line_elements = (
