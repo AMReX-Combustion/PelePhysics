@@ -15,18 +15,18 @@ class SymbolicMath:
         n_qssa_species = species_info.n_qssa_species 
         
         self.sc_smp = smp.symbols('sc_smp:'+str(n_species))
-        self.g_RT_smp = smp.symbols('g_RT_smp:'+str(n_species))  
-        self.h_RT_smp = smp.symbols('h_RT_smp:'+str(n_species))  
-        self.wdot_smp = smp.symbols('wdot_smp:'+str(n_species))
+        self.g_RT_smp = [ smp.symbols('g_RT_smp'+str(i)) for i in range(n_species)]
+        self.h_RT_smp = [ 1.0 for _ in range(n_species)]
+        self.wdot_smp = [ 1.0 for _ in range(n_species)]
  
         if n_qssa_species > 0:
 
             n_qssa_reactions = reaction_info.n_qssa_reactions
-            self.sc_qss_smp = smp.symbols('sc_qss_smp:'+str(n_qssa_species))
+            self.sc_qss_smp = [ 1.0 for _ in range(n_qssa_species)]
             self.kf_qss_smp = [ 1.0 for _ in range(n_qssa_reactions)]
-            self.qf_qss_smp = smp.symbols('qf_qss_smp:'+str(n_qssa_reactions))
-            self.qr_qss_smp = smp.symbols('qr_qss_smp:'+str(n_qssa_reactions))
-            self.g_RT_qss_smp = smp.symbols('g_RT_qss_smp:'+str(n_qssa_species)) 
-            self.h_RT_qss_smp = smp.symbols('h_RT_qss_smp:'+str(n_qssa_species)) 
+            self.qf_qss_smp = [ 1.0 for _ in range(n_qssa_reactions)]
+            self.qr_qss_smp = [ 1.0 for _ in range(n_qssa_reactions)]
+            self.g_RT_qss_smp = [ smp.symbols('g_RT_qss_smp'+str(i)) for i in range(n_qssa_species)] 
+            self.h_RT_qss_smp = [ 1.0 for _ in range(n_qssa_species)]
     
 

@@ -278,6 +278,7 @@ class Converter:
                 self.species_info,
                 self.reaction_info,
                 precond=True,
+                syms=None
             )
             cj.dproduction_rate(
                 hdr,

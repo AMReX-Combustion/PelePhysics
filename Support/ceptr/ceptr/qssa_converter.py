@@ -1591,15 +1591,22 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m,
             ),
         )
+        coeff1 = cc.Patm_pa
+        coeff2 = cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m
+        syms.refC_smp = coeff1/coeff2 * syms.invT_smp
         cw.writer(fstream, "const amrex::Real refCinv = 1. / refC;")
+        syms.refCinv_smp = 1.0 / syms.refC_smp
 
     cw.writer(fstream, cw.comment("compute the mixture concentration"))
     cw.writer(fstream, "amrex::Real mixture = 0.0;")
+    syms.mixture_smp = 0.0
     cw.writer(
         fstream, "for (int i = 0; i < %d; ++i) {" % species_info.n_species
     )
     cw.writer(fstream, "mixture += sc[i];")
     cw.writer(fstream, "}")
+    for i in range(species_info.n_species):
+        syms.mixture_smp += syms.sc_smp[i]
 
     nclassd_qssa = reaction_info.n_qssa_reactions - nspecial_qssa
     # nCorr_qssa = n3body_qssa + ntroe_qssa + nsri_qssa + nlindemann_qssa
@@ -1675,22 +1682,23 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
             cw.comment("reaction %d: %s" % (orig_idx, reaction.equation)),
         )
         if bool(reaction.orders):
-            forward_sc = qssa_return_coeff(
-                mechanism, species_info, reaction, reaction.orders
+            forward_sc, forward_sc_smp = qssa_return_coeff(
+                mechanism, species_info, reaction, reaction.orders, syms
             )
         else:
-            forward_sc = qssa_return_coeff(
-                mechanism, species_info, reaction, reaction.reactants
+            forward_sc, forward_sc_smp = qssa_return_coeff(
+                mechanism, species_info, reaction, reaction.reactants, syms
             )
         if reaction.reversible:
-            reverse_sc = qssa_return_coeff(
-                mechanism, species_info, reaction, reaction.products
+            reverse_sc, reverse_sc_smp = qssa_return_coeff(
+                mechanism, species_info, reaction, reaction.products, syms
             )
         else:
             reverse_sc = "0.0"
+            reverse_sc_smp = 0.0
 
-        kc_exp_arg = cu.sorted_kc_exp_arg(mechanism, species_info, reaction)
-        kc_conv_inv = cu.fkc_conv_inv(mechanism, species_info, reaction)
+        kc_exp_arg, kc_exp_arg_smp = cu.sorted_kc_exp_arg(mechanism, species_info, reaction, syms)
+        kc_conv_inv, kc_conv_inv_smp = cu.fkc_conv_inv(mechanism, species_info, reaction, syms)
 
         alpha = 1.0
         if not third_body and not falloff:
@@ -1701,13 +1709,17 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                     cw.comment(
                         "qf[%d] = k_f[%d] * (%s);" % (idx, idx, forward_sc)
                     ),
+                    
                 )
                 cw.writer(fstream, "qf[%d] = 0.0;" % (idx))
+                syms.qf_qss_smp[idx] = 0.0
             else:
                 cw.writer(
                     fstream,
                     "qf[%d] = k_f[%d] * (%s);" % (idx, idx, forward_sc),
                 )
+                syms.qf_qss_smp[idx] = syms.kf_qss_smp[idx] * forward_sc_smp
+            
         elif not falloff and len(reaction.efficiencies) == 1:
             if remove_forward:
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
@@ -1718,14 +1730,18 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                     ),
                 )
                 cw.writer(fstream, "qf[%d] = 0.0;" % (idx))
+                syms.qf_qss_smp[idx] = 0.0
             else:
                 cw.writer(
                     fstream,
                     "qf[%d] = k_f[%d] * (%s);" % (idx, idx, forward_sc),
                 )
+                syms.qf_qss_smp[idx] = syms.kf_qss_smp[idx] * forward_sc_smp
+
         elif not falloff:
-            alpha = cu.enhancement_d(mechanism, species_info, reaction)
-            cw.writer(fstream, "const amrex::Real Corr = %s;" % (alpha))
+            alpha, alpha_smp = cu.enhancement_d(mechanism, species_info, reaction,syms)
+            cw.writer(fstream, "const amrex::Real Corr = %s;" % (alpha)) 
+            Corr_smp = alpha_smp
             if remove_forward:
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
@@ -1736,30 +1752,40 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                     ),
                 )
                 cw.writer(fstream, "qf[%d] = 0.0;" % (idx))
+                syms.qf_qss_smp[idx] = 0.0
             else:
                 cw.writer(
                     fstream,
                     "qf[%d] = Corr * k_f[%d] * (%s);" % (idx, idx, forward_sc),
                 )
+                syms.qf_qss_smp[idx] = Corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
         else:
-            alpha = cu.enhancement_d(mechanism, species_info, reaction)
+            alpha, alpha_smp = cu.enhancement_d(mechanism, species_info, reaction, syms)
             cw.writer(fstream, "amrex::Real Corr = %s;" % (alpha))
+            Corr_smp = alpha_smp
             cw.writer(
                 fstream,
                 "const amrex::Real redP = Corr / k_f[%d] * %.15g "
                 % (idx, 10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)),
             )
+            coeff = 10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)
+            redP_smp = Corr_smp / syms.kf_qss_smp[idx] * coeff
             cw.writer(
                 fstream,
                 "           * exp(%.15g  * tc[0] - %.15g * invT);"
                 % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m),
             )
+            coeff = (1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m
+            redP_smp *= smp.exp(low_beta * syms.tc_smp[0] - coeff * syms.invT_smp)
             if is_troe:
                 cw.writer(
                     fstream, "const amrex::Real F = redP / (1.0 + redP);"
                 )
+                F_smp = redP_smp / (1.0 + redP_smp)
                 cw.writer(fstream, "const amrex::Real logPred = log10(redP);")
+                logPred_smp = smp.log(redP_smp,10) 
                 cw.writer(fstream, "const amrex::Real logFcent = log10(")
+                int_smp = 0
                 if abs(troe[1]) > 1.0e-100:
                     if 1.0 - troe[0] != 0:
                         cw.writer(
@@ -1770,8 +1796,10 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                                 (1 / troe[1]),
                             ),
                         )
+                        int_smp += (1.0 - troe[0]) * smp.exp(-syms.tc_smp[1] * (1 / troe[1]))
                 else:
                     cw.writer(fstream, "     0.0 ")
+                    int_smp += 0.0
                 if abs(troe[2]) > 1.0e-100:
                     if troe[0] != 0:
                         cw.writer(
@@ -1782,39 +1810,51 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                                 (1 / troe[2]),
                             ),
                         )
+                        int_smp += (troe[0]) * smp.exp(-syms.tc_smp[1] * (1 / troe[2]))
                 else:
                     cw.writer(fstream, "     0.0 ")
+                    int_smp += 0.0
                 if ntroe == 4:
                     if troe[3] < 0:
                         cw.writer(
                             fstream,
                             "    + exp(%.15g * invT));" % -troe[3],
                         )
+                        int_smp += smp.exp(-troe[3] * syms.invT_smp)
                     else:
                         cw.writer(
                             fstream,
                             "    + exp(-%.15g * invT));" % troe[3],
                         )
+                        int_smp += smp.exp(-troe[3] * syms.invT_smp)
                 else:
                     cw.writer(fstream, "    + 0.0);")
+                    int_smp += 0.0
+                logFcent_smp = smp.log(int_smp,10)
+                
                 cw.writer(
                     fstream,
                     "const amrex::Real troe_c = -0.4 - 0.67 * logFcent;",
                 )
+                troe_c_smp = -0.4 - 0.67 * logFcent_smp
                 cw.writer(
                     fstream,
                     "const amrex::Real troe_n = 0.75 - 1.27 * logFcent;",
                 )
+                troe_n_smp = 0.75 - 1.27 * logFcent_smp
                 cw.writer(
                     fstream,
                     "const amrex::Real troe = (troe_c + logPred)"
                     + " / (troe_n - 0.14 * (troe_c + logPred));",
                 )
+                troe_smp = (troe_c_smp + logPred_smp)/(troe_n_smp - 0.14 * (troe_c_smp + logPred_smp))
                 cw.writer(
                     fstream,
                     "const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));",
                 )
+                F_troe_smp = 10**(logFcent_smp/(1.0 + troe_smp * troe_smp))
                 cw.writer(fstream, "Corr = F * F_troe;")
+                Corr_smp = F_smp * F_troe_smp
                 if remove_forward:
                     cw.writer(fstream, cw.comment("Remove forward reaction"))
                     cw.writer(
@@ -1825,14 +1865,17 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                         ),
                     )
                     cw.writer(fstream, "qf[%d]  = 0.0;" % (idx))
+                    syms.qf_qss_smp[idx] = 0.0
                 else:
                     cw.writer(
                         fstream,
                         "qf[%d]  = Corr * k_f[%d] * (%s);"
                         % (idx, idx, forward_sc),
                     )
+                    syms.qf_qss_smp[idx] = Corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
             elif nlindemann_qssa > 0:
                 cw.writer(fstream, "Corr = redP / (1.0 + redP);")
+                Corr_smp = redP_smp / (1.0 + redP_smp)
                 if remove_forward:
                     cw.writer(fstream, cw.comment("Remove forward reaction"))
                     cw.writer(
@@ -1842,13 +1885,15 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                             % (idx, idx, forward_sc)
                         ),
                     )
-                    cw.writer(fstream, "qf[%d] = 0.0;" % (idx))
+                    cw.writer(fstream, "qf[%d] = 0.0;" % (idx)) 
+                    syms.qf_qss_smp[idx] = 0.0
                 else:
                     cw.writer(
                         fstream,
                         "qf[%d] = Corr * k_f[%d] * (%s);"
                         % (idx, idx, forward_sc),
                     )
+                    syms.qf_qss_smp[idx] = Corr_smp * kf_qss_smp[idx] * forward_sc_smp
 
         if kc_conv_inv:
             if alpha == 1.0:
@@ -1857,12 +1902,14 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                     "qr[%d] = k_f[%d] * exp(-(%s)) * (%s) * (%s);"
                     % (idx, idx, kc_exp_arg, kc_conv_inv, reverse_sc),
                 )
+                syms.qr_qss_smp[idx] = syms.kf_qss_smp[idx] * smp.exp(-kc_exp_arg_smp) * kc_conv_inv_smp * reverse_sc_smp
             else:
                 cw.writer(
                     fstream,
                     "qr[%d] = Corr * k_f[%d] * exp(-(%s)) * (%s) * (%s);"
                     % (idx, idx, kc_exp_arg, kc_conv_inv, reverse_sc),
                 )
+                syms.qr_qss_smp[idx] = Corr_smp * syms.kf_qss_smp[idx] * smp.exp(-kc_exp_arg_smp) * kc_conv_inv_smp * reverse_sc_smp
         else:
             if alpha == 1.0:
                 cw.writer(
@@ -1870,12 +1917,14 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                     "qr[%d] = k_f[%d] * exp(-(%s)) * (%s);"
                     % (idx, idx, kc_exp_arg, reverse_sc),
                 )
+                syms.qr_qss_smp[idx] = syms.kf_qss_smp[idx] * smp.exp(-kc_exp_arg_smp) * reverse_sc_smp
             else:
                 cw.writer(
                     fstream,
                     "qr[%d] = Corr * k_f[%d] * exp(-(%s)) * (%s);"
                     % (idx, idx, kc_exp_arg, reverse_sc),
                 )
+                syms.qr_qss_smp[idx] = Corr_smp * syms.kf_qss_smp[idx] * smp.exp(-kc_exp_arg_smp) * reverse_sc_smp
         cw.writer(fstream, "}")
 
     cw.writer(fstream)
@@ -2535,7 +2584,7 @@ def gauss_pivoting(species_info, a, b=None):
     return a, x, b, intermediate_helpers
 
 
-def qssa_return_coeff(mechanism, species_info, reaction, reagents):
+def qssa_return_coeff(mechanism, species_info, reaction, reagents,syms):
     """QSSA coefficient."""
     if hasattr(reaction, "efficiencies"):
         if len(reaction.efficiencies) == 1:
@@ -2552,6 +2601,7 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents):
             )
 
     phi = []
+    phi_smp = []
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
     sorted_reagents = sorted(reagents.keys(), key=lambda v: dict_species[v])
     for symbol in sorted_reagents:
@@ -2559,12 +2609,20 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents):
         if symbol not in species_info.qssa_species_list:
             if float(coefficient) == 1.0:
                 conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
+                syms.conc_smp = syms.sc_smp[species_info.ordered_idx_map[symbol]] 
             else:
                 conc = "pow(sc[%d], %f)" % (
                     species_info.ordered_idx_map[symbol],
                     float(coefficient),
                 )
+                conc_smp = syms.sc_smp[species_info.ordered_idx_map[symbol]] ** float(coefficient) 
             phi += [conc]
+            phi_smp += [syms.conc_smp]
         if len(phi) < 1:
             phi = ["1.0"]
-    return "*".join(phi)
+            phi_smp = [1.0]
+        
+    qssa_coeff_smp = 1.0
+    for phival in phi_smp:
+        qssa_coeff_smp *= phival
+    return "*".join(phi), qssa_coeff_smp

@@ -6,7 +6,7 @@ import ceptr.utilities as cu
 import ceptr.writer as cw
 
 
-def production_rate(fstream, mechanism, species_info, reaction_info):
+def production_rate(fstream, mechanism, species_info, reaction_info, syms=None):
     """Write production rate."""
     n_species = species_info.n_species
     n_reactions = mechanism.n_reactions
@@ -169,9 +169,9 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
             reaction = mechanism.reaction(orig_idx)
 
             kc_exp_arg = cu.sorted_kc_exp_arg(
-                mechanism, species_info, reaction
+                mechanism, species_info, reaction, syms
             )
-            kc_conv_inv = cu.fkc_conv_inv(mechanism, species_info, reaction)
+            kc_conv_inv = cu.fkc_conv_inv(mechanism, species_info, reaction, syms)
 
             dim = cu.phase_space_units(reaction.reactants)
             third_body = reaction.reaction_type == "three-body"
@@ -516,9 +516,9 @@ def production_rate(fstream, mechanism, species_info, reaction_info):
                 reverse_sc = "0.0"
 
             kc_exp_arg = cu.sorted_kc_exp_arg(
-                mechanism, species_info, reaction
+                mechanism, species_info, reaction, syms
             )
-            kc_conv_inv = cu.fkc_conv_inv(mechanism, species_info, reaction)
+            kc_conv_inv = cu.fkc_conv_inv(mechanism, species_info, reaction, syms)
 
             dim = cu.phase_space_units(reaction.reactants)
             third_body = reaction.reaction_type == "three-body"

@@ -8,7 +8,7 @@ import ceptr.utilities as cu
 import ceptr.writer as cw
 
 
-def ajac(fstream, mechanism, species_info, reaction_info, precond=False):
+def ajac(fstream, mechanism, species_info, reaction_info, precond=False, syms=None):
     """Write jacobian for a reaction."""
     n_species = species_info.n_species
 
@@ -173,6 +173,7 @@ def ajac(fstream, mechanism, species_info, reaction_info, precond=False):
             reaction,
             orig_idx,
             precond=precond,
+            syms=None
         )
         cw.writer(fstream)
 
@@ -256,6 +257,7 @@ def ajac_reaction_d(
     reaction,
     orig_idx,
     precond=False,
+    syms=None
 ):
     """Write jacobian of reaction."""
     n_species = species_info.n_species
@@ -428,10 +430,11 @@ def ajac_reaction_d(
 
     if has_alpha:
         cw.writer(fstream, cw.comment("3-body correction factor"))
+        enhancement_d = cu.enhancement_d(mechanism, species_info, reaction,syms)
         cw.writer(
             fstream,
             "alpha = %s;"
-            % cu.enhancement_d(mechanism, species_info, reaction),
+            % enhancement_d
         )
 
     # forward
