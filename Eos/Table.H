@@ -7,7 +7,7 @@
 
 namespace pele{
   namespace physics{
-    
+
     // Struct to contain tabulated data
     class TabFuncParams {
     public:
@@ -17,158 +17,158 @@ namespace pele{
 
       void initialize()
       {
-	amrex::ParmParse pp("table");
-	std::string tablefile;
-	pp.get("filename", tablefile);
-	if (m_h_tf_data.Ndim > MAXD_TABLE) {
-	  amrex::Abort("Requesting too many table dimensions, need to increase MAXD_TABLE");
-	}
-	pp.query("v",m_verbose);
-	read_table(tablefile);
-	if (m_verbose >= 1) {
-	  print();
-	}
-	allocate();
+        amrex::ParmParse pp("table");
+        std::string tablefile;
+        pp.get("filename", tablefile);
+        if (m_h_tf_data.Ndim > MAXD_TABLE) {
+          amrex::Abort("Requesting too many table dimensions, need to increase MAXD_TABLE");
+        }
+        pp.query("v",m_verbose);
+        read_table(tablefile);
+        if (m_verbose >= 1) {
+          print();
+        }
+        allocate();
       }
 
       void read_table(std::string & tablefile)
       {
-	std::ifstream fi(tablefile, std::ios::binary | std::ios::in);
-	if (!fi.is_open()) {
-	  // AMREX ABORT
-	  std::cout << ("Unable to open input file " + tablefile) << std::endl;
-	}
-	fi.seekg(0, std::ios::beg);
+        std::ifstream fi(tablefile, std::ios::binary | std::ios::in);
+        if (!fi.is_open()) {
+          // AMREX ABORT
+          std::cout << ("Unable to open input file " + tablefile) << std::endl;
+        }
+        fi.seekg(0, std::ios::beg);
 
-	// Number of dimensions
+        // Number of dimensions
         fi.read(reinterpret_cast<char*>(&m_h_tf_data.Ndim), sizeof(int));
-	if (m_h_tf_data.Ndim > MAXD_TABLE) {
-	  amrex::Abort("Requesting too many table dimensions, need to increase MAXD_TABLE");
-	}
+        if (m_h_tf_data.Ndim > MAXD_TABLE) {
+          amrex::Abort("Requesting too many table dimensions, need to increase MAXD_TABLE");
+        }
 
-	// Dimension names
-	m_h_tf_data.dimnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim*m_h_tf_data.len_str*sizeof(char)));
-	fi.read(m_h_tf_data.dimnames, m_h_tf_data.Ndim*m_h_tf_data.len_str*sizeof(char));
-	
-	// Dimension lengths 
-	m_h_tf_data.dimLengths = static_cast<int*>(amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim*sizeof(int)));
-	fi.read(reinterpret_cast<char*>(m_h_tf_data.dimLengths), m_h_tf_data.Ndim*sizeof(int));
-	// Number of variables
-	fi.read(reinterpret_cast<char*>(&m_h_tf_data.Nvar), sizeof(int));
-	
-	// Grid locations for all dimensions
-	int Ngridtot = 0;
-	for (int ii = 0; ii<m_h_tf_data.Ndim; ii++) { Ngridtot += m_h_tf_data.dimLengths[ii];}
-	m_h_tf_data.grids = static_cast<amrex::Real*>(amrex::The_Pinned_Arena()->alloc(Ngridtot*sizeof(amrex::Real)));
-	fi.read(reinterpret_cast<char*>(m_h_tf_data.grids), sizeof(amrex::Real)*Ngridtot);
-	
-	// Model Name
-	fi.read(m_h_tf_data.model_name, sizeof(char)*m_h_tf_data.len_str);
-	m_h_tf_data.model_name[m_h_tf_data.len_str] = '\0';
-	
-	// Variable Names
-	m_h_tf_data.varnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Nvar*m_h_tf_data.len_str*sizeof(char)));
-	fi.read(m_h_tf_data.varnames, m_h_tf_data.Nvar*m_h_tf_data.len_str*sizeof(char));
+        // Dimension names
+        m_h_tf_data.dimnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim*m_h_tf_data.len_str*sizeof(char)));
+        fi.read(m_h_tf_data.dimnames, m_h_tf_data.Ndim*m_h_tf_data.len_str*sizeof(char));
 
-	// Data
-	m_h_tf_data.dimDataSpacing = static_cast<int*>(amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim*sizeof(int)));
-	m_h_tf_data.dimDataSpacing[0] = 1;
-	for (int ii = 1; ii < m_h_tf_data.Ndim; ii++) {
-	  m_h_tf_data.dimDataSpacing[ii] = m_h_tf_data.dimDataSpacing[ii-1] * m_h_tf_data.dimLengths[ii-1];
-	}
-	m_h_tf_data.varSpacing = m_h_tf_data.dimDataSpacing[m_h_tf_data.Ndim-1] * m_h_tf_data.dimLengths[m_h_tf_data.Ndim-1];
-	int Ndata = m_h_tf_data.varSpacing * m_h_tf_data.Nvar;
-	m_h_tf_data.values = static_cast<amrex::Real*>(amrex::The_Pinned_Arena()->alloc(Ndata*sizeof(amrex::Real)));
-	fi.read(reinterpret_cast<char*>(m_h_tf_data.values), sizeof(amrex::Real)*Ndata);
+        // Dimension lengths
+        m_h_tf_data.dimLengths = static_cast<int*>(amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim*sizeof(int)));
+        fi.read(reinterpret_cast<char*>(m_h_tf_data.dimLengths), m_h_tf_data.Ndim*sizeof(int));
+        // Number of variables
+        fi.read(reinterpret_cast<char*>(&m_h_tf_data.Nvar), sizeof(int));
+
+        // Grid locations for all dimensions
+        int Ngridtot = 0;
+        for (int ii = 0; ii<m_h_tf_data.Ndim; ii++) { Ngridtot += m_h_tf_data.dimLengths[ii];}
+        m_h_tf_data.grids = static_cast<amrex::Real*>(amrex::The_Pinned_Arena()->alloc(Ngridtot*sizeof(amrex::Real)));
+        fi.read(reinterpret_cast<char*>(m_h_tf_data.grids), sizeof(amrex::Real)*Ngridtot);
+
+        // Model Name
+        fi.read(m_h_tf_data.model_name, sizeof(char)*m_h_tf_data.len_str);
+        m_h_tf_data.model_name[m_h_tf_data.len_str] = '\0';
+
+        // Variable Names
+        m_h_tf_data.varnames = static_cast<char*>(amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Nvar*m_h_tf_data.len_str*sizeof(char)));
+        fi.read(m_h_tf_data.varnames, m_h_tf_data.Nvar*m_h_tf_data.len_str*sizeof(char));
+
+        // Data
+        m_h_tf_data.dimDataSpacing = static_cast<int*>(amrex::The_Pinned_Arena()->alloc(m_h_tf_data.Ndim*sizeof(int)));
+        m_h_tf_data.dimDataSpacing[0] = 1;
+        for (int ii = 1; ii < m_h_tf_data.Ndim; ii++) {
+          m_h_tf_data.dimDataSpacing[ii] = m_h_tf_data.dimDataSpacing[ii-1] * m_h_tf_data.dimLengths[ii-1];
+        }
+        m_h_tf_data.varSpacing = m_h_tf_data.dimDataSpacing[m_h_tf_data.Ndim-1] * m_h_tf_data.dimLengths[m_h_tf_data.Ndim-1];
+        int Ndata = m_h_tf_data.varSpacing * m_h_tf_data.Nvar;
+        m_h_tf_data.values = static_cast<amrex::Real*>(amrex::The_Pinned_Arena()->alloc(Ndata*sizeof(amrex::Real)));
+        fi.read(reinterpret_cast<char*>(m_h_tf_data.values), sizeof(amrex::Real)*Ndata);
       }
-      
+
       void print()
       {
-	amrex::Print() << "TABULATED FUNCTION" << std::endl;
-	amrex::Print() << "Ndim: " << m_h_tf_data.Ndim << std::endl;
-	amrex::Print() << "Nxi : ";
-	for (int ii = 0; ii< m_h_tf_data.Ndim; ii++) {
-	  std::string dimname(&m_h_tf_data.dimnames[ii*m_h_tf_data.len_str], m_h_tf_data.len_str);
-	  amrex::Print() << dimname << " " << m_h_tf_data.dimLengths[ii] << " | " ;
-	}
-	amrex::Print() << std::endl;
-	amrex::Print() << "Nv: " << m_h_tf_data.Nvar << std::endl;
-	amrex::Print() << "Grids: " << std::endl;
-	int start = 0;
-	for (int ii=0; ii < m_h_tf_data.Ndim; ii++) {
-	  for (int jj=start; jj < start + m_h_tf_data.dimLengths[ii]; jj++) {amrex::Print() << m_h_tf_data.grids[jj] << " " ;}
-	  start += m_h_tf_data.dimLengths[ii];
-	  amrex::Print() << std::endl << std::endl;
-	}
-	amrex::Print() << "Model name: " << m_h_tf_data.model_name << std::endl;
+        amrex::Print() << "TABULATED FUNCTION" << std::endl;
+        amrex::Print() << "Ndim: " << m_h_tf_data.Ndim << std::endl;
+        amrex::Print() << "Nxi : ";
+        for (int ii = 0; ii< m_h_tf_data.Ndim; ii++) {
+          std::string dimname(&m_h_tf_data.dimnames[ii*m_h_tf_data.len_str], m_h_tf_data.len_str);
+          amrex::Print() << dimname << " " << m_h_tf_data.dimLengths[ii] << " | " ;
+        }
+        amrex::Print() << std::endl;
+        amrex::Print() << "Nv: " << m_h_tf_data.Nvar << std::endl;
+        amrex::Print() << "Grids: " << std::endl;
+        int start = 0;
+        for (int ii=0; ii < m_h_tf_data.Ndim; ii++) {
+          for (int jj=start; jj < start + m_h_tf_data.dimLengths[ii]; jj++) {amrex::Print() << m_h_tf_data.grids[jj] << " " ;}
+          start += m_h_tf_data.dimLengths[ii];
+          amrex::Print() << std::endl << std::endl;
+        }
+        amrex::Print() << "Model name: " << m_h_tf_data.model_name << std::endl;
 
-	amrex::Print() << "Index | Variable | Min | Max" << std::endl; 
-	for (int ii=0; ii < m_h_tf_data.Nvar; ii++) {
-	  std::string varname(&m_h_tf_data.varnames[ii*m_h_tf_data.len_str], m_h_tf_data.len_str);
-	  amrex::Real *dat_beg = &m_h_tf_data.values[ii*m_h_tf_data.varSpacing];
-	  amrex::Real *dat_end = &m_h_tf_data.values[(ii+1)*m_h_tf_data.varSpacing];
-	  amrex::Real *min_entry =  std::min_element(dat_beg, dat_end) ;
-	  amrex::Real *max_entry =  std::max_element(dat_beg, dat_end) ;	    
-	  amrex::Print() << ii << " | " << varname << " | " << *min_entry  << " | " << *max_entry <<  std::endl;
-	}
+        amrex::Print() << "Index | Variable | Min | Max" << std::endl;
+        for (int ii=0; ii < m_h_tf_data.Nvar; ii++) {
+          std::string varname(&m_h_tf_data.varnames[ii*m_h_tf_data.len_str], m_h_tf_data.len_str);
+          amrex::Real *dat_beg = &m_h_tf_data.values[ii*m_h_tf_data.varSpacing];
+          amrex::Real *dat_end = &m_h_tf_data.values[(ii+1)*m_h_tf_data.varSpacing];
+          amrex::Real *min_entry =  std::min_element(dat_beg, dat_end) ;
+          amrex::Real *max_entry =  std::max_element(dat_beg, dat_end) ;
+          amrex::Print() << ii << " | " << varname << " | " << *min_entry  << " | " << *max_entry <<  std::endl;
+        }
       }
-      
+
       struct TabFuncData
       {
-	static constexpr int len_str = 64; 
-	int Ndim;
-	int Nvar;
-	int varSpacing;
+        static constexpr int len_str = 64;
+        int Ndim;
+        int Nvar;
+        int varSpacing;
         int* dimLengths;
-	int* dimDataSpacing;
-	amrex::Real* grids;
-	amrex::Real* values;
-	char model_name[len_str+1];
-	char* varnames;
-	char* dimnames;
+        int* dimDataSpacing;
+        amrex::Real* grids;
+        amrex::Real* values;
+        char model_name[len_str+1];
+        char* varnames;
+        char* dimnames;
       };
 
       void allocate()
       {
-	if (!m_device_allocated) {
-	  m_d_tf_data = static_cast<TabFuncData*>(amrex::The_Device_Arena()->alloc(sizeof(m_h_tf_data)));
-	  m_device_allocated = true;
-	  sync_to_device();
-	}
+        if (!m_device_allocated) {
+          m_d_tf_data = static_cast<TabFuncData*>(amrex::The_Device_Arena()->alloc(sizeof(m_h_tf_data)));
+          m_device_allocated = true;
+          sync_to_device();
+        }
       }
 
       void sync_to_device()
-      {	
-	if (!m_device_allocated) {
-	  amrex::Abort("Device params not allocated yet");
-	} else {
-	  amrex::Gpu::copy(amrex::Gpu::hostToDevice, &m_h_tf_data, &m_h_tf_data + 1,
-			   m_d_tf_data);
-	}
+      {
+        if (!m_device_allocated) {
+          amrex::Abort("Device params not allocated yet");
+        } else {
+          amrex::Gpu::copy(amrex::Gpu::hostToDevice, &m_h_tf_data, &m_h_tf_data + 1,
+                           m_d_tf_data);
+        }
       }
 
       void deallocate()
       {
-	amrex::The_Pinned_Arena()->free(m_h_tf_data.dimLengths);
-	amrex::The_Pinned_Arena()->free(m_h_tf_data.dimDataSpacing);
-	amrex::The_Pinned_Arena()->free(m_h_tf_data.grids);
-	amrex::The_Pinned_Arena()->free(m_h_tf_data.values);
-	amrex::The_Pinned_Arena()->free(m_h_tf_data.varnames);
-	amrex::The_Pinned_Arena()->free(m_h_tf_data.dimnames);
-	if (m_device_allocated)
-	  amrex::The_Device_Arena()->free(m_d_tf_data);
+        amrex::The_Pinned_Arena()->free(m_h_tf_data.dimLengths);
+        amrex::The_Pinned_Arena()->free(m_h_tf_data.dimDataSpacing);
+        amrex::The_Pinned_Arena()->free(m_h_tf_data.grids);
+        amrex::The_Pinned_Arena()->free(m_h_tf_data.values);
+        amrex::The_Pinned_Arena()->free(m_h_tf_data.varnames);
+        amrex::The_Pinned_Arena()->free(m_h_tf_data.dimnames);
+        if (m_device_allocated)
+          amrex::The_Device_Arena()->free(m_d_tf_data);
       }
-      
+
       TabFuncData& host_tabfunc_data()
       {
-	return m_h_tf_data;
+        return m_h_tf_data;
       }
 
       TabFuncData* device_tabfunc_data()
       {
-	return m_d_tf_data;
+        return m_d_tf_data;
       }
-      
+
     private :
       int m_verbose = 0;
       TabFuncData m_h_tf_data;
@@ -182,27 +182,27 @@ namespace pele{
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       TabFunc() {}
-      
+
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       TabFunc(TabFuncParams::TabFuncData* tf_data_in) {
-	tf_data = tf_data_in;
-      }    
-      
+        tf_data = tf_data_in;
+      }
+
       // Lookup directly if you already know index
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       void
       get_from_table(const int ivar, const amrex::Real interpdata[], amrex::Real& out)
-      {	
-	// Get alphas and indices
+      {
+        // Get alphas and indices
         int indices[MAXD_TABLE];
-	amrex::Real alphas[MAXD_TABLE];
-	amrex::Real dxinv[MAXD_TABLE];
-	get_indices_alphas_dxinv(interpdata, indices, alphas, dxinv);
-	
-	// interpolate down
-	out = interpolate(indices, alphas, &tf_data->values[ivar * tf_data->varSpacing]);
+        amrex::Real alphas[MAXD_TABLE];
+        amrex::Real dxinv[MAXD_TABLE];
+        get_indices_alphas_dxinv(interpdata, indices, alphas, dxinv);
+
+        // interpolate down
+        out = interpolate(indices, alphas, &tf_data->values[ivar * tf_data->varSpacing]);
       }
 
       // Get derivatives of indexed variable with respect to table dimensions using finite difference
@@ -211,14 +211,14 @@ namespace pele{
       void
       get_table_dir_derivs(int ivar, const amrex::Real derivloc[], amrex::Real derivs[])
       {
-	// Get alphas and indices
+        // Get alphas and indices
         int indices[MAXD_TABLE];
-	amrex::Real alphas[MAXD_TABLE];
-	amrex::Real dxinv[MAXD_TABLE];
-	get_indices_alphas_dxinv(derivloc, indices, alphas, dxinv);
-	
-	// finite differences from table
-	amrex::Real out = differentiate(indices, alphas, dxinv, &tf_data->values[ivar * tf_data->varSpacing], derivs);
+        amrex::Real alphas[MAXD_TABLE];
+        amrex::Real dxinv[MAXD_TABLE];
+        get_indices_alphas_dxinv(derivloc, indices, alphas, dxinv);
+
+        // finite differences from table
+        amrex::Real out = differentiate(indices, alphas, dxinv, &tf_data->values[ivar * tf_data->varSpacing], derivs);
       }
       /*
       int idx_density;
@@ -238,37 +238,37 @@ namespace pele{
       void
       get_indices_alphas_dxinv(const amrex::Real interpdata[], int indices[], amrex::Real alphas[], amrex::Real dxinv[])
       {
-	int start = 0;
-	for (int dim = 0; dim < tf_data->Ndim; dim++) {
-	  int dimLen = tf_data->dimLengths[dim];
-	  // Find index to left of data
-	  // TODO: test alternatives: lower_bound, find, home rolled while loop, home rolled fixed grid direct
-	  // SOFAR: lower_bound is much faster than home rolled while loop. Even then, finding indexes is ~50% of runtime
+        int start = 0;
+        for (int dim = 0; dim < tf_data->Ndim; dim++) {
+          int dimLen = tf_data->dimLengths[dim];
+          // Find index to left of data
+          // TODO: test alternatives: lower_bound, find, home rolled while loop, home rolled fixed grid direct
+          // SOFAR: lower_bound is much faster than home rolled while loop. Even then, finding indexes is ~50% of runtime
 
 #ifndef AMREX_USE_GPU
-	  auto beg = &tf_data->grids[start];
-	  int idx = std::lower_bound(beg+1, beg+dimLen-1, interpdata[dim]) - beg - 1;
-	  idx = std::min(std::max(idx,0),dimLen-2); // don't let idx be negative or out of bounds
+          auto beg = &tf_data->grids[start];
+          int idx = std::lower_bound(beg+1, beg+dimLen-1, interpdata[dim]) - beg - 1;
+          idx = std::min(std::max(idx,0),dimLen-2); // don't let idx be negative or out of bounds
 #else
-	  // home rolled
-	  int idx = 1;
-	  while (tf_data->grids[start+idx] < interpdata[dim] && idx < dimLen) {idx+=1;};
-	  idx-=1;
+          // home rolled
+          int idx = 1;
+          while (tf_data->grids[start+idx] < interpdata[dim] && idx < dimLen) {idx+=1;};
+          idx-=1;
 #endif
-	  // test to see cost if no lookup
-	  // int idx=42;
+          // test to see cost if no lookup
+          // int idx=42;
 
-	  indices[dim] = idx;
-	  idx+=start;
-	  amrex::Real dx_inv = 1.0 / (tf_data->grids[idx+1] - tf_data->grids[idx]);
-	  dxinv[dim] = dx_inv;
-	  amrex::Real alpha = (tf_data->grids[idx+1] - interpdata[dim]) * dx_inv;
-	  alphas[dim] = std::min(std::max(alpha,0.0),1.0); // Clip to avoid extrapolating when out of bounds // REPLACE with AMReX function
-	  //std::cout << "alpha " << dim << ": " << alphas[dim] << std::endl;
-	  start += dimLen;
-	}
+          indices[dim] = idx;
+          idx+=start;
+          amrex::Real dx_inv = 1.0 / (tf_data->grids[idx+1] - tf_data->grids[idx]);
+          dxinv[dim] = dx_inv;
+          amrex::Real alpha = (tf_data->grids[idx+1] - interpdata[dim]) * dx_inv;
+          alphas[dim] = std::min(std::max(alpha,0.0),1.0); // Clip to avoid extrapolating when out of bounds // REPLACE with AMReX function
+          //std::cout << "alpha " << dim << ": " << alphas[dim] << std::endl;
+          start += dimLen;
+        }
       }
-      
+
       // Wrapper for interpolation process, chooses appropriate approach based on dimensionality
       // some notes:
       // the process is entirely recursive, but for  Ndim <= 5 is unrolled to allow inlining
@@ -277,261 +277,261 @@ namespace pele{
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real interpolate(const int indices[], const amrex::Real alphas[], const amrex::Real data[]){
-	amrex::Real out_value;
-	switch (tf_data->Ndim) {
-	case 1 : out_value = interpolate_1D(indices, alphas, data); break;
-	case 2 : out_value = interpolate_2D(indices, alphas, data); break;
-	case 3 : out_value = interpolate_3D(indices, alphas, data); break;
-	case 4 : out_value = interpolate_4D(indices, alphas, data); break;
-	case 5 : out_value = interpolate_5D(indices, alphas, data); break;
-	default :
+        amrex::Real out_value;
+        switch (tf_data->Ndim) {
+        case 1 : out_value = interpolate_1D(indices, alphas, data); break;
+        case 2 : out_value = interpolate_2D(indices, alphas, data); break;
+        case 3 : out_value = interpolate_3D(indices, alphas, data); break;
+        case 4 : out_value = interpolate_4D(indices, alphas, data); break;
+        case 5 : out_value = interpolate_5D(indices, alphas, data); break;
+        default :
 #if MAXD_TABLE  > 5
-	  out_value = interpolate_ND(indices, alphas, data);
+          out_value = interpolate_ND(indices, alphas, data);
 #else
-	  amrex::Abort("Tabulated function: Failure: table must have 1-5 dimensions \n)");
-#endif	  
-	}
-	return out_value;
+          amrex::Abort("Tabulated function: Failure: table must have 1-5 dimensions \n)");
+#endif
+        }
+        return out_value;
       }
-      
+
       // recursive function for interpolating each dimension - cannot be inlined - use for Ndim >5 until Ndim=5
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real interpolate_ND(const int indices[], const amrex::Real alphas[], const amrex::Real data[])
       {
-	return interpolate_ND(indices, alphas, data, tf_data->Ndim-1);
+        return interpolate_ND(indices, alphas, data, tf_data->Ndim-1);
       }
 
       AMREX_GPU_HOST_DEVICE
       amrex::Real interpolate_ND(const int indices[], const amrex::Real alphas[], const amrex::Real data[],  const int dim)
       {
-	if (dim == 5) {
-	  return interpolate_5D(indices, alphas, data);
-	} else if (dim > 0) {
-	  amrex::Real out_value_left  = interpolate_ND(indices, alphas, &data[indices[dim]*tf_data->dimDataSpacing[dim]], dim-1);
-	  amrex::Real out_value_right = interpolate_ND(indices, alphas, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], dim-1);
-	  return alphas[dim] * out_value_left + (1.0 - alphas[dim]) * out_value_right;	  
-	} else {
-	  amrex::Real out_value_left  = data[indices[dim]];
-	  amrex::Real out_value_right = data[indices[dim]+1];
-	  return alphas[dim] * out_value_left + (1.0 - alphas[dim]) * out_value_right;
-	}
-      }  
+        if (dim == 5) {
+          return interpolate_5D(indices, alphas, data);
+        } else if (dim > 0) {
+          amrex::Real out_value_left  = interpolate_ND(indices, alphas, &data[indices[dim]*tf_data->dimDataSpacing[dim]], dim-1);
+          amrex::Real out_value_right = interpolate_ND(indices, alphas, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], dim-1);
+          return alphas[dim] * out_value_left + (1.0 - alphas[dim]) * out_value_right;
+        } else {
+          amrex::Real out_value_left  = data[indices[dim]];
+          amrex::Real out_value_right = data[indices[dim]+1];
+          return alphas[dim] * out_value_left + (1.0 - alphas[dim]) * out_value_right;
+        }
+      }
 
       // unrolled versions of above (for inlining/performance)
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real interpolate_5D(const int indices[], const amrex::Real alphas[], const amrex::Real data[]){
-	int idx = indices[4];
-	int dimDataSpac = tf_data->dimDataSpacing[4];
-	amrex::Real out_value_left = interpolate_4D(indices, alphas, &data[idx*dimDataSpac]);
-	amrex::Real out_value_right = interpolate_4D(indices, alphas, &data[(idx+1)*dimDataSpac]);
-	amrex::Real alpha = alphas[4];
-	return alpha * out_value_left + (1.0 - alpha) * out_value_right;
+        int idx = indices[4];
+        int dimDataSpac = tf_data->dimDataSpacing[4];
+        amrex::Real out_value_left = interpolate_4D(indices, alphas, &data[idx*dimDataSpac]);
+        amrex::Real out_value_right = interpolate_4D(indices, alphas, &data[(idx+1)*dimDataSpac]);
+        amrex::Real alpha = alphas[4];
+        return alpha * out_value_left + (1.0 - alpha) * out_value_right;
       }
 
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real interpolate_4D(const int indices[], const amrex::Real alphas[], const amrex::Real data[]){
-	int idx = indices[3];
-	int dimDataSpac = tf_data->dimDataSpacing[3];
-	amrex::Real out_value_left = interpolate_3D(indices, alphas, &data[idx*dimDataSpac]);
-	amrex::Real out_value_right = interpolate_3D(indices, alphas, &data[(idx+1)*dimDataSpac]);
-	amrex::Real alpha = alphas[3];
-	return alpha * out_value_left + (1.0 - alpha) * out_value_right;
+        int idx = indices[3];
+        int dimDataSpac = tf_data->dimDataSpacing[3];
+        amrex::Real out_value_left = interpolate_3D(indices, alphas, &data[idx*dimDataSpac]);
+        amrex::Real out_value_right = interpolate_3D(indices, alphas, &data[(idx+1)*dimDataSpac]);
+        amrex::Real alpha = alphas[3];
+        return alpha * out_value_left + (1.0 - alpha) * out_value_right;
       }
-      
+
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real interpolate_3D(const int indices[], const amrex::Real alphas[], const amrex::Real data[]){
-	int idx = indices[2];
-	int dimDataSpac = tf_data->dimDataSpacing[2];
-	amrex::Real out_value_left = interpolate_2D(indices, alphas, &data[idx*dimDataSpac]);
-	amrex::Real out_value_right = interpolate_2D(indices, alphas, &data[(idx+1)*dimDataSpac]);
-	amrex::Real alpha = alphas[2];
-	return alpha * out_value_left + (1.0 - alpha) * out_value_right;
+        int idx = indices[2];
+        int dimDataSpac = tf_data->dimDataSpacing[2];
+        amrex::Real out_value_left = interpolate_2D(indices, alphas, &data[idx*dimDataSpac]);
+        amrex::Real out_value_right = interpolate_2D(indices, alphas, &data[(idx+1)*dimDataSpac]);
+        amrex::Real alpha = alphas[2];
+        return alpha * out_value_left + (1.0 - alpha) * out_value_right;
       }
-      
+
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real interpolate_2D(const int indices[], const amrex::Real alphas[], const amrex::Real data[]){
-	int idx = indices[1];
-	int dimDataSpac = tf_data->dimDataSpacing[1];
-	amrex::Real out_value_left = interpolate_1D(indices, alphas, &data[idx*dimDataSpac]);
-	amrex::Real out_value_right = interpolate_1D(indices, alphas, &data[(idx+1)*dimDataSpac]);
-	amrex::Real alpha = alphas[1];
-	return alpha * out_value_left + (1.0 - alpha) * out_value_right;
+        int idx = indices[1];
+        int dimDataSpac = tf_data->dimDataSpacing[1];
+        amrex::Real out_value_left = interpolate_1D(indices, alphas, &data[idx*dimDataSpac]);
+        amrex::Real out_value_right = interpolate_1D(indices, alphas, &data[(idx+1)*dimDataSpac]);
+        amrex::Real alpha = alphas[1];
+        return alpha * out_value_left + (1.0 - alpha) * out_value_right;
       }
-	
+
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real interpolate_1D(const int indices[], const amrex::Real alphas[], const amrex::Real data[]){
-	int idx = indices[0];
-	amrex::Real out_value_left = data[idx];
-	amrex::Real  out_value_right = data[idx+1];
-	amrex::Real alpha = alphas[0];
-	return alpha * out_value_left + (1.0 - alpha) * out_value_right;
+        int idx = indices[0];
+        amrex::Real out_value_left = data[idx];
+        amrex::Real  out_value_right = data[idx+1];
+        amrex::Real alpha = alphas[0];
+        return alpha * out_value_left + (1.0 - alpha) * out_value_right;
       }
-      
+
       // Wrapper for interpolation process, chooses appropriate approach based on dimensionality
       // same caveats apply as for the interpolation process
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real differentiate(const int indices[], const amrex::Real alphas[], const amrex::Real dxinv[],
-				const amrex::Real data[], amrex::Real derivs[]){
-	amrex::Real out_value;
-	switch (tf_data->Ndim) {
-	case 1 : out_value = differentiate_1D(indices, alphas, dxinv, data, derivs); break;
-	case 2 : out_value = differentiate_2D(indices, alphas, dxinv, data, derivs); break;
-	case 3 : out_value = differentiate_3D(indices, alphas, dxinv, data, derivs); break;
-	case 4 : out_value = differentiate_4D(indices, alphas, dxinv, data, derivs); break;
-	case 5 : out_value = differentiate_5D(indices, alphas, dxinv, data, derivs); break;
-	default :
+                                const amrex::Real data[], amrex::Real derivs[]){
+        amrex::Real out_value;
+        switch (tf_data->Ndim) {
+        case 1 : out_value = differentiate_1D(indices, alphas, dxinv, data, derivs); break;
+        case 2 : out_value = differentiate_2D(indices, alphas, dxinv, data, derivs); break;
+        case 3 : out_value = differentiate_3D(indices, alphas, dxinv, data, derivs); break;
+        case 4 : out_value = differentiate_4D(indices, alphas, dxinv, data, derivs); break;
+        case 5 : out_value = differentiate_5D(indices, alphas, dxinv, data, derivs); break;
+        default :
 #if MAXD_TABLE  > 5
-	  out_value = differentiate_ND(indices, alphas, dxinv, data, derivs);
+          out_value = differentiate_ND(indices, alphas, dxinv, data, derivs);
 #else
-	  amrex::Abort("Tabulated function: Failure: table must have 1-5 dimensions \n)");
-#endif	  
-	}
-	return out_value;
+          amrex::Abort("Tabulated function: Failure: table must have 1-5 dimensions \n)");
+#endif
+        }
+        return out_value;
       }
 
       // Recursive functions
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real differentiate_ND(const int indices[], const amrex::Real alphas[], const amrex::Real dxinv[],
-				  const amrex::Real data[], amrex::Real derivs[])
+                                  const amrex::Real data[], amrex::Real derivs[])
       {
-	amrex::Real outval = differentiate_ND(indices, alphas, dxinv, data, derivs, tf_data->Ndim-1);
-	return outval;
+        amrex::Real outval = differentiate_ND(indices, alphas, dxinv, data, derivs, tf_data->Ndim-1);
+        return outval;
       }
 
       AMREX_GPU_HOST_DEVICE
       amrex::Real differentiate_ND(const int indices[], const amrex::Real alphas[], const amrex::Real dxinv[],
-					    const amrex::Real data[], amrex::Real derivs[], const int dim)
+                                            const amrex::Real data[], amrex::Real derivs[], const int dim)
       {
-	amrex::Real value_left, value_right;
-	amrex::Real alpha = alphas[dim];
-	amrex::Real oneMinusAlpha =  1.0 - alpha;
-	if (dim == 0) {
-	  int idx = indices[0];
-	  value_left = data[idx];
-	  value_right = data[idx+1];
-	} else {
-	  amrex::Real derivs_left[MAXD_TABLE];
-	  amrex::Real derivs_right[MAXD_TABLE];
-	  // Exit recursion for performance when possible
-	  if (dim == 5) {
-	    value_left = differentiate_5D(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left);
-	    value_right = differentiate_5D(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right);
-	  } else {
-	    value_left = differentiate_ND(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left, dim-1);
-	    value_right = differentiate_ND(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right, dim-1);
-	  }
-	  // interpolate existing derivatives
-	  for (int ddim = 0; ddim < dim; ddim++ ){
-	    derivs[ddim] = alpha*derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
-	  }
-	}
-	derivs[dim] = (value_right - value_left)*dxinv[dim]; // take the derivative
-	return alpha * value_left + oneMinusAlpha * value_right; // interpolate
-	}
+        amrex::Real value_left, value_right;
+        amrex::Real alpha = alphas[dim];
+        amrex::Real oneMinusAlpha =  1.0 - alpha;
+        if (dim == 0) {
+          int idx = indices[0];
+          value_left = data[idx];
+          value_right = data[idx+1];
+        } else {
+          amrex::Real derivs_left[MAXD_TABLE];
+          amrex::Real derivs_right[MAXD_TABLE];
+          // Exit recursion for performance when possible
+          if (dim == 5) {
+            value_left = differentiate_5D(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left);
+            value_right = differentiate_5D(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right);
+          } else {
+            value_left = differentiate_ND(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left, dim-1);
+            value_right = differentiate_ND(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right, dim-1);
+          }
+          // interpolate existing derivatives
+          for (int ddim = 0; ddim < dim; ddim++ ){
+            derivs[ddim] = alpha*derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
+          }
+        }
+        derivs[dim] = (value_right - value_left)*dxinv[dim]; // take the derivative
+        return alpha * value_left + oneMinusAlpha * value_right; // interpolate
+        }
 
       // inlinable functions
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real differentiate_5D(const int indices[], const amrex::Real alphas[], const amrex::Real dxinv[],
-				  const amrex::Real data[], amrex::Real derivs[])
+                                  const amrex::Real data[], amrex::Real derivs[])
       {
-	const int dim=4;
-	amrex::Real alpha = alphas[dim];
-	amrex::Real oneMinusAlpha =  1.0 - alpha;
-	amrex::Real derivs_left[dim];
-	amrex::Real derivs_right[dim];
-	amrex::Real value_left = differentiate_4D(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left);
-	amrex::Real value_right = differentiate_4D(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right);
-	// interpolate existing derivatives
-	for (int ddim = 0; ddim < dim; ddim++ ){
-	  derivs[ddim] = alpha*derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
-	}
-	derivs[dim] = (value_right - value_left)*dxinv[dim]; // take the derivative
-	return alpha * value_left + oneMinusAlpha * value_right; // interpolate	
+        const int dim=4;
+        amrex::Real alpha = alphas[dim];
+        amrex::Real oneMinusAlpha =  1.0 - alpha;
+        amrex::Real derivs_left[dim];
+        amrex::Real derivs_right[dim];
+        amrex::Real value_left = differentiate_4D(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left);
+        amrex::Real value_right = differentiate_4D(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right);
+        // interpolate existing derivatives
+        for (int ddim = 0; ddim < dim; ddim++ ){
+          derivs[ddim] = alpha*derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
+        }
+        derivs[dim] = (value_right - value_left)*dxinv[dim]; // take the derivative
+        return alpha * value_left + oneMinusAlpha * value_right; // interpolate
       }
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real differentiate_4D(const int indices[], const amrex::Real alphas[], const amrex::Real dxinv[],
-				  const amrex::Real data[], amrex::Real derivs[])
+                                  const amrex::Real data[], amrex::Real derivs[])
       {
-	const int dim=3;
-	amrex::Real alpha = alphas[dim];
-	amrex::Real oneMinusAlpha =  1.0 - alpha;
-	amrex::Real derivs_left[dim];
-	amrex::Real derivs_right[dim];
-	amrex::Real value_left = differentiate_3D(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left);
-	amrex::Real value_right = differentiate_3D(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right);
-	// interpolate existing derivatives
-	for (int ddim = 0; ddim < dim; ddim++ ){
-	  derivs[ddim] = alpha*derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
-	}
-	derivs[dim] = (value_right - value_left)*dxinv[dim]; // take the derivative
-	return alpha * value_left + oneMinusAlpha * value_right; // interpolate	
+        const int dim=3;
+        amrex::Real alpha = alphas[dim];
+        amrex::Real oneMinusAlpha =  1.0 - alpha;
+        amrex::Real derivs_left[dim];
+        amrex::Real derivs_right[dim];
+        amrex::Real value_left = differentiate_3D(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left);
+        amrex::Real value_right = differentiate_3D(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right);
+        // interpolate existing derivatives
+        for (int ddim = 0; ddim < dim; ddim++ ){
+          derivs[ddim] = alpha*derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
+        }
+        derivs[dim] = (value_right - value_left)*dxinv[dim]; // take the derivative
+        return alpha * value_left + oneMinusAlpha * value_right; // interpolate
       }
 
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real differentiate_3D(const int indices[], const amrex::Real alphas[], const amrex::Real dxinv[],
-				  const amrex::Real data[], amrex::Real derivs[])
+                                  const amrex::Real data[], amrex::Real derivs[])
       {
-	const int dim=2;
-	amrex::Real alpha = alphas[dim];
-	amrex::Real oneMinusAlpha =  1.0 - alpha;
-	amrex::Real derivs_left[dim];
-	amrex::Real derivs_right[dim];
-	amrex::Real value_left = differentiate_2D(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left);
-	amrex::Real value_right = differentiate_2D(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right);
-	// interpolate existing derivatives
-	for (int ddim = 0; ddim < dim; ddim++ ){
-	  derivs[ddim] = alpha*derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
-	}
-	derivs[dim] = (value_right - value_left)*dxinv[dim]; // take the derivative
-	return alpha * value_left + oneMinusAlpha * value_right; // interpolate	
+        const int dim=2;
+        amrex::Real alpha = alphas[dim];
+        amrex::Real oneMinusAlpha =  1.0 - alpha;
+        amrex::Real derivs_left[dim];
+        amrex::Real derivs_right[dim];
+        amrex::Real value_left = differentiate_2D(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left);
+        amrex::Real value_right = differentiate_2D(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right);
+        // interpolate existing derivatives
+        for (int ddim = 0; ddim < dim; ddim++ ){
+          derivs[ddim] = alpha*derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
+        }
+        derivs[dim] = (value_right - value_left)*dxinv[dim]; // take the derivative
+        return alpha * value_left + oneMinusAlpha * value_right; // interpolate
       }
 
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real differentiate_2D(const int indices[], const amrex::Real alphas[], const amrex::Real dxinv[],
-				  const amrex::Real data[], amrex::Real derivs[])
+                                  const amrex::Real data[], amrex::Real derivs[])
       {
-	const int dim=1;
-	amrex::Real alpha = alphas[dim];
-	amrex::Real oneMinusAlpha =  1.0 - alpha;
-	amrex::Real derivs_left[dim];
-	amrex::Real derivs_right[dim];
-	amrex::Real value_left = differentiate_1D(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left);
-	amrex::Real value_right = differentiate_1D(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right);
-	// interpolate existing derivatives
-	for (int ddim = 0; ddim < dim; ddim++ ){
-	  derivs[ddim] = alpha*derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
-	}
-	derivs[dim] = (value_right - value_left)*dxinv[dim]; // take the derivative
-	return alpha * value_left + oneMinusAlpha * value_right; // interpolate	
+        const int dim=1;
+        amrex::Real alpha = alphas[dim];
+        amrex::Real oneMinusAlpha =  1.0 - alpha;
+        amrex::Real derivs_left[dim];
+        amrex::Real derivs_right[dim];
+        amrex::Real value_left = differentiate_1D(indices, alphas, dxinv, &data[indices[dim]*tf_data->dimDataSpacing[dim]], derivs_left);
+        amrex::Real value_right = differentiate_1D(indices, alphas, dxinv, &data[(indices[dim]+1)*tf_data->dimDataSpacing[dim]], derivs_right);
+        // interpolate existing derivatives
+        for (int ddim = 0; ddim < dim; ddim++ ){
+          derivs[ddim] = alpha*derivs_left[ddim] + oneMinusAlpha * derivs_right[ddim];
+        }
+        derivs[dim] = (value_right - value_left)*dxinv[dim]; // take the derivative
+        return alpha * value_left + oneMinusAlpha * value_right; // interpolate
       }
 
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
       amrex::Real differentiate_1D(const int indices[], const amrex::Real alphas[], const amrex::Real dxinv[],
-				  const amrex::Real data[], amrex::Real derivs[])
+                                  const amrex::Real data[], amrex::Real derivs[])
       {
-	amrex::Real alpha = alphas[0];
-	amrex::Real oneMinusAlpha =  1.0 - alpha;
-	int idx = indices[0];
-	amrex::Real value_left = data[idx];
-	amrex::Real value_right = data[idx+1];
-	derivs[0] = (value_right - value_left)*dxinv[0]; // take the derivative
-	return alpha * value_left + oneMinusAlpha * value_right; // interpolate	
+        amrex::Real alpha = alphas[0];
+        amrex::Real oneMinusAlpha =  1.0 - alpha;
+        int idx = indices[0];
+        amrex::Real value_left = data[idx];
+        amrex::Real value_right = data[idx+1];
+        derivs[0] = (value_right - value_left)*dxinv[0]; // take the derivative
+        return alpha * value_left + oneMinusAlpha * value_right; // interpolate
       }
 
-      
+
     };
   }
 }
