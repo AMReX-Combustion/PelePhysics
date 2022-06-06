@@ -2,10 +2,8 @@
 I tried to not modify functions that did not need be modified but we should probably revamp this to make the code more readable. For ex: functions like `sorted_kc_exp` now throw back 1 or 2 output if symbolic recording is enabled or not. We should clean that
 
 1. Homogeneize functions (see above)
-2. Propagate differentiation through `comp_sc_qss`
+2. Propagate differentiation through `comp_sc_qss` (ONGOING)
 3. ~~Cook up simpler example for verifying dsc_qss/dsc~~ See `dodecane_lu_qss_simple`
-   - Make the qss mech via `makeQss.sh` in `Support/ceptr`
-   - Make the simple qss mech via `makeQss_simple.sh` in `Support/ceptr`
 4. Verify that dsc_qss/dsc is correct on simpler example
 5. Verify that dsc_qss/dsc is correct 
 6. Try 0D example with and without Jacobian fix
