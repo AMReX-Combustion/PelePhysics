@@ -399,7 +399,7 @@ struct SRK
     amrex::Real fzero = 1.0;
 
     MixingRuleBm(Y, bm);
-    K1 = (1.0 / bm) * log(1.0 + bm * R);
+    K1 = (1.0 / bm) * log1p(bm * R);
 
     // Use input T as initial guess
     Tn = T;
@@ -464,7 +464,7 @@ struct SRK
   void RYET2P(
     amrex::Real R,
     amrex::Real Y[],
-    amrex::Real& E,
+    const amrex::Real& E,
     amrex::Real& T,
     amrex::Real& P)
   {
@@ -969,7 +969,7 @@ struct SRK
   }
 
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE SRK(Args... /*unused*/)
+  AMREX_GPU_HOST_DEVICE explicit SRK(Args... /*unused*/)
   {
     // Note maybe these should be placed in mechanism.H and computed
     // there instead of every time the EOS is initialized

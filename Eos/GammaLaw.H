@@ -113,7 +113,7 @@ struct GammaLaw
   static void RYET2P(
     amrex::Real R,
     amrex::Real* /*Y*/,
-    amrex::Real& E,
+    const amrex::Real& E,
     amrex::Real& /*T*/,
     amrex::Real& P)
   {
@@ -389,7 +389,7 @@ struct GammaLaw
   }
 
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE GammaLaw(Args... /*unused*/)
+  AMREX_GPU_HOST_DEVICE explicit GammaLaw(Args... /*unused*/)
   {
   }
 

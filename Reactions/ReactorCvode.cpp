@@ -567,8 +567,8 @@ ReactorCvode::checkCvodeOptions() const
     PS = SUNSparseMatrix(
       (NUM_SPECIES + 1), (NUM_SPECIES + 1), nJdata, CSR_MAT,
       *amrex::sundials::The_Sundials_Context());
-    int* rowCount = (int*)SUNSparseMatrix_IndexPointers(PS);
-    int* colIdx = (int*)SUNSparseMatrix_IndexValues(PS);
+    int* rowCount = static_cast<int*>(SUNSparseMatrix_IndexPointers(PS));
+    int* colIdx = static_cast<int*>(SUNSparseMatrix_IndexValues(PS));
     SPARSITY_PREPROC_CSR(colIdx, rowCount, &HP, 1, 0);
     amrex::Print()
       << "\n\n *** Treating CHEM Jac (CSR symbolic analysis)*** \n\n";
@@ -607,8 +607,8 @@ ReactorCvode::checkCvodeOptions() const
     PS = SUNSparseMatrix(
       (NUM_SPECIES + 1), (NUM_SPECIES + 1), nJdata, CSR_MAT,
       *amrex::sundials::The_Sundials_Context());
-    rowCount = (int*)SUNSparseMatrix_IndexPointers(PS);
-    colIdx = (int*)SUNSparseMatrix_IndexValues(PS);
+    rowCount = static_cast<int*>(SUNSparseMatrix_IndexPointers(PS));
+    colIdx = static_cast<int*>(SUNSparseMatrix_IndexValues(PS));
     SPARSITY_PREPROC_SYST_CSR(colIdx, rowCount, &HP, 1, 1);
     amrex::Print()
       << "\n\n *** Treating SYST Jac (CSR symbolic analysis)*** \n\n";
@@ -1375,6 +1375,7 @@ ReactorCvode::react(
           captured_clean_init_massfrac, rY_in, T_in, rEner_in, rEner_src_in,
           FC_in, yvec_d, udata_g->rhoe_init, nfe_tot, dt_react);
 
+        // cppcheck-suppress knownConditionTrueFalse
         if ((udata_g->verbose > 3) && (omp_thread == 0)) {
           amrex::Print() << "END : time curr is " << CvodeActual_time_final
                          << " and actual dt_react is " << actual_dt << "\n";

@@ -55,6 +55,7 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
 
 void
 ReactorBase::set_sundials_solver_tols(
+  // cppcheck-suppress constParameter
   sundials::Context& sunctx,
   void* sundials_mem,
   const int ncells,

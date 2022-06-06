@@ -28,7 +28,7 @@ struct NonIdealChungCorrections<eos::SRK>
     const amrex::Real Temp,
     const amrex::Real* Xloc,
     const amrex::Real rholoc,
-    amrex::Real& wbar,
+    const amrex::Real& wbar,
     amrex::Real& mu,
     amrex::Real& lam,
     TransParm<eos::SRK, SimpleTransport> const* trans_parm)
@@ -151,6 +151,7 @@ struct BinaryDiff
       amrex::Real term1 = 0.0;
       amrex::Real term2 = 0.0;
       for (int j = 0; j < NUM_SPECIES; ++j) {
+        // cppcheck-suppress knownConditionTrueFalse
         if (i != j) {
           const int four_idx_ij = 4 * (i + NUM_SPECIES * j);
           const amrex::Real dbintemp =
@@ -185,6 +186,7 @@ struct BinaryDiff<eos::SRK>
       amrex::Real term1 = 0.0;
       amrex::Real term2 = 0.0;
       for (int j = 0; j < NUM_SPECIES; ++j) {
+        // cppcheck-suppress knownConditionTrueFalse
         if (i != j) {
           const int idx_ij = i + NUM_SPECIES * j;
           amrex::Real dbintemp = tparm->fitdbin[4 * idx_ij] +
@@ -420,7 +422,7 @@ struct SimpleTransport
     }
   }
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE SimpleTransport(Args... /*unused*/)
+  AMREX_GPU_HOST_DEVICE explicit SimpleTransport(Args... /*unused*/)
   {
   }
 };
