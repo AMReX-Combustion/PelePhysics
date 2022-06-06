@@ -330,7 +330,7 @@ struct SRK
     Calc_Am_and_derivs(T, Y, am, dAmdT, d2AmdT2);
 
     tau = 1.0 / R;
-    K1 = (1.0 / bm) * log(1.0 + bm * R);
+    K1 = (1.0 / bm) * log1p(bm * R);
     amrex::Real InvEosT1Denom = 1.0 / (tau - bm);
     amrex::Real InvEosT2Denom = 1.0 / (tau * (tau + bm));
     amrex::Real InvEosT3Denom = 1.0 / (tau + bm);
@@ -366,7 +366,7 @@ struct SRK
     MixingRuleAmBm(T, Y, am, bm);
     Calc_d2AmdT2(T, Y, d2AmdT2);
     CKCVBS(&T, Y, &Cv);
-    Cv += T * d2AmdT2 * (1.0 / bm) * log(1 + bm * R);
+    Cv += T * d2AmdT2 * (1.0 / bm) * log1p(bm * R);
   }
 
   AMREX_GPU_HOST_DEVICE
@@ -394,7 +394,7 @@ struct SRK
     // a reasonable initial guess.
     amrex::Real Tn;
     amrex::Real bm, am, dAmdT, d2AmdT2;
-    amrex::Real K1, ei_ig[NUM_SPECIES], Eig, Cv, dT;
+    amrex::Real K1, ei_ig[NUM_SPECIES], Cv;
     int nIter = 0;
     amrex::Real fzero = 1.0;
 
@@ -410,7 +410,7 @@ struct SRK
       Calc_Am_and_derivs(Tn, Y, am, dAmdT, d2AmdT2);
       // ideal gas internal energy
       CKUMS(&Tn, ei_ig);
-      Eig = 0.0;
+      amrex::Real Eig = 0.0;
       for (int ii = 0; ii < NUM_SPECIES; ii++) {
         Eig += Y[ii] * ei_ig[ii];
       };
@@ -421,7 +421,7 @@ struct SRK
 
       // Take difference between E(Tn) and E and iterate
       fzero = -E + Eig + (Tn * dAmdT - am) * K1;
-      dT = fzero / Cv;
+      amrex::Real dT = fzero / Cv;
       Tn -= dT;
     }
     T = Tn;
@@ -509,7 +509,7 @@ struct SRK
     while (amrex::Math::abs(P - Pnp1) > convCrit && nIter < maxIter) {
       nIter += 1;
       Calc_dAmdT(T, Y, dAmdT);
-      dpdT = Rm * InvEosT1Denom - dAmdT * InvEosT2Denom;
+      amrex::Real dpdT = Rm * InvEosT1Denom - dAmdT * InvEosT2Denom;
       // Newton iteration: Tnext = T - (p(T,Y,R) - Ptarget)/dpdT
       T -= (Pnp1 - P) / dpdT;
       // Calculate updated pressure to use as a convergence criterion
@@ -534,7 +534,7 @@ struct SRK
 
     InvBm = 1.0 / bm;
     tau = 1.0 / R;
-    K1 = InvBm * log(1.0 + bm * R);
+    K1 = InvBm * log1p(bm * R);
     RmT = Constants::RU / wbar * T;
     InvRuT = 1.0 / (Constants::RU * T);
     InvEosT1Denom = 1.0 / (tau - bm);
@@ -602,7 +602,7 @@ struct SRK
     Calc_d2AmdTY(T, Y, d2AmdTY);
 
     inv_bm = 1.0 / bm;
-    K1 = inv_bm * log(1.0 + bm * R);
+    K1 = inv_bm * log1p(bm * R);
     InvEosT3Denom = 1.0 / (1.0 / R + bm);
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
@@ -630,7 +630,7 @@ struct SRK
     MixingRuleAmBm(T, Y, am, bm);
     Calc_dAmdT(T, Y, dAmdT);
     // below was log(1 + bm/tau), tau = 1/R so this is simpler)
-    K1 = (1.0 / bm) * log(1.0 + bm * R);
+    K1 = (1.0 / bm) * log1p(bm * R);
     E += (T * dAmdT - am) * K1;
   }
 
@@ -666,7 +666,7 @@ struct SRK
       E += Ei[ii] * Y[ii];
     }
     Calc_dAmdT(T, Y, dAmdT);
-    K1 = (1.0 / bm) * log(1.0 + bm * R); // R = 1/tau
+    K1 = (1.0 / bm) * log1p(bm * R); // R = 1/tau
     E += (T * dAmdT - am) * K1;
   }
 
@@ -706,8 +706,8 @@ struct SRK
   {
     amrex::Real am, bm, dAmdT, d2AmdT2;
     amrex::Real dAmdY[NUM_SPECIES], d2AmdTY[NUM_SPECIES], inv_mwt[NUM_SPECIES];
-    amrex::Real wbar, Rmk;
-    amrex::Real dpdtau, dhmdtau, dpdYk, dhmdYk;
+    amrex::Real wbar;
+    amrex::Real dpdtau, dhmdtau;
 
     // Ideal gas part
     CKHMS(&T, Hi);
@@ -722,7 +722,7 @@ struct SRK
     get_imw(inv_mwt);
 
     amrex::Real tau = 1.0 / R;
-    amrex::Real K1 = (1.0 / bm) * log(1.0 + bm * R);
+    amrex::Real K1 = (1.0 / bm) * log1p(bm * R);
     amrex::Real InvEosT1Denom = 1.0 / (tau - bm);
     amrex::Real InvEosT2Denom = 1.0 / (tau * (tau + bm));
     amrex::Real InvEosT3Denom = 1.0 / (tau + bm);
@@ -735,11 +735,11 @@ struct SRK
               Rm * T * bm * InvEosT1Denom * InvEosT1Denom;
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
-      Rmk = Constants::RU * inv_mwt[ii];
-      dpdYk = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom +
-              Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom +
-                        am * InvEosT2Denom * InvEosT3Denom);
-      dhmdYk =
+      amrex::Real Rmk = Constants::RU * inv_mwt[ii];
+      amrex::Real dpdYk = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom +
+                          Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom +
+                                    am * InvEosT2Denom * InvEosT3Denom);
+      amrex::Real dhmdYk =
         Hi[ii] + (T * d2AmdTY[ii] - dAmdY[ii]) * K1 -
         Bi[ii] * (T * dAmdT - am) * (K1 / bm - InvEosT3Denom / bm) +
         am * Bi[ii] * InvEosT3Denom * InvEosT3Denom -
@@ -774,7 +774,7 @@ struct SRK
     Calc_Am_and_derivs(T, Y, am, dAmdT, d2AmdT2);
 
     tau = 1.0 / R;
-    K1 = (1.0 / bm) * log(1.0 + bm * R);
+    K1 = (1.0 / bm) * log1p(bm * R);
 
     amrex::Real InvEosT1Denom = 1.0 / (tau - bm);
     amrex::Real InvEosT2Denom = 1.0 / (tau * (tau + bm));
@@ -888,7 +888,7 @@ struct SRK
     amrex::Real InvEosT1Denom = 1.0 / (tau - bm);
     amrex::Real InvEosT2Denom = 1.0 / (tau * (tau + bm));
     CKCVBS(&T, Y, &Cv);
-    Cv += T * d2AmdT2 * (1.0 / bm) * log(1 + bm * R);
+    Cv += T * d2AmdT2 * (1.0 / bm) * log1p(bm * R);
 
     amrex::Real dpdT = Rm * InvEosT1Denom - dAmdT * InvEosT2Denom;
     amrex::Real dedtau = InvEosT2Denom * (am - T * dAmdT);
@@ -908,7 +908,7 @@ struct SRK
     amrex::Real dijY[][NUM_SPECIES])
   {
     amrex::Real bm, am, dAmdY[NUM_SPECIES], d2AmdY2[NUM_SPECIES][NUM_SPECIES];
-    amrex::Real wbar, Rmk;
+    amrex::Real wbar;
     amrex::Real dpdtau, dpdYk[NUM_SPECIES], inv_mwt[NUM_SPECIES];
 
     // Optimize by combining Am derivate calls?
@@ -920,7 +920,7 @@ struct SRK
 
     amrex::Real tau = 1.0 / R;
     amrex::Real InvBm = 1.0 / bm;
-    amrex::Real K1 = (1.0 / bm) * log(1.0 + bm * R);
+    amrex::Real K1 = (1.0 / bm) * log1p(bm * R);
     amrex::Real InvEosT1Denom = 1.0 / (tau - bm);
     amrex::Real InvEosT2Denom = 1.0 / (tau * (tau + bm));
     amrex::Real InvEosT3Denom = 1.0 / (tau + bm);
@@ -930,7 +930,7 @@ struct SRK
              am * (2.0 * tau + bm) * InvEosT2Denom * InvEosT2Denom;
 
     for (int ii = 0; ii < NUM_SPECIES; ii++) {
-      Rmk = Constants::RU * inv_mwt[ii];
+      amrex::Real Rmk = Constants::RU * inv_mwt[ii];
       dpdYk[ii] = Rmk * T * InvEosT1Denom - dAmdY[ii] * InvEosT2Denom +
                   Bi[ii] * (Rm * T * InvEosT1Denom * InvEosT1Denom +
                             am * InvEosT2Denom * InvEosT3Denom);

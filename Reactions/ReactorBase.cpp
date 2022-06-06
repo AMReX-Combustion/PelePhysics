@@ -42,6 +42,7 @@ ReactorBase::set_typ_vals_ode(const std::vector<amrex::Real>& ExtTypVals)
     m_typ_vals[i] = ExtTypVals[i];
   }
 
+  // cppcheck-suppress knownConditionTrueFalse
   if ((omp_thread == 0) && (verbose > 0)) {
     amrex::Print() << "Set the typical values for PelePhysics ODE integration:"
                    << std::endl;
@@ -59,7 +60,7 @@ ReactorBase::set_sundials_solver_tols(
   const int ncells,
   const amrex::Real relTol,
   const amrex::Real absTol,
-  const std::string solvername)
+  const std::string& solvername)
 {
   int omp_thread = 0;
 #ifdef AMREX_USE_OMP
@@ -90,6 +91,7 @@ ReactorBase::set_sundials_solver_tols(
 #endif
 
   if (m_typ_vals[0] > 0.0) {
+    // cppcheck-suppress knownConditionTrueFalse
     if ((verbose > 0) && (omp_thread == 0)) {
       amrex::Print() << " Setting " << solvername
                      << " tolerances with TypVals rtol = " << relTol
@@ -102,6 +104,7 @@ ReactorBase::set_sundials_solver_tols(
       }
     }
   } else {
+    // cppcheck-suppress knownConditionTrueFalse
     if ((verbose > 0) && (omp_thread == 0)) {
       amrex::Print() << " Setting " << solvername
                      << " tolerances rtol = " << relTol << " atol = " << absTol

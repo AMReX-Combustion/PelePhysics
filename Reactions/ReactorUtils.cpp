@@ -15,8 +15,6 @@ namespace utils {
 int
 check_flag(void* flagvalue, const char* funcname, int opt)
 {
-  int* errflag;
-
   if (opt == 0 && flagvalue == nullptr) {
     if (amrex::ParallelDescriptor::IOProcessor()) {
       fprintf(
@@ -27,7 +25,7 @@ check_flag(void* flagvalue, const char* funcname, int opt)
     return (1);
   }
   if (opt == 1) {
-    errflag = (int*)flagvalue;
+    int* errflag = static_cast<int*>(flagvalue);
     if (*errflag < 0) {
       if (amrex::ParallelDescriptor::IOProcessor()) {
         fprintf(

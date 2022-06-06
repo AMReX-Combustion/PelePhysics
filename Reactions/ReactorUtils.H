@@ -215,7 +215,7 @@ public:
     "FlattenOps must have ordering type as its template argument");
 
   void flatten(
-    const amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     const int reactor_type,
     const bool clean_init_massfrac,
@@ -243,7 +243,7 @@ public:
   }
 
   void unflatten(
-    const amrex::Box box,
+    const amrex::Box& box,
     const int ncells,
     const int reactor_type,
     const bool clean_init_massfrac,
