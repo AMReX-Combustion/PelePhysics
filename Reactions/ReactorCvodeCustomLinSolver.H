@@ -20,7 +20,7 @@ namespace physics {
 namespace reactions {
 namespace cvode {
 #ifdef AMREX_USE_GPU
-struct _SUNLinearSolverContent_Dense_custom
+struct SUNLinearSolverContent_Dense_custom_struct
 {
   sunindextype last_flag;
   int nsubsys;
