@@ -386,7 +386,7 @@ ReactorArkode::react(
     ERKStepFree(&arkode_mem);
   }
 
-  amrex::The_Arena()->free(user_data);
+  delete user_data;
 
   return static_cast<int>(nfe);
 }
