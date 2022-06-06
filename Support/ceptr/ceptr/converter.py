@@ -267,11 +267,9 @@ class Converter:
                     hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
                 )
 
-            sc_qss_16 = self.syms.sc_qss_smp[16]
-            sc_8 = self.syms.sc_smp[8]
-            print("diff sc_qss_16 / sc_8 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[8]))
-            print("diff sc_qss_16 / sc_1 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[1]))
-            stop
+            #print("diff sc_qss_16 / sc_8 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[8]))
+            #print("diff sc_qss_16 / sc_1 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[1]))
+            #stop
 
             # prod rate related
             cp.production_rate(
