@@ -1562,7 +1562,8 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 sys.exit(1)
 
         cw.writer(fstream, "k_f[%d] = %.15g" % (index, pef.m))
-        syms.kf_qss_smp[index] *= pef.m
+        syms.kf_qss_smp[index] = pef.m
+
         if (beta == 0) and (ae == 0):
             cw.writer(fstream, "           ;")
         else:
@@ -1958,6 +1959,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                     % (idx, idx, kc_exp_arg, reverse_sc),
                 )
                 syms.qr_qss_smp[idx] = Corr_smp * syms.kf_qss_smp[idx] * smp.exp(-kc_exp_arg_smp) * reverse_sc_smp
+
         cw.writer(fstream, "}")
 
     cw.writer(fstream)
@@ -2065,6 +2067,8 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 ),
             )
             cw.writer(fstream)
+        # This case happens for dodecane_lu_qss
+        
         if symbol in list(species_info.qssa_info.group.keys()):
             print(
                 "    Though case. Submatrix has size ",
@@ -2105,7 +2109,9 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 long_line_elements = (
                     species_info.qssa_info.rhs[species]
                 ).split()
+                
                 len_long_line = len(long_line_elements)
+                numerator_smp = species_info.qssa_info.rhs_smp[species]
                 # if we have more than 7 elements
                 if len_long_line > 7:
                     # treat first line separately with the epsilon
@@ -2160,6 +2166,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                     species_info.qssa_info.coeff[species]
                 ).split()
                 len_long_line = len(long_line_elements)
+                denominator_smp = species_info.qssa_info.coeff_smp[species]
                 # if we have more than 7 elements
                 if len_long_line > 7:
                     # treat first line separately with the epsilon
@@ -2219,6 +2226,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                     + denominator
                     + ";",
                 )
+                speciesRHS_smp = - numerator_smp / denominator_smp
                 cw.writer(fstream)
 
                 for j in range(len(gr_species)):
@@ -2251,6 +2259,9 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                                 + denominator
                                 + ";",
                             )
+                            species_groupSpecies_smp = (species_info.qssa_info.qssa_coeff_smp[species][gr_species[j]][0]
+                                                      /denominator_smp)
+                  
                 cw.writer(fstream)
                 rhs_submatrix[index] = str(species.replace("*", "D")) + "_rhs"
 
