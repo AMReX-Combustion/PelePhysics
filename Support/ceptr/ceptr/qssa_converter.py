@@ -1374,8 +1374,8 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info,syms):
     print()
 
 
-def qssa_component_functions(fstream, mechanism, species_info, reaction_info, syms):
-    """QSSA component functions."""
+def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
+    """QSSA coeff functions."""
     itroe = reaction_info.index[0:2]
     isri = reaction_info.index[1:3]
     ilindemann = reaction_info.index[2:4]
@@ -1486,114 +1486,6 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
     if len(reaction_info.index) != 7:
         print("\n\nCheck this!!!\n")
         sys.exit(1)
-
-    # k_f_qssa function
-    cw.writer(fstream)
-    cw.writer(
-        fstream,
-        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_k_f_qss"
-        + "(const amrex::Real * tc, amrex::Real invT, amrex::Real * k_f)",
-    )
-    cw.writer(fstream, "{")
-    for index, qssa_reac in enumerate(reaction_info.qssa_reactions):
-        reaction = mechanism.reaction(qssa_reac)
-        cw.writer(
-            fstream,
-            cw.comment("reaction %d: %s" % (qssa_reac, reaction.equation)),
-        )
-
-        dim = cu.phase_space_units(reaction.reactants)
-        third_body = reaction.reaction_type == "three-body"
-        falloff = reaction.reaction_type == "falloff"
-        is_troe = False
-        # is_sri = False
-        aeuc = cu.activation_energy_units()
-        if not third_body and not falloff:
-            # Case 3 !PD, !TB
-            ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-            pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
-            beta = reaction.rate.temperature_exponent
-            ae = (
-                reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
-            ).to(aeuc)
-        elif not falloff:
-            # Case 2 !PD, TB
-            ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
-            pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
-            beta = reaction.rate.temperature_exponent
-            ae = (
-                reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
-            ).to(aeuc)
-        else:
-            # Case 2 !PD, TB
-            ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
-            pef = (
-                reaction.high_rate.pre_exponential_factor * ctuc
-            ).to_base_units()
-            beta = reaction.high_rate.temperature_exponent
-            ae = (
-                reaction.high_rate.activation_energy
-                * cc.ureg.joule
-                / cc.ureg.kmol
-            ).to(aeuc)
-
-            low_pef = (
-                reaction.low_rate.pre_exponential_factor * ctuc
-            ).to_base_units()
-            low_beta = reaction.low_rate.temperature_exponent
-            low_ae = (
-                reaction.low_rate.activation_energy
-                * cc.ureg.joule
-                / cc.ureg.kmol
-            ).to(aeuc)
-            if reaction.rate.type == "Troe":
-                troe = reaction.rate.falloff_coeffs
-                ntroe = len(troe)
-                is_troe = True
-            elif reaction.rate.type == "Sri":
-                pass
-                # sri = reaction.rate.falloff_coeffs
-                # nsri = len(sri)
-                # is_sri = True
-            elif reaction.rate.type == "Lindemann":
-                pass
-            else:
-                print(f"Unrecognized reaction rate type: {reaction.equation}")
-                sys.exit(1)
-
-        cw.writer(fstream, "k_f[%d] = %.15g" % (index, pef.m))
-        syms.kf_qss_smp[index] = pef.m
-
-        if (beta == 0) and (ae == 0):
-            cw.writer(fstream, "           ;")
-        else:
-            if ae == 0:
-                cw.writer(
-                    fstream, "           * exp((%.15g) * tc[0]);" % (beta)
-                )
-                syms.kf_qss_smp[index] *= smp.exp(beta * syms.tc_smp[0])
-            elif beta == 0:
-                cw.writer(
-                    fstream,
-                    "           * exp(-(%.15g) * invT);"
-                    % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
-                )
-                coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
-                syms.kf_qss_smp[index] *= smp.exp(-coeff * syms.invT_smp)
-                
-            else:
-                cw.writer(
-                    fstream,
-                    "           * exp((%.15g) * tc[0] - (%.15g) * invT);"
-                    % (beta, ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
-                )
-                coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
-                syms.kf_qss_smp[index] *= smp.exp(beta * syms.tc_smp[0] - coeff * syms.invT_smp)
-
-
-    cw.writer(fstream)
-    cw.writer(fstream, "return;")
-    cw.writer(fstream, "}")
 
     # qssa coefficients
     cw.writer(fstream)
@@ -1966,6 +1858,229 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
     cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
 
+    return
+
+def qssa_component_functions(fstream, mechanism, species_info, reaction_info, syms):
+    """QSSA component functions."""
+    itroe = reaction_info.index[0:2]
+    isri = reaction_info.index[1:3]
+    ilindemann = reaction_info.index[2:4]
+    i3body = reaction_info.index[3:5]
+    isimple = reaction_info.index[4:6]
+    ispecial = reaction_info.index[5:7]
+
+    print("troe index range is: ", itroe)
+    print("sri index range is: ", isri)
+    print("lindemann index range is: ", ilindemann)
+    print("3body index range is: ", i3body)
+    print("simple index range is: ", isimple)
+    print("special index range is: ", ispecial)
+
+    ntroe_qssa = 0
+    nsri_qssa = 0
+    nlindemann_qssa = 0
+    n3body_qssa = 0
+    nsimple_qssa = 0
+    nspecial_qssa = 0
+
+    itroe_qssa = [0, 0]
+    isri_qssa = [0, 0]
+    ilindemann_qssa = [0, 0]
+    i3body_qssa = [0, 0]
+    isimple_qssa = [0, 0]
+    ispecial_qssa = [0, 0]
+
+    troe_first = True
+    sri_first = True
+    lindemann_first = True
+    threebody_first = True
+    simple_first = True
+    special_first = True
+
+    for reac_id in reaction_info.qssa_reactions:
+        if reac_id >= itroe[0] and reac_id < itroe[1]:
+            print(
+                "reaction ",
+                reac_id,
+                mechanism.reaction(reac_id).equation,
+                " goes in troe",
+            )
+            ntroe_qssa += 1
+            if troe_first:
+                itroe_qssa[0] = reaction_info.qssa_reactions.index(reac_id)
+                troe_first = False
+            itroe_qssa[1] = reaction_info.qssa_reactions.index(reac_id) + 1
+        if reac_id >= isri[0] and reac_id < isri[1]:
+            print(
+                "reaction ",
+                reac_id,
+                mechanism.reaction(reac_id).equation,
+                " goes in sri",
+            )
+            nsri_qssa += 1
+            if sri_first:
+                isri_qssa[0] = reaction_info.qssa_reactions.index(reac_id)
+                sri_first = False
+            isri_qssa[1] = reaction_info.qssa_reactions.index(reac_id) + 1
+        if reac_id >= ilindemann[0] and reac_id < ilindemann[1]:
+            print(
+                "reaction ",
+                reac_id,
+                mechanism.reaction(reac_id).equation,
+                " goes in lindemann",
+            )
+            nlindemann_qssa += 1
+            if lindemann_first:
+                ilindemann_qssa[0] = reaction_info.qssa_reactions.index(
+                    reac_id
+                )
+                lindemann_first = False
+            ilindemann_qssa[1] = (
+                reaction_info.qssa_reactions.index(reac_id) + 1
+            )
+        if reac_id >= i3body[0] and reac_id < i3body[1]:
+            print(
+                "reaction ",
+                reac_id,
+                mechanism.reaction(reac_id).equation,
+                " goes in 3body",
+            )
+            n3body_qssa += 1
+            if threebody_first:
+                i3body_qssa[0] = reaction_info.qssa_reactions.index(reac_id)
+                threebody_first = False
+            i3body_qssa[1] = reaction_info.qssa_reactions.index(reac_id) + 1
+        if reac_id >= isimple[0] and reac_id < isimple[1]:
+            nsimple_qssa += 1
+            if simple_first:
+                isimple_qssa[0] = reaction_info.qssa_reactions.index(reac_id)
+                simple_first = False
+            isimple_qssa[1] = reaction_info.qssa_reactions.index(reac_id) + 1
+        if reac_id >= ispecial[0] and reac_id < ispecial[1]:
+            print(
+                "reaction ",
+                reac_id,
+                mechanism.reaction(reac_id).equation,
+                " goes in special",
+            )
+            nspecial_qssa += 1
+            if special_first:
+                ispecial_qssa[0] = reaction_info.qssa_reactions.index(reac_id)
+                special_first = False
+            ispecial_qssa[1] = reaction_info.qssa_reactions.index(reac_id) + 1
+
+    if len(reaction_info.index) != 7:
+        print("\n\nCheck this!!!\n")
+        sys.exit(1)
+
+    # k_f_qssa function
+    cw.writer(fstream)
+    cw.writer(
+        fstream,
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_k_f_qss"
+        + "(const amrex::Real * tc, amrex::Real invT, amrex::Real * k_f)",
+    )
+    cw.writer(fstream, "{")
+    for index, qssa_reac in enumerate(reaction_info.qssa_reactions):
+        reaction = mechanism.reaction(qssa_reac)
+        cw.writer(
+            fstream,
+            cw.comment("reaction %d: %s" % (qssa_reac, reaction.equation)),
+        )
+
+        dim = cu.phase_space_units(reaction.reactants)
+        third_body = reaction.reaction_type == "three-body"
+        falloff = reaction.reaction_type == "falloff"
+        is_troe = False
+        # is_sri = False
+        aeuc = cu.activation_energy_units()
+        if not third_body and not falloff:
+            # Case 3 !PD, !TB
+            ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
+            pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
+            beta = reaction.rate.temperature_exponent
+            ae = (
+                reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
+            ).to(aeuc)
+        elif not falloff:
+            # Case 2 !PD, TB
+            ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), -dim)
+            pef = (reaction.rate.pre_exponential_factor * ctuc).to_base_units()
+            beta = reaction.rate.temperature_exponent
+            ae = (
+                reaction.rate.activation_energy * cc.ureg.joule / cc.ureg.kmol
+            ).to(aeuc)
+        else:
+            # Case 2 !PD, TB
+            ctuc = cu.prefactor_units(cc.ureg("kmol/m**3"), 1 - dim)
+            pef = (
+                reaction.high_rate.pre_exponential_factor * ctuc
+            ).to_base_units()
+            beta = reaction.high_rate.temperature_exponent
+            ae = (
+                reaction.high_rate.activation_energy
+                * cc.ureg.joule
+                / cc.ureg.kmol
+            ).to(aeuc)
+
+            low_pef = (
+                reaction.low_rate.pre_exponential_factor * ctuc
+            ).to_base_units()
+            low_beta = reaction.low_rate.temperature_exponent
+            low_ae = (
+                reaction.low_rate.activation_energy
+                * cc.ureg.joule
+                / cc.ureg.kmol
+            ).to(aeuc)
+            if reaction.rate.type == "Troe":
+                troe = reaction.rate.falloff_coeffs
+                ntroe = len(troe)
+                is_troe = True
+            elif reaction.rate.type == "Sri":
+                pass
+                # sri = reaction.rate.falloff_coeffs
+                # nsri = len(sri)
+                # is_sri = True
+            elif reaction.rate.type == "Lindemann":
+                pass
+            else:
+                print(f"Unrecognized reaction rate type: {reaction.equation}")
+                sys.exit(1)
+
+        cw.writer(fstream, "k_f[%d] = %.15g" % (index, pef.m))
+        syms.kf_qss_smp[index] = pef.m
+
+        if (beta == 0) and (ae == 0):
+            cw.writer(fstream, "           ;")
+        else:
+            if ae == 0:
+                cw.writer(
+                    fstream, "           * exp((%.15g) * tc[0]);" % (beta)
+                )
+                syms.kf_qss_smp[index] *= smp.exp(beta * syms.tc_smp[0])
+            elif beta == 0:
+                cw.writer(
+                    fstream,
+                    "           * exp(-(%.15g) * invT);"
+                    % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
+                )
+                coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
+                syms.kf_qss_smp[index] *= smp.exp(-coeff * syms.invT_smp)
+                
+            else:
+                cw.writer(
+                    fstream,
+                    "           * exp((%.15g) * tc[0] - (%.15g) * invT);"
+                    % (beta, ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
+                )
+                coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
+                syms.kf_qss_smp[index] *= smp.exp(beta * syms.tc_smp[0] - coeff * syms.invT_smp)
+
+
+    cw.writer(fstream)
+    cw.writer(fstream, "return;")
+    cw.writer(fstream, "}")
+
     # qssa concentrations
     cw.writer(fstream)
     cw.writer(
@@ -2298,7 +2413,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
             )
 
             print("X is ", x)
-            print("X_smp is ", x_smp)
+            #print("X_smp is ", x_smp)
         
             cw.writer(fstream, cw.comment("Putting it all together"))
             for helper in intermediate_helpers:

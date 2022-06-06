@@ -4,6 +4,7 @@ import shutil
 import subprocess as spr
 
 import numpy as np
+import sympy as smp
 
 import ceptr.ck as cck
 import ceptr.gjs as cgjs
@@ -251,6 +252,11 @@ class Converter:
                 cqc.sort_qssa_computation(
                     self.mechanism, self.species_info, self.reaction_info
                 )
+                # Invert QSSA print coeff and QSSA evaluation to see expressions in terms of qr and qf
+                print("QSSA print coeff")
+                cqc.qssa_coeff_functions(
+                    hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
+                )
                 print("QSSA evaluation")
                 # Actually gauss-pivot the matrix to get algebraic expr
                 cqc.sort_qssa_solution_elements(
@@ -260,6 +266,12 @@ class Converter:
                 cqc.qssa_component_functions(
                     hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
                 )
+
+            sc_qss_16 = self.syms.sc_qss_smp[16]
+            sc_8 = self.syms.sc_smp[8]
+            print("diff sc_qss_16 / sc_8 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[8]))
+            print("diff sc_qss_16 / sc_1 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[1]))
+            stop
 
             # prod rate related
             cp.production_rate(
