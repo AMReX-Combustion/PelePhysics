@@ -484,7 +484,7 @@ struct SRK
   void RYP2T(amrex::Real R, amrex::Real Y[], amrex::Real P, amrex::Real& T)
   {
     amrex::Real am, bm, dAmdT;
-    amrex::Real tau, wbar, Rm, Pnp1, dpdT;
+    amrex::Real tau, wbar, Rm, Pnp1;
     amrex::Real eosT1Denom, eosT2Denom, InvEosT1Denom, InvEosT2Denom;
     int nIter;
 
