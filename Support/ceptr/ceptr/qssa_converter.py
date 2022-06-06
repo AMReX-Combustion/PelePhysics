@@ -1984,13 +1984,18 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
     print(list(species_info.qssa_info.needs.keys()))
     print(list(species_info.qssa_info.group.keys()))
 
+
+    intermediateTerms_smp = {}
+    coeff_submatrix_smp = []
+    rhs_submatrix_smp = []
+     
+
     for i in species_info.qssa_info.decouple_index:
         symbol = species_info.qssa_info.decouple_index[i]
         print("... Dealing with Spec/Group ", symbol)
 
         # This case does not happen for dodecane_lu_qss, do later
         if symbol in list(species_info.qssa_info.needs.keys()):
-            sys.exit('NOT DIFFERENTIATED YET')
             print("    Simple case, single group")
             cpp_var_str_symbol = symbol.replace("*", "D")
             denominator = cpp_var_str_symbol + "_denom"
@@ -2009,6 +2014,8 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
             # RHS
             # cut line if too big !
             long_line_elements = (species_info.qssa_info.rhs[symbol]).split()
+            numerator_smp = species_info.qssa_info.rhs_smp[symbol]
+            intermediateTerms_smp[numerator] = species_info.qssa_info.rhs_smp[symbol]
             len_long_line = len(long_line_elements)
             # if we have more than 7 elements
             if len_long_line > 7:
@@ -2056,6 +2063,8 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 "amrex::Real %s = epsilon %s;"
                 % (denominator, species_info.qssa_info.coeff[symbol]),
             )
+            denominator_smp = species_info.qssa_info.coeff_smp[symbol]
+            intermediateTerms_smp[denominator] = species_info.qssa_info.coeff_smp[symbol]
             cw.writer(fstream)
             cw.writer(
                 fstream,
@@ -2066,9 +2075,9 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                     denominator,
                 ),
             )
+            syms.sc_qss_smp[species_info.qssa_species_list.index(symbol)] = - numerator_smp / denominator_smp
             cw.writer(fstream)
         # This case happens for dodecane_lu_qss
-        
         if symbol in list(species_info.qssa_info.group.keys()):
             print(
                 "    Though case. Submatrix has size ",
@@ -2080,7 +2089,12 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 ["0"] * len(species_info.qssa_info.group[symbol])
                 for i in range(len(species_info.qssa_info.group[symbol]))
             ]
+            coeff_submatrix_smp = [
+                [0] * len(species_info.qssa_info.group[symbol])
+                for i in range(len(species_info.qssa_info.group[symbol]))
+            ]
             rhs_submatrix = ["0"] * len(species_info.qssa_info.group[symbol])
+            rhs_submatrix_smp = [0] * len(species_info.qssa_info.group[symbol])
             gr_species = species_info.qssa_info.group[symbol]
             print("    Species involved :", gr_species)
             cw.writer(
@@ -2112,6 +2126,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 
                 len_long_line = len(long_line_elements)
                 numerator_smp = species_info.qssa_info.rhs_smp[species]
+                intermediateTerms_smp[numerator] = species_info.qssa_info.rhs_smp[species]
                 # if we have more than 7 elements
                 if len_long_line > 7:
                     # treat first line separately with the epsilon
@@ -2167,6 +2182,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 ).split()
                 len_long_line = len(long_line_elements)
                 denominator_smp = species_info.qssa_info.coeff_smp[species]
+                intermediateTerms_smp[denominator] = species_info.qssa_info.coeff_smp[species]
                 # if we have more than 7 elements
                 if len_long_line > 7:
                     # treat first line separately with the epsilon
@@ -2227,11 +2243,13 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                     + ";",
                 )
                 speciesRHS_smp = - numerator_smp / denominator_smp
+                intermediateTerms_smp[species.replace("*", "D") + '_rhs'] = - numerator_smp / denominator_smp
                 cw.writer(fstream)
 
                 for j in range(len(gr_species)):
                     if j == index:
                         coeff_submatrix[index][j] = "1"
+                        coeff_submatrix_smp[index][j] = 1
                     else:
                         if (
                             species_info.qssa_info.qssa_coeff[species][
@@ -2261,16 +2279,27 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                             )
                             species_groupSpecies_smp = (species_info.qssa_info.qssa_coeff_smp[species][gr_species[j]][0]
                                                       /denominator_smp)
+                            intermediateTerms_smp[str(species.replace("*", "D")) + "_" +  str(gr_species[j].replace("*", "D"))] = (species_info.qssa_info.qssa_coeff_smp[species][gr_species[j]][0])/denominator_smp
+                            coeff_submatrix_smp[index][j] = ( 
+                                intermediateTerms_smp[
+                                    str(species).replace("*", "D")
+                                    + "_"
+                                    + str(gr_species[j]).replace("*", "D")
+                                ]
+                            )
                   
                 cw.writer(fstream)
                 rhs_submatrix[index] = str(species.replace("*", "D")) + "_rhs"
+                rhs_submatrix_smp[index] = intermediateTerms_smp[str(species.replace("*", "D")) + "_rhs"]
 
-            a, x, b, intermediate_helpers = gauss_pivoting(
-                species_info, coeff_submatrix, rhs_submatrix
+            a, x, b, intermediate_helpers, x_smp = gauss_pivoting(
+                species_info, coeff_submatrix, rhs_submatrix,
+                coeff_submatrix_smp, rhs_submatrix_smp, syms
             )
 
             print("X is ", x)
-
+            print("X_smp is ", x_smp)
+        
             cw.writer(fstream, cw.comment("Putting it all together"))
             for helper in intermediate_helpers:
                 if (
@@ -2281,16 +2310,19 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                         fstream,
                         "%s = %s;" % (helper, intermediate_helpers[helper]),
                     )
+                    #print(helper  + "  ->  " +intermediate_helpers[helper])
                 else:
                     cw.writer(
                         fstream,
                         "amrex::Real %s = %s;"
                         % (helper, intermediate_helpers[helper]),
                     )
+                    #print(helper  + "  ->  " +intermediate_helpers[helper])
+                    #print(intermediate_helpers[helper])
                     species_info.qssa_info.list_of_intermediate_helpers.append(
                         helper
                     )
-
+            #stop
             for count in range(len(gr_species)):
                 max_index = len(gr_species) - 1
                 species = gr_species[max_index - count]
@@ -2298,6 +2330,9 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 # cut line if too big !
                 long_line_elements = x[max_index - count].split()
                 len_long_line = len(long_line_elements)
+                print("SPECIES "+ str(count) + " = ")
+                syms.sc_qss_smp[species_info.qssa_species_list.index(species)] = x_smp[max_index - count]
+                print(long_line_elements)
                 # if we have more than 4 elements
                 if len_long_line > 4:
                     # treat first line separately
@@ -2352,7 +2387,6 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                         + ";",
                     )
                 cw.writer(fstream)
-
     cw.writer(fstream)
     cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
@@ -2360,16 +2394,20 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
     return
 
 
-def gauss_pivoting(species_info, a, b=None):
+def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
     """Gauss pivoting."""
     print()
     print("In Gauss pivot")
 
     pivots = []
+    pivots_smp = []
     intermediate_helpers = OrderedDict()
+    intermediate_helpers_smp = OrderedDict()
     helper_counters = 0
 
     x = [""] * len(a[0])
+    x_smp = [0] * len(a[0])
+
     for i in range(len(a[0])):
         x[i] = "X" + str(i)
 
@@ -2399,28 +2437,43 @@ def gauss_pivoting(species_info, a, b=None):
     indi, indj = np.nonzero(a_num)
 
     n = len(b)
+    
     for k in range(n - 1):
 
-        pivot = a[k][k]
 
+        pivot = a[k][k]
+        pivot_smp = a_smp[k][k]
+    
         # swap lines if needed
         if pivot == 0:
             temp = np.array(a[k + 1][:])
             a[k + 1][:] = a[k][:]
             a[k][:] = temp
+            temp_smp = np.array(a_smp[k + 1][:])
+            a_smp[k + 1][:] = a_smp[k][:]
+            a_smp[k][:] = temp_smp
 
             temp = str(b[k + 1])
             b[k + 1] = b[k]
             b[k] = temp
+            temp_smp = str(b_smp[k + 1])
+            b_smp[k + 1] = b_smp[k]
+            b_smp[k] = temp_smp
 
             pivot = a[k][k]
+            pivot_smp = a_smp[k][k]
 
         print()
         print("   **ROW of pivot ", k, " and pivot is ", pivot)
         pivots.append(pivot)
+        pivots_smp.append(pivot_smp)
+        #print("pivot = ", pivot)
+        #print("pivot_smp = ", pivot_smp)
+       
 
         for i in range(k, len(b) - 1):
             num = a[i + 1][k]
+            num_smp = a_smp[i + 1][k]
             print(
                 "       xx Treating ROW ",
                 i + 1,
@@ -2431,6 +2484,9 @@ def gauss_pivoting(species_info, a, b=None):
                 "/",
                 pivot,
             )
+            #print("num = ", num)
+            #print("num_smp = ", num_smp)
+
             if num == "0":
                 print(
                     "        !! No need to do anything, already zeroed ... skip"
@@ -2443,35 +2499,46 @@ def gauss_pivoting(species_info, a, b=None):
                 if pivot != "1":
                     if num != "1":
                         helper = num + "/" + pivot
+                        helper_smp = num_smp / pivot_smp
                         helper_name = "H_" + str(helper_counters)
                         intermediate_helpers[helper_name] = helper
+                        intermediate_helpers_smp[helper_name] = helper_smp
                         b[i + 1] = (
                             b[i + 1] + " -" + b[int(k)] + "*" + helper_name
                         )
+ 
+                        b_smp[i + 1] = b_smp[i + 1] - b_smp[int(k)] * helper_smp
                         b[i + 1] = "(" + b[i + 1] + ")"
                         helper_counters += 1
                     else:
                         helper = 1 + "/" + pivot
+                        helper_smp = 1/pivot_smp
                         helper_name = "H_" + str(helper_counters)
                         intermediate_helpers[helper_name] = helper
+                        intermediate_helpers_smp[helper_name] = helper_smp
                         print(" IN THIS CASE !! CHECK THAT ITS OK !! ")
                         b[i + 1] = (
                             b[i + 1] + " -" + b[int(k)] + "*" + helper_name
                         )
+                        b_smp[i + 1] = b_smp[i + 1]  - b_smp[int(k)] * helper_smp
                         b[i + 1] = "(" + b[i + 1] + ")"
                         helper_counters += 1
                 else:
                     if num != "1":
                         helper = num
+                        helper_smp = num_smp
                         helper_name = "H_" + str(helper_counters)
                         intermediate_helpers[helper_name] = helper
+                        intermediate_helpers_smp[helper_name] = helper_smp
                         b[i + 1] = (
                             b[i + 1] + " -" + b[int(k)] + "*" + helper_name
                         )
+                        b_smp[i + 1] =  b_smp[i + 1]  - b_smp[int(k)] * helper_smp
                         b[i + 1] = "(" + b[i + 1] + ")"
                         helper_counters += 1
                     else:
                         b[i + 1] = b[i + 1] + " -" + b[int(k)]
+                        b_smp[i + 1] =  b_smp[i + 1]  - b_smp[int(k)]
                         b[i + 1] = "(" + b[i + 1] + ")"
 
             print("          ... and B ends with: ")
@@ -2489,6 +2556,7 @@ def gauss_pivoting(species_info, a, b=None):
                 if j == k:
                     print("            !! 0 ELEM !")
                     a[i + 1][j] = "0"
+                    a_smp[i + 1][j] = 0
                 else:
                     if a[i + 1][j] != "0":
                         if num != "0":
@@ -2502,6 +2570,7 @@ def gauss_pivoting(species_info, a, b=None):
                                             + "*"
                                             + helper_name
                                         )
+                                        a_smp[i + 1][j] = a_smp[i + 1][j] - a_smp[k][j] * helper_smp
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
                                     if a[k][j] != "0":
@@ -2515,6 +2584,7 @@ def gauss_pivoting(species_info, a, b=None):
                                             + "*"
                                             + helper_name
                                         )
+                                        a_smp[i + 1][j] = a_smp[i + 1][j] - a_smp[k][j] * helper_smp
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                             else:
                                 if num != "1":
@@ -2526,12 +2596,14 @@ def gauss_pivoting(species_info, a, b=None):
                                             + "*"
                                             + helper_name
                                         )
+                                        a_smp[i + 1][j] = a_smp[i + 1][j] - a_smp[k][j] * helper_smp
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
                                     if a[k][j] != "0":
                                         a[i + 1][j] = (
                                             a[i + 1][j] + " -" + a[k][j]
                                         )
+                                        a_smp[i + 1][j] = a_smp[i + 1][j] - a_smp[k][j]
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                     else:
                         if num != "0":
@@ -2541,6 +2613,7 @@ def gauss_pivoting(species_info, a, b=None):
                                         a[i + 1][j] = (
                                             " -" + a[k][j] + "*" + helper_name
                                         )
+                                        a_smp[i + 1][j] = - a_smp[k][j] * helper_smp
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
                                     if a[k][j] != "0":
@@ -2550,6 +2623,7 @@ def gauss_pivoting(species_info, a, b=None):
                                         a[i + 1][j] = (
                                             " -" + a[k][j] + "*" + helper_name
                                         )
+                                        a_smp[i + 1][j] = - a_smp[k][j] * helper_smp
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                             else:
                                 if num != "1":
@@ -2557,10 +2631,12 @@ def gauss_pivoting(species_info, a, b=None):
                                         a[i + 1][j] = (
                                             " -" + a[k][j] + "*" + helper_name
                                         )
+                                        a_smp[i + 1][j] = - a_smp[k][j] * helper_smp
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
                                 else:
                                     if a[k][j] != "0":
                                         a[i + 1][j] = " -" + a[k][j]
+                                        a_smp[i + 1][j] = - a_smp[k][j]
                                         a[i + 1][j] = "(" + a[i + 1][j] + ")"
             print("          ... and updated A is: ")
             print("             ", a)
@@ -2573,11 +2649,14 @@ def gauss_pivoting(species_info, a, b=None):
     n = n - 1
     if a[n][n] != "1":
         x[n] = b[n] + "/" + a[n][n]
+        x_smp[n] = b_smp[n] / a_smp[n][n]
     else:
         x[n] = b[n]
+        x_smp[n] = b_smp[n]
 
     for i in range(1, n + 1):
         sumprod = ""
+        sumprod_smp = 0
         for j in range(i):
             flag = False
             if a[n - i][n - j] != "0":
@@ -2586,6 +2665,7 @@ def gauss_pivoting(species_info, a, b=None):
                 flag = True
                 if a[n - i][n - j] == "1":
                     sumprod += " (" + str(x[n - j]) + ")"
+                    sumprod_smp += x_smp[n - j]
                 elif j != 0:
                     sumprod += (
                         " +"
@@ -2599,6 +2679,13 @@ def gauss_pivoting(species_info, a, b=None):
                         )
                         + "]"
                     )
+                    sumprod_smp += ( 
+                        + a_smp[n - i][n - j]
+                        * syms.sc_qss_smp[ species_info.qssa_species_list.index(
+                                          species[n - j] 
+                                       )
+                                     ]
+                    )
                 else:
                     sumprod += (
                         a[n - i][n - j]
@@ -2611,23 +2698,36 @@ def gauss_pivoting(species_info, a, b=None):
                         )
                         + "]"
                     )
+                    sumprod_smp += (
+                        a_smp[n - i][n - j]
+                        * syms.sc_qss_smp[ species_info.qssa_species_list.index(
+                                           species[n - j]
+                                           )
+                                         ]
+                    )
 
         if sumprod == "":
             if a[n - i][n - i] != "1":
                 x[n - i] = "(" + b[n - i] + ")/" + a[n - i][n - i]
+                x_smp[n-i] = b_smp[n - i] / a_smp[n - i][n - i]
             else:
                 x[n - i] = b[n - i]
+                x_smp[n - i] = b_smp[n - i]
         else:
             if a[n - i][n - i] == "1":
                 x[n - i] = b[n - i] + " -(" + sumprod + ")"
+                x_smp[n - i] = b_smp[n - i]  -( sumprod_smp )
             else:
                 x[n - i] = (
                     "(" + b[n - i] + " -(" + sumprod + "))/" + a[n - i][n - i]
                 )
+                x_smp[n - i] = (
+                    (b_smp[n - i] - ( sumprod_smp ))/a_smp[n - i][n - i]
+                )
     print()
     print()
 
-    return a, x, b, intermediate_helpers
+    return a, x, b, intermediate_helpers, x_smp
 
 
 def qssa_return_coeff(mechanism, species_info, reaction, reagents,syms):
