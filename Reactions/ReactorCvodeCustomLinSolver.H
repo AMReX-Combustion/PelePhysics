@@ -32,7 +32,7 @@ struct _SUNLinearSolverContent_Dense_custom
 };
 
 using SUNLinearSolverContent_Dense_custom =
-  _SUNLinearSolverContent_Dense_custom*;
+  SUNLinearSolverContent_Dense_custom_struct*;
 
 SUNLinearSolver SUNLinSol_dense_custom(
   N_Vector y, SUNMatrix A, amrex::gpuStream_t stream, SUNContext sunctx);
