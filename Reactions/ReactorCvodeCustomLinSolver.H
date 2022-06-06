@@ -31,8 +31,8 @@ struct _SUNLinearSolverContent_Dense_custom
   amrex::gpuStream_t stream;
 };
 
-typedef struct _SUNLinearSolverContent_Dense_custom*
-  SUNLinearSolverContent_Dense_custom;
+using SUNLinearSolverContent_Dense_custom =
+  _SUNLinearSolverContent_Dense_custom*;
 
 SUNLinearSolver SUNLinSol_dense_custom(
   N_Vector y, SUNMatrix A, amrex::gpuStream_t stream, SUNContext sunctx);
@@ -47,7 +47,7 @@ int SUNLinSolSetup_Dense_custom(SUNLinearSolver S, SUNMatrix A);
 int SUNLinSolFree_Dense_custom(SUNLinearSolver S);
 
 #else
-struct _SUNLinearSolverContent_Sparse_custom
+struct SUNLinearSolverContent_Sparse_custom_struct
 {
   sunindextype last_flag;
   int reactor_type;
@@ -56,8 +56,8 @@ struct _SUNLinearSolverContent_Sparse_custom
   int subsys_nnz;
 };
 
-typedef struct _SUNLinearSolverContent_Sparse_custom*
-  SUNLinearSolverContent_Sparse_custom;
+using SUNLinearSolverContent_Sparse_custom =
+  SUNLinearSolverContent_Sparse_custom_struct*;
 
 SUNLinearSolver SUNLinSol_sparse_custom(
   N_Vector y,
