@@ -1940,7 +1940,8 @@ def qssa_scQss_debug(fstream, mechanism, species_info, reaction_info, syms):
             "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
         )
 
-    listSpec = [3,4,7,8,9,10,11,12,13,14,15,16,17]
+    #listSpec = [3,4,7,8,9,10,11,12,13,14,15,16,17]
+    listSpec = [10,16,17]
 
     #for ispec in range(species_info.n_qssa_species):
     for ispec in listSpec:
@@ -2236,7 +2237,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
             # RHS
             # cut line if too big !
             long_line_elements = (species_info.qssa_info.rhs[symbol]).split()
-            numerator_smp = species_info.qssa_info.rhs_smp[symbol]
+            numerator_smp = 1e-12 + species_info.qssa_info.rhs_smp[symbol]
             intermediateTerms_smp[numerator] = species_info.qssa_info.rhs_smp[symbol]
             len_long_line = len(long_line_elements)
             # if we have more than 7 elements
@@ -2285,7 +2286,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 "amrex::Real %s = epsilon %s;"
                 % (denominator, species_info.qssa_info.coeff[symbol]),
             )
-            denominator_smp = species_info.qssa_info.coeff_smp[symbol]
+            denominator_smp = 1e-12 + species_info.qssa_info.coeff_smp[symbol]
             intermediateTerms_smp[denominator] = species_info.qssa_info.coeff_smp[symbol]
             cw.writer(fstream)
             cw.writer(
@@ -2347,7 +2348,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 ).split()
                 
                 len_long_line = len(long_line_elements)
-                numerator_smp = species_info.qssa_info.rhs_smp[species]
+                numerator_smp = 1e-12 + species_info.qssa_info.rhs_smp[species]
                 intermediateTerms_smp[numerator] = species_info.qssa_info.rhs_smp[species]
                 # if we have more than 7 elements
                 if len_long_line > 7:
@@ -2403,7 +2404,7 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                     species_info.qssa_info.coeff[species]
                 ).split()
                 len_long_line = len(long_line_elements)
-                denominator_smp = species_info.qssa_info.coeff_smp[species]
+                denominator_smp = 1e-12 + species_info.qssa_info.coeff_smp[species]
                 intermediateTerms_smp[denominator] = species_info.qssa_info.coeff_smp[species]
                 # if we have more than 7 elements
                 if len_long_line > 7:
@@ -2499,9 +2500,9 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                                 + denominator
                                 + ";",
                             )
-                            species_groupSpecies_smp = (species_info.qssa_info.qssa_coeff_smp[species][gr_species[j]][0]
+                            species_groupSpecies_smp = 1e-12 + (species_info.qssa_info.qssa_coeff_smp[species][gr_species[j]][0]
                                                       /denominator_smp)
-                            intermediateTerms_smp[str(species.replace("*", "D")) + "_" +  str(gr_species[j].replace("*", "D"))] = (species_info.qssa_info.qssa_coeff_smp[species][gr_species[j]][0])/denominator_smp
+                            intermediateTerms_smp[str(species.replace("*", "D")) + "_" +  str(gr_species[j].replace("*", "D"))] = 1e-12 + (species_info.qssa_info.qssa_coeff_smp[species][gr_species[j]][0])/denominator_smp
                             coeff_submatrix_smp[index][j] = ( 
                                 intermediateTerms_smp[
                                     str(species).replace("*", "D")
