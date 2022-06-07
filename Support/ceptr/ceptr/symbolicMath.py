@@ -1,7 +1,22 @@
 """Symbolic math for symbolic differentiation."""
 from collections import OrderedDict
 import sympy as smp
+import re
 
+def convertToCPP(symStr):
+    cppStr = symStr
+    # Fix indices
+    symbReplace = re.findall(r'_smp\d+', cppStr)
+    for symb in symbReplace:
+        ind = symb[4:]
+        cppStr = cppStr.replace(symb,"["+ind+"]",1)
+    # Fix superfluous _smp
+    symbReplace = re.findall(r'_smp', cppStr)
+    for symb in symbReplace:
+        cppStr = cppStr.replace(symb,"",1)
+    # Fix power
+    #symbReplace = re.findall(r'\*\*\d+', cppStr)
+    return cppStr
 
 class SymbolicMath:
     """Symbols to carry throughout operations."""
