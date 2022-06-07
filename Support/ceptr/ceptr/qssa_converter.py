@@ -2445,9 +2445,9 @@ def qssa_component_functions(fstream, mechanism, species_info, reaction_info, sy
                 # cut line if too big !
                 long_line_elements = x[max_index - count].split()
                 len_long_line = len(long_line_elements)
-                print("SPECIES "+ str(count) + " = ")
+                #print("SPECIES "+ str(count) + " = ")
                 syms.sc_qss_smp[species_info.qssa_species_list.index(species)] = x_smp[max_index - count]
-                print(long_line_elements)
+                #print(long_line_elements)
                 # if we have more than 4 elements
                 if len_long_line > 4:
                     # treat first line separately
