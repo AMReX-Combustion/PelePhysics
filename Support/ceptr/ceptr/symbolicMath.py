@@ -4,18 +4,13 @@ import sympy as smp
 import re
 
 def convertToCPP(symStr):
-    cppStr = symStr
     # Fix indices
-    symbReplace = re.findall(r'_smp\d+', cppStr)
-    for symb in symbReplace:
-        ind = symb[4:]
-        cppStr = cppStr.replace(symb,"["+ind+"]",1)
+    cppStr = re.sub(r"(_smp)(\d{1,9})", r"[\2]", symStr)
     # Fix superfluous _smp
-    symbReplace = re.findall(r'_smp', cppStr)
-    for symb in symbReplace:
-        cppStr = cppStr.replace(symb,"",1)
+    cppStr = re.sub(r"(_smp)", r"", cppStr)
     # Fix power
     #symbReplace = re.findall(r'\*\*\d+', cppStr)
+    # cppStr = re.sub(r"([])(**)(\d)", r"pow(\1, \3)"))
     return cppStr
 
 class SymbolicMath:
