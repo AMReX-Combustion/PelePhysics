@@ -12,7 +12,7 @@ SprayParticleContainer::computeDerivedVars(
   const Vector<std::string> derivePlotVars,
   std::string* sprayFuelNames)
 {
-  const int derivePlotVarCount = derivePlotVars.size();
+  const int derivePlotVarCount = int(derivePlotVars.size());
   AMREX_ALWAYS_ASSERT(mf_var.nComp() >= derivePlotVarCount);
   SprayComps SPI = m_sprayIndx;
   const auto dxiarr = this->Geom(level).InvCellSizeArray();
@@ -39,9 +39,7 @@ SprayParticleContainer::computeDerivedVars(
   const int d32_indx = d10_indx + 1;
   const int temp_indx = d32_indx + 1;
   const int vel_indx = temp_indx + 1;
-  const auto domain = this->Geom(level).Domain();
   for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
-    const Box tile_box = pti.tilebox();
     const Long Np = pti.numParticles();
     ParticleType* pstruct = &(pti.GetArrayOfStructs()[0]);
     const SprayData* fdat = d_sprayData;
