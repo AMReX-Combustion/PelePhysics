@@ -55,6 +55,8 @@ main(int argc, char* argv[])
     amrex::Real * kf_qss = new amrex::Real [NUM_QSS_REACTIONS];
     amrex::Real * qf_qss = new amrex::Real [NUM_QSS_REACTIONS];
     amrex::Real * qr_qss = new amrex::Real [NUM_QSS_REACTIONS];
+    amrex::Real * qf_qss_sym = new amrex::Real [NUM_QSS_REACTIONS];
+    amrex::Real * qr_qss_sym = new amrex::Real [NUM_QSS_REACTIONS];
     amrex::Real * g_RT = new amrex::Real [NUM_SPECIES];
     amrex::Real * g_RT_qss = new amrex::Real [NUM_QSS_SPECIES];
     for (int i = 0; i < NUM_SPECIES; ++i) {
@@ -68,9 +70,16 @@ main(int argc, char* argv[])
     comp_k_f_qss(tc, invT, kf_qss);
     comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);
     comp_sc_qss(sc_qss, qf_qss, qr_qss);
+    comp_qss_coeff_debug(sc, qf_qss_sym, qr_qss_sym, T);
 
     print<double>(sc_qss,NUM_QSS_SPECIES,"sc_qss");
     print<double>(sc_qss_sym,NUM_QSS_SPECIES,"sc_qss_sym");
+
+    print<double>(qf_qss,NUM_QSS_REACTIONS,"qf_qss");
+    print<double>(qf_qss_sym,NUM_QSS_REACTIONS,"qf_qss_sym");
+    
+    print<double>(qr_qss,NUM_QSS_REACTIONS,"qr_qss");
+    print<double>(qr_qss_sym,NUM_QSS_REACTIONS,"qr_qss_sym");
 
 
   return 0;
