@@ -382,7 +382,7 @@ struct Fuego
   }
 
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE Fuego(Args... /*unused*/)
+  AMREX_GPU_HOST_DEVICE explicit Fuego(Args... /*unused*/)
   {
   }
 };

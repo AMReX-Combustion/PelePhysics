@@ -28,7 +28,7 @@ struct NonIdealChungCorrections<eos::SRK>
     const amrex::Real Temp,
     const amrex::Real* Xloc,
     const amrex::Real rholoc,
-    amrex::Real& wbar,
+    const amrex::Real wbar,
     amrex::Real& mu,
     amrex::Real& lam,
     TransParm<eos::SRK, SimpleTransport> const* trans_parm)
@@ -151,6 +151,7 @@ struct BinaryDiff
       amrex::Real term1 = 0.0;
       amrex::Real term2 = 0.0;
       for (int j = 0; j < NUM_SPECIES; ++j) {
+        // cppcheck-suppress knownConditionTrueFalse
         if (i != j) {
           const int four_idx_ij = 4 * (i + NUM_SPECIES * j);
           const amrex::Real dbintemp =
@@ -185,6 +186,7 @@ struct BinaryDiff<eos::SRK>
       amrex::Real term1 = 0.0;
       amrex::Real term2 = 0.0;
       for (int j = 0; j < NUM_SPECIES; ++j) {
+        // cppcheck-suppress knownConditionTrueFalse
         if (i != j) {
           const int idx_ij = i + NUM_SPECIES * j;
           amrex::Real dbintemp = tparm->fitdbin[4 * idx_ij] +
@@ -295,7 +297,7 @@ struct SimpleTransport
     logT[1] = logT[0] * logT[0];
     logT[2] = logT[0] * logT[1];
 
-    amrex::Real sum = 0.;
+    amrex::Real sum = 0.0;
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       sum += Yloc[i];
@@ -305,7 +307,7 @@ struct SimpleTransport
       Yloc[i] += trace * (sum / NUM_SPECIES - Yloc[i]);
     }
 
-    amrex::Real wbar = 0.;
+    amrex::Real wbar = 0.0;
     for (int i = 0; i < NUM_SPECIES; ++i) {
       wbar += Yloc[i] * tparm->iwt[i];
     }
@@ -354,7 +356,7 @@ struct SimpleTransport
         lamloc[i] = std::exp(lamloc[i]);
       }
 
-      lam = 0.;
+      lam = 0.0;
       for (int i = 0; i < NUM_SPECIES; ++i) {
         lam += Xloc[i] * std::sqrt(std::sqrt(
                            lamloc[i])); // lam = sum[Xloc_i * (lamloc_i)^(1/4)]
@@ -420,7 +422,7 @@ struct SimpleTransport
     }
   }
   template <class... Args>
-  AMREX_GPU_HOST_DEVICE SimpleTransport(Args... /*unused*/)
+  AMREX_GPU_HOST_DEVICE explicit SimpleTransport(Args... /*unused*/)
   {
   }
 };

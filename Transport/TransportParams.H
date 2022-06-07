@@ -276,6 +276,7 @@ struct InitTransParm<eos::SRK, SimpleTransport>
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       for (int j = 0; j < NUM_SPECIES; ++j) {
+        // cppcheck-suppress knownConditionTrueFalse
         if (i != j) {
           const int idx_ij = i + NUM_SPECIES * j;
           const amrex::Real S_ij =
