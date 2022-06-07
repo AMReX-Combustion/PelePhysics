@@ -4,6 +4,16 @@
 namespace pele {
 namespace physics {
 
+struct ManFuncData
+{
+  static constexpr int len_str = 64;
+  int Ndim;
+  int Nvar;
+  char model_name[len_str+1];
+  char* varnames;
+  char* dimnames;
+};
+
 class ManFuncParams
 {
 public:

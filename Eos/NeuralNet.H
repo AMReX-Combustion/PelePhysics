@@ -7,6 +7,62 @@
 namespace pele {
 namespace physics {
 
+// struct NNFuncData: ManFuncData {};
+// 
+// class NNFuncParams: public ManFuncParams
+// {
+//   NNFuncParams()  {}
+//   ~NNFuncParams() {}
+//
+//   virtual void initialize()
+//   {
+//     // Get filename and load
+//     amrex::ParmParse pp("nn");
+//
+//     std::string nnfile;
+//     pp.get("filename", nnfile);
+//
+//     try
+//     {
+//       // Deserialize the ScriptModule from a file using torch::jit::load().
+//       nnmodel = torch::jit::load(nnfile);
+//       // Convert to proper data type
+//       nnmodel.to(dtype);
+//     }
+//     catch(const c10::Error& e)
+//     {
+//       amrex::Error("Unable to load neural network model for manifold EOS.");
+//     }
+//
+//     allocate();
+//   }
+//
+//   virtual void allocate()
+//   {
+// #ifdef AMREX_USE_CUDA
+//     sync_to_device();
+// #endif
+//   }
+//
+//   virtual void deallocate()
+//   {
+//     // The nnmodel should be freed up automatically once it goes out of scope
+//     // The code below clears the Torch cache
+//     // c10::cuda::CUDACachingAllocator::empty_cache();
+//   }
+//
+//   virtual void sync_to_device()
+//   {
+//     // Move model to GPU
+//     nnmodel.to(device);
+//   }
+//
+// private:
+//
+//   torch::jit::script::Module nnmodel;
+//   };
+// };
+
 class NNFunc: public ManifoldFunc
 {
 public:
