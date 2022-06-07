@@ -5,6 +5,7 @@ from collections import Counter, OrderedDict, defaultdict
 
 import numpy as np
 import sympy as smp
+import time
 
 import ceptr.constants as cc
 import ceptr.utilities as cu
@@ -1859,6 +1860,112 @@ def qssa_coeff_functions(fstream, mechanism, species_info, reaction_info, syms):
     cw.writer(fstream, "}")
 
     return
+
+def qssa_scQss_debug(fstream, mechanism, species_info, reaction_info, syms):
+    n_species = species_info.n_species
+    cw.writer(fstream)
+    cw.writer(
+        fstream,
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_sc_qss_debug"
+        + "(amrex::Real * sc, amrex::Real * sc_qss, amrex::Real T)",
+    )
+    cw.writer(fstream, "{")
+
+    cw.writer(fstream)
+    cw.writer(
+        fstream,
+        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
+        + cw.comment("temperature cache"),
+    )
+    cw.writer(fstream, "amrex::Real invT = 1.0 / tc[1];")
+    cw.writer(fstream, "amrex::Real invT2 = invT * invT;")
+    cw.writer(fstream)
+    cw.writer(
+        fstream,
+        cw.comment("reference concentration: P_atm / (RT) in inverse mol/m^3"),
+    )
+    cw.writer(
+        fstream,
+        "amrex::Real refC = %g / %g / T;"
+        % (
+            cc.Patm_pa,
+            cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m,
+        ),
+    )
+    cw.writer(fstream, "amrex::Real refCinv = 1.0 / refC;")
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("compute the mixture concentration"))
+    cw.writer(fstream, "amrex::Real mixture = 0.0;")
+    cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
+    cw.writer(fstream, "mixture += sc[k];")
+    cw.writer(fstream, "}")
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
+    cw.writer(fstream, "amrex::Real g_RT[%d];" % (n_species))
+    cw.writer(fstream, "gibbs(g_RT, tc);")
+    if species_info.n_qssa_species > 0:
+        cw.writer(
+            fstream,
+            "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
+        )
+        cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("compute the species enthalpy"))
+    cw.writer(fstream, "amrex::Real h_RT[%d];" % (n_species))
+    cw.writer(fstream, "speciesEnthalpy(h_RT, tc);")
+    if species_info.n_qssa_species > 0:
+        cw.writer(
+            fstream,
+            "amrex::Real h_RT_qss[%d];" % (species_info.n_qssa_species),
+        )
+        cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
+    if species_info.n_qssa_species > 0:
+        cw.writer(fstream)
+        cw.writer(fstream, cw.comment("Fill sc_qss here"))
+        #cw.writer(
+        #    fstream, "amrex::Real sc_qss[%d];" % species_info.n_qssa_species
+        #)
+        cw.writer(
+            fstream,
+            "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+            % (
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
+            ),
+        )
+        cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
+        cw.writer(
+            fstream,
+            "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
+        )
+
+    listSpec = [3,4,7,8,9,10,11,12,13,14,15,16,17]
+
+    #for ispec in range(species_info.n_qssa_species):
+    for ispec in listSpec:
+        times = time.time()
+        cppStr = syms.convertToCPP(syms.sc_qss_smp[ispec])
+        timee = time.time()
+        print("Made expr for spec %d (time = %.3g s)" % (ispec,timee-times))
+        times = time.time()
+        cw.writer(
+            fstream,
+            "sc_qss[%s] = %s;"
+                % (
+                    str(ispec),
+                    cppStr,
+                ),
+        )
+        timee = time.time()
+        print("Printed expr for spec %d (time = %.3g s)" % (ispec,timee-times))
+        
+    
+
+    cw.writer(fstream, "}")
+    
+    
+
 
 def qssa_component_functions(fstream, mechanism, species_info, reaction_info, syms):
     """QSSA component functions."""

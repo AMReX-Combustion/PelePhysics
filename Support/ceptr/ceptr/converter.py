@@ -266,6 +266,10 @@ class Converter:
                 cqc.qssa_component_functions(
                     hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
                 )
+                print("Symbolic Sc qss print for debug")
+                cqc.qssa_scQss_debug(
+                    hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
+                )
 
             #print("diff sc_qss_16 / sc_8 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[8]))
             #print("diff sc_qss_16 / sc_1 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[1]))

@@ -4,16 +4,6 @@ import sympy as smp
 import re
 
 
-def convertToCPP(symSmp):
-    # Convert to ccode (to fix pow) and then string
-    symStr = str(smp.ccode(symSmp))
-    # Fix indices
-    cppStr = re.sub(r"(_smp)(\d{1,9})", r"[\2]", symStr)
-    # Fix superfluous _smp
-    cppStr = re.sub(r"(_smp)", r"", cppStr)
-
-    return cppStr
-
 
 class SymbolicMath:
     """Symbols to carry throughout operations."""
@@ -70,3 +60,15 @@ class SymbolicMath:
                 smp.symbols("h_RT_qss_smp" + str(i))
                 for i in range(n_qssa_species)
             ]
+
+    def convertToCPP(self,symSmp):
+        # Convert to ccode (to fix pow) and then string
+        cppcode = smp.ccode(symSmp)
+        symStr = str(cppcode)
+        # Fix indices
+        cppStr = re.sub(r"(_smp)(\d{1,9})", r"[\2]", symStr)
+        # Fix superfluous _smp
+        cppStr = re.sub(r"(_smp)", r"", cppStr)
+    
+        return cppStr
+
