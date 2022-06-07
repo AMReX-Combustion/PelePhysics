@@ -464,7 +464,7 @@ struct SRK
   void RYET2P(
     amrex::Real R,
     amrex::Real Y[],
-    const amrex::Real& E,
+    const amrex::Real E,
     amrex::Real& T,
     amrex::Real& P)
   {

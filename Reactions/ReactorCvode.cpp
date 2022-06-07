@@ -567,8 +567,8 @@ ReactorCvode::checkCvodeOptions() const
     PS = SUNSparseMatrix(
       (NUM_SPECIES + 1), (NUM_SPECIES + 1), nJdata, CSR_MAT,
       *amrex::sundials::The_Sundials_Context());
-    int* rowCount = static_cast<int*>(SUNSparseMatrix_IndexPointers(PS));
-    int* colIdx = static_cast<int*>(SUNSparseMatrix_IndexValues(PS));
+    auto* rowCount = static_cast<int*>(SUNSparseMatrix_IndexPointers(PS));
+    auto* colIdx = static_cast<int*>(SUNSparseMatrix_IndexValues(PS));
     SPARSITY_PREPROC_CSR(colIdx, rowCount, &HP, 1, 0);
     amrex::Print()
       << "\n\n *** Treating CHEM Jac (CSR symbolic analysis)*** \n\n";

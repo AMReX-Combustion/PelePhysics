@@ -28,7 +28,7 @@ struct NonIdealChungCorrections<eos::SRK>
     const amrex::Real Temp,
     const amrex::Real* Xloc,
     const amrex::Real rholoc,
-    const amrex::Real& wbar,
+    const amrex::Real wbar,
     amrex::Real& mu,
     amrex::Real& lam,
     TransParm<eos::SRK, SimpleTransport> const* trans_parm)
@@ -297,7 +297,7 @@ struct SimpleTransport
     logT[1] = logT[0] * logT[0];
     logT[2] = logT[0] * logT[1];
 
-    amrex::Real sum = 0.;
+    amrex::Real sum = 0.0;
 
     for (int i = 0; i < NUM_SPECIES; ++i) {
       sum += Yloc[i];
@@ -307,7 +307,7 @@ struct SimpleTransport
       Yloc[i] += trace * (sum / NUM_SPECIES - Yloc[i]);
     }
 
-    amrex::Real wbar = 0.;
+    amrex::Real wbar = 0.0;
     for (int i = 0; i < NUM_SPECIES; ++i) {
       wbar += Yloc[i] * tparm->iwt[i];
     }
@@ -356,7 +356,7 @@ struct SimpleTransport
         lamloc[i] = std::exp(lamloc[i]);
       }
 
-      lam = 0.;
+      lam = 0.0;
       for (int i = 0; i < NUM_SPECIES; ++i) {
         lam += Xloc[i] * std::sqrt(std::sqrt(
                            lamloc[i])); // lam = sum[Xloc_i * (lamloc_i)^(1/4)]

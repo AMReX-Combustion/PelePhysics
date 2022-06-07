@@ -113,8 +113,8 @@ struct GammaLaw
   static void RYET2P(
     amrex::Real R,
     amrex::Real* /*Y*/,
-    const amrex::Real& E,
-    amrex::Real& /*T*/,
+    const amrex::Real E,
+    amrex::Real /*T*/,
     amrex::Real& P)
   {
     P = (Constants::gamma - 1.0) * R * E;
