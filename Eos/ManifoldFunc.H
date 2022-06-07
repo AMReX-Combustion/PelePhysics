@@ -18,8 +18,6 @@ class ManFuncParams
 {
 public:
 
-  ManifoldFunc() = delete;
-
   virtual void initialize();
   virtual void allocate();
   virtual void deallocate();
@@ -31,9 +29,13 @@ class ManifoldFunc
 {
 public:
 
-  ManifoldFunc() = delete;
-  virtual void get_value(const int ivar, amrex::Real indata[], amrex::Real& out);
-  virtual void get_derivs(const int ivar, amrex::Real indata[], amrex::Real derivs[]);
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  virtual void get_value(const int ivar, const amrex::Real indata[], amrex::Real& out);
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  virtual void get_derivs(const int ivar, const amrex::Real indata[], amrex::Real derivs[]);
 
 }; // class ManifoldFunc
 }  // namespace physics

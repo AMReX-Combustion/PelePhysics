@@ -4,6 +4,7 @@
 #define MAXD_TABLE 5
 #include <iostream>
 #include <fstream>
+#include "ManifoldFunc.H"
 
 namespace pele{
   namespace physics{
@@ -177,7 +178,7 @@ namespace pele{
       };
 
     // Struct to contain tabulated data
-    class TabFunc {
+    class TabFunc: public ManifoldFunc {
     public:
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
@@ -192,8 +193,8 @@ namespace pele{
       // Lookup directly if you already know index
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
-      void
-      get_from_table(const int ivar, const amrex::Real interpdata[], amrex::Real& out)
+      virtual void
+      get_value(const int ivar, const amrex::Real interpdata[], amrex::Real& out)
       {
         // Get alphas and indices
         int indices[MAXD_TABLE];
@@ -208,8 +209,8 @@ namespace pele{
       // Get derivatives of indexed variable with respect to table dimensions using finite difference
       AMREX_GPU_HOST_DEVICE
       AMREX_FORCE_INLINE
-      void
-      get_table_dir_derivs(int ivar, const amrex::Real derivloc[], amrex::Real derivs[])
+      virtual void
+      get_derivs(int ivar, const amrex::Real derivloc[], amrex::Real derivs[])
       {
         // Get alphas and indices
         int indices[MAXD_TABLE];

@@ -8,7 +8,7 @@ namespace pele {
 namespace physics {
 
 // struct NNFuncData: ManFuncData {};
-// 
+//
 // class NNFuncParams: public ManFuncParams
 // {
 //   NNFuncParams()  {}
@@ -96,7 +96,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void get_value(const int ivar, amrex::Real indata[], amrex::Real& out)
+  virtual void get_value(const int ivar, const amrex::Real indata[], amrex::Real& out)
   {
     torch::Tensor intensor = torch::from_blob(indata, {Ndim}, tensoropt);
     get_value(ivar, intensor, out);
@@ -104,7 +104,7 @@ public:
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
-  virtual void get_derivs(const int ivar, amrex::Real indata[], amrex::Real derivs[])
+  virtual void get_derivs(const int ivar, const amrex::Real indata[], amrex::Real derivs[])
   {
     torch::Tensor intensor = torch::from_blob(indata, {Ndim}, tensoropt);
     get_derivs(ivar, intensor, derivs);
