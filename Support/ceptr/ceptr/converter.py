@@ -305,13 +305,13 @@ class Converter:
     def formatter(self):
         """Format with clang-format."""
         clexec = "clang-format"
-        try:
-            shutil.which(clexec)
-        except shutil.Error:
-            print("Clang-format not found")
-
-        spr.run([clexec, "-i", self.hdrname])
-        spr.run([clexec, "-i", self.cppname])
+        if shutil.which(clexec) is not None:
+            spr.run([clexec, "-i", self.hdrname])
+            spr.run([clexec, "-i", self.cppname])
+        else:
+            print(
+                "Clang-format not found. C++ files will be hard to parse by a human."
+            )
 
     def atomic_weight(self, fstream):
         """Write the atomic weight."""
