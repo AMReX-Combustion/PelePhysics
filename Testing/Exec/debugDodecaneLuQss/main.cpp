@@ -76,13 +76,13 @@ main(int argc, char* argv[])
     std::string filenameSym="logSym.txt";
 
     print<double>(filenameBase,sc_qss,NUM_QSS_SPECIES,"sc_qss");
-    print<double>(filenameSym,sc_qss_sym,NUM_QSS_SPECIES,"sc_qss_sym");
+    print<double>(filenameSym,sc_qss_sym,NUM_QSS_SPECIES,"sc_qss");
 
     print<double>(filenameBase,qf_qss,NUM_QSS_REACTIONS,"qf_qss");
-    print<double>(filenameSym,qf_qss_sym,NUM_QSS_REACTIONS,"qf_qss_sym");
+    print<double>(filenameSym,qf_qss_sym,NUM_QSS_REACTIONS,"qf_qss");
     
     print<double>(filenameBase,qr_qss,NUM_QSS_REACTIONS,"qr_qss");
-    print<double>(filenameSym,qr_qss_sym,NUM_QSS_REACTIONS,"qr_qss_sym");
+    print<double>(filenameSym,qr_qss_sym,NUM_QSS_REACTIONS,"qr_qss");
 
 
   return 0;

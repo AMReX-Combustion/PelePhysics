@@ -14,4 +14,6 @@ make COMP=llvm TPL
 make COMP=llvm -j 2
 
 # Execute 0D
-./Pele3d.llvm.ex > log
+./Pele3d.llvm.ex 
+
+diff -rbBp logBase.txt logSym.txt > diffLog
