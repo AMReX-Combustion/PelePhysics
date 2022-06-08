@@ -1590,7 +1590,6 @@ def qssa_coeff_functions(
     cw.writer(fstream, "}")
     for i in range(species_info.n_species):
         syms.mixture_smp += syms.sc_smp[i]
-
     nclassd_qssa = reaction_info.n_qssa_reactions - nspecial_qssa
     # nCorr_qssa = n3body_qssa + ntroe_qssa + nsri_qssa + nlindemann_qssa
 
@@ -2148,8 +2147,9 @@ def qssa_scQss_debug(fstream, mechanism, species_info, reaction_info, syms):
             "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
         )
 
-    listSpec = [3,4,7,8,9,10,11,12,13,14,15,16,17]
+    #listSpec = [3,4,7,8,9,10,11,12,13,14,15,16,17]
     #listSpec = [10, 16, 17]
+    listSpec = list(range(species_info.n_qssa_species))
 
     # for ispec in range(species_info.n_qssa_species):
     for ispec in listSpec:
@@ -3300,7 +3300,7 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
         if symbol not in species_info.qssa_species_list:
             if float(coefficient) == 1.0:
                 conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
-                syms.conc_smp = syms.sc_smp[
+                conc_smp = syms.sc_smp[
                     species_info.ordered_idx_map[symbol]
                 ]
             else:
@@ -3312,7 +3312,7 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
                     species_info.ordered_idx_map[symbol]
                 ] ** float(coefficient)
             phi += [conc]
-            phi_smp += [syms.conc_smp]
+            phi_smp += [conc_smp]
         if len(phi) < 1:
             phi = ["1.0"]
             phi_smp = [1.0]
@@ -3320,4 +3320,5 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
     qssa_coeff_smp = 1.0
     for phival in phi_smp:
         qssa_coeff_smp *= phival
+ 
     return "*".join(phi), qssa_coeff_smp
