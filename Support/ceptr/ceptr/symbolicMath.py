@@ -4,7 +4,6 @@ import sympy as smp
 import re
 
 
-
 class SymbolicMath:
     """Symbols to carry throughout operations."""
 
@@ -61,7 +60,7 @@ class SymbolicMath:
                 for i in range(n_qssa_species)
             ]
 
-    def convertToCPP(self,symSmp):
+    def convertToCPP(self, symSmp):
         # Convert to ccode (to fix pow) and then string
         cppcode = smp.ccode(symSmp)
         symStr = str(cppcode)
@@ -69,6 +68,5 @@ class SymbolicMath:
         cppStr = re.sub(r"(_smp)(\d{1,9})", r"[\2]", symStr)
         # Fix superfluous _smp
         cppStr = re.sub(r"(_smp)", r"", cppStr)
-    
-        return cppStr
 
+        return cppStr
