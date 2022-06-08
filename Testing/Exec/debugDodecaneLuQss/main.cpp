@@ -72,14 +72,17 @@ main(int argc, char* argv[])
     comp_sc_qss(sc_qss, qf_qss, qr_qss);
     comp_qss_coeff_debug(sc, qf_qss_sym, qr_qss_sym, T);
 
-    print<double>(sc_qss,NUM_QSS_SPECIES,"sc_qss");
-    print<double>(sc_qss_sym,NUM_QSS_SPECIES,"sc_qss_sym");
+    std::string filenameBase="logBase.txt";
+    std::string filenameSym="logSym.txt";
 
-    print<double>(qf_qss,NUM_QSS_REACTIONS,"qf_qss");
-    print<double>(qf_qss_sym,NUM_QSS_REACTIONS,"qf_qss_sym");
+    print<double>(filenameBase,sc_qss,NUM_QSS_SPECIES,"sc_qss");
+    print<double>(filenameSym,sc_qss_sym,NUM_QSS_SPECIES,"sc_qss_sym");
+
+    print<double>(filenameBase,qf_qss,NUM_QSS_REACTIONS,"qf_qss");
+    print<double>(filenameSym,qf_qss_sym,NUM_QSS_REACTIONS,"qf_qss_sym");
     
-    print<double>(qr_qss,NUM_QSS_REACTIONS,"qr_qss");
-    print<double>(qr_qss_sym,NUM_QSS_REACTIONS,"qr_qss_sym");
+    print<double>(filenameBase,qr_qss,NUM_QSS_REACTIONS,"qr_qss");
+    print<double>(filenameSym,qr_qss_sym,NUM_QSS_REACTIONS,"qr_qss_sym");
 
 
   return 0;
