@@ -11,6 +11,7 @@ import ceptr.constants as cc
 import ceptr.utilities as cu
 import ceptr.writer as cw
 
+import re
 
 def set_qssa_reactions(mechanism, species_info, reaction_info):
     """Get list of reaction indices that involve QSSA species."""
@@ -2147,8 +2148,8 @@ def qssa_scQss_debug(fstream, mechanism, species_info, reaction_info, syms):
             "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
         )
 
-    # listSpec = [3,4,7,8,9,10,11,12,13,14,15,16,17]
-    listSpec = [10, 16, 17]
+    listSpec = [3,4,7,8,9,10,11,12,13,14,15,16,17]
+    #listSpec = [10, 16, 17]
 
     # for ispec in range(species_info.n_qssa_species):
     for ispec in listSpec:
@@ -2159,17 +2160,20 @@ def qssa_scQss_debug(fstream, mechanism, species_info, reaction_info, syms):
         # Write the reduced common expressions
         # The subexpressions are stored in cse index 0
         for cse_idx in range(len(sc_qss_cse[0])):
+            commonExp = syms.convertToCPP(sc_qss_cse[0][cse_idx][1])
+            commonExp = re.sub(r"(x)(\d{1,9})", r"x\2_"+str(ispec), commonExp) 
             cw.writer(
                 fstream,
                 "amrex::Real %s = %s;"
                 % (
-                    syms.convertToCPP(sc_qss_cse[0][cse_idx][0]),
-                    syms.convertToCPP(sc_qss_cse[0][cse_idx][1]),
+                    syms.convertToCPP(sc_qss_cse[0][cse_idx][0])+'_'+str(ispec),
+                    commonExp,
                 ),
             )
 
         # The full qss expression is stored in cse index 1
         cppStr = syms.convertToCPP(sc_qss_cse[1])
+        cppStr = re.sub(r"(x)(\d{1,9})", r"x\2_"+str(ispec), cppStr)
         timee = time.time()
         print("Made expr for spec %d (time = %.3g s)" % (ispec, timee - times))
         times = time.time()
