@@ -351,7 +351,7 @@ public:
 
 private:
   TransParm<EosType, TransportType> m_h_trans_parm;
-  TransParm<EosType, TransportType>* m_d_trans_parm;
+  TransParm<EosType, TransportType>* m_d_trans_parm{nullptr};
   bool m_device_allocated{false};
 };
 } // namespace transport

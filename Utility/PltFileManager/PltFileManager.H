@@ -32,11 +32,10 @@ public:
 protected:
   // MetaData
   std::string m_pltFile;             // pltfile name
-  int m_nvars;                       // number of variables
+  int m_nvars{0};                    // number of variables
   amrex::Vector<std::string> m_vars; // list of variable in the plotfile
-  int m_nlevels;                     // number of levels
-  amrex::Real m_time;                // Simulation time
-  amrex::Real m_nsteps;              // Simulation step count
+  int m_nlevels{0};                  // number of levels
+  amrex::Real m_time{0.0};           // Simulation time
 
   amrex::Vector<amrex::BoxArray> m_grids;
   amrex::Vector<amrex::Geometry> m_geoms;

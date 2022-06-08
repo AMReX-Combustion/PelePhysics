@@ -22,9 +22,8 @@ GotoNextLine(std::istream& is)
 }
 
 PltFileManager::PltFileManager(const std::string& a_pltFile)
+  : m_pltFile{a_pltFile}
 {
-  m_pltFile = a_pltFile;
-
   // Get the plt metadata and resize part of the data vectors
   std::string pltFileHeader(m_pltFile + "/Header");
   readGenericPlotfileHeader(pltFileHeader);
