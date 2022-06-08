@@ -2159,7 +2159,7 @@ def qssa_sc_qss_debug(fstream, mechanism, species_info, reaction_info, syms):
             )
             cw.writer(
                 fstream,
-                "amrex::Real %s = %s;"
+                "const amrex::Real %s = %s;"
                 % (
                     syms.convert_to_cpp(sc_qss_cse[0][cse_idx][0])
                     + "_"
