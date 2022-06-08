@@ -1,5 +1,4 @@
 """Symbolic math for symbolic differentiation."""
-from collections import OrderedDict
 import sympy as smp
 
 
@@ -61,9 +60,10 @@ class SymbolicMath:
                 for i in range(n_qssa_species)
             ]
 
-    def convertToCPP(self, symSmp):
+    def convert_to_cpp(self, sym_smp):
+        """Convert sympy object to C code compatible string."""
         # Convert to ccode (to fix pow) and then string
-        cppcode = smp.ccode(symSmp)
-        cppStr = str(cppcode)
+        cppcode = smp.ccode(sym_smp)
+        cpp_str = str(cppcode)
 
-        return cppStr
+        return cpp_str

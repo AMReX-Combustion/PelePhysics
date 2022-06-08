@@ -1,17 +1,17 @@
 """QSSA functions needed for conversion."""
 import copy
+import re
 import sys
+import time
 from collections import Counter, OrderedDict, defaultdict
 
 import numpy as np
 import sympy as smp
-import time
 
 import ceptr.constants as cc
 import ceptr.utilities as cu
 import ceptr.writer as cw
 
-import re
 
 def set_qssa_reactions(mechanism, species_info, reaction_info):
     """Get list of reaction indices that involve QSSA species."""
@@ -1373,21 +1373,10 @@ def sort_qssa_solution_elements(mechanism, species_info, reaction_info, syms):
         species_info.qssa_info.rhs_smp[symbol] = 0
         for rhs_smp in rhs_hold_smp:
             species_info.qssa_info.rhs_smp[symbol] += rhs_smp
-        # print(f"starting simplify section for {symbol}...")
-        # print(species_info.qssa_info.rhs_smp[symbol])
-        # times = time.time()
-        # species_info.qssa_info.rhs_smp[symbol] = smp.powdenest(species_info.qssa_info.rhs_smp[symbol])
-        # timee = time.time()
-        # print(species_info.qssa_info.rhs_smp[symbol])
-        # print(f"Time to simplify rhs {symbol} = {timee-times}")
-        # exit()
+
         species_info.qssa_info.coeff_smp[symbol] = 0
         for coeff_smp in coeff_hold_smp:
             species_info.qssa_info.coeff_smp[symbol] += coeff_smp
-        # times = time.time()
-        # species_info.qssa_info.coeff_smp[symbol] = smp.simplify(species_info.qssa_info.coeff_smp[symbol])
-        # timee = time.time()
-        # print(f"Time to simplify coeff {symbol} = {timee-times}")
 
         species_info.qssa_info.qssa_coeff[symbol] = OrderedDict()
         species_info.qssa_info.qssa_coeff_smp[symbol] = OrderedDict()
@@ -1728,7 +1717,7 @@ def qssa_coeff_functions(
                 mechanism, species_info, reaction, syms
             )
             cw.writer(fstream, "const amrex::Real Corr = %s;" % (alpha))
-            Corr_smp = alpha_smp
+            corr_smp = alpha_smp
             if remove_forward:
                 cw.writer(fstream, cw.comment("Remove forward reaction"))
                 cw.writer(
@@ -1746,37 +1735,37 @@ def qssa_coeff_functions(
                     "qf[%d] = Corr * k_f[%d] * (%s);" % (idx, idx, forward_sc),
                 )
                 syms.qf_qss_smp[idx] = (
-                    Corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
+                    corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
                 )
         else:
             alpha, alpha_smp = cu.enhancement_d(
                 mechanism, species_info, reaction, syms
             )
             cw.writer(fstream, "amrex::Real Corr = %s;" % (alpha))
-            Corr_smp = alpha_smp
+            corr_smp = alpha_smp
             cw.writer(
                 fstream,
                 "const amrex::Real redP = Corr / k_f[%d] * %.15g "
                 % (idx, 10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)),
             )
             coeff = 10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)
-            redP_smp = Corr_smp / syms.kf_qss_smp[idx] * coeff
+            redp_smp = corr_smp / syms.kf_qss_smp[idx] * coeff
             cw.writer(
                 fstream,
                 "           * exp(%.15g  * tc[0] - %.15g * invT);"
                 % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m),
             )
             coeff = (1.0 / cc.Rc / cc.ureg.kelvin).m * low_ae.m
-            redP_smp *= smp.exp(
+            redp_smp *= smp.exp(
                 low_beta * syms.tc_smp[0] - coeff * syms.invT_smp
             )
             if is_troe:
                 cw.writer(
                     fstream, "const amrex::Real F = redP / (1.0 + redP);"
                 )
-                F_smp = redP_smp / (1.0 + redP_smp)
+                f_smp = redp_smp / (1.0 + redp_smp)
                 cw.writer(fstream, "const amrex::Real logPred = log10(redP);")
-                logPred_smp = smp.log(redP_smp, 10)
+                log_pred_smp = smp.log(redp_smp, 10)
                 cw.writer(fstream, "const amrex::Real logFcent = log10(")
                 int_smp = 0
                 if abs(troe[1]) > 1.0e-100:
@@ -1827,33 +1816,35 @@ def qssa_coeff_functions(
                 else:
                     cw.writer(fstream, "    + 0.0);")
                     int_smp += 0.0
-                logFcent_smp = smp.log(int_smp, 10)
+                log_fcent_smp = smp.log(int_smp, 10)
 
                 cw.writer(
                     fstream,
                     "const amrex::Real troe_c = -0.4 - 0.67 * logFcent;",
                 )
-                troe_c_smp = -0.4 - 0.67 * logFcent_smp
+                troe_c_smp = -0.4 - 0.67 * log_fcent_smp
                 cw.writer(
                     fstream,
                     "const amrex::Real troe_n = 0.75 - 1.27 * logFcent;",
                 )
-                troe_n_smp = 0.75 - 1.27 * logFcent_smp
+                troe_n_smp = 0.75 - 1.27 * log_fcent_smp
                 cw.writer(
                     fstream,
                     "const amrex::Real troe = (troe_c + logPred)"
                     + " / (troe_n - 0.14 * (troe_c + logPred));",
                 )
-                troe_smp = (troe_c_smp + logPred_smp) / (
-                    troe_n_smp - 0.14 * (troe_c_smp + logPred_smp)
+                troe_smp = (troe_c_smp + log_pred_smp) / (
+                    troe_n_smp - 0.14 * (troe_c_smp + log_pred_smp)
                 )
                 cw.writer(
                     fstream,
                     "const amrex::Real F_troe = pow(10, logFcent / (1.0 + troe * troe));",
                 )
-                F_troe_smp = 10 ** (logFcent_smp / (1.0 + troe_smp * troe_smp))
+                f_troe_smp = 10 ** (
+                    log_fcent_smp / (1.0 + troe_smp * troe_smp)
+                )
                 cw.writer(fstream, "Corr = F * F_troe;")
-                Corr_smp = F_smp * F_troe_smp
+                corr_smp = f_smp * f_troe_smp
                 if remove_forward:
                     cw.writer(fstream, cw.comment("Remove forward reaction"))
                     cw.writer(
@@ -1872,11 +1863,11 @@ def qssa_coeff_functions(
                         % (idx, idx, forward_sc),
                     )
                     syms.qf_qss_smp[idx] = (
-                        Corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
+                        corr_smp * syms.kf_qss_smp[idx] * forward_sc_smp
                     )
             elif nlindemann_qssa > 0:
                 cw.writer(fstream, "Corr = redP / (1.0 + redP);")
-                Corr_smp = redP_smp / (1.0 + redP_smp)
+                corr_smp = redp_smp / (1.0 + redp_smp)
                 if remove_forward:
                     cw.writer(fstream, cw.comment("Remove forward reaction"))
                     cw.writer(
@@ -1895,7 +1886,7 @@ def qssa_coeff_functions(
                         % (idx, idx, forward_sc),
                     )
                     syms.qf_qss_smp[idx] = (
-                        Corr_smp * kf_qss_smp[idx] * forward_sc_smp
+                        corr_smp * kf_qss_smp[idx] * forward_sc_smp
                     )
 
         if kc_conv_inv:
@@ -1918,7 +1909,7 @@ def qssa_coeff_functions(
                     % (idx, idx, kc_exp_arg, kc_conv_inv, reverse_sc),
                 )
                 syms.qr_qss_smp[idx] = (
-                    Corr_smp
+                    corr_smp
                     * syms.kf_qss_smp[idx]
                     * smp.exp(-kc_exp_arg_smp)
                     * kc_conv_inv_smp
@@ -1943,7 +1934,7 @@ def qssa_coeff_functions(
                     % (idx, idx, kc_exp_arg, reverse_sc),
                 )
                 syms.qr_qss_smp[idx] = (
-                    Corr_smp
+                    corr_smp
                     * syms.kf_qss_smp[idx]
                     * smp.exp(-kc_exp_arg_smp)
                     * reverse_sc_smp
@@ -1959,6 +1950,7 @@ def qssa_coeff_functions(
 
 
 def qssa_coeff_debug(fstream, mechanism, species_info, reaction_info, syms):
+    """Temporary QSSA coeff debuging function."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2030,7 +2022,7 @@ def qssa_coeff_debug(fstream, mechanism, species_info, reaction_info, syms):
 
     for ireac in range(reaction_info.n_qssa_reactions):
         times = time.time()
-        cppStr = syms.convertToCPP(syms.qf_qss_smp[ireac])
+        cpp_str = syms.convert_to_cpp(syms.qf_qss_smp[ireac])
         timee = time.time()
         print("Made expr for qf %d (time = %.3g s)" % (ireac, timee - times))
         times = time.time()
@@ -2039,7 +2031,7 @@ def qssa_coeff_debug(fstream, mechanism, species_info, reaction_info, syms):
             "qf_qss[%s] = %s;"
             % (
                 str(ireac),
-                cppStr,
+                cpp_str,
             ),
         )
         timee = time.time()
@@ -2048,7 +2040,7 @@ def qssa_coeff_debug(fstream, mechanism, species_info, reaction_info, syms):
         )
     for ireac in range(reaction_info.n_qssa_reactions):
         times = time.time()
-        cppStr = syms.convertToCPP(syms.qr_qss_smp[ireac])
+        cpp_str = syms.convert_to_cpp(syms.qr_qss_smp[ireac])
         timee = time.time()
         print("Made expr for qr %d (time = %.3g s)" % (ireac, timee - times))
         times = time.time()
@@ -2057,7 +2049,7 @@ def qssa_coeff_debug(fstream, mechanism, species_info, reaction_info, syms):
             "qr_qss[%s] = %s;"
             % (
                 str(ireac),
-                cppStr,
+                cpp_str,
             ),
         )
         timee = time.time()
@@ -2068,7 +2060,8 @@ def qssa_coeff_debug(fstream, mechanism, species_info, reaction_info, syms):
     cw.writer(fstream, "}")
 
 
-def qssa_scQss_debug(fstream, mechanism, species_info, reaction_info, syms):
+def qssa_sc_qss_debug(fstream, mechanism, species_info, reaction_info, syms):
+    """Temporary SCQSS debuging function."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2147,12 +2140,12 @@ def qssa_scQss_debug(fstream, mechanism, species_info, reaction_info, syms):
             "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
         )
 
-    #listSpec = [3,4,7,8,9,10,11,12,13,14,15,16,17]
-    #listSpec = [10, 16, 17]
-    listSpec = list(range(species_info.n_qssa_species))
+    # list_spec = [3,4,7,8,9,10,11,12,13,14,15,16,17]
+    # list_spec = [10, 16, 17]
+    list_spec = list(range(species_info.n_qssa_species))
 
     # for ispec in range(species_info.n_qssa_species):
-    for ispec in listSpec:
+    for ispec in list_spec:
         times = time.time()
         # Compute the common subexpressions using sympy
         sc_qss_cse = smp.cse(syms.sc_qss_smp[ispec])
@@ -2160,20 +2153,24 @@ def qssa_scQss_debug(fstream, mechanism, species_info, reaction_info, syms):
         # Write the reduced common expressions
         # The subexpressions are stored in cse index 0
         for cse_idx in range(len(sc_qss_cse[0])):
-            commonExp = syms.convertToCPP(sc_qss_cse[0][cse_idx][1])
-            commonExp = re.sub(r"(x)(\d{1,9})", r"x\2_"+str(ispec), commonExp) 
+            common_exp = syms.convert_to_cpp(sc_qss_cse[0][cse_idx][1])
+            common_exp = re.sub(
+                r"(x)(\d{1,9})", r"x\2_" + str(ispec), common_exp
+            )
             cw.writer(
                 fstream,
                 "amrex::Real %s = %s;"
                 % (
-                    syms.convertToCPP(sc_qss_cse[0][cse_idx][0])+'_'+str(ispec),
-                    commonExp,
+                    syms.convert_to_cpp(sc_qss_cse[0][cse_idx][0])
+                    + "_"
+                    + str(ispec),
+                    common_exp,
                 ),
             )
 
         # The full qss expression is stored in cse index 1
-        cppStr = syms.convertToCPP(sc_qss_cse[1])
-        cppStr = re.sub(r"(x)(\d{1,9})", r"x\2_"+str(ispec), cppStr)
+        cpp_str = syms.convert_to_cpp(sc_qss_cse[1])
+        cpp_str = re.sub(r"(x)(\d{1,9})", r"x\2_" + str(ispec), cpp_str)
         timee = time.time()
         print("Made expr for spec %d (time = %.3g s)" % (ispec, timee - times))
         times = time.time()
@@ -2182,7 +2179,7 @@ def qssa_scQss_debug(fstream, mechanism, species_info, reaction_info, syms):
             "sc_qss[%s] = %s;"
             % (
                 str(ispec),
-                cppStr,
+                cpp_str,
             ),
         )
         timee = time.time()
@@ -2435,7 +2432,7 @@ def qssa_component_functions(
     print(list(species_info.qssa_info.needs.keys()))
     print(list(species_info.qssa_info.group.keys()))
 
-    intermediateTerms_smp = {}
+    intermediate_terms_smp = {}
     coeff_submatrix_smp = []
     rhs_submatrix_smp = []
 
@@ -2464,7 +2461,7 @@ def qssa_component_functions(
             # cut line if too big !
             long_line_elements = (species_info.qssa_info.rhs[symbol]).split()
             numerator_smp = 1e-12 + species_info.qssa_info.rhs_smp[symbol]
-            intermediateTerms_smp[numerator] = species_info.qssa_info.rhs_smp[
+            intermediate_terms_smp[numerator] = species_info.qssa_info.rhs_smp[
                 symbol
             ]
             len_long_line = len(long_line_elements)
@@ -2515,7 +2512,7 @@ def qssa_component_functions(
                 % (denominator, species_info.qssa_info.coeff[symbol]),
             )
             denominator_smp = 1e-12 + species_info.qssa_info.coeff_smp[symbol]
-            intermediateTerms_smp[
+            intermediate_terms_smp[
                 denominator
             ] = species_info.qssa_info.coeff_smp[symbol]
             cw.writer(fstream)
@@ -2591,7 +2588,7 @@ def qssa_component_functions(
 
                 len_long_line = len(long_line_elements)
                 numerator_smp = 1e-12 + species_info.qssa_info.rhs_smp[species]
-                intermediateTerms_smp[
+                intermediate_terms_smp[
                     numerator
                 ] = species_info.qssa_info.rhs_smp[species]
                 # if we have more than 7 elements
@@ -2651,7 +2648,7 @@ def qssa_component_functions(
                 denominator_smp = (
                     1e-12 + species_info.qssa_info.coeff_smp[species]
                 )
-                intermediateTerms_smp[
+                intermediate_terms_smp[
                     denominator
                 ] = species_info.qssa_info.coeff_smp[species]
                 # if we have more than 7 elements
@@ -2713,16 +2710,9 @@ def qssa_component_functions(
                     + denominator
                     + ";",
                 )
-                speciesRHS_smp = -numerator_smp / denominator_smp
-                # print(f"Starting simplification of fraction for {symbol}...")
-                # print(speciesRHS_smp)
-                # times = time.time()
-                # speciesRHS_smp = smp.cancel(speciesRHS_smp)
-                # timee = time.time()
-                # print(speciesRHS_smp)
-                # print(f"Time to simplify = {timee-times}")
-                # exit()
-                intermediateTerms_smp[species.replace("*", "D") + "_rhs"] = (
+                species_rhs_smp = -numerator_smp / denominator_smp
+
+                intermediate_terms_smp[species.replace("*", "D") + "_rhs"] = (
                     -numerator_smp / denominator_smp
                 )
                 cw.writer(fstream)
@@ -2759,22 +2749,19 @@ def qssa_component_functions(
                                 + ";",
                             )
 
-                            intermediateTerms_smp[
+                            intermediate_terms_smp[
                                 str(species.replace("*", "D"))
                                 + "_"
                                 + str(gr_species[j].replace("*", "D"))
                             ] = (
-                                 (
-                                    1e-12 + 
-                                    species_info.qssa_info.qssa_coeff_smp[
-                                        species
-                                    ][gr_species[j]][0]
-                                )
-                                / denominator_smp
-                            )
+                                1e-12
+                                + species_info.qssa_info.qssa_coeff_smp[
+                                    species
+                                ][gr_species[j]][0]
+                            ) / denominator_smp
                             coeff_submatrix_smp[index][
                                 j
-                            ] = intermediateTerms_smp[
+                            ] = intermediate_terms_smp[
                                 str(species).replace("*", "D")
                                 + "_"
                                 + str(gr_species[j]).replace("*", "D")
@@ -2782,7 +2769,7 @@ def qssa_component_functions(
 
                 cw.writer(fstream)
                 rhs_submatrix[index] = str(species.replace("*", "D")) + "_rhs"
-                rhs_submatrix_smp[index] = intermediateTerms_smp[
+                rhs_submatrix_smp[index] = intermediate_terms_smp[
                     str(species.replace("*", "D")) + "_rhs"
                 ]
 
@@ -3278,9 +3265,7 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
         if symbol not in species_info.qssa_species_list:
             if float(coefficient) == 1.0:
                 conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
-                conc_smp = syms.sc_smp[
-                    species_info.ordered_idx_map[symbol]
-                ]
+                conc_smp = syms.sc_smp[species_info.ordered_idx_map[symbol]]
             else:
                 conc = "pow(sc[%d], %f)" % (
                     species_info.ordered_idx_map[symbol],
@@ -3298,5 +3283,5 @@ def qssa_return_coeff(mechanism, species_info, reaction, reagents, syms):
     qssa_coeff_smp = 1.0
     for phival in phi_smp:
         qssa_coeff_smp *= phival
- 
+
     return "*".join(phi), qssa_coeff_smp

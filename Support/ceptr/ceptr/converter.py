@@ -14,10 +14,10 @@ import ceptr.qssa_converter as cqc
 import ceptr.reaction_info as cri
 import ceptr.sparsity as csp
 import ceptr.species_info as csi
+import ceptr.symbolic_math as csm
 import ceptr.thermo as cth
 import ceptr.transport as ctr
 import ceptr.writer as cw
-import ceptr.symbolicMath as csm
 
 
 class Converter:
@@ -67,7 +67,7 @@ class Converter:
                 self.mechanism, self.species_info, self.reaction_info
             )
         # Initialize symbolic variables
-        self.syms = csm.SymbolicMath(self.species_info, self.reaction_info)   
+        self.syms = csm.SymbolicMath(self.species_info, self.reaction_info)
 
     def set_species(self):
         """Set the species."""
@@ -252,32 +252,52 @@ class Converter:
                 cqc.sort_qssa_computation(
                     self.mechanism, self.species_info, self.reaction_info
                 )
-                # Invert QSSA print coeff and QSSA evaluation to see expressions in terms of qr and qf
+                # Invert QSSA print coeff and QSSA evaluation to see expressions
+                #  in terms of qr and qf
                 print("QSSA print coeff")
                 cqc.qssa_coeff_functions(
-                    hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
                 )
                 print("QSSA evaluation")
                 # Actually gauss-pivot the matrix to get algebraic expr
                 cqc.sort_qssa_solution_elements(
-                    self.mechanism, self.species_info, self.reaction_info, self.syms
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
                 )
                 print("QSSA printing")
                 cqc.qssa_component_functions(
-                    hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
                 )
                 print("Symbolic Sc qss print for debug")
-                cqc.qssa_scQss_debug(
-                    hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
+                cqc.qssa_sc_qss_debug(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
                 )
                 print("Symbolic qf qss print for debug")
                 cqc.qssa_coeff_debug(
-                    hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
                 )
 
-            #print("diff sc_qss_16 / sc_8 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[8]))
-            #print("diff sc_qss_16 / sc_1 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[1]))
-            #stop
+            # print("diff sc_qss_16 / sc_8 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[8]))
+            # print("diff sc_qss_16 / sc_1 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[1]))
+            # stop
 
             # prod rate related
             cp.production_rate(
@@ -296,7 +316,7 @@ class Converter:
                 self.species_info,
                 self.reaction_info,
                 precond=True,
-                syms=None
+                syms=None,
             )
             cj.dproduction_rate(
                 hdr,
