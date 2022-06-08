@@ -1,14 +1,13 @@
 """Symbolic math for symbolic differentiation."""
 from collections import OrderedDict
 import sympy as smp
-import re
 
 
 class SymbolicMath:
     """Symbols to carry throughout operations."""
 
     def __init__(self, species_info, reaction_info):
-        self.T_smp = smp.symbols("T_smp")
+        self.T_smp = smp.symbols("T")
         self.tc_smp = [
             smp.log(self.T_smp),
             self.T_smp,
@@ -21,52 +20,50 @@ class SymbolicMath:
         n_species = species_info.n_species
         n_qssa_species = species_info.n_qssa_species
 
-        self.sc_smp = smp.symbols("sc_smp:" + str(n_species))
+        self.sc_smp = [
+            smp.symbols("sc[" + str(i) + "]") for i in range(n_species)
+        ]
         self.g_RT_smp = [
-            smp.symbols("g_RT_smp" + str(i)) for i in range(n_species)
+            smp.symbols("g_RT[" + str(i) + "]") for i in range(n_species)
         ]
         self.h_RT_smp = [
-            smp.symbols("h_RT_smp" + str(i)) for i in range(n_species)
+            smp.symbols("h_RT[" + str(i) + "]") for i in range(n_species)
         ]
         self.wdot_smp = [
-            smp.symbols("wdot_smp" + str(i)) for i in range(n_species)
+            smp.symbols("wdot[" + str(i) + "]") for i in range(n_species)
         ]
 
         if n_qssa_species > 0:
 
             n_qssa_reactions = reaction_info.n_qssa_reactions
             self.sc_qss_smp = [
-                smp.symbols("sc_qss_smp" + str(i))
+                smp.symbols("sc_qss[" + str(i) + "]")
                 for i in range(n_qssa_species)
             ]
             self.kf_qss_smp = [
-                smp.symbols("kf_qss_smp" + str(i))
+                smp.symbols("kf_qss[" + str(i) + "]")
                 for i in range(n_qssa_reactions)
             ]
             self.qf_qss_smp = [
-                smp.symbols("qf_qss_smp" + str(i))
+                smp.symbols("qf_qss[" + str(i) + "]")
                 for i in range(n_qssa_reactions)
             ]
             self.qr_qss_smp = [
-                smp.symbols("qr_qss_smp" + str(i))
+                smp.symbols("qr_qss[" + str(i) + "]")
                 for i in range(n_qssa_reactions)
             ]
             self.g_RT_qss_smp = [
-                smp.symbols("g_RT_qss_smp" + str(i))
+                smp.symbols("g_RT_qss[" + str(i) + "]")
                 for i in range(n_qssa_species)
             ]
             self.h_RT_qss_smp = [
-                smp.symbols("h_RT_qss_smp" + str(i))
+                smp.symbols("h_RT_qss[" + str(i) + "]")
                 for i in range(n_qssa_species)
             ]
 
     def convertToCPP(self, symSmp):
         # Convert to ccode (to fix pow) and then string
         cppcode = smp.ccode(symSmp)
-        symStr = str(cppcode)
-        # Fix indices
-        cppStr = re.sub(r"(_smp)(\d{1,9})", r"[\2]", symStr)
-        # Fix superfluous _smp
-        cppStr = re.sub(r"(_smp)", r"", cppStr)
+        cppStr = str(cppcode)
 
         return cppStr
