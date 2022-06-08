@@ -295,7 +295,7 @@ def enhancement_d(mechanism, species_info, reaction, syms=None):
                     if recordSymbolicOperations: alpha_smp.append(factor_smp*conc_smp)
 
     if recordSymbolicOperations: 
-        enhancement_smp = 1.0
+        enhancement_smp = 0.0
         for alphaVal in alpha_smp:
             enhancement_smp += (alphaVal)
 
