@@ -2759,41 +2759,19 @@ def qssa_component_functions(
                                 + ";",
                             )
 
-                            species_groupSpecies_smp = 1e-12 + (
-                                species_info.qssa_info.qssa_coeff_smp[species][
-                                    gr_species[j]
-                                ][0]
-                                / denominator_smp
-                            )
                             intermediateTerms_smp[
                                 str(species.replace("*", "D"))
                                 + "_"
                                 + str(gr_species[j].replace("*", "D"))
                             ] = (
-                                1e-12
-                                + (
+                                 (
+                                    1e-12 + 
                                     species_info.qssa_info.qssa_coeff_smp[
                                         species
                                     ][gr_species[j]][0]
                                 )
                                 / denominator_smp
                             )
-                            coeff_submatrix_smp[index][
-                                j
-                            ] = intermediateTerms_smp[
-                                str(species).replace("*", "D")
-                                + "_"
-                                + str(gr_species[j]).replace("*", "D")
-                            ]
-                            intermediateTerms_smp[
-                                str(species.replace("*", "D"))
-                                + "_"
-                                + str(gr_species[j].replace("*", "D"))
-                            ] = (
-                                species_info.qssa_info.qssa_coeff_smp[species][
-                                    gr_species[j]
-                                ][0]
-                            ) / denominator_smp
                             coeff_submatrix_smp[index][
                                 j
                             ] = intermediateTerms_smp[
