@@ -42,3 +42,17 @@ void print(std::string filename, T val,  std::string name="") {
     file << "\t" <<  val << "\n";
     file.close();
 }
+
+template <typename T>
+void print2py(std::string filename, T * array, int size, std::string name="") {
+    std::ofstream file;
+    file.open(filename,std::ios_base::app);
+
+    file << "import numpy as np"  <<  "\n";
+    file << name << " = np.zeros("  << size <<  ")\n";
+
+    for (int i=0; i<size; i++) {
+        file << name << "[" << i << "]=" <<  array[i] << "\n";
+    }
+    file.close();
+}
