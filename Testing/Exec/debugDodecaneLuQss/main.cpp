@@ -61,7 +61,7 @@ main(int argc, char* argv[])
     amrex::Real * g_RT_qss = new amrex::Real [NUM_QSS_SPECIES];
     for (int i = 0; i < NUM_SPECIES; ++i) {
         // dummy numbers
-        sc[i] = (i+1)*0.001;
+        sc[i] = (i+1)*0.02;
     }
     comp_sc_qss_debug(sc, sc_qss_sym, T);
 
@@ -69,8 +69,13 @@ main(int argc, char* argv[])
     gibbs_qss(g_RT_qss, tc);
     comp_k_f_qss(tc, invT, kf_qss);
     comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);
-    comp_sc_qss(sc_qss, qf_qss, qr_qss);
     comp_qss_coeff_debug(sc, qf_qss_sym, qr_qss_sym, T);
+ 
+    std::cout << " ======= INTERM TERMS BASE ======= " << "\n";
+    comp_sc_qss(sc_qss, qf_qss, qr_qss);
+
+    std::cout << " ======= INTERM TERMS SYMS ======= " << "\n";
+    comp_qss_terms_debug(sc, T);
 
     std::string filenameBase="logBase.txt";
     std::string filenameSym="logSym.txt";

@@ -40,6 +40,7 @@ class SymbolicMath:
       
         # for storing intermediate terms used in definition of sc_qss
         self.intermediate_helpers_smp = OrderedDict()
+        self.intermediate_terms_smp = {}
  
         if n_qssa_species > 0:
 

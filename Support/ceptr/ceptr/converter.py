@@ -242,6 +242,10 @@ class Converter:
             cck.cksms(hdr, self.mechanism, self.species_info)
 
             if self.species_info.n_qssa_species > 0:
+     
+                helper_names_to_print = ['H_2']
+                intermediate_names_to_print = ['PXC5H11_rhs', 'PXC7H15_rhs']
+
                 print("QSSA groups")
                 # Figure out dependencies
                 cqc.get_qssa_groups(
@@ -277,6 +281,8 @@ class Converter:
                     self.species_info,
                     self.reaction_info,
                     self.syms,
+                    helper_names_to_print,
+                    intermediate_names_to_print,
                 )
                 print("Symbolic Sc qss print for debug")
                 cqc.qssa_sc_qss_debug(
@@ -293,6 +299,16 @@ class Converter:
                     self.species_info,
                     self.reaction_info,
                     self.syms,
+                )
+                print("Symbolic qss terms print for debug")
+                cqc.qssa_terms_debug(
+                    hdr,
+                    self.mechanism,
+                    self.species_info,
+                    self.reaction_info,
+                    self.syms,
+                    helper_names_to_print,
+                    intermediate_names_to_print,
                 )
 
             # print("diff sc_qss_16 / sc_8 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[8]))

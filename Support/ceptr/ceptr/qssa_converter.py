@@ -1945,6 +1945,125 @@ def qssa_coeff_functions(
 
     return
 
+def qssa_terms_debug(fstream, mechanism, species_info, reaction_info, syms, helper_names_to_print=[], intermediate_names_to_print=[]):
+    n_species = species_info.n_species
+    cw.writer(fstream)
+    cw.writer(
+        fstream,
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void comp_qss_terms_debug"
+        + "(amrex::Real * sc, amrex::Real T)",
+    )
+    cw.writer(fstream, "{")
+
+    cw.writer(fstream)
+    cw.writer(
+        fstream,
+        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
+        + cw.comment("temperature cache"),
+    )
+    cw.writer(fstream, "amrex::Real invT = 1.0 / tc[1];")
+    cw.writer(fstream, "amrex::Real invT2 = invT * invT;")
+    cw.writer(fstream)
+    cw.writer(
+        fstream,
+        cw.comment("reference concentration: P_atm / (RT) in inverse mol/m^3"),
+    )
+    cw.writer(
+        fstream,
+        "amrex::Real refC = %g / %g / T;"
+        % (
+            cc.Patm_pa,
+            cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m,
+        ),
+    )
+    cw.writer(fstream, "amrex::Real refCinv = 1.0 / refC;")
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("compute the mixture concentration"))
+    cw.writer(fstream, "amrex::Real mixture = 0.0;")
+    cw.writer(fstream, "for (int k = 0; k < %d; ++k) {" % n_species)
+    cw.writer(fstream, "mixture += sc[k];")
+    cw.writer(fstream, "}")
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
+    cw.writer(fstream, "amrex::Real g_RT[%d];" % (n_species))
+    cw.writer(fstream, "gibbs(g_RT, tc);")
+    if species_info.n_qssa_species > 0:
+        cw.writer(
+            fstream,
+            "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
+        )
+        cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
+    cw.writer(fstream)
+    cw.writer(fstream, cw.comment("compute the species enthalpy"))
+    cw.writer(fstream, "amrex::Real h_RT[%d];" % (n_species))
+    cw.writer(fstream, "speciesEnthalpy(h_RT, tc);")
+    if species_info.n_qssa_species > 0:
+        cw.writer(
+            fstream,
+            "amrex::Real h_RT_qss[%d];" % (species_info.n_qssa_species),
+        )
+        cw.writer(fstream, "speciesEnthalpy_qss(h_RT_qss, tc);")
+    if species_info.n_qssa_species > 0:
+        cw.writer(fstream)
+        cw.writer(fstream, cw.comment("Fill sc_qss here"))
+        # cw.writer(
+        #    fstream, "amrex::Real sc_qss[%d];" % species_info.n_qssa_species
+        # )
+        cw.writer(
+            fstream,
+            "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+            % (
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
+                reaction_info.n_qssa_reactions,
+            ),
+        )
+        cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
+        cw.writer(
+            fstream,
+            "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
+        )
+
+
+    for name in helper_names_to_print:
+         cw.writer(
+                     fstream,
+                     "amrex::Real %s = %s;"
+                     % (
+                         name,
+                         smp.ccode(syms.intermediate_helpers_smp[name]),
+                     ),
+                 )
+    for name in intermediate_names_to_print:
+         cw.writer(
+                     fstream,
+                     "amrex::Real %s = %s;"
+                     % (
+                         name,
+                         smp.ccode(syms.intermediate_terms_smp[name]),
+                     ),
+                 )
+    for name in helper_names_to_print:
+         cw.writer(
+                     fstream,
+                     'std::cout << "  %s = " << %s << "\\n";'
+                     % (
+                         name,
+                         name
+                     ),
+                 )
+    for name in intermediate_names_to_print:
+         cw.writer(
+                     fstream,
+                     'std::cout << "  %s = " << %s << "\\n";'
+                     % (
+                         name,
+                         name
+                     ),
+                 )
+
+
+    cw.writer(fstream, "}")
 
 def qssa_coeff_debug(fstream, mechanism, species_info, reaction_info, syms):
     """Temporary QSSA coeff debuging function."""
@@ -2189,7 +2308,7 @@ def qssa_sc_qss_debug(fstream, mechanism, species_info, reaction_info, syms):
 
 
 def qssa_component_functions(
-    fstream, mechanism, species_info, reaction_info, syms
+    fstream, mechanism, species_info, reaction_info, syms, helper_names_to_print=[], intermediate_names_to_print=[]
 ):
     """QSSA component functions."""
     itroe = reaction_info.index[0:2]
@@ -2430,7 +2549,6 @@ def qssa_component_functions(
     print(list(species_info.qssa_info.needs.keys()))
     print(list(species_info.qssa_info.group.keys()))
 
-    intermediate_terms_smp = {}
     coeff_submatrix_smp = []
     rhs_submatrix_smp = []
 
@@ -2459,7 +2577,7 @@ def qssa_component_functions(
             # cut line if too big !
             long_line_elements = (species_info.qssa_info.rhs[symbol]).split()
             numerator_smp = 1e-12 + species_info.qssa_info.rhs_smp[symbol]
-            intermediate_terms_smp[numerator] = species_info.qssa_info.rhs_smp[
+            syms.intermediate_terms_smp[numerator] = species_info.qssa_info.rhs_smp[
                 symbol
             ]
             len_long_line = len(long_line_elements)
@@ -2510,7 +2628,7 @@ def qssa_component_functions(
                 % (denominator, species_info.qssa_info.coeff[symbol]),
             )
             denominator_smp = 1e-12 + species_info.qssa_info.coeff_smp[symbol]
-            intermediate_terms_smp[
+            syms.intermediate_terms_smp[
                 denominator
             ] = species_info.qssa_info.coeff_smp[symbol]
             cw.writer(fstream)
@@ -2586,7 +2704,7 @@ def qssa_component_functions(
 
                 len_long_line = len(long_line_elements)
                 numerator_smp = 1e-12 + species_info.qssa_info.rhs_smp[species]
-                intermediate_terms_smp[
+                syms.intermediate_terms_smp[
                     numerator
                 ] = species_info.qssa_info.rhs_smp[species]
                 # if we have more than 7 elements
@@ -2646,7 +2764,7 @@ def qssa_component_functions(
                 denominator_smp = (
                     1e-12 + species_info.qssa_info.coeff_smp[species]
                 )
-                intermediate_terms_smp[
+                syms.intermediate_terms_smp[
                     denominator
                 ] = species_info.qssa_info.coeff_smp[species]
                 # if we have more than 7 elements
@@ -2710,7 +2828,7 @@ def qssa_component_functions(
                 )
                 species_rhs_smp = -numerator_smp / denominator_smp
 
-                intermediate_terms_smp[species.replace("*", "D") + "_rhs"] = (
+                syms.intermediate_terms_smp[species.replace("*", "D") + "_rhs"] = (
                     -numerator_smp / denominator_smp
                 )
                 cw.writer(fstream)
@@ -2747,7 +2865,7 @@ def qssa_component_functions(
                                 + ";",
                             )
 
-                            intermediate_terms_smp[
+                            syms.intermediate_terms_smp[
                                 str(species.replace("*", "D"))
                                 + "_"
                                 + str(gr_species[j].replace("*", "D"))
@@ -2759,7 +2877,7 @@ def qssa_component_functions(
                             ) / denominator_smp
                             coeff_submatrix_smp[index][
                                 j
-                            ] = intermediate_terms_smp[
+                            ] = syms.intermediate_terms_smp[
                                 str(species).replace("*", "D")
                                 + "_"
                                 + str(gr_species[j]).replace("*", "D")
@@ -2767,7 +2885,7 @@ def qssa_component_functions(
 
                 cw.writer(fstream)
                 rhs_submatrix[index] = str(species.replace("*", "D")) + "_rhs"
-                rhs_submatrix_smp[index] = intermediate_terms_smp[
+                rhs_submatrix_smp[index] = syms.intermediate_terms_smp[
                     str(species.replace("*", "D")) + "_rhs"
                 ]
 
@@ -2872,6 +2990,26 @@ def qssa_component_functions(
                         + ";",
                     )
                 cw.writer(fstream)
+
+    for name in helper_names_to_print:
+         cw.writer(
+                     fstream,
+                     'std::cout << "  %s = " << %s << "\\n";'
+                     % (
+                         name,
+                         name
+                     ),
+                 )
+    for name in intermediate_names_to_print:
+         cw.writer(
+                     fstream,
+                     'std::cout << "  %s = " << %s << "\\n";'
+                     % (
+                         name,
+                         name
+                     ),
+                 )
+
     cw.writer(fstream)
     cw.writer(fstream, "return;")
     cw.writer(fstream, "}")
