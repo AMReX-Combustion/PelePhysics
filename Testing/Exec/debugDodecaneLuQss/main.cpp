@@ -71,7 +71,8 @@ main(int argc, char* argv[])
     comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);
     comp_qss_coeff_debug(sc, qf_qss_sym, qr_qss_sym, T);
  
-    std::cout << " ======= INTERM TERMS BASE ======= " << "\n";
+    // Make sure to uncomment lines in comp_sc_qss if we want to activate this
+    //std::cout << " ======= INTERM TERMS BASE ======= " << "\n";
     comp_sc_qss(sc_qss, qf_qss, qr_qss);
 
     std::cout << " ======= INTERM TERMS SYMS ======= " << "\n";
