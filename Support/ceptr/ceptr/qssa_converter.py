@@ -2142,7 +2142,8 @@ def qssa_sc_qss_debug(fstream, mechanism, species_info, reaction_info, syms):
 
     # list_spec = [3,4,7,8,9,10,11,12,13,14,15,16,17]
     # list_spec = [10, 16, 17]
-    list_spec = list(range(species_info.n_qssa_species))
+    # list_spec = list(range(species_info.n_qssa_species))
+    list_spec = [0, 1, 2, 4, 5, 6, 7, 9, 11, 12, 13, 15, 8, 10, 14, 3, 16, 17]
 
     # for ispec in range(species_info.n_qssa_species):
     for ispec in list_spec:
