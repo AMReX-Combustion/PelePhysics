@@ -2883,12 +2883,28 @@ def qssa_component_functions(
                                 + "_"
                                 + str(gr_species[j]).replace("*", "D")
                             ]
+                            # REMOVE IF NO DEBUG
+                            #coeff_submatrix_smp[index][
+                            #    j
+                            #] = smp.symbols(
+                            #    str(species).replace("*", "D")
+                            #    + "_"
+                            #    + str(gr_species[j]).replace("*", "D")
+                            #)
+
+                # REMOVE IF NO DEBUG
+                #for key in list(syms.intermediate_terms_smp.keys()):
+                #    syms.intermediate_terms_smp[key] = smp.symbols(key)
 
                 cw.writer(fstream)
                 rhs_submatrix[index] = str(species.replace("*", "D")) + "_rhs"
                 rhs_submatrix_smp[index] = syms.intermediate_terms_smp[
                     str(species.replace("*", "D")) + "_rhs"
                 ]
+                # REMOVE IF NO DEBUG
+                #rhs_submatrix_smp[index] = smp.symbols(
+                #    str(specie/s.replace("*", "D")) + "_rhs"
+                #)
 
             a, x, b, intermediate_helpers, x_smp = gauss_pivoting(
                 species_info,
@@ -3122,6 +3138,8 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper = num + "/" + pivot
                         helper_smp = num_smp / pivot_smp
                         helper_name = "H_" + str(helper_counters)
+                        # REMOVE IF NO DEBUG
+                        #helper_smp = smp.symbols(helper_name)
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
                         b[i + 1] = (
@@ -3137,6 +3155,8 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper = 1 + "/" + pivot
                         helper_smp = 1 / pivot_smp
                         helper_name = "H_" + str(helper_counters)
+                        # REMOVE IF NO DEBUG
+                        #helper_smp = smp.symbols(helper_name)
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
                         print(" IN THIS CASE !! CHECK THAT ITS OK !! ")
@@ -3153,6 +3173,8 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper = num
                         helper_smp = num_smp
                         helper_name = "H_" + str(helper_counters)
+                        # REMOVE IF NO DEBUG
+                        #helper_smp = smp.symbols(helper_name)
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
                         b[i + 1] = (
