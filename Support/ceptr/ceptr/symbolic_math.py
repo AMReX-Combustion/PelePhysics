@@ -32,6 +32,10 @@ class SymbolicMath:
             smp.symbols("wdot[" + str(i) + "]") for i in range(n_species)
         ]
 
+        self.mixture_smp = 0.0
+        for i in range(n_species):
+            self.mixture_smp += self.sc_smp[i]
+       
         if n_qssa_species > 0:
 
             n_qssa_reactions = reaction_info.n_qssa_reactions
