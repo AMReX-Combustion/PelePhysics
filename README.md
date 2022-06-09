@@ -6,9 +6,10 @@ I tried to not modify functions that did not need be modified but we should prob
 3. ~~Verify that `qf_qss` and `qr_qss` are consistent with `comp_qss_coeff`~~
 4. ~~Verify that `sc_qss` is consistent with `comp_sc_qss`~~ See `debugDodecaneLuQss`
 5. ~~Make sure that the expressions printed are compact~~
-6. Verify that `dsc_qss/dsc` is correct compared to finite difference
-7. Modify `aJacobian` to include the dependence of `sc_qss` with `sc` and `T`.
-8. Try 0D example (`ReactEval_dodecanelu_qss`) with and without Jacobian fix
+6. ~~Make sure code is correctly formatter~~ See `.git/hooks/pre-commit`
+7. Verify that `dsc_qss/dsc` is correct compared to finite difference
+8. Modify `aJacobian` to include the dependence of `sc_qss` with `sc` and `T`.
+9. Try 0D example (`ReactEval_dodecanelu_qss`) with and without Jacobian fix
 
 # PelePhysics
 *A respository of physics databases and implementation code for use with the `Pele` suite of of codes*
