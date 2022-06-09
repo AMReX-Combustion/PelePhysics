@@ -1,6 +1,8 @@
 """Symbolic math for symbolic differentiation."""
-import sympy as smp
 from collections import OrderedDict
+
+import sympy as smp
+
 
 class SymbolicMath:
     """Symbols to carry throughout operations."""
@@ -37,11 +39,11 @@ class SymbolicMath:
         self.mixture_smp = 0.0
         for i in range(n_species):
             self.mixture_smp += self.sc_smp[i]
-      
+
         # for storing intermediate terms used in definition of sc_qss
         self.intermediate_helpers_smp = OrderedDict()
         self.intermediate_terms_smp = {}
- 
+
         if n_qssa_species > 0:
 
             n_qssa_reactions = reaction_info.n_qssa_reactions

@@ -1945,7 +1945,16 @@ def qssa_coeff_functions(
 
     return
 
-def qssa_terms_debug(fstream, mechanism, species_info, reaction_info, syms, helper_names_to_print=[], intermediate_names_to_print=[]):
+
+def qssa_terms_debug(
+    fstream,
+    mechanism,
+    species_info,
+    reaction_info,
+    syms,
+    helper_names_to_print=[],
+    intermediate_names_to_print=[],
+):
     """Temporary QSSA terms debuging function."""
     n_species = species_info.n_species
     cw.writer(fstream)
@@ -2025,46 +2034,37 @@ def qssa_terms_debug(fstream, mechanism, species_info, reaction_info, syms, help
             "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT, g_RT_qss);",
         )
 
-
     for name in helper_names_to_print:
-         cw.writer(
-                     fstream,
-                     "amrex::Real %s = %s;"
-                     % (
-                         name,
-                         smp.ccode(syms.intermediate_helpers_smp[name]),
-                     ),
-                 )
+        cw.writer(
+            fstream,
+            "amrex::Real %s = %s;"
+            % (
+                name,
+                smp.ccode(syms.intermediate_helpers_smp[name]),
+            ),
+        )
     for name in intermediate_names_to_print:
-         cw.writer(
-                     fstream,
-                     "amrex::Real %s = %s;"
-                     % (
-                         name,
-                         smp.ccode(syms.intermediate_terms_smp[name]),
-                     ),
-                 )
+        cw.writer(
+            fstream,
+            "amrex::Real %s = %s;"
+            % (
+                name,
+                smp.ccode(syms.intermediate_terms_smp[name]),
+            ),
+        )
     for name in helper_names_to_print:
-         cw.writer(
-                     fstream,
-                     'std::cout << "  %s = " << %s << "\\n";'
-                     % (
-                         name,
-                         name
-                     ),
-                 )
+        cw.writer(
+            fstream,
+            'std::cout << "  %s = " << %s << "\\n";' % (name, name),
+        )
     for name in intermediate_names_to_print:
-         cw.writer(
-                     fstream,
-                     'std::cout << "  %s = " << %s << "\\n";'
-                     % (
-                         name,
-                         name
-                     ),
-                 )
-
+        cw.writer(
+            fstream,
+            'std::cout << "  %s = " << %s << "\\n";' % (name, name),
+        )
 
     cw.writer(fstream, "}")
+
 
 def qssa_coeff_debug(fstream, mechanism, species_info, reaction_info, syms):
     """Temporary QSSA coeff debuging function."""
@@ -2309,7 +2309,13 @@ def qssa_sc_qss_debug(fstream, mechanism, species_info, reaction_info, syms):
 
 
 def qssa_component_functions(
-    fstream, mechanism, species_info, reaction_info, syms, helper_names_to_print=[], intermediate_names_to_print=[]
+    fstream,
+    mechanism,
+    species_info,
+    reaction_info,
+    syms,
+    helper_names_to_print=[],
+    intermediate_names_to_print=[],
 ):
     """QSSA component functions."""
     itroe = reaction_info.index[0:2]
@@ -2578,9 +2584,9 @@ def qssa_component_functions(
             # cut line if too big !
             long_line_elements = (species_info.qssa_info.rhs[symbol]).split()
             numerator_smp = 1e-12 + species_info.qssa_info.rhs_smp[symbol]
-            syms.intermediate_terms_smp[numerator] = species_info.qssa_info.rhs_smp[
-                symbol
-            ]
+            syms.intermediate_terms_smp[
+                numerator
+            ] = species_info.qssa_info.rhs_smp[symbol]
             len_long_line = len(long_line_elements)
             # if we have more than 7 elements
             if len_long_line > 7:
@@ -2829,9 +2835,9 @@ def qssa_component_functions(
                 )
                 species_rhs_smp = -numerator_smp / denominator_smp
 
-                syms.intermediate_terms_smp[species.replace("*", "D") + "_rhs"] = (
-                    -numerator_smp / denominator_smp
-                )
+                syms.intermediate_terms_smp[
+                    species.replace("*", "D") + "_rhs"
+                ] = (-numerator_smp / denominator_smp)
                 cw.writer(fstream)
 
                 for j in range(len(gr_species)):
@@ -2884,16 +2890,16 @@ def qssa_component_functions(
                                 + str(gr_species[j]).replace("*", "D")
                             ]
                             # REMOVE IF NO DEBUG
-                            #coeff_submatrix_smp[index][
+                            # coeff_submatrix_smp[index][
                             #    j
-                            #] = smp.symbols(
+                            # ] = smp.symbols(
                             #    str(species).replace("*", "D")
                             #    + "_"
                             #    + str(gr_species[j]).replace("*", "D")
-                            #)
+                            # )
 
                 # REMOVE IF NO DEBUG
-                #for key in list(syms.intermediate_terms_smp.keys()):
+                # for key in list(syms.intermediate_terms_smp.keys()):
                 #    syms.intermediate_terms_smp[key] = smp.symbols(key)
 
                 cw.writer(fstream)
@@ -2902,9 +2908,9 @@ def qssa_component_functions(
                     str(species.replace("*", "D")) + "_rhs"
                 ]
                 # REMOVE IF NO DEBUG
-                #rhs_submatrix_smp[index] = smp.symbols(
+                # rhs_submatrix_smp[index] = smp.symbols(
                 #    str(specie/s.replace("*", "D")) + "_rhs"
-                #)
+                # )
 
             a, x, b, intermediate_helpers, x_smp = gauss_pivoting(
                 species_info,
@@ -3008,7 +3014,7 @@ def qssa_component_functions(
                     )
                 cw.writer(fstream)
 
-    #for name in helper_names_to_print:
+    # for name in helper_names_to_print:
     #     cw.writer(
     #                 fstream,
     #                 'std::cout << "  %s = " << %s << "\\n";'
@@ -3017,7 +3023,7 @@ def qssa_component_functions(
     #                     name
     #                 ),
     #             )
-    #for name in intermediate_names_to_print:
+    # for name in intermediate_names_to_print:
     #     cw.writer(
     #                 fstream,
     #                 'std::cout << "  %s = " << %s << "\\n";'
@@ -3139,7 +3145,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper_smp = num_smp / pivot_smp
                         helper_name = "H_" + str(helper_counters)
                         # REMOVE IF NO DEBUG
-                        #helper_smp = smp.symbols(helper_name)
+                        # helper_smp = smp.symbols(helper_name)
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
                         b[i + 1] = (
@@ -3156,7 +3162,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper_smp = 1 / pivot_smp
                         helper_name = "H_" + str(helper_counters)
                         # REMOVE IF NO DEBUG
-                        #helper_smp = smp.symbols(helper_name)
+                        # helper_smp = smp.symbols(helper_name)
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
                         print(" IN THIS CASE !! CHECK THAT ITS OK !! ")
@@ -3174,7 +3180,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper_smp = num_smp
                         helper_name = "H_" + str(helper_counters)
                         # REMOVE IF NO DEBUG
-                        #helper_smp = smp.symbols(helper_name)
+                        # helper_smp = smp.symbols(helper_name)
                         intermediate_helpers[helper_name] = helper
                         syms.intermediate_helpers_smp[helper_name] = helper_smp
                         b[i + 1] = (

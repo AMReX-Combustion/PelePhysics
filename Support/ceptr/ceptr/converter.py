@@ -242,9 +242,9 @@ class Converter:
             cck.cksms(hdr, self.mechanism, self.species_info)
 
             if self.species_info.n_qssa_species > 0:
-     
-                helper_names_to_print = ['H_2']
-                intermediate_names_to_print = ['PXC5H11_rhs', 'PXC7H15_rhs']
+
+                helper_names_to_print = ["H_2"]
+                intermediate_names_to_print = ["PXC5H11_rhs", "PXC7H15_rhs"]
 
                 print("QSSA groups")
                 # Figure out dependencies
