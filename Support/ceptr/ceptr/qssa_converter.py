@@ -1571,14 +1571,11 @@ def qssa_coeff_functions(
 
     cw.writer(fstream, cw.comment("compute the mixture concentration"))
     cw.writer(fstream, "amrex::Real mixture = 0.0;")
-    syms.mixture_smp = 0.0
     cw.writer(
         fstream, "for (int i = 0; i < %d; ++i) {" % species_info.n_species
     )
     cw.writer(fstream, "mixture += sc[i];")
     cw.writer(fstream, "}")
-    for i in range(species_info.n_species):
-        syms.mixture_smp += syms.sc_smp[i]
     nclassd_qssa = reaction_info.n_qssa_reactions - nspecial_qssa
     # nCorr_qssa = n3body_qssa + ntroe_qssa + nsri_qssa + nlindemann_qssa
 
@@ -2890,7 +2887,6 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
     pivots = []
     pivots_smp = []
     intermediate_helpers = OrderedDict()
-    intermediate_helpers_smp = OrderedDict()
     helper_counters = 0
 
     x = [""] * len(a[0])
@@ -2988,7 +2984,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper_smp = num_smp / pivot_smp
                         helper_name = "H_" + str(helper_counters)
                         intermediate_helpers[helper_name] = helper
-                        intermediate_helpers_smp[helper_name] = helper_smp
+                        syms.intermediate_helpers_smp[helper_name] = helper_smp
                         b[i + 1] = (
                             b[i + 1] + " -" + b[int(k)] + "*" + helper_name
                         )
@@ -3003,7 +2999,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper_smp = 1 / pivot_smp
                         helper_name = "H_" + str(helper_counters)
                         intermediate_helpers[helper_name] = helper
-                        intermediate_helpers_smp[helper_name] = helper_smp
+                        syms.intermediate_helpers_smp[helper_name] = helper_smp
                         print(" IN THIS CASE !! CHECK THAT ITS OK !! ")
                         b[i + 1] = (
                             b[i + 1] + " -" + b[int(k)] + "*" + helper_name
@@ -3019,7 +3015,7 @@ def gauss_pivoting(species_info, a, b=None, a_smp=None, b_smp=None, syms=None):
                         helper_smp = num_smp
                         helper_name = "H_" + str(helper_counters)
                         intermediate_helpers[helper_name] = helper
-                        intermediate_helpers_smp[helper_name] = helper_smp
+                        syms.intermediate_helpers_smp[helper_name] = helper_smp
                         b[i + 1] = (
                             b[i + 1] + " -" + b[int(k)] + "*" + helper_name
                         )
