@@ -1946,6 +1946,7 @@ def qssa_coeff_functions(
     return
 
 def qssa_terms_debug(fstream, mechanism, species_info, reaction_info, syms, helper_names_to_print=[], intermediate_names_to_print=[]):
+    """Temporary QSSA terms debuging function."""
     n_species = species_info.n_species
     cw.writer(fstream)
     cw.writer(
@@ -2991,24 +2992,24 @@ def qssa_component_functions(
                     )
                 cw.writer(fstream)
 
-    for name in helper_names_to_print:
-         cw.writer(
-                     fstream,
-                     'std::cout << "  %s = " << %s << "\\n";'
-                     % (
-                         name,
-                         name
-                     ),
-                 )
-    for name in intermediate_names_to_print:
-         cw.writer(
-                     fstream,
-                     'std::cout << "  %s = " << %s << "\\n";'
-                     % (
-                         name,
-                         name
-                     ),
-                 )
+    #for name in helper_names_to_print:
+    #     cw.writer(
+    #                 fstream,
+    #                 'std::cout << "  %s = " << %s << "\\n";'
+    #                 % (
+    #                     name,
+    #                     name
+    #                 ),
+    #             )
+    #for name in intermediate_names_to_print:
+    #     cw.writer(
+    #                 fstream,
+    #                 'std::cout << "  %s = " << %s << "\\n";'
+    #                 % (
+    #                     name,
+    #                     name
+    #                 ),
+    #             )
 
     cw.writer(fstream)
     cw.writer(fstream, "return;")
