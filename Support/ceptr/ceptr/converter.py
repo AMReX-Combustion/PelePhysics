@@ -1,5 +1,6 @@
 """Generate C++ files for a mechanism."""
 import pathlib
+import re
 import shutil
 import subprocess as spr
 
@@ -284,36 +285,39 @@ class Converter:
                     helper_names_to_print,
                     intermediate_names_to_print,
                 )
-                print("Symbolic Sc qss print for debug")
-                cqc.qssa_sc_qss_debug(
-                    hdr,
-                    self.mechanism,
-                    self.species_info,
-                    self.reaction_info,
-                    self.syms,
-                )
-                print("Symbolic qf qss print for debug")
-                cqc.qssa_coeff_debug(
-                    hdr,
-                    self.mechanism,
-                    self.species_info,
-                    self.reaction_info,
-                    self.syms,
-                )
-                print("Symbolic qss terms print for debug")
-                cqc.qssa_terms_debug(
-                    hdr,
-                    self.mechanism,
-                    self.species_info,
-                    self.reaction_info,
-                    self.syms,
-                    helper_names_to_print,
-                    intermediate_names_to_print,
-                )
+                # print("Symbolic Sc qss print for debug")
+                # cqc.qssa_sc_qss_debug(
+                #     hdr,
+                #     self.mechanism,
+                #     self.species_info,
+                #     self.reaction_info,
+                #     self.syms,
+                # )
+                # print("Symbolic qf qss print for debug")
+                # cqc.qssa_coeff_debug(
+                #     hdr,
+                #     self.mechanism,
+                #     self.species_info,
+                #     self.reaction_info,
+                #     self.syms,
+                # )
+                # print("Symbolic qss terms print for debug")
+                # cqc.qssa_terms_debug(
+                #     hdr,
+                #     self.mechanism,
+                #     self.species_info,
+                #     self.reaction_info,
+                #     self.syms,
+                #     helper_names_to_print,
+                #     intermediate_names_to_print,
+                # )
 
             # print("diff sc_qss_16 / sc_8 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[8]))
             # print("diff sc_qss_16 / sc_1 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[1]))
             # stop
+
+            self.species_info.create_dicts()
+            self.species_info.identify_qss_dependencies(self.syms)
 
             # prod rate related
             cp.production_rate(
@@ -332,7 +336,7 @@ class Converter:
                 self.species_info,
                 self.reaction_info,
                 precond=True,
-                syms=None,
+                syms=self.syms,
             )
             cj.dproduction_rate(
                 hdr,
@@ -342,7 +346,13 @@ class Converter:
                 precond=True,
             )
             # # Analytical jacobian on GPU -- not used on CPU, define in mechanism.cpp
-            cj.ajac(hdr, self.mechanism, self.species_info, self.reaction_info)
+            cj.ajac(
+                hdr,
+                self.mechanism,
+                self.species_info,
+                self.reaction_info,
+                syms=self.syms,
+            )
             cj.dproduction_rate(
                 hdr, self.mechanism, self.species_info, self.reaction_info
             )

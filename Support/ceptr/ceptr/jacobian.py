@@ -161,6 +161,8 @@ def ajac(
     cw.writer(fstream, "const amrex::Real log10e = 1.0/log(10.0);")
 
     for orig_idx, _ in reaction_info.idxmap.items():
+        # if orig_idx == 35:
+        #     exit()
         reaction = mechanism.reaction(orig_idx)
 
         cw.writer(
@@ -175,7 +177,7 @@ def ajac(
             reaction,
             orig_idx,
             precond=precond,
-            syms=None,
+            syms=syms,
         )
         cw.writer(fstream)
 
@@ -352,6 +354,7 @@ def ajac_reaction_d(
     rea_dict = OrderedDict()
     pro_dict = OrderedDict()
     all_dict = OrderedDict()
+    all_wqss_dict = OrderedDict()
     sum_nuk = 0
     all_reactants = copy.deepcopy(reaction.reactants)
     all_products = copy.deepcopy(reaction.products)
@@ -376,6 +379,7 @@ def ajac_reaction_d(
                 )
             )
 
+    # Build rea_dict containing reaction species
     for symbol, coefficient in all_reactants.items():
         k = species_info.ordered_idx_map[symbol]
         sum_nuk -= coefficient
@@ -384,6 +388,7 @@ def ajac_reaction_d(
             rea_dict[k] = (symbol, coefficient + coe_old)
         else:
             rea_dict[k] = (symbol, coefficient)
+    # Build pro_dict containing product species
     for symbol, coefficient in all_products.items():
         k = species_info.ordered_idx_map[symbol]
         sum_nuk += coefficient
@@ -392,7 +397,9 @@ def ajac_reaction_d(
             pro_dict[k] = (symbol, coefficient + coe_old)
         else:
             pro_dict[k] = (symbol, coefficient)
+    # Build the dict with species and coefficients
     for k in range(n_species):
+        # for k in range(len(species_info.all_species_list)):
         if k in rea_dict and k in pro_dict:
             sr, nur = rea_dict[k]
             sp, nup = pro_dict[k]
@@ -403,6 +410,23 @@ def ajac_reaction_d(
         elif k in pro_dict:
             sp, nup = pro_dict[k]
             all_dict[k] = (sp, nup)
+
+    # Build the dict including qss species
+    for k in range(len(species_info.all_species_list)):
+        if k in rea_dict and k in pro_dict:
+            sr, nur = rea_dict[k]
+            sp, nup = pro_dict[k]
+            all_wqss_dict[k] = (sr, nup - nur)
+        elif k in rea_dict:
+            sr, nur = rea_dict[k]
+            all_wqss_dict[k] = (sr, -nur)
+        elif k in pro_dict:
+            sp, nup = pro_dict[k]
+            all_wqss_dict[k] = (sp, nup)
+
+    # print(f"rea_dict = {rea_dict}")
+    # print(f"pro_dict = {pro_dict}")
+    # print(f"all_dict = {all_dict}")
 
     sorted_reactants = sorted(rea_dict.values())
     sorted_products = sorted(pro_dict.values())
@@ -433,7 +457,11 @@ def ajac_reaction_d(
     if has_alpha:
         cw.writer(fstream, cw.comment("3-body correction factor"))
         enhancement_d = cu.enhancement_d(
-            mechanism, species_info, reaction, syms
+            # mechanism, species_info, reaction, syms
+            mechanism,
+            species_info,
+            reaction,
+            syms=None,
         )
         cw.writer(fstream, "alpha = %s;" % enhancement_d)
 
@@ -642,11 +670,8 @@ def ajac_reaction_d(
 
         dlnkcdt_s = "invT * ("
         terms = []
-        dict_species = {
-            v: i for i, v in enumerate(species_info.all_species_list)
-        }
         for symbol, coefficient in sorted(
-            sorted_reactants, key=lambda v: dict_species[v[0]]
+            sorted_reactants, key=lambda v: species_info.dict_species[v[0]]
         ):
             k = species_info.ordered_idx_map[symbol]
             if symbol not in species_info.qssa_species_list:
@@ -664,7 +689,7 @@ def ajac_reaction_d(
         dlnkcdt_s += "-(" + " + ".join(terms) + ")"
         terms = []
         for symbol, coefficient in sorted(
-            sorted_products, key=lambda v: dict_species[v[0]]
+            sorted_products, key=lambda v: species_info.dict_species[v[0]]
         ):
             k = species_info.ordered_idx_map[symbol]
             if symbol not in species_info.qssa_species_list:
@@ -794,7 +819,8 @@ def ajac_reaction_d(
         if not precond:
             cw.writer(fstream, "if (consP) {")
 
-            for k in range(n_species):
+            # for k in range(n_species):
+            for k in range(len(species_info.all_species_list)):
                 dqdc_s = denhancement_d(
                     mechanism, species_info, reaction, k, True
                 )
@@ -822,9 +848,15 @@ def ajac_reaction_d(
                     dqdc_s,
                     k,
                     remove_forward,
+                    syms,
                 )
                 if dqdc_s:
-                    symb_k = species_info.nonqssa_species[k].name
+                    # print(dqdc_s)
+                    # symb_k = species_info.nonqssa_species[k].name
+                    # print(k)
+                    # print(species_info.nonqssa_species[k])
+                    # print(species_info.all_species_list[k])
+                    symb_k = species_info.all_species_list[k]
                     cw.writer(fstream, cw.comment("d()/d[%s]" % symb_k))
                     cw.writer(fstream, "dqdci = %s;" % (dqdc_s))
                     #
@@ -849,7 +881,8 @@ def ajac_reaction_d(
             cw.writer(fstream, "}")
             cw.writer(fstream, "else {")
 
-        for k in range(n_species):
+        # for k in range(n_species):
+        for k in range(len(species_info.all_species_list)):
             dqdc_s = denhancement_d(
                 mechanism, species_info, reaction, k, False
             )
@@ -877,6 +910,7 @@ def ajac_reaction_d(
                 dqdc_s,
                 k,
                 remove_forward,
+                syms,
             )
             if dqdc_s:
                 cw.writer(fstream, "dqdc[%d] = %s;" % (k, dqdc_s))
@@ -909,7 +943,10 @@ def ajac_reaction_d(
 
     else:
 
-        for k in range(n_species):
+        # print(reaction)
+        # print(all_dict)
+        # for k in range(n_species):
+        for k in range(len(species_info.all_species_list)):
             dqdc_s = dqdc_d(
                 fstream,
                 mechanism,
@@ -922,16 +959,24 @@ def ajac_reaction_d(
                 "",
                 k,
                 remove_forward,
+                syms,
             )
+
             if dqdc_s:
-                cw.writer(fstream, cw.comment("d()/d[%s]" % all_dict[k][0]))
+                # print(all_wqss_dict[k][0])
+                # print(f"dqdc_s = {dqdc_s}")
+                # cw.writer(fstream, cw.comment("d()/d[%s]" % all_dict[k][0]))
+                # if all_wqss_dict[k][0] not in species_info.qssa_species_list:
+                cw.writer(
+                    fstream, cw.comment("d()/d[%s]" % all_wqss_dict[k][0])
+                )
                 cw.writer(fstream, "dqdci = %s;" % (dqdc_s))
                 if reaction.reversible or k in rea_dict:
                     for m in sorted(all_dict.keys()):
                         if all_dict[m][1] != 0:
                             s1 = "J[%d] += %.15g * dqdci;" % (
                                 k * (n_species + 1) + m,
-                                all_dict[m][1],
+                                all_wqss_dict[m][1],
                             )
                             s1 = s1.replace("+= 1 *", "+=").replace(
                                 "+= -1 *", "-="
@@ -939,11 +984,16 @@ def ajac_reaction_d(
                             s2 = cw.comment(
                                 "dwdot[%s]/d[%s]"
                                 % (
-                                    all_dict[m][0],
-                                    all_dict[k][0],
+                                    all_wqss_dict[m][0],
+                                    all_wqss_dict[k][0],
                                 )
                             )
                             cw.writer(fstream, s1.ljust(30) + s2)
+                # else:
+                #     print(f"QSSA species identified in reaction: {all_wqss_dict[k][0]}")
+                #     print(species_info.dict_qssdepend_sc[all_wqss_dict[k][0]])
+                #     print(species_info.dict_qssdepend_scqss[all_wqss_dict[k][0]])
+                #     print(syms.sc_qss_smp[species_info.dict_qss_species[all_wqss_dict[k][0]]])
         cw.writer(fstream, cw.comment("d()/dT"))
         for m in sorted(all_dict.keys()):
             if all_dict[m][1] != 0:
@@ -972,14 +1022,24 @@ def dqdc_d(
     dqdc_s,
     k,
     remove_forward,
+    syms,
 ):
     """Write dqdc."""
+    # print(reaction)
+    # print(rea_dict)
+    # print(k)
     if dqdc_s == "0":
         dqdc_s = ""
     if k in sorted(rea_dict.keys()):
+        # print(k)
         dps = dphase_space(
-            mechanism, species_info, sorted_reactants, rea_dict[k][0]
+            mechanism,
+            species_info,
+            sorted_reactants,
+            rea_dict[k][0],
+            syms,
         )
+        # print(dps)
         if dps == "1.0":
             dps_s = ""
         else:
@@ -992,7 +1052,11 @@ def dqdc_d(
     if reaction.reversible:
         if k in sorted(pro_dict.keys()):
             dps = dphase_space(
-                mechanism, species_info, sorted_products, pro_dict[k][0]
+                mechanism,
+                species_info,
+                sorted_products,
+                pro_dict[k][0],
+                syms,
             )
             if dps == "1.0":
                 dps_s = ""
@@ -1037,12 +1101,13 @@ def denhancement_d(mechanism, species_info, reaction, kid, cons_p):
             return "1"
 
 
-def dphase_space(mechanism, species_info, reagents, r):
+def dphase_space(mechanism, species_info, reagents, r, syms):
     """Get string for phase space gradient."""
     reagents = {x[0]: x[1] for x in reagents}
     phi = []
-    dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
-    sorted_reagents = sorted(reagents.keys(), key=lambda v: dict_species[v])
+    sorted_reagents = sorted(
+        reagents.keys(), key=lambda v: species_info.dict_species[v]
+    )
     for symbol in sorted_reagents:
         coefficient = reagents[symbol]
         if symbol not in species_info.qssa_species_list:
@@ -1068,6 +1133,7 @@ def dphase_space(mechanism, species_info, reagents, r):
                         coefficient,
                     )
                 phi += [conc]
+        # Symbol is in qssa_species_list
         else:
             if symbol == r:
                 if coefficient > 1:
