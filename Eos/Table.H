@@ -114,19 +114,13 @@ namespace pele{
         }
       }
 
-      struct TabFuncData
+      struct TabFuncData: ManFuncData
       {
-        static constexpr int len_str = 64;
-        int Ndim;
-        int Nvar;
         int varSpacing;
         int* dimLengths;
         int* dimDataSpacing;
         amrex::Real* grids;
         amrex::Real* values;
-        char model_name[len_str+1];
-        char* varnames;
-        char* dimnames;
       };
 
       void allocate()

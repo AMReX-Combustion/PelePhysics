@@ -11,24 +11,6 @@
 namespace pele {
 namespace physics {
 namespace eos {
-
-AMREX_FORCE_INLINE
-int get_var_index(const char* varname, const char* varlist, const int nvar, const int len_str, const bool require = true)
-{
-  std::string var(varname);
-  int ii;
-  for (ii = 0; ii < nvar; ii++) {
-    std::string vartest = std::string(&varlist[ii*len_str], len_str);
-    if (amrex::trim(var) == amrex::trim(vartest)) break;
-  }
-  if (ii == nvar && require) {
-    amrex::Abort("Requested variable not found in table: " + var);
-  }
-  else if (ii == nvar) {
-    ii = -1; // less than 0 = not found
-  }
-  return ii;
-}
   
 struct GammaLaw;
 struct Fuego;
@@ -87,25 +69,24 @@ struct InitEosParm<Manifold>
     eosparm->tf_data = tf_data_in;
     // First (N-1) species are table dimensions (last species corresponds to density)
     AMREX_ALWAYS_ASSERT(tf_data_in->Ndim == NUM_SPECIES - 1);
-      
+
     amrex::ParmParse pp("eos");
     pp.get("nominal_pressure_cgs", eosparm->Pnom_cgs);
-      
+
     // Get important indices
-    eosparm->idx_density = get_var_index("RHO", tf_data_in->varnames, tf_data_in->Nvar, tf_data_in->len_str);
-    eosparm->idx_T = get_var_index("T", tf_data_in->varnames, tf_data_in->Nvar, tf_data_in->len_str);
+    eosparm->idx_density = get_var_index("RHO", tf_data_in);
+    eosparm->idx_T = get_var_index("T", tf_data_in);
 
     // For manifold parameter source terms, assume if index not found, source term is 0
     for (int idim = 0; idim < tf_data_in->Ndim; idim++) {
       std::string dimname = std::string(&tf_data_in->dimnames[idim*tf_data_in->len_str], tf_data_in->len_str);
-      eosparm->idx_Wdot[idim] = get_var_index(("SRC_"+amrex::trim(dimname)).c_str(),
-					       tf_data_in->varnames, tf_data_in->Nvar, tf_data_in->len_str, false);
+      eosparm->idx_Wdot[idim] = get_var_index(("SRC_"+amrex::trim(dimname)).c_str(), tf_data_in, false);
       if( eosparm->idx_Wdot[idim] < 0) {
 	amrex::Print() << "Warning: No source term found for manifold parameter " << tf_data_in->dimnames[idim]
 		       << ", assuming SRC_" << tf_data_in->dimnames[idim] << " = 0";
       }
     }
-      
+
   }
 };
 
@@ -162,7 +143,7 @@ public:
   {
     return m_h_eos_parm;
   }
-  
+
   const EosParm<EOSType>* device_eos_parm()
   {
     return m_d_eos_parm;
