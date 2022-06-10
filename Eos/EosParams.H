@@ -49,7 +49,7 @@ struct InitEosParm<GammaLaw>
 template <>
 struct EosParm<Manifold>
 {
-  TabFuncParams::TabFuncData* tf_data;
+  ManFuncParams::ManFuncData* manf_data;
   amrex::Real Pnom_cgs;
   int idx_density{0};
   int idx_T{0};
@@ -61,29 +61,29 @@ struct InitEosParm<Manifold>
 {
   void operator()(EosParm<Manifold>* eosparm)
   {
-    amrex::Error("Manifold EOS cannot be initialized without tabulated data");
+    amrex::Error("Manifold EOS cannot be initialized without tabulated or neural network data");
   }
 
-  void operator()(EosParm<Manifold>* eosparm, TabFuncParams::TabFuncData* tf_data_in)
+  void operator()(EosParm<Manifold>* eosparm, ManFuncParams::ManFuncData* manf_data_in)
   {
-    eosparm->tf_data = tf_data_in;
+    eosparm->manf_data = manf_data_in;
     // First (N-1) species are table dimensions (last species corresponds to density)
-    AMREX_ALWAYS_ASSERT(tf_data_in->Ndim == NUM_SPECIES - 1);
+    AMREX_ALWAYS_ASSERT(manf_data_in->Ndim == NUM_SPECIES - 1);
 
     amrex::ParmParse pp("eos");
     pp.get("nominal_pressure_cgs", eosparm->Pnom_cgs);
 
     // Get important indices
-    eosparm->idx_density = get_var_index("RHO", tf_data_in);
-    eosparm->idx_T = get_var_index("T", tf_data_in);
+    eosparm->idx_density = get_var_index("RHO", manf_data_in);
+    eosparm->idx_T = get_var_index("T", manf_data_in);
 
     // For manifold parameter source terms, assume if index not found, source term is 0
-    for (int idim = 0; idim < tf_data_in->Ndim; idim++) {
-      std::string dimname = std::string(&tf_data_in->dimnames[idim*tf_data_in->len_str], tf_data_in->len_str);
-      eosparm->idx_Wdot[idim] = get_var_index(("SRC_"+amrex::trim(dimname)).c_str(), tf_data_in, false);
+    for (int idim = 0; idim < manf_data_in->Ndim; idim++) {
+      std::string dimname = std::string(&manf_data_in->dimnames[idim*manf_data_in->len_str], manf_data_in->len_str);
+      eosparm->idx_Wdot[idim] = get_var_index(("SRC_"+amrex::trim(dimname)).c_str(), manf_data_in, false);
       if( eosparm->idx_Wdot[idim] < 0) {
-	amrex::Print() << "Warning: No source term found for manifold parameter " << tf_data_in->dimnames[idim]
-		       << ", assuming SRC_" << tf_data_in->dimnames[idim] << " = 0";
+	amrex::Print() << "Warning: No source term found for manifold parameter " << manf_data_in->dimnames[idim]
+		       << ", assuming SRC_" << manf_data_in->dimnames[idim] << " = 0";
       }
     }
 
@@ -110,9 +110,9 @@ public:
     }
   }
 
-  void allocate(TabFuncParams::TabFuncData* tf_data)
+  void allocate(ManFuncParams::ManFuncData* manf_data)
   {
-    InitEosParm<EOSType>()(&m_h_eos_parm, tf_data);
+    InitEosParm<EOSType>()(&m_h_eos_parm, manf_data);
     if (!m_device_allocated) {
       m_d_eos_parm =
         (EosParm<EOSType>*)amrex::The_Device_Arena()->alloc(

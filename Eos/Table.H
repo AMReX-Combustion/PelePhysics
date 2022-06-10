@@ -114,7 +114,7 @@ namespace pele{
         }
       }
 
-      struct TabFuncData: ManFuncData
+      struct TabFuncData: ManFuncParams::ManFuncData
       {
         int varSpacing;
         int* dimLengths;

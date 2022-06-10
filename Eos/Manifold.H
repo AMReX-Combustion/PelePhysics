@@ -225,7 +225,9 @@ struct Manifold
   Manifold(const EosParm<Manifold>* eparm)
   {
 #ifdef USE_MANIFOLD_TABLE
-    manfunc.reset(new pele::physics::TabFunc(eparm->tf_data));
+    TabFuncParams::TabFuncData* tf_data =
+        static_cast<TabFuncParams::TabFuncData*>(eosparm->manf_data);
+    manfunc.reset(new pele::physics::TabFunc(tf_data));
 #elif defined(USE_MANIFOLD_NN)
     amrex::Error("Manifold model using neural network is not yet implemented.");
 #else
