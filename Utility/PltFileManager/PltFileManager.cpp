@@ -3,6 +3,7 @@
 #include <PltFileManagerBCFill.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_FillPatchUtil.H>
+#include <utility>
 
 using namespace amrex;
 
@@ -21,8 +22,8 @@ GotoNextLine(std::istream& is)
   is.ignore(bl_ignore_max, '\n');
 }
 
-PltFileManager::PltFileManager(const std::string& a_pltFile)
-  : m_pltFile{a_pltFile}
+PltFileManager::PltFileManager(std::string a_pltFile)
+  : m_pltFile{std::move(a_pltFile)}
 {
   // Get the plt metadata and resize part of the data vectors
   std::string pltFileHeader(m_pltFile + "/Header");
