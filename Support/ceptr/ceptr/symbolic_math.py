@@ -2,7 +2,7 @@
 from collections import OrderedDict
 
 import sympy as smp
-
+import time
 
 class SymbolicMath:
     """Symbols to carry throughout operations."""
@@ -80,3 +80,54 @@ class SymbolicMath:
         cpp_str = str(cppcode)
 
         return cpp_str
+
+    def write_array_to_cpp(self, list_smp, array_str, cw, fstream):
+        """Convert sympy array to C code compatible string."""
+        n = len(list_smp)   
+ 
+        # Write common expressions
+        times = time.time()
+        array_cse = smp.cse(list_smp)
+        for cse_idx in range(len(array_cse[0])):
+            left_cse = self.convert_to_cpp(array_cse[0][cse_idx][0])
+            right_cse = self.convert_to_cpp(array_cse[0][cse_idx][1])
+            cw.writer(
+                fstream,
+                "const amrex::Real %s = %s;"
+                % (
+                     left_cse,
+                     right_cse,
+                ),
+            )
+        timee = time.time()
+        
+        print(
+                "Made common expr (time = %.3g s)"
+                % (timee - times)
+            )
+
+        # Write all the entries
+        for i in range(n):
+            # The full expression is stored in array_cse index 1
+            times = time.time()
+            cpp_str = self.convert_to_cpp(array_cse[1][i])
+            timee = time.time()
+            print(
+                "Made expr for entry %d (time = %.3g s)"
+                % (i, timee - times)
+            )
+            times = time.time()
+            cw.writer(
+                fstream,
+                "%s[%s] = %s;"
+                % (  
+                    array_str,
+                    str(i),
+                    cpp_str,
+                ),
+            )
+            timee = time.time()
+            print(
+                "Printed expr for entry %d (time = %.3g s)"
+                % (i, timee - times)
+            )
