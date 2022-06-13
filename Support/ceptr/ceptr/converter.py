@@ -285,32 +285,32 @@ class Converter:
                     helper_names_to_print,
                     intermediate_names_to_print,
                 )
-                # print("Symbolic Sc qss print for debug")
-                # cqc.qssa_sc_qss_debug(
-                #     hdr,
-                #     self.mechanism,
-                #     self.species_info,
-                #     self.reaction_info,
-                #     self.syms,
-                # )
-                # print("Symbolic qf qss print for debug")
-                # cqc.qssa_coeff_debug(
-                #     hdr,
-                #     self.mechanism,
-                #     self.species_info,
-                #     self.reaction_info,
-                #     self.syms,
-                # )
-                # print("Symbolic qss terms print for debug")
-                # cqc.qssa_terms_debug(
-                #     hdr,
-                #     self.mechanism,
-                #     self.species_info,
-                #     self.reaction_info,
-                #     self.syms,
-                #     helper_names_to_print,
-                #     intermediate_names_to_print,
-                # )
+            #    print("Symbolic Sc qss print for debug")
+            #    cqc.qssa_sc_qss_debug(
+            #        hdr,
+            #        self.mechanism,
+            #        self.species_info,
+            #        self.reaction_info,
+            #        self.syms,
+            #    )
+            #    print("Symbolic qf qss print for debug")
+            #    cqc.qssa_coeff_debug(
+            #        hdr,
+            #        self.mechanism,
+            #        self.species_info,
+            #        self.reaction_info,
+            #        self.syms,
+            #    )
+            #    print("Symbolic qss terms print for debug")
+            #    cqc.qssa_terms_debug(
+            #        hdr,
+            #        self.mechanism,
+            #        self.species_info,
+            #        self.reaction_info,
+            #        self.syms,
+            #        helper_names_to_print,
+            #        intermediate_names_to_print,
+            #    )
 
             # print("diff sc_qss_16 / sc_8 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[8]))
             # print("diff sc_qss_16 / sc_1 = ", smp.diff(self.syms.sc_qss_smp[16],self.syms.sc_smp[1]))
@@ -321,7 +321,15 @@ class Converter:
 
             # prod rate related
             cp.production_rate(
-                hdr, self.mechanism, self.species_info, self.reaction_info
+                hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
+            )
+            print("Symbolic wdot print for debug")
+            cp.production_rate_debug(
+                hdr,
+                self.mechanism,
+                self.species_info,
+                self.reaction_info,
+                self.syms,
             )
             cck.ckwc(hdr, self.mechanism, self.species_info)
             cck.ckwyp(hdr, self.mechanism, self.species_info)

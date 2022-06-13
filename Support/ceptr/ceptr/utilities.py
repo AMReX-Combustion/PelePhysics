@@ -11,8 +11,11 @@ def intersection(lst1, lst2):
     return list(set(lst1).intersection(lst2))
 
 
-def qss_sorted_phase_space(mechanism, species_info, reaction, reagents):
+def qss_sorted_phase_space(mechanism, species_info, reaction, reagents, syms=None):
     """Get string of phase space."""
+    record_symbolic_operations = True
+    if syms is None:
+        record_symbolic_operations = False
     if hasattr(reaction, "efficiencies"):
         if len(reaction.efficiencies) == 1:
             reagents = copy.deepcopy(
@@ -28,6 +31,8 @@ def qss_sorted_phase_space(mechanism, species_info, reaction, reagents):
             )
 
     phi = []
+    if record_symbolic_operations: 
+        phi_smp = []
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
     sorted_reagents = sorted(reagents.keys(), key=lambda v: dict_species[v])
     n_species = species_info.n_species
@@ -38,28 +43,48 @@ def qss_sorted_phase_space(mechanism, species_info, reaction, reagents):
                 conc = "sc_qss[%d]" % (
                     species_info.ordered_idx_map[symbol] - n_species
                 )
+                if record_symbolic_operations: 
+                    conc_smp = syms.sc_qss_smp[species_info.ordered_idx_map[symbol] - n_species]
             else:
                 conc = "pow(sc_qss[%d], %f)" % (
                     species_info.ordered_idx_map[symbol] - n_species,
                     float(coefficient),
                 )
+                if record_symbolic_operations: 
+                    conc_smp = pow(syms.sc_qss_smp[species_info.ordered_idx_map[symbol] - n_species], float(coefficient))
             phi += [conc]
+            if record_symbolic_operations: 
+                phi_smp += [conc_smp]
         else:
             if float(coefficient) == 1.0:
                 conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
+                if record_symbolic_operations: 
+                    conc_smp = syms.sc_smp[species_info.ordered_idx_map[symbol]]
             else:
                 if float(coefficient) == 2.0:
                     conc = "(sc[%d] * sc[%d])" % (
                         species_info.ordered_idx_map[symbol],
                         species_info.ordered_idx_map[symbol],
                     )
+                    if record_symbolic_operations: 
+                        conc_smp = syms.sc_smp[species_info.ordered_idx_map[symbol]] * syms.sc_smp[species_info.ordered_idx_map[symbol]]
                 else:
                     conc = "pow(sc[%d], %f)" % (
                         species_info.ordered_idx_map[symbol],
                         float(coefficient),
                     )
+                    if record_symbolic_operations: 
+                        conc_smp = pow(sc[species_info.ordered_idx_map[symbol]],  float(coefficient))
             phi += [conc]
-    return "*".join(phi)
+            if record_symbolic_operations: 
+                phi_smp += [conc_smp]
+    if not record_symbolic_operations: 
+        return "*".join(phi)
+    else: 
+        out_smp = 1.0
+        for phi_val_smp in phi_smp:
+            out_smp *= phi_val_smp
+        return "*".join(phi), out_smp
 
 
 def phase_space_units(reagents):

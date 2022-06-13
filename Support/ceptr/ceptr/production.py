@@ -5,6 +5,9 @@ import ceptr.constants as cc
 import ceptr.utilities as cu
 import ceptr.writer as cw
 
+import sympy as smp
+import time
+import re
 
 def production_rate(
     fstream, mechanism, species_info, reaction_info, syms=None
@@ -61,42 +64,46 @@ def production_rate(
                 cw.comment("reaction %d: %s" % (orig_idx, reaction.equation)),
             )
             if bool(reaction.orders):
+                string = cu.qss_sorted_phase_space(
+                            mechanism, species_info, reaction, reaction.orders
+                        )
                 cw.writer(
                     fstream,
                     "qf[%d] = %s;"
                     % (
                         idx,
-                        cu.qss_sorted_phase_space(
-                            mechanism, species_info, reaction, reaction.orders
-                        ),
+                        string,
                     ),
                 )
             else:
+                string = cu.qss_sorted_phase_space(
+                             mechanism,
+                             species_info,
+                             reaction,
+                             reaction.reactants,
+                         )
                 cw.writer(
                     fstream,
                     "qf[%d] = %s;"
                     % (
                         idx,
-                        cu.qss_sorted_phase_space(
+                        string,
+                    ),
+                )
+                
+            if reaction.reversible:
+                string = cu.qss_sorted_phase_space(
                             mechanism,
                             species_info,
                             reaction,
-                            reaction.reactants,
-                        ),
-                    ),
-                )
-            if reaction.reversible:
+                            reaction.products,
+                        )
                 cw.writer(
                     fstream,
                     "qr[%d] = %s;"
                     % (
                         idx,
-                        cu.qss_sorted_phase_space(
-                            mechanism,
-                            species_info,
-                            reaction,
-                            reaction.products,
-                        ),
+                        string,
                     ),
                 )
             else:
@@ -171,10 +178,10 @@ def production_rate(
             reaction = mechanism.reaction(orig_idx)
 
             kc_exp_arg = cu.sorted_kc_exp_arg(
-                mechanism, species_info, reaction, syms
+                mechanism, species_info, reaction
             )
             kc_conv_inv = cu.fkc_conv_inv(
-                mechanism, species_info, reaction, syms
+                mechanism, species_info, reaction
             )
 
             dim = cu.phase_space_units(reaction.reactants)
@@ -450,6 +457,9 @@ def production_rate(
     cw.writer(fstream, "}")
     cw.writer(fstream)
 
+    for i in range(n_species):
+        syms.wdot_smp[i] = 0.0
+
     if n_reactions > 0:
         # nclassd = n_reactions - nspecial
         # nCorr   = n3body + ntroe + nsri + nlindemann
@@ -505,24 +515,25 @@ def production_rate(
             reaction = mechanism.reaction(orig_idx)
             cw.writer(fstream, "{")
             if bool(reaction.orders):
-                forward_sc = cu.qss_sorted_phase_space(
-                    mechanism, species_info, reaction, reaction.orders
+                forward_sc, forward_sc_smp = cu.qss_sorted_phase_space(
+                    mechanism, species_info, reaction, reaction.orders, syms
                 )
             else:
-                forward_sc = cu.qss_sorted_phase_space(
-                    mechanism, species_info, reaction, reaction.reactants
+                forward_sc, forward_sc_smp = cu.qss_sorted_phase_space(
+                    mechanism, species_info, reaction, reaction.reactants, syms
                 )
             if reaction.reversible:
-                reverse_sc = cu.qss_sorted_phase_space(
-                    mechanism, species_info, reaction, reaction.products
+                reverse_sc, reverse_sc_smp = cu.qss_sorted_phase_space(
+                    mechanism, species_info, reaction, reaction.products, syms
                 )
             else:
                 reverse_sc = "0.0"
+                reverse_sc_smp = 0.0
 
-            kc_exp_arg = cu.sorted_kc_exp_arg(
+            kc_exp_arg, kc_exp_arg_smp = cu.sorted_kc_exp_arg(
                 mechanism, species_info, reaction, syms
             )
-            kc_conv_inv = cu.fkc_conv_inv(
+            kc_conv_inv, kc_conv_inv_smp = cu.fkc_conv_inv(
                 mechanism, species_info, reaction, syms
             )
 
@@ -599,6 +610,9 @@ def production_rate(
                 cw.comment("reaction %d:  %s" % (orig_idx, reaction.equation)),
             )
             cw.writer(fstream, "const amrex::Real k_f = %.15g" % (pef.m))
+ 
+            k_f_smp = pef.m
+       
             if (beta == 0) and (ae == 0):
                 cw.writer(fstream, "           ;")
             else:
@@ -606,18 +620,30 @@ def production_rate(
                     cw.writer(
                         fstream, "           * exp((%.15g) * tc[0]);" % (beta)
                     )
+                    k_f_smp *= smp.exp( beta * syms.tc_smp[0])
+                    #print("k_f_smp = ",k_f_smp)
+                    #stop
                 elif beta == 0:
                     cw.writer(
                         fstream,
                         "           * exp(-(%.15g) * invT);"
                         % (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae),
                     )
+                    coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
+                    k_f_smp *= smp.exp( -coeff * syms.invT_smp)
+                    #print("k_f_smp = ",k_f_smp)
+                    #print("coeff = ",coeff)
+                    #stop
                 else:
                     cw.writer(
                         fstream,
                         "           * exp((%.15g) * tc[0] - (%.15g) * invT);"
                         % (beta, (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae)),
                     )
+                    coeff = ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae
+                    k_f_smp *= smp.exp(beta * syms.tc_smp[0] - coeff * syms.invT_smp)
+                    #print("k_f_smp = ",k_f_smp)
+                    #stop
 
             alpha = None
             if not third_body and not falloff:
@@ -625,43 +651,59 @@ def production_rate(
                     fstream,
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
                 )
+                qf_smp = k_f_smp * forward_sc_smp
             elif not falloff and len(reaction.efficiencies) == 1:
                 cw.writer(
                     fstream,
                     "const amrex::Real qf = k_f * (%s);" % (forward_sc),
                 )
+                qf_smp = k_f_smp * forward_sc_smp
             elif not falloff:
-                alpha = enhancement_d_with_qss(
-                    mechanism, species_info, reaction
+                alpha, alpha_smp = enhancement_d_with_qss(
+                    mechanism, species_info, reaction, syms
                 )
                 cw.writer(fstream, "const amrex::Real Corr = %s;" % (alpha))
+                Corr_smp = alpha_smp
                 cw.writer(
                     fstream,
                     "const amrex::Real qf = Corr * k_f * (%s);" % (forward_sc),
                 )
+                qf_smp = Corr_smp * k_f_smp * forward_sc_smp 
             else:
-                alpha = enhancement_d_with_qss(
-                    mechanism, species_info, reaction
+                alpha, alpha_smp = enhancement_d_with_qss(
+                    mechanism, species_info, reaction, syms
                 )
                 cw.writer(fstream, "amrex::Real Corr = %s;" % (alpha))
+                Corr_smp = alpha_smp
                 cw.writer(
                     fstream,
                     "const amrex::Real redP = Corr / k_f * %.15g "
                     % (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)),
                 )
+                redP_smp = Corr_smp / k_f_smp * (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim))
+                #print("redP_smp = ",redP_smp)
+                #stop
                 cw.writer(
                     fstream,
                     "           * exp(%.15g * tc[0] - %.15g * invT);"
                     % (low_beta, (1.0 / cc.Rc / cc.ureg.kelvin * low_ae)),
                 )
+                coeff = (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).magnitude
+                redP_smp *= smp.exp(low_beta * syms.tc_smp[0] - coeff * syms.invT_smp)
+                #print("coeff = ",coeff)
+                #print("redP_smp = ",redP_smp)
+                #stop
                 if is_troe:
                     cw.writer(
                         fstream, "const amrex::Real F = redP / (1.0 + redP);"
                     )
+                    F_smp = redP_smp / (1.0 + redP_smp)
                     cw.writer(
                         fstream, "const amrex::Real logPred = log10(redP);"
                     )
+                    logPred_smp = smp.log(redP_smp,10)
                     cw.writer(fstream, "const amrex::Real logFcent = log10(")
+                    intLog_smp = 0.0
                     if abs(troe[1]) > 1.0e-100:
                         if 1.0 - troe[0] != 0:
                             cw.writer(
@@ -669,6 +711,7 @@ def production_rate(
                                 "    %.15g * exp(-tc[1] * %.15g)"
                                 % (1.0 - troe[0], (1 / troe[1])),
                             )
+                            intLog_smp += (1.0 - troe[0]) * smp.exp( -syms.tc_smp[1] * (1 / troe[1]) )
                     else:
                         cw.writer(fstream, "     0.0 ")
                     if abs(troe[2]) > 1.0e-100:
@@ -678,6 +721,7 @@ def production_rate(
                                 "    + %.15g * exp(-tc[1] * %.15g)"
                                 % (troe[0], (1 / troe[2])),
                             )
+                            intLog_smp += troe[0] * smp.exp(-syms.tc_smp[1] * (1 / troe[2]))
                     else:
                         cw.writer(fstream, "    + 0.0 ")
                     if ntroe == 4:
@@ -685,67 +729,85 @@ def production_rate(
                             cw.writer(
                                 fstream, "    + exp(%.15g * invT));" % -troe[3]
                             )
+                            intLog_smp += smp.exp(-troe[3] * syms.invT_smp)
                         else:
                             cw.writer(
                                 fstream, "    + exp(-%.15g * invT));" % troe[3]
                             )
+                            intLog_smp += smp.exp(-troe[3] * syms.invT_smp)
                     else:
                         cw.writer(fstream, "    + 0.0);")
+                    logFcent_smp = smp.log(intLog_smp,10)
+                    #WORKS till here
                     cw.writer(
                         fstream,
                         "const amrex::Real troe_c = -0.4 - 0.67 * logFcent;",
                     )
+                    troe_c_smp = -0.4 - 0.67 * logFcent_smp
                     cw.writer(
                         fstream,
                         "const amrex::Real troe_n = 0.75 - 1.27 * logFcent;",
                     )
+                    troe_n_smp = 0.75 - 1.27 * logFcent_smp
                     cw.writer(
                         fstream,
                         "const amrex::Real troe = (troe_c + logPred) / (troe_n"
                         " - 0.14 * (troe_c + logPred));",
                     )
+                    troe_smp = (troe_c_smp + logPred_smp) / (troe_n_smp - 0.14 * (troe_c_smp + logPred_smp))
                     cw.writer(
                         fstream,
                         "const amrex::Real F_troe = pow(10, logFcent / (1.0 +"
                         " troe * troe));",
                     )
+                    F_troe_smp = pow(10, logFcent_smp / (1.0 + troe_smp * troe_smp))
                     cw.writer(fstream, "Corr = F * F_troe;")
+                    Corr_smp = F_smp * F_troe_smp
                     cw.writer(
                         fstream,
                         "const amrex::Real qf = Corr * k_f * (%s);"
                         % (forward_sc),
                     )
+                    qf_smp = Corr_smp * k_f_smp * forward_sc_smp
                 elif is_sri:
                     cw.writer(
                         fstream, "const amrex::Real F = redP / (1.0 + redP);"
                     )
+                    F_smp = redP_smp / (1.0 + redP_smp)
                     cw.writer(
                         fstream, "const amrex::Real logPred = log10(redP);"
                     )
+                    logPred_smp = smp.log(redP_smp,10)
                     cw.writer(fstream, "X = 1.0 / (1.0 + logPred*logPred);")
+                    X_smp = 1.0 / (1.0 + logPred_smp * logPred_smp)
                     if sri[1] < 0:
                         cw.writer(
                             fstream,
                             "F_sri = exp(X * log(%.15g * exp(%.15g * invT)"
                             % (sri[0], -sri[1]),
                         )
+                        if not syms is None: sys.exit('Not done for now')
                     else:
                         cw.writer(
                             fstream,
                             "F_sri = exp(X * log(%.15g * exp(-%.15g * invT)"
                             % (sri[0], sri[1]),
                         )
+                        if not syms is None: sys.exit('Not done for now')
                     if sri[2] > 1.0e-100:
                         cw.writer(
                             fstream, "   +  exp(tc[0] / %.15g) " % sri[2]
                         )
+                        if not syms is None: sys.exit('Not done for now')
                     else:
                         cw.writer(fstream, "   +  0. ")
+                        if not syms is None: sys.exit('Not done for now')
                     cw.writer(
                         fstream,
                         "   *  (%d > 3 ? %.15g * exp(%.15g * tc[0]) : 1.0);"
                         % (nsri, sri[3], sri[4]),
                     )
+                    if not syms is None: sys.exit('Not done for now')
                     cw.writer(fstream, "Corr = F * F_sri;")
                     cw.writer(
                         fstream,
@@ -754,12 +816,14 @@ def production_rate(
                     )
                 elif nlindemann > 0:
                     cw.writer(fstream, "Corr = redP / (1.0 + redP);")
+                    Corr_smp = redP_smp / (1.0 + redP_smp)
                     cw.writer(
                         fstream,
                         "const amrex::Real qf = Corr * k_f * (%s);"
                         % (forward_sc),
                     )
-
+                    qf_smp = Corr_smp * k_f_smp * forward_sc_smp
+            # Works till here
             if kc_conv_inv:
                 if alpha is None:
                     cw.writer(
@@ -767,6 +831,7 @@ def production_rate(
                         "const amrex::Real qr = k_f * exp(-(%s)) * (%s) *"
                         " (%s);" % (kc_exp_arg, kc_conv_inv, reverse_sc),
                     )
+                    qr_smp = k_f_smp * smp.exp(-(kc_exp_arg_smp)) * (kc_conv_inv_smp) * (reverse_sc_smp)
                 else:
                     cw.writer(
                         fstream,
@@ -774,6 +839,7 @@ def production_rate(
                         " (%s) * (%s);"
                         % (kc_exp_arg, kc_conv_inv, reverse_sc),
                     )
+                    qr_smp = Corr_smp * k_f_smp * smp.exp(-kc_exp_arg_smp) * (kc_conv_inv_smp) * (reverse_sc_smp)
             else:
                 if alpha is None:
                     cw.writer(
@@ -781,12 +847,14 @@ def production_rate(
                         "const amrex::Real qr = k_f * exp(-(%s)) * (%s);"
                         % (kc_exp_arg, reverse_sc),
                     )
+                    qr_smp = k_f_smp * smp.exp(-(kc_exp_arg_smp)) * reverse_sc_smp
                 else:
                     cw.writer(
                         fstream,
                         "const amrex::Real qr = Corr * k_f * exp(-(%s)) *"
                         " (%s);" % (kc_exp_arg, reverse_sc),
-                    )
+                    ) 
+                    qr_smp = Corr_smp * k_f_smp * smp.exp(-(kc_exp_arg_smp)) * reverse_sc_smp
 
             remove_forward = cu.is_remove_forward(reaction_info, orig_idx)
 
@@ -796,8 +864,10 @@ def production_rate(
                     fstream, cw.comment("const amrex::Real qdot = qf - qr;")
                 )
                 cw.writer(fstream, "const amrex::Real qdot = - qr;")
+                qdot_smp = -qr_smp
             else:
                 cw.writer(fstream, "const amrex::Real qdot = qf - qr;")
+                qdot_smp = qf_smp - qr_smp 
 
             reaction = mechanism.reaction(orig_idx)
             lst_reactants = [(k, v) for k, v in reaction.reactants.items()]
@@ -825,6 +895,7 @@ def production_rate(
                                 "wdot[%d] -= qdot;"
                                 % (species_info.ordered_idx_map[symbol]),
                             )
+                            syms.wdot_smp[species_info.ordered_idx_map[symbol]] -= qdot_smp
                         else:
                             cw.writer(
                                 fstream,
@@ -834,6 +905,7 @@ def production_rate(
                                     coefficient,
                                 ),
                             )
+                            syms.wdot_smp[species_info.ordered_idx_map[symbol]] -= coefficient * qdot_smp
                 for b in reaction.products:
                     if b == a[0]:
                         if coefficient == 1.0:
@@ -842,6 +914,7 @@ def production_rate(
                                 "wdot[%d] += qdot;"
                                 % (species_info.ordered_idx_map[symbol]),
                             )
+                            syms.wdot_smp[species_info.ordered_idx_map[symbol]] += qdot_smp
                         else:
                             cw.writer(
                                 fstream,
@@ -851,6 +924,7 @@ def production_rate(
                                     coefficient,
                                 ),
                             )
+                            syms.wdot_smp[species_info.ordered_idx_map[symbol]] += coefficient * qdot_smp
             cw.writer(fstream, "}")
             cw.writer(fstream)
 
@@ -861,6 +935,145 @@ def production_rate(
 
     cw.writer(fstream)
 
+def production_rate_debug(
+    fstream, mechanism, species_info, reaction_info, syms=None
+):
+    """Temporary Write production rate obtained with Sympy"""
+    n_species = species_info.n_species
+    n_reactions = mechanism.n_reactions
+
+    cw.writer(fstream)
+
+    # main function
+    cw.writer(
+        fstream,
+        "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
+        " productionRate_debug(amrex::Real * wdot, amrex::Real * sc, amrex::Real T)",
+    )
+    cw.writer(fstream, "{")
+
+    cw.writer(
+        fstream,
+        "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
+        + cw.comment("temperature cache"),
+    )
+    cw.writer(fstream, "const amrex::Real invT = 1.0 / tc[1];")
+    cw.writer(fstream)
+
+    if n_reactions == 0:
+        cw.writer(fstream)
+    else:
+        cw.writer(
+            fstream,
+            cw.comment(
+                "reference concentration: P_atm / (RT) in inverse mol/m^3"
+            ),
+        )
+        cw.writer(
+            fstream,
+            "const amrex::Real refC = %g / %g * invT;"
+            % (
+                cc.Patm_pa,
+                cc.R.to(cc.ureg.joule / (cc.ureg.mole / cc.ureg.kelvin)).m,
+            ),
+        )
+        cw.writer(fstream, "const amrex::Real refCinv = 1 / refC;")
+
+    if n_reactions > 0:
+        # nclassd = n_reactions - nspecial
+        # nCorr   = n3body + ntroe + nsri + nlindemann
+
+        # Kc stuff
+        cw.writer(fstream, cw.comment("compute the Gibbs free energy"))
+        cw.writer(fstream, "amrex::Real g_RT[%d];" % species_info.n_species)
+        cw.writer(fstream, "gibbs(g_RT, tc);")
+        if species_info.n_qssa_species > 0:
+            cw.writer(
+                fstream,
+                "amrex::Real g_RT_qss[%d];" % (species_info.n_qssa_species),
+            )
+            cw.writer(fstream, "gibbs_qss(g_RT_qss, tc);")
+        cw.writer(fstream)
+
+        if species_info.n_qssa_species > 0:
+            cw.writer(
+                fstream,
+                "amrex::Real sc_qss[%d];"
+                % (max(1, species_info.n_qssa_species)),
+            )
+            cw.writer(
+                fstream,
+                "amrex::Real kf_qss[%d], qf_qss[%d], qr_qss[%d];"
+                % (
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
+                    reaction_info.n_qssa_reactions,
+                ),
+            )
+            cw.writer(fstream, cw.comment("Fill sc_qss here"))
+            cw.writer(fstream, "comp_k_f_qss(tc, invT, kf_qss);")
+            # cw.writer(fstream,"comp_Kc_qss(invT, g_RT, g_RT_qss, Kc_qss);")
+            cw.writer(
+                fstream,
+                "comp_qss_coeff(kf_qss, qf_qss, qr_qss, sc, tc, g_RT,"
+                " g_RT_qss);",
+            )
+            cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
+            cw.writer(fstream)
+
+            listSpec = [0,20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34]
+
+            #for ispec in range(species_info.n_species):
+            for ispec in listSpec:
+                times = time.time()
+                # Compute the common subexpressions using sympy
+                wdot_cse = smp.cse(syms.wdot_smp[ispec])
+
+                # Write the reduced common expressions
+                # The subexpressions are stored in cse index 0
+                for cse_idx in range(len(wdot_cse[0])):
+                    common_exp = syms.convert_to_cpp(wdot_cse[0][cse_idx][1])
+                    common_exp = re.sub(
+                        r"(x)(\d{1,9})", r"x\2_" + str(ispec), common_exp
+                    )
+                    cw.writer(
+                        fstream,
+                        "const amrex::Real %s = %s;"
+                        % (
+                            syms.convert_to_cpp(wdot_cse[0][cse_idx][0])
+                            + "_"
+                            + str(ispec),
+                            common_exp,
+                        ),
+                    )
+
+                # The full qss expression is stored in cse index 1
+                cpp_str = syms.convert_to_cpp(wdot_cse[1])
+                cpp_str = re.sub(r"(x)(\d{1,9})", r"x\2_" + str(ispec), cpp_str)
+                timee = time.time()
+                print("Made expr for spec %d (time = %.3g s)" % (ispec, timee - times))
+                times = time.time()
+                cw.writer(
+                    fstream,
+                    "wdot[%s] = %s;"
+                    % (
+                        str(ispec),
+                        cpp_str,
+                    ),
+                )
+                timee = time.time()
+                print(
+                    "Printed expr for spec %d (time = %.3g s)" % (ispec, timee - times)
+                )
+  
+            cw.writer(fstream)
+
+    cw.writer(fstream)
+
+    cw.writer(fstream, "return;")
+    cw.writer(fstream, "}")
+
+    cw.writer(fstream)
 
 def progress_rate_fr(fstream, mechanism, species_info, reaction_info):
     """Write progress rates."""
@@ -944,8 +1157,11 @@ def progress_rate_fr(fstream, mechanism, species_info, reaction_info):
     cw.writer(fstream, "}")
 
 
-def enhancement_d_with_qss(mechanism, species_info, reaction):
+def enhancement_d_with_qss(mechanism, species_info, reaction, syms=None):
     """Write enhancement with QSS."""
+    record_symbolic_operations = True
+    if syms is None:
+        record_symbolic_operations = False
     third_body = reaction.reaction_type == "three-body"
     falloff = reaction.reaction_type == "falloff"
     if not third_body and not falloff:
@@ -957,11 +1173,22 @@ def enhancement_d_with_qss(mechanism, species_info, reaction):
         sys.exit(1)
         species, coefficient = third_body
         if species == "<mixture>":
-            return "mixture"
-        return "sc[%d]" % species_info.ordered_idx_map[species]
+            if record_symbolic_operations:
+                return "mixture", syms.mixture_smp
+            else:
+                return "mixture"
+        if record_symbolic_operations:
+            return (
+                "sc[%d]" % species_info.ordered_idx_map[species],
+                syms.sc_smp[species_info.ordered_idx_map[species]],
+            )
+        else:
+            return "sc[%d]" % species_info.ordered_idx_map[species]
 
     efficiencies = reaction.efficiencies
     alpha = ["mixture"]
+    if record_symbolic_operations:
+        alpha_smp = [syms.mixture_smp]
     dict_species = {v: i for i, v in enumerate(species_info.all_species_list)}
     sorted_efficiencies = sorted(
         efficiencies.keys(), key=lambda v: dict_species[v]
@@ -970,22 +1197,51 @@ def enhancement_d_with_qss(mechanism, species_info, reaction):
         efficiency = efficiencies[symbol]
         if symbol not in species_info.qssa_species_list:
             factor = "(%.15g)" % (efficiency - 1)
+            if record_symbolic_operations:
+                factor_smp = efficiency - 1
             if (efficiency - 1) != 0:
                 conc = "sc[%d]" % species_info.ordered_idx_map[symbol]
+                if record_symbolic_operations:
+                    conc_smp = syms.sc_smp[
+                        species_info.ordered_idx_map[symbol]
+                    ]
                 if (efficiency - 1) == 1:
                     alpha.append("%s" % (conc))
+                    if record_symbolic_operations:
+                        alpha_smp.append(conc_smp)
                 else:
                     alpha.append("%s*%s" % (factor, conc))
+                    if record_symbolic_operations:
+                        alpha_smp.append(factor_smp * conc_smp)
         else:
             factor = "(%.15g)" % (efficiency - 1)
+            if record_symbolic_operations:
+                factor_smp = efficiency - 1
             if (efficiency - 1) != 0:
                 conc = "sc_qss[%d]" % (
                     species_info.ordered_idx_map[symbol]
                     - species_info.n_species
                 )
+                if record_symbolic_operations:
+                    conc_smp = syms.sc_qss_smp[
+                        species_info.ordered_idx_map[symbol]
+                        - species_info.n_species
+                    ]
                 if (efficiency - 1) == 1:
                     alpha.append("%s" % (conc))
+                    if record_symbolic_operations:
+                        alpha_smp.append(conc_smp)
                 else:
                     alpha.append("%s*%s" % (factor, conc))
+                    if record_symbolic_operations:
+                        alpha_smp.append(factor_smp * conc_smp)
 
-    return " + ".join(alpha).replace("+ -", "- ")
+    if record_symbolic_operations:
+        enhancement_smp = 0.0
+        for alpha_val in alpha_smp:
+            enhancement_smp += alpha_val
+
+    if not record_symbolic_operations:
+        return " + ".join(alpha).replace("+ -", "- ")
+    else:
+        return " + ".join(alpha).replace("+ -", "- "), enhancement_smp
