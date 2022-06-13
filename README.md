@@ -6,9 +6,11 @@ I tried to not modify functions that did not need be modified but we should prob
 3. ~~Verify that `qf_qss` and `qr_qss` are consistent with `comp_qss_coeff`~~
 4. ~~Verify that `sc_qss` is consistent with `comp_sc_qss`~~ See `debugDodecaneLuQss`
 5. ~~Make sure that the expressions printed are compact~~
-6. ~~Make sure code is correctly formatter~~ See `.git/hooks/pre-commit`
+6. ~~Make sure code is correctly formatted~~
 7. Verify that `dsc_qss/dsc` is correct compared to finite difference
 8. Modify `aJacobian` to include the dependence of `sc_qss` with `sc` and `T`.
+  - Symbolic encoding of `wdot`
+  - Verify that `wdot` values obtained with `sympy` 
 9. Try 0D example (`ReactEval_dodecanelu_qss`) with and without Jacobian fix
 
 # PelePhysics
