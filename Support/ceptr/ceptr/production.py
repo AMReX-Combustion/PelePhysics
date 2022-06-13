@@ -924,7 +924,7 @@ def production_rate(
 def production_rate_debug(
     fstream, mechanism, species_info, reaction_info, syms=None
 ):
-    """Temporary Write production rate obtained with Sympy"""
+    """Temporary Write production rate obtained with Sympy. This is an expensive function"""
     n_species = species_info.n_species
     n_reactions = mechanism.n_reactions
 
