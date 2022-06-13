@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "Table.H"
-// #include "NeuralNet.H"
+#include "NeuralNet.H"
 
 namespace pele {
 namespace physics {
@@ -200,7 +200,7 @@ struct Manifold
     amrex::Real rho_from_table;
     manfunc->get_value(eosparm->idx_density, Y, rho_from_table);
 
-    // Return pressure is nominal pressure scaled due to desnity mismatch
+    // Return pressure is nominal pressure scaled due to density mismatch
     P = eosparm->Pnom_cgs * R/rho_from_table;
 
     // amrex::Error("RTY2P is not yet implemented for Manifold EOS");
@@ -229,7 +229,9 @@ struct Manifold
         static_cast<TabFuncParams::TabFuncData*>(eosparm->manf_data);
     manfunc.reset(new pele::physics::TabFunc(tf_data));
 #elif defined(USE_MANIFOLD_NN)
-    amrex::Error("Manifold model using neural network is not yet implemented.");
+    NNFuncParams::NNFuncData* nnf_data =
+        static_cast<NNFuncParams::NNFuncData*>(eosparm->manf_data);
+    manfunc.reset(new pele::physics::NNFunc(nnf_data));
 #else
     amrex::Error("Invalid option for manifold model.");
 #endif

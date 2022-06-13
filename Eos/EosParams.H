@@ -67,8 +67,10 @@ struct InitEosParm<Manifold>
   void operator()(EosParm<Manifold>* eosparm, ManFuncParams::ManFuncData* manf_data_in)
   {
     eosparm->manf_data = manf_data_in;
+#ifdef USE_MANIFOLD_TABLE
     // First (N-1) species are table dimensions (last species corresponds to density)
     AMREX_ALWAYS_ASSERT(manf_data_in->Ndim == NUM_SPECIES - 1);
+#endif
 
     amrex::ParmParse pp("eos");
     pp.get("nominal_pressure_cgs", eosparm->Pnom_cgs);

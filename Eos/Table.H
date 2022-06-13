@@ -10,13 +10,13 @@ namespace pele{
   namespace physics{
 
     // Struct to contain tabulated data
-    class TabFuncParams {
+    class TabFuncParams: ManFuncParams {
     public:
 
       TabFuncParams() {}
-      ~TabFuncParams() {}
-
-      void initialize()
+      virtual ~TabFuncParams() {}
+      
+      virtual void initialize()
       {
         amrex::ParmParse pp("table");
         std::string tablefile;
@@ -56,6 +56,8 @@ namespace pele{
         fi.read(reinterpret_cast<char*>(m_h_tf_data.dimLengths), m_h_tf_data.Ndim*sizeof(int));
         // Number of variables
         fi.read(reinterpret_cast<char*>(&m_h_tf_data.Nvar), sizeof(int));
+        // No separate passed variables for a table
+        m_h_tf_data.Nmanpar = m_h_tf_data.Ndim;
 
         // Grid locations for all dimensions
         int Ngridtot = 0;
@@ -123,7 +125,7 @@ namespace pele{
         amrex::Real* values;
       };
 
-      void allocate()
+      virtual void allocate()
       {
         if (!m_device_allocated) {
           m_d_tf_data = static_cast<TabFuncData*>(amrex::The_Device_Arena()->alloc(sizeof(m_h_tf_data)));
@@ -132,17 +134,7 @@ namespace pele{
         }
       }
 
-      void sync_to_device()
-      {
-        if (!m_device_allocated) {
-          amrex::Abort("Device params not allocated yet");
-        } else {
-          amrex::Gpu::copy(amrex::Gpu::hostToDevice, &m_h_tf_data, &m_h_tf_data + 1,
-                           m_d_tf_data);
-        }
-      }
-
-      void deallocate()
+      virtual void deallocate()
       {
         amrex::The_Pinned_Arena()->free(m_h_tf_data.dimLengths);
         amrex::The_Pinned_Arena()->free(m_h_tf_data.dimDataSpacing);
@@ -152,6 +144,26 @@ namespace pele{
         amrex::The_Pinned_Arena()->free(m_h_tf_data.dimnames);
         if (m_device_allocated)
           amrex::The_Device_Arena()->free(m_d_tf_data);
+      }
+      
+      virtual void sync_to_device()
+      {
+        if (!m_device_allocated) {
+          amrex::Abort("Device params not allocated yet");
+        } else {
+          amrex::Gpu::copy(amrex::Gpu::hostToDevice, &m_h_tf_data, &m_h_tf_data + 1,
+                           m_d_tf_data);
+        }
+      }
+      
+      virtual ManFuncData& host_manfunc_data()
+      {
+        return m_h_tf_data;
+      }
+      
+      virtual ManFuncData* device_manfunc_data()
+      {
+        return m_d_tf_data;
       }
 
       TabFuncData& host_tabfunc_data()
