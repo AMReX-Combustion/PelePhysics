@@ -1054,56 +1054,7 @@ def production_rate_debug(
             cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             cw.writer(fstream)
 
-            # listSpec = [0,20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34]
-
-            for ispec in range(species_info.n_species):
-                # for ispec in listSpec:
-                times = time.time()
-                # Compute the common subexpressions using sympy
-                wdot_cse = smp.cse(syms.wdot_smp[ispec])
-
-                # Write the reduced common expressions
-                # The subexpressions are stored in cse index 0
-                for cse_idx in range(len(wdot_cse[0])):
-                    common_exp = syms.convert_to_cpp(wdot_cse[0][cse_idx][1])
-                    common_exp = re.sub(
-                        r"(x)(\d{1,9})", r"x\2_" + str(ispec), common_exp
-                    )
-                    cw.writer(
-                        fstream,
-                        "const amrex::Real %s = %s;"
-                        % (
-                            syms.convert_to_cpp(wdot_cse[0][cse_idx][0])
-                            + "_"
-                            + str(ispec),
-                            common_exp,
-                        ),
-                    )
-
-                # The full qss expression is stored in cse index 1
-                cpp_str = syms.convert_to_cpp(wdot_cse[1])
-                cpp_str = re.sub(
-                    r"(x)(\d{1,9})", r"x\2_" + str(ispec), cpp_str
-                )
-                timee = time.time()
-                print(
-                    "Made expr for spec %d (time = %.3g s)"
-                    % (ispec, timee - times)
-                )
-                times = time.time()
-                cw.writer(
-                    fstream,
-                    "wdot[%s] = %s;"
-                    % (
-                        str(ispec),
-                        cpp_str,
-                    ),
-                )
-                timee = time.time()
-                print(
-                    "Printed expr for spec %d (time = %.3g s)"
-                    % (ispec, timee - times)
-                )
+            syms.write_array_to_cpp(syms.wdot_smp, 'wdot', cw, fstream)
 
             cw.writer(fstream)
 
