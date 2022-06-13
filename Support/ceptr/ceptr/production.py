@@ -621,8 +621,6 @@ def production_rate(
                         fstream, "           * exp((%.15g) * tc[0]);" % (beta)
                     )
                     k_f_smp *= smp.exp( beta * syms.tc_smp[0])
-                    #print("k_f_smp = ",k_f_smp)
-                    #stop
                 elif beta == 0:
                     cw.writer(
                         fstream,
@@ -631,9 +629,6 @@ def production_rate(
                     )
                     coeff = (((1.0 / cc.Rc / cc.ureg.kelvin)) * ae).magnitude
                     k_f_smp *= smp.exp( -coeff * syms.invT_smp)
-                    #print("k_f_smp = ",k_f_smp)
-                    #print("coeff = ",coeff)
-                    #stop
                 else:
                     cw.writer(
                         fstream,
@@ -642,8 +637,6 @@ def production_rate(
                     )
                     coeff = ((1.0 / cc.Rc / cc.ureg.kelvin)) * ae
                     k_f_smp *= smp.exp(beta * syms.tc_smp[0] - coeff * syms.invT_smp)
-                    #print("k_f_smp = ",k_f_smp)
-                    #stop
 
             alpha = None
             if not third_body and not falloff:
@@ -681,8 +674,6 @@ def production_rate(
                     % (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim)),
                 )
                 redP_smp = Corr_smp / k_f_smp * (10 ** (-dim * 6) * low_pef.m * 10 ** (3**dim))
-                #print("redP_smp = ",redP_smp)
-                #stop
                 cw.writer(
                     fstream,
                     "           * exp(%.15g * tc[0] - %.15g * invT);"
@@ -690,9 +681,6 @@ def production_rate(
                 )
                 coeff = (1.0 / cc.Rc / cc.ureg.kelvin * low_ae).magnitude
                 redP_smp *= smp.exp(low_beta * syms.tc_smp[0] - coeff * syms.invT_smp)
-                #print("coeff = ",coeff)
-                #print("redP_smp = ",redP_smp)
-                #stop
                 if is_troe:
                     cw.writer(
                         fstream, "const amrex::Real F = redP / (1.0 + redP);"
@@ -738,7 +726,6 @@ def production_rate(
                     else:
                         cw.writer(fstream, "    + 0.0);")
                     logFcent_smp = smp.log(intLog_smp,10)
-                    #WORKS till here
                     cw.writer(
                         fstream,
                         "const amrex::Real troe_c = -0.4 - 0.67 * logFcent;",
@@ -823,7 +810,6 @@ def production_rate(
                         % (forward_sc),
                     )
                     qf_smp = Corr_smp * k_f_smp * forward_sc_smp
-            # Works till here
             if kc_conv_inv:
                 if alpha is None:
                     cw.writer(
@@ -1021,10 +1007,10 @@ def production_rate_debug(
             cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             cw.writer(fstream)
 
-            listSpec = [0,20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34]
+            #listSpec = [0,20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34]
 
-            #for ispec in range(species_info.n_species):
-            for ispec in listSpec:
+            for ispec in range(species_info.n_species):
+            #for ispec in listSpec:
                 times = time.time()
                 # Compute the common subexpressions using sympy
                 wdot_cse = smp.cse(syms.wdot_smp[ispec])
