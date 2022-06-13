@@ -820,7 +820,7 @@ def ajac_reaction_d(
             cw.writer(fstream, "if (consP) {")
 
             for k in range(n_species):
-            # for k in range(len(species_info.all_species_list)):
+                # for k in range(len(species_info.all_species_list)):
                 dqdc_s = denhancement_d(
                     mechanism, species_info, reaction, k, True
                 )
@@ -882,7 +882,7 @@ def ajac_reaction_d(
             cw.writer(fstream, "else {")
 
         for k in range(n_species):
-        # for k in range(len(species_info.all_species_list)):
+            # for k in range(len(species_info.all_species_list)):
             dqdc_s = denhancement_d(
                 mechanism, species_info, reaction, k, False
             )
@@ -946,7 +946,7 @@ def ajac_reaction_d(
         # print(reaction)
         # print(all_dict)
         for k in range(n_species):
-        # for k in range(len(species_info.all_species_list)):
+            # for k in range(len(species_info.all_species_list)):
             dqdc_s = dqdc_d(
                 fstream,
                 mechanism,

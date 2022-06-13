@@ -321,16 +321,20 @@ class Converter:
 
             # prod rate related
             cp.production_rate(
-                hdr, self.mechanism, self.species_info, self.reaction_info, self.syms
+                hdr,
+                self.mechanism,
+                self.species_info,
+                self.reaction_info,
+                self.syms,
             )
-            #print("Symbolic wdot print for debug")
-            #cp.production_rate_debug(
+            # print("Symbolic wdot print for debug")
+            # cp.production_rate_debug(
             #    hdr,
             #    self.mechanism,
             #    self.species_info,
             #    self.reaction_info,
             #    self.syms,
-            #)
+            # )
             cck.ckwc(hdr, self.mechanism, self.species_info)
             cck.ckwyp(hdr, self.mechanism, self.species_info)
             cck.ckwxp(hdr, self.mechanism, self.species_info)
