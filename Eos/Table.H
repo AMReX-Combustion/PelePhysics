@@ -10,7 +10,7 @@ namespace pele{
   namespace physics{
 
     // Struct to contain tabulated data
-    class TabFuncParams: ManFuncParams {
+    class TabFuncParams: public ManFuncParams {
     public:
 
       TabFuncParams() {}
@@ -18,7 +18,9 @@ namespace pele{
       
       virtual void initialize()
       {
-        amrex::ParmParse pp("table");
+        m_h_tf_data.manmodel = ManifoldModel::TABLE;
+        
+        amrex::ParmParse pp("manifold");
         std::string tablefile;
         pp.get("filename", tablefile);
         if (m_h_tf_data.Ndim > MAXD_TABLE) {
@@ -176,7 +178,7 @@ namespace pele{
         return m_d_tf_data;
       }
 
-    private :
+    private:
       int m_verbose = 0;
       TabFuncData m_h_tf_data;
       TabFuncData* m_d_tf_data;
@@ -233,6 +235,11 @@ namespace pele{
       virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[], amrex::Real& out)
       {
         out = 0.0;
+      }
+      
+      virtual ManifoldModel model()
+      {
+        return tf_data->manmodel;
       }
       
       /*

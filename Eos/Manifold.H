@@ -2,12 +2,9 @@
 #define _MANIFOLD_H_
 
 #include <memory>
-
-#ifdef USE_MANIFOLD_TABLE
 #include "Table.H"
-#endif
 
-#ifdef USE_MANIFOLD_NN
+#ifdef USE_LIBTORCH
 #include "NeuralNet.H"
 #endif
 
@@ -234,17 +231,31 @@ struct Manifold
   Manifold(const EosParm<Manifold>* eparm)
   {
     eosparm = eparm;
-#ifdef USE_MANIFOLD_TABLE
-    TabFuncParams::TabFuncData* tf_data =
-        static_cast<TabFuncParams::TabFuncData*>(eosparm->manf_data);
-    manfunc.reset(new pele::physics::TabFunc(tf_data));
-#elif defined(USE_MANIFOLD_NN)
-    NNFuncParams::NNFuncData* nnf_data =
-        static_cast<NNFuncParams::NNFuncData*>(eosparm->manf_data);
-    manfunc.reset(new pele::physics::NNFunc(nnf_data));
+    
+    if(eosparm->manf_data->manmodel == ManifoldModel::TABLE)
+    {
+      TabFuncParams::TabFuncData* tf_data =
+          static_cast<TabFuncParams::TabFuncData*>(eosparm->manf_data);
+      if(tf_data == nullptr)
+      {
+        amrex::Error("Selected manifold model was Table, but data struct is not of type TabFuncData.");
+      }
+      manfunc.reset(new pele::physics::TabFunc(tf_data));
+    }
+    else
+    {
+#ifdef USE_LIBTORCH
+      NNFuncParams::NNFuncData* nnf_data =
+          static_cast<NNFuncParams::NNFuncData*>(eosparm->manf_data);
+      if(nnf_data == nullptr)
+      {
+        amrex::Error("Selected manifold model was NeuralNet, but data struct is not of type NNFuncData.");
+      }
+      manfunc.reset(new pele::physics::NNFunc(nnf_data));
 #else
-    amrex::Error("Invalid option for manifold model.");
+      amrex::Error("Must set USE_LIBTORCH = TRUE to run with neural net manifold model.");
 #endif
+    }
   }
 
   template <class... Args>

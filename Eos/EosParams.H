@@ -79,25 +79,27 @@ struct InitEosParm<Manifold>
 
     // For manifold table parameter source terms, assume if index not found, source term is 0
     // For neural net, require a definition to be supplied for each manifold parameter
-#ifdef USE_MANIFOLD_TABLE
-    for (int idim = 0; idim < manf_data_in->Ndim; idim++)
+    if(manf_data_in->manmodel == ManifoldModel::TABLE)
     {
-      std::string dimname = std::string(&manf_data_in->dimnames[idim*manf_data_in->len_str], manf_data_in->len_str);
-      eosparm->idx_Wdot[idim] = get_var_index(("SRC_"+amrex::trim(dimname)).c_str(), manf_data_in, false);
-      if( eosparm->idx_Wdot[idim] < 0)
+      for (int idim = 0; idim < manf_data_in->Ndim; idim++)
       {
-      	amrex::Print() << "Warning: No source term found for manifold parameter " << manf_data_in->dimnames[idim]
-      		       << ", assuming SRC_" << manf_data_in->dimnames[idim] << " = 0";
+        std::string dimname = std::string(&manf_data_in->dimnames[idim*manf_data_in->len_str], manf_data_in->len_str);
+        eosparm->idx_Wdot[idim] = get_var_index(("SRC_"+amrex::trim(dimname)).c_str(), manf_data_in, false);
+        if( eosparm->idx_Wdot[idim] < 0)
+        {
+        	amrex::Print() << "Warning: No source term found for manifold parameter " << manf_data_in->dimnames[idim]
+        		       << ", assuming SRC_" << manf_data_in->dimnames[idim] << " = 0";
+        }
       }
     }
-#else
-    for (int idim = 0; idim < manf_data_in->Ndim; idim++)
+    else
     {
-      // The info file / metadata loader will ensure we have a definition for each
-      eosparm->idx_Wdot[idim] = -1;
+      for (int idim = 0; idim < manf_data_in->Ndim; idim++)
+      {
+        // The info file / metadata loader will ensure we have a definition for each
+        eosparm->idx_Wdot[idim] = -1;
+      }  
     }
-#endif
-
   }
 };
 

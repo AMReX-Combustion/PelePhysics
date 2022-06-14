@@ -32,7 +32,7 @@ namespace TensorParams
   const torch::TensorOptions tensoropt = torch::TensorOptions().dtype(dtype).device(device);
 }
 
-class NNFuncParams: ManFuncParams
+class NNFuncParams: public ManFuncParams
 {
 public:
   
@@ -47,10 +47,12 @@ public:
 
   virtual void initialize()
   {
-    amrex::ParmParse pp("nn");
+    m_h_nnf_data.manmodel = ManifoldModel::NEURAL_NET;
+    
+    amrex::ParmParse pp("manifold");
     
     std::string nn_filename;
-    pp.get("nn_filename", nn_filename);
+    pp.get("filename", nn_filename);
     
     torch::jit::script::Module nnmodel;
     try
@@ -394,6 +396,13 @@ public:
     torch::Tensor intensor = torch::empty({1, nnf_data->Ndim}, TensorParams::tensoropt);
     std::memcpy(intensor.data_ptr(), indata, sizeof(amrex::Real) * intensor.numel());
     calculate_Wdot(paramidx, intensor, out);
+  }
+  
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  virtual ManifoldModel model()
+  {
+    return nnf_data->manmodel;
   }
 
 private:

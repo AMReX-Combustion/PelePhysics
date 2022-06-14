@@ -3,6 +3,12 @@
 
 namespace pele {
 namespace physics {
+  
+enum class ManifoldModel
+{
+  TABLE = 0,
+  NEURAL_NET = 1
+};
 
 class ManFuncParams
 {
@@ -15,6 +21,7 @@ public:
   
   struct ManFuncData
   {
+    ManifoldModel manmodel;
     static constexpr int len_str = 64; // Length of strings in the char arrays
     char model_name[len_str+1]; // Name of the neural network model
     int Ndim; // Input dimension (# of manifold params)
@@ -26,6 +33,8 @@ public:
   
   virtual ManFuncData& host_manfunc_data() = 0;
   virtual ManFuncData* device_manfunc_data() = 0;
+  
+  virtual ~ManFuncParams() {};
 
 }; // class ManFuncParams
 
@@ -61,8 +70,11 @@ public:
   AMREX_GPU_HOST_DEVICE
   virtual void calculate_Wdot(const int paramidx, const amrex::Real indata[], amrex::Real& out) = 0;
   
+  AMREX_GPU_HOST_DEVICE
+  virtual ManifoldModel model() = 0;
+  
   virtual ~ManifoldFunc() {};
-
+  
 }; // class ManifoldFunc
 }  // namespace physics
 }  // namespace pele
