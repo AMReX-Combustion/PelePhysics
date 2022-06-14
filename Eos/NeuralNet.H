@@ -213,6 +213,8 @@ public:
     m_h_nnf_data.Ncomb = umap["def_" + amrex::trim(dimnames[0])].size();
     m_h_nnf_data.comb_coeff = static_cast<amrex::Real*>(
         amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*m_h_nnf_data.Ncomb*sizeof(amrex::Real)));
+    m_h_nnf_data.comb_idx = static_cast<int*>(
+        amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*m_h_nnf_data.Ncomb*sizeof(int)));
     m_h_nnf_data.comb_src_idx = static_cast<int*>(
         amrex::The_Pinned_Arena()->alloc(m_h_nnf_data.Ndim*m_h_nnf_data.Ncomb*sizeof(int)));
     for(int i = 0; i < m_h_nnf_data.Ndim; i++)
@@ -225,10 +227,13 @@ public:
         auto start = 0u;
         auto end = defn[j].find("*");
         std::string coeff = defn[j].substr(start, end);
-        std::string var = "SRC_" + defn[j].substr(end+1, std::string::npos);
+        std::string var = defn[j].substr(end+1, std::string::npos);
+        std::string src_var = "SRC_" + var;
         int idx = get_var_index(var.c_str(), &m_h_nnf_data);
+        int src_idx = get_var_index(src_var.c_str(), &m_h_nnf_data);
         m_h_nnf_data.comb_coeff[i*m_h_nnf_data.Ncomb + j] = (amrex::Real)std::stod(coeff);
-        m_h_nnf_data.comb_src_idx[i*m_h_nnf_data.Ncomb + j] = idx;
+        m_h_nnf_data.comb_idx[i*m_h_nnf_data.Ncomb + j] = idx;
+        m_h_nnf_data.comb_src_idx[i*m_h_nnf_data.Ncomb + j] = src_idx;
       }
     }
   }
@@ -265,13 +270,15 @@ public:
     for(int i = 0; i < m_h_nnf_data.Ndim; i++)
     {
       std::string dimname(&m_h_nnf_data.dimnames[i*m_h_nnf_data.len_str], m_h_nnf_data.len_str);
-      amrex::Print() << "Defn. SRC_" + amrex::trim(dimname) + ": Source Term | Coeff." << std::endl;
+      amrex::Print() << "Defn. " + amrex::trim(dimname) + ": Variable | Source Term | Coeff." << std::endl;
       for(int j = 0; j < m_h_nnf_data.Ncomb; j++)
       {
-        const int& idx = m_h_nnf_data.comb_src_idx[i*m_h_nnf_data.Ncomb + j];
+        const int& idx = m_h_nnf_data.comb_idx[i*m_h_nnf_data.Ncomb + j];
+        const int& src_idx = m_h_nnf_data.comb_src_idx[i*m_h_nnf_data.Ncomb + j];
         const amrex::Real& coeff = m_h_nnf_data.comb_coeff[i*m_h_nnf_data.Ncomb + j];
         std::string varname(&m_h_nnf_data.varnames[idx*m_h_nnf_data.len_str], m_h_nnf_data.len_str);
-        amrex::Print() << amrex::trim(varname) << " | " << coeff << std::endl;
+        std::string src_varname(&m_h_nnf_data.varnames[src_idx*m_h_nnf_data.len_str], m_h_nnf_data.len_str);
+        amrex::Print() << amrex::trim(varname) << " | " << amrex::trim(src_varname) << " | " << coeff << std::endl;
       }
       amrex::Print() << std::endl;
     }
@@ -292,6 +299,7 @@ public:
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.varnames);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.dimnames);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_src_idx);
+    amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_idx);
     amrex::The_Pinned_Arena()->free(m_h_nnf_data.comb_coeff);
     
     // if(m_device_allocated)
@@ -319,6 +327,7 @@ public:
     torch::jit::script::Module nnmodel;
     int Ncomb; // Number of variables that the manifold params are linear combinations of
     amrex::Real* comb_coeff; // Coefficients in linear combination for each manifold param
+    int* comb_idx; // Index of variable corresponding to each comb_coeff
     int* comb_src_idx; // Index of source term for variable corresponding to each comb_coeff
   };
   
