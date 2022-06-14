@@ -99,6 +99,8 @@ main(int argc, char* argv[])
     index_wdot = 0;
     index_J = index_sc * (NUM_SPECIES+1) + index_wdot;
 
+    std::cout << "Computing dwdot" << index_wdot << "/dsc"<< index_sc << "\n";
+
     for (int i=0; i < NUM_PERT; ++i){
         perturb_sc(sc_pert1, sc_pert2, sc, pertMag[i], index_sc);
         productionRate(wdot_pert1, sc_pert1, T);
