@@ -385,6 +385,9 @@ class Converter:
                 self.reaction_info,
                 self.syms,
                 dwdot0dc0,
+                self.species_info.ordered_idx_map["NC12H26"]
+                * (self.species_info.n_species + 1)
+                + 0,
             )
 
             # Approx analytical jacobian

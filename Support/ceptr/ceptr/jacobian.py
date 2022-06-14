@@ -1198,7 +1198,13 @@ def dproduction_rate(
 
 
 def ajac_term_debug(
-    fstream, mechanism, species_info, reaction_info, syms=None, dwdotdc=None
+    fstream,
+    mechanism,
+    species_info,
+    reaction_info,
+    syms=None,
+    dwdotdc=None,
+    index=0,
 ):
     """Temporary Write jacobian term for debugging."""
     n_species = species_info.n_species
@@ -1210,10 +1216,11 @@ def ajac_term_debug(
     cw.writer(
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void "
-        " ajac_term_debug(amrex::Real * Jterm, amrex::Real * sc, amrex::Real T)",
+        " ajac_term_debug(amrex::Real * J, amrex::Real * sc, amrex::Real T)",
     )
     cw.writer(fstream, "{")
 
+    cw.writer(fstream, cw.comment(f"J corresponds to index: {index}"))
     cw.writer(
         fstream,
         "const amrex::Real tc[5] = { log(T), T, T*T, T*T*T, T*T*T*T };"
@@ -1283,7 +1290,7 @@ def ajac_term_debug(
             cw.writer(fstream, "comp_sc_qss(sc_qss, qf_qss, qr_qss);")
             cw.writer(fstream)
 
-            syms.write_array_to_cpp([dwdotdc], "Jterm", cw, fstream)
+            syms.write_array_to_cpp([dwdotdc], f"J", cw, fstream)
 
             cw.writer(fstream)
 
